@@ -35,6 +35,7 @@ export type UsePortfolioBillingShareOptions = {
   endDate?: string;
   branch?: string;
   nature?: "gross" | "net";
+  customerCenters?: string;
 };
 
 export type UsePortfolioBillingShareResult = {
@@ -49,7 +50,7 @@ export type UsePortfolioBillingShareResult = {
 export function usePortfolioBillingShare(
   options: UsePortfolioBillingShareOptions = {},
 ): UsePortfolioBillingShareResult {
-  const { sellerId, startDate, endDate, branch, nature } = options;
+  const { sellerId, startDate, endDate, branch, nature, customerCenters } = options;
   const { canManagePortfolios } = usePortfolioScope();
   const allowed = canViewPortfolioBillingShare({
     canManagePortfolios,
@@ -74,6 +75,7 @@ export function usePortfolioBillingShare(
         end_date: resolvedEnd,
         branch: branch || undefined,
         seller_id: sellerId?.trim() || undefined,
+        customer_centers: customerCenters?.trim() || undefined,
         nature: nature || undefined,
         scope_mode: PORTFOLIO_MEMBERSHIP_SCOPE_MODE,
       },
@@ -92,7 +94,7 @@ export function usePortfolioBillingShare(
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [allowed, resolvedStart, resolvedEnd, branch, sellerId, nature]);
+  }, [allowed, resolvedStart, resolvedEnd, branch, sellerId, nature, customerCenters]);
 
   return {
     allowed,

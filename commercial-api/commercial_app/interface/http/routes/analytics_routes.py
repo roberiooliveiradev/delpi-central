@@ -30,6 +30,9 @@ from commercial_app.application.use_cases.get_portfolio_billing_ranking import (
 )
 from commercial_app.core.auth_actor import current_user_from_request
 from commercial_app.core.responses import fail, ok
+from commercial_app.application.services.analytics_customer_codes_service import (
+    AnalyticsCustomerCodesService,
+)
 from commercial_app.composition.commercial_composer import build_delpi_commercial_gateway
 from commercial_app.interface.http.routes.totvs_bff_helpers import (
     merge_totvs_params,
@@ -114,6 +117,64 @@ def _common_filters(
     }
 
 
+def _center_csv(value: object | None) -> str | None:
+    if not isinstance(value, str):
+        return None
+    text = value.strip()
+    return text or None
+
+
+def _with_customer_centers(
+    params: dict[str, Any],
+    customer_centers: str | None,
+) -> dict[str, Any]:
+    centers = _center_csv(customer_centers)
+    if not centers:
+        return params
+    return {**params, "customer_centers": centers}
+
+
+@router.get(
+    "/customer-centers",
+    operation_id="bff_list_commercial_customer_centers",
+)
+@require_any_permission(*COMMERCIAL_ANALYTICS_PERMISSIONS)
+def bff_customer_centers(
+    request: Request,
+    seller_id: str | None = Query(default=None),
+    portfolio_id: str | None = Query(default=None),
+):
+    """Catálogo de centros distintos da SA7, restrito à membership do recorte."""
+    operation_id = "bff_list_commercial_customer_centers"
+    try:
+        scope = resolve_analytics_portfolio_scope(
+            request, seller_id=seller_id, portfolio_id=portfolio_id
+        )
+        params: dict[str, Any] = {}
+        codes = AnalyticsCustomerCodesService.codes_param(scope)
+        if codes is not None:
+            params["customer_codes"] = codes
+        payload = build_delpi_commercial_gateway().get_commercial_analytics(
+            "/customer-centers", params=params
+        )
+        return ok(
+            unwrap_gateway_data(payload),
+            message="Centros do cliente carregados.",
+            operation_id=operation_id,
+        )
+    except PermissionError as exc:
+        return fail(str(exc), 403, operation_id=operation_id)
+    except LookupError as exc:
+        return fail(str(exc), 404, operation_id=operation_id)
+    except ValueError as exc:
+        return fail(str(exc), 400, operation_id=operation_id)
+    except RuntimeError as exc:
+        return fail(str(exc), 502, operation_id=operation_id)
+    except Exception:
+        logger.exception("%s_failed", operation_id)
+        return fail("Erro interno no BFF analytics.", 500, operation_id=operation_id)
+
+
 @router.get(
     "/portfolio-billing-share",
     operation_id="bff_get_analytics_portfolio_billing_share",
@@ -128,6 +189,7 @@ def bff_portfolio_billing_share(
     seller_id: str | None = Query(default=None),
     portfolio_id: str | None = Query(default=None),
     customer_codes: str | None = Query(default=None),
+    customer_centers: str | None = Query(default=None),
     nature: str | None = None,
 ):
     """KPI-PORTFOLIO-SHARE: portfolioRol ÷ companyRol no período filtrado."""
@@ -146,6 +208,7 @@ def bff_portfolio_billing_share(
             customer_segment=customer_segment,
             nature=nature,
             selected_customer_codes=customer_codes,
+            customer_centers=customer_centers,
         )
         return ok(
             data,
@@ -187,6 +250,7 @@ def bff_portfolio_billing_ranking(
     limit: int = Query(default=50, ge=1, le=500),
     order: str = Query(default="growth", pattern="^(growth|decline)$"),
     customer_codes: str | None = Query(default=None),
+    customer_centers: str | None = Query(default=None),
     nature: str | None = None,
 ):
     """Ranking delta % faturamento vs período −1 ano (cliente; vendedor se team/manage)."""
@@ -225,6 +289,7 @@ def bff_portfolio_billing_ranking(
             order=resolved_order,  # type: ignore[arg-type]
             nature=nature if isinstance(nature, str) else None,
             selected_customer_codes=customer_codes,
+            customer_centers=customer_centers,
         )
         return ok(
             data,
@@ -338,6 +403,7 @@ def bff_commercial_rol_summary(
     customer_segment: str | None = None,
     seller_id: str | None = Query(default=None),
     portfolio_id: str | None = Query(default=None),
+    customer_centers: str | None = Query(default=None),
 ):
     return _proxy(
         request,
@@ -345,11 +411,14 @@ def bff_commercial_rol_summary(
         path="/rol/summary",
         seller_id=seller_id,
         portfolio_id=portfolio_id,
-        params=_common_filters(
-            start_date=start_date,
-            end_date=end_date,
-            branch=branch,
-            customer_segment=customer_segment,
+        params=_with_customer_centers(
+            _common_filters(
+                start_date=start_date,
+                end_date=end_date,
+                branch=branch,
+                customer_segment=customer_segment,
+            ),
+            customer_centers,
         ),
         message="ROL comercial carregado.",
     )
@@ -556,6 +625,7 @@ def bff_sales_order_otd(
     customer_segment: str | None = None,
     seller_id: str | None = Query(default=None),
     portfolio_id: str | None = Query(default=None),
+    customer_centers: str | None = Query(default=None),
 ):
     return _proxy(
         request,
@@ -563,11 +633,14 @@ def bff_sales_order_otd(
         path="/sales-order-otd",
         seller_id=seller_id,
         portfolio_id=portfolio_id,
-        params=_common_filters(
-            start_date=start_date,
-            end_date=end_date,
-            branch=branch,
-            customer_segment=customer_segment,
+        params=_with_customer_centers(
+            _common_filters(
+                start_date=start_date,
+                end_date=end_date,
+                branch=branch,
+                customer_segment=customer_segment,
+            ),
+            customer_centers,
         ),
         message="OTD carregado.",
     )
@@ -611,6 +684,7 @@ def bff_rol_series(
     granularity: str | None = None,
     seller_id: str | None = Query(default=None),
     portfolio_id: str | None = Query(default=None),
+    customer_centers: str | None = Query(default=None),
 ):
     return _proxy(
         request,
@@ -618,12 +692,15 @@ def bff_rol_series(
         path="/rol/series",
         seller_id=seller_id,
         portfolio_id=portfolio_id,
-        params=_common_filters(
-            start_date=start_date,
-            end_date=end_date,
-            branch=branch,
-            customer_segment=customer_segment,
-            granularity=granularity,
+        params=_with_customer_centers(
+            _common_filters(
+                start_date=start_date,
+                end_date=end_date,
+                branch=branch,
+                customer_segment=customer_segment,
+                granularity=granularity,
+            ),
+            customer_centers,
         ),
         message="Série ROL carregada.",
     )
@@ -644,6 +721,7 @@ def bff_rol_by_product(
     limit: int | None = Query(default=500, ge=1, le=500),
     seller_id: str | None = Query(default=None),
     portfolio_id: str | None = Query(default=None),
+    customer_centers: str | None = Query(default=None),
 ):
     return _proxy(
         request,
@@ -651,19 +729,22 @@ def bff_rol_by_product(
         path="/rol/by-product",
         seller_id=seller_id,
         portfolio_id=portfolio_id,
-        params={
-            **_common_filters(
-                start_date=start_date,
-                end_date=end_date,
-                branch=branch,
-                customer_segment=customer_segment,
-            ),
-            "product_codes": product_codes,
-            "product_groups": product_groups,
-            "market": market,
-            "group_by": group_by,
-            "limit": limit,
-        },
+        params=_with_customer_centers(
+            {
+                **_common_filters(
+                    start_date=start_date,
+                    end_date=end_date,
+                    branch=branch,
+                    customer_segment=customer_segment,
+                ),
+                "product_codes": product_codes,
+                "product_groups": product_groups,
+                "market": market,
+                "group_by": group_by,
+                "limit": limit,
+            },
+            customer_centers,
+        ),
         message="ROL por produto carregado.",
     )
 
@@ -683,18 +764,22 @@ def bff_rol_by_customer(
     include_others: bool | None = Query(default=False),
     seller_id: str | None = Query(default=None),
     portfolio_id: str | None = Query(default=None),
+    customer_centers: str | None = Query(default=None),
 ):
     """ABC / ranking de participação — envelope api-delpi sem remap YoY."""
-    params: dict[str, Any] = {
-        **_common_filters(
-            start_date=start_date,
-            end_date=end_date,
-            branch=branch,
-            customer_segment=customer_segment,
-        ),
-        "limit": limit,
-        "include_others": include_others,
-    }
+    params: dict[str, Any] = _with_customer_centers(
+        {
+            **_common_filters(
+                start_date=start_date,
+                end_date=end_date,
+                branch=branch,
+                customer_segment=customer_segment,
+            ),
+            "limit": limit,
+            "include_others": include_others,
+        },
+        customer_centers,
+    )
     # Optional filters may be ignored by api-delpi until wired; pass through if set.
     if product_codes:
         params["product_codes"] = product_codes
@@ -916,6 +1001,7 @@ def bff_otd_panel(
     search: str | None = None,
     seller_id: str | None = Query(default=None),
     portfolio_id: str | None = Query(default=None),
+    customer_centers: str | None = Query(default=None),
 ):
     return _proxy(
         request,
@@ -923,17 +1009,20 @@ def bff_otd_panel(
         path="/sales-order-otd/panel",
         seller_id=seller_id,
         portfolio_id=portfolio_id,
-        params=_common_filters(
-            start_date=start_date,
-            end_date=end_date,
-            branch=branch,
-            customer_segment=customer_segment,
-            status=status,
-            page=page,
-            page_size=page_size,
-            sort_by=sort_by,
-            sort_dir=sort_dir,
-            search=search,
+        params=_with_customer_centers(
+            _common_filters(
+                start_date=start_date,
+                end_date=end_date,
+                branch=branch,
+                customer_segment=customer_segment,
+                status=status,
+                page=page,
+                page_size=page_size,
+                sort_by=sort_by,
+                sort_dir=sort_dir,
+                search=search,
+            ),
+            customer_centers,
         ),
         message="Painel OTD carregado.",
     )
@@ -950,6 +1039,7 @@ def bff_otd_series(
     granularity: str | None = None,
     seller_id: str | None = Query(default=None),
     portfolio_id: str | None = Query(default=None),
+    customer_centers: str | None = Query(default=None),
 ):
     return _proxy(
         request,
@@ -957,12 +1047,15 @@ def bff_otd_series(
         path="/sales-order-otd/series",
         seller_id=seller_id,
         portfolio_id=portfolio_id,
-        params=_common_filters(
-            start_date=start_date,
-            end_date=end_date,
-            branch=branch,
-            customer_segment=customer_segment,
-            granularity=granularity,
+        params=_with_customer_centers(
+            _common_filters(
+                start_date=start_date,
+                end_date=end_date,
+                branch=branch,
+                customer_segment=customer_segment,
+                granularity=granularity,
+            ),
+            customer_centers,
         ),
         message="Série OTD carregada.",
     )
@@ -983,6 +1076,7 @@ def bff_otd_line(
     customer_segment: str | None = None,
     seller_id: str | None = Query(default=None),
     portfolio_id: str | None = Query(default=None),
+    customer_centers: str | None = Query(default=None),
 ):
     b = quote(branch.strip(), safe="")
     o = quote(order_number.strip(), safe="")
@@ -993,11 +1087,14 @@ def bff_otd_line(
         path=f"/sales-order-otd/lines/{b}/{o}/{line}",
         seller_id=seller_id,
         portfolio_id=portfolio_id,
-        params=_common_filters(
-            start_date=start_date,
-            end_date=end_date,
-            branch=None,
-            customer_segment=customer_segment,
+        params=_with_customer_centers(
+            _common_filters(
+                start_date=start_date,
+                end_date=end_date,
+                branch=None,
+                customer_segment=customer_segment,
+            ),
+            customer_centers,
         ),
         message="Detalhe da linha OTD carregado.",
     )

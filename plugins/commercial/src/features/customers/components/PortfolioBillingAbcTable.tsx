@@ -61,6 +61,7 @@ type AbcRow = {
   customerCode: string;
   customerStore: string;
   customerName: string;
+  customerCenter: string;
   cnpj: string;
   cityState: string;
   sharePct: number | null;
@@ -134,6 +135,7 @@ export function PortfolioBillingAbcTable({
         end_date: filters.endDate,
         seller_id: sellerId || undefined,
         customer_codes: filters.customerCodesCsv || undefined,
+        customer_centers: filters.customerCentersCsv || undefined,
         product_codes: filters.productCodesCsv || undefined,
         product_groups: filters.productGroupsCsv || undefined,
         market: filters.marketParam,
@@ -166,6 +168,7 @@ export function PortfolioBillingAbcTable({
     filters.startDate,
     filters.endDate,
     filters.customerCodesCsv,
+    filters.customerCentersCsv,
     filters.productCodesCsv,
     filters.productGroupsCsv,
     filters.marketParam,
@@ -179,6 +182,7 @@ export function PortfolioBillingAbcTable({
       customerCode: (item.customer_code || "").trim(),
       customerStore: (item.customer_store || "01").trim() || "01",
       customerName: item.customer_name || item.customer_code || "—",
+      customerCenter: (item.customer_center || "").trim(),
       cnpj: formatCnpj(item.cnpj),
       cityState: formatCityState(item.city, item.state),
       sharePct: item.share_pct ?? null,
@@ -234,6 +238,13 @@ export function PortfolioBillingAbcTable({
             row.customerName
           ),
         sortValue: (row) => row.customerName,
+        sortable: true,
+      },
+      {
+        key: "customerCenter",
+        header: CUSTOMER_BILLING_CONTENT.colCustomerCenter,
+        render: (row) => row.customerCenter || "—",
+        sortValue: (row) => row.customerCenter,
         sortable: true,
       },
       {

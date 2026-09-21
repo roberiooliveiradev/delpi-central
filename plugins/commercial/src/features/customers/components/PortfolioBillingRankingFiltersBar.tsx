@@ -3,11 +3,14 @@ import type { ReactNode } from "react";
 import {
   CommercialClearFiltersButton,
   CommercialFilterBarShell,
+  CommercialMultiSelectField,
   CommercialScopeChipBar,
   CommercialSectionHintLabel,
   CommercialSelectField,
 } from "../../../app/commercialUi";
 import { CM_HELP } from "../../../content/helpTooltips";
+import { CUSTOMER_BILLING_CONTENT } from "../../../content/customerBillingContent";
+import { useAnalyticsCustomerCenterOptions } from "../../analytics/hooks/useAnalyticsCustomerCenterOptions";
 import {
   BILLING_SERIES_PRESET_OPTIONS,
   DEFAULT_BILLING_SERIES_PRESET,
@@ -44,6 +47,9 @@ type PortfolioBillingRankingFiltersBarProps = {
   onChange: (next: Partial<PortfolioBillingRankingFilters>) => void;
   canUseTeamScope: boolean;
   sellerFilter?: ReactNode;
+  sellerId?: string | null;
+  customerCenters: string[];
+  onCustomerCenters: (centers: string[]) => void;
 };
 
 export function PortfolioBillingRankingFiltersBar({
@@ -51,7 +57,11 @@ export function PortfolioBillingRankingFiltersBar({
   onChange,
   canUseTeamScope,
   sellerFilter = null,
+  sellerId = null,
+  customerCenters,
+  onCustomerCenters,
 }: PortfolioBillingRankingFiltersBarProps) {
+  const centerOptions = useAnalyticsCustomerCenterOptions(sellerId);
   const effectiveGroupBy =
     filters.groupBy === "seller" && canUseTeamScope ? "seller" : "customer";
 
@@ -157,6 +167,16 @@ export function PortfolioBillingRankingFiltersBar({
             value: String(n),
             label: String(n),
           }))}
+        />
+        <CommercialMultiSelectField
+          className="cm-customers-page__search-field"
+          label={CUSTOMER_BILLING_CONTENT.filterCustomerCenter}
+          hint={CM_HELP.customers.billingFilterCustomerCenter}
+          options={centerOptions}
+          selectedValues={customerCenters}
+          onChange={onCustomerCenters}
+          emptyLabel={CUSTOMER_BILLING_CONTENT.filterCustomerCenterEmpty}
+          searchable
         />
         {sellerFilter}
         {hasActiveFilters ? (

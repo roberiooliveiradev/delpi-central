@@ -113,6 +113,7 @@ class GetPortfolioBillingShareUseCase:
         customer_segment: str | None = None,
         nature: str | None = None,
         selected_customer_codes: str | None = None,
+        customer_centers: str | None = None,
     ) -> dict[str, Any]:
         amount_nature = normalize_billing_amount_nature(nature)
         company_scope = CommercialCustomerScope(
@@ -123,6 +124,9 @@ class GetPortfolioBillingShareUseCase:
             "start_date": start_date,
             "end_date": end_date,
             "customer_segment": customer_segment,
+            "customer_centers": customer_centers.strip()
+            if isinstance(customer_centers, str) and customer_centers.strip()
+            else None,
         }
         portfolio_rol = self._sum_amount(
             gateway,

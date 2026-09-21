@@ -135,6 +135,12 @@ Não. Escopo = carteira(s). Período = filtros da **Visão geral** (ou da tela e
 **O filtro de clientes da Visão geral lista todos os clientes do TOTVS?**  
 Não. A lista vem das carteiras do recorte (ou de todas as carteiras ativas, se você não filtrar carteira). Vazio = todos os clientes daquele recorte.
 
+**Centro do cliente é o nome da WEG?**  
+Não. O nome jurídico da WEG é compartilhado por várias unidades. O centro separa a amarração produto–cliente. O rótulo mostra o nome reduzido e o código do centro, não um apelido fixo.
+
+**O centro do cliente muda o funil e os novos negócios?**  
+Não. Na Visão geral ele restringe ROL e OTD. Funil, novos negócios e metas continuam no recorte de período, unidade, segmento e cliente. Em Minha Carteira vale no ABC, ranking, mix e share. A série de notas do faturamento segue o cliente selecionado.
+
 **Como troco a Visão em Oportunidades?**  
 No hero: **Visão** → Por colaborador ou Por oportunidade. A URL guarda `?view=` para compartilhar. Clique num vendedor no resumo abre a lista filtrada daquele colaborador. Na Visão Por oportunidade, **Busca** e **Status** ficam no hero. Use **Colunas** / fonte / export na toolbar de cada tabela.
 
@@ -276,6 +282,7 @@ Fonte na UI: **Ajuda** → **Catálogo de termos** (`plugins/commercial/src/cont
 | Ajuda | Manual, FAQ e este catálogo | Menu superior |
 | SC / ES | Unidades Santa Catarina e Espírito Santo | Filtros |
 | Filtro de clientes | Um ou mais clientes do recorte (carteira ou carteiras ativas). Vazio = todos desse recorte | Visão geral · OTD · Oportunidades |
+| Centro do cliente | Unidade da amarração produto–cliente. Não é o nome jurídico da WEG. Vazio = todos os centros. Não altera funil, novos negócios nem metas | Visão geral · OTD · Minha Carteira |
 | Membership | Você está vinculado a uma carteira | Escopo / carteira |
 
 ### Pedido, oportunidade e proposta

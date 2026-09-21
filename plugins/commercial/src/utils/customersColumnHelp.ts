@@ -156,6 +156,7 @@ export const PORTFOLIO_BY_PRODUCT_COLUMN_HELP: Record<string, string> = {
 
 export const PORTFOLIO_ABC_COLUMN_HELP: Record<string, string> = {
   customer: CM_HELP.customers.abcColumns.customer,
+  customerCenter: CM_HELP.customers.abcColumns.customerCenter,
   cnpj: CM_HELP.customers.abcColumns.cnpj,
   city: CM_HELP.customers.abcColumns.city,
   share: CM_HELP.customers.abcColumns.share,
@@ -164,6 +165,7 @@ export const PORTFOLIO_ABC_COLUMN_HELP: Record<string, string> = {
 export const PORTFOLIO_RANKING_COLUMN_HELP: Record<string, string> = {
   rank: CM_HELP.customers.rankingColumns.rank,
   customer: CM_HELP.customers.rankingColumns.customer,
+  customerCenter: CM_HELP.customers.rankingColumns.customerCenter,
   seller: CM_HELP.customers.rankingColumns.seller,
   trend: CM_HELP.customers.rankingColumns.trend,
   current: CM_HELP.customers.rankingColumns.current,

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type { CustomerSummary } from "../types/customerSummary";
 import {
@@ -32,6 +32,10 @@ export type PortfolioBillingWorkspaceFilters = {
   customerOptions: BillingSeriesCustomerOption[];
   /** CSV de códigos TOTVS (vazio = toda a carteira no BFF). */
   customerCodesCsv: string;
+  customerCenters: string[];
+  setCustomerCenters: (centers: string[]) => void;
+  /** CSV de centros (vazio = omitido). */
+  customerCentersCsv: string;
   selectedProductCodes: string[];
   setSelectedProductCodes: (codes: string[]) => void;
   selectedProductGroups: string[];
@@ -61,11 +65,48 @@ function customerOptionsFromList(
     .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
 }
 
+const BILLING_CUSTOMER_CENTERS_SESSION_KEY = "delpi.commercial.billing.customerCenters";
+
+function readStoredCustomerCenters(): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.sessionStorage.getItem(BILLING_CUSTOMER_CENTERS_SESSION_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) return [];
+    const seen = new Set<string>();
+    const out: string[] = [];
+    for (const entry of parsed) {
+      if (typeof entry !== "string") continue;
+      const center = entry.trim();
+      if (!center || seen.has(center)) continue;
+      seen.add(center);
+      out.push(center);
+    }
+    return out;
+  } catch {
+    return [];
+  }
+}
+
+function writeStoredCustomerCenters(centers: string[]): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.sessionStorage.setItem(
+      BILLING_CUSTOMER_CENTERS_SESSION_KEY,
+      JSON.stringify(centers),
+    );
+  } catch {
+    // ignora
+  }
+}
+
 /**
  * Estado único de filtros do painel Faturamento (série + tabelas).
  */
 export function usePortfolioBillingWorkspaceFilters(
   customers: CustomerSummary[] | undefined,
+  sellerId?: string | null,
 ): PortfolioBillingWorkspaceFilters {
   const defaultRange = periodRangeFromBillingPreset(DEFAULT_BILLING_SERIES_PRESET);
   const [preset, setPreset] = useState<BillingSeriesPeriodPreset>(
@@ -74,6 +115,9 @@ export function usePortfolioBillingWorkspaceFilters(
   const [customStart, setCustomStart] = useState(defaultRange.startDate);
   const [customEnd, setCustomEnd] = useState(defaultRange.endDate);
   const [selectedCustomerKeys, setSelectedCustomerKeys] = useState<string[]>([]);
+  const [customerCenters, setCustomerCentersState] = useState<string[]>(
+    readStoredCustomerCenters,
+  );
   const [selectedProductCodes, setSelectedProductCodes] = useState<string[]>([]);
   const [selectedProductGroups, setSelectedProductGroups] = useState<string[]>([]);
   const [selectedMarkets, setSelectedMarkets] = useState<BillingMarketFilter[]>([]);
@@ -113,6 +157,20 @@ export function usePortfolioBillingWorkspaceFilters(
     return [...codes].join(",");
   }, [customerOptions, effectiveCustomerKeys]);
 
+  const customerCentersCsv = customerCenters.join(",");
+  const sellerScopeKey = (sellerId || "").trim();
+  const previousSellerScopeKey = useRef(sellerScopeKey);
+
+  useEffect(() => {
+    writeStoredCustomerCenters(customerCenters);
+  }, [customerCenters]);
+
+  useEffect(() => {
+    if (previousSellerScopeKey.current === sellerScopeKey) return;
+    previousSellerScopeKey.current = sellerScopeKey;
+    setCustomerCentersState([]);
+  }, [sellerScopeKey]);
+
   const marketParam = useMemo((): BillingMarketFilter | undefined => {
     if (selectedMarkets.length === 1) return selectedMarkets[0];
     return undefined;
@@ -129,6 +187,7 @@ export function usePortfolioBillingWorkspaceFilters(
 
   const clearRecorteFilters = useCallback(() => {
     setSelectedCustomerKeys([]);
+    setCustomerCentersState([]);
     setSelectedProductCodes([]);
     setSelectedProductGroups([]);
     setSelectedMarkets([]);
@@ -136,6 +195,7 @@ export function usePortfolioBillingWorkspaceFilters(
 
   const hasActiveRecorteFilters =
     effectiveCustomerKeys.length > 0 ||
+    customerCenters.length > 0 ||
     selectedProductCodes.length > 0 ||
     selectedProductGroups.length > 0 ||
     selectedMarkets.length > 0;
@@ -154,6 +214,9 @@ export function usePortfolioBillingWorkspaceFilters(
     setSelectedCustomerKeys,
     customerOptions,
     customerCodesCsv,
+    customerCenters,
+    setCustomerCenters: setCustomerCentersState,
+    customerCentersCsv,
     selectedProductCodes,
     setSelectedProductCodes,
     selectedProductGroups,

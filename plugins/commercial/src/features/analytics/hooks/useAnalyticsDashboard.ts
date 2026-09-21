@@ -104,6 +104,7 @@ export function useAnalyticsDashboard(filters: AnalyticsFilterParams): Analytics
       customer_segment: filters.customer_segment,
       seller_id: filters.seller_id,
       customer_codes: filters.customer_codes,
+      customer_centers: filters.customer_centers,
     };
 
     const settledValue = <T,>(
@@ -229,6 +230,7 @@ export function useAnalyticsDashboard(filters: AnalyticsFilterParams): Analytics
     filters.customer_segment,
     filters.seller_id,
     filters.customer_codes,
+    filters.customer_centers,
     reloadKey,
   ]);
 

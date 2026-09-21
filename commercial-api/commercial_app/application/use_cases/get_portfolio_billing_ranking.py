@@ -77,6 +77,22 @@ def compute_delta_pct(current: float, prior: float) -> float | None:
     return round(((current - prior) / prior) * 100, 1)
 
 
+def _single_customer_center(
+    current: dict[str, Any] | None,
+    prior: dict[str, Any] | None,
+) -> str | None:
+    seen: list[str] = []
+    for item in (current, prior):
+        if not item:
+            continue
+        value = str(item.get("customer_center") or "").strip()
+        if value and value not in seen:
+            seen.append(value)
+    if len(seen) == 1:
+        return seen[0]
+    return None
+
+
 def _items_map(raw: Any) -> dict[tuple[str, str], dict[str, Any]]:
     data = _unwrap_data(raw)
     if not isinstance(data, dict):
@@ -133,6 +149,7 @@ class GetPortfolioBillingRankingUseCase:
         seller_name_by_customer: dict[tuple[str, str], str] | None = None,
         nature: str | None = None,
         selected_customer_codes: str | None = None,
+        customer_centers: str | None = None,
     ) -> dict[str, Any]:
         if not start_date or not end_date:
             raise ValueError("start_date e end_date são obrigatórios.")
@@ -147,6 +164,9 @@ class GetPortfolioBillingRankingUseCase:
             "customer_segment": customer_segment,
             "limit": min(max(int(limit), 1), 500),
             "include_others": False,
+            "customer_centers": customer_centers.strip()
+            if isinstance(customer_centers, str) and customer_centers.strip()
+            else None,
         }
         base_prior = {
             **base_current,
@@ -246,6 +266,7 @@ class GetPortfolioBillingRankingUseCase:
                     "customerCode": key[0],
                     "customerStore": key[1],
                     "customerName": name,
+                    "customerCenter": _single_customer_center(cur, pri),
                     "cnpj": source.get("cnpj"),
                     "city": source.get("city"),
                     "state": source.get("state"),

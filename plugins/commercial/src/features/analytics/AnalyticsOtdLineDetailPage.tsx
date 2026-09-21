@@ -59,6 +59,9 @@ export function AnalyticsOtdLineDetailPage({
         start_date: filters.apiParams.start_date,
         end_date: filters.apiParams.end_date,
         customer_segment: filters.apiParams.customer_segment,
+        seller_id: filters.apiParams.seller_id,
+        customer_codes: filters.apiParams.customer_codes,
+        customer_centers: filters.apiParams.customer_centers,
       },
       controller.signal,
     )
@@ -81,6 +84,9 @@ export function AnalyticsOtdLineDetailPage({
     filters.apiParams.start_date,
     filters.apiParams.end_date,
     filters.apiParams.customer_segment,
+    filters.apiParams.seller_id,
+    filters.apiParams.customer_codes,
+    filters.apiParams.customer_centers,
   ]);
 
   const line = data?.line;

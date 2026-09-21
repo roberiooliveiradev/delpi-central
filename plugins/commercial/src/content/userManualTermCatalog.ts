@@ -89,6 +89,11 @@ export const USER_MANUAL_TERM_CATALOG: readonly UserManualTermGroup[] = [
         applies: "Visão geral · OTD · Oportunidades",
       },
       {
+        term: "Centro do cliente",
+        meaning: CM_HELP.analytics.filterCustomerCenter,
+        applies: "Visão geral · OTD · Minha Carteira (ABC, ranking, mix e share)",
+      },
+      {
         term: "Membership",
         meaning: "Você está vinculado a uma carteira. Sem vínculo, a lista pode vir consolidada.",
         applies: "Escopo · Minha Carteira · Administração",

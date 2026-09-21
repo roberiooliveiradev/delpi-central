@@ -48,6 +48,41 @@ def customer_center_filter_column(centers: list[str] | None) -> str | None:
     return f"{CUSTOMER_CENTER_ALIAS}.customer_center"
 
 
+def customer_center_catalog_label(center: str, short_name: str | None) -> str:
+    """Display label from the representative store name. Never a hardcoded unit map."""
+    code = (center or "").strip()
+    name = (short_name or "").strip() or code
+    if not code:
+        return name
+    return f"{name} ({code})"
+
+
+def customer_center_catalog_sql(*, customer_code_filter_sql: str) -> str:
+    """Distinct non-empty centers. One representative short name per center."""
+    predicate = (customer_code_filter_sql or "1 = 1").strip() or "1 = 1"
+    return f"""
+        SELECT
+            RTRIM(LTRIM(A7.A7_XCENT)) AS center,
+            MIN(
+                COALESCE(
+                    NULLIF(RTRIM(SA1.A1_NREDUZ), ''),
+                    NULLIF(RTRIM(SA1.A1_NOME), ''),
+                    RTRIM(LTRIM(A7.A7_XCENT))
+                )
+            ) AS short_name
+        FROM SA7010 A7 WITH (NOLOCK)
+        LEFT JOIN SA1010 SA1 WITH (NOLOCK)
+            ON  SA1.D_E_L_E_T_ = ''
+            AND RTRIM(LTRIM(SA1.A1_COD)) = RTRIM(LTRIM(A7.A7_CLIENTE))
+            AND RTRIM(LTRIM(SA1.A1_LOJA)) = RTRIM(LTRIM(A7.A7_LOJA))
+        WHERE A7.D_E_L_E_T_ = ''
+          AND RTRIM(ISNULL(A7.A7_XCENT, '')) <> ''
+          AND ({predicate})
+        GROUP BY RTRIM(LTRIM(A7.A7_XCENT))
+        ORDER BY center
+    """
+
+
 def customer_center_join_sql(
     *,
     centers: list[str] | None,

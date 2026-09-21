@@ -10,6 +10,7 @@ import { ANALYTICS_CONTENT } from "../../../content/analyticsContent";
 import { SellerScopeFilter, ANALYTICS_PORTFOLIO_FILTER_EMPTY_LABEL } from "../../customers/components/SellerScopeFilter";
 import { ANALYTICS_BRANCH_OPTIONS } from "../utils/analyticsBranchFilters";
 import { useAnalyticsCustomerOptions } from "../hooks/useAnalyticsCustomerOptions";
+import { useAnalyticsCustomerCenterOptions } from "../hooks/useAnalyticsCustomerCenterOptions";
 import { type PeriodPresetId } from "../utils/periodPreset";
 import type { AnalyticsFilterUrlState } from "../utils/analyticsFilterUrl";
 import type { SellerPortfolio } from "../../../types/portfolio";
@@ -33,6 +34,8 @@ type AnalyticsFiltersProps = {
   onCustomerSegment: (value: AnalyticsFilterUrlState["customerSegment"]) => void;
   customerCodes?: string[];
   onCustomerCodes?: (value: string[]) => void;
+  customerCenters?: string[];
+  onCustomerCenters?: (value: string[]) => void;
   onSellerIds?: (value: string[]) => void;
 };
 
@@ -55,10 +58,13 @@ export function AnalyticsFilters({
   onCustomerSegment,
   customerCodes = [],
   onCustomerCodes,
+  customerCenters = [],
+  onCustomerCenters,
   onSellerIds,
 }: AnalyticsFiltersProps) {
   const { FiltersRow } = cmFiltersKit;
   const customerOptions = useAnalyticsCustomerOptions(sellerIds);
+  const customerCenterOptions = useAnalyticsCustomerCenterOptions(sellerIds);
 
   return (
     <>
@@ -125,6 +131,17 @@ export function AnalyticsFilters({
             emptyLabel={ANALYTICS_CONTENT.filters.customerAll}
             searchable
             hint={CM_HELP.analytics.filterCustomer}
+          />
+        ) : null}
+        {onCustomerCenters ? (
+          <CommercialMultiSelectField
+            label={ANALYTICS_CONTENT.filters.customerCenter}
+            selectedValues={customerCenters}
+            onChange={onCustomerCenters}
+            options={customerCenterOptions}
+            emptyLabel={ANALYTICS_CONTENT.filters.customerCenterAll}
+            searchable
+            hint={CM_HELP.analytics.filterCustomerCenter}
           />
         ) : null}
         {canFilterPortfolios && onSellerIds ? (

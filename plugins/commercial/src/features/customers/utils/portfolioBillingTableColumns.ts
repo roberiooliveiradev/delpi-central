@@ -19,6 +19,7 @@ export const PORTFOLIO_BY_PRODUCT_COLUMN_CATALOG: readonly PortfolioBillingColum
 
 export const PORTFOLIO_ABC_COLUMN_CATALOG: readonly PortfolioBillingColumnItem[] = [
   { key: "customer", label: CUSTOMER_BILLING_CONTENT.colCustomer },
+  { key: "customerCenter", label: CUSTOMER_BILLING_CONTENT.colCustomerCenter },
   { key: "cnpj", label: CUSTOMER_BILLING_CONTENT.colCnpj },
   { key: "city", label: CUSTOMER_BILLING_CONTENT.colCityState },
   { key: "share", label: CUSTOMER_BILLING_CONTENT.colShare },
@@ -27,6 +28,7 @@ export const PORTFOLIO_ABC_COLUMN_CATALOG: readonly PortfolioBillingColumnItem[]
 export const PORTFOLIO_RANKING_COLUMN_CATALOG: readonly PortfolioBillingColumnItem[] = [
   { key: "rank", label: "#" },
   { key: "customer", label: "Cliente" },
+  { key: "customerCenter", label: CUSTOMER_BILLING_CONTENT.colCustomerCenter },
   { key: "seller", label: "Vendedor" },
   { key: "trend", label: "Tendência" },
   { key: "current", label: "Faturamento atual" },
@@ -40,11 +42,11 @@ export const PORTFOLIO_BY_PRODUCT_FONT_STORAGE_KEY =
   "commercial:portfolio-billing-by-product:table-font-size:v1";
 
 export const PORTFOLIO_ABC_COLUMNS_STORAGE_KEY =
-  "commercial:portfolio-billing-abc:table-columns:v1";
+  "commercial:portfolio-billing-abc:table-columns:v2";
 export const PORTFOLIO_ABC_FONT_STORAGE_KEY =
   "commercial:portfolio-billing-abc:table-font-size:v1";
 
 export const PORTFOLIO_RANKING_COLUMNS_STORAGE_KEY =
-  "commercial:portfolio-billing-ranking:table-columns:v1";
+  "commercial:portfolio-billing-ranking:table-columns:v2";
 export const PORTFOLIO_RANKING_FONT_STORAGE_KEY =
   "commercial:portfolio-billing-ranking:table-font-size:v1";

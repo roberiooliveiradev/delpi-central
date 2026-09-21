@@ -18,6 +18,9 @@ describe("AnalyticsFilters — carteira multi e unidade", () => {
     assert.match(source, /ANALYTICS_CONTENT\.filters\.customer/);
     assert.match(source, /emptyLabel=\{ANALYTICS_CONTENT\.filters\.customerAll\}/);
     assert.match(source, /useAnalyticsCustomerOptions/);
+    assert.match(source, /useAnalyticsCustomerCenterOptions/);
+    assert.match(source, /ANALYTICS_CONTENT\.filters\.customerCenter/);
+    assert.match(source, /onCustomerCenters \?/);
     assert.match(source, /searchable/);
     assert.doesNotMatch(source, /onSellerId\?/);
   });

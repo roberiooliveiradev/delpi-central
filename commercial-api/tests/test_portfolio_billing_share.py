@@ -99,6 +99,27 @@ def test_use_case_share_portfolio_over_company() -> None:
     assert gateway.get_commercial_analytics.call_count == 4
 
 
+def test_share_forwards_customer_centers_on_portfolio_and_company() -> None:
+    gateway = MagicMock()
+    gateway.get_commercial_analytics.return_value = {"data": {"rol": 10}}
+    scope = CommercialCustomerScope(
+        unrestricted=False,
+        allowed_customers=frozenset({("000001", "11")}),
+    )
+    GetPortfolioBillingShareUseCase().execute(
+        gateway,
+        scope,
+        start_date="2026-01-01",
+        end_date="2026-01-31",
+        branch="01",
+        customer_centers="1320",
+    )
+    assert gateway.get_commercial_analytics.call_count == 2
+    for call in gateway.get_commercial_analytics.call_args_list:
+        assert call.args[0] == ROL_SUMMARY_PATH
+        assert call.kwargs["params"]["customer_centers"] == "1320"
+
+
 def test_use_case_share_selected_codes_only_on_numerator() -> None:
     gateway = MagicMock()
 

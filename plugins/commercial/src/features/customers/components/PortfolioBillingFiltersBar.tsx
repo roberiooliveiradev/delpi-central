@@ -12,6 +12,7 @@ import {
 import { CM_HELP } from "../../../content/helpTooltips";
 import { CUSTOMER_BILLING_CONTENT } from "../../../content/customerBillingContent";
 import { BILLING_SERIES_PRESET_OPTIONS } from "../utils/billingSeriesPeriod";
+import { useAnalyticsCustomerCenterOptions } from "../../analytics/hooks/useAnalyticsCustomerCenterOptions";
 import type { PortfolioBillingWorkspaceFilters } from "../hooks/usePortfolioBillingWorkspaceFilters";
 
 type ProductOption = { value: string; label: string };
@@ -22,6 +23,7 @@ type PortfolioBillingFiltersBarProps = {
   productGroupOptions: ProductOption[];
   /** Escopo de carteira compartilhado (hero). */
   sellerFilter?: ReactNode;
+  sellerId?: string | null;
   className?: string;
 };
 
@@ -30,6 +32,7 @@ export function PortfolioBillingFiltersBar({
   productOptions,
   productGroupOptions,
   sellerFilter = null,
+  sellerId = null,
   className,
 }: PortfolioBillingFiltersBarProps) {
   const periodChips = BILLING_SERIES_PRESET_OPTIONS.map((option) => ({
@@ -63,6 +66,8 @@ export function PortfolioBillingFiltersBar({
       onSelect: () => filters.setSelectedMarkets(["export"]),
     },
   ];
+
+  const centerOptions = useAnalyticsCustomerCenterOptions(sellerId);
 
   return (
     <div className={["cm-portfolio-billing-filters", className].filter(Boolean).join(" ")}>
@@ -123,6 +128,16 @@ export function PortfolioBillingFiltersBar({
           selectedValues={filters.selectedCustomerKeys}
           onChange={filters.setSelectedCustomerKeys}
           emptyLabel={CUSTOMER_BILLING_CONTENT.filterCustomerEmpty}
+          searchable
+        />
+        <CommercialMultiSelectField
+          className="cm-customers-page__search-field"
+          label={CUSTOMER_BILLING_CONTENT.filterCustomerCenter}
+          hint={CM_HELP.customers.billingFilterCustomerCenter}
+          options={centerOptions}
+          selectedValues={filters.customerCenters}
+          onChange={filters.setCustomerCenters}
+          emptyLabel={CUSTOMER_BILLING_CONTENT.filterCustomerCenterEmpty}
           searchable
         />
         <CommercialMultiSelectField

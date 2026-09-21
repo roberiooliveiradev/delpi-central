@@ -32,6 +32,7 @@ describe("userManualTermCatalog", () => {
         "OTD",
         "Carteira em aberto",
         "Filtro de clientes",
+        "Centro do cliente",
       ]),
     );
   });

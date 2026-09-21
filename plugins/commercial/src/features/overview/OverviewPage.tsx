@@ -245,6 +245,7 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
           customerSegment={filters.customerSegment}
           sellerIds={filters.sellerIds}
           customerCodes={filters.customerCodes}
+          customerCenters={filters.customerCenters}
           canFilterPortfolios={filters.canFilterPortfolios}
           canUseTeamScope={filters.canUseTeamScope}
           filterablePortfolios={filters.filterablePortfolios}
@@ -255,6 +256,7 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
           onBranches={filters.setBranches}
           onCustomerSegment={filters.setCustomerSegment}
           onCustomerCodes={filters.setCustomerCodes}
+          onCustomerCenters={filters.setCustomerCenters}
           onSellerIds={filters.setSellerIds}
         />
       </CommercialPageHero>
@@ -537,6 +539,7 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
               customer_segment: filters.apiParams.customer_segment,
               seller_id: filters.apiParams.seller_id,
               customer_codes: filters.apiParams.customer_codes,
+              customer_centers: filters.apiParams.customer_centers,
               branch: filters.apiParams.branch,
             }}
             onDrillDown={(dateStart, dateEnd) => {

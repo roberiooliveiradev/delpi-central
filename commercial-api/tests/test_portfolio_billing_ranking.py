@@ -93,6 +93,27 @@ def test_use_case_ranks_customers_by_delta_pct() -> None:
     assert data["order"] == "growth"
 
 
+def test_ranking_forwards_customer_centers_on_current_and_prior() -> None:
+    gateway = MagicMock()
+    gateway.get_commercial_analytics.return_value = {"data": {"items": []}}
+    scope = CommercialCustomerScope(
+        unrestricted=False,
+        allowed_customers=frozenset({("000001", "11")}),
+    )
+    GetPortfolioBillingRankingUseCase().execute(
+        gateway,
+        scope,
+        start_date="2026-01-01",
+        end_date="2026-01-31",
+        customer_centers="1320,1505",
+    )
+    assert gateway.get_commercial_analytics.call_count == 2
+    for call in gateway.get_commercial_analytics.call_args_list:
+        assert call.args[0] == "/rol/by-customer"
+        assert call.kwargs["params"]["customer_centers"] == "1320,1505"
+        assert call.kwargs["params"]["customer_codes"] == "000001"
+
+
 def test_use_case_ranks_by_gross_revenue_when_nature_gross() -> None:
     gateway = MagicMock()
 

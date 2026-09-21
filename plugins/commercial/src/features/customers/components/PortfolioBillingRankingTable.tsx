@@ -60,6 +60,7 @@ type PortfolioBillingRankingTableProps = {
   active?: boolean;
   billingNature?: "gross" | "net";
   filters: PortfolioBillingRankingFilters;
+  customerCentersCsv?: string;
 };
 
 export function PortfolioBillingRankingTable({
@@ -67,6 +68,7 @@ export function PortfolioBillingRankingTable({
   active = true,
   billingNature = "gross",
   filters,
+  customerCentersCsv = "",
 }: PortfolioBillingRankingTableProps) {
   const { canUseTeamScope } = usePortfolioScope();
   const { groupBy, order, limit, periodPreset } = filters;
@@ -127,6 +129,7 @@ export function PortfolioBillingRankingTable({
         limit,
         order,
         nature: billingNature,
+        customer_centers: customerCentersCsv.trim() || undefined,
         scope_mode: PORTFOLIO_MEMBERSHIP_SCOPE_MODE,
       },
       controller.signal,
@@ -153,6 +156,7 @@ export function PortfolioBillingRankingTable({
     periodRange.startDate,
     sellerId,
     billingNature,
+    customerCentersCsv,
   ]);
 
   const avatarPairs = useMemo(
@@ -215,6 +219,11 @@ export function PortfolioBillingRankingTable({
             />
           );
         },
+      });
+      base.push({
+        key: "customerCenter",
+        header: "Centro",
+        render: (row) => (row.customerCenter || "").trim() || "—",
       });
     }
     base.push(

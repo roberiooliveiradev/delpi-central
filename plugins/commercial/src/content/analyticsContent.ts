@@ -120,6 +120,8 @@ export const ANALYTICS_CONTENT = {
     segmentNewBusiness: "Novos negócios",
     customer: "Cliente",
     customerAll: "Todos os clientes",
+    customerCenter: "Centro do cliente",
+    customerCenterAll: "Todos os centros",
   },
 };
 

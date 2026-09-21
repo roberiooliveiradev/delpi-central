@@ -173,12 +173,16 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
     billingNature,
   });
 
+  const billingFilters = usePortfolioBillingWorkspaceFilters(
+    aggregation?.customers,
+    canFilterPortfolios ? sellerIdFilter : null,
+  );
+
   const portfolioShare = usePortfolioBillingShare({
     sellerId: canFilterPortfolios ? sellerIdFilter : null,
     nature: billingNature,
+    customerCenters: billingFilters.customerCentersCsv || undefined,
   });
-
-  const billingFilters = usePortfolioBillingWorkspaceFilters(aggregation?.customers);
   const [billingProductOptions, setBillingProductOptions] = useState<
     Array<{ value: string; label: string }>
   >([]);
@@ -660,6 +664,7 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
             productOptions={billingProductOptions}
             productGroupOptions={billingProductGroupOptions}
             sellerFilter={sellerFilterControl}
+            sellerId={canFilterPortfolios ? sellerIdFilter : null}
           />
         ) : null}
 
@@ -669,6 +674,9 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
             onChange={patchRankingFilters}
             canUseTeamScope={canUseTeamScope}
             sellerFilter={sellerFilterControl}
+            sellerId={canFilterPortfolios ? sellerIdFilter : null}
+            customerCenters={billingFilters.customerCenters}
+            onCustomerCenters={billingFilters.setCustomerCenters}
           />
         ) : null}
       </CommercialPageHero>
@@ -793,6 +801,7 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
                   active={panel === "ranking"}
                   billingNature={billingNature}
                   filters={rankingFilters}
+                  customerCentersCsv={billingFilters.customerCentersCsv}
                 />
               </div>
 

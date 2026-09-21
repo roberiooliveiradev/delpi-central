@@ -203,12 +203,20 @@ export const USER_MANUAL_CONTENT = {
           a: "Não. A lista vem das carteiras do recorte (ou de todas as carteiras ativas, se você não filtrar carteira). Vazio = todos os clientes daquele recorte.",
         },
         {
+          q: "Centro do cliente é o nome da WEG?",
+          a: "Não. O nome jurídico da WEG é compartilhado por várias unidades. O centro separa a amarração produto–cliente. O rótulo mostra o nome reduzido e o código do centro, não um apelido fixo.",
+        },
+        {
+          q: "O centro do cliente muda o funil e os novos negócios?",
+          a: "Não. Na Visão geral ele restringe ROL e OTD. Funil, novos negócios e metas continuam no recorte de período, unidade, segmento e cliente. Em Minha Carteira vale no ABC, ranking, mix e share. A série de notas do faturamento segue o cliente selecionado.",
+        },
+        {
           q: "ABC de clientes é o mesmo que Ranking?",
           a: "Não. O painel ABC ordena por participação no período (avatar, CNPJ e praça). O painel Ranking mostra crescimento ou queda versus o mesmo período no ano anterior.",
         },
         {
           q: "Como exporto o mix de produto do faturamento?",
-          a: "Minha Carteira → Faturamento. No hero: chips de Período e Mercado; cliente, família, produto e carteira na barra (como em Clientes). Excel na tabela abaixo do gráfico.",
+          a: "Minha Carteira → Faturamento. No hero: chips de Período e Mercado; cliente, centro do cliente, família, produto e carteira na barra (como em Clientes). Excel na tabela abaixo do gráfico.",
         },
         {
           q: "Como exporto o ABC de clientes?",

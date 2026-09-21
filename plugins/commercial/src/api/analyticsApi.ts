@@ -50,6 +50,9 @@ function buildQuery(
   if (params.customer_codes?.trim()) {
     searchParams.set("customer_codes", params.customer_codes.trim());
   }
+  if (params.customer_centers?.trim()) {
+    searchParams.set("customer_centers", params.customer_centers.trim());
+  }
   if (params.account_customer_code?.trim()) {
     searchParams.set("account_customer_code", params.account_customer_code.trim());
   }
@@ -82,6 +85,14 @@ function buildQuery(
   return query ? `?${query}` : "";
 }
 
+/** Funil, metas e propostas não aceitam centro do cliente. */
+function withoutCustomerCenters<T extends AnalyticsFilterParams>(
+  params: T,
+): Omit<T, "customer_centers"> {
+  const { customer_centers: _ignored, ...rest } = params;
+  return rest;
+}
+
 async function fetchAnalyticsData<T>(
   path: string,
   params: AnalyticsFilterParams = {},
@@ -94,24 +105,48 @@ async function fetchAnalyticsData<T>(
   return unwrapEnvelope(response, "Erro na API comercial");
 }
 
+export type CustomerCenterCatalogItem = {
+  center: string;
+  label: string;
+};
+
+export function getCommercialCustomerCenters(
+  params: Pick<AnalyticsFilterParams, "seller_id"> = {},
+  signal?: AbortSignal,
+) {
+  return fetchAnalyticsData<{ items: CustomerCenterCatalogItem[] }>(
+    "/customer-centers",
+    { seller_id: params.seller_id },
+    signal,
+  );
+}
+
 export function getRolSummary(params: AnalyticsFilterParams, signal?: AbortSignal) {
   return fetchAnalyticsData<RolTargetData>("/rol/summary", params, signal);
 }
 
 export function getWegRolTarget(params: AnalyticsFilterParams, signal?: AbortSignal) {
-  return fetchAnalyticsData<RolTargetData>("/weg-rol-target-pct", params, signal);
+  return fetchAnalyticsData<RolTargetData>(
+    "/weg-rol-target-pct",
+    withoutCustomerCenters(params),
+    signal,
+  );
 }
 
 export function getNewBusinessRolTarget(params: AnalyticsFilterParams, signal?: AbortSignal) {
   return fetchAnalyticsData<RolTargetData>(
     "/new-business-rol-target-pct",
-    params,
+    withoutCustomerCenters(params),
     signal,
   );
 }
 
 export function getClosingRate(params: AnalyticsFilterParams, signal?: AbortSignal) {
-  return fetchAnalyticsData<ClosingRateData>("/closing-rate", params, signal);
+  return fetchAnalyticsData<ClosingRateData>(
+    "/closing-rate",
+    withoutCustomerCenters(params),
+    signal,
+  );
 }
 
 /** Snapshot de carteira em aberto — ignora período; usa seller_id/escopo. */
@@ -157,7 +192,7 @@ export function getOpportunityCollaboratorSummary(
     sourceCount: number;
     total: number;
     truncated: boolean;
-  }>("/opportunity-collaborator-summary", params, signal);
+  }>("/opportunity-collaborator-summary", withoutCustomerCenters(params), signal);
 }
 
 /** Ranking delta % faturamento vs período −1 ano. */
@@ -193,11 +228,24 @@ export function getSalesOrderOtd(params: AnalyticsFilterParams, signal?: AbortSi
 }
 
 export function getNewBusinessRolPct(params: AnalyticsFilterParams, signal?: AbortSignal) {
-  return fetchAnalyticsData<NewBusinessRolPctData>("/new-business-rol-pct", params, signal);
+  return fetchAnalyticsData<NewBusinessRolPctData>(
+    "/new-business-rol-pct",
+    withoutCustomerCenters(params),
+    signal,
+  );
 }
 
 export function getCommercialRolSeries(
-  params: Pick<AnalyticsFilterParams, "start_date" | "end_date" | "customer_segment" | "seller_id"> & {
+  params: Pick<
+    AnalyticsFilterParams,
+    | "start_date"
+    | "end_date"
+    | "customer_segment"
+    | "seller_id"
+    | "customer_codes"
+    | "customer_centers"
+    | "branch"
+  > & {
     granularity: ChartGranularity;
   },
   signal?: AbortSignal,
@@ -230,6 +278,9 @@ export function getCommercialRolByCustomer(
   if (params.customer_codes?.trim()) {
     searchParams.set("customer_codes", params.customer_codes.trim());
   }
+  if (params.customer_centers?.trim()) {
+    searchParams.set("customer_centers", params.customer_centers.trim());
+  }
   if (params.product_codes?.trim()) {
     searchParams.set("product_codes", params.product_codes.trim());
   }
@@ -261,13 +312,17 @@ export function getSalesConversionRateSeries(
 ) {
   return fetchAnalyticsData<SalesConversionRateSeriesData>(
     "/closing-rate/series",
-    params,
+    withoutCustomerCenters(params),
     signal,
   );
 }
 
 export function getCommercialProposals(params: AnalyticsFilterParams, signal?: AbortSignal) {
-  return fetchAnalyticsData<CommercialProposalsPage>("/proposals", params, signal);
+  return fetchAnalyticsData<CommercialProposalsPage>(
+    "/proposals",
+    withoutCustomerCenters(params),
+    signal,
+  );
 }
 
 export function getCommercialProposalByNumber(
@@ -323,7 +378,13 @@ export function getSalesOrderOtdPanel(params: AnalyticsFilterParams, signal?: Ab
 export function getSalesOrderOtdSeries(
   params: Pick<
     AnalyticsFilterParams,
-    "start_date" | "end_date" | "branch" | "customer_segment" | "seller_id"
+    | "start_date"
+    | "end_date"
+    | "branch"
+    | "customer_segment"
+    | "seller_id"
+    | "customer_codes"
+    | "customer_centers"
   > & {
     granularity: ChartGranularity;
   },
@@ -336,7 +397,15 @@ export function getSalesOrderOtdLineDetail(
   branch: string,
   orderNumber: string,
   lineItem: string,
-  params: Pick<AnalyticsFilterParams, "start_date" | "end_date" | "customer_segment" | "seller_id">,
+  params: Pick<
+    AnalyticsFilterParams,
+    | "start_date"
+    | "end_date"
+    | "customer_segment"
+    | "seller_id"
+    | "customer_codes"
+    | "customer_centers"
+  >,
   signal?: AbortSignal,
 ) {
   const encodedBranch = encodeURIComponent(branch);

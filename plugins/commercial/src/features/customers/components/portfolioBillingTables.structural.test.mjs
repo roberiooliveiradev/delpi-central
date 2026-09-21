@@ -54,6 +54,8 @@ describe("Portfolio billing tables — estrutural", () => {
     );
     assert.match(filters, /CommercialFilterBarShell/);
     assert.match(filters, /CommercialMultiSelectField/);
+    assert.match(filters, /filterCustomerCenter/);
+    assert.match(filters, /useAnalyticsCustomerCenterOptions/);
     assert.match(filters, /CommercialScopeChipBar/);
     assert.match(filters, /BILLING_SERIES_PRESET_OPTIONS/);
     assert.match(filters, /CommercialClearFiltersButton/);

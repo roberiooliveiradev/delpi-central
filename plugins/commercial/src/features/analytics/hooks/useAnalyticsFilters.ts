@@ -102,6 +102,11 @@ function serializeCustomerCodesForApi(codes: string[]): string | undefined {
   return codes.join(",");
 }
 
+function serializeCustomerCentersForApi(centers: string[]): string | undefined {
+  if (centers.length === 0) return undefined;
+  return centers.join(",");
+}
+
 export function useAnalyticsFilters() {
   const initial = readAnalyticsFilters();
   const {
@@ -117,6 +122,7 @@ export function useAnalyticsFilters() {
   const [customerSegment, setCustomerSegmentState] = useState(initial.customerSegment);
   const [sellerIds, setSellerIdsState] = useState(initial.sellerIds);
   const [customerCodes, setCustomerCodesState] = useState(initial.customerCodes);
+  const [customerCenters, setCustomerCentersState] = useState(initial.customerCenters);
   const [storedPeriodPreset, setStoredPeriodPreset] = useState<PeriodPresetId | null>(
     initial.periodPreset,
   );
@@ -187,6 +193,7 @@ export function useAnalyticsFilters() {
     if (previousSellerScopeKey.current === sellerScopeKey) return;
     previousSellerScopeKey.current = sellerScopeKey;
     setCustomerCodesState([]);
+    setCustomerCentersState([]);
   }, [sellerScopeKey]);
 
   const periodPreset: PeriodPresetId = forceCustomPreset
@@ -202,6 +209,7 @@ export function useAnalyticsFilters() {
       customerSegment,
       sellerIds: effectiveSellerIds,
       customerCodes,
+      customerCenters,
       periodPreset: forceCustomPreset ? null : storedPeriodPreset,
     });
   }, [
@@ -212,6 +220,7 @@ export function useAnalyticsFilters() {
     customerSegment,
     effectiveSellerIds,
     customerCodes,
+    customerCenters,
     storedPeriodPreset,
     forceCustomPreset,
   ]);
@@ -224,6 +233,7 @@ export function useAnalyticsFilters() {
       setCustomerSegmentState(next.customerSegment);
       setSellerIdsState(sanitizeSellerIds(next.sellerIds, sellerAccess));
       setCustomerCodesState(next.customerCodes);
+      setCustomerCentersState(next.customerCenters);
       setStoredPeriodPreset(next.periodPreset);
       setForceCustomPreset(false);
     });
@@ -236,6 +246,7 @@ export function useAnalyticsFilters() {
     customer_segment: customerSegment || undefined,
     seller_id: serializeSellerIdsForApi(effectiveSellerIds),
     customer_codes: serializeCustomerCodesForApi(customerCodes),
+    customer_centers: serializeCustomerCentersForApi(customerCenters),
   };
 
   const filterState: AnalyticsFilterUrlState = {
@@ -246,6 +257,7 @@ export function useAnalyticsFilters() {
     customerSegment,
     sellerIds: effectiveSellerIds,
     customerCodes,
+    customerCenters,
     periodPreset: forceCustomPreset ? null : storedPeriodPreset,
   };
 
@@ -273,6 +285,7 @@ export function useAnalyticsFilters() {
     customerSegment,
     sellerIds: effectiveSellerIds,
     customerCodes,
+    customerCenters,
     canFilterPortfolios,
     canUseTeamScope,
     filterablePortfolios,
@@ -289,6 +302,7 @@ export function useAnalyticsFilters() {
     ),
     setSellerIds: useCallback((v: string[]) => setSellerIdsState(v), []),
     setCustomerCodes: useCallback((v: string[]) => setCustomerCodesState(v), []),
+    setCustomerCenters: useCallback((v: string[]) => setCustomerCentersState(v), []),
     apiParams,
     filterState,
   };

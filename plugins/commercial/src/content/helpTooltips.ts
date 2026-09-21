@@ -325,6 +325,8 @@ export const CM_HELP = {
       "Por padrão a tendência exclui o bucket incompleto (ex.: mês corrente). Em Séries, com a tendência ativa, «Ponderar período parcial» inclui o valor do período atual escalado pelo % já decorrido. A ponderação não se aplica às séries comparativas (ano anterior, −2 e −3 anos): esses buckets já estão completos no calendário de origem.",
     billingFilterCustomer:
       "Restringe o gráfico, o mix e o ABC aos clientes selecionados. Vazio = toda a carteira do escopo. Compartilhado entre os painéis Faturamento e ABC.",
+    billingFilterCustomerCenter:
+      "Centro da amarração produto–cliente. Não é o nome jurídico da WEG. Vazio = todos os centros. Vale no ABC, no ranking, no mix de produto e no share. A série de notas do painel continua pelo cliente selecionado.",
     billingFilterProductGroup:
       "Família Protheus (B1_GRUPO). Filtra o mix de produto e o ABC. Vazio = todas as famílias do recorte.",
     billingFilterProduct:
@@ -354,6 +356,7 @@ export const CM_HELP = {
     },
     abcColumns: {
       customer: "Cliente da carteira com avatar e link para a Conta 360.",
+      customerCenter: "Centro da amarração quando o grupo tem um único centro. Vazio = centros mistos na mesma loja.",
       cnpj: "CNPJ do cadastro, quando disponível no envelope de ROL.",
       city: "Cidade e UF (ou marcação de exterior) do cliente.",
       share: "Participação percentual do cliente no faturamento do período.",
@@ -361,6 +364,7 @@ export const CM_HELP = {
     rankingColumns: {
       rank: "Posição no ranking conforme o foco (maiores altas ou quedas).",
       customer: "Cliente com avatar e link para a Conta 360.",
+      customerCenter: "Centro da amarração quando o cliente tem um único centro no período. Vazio = centros mistos.",
       seller: "Vendedor/carteira quando o ranking está agrupado por vendedor.",
       trend: "Sparkline comparando o período atual com o mesmo período no ano anterior.",
       current: "Faturamento no período atual (bruto ou líquido conforme a Natureza).",
@@ -619,7 +623,7 @@ export const CM_HELP = {
     portfolioFilter:
       "Não filtrar = indicadores no consolidado global (TOTVS). Selecione uma ou mais carteiras (ou «Selecionar visíveis») para restringir ao escopo dessas carteiras.",
     filters:
-      "Período, competência, unidade (Santa Catarina / Espírito Santo), segmento, cliente(s) e carteira(s) aplicados aos painéis e listas desta página.",
+      "Período, competência, unidade (Santa Catarina / Espírito Santo), segmento, cliente(s), centro do cliente e carteira(s) aplicados aos painéis e listas desta página.",
     filterDateStart: "Início do período analítico.",
     filterDateEnd: "Fim do período analítico.",
     filterPeriodPreset:
@@ -631,6 +635,8 @@ export const CM_HELP = {
     filterSegment: "Segmento de cliente (TOTVS). Vazio = todos.",
     filterCustomer:
       "Um ou mais clientes do recorte (carteira selecionada ou, sem carteira, clientes das carteiras ativas). Vazio = todos os clientes daquele recorte. Com carteira, só entram códigos da membership.",
+    filterCustomerCenter:
+      "Unidade da amarração produto–cliente (não o nome jurídico da WEG). Vazio = todos os centros do recorte. Restringe ROL e OTD; não altera funil, novos negócios nem metas.",
     otdPage:
       "Pontualidade comercial das linhas: faturadas comparam DatFat com a data prometida; abertas sem fatura só contam atraso a partir do dia seguinte ao prometido.",
     otdKpi: "OTD %, linhas no prazo e atrasadas no período (faturadas e abertas já vencidas após o dia prometido).",

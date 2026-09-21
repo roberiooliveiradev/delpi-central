@@ -30,3 +30,5 @@ Uma amarração é `A7_PRODUTO` + `A7_CLIENTE` + `A7_LOJA`. Nesse trio há no m�
 ## Censo conhecido (não é allowlist)
 
 Centros preenchidos hoje existem só no cliente `000001`. Exemplos: `1100` e `1200` na loja `01`, `1320` na loja `11`, `1505` na loja `12`, `1106` na loja `09`, `1700` na loja `06`. Lojas sem nenhum centro continuam acessíveis por `customer_code_stores`.
+
+A lista para um seletor é `GET /commercial/customer-centers` (`list_commercial_customer_centers`). O rótulo é o nome reduzido de uma loja do centro mais o código, não um mapa fixo de unidades.

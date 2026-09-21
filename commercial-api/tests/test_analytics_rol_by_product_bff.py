@@ -158,3 +158,199 @@ def test_bff_rol_by_customer_passes_through_envelope() -> None:
     assert path[0] == "/rol/by-customer"
     assert "customer_codes" not in kwargs["params"]
     assert kwargs["params"]["include_others"] is False
+
+
+def test_bff_rol_by_customer_forwards_customer_centers_with_membership() -> None:
+    gateway = MagicMock()
+    gateway.get_commercial_analytics.return_value = {"data": {"items": []}}
+    scope = CommercialCustomerScope(
+        unrestricted=False,
+        allowed_customers=frozenset({("000001", "11")}),
+    )
+    request = _request(
+        "/analytics/rol/by-customer",
+        query=b"customer_codes=000001&customer_centers=1320",
+    )
+    request.state.user = _User(["commercial.access"])
+
+    with (
+        patch.object(
+            analytics_routes,
+            "build_delpi_commercial_gateway",
+            return_value=gateway,
+        ),
+        patch.object(
+            analytics_routes,
+            "resolve_analytics_portfolio_scope",
+            return_value=scope,
+        ),
+    ):
+        response = analytics_routes.bff_rol_by_customer(
+            request,
+            start_date="2026-01-01",
+            end_date="2026-01-31",
+            branch=None,
+            customer_segment=None,
+            product_codes=None,
+            product_groups=None,
+            market=None,
+            limit=500,
+            include_others=False,
+            seller_id=None,
+            portfolio_id=None,
+            customer_centers="1320",
+        )
+
+    assert response.status_code == 200
+    params = gateway.get_commercial_analytics.call_args.kwargs["params"]
+    assert gateway.get_commercial_analytics.call_args.args[0] == "/rol/by-customer"
+    assert params["customer_centers"] == "1320"
+    assert params["customer_codes"] == "000001"
+
+
+def test_bff_otd_series_forwards_customer_centers() -> None:
+    gateway = MagicMock()
+    gateway.get_commercial_analytics.return_value = {"data": {"items": []}}
+    scope = CommercialCustomerScope(
+        unrestricted=False,
+        allowed_customers=frozenset({("000001", "11")}),
+    )
+    request = _request("/analytics/sales-order-otd/series")
+    request.state.user = _User(["commercial.access"])
+
+    with (
+        patch.object(
+            analytics_routes,
+            "build_delpi_commercial_gateway",
+            return_value=gateway,
+        ),
+        patch.object(
+            analytics_routes,
+            "resolve_analytics_portfolio_scope",
+            return_value=scope,
+        ),
+    ):
+        response = analytics_routes.bff_otd_series(
+            request,
+            start_date="2026-01-01",
+            end_date="2026-01-31",
+            branch=None,
+            customer_segment=None,
+            granularity="month",
+            seller_id=None,
+            portfolio_id=None,
+            customer_centers="1320",
+        )
+
+    assert response.status_code == 200
+    params = gateway.get_commercial_analytics.call_args.kwargs["params"]
+    assert gateway.get_commercial_analytics.call_args.args[0] == "/sales-order-otd/series"
+    assert params["customer_centers"] == "1320"
+    assert params["customer_codes"] == "000001"
+
+
+def test_bff_closing_rate_does_not_forward_customer_centers() -> None:
+    import inspect
+
+    assert "customer_centers" not in inspect.signature(
+        analytics_routes.bff_closing_rate
+    ).parameters
+    gateway = MagicMock()
+    gateway.get_commercial_analytics.return_value = {"data": {"rate": 0}}
+    scope = CommercialCustomerScope(unrestricted=True, allowed_customers=None)
+    request = _request(
+        "/analytics/closing-rate",
+        query=b"customer_centers=1320",
+    )
+    request.state.user = _User(["commercial.access"])
+
+    with (
+        patch.object(
+            analytics_routes,
+            "build_delpi_commercial_gateway",
+            return_value=gateway,
+        ),
+        patch.object(
+            analytics_routes,
+            "resolve_analytics_portfolio_scope",
+            return_value=scope,
+        ),
+    ):
+        response = analytics_routes.bff_closing_rate(
+            request,
+            start_date="2026-01-01",
+            end_date="2026-01-31",
+            branch=None,
+            customer_segment=None,
+            seller_id=None,
+            portfolio_id=None,
+        )
+
+    assert response.status_code == 200
+    params = gateway.get_commercial_analytics.call_args.kwargs["params"]
+    assert gateway.get_commercial_analytics.call_args.args[0] == "/closing-rate"
+    assert "customer_centers" not in params
+
+
+def test_bff_customer_centers_passes_membership_codes() -> None:
+    gateway = MagicMock()
+    gateway.get_commercial_analytics.return_value = {
+        "data": {"items": [{"center": "1320", "label": "WEG AUTOMACAO (1320)"}]}
+    }
+    scope = CommercialCustomerScope(
+        unrestricted=False,
+        allowed_customers=frozenset({("000001", "11")}),
+    )
+    request = _request("/analytics/customer-centers")
+    request.state.user = _User(["commercial.access"])
+
+    with (
+        patch.object(
+            analytics_routes,
+            "build_delpi_commercial_gateway",
+            return_value=gateway,
+        ),
+        patch.object(
+            analytics_routes,
+            "resolve_analytics_portfolio_scope",
+            return_value=scope,
+        ),
+    ):
+        response = analytics_routes.bff_customer_centers(
+            request,
+            seller_id=None,
+            portfolio_id="p1",
+        )
+
+    assert response.status_code == 200
+    body = json.loads(response.body)
+    assert body["data"]["items"][0]["center"] == "1320"
+    path = gateway.get_commercial_analytics.call_args.args[0]
+    params = gateway.get_commercial_analytics.call_args.kwargs["params"]
+    assert path == "/customer-centers"
+    assert params["customer_codes"] == "000001"
+
+
+def test_bff_customer_centers_unrestricted_omits_codes() -> None:
+    gateway = MagicMock()
+    gateway.get_commercial_analytics.return_value = {"data": {"items": []}}
+    scope = CommercialCustomerScope(unrestricted=True, allowed_customers=None)
+    request = _request("/analytics/customer-centers")
+    request.state.user = _User(["commercial.access"])
+
+    with (
+        patch.object(
+            analytics_routes,
+            "build_delpi_commercial_gateway",
+            return_value=gateway,
+        ),
+        patch.object(
+            analytics_routes,
+            "resolve_analytics_portfolio_scope",
+            return_value=scope,
+        ),
+    ):
+        analytics_routes.bff_customer_centers(request, seller_id=None, portfolio_id=None)
+
+    params = gateway.get_commercial_analytics.call_args.kwargs["params"]
+    assert "customer_codes" not in params

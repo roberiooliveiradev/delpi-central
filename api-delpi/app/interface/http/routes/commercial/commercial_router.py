@@ -141,6 +141,44 @@ router = APIRouter(prefix="/commercial", tags=["Comercial"])
 
 
 @router.get(
+    "/customer-centers",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "list_commercial_customer_centers",
+        path="/commercial/customer-centers",
+    ),
+)
+@require_any_permission(KPI_COMMERCIAL_ACCESS)
+def list_commercial_customer_centers(
+    customer_codes: Optional[str] = Query(
+        None,
+        description="CSV of TOTVS customer codes. Omit to list every non-empty center.",
+    ),
+):
+    try:
+        from app.infrastructure.persistence.totvs.commercial_repositories.commercial_customer_center_catalog_repository import (
+            CommercialCustomerCenterCatalogRepository,
+        )
+
+        items = CommercialCustomerCenterCatalogRepository().list_centers(
+            parse_customer_codes(customer_codes)
+        )
+        return api_delpi_success(
+            {"items": items},
+            operation_id="list_commercial_customer_centers",
+            message="Customer centers fetched successfully.",
+        )
+    except ValueError as exc:
+        log_error(f"Validation error while listing customer centers: {exc}")
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Error while listing customer centers: {exc}")
+        return error_response(
+            "Internal error while listing customer centers.",
+            status_code=500,
+        )
+
+
+@router.get(
     "/weg-rol-target-pct",
     **OpenApiAgentMetadataBuilder.from_contract(
         "get_weg_rol_target_pct",

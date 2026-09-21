@@ -138,6 +138,7 @@ export function AnalyticsOtdPage({ basePath }: AnalyticsOtdPageProps) {
     filters.apiParams.customer_segment,
     filters.apiParams.seller_id,
     filters.apiParams.customer_codes,
+    filters.apiParams.customer_centers,
   ].join("|");
 
   useEffect(() => {
@@ -170,6 +171,7 @@ export function AnalyticsOtdPage({ basePath }: AnalyticsOtdPageProps) {
     filters.apiParams.customer_segment,
     filters.apiParams.seller_id,
     filters.apiParams.customer_codes,
+    filters.apiParams.customer_centers,
     reloadKey,
   ]);
 
@@ -243,6 +245,7 @@ export function AnalyticsOtdPage({ basePath }: AnalyticsOtdPageProps) {
     filters.apiParams.customer_segment,
     filters.apiParams.seller_id,
     filters.apiParams.customer_codes,
+    filters.apiParams.customer_centers,
     listState.page,
     listState.search,
     listState.status,
@@ -397,6 +400,11 @@ export function AnalyticsOtdPage({ basePath }: AnalyticsOtdPageProps) {
       render: (row) => <OtdCustomerIdentityCell customer={customerIdentity(row)} />,
     },
     {
+      key: "customerCenter",
+      header: "Centro",
+      render: (row) => (row.customer_center || "").trim() || "—",
+    },
+    {
       key: "product",
       header: "Produto",
       sortable: true,
@@ -495,6 +503,7 @@ export function AnalyticsOtdPage({ basePath }: AnalyticsOtdPageProps) {
           customerSegment={filters.customerSegment}
           sellerIds={filters.sellerIds}
           customerCodes={filters.customerCodes}
+          customerCenters={filters.customerCenters}
           canFilterPortfolios={filters.canFilterPortfolios}
           canUseTeamScope={filters.canUseTeamScope}
           filterablePortfolios={filters.filterablePortfolios}
@@ -505,6 +514,7 @@ export function AnalyticsOtdPage({ basePath }: AnalyticsOtdPageProps) {
           onBranches={filters.setBranches}
           onCustomerSegment={filters.setCustomerSegment}
           onCustomerCodes={filters.setCustomerCodes}
+          onCustomerCenters={filters.setCustomerCenters}
           onSellerIds={filters.setSellerIds}
         />
       </CommercialPageHero>

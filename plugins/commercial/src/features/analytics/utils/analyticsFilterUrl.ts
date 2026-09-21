@@ -24,6 +24,8 @@ export type AnalyticsFilterUrlState = LinkedDateFilters & {
   sellerIds: string[];
   /** Códigos TOTVS selecionados; vazio = todos os clientes do recorte. */
   customerCodes: string[];
+  /** Centros da amarração; vazio = não envia customer_centers. */
+  customerCenters: string[];
   /** Preset explícito na URL (`period_preset`); null = inferir / custom. */
   periodPreset: PeriodPresetId | null;
 };
@@ -37,6 +39,7 @@ const ANALYTICS_OPPORTUNITY_BACK_KEYS = [
   "customer_segment",
   "seller_id",
   "customer_codes",
+  "customer_centers",
   "period_preset",
   "search",
 ] as const;
@@ -62,6 +65,7 @@ function defaultFilterState(): AnalyticsFilterUrlState {
     customerSegment: "",
     sellerIds: [],
     customerCodes: [],
+    customerCenters: [],
     periodPreset: null,
   };
 }
@@ -92,6 +96,28 @@ function parseCustomerCodesCsv(raw: string): string[] {
 
 function serializeCustomerCodesCsv(codes: string[]): string {
   return parseCsvIds(codes.join(",")).join(",");
+}
+
+function parseCustomerCentersCsv(raw: string): string[] {
+  return parseCsvIds(raw);
+}
+
+function serializeCustomerCentersCsv(centers: string[]): string {
+  return parseCsvIds(centers.join(",")).join(",");
+}
+
+function parseStoredCustomerCenters(data: Record<string, unknown>): string[] {
+  if (Array.isArray(data.customerCenters)) {
+    return parseCustomerCentersCsv(
+      data.customerCenters
+        .filter((entry): entry is string => typeof entry === "string")
+        .join(","),
+    );
+  }
+  if (typeof data.customerCenters === "string" && data.customerCenters.trim()) {
+    return parseCustomerCentersCsv(data.customerCenters);
+  }
+  return [];
 }
 
 function parseStoredSellerIds(data: Record<string, unknown>): string[] {
@@ -151,6 +177,7 @@ function parseFilterParams(params: URLSearchParams): AnalyticsFilterUrlState | n
   const customerSegmentParam = params.get("customer_segment") ?? "";
   const sellerIdParam = (params.get("seller_id") ?? "").trim();
   const customerCodesParam = (params.get("customer_codes") ?? "").trim();
+  const customerCentersParam = (params.get("customer_centers") ?? "").trim();
   const periodPresetParam = params.get("period_preset") ?? "";
   const hasAny =
     isValidIsoDate(dateStartParam) ||
@@ -160,6 +187,7 @@ function parseFilterParams(params: URLSearchParams): AnalyticsFilterUrlState | n
     customerSegmentParam.length > 0 ||
     sellerIdParam.length > 0 ||
     customerCodesParam.length > 0 ||
+    customerCentersParam.length > 0 ||
     periodPresetParam.length > 0;
 
   if (!hasAny) return null;
@@ -179,6 +207,7 @@ function parseFilterParams(params: URLSearchParams): AnalyticsFilterUrlState | n
     customerSegment: parseCustomerSegment(customerSegmentParam),
     sellerIds: parseSellerIdsCsv(sellerIdParam),
     customerCodes: parseCustomerCodesCsv(customerCodesParam),
+    customerCenters: parseCustomerCentersCsv(customerCentersParam),
     periodPreset: parsePeriodPresetId(periodPresetParam),
   };
 }
@@ -219,6 +248,7 @@ export function readAnalyticsFilters(
           ),
           sellerIds: parseStoredSellerIds(data),
           customerCodes: parseStoredCustomerCodes(data),
+          customerCenters: parseStoredCustomerCenters(data),
           periodPreset: parsePeriodPresetId(
             typeof data.periodPreset === "string" ? data.periodPreset : null,
           ),
@@ -244,6 +274,8 @@ export function buildAnalyticsFilterSearchParams(state: AnalyticsFilterUrlState)
   if (sellerIds) params.set("seller_id", sellerIds);
   const customerCodes = serializeCustomerCodesCsv(state.customerCodes);
   if (customerCodes) params.set("customer_codes", customerCodes);
+  const customerCenters = serializeCustomerCentersCsv(state.customerCenters);
+  if (customerCenters) params.set("customer_centers", customerCenters);
   if (state.periodPreset && state.periodPreset !== "custom") {
     params.set("period_preset", state.periodPreset);
   }

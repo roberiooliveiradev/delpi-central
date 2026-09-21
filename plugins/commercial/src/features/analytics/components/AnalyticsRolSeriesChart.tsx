@@ -64,7 +64,13 @@ type RolChartPoint = CommercialRolSeriesPoint & {
 type RolSeriesChartProps = {
   filters: Pick<
     AnalyticsFilterParams,
-    "start_date" | "end_date" | "customer_segment" | "seller_id" | "branch"
+    | "start_date"
+    | "end_date"
+    | "customer_segment"
+    | "seller_id"
+    | "customer_codes"
+    | "customer_centers"
+    | "branch"
   >;
   onDrillDown?: (dateStart: string, dateEnd: string) => void;
   onPointsChange?: (points: CommercialRolSeriesPoint[]) => void;
@@ -162,6 +168,9 @@ export function AnalyticsRolSeriesChart({
     filters.end_date,
     filters.customer_segment,
     filters.seller_id,
+    filters.customer_codes,
+    filters.customer_centers,
+    filters.branch,
     granularity,
     yoyActive,
   ]);

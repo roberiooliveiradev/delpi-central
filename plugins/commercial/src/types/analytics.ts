@@ -11,6 +11,8 @@ export type AnalyticsFilterParams = {
   seller_id?: string;
   /** Filtro de clientes — commercial-api intersecta com membership. CSV de códigos TOTVS. */
   customer_codes?: string;
+  /** Centros da amarração produto–cliente (SA7). CSV. Vazio = omitido. */
+  customer_centers?: string;
   /**
    * Conta 360: filtra OVs deste código sem membership de carteira
    * (`account_customer_code` no BFF).
@@ -90,6 +92,7 @@ export type PortfolioBillingRankingItem = {
   customerCode?: string | null;
   customerStore?: string | null;
   customerName?: string | null;
+  customerCenter?: string | null;
   sellerName?: string | null;
   currentRol: number;
   priorRol: number;
@@ -151,6 +154,7 @@ export type CommercialRolByCustomerItem = {
   customer_code: string;
   customer_store?: string;
   customer_name: string;
+  customer_center?: string | null;
   cnpj?: string | null;
   city?: string | null;
   state?: string | null;
@@ -340,6 +344,7 @@ export type SalesOrderOtdLineItem = {
   customer_store?: string | null;
   customer_name?: string | null;
   customer_short_name?: string | null;
+  customer_center?: string | null;
   qty_sold?: number | null;
   qty_delivered?: number | null;
   promised_date?: string | null;
@@ -354,6 +359,7 @@ export type SalesOrderOtdRecurringCustomer = {
   customer_store?: string | null;
   customer_name?: string | null;
   customer_short_name?: string | null;
+  customer_center?: string | null;
   late_count: number;
   total_late_days?: number | null;
 };

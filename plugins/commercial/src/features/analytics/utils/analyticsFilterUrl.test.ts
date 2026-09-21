@@ -58,6 +58,7 @@ describe("analyticsFilterUrl — period_preset", () => {
       customerSegment: "",
       sellerIds: [],
       customerCodes: [],
+      customerCenters: [],
       periodPreset: null,
     });
     expect(params).not.toContain("period_preset");
@@ -72,5 +73,33 @@ describe("analyticsFilterUrl — customerCodes multi", () => {
     expect(state.customerCodes).toEqual(["001", "002"]);
     const params = buildAnalyticsFilterSearchParams(state);
     expect(params).toContain("customer_codes=001%2C002");
+  });
+});
+
+describe("analyticsFilterUrl — customerCenters", () => {
+  it("lê 1320,1505 e serializa de volta", () => {
+    const state = readAnalyticsFilters(
+      "?start_date=2026-01-01&end_date=2026-01-31&customer_centers=1320,1505",
+    );
+    expect(state.customerCenters).toEqual(["1320", "1505"]);
+    const params = buildAnalyticsFilterSearchParams(state);
+    expect(params).toContain("customer_centers=1320%2C1505");
+  });
+
+  it("mantém a ordem estável e remove duplicata", () => {
+    const state = readAnalyticsFilters(
+      "?start_date=2026-01-01&customer_centers=1505,1320,1505",
+    );
+    expect(state.customerCenters).toEqual(["1505", "1320"]);
+    const params = buildAnalyticsFilterSearchParams(state);
+    expect(params).toContain("customer_centers=1505%2C1320");
+    expect(params.match(/1505/g)?.length).toBe(1);
+  });
+
+  it("omite customer_centers quando a seleção está vazia", () => {
+    const state = readAnalyticsFilters("?start_date=2026-01-01&end_date=2026-01-31");
+    expect(state.customerCenters).toEqual([]);
+    const params = buildAnalyticsFilterSearchParams(state);
+    expect(params).not.toContain("customer_centers");
   });
 });
