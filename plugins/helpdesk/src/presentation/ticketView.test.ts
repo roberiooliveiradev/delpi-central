@@ -12,7 +12,9 @@ import {
   statusBadgeVariant,
   ticketListSearch,
   ticketRecordFields,
+  viewerNameAliasesFromToken,
   viewForTicketLoad,
+  writtenByViewer,
 } from "./ticketView";
 
 describe("viewForTicketLoad", () => {
@@ -93,7 +95,33 @@ describe("detailRecordHeading", () => {
 describe("conversationMessages", () => {
   const now = new Date("2026-09-21T12:00:00Z");
 
-  it("abre com o solicitante, o título e o tempo relativo", () => {
+  it("não marca a abertura como minha só porque o chamado tem solicitante", () => {
+    const messages = conversationMessages(
+      {
+        title: "Renovação da assinatura do DraftSight",
+        description: "Peço a renovação",
+        created_at: "2026-09-21T10:00:00Z",
+        requester_display_name: "William Ricardo Jacomini",
+        timeline: [],
+        attachments: [{ document_id: 2 }, { document_id: 4 }],
+      },
+      now,
+      ["João Silva"],
+    );
+    expect(messages[0]).toMatchObject({
+      id: "opening",
+      kind: "opening",
+      headingText: "Renovação da assinatura do DraftSight",
+      bodyText: "Peço a renovação",
+      createdAtLabel: "Criado em 2 horas atrás",
+      authorName: "William Ricardo Jacomini",
+      mine: false,
+      attachmentIds: [2, 4],
+    });
+    expect(conversationAuthorSrc(messages[0].mine, "blob:me")).toBeUndefined();
+  });
+
+  it("marca a abertura como minha quando o solicitante é o usuário logado", () => {
     const messages = conversationMessages(
       {
         title: "Chamado teste Api Minha delpi",
@@ -101,20 +129,13 @@ describe("conversationMessages", () => {
         created_at: "2026-09-21T10:00:00Z",
         requester_display_name: "Robério Teixeira",
         timeline: [],
-        attachments: [{ document_id: 2 }, { document_id: 4 }],
+        attachments: [{ document_id: 2 }],
       },
       now,
+      ["Robério Teixeira"],
     );
-    expect(messages[0]).toMatchObject({
-      id: "opening",
-      kind: "opening",
-      headingText: "Chamado teste Api Minha delpi",
-      bodyText: "Esse chamado é um teste",
-      createdAtLabel: "Criado em 2 horas atrás",
-      authorName: "Robério Teixeira",
-      mine: true,
-      attachmentIds: [2, 4],
-    });
+    expect(messages[0]?.mine).toBe(true);
+    expect(conversationAuthorSrc(messages[0].mine, "blob:me")).toBe("blob:me");
   });
 
   it("escreve a data calendário quando o chamado é antigo", () => {
@@ -157,6 +178,7 @@ describe("conversationMessages", () => {
         attachments: [{ document_id: 2 }],
       },
       now,
+      ["Robério Teixeira"],
     );
     expect(messages[1]).toMatchObject({
       id: "9",
@@ -198,7 +220,75 @@ describe("conversationMessages", () => {
     );
     expect(messages.map((message) => message.kind)).not.toContain("task");
   });
+
+  it("marca o acompanhamento escrito pelo usuário logado, mesmo quando ele não é o solicitante", () => {
+    const messages = conversationMessages(
+      {
+        title: "Rede",
+        description: "Sem internet",
+        created_at: "2026-09-21T10:00:00Z",
+        requester_display_name: "William Ricardo Jacomini",
+        timeline: [
+          {
+            id: 11,
+            kind: "followup",
+            content: "Já estou vendo",
+            created_at: "2026-09-21T11:00:00Z",
+            author_display_name: "João Silva",
+          },
+        ],
+        attachments: [],
+      },
+      now,
+      ["João Silva"],
+    );
+    expect(messages[0]?.mine).toBe(false);
+    expect(messages[1]).toMatchObject({ id: "11", mine: true, authorName: "João Silva" });
+  });
 });
+
+describe("writtenByViewer", () => {
+  it("iguala nome com acento e nome sem acento", () => {
+    expect(writtenByViewer("João Silva", ["Joao Silva"])).toBe(true);
+  });
+
+  it("reconhece nome completo do GLPI a partir de prenome e sobrenome do JWT", () => {
+    expect(writtenByViewer("William Ricardo Jacomini", ["William Jacomini"])).toBe(true);
+  });
+
+  it("não trata prenome sozinho como a mesma pessoa", () => {
+    expect(writtenByViewer("William Ricardo Jacomini", ["William"])).toBe(false);
+    expect(writtenByViewer("Ana Paula", ["Ana"])).toBe(false);
+  });
+});
+
+describe("viewerNameAliasesFromToken", () => {
+  it("lê o nome completo e o prenome+sobrenome do JWT", () => {
+    expect(viewerNameAliasesFromToken(jwtToken({ name: "João Silva", given_name: "João", family_name: "Silva" }))).toEqual([
+      "João Silva",
+    ]);
+    expect(viewerNameAliasesFromToken(jwtToken({ given_name: "William", family_name: "Jacomini" }))).toEqual([
+      "William Jacomini",
+    ]);
+  });
+
+  it("não inventa identidade sem token ou com payload ilegível", () => {
+    expect(viewerNameAliasesFromToken(undefined)).toEqual([]);
+    expect(viewerNameAliasesFromToken("not-a-jwt")).toEqual([]);
+    expect(viewerNameAliasesFromToken(jwtToken({ preferred_username: "denha", email: "denha@delpi.com" }))).toEqual([]);
+  });
+});
+
+function jwtToken(claims: Record<string, string>): string {
+  const json = JSON.stringify(claims);
+  const bytes = new TextEncoder().encode(json);
+  let binary = "";
+  bytes.forEach((byte) => {
+    binary += String.fromCharCode(byte);
+  });
+  const payload = btoa(binary).replace(/=+$/, "").replace(/\+/g, "-").replace(/\//g, "_");
+  return `hdr.${payload}.sig`;
+}
 
 describe("relativeTimeLabel", () => {
   const now = new Date("2026-09-21T12:00:00Z");

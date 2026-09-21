@@ -15,6 +15,10 @@ export function configurePersonProfileClient(getAccessToken: TokenGetter) {
   accessTokenGetter = getAccessToken;
 }
 
+export function configuredAccessToken(): string | undefined {
+  return accessTokenGetter?.();
+}
+
 function headers(accept: string): Record<string, string> {
   const result: Record<string, string> = {
     Accept: accept,

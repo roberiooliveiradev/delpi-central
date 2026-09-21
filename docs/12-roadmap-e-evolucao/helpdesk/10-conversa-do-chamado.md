@@ -81,7 +81,7 @@ Claro e escuro continuam nos tokens `--delpi-ui-*` já mapeados em `.dashboard-h
 
 O tempo «2 horas atrás» é formatação da tela a partir de `date_creation`. O JSON guarda o instante.
 
-As iniciais saem do nome exibido. Não há foto nem armazenamento de avatar neste módulo.
+As iniciais saem do nome exibido. A foto da Minha DELPI (Core) só entra quando o autor da mensagem é o usuário logado. Foto do GLPI e armazenamento de avatar continuam fora deste módulo.
 
 ## 5. Componente
 

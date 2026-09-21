@@ -214,7 +214,7 @@ HelpdeskSectionCard  «Conversa»  hint = helpTooltips.detail
     [ enviar ]
 ```
 
-A abertura existe mesmo sem acompanhamento. Tarefa, solução, aprovação e acompanhamento privado não entram. `mine` significa que o autor é o solicitante do chamado.
+A abertura existe mesmo sem acompanhamento. Tarefa, solução, aprovação e acompanhamento privado não entram. `mine` significa que o autor é o usuário logado na Minha DELPI. A foto da Core só entra nessa bolha; as outras usam iniciais.
 
 ## 4. Fora destas rotas
 

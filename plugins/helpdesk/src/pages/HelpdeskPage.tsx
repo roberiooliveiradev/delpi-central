@@ -14,6 +14,7 @@ import {
   type TicketDetail,
   type TicketSummary,
 } from "../api/helpdeskApi";
+import { configuredAccessToken } from "../api/personProfileApi";
 import { helpTooltips } from "../content/helpTooltips";
 import {
   conversationAuthorSrc,
@@ -28,6 +29,7 @@ import {
   ticketListSearch,
   TICKET_STATUS_FILTERS,
   type TicketListFilters,
+  viewerNameAliasesFromToken,
   viewForTicketLoad,
 } from "../presentation/ticketView";
 import { navigateHelpdesk, type HelpdeskRoute } from "../routing/helpdeskRoute";
@@ -462,6 +464,7 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
   const [saving, setSaving] = useState(false);
   const [idempotencyKey, setIdempotencyKey] = useState(newIdempotencyKey);
   const myPhotoUrl = useMyPersonProfilePhoto();
+  const viewerAliases = viewerNameAliasesFromToken(configuredAccessToken());
 
   function load() {
     setLoading(true);
@@ -498,7 +501,7 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
             <HelpdeskMessageThread
               listAriaLabel="Conversa do chamado"
               emptyLabel="Nenhuma mensagem"
-              messages={conversationMessages(ticket, new Date()).map((message) => ({
+              messages={conversationMessages(ticket, new Date(), viewerAliases).map((message) => ({
                 id: message.id,
                 kind: message.kind,
                 headingText: message.headingText || undefined,

@@ -258,13 +258,40 @@ export function conversationAuthorSrc(mine: boolean, photoUrl: string | null | u
   return src || undefined;
 }
 
-function writtenByRequester(author: string, requester: string): boolean {
-  const authorName = author.trim();
-  const requesterName = requester.trim();
-  return requesterName.length > 0 && authorName === requesterName;
+export function normalizePersonName(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLocaleLowerCase("pt-BR");
 }
 
-export function conversationMessages(ticket: ConversationSource, now: Date): ConversationMessage[] {
+export function writtenByViewer(author: string, viewerAliases: readonly string[]): boolean {
+  const authorName = normalizePersonName(author);
+  if (!authorName) return false;
+  return viewerAliases.some((alias) => {
+    const named = normalizePersonName(alias);
+    if (!named) return false;
+    if (named === authorName) return true;
+    return twoTokenNameMatch(authorName, named);
+  });
+}
+
+export function viewerNameAliasesFromToken(token: string | undefined): string[] {
+  const payload = jwtPayload(token);
+  if (!payload) return [];
+  const given = stringClaim(payload.given_name);
+  const family = stringClaim(payload.family_name);
+  const aliases = [stringClaim(payload.name), [given, family].filter(Boolean).join(" ")];
+  return [...new Set(aliases.map((item) => item.trim()).filter(Boolean))];
+}
+
+export function conversationMessages(
+  ticket: ConversationSource,
+  now: Date,
+  viewerAliases: readonly string[] = [],
+): ConversationMessage[] {
   const requester = ticket.requester_display_name.trim();
   const opening: ConversationMessage = {
     id: "opening",
@@ -273,7 +300,7 @@ export function conversationMessages(ticket: ConversationSource, now: Date): Con
     bodyText: ticket.description,
     createdAtLabel: openingTimeLabel(ticket.created_at, requester, now),
     authorName: requester,
-    mine: requester.length > 0,
+    mine: writtenByViewer(requester, viewerAliases),
     attachmentIds: ticket.attachments.map((file) => file.document_id),
   };
   const followups = ticket.timeline
@@ -285,8 +312,36 @@ export function conversationMessages(ticket: ConversationSource, now: Date): Con
       bodyText: entry.content,
       createdAtLabel: relativeTimeLabel(entry.created_at, now),
       authorName: entry.author_display_name.trim(),
-      mine: writtenByRequester(entry.author_display_name, requester),
+      mine: writtenByViewer(entry.author_display_name, viewerAliases),
       attachmentIds: [],
     }));
   return [opening, ...followups];
+}
+
+function stringClaim(value: unknown): string {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function twoTokenNameMatch(authorName: string, aliasName: string): boolean {
+  const tokens = aliasName.split(" ");
+  if (tokens.length !== 2) return false;
+  const [given, family] = tokens;
+  if (given.length < 2 || family.length < 2) return false;
+  return authorName.startsWith(`${given} `) && authorName.endsWith(` ${family}`);
+}
+
+function jwtPayload(token: string | undefined): Record<string, unknown> | null {
+  if (!token) return null;
+  const payload = token.split(".")[1];
+  if (!payload) return null;
+  try {
+    const normalized = payload.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = normalized.padEnd(normalized.length + ((4 - (normalized.length % 4)) % 4), "=");
+    const binary = atob(padded);
+    const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+    const parsed = JSON.parse(new TextDecoder().decode(bytes)) as unknown;
+    return parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : null;
+  } catch {
+    return null;
+  }
 }
