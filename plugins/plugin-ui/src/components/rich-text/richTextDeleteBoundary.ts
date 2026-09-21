@@ -1,9 +1,28 @@
 /**
  * Evita que Backspace/Delete na fronteira de negrito/itálico “contamine”
  * o restante da linha (bug clássico do contentEditable + HTML do Word).
+ * Também remove void blocks adjacentes (`<hr>`) que o browser não apaga.
  */
 
 type TextCaret = { node: Text; offset: number };
+
+const VOID_BLOCK_TAGS = new Set(["HR"]);
+
+const BLOCK_TAGS = new Set([
+  "P",
+  "DIV",
+  "H1",
+  "H2",
+  "H3",
+  "H4",
+  "H5",
+  "H6",
+  "LI",
+  "TD",
+  "TH",
+  "BLOCKQUOTE",
+  "PRE",
+]);
 
 function previousTextNode(from: Text, editor: HTMLElement): Text | null {
   const walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT);
@@ -82,6 +101,109 @@ function adjacentChar(
   const next = nextTextNode(caret.node, editor);
   if (!next?.data.length) return null;
   return { node: next, offset: 0 };
+}
+
+function isVoidBlockElement(node: Node | null | undefined): node is HTMLElement {
+  return node instanceof HTMLElement && VOID_BLOCK_TAGS.has(node.tagName);
+}
+
+function findClosestBlock(node: Node | null, editor: HTMLElement): HTMLElement | null {
+  let current: Node | null = node;
+  while (current && current !== editor) {
+    if (current instanceof HTMLElement && BLOCK_TAGS.has(current.tagName) && editor.contains(current)) {
+      return current;
+    }
+    current = current.parentNode;
+  }
+  return null;
+}
+
+function isCaretAtBlockStart(caret: TextCaret, block: HTMLElement): boolean {
+  if (caret.offset !== 0) return false;
+  return previousTextNode(caret.node, block) === null;
+}
+
+function isCaretAtBlockEnd(caret: TextCaret, block: HTMLElement): boolean {
+  if (caret.offset !== caret.node.data.length) return false;
+  return nextTextNode(caret.node, block) === null;
+}
+
+/**
+ * Remove `<hr>` (e outros void blocks) adjacentes ao caret.
+ * O contentEditable costuma ignorar Backspace/Delete nesses elementos.
+ * @returns true se consumiu o evento (chamar preventDefault).
+ */
+export function tryDeleteRichTextAdjacentVoid(
+  editor: HTMLElement | null,
+  direction: "backward" | "forward",
+): boolean {
+  if (!editor) return false;
+  const selection = window.getSelection();
+  if (!selection?.isCollapsed || selection.rangeCount === 0) return false;
+  const range = selection.getRangeAt(0);
+  if (!editor.contains(range.commonAncestorContainer)) return false;
+
+  if (range.startContainer instanceof Element) {
+    const parent = range.startContainer;
+    const candidate =
+      direction === "backward"
+        ? parent.childNodes[range.startOffset - 1]
+        : parent.childNodes[range.startOffset];
+    if (isVoidBlockElement(candidate) && editor.contains(candidate)) {
+      candidate.remove();
+      return true;
+    }
+  }
+
+  const caret = resolveTextCaret(range);
+  if (caret) {
+    const block = findClosestBlock(caret.node, editor);
+    if (block) {
+      if (direction === "backward" && isCaretAtBlockStart(caret, block)) {
+        const prev = block.previousElementSibling;
+        if (isVoidBlockElement(prev) && editor.contains(prev)) {
+          prev.remove();
+          return true;
+        }
+      }
+      if (direction === "forward" && isCaretAtBlockEnd(caret, block)) {
+        const next = block.nextElementSibling;
+        if (isVoidBlockElement(next) && editor.contains(next)) {
+          next.remove();
+          return true;
+        }
+      }
+    }
+  }
+
+  // Parágrafo vazio só com <br>: caret no Element sem TextCaret.
+  if (range.startContainer instanceof Element) {
+    const block =
+      findClosestBlock(range.startContainer, editor) ??
+      (range.startContainer instanceof HTMLElement && BLOCK_TAGS.has(range.startContainer.tagName)
+        ? range.startContainer
+        : null);
+    if (block && editor.contains(block)) {
+      const text = (block.textContent ?? "").replace(/\u200B/g, "").trim();
+      if (!text) {
+        if (direction === "backward") {
+          const prev = block.previousElementSibling;
+          if (isVoidBlockElement(prev) && editor.contains(prev)) {
+            prev.remove();
+            return true;
+          }
+        } else {
+          const next = block.nextElementSibling;
+          if (isVoidBlockElement(next) && editor.contains(next)) {
+            next.remove();
+            return true;
+          }
+        }
+      }
+    }
+  }
+
+  return false;
 }
 
 /**

@@ -76,6 +76,20 @@ export function execRichTextCommand(command: string, value?: string) {
   }
 }
 
+/** Insere linha horizontal (`<hr>`) — paridade com HTML/Markdown (`---` / `***`). */
+export function insertRichTextHorizontalRule(editor: HTMLElement | null): void {
+  if (!editor) return;
+  focusEditor(editor);
+  const before = editor.innerHTML;
+  try {
+    document.execCommand("insertHorizontalRule");
+  } catch {
+    /* ignore */
+  }
+  if (editor.innerHTML !== before && /<hr\b/i.test(editor.innerHTML)) return;
+  insertRichTextHtmlFragment(editor, "<hr>");
+}
+
 /** Insere HTML na seleção (fallback quando execCommand insertHTML é no-op, ex. jsdom). */
 export function insertRichTextHtmlFragment(editor: HTMLElement | null, html: string): void {
   if (!editor || !html) return;

@@ -24,6 +24,7 @@ export const RICH_TEXT_HTML_SUGGEST_TAGS = [
   "h4",
   "h5",
   "h6",
+  "hr",
   "i",
   "ins",
   "li",
@@ -85,7 +86,7 @@ export const RICH_TEXT_CSS_VALUE_HINTS: Record<string, readonly string[]> = {
   border: ["1px solid #c5cdd6", "none"],
 };
 
-const VOID_TAGS = new Set(["br", "col"]);
+const VOID_TAGS = new Set(["br", "col", "hr", "img"]);
 const TAG_SET = new Set<string>(RICH_TEXT_HTML_SUGGEST_TAGS);
 const CSS_PROP_SET = new Set<string>(RICH_TEXT_CSS_SUGGEST_PROPERTIES);
 

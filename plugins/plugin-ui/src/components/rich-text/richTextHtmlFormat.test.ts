@@ -53,6 +53,14 @@ describe("stripDangerousRichTextTags", () => {
   it("envolve texto solto em parágrafo ao sanitizar", () => {
     const cleaned = stripDangerousRichTextTags("<p></p>\nsdsdsdsdsd\n<hr>");
     expect(cleaned).toMatch(/<p[^>]*>\s*sdsdsdsdsd\s*<\/p>/i);
+    expect(cleaned.toLowerCase()).toContain("<hr");
+  });
+
+  it("preserva <hr> entre blocos", () => {
+    const cleaned = stripDangerousRichTextTags("<p>a</p><hr><p>b</p>");
+    expect(cleaned.toLowerCase()).toContain("<hr");
+    expect(cleaned).toContain("<p>a</p>");
+    expect(cleaned).toContain("<p>b</p>");
   });
 });
 

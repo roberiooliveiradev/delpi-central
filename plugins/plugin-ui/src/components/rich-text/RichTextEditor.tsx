@@ -18,7 +18,10 @@ import {
   normalizeRichTextLinkUrl,
   unwrapRichTextLink,
 } from "./richTextCommands";
-import { tryDeleteRichTextAtEmphasisBoundary } from "./richTextDeleteBoundary";
+import {
+  tryDeleteRichTextAdjacentVoid,
+  tryDeleteRichTextAtEmphasisBoundary,
+} from "./richTextDeleteBoundary";
 import { prettyPrintRichTextHtml, stripDangerousRichTextTags } from "./richTextHtmlFormat";
 import { RICH_TEXT_LABELS } from "./richTextLabels";
 import {
@@ -366,7 +369,10 @@ export function RichTextEditor({
           if (!editorEl) return;
           const direction =
             inputType === "deleteContentBackward" ? "backward" : "forward";
-          if (tryDeleteRichTextAtEmphasisBoundary(editorEl, direction)) {
+          if (
+            tryDeleteRichTextAdjacentVoid(editorEl, direction) ||
+            tryDeleteRichTextAtEmphasisBoundary(editorEl, direction)
+          ) {
             event.preventDefault();
             emitChange();
             syncActiveLink();

@@ -41,6 +41,12 @@ turndown.addRule("underline", {
   replacement: (content) => `<u>${content}</u>`,
 });
 
+/** Linha horizontal → --- (paridade com escrita Markdown / visual / HTML). */
+turndown.addRule("horizontalRule", {
+  filter: "hr",
+  replacement: () => "\n\n---\n\n",
+});
+
 /** Parágrafo com text-align ≠ left — HTML island (mesmo padrão underline/font-size). */
 turndown.addRule("paragraphTextAlign", {
   filter: (node) => {

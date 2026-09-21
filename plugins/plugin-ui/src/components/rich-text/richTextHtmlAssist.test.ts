@@ -36,6 +36,11 @@ describe("listRichTextHtmlTagSuggestions", () => {
     expect(listRichTextHtmlTagSuggestions("t")).toContain("td");
     expect(listRichTextHtmlTagSuggestions("xyz")).toEqual([]);
   });
+
+  it("inclui hr (paridade com visual/Markdown e bleach)", () => {
+    expect(listRichTextHtmlTagSuggestions("h")).toContain("hr");
+    expect(listRichTextHtmlTagSuggestions("hr")).toEqual(["hr"]);
+  });
 });
 
 describe("CSS suggestions", () => {
@@ -105,6 +110,7 @@ describe("applyRichTextHtmlAutoClose", () => {
 
   it("não fecha void tags", () => {
     expect(applyRichTextHtmlAutoClose("<br>", 4)).toBeNull();
+    expect(applyRichTextHtmlAutoClose("<hr>", 4)).toBeNull();
   });
 
   it("não duplica fechamento já presente", () => {

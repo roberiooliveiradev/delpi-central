@@ -29,6 +29,7 @@ describe("RichTextEditor", () => {
       screen.getByRole("button", { name: RICH_TEXT_LABELS.highlightColor }).closest(".delpi-ui-help-tooltip--wrap"),
     ).toBeTruthy();
     expect(toolbarButton(RICH_TEXT_LABELS.table)).toBeTruthy();
+    expect(toolbarButton(RICH_TEXT_LABELS.horizontalRule)).toBeTruthy();
     expect(toolbarButton(RICH_TEXT_LABELS.bold)).toBeTruthy();
     expect(toolbarButton(RICH_TEXT_LABELS.sourceHtml)).toBeTruthy();
     expect(toolbarButton(RICH_TEXT_LABELS.sourceMarkdown)).toBeTruthy();

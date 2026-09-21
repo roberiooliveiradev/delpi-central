@@ -28,6 +28,9 @@ export const RICH_TEXT_LABELS = {
   link: "Inserir link",
   table: "Inserir tabela",
   tableCatalog: "Catálogo de tabelas",
+  horizontalRule: "Linha horizontal",
+  horizontalRuleHint:
+    "Insere uma linha divisória — a mesma que <hr> no HTML e --- (ou ***) no Markdown. No visual, Backspace/Delete ao lado da linha remove.",
   heading: "Título (H2)",
   undo: "Desfazer",
   redo: "Refazer",
@@ -47,9 +50,9 @@ export const RICH_TEXT_LABELS = {
   sourceEditor: "Fonte HTML do texto",
   sourceMarkdownEditor: "Fonte Markdown do texto",
   sourceHint:
-    "Digite < para tags e edite style=\"…\" para CSS. Só o allowlist é preservado ao salvar (sem script/CSS global).",
+    "Digite < para tags (inclui hr) e edite style=\"…\" para CSS. Só o allowlist é preservado ao salvar (sem script/CSS global).",
   sourceMarkdownHint:
-    "Edite em Markdown (GFM). Ao voltar ao visual, o conteúdo vira HTML sanitizado. Tabelas/estilos ricos podem simplificar.",
+    "Edite em Markdown (GFM). Use --- ou *** para linha horizontal. Ao voltar ao visual, o conteúdo vira HTML sanitizado. Tabelas/estilos ricos podem simplificar.",
   sourceSuggestList: "Sugestões de HTML e CSS",
   sourceSuggestTag: "tag HTML",
   sourceSuggestCss: "propriedade CSS",

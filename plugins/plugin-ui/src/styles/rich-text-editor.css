@@ -312,6 +312,16 @@
   margin-bottom: 0;
 }
 
+.delpi-ui-rich-text__editor hr,
+.delpi-ui-rich-text--preview hr {
+  display: block;
+  width: 100%;
+  height: 0;
+  margin: 14px 0;
+  border: 0;
+  border-top: 1px solid color-mix(in srgb, var(--delpi-ui-text, #111) 22%, transparent);
+}
+
 .delpi-ui-rich-text__editor a,
 .delpi-ui-rich-text--preview a {
   color: var(--delpi-ui-accent, #089bdb);

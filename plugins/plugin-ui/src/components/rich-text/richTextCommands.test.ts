@@ -5,6 +5,7 @@ import {
   applyRichTextAlign,
   applyRichTextFontSize,
   findRichTextAlignBlock,
+  insertRichTextHorizontalRule,
   isRichTextRangeInEditor,
   normalizeRichTextLinkUrl,
   queryRichTextAlign,
@@ -138,6 +139,28 @@ describe("richTextTable", () => {
     expect(normalized).toContain("delpi-ui-rich-text-table");
     expect(normalized).not.toContain("onclick");
     expect(normalized).not.toContain("<script");
+  });
+});
+
+describe("insertRichTextHorizontalRule", () => {
+  it("insere <hr> no editor", () => {
+    const editor = document.createElement("div");
+    editor.contentEditable = "true";
+    editor.innerHTML = "<p>x</p>";
+    document.body.appendChild(editor);
+
+    const text = editor.querySelector("p")!.firstChild as Text;
+    const selection = window.getSelection()!;
+    const range = document.createRange();
+    range.setStart(text, 1);
+    range.collapse(true);
+    selection.removeAllRanges();
+    selection.addRange(range);
+
+    insertRichTextHorizontalRule(editor);
+    expect(editor.innerHTML.toLowerCase()).toContain("<hr");
+
+    document.body.removeChild(editor);
   });
 });
 

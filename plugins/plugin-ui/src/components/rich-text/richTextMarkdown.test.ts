@@ -62,6 +62,15 @@ describe("markdownToRichTextHtml / richTextHtmlToMarkdown", () => {
     expect(back).toContain("<strong>");
   });
 
+  it("preserva linha horizontal no round-trip visual/HTML/Markdown", () => {
+    const fromMd = markdownToRichTextHtml("antes\n\n---\n\ndepois");
+    expect(fromMd.toLowerCase()).toContain("<hr");
+    const md = richTextHtmlToMarkdown("<p>antes</p><hr><p>depois</p>");
+    expect(md).toMatch(/---|(\* \* \*)/);
+    const back = markdownToRichTextHtml(md);
+    expect(back.toLowerCase()).toContain("<hr");
+  });
+
   it("preserva span de font-size no round-trip markdown", () => {
     const md = richTextHtmlToMarkdown(
       '<p><span style="font-size:18px">hi</span></p>',

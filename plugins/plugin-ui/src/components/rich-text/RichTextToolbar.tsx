@@ -12,6 +12,7 @@ import {
   Link,
   List,
   ListOrdered,
+  Minus,
   Outdent,
   Redo2,
   RemoveFormatting,
@@ -42,6 +43,7 @@ import {
   applyRichTextFontFamily,
   applyRichTextFontSize,
   getRichTextSelectionRange,
+  insertRichTextHorizontalRule,
   queryRichTextAlign,
   queryRichTextCommandState,
   queryRichTextFontSize,
@@ -467,6 +469,14 @@ export function RichTextToolbar({
           onClick={onRequestLink}
         >
           <Link size={15} aria-hidden="true" />
+        </RichTextIconButton>
+        <RichTextIconButton
+          hint={RICH_TEXT_LABELS.horizontalRuleHint}
+          ariaLabel={RICH_TEXT_LABELS.horizontalRule}
+          disabled={formatDisabled}
+          onClick={() => withEditor((editor) => insertRichTextHorizontalRule(editor))}
+        >
+          <Minus size={15} aria-hidden="true" />
         </RichTextIconButton>
         <div ref={tableAnchorRef} className="delpi-ui-rich-text-ribbon__dropdown">
           <RichTextIconButton
