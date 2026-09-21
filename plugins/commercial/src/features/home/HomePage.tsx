@@ -30,11 +30,10 @@ import {
   cmSectionCardClassNames,
   cmSectionLabels,
   CommercialActionButton,
-  CommercialAlertQueue,
   CommercialCatalogSearchBar,
-  CommercialHubChipRow,
+  CommercialEventsSection,
   CommercialLoadingCard,
-  CommercialRouteChip,
+  CommercialRecentAccessStrip,
   CommercialScopeChipBar,
   CommercialSectionRouteCard,
   CommercialWorklistItem,
@@ -495,12 +494,12 @@ export function HomePage({
     <section className="cm-page-stack cm-home-layout" aria-label="Início">
       <div className="cm-home-stack">
         {showEventsPanel ? (
-          <SectionCard
+          <CommercialEventsSection
             title={EVENTS.title}
             subtitle={EVENTS.subtitle}
             hint={CM_HELP.home.alerts}
-            classNames={cmSectionCardClassNames}
-            labels={cmSectionLabels}
+            items={alerts}
+            listAriaLabel={EVENTS.listAriaLabel}
             actions={
               <>
                 <CommercialActionButton
@@ -521,7 +520,6 @@ export function HomePage({
             }
           >
             <div className="cm-home-events-panel">
-              {alerts.length > 0 ? <CommercialAlertQueue items={alerts} /> : null}
               {showWorklist && worklist.items.length > 0 ? (
                 <>
                   {queueChips.length > 0 ? (
@@ -564,7 +562,7 @@ export function HomePage({
                 </>
               ) : null}
             </div>
-          </SectionCard>
+          </CommercialEventsSection>
         ) : null}
 
         {showQueueOk ? (
@@ -614,58 +612,24 @@ export function HomePage({
               </p>
             ) : null}
 
-            {favorites.length > 0 ? (
-              <CommercialHubChipRow
-                label={FEATURES.favoritesTitle}
-                aria-label={FEATURES.favoritesTitle}
-              >
-                {favorites.map((item) => {
-                  const label =
-                    hubRouteLabelByView(item.viewId, item.search) ?? item.viewId;
-                  return (
-                    <CommercialRouteChip
-                      key={homeFavoriteKey(item)}
-                      tone="pinned"
-                      label={label}
-                      onNavigate={() =>
-                        navigateRoute({
-                          viewId: item.viewId,
-                          search: item.search,
-                          label,
-                        })
-                      }
-                      onRemove={() => {
-                        void toggleFavorite(item);
-                      }}
-                      removeLabel={FEATURES.unpinLabel}
-                    />
-                  );
-                })}
-              </CommercialHubChipRow>
-            ) : null}
-
-            {visibleRecents.length > 0 ? (
-              <CommercialHubChipRow
-                label={FEATURES.recentsTitle}
-                aria-label={FEATURES.recentsTitle}
-              >
-                {visibleRecents.map((item) => (
-                  <CommercialRouteChip
-                    key={`${homeFavoriteKey(item)}-${item.at}`}
-                    tone="recent"
-                    label={item.label}
-                    leadingIcon={resolveHubRouteIcon(item.viewId)}
-                    onNavigate={() =>
-                      navigateRoute({
-                        viewId: item.viewId,
-                        search: item.search,
-                        label: item.label,
-                      })
-                    }
-                  />
-                ))}
-              </CommercialHubChipRow>
-            ) : null}
+            <CommercialRecentAccessStrip
+              label={FEATURES.recentsTitle}
+              aria-label={FEATURES.recentsTitle}
+              items={visibleRecents.map((item) => ({
+                id: homeFavoriteKey(item),
+                label: item.label,
+                icon: resolveHubRouteIcon(item.viewId),
+              }))}
+              onSelect={(id: string) => {
+                const item = visibleRecents.find((entry) => homeFavoriteKey(entry) === id);
+                if (!item) return;
+                navigateRoute({
+                  viewId: item.viewId,
+                  search: item.search,
+                  label: item.label,
+                });
+              }}
+            />
 
             {sections.length === 0 ? (
               <EmptyState classNames={cmEmptyStateClassNames} defaultMessage={FEATURES.empty} />

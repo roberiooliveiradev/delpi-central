@@ -34,9 +34,10 @@ describe("home hub stack", () => {
     assert.match(home, /cm-home-stack/);
     assert.match(home, /CommercialSectionRouteCard/);
     assert.match(home, /CommercialCatalogSearchBar/);
-    assert.match(home, /CommercialHubChipRow/);
-    assert.match(home, /CommercialRouteChip/);
-    assert.match(home, /leadingIcon/);
+    assert.match(home, /CommercialEventsSection/);
+    assert.match(home, /CommercialRecentAccessStrip/);
+    assert.doesNotMatch(home, /FEATURES\.favoritesTitle/);
+    assert.match(home, /icon: resolveHubRouteIcon/);
     assert.match(home, /cm-home-queue-ok/);
     assert.match(home, /queueOkTitle/);
     assert.match(home, /cm-home-sections-grid/);
@@ -73,6 +74,8 @@ describe("home hub stack", () => {
     assert.match(ui, /CommercialCatalogSearchBar/);
     assert.match(ui, /CommercialHubChipRow/);
     assert.match(ui, /CommercialRouteChip/);
+    assert.match(ui, /CommercialEventsSection/);
+    assert.match(ui, /CommercialRecentAccessStrip/);
     assert.match(ui, /CommercialCommandPalette/);
     assert.match(ui, /CommercialTopBarSearchTrigger/);
     assert.match(ui, /createDashboardTopBarSearchTrigger/);

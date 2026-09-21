@@ -25,6 +25,8 @@ import {
   createDashboardUserManual,
   createDashboardHubChipRow,
   createDashboardRouteChip,
+  createDashboardEventsSection,
+  createDashboardRecentAccessStrip,
   createDashboardScopeChipBar,
   createDashboardSelectField,
   createDashboardTextAreaField,
@@ -429,6 +431,14 @@ export const CommercialLoadingCard = createDashboardLoadingActivityCard({
 });
 
 export const CommercialAlertQueue = createDashboardAlertQueue({ prefix: UI_PREFIX });
+export const CommercialEventsSection = createDashboardEventsSection({
+  prefix: UI_PREFIX,
+  labels: cmSectionLabels,
+  sectionClassNames: cmSectionCardClassNames,
+});
+export const CommercialRecentAccessStrip = createDashboardRecentAccessStrip({
+  prefix: UI_PREFIX,
+});
 export const CommercialScopeChipBar = createDashboardScopeChipBar({ prefix: UI_PREFIX });
 export const CommercialWorklistItem = createDashboardWorklistItem({ prefix: UI_PREFIX });
 export const CommercialActivityTimeline = createTimeline({ prefix: UI_PREFIX });
