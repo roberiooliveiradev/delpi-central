@@ -19,7 +19,7 @@ H9  Página do chamado                      TARGET
 H10 Solução, reabrir, satisfação           CONSOLE  (E10.S1 — sem operação HLAPI do solicitante)
 H11 Condicionais (TTR, observer)           TARGET   Forms e vínculo riscados (H6)
 H12 Upload de arquivo novo                 BLOQUEADO até decisão + API
-H13 Listagem dinâmica (modelo → builder)   TARGET   prep de componentes autorizada
+H13 Listagem dinâmica (modelo → builder)   ENTREGUE  AND builder + multi-sort + prefs localStorage; OR/export/massa CONSOLE
 —   Bancada / outro itemtype / HD-011      FORA
 ```
 
@@ -133,8 +133,8 @@ O GLPI central tem builder de critérios, multi-sort, preferência de colunas e 
 | Entrega | Fonte | HD |
 |---|---|---|
 | Modelo declarativo + tabela/toolbar receptáculos (sem refatorar depois) | 13 G-50…G-53 | HD-027 |
-| Builder AND/OR + multi-sort na UI do solicitante | 13 G-54 | HD-027 |
-| Preferência de colunas (visão pessoal no host DELPI) | 13 G-55 | HD-027 |
+| Builder AND (+ regra) + multi-sort na UI do solicitante; OR/grupo aninhado no console/evolução | 13 G-54 | HD-027 |
+| Preferência de colunas (localStorage no host DELPI) | 13 G-55 | HD-027 |
 | Export / massa / mapa / saved search | G-56 | — (CONSOLE) |
 
 Ordem: componentes e tipos **já** no MFE; builder e prefs só depois de H7 estável e contrato RSQL ADDITIVE.

@@ -366,6 +366,10 @@ describe("ticket list filters", () => {
 
   it("ordena pela coluna no helpdesk e inverte a mesma coluna", () => {
     expect(parseTicketSort("updated_at:desc")).toEqual({ key: "updated_at", direction: "desc" });
+    expect(parseTicketSort("updated_at:desc,title:asc")).toEqual({
+      key: "updated_at",
+      direction: "desc",
+    });
     expect(nextTicketSort("updated_at:desc", "updated_at")).toBe("updated_at:asc");
     expect(nextTicketSort("updated_at:desc", "title")).toBe("title:asc");
     expect(nextTicketSort("title:asc", "created_at")).toBe("created_at:desc");

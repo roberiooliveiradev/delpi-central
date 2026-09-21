@@ -508,15 +508,26 @@ def _day(value: str, field: str) -> str:
 
 
 def _sort_clause(value: str) -> str:
-    raw = (value or "updated_at:desc").strip()
-    field, _, direction = raw.partition(":")
-    mapped = _SORT_FIELDS.get(field)
-    if mapped is None:
+    chunks = [chunk.strip() for chunk in (value or "updated_at:desc").split(",") if chunk.strip()]
+    if not chunks:
+        chunks = ["updated_at:desc"]
+    if len(chunks) > 3:
         raise GlpiValidation("sort inválido.")
-    order = direction.strip().lower() or "desc"
-    if order not in {"asc", "desc"}:
-        raise GlpiValidation("sort inválido.")
-    return f"{mapped}:{order}"
+    parts: list[str] = []
+    seen: set[str] = set()
+    for raw in chunks:
+        field, _, direction = raw.partition(":")
+        mapped = _SORT_FIELDS.get(field.strip())
+        if mapped is None:
+            raise GlpiValidation("sort inválido.")
+        if mapped in seen:
+            raise GlpiValidation("sort inválido.")
+        order = direction.strip().lower() or "desc"
+        if order not in {"asc", "desc"}:
+            raise GlpiValidation("sort inválido.")
+        seen.add(mapped)
+        parts.append(f"{mapped}:{order}")
+    return ",".join(parts)
 
 
 def _helpdesk_visible(row: dict) -> bool:

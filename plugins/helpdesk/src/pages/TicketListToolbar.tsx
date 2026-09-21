@@ -1,23 +1,36 @@
-import { Columns3, RefreshCw } from "lucide-react";
+import { RefreshCw } from "lucide-react";
+import type { ReactNode } from "react";
 
 import type { TicketListViewModel } from "../presentation/ticketListViewModel";
 import { HelpdeskIconButton } from "../ui/helpdeskUi";
 
 /**
- * List chrome slots for GLPI-parity listing (chips, sort summary, column prefs, refresh).
- * Export / map / bulk actions stay console — slots are typed but not rendered until H13.
+ * List chrome: chips, sort summary, column prefs slot, refresh.
+ * Export / map / bulk stay console.
  */
 export function TicketListToolbar({
   viewModel,
   onRefresh,
-  onOpenColumnPreferences,
+  columnPreferencesSlot,
+  sortBuilderSlot,
+  filterBuilderToggle,
 }: {
   viewModel: TicketListViewModel;
   onRefresh?: () => void;
-  onOpenColumnPreferences?: () => void;
+  columnPreferencesSlot?: ReactNode;
+  sortBuilderSlot?: ReactNode;
+  filterBuilderToggle?: ReactNode;
 }) {
   const hasChips = viewModel.activeFilterLabels.length > 0 || Boolean(viewModel.primarySortLabel);
-  if (!hasChips && !onRefresh && !onOpenColumnPreferences) return null;
+  if (
+    !hasChips &&
+    !onRefresh &&
+    !columnPreferencesSlot &&
+    !filterBuilderToggle &&
+    !sortBuilderSlot
+  ) {
+    return null;
+  }
 
   return (
     <div className="helpdesk-list-toolbar" role="region" aria-label="Recorte da lista">
@@ -34,17 +47,11 @@ export function TicketListToolbar({
         ) : null}
       </div>
       <div className="helpdesk-list-toolbar__actions">
-        {onOpenColumnPreferences ? (
-          <HelpdeskIconButton
-            aria-label="Selecionar colunas da lista"
-            title="Selecionar colunas da lista"
-            onClick={onOpenColumnPreferences}
-          >
-            <Columns3 size={16} aria-hidden />
-          </HelpdeskIconButton>
-        ) : null}
+        {filterBuilderToggle}
+        {sortBuilderSlot}
+        {columnPreferencesSlot}
         {onRefresh ? (
-          <HelpdeskIconButton aria-label="Atualizar lista" title="Atualizar lista" onClick={onRefresh}>
+          <HelpdeskIconButton aria-label="Atualizar lista" onClick={onRefresh}>
             <RefreshCw size={16} aria-hidden />
           </HelpdeskIconButton>
         ) : null}

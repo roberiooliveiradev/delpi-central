@@ -11,7 +11,7 @@
 import type { TicketSummary } from "../api/helpdeskApi";
 import {
   absoluteDateTimeLabel,
-  parseTicketSort,
+  TICKET_LIST_SORTABLE_COLUMNS,
   type TicketListFilters,
   type TicketListSortKey,
 } from "./ticketView";
@@ -202,8 +202,8 @@ export function ticketListViewModelFromFilters(
   push("created_from", filters.created_from, "gte");
   push("created_to", filters.created_to, "lte");
 
-  const parsed = parseTicketSort(filters.sort);
-  const sorts: TicketListSortLevel[] = [{ field: parsed.key, direction: parsed.direction }];
+  const parsedLevels = parseTicketSortLevels(filters.sort);
+  const sorts: TicketListSortLevel[] = parsedLevels;
   const activeFilterLabels: string[] = [];
   if (filters.status.trim()) {
     activeFilterLabels.push(`Status: ${STATUS_FILTER_LABELS[filters.status] ?? filters.status}`);
@@ -214,6 +214,12 @@ export function ticketListViewModelFromFilters(
   if (filters.updated_from.trim() || filters.updated_to.trim()) activeFilterLabels.push("Atualizado");
   if (filters.created_from.trim() || filters.created_to.trim()) activeFilterLabels.push("Aberto");
 
+  const primary = sorts[0] ?? { field: "updated_at" as const, direction: "desc" as const };
+  const sortLabel =
+    sorts.length > 1
+      ? `Ordenado por ${SORT_LABELS[primary.field] ?? primary.field} (+${sorts.length - 1})`
+      : `Ordenado por ${SORT_LABELS[primary.field] ?? primary.field}`;
+
   return {
     filterRoot: { id: "root", combinator: "and", rules, groups: [] },
     sorts,
@@ -222,7 +228,7 @@ export function ticketListViewModelFromFilters(
     page: filters.page,
     pageSize: filters.page_size,
     activeFilterLabels,
-    primarySortLabel: `Ordenado por ${SORT_LABELS[parsed.key] ?? parsed.key}`,
+    primarySortLabel: sortLabel,
   };
 }
 
@@ -260,4 +266,138 @@ export function cellTextForColumn(row: TicketSummary, key: TicketListColumnKey):
 
 export function columnDefinition(key: TicketListColumnKey): TicketListColumnDefinition | undefined {
   return COLUMN_BY_KEY.get(key);
+}
+
+const FILTER_FIELD_LABELS: Record<TicketListFilterFieldKey, string> = {
+  q: "Busca",
+  status: "Status",
+  urgency_id: "Urgência",
+  category_id: "Categoria",
+  updated_from: "Atualizado de",
+  updated_to: "Atualizado até",
+  created_from: "Aberto de",
+  created_to: "Aberto até",
+  solved_from: "Resolvido de",
+  solved_to: "Resolvido até",
+};
+
+/** Fields the solicitante builder can send today (flat ADDITIVE BFF query). */
+export const TICKET_LIST_BUILDER_FIELDS: readonly {
+  key: TicketListFilterFieldKey;
+  label: string;
+  input: "text" | "status" | "urgency" | "category" | "date";
+  operator: ListFilterOperator;
+}[] = [
+  { key: "q", label: FILTER_FIELD_LABELS.q, input: "text", operator: "contains" },
+  { key: "status", label: FILTER_FIELD_LABELS.status, input: "status", operator: "eq" },
+  { key: "urgency_id", label: FILTER_FIELD_LABELS.urgency_id, input: "urgency", operator: "eq" },
+  { key: "category_id", label: FILTER_FIELD_LABELS.category_id, input: "category", operator: "eq" },
+  { key: "updated_from", label: FILTER_FIELD_LABELS.updated_from, input: "date", operator: "gte" },
+  { key: "updated_to", label: FILTER_FIELD_LABELS.updated_to, input: "date", operator: "lte" },
+  { key: "created_from", label: FILTER_FIELD_LABELS.created_from, input: "date", operator: "gte" },
+  { key: "created_to", label: FILTER_FIELD_LABELS.created_to, input: "date", operator: "lte" },
+] as const;
+
+export function newFilterRuleId(): string {
+  return `rule-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
+}
+
+export function parseTicketSortLevels(sort: string): TicketListSortLevel[] {
+  const chunks = String(sort || "updated_at:desc")
+    .split(",")
+    .map((chunk) => chunk.trim())
+    .filter(Boolean)
+    .slice(0, 3);
+  if (chunks.length === 0) return [{ field: "updated_at", direction: "desc" }];
+  const levels: TicketListSortLevel[] = [];
+  const seen = new Set<string>();
+  for (const chunk of chunks) {
+    const [fieldRaw, directionRaw] = chunk.split(":");
+    const fieldCandidate = (fieldRaw || "updated_at").trim();
+    if (!TICKET_LIST_SORTABLE_COLUMNS.includes(fieldCandidate as TicketListSortKey)) continue;
+    const field = fieldCandidate as TicketListSortKey;
+    const direction = directionRaw === "asc" ? "asc" : "desc";
+    if (seen.has(field)) continue;
+    seen.add(field);
+    levels.push({ field, direction });
+  }
+  return levels.length > 0 ? levels : [{ field: "updated_at", direction: "desc" }];
+}
+
+export function formatTicketSortLevels(levels: TicketListSortLevel[]): string {
+  const cleaned = levels
+    .filter((level) => Boolean(level.field))
+    .slice(0, 3)
+    .map((level) => `${level.field}:${level.direction === "asc" ? "asc" : "desc"}`);
+  return cleaned.length > 0 ? cleaned.join(",") : "updated_at:desc";
+}
+
+/** Flattens AND rules from the builder into the flat URL filters (OR groups not serialized). */
+export function ticketListFiltersFromFilterGroup(
+  group: TicketListFilterGroup,
+  base: TicketListFilters,
+): TicketListFilters {
+  const next: TicketListFilters = {
+    ...base,
+    q: "",
+    status: "",
+    urgency_id: "",
+    category_id: "",
+    updated_from: "",
+    updated_to: "",
+    created_from: "",
+    created_to: "",
+    page: 1,
+  };
+  const applyRule = (rule: TicketListFilterRule) => {
+    const value = rule.value.trim();
+    if (!value) return;
+    switch (rule.field) {
+      case "q":
+        next.q = value;
+        break;
+      case "status":
+        next.status = value;
+        break;
+      case "urgency_id":
+        next.urgency_id = value;
+        break;
+      case "category_id":
+        next.category_id = value;
+        break;
+      case "updated_from":
+        next.updated_from = value;
+        break;
+      case "updated_to":
+        next.updated_to = value;
+        break;
+      case "created_from":
+        next.created_from = value;
+        break;
+      case "created_to":
+        next.created_to = value;
+        break;
+      default:
+        break;
+    }
+  };
+  for (const rule of group.rules) applyRule(rule);
+  for (const nested of group.groups) {
+    if (nested.combinator !== "and") continue;
+    for (const rule of nested.rules) applyRule(rule);
+  }
+  return next;
+}
+
+export function preferencesFromVisibility(
+  visibility: Record<string, boolean>,
+  order: string[],
+): TicketListColumnPreference[] {
+  const solicitante = TICKET_LIST_COLUMN_CATALOG.filter((column) => column.solicitante);
+  const orderIndex = new Map(order.map((key, index) => [key, index]));
+  return solicitante.map((column, index) => ({
+    key: column.key,
+    visible: column.fixed ? true : visibility[column.key] !== false,
+    order: orderIndex.get(column.key) ?? index,
+  }));
 }

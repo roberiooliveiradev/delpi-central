@@ -118,6 +118,92 @@
   margin-inline-start: auto;
 }
 
+.dashboard-helpdesk .helpdesk-filter-builder,
+.dashboard-helpdesk .helpdesk-sort-builder {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--helpdesk-border);
+  border-radius: 0.75rem;
+  background: color-mix(in srgb, var(--helpdesk-surface) 92%, transparent);
+}
+
+.dashboard-helpdesk .helpdesk-filter-builder__header,
+.dashboard-helpdesk .helpdesk-sort-builder__header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dashboard-helpdesk .helpdesk-filter-builder__title,
+.dashboard-helpdesk .helpdesk-sort-builder__title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.dashboard-helpdesk .helpdesk-filter-builder__hint,
+.dashboard-helpdesk .helpdesk-sort-builder__hint {
+  margin: 0;
+  color: var(--helpdesk-muted, #64748b);
+  font-size: 0.85rem;
+}
+
+.dashboard-helpdesk .helpdesk-filter-builder__rules,
+.dashboard-helpdesk .helpdesk-sort-builder__levels {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.dashboard-helpdesk .helpdesk-filter-builder__rule,
+.dashboard-helpdesk .helpdesk-sort-builder__level {
+  display: grid;
+  grid-template-columns: minmax(8rem, 1.1fr) minmax(7rem, 0.9fr) minmax(8rem, 1.2fr) auto;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.dashboard-helpdesk .helpdesk-filter-builder__rule[data-kind="text"],
+.dashboard-helpdesk .helpdesk-filter-builder__rule[data-kind="date"] {
+  grid-template-columns: minmax(8rem, 1.1fr) minmax(8rem, 1.2fr) auto;
+}
+
+.dashboard-helpdesk .helpdesk-sort-builder__level {
+  grid-template-columns: 2.5rem minmax(8rem, 1.2fr) minmax(7rem, 0.9fr) auto;
+}
+
+.dashboard-helpdesk .helpdesk-sort-builder__ordinal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--helpdesk-accent, #0f766e) 18%, transparent);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.dashboard-helpdesk .helpdesk-filter-builder__actions,
+.dashboard-helpdesk .helpdesk-sort-builder__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+@media (max-width: 768px) {
+  .dashboard-helpdesk .helpdesk-filter-builder__rule,
+  .dashboard-helpdesk .helpdesk-filter-builder__rule[data-kind="text"],
+  .dashboard-helpdesk .helpdesk-filter-builder__rule[data-kind="date"],
+  .dashboard-helpdesk .helpdesk-sort-builder__level {
+    grid-template-columns: 1fr;
+  }
+}
+
 .dashboard-helpdesk .helpdesk-record-list {
   display: flex;
   flex-direction: column;

@@ -1,6 +1,10 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { ActionButton, FilePreviewModal } from "@delpi/plugin-ui/index";
-import { AlignLeft, ChevronLeft, ChevronRight, FilterX, FolderTree, Gauge, Plus, Send, TicketPlus, Type } from "lucide-react";
+import {
+  ActionButton,
+  FilePreviewModal,
+  TableColumnVisibilityMenu,
+} from "@delpi/plugin-ui/index";
+import { AlignLeft, ArrowUpDown, ChevronLeft, ChevronRight, FilterX, FolderTree, Gauge, ListFilter, Plus, Send, TicketPlus, Type } from "lucide-react";
 
 import {
   HelpdeskApiError,
@@ -39,8 +43,19 @@ import {
 } from "../presentation/ticketView";
 import { navigateHelpdesk, type HelpdeskRoute } from "../routing/helpdeskRoute";
 import { useMyPersonProfilePhoto } from "../presentation/useMyPersonProfilePhoto";
-import { ticketListViewModelFromFilters } from "../presentation/ticketListViewModel";
+import {
+  emptyFilterGroup,
+  formatTicketSortLevels,
+  parseTicketSortLevels,
+  ticketListFiltersFromFilterGroup,
+  ticketListViewModelFromFilters,
+  type TicketListFilterGroup,
+  type TicketListSortLevel,
+} from "../presentation/ticketListViewModel";
+import { useHelpdeskTicketListColumns } from "../presentation/useHelpdeskTicketListColumns";
 import { TicketAttachmentPreview } from "./TicketAttachmentPreview";
+import { TicketListFilterBuilder } from "./TicketListFilterBuilder";
+import { TicketListSortBuilder } from "./TicketListSortBuilder";
 import { TicketListTable } from "./TicketListTable";
 import { TicketListToolbar } from "./TicketListToolbar";
 import {
@@ -119,6 +134,22 @@ function TicketListPage() {
   const [errorCode, setErrorCode] = useState<string | null>(null);
   const [errorText, setErrorText] = useState<string | null>(null);
   const [linking, setLinking] = useState(false);
+  const [showFilterBuilder, setShowFilterBuilder] = useState(false);
+  const [showSortBuilder, setShowSortBuilder] = useState(false);
+  const [builderGroup, setBuilderGroup] = useState<TicketListFilterGroup>(() =>
+    ticketListViewModelFromFilters(filters).filterRoot,
+  );
+  const [sortDraft, setSortDraft] = useState<TicketListSortLevel[]>(() =>
+    parseTicketSortLevels(filters.sort),
+  );
+  const {
+    columnPreferences,
+    menuColumns,
+    visibility,
+    setColumnVisible,
+    reorderColumns,
+    resetPreferences,
+  } = useHelpdeskTicketListColumns();
 
   function commitFilters(next: TicketListFilters) {
     setFilters(next);
@@ -197,6 +228,12 @@ function TicketListPage() {
     filterActive: isTicketFilterActive(filters),
   });
   const filterActive = isTicketFilterActive(filters);
+  const listViewModel = ticketListViewModelFromFilters(filters, columnPreferences);
+
+  useEffect(() => {
+    setBuilderGroup(ticketListViewModelFromFilters(filters).filterRoot);
+    setSortDraft(parseTicketSortLevels(filters.sort));
+  }, [filters]);
 
   return (
     <HelpdeskPageStack>
@@ -310,12 +347,83 @@ function TicketListPage() {
         )}
         {view === "link" || view === "forbidden" ? null : (
           <TicketListToolbar
-            viewModel={ticketListViewModelFromFilters(filters)}
+            viewModel={listViewModel}
             onRefresh={() => {
               void load(filters);
             }}
+            filterBuilderToggle={
+              <HelpdeskIconButton
+                aria-label={showFilterBuilder ? "Fechar construtor de filtros" : "Abrir construtor de filtros"}
+                onClick={() => {
+                  setShowFilterBuilder((open) => {
+                    if (!open) {
+                      setBuilderGroup(ticketListViewModelFromFilters(filters, columnPreferences).filterRoot);
+                    }
+                    return !open;
+                  });
+                  setShowSortBuilder(false);
+                }}
+              >
+                <ListFilter size={16} aria-hidden />
+              </HelpdeskIconButton>
+            }
+            sortBuilderSlot={
+              <HelpdeskIconButton
+                aria-label={showSortBuilder ? "Fechar ordenação" : "Ordenação em níveis"}
+                onClick={() => {
+                  setShowSortBuilder((open) => {
+                    if (!open) setSortDraft(parseTicketSortLevels(filters.sort));
+                    return !open;
+                  });
+                  setShowFilterBuilder(false);
+                }}
+              >
+                <ArrowUpDown size={16} aria-hidden />
+              </HelpdeskIconButton>
+            }
+            columnPreferencesSlot={
+              <TableColumnVisibilityMenu
+                columns={menuColumns}
+                visibility={visibility}
+                onToggleColumn={setColumnVisible}
+                onReset={resetPreferences}
+                onReorderColumns={reorderColumns}
+                labels={{
+                  trigger: "Colunas",
+                  panelTitle: "Colunas da lista",
+                  reset: "Restaurar padrão",
+                  hint: "A preferência fica neste navegador.",
+                  columnAriaLabel: (label) => `Mostrar coluna ${label}`,
+                }}
+              />
+            }
           />
         )}
+        {showFilterBuilder && view !== "link" && view !== "forbidden" ? (
+          <TicketListFilterBuilder
+            group={builderGroup}
+            onChange={setBuilderGroup}
+            urgencies={urgencies}
+            categories={categories}
+            onClear={() => setBuilderGroup(emptyFilterGroup())}
+            onApply={() => {
+              const next = ticketListFiltersFromFilterGroup(builderGroup, filters);
+              setQDraft(next.q);
+              commitFilters(next);
+              setShowFilterBuilder(false);
+            }}
+          />
+        ) : null}
+        {showSortBuilder && view !== "link" && view !== "forbidden" ? (
+          <TicketListSortBuilder
+            levels={sortDraft}
+            onChange={setSortDraft}
+            onApply={() => {
+              commitFilters({ ...filters, sort: formatTicketSortLevels(sortDraft), page: 1 });
+              setShowSortBuilder(false);
+            }}
+          />
+        ) : null}
         {view === "loading" ? <HelpdeskLoadingState /> : null}
         {view === "forbidden" || view === "unavailable" || view === "error" ? (
           <HelpdeskStateBanner variant="error">{errorText}</HelpdeskStateBanner>
@@ -354,6 +462,7 @@ function TicketListPage() {
             items={items}
             loading={loading}
             sort={parseTicketSort(filters.sort)}
+            columnPreferences={columnPreferences}
             onSortChange={(columnKey) =>
               commitFilters({ ...filters, sort: nextTicketSort(filters.sort, columnKey), page: 1 })
             }

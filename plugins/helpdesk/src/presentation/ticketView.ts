@@ -154,7 +154,8 @@ export type TicketListSortKey = (typeof TICKET_LIST_SORTABLE_COLUMNS)[number];
 const DESC_FIRST_SORT_KEYS = new Set<TicketListSortKey>(["created_at", "updated_at", "solved_at"]);
 
 export function parseTicketSort(sort: string): { key: TicketListSortKey; direction: "asc" | "desc" } {
-  const [field, direction] = (sort || "updated_at:desc").split(":");
+  const primary = (sort || "updated_at:desc").split(",")[0]?.trim() || "updated_at:desc";
+  const [field, direction] = primary.split(":");
   const key = TICKET_LIST_SORTABLE_COLUMNS.includes(field as TicketListSortKey)
     ? (field as TicketListSortKey)
     : "updated_at";

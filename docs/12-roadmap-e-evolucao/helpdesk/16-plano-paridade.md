@@ -1,6 +1,6 @@
 # 16 — Plano de paridade do solicitante
 
-> **Status:** em execução. **E8–E12** e **E13.S1** entregues; **E13.S2** (builder) no plano.
+> **Status:** em execução. **E8–E12** e **E13.S1–E13.S2** entregues; verify-final da paridade no plano.
 > **Não altera** [`06-plano-execucao.md`](./06-plano-execucao.md) (`E1…E5`).
 > **Ondas:** [`05-roadmap.md`](./05-roadmap.md) H6…H13.
 > **Inventários:** [`12`](./12-conteudo-da-mensagem.md) · [`13`](./13-listagem-de-chamados.md) · [`14`](./14-pagina-e-estados-do-chamado.md) · [`15`](./15-capacidades-glpi.md).
@@ -38,7 +38,7 @@ O colaborador passa a ver e gravar no Meus Chamados de TI o que o GLPI já entre
 | RQ-11 | Ajuda no mesmo entregável | HERDADO_POR_SOLUCAO_TRANSVERSAL cada S user-facing |
 | RQ-12 | Bancada / Change / entidade / API legada | FORA_DO_ESCOPO_COM_JUSTIFICATIVA |
 | RQ-13 | H3 no ledger | **ATENDIDO** E6.S0 — ids 1120 / 593 |
-| RQ-14 | Listagem dinâmica (modelo agora; builder depois) | **ATENDIDO** E13.S1 (prep); E13.S2 no plano |
+| RQ-14 | Listagem dinâmica (modelo agora; builder depois) | **ATENDIDO** E13.S1 + E13.S2 |
 
 ## Evidências e hipóteses
 
@@ -302,7 +302,8 @@ Owner do corpo e do status: helpdesk-api. Owner da bolha/editor: plugin-ui. MFE 
 - **Não fazer:** saved search GLPI, export, massa, mapa, entidade.
 - **Deps:** E13.S1.
 - **Pronto:** ajuda descreve o builder; F5 mantém recorte.
-- **Commit:** a definir na execução.
+- **Commit:** `feat(helpdesk): entrega o construtor de filtros e as preferências de coluna.`
+- **Estado:** entregue (AND na URL; OU/grupos aninhados ficam CONSOLE/evolução; prefs via `localStorage` do kit).
 
 ---
 

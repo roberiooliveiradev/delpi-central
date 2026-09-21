@@ -6,7 +6,10 @@ import {
 } from "./ticketView";
 import {
   defaultTicketListColumnPreferences,
+  formatTicketSortLevels,
+  parseTicketSortLevels,
   resolveVisibleColumns,
+  ticketListFiltersFromFilterGroup,
   ticketListViewModelFromFilters,
 } from "./ticketListViewModel";
 
@@ -48,5 +51,71 @@ describe("resolveVisibleColumns", () => {
       column.key === "urgency" ? { ...column, visible: false } : column,
     );
     expect(resolveVisibleColumns(prefs).map((column) => column.key)).not.toContain("urgency");
+  });
+});
+
+describe("parseTicketSortLevels / formatTicketSortLevels", () => {
+  it("aceita até três níveis e ignora campo inválido", () => {
+    expect(parseTicketSortLevels("updated_at:desc,title:asc,status:asc")).toEqual([
+      { field: "updated_at", direction: "desc" },
+      { field: "title", direction: "asc" },
+      { field: "status", direction: "asc" },
+    ]);
+    expect(parseTicketSortLevels("updated_at:desc,entity:asc,title:asc")).toEqual([
+      { field: "updated_at", direction: "desc" },
+      { field: "title", direction: "asc" },
+    ]);
+  });
+
+  it("serializa multi-sort para a URL", () => {
+    expect(
+      formatTicketSortLevels([
+        { field: "updated_at", direction: "desc" },
+        { field: "title", direction: "asc" },
+      ]),
+    ).toBe("updated_at:desc,title:asc");
+  });
+});
+
+describe("ticketListFiltersFromFilterGroup", () => {
+  it("achata regras AND no recorte plano", () => {
+    const next = ticketListFiltersFromFilterGroup(
+      {
+        id: "root",
+        combinator: "and",
+        rules: [
+          { id: "1", field: "q", operator: "contains", value: "rede" },
+          { id: "2", field: "status", operator: "eq", value: "open" },
+          { id: "3", field: "created_from", operator: "gte", value: "2026-01-01" },
+        ],
+        groups: [],
+      },
+      DEFAULT_TICKET_LIST_FILTERS,
+    );
+    expect(next.q).toBe("rede");
+    expect(next.status).toBe("open");
+    expect(next.created_from).toBe("2026-01-01");
+    expect(next.page).toBe(1);
+  });
+
+  it("não serializa grupo OR aninhado", () => {
+    const next = ticketListFiltersFromFilterGroup(
+      {
+        id: "root",
+        combinator: "and",
+        rules: [{ id: "1", field: "status", operator: "eq", value: "open" }],
+        groups: [
+          {
+            id: "or-1",
+            combinator: "or",
+            rules: [{ id: "2", field: "q", operator: "contains", value: "ignorar" }],
+            groups: [],
+          },
+        ],
+      },
+      DEFAULT_TICKET_LIST_FILTERS,
+    );
+    expect(next.status).toBe("open");
+    expect(next.q).toBe("");
   });
 });

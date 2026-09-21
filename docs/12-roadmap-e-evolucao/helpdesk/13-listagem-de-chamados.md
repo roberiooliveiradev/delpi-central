@@ -268,12 +268,12 @@ Estado novo: `PREP_COMPONENTES` = tipos e slots já no MFE; comportamento GLPI c
 
 | ID | Capacidade | Estado | Dono |
 |---|---|---|---|
-| G-50 | Modelo de regras/grupos (`TicketListFilterGroup`) alimentado pelo recorte plano | PREP_COMPONENTES | MFE `ticketListViewModel` |
-| G-51 | Multi-sort tipado (`TicketListSortLevel[]`); hoje 1 nível na URL | PREP_COMPONENTES | MFE; BFF H13 se multi |
-| G-52 | Catálogo de colunas + preferência visível/ordem; fixas id/título | PREP_COMPONENTES | `TicketListTable` via catálogo |
-| G-53 | Toolbar: chips de filtro/sort + atualizar (+ slot colunas) | PREP_COMPONENTES | `TicketListToolbar` |
-| G-54 | Builder visual AND/OR (+ regra / + grupo) | TARGET H13 | kit + MFE; BFF traduz para RSQL |
-| G-55 | Preferência de colunas persistida (pessoal) | TARGET H13 | preferência no host DELPI — **não** `front/ticket.php` |
+| G-50 | Modelo de regras/grupos (`TicketListFilterGroup`) alimentado pelo recorte plano | IMPLEMENTADO | MFE `ticketListViewModel` |
+| G-51 | Multi-sort tipado (`TicketListSortLevel[]`); até 3 níveis na URL/BFF | IMPLEMENTADO | MFE + `_sort_clause` |
+| G-52 | Catálogo de colunas + preferência visível/ordem; fixas id/título | IMPLEMENTADO | `TicketListTable` via catálogo |
+| G-53 | Toolbar: chips de filtro/sort + atualizar (+ slot colunas) | IMPLEMENTADO | `TicketListToolbar` |
+| G-54 | Builder visual AND (+ regra); OR/grupo aninhado | IMPLEMENTADO (AND); OR → CONSOLE/evolução | MFE `TicketListFilterBuilder`; BFF flat query |
+| G-55 | Preferência de colunas persistida (pessoal) | IMPLEMENTADO | `useTableColumnVisibility` localStorage — **não** `front/ticket.php` |
 | G-56 | Export CSV/PDF, massa, lixeira, mapa, saved search | CONSOLE_GLPI | — |
 
 ## 8. Ownership
@@ -285,8 +285,8 @@ CANONICAL OWNER   helpdesk-api (contrato da lista)
 CONSUMERS         MFE HelpdeskPage, TicketListTable, TicketListToolbar, ticketListViewModel, parseTicketListFilters
 NÃO-CONSUMIDOR    api-delpi, Chat, portal
 FALLBACK          items: [] + has_more false
-PERSISTENCE       recorte só na URL do MFE (hoje); prefs de coluna = alvo H13 no host DELPI
-RELOAD            F5 na mesma query; botão atualizar da toolbar
+PERSISTENCE       recorte na URL do MFE; prefs de coluna em localStorage (`helpdesk:ticket-list:columns:v1`)
+RELOAD            F5 na mesma query; botão atualizar da toolbar; builder reaplica na URL
 SURFACES          /apps/helpdesk apenas
 TESTS             test_mapping / ticketView.test / ticketListViewModel.test
 DOCS/HELP         este arquivo + helpTooltips no entregável de código

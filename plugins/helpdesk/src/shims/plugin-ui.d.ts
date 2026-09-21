@@ -334,6 +334,21 @@ declare module "@delpi/plugin-ui/index" {
 
   export function FieldLabel(props: FieldLabelProps): ReactElement;
 
+  export type RichTextEditorMode = "edit" | "preview";
+
+  export type RichTextEditorProps = {
+    value: string;
+    onChange: (next: string) => void;
+    mode?: RichTextEditorMode;
+    disabled?: boolean;
+    className?: string;
+    ariaLabel?: string;
+    portalScopeClassName?: string;
+    minHeight?: number;
+  };
+
+  export function RichTextEditor(props: RichTextEditorProps): ReactElement;
+
   export type NativeTextAreaControlProps = {
     value: string;
     onChange?: (value: string) => void;
@@ -919,6 +934,58 @@ declare module "@delpi/plugin-ui/index" {
   export function createDashboardDataRecordCard(config: {
     prefix: string;
   }): ComponentType<DashboardDataRecordCardProps>;
+
+  export type TableColumnVisibilityItem = {
+    key: string;
+    label: string;
+  };
+
+  export type TableColumnVisibilityMenuLabels = {
+    trigger: string;
+    panelTitle: string;
+    reset: string;
+    hint: string;
+    columnAriaLabel: (columnLabel: string) => string;
+    panelAriaLabel?: string;
+    reorderAriaLabel?: (columnLabel: string) => string;
+  };
+
+  export type TableColumnVisibilityMenuProps = {
+    columns: readonly TableColumnVisibilityItem[];
+    visibility: Record<string, boolean>;
+    onToggleColumn: (key: string, visible: boolean) => void;
+    onReset: () => void;
+    labels: TableColumnVisibilityMenuLabels;
+    className?: string;
+    keepAtLeastOne?: boolean;
+    enableReorder?: boolean;
+    onReorderColumns?: (fromKey: string, toKey: string) => void;
+  };
+
+  export function TableColumnVisibilityMenu(props: TableColumnVisibilityMenuProps): ReactElement;
+
+  export function useTableColumnVisibility(options: {
+    storageKey: string;
+    columns: readonly TableColumnVisibilityItem[];
+    enabled?: boolean;
+    defaultVisibility?: Record<string, boolean>;
+    keepAtLeastOne?: boolean;
+    emptyFallbackKeys?: readonly string[];
+    legacyStorageKeys?: readonly string[];
+    saveDebounceMs?: number;
+  }): {
+    visibility: Record<string, boolean>;
+    order: string[];
+    orderedColumns: TableColumnVisibilityItem[];
+    visibleKeys: string[];
+    visibleColumnCount: number;
+    setColumnVisible: (key: string, visible: boolean) => void;
+    setColumnOrder: (order: string[]) => void;
+    reorderColumns: (fromKey: string, toKey: string) => void;
+    applyVisibleOrder: (visibleKeysInOrder: string[]) => void;
+    reset: () => void;
+    filterColumns: <T extends { key: string }>(columns: readonly T[]) => T[];
+  };
 }
 
 declare module "@delpi/plugin-ui/styles" {}
