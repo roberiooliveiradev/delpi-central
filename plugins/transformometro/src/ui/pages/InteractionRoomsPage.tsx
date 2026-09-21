@@ -4,8 +4,10 @@ import {
   FilePreviewModal,
   INTERACTION_ROOM_PAGE_LABELS_PT,
   InteractionRoomPage,
+  listInlinePendingIdsFromMarkdown,
   markdownToPlainPreview,
   reactionLabelForCode,
+  rewriteInlinePendingInMarkdown,
   type InteractionRoomMessage,
   type InteractionRoomSharedItem,
   type MentionComposerPendingAttachment,
@@ -42,10 +44,9 @@ import {
   type InteractionRoomDto,
 } from "../../data/api/transformometroInteractionApi";
 import { useDirectoryUserLabels } from "../../hooks/useDirectoryUserLabels";
-import { useMyPersonProfilePhotoUrl } from "../../hooks/useMyPersonProfilePhotoUrl";
+import { usePersonProfilePhotoUrls } from "../../hooks/usePersonProfilePhotoUrls";
 import { buildProcessoPath } from "../../utils/routeParser";
 import { formatDateTime } from "../../utils/format";
-import "./InteractionRoomsPage.css";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
   pathname?: string;
@@ -94,6 +95,24 @@ function reactionItems(message: InteractionMessageDto, meId: string | null): Rea
   return [...grouped.values()];
 }
 
+/** Keep older pages already loaded; refresh the latest page without wiping history. */
+function mergePollMessages(
+  current: InteractionMessageDto[],
+  latest: InteractionMessageDto[],
+): InteractionMessageDto[] {
+  if (latest.length === 0) return current;
+  const latestIds = new Set(latest.map((item) => item.id));
+  const oldestLatestId = latest[0]?.id;
+  const cursorIndex = oldestLatestId
+    ? current.findIndex((item) => item.id === oldestLatestId)
+    : -1;
+  const older =
+    cursorIndex > 0
+      ? current.slice(0, cursorIndex).filter((item) => !latestIds.has(item.id))
+      : current.filter((item) => !latestIds.has(item.id));
+  return [...older, ...latest];
+}
+
 type PreviewTarget = {
   id: string;
   fileName: string;
@@ -112,11 +131,14 @@ export function InteractionRoomsPage({ getAccessToken, pathname, roomId, onNavig
   const [messagesError, setMessagesError] = useState<string | null>(null);
   const [shared, setShared] = useState<InteractionAttachmentDto[]>([]);
   const [hasMore, setHasMore] = useState(false);
+  const [loadingOlder, setLoadingOlder] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<InteractionInboxFilter>("all");
   const [draft, setDraft] = useState("");
   const [pending, setPending] = useState<MentionComposerPendingAttachment[]>([]);
+  const [inlineFiles, setInlineFiles] = useState<Record<string, File>>({});
+  const [inlineThumbUrls, setInlineThumbUrls] = useState<Record<string, string>>({});
   const [resumeMessageId, setResumeMessageId] = useState<string | null>(null);
   const [replyId, setReplyId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -130,6 +152,14 @@ export function InteractionRoomsPage({ getAccessToken, pathname, roomId, onNavig
   const [thumbUrls, setThumbUrls] = useState<Record<string, string>>({});
   const [preview, setPreview] = useState<PreviewTarget | null>(null);
   const nameCacheRef = useRef<Record<string, string>>({});
+
+  const clearInlinePending = useCallback(() => {
+    setInlineFiles({});
+    setInlineThumbUrls((previous) => {
+      for (const url of Object.values(previous)) URL.revokeObjectURL(url);
+      return {};
+    });
+  }, []);
 
   useEffect(() => {
     void fetchMeProfile(getAccessToken)
@@ -151,11 +181,15 @@ export function InteractionRoomsPage({ getAccessToken, pathname, roomId, onNavig
     for (const file of shared) {
       if (file.uploaded_by_user_id) ids.add(file.uploaded_by_user_id);
     }
+    for (const hit of mentionHits) {
+      if (hit.id) ids.add(hit.id);
+    }
+    if (meId) ids.add(meId);
     return [...ids];
-  }, [messages, shared]);
+  }, [meId, mentionHits, messages, shared]);
 
   const { nameFor: directoryNameFor } = useDirectoryUserLabels(authorIds, getAccessToken);
-  const myPhotoUrl = useMyPersonProfilePhotoUrl(Boolean(meId), getAccessToken);
+  const { photoFor } = usePersonProfilePhotoUrls(authorIds, getAccessToken);
 
   const authorName = useCallback(
     (authorUserId: string, fallback?: string | null) => {
@@ -224,28 +258,56 @@ export function InteractionRoomsPage({ getAccessToken, pathname, roomId, onNavig
     setRoomsError(null);
   }, [filter, getAccessToken]);
 
-  const loadThread = useCallback(async () => {
-    if (!roomId) {
-      setRoom(null);
+  const loadThread = useCallback(
+    async (mode: "replace" | "poll" = "replace") => {
+      if (!roomId) {
+        setRoom(null);
+        setRoomError(null);
+        setMessages(null);
+        setMessagesError(null);
+        setShared([]);
+        setHasMore(false);
+        return;
+      }
+      const [nextRoom, nextMessages, nextFiles] = await Promise.all([
+        getInteractionRoom(roomId, getAccessToken),
+        listInteractionMessages(roomId, getAccessToken),
+        listInteractionAttachments(roomId, getAccessToken),
+      ]);
+      setRoom(nextRoom);
       setRoomError(null);
-      setMessages(null);
+      if (mode === "poll") {
+        setMessages((current) => mergePollMessages(current ?? [], nextMessages.items));
+      } else {
+        setMessages(nextMessages.items);
+        setHasMore(nextMessages.has_more);
+      }
+      setShared(nextFiles.items);
       setMessagesError(null);
-      setShared([]);
-      setHasMore(false);
-      return;
+    },
+    [getAccessToken, roomId],
+  );
+
+  const loadOlder = useCallback(async () => {
+    if (!roomId || loadingOlder || !hasMore) return;
+    const oldestId = messages?.[0]?.id;
+    if (!oldestId) return;
+    setLoadingOlder(true);
+    try {
+      const page = await listInteractionMessages(roomId, getAccessToken, { beforeId: oldestId });
+      const incomingIds = new Set(page.items.map((item) => item.id));
+      setMessages((current) => [
+        ...page.items,
+        ...(current ?? []).filter((item) => !incomingIds.has(item.id)),
+      ]);
+      setHasMore(page.has_more);
+      setMessagesError(null);
+    } catch (reason) {
+      setMessagesError(errorText(reason, "Não foi possível carregar mensagens anteriores."));
+    } finally {
+      setLoadingOlder(false);
     }
-    const [nextRoom, nextMessages, nextFiles] = await Promise.all([
-      getInteractionRoom(roomId, getAccessToken),
-      listInteractionMessages(roomId, getAccessToken),
-      listInteractionAttachments(roomId, getAccessToken),
-    ]);
-    setRoom(nextRoom);
-    setRoomError(null);
-    setMessages(nextMessages.items);
-    setShared(nextFiles.items);
-    setHasMore(nextMessages.has_more);
-    setMessagesError(null);
-  }, [getAccessToken, roomId]);
+  }, [getAccessToken, hasMore, loadingOlder, messages, roomId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -265,6 +327,7 @@ export function InteractionRoomsPage({ getAccessToken, pathname, roomId, onNavig
     let cancelled = false;
     setDraft("");
     setPending([]);
+    clearInlinePending();
     setResumeMessageId(null);
     setReplyId(null);
     setEditingId(null);
@@ -275,10 +338,12 @@ export function InteractionRoomsPage({ getAccessToken, pathname, roomId, onNavig
     setRoom(null);
     setMessages(null);
     setShared([]);
+    setHasMore(false);
+    setLoadingOlder(false);
     setRoomError(null);
     setMessagesError(null);
     if (!roomId) return;
-    void loadThread().catch((reason) => {
+    void loadThread("replace").catch((reason) => {
       if (cancelled) return;
       const message = errorText(reason, "Não foi possível abrir a sala.");
       setRoomError(message);
@@ -287,7 +352,7 @@ export function InteractionRoomsPage({ getAccessToken, pathname, roomId, onNavig
     return () => {
       cancelled = true;
     };
-  }, [loadThread, roomId]);
+  }, [clearInlinePending, loadThread, roomId]);
 
   useEffect(() => {
     if (!roomId) return;
@@ -306,7 +371,7 @@ export function InteractionRoomsPage({ getAccessToken, pathname, roomId, onNavig
     if (!roomId) return;
     const timer = window.setInterval(() => {
       if (document.visibilityState !== "visible") return;
-      void loadThread()
+      void loadThread("poll")
         .then(() => loadRooms())
         .catch(() => undefined);
     }, 20000);
@@ -317,7 +382,7 @@ export function InteractionRoomsPage({ getAccessToken, pathname, roomId, onNavig
     setRefreshing(true);
     try {
       await loadRooms();
-      if (roomId) await loadThread();
+      if (roomId) await loadThread("replace");
     } catch (reason) {
       const message = errorText(reason, "Não foi possível atualizar.");
       if (roomId) setMessagesError(message);
@@ -330,6 +395,48 @@ export function InteractionRoomsPage({ getAccessToken, pathname, roomId, onNavig
   const replaceMessage = useCallback((next: InteractionMessageDto) => {
     setMessages((current) => (current ?? []).map((item) => (item.id === next.id ? next : item)));
   }, []);
+
+  const onInlineImagesInserted = useCallback(
+    (items: readonly { pendingId: string; file: File }[]) => {
+      if (items.length === 0) return;
+      setInlineFiles((previous) => {
+        const next = { ...previous };
+        for (const item of items) next[item.pendingId] = item.file;
+        return next;
+      });
+      setInlineThumbUrls((previous) => {
+        const next = { ...previous };
+        for (const item of items) {
+          if (next[item.pendingId]) continue;
+          next[item.pendingId] = URL.createObjectURL(item.file);
+        }
+        return next;
+      });
+    },
+    [],
+  );
+
+  const onInlineImageRemoved = useCallback((pendingId: string) => {
+    setInlineFiles((previous) => {
+      if (!(pendingId in previous)) return previous;
+      const next = { ...previous };
+      delete next[pendingId];
+      return next;
+    });
+    setInlineThumbUrls((previous) => {
+      const url = previous[pendingId];
+      if (!url) return previous;
+      URL.revokeObjectURL(url);
+      const next = { ...previous };
+      delete next[pendingId];
+      return next;
+    });
+  }, []);
+
+  const resolveAttachmentImageSrc = useCallback(
+    (attachmentId: string) => inlineThumbUrls[attachmentId] ?? thumbUrls[attachmentId] ?? null,
+    [inlineThumbUrls, thumbUrls],
+  );
 
   function addFiles(files: File[]) {
     if (files.length === 0) return;
@@ -348,10 +455,32 @@ export function InteractionRoomsPage({ getAccessToken, pathname, roomId, onNavig
     });
   }
 
+  async function uploadInlineAndRewrite(messageId: string, bodyText: string): Promise<string> {
+    if (!roomId) return bodyText;
+    const pendingIds = listInlinePendingIdsFromMarkdown(bodyText);
+    if (pendingIds.length === 0) return bodyText;
+    const pendingToUuid: Record<string, string> = {};
+    for (const pendingId of pendingIds) {
+      const file = inlineFiles[pendingId];
+      if (!file) {
+        throw new Error("Uma imagem colada não pôde ser enviada. Remova-a e cole novamente.");
+      }
+      const uploaded = await uploadInteractionAttachment(roomId, messageId, file, getAccessToken);
+      pendingToUuid[pendingId] = uploaded.id;
+    }
+    const rewritten = rewriteInlinePendingInMarkdown(bodyText, pendingToUuid);
+    if (listInlinePendingIdsFromMarkdown(rewritten).length > 0) {
+      throw new Error("Uma imagem colada não pôde ser enviada. Remova-a e cole novamente.");
+    }
+    return rewritten;
+  }
+
   async function send(markdown: string) {
     if (!roomId || sending) return;
-    const content = markdown.replace(/\r\n/g, "\n").replace(/\r/g, "\n").trim();
-    if (!resumeMessageId && !plainMessage(content)) {
+    const content = markdown.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+    const inlinePending = listInlinePendingIdsFromMarkdown(content);
+    const hasBody = Boolean(plainMessage(content) || inlinePending.length > 0 || pending.length > 0);
+    if (!resumeMessageId && !hasBody) {
       setSendError("A mensagem não pode ficar em branco.");
       return;
     }
@@ -362,16 +491,17 @@ export function InteractionRoomsPage({ getAccessToken, pathname, roomId, onNavig
     setSending(true);
     setSendError(null);
     let messageId = resumeMessageId;
+    let bodyText = content.trim() || (inlinePending.length > 0 || pending.length > 0 ? content : "");
     try {
       if (!messageId) {
         const mentions = mentionsRef.current.filter((item) =>
-          content.toLowerCase().includes(`@${item.label.toLowerCase()}`),
+          bodyText.toLowerCase().includes(`@${item.label.toLowerCase()}`),
         );
-        const saved = await postInteractionMessage(roomId, content, getAccessToken, {
+        const saved = await postInteractionMessage(roomId, bodyText, getAccessToken, {
           parentId: replyId,
           mentions,
         });
-        if (!saved.id || saved.room_id !== roomId || saved.content !== content) {
+        if (!saved.id || saved.room_id !== roomId) {
           throw new Error("O envio não confirmou a mensagem.");
         }
         messageId = saved.id;
@@ -379,6 +509,12 @@ export function InteractionRoomsPage({ getAccessToken, pathname, roomId, onNavig
         setDraft("");
         setReplyId(null);
         mentionsRef.current = [];
+      }
+      if (listInlinePendingIdsFromMarkdown(bodyText).length > 0) {
+        bodyText = await uploadInlineAndRewrite(messageId, bodyText);
+        const rewritten = await editInteractionMessage(roomId, messageId, bodyText, getAccessToken);
+        replaceMessage(rewritten);
+        clearInlinePending();
       }
       const remaining: MentionComposerPendingAttachment[] = [];
       let uploadFailed = false;
@@ -401,9 +537,8 @@ export function InteractionRoomsPage({ getAccessToken, pathname, roomId, onNavig
         listInteractionMessages(roomId, getAccessToken),
         listInteractionAttachments(roomId, getAccessToken),
       ]);
-      setMessages(nextMessages.items);
+      setMessages((current) => mergePollMessages(current ?? [], nextMessages.items));
       setShared(nextFiles.items);
-      setHasMore(nextMessages.has_more);
       setMessagesError(null);
       void loadRooms().catch(() => undefined);
     } catch (reason) {
@@ -415,17 +550,23 @@ export function InteractionRoomsPage({ getAccessToken, pathname, roomId, onNavig
 
   async function saveEdit(markdown: string) {
     if (!roomId || !editingId) return;
-    const content = markdown.replace(/\r\n/g, "\n").replace(/\r/g, "\n").trim();
-    if (!plainMessage(content)) {
+    const content = markdown.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+    const inlinePending = listInlinePendingIdsFromMarkdown(content);
+    if (!plainMessage(content) && inlinePending.length === 0) {
       setActionError("A mensagem não pode ficar em branco.");
       return;
     }
     try {
-      const saved = await editInteractionMessage(roomId, editingId, content, getAccessToken);
-      if (saved.content !== content) throw new Error("A edição não confirmou a mensagem.");
+      let bodyText = content;
+      if (inlinePending.length > 0) {
+        bodyText = await uploadInlineAndRewrite(editingId, bodyText);
+      }
+      const saved = await editInteractionMessage(roomId, editingId, bodyText, getAccessToken);
+      if (saved.content !== bodyText) throw new Error("A edição não confirmou a mensagem.");
       replaceMessage(saved);
       setEditingId(null);
       setEditDraft("");
+      clearInlinePending();
       setActionError(null);
     } catch (reason) {
       setActionError(errorText(reason, "Não foi possível editar a mensagem."));
@@ -481,6 +622,16 @@ export function InteractionRoomsPage({ getAccessToken, pathname, roomId, onNavig
     }
   }
 
+  function findAttachment(id: string): InteractionAttachmentDto | undefined {
+    const fromShared = shared.find((item) => item.id === id);
+    if (fromShared) return fromShared;
+    for (const message of messages ?? []) {
+      const hit = (message.attachments ?? []).find((item) => item.id === id);
+      if (hit) return hit;
+    }
+    return undefined;
+  }
+
   async function removeFile(file: InteractionAttachmentDto) {
     if (!roomId) return;
     if (!window.confirm("Remover este arquivo?")) return;
@@ -523,7 +674,7 @@ export function InteractionRoomsPage({ getAccessToken, pathname, roomId, onNavig
             : formatDateTime(item.created_at),
           authorName: authorName(item.author_user_id),
           authorUserId: item.author_user_id,
-          authorSrc: meId && item.author_user_id === meId ? myPhotoUrl : null,
+          authorSrc: photoFor(item.author_user_id),
           parentId: item.parent_id,
           mine: Boolean(meId && item.author_user_id === meId),
           deleted: removed,
@@ -537,8 +688,7 @@ export function InteractionRoomsPage({ getAccessToken, pathname, roomId, onNavig
               label,
               avatarName: resolved,
               title: `Menção: ${resolved}`,
-              avatarSrc:
-                meId && mention.user_id === meId ? myPhotoUrl ?? undefined : undefined,
+              avatarSrc: photoFor(mention.user_id) ?? undefined,
             };
           }),
           reactions: reactionItems(item, meId),
@@ -552,7 +702,7 @@ export function InteractionRoomsPage({ getAccessToken, pathname, roomId, onNavig
           })),
         };
       }),
-    [authorName, meId, messages, myPhotoUrl, thumbUrls],
+    [authorName, meId, messages, photoFor, thumbUrls],
   );
 
   const speakers = useMemo(() => {
@@ -563,9 +713,9 @@ export function InteractionRoomsPage({ getAccessToken, pathname, roomId, onNavig
     return [...seen.entries()].map(([id, name]) => ({
       id,
       name,
-      src: meId && id === meId ? myPhotoUrl : null,
+      src: photoFor(id),
     }));
-  }, [authorName, meId, messages, myPhotoUrl]);
+  }, [authorName, messages, photoFor]);
 
   const sharedItems = useMemo<InteractionRoomSharedItem[]>(() => {
     const files: InteractionRoomSharedItem[] = shared.map((file) => ({
@@ -598,6 +748,15 @@ export function InteractionRoomsPage({ getAccessToken, pathname, roomId, onNavig
     }
     return [...files, ...links];
   }, [authorName, messages, shared]);
+
+  const mentionHitsWithPhotos = useMemo(
+    () =>
+      mentionHits.map((hit) => ({
+        ...hit,
+        avatarSrc: photoFor(hit.id) ?? undefined,
+      })),
+    [mentionHits, photoFor],
+  );
 
   const replyTarget = (messages ?? []).find((item) => item.id === replyId) ?? null;
   const searchEmpty = query.trim().length > 0 && (rooms?.length ?? 0) > 0 && visibleRooms.length === 0;
@@ -680,6 +839,8 @@ export function InteractionRoomsPage({ getAccessToken, pathname, roomId, onNavig
         composerError={sendError}
         actionError={actionError}
         hasMore={hasMore}
+        onLoadOlder={() => void loadOlder()}
+        loadingOlder={loadingOlder}
         editingId={editingId}
         editDraft={editDraft}
         onEditDraftChange={setEditDraft}
@@ -687,6 +848,7 @@ export function InteractionRoomsPage({ getAccessToken, pathname, roomId, onNavig
         onCancelEdit={() => {
           setEditingId(null);
           setEditDraft("");
+          clearInlinePending();
         }}
         portalScopeClassName={TM_PORTAL_SCOPE}
         draft={draft}
@@ -697,7 +859,10 @@ export function InteractionRoomsPage({ getAccessToken, pathname, roomId, onNavig
         onFiles={addFiles}
         onRemovePendingAttachment={(id) => setPending((current) => current.filter((item) => item.id !== id))}
         accept={FILE_ACCEPT}
-        mentionHits={mentionHits}
+        resolveAttachmentImageSrc={resolveAttachmentImageSrc}
+        onInlineImagesInserted={onInlineImagesInserted}
+        onInlineImageRemoved={onInlineImageRemoved}
+        mentionHits={mentionHitsWithPhotos}
         onMentionQueryChange={(next) => {
           if (!next?.trim()) {
             setMentionHits([]);
@@ -711,11 +876,10 @@ export function InteractionRoomsPage({ getAccessToken, pathname, roomId, onNavig
               setMentionHits(
                 users.map((user) => ({
                   id: user.id,
-                  kind: "user",
+                  kind: "user" as const,
                   label: user.name,
                   subtitle: user.email,
                   avatarName: user.name,
-                  avatarSrc: meId && user.id === meId ? myPhotoUrl ?? undefined : undefined,
                 })),
               );
             })
@@ -759,21 +923,11 @@ export function InteractionRoomsPage({ getAccessToken, pathname, roomId, onNavig
         onDelete={(id) => void removeMessage(id)}
         onToggleReaction={(id, code) => void react(id, code)}
         onOpenAttachment={(id) => {
-          const fromShared = shared.find((item) => item.id === id);
-          if (fromShared) {
-            void openFile(fromShared);
-            return;
-          }
-          for (const message of messages ?? []) {
-            const hit = (message.attachments ?? []).find((item) => item.id === id);
-            if (hit) {
-              void openFile(hit);
-              return;
-            }
-          }
+          const file = findAttachment(id);
+          if (file) void openFile(file);
         }}
         onRemoveAttachment={(id) => {
-          const file = shared.find((item) => item.id === id);
+          const file = findAttachment(id);
           if (file) void removeFile(file);
         }}
         sharedItems={sharedItems}

@@ -15,7 +15,14 @@ describe("InteractionRoomsPage", () => {
     expect(source).toMatch(/Abrir processo/);
     expect(source).toMatch(/portalScopeClassName=\{TM_PORTAL_SCOPE\}/);
     expect(source).toMatch(/useDirectoryUserLabels/);
+    expect(source).toMatch(/usePersonProfilePhotoUrls/);
     expect(source).toMatch(/onSaveEdit/);
+    expect(source).toMatch(/onRemoveAttachment/);
+    expect(source).toMatch(/resolveAttachmentImageSrc/);
+    expect(source).toMatch(/rewriteInlinePendingInMarkdown/);
+    expect(source).toMatch(/onInlineImagesInserted/);
+    expect(source).toMatch(/onLoadOlder/);
+    expect(source).toMatch(/beforeId/);
     expect(source).toMatch(/FilePreviewModal/);
     expect(source).not.toMatch(/<RoomConversationShell[\s/>]/);
     expect(source).not.toMatch(/<MentionComposer[\s/>]/);

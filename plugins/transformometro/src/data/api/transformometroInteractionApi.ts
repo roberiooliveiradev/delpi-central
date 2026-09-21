@@ -101,12 +101,52 @@ export function getInteractionRoom(roomId: string, getAccessToken?: () => string
 export function listInteractionMessages(
   roomId: string,
   getAccessToken?: () => string | undefined,
-  limit = 50,
+  options?: { limit?: number; beforeId?: string | null },
 ) {
+  const params = new URLSearchParams();
+  const limit = options?.limit ?? 50;
+  params.set("limit", String(limit));
+  if (options?.beforeId) params.set("before_id", options.beforeId);
   return request<InteractionMessagePage>(
-    `/interaction-rooms/${roomId}/messages?limit=${encodeURIComponent(String(limit))}`,
+    `/interaction-rooms/${roomId}/messages?${params}`,
     getAccessToken,
   );
+}
+
+export type PersonProfilePhotoFlagDto = {
+  user_id: string;
+  has_photo: boolean;
+};
+
+/** Batch flags for third-party avatars (user-parity JWT; soft-fail at caller). */
+export function lookupPersonProfilePhotoFlags(
+  ids: readonly string[],
+  getAccessToken?: () => string | undefined,
+) {
+  const unique = [...new Set(ids.map((id) => id.trim()).filter(Boolean))].slice(0, 50);
+  if (unique.length === 0) {
+    return Promise.resolve({ items: [] as PersonProfilePhotoFlagDto[] });
+  }
+  const params = new URLSearchParams({ ids: unique.join(",") });
+  return request<{ items: PersonProfilePhotoFlagDto[] }>(
+    `/person-profiles/photo-flags?${params}`,
+    getAccessToken,
+  );
+}
+
+/** Download person-profile photo bytes via TM facade (never Core S2S from the MFE). */
+export async function downloadPersonProfilePhoto(
+  userId: string,
+  getAccessToken?: () => string | undefined,
+): Promise<Blob | null> {
+  const uid = userId.trim();
+  if (!uid) return null;
+  const response = await fetch(
+    `${TRANSFORMOMETRO_API_BASE}/person-profiles/${encodeURIComponent(uid)}/photo`,
+    { headers: buildAuthHeaders(getAccessToken) },
+  );
+  if (!response.ok) return null;
+  return response.blob();
 }
 
 export function postInteractionMessage(
