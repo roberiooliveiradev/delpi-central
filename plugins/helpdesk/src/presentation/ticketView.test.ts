@@ -9,6 +9,7 @@ import {
   isTicketFilterActive,
   listHelpdeskAttachmentIdsInHtml,
   nextTicketSort,
+  parseObserverIdsInput,
   parseTicketListFilters,
   parseTicketSort,
   relativeTimeLabel,
@@ -380,5 +381,12 @@ describe("hasVisibleRichText", () => {
     expect(hasVisibleRichText("<p></p>")).toBe(false);
     expect(hasVisibleRichText("<p><br></p>")).toBe(false);
     expect(hasVisibleRichText("")).toBe(false);
+  });
+});
+
+describe("parseObserverIdsInput", () => {
+  it("lê ids positivos únicos e ignora lixo", () => {
+    expect(parseObserverIdsInput("15, 15;22 abc -3")).toEqual([15, 22]);
+    expect(parseObserverIdsInput("")).toEqual([]);
   });
 });

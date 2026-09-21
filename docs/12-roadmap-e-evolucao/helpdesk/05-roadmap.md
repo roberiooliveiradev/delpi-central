@@ -115,8 +115,8 @@ Só o que H6 **provou**. Linha morta some do plano, não vira tela vazia.
 
 | Entrega | Gate | HD |
 |---|---|---|
-| TTR visível (`sla_ttr` / `sla_tto`) | H-X3 **PROVEN** | HD-025 |
-| Observador na abertura (`POST …/TeamMember`) | H-X2 **PROVEN** | HD-025 |
+| TTR visível (`sla_ttr` / `sla_tto`) | H-X3 **IMPLEMENTADO** E11 | HD-025 |
+| Observador na abertura (`POST …/TeamMember`) | H-X2 **IMPLEMENTADO** E11 | HD-025 |
 | ~~Vínculos do próprio chamado~~ | H-X4 **FORA** | — |
 | ~~Entrar num Form/catálogo~~ | H-X1 **FORA** | — |
 

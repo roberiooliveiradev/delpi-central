@@ -12,6 +12,7 @@ from helpdesk_app.domain.errors import (
     MissingIdempotencyKey,
 )
 from helpdesk_app.domain.models import StoredResponse, TicketDetail, TicketListPage, TicketListQuery
+from helpdesk_app.infrastructure.glpi.mapping import normalize_observer_ids
 
 
 class TicketService:
@@ -45,22 +46,27 @@ class TicketService:
         description: str,
         category_id: int,
         urgency_id: int,
+        observer_ids: list[int] | tuple[int, ...] | None = None,
         idempotency_key: str | None,
     ) -> StoredResponse:
         key = _require_key(idempotency_key)
         _validate_text(title, "title")
         description_html = _prepare_message_html(description, "description")
+        observers = normalize_observer_ids(observer_ids)
         operation = "create_ticket"
         existing = self._idempotency.get(subject, operation, key)
         if existing is not None:
             return existing
+        token = self._token(subject)
         ticket_id = self._glpi.create_ticket(
-            self._token(subject),
+            token,
             title=title.strip(),
             description=description_html,
             category_id=category_id,
             urgency_id=urgency_id,
         )
+        for user_id in observers:
+            self._glpi.add_ticket_observer(token, ticket_id, user_id)
         stored = StoredResponse(status_code=201, body={"id": ticket_id})
         self._idempotency.save(subject, operation, key, stored)
         return stored

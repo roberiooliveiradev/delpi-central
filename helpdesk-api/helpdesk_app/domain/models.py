@@ -45,6 +45,8 @@ class TicketSummary:
     status_id: int | None = None
     solved_at: str = ""
     closed_at: str = ""
+    sla_ttr: str = ""
+    sla_tto: str = ""
 
 
 @dataclass(frozen=True)
@@ -106,6 +108,8 @@ class TicketDetail:
     observers_display_name: str = ""
     solved_at: str = ""
     closed_at: str = ""
+    sla_ttr: str = ""
+    sla_tto: str = ""
 
 
 @dataclass(frozen=True)

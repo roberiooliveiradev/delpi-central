@@ -58,6 +58,7 @@ class FakeGlpi:
         self.downloaded = []
         self.created = []
         self.followups = []
+        self.observers = []
         self.calls = 0
 
     def authorization_url(self, *, state: str, code_challenge: str) -> str:
@@ -94,6 +95,13 @@ class FakeGlpi:
         assert "requester" not in title
         self.created.append((title, description, category_id, urgency_id, access_token))
         return 42
+
+    def add_ticket_observer(self, access_token: str, ticket_id: int, user_id: int):
+        self.calls += 1
+        assert access_token
+        assert "requester" not in str(user_id)
+        assert "entity" not in str(user_id)
+        self.observers.append((ticket_id, user_id, access_token))
 
     def add_followup(self, access_token: str, ticket_id: int, content: str):
         self.calls += 1

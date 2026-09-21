@@ -74,7 +74,7 @@ Doc: [Manage tickets](https://help.glpi-project.org/documentation/modules/assist
 | X-25 | Atores: requerente, observador, atribuído (pessoa/grupo/fornecedor) | atribuído e requerente IMPLEMENTADOS como rótulo; editar CONSOLE; observador ALVO no 14 P-05 |
 | X-26 | Notificação por ator (sim/não, e-mail) | CONSOLE_GLPI |
 | X-27 | Itens de inventário | CONSOLE_GLPI |
-| X-28 | TTO, TTR, TTO/TTR internos, SLA, OLA, próximo nível | CONSOLE_GLPI para gerir; **TTR visível** = ALVO_LEITURA (`sla_ttr` / `sla_tto`, H-X3) |
+| X-28 | TTO, TTR, TTO/TTR internos, SLA, OLA, próximo nível | CONSOLE para gerir; **TTR/TTO visíveis IMPLEMENTADOS** (`sla_ttr` / `sla_tto`) |
 | X-29 | Chamados ligados: Linked to, Duplicates, Child of, Parent of | CONSOLE para criar **e** para ver — H-X4 **FORA** (sem campo/rota na HLAPI) |
 | X-30 | Duplicata fecha em cascata | CONSOLE_GLPI — o GLPI aplica; a Minha DELPI só relê o status |
 | X-31 | Último editor | CONSOLE_GLPI — [`13`](./13-listagem-de-chamados.md) |
@@ -89,12 +89,12 @@ Doc: [Manage tickets](https://help.glpi-project.org/documentation/modules/assist
 | X-43 | Documento no follow-up | baixar IMPLEMENTADO; enviar BLOQUEADO; vínculo por bolha A-07 |
 | X-44 | Motivo de pendência + lembretes | CONSOLE_GLPI — status Pendente no 14 |
 | X-45 | Tarefa (e tarefa planejada → status 3) | CONSOLE_GLPI |
-| X-46 | Solução + aprovação do solicitante | H5 — [`14`](./14-pagina-e-estados-do-chamado.md) P-07 |
-| X-47 | Validação / etapas de aprovação | CONSOLE_GLPI / H5 |
+| X-46 | Solução + aprovação do solicitante | **CONSOLE** E10 — [`evidence/e10-cycle-console.md`](./evidence/e10-cycle-console.md) |
+| X-47 | Validação / etapas de aprovação | CONSOLE_GLPI |
 | X-48 | Menção a usuário | ALVO no 12 M-07 / M-23 |
 | X-49 | Excluir chamado Novo sem ação | CONSOLE_GLPI — [`14`](./14-pagina-e-estados-do-chamado.md) P-10 |
-| X-50 | Reabrir fechado | H5 — matriz da interface simplificada |
-| X-51 | Pesquisa de satisfação | H5 |
+| X-50 | Reabrir fechado | **CONSOLE** E10 — PATCH status 403 no Colaborador |
+| X-51 | Pesquisa de satisfação | **CONSOLE** E10 — sem path HLAPI |
 
 ## 6. Matriz — abas do formulário central
 
@@ -139,8 +139,8 @@ Estes não abrem etapa. Só deixam de ser lacuna invisível.
 | ID | Capacidade | Por que importa ao solicitante | Estado |
 |---|---|---|---|
 | X-09 | Catálogo / Forms GLPI 11 | muita abertura real passa por formulário, não pelo ticket genérico | **FORA** (H-X1) |
-| X-13 | Observador na abertura | o GLPI simplificado deixa adicionar watcher | **PROVEN** TeamMember (H-X2) |
-| X-28 | TTR visível | «até quando deve ser resolvido» | **PROVEN** `sla_ttr` / `sla_tto` |
+| X-13 | Observador na abertura | o GLPI simplificado deixa adicionar watcher | **IMPLEMENTADO** `observer_ids` → TeamMember |
+| X-28 | TTR visível | «até quando deve ser resolvido» | **IMPLEMENTADO** `sla_ttr` / `sla_tto` |
 | X-29 | Vínculo (duplicata / filho) | o solicitante vê que o 1101 é duplicata do 1090 | **FORA** (H-X4); criar vínculo CONSOLE |
 | X-46 | Aprovar solução | já era H5; permanece | **CONSOLE** (E10) |
 

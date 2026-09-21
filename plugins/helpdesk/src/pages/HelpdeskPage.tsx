@@ -25,6 +25,7 @@ import {
   isTicketFilterActive,
   listHelpdeskAttachmentIdsInHtml,
   newIdempotencyKey,
+  parseObserverIdsInput,
   parseTicketListFilters,
   statusBadgeVariant,
   nextTicketSort,
@@ -386,6 +387,7 @@ function TicketListPage() {
 function CreateTicketPage() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [observerIdsInput, setObserverIdsInput] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [urgencyId, setUrgencyId] = useState("");
   const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
@@ -441,6 +443,7 @@ function CreateTicketPage() {
               description: description.trim(),
               category_id: Number(categoryId),
               urgency_id: Number(urgencyId),
+              observer_ids: parseObserverIdsInput(observerIdsInput),
             },
             idempotencyKey,
           )
@@ -487,6 +490,13 @@ function CreateTicketPage() {
               required
               options={urgencies.map((item) => ({ value: String(item.id), label: item.name }))}
               icon={<Gauge size={14} aria-hidden />}
+            />
+            <HelpdeskTextField
+              label="Observadores"
+              hint={helpTooltips.create}
+              value={observerIdsInput}
+              onChange={setObserverIdsInput}
+              icon={<Type size={14} aria-hidden />}
             />
           </aside>
         </div>
@@ -591,9 +601,13 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                 updated_at: ticket.updated_at,
                 solved_at: ticket.solved_at,
                 closed_at: ticket.closed_at,
+                sla_ttr: ticket.sla_ttr,
+                sla_tto: ticket.sla_tto,
               })
                 .filter((field) =>
-                  ["observers", "created_at", "updated_at", "solved_at", "closed_at"].includes(field.id),
+                  ["observers", "sla_ttr", "sla_tto", "created_at", "updated_at", "solved_at", "closed_at"].includes(
+                    field.id,
+                  ),
                 )
                 .map((field) => ({
                   id: field.id,

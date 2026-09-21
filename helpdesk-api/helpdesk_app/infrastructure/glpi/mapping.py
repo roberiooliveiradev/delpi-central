@@ -201,6 +201,8 @@ def parse_ticket_detail(payload: dict, timeline_payload: dict | list) -> TicketD
         observers_display_name=_observer_names(payload),
         solved_at=summary.solved_at,
         closed_at=summary.closed_at,
+        sla_ttr=summary.sla_ttr,
+        sla_tto=summary.sla_tto,
     )
 
 
@@ -224,6 +226,36 @@ def create_ticket_body(*, title: str, description: str, category_id: int, urgenc
     }
 
 
+def team_member_observer_body(user_id: int) -> dict:
+    """HD-011: only type/role/id — never requester or entity."""
+    if user_id <= 0:
+        raise GlpiValidation("observer_id inválido.")
+    return {"type": "User", "role": "observer", "id": int(user_id)}
+
+
+def normalize_observer_ids(raw) -> tuple[int, ...]:
+    if raw is None:
+        return ()
+    if not isinstance(raw, (list, tuple)):
+        raise GlpiValidation("observer_ids inválido.")
+    if len(raw) > 10:
+        raise GlpiValidation("observer_ids excede o limite.")
+    seen: set[int] = set()
+    ordered: list[int] = []
+    for item in raw:
+        try:
+            user_id = int(item)
+        except (TypeError, ValueError) as exc:
+            raise GlpiValidation("observer_id inválido.") from exc
+        if user_id <= 0:
+            raise GlpiValidation("observer_id inválido.")
+        if user_id in seen:
+            continue
+        seen.add(user_id)
+        ordered.append(user_id)
+    return tuple(ordered)
+
+
 def _summary(row: dict) -> TicketSummary:
     return TicketSummary(
         id=int(row.get("id") or 0),
@@ -237,6 +269,8 @@ def _summary(row: dict) -> TicketSummary:
         status_id=_status_id(row.get("status")),
         solved_at=_optional_instant(row.get("date_solve")),
         closed_at=_optional_instant(row.get("date_close")),
+        sla_ttr=_named(row.get("sla_ttr")),
+        sla_tto=_named(row.get("sla_tto")),
     )
 
 

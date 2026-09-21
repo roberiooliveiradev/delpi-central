@@ -64,6 +64,8 @@ export type TicketSummary = {
   created_at: string;
   solved_at?: string;
   closed_at?: string;
+  sla_ttr?: string;
+  sla_tto?: string;
   assigned_display_name: string;
 };
 
@@ -141,7 +143,13 @@ export function listUrgencies(signal?: AbortSignal) {
 }
 
 export function createTicket(
-  body: { title: string; description: string; category_id: number; urgency_id: number },
+  body: {
+    title: string;
+    description: string;
+    category_id: number;
+    urgency_id: number;
+    observer_ids?: number[];
+  },
   idempotencyKey: string,
 ) {
   return request<{ id: number }>("/tickets", {

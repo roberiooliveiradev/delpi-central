@@ -41,12 +41,16 @@ export function ticketRecordFields(input: {
   updated_at?: string;
   solved_at?: string;
   closed_at?: string;
+  sla_ttr?: string;
+  sla_tto?: string;
 }): TicketRecordField[] {
   const created = absoluteDateTimeLabel(input.created_at ?? "");
   const updated = absoluteDateTimeLabel(input.updated_at ?? "");
   const solved = absoluteDateTimeLabel(input.solved_at ?? "");
   const closed = absoluteDateTimeLabel(input.closed_at ?? "");
   const observers = (input.observers_display_name ?? "").trim();
+  const ttr = (input.sla_ttr ?? "").trim();
+  const tto = (input.sla_tto ?? "").trim();
   return [
     { id: "id", label: "Chamado", value: String(input.id), present: input.id > 0 },
     { id: "category", label: "Categoria", value: input.category, present: input.category.trim().length > 0 },
@@ -62,6 +66,18 @@ export function ticketRecordFields(input: {
       label: "Observador",
       value: observers,
       present: observers.length > 0,
+    },
+    {
+      id: "sla_tto",
+      label: "TTO",
+      value: tto,
+      present: tto.length > 0,
+    },
+    {
+      id: "sla_ttr",
+      label: "TTR",
+      value: ttr,
+      present: ttr.length > 0,
     },
     {
       id: "created_at",
@@ -292,6 +308,20 @@ export function stampHelpdeskAttachmentIds(html: string): string {
 }
 
 /** True when rich-text HTML still has visible characters after stripping tags. */
+/** Parses optional GLPI user ids from a comma/space separated field. */
+export function parseObserverIdsInput(raw: string): number[] {
+  const ids: number[] = [];
+  const seen = new Set<number>();
+  for (const token of String(raw || "").split(/[\s,;]+/)) {
+    if (!token) continue;
+    const id = Number(token);
+    if (!Number.isInteger(id) || id <= 0 || seen.has(id)) continue;
+    seen.add(id);
+    ids.push(id);
+  }
+  return ids;
+}
+
 export function hasVisibleRichText(html: string): boolean {
   const plain = String(html || "")
     .replace(/<br\s*\/?>/gi, " ")

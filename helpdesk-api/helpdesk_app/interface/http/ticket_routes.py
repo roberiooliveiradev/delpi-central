@@ -20,6 +20,7 @@ class CreateTicketBody(BaseModel):
     description: str
     category_id: int
     urgency_id: int
+    observer_ids: list[int] = Field(default_factory=list)
 
 
 class FollowupBody(BaseModel):
@@ -101,6 +102,8 @@ def list_tickets(
                 "created_at": row.created_at,
                 "solved_at": row.solved_at,
                 "closed_at": row.closed_at,
+                "sla_ttr": row.sla_ttr,
+                "sla_tto": row.sla_tto,
                 "assigned_display_name": row.assigned_display_name,
             }
             for row in listed.items
@@ -129,6 +132,8 @@ def get_ticket(request: Request, ticket_id: int):
         "created_at": ticket.created_at,
         "solved_at": ticket.solved_at,
         "closed_at": ticket.closed_at,
+        "sla_ttr": ticket.sla_ttr,
+        "sla_tto": ticket.sla_tto,
         "can_followup": ticket.can_followup,
         "requester_display_name": ticket.requester_display_name,
         "requester_mine": ticket.requester_mine,
@@ -192,6 +197,7 @@ def create_ticket(
             description=body.description,
             category_id=body.category_id,
             urgency_id=body.urgency_id,
+            observer_ids=body.observer_ids,
             idempotency_key=idempotency_key,
         )
     except HelpdeskError as exc:

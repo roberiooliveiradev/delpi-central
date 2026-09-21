@@ -613,6 +613,8 @@ def test_mapping_list_publishes_created_at_and_assigned():
                 "date_mod": "2026-02-19T12:00:00Z",
                 "date_solve": None,
                 "date_close": None,
+                "sla_ttr": {"id": 1, "name": "TTR 8h"},
+                "sla_tto": {"id": 2, "name": "TTO 1h"},
                 "team": [{"role": "assigned", "firstname": "Ana", "realname": "Silva"}],
             }
         ]
@@ -624,6 +626,25 @@ def test_mapping_list_publishes_created_at_and_assigned():
     assert listed[0].status == "Em atendimento (atribuído)"
     assert listed[0].solved_at == ""
     assert listed[0].closed_at == ""
+    assert listed[0].sla_ttr == "TTR 8h"
+    assert listed[0].sla_tto == "TTO 1h"
+
+
+def test_team_member_observer_body_is_hd011_safe():
+    from helpdesk_app.infrastructure.glpi.mapping import (
+        normalize_observer_ids,
+        team_member_observer_body,
+    )
+
+    body = team_member_observer_body(15)
+    assert body == {"type": "User", "role": "observer", "id": 15}
+    assert "requester" not in body
+    assert "entity" not in body
+    assert normalize_observer_ids([15, 15, 22]) == (15, 22)
+    with pytest.raises(GlpiValidation):
+        team_member_observer_body(0)
+    with pytest.raises(GlpiValidation):
+        normalize_observer_ids([-1])
 
 
 def test_mapping_list_publishes_solved_and_closed_instants():

@@ -132,6 +132,37 @@ def test_create_ticket_and_followup_are_idempotent():
     assert len(glpi.followups) == 1
 
 
+def test_create_attaches_observers_without_requester_or_entity():
+    client, glpi = build_client()
+    link(client)
+    created = client.post(
+        "/tickets",
+        json={
+            "title": "Com watcher",
+            "description": "Preciso de cópia",
+            "category_id": 3,
+            "urgency_id": 3,
+            "observer_ids": [15, 15, 22],
+        },
+        headers={**auth_headers(), "Idempotency-Key": "intent-obs-1"},
+    )
+    assert created.status_code == 201
+    assert glpi.observers == [(42, 15, "access-a"), (42, 22, "access-a")]
+    forbidden = client.post(
+        "/tickets",
+        json={
+            "title": "X",
+            "description": "Y",
+            "category_id": 3,
+            "urgency_id": 3,
+            "requester_id": 9,
+            "observer_ids": [1],
+        },
+        headers={**auth_headers(), "Idempotency-Key": "intent-obs-2"},
+    )
+    assert forbidden.status_code == 422
+
+
 def test_create_and_followup_sanitize_html_and_keep_plain_text():
     client, glpi = build_client()
     link(client)

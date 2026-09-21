@@ -32,6 +32,7 @@ from helpdesk_app.infrastructure.glpi.mapping import (
     parse_ticket_page,
     parse_token_set,
     parse_viewer_identity,
+    team_member_observer_body,
 )
 
 logger = logging.getLogger("helpdesk.glpi")
@@ -221,6 +222,15 @@ class HttpxGlpiClient:
             json_body=body,
         )
         return parse_created_id(payload)
+
+    def add_ticket_observer(self, access_token: str, ticket_id: int, user_id: int) -> None:
+        body = team_member_observer_body(user_id)
+        self._json(
+            "POST",
+            f"/api.php/v2.2/Assistance/Ticket/{int(ticket_id)}/TeamMember",
+            token=access_token,
+            json_body=body,
+        )
 
     def add_followup(self, access_token: str, ticket_id: int, content: str) -> int:
         payload = self._json(
