@@ -200,7 +200,7 @@ Abstraction Gate aplicado como recomendação, não como schema.
 | Início | Dashboard é a home | TM dashboard | `DashboardResumo` e alertas/vencimentos | Home operacional | Leituras existentes | Projeção | não `get_transforma_home` | não | Início | PARTIAL |
 | Visão geral do programa | Dashboard PROVEN | TM | resumo, evolução, processos | Overview com filtros cujo cálculo exista | Dashboard | Não | `analyze` / dashboard | não `get_portal_overview` | Visão geral | PARTIAL |
 | Sala de interação | Ausente no TM | Comercial | `commercial-api` interaction rooms | Só se surgir owner transversal | Não copiar | TO_INVENTORY | não | não | Sala | TO_INVENTORY |
-| Minhas tarefas | Pendência de ata PROVEN | TM atas; Comercial tem worklist própria | `pending-signatures` | Projeção de obrigações | Não task store paralelo | TO_INVENTORY | não `get_my_tasks` | não | Tarefas | PARTIAL |
+| Minhas tarefas | Assinatura pendente PROVEN | TM atas | `pending-signatures` | Projeção de obrigações | Não task store paralelo | Não | não `get_my_tasks` | não | Tarefas | PROVEN |
 | Meus processos | Lista de processos PROVEN | TM | workspace de processos | Lista no escopo autorizado | search/list existente | Não | `search_records` | genérico | Meus processos | PARTIAL |
 | Portfólio | Ausente | — | — | Read model, não agregado | Abstraction Gate | Não por default | não `get_my_portfolio` | não | Portfólio | TARGET |
 | Administração | Catálogos PROVEN | TM | unidades, departamentos, recursos | Só domínio TM | Telas atuais | Não | catálogo existente | genérico | Administração | PARTIAL |

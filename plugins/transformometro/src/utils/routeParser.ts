@@ -5,6 +5,7 @@ import { defaultRecursoSection } from "../ui/settings/settingsWorkspaceNav";
 export type TransformometroView =
   | "home"
   | "dashboard"
+  | "myTasks"
   | "administration"
   | "dados"
   | "configuracoes"
@@ -100,6 +101,7 @@ function matchSettingsUnit(path: string) {
 export function parseTransformometroPath(pathname: string): ParsedTransformometroRoute {
   const path = canonicalizeTransformometroPath(pathname);
 
+  if (path === TRANSFORMOMETRO_ROUTES.myTasks) return { view: "myTasks" };
   if (path === TRANSFORMOMETRO_ROUTES.meetingMinutes) return { view: "atas" };
   if (path === `${TRANSFORMOMETRO_ROUTES.meetingMinutes}/new`) return { view: "ataNew" };
   if (path === TRANSFORMOMETRO_ROUTES.meetingMinutesPending) return { view: "atasPending" };

@@ -1,6 +1,7 @@
 export const TRANSFORMOMETRO_ROUTES = {
   home: "/apps/transformometro",
   dashboard: "/apps/transformometro/dashboard",
+  myTasks: "/apps/transformometro/my-tasks",
   processes: "/apps/transformometro/processes",
   /** @deprecated alias — use `processes` */
   processos: "/apps/transformometro/processes",

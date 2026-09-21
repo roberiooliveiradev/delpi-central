@@ -22,6 +22,11 @@ export const PORTAL_PAGE_COPY = {
     title: "Visão geral",
     description: "Indicadores e resultados do programa de transformação.",
   },
+  myTasks: {
+    eyebrow: "OPERAÇÃO",
+    title: "Minhas tarefas",
+    description: "Acompanhe ações e pendências que exigem sua atenção.",
+  },
   processes: {
     eyebrow: "PROCESSOS",
     title: "Meus processos",
@@ -83,13 +88,14 @@ export type DeferredNavItem = {
 export const PORTAL_TOPBAR_ITEMS = [
   { id: "home", label: "Início", path: TRANSFORMOMETRO_ROUTES.home },
   { id: "overview", label: "Visão geral", path: TRANSFORMOMETRO_ROUTES.dashboard },
+  { id: "tasks", label: "Minhas tarefas", path: TRANSFORMOMETRO_ROUTES.myTasks },
   { id: "processes", label: "Meus processos", path: TRANSFORMOMETRO_ROUTES.processes },
   { id: "administration", label: "Administração", path: TRANSFORMOMETRO_ROUTES.administration },
   { id: "help", label: "Ajuda", path: TRANSFORMOMETRO_ROUTES.help },
 ] as const;
 
 /**
- * Sala e tarefas pertencem a outros contextos.
+ * Sala permanece em outro contexto.
  * Favoritos de rota deste portal são preferência local do MFE, não item da TopBar de negócio.
  */
 export const DEFERRED_NAV_ITEMS: readonly DeferredNavItem[] = [
@@ -99,13 +105,6 @@ export const DEFERRED_NAV_ITEMS: readonly DeferredNavItem[] = [
     placement: "topbar",
     status: "TO_INVENTORY",
     reason: "A sala funcional pertence ao commercial-api. Não há contrato transversal no Core.",
-  },
-  {
-    id: "tasks",
-    label: "Minhas tarefas",
-    placement: "topbar",
-    status: "TO_INVENTORY",
-    reason: "Não há task store compartilhado. Pendências de ata não são essa capability.",
   },
   {
     id: "user",
@@ -132,6 +131,19 @@ export const PORTAL_LAUNCHER_GROUPS: readonly {
         label: "Visão geral",
         path: TRANSFORMOMETRO_ROUTES.dashboard,
         description: "Indicadores e resultados do programa de transformação.",
+      },
+    ],
+  },
+  {
+    id: "operation",
+    title: "Operação",
+    description: "Ações que exigem sua atenção.",
+    links: [
+      {
+        id: "my-tasks",
+        label: "Minhas tarefas",
+        path: TRANSFORMOMETRO_ROUTES.myTasks,
+        description: "Itens que exigem sua atenção.",
       },
     ],
   },
@@ -308,6 +320,7 @@ export function resolvePortalTopBarId(currentPath?: string): string {
   ) {
     return "overview";
   }
+  if (currentPath === TRANSFORMOMETRO_ROUTES.myTasks) return "tasks";
   if (currentPath.includes("/processes") || currentPath.includes("/processos")) {
     return "processes";
   }

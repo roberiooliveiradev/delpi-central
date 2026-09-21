@@ -23,6 +23,7 @@ import { MeetingMinuteEditorPage } from "./ui/pages/MeetingMinuteEditorPage";
 import { MeetingMinuteDetailPage } from "./ui/pages/MeetingMinuteDetailPage";
 import { MeetingMinuteSignPage } from "./ui/pages/MeetingMinuteSignPage";
 import { MeetingMinutesPendingPage } from "./ui/pages/MeetingMinutesPendingPage";
+import { MyTasksPage } from "./ui/pages/MyTasksPage";
 import { MySignaturePage } from "./ui/pages/MySignaturePage";
 import { DiagramEditorPage } from "./ui/pages/DiagramEditorPage";
 import { useDelpiPortalBridge } from "./hooks/useDelpiPortalBridge";
@@ -64,6 +65,10 @@ function AppRoutes({ getAccessToken, pathname: pathnameFromHost }: AppProps) {
         pathname={pathname}
         onNavigate={onNavigate}
       />
+    );
+  } else if (route.view === "myTasks") {
+    page = (
+      <MyTasksPage getAccessToken={getAccessToken} pathname={pathname} onNavigate={onNavigate} />
     );
   } else if (route.view === "help") {
     page = <HelpPage pathname={pathname} onNavigate={onNavigate} />;

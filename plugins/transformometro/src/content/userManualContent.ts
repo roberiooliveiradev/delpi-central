@@ -36,7 +36,7 @@ export function visibleManualLinks(
 export const USER_MANUAL_CONTENT = {
   backHome: "Voltar ao início",
   scopeNote:
-    "Este manual descreve o que o Portal Transforma+ já oferece. Sala de interação e Minhas tarefas ainda não fazem parte deste portal.",
+    "Este manual descreve o que o Portal Transforma+ já oferece. Sala de interação ainda não faz parte deste portal.",
   tocTitle: "Neste manual",
   tocAriaLabel: "Sumário do manual",
   conceptsTitle: "Conceitos",
@@ -134,6 +134,25 @@ export const USER_MANUAL_CONTENT = {
           where: "Meus processos",
           how: "Abra a lista e escolha o processo.",
           path: TRANSFORMOMETRO_ROUTES.processes,
+        },
+      ],
+    },
+    {
+      id: "my-tasks",
+      title: "Minhas tarefas",
+      intro:
+        "Lista o que exige a sua ação agora. Hoje isso é a assinatura pendente de uma ata em que você é signatário. Não lista processos da unidade nem responsáveis escritos só pelo nome.",
+      bullets: [
+        "Abra o item para ir à ata. A assinatura acontece na própria ata, não nesta lista.",
+        "Quando você assina, a ata sai da lista na próxima leitura.",
+        "Revisão vencendo e melhoria com responsável local não entram aqui: não há atribuição ao seu usuário.",
+      ],
+      links: [
+        {
+          want: "Ver o que exige a minha ação",
+          where: "Minhas tarefas",
+          how: "Use a barra superior ou o card Operação no Início.",
+          path: TRANSFORMOMETRO_ROUTES.myTasks,
         },
       ],
     },

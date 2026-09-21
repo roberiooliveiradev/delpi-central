@@ -1,4 +1,4 @@
-import { BarChart3, BookOpen, FileText, List, Settings } from "lucide-react";
+import { BarChart3, BookOpen, ClipboardList, FileText, List, Settings } from "lucide-react";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   CatalogSearchBar,
@@ -54,6 +54,7 @@ const SECTION_LABELS = {
 
 const GROUP_ICONS: Record<string, ReactNode> = {
   management: <BarChart3 size={20} strokeWidth={1.75} aria-hidden="true" />,
+  operation: <ClipboardList size={20} strokeWidth={1.75} aria-hidden="true" />,
   processes: <List size={20} strokeWidth={1.75} aria-hidden="true" />,
   records: <FileText size={20} strokeWidth={1.75} aria-hidden="true" />,
   administration: <Settings size={20} strokeWidth={1.75} aria-hidden="true" />,

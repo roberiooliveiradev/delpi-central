@@ -33,12 +33,13 @@ describe("Portal Transforma+ navigation", () => {
     expect(PORTAL_TOPBAR_ITEMS.map((item) => item.label)).toEqual([
       "Início",
       "Visão geral",
+      "Minhas tarefas",
       "Meus processos",
       "Administração",
       "Ajuda",
     ]);
     const labels = PORTAL_TOPBAR_ITEMS.map((item) => item.label).join(" ");
-    expect(labels).not.toMatch(/Atas|Configurações|Exportar|Sala|Tarefas|Favoritos/);
+    expect(labels).not.toMatch(/Atas|Configurações|Exportar|Sala|Favoritos/);
   });
 
   it("não coloca Configurações como área principal", () => {
@@ -46,7 +47,14 @@ describe("Portal Transforma+ navigation", () => {
     const links = PORTAL_LAUNCHER_GROUPS.flatMap((group) => group.links.map((link) => link.label));
     expect(links).not.toContain("Configurações");
     expect(links).toEqual(
-      expect.arrayContaining(["Atas", "Exportar / Importar", "Meus processos", "Visão geral", "Administração"]),
+      expect.arrayContaining([
+        "Atas",
+        "Exportar / Importar",
+        "Meus processos",
+        "Minhas tarefas",
+        "Visão geral",
+        "Administração",
+      ]),
     );
     const visible = filterPortalCatalog("", { includeAdministration: false }).map((item) => item.label);
     expect(visible).not.toContain("Configurações");
@@ -54,12 +62,8 @@ describe("Portal Transforma+ navigation", () => {
     expect(visible).toContain("Exportar / Importar");
   });
 
-  it("não promove sala, tarefas ou usuário a funcional", () => {
-    expect(DEFERRED_NAV_ITEMS.map((item) => item.label)).toEqual([
-      "Sala de interação",
-      "Minhas tarefas",
-      "Usuário",
-    ]);
+  it("não promove sala ou usuário a funcional", () => {
+    expect(DEFERRED_NAV_ITEMS.map((item) => item.label)).toEqual(["Sala de interação", "Usuário"]);
     expect(DEFERRED_NAV_ITEMS.every((item) => item.status === "TO_INVENTORY")).toBe(true);
     const topIds = PORTAL_TOPBAR_ITEMS.map((item) => item.id);
     for (const item of DEFERRED_NAV_ITEMS) {
@@ -77,6 +81,7 @@ describe("Portal Transforma+ navigation", () => {
     expect(parseTransformometroPath(TRANSFORMOMETRO_ROUTES.meetingMinutes).view).toBe("atas");
     expect(parseTransformometroPath(TRANSFORMOMETRO_ROUTES.settingsUnits).view).toBe("configuracoes");
     expect(parseTransformometroPath(TRANSFORMOMETRO_ROUTES.data).view).toBe("dados");
+    expect(parseTransformometroPath(TRANSFORMOMETRO_ROUTES.myTasks).view).toBe("myTasks");
     expect(parseTransformometroPath(TRANSFORMOMETRO_ROUTES.help).view).toBe("help");
     expect(parseTransformometroPath("/apps/transformometro/ajuda").view).toBe("help");
     expect(parseTransformometroPath("/apps/transformometro/manual").view).toBe("dashboard");
@@ -115,7 +120,9 @@ describe("Portal Transforma+ navigation", () => {
       TRANSFORMOMETRO_ROUTES.help,
     );
     expect(filterPortalCatalog("favoritos")).toEqual([]);
-    expect(filterPortalCatalog("tarefas")).toEqual([]);
+    expect(filterPortalCatalog("tarefas").map((item) => item.path)).toContain(
+      TRANSFORMOMETRO_ROUTES.myTasks,
+    );
     expect(isPortalSearchShortcut({ key: "k", ctrlKey: true, metaKey: false })).toBe(true);
     expect(isPortalSearchShortcut({ key: "K", ctrlKey: false, metaKey: true })).toBe(true);
     expect(isPortalSearchShortcut({ key: "k", ctrlKey: false, metaKey: false })).toBe(false);
@@ -164,6 +171,7 @@ describe("Portal Transforma+ navigation", () => {
     });
     expect(PORTAL_LAUNCHER_GROUPS.map((group) => group.title)).toEqual([
       "Gestão",
+      "Operação",
       "Processos",
       "Registros",
       "Administração",
@@ -182,6 +190,7 @@ describe("Portal Transforma+ navigation", () => {
       expect.arrayContaining([
         "Visão geral",
         "Meus processos",
+        "Minhas tarefas",
         "Atas",
         "Exportar / Importar",
         "Administração",
@@ -190,13 +199,13 @@ describe("Portal Transforma+ navigation", () => {
     );
     const text = JSON.stringify(USER_MANUAL_CONTENT);
     expect(text).not.toMatch(/Keycloak|MCP|GPT Actions|JWT/);
-    expect(text).toContain("ainda não fazem parte deste portal");
+    expect(text).toContain("Sala de interação ainda não faz parte deste portal.");
     expect(text).toContain("usuários responsáveis pela administração do Portal");
     for (const section of USER_MANUAL_CONTENT.sections) {
       for (const link of visibleManualLinks(section.links, false)) {
         expect(link.path).toBeTruthy();
         const view = parseTransformometroPath(link.path!).view;
-        expect(["home", "help", "dashboard", "processos", "atas", "dados"]).toContain(view);
+        expect(["home", "help", "dashboard", "processos", "myTasks", "atas", "dados"]).toContain(view);
       }
     }
     const adminLinks = USER_MANUAL_CONTENT.sections.flatMap((section) =>
@@ -215,6 +224,7 @@ describe("Portal Transforma+ navigation", () => {
     expect(visiblePortalTopBarItems(false).map((item) => item.label)).toEqual([
       "Início",
       "Visão geral",
+      "Minhas tarefas",
       "Meus processos",
       "Ajuda",
     ]);
