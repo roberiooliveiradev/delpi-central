@@ -1,7 +1,7 @@
 {
   "version": 1,
   "generatedAt": "2026-09-21",
-  "operation_count": 196,
+  "operation_count": 201,
   "operations": [
     {
       "operationId": "post_liberar",
@@ -313,6 +313,36 @@
       "operationId": "post_processo_diagrama_validacao",
       "method": "POST",
       "path": "/transformometro/processos/{processo_id}/diagrama/validacao",
+      "module": "crud"
+    },
+    {
+      "operationId": "list_process_documents",
+      "method": "GET",
+      "path": "/transformometro/processos/{processo_id}/documents",
+      "module": "crud"
+    },
+    {
+      "operationId": "create_process_document",
+      "method": "POST",
+      "path": "/transformometro/processos/{processo_id}/documents",
+      "module": "crud"
+    },
+    {
+      "operationId": "delete_process_document",
+      "method": "DELETE",
+      "path": "/transformometro/processos/{processo_id}/documents/{document_id}",
+      "module": "crud"
+    },
+    {
+      "operationId": "get_process_document",
+      "method": "GET",
+      "path": "/transformometro/processos/{processo_id}/documents/{document_id}",
+      "module": "crud"
+    },
+    {
+      "operationId": "update_process_document",
+      "method": "PATCH",
+      "path": "/transformometro/processos/{processo_id}/documents/{document_id}",
       "module": "crud"
     },
     {

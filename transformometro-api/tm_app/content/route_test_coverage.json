@@ -1,9 +1,9 @@
 {
   "version": 1,
   "generatedAt": "2026-09-21",
-  "baselineOperationCount": 195,
-  "operationCount": 195,
-  "coveredCount": 195,
+  "baselineOperationCount": 201,
+  "operationCount": 201,
+  "coveredCount": 201,
   "gapCount": 0,
   "exemptCount": 0,
   "byModule": {
@@ -14,8 +14,8 @@
       "exempt": 0
     },
     "crud": {
-      "total": 95,
-      "covered": 95,
+      "total": 101,
+      "covered": 101,
       "gap": 0,
       "exempt": 0
     },
@@ -440,6 +440,41 @@
       "status": "covered"
     },
     {
+      "operationId": "list_process_documents",
+      "method": "GET",
+      "path": "/transformometro/processos/{processo_id}/documents",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "create_process_document",
+      "method": "POST",
+      "path": "/transformometro/processos/{processo_id}/documents",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "delete_process_document",
+      "method": "DELETE",
+      "path": "/transformometro/processos/{processo_id}/documents/{document_id}",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_process_document",
+      "method": "GET",
+      "path": "/transformometro/processos/{processo_id}/documents/{document_id}",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "update_process_document",
+      "method": "PATCH",
+      "path": "/transformometro/processos/{processo_id}/documents/{document_id}",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
       "operationId": "duplicate_processo",
       "method": "POST",
       "path": "/transformometro/processos/{processo_id}/duplicar",
@@ -464,6 +499,13 @@
       "operationId": "processo_matriz_impacto_esforco",
       "method": "GET",
       "path": "/transformometro/processos/{processo_id}/matriz-impacto-esforco",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_processo_related_tasks",
+      "method": "GET",
+      "path": "/transformometro/processos/{processo_id}/related-tasks",
       "module": "crud",
       "status": "covered"
     },

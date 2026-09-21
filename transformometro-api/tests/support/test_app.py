@@ -61,6 +61,7 @@ from tm_app.interface.http.routes.integrations_routes import router as integrati
 from tm_app.interface.http.routes.json_backup_routes import router as json_backup_router
 from tm_app.interface.http.routes.meeting_minutes_routes import router as meeting_minutes_router
 from tm_app.interface.http.routes.process_file_routes import router as processo_arquivo_router
+from tm_app.interface.http.routes.process_document_routes import router as process_document_router
 from tm_app.interface.http.routes.public_meeting_minutes_routes import (
     public_router as public_meeting_minutes_router,
 )
@@ -107,6 +108,7 @@ def create_test_app() -> FastAPI:
     app.include_router(json_backup_router)
     app.include_router(revisao_evidence_router)
     app.include_router(processo_arquivo_router)
+    app.include_router(process_document_router)
     app.include_router(diagram_router)
     app.include_router(decomposition_router)
     app.include_router(collaboration_router)
