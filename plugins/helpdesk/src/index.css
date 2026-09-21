@@ -43,50 +43,8 @@
   --helpdesk-border: rgba(255, 255, 255, 0.12);
 }
 
-.dashboard-helpdesk .helpdesk-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
+.dashboard-helpdesk .helpdesk-record-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-}
-
-.dashboard-helpdesk .helpdesk-list button {
-  width: 100%;
-  text-align: left;
-  border: 1px solid var(--helpdesk-border);
-  background: var(--helpdesk-surface);
-  color: inherit;
-  border-radius: 12px;
-  padding: 12px 14px;
-  cursor: pointer;
-}
-
-.dashboard-helpdesk .helpdesk-meta {
-  color: var(--helpdesk-text-muted);
-  font-size: 0.875rem;
-}
-
-.dashboard-helpdesk label {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-bottom: 12px;
-}
-
-.dashboard-helpdesk input,
-.dashboard-helpdesk textarea,
-.dashboard-helpdesk select {
-  border: 1px solid var(--helpdesk-border);
-  border-radius: 10px;
-  padding: 10px 12px;
-  background: var(--helpdesk-surface);
-  color: inherit;
-  font: inherit;
-}
-
-.dashboard-helpdesk textarea {
-  min-height: 120px;
-  resize: vertical;
+  gap: var(--helpdesk-section-gap);
 }

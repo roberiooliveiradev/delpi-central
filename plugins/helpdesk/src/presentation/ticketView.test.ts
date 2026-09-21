@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { viewForTicketLoad } from "./ticketView";
+import { viewForTicketLoad, statusBadgeVariant } from "./ticketView";
 
 describe("viewForTicketLoad", () => {
   it("mostra a lista quando há chamados", () => {
@@ -24,5 +24,20 @@ describe("viewForTicketLoad", () => {
     expect(
       viewForTicketLoad({ loading: false, errorCode: "glpi_link_required", itemCount: 0 }),
     ).toBe("link");
+  });
+});
+
+describe("statusBadgeVariant", () => {
+  it("marca chamado novo e solucionado com tons diferentes", () => {
+    expect(statusBadgeVariant("Novo")).toBe("info");
+    expect(statusBadgeVariant("Solucionado")).toBe("success");
+  });
+
+  it("trata atendimento atribuído como o mesmo tom de em andamento", () => {
+    expect(statusBadgeVariant("Em atendimento (atribuído)")).toBe("warning");
+  });
+
+  it("não promove status desconhecido", () => {
+    expect(statusBadgeVariant("Aguardando peça")).toBe("neutral");
   });
 });

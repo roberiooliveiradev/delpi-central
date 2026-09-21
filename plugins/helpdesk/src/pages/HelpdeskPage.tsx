@@ -14,15 +14,20 @@ import {
   type TicketSummary,
 } from "../api/helpdeskApi";
 import { helpTooltips } from "../content/helpTooltips";
-import { newIdempotencyKey, viewForTicketLoad } from "../presentation/ticketView";
+import { newIdempotencyKey, statusBadgeVariant, viewForTicketLoad } from "../presentation/ticketView";
 import { navigateHelpdesk, type HelpdeskRoute } from "../routing/helpdeskRoute";
 import {
   HelpdeskEmptyState,
   HelpdeskFormActions,
   HelpdeskLoadingState,
   HelpdeskPageHeader,
+  HelpdeskRecordCard,
   HelpdeskSectionCard,
+  HelpdeskSelect,
   HelpdeskStateBanner,
+  HelpdeskStatusBadge,
+  HelpdeskTextArea,
+  HelpdeskTextField,
   HelpdeskTimeline,
 } from "../ui/helpdeskUi";
 
@@ -115,18 +120,28 @@ function TicketListPage() {
         ) : null}
         {view === "empty" ? <HelpdeskEmptyState /> : null}
         {view === "list" ? (
-          <ul className="helpdesk-list">
+          <div className="helpdesk-record-list">
             {items.map((item) => (
-              <li key={item.id}>
-                <button type="button" onClick={() => navigateHelpdesk(`/apps/helpdesk/tickets/${item.id}`)}>
-                  <strong>{item.title}</strong>
-                  <div className="helpdesk-meta">
-                    {item.status} · {item.category} · {item.urgency}
-                  </div>
-                </button>
-              </li>
+              <HelpdeskRecordCard
+                key={item.id}
+                title={item.title}
+                status={<HelpdeskStatusBadge label={item.status} variant={statusBadgeVariant(item.status)} />}
+                fields={[
+                  { id: "category", label: "Categoria", value: item.category },
+                  { id: "urgency", label: "Urgência", value: item.urgency },
+                ]}
+                href={`/apps/helpdesk/tickets/${item.id}`}
+                ariaLabel={item.title}
+                onNavigate={(event) => {
+                  if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) {
+                    return;
+                  }
+                  event.preventDefault();
+                  navigateHelpdesk(`/apps/helpdesk/tickets/${item.id}`);
+                }}
+              />
             ))}
-          </ul>
+          </div>
         ) : null}
       </HelpdeskSectionCard>
     </>
@@ -189,34 +204,23 @@ function CreateTicketPage() {
             });
         }}
       >
-        <label>
-          Título
-          <input value={title} onChange={(event) => setTitle(event.target.value)} required />
-        </label>
-        <label>
-          Descrição
-          <textarea value={description} onChange={(event) => setDescription(event.target.value)} required />
-        </label>
-        <label>
-          Categoria
-          <select value={categoryId} onChange={(event) => setCategoryId(event.target.value)} required>
-            {categories.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Urgência
-          <select value={urgencyId} onChange={(event) => setUrgencyId(event.target.value)} required>
-            {urgencies.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.name}
-              </option>
-            ))}
-          </select>
-        </label>
+        <HelpdeskTextField label="Título" hint={helpTooltips.create} value={title} onChange={setTitle} required />
+        <HelpdeskTextArea label="Descrição" value={description} onChange={setDescription} required />
+        <HelpdeskSelect
+          label="Categoria"
+          value={categoryId}
+          onChange={setCategoryId}
+          required
+          searchable
+          options={categories.map((item) => ({ value: String(item.id), label: item.name }))}
+        />
+        <HelpdeskSelect
+          label="Urgência"
+          value={urgencyId}
+          onChange={setUrgencyId}
+          required
+          options={urgencies.map((item) => ({ value: String(item.id), label: item.name }))}
+        />
         <HelpdeskFormActions>
           <ActionButton type="button" onClick={() => navigateHelpdesk("/apps/helpdesk")}>
             Voltar
@@ -259,9 +263,11 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
         {errorText ? <HelpdeskStateBanner variant="error">{errorText}</HelpdeskStateBanner> : null}
         {ticket ? (
           <>
-            <p className="helpdesk-meta">
-              {ticket.status} · {ticket.category} · {ticket.urgency}
-            </p>
+            <HelpdeskRecordCard
+              title={ticket.category}
+              subtitle={ticket.urgency}
+              status={<HelpdeskStatusBadge label={ticket.status} variant={statusBadgeVariant(ticket.status)} />}
+            />
             <p>{ticket.description}</p>
             <HelpdeskTimeline
               items={ticket.timeline.map((entry) => ({
@@ -286,10 +292,13 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                   .finally(() => setSaving(false));
               }}
             >
-              <label>
-                Acompanhamento
-                <textarea value={content} onChange={(event) => setContent(event.target.value)} required />
-              </label>
+              <HelpdeskTextArea
+                label="Acompanhamento"
+                hint={helpTooltips.detail}
+                value={content}
+                onChange={setContent}
+                required
+              />
               <HelpdeskFormActions>
                 <ActionButton type="button" onClick={() => navigateHelpdesk("/apps/helpdesk")}>
                   Voltar

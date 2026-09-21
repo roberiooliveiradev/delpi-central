@@ -1,6 +1,6 @@
 # 01 — Visão de produto
 
-> **Status:** `PLANNED`
+> **Status:** `PROVEN` na lista publicada em 21/09/2026
 > **North star e authorities:** [`README.md`](./README.md)
 
 ## 1. Para quem
@@ -29,8 +29,7 @@ Meus Chamados de TI
 [ Novo chamado ]
 
 Meus chamados
-| Número | Título | Status | Atualizado |
-| 1234   | ...    | ...    | ...        |
+card: título, status, categoria, urgência
 vazio: "Você ainda não tem chamados."
 
 --- Novo chamado ---

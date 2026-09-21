@@ -1,11 +1,11 @@
 # 06 — Plano de execução
 
-> **Status:** implementação no repositório; H1–H4 seguem `NOT_STARTED` no ledger até `E5.S2`
+> **Status:** H1, H2 e H4 `PROVEN` no ledger; H3 ainda `NOT_STARTED`
 > **Esta é a ordem.** [`05-roadmap.md`](./05-roadmap.md) só mostra as ondas.
 > **Requisitos:** [`07-requisitos.md`](./07-requisitos.md)
 > **Prova:** [`09-testes-e-aceite.md`](./09-testes-e-aceite.md)
 
-O código de E1–E4 está no repositório. Isso não marca o ledger: a homologação com um usuário real no GLPI ainda não rodou.
+A lista e a sessão OAuth foram usadas em produção em 21/09/2026. A abertura e o acompanhamento ainda não têm esse registro no ledger.
 
 ## Antes × depois
 
@@ -136,7 +136,7 @@ Cobre: HD-018.
 
 Um colaborador com perfil de chamado abre um chamado de teste na Minha DELPI e o mesmo número aparece no GLPI em nome dele. Um usuário sem direito no GLPI recebe acesso negado. O console do técnico não muda.
 
-Aceite registrado no ledger. Sem isso, H4 não está `PROVEN` em produção.
+Aceite parcial registrado no ledger: sessão, lista e tela. A abertura de um chamado de teste e o acompanhamento ainda fecham H3.
 
 ## Fora deste plano
 
@@ -145,6 +145,6 @@ H5 de [`05-roadmap.md`](./05-roadmap.md). Não criar etapa especulativa para ane
 ## Revisão adversarial
 
 - O escopo `api` é largo. A mitigação travada é perfil GLPI + superfície mínima do BFF, não um escopo que o GLPI 11.0.5 não tem.
-- O iframe atual aponta para um host errado. Corrigir o iframe no meio de E1 criaria duas experiências. O corte fica em E4.S4.
-- Dropdown de categoria ainda não teve o path gravado campo a campo. E2.S1 é a etapa que fecha isso no OpenAPI vivo, antes da tela.
+- O iframe antigo apontava para um host errado. O corte para o MFE já está publicado.
+- Categorias saem de `GET /api.php/v2.2/Dropdowns/ITILCategory`. Urgência é o enum 1–5 do Ticket, não um dropdown.
 - Chamado duplicado é o risco da escrita. Idempotência e ausência de retry estão em E3, não como ajuste posterior.

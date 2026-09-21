@@ -1,6 +1,6 @@
 # 02 — Arquitetura
 
-> **Status do alvo:** `PLANNED`
+> **Status do alvo:** publicado; lista `PROVEN` em 21/09/2026
 > **Status do GLPI de produção:** `PROVEN` em 21/09/2026
 > **Ledger:** [`evidence/execution-ledger.md`](./evidence/execution-ledger.md)
 
@@ -14,7 +14,7 @@ Portal
       → GLPI HLAPI 2.2 em nome do usuário
 ```
 
-O iframe antigo apontava para `https://centraldelpi.com.br/helpdesk/`, que não é o host do GLPI. Esse manifesto foi substituído no repositório. O portal publicado só passa a servir o MFE depois do deploy. O path `/helpdesk` redireciona para `/apps/helpdesk`.
+O iframe antigo apontava para `https://centraldelpi.com.br/helpdesk/`, que não é o host do GLPI. O manifesto vigente é o microfrontend em `/apps/helpdesk`. O portal publicado já serve essa tela. O path `/helpdesk` redireciona para `/apps/helpdesk`.
 
 GLPI de produção, lido no container `inventario-ti-glpi-1`:
 

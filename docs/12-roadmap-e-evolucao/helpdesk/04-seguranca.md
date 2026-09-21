@@ -1,6 +1,6 @@
 # 04 — Segurança e identidade
 
-> **Status:** decisões `READY_CONFIRMED` na fundação GLPI; runtime do BFF `PLANNED`
+> **Status:** decisões `READY_CONFIRMED`; BFF publicado e sessão OAuth `PROVEN` na lista de 21/09/2026
 > **Contrato:** [`03-contrato.md`](./03-contrato.md)
 
 ## 1. Duas portas

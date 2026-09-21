@@ -96,7 +96,7 @@ Especificação: [../05-plugin-system/plugin-vs-module.md](../05-plugin-system/p
 | `plugins/central-agendamento` | `central-agendamento` | microfrontend | plugin | `/apps/central-agendamento` | `delpi-central-agendamento` |
 | `plugins/cultura-delpi` | (ver manifesto) | microfrontend | plugin | (ver manifesto) | (ver compose) |
 | `plugins/transformometro` | `transformometro` | microfrontend | plugin | `/apps/transformometro` | `delpi-transformometro` |
-| `plugins/helpdesk` | Meus Chamados de TI | microfrontend | `helpdesk.access` | `/apps/helpdesk` | BFF `helpdesk-api`; GLPI continua dono do chamado. Homologação com usuário real ainda não marcada no ledger |
+| `plugins/helpdesk` | Meus Chamados de TI | microfrontend | `helpdesk.access` | `/apps/helpdesk` | BFF `helpdesk-api`; lista publicada. Abertura ao vivo ainda não está no ledger |
 | `plugins/api-delpi-console` | `api-delpi-console` | microfrontend | plugin | `/apps/api-delpi-console` | `delpi-api-delpi-console` |
 | `plugins/idd_production` | (ver manifesto) | — | — | — | Avaliar registro na Core API |
 | `plugins/tv-dashboard` | `tv-dashboard` | microfrontend | plugin | `/apps/tv-dashboard` | `delpi-tv-dashboard` |

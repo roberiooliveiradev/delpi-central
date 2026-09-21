@@ -50,11 +50,11 @@ Uma etapa só fecha quando o aceite dela no plano de execução e os itens abaix
 ## E4
 
 ```text
-[ ] /apps/helpdesk é MFE, não iframe
-[ ] loading, vazio, erro e proibido visíveis
-[ ] F5 no detalhe reabre o mesmo chamado
-[ ] ajuda in-app publicada com a tela
-[ ] uma única entrada no menu, com o nome Meus Chamados de TI
+[x] /apps/helpdesk é MFE, não iframe
+[x] loading, vazio, erro e proibido visíveis
+[x] F5 no detalhe reabre o mesmo chamado
+[x] ajuda in-app publicada com a tela
+[x] uma única entrada no menu, com o nome Meus Chamados de TI
 [ ] desktop e largura estreita utilizáveis
 ```
 
@@ -66,4 +66,4 @@ Uma etapa só fecha quando o aceite dela no plano de execução e os itens abaix
 [ ] console do técnico em helpdesk.centraldelpi.com.br inalterado
 ```
 
-Sem o item de homologação, o status do produto permanece `PLANNED`, mesmo com teste automatizado verde.
+A lista em produção, em 21/09/2026, fecha a leitura e a tela. A abertura e o acompanhamento ao vivo ainda precisam entrar no ledger para H3 deixar de ser `NOT_STARTED`.

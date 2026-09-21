@@ -6,6 +6,7 @@
 declare module "@delpi/plugin-ui/index" {
   import type {
     ComponentType,
+    MouseEvent,
     InputHTMLAttributes,
     ReactElement,
     ReactNode,
@@ -344,6 +345,7 @@ declare module "@delpi/plugin-ui/index" {
     hint?: string;
     placeholder?: string;
     disabled?: boolean;
+    required?: boolean;
     type?: string;
     id?: string;
   };
@@ -376,6 +378,7 @@ declare module "@delpi/plugin-ui/index" {
     onChange: (value: string) => void;
     options: readonly SelectFieldOption[];
     hint?: string;
+    required?: boolean;
     disabled?: boolean;
     searchable?: boolean;
   };
@@ -824,6 +827,45 @@ declare module "@delpi/plugin-ui/index" {
     items: FloatingNoticeItem[];
     onDismiss: (id: string) => void;
   }>;
+
+  export type DashboardTextAreaFieldProps = {
+    label: string;
+    value: string;
+    onChange: (value: string) => void;
+    hint?: string;
+    placeholder?: string;
+    rows?: number;
+    disabled?: boolean;
+    required?: boolean;
+    id?: string;
+  };
+
+  export function textAreaFieldBemClasses(prefix: string): TextFieldClassNames;
+
+  export function createDashboardTextAreaField(config: {
+    classNames: TextFieldClassNames;
+  }): ComponentType<DashboardTextAreaFieldProps>;
+
+  export type DataRecordCardField = {
+    id: string;
+    label: ReactNode;
+    value: ReactNode;
+    present?: boolean;
+  };
+
+  export type DashboardDataRecordCardProps = {
+    title: ReactNode;
+    subtitle?: ReactNode;
+    status?: ReactNode;
+    fields?: DataRecordCardField[];
+    href?: string;
+    onNavigate?: (event: MouseEvent<HTMLAnchorElement>) => void;
+    ariaLabel?: string;
+  };
+
+  export function createDashboardDataRecordCard(config: {
+    prefix: string;
+  }): ComponentType<DashboardDataRecordCardProps>;
 }
 
 declare module "@delpi/plugin-ui/styles" {}

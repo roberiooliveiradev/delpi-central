@@ -1,6 +1,6 @@
 # 03 — Contrato
 
-> **Status:** `PLANNED` no BFF; rotas GLPI abaixo são `PROVEN` no código do GLPI 11.0.5
+> **Status:** contrato implementado; leitura ao vivo `PROVEN` em 21/09/2026
 > **Arquitetura:** [`02-arquitetura.md`](./02-arquitetura.md)
 
 O MFE consome só este contrato. Campos do GLPI não vazam quando o BFF consegue traduzir. Onde a tradução ainda não existe, o nome no JSON do BFF é o deste documento, não o nome cru do schema GLPI.
@@ -106,7 +106,7 @@ Chamadas com `Authorization: Bearer` do access token da pessoa e cabeçalho `GLP
 | Linha do tempo | `GET /api.php/v2.2/Assistance/Ticket/{id}/Timeline` |
 | Acompanhamento | `POST /api.php/v2.2/Assistance/Ticket/{id}/Timeline/Followup` |
 
-Categoria e urgência saem dos dropdowns da mesma HLAPI que o schema do Ticket referencia. O path exato do dropdown é fechado em `E2.S1` contra o OpenAPI vivo do GLPI (`/api.php/doc.json`), sem inventar lista fixa no BFF.
+Categoria: `GET /api.php/v2.2/Dropdowns/ITILCategory`, usando `completename`. Urgência é o enum 1–5 do schema de Ticket (Muito baixa, Baixa, Média, Alta, Muito alta), não um dropdown.
 
 Fora do mapa, mesmo que o escopo `api` permita: `Change`, `Problem`, ativo, inventário, GraphQL, tarefa de técnico, validação e solução. O BFF não publica rota para isso.
 

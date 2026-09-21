@@ -5,10 +5,10 @@
 
 ```text
 H0  Fundação GLPI                          PROVEN
-H1  BFF e sessão OAuth                     PLANNED
-H2  Leitura                                PLANNED
+H1  BFF e sessão OAuth                     PROVEN
+H2  Leitura da lista                       PROVEN
 H3  Abertura e acompanhamento              PLANNED
-H4  Tela nativa no lugar do iframe         PLANNED
+H4  Tela nativa no lugar do iframe         PROVEN
 H5  Anexo, satisfação, bancada técnica     TARGET
 ```
 

@@ -1,20 +1,29 @@
 import {
+  createDashboardDataRecordCard,
   createDashboardEmptyState,
   createDashboardFormActions,
   createDashboardLoadingState,
   createDashboardPageHeader,
   createDashboardSectionCard,
+  createDashboardSelectField,
   createDashboardStateBanner,
+  createDashboardStatusBadge,
+  createDashboardTextAreaField,
+  createDashboardTextField,
   createTimeline,
   emptyStateCardBemClasses,
   formActionsBemClasses,
   loadingStateCardBemClasses,
   pageHeaderTitleRowBemClasses,
   sectionCardPacBemClasses,
+  selectFieldPacClasses,
   stateBannerBemClasses,
+  textAreaFieldBemClasses,
+  textFieldPacClasses,
 } from "@delpi/plugin-ui/index";
 
 const PREFIX = "helpdesk";
+const selectClasses = selectFieldPacClasses(PREFIX);
 
 export const HelpdeskPageHeader = createDashboardPageHeader({
   layout: "titleRow",
@@ -46,3 +55,29 @@ export const HelpdeskLoadingState = createDashboardLoadingState({
 });
 
 export const HelpdeskTimeline = createTimeline({ prefix: PREFIX });
+
+export const HelpdeskStatusBadge = createDashboardStatusBadge({ prefix: PREFIX });
+
+export const HelpdeskRecordCard = createDashboardDataRecordCard({ prefix: PREFIX });
+
+export const HelpdeskTextField = createDashboardTextField({
+  classNames: textFieldPacClasses(PREFIX),
+});
+
+export const HelpdeskTextArea = createDashboardTextAreaField({
+  classNames: textAreaFieldBemClasses(PREFIX),
+});
+
+export const HelpdeskSelect = createDashboardSelectField({
+  field: selectClasses.field,
+  control: selectClasses.control,
+  labels: {
+    placeholder: "Selecione",
+    emptyLabel: "Nenhuma opção",
+    control: {
+      searchPlaceholder: "Buscar",
+      emptyOptions: "Nada encontrado",
+      searchAriaLabel: (label) => (label ? `Buscar ${label}` : "Buscar"),
+    },
+  },
+});
