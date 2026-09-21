@@ -1895,6 +1895,62 @@ services:
     networks:
       - delpi-network
 
+  helpdesk-api:
+    <<: *plugin-profile
+    build:
+      context: ..
+      dockerfile: helpdesk-api/Dockerfile
+
+    container_name: delpi-helpdesk-api
+    restart: unless-stopped
+
+    env_file:
+      - .env
+
+    environment:
+      PORT: "8000"
+      HELPDESK_API_ROOT_PATH: /apps/helpdesk-api
+      HELPDESK_RUN_MIGRATIONS_ON_STARTUP: ${HELPDESK_RUN_MIGRATIONS_ON_STARTUP:-true}
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-http://localhost}
+
+      JWT_SECRET: ${API_DELPI_JWT_SECRET}
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM}
+      KEYCLOAK_AUDIENCE: ${KEYCLOAK_AUDIENCE}
+      KEYCLOAK_JWKS_URL: ${KEYCLOAK_JWKS_URL}
+      KEYCLOAK_ISSUER: ${KEYCLOAK_ISSUER}
+      JWT_ALGORITHMS: ${JWT_ALGORITHMS}
+      LOG_LEVEL: ${LOG_LEVEL}
+      TZ: ${TZ}
+
+      DELPI_AUTH_CORE_API_URL: ${DELPI_AUTH_CORE_API_URL:-http://core-api:8000}
+      CORE_API_INTEGRATIONS_SERVICE_TOKEN: ${CORE_API_INTEGRATIONS_SERVICE_TOKEN:-${API_DELPI_INTERNAL_SERVICE_TOKEN:-}}
+
+      PLUGINS_DB_HOST: ${PLUGINS_DB_HOST}
+      PLUGINS_DB_PORT: ${PLUGINS_DB_PORT}
+      PLUGINS_DB_NAME: ${PLUGINS_DB_NAME}
+      PLUGINS_DB_USER: ${PLUGINS_DB_USER}
+      PLUGINS_DB_PASSWORD: ${PLUGINS_DB_PASSWORD}
+      PLUGINS_DB_CONNECT_TIMEOUT: ${PLUGINS_DB_CONNECT_TIMEOUT}
+      PLUGINS_DB_SSLMODE: ${PLUGINS_DB_SSLMODE}
+
+      GLPI_BASE_URL: ${GLPI_BASE_URL:-https://helpdesk.centraldelpi.com.br}
+      GLPI_OAUTH_CLIENT_ID: ${GLPI_OAUTH_CLIENT_ID:-}
+      GLPI_OAUTH_CLIENT_SECRET: ${GLPI_OAUTH_CLIENT_SECRET:-}
+      GLPI_OAUTH_REDIRECT_URI: ${GLPI_OAUTH_REDIRECT_URI:-https://centraldelpi.com.br/apps/helpdesk-api/auth/glpi/callback}
+      HELPDESK_TOKEN_ENCRYPTION_KEY: ${HELPDESK_TOKEN_ENCRYPTION_KEY:-}
+
+    volumes:
+      - ../helpdesk-api:/app
+      - ../shared:/shared
+
+    depends_on:
+      - keycloak
+      - postgres-plugins
+      - core-api
+
+    networks:
+      - delpi-network
+
   purchase-requests:
     <<: *plugin-ui-federated
     build:
@@ -1919,6 +1975,22 @@ services:
       target: production
 
     container_name: delpi-my-requests
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    networks:
+      - delpi-network
+
+  helpdesk:
+    <<: *plugin-ui-federated
+    build:
+      context: ../plugins
+      dockerfile: helpdesk/Dockerfile
+      target: production
+
+    container_name: delpi-helpdesk
     restart: unless-stopped
 
     environment:

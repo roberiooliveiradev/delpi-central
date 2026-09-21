@@ -1,37 +1,33 @@
 {
   "schemaVersion": "1.0.0",
   "id": "helpdesk",
-  "name": "Helpdesk DELPI",
-  "description": "Portal de atendimento GLPI",
+  "name": "Meus Chamados de TI",
+  "description": "Abertura e acompanhamento dos chamados de TI da pessoa, com o GLPI como fonte.",
   "icon": "lucide-message-circle-warning",
-  "version": "1.0.1",
-  "type": "iframe",
-
-  "basePath": "/helpdesk",
-  "entry": "https://centraldelpi.com.br/helpdesk/",
-
+  "version": "1.1.0",
+  "type": "microfrontend",
+  "basePath": "/apps/helpdesk",
+  "entry": "/apps/helpdesk/assets/remoteEntry.js",
   "permissions": [
     {
       "code": "helpdesk.access",
-      "name": "helpdesk.access",
-      "description": "Acesso ao helpdesk",
+      "name": "Acessar Meus Chamados de TI",
+      "description": "Permite abrir Meus Chamados de TI.",
       "module": "helpdesk"
     }
   ],
-
   "routes": [
     {
-      "path": "/helpdesk",
-      "label": "Abrir",
+      "path": "/apps/helpdesk",
+      "label": "Meus chamados",
       "permission": "helpdesk.access",
-      "icon": "external-link",
+      "icon": "message-circle-warning",
       "entry": null,
       "order": 1,
       "showInMenu": true
     }
   ],
-
   "ui": {
-    "renderMode": "embedded"
+    "renderMode": "federated"
   }
 }

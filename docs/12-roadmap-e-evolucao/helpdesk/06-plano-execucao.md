@@ -1,11 +1,11 @@
 # 06 — Plano de execução
 
-> **Status:** `PLANNED / NOT_STARTED`
+> **Status:** implementação no repositório; H1–H4 seguem `NOT_STARTED` no ledger até `E5.S2`
 > **Esta é a ordem.** [`05-roadmap.md`](./05-roadmap.md) só mostra as ondas.
 > **Requisitos:** [`07-requisitos.md`](./07-requisitos.md)
 > **Prova:** [`09-testes-e-aceite.md`](./09-testes-e-aceite.md)
 
-Nenhuma subetapa abaixo foi executada. Documentação desta pasta não conta como `E1`.
+O código de E1–E4 está no repositório. Isso não marca o ledger: a homologação com um usuário real no GLPI ainda não rodou.
 
 ## Antes × depois
 

@@ -146,6 +146,7 @@ FASE_MFE=(
   production-pulse
   purchase-requests
   my-requests
+  helpdesk
   cultura-delpi
   delia
   codigo-etica
@@ -167,6 +168,7 @@ FASE_API=(
   maintenance-api
   purchase-requests-api
   requests-api
+  helpdesk-api
   commercial-api
   supplies-api
   delia-api

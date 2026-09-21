@@ -4,19 +4,17 @@
 > **Status do GLPI de produção:** `PROVEN` em 21/09/2026
 > **Ledger:** [`evidence/execution-ledger.md`](./evidence/execution-ledger.md)
 
-## 1. Estado atual
+## 1. Estado no repositório
 
 ```text
 Portal
-  → plugins/helpdesk (type: iframe, permissão helpdesk.access)
-      entry https://centraldelpi.com.br/helpdesk/
-
-Gateway
-  server_name helpdesk.centraldelpi.com.br
-  → inventario-ti-glpi-1:80
+  → plugins/helpdesk (type: microfrontend, permissão helpdesk.access)
+      entry /apps/helpdesk/assets/remoteEntry.js
+  → helpdesk-api /apps/helpdesk-api
+      → GLPI HLAPI 2.2 em nome do usuário
 ```
 
-O manifesto iframe não aponta para o host em que o GLPI realmente responde. Isso é drift. O produto alvo não corrige o iframe; substitui o plugin por MFE quando `E4` provar o fluxo nativo. Até lá o iframe permanece como está.
+O iframe antigo apontava para `https://centraldelpi.com.br/helpdesk/`, que não é o host do GLPI. Esse manifesto foi substituído no repositório. O portal publicado só passa a servir o MFE depois do deploy. O path `/helpdesk` redireciona para `/apps/helpdesk`.
 
 GLPI de produção, lido no container `inventario-ti-glpi-1`:
 

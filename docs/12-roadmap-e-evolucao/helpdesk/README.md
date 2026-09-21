@@ -1,10 +1,10 @@
 # Meus Chamados de TI
 
-> **Status:** `PLANNED / NOT_STARTED` para código da Minha DELPI
+> **Status:** código no repositório; ledger H1–H4 permanece `NOT_STARTED` até a homologação com usuário real
 > **Fundação GLPI:** `PROVEN` em produção (21/09/2026)
 > **Produto:** Meus Chamados de TI — abertura e acompanhamento de chamados dentro da Minha DELPI, com o GLPI como dono do chamado
 > **Requisitos:** `HD-001…HD-018` em [`07-requisitos.md`](./07-requisitos.md)
-> **Próxima etapa:** `E1.S1 — scaffold da helpdesk-api`
+> **Próxima etapa:** publicar a stack e executar `E5.S2` com um usuário real
 > **Ordem de execução:** [`06-plano-execucao.md`](./06-plano-execucao.md)
 > **Estado de execução:** [`evidence/execution-ledger.md`](./evidence/execution-ledger.md)
 
@@ -15,11 +15,11 @@ Esta pasta decide o produto. Não autoriza implementação sozinha e não prova 
 Meus Chamados de TI não é um segundo sistema de chamados e não é um conserto do iframe atual.
 
 ```text
-Hoje                              Alvo
--------------------------------  --------------------------------
-plugins/helpdesk (iframe)        plugins/helpdesk (MFE nativo)
-sem API própria                  helpdesk-api
-GLPI na tela cheia / outro host  GLPI só como autoridade do chamado
+Hoje, no repositório                 Publicado
+-----------------------------------  --------------------------------
+plugins/helpdesk (MFE nativo)        ainda depende do deploy
+helpdesk-api                         ainda depende do deploy e do .env
+GLPI continua dono do chamado        homologação E5.S2 pendente
 ```
 
 ```text
