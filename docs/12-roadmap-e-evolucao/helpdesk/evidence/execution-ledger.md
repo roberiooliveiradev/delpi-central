@@ -20,6 +20,6 @@ Estados: `PROVEN` | `PLANNED` | `TARGET` | `NOT_STARTED`.
 | H5 | Anexo, satisfação, bancada técnica | TARGET | fatiado em H10/H12/CONSOLE — [`05-roadmap.md`](../05-roadmap.md) |
 | H6 | Gates HLAPI da paridade | PROVEN | 21/09/2026 — vereditos em [`12`](../12-conteudo-da-mensagem.md) §15, [`13`](../13-listagem-de-chamados.md) §13, [`14`](../14-pagina-e-estados-do-chamado.md) §10, [`15`](../15-capacidades-glpi.md) §9 |
 
-H3 e H6 fechados. Próxima onda de código: H7 (`status_id`) em [`16-plano-paridade.md`](../16-plano-paridade.md) E7. Sem senha neste arquivo.
+H3 e H6 fechados. Paridade E6–E13 + verify-final concluídos. E14 (menção leitura M-07) entregue; M-23 (`@` no compositor) BLOQUEADO sem catálogo HLAPI. Sem senha neste arquivo.
 
 Segredo do cliente OAuth não é registrado aqui.

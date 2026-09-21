@@ -155,7 +155,7 @@ Lido no schema do GLPI 11.0.5 (`ITILController`):
 
 POST de abertura e de acompanhamento aceita `content` string. A HLAPI não define multipart. Por isso HTML no JSON é o caminho de escrita rica; binário de arquivo novo não é.
 
-Não há, neste inventário, operação HLAPI de “usuários mencionáveis” confirmada. M-23 permanece dependente disso.
+Não há, neste inventário, operação HLAPI de “usuários mencionáveis” confirmada. **M-23 = BLOQUEADO** até existir path PROVEN que liste usuários por **id** (não por nome). M-07 (chip na leitura) **IMPLEMENTADO** E14 via `enrichGlpiUserMentionSpans`.
 
 ## 5. O que a Minha DELPI faz hoje
 
@@ -276,7 +276,7 @@ FORA                  → não entra neste produto
 | M-04 | Link (`http`, `https`, `mailto`); sem `javascript:` | ALVO_LEITURA | sanitizer canônico no BFF |
 | M-05 | Título, citação, alinhamento e cor **se** vierem no HTML | ALVO_LEITURA | same allowlist |
 | M-06 | Tabela e bloco de código | ALVO_LEITURA | kit; tokens `--delpi-ui-*` |
-| M-07 | Menção visível (chip), sem usar o nome como identidade | ALVO_LEITURA | parse `data-user-id`; rótulo só visual |
+| M-07 | Menção visível (chip), sem usar o nome como identidade | **IMPLEMENTADO** E14 | `enrichGlpiUserMentionSpans` + `bodyMode=html` |
 | M-08 | Imagem **no** corpo, autenticada | IMPLEMENTADO | rewrite `document.send.php` → GET anexo; blob + `FilePreviewModal` |
 | M-09 | Documento ligado **àquela** mensagem | HIPOTESE_A_VALIDAR (A-07) | não inventar vínculo |
 | M-10 | Documento só do chamado, sem mensagem dona | IMPLEMENTADO hoje na abertura | invariante até A-07 |
@@ -290,7 +290,7 @@ FORA                  → não entra neste produto
 | M-20 | Compositor rico no lugar do textarea (parágrafo, ênfase, lista, link) | IMPLEMENTADO | `HelpdeskRichTextField` → `RichTextEditor` |
 | M-21 | POST `content` em HTML sanitizado, não texto achatado | IMPLEMENTADO | BFF `prepare_outbound_message_html` |
 | M-22 | Título, tabela, código, cor, alinhamento no compositor | IMPLEMENTADO | toolbar do `RichTextEditor` |
-| M-23 | Menção no compositor (`@`) | ALVO_ESCRITA + HIPOTESE catálogo | só com id; sem `MentionComposer` das salas |
+| M-23 | Menção no compositor (`@`) | **BLOQUEADO** — sem path HLAPI de mencionáveis por id | só com id; sem `MentionComposer` das salas |
 | M-24 | Inserir imagem ou arquivo novo no envio | BLOQUEADO | A-08; JSON-only |
 | M-25 | Colar imagem da área de transferência | BLOQUEADO | vira upload |
 | M-26 | Editar mensagem já gravada | CONSOLE_GLPI | a doc do GLPI tem Edit; o BFF não publica PATCH |
@@ -306,7 +306,7 @@ FORA                  → não entra neste produto
 | M-31 | `RichTextEditor` como compositor do helpdesk | HERDA_KIT — IMPLEMENTADO via `HelpdeskRichTextField` |
 | M-32 | Prévia / modal / baixar anexo | HERDA_KIT — já ligados na abertura |
 | M-33 | CSS de bolha no MFE helpdesk | proibido — factories do plugin-ui |
-| M-34 | Chip de menção a partir de `data-user-id`, sem casar `@nome` | KIT_A_ESTENDER (hoje `MentionText` é label) |
+| M-34 | Chip de menção a partir de `data-user-id`, sem casar `@nome` | **IMPLEMENTADO** E14 | `enrichGlpiUserMentionSpans` no kit |
 | M-35 | `resolveAttachmentImageSrc` para `document_id` do BFF (não `attachment:{uuid}` das salas) | KIT_A_ESTENDER ou adapter no host |
 
 Enquanto M-30 não existir, o helpdesk **não** implementa um renderer HTML próprio e **não** reusa `bodyMode=markdown` para HTML do GLPI.
@@ -427,7 +427,7 @@ Campos de rótulo (`title`, nomes) continuam em `display_text`. Conteúdo de men
 | ID | Falta | Bloqueia |
 |---|---|---|
 | H1–H4 | captura do `content` cru (6288 inexistente; 1108/1045/467) | **fechado** em §15 — M-08 liberado; A-07 permanece FORA |
-| H5 menção | markup exato + lista HLAPI de mencionáveis | M-23, parte de M-07 se o atributo divergir |
+| H5 menção | lista HLAPI de mencionáveis por **id** | M-23 **BLOQUEADO**; M-07 **IMPLEMENTADO** E14 (attrs `data-user-*` confirmados no bleach) |
 | H6 teto | tamanho máximo que o GLPI/BFF aceita | M-29 = 50 000 caracteres no BFF |
 
 ## 15. Hipóteses de imagem — vereditos (E6.S1, 21/09/2026)
@@ -444,6 +444,15 @@ O id **6288 não existe** neste GLPI (`MAX(id)=1119`). Substitutos com `<img>`: 
 | H4 | **FORA** (A-07) | schema e JSON de `Followup` **não** listam documentos; `Document` é tipo irmão na Timeline |
 
 M-08 (rewrite de `document.send.php`) **IMPLEMENTADO** (E8.S1 + E8.S2 + E8.S4). M-09 / A-07 **não** desbloqueiam: a imagem no HTML e o `Document` da Timeline não vêm amarrados ao Followup — a bolha de acompanhamento **não** ganha `belowBody` inventado.
+
+## 15b. Menção — vereditos (E14, 21/09/2026)
+
+| ID | Veredito | Evidência |
+|---|---|---|
+| M-07 leitura | **IMPLEMENTADO** | BFF preserva `data-user-mention`/`data-user-id` (dígitos); kit `enrichGlpiUserMentionSpans` + `MessageThread` `bodyMode=html` aplica chip; identidade = id, rótulo = texto do span |
+| M-23 escrita `@` | **BLOQUEADO** | sem operação HLAPI de usuários mencionáveis confirmada neste inventário; não inventar catálogo por nome; sem `MentionComposer` (A-08) |
+
+Desbloqueio de M-23 exige novo gate PROVEN (path + schema) e plano próprio — não reabre E8/E14.
 
 ## 16. Prova, quando houver autorização
 

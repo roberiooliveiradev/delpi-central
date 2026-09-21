@@ -13,13 +13,14 @@ H2  Leitura da lista                       PROVEN
 H3  Abertura e acompanhamento              PROVEN
 H4  Tela nativa no lugar do iframe         PROVEN
 H6  Investigação HLAPI (gates)             PROVEN
-H7  Estados e lista do solicitante         TARGET
-H8  Corpo rico da mensagem                 TARGET
-H9  Página do chamado                      TARGET
+H7  Estados e lista do solicitante         ENTREGUE
+H8  Corpo rico da mensagem                 ENTREGUE  (menção leitura E14; @ escrita BLOQUEADA sem catálogo)
+H9  Página do chamado                      ENTREGUE
 H10 Solução, reabrir, satisfação           CONSOLE  (E10.S1 — sem operação HLAPI do solicitante)
-H11 Condicionais (TTR, observer)           TARGET   Forms e vínculo riscados (H6)
+H11 Condicionais (TTR, observer)           ENTREGUE  Forms e vínculo riscados (H6)
 H12 Upload de arquivo novo                 BLOQUEADO até decisão + API
 H13 Listagem dinâmica (modelo → builder)   ENTREGUE  AND builder + multi-sort + prefs localStorage; OR/export/massa CONSOLE
+H14 Menções na conversa (leitura)          ENTREGUE  M-07 chips; M-23 park
 —   Bancada / outro itemtype / HD-011      FORA
 ```
 
@@ -85,7 +86,8 @@ Depende de H6 para imagem. Leitura HTML e escrita rica **não** dependem da imag
 | Modo HTML no `MessageThread` do kit | 12 M-30 | HD-021 |
 | `RichTextEditor` em abrir e responder; POST HTML | 12 M-20…M-22, M-28 | HD-022 |
 | Rewrite de `document.send.php` + modal | 12 M-08 — **IMPLEMENTADO** (12-H1 PROVEN; P0 6288 FORA → 1108) | HD-021 |
-| Menção por `data-user-id`; `@` só com catálogo | 12 M-07, M-23 | HD-022 |
+| Menção por `data-user-id` (chip na bolha) | 12 M-07 — **IMPLEMENTADO** E14 | HD-022 |
+| `@` no compositor | 12 M-23 — **BLOQUEADO** sem catálogo HLAPI | HD-022 |
 | Sem colar imagem / upload | A-08 | HD-026 |
 
 ## H9 — Página do chamado
