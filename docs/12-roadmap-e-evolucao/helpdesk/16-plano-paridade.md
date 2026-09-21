@@ -1,6 +1,6 @@
 # 16 — Plano de paridade do solicitante
 
-> **Status:** em execução. **E8–E11** e **E13.S1** entregues; **E12** park / **E13.S2** no plano.
+> **Status:** em execução. **E8–E12** e **E13.S1** entregues; **E13.S2** (builder) no plano.
 > **Não altera** [`06-plano-execucao.md`](./06-plano-execucao.md) (`E1…E5`).
 > **Ondas:** [`05-roadmap.md`](./05-roadmap.md) H6…H13.
 > **Inventários:** [`12`](./12-conteudo-da-mensagem.md) · [`13`](./13-listagem-de-chamados.md) · [`14`](./14-pagina-e-estados-do-chamado.md) · [`15`](./15-capacidades-glpi.md).
@@ -34,7 +34,7 @@ O colaborador passa a ver e gravar no Meus Chamados de TI o que o GLPI já entre
 | RQ-07 | Página: datas, can_followup, observador | **ATENDIDO** E9.S1 — `can_followup` só false no status 6 |
 | RQ-08 | Aprovar/reabrir/satisfação se HLAPI | **ATENDIDO** E10.S1 = **CONSOLE** — Satisfaction sem path; approve/reject sem `add_close` na HLAPI; reopen PATCH 403 |
 | RQ-09 | TTR, vínculo, Form, observer write se H6 | **ATENDIDO** E11.S1 — TTR + observer; Form/vínculo FORA |
-| RQ-10 | Upload | BLOQUEADO_COM_EVIDENCIA E12 |
+| RQ-10 | Upload | **ATENDIDO** E12.S1 = BLOQUEADO (A-08; sem multipart) |
 | RQ-11 | Ajuda no mesmo entregável | HERDADO_POR_SOLUCAO_TRANSVERSAL cada S user-facing |
 | RQ-12 | Bancada / Change / entidade / API legada | FORA_DO_ESCOPO_COM_JUSTIFICATIVA |
 | RQ-13 | H3 no ledger | **ATENDIDO** E6.S0 — ids 1120 / 593 |
@@ -278,6 +278,7 @@ Owner do corpo e do status: helpdesk-api. Owner da bolha/editor: plugin-ui. MFE 
 - **Não fazer:** ligar API legada.
 - **Pronto:** HD-026 = BLOQUEADO no 07.
 - **Commit:** nenhum, salvo drift documental.
+- **Estado:** **ATENDIDO** — park confirmado; sem multipart; A-08 / HD-026 BLOQUEADO.
 
 ---
 

@@ -33,7 +33,7 @@
 | HD-023 | Página: datas, `can_followup`, observador só leitura | detalhe | E9.S1 | [`14`](./14-pagina-e-estados-do-chamado.md) |
 | HD-024 | Aprovar/recusar solução, reabrir, satisfação | **CONSOLE** — sem operação HLAPI do solicitante | E10.S1 | [`evidence/e10-cycle-console.md`](./evidence/e10-cycle-console.md) |
 | HD-025 | TTR, vínculo, Form, observer na abertura | TTR+observer **IMPLEMENTADOS**; Form/vínculo FORA | E11.S1 | [`15`](./15-capacidades-glpi.md) |
-| HD-026 | Upload de arquivo novo | BLOQUEADO | E12.S1 | A-08 |
+| HD-026 | Upload de arquivo novo | **BLOQUEADO** — HLAPI JSON-only; API legada desligada | E12.S1 | A-08 |
 | HD-027 | Listagem dinâmica: modelo/colunas/toolbar agora; builder AND/OR e prefs depois | sem export/massa/mapa | E13.S1, E13.S2 | [`13`](./13-listagem-de-chamados.md) G-50…G-55 |
 
 Inventários 12–15 descrevem o alvo. A ordem de código é o [`16`](./16-plano-paridade.md).
