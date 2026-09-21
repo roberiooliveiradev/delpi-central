@@ -54,7 +54,7 @@ Uma etapa só fecha quando o aceite dela no plano de execução e os itens abaix
 [ ] loading, vazio, erro e proibido visíveis
 [ ] F5 no detalhe reabre o mesmo chamado
 [ ] ajuda in-app publicada com a tela
-[ ] uma única entrada de helpdesk no menu
+[ ] uma única entrada no menu, com o nome Meus Chamados de TI
 [ ] desktop e largura estreita utilizáveis
 ```
 

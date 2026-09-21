@@ -1,4 +1,4 @@
-# Índice — Helpdesk DELPI
+# Índice — Meus Chamados de TI
 
 Entrada: [`README.md`](./README.md).
 

@@ -13,7 +13,7 @@ O técnico, o supervisor e o administrador do parque continuam no GLPI. Esta ent
 
 | Ação | Resultado perceptível |
 |---|---|
-| Abrir o Helpdesk | Tela da Minha DELPI, não um iframe do GLPI |
+| Abrir Meus Chamados de TI | Tela da Minha DELPI, não um iframe do GLPI |
 | Primeira vez | O navegador autoriza o cliente OAuth no GLPI e volta para a Minha DELPI |
 | Ver chamados | Lista só os chamados que o perfil da pessoa enxerga |
 | Abrir chamado | Título, descrição, categoria e urgência; o solicitante é a própria pessoa |
@@ -25,7 +25,7 @@ Estados obrigatórios em cada tela: carregando, vazio, erro, acesso negado.
 ## 3. Wireframe
 
 ```text
-Helpdesk
+Meus Chamados de TI
 [ Novo chamado ]
 
 Meus chamados

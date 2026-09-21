@@ -20,10 +20,10 @@ Estado de cada um, até existir código: `ATENDIDO_NO_PLANO`. Nenhum está `PROV
 | HD-011 | A tela não escolhe solicitante nem entidade | payload sem esses campos | E3.S1 | teste negativo rejeita campo extra de solicitante |
 | HD-012 | Reenvio da mesma intenção não duplica chamado | `Idempotency-Key`, sem retry de POST | E3.S1 | duas requisições, um id |
 | HD-013 | Incluir acompanhamento no chamado visível | `POST .../followups` | E3.S2 | texto na timeline; alheio não recebe |
-| HD-014 | Tela nativa substitui o iframe | MFE federado | E4.S1 | menu abre `/apps/helpdesk` |
+| HD-014 | Tela nativa substitui o iframe, com o nome Meus Chamados de TI | MFE federado | E4.S1 | menu abre `/apps/helpdesk` com esse nome |
 | HD-015 | Lista, formulário e detalhe com vazio, erro, loading e proibido | UI | E4.S2 | 403 não vira lista vazia; F5 no detalhe |
 | HD-016 | Ajuda in-app no mesmo entregável da tela | conteúdo do plugin | E4.S3 | manual cobre abrir e acompanhar |
-| HD-017 | Uma entrada de helpdesk no portal | corte do manifest iframe | E4.S4 | path antigo redireciona |
+| HD-017 | Uma entrada Meus Chamados de TI no portal | corte do manifest iframe | E4.S4 | path antigo redireciona |
 | HD-018 | Prova positive, irmã e negativa, mais um usuário real | E5 | E5.S1, E5.S2 | ledger `PROVEN` só depois da homologação |
 
 ## Herdados da plataforma

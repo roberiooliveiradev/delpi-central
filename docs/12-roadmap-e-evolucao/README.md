@@ -53,7 +53,7 @@ Estado atual, decisões consolidadas, pendências e plano de evolução.
 |---|---|
 | [davi/README.md](./davi/README.md) | Product/architecture baseline, capability/source model, CURRENT PROVEN vs TARGET e authority boundaries |
 
-### Helpdesk DELPI
+### Meus Chamados de TI
 
 | Arquivo | Conteúdo |
 |---|---|

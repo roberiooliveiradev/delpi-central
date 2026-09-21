@@ -1,8 +1,8 @@
-# Helpdesk DELPI
+# Meus Chamados de TI
 
 > **Status:** `PLANNED / NOT_STARTED` para código da Minha DELPI
 > **Fundação GLPI:** `PROVEN` em produção (21/09/2026)
-> **Produto:** abertura e acompanhamento de chamados dentro da Minha DELPI, com o GLPI como dono do chamado
+> **Produto:** Meus Chamados de TI — abertura e acompanhamento de chamados dentro da Minha DELPI, com o GLPI como dono do chamado
 > **Requisitos:** `HD-001…HD-018` em [`07-requisitos.md`](./07-requisitos.md)
 > **Próxima etapa:** `E1.S1 — scaffold da helpdesk-api`
 > **Ordem de execução:** [`06-plano-execucao.md`](./06-plano-execucao.md)
@@ -12,7 +12,7 @@ Esta pasta decide o produto. Não autoriza implementação sozinha e não prova 
 
 ## 1. Decisão fundamental
 
-O Helpdesk DELPI não é um segundo sistema de chamados e não é um conserto do iframe atual.
+Meus Chamados de TI não é um segundo sistema de chamados e não é um conserto do iframe atual.
 
 ```text
 Hoje                              Alvo
@@ -36,7 +36,7 @@ O navegador não chama o GLPI. A api-delpi não entra neste fluxo. O GLPI contin
 
 ```text
 entrar na Minha DELPI
-→ abrir o Helpdesk
+→ abrir Meus Chamados de TI
 → autorizar uma vez no GLPI (sessão SAML já existente)
 → ver os meus chamados
 → abrir um chamado
@@ -69,7 +69,20 @@ API legada           !=  API deste módulo
 
 O portão da Minha DELPI é `helpdesk.access`. O que a pessoa pode criar ou ver é o perfil GLPI aplicado ao token dela. Se o GLPI responder 403, a tela mostra acesso negado. O MFE não reimplementa essa regra.
 
-## 4. Como ler
+## 4. Identidade
+
+O nome segue o mesmo corte de Minhas Solicitações: o que a pessoa lê é português e possessivo; o id técnico permanece inglês.
+
+| Superfície | Valor |
+|---|---|
+| Nome no menu, título da tela, ajuda e manifest `name` | **Meus Chamados de TI** |
+| Nome da permissão | Acessar Meus Chamados de TI |
+| Id do app, pasta, permissão e API | `helpdesk`, `helpdesk.access`, `helpdesk-api` |
+| Caminhos | `/apps/helpdesk` e `/apps/helpdesk-api` |
+
+O id não muda. O plugin iframe já é `helpdesk`, e o cliente OAuth de produção já tem a redirect em `/apps/helpdesk-api/auth/glpi/callback`. Renomear o path agora exigiria outro cliente no GLPI sem mudar o que a pessoa vê.
+
+## 5. Como ler
 
 | Pergunta | Documento |
 |---|---|
@@ -86,6 +99,6 @@ O portão da Minha DELPI é `helpdesk.access`. O que a pessoa pode criar ou ver 
 
 Mapa curto: [`INDEX.md`](./INDEX.md).
 
-## 5. Fora da primeira entrega
+## 6. Fora da primeira entrega
 
 Anexo, pesquisa de satisfação, fila do técnico, mudança, problema, inventário, API legada do GLPI e gravação de chamado em banco da Minha DELPI. Detalhe em [`05-roadmap.md`](./05-roadmap.md).

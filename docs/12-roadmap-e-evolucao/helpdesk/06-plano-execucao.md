@@ -94,7 +94,7 @@ Depende de E2 e E3 publicados no gateway.
 
 `plugins/helpdesk` passa a microfrontend federado em `/apps/helpdesk`. O manifest iframe só é trocado nesta etapa, depois do fluxo da API existir.
 
-Aceite: a rota do portal abre a tela nativa; build do plugin passa.
+Aceite: a rota do portal abre a tela nativa com o título Meus Chamados de TI; build do plugin passa.
 
 Cobre: HD-014.
 
@@ -118,7 +118,7 @@ Cobre: HD-016.
 
 Manifest `type: microfrontend`, permissão `helpdesk.access` mantida. Quem ainda abrir o path antigo do iframe cai em `/apps/helpdesk`.
 
-Aceite: não restam duas telas de helpdesk no menu.
+Aceite: o menu mostra uma entrada, **Meus Chamados de TI**, e não restam duas telas.
 
 Cobre: HD-017.
 

@@ -1,4 +1,4 @@
-# Ledger de execução — Helpdesk DELPI
+# Ledger de execução — Meus Chamados de TI
 
 Fonte de estado. O roadmap não substitui esta tabela.
 
