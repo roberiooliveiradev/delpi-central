@@ -99,6 +99,8 @@ def list_tickets(
                 "urgency": row.urgency,
                 "updated_at": row.updated_at,
                 "created_at": row.created_at,
+                "solved_at": row.solved_at,
+                "closed_at": row.closed_at,
                 "assigned_display_name": row.assigned_display_name,
             }
             for row in listed.items

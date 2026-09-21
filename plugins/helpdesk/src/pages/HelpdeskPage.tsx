@@ -246,7 +246,7 @@ function TicketListPage() {
               type="search"
               value={qDraft}
               onChange={setQDraft}
-              placeholder="Título do chamado"
+              placeholder="Título ou texto do chamado"
             />
             <HelpdeskFilterSelect
               label="Status"

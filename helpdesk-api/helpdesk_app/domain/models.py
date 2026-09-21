@@ -43,6 +43,8 @@ class TicketSummary:
     created_at: str = ""
     assigned_display_name: str = ""
     status_id: int | None = None
+    solved_at: str = ""
+    closed_at: str = ""
 
 
 @dataclass(frozen=True)
