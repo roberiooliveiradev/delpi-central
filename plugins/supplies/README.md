@@ -12,7 +12,8 @@ Documentação de produto: [docs/12-roadmap-e-evolucao/supplies/](../../docs/12-
 | CSS root | `.dashboard-supplies-portal.dashboard-page` |
 | Tokens | `--sp-*` → `--delpi-ui-*` |
 | API | `/apps/supplies-api` |
-| Permission de entrada | `supplies.portal.access` |
+| Permission de entrada | `supplies.access` |
+| Administração | `supplies.manage` |
 
 Não reutilizar `.dashboard-supplies` (cockpit legado).
 

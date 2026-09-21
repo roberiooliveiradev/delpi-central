@@ -39,8 +39,8 @@ O ícone/controle de ajuda separado só é aceitável quando não existir label/
 |---|---|---|---|---|
 | Shell | TopBar/nav/busca/Favoritos/avatar | — | `supplies.access` | entregue |
 | WF-01 | Início | `/apps/supplies` | `supplies.access` | **FECHADA** |
-| WF-02 | Visão geral | `/overview` | `supplies.analytics.access` | **FECHADA** · WF-02R |
-| WF-OTD-A | OTD analytics | `/analytics/otd` | `supplies.analytics.access` | **FECHADA** |
+| WF-02 | Visão geral | `/overview` | `supplies.access` | **FECHADA** · WF-02R |
+| WF-OTD-A | OTD analytics | `/analytics/otd` | `supplies.access` | **FECHADA** |
 | WF-HELP | Ajuda / Manual | `/help` | `supplies.access` | implementada; evolui junto das features |
 | WF-USER | Perfil usuário | `/users/:userId` | self portal; terceiros admin | implementada |
 
@@ -83,7 +83,7 @@ Não criar permission CRUD por existir novo botão/GET/POST/PATCH.
 |---|---|
 | Objetivo | cockpit dos 7 KPIs P0 + série OTD + CTA para WF-OTD-A |
 | Rota | `/overview` |
-| Capability | `supplies.analytics.access` |
+| Capability | `supplies.access` |
 | Unit | MultiSelect das unidades em `allowedUnits`; consolidado = união autorizada |
 | KPIs | OTD, STOCK-VALUE, TURNOVER, CPV, SAVINGS, SC-OPEN, CRITICAL-MP |
 | Filtros globais | período + `from`/`to` + `branch`; URL shareable |
@@ -129,7 +129,7 @@ SectionCard "Comparativo no período"
 |---|---|
 | Objetivo | gauges por unidade + evolução temporal |
 | Rota | `/analytics/otd` |
-| Capability | `supplies.analytics.access` |
+| Capability | `supplies.access` |
 | Entrada | Overview/catálogo/deep link |
 | Fontes | `/analytics/otd` + `/analytics/otd/series` |
 | Filtros | mesmo contrato de período/unidade do Overview |
@@ -178,10 +178,10 @@ SectionCard "OTD no tempo"
 | Campo | Conteúdo |
 |---|---|
 | Rota | `/purchase-requests` |
-| Capability | `supplies.purchase-requests.access` |
-| Unit | obrigatório |
+| Capability | `supplies.access` |
+| Unit | filtro de dados `01`/`02` |
 | Resource scope | acompanhamento global do Portal; CC/view-all só no standalone |
-| Export | `supplies.purchase-requests.export` + scopes |
+| Export | mesma visibilidade do dataset; sem permission de export no Portal |
 | Fonte | PR-api C1; supplies-api/PG somente após C2 |
 | Chrome | PagePath + PageHero + FilterBar kit + SectionCard + ActionButton |
 | Estado | **GATE-FEATURE PASS** (2026-09-11); smoke federado `INCONCLUSIVE` |
