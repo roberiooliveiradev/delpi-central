@@ -65,13 +65,9 @@ export const SP_HELP = {
   overviewFiltersBranch:
     "Unidades liberadas no seu escopo (Santa Catarina e/ou Espírito Santo). Vazio ou ambas = consolidado. Unidade fora do escopo é bloqueada pela API.",
   overviewGoalTriad:
-    "Meta do período vem do SI (comparable_goal). Para estoque (snapshot), a meta é o nível/teto cadastrado — não há pró-rata diária nem soma de meses. Meta mês/referência é a meta cadastrada consolidada. Nota IDD é o score do SI — não é recalculada no navegador.",
+    "O número do card é o realizado do escopo ativo: uma unidade, ou a união Santa Catarina + Espírito Santo quando Todas. Meta do período vem do SI (comparable_goal). Para estoque (snapshot), a meta é o nível/teto cadastrado — não há pró-rata diária nem soma de meses. Meta mês/referência é a meta cadastrada consolidada. Nota IDD é o score do SI — não é recalculada no navegador.",
   overviewDepartmentIdd:
     "IDD Suprimentos é a nota canônica do Strategic Indicators para o escopo ativo do filtro. Todas ou as duas unidades mostram só o consolidado. Uma unidade mostra só Santa Catarina ou Espírito Santo. Nota ausente não vira zero.",
-  overviewUnitRealized:
-    "Realizado do escopo ativo é o valor que o Strategic Indicators usa na nota e na meta. Não é soma feita no Portal. Traço significa valor indisponível.",
-  overviewUnitGoal:
-    "Meta do período é a meta comparável ao recorte (parcial, fechada ou acumulada). Meta mês é a referência cadastrada e não substitui a meta do período.",
   overviewOtdChart:
     "Série de OTD de pedidos de compra com ChartViewShell completo (granularidade, tipo, YoY, cores e exportação). Usa o mesmo filtro de unidade e período da Visão geral. Abra OTD para ver os velocímetros.",
   overviewCompareChart:

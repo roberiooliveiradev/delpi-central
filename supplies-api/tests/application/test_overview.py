@@ -102,14 +102,12 @@ def test_overview_positive_seven_kpis():
     assert next(k for k in result["kpis"] if k["id"] == "KPI-CRITICAL-MP")["temporalNature"] == (
         "snapshot"
     )
+    assert reads.get_otd.call_args.kwargs["branch"] == "01"
 
 
 def test_overview_sibling_consolidated_two_units():
     reads = _stub_reads()
-    reads.get_stock_value.side_effect = [
-        {"total_stock_value": 100.0},
-        {"total_stock_value": 200.0},
-    ]
+    reads.get_stock_value.return_value = {"total_stock_value": 10843674.0}
     pr = MagicMock()
     pr.count_open_requests.side_effect = [5, 7]
     si = MagicMock()
@@ -135,9 +133,51 @@ def test_overview_sibling_consolidated_two_units():
     assert result["scope"]["mode"] == "consolidated"
     assert result["scope"]["branches"] == ["01", "02"]
     stock = next(k for k in result["kpis"] if k["id"] == "KPI-STOCK-VALUE")
-    assert stock["value"] == 300.0
+    assert stock["value"] == 10843674.0
+    assert reads.get_stock_value.call_count == 1
+    assert reads.get_otd.call_args.kwargs["branch"] is None
     sc = next(k for k in result["kpis"] if k["id"] == "KPI-SC-OPEN")
     assert sc["value"] == 12.0
+
+
+def test_overview_consolidated_keeps_owner_ratio_instead_of_branch_mean():
+    reads = _stub_reads()
+
+    def otd(**kwargs):
+        if kwargs.get("branch") is None:
+            return {"otd_percentage": 94.58}
+        return {"otd_percentage": 99.0}
+
+    reads.get_otd.side_effect = otd
+    pr = MagicMock()
+    pr.count_open_requests.return_value = 1
+    si = MagicMock()
+    si.metrics_by_kpi.return_value = {
+        "KPI-OTD": {
+            "indicator_id": "supplies-otd",
+            "present": True,
+            "realized": {"consolidated": 94.58},
+            "goals_by_unit": {"consolidated": 64.4},
+            "goal_value": 92.0,
+            "comparable_goal": 64.4,
+            "reference_goal": 92.0,
+            "score": 10.0,
+        }
+    }
+    result = OverviewCompositionService(
+        delpi_reads=reads,
+        purchase_requests=pr,
+        strategic_indicators=si,
+    ).compose(
+        _user(permissions={"supplies.access"}),
+        branches=["01", "02"],
+        start_date="2026-09-01",
+        end_date="2026-09-21",
+    )
+    otd = next(k for k in result["kpis"] if k["id"] == "KPI-OTD")
+    assert reads.get_otd.call_count == 1
+    assert otd["value"] == 94.58
+    assert result["siValueDrift"] == []
 
 
 def test_overview_unit_cross_forbidden():

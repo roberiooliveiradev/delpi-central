@@ -41,7 +41,6 @@ import {
   mapOverviewFetchError,
   OVERVIEW_CONTENT,
 } from "../features/overview/overviewContent";
-import { OverviewStrategicUnits } from "../features/overview/OverviewStrategicUnits";
 import { resolveApiBranch } from "../features/overview/suppliesBranchFilters";
 import { buildOverviewKpiPresentation } from "../features/overview/overviewKpiPresentation";
 import {
@@ -193,7 +192,6 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
                   kpi={kpi}
                   periodKindBadge={periodKindBadge}
                   goalContext={kpiGoalContext}
-                  scopeKey={activeStrategicScopeKey(data?.strategicContext)}
                 />
               </li>
             ))}
@@ -268,11 +266,9 @@ function OverviewKpiItem({
   kpi,
   periodKindBadge,
   goalContext,
-  scopeKey,
 }: {
   kpi: OverviewKpiCard;
   periodKindBadge: "MTD" | "YTD" | null;
-  scopeKey: "consolidated" | "01" | "02" | null;
   goalContext: {
     from: string;
     to: string;
@@ -306,7 +302,6 @@ function OverviewKpiItem({
       goalScopeHint={presentation.goalScopeHint}
       goalPerformanceBadge={performance}
       iddScoreLabel={presentation.iddScoreLabel}
-      footer={<OverviewStrategicUnits strategic={kpi.strategic ?? null} scopeKey={scopeKey} />}
       icon={KPI_ICONS[kpi.id] ?? <BarChart3 size={22} strokeWidth={1.75} aria-hidden="true" />}
       className={unavailable ? "sp-overview__kpi--unavailable" : undefined}
     />

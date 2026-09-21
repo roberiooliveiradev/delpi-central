@@ -88,7 +88,7 @@ Não criar permission CRUD por existir novo botão/GET/POST/PATCH.
 | KPIs | OTD, STOCK-VALUE, TURNOVER, CPV, SAVINGS, SC-OPEN, CRITICAL-MP |
 | Filtros globais | período + `from`/`to` + `branch`; URL shareable |
 | Fora do chrome global | cliente/segmento/carteira/vendedor, `location` e `stock_method` quando não suportados por todos os KPIs |
-| Metas | tríade SI: `goalValue`, `comparableGoal`, `referenceGoal` + `iddScore`; rodapé com realizado/meta por unidade quando o SI enviar |
+| Metas | tríade SI no card: `goalValue`, `comparableGoal`, `referenceGoal` + `iddScore`. O número grande é o realizado da api-delpi no escopo ativo (união, não média das filiais). Sem segunda linha de realizado |
 | IDD | um badge do kit para o escopo ativo: Consolidado, Santa Catarina ou Espírito Santo. Sem breakdown simultâneo |
 | Gráficos | OTD no tempo segue o mesmo escopo: uma unidade ou consolidado 01+02 |
 | Partial | blocos auxiliares podem ficar unavailable sem derrubar tudo |
@@ -115,7 +115,7 @@ Não criar permission CRUD por existir novo botão/GET/POST/PATCH.
 SectionCard "Indicadores"
   IDD Suprimentos do escopo ativo (somente Consolidado, ou somente a unidade filtrada)
   7 KPI cards; help no próprio título/labels de meta
-  rodapé dos 5 KPIs SI: realizado e meta só do escopo ativo
+  realizado e meta ficam no card; sem rodapé paralelo
 
 SectionCard "OTD no tempo"                                  [Abrir OTD]
   ChartViewShell + série

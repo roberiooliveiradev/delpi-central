@@ -133,18 +133,6 @@ def _as_float(value: Any) -> float | None:
         return None
 
 
-def _mean(values: list[float]) -> float | None:
-    if not values:
-        return None
-    return sum(values) / len(values)
-
-
-def _sum(values: list[float]) -> float | None:
-    if not values:
-        return None
-    return sum(values)
-
-
 def _strategic_block(kpi_id: str, si_row: dict[str, Any]) -> dict[str, Any] | None:
     if kpi_id not in STRATEGIC_KPI_IDS:
         return None
@@ -309,7 +297,7 @@ class OverviewCompositionService:
             )
 
         fetchers: dict[str, Callable[[], Any]] = {
-            "KPI-OTD": lambda: self._collect_numeric(
+            "KPI-OTD": lambda: self._collect_delpi_measure(
                 effective,
                 lambda b: self.delpi_reads.get_otd(
                     access_token=token,
@@ -317,9 +305,8 @@ class OverviewCompositionService:
                     start_date=start,
                     end_date=end,
                 ).get("otd_percentage"),
-                agg=_mean,
             ),
-            "KPI-STOCK-VALUE": lambda: self._collect_numeric(
+            "KPI-STOCK-VALUE": lambda: self._collect_delpi_measure(
                 effective,
                 lambda b: self.delpi_reads.get_stock_value(
                     access_token=token,
@@ -327,9 +314,8 @@ class OverviewCompositionService:
                     start_date=start,
                     end_date=end,
                 ).get("total_stock_value"),
-                agg=_sum,
             ),
-            "KPI-TURNOVER": lambda: self._collect_numeric(
+            "KPI-TURNOVER": lambda: self._collect_delpi_measure(
                 effective,
                 lambda b: self.delpi_reads.get_inventory_turnover(
                     access_token=token,
@@ -337,9 +323,8 @@ class OverviewCompositionService:
                     start_date=start,
                     end_date=end,
                 ).get("inventory_turnover_times"),
-                agg=_mean,
             ),
-            "KPI-CPV": lambda: self._collect_numeric(
+            "KPI-CPV": lambda: self._collect_delpi_measure(
                 effective,
                 lambda b: self.delpi_reads.get_cpv(
                     access_token=token,
@@ -347,27 +332,22 @@ class OverviewCompositionService:
                     start_date=start,
                     end_date=end,
                 ).get("cpv_percentage"),
-                agg=_mean,
             ),
-            "KPI-SAVINGS": lambda: self._collect_numeric(
+            "KPI-SAVINGS": lambda: self._collect_delpi_measure(
                 effective,
-                lambda b: (
-                    self.delpi_reads.get_negotiation_savings(
-                        access_token=token,
-                        branch=b,
-                        start_date=start,
-                        end_date=end,
-                    ).get("total_savings")
-                ),
-                agg=_sum,
+                lambda b: self.delpi_reads.get_negotiation_savings(
+                    access_token=token,
+                    branch=b,
+                    start_date=start,
+                    end_date=end,
+                ).get("total_savings"),
             ),
-            "KPI-CRITICAL-MP": lambda: self._collect_numeric(
+            "KPI-CRITICAL-MP": lambda: self._collect_delpi_measure(
                 effective,
                 lambda b: self.delpi_reads.get_safety_stock_summary(
                     access_token=token,
                     branch=b,
                 ).get("below_safety_stock"),
-                agg=_sum,
             ),
             "KPI-SC-OPEN": lambda: self._collect_sc_open(token, effective),
         }
@@ -499,6 +479,20 @@ class OverviewCompositionService:
             },
             "errors": [],
         }
+
+    def _collect_delpi_measure(
+        self,
+        branches: list[str],
+        reader: Callable[[str | None], Any],
+    ) -> float | None:
+        """One unit keeps that branch. Todas uses one api-delpi call with branch omitted.
+
+        Omitted branch is the owner union (01+02): ratios stay weighted, stock is the
+        consolidated total. The BFF does not average filial percentages.
+        """
+        if len(branches) == 1:
+            return self._collect_numeric(branches, reader, agg=lambda values: values[0])
+        return _as_float(reader(None))
 
     def _collect_numeric(
         self,

@@ -24,6 +24,8 @@ Nenhuma ficha do conjunto P0 acima fica em `NECESSITA_VALIDACAO_FUNCIONAL`. Resi
 
 Se uma fonte externa, como Strategic Indicators, só oferecer consolidado corporativo maior que o escopo do usuário, esse valor não pode ser exposto como autorizado sem uma forma canônica de recalcular/filtrar o mesmo recorte.
 
+No consolidado (Todas / 01+02), OTD, estoque, giro, CPV, economia e materiais críticos vêm de **uma** leitura da api-delpi com `branch` omitido (união 01+02). O Portal não faz média dos percentuais das filiais. Uma unidade continua filtrando `branch=01` ou `branch=02`.
+
 ## Regra transversal de tempo
 
 Cards lado a lado podem ter naturezas temporais diferentes e devem deixar isso visível:

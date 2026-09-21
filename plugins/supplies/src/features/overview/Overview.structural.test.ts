@@ -20,7 +20,7 @@ describe("Overview structural", () => {
     expect(page).toContain("goalPerformanceBadge");
     expect(page).toContain("activeStrategicScopeKey");
     expect(page).not.toContain("DEPARTMENT_SCORE_SCOPES");
-    expect(page).toContain("OverviewStrategicUnits");
+    expect(page).not.toContain("OverviewStrategicUnits");
     expect(page).toContain("IDD Suprimentos");
     expect(page).not.toContain("calculateIndicatorIddScore");
     expect(page).not.toContain("strategic-indicators-api");
