@@ -11,6 +11,7 @@ import {
   type ReactNode,
 } from "react";
 
+import { HelpTooltip } from "../help/HelpTooltip";
 import { delpiUiClass } from "../../utils/delpiUiClass";
 
 export const RESIZABLE_COLUMNS_MIN_LEFT_PX = 240;
@@ -36,6 +37,10 @@ export type ResizableColumnsLabels = {
   separatorAriaLabel: string;
   collapseAriaLabel: string;
   expandAriaLabel: string;
+  /** HelpTooltip on the collapse control (list expanded). Falls back to collapseAriaLabel. */
+  collapseHelp?: string;
+  /** HelpTooltip on the expand control (list collapsed). Falls back to expandAriaLabel. */
+  expandHelp?: string;
 };
 
 export type ResizableColumnsProps = {
@@ -240,21 +245,28 @@ export function ResizableColumns({
     isDragging ? classNames.handleDragging : classNames.handle,
   ].join(" ");
 
+  const collapseHelp = isCollapsed
+    ? labels.expandHelp ?? labels.expandAriaLabel
+    : labels.collapseHelp ?? labels.collapseAriaLabel;
+
   const collapseButton = (
-    <button
-      type="button"
-      className={collapseButtonClass}
-      aria-label={isCollapsed ? labels.expandAriaLabel : labels.collapseAriaLabel}
-      aria-pressed={isCollapsed}
-      onPointerDown={onCollapsePointerDown}
-      onClick={onCollapseClick}
-    >
-      {isCollapsed ? (
-        <PanelLeftOpen size={16} aria-hidden />
-      ) : (
-        <PanelLeftClose size={16} aria-hidden />
-      )}
-    </button>
+    <HelpTooltip content={collapseHelp} wrap placement="bottom">
+      <button
+        type="button"
+        className={collapseButtonClass}
+        aria-label={isCollapsed ? labels.expandAriaLabel : labels.collapseAriaLabel}
+        aria-pressed={isCollapsed}
+        title={collapseHelp}
+        onPointerDown={onCollapsePointerDown}
+        onClick={onCollapseClick}
+      >
+        {isCollapsed ? (
+          <PanelLeftOpen size={16} aria-hidden />
+        ) : (
+          <PanelLeftClose size={16} aria-hidden />
+        )}
+      </button>
+    </HelpTooltip>
   );
 
   return (

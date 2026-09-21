@@ -113,6 +113,8 @@ export type InteractionRoomPageLabels = {
   resizeSeparator: string;
   collapseInbox: string;
   expandInbox: string;
+  collapseInboxHelp: string;
+  expandInboxHelp: string;
   threadAriaLabel: string;
   messagesAriaLabel: string;
   emptyThreadTitle: string;
@@ -168,6 +170,8 @@ export const INTERACTION_ROOM_PAGE_LABELS_PT: InteractionRoomPageLabels = {
   resizeSeparator: "Redimensionar lista de salas",
   collapseInbox: "Recolher lista de salas",
   expandInbox: "Mostrar lista de salas",
+  collapseInboxHelp: "Recolhe a lista de conversas para dar mais espaço à sala. Arraste a linha para mudar a largura.",
+  expandInboxHelp: "Mostra de novo a lista de conversas à esquerda.",
   threadAriaLabel: "Conversa",
   messagesAriaLabel: "Mensagens da sala",
   emptyThreadTitle: "Nenhuma mensagem ainda",
@@ -815,6 +819,8 @@ export function InteractionRoomPage({
               separatorAriaLabel: labels.resizeSeparator,
               collapseAriaLabel: labels.collapseInbox,
               expandAriaLabel: labels.expandInbox,
+              collapseHelp: labels.collapseInboxHelp,
+              expandHelp: labels.expandInboxHelp,
             }}
           />
         ) : (

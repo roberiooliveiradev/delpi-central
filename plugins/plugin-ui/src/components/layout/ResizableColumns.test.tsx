@@ -109,5 +109,29 @@ describe("ResizableColumns", () => {
       /\.delpi-ui-resizable-columns:not\(\.delpi-ui-resizable-columns--collapsed\)\s*>\s*\.delpi-ui-resizable-columns__right/,
     );
     expect(css).toMatch(/padding-inline-start:\s*2\.25rem/);
+    expect(css).toMatch(
+      /\.delpi-ui-resizable-columns__handle > \.delpi-ui-help-tooltip--wrap/,
+    );
+    expect(css).toMatch(/left:\s*calc\(50% \+ 4px\)/);
+  });
+
+  it("expõe ajuda no botão de recolher e de expandir", () => {
+    render(
+      <ResizableColumns
+        classNames={classNames}
+        labels={{
+          ...labels,
+          collapseHelp: "Recolhe a lista de conversas.",
+          expandHelp: "Mostra a lista de conversas.",
+        }}
+        left={<div>Inbox</div>}
+        right={<div>Thread</div>}
+      />,
+    );
+    const collapse = screen.getByRole("button", { name: "Collapse inbox" });
+    expect(collapse.getAttribute("title")).toBe("Recolhe a lista de conversas.");
+    fireEvent.click(collapse);
+    const expand = screen.getByRole("button", { name: "Expand inbox" });
+    expect(expand.getAttribute("title")).toBe("Mostra a lista de conversas.");
   });
 });

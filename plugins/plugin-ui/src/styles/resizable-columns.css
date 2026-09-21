@@ -87,13 +87,16 @@
   pointer-events: none;
 }
 
-.delpi-ui-resizable-columns__collapse {
+/* Help + botão: à direita da linha divisória (não centrado nela). */
+.delpi-ui-resizable-columns__handle > .delpi-ui-help-tooltip--wrap {
   position: absolute;
   top: 0.35rem;
-  /* Centraliza no divisor; o padding da coluna direita evita cobrir o título. */
-  left: 50%;
-  transform: translateX(-50%);
+  left: calc(50% + 4px);
   z-index: 1;
+}
+
+.delpi-ui-resizable-columns__collapse {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -106,7 +109,7 @@
   color: inherit;
   background: color-mix(
     in srgb,
-    var(--delpi-ui-surface, var(--surface, #ffffff)) 88%,
+    var(--delpi-ui-surface, var(--surface, #ffffff)) 92%,
     transparent
   );
   cursor: pointer;
@@ -131,8 +134,6 @@
 }
 
 .delpi-ui-resizable-columns__collapse--collapsed {
-  position: static;
-  transform: none;
   width: 36px;
   height: 36px;
   color: var(--delpi-ui-accent, var(--primary, #089bdb));
