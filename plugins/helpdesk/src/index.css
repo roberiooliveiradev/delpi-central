@@ -250,8 +250,9 @@
 .dashboard-helpdesk .helpdesk-create-layout {
   display: grid;
   flex: 1 1 auto;
-  grid-template-columns: minmax(0, 2fr) minmax(16rem, 1fr);
+  grid-template-columns: minmax(0, 1fr) minmax(14rem, 17rem);
   gap: var(--helpdesk-section-gap);
+  align-items: stretch;
   min-height: 0;
 }
 
@@ -259,8 +260,9 @@
 .dashboard-helpdesk .helpdesk-create-layout__aside {
   display: flex;
   flex-direction: column;
-  gap: var(--helpdesk-section-gap);
+  gap: 0.75rem;
   min-width: 0;
+  min-height: 0;
 }
 
 .dashboard-helpdesk .helpdesk-create-layout__aside {
@@ -268,15 +270,35 @@
   border-inline-start: 1px solid var(--helpdesk-border);
 }
 
+.dashboard-helpdesk .helpdesk-create-layout__aside-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-block-start: auto;
+  padding-block-start: 0.75rem;
+  border-block-start: 1px solid var(--helpdesk-border);
+}
+
 .dashboard-helpdesk .helpdesk-rich-text-field {
   display: flex;
+  flex: 1 1 auto;
   flex-direction: column;
   gap: 0.5rem;
   min-width: 0;
+  min-height: 0;
 }
 
 .dashboard-helpdesk .helpdesk-rich-text-field .delpi-ui-rich-text {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
   min-width: 0;
+  min-height: 14rem;
+}
+
+.dashboard-helpdesk .helpdesk-rich-text-field .delpi-ui-rich-text__editor,
+.dashboard-helpdesk .helpdesk-rich-text-field [contenteditable="true"] {
+  flex: 1 1 auto;
+  min-height: 10rem;
 }
 
 @media (max-width: 768px) {
@@ -289,5 +311,9 @@
     padding-block-start: var(--helpdesk-card-padding);
     border-inline-start: 0;
     border-block-start: 1px solid var(--helpdesk-border);
+  }
+
+  .dashboard-helpdesk .helpdesk-create-layout__aside-actions {
+    margin-block-start: 0.5rem;
   }
 }

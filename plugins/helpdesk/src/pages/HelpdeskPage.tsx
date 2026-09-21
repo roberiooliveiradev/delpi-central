@@ -5,7 +5,7 @@ import {
   HintAction,
   TableColumnVisibilityMenu,
 } from "@delpi/plugin-ui/index";
-import { AlignLeft, ArrowUpDown, ChevronLeft, ChevronRight, FilterX, FolderTree, Gauge, ListFilter, Plus, RefreshCw, Send, TicketPlus, Type } from "lucide-react";
+import { AlignLeft, ArrowUpDown, ChevronLeft, ChevronRight, FilterX, FolderTree, Gauge, ListFilter, Plus, RefreshCw, Send, TicketPlus, Type, Users } from "lucide-react";
 
 import {
   HelpdeskApiError,
@@ -108,11 +108,17 @@ function HelpdeskPageStack({ children }: { children: ReactNode }) {
   return <div className="helpdesk-page-stack">{children}</div>;
 }
 
-function HelpdeskBackButton() {
-  return (
+function HelpdeskBackButton({ hint }: { hint?: string }) {
+  const button = (
     <HelpdeskIconButton aria-label="Voltar" onClick={() => navigateHelpdesk("/apps/helpdesk")}>
       <ChevronLeft size={16} aria-hidden />
     </HelpdeskIconButton>
+  );
+  if (!hint) return button;
+  return (
+    <HintAction hint={hint} ariaLabel="Ajuda: Voltar">
+      {button}
+    </HintAction>
   );
 }
 
@@ -572,97 +578,102 @@ function CreateTicketPage() {
 
   return (
     <HelpdeskPageStack>
-    <HelpdeskPageHeader
-      title="Abrir chamado"
-      compact
-      nav={<HelpdeskBackButton />}
-      icon={<TicketPlus size={18} aria-hidden />}
-    />
-    <HelpdeskSectionCard title="Abrir chamado" hint={helpTooltips.create} fill>
-      {loading ? <HelpdeskLoadingState message="Carregando categorias…" /> : null}
-      {errorText ? <HelpdeskStateBanner variant="error">{errorText}</HelpdeskStateBanner> : null}
-      <form
-        className="helpdesk-create-form"
-        onSubmit={(event) => {
-          event.preventDefault();
-          if (saving || !title.trim() || !hasVisibleRichText(description)) return;
-          setSaving(true);
-          setErrorText(null);
-          void createTicket(
-            {
-              title: title.trim(),
-              description: description.trim(),
-              category_id: Number(categoryId),
-              urgency_id: Number(urgencyId),
-              observer_ids: parseObserverIdsInput(observerIdsInput),
-            },
-            idempotencyKey,
-          )
-            .then((created) => navigateHelpdesk(`/apps/helpdesk/tickets/${created.id}`))
-            .catch((error) => {
-              setErrorText(messageFor(error).text);
-              setSaving(false);
-            });
-        }}
-      >
-        <div className="helpdesk-create-layout">
-          <div className="helpdesk-create-layout__main">
-            <HelpdeskTextField
-              label="Título"
-              hint={helpTooltips.create}
-              value={title}
-              onChange={setTitle}
-              required
-              icon={<Type size={14} aria-hidden />}
-            />
-            <HelpdeskRichTextField
-              label="Descrição"
-              hint={helpTooltips.create}
-              value={description}
-              onChange={setDescription}
-              minHeight={280}
-              icon={<AlignLeft size={14} aria-hidden />}
-            />
+      <HelpdeskPageHeader
+        title="Abrir chamado"
+        subtitle="No seu nome, na entidade padrão do helpdesk"
+        compact
+        nav={<HelpdeskBackButton hint={helpTooltips.createUi.back} />}
+        icon={<TicketPlus size={18} aria-hidden />}
+      />
+      <HelpdeskSectionCard title="Formulário" hint={helpTooltips.create} fill>
+        {loading ? <HelpdeskLoadingState message="Carregando categorias…" /> : null}
+        {errorText ? <HelpdeskStateBanner variant="error">{errorText}</HelpdeskStateBanner> : null}
+        <form
+          className="helpdesk-create-form"
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (saving || !title.trim() || !hasVisibleRichText(description)) return;
+            setSaving(true);
+            setErrorText(null);
+            void createTicket(
+              {
+                title: title.trim(),
+                description: description.trim(),
+                category_id: Number(categoryId),
+                urgency_id: Number(urgencyId),
+                observer_ids: parseObserverIdsInput(observerIdsInput),
+              },
+              idempotencyKey,
+            )
+              .then((created) => navigateHelpdesk(`/apps/helpdesk/tickets/${created.id}`))
+              .catch((error) => {
+                setErrorText(messageFor(error).text);
+                setSaving(false);
+              });
+          }}
+        >
+          <div className="helpdesk-create-layout">
+            <div className="helpdesk-create-layout__main">
+              <HelpdeskTextField
+                label="Título"
+                hint={helpTooltips.createUi.title}
+                value={title}
+                onChange={setTitle}
+                required
+                icon={<Type size={14} aria-hidden />}
+              />
+              <HelpdeskRichTextField
+                label="Descrição"
+                hint={helpTooltips.createUi.description}
+                value={description}
+                onChange={setDescription}
+                minHeight={220}
+                icon={<AlignLeft size={14} aria-hidden />}
+              />
+            </div>
+            <aside className="helpdesk-create-layout__aside" aria-label="Classificação do chamado">
+              <HelpdeskSelect
+                label="Categoria"
+                hint={helpTooltips.createUi.category}
+                value={categoryId}
+                onChange={setCategoryId}
+                required
+                searchable
+                options={categories.map((item) => ({ value: String(item.id), label: item.name }))}
+                icon={<FolderTree size={14} aria-hidden />}
+              />
+              <HelpdeskSelect
+                label="Urgência"
+                hint={helpTooltips.createUi.urgency}
+                value={urgencyId}
+                onChange={setUrgencyId}
+                required
+                options={urgencies.map((item) => ({ value: String(item.id), label: item.name }))}
+                icon={<Gauge size={14} aria-hidden />}
+              />
+              <HelpdeskTextField
+                label="Observadores"
+                hint={helpTooltips.createUi.observers}
+                value={observerIdsInput}
+                onChange={setObserverIdsInput}
+                icon={<Users size={14} aria-hidden />}
+              />
+              <div className="helpdesk-create-layout__aside-actions">
+                <HintAction hint={helpTooltips.createUi.send} ariaLabel="Ajuda: Enviar chamado">
+                  <HelpdeskIconButton
+                    tone="primary"
+                    type="submit"
+                    aria-label={saving ? "Enviando" : "Enviar chamado"}
+                    disabled={saving || loading || !title.trim() || !hasVisibleRichText(description)}
+                  >
+                    <Send size={16} aria-hidden />
+                  </HelpdeskIconButton>
+                </HintAction>
+              </div>
+            </aside>
           </div>
-          <aside className="helpdesk-create-layout__aside" aria-label="Classificação do chamado">
-            <HelpdeskSelect
-              label="Categoria"
-              value={categoryId}
-              onChange={setCategoryId}
-              required
-              searchable
-              options={categories.map((item) => ({ value: String(item.id), label: item.name }))}
-              icon={<FolderTree size={14} aria-hidden />}
-            />
-            <HelpdeskSelect
-              label="Urgência"
-              value={urgencyId}
-              onChange={setUrgencyId}
-              required
-              options={urgencies.map((item) => ({ value: String(item.id), label: item.name }))}
-              icon={<Gauge size={14} aria-hidden />}
-            />
-            <HelpdeskTextField
-              label="Observadores"
-              hint={helpTooltips.create}
-              value={observerIdsInput}
-              onChange={setObserverIdsInput}
-              icon={<Type size={14} aria-hidden />}
-            />
-          </aside>
-        </div>
-        <HelpdeskFormActions align="end">
-          <HelpdeskIconButton
-            tone="primary"
-            type="submit"
-            aria-label={saving ? "Enviando" : "Enviar chamado"}
-            disabled={saving || loading || !title.trim() || !hasVisibleRichText(description)}
-          >
-            <Send size={16} aria-hidden />
-          </HelpdeskIconButton>
-        </HelpdeskFormActions>
-      </form>
-    </HelpdeskSectionCard>
+        </form>
+      </HelpdeskSectionCard>
     </HelpdeskPageStack>
   );
 }
