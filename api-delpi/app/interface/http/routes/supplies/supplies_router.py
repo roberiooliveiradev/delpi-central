@@ -16,7 +16,9 @@ from app.interface.http.query_param_enums import (
     STOCK_METHOD_QUERY,
 )
 
-from delpi_auth.authorization import require_any_permission
+from app.interface.http.supplies_bff_service_access import (
+    require_any_permission_or_supplies_bff,
+)
 
 from app.application.security.api_delpi_permissions import KPI_SUPPLIES_ACCESS
 from app.core.responses import error_response
@@ -85,7 +87,7 @@ router = APIRouter(
 
 
 @router.get("/cpv", **SUPPLIES_CPV)
-@require_any_permission(KPI_SUPPLIES_ACCESS)
+@require_any_permission_or_supplies_bff(KPI_SUPPLIES_ACCESS)
 def get_cpv(
     branch: str | None = BRANCH_QUERY_OPTIONAL(),
     start_date: str | None = Query(default=None),
@@ -131,7 +133,7 @@ def get_cpv(
     
 
 @router.get("/otd", **SUPPLIES_OTD)
-@require_any_permission(KPI_SUPPLIES_ACCESS)
+@require_any_permission_or_supplies_bff(KPI_SUPPLIES_ACCESS)
 def get_otd(
     branch: str | None = BRANCH_QUERY_OPTIONAL(),
     start_date: str | None = Query(default=None),
@@ -185,7 +187,7 @@ def get_otd(
         path="/supplies/purchase-order-otd/series",
     ),
 )
-@require_any_permission(KPI_SUPPLIES_ACCESS)
+@require_any_permission_or_supplies_bff(KPI_SUPPLIES_ACCESS)
 def get_supplies_purchase_order_otd_series(
     granularity: str = GRANULARITY_QUERY_MONTH(),
     start_date: Optional[str] = Query(None),
@@ -224,7 +226,7 @@ def get_supplies_purchase_order_otd_series(
         path="/supplies/purchase-order-otd/panel",
     ),
 )
-@require_any_permission(KPI_SUPPLIES_ACCESS)
+@require_any_permission_or_supplies_bff(KPI_SUPPLIES_ACCESS)
 def get_supplies_purchase_order_otd_panel(
     branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     start_date: Optional[str] = Query(None),
@@ -272,7 +274,7 @@ def get_supplies_purchase_order_otd_panel(
         path="/supplies/purchase-order-otd",
     ),
 )
-@require_any_permission(KPI_SUPPLIES_ACCESS)
+@require_any_permission_or_supplies_bff(KPI_SUPPLIES_ACCESS)
 def get_supplies_purchase_order_otd(
     branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     start_date: Optional[str] = Query(None),
@@ -304,7 +306,7 @@ def get_supplies_purchase_order_otd(
     
 
 @router.get("/stock-value", **SUPPLIES_STOCK_VALUE)
-@require_any_permission(KPI_SUPPLIES_ACCESS)
+@require_any_permission_or_supplies_bff(KPI_SUPPLIES_ACCESS)
 def get_stock_value(
     branch: str | None = BRANCH_QUERY_OPTIONAL(),
     location: str | None = Query(default=None),
@@ -359,7 +361,7 @@ def get_stock_value(
     
 
 @router.get("/negotiation-savings/summary", **SUPPLIES_NEGOTIATION_SAVINGS)
-@require_any_permission(KPI_SUPPLIES_ACCESS)
+@require_any_permission_or_supplies_bff(KPI_SUPPLIES_ACCESS)
 def get_negotiation_savings_summary(
     branch: str | None = BRANCH_QUERY_OPTIONAL(),
     start_date: str | None = Query(default=None),
@@ -405,7 +407,7 @@ def get_negotiation_savings_summary(
 
 
 @router.get("/inventory-turnover", **SUPPLIES_INVENTORY_TURNOVER)
-@require_any_permission(KPI_SUPPLIES_ACCESS)
+@require_any_permission_or_supplies_bff(KPI_SUPPLIES_ACCESS)
 def get_inventory_turnover(
     branch: str | None = BRANCH_QUERY_OPTIONAL(),
     location: str | None = Query(default=None),

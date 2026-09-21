@@ -18,6 +18,8 @@ MFE supplies
 
 O JWT Keycloak identifica e autentica. **Authorization efetiva vem do Core API**; não confiar em `permissions`/`is_superadmin` dos claims como decisão final.
 
+Contrato vigente (ADR-009): o Portal só tem `supplies.access` e `supplies.manage`. Unidade é filtro `01`/`02`. A supplies-api chama `api-delpi` e `purchase-requests-api` com `X-Delpi-Caller-App: supplies-api` e `X-Delpi-Service-Token`. Sem esse par, o downstream não aplica a semântica do Portal.
+
 Não copiar os middlewares compartilhados:
 
 - `shared/delpi_auth/middleware/flask_auth.py` — AuthZ a partir de claims;

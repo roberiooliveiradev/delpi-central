@@ -1,3 +1,5 @@
+> **Histórico / SUPERSEDED pelo [ADR-009](./adr/ADR-009-product-access-and-operational-data-scope.md):** o Portal vigente usa só `supplies.access` e `supplies.manage`. Unidade é filtro de dados `01`/`02`. O texto abaixo não é o contrato ativo.
+
 # PERSONA × EXPERIÊNCIA — Portal Suprimentos
 
 > Personas orientam UX. Autorização real = **effective permissions do Core + unit scope + resource scope/ownership + regra de negócio**. Sem `if role == comprador` no MFE.

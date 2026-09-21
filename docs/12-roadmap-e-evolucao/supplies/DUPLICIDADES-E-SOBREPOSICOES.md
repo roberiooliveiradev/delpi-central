@@ -1,3 +1,5 @@
+> **Histórico / SUPERSEDED pelo [ADR-009](./adr/ADR-009-product-access-and-operational-data-scope.md):** o Portal vigente usa só `supplies.access` e `supplies.manage`. Unidade é filtro de dados `01`/`02`. O texto abaixo não é o contrato ativo.
+
 # Duplicidades e sobreposições — Suprimentos
 
 > Correlação ≠ identidade de regra. Sem dump/contrato do BI, não declarar duplicata perfeita.

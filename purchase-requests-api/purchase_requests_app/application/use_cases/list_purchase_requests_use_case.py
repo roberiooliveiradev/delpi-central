@@ -8,6 +8,10 @@ from purchase_requests_app.application.security.purchase_requests_permissions im
     assert_branches_access,
     has_access,
 )
+from purchase_requests_app.application.security.supplies_portal_context import (
+    authorize_portal_branches,
+    is_trusted_supplies_bff_call,
+)
 from purchase_requests_app.application.services.purchase_request_aggregation_service import (
     GATEWAY_SORT_FIELDS,
     LOCAL_SORT_FIELDS,
@@ -64,14 +68,21 @@ class ListPurchaseRequestsUseCase:
         page: int = 1,
         page_size: int = 50,
     ) -> dict[str, Any]:
-        if not has_access(user):
+        portal = is_trusted_supplies_bff_call()
+        if not portal and not has_access(user):
             raise PermissionError("Sem permissão para acessar solicitações de compra.")
-        codes = self._authorized_branches(user, branch=branch, branches=branches)
+        codes = self._authorized_branches(
+            user,
+            branch=branch,
+            branches=branches,
+            portal=portal,
+        )
         resolution, cost_center_codes, scopes = self._resolve_scopes(
             user=user,
             branches=codes,
             cost_center=cost_center,
             cost_centers=cost_centers,
+            portal=portal,
         )
         if cost_center_codes == [] or scopes == []:
             return {
@@ -162,14 +173,21 @@ class ListPurchaseRequestsUseCase:
         sort_by: str | None = None,
         sort_dir: str | None = None,
     ) -> dict[str, Any]:
-        if not has_access(user):
+        portal = is_trusted_supplies_bff_call()
+        if not portal and not has_access(user):
             raise PermissionError("Sem permissão para acessar solicitações de compra.")
-        codes = self._authorized_branches(user, branch=branch, branches=branches)
+        codes = self._authorized_branches(
+            user,
+            branch=branch,
+            branches=branches,
+            portal=portal,
+        )
         resolution, cost_center_codes, scopes = self._resolve_scopes(
             user=user,
             branches=codes,
             cost_center=cost_center,
             cost_centers=cost_centers,
+            portal=portal,
         )
         if cost_center_codes == [] or scopes == []:
             return {"items": [], "total": 0}
@@ -223,7 +241,13 @@ class ListPurchaseRequestsUseCase:
         *,
         branch: str | None,
         branches: list[str] | None,
+        portal: bool,
     ) -> list[str]:
+        requested = list(branches or [])
+        if not requested and branch:
+            requested = [branch]
+        if portal:
+            return authorize_portal_branches(requested)
         if branches:
             return assert_branches_access(user, branches)
         if branch:
@@ -238,6 +262,7 @@ class ListPurchaseRequestsUseCase:
         branches: list[str],
         cost_center: str | None,
         cost_centers: list[str] | None,
+        portal: bool,
     ):
         scope_rows = self._scope_repository.list_active_cost_centers_for_user(
             str(getattr(user, "id", "") or getattr(user, "sub", ""))
@@ -249,6 +274,7 @@ class ListPurchaseRequestsUseCase:
                 explicit_cost_center=cost_center,
                 explicit_cost_centers=cost_centers,
                 scope_rows=scope_rows,
+                portal_global=portal,
             )
             effective = self._scope_resolver.effective_cost_centers(
                 resolution,
@@ -265,6 +291,7 @@ class ListPurchaseRequestsUseCase:
             explicit_cost_center=cost_center,
             explicit_cost_centers=cost_centers,
             scope_rows=scope_rows,
+            portal_global=portal,
         )
         scopes = self._scope_resolver.effective_cost_center_scopes(
             resolution,

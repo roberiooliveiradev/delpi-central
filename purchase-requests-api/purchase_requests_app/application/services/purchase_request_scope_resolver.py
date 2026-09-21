@@ -33,8 +33,9 @@ class PurchaseRequestScopeResolver:
         explicit_cost_center: str | None = None,
         explicit_cost_centers: list[str] | None = None,
         scope_rows: list[dict] | None = None,
+        portal_global: bool = False,
     ) -> ScopeResolution:
-        view_all = has_view_all(user)
+        view_all = portal_global or has_view_all(user)
         if view_all:
             resolution = ScopeResolution(view_all=True, allowed_cost_centers=frozenset())
         else:
@@ -90,8 +91,9 @@ class PurchaseRequestScopeResolver:
         explicit_cost_center: str | None = None,
         explicit_cost_centers: list[str] | None = None,
         scope_rows: list[dict] | None = None,
+        portal_global: bool = False,
     ) -> ScopeResolution:
-        view_all = has_view_all(user)
+        view_all = portal_global or has_view_all(user)
         if view_all:
             resolution = ScopeResolution(view_all=True, allowed_cost_centers=frozenset())
         else:

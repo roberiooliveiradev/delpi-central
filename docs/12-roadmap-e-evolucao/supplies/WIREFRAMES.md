@@ -37,11 +37,11 @@ O ícone/controle de ajuda separado só é aceitável quando não existir label/
 
 | WF | Página | Rota | Capability | Estado |
 |---|---|---|---|---|
-| Shell | TopBar/nav/busca/Favoritos/avatar | — | `supplies.portal.access` | entregue |
-| WF-01 | Início | `/apps/supplies` | `supplies.portal.access` | **FECHADA** |
+| Shell | TopBar/nav/busca/Favoritos/avatar | — | `supplies.access` | entregue |
+| WF-01 | Início | `/apps/supplies` | `supplies.access` | **FECHADA** |
 | WF-02 | Visão geral | `/overview` | `supplies.analytics.access` | **FECHADA** · WF-02R |
 | WF-OTD-A | OTD analytics | `/analytics/otd` | `supplies.analytics.access` | **FECHADA** |
-| WF-HELP | Ajuda / Manual | `/help` | `supplies.portal.access` | implementada; evolui junto das features |
+| WF-HELP | Ajuda / Manual | `/help` | `supplies.access` | implementada; evolui junto das features |
 | WF-USER | Perfil usuário | `/users/:userId` | self portal; terceiros admin | implementada |
 
 Preferências pessoais ficam no WF-USER + `/me/preferences`; não existe página `/preferences` separada. Perfil global Minha DELPI permanece em `/profile` do host.
@@ -69,7 +69,7 @@ Não criar permission CRUD por existir novo botão/GET/POST/PATCH.
 |---|---|
 | Objetivo | ação e descoberta, não BI |
 | Rota | `/apps/supplies` |
-| Capability | `supplies.portal.access` |
+| Capability | `supplies.access` |
 | Fonte | `/home/attention` + catálogo + favoritos |
 | Conteúdo | atenção, busca, favoritos, recentes, cards por capability |
 | Partial | bloco auxiliar indisponível não derruba o Hub |
@@ -180,7 +180,7 @@ SectionCard "OTD no tempo"
 | Rota | `/purchase-requests` |
 | Capability | `supplies.purchase-requests.access` |
 | Unit | obrigatório |
-| Resource scope | CC fail-closed; `view-all` amplia CC, nunca unidade |
+| Resource scope | acompanhamento global do Portal; CC/view-all só no standalone |
 | Export | `supplies.purchase-requests.export` + scopes |
 | Fonte | PR-api C1; supplies-api/PG somente após C2 |
 | Chrome | PagePath + PageHero + FilterBar kit + SectionCard + ActionButton |
@@ -196,7 +196,7 @@ SectionCard "OTD no tempo"
 | Campo | Conteúdo |
 |---|---|
 | Rota | `/purchase-orders` |
-| Capability | `supplies.operations.access` |
+| Capability | `supplies.access` |
 | Unit | sim |
 | Fonte | api-delpi `GET /supplies/purchase-orders` (SC7 aberto) via supplies-api |
 | Ações | abrir ficha `/purchase-orders/:branch/:number` |
@@ -208,7 +208,7 @@ SectionCard "OTD no tempo"
 | Campo | Conteúdo |
 |---|---|
 | Rota | `/purchase-orders/:branch/:number` |
-| Capability | `supplies.operations.access` |
+| Capability | `supplies.access` |
 | Resource | pedido deve pertencer ao recorte autorizado |
 | Fonte | api-delpi `GET /supplies/purchase-orders/{branch}/{order_number}` via supplies-api |
 | Ações | ficha read-only; voltar à lista |
@@ -220,7 +220,7 @@ SectionCard "OTD no tempo"
 | Campo | Conteúdo |
 |---|---|
 | Rota | `/deliveries` |
-| Capability | `supplies.operations.access` |
+| Capability | `supplies.access` |
 | Conteúdo | atrasos operacionais e drills autorizados |
 | Paridade | BI atraso só pode ser depreciado após comparação real; P-03 continua residual de cutover/paridade |
 

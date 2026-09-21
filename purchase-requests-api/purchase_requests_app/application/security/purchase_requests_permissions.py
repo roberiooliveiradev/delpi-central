@@ -7,8 +7,6 @@ from delpi_auth.authz_core import has_permission
 UNIT_CODES = ("01", "02")
 
 ACCESS_PERMISSION = "purchase-requests.access"
-SUPPLIES_ACCESS = "supplies.access"
-SUPPLIES_MANAGE = "supplies.manage"
 ADMIN_PERMISSION = "purchase-requests.admin"
 VIEW_ALL_PERMISSION = "purchase-requests.view-all"
 EXPORT_PERMISSION = "purchase-requests.export"
@@ -30,8 +28,6 @@ def normalize_branch(value: str | None) -> str | None:
 
 def has_access(user) -> bool:
     if getattr(user, "is_superadmin", False):
-        return True
-    if has_permission(user, SUPPLIES_ACCESS):
         return True
     return has_permission(user, ACCESS_PERMISSION) or has_permission(user, ADMIN_PERMISSION)
 
@@ -59,8 +55,6 @@ def has_any_module_admin_permission(user) -> bool:
 def has_view_all(user) -> bool:
     if getattr(user, "is_superadmin", False):
         return True
-    if has_permission(user, SUPPLIES_ACCESS):
-        return True
     return has_permission(user, VIEW_ALL_PERMISSION)
 
 
@@ -69,8 +63,6 @@ def has_branch_access(user, branch: str) -> bool:
     if not code:
         return False
     if getattr(user, "is_superadmin", False):
-        return True
-    if has_permission(user, SUPPLIES_ACCESS):
         return True
     if has_permission(user, ADMIN_PERMISSION):
         return True

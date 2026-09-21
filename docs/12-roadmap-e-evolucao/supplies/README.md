@@ -133,9 +133,9 @@ selecionar página em foco
 
 **Solicitações de compras (WF-04):** BFF C1 `/purchase-requests*` via `purchase-requests-api` (CC fail-closed; multi-unidade `?branch=` repetido; `sort_by`/`sort_dir`; export sem fan-out paginado). MFE: MultiSelect de unidades (nome sem código), Tabela/Cards, sort server-side, Excel (`format=xlsx`, CSV legado), colunas/fonte persistidos. AuthZ access/export/unit/CC. Smoke federado: `INCONCLUSIVE` neste ambiente.
 
-**Pedidos de compra (WF-05):** MFE → `supplies-api` → `api-delpi` `GET /supplies/purchase-orders` (SC7 aberto, multi-unidade, `sort_by`/`sort_dir`, `summary`); BFF `GET /purchase-orders` + `GET /purchase-orders/export` (XLSX; operations + units). MFE: MultiSelect de unidades (nome sem código), Tabela/Cards, sort server-side, Excel, colunas/fonte persistidos. Clique na linha abre a ficha E8. Distinto do painel OTD. Smoke federado: `INCONCLUSIVE`.
+**Pedidos de compra (WF-05):** MFE → `supplies-api` → `api-delpi` `GET /supplies/purchase-orders` (SC7 aberto, filtro `01`/`02`, `sort_by`/`sort_dir`, `summary`); BFF `GET /purchase-orders` + `GET /purchase-orders/export` (XLSX; `supplies.access`). MFE: MultiSelect de unidades (nome sem código), Tabela/Cards, sort server-side, Excel, colunas/fonte persistidos. Clique na linha abre a ficha E8. Distinto do painel OTD. Smoke federado: `INCONCLUSIVE`.
 
-**Detalhe do pedido (WF-06):** api-delpi `GET /supplies/purchase-orders/{branch}/{order_number}`; BFF `GET /purchase-orders/<branch>/<number>` (operations + unit); MFE `/purchase-orders/:branch/:number` read-only (itens, entrega prometida, receipts, SC origem). Smoke federado: `INCONCLUSIVE`.
+**Detalhe do pedido (WF-06):** api-delpi `GET /supplies/purchase-orders/{branch}/{order_number}`; BFF `GET /purchase-orders/<branch>/<number>` (`supplies.access` + filtro `01`/`02`); MFE `/purchase-orders/:branch/:number` read-only (itens, entrega prometida, receipts, SC origem). Smoke federado: `INCONCLUSIVE`.
 
 A manutenção transversal de UI (por exemplo, help embutido no próprio label e loading canônico do `plugin-ui`) pode corrigir componentes compartilhados, mas não reabre uma página fechada salvo regressão material do seu DoD.
 
@@ -151,7 +151,7 @@ A manutenção transversal de UI (por exemplo, help embutido no próprio label e
 | Framework API | Flask |
 | CSS root | `.dashboard-supplies-portal` |
 | Tokens | `--sp-*` → `--delpi-ui-*` |
-| Entrada | `supplies.portal.access` |
+| Entrada | `supplies.access` |
 
 ```text
 Browser
@@ -174,7 +174,7 @@ Invariantes:
 - SQL/regra TOTVS permanecem na `api-delpi`.
 - Estado do produto pertence à `supplies-api`; não espelhar TOTVS no Postgres.
 - Capabilities de produto não devem espelhar CRUD.
-- Unidade é eixo ortogonal `supplies.unit.filial-{TOTVS}`.
+- Unidade do Portal é filtro de dados `01`/`02` (ADR-009), não `supplies.unit.*`.
 - C1 → C2 → paridade final → C3 é ordem obrigatória para Purchase Requests.
 - Cutover só após paridade, classificação dos BIs/legados, target saudável e rollback conhecido.
 

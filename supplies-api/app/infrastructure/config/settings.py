@@ -17,7 +17,12 @@ class Settings:
 
     DELPI_API_URL = os.getenv("DELPI_API_URL", "http://delpi-api-delpi:8000")
     DELPI_API_TIMEOUT_SECONDS = float(os.getenv("DELPI_API_TIMEOUT", "30"))
-    DELPI_API_CALLER_APP = os.getenv("DELPI_API_CALLER_APP", "supplies-api")
+    SUPPLIES_CALLER_APP = (
+        os.getenv("SUPPLIES_CALLER_APP")
+        or os.getenv("DELPI_API_CALLER_APP")
+        or "supplies-api"
+    )
+    DELPI_API_CALLER_APP = SUPPLIES_CALLER_APP
 
     PURCHASE_REQUESTS_API_URL = os.getenv(
         "PURCHASE_REQUESTS_API_URL",

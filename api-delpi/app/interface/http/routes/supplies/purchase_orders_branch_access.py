@@ -2,13 +2,9 @@
 
 from __future__ import annotations
 
-from delpi_auth.authz_core import has_permission
-from delpi_auth.request_context import get_current_user
-
 from app.application.security.api_delpi_permissions import (
     API_DELPI_ACCESS,
     DASHBOARD_SUPPLIES_VIEW,
-    SUPPLIES_ACCESS,
 )
 from app.domain.totvs.protheus_branches import PROTHEUS_BRANCH_CODES
 from app.interface.http.branch_access_gate import BranchAccessGate
@@ -21,21 +17,9 @@ _GATE = BranchAccessGate(
     extra_global_view_perms=(API_DELPI_ACCESS,),
 )
 
-_OPERATIONAL_UNITS = frozenset({"01", "02"})
-_SURFACE = (SUPPLIES_ACCESS,)
-
-
-def _canonical_unit_allowed(branch: str) -> bool:
-    user = get_current_user()
-    if user is None or branch not in _OPERATIONAL_UNITS:
-        return False
-    return any(has_permission(user, code) for code in _SURFACE)
-
 
 def branch_view_allowed(branch: str) -> bool:
-    if _GATE.branch_view_allowed(branch):
-        return True
-    return _canonical_unit_allowed(branch)
+    return _GATE.branch_view_allowed(branch)
 
 
 def list_viewable_branches() -> list[str]:

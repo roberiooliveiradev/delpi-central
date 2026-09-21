@@ -9,6 +9,11 @@ from app.infrastructure.gateways.purchase_requests_gateway import (
 )
 
 
+@pytest.fixture(autouse=True)
+def _service_token(monkeypatch):
+    monkeypatch.setenv("API_DELPI_INTERNAL_SERVICE_TOKEN", "svc-secret")
+
+
 @responses.activate
 def test_list_forwards_bearer_and_query():
     responses.add(
@@ -29,6 +34,8 @@ def test_list_forwards_bearer_and_query():
     assert payload["data"]["total"] == 0
     assert responses.calls[0].request.headers["Authorization"] == "Bearer tok-1"
     assert responses.calls[0].request.headers["X-Delpi-Caller-App"] == "supplies-api"
+    assert responses.calls[0].request.headers["X-Delpi-Service-Token"] == "svc-secret"
+    assert "svc-secret" not in (responses.calls[0].request.headers.get("Authorization") or "")
     assert "branch=01" in (responses.calls[0].request.url or "")
 
 
@@ -77,3 +84,10 @@ def test_count_open_sibling_sums_stages():
         PurchaseRequestsGateway.OPEN_STAGES
     )
     assert len(responses.calls) == len(PurchaseRequestsGateway.OPEN_STAGES)
+
+
+def test_missing_service_token_is_fail_closed(monkeypatch):
+    monkeypatch.delenv("API_DELPI_INTERNAL_SERVICE_TOKEN", raising=False)
+    gateway = PurchaseRequestsGateway(base_url="http://pr-api.test", timeout_seconds=2.0)
+    with pytest.raises(PurchaseRequestsGatewayError, match="service identity"):
+        gateway.list_purchase_requests(access_token="tok", params={"branch": "01"})

@@ -1,8 +1,7 @@
-"""Branch shape check for supplies.access on KPI routes.
+"""Branch shape check for direct callers of supplies KPI routes.
 
-Supplies is not multi-unit: supplies.access may read 01 and 02.
-Legacy api-delpi.access and dashboard-supplies.view stay global.
-supplies.manage is not a read grant.
+supplies.access is not an api-delpi grant. Trusted supplies-api skips this
+guard. Sibling api-delpi.access and dashboard-supplies.view stay global.
 """
 
 from __future__ import annotations
@@ -17,33 +16,19 @@ from app.application.security.api_delpi_permissions import (
     DASHBOARD_SUPPLIES_VIEW,
     SUPPLIES_ACCESS,
 )
+from app.interface.http.supplies_bff_service_access import is_trusted_supplies_bff_call
 
-_UNITS = frozenset({"01", "02"})
-_SURFACE = (SUPPLIES_ACCESS,)
 _LEGACY_GLOBAL = (API_DELPI_ACCESS, DASHBOARD_SUPPLIES_VIEW)
 
 
-def _allowed(user, branch: str) -> bool:
-    if branch not in _UNITS:
-        return False
-    return any(has_permission(user, code) for code in _SURFACE)
-
-
 def enforce_canonical_supplies_branch(request: Request) -> None:
+    if is_trusted_supplies_bff_call():
+        return
     user = get_current_user()
     if user is None or getattr(user, "is_superadmin", False):
         return
     if any(has_permission(user, code) for code in _LEGACY_GLOBAL):
         return
-    if not any(has_permission(user, code) for code in _SURFACE):
-        return
-    raw_values = [item.strip() for item in request.query_params.getlist("branch") if item.strip()]
-    if not raw_values:
+    if has_permission(user, SUPPLIES_ACCESS):
         raise HTTPException(status_code=403, detail="Forbidden")
-    for raw in raw_values:
-        if raw in {"all", "*"}:
-            if not all(_allowed(user, code) for code in _UNITS):
-                raise HTTPException(status_code=403, detail="Forbidden")
-            continue
-        if not _allowed(user, raw):
-            raise HTTPException(status_code=403, detail="Forbidden")
+    _ = request

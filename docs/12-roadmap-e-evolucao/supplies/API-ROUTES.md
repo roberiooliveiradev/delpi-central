@@ -9,7 +9,7 @@
 Envelope alvo: `{ success, message, data, meta }`.  
 AuthN: JWT Keycloak.  
 AuthZ: permissions efetivas resolvidas pelo Core API; não usar lista de permissions dos claims JWT como fonte final.  
-Target RBAC ([ADR-008](./adr/ADR-008-access-manage-rbac.md)): rotas normais exigem `supplies.access`; administração exige `supplies.manage`. Dado TOTVS continua exigindo `supplies.unit.filial-*`.
+Target RBAC ([ADR-009](./adr/ADR-009-product-access-and-operational-data-scope.md)): rotas normais exigem `supplies.access`; administração exige `supplies.manage`. Unidade é filtro de dados `01`/`02`, não permission. SC do Portal é acompanhamento global via S2S confiável para `purchase-requests-api`. O standalone mantém o RBAC próprio.
 
 Status documental:
 
@@ -31,12 +31,12 @@ AND resource scope / ownership quando aplicável
 AND business rule
 ```
 
-Capabilities canônicas:
+Capabilities canônicas do Portal:
 
 - `supplies.access`
 - `supplies.manage`
-- `supplies.purchase-requests.view-all`
-- `supplies.unit.filial-{TOTVS}`
+
+Escopo de dados operacional: `01` e `02`. Não há `supplies.unit.*` nem `supplies.purchase-requests.view-all`.
 
 Não espelhar CRUD em permission codes. Qualquer `ANY_OF`/`ALL_OF` precisa ser decisão formal do contrato antes da implementação.
 
@@ -57,9 +57,9 @@ Não espelhar CRUD em permission codes. Qualquer `ANY_OF`/`ALL_OF` precisa ser d
 | GET | `/analytics/otd` | `supplies.access` + unit | api-delpi + SI | **IMPLEMENTADO** |
 | GET | `/purchase-requests` | `supplies.access` + units + CC | PR-api (`?branch=` repetido, `sort_by`/`sort_dir` allow-list + `overall_stage` owner-local) | **IMPLEMENTADO_C1** |
 | GET | `/purchase-requests/{branch}/{number}` | `supplies.access` + unit + resource scope | PR-api | **IMPLEMENTADO_C1** |
-| GET | `/purchase-requests/export` | `supplies.access` + units + CC/view-all | PR-api `/export` → CSV default ou `format=xlsx` | **IMPLEMENTADO_C1** |
+| GET | `/purchase-requests/export` | `supplies.access`; downstream S2S; acompanhamento global | PR-api `/export` → CSV default ou `format=xlsx` | **IMPLEMENTADO_C1** |
 | GET | `/purchase-orders` | `supplies.access` + units | api-delpi `GET /supplies/purchase-orders` | **IMPLEMENTADO** |
-| GET | `/purchase-orders/{branch}/{number}` | operations + unit | api-delpi `GET /supplies/purchase-orders/{branch}/{order_number}` | **IMPLEMENTADO** |
+| GET | `/purchase-orders/{branch}/{number}` | `supplies.access` + filtro de dados `01`/`02` | api-delpi `GET /supplies/purchase-orders/{branch}/{order_number}` | **IMPLEMENTADO** |
 | GET | `/purchase-orders/export` | `supplies.access` + units | api-delpi `GET /supplies/purchase-orders/export` → XLSX no BFF | **IMPLEMENTADO** |
 | GET | `/users/{id}/profile` | self portal; terceiro admin | Core + prefs | **IMPLEMENTADO** |
 | PATCH | `/users/{id}/profile` | self only + portal | PG prefs | **IMPLEMENTADO** |
@@ -75,26 +75,26 @@ As rotas abaixo são **alvos de composição** e só entram em implementação q
 | Página / fluxo | Method | Path alvo | Capability | Fonte provável/canônica | Estado |
 |---|---|---|---|---|---|
 | Pedidos | GET | `/purchase-orders` | `supplies.access` + unit | api-delpi `GET /supplies/purchase-orders` (SC7 aberto + `summary`) | **IMPLEMENTADO** |
-| Detalhe pedido | GET | `/purchase-orders/{branch}/{number}` | operations + unit + resource (universo aberto SC7) | api-delpi `GET /supplies/purchase-orders/{branch}/{order_number}` | **IMPLEMENTADO** |
-| Entregas | GET | `/deliveries/late` | operations + unit | api-delpi PO-OTD panel | PLANEJADO |
+| Detalhe pedido | GET | `/purchase-orders/{branch}/{number}` | `supplies.access` + filtro de dados `01`/`02` + resource (universo aberto SC7) | api-delpi `GET /supplies/purchase-orders/{branch}/{order_number}` | **IMPLEMENTADO** |
+| Entregas | GET | `/deliveries/late` | `supplies.access` + filtro de dados `01`/`02` | api-delpi PO-OTD panel | PLANEJADO |
 | Estoque | GET | `/inventory/stock-value` | política a fechar na página | api-delpi stock-value | PLANEJADO |
-| Estoque | GET | `/inventory/stock-balances` | operations + unit | api-delpi stock-balances | PLANEJADO |
+| Estoque | GET | `/inventory/stock-balances` | `supplies.access` + filtro de dados `01`/`02` | api-delpi stock-balances | PLANEJADO |
 | Giro | GET | `/inventory/turnover` | analytics + unit | api-delpi inventory-turnover | PLANEJADO |
-| ESTSEG | GET | `/safety-stock/summary` | operations + unit | api-delpi safety-stock | PLANEJADO |
-| ESTSEG | GET | `/safety-stock/items` | operations + unit | api-delpi safety-stock | PLANEJADO |
-| ESTSEG detalhe | GET | `/safety-stock/items/{code}` | operations + unit + item | api-delpi | PLANEJADO |
-| Consumo | GET | `/safety-stock/consumption-analysis/summary` | operations + unit | api-delpi | PLANEJADO |
-| Consumo | GET | `/safety-stock/consumption-analysis/items` | operations + unit | api-delpi | PLANEJADO |
+| ESTSEG | GET | `/safety-stock/summary` | `supplies.access` + filtro de dados `01`/`02` | api-delpi safety-stock | PLANEJADO |
+| ESTSEG | GET | `/safety-stock/items` | `supplies.access` + filtro de dados `01`/`02` | api-delpi safety-stock | PLANEJADO |
+| ESTSEG detalhe | GET | `/safety-stock/items/{code}` | `supplies.access` + filtro de dados `01`/`02` + item | api-delpi | PLANEJADO |
+| Consumo | GET | `/safety-stock/consumption-analysis/summary` | `supplies.access` + filtro de dados `01`/`02` | api-delpi | PLANEJADO |
+| Consumo | GET | `/safety-stock/consumption-analysis/items` | `supplies.access` + filtro de dados `01`/`02` | api-delpi | PLANEJADO |
 | Savings | GET | `/analytics/savings` | analytics + unit | api-delpi + SI | PLANEJADO |
 | CPV dedicado | GET | `/analytics/cpv` | analytics + unit | api-delpi | PLANEJADO |
-| Fornecedores | GET | `/suppliers` | operations; unit conforme fonte | api-delpi / busca fornecedor | **BLOQUEADO** se contrato de busca não estiver comprovado |
-| Fornecedor 360 | GET | `/suppliers/{code}/{store}` | operations + unit/resource | api-delpi + PG; Qualidade somente após P-11 | PLANEJADO |
-| Nota fornecedor | POST | `/suppliers/{code}/{store}/notes` | operations + unit/resource/ownership | PG | PLANEJADO |
-| Nota fornecedor | PATCH | `/suppliers/{code}/{store}/notes/{note_id}` | operations + unit/resource/ownership | PG | PLANEJADO |
-| Produtos | GET | `/products` | operations | api-delpi products | PLANEJADO |
-| Produto 360 | GET | `/products/{code}` | operations + unit quando bloco exigir | api-delpi | PLANEJADO |
-| Onde usado | GET | `/products/{code}/where-used` | operations | `get_product_parents` | PLANEJADO |
-| Histórico preço | GET | `/products/{code}/price-history` | operations + unit quando aplicável | api-delpi | PLANEJADO |
+| Fornecedores | GET | `/suppliers` | `supplies.access` quando a página existir | api-delpi / busca fornecedor | **BLOQUEADO** se contrato de busca não estiver comprovado |
+| Fornecedor 360 | GET | `/suppliers/{code}/{store}` | `supplies.access` + filtro de dados `01`/`02`/resource | api-delpi + PG; Qualidade somente após P-11 | PLANEJADO |
+| Nota fornecedor | POST | `/suppliers/{code}/{store}/notes` | `supplies.access` + filtro de dados `01`/`02`/resource/ownership | PG | PLANEJADO |
+| Nota fornecedor | PATCH | `/suppliers/{code}/{store}/notes/{note_id}` | `supplies.access` + filtro de dados `01`/`02`/resource/ownership | PG | PLANEJADO |
+| Produtos | GET | `/products` | `supplies.access` quando a página existir | api-delpi products | PLANEJADO |
+| Produto 360 | GET | `/products/{code}` | `supplies.access` + filtro de dados `01`/`02` quando bloco exigir | api-delpi | PLANEJADO |
+| Onde usado | GET | `/products/{code}/where-used` | `supplies.access` quando a página existir | `get_product_parents` | PLANEJADO |
+| Histórico preço | GET | `/products/{code}/price-history` | `supplies.access` + filtro de dados `01`/`02` quando aplicável | api-delpi | PLANEJADO |
 | Tasks | GET | `/tasks` | portal + resource scope | PG | PLANEJADO |
 | Tasks | POST | `/tasks` | portal + capability do recurso + scope | PG | PLANEJADO |
 | Tasks | PATCH | `/tasks/{task_id}` | portal + capability do recurso + ownership | PG | PLANEJADO |

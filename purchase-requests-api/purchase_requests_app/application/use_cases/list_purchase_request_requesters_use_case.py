@@ -7,6 +7,10 @@ from purchase_requests_app.application.security.purchase_requests_permissions im
     assert_branches_access,
     has_access,
 )
+from purchase_requests_app.application.security.supplies_portal_context import (
+    authorize_portal_branches,
+    is_trusted_supplies_bff_call,
+)
 from purchase_requests_app.application.services.purchase_request_scope_resolver import (
     PurchaseRequestScopeResolver,
 )
@@ -45,10 +49,13 @@ class ListPurchaseRequestRequestersUseCase:
         supplier_code: str | None = None,
         order_number: str | None = None,
     ) -> dict[str, Any]:
-        if not has_access(user):
+        portal = is_trusted_supplies_bff_call()
+        if not portal and not has_access(user):
             raise PermissionError("Sem permissão para acessar solicitações de compra.")
         codes = branches or ([branch] if branch else [])
-        if len(codes) > 1:
+        if portal:
+            codes = authorize_portal_branches(codes)
+        elif len(codes) > 1:
             codes = assert_branches_access(user, codes)
         elif codes:
             assert_branch_access(user, codes[0])
@@ -73,6 +80,7 @@ class ListPurchaseRequestRequestersUseCase:
                 explicit_cost_center=cost_center,
                 explicit_cost_centers=cost_centers,
                 scope_rows=scope_rows,
+                portal_global=portal,
             )
             effective_ccs = self._scope_resolver.effective_cost_centers(
                 resolution,
@@ -91,6 +99,7 @@ class ListPurchaseRequestRequestersUseCase:
                 explicit_cost_center=cost_center,
                 explicit_cost_centers=cost_centers,
                 scope_rows=scope_rows,
+                portal_global=portal,
             )
             scopes = self._scope_resolver.effective_cost_center_scopes(
                 resolution,

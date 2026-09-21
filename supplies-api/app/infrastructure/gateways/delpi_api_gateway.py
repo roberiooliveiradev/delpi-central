@@ -34,7 +34,7 @@ class DelpiApiGateway:
             if timeout_seconds is not None
             else Settings.DELPI_API_TIMEOUT_SECONDS
         )
-        self.caller_app = caller_app or Settings.DELPI_API_CALLER_APP
+        self.caller_app = caller_app or Settings.SUPPLIES_CALLER_APP
 
     def get(
         self,

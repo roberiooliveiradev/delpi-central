@@ -1,3 +1,5 @@
+> **Histórico / SUPERSEDED pelo [ADR-009](./adr/ADR-009-product-access-and-operational-data-scope.md):** o Portal vigente usa só `supplies.access` e `supplies.manage`. Unidade é filtro de dados `01`/`02`. O texto abaixo não é o contrato ativo.
+
 # CUTOVER-RUNBOOK — Portal Suprimentos
 
 **Não executar nesta etapa.** Pré-requisitos: [HOMOLOGACAO-PARIDADE.md](./HOMOLOGACAO-PARIDADE.md) + [ADR-002](./adr/ADR-002-purchase-requests-api.md) + [ADR-003](./adr/ADR-003-legacy-app-consolidation.md).

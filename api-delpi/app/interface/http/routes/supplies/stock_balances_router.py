@@ -8,7 +8,9 @@ from app.interface.http.pagination_query import (
 )
 
 
-from delpi_auth.authorization import require_any_permission
+from app.interface.http.supplies_bff_service_access import (
+    require_any_permission_or_supplies_bff,
+)
 
 from app.application.dto.supplies.stock_balances_request import (
     StockBalancesItemsRequest,
@@ -78,7 +80,7 @@ def _resolve_warehouse(
         path="/supplies/stock-balances/summary",
     ),
 )
-@require_any_permission(KPI_SUPPLIES_ACCESS)
+@require_any_permission_or_supplies_bff(KPI_SUPPLIES_ACCESS)
 def get_supplies_stock_balances_summary(
     branch: str | None = BRANCH_QUERY_OPTIONAL(),
     warehouse: str | None = Query(
@@ -136,7 +138,7 @@ def get_supplies_stock_balances_summary(
         path="/supplies/stock-balances/items",
     ),
 )
-@require_any_permission(KPI_SUPPLIES_ACCESS)
+@require_any_permission_or_supplies_bff(KPI_SUPPLIES_ACCESS)
 def get_supplies_stock_balances_items(
     branch: str | None = BRANCH_QUERY_OPTIONAL(),
     warehouse: str | None = Query(

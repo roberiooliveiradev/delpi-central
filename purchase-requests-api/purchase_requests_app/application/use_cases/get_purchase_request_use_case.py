@@ -6,6 +6,10 @@ from purchase_requests_app.application.security.purchase_requests_permissions im
     assert_branch_access,
     has_access,
 )
+from purchase_requests_app.application.security.supplies_portal_context import (
+    authorize_portal_branches,
+    is_trusted_supplies_bff_call,
+)
 from purchase_requests_app.application.services.purchase_request_aggregation_service import (
     PurchaseRequestAggregationService,
 )
@@ -45,9 +49,13 @@ class GetPurchaseRequestUseCase:
         cost_center: str | None = None,
         cost_centers: list[str] | None = None,
     ) -> dict[str, Any]:
-        if not has_access(user):
+        portal = is_trusted_supplies_bff_call()
+        if not portal and not has_access(user):
             raise PermissionError("Sem permissão para acessar solicitações de compra.")
-        assert_branch_access(user, branch)
+        if portal:
+            authorize_portal_branches([branch])
+        else:
+            assert_branch_access(user, branch)
         scope_rows = self._scope_repository.list_active_cost_centers_for_user(
             str(getattr(user, "id", "") or getattr(user, "sub", ""))
         )
@@ -57,6 +65,7 @@ class GetPurchaseRequestUseCase:
             explicit_cost_center=cost_center,
             explicit_cost_centers=cost_centers,
             scope_rows=scope_rows,
+            portal_global=portal,
         )
         effective_ccs = self._scope_resolver.effective_cost_centers(
             resolution,

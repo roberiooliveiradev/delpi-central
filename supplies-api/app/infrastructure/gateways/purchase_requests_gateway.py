@@ -5,6 +5,7 @@ from typing import Any
 from urllib.parse import urlencode, urljoin
 
 import requests
+from delpi_auth.service_token import apply_internal_service_headers
 
 from app.infrastructure.config.settings import Settings
 
@@ -49,7 +50,7 @@ class PurchaseRequestsGateway:
             if timeout_seconds is not None
             else Settings.PURCHASE_REQUESTS_API_TIMEOUT_SECONDS
         )
-        self.caller_app = caller_app or Settings.DELPI_API_CALLER_APP
+        self.caller_app = caller_app or Settings.SUPPLIES_CALLER_APP
 
     def count_open_requests(
         self,
@@ -154,6 +155,13 @@ class PurchaseRequestsGateway:
             "Authorization": f"Bearer {access_token}",
             "X-Delpi-Caller-App": self.caller_app,
         }
+        apply_internal_service_headers(headers)
+        if "X-Delpi-Service-Token" not in headers:
+            raise PurchaseRequestsGatewayError(
+                "purchase-requests-api service identity is not configured"
+            )
+        if headers.get("Authorization") != f"Bearer {access_token}":
+            headers["Authorization"] = f"Bearer {access_token}"
         try:
             response = requests.get(
                 url,

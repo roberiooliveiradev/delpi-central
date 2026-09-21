@@ -1,3 +1,5 @@
+> **Histórico / SUPERSEDED pelo [ADR-009](./ADR-009-product-access-and-operational-data-scope.md):** não usar os códigos deste ADR como catálogo vigente do Portal.
+
 # ADR-007 — Minimização do catálogo de permissões
 
 | Campo | Valor |

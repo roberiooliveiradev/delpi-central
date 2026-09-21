@@ -11,6 +11,11 @@ from app.interface.http.pagination_query import (
 
 from delpi_auth.authorization import require_any_permission, require_auth
 
+from app.interface.http.supplies_bff_service_access import (
+    PURCHASE_REQUESTS_API_CALLER,
+    require_any_permission_or_trusted_caller,
+)
+
 from app.application.security.api_delpi_permissions import (
     PURCHASE_REQUESTS_READ_PERMISSIONS,
     SAFETY_STOCK_READ_PERMISSIONS,
@@ -130,7 +135,10 @@ def _lines_kwargs(
         path="/supplies/purchase-requests/lines",
     ),
 )
-@require_any_permission(PURCHASE_REQUESTS_READ_PERMISSIONS)
+@require_any_permission_or_trusted_caller(
+    PURCHASE_REQUESTS_READ_PERMISSIONS,
+    caller=PURCHASE_REQUESTS_API_CALLER,
+)
 def list_supplies_purchase_request_lines_route(
     branch: list[str] = BRANCH_CODES_QUERY(),
     date_from: str | None = Query(None, alias="date_from"),
@@ -209,7 +217,10 @@ def list_supplies_purchase_request_lines_route(
         path="/supplies/purchase-requests/lines/export",
     ),
 )
-@require_any_permission(PURCHASE_REQUESTS_READ_PERMISSIONS)
+@require_any_permission_or_trusted_caller(
+    PURCHASE_REQUESTS_READ_PERMISSIONS,
+    caller=PURCHASE_REQUESTS_API_CALLER,
+)
 def export_supplies_purchase_request_lines_route(
     branch: list[str] = BRANCH_CODES_QUERY(),
     date_from: str | None = Query(None, alias="date_from"),
@@ -276,7 +287,10 @@ def export_supplies_purchase_request_lines_route(
 
 
 @router.get("/requesters")
-@require_any_permission(PURCHASE_REQUESTS_READ_PERMISSIONS)
+@require_any_permission_or_trusted_caller(
+    PURCHASE_REQUESTS_READ_PERMISSIONS,
+    caller=PURCHASE_REQUESTS_API_CALLER,
+)
 def list_supplies_purchase_request_requesters_route(
     branch: list[str] = BRANCH_CODES_QUERY(),
     date_from: str | None = Query(None, alias="date_from"),
@@ -339,7 +353,10 @@ def list_supplies_purchase_request_requesters_route(
         path="/supplies/purchase-requests/lines/{branch}/{request_number}",
     ),
 )
-@require_any_permission(PURCHASE_REQUESTS_READ_PERMISSIONS)
+@require_any_permission_or_trusted_caller(
+    PURCHASE_REQUESTS_READ_PERMISSIONS,
+    caller=PURCHASE_REQUESTS_API_CALLER,
+)
 def get_supplies_purchase_request_lines_route(
     branch: str,
     request_number: str,

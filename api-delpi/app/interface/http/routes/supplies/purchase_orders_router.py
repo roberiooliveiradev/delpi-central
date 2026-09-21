@@ -4,7 +4,9 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Query
 
-from delpi_auth.authorization import require_any_permission
+from app.interface.http.supplies_bff_service_access import (
+    require_any_permission_or_supplies_bff,
+)
 
 from app.application.security.api_delpi_permissions import KPI_SUPPLIES_ACCESS
 from app.composition.supplies_composer import (
@@ -71,7 +73,7 @@ def _list_kwargs(
         path="/supplies/purchase-orders",
     ),
 )
-@require_any_permission(KPI_SUPPLIES_ACCESS)
+@require_any_permission_or_supplies_bff(KPI_SUPPLIES_ACCESS)
 def list_supplies_purchase_orders_route(
     branch: list[str] = BRANCH_CODES_QUERY(),
     page: int = Query(1, ge=1),
@@ -144,7 +146,7 @@ def list_supplies_purchase_orders_route(
         path="/supplies/purchase-orders/export",
     ),
 )
-@require_any_permission(KPI_SUPPLIES_ACCESS)
+@require_any_permission_or_supplies_bff(KPI_SUPPLIES_ACCESS)
 def export_supplies_purchase_orders_route(
     branch: list[str] = BRANCH_CODES_QUERY(),
     order_number: str | None = Query(None),
@@ -211,7 +213,7 @@ def export_supplies_purchase_orders_route(
         path="/supplies/purchase-orders/{branch}/{order_number}",
     ),
 )
-@require_any_permission(KPI_SUPPLIES_ACCESS)
+@require_any_permission_or_supplies_bff(KPI_SUPPLIES_ACCESS)
 def get_supplies_purchase_order(
     branch: str = BRANCH_PATH(),
     order_number: str = ORDER_NUMBER_PATH(),

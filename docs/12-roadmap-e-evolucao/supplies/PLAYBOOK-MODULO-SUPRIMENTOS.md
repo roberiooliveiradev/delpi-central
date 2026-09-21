@@ -1,3 +1,5 @@
+> **Histórico / SUPERSEDED pelo [ADR-009](./adr/ADR-009-product-access-and-operational-data-scope.md):** o Portal vigente usa só `supplies.access` e `supplies.manage`. Unidade é filtro de dados `01`/`02`. O texto abaixo não é o contrato ativo.
+
 # PLAYBOOK — Portal Suprimentos (Minha DELPI)
 
 > **Status (2026-09-11):** arquitetura/produto congelados e implementação incremental em andamento. **E1–E7 concluídas; WF-05 GATE-FEATURE PASS (lista).**  

@@ -6,8 +6,11 @@ Princípio: **dado compartilhado ≠ ownership**. Consumo por HTTP/deep link; se
 |---|---|---|---|---|
 | Identidade SSO | Keycloak | JWT | validação AuthN | confiar em permission claims como AuthZ final |
 | Effective permissions, users, apps, routes, favoritos | **Core API** | Postgres Core + Keycloak context | `/me`, `/me/apps` (`apps[].routes`) | colocar regra de Suprimentos na Core; depender de `/me/routes` |
-| Catálogo de permissions do app | Core + manifest `supplies` | RBAC | `supplies.access` / `supplies.manage` + units + view-all; códigos antigos em compatibilidade (ADR-008) | autorizar só no frontend |
-| Units do Portal | Core effective permissions + catálogo `supplies.unit.*` | RBAC | supplies-api deriva `allowedUnits` | ler units de claims JWT como fonte final |
+| Catálogo de permissions do app | Core + manifest `supplies` | RBAC | somente `supplies.access` e `supplies.manage` (ADR-009) | autorizar só no frontend; recriar unit/view-all do Portal |
+| Units do Portal | supplies-api | filtro de dados do produto | `access` → `01` e `02`; «Todas» = essa união | tratar unidade como permission Core |
+| Chamada do MFE | supplies-api | HTTP | BFF único | browser → api-delpi ou purchase-requests-api |
+| S2S SC | purchase-requests-api | HTTP + service token | caller `supplies-api` ativa acompanhamento global | inferir Portal só pelo token do usuário |
+| S2S TOTVS | api-delpi | HTTP + service token | caller `supplies-api` lê o que a BFF já autorizou | usar `supplies.access` como bypass direto |
 | SQL Protheus SC1/SC7/SA2/SA5/SB1/SB2/SBZ/SD1/SD3/SD4 | **api-delpi** | TOTVS | gateway HTTP | espelhar TOTVS no PG do Portal |
 | CPV/OTD/ESTSEG/giro e interpretações ERP | **api-delpi** | SQL + domínio TOTVS | BFF | reimplementar fórmula no MFE/BFF |
 | Escopo CC/mapping/notificações SC até C2 | **purchase-requests-api** | schema `purchase_requests` | HTTP C1 | duplicar fail-closed na api-delpi |

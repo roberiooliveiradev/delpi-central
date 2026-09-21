@@ -18,6 +18,10 @@ from purchase_requests_app.interface.http.routes.purchase_requests_routes import
     admin_router,
     router as purchase_requests_router,
 )
+from purchase_requests_app.application.security.supplies_portal_context import (
+    bind_http_request,
+    reset_http_request,
+)
 from purchase_requests_app.middleware.auth_middleware import jwt_middleware
 from purchase_requests_app.startup.run_migrations_on_startup import run_migrations_on_startup
 
@@ -96,6 +100,15 @@ async def validation_exception_handler(_request: Request, exc: RequestValidation
 async def unhandled_exception_handler(_request: Request, exc: Exception):
     logging.getLogger(__name__).exception("unhandled_exception")
     return fail("Erro interno do servidor.", 500)
+
+
+@app.middleware("http")
+async def bind_portal_request_context(request: Request, call_next):
+    token = bind_http_request(request)
+    try:
+        return await call_next(request)
+    finally:
+        reset_http_request(token)
 
 
 app.middleware("http")(jwt_middleware)

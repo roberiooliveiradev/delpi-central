@@ -76,8 +76,8 @@ Nenhum RQ futuro é autorização automática de implementação.
 | `supplies-api` Flask | ADR-001 + instruções oficiais |
 | MFE somente `supplies-api` | ADR-001 / boundaries |
 | effective permissions via Core | ADR-001/006 |
-| capabilities mínimas | ADR-007 |
-| unit `supplies.unit.filial-{TOTVS}` | ADR-006 |
+| capabilities do Portal: `supplies.access` e `supplies.manage` | ADR-008 + ADR-009 |
+| unidade = filtro de dados `01`/`02`, não permission | ADR-009 (supersede ADR-006) |
 | SC C0→C1→C2→paridade→C3 | ADR-002 |
 | target saudável antes de redirect | CUTOVER-RUNBOOK |
 | Home ≠ Overview | DESIGN-IA |
@@ -168,7 +168,7 @@ Overview/OTD fechados com filtros/URL, 7 KPIs, metas SI, charts/gauges e Ajuda.
 
 ## E6.S3 — Export — COMPLETED
 
-**Entregue:** export condicionado a access + export + unit + CC/view-all.
+**Entregue:** export da SC do Portal segue a mesma visibilidade do acompanhamento global (`supplies.access` + S2S). O standalone continua com o próprio RBAC de export.
 
 ## E6.S4 — Evidência C2 — COMPLETED DOCUMENTAL
 
@@ -193,7 +193,7 @@ As etapas abaixo estão **BLOCKED_BY_QUEUE**. Antes de executar qualquer uma, su
 
 **Entregue:**
 - E7.S1 api-delpi `GET /supplies/purchase-orders` (`list_supplies_purchase_orders`) — SC7 aberto paginado;
-- E7.S2 BFF `GET /purchase-orders` (operations + unit);
+- E7.S2 BFF `GET /purchase-orders` (`supplies.access` + filtro `01`/`02`);
 - E7.S3 MFE kit-first + URL/F5 + seleção de linha (detalhe completo fora);
 - E7.S4 Help + docs GATE-FEATURE; smoke federado `INCONCLUSIVE`.
 
@@ -229,7 +229,7 @@ Busca/lista. Se busca SA2/contrato fornecedor não estiver comprovada, manter `B
 
 ## E14 — WF-10 Fornecedor 360
 
-Composição TOTVS + PG. **Qualidade fica fora do P0 enquanto P-11 não estiver resolvido**; não usar “quando autorizada” como receita ambígua. Notas seguem operations + unit + resource + ownership/política de equipe, sem permission CRUD preventiva.
+Composição TOTVS + PG. **Qualidade fica fora do P0 enquanto P-11 não estiver resolvido**; não usar “quando autorizada” como receita ambígua. Notas, quando existirem, seguem `supplies.access` + escopo de dados + ownership, sem permission CRUD preventiva. E9 não está autorizada; a AuthZ futura é `supplies.access`, sem permission própria.
 
 ## E15 — WF-11 OTD Fornecedores
 

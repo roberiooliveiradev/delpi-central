@@ -2,8 +2,8 @@
 
 | Campo | Valor |
 |-------|--------|
-| Status | Aceito (PO, 2026-09-08) |
-| Contexto | Portal Suprimentos é multi-unidade |
+| Status | SUPERSEDED BY [ADR-009](./ADR-009-product-access-and-operational-data-scope.md) |
+| Contexto | Histórico — Portal Suprimentos deixou de modelar unidade como permission |
 | Relacionados | [PERFIS-E-PERMISSOES.md](../PERFIS-E-PERMISSOES.md), [ADR-004](./ADR-004-plugin-identity-and-css-root.md), [ADR-007](./ADR-007-permission-minimization.md) |
 
 ---

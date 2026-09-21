@@ -1,3 +1,5 @@
+> **Histórico / SUPERSEDED pelo [ADR-009](./adr/ADR-009-product-access-and-operational-data-scope.md):** o Portal vigente usa só `supplies.access` e `supplies.manage`. Unidade é filtro de dados `01`/`02`. O texto abaixo não é o contrato ativo.
+
 # TABLE-UX-PARITY — Portal Suprimentos
 
 > **Status:** PLANNED / transversal · **não autoriza implementação por si só**.  

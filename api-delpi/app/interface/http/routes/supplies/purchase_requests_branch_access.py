@@ -1,17 +1,22 @@
-"""Autorização por filial — purchase request lines (Suprimentos)."""
+"""Autorização por filial — purchase request lines (Suprimentos).
+
+Direct callers use purchase-requests.* . The purchase-requests-api hop is
+trusted only with caller + service token. supplies.access on the user token
+is not a branch grant.
+"""
 
 from __future__ import annotations
-
-from delpi_auth.authz_core import has_permission
-from delpi_auth.request_context import get_current_user
 
 from app.application.security.api_delpi_permissions import (
     PURCHASE_REQUESTS_ACCESS,
     PURCHASE_REQUESTS_BRANCH_VIEW_PERMS,
-    SUPPLIES_ACCESS,
 )
 from app.domain.totvs.protheus_branches import PROTHEUS_BRANCH_CODES
 from app.interface.http.branch_access_gate import BranchAccessGate
+from app.interface.http.supplies_bff_service_access import (
+    PURCHASE_REQUESTS_API_CALLER,
+    is_trusted_internal_caller,
+)
 
 _GATE = BranchAccessGate(
     global_view_perm=PURCHASE_REQUESTS_ACCESS,
@@ -19,21 +24,9 @@ _GATE = BranchAccessGate(
     resource_label="solicitações de compra",
 )
 
-_OPERATIONAL_UNITS = frozenset({"01", "02"})
-_SURFACE = (SUPPLIES_ACCESS,)
-
-
-def _canonical_unit_allowed(branch: str) -> bool:
-    user = get_current_user()
-    if user is None or branch not in _OPERATIONAL_UNITS:
-        return False
-    return any(has_permission(user, code) for code in _SURFACE)
-
 
 def branch_view_allowed(branch: str) -> bool:
-    if _GATE.branch_view_allowed(branch):
-        return True
-    return _canonical_unit_allowed(branch)
+    return _GATE.branch_view_allowed(branch)
 
 
 def list_viewable_branches() -> list[str]:
@@ -41,6 +34,8 @@ def list_viewable_branches() -> list[str]:
 
 
 def branch_access_error(branch: str | None):
+    if is_trusted_internal_caller(PURCHASE_REQUESTS_API_CALLER):
+        return None
     return _GATE.branch_access_error(branch)
 
 

@@ -1,3 +1,5 @@
+> **Histórico / SUPERSEDED pelo [ADR-009](./adr/ADR-009-product-access-and-operational-data-scope.md):** o Portal vigente usa só `supplies.access` e `supplies.manage`. Unidade é filtro de dados `01`/`02`. O texto abaixo não é o contrato ativo.
+
 # DECISOES_FUNCIONAIS_PENDENTES — Portal Suprimentos
 
 > Revisado em 2026-09-16. Este arquivo contém apenas decisões que o repositório ainda não responde. Hipótese não vira receita executável.

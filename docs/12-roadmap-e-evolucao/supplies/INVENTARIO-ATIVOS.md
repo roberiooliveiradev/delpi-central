@@ -1,3 +1,5 @@
+> **Histórico / SUPERSEDED pelo [ADR-009](./adr/ADR-009-product-access-and-operational-data-scope.md):** o Portal vigente usa só `supplies.access` e `supplies.manage`. Unidade é filtro de dados `01`/`02`. O texto abaixo não é o contrato ativo.
+
 # Inventário de ativos — Portal Suprimentos
 
 > **Revisado em 2026-09-10.** O Portal Suprimentos e a `supplies-api` já existem e possuem E1–E5 + SC C1 funcional implementados. Este inventário não deve descrevê-los como “futuros”. Dump Core produção dos 6 BIs externos continua pendente.
