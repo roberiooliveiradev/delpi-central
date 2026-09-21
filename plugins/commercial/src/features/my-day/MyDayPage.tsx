@@ -4,7 +4,7 @@ import {
   TaskEditorFrame,
   TaskEmptyState,
   TaskSearchField,
-  TaskWorklistSection,
+  TaskWorkspacePage,
   UserDirectoryPicker,
   attachmentIdsInMarkdown,
   type DirectoryUserOption,
@@ -863,6 +863,8 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
 
   return (
     <section className="cm-page-stack">
+      <TaskWorkspacePage
+        hero={
       <CommercialPageHero
         aria-label="Resumo do Meu dia"
         eyebrow="Meu dia"
@@ -992,33 +994,294 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
           ) : null}
         </div>
       </CommercialPageHero>
-
-      <TaskWorklistSection
-        classNames={cmSectionCardClassNames}
-        labels={cmSectionLabels}
-        title="Fila"
-        subtitle="Atrasadas → hoje → depois → concluídas."
-        hint={CM_HELP.myDay.worklist}
-        actions={
-          <>
-            {canManageFollowups ? (
-              <CommercialActionButton variant="primary" onClick={openCreateForm}>
-                Nova tarefa
+        }
+        worklist={{
+          classNames: cmSectionCardClassNames,
+          labels: cmSectionLabels,
+          title: "Fila",
+          subtitle: "Atrasadas → hoje → depois → concluídas.",
+          hint: CM_HELP.myDay.worklist,
+          actions: (
+            <>
+              {canManageFollowups ? (
+                <CommercialActionButton variant="primary" onClick={openCreateForm}>
+                  Nova tarefa
+                </CommercialActionButton>
+              ) : null}
+              <CommercialActionButton variant="ghost" onClick={() => void reload()}>
+                Atualizar
               </CommercialActionButton>
-            ) : null}
-            <CommercialActionButton variant="ghost" onClick={() => void reload()}>
-              Atualizar
-            </CommercialActionButton>
-          </>
-        }
-        search={
-          <TaskSearchField
-            value={taskQuery}
-            onChange={setTaskQuery}
-            placeholder="Buscar tarefas..."
-            aria-label="Buscar tarefas"
-          />
-        }
+            </>
+          ),
+          search: (
+            <TaskSearchField
+              value={taskQuery}
+              onChange={setTaskQuery}
+              placeholder="Buscar tarefas..."
+              aria-label="Buscar tarefas"
+            />
+          ),
+        }}
+        editor={canManageFollowups && formMode !== "closed" ? (
+        <div ref={taskFormRef} className="cm-my-day-create">
+          <TaskEditorFrame
+            classNames={cmSectionCardClassNames}
+            labels={cmSectionLabels}
+            title={formMode === "edit" ? "Editar tarefa" : "Nova tarefa"}
+            subtitle={
+              formMode === "edit"
+                ? canTeamWorklist
+                  ? "Altere campos, responsável e anexos; salve para gravar."
+                  : "Altere campos e anexos; salve para gravar."
+                : canTeamWorklist
+                  ? "Título, prazo, tipo, responsável, cliente, observação e anexos."
+                  : "Título, prazo, tipo, cliente, observação e anexos — padrão HubSpot/Pipedrive."
+            }
+            hint={formMode === "edit" ? CM_HELP.myDay.editTask : CM_HELP.myDay.newTask}
+            reviewRows={[
+              { label: "Título", value: title.trim() || "—" },
+              {
+                label: "Responsável",
+                value:
+                  assigneeMode === "groups"
+                    ? assigneeGroupIds
+                        .map((id) => groupOptions.find((group) => group.id === id)?.name || id)
+                        .join(", ") || "—"
+                    : assigneePicker
+                        .map((user) => user.name || user.email)
+                        .join(", ") || (formMode === "create" ? "Eu" : "—"),
+              },
+              { label: "Prazo", value: dueDate || "—" },
+              { label: "Descrição", value: description.trim() || "—" },
+            ]}
+            onClose={closeTaskForm}
+            primaryLabel={formMode === "edit" ? "Salvar alterações" : "Criar tarefa"}
+            onPrimary={() => void (formMode === "edit" ? onSaveEdit() : onCreate())}
+            primaryBusy={formMode === "edit" ? savingEdit : creating}
+          >
+            <div className="cm-my-day-form">
+              <div className="cm-my-day-form__title">
+                <CommercialTextField
+                  label="Título"
+                  hint={CM_HELP.myDay.taskTitle}
+                  value={title}
+                  onChange={setTitle}
+                  placeholder="Ex.: Ligar para ACME sobre atraso"
+                  required
+                />
+              </div>
+              <div className="cm-my-day-form__title">
+                <CommercialTextAreaField
+                  label="Observação"
+                  hint={CM_HELP.myDay.taskDescription}
+                  value={description}
+                  onChange={setDescription}
+                  placeholder="Ex.: Cliente pediu retorno após emitir NF 12345"
+                />
+              </div>
+              <CommercialTextField
+                label="Prazo"
+                hint={CM_HELP.myDay.taskDue}
+                type="date"
+                value={dueDate}
+                onChange={setDueDate}
+                required
+              />
+              <CommercialSelectField
+                label="Prioridade"
+                hint={CM_HELP.myDay.taskPriority}
+                options={[...PRIORITY_OPTIONS]}
+                value={priority}
+                onChange={setPriority}
+                allowEmpty={false}
+              />
+              <CommercialSelectField
+                label="Tipo"
+                hint={CM_HELP.myDay.taskType}
+                options={[...TASK_TYPE_OPTIONS]}
+                value={taskType}
+                onChange={setTaskType}
+                allowEmpty={false}
+              />
+              {canTeamWorklist || canAssignGroups ? (
+                <div className="cm-my-day-form__assignee-xor">
+                  {canTeamWorklist && canAssignGroups ? (
+                    <CommercialSegmentToggle
+                      size="sm"
+                      ariaLabel={CM_HELP.myDay.taskAssigneeXor}
+                      idPrefix="my-day-assignee-mode"
+                      value={assigneeMode}
+                      onChange={(next) => {
+                        const mode = next === "groups" ? "groups" : "users";
+                        setAssigneeMode(mode);
+                        if (mode === "users") setAssigneeGroupIds([]);
+                        else setAssigneePicker([]);
+                      }}
+                      options={[
+                        { value: "users", label: "Usuários" },
+                        { value: "groups", label: "Grupos" },
+                      ]}
+                    />
+                  ) : null}
+                  {canTeamWorklist && assigneeMode === "users" ? (
+                    <UserDirectoryPicker
+                      value={assigneePicker}
+                      onChange={setAssigneePicker}
+                      searchUsers={searchDirectoryUsers}
+                      maxSelected={20}
+                      showEmail
+                      renderOptionLeading={(user) => (
+                        <TaskUserChipAvatar
+                          userId={user.id}
+                          name={(user.name || "").trim() || user.email}
+                        />
+                      )}
+                      renderSelectedChip={({ user, label, disabled, onRemove }) => (
+                        <span className="delpi-ui-tag-chip">
+                          <TaskUserChipAvatar
+                            userId={user.id}
+                            name={(user.name || "").trim() || user.email}
+                          />
+                          <span>{label}</span>
+                          <button
+                            type="button"
+                            className="delpi-ui-tag-chip__remove"
+                            disabled={disabled}
+                            aria-label={`Remover ${label}`}
+                            onClick={onRemove}
+                          >
+                            <X size={14} aria-hidden="true" />
+                          </button>
+                        </span>
+                      )}
+                      labels={{
+                        title: "Responsáveis",
+                        hint: CM_HELP.myDay.taskAssignee,
+                        placeholder:
+                          formMode === "edit"
+                            ? "Buscar usuários…"
+                            : "Buscar usuários… (vazio = eu)",
+                      }}
+                    />
+                  ) : null}
+                  {canAssignGroups && assigneeMode === "groups" ? (
+                    <CommercialMultiSelectField
+                      id="my-day-task-groups"
+                      label="Grupos"
+                      hint={CM_HELP.myDay.taskGroups}
+                      selectedValues={assigneeGroupIds}
+                      onChange={setAssigneeGroupIds}
+                      options={groupOptions.map((group) => ({
+                        value: group.id,
+                        label: group.name || group.kind || group.id,
+                      }))}
+                      searchable
+                    />
+                  ) : null}
+                </div>
+              ) : null}
+              <CustomerSearchPicker
+                value={customerSelection}
+                onChange={setCustomerSelection}
+                maxSelected={20}
+                renderOptionLeading={(hit) => (
+                  <CustomerAvatar
+                    code={hit.code}
+                    store={hit.store}
+                    name={(hit.name || "").trim() || hit.code}
+                    size="sm"
+                  />
+                )}
+                renderSelectedChip={({ item, label, disabled, onRemove }) => (
+                  <span className="delpi-ui-tag-chip">
+                    <CustomerAvatar
+                      code={item.code}
+                      store={item.store}
+                      name={(item.name || "").trim() || item.code}
+                      size="sm"
+                    />
+                    <span>{label}</span>
+                    <button
+                      type="button"
+                      className="delpi-ui-tag-chip__remove"
+                      disabled={disabled}
+                      aria-label={`Remover ${label}`}
+                      onClick={onRemove}
+                    >
+                      <X size={14} aria-hidden="true" />
+                    </button>
+                  </span>
+                )}
+                labels={{
+                  title: "Clientes",
+                  hint: CM_HELP.myDay.taskCustomer,
+                  placeholder: "Código ou nome (opcional)",
+                }}
+              />
+              {formMode === "create" ? (
+                <div className="cm-my-day-form__title cm-my-day-attachments">
+                  <CommercialFileDropzone
+                    multiple
+                    accept=".pdf,.png,.jpg,.jpeg,.webp,.gif,.txt,.doc,.docx,.xls,.xlsx,application/pdf,image/*,text/plain"
+                    fieldLabel="Anexo (opcional)"
+                    onFilesSelected={(files) => {
+                      setPendingAttachments((current) => [
+                        ...current,
+                        ...files.map((file) => ({
+                          id: `pending-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+                          file,
+                        })),
+                      ]);
+                    }}
+                    labels={{
+                      title: "Arraste ou clique para anexar",
+                      hint: "PDF, imagem, TXT, Word ou Excel · máx. 10 MB por arquivo",
+                    }}
+                  />
+                  <CommercialAttachmentPreviewStrip
+                    mode="manage"
+                    items={pendingAttachments.map((item) => ({
+                      id: item.id,
+                      fileName: item.file.name,
+                      contentType: item.file.type,
+                      detail:
+                        item.file.size < 1024
+                          ? `${item.file.size} B`
+                          : item.file.size < 1024 * 1024
+                            ? `${(item.file.size / 1024).toFixed(1)} KB`
+                            : `${(item.file.size / (1024 * 1024)).toFixed(1)} MB`,
+                      previewUrl: pendingThumbUrls[item.id] ?? null,
+                    }))}
+                    emptyMessage="Nenhum arquivo na fila. Use a área acima para anexar."
+                    labels={{ empty: "Nenhum arquivo na fila. Use a área acima para anexar." }}
+                    onOpen={(item) => {
+                      const found = pendingAttachments.find((row) => row.id === item.id);
+                      if (found) setPendingPreview({ kind: "local", file: found.file });
+                    }}
+                    onRemove={(item) => {
+                      setPendingAttachments((current) =>
+                        current.filter((row) => row.id !== item.id),
+                      );
+                    }}
+                  />
+                </div>
+              ) : null}
+              {formMode === "edit" && editingTaskId ? (
+                <div className="cm-my-day-form__title">
+                  <TaskAttachmentsBlock
+                    taskId={editingTaskId}
+                    mode="manage"
+                    excludeAttachmentIds={attachmentIdsInMarkdown(description)}
+                    onChanged={() => void reload()}
+                    notifyError={notifyError}
+                    notifySuccess={notifySuccess}
+                  />
+                </div>
+              ) : null}
+            </div>
+          </TaskEditorFrame>
+        </div>
+        ) : null}
       >
         {loading ? <CommercialLoadingCard title="Carregando worklist…" variant="panel" /> : null}
         {error ? (
@@ -1294,268 +1557,7 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
             )}
           </CommercialViewTransition>
         ) : null}
-      </TaskWorklistSection>
-
-      {canManageFollowups && formMode !== "closed" ? (
-        <div ref={taskFormRef} className="cm-my-day-create">
-          <TaskEditorFrame
-            classNames={cmSectionCardClassNames}
-            labels={cmSectionLabels}
-            title={formMode === "edit" ? "Editar tarefa" : "Nova tarefa"}
-            subtitle={
-              formMode === "edit"
-                ? canTeamWorklist
-                  ? "Altere campos, responsável e anexos; salve para gravar."
-                  : "Altere campos e anexos; salve para gravar."
-                : canTeamWorklist
-                  ? "Título, prazo, tipo, responsável, cliente, observação e anexos."
-                  : "Título, prazo, tipo, cliente, observação e anexos — padrão HubSpot/Pipedrive."
-            }
-            hint={formMode === "edit" ? CM_HELP.myDay.editTask : CM_HELP.myDay.newTask}
-            reviewRows={[
-              { label: "Título", value: title.trim() || "—" },
-              {
-                label: "Responsável",
-                value:
-                  assigneeMode === "groups"
-                    ? assigneeGroupIds
-                        .map((id) => groupOptions.find((group) => group.id === id)?.name || id)
-                        .join(", ") || "—"
-                    : assigneePicker
-                        .map((user) => user.name || user.email)
-                        .join(", ") || (formMode === "create" ? "Eu" : "—"),
-              },
-              { label: "Prazo", value: dueDate || "—" },
-              { label: "Descrição", value: description.trim() || "—" },
-            ]}
-            onClose={closeTaskForm}
-            primaryLabel={formMode === "edit" ? "Salvar alterações" : "Criar tarefa"}
-            onPrimary={() => void (formMode === "edit" ? onSaveEdit() : onCreate())}
-            primaryBusy={formMode === "edit" ? savingEdit : creating}
-          >
-            <div className="cm-my-day-form">
-              <div className="cm-my-day-form__title">
-                <CommercialTextField
-                  label="Título"
-                  hint={CM_HELP.myDay.taskTitle}
-                  value={title}
-                  onChange={setTitle}
-                  placeholder="Ex.: Ligar para ACME sobre atraso"
-                  required
-                />
-              </div>
-              <div className="cm-my-day-form__title">
-                <CommercialTextAreaField
-                  label="Observação"
-                  hint={CM_HELP.myDay.taskDescription}
-                  value={description}
-                  onChange={setDescription}
-                  placeholder="Ex.: Cliente pediu retorno após emitir NF 12345"
-                />
-              </div>
-              <CommercialTextField
-                label="Prazo"
-                hint={CM_HELP.myDay.taskDue}
-                type="date"
-                value={dueDate}
-                onChange={setDueDate}
-                required
-              />
-              <CommercialSelectField
-                label="Prioridade"
-                hint={CM_HELP.myDay.taskPriority}
-                options={[...PRIORITY_OPTIONS]}
-                value={priority}
-                onChange={setPriority}
-                allowEmpty={false}
-              />
-              <CommercialSelectField
-                label="Tipo"
-                hint={CM_HELP.myDay.taskType}
-                options={[...TASK_TYPE_OPTIONS]}
-                value={taskType}
-                onChange={setTaskType}
-                allowEmpty={false}
-              />
-              {canTeamWorklist || canAssignGroups ? (
-                <div className="cm-my-day-form__assignee-xor">
-                  {canTeamWorklist && canAssignGroups ? (
-                    <CommercialSegmentToggle
-                      size="sm"
-                      ariaLabel={CM_HELP.myDay.taskAssigneeXor}
-                      idPrefix="my-day-assignee-mode"
-                      value={assigneeMode}
-                      onChange={(next) => {
-                        const mode = next === "groups" ? "groups" : "users";
-                        setAssigneeMode(mode);
-                        if (mode === "users") setAssigneeGroupIds([]);
-                        else setAssigneePicker([]);
-                      }}
-                      options={[
-                        { value: "users", label: "Usuários" },
-                        { value: "groups", label: "Grupos" },
-                      ]}
-                    />
-                  ) : null}
-                  {canTeamWorklist && assigneeMode === "users" ? (
-                    <UserDirectoryPicker
-                      value={assigneePicker}
-                      onChange={setAssigneePicker}
-                      searchUsers={searchDirectoryUsers}
-                      maxSelected={20}
-                      showEmail
-                      renderOptionLeading={(user) => (
-                        <TaskUserChipAvatar
-                          userId={user.id}
-                          name={(user.name || "").trim() || user.email}
-                        />
-                      )}
-                      renderSelectedChip={({ user, label, disabled, onRemove }) => (
-                        <span className="delpi-ui-tag-chip">
-                          <TaskUserChipAvatar
-                            userId={user.id}
-                            name={(user.name || "").trim() || user.email}
-                          />
-                          <span>{label}</span>
-                          <button
-                            type="button"
-                            className="delpi-ui-tag-chip__remove"
-                            disabled={disabled}
-                            aria-label={`Remover ${label}`}
-                            onClick={onRemove}
-                          >
-                            <X size={14} aria-hidden="true" />
-                          </button>
-                        </span>
-                      )}
-                      labels={{
-                        title: "Responsáveis",
-                        hint: CM_HELP.myDay.taskAssignee,
-                        placeholder:
-                          formMode === "edit"
-                            ? "Buscar usuários…"
-                            : "Buscar usuários… (vazio = eu)",
-                      }}
-                    />
-                  ) : null}
-                  {canAssignGroups && assigneeMode === "groups" ? (
-                    <CommercialMultiSelectField
-                      id="my-day-task-groups"
-                      label="Grupos"
-                      hint={CM_HELP.myDay.taskGroups}
-                      selectedValues={assigneeGroupIds}
-                      onChange={setAssigneeGroupIds}
-                      options={groupOptions.map((group) => ({
-                        value: group.id,
-                        label: group.name || group.kind || group.id,
-                      }))}
-                      searchable
-                    />
-                  ) : null}
-                </div>
-              ) : null}
-              <CustomerSearchPicker
-                value={customerSelection}
-                onChange={setCustomerSelection}
-                maxSelected={20}
-                renderOptionLeading={(hit) => (
-                  <CustomerAvatar
-                    code={hit.code}
-                    store={hit.store}
-                    name={(hit.name || "").trim() || hit.code}
-                    size="sm"
-                  />
-                )}
-                renderSelectedChip={({ item, label, disabled, onRemove }) => (
-                  <span className="delpi-ui-tag-chip">
-                    <CustomerAvatar
-                      code={item.code}
-                      store={item.store}
-                      name={(item.name || "").trim() || item.code}
-                      size="sm"
-                    />
-                    <span>{label}</span>
-                    <button
-                      type="button"
-                      className="delpi-ui-tag-chip__remove"
-                      disabled={disabled}
-                      aria-label={`Remover ${label}`}
-                      onClick={onRemove}
-                    >
-                      <X size={14} aria-hidden="true" />
-                    </button>
-                  </span>
-                )}
-                labels={{
-                  title: "Clientes",
-                  hint: CM_HELP.myDay.taskCustomer,
-                  placeholder: "Código ou nome (opcional)",
-                }}
-              />
-              {formMode === "create" ? (
-                <div className="cm-my-day-form__title cm-my-day-attachments">
-                  <CommercialFileDropzone
-                    multiple
-                    accept=".pdf,.png,.jpg,.jpeg,.webp,.gif,.txt,.doc,.docx,.xls,.xlsx,application/pdf,image/*,text/plain"
-                    fieldLabel="Anexo (opcional)"
-                    onFilesSelected={(files) => {
-                      setPendingAttachments((current) => [
-                        ...current,
-                        ...files.map((file) => ({
-                          id: `pending-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
-                          file,
-                        })),
-                      ]);
-                    }}
-                    labels={{
-                      title: "Arraste ou clique para anexar",
-                      hint: "PDF, imagem, TXT, Word ou Excel · máx. 10 MB por arquivo",
-                    }}
-                  />
-                  <CommercialAttachmentPreviewStrip
-                    mode="manage"
-                    items={pendingAttachments.map((item) => ({
-                      id: item.id,
-                      fileName: item.file.name,
-                      contentType: item.file.type,
-                      detail:
-                        item.file.size < 1024
-                          ? `${item.file.size} B`
-                          : item.file.size < 1024 * 1024
-                            ? `${(item.file.size / 1024).toFixed(1)} KB`
-                            : `${(item.file.size / (1024 * 1024)).toFixed(1)} MB`,
-                      previewUrl: pendingThumbUrls[item.id] ?? null,
-                    }))}
-                    emptyMessage="Nenhum arquivo na fila. Use a área acima para anexar."
-                    labels={{ empty: "Nenhum arquivo na fila. Use a área acima para anexar." }}
-                    onOpen={(item) => {
-                      const found = pendingAttachments.find((row) => row.id === item.id);
-                      if (found) setPendingPreview({ kind: "local", file: found.file });
-                    }}
-                    onRemove={(item) => {
-                      setPendingAttachments((current) =>
-                        current.filter((row) => row.id !== item.id),
-                      );
-                    }}
-                  />
-                </div>
-              ) : null}
-              {formMode === "edit" && editingTaskId ? (
-                <div className="cm-my-day-form__title">
-                  <TaskAttachmentsBlock
-                    taskId={editingTaskId}
-                    mode="manage"
-                    excludeAttachmentIds={attachmentIdsInMarkdown(description)}
-                    onChanged={() => void reload()}
-                    notifyError={notifyError}
-                    notifySuccess={notifySuccess}
-                  />
-                </div>
-              ) : null}
-            </div>
-          </TaskEditorFrame>
-        </div>
-      ) : null}
+      </TaskWorkspacePage>
       <TaskAttachmentPreviewModal
         target={pendingPreview}
         open={Boolean(pendingPreview)}

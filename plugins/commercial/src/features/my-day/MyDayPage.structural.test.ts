@@ -8,8 +8,8 @@ const source = readFileSync(join(dir, "MyDayPage.tsx"), "utf8");
 
 describe("MyDayPage shared task chrome", () => {
   it("usa o editor compartilhado sem mudar o owner comercial", () => {
+    expect(source).toMatch(/TaskWorkspacePage/);
     expect(source).toMatch(/TaskEditorFrame/);
-    expect(source).toMatch(/TaskWorklistSection/);
     expect(source).toMatch(/TaskSearchField/);
     expect(source).toMatch(/TaskEmptyState/);
     expect(source).toMatch(/commercialTaskMatchesQuery/);
