@@ -80,12 +80,42 @@
   height: 100%;
 }
 
-:root[data-theme="dark"] .dashboard-helpdesk {
-  --helpdesk-title: color-mix(in srgb, var(--primary, #089bdb) 72%, white);
-  --helpdesk-text: rgba(255, 255, 255, 0.88);
-  --helpdesk-text-muted: rgba(255, 255, 255, 0.64);
-  --helpdesk-surface: color-mix(in srgb, var(--surface, #1e293b) 92%, black);
-  --helpdesk-border: rgba(255, 255, 255, 0.12);
+.dashboard-helpdesk .helpdesk-list-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.dashboard-helpdesk .helpdesk-list-toolbar__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+}
+
+.dashboard-helpdesk .helpdesk-list-toolbar__chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--helpdesk-border);
+  background: color-mix(in srgb, var(--helpdesk-accent) 10%, var(--helpdesk-surface));
+  color: var(--helpdesk-title);
+  font-size: 0.8125rem;
+  line-height: 1.2;
+}
+
+.dashboard-helpdesk .helpdesk-list-toolbar__chip[data-kind="sort"] {
+  background: color-mix(in srgb, var(--helpdesk-accent) 18%, var(--helpdesk-surface));
+}
+
+.dashboard-helpdesk .helpdesk-list-toolbar__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-inline-start: auto;
 }
 
 .dashboard-helpdesk .helpdesk-record-list {

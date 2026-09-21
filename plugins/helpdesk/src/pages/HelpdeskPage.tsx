@@ -33,8 +33,10 @@ import {
 } from "../presentation/ticketView";
 import { navigateHelpdesk, type HelpdeskRoute } from "../routing/helpdeskRoute";
 import { useMyPersonProfilePhoto } from "../presentation/useMyPersonProfilePhoto";
+import { ticketListViewModelFromFilters } from "../presentation/ticketListViewModel";
 import { TicketAttachmentPreview } from "./TicketAttachmentPreview";
 import { TicketListTable } from "./TicketListTable";
+import { TicketListToolbar } from "./TicketListToolbar";
 import {
   HelpdeskEmptyState,
   HelpdeskFilterInput,
@@ -299,6 +301,14 @@ function TicketListPage() {
               options={[...TICKET_PAGE_SIZE_OPTIONS]}
             />
           </HelpdeskFiltersRow>
+        )}
+        {view === "link" || view === "forbidden" ? null : (
+          <TicketListToolbar
+            viewModel={ticketListViewModelFromFilters(filters)}
+            onRefresh={() => {
+              void load(filters);
+            }}
+          />
         )}
         {view === "loading" ? <HelpdeskLoadingState /> : null}
         {view === "forbidden" || view === "unavailable" || view === "error" ? (

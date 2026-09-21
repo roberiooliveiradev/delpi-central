@@ -128,9 +128,9 @@ Motor [Search](https://help.glpi-project.org/documentation/readme-1-1/search) + 
 |---|---|---|
 | X-80 | Grade do solicitante (id, título, status, datas, categoria, técnico) | IMPLEMENTADO; datas absolutas / resolução no 13 |
 | X-81 | Busca no título | IMPLEMENTADO; no conteúdo ALVO 13 G-21 |
-| X-82 | Critérios AND/OR, multi-itemtype, lixeira, saved search, export, massa, mapa, multi-sort | CONSOLE_GLPI |
+| X-82 | Critérios AND/OR, multi-itemtype, lixeira, saved search, export, massa, mapa, multi-sort | **fatiado** — multi-itemtype/lixeira/saved search/export/massa/mapa = CONSOLE; critérios + multi-sort do **solicitante** = H13 ([`13`](./13-listagem-de-chamados.md) §3.5, G-50…G-56) |
 | X-83 | Busca rápida global (ativos, usuários…) | CONSOLE_GLPI / outro módulo |
-| X-84 | Colunas pessoais vs globais | CONSOLE_GLPI — a Minha DELPI tem coluna fixa |
+| X-84 | Colunas pessoais vs globais | PREP catálogo MFE; prefs pessoais = H13 no host DELPI (não `front/ticket.php`) |
 
 ## 8. O que ainda **não** estava em 12–14 (novos ALVO/HIPOTESE)
 

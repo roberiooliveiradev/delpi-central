@@ -78,7 +78,8 @@ O bloco escuro é `:root[data-theme="dark"] .dashboard-helpdesk`. Superfície, t
 | `createDashboardEmptyState` | `HelpdeskEmptyState` | Lista sem itens e sem erro |
 | `createDashboardStatusBadge` | `HelpdeskStatusBadge` | Status do chamado |
 | `createDashboardDataRecordCard` | `HelpdeskRecordCard` | Resumo do detalhe |
-| `DataTable` | `HelpdeskDataTable` | Lista com ordenação de coluna |
+| `DataTable` | `HelpdeskDataTable` | Lista com ordenação de coluna (colunas via catálogo) |
+| `TicketListToolbar` | — | Chips de recorte/sort + atualizar (H13) |
 | `createDashboardMessageThread` | `HelpdeskMessageThread` | Abertura e acompanhamentos do detalhe, em texto puro. Alvo HTML: [`12-conteudo-da-mensagem.md`](./12-conteudo-da-mensagem.md) |
 | `createDashboardTextField` | `HelpdeskTextField` | Título |
 | `createDashboardTextAreaField` | `HelpdeskTextArea` | Descrição e resposta |

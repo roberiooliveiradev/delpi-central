@@ -19,6 +19,7 @@ H9  Página do chamado                      TARGET
 H10 Solução, reabrir, satisfação           TARGET   (ex-H5 do solicitante)
 H11 Condicionais (TTR, observer)           TARGET   Forms e vínculo riscados (H6)
 H12 Upload de arquivo novo                 BLOQUEADO até decisão + API
+H13 Listagem dinâmica (modelo → builder)   TARGET   prep de componentes autorizada
 —   Bancada / outro itemtype / HD-011      FORA
 ```
 
@@ -32,7 +33,7 @@ Não entra, mesmo neste roadmap:
 
 | Fica fora | Por quê |
 |---|---|
-| Formulário de três colunas, abas, Kanban, PDF, massa, export, saved search | console — [`15`](./15-capacidades-glpi.md) X-60…X-76, X-82 |
+| Formulário de três colunas, abas, Kanban, PDF, massa, export, saved search, mapa | console — [`15`](./15-capacidades-glpi.md) X-60…X-76, X-82 |
 | Mudança, problema, inventário, entidade, delegação, anônimo | FORA / HD-011 |
 | PATCH de status, tarefa, privado, excluir Novo | console — [`14`](./14-pagina-e-estados-do-chamado.md) |
 | API legada / `password` grant | proibido |
@@ -125,6 +126,19 @@ Sem reimplementar Formcreator. Sem criar vínculo, SLA ou item de inventário no
 
 BLOQUEADO. Desbloqueia só com decisão explícita de (a) ligar API legada — hoje proibida — ou (b) HLAPI passar a aceitar multipart. Até lá: N-01, M-24, M-25, A-08.
 
+## H13 — Listagem dinâmica
+
+O GLPI central tem builder de critérios, multi-sort, preferência de colunas e toolbar (capturas em [`13`](./13-listagem-de-chamados.md) §3.5). Meus Chamados **não** copia export/massa/mapa/lixeira.
+
+| Entrega | Fonte | HD |
+|---|---|---|
+| Modelo declarativo + tabela/toolbar receptáculos (sem refatorar depois) | 13 G-50…G-53 | HD-027 |
+| Builder AND/OR + multi-sort na UI do solicitante | 13 G-54 | HD-027 |
+| Preferência de colunas (visão pessoal no host DELPI) | 13 G-55 | HD-027 |
+| Export / massa / mapa / saved search | G-56 | — (CONSOLE) |
+
+Ordem: componentes e tipos **já** no MFE; builder e prefs só depois de H7 estável e contrato RSQL ADDITIVE.
+
 ## Dependências
 
 ```text
@@ -136,6 +150,7 @@ H0 → H1 → H2 → H3/H4
                        └→ H11 (se houver campo)
 H7 (status_id, datas absolutas, page_size) não espera H6
 H12 isolado
+H13 depois de H7 (lista já ADDITIVE); prep de componentes pode preceder o builder
 ```
 
 ## Protocolo

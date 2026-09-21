@@ -1,8 +1,8 @@
 # 16 — Plano de paridade do solicitante
 
-> **Status:** em execução. **E6.S0 e E6.S1 concluídos** em 21/09/2026.
+> **Status:** em execução. **E6…E7** concluídos; **E8.S1** e **E13.S1** em entrega.
 > **Não altera** [`06-plano-execucao.md`](./06-plano-execucao.md) (`E1…E5`).
-> **Ondas:** [`05-roadmap.md`](./05-roadmap.md) H6…H12.
+> **Ondas:** [`05-roadmap.md`](./05-roadmap.md) H6…H13.
 > **Inventários:** [`12`](./12-conteudo-da-mensagem.md) · [`13`](./13-listagem-de-chamados.md) · [`14`](./14-pagina-e-estados-do-chamado.md) · [`15`](./15-capacidades-glpi.md).
 > **Contrato vigente:** [`03-contrato.md`](./03-contrato.md) — evoluções **ADDITIVE**.
 > **Identidade:** id GLPI ou e-mail; nome é rótulo.
@@ -28,7 +28,7 @@ O colaborador passa a ver e gravar no Meus Chamados de TI o que o GLPI já entre
 | RQ-01 | `status_id` + badge/filtro por id; grupos pending/approval | **ATENDIDO** E7.S1 |
 | RQ-02 | Lista: data absoluta, período de abertura, page_size | **ATENDIDO** E7.S2 |
 | RQ-03 | Lista: solved_at / busca no content se H6 | **ATENDIDO** E7.S3 |
-| RQ-04 | HTML sanitizado na bolha | ATENDIDO_NO_PLANO E8.S1–S2 |
+| RQ-04 | HTML sanitizado na bolha | **ATENDIDO** E8.S1 (leitura BFF); E8.S2–S4 no plano |
 | RQ-05 | Compositor rico abrir+responder | ATENDIDO_NO_PLANO E8.S3 |
 | RQ-06 | Imagem no corpo via BFF se H6 | DESBLOQUEADO — 12-H1 **PROVEN**; A-07 continua FORA → E8.S4 |
 | RQ-07 | Página: datas, can_followup, observador | ATENDIDO_NO_PLANO E9.S1 — `can_followup` só false no status 6 |
@@ -38,6 +38,7 @@ O colaborador passa a ver e gravar no Meus Chamados de TI o que o GLPI já entre
 | RQ-11 | Ajuda no mesmo entregável | HERDADO_POR_SOLUCAO_TRANSVERSAL cada S user-facing |
 | RQ-12 | Bancada / Change / entidade / API legada | FORA_DO_ESCOPO_COM_JUSTIFICATIVA |
 | RQ-13 | H3 no ledger | **ATENDIDO** E6.S0 — ids 1120 / 593 |
+| RQ-14 | Listagem dinâmica (modelo agora; builder depois) | **ATENDIDO** E13.S1 (prep); E13.S2 no plano |
 
 ## Evidências e hipóteses
 
@@ -274,6 +275,30 @@ Owner do corpo e do status: helpdesk-api. Owner da bolha/editor: plugin-ui. MFE 
 - **Não fazer:** ligar API legada.
 - **Pronto:** HD-026 = BLOQUEADO no 07.
 - **Commit:** nenhum, salvo drift documental.
+
+---
+
+## E13 — Listagem dinâmica (H13)
+
+### E13.S1 — Modelo e receptáculos no MFE
+
+- **Objetivo:** tipos `TicketListFilterGroup` / `SortLevel` / catálogo de colunas + `TicketListToolbar` + tabela baseada no catálogo; URL plana continua a fonte do recorte.
+- **RQ:** RQ-14 · HD-027 · 13 G-50…G-53
+- **Fazer:** adapter `ticketListViewModelFromFilters`; chips + atualizar; testes do modelo.
+- **Não fazer:** builder visual; export/massa/mapa; mudar contrato do BFF.
+- **Deps:** H7 estável (lista ADDITIVE).
+- **Pronto:** grade não hardcoda colunas; toolbar consome o view model.
+- **Commit:** `feat(helpdesk): prepara a lista para filtros e colunas dinâmicos.`
+
+### E13.S2 — Builder e preferência de colunas
+
+- **Objetivo:** UI de regras/grupos + multi-sort + prefs de coluna; BFF traduz para RSQL ADDITIVE.
+- **RQ:** HD-027 · G-54, G-55
+- **Fazer:** só campos do schema já filtráveis; prefs no host DELPI.
+- **Não fazer:** saved search GLPI, export, massa, mapa, entidade.
+- **Deps:** E13.S1.
+- **Pronto:** ajuda descreve o builder; F5 mantém recorte.
+- **Commit:** a definir na execução.
 
 ---
 

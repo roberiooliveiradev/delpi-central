@@ -37,6 +37,7 @@ Isto **estende** HD-008 (listar) e HD-016 (ajuda). Não é HD-019. Não abre H5.
 | [Saved searches](https://help.glpi-project.org/faq/glpi/saved_searches) | CONFIRMADO_EM_DOCUMENTACAO_CANONICA | bookmark da busca; visibilidade por perfil/entidade |
 | [Search result display](https://help.glpi-project.org/documentation/modules/configuration/general/search-result-display.md) | CONFIRMADO_EM_DOCUMENTACAO_CANONICA | colunas globais vs pessoais; interface helpdesk tem vista própria |
 | Foto Super-Admin `front/ticket.php` (21/09/2026) | CONFIRMADO_EM_DOCUMENTACAO_CANONICA (captura) | colunas da bancada + 128 128 + contadores |
+| Capturas Search UI (filtros dinâmicos, colunas, multi-sort, toolbar) | CONFIRMADO_EM_DOCUMENTACAO_CANONICA (captura) | shape do motor central — §3.5 |
 | Foto MFE `/apps/helpdesk` (21/09/2026) | CONFIRMADO_NO_CODIGO (tela) | tabela + filtros já publicados |
 | Issue GLPI #23387 (lista self-service) | CONFIRMADO_EM_DOCUMENTACAO_CANONICA | interface simplificada: colunas configuráveis à parte; critérios de busca restritos |
 | HLAPI 2.2 `GET /Assistance/Ticket` (`filter`, `start`, `limit`, `sort`) | CONFIRMADO_NO_CODIGO | binding em `mapping.build_ticket_list_query` |
@@ -101,6 +102,22 @@ A doc oficial lista, além das colunas:
 Issue #23387 + prática GLPI 11: o solicitante vê uma grade curta; a busca costuma limitar-se a características do chamado e a atores «requerente». Observador como filtro pode faltar. Colunas da vista Helpdesk configuram-se à parte da vista central.
 
 Alvo da Minha DELPI = essa grade + achar o próprio chamado (busca, filtro, ordenação, página), no kit, sem motor de inventário.
+
+### 3.5 Motor Search na UI central — captura 21/09/2026
+
+Fotos do GLPI `front/ticket.php` (interface central). **Não** são a tela do solicitante; documentam o shape que o modelo declarativo da Minha DELPI precisa receber sem refatorar a grade depois.
+
+| Peça na captura | Comportamento GLPI | Destino Meus Chamados |
+|---|---|---|
+| Builder «Pesquisar» | linha = campo + operador (`é`) + valor; `+ regra` / `+ regra global` / `+ grupo`; lógica AND/OR entre linhas | **modelo** `TicketListFilterGroup` (PREP); builder rico = H13; recorte simples continua na URL |
+| Chip «Filtrado por Status» | resumo do recorte ativo | `TicketListToolbar` chips (PREP → ligado) |
+| «Ordenado por Última atualização» + popover | multi-nível (`+ Adicionar outra ordenação`, ASC/DESC) | **modelo** `TicketListSortLevel[]` (PREP); UI multi-sort = H13; hoje 1 nível na URL |
+| Modal «Selecione os itens padrões…» | visão global vs pessoal; colunas fixas ID/Título/Entidade; demais arrastáveis | **catálogo** `TICKET_LIST_COLUMN_CATALOG` + prefs (PREP); Entidade/último editor continuam CONSOLE |
+| Toolbar grade/mapa | troca lista ↔ mapa | `viewMode: "table" \| "map"` tipado; **mapa = CONSOLE** |
+| Seleção + lixeira vermelha | ações em massa | CONSOLE |
+| Ícone colunas + atualizar + Exportar | preferência de colunas, reload, CSV/PDF | colunas/atualizar = PREP/H13; **export = CONSOLE** |
+
+Contrato futuro do BFF para grupos/regras continua ADDITIVE e RSQL — sem copiar o JSON interno do Search Engine do PHP.
 
 ## 4. O que a HLAPI 2.2 confirma
 
@@ -245,23 +262,37 @@ FORA                  → não entra neste produto
 | G-42 | Identidade: id/e-mail; nome na coluna é rótulo | invariante |
 | G-43 | Sem CSS de tabela no MFE | invariante |
 
+### 7.5 Listagem dinâmica (modelo + chrome)
+
+Estado novo: `PREP_COMPONENTES` = tipos e slots já no MFE; comportamento GLPI completo ainda não.
+
+| ID | Capacidade | Estado | Dono |
+|---|---|---|---|
+| G-50 | Modelo de regras/grupos (`TicketListFilterGroup`) alimentado pelo recorte plano | PREP_COMPONENTES | MFE `ticketListViewModel` |
+| G-51 | Multi-sort tipado (`TicketListSortLevel[]`); hoje 1 nível na URL | PREP_COMPONENTES | MFE; BFF H13 se multi |
+| G-52 | Catálogo de colunas + preferência visível/ordem; fixas id/título | PREP_COMPONENTES | `TicketListTable` via catálogo |
+| G-53 | Toolbar: chips de filtro/sort + atualizar (+ slot colunas) | PREP_COMPONENTES | `TicketListToolbar` |
+| G-54 | Builder visual AND/OR (+ regra / + grupo) | TARGET H13 | kit + MFE; BFF traduz para RSQL |
+| G-55 | Preferência de colunas persistida (pessoal) | TARGET H13 | preferência no host DELPI — **não** `front/ticket.php` |
+| G-56 | Export CSV/PDF, massa, lixeira, mapa, saved search | CONSOLE_GLPI | — |
+
 ## 8. Ownership
 
 ```text
 PRODUCER          GLPI GET /Assistance/Ticket
 TRANSFORMER       mapping.build_ticket_list_query / parse_ticket_list / _summary
 CANONICAL OWNER   helpdesk-api (contrato da lista)
-CONSUMERS         MFE HelpdeskPage, TicketListTable, parseTicketListFilters
+CONSUMERS         MFE HelpdeskPage, TicketListTable, TicketListToolbar, ticketListViewModel, parseTicketListFilters
 NÃO-CONSUMIDOR    api-delpi, Chat, portal
 FALLBACK          items: [] + has_more false
-PERSISTENCE       recorte só na URL do MFE; dono do chamado = GLPI
-RELOAD            F5 na mesma query
+PERSISTENCE       recorte só na URL do MFE (hoje); prefs de coluna = alvo H13 no host DELPI
+RELOAD            F5 na mesma query; botão atualizar da toolbar
 SURFACES          /apps/helpdesk apenas
-TESTS             test_mapping / ticketView.test (filtros); não cobrem date_solve
+TESTS             test_mapping / ticketView.test / ticketListViewModel.test
 DOCS/HELP         este arquivo + helpTooltips no entregável de código
 ```
 
-Ler `TicketListTable` e `build_ticket_list_query` **antes** de mudar o JSON. Campos novos são aditivos.
+Ler `TicketListTable`, `ticketListViewModel` e `build_ticket_list_query` **antes** de mudar o JSON. Campos novos são aditivos.
 
 ## 9. Contrato-alvo (quando for implementar)
 
@@ -331,12 +362,13 @@ Não filtrar no cliente a coleção do Super-Admin. O token decide o universo; o
 | D-01 | Produto = lista do solicitante, não `front/ticket.php` | 01 + foto 128 128 |
 | D-02 | Evolução ADDITIVE; sem total inventado | contrato + L-11 |
 | D-03 | Sem filtro/ordem por `team` | RSQL não vê `team` |
-| D-04 | Sem entidade, último editor, Kanban, export, massa, saved search, lixeira, mapa | Search doc + HD-011 |
+| D-04 | Sem entidade, último editor, Kanban, export, massa, saved search, lixeira, mapa **na UI** | Search doc + HD-011 + captura toolbar |
 | D-05 | Tipo/prioridade/impacto fora da abertura e da grade do colaborador | formulário só urgência |
 | D-06 | HTML do corpo não entra na célula | 12 M-42 |
 | D-07 | Identidade por id/e-mail | C-05 |
-| D-08 | Sem CSS de grade no MFE | kit |
+| D-08 | Sem CSS de grade no MFE (só chrome de página) | kit |
 | D-09 | Default da lista permanece Todos | subtítulo já não diz «abertos» |
+| D-10 | Listagem dinâmica: modelo declarativo no MFE **antes** do builder; contrato BFF ADDITIVE | captura Search + G-50…G-55 |
 
 ### Não prontas — fechadas em E6.S1 (21/09/2026)
 
