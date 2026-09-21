@@ -577,8 +577,8 @@ Review: `ARCHITECTURE_REVIEW_C0_S1`; `REVIEWED_HEAD=c822f0e72495256c3459a4b36b9c
 | CP | Naming/ownership note (C0.S1 accepted) | Status unchanged |
 |---|---|---|
 | CP-130–CP-134, CP-140 | architecture gates; no path invent | PLANNED |
-| CP-138 | owner label → Portal/DÉLIA MFE; C2-T1D1 acceptance adds transient vs retained browser state, residency gate, centralized cleanup/removability; no new CP | PLANNED |
-| CP-158 | C2-T1D1 acceptance adds User A → Portal logout → User B isolation for DÉLIA-owned browser state; Portal/Keycloak keep session authority | PLANNED |
+| CP-138 | owner label → Portal/DÉLIA MFE; C2-T1D1 acceptance adds transient vs retained browser state, residency gate, centralized cleanup/removability; C2-T2 current shell = PARTIAL (transient root only; no retained boundary) | PLANNED |
+| CP-158 | C2-T1D1 acceptance adds User A → Portal logout → User B isolation for DÉLIA-owned browser state; C2-T2 unmount/remount PASS for current shell; future retained-state isolation not implemented | PLANNED |
 | CP-141 | path → `delia-api/` | LOCKED (C1) |
 | CP-142 | path → `plugins/delia/` | LOCKED (C1) |
 | CP-143 | `id=delia`; manifest source DÉLIA; registry Core | LOCKED (C1) |

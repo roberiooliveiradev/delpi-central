@@ -98,11 +98,14 @@ PRODUCTION_READINESS = NOT_PROVEN
 C2_AUTHORIZED = YES
 C2_T1 = INVENTORY_FREEZE_READY_FOR_REVIEW (§6.46)
 C2_T1D1 = BROWSER_STATE_POLICY_PERSISTED (§6.47)
+C2_T2 = VERIFICATION_EVIDENCE_READY_FOR_REVIEW (§6.48)
+C2_STARTED = YES
+C2_IMPLEMENTATION_STARTED = NO
 BROWSER_STATE_RESIDENCY_POLICY = APPROVED
 BROWSER_RETAINED_STATE_CURRENTLY_REQUIRED = NO
 CENTRALIZED_BROWSER_STATE_BOUNDARY = REQUIRED_ON_FIRST_RETAINED_STATE
 SHARED_DEVICE_ISOLATION_INVARIANT = FROZEN_ACCEPTED
-C2_STARTED = NO
+C2_STARTED = YES
 C2_IMPLEMENTATION_STARTED = NO
 PORTAL_HOST_CONTRACT = FROZEN_ACCEPTED
 OPERATIONAL_CONTEXT = TO_INVENTORY
@@ -2186,6 +2189,51 @@ NEXT = C2-T2 — HOST_PRESENTATION_BINDING_AND_SESSION_ISOLATION_VERIFICATION
   verify host lifecycle first; no storage/logout abstraction unless the gate applies
 ```
 
+## 6.48 C2-T2 — HOST_PRESENTATION_BINDING_AND_SESSION_ISOLATION_VERIFICATION
+
+```text
+DATE: 2026-09-21
+STEP: C2-T2
+MODE: RUNTIME VERIFICATION + TESTS
+BASE_HEAD: 57b7dc6ecf10fc7712ee559863cd91a3e35ab39b
+POST_C2_T1D1_COMMITS: NONE
+DECISION_GATE: OUTCOME_A_EXISTING_LIFECYCLE_SUFFICIENT
+RUNTIME_PRODUCT_CHANGE: NONE
+NEW_RUNTIME_ABSTRACTIONS: NONE
+
+PORTAL:
+  logout → isAuthenticated false → App() returns login routes, not AppShell
+  AppHost effect cleanup calls remote.unmount(el) and nulls mountedModuleRef
+DELIA:
+  unmount → root.unmount() + WeakMap delete
+  updateRoute reuses the same root
+  remount creates a new root
+  no localStorage/sessionStorage/indexedDB/Cache API/service worker
+  no listeners/timers/sockets
+  permissions/isSuperadmin/getAccessToken ignored
+
+TESTS: plugins/delia vitest 19 PASS
+BUILD: vite build PASS
+FEDERATION: verify-federation-react-patch PASS
+PORTAL_LOGOUT_FULL_E2E = TEST_NOT_RUN
+LIVE_USER_A_USER_B = TEST_NOT_RUN
+LIVE authenticated logout smoke = TEST_NOT_RUN
+  anonymous GET /apps/delia = 200 does not prove an authenticated session
+
+BROWSER_RETAINED_STATE = NONE
+BROWSER_STATE_BOUNDARY_REQUIRED_NOW = NO
+SESSION_ISOLATION_CURRENT_SCOPE = PASS
+C2_STARTED = YES
+C2_IMPLEMENTATION_STARTED = NO
+PRODUCTION_READINESS = NOT_PROVEN
+CP-008 = PARTIAL (host path projection only; no WorkspaceContext)
+CP-138 = PARTIAL
+CP-158 = PARTIAL (vacuous for retained state; unmount/remount proven)
+DISCOVERED_REQUIREMENT = NONE
+EXECUTION_DRIFT = NONE
+NEXT = hold for review; do not start operational context or a command bus
+```
+
 ## 7. Canonical phase mapping
 
 ```text
@@ -2394,4 +2442,4 @@ SAFETY_INTERLOCK_BYPASS
 
 ## 14. First execution
 
-Historical C0.S0..C0.S7 remain **APPROVED** / `FOUNDATION_FREEZE=APPROVED`. C1-T1..T6D1 completed standalone bootstrap. **C1-FINAL** (`§6.45`) accepted bootstrap with non-blocking residuals (`TYPESCRIPT_ISOLATED`, `CORE_CONTEXT_LIVE_NETWORK`). `C1_EXECUTED=YES`. `C1_BOOTSTRAP_ACCEPTANCE=ACCEPT_WITH_RESIDUAL`. `C1_BOOTSTRAP_RUNTIME_READINESS=PROVEN` (bootstrap scope). `PRODUCTION_READINESS=NOT_PROVEN`. `C2_AUTHORIZED=YES`. `C0=NOT_STARTED`. **C2-T1** (`§6.46`) froze the current Portal host/route contract. Operational WorkspaceContext remains `TO_INVENTORY`. `C2_STARTED=NO`. `C2_IMPLEMENTATION_STARTED=NO`. **C2-T1D1** (`§6.47`) approved `BROWSER_STATE_RESIDENCY_POLICY`. No retained browser state is required now. Next bounded task: **C2-T2 — HOST_PRESENTATION_BINDING_AND_SESSION_ISOLATION_VERIFICATION** (do not start automatically; no storage or logout abstraction unless the residency gate applies).
+Historical C0.S0..C0.S7 remain **APPROVED** / `FOUNDATION_FREEZE=APPROVED`. C1-T1..T6D1 completed standalone bootstrap. **C1-FINAL** (`§6.45`) accepted bootstrap with non-blocking residuals (`TYPESCRIPT_ISOLATED`, `CORE_CONTEXT_LIVE_NETWORK`). `C1_EXECUTED=YES`. `C1_BOOTSTRAP_ACCEPTANCE=ACCEPT_WITH_RESIDUAL`. `C1_BOOTSTRAP_RUNTIME_READINESS=PROVEN` (bootstrap scope). `PRODUCTION_READINESS=NOT_PROVEN`. `C2_AUTHORIZED=YES`. `C0=NOT_STARTED`. **C2-T1** (`§6.46`) froze the current Portal host/route contract. Operational WorkspaceContext remains `TO_INVENTORY`. `C2_STARTED=NO`. `C2_IMPLEMENTATION_STARTED=NO`. **C2-T1D1** (`§6.47`) approved `BROWSER_STATE_RESIDENCY_POLICY`. No retained browser state is required now. **C2-T2** (`§6.48`) verified the existing host lifecycle. No new logout stack or storage boundary. `C2_STARTED=YES`. `C2_IMPLEMENTATION_STARTED=NO`. Do not start operational context or a command bus automatically.

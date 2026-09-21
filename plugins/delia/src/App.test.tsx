@@ -1,7 +1,11 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it } from "vitest";
 
 import App from "./App";
+
+afterEach(() => {
+  cleanup();
+});
 
 describe("App shell", () => {
   it("renders accessible product landmark and heading", () => {
@@ -30,6 +34,28 @@ describe("App shell", () => {
     expect(container.textContent).not.toMatch(/superadmin/i);
     expect(container.querySelector("[data-authorized]")).toBeNull();
     expect(container.querySelector("[data-permission-gate]")).toBeNull();
+  });
+
+  it("refreshes host route presentation and starts clean after unmount", () => {
+    const first = render(
+      <App pathname="/apps/delia" routeLabel="Sessão A" search="" />,
+    );
+    expect(screen.getByText(/Sessão A/)).toBeTruthy();
+    expect(screen.getByText("/apps/delia")).toBeTruthy();
+
+    first.rerender(
+      <App pathname="/apps/delia/panel" routeLabel="Sessão B" search="?view=host" />,
+    );
+    expect(screen.queryByText(/Sessão A/)).toBeNull();
+    expect(screen.getByText(/Sessão B/)).toBeTruthy();
+    expect(screen.getByText("/apps/delia/panel")).toBeTruthy();
+
+    first.unmount();
+
+    render(<App pathname="/apps/delia" />);
+    expect(screen.queryByText(/Sessão A/)).toBeNull();
+    expect(screen.queryByText(/Sessão B/)).toBeNull();
+    expect(screen.getByText("/apps/delia")).toBeTruthy();
   });
 
   it("uses container-friendly responsive foundation classes", () => {

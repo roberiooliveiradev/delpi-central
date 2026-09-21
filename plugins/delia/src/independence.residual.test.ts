@@ -62,6 +62,9 @@ describe("C1 independence and media safety", () => {
       const text = readFileSync(file, "utf8");
       expect(text.includes("localStorage")).toBe(false);
       expect(text.includes("sessionStorage")).toBe(false);
+      expect(text.includes("indexedDB")).toBe(false);
+      expect(text.includes("caches.")).toBe(false);
+      expect(text.includes("serviceWorker")).toBe(false);
       expect(text.includes("jwt.decode")).toBe(false);
       expect(text.includes("atob(")).toBe(false);
     }

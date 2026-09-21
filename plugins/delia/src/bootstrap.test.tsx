@@ -1,15 +1,19 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-const render = vi.fn();
-const unmountRoot = vi.fn();
+const { render, unmountRoot, createRoot } = vi.hoisted(() => {
+  const render = vi.fn();
+  const unmountRoot = vi.fn();
+  const createRoot = vi.fn(() => ({
+    render,
+    unmount: unmountRoot,
+  }));
+  return { render, unmountRoot, createRoot };
+});
 
 vi.mock("../../vite/federationShareScope", () => ({
   preparePluginUiRemote: vi.fn().mockResolvedValue(undefined),
   getReactDomClient: vi.fn().mockResolvedValue({
-    createRoot: () => ({
-      render,
-      unmount: unmountRoot,
-    }),
+    createRoot,
   }),
 }));
 
@@ -18,6 +22,7 @@ import { mount, unmount, updateRoute } from "./bootstrap";
 afterEach(() => {
   render.mockClear();
   unmountRoot.mockClear();
+  createRoot.mockClear();
   document.body.innerHTML = "";
 });
 
@@ -61,5 +66,40 @@ describe("bootstrap mount/unmount", () => {
 
     unmount(el);
     expect(unmountRoot).toHaveBeenCalledTimes(1);
+  });
+
+  it("destroys the root on unmount and creates a fresh root on remount", () => {
+    const el = document.createElement("div");
+    document.body.appendChild(el);
+
+    mount(el, { pathname: "/apps/delia", routeLabel: "User A" });
+    unmount(el);
+    mount(el, { pathname: "/apps/delia", routeLabel: "User B" });
+
+    expect(createRoot).toHaveBeenCalledTimes(2);
+    expect(unmountRoot).toHaveBeenCalledTimes(1);
+    expect(render.mock.calls[1][0]?.props?.routeLabel).toBe("User B");
+
+    unmount(el);
+  });
+
+  it("updateRoute refreshes host presentation without a second root", () => {
+    const el = document.createElement("div");
+    document.body.appendChild(el);
+
+    mount(el, { pathname: "/apps/delia", search: "" });
+    updateRoute(el, {
+      pathname: "/apps/delia/panel",
+      search: "?view=host",
+      routeLabel: "Painel",
+    });
+
+    expect(createRoot).toHaveBeenCalledTimes(1);
+    expect(render).toHaveBeenCalledTimes(2);
+    expect(render.mock.calls[1][0]?.props?.pathname).toBe("/apps/delia/panel");
+    expect(render.mock.calls[1][0]?.props?.search).toBe("?view=host");
+    expect(render.mock.calls[1][0]?.props?.routeLabel).toBe("Painel");
+
+    unmount(el);
   });
 });

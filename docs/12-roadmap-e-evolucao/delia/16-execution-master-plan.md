@@ -3,7 +3,7 @@
 **Status:** planejamento executável canônico  
 **Autoridade de ordem:** **este documento é a única fonte de verdade para a sequência de implementação**  
 **Produto:** **DÉLIA**, aplicação standalone nova  
-**Próxima etapa:** `C2-T2 — HOST_PRESENTATION_BINDING_AND_SESSION_ISOLATION_VERIFICATION` (`C2-T1D1` browser-state policy approved; no storage/logout abstraction unless the residency gate applies; `C2_IMPLEMENTATION_STARTED=NO`)
+**Próxima etapa:** revisão de `C2-T2` (`C2_STARTED=YES`; `C2_IMPLEMENTATION_STARTED=NO`; ciclo de host existente suficiente; sem storage/logout novo; `PRODUCTION_READINESS=NOT_PROVEN`)
 **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Baseline:** [`51-platform-integration-baseline.md`](./51-platform-integration-baseline.md)  
 **Bootstrap:** [`52-standalone-repository-and-bootstrap-plan.md`](./52-standalone-repository-and-bootstrap-plan.md)  
@@ -362,7 +362,8 @@ C2_AUTHORIZED = YES
 TYPESCRIPT_ISOLATED = INCONCLUSIVE (NON_BLOCKING_RESIDUAL)
 CORE_CONTEXT_LIVE_NETWORK = TEST_NOT_RUN (NON_BLOCKING; formal CORE_CONTEXT=PASS; T6 proved live Core governance path)
 C2_T1 = INVENTORY_FREEZE_READY_FOR_REVIEW
-C2_STARTED = NO
+C2_T2 = VERIFICATION_EVIDENCE_READY_FOR_REVIEW
+C2_STARTED = YES
 C2_IMPLEMENTATION_STARTED = NO
 PORTAL_HOST_CONTRACT = FROZEN_ACCEPTED (current AppHost props; ≠ business AuthZ)
 OPERATIONAL_CONTEXT = TO_INVENTORY (no runtime WorkspaceContext)
@@ -370,7 +371,7 @@ BROWSER_STATE_RESIDENCY_POLICY = APPROVED (C2-T1D1)
 BROWSER_RETAINED_STATE_CURRENTLY_REQUIRED = NO
 CENTRALIZED_BROWSER_STATE_BOUNDARY = REQUIRED_ON_FIRST_RETAINED_STATE
 SHARED_DEVICE_ISOLATION_INVARIANT = FROZEN_ACCEPTED
-NEXT = C2-T2 — HOST_PRESENTATION_BINDING_AND_SESSION_ISOLATION_VERIFICATION (do not start automatically; no storage framework)
+NEXT = hold for C2-T2 review (do not start operational context or a command bus)
 ```
 
 ## C0.S2 — Authorities / bounded contexts
