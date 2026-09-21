@@ -146,6 +146,7 @@ export const USER_MANUAL_CONTENT = {
         "Nova tarefa pede título, responsável, prazo opcional e descrição. Revise o resumo e confirme antes de gravar.",
         "O responsável é um usuário do diretório. O nome é só exibição; a tarefa guarda o identificador.",
         "Edite ou conclua só a tarefa criada no portal. Concluir tira o item de Pendentes.",
+        "A busca fica na fila e combina com Pendentes, Concluídas e Todas.",
         "Assinatura pendente de ata não se edita nem se conclui nesta lista: abra a ata e assine lá. Depois que assinar, o item some.",
       ],
       links: [

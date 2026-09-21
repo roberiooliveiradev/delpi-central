@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActionButton,
-  EmptyState,
   ScopeChipBar,
   TaskEditorFrame,
+  TaskEmptyState,
   TaskItemsTable,
+  TaskSearchField,
+  TaskWorklistSection,
   UserDirectoryPicker,
   buildTaskWorkspaceHighlights,
-  emptyStateCardBemClasses,
   scopeChipBarBemClasses,
   type DirectoryUserOption,
   type TaskItemPresentation,
@@ -43,7 +44,6 @@ type Props = Pick<AppProps, "getAccessToken"> & {
 type FilterId = "pending" | "completed" | "all";
 type FormMode = "closed" | "create" | "edit";
 
-const EMPTY = emptyStateCardBemClasses("ds");
 const CHIPS = scopeChipBarBemClasses("ds");
 
 export function MyTasksPage({ getAccessToken, pathname, onNavigate }: Props) {
@@ -251,14 +251,8 @@ export function MyTasksPage({ getAccessToken, pathname, onNavigate }: Props) {
         subtitle={PORTAL_PAGE_COPY.myTasks.description}
         currentPath={pathname ?? TRANSFORMOMETRO_ROUTES.myTasks}
         onNavigate={onNavigate}
-        onRefresh={() => setReloadNonce((nonce) => nonce + 1)}
         refreshing={refreshing}
         highlights={highlights}
-        actions={
-          <ActionButton variant="primary" onClick={openCreate}>
-            Nova tarefa
-          </ActionButton>
-        }
       >
         <ScopeChipBar
           classNames={CHIPS}
@@ -268,14 +262,6 @@ export function MyTasksPage({ getAccessToken, pathname, onNavigate }: Props) {
             { id: "completed", label: "Concluídas", active: filter === "completed", onSelect: () => setFilter("completed") },
             { id: "all", label: "Todas", active: filter === "all", onSelect: () => setFilter("all") },
           ]}
-        />
-        <TmNativeTextField
-          id="tm-task-search"
-          label="Buscar na lista"
-          type="search"
-          value={query}
-          onChange={setQuery}
-          placeholder="Título, origem ou contexto"
         />
       </PageHeader>
       {payload?.partial_error ? <p role="status">{payload.partial_error}</p> : null}
@@ -287,6 +273,69 @@ export function MyTasksPage({ getAccessToken, pathname, onNavigate }: Props) {
           </button>
         </p>
       ) : null}
+      <TaskWorklistSection
+        title="Fila"
+        subtitle="Pendentes, concluídas e assinaturas de ata."
+        actions={
+          <>
+            <ActionButton variant="primary" onClick={openCreate}>
+              Nova tarefa
+            </ActionButton>
+            <ActionButton variant="ghost" onClick={() => setReloadNonce((nonce) => nonce + 1)}>
+              {refreshing ? "Atualizando…" : "Atualizar"}
+            </ActionButton>
+          </>
+        }
+        search={
+          <TaskSearchField
+            id="tm-task-search"
+            value={query}
+            onChange={setQuery}
+            placeholder="Buscar tarefas..."
+            aria-label="Buscar tarefas"
+          />
+        }
+      >
+        {rows.length === 0 && !error ? (
+          <TaskEmptyState
+            title={
+              query.trim()
+                ? "Nenhuma tarefa corresponde à busca"
+                : filter === "completed"
+                  ? "Nenhuma tarefa concluída"
+                  : filter === "all"
+                    ? "Nenhuma tarefa nesta lista"
+                    : "Nenhuma tarefa pendente"
+            }
+            message={
+              query.trim()
+                ? "Ajuste o texto ou limpe a busca para ver o restante da fila."
+                : filter === "completed"
+                  ? "Nenhuma tarefa concluída."
+                  : filter === "all"
+                    ? "Nenhuma tarefa nesta lista."
+                    : "Nenhuma tarefa pendente no momento."
+            }
+          >
+            {!query.trim() ? (
+              <ActionButton variant="primary" onClick={openCreate}>
+                Nova tarefa
+              </ActionButton>
+            ) : null}
+          </TaskEmptyState>
+        ) : (
+          <section aria-busy={refreshing || undefined}>
+            <TaskItemsTable
+              items={rows}
+              refreshing={refreshing}
+              onOpen={onOpen}
+              onEdit={openEdit}
+              onComplete={(item) => void onComplete(item)}
+              onCancel={(item) => void onCancel(item)}
+            />
+          </section>
+        )}
+      </TaskWorklistSection>
       {formMode !== "closed" ? (
         <TaskEditorFrame
           title={formMode === "edit" ? "Editar tarefa" : "Nova tarefa"}
@@ -298,12 +347,13 @@ export function MyTasksPage({ getAccessToken, pathname, onNavigate }: Props) {
           primaryBusy={saving}
           primaryDisabled={!title.trim()}
         >
-          <TmNativeTextField id="tm-task-title" label="Título" value={title} onChange={setTitle} required />
+          <TmNativeTextField id="tm-task-title" label="Título" value={title} onChange={setTitle} required span />
           <TmNativeTextAreaField
             id="tm-task-description"
             label="Descrição"
             value={description}
             onChange={setDescription}
+            span
           />
           <TmNativeTextField id="tm-task-due" label="Prazo" type="date" value={dueDate} onChange={setDueDate} />
           <UserDirectoryPicker
@@ -315,35 +365,6 @@ export function MyTasksPage({ getAccessToken, pathname, onNavigate }: Props) {
           />
         </TaskEditorFrame>
       ) : null}
-      {rows.length === 0 && !error ? (
-        <EmptyState
-          classNames={EMPTY}
-          defaultMessage={
-            query.trim()
-              ? "Nenhuma tarefa corresponde à busca."
-              : filter === "completed"
-                ? "Nenhuma tarefa concluída."
-                : filter === "all"
-                  ? "Nenhuma tarefa nesta lista."
-                  : "Nenhuma tarefa pendente no momento."
-          }
-        >
-          <ActionButton variant="primary" onClick={openCreate}>
-            Nova tarefa
-          </ActionButton>
-        </EmptyState>
-      ) : (
-        <section aria-busy={refreshing || undefined}>
-          <TaskItemsTable
-            items={rows}
-            refreshing={refreshing}
-            onOpen={onOpen}
-            onEdit={openEdit}
-            onComplete={(item) => void onComplete(item)}
-            onCancel={(item) => void onCancel(item)}
-          />
-        </section>
-      )}
     </TransformometroShell>
   );
 }
