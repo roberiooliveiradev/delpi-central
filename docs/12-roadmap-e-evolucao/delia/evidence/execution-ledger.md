@@ -9,7 +9,7 @@
 **Internet/External Connectors:** [`../55-internet-research-and-external-connectors.md`](../55-internet-research-and-external-connectors.md)  
 **Microsoft Teams:** [`../56-microsoft-teams-connector-and-meeting-integration.md`](../56-microsoft-teams-connector-and-meeting-integration.md)  
 **Autonomous Operations/Execution Hub:** [`../57-event-driven-autonomous-operations-and-automation-execution-hub.md`](../57-event-driven-autonomous-operations-and-automation-execution-hub.md)  
-**Next:** `C2-T5R3` companion dock live smoke (`LIVE_COMPANION_DOCK=TEST_NOT_RUN`; `C2_EXECUTED=NO`). Não iniciar T6. Não criar iframe bridge.
+**Next:** `C2-T5R3R1` dynamic dock reclamp live smoke (`LIVE_DYNAMIC_RECLAMP=TEST_NOT_RUN`; `C2_EXECUTED=NO`). Não iniciar T6. Não criar iframe bridge.
 
 ## 1. Ledger rule
 
@@ -106,6 +106,7 @@ C2_T5 = IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW (§6.52)
 C2_T5R1 = IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW (§6.53)
 C2_T5R2 = LIVE_GLOBAL_SURFACE_FAIL_BUNDLE_CONTAINS_T5 (§6.54)
 C2_T5R3 = IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW (§6.55)
+C2_T5R3R1 = IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW (§6.56)
 C2_EXECUTED = NO
 C2_STARTED = YES
 C2_IMPLEMENTATION_STARTED = YES
@@ -2450,6 +2451,39 @@ PRODUCTION_READINESS = NOT_PROVEN
 NEXT = C2-T5R3 post-deploy companion dock smoke (do not start T6)
 ```
 
+## 6.56 C2-T5R3R1 — COMPANION_DOCK_DYNAMIC_WIDTH_HARDENING
+
+```text
+DATE: 2026-09-21
+STEP: C2-T5R3R1
+MODE: BOUNDED RUNTIME FIX
+PREVIOUS_DEFECT: DYNAMIC_WORKSPACE_RECLAMP = NOT_IMPLEMENTED
+CORRECTED: DYNAMIC_WORKSPACE_RECLAMP = PASS (unit)
+EXAMPLE: workspace 1600 dock 640 → workspace 1000 dock 450
+NOOP: dock 440 remains 440 when the new max still fits
+GROW: reclamped 450 stays 450; previous larger width is not restored
+INELIGIBLE: stored width is not written below the minimum; dock closes by existing rule
+ARIA: aria-valuenow tracks reclamped dockWidth; aria-valuemax tracks the new max
+LIVE_COMPANION_DOCK_RENDER = PASS
+LIVE_OPEN_WITHOUT_NAVIGATION = PASS
+LIVE_ROUTE_REMAINS_CURRENT_APP = PASS
+LIVE_NON_MODAL_VISUAL = PASS
+LIVE_BACKDROP = NONE
+LIVE_SPECIAL_SIDEBAR_GLOBAL_ENTRY_REMOVED = PASS
+LIVE_NORMAL_DELIA_APP_ENTRY_PRESERVED = PASS
+LIVE_DYNAMIC_RECLAMP = TEST_NOT_RUN
+LIVE_CENTER_APP_INTERACTION = TEST_NOT_RUN
+LIVE_ROUTE_PERSISTENCE = TEST_NOT_RUN
+LIVE_POINTER_RESIZE = TEST_NOT_RUN
+LIVE_KEYBOARD_RESIZE = TEST_NOT_RUN
+LIVE_CLOSE_REOPEN = TEST_NOT_RUN
+LIVE_FULLPAGE_TRANSITION = TEST_NOT_RUN
+BROWSER_RETAINED_STATE = NONE
+NEW_HOST_FIELDS = NONE
+C2_EXECUTED = NO
+NEXT = C2-T5R3R1 post-deploy dynamic-width smoke (do not start T6)
+```
+
 ## 7. Canonical phase mapping
 
 ```text
@@ -2658,4 +2692,4 @@ SAFETY_INTERLOCK_BYPASS
 
 ## 14. First execution
 
-Historical C0.S0..C0.S7 remain **APPROVED** / `FOUNDATION_FREEZE=APPROVED`. C1-T1..T6D1 completed standalone bootstrap. **C1-FINAL** (`§6.45`) accepted bootstrap with non-blocking residuals (`TYPESCRIPT_ISOLATED`, `CORE_CONTEXT_LIVE_NETWORK`). `C1_EXECUTED=YES`. `C1_BOOTSTRAP_ACCEPTANCE=ACCEPT_WITH_RESIDUAL`. `C1_BOOTSTRAP_RUNTIME_READINESS=PROVEN` (bootstrap scope). `PRODUCTION_READINESS=NOT_PROVEN`. `C2_AUTHORIZED=YES`. `C0=NOT_STARTED`. **C2-T1** (`§6.46`) froze the current Portal host/route contract. Operational WorkspaceContext remains `TO_INVENTORY`. `C2_STARTED=NO`. `C2_IMPLEMENTATION_STARTED=NO`. **C2-T1D1** (`§6.47`) approved `BROWSER_STATE_RESIDENCY_POLICY`. No retained browser state is required now. **C2-T2** (`§6.48`) verified the existing host lifecycle. No new logout stack or storage boundary. `C2_STARTED=YES`. `C2_IMPLEMENTATION_STARTED=NO`. `C2_EXECUTED=NO`. **C2-T3** (`§6.49`) froze the remaining C2 order. **C2-T4** (`§6.50`) inventoried operational authorities: OP/PRODUCT/OPERATION proven via api-delpi; MACHINE/POSTO `TO_INVENTORY`; Workspace remains `DEFER`. **C2-T4R1** (`§6.51`) removed illegal formal status `OPERATIONAL_CONTEXT=MIXED` and restored `OPERATIONAL_CONTEXT=TO_INVENTORY` while preserving the proven OP/product/operation sub-facts. **C2-T5** (`§6.52`) implemented the approved Portal global DÉLIA surface using the same federated remote `delia` / `./App`. **C2-T5R1** (`§6.53`) hardened stale async mount and dialog focus, and corrected the stale T4R1 SHA in §6.52. **C2-T5R2** (`§6.54`) recorded Product Master `LIVE_GLOBAL_SURFACE=FAIL` and proved the public Portal bundle published `2026-09-21T13:42:11Z` already contains the T5R1 launcher. Product Master later confirmed that V1 launcher and panel were live and rejected the modal UX. **C2-T5R3** (`§6.55`) replaced that surface with a non-modal companion dock. `C2_IMPLEMENTATION_STARTED=YES`. `C2_EXECUTED=NO`. Next bounded task: **C2-T5R3 post-deploy companion dock smoke** (do not start T6; do not create an iframe bridge).
+Historical C0.S0..C0.S7 remain **APPROVED** / `FOUNDATION_FREEZE=APPROVED`. C1-T1..T6D1 completed standalone bootstrap. **C1-FINAL** (`§6.45`) accepted bootstrap with non-blocking residuals (`TYPESCRIPT_ISOLATED`, `CORE_CONTEXT_LIVE_NETWORK`). `C1_EXECUTED=YES`. `C1_BOOTSTRAP_ACCEPTANCE=ACCEPT_WITH_RESIDUAL`. `C1_BOOTSTRAP_RUNTIME_READINESS=PROVEN` (bootstrap scope). `PRODUCTION_READINESS=NOT_PROVEN`. `C2_AUTHORIZED=YES`. `C0=NOT_STARTED`. **C2-T1** (`§6.46`) froze the current Portal host/route contract. Operational WorkspaceContext remains `TO_INVENTORY`. `C2_STARTED=NO`. `C2_IMPLEMENTATION_STARTED=NO`. **C2-T1D1** (`§6.47`) approved `BROWSER_STATE_RESIDENCY_POLICY`. No retained browser state is required now. **C2-T2** (`§6.48`) verified the existing host lifecycle. No new logout stack or storage boundary. `C2_STARTED=YES`. `C2_IMPLEMENTATION_STARTED=NO`. `C2_EXECUTED=NO`. **C2-T3** (`§6.49`) froze the remaining C2 order. **C2-T4** (`§6.50`) inventoried operational authorities: OP/PRODUCT/OPERATION proven via api-delpi; MACHINE/POSTO `TO_INVENTORY`; Workspace remains `DEFER`. **C2-T4R1** (`§6.51`) removed illegal formal status `OPERATIONAL_CONTEXT=MIXED` and restored `OPERATIONAL_CONTEXT=TO_INVENTORY` while preserving the proven OP/product/operation sub-facts. **C2-T5** (`§6.52`) implemented the approved Portal global DÉLIA surface using the same federated remote `delia` / `./App`. **C2-T5R1** (`§6.53`) hardened stale async mount and dialog focus, and corrected the stale T4R1 SHA in §6.52. **C2-T5R2** (`§6.54`) recorded Product Master `LIVE_GLOBAL_SURFACE=FAIL` and proved the public Portal bundle published `2026-09-21T13:42:11Z` already contains the T5R1 launcher. Product Master later confirmed that V1 launcher and panel were live and rejected the modal UX. **C2-T5R3** (`§6.55`) replaced that surface with a non-modal companion dock. Product Master then confirmed the live dock render on `/apps/my-requests` (non-modal, no backdrop, special launcher removed, normal app entry preserved). **C2-T5R3R1** (`§6.56`) reclamps the transient dock width when the workspace narrows. `LIVE_DYNAMIC_RECLAMP=TEST_NOT_RUN`. `C2_IMPLEMENTATION_STARTED=YES`. `C2_EXECUTED=NO`. Next bounded task: **C2-T5R3R1 post-deploy dynamic-width smoke** (do not start T6; do not create an iframe bridge).
