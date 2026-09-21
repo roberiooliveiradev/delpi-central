@@ -77,6 +77,7 @@ const LEGACY_FOCUS_INACTIVE = "inactive";
 export const CUSTOMER_LIST_SORT_VALUES = [
   "attention",
   "nome",
+  "customerCenter",
   "quantidadePedidosAtrasados",
   "maiorAtrasoDias",
   "valorTotalAberto",

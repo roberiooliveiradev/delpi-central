@@ -58,6 +58,7 @@ export type CustomerTrendFilter = CustomerListTrend;
 export type CustomerListSortKey =
   | "attention"
   | "nome"
+  | "customerCenter"
   | "quantidadePedidosAtrasados"
   | "maiorAtrasoDias"
   | "valorTotalAberto"

@@ -53,6 +53,19 @@ export function sortCustomers(
       case "nome":
         cmp = a.nome.localeCompare(b.nome, "pt-BR", { sensitivity: "base" });
         break;
+      case "customerCenter": {
+        const centerA = a.customerCenter?.trim() ?? "";
+        const centerB = b.customerCenter?.trim() ?? "";
+        if (!centerA && centerB) cmp = 1;
+        else if (centerA && !centerB) cmp = -1;
+        else {
+          cmp = centerA.localeCompare(centerB, "pt-BR", {
+            numeric: true,
+            sensitivity: "base",
+          });
+        }
+        break;
+      }
       case "quantidadePedidosAtrasados":
         cmp = a.quantidadePedidosAtrasados - b.quantidadePedidosAtrasados;
         break;

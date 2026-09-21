@@ -24,6 +24,7 @@ import {
 } from "./customerIdentity.ts";
 import {
   compareAttention,
+  sortCustomers,
   sortCustomersByAttention,
 } from "./customerSorting.ts";
 import { buildSellerNameByCustomerKey } from "./sellerNameByCustomer.ts";
@@ -270,6 +271,20 @@ describe("customerAggregation", () => {
 });
 
 describe("customerSorting e filters", () => {
+  it("ordena por centro com vazios por último e numericamente", () => {
+    const base = aggregateCustomers([
+      line({ codigo_cadastro: "000001", loja_cadastro: "01", nome_cliente: "WEG" }),
+    ]).customers[0];
+    const empty = { ...base, key: "000001|10", loja: "10", customerCenter: null };
+    const c1200 = { ...base, key: "000001|01|1200", customerCenter: "1200" };
+    const c1100 = { ...base, key: "000001|01|1100", customerCenter: "1100" };
+    const sorted = sortCustomers([empty, c1200, c1100], "customerCenter", "asc");
+    assert.deepEqual(
+      sorted.map((row) => row.customerCenter),
+      ["1100", "1200", null],
+    );
+  });
+
   it("clientes atrasados aparecem primeiro", () => {
     const overdue = {
       ...aggregateCustomers([

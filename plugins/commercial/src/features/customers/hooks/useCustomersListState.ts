@@ -130,7 +130,12 @@ export function useCustomersListState(options: {
       sort,
       dir: current.sort === sort
         ? current.dir === "asc" ? "desc" : "asc"
-        : sort === "nome" || sort === "city" || sort === "sellerName" ? "asc" : "desc",
+        : sort === "nome" ||
+            sort === "customerCenter" ||
+            sort === "city" ||
+            sort === "sellerName"
+          ? "asc"
+          : "desc",
     }));
   }, []);
   const setPage = useCallback((page: number) => mutate({ page }), [mutate]);

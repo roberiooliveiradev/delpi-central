@@ -79,7 +79,7 @@ type CustomersTableProps = {
 
 const SORTABLE_COLUMN_KEYS = new Set<CustomerColumnKey>(
   CUSTOMER_COLUMN_CATALOG.map((column) => column.key).filter(
-    (key) => key !== "customerCenter",
+    (key) => key !== "status",
   ),
 );
 
@@ -246,6 +246,7 @@ export function CustomersTable({
       key: "customerCenter",
       header: "Centro",
       headerHint: CM_HELP.customers.list,
+      sortable: true,
       render: (customer) => customer.customerCenter?.trim() || "—",
     },
     {
