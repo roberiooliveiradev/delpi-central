@@ -36,6 +36,8 @@ Prova de formatação, XSS e imagem no corpo **não** entra nesta lista até hav
 
 Prova da grade (data absoluta, resolução, busca no conteúdo) está em [`13-listagem-de-chamados.md`](./13-listagem-de-chamados.md) §14 e também só depois de autorização.
 
+Prova da página e dos sete status está em [`14-pagina-e-estados-do-chamado.md`](./14-pagina-e-estados-do-chamado.md) §11.
+
 ## 3. Homologação E5.S2
 
 ```text

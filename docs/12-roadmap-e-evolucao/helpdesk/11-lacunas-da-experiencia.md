@@ -99,7 +99,7 @@ A conversa em bolhas já foi publicada. As fotos mostram o corte que ainda falta
 | C-04 | Foto do técnico | o 6288 tem avatar com foto; este módulo não guarda foto | CONSOLE_GLPI / fora — iniciais bastam |
 | C-05 | Lado da bolha | no 2 as duas mensagens foram para a direita; `mine` era «autor = solicitante» | IMPLEMENTADO — `mine` no BFF por id GLPI ou e-mail; nome só rótulo |
 | C-06 | Título da abertura vs cartão de urgência | o cartão do 2 virou «Média» porque a categoria está vazia (`itilcategories_id=0`) | já documentado; não inventar categoria |
-| C-07 | Tarefa, solução, aprovação, atores, SLA | fotos do 6288 | CONSOLE_GLPI — já em [`10-conversa-do-chamado.md`](./10-conversa-do-chamado.md) |
+| C-07 | Tarefa, solução, aprovação, atores, SLA | fotos do 6288 e 1101 | CONSOLE_GLPI — página/estados em [`14-pagina-e-estados-do-chamado.md`](./14-pagina-e-estados-do-chamado.md) |
 | C-08 | Formatação, HTML, imagem no corpo | o BFF remove tags; a bolha é `plain`; o 6288 tem imagem no fio | inventário em [`12-conteudo-da-mensagem.md`](./12-conteudo-da-mensagem.md) (markup, allowlist, contrato aditivo, H1–H4) — sem autorização de código |
 
 ### 3.4 Abrir chamado
@@ -193,4 +193,4 @@ Ainda não é etapa. Quando for planejada, a prova mínima é:
 
 ## 9. Fora deste inventário como autorização
 
-Este arquivo não abre E*.S*, não marca H5 como `PROVEN` e não liga a API legada. [`10-conversa-do-chamado.md`](./10-conversa-do-chamado.md) descreve a conversa já publicada. A paridade da listagem passou para [`13-listagem-de-chamados.md`](./13-listagem-de-chamados.md). O corpo da mensagem está em [`12-conteudo-da-mensagem.md`](./12-conteudo-da-mensagem.md).
+Este arquivo não abre E*.S*, não marca H5 como `PROVEN` e não liga a API legada. [`10-conversa-do-chamado.md`](./10-conversa-do-chamado.md) descreve a conversa já publicada. A paridade da listagem passou para [`13-listagem-de-chamados.md`](./13-listagem-de-chamados.md). O corpo da mensagem está em [`12-conteudo-da-mensagem.md`](./12-conteudo-da-mensagem.md). A página e os estados estão em [`14-pagina-e-estados-do-chamado.md`](./14-pagina-e-estados-do-chamado.md).

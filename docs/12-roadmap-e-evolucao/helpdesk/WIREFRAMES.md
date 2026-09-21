@@ -9,6 +9,7 @@
 > **Lacunas restantes:** [`11-lacunas-da-experiencia.md`](./11-lacunas-da-experiencia.md).
 > **Corpo da mensagem (alvo, sem implementar):** [`12-conteudo-da-mensagem.md`](./12-conteudo-da-mensagem.md).
 > **Listagem (alvo, sem implementar):** [`13-listagem-de-chamados.md`](./13-listagem-de-chamados.md). A tela publicada abaixo permanece.
+> **Página e estados (alvo, sem implementar):** [`14-pagina-e-estados-do-chamado.md`](./14-pagina-e-estados-do-chamado.md).
 
 Implementar uma tela deste módulo é montar as factories já nomeadas. Não criar `button`, `input`, `select`, `textarea`, card ou badge com CSS próprio.
 
@@ -182,7 +183,7 @@ Não há campo de solicitante nem de entidade. Sucesso navega para `/apps/helpde
 
 ## 3. Detalhe — `/apps/helpdesk/tickets/{id}`
 
-A tela publicada é a conversa abaixo. O inventário que a originou está em [`10-conversa-do-chamado.md`](./10-conversa-do-chamado.md).
+A tela publicada é a conversa abaixo. O inventário da conversa está em [`10-conversa-do-chamado.md`](./10-conversa-do-chamado.md). Página completa e estados: [`14-pagina-e-estados-do-chamado.md`](./14-pagina-e-estados-do-chamado.md).
 
 ```text
 HelpdeskPageHeader

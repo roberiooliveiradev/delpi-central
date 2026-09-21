@@ -5,6 +5,7 @@
 >
 > O `createDashboardMessageThread` já saía pelo barrel do plugin-ui. A entrega estendeu o fio com título, texto puro e identidade na bolha do solicitante; não criou outro componente.
 > **Corpo da mensagem (HTML, formatação, imagem):** inventário em [`12-conteudo-da-mensagem.md`](./12-conteudo-da-mensagem.md). Não implementar a partir deste arquivo.
+> **Página (abas, atores, ciclo de status):** inventário em [`14-pagina-e-estados-do-chamado.md`](./14-pagina-e-estados-do-chamado.md). Não implementar a partir deste arquivo.
 
 Este documento descreve o que falta para o detalhe de Meus Chamados de TI parecer a conversa do GLPI, dentro do kit da Minha DELPI. As fotos de referência são o chamado `1114` em `helpdesk.centraldelpi.com.br/front/ticket.form.php?id=1114`, visto pela interface padrão (central), com o usuário Super-Admin.
 

@@ -30,6 +30,8 @@ Formatação, HTML e imagem no corpo da conversa **não** são HD novo. Estendem
 
 Paridade da listagem com o GLPI do solicitante **não** é HD novo. Estende HD-008 e HD-016. Inventário em [`13-listagem-de-chamados.md`](./13-listagem-de-chamados.md); sem autorização de código.
 
+Página do chamado e estados ITIL **não** são HD novo. Estendem HD-009, HD-013, HD-015 e HD-016. Inventário em [`14-pagina-e-estados-do-chamado.md`](./14-pagina-e-estados-do-chamado.md); sem autorização de código.
+
 ## Herdados da plataforma
 
 Não viram HD próprio:

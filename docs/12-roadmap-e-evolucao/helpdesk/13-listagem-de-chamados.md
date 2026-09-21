@@ -217,7 +217,7 @@ FORA                  → não entra neste produto
 | G-20 | `q` no título | IMPLEMENTADO | — |
 | G-21 | `q` também no `content` (texto, não HTML) | ALVO_RECORTE + H1 | BFF `name=like` **ou** `content=like`; sem segunda caixa |
 | G-22 | Status agrupado | IMPLEMENTADO | — |
-| G-23 | Grupo `pending` (status 4) explícito | ALVO_RECORTE | mesmo enum de grupos; hoje `pending` cai em `open` |
+| G-23 | Grupo `pending` (status 4) explícito | ALVO_RECORTE | mesmo enum; detalhe em [`14-pagina-e-estados-do-chamado.md`](./14-pagina-e-estados-do-chamado.md) S-05 |
 | G-24 | Urgência, categoria, atualizado de/até | IMPLEMENTADO | — |
 | G-25 | Aberto de/até (`created_from` / `created_to`) | ALVO_RECORTE | `date_creation`; ADDITIVE |
 | G-26 | Filtro por técnico | BLOQUEADO | mesmo motivo de G-06 |

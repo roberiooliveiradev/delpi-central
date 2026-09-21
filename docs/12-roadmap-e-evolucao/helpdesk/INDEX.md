@@ -19,6 +19,7 @@ Conversa do chamado: [`10-conversa-do-chamado.md`](./10-conversa-do-chamado.md).
 Lacunas da experiência (inventário, sem autorização de código): [`11-lacunas-da-experiencia.md`](./11-lacunas-da-experiencia.md).
 Conteúdo da mensagem (formatação, imagem, HTML; inventário, sem autorização de código): [`12-conteudo-da-mensagem.md`](./12-conteudo-da-mensagem.md).
 Listagem de chamados (colunas, filtros, paridade GLPI; inventário, sem autorização de código): [`13-listagem-de-chamados.md`](./13-listagem-de-chamados.md).
+Página do chamado e estados (formulário GLPI × detalhe; ciclo ITIL; inventário, sem autorização de código): [`14-pagina-e-estados-do-chamado.md`](./14-pagina-e-estados-do-chamado.md).
 
 ## Roteamento rápido
 
@@ -28,6 +29,7 @@ de quem é o chamado?        → 02
 qual URL e qual JSON?       → 03
 o corpo da mensagem?        → 12 (HTML, formatação, imagem; inventário)
 a listagem de chamados?     → 13 (colunas, filtros, paridade GLPI; inventário)
+a página e os estados?      → 14 (detalhe do solicitante + ciclo ITIL; inventário)
 onde fica o segredo?        → 04
 o que vem depois do MVP?    → 05
 o que implementar agora?    → 06
