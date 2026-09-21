@@ -4,10 +4,13 @@ import {
   FilePreviewModal,
   INTERACTION_ROOM_PAGE_LABELS_PT,
   InteractionRoomPage,
+  TaskEditorFrame,
+  UserDirectoryPicker,
   listInlinePendingIdsFromMarkdown,
   markdownToPlainPreview,
   reactionLabelForCode,
   rewriteInlinePendingInMarkdown,
+  type DirectoryUserOption,
   type InteractionRoomMessage,
   type InteractionRoomSharedItem,
   type MentionComposerPendingAttachment,
@@ -19,6 +22,8 @@ import {
 import type { AppProps } from "../../App";
 import { TransformometroShell } from "../../components/TransformometroShell";
 import { PortalTopBar } from "../../components/TransformometroNav";
+import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
+import { TmNativeTextAreaField, TmNativeTextField } from "../../components/ui/tmNativeFormFields";
 import { TRANSFORMOMETRO_ROUTES, buildInteractionRoomPath } from "../../constants/routes";
 import { fetchMeProfile } from "../../data/api/meApi";
 import { searchDirectoryUsers } from "../../data/api/transformometroMeetingMinutesApi";
@@ -43,6 +48,10 @@ import {
   type InteractionMessageDto,
   type InteractionRoomDto,
 } from "../../data/api/transformometroInteractionApi";
+import {
+  createTask,
+  getTask,
+} from "../../data/api/transformometroTasksApi";
 import { useDirectoryUserLabels } from "../../hooks/useDirectoryUserLabels";
 import { usePersonProfilePhotoUrls } from "../../hooks/usePersonProfilePhotoUrls";
 import { buildProcessoPath } from "../../utils/routeParser";
@@ -122,6 +131,7 @@ type PreviewTarget = {
 };
 
 export function InteractionRoomsPage({ getAccessToken, pathname, roomId, onNavigate }: Props) {
+  const confirm = useConfirm();
   const mentionsRef = useRef<InteractionMentionDto[]>([]);
   const [rooms, setRooms] = useState<InteractionRoomDto[] | null>(null);
   const [roomsError, setRoomsError] = useState<string | null>(null);
@@ -149,8 +159,16 @@ export function InteractionRoomsPage({ getAccessToken, pathname, roomId, onNavig
   const [actionError, setActionError] = useState<string | null>(null);
   const [meId, setMeId] = useState<string | null>(null);
   const [meName, setMeName] = useState<string | null>(null);
+  const [meOption, setMeOption] = useState<DirectoryUserOption | null>(null);
   const [thumbUrls, setThumbUrls] = useState<Record<string, string>>({});
   const [preview, setPreview] = useState<PreviewTarget | null>(null);
+  const [taskFormOpen, setTaskFormOpen] = useState(false);
+  const [taskSourceMessageId, setTaskSourceMessageId] = useState<string | null>(null);
+  const [taskTitle, setTaskTitle] = useState("");
+  const [taskDescription, setTaskDescription] = useState("");
+  const [taskDueDate, setTaskDueDate] = useState("");
+  const [taskAssignee, setTaskAssignee] = useState<DirectoryUserOption[]>([]);
+  const [taskSaving, setTaskSaving] = useState(false);
   const nameCacheRef = useRef<Record<string, string>>({});
 
   const clearInlinePending = useCallback(() => {
@@ -164,8 +182,14 @@ export function InteractionRoomsPage({ getAccessToken, pathname, roomId, onNavig
   useEffect(() => {
     void fetchMeProfile(getAccessToken)
       .then((profile) => {
-        setMeId(profile.id || null);
-        setMeName(profile.name?.trim() || null);
+        const id = profile.id || null;
+        const name = profile.name?.trim() || null;
+        setMeId(id);
+        setMeName(name);
+        if (id) {
+          const self = { id, name: name || "Eu", email: "" };
+          setMeOption(self);
+        }
       })
       .catch(() => undefined);
   }, [getAccessToken]);
@@ -575,13 +599,82 @@ export function InteractionRoomsPage({ getAccessToken, pathname, roomId, onNavig
 
   async function removeMessage(messageId: string) {
     if (!roomId) return;
-    if (!window.confirm("Remover esta mensagem?")) return;
+    const ok = await confirm({
+      title: "Excluir mensagem?",
+      message: "A mensagem será removida da conversa. Esta ação não pode ser desfeita.",
+      confirmLabel: "Excluir",
+      cancelLabel: "Cancelar",
+      variant: "danger",
+    });
+    if (!ok) return;
     try {
       const saved = await deleteInteractionMessage(roomId, messageId, getAccessToken);
       replaceMessage(saved);
+      if (editingId === messageId) {
+        setEditingId(null);
+        setEditDraft("");
+        clearInlinePending();
+      }
+      if (replyId === messageId) setReplyId(null);
       setActionError(null);
     } catch (reason) {
       setActionError(errorText(reason, "Não foi possível remover a mensagem."));
+    }
+  }
+
+  function openCreateTaskFromMessage(message: InteractionRoomMessage) {
+    const source = (messages ?? []).find((item) => item.id === message.id);
+    if (!source || source.deleted_at) return;
+    setTaskSourceMessageId(source.id);
+    setTaskTitle("");
+    setTaskDescription(plainMessage(source.content));
+    setTaskDueDate("");
+    setTaskAssignee(meOption ? [meOption] : []);
+    setTaskFormOpen(true);
+    setActionError(null);
+  }
+
+  function closeTaskForm() {
+    setTaskFormOpen(false);
+    setTaskSourceMessageId(null);
+    setTaskTitle("");
+    setTaskDescription("");
+    setTaskDueDate("");
+    setTaskAssignee(meOption ? [meOption] : []);
+  }
+
+  async function submitTaskFromMessage() {
+    if (!taskSourceMessageId || !taskTitle.trim() || taskSaving) return;
+    const assigneeId = taskAssignee[0]?.id || meOption?.id || "";
+    const confirmed = await confirm({
+      title: "Criar tarefa?",
+      message: `${taskTitle.trim()} · ${taskAssignee[0]?.name || "você"} · ${taskDueDate || "sem prazo"}`,
+      confirmLabel: "Criar tarefa",
+    });
+    if (!confirmed) return;
+    setTaskSaving(true);
+    try {
+      const payloadWrite = {
+        title: taskTitle.trim(),
+        description: taskDescription.trim() || null,
+        assignee_user_id: assigneeId || null,
+        due_date: taskDueDate || null,
+        source_interaction_message_id: taskSourceMessageId,
+      };
+      const saved = await createTask(payloadWrite, getAccessToken);
+      const readBack = await getTask(saved.id, getAccessToken);
+      if (
+        readBack.title !== payloadWrite.title ||
+        readBack.source_interaction_message_id !== taskSourceMessageId
+      ) {
+        throw new Error("A gravação não confirmou o estado esperado.");
+      }
+      closeTaskForm();
+      setActionError(null);
+    } catch (reason) {
+      setActionError(errorText(reason, "Não foi possível criar a tarefa a partir da mensagem."));
+    } finally {
+      setTaskSaving(false);
     }
   }
 
@@ -634,7 +727,14 @@ export function InteractionRoomsPage({ getAccessToken, pathname, roomId, onNavig
 
   async function removeFile(file: InteractionAttachmentDto) {
     if (!roomId) return;
-    if (!window.confirm("Remover este arquivo?")) return;
+    const ok = await confirm({
+      title: "Remover arquivo?",
+      message: `Remover ${file.file_name} da conversa?`,
+      confirmLabel: "Remover",
+      cancelLabel: "Cancelar",
+      variant: "danger",
+    });
+    if (!ok) return;
     try {
       await deleteInteractionAttachment(roomId, file.id, getAccessToken);
       setShared((current) => current.filter((item) => item.id !== file.id));
@@ -925,6 +1025,8 @@ export function InteractionRoomsPage({ getAccessToken, pathname, roomId, onNavig
           setEditDraft(source.content);
         }}
         onDelete={(id) => void removeMessage(id)}
+        onCreateTask={(message) => openCreateTaskFromMessage(message)}
+        createTaskBusyMessageId={taskSaving ? taskSourceMessageId : null}
         onToggleReaction={(id, code) => void react(id, code)}
         onOpenAttachment={(id) => {
           const file = findAttachment(id);
@@ -950,6 +1052,50 @@ export function InteractionRoomsPage({ getAccessToken, pathname, roomId, onNavig
         onCopyLink={() => void navigator.clipboard.writeText(window.location.href)}
         threadStatus={refreshing ? <p role="status">Atualizando mensagens…</p> : null}
       />
+      {taskFormOpen ? (
+        <TaskEditorFrame
+          title="Nova tarefa a partir da mensagem"
+          subtitle="A tarefa fica no Portal Transforma+. A mensagem original permanece na sala."
+          reviewRows={[
+            { label: "Título", value: taskTitle.trim() || "—" },
+            { label: "Responsável", value: taskAssignee[0]?.name || "—" },
+            { label: "Prazo", value: taskDueDate || "Sem prazo" },
+            { label: "Descrição", value: taskDescription.trim() || "—" },
+            {
+              label: "Origem",
+              value: taskSourceMessageId ? `Mensagem ${taskSourceMessageId.slice(0, 8)}…` : "—",
+            },
+          ]}
+          onClose={closeTaskForm}
+          primaryLabel="Criar tarefa"
+          onPrimary={() => void submitTaskFromMessage()}
+          primaryBusy={taskSaving}
+          primaryDisabled={!taskTitle.trim()}
+        >
+          <TmNativeTextField id="tm-room-task-title" label="Título" value={taskTitle} onChange={setTaskTitle} required span />
+          <TmNativeTextAreaField
+            id="tm-room-task-description"
+            label="Descrição"
+            value={taskDescription}
+            onChange={setTaskDescription}
+            span
+          />
+          <TmNativeTextField
+            id="tm-room-task-due"
+            label="Prazo"
+            type="date"
+            value={taskDueDate}
+            onChange={setTaskDueDate}
+          />
+          <UserDirectoryPicker
+            value={taskAssignee}
+            onChange={setTaskAssignee}
+            searchUsers={(query, limit, signal) => searchDirectoryUsers(query, limit, signal, getAccessToken)}
+            maxSelected={1}
+            labels={{ title: "Responsável", placeholder: "Atribuir a mim ou buscar…" }}
+          />
+        </TaskEditorFrame>
+      ) : null}
       <FilePreviewModal
         open={Boolean(preview)}
         title={preview?.fileName ?? "Arquivo"}

@@ -25,6 +25,11 @@ describe("InteractionRoomsPage", () => {
     expect(source).toMatch(/onInlineImagesInserted/);
     expect(source).toMatch(/onLoadOlder/);
     expect(source).toMatch(/beforeId/);
+    expect(source).toMatch(/onCreateTask/);
+    expect(source).toMatch(/TaskEditorFrame/);
+    expect(source).toMatch(/source_interaction_message_id/);
+    expect(source).toMatch(/useConfirm/);
+    expect(source).not.toMatch(/window\.confirm/);
     expect(source).toMatch(/FilePreviewModal/);
     expect(source).toMatch(/findAttachment/);
     expect(source).not.toMatch(/<RoomConversationShell[\s/>]/);

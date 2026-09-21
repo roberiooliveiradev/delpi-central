@@ -12,6 +12,7 @@ export type TransformometroTask = {
   created_at?: string | null;
   updated_at?: string | null;
   completed_at?: string | null;
+  source_interaction_message_id?: string | null;
 };
 
 export type MyTaskItemDto = {
@@ -48,6 +49,7 @@ export type TaskWritePayload = {
   description?: string | null;
   assignee_user_id?: string | null;
   due_date?: string | null;
+  source_interaction_message_id?: string | null;
 };
 
 async function request<T>(
