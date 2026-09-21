@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 
 import { ConfirmModalPanel, confirmModalTransformometroClasses } from "@delpi/plugin-ui/index";
 
-import { Modal } from "./Modal";
+import { HostContainedDialog } from "./Modal";
 
 export type ConfirmModalProps = {
   open: boolean;
@@ -32,7 +32,7 @@ export function ConfirmModal({
   onSecondary,
 }: ConfirmModalProps) {
   return (
-    <Modal open={open} title={title} onClose={onCancel} className="ds-modal--confirm">
+    <HostContainedDialog open={open} title={title} onClose={onCancel} className="ds-modal--confirm">
       <ConfirmModalPanel
         message={message}
         confirmLabel={confirmLabel}
@@ -45,6 +45,6 @@ export function ConfirmModal({
         onSecondary={onSecondary}
         classNames={confirmModalTransformometroClasses()}
       />
-    </Modal>
+    </HostContainedDialog>
   );
 }

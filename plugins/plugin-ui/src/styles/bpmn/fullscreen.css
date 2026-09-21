@@ -1,7 +1,12 @@
 /* BPMN — fullscreen.css */
 
-/* Modal de confirmação — padrão action plans (PAC) */.dashboard-transformometro.ds-modal-overlay,
-.delpi-ui-flowchart-shell .ds-modal-overlay, .dashboard-transformometro .ds-modal-overlay{
+/*
+ * Confirms do editor de fluxograma — só no shell BPMN.
+ * NÃO usar `.dashboard-transformometro .ds-modal*` aqui: isso força
+ * `position:fixed; inset:0` e `width:480px` em todo modal do portal,
+ * quebrando host-contained (`mfe-modal-host-contained.mdc`) e `--wide`.
+ */
+.delpi-ui-flowchart-shell .ds-modal-overlay {
   position: fixed;
   inset: 0;
   z-index: 10100;
@@ -13,7 +18,7 @@
   backdrop-filter: blur(2px);
 }
 
-.delpi-ui-flowchart-shell .ds-modal, .dashboard-transformometro .ds-modal{
+.delpi-ui-flowchart-shell .ds-modal {
   width: min(480px, 100%);
   max-height: min(88vh, 640px);
   display: flex;
@@ -26,7 +31,7 @@
   animation: delpi-ui-bpmn-modal-in 0.18s ease-out;
 }
 
-.delpi-ui-flowchart-shell .ds-modal__header, .dashboard-transformometro .ds-modal__header{
+.delpi-ui-flowchart-shell .ds-modal__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -35,7 +40,7 @@
   border-bottom: 1px solid var(--ds-border-subtle, var(--ds-card-border));
 }
 
-.delpi-ui-flowchart-shell .ds-modal__title, .dashboard-transformometro .ds-modal__title{
+.delpi-ui-flowchart-shell .ds-modal__title {
   margin: 0;
   font-size: var(--ds-font-md, 16px);
   font-weight: 600;
@@ -45,19 +50,19 @@
   white-space: nowrap;
 }
 
-.delpi-ui-flowchart-shell .ds-modal__body, .dashboard-transformometro .ds-modal__body{
+.delpi-ui-flowchart-shell .ds-modal__body {
   padding: 16px 18px 18px;
   overflow: auto;
 }
 
-.delpi-ui-flowchart-shell .ds-modal__close, .dashboard-transformometro .ds-modal__close{
+.delpi-ui-flowchart-shell .ds-modal__close {
   width: 36px;
   min-height: 36px;
   padding: 0;
   justify-content: center;
 }
 
-.delpi-ui-flowchart-shell .ds-confirm-modal__message, .dashboard-transformometro .ds-confirm-modal__message{
+.delpi-ui-flowchart-shell .ds-confirm-modal__message {
   margin: 0 0 1.25rem;
   font-size: var(--ds-font-sm, 14px);
   line-height: 1.55;
@@ -65,11 +70,11 @@
   white-space: pre-line;
 }
 
-.delpi-ui-flowchart-shell .ds-form-actions--end, .dashboard-transformometro .ds-form-actions--end{
+.delpi-ui-flowchart-shell .ds-form-actions--end {
   justify-content: flex-end;
 }
 
-.delpi-ui-flowchart-shell .ds-danger-btn, .dashboard-transformometro .ds-danger-btn{
+.delpi-ui-flowchart-shell .ds-danger-btn {
   min-height: var(--ds-control-height);
   border-radius: var(--ds-control-radius);
   padding: 10px 14px;
@@ -83,7 +88,7 @@
   cursor: pointer;
 }
 
-.delpi-ui-flowchart-shell .ds-danger-btn:disabled, .dashboard-transformometro .ds-danger-btn:disabled{
+.delpi-ui-flowchart-shell .ds-danger-btn:disabled {
   opacity: 0.55;
   cursor: not-allowed;
 }

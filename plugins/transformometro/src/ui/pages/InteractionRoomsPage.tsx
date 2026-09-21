@@ -22,7 +22,7 @@ import {
 import type { AppProps } from "../../App";
 import { TransformometroShell } from "../../components/TransformometroShell";
 import { PortalTopBar } from "../../components/TransformometroNav";
-import { WideModal } from "../../components/ui/Modal";
+import { HostContainedWideDialog } from "../../components/ui/Modal";
 import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
 import { TmNativeTextAreaField, TmNativeTextField } from "../../components/ui/tmNativeFormFields";
 import { TRANSFORMOMETRO_ROUTES, buildInteractionRoomPath } from "../../constants/routes";
@@ -1053,7 +1053,7 @@ export function InteractionRoomsPage({ getAccessToken, pathname, roomId, onNavig
         onCopyLink={() => void navigator.clipboard.writeText(window.location.href)}
         threadStatus={refreshing ? <p role="status">Atualizando mensagens…</p> : null}
       />
-      <WideModal
+      <HostContainedWideDialog
         open={taskFormOpen}
         title="Nova tarefa a partir da mensagem"
         description="A tarefa fica no Portal Transforma+. A mensagem original permanece na sala."
@@ -1117,7 +1117,7 @@ export function InteractionRoomsPage({ getAccessToken, pathname, roomId, onNavig
             labels={{ title: "Responsável", placeholder: "Atribuir a mim ou buscar…" }}
           />
         </TaskEditorFrame>
-      </WideModal>
+      </HostContainedWideDialog>
       <FilePreviewModal
         open={Boolean(preview)}
         title={preview?.fileName ?? "Arquivo"}
