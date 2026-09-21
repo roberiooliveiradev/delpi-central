@@ -2,7 +2,7 @@
 
 Microfrontend em `/apps/helpdesk`. Os chamados continuam no GLPI; esta tela só consome a helpdesk-api.
 
-A lista usa cartões do kit (`DataRecordCard` e `StatusBadge`). O formulário usa os campos do kit (`TextField`, `TextAreaField`, `SelectField`). O CSS do plugin só mapeia tokens e o espaço entre os cartões.
+A composição de cada tela, os estados e o claro/escuro estão em [`WIREFRAMES.md`](./WIREFRAMES.md). Não criar controle visual fora das factories de `src/ui/helpdeskUi.tsx`.
 
 ## Ajuda
 

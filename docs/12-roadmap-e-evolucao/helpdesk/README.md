@@ -86,6 +86,7 @@ O id não muda. O plugin iframe já é `helpdesk`, e o cliente OAuth de produç�
 
 | Pergunta | Documento |
 |---|---|
+| Como a tela é composta? | [`WIREFRAMES.md`](./WIREFRAMES.md) |
 | O que a pessoa faz? | [`01-visao-produto.md`](./01-visao-produto.md) |
 | Quem é dono e o que já existe? | [`02-arquitetura.md`](./02-arquitetura.md) |
 | Qual é o contrato? | [`03-contrato.md`](./03-contrato.md) |

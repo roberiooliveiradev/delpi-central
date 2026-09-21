@@ -14,11 +14,12 @@ Entrada: [`README.md`](./README.md).
 8. [`evidence/execution-ledger.md`](./evidence/execution-ledger.md) — o que está `PROVEN`.
 
 Visão e ondas: [`01-visao-produto.md`](./01-visao-produto.md), [`05-roadmap.md`](./05-roadmap.md).
+Telas e componentes: [`WIREFRAMES.md`](./WIREFRAMES.md).
 
 ## Roteamento rápido
 
 ```text
-o que a pessoa vê?          → 01
+o que a pessoa vê?          → 01 e WIREFRAMES.md
 de quem é o chamado?        → 02
 qual URL e qual JSON?       → 03
 onde fica o segredo?        → 04

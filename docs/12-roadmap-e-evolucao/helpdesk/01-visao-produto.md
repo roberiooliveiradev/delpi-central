@@ -24,25 +24,12 @@ Estados obrigatórios em cada tela: carregando, vazio, erro, acesso negado.
 
 ## 3. Wireframe
 
+O desenho fechado das telas, dos componentes do kit e do claro/escuro está em [`WIREFRAMES.md`](./WIREFRAMES.md). A visão resumida:
+
 ```text
-Meus Chamados de TI
-[ Novo chamado ]
-
-Meus chamados
-card: título, status, categoria, urgência
-vazio: "Você ainda não tem chamados."
-
---- Novo chamado ---
-Título
-Descrição
-Categoria   (lista vinda do GLPI)
-Urgência    (lista vinda do GLPI)
-[ Enviar ]
-
---- Chamado 1234 ---
-Título, status, categoria, urgência
-Linha do tempo
-[ Novo acompanhamento ]
+/apps/helpdesk                  lista em cartões
+/apps/helpdesk/tickets/new      título, descrição, categoria, urgência
+/apps/helpdesk/tickets/{id}     resumo, descrição, linha do tempo, acompanhamento
 ```
 
 Deep link do detalhe fica na URL do MFE (`/apps/helpdesk/tickets/{id}`), para sobreviver a atualizar a página.

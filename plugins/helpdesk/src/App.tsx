@@ -12,7 +12,7 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
   const pathname = useHelpdeskRouterPath(pathnameFromHost);
   const route = parseHelpdeskRoute(pathname);
   return (
-    <div className="dashboard-helpdesk">
+    <div className="dashboard-helpdesk dashboard-page">
       <HelpdeskPage route={route} />
     </div>
   );

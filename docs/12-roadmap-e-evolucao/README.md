@@ -59,6 +59,7 @@ Estado atual, decisões consolidadas, pendências e plano de evolução.
 |---|---|
 | [helpdesk/README.md](./helpdesk/README.md) | Entrada — GLPI dono do chamado, BFF em nome do usuário, ondas H0–H5 |
 | [helpdesk/INDEX.md](./helpdesk/INDEX.md) | Roteamento da documentação |
+| [helpdesk/WIREFRAMES.md](./helpdesk/WIREFRAMES.md) | Telas, componentes do kit, estados e claro/escuro |
 | [helpdesk/06-plano-execucao.md](./helpdesk/06-plano-execucao.md) | Ordem executável E1–E5 (não autoriza implementação sozinha) |
 
 ### Apontamento de Produção
