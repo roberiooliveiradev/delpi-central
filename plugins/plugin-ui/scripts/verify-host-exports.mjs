@@ -27,6 +27,9 @@ const REQUIRED_HOST_EXPORTS = [
   "createDashboardEntityAvatarLabel",
   "createDashboardEventsSection",
   "createDashboardRecentAccessStrip",
+  "formatPortalGreeting",
+  "firstNameFromDisplay",
+  "portalDayPeriodGreeting",
 ];
 
 function findIndexExpose(dir) {

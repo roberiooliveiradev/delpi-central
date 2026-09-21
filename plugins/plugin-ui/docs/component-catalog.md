@@ -560,9 +560,17 @@ const classNames = chartCardBemClasses("dp", { withHeading: false, withActions: 
 
 OWNS: eyebrow, título, descrição, actions, badge, highlights e body/filters.
 
-DOES NOT OWN: saudação personalizada, cálculo de métricas, filtros de domínio.
+DOES NOT OWN: identidade do usuário, cálculo de métricas, filtros de domínio. O título pode receber a string de `formatPortalGreeting`.
 
 Highlights aceitam `label`, `value`, `description?`, `tone?` e `loading?`. Não criar um segundo Hero.
+
+### `formatPortalGreeting`
+
+OWNS: apresentação de período do dia + primeiro nome.
+
+DOES NOT OWN: fetch de identidade, JWT, persistência, AuthZ, cargo ou perfil.
+
+`firstNameFromDisplay` e `portalDayPeriodGreeting` são helpers do mesmo chrome. Clock é injetável. Sem nome, o portal passa o `fallback` digno.
 
 ### `EventsSection`
 

@@ -42,6 +42,12 @@ export {
   resolveColorFamily,
 } from "./theme/colorFamilyCatalog";
 export * from "./utils";
+/** Hosts dos portais consomem a saudação sem uso interno no remote. */
+export {
+  firstNameFromDisplay,
+  formatPortalGreeting,
+  portalDayPeriodGreeting,
+} from "./utils/portalGreeting";
 export * from "./displayFormat";
 export * from "./components/displayFormat";
 export * from "./hooks";
