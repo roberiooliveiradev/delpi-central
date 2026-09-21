@@ -4,7 +4,7 @@
   "name": "Meus Chamados de TI",
   "description": "Abertura e acompanhamento dos chamados de TI da pessoa, com o GLPI como fonte.",
   "icon": "lucide-message-circle-warning",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "type": "microfrontend",
   "basePath": "/apps/helpdesk",
   "entry": "/apps/helpdesk/assets/remoteEntry.js",
@@ -13,6 +13,12 @@
       "code": "helpdesk.access",
       "name": "Acessar Meus Chamados de TI",
       "description": "Permite abrir Meus Chamados de TI.",
+      "module": "helpdesk"
+    },
+    {
+      "code": "helpdesk.console",
+      "name": "Abrir o console do helpdesk",
+      "description": "Abre o GLPI já autenticado com a sessão da Minha DELPI.",
       "module": "helpdesk"
     }
   ],
@@ -25,6 +31,16 @@
       "entry": null,
       "order": 1,
       "showInMenu": true
+    },
+    {
+      "path": "/apps/helpdesk/console",
+      "label": "Console do helpdesk",
+      "permission": "helpdesk.console",
+      "icon": "headset",
+      "entry": "https://helpdesk.centraldelpi.com.br/?samlIdpId=1",
+      "order": 2,
+      "showInMenu": true,
+      "openInNewTab": true
     }
   ],
   "ui": {

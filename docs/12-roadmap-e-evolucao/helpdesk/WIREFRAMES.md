@@ -202,7 +202,7 @@ Estas telas só entram depois de decisão nova. Quando entrarem, usam o kit abai
 |---|---|---|
 | Anexo | detalhe, abaixo da timeline | `createDashboardFileDropzone` para escolher; `FilePreviewModal` para ver. Envio continua sem retry e com `Idempotency-Key` |
 | Satisfação | detalhe, só se o status estiver solucionado | `HelpdeskSelect` ou botões `ActionButton` com os valores que o GLPI devolver. Sem componente de estrela no MFE |
-| Bancada do técnico | não há rota neste MFE | permanece em `helpdesk.centraldelpi.com.br` |
+| Bancada do técnico | rota de menu `/apps/helpdesk/console`, fora do MFE | abre `helpdesk.centraldelpi.com.br` em nova aba, com `samlIdpId=1`, só para `helpdesk.console` |
 | Entidade | não há campo | continua a entidade padrão do usuário |
 
 Se o kit não tiver o primitivo na hora de H5, o primitivo nasce em `plugins/plugin-ui` e só depois o MFE ganha a factory. O wireframe desta seção é atualizado no mesmo passo.

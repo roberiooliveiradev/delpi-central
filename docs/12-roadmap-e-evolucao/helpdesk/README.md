@@ -43,7 +43,7 @@ entrar na Minha DELPI
 → acompanhar e incluir follow-up
 ```
 
-A fila do técnico, o inventário e a administração continuam no GLPI em `https://helpdesk.centraldelpi.com.br`.
+A fila do técnico, o inventário e a administração continuam no GLPI em `https://helpdesk.centraldelpi.com.br`. Quem tem `helpdesk.console` vê no menu **Console do helpdesk**, que abre esse endereço já pela sessão da Minha DELPI.
 
 ## 3. Authorities
 
