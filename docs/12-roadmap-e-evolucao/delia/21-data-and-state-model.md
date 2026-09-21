@@ -1377,6 +1377,16 @@ Cache/materialization never becomes permission or business authority.
 
 ## 31. Shared-device / Edge / worker isolation
 
+Browser residency (C2-T1D1, `BROWSER_STATE_RESIDENCY_POLICY=APPROVED`):
+
+- current DÉLIA runtime has no proven `BROWSER_RETAINED_STATE`; `BROWSER_RETAINED_STATE_CURRENTLY_REQUIRED=NO`;
+- `CENTRALIZED_BROWSER_STATE_BOUNDARY=REQUIRED_ON_FIRST_RETAINED_STATE`; `CURRENT_RUNTIME_IMPLEMENTATION=NONE`;
+- transient UI state may stay in the mounted component; retained browser state requires the gate in `49` §6.1;
+- session-scoped state clears on logout/session invalidation; user-scoped state must not be readable by the next user; uncertain class clears;
+- DÉLIA-owned keys, when they exist, must be namespaced, enumerable, and versioned so stale versions and the current session can be removed from one lifecycle path;
+- no namespace syntax is frozen, and no namespace is claimed in the current runtime;
+- browser copies are not authoritative and are not a shadow record for Evidence, Decision, Work, domain facts, or authorization.
+
 - user switch clears personal/context/media/external/memory projections;
 - RPA worker/session cannot leak prior execution credentials/data;
 - scheduler/background occurrence does not reuse browser/session credential as authorization;

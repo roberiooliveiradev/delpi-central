@@ -1067,7 +1067,7 @@ Também provar:
 
 - WorkspaceContext bounded/sanitized;
 - EntityRef/SourceRef sem credential/permission truth;
-- shared-device logout/user-switch cleanup;
+- shared-device logout/user-switch cleanup (`CP-158`, C2-T1D1): User A → DÉLIA → Portal logout/session end → User B on the same browser must not see or use User A DÉLIA retained browser state; default uncertain retention is clear/fail-closed; status until a retained-state consumer exists = `TEST_NOT_RUN`; the test must prove outcome, not only that a cleanup function was called;
 - authorized app/route/entity commands;
 - arbitrary URL/navigation target rejected;
 - iframe bridge safe;

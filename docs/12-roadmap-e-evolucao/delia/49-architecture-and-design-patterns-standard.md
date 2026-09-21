@@ -126,6 +126,22 @@ features/contracts/adapters only when responsibility is real
 
 Durable business/memory/artifact/process/model/automation state is backend-owned. Browser never becomes secret/token/model-registry store.
 
+### 6.1 Browser State Residency — Product Master C2-T1D1
+
+`BROWSER_STATE_RESIDENCY_POLICY=APPROVED`. Documentation only. No storage framework in this decision.
+
+Keycloak remains authentication/session authority. Portal remains login/logout/session host. DÉLIA follows the host lifecycle and clears DÉLIA-owned browser state when required. DÉLIA does not implement a second authentication stack, call Keycloak as a parallel logout authority, or own the Portal session.
+
+`TRANSIENT_UI_STATE` (open/closed control, current render, pathname/search projection, temporary component state) may stay local when it ends with the mounted surface and leaves no material cross-user residue.
+
+`BROWSER_RETAINED_STATE` is any state that can survive React unmount, federated unmount, route change, reload, Portal logout, user change, or device reuse. Categories governed when introduced, not claimed as current DÉLIA usage: `localStorage`, `sessionStorage`, IndexedDB, Cache API, persisted browser caches, service-worker application data, module-level state that outlives React roots, client persistence libraries, browser artifact refs, drafts, and offline/client queues.
+
+Before any `BROWSER_RETAINED_STATE` is introduced, the task must pass the Browser State Residency Gate: need, owner, classification, authority (default NO), user/session scope, storage mechanism, retention, invalidation, centralized cleanup, session-change behavior, security/privacy, versioning, and a User A → logout → User B isolation test. Missing answers forbid the state.
+
+Feature code must not own retained browser storage directly. The first real retained-state consumer makes `BROWSER_STATE_BOUNDARY=REQUIRED` and implements only the smallest adapter/registry/scoped service that can run one semantic cleanup (`clearCurrentSessionState()` or equivalent) without every feature knowing every key. Do not create a generic storage framework before that consumer exists.
+
+Default when retention class is uncertain: clear / fail closed. Browser state never stores passwords, client secrets, refresh tokens, service credentials, provider secrets, authorization decisions, or permission grants. Raw access tokens stay on the Portal/Keycloak transport path and are not copied into DÉLIA browser persistence. Durable Evidence, Decision, Work, outcomes, and domain facts stay backend-owned.
+
 ## 7. Pattern Decision Matrix
 
 | Problem | Default pattern | Boundary |

@@ -73,14 +73,14 @@ OUT_OF_SCOPE_WITH_DECISION
 | CP-135 | Error/Result model transversal | Application/Interfaces | contract/conformance | PLANNED |
 | CP-136 | EventEnvelope + Outbox/Idempotency/Resilience rules | Platform/Work | conformance | PLANNED |
 | CP-137 | State Machine para lifecycles não triviais | Domain/Policy/Work | transition tests | PLANNED |
-| CP-138 | Frontend state ownership | Portal/DÉLIA MFE | frontend conformance | PLANNED |
+| CP-138 | Frontend state ownership | Portal/DÉLIA MFE | frontend conformance; browser-retained residency gate and centralized removability (C2-T1D1) | PLANNED — policy APPROVED; runtime boundary not implemented |
 | CP-139 | Adapter/ACL/Strangler para integrações legadas quando necessário | Architecture | migration gate | PLANNED |
 | CP-140 | Architecture conformance + ADR process | Architecture | conformance/ADR | PLANNED |
 | CP-146 | Zero dependência de runtime do Minha DELPI Chat | DÉLIA Platform | Chat-offline/scan | PLANNED |
 | CP-147 | Persistência/migration chain próprias da DÉLIA | DÉLIA API (`delia-api/migrations/` when owned state exists) | storage ownership | PLANNED — **NOT_APPLICABLE_AT_C1** (C1-T6D1: no DÉLIA-owned persisted state; REQUIRED on first owned persistence) |
 | CP-154 | Inventário Portal/Core/Gateway/APIs/MFEs antes do runtime | Architecture | C0.S0 evidence | PLANNED |
 | CP-157 | Media capture/consent/retention classes definidas antes do runtime multimodal contínuo | DÉLIA Security/Architecture | media/privacy foundation | PLANNED |
-| CP-158 | Shared-device identity/session isolation | DÉLIA/Portal/Security | device session negative tests | PLANNED |
+| CP-158 | Shared-device identity/session isolation | DÉLIA/Portal/Security | User A → logout → User B negative (C2-T1D1) | PLANNED — invariant FROZEN_ACCEPTED; tests TEST_NOT_RUN |
 | CP-175 | Raw media minimization e retention class-specific | DÉLIA Media/Security | retention/data minimization | PLANNED |
 | CP-176 | Sem reconhecimento facial open-world/indiscriminado, emotion detection como truth ou hidden surveillance por default | Security/Governance | privacy negative gate | PLANNED |
 | CP-178 | Arbitrary LLM→machine command proibido | DÉLIA/Industrial Safety | OT boundary gate | PLANNED |
@@ -577,7 +577,8 @@ Review: `ARCHITECTURE_REVIEW_C0_S1`; `REVIEWED_HEAD=c822f0e72495256c3459a4b36b9c
 | CP | Naming/ownership note (C0.S1 accepted) | Status unchanged |
 |---|---|---|
 | CP-130–CP-134, CP-140 | architecture gates; no path invent | PLANNED |
-| CP-138 | owner label → Portal/DÉLIA MFE | PLANNED |
+| CP-138 | owner label → Portal/DÉLIA MFE; C2-T1D1 acceptance adds transient vs retained browser state, residency gate, centralized cleanup/removability; no new CP | PLANNED |
+| CP-158 | C2-T1D1 acceptance adds User A → Portal logout → User B isolation for DÉLIA-owned browser state; Portal/Keycloak keep session authority | PLANNED |
 | CP-141 | path → `delia-api/` | LOCKED (C1) |
 | CP-142 | path → `plugins/delia/` | LOCKED (C1) |
 | CP-143 | `id=delia`; manifest source DÉLIA; registry Core | LOCKED (C1) |

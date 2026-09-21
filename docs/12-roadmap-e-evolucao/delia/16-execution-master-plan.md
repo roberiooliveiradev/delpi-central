@@ -3,7 +3,7 @@
 **Status:** planejamento executável canônico  
 **Autoridade de ordem:** **este documento é a única fonte de verdade para a sequência de implementação**  
 **Produto:** **DÉLIA**, aplicação standalone nova  
-**Próxima etapa:** `C2-T2 — HOST_PRESENTATION_BINDING_AND_SESSION_ISOLATION` (`C2-T1` inventory freeze recorded; `C2_IMPLEMENTATION_STARTED=NO`; `C1_BOOTSTRAP_ACCEPTANCE=ACCEPT_WITH_RESIDUAL`; `PRODUCTION_READINESS=NOT_PROVEN`)
+**Próxima etapa:** `C2-T2 — HOST_PRESENTATION_BINDING_AND_SESSION_ISOLATION_VERIFICATION` (`C2-T1D1` browser-state policy approved; no storage/logout abstraction unless the residency gate applies; `C2_IMPLEMENTATION_STARTED=NO`)
 **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Baseline:** [`51-platform-integration-baseline.md`](./51-platform-integration-baseline.md)  
 **Bootstrap:** [`52-standalone-repository-and-bootstrap-plan.md`](./52-standalone-repository-and-bootstrap-plan.md)  
@@ -366,7 +366,11 @@ C2_STARTED = NO
 C2_IMPLEMENTATION_STARTED = NO
 PORTAL_HOST_CONTRACT = FROZEN_ACCEPTED (current AppHost props; ≠ business AuthZ)
 OPERATIONAL_CONTEXT = TO_INVENTORY (no runtime WorkspaceContext)
-NEXT = C2-T2 — HOST_PRESENTATION_BINDING_AND_SESSION_ISOLATION (do not start automatically)
+BROWSER_STATE_RESIDENCY_POLICY = APPROVED (C2-T1D1)
+BROWSER_RETAINED_STATE_CURRENTLY_REQUIRED = NO
+CENTRALIZED_BROWSER_STATE_BOUNDARY = REQUIRED_ON_FIRST_RETAINED_STATE
+SHARED_DEVICE_ISOLATION_INVARIANT = FROZEN_ACCEPTED
+NEXT = C2-T2 — HOST_PRESENTATION_BINDING_AND_SESSION_ISOLATION_VERIFICATION (do not start automatically; no storage framework)
 ```
 
 ## C0.S2 — Authorities / bounded contexts
@@ -593,7 +597,7 @@ FOUNDATION_FREEZE = APPROVED does NOT mean:
 - typed PlatformCommands;
 - global panel/full-page parity;
 - iframe bridge/security;
-- shared-device/session cleanup;
+- shared-device/session cleanup under `BROWSER_STATE_RESIDENCY_POLICY` (C2-T1D1): verify host lifecycle first; introduce a browser-state boundary only when retained state is proven;
 - operational context OP/machine/product/operation/posto;
 - no memory/Edge/device/tool/provider state as permission authority.
 
