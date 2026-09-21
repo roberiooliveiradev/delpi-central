@@ -35,8 +35,7 @@ export function visibleManualLinks(
 
 export const USER_MANUAL_CONTENT = {
   backHome: "Voltar ao início",
-  scopeNote:
-    "Este manual descreve o que o Portal Transforma+ já oferece. Sala de interação ainda não faz parte deste portal.",
+  scopeNote: "Este manual descreve o que o Portal Transforma+ já oferece.",
   tocTitle: "Neste manual",
   tocAriaLabel: "Sumário do manual",
   conceptsTitle: "Conceitos",
@@ -155,6 +154,33 @@ export const USER_MANUAL_CONTENT = {
           where: "Minhas tarefas",
           how: "Use Nova tarefa, os filtros Pendentes/Concluídas/Todas ou Atualizar.",
           path: TRANSFORMOMETRO_ROUTES.myTasks,
+        },
+      ],
+    },
+    {
+      id: "interaction",
+      title: "Sala de interação",
+      intro:
+        "A sala reúne a conversa de um processo. A lista mostra só processos que já têm sala. Abrir um processo cria a sala daquele processo na primeira vez.",
+      bullets: [
+        "Na barra, Sala de interação abre a lista. Escolha um processo para ler as mensagens.",
+        "Se a lista estiver vazia, abra Meus processos e, no processo, use Sala de interação.",
+        "Escreva a mensagem e use Enviar. O texto permanece se o envio falhar.",
+        "Atualizar busca as mensagens de novo. A conversa não aparece sozinha.",
+        "A sala não substitui tarefas, atas nem revisões. Cada uma continua no seu lugar.",
+      ],
+      links: [
+        {
+          want: "Abrir as salas",
+          where: "Sala de interação",
+          how: "Use Sala de interação na barra ou no grupo Operação do Início.",
+          path: TRANSFORMOMETRO_ROUTES.interactionRooms,
+        },
+        {
+          want: "Começar a conversa de um processo",
+          where: "Meus processos",
+          how: "Abra o processo e use Sala de interação no painel.",
+          path: TRANSFORMOMETRO_ROUTES.processes,
         },
       ],
     },

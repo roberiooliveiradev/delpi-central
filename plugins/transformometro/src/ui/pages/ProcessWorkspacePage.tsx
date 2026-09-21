@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, Copy, Trash2 } from "lucide-react";
+import { ArrowLeft, Copy, MessagesSquare, Trash2 } from "lucide-react";
 
 import type { AppProps } from "../../App";
 import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
 import { TransformometroShell } from "../../components/TransformometroShell";
-import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
+import { TRANSFORMOMETRO_ROUTES, buildInteractionRoomPath } from "../../constants/routes";
+import { openInteractionRoom } from "../../data/api/transformometroInteractionApi";
 import {
   deleteProcesso,
   duplicateProcesso,
@@ -68,6 +69,8 @@ export function ProcessWorkspacePage({
 }: Props) {
   const confirm = useConfirm();
   const processoId = route.processoId;
+  const [openingRoom, setOpeningRoom] = useState(false);
+  const [roomError, setRoomError] = useState<string | null>(null);
   const activeSection = useProcessoWorkspaceSection();
   const activeInstanciaSection = useInstanciaWorkspaceSection();
   const [mountedPanels, setMountedPanels] = useState<Set<string>>(() => new Set());
@@ -228,6 +231,19 @@ export function ProcessWorkspacePage({
     }
   }
 
+  async function handleOpenInteractionRoom() {
+    setOpeningRoom(true);
+    setRoomError(null);
+    try {
+      const room = await openInteractionRoom(processoId, getAccessToken);
+      onNavigate(buildInteractionRoomPath(room.id));
+    } catch (reason) {
+      setRoomError(reason instanceof Error ? reason.message : "Não foi possível abrir a sala.");
+    } finally {
+      setOpeningRoom(false);
+    }
+  }
+
   const processBackAction = (
     <button type="button" className={`${DS_GHOST_BTN} tm-processo-workspace-sidebar__action-btn`} onClick={onBack}>
       <ArrowLeft size={16} />
@@ -237,6 +253,18 @@ export function ProcessWorkspacePage({
 
   const processSidebarActions = (
     <>
+      <button
+        type="button"
+        className={`${DS_GHOST_BTN} tm-processo-workspace-sidebar__action-btn`}
+        disabled={!processo || openingRoom}
+        onClick={() => void handleOpenInteractionRoom()}
+      >
+        <MessagesSquare size={16} />
+        Sala de interação
+      </button>
+      {roomError ? (
+        <p role="alert">{roomError}</p>
+      ) : null}
       <button
         type="button"
         className={`${DS_GHOST_BTN} tm-processo-workspace-sidebar__action-btn`}

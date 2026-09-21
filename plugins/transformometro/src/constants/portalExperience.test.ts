@@ -33,13 +33,14 @@ describe("Portal Transforma+ navigation", () => {
     expect(PORTAL_TOPBAR_ITEMS.map((item) => item.label)).toEqual([
       "Início",
       "Visão geral",
+      "Sala de interação",
       "Minhas tarefas",
       "Meus processos",
       "Administração",
       "Ajuda",
     ]);
     const labels = PORTAL_TOPBAR_ITEMS.map((item) => item.label).join(" ");
-    expect(labels).not.toMatch(/Atas|Configurações|Exportar|Sala|Favoritos/);
+    expect(labels).not.toMatch(/Atas|Configurações|Exportar|Favoritos/);
   });
 
   it("não coloca Configurações como área principal", () => {
@@ -52,6 +53,7 @@ describe("Portal Transforma+ navigation", () => {
         "Exportar / Importar",
         "Meus processos",
         "Minhas tarefas",
+        "Sala de interação",
         "Visão geral",
         "Administração",
       ]),
@@ -62,14 +64,15 @@ describe("Portal Transforma+ navigation", () => {
     expect(visible).toContain("Exportar / Importar");
   });
 
-  it("não promove sala ou usuário a funcional", () => {
-    expect(DEFERRED_NAV_ITEMS.map((item) => item.label)).toEqual(["Sala de interação", "Usuário"]);
+  it("mantém usuário fora da TopBar", () => {
+    expect(DEFERRED_NAV_ITEMS.map((item) => item.label)).toEqual(["Usuário"]);
     expect(DEFERRED_NAV_ITEMS.every((item) => item.status === "TO_INVENTORY")).toBe(true);
     const topIds = PORTAL_TOPBAR_ITEMS.map((item) => item.id);
     for (const item of DEFERRED_NAV_ITEMS) {
       expect(topIds).not.toContain(item.id);
     }
     expect(topIds).toContain("help");
+    expect(topIds).toContain("interaction");
   });
 
   it("preserva deep links fora da TopBar", () => {
@@ -82,6 +85,12 @@ describe("Portal Transforma+ navigation", () => {
     expect(parseTransformometroPath(TRANSFORMOMETRO_ROUTES.settingsUnits).view).toBe("configuracoes");
     expect(parseTransformometroPath(TRANSFORMOMETRO_ROUTES.data).view).toBe("dados");
     expect(parseTransformometroPath(TRANSFORMOMETRO_ROUTES.myTasks).view).toBe("myTasks");
+    expect(parseTransformometroPath(TRANSFORMOMETRO_ROUTES.interactionRooms).view).toBe(
+      "interactionRooms",
+    );
+    expect(
+      parseTransformometroPath(`${TRANSFORMOMETRO_ROUTES.interactionRooms}/room-1`).roomId,
+    ).toBe("room-1");
     expect(parseTransformometroPath(TRANSFORMOMETRO_ROUTES.help).view).toBe("help");
     expect(parseTransformometroPath("/apps/transformometro/ajuda").view).toBe("help");
     expect(parseTransformometroPath("/apps/transformometro/manual").view).toBe("dashboard");
@@ -90,6 +99,11 @@ describe("Portal Transforma+ navigation", () => {
   it("marca Administração nas rotas administrativas e não na home", () => {
     expect(resolvePortalTopBarId(TRANSFORMOMETRO_ROUTES.home)).toBe("home");
     expect(resolvePortalTopBarId(TRANSFORMOMETRO_ROUTES.dashboard)).toBe("overview");
+    expect(resolvePortalTopBarId(TRANSFORMOMETRO_ROUTES.myTasks)).toBe("tasks");
+    expect(resolvePortalTopBarId(TRANSFORMOMETRO_ROUTES.interactionRooms)).toBe("interaction");
+    expect(resolvePortalTopBarId(`${TRANSFORMOMETRO_ROUTES.interactionRooms}/room-1`)).toBe(
+      "interaction",
+    );
     expect(resolvePortalTopBarId(TRANSFORMOMETRO_ROUTES.processes)).toBe("processes");
     expect(resolvePortalTopBarId(TRANSFORMOMETRO_ROUTES.settingsUnits)).toBe("administration");
     expect(resolvePortalTopBarId(TRANSFORMOMETRO_ROUTES.data)).toBe("");
@@ -109,8 +123,10 @@ describe("Portal Transforma+ navigation", () => {
       TRANSFORMOMETRO_ROUTES.data,
     );
     expect(filterPortalCatalog("manual").map((item) => item.path)).toContain(TRANSFORMOMETRO_ROUTES.help);
-    expect(filterPortalCatalog("sala")).toEqual([]);
-    expect(filterPortalCatalog("").some((item) => item.id === "interaction")).toBe(false);
+    expect(filterPortalCatalog("sala").map((item) => item.path)).toContain(
+      TRANSFORMOMETRO_ROUTES.interactionRooms,
+    );
+    expect(filterPortalCatalog("").some((item) => item.id === "interaction")).toBe(true);
     expect(filterPortalCatalog("administração", { includeAdministration: false })).toEqual([]);
     expect(filterPortalCatalog("unidades", { includeAdministration: false })).toEqual([]);
     expect(filterPortalCatalog("unidades", { includeAdministration: true }).map((item) => item.path)).toContain(
@@ -191,6 +207,7 @@ describe("Portal Transforma+ navigation", () => {
         "Visão geral",
         "Meus processos",
         "Minhas tarefas",
+        "Sala de interação",
         "Atas",
         "Exportar / Importar",
         "Administração",
@@ -198,14 +215,15 @@ describe("Portal Transforma+ navigation", () => {
       ]),
     );
     const text = JSON.stringify(USER_MANUAL_CONTENT);
-    expect(text).not.toMatch(/Keycloak|MCP|GPT Actions|JWT/);
-    expect(text).toContain("Sala de interação ainda não faz parte deste portal.");
+    expect(text).not.toMatch(/Keycloak|MCP|GPT Actions|JWT|plugin-ui|WebSocket/);
+    expect(text).toContain("A sala reúne a conversa de um processo.");
+    expect(text).not.toContain("ainda não faz parte deste portal");
     expect(text).toContain("usuários responsáveis pela administração do Portal");
     for (const section of USER_MANUAL_CONTENT.sections) {
       for (const link of visibleManualLinks(section.links, false)) {
         expect(link.path).toBeTruthy();
         const view = parseTransformometroPath(link.path!).view;
-        expect(["home", "help", "dashboard", "processos", "myTasks", "atas", "dados"]).toContain(view);
+        expect(["home", "help", "dashboard", "processos", "myTasks", "interactionRooms", "atas", "dados"]).toContain(view);
       }
     }
     const adminLinks = USER_MANUAL_CONTENT.sections.flatMap((section) =>
@@ -224,6 +242,7 @@ describe("Portal Transforma+ navigation", () => {
     expect(visiblePortalTopBarItems(false).map((item) => item.label)).toEqual([
       "Início",
       "Visão geral",
+      "Sala de interação",
       "Minhas tarefas",
       "Meus processos",
       "Ajuda",

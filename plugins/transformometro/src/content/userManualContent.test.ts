@@ -18,12 +18,12 @@ describe("Transforma+ user manual", () => {
     expect(text).toMatch(/nota IDD/);
     expect(text).not.toMatch(/Strategic Indicators/);
     expect(text).not.toMatch(/Keycloak/);
-    expect(text).toMatch(/ainda não faz(em)? parte deste portal/);
+    expect(text).not.toMatch(/ainda não faz(em)? parte deste portal/);
     expect(text).not.toMatch(/carteira/);
     const linked = USER_MANUAL_CONTENT.sections.flatMap((section) => section.links ?? []);
     expect(
       linked
-        .filter((link) => link.where !== "Minhas tarefas")
+        .filter((link) => link.where !== "Minhas tarefas" && link.where !== "Sala de interação")
         .every((link) => !/sala|tarefa/i.test(`${link.want} ${link.where} ${link.path ?? ""}`)),
     ).toBe(true);
     expect(USER_MANUAL_CONTENT.sections.map((section) => section.id)).toEqual([
@@ -32,6 +32,7 @@ describe("Transforma+ user manual", () => {
       "targets-idd",
       "processes",
       "my-tasks",
+      "interaction",
       "minutes",
       "data",
       "administration",

@@ -1,0 +1,61 @@
+.tm-interaction-room {
+  display: grid;
+  grid-template-columns: minmax(16rem, 22rem) minmax(0, 1fr);
+  gap: 1rem;
+  align-items: stretch;
+  min-height: 32rem;
+}
+
+.tm-interaction-room__inbox,
+.tm-interaction-room__thread {
+  min-width: 0;
+  min-height: 24rem;
+}
+
+.tm-interaction-room__thread {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.tm-interaction-room__composer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.tm-interaction-room__composer label {
+  font-size: 0.875rem;
+}
+
+.tm-interaction-room__composer textarea {
+  width: 100%;
+  min-height: 5.5rem;
+  resize: vertical;
+  white-space: pre-wrap;
+}
+
+.tm-interaction-room__composer-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.tm-interaction-room__body {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.tm-interaction-room__alert {
+  margin: 0;
+}
+
+@media (max-width: 900px) {
+  .tm-interaction-room {
+    grid-template-columns: 1fr;
+  }
+
+  .tm-interaction-room--thread .tm-interaction-room__inbox,
+  .tm-interaction-room:not(.tm-interaction-room--thread) .tm-interaction-room__thread {
+    display: none;
+  }
+}

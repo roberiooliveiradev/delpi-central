@@ -27,6 +27,11 @@ export const PORTAL_PAGE_COPY = {
     title: "Minhas tarefas",
     description: "Acompanhe e organize ações que exigem sua atenção.",
   },
+  interactionRooms: {
+    eyebrow: "COLABORAÇÃO",
+    title: "Sala de interação",
+    description: "Converse sobre processos e transformações.",
+  },
   processes: {
     eyebrow: "PROCESSOS",
     title: "Meus processos",
@@ -88,24 +93,15 @@ export type DeferredNavItem = {
 export const PORTAL_TOPBAR_ITEMS = [
   { id: "home", label: "Início", path: TRANSFORMOMETRO_ROUTES.home },
   { id: "overview", label: "Visão geral", path: TRANSFORMOMETRO_ROUTES.dashboard },
+  { id: "interaction", label: "Sala de interação", path: TRANSFORMOMETRO_ROUTES.interactionRooms },
   { id: "tasks", label: "Minhas tarefas", path: TRANSFORMOMETRO_ROUTES.myTasks },
   { id: "processes", label: "Meus processos", path: TRANSFORMOMETRO_ROUTES.processes },
   { id: "administration", label: "Administração", path: TRANSFORMOMETRO_ROUTES.administration },
   { id: "help", label: "Ajuda", path: TRANSFORMOMETRO_ROUTES.help },
 ] as const;
 
-/**
- * Sala permanece em outro contexto.
- * Favoritos de rota deste portal são preferência local do MFE, não item da TopBar de negócio.
- */
+/** Favoritos de rota deste portal são preferência local do MFE, não item da TopBar de negócio. */
 export const DEFERRED_NAV_ITEMS: readonly DeferredNavItem[] = [
-  {
-    id: "interaction",
-    label: "Sala de interação",
-    placement: "topbar",
-    status: "TO_INVENTORY",
-    reason: "A sala funcional pertence ao commercial-api. Não há contrato transversal no Core.",
-  },
   {
     id: "user",
     label: "Usuário",
@@ -137,8 +133,14 @@ export const PORTAL_LAUNCHER_GROUPS: readonly {
   {
     id: "operation",
     title: "Operação",
-    description: "Ações que exigem sua atenção.",
+    description: "Ações e conversas do trabalho no portal.",
     links: [
+      {
+        id: "interaction",
+        label: "Sala de interação",
+        path: TRANSFORMOMETRO_ROUTES.interactionRooms,
+        description: "Converse sobre os processos que já têm uma sala.",
+      },
       {
         id: "my-tasks",
         label: "Minhas tarefas",
@@ -321,6 +323,12 @@ export function resolvePortalTopBarId(currentPath?: string): string {
     return "overview";
   }
   if (currentPath === TRANSFORMOMETRO_ROUTES.myTasks) return "tasks";
+  if (
+    currentPath === TRANSFORMOMETRO_ROUTES.interactionRooms ||
+    currentPath.startsWith(`${TRANSFORMOMETRO_ROUTES.interactionRooms}/`)
+  ) {
+    return "interaction";
+  }
   if (currentPath.includes("/processes") || currentPath.includes("/processos")) {
     return "processes";
   }

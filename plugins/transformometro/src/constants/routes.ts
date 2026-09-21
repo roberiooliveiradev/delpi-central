@@ -37,7 +37,12 @@ export const TRANSFORMOMETRO_ROUTES = {
   dados: "/apps/transformometro/data",
   administration: "/apps/transformometro/administration",
   help: "/apps/transformometro/help",
+  interactionRooms: "/apps/transformometro/interaction-rooms",
 } as const;
+
+export function buildInteractionRoomPath(roomId: string): string {
+  return `${TRANSFORMOMETRO_ROUTES.interactionRooms}/${roomId}`;
+}
 
 export function buildAtaPath(ataId: string): string {
   return `${TRANSFORMOMETRO_ROUTES.meetingMinutes}/${ataId}`;
