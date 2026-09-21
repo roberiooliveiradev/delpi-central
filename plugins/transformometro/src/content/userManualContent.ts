@@ -163,9 +163,9 @@ export const USER_MANUAL_CONTENT = {
       intro:
         "A sala reúne a conversa de um processo. A lista mostra só processos que já têm sala. Abrir um processo cria a sala daquele processo na primeira vez.",
       bullets: [
-        "Na barra, Sala de interação abre a lista. Escolha um processo para ler as mensagens.",
-        "Se a lista estiver vazia, abra Meus processos e, no processo, use Sala de interação.",
-        "Escreva a mensagem e use Enviar. O texto permanece se o envio falhar.",
+        "Na barra, Sala de interação abre Conversas. A busca filtra pelo nome ou código do processo.",
+        "Todas e Processos mostram as salas já abertas. A lista não cria sala vazia.",
+        "Escreva a mensagem e envie. O texto permanece se o envio falhar.",
         "Atualizar busca as mensagens de novo. A conversa não aparece sozinha.",
         "A sala não substitui tarefas, atas nem revisões. Cada uma continua no seu lugar.",
       ],

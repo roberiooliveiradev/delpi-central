@@ -1,61 +1,62 @@
-.tm-interaction-room {
-  display: grid;
-  grid-template-columns: minmax(16rem, 22rem) minmax(0, 1fr);
-  gap: 1rem;
-  align-items: stretch;
-  min-height: 32rem;
-}
-
-.tm-interaction-room__inbox,
-.tm-interaction-room__thread {
+.tm-room-workspace {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
   min-width: 0;
-  min-height: 24rem;
+  min-height: calc(100vh - 4.75rem);
 }
 
-.tm-interaction-room__thread {
+.tm-room-workspace__grid {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  align-items: stretch;
+}
+
+.tm-room-inbox-pane,
+.tm-room-thread {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.tm-room-inbox-pane {
+  gap: 0.75rem;
+}
+
+.tm-room-inbox-pane__filters {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
 }
 
-.tm-interaction-room__composer {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.tm-interaction-room__composer label {
-  font-size: 0.875rem;
-}
-
-.tm-interaction-room__composer textarea {
-  width: 100%;
-  min-height: 5.5rem;
-  resize: vertical;
-  white-space: pre-wrap;
-}
-
-.tm-interaction-room__composer-actions {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.tm-interaction-room__body {
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
-
-.tm-interaction-room__alert {
+.tm-room-inbox-pane__refresh,
+.tm-room-thread__refresh,
+.tm-room-alert {
   margin: 0;
 }
 
-@media (max-width: 900px) {
-  .tm-interaction-room {
-    grid-template-columns: 1fr;
-  }
+.tm-room-workspace__grid > .tm-room-inbox-pane,
+.tm-room-workspace .delpi-ui-resizable-columns,
+.tm-room-workspace .delpi-ui-resizable-columns__left,
+.tm-room-workspace .delpi-ui-resizable-columns__right,
+.tm-room-workspace .delpi-ui-room-thread,
+.tm-room-workspace .delpi-ui-room-thread__body,
+.tm-room-workspace .delpi-ui-room-thread__main,
+.tm-room-workspace .delpi-ui-room-thread__stage {
+  min-height: 0;
+}
 
-  .tm-interaction-room--thread .tm-interaction-room__inbox,
-  .tm-interaction-room:not(.tm-interaction-room--thread) .tm-interaction-room__thread {
-    display: none;
-  }
+.tm-room-workspace .delpi-ui-resizable-columns {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.tm-room-workspace .delpi-ui-resizable-columns__right > .tm-room-thread,
+.tm-room-workspace .delpi-ui-room-thread {
+  height: 100%;
 }

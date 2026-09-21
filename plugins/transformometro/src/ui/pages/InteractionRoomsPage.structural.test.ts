@@ -7,19 +7,21 @@ const dir = dirname(fileURLToPath(import.meta.url));
 const source = readFileSync(join(dir, "InteractionRoomsPage.tsx"), "utf8");
 
 describe("InteractionRoomsPage", () => {
-  it("usa o chrome compartilhado em texto puro, sem domínio comercial", () => {
+  it("usa o mesmo canvas de conversas do kit, sem domínio comercial", () => {
+    expect(source).toMatch(/Conversas/);
+    expect(source).toMatch(/Buscar por título da sala/);
+    expect(source).toMatch(/CatalogSearchBar/);
+    expect(source).toMatch(/ScopeChipBar/);
     expect(source).toMatch(/RoomInboxList/);
-    expect(source).toMatch(/RoomHeader/);
-    expect(source).toMatch(/RoomConversationChatColumn/);
+    expect(source).toMatch(/InitialsAvatar/);
+    expect(source).toMatch(/ResizableColumns/);
+    expect(source).toMatch(/MentionComposer/);
+    expect(source).toMatch(/showAttach=\{false\}/);
     expect(source).toMatch(/MessageThread/);
-    expect(source).toMatch(/renderBody/);
-    expect(source).toMatch(/LoadingActivityCard/);
-    expect(source).toMatch(/Nenhuma interação ainda/);
-    expect(source).toMatch(/Abra um processo para iniciar uma interação/);
-    expect(source).not.toMatch(/MentionComposer/);
-    expect(source).not.toMatch(/RoomConversationShell/);
-    expect(source).not.toMatch(/dangerouslySetInnerHTML/);
+    expect(source).toMatch(/Nenhuma mensagem ainda/);
+    expect(source).not.toMatch(/Não lidas|Menções|Murais/);
     expect(source).not.toMatch(/from ["']@delpi\/commercial/);
     expect(source).not.toMatch(/WebSocket|commercial\.interaction|commercial\.access/);
+    expect(source).not.toMatch(/RoomConversationShell/);
   });
 });
