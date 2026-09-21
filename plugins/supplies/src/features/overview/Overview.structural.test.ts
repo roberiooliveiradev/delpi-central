@@ -30,10 +30,9 @@ describe("Overview structural", () => {
     expect(page).not.toContain('type="date"');
 
     const filters = readFileSync(join(here, "OverviewFilters.tsx"), "utf8");
-    expect(filters).toContain("SuppliesFilterBarShell");
+    expect(filters).toContain("SuppliesQuickPeriodSelector");
     expect(filters).toContain("SuppliesDateField");
     expect(filters).toContain("SuppliesMultiSelectField");
-    expect(filters).toContain("SuppliesSegmentToggle");
     expect(filters).not.toContain("SuppliesSelectField");
 
     const otd = readFileSync(join(here, "OverviewOtdSeriesChart.tsx"), "utf8");

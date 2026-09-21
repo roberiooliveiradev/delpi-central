@@ -198,6 +198,11 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
     updatedAt: "2026-09-11",
     changeNote: "Uma moldura: FiltersRow interno sem segunda borda (mantém shell no hero)",
   }),
+  vc("layout", "QuickPeriodSelector", {
+    addedAt: "2026-09-21",
+    description:
+      "Atalhos de período genéricos (Hoje…Personalizado). Chrome FilterBarShell + SegmentToggle; cálculo em periodPreset.",
+  }),
   vc("layout", "FilterInputField"),
   vc("layout", "FilterSelectField", {
     addedAt: CATALOG_EXPAND_DATE,

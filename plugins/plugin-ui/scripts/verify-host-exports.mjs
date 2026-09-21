@@ -32,6 +32,13 @@ const REQUIRED_HOST_EXPORTS = [
   "portalDayPeriodGreeting",
   "createDashboardDepartmentScoreBadge",
   "DepartmentScoreBadge",
+  "QuickPeriodSelector",
+  "createDashboardQuickPeriodSelector",
+  "resolvePeriodPreset",
+  "todayIsoInTimeZone",
+  "detectPeriodPreset",
+  "resolveEffectivePeriodPreset",
+  "PERIOD_PRESET_OPTIONS",
 ];
 
 function findIndexExpose(dir) {

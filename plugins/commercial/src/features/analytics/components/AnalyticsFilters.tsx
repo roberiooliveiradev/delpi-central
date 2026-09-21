@@ -1,9 +1,7 @@
 import {
   CommercialDateField,
-  CommercialFilterBarShell,
   CommercialMultiSelectField,
-  CommercialSectionHintLabel,
-  CommercialSegmentToggle,
+  CommercialQuickPeriodSelector,
   CommercialSelectField,
   cmFiltersKit,
 } from "../../../app/commercialUi";
@@ -12,10 +10,7 @@ import { ANALYTICS_CONTENT } from "../../../content/analyticsContent";
 import { SellerScopeFilter, ANALYTICS_PORTFOLIO_FILTER_EMPTY_LABEL } from "../../customers/components/SellerScopeFilter";
 import { ANALYTICS_BRANCH_OPTIONS } from "../utils/analyticsBranchFilters";
 import { useAnalyticsCustomerOptions } from "../hooks/useAnalyticsCustomerOptions";
-import {
-  PERIOD_PRESET_OPTIONS,
-  type PeriodPresetId,
-} from "../utils/periodPreset";
+import { type PeriodPresetId } from "../utils/periodPreset";
 import type { AnalyticsFilterUrlState } from "../utils/analyticsFilterUrl";
 import type { SellerPortfolio } from "../../../types/portfolio";
 
@@ -68,28 +63,14 @@ export function AnalyticsFilters({
   return (
     <>
       {onPeriodPreset ? (
-        <CommercialFilterBarShell
-          embedded
+        <CommercialQuickPeriodSelector
+          value={periodPreset}
+          onChange={onPeriodPreset}
+          label={ANALYTICS_CONTENT.filters.periodPreset}
+          hint={CM_HELP.analytics.filterPeriodPreset}
           ariaLabel={ANALYTICS_CONTENT.filters.periodPreset}
-          leading={
-            <div>
-              <CommercialSectionHintLabel
-                label={ANALYTICS_CONTENT.filters.periodPreset}
-                hint={CM_HELP.analytics.filterPeriodPreset}
-              />
-              <CommercialSegmentToggle
-                ariaLabel={ANALYTICS_CONTENT.filters.periodPreset}
-                idPrefix="analytics-period-preset"
-                size="sm"
-                value={periodPreset}
-                onChange={onPeriodPreset}
-                options={PERIOD_PRESET_OPTIONS}
-              />
-            </div>
-          }
-        >
-          {null}
-        </CommercialFilterBarShell>
+          idPrefix="analytics-period-preset"
+        />
       ) : null}
       <FiltersRow variant="extended">
         <CommercialDateField

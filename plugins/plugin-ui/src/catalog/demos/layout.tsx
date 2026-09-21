@@ -28,6 +28,7 @@ import {
   FilterInputField,
   FiltersRow,
   filtersRowBemClasses,
+  QuickPeriodSelector,
   FitText,
   FormActions,
   formActionsBemClasses,
@@ -78,6 +79,7 @@ import {
   UserManualLayout,
   userManualBemClasses,
 } from "../../components/layout";
+import type { PeriodPresetId } from "../../utils/periodPreset";
 import type { CatalogEntryDraft } from "../types";
 
 const ribbonGroupsCn = ribbonGroupsRowBemClasses(PUC_PREFIX);
@@ -118,6 +120,18 @@ const recentAccessCn = {
 const eventsSectionLabels = {
   titleHelpAriaLabel: (title: string) => `Ajuda: ${title}`,
 };
+
+function QuickPeriodSelectorDemo() {
+  const [period, setPeriod] = useState<PeriodPresetId>("this_month");
+  return (
+    <QuickPeriodSelector
+      prefix={PUC_PREFIX}
+      value={period}
+      onChange={setPeriod}
+      hint="Atalhos de período no fuso America/Sao_Paulo."
+    />
+  );
+}
 
 function UnderlineNavDemo({ mode }: { mode: "navigation" | "tabs" }) {
   const [activeId, setActiveId] = useState("overview");
@@ -595,6 +609,22 @@ export const layoutCatalogEntries: CatalogEntryDraft[] = [
         id: "default",
         label: "Com FilterInputField",
         render: () => <FiltersRowDemo />,
+      },
+    ],
+  },
+  {
+    id: "layout.QuickPeriodSelector",
+    family: "layout",
+    exportName: "QuickPeriodSelector",
+    title: "QuickPeriodSelector",
+    description: "Atalhos de período genéricos (Hoje…Personalizado).",
+    docAnchor: "quickperiodselector",
+    propsSummary: ["value", "onChange", "prefix", "hint"],
+    demos: [
+      {
+        id: "default",
+        label: "Padrão",
+        render: () => <QuickPeriodSelectorDemo />,
       },
     ],
   },

@@ -54,6 +54,19 @@ export {
   createDashboardDepartmentScoreBadge,
   departmentScoreBadgeBemClasses,
 } from "./components/layout/DepartmentScoreBadge";
+/** Hosts dos portais consomem o seletor de período sem uso interno no remote. */
+export {
+  QuickPeriodSelector,
+  createDashboardQuickPeriodSelector,
+} from "./components/layout/QuickPeriodSelector";
+export {
+  PERIOD_PRESET_OPTIONS,
+  detectPeriodPreset,
+  parsePeriodPresetId,
+  resolveEffectivePeriodPreset,
+  resolvePeriodPreset,
+  todayIsoInTimeZone,
+} from "./utils/periodPreset";
 export * from "./displayFormat";
 export * from "./components/displayFormat";
 export * from "./hooks";

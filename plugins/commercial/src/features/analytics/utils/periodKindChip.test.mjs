@@ -2,7 +2,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { resolvePeriodKindChip } from "./periodPreset.ts";
+import { resolvePeriodKindChip } from "./periodKindChip.ts";
 
 describe("resolvePeriodKindChip", () => {
   it("mapeia este mês para MTD e ano para YTD", () => {

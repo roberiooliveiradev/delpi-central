@@ -14,6 +14,7 @@ describe("Transforma+ user manual", () => {
     expect(text).toMatch(/últimos acessos/i);
     expect(text).toMatch(/Metas e IDD/);
     expect(text).toMatch(/Economia bruta é o indicador do programa com meta/);
+    expect(text).toMatch(/Use Período rápido para escolher intervalos comuns/);
     expect(text).toMatch(/nota IDD/);
     expect(text).not.toMatch(/Strategic Indicators/);
     expect(text).not.toMatch(/Keycloak/);

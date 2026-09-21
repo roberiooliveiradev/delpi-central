@@ -19,5 +19,6 @@ describe("PortalHomePage shared chrome", () => {
     expect(source).not.toMatch(/label="Favoritos"/);
     expect(source).not.toMatch(/HubChipRow/);
     expect(source).not.toMatch(/from ["']@delpi\/commercial/);
+    expect(source).not.toMatch(/QuickPeriodSelector/);
   });
 });

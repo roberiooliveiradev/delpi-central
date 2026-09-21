@@ -47,6 +47,7 @@ import {
   createDashboardKanbanBoard,
   createDashboardTableFontSizeControls,
   createFilterBarShell,
+  createDashboardQuickPeriodSelector,
   createHostContainedModalShell,
   createHostContainedDrawerShell,
   dateFieldBemClasses,
@@ -452,6 +453,7 @@ export const CommercialFilterBarShell = createFilterBarShell({
   withGrid: true,
   defaultAriaLabel: "Filtros",
 });
+export const CommercialQuickPeriodSelector = createDashboardQuickPeriodSelector(UI_PREFIX);
 
 export const CommercialPagination = createCompactPagination({
   prefix: UI_PREFIX,

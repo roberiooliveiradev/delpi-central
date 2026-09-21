@@ -39,6 +39,7 @@ import {
   createDashboardUserManual,
   createDashboardViewTransition,
   createFilterBarShell,
+  createDashboardQuickPeriodSelector,
   createInitialsAvatar,
   createDashboardEntityAvatarLabel,
   createDashboardInlineNavLink,
@@ -161,6 +162,7 @@ export const SuppliesFilterBarShell = createFilterBarShell({
   withGrid: true,
   defaultAriaLabel: "Filtros",
 });
+export const SuppliesQuickPeriodSelector = createDashboardQuickPeriodSelector(UI_PREFIX);
 
 export const spFiltersKit = createDashboardFiltersKit({
   prefix: UI_PREFIX,

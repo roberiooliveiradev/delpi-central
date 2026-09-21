@@ -12,7 +12,7 @@ O app cobre **todos** os componentes React visuais listados em `src/catalog/visu
 |---------|----------------------|
 | actions | ActionButton, BackLink, IconButton, ClearFiltersButton |
 | help | HelpTooltip, KeyTip, FieldLabel, TabHintCell… |
-| layout | TopBar, TopBarSearchTrigger, TopBarFavoritesStrip, PageHero, EventsSection, RecentAccessStrip, EditorChrome, KpiCard, MetricKpiCard, InitialsAvatar, RibbonGroupsRow, ChartCard… |
+| layout | TopBar, TopBarSearchTrigger, TopBarFavoritesStrip, PageHero, EventsSection, RecentAccessStrip, EditorChrome, KpiCard, MetricKpiCard, InitialsAvatar, RibbonGroupsRow, ChartCard, QuickPeriodSelector… |
 | feedback | EmptyState, **EmptyGuidance**, ModalShell, DrawerShell, ScreenLoading, InlineLoadingProgress, **AlertQueue**, **ScopeChipBar**, **WorklistItem**… |
 | forms | SelectField, DateField, MultiSelectField… |
 | data | DataTable, DataTableSection, CompactPagination, ConfigurablePresentationTable, **Timeline** (`ActivityTimeline` alias)… |
@@ -827,6 +827,21 @@ Shell da linha de filtros (`{prefix}-filters-row`) e campos label+controle reuti
 | `FilterBar` | Alias de `FiltersRow` (roadmap F2.6) |
 
 Helpers: `filtersRowBemClasses(prefix)` e `createDashboardFiltersKit({ prefix, labels, portalScopeClassName? })` — retorna `FiltersRow`, `FilterInputField` e `FilterSelectField`.
+
+### `QuickPeriodSelector`
+
+Atalhos de período genéricos (`today`…`custom`). Chrome = `FilterBarShell` + `SegmentToggle` `sm`. Cálculo em `resolvePeriodPreset` (America/Sao_Paulo). O consumidor aplica datas/competência e busca; o kit não chama API.
+
+```tsx
+<QuickPeriodSelector
+  prefix="ds"
+  value={period}
+  onChange={setPeriod}
+  hint="Atalhos de período no fuso America/Sao_Paulo."
+/>
+```
+
+Helpers: `createDashboardQuickPeriodSelector(prefix)`, `todayIsoInTimeZone`, `detectPeriodPreset`, `resolveEffectivePeriodPreset`.
 
 ### `SimpleKpiCard` / `createKaizenKpiCard` / `createAnalyticsKpiCard`
 

@@ -1,14 +1,12 @@
 import {
   SuppliesDateField,
-  SuppliesFilterBarShell,
   SuppliesMultiSelectField,
-  SuppliesSectionHintLabel,
-  SuppliesSegmentToggle,
+  SuppliesQuickPeriodSelector,
   spFiltersKit,
 } from "../../app/suppliesUi";
 import { SP_HELP } from "../../content/helpTooltips";
 import { OVERVIEW_CONTENT } from "./overviewContent";
-import { PERIOD_PRESET_OPTIONS, type PeriodPresetId } from "../../app/periodPreset";
+import { type PeriodPresetId } from "../../app/periodPreset";
 import { SUPPLIES_UNIT_FIELD_LABEL } from "./suppliesBranchFilters";
 
 type OverviewFiltersProps = {
@@ -38,28 +36,14 @@ export function OverviewFilters({
 
   return (
     <>
-      <SuppliesFilterBarShell
-        embedded
+      <SuppliesQuickPeriodSelector
+        value={period}
+        onChange={onPeriod}
+        label={OVERVIEW_CONTENT.periodPresetLabel}
+        hint={SP_HELP.overviewFiltersPeriod}
         ariaLabel={OVERVIEW_CONTENT.periodPresetLabel}
-        leading={
-          <div>
-            <SuppliesSectionHintLabel
-              label={OVERVIEW_CONTENT.periodPresetLabel}
-              hint={SP_HELP.overviewFiltersPeriod}
-            />
-            <SuppliesSegmentToggle
-              ariaLabel={OVERVIEW_CONTENT.periodPresetLabel}
-              idPrefix="overview-period-preset"
-              size="sm"
-              value={period}
-              onChange={(value) => onPeriod(value as PeriodPresetId)}
-              options={PERIOD_PRESET_OPTIONS}
-            />
-          </div>
-        }
-      >
-        {null}
-      </SuppliesFilterBarShell>
+        idPrefix="overview-period-preset"
+      />
       <FiltersRow variant="extended">
         <SuppliesDateField
           label={OVERVIEW_CONTENT.periodFromLabel}

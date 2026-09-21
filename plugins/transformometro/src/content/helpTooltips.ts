@@ -83,6 +83,8 @@ export const TM_HELP_TOOLTIPS = {
       "Filtro analítico do gráfico: Consolidado (todas as unidades), Unidade ou Departamento. Instâncias multi-unidade contam uma fatia de economia por unidade do recorte. Investimento não multiplica.",
     chatgptAssistente:
       "O Custom GPT do Transformômetro analisa e cadastra com a mesma conta e permissões desta tela. Assinatura manuscrita e uploads ficam só na Minha DELPI.",
+    periodPreset:
+      "Use Período rápido para escolher intervalos comuns ou selecione Personalizado para informar datas manualmente.",
     competencia:
       "Escolhe um mês (competência) e preenche o período automaticamente. Ao ajustar as datas para meses diferentes, a competência fica em branco.",
     dateStart: "Início do período analisado (competência mensal). Filtra economias, custos e horas.",

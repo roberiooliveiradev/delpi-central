@@ -711,6 +711,65 @@ declare module "@delpi/plugin-ui/index" {
     options: Array<{ value: string; label: string }>;
   }>;
 
+  export type PeriodPresetId =
+    | "today"
+    | "this_week"
+    | "this_month"
+    | "last_month"
+    | "this_quarter"
+    | "this_year"
+    | "last_12_months"
+    | "custom";
+
+  export type PeriodPresetRange = {
+    dateStart: string;
+    dateEnd: string;
+    competence: string;
+  };
+
+  export const PERIOD_PRESET_IDS: readonly PeriodPresetId[];
+  export const PERIOD_PRESET_OPTIONS: Array<{ value: PeriodPresetId; label: string }>;
+
+  export function todayIsoInTimeZone(now?: Date, timeZone?: string): string;
+  export function resolvePeriodPreset(
+    preset: PeriodPresetId,
+    now?: Date,
+    timeZone?: string,
+  ): PeriodPresetRange | null;
+  export function detectPeriodPreset(
+    dateStart: string,
+    dateEnd: string,
+    now?: Date,
+    timeZone?: string,
+  ): PeriodPresetId;
+  export function resolveEffectivePeriodPreset(
+    dateStart: string,
+    dateEnd: string,
+    stored?: PeriodPresetId | null,
+    now?: Date,
+    timeZone?: string,
+  ): PeriodPresetId;
+  export function parsePeriodPresetId(value: string | null | undefined): PeriodPresetId | null;
+
+  export function QuickPeriodSelector(props: {
+    value: PeriodPresetId;
+    onChange: (value: PeriodPresetId) => void;
+    prefix?: string;
+    label?: string;
+    hint?: string;
+    ariaLabel?: string;
+    idPrefix?: string;
+  }): ReactNode;
+
+  export function createDashboardQuickPeriodSelector(prefix: string): ComponentType<{
+    value: PeriodPresetId;
+    onChange: (value: PeriodPresetId) => void;
+    label?: string;
+    hint?: string;
+    ariaLabel?: string;
+    idPrefix?: string;
+  }>;
+
   export const OPERATIONAL_UNIT_FIELD_LABEL: string;
   export const OPERATIONAL_UNIT_COLUMN_LABEL: string;
   export const OPERATIONAL_UNIT_OPTIONS: Array<{ value: string; label: string }>;

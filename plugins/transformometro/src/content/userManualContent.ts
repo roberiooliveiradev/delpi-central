@@ -87,6 +87,7 @@ export const USER_MANUAL_CONTENT = {
       title: "Visão geral",
       intro: "Mostra indicadores e resultados do programa de transformação.",
       bullets: [
+        "Use Período rápido para escolher intervalos comuns ou selecione Personalizado para informar datas manualmente.",
         "As visões são Consolidado, Unidade e Departamento. Isso recorta os dados; não muda quem pode abrir o portal.",
         "Em Consolidado, os cards mostram o contexto de todas as unidades e o período.",
         "Em Unidade ou Departamento, o rodapé do card identifica o nome canônico escolhido e o período.",

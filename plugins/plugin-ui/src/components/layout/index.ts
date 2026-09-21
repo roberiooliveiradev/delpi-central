@@ -173,6 +173,11 @@ export {
   type FilterBarShellProps,
 } from "./FilterBarShell";
 export {
+  QuickPeriodSelector,
+  createDashboardQuickPeriodSelector,
+  type QuickPeriodSelectorProps,
+} from "./QuickPeriodSelector";
+export {
   DetailFieldGrid,
   createDashboardDetailFieldGrid,
   createInfoGrid,

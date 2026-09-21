@@ -6,7 +6,7 @@ import {
   resolveEffectivePeriodPreset,
   resolvePeriodPreset,
   todayIsoInTimeZone,
-} from "./periodPreset.ts";
+} from "../../../../../plugin-ui/src/utils/periodPreset.ts";
 
 describe("periodPreset", () => {
   const now = new Date("2026-08-13T18:00:00.000Z"); // afternoon SP

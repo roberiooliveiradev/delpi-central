@@ -19,10 +19,13 @@ import {
   FieldLabel,
   formatIndicatorIddScore,
   NativeTextControl,
+  QuickPeriodSelector,
   SectionCard,
   SegmentToggle,
   sectionCardPacBemClasses,
+  todayIsoInTimeZone,
   useChartGranularitySelection,
+  type PeriodPresetId,
 } from "@delpi/plugin-ui/index";
 import { MultiSelectField } from "../../components/MultiSelectField";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
@@ -73,8 +76,12 @@ import {
 } from "../../utils/format";
 import { buildEvolucaoSavingsSeries } from "../../utils/evolucaoChartSeries";
 import { useTransformometroCatalogWatch } from "../../hooks/useTransformometroCatalogWatch";
-import { currentMonthFilterRange } from "../../utils/dashboardFilters";
 import { competenceToDateRange, dateRangeToCompetence } from "../../utils/competence";
+import {
+  applyDashboardPeriodPreset,
+  defaultDashboardPeriod,
+  effectiveDashboardPeriodPreset,
+} from "../../utils/dashboardPeriod";
 import { horasEconomizadasDiaria } from "../../utils/calcRules";
 import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
 import { buildProcessoPath } from "../../utils/routeParser";
@@ -117,11 +124,11 @@ type Filters = {
 
 type DashboardViewMode = "consolidated" | "filial" | "department";
 
-const monthRange = currentMonthFilterRange();
+const defaultPeriod = defaultDashboardPeriod();
 const defaultFilters: Filters = {
-  dataInicial: monthRange.dataInicial,
-  dataFinal: monthRange.dataFinal,
-  competence: dateRangeToCompetence(monthRange.dataInicial, monthRange.dataFinal),
+  dataInicial: defaultPeriod.dataInicial,
+  dataFinal: defaultPeriod.dataFinal,
+  competence: defaultPeriod.competence,
   filialIds: [],
   setorIds: [],
 };
@@ -168,6 +175,10 @@ function chartHint(
 export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
   const confirm = useConfirm();
   const [filters, setFilters] = useState<Filters>(defaultFilters);
+  const [storedPeriodPreset, setStoredPeriodPreset] = useState<PeriodPresetId | null>(
+    defaultPeriod.periodPreset,
+  );
+  const [forceCustomPreset, setForceCustomPreset] = useState(false);
   const [resumo, setResumo] = useState<DashboardResumo | null>(null);
   const [strategicIndicators, setStrategicIndicators] =
     useState<DashboardStrategicIndicators | null>(null);
@@ -292,35 +303,64 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
     }
   }, [viewMode]);
 
+  const periodPreset = effectiveDashboardPeriodPreset(
+    filters,
+    storedPeriodPreset,
+    forceCustomPreset,
+  );
+
+  const clearStoredPeriodPreset = useCallback(() => {
+    setForceCustomPreset(false);
+    setStoredPeriodPreset(null);
+  }, []);
+
+  const handlePeriodPreset = useCallback(
+    (preset: PeriodPresetId) => {
+      const next = applyDashboardPeriodPreset(preset, filters);
+      setForceCustomPreset(next.forceCustom);
+      setStoredPeriodPreset(next.storedPreset);
+      setFilters((prev) => ({
+        ...prev,
+        dataInicial: next.dataInicial,
+        dataFinal: next.dataFinal,
+        competence: next.competence,
+      }));
+    },
+    [filters],
+  );
+
   const handleCompetenceChange = useCallback((value: string) => {
+    clearStoredPeriodPreset();
     if (!value) {
       setFilters((prev) => ({ ...prev, competence: "" }));
       return;
     }
-    const range = competenceToDateRange(value);
+    const range = competenceToDateRange(value, todayIsoInTimeZone());
     setFilters((prev) => ({
       ...prev,
       competence: value,
       dataInicial: range.dataInicial || prev.dataInicial,
       dataFinal: range.dataFinal || prev.dataFinal,
     }));
-  }, []);
+  }, [clearStoredPeriodPreset]);
 
   const handleDateInicialChange = useCallback((value: string) => {
+    clearStoredPeriodPreset();
     setFilters((prev) => ({
       ...prev,
       dataInicial: value,
       competence: dateRangeToCompetence(value, prev.dataFinal),
     }));
-  }, []);
+  }, [clearStoredPeriodPreset]);
 
   const handleDateFinalChange = useCallback((value: string) => {
+    clearStoredPeriodPreset();
     setFilters((prev) => ({
       ...prev,
       dataFinal: value,
       competence: dateRangeToCompetence(prev.dataInicial, value),
     }));
-  }, []);
+  }, [clearStoredPeriodPreset]);
 
   const load = useCallback(async () => {
     setRefreshing(true);
@@ -661,6 +701,13 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
           />
         }
       >
+      <QuickPeriodSelector
+        prefix="ds"
+        value={periodPreset}
+        onChange={handlePeriodPreset}
+        hint={TM_HELP_TOOLTIPS.dashboard.periodPreset}
+        idPrefix="tm-dashboard-period"
+      />
       <section className={`${DS_FILTERS_ROW} ds-no-print`}>
           <label className={DS_FILTER_BOX}>
             <FieldLabel className="tm-field__label"

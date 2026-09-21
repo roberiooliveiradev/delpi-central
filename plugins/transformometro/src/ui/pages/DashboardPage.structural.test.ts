@@ -12,10 +12,13 @@ describe("DashboardPage shared chrome", () => {
     expect(source).toMatch(/buildGrossSavingsKpiPresentation/);
     expect(source).toMatch(/pickSiIddScoreLabel|iddScoreLabel=\{grossSavingsPresentation/);
     expect(source).toMatch(/DepartmentScoreBadge/);
+    expect(source).toMatch(/QuickPeriodSelector/);
+    expect(source).toMatch(/applyDashboardPeriodPreset/);
     expect(source).toMatch(/fetchDashboardStrategicIndicators/);
     expect(source).not.toMatch(/calculateIndicatorIddScore/);
     expect(source).not.toMatch(/\/apps\/api-delpi/);
     expect(source).not.toMatch(/sum\(/);
     expect(source).not.toMatch(/from ["']@delpi\/commercial/);
+    expect(source).not.toMatch(/\.tm-quick-period/);
   });
 });
