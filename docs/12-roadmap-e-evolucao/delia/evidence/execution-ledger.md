@@ -9,7 +9,7 @@
 **Internet/External Connectors:** [`../55-internet-research-and-external-connectors.md`](../55-internet-research-and-external-connectors.md)  
 **Microsoft Teams:** [`../56-microsoft-teams-connector-and-meeting-integration.md`](../56-microsoft-teams-connector-and-meeting-integration.md)  
 **Autonomous Operations/Execution Hub:** [`../57-event-driven-autonomous-operations-and-automation-execution-hub.md`](../57-event-driven-autonomous-operations-and-automation-execution-hub.md)  
-**Next:** **C1-T3 — next bounded C1 bootstrap step (pending T2 review)** (`C0.S0..=C0.S7=APPROVED`; `FOUNDATION_FREEZE=APPROVED`; `C1_AUTHORIZED=YES`; `C1_STARTED=YES`; `C1_EXECUTED=NO`; `DÉLIA_RUNTIME_DIFF=delia-api skeleton + /health + JWT/Core access context`; C0 remains **NOT_STARTED**; `RUNTIME_READINESS=NOT_PROVEN`; `PRODUCTION_READINESS=NOT_PROVEN`).
+**Next:** **C2-T2 — HOST_PRESENTATION_BINDING_AND_SESSION_ISOLATION** (`C2-T1` inventory freeze; `C2_STARTED=NO`; `C2_IMPLEMENTATION_STARTED=NO`; `C1_EXECUTED=YES`; `PRODUCTION_READINESS=NOT_PROVEN`).
 
 ## 1. Ledger rule
 
@@ -24,8 +24,8 @@ Estado factual de inventory usa `PROVEN | TO_INVENTORY`; planejamento usa `PLANN
 | Fase | Status | Próximo step | Dependência |
 |---|---|---|---|
 | C0 Platform + Architecture + Privacy/Security/Data/Automation/AI Foundations | **NOT_STARTED** | **C1 bootstrap continues (T2 review → next C1 step)** | C0.S0..=C0.S7=APPROVED; FOUNDATION_FREEZE=APPROVED; C1_AUTHORIZED=YES; C1_STARTED=YES |
-| C1 Standalone Bootstrap | IN_PROGRESS | C1-T3 (pending T2 review) | C1-T1/T1R1/T2 JWT+Core context done; C1_EXECUTED=NO |
-| C2 Portal + Operational Context + Commands | LOCKED | — | C1 independence gate |
+| C1 Standalone Bootstrap | ACCEPTED_WITH_RESIDUAL | — | C1-FINAL §6.45 |
+| C2 Portal + Operational Context + Commands | INVENTORY_FROZEN / NOT_STARTED | C2-T2 (do not start automatically) | C2-T1 §6.46; implementation not started |
 | C3 Intelligence + Capability Foundations | LOCKED | — | C1+C2 foundations |
 | C4 Governed Reads + Graph/Semantics/Analysis/Predictive Discovery | LOCKED | — | C3 foundations |
 | C5 Governed Writes + Executors + Durable/Recurring Work + Artifacts/Prescriptive Prepare | LOCKED | — | C4 reads/evidence |
@@ -2070,6 +2070,66 @@ ARCHITECTURE_DECISION_REQUIRED=NONE
 NEXT=C2 — PORTAL_CONTEXT_AND_PLATFORM_COMMANDS (do not start automatically)
 ```
 
+## 6.46 C2-T1 — PORTAL_CONTEXT_AND_PLATFORM_COMMANDS_INVENTORY_FREEZE
+
+```text
+DATE: 2026-09-21
+STEP: C2-T1
+NAME: PORTAL_CONTEXT_AND_PLATFORM_COMMANDS_INVENTORY_FREEZE
+STATUS: INVENTORY_FREEZE
+MODE: INVENTORY + CONTRACT FREEZE + EVIDENCE ONLY
+BASE_HEAD: 97d664aa7b478db457292872105627806808c066
+REVIEWED_HEAD: 712d72b924e3a8dcc08aaca281c581f657b29cd7
+RUNTIME_CODE_CHANGE: NONE
+C2_IMPLEMENTATION_STARTED: NO
+
+POST_C1:
+  61 commits after C1-FINAL.
+  delia-api / plugins/delia / gateway / compose: unchanged.
+  MATERIAL_TO_C2_T1: 783eb1f15 adds Core /me/apps authorizationRoutes
+    and Portal FederatedAppRouteGuard consumes it (fallback app.routes).
+    Host MFE props still use authorized app.routes only.
+  C1 bootstrap reopen: NO.
+  C1 /me/apps payload shape: STALE_FOR_ADDITIVE_FIELD authorizationRoutes only.
+  Remaining commits: OUTSIDE_TASK.
+
+PORTAL_HOST_CONTRACT = FROZEN_ACCEPTED
+  props proven in portal/src/ui/AppHost.tsx mount + updateRoute
+PORTAL_ROUTE_CONTEXT = FROZEN_ACCEPTED
+  basePath, pathname, search, appRoutes, routeLabel, alternateEntry, updateRoute
+OPERATIONAL_CONTEXT = TO_INVENTORY
+  WORKSPACE_CONTEXT_CONCLUSION = MINIMAL_HOST_CONTEXT_ONLY
+  no product WorkspaceContext runtime; Chat workspace is CHAT_ONLY
+PLATFORM_COMMANDS = INVENTORIED
+  C2-allowed future subset: host route presentation + getAccessToken transport
+  logout/favorites/notifications/admin RBAC not exposed as DÉLIA commands
+NO_PARALLEL_AUTHORITY = PASS
+ABSTRACTION_GATE = PASS (no new host interface)
+
+permissions/isSuperadmin = PRESENTATION_CONTEXT from GET /core-api/me
+getAccessToken = Keycloak bearer via tokenRef; refresh = keycloak.updateToken(60)
+JWT claims != final AuthZ
+DELPI_GLOBAL_LOGOUT clears Portal session; federated logout signal is iframe-oriented
+DÉLIA MFE does not subscribe to DELPI_GLOBAL_LOGOUT (gap; not fixed here)
+
+C1_STATE_PRESERVED:
+  C1_BOOTSTRAP_ACCEPTANCE=ACCEPT_WITH_RESIDUAL
+  C1_EXECUTED=YES
+  C1_BOOTSTRAP_RUNTIME_READINESS=PROVEN
+  PRODUCTION_READINESS=NOT_PROVEN
+  C2_AUTHORIZED=YES
+  TYPESCRIPT_ISOLATED=INCONCLUSIVE NON_BLOCKING
+  CORE_CONTEXT_LIVE_NETWORK=TEST_NOT_RUN NON_BLOCKING
+
+TESTS_THIS_TASK = TEST_NOT_RUN (source inspection only)
+EXECUTION_DRIFT = NONE
+ARCHITECTURE_DECISION_REQUIRED = NONE
+DISCOVERED_REQUIREMENT = NONE
+C2_T1_RESULT = INVENTORY_FREEZE_READY_FOR_REVIEW
+C2_STARTED = NO
+NEXT = C2-T2 — HOST_PRESENTATION_BINDING_AND_SESSION_ISOLATION (do not start automatically)
+```
+
 ## 7. Canonical phase mapping
 
 ```text
@@ -2278,4 +2338,4 @@ SAFETY_INTERLOCK_BYPASS
 
 ## 14. First execution
 
-Historical C0.S0..C0.S7 remain **APPROVED** / `FOUNDATION_FREEZE=APPROVED`. C1-T1..T6D1 completed standalone bootstrap. **C1-FINAL** (`§6.45`) accepted bootstrap with non-blocking residuals (`TYPESCRIPT_ISOLATED`, `CORE_CONTEXT_LIVE_NETWORK`). `C1_EXECUTED=YES`. `C1_BOOTSTRAP_ACCEPTANCE=ACCEPT_WITH_RESIDUAL`. `C1_BOOTSTRAP_RUNTIME_READINESS=PROVEN` (bootstrap scope). `PRODUCTION_READINESS=NOT_PROVEN`. `C2_AUTHORIZED=YES`. `C0=NOT_STARTED`. Next bounded phase: **C2 — Portal Context + Platform Commands** (do not start automatically).
+Historical C0.S0..C0.S7 remain **APPROVED** / `FOUNDATION_FREEZE=APPROVED`. C1-T1..T6D1 completed standalone bootstrap. **C1-FINAL** (`§6.45`) accepted bootstrap with non-blocking residuals (`TYPESCRIPT_ISOLATED`, `CORE_CONTEXT_LIVE_NETWORK`). `C1_EXECUTED=YES`. `C1_BOOTSTRAP_ACCEPTANCE=ACCEPT_WITH_RESIDUAL`. `C1_BOOTSTRAP_RUNTIME_READINESS=PROVEN` (bootstrap scope). `PRODUCTION_READINESS=NOT_PROVEN`. `C2_AUTHORIZED=YES`. `C0=NOT_STARTED`. **C2-T1** (`§6.46`) froze the current Portal host/route contract. Operational WorkspaceContext remains `TO_INVENTORY`. `C2_STARTED=NO`. `C2_IMPLEMENTATION_STARTED=NO`. Next bounded task: **C2-T2 — HOST_PRESENTATION_BINDING_AND_SESSION_ISOLATION** (do not start automatically).

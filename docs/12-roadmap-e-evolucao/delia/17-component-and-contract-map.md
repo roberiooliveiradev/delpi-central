@@ -944,6 +944,20 @@ FORBIDDEN: WorkspaceContext!=permission/JWT/secret/SoT;
 STATUS = FROZEN_CANDIDATE
 ```
 
+C2-T1 factual freeze (runtime host props; does not promote WorkspaceContext):
+
+```text
+PROVEN AppHost → federated MFE props:
+  getAccessToken, basePath, pathname, search, alternateEntry,
+  appRoutes {path, entry, openInNewTab}, routeLabel, permissions, isSuperadmin
+SOURCE: Portal AuthContext user (/core-api/me) + apps (/core-api/me/apps routes subset)
+AUTHORITY: presentation/navigation/token transport only
+NOT PASSED: authorizationRoutes, roles, groups, email, profile blob
+WorkspaceContext / EntityRef / OP-machine-product context = NOT runtime = TO_INVENTORY
+ChatWorkspaceContext / TvWorkspaceContext = CHAT_ONLY ≠ product Workspace
+NO new host abstraction (single Portal producer; typed props suffice)
+```
+
 #### DELIA.DOMAIN.READ
 
 ```text

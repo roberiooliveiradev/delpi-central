@@ -3,7 +3,7 @@
 **Status:** planejamento executável canônico  
 **Autoridade de ordem:** **este documento é a única fonte de verdade para a sequência de implementação**  
 **Produto:** **DÉLIA**, aplicação standalone nova  
-**Próxima etapa:** `C2 — PORTAL_CONTEXT_AND_PLATFORM_COMMANDS` (`C1_BOOTSTRAP_ACCEPTANCE=ACCEPT_WITH_RESIDUAL`; `C1_EXECUTED=YES`; `C2_AUTHORIZED=YES`; não iniciar automaticamente; `PRODUCTION_READINESS=NOT_PROVEN`)
+**Próxima etapa:** `C2-T2 — HOST_PRESENTATION_BINDING_AND_SESSION_ISOLATION` (`C2-T1` inventory freeze recorded; `C2_IMPLEMENTATION_STARTED=NO`; `C1_BOOTSTRAP_ACCEPTANCE=ACCEPT_WITH_RESIDUAL`; `PRODUCTION_READINESS=NOT_PROVEN`)
 **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Baseline:** [`51-platform-integration-baseline.md`](./51-platform-integration-baseline.md)  
 **Bootstrap:** [`52-standalone-repository-and-bootstrap-plan.md`](./52-standalone-repository-and-bootstrap-plan.md)  
@@ -361,7 +361,12 @@ PRODUCTION_READINESS = NOT_PROVEN
 C2_AUTHORIZED = YES
 TYPESCRIPT_ISOLATED = INCONCLUSIVE (NON_BLOCKING_RESIDUAL)
 CORE_CONTEXT_LIVE_NETWORK = TEST_NOT_RUN (NON_BLOCKING; formal CORE_CONTEXT=PASS; T6 proved live Core governance path)
-NEXT = C2 — PORTAL_CONTEXT_AND_PLATFORM_COMMANDS (do not start automatically)
+C2_T1 = INVENTORY_FREEZE_READY_FOR_REVIEW
+C2_STARTED = NO
+C2_IMPLEMENTATION_STARTED = NO
+PORTAL_HOST_CONTRACT = FROZEN_ACCEPTED (current AppHost props; ≠ business AuthZ)
+OPERATIONAL_CONTEXT = TO_INVENTORY (no runtime WorkspaceContext)
+NEXT = C2-T2 — HOST_PRESENTATION_BINDING_AND_SESSION_ISOLATION (do not start automatically)
 ```
 
 ## C0.S2 — Authorities / bounded contexts
