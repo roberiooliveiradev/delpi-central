@@ -9,7 +9,7 @@
 **Internet/External Connectors:** [`../55-internet-research-and-external-connectors.md`](../55-internet-research-and-external-connectors.md)  
 **Microsoft Teams:** [`../56-microsoft-teams-connector-and-meeting-integration.md`](../56-microsoft-teams-connector-and-meeting-integration.md)  
 **Autonomous Operations/Execution Hub:** [`../57-event-driven-autonomous-operations-and-automation-execution-hub.md`](../57-event-driven-autonomous-operations-and-automation-execution-hub.md)  
-**Next:** `C2-FINAL` C2 acceptance review (`C2_EXECUTED=NO`). Não iniciar C3. Não implementar iframe bridge. Não corrigir os achados de segurança do Portal/Transformômetro neste ledger. C2-PREFINAL-R1 normalizou CP-001/CP-149/CP-156.
+**Next:** `C3 FIRST-BOUNDED-TASK DEFINITION` (`C2_EXECUTED=YES`; `C3_AUTHORIZED=YES`; `C3_STARTED=NO`). Não iniciar C3 automaticamente. Não implementar iframe bridge. Não corrigir os achados de segurança do Portal/Transformômetro neste ledger.
 
 ## 1. Ledger rule
 
@@ -25,8 +25,8 @@ Estado factual de inventory usa `PROVEN | TO_INVENTORY`; planejamento usa `PLANN
 |---|---|---|---|
 | C0 Platform + Architecture + Privacy/Security/Data/Automation/AI Foundations | **NOT_STARTED** | **C1 bootstrap continues (T2 review → next C1 step)** | C0.S0..=C0.S7=APPROVED; FOUNDATION_FREEZE=APPROVED; C1_AUTHORIZED=YES; C1_STARTED=YES |
 | C1 Standalone Bootstrap | ACCEPTED_WITH_RESIDUAL | — | C1-FINAL §6.45 |
-| C2 Portal + Operational Context + Commands | IMPLEMENTATION_STARTED / INCOMPLETE | C2-T6 (do not start automatically) | C2-T5 §6.52; `C2_EXECUTED=NO` |
-| C3 Intelligence + Capability Foundations | LOCKED | — | C1+C2 foundations |
+| C2 Portal + Operational Context + Commands | ACCEPTED_WITH_RESIDUAL | — | C2-FINAL §6.61; `C2_EXECUTED=YES` |
+| C3 Intelligence + Capability Foundations | AUTHORIZED / NOT_STARTED | C3 FIRST-BOUNDED-TASK DEFINITION (do not start automatically) | C2-FINAL §6.61; `C3_AUTHORIZED=YES`; `C3_STARTED=NO` |
 | C4 Governed Reads + Graph/Semantics/Analysis/Predictive Discovery | LOCKED | — | C3 foundations |
 | C5 Governed Writes + Executors + Durable/Recurring Work + Artifacts/Prescriptive Prepare | LOCKED | — | C4 reads/evidence |
 | C6 Product Work + Process Intelligence + Control Tower + Meeting/Frontline + Ecosystem | LOCKED | — | C5 governed-write/durable foundation |
@@ -109,10 +109,19 @@ C2_T5R3 = IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW (§6.55)
 C2_T5R3R1 = ACCEPTED_CURRENT_SCOPE (§6.56 code, §6.57 live smoke)
 C2_T6 = ACCEPTED_WITH_OWNER_SECURITY_FOLLOWUP (§6.58 technical inventory; taxonomy corrected in §6.59)
 C2_T6R1 = ACCEPTED_WITH_RESIDUAL (§6.59)
-C2_PREFINAL_R1 = DOCUMENTATION_NORMALIZATION_READY_FOR_REVIEW (§6.60)
-C2_EXECUTED = NO
+C2_PREFINAL_R1 = ACCEPT (§6.60)
+C2_FINAL = ACCEPT_WITH_RESIDUAL (§6.61)
+C2_EXECUTED = YES
 C2_STARTED = YES
 C2_IMPLEMENTATION_STARTED = YES
+C2_PORTAL_SURFACE_READINESS = PROVEN_CURRENT_SCOPE
+C3_AUTHORIZED = YES
+C3_STARTED = NO
+C3_EXECUTED = NO
+PRODUCTION_READINESS = NOT_PROVEN
+PORTAL_SECURITY_REVIEW_REQUIRED = YES
+TRANSFORMOMETRO_SECURITY_REVIEW_REQUIRED = YES
+C2_SECURITY_BLOCKER = NO
 BROWSER_STATE_RESIDENCY_POLICY = APPROVED
 BROWSER_RETAINED_STATE_CURRENTLY_REQUIRED = NO
 CENTRALIZED_BROWSER_STATE_BOUNDARY = REQUIRED_ON_FIRST_RETAINED_STATE
@@ -127,6 +136,18 @@ POSTO = TO_INVENTORY
 WORK_CENTER = PROVEN
 WORK_CENTER_ROLE = RELATED_CONCEPT_NOT_CP159_IDENTITY
 WORKSPACE_CONTEXT_RUNTIME_STATUS = DEFER
+WORKSPACE_CONTEXT_CANONICAL_STATUS = FROZEN_CANDIDATE
+GLOBAL_DELIA_COMPANION_DOCK = ACCEPTED_CURRENT_SCOPE
+GLOBAL_DELIA_SURFACE_V1 = SUPERSEDED_UX
+GLOBAL_DELIA_SURFACE_V2 = COMPANION_DOCK_APPROVED
+BROWSER_RETAINED_STATE = NONE
+FULLPAGE_DELIA_IS_IFRAME = NO
+COMPANION_DOCK_IS_IFRAME = NO
+REAL_DELIA_IFRAME_CONSUMER = NONE
+DELIA_IFRAME_BRIDGE = NONE
+DELIA_TOKEN_OVER_IFRAME_BRIDGE = FORBIDDEN
+TYPESCRIPT_ISOLATED = INCONCLUSIVE (NON_BLOCKING residual from C1)
+CORE_CONTEXT_LIVE_NETWORK = TEST_NOT_RUN (NON_BLOCKING residual from C1)
 NEW_BEHAVIORAL_TESTS = PASS (C2-T5 unit/structural; live global TEST_NOT_RUN)
 FUTURE_C1_C7_GREEN_EVIDENCE_REQUIRED = YES
 DÉLIA_RUNTIME_DIFF = delia-api + plugins/delia + Gateway/Compose publication + Core registration
@@ -2673,6 +2694,134 @@ PRODUCTION_READINESS = NOT_PROVEN
 NEXT = C2-FINAL acceptance review
 ```
 
+## 6.61 C2-FINAL — PORTAL_CONTEXT_AND_PLATFORM_COMMANDS_ACCEPTANCE_REVIEW
+
+```text
+DATE: 2026-09-21
+STEP: C2-FINAL
+NAME: PORTAL_CONTEXT_AND_PLATFORM_COMMANDS_ACCEPTANCE_REVIEW
+STATUS: PLAN_ONLY / FINAL_ACCEPTANCE_REVIEW
+REVIEWED_HEAD: 90ca3ce3492881fefdd95df565a3738cd7747506
+BASE_HEAD: de9add9f671954a0d0b74105f771b16e142fba8c
+POST_PREFINAL_COMMITS:
+  4f3ed59483 helpdesk author id/email = OUTSIDE_TASK
+  ce85f3f7b4 plugin-ui reaction glyph/toolbar = OUTSIDE_TASK / EVIDENCE_FRESHNESS_IMPACT (shared UI; MFE rerun required)
+  d543299b92 supplies E9 deliveries freeze = OUTSIDE_TASK
+  c773c00247 helpdesk message inventory = OUTSIDE_TASK
+  c287613262 supplies Transforma+ drift row = OUTSIDE_TASK
+  90ca3ce349 helpdesk message body inventory = OUTSIDE_TASK
+RUNTIME_CODE_CHANGE: NONE (C2-FINAL documentation/review only)
+PORTAL_DELIA_BOUNDARY_DIFF_SINCE_PREFINAL: NONE
+VERDICT: ACCEPT_WITH_RESIDUAL
+
+C2_EVIDENCE_CHAIN:
+  T1 — host/route contract FROZEN_ACCEPTED; host props presentation/navigation/transport only
+  T1D1 — BROWSER_STATE_RESIDENCY_POLICY APPROVED; retained state not required now
+  T2 — mount/updateRoute/unmount/fresh-remount PASS for current shell; no DÉLIA logout
+  T3 — remaining C2 ordered; Workspace/command bus/iframe bridge deferred without pulling C3
+  T4/T4R1 — OP/PRODUCT/OPERATION PROVEN; MACHINE/POSTO TO_INVENTORY; OPERATIONAL_CONTEXT=TO_INVENTORY
+  T5 — V1 modal FUNCTIONAL_BUT_UX_SUPERSEDED
+  T5R1 — async stale-mount guard
+  T5R2 — live V1 FAIL then Product Master rejected modal UX
+  T5R3 — Companion Dock approved non-modal surface
+  T5R3R1 — dynamic width reclamp
+  T5R3R1L1 — Product Master live smoke PASS for recorded scope
+  T6 — iframe applicability freeze; no DÉLIA iframe consumer
+  T6R1 — CP Status taxonomy + owner security handoff
+  PREFINAL-R1 — CP-001/149/156 Status restored to LOCKED
+
+STALE_EVIDENCE_ASSESSMENT: NONE for Companion Dock live smoke
+  No post-PREFINAL commits touch portal Companion Dock, AppHost iframe bridge, plugins/delia, delia-api, or docs/delia.
+  plugin-ui collaboration reaction changes require MFE freshness only.
+
+FRESHNESS_RERUNS (REVIEWED_HEAD):
+  Portal: npx tsx --test globalDeliaDock(+structural)+federatedRemoteHost+appHostEntry → 30 PASS
+  DÉLIA MFE: npm test → 19 PASS; npm run build → PASS; npm run verify:federation → PASS
+
+C2_FORMAL_GATES:
+  WorkspaceContext bounded/sanitized = ACCEPTED_DEFER_WITH_EVIDENCE (FROZEN_CANDIDATE; no runtime aggregate; no invented authority)
+  EntityRef/SourceRef no credential/permission truth = SATISFIED_BY_NEGATIVE_INVARIANT (candidates frozen; no runtime binding)
+  shared-device logout/user-switch cleanup = SATISFIED_CURRENT_SCOPE for no-retained-state shell; LIVE_USER_A_USER_B/PORTAL_LOGOUT_FULL_E2E = NON_BLOCKING_RESIDUAL
+  authorized app/route/entity commands = SATISFIED_CURRENT_SCOPE via Portal/Core primitives; no DÉLIA command bus
+  arbitrary URL/navigation target rejected = SATISFIED_CURRENT_SCOPE via Core /me/apps + AppHost authorized mount
+  iframe bridge safe = ACCEPTED_DEFER_WITH_EVIDENCE for DÉLIA (no consumer); owner security follow-ups preserved
+  execution/model/memory/device refs do not grant authority = SATISFIED_BY_NEGATIVE_INVARIANT
+  platform visual action ≠ Business Action = SATISFIED_BY_NEGATIVE_INVARIANT (navigate/theme only; CP-068 shell negative NONE)
+
+C2_INTEGRATION_EVIDENCE:
+  SAME_REMOTE delia/./App = PASS
+  SAME_API delia-api = PASS
+  SECOND_DELIA_RUNTIME = NONE
+  COMPANION_DOCK live recorded scope = PASS (Product Master)
+  UNIT route persistence/close-reopen/full-page exclusivity = PASS
+  LIVE_ROUTE_PERSISTENCE/CLOSE_REOPEN/FULLPAGE_TRANSITION = TEST_NOT_RUN (NON_BLOCKING)
+  RENDERED_PORTAL_DOM_INTEGRATION = TEST_NOT_RUN (NON_BLOCKING; no Portal React DOM harness)
+
+SECURITY_C2:
+  C2_SECURITY_BLOCKER = NO
+  PORTAL_SECURITY_REVIEW_REQUIRED = YES
+  TRANSFORMOMETRO_SECURITY_REVIEW_REQUIRED = YES
+  DELIA_SECURITY_REVIEW_REQUIRED_FOR_T6 = NO
+  FINDINGS = PORTAL_EMBEDDED_TOKEN_TO_ENTRY_ORIGIN; APPHOST_MESSAGE_SOURCE_UNCHECKED; TRANSFORMETRO_NAVIGATE_LISTENER
+  DELIA_TOKEN_OVER_IFRAME_BRIDGE = FORBIDDEN
+
+BOUNDARY_REVIEW = PASS
+  Keycloak=identity; Core=RBAC; Portal=host/navigation/Companion Dock; Domain APIs=business SoT; DÉLIA=standalone shell
+ABSTRACTION_GATE_C2 = PASS
+  federatedRemoteHost shared by AppHost+dock; GlobalDeliaDock product composition; reclamp helper justified
+  UNJUSTIFIED_ABSTRACTION = NONE
+CHAT_RUNTIME_DEPENDENCY = NONE
+C3_RUNTIME_LEAKAGE = NONE
+PARALLEL_AUTHORITY = NONE
+
+REQUIREMENTS_DISPOSITION (canonical Status unchanged by acceptance):
+  CP-001/149 = LOCKED + SATISFIED_CURRENT_SCOPE (Companion Dock)
+  CP-002/003/005 = LOCKED + Portal primitives REUSE / no DÉLIA bus
+  CP-004/006/007/025 = LOCKED + ACCEPTED_DEFER until real consumer
+  CP-008/009/010/011/159 = LOCKED + ACCEPTED_DEFER (Workspace/Entity runtime)
+  CP-012 = LOCKED + FUTURE_PHASE (C3)
+  CP-059 = LOCKED + Core capability projection preserved
+  CP-061..065/068/070 = LOCKED + ACCEPTED_DEFER / negative invariant
+  CP-069 = TO_INVENTORY + OWNER_SECURITY_FOLLOWUP / DO_NOT_COPY
+  CP-138 = PLANNED + ACCEPTED_DEFER (browser residency APPROVED; no retained state)
+  CP-148/150/153/155 = LOCKED + SATISFIED_CURRENT_SCOPE
+  CP-156 = LOCKED + NON_BLOCKING_RESIDUAL (Meeting/Frontline absent)
+  CP-158 = PLANNED + NON_BLOCKING_RESIDUAL (invariant frozen; live A/B TEST_NOT_RUN)
+  CP-171 = LOCKED + NOT_APPLICABLE_CURRENT_RUNTIME for C2 device runtime
+  DISCOVERED_REQUIREMENT = NONE
+
+RESIDUALS (NON_BLOCKING):
+  TYPESCRIPT_ISOLATED=INCONCLUSIVE
+  CORE_CONTEXT_LIVE_NETWORK=TEST_NOT_RUN
+  PORTAL_LOGOUT_FULL_E2E=TEST_NOT_RUN
+  LIVE_USER_A_USER_B=TEST_NOT_RUN
+  RENDERED_PORTAL_DOM_INTEGRATION=TEST_NOT_RUN
+  LIVE_ROUTE_PERSISTENCE/CLOSE_REOPEN/FULLPAGE_TRANSITION=TEST_NOT_RUN
+  MACHINE/POSTO=TO_INVENTORY
+  WORKSPACE_CONTEXT_RUNTIME=DEFER
+  CP-069=TO_INVENTORY
+  Portal/Transformômetro owner security findings
+
+FUTURE_TRIGGERS:
+  FIRST_RETAINED_BROWSER_STATE → Browser State Residency Gate mandatory
+  FIRST_REAL_WORKSPACE_CONTEXT_CONSUMER → WorkspaceContext promotion gate
+  FIRST_MACHINE_OR_POSTO_CONTEXT_REQUIREMENT → prove owner/source/id
+  FIRST_DELIA_IFRAME_CONSUMER → iframe security/handshake contract
+  FIRST_PLATFORM_NAVIGATION_COMMAND_CONSUMER → typed command contract before implementation
+  FIRST_ENTITYREF_RUNTIME_CONSUMER → bind only proven owner/source/id
+
+C2_ACCEPTANCE = ACCEPT_WITH_RESIDUAL
+C2_EXECUTED = YES
+C2_PORTAL_SURFACE_READINESS = PROVEN_CURRENT_SCOPE
+C3_AUTHORIZED = YES
+C3_STARTED = NO
+C3_EXECUTED = NO
+PRODUCTION_READINESS = NOT_PROVEN
+EXECUTION_DRIFT = NONE
+ARCHITECTURE_DECISION_REQUIRED = NONE
+NEXT = C3 FIRST-BOUNDED-TASK DEFINITION (16 lists C3 foundations; no bounded C3-T1 yet; do not invent runtime)
+```
+
 ## 7. Canonical phase mapping
 
 ```text
@@ -2881,4 +3030,4 @@ SAFETY_INTERLOCK_BYPASS
 
 ## 14. First execution
 
-Historical C0.S0..C0.S7 remain **APPROVED** / `FOUNDATION_FREEZE=APPROVED`. C1-T1..T6D1 completed standalone bootstrap. **C1-FINAL** (`§6.45`) accepted bootstrap with non-blocking residuals (`TYPESCRIPT_ISOLATED`, `CORE_CONTEXT_LIVE_NETWORK`). `C1_EXECUTED=YES`. `C1_BOOTSTRAP_ACCEPTANCE=ACCEPT_WITH_RESIDUAL`. `C1_BOOTSTRAP_RUNTIME_READINESS=PROVEN` (bootstrap scope). `PRODUCTION_READINESS=NOT_PROVEN`. `C2_AUTHORIZED=YES`. `C0=NOT_STARTED`. **C2-T1** (`§6.46`) froze the current Portal host/route contract. Operational WorkspaceContext remains `TO_INVENTORY`. `C2_STARTED=NO`. `C2_IMPLEMENTATION_STARTED=NO`. **C2-T1D1** (`§6.47`) approved `BROWSER_STATE_RESIDENCY_POLICY`. No retained browser state is required now. **C2-T2** (`§6.48`) verified the existing host lifecycle. No new logout stack or storage boundary. `C2_STARTED=YES`. `C2_IMPLEMENTATION_STARTED=NO`. `C2_EXECUTED=NO`. **C2-T3** (`§6.49`) froze the remaining C2 order. **C2-T4** (`§6.50`) inventoried operational authorities: OP/PRODUCT/OPERATION proven via api-delpi; MACHINE/POSTO `TO_INVENTORY`; Workspace remains `DEFER`. **C2-T4R1** (`§6.51`) removed illegal formal status `OPERATIONAL_CONTEXT=MIXED` and restored `OPERATIONAL_CONTEXT=TO_INVENTORY` while preserving the proven OP/product/operation sub-facts. **C2-T5** (`§6.52`) implemented the approved Portal global DÉLIA surface using the same federated remote `delia` / `./App`. **C2-T5R1** (`§6.53`) hardened stale async mount and dialog focus, and corrected the stale T4R1 SHA in §6.52. **C2-T5R2** (`§6.54`) recorded Product Master `LIVE_GLOBAL_SURFACE=FAIL` and proved the public Portal bundle published `2026-09-21T13:42:11Z` already contains the T5R1 launcher. Product Master later confirmed that V1 launcher and panel were live and rejected the modal UX. **C2-T5R3** (`§6.55`) replaced that surface with a non-modal companion dock. Product Master then confirmed the live dock render on `/apps/my-requests` (non-modal, no backdrop, special launcher removed, normal app entry preserved). **C2-T5R3R1** (`§6.56`) reclamps the transient dock width when the workspace narrows. **C2-T5R3R1L1** (`§6.57`) records Product Master acceptance of the requested live smoke, including dynamic reclamp. **C2-T6** (`§6.58`) froze iframe applicability: DÉLIA stays federated; the existing Portal embedded host is not a DÉLIA bridge. `C2_EXECUTED=NO`. Next bounded task: **C2-FINAL — C2 acceptance review** (do not start C3; do not implement an iframe bridge). **C2-T6R1** (`§6.59`) restored canonical CP statuses for CP-061–CP-070 and recorded Portal/Transformômetro security follow-up as owner work, not a C2 blocker. **C2-PREFINAL-R1** (`§6.60`) restored CP-001/CP-149/CP-156 to `LOCKED` and corrected the stale CP-149 live note.
+Historical C0.S0..C0.S7 remain **APPROVED** / `FOUNDATION_FREEZE=APPROVED`. C1-T1..T6D1 completed standalone bootstrap. **C1-FINAL** (`§6.45`) accepted bootstrap with non-blocking residuals (`TYPESCRIPT_ISOLATED`, `CORE_CONTEXT_LIVE_NETWORK`). `C1_EXECUTED=YES`. `C1_BOOTSTRAP_ACCEPTANCE=ACCEPT_WITH_RESIDUAL`. `C1_BOOTSTRAP_RUNTIME_READINESS=PROVEN` (bootstrap scope). `PRODUCTION_READINESS=NOT_PROVEN`. `C2_AUTHORIZED=YES`. `C0=NOT_STARTED`. **C2-T1** (`§6.46`) froze the current Portal host/route contract. Operational WorkspaceContext remains `TO_INVENTORY`. `C2_STARTED=NO`. `C2_IMPLEMENTATION_STARTED=NO`. **C2-T1D1** (`§6.47`) approved `BROWSER_STATE_RESIDENCY_POLICY`. No retained browser state is required now. **C2-T2** (`§6.48`) verified the existing host lifecycle. No new logout stack or storage boundary. `C2_STARTED=YES`. `C2_IMPLEMENTATION_STARTED=NO`. `C2_EXECUTED=NO`. **C2-T3** (`§6.49`) froze the remaining C2 order. **C2-T4** (`§6.50`) inventoried operational authorities: OP/PRODUCT/OPERATION proven via api-delpi; MACHINE/POSTO `TO_INVENTORY`; Workspace remains `DEFER`. **C2-T4R1** (`§6.51`) removed illegal formal status `OPERATIONAL_CONTEXT=MIXED` and restored `OPERATIONAL_CONTEXT=TO_INVENTORY` while preserving the proven OP/product/operation sub-facts. **C2-T5** (`§6.52`) implemented the approved Portal global DÉLIA surface using the same federated remote `delia` / `./App`. **C2-T5R1** (`§6.53`) hardened stale async mount and dialog focus, and corrected the stale T4R1 SHA in §6.52. **C2-T5R2** (`§6.54`) recorded Product Master `LIVE_GLOBAL_SURFACE=FAIL` and proved the public Portal bundle published `2026-09-21T13:42:11Z` already contains the T5R1 launcher. Product Master later confirmed that V1 launcher and panel were live and rejected the modal UX. **C2-T5R3** (`§6.55`) replaced that surface with a non-modal companion dock. Product Master then confirmed the live dock render on `/apps/my-requests` (non-modal, no backdrop, special launcher removed, normal app entry preserved). **C2-T5R3R1** (`§6.56`) reclamps the transient dock width when the workspace narrows. **C2-T5R3R1L1** (`§6.57`) records Product Master acceptance of the requested live smoke, including dynamic reclamp. **C2-T6** (`§6.58`) froze iframe applicability: DÉLIA stays federated; the existing Portal embedded host is not a DÉLIA bridge. `C2_EXECUTED=NO`. Next bounded task: **C2-FINAL — C2 acceptance review** (do not start C3; do not implement an iframe bridge). **C2-T6R1** (`§6.59`) restored canonical CP statuses for CP-061–CP-070 and recorded Portal/Transformômetro security follow-up as owner work, not a C2 blocker. **C2-PREFINAL-R1** (`§6.60`) restored CP-001/CP-149/CP-156 to `LOCKED` and corrected the stale CP-149 live note. **C2-FINAL** (`§6.61`) accepted C2 with residual: `C2_EXECUTED=YES`; `C3_AUTHORIZED=YES`; `C3_STARTED=NO`; next = C3 FIRST-BOUNDED-TASK DEFINITION.

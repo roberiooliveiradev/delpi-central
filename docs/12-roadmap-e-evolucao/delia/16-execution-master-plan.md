@@ -3,7 +3,7 @@
 **Status:** planejamento executável canônico  
 **Autoridade de ordem:** **este documento é a única fonte de verdade para a sequência de implementação**  
 **Produto:** **DÉLIA**, aplicação standalone nova  
-**Próxima etapa:** `C2-FINAL` C2 acceptance review (`C2_EXECUTED=NO`; do not start C3)
+**Próxima etapa:** `C3 FIRST-BOUNDED-TASK DEFINITION` (`C2_EXECUTED=YES`; `C3_AUTHORIZED=YES`; `C3_STARTED=NO`; do not start C3 automatically)
 **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Baseline:** [`51-platform-integration-baseline.md`](./51-platform-integration-baseline.md)  
 **Bootstrap:** [`52-standalone-repository-and-bootstrap-plan.md`](./52-standalone-repository-and-bootstrap-plan.md)  
@@ -373,10 +373,16 @@ C2_T5R3 = IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW
 C2_T5R3R1 = ACCEPTED_CURRENT_SCOPE
 C2_T6 = ACCEPTED_WITH_OWNER_SECURITY_FOLLOWUP
 C2_T6R1 = ACCEPTED_WITH_RESIDUAL
-C2_PREFINAL_R1 = DOCUMENTATION_NORMALIZATION_READY_FOR_REVIEW
+C2_PREFINAL_R1 = ACCEPT
+C2_FINAL = ACCEPT_WITH_RESIDUAL
 C2_STARTED = YES
 C2_IMPLEMENTATION_STARTED = YES
-C2_EXECUTED = NO
+C2_EXECUTED = YES
+C2_PORTAL_SURFACE_READINESS = PROVEN_CURRENT_SCOPE
+C3_AUTHORIZED = YES
+C3_STARTED = NO
+C3_EXECUTED = NO
+PRODUCTION_READINESS = NOT_PROVEN
 PORTAL_HOST_CONTRACT = FROZEN_ACCEPTED (current AppHost props; ≠ business AuthZ)
 OPERATIONAL_CONTEXT = TO_INVENTORY
 OP = PROVEN
@@ -391,7 +397,7 @@ BROWSER_STATE_RESIDENCY_POLICY = APPROVED (C2-T1D1)
 BROWSER_RETAINED_STATE_CURRENTLY_REQUIRED = NO
 CENTRALIZED_BROWSER_STATE_BOUNDARY = REQUIRED_ON_FIRST_RETAINED_STATE
 SHARED_DEVICE_ISOLATION_INVARIANT = FROZEN_ACCEPTED
-NEXT = C2-FINAL acceptance review (C2_EXECUTED=NO; do not start C3)
+NEXT = C3 FIRST-BOUNDED-TASK DEFINITION (C3_AUTHORIZED=YES; C3_STARTED=NO; do not invent C3-T1 runtime)
 ```
 
 ## C0.S2 — Authorities / bounded contexts
@@ -635,10 +641,15 @@ C2-T4: OP/PRODUCT/OPERATION public via api-delpi (TOTVS); MACHINE/POSTO TO_INVEN
 C2-T4R1: formal status OPERATIONAL_CONTEXT = TO_INVENTORY (MIXED is not a canonical factual status)
 WORKSPACE_CONTEXT_RUNTIME = DEFER
 C2_IMPLEMENTATION_STARTED = YES
-C2_EXECUTED = NO
+C2_EXECUTED = YES
+C2_FINAL = ACCEPT_WITH_RESIDUAL
 C2-T6R1: ACCEPTED_WITH_RESIDUAL; iframe CP Status restored; C2_SECURITY_BLOCKER=NO; Portal and Transformômetro security review remains required
 C2-PREFINAL-R1: CP-001/CP-149/CP-156 restored to LOCKED; CP-149 live note corrected; CANONICAL_STATUS ≠ implementation evidence
-NEXT = C2-FINAL acceptance review (no iframe bridge; no C3; no security fix)
+C3_AUTHORIZED = YES
+C3_STARTED = NO
+C3_EXECUTED = NO
+PRODUCTION_READINESS = NOT_PROVEN
+NEXT = C3 FIRST-BOUNDED-TASK DEFINITION (do not start C3 automatically; no iframe bridge; no security fix)
 C2-FINAL after those reviews
 Workspace binding remains unscheduled
 ```

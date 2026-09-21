@@ -138,7 +138,7 @@ OUT_OF_SCOPE_WITH_DECISION
 
 | ID | Requisito | Owner | Gate | Status |
 |---|---|---|---|---|
-| CP-001 | DÉLIA global no Portal | DÉLIA MFE + Portal | panel/full-page UX | LOCKED — current C2 implementation uses the approved non-modal Companion Dock; Product Master live smoke accepted for the recorded scope; C2_EXECUTED=NO |
+| CP-001 | DÉLIA global no Portal | DÉLIA MFE + Portal | panel/full-page UX | LOCKED — current C2 implementation uses the approved non-modal Companion Dock; Product Master live smoke accepted for the recorded scope; C2_EXECUTED=YES (ACCEPT_WITH_RESIDUAL) |
 | CP-002 | Abrir app | Portal/CopilotBridge | authorized navigation | LOCKED |
 | CP-003 | Abrir rota | Portal/CopilotBridge | authorized navigation | LOCKED |
 | CP-004 | Abrir entidade | Portal + app contract | EntityRef/deep-link | LOCKED |
@@ -569,7 +569,7 @@ No CP promoted to PASS by documentation alone
 
 Related non-inventory CPs (CP-178/179 OT, CP-091 EntityRef, etc.) remain PLANNED/LOCKED per their rows; inventory evidence does not satisfy runtime gates.
 
-C2-T3: rows CP-001–CP-012, CP-025, CP-059, CP-149, CP-156 and CP-159 remain `LOCKED` as requirements (`LOCKED` ≠ runtime PASS). C2-T6R1 restored canonical Status for CP-061–CP-070 (`LOCKED`, except CP-069 `TO_INVENTORY`). C2-PREFINAL-R1 restored CP-001/CP-149/CP-156 to `LOCKED` after C2-T5 documentation drift introduced non-canonical Status tokens; implementation and live evidence stay in the note. Product Master live smoke of the companion dock is `PASS` for the recorded scope (§6.57). C2-T6 inventories the existing Portal embedded host. DÉLIA full-page and companion dock stay federated. No DÉLIA iframe bridge was added. V1 modal UX is `SUPERSEDED_UX`. Host presentation, transient dock state and full-page mount are the current C2 runtime. WorkspaceContext, operational OP/machine/product/operation/posto, typed command bus and DÉLIA iframe bridge are not runtime. CP-012 reasoning is C3. `LIVE_USER_A_USER_B` and portal logout E2E stay at their previous status. Portal and Transformômetro iframe security findings are owner follow-up, not C2 blockers. `C2_EXECUTED=NO`.
+C2-T3: rows CP-001–CP-012, CP-025, CP-059, CP-149, CP-156 and CP-159 remain `LOCKED` as requirements (`LOCKED` ≠ runtime PASS). C2-T6R1 restored canonical Status for CP-061–CP-070 (`LOCKED`, except CP-069 `TO_INVENTORY`). C2-PREFINAL-R1 restored CP-001/CP-149/CP-156 to `LOCKED` after C2-T5 documentation drift introduced non-canonical Status tokens; implementation and live evidence stay in the note. Product Master live smoke of the companion dock is `PASS` for the recorded scope (§6.57). C2-T6 inventories the existing Portal embedded host. DÉLIA full-page and companion dock stay federated. No DÉLIA iframe bridge was added. V1 modal UX is `SUPERSEDED_UX`. Host presentation, transient dock state and full-page mount are the current C2 runtime. WorkspaceContext, operational OP/machine/product/operation/posto, typed command bus and DÉLIA iframe bridge are not runtime. CP-012 reasoning is C3. `LIVE_USER_A_USER_B` and portal logout E2E stay at their previous status. Portal and Transformômetro iframe security findings are owner follow-up, not C2 blockers. **C2-FINAL** (`§6.61`): `C2_ACCEPTANCE=ACCEPT_WITH_RESIDUAL`; `C2_EXECUTED=YES`; `C3_AUTHORIZED=YES`; `C3_STARTED=NO`; `PRODUCTION_READINESS=NOT_PROVEN`.
 
 ## 15. C0.S1 naming / physical ownership linkage — accepted review
 
