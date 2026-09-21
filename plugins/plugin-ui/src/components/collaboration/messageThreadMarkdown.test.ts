@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  enrichGlpiUserMentionSpans,
   enrichMessageHtmlMentions,
   markdownToPlainPreview,
   messageBodyHtmlFromMarkdown,
@@ -51,6 +52,11 @@ describe("messageBodyHtmlFromMarkdown", () => {
     expect(messageBodyHtmlIsPlainParagraph("<p>oi</p>")).toBe(true);
     expect(messageBodyHtmlIsPlainParagraph("<p><strong>x</strong></p>")).toBe(false);
     expect(messageBodyHtmlIsPlainParagraph("<ul><li>a</li></ul>")).toBe(false);
+    expect(
+      messageBodyHtmlIsPlainParagraph(
+        '<p><span data-user-mention="true" data-user-id="12">@Ana</span></p>',
+      ),
+    ).toBe(false);
   });
 });
 
@@ -62,6 +68,42 @@ describe("enrichMessageHtmlMentions", () => {
       "chip",
     );
     expect(html).toContain("<code>@Ana</code>");
-    expect(html).not.toContain("class=\"chip\"");
+    expect(html).not.toContain('class="chip"');
+  });
+});
+
+describe("enrichGlpiUserMentionSpans", () => {
+  it("converte span GLPI em chip preservando data-user-id", () => {
+    const html = enrichGlpiUserMentionSpans(
+      '<p>Oi <span data-user-mention="true" data-user-id="123">@Ana</span></p>',
+      "delpi-ui-mention-text__chip",
+    );
+    expect(html).toContain('data-user-id="123"');
+    expect(html).toContain('data-user-mention="true"');
+    expect(html).toContain('data-mention-kind="user"');
+    expect(html).toContain("delpi-ui-mention-text__chip");
+    expect(html).toContain("delpi-ui-mention-text__chip-label");
+    expect(html).toContain("Ana");
+    expect(html).not.toContain(">@Ana<");
+  });
+
+  it("irmão: span sem menção GLPI permanece intacto", () => {
+    const source = '<p><span class="note">aviso</span></p>';
+    expect(enrichGlpiUserMentionSpans(source, "chip")).toBe(source);
+  });
+
+  it("negativo: não inventa id a partir de @nome em texto", () => {
+    const html = enrichGlpiUserMentionSpans("<p>Oi @Ana</p>", "chip");
+    expect(html).toBe("<p>Oi @Ana</p>");
+    expect(html).not.toContain("data-user-id");
+    expect(html).not.toContain('class="chip"');
+  });
+
+  it("ignora data-user-id não numérico", () => {
+    const source =
+      '<p><span data-user-mention="true" data-user-id="abc">@X</span></p>';
+    const html = enrichGlpiUserMentionSpans(source, "chip");
+    expect(html).toContain('data-user-id="abc"');
+    expect(html).not.toContain('class="chip"');
   });
 });

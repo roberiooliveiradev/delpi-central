@@ -579,6 +579,34 @@ describe("MessageThread", () => {
     expect(rich?.innerHTML.toLowerCase()).not.toContain("<script");
   });
 
+  it("estiliza menção GLPI data-user-id como chip no bodyMode html", () => {
+    const { container } = render(
+      <MessageThread
+        classNames={classNames}
+        listAriaLabel="Messages"
+        emptyLabel="Empty"
+        bodyMode="html"
+        messages={[
+          {
+            id: "mention",
+            kind: "text",
+            bodyText: "Oi @Ana",
+            bodyHtml:
+              '<p>Oi <span data-user-mention="true" data-user-id="69">@Ana</span></p>',
+            authorName: "Bob",
+            createdAtLabel: "10:01",
+          },
+        ]}
+      />,
+    );
+    const chip = container.querySelector(
+      'span[data-user-id="69"].delpi-ui-mention-text__chip',
+    );
+    expect(chip).not.toBeNull();
+    expect(chip?.getAttribute("data-mention-kind")).toBe("user");
+    expect(chip?.textContent).toContain("Ana");
+  });
+
   it("omits the heading when headingText is absent", () => {
     const { container } = render(
       <MessageThread

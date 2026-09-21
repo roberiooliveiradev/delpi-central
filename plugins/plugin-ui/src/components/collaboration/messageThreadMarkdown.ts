@@ -109,7 +109,7 @@ export function messageBodyHtmlIsPlainParagraph(html: string): boolean {
     const el = children[0] as Element;
     if (el.tagName.toLowerCase() !== "p") return false;
     return !el.querySelector(
-      "a, code, pre, strong, b, em, i, u, s, del, ul, ol, blockquote, br, figure, img",
+      "a, code, pre, strong, b, em, i, u, s, del, ul, ol, blockquote, br, figure, img, span[data-user-mention]",
     );
   } catch {
     return false;
@@ -141,6 +141,7 @@ export function enrichMessageHtmlMentions(
       const parent = node.parentElement;
       if (!parent) continue;
       if (parent.closest("code, pre, a, script, style")) continue;
+      if (parent.closest("span[data-user-mention][data-user-id]")) continue;
       const value = node.textContent ?? "";
       if (!value.includes("@")) continue;
       const segments = parseMentionText(value, mentions);
@@ -195,6 +196,51 @@ export function enrichMessageHtmlMentions(
         frag.appendChild(span);
       }
       parent.replaceChild(frag, node);
+    }
+
+    return root.innerHTML;
+  } catch {
+    return raw;
+  }
+}
+
+/**
+ * Estiliza spans GLPI `data-user-mention` + `data-user-id` (só dígitos) como chips do kit.
+ * Identidade = id numérico; o texto interno é só rótulo — não casa por @nome.
+ */
+export function enrichGlpiUserMentionSpans(
+  html: string,
+  chipClassName = "delpi-ui-mention-text__chip",
+): string {
+  const raw = (html || "").trim();
+  if (!raw || typeof DOMParser === "undefined") return raw;
+  try {
+    const doc = new DOMParser().parseFromString(
+      `<div id="__mt_root">${raw}</div>`,
+      "text/html",
+    );
+    const root = doc.getElementById("__mt_root");
+    if (!root) return raw;
+
+    for (const el of Array.from(
+      root.querySelectorAll("span[data-user-mention][data-user-id]"),
+    )) {
+      if (!(el instanceof HTMLElement)) continue;
+      const id = (el.getAttribute("data-user-id") ?? "").trim();
+      if (!/^\d+$/.test(id)) continue;
+      const flag = (el.getAttribute("data-user-mention") ?? "").trim().toLowerCase();
+      if (flag !== "true" && flag !== "1") continue;
+
+      const labelText = displayMentionLabel(el.textContent ?? "");
+      el.className = chipClassName;
+      el.setAttribute("data-user-id", id);
+      el.setAttribute("data-user-mention", "true");
+      el.setAttribute("data-mention-kind", "user");
+      el.replaceChildren();
+      const label = doc.createElement("span");
+      label.className = "delpi-ui-mention-text__chip-label";
+      label.textContent = labelText;
+      el.appendChild(label);
     }
 
     return root.innerHTML;

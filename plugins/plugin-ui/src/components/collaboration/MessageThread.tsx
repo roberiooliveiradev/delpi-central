@@ -17,6 +17,7 @@ import {
   useMessageThreadActionsOpen,
 } from "./MessageThreadActionsBar";
 import {
+  enrichGlpiUserMentionSpans,
   markdownToPlainPreview,
   messageBodyHtmlFromMarkdown,
   messageBodyHtmlIsPlainParagraph,
@@ -327,14 +328,15 @@ function htmlMessageBody(
     return <span className={classNames.body}>{message.bodyText}</span>;
   }
   const cleaned = stripDangerousRichTextTags(source).trim();
-  const html = applyAttachmentImageSources(cleaned, resolveAttachmentImageSrc);
+  const withSrc = applyAttachmentImageSources(cleaned, resolveAttachmentImageSrc);
+  const html = enrichGlpiUserMentionSpans(withSrc, classNames.mention.chip);
   if (!html || messageBodyHtmlIsPlainParagraph(html)) {
     return <span className={classNames.body}>{message.bodyText || html.replace(/<[^>]+>/g, "")}</span>;
   }
   return (
     <div
       className={classNames.bodyRich}
-      // Defense-in-depth: API is the authority; stripDangerousRichTextTags ran above.
+      // Defense-in-depth: API is the authority; stripDangerousRichTextTags + GLPI mention chips ran above.
       dangerouslySetInnerHTML={{ __html: html }}
       onClick={(event) => {
         if (!onAttachmentImageClick) return;

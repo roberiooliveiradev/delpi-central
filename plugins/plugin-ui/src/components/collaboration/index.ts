@@ -206,6 +206,7 @@ export {
 } from "./MessageBodyReadonly";
 export {
   attachmentIdsInMarkdown,
+  enrichGlpiUserMentionSpans,
   enrichMessageHtmlMentions,
   markdownToPlainPreview,
   messageBodyHtmlFromMarkdown,
