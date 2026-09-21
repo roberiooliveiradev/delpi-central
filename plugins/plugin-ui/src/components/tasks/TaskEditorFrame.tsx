@@ -69,7 +69,7 @@ export function TaskEditorFrame({
       }
     >
       <div className="delpi-ui-task-editor-frame">
-        {children}
+        <div className="delpi-ui-task-editor-frame__fields">{children}</div>
         {reviewRows && reviewRows.length > 0 ? (
           <section className="delpi-ui-task-editor-frame__review" aria-label={reviewTitle}>
             <h3 className="delpi-ui-task-editor-frame__review-title">{reviewTitle}</h3>

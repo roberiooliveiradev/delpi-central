@@ -53,7 +53,10 @@ export { LoadingActivityBadge } from "./components/feedback/LoadingActivityBadge
 /** Hosts consomem chrome de tarefas sem persistência no kit. */
 export {
   TaskEditorFrame,
+  TaskEmptyState,
   TaskItemsTable,
+  TaskSearchField,
+  TaskWorklistSection,
   buildTaskWorkspaceHighlights,
 } from "./components/tasks";
 export type {

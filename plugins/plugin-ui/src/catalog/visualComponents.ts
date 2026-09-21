@@ -249,6 +249,18 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
     description:
       "Chrome de criação/edição de tarefa. OWNS apresentação; DOES NOT OWN persistência, assignment ou AuthZ.",
   }),
+  vc("feedback", "TaskEmptyState", {
+    addedAt: "2026-09-21",
+    description: "Empty da fila. OWNS estrutura; DOES NOT OWN copy de domínio nem CTA de API.",
+  }),
+  vc("layout", "TaskWorklistSection", {
+    addedAt: "2026-09-21",
+    description: "Seção da fila com ações e slot de busca. OWNS layout; DOES NOT OWN filtro.",
+  }),
+  vc("forms", "TaskSearchField", {
+    addedAt: "2026-09-21",
+    description: "Campo de busca da fila. OWNS input; DOES NOT OWN a consulta.",
+  }),
   vc("data", "TaskItemsTable", {
     addedAt: "2026-09-21",
     description:

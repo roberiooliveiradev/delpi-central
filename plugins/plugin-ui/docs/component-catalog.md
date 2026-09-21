@@ -622,15 +622,15 @@ Gramática compartilhada de apresentação (o portal continua dono do fetch):
 | Error | mensagem do portal + retry local |
 | Empty | empty state real, depois da consulta terminar |
 
-### `TaskEditorFrame` / `TaskItemsTable`
+### `TaskEditorFrame` / `TaskWorklistSection` / `TaskSearchField` / `TaskEmptyState` / `TaskItemsTable`
 
 Chrome compartilhado de Minhas tarefas.
 
-OWNS: layout do editor, resumo de confirmação, tabela e ações visíveis.
+OWNS: layout da fila, busca, empty, editor, resumo de confirmação, rodapé e tabela.
 
-DOES NOT OWN: persistência, assignment, workflow, AuthZ ou status de negócio.
+DOES NOT OWN: persistência, assignment, workflow, AuthZ, filtro ou status de negócio.
 
-O portal passa `TaskItemPresentation` e callbacks. O kit não faz fetch.
+O portal passa descriptors, texto e callbacks. O kit não faz fetch.
 
 ### `LoadingActivityCard`
 
