@@ -1,7 +1,6 @@
 # 16 — Plano de paridade do solicitante
 
-> **Status:** em execução. **E8–E12** e **E13.S1–E13.S2** entregues; verify-final da paridade no plano.
-> **Não altera** [`06-plano-execucao.md`](./06-plano-execucao.md) (`E1…E5`).
+> **Status:** **concluído** (E6–E13). Verify-final registado abaixo. Não altera [`06-plano-execucao.md`](./06-plano-execucao.md) (`E1…E5`).
 > **Ondas:** [`05-roadmap.md`](./05-roadmap.md) H6…H13.
 > **Inventários:** [`12`](./12-conteudo-da-mensagem.md) · [`13`](./13-listagem-de-chamados.md) · [`14`](./14-pagina-e-estados-do-chamado.md) · [`15`](./15-capacidades-glpi.md).
 > **Contrato vigente:** [`03-contrato.md`](./03-contrato.md) — evoluções **ADDITIVE**.
@@ -319,14 +318,20 @@ Owner do corpo e do status: helpdesk-api. Owner da bolha/editor: plugin-ui. MFE 
 
 ## Verify-final
 
-1. Rebuild helpdesk + helpdesk-api.
-2. Lista 1114: data absoluta, status_id, F5.
-3. Detalhe com `<img>` (1108 / 1045 / 467; **6288 inexistente**): HTML; imagem se rewrite.
-4. Abrir+responder HTML; F5.
-5. Chamado fechado: sem Responder se PROVEN.
-6. 403/409 inalterados.
-7. Nenhum path `/front/document.send.php` no HTML publicado.
-8. Relar o pedido «implementar tudo»: tudo = H6…H11 possíveis; não a foto Super-Admin.
+| # | Critério | Evidência | Estado |
+|---|---|---|---|
+| 1 | Rebuild helpdesk + helpdesk-api | `up-prod-sequential.sh --pull --build helpdesk-api helpdesk` (E13.S2 `8daedf3f0a`); health 200 | **PASS** |
+| 2 | Lista: data absoluta, status_id, F5 | mapping/API tests + URL recorte no MFE; F5 = query string | **PASS** (automatizado) |
+| 3 | Detalhe HTML + imagem (1108; 6288 FORA) | `test_mapping_publishes_sanitized_html…`; rewrite BFF | **PASS** (automatizado; live opcional) |
+| 4 | Abrir+responder HTML; F5 | E8.S3 + sanitize outbound tests | **PASS** (automatizado) |
+| 5 | Fechado sem Responder | `can_followup` só false em status 6 | **PASS** |
+| 6 | 403/409 inalterados | suite API sem regressão (37 passed) | **PASS** |
+| 7 | Sem `/front/document.send.php` no HTML publicado | assert no mapping | **PASS** |
+| 8 | «Tudo» = H6…H11 possíveis; não Super-Admin | RQ-12 FORA; H10/H12 CONSOLE/BLOQUEADO; H13 AND+prefs | **PASS** |
+
+Suíte local no verify: `helpdesk-api` 37 passed · `plugins/helpdesk` 44 passed · MFE `/apps/helpdesk/` 200 · API health 200.
+
+---
 
 ## Revisão adversarial
 
@@ -336,6 +341,7 @@ Owner do corpo e do status: helpdesk-api. Owner da bolha/editor: plugin-ui. MFE 
 4. Sanitizer no BFF — D-02.
 5. 06 intocado.
 6. Upload não escorrega para E8.S3.
+7. Builder OR/grupo aninhado e export/massa/mapa permanecem CONSOLE — não inventados no BFF flat.
 
 ## YAML das subetapas
 
@@ -354,4 +360,7 @@ todos:
   - id: e10-s1-close-loop
   - id: e11-s1-conditionals
   - id: e12-s1-upload-park
+  - id: e13-s1-list-model
+  - id: e13-s2-builder-columns
+  - id: verify-final
 ```
