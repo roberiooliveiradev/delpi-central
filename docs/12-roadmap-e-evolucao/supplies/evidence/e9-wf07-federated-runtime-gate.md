@@ -2,7 +2,8 @@
 
 - Data: 2026-09-21
 - Ambiente: Portal de produção `https://minhadelpi.com.br` (jornada no shell, MFE federado)
-- Baseline código: `9b5cc1ae2102c04a4ab740b6f25df3eded6457b3` (= `origin/main` no momento do gate)
+- Baseline código (smoke): `9b5cc1ae2102c04a4ab740b6f25df3eded6457b3` (= `origin/main` no momento do gate)
+- Commits de evidência/docs: `4acef0976e` + `542fc1dbc6` (docs only; sem mudança de produto)
 - Commit E9.S4 (Help/URL) ancestral: `9a772992b8`
 - Commit E9.S2 (BFF) ancestral: `22c32e7173`
 
