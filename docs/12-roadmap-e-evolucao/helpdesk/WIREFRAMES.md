@@ -5,8 +5,8 @@
 > **API:** `/apps/helpdesk-api` (o navegador não chama o GLPI nem a api-delpi)
 > **UI kit:** `@delpi/plugin-ui` via Module Federation · factories em [`plugins/helpdesk/src/ui/helpdeskUi.tsx`](../../../plugins/helpdesk/src/ui/helpdeskUi.tsx)
 > **Regras:** `plugins-reusable-components.mdc`, `plugins-visual-design-system.mdc`
-> **Estado:** lista, vínculo e detalhe publicados. H5 abaixo é especificação, não autorização para implementar.
-> **Lacunas (filtro, dados da lista, prévia de imagem):** [`11-lacunas-da-experiencia.md`](./11-lacunas-da-experiencia.md) — inventário, sem autorização de código.
+> **Estado:** lista com filtros, vínculo, conversa e prévia de anexo publicados. H5 abaixo é especificação, não autorização para implementar.
+> **Lacunas restantes:** [`11-lacunas-da-experiencia.md`](./11-lacunas-da-experiencia.md).
 
 Implementar uma tela deste módulo é montar as factories já nomeadas. Não criar `button`, `input`, `select`, `textarea`, card ou badge com CSS próprio.
 
@@ -77,8 +77,11 @@ O bloco escuro é `:root[data-theme="dark"] .dashboard-helpdesk`. Superfície, t
 | `createDashboardTextField` | `HelpdeskTextField` | Título |
 | `createDashboardTextAreaField` | `HelpdeskTextArea` | Descrição e resposta |
 | `createDashboardSelectField` | `HelpdeskSelect` | Categoria (com busca) e urgência |
-| `createDashboardFormActions` | `HelpdeskFormActions` | Rodapé dos formulários e do vínculo |
-| `ActionButton` | — | Abrir chamado, autorizar, voltar, enviar |
+| `createDashboardFormActions` | `HelpdeskFormActions` | Rodapé dos formulários, vínculo e paginação |
+| `createDashboardFiltersKit` | `HelpdeskFiltersRow` / `HelpdeskFilterInput` / `HelpdeskFilterSelect` | Recorte da lista |
+| `createDashboardAttachmentPreviewStrip` | `HelpdeskAttachmentPreviewStrip` | Miniaturas no `belowBody` da abertura |
+| `FilePreviewModal` | — | Prévia + Baixar; blob só na memória |
+| `ActionButton` | — | Abrir chamado, autorizar, voltar, enviar, paginação, Baixar |
 
 Texto de ajuda: `plugins/helpdesk/src/content/helpTooltips.ts`. O hint fica na prop `hint` do card ou do campo. Não colocar path de API no texto.
 
@@ -107,11 +110,20 @@ O detalhe sobrevive a atualizar a página porque o id está no path. Clique norm
 ```text
 HelpdeskPageHeader
   título: Meus Chamados de TI
-  subtítulo: Chamados abertos no seu nome
+  subtítulo: Chamados no seu nome
   [ Atualizar ]
 
 HelpdeskSectionCard  «Meus chamados»  hint = helpTooltips.list
   actions: [ Abrir chamado ]
+
+  HelpdeskFiltersRow  hint = helpTooltips.filters
+    Buscar ·····
+    Status [Select]
+    Urgência [Select]
+    Categoria [Select]
+    Atualizado de / até  date
+    Ordenar [Select]
+    [ Limpar filtros ]  só com recorte ativo
 
   carregando     │ ░░░ │  «Carregando chamados…»
   proibido       ⚠  permissão do portal ou recusa do helpdesk
@@ -120,11 +132,17 @@ HelpdeskSectionCard  «Meus chamados»  hint = helpTooltips.list
   sem vínculo    ℹ  helpTooltips.link
                  [ Autorizar no helpdesk ]
   vazio          ∅  «Você ainda não tem chamados.»
+                 ∅  «Nenhum chamado neste recorte.»  se filtro ativo
   lista          ▢  título do chamado
                     ● status
+                    Chamado      id
                     Categoria    valor
                     Urgência     valor
+                    Técnico      valor
+                    Aberto       relativo
+                    Atualizado   relativo
                  ▢  …
+  [ Anterior ]  Página N  [ Próxima ]  via has_more; sem total inventado
 ```
 
 Um estado por vez. Lista vazia só aparece com HTTP 200 e `items: []`. Proibido, vínculo e indisponível não podem parecer lista vazia.
@@ -173,17 +191,18 @@ HelpdeskSectionCard  «Conversa»  hint = helpTooltips.detail
   ▢  título = categoria
      subtítulo = urgência
      ● status
+     Chamado / Técnico quando existirem
 
   HelpdeskMessageThread  bodyMode = plain
     abertura
       autor = requester_display_name
-      hora = tempo relativo de created_at
+      hora = «Criado em …»
       título = título do chamado
       corpo = descrição em texto puro
-      Baixar = arquivos do chamado (não de uma resposta)
+      prévia = HelpdeskAttachmentPreviewStrip; clique abre FilePreviewModal com Baixar
     acompanhamento
       autor, hora, texto
-      sem arquivo
+      sem arquivo próprio (A-07 ainda não inventa o vínculo)
 
   Responder   [ texto ]  obrigatório  hint = helpTooltips.detail
   HelpdeskFormActions

@@ -42,13 +42,33 @@ def test_list_empty_is_ok_and_detail_hides_foreign_ticket():
     glpi.tickets = []
     listed = client.get("/tickets", headers=auth_headers())
     assert listed.status_code == 200
-    assert listed.json() == {"items": []}
+    assert listed.json() == {"items": [], "page": 1, "page_size": 20, "has_more": False}
     missing = client.get("/tickets/99", headers=auth_headers())
     assert missing.status_code == 404
     forbidden = client.get("/tickets/403", headers=auth_headers())
     assert forbidden.status_code == 403
     assert forbidden.json()["error"] == "glpi_forbidden"
     assert "description" not in forbidden.json()
+
+
+def test_list_publishes_dates_and_forwards_filter():
+    client, glpi = build_client()
+    link(client)
+    listed = client.get(
+        "/tickets",
+        params={"q": "Impressora", "status": "open", "sort": "updated_at:desc", "page": 1},
+        headers=auth_headers(),
+    )
+    assert listed.status_code == 200
+    body = listed.json()
+    assert body["items"][0]["id"] == 7
+    assert body["items"][0]["created_at"] == ""
+    assert "assigned_display_name" in body["items"][0]
+    assert body["page"] == 1
+    assert glpi.last_list_query.filter.startswith("name=like=*Impressora*")
+    assert "status.id=in=(1,10,2,3,4)" in glpi.last_list_query.filter
+    bad = client.get("/tickets", params={"status": "drop-table"}, headers=auth_headers())
+    assert bad.status_code == 422
 
 
 def test_create_ticket_and_followup_are_idempotent():

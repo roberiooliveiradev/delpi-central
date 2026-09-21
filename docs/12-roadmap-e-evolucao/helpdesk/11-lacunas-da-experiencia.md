@@ -1,6 +1,6 @@
 # 11 — Lacunas da experiência
 
-> **Status:** inventário. Não autoriza implementação e não altera [`06-plano-execucao.md`](./06-plano-execucao.md).
+> **Status:** inventário da experiência. A onda de lista, filtros e prévia de anexo está em implementação. Não altera [`06-plano-execucao.md`](./06-plano-execucao.md).
 > **Tela publicada:** [`WIREFRAMES.md`](./WIREFRAMES.md).
 > **Conversa já especificada:** [`10-conversa-do-chamado.md`](./10-conversa-do-chamado.md).
 > **Contrato vigente:** [`03-contrato.md`](./03-contrato.md).
@@ -53,18 +53,18 @@ Pedido explícito das fotos: filtros e listagem de dados.
 
 | ID | Lacuna | Evidência | Estado | Dono |
 |---|---|---|---|---|
-| L-01 | Busca por texto (título / conteúdo visível) | lista MFE sem campo; GLPI tem «Pesquisar» | PROXIMA_ONDA + CONTRATO_AUSENTE | BFF query + `FilterInputField` |
-| L-02 | Filtro de status | a lista mistura Novo, Em atendimento e Solucionado; o subtítulo diz «abertos» | PROXIMA_ONDA + CONTRATO_AUSENTE | BFF + `FilterSelectField` |
-| L-03 | Filtro de urgência | o dado já existe no cartão; não dá para restringir | PROXIMA_ONDA + CONTRATO_AUSENTE | BFF + `HelpdeskSelect` / kit de filtro |
-| L-04 | Filtro de categoria | categorias já vêm de `GET /ticket-categories` | PROXIMA_ONDA + CONTRATO_AUSENTE | BFF + filtro |
-| L-05 | Filtro de período (abertura ou última atualização) | GLPI tem data de abertura e última atualização; o MFE não mostra nenhuma | PROXIMA_ONDA + CONTRATO_AUSENTE | BFF + `FilterInputField` date |
-| L-06 | Id do chamado visível | GLPI coluna ID; MFE só o path | PROXIMA_ONDA | apresentação; `id` já está no JSON |
-| L-07 | Data de abertura na lista | GLPI «Data de abertura»; BFF da lista não publica `created_at` | PROXIMA_ONDA + CONTRATO_AUSENTE | `TicketSummary` |
-| L-08 | Data da última atualização na lista | contrato já tem `updated_at`; a tela ignora | PROXIMA_ONDA | `ticketRecordFields` |
-| L-09 | Técnico atribuído na lista e no detalhe | GLPI «Atribuído»; o `team` com `role=assigned` já existe no ticket | PROXIMA_ONDA + CONTRATO_AUSENTE | tradutor, campo `assigned_display_name` |
-| L-10 | Ordenar (última atualização, abertura, título) | GLPI «Ordenado por Última atualização»; BFF devolve a ordem do GLPI sem parâmetro | PROXIMA_ONDA + CONTRATO_AUSENTE | query `sort` |
-| L-11 | Paginação | GLPI 15 por página; BFF pede a coleção inteira de `GET /Assistance/Ticket` | PROXIMA_ONDA + HIPOTESE_A_VALIDAR | ver §6 |
-| L-12 | Estado vazio com filtro ativo | hoje o vazio significa «nenhum chamado»; com filtro precisa dizer «nenhum neste recorte» | PROXIMA_ONDA | apresentação + ajuda |
+| L-01 | Busca por texto (título / conteúdo visível) | lista MFE sem campo; GLPI tem «Pesquisar» | IMPLEMENTADO | BFF `q` + `FilterInputField` |
+| L-02 | Filtro de status | a lista mistura Novo, Em atendimento e Solucionado; o subtítulo diz «abertos» | IMPLEMENTADO | BFF + `FilterSelectField` |
+| L-03 | Filtro de urgência | o dado já existe no cartão; não dá para restringir | IMPLEMENTADO | BFF + kit de filtro |
+| L-04 | Filtro de categoria | categorias já vêm de `GET /ticket-categories` | IMPLEMENTADO | BFF + filtro |
+| L-05 | Filtro de período (abertura ou última atualização) | GLPI tem data de abertura e última atualização; o MFE não mostra nenhuma | IMPLEMENTADO | BFF `updated_from`/`updated_to` + date |
+| L-06 | Id do chamado visível | GLPI coluna ID; MFE só o path | IMPLEMENTADO | apresentação; `id` já está no JSON |
+| L-07 | Data de abertura na lista | GLPI «Data de abertura»; BFF da lista não publica `created_at` | IMPLEMENTADO | `TicketSummary.created_at` |
+| L-08 | Data da última atualização na lista | contrato já tem `updated_at`; a tela ignora | IMPLEMENTADO | `ticketRecordFields` |
+| L-09 | Técnico atribuído na lista e no detalhe | GLPI «Atribuído»; o `team` com `role=assigned` já existe no ticket | IMPLEMENTADO | `assigned_display_name` |
+| L-10 | Ordenar (última atualização, abertura, título) | GLPI «Ordenado por Última atualização»; BFF devolve a ordem do GLPI sem parâmetro | IMPLEMENTADO | query `sort` |
+| L-11 | Paginação | GLPI 15 por página; BFF pede a coleção inteira de `GET /Assistance/Ticket` | IMPLEMENTADO | `page`/`has_more`; sem total inventado |
+| L-12 | Estado vazio com filtro ativo | hoje o vazio significa «nenhum chamado»; com filtro precisa dizer «nenhum neste recorte» | IMPLEMENTADO | apresentação + ajuda |
 
 Kit já no plugin-ui, ainda sem factory no helpdesk: `createDashboardFiltersKit` (`FiltersRow`, `FilterInputField`, `FilterSelectField`). Uma moldura só — a do `FilterBar`. Sem tabela de 11 colunas: o wireframe vigente proíbe rolagem horizontal. A listagem continua em `HelpdeskRecordCard`, com mais campos.
 
@@ -76,10 +76,10 @@ Pedido explícito das fotos: a imagem como prévia e um modal com download.
 
 | ID | Lacuna | Evidência | Estado | Dono |
 |---|---|---|---|---|
-| A-01 | Miniatura da imagem na conversa | chamado 2 no MFE é um botão com o nome hash do GLPI; no 6288 a foto está no fio | PROXIMA_ONDA | `AttachmentPreviewStrip` no `belowBody` |
-| A-02 | Clicar abre modal de prévia | GLPI mostra a imagem grande no próprio chamado | PROXIMA_ONDA | `FilePreviewModal` (`headerActions` já aceita Baixar) |
-| A-03 | Download no modal, não no lugar da prévia | o download autenticado já existe | HERDADO da rota publicada; a posição muda | `GET .../attachments/{document_id}` |
-| A-04 | PDF e outros tipos que o kit prevê | `FilePreviewModal` já distingue image/pdf/text/docx; arquivo sem prévia continua só download | PROXIMA_ONDA | mesmo modal |
+| A-01 | Miniatura da imagem na conversa | chamado 2 no MFE é um botão com o nome hash do GLPI; no 6288 a foto está no fio | IMPLEMENTADO | `AttachmentPreviewStrip` no `belowBody` |
+| A-02 | Clicar abre modal de prévia | GLPI mostra a imagem grande no próprio chamado | IMPLEMENTADO | `FilePreviewModal` (`headerActions` já aceita Baixar) |
+| A-03 | Download no modal, não no lugar da prévia | o download autenticado já existe | IMPLEMENTADO | `GET .../attachments/{document_id}` |
+| A-04 | PDF e outros tipos que o kit prevê | `FilePreviewModal` já distingue image/pdf/text/docx; arquivo sem prévia continua só download | IMPLEMENTADO | mesmo modal |
 | A-05 | Blob só na memória da página | a regra de upload persistente já proíbe gravar o arquivo na Minha DELPI | HERDADO | `URL.createObjectURL` + revoke |
 | A-06 | Documento de outro chamado | 404 sem bytes — não pode mudar | invariante | serviço atual |
 | A-07 | Imagem de um acompanhamento específico | no 6288 a foto está na mensagem do técnico; a HLAPI do Followup não devolve essa lista; hoje todos os `Document` da timeline vão para a abertura | HIPOTESE_A_VALIDAR | não inventar o vínculo |
@@ -93,9 +93,9 @@ A conversa em bolhas já foi publicada. As fotos mostram o corte que ainda falta
 
 | ID | Lacuna | Evidência | Estado |
 |---|---|---|---|
-| C-01 | Nome do solicitante na abertura | chamado 2: bolha sem «Robério» / iniciais reais | HIPOTESE_A_VALIDAR — `requester_display_name` pode vir vazio se o `team` não trouxer `requester` |
-| C-02 | Nome de quem acompanhou | GLPI 6288 escreve Mainena e Michael; o MFE no 2 só mostra o relógio | PROXIMA_ONDA se o JSON já tiver `author_display_name`; senão CONTRATO no tradutor do `user` |
-| C-03 | «Criado em … por …» | o GLPI escreve a frase; o MFE só põe a data relativa ou `dd/mm/aaaa` | apresentação; o instante já existe no detalhe |
+| C-01 | Nome do solicitante na abertura | chamado 2: bolha sem «Robério» / iniciais reais | IMPLEMENTADO no tradutor (`requester` ou `user_recipient`); lado da bolha depende do nome ao vivo |
+| C-02 | Nome de quem acompanhou | GLPI 6288 escreve Mainena e Michael; o MFE no 2 só mostra o relógio | IMPLEMENTADO no tradutor (`display_name` / nome completo) |
+| C-03 | «Criado em … por …» | o GLPI escreve a frase; o MFE só põe a data relativa ou `dd/mm/aaaa` | IMPLEMENTADO — rótulo «Criado em …» |
 | C-04 | Foto do técnico | o 6288 tem avatar com foto; este módulo não guarda foto | CONSOLE_GLPI / fora — iniciais bastam |
 | C-05 | Lado da bolha | no 2 as duas mensagens foram para a direita; `mine` hoje é «autor = solicitante» | rever quando C-01 estiver preenchido |
 | C-06 | Título da abertura vs cartão de urgência | o cartão do 2 virou «Média» porque a categoria está vazia (`itilcategories_id=0`) | já documentado; não inventar categoria |
@@ -122,36 +122,9 @@ Já estavam em H5. Continuam fora desta onda de filtros/prévia, salvo decisão 
 | H-05 | Itens, custos, base de conhecimento, histórico, estatísticas | CONSOLE_GLPI |
 | H-06 | Seletor de entidade | H5 |
 
-## 4. Contrato que a próxima onda precisa
+## 4. Contrato da lista
 
-Aditivo. Lista, POST e download atuais continuam válidos.
-
-`GET /tickets` hoje:
-
-```text
-id, title, status, category, urgency, updated_at
-```
-
-Ainda falta, para a listagem das fotos:
-
-```text
-created_at
-assigned_display_name
-```
-
-Ainda falta, para achar o chamado sem baixar o parque:
-
-```text
-q
-status
-urgency_id
-category_id
-updated_from / updated_to   (ou opened_from / opened_to)
-sort
-page / page_size
-```
-
-Os nomes finais dos query params só travam depois de ler o schema vivo `GET /api.php/v2.2/Assistance/Ticket` (HLAPI 2.2). Até lá, L-01…L-05 e L-10…L-11 ficam com `HIPOTESE_A_VALIDAR` no binding.
+Publicado em [`03-contrato.md`](./03-contrato.md). `GET /tickets` agora devolve `created_at`, `assigned_display_name`, `page`, `page_size` e `has_more`, e aceita `q`, `status`, `urgency_id`, `category_id`, `updated_from`, `updated_to`, `sort`, `page` e `page_size`. O binding HLAPI (`filter` RSQL, `start`, `limit`, `sort`) foi lido em `api.php/doc.json` 2.2.0.
 
 Prévia de arquivo **não** cria rota nova. O modal reusa `GET /tickets/{id}/attachments/{document_id}`. O browser não chama o GLPI.
 

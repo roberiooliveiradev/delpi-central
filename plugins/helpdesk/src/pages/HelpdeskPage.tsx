@@ -6,7 +6,6 @@ import {
   beginGlpiLink,
   createFollowup,
   createTicket,
-  downloadTicketAttachment,
   getTicket,
   listCategories,
   listTickets,
@@ -18,14 +17,24 @@ import { helpTooltips } from "../content/helpTooltips";
 import {
   conversationMessages,
   detailRecordHeading,
+  isTicketFilterActive,
   newIdempotencyKey,
+  parseTicketListFilters,
   statusBadgeVariant,
+  ticketListSearch,
   ticketRecordFields,
+  TICKET_SORT_OPTIONS,
+  TICKET_STATUS_FILTERS,
+  type TicketListFilters,
   viewForTicketLoad,
 } from "../presentation/ticketView";
 import { navigateHelpdesk, type HelpdeskRoute } from "../routing/helpdeskRoute";
+import { TicketAttachmentPreview } from "./TicketAttachmentPreview";
 import {
   HelpdeskEmptyState,
+  HelpdeskFilterInput,
+  HelpdeskFilterSelect,
+  HelpdeskFiltersRow,
   HelpdeskFormActions,
   HelpdeskLoadingState,
   HelpdeskMessageThread,
@@ -64,23 +73,52 @@ export function HelpdeskPage({ route }: { route: HelpdeskRoute }) {
   return <TicketListPage />;
 }
 
+function currentListFilters(): TicketListFilters {
+  return parseTicketListFilters(typeof window === "undefined" ? "" : window.location.search);
+}
+
+function writeListFilters(filters: TicketListFilters) {
+  window.history.replaceState({}, "", `/apps/helpdesk${ticketListSearch(filters)}`);
+}
+
 function TicketListPage() {
+  const [filters, setFilters] = useState(currentListFilters);
+  const [qDraft, setQDraft] = useState(filters.q);
   const [items, setItems] = useState<TicketSummary[]>([]);
+  const [hasMore, setHasMore] = useState(false);
+  const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
+  const [urgencies, setUrgencies] = useState<{ id: number; name: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorCode, setErrorCode] = useState<string | null>(null);
   const [errorText, setErrorText] = useState<string | null>(null);
   const [linking, setLinking] = useState(false);
 
-  async function load() {
+  function commitFilters(next: TicketListFilters) {
+    setFilters(next);
+    writeListFilters(next);
+  }
+
+  async function load(next = filters) {
     setLoading(true);
     setErrorCode(null);
     setErrorText(null);
     try {
-      const body = await listTickets();
+      const body = await listTickets({
+        q: next.q || undefined,
+        status: next.status || undefined,
+        urgency_id: next.urgency_id || undefined,
+        category_id: next.category_id || undefined,
+        updated_from: next.updated_from || undefined,
+        updated_to: next.updated_to || undefined,
+        sort: next.sort || undefined,
+        page: next.page,
+      });
       setItems(body.items);
+      setHasMore(body.has_more);
     } catch (error) {
       const mapped = messageFor(error);
       setItems([]);
+      setHasMore(false);
       setErrorCode(mapped.code);
       setErrorText(mapped.text);
     } finally {
@@ -89,15 +127,124 @@ function TicketListPage() {
   }
 
   useEffect(() => {
-    void load();
+    void load(filters);
+  }, [filters]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      if (qDraft === filters.q) return;
+      commitFilters({ ...filters, q: qDraft, page: 1 });
+    }, 400);
+    return () => window.clearTimeout(timer);
+  }, [filters, qDraft]);
+
+  useEffect(() => {
+    void Promise.all([listCategories(), listUrgencies()])
+      .then(([categoryBody, urgencyBody]) => {
+        setCategories(categoryBody.items);
+        setUrgencies(urgencyBody.items);
+      })
+      .catch(() => {
+        setCategories([]);
+        setUrgencies([]);
+      });
   }, []);
 
-  const view = viewForTicketLoad({ loading, errorCode, itemCount: items.length });
+  useEffect(() => {
+    const onPop = () => {
+      const next = currentListFilters();
+      setFilters(next);
+      setQDraft(next.q);
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+
+  const view = viewForTicketLoad({
+    loading,
+    errorCode,
+    itemCount: items.length,
+    filterActive: isTicketFilterActive(filters),
+  });
+  const filterActive = isTicketFilterActive(filters);
 
   return (
     <>
-      <HelpdeskPageHeader title="Meus Chamados de TI" subtitle="Chamados abertos no seu nome" onRefresh={() => void load()} refreshing={loading} />
-      <HelpdeskSectionCard title="Meus chamados" hint={helpTooltips.list} actions={<ActionButton variant="primary" onClick={() => navigateHelpdesk("/apps/helpdesk/tickets/new")}>Abrir chamado</ActionButton>}>
+      <HelpdeskPageHeader
+        title="Meus Chamados de TI"
+        subtitle="Chamados no seu nome"
+        onRefresh={() => void load(filters)}
+        refreshing={loading}
+      />
+      <HelpdeskSectionCard
+        title="Meus chamados"
+        hint={helpTooltips.list}
+        actions={
+          <ActionButton variant="primary" onClick={() => navigateHelpdesk("/apps/helpdesk/tickets/new")}>
+            Abrir chamado
+          </ActionButton>
+        }
+      >
+        {view === "link" ? null : (
+          <HelpdeskFiltersRow variant="extended" trailing={
+            filterActive ? (
+              <ActionButton
+                onClick={() => {
+                  const next = { ...currentListFilters(), q: "", status: "", urgency_id: "", category_id: "", updated_from: "", updated_to: "", page: 1, sort: filters.sort };
+                  setQDraft("");
+                  commitFilters(next);
+                }}
+              >
+                Limpar filtros
+              </ActionButton>
+            ) : null
+          }>
+            <HelpdeskFilterInput
+              label="Buscar"
+              hint={helpTooltips.filters}
+              type="search"
+              value={qDraft}
+              onChange={setQDraft}
+              placeholder="Título do chamado"
+            />
+            <HelpdeskFilterSelect
+              label="Status"
+              value={filters.status}
+              onChange={(status) => commitFilters({ ...filters, status, page: 1 })}
+              options={[...TICKET_STATUS_FILTERS]}
+            />
+            <HelpdeskFilterSelect
+              label="Urgência"
+              value={filters.urgency_id}
+              onChange={(urgency_id) => commitFilters({ ...filters, urgency_id, page: 1 })}
+              options={[{ value: "", label: "Todas" }, ...urgencies.map((item) => ({ value: String(item.id), label: item.name }))]}
+            />
+            <HelpdeskFilterSelect
+              label="Categoria"
+              value={filters.category_id}
+              onChange={(category_id) => commitFilters({ ...filters, category_id, page: 1 })}
+              options={[{ value: "", label: "Todas" }, ...categories.map((item) => ({ value: String(item.id), label: item.name }))]}
+            />
+            <HelpdeskFilterInput
+              label="Atualizado de"
+              type="date"
+              value={filters.updated_from}
+              onChange={(updated_from) => commitFilters({ ...filters, updated_from, page: 1 })}
+            />
+            <HelpdeskFilterInput
+              label="Atualizado até"
+              type="date"
+              value={filters.updated_to}
+              onChange={(updated_to) => commitFilters({ ...filters, updated_to, page: 1 })}
+            />
+            <HelpdeskFilterSelect
+              label="Ordenar"
+              value={filters.sort}
+              onChange={(sort) => commitFilters({ ...filters, sort, page: 1 })}
+              options={[...TICKET_SORT_OPTIONS]}
+            />
+          </HelpdeskFiltersRow>
+        )}
         {view === "loading" ? <HelpdeskLoadingState /> : null}
         {view === "forbidden" || view === "unavailable" || view === "error" ? (
           <HelpdeskStateBanner variant="error">{errorText}</HelpdeskStateBanner>
@@ -126,7 +273,11 @@ function TicketListPage() {
             </HelpdeskFormActions>
           </HelpdeskStateBanner>
         ) : null}
-        {view === "empty" ? <HelpdeskEmptyState /> : null}
+        {view === "empty" ? (
+          <HelpdeskEmptyState
+            message={filterActive ? "Nenhum chamado neste recorte." : undefined}
+          />
+        ) : null}
         {view === "list" ? (
           <div className="helpdesk-record-list">
             {items.map((item) => (
@@ -134,7 +285,14 @@ function TicketListPage() {
                 key={item.id}
                 title={item.title}
                 status={<HelpdeskStatusBadge label={item.status} variant={statusBadgeVariant(item.status)} />}
-                fields={ticketRecordFields(item.category, item.urgency)}
+                fields={ticketRecordFields({
+                  id: item.id,
+                  category: item.category,
+                  urgency: item.urgency,
+                  assigned_display_name: item.assigned_display_name,
+                  created_at: item.created_at,
+                  updated_at: item.updated_at,
+                })}
                 href={`/apps/helpdesk/tickets/${item.id}`}
                 ariaLabel={item.title}
                 onNavigate={(event) => {
@@ -147,6 +305,25 @@ function TicketListPage() {
               />
             ))}
           </div>
+        ) : null}
+        {view === "list" || (view === "empty" && filters.page > 1) ? (
+          <HelpdeskFormActions>
+            <ActionButton
+              disabled={filters.page <= 1 || loading}
+              onClick={() => commitFilters({ ...filters, page: Math.max(1, filters.page - 1) })}
+            >
+              Anterior
+            </ActionButton>
+            <ActionButton disabled>
+              {`Página ${filters.page}`}
+            </ActionButton>
+            <ActionButton
+              disabled={!hasMore || loading}
+              onClick={() => commitFilters({ ...filters, page: filters.page + 1 })}
+            >
+              Próxima
+            </ActionButton>
+          </HelpdeskFormActions>
         ) : null}
       </HelpdeskSectionCard>
     </>
@@ -271,6 +448,14 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
             <HelpdeskRecordCard
               {...detailRecordHeading(ticket.category, ticket.urgency)}
               status={<HelpdeskStatusBadge label={ticket.status} variant={statusBadgeVariant(ticket.status)} />}
+              fields={ticketRecordFields({
+                id: ticket.id,
+                category: ticket.category,
+                urgency: ticket.urgency,
+                assigned_display_name: ticket.assigned_display_name,
+                created_at: ticket.created_at,
+                updated_at: ticket.updated_at,
+              }).filter((field) => field.id === "id" || field.id === "assigned")}
             />
             <HelpdeskMessageThread
               listAriaLabel="Conversa do chamado"
@@ -285,24 +470,11 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                 mine: message.mine,
                 belowBody:
                   message.attachmentIds.length > 0 ? (
-                    <div className="helpdesk-record-list">
-                      {message.attachmentIds.map((documentId) => {
-                        const file = ticket.attachments.find((item) => item.document_id === documentId);
-                        const filename = file?.filename || "anexo";
-                        return (
-                          <ActionButton
-                            key={documentId}
-                            onClick={() => {
-                              void downloadTicketAttachment(ticketId, documentId, filename).catch((error) => {
-                                setErrorText(messageFor(error).text);
-                              });
-                            }}
-                          >
-                            {`Baixar ${filename}`}
-                          </ActionButton>
-                        );
-                      })}
-                    </div>
+                    <TicketAttachmentPreview
+                      ticketId={ticketId}
+                      attachments={ticket.attachments.filter((item) => message.attachmentIds.includes(item.document_id))}
+                      onError={(text) => setErrorText(text)}
+                    />
                   ) : undefined,
               }))}
             />

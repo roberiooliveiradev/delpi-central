@@ -5,7 +5,13 @@ import pytest
 
 from helpdesk_app.domain.errors import GlpiUnavailable
 from helpdesk_app.infrastructure.glpi.http_client import HttpxGlpiClient
-from helpdesk_app.infrastructure.glpi.mapping import parse_categories, parse_ticket_detail, parse_ticket_list
+from helpdesk_app.infrastructure.glpi.mapping import (
+    build_ticket_list_query,
+    parse_categories,
+    parse_ticket_detail,
+    parse_ticket_list,
+)
+from helpdesk_app.domain.errors import GlpiValidation
 
 
 def test_post_is_not_retried_and_get_retries_transient_status():
@@ -39,8 +45,8 @@ def test_post_is_not_retried_and_get_retries_transient_status():
         pass
     assert calls["post"] == 1
     assert client.post_calls == 1
-    listed = client.list_tickets("token")
-    assert listed == []
+    listed = client.list_tickets("token", build_ticket_list_query())
+    assert listed.items == ()
     assert calls["get"] == 3
 
 
@@ -287,6 +293,69 @@ def test_mapping_publishes_requester_and_hides_private_followup():
         },
     )
     assert detail.requester_display_name == "Robério Teixeira"
+    assert detail.assigned_display_name == "Técnico"
     assert detail.created_at == "2026-09-21T10:00:00Z"
     assert detail.description == "Texto da abertura"
     assert [entry.content for entry in detail.timeline] == ["Público"]
+
+
+def test_list_query_uses_rsql_and_rejects_injection():
+    query = build_ticket_list_query(
+        q="Monitor;status==1",
+        status="open",
+        urgency_id=3,
+        category_id=8,
+        updated_from="2026-02-01",
+        updated_to="2026-02-28",
+        sort="created_at:asc",
+        page=2,
+        page_size=20,
+    )
+    assert "status==1" not in query.filter
+    assert "name=like=*Monitorstatus1*" in query.filter
+    assert "status.id=in=(1,10,2,3,4)" in query.filter
+    assert "urgency==3" in query.filter
+    assert "category.id==8" in query.filter
+    assert query.sort == "date_creation:asc"
+    assert query.start == 20
+    assert query.limit == 21
+    with pytest.raises(GlpiValidation):
+        build_ticket_list_query(status="admin")
+    with pytest.raises(GlpiValidation):
+        build_ticket_list_query(sort="entity:desc")
+
+
+def test_mapping_list_publishes_created_at_and_assigned():
+    listed = parse_ticket_list(
+        [
+            {
+                "id": 2,
+                "name": "Monitor falhando",
+                "status": {"id": 2, "name": "Em atendimento (atribuído)"},
+                "category": {"id": 0},
+                "urgency": 3,
+                "date_creation": "2026-02-19T10:00:00Z",
+                "date_mod": "2026-02-19T12:00:00Z",
+                "team": [{"role": "assigned", "firstname": "Ana", "realname": "Silva"}],
+            }
+        ]
+    )
+    assert listed[0].created_at == "2026-02-19T10:00:00Z"
+    assert listed[0].assigned_display_name == "Ana Silva"
+    assert listed[0].category == ""
+
+
+def test_requester_falls_back_to_user_recipient():
+    detail = parse_ticket_detail(
+        {
+            "id": 2,
+            "name": "Monitor falhando",
+            "content": "Máquina",
+            "status": {"name": "Novo"},
+            "urgency": 3,
+            "date_creation": "2026-02-19T10:00:00Z",
+            "user_recipient": {"display_name": "Robério Teixeira"},
+        },
+        {"results": []},
+    )
+    assert detail.requester_display_name == "Robério Teixeira"

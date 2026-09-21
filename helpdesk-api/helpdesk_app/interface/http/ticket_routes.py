@@ -7,7 +7,7 @@ from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel, ConfigDict, Field
 
 from helpdesk_app.domain.errors import HelpdeskError
-from helpdesk_app.infrastructure.glpi.mapping import URGENCIES, attachment_filename
+from helpdesk_app.infrastructure.glpi.mapping import URGENCIES, attachment_filename, build_ticket_list_query
 from helpdesk_app.interface.http.actor import require_actor
 
 router = APIRouter(tags=["Helpdesk Tickets"])
@@ -56,10 +56,32 @@ def urgencies(request: Request):
 
 
 @router.get("/tickets")
-def list_tickets(request: Request):
+def list_tickets(
+    request: Request,
+    q: str = "",
+    status: str = "",
+    urgency_id: int | None = None,
+    category_id: int | None = None,
+    updated_from: str = "",
+    updated_to: str = "",
+    sort: str = "updated_at:desc",
+    page: int = 1,
+    page_size: int = 20,
+):
     actor = require_actor(request)
     try:
-        rows = _tickets(request).tickets(actor.subject)
+        query = build_ticket_list_query(
+            q=q,
+            status=status,
+            urgency_id=urgency_id,
+            category_id=category_id,
+            updated_from=updated_from,
+            updated_to=updated_to,
+            sort=sort,
+            page=page,
+            page_size=page_size,
+        )
+        listed = _tickets(request).tickets(actor.subject, query)
     except HelpdeskError as exc:
         return _error(exc, request)
     return {
@@ -71,9 +93,14 @@ def list_tickets(request: Request):
                 "category": row.category,
                 "urgency": row.urgency,
                 "updated_at": row.updated_at,
+                "created_at": row.created_at,
+                "assigned_display_name": row.assigned_display_name,
             }
-            for row in rows
-        ]
+            for row in listed.items
+        ],
+        "page": listed.page,
+        "page_size": listed.page_size,
+        "has_more": listed.has_more,
     }
 
 
@@ -93,6 +120,7 @@ def get_ticket(request: Request, ticket_id: int):
         "updated_at": ticket.updated_at,
         "created_at": ticket.created_at,
         "requester_display_name": ticket.requester_display_name,
+        "assigned_display_name": ticket.assigned_display_name,
         "description": ticket.description,
         "timeline": [
             {

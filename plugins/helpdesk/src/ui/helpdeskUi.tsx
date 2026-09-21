@@ -1,7 +1,10 @@
 import { type ComponentProps } from "react";
 import {
+  attachmentPreviewStripBemClasses,
+  createDashboardAttachmentPreviewStrip,
   createDashboardDataRecordCard,
   createDashboardEmptyState,
+  createDashboardFiltersKit,
   createDashboardFormActions,
   createDashboardLoadingState,
   createDashboardMessageThread,
@@ -75,6 +78,25 @@ export const HelpdeskTextField = createDashboardTextField({
 
 export const HelpdeskTextArea = createDashboardTextAreaField({
   classNames: textAreaFieldBemClasses(PREFIX),
+});
+
+const helpdeskFilters = createDashboardFiltersKit({
+  prefix: PREFIX,
+  labels: { filtersAriaLabel: "Filtros dos chamados" },
+  portalScopeClassName: "dashboard-helpdesk",
+});
+
+export const HelpdeskFiltersRow = helpdeskFilters.FiltersRow;
+export const HelpdeskFilterInput = helpdeskFilters.FilterInputField;
+export const HelpdeskFilterSelect = helpdeskFilters.FilterSelectField;
+
+export const HelpdeskAttachmentPreviewStrip = createDashboardAttachmentPreviewStrip({
+  classNames: attachmentPreviewStripBemClasses(PREFIX),
+  labels: {
+    empty: "Nenhum arquivo neste chamado.",
+    openAriaLabel: (fileName) => `Abrir ${fileName}`,
+    removeAriaLabel: (fileName) => `Remover ${fileName}`,
+  },
 });
 
 export const HelpdeskSelect = createDashboardSelectField({

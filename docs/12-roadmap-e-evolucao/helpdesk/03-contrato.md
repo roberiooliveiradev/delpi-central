@@ -39,7 +39,20 @@ Base do MFE: `/apps/helpdesk-api`.
 | GET | `/tickets` | Chamados visíveis para esse token |
 | GET | `/tickets/{id}` | Detalhe + linha do tempo |
 
-`GET /tickets` devolve:
+`GET /tickets` aceita recorte no helpdesk, não no navegador:
+
+| Query | Papel |
+|---|---|
+| `q` | busca sanitizada no título (`name=like=*termo*`) |
+| `status` | `open` (1,10,2,3,4), `in_progress` (2,3), `solved` (5), `closed` (6) |
+| `urgency_id` | urgência 1–5 |
+| `category_id` | categoria do token |
+| `updated_from` / `updated_to` | `YYYY-MM-DD` em `date_mod` |
+| `sort` | `updated_at:desc` (padrão), `created_at:asc\|desc`, `title:asc` |
+| `page` | página 1-based |
+| `page_size` | padrão 20, máximo 50 |
+
+O BFF pede `limit = page_size + 1` à HLAPI e devolve `has_more`. Não inventa total do parque. Status ou sort desconhecidos: 422 `validation_error`. `q` só conserva letra, número, espaço, hífen e underscore.
 
 ```json
 {
@@ -50,15 +63,20 @@ Base do MFE: `/apps/helpdesk-api`.
       "status": "string",
       "category": "string",
       "urgency": "string",
-      "updated_at": "2026-09-21T12:00:00Z"
+      "updated_at": "2026-09-21T12:00:00Z",
+      "created_at": "2026-09-20T08:00:00Z",
+      "assigned_display_name": "string"
     }
-  ]
+  ],
+  "page": 1,
+  "page_size": 20,
+  "has_more": false
 }
 ```
 
-Lista vazia com sessão válida é `200` e `items: []`. Não é erro.
+Lista vazia com sessão válida é `200`, `items: []` e `has_more: false`. Não é erro.
 
-`GET /tickets/{id}` inclui `description`, `created_at` (instante de abertura), `requester_display_name` (primeiro membro de `team` com papel `requester`; vazio se não houver), `timeline[]` com `id`, `kind` (`followup`), `content`, `created_at`, `author_display_name`, e `attachments[]` com `document_id`, `filename` e `mime`. A lista de anexos traz só arquivos já ligados àquele chamado. Lista vazia é `[]`. Acompanhamento privado e tarefa não entram em `timeline`. Os campos novos são aditivos: a lista e as escritas não mudam.
+`GET /tickets/{id}` inclui `description`, `created_at` (instante de abertura), `requester_display_name` (primeiro membro de `team` com papel `requester`; se faltar, `user_recipient`), `assigned_display_name` (primeiro `assigned` do `team`), `timeline[]` com `id`, `kind` (`followup`), `content`, `created_at`, `author_display_name`, e `attachments[]` com `document_id`, `filename` e `mime`. A lista de anexos traz só arquivos já ligados àquele chamado. Lista vazia é `[]`. Acompanhamento privado e tarefa não entram em `timeline`. Os campos novos são aditivos.
 
 `GET /tickets/{id}/attachments/{document_id}` devolve o arquivo com o token da pessoa. O `document_id` precisa estar em `attachments` daquele chamado; caso contrário a resposta é 404, sem o corpo. O arquivo não é gravado na Minha DELPI: o BFF só repassa o download do GLPI.
 

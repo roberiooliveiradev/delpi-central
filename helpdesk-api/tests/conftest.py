@@ -8,7 +8,15 @@ from fastapi.testclient import TestClient
 from helpdesk_app.application.oauth_service import OAuthService
 from helpdesk_app.application.ticket_service import TicketService
 from helpdesk_app.domain.errors import GlpiForbidden, GlpiNotFound, HelpdeskError
-from helpdesk_app.domain.models import Attachment, Category, TicketDetail, TicketSummary, TimelineEntry, TokenSet
+from helpdesk_app.domain.models import (
+    Attachment,
+    Category,
+    TicketDetail,
+    TicketListPage,
+    TicketSummary,
+    TimelineEntry,
+    TokenSet,
+)
 from helpdesk_app.infrastructure.persistence.memory import (
     MemoryIdempotencyStore,
     MemorySessionStore,
@@ -66,10 +74,11 @@ class FakeGlpi:
         assert access_token
         return [Category(3, "Hardware")]
 
-    def list_tickets(self, access_token: str):
+    def list_tickets(self, access_token: str, query):
         self.calls += 1
         assert access_token
-        return list(self.tickets)
+        self.last_list_query = query
+        return TicketListPage(items=tuple(self.tickets), page=query.page, page_size=query.page_size, has_more=False)
 
     def get_ticket(self, access_token: str, ticket_id: int):
         self.calls += 1

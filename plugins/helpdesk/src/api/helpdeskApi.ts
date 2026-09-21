@@ -60,6 +60,20 @@ export type TicketSummary = {
   category: string;
   urgency: string;
   updated_at: string;
+  created_at: string;
+  assigned_display_name: string;
+};
+
+export type TicketListQuery = {
+  q?: string;
+  status?: string;
+  urgency_id?: string;
+  category_id?: string;
+  updated_from?: string;
+  updated_to?: string;
+  sort?: string;
+  page?: number;
+  page_size?: number;
 };
 
 export type TimelineEntry = {
@@ -72,7 +86,6 @@ export type TimelineEntry = {
 
 export type TicketDetail = TicketSummary & {
   description: string;
-  created_at: string;
   requester_display_name: string;
   timeline: TimelineEntry[];
   attachments: TicketAttachment[];
@@ -84,8 +97,22 @@ export type TicketAttachment = {
   mime: string;
 };
 
-export function listTickets(signal?: AbortSignal) {
-  return request<{ items: TicketSummary[] }>("/tickets", { signal });
+export function listTickets(query: TicketListQuery = {}, signal?: AbortSignal) {
+  const params = new URLSearchParams();
+  if (query.q) params.set("q", query.q);
+  if (query.status) params.set("status", query.status);
+  if (query.urgency_id) params.set("urgency_id", query.urgency_id);
+  if (query.category_id) params.set("category_id", query.category_id);
+  if (query.updated_from) params.set("updated_from", query.updated_from);
+  if (query.updated_to) params.set("updated_to", query.updated_to);
+  if (query.sort) params.set("sort", query.sort);
+  if (query.page && query.page > 1) params.set("page", String(query.page));
+  if (query.page_size) params.set("page_size", String(query.page_size));
+  const suffix = params.toString() ? `?${params}` : "";
+  return request<{ items: TicketSummary[]; page: number; page_size: number; has_more: boolean }>(
+    `/tickets${suffix}`,
+    { signal },
+  );
 }
 
 export function getTicket(id: string, signal?: AbortSignal) {
@@ -125,12 +152,16 @@ export function createFollowup(ticketId: string, content: string, idempotencyKey
   });
 }
 
-export async function downloadTicketAttachment(ticketId: string, documentId: number, filename: string) {
+export async function fetchTicketAttachmentBlob(ticketId: string, documentId: number): Promise<Blob> {
   const response = await fetch(`${BASE}/tickets/${ticketId}/attachments/${documentId}`, {
     headers: headers(),
   });
   if (!response.ok) throw await readError(response);
-  const blob = await response.blob();
+  return response.blob();
+}
+
+export async function downloadTicketAttachment(ticketId: string, documentId: number, filename: string) {
+  const blob = await fetchTicketAttachmentBlob(ticketId, documentId);
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;

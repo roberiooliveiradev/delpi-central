@@ -11,7 +11,7 @@ from helpdesk_app.domain.errors import (
     GlpiUnavailable,
     GlpiValidation,
 )
-from helpdesk_app.domain.models import Attachment, Category, TicketDetail, TicketSummary, TokenSet
+from helpdesk_app.domain.models import Attachment, Category, TicketDetail, TicketListPage, TicketListQuery, TokenSet
 from helpdesk_app.infrastructure.glpi.mapping import (
     URGENCIES,
     create_ticket_body,
@@ -19,7 +19,7 @@ from helpdesk_app.infrastructure.glpi.mapping import (
     parse_categories,
     parse_created_id,
     parse_ticket_detail,
-    parse_ticket_list,
+    parse_ticket_page,
     parse_token_set,
 )
 
@@ -117,9 +117,21 @@ class HttpxGlpiClient:
     def list_urgencies(self):
         return list(URGENCIES)
 
-    def list_tickets(self, access_token: str) -> list[TicketSummary]:
-        payload = self._json("GET", "/api.php/v2.2/Assistance/Ticket", token=access_token)
-        return parse_ticket_list(payload)
+    def list_tickets(self, access_token: str, query: TicketListQuery) -> TicketListPage:
+        params: dict[str, str | int] = {
+            "start": query.start,
+            "limit": query.limit,
+            "sort": query.sort,
+        }
+        if query.filter:
+            params["filter"] = query.filter
+        payload = self._json(
+            "GET",
+            "/api.php/v2.2/Assistance/Ticket",
+            token=access_token,
+            params=params,
+        )
+        return parse_ticket_page(payload, query)
 
     def get_ticket(self, access_token: str, ticket_id: int) -> TicketDetail:
         ticket = self._json(
@@ -203,8 +215,9 @@ class HttpxGlpiClient:
         token: str | None = None,
         json_body: dict | None = None,
         form: dict | None = None,
+        params: dict | None = None,
     ) -> dict:
-        response = self._request(method, path, token=token, json_body=json_body, form=form)
+        response = self._request(method, path, token=token, json_body=json_body, form=form, params=params)
         if not response.content:
             return {}
         data = response.json()
@@ -220,6 +233,7 @@ class HttpxGlpiClient:
         token: str | None = None,
         json_body: dict | None = None,
         form: dict | None = None,
+        params: dict | None = None,
         accept: str = "application/json",
     ) -> httpx.Response:
         headers = {"Accept": accept, "GLPI-API-Version": "2.2.0"}
@@ -235,6 +249,7 @@ class HttpxGlpiClient:
                     method,
                     f"{self._base}{path}",
                     headers=headers,
+                    params=params,
                     json=json_body,
                     data=form,
                 )

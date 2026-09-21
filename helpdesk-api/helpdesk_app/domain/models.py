@@ -27,6 +27,26 @@ class TicketSummary:
     category: str
     urgency: str
     updated_at: str
+    created_at: str = ""
+    assigned_display_name: str = ""
+
+
+@dataclass(frozen=True)
+class TicketListQuery:
+    filter: str = ""
+    start: int = 0
+    limit: int = 21
+    sort: str = "date_mod:desc"
+    page: int = 1
+    page_size: int = 20
+
+
+@dataclass(frozen=True)
+class TicketListPage:
+    items: tuple[TicketSummary, ...]
+    page: int
+    page_size: int
+    has_more: bool
 
 
 @dataclass(frozen=True)
@@ -58,6 +78,7 @@ class TicketDetail:
     attachments: tuple[Attachment, ...] = ()
     created_at: str = ""
     requester_display_name: str = ""
+    assigned_display_name: str = ""
 
 
 @dataclass(frozen=True)

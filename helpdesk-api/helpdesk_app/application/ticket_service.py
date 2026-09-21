@@ -7,7 +7,7 @@ from helpdesk_app.domain.errors import (
     LinkRequired,
     MissingIdempotencyKey,
 )
-from helpdesk_app.domain.models import StoredResponse, TicketDetail, TicketSummary
+from helpdesk_app.domain.models import StoredResponse, TicketDetail, TicketListPage, TicketListQuery
 
 
 class TicketService:
@@ -19,8 +19,8 @@ class TicketService:
     def categories(self, subject: str):
         return self._glpi.list_categories(self._token(subject))
 
-    def tickets(self, subject: str) -> list[TicketSummary]:
-        return self._glpi.list_tickets(self._token(subject))
+    def tickets(self, subject: str, query: TicketListQuery) -> TicketListPage:
+        return self._glpi.list_tickets(self._token(subject), query)
 
     def ticket(self, subject: str, ticket_id: int) -> TicketDetail:
         return self._glpi.get_ticket(self._token(subject), ticket_id)

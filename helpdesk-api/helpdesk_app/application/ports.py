@@ -6,7 +6,8 @@ from helpdesk_app.domain.models import (
     PendingAuthorization,
     StoredResponse,
     TicketDetail,
-    TicketSummary,
+    TicketListPage,
+    TicketListQuery,
     TokenSet,
 )
 
@@ -20,7 +21,7 @@ class GlpiGateway(Protocol):
 
     def list_categories(self, access_token: str) -> list[Category]: ...
 
-    def list_tickets(self, access_token: str) -> list[TicketSummary]: ...
+    def list_tickets(self, access_token: str, query: TicketListQuery) -> TicketListPage: ...
 
     def get_ticket(self, access_token: str, ticket_id: int) -> TicketDetail: ...
 

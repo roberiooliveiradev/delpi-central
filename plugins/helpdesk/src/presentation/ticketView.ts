@@ -11,6 +11,7 @@ export function viewForTicketLoad(input: {
   loading: boolean;
   errorCode?: string | null;
   itemCount: number;
+  filterActive?: boolean;
 }): TicketListView {
   if (input.loading) return "loading";
   if (input.errorCode === "forbidden" || input.errorCode === "glpi_forbidden") {
@@ -30,11 +31,116 @@ export type TicketRecordField = {
   present: boolean;
 };
 
-export function ticketRecordFields(category: string, urgency: string): TicketRecordField[] {
+export function ticketRecordFields(input: {
+  id: number;
+  category: string;
+  urgency: string;
+  assigned_display_name?: string;
+  created_at?: string;
+  updated_at?: string;
+  now?: Date;
+}): TicketRecordField[] {
+  const now = input.now ?? new Date();
   return [
-    { id: "category", label: "Categoria", value: category, present: category.trim().length > 0 },
-    { id: "urgency", label: "Urgência", value: urgency, present: urgency.trim().length > 0 },
+    { id: "id", label: "Chamado", value: String(input.id), present: input.id > 0 },
+    { id: "category", label: "Categoria", value: input.category, present: input.category.trim().length > 0 },
+    { id: "urgency", label: "Urgência", value: input.urgency, present: input.urgency.trim().length > 0 },
+    {
+      id: "assigned",
+      label: "Técnico",
+      value: (input.assigned_display_name ?? "").trim(),
+      present: (input.assigned_display_name ?? "").trim().length > 0,
+    },
+    {
+      id: "created_at",
+      label: "Aberto",
+      value: relativeTimeLabel(input.created_at ?? "", now),
+      present: Boolean(relativeTimeLabel(input.created_at ?? "", now)),
+    },
+    {
+      id: "updated_at",
+      label: "Atualizado",
+      value: relativeTimeLabel(input.updated_at ?? "", now),
+      present: Boolean(relativeTimeLabel(input.updated_at ?? "", now)),
+    },
   ];
+}
+
+export type TicketListFilters = {
+  q: string;
+  status: string;
+  urgency_id: string;
+  category_id: string;
+  updated_from: string;
+  updated_to: string;
+  sort: string;
+  page: number;
+};
+
+export const TICKET_STATUS_FILTERS = [
+  { value: "", label: "Todos" },
+  { value: "open", label: "Abertos" },
+  { value: "in_progress", label: "Em atendimento" },
+  { value: "solved", label: "Solucionados" },
+  { value: "closed", label: "Fechados" },
+] as const;
+
+export const TICKET_SORT_OPTIONS = [
+  { value: "updated_at:desc", label: "Atualizados recentemente" },
+  { value: "created_at:desc", label: "Abertos recentemente" },
+  { value: "created_at:asc", label: "Mais antigos" },
+  { value: "title:asc", label: "Título A–Z" },
+] as const;
+
+export const DEFAULT_TICKET_LIST_FILTERS: TicketListFilters = {
+  q: "",
+  status: "",
+  urgency_id: "",
+  category_id: "",
+  updated_from: "",
+  updated_to: "",
+  sort: "updated_at:desc",
+  page: 1,
+};
+
+export function parseTicketListFilters(search: string): TicketListFilters {
+  const params = new URLSearchParams(search.startsWith("?") ? search.slice(1) : search);
+  const page = Number(params.get("page") || "1");
+  return {
+    q: (params.get("q") || "").trim(),
+    status: (params.get("status") || "").trim(),
+    urgency_id: (params.get("urgency_id") || "").trim(),
+    category_id: (params.get("category_id") || "").trim(),
+    updated_from: (params.get("updated_from") || "").trim(),
+    updated_to: (params.get("updated_to") || "").trim(),
+    sort: (params.get("sort") || DEFAULT_TICKET_LIST_FILTERS.sort).trim(),
+    page: Number.isInteger(page) && page > 0 ? page : 1,
+  };
+}
+
+export function ticketListSearch(filters: TicketListFilters): string {
+  const params = new URLSearchParams();
+  if (filters.q.trim()) params.set("q", filters.q.trim());
+  if (filters.status.trim()) params.set("status", filters.status.trim());
+  if (filters.urgency_id.trim()) params.set("urgency_id", filters.urgency_id.trim());
+  if (filters.category_id.trim()) params.set("category_id", filters.category_id.trim());
+  if (filters.updated_from.trim()) params.set("updated_from", filters.updated_from.trim());
+  if (filters.updated_to.trim()) params.set("updated_to", filters.updated_to.trim());
+  if (filters.sort && filters.sort !== DEFAULT_TICKET_LIST_FILTERS.sort) params.set("sort", filters.sort);
+  if (filters.page > 1) params.set("page", String(filters.page));
+  const query = params.toString();
+  return query ? `?${query}` : "";
+}
+
+export function isTicketFilterActive(filters: TicketListFilters): boolean {
+  return Boolean(
+    filters.q.trim()
+      || filters.status.trim()
+      || filters.urgency_id.trim()
+      || filters.category_id.trim()
+      || filters.updated_from.trim()
+      || filters.updated_to.trim(),
+  );
 }
 
 export function detailRecordHeading(category: string, urgency: string): { title: string; subtitle?: string } {
@@ -115,6 +221,12 @@ export function relativeTimeLabel(value: string, now: Date): string {
   return `${dayOfMonth}/${month}/${date.getFullYear()}`;
 }
 
+function openingTimeLabel(createdAt: string, requester: string, now: Date): string {
+  const time = relativeTimeLabel(createdAt, now);
+  if (!time) return requester ? `por ${requester}` : "";
+  return `Criado em ${time}`;
+}
+
 function writtenByRequester(author: string, requester: string): boolean {
   const authorName = author.trim();
   const requesterName = requester.trim();
@@ -128,7 +240,7 @@ export function conversationMessages(ticket: ConversationSource, now: Date): Con
     kind: "opening",
     headingText: ticket.title.trim(),
     bodyText: ticket.description,
-    createdAtLabel: relativeTimeLabel(ticket.created_at, now),
+    createdAtLabel: openingTimeLabel(ticket.created_at, requester, now),
     authorName: requester,
     mine: requester.length > 0,
     attachmentIds: ticket.attachments.map((file) => file.document_id),

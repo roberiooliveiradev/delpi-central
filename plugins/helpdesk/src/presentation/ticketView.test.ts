@@ -3,8 +3,11 @@ import { describe, expect, it } from "vitest";
 import {
   conversationMessages,
   detailRecordHeading,
+  isTicketFilterActive,
+  parseTicketListFilters,
   relativeTimeLabel,
   statusBadgeVariant,
+  ticketListSearch,
   ticketRecordFields,
   viewForTicketLoad,
 } from "./ticketView";
@@ -51,19 +54,22 @@ describe("statusBadgeVariant", () => {
 
 describe("ticketRecordFields", () => {
   it("esconde a categoria quando o helpdesk não tem nome", () => {
-    const fields = ticketRecordFields("", "Baixa");
+    const fields = ticketRecordFields({ id: 2, category: "", urgency: "Baixa" });
     expect(fields.find((field) => field.id === "category")?.present).toBe(false);
     expect(fields.find((field) => field.id === "urgency")?.present).toBe(true);
+    expect(fields.find((field) => field.id === "id")?.value).toBe("2");
   });
 
   it("mostra categoria e urgência quando as duas existem", () => {
-    const fields = ticketRecordFields("Rede", "Média");
-    expect(fields.every((field) => field.present)).toBe(true);
+    const fields = ticketRecordFields({ id: 4, category: "Rede", urgency: "Média" });
+    expect(fields.find((field) => field.id === "category")?.present).toBe(true);
+    expect(fields.find((field) => field.id === "urgency")?.present).toBe(true);
   });
 
   it("não mostra urgência vazia", () => {
-    const fields = ticketRecordFields("Rede", " ");
+    const fields = ticketRecordFields({ id: 4, category: "Rede", urgency: " " });
     expect(fields.find((field) => field.id === "urgency")?.present).toBe(false);
+    expect(fields.find((field) => field.id === "assigned")?.present).toBe(false);
   });
 });
 
@@ -101,11 +107,26 @@ describe("conversationMessages", () => {
       kind: "opening",
       headingText: "Chamado teste Api Minha delpi",
       bodyText: "Esse chamado é um teste",
-      createdAtLabel: "2 horas atrás",
+      createdAtLabel: "Criado em 2 horas atrás",
       authorName: "Robério Teixeira",
       mine: true,
       attachmentIds: [2, 4],
     });
+  });
+
+  it("escreve a data calendário quando o chamado é antigo", () => {
+    const messages = conversationMessages(
+      {
+        title: "Monitor falhando",
+        description: "Tela piscando",
+        created_at: "2026-02-19T10:00:00Z",
+        requester_display_name: "Robério Teixeira",
+        timeline: [],
+        attachments: [],
+      },
+      now,
+    );
+    expect(messages[0].createdAtLabel).toBe("Criado em 19/02/2026");
   });
 
   it("mostra o acompanhamento de outra pessoa do outro lado, sem anexo", () => {
@@ -183,5 +204,28 @@ describe("relativeTimeLabel", () => {
 
   it("não inventa tempo para uma data ilegível", () => {
     expect(relativeTimeLabel("não é data", now)).toBe("");
+  });
+});
+
+describe("ticket list filters", () => {
+  it("guarda o recorte na URL e detecta filtro ativo", () => {
+    const search = ticketListSearch({
+      q: "Monitor falhando",
+      status: "in_progress",
+      urgency_id: "3",
+      category_id: "",
+      updated_from: "",
+      updated_to: "",
+      sort: "updated_at:desc",
+      page: 1,
+    });
+    expect(search).toContain("q=Monitor");
+    expect(search).toContain("status=in_progress");
+    expect(isTicketFilterActive(parseTicketListFilters(search))).toBe(true);
+    expect(isTicketFilterActive(parseTicketListFilters(""))).toBe(false);
+  });
+
+  it("não trata página sozinha como recorte", () => {
+    expect(isTicketFilterActive(parseTicketListFilters("?page=2&sort=title:asc"))).toBe(false);
   });
 });

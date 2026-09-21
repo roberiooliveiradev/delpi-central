@@ -300,6 +300,14 @@ declare module "@delpi/plugin-ui/index" {
 
   export function FilePreviewModal(props: FilePreviewModalProps): ReactElement;
 
+  export type FilePreviewKind = "image" | "pdf" | "text" | "docx" | "spreadsheet" | "none";
+
+  export function resolveFilePreviewKind(input: {
+    mimeType?: string | null;
+    fileName?: string | null;
+    declaredType?: string | null;
+  }): FilePreviewKind;
+
   export type FieldLabelProps = {
     label: string;
     hint?: string;
@@ -457,6 +465,7 @@ declare module "@delpi/plugin-ui/index" {
 
   export type FilterInputFieldProps = {
     label: string;
+    hint?: string;
     type: Extract<InputHTMLAttributes<HTMLInputElement>["type"], "month" | "date" | "text" | "search">;
     value: string;
     onChange: (value: string) => void;
@@ -475,7 +484,7 @@ declare module "@delpi/plugin-ui/index" {
   };
 
   export type DashboardFiltersKit = {
-    FiltersRow: ComponentType<{ children?: ReactNode; trailing?: ReactNode }>;
+    FiltersRow: ComponentType<{ children?: ReactNode; trailing?: ReactNode; variant?: "default" | "extended" }>;
     FilterInputField: ComponentType<FilterInputFieldProps>;
     FilterSelectField: ComponentType<FilterSelectFieldProps>;
   };

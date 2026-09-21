@@ -14,6 +14,8 @@ from helpdesk_app.domain.models import (
     Attachment,
     Category,
     TicketDetail,
+    TicketListPage,
+    TicketListQuery,
     TicketSummary,
     TimelineEntry,
     TokenSet,
@@ -33,6 +35,20 @@ _URGENCY_NAMES = {item.id: item.name for item in URGENCIES}
 _CP850_MOJIBAKE = "\u251c"
 _HTML_TAG = re.compile(r"<[^>]+>")
 _WHITESPACE = re.compile(r"\s+")
+_DATE_ONLY = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+_STATUS_GROUPS = {
+    "open": (1, 10, 2, 3, 4),
+    "in_progress": (2, 3),
+    "solved": (5,),
+    "closed": (6,),
+}
+_SORT_FIELDS = {
+    "updated_at": "date_mod",
+    "created_at": "date_creation",
+    "title": "name",
+}
+_MAX_PAGE_SIZE = 50
+_DEFAULT_PAGE_SIZE = 20
 
 
 def parse_token_set(payload: dict) -> TokenSet:
@@ -61,6 +77,63 @@ def parse_ticket_list(payload: dict | list) -> list[TicketSummary]:
     return [_summary(row) for row in _results(payload) if isinstance(row, dict)]
 
 
+def parse_ticket_page(payload: dict | list, query: TicketListQuery) -> TicketListPage:
+    rows = parse_ticket_list(payload)
+    has_more = len(rows) > query.page_size
+    return TicketListPage(
+        items=tuple(rows[: query.page_size]),
+        page=query.page,
+        page_size=query.page_size,
+        has_more=has_more,
+    )
+
+
+def build_ticket_list_query(
+    *,
+    q: str = "",
+    status: str = "",
+    urgency_id: int | None = None,
+    category_id: int | None = None,
+    updated_from: str = "",
+    updated_to: str = "",
+    sort: str = "updated_at:desc",
+    page: int = 1,
+    page_size: int = _DEFAULT_PAGE_SIZE,
+) -> TicketListQuery:
+    clauses: list[str] = []
+    term = _search_term(q)
+    if term:
+        clauses.append(f"name=like=*{term}*")
+    status_ids = _status_ids(status)
+    if status_ids:
+        joined = ",".join(str(item) for item in status_ids)
+        clauses.append(f"status.id=in=({joined})" if len(status_ids) > 1 else f"status.id=={status_ids[0]}")
+    if urgency_id is not None:
+        if urgency_id not in _URGENCY_NAMES:
+            raise GlpiValidation("urgency_id inválido.")
+        clauses.append(f"urgency=={urgency_id}")
+    if category_id is not None:
+        if category_id < 1:
+            raise GlpiValidation("category_id inválido.")
+        clauses.append(f"category.id=={category_id}")
+    start_day = _day(updated_from, "updated_from")
+    end_day = _day(updated_to, "updated_to")
+    if start_day:
+        clauses.append(f"date_mod=ge={start_day}T00:00:00")
+    if end_day:
+        clauses.append(f"date_mod=le={end_day}T23:59:59")
+    safe_page = max(1, page)
+    safe_size = min(_MAX_PAGE_SIZE, max(1, page_size))
+    return TicketListQuery(
+        filter=";".join(clauses),
+        start=(safe_page - 1) * safe_size,
+        limit=safe_size + 1,
+        sort=_sort_clause(sort),
+        page=safe_page,
+        page_size=safe_size,
+    )
+
+
 def parse_ticket_detail(payload: dict, timeline_payload: dict | list) -> TicketDetail:
     summary = _summary(payload)
     description = _text(payload.get("content"))
@@ -77,8 +150,9 @@ def parse_ticket_detail(payload: dict, timeline_payload: dict | list) -> TicketD
         description=description,
         timeline=timeline,
         attachments=attachments,
-        created_at=str(payload.get("date_creation") or ""),
+        created_at=summary.created_at,
         requester_display_name=_requester_name(payload),
+        assigned_display_name=summary.assigned_display_name,
     )
 
 
@@ -110,6 +184,8 @@ def _summary(row: dict) -> TicketSummary:
         category=_named(row.get("category")),
         urgency=_urgency_name(row.get("urgency")),
         updated_at=str(row.get("date_mod") or row.get("date_creation") or ""),
+        created_at=str(row.get("date_creation") or ""),
+        assigned_display_name=_team_name(row, "assigned"),
     )
 
 
@@ -123,7 +199,7 @@ def _timeline_entry(row: dict) -> TimelineEntry | None:
     user = row.get("user") or row.get("users_id") or {}
     author = ""
     if isinstance(user, dict):
-        author = display_text(user.get("name") or user.get("completename"))
+        author = _person_name(user)
     return TimelineEntry(
         id=int(row.get("id") or 0),
         kind="followup",
@@ -173,16 +249,76 @@ def _results(payload: dict | list) -> list:
 
 
 def _requester_name(row: dict) -> str:
+    named = _team_name(row, "requester")
+    if named:
+        return named
+    recipient = row.get("user_recipient")
+    if isinstance(recipient, dict):
+        return _person_name(recipient)
+    return ""
+
+
+def _team_name(row: dict, role: str) -> str:
     team = row.get("team") or []
     if not isinstance(team, list):
         return ""
     for member in team:
         if not isinstance(member, dict):
             continue
-        if str(member.get("role") or "") != "requester":
+        if str(member.get("role") or "") != role:
             continue
-        return display_text(member.get("display_name") or member.get("name") or member.get("realname"))
+        return _person_name(member)
     return ""
+
+
+def _person_name(value: dict) -> str:
+    first = display_text(value.get("firstname"))
+    last = display_text(value.get("realname"))
+    joined = " ".join(part for part in (first, last) if part)
+    return display_text(
+        value.get("display_name") or value.get("completename") or joined or value.get("name")
+    )
+
+
+def _search_term(value: str) -> str:
+    cleaned = "".join(char for char in value if char.isalnum() or char in " -_")
+    return _WHITESPACE.sub(" ", cleaned).strip()[:80]
+
+
+def _status_ids(value: str) -> tuple[int, ...]:
+    token = value.strip().lower()
+    if not token or token == "all":
+        return ()
+    if token in _STATUS_GROUPS:
+        return _STATUS_GROUPS[token]
+    try:
+        status_id = int(token)
+    except ValueError as exc:
+        raise GlpiValidation("status inválido.") from exc
+    if status_id not in {1, 2, 3, 4, 5, 6, 10}:
+        raise GlpiValidation("status inválido.")
+    return (status_id,)
+
+
+def _day(value: str, field: str) -> str:
+    text = value.strip()
+    if not text:
+        return ""
+    if not _DATE_ONLY.match(text):
+        raise GlpiValidation(f"{field} inválido.")
+    return text
+
+
+def _sort_clause(value: str) -> str:
+    raw = (value or "updated_at:desc").strip()
+    field, _, direction = raw.partition(":")
+    mapped = _SORT_FIELDS.get(field)
+    if mapped is None:
+        raise GlpiValidation("sort inválido.")
+    order = direction.strip().lower() or "desc"
+    if order not in {"asc", "desc"}:
+        raise GlpiValidation("sort inválido.")
+    return f"{mapped}:{order}"
 
 
 def _is_private(row: dict) -> bool:
