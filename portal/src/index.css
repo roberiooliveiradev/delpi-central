@@ -48,7 +48,14 @@ textarea {
 /* Base para botões ainda não migrados. `:where()` mantém a especificidade de um
    seletor de elemento: sem ele, esta regra passaria a vencer classes de página
    como `.collapse-btn` e quebraria sidebar, launcher e cards. */
-button:where(:not(.portal-ui-btn)) {
+button:where(
+  :not(
+    .portal-ui-btn,
+    .delpi-ui-icon-btn,
+    .delpi-ui-action-btn,
+    .delpi-ui-ghost-btn
+  )
+) {
   color: var(--control-text);
   background: var(--control-bg);
   border: 1px solid var(--control-border);
@@ -63,7 +70,14 @@ button:where(:not(.portal-ui-btn)) {
     transform 0.2s ease;
 }
 
-button:where(:not(.portal-ui-btn)):hover:not(:disabled) {
+button:where(
+  :not(
+    .portal-ui-btn,
+    .delpi-ui-icon-btn,
+    .delpi-ui-action-btn,
+    .delpi-ui-ghost-btn
+  )
+):hover:not(:disabled) {
   border-color: var(--primary);
   color: var(--primary);
   background: var(--surface-2);

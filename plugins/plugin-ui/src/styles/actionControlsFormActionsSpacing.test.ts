@@ -32,6 +32,18 @@ describe("action-controls FormActions spacing", () => {
     );
   });
 
+  it("no hover o primary mantém fundo e ícone, sem o reset global do portal", () => {
+    expect(css).toMatch(
+      /\.delpi-ui-icon-btn--primary:hover:not\(:disabled\)[\s\S]*?background:\s*var\(--delpi-ui-accent/,
+    );
+    expect(css).toMatch(
+      /\.delpi-ui-icon-btn--primary:hover:not\(:disabled\)[\s\S]*?color:\s*var\(--delpi-ui-on-accent,\s*#ffffff\)/,
+    );
+    expect(css).toMatch(
+      /\.delpi-ui-action-btn--primary:hover:not\(:disabled\):not\(\.delpi-ui-action-btn--disabled\)[\s\S]*?background:\s*var\(--delpi-ui-accent/,
+    );
+  });
+
   it("desliga o visual nativo do botão para o tema do portal pintar o ícone", () => {
     expect(css).toMatch(/\.delpi-ui-action-btn\s*\{[^}]*appearance:\s*none/);
     expect(css).toMatch(/\.delpi-ui-icon-btn\s*\{[^}]*appearance:\s*none/);

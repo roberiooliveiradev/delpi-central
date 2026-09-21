@@ -60,6 +60,14 @@ a.delpi-ui-action-btn--link:visited {
   color: var(--delpi-ui-on-accent, #ffffff);
 }
 
+.delpi-ui-action-btn--primary:hover:not(:disabled):not(.delpi-ui-action-btn--disabled),
+.delpi-ui-action-btn--primary:focus-visible,
+.delpi-ui-action-btn--primary:active:not(:disabled) {
+  background: var(--delpi-ui-accent, var(--primary, #089bdb));
+  border-color: var(--delpi-ui-accent, var(--primary, #089bdb));
+  color: var(--delpi-ui-on-accent, #ffffff);
+}
+
 .delpi-ui-action-btn--primary:hover:not(:disabled):not(.delpi-ui-action-btn--disabled) {
   filter: brightness(1.05);
 }
@@ -226,8 +234,15 @@ a.delpi-ui-action-btn--link:visited {
   color: var(--delpi-ui-on-accent, #ffffff);
 }
 
-.delpi-ui-icon-btn--primary:hover:not(:disabled) {
+.delpi-ui-icon-btn--primary:hover:not(:disabled),
+.delpi-ui-icon-btn--primary:focus-visible,
+.delpi-ui-icon-btn--primary:active:not(:disabled) {
+  background: var(--delpi-ui-accent, var(--primary, #089bdb));
+  border-color: var(--delpi-ui-accent, var(--primary, #089bdb));
   color: var(--delpi-ui-on-accent, #ffffff);
+}
+
+.delpi-ui-icon-btn--primary:hover:not(:disabled) {
   filter: brightness(1.05);
 }
 
