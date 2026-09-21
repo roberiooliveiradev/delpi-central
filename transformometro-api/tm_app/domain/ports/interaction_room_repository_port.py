@@ -21,7 +21,13 @@ class InteractionRoomRepositoryPort(Protocol):
         inbox_filter: str = "all",
     ) -> list[InteractionRoom]: ...
 
-    def list_messages(self, room_id: str, *, limit: int) -> tuple[list[InteractionMessage], bool]: ...
+    def list_messages(
+        self,
+        room_id: str,
+        *,
+        limit: int,
+        before_id: str | None = None,
+    ) -> tuple[list[InteractionMessage], bool]: ...
 
     def add_message(
         self,

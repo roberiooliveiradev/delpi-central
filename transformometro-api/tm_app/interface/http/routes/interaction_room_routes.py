@@ -98,9 +98,21 @@ def get_interaction_room(request: Request, room_id: str):
     "/interaction-rooms/{room_id}/messages",
     operation_id="list_transformometro_interaction_messages",
 )
-def list_interaction_messages(request: Request, room_id: str, limit: int = 50):
+def list_interaction_messages(
+    request: Request,
+    room_id: str,
+    limit: int = 50,
+    before_id: str | None = None,
+):
     try:
-        return ok(_rooms.list_messages(request.state.user, room_id, limit=limit))
+        return ok(
+            _rooms.list_messages(
+                request.state.user,
+                room_id,
+                limit=limit,
+                before_id=before_id,
+            )
+        )
     except Exception as exc:
         return _handle(exc)
 

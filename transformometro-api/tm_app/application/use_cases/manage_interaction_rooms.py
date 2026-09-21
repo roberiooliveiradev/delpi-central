@@ -72,10 +72,22 @@ class InteractionRoomUseCases:
             inbox_filter=normalize_inbox_filter(inbox_filter),
         )
 
-    def list_messages(self, user: Any, room_id: str, *, limit: int = DEFAULT_MESSAGE_LIMIT) -> dict[str, Any]:
+    def list_messages(
+        self,
+        user: Any,
+        room_id: str,
+        *,
+        limit: int = DEFAULT_MESSAGE_LIMIT,
+        before_id: str | None = None,
+    ) -> dict[str, Any]:
         self._policy.require_access(user)
         room = self.get_room(user, room_id)
-        messages, has_more = self._repo.list_messages(room.id, limit=_limit(limit))
+        cursor = normalize_uuid(before_id, label="A mensagem âncora") if before_id else None
+        messages, has_more = self._repo.list_messages(
+            room.id,
+            limit=_limit(limit),
+            before_id=cursor,
+        )
         return {
             "items": [item.to_dict() for item in messages],
             "has_more": has_more,

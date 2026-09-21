@@ -173,18 +173,46 @@ class InteractionRoomRepository(PluginBaseRepository, InteractionRoomRepositoryP
             return [room for room in rooms if room.mentioned]
         return rooms
 
-    def list_messages(self, room_id: str, *, limit: int) -> tuple[list[InteractionMessage], bool]:
-        rows = self.fetch_all(
-            f"""SELECT * FROM (
-                    SELECT {_MESSAGE_COLUMNS}
-                    FROM {_S}.tm_interaction_messages
-                    WHERE room_id = %s::uuid
-                    ORDER BY created_at DESC, id DESC
-                    LIMIT %s
-                ) recent
-                ORDER BY created_at ASC, id ASC""",
-            (room_id, limit + 1),
-        )
+    def list_messages(
+        self,
+        room_id: str,
+        *,
+        limit: int,
+        before_id: str | None = None,
+    ) -> tuple[list[InteractionMessage], bool]:
+        cursor = (before_id or "").strip() or None
+        if cursor:
+            anchor = self.fetch_one(
+                f"""SELECT created_at, id FROM {_S}.tm_interaction_messages
+                    WHERE id = %s::uuid AND room_id = %s::uuid""",
+                (cursor, room_id),
+            )
+            if anchor is None:
+                raise LookupError("Mensagem âncora não encontrada.")
+            rows = self.fetch_all(
+                f"""SELECT * FROM (
+                        SELECT {_MESSAGE_COLUMNS}
+                        FROM {_S}.tm_interaction_messages
+                        WHERE room_id = %s::uuid
+                          AND (created_at, id) < (%s, %s::uuid)
+                        ORDER BY created_at DESC, id DESC
+                        LIMIT %s
+                    ) older
+                    ORDER BY created_at ASC, id ASC""",
+                (room_id, anchor["created_at"], str(anchor["id"]), limit + 1),
+            )
+        else:
+            rows = self.fetch_all(
+                f"""SELECT * FROM (
+                        SELECT {_MESSAGE_COLUMNS}
+                        FROM {_S}.tm_interaction_messages
+                        WHERE room_id = %s::uuid
+                        ORDER BY created_at DESC, id DESC
+                        LIMIT %s
+                    ) recent
+                    ORDER BY created_at ASC, id ASC""",
+                (room_id, limit + 1),
+            )
         has_more = len(rows) > limit
         visible = rows[-limit:] if has_more else rows
         return self._decorate([_message(row) for row in visible]), has_more
@@ -464,11 +492,28 @@ class InMemoryInteractionRoomRepository(InteractionRoomRepositoryPort):
             visible.append(shown)
         return visible
 
-    def list_messages(self, room_id: str, *, limit: int) -> tuple[list[InteractionMessage], bool]:
+    def list_messages(
+        self,
+        room_id: str,
+        *,
+        limit: int,
+        before_id: str | None = None,
+    ) -> tuple[list[InteractionMessage], bool]:
         rows = [self._view(item) for item in self.messages.values() if item.room_id == room_id]
         rows.sort(key=lambda item: (item.created_at or datetime.min, item.id))
+        cursor = (before_id or "").strip() or None
+        if cursor:
+            anchor = next((item for item in rows if item.id == cursor), None)
+            if anchor is None:
+                raise LookupError("Mensagem âncora não encontrada.")
+            anchor_key = (anchor.created_at or datetime.min, anchor.id)
+            rows = [
+                item
+                for item in rows
+                if (item.created_at or datetime.min, item.id) < anchor_key
+            ]
         has_more = len(rows) > limit
-        return rows[-limit:], has_more
+        return (rows[-limit:] if has_more else rows), has_more
 
     def add_message(
         self,
