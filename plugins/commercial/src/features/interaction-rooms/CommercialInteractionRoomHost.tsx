@@ -74,7 +74,6 @@ import {
   interactionRoomAuthorAvatarFields,
   interactionRoomParticipantAvatar,
 } from "./interactionRoomUserLink";
-import { buildCreateTaskMessageAction } from "./messageThreadTaskAction";
 import { buildEditComposerBanner, buildReplyComposerBanner } from "./interactionRoomReply";
 import { mapInteractionMentionsToTextItems } from "./mapInteractionMentionToTextItem";
 import { resolveRoomEntityHref } from "./resolveInteractionEntityHref";
@@ -626,28 +625,6 @@ export function CommercialInteractionRoomHost({
     ],
   );
 
-  const resolveExtraActions = useCallback(
-    (message: InteractionRoomMessage) => {
-      const action = buildCreateTaskMessageAction({
-        message,
-        onCreateTask: (messageId) => {
-          void onCreateTaskFromMessage(messageId);
-        },
-        busy:
-          creatingTaskMessageId === message.id ||
-          pinningMessageId === message.id ||
-          deletingMessageId === message.id,
-      });
-      return action ? [action] : [];
-    },
-    [
-      onCreateTaskFromMessage,
-      creatingTaskMessageId,
-      pinningMessageId,
-      deletingMessageId,
-    ],
-  );
-
   const resolveActionExtras = useCallback(
     (message: InteractionRoomMessage) => {
       if (message.deleted) return null;
@@ -998,8 +975,11 @@ export function CommercialInteractionRoomHost({
                 }}
               />
             }
-            resolveExtraActions={resolveExtraActions}
             resolveActionExtras={resolveActionExtras}
+            onCreateTask={(message) => {
+              void onCreateTaskFromMessage(message.id);
+            }}
+            createTaskBusyMessageId={creatingTaskMessageId}
             onReply={(messageId) => {
               setEditingMessageId(null);
               setReplyMessageId(messageId);

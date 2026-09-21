@@ -19,8 +19,8 @@ describe("CommercialInteractionRoomHost", () => {
     expect(source).toMatch(/cm-interaction-room-host/);
     expect(source).toMatch(/prefix="cm"/);
     expect(source).toMatch(/portalScopeClassName=\{CM_PORTAL_SCOPE\}/);
-    expect(source).toMatch(/resolveExtraActions/);
-    expect(source).toMatch(/buildCreateTaskMessageAction/);
+    expect(source).toMatch(/onCreateTask=/);
+    expect(source).toMatch(/createTaskBusyMessageId/);
     expect(source).toMatch(/renderComposer/);
     expect(source).toMatch(/InteractionRoomMessageComposer/);
     expect(source).toMatch(/resolveActionExtras/);
@@ -37,6 +37,8 @@ describe("CommercialInteractionRoomHost", () => {
     expect(source).toMatch(/useInteractionRoomSync/);
     expect(source).toMatch(/applyInteractionRoomRealtime/);
     expect(source).toMatch(/createTaskFromInteractionMessage/);
+    expect(source).not.toMatch(/resolveExtraActions/);
+    expect(source).not.toMatch(/buildCreateTaskMessageAction/);
     expect(source).toMatch(/TaskAttachmentPreviewModal/);
     expect(source).toMatch(/inboxHref/);
     expect(source).toMatch(/onRoomTitle/);
