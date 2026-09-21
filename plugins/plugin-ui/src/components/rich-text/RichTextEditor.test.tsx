@@ -18,6 +18,16 @@ describe("RichTextEditor", () => {
     render(<RichTextEditor value="<p>Teste</p>" onChange={() => undefined} />);
     expect(screen.getByRole("toolbar", { name: RICH_TEXT_LABELS.toolbar })).toBeTruthy();
     expect(screen.getByRole("group", { name: RICH_TEXT_LABELS.fontSize })).toBeTruthy();
+    const fontFamily = screen.getByRole("button", { name: RICH_TEXT_LABELS.fontFamily });
+    expect(fontFamily.closest(".delpi-ui-help-tooltip--wrap")).toBeTruthy();
+    const fontSizeDown = screen.getByRole("button", { name: RICH_TEXT_LABELS.fontSizeDecrease });
+    const fontSizeUp = screen.getByRole("button", { name: RICH_TEXT_LABELS.fontSizeIncrease });
+    expect(fontSizeDown.closest(".delpi-ui-help-tooltip--wrap")).toBeTruthy();
+    expect(fontSizeUp.closest(".delpi-ui-help-tooltip--wrap")).toBeTruthy();
+    expect(screen.getByRole("button", { name: RICH_TEXT_LABELS.textColor }).closest(".delpi-ui-help-tooltip--wrap")).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: RICH_TEXT_LABELS.highlightColor }).closest(".delpi-ui-help-tooltip--wrap"),
+    ).toBeTruthy();
     expect(toolbarButton(RICH_TEXT_LABELS.table)).toBeTruthy();
     expect(toolbarButton(RICH_TEXT_LABELS.bold)).toBeTruthy();
     expect(toolbarButton(RICH_TEXT_LABELS.sourceHtml)).toBeTruthy();

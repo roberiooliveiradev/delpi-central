@@ -26,6 +26,7 @@ import {
   useEffect,
   useRef,
   useState,
+  type ReactElement,
   type ReactNode,
   type RefObject,
 } from "react";
@@ -209,21 +210,27 @@ export function RichTextToolbar({
   return (
     <div className="delpi-ui-rich-text-ribbon" role="toolbar" aria-label={RICH_TEXT_LABELS.toolbar}>
       <section className="delpi-ui-rich-text-ribbon__cluster" aria-label={RICH_TEXT_LABELS.fontSection}>
-        <FormSelectControl
-          value={fontFamily}
-          onChange={(value) => {
-            setFontFamily(value);
-            withEditor((editor) => applyRichTextFontFamily(editor, value));
-          }}
-          options={RICH_TEXT_FONT_FAMILIES.map((font) => ({
-            value: font.value,
-            label: font.label,
-          }))}
-          disabled={formatDisabled}
-          className="delpi-ui-select--compact delpi-ui-rich-text-ribbon__font-select"
-          ariaLabel={RICH_TEXT_LABELS.fontFamily}
-          portalScopeClassName={portalScopeClassName}
-        />
+        <HintAction
+          hint={RICH_TEXT_LABELS.fontFamilyHint}
+          ariaLabel={`Ajuda: ${RICH_TEXT_LABELS.fontFamily}`}
+          placement="bottom"
+        >
+          <FormSelectControl
+            value={fontFamily}
+            onChange={(value) => {
+              setFontFamily(value);
+              withEditor((editor) => applyRichTextFontFamily(editor, value));
+            }}
+            options={RICH_TEXT_FONT_FAMILIES.map((font) => ({
+              value: font.value,
+              label: font.label,
+            }))}
+            disabled={formatDisabled}
+            className="delpi-ui-select--compact delpi-ui-rich-text-ribbon__font-select"
+            ariaLabel={RICH_TEXT_LABELS.fontFamily}
+            portalScopeClassName={portalScopeClassName}
+          />
+        </HintAction>
         <NumberStepperControl
           value={fontSize}
           onChange={applyFontSize}
@@ -242,6 +249,33 @@ export function RichTextToolbar({
           stepDownAriaLabel={RICH_TEXT_LABELS.fontSizeDecrease}
           stepUpAriaLabel={RICH_TEXT_LABELS.fontSizeIncrease}
           portalScopeClassName={portalScopeClassName}
+          renderStepDown={(button) => (
+            <HintAction
+              hint={RICH_TEXT_LABELS.fontSizeDecrease}
+              ariaLabel={RICH_TEXT_LABELS.fontSizeDecrease}
+              placement="bottom"
+            >
+              {button as ReactElement}
+            </HintAction>
+          )}
+          renderStepUp={(button) => (
+            <HintAction
+              hint={RICH_TEXT_LABELS.fontSizeIncrease}
+              ariaLabel={RICH_TEXT_LABELS.fontSizeIncrease}
+              placement="bottom"
+            >
+              {button as ReactElement}
+            </HintAction>
+          )}
+          renderValue={(control) => (
+            <HintAction
+              hint={RICH_TEXT_LABELS.fontSizeHint}
+              ariaLabel={`Ajuda: ${RICH_TEXT_LABELS.fontSize}`}
+              placement="bottom"
+            >
+              {control as ReactElement}
+            </HintAction>
+          )}
         />
       </section>
 
@@ -284,44 +318,56 @@ export function RichTextToolbar({
         >
           <Strikethrough size={15} aria-hidden="true" />
         </RichTextIconButton>
-        <span
-          className={
-            formatDisabled ? "delpi-ui-rich-text-ribbon__color--disabled" : undefined
-          }
-          aria-disabled={formatDisabled || undefined}
+        <HintAction
+          hint={RICH_TEXT_LABELS.textColorHint}
+          ariaLabel={`Ajuda: ${RICH_TEXT_LABELS.textColor}`}
+          placement="bottom"
         >
-          <RibbonColorPicker
-            label={RICH_TEXT_LABELS.textColor}
-            ariaLabel={RICH_TEXT_LABELS.textColor}
-            variant="text"
-            value={textColor}
-            className="delpi-ui-color-picker-trigger--inline"
-            onChange={(color) => {
-              if (formatDisabled) return;
-              setTextColor(color);
-              withEditor((editor) => runRichTextCommand(editor, "foreColor", color));
-            }}
-          />
-        </span>
-        <span
-          className={
-            formatDisabled ? "delpi-ui-rich-text-ribbon__color--disabled" : undefined
-          }
-          aria-disabled={formatDisabled || undefined}
+          <span
+            className={
+              formatDisabled ? "delpi-ui-rich-text-ribbon__color--disabled" : undefined
+            }
+            aria-disabled={formatDisabled || undefined}
+          >
+            <RibbonColorPicker
+              label={RICH_TEXT_LABELS.textColor}
+              ariaLabel={RICH_TEXT_LABELS.textColor}
+              variant="text"
+              value={textColor}
+              className="delpi-ui-color-picker-trigger--inline"
+              onChange={(color) => {
+                if (formatDisabled) return;
+                setTextColor(color);
+                withEditor((editor) => runRichTextCommand(editor, "foreColor", color));
+              }}
+            />
+          </span>
+        </HintAction>
+        <HintAction
+          hint={RICH_TEXT_LABELS.highlightColorHint}
+          ariaLabel={`Ajuda: ${RICH_TEXT_LABELS.highlightColor}`}
+          placement="bottom"
         >
-          <RibbonColorPicker
-            label={RICH_TEXT_LABELS.highlightColor}
-            ariaLabel={RICH_TEXT_LABELS.highlightColor}
-            variant="fill"
-            value={highlightColor}
-            className="delpi-ui-color-picker-trigger--inline"
-            onChange={(color) => {
-              if (formatDisabled) return;
-              setHighlightColor(color);
-              withEditor((editor) => runRichTextCommand(editor, "hiliteColor", color));
-            }}
-          />
-        </span>
+          <span
+            className={
+              formatDisabled ? "delpi-ui-rich-text-ribbon__color--disabled" : undefined
+            }
+            aria-disabled={formatDisabled || undefined}
+          >
+            <RibbonColorPicker
+              label={RICH_TEXT_LABELS.highlightColor}
+              ariaLabel={RICH_TEXT_LABELS.highlightColor}
+              variant="fill"
+              value={highlightColor}
+              className="delpi-ui-color-picker-trigger--inline"
+              onChange={(color) => {
+                if (formatDisabled) return;
+                setHighlightColor(color);
+                withEditor((editor) => runRichTextCommand(editor, "hiliteColor", color));
+              }}
+            />
+          </span>
+        </HintAction>
         <RichTextIconButton
           hint={RICH_TEXT_LABELS.clearFormatting}
           ariaLabel={RICH_TEXT_LABELS.clearFormatting}
