@@ -13,6 +13,8 @@ export type TaskWorklistSectionProps = {
   hint?: string;
   actions?: ReactNode;
   search?: ReactNode;
+  /** Filtros secundários abaixo da busca (domínio no portal). */
+  filters?: ReactNode;
   children: ReactNode;
   classNames?: SectionCardClassNames;
   labels?: SectionCardLabels;
@@ -29,6 +31,7 @@ export function TaskWorklistSection({
   hint,
   actions,
   search,
+  filters,
   children,
   classNames = sectionCardPacBemClasses("delpi-ui"),
   labels = DEFAULT_LABELS,
@@ -44,6 +47,7 @@ export function TaskWorklistSection({
     >
       <div className="delpi-ui-task-worklist">
         {search ? <div className="delpi-ui-task-worklist__search">{search}</div> : null}
+        {filters ? <div className="delpi-ui-task-worklist__filters">{filters}</div> : null}
         <div className="delpi-ui-task-worklist__content">{children}</div>
       </div>
     </SectionCard>

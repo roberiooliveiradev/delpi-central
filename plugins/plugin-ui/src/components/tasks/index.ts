@@ -4,6 +4,11 @@ export { TaskItemsTable, type TaskItemsTableProps } from "./TaskItemsTable";
 export { TaskSearchField, type TaskSearchFieldProps } from "./TaskSearchField";
 export { TaskWorklistSection, type TaskWorklistSectionProps } from "./TaskWorklistSection";
 export {
+  TaskWorkspacePage,
+  type TaskWorkspacePageProps,
+  type TaskWorkspaceWorklistProps,
+} from "./TaskWorkspacePage";
+export {
   buildTaskWorkspaceHighlights,
   type TaskItemActionFlags,
   type TaskItemPresentation,

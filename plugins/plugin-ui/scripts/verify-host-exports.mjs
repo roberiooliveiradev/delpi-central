@@ -38,6 +38,7 @@ const REQUIRED_HOST_EXPORTS = [
   "TaskItemsTable",
   "TaskSearchField",
   "TaskWorklistSection",
+  "TaskWorkspacePage",
   "buildTaskWorkspaceHighlights",
   "QuickPeriodSelector",
   "createDashboardQuickPeriodSelector",

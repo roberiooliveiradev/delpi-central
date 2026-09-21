@@ -1,14 +1,49 @@
 /**
  * Chrome de Minhas tarefas — apresentação apenas.
- * OWNS: layout da fila, busca, empty, editor e rodapé.
+ * OWNS: layout da fila, busca, empty, editor, página workspace e rodapé.
  * DOES NOT OWN: persistência, assignment, AuthZ, filtro de dados.
  */
+
+.delpi-ui-task-workspace {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 16px;
+  min-width: 0;
+  width: 100%;
+}
+
+.delpi-ui-task-workspace__partial,
+.delpi-ui-task-workspace__error,
+.delpi-ui-task-workspace__refreshing,
+.delpi-ui-task-workspace__initial {
+  min-width: 0;
+}
+
+.delpi-ui-task-workspace__refreshing {
+  margin: 0;
+  font-size: 13px;
+  color: var(--delpi-ui-text-muted, rgba(17, 17, 17, 0.7));
+}
+
+.delpi-ui-task-workspace__items,
+.delpi-ui-task-workspace__editor {
+  min-width: 0;
+}
 
 .delpi-ui-task-worklist {
   display: flex;
   flex-direction: column;
   align-items: stretch;
   gap: 12px;
+  min-width: 0;
+}
+
+.delpi-ui-task-worklist__filters {
+  display: flex;
+  flex-flow: row wrap;
+  align-items: center;
+  gap: 8px;
   min-width: 0;
 }
 

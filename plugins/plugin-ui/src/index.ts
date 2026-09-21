@@ -61,13 +61,16 @@ export {
   TaskItemsTable,
   TaskSearchField,
   TaskWorklistSection,
+  TaskWorkspacePage,
   buildTaskWorkspaceHighlights,
 } from "./components/tasks";
 export type {
   TaskItemActionFlags,
   TaskItemPresentation,
   TaskWorkspaceHighlight,
+  TaskWorkspacePageProps,
   TaskWorkspaceSummary,
+  TaskWorkspaceWorklistProps,
 } from "./components/tasks";
 /** Hosts dos portais consomem o chrome de IDD sem uso interno no remote. */
 export {

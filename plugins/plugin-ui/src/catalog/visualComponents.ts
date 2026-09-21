@@ -257,6 +257,11 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
     addedAt: "2026-09-21",
     description: "Seção da fila com ações e slot de busca. OWNS layout; DOES NOT OWN filtro.",
   }),
+  vc("layout", "TaskWorkspacePage", {
+    addedAt: "2026-09-21",
+    description:
+      "Página completa Minhas tarefas (hero + status + worklist + editor). OWNS composição; DOES NOT OWN domínio/API/AuthZ.",
+  }),
   vc("forms", "TaskSearchField", {
     addedAt: "2026-09-21",
     description: "Campo de busca da fila. OWNS input; DOES NOT OWN a consulta.",
