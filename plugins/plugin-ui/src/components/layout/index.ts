@@ -378,6 +378,14 @@ export {
   type ProgressTrackerStepState,
 } from "./ProgressTracker";
 export {
+  DepartmentScoreBadge,
+  createDashboardDepartmentScoreBadge,
+  departmentScoreBadgeBemClasses,
+  type DashboardDepartmentScoreBadgeProps,
+  type DepartmentScoreBadgeClassNames,
+  type DepartmentScoreBadgeProps,
+} from "./DepartmentScoreBadge";
+export {
   PageHero,
   createDashboardPageHero,
   pageHeroBemClasses,

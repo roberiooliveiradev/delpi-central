@@ -48,6 +48,12 @@ export {
   formatPortalGreeting,
   portalDayPeriodGreeting,
 } from "./utils/portalGreeting";
+/** Hosts dos portais consomem o chrome de IDD sem uso interno no remote. */
+export {
+  DepartmentScoreBadge,
+  createDashboardDepartmentScoreBadge,
+  departmentScoreBadgeBemClasses,
+} from "./components/layout/DepartmentScoreBadge";
 export * from "./displayFormat";
 export * from "./components/displayFormat";
 export * from "./hooks";

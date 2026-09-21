@@ -30,6 +30,8 @@ const REQUIRED_HOST_EXPORTS = [
   "formatPortalGreeting",
   "firstNameFromDisplay",
   "portalDayPeriodGreeting",
+  "createDashboardDepartmentScoreBadge",
+  "DepartmentScoreBadge",
 ];
 
 function findIndexExpose(dir) {
