@@ -291,9 +291,14 @@ def _person_name(value: dict) -> str:
     first = display_text(value.get("firstname"))
     last = display_text(value.get("realname"))
     joined = " ".join(part for part in (first, last) if part)
-    return display_text(
-        value.get("display_name") or value.get("completename") or joined or value.get("name")
+    labeled = display_text(
+        value.get("display_name") or value.get("completename") or value.get("name")
     )
+    return _fuller_person_name(joined, labeled)
+
+
+def _fuller_person_name(*names: str) -> str:
+    return max((name for name in names if name), key=lambda name: (len(name.split()), len(name)), default="")
 
 
 def _search_term(value: str) -> str:

@@ -429,6 +429,40 @@ def test_mapping_list_drops_deleted_and_detail_hides_them():
         )
 
 
+def test_person_name_prefers_the_most_complete_label():
+    detail = parse_ticket_detail(
+        {
+            "id": 1114,
+            "name": "Chamado teste",
+            "content": "Texto",
+            "status": {"name": "Novo"},
+            "urgency": 2,
+            "team": [
+                {
+                    "role": "requester",
+                    "display_name": "Roberio",
+                    "firstname": "Robério",
+                    "realname": "Oliveira",
+                }
+            ],
+        },
+        {
+            "results": [
+                {
+                    "type": "Followup",
+                    "item": {
+                        "id": 9,
+                        "content": "olola",
+                        "user": {"display_name": "Roberio", "firstname": "Robério", "realname": "Oliveira"},
+                    },
+                }
+            ]
+        },
+    )
+    assert detail.requester_display_name == "Robério Oliveira"
+    assert detail.timeline[0].author_display_name == "Robério Oliveira"
+
+
 def test_requester_falls_back_to_user_recipient():
     detail = parse_ticket_detail(
         {

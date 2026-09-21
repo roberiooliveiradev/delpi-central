@@ -268,14 +268,9 @@ export function normalizePersonName(value: string): string {
 }
 
 export function writtenByViewer(author: string, viewerAliases: readonly string[]): boolean {
-  const authorName = normalizePersonName(author);
-  if (!authorName) return false;
-  return viewerAliases.some((alias) => {
-    const named = normalizePersonName(alias);
-    if (!named) return false;
-    if (named === authorName) return true;
-    return twoTokenNameMatch(authorName, named);
-  });
+  const authorTokens = personNameTokens(author);
+  if (!authorTokens.length) return false;
+  return viewerAliases.some((alias) => samePersonTokens(authorTokens, personNameTokens(alias)));
 }
 
 export function viewerNameAliasesFromToken(token: string | undefined): string[] {
@@ -322,12 +317,29 @@ function stringClaim(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
 }
 
-function twoTokenNameMatch(authorName: string, aliasName: string): boolean {
-  const tokens = aliasName.split(" ");
-  if (tokens.length !== 2) return false;
-  const [given, family] = tokens;
+function personNameTokens(value: string): string[] {
+  const named = normalizePersonName(value);
+  return named ? named.split(" ") : [];
+}
+
+function samePersonTokens(author: readonly string[], alias: readonly string[]): boolean {
+  if (!alias.length) return false;
+  if (author.join(" ") === alias.join(" ")) return true;
+  if (isLeadingTokenPrefix(author, alias)) return true;
+  return twoTokenBoundary(author, alias);
+}
+
+function isLeadingTokenPrefix(author: readonly string[], alias: readonly string[]): boolean {
+  if (author.length === 0 || author.length >= alias.length) return false;
+  if (author.some((token) => token.length < 2)) return false;
+  return author.every((token, index) => token === alias[index]);
+}
+
+function twoTokenBoundary(author: readonly string[], alias: readonly string[]): boolean {
+  if (alias.length !== 2 || author.length < 3) return false;
+  const [given, family] = alias;
   if (given.length < 2 || family.length < 2) return false;
-  return authorName.startsWith(`${given} `) && authorName.endsWith(` ${family}`);
+  return author[0] === given && author[author.length - 1] === family;
 }
 
 function jwtPayload(token: string | undefined): Record<string, unknown> | null {

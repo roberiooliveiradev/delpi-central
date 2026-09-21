@@ -221,6 +221,32 @@ describe("conversationMessages", () => {
     expect(messages.map((message) => message.kind)).not.toContain("task");
   });
 
+  it("marca como minhas as mensagens em que o GLPI só mandou o prenome do usuário logado", () => {
+    const messages = conversationMessages(
+      {
+        title: "Chamado teste Api Minha delpi",
+        description: "Esse chamado é um teste",
+        created_at: "2026-09-21T10:00:00Z",
+        requester_display_name: "Roberio",
+        timeline: [
+          {
+            id: 12,
+            kind: "followup",
+            content: "olola",
+            created_at: "2026-09-21T11:10:00Z",
+            author_display_name: "Roberio",
+          },
+        ],
+        attachments: [],
+      },
+      now,
+      ["Robério Oliveira"],
+    );
+    expect(messages[0]?.mine).toBe(true);
+    expect(messages[1]?.mine).toBe(true);
+    expect(conversationAuthorSrc(messages[1].mine, "blob:me")).toBe("blob:me");
+  });
+
   it("marca o acompanhamento escrito pelo usuário logado, mesmo quando ele não é o solicitante", () => {
     const messages = conversationMessages(
       {
@@ -256,9 +282,19 @@ describe("writtenByViewer", () => {
     expect(writtenByViewer("William Ricardo Jacomini", ["William Jacomini"])).toBe(true);
   });
 
-  it("não trata prenome sozinho como a mesma pessoa", () => {
+  it("reconhece o prenome do GLPI quando o JWT tem o nome completo", () => {
+    expect(writtenByViewer("Roberio", ["Robério Oliveira"])).toBe(true);
+    expect(writtenByViewer("William", ["William Ricardo Jacomini"])).toBe(true);
+  });
+
+  it("não trata prenome sozinho do JWT como a mesma pessoa", () => {
     expect(writtenByViewer("William Ricardo Jacomini", ["William"])).toBe(false);
     expect(writtenByViewer("Ana Paula", ["Ana"])).toBe(false);
+  });
+
+  it("não junta duas pessoas que só compartilham o prenome", () => {
+    expect(writtenByViewer("Robério Teixeira", ["Robério Oliveira"])).toBe(false);
+    expect(writtenByViewer("Ana Silva", ["Ana Paula"])).toBe(false);
   });
 });
 
