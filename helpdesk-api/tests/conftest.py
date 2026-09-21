@@ -80,7 +80,7 @@ class FakeGlpi:
         self.last_list_query = query
         return TicketListPage(items=tuple(self.tickets), page=query.page, page_size=query.page_size, has_more=False)
 
-    def get_ticket(self, access_token: str, ticket_id: int):
+    def get_ticket(self, access_token: str, ticket_id: int, viewer_email: str = ""):
         self.calls += 1
         if ticket_id == 99:
             raise GlpiNotFound("ausente")
@@ -136,6 +136,7 @@ def build_client(glpi: FakeGlpi | None = None) -> tuple[TestClient, FakeGlpi]:
         permissions = [item for item in request.headers.get("x-permissions", "").split(",") if item]
         request.state.user = SimpleNamespace(
             sub=request.headers.get("x-subject", ""),
+            email=request.headers.get("x-email", ""),
             permissions=permissions,
             is_superadmin=False,
         )

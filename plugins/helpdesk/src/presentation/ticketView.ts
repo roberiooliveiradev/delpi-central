@@ -198,12 +198,14 @@ export type ConversationSource = {
   description: string;
   created_at: string;
   requester_display_name: string;
+  requester_mine?: boolean;
   timeline: {
     id: number;
     kind: string;
     content: string;
     created_at: string;
     author_display_name: string;
+    mine?: boolean;
   }[];
   attachments: { document_id: number }[];
 };
@@ -258,35 +260,7 @@ export function conversationAuthorSrc(mine: boolean, photoUrl: string | null | u
   return src || undefined;
 }
 
-export function normalizePersonName(value: string): string {
-  return value
-    .normalize("NFD")
-    .replace(/\p{M}/gu, "")
-    .replace(/\s+/g, " ")
-    .trim()
-    .toLocaleLowerCase("pt-BR");
-}
-
-export function writtenByViewer(author: string, viewerAliases: readonly string[]): boolean {
-  const authorTokens = personNameTokens(author);
-  if (!authorTokens.length) return false;
-  return viewerAliases.some((alias) => samePersonTokens(authorTokens, personNameTokens(alias)));
-}
-
-export function viewerNameAliasesFromToken(token: string | undefined): string[] {
-  const payload = jwtPayload(token);
-  if (!payload) return [];
-  const given = stringClaim(payload.given_name);
-  const family = stringClaim(payload.family_name);
-  const aliases = [stringClaim(payload.name), [given, family].filter(Boolean).join(" ")];
-  return [...new Set(aliases.map((item) => item.trim()).filter(Boolean))];
-}
-
-export function conversationMessages(
-  ticket: ConversationSource,
-  now: Date,
-  viewerAliases: readonly string[] = [],
-): ConversationMessage[] {
+export function conversationMessages(ticket: ConversationSource, now: Date): ConversationMessage[] {
   const requester = ticket.requester_display_name.trim();
   const opening: ConversationMessage = {
     id: "opening",
@@ -295,7 +269,7 @@ export function conversationMessages(
     bodyText: ticket.description,
     createdAtLabel: openingTimeLabel(ticket.created_at, requester, now),
     authorName: requester,
-    mine: writtenByViewer(requester, viewerAliases),
+    mine: ticket.requester_mine === true,
     attachmentIds: ticket.attachments.map((file) => file.document_id),
   };
   const followups = ticket.timeline
@@ -307,53 +281,8 @@ export function conversationMessages(
       bodyText: entry.content,
       createdAtLabel: relativeTimeLabel(entry.created_at, now),
       authorName: entry.author_display_name.trim(),
-      mine: writtenByViewer(entry.author_display_name, viewerAliases),
+      mine: entry.mine === true,
       attachmentIds: [],
     }));
   return [opening, ...followups];
-}
-
-function stringClaim(value: unknown): string {
-  return typeof value === "string" ? value.trim() : "";
-}
-
-function personNameTokens(value: string): string[] {
-  const named = normalizePersonName(value);
-  return named ? named.split(" ") : [];
-}
-
-function samePersonTokens(author: readonly string[], alias: readonly string[]): boolean {
-  if (!alias.length) return false;
-  if (author.join(" ") === alias.join(" ")) return true;
-  if (isLeadingTokenPrefix(author, alias)) return true;
-  return twoTokenBoundary(author, alias);
-}
-
-function isLeadingTokenPrefix(author: readonly string[], alias: readonly string[]): boolean {
-  if (author.length === 0 || author.length >= alias.length) return false;
-  if (author.some((token) => token.length < 2)) return false;
-  return author.every((token, index) => token === alias[index]);
-}
-
-function twoTokenBoundary(author: readonly string[], alias: readonly string[]): boolean {
-  if (alias.length !== 2 || author.length < 3) return false;
-  const [given, family] = alias;
-  if (given.length < 2 || family.length < 2) return false;
-  return author[0] === given && author[author.length - 1] === family;
-}
-
-function jwtPayload(token: string | undefined): Record<string, unknown> | null {
-  if (!token) return null;
-  const payload = token.split(".")[1];
-  if (!payload) return null;
-  try {
-    const normalized = payload.replace(/-/g, "+").replace(/_/g, "/");
-    const padded = normalized.padEnd(normalized.length + ((4 - (normalized.length % 4)) % 4), "=");
-    const binary = atob(padded);
-    const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
-    const parsed = JSON.parse(new TextDecoder().decode(bytes)) as unknown;
-    return parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : null;
-  } catch {
-    return null;
-  }
 }

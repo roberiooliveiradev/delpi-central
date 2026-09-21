@@ -5,6 +5,19 @@ from datetime import datetime
 @dataclass(frozen=True)
 class Actor:
     subject: str
+    email: str = ""
+
+
+@dataclass(frozen=True)
+class PersonIdentity:
+    user_id: int | None = None
+    emails: tuple[str, ...] = ()
+
+
+def same_person(left: PersonIdentity, right: PersonIdentity) -> bool:
+    if left.user_id and right.user_id and left.user_id == right.user_id:
+        return True
+    return bool(set(left.emails) & set(right.emails))
 
 
 @dataclass(frozen=True)
@@ -56,6 +69,8 @@ class TimelineEntry:
     content: str
     created_at: str
     author_display_name: str
+    author_identity: PersonIdentity = PersonIdentity()
+    mine: bool = False
 
 
 @dataclass(frozen=True)
@@ -79,6 +94,8 @@ class TicketDetail:
     created_at: str = ""
     requester_display_name: str = ""
     assigned_display_name: str = ""
+    requester_identity: PersonIdentity = PersonIdentity()
+    requester_mine: bool = False
 
 
 @dataclass(frozen=True)

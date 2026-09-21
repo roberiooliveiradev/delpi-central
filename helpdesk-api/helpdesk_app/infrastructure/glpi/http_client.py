@@ -11,9 +11,18 @@ from helpdesk_app.domain.errors import (
     GlpiUnavailable,
     GlpiValidation,
 )
-from helpdesk_app.domain.models import Attachment, Category, TicketDetail, TicketListPage, TicketListQuery, TokenSet
+from helpdesk_app.domain.models import (
+    Attachment,
+    Category,
+    PersonIdentity,
+    TicketDetail,
+    TicketListPage,
+    TicketListQuery,
+    TokenSet,
+)
 from helpdesk_app.infrastructure.glpi.mapping import (
     URGENCIES,
+    apply_viewer_identity,
     create_ticket_body,
     display_text,
     parse_categories,
@@ -22,6 +31,7 @@ from helpdesk_app.infrastructure.glpi.mapping import (
     parse_ticket_detail,
     parse_ticket_page,
     parse_token_set,
+    parse_viewer_identity,
 )
 
 logger = logging.getLogger("helpdesk.glpi")
@@ -153,7 +163,7 @@ class HttpxGlpiClient:
         )
         return parse_ticket_page(payload, query)
 
-    def get_ticket(self, access_token: str, ticket_id: int) -> TicketDetail:
+    def get_ticket(self, access_token: str, ticket_id: int, viewer_email: str = "") -> TicketDetail:
         ticket = self._json(
             "GET", f"/api.php/v2.2/Assistance/Ticket/{ticket_id}", token=access_token
         )
@@ -162,9 +172,20 @@ class HttpxGlpiClient:
             f"/api.php/v2.2/Assistance/Ticket/{ticket_id}/Timeline",
             token=access_token,
         )
-        detail = parse_ticket_detail(ticket, timeline)
+        detail = apply_viewer_identity(
+            parse_ticket_detail(ticket, timeline),
+            self._viewer_identity(access_token, viewer_email),
+        )
         named = tuple(self._named_attachment(access_token, item) for item in detail.attachments)
         return replace(detail, attachments=named)
+
+    def _viewer_identity(self, access_token: str, viewer_email: str) -> PersonIdentity:
+        try:
+            session = self._json("GET", "/api.php/v2.2/session", token=access_token)
+        except (GlpiForbidden, GlpiNotFound, GlpiUnavailable):
+            logger.info("glpi_session_identity_unavailable")
+            session = {}
+        return parse_viewer_identity(session if isinstance(session, dict) else {}, viewer_email)
 
     def download_attachment(self, access_token: str, document_id: int) -> tuple[bytes, str]:
         response = self._request(

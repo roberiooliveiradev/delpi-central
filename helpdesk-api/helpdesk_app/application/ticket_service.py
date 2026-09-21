@@ -22,11 +22,11 @@ class TicketService:
     def tickets(self, subject: str, query: TicketListQuery) -> TicketListPage:
         return self._glpi.list_tickets(self._token(subject), query)
 
-    def ticket(self, subject: str, ticket_id: int) -> TicketDetail:
-        return self._glpi.get_ticket(self._token(subject), ticket_id)
+    def ticket(self, subject: str, ticket_id: int, viewer_email: str = "") -> TicketDetail:
+        return self._glpi.get_ticket(self._token(subject), ticket_id, viewer_email=viewer_email)
 
     def attachment(self, subject: str, ticket_id: int, document_id: int) -> tuple[bytes, str, str]:
-        ticket = self.ticket(subject, ticket_id)
+        ticket = self.ticket(subject, ticket_id, viewer_email="")
         match = next((item for item in ticket.attachments if item.document_id == document_id), None)
         if match is None:
             raise GlpiNotFound("Anexo não encontrado.")

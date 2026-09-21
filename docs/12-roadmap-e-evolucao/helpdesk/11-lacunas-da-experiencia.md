@@ -97,7 +97,7 @@ A conversa em bolhas já foi publicada. As fotos mostram o corte que ainda falta
 | C-02 | Nome de quem acompanhou | GLPI 6288 escreve Mainena e Michael; o MFE no 2 só mostra o relógio | IMPLEMENTADO no tradutor (`display_name` / nome completo) |
 | C-03 | «Criado em … por …» | o GLPI escreve a frase; o MFE só põe a data relativa ou `dd/mm/aaaa` | IMPLEMENTADO — rótulo «Criado em …» |
 | C-04 | Foto do técnico | o 6288 tem avatar com foto; este módulo não guarda foto | CONSOLE_GLPI / fora — iniciais bastam |
-| C-05 | Lado da bolha | no 2 as duas mensagens foram para a direita; `mine` era «autor = solicitante» | IMPLEMENTADO — `mine` e foto Core só quando o autor é o usuário logado |
+| C-05 | Lado da bolha | no 2 as duas mensagens foram para a direita; `mine` era «autor = solicitante» | IMPLEMENTADO — `mine` no BFF por id GLPI ou e-mail; nome só rótulo |
 | C-06 | Título da abertura vs cartão de urgência | o cartão do 2 virou «Média» porque a categoria está vazia (`itilcategories_id=0`) | já documentado; não inventar categoria |
 | C-07 | Tarefa, solução, aprovação, atores, SLA | fotos do 6288 | CONSOLE_GLPI — já em [`10-conversa-do-chamado.md`](./10-conversa-do-chamado.md) |
 

@@ -81,7 +81,7 @@ Claro e escuro continuam nos tokens `--delpi-ui-*` já mapeados em `.dashboard-h
 
 O tempo «2 horas atrás» é formatação da tela a partir de `date_creation`. O JSON guarda o instante.
 
-As iniciais saem do nome exibido. A foto da Minha DELPI (Core) só entra quando o autor da mensagem é o usuário logado. Foto do GLPI e armazenamento de avatar continuam fora deste módulo.
+As iniciais saem do nome exibido. A foto da Minha DELPI (Core) só entra quando o BFF marca a mensagem como do usuário logado, por id do GLPI ou e-mail. Nome não identifica autor. Foto do GLPI e armazenamento de avatar continuam fora deste módulo.
 
 ## 5. Componente
 
@@ -100,7 +100,8 @@ O compositor de resposta continua `HelpdeskTextArea` e `ActionButton`. `MentionC
 | Instante da abertura | `Ticket.date_creation` | `created_at` no detalhe |
 | Nome do solicitante | `Ticket.team[]` com `role=requester`; a limpeza da equipe também preserva `display_name` | `requester_display_name` |
 | Texto da abertura | `Ticket.content` (HTML) | `description`, já em texto puro |
-| Acompanhamento | `Followup.user`, `content`, `date_creation` | `timeline[]` com `author_display_name`, `content`, `created_at` |
+| Acompanhamento | `Followup.user`, `content`, `date_creation` | `timeline[]` com `author_display_name`, `content`, `created_at`, `mine` |
+| Autor da mensagem | `Followup.user.id` / `team[].id` e `GET /session` → `user_id`; e-mail do JWT se o GLPI trouxer e-mail | `mine` / `requester_mine` — nunca o nome |
 | Acompanhamento privado | `Followup.is_private` | não entra em `timeline` |
 | Arquivo do chamado | `Timeline` tipo `Document`, `documents_id` | `attachments[]` e o download já publicados; a tela mostra o botão na abertura |
 | Arquivo de um acompanhamento | documento ligado ao follow-up, não ao chamado | a HLAPI do item `Followup` não devolve essa lista; o download continua do chamado inteiro |

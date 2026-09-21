@@ -8,11 +8,13 @@ Acompanhamento: POST .../Timeline/Followup
 
 import html
 import re
+from dataclasses import replace
 
 from helpdesk_app.domain.errors import GlpiNotFound, GlpiValidation
 from helpdesk_app.domain.models import (
     Attachment,
     Category,
+    PersonIdentity,
     TicketDetail,
     TicketListPage,
     TicketListQuery,
@@ -20,6 +22,7 @@ from helpdesk_app.domain.models import (
     TimelineEntry,
     TokenSet,
     Urgency,
+    same_person,
 )
 
 # Rótulos pt_BR do GLPI para o enum documentado no schema Ticket.
@@ -169,6 +172,7 @@ def parse_ticket_detail(payload: dict, timeline_payload: dict | list) -> TicketD
         created_at=summary.created_at,
         requester_display_name=_requester_name(payload),
         assigned_display_name=summary.assigned_display_name,
+        requester_identity=_requester_identity(payload),
     )
 
 
@@ -213,15 +217,16 @@ def _timeline_entry(row: dict) -> TimelineEntry | None:
     if _is_private(row):
         return None
     user = row.get("user") or row.get("users_id") or {}
-    author = ""
-    if isinstance(user, dict):
-        author = _person_name(user)
+    if isinstance(user, int):
+        user = {"id": user}
+    author = _person_name(user) if isinstance(user, dict) else ""
     return TimelineEntry(
         id=int(row.get("id") or 0),
         kind="followup",
         content=_text(row.get("content")),
         created_at=str(row.get("date_creation") or row.get("date") or ""),
         author_display_name=author,
+        author_identity=_person_identity(user if isinstance(user, dict) else {}),
     )
 
 
@@ -264,6 +269,20 @@ def _results(payload: dict | list) -> list:
     return []
 
 
+def apply_viewer_identity(detail: TicketDetail, viewer: PersonIdentity) -> TicketDetail:
+    return replace(
+        detail,
+        requester_mine=same_person(detail.requester_identity, viewer),
+        timeline=tuple(
+            replace(entry, mine=same_person(entry.author_identity, viewer)) for entry in detail.timeline
+        ),
+    )
+
+
+def parse_viewer_identity(session: dict, viewer_email: str = "") -> PersonIdentity:
+    return PersonIdentity(user_id=_person_id({"id": session.get("user_id")}), emails=_emails(viewer_email))
+
+
 def _requester_name(row: dict) -> str:
     named = _team_name(row, "requester")
     if named:
@@ -272,6 +291,57 @@ def _requester_name(row: dict) -> str:
     if isinstance(recipient, dict):
         return _person_name(recipient)
     return ""
+
+
+def _requester_identity(row: dict) -> PersonIdentity:
+    team = row.get("team") or []
+    if isinstance(team, list):
+        for member in team:
+            if isinstance(member, dict) and str(member.get("role") or "") == "requester":
+                return _person_identity(member)
+    recipient = row.get("user_recipient")
+    if isinstance(recipient, dict):
+        return _person_identity(recipient)
+    return PersonIdentity()
+
+
+def _person_identity(value: dict) -> PersonIdentity:
+    return PersonIdentity(user_id=_person_id(value), emails=_emails(value))
+
+
+def _person_id(value: dict) -> int | None:
+    for key in ("id", "users_id"):
+        raw = value.get(key)
+        if isinstance(raw, dict):
+            raw = raw.get("id")
+        try:
+            parsed = int(raw)
+        except (TypeError, ValueError):
+            continue
+        if parsed > 0:
+            return parsed
+    return None
+
+
+def _emails(value: dict | str) -> tuple[str, ...]:
+    found: list[str] = []
+    if isinstance(value, str):
+        found.append(_email(value))
+    elif isinstance(value, dict):
+        found.append(_email(value.get("email")))
+        emails = value.get("emails")
+        if isinstance(emails, list):
+            for item in emails:
+                if isinstance(item, str):
+                    found.append(_email(item))
+                elif isinstance(item, dict):
+                    found.append(_email(item.get("email")))
+    return tuple(item for item in dict.fromkeys(found) if item)
+
+
+def _email(value) -> str:
+    text = str(value or "").strip().lower()
+    return text if "@" in text else ""
 
 
 def _team_name(row: dict, role: str) -> str:

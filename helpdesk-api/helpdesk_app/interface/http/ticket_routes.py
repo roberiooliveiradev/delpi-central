@@ -108,7 +108,7 @@ def list_tickets(
 def get_ticket(request: Request, ticket_id: int):
     actor = require_actor(request)
     try:
-        ticket = _tickets(request).ticket(actor.subject, ticket_id)
+        ticket = _tickets(request).ticket(actor.subject, ticket_id, viewer_email=actor.email)
     except HelpdeskError as exc:
         return _error(exc, request)
     return {
@@ -120,6 +120,7 @@ def get_ticket(request: Request, ticket_id: int):
         "updated_at": ticket.updated_at,
         "created_at": ticket.created_at,
         "requester_display_name": ticket.requester_display_name,
+        "requester_mine": ticket.requester_mine,
         "assigned_display_name": ticket.assigned_display_name,
         "description": ticket.description,
         "timeline": [
@@ -129,6 +130,7 @@ def get_ticket(request: Request, ticket_id: int):
                 "content": entry.content,
                 "created_at": entry.created_at,
                 "author_display_name": entry.author_display_name,
+                "mine": entry.mine,
             }
             for entry in ticket.timeline
         ],

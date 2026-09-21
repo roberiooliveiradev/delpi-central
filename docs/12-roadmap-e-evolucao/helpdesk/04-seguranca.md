@@ -56,6 +56,7 @@ O escopo `api` no GLPI é largo: cobre a HLAPI que o perfil permitir, não só c
 
 - Apagar o vínculo local no logout da Minha DELPI e em `DELETE /auth/glpi/session`.
 - Não guardar access token nem refresh token em `localStorage` ou cookie legível pelo MFE.
+- Identidade de autor da conversa: id do usuário no GLPI ou e-mail do JWT. Nome de pessoa não entra em nenhum fluxo de decisão.
 - Log de integração: sujeito Keycloak, id do chamado, status HTTP, duração. Sem título, descrição, código de autorização, access token, refresh token ou segredo.
 - Cifra da sessão com chave própria da helpdesk-api, distinta do segredo OAuth.
 

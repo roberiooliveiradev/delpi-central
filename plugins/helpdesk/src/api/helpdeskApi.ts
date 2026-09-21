@@ -82,11 +82,13 @@ export type TimelineEntry = {
   content: string;
   created_at: string;
   author_display_name: string;
+  mine: boolean;
 };
 
 export type TicketDetail = TicketSummary & {
   description: string;
   requester_display_name: string;
+  requester_mine: boolean;
   timeline: TimelineEntry[];
   attachments: TicketAttachment[];
 };

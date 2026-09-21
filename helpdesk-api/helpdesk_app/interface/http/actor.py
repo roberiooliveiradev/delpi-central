@@ -14,4 +14,5 @@ def require_actor(request: Request) -> Actor:
     subject = str(getattr(user, "sub", None) or getattr(user, "id", "") or "")
     if not subject:
         raise PortalForbidden("Sessão sem sujeito.")
-    return Actor(subject=subject)
+    email = str(getattr(user, "email", "") or "")
+    return Actor(subject=subject, email=email)

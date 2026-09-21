@@ -5,13 +5,62 @@ import pytest
 
 from helpdesk_app.domain.errors import GlpiUnavailable
 from helpdesk_app.infrastructure.glpi.http_client import HttpxGlpiClient
+from helpdesk_app.domain.models import PersonIdentity
 from helpdesk_app.infrastructure.glpi.mapping import (
+    apply_viewer_identity,
     build_ticket_list_query,
     parse_categories,
     parse_ticket_detail,
     parse_ticket_list,
+    parse_viewer_identity,
 )
 from helpdesk_app.domain.errors import GlpiForbidden, GlpiNotFound, GlpiValidation
+
+
+def test_get_ticket_marks_mine_from_session_user_id():
+    def handler(request: httpx.Request) -> httpx.Response:
+        path = request.url.path
+        if path.endswith("/session"):
+            return httpx.Response(200, json={"user_id": 12, "name": "roberio"})
+        if path.endswith("/Timeline"):
+            return httpx.Response(
+                200,
+                json={
+                    "results": [
+                        {
+                            "type": "Followup",
+                            "item": {
+                                "id": 9,
+                                "content": "olola",
+                                "user": {"id": 12, "name": "Roberio"},
+                            },
+                        }
+                    ]
+                },
+            )
+        return httpx.Response(
+            200,
+            json={
+                "id": 1114,
+                "name": "Chamado teste",
+                "content": "Texto",
+                "status": {"name": "Novo"},
+                "urgency": 2,
+                "team": [{"role": "requester", "id": 12, "display_name": "Outro Nome"}],
+            },
+        )
+
+    client = HttpxGlpiClient(
+        base_url="https://glpi.example",
+        client_id="id",
+        client_secret="super-secret",
+        redirect_uri="https://centraldelpi.com.br/apps/helpdesk-api/auth/glpi/callback",
+        transport=httpx.MockTransport(handler),
+    )
+    detail = client.get_ticket("token", 1114, viewer_email="roberio@delpi.com.br")
+    assert detail.requester_mine is True
+    assert detail.timeline[0].mine is True
+    assert detail.requester_display_name == "Outro Nome"
 
 
 def test_post_is_not_retried_and_get_retries_transient_status():
@@ -461,6 +510,59 @@ def test_person_name_prefers_the_most_complete_label():
     )
     assert detail.requester_display_name == "Robério Oliveira"
     assert detail.timeline[0].author_display_name == "Robério Oliveira"
+
+
+def test_conversation_identity_uses_id_or_email_never_name():
+    detail = parse_ticket_detail(
+        {
+            "id": 1114,
+            "name": "Chamado teste",
+            "content": "Texto",
+            "status": {"name": "Novo"},
+            "urgency": 2,
+            "team": [
+                {
+                    "role": "requester",
+                    "id": 12,
+                    "display_name": "Roberio",
+                    "email": "roberio@delpi.com.br",
+                }
+            ],
+        },
+        {
+            "results": [
+                {
+                    "type": "Followup",
+                    "item": {
+                        "id": 9,
+                        "content": "olola",
+                        "user": {"id": 12, "name": "Roberio"},
+                    },
+                },
+                {
+                    "type": "Followup",
+                    "item": {
+                        "id": 10,
+                        "content": "outro",
+                        "user": {"id": 44, "name": "Roberio"},
+                    },
+                },
+            ]
+        },
+    )
+    same_id = apply_viewer_identity(detail, PersonIdentity(user_id=12))
+    assert same_id.requester_mine is True
+    assert same_id.timeline[0].mine is True
+    assert same_id.timeline[1].mine is False
+
+    same_email = apply_viewer_identity(detail, parse_viewer_identity({}, "ROBERIO@delpi.com.br"))
+    assert same_email.requester_mine is True
+    assert same_email.timeline[0].mine is False
+
+    same_name_other_id = apply_viewer_identity(detail, PersonIdentity(user_id=99))
+    assert same_name_other_id.requester_mine is False
+    assert same_name_other_id.timeline[0].mine is False
+    assert parse_viewer_identity({"user_id": -1}, "").user_id is None
 
 
 def test_requester_falls_back_to_user_recipient():
