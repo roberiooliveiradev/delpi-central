@@ -1,12 +1,10 @@
 import { type ComponentProps, type ReactNode } from "react";
 import {
   attachmentPreviewStripBemClasses,
+  createCompactPagination,
   createDashboardAttachmentPreviewStrip,
+  createDashboardDataCardsGrid,
   createDashboardDataRecordCard,
-  DataTable,
-  dataTableBemClasses,
-  FieldLabel,
-  IconButton,
   createDashboardEmptyState,
   createDashboardFiltersKit,
   createDashboardFormActions,
@@ -14,11 +12,16 @@ import {
   createDashboardMessageThread,
   createDashboardPageHeader,
   createDashboardSectionCard,
+  createDashboardSegmentToggle,
   createDashboardSelectField,
   createDashboardStateBanner,
   createDashboardStatusBadge,
   createDashboardTextAreaField,
   createDashboardTextField,
+  DataTable,
+  dataTableBemClasses,
+  FieldLabel,
+  IconButton,
   emptyStateCardBemClasses,
   formActionsBemClasses,
   loadingStateCardBemClasses,
@@ -29,7 +32,10 @@ import {
   stateBannerBemClasses,
   textAreaFieldBemClasses,
   textFieldPacClasses,
+  usePersistedViewLayout,
 } from "@delpi/plugin-ui/index";
+
+export { usePersistedViewLayout };
 
 const PREFIX = "helpdesk";
 const selectClasses = selectFieldPacClasses(PREFIX);
@@ -156,6 +162,23 @@ const helpdeskFilters = createDashboardFiltersKit({
 export const HelpdeskFiltersRow = helpdeskFilters.FiltersRow;
 export const HelpdeskFilterInput = helpdeskFilters.FilterInputField;
 export const HelpdeskFilterSelect = helpdeskFilters.FilterSelectField;
+
+export const HelpdeskSegmentToggle = createDashboardSegmentToggle(PREFIX);
+export const HelpdeskDataCardsGrid = createDashboardDataCardsGrid({ prefix: PREFIX });
+
+export const HelpdeskCompactPagination = createCompactPagination({
+  prefix: PREFIX,
+  layout: "grouped",
+  labels: {
+    info: ({ page }) => `Página ${page}`,
+    pageSizeLabel: "Por página",
+    previous: "Anterior",
+    next: "Próxima",
+    navigationAriaLabel: "Paginação da lista de chamados",
+  },
+});
+
+export const HELPDESK_TICKET_LIST_VIEW_LAYOUT_KEY = "helpdesk:ticket-list:view-layout:v1";
 
 export const HelpdeskAttachmentPreviewStrip = createDashboardAttachmentPreviewStrip({
   classNames: attachmentPreviewStripBemClasses(PREFIX),

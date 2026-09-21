@@ -87,7 +87,10 @@ O bloco escuro é `:root[data-theme="dark"] .dashboard-helpdesk`. Superfície, t
 | `HelpdeskRichTextField` | `RichTextEditor` | Descrição na abertura e Responder |
 | `createDashboardSelectField` | `HelpdeskSelect` | Categoria (com busca) e urgência |
 | `createDashboardFormActions` | `HelpdeskFormActions` | Rodapé dos formulários, vínculo e paginação |
-| `createDashboardFiltersKit` | `HelpdeskFiltersRow` / `HelpdeskFilterInput` / `HelpdeskFilterSelect` | Recorte da lista |
+| `createDashboardFiltersKit` | `HelpdeskFilterInput` / `HelpdeskFilterSelect` | Regras do construtor de filtros |
+| `createDashboardSegmentToggle` | `HelpdeskSegmentToggle` | Tabela \| Cards |
+| `createDashboardDataCardsGrid` | `HelpdeskDataCardsGrid` | Grade de cards |
+| `createCompactPagination` | `HelpdeskCompactPagination` | Página + Por página (has_more) |
 | `createDashboardAttachmentPreviewStrip` | `HelpdeskAttachmentPreviewStrip` | Miniaturas no `belowBody` da abertura |
 | `FilePreviewModal` | — | Prévia + Baixar; blob só na memória |
 | `ActionButton` | — | Autorizar no helpdesk |
@@ -128,13 +131,14 @@ HelpdeskPageHeader
 HelpdeskSectionCard  «Meus chamados»  hint = helpTooltips.list
   actions: [ + ]  aria-label Abrir chamado
 
-  HelpdeskFiltersRow  hint = helpTooltips.filters
-    Buscar ·····
-    Status [Select]
-    Urgência [Select]
-    Categoria [Select]
-    Atualizado de / até  date
-    [ Limpar filtros ]  só com recorte ativo
+  TicketListToolbar
+    SegmentToggle Tabela | Cards
+    chips de recorte / ordenação
+    [ Limpar ]  só com recorte ativo
+    [ Construtor de filtros ] [ Ordenação ] [ Colunas ] [ Atualizar lista ]
+
+  TicketListFilterBuilder  (aberto por padrão; único editor do recorte)
+    regras E (AND): busca, status, urgência, categoria, datas
 
   carregando     │ ░░░ │  «Carregando chamados…»
   proibido       ⚠  permissão do portal ou recusa do helpdesk
@@ -144,13 +148,14 @@ HelpdeskSectionCard  «Meus chamados»  hint = helpTooltips.list
                  [ Autorizar no helpdesk ]
   vazio          ∅  «Você ainda não tem chamados.»
                  ∅  «Nenhum chamado neste recorte.»  se filtro ativo
-  lista          HelpdeskDataTable  layout=scroll
+  lista tabela   HelpdeskDataTable  layout=scroll
                     colunas ordenáveis: Chamado, Título, Status, Categoria, Urgência, Aberto, Atualizado, Resolvido, Fechado
                     Técnico e Requerente sem ordenação (não são propriedade SQL da HLAPI)
                     Chamado e Título são <a href=/apps/helpdesk/tickets/{id}>; clique normal → navigateHelpdesk
                     Ctrl, Shift, Alt ou clique do meio abrem o href
                     datas absolutas; resolução e fechamento quando o GLPI trouxer
-  [ ← ]  N  [ → ]  via has_more; sem total inventado
+  lista cards    DataCardsGrid + HelpdeskRecordCard (#id · urgência · técnico)
+  CompactPagination  Página N · Por página 10/20/50 · Anterior / Próxima  via has_more; sem total inventado
 ```
 
 Um estado por vez. Lista vazia só aparece com HTTP 200 e `items: []`. Proibido, vínculo e indisponível não podem parecer lista vazia.

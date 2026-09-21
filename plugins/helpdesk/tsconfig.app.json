@@ -22,5 +22,6 @@
       "@delpi/plugin-ui/index": ["./src/shims/plugin-ui.d.ts"]
     }
   },
-  "include": ["src"]
+  "include": ["src"],
+  "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx"]
 }

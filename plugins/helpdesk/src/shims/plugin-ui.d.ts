@@ -450,6 +450,7 @@ declare module "@delpi/plugin-ui/index" {
     value: T;
     onChange: (value: T) => void;
     ariaLabel: string;
+    idPrefix?: string;
     disabled?: boolean;
     size?: "sm" | "md";
     widthMode?: "fill" | "content";
@@ -572,8 +573,11 @@ declare module "@delpi/plugin-ui/index" {
     pageSize: number;
     total: number;
     totalPages?: number;
+    pageSizeOptions?: readonly number[];
     onPageChange: (page: number) => void;
+    onPageSizeChange?: (pageSize: number) => void;
     disabled?: boolean;
+    hideWhenSinglePage?: boolean;
   };
 
   export function createCompactPagination(config: {
@@ -583,6 +587,27 @@ declare module "@delpi/plugin-ui/index" {
     ghostBtn?: string;
     withHints?: boolean;
   }): ComponentType<DashboardCompactPaginationProps>;
+
+  export type DashboardDataCardsGridProps = {
+    children?: ReactNode;
+    empty?: ReactNode;
+    ariaLabel?: string;
+    className?: string;
+  };
+
+  export function createDashboardDataCardsGrid(config: {
+    prefix: string;
+  }): ComponentType<DashboardDataCardsGridProps>;
+
+  export function usePersistedViewLayout(options: {
+    storageKey: string;
+    defaultMode?: "table" | "cards" | "board";
+    mobileMaxWidthPx?: number;
+    enabled?: boolean;
+  }): {
+    layout: "table" | "cards" | "board";
+    setLayout: (layout: "table" | "cards" | "board") => void;
+  };
 
   export type DashboardModalShellProps = {
     open: boolean;

@@ -7,18 +7,22 @@ import type { TicketListViewModel } from "../presentation/ticketListViewModel";
 import { HelpdeskIconButton } from "../ui/helpdeskUi";
 
 /**
- * List chrome: chips, sort summary, column prefs slot, refresh.
+ * List chrome: view toggle, chips, sort summary, column prefs, refresh.
  * Export / map / bulk stay console.
  */
 export function TicketListToolbar({
   viewModel,
   onRefresh,
+  leading,
+  clearFiltersSlot,
   columnPreferencesSlot,
   sortBuilderSlot,
   filterBuilderToggle,
 }: {
   viewModel: TicketListViewModel;
   onRefresh?: () => void;
+  leading?: ReactNode;
+  clearFiltersSlot?: ReactNode;
   columnPreferencesSlot?: ReactNode;
   sortBuilderSlot?: ReactNode;
   filterBuilderToggle?: ReactNode;
@@ -27,6 +31,8 @@ export function TicketListToolbar({
   if (
     !hasChips &&
     !onRefresh &&
+    !leading &&
+    !clearFiltersSlot &&
     !columnPreferencesSlot &&
     !filterBuilderToggle &&
     !sortBuilderSlot
@@ -36,23 +42,27 @@ export function TicketListToolbar({
 
   return (
     <div className="helpdesk-list-toolbar" role="region" aria-label="Recorte da lista">
-      <div className="helpdesk-list-toolbar__chips">
-        {viewModel.activeFilterLabels.map((label) => (
-          <HintAction key={label} hint={helpTooltips.listUi.filterChip} ariaLabel={`Ajuda: ${label}`}>
-            <span className="helpdesk-list-toolbar__chip" data-kind="filter">
-              Filtrado por {label}
-            </span>
-          </HintAction>
-        ))}
-        {viewModel.primarySortLabel ? (
-          <HintAction hint={helpTooltips.listUi.sortChip} ariaLabel="Ajuda: ordenação">
-            <span className="helpdesk-list-toolbar__chip" data-kind="sort">
-              {viewModel.primarySortLabel}
-            </span>
-          </HintAction>
-        ) : null}
+      <div className="helpdesk-list-toolbar__leading">
+        {leading}
+        <div className="helpdesk-list-toolbar__chips">
+          {viewModel.activeFilterLabels.map((label) => (
+            <HintAction key={label} hint={helpTooltips.listUi.filterChip} ariaLabel={`Ajuda: ${label}`}>
+              <span className="helpdesk-list-toolbar__chip" data-kind="filter">
+                Filtrado por {label}
+              </span>
+            </HintAction>
+          ))}
+          {viewModel.primarySortLabel ? (
+            <HintAction hint={helpTooltips.listUi.sortChip} ariaLabel="Ajuda: ordenação">
+              <span className="helpdesk-list-toolbar__chip" data-kind="sort">
+                {viewModel.primarySortLabel}
+              </span>
+            </HintAction>
+          ) : null}
+        </div>
       </div>
       <div className="helpdesk-list-toolbar__actions">
+        {clearFiltersSlot}
         {filterBuilderToggle}
         {sortBuilderSlot}
         {columnPreferencesSlot}

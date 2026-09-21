@@ -1,8 +1,8 @@
 export const helpTooltips = {
   list:
-    "Aqui ficam os chamados de TI no seu nome, em tabela que preenche a tela e rola por dentro. Aberto, atualizado, resolvido e fechado mostram dia e hora. Acima da grade, o recorte ativo e a ordenação aparecem em chips; o botão de atualizar pede de novo ao helpdesk. Use Colunas para mostrar ou esconder campos — a preferência fica neste navegador. Clique no cabeçalho para ordenar (resolvido e fechado inclusive) ou abra a ordenação em níveis (até três). O número e o título são o endereço do chamado: Ctrl, Shift, Alt ou o clique do meio abrem em outra aba. O mais (+) abre chamado; as setas mudam de página; o seletor define 10, 20 ou 50 por página; o X limpa o recorte. Chamado de outra pessoa e da lixeira não aparecem.",
+    "Aqui ficam os chamados de TI no seu nome. Alterne Tabela ou Cards — a preferência fica neste navegador. Aberto, atualizado, resolvido e fechado mostram dia e hora. O recorte e a ordenação aparecem em chips; o construtor de filtros (ícone de funil) é o único lugar para busca, status, urgência, categoria e datas. Use Colunas na tabela para mostrar ou esconder campos. Clique no cabeçalho para ordenar ou abra a ordenação em níveis (até três). O número e o título são o endereço do chamado: Ctrl, Shift, Alt ou o clique do meio abrem em outra aba. O mais (+) abre chamado; na paginação, Anterior/Próxima e Por página (10, 20 ou 50); o X limpa o recorte. Chamado de outra pessoa e da lixeira não aparecem.",
   filters:
-    "A busca e os filtros pedem o recorte ao helpdesk. A busca acha no título ou no texto da abertura. O selo de estado usa o número do status (novo, em atendimento, pendente, aguardando aprovação, solucionado, fechado), não o texto. Pendentes e aguardando aprovação têm recorte próprio; Abertos continua incluindo os que esperam aprovação. Aberto de/até filtra pela data de abertura; atualizado de/até, pela última mudança. O construtor de filtros monta várias regras com E (AND) e grava o recorte na URL — o F5 mantém o mesmo critério. Grupos com OU, exportação, seleção em massa e mapa ficam no console do helpdesk. A ordenação também: o clique na coluna não reordena só esta página. Recorte vazio significa que nenhum chamado bate com o filtro, não que você não tenha chamados.",
+    "Busca e filtros ficam só no construtor personalizável (ícone de funil). A busca acha no título ou no texto da abertura. O selo de estado usa o número do status (novo, em atendimento, pendente, aguardando aprovação, solucionado, fechado), não o texto. Pendentes e aguardando aprovação têm recorte próprio; Abertos continua incluindo os que esperam aprovação. Aberto de/até filtra pela data de abertura; atualizado de/até, pela última mudança. O construtor monta várias regras com E (AND) e grava o recorte na URL — o F5 mantém o mesmo critério. Grupos com OU, exportação, seleção em massa e mapa ficam no console do helpdesk. A ordenação também: o clique na coluna não reordena só esta página. Recorte vazio significa que nenhum chamado bate com o filtro, não que você não tenha chamados.",
   link:
     "Na primeira vez, a Minha DELPI entra no helpdesk com o mesmo login. Se o usuário ainda não existir lá, o helpdesk cria a conta. Depois disso, os chamados passam a aparecer aqui.",
   create:
@@ -30,7 +30,8 @@ export const helpTooltips = {
     refreshPage: "Pede de novo a lista ao helpdesk com o mesmo recorte da URL.",
     openTicket: "Abre o formulário para registrar um chamado novo no seu nome.",
     clearFilters: "Remove busca, status, urgência, categoria e datas; mantém a ordenação e o tamanho da página.",
-    search: "Busca no título ou no texto da abertura do chamado. Aguarda um instante antes de pedir ao helpdesk.",
+    viewLayout: "Alterna a lista entre tabela e cards. A escolha fica neste navegador.",
+    search: "Busca no título ou no texto da abertura do chamado — use o construtor de filtros.",
     status:
       "Recorta pelo número do status no helpdesk: abertos (inclui aprovação), em atendimento, pendentes, aguardando aprovação, solucionados ou fechados.",
     urgency: "Filtra pela urgência cadastrada no helpdesk. Todas mostra qualquer urgência.",
@@ -39,12 +40,12 @@ export const helpTooltips = {
     updatedTo: "Só chamados cuja última atualização é neste dia ou antes.",
     createdFrom: "Só chamados abertos neste dia ou depois.",
     createdTo: "Só chamados abertos neste dia ou antes.",
-    pageSize: "Quantos chamados o helpdesk devolve por página: 10, 20 ou 50.",
+    pageSize: "Quantos chamados o helpdesk devolve por página: 10, 20 ou 50 — fica na paginação da lista.",
     sortChip: "Mostra a ordenação ativa. Até três níveis; o primeiro é o que a grade destaca.",
     filterChip: "Indica um critério do recorte que está na URL e sobrevive ao F5.",
-    filterBuilderToggle: "Abre ou fecha o construtor de regras com E (AND). O recorte aplicado vai para a URL.",
+    filterBuilderToggle: "Abre ou fecha o construtor de regras com E (AND). É o único editor do recorte; o aplicado vai para a URL.",
     sortBuilderToggle: "Abre ou fecha a ordenação em níveis (até três campos).",
-    columns: "Mostra ou esconde colunas da grade. A preferência fica neste navegador.",
+    columns: "Mostra ou esconde colunas da grade (modo tabela). A preferência fica neste navegador.",
     refreshList: "Atualiza só a grade com o recorte atual, sem limpar filtros.",
     prevPage: "Volta para a página anterior do recorte.",
     nextPage: "Avança para a próxima página quando o helpdesk indica que há mais.",
