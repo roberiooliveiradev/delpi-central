@@ -5,7 +5,7 @@
 > **Modo de entrega:** **uma página por vez até DoD** — a próxima página só pode ser promovida a foco após fechamento da atual
 > **Página em foco:** **E9 / WF-07 Entregas / atrasos** — MFE prod OK; BFF prod 404 em `/deliveries/late`
 > **Últimas páginas fechadas:** **Início (WF-01)**, **Visão geral (WF-02/WF-02R)**, **OTD analytics (WF-OTD-A)**, **Solicitações de compras (WF-04)**, **Pedidos de compra (WF-05)** e **Detalhe do pedido (WF-06)**
-> **Próxima receita:** executar `E9.S1`–`E9.S5` do [IMPLEMENTATION-PLAN](./IMPLEMENTATION-PLAN.md) sem ultrapassar o freeze
+> **Próxima receita:** redeploy `supplies-api` (rota E9.S2) + re-smoke WF-07 — não promover E10 enquanto GATE FAIL
 > **Id técnico:** `supplies` · **basePath:** `/apps/supplies` · **API:** `supplies-api` · gateway `/apps/supplies-api/` · **CSS root:** `.dashboard-supplies-portal`
 
 O Portal Suprimentos é o hub operacional, analítico e gerencial do domínio de Suprimentos na Minha DELPI. Ele substitui progressivamente experiências fragmentadas por jornadas coesas, preservando bounded contexts, RBAC central, paridade mensurável e rollback.
