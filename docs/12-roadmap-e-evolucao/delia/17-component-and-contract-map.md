@@ -434,6 +434,23 @@ REJECTED_META:
 WorkspaceContext shape = FROZEN_CANDIDATE (C0.S5 §22); ≠AuthZ/SoT/JWT/secret
 ```
 
+#### C3-T1 Evidence / epistemic semantic use (candidate)
+
+```text
+STATUS = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+OWNER_DOC = 21 §4B
+THEMATIC = 38-evidence-provenance-and-epistemic-ux.md
+REUSES = SourceRef, EvidenceRef, EntityRef, ModelRef, PredictionRef, OutcomeRef
+EPISTEMIC_CLASSES = FACT, CALCULATION, HYPOTHESIS, CONCLUSION, RECOMMENDATION
+SEPARATE = PREDICTION (PredictionRef), SIMULATION (ScenarioRef)
+NO_REDESIGN = C0 shared refs remain FROZEN_ACCEPTED
+NO_RUNTIME = Evidence store / LLM / RAG / planner / conversation = NONE
+C3_STARTED = NO
+NEXT = Architecture / Coordination review of C3-T1; do not start C3-T2
+```
+
+Evidence coordination is owned by DÉLIA; original source/domain/provider remains authority for the underlying fact. EvidenceRef ≠ permission; SourceRef ≠ access grant; Prediction ≠ FACT; Recommendation ≠ authorization.
+
 ## 3A. Architecture / persistence / privacy / safety — C0.S4 freeze accepted
 
 > Canonical rules: [`21-data-and-state-model.md`](./21-data-and-state-model.md) §4A.

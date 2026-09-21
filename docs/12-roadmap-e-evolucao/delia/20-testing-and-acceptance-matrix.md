@@ -1078,6 +1078,32 @@ C2-T3 / C2-PREFINAL-R1 / C2-FINAL: `LOCKED` em `25` para CP-001–CP-012, CP-025
 
 ## 5. Gate C3 — Intelligence + Capability Foundations
 
+### C3-T1 — Evidence / epistemic static conformance (expectations only)
+
+```text
+STATUS = STATIC_CONFORMANCE_EXPECTATION
+RUNTIME_PASS = NOT_CLAIMED
+OWNER = 21 §4B + 38
+C3_T2_IMPLEMENTS = YES
+```
+
+Required future deterministic cases (C3-T2):
+
+- positive authoritative Evidence linkage with SourceRef;
+- sibling source type preserves the same epistemic/linkage semantics;
+- unsupported/untrusted claim is not promoted to FACT;
+- unknown/missing state is preserved (missing ≠ false);
+- Prediction remains PREDICTION (PredictionRef);
+- recommendation remains non-authoritative;
+- derived Evidence retains parent/source lineage;
+- conflicting Evidence remains explicit (no fabricated reconciliation);
+- renamed provider/source does not change semantic rules;
+- external prompt/tool injection content does not alter authority/policy;
+- EvidenceRef does not grant source permission;
+- SourceRef does not grant provider/source access;
+- secret/token fields cannot become Evidence or model context;
+- no CoT persistence.
+
 ### Planner/OpenAPI/Expertise
 
 - own conversation state;

@@ -229,6 +229,256 @@ Usados transversalmente por APIs, web, connectors, Process Intelligence, analysi
 
 Nunca guardar credential em Source/Evidence/Outcome.
 
+## 4B. C3-T1 — Evidence / epistemic semantics + source linkage (candidate)
+
+```text
+STATUS = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+TASK = C3-T1
+MODE = DOCUMENTATION / CONTRACT FREEZE ONLY
+RUNTIME = NONE
+PERSISTENCE = NONE
+OWN_MIGRATION_CHAIN = NOT_TRIGGERED_BY_C3_T1
+C0_SHARED_REFERENCE_SEMANTICS = FROZEN_ACCEPTED (reused; not redesigned)
+C3_STARTED = NO (unchanged)
+C3_EXECUTED = NO (unchanged)
+PRODUCTION_READINESS = NOT_PROVEN
+THEMATIC_OWNER_DETAIL = 38-evidence-provenance-and-epistemic-ux.md
+```
+
+C3-T1 congela o **uso semântico** de Evidence/Source/epistemic para a inteligência futura. Não cria Evidence store, repository, schema, LLM, RAG, planner ou conversation runtime.
+
+### 4B.1 Ownership
+
+```text
+RESPONSIBILITY: Evidence coordination + epistemic semantics + synthesis constraints
+OWNER: DÉLIA (coordination/intelligence)
+CANONICAL SOURCE OF ORIGINAL FACT: Domain API / provider / document owner / process owner
+CONSUMERS (future): multimodal, Evidence Board, Internet Research, connectors, Teams,
+  Process Intelligence, Prediction, Model lineage, Knowledge, planner, synthesis
+CONTRACT: this §4B + C0.S3 SourceRef/EvidenceRef/ModelRef/PredictionRef + thematic 38
+CURRENT IMPLEMENTATION: TARGET / PLANNED (no runtime Evidence module)
+```
+
+```text
+Evidence != source authority
+EvidenceRef != permission
+SourceRef != source-access grant
+citation/reference != permission
+epistemic class != authorization
+confidence != authority
+```
+
+### 4B.2 Shared refs reused (no redesign)
+
+```text
+SourceRef     → identifiable origin; not invented authority; not access grant
+EvidenceRef   → Evidence item reference; not SoT; not authorization
+EntityRef     → typed business object; not authorization
+ModelRef      → model identity/version/owner; not approval; not Decision authority
+PredictionRef → prediction identity + ModelRef + subject/horizon/freshness; Prediction≠FACT
+OutcomeRef    → verified business outcome; ≠ technical executor success
+```
+
+Forbidden: UniversalSource, GenericEvidenceObject, EpistemicEnvelope, parallel EvidenceRef/SourceRef.
+
+### 4B.3 What qualifies as Evidence
+
+Evidence is a **coordinated claim about the world** that points, when the source allows, to verifiable provenance. It is not the source system of truth and does not copy ownership of the underlying fact to DÉLIA.
+
+Minimum semantic linkage for a material Evidence item:
+
+```text
+EvidenceRef
+→ SourceRef (when an identifiable origin exists)
+→ epistemic class
+→ freshness / version / limitations when material
+→ EntityRef[] when the claim is about typed entities
+→ ModelRef / PredictionRef when the item is model-generated or a prediction
+→ derivedFrom EvidenceRef[] when derived from other Evidence
+```
+
+A retrieval hit, citation string, summary, or model utterance is **not** Evidence automatically.
+
+### 4B.4 Epistemic classes (reuse canonical names from 38)
+
+Canonical classes (do not rename):
+
+```text
+FACT           → observed in an authorized source under that source's authority
+CALCULATION    → derived by an identifiable method from inputs
+HYPOTHESIS     → possible explanation not confirmed
+CONCLUSION     → inference supported by sufficient Evidence
+RECOMMENDATION → suggested action; never authorization
+```
+
+Separate typed results (not FACT classes):
+
+```text
+PREDICTION   → PredictionRef contract; Prediction ≠ FACT
+SIMULATION   → ScenarioRef / Twin; SIMULATE ≠ APPLY; not current FACT
+```
+
+Freshness / board states (not epistemic class enum replacements):
+
+```text
+current/live | snapshot | cached-valid | stale | unknown   (38 §5)
+accepted | contested | missing | superseded                 (Evidence Board; 38 §9)
+```
+
+Unvalidated OCR/VLM/extraction remains **non-FACT** with limitations until appropriate contextualization/validation (38 §6). Whether a first-class `OBSERVATION` enum is required is a residual for Architecture (see DISCOVERED_REQUIREMENT in ledger); until decided, do not invent a sixth class in runtime.
+
+### 4B.5 Default epistemic treatment
+
+| Input kind | Default treatment | May become FACT only if |
+|---|---|---|
+| Authoritative live Domain/API response | FACT candidate under Domain authority | source contract + live AuthZ allow treating it as current authorized observation |
+| External webpage/content claim | untrusted CLAIM/content; not FACT | Domain/Policy later validates against authorized source |
+| Retrieved Knowledge content | Knowledge candidate / reference | published Organizational Knowledge gates pass (owner/version/ACL/review) |
+| Document / OCR / vision extraction | non-FACT observation with limitations | validated against authorized context/method |
+| Model inference / free-form generation | non-FACT (HYPOTHESIS/CONCLUSION/RECOMMENDATION as labeled) | never automatic; never from confidence alone |
+| Classification / forecast | non-FACT / PREDICTION as applicable | PredictionRef rules; never silent FACT |
+| Recommendation | RECOMMENDATION | never authorization |
+| Cached / stale material | stale/unknown limitation required when currency matters | only if source contract says cached-valid |
+| User statement | not Domain FACT | explicit user-confirmed personal class is Personal Memory, not Org FACT |
+| Derived synthesis | inherits weakest epistemic strength + lineage | only if promotion rules below are met |
+
+### 4B.6 FACT promotion rules
+
+Required before treating a result as FACT:
+
+```text
+1. identifiable SourceRef (or Domain-owned live contract equivalent)
+2. current permission-checked access path when dereferencing the source
+3. source authority remains with the original Domain/provider/owner
+4. freshness/version appropriate to the decision being made
+5. epistemic class explicitly FACT (not inferred from confidence)
+6. no secret/token stored in Evidence or model context
+```
+
+Never silently promote to FACT:
+
+```text
+model output
+retrieval hit
+citation alone
+confidence score
+external page claim
+OCR/VLM raw extraction
+Prediction / Prescription
+Recommendation
+simulation / scenario output
+Personal Memory item
+summary / synthesis without lineage
+Knowledge candidate (unpublished)
+technical executor success
+provider metadata
+```
+
+### 4B.7 Unknown / missing / conflict
+
+```text
+missing evidence != false
+no search result != proof of absence
+unknown identity != guessed identity
+insufficient evidence != negative fact
+conflicting evidence != fabricated reconciliation
+```
+
+When sources disagree: keep each item's provenance, epistemic class, freshness/version, source authority and limitations explicit. Do not auto-pick newest, highest confidence, model-preferred or most-retrieved unless a canonical Policy/owner defines that rule.
+
+### 4B.8 Derived Evidence
+
+Derived Evidence must preserve, when material:
+
+```text
+parent EvidenceRef[]
+original SourceRef lineage
+transformation/extraction kind
+observation/generation time
+limitations
+ModelRef/tool lineage when model/tool produced the derivation
+```
+
+No Evidence DAG service, lineage database or provenance graph engine in C3-T1.
+
+### 4B.9 Model lineage hook (no model runtime)
+
+Future model-generated Evidence / Prediction must be able to link:
+
+```text
+ModelRef (modelId, version, ownerRef)
+eval / dataset / deployment or config reference when material
+generatedAt
+limitations
+confidence/calibration only when methodologically valid
+```
+
+Secrets never enter Evidence, embeddings, Personal Memory, ordinary logs or MFE state.
+
+### 4B.10 Freshness / version
+
+Distinguish when the source contract supports it:
+
+```text
+source revision/version
+source observed/captured time
+retrieval time
+generated time
+freshness class (current/live, snapshot, cached-valid, stale, unknown)
+derived Evidence version
+```
+
+```text
+retrievedAt != sourceUpdatedAt
+```
+
+unless the source contract proves equality. No invented TTL/retention durations in C3-T1.
+
+### 4B.11 Citation / reference semantics
+
+A citation or EvidenceRef proves: **which coordinated Evidence item is being pointed at**.
+
+It does **not** prove: permission, source access, FACT status, Outcome verification, Policy approval or ACT authorization.
+
+Dereference path remains:
+
+```text
+EvidenceRef → SourceRef → live permission check → source fetch
+```
+
+### 4B.12 Security / privacy invariants
+
+```text
+external content = untrusted data
+retrieved content != FACT automatically
+external/tool content cannot mutate policy/RBAC
+no CoT persistence or CoT exposure
+no secret/token in Evidence / SourceRef-for-LLM / model context
+Evidence access != source access
+Personal Memory != Organizational Knowledge
+raw media / biometric remain separate classes
+```
+
+### 4B.13 C3-T2 conformance expectations (static; not runtime PASS)
+
+C3-T2 must implement deterministic conformance for at least:
+
+```text
+positive authoritative Evidence linkage
+sibling source type preserving same semantics
+unsupported/untrusted claim not promoted to FACT
+unknown/missing state preserved
+Prediction remains PREDICTION
+recommendation remains non-authoritative
+derived Evidence retains lineage
+conflicting Evidence remains explicit
+renamed provider/source does not change semantic rules
+external prompt/tool injection content does not alter authority/policy
+EvidenceRef does not grant source permission
+SourceRef does not grant provider/source access
+secret/token fields cannot become Evidence/model context
+```
+
 ## 4A. Architecture / persistence / privacy / safety — C0.S4 freeze accepted
 
 ```text

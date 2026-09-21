@@ -54,8 +54,8 @@ OUT_OF_SCOPE_WITH_DECISION
 | CP-088 | PDF/imagem não altera policy | DÉLIA Multimodal/Policy | safety contract; C3 eval | PLANNED |
 | CP-091 | EntityRef cross-domain canônico | DÉLIA shared/domain owners | primitive | PLANNED |
 | CP-092 | RelationshipRef com provenance | Graph/domain owners | primitive | PLANNED |
-| CP-093 | EvidenceRef transversal | DÉLIA API | primitive | PLANNED |
-| CP-094 | Epistemic classes canônicas | DÉLIA synthesis | semantics | PLANNED |
+| CP-093 | EvidenceRef transversal | DÉLIA API | primitive | PLANNED — C0 shared EvidenceRef FROZEN_ACCEPTED; C3-T1 candidate freezes semantic consumption/linkage in 21 §4B (runtime NOT_IMPLEMENTED) |
+| CP-094 | Epistemic classes canônicas | DÉLIA synthesis | semantics | PLANNED — C3-T1 candidate reuses 38 classes FACT/CALCULATION/HYPOTHESIS/CONCLUSION/RECOMMENDATION (+ Prediction/Simulation separate); architecture review pending |
 | CP-095 | Evidence multimodal page/region | DÉLIA Multimodal | contract; runtime C3 | PLANNED |
 | CP-105 | Workflow persistence/checkpoint contract | DÉLIA Work Runtime | lifecycle contract | PLANNED |
 | CP-106 | `wait_user` semantics | DÉLIA Work Runtime | lifecycle contract | PLANNED |

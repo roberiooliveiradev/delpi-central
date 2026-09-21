@@ -3,7 +3,7 @@
 **Status:** planejamento executável canônico  
 **Autoridade de ordem:** **este documento é a única fonte de verdade para a sequência de implementação**  
 **Produto:** **DÉLIA**, aplicação standalone nova  
-**Próxima etapa:** `C3 FIRST-BOUNDED-TASK DEFINITION` (`C2_EXECUTED=YES`; `C3_AUTHORIZED=YES`; `C3_STARTED=NO`; do not start C3 automatically)
+**Próxima etapa:** Architecture / Coordination review of `C3-T1` Evidence epistemic contract candidate (`C3_AUTHORIZED=YES`; `C3_STARTED=NO`; do not start C3-T2)
 **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Baseline:** [`51-platform-integration-baseline.md`](./51-platform-integration-baseline.md)  
 **Bootstrap:** [`52-standalone-repository-and-bootstrap-plan.md`](./52-standalone-repository-and-bootstrap-plan.md)  
@@ -397,7 +397,26 @@ BROWSER_STATE_RESIDENCY_POLICY = APPROVED (C2-T1D1)
 BROWSER_RETAINED_STATE_CURRENTLY_REQUIRED = NO
 CENTRALIZED_BROWSER_STATE_BOUNDARY = REQUIRED_ON_FIRST_RETAINED_STATE
 SHARED_DEVICE_ISOLATION_INVARIANT = FROZEN_ACCEPTED
-NEXT = C3 FIRST-BOUNDED-TASK DEFINITION (C3_AUTHORIZED=YES; C3_STARTED=NO; do not invent C3-T1 runtime)
+NEXT = Architecture / Coordination review of C3-T1 candidate (C3_AUTHORIZED=YES; C3_STARTED=NO; do not start C3-T2)
+```
+
+C3 initial bounded DAG (Coordination-approved dependency order; not the numbered foundation inventory):
+
+```text
+C3-T1 Evidence / epistemic semantics + source linkage = CANDIDATE_FOR_ARCHITECTURE_REVIEW (21 §4B)
+→ C3-T2 Evidence epistemic domain model + conformance (do not start)
+→ C3-T3 Minimal Model Invocation + Eval/Lineage Foundation
+→ C3-T4 Structured Understanding Vertical Slice
+(partial parallel after Evidence baseline) C3-T5 OpenAPI Action Catalog + Capability Projection
+→ C3-T6 Expertise / Knowledge Governance + Retrieval Contracts
+→ C3-T7 FAST|OPERATIONAL|REASONING + Structured Planner Foundation
+→ C3-T8 Conversation / Session Interaction Foundation
+EVIDENCE_BEFORE_MODEL = YES
+EVIDENCE_BEFORE_PLANNER = YES
+EVIDENCE_BEFORE_INTELLIGENT_CONVERSATION = YES
+EVIDENCE_BEFORE_RAG_KNOWLEDGE_RUNTIME = YES
+C3_STARTED = NO
+C3_EXECUTED = NO
 ```
 
 ## C0.S2 — Authorities / bounded contexts
@@ -649,7 +668,7 @@ C3_AUTHORIZED = YES
 C3_STARTED = NO
 C3_EXECUTED = NO
 PRODUCTION_READINESS = NOT_PROVEN
-NEXT = C3 FIRST-BOUNDED-TASK DEFINITION (do not start C3 automatically; no iframe bridge; no security fix)
+NEXT = Architecture / Coordination review of C3-T1 candidate (C3_STARTED=NO; do not start C3-T2; no iframe bridge; no security fix)
 C2-FINAL after those reviews
 Workspace binding remains unscheduled
 ```
