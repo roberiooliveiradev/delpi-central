@@ -142,7 +142,7 @@
   min-width: 0;
 }
 
-@media (min-width: 900px) {
+@media (min-width: 720px) {
   .delpi-ui-task-editor-frame__fields {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -154,7 +154,7 @@
 
 .delpi-ui-task-editor-frame__review {
   align-self: stretch;
-  padding: 12px 14px;
+  padding: 10px 12px;
   border: 1px solid var(--delpi-ui-border, #e6e6e6);
   border-radius: 12px;
   background: color-mix(in srgb, var(--delpi-ui-surface, #fff) 92%, var(--delpi-ui-accent, #089bdb) 8%);
@@ -168,13 +168,20 @@
 .delpi-ui-task-editor-frame__review-list {
   margin: 0;
   display: grid;
-  gap: 6px;
+  gap: 6px 16px;
+}
+
+@media (min-width: 720px) {
+  .delpi-ui-task-editor-frame__review-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .delpi-ui-task-editor-frame__review-row {
   display: grid;
-  grid-template-columns: minmax(7rem, 10rem) 1fr;
-  gap: 8px;
+  grid-template-columns: minmax(5.5rem, 8rem) minmax(0, 1fr);
+  gap: 6px 8px;
+  min-width: 0;
 }
 
 .delpi-ui-task-editor-frame__review-row dt {
@@ -183,6 +190,21 @@
 
 .delpi-ui-task-editor-frame__review-row dd {
   margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.delpi-ui-task-editor-frame__review-row--span {
+  grid-column: 1 / -1;
+}
+
+/* Modal wide: campos e revisão usam a largura sem empilhar em coluna estreita. */
+.delpi-ui-modal--wide .delpi-ui-task-editor-frame {
+  gap: 14px;
+}
+
+.delpi-ui-modal--wide .delpi-ui-task-editor-frame__fields {
+  gap: 12px 16px;
 }
 
 @media (max-width: 720px) {

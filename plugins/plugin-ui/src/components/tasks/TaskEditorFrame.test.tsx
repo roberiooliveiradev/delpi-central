@@ -56,4 +56,26 @@ describe("TaskEditorFrame", () => {
     expect(screen.getByText("Revise antes de gravar")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Criar tarefa" })).toBeTruthy();
   });
+
+  it("hideActions omite a barra quando o host usa footer do modal", () => {
+    render(
+      <TaskEditorFrame
+        surface="bare"
+        hideActions
+        title="Nova tarefa"
+        primaryLabel="Criar tarefa"
+        onPrimary={() => undefined}
+        onClose={() => undefined}
+        reviewRows={[{ label: "Título", value: "x" }]}
+      >
+        <label>
+          Título
+          <input />
+        </label>
+      </TaskEditorFrame>,
+    );
+    expect(screen.queryByRole("button", { name: "Criar tarefa" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Cancelar" })).toBeNull();
+    expect(screen.getByText("Revise antes de gravar")).toBeTruthy();
+  });
 });

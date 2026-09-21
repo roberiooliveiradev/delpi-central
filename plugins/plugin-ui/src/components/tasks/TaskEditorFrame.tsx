@@ -11,6 +11,8 @@ import {
 export type TaskEditorReviewRow = {
   label: string;
   value: string;
+  /** Em layout largo, ocupa as duas colunas do resumo. */
+  span?: boolean;
 };
 
 export type TaskEditorFrameProps = {
@@ -33,6 +35,8 @@ export type TaskEditorFrameProps = {
    * `bare` = só campos/revisão/ações — para hospedar dentro de ModalShell.
    */
   surface?: "section" | "bare";
+  /** Omite a barra de ações (ex.: botões no `footer` do ModalShell). */
+  hideActions?: boolean;
 };
 
 const DEFAULT_LABELS: SectionCardLabels = {
@@ -55,6 +59,7 @@ export function TaskEditorFrame({
   classNames = sectionCardPacBemClasses("delpi-ui"),
   labels = DEFAULT_LABELS,
   surface = "section",
+  hideActions = false,
 }: TaskEditorFrameProps) {
   const body = (
     <div className="delpi-ui-task-editor-frame">
@@ -64,7 +69,14 @@ export function TaskEditorFrame({
           <h3 className="delpi-ui-task-editor-frame__review-title">{reviewTitle}</h3>
           <dl className="delpi-ui-task-editor-frame__review-list">
             {reviewRows.map((row) => (
-              <div key={row.label} className="delpi-ui-task-editor-frame__review-row">
+              <div
+                key={row.label}
+                className={
+                  row.span
+                    ? "delpi-ui-task-editor-frame__review-row delpi-ui-task-editor-frame__review-row--span"
+                    : "delpi-ui-task-editor-frame__review-row"
+                }
+              >
                 <dt>{row.label}</dt>
                 <dd>{row.value}</dd>
               </div>
@@ -72,18 +84,20 @@ export function TaskEditorFrame({
           </dl>
         </section>
       ) : null}
-      <div className="delpi-ui-task-editor-frame__actions">
-        <ActionButton variant="ghost" onClick={onClose}>
-          {closeLabel}
-        </ActionButton>
-        <ActionButton
-          variant="primary"
-          disabled={primaryBusy || primaryDisabled}
-          onClick={onPrimary}
-        >
-          {primaryBusy ? "Salvando…" : primaryLabel}
-        </ActionButton>
-      </div>
+      {hideActions ? null : (
+        <div className="delpi-ui-task-editor-frame__actions">
+          <ActionButton variant="ghost" onClick={onClose}>
+            {closeLabel}
+          </ActionButton>
+          <ActionButton
+            variant="primary"
+            disabled={primaryBusy || primaryDisabled}
+            onClick={onPrimary}
+          >
+            {primaryBusy ? "Salvando…" : primaryLabel}
+          </ActionButton>
+        </div>
+      )}
     </div>
   );
 

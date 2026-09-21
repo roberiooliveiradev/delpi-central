@@ -22,7 +22,7 @@ import {
 import type { AppProps } from "../../App";
 import { TransformometroShell } from "../../components/TransformometroShell";
 import { PortalTopBar } from "../../components/TransformometroNav";
-import { Modal } from "../../components/ui/Modal";
+import { WideModal } from "../../components/ui/Modal";
 import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
 import { TmNativeTextAreaField, TmNativeTextField } from "../../components/ui/tmNativeFormFields";
 import { TRANSFORMOMETRO_ROUTES, buildInteractionRoomPath } from "../../constants/routes";
@@ -1053,24 +1053,39 @@ export function InteractionRoomsPage({ getAccessToken, pathname, roomId, onNavig
         onCopyLink={() => void navigator.clipboard.writeText(window.location.href)}
         threadStatus={refreshing ? <p role="status">Atualizando mensagens…</p> : null}
       />
-      <Modal
+      <WideModal
         open={taskFormOpen}
         title="Nova tarefa a partir da mensagem"
         description="A tarefa fica no Portal Transforma+. A mensagem original permanece na sala."
         onClose={closeTaskForm}
+        footer={
+          <>
+            <ActionButton variant="ghost" onClick={closeTaskForm} disabled={taskSaving}>
+              Cancelar
+            </ActionButton>
+            <ActionButton
+              variant="primary"
+              disabled={taskSaving || !taskTitle.trim()}
+              onClick={() => void submitTaskFromMessage()}
+            >
+              {taskSaving ? "Salvando…" : "Criar tarefa"}
+            </ActionButton>
+          </>
+        }
       >
         <TaskEditorFrame
           surface="bare"
+          hideActions
           title="Nova tarefa a partir da mensagem"
           reviewRows={[
             { label: "Título", value: taskTitle.trim() || "—" },
             { label: "Responsável", value: taskAssignee[0]?.name || "—" },
             { label: "Prazo", value: taskDueDate || "Sem prazo" },
-            { label: "Descrição", value: taskDescription.trim() || "—" },
             {
               label: "Origem",
               value: taskSourceMessageId ? `Mensagem ${taskSourceMessageId.slice(0, 8)}…` : "—",
             },
+            { label: "Descrição", value: taskDescription.trim() || "—", span: true },
           ]}
           onClose={closeTaskForm}
           primaryLabel="Criar tarefa"
@@ -1085,6 +1100,7 @@ export function InteractionRoomsPage({ getAccessToken, pathname, roomId, onNavig
             value={taskDescription}
             onChange={setTaskDescription}
             span
+            rows={4}
           />
           <TmNativeTextField
             id="tm-room-task-due"
@@ -1101,7 +1117,7 @@ export function InteractionRoomsPage({ getAccessToken, pathname, roomId, onNavig
             labels={{ title: "Responsável", placeholder: "Atribuir a mim ou buscar…" }}
           />
         </TaskEditorFrame>
-      </Modal>
+      </WideModal>
       <FilePreviewModal
         open={Boolean(preview)}
         title={preview?.fileName ?? "Arquivo"}

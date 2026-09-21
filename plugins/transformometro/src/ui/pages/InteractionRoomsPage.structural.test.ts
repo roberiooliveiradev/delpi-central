@@ -28,7 +28,8 @@ describe("InteractionRoomsPage", () => {
     expect(source).toMatch(/onCreateTask/);
     expect(source).toMatch(/TaskEditorFrame/);
     expect(source).toMatch(/surface="bare"/);
-    expect(source).toMatch(/<Modal\b/);
+    expect(source).toMatch(/hideActions/);
+    expect(source).toMatch(/WideModal/);
     expect(source).toMatch(/source_interaction_message_id/);
     expect(source).toMatch(/useConfirm/);
     expect(source).not.toMatch(/window\.confirm/);
