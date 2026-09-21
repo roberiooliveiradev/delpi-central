@@ -9,7 +9,7 @@
 **Internet/External Connectors:** [`../55-internet-research-and-external-connectors.md`](../55-internet-research-and-external-connectors.md)  
 **Microsoft Teams:** [`../56-microsoft-teams-connector-and-meeting-integration.md`](../56-microsoft-teams-connector-and-meeting-integration.md)  
 **Autonomous Operations/Execution Hub:** [`../57-event-driven-autonomous-operations-and-automation-execution-hub.md`](../57-event-driven-autonomous-operations-and-automation-execution-hub.md)  
-**Next:** `C2-T5 — GLOBAL_SURFACE_APPLICABILITY` (`C2-T4` inventory; Workspace DEFER; `C2_IMPLEMENTATION_STARTED=NO`; `C2_EXECUTED=NO`). Não iniciar automaticamente.
+**Next:** `C2-T5 — GLOBAL_SURFACE_APPLICABILITY` (`C2-T4R1` normalized `OPERATIONAL_CONTEXT=TO_INVENTORY`; Workspace DEFER; `C2_IMPLEMENTATION_STARTED=NO`; `C2_EXECUTED=NO`). Não iniciar automaticamente.
 
 ## 1. Ledger rule
 
@@ -101,6 +101,7 @@ C2_T1D1 = BROWSER_STATE_POLICY_PERSISTED (§6.47)
 C2_T2 = VERIFICATION_EVIDENCE_READY_FOR_REVIEW (§6.48)
 C2_T3 = DEPENDENCY_FREEZE_READY_FOR_REVIEW (§6.49)
 C2_T4 = OPERATIONAL_CONTEXT_INVENTORY_READY_FOR_REVIEW (§6.50)
+C2_T4R1 = STATUS_NORMALIZATION_READY_FOR_REVIEW (§6.51)
 C2_EXECUTED = NO
 C2_STARTED = YES
 C2_IMPLEMENTATION_STARTED = NO
@@ -109,7 +110,15 @@ BROWSER_RETAINED_STATE_CURRENTLY_REQUIRED = NO
 CENTRALIZED_BROWSER_STATE_BOUNDARY = REQUIRED_ON_FIRST_RETAINED_STATE
 SHARED_DEVICE_ISOLATION_INVARIANT = FROZEN_ACCEPTED
 PORTAL_HOST_CONTRACT = FROZEN_ACCEPTED
-OPERATIONAL_CONTEXT = MIXED (OP/PRODUCT/OPERATION=PROVEN; MACHINE/POSTO=TO_INVENTORY)
+OPERATIONAL_CONTEXT = TO_INVENTORY
+OP = PROVEN
+PRODUCT = PROVEN
+OPERATION = PROVEN
+MACHINE = TO_INVENTORY
+POSTO = TO_INVENTORY
+WORK_CENTER = PROVEN
+WORK_CENTER_ROLE = RELATED_CONCEPT_NOT_CP159_IDENTITY
+WORKSPACE_CONTEXT_RUNTIME_STATUS = DEFER
 NEW_BEHAVIORAL_TESTS = TEST_NOT_RUN
 FUTURE_C1_C7_GREEN_EVIDENCE_REQUIRED = YES
 DÉLIA_RUNTIME_DIFF = delia-api + plugins/delia + Gateway/Compose publication + Core registration
@@ -2301,6 +2310,28 @@ AUTHORITY: selection ≠ AuthZ; Domain APIs remain final
 NEXT = C2-T5 — GLOBAL_SURFACE_APPLICABILITY (do not start automatically)
 ```
 
+## 6.51 C2-T4R1 — NORMALIZE_OPERATIONAL_CONTEXT_STATUS
+
+```text
+DATE: 2026-09-21
+STEP: C2-T4R1
+MODE: DOCUMENTATION ONLY
+PREVIOUS_FORMAL_DRIFT: OPERATIONAL_CONTEXT = MIXED (illegal factual taxonomy)
+CORRECTION: OPERATIONAL_CONTEXT = TO_INVENTORY
+OP = PROVEN
+PRODUCT = PROVEN
+OPERATION = PROVEN
+MACHINE = TO_INVENTORY
+POSTO = TO_INVENTORY
+WORK_CENTER = PROVEN
+WORK_CENTER_ROLE = RELATED_CONCEPT_NOT_CP159_IDENTITY
+WORKSPACE_CONTEXT_RUNTIME_STATUS = DEFER
+DISCOVERED_REQUIREMENT = NONE
+RUNTIME_CODE_CHANGE = NONE
+MIXED is not a canonical factual status (PROVEN | TO_INVENTORY | PLANNED | TARGET)
+NEXT = C2-T5 — GLOBAL_SURFACE_APPLICABILITY (do not start automatically)
+```
+
 ## 7. Canonical phase mapping
 
 ```text
@@ -2509,4 +2540,4 @@ SAFETY_INTERLOCK_BYPASS
 
 ## 14. First execution
 
-Historical C0.S0..C0.S7 remain **APPROVED** / `FOUNDATION_FREEZE=APPROVED`. C1-T1..T6D1 completed standalone bootstrap. **C1-FINAL** (`§6.45`) accepted bootstrap with non-blocking residuals (`TYPESCRIPT_ISOLATED`, `CORE_CONTEXT_LIVE_NETWORK`). `C1_EXECUTED=YES`. `C1_BOOTSTRAP_ACCEPTANCE=ACCEPT_WITH_RESIDUAL`. `C1_BOOTSTRAP_RUNTIME_READINESS=PROVEN` (bootstrap scope). `PRODUCTION_READINESS=NOT_PROVEN`. `C2_AUTHORIZED=YES`. `C0=NOT_STARTED`. **C2-T1** (`§6.46`) froze the current Portal host/route contract. Operational WorkspaceContext remains `TO_INVENTORY`. `C2_STARTED=NO`. `C2_IMPLEMENTATION_STARTED=NO`. **C2-T1D1** (`§6.47`) approved `BROWSER_STATE_RESIDENCY_POLICY`. No retained browser state is required now. **C2-T2** (`§6.48`) verified the existing host lifecycle. No new logout stack or storage boundary. `C2_STARTED=YES`. `C2_IMPLEMENTATION_STARTED=NO`. `C2_EXECUTED=NO`. **C2-T3** (`§6.49`) froze the remaining C2 order. **C2-T4** (`§6.50`) inventoried operational authorities: OP/PRODUCT/OPERATION proven via api-delpi; MACHINE/POSTO `TO_INVENTORY`; Workspace remains `DEFER`. Next bounded task: **C2-T5 — GLOBAL_SURFACE_APPLICABILITY** (do not start automatically).
+Historical C0.S0..C0.S7 remain **APPROVED** / `FOUNDATION_FREEZE=APPROVED`. C1-T1..T6D1 completed standalone bootstrap. **C1-FINAL** (`§6.45`) accepted bootstrap with non-blocking residuals (`TYPESCRIPT_ISOLATED`, `CORE_CONTEXT_LIVE_NETWORK`). `C1_EXECUTED=YES`. `C1_BOOTSTRAP_ACCEPTANCE=ACCEPT_WITH_RESIDUAL`. `C1_BOOTSTRAP_RUNTIME_READINESS=PROVEN` (bootstrap scope). `PRODUCTION_READINESS=NOT_PROVEN`. `C2_AUTHORIZED=YES`. `C0=NOT_STARTED`. **C2-T1** (`§6.46`) froze the current Portal host/route contract. Operational WorkspaceContext remains `TO_INVENTORY`. `C2_STARTED=NO`. `C2_IMPLEMENTATION_STARTED=NO`. **C2-T1D1** (`§6.47`) approved `BROWSER_STATE_RESIDENCY_POLICY`. No retained browser state is required now. **C2-T2** (`§6.48`) verified the existing host lifecycle. No new logout stack or storage boundary. `C2_STARTED=YES`. `C2_IMPLEMENTATION_STARTED=NO`. `C2_EXECUTED=NO`. **C2-T3** (`§6.49`) froze the remaining C2 order. **C2-T4** (`§6.50`) inventoried operational authorities: OP/PRODUCT/OPERATION proven via api-delpi; MACHINE/POSTO `TO_INVENTORY`; Workspace remains `DEFER`. **C2-T4R1** (`§6.51`) removed illegal formal status `OPERATIONAL_CONTEXT=MIXED` and restored `OPERATIONAL_CONTEXT=TO_INVENTORY` while preserving the proven OP/product/operation sub-facts. Next bounded task: **C2-T5 — GLOBAL_SURFACE_APPLICABILITY** (do not start automatically).

@@ -3,7 +3,7 @@
 **Status:** planejamento executável canônico  
 **Autoridade de ordem:** **este documento é a única fonte de verdade para a sequência de implementação**  
 **Produto:** **DÉLIA**, aplicação standalone nova  
-**Próxima etapa:** `C2-T5 — GLOBAL_SURFACE_APPLICABILITY` (`C2-T4` inventory: OP/PRODUCT/OPERATION proven; MACHINE/POSTO TO_INVENTORY; Workspace DEFER; `C2_IMPLEMENTATION_STARTED=NO`)
+**Próxima etapa:** `C2-T5 — GLOBAL_SURFACE_APPLICABILITY` (`C2-T4R1`: `OPERATIONAL_CONTEXT=TO_INVENTORY`; OP/PRODUCT/OPERATION proven; MACHINE/POSTO TO_INVENTORY; Workspace DEFER; `C2_IMPLEMENTATION_STARTED=NO`)
 **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Baseline:** [`51-platform-integration-baseline.md`](./51-platform-integration-baseline.md)  
 **Bootstrap:** [`52-standalone-repository-and-bootstrap-plan.md`](./52-standalone-repository-and-bootstrap-plan.md)  
@@ -365,11 +365,20 @@ C2_T1 = INVENTORY_FREEZE_READY_FOR_REVIEW
 C2_T2 = VERIFICATION_EVIDENCE_READY_FOR_REVIEW
 C2_T3 = DEPENDENCY_FREEZE_READY_FOR_REVIEW
 C2_T4 = OPERATIONAL_CONTEXT_INVENTORY_READY_FOR_REVIEW
+C2_T4R1 = STATUS_NORMALIZATION_READY_FOR_REVIEW
 C2_STARTED = YES
 C2_IMPLEMENTATION_STARTED = NO
 C2_EXECUTED = NO
 PORTAL_HOST_CONTRACT = FROZEN_ACCEPTED (current AppHost props; ≠ business AuthZ)
-OPERATIONAL_CONTEXT = MIXED (OP/PRODUCT/OPERATION=PROVEN; MACHINE/POSTO=TO_INVENTORY; Workspace DEFER)
+OPERATIONAL_CONTEXT = TO_INVENTORY
+OP = PROVEN
+PRODUCT = PROVEN
+OPERATION = PROVEN
+MACHINE = TO_INVENTORY
+POSTO = TO_INVENTORY
+WORK_CENTER = PROVEN
+WORK_CENTER_ROLE = RELATED_CONCEPT_NOT_CP159_IDENTITY
+WORKSPACE_CONTEXT_RUNTIME_STATUS = DEFER
 BROWSER_STATE_RESIDENCY_POLICY = APPROVED (C2-T1D1)
 BROWSER_RETAINED_STATE_CURRENTLY_REQUIRED = NO
 CENTRALIZED_BROWSER_STATE_BOUNDARY = REQUIRED_ON_FIRST_RETAINED_STATE
@@ -614,7 +623,8 @@ DEFER: PlatformCommand bus; Portal location remains the navigation mechanism
 DEFER: iframe bridge until DÉLIA has a real iframe consumer
 DEFER: global panel until a Portal slot that reuses the same runtime is proven
 DEFER: CP-012 intelligence to C3
-C2-T4 MIXED: OP/PRODUCT/OPERATION public via api-delpi (TOTVS); MACHINE/POSTO no canonical identity
+C2-T4: OP/PRODUCT/OPERATION public via api-delpi (TOTVS); MACHINE/POSTO TO_INVENTORY; aggregate OPERATIONAL_CONTEXT remains TO_INVENTORY
+C2-T4R1: formal status OPERATIONAL_CONTEXT = TO_INVENTORY (MIXED is not a canonical factual status)
 WORKSPACE_CONTEXT_RUNTIME = DEFER
 NEXT = C2-T5 global surface applicability
 C2-T6 iframe applicability (no new bridge by default)
