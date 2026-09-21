@@ -43,6 +43,7 @@ import {
   viewForTicketLoad,
 } from "../presentation/ticketView";
 import { navigateHelpdesk, type HelpdeskRoute } from "../routing/helpdeskRoute";
+import { lastHelpdeskListPath, rememberHelpdeskListPath } from "../presentation/listNavigationMemory";
 import {
   clearCreateDraft,
   clearReplyDraft,
@@ -118,7 +119,7 @@ function HelpdeskPageStack({ children }: { children: ReactNode }) {
 
 function HelpdeskBackButton({ hint }: { hint?: string }) {
   const button = (
-    <HelpdeskIconButton aria-label="Voltar" onClick={() => navigateHelpdesk("/apps/helpdesk")}>
+    <HelpdeskIconButton aria-label="Voltar" onClick={() => navigateHelpdesk(lastHelpdeskListPath())}>
       <ChevronLeft size={16} aria-hidden />
     </HelpdeskIconButton>
   );
@@ -135,7 +136,9 @@ function currentListFilters(): TicketListFilters {
 }
 
 function writeListFilters(filters: TicketListFilters) {
-  window.history.replaceState({}, "", `/apps/helpdesk${ticketListSearch(filters)}`);
+  const path = `/apps/helpdesk${ticketListSearch(filters)}`;
+  window.history.replaceState({}, "", path);
+  rememberHelpdeskListPath(path);
 }
 
 function TicketListPage() {
@@ -165,6 +168,10 @@ function TicketListPage() {
     reorderColumns,
     resetPreferences,
   } = useHelpdeskTicketListColumns();
+
+  useEffect(() => {
+    rememberHelpdeskListPath(`/apps/helpdesk${ticketListSearch(filters)}`);
+  }, [filters]);
 
   function commitFilters(next: TicketListFilters) {
     setFilters(next);
@@ -787,7 +794,7 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
       <HelpdeskPageHeader
         title={ticket?.title || "Chamado"}
         compact
-        nav={<HelpdeskBackButton />}
+        nav={<HelpdeskBackButton hint={helpTooltips.detailUi.back} />}
         onRefresh={load}
         refreshing={loading}
       />

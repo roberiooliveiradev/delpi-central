@@ -6,10 +6,10 @@ export const helpTooltips = {
   link:
     "Na primeira vez, a Minha DELPI entra no helpdesk com o mesmo login. Se o usuário ainda não existir lá, o helpdesk cria a conta. Depois disso, os chamados passam a aparecer aqui.",
   create:
-    "À esquerda ficam título e descrição; à direita, categoria, urgência e observadores opcionais. A descrição aceita formatação (negrito, listas, links, título, tabela) — o mesmo editor da resposta. O que você digitar fica guardado neste navegador se atualizar a página (F5); some depois do envio. Não dá para colar imagem nem anexar arquivo na abertura. Observadores: números de usuário do helpdesk, separados por vírgula — o BFF só envia o papel observador, sem escolher solicitante nem entidade. O envio fica no rodapé da classificação. A categoria é a lista visível para o seu usuário. A seta no canto superior volta à lista. O chamado fica no seu usuário e na entidade padrão do helpdesk.",
+    "À esquerda ficam título e descrição; à direita, categoria, urgência e observadores opcionais. A descrição aceita formatação (negrito, listas, links, título, tabela) — o mesmo editor da resposta. O que você digitar fica guardado neste navegador se atualizar a página (F5); some depois do envio. Não dá para colar imagem nem anexar arquivo na abertura. Observadores: números de usuário do helpdesk, separados por vírgula — o BFF só envia o papel observador, sem escolher solicitante nem entidade. O envio fica no rodapé da classificação. A categoria é a lista visível para o seu usuário. A seta no canto superior volta à lista com o mesmo recorte (busca, filtros e página). O chamado fica no seu usuário e na entidade padrão do helpdesk.",
 
   createUi: {
-    back: "Volta para a lista de Meus chamados sem gravar este formulário.",
+    back: "Volta para a lista de Meus chamados com o mesmo recorte que você tinha (busca, filtros e página), sem gravar este formulário.",
     title: "Assunto curto do chamado. Obrigatório.",
     description:
       "Detalhe o problema com formatação se quiser. Obrigatório. O texto fica guardado se você atualizar a página (F5). Não dá para colar imagem nem anexar arquivo na abertura — a barra do editor já traz ajuda em cada ícone.",
@@ -19,8 +19,11 @@ export const helpTooltips = {
       "Opcional. Números de usuário do helpdesk, separados por vírgula. Só papel observador — sem escolher solicitante nem entidade.",
     send: "Grava o chamado no helpdesk no seu nome e abre a conversa.",
   },
+  detailUi: {
+    back: "Volta para a lista de Meus chamados com o mesmo recorte que você tinha (busca, filtros e página).",
+  },
   detail:
-    "A conversa preenche a tela e rola. No cartão aparecem aberto, atualizado, resolvido e fechado em dia e hora; TTO/TTR e o observador só se o helpdesk trouxer. A resposta fica no rodapé no mesmo editor rico da abertura, enquanto o chamado aceitar acompanhamento — chamado fechado some o Responder. O texto da resposta sobrevive ao F5 neste navegador até você enviar. Aprovar solução, reabrir e pesquisa de satisfação ficam no console do helpdesk: a API nova ainda não entrega esses passos ao solicitante. A formatação do helpdesk aparece na bolha; menções gravadas no helpdesk (chip com id de usuário) também. Imagens do fio abrem em prévia ao clicar. Não dá para colar imagem nem enviar arquivo novo por aqui, nem mencionar alguém com @ neste editor — isso fica no console até a API listar quem pode ser mencionado. A foto da Minha DELPI aparece só nas mensagens que o helpdesk reconhece como suas, pelo usuário ou pelo e-mail, não pelo nome. Nas outras, as iniciais de quem escreveu. A seta no canto superior volta à lista; o ícone de enviar grava a resposta. Arquivos ligados ao chamado ficam abaixo da abertura.",
+    "A conversa preenche a tela e rola. No cartão aparecem aberto, atualizado, resolvido e fechado em dia e hora; TTO/TTR e o observador só se o helpdesk trouxer. A resposta fica no rodapé no mesmo editor rico da abertura, enquanto o chamado aceitar acompanhamento — chamado fechado some o Responder. O texto da resposta sobrevive ao F5 neste navegador até você enviar. Aprovar solução, reabrir e pesquisa de satisfação ficam no console do helpdesk: a API nova ainda não entrega esses passos ao solicitante. A formatação do helpdesk aparece na bolha; menções gravadas no helpdesk (chip com id de usuário) também. Imagens do fio abrem em prévia ao clicar. Não dá para colar imagem nem enviar arquivo novo por aqui, nem mencionar alguém com @ neste editor — isso fica no console até a API listar quem pode ser mencionado. A foto da Minha DELPI aparece só nas mensagens que o helpdesk reconhece como suas, pelo usuário ou pelo e-mail, não pelo nome. Nas outras, as iniciais de quem escreveu. A seta no canto superior volta à lista com o mesmo recorte (busca, filtros e página); o ícone de enviar grava a resposta. Arquivos ligados ao chamado ficam abaixo da abertura.",
 
   /** Controles da lista — um texto curto por superfície. */
   listUi: {

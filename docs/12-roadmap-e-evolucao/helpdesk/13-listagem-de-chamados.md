@@ -239,6 +239,7 @@ FORA                  → não entra neste produto
 | G-30 | `page` / `has_more` sem total | **IMPLEMENTADO** |
 | G-31 | Seletor `page_size` 10/20/50 | **IMPLEMENTADO** |
 | G-32 | Recorte na URL e F5 | **IMPLEMENTADO** |
+| G-32b | Voltar do detalhe/abertura restaura o recorte | **IMPLEMENTADO** | `listNavigationMemory` + seta Voltar |
 | G-33 | Vazio vs recorte vazio | **IMPLEMENTADO** |
 | G-34 | 403/409 não viram lista vazia | **IMPLEMENTADO** |
 | G-35 | Lixeira fora da lista | **IMPLEMENTADO** |

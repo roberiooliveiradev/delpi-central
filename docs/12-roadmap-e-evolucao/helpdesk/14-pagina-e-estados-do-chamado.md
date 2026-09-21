@@ -85,6 +85,7 @@ HelpdeskRichTextField  Responder  (oculto se can_followup=false)
 | Aprovar solução / reabrir / pesquisa | CONSOLE (E10) |
 | Excluir Novo | não — CONSOLE |
 | F5 | id no path; rascunho de resposta em `sessionStorage` |
+| Voltar | restaura a lista com o último recorte (`sessionStorage` `helpdesk:last-list-path:v1`) |
 
 ## 4. Estados do chamado
 
