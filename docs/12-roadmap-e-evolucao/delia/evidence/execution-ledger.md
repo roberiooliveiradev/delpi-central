@@ -9,7 +9,7 @@
 **Internet/External Connectors:** [`../55-internet-research-and-external-connectors.md`](../55-internet-research-and-external-connectors.md)  
 **Microsoft Teams:** [`../56-microsoft-teams-connector-and-meeting-integration.md`](../56-microsoft-teams-connector-and-meeting-integration.md)  
 **Autonomous Operations/Execution Hub:** [`../57-event-driven-autonomous-operations-and-automation-execution-hub.md`](../57-event-driven-autonomous-operations-and-automation-execution-hub.md)  
-**Next:** `C2-FINAL` C2 acceptance review (`C2_EXECUTED=NO`). Não iniciar C3. Não implementar iframe bridge. Não corrigir os achados de segurança do Portal/Transformômetro neste ledger.
+**Next:** `C2-FINAL` C2 acceptance review (`C2_EXECUTED=NO`). Não iniciar C3. Não implementar iframe bridge. Não corrigir os achados de segurança do Portal/Transformômetro neste ledger. C2-PREFINAL-R1 normalizou CP-001/CP-149/CP-156.
 
 ## 1. Ledger rule
 
@@ -108,7 +108,8 @@ C2_T5R2 = LIVE_GLOBAL_SURFACE_FAIL_BUNDLE_CONTAINS_T5 (§6.54)
 C2_T5R3 = IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW (§6.55)
 C2_T5R3R1 = ACCEPTED_CURRENT_SCOPE (§6.56 code, §6.57 live smoke)
 C2_T6 = ACCEPTED_WITH_OWNER_SECURITY_FOLLOWUP (§6.58 technical inventory; taxonomy corrected in §6.59)
-C2_T6R1 = DOCUMENTATION_NORMALIZATION_READY_FOR_REVIEW (§6.59)
+C2_T6R1 = ACCEPTED_WITH_RESIDUAL (§6.59)
+C2_PREFINAL_R1 = DOCUMENTATION_NORMALIZATION_READY_FOR_REVIEW (§6.60)
 C2_EXECUTED = NO
 C2_STARTED = YES
 C2_IMPLEMENTATION_STARTED = YES
@@ -2637,6 +2638,36 @@ TRANSFORMOMETRO_HANDOFF_GOAL = review origin and source validation; replace targ
 DELIA_OWNS_THOSE_BRIDGES = NO
 C2_T6 = ACCEPTED_WITH_OWNER_SECURITY_FOLLOWUP
 C2_T6R1 = DOCUMENTATION_NORMALIZATION_READY_FOR_REVIEW
+C2_EXECUTED = NO
+PRODUCTION_READINESS = NOT_PROVEN
+NEXT = C2-FINAL acceptance review
+```
+
+## 6.60 C2-PREFINAL-R1 — NORMALIZE_REMAINING_C2_REQUIREMENT_STATUSES
+
+```text
+DATE: 2026-09-21
+STEP: C2-PREFINAL-R1
+MODE: DOCUMENTATION-ONLY PREFINAL NORMALIZATION
+DOCUMENTATION_DRIFT = YES / CORRECTED_BY_PREFINAL_R1
+EXECUTION_DRIFT = NONE
+RUNTIME_CHANGE = NONE
+DRIFT = CP-001/CP-149 Status used IMPLEMENTED_CURRENT_SCOPE; CP-156 Status used PARTIAL; CP-149 note still said LIVE_COMPANION_DOCK=TEST_NOT_RUN
+HISTORICAL_CANONICAL = C2-T3 freeze commit 42168c369a had CP-001/CP-149/CP-156 = LOCKED
+CANONICAL_STATUS:
+  CP-001 = LOCKED
+  CP-149 = LOCKED
+  CP-156 = LOCKED
+CP-149_LIVE_NOTE = CORRECTED (Product Master smoke §6.57; residuals remain explicit)
+T6_SECURITY_HANDOFF = PRESERVED
+C2_SECURITY_BLOCKER = NO
+PORTAL_SECURITY_REVIEW_REQUIRED = YES
+TRANSFORMOMETRO_SECURITY_REVIEW_REQUIRED = YES
+DELIA_SECURITY_REVIEW_REQUIRED_FOR_T6 = NO
+OWNER_SECURITY_FOLLOWUPS = Portal/Security; Transformômetro
+C2_T6 = ACCEPTED_WITH_OWNER_SECURITY_FOLLOWUP
+C2_T6R1 = ACCEPTED_WITH_RESIDUAL
+C2_PREFINAL_R1 = DOCUMENTATION_NORMALIZATION_READY_FOR_REVIEW
 C2_EXECUTED = NO
 PRODUCTION_READINESS = NOT_PROVEN
 NEXT = C2-FINAL acceptance review

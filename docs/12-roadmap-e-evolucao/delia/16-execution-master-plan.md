@@ -372,7 +372,8 @@ C2_T5R2 = LIVE_GLOBAL_SURFACE_FAIL_BUNDLE_CONTAINS_T5
 C2_T5R3 = IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW
 C2_T5R3R1 = ACCEPTED_CURRENT_SCOPE
 C2_T6 = ACCEPTED_WITH_OWNER_SECURITY_FOLLOWUP
-C2_T6R1 = DOCUMENTATION_NORMALIZATION_READY_FOR_REVIEW
+C2_T6R1 = ACCEPTED_WITH_RESIDUAL
+C2_PREFINAL_R1 = DOCUMENTATION_NORMALIZATION_READY_FOR_REVIEW
 C2_STARTED = YES
 C2_IMPLEMENTATION_STARTED = YES
 C2_EXECUTED = NO
@@ -628,14 +629,15 @@ CLOSED_FOR_CURRENT_SCOPE: host props, route projection, mount/updateRoute/unmoun
 DEFER: WorkspaceContext runtime until operational owners/sources exist
 DEFER: PlatformCommand bus; Portal location remains the navigation mechanism
 DEFER: iframe bridge until DÉLIA has a real iframe consumer
-IMPLEMENTED_CURRENT_SCOPE: C2-T5R3 companion dock reuses federated remote `delia` / `./App`; V1 modal surface is SUPERSEDED_UX; visibility = `/me/apps` id=delia plus eligible split; no special sidebar launcher
+IMPLEMENTATION_EVIDENCE: C2-T5R3 companion dock reuses federated remote `delia` / `./App`; V1 modal surface is SUPERSEDED_UX; visibility = `/me/apps` id=delia plus eligible split; no special sidebar launcher
 DEFER: CP-012 intelligence to C3
 C2-T4: OP/PRODUCT/OPERATION public via api-delpi (TOTVS); MACHINE/POSTO TO_INVENTORY; aggregate OPERATIONAL_CONTEXT remains TO_INVENTORY
 C2-T4R1: formal status OPERATIONAL_CONTEXT = TO_INVENTORY (MIXED is not a canonical factual status)
 WORKSPACE_CONTEXT_RUNTIME = DEFER
 C2_IMPLEMENTATION_STARTED = YES
 C2_EXECUTED = NO
-C2-T6R1: canonical CP Status restored in 25; applicability stays in the note; C2_SECURITY_BLOCKER=NO; Portal and Transformômetro security review remains required
+C2-T6R1: ACCEPTED_WITH_RESIDUAL; iframe CP Status restored; C2_SECURITY_BLOCKER=NO; Portal and Transformômetro security review remains required
+C2-PREFINAL-R1: CP-001/CP-149/CP-156 restored to LOCKED; CP-149 live note corrected; CANONICAL_STATUS ≠ implementation evidence
 NEXT = C2-FINAL acceptance review (no iframe bridge; no C3; no security fix)
 C2-FINAL after those reviews
 Workspace binding remains unscheduled

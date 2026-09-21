@@ -128,7 +128,7 @@ OUT_OF_SCOPE_WITH_DECISION
 | CP-144 | Gateway route própria API/MFE | Gateway (`/apps/delia-api/`, `/apps/delia`) | dev/prod parity | LOCKED |
 | CP-145 | Compose/deploy próprios | Infra (`delpi-delia-api`, `delpi-delia`) | independent service/start | LOCKED |
 | CP-148 | Portal federated full-page mount | Portal/DÉLIA MFE | authorized mount/F5 | LOCKED — C2-T5 full-page AppHost preserved (same remote helpers) |
-| CP-149 | Global DÉLIA panel usando o mesmo MFE/runtime | Portal/DÉLIA MFE | surface parity | IMPLEMENTED_CURRENT_SCOPE (code) — companion dock; LIVE_COMPANION_DOCK=TEST_NOT_RUN |
+| CP-149 | Global DÉLIA panel usando o mesmo MFE/runtime | Portal/DÉLIA MFE | surface parity | LOCKED — current C2 uses the same federated DÉLIA MFE/runtime (`delia` / `./App`) for full-page and Companion Dock; Product Master live smoke accepted for the recorded Companion Dock scope (§6.57); remaining live residuals (route persistence, close/reopen, full-page transition, User A/B, portal logout E2E) stay explicit |
 | CP-150 | JWT + Core/RBAC integration | DÉLIA API/Core | auth negatives | LOCKED |
 | CP-152 | Health + independent rollback/shutdown | DÉLIA/Infra | Chat-offline rollback | LOCKED |
 | CP-153 | Reuso obrigatório de `@delpi/plugin-ui`/shared federation | DÉLIA MFE | federation/UI conformance | LOCKED |
@@ -138,7 +138,7 @@ OUT_OF_SCOPE_WITH_DECISION
 
 | ID | Requisito | Owner | Gate | Status |
 |---|---|---|---|---|
-| CP-001 | DÉLIA global no Portal | DÉLIA MFE + Portal | panel/full-page UX | IMPLEMENTED_CURRENT_SCOPE — companion dock live smoke PASS for render, reclamp, pointer/keyboard and usable center app; C2_EXECUTED=NO |
+| CP-001 | DÉLIA global no Portal | DÉLIA MFE + Portal | panel/full-page UX | LOCKED — current C2 implementation uses the approved non-modal Companion Dock; Product Master live smoke accepted for the recorded scope; C2_EXECUTED=NO |
 | CP-002 | Abrir app | Portal/CopilotBridge | authorized navigation | LOCKED |
 | CP-003 | Abrir rota | Portal/CopilotBridge | authorized navigation | LOCKED |
 | CP-004 | Abrir entidade | Portal + app contract | EntityRef/deep-link | LOCKED |
@@ -160,7 +160,7 @@ OUT_OF_SCOPE_WITH_DECISION
 | CP-068 | Proibir Business Action via DOM/click | Portal/DÉLIA Policy | negative gate | LOCKED — DELIA_DOM_BUSINESS_ACTION=NONE; current C2 shell negative evidence PASS; not PASS for future ACT |
 | CP-069 | SSO iframe sem token pelo bridge | Portal/App/Security | auth architecture | TO_INVENTORY — legacy Portal DELPI_AUTH token postMessage; DÉLIA pattern DO_NOT_COPY; target SSO without bearer token over a generic bridge is NOT_PROVEN |
 | CP-070 | Observabilidade iframe bridge | Portal/Observability | trace/redaction | LOCKED — current bridge observability TO_INVENTORY / NOT_PROVEN |
-| CP-156 | Paridade de RBAC/policy entre Global/Workspace/Meeting/Frontline | Portal/DÉLIA Policy | surface parity | PARTIAL — companion dock and full-page share Core `/me/apps` + same host AuthZ hints; Meeting/Frontline surfaces do not exist |
+| CP-156 | Paridade de RBAC/policy entre Global/Workspace/Meeting/Frontline | Portal/DÉLIA Policy | surface parity | LOCKED — current evidence is partial: full-page and Companion Dock share Core `/me/apps` and the same host AuthZ hints; Meeting/Frontline surfaces do not exist |
 | CP-159 | Contexto operacional OP/máquina/produto/operação/posto usa WorkspaceContext + EntityRef | Portal/MFE/DÉLIA | operational context contract | LOCKED — inventory only; C2-T4/T4R1: OPERATIONAL_CONTEXT=TO_INVENTORY; no Workspace runtime after T5 |
 | CP-171 | Device metadata não substitui identidade/autorização | Portal/DÉLIA Security | shared-device/context negative | LOCKED — requirement only; not a C2 device runtime |
 
@@ -569,7 +569,7 @@ No CP promoted to PASS by documentation alone
 
 Related non-inventory CPs (CP-178/179 OT, CP-091 EntityRef, etc.) remain PLANNED/LOCKED per their rows; inventory evidence does not satisfy runtime gates.
 
-C2-T3: rows CP-002–CP-012, CP-025, CP-059 and CP-159 remain `LOCKED` as requirements. C2-T6R1 restores the canonical Status vocabulary for CP-061–CP-070 (`LOCKED`, except CP-069 `TO_INVENTORY`). Applicability notes after that status are not lifecycle statuses and are not PASS. C2-T5R3 keeps CP-001/CP-149 at `IMPLEMENTED_CURRENT_SCOPE` for the companion dock (`C2_EXECUTED=NO`). Product Master live smoke of the companion dock is `PASS` for render, non-modal, current route, dynamic reclamp, usable center app, pointer resize and keyboard resize. C2-T6 inventories the existing Portal embedded host. DÉLIA full-page and companion dock stay federated. No DÉLIA iframe bridge was added. V1 modal UX is `SUPERSEDED_UX`. CP-156 is `PARTIAL`. Host presentation, transient dock state and full-page mount are the current C2 runtime. WorkspaceContext, operational OP/machine/product/operation/posto, typed command bus and DÉLIA iframe bridge are not runtime. CP-012 reasoning is C3. `LIVE_USER_A_USER_B` and portal logout E2E stay at their previous status. Portal and Transformômetro iframe security findings are owner follow-up, not C2 blockers.
+C2-T3: rows CP-001–CP-012, CP-025, CP-059, CP-149, CP-156 and CP-159 remain `LOCKED` as requirements (`LOCKED` ≠ runtime PASS). C2-T6R1 restored canonical Status for CP-061–CP-070 (`LOCKED`, except CP-069 `TO_INVENTORY`). C2-PREFINAL-R1 restored CP-001/CP-149/CP-156 to `LOCKED` after C2-T5 documentation drift introduced non-canonical Status tokens; implementation and live evidence stay in the note. Product Master live smoke of the companion dock is `PASS` for the recorded scope (§6.57). C2-T6 inventories the existing Portal embedded host. DÉLIA full-page and companion dock stay federated. No DÉLIA iframe bridge was added. V1 modal UX is `SUPERSEDED_UX`. Host presentation, transient dock state and full-page mount are the current C2 runtime. WorkspaceContext, operational OP/machine/product/operation/posto, typed command bus and DÉLIA iframe bridge are not runtime. CP-012 reasoning is C3. `LIVE_USER_A_USER_B` and portal logout E2E stay at their previous status. Portal and Transformômetro iframe security findings are owner follow-up, not C2 blockers. `C2_EXECUTED=NO`.
 
 ## 15. C0.S1 naming / physical ownership linkage — accepted review
 
