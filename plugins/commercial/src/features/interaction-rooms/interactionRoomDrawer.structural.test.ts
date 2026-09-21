@@ -20,10 +20,15 @@ describe("CommercialHostDrawer", () => {
     expect(panel).toMatch(/InteractionRoomPage/);
     expect(panel).toMatch(/CommercialRoomPanel/);
     expect(panel).not.toMatch(/InteractionRoomWorkspace/);
-    const page = readFileSync(join(dir, "InteractionRoomPage.tsx"), "utf8");
+    const page = readFileSync(
+      join(dir, "CommercialInteractionRoomHost.tsx"),
+      "utf8",
+    );
     expect(page).not.toMatch(/CommercialHostDrawer/);
-    expect(page).toMatch(/CommercialRoomConversationShell/);
-    expect(page).toMatch(/CommercialRoomConversationChatColumn/);
-    expect(page).toMatch(/CommercialRoomSidePanel/);
+    expect(page).not.toMatch(/CommercialRoomConversationShell/);
+    expect(page).not.toMatch(/CommercialRoomConversationChatColumn/);
+    expect(page).not.toMatch(/CommercialRoomSidePanel/);
+    expect(page).toMatch(/KitInteractionRoomPage/);
+    expect(page).toMatch(/layout="thread"/);
   });
 });
