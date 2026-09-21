@@ -73,6 +73,10 @@ class Settings:
         "TM_ATA_PDF_UPLOAD_DIR",
         default="/app/data/transformometro/atas/pdfs",
     )
+    TM_INTERACTION_UPLOAD_DIR: str = _get_env(
+        "TM_INTERACTION_UPLOAD_DIR",
+        default="/app/data/transformometro/interaction-rooms",
+    )
     TM_ATA_SIGNATURE_MAX_BYTES: int = int(
         _get_env("TM_ATA_SIGNATURE_MAX_BYTES", default=str(2 * 1024 * 1024))
         or str(2 * 1024 * 1024)

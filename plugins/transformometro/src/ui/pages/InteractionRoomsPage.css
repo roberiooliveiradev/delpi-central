@@ -34,6 +34,35 @@
   gap: 0.75rem;
 }
 
+.tm-room-message-extra {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-top: 0.35rem;
+}
+
+.tm-room-file-link,
+.tm-room-edit textarea {
+  font: inherit;
+}
+
+.tm-room-file-link {
+  display: inline-flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.tm-room-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.tm-room-edit textarea {
+  min-height: 4.5rem;
+  resize: vertical;
+}
+
 .tm-room-inbox-pane__refresh,
 .tm-room-thread__refresh,
 .tm-room-alert {

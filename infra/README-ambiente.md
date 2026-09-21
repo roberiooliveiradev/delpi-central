@@ -572,6 +572,15 @@ Assinaturas PNG e PDF final das atas (metadado em `transformometro.tm_meeting_*`
 |----------|----------------------|---------------|
 | `TM_ATA_SIGNATURE_UPLOAD_DIR` | `/app/data/transformometro/atas/signatures` | `${DELPI_DATA_HOST_DIR}/transformometro/atas/signatures` |
 | `TM_ATA_PDF_UPLOAD_DIR` | `/app/data/transformometro/atas/pdfs` | `${DELPI_DATA_HOST_DIR}/transformometro/atas/pdfs` |
+
+## Anexos da sala de interação (transformometro-api)
+
+Arquivos enviados numa mensagem da sala ficam em `/app/data/transformometro/interaction-rooms` (metadado em `transformometro.tm_interaction_attachments`).
+
+| Variável | Default no container | Host (volume) |
+|----------|----------------------|---------------|
+| `TM_INTERACTION_UPLOAD_DIR` | `/app/data/transformometro/interaction-rooms` | `${DELPI_DATA_HOST_DIR}/transformometro/interaction-rooms` |
+
 > **Exceção operacional:** o path físico `…/transformometro/atas/…` no host/container permanece (não migrar volume). Só HTTP/código usam `meeting-minutes`.
 
 
@@ -633,7 +642,8 @@ LLM_PROVIDER=openai_compatible
 
 ```bash
 sudo mkdir -p /var/lib/delpi/revisao-evidencias /var/lib/delpi/processo-arquivos \
-  /var/lib/delpi/transformometro/atas/signatures /var/lib/delpi/transformometro/atas/pdfs
+  /var/lib/delpi/transformometro/atas/signatures /var/lib/delpi/transformometro/atas/pdfs \
+  /var/lib/delpi/transformometro/interaction-rooms
 # recreate após mudar env:
 # ./infra/scripts/up-prod-sequential.sh --fase api  # ou force-recreate dos dois serviços
 docker compose -f docker-compose.yml up -d --force-recreate transformometro-api minha-delpi-ai-api

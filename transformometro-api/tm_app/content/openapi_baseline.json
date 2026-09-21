@@ -1,7 +1,7 @@
 {
   "version": 1,
   "generatedAt": "2026-09-21",
-  "operation_count": 185,
+  "operation_count": 195,
   "operations": [
     {
       "operationId": "post_liberar",
@@ -898,6 +898,24 @@
       "module": "interaction_rooms"
     },
     {
+      "operationId": "list_transformometro_interaction_attachments",
+      "method": "GET",
+      "path": "/transformometro/interaction-rooms/{room_id}/attachments",
+      "module": "interaction_rooms"
+    },
+    {
+      "operationId": "delete_transformometro_interaction_attachment",
+      "method": "DELETE",
+      "path": "/transformometro/interaction-rooms/{room_id}/attachments/{attachment_id}",
+      "module": "interaction_rooms"
+    },
+    {
+      "operationId": "download_transformometro_interaction_attachment",
+      "method": "GET",
+      "path": "/transformometro/interaction-rooms/{room_id}/attachments/{attachment_id}",
+      "module": "interaction_rooms"
+    },
+    {
       "operationId": "list_transformometro_interaction_messages",
       "method": "GET",
       "path": "/transformometro/interaction-rooms/{room_id}/messages",
@@ -907,6 +925,48 @@
       "operationId": "post_transformometro_interaction_message",
       "method": "POST",
       "path": "/transformometro/interaction-rooms/{room_id}/messages",
+      "module": "interaction_rooms"
+    },
+    {
+      "operationId": "delete_transformometro_interaction_message",
+      "method": "DELETE",
+      "path": "/transformometro/interaction-rooms/{room_id}/messages/{message_id}",
+      "module": "interaction_rooms"
+    },
+    {
+      "operationId": "patch_transformometro_interaction_message",
+      "method": "PATCH",
+      "path": "/transformometro/interaction-rooms/{room_id}/messages/{message_id}",
+      "module": "interaction_rooms"
+    },
+    {
+      "operationId": "upload_transformometro_interaction_attachment",
+      "method": "POST",
+      "path": "/transformometro/interaction-rooms/{room_id}/messages/{message_id}/attachments",
+      "module": "interaction_rooms"
+    },
+    {
+      "operationId": "unpin_transformometro_interaction_message",
+      "method": "DELETE",
+      "path": "/transformometro/interaction-rooms/{room_id}/messages/{message_id}/pin",
+      "module": "interaction_rooms"
+    },
+    {
+      "operationId": "pin_transformometro_interaction_message",
+      "method": "POST",
+      "path": "/transformometro/interaction-rooms/{room_id}/messages/{message_id}/pin",
+      "module": "interaction_rooms"
+    },
+    {
+      "operationId": "toggle_transformometro_interaction_reaction",
+      "method": "POST",
+      "path": "/transformometro/interaction-rooms/{room_id}/messages/{message_id}/reactions",
+      "module": "interaction_rooms"
+    },
+    {
+      "operationId": "mark_transformometro_interaction_room_read",
+      "method": "POST",
+      "path": "/transformometro/interaction-rooms/{room_id}/read",
       "module": "interaction_rooms"
     },
     {

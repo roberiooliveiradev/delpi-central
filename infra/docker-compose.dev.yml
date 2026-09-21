@@ -1557,6 +1557,7 @@ services:
       TM_PROCESSO_ARQUIVO_UPLOAD_DIR: ${TM_PROCESSO_ARQUIVO_UPLOAD_DIR:-/app/data/processo-arquivos}
       TM_ATA_SIGNATURE_UPLOAD_DIR: ${TM_ATA_SIGNATURE_UPLOAD_DIR:-/app/data/transformometro/atas/signatures}
       TM_ATA_PDF_UPLOAD_DIR: ${TM_ATA_PDF_UPLOAD_DIR:-/app/data/transformometro/atas/pdfs}
+      TM_INTERACTION_UPLOAD_DIR: ${TM_INTERACTION_UPLOAD_DIR:-/app/data/transformometro/interaction-rooms}
       TM_PORTAL_NOTIFICATIONS_ENABLED: ${TM_PORTAL_NOTIFICATIONS_ENABLED:-true}
       TM_MAIL_ENABLED: ${TM_MAIL_ENABLED:-true}
       TM_ATA_SIGN_INVITE_TTL_DAYS: ${TM_ATA_SIGN_INVITE_TTL_DAYS:-14}
@@ -1586,6 +1587,7 @@ services:
       - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/processo-arquivos:/app/data/processo-arquivos
       - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/transformometro/atas/signatures:/app/data/transformometro/atas/signatures
       - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/transformometro/atas/pdfs:/app/data/transformometro/atas/pdfs
+      - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/transformometro/interaction-rooms:/app/data/transformometro/interaction-rooms
 
     depends_on:
       - keycloak

@@ -19,6 +19,31 @@ def normalize_processo_id(value: str | None) -> str:
     return normalize_uuid(value, label="O processo")
 
 
+def normalize_inbox_filter(value: str | None) -> str:
+    key = (value or "all").strip().lower()
+    if key not in {"all", "process", "unread", "mentioned"}:
+        raise ValueError("Filtro inválido.")
+    return key
+
+
+def normalize_reaction_code(value: str | None) -> str:
+    code = (value or "").strip()
+    if not code or len(code) > 32:
+        raise ValueError("Reação inválida.")
+    return code
+
+
+def normalize_mentions(items: list[dict] | None) -> tuple[tuple[str, str], ...]:
+    seen: dict[str, str] = {}
+    for item in items or []:
+        user_id = normalize_uuid(str(item.get("user_id") or ""), label="A pessoa mencionada")
+        label = " ".join(str(item.get("label") or "").replace("@", " ").split())
+        if not label:
+            continue
+        seen[user_id] = label[:80]
+    return tuple(seen.items())
+
+
 def normalize_message_content(value: str | None) -> str:
     text = (value or "").replace("\r\n", "\n").replace("\r", "\n").strip()
     if not text:

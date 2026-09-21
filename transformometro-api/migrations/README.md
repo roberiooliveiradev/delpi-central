@@ -45,6 +45,7 @@ Schema: **`transformometro`** no Postgres **postgres-plugins** (`PLUGINS_DB_*`).
 | V041 | `V041__beneficio_categoria_default_automatico.sql` | Default + backfill `beneficio_calculo_categoria` → `automatico` (a partir de `economia_tempo`) |
 | V042 | `V042__meeting_minutes_transforma_mais.sql` | Atas Transforma+ (`tm_meeting_minutes*`, assinaturas, perfil de assinatura) |
 | V046 | `V046__interaction_rooms.sql` | Sala de interação do processo (`tm_interaction_rooms`, `tm_interaction_messages`). Aditiva. Sem FK para Core. |
+| V047 | `V047__interaction_room_capabilities.sql` | Resposta, edição, leitura, reação, fixar, menção e anexo da sala. Aditiva. Binário no volume da sala. |
 
 ## Notas V019–V020
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, File, Request, UploadFile
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field, field_validator
 
 from tm_app.application.security.authorization_policy import AuthorizationDenied
@@ -19,13 +20,33 @@ class OpenInteractionRoomBody(BaseModel):
     processo_id: str
 
 
+class MentionBody(BaseModel):
+    user_id: str
+    label: str = ""
+
+
 class PostInteractionMessageBody(BaseModel):
+    content: str = Field(..., max_length=MAX_MESSAGE_LENGTH)
+    parent_id: str | None = None
+    mentions: list[MentionBody] = Field(default_factory=list)
+
+    @field_validator("content")
+    @classmethod
+    def content_is_plain_text(cls, value: str) -> str:
+        return normalize_message_content(value)
+
+
+class EditInteractionMessageBody(BaseModel):
     content: str = Field(..., max_length=MAX_MESSAGE_LENGTH)
 
     @field_validator("content")
     @classmethod
     def content_is_plain_text(cls, value: str) -> str:
         return normalize_message_content(value)
+
+
+class ReactionBody(BaseModel):
+    code: str
 
 
 def _handle(exc: Exception):
@@ -43,9 +64,16 @@ def _handle(exc: Exception):
 
 
 @router.get("/interaction-rooms", operation_id="list_transformometro_interaction_rooms")
-def list_interaction_rooms(request: Request):
+def list_interaction_rooms(request: Request, inbox_filter: str = "all"):
     try:
-        return ok({"items": [room.to_dict() for room in _rooms.list_rooms(request.state.user)]})
+        return ok(
+            {
+                "items": [
+                    room.to_dict()
+                    for room in _rooms.list_rooms(request.state.user, inbox_filter=inbox_filter)
+                ]
+            }
+        )
     except Exception as exc:
         return _handle(exc)
 
@@ -84,8 +112,146 @@ def list_interaction_messages(request: Request, room_id: str, limit: int = 50):
 def post_interaction_message(request: Request, room_id: str, body: PostInteractionMessageBody):
     try:
         return ok(
-            _rooms.post_message(request.state.user, room_id, body.content).to_dict(),
+            _rooms.post_message(
+                request.state.user,
+                room_id,
+                body.content,
+                parent_id=body.parent_id,
+                mentions=[item.model_dump() for item in body.mentions],
+            ).to_dict(),
             status_code=201,
         )
+    except Exception as exc:
+        return _handle(exc)
+
+
+@router.patch(
+    "/interaction-rooms/{room_id}/messages/{message_id}",
+    operation_id="patch_transformometro_interaction_message",
+)
+def patch_interaction_message(
+    request: Request,
+    room_id: str,
+    message_id: str,
+    body: EditInteractionMessageBody,
+):
+    try:
+        return ok(_rooms.edit_message(request.state.user, room_id, message_id, body.content).to_dict())
+    except Exception as exc:
+        return _handle(exc)
+
+
+@router.delete(
+    "/interaction-rooms/{room_id}/messages/{message_id}",
+    operation_id="delete_transformometro_interaction_message",
+)
+def delete_interaction_message(request: Request, room_id: str, message_id: str):
+    try:
+        return ok(_rooms.delete_message(request.state.user, room_id, message_id).to_dict())
+    except Exception as exc:
+        return _handle(exc)
+
+
+@router.post(
+    "/interaction-rooms/{room_id}/messages/{message_id}/reactions",
+    operation_id="toggle_transformometro_interaction_reaction",
+)
+def toggle_interaction_reaction(request: Request, room_id: str, message_id: str, body: ReactionBody):
+    try:
+        return ok(_rooms.toggle_reaction(request.state.user, room_id, message_id, body.code).to_dict())
+    except Exception as exc:
+        return _handle(exc)
+
+
+@router.post(
+    "/interaction-rooms/{room_id}/messages/{message_id}/pin",
+    operation_id="pin_transformometro_interaction_message",
+)
+def pin_interaction_message(request: Request, room_id: str, message_id: str):
+    try:
+        return ok(_rooms.pin_message(request.state.user, room_id, message_id).to_dict())
+    except Exception as exc:
+        return _handle(exc)
+
+
+@router.delete(
+    "/interaction-rooms/{room_id}/messages/{message_id}/pin",
+    operation_id="unpin_transformometro_interaction_message",
+)
+def unpin_interaction_message(request: Request, room_id: str, message_id: str):
+    try:
+        return ok(_rooms.unpin_message(request.state.user, room_id, message_id).to_dict())
+    except Exception as exc:
+        return _handle(exc)
+
+
+@router.post(
+    "/interaction-rooms/{room_id}/read",
+    operation_id="mark_transformometro_interaction_room_read",
+)
+def mark_interaction_room_read(request: Request, room_id: str):
+    try:
+        _rooms.mark_read(request.state.user, room_id)
+        return ok({"room_id": room_id})
+    except Exception as exc:
+        return _handle(exc)
+
+
+@router.get(
+    "/interaction-rooms/{room_id}/attachments",
+    operation_id="list_transformometro_interaction_attachments",
+)
+def list_interaction_attachments(request: Request, room_id: str):
+    try:
+        return ok({"items": [item.to_dict() for item in _rooms.list_attachments(request.state.user, room_id)]})
+    except Exception as exc:
+        return _handle(exc)
+
+
+@router.post(
+    "/interaction-rooms/{room_id}/messages/{message_id}/attachments",
+    operation_id="upload_transformometro_interaction_attachment",
+)
+async def upload_interaction_attachment(
+    request: Request,
+    room_id: str,
+    message_id: str,
+    file: UploadFile = File(...),
+):
+    content = await file.read()
+    try:
+        saved = _rooms.add_attachment(
+            request.state.user,
+            room_id,
+            message_id,
+            file_name=file.filename or "arquivo",
+            content=content,
+            mime_type=file.content_type,
+        )
+        return ok(saved.to_dict(), status_code=201)
+    except Exception as exc:
+        return _handle(exc)
+
+
+@router.get(
+    "/interaction-rooms/{room_id}/attachments/{attachment_id}",
+    operation_id="download_transformometro_interaction_attachment",
+)
+def download_interaction_attachment(request: Request, room_id: str, attachment_id: str):
+    try:
+        path, name, mime = _rooms.open_attachment(request.state.user, room_id, attachment_id)
+    except Exception as exc:
+        return _handle(exc)
+    return FileResponse(path, media_type=mime or "application/octet-stream", filename=name)
+
+
+@router.delete(
+    "/interaction-rooms/{room_id}/attachments/{attachment_id}",
+    operation_id="delete_transformometro_interaction_attachment",
+)
+def delete_interaction_attachment(request: Request, room_id: str, attachment_id: str):
+    try:
+        _rooms.delete_attachment(request.state.user, room_id, attachment_id)
+        return ok({"id": attachment_id})
     except Exception as exc:
         return _handle(exc)
