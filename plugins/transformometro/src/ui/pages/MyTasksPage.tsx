@@ -6,7 +6,7 @@ import {
   TaskEmptyState,
   TaskItemsTable,
   TaskSearchField,
-  TaskWorklistSection,
+  TaskWorkspacePage,
   UserDirectoryPicker,
   buildTaskWorkspaceHighlights,
   scopeChipBarBemClasses,
@@ -225,75 +225,105 @@ export function MyTasksPage({ getAccessToken, pathname, onNavigate }: Props) {
     if (item.route) onNavigate(item.route);
   }
 
-  if (loading && !payload) {
-    return (
-      <TransformometroShell>
-        <PageHeader
-          eyebrow={PORTAL_PAGE_COPY.myTasks.eyebrow}
-          title={PORTAL_PAGE_COPY.myTasks.title}
-          subtitle={PORTAL_PAGE_COPY.myTasks.description}
-          currentPath={pathname ?? TRANSFORMOMETRO_ROUTES.myTasks}
-          onNavigate={onNavigate}
-        />
-        <LoadingActivityCard
-          title="Carregando suas tarefas"
-          description="Buscando tarefas do portal e assinaturas pendentes."
-        />
-      </TransformometroShell>
-    );
-  }
+  const hero = (
+    <PageHeader
+      eyebrow={PORTAL_PAGE_COPY.myTasks.eyebrow}
+      title={PORTAL_PAGE_COPY.myTasks.title}
+      subtitle={PORTAL_PAGE_COPY.myTasks.description}
+      currentPath={pathname ?? TRANSFORMOMETRO_ROUTES.myTasks}
+      onNavigate={onNavigate}
+      refreshing={refreshing}
+      highlights={highlights}
+    >
+      <ScopeChipBar
+        classNames={CHIPS}
+        aria-label="Filtro de tarefas"
+        chips={[
+          { id: "pending", label: "Pendentes", active: filter === "pending", onSelect: () => setFilter("pending") },
+          { id: "completed", label: "Concluídas", active: filter === "completed", onSelect: () => setFilter("completed") },
+          { id: "all", label: "Todas", active: filter === "all", onSelect: () => setFilter("all") },
+        ]}
+      />
+    </PageHeader>
+  );
 
   return (
     <TransformometroShell>
-      <PageHeader
-        eyebrow={PORTAL_PAGE_COPY.myTasks.eyebrow}
-        title={PORTAL_PAGE_COPY.myTasks.title}
-        subtitle={PORTAL_PAGE_COPY.myTasks.description}
-        currentPath={pathname ?? TRANSFORMOMETRO_ROUTES.myTasks}
-        onNavigate={onNavigate}
-        refreshing={refreshing}
-        highlights={highlights}
-      >
-        <ScopeChipBar
-          classNames={CHIPS}
-          aria-label="Filtro de tarefas"
-          chips={[
-            { id: "pending", label: "Pendentes", active: filter === "pending", onSelect: () => setFilter("pending") },
-            { id: "completed", label: "Concluídas", active: filter === "completed", onSelect: () => setFilter("completed") },
-            { id: "all", label: "Todas", active: filter === "all", onSelect: () => setFilter("all") },
-          ]}
-        />
-      </PageHeader>
-      {payload?.partial_error ? <p role="status">{payload.partial_error}</p> : null}
-      {error ? (
-        <p role="alert">
-          {error}{" "}
-          <button type="button" onClick={() => setReloadNonce((nonce) => nonce + 1)}>
-            Tentar de novo
-          </button>
-        </p>
-      ) : null}
-      <TaskWorklistSection
-        title="Fila"
-        subtitle="Pendentes, concluídas e assinaturas de ata."
-        actions={
-          <>
-            <ActionButton variant="primary" onClick={openCreate}>
-              Nova tarefa
-            </ActionButton>
-            <ActionButton variant="ghost" onClick={() => setReloadNonce((nonce) => nonce + 1)}>
-              {refreshing ? "Atualizando…" : "Atualizar"}
-            </ActionButton>
-          </>
+      <TaskWorkspacePage
+        hero={hero}
+        initialLoading={
+          loading && !payload ? (
+            <LoadingActivityCard
+              title="Carregando suas tarefas"
+              description="Buscando tarefas do portal e assinaturas pendentes."
+            />
+          ) : undefined
         }
-        search={
-          <TaskSearchField
-            id="tm-task-search"
-            value={query}
-            onChange={setQuery}
-            placeholder="Buscar tarefas..."
-            aria-label="Buscar tarefas"
-          />
+        refreshing={refreshing}
+        partialError={payload?.partial_error ? <p>{payload.partial_error}</p> : null}
+        error={
+          error ? (
+            <p>
+              {error}{" "}
+              <button type="button" onClick={() => setReloadNonce((nonce) => nonce + 1)}>
+                Tentar de novo
+              </button>
+            </p>
+          ) : null
+        }
+        worklist={{
+          title: "Fila",
+          subtitle: "Pendentes, concluídas e assinaturas de ata.",
+          actions: (
+            <>
+              <ActionButton variant="primary" onClick={openCreate}>
+                Nova tarefa
+              </ActionButton>
+              <ActionButton variant="ghost" onClick={() => setReloadNonce((nonce) => nonce + 1)}>
+                {refreshing ? "Atualizando…" : "Atualizar"}
+              </ActionButton>
+            </>
+          ),
+          search: (
+            <TaskSearchField
+              id="tm-task-search"
+              value={query}
+              onChange={setQuery}
+              placeholder="Buscar tarefas..."
+              aria-label="Buscar tarefas"
+            />
+          ),
+        }}
+        editor={
+          formMode !== "closed" ? (
+            <TaskEditorFrame
+              title={formMode === "edit" ? "Editar tarefa" : "Nova tarefa"}
+              subtitle="A tarefa fica no Portal Transforma+. Assinatura de ata continua na própria ata."
+              reviewRows={reviewRows}
+              onClose={closeForm}
+              primaryLabel={formMode === "edit" ? "Salvar alterações" : "Criar tarefa"}
+              onPrimary={() => void submit()}
+              primaryBusy={saving}
+              primaryDisabled={!title.trim()}
+            >
+              <TmNativeTextField id="tm-task-title" label="Título" value={title} onChange={setTitle} required span />
+              <TmNativeTextAreaField
+                id="tm-task-description"
+                label="Descrição"
+                value={description}
+                onChange={setDescription}
+                span
+              />
+              <TmNativeTextField id="tm-task-due" label="Prazo" type="date" value={dueDate} onChange={setDueDate} />
+              <UserDirectoryPicker
+                value={assignee}
+                onChange={setAssignee}
+                searchUsers={(query, limit, signal) => searchDirectoryUsers(query, limit, signal, getAccessToken)}
+                maxSelected={1}
+                labels={{ title: "Responsável", placeholder: "Atribuir a mim ou buscar…" }}
+              />
+            </TaskEditorFrame>
+          ) : null
         }
       >
         {rows.length === 0 && !error ? (
@@ -324,47 +354,16 @@ export function MyTasksPage({ getAccessToken, pathname, onNavigate }: Props) {
             ) : null}
           </TaskEmptyState>
         ) : (
-          <section aria-busy={refreshing || undefined}>
-            <TaskItemsTable
-              items={rows}
-              refreshing={refreshing}
-              onOpen={onOpen}
-              onEdit={openEdit}
-              onComplete={(item) => void onComplete(item)}
-              onCancel={(item) => void onCancel(item)}
-            />
-          </section>
+          <TaskItemsTable
+            items={rows}
+            refreshing={refreshing}
+            onOpen={onOpen}
+            onEdit={openEdit}
+            onComplete={(item) => void onComplete(item)}
+            onCancel={(item) => void onCancel(item)}
+          />
         )}
-      </TaskWorklistSection>
-      {formMode !== "closed" ? (
-        <TaskEditorFrame
-          title={formMode === "edit" ? "Editar tarefa" : "Nova tarefa"}
-          subtitle="A tarefa fica no Portal Transforma+. Assinatura de ata continua na própria ata."
-          reviewRows={reviewRows}
-          onClose={closeForm}
-          primaryLabel={formMode === "edit" ? "Salvar alterações" : "Criar tarefa"}
-          onPrimary={() => void submit()}
-          primaryBusy={saving}
-          primaryDisabled={!title.trim()}
-        >
-          <TmNativeTextField id="tm-task-title" label="Título" value={title} onChange={setTitle} required span />
-          <TmNativeTextAreaField
-            id="tm-task-description"
-            label="Descrição"
-            value={description}
-            onChange={setDescription}
-            span
-          />
-          <TmNativeTextField id="tm-task-due" label="Prazo" type="date" value={dueDate} onChange={setDueDate} />
-          <UserDirectoryPicker
-            value={assignee}
-            onChange={setAssignee}
-            searchUsers={(query, limit, signal) => searchDirectoryUsers(query, limit, signal, getAccessToken)}
-            maxSelected={1}
-            labels={{ title: "Responsável", placeholder: "Atribuir a mim ou buscar…" }}
-          />
-        </TaskEditorFrame>
-      ) : null}
+      </TaskWorkspacePage>
     </TransformometroShell>
   );
 }

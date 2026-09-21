@@ -8,7 +8,7 @@ const source = readFileSync(join(dir, "MyTasksPage.tsx"), "utf8");
 
 describe("MyTasksPage", () => {
   it("usa o chrome compartilhado da fila, sem busca no hero nem store local", () => {
-    expect(source).toMatch(/TaskWorklistSection/);
+    expect(source).toMatch(/TaskWorkspacePage/);
     expect(source).toMatch(/TaskSearchField/);
     expect(source).toMatch(/TaskEmptyState/);
     expect(source).toMatch(/TaskEditorFrame/);
