@@ -11,15 +11,15 @@ export type DemandExcelPayload = {
   rows: Record<string, string | number>[];
 };
 
-/** Monta a planilha da Demanda (sem I/O) — inclui data de emissão do pedido. */
+/** Monta a planilha da Demanda (sem I/O). Despacho = C6_DATAEMB, à esquerda da entrega. */
 export function buildDemandExcelPayload(lines: readonly DemandLine[]): DemandExcelPayload {
   const detail = copy.demand.detail;
   const columns = copy.demand.columns;
   return {
     title: copy.demand.exportSheetTitle,
     columns: [
+      { key: "dispatch", label: columns.dispatch },
       { key: "due", label: columns.due },
-      { key: "issued", label: detail.dispatch },
       { key: "customer", label: columns.customer },
       { key: "order", label: columns.order },
       { key: "customerOrder", label: detail.customerOrder },
@@ -32,8 +32,8 @@ export function buildDemandExcelPayload(lines: readonly DemandLine[]): DemandExc
       { key: "status", label: columns.status },
     ],
     rows: lines.map((line) => ({
+      dispatch: line.dispatch_date ? formatIsoDate(line.dispatch_date) : "",
       due: line.due_date ? formatIsoDate(line.due_date) : "",
-      issued: line.dispatch_date ? formatIsoDate(line.dispatch_date) : "",
       customer: line.customer_name || "",
       order: `${line.sales_order}/${line.line_item}`,
       customerOrder: line.customer_order || "",

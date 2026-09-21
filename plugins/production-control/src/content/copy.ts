@@ -364,6 +364,7 @@ export const copy = {
       covered_by_stock: "Coberta por estoque",
     },
     columns: {
+      dispatch: "Data de despacho",
       due: "Entrega",
       customer: "Cliente",
       order: "Pedido",

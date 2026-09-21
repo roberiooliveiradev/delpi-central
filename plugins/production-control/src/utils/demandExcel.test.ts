@@ -33,12 +33,14 @@ function line(overrides: Partial<DemandLine> = {}): DemandLine {
 }
 
 describe("buildDemandExcelPayload", () => {
-  it("inclui emissão do pedido junto com a entrega", () => {
+  it("coloca a data de despacho imediatamente à esquerda da entrega", () => {
     const payload = buildDemandExcelPayload([line()]);
     const keys = payload.columns.map((column) => column.key);
-    expect(keys).toContain("issued");
-    expect(keys).toContain("due");
-    expect(payload.rows[0]?.issued).toBe("20/08/2026");
+    const labels = payload.columns.map((column) => column.label);
+    expect(keys.indexOf("dispatch")).toBe(keys.indexOf("due") - 1);
+    expect(labels[keys.indexOf("dispatch")]).toBe("Data de despacho");
+    expect(labels[keys.indexOf("due")]).toBe("Entrega");
+    expect(payload.rows[0]?.dispatch).toBe("20/08/2026");
     expect(payload.rows[0]?.due).toBe("25/08/2026");
   });
 
@@ -48,8 +50,9 @@ describe("buildDemandExcelPayload", () => {
     expect(payload.rows[0]?.open).toBe(60);
   });
 
-  it("deixa emissão vazia quando não há data de despacho/emissão", () => {
+  it("deixa o despacho vazio quando o pedido não tem C6_DATAEMB", () => {
     const payload = buildDemandExcelPayload([line({ dispatch_date: null })]);
-    expect(payload.rows[0]?.issued).toBe("");
+    expect(payload.rows[0]?.dispatch).toBe("");
+    expect(payload.rows[0]?.due).toBe("25/08/2026");
   });
 });
