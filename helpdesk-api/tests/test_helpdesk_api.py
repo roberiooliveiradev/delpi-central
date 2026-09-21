@@ -179,6 +179,8 @@ def test_attachment_download_uses_only_files_on_the_ticket():
     assert body["requester_display_name"] == "Robério Teixeira"
     assert body["requester_mine"] is False
     assert body["timeline"][0]["mine"] is False
+    assert "description_html" in body
+    assert "content_html" in body["timeline"][0]
     assert body["attachments"] == [
         {"document_id": 2, "filename": "logo.png", "mime": "image/png"},
         {"document_id": 4, "filename": "foto.jpg", "mime": "image/jpeg"},

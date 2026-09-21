@@ -74,6 +74,7 @@ class TimelineEntry:
     author_display_name: str
     author_identity: PersonIdentity = PersonIdentity()
     mine: bool = False
+    content_html: str = ""
 
 
 @dataclass(frozen=True)
@@ -100,6 +101,7 @@ class TicketDetail:
     requester_identity: PersonIdentity = PersonIdentity()
     requester_mine: bool = False
     status_id: int | None = None
+    description_html: str = ""
 
 
 @dataclass(frozen=True)

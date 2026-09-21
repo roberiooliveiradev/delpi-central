@@ -131,11 +131,13 @@ def get_ticket(request: Request, ticket_id: int):
         "requester_mine": ticket.requester_mine,
         "assigned_display_name": ticket.assigned_display_name,
         "description": ticket.description,
+        "description_html": ticket.description_html,
         "timeline": [
             {
                 "id": entry.id,
                 "kind": entry.kind,
                 "content": entry.content,
+                "content_html": entry.content_html,
                 "created_at": entry.created_at,
                 "author_display_name": entry.author_display_name,
                 "mine": entry.mine,

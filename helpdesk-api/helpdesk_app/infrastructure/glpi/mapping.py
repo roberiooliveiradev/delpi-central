@@ -10,6 +10,7 @@ import html
 import re
 from dataclasses import replace
 
+from helpdesk_app.application.services.message_html_sanitizer import sanitize_message_html
 from helpdesk_app.domain.errors import GlpiNotFound, GlpiValidation
 from helpdesk_app.domain.models import (
     Attachment,
@@ -166,10 +167,20 @@ def parse_ticket_detail(payload: dict, timeline_payload: dict | list) -> TicketD
     if _is_deleted(payload):
         raise GlpiNotFound("Chamado não encontrado.")
     summary = _summary(payload)
-    description = _text(payload.get("content"))
     rows = [row for row in _results(timeline_payload) if isinstance(row, dict)]
-    timeline = tuple(entry for entry in (_timeline_entry(row) for row in rows) if entry is not None)
     attachments = tuple(item for item in (_attachment(row) for row in rows) if item is not None)
+    allowed_docs = {item.document_id for item in attachments}
+    description_html = sanitize_message_html(
+        _repair_cp850_mojibake(str(payload.get("content") or "")),
+        ticket_id=summary.id,
+        allowed_document_ids=allowed_docs,
+    )
+    description = _text(description_html) if description_html else _text(payload.get("content"))
+    timeline = tuple(
+        entry
+        for entry in (_timeline_entry(row, ticket_id=summary.id, allowed_document_ids=allowed_docs) for row in rows)
+        if entry is not None
+    )
     return TicketDetail(
         id=summary.id,
         title=summary.title,
@@ -178,6 +189,7 @@ def parse_ticket_detail(payload: dict, timeline_payload: dict | list) -> TicketD
         urgency=summary.urgency,
         updated_at=summary.updated_at,
         description=description,
+        description_html=description_html,
         timeline=timeline,
         attachments=attachments,
         created_at=summary.created_at,
@@ -233,7 +245,12 @@ def _optional_instant(value) -> str:
     return text
 
 
-def _timeline_entry(row: dict) -> TimelineEntry | None:
+def _timeline_entry(
+    row: dict,
+    *,
+    ticket_id: int,
+    allowed_document_ids: set[int],
+) -> TimelineEntry | None:
     kind, payload = _timeline_payload(row)
     if kind not in {"Followup", "ITILFollowup"}:
         return None
@@ -244,10 +261,17 @@ def _timeline_entry(row: dict) -> TimelineEntry | None:
     if isinstance(user, int):
         user = {"id": user}
     author = _person_name(user) if isinstance(user, dict) else ""
+    content_html = sanitize_message_html(
+        _repair_cp850_mojibake(str(row.get("content") or "")),
+        ticket_id=ticket_id,
+        allowed_document_ids=allowed_document_ids,
+    )
+    content = _text(content_html) if content_html else _text(row.get("content"))
     return TimelineEntry(
         id=int(row.get("id") or 0),
         kind="followup",
-        content=_text(row.get("content")),
+        content=content,
+        content_html=content_html,
         created_at=str(row.get("date_creation") or row.get("date") or ""),
         author_display_name=author,
         author_identity=_person_identity(user if isinstance(user, dict) else {}),

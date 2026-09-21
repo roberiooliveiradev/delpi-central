@@ -291,11 +291,66 @@ def test_mapping_repairs_legacy_text_and_strips_html():
         },
     )
     assert detail.description == "Rede não quer funcionar"
+    assert detail.description_html == "<p>Rede não quer funcionar</p>"
     assert detail.timeline[0].content == "Máquina ligada"
+    assert detail.timeline[0].content_html == "<p>Máquina ligada</p>"
     assert detail.category == ""
 
 
-def test_mapping_keeps_text_that_is_already_utf8():
+def test_mapping_publishes_sanitized_html_and_rewrites_owned_documents():
+    detail = parse_ticket_detail(
+        {
+            "id": 1108,
+            "name": "Foto",
+            "content": (
+                '<p><strong>Rede</strong> ok</p>'
+                '<p><a href="https://example.com/docs">manual</a></p>'
+                '<p><a href="/front/document.send.php?docid=391&amp;itemtype=Ticket&amp;items_id=1108" target="_blank">'
+                '<img src="/front/document.send.php?docid=391" alt="placa" width="100" /></a></p>'
+                '<p><img src="/front/document.send.php?docid=999" alt="alheio" /></p>'
+                '<script>alert(1)</script>'
+                '<p><a href="javascript:alert(1)">x</a></p>'
+                '<img src="x" onerror="alert(1)" />'
+            ),
+            "status": {"id": 1, "name": "Novo"},
+            "urgency": 2,
+        },
+        {
+            "results": [
+                {
+                    "type": "Document",
+                    "item": {
+                        "documents_id": 391,
+                        "filename": "placa.png",
+                        "mime": "image/png",
+                    },
+                },
+                {
+                    "type": "Followup",
+                    "item": {
+                        "id": 12,
+                        "content": "<p>Cabo <em>ok</em></p><script>bad()</script>",
+                        "date_creation": "2026-09-21T11:00:00Z",
+                        "user": {"name": "Ana"},
+                    },
+                },
+            ]
+        },
+    )
+    assert detail.description == "Rede ok manual x"
+    assert "<strong>Rede</strong>" in detail.description_html
+    assert 'href="https://example.com/docs"' in detail.description_html
+    assert "/front/document.send.php" not in detail.description_html
+    assert 'src="/apps/helpdesk-api/tickets/1108/attachments/391"' in detail.description_html
+    assert 'alt="placa"' in detail.description_html
+    assert "docid=999" not in detail.description_html
+    assert "alheio" not in detail.description_html
+    assert "<script" not in detail.description_html.lower()
+    assert "javascript:" not in detail.description_html.lower()
+    assert "onerror" not in detail.description_html.lower()
+    assert detail.timeline[0].content == "Cabo ok"
+    assert detail.timeline[0].content_html == "<p>Cabo <em>ok</em></p>"
+    assert [item.document_id for item in detail.attachments] == [391]
     detail = parse_ticket_detail(
         {
             "id": 5,
