@@ -20,8 +20,12 @@ import { resolveFederationEntry } from "./appHostEntry";
 import {
   buildGlobalDeliaHostProps,
   findAuthorizedDeliaApp,
+  isUsableFocusTarget,
+  listModalFocusables,
   normalizeAppBasePath,
   resolveDeliaExposedModule,
+  resolveFocusReturnTarget,
+  resolveModalTabTarget,
   shouldKeepGlobalDeliaPanelOpen,
   shouldRenderGlobalDeliaLauncher,
 } from "./globalDeliaSurface";
@@ -35,9 +39,10 @@ const GLOBAL_DELIA_HELP =
 type GlobalDeliaContextValue = {
   launcherVisible: boolean;
   panelOpen: boolean;
-  toggle: () => void;
+  toggleFrom: (trigger: HTMLElement) => void;
   close: () => void;
-  launcherRef: RefObject<HTMLButtonElement | null>;
+  desktopLauncherRef: RefObject<HTMLButtonElement | null>;
+  mobileLauncherRef: RefObject<HTMLButtonElement | null>;
 };
 
 const GlobalDeliaContext = createContext<GlobalDeliaContextValue | null>(null);
@@ -47,7 +52,10 @@ export function GlobalDeliaProvider({ children }: { children: ReactNode }) {
   const location = useLocation();
   const navigate = useNavigate();
   const [requestedOpen, setRequestedOpen] = useState(false);
-  const launcherRef = useRef<HTMLButtonElement | null>(null);
+  const requestedOpenRef = useRef(false);
+  const desktopLauncherRef = useRef<HTMLButtonElement | null>(null);
+  const mobileLauncherRef = useRef<HTMLButtonElement | null>(null);
+  const openerRef = useRef<HTMLElement | null>(null);
 
   const deliaApp = useMemo(() => findAuthorizedDeliaApp(apps), [apps]);
   const launcherVisible = shouldRenderGlobalDeliaLauncher({
@@ -62,19 +70,33 @@ export function GlobalDeliaProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!deliaApp || !launcherVisible) {
+      requestedOpenRef.current = false;
       setRequestedOpen(false);
     }
   }, [deliaApp, launcherVisible]);
 
-  const toggle = useCallback(() => {
-    if (!launcherVisible) return;
-    setRequestedOpen((open) => !open);
-  }, [launcherVisible]);
-
   const close = useCallback(() => {
+    const opener = openerRef.current;
+    const desktop = desktopLauncherRef.current;
+    const mobile = mobileLauncherRef.current;
+    requestedOpenRef.current = false;
     setRequestedOpen(false);
-    queueMicrotask(() => launcherRef.current?.focus());
+    queueMicrotask(() => {
+      const target = resolveFocusReturnTarget(opener, [desktop, mobile]);
+      if (isUsableFocusTarget(target)) target.focus();
+    });
   }, []);
+
+  const toggleFrom = useCallback((trigger: HTMLElement) => {
+    if (!launcherVisible) return;
+    if (requestedOpenRef.current) {
+      close();
+      return;
+    }
+    openerRef.current = trigger;
+    requestedOpenRef.current = true;
+    setRequestedOpen(true);
+  }, [launcherVisible, close]);
 
   const hostProps = useMemo(() => {
     if (!deliaApp) return null;
@@ -89,6 +111,7 @@ export function GlobalDeliaProvider({ children }: { children: ReactNode }) {
 
   const openFullPage = useCallback(() => {
     if (!deliaApp) return;
+    requestedOpenRef.current = false;
     setRequestedOpen(false);
     navigate(normalizeAppBasePath(deliaApp.basePath));
   }, [deliaApp, navigate]);
@@ -97,11 +120,12 @@ export function GlobalDeliaProvider({ children }: { children: ReactNode }) {
     () => ({
       launcherVisible,
       panelOpen,
-      toggle,
+      toggleFrom,
       close,
-      launcherRef,
+      desktopLauncherRef,
+      mobileLauncherRef,
     }),
-    [launcherVisible, panelOpen, toggle, close],
+    [launcherVisible, panelOpen, toggleFrom, close],
   );
 
   return (
@@ -131,7 +155,7 @@ export function GlobalDeliaSidebarLauncher() {
   return (
     <div className="global-delia-launcher-wrap">
       <button
-        ref={ctx.launcherRef}
+        ref={ctx.desktopLauncherRef}
         type="button"
         className={[
           "sidebar-footer-item",
@@ -144,7 +168,7 @@ export function GlobalDeliaSidebarLauncher() {
         aria-expanded={ctx.panelOpen}
         aria-controls={ctx.panelOpen ? "global-delia-panel" : undefined}
         data-tour="sidebar-delia"
-        onClick={ctx.toggle}
+        onClick={(event) => ctx.toggleFrom(event.currentTarget)}
       >
         <Sparkles size={18} aria-hidden="true" />
         <span>DÉLIA</span>
@@ -160,12 +184,13 @@ export function GlobalDeliaMobileLauncher() {
 
   return (
     <button
+      ref={ctx.mobileLauncherRef}
       type="button"
       className={`portal-mobile-nav__button ${ctx.panelOpen ? "is-active" : ""}`}
       aria-label="Abrir DÉLIA"
       aria-expanded={ctx.panelOpen}
       data-tour="portal-mobile-nav-delia"
-      onClick={ctx.toggle}
+      onClick={(event) => ctx.toggleFrom(event.currentTarget)}
     >
       <Sparkles size={20} strokeWidth={2.1} aria-hidden="true" />
     </button>
@@ -180,6 +205,7 @@ function GlobalDeliaPanel(props: {
   onOpenFullPage: () => void;
 }) {
   const titleId = useId();
+  const panelRef = useRef<HTMLElement | null>(null);
   const { hostRef, error, ready } = useFederatedRemoteMount({
     enabled: true,
     entryUrl: props.entryUrl,
@@ -190,8 +216,19 @@ function GlobalDeliaPanel(props: {
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
+        event.preventDefault();
         props.onClose();
+        return;
       }
+      if (event.key !== "Tab" || !panelRef.current) return;
+      const next = resolveModalTabTarget(
+        listModalFocusables(panelRef.current),
+        document.activeElement,
+        event.shiftKey,
+      );
+      if (!next) return;
+      event.preventDefault();
+      next.focus();
     }
 
     window.addEventListener("keydown", handleKeyDown);
@@ -215,6 +252,7 @@ function GlobalDeliaPanel(props: {
         onClick={props.onClose}
       />
       <aside
+        ref={panelRef}
         id="global-delia-panel"
         className="global-delia-panel"
         role="dialog"

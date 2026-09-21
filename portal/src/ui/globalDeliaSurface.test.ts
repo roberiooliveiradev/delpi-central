@@ -6,6 +6,8 @@ import {
   buildGlobalDeliaHostProps,
   findAuthorizedDeliaApp,
   isDeliaFullPagePath,
+  resolveFocusReturnTarget,
+  resolveModalTabTarget,
   shouldKeepGlobalDeliaPanelOpen,
   shouldRenderGlobalDeliaLauncher,
 } from "./globalDeliaSurface.ts";
@@ -151,5 +153,81 @@ describe("global host props", () => {
       user: null,
     });
     assert.equal(props.routeLabel, "DÉLIA");
+  });
+});
+
+function fakeTarget(options: {
+  connected?: boolean;
+  rects?: number;
+  label: string;
+}): HTMLElement {
+  const focused: string[] = [];
+  return {
+    isConnected: options.connected !== false,
+    getClientRects: () => Array.from({ length: options.rects ?? 1 }),
+    focus() {
+      focused.push(options.label);
+      (this as HTMLElement & { focused?: string[] }).focused = focused;
+    },
+  } as unknown as HTMLElement;
+}
+
+describe("focus return", () => {
+  it("devolve o foco ao gatilho desktop que abriu o painel", () => {
+    const desktop = fakeTarget({ label: "desktop" });
+    const mobile = fakeTarget({ label: "mobile", rects: 0 });
+    assert.equal(resolveFocusReturnTarget(desktop, [mobile]), desktop);
+  });
+
+  it("devolve o foco ao gatilho mobile quando o desktop não está usável", () => {
+    const desktop = fakeTarget({ label: "desktop", rects: 0 });
+    const mobile = fakeTarget({ label: "mobile" });
+    assert.equal(resolveFocusReturnTarget(mobile, [desktop]), mobile);
+    assert.equal(resolveFocusReturnTarget(desktop, [mobile]), mobile);
+  });
+
+  it("ignora gatilho desconectado", () => {
+    const gone = fakeTarget({ label: "gone", connected: false });
+    const desktop = fakeTarget({ label: "desktop" });
+    assert.equal(resolveFocusReturnTarget(gone, [desktop]), desktop);
+  });
+});
+
+describe("focus containment", () => {
+  it("Tab no último item volta ao primeiro e Shift+Tab no primeiro volta ao último", () => {
+    const first = fakeTarget({ label: "first" });
+    const last = fakeTarget({ label: "last" });
+    assert.equal(resolveModalTabTarget([first, last], last, false), first);
+    assert.equal(resolveModalTabTarget([first, last], first, true), last);
+    assert.equal(resolveModalTabTarget([first, last], null, false), first);
+  });
+});
+
+describe("full-page lifecycle transition", () => {
+  it("fecha o painel pedido quando a rota passa a ser a DÉLIA full-page", () => {
+    const apps = [deliaApp()];
+    assert.equal(
+      shouldKeepGlobalDeliaPanelOpen({
+        apps,
+        pathname: "/apps/helpdesk",
+        requestedOpen: true,
+      }),
+      true,
+    );
+    assert.equal(
+      shouldKeepGlobalDeliaPanelOpen({
+        apps,
+        pathname: "/apps/delia",
+        requestedOpen: true,
+      }),
+      false,
+    );
+    assert.equal(
+      shouldRenderGlobalDeliaLauncher({
+        apps,
+        pathname: "/apps/delia",
+      }),
+      false,
+    );
   });
 });

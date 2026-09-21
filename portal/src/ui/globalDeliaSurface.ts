@@ -47,6 +47,60 @@ export function shouldRenderGlobalDeliaLauncher(options: {
   return !isDeliaFullPagePath(options.pathname, app.basePath);
 }
 
+const MODAL_FOCUSABLE_SELECTOR = [
+  "a[href]",
+  "button:not([disabled])",
+  "input:not([disabled])",
+  "select:not([disabled])",
+  "textarea:not([disabled])",
+  '[tabindex]:not([tabindex="-1"])',
+].join(", ");
+
+/** Visible, connected control. Display:none yields an empty client rect. */
+export function isUsableFocusTarget(el: HTMLElement | null): el is HTMLElement {
+  if (!el || el.isConnected === false) return false;
+  if (typeof el.getClientRects === "function" && el.getClientRects().length === 0) {
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Focus returns to the trigger that opened the panel when it is still usable.
+ * Otherwise the first still-visible launcher. Transient only.
+ */
+export function resolveFocusReturnTarget(
+  trigger: HTMLElement | null,
+  fallbacks: Array<HTMLElement | null>,
+): HTMLElement | null {
+  if (isUsableFocusTarget(trigger)) return trigger;
+  for (const candidate of fallbacks) {
+    if (isUsableFocusTarget(candidate)) return candidate;
+  }
+  return null;
+}
+
+export function listModalFocusables(root: ParentNode): HTMLElement[] {
+  return Array.from(root.querySelectorAll<HTMLElement>(MODAL_FOCUSABLE_SELECTOR)).filter(
+    (el) => isUsableFocusTarget(el),
+  );
+}
+
+/** Tab cycles inside the dialog. Focus outside the list lands on the first item. */
+export function resolveModalTabTarget(
+  focusables: HTMLElement[],
+  active: Element | null,
+  shiftKey: boolean,
+): HTMLElement | null {
+  if (!focusables.length) return null;
+  const index = focusables.findIndex((el) => el === active);
+  if (index < 0) return shiftKey ? focusables[focusables.length - 1] : focusables[0];
+  if (shiftKey) {
+    return focusables[index === 0 ? focusables.length - 1 : index - 1];
+  }
+  return focusables[index === focusables.length - 1 ? 0 : index + 1];
+}
+
 export function shouldKeepGlobalDeliaPanelOpen(options: {
   apps: AppItem[] | undefined;
   pathname: string;

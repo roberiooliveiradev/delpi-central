@@ -114,6 +114,7 @@ export function createFederatedMountSession(options?: {
   loadModule?: typeof loadFederatedExposedModule;
 }): FederatedMountSession {
   const loadModule = options?.loadModule ?? loadFederatedExposedModule;
+  let generation = 0;
   let module: FederatedRemoteModule | null = null;
   let mountEl: HTMLElement | null = null;
   let currentEntry: string | null = null;
@@ -122,11 +123,23 @@ export function createFederatedMountSession(options?: {
   return {
     async mount(el, entryUrl, props, exposedModule = "./App") {
       this.unmount();
+      const ownGeneration = ++generation;
+
+      let loaded: FederatedRemoteModule;
+      try {
+        loaded = await loadModule(entryUrl, exposedModule);
+      } catch (error) {
+        if (ownGeneration !== generation) return;
+        throw error;
+      }
+
+      if (ownGeneration !== generation) return;
+
       mountEl = el;
       currentEntry = entryUrl;
       currentExposed = exposedModule;
+      module = loaded;
       mountEl.innerHTML = "";
-      module = await loadModule(entryUrl, exposedModule);
       module.mount(mountEl, props);
     },
     updateRoute(props) {
@@ -134,6 +147,7 @@ export function createFederatedMountSession(options?: {
       updateFederatedRemote(module, mountEl, props);
     },
     unmount() {
+      generation += 1;
       const el = mountEl;
       const mounted = module;
       module = null;

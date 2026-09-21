@@ -22,11 +22,15 @@ describe("global DÉLIA surface wiring", () => {
     assert.match(appHost, /updateFederatedRemote/);
     assert.match(appHost, /unmountFederatedRemote/);
     assert.doesNotMatch(appHost, /loadFederatedContainer/);
-    assert.match(remoteHost, /import\(\s*\/\* @vite-ignore \*\/ entryUrl/);
+    assert.match(remoteHost, /ownGeneration !== generation/);
     assert.match(surface, /DELIA_APP_ID = "delia"/);
     assert.match(surface, /DELIA_EXPOSED_MODULE = "\.\/App"/);
     assert.doesNotMatch(surface, /permissions\.includes/);
     assert.match(surface, /Do not consult permissions, roles, groups, or isSuperadmin/);
+    assert.match(panel, /resolveModalTabTarget/);
+    assert.match(panel, /resolveFocusReturnTarget/);
+    assert.match(panel, /openerRef/);
+    assert.match(panel, /mobileLauncherRef/);
     assert.doesNotMatch(panel, /localStorage|sessionStorage|indexedDB/i);
     assert.match(app, /GlobalDeliaProvider/);
     assert.match(app, /<AppHost /);
