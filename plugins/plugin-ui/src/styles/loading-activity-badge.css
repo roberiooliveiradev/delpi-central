@@ -88,6 +88,13 @@
   animation: delpi-ui-loading-slide 1.4s ease-in-out infinite;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .delpi-ui-loading-activity-badge__spinner,
+  .delpi-ui-loading-activity-badge__bar-indicator {
+    animation: none;
+  }
+}
+
 @media (max-width: 640px) {
   .delpi-ui-loading-activity-badge {
     min-height: 34px;

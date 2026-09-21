@@ -603,11 +603,24 @@ DOES NOT OWN: fórmula de IDD, cálculo de meta, status “dentro da meta”.
 | `icon` | `ReactNode` | Ícone à direita |
 | `footer` | `ReactNode?` | Slot inferior |
 | `onClick` / `aria-label` | `() => void` / `string` | Torna o `<article>` acionável (`role="button"`) para drill-down; cliques em help/`a`/`button` internos são ignorados |
-| `loading` | `boolean?` | Placeholder `…` |
+| `loading` | `boolean?` | Primeira leitura: placeholder `…` no lugar do valor |
+| `refreshing` | `boolean?` | Nova consulta: mantém valor e meta anteriores, `aria-busy` e classe `--refreshing` |
+
+`loading` é a primeira leitura (ainda não há valor). `refreshing` é atualização com conteúdo anterior visível. O portal dono do fetch passa os booleanos; o kit não busca dados.
 | `classNames` | `KpiCardClassNames` | BEM do plugin (incl. `goalHelp` / `goalMonthly`) |
 | `labels` | `KpiCardLabels` | Textos PT do plugin |
 
 Helpers: `kpiCardBemClasses(prefix)` e `createDashboardKpiCard({ prefix, labels })` para wrapper de uma linha nos dashboards.
+
+Gramática compartilhada de apresentação (o portal continua dono do fetch):
+
+| Estado | Chrome |
+|--------|--------|
+| Initial loading | `LoadingActivityCard` / `KpiCard loading` — ainda não há valor |
+| Refreshing | conteúdo anterior + `LoadingActivityBadge` / `KpiCard refreshing` |
+| Partial | dados válidos permanecem; a parte que falhou usa o estado do próprio portal |
+| Error | mensagem do portal + retry local |
+| Empty | empty state real, depois da consulta terminar |
 
 ### `LoadingActivityCard`
 

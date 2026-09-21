@@ -32,6 +32,7 @@ const REQUIRED_HOST_EXPORTS = [
   "portalDayPeriodGreeting",
   "createDashboardDepartmentScoreBadge",
   "DepartmentScoreBadge",
+  "LoadingActivityBadge",
   "QuickPeriodSelector",
   "createDashboardQuickPeriodSelector",
   "resolvePeriodPreset",

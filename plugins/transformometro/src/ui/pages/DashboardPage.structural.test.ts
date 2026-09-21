@@ -13,6 +13,10 @@ describe("DashboardPage shared chrome", () => {
     expect(source).toMatch(/pickSiIddScoreLabel|iddScoreLabel=\{grossSavingsPresentation/);
     expect(source).toMatch(/DepartmentScoreBadge/);
     expect(source).toMatch(/QuickPeriodSelector/);
+    expect(source).toMatch(/shouldCommitDashboardRequest/);
+    expect(source).toMatch(/pageRefreshing/);
+    expect(source).toMatch(/refreshing=\{pageRefreshing\}/);
+    expect(source).not.toMatch(/PortalAsyncActivityProvider/);
     expect(source).toMatch(/applyDashboardPeriodPreset/);
     expect(source).toMatch(/fetchDashboardStrategicIndicators/);
     expect(source).not.toMatch(/calculateIndicatorIddScore/);

@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { RefreshCw } from "lucide-react";
-import { PageHero, pageHeroBemClasses, type PageHeroHighlight } from "@delpi/plugin-ui/index";
+import { PageHero, pageHeroBemClasses, LoadingActivityBadge, type PageHeroHighlight } from "@delpi/plugin-ui/index";
 
 import { PORTAL_PRODUCT_NAME } from "../constants/portalExperience";
 import { DS_GHOST_BTN } from "./ghostChrome";
@@ -58,11 +58,13 @@ export function PageHeader({
                 className={DS_GHOST_BTN}
                 onClick={onRefresh}
                 disabled={refreshing}
+                aria-busy={refreshing || undefined}
               >
                 <RefreshCw size={16} aria-hidden="true" />
                 {refreshing ? "Atualizando…" : "Atualizar"}
               </button>
             ) : null}
+            {refreshing ? <LoadingActivityBadge label="Atualizando…" /> : null}
             {actions}
           </>
         }

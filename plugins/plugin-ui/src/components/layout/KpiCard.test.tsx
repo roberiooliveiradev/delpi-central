@@ -209,4 +209,24 @@ describe("KpiCard", () => {
     );
     expect(screen.getByRole("heading", { level: 3 }).textContent).toBe("…");
   });
+
+  it("mantém o valor anterior enquanto refreshing", () => {
+    render(
+      <KpiCard
+        title="Economia bruta"
+        value="R$ 28.490,42"
+        goalLabel="10.000"
+        iddScoreLabel="8,4"
+        refreshing
+        icon={<span />}
+        classNames={kpiCardBemClasses("ds")}
+        labels={LABELS}
+      />,
+    );
+    const card = screen.getByRole("article");
+    expect(card.getAttribute("aria-busy")).toBe("true");
+    expect(card.className).toContain("delpi-ui-kpi-card--refreshing");
+    expect(screen.getByRole("heading", { level: 3 }).textContent).toBe("R$ 28.490,42");
+    expect(screen.getByText("8,4")).toBeTruthy();
+  });
 });

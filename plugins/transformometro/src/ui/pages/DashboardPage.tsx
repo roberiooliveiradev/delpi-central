@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertTriangle,
   CalendarClock,
@@ -82,6 +82,11 @@ import {
   defaultDashboardPeriod,
   effectiveDashboardPeriodPreset,
 } from "../../utils/dashboardPeriod";
+import {
+  dashboardRequestKey,
+  isDashboardRefreshing,
+  shouldCommitDashboardRequest,
+} from "../../utils/dashboardRequest";
 import { horasEconomizadasDiaria } from "../../utils/calcRules";
 import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
 import { buildProcessoPath } from "../../utils/routeParser";
@@ -190,7 +195,8 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
   const [vencidas, setVencidas] = useState<DashboardVencimentoItem[]>([]);
   const [porFamilia, setPorFamilia] = useState<DashboardFamiliaItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const [reloadNonce, setReloadNonce] = useState(0);
+  const [settledRequestKey, setSettledRequestKey] = useState<string | null>(null);
   const [recalculating, setRecalculating] = useState(false);
   const [exporting, setExporting] = useState<"csv" | "excel" | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -253,6 +259,19 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
     if (siBranch) next.branch = siBranch;
     return next;
   }, [filters.competence, filters.dataFinal, filters.dataInicial, siBranch]);
+  const requestKey = useMemo(
+    () =>
+      dashboardRequestKey({
+        params,
+        siParams,
+        granularity: savingsGranularity,
+        reloadNonce,
+      }),
+    [params, reloadNonce, savingsGranularity, siParams],
+  );
+  const latestRequestKey = useRef(requestKey);
+  latestRequestKey.current = requestKey;
+  const pageRefreshing = isDashboardRefreshing(Boolean(resumo), settledRequestKey, requestKey);
   const grossSavingsPresentation = useMemo(
     () =>
       buildGrossSavingsKpiPresentation(
@@ -363,7 +382,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
   }, [clearStoredPeriodPreset]);
 
   const load = useCallback(async () => {
-    setRefreshing(true);
+    const startedKey = requestKey;
     setSiLoading(true);
     try {
       const evolucaoParams = {
@@ -387,6 +406,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
         fetchDashboardVencimentos(getAccessToken, params),
         fetchDashboardStrategicIndicators(getAccessToken, siParams).catch(() => null),
       ]);
+      if (!shouldCommitDashboardRequest(startedKey, latestRequestKey.current)) return;
       setResumo(resumoData);
       setEvolucao(evolucaoData.items);
       setProcessos(processosData.items);
@@ -395,14 +415,18 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
       setVencendo(vencimentosData.vencendo ?? []);
       setVencidas(vencimentosData.vencidas ?? []);
       setStrategicIndicators(siData);
+      setError(null);
     } catch (err) {
+      if (!shouldCommitDashboardRequest(startedKey, latestRequestKey.current)) return;
       setError(err instanceof Error ? err.message : "Erro ao carregar dashboard");
     } finally {
-      setLoading(false);
-      setRefreshing(false);
-      setSiLoading(false);
+      if (shouldCommitDashboardRequest(startedKey, latestRequestKey.current)) {
+        setLoading(false);
+        setSiLoading(false);
+        setSettledRequestKey(startedKey);
+      }
     }
-  }, [getAccessToken, params, savingsGranularity, siParams]);
+  }, [getAccessToken, params, requestKey, savingsGranularity, siParams]);
 
   useEffect(() => {
     void load();
@@ -412,12 +436,12 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
     catalogId: "dashboard",
     getAccessToken,
     onUpdated: () => {
-      void load();
+      setReloadNonce((nonce) => nonce + 1);
     },
   });
 
-  async function handleRefresh() {
-    await load();
+  function handleRefresh() {
+    setReloadNonce((nonce) => nonce + 1);
   }
 
   async function handleRecalcCache() {
@@ -434,7 +458,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
     setError(null);
     try {
       await recalcularDashboard(getAccessToken);
-      await load();
+      setReloadNonce((nonce) => nonce + 1);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao recalcular cache do dashboard");
     } finally {
@@ -628,7 +652,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
     [onNavigate]
   );
 
-  const isBusy = loading || refreshing;
+  const isBusy = loading || pageRefreshing;
   const dashboardFetchProgress = useTrackedSingleFetchProgress(loading && !resumo);
   const dashboardLoadingProgress = useLoadingProgress(
     loading && !resumo,
@@ -647,7 +671,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
           badge={
             <DepartmentScoreBadge
               classNames={DEPT_IDD}
-              loading={siLoading}
+              loading={siLoading && !globalIddLabel}
               scoreLabel={globalIddLabel}
               classification={globalIddClassification}
             />
@@ -683,18 +707,18 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
         badge={
           <DepartmentScoreBadge
             classNames={DEPT_IDD}
-            loading={siLoading}
+            loading={siLoading && !globalIddLabel}
             scoreLabel={globalIddLabel}
             classification={globalIddClassification}
           />
         }
         onRefresh={() => void handleRefresh()}
-        refreshing={refreshing || recalculating}
+        refreshing={pageRefreshing || recalculating}
         actions={
           <DashboardToolbarMenu
             exporting={exporting}
             recalculating={recalculating}
-            disabled={refreshing}
+            disabled={pageRefreshing}
             onExportCsv={() => void handleDownloadCsv()}
             onExportExcel={() => void handleDownloadExcel()}
             onRecalcCache={() => void handleRecalcCache()}
@@ -808,7 +832,8 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
         hasData={Boolean(resumo)}
         onRetry={() => {
           setError(null);
-          void load();
+          if (!resumo) setLoading(true);
+          setReloadNonce((nonce) => nonce + 1);
         }}
         onDismissError={() => setError(null)}
       />
@@ -909,14 +934,15 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
         labels={SECTION_LABELS}
         title="Indicadores"
       >
-      <section className="ds-kpi-grid">
+      <section className="ds-kpi-grid" aria-busy={pageRefreshing || undefined}>
         <KpiCard
           title="Economia líquida"
           titleHint={TM_HELP_TOOLTIPS.dashboard.kpis.economiaLiquida}
           value={formatCurrency(resumo?.economia_liquida_total)}
           contextLabel={kpiContext}
           icon={<Coins size={22} />}
-          loading={isBusy && !resumo}
+          loading={loading && !resumo}
+          refreshing={pageRefreshing}
         />
         <KpiCard
           title="Economia bruta"
@@ -934,7 +960,8 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
           goalPerformanceBadge={grossSavingsPresentation.goalPerformanceBadge}
           iddScoreLabel={grossSavingsPresentation.iddScoreLabel}
           icon={<Coins size={22} />}
-          loading={isBusy && !resumo}
+          loading={loading && !resumo}
+          refreshing={pageRefreshing}
         />
         <KpiCard
           title="Soluções implementadas"
@@ -942,7 +969,8 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
           value={formatDecimal(resumo?.solucoes_implementadas, 0)}
           contextLabel={kpiContext}
           icon={<Lightbulb size={22} />}
-          loading={isBusy && !resumo}
+          loading={loading && !resumo}
+          refreshing={pageRefreshing}
         />
         <KpiCard
           title="Horas economizadas"
@@ -950,7 +978,8 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
           value={formatDecimal(resumo?.horas_economizadas_total, 1)}
           contextLabel={kpiContext}
           icon={<Clock size={22} />}
-          loading={isBusy && !resumo}
+          loading={loading && !resumo}
+          refreshing={pageRefreshing}
         />
         <KpiCard
           title="ROI acumulado"
@@ -958,7 +987,8 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
           value={formatRoiRatio(resumo?.roi_medio, 1)}
           contextLabel={kpiContext}
           icon={<TrendingUp size={22} />}
-          loading={isBusy && !resumo}
+          loading={loading && !resumo}
+          refreshing={pageRefreshing}
         />
         <KpiCard
           title="Investimento total"
@@ -966,7 +996,8 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
           value={formatCurrency(resumo?.investimento_total ?? resumo?.investimento_unico_total)}
           contextLabel={kpiContext}
           icon={<Coins size={22} />}
-          loading={isBusy && !resumo}
+          loading={loading && !resumo}
+          refreshing={pageRefreshing}
         />
       </section>
       </SectionCard>
@@ -1090,7 +1121,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
           rows={porFamilia}
           rowKey={(row) => row.familia_processo}
           loading={loading}
-          refreshing={refreshing}
+          refreshing={pageRefreshing}
           emptyMessage=""
         />
       ) : null}
@@ -1104,7 +1135,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
         rows={processos}
         rowKey={(row) => row.processo_id}
         loading={loading}
-        refreshing={refreshing}
+        refreshing={pageRefreshing}
         emptyMessage="Nenhum processo com economia calculada no período. Cadastre revisões e medições."
       />
     </TransformometroShell>

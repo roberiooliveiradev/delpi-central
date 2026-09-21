@@ -48,6 +48,8 @@ export {
   formatPortalGreeting,
   portalDayPeriodGreeting,
 } from "./utils/portalGreeting";
+/** Hosts sinalizam refresh sem fetch no kit. */
+export { LoadingActivityBadge } from "./components/feedback/LoadingActivityBadge";
 /** Hosts dos portais consomem o chrome de IDD sem uso interno no remote. */
 export {
   DepartmentScoreBadge,

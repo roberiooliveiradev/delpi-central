@@ -71,7 +71,10 @@ export type KpiCardProps = {
   subtitle?: string;
   icon: ReactNode;
   footer?: ReactNode;
+  /** Primeira leitura: substitui o valor por placeholder. */
   loading?: boolean;
+  /** Nova consulta com valor anterior ainda visível. */
+  refreshing?: boolean;
   classNames: KpiCardClassNames;
   labels: KpiCardLabels;
   className?: string;
@@ -145,6 +148,7 @@ export function KpiCard({
   icon,
   footer = null,
   loading = false,
+  refreshing = false,
   classNames,
   labels,
   className,
@@ -185,6 +189,7 @@ export function KpiCard({
     classNames.article,
     comparisonTone ? `delpi-ui-kpi-card--${comparisonTone}` : null,
     interactive ? "delpi-ui-kpi-card--interactive" : null,
+    refreshing && !loading ? "delpi-ui-kpi-card--refreshing" : null,
     className,
   ]
     .filter(Boolean)
@@ -210,6 +215,7 @@ export function KpiCard({
   return (
     <article
       className={articleClass}
+      aria-busy={loading || refreshing ? true : undefined}
       {...(interactive
         ? {
             role: "button" as const,
