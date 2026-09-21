@@ -1,73 +1,231 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { EmptyState, ActionButton, emptyStateCardBemClasses } from "@delpi/plugin-ui/index";
+import {
+  ActionButton,
+  EmptyState,
+  ScopeChipBar,
+  TaskEditorFrame,
+  TaskItemsTable,
+  UserDirectoryPicker,
+  buildTaskWorkspaceHighlights,
+  emptyStateCardBemClasses,
+  scopeChipBarBemClasses,
+  type DirectoryUserOption,
+  type TaskItemPresentation,
+} from "@delpi/plugin-ui/index";
 
 import type { AppProps } from "../../App";
-import { DataTableSection, type DataTableColumn } from "../../components/DataTableSection";
 import { LoadingActivityCard } from "../../components/LoadingActivityCard";
 import { PageHeader } from "../../components/PageHeader";
 import { TransformometroShell } from "../../components/TransformometroShell";
+import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
+import { TmNativeTextAreaField, TmNativeTextField } from "../../components/ui/tmNativeFormFields";
 import { PORTAL_PAGE_COPY } from "../../constants/portalExperience";
 import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
-import { pendingAtas } from "../../data/api/transformometroMeetingMinutesApi";
-import { ataStatusLabel } from "../meeting-minutes/meetingMinuteStatusUi";
-import { projectPendingSignatureTasks, type MyTaskProjection } from "./myTaskProjection";
+import { fetchMeProfile } from "../../data/api/meApi";
+import { searchDirectoryUsers } from "../../data/api/transformometroMeetingMinutesApi";
+import {
+  cancelTask,
+  completeTask,
+  createTask,
+  getTask,
+  listMyTaskItems,
+  updateTask,
+  type MyTaskItemDto,
+  type MyTaskItemsResponse,
+} from "../../data/api/transformometroTasksApi";
+import { toTaskItemPresentation } from "./myTaskPresentation";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
   pathname?: string;
   onNavigate: (path: string) => void;
 };
 
+type FilterId = "pending" | "completed" | "all";
+type FormMode = "closed" | "create" | "edit";
+
 const EMPTY = emptyStateCardBemClasses("ds");
+const CHIPS = scopeChipBarBemClasses("ds");
 
 export function MyTasksPage({ getAccessToken, pathname, onNavigate }: Props) {
-  const [tasks, setTasks] = useState<MyTaskProjection[] | null>(null);
+  const confirm = useConfirm();
+  const [payload, setPayload] = useState<MyTaskItemsResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [reloadNonce, setReloadNonce] = useState(0);
+  const [filter, setFilter] = useState<FilterId>("pending");
+  const [formMode, setFormMode] = useState<FormMode>("closed");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [dueDate, setDueDate] = useState("");
+  const [assignee, setAssignee] = useState<DirectoryUserOption[]>([]);
+  const [me, setMe] = useState<DirectoryUserOption | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [query, setQuery] = useState("");
+
+  useEffect(() => {
+    void fetchMeProfile(getAccessToken)
+      .then((profile) => {
+        if (!profile.id) return;
+        const self = { id: profile.id, name: profile.name || "Eu", email: "" };
+        setMe(self);
+        setAssignee((current) => (current.length ? current : [self]));
+      })
+      .catch(() => undefined);
+  }, [getAccessToken]);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await pendingAtas(getAccessToken);
-      setTasks(projectPendingSignatureTasks(response.items ?? []));
+      const next = await listMyTaskItems(getAccessToken, filter);
+      setPayload(next);
       setError(null);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Não foi possível carregar suas tarefas.");
     } finally {
       setLoading(false);
     }
-  }, [getAccessToken]);
+  }, [filter, getAccessToken]);
 
   useEffect(() => {
     void load();
   }, [load, reloadNonce]);
 
-  const refreshing = Boolean(tasks) && loading;
-  const columns = useMemo<DataTableColumn<MyTaskProjection>[]>(
-    () => [
-      { key: "title", header: "Tarefa", render: (row) => row.title },
-      { key: "source", header: "Origem", render: () => "Ata" },
-      { key: "status", header: "Status", render: (row) => ataStatusLabel(row.status) },
-      {
-        key: "context",
-        header: "Contexto",
-        render: (row) => row.contextLabel ?? "—",
-      },
-      {
-        key: "action",
-        header: "Ação",
-        interactive: true,
-        render: (row) => (
-          <ActionButton variant="link" onClick={() => onNavigate(row.route)}>
-            Abrir
-          </ActionButton>
-        ),
-      },
-    ],
-    [onNavigate],
-  );
+  const refreshing = Boolean(payload) && loading;
+  const items = payload?.items ?? [];
+  const rows = useMemo(() => {
+    const mapped = items.map((item) =>
+      toTaskItemPresentation(
+        item,
+        item.assignee_user_id && me?.id === item.assignee_user_id ? me.name : null,
+      ),
+    );
+    const needle = query.trim().toLowerCase();
+    if (!needle) return mapped;
+    return mapped.filter((row) =>
+      [row.title, row.description, row.sourceLabel, row.contextLabel]
+        .filter(Boolean)
+        .some((value) => String(value).toLowerCase().includes(needle)),
+    );
+  }, [items, me, query]);
+  const highlights = buildTaskWorkspaceHighlights(payload?.summary ?? { pending: 0 }, {
+    loading: refreshing || (loading && !payload),
+    includeDueBuckets: true,
+  });
 
-  if (loading && !tasks) {
+  function openCreate() {
+    setFormMode("create");
+    setEditingId(null);
+    setTitle("");
+    setDescription("");
+    setDueDate("");
+    setAssignee(me ? [me] : []);
+  }
+
+  function openEdit(item: TaskItemPresentation) {
+    const source = items.find((row) => row.id === item.id);
+    if (!source || source.type !== "manual_task") return;
+    setFormMode("edit");
+    setEditingId(source.source_id);
+    setTitle(source.title);
+    setDescription(source.description ?? "");
+    setDueDate(source.due_date ?? "");
+    setAssignee(
+      source.assignee_user_id
+        ? [{ id: source.assignee_user_id, name: me?.name || "Responsável", email: "" }]
+        : me
+          ? [me]
+          : [],
+    );
+  }
+
+  function closeForm() {
+    setFormMode("closed");
+    setEditingId(null);
+  }
+
+  const reviewRows = [
+    { label: "Título", value: title.trim() || "—" },
+    { label: "Responsável", value: assignee[0]?.name || "—" },
+    { label: "Prazo", value: dueDate || "Sem prazo" },
+    { label: "Descrição", value: description.trim() || "—" },
+  ];
+
+  async function submit() {
+    if (!title.trim()) return;
+    const assigneeId = assignee[0]?.id || me?.id || "";
+    const confirmed = await confirm({
+      title: formMode === "edit" ? "Salvar tarefa?" : "Criar tarefa?",
+      message: `${title.trim()} · ${assignee[0]?.name || "você"} · ${dueDate || "sem prazo"}`,
+      confirmLabel: formMode === "edit" ? "Salvar" : "Criar tarefa",
+    });
+    if (!confirmed) return;
+    setSaving(true);
+    try {
+      const payloadWrite = {
+        title: title.trim(),
+        description: description.trim() || null,
+        assignee_user_id: assigneeId || null,
+        due_date: dueDate || null,
+      };
+      const saved =
+        formMode === "edit" && editingId
+          ? await updateTask(editingId, payloadWrite, getAccessToken)
+          : await createTask(payloadWrite, getAccessToken);
+      const readBack = await getTask(saved.id, getAccessToken);
+      if (readBack.title !== payloadWrite.title || readBack.assignee_user_id !== (assigneeId || readBack.assignee_user_id)) {
+        throw new Error("A gravação não confirmou o estado esperado.");
+      }
+      closeForm();
+      setReloadNonce((nonce) => nonce + 1);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Não foi possível gravar a tarefa.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function onComplete(item: TaskItemPresentation) {
+    const source = items.find((row) => row.id === item.id);
+    if (!source || source.type !== "manual_task") return;
+    const confirmed = await confirm({
+      title: "Concluir tarefa?",
+      message: source.title,
+      confirmLabel: "Concluir",
+    });
+    if (!confirmed) return;
+    try {
+      const done = await completeTask(source.source_id, getAccessToken);
+      if (done.status !== "completed") throw new Error("A conclusão não foi confirmada.");
+      setReloadNonce((nonce) => nonce + 1);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Não foi possível concluir a tarefa.");
+    }
+  }
+
+  async function onCancel(item: TaskItemPresentation) {
+    const source = items.find((row) => row.id === item.id);
+    if (!source || source.type !== "manual_task") return;
+    const confirmed = await confirm({
+      title: "Cancelar tarefa?",
+      message: source.title,
+      confirmLabel: "Cancelar tarefa",
+    });
+    if (!confirmed) return;
+    try {
+      const cancelled = await cancelTask(source.source_id, getAccessToken);
+      if (cancelled.status !== "cancelled") throw new Error("O cancelamento não foi confirmado.");
+      setReloadNonce((nonce) => nonce + 1);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Não foi possível cancelar a tarefa.");
+    }
+  }
+
+  function onOpen(item: TaskItemPresentation) {
+    if (item.route) onNavigate(item.route);
+  }
+
+  if (loading && !payload) {
     return (
       <TransformometroShell>
         <PageHeader
@@ -79,13 +237,11 @@ export function MyTasksPage({ getAccessToken, pathname, onNavigate }: Props) {
         />
         <LoadingActivityCard
           title="Carregando suas tarefas"
-          description="Buscando assinaturas de ata que ainda exigem a sua ação."
+          description="Buscando tarefas do portal e assinaturas pendentes."
         />
       </TransformometroShell>
     );
   }
-
-  const rows = tasks ?? [];
 
   return (
     <TransformometroShell>
@@ -97,15 +253,32 @@ export function MyTasksPage({ getAccessToken, pathname, onNavigate }: Props) {
         onNavigate={onNavigate}
         onRefresh={() => setReloadNonce((nonce) => nonce + 1)}
         refreshing={refreshing}
-        highlights={[
-          {
-            id: "pending",
-            label: "Pendentes",
-            value: String(rows.length),
-            loading: refreshing,
-          },
-        ]}
-      />
+        highlights={highlights}
+        actions={
+          <ActionButton variant="primary" onClick={openCreate}>
+            Nova tarefa
+          </ActionButton>
+        }
+      >
+        <ScopeChipBar
+          classNames={CHIPS}
+          aria-label="Filtro de tarefas"
+          chips={[
+            { id: "pending", label: "Pendentes", active: filter === "pending", onSelect: () => setFilter("pending") },
+            { id: "completed", label: "Concluídas", active: filter === "completed", onSelect: () => setFilter("completed") },
+            { id: "all", label: "Todas", active: filter === "all", onSelect: () => setFilter("all") },
+          ]}
+        />
+        <TmNativeTextField
+          id="tm-task-search"
+          label="Buscar na lista"
+          type="search"
+          value={query}
+          onChange={setQuery}
+          placeholder="Título, origem ou contexto"
+        />
+      </PageHeader>
+      {payload?.partial_error ? <p role="status">{payload.partial_error}</p> : null}
       {error ? (
         <p role="alert">
           {error}{" "}
@@ -114,27 +287,65 @@ export function MyTasksPage({ getAccessToken, pathname, onNavigate }: Props) {
           </button>
         </p>
       ) : null}
+      {formMode !== "closed" ? (
+        <TaskEditorFrame
+          title={formMode === "edit" ? "Editar tarefa" : "Nova tarefa"}
+          subtitle="A tarefa fica no Portal Transforma+. Assinatura de ata continua na própria ata."
+          reviewRows={reviewRows}
+          onClose={closeForm}
+          primaryLabel={formMode === "edit" ? "Salvar alterações" : "Criar tarefa"}
+          onPrimary={() => void submit()}
+          primaryBusy={saving}
+          primaryDisabled={!title.trim()}
+        >
+          <TmNativeTextField id="tm-task-title" label="Título" value={title} onChange={setTitle} required />
+          <TmNativeTextAreaField
+            id="tm-task-description"
+            label="Descrição"
+            value={description}
+            onChange={setDescription}
+          />
+          <TmNativeTextField id="tm-task-due" label="Prazo" type="date" value={dueDate} onChange={setDueDate} />
+          <UserDirectoryPicker
+            value={assignee}
+            onChange={setAssignee}
+            searchUsers={(query, limit, signal) => searchDirectoryUsers(query, limit, signal, getAccessToken)}
+            maxSelected={1}
+            labels={{ title: "Responsável", placeholder: "Atribuir a mim ou buscar…" }}
+          />
+        </TaskEditorFrame>
+      ) : null}
       {rows.length === 0 && !error ? (
         <EmptyState
           classNames={EMPTY}
-          title="Nenhuma tarefa pendente"
-          defaultMessage="Nenhuma tarefa pendente no momento."
-        />
+          defaultMessage={
+            query.trim()
+              ? "Nenhuma tarefa corresponde à busca."
+              : filter === "completed"
+                ? "Nenhuma tarefa concluída."
+                : filter === "all"
+                  ? "Nenhuma tarefa nesta lista."
+                  : "Nenhuma tarefa pendente no momento."
+          }
+        >
+          <ActionButton variant="primary" onClick={openCreate}>
+            Nova tarefa
+          </ActionButton>
+        </EmptyState>
       ) : (
         <section aria-busy={refreshing || undefined}>
-          <DataTableSection
-            columnPreferencesKey="transformometro:MyTasksPage:pending-signatures:v1"
-            title="Pendências"
-            hint="Assinaturas de ata atribuídas a você. Abrir leva ao registro."
-            columns={columns}
-            rows={rows}
-            rowKey={(row) => row.id}
-            loading={false}
+          <TaskItemsTable
+            items={rows}
             refreshing={refreshing}
-            emptyMessage="Nenhuma tarefa pendente no momento."
+            onOpen={onOpen}
+            onEdit={openEdit}
+            onComplete={(item) => void onComplete(item)}
+            onCancel={(item) => void onCancel(item)}
           />
         </section>
       )}
     </TransformometroShell>
   );
 }
+
+export type { MyTaskItemDto };

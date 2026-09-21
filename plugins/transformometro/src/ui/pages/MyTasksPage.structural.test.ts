@@ -7,15 +7,18 @@ const dir = dirname(fileURLToPath(import.meta.url));
 const source = readFileSync(join(dir, "MyTasksPage.tsx"), "utf8");
 
 describe("MyTasksPage", () => {
-  it("projeta pending-signatures no chrome compartilhado, sem task store", () => {
-    expect(source).toMatch(/pendingAtas/);
-    expect(source).toMatch(/projectPendingSignatureTasks/);
+  it("consome chrome compartilhado e a projeção unificada, sem store local", () => {
+    expect(source).toMatch(/listMyTaskItems/);
+    expect(source).toMatch(/TaskItemsTable/);
+    expect(source).toMatch(/TaskEditorFrame/);
+    expect(source).toMatch(/UserDirectoryPicker/);
     expect(source).toMatch(/LoadingActivityCard/);
     expect(source).toMatch(/EmptyState/);
-    expect(source).toMatch(/DataTableSection/);
     expect(source).toMatch(/Nenhuma tarefa pendente no momento/);
+    expect(source).toMatch(/Nova tarefa/);
     expect(source).not.toMatch(/from ["']@delpi\/commercial/);
     expect(source).not.toMatch(/INSERT INTO/);
-    expect(source).not.toMatch(/dueDate|priority/);
+    expect(source).not.toMatch(/pendingAtas/);
+    expect(source).not.toMatch(/createTaskEngine|SharedTaskStore/);
   });
 });

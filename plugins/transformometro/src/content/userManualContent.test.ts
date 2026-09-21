@@ -18,22 +18,29 @@ describe("Transforma+ user manual", () => {
     expect(text).toMatch(/nota IDD/);
     expect(text).not.toMatch(/Strategic Indicators/);
     expect(text).not.toMatch(/Keycloak/);
-    expect(text).toMatch(/ainda não fazem parte deste portal/);
+    expect(text).toMatch(/ainda não faz(em)? parte deste portal/);
     expect(text).not.toMatch(/carteira/);
     const linked = USER_MANUAL_CONTENT.sections.flatMap((section) => section.links ?? []);
-    expect(linked.every((link) => !/sala|tarefa/i.test(`${link.want} ${link.where} ${link.path ?? ""}`))).toBe(
-      true,
-    );
+    expect(
+      linked
+        .filter((link) => link.where !== "Minhas tarefas")
+        .every((link) => !/sala|tarefa/i.test(`${link.want} ${link.where} ${link.path ?? ""}`)),
+    ).toBe(true);
     expect(USER_MANUAL_CONTENT.sections.map((section) => section.id)).toEqual([
       "home",
       "overview",
       "targets-idd",
       "processes",
+      "my-tasks",
       "minutes",
       "data",
       "administration",
       "settings",
     ]);
+    const tasks = USER_MANUAL_CONTENT.sections.find((section) => section.id === "my-tasks");
+    expect(tasks?.intro).toMatch(/assinatura/i);
+    expect(JSON.stringify(tasks)).toMatch(/Nova tarefa/);
+    expect(JSON.stringify(tasks)).not.toMatch(/schema|OpenAPI|plugin-ui/);
   });
 
   it("só liga caminhos reais do MFE", () => {

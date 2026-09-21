@@ -25,7 +25,7 @@ export const PORTAL_PAGE_COPY = {
   myTasks: {
     eyebrow: "OPERAÇÃO",
     title: "Minhas tarefas",
-    description: "Acompanhe ações e pendências que exigem sua atenção.",
+    description: "Acompanhe e organize ações que exigem sua atenção.",
   },
   processes: {
     eyebrow: "PROCESSOS",
@@ -143,7 +143,7 @@ export const PORTAL_LAUNCHER_GROUPS: readonly {
         id: "my-tasks",
         label: "Minhas tarefas",
         path: TRANSFORMOMETRO_ROUTES.myTasks,
-        description: "Itens que exigem sua atenção.",
+        description: "Crie e acompanhe ações e pendências do Portal.",
       },
     ],
   },

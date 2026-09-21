@@ -141,17 +141,18 @@ export const USER_MANUAL_CONTENT = {
       id: "my-tasks",
       title: "Minhas tarefas",
       intro:
-        "Lista o que exige a sua ação agora. Hoje isso é a assinatura pendente de uma ata em que você é signatário. Não lista processos da unidade nem responsáveis escritos só pelo nome.",
+        "Crie tarefas do portal, atribua um responsável e acompanhe prazos. Assinaturas de ata pendentes também aparecem aqui, sem virar outra tarefa.",
       bullets: [
-        "Abra o item para ir à ata. A assinatura acontece na própria ata, não nesta lista.",
-        "Quando você assina, a ata sai da lista na próxima leitura.",
-        "Revisão vencendo e melhoria com responsável local não entram aqui: não há atribuição ao seu usuário.",
+        "Nova tarefa pede título, responsável, prazo opcional e descrição. Revise o resumo e confirme antes de gravar.",
+        "O responsável é um usuário do diretório. O nome é só exibição; a tarefa guarda o identificador.",
+        "Edite ou conclua só a tarefa criada no portal. Concluir tira o item de Pendentes.",
+        "Assinatura pendente de ata não se edita nem se conclui nesta lista: abra a ata e assine lá. Depois que assinar, o item some.",
       ],
       links: [
         {
-          want: "Ver o que exige a minha ação",
+          want: "Criar ou acompanhar uma tarefa",
           where: "Minhas tarefas",
-          how: "Use a barra superior ou o card Operação no Início.",
+          how: "Use Nova tarefa, os filtros Pendentes/Concluídas/Todas ou Atualizar.",
           path: TRANSFORMOMETRO_ROUTES.myTasks,
         },
       ],
