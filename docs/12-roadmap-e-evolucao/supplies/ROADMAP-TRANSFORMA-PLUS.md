@@ -49,9 +49,9 @@
 |---|---|
 | E1–E7 | Jornadas **implementadas / deploy documentados** conforme documentação mestra vigente |
 | E8 / WF-06 Detalhe do Pedido | **IMPLEMENTATION PRESENT / DEPLOYED** (ficha `/purchase-orders/:branch/:number`) |
-| GATE-FEATURE WF-06 | **INCONCLUSIVE** enquanto o smoke federado live não estiver comprovado — **não** confundir com `GATE-FEATURE PASS` |
+| GATE-FEATURE WF-06 | **PASS** em 2026-09-21 — smoke federado live; residual de 403 de unidade não executado ([evidência](./evidence/e8-wf06-federated-runtime-gate.md)) |
 
-Formulação canônica deste roadmap: E1–E7 possuem jornadas implementadas conforme documentação vigente; E8/WF-06 possui implementação/deploy documentados, mas seu GATE-FEATURE permanece INCONCLUSIVE enquanto o smoke federado live não estiver comprovado.
+Formulação canônica deste roadmap: E1–E7 possuem jornadas implementadas conforme documentação vigente; E8/WF-06 possui implementação e GATE-FEATURE PASS no smoke federado de 2026-09-21, com residual de 403 de unidade não executado.
 
 A fila nativa (Entregas, ESTSEG no portal, Fornecedores 360, Importações, etc.) continua **bloqueada** até autorização página-a-página.
 
@@ -440,7 +440,7 @@ Roadmap ≠ autorização de implementação.
 | Capacidade | Estado atual | Evidência | Necessidade | Próximo passo |
 |---|---|---|---|---|
 | Portal SC/PC (E1–E7 impl.) | Existente (implementação) | `plugins/supplies`, `supplies-api`, README | Manter; evoluir qualidade SC | Homologar SUP-003/004 |
-| E8 / WF-06 detalhe PC | IMPLEMENTATION PRESENT / DEPLOYED; GATE INCONCLUSIVE | README GATE-FEATURE WF-06 | Smoke federado live | Não declarar GATE PASS |
+| E8 / WF-06 detalhe PC | IMPLEMENTATION PRESENT / DEPLOYED; GATE PASS | [evidência federada](./evidence/e8-wf06-federated-runtime-gate.md) | Manter residual de 403 documentado | Não promover E9 sem autorização |
 | Overview + OTD KPI | Existente | KPI-FICHAS; `/analytics/otd` | Homologar universo OTD | P-03 |
 | ESTSEG | Parcial | `plugins/estoque-seguranca`; placeholder Portal | Absorção + fórmula ideal | E11 + homologação |
 | Fornecedor 360 / OTD página | Proposto | Placeholder `App.tsx` | Página nativa | Contrato SA2; P-11 |
@@ -481,7 +481,7 @@ Distinguir sempre: consulta · preparação · pré-validação · gravação.
 
 | Drift | Onde | Tratamento |
 |---|---|---|
-| Prosa E1–E8 concluída vs YAML antigo `e6-s5 pending` / `e7`/`e8` blocked | IMPLEMENTATION-PLAN | Reconciliado em 2026-09-21 (`aa13f1075`): YAML `completed` para a entrega. GATE-FEATURE WF-06 segue `INCONCLUSIVE`; E9 segue bloqueada |
+| Prosa E1–E8 concluída vs YAML antigo `e6-s5 pending` / `e7`/`e8` blocked | IMPLEMENTATION-PLAN | Reconciliado em 2026-09-21 (`aa13f1075`): YAML `completed` para a entrega. GATE-FEATURE WF-06 = PASS em 2026-09-21; E9 segue bloqueada por falta de autorização |
 | `/me/routes` vs `/me/apps` | README/instruções oficiais vs Core atual | Contrato vigente = `/me` + `/me/apps`; documentado no README supplies |
 | Cutover OTD → `/suppliers/otd` vs placeholder | CUTOVER-RUNBOOK vs código | Target documentado; código ainda não |
 | DESIGN-IA “foco SC” vs E8 implementado (gate INCONCLUSIVE) | DESIGN-IA status | Doc de status atrasada |

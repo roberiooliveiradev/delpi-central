@@ -1,7 +1,7 @@
 # IMPLEMENTATION-PLAN — Portal Suprimentos
 
 > **Status (revalidado 2026-09-21, `aa13f1075`):** plano executável revisado segundo `evidence-driven-execution.mdc`, `plan-construction.mdc` e `plan-execution.mdc`.
-> **Entregue:** E1–E8 (incluindo E8 / WF-06 detalhe do pedido). GATE-FEATURE WF-06 permanece `INCONCLUSIVE`: não há evidência persistida de smoke federado live.
+> **Entregue:** E1–E8 (incluindo E8 / WF-06 detalhe do pedido). GATE-FEATURE WF-06 = **PASS** no smoke federado de 2026-09-21 ([evidência](./evidence/e8-wf06-federated-runtime-gate.md)). Residual: 403 de unidade não executado.
 > **Em foco:** nenhuma página — E9 / WF-07 Entregas **não autorizada**. Não há, neste repositório, registro persistido de autorização do Product Owner nem de contract freeze que libere a implementação.
 > **Próxima página candidata:** E9 WF-07 Entregas, bloqueada até essa autorização existir como evidência do repositório.
 > **Modo:** uma página user-facing por vez; etapas futuras abaixo são fila/grafo, não autorização de execução.
@@ -47,8 +47,8 @@ Invariantes:
 | RQ-05 | Overview/OTD com KPIs e metas SI canônicas | ATENDIDO — E5 |
 | RQ-06 | SC C1 funcional + DoD da página | ATENDIDO — E6.S1–S5 |
 | RQ-07 | Pedidos de Compra (lista) | ATENDIDO — E7 |
-| RQ-08 | Detalhe do Pedido | ATENDIDO — E8 implementado; GATE-FEATURE WF-06 `INCONCLUSIVE` |
-| RQ-09 | Entregas/Atrasos | BLOQUEADO — E9 sem autorização persistida e com pré-condição de gate E8 ainda inconclusiva |
+| RQ-08 | Detalhe do Pedido | ATENDIDO — E8 implementado; GATE-FEATURE WF-06 `PASS` |
+| RQ-09 | Entregas/Atrasos | BLOQUEADO — E9 sem autorização persistida do Product Owner |
 | RQ-10 | Estoque | BLOQUEADO pela fila — E10 |
 | RQ-11 | ESTSEG | BLOQUEADO pela fila — E11 |
 | RQ-12 | Análise de Consumo | BLOQUEADO pela fila — E12 |
@@ -203,13 +203,13 @@ As etapas abaixo estão **BLOCKED_BY_QUEUE**. Antes de executar qualquer uma, su
 
 ## E8 — WF-06 Detalhe do Pedido
 
-**Executado 2026-09-16** (autorização PO 2026-09-15, registrada neste plano). Producer api-delpi + BFF + MFE ficha read-only. O ledger YAML marca a entrega como `completed`. Isso não promove GATE-FEATURE WF-06 a PASS: o smoke federado live segue `INCONCLUSIVE`.
+**Executado 2026-09-16** (autorização PO 2026-09-15, registrada neste plano). Producer api-delpi + BFF + MFE ficha read-only. O ledger YAML marca a entrega como `completed`. GATE-FEATURE WF-06 = **PASS** em 2026-09-21, com residual de 403 de unidade não executado.
 
 Pré-condição: autorização explícita PO (E7 já PASS). Contrato de detalhe + resource scope + itens/prometida/recebimentos/SC origem + follow-up apenas se recurso/capability permitirem. Fechar GATE-FEATURE próprio.
 
 ## E9 — WF-07 Entregas/Atrasos
 
-Pré-condição persistida neste plano: E8 com GATE-FEATURE PASS e autorização explícita do Product Owner registrada no repositório. Nenhuma das duas foi encontrada na revalidação de 2026-09-21 (`aa13f1075`). Comparar regra do BI Atraso quando evidência produtiva existir; isso bloqueia **depreciação/paridade**, não a construção da página nativa se o contrato PO-OTD estiver confirmado e a página for autorizada. Fechar GATE-FEATURE.
+Pré-condição persistida neste plano: E8 com GATE-FEATURE PASS e autorização explícita do Product Owner registrada no repositório. O gate de E8 passou em 2026-09-21. A autorização de WF-07 continua ausente. Comparar regra do BI Atraso quando evidência produtiva existir; isso bloqueia **depreciação/paridade**, não a construção da página nativa se o contrato PO-OTD estiver confirmado e a página for autorizada. Fechar GATE-FEATURE.
 
 ## E10 — WF-15 Controle de Estoques
 

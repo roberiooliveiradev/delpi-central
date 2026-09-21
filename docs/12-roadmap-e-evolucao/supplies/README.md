@@ -1,6 +1,6 @@
 # Portal Suprimentos — documentação mestra
 
-> **Status (2026-09-16):** implementação incremental em andamento · **E1–E8 concluídas** · **WF-06 GATE-FEATURE** sujeito a smoke federado `INCONCLUSIVE` neste ambiente  
+> **Status (2026-09-21):** implementação incremental em andamento · **E1–E8 concluídas** · **WF-06 GATE-FEATURE PASS** no smoke federado de produção
 > **Readiness:** **GATE-E1 + GATE-ARCH + GATE-AUTHZ + GATE-RBAC PASS (local)**  
 > **Modo de entrega:** **uma página por vez até DoD** — a próxima página só pode ser promovida a foco após fechamento da atual  
 > **Página em foco:** **nenhuma** — E8 / WF-06 Detalhe do Pedido entregue; E9 / WF-07 Entregas **não autorizada**  
@@ -35,7 +35,7 @@ A documentação desta pasta deve obedecer à hierarquia vigente das regras `.cu
 | **E5 — Overview + OTD analytics** | **concluída** — WF-02/WF-02R + WF-OTD-A; tríade de meta SI, filtros/URL, charts e gauges |
 | **E6 — SC C1 + GATE-FEATURE WF-04** | **concluída 2026-09-11** — BFF C1, lista/detalhe/export, kit-first, Help, testes; smoke federado `INCONCLUSIVE` |
 | **E7 — Pedidos lista + GATE-FEATURE WF-05** | **concluída 2026-09-11** — api-delpi SC7 aberto, BFF operations+unit, MFE kit-first |
-| **E8 — Detalhe do Pedido + GATE-FEATURE WF-06** | **concluída 2026-09-16** — ficha `/purchase-orders/:branch/:number`; smoke federado `INCONCLUSIVE` |
+| **E8 — Detalhe do Pedido + GATE-FEATURE WF-06** | **concluída 2026-09-16** — ficha `/purchase-orders/:branch/:number`; smoke federado **PASS** em 2026-09-21 |
 | RBAC alvo | revisado; menor catálogo suficiente (ADR-007) |
 | Authz Core-first | **GATE-AUTHZ PASS** — fail-closed na fronteira; permissions efetivas do Core, não claims JWT |
 | BIs externos | dump **local** 0/6 documentado; dump Core **produção** obrigatório antes do cutover |
@@ -55,7 +55,7 @@ A documentação desta pasta deve obedecer à hierarquia vigente das regras `.cu
 | **GATE-MFE** | **PASS nas páginas fechadas**; revalidar por página nova |
 | **GATE-FEATURE WF-04** | **PASS** — smoke federado `INCONCLUSIVE` (não inferido) |
 | **GATE-FEATURE WF-05** | **PASS** — smoke federado `INCONCLUSIVE` (não inferido) |
-| **GATE-FEATURE WF-06** | **INCONCLUSIVE** até smoke federado live; testes de contrato/BFF/MFE executados |
+| **GATE-FEATURE WF-06** | **PASS** — smoke federado em `https://minhadelpi.com.br` em 2026-09-21; residual: 403 de unidade não executado ([evidência](./evidence/e8-wf06-federated-runtime-gate.md)) |
 | **GATE-C2** | futuro; não autorizado enquanto prerequisites não forem provados |
 | **GATE-PARITY** | futuro; evidência quantitativa obrigatória |
 | **GATE-CUTOVER** | futuro; nenhum legado/BI pode permanecer `LEGADO_A_VALIDAR` |
@@ -135,7 +135,7 @@ selecionar página em foco
 
 **Pedidos de compra (WF-05):** MFE → `supplies-api` → `api-delpi` `GET /supplies/purchase-orders` (SC7 aberto, filtro `01`/`02`, `sort_by`/`sort_dir`, `summary`); BFF `GET /purchase-orders` + `GET /purchase-orders/export` (XLSX; `supplies.access`). MFE: MultiSelect de unidades (nome sem código), Tabela/Cards, sort server-side, Excel, colunas/fonte persistidos. Clique na linha abre a ficha E8. Distinto do painel OTD. Smoke federado: `INCONCLUSIVE`.
 
-**Detalhe do pedido (WF-06):** api-delpi `GET /supplies/purchase-orders/{branch}/{order_number}`; BFF `GET /purchase-orders/<branch>/<number>` (`supplies.access` + filtro `01`/`02`); MFE `/purchase-orders/:branch/:number` read-only (itens, entrega prometida, receipts, SC origem). Smoke federado: `INCONCLUSIVE`.
+**Detalhe do pedido (WF-06):** api-delpi `GET /supplies/purchase-orders/{branch}/{order_number}`; BFF `GET /purchase-orders/<branch>/<number>` (`supplies.access` + filtro `01`/`02`); MFE `/purchase-orders/:branch/:number` read-only (itens, entrega prometida, receipts, SC origem). Smoke federado: **PASS** em 2026-09-21 ([evidência](./evidence/e8-wf06-federated-runtime-gate.md)).
 
 A manutenção transversal de UI (por exemplo, help embutido no próprio label e loading canônico do `plugin-ui`) pode corrigir componentes compartilhados, mas não reabre uma página fechada salvo regressão material do seu DoD.
 
@@ -226,6 +226,6 @@ Invariantes:
 
 **Único próximo passo autorizado pelo roadmap:** Product Owner autorizar a promoção de **WF-07 Entregas / atrasos** em evidência persistida neste repositório. Sem essa autorização, a fila permanece bloqueada.
 
-Revalidação 2026-09-21 (`aa13f1075`): o ledger YAML de E6.S5, E7 e E8 acompanha a prosa (entrega concluída). GATE-FEATURE WF-06 continua `INCONCLUSIVE`. Não há arquivo, ADR ou evidência que registre `E8_GATE_STATUS = PASS` nem autorização de implementação de E9. Alegação fora do repositório não altera esses estados.
+Revalidação 2026-09-21 (`24ee4ad48`): GATE-FEATURE WF-06 está **PASS** no smoke federado de produção ([evidência](./evidence/e8-wf06-federated-runtime-gate.md)). Não há autorização persistida de implementação de E9. Alegação fora do repositório não libera WF-07.
 
 Dump Core de produção dos BIs externos não bloqueia a fila de páginas; bloqueia decisões de paridade/depreciação/redirect e o `GATE-CUTOVER`.
