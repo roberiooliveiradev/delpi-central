@@ -403,11 +403,12 @@ export const CM_HELP = {
     contacts:
       "Contatos da conta: cadastro TOTVS somente leitura e contatos locais da equipe comercial (CRUD + WhatsApp).",
     columns: {
-      nome: "Nome fantasia/razão e código+loja da conta na carteira.",
+      nome: "Nome fantasia/razão e identidade da conta (código-loja · centro quando houver).",
       sellerName: "Vendedor/carteira responsável pelo cliente no escopo atual.",
       city: "Cidade e UF do cadastro TOTVS (quando o enriquecimento estiver disponível).",
       lastPurchaseDate: "Data da última nota fiscal de saída conhecida para a conta.",
-      billed12m: "Soma do faturamento dos últimos 12 meses (quando coberto).",
+      billed12m:
+        "Soma do faturamento dos últimos 12 meses (quando coberto). Com centro na linha, não mistura o total da loja — use Histórico na Conta.",
       status: "Situação operacional na carteira (ativo, sem venda recente, etc.).",
       valorTotalAberto: "Soma do valor em aberto dos pedidos de venda desta conta.",
       quantidadePedidosAtrasados: "Quantidade de pedidos com linha vencida e saldo em aberto.",
@@ -475,7 +476,7 @@ export const CM_HELP = {
     billingFilterSearch:
       "Busca por número da nota, série, pedido de venda ou código/descrição do produto.",
     billingSeriesCustomer:
-      "Filtra a série de faturamento da carteira a um ou mais clientes (código+loja).",
+      "Filtra a série de faturamento da carteira a um ou mais clientes (código+loja). Use o filtro Centro do cliente para restringir unidades da amarração.",
     billingSeriesAccount:
       "Evolução do faturamento ou da quantidade fornecida deste cliente no período dos filtros (Métrica R$ | Qtd). A quantidade inclui a UM da nota; UMs diferentes no período omitem a UM (não usam «mistas» como unidade). Em Opções do gráfico, «Comparar ano anterior» coloca as colunas do ano anterior lado a lado com o período atual. Em Séries, configure cor, visibilidade e tendência linear de cada série (inclusive o ano anterior); «Restaurar padrão» remove a personalização da série selecionada.",
     billingSeriesTrend:
@@ -514,7 +515,8 @@ export const CM_HELP = {
     },
     orderLinesColumns: {
       product: "Código do produto da linha do pedido.",
-      center: "Centro da amarração produto–cliente da linha.",
+      center:
+        "Centro da amarração produto–cliente da linha. Sem centro, a loja inteira permanece no escopo.",
       ordered:
         "Quantidade pedida na linha (3 casas). Com Peças, converte só UM=MI (1 MI = 1000 PC).",
       delivered:
@@ -583,7 +585,8 @@ export const CM_HELP = {
       "Filtra a lista de vinculados por código, loja ou nome. Use com «Selecionar todos filtrados».",
     colDisplayName: "Nome da carteira no seletor de escopo e nas telas do portal.",
     colUserId: "Responsável da carteira (usuário Minha Delpi).",
-    colCustomerCount: "Quantidade de clientes (código+loja) vinculados a esta carteira.",
+    colCustomerCount:
+      "Quantidade de vínculos de cliente na carteira (código+loja+centro; sem centro = par).",
     colMemberCount: "Quantidade de usuários com acesso a esta carteira (responsável + membros).",
     colCustomerCode: "Código e loja do cliente (chave cadastral TOTVS).",
     colCustomerName: "Nome fantasia ou razão social do cliente.",

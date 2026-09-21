@@ -91,7 +91,13 @@ export const USER_MANUAL_TERM_CATALOG: readonly UserManualTermGroup[] = [
       {
         term: "Centro do cliente",
         meaning: CM_HELP.analytics.filterCustomerCenter,
-        applies: "Visão geral · OTD · Minha Carteira (ABC, ranking, mix e share)",
+        applies:
+          "Visão geral · OTD · Meus pedidos · Minha Carteira · Conta · Administração → Carteiras",
+      },
+      {
+        term: "Código, loja e centro",
+        meaning: CM_HELP.customers.list,
+        applies: "Minha Carteira · Meus pedidos · Conta · Administração → Carteiras",
       },
       {
         term: "Membership",

@@ -302,7 +302,7 @@ Endpoints comprovados:
 | Entidade/tabela | Migration(s) | Repository (quando identificado) | Owner | Fonte canônica | Relações principais | Runtime? |
 |-----------------|--------------|----------------------------------|-------|----------------|---------------------|----------|
 | `seller_portfolios` | V001, V005, V013 | `PostgresSellerPortfolioRepository` | commercial-api | Postgres | members, customers | sim p/ contagens |
-| `seller_customers` | V001 | idem | commercial-api | Postgres | → ref TOTVS code+store | sim |
+| `seller_customers` | V001, **V023** | idem | commercial-api | Postgres | → TOTVS code+store+center (`customer_center` nullable = fallback do par) | sim |
 | `seller_portfolio_members` | V005 | idem | commercial-api | Postgres | N:N user↔portfolio | sim |
 | `audit_log` | V001 | `PostgresAuditLogRepository` | commercial-api | Postgres | portfolio/contacts/groups/… | sim |
 | `customer_avatars` | V002 | `PostgresCustomerAvatarRepository` | commercial-api | Postgres + volume | code+store | sim |

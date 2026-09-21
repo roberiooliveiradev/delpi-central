@@ -30,7 +30,7 @@ O **Portal Comercial** é a UX canônica: carteira (N membros), pedidos, Meu dia
 | **[KPI-FICHAS.md](./KPI-FICHAS.md)** | Fichas KPI (F0) — Onda A C1 (baseline código; assinatura formal opcional) |
 | **[KPI-HOMOLOGACAO-ONDA-A.md](./KPI-HOMOLOGACAO-ONDA-A.md)** | Workshop homologação ROL / carteira / hit rate |
 | **[API-ROUTES.md](./API-ROUTES.md)** | Catálogo commercial-api + api-delpi |
-| **[DATA-MODEL.md](./DATA-MODEL.md)** | Tabelas Postgres schema `commercial` (`seller_portfolio_members`) |
+| **[DATA-MODEL.md](./DATA-MODEL.md)** | Tabelas Postgres schema `commercial` (carteira multi-membro + `customer_center` em `seller_customers`) |
 | **[crm-sigatec.md](../../../../api-delpi/docs/api/padroes-totvs/crm-sigatec.md)** | Censo vivo SIGATEC (19 ago 2026): 3767 OVs, funil COMPONENTES 82%, `AD8` vazio — [playbook SX3](../../../../api-delpi/docs/api/padroes-totvs/playbooks/playbook-crm-totvs-dicionario.md) |
 | **[WIREFRAMES.md](./WIREFRAMES.md)** | Wireframes WF-01–10 (+ WF-01R / Meu dia / WF-05R multi-membro) |
 | **[playbook-mfe-page-excellence.md](../../05-plugin-system/playbook-mfe-page-excellence.md)** | Excelência lista+detalhe MFE (P0–P2) — caso Pedidos / WF-02R |

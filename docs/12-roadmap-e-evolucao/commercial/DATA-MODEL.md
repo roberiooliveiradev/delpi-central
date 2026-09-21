@@ -51,7 +51,7 @@
 erDiagram
   seller_portfolios ||--o{ seller_portfolio_members : has
   seller_portfolios ||--o{ seller_customers : has
-  seller_customers }o--|| customer_ref : "code+store"
+  seller_customers }o--|| customer_ref : "code+store+center"
   customer_avatars }o--|| customer_ref : "code+store"
 
   opportunities ||--o{ opportunity_stage_history : tracks
@@ -142,7 +142,7 @@ Grupos **operacionais** do Portal — **sem seeds fixos**; o gestor cria, exclui
 
 ### 3.2 `seller_customers`
 
-Vínculo carteira ↔ cliente TOTVS (antes: `seller_customers`).
+Vínculo carteira ↔ cliente TOTVS (antes: `seller_customers`). Identidade operacional = **código + loja + centro** (`V023`).
 
 | Coluna | Tipo | Constraints / notas |
 |--------|------|---------------------|
@@ -150,12 +150,14 @@ Vínculo carteira ↔ cliente TOTVS (antes: `seller_customers`).
 | `seller_portfolio_id` | UUID | NOT NULL, FK → `seller_portfolios(id)` ON DELETE CASCADE |
 | `customer_code` | TEXT | NOT NULL |
 | `customer_store` | TEXT | NOT NULL |
+| `customer_center` | TEXT | NULL — centro SA7 (`A7_XCENT`); `NULL`/vazio = fallback do par (loja inteira). Conferido na amarração ao gravar |
 | `customer_name` | TEXT | NULL — cache de exibição; fonte canônica TOTVS |
 | `created_at` | TIMESTAMPTZ | NOT NULL, default `NOW()` |
 | `created_by_user_id` | TEXT | NULL |
 
-**Único:** `(seller_portfolio_id, customer_code, customer_store)`.  
-**Índices:** `(seller_portfolio_id)`; `(customer_code, customer_store)`.
+**Único:** `(seller_portfolio_id, customer_code, customer_store, COALESCE(customer_center, ''))` — índice `uq_seller_customers_code_store_center` (`V023`).  
+**Índices:** `(seller_portfolio_id)`; `(customer_code, customer_store)`.  
+Avatar / contatos locais continuam no grão **código+loja** (sem centro).
 
 ### 3.3 `customer_avatars`
 
@@ -917,6 +919,7 @@ Multi-membro **não** cabe no schema PVA (`sellers.user_id UNIQUE`) — ver [F2C
 | Prospect / contato TOTVS | api-delpi (`SUS`/`AC8`); não clonar SA1 |
 | ROL / OTD / hit rate | api-delpi (+ SI metas) |
 | Cadastro SA1 completo | TOTVS |
+| Centro do cliente (`A7_XCENT`) | TOTVS SA7 — ver [centro-cliente.md](../../../../api-delpi/docs/api/padroes-totvs/centro-cliente.md); vínculo Delpi em `seller_customers.customer_center` |
 
 ---
 
@@ -935,5 +938,6 @@ Multi-membro **não** cabe no schema PVA (`sellers.user_id UNIQUE`) — ver [F2C
 - Censo SIGATEC: [crm-sigatec.md](../../../../api-delpi/docs/api/padroes-totvs/crm-sigatec.md)
 - SQL legado: `api-delpi/migrations/plugins/pedidos-venda-abertos/V001__*.sql`, `V002__*.sql`
 - Multi-membro: `commercial-api/migrations/V005__seller_portfolio_members.sql`
+- Centro do cliente na carteira: `commercial-api/migrations/V023__seller_customer_center.sql` · padrão TOTVS [centro-cliente.md](../../../../api-delpi/docs/api/padroes-totvs/centro-cliente.md)
 - Estilo documental: [delpi-reports/SCHEMA.md](../delpi-reports/SCHEMA.md)
 - Wireframes: [WIREFRAMES.md](./WIREFRAMES.md) (WF-05R / D / ORG)

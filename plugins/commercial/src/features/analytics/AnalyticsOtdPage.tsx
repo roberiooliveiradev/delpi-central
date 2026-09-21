@@ -402,6 +402,7 @@ export function AnalyticsOtdPage({ basePath }: AnalyticsOtdPageProps) {
     {
       key: "customerCenter",
       header: "Centro",
+      headerHint: CM_HELP.analytics.filterCustomerCenter,
       render: (row) => (row.customer_center || "").trim() || "—",
     },
     {

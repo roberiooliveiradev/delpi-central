@@ -33,6 +33,7 @@ describe("userManualTermCatalog", () => {
         "Carteira em aberto",
         "Filtro de clientes",
         "Centro do cliente",
+        "Código, loja e centro",
       ]),
     );
   });

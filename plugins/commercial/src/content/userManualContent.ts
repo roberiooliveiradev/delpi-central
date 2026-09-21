@@ -36,7 +36,7 @@ export const USER_MANUAL_CONTENT = {
   backHome: "Voltar ao Início",
   tocTitle: "Nesta página",
   tocAriaLabel: "Índice do manual",
-  conceptsTitle: "Três conceitos (não misture)",
+  conceptsTitle: "Quatro conceitos (não misture)",
   concepts: [
     {
       term: "Pedido",
@@ -49,6 +49,11 @@ export const USER_MANUAL_CONTENT = {
     {
       term: "Proposta (documento)",
       meaning: "Documento ADY + PDF para o cliente — tela Propostas.",
+    },
+    {
+      term: "Cliente (carteira)",
+      meaning:
+        "Código, loja e centro. Sem centro, a loja inteira continua visível. Contatos e avatar são da loja.",
     },
   ],
   scopeNote:
@@ -80,6 +85,11 @@ export const USER_MANUAL_CONTENT = {
           how: "Filtro de estoque / Pode faturar (alocação FIFO)",
         },
         {
+          want: "Filtrar pedidos por centro do cliente",
+          where: "Meus pedidos",
+          how: "Filtro Centro; coluna Centro e subtítulo do Cliente (código-loja · centro)",
+        },
+        {
           want: "Acompanhar linha ou OP",
           where: "Meus pedidos → linha",
           how: "Abra a ficha; depois a OP, se houver",
@@ -87,7 +97,12 @@ export const USER_MANUAL_CONTENT = {
         {
           want: "Ver meus clientes",
           where: "Minha Carteira",
-          how: "Busca, Foco e Tendência",
+          how: "Busca, Foco e Tendência; cada linha é código, loja e centro",
+        },
+        {
+          want: "Separar unidades do mesmo cliente (ex.: WEG)",
+          where: "Minha Carteira → Clientes",
+          how: "Coluna Centro e ordenação por Centro; uma linha por centro vinculado — qualquer cliente com centro na SA7",
         },
         {
           want: "Ver mix de produto do faturamento",
@@ -102,7 +117,7 @@ export const USER_MANUAL_CONTENT = {
         {
           want: "Preparar visita ou call",
           where: "Minha Carteira → Conta",
-          how: "Abas Resumo, Pedidos, Histórico, Oportunidades, Contatos, Atividades",
+          how: "Abas Resumo, Pedidos, Histórico, Oportunidades, Contatos, Atividades — pedidos e faturamento seguem o centro da conta",
         },
         {
           want: "Follow-up com prazo",
@@ -140,6 +155,11 @@ export const USER_MANUAL_CONTENT = {
           how: "Só com permissão de administrar",
         },
         {
+          want: "Vincular cliente com centro",
+          where: "Administração → Carteiras",
+          how: "Ao incluir, escolha o centro quando a loja tiver amarração; centro inexistente não grava",
+        },
+        {
           want: "Configurar prazos (SLA)",
           where: "Administração → SLAs",
           how: "Criar, editar ou desativar políticas de prazo (tarefa, amostra, confirmação, etapa de oferta). Soft deactivate — não apaga o histórico.",
@@ -157,12 +177,13 @@ export const USER_MANUAL_CONTENT = {
       bullets: [
         "Início — hub: saudação com o primeiro nome da sessão, eventos e caminhos (busca, últimos acessos e cards com estrela). Favoritos só na barra superior.",
         "Barra superior — Buscar (Ctrl/Cmd+K) abre a mesma busca de caminhos em qualquer tela; favoritos ficam ao lado.",
-        "Visão geral — placar do período (ROL, meta, conversão, carteira aberta…).",
-        "Meus pedidos — bancada operacional; URL compartilhável com filtros.",
-        "Minha Carteira — clientes vinculados; painéis Faturamento (série + mix), ABC, Ranking e Clientes; clique no cliente abre a Conta.",
+        "Visão geral — placar do período (ROL, meta, conversão, carteira aberta…). Filtro de centro do cliente restringe ROL e OTD.",
+        "Meus pedidos — bancada operacional; filtro e coluna Centro; subtítulo do Cliente junta código-loja · centro; URL compartilhável com filtros.",
+        "Minha Carteira — clientes vinculados (código, loja e centro); coluna Centro ordenável; painéis Faturamento, ABC, Ranking e Clientes; clique abre a Conta.",
+        "Conta — pedidos, histórico e série seguem o centro escolhido (fora da URL). Contatos e avatar são da loja. Com centro, o Fat. 12 meses do hero não mistura o total da loja.",
         "Minhas tarefas — fila de follow-ups.",
         "Sala de interação — conversas internas.",
-        "Administração — carteiras, equipe, grupos e SLAs (gestores).",
+        "Administração — carteiras (vínculo com centro conferido), equipe, grupos e SLAs (gestores).",
         "OTD, Oportunidades e Propostas — pelo Início ou drills; não ficam no menu de cima. Em Oportunidades, use Visão (colaborador | oportunidade) como na Minha Carteira.",
       ],
     },
@@ -207,8 +228,20 @@ export const USER_MANUAL_CONTENT = {
           a: "Não. O nome jurídico da WEG é compartilhado por várias unidades. O centro separa a amarração produto–cliente. O rótulo mostra o nome reduzido e o código do centro, não um apelido fixo.",
         },
         {
+          q: "O que é código, loja e centro?",
+          a: "Na Minha Carteira e em Meus pedidos o cliente operacional é o trio: código, loja e centro. A coluna Centro fica separada; o subtítulo do Cliente junta código-loja · centro quando houver centro. Sem centro, a loja inteira continua visível (fallback do par).",
+        },
+        {
+          q: "Por que vejo duas linhas do mesmo cliente (ex.: WEG Motores)?",
+          a: "Porque a loja tem mais de um centro vinculado (ex.: 1100 e 1200). Cada centro é um vínculo próprio na carteira. Vale para qualquer cliente com centros na SA7. Centro novo na amarração não entra sozinho: só aparece depois de ser vinculado e conferido em Administração.",
+        },
+        {
           q: "O centro do cliente muda o funil e os novos negócios?",
-          a: "Não. Na Visão geral ele restringe ROL e OTD. Funil, novos negócios e metas continuam no recorte de período, unidade, segmento e cliente. Em Minha Carteira e em Meus pedidos o cliente é código, loja e centro. Sem centro, a loja inteira continua visível. Um centro novo só entra na carteira depois de ser vinculado e conferido. Contatos e avatar continuam da loja. O faturamento de 12 meses da linha separada por centro pode ficar vazio.",
+          a: "Não. Na Visão geral ele restringe ROL e OTD. Funil, novos negócios e metas continuam no recorte de período, unidade, segmento e cliente. Em Minha Carteira e em Meus pedidos o cliente é código, loja e centro. Sem centro, a loja inteira continua visível. Contatos e avatar continuam da loja. O faturamento de 12 meses da linha separada por centro pode ficar vazio na lista.",
+        },
+        {
+          q: "O centro aparece no link da Conta?",
+          a: "Não. A URL fica só com código e loja. O centro escolhido segue fora do link (sessão) e segrega pedidos, histórico e série. Ao abrir a Conta pela lista, o centro da linha é preservado.",
         },
         {
           q: "ABC de clientes é o mesmo que Ranking?",
@@ -279,6 +312,10 @@ export const USER_MANUAL_CONTENT = {
       title: "Dúvidas — pedidos e estoque",
       faqs: [
         {
+          q: "Onde vejo o centro em Meus pedidos?",
+          a: "No filtro Centro, na coluna Centro e no subtítulo do Cliente (código-loja · centro). Cards e board usam a mesma identidade. Sem centro na linha, a coluna mostra traço.",
+        },
+        {
           q: "No Protheus tem estoque, mas aqui diz sem ou parcial",
           a: "O Portal aloca estoque em ordem FIFO entre as linhas. O saldo pode estar comprometido por outro pedido.",
         },
@@ -315,6 +352,18 @@ export const USER_MANUAL_CONTENT = {
         {
           q: "Cliente sem pedido some da Minha Carteira?",
           a: "Não. A lista é a carteira vinculada; pedido aberto é informação extra.",
+        },
+        {
+          q: "Posso ordenar a carteira pelo centro?",
+          a: "Sim. Clique no cabeçalho Centro ou use a ordenação da tabela. Vazios ficam por último; códigos numéricos ordenam de forma numérica.",
+        },
+        {
+          q: "Por que o Fat. 12 meses fica vazio em algumas linhas?",
+          a: "Quando a linha tem centro próprio, a lista não mistura o total da loja no Fat. 12 meses. Na Conta com centro, o hero também não mistura — use Histórico de vendas para o faturamento daquele centro.",
+        },
+        {
+          q: "Como vinculo um centro novo na carteira?",
+          a: "Administração → Carteiras → detalhe. Ao incluir o cliente, escolha o centro quando a loja tiver amarração. Centro que não existe na amarração não grava. Centro novo na fábrica só aparece depois desse vínculo.",
         },
         {
           q: "O que é o badge Compartilhado?",

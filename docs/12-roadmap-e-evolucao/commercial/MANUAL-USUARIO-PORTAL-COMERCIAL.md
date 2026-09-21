@@ -30,6 +30,8 @@ Documento irmão (instrutores): [TREINAMENTO-PORTAL-COMERCIAL-1H.md](./TREINAMEN
 | **Oportunidade (OV)** | Proposta comercial no Protheus (AD1010) |
 | **Proposta (documento)** | Documento ADY + PDF para o cliente |
 
+**Cliente na carteira:** código, loja e **centro**. Sem centro, a loja inteira continua visível. Contatos e avatar são da loja. A coluna **Centro** fica separada; o subtítulo do Cliente junta `código-loja · centro`.
+
 ---
 
 ## 2. Quero… → vá em…
@@ -41,12 +43,14 @@ Documento irmão (instrutores): [TREINAMENTO-PORTAL-COMERCIAL-1H.md](./TREINAMEN
 | Ver o que precisa de atenção hoje | **Início** | Olhe eventos, highlights (atrasos, follow-ups, valor em aberto) e atalhos |
 | Ver atrasos de entrega | **Meus pedidos** (ou atalho no Início) | Chip **Atraso** / “Ver atrasos” |
 | Ver o que pode faturar | **Meus pedidos** | Chip / filtro de estoque e “Pode faturar” (estoque alocado em ordem FIFO) |
+| Filtrar pedidos por centro | **Meus pedidos** | Filtro **Centro**; coluna Centro e subtítulo do Cliente (`código-loja · centro`) |
 | Acompanhar uma linha ou OP | **Meus pedidos** → clique na linha | Abre ficha da linha; daí abre a OP se houver |
-| Ver meus clientes | **Minha Carteira** → Clientes | No hero: busca, Foco e Tendência |
+| Ver meus clientes | **Minha Carteira** → Clientes | No hero: busca, Foco e Tendência; cada linha é código, loja e centro |
+| Separar unidades do mesmo cliente (ex.: WEG) | **Minha Carteira** → Clientes | Coluna **Centro** (ordenável); uma linha por centro vinculado — vale para qualquer cliente com centro na SA7 |
 | Ver mix de produto do faturamento | **Minha Carteira** → Faturamento | Chips Período/Mercado + barra no hero; Excel |
 | Ver ABC de clientes | **Minha Carteira** → ABC | Mesmos filtros do hero que o Faturamento; Excel |
 | Ver ranking crescimento/queda | **Minha Carteira** → Ranking | Chips Período/Foco (+ Agrupar) e Top N no hero |
-| Preparar visita / call com cliente | **Minha Carteira** → cliente | Conta: abas Resumo, Pedidos, Histórico, Oportunidades, Contatos, Atividades |
+| Preparar visita / call com cliente | **Minha Carteira** → cliente | Conta: abas Resumo, Pedidos, Histórico, Oportunidades, Contatos, Atividades — pedidos e faturamento seguem o centro da conta |
 | Criar ou concluir follow-up | **Minhas tarefas** | Buckets (atrasadas / hoje / …); criar com prazo e responsável |
 | Conversar com o time sobre um pedido | **Sala de interação** ou painel na ficha | Inbox ou “abrir sala” no pedido/conta/OV |
 | Ver indicadores do mês / ano | **Visão geral** | Ajuste período e unidade (SC/ES); KPIs e gráficos. Na busca de caminhos do **Início**, «indicadores» / «dashboard» / «meta» também abrem a Visão geral |
@@ -61,6 +65,7 @@ Documento irmão (instrutores): [TREINAMENTO-PORTAL-COMERCIAL-1H.md](./TREINAMEN
 | Quero… | Onde ir | Quem precisa |
 |--------|---------|--------------|
 | Criar ou editar carteira, membros, clientes | **Administração** → **Carteiras** | Permissão de administrar |
+| Vincular cliente com centro | **Administração** → Carteiras → detalhe | Ao incluir, escolha o centro quando a loja tiver amarração; centro inexistente não grava |
 | Ver clientes sem vendedor / overlapping | **Administração** → Carteiras | Filtros “Sem cobertura” / overlapping |
 | Transferir vários clientes | Detalhe da carteira / bulk | Administrar |
 | Ver equipe online / grupos | **Administração** → Equipe / Grupos | Administrar |
@@ -87,31 +92,33 @@ Documento irmão (instrutores): [TREINAMENTO-PORTAL-COMERCIAL-1H.md](./TREINAMEN
 | Visão geral | BI do período |
 | Sala de interação | Chat interno |
 | Minhas tarefas | Worklist de follow-ups |
-| Meus pedidos | Bancada operacional |
-| Minha Carteira | Clientes da(s) sua(s) carteira(s) |
-| Administração | Só quem administra: carteiras, equipe, grupos, SLAs |
+| Meus pedidos | Bancada operacional; filtro e coluna **Centro**; subtítulo do Cliente junta código-loja · centro |
+| Minha Carteira | Clientes da(s) sua(s) carteira(s) — código, loja e centro; coluna Centro ordenável |
+| Administração | Só quem administra: carteiras (vínculo com centro conferido), equipe, grupos, SLAs |
 
 Telas extras (OTD, Oportunidades, Propostas) entram pelo **Início** ou por atalhos da Visão geral — não ocupam o menu de cima. Em **Oportunidades**, o hero tem **Visão** (Por colaborador | Por oportunidade), no mesmo padrão da Minha Carteira.
 
 ### 3.2 Conta do cliente (após clicar em um cliente)
 
+O **centro não vai na URL** (fica só código e loja). O centro escolhido segue fora do link e segrega pedidos, histórico e série. Contatos e avatar são da loja. Com centro, o Fat. 12 meses do hero **não mistura** o total da loja — use **Histórico de vendas**.
+
 | Aba | Conteúdo típico |
 |-----|-----------------|
 | Resumo | Situação, indicadores, pontos para conversa |
-| Pedidos | Pedidos/linhas daquele cliente |
-| Histórico | Faturamento e notas fiscais |
+| Pedidos | Pedidos/linhas daquele cliente (e centro, quando houver) |
+| Histórico | Faturamento e notas fiscais do centro |
 | Oportunidades | OVs daquele cliente |
 | Contatos | Contato do Protheus (só leitura) + contatos locais (você pode cadastrar) |
 | Atividades | Timeline e follow-ups |
 
 ### 3.3 Pedido → linha → OP
 
-1. Em **Meus pedidos**, filtre o que importa (atraso, estoque, cliente, centro, datas).  
+1. Em **Meus pedidos**, filtre o que importa (atraso, estoque, cliente, **centro**, datas).  
 2. Clique na **linha** → status fabril, estoque, OPs, estrutura do produto, OV se houver vínculo.  
 3. Abra a **OP** pela ficha da linha quando precisar de apontamentos / prazo.  
 4. A URL da lista e das fichas pode ser **copiada e compartilhada** (filtros costumam ser preservados ao voltar).
 
-O cliente da carteira é código, loja e centro. Se a loja não tiver centro, ela continua aparecendo inteira. Centro novo precisa ser vinculado e é conferido na amarração. Contatos e avatar são da loja.
+O cliente da carteira é **código, loja e centro**. Se a loja não tiver centro, ela continua aparecendo inteira. Centro novo precisa ser vinculado e é conferido na amarração. Contatos e avatar são da loja. A coluna **Centro** fica separada; o subtítulo do Cliente junta `código-loja · centro`.
 
 ---
 
@@ -140,8 +147,17 @@ Não. A lista vem das carteiras do recorte (ou de todas as carteiras ativas, se 
 **Centro do cliente é o nome da WEG?**  
 Não. O nome jurídico da WEG é compartilhado por várias unidades. O centro separa a amarração produto–cliente. O rótulo mostra o nome reduzido e o código do centro, não um apelido fixo.
 
+**O que é código, loja e centro?**  
+Na Minha Carteira e em Meus pedidos o cliente operacional é o trio: código, loja e centro. A coluna **Centro** fica separada; o subtítulo do Cliente junta `código-loja · centro` quando houver centro. Sem centro, a loja inteira continua visível (fallback do par).
+
+**Por que vejo duas linhas do mesmo cliente (ex.: WEG Motores)?**
+Porque a loja tem mais de um centro vinculado (ex.: 1100 e 1200). Cada centro é um vínculo próprio na carteira. Vale para qualquer cliente com centros na SA7. Centro novo na amarração não entra sozinho: só aparece depois de ser vinculado e conferido em **Administração**.
+
 **O centro do cliente muda o funil e os novos negócios?**  
-Não. Na Visão geral ele restringe ROL e OTD. Funil, novos negócios e metas continuam no recorte de período, unidade, segmento e cliente. Em Minha Carteira vale no ABC, ranking, mix e share. A série de notas do faturamento segue o cliente selecionado.
+Não. Na Visão geral ele restringe ROL e OTD. Funil, novos negócios e metas continuam no recorte de período, unidade, segmento e cliente. Em Minha Carteira e em Meus pedidos o cliente é código, loja e centro. Sem centro, a loja inteira continua visível. Contatos e avatar continuam da loja. O faturamento de 12 meses da linha separada por centro pode ficar vazio na lista.
+
+**O centro aparece no link da Conta?**  
+Não. A URL fica só com código e loja. O centro escolhido segue fora do link (sessão) e segrega pedidos, histórico e série. Ao abrir a Conta pela lista, o centro da linha é preservado.
 
 **Como troco a Visão em Oportunidades?**  
 No hero: **Visão** → Por colaborador ou Por oportunidade. A URL guarda `?view=` para compartilhar. Clique num vendedor no resumo abre a lista filtrada daquele colaborador. Na Visão Por oportunidade, **Busca** e **Status** ficam no hero. Use **Colunas** / fonte / export na toolbar de cada tabela.
@@ -180,6 +196,9 @@ Na Visão geral / gráficos, use a opção de **comparar ano anterior** (quando 
 
 ### Pedidos e estoque
 
+**Onde vejo o centro em Meus pedidos?**  
+No filtro **Centro**, na coluna **Centro** e no subtítulo do Cliente (`código-loja · centro`). Cards e board usam a mesma identidade. Sem centro na linha, a coluna mostra traço.
+
 **No Protheus tem estoque, mas aqui diz sem / parcial.**  
 O Portal aloca estoque em **ordem FIFO** entre as linhas. O saldo pode estar “comprometido” por outro pedido na fila.
 
@@ -205,6 +224,15 @@ Ainda **não** é função deste Portal. Use o processo atual da empresa até a 
 
 **Cliente sem pedido some da Minha Carteira?**  
 Não. A lista é a carteira vinculada; pedido aberto é informação extra.
+
+**Posso ordenar a carteira pelo centro?**  
+Sim. Clique no cabeçalho **Centro** ou use a ordenação da tabela. Vazios ficam por último; códigos numéricos ordenam de forma numérica.
+
+**Por que o Fat. 12 meses fica vazio em algumas linhas?**  
+Quando a linha tem centro próprio, a lista não mistura o total da loja no Fat. 12 meses. Na Conta com centro, o hero também não mistura — use **Histórico de vendas** para o faturamento daquele centro.
+
+**Como vinculo um centro novo na carteira?**  
+**Administração** → **Carteiras** → detalhe. Ao incluir o cliente, escolha o centro quando a loja tiver amarração. Centro que não existe na amarração não grava. Centro novo na fábrica só aparece depois desse vínculo.
 
 **O que é badge “Compartilhado”?**  
 O cliente está em **mais de uma carteira** ativa.
@@ -284,7 +312,8 @@ Fonte na UI: **Ajuda** → **Catálogo de termos** (`plugins/commercial/src/cont
 | Ajuda | Manual, FAQ e este catálogo | Menu superior |
 | SC / ES | Unidades Santa Catarina e Espírito Santo | Filtros |
 | Filtro de clientes | Um ou mais clientes do recorte (carteira ou carteiras ativas). Vazio = todos desse recorte | Visão geral · OTD · Oportunidades |
-| Centro do cliente | Unidade da amarração produto–cliente. Não é o nome jurídico da WEG. Vazio = todos os centros. Não altera funil, novos negócios nem metas | Visão geral · OTD · Minha Carteira |
+| Centro do cliente | Unidade da amarração produto–cliente. Não é o nome jurídico da WEG. Vazio = todos os centros / fallback da loja. Não altera funil, novos negócios nem metas | Visão geral · OTD · Meus pedidos · Minha Carteira · Conta · Administração |
+| Código, loja e centro | Identidade do cliente na carteira e nos pedidos. Coluna Centro separada; subtítulo junta código-loja · centro | Minha Carteira · Meus pedidos · Conta · Administração |
 | Membership | Você está vinculado a uma carteira | Escopo / carteira |
 
 ### Pedido, oportunidade e proposta
@@ -348,7 +377,7 @@ Fonte na UI: **Ajuda** → **Catálogo de termos** (`plugins/commercial/src/cont
 | Carteira no tempo | Valor aberto por data de entrega (atrasado, este mês, 1–3 meses…) | Visão geral |
 | Taxa de conversão / Funil | Propostas ganhas ÷ revisões abertas no período | Visão geral |
 | OTD | Pontualidade: data da nota × data de entrega prometida | Início → Pontualidade (OTD) |
-| Fat. 12 meses | Soma do faturamento dos últimos 12 meses | Minha Carteira · Conta |
+| Fat. 12 meses | Soma do faturamento dos últimos 12 meses. Com centro na linha/Conta, não mistura o total da loja | Minha Carteira · Conta |
 
 ### Minha Carteira — foco e tendência
 

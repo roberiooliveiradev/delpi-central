@@ -106,7 +106,7 @@ Painel — campos de linha relevantes:
 | `customer_code` | `C5.C5_CLIENTE` |
 | `customer_store` | `C5.C5_LOJACLI` (loja do cliente) |
 | `customer_name` | Preferência `SA1.A1_NREDUZ`; se vazio, `SA1.A1_NOME` |
-| `customer_center` | Nas agregações por cliente (`by-customer`, `series-by-customer`), preenchido só quando o grupo código+loja tem um único `A7_XCENT`. Dois centros na mesma loja permanecem um grupo com o campo nulo. |
+| `customer_center` | Nas agregações por cliente (`by-customer`, `series-by-customer`), preenchido só quando o grupo código+loja tem um único `A7_XCENT`. Dois centros na mesma loja permanecem um grupo com o campo nulo. No **painel de linhas**, o join SA7 (e portanto o valor da coluna) só entra quando o filtro `customer_centers` está ativo; sem filtro a coluna vem nula. |
 | `customer_short_name` | `SA1.A1_NREDUZ` (nome reduzido do **cliente**) |
 | `unit` | `C6.C6_UM` com fallback `B1.B1_UM` (sem conversão) |
 | `days_diff` | Dias entre promessa e fatura (ou data de referência se aberta) |

@@ -191,16 +191,18 @@ Ajuste fino conforme a sala: se **só vendedores**, enxugue Admin (T8) e alongue
 #### Subtópicos
 
 1. Lista operacional com escopo de carteira.
-2. Filtros / deep links: busca, filial, cliente, datas, sort, página.
-3. Chips: **Atraso**, estoque (`com_estoque` / `parcial` / `sem_estoque`), “Pode faturar” (FIFO no BFF).
-4. Badge da nav “Meus pedidos” alinhado ao mesmo critério de pronto para faturar.
-5. Board/kanban por etapa (se habilitado na build).
-6. **Ficha da linha:** status fabril, OPs, BOM, timeline, OV relacionada. Coluna **Data de entrega** depende do **Incoterm** (EXW/FOB = expedição; CIF = saída da empresa) — ver [GLOSSARIO-TERMOS.md](./GLOSSARIO-TERMOS.md).
-7. **Ficha da OP:** apontamentos, prazo OTD, troca de OP na URL.
-8. Retorno à lista preservando filtros (URL compartilhável).
+2. Filtros / deep links: busca, filial, cliente, **centro**, datas, sort, página.
+3. Identidade do cliente: coluna **Centro** + subtítulo `código-loja · centro` (cards/board iguais).
+4. Chips: **Atraso**, estoque (`com_estoque` / `parcial` / `sem_estoque`), “Pode faturar” (FIFO no BFF).
+5. Badge da nav “Meus pedidos” alinhado ao mesmo critério de pronto para faturar.
+6. Board/kanban por etapa (se habilitado na build).
+7. **Ficha da linha:** status fabril, OPs, BOM, timeline, OV relacionada. Coluna **Data de entrega** depende do **Incoterm** (EXW/FOB = expedição; CIF = saída da empresa) — ver [GLOSSARIO-TERMOS.md](./GLOSSARIO-TERMOS.md).
+8. **Ficha da OP:** apontamentos, prazo OTD, troca de OP na URL.
+9. Retorno à lista preservando filtros (URL compartilhável).
 
 #### Demonstrar
 
+- Filtrar por **Centro** → mostrar coluna Centro e subtítulo do Cliente.
 - Filtrar atrasos → abrir uma linha → abrir uma OP → voltar com breadcrumb.
 - Mostrar que a URL da lista pode ser colada no Teams/e-mail.
 - Relacionar linha ↔ OV (CTA só quando houver `proposal_number` / resolução).
@@ -209,6 +211,7 @@ Ajuste fino conforme a sala: se **só vendedores**, enxugue Admin (T8) e alongue
 
 | Dúvida | Resposta curta |
 |--------|----------------|
+| Onde vejo o centro? | Filtro **Centro**, coluna **Centro** e subtítulo do Cliente (`código-loja · centro`). |
 | “Tem estoque no Protheus mas aqui diz sem” | Alocação **FIFO** entre pedidos; estoque pode estar “reservado” por outra linha. |
 | Data de entrega = chegada no cliente? | **Não.** Depende do Incoterm: EXW/FOB = expedição (cliente busca); CIF = saída da empresa. |
 | Pedido ≠ OV | Pedido = C5/SC6; OV = AD1010; proposta documento = ADY — três conceitos. |
@@ -223,27 +226,29 @@ Ajuste fino conforme a sala: se **só vendedores**, enxugue Admin (T8) e alongue
 #### Subtópicos — lista
 
 1. Universo = clientes **vinculados** à carteira (não só quem tem pedido aberto).
-2. Painéis: Clientes / Faturamento / Ranking (`panel=`).
-3. Foco operacional + tendência de NF (eixos independentes).
-4. Natureza **bruto × líquido** (quando o contrato ofereceita).
-5. Série de faturamento + comparar ano anterior.
-6. Badge **Compartilhado** (cliente em mais de uma carteira).
-7. Auditoria “histórico da carteira” (colapsável).
-8. Export Excel da lista.
+2. Cliente = **código, loja e centro** (coluna Centro + subtítulo `código-loja · centro`). Sem centro = loja inteira.
+3. Painéis: Clientes / Faturamento / Ranking (`panel=`).
+4. Foco operacional + tendência de NF (eixos independentes).
+5. Natureza **bruto × líquido** (quando o contrato permite).
+6. Série de faturamento + comparar ano anterior.
+7. Badge **Compartilhado** (cliente em mais de uma carteira).
+8. Auditoria “histórico da carteira” (colapsável).
+9. Export Excel da lista.
 
 #### Subtópicos — Conta (`?secao=`)
 
 | Aba | Conteúdo |
 |-----|----------|
-| Resumo | Identidade, KPIs, pontos para conversa, previews |
-| Pedidos | Linhas do cliente → ficha nativa |
-| Histórico | Faturamento + NFs (detalhe NF em página) |
+| Resumo | Identidade (centro fora da URL), KPIs, pontos para conversa |
+| Pedidos | Linhas do cliente/centro → ficha nativa |
+| Histórico | Faturamento + NFs do centro |
 | Oportunidades | OVs do cliente |
-| Contatos | TOTVS (leitura) + contatos locais (CRUD) |
+| Contatos | TOTVS (leitura) + contatos locais (CRUD) — da loja |
 | Atividades | Timeline / follow-ups |
 
 #### Demonstrar
 
+- Abrir cliente com centro (ex. WEG) → duas linhas / coluna Centro → Conta sem centro na URL.
 - Abrir cliente → Resumo → Contatos (criar um contato local de teste, se ambiente permitir).
 - “Ver atrasos” da conta → pedidos filtrados.
 - Mostrar cliente compartilhado (se houver no ambiente).
@@ -253,10 +258,13 @@ Ajuste fino conforme a sala: se **só vendedores**, enxugue Admin (T8) e alongue
 | Dúvida | Resposta curta |
 |--------|----------------|
 | Cliente sem pedido some da carteira? | Não — membership define a lista; pedido é overlay. |
+| Por que duas linhas do mesmo cliente? | Mais de um centro vinculado (ex. WEG 1100/1200); vale para qualquer cliente com SA7. |
+| Centro no link da Conta? | Não — só código/loja; centro na sessão. |
+| Fat. 12m vazio na linha com centro? | Não mistura total da loja; use Histórico na Conta. |
 | Fat. 12m bruto vs líquido | Líquido segue lógica ROL; bruto = NF / gross_revenue conforme painel. |
 | “Dado indisponível” | Enrichment parcial; lista base permanece; Excel deixa célula vazia. |
 | Contato do Protheus posso editar? | Não; só contatos **locais** Delpi. |
-| Onde edito a carteira (vínculos)? | **Administração → Carteiras** (`manage`). |
+| Onde edito a carteira (vínculos)? | **Administração → Carteiras** (`manage`); centro é conferido na amarração. |
 
 ---
 

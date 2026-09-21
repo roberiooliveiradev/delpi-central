@@ -24,6 +24,16 @@ describe("user manual page", () => {
     assert.match(content, /Onde configuro os SLAs/);
     assert.match(content, /Centro do cliente é o nome da WEG/);
     assert.match(content, /não altera funil|não muda o funil|Funil, novos negócios e metas/);
+    assert.match(content, /O que é código, loja e centro/);
+    assert.match(content, /Por que vejo duas linhas do mesmo cliente/);
+    assert.match(content, /qualquer cliente com centros na SA7/);
+    assert.match(content, /Separar unidades do mesmo cliente/);
+    assert.match(content, /O centro aparece no link da Conta/);
+    assert.match(content, /Onde vejo o centro em Meus pedidos/);
+    assert.match(content, /Posso ordenar a carteira pelo centro/);
+    assert.match(content, /Como vinculo um centro novo na carteira/);
+    assert.match(content, /Filtrar pedidos por centro do cliente/);
+    assert.match(content, /Quatro conceitos/);
     assert.match(content, /Onde vejo o ROL do mês/);
     assert.match(content, /busca de caminhos.*indicadores/);
     assert.match(content, /popover ancorado à barra/);

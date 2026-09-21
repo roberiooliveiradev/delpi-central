@@ -50,7 +50,7 @@ Rodar a partir da raiz do monorepo:
 | 7 | Detalhe: seção Usuários — add/remove membro; **Tornar responsável**; picker só `app=commercial` | |
 | 8 | Criar carteira com **vários** usuários (`user_ids`); exatamente um owner | |
 | 9 | Toggle **Lista \| Organização**; eixo **Por carteira \| Por pessoa**; URL `view`/`axis` | |
-| 10 | Usuário em 2+ carteiras ativas: «Todas» deduplica cliente (código+loja) | |
+| 10 | Usuário em 2+ carteiras ativas: «Todas» deduplica vínculo (código+loja+centro; sem centro = par) | |
 | 11 | Inativar carteira com membros: regra API (sem órfãos indevidos / feedback UI) | |
 
 ## Checklist funcional — P1 (smoke ops)
