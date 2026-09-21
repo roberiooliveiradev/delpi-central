@@ -2,10 +2,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   StatusBadge,
   TaskEditorFrame,
+  TaskEmptyState,
+  TaskSearchField,
+  TaskWorklistSection,
   UserDirectoryPicker,
   attachmentIdsInMarkdown,
   type DirectoryUserOption,
 } from "@delpi/plugin-ui/index";
+import { commercialTaskMatchesQuery } from "./myDayTaskSearch";
 import { X } from "lucide-react";
 
 import { useCommercialWorklistSync } from "../../app/CommercialRealtimeProvider";
@@ -43,7 +47,6 @@ import {
   CommercialMultiSelectField,
   CommercialPageHero,
   CommercialScopeChipBar,
-  CommercialSectionCard,
   CommercialSelectField,
   CommercialSegmentToggle,
   CommercialStatusBadge,
@@ -298,6 +301,7 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
   const [pendingThumbUrls, setPendingThumbUrls] = useState<Record<string, string>>({});
   const [pendingPreview, setPendingPreview] = useState<TaskAttachmentPreviewTarget>(null);
   const [formMode, setFormMode] = useState<TaskFormMode>("closed");
+  const [taskQuery, setTaskQuery] = useState("");
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const taskFormRef = useRef<HTMLDivElement | null>(null);
   const deepLinkBucketRef = useRef<BucketKey | null>(null);
@@ -620,6 +624,22 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
     if (typeFilter === "all") return bucketItems;
     return bucketItems.filter((task) => (task.task_type || "follow_up") === typeFilter);
   }, [bucket, data, doneItems, typeFilter]);
+
+  const visibleItems = useMemo(
+    () =>
+      items.filter((task) =>
+        commercialTaskMatchesQuery(task, taskQuery, {
+          typeLabel: TYPE_LABELS[task.task_type] ?? task.task_type,
+          assigneeLabels: (task.assignee_user_ids?.length
+            ? task.assignee_user_ids
+            : task.assignee_user_id
+              ? [task.assignee_user_id]
+              : []
+          ).map((userId) => sellerNameByUserId.get(userId) ?? directoryLabelFor(userId)),
+        }),
+      ),
+    [directoryLabelFor, items, sellerNameByUserId, taskQuery],
+  );
 
   const typeFilterChips = useMemo(() => {
     const source =
@@ -973,12 +993,14 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
         </div>
       </CommercialPageHero>
 
-      <CommercialSectionCard
+      <TaskWorklistSection
+        classNames={cmSectionCardClassNames}
+        labels={cmSectionLabels}
         title="Fila"
         subtitle="Atrasadas → hoje → depois → concluídas."
         hint={CM_HELP.myDay.worklist}
         actions={
-          <div className="cm-my-day-queue-actions">
+          <>
             {canManageFollowups ? (
               <CommercialActionButton variant="primary" onClick={openCreateForm}>
                 Nova tarefa
@@ -987,7 +1009,15 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
             <CommercialActionButton variant="ghost" onClick={() => void reload()}>
               Atualizar
             </CommercialActionButton>
-          </div>
+          </>
+        }
+        search={
+          <TaskSearchField
+            value={taskQuery}
+            onChange={setTaskQuery}
+            placeholder="Buscar tarefas..."
+            aria-label="Buscar tarefas"
+          />
         }
       >
         {loading ? <CommercialLoadingCard title="Carregando worklist…" variant="panel" /> : null}
@@ -1000,28 +1030,32 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
             transitionKey={`scope-${workScope}-${teamAssigneeFilter}-bucket-${bucket}-${typeFilter}`}
             tone="panel"
           >
-            {items.length === 0 ? (
-              <CommercialEmptyState
+            {visibleItems.length === 0 ? (
+              <TaskEmptyState
                 title={
-                  typeFilter === "all"
-                    ? `Nenhuma em ${BUCKET_META[bucket].label.toLowerCase()}`
-                    : `Nenhuma ${TYPE_LABELS[typeFilter] ?? typeFilter} em ${BUCKET_META[bucket].label.toLowerCase()}`
+                  taskQuery.trim()
+                    ? "Nenhuma tarefa corresponde à busca"
+                    : typeFilter === "all"
+                      ? `Nenhuma em ${BUCKET_META[bucket].label.toLowerCase()}`
+                      : `Nenhuma ${TYPE_LABELS[typeFilter] ?? typeFilter} em ${BUCKET_META[bucket].label.toLowerCase()}`
                 }
                 message={
-                  typeFilter === "all"
-                    ? BUCKET_META[bucket].emptyHint
-                    : "Tente outro tipo ou crie uma tarefa com este tipo."
+                  taskQuery.trim()
+                    ? "Ajuste o texto ou limpe a busca para ver o restante da fila."
+                    : typeFilter === "all"
+                      ? BUCKET_META[bucket].emptyHint
+                      : "Tente outro tipo ou crie uma tarefa com este tipo."
                 }
               >
-                {canManageFollowups && bucket !== "done" ? (
+                {canManageFollowups && bucket !== "done" && !taskQuery.trim() ? (
                   <CommercialActionButton variant="primary" onClick={openCreateForm}>
                     Nova tarefa
                   </CommercialActionButton>
                 ) : null}
-              </CommercialEmptyState>
+              </TaskEmptyState>
             ) : (
               <div className="cm-my-day-list" aria-label={`Tarefas: ${BUCKET_META[bucket].label}`}>
-                {items.map((task) => {
+                {visibleItems.map((task) => {
                   const typeLabel = TYPE_LABELS[task.task_type] ?? task.task_type;
                   const priorityLabel =
                     PRIORITY_LABELS[task.priority] ?? task.priority;
@@ -1260,7 +1294,7 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
             )}
           </CommercialViewTransition>
         ) : null}
-      </CommercialSectionCard>
+      </TaskWorklistSection>
 
       {canManageFollowups && formMode !== "closed" ? (
         <div ref={taskFormRef} className="cm-my-day-create">

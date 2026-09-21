@@ -679,13 +679,6 @@
   max-width: 320px;
 }
 
-.dashboard-commercial .cm-my-day-queue-actions {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
 .dashboard-commercial .cm-my-day-reassign {
   display: flex;
   flex-direction: column;

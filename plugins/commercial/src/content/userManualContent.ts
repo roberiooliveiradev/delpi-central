@@ -107,7 +107,7 @@ export const USER_MANUAL_CONTENT = {
         {
           want: "Follow-up com prazo",
           where: "Minhas tarefas",
-          how: "Buckets e criar tarefa com responsável",
+          how: "Buckets, busca na fila e criar tarefa com responsável",
         },
         {
           want: "Conversar com o time",

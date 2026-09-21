@@ -52,7 +52,8 @@ describe("Table audit P0 (E7.S1)", () => {
     assert.doesNotMatch(opp, /sortTableRows\(/);
 
     const myDay = readFileSync(join(src, "features/my-day/MyDayPage.tsx"), "utf8");
-    assert.match(myDay, /CommercialSectionCard/);
+    assert.match(myDay, /TaskWorklistSection/);
+    assert.match(myDay, /TaskEmptyState/);
     assert.match(myDay, /CommercialEmptyState/);
     assert.doesNotMatch(myDay, /\bSectionCard\b|\bEmptyState\b/);
 
