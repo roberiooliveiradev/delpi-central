@@ -2,8 +2,8 @@
 
 > **Status (revalidado 2026-09-21, `4f3ed59483`):** plano executável revisado segundo `evidence-driven-execution.mdc`, `plan-construction.mdc` e `plan-execution.mdc`.
 > **Entregue:** E1–E8 (incluindo E8 / WF-06 detalhe do pedido). GATE-FEATURE WF-06 = **PASS** ([evidência](./evidence/e8-wf06-federated-runtime-gate.md)).
-> **Em foco:** **E9 / WF-07 Entregas / atrasos** — BFF + MFE entregues (E9.S1–S3); Help/URL final pendente.
-> **Próxima receita:** `E9.S4` (Help + URL/F5) → `E9.S5`.
+> **Em foco:** **E9 / WF-07 Entregas / atrasos** — BFF + MFE + Help/URL entregues (E9.S1–S4); GATE-FEATURE pendente.
+> **Próxima receita:** `E9.S5` (suites + federated runtime GATE-FEATURE WF-07).
 > **Modo:** uma página user-facing por vez; etapas futuras abaixo são fila/grafo, não autorização automática.
 
 Referências: [README](./README.md), ADR-001..ADR-007, [WIREFRAMES](./WIREFRAMES.md), [API-ROUTES](./API-ROUTES.md), [DECISOES_FUNCIONAIS_PENDENTES](./DECISOES_FUNCIONAIS_PENDENTES.md), [HOMOLOGACAO-PARIDADE](./HOMOLOGACAO-PARIDADE.md).
@@ -240,13 +240,13 @@ Rota `/apps/supplies/deliveries` substitui placeholder; client BFF-only `GET /de
 
 **Teste:** `features/deliveries/*.test.ts` (query/client + structural).
 
-### E9.S4 — Help + estados + URL — NEXT
+### E9.S4 — Help + estados + URL — COMPLETED
 
-Sync Manual / Quero→onde / FAQ / tooltips / glossário; corrigir «atrasos do dia» para a semântica de digitação do recebimento.
+Sync Manual / Quero→onde / FAQ / tooltips / glossário; «atrasos do dia» removido; período = digitação; URL shareable com pushState + popstate; empty com CTA Limpar/Ajuda. Manifest `showInMenu=false` preservado (padrão interno; discoverability via Início/catálogo).
 
-**Teste:** chaves de Help / links do Manual.
+**Teste:** `features/deliveries/*` + `userManual.structural` + `helpTooltips.structural`.
 
-### E9.S5 — Suites + GATE-FEATURE WF-07
+### E9.S5 — Suites + GATE-FEATURE WF-07 — NEXT
 
 Suites API+MFE + smoke federado Portal → BFF only. Só então classificar GATE-FEATURE.
 

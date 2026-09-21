@@ -26,6 +26,8 @@ export const DELIVERIES_CONTENT = {
   emptyTitle: "Nenhum recebimento neste recorte",
   emptyMessage:
     "Ajuste unidade, período de digitação ou situação. Pedidos sem entrada não aparecem aqui.",
+  emptyClearAction: "Limpar filtros",
+  emptyHelpAction: "Abrir Ajuda",
   noUnitsTitle: "Nenhuma filial liberada",
   noUnitsMessage:
     "Seu acesso não inclui unidades neste módulo. Peça o escopo canônico ao administrador.",

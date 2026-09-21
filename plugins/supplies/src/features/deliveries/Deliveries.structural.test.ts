@@ -123,9 +123,14 @@ describe("Deliveries feature (E9.S3)", () => {
     expect(page).toContain("C.retry");
     expect(page).toContain("mapDeliveriesFetchError");
     expect(page).toContain("items.length === 0");
+    expect(page).toContain("emptyClearAction");
+    expect(page).toContain('navigatePluginView("help"');
+    expect(page).toContain('addEventListener("popstate"');
+    expect(page).toContain("pushState");
     expect(content).toContain("emptyTitle");
     expect(content).toContain("forbiddenUnit");
     expect(content).toContain("retry");
+    expect(content).not.toMatch(/permission de entregas/i);
   });
 
   it("summary só de campos do contrato (sem KPI inventado)", () => {
@@ -135,5 +140,14 @@ describe("Deliveries feature (E9.S3)", () => {
     expect(page).toContain("on_time_lines");
     expect(page).not.toMatch(/purchase_order_otd_pct/);
     expect(page).not.toMatch(/late_percentage/);
+  });
+
+  it("Help período explicita digitação; sem drill na copy da página", () => {
+    const help = readFileSync(join(dir, "../../content/helpTooltips.ts"), "utf8");
+    expect(help).toMatch(/deliveriesPeriod:[\s\S]*digitação\/entrada/);
+    expect(help).toMatch(/deliveries:[\s\S]*matéria-prima/);
+    expect(help).not.toMatch(/atrasos do dia/);
+    const page = readFileSync(join(dir, "DeliveriesPage.tsx"), "utf8");
+    expect(page).not.toMatch(/clique no pedido|abrir a ficha/i);
   });
 });

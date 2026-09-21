@@ -31,14 +31,14 @@ Herdar textos já canônicos de:
 - Filtros **rejeitados** na Overview (não entram no chrome global): competence, cliente, segmento, carteira, vendedor, `location` global, `stock_method` global (pertencem a telas de domínio, não ao placar).
 - Metas na Visão geral: **Meta do período** = `comparableGoal` do SI; **Meta mês** = `referenceGoal`/`goalValue` cadastrada (consolidado = rollup 01+02); **Nota IDD** = `iddScore` do SI (não recalcular no MFE). **Valor do estoque** usa meta de **nível/teto** (sem pró-rata diária nem soma de meses). SC pendentes e materiais críticos sem meta SI.
 - Gráfico OTD com toolbar (granularity/tipo/export) e comparativo valor×meta (sem série inventada).
-- Página OTD (`/analytics/otd`): velocímetros por unidade; Overview = placar; Entregas = atraso operacional.
+- Página OTD (`/analytics/otd`): velocímetros por unidade; Overview = placar; Entregas / Atrasos = recebimentos MP no período selecionado (digitação), não «atrasos do dia».
 - Loading padrão: `SuppliesLoadingCard` (plugin-ui); banners só para error/partial/forbidden.
 - Manual `/help`: PageHero + SectionCard (família Comercial), conteúdo em `userManualContent.ts`.
 - Onde ver SC, ESTSEG, item, fornecedor.
 - Fornecedor e solicitante nas listas/fichas de PC e SC usam avatar de iniciais do kit (`EntityAvatarLabel`). Fichas próprias reservadas — ver `DIRECTORY-OBJECTS.md`. O avatar **não** navega até as páginas existirem.
 - O que cada KPI do Overview significa (link fichas, linguagem de negócio).
 - 403: «sem permissão para esta filial / este módulo».
-- FAQ: diferença estoque × estoque de segurança; OTD × atraso; Overview × página OTD; Sheets × indicadores; filtros/URL; Meta parcial × Meta mês.
+- FAQ: diferença estoque × estoque de segurança; OTD × Entregas / Atrasos × Pedidos de compra; Overview × página OTD; Sheets × indicadores; filtros/URL; Meta parcial × Meta mês.
 - Onde alterar filial padrão / densidade de tabelas (perfil do plugin — WF-USER), sem confundir com `/profile` do Portal.
 - Foto, cargo e contatos: fonte Core (`/me/person-profile`); edição só no Meu Perfil do host; TopBar/WF-USER sincronizam via CustomEvent.
 

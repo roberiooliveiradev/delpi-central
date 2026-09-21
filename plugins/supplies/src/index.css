@@ -755,6 +755,13 @@
   font-variant-numeric: tabular-nums;
 }
 
+.dashboard-supplies-portal .sp-deliveries__empty-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
 .dashboard-supplies-portal .sp-purchase-orders .delpi-ui-data-list-toolbar {
   flex-wrap: wrap;
 }

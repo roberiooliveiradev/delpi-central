@@ -111,7 +111,7 @@ export const HUB_SECTIONS: readonly HubSectionDef[] = [
         label: "Entregas",
         viewId: "deliveries",
         requiredCap: "operations",
-        keywords: ["entrega", "sd1"],
+        keywords: ["entrega", "atraso", "recebimento", "pontualidade", "otd operacional", "sd1"],
       },
       {
         id: "suppliers",

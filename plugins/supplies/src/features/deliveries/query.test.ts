@@ -71,6 +71,37 @@ describe("deliveries query / API params", () => {
     expect(parsed).toEqual(query);
   });
 
+  it("deep-link F5-equivalent parse completo", () => {
+    const search =
+      "?branch=01&status=on_time&start_date=2026-09-01&end_date=2026-09-30&page=2&page_size=20&sort_by=expected_delivery_date&sort_dir=desc";
+    const parsed = parseQueryFromSearch(search, ["01", "02"]);
+    expect(parsed).toEqual({
+      branches: ["01"],
+      status: "on_time",
+      start_date: "2026-09-01",
+      end_date: "2026-09-30",
+      page: 2,
+      page_size: 20,
+      sort_by: "expected_delivery_date",
+      sort_dir: "desc",
+    });
+    expect(buildUrlSearch(parsed)).toContain("branch=01");
+    expect(buildUrlSearch(parsed)).not.toContain("branch=02");
+  });
+
+  it("sanitiza params inválidos sem inventar branch", () => {
+    const parsed = parseQueryFromSearch(
+      "?status=garbage&branch=99&page=-1&page_size=abc&sort_dir=x&sort_by=unknown",
+      ["01", "02"],
+    );
+    expect(parsed.status).toBe("late");
+    expect(parsed.branches).toEqual([]);
+    expect(parsed.page).toBe(1);
+    expect(parsed.page_size).toBe(20);
+    expect(parsed.sort_dir).toBe("asc");
+    expect(parsed.sort_by).toBe("");
+  });
+
   it("filtro muda com page=1 na query URL ao reparsear após patch mental", () => {
     const base = createDefaultQuery([], new Date("2026-09-15T12:00:00-03:00"));
     const patched = { ...base, status: "on_time" as const, page: 1 };

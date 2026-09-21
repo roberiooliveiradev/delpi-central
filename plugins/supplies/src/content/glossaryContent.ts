@@ -11,7 +11,12 @@ export const GLOSSARY_CONTENT: readonly GlossaryEntry[] = [
   {
     term: "OTD",
     meaning:
-      "On-Time Delivery — pontualidade de entrega frente ao compromisso. Não confundir com a lista de atrasos do dia.",
+      "On-Time Delivery — pontualidade de entrega frente ao compromisso. Indicador analítico (Visão geral / página OTD). Não confundir com a lista operacional Entregas / Atrasos (recebimentos MP no período selecionado).",
+  },
+  {
+    term: "Data de digitação do recebimento",
+    meaning:
+      "Data em que o recebimento foi digitado/entrado no sistema. Em Entregas / Atrasos, o filtro de período usa essa data — não a data prometida nem a emissão do pedido de compra.",
   },
   {
     term: "ESTSEG",

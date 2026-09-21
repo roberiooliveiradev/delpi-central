@@ -79,7 +79,7 @@ export const SP_HELP = {
   overviewChartSeriesColor:
     "Cor desta série no gráfico. Aplica somente à série selecionada.",
   otdAnalyticsPage:
-    "Pontualidade de compras com velocímetros por unidade (Santa Catarina / Espírito Santo) e evolução no tempo. Diferente da Visão geral (placar de KPIs) e de Entregas (atrasos do dia).",
+    "Pontualidade de compras com velocímetros por unidade (Santa Catarina / Espírito Santo) e evolução no tempo. Diferente da Visão geral (placar de KPIs) e de Entregas / Atrasos (recebimentos MP no período selecionado).",
   purchaseRequests:
     "Acompanhamento global das solicitações no período. Os indicadores contam SCs, não linhas: Solicitações é o total do recorte; Aguardando pedido reúne SCs ainda sem pedido completo; Aguardando recebimento reúne SCs já encaminhadas e ainda não concluídas. Atenção só filtra a lista — não é permissão nem um fluxo novo.",
   purchaseRequestsStage:
@@ -168,19 +168,19 @@ export const SP_HELP = {
   purchaseOrderDetailReceipts:
     "Recebimentos do item, com nota, quantidade, datas de emissão e entrada. Se a lista estiver vazia, ainda não há documento de entrada para aquela linha.",
   deliveries:
-    "Linhas de recebimento de matéria-prima classificadas por pontualidade. Não é a lista de pedidos em aberto nem o OTD analítico. Sync completa de Help fica em E9.S4.",
+    "Linhas de recebimento de matéria-prima (MP) classificadas por pontualidade. Em atraso = recebimento depois da data prometida; No prazo = no compromisso ou antes. O período usa a data de digitação/entrada do recebimento — não a data prometida nem a emissão do PC. Não é a lista de Pedidos de compra (saldo aberto) nem o OTD analítico.",
   deliveriesBranch:
-    "Unidade do recorte (Santa Catarina e/ou Espírito Santo). «Todas» omite o parâmetro branch; o BFF compõe 01+02. Códigos técnicos ficam só na URL e na API.",
+    "Unidade do recorte (Santa Catarina e/ou Espírito Santo). «Todas» omite o parâmetro branch na URL; o Portal consulta o consolidado autorizado. Códigos técnicos ficam só na URL e na API.",
   deliveriesPeriod:
-    "Período da data de digitação do recebimento (entrada), não da data prometida nem da emissão do PC. Atalhos preenchem De/Até; Personalizado = intervalo manual.",
+    "O período considera a data de digitação/entrada do recebimento. Não filtra pela data prometida nem pela emissão do pedido. Atalhos preenchem De/Até; Personalizado = intervalo manual. A URL guarda start_date e end_date (F5 restaura o recorte).",
   deliveriesStatus:
-    "Situação de pontualidade do recebimento: Em atraso ou No prazo. O valor vem do contrato; o Portal não recalcula atraso.",
+    "Situação de pontualidade do recebimento: Em atraso ou No prazo. O valor vem do servidor; o Portal não recalcula atraso a partir dos dias.",
   deliveriesFilters:
-    "Filtros aplicam automaticamente. Limpar volta ao padrão (Todas, Em atraso, mês corrente).",
+    "Filtros aplicam automaticamente. A URL guarda unidade, situação, período, página e ordenação para compartilhar ou atualizar (F5). Limpar volta ao padrão (Todas, Em atraso, mês corrente). Não há clique no pedido nesta tela.",
   deliveriesRefresh:
     "Recarrega a lista e o resumo com os mesmos filtros. O horário é da última consulta bem-sucedida nesta tela.",
   deliveriesTableMeta:
-    "Colunas visíveis e total de linhas do recorte filtrado (não só a página atual).",
+    "Colunas visíveis e total de linhas do recorte filtrado (não só a página atual). Pedido aparece como texto — não abre ficha nesta página.",
   userProfile:
     "Perfil do Portal Suprimentos: identidade Minha DELPI (foto, cargo e contatos da Core, só leitura), atalhos por capability e preferências (filial padrão e densidade). Edite foto/cargo/contatos em /profile do Portal host.",
   userProfilePrefs:

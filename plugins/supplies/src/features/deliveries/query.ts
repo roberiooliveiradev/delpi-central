@@ -69,6 +69,13 @@ function readStatus(raw: string): DeliveryPunctualityStatus {
   return raw === "on_time" ? "on_time" : "late";
 }
 
+function readSortBy(raw: string): string {
+  const trimmed = raw.trim();
+  if (!trimmed) return "";
+  const allowed = Object.values(DELIVERIES_SORTABLE_COLUMNS) as readonly string[];
+  return allowed.includes(trimmed) ? trimmed : "";
+}
+
 export function parseQueryFromSearch(
   search: string,
   allowedUnits: readonly string[] = [],
@@ -89,11 +96,26 @@ export function parseQueryFromSearch(
     status: readStatus(readParam(params, "status")),
     start_date: start,
     end_date: end,
-    sort_by: readParam(params, "sort_by"),
+    sort_by: readSortBy(readParam(params, "sort_by")),
     sort_dir: readSortDir(readParam(params, "sort_dir")),
     page: readInt(params, "page", 1),
     page_size: readInt(params, "page_size", DEFAULT_PAGE_SIZE),
   };
+}
+
+export function sameDeliveriesQuery(
+  left: DeliveriesQuery,
+  right: DeliveriesQuery,
+): boolean {
+  if (left.status !== right.status) return false;
+  if (left.start_date !== right.start_date) return false;
+  if (left.end_date !== right.end_date) return false;
+  if (left.sort_by !== right.sort_by) return false;
+  if (left.sort_dir !== right.sort_dir) return false;
+  if (left.page !== right.page) return false;
+  if (left.page_size !== right.page_size) return false;
+  if (left.branches.length !== right.branches.length) return false;
+  return left.branches.every((code, index) => code === right.branches[index]);
 }
 
 /**

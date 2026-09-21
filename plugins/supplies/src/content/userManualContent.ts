@@ -76,12 +76,17 @@ export const USER_MANUAL_CONTENT = {
         {
           want: "Ver OTD com velocímetro",
           where: "OTD",
-          how: "Velocímetros por unidade e série no tempo; mesmos filtros da Visão geral. Diferente de Entregas (atrasos do dia)",
+          how: "Velocímetros por unidade e série no tempo; mesmos filtros da Visão geral. Diferente de Entregas / Atrasos (recebimentos MP no período)",
         },
         {
           want: "Compartilhar o mesmo recorte da Visão geral",
           where: "Visão geral",
           how: "A URL guarda unidade(s), datas e preset — copie o link com o filtro ativo",
+        },
+        {
+          want: "Acompanhar entregas atrasadas",
+          where: "Entregas / Atrasos",
+          how: "Recebimentos MP por pontualidade; filtre Unidade, período de digitação e Em atraso/No prazo. A URL guarda o recorte (F5). Sem clique no pedido",
         },
         {
           want: "Abrir pedidos de compra (PC)",
@@ -134,9 +139,9 @@ export const USER_MANUAL_CONTENT = {
           how: "Lista 360 reservada; hoje o avatar identifica o fornecedor nos pedidos",
         },
         {
-          want: "Acompanhar pedidos e entregas",
+          want: "Acompanhar pedidos em aberto",
           where: "Pedidos de compra",
-          how: "Ou Entregas para atrasos operacionais",
+          how: "Saldo pendente de recebimento; para pontualidade de recebimentos já digitados use Entregas / Atrasos",
         },
         {
           want: "Fila pessoal",
@@ -157,7 +162,8 @@ export const USER_MANUAL_CONTENT = {
         "Início — saudação com o primeiro nome da sessão, atenção, busca, favoritos e caminhos por capability.",
         "Visão geral — indicadores consolidados do período e das unidades selecionadas; itens operacionais em Solicitações e Operações.",
         "OTD — velocímetros de pontualidade e evolução; abra pelo Início, catálogo Análises ou CTA da Visão geral.",
-        "Pedidos de compra — itens com saldo pendente de recebimento no recorte; hero com linhas/valor/atrasadas; Atenção Todos(N)/Atrasados(N) do resumo do servidor; filtros automáticos, Atualizar; Unidade como Santa Catarina / Espírito Santo; clique no PC para a ficha. Distinto do OTD de pontualidade.",
+        "Pedidos de compra — itens com saldo pendente de recebimento no recorte; hero com linhas/valor/atrasadas; Atenção Todos(N)/Atrasados(N) do resumo do servidor; filtros automáticos, Atualizar; Unidade como Santa Catarina / Espírito Santo; clique no PC para a ficha. Distinto do OTD de pontualidade e de Entregas / Atrasos.",
+        "Entregas / Atrasos — recebimentos de matéria-prima (MP) já digitados, classificados em Em atraso ou No prazo. Período = data de digitação/entrada. Sem clique no pedido (histórico ≠ PC aberto).",
         "Solicitações de compras — acompanhamento global no período; o hero conta SCs e a faixa Atenção filtra a situação sem ser uma permissão. Clique na SC para a ficha; exportação Excel faz parte do uso normal.",
         "Operações — pedidos, entregas, fornecedores, produtos, estoque e ESTSEG.",
         "Indicadores / Negociações — recorte analítico quando liberado.",
@@ -175,8 +181,16 @@ export const USER_MANUAL_CONTENT = {
           a: "Estoque é o saldo físico/posições. Estoque de segurança (ESTSEG) é a cobertura mínima planejada e o déficit — abra Estoque de segurança, não Estoque.",
         },
         {
-          q: "OTD é a mesma coisa que atraso?",
-          a: "Não. OTD mede pontualidade no período. Atrasos do dia aparecem em Entregas / operação — não use um como substituto do outro.",
+          q: "OTD é a mesma coisa que Entregas / Atrasos?",
+          a: "Não. OTD (Visão geral / página OTD) é indicador analítico de pontualidade. Entregas / Atrasos lista recebimentos históricos de MP e a pontualidade de cada linha no período de digitação. Pedidos de compra lista PCs ainda em aberto — outro universo.",
+        },
+        {
+          q: "Qual a diferença entre Entregas / Atrasos e Pedidos de compra?",
+          a: "Entregas / Atrasos mostra linhas de recebimento já digitadas (MP) e se chegaram Em atraso ou No prazo. Pedidos de compra mostra saldo em aberto (SC7) — inclusive sem recebimento. Não clique no pedido em Entregas: a ficha de PC só cobre o universo aberto.",
+        },
+        {
+          q: "O período em Entregas / Atrasos filtra qual data?",
+          a: "A data de digitação/entrada do recebimento. Não é a data prometida nem a emissão do pedido.",
         },
         {
           q: "Qual a diferença entre Visão geral e a página OTD?",
@@ -213,6 +227,10 @@ export const USER_MANUAL_CONTENT = {
         {
           q: "Como compartilho o recorte da lista de SC?",
           a: "A URL da lista guarda unidade, período (date_from/date_to), uma ou mais situações (overall_stage repetido), produto e ordenação (sort_by/sort_dir). Sem branch na URL significa Todas as unidades liberadas. Os atalhos de período (iguais à Visão geral) preenchem as datas; editar datas vira Personalizado. O padrão é Este mês. F5 restaura o mesmo estado e deriva o atalho das datas. A faixa Atenção grava os mesmos overall_stage e volta para a página 1.",
+        },
+        {
+          q: "Como compartilho o recorte de Entregas / Atrasos?",
+          a: "A URL guarda branch (omitido = Todas), status, start_date, end_date, page, page_size, sort_by e sort_dir. F5 restaura o mesmo recorte. O período é a digitação do recebimento.",
         },
         {
           q: "Como ordeno a lista de SC ou pedidos em Cards?",

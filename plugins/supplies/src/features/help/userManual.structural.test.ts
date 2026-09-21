@@ -25,12 +25,15 @@ describe("userManual content", () => {
     expect(want?.links?.some((row) => /ESTSEG|segurança/i.test(row.want))).toBe(true);
     expect(want?.links?.some((row) => /filial padrão|densidade/i.test(row.want))).toBe(true);
     expect(want?.links?.some((row) => /OTD|velocímetro/i.test(row.want))).toBe(true);
+    expect(want?.links?.some((row) => /entregas atrasadas/i.test(row.want))).toBe(true);
     expect(want?.links?.some((row) => /detalhe de um pedido/i.test(row.want))).toBe(true);
 
     const faq = USER_MANUAL_CONTENT.sections.find((section) => section.id === "faq");
     const questions = (faq?.faqs ?? []).map((item) => item.q).join(" ");
+    const answers = (faq?.faqs ?? []).map((item) => item.a).join(" ");
     expect(questions).toMatch(/estoque/i);
     expect(questions).toMatch(/OTD/i);
+    expect(questions).toMatch(/Entregas \/ Atrasos/);
     expect(questions).toMatch(/Visão geral.*OTD|OTD.*Visão geral/i);
     expect(questions).toMatch(/Sheets|indicadores/i);
     expect(questions).toMatch(/403/);
@@ -38,16 +41,34 @@ describe("userManual content", () => {
     expect(questions).toMatch(/\/profile|Minha DELPI/i);
     expect(questions).toMatch(/detalhe de um pedido de compra/i);
     expect(questions).toMatch(/avatar do fornecedor|solicitante/i);
+    expect(answers).not.toMatch(/atrasos do dia/i);
+    expect(answers).toMatch(/digitação/i);
   });
 
   it("exposes glossary terms and tool link targets", () => {
     const terms = GLOSSARY_CONTENT.map((entry) => entry.term);
-    for (const required of ["OTD", "ESTSEG", "SC", "PC", "CPV", "Giro", "Filial 01", "Filial 02"]) {
+    for (const required of [
+      "OTD",
+      "ESTSEG",
+      "SC",
+      "PC",
+      "CPV",
+      "Giro",
+      "Filial 01",
+      "Filial 02",
+      "Data de digitação do recebimento",
+    ]) {
       expect(terms).toContain(required);
     }
     expect(MANUAL_TOOL_TARGETS.some((target) => target.label === "Visão geral")).toBe(true);
     expect(MANUAL_TOOL_TARGETS.some((target) => target.viewId === "analytics_otd")).toBe(true);
     expect(MANUAL_TOOL_TARGETS.some((target) => target.viewId === "purchase_requests")).toBe(
+      true,
+    );
+    expect(MANUAL_TOOL_TARGETS.some((target) => target.label === "Entregas / Atrasos")).toBe(
+      true,
+    );
+    expect(GLOSSARY_CONTENT.every((entry) => !/atrasos do dia/i.test(entry.meaning))).toBe(
       true,
     );
   });

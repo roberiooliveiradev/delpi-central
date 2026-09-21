@@ -14,6 +14,7 @@ export const MANUAL_TOOL_TARGETS: readonly ManualToolTarget[] = [
   { label: "Estoque de segurança", viewId: "safety_stock" },
   { label: "Solicitações de compras", viewId: "purchase_requests" },
   { label: "Pedidos de compra", viewId: "purchase_orders" },
+  { label: "Entregas / Atrasos", viewId: "deliveries" },
   { label: "Minhas tarefas", viewId: "my_tasks" },
   { label: "Visão geral", viewId: "overview" },
   { label: "Administração", viewId: "administration" },

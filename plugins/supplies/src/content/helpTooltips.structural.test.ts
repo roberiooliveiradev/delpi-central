@@ -65,6 +65,11 @@ describe("helpTooltips", () => {
     expect(SP_HELP.purchaseOrderDetail.length).toBeGreaterThan(20);
     expect(SP_HELP.purchaseOrderDetailItems.length).toBeGreaterThan(20);
     expect(SP_HELP.purchaseOrderDetailReceipts.length).toBeGreaterThan(20);
+    expect(SP_HELP.deliveries.length).toBeGreaterThan(20);
+    expect(SP_HELP.deliveriesPeriod).toMatch(/digitação\/entrada/);
+    expect(SP_HELP.deliveriesPeriod).not.toMatch(/atrasos do dia/);
+    expect(SP_HELP.deliveries).not.toMatch(/atrasos do dia/);
+    expect(SP_HELP.otdAnalyticsPage).not.toMatch(/atrasos do dia/);
     expect(SP_HELP.forbiddenUnit.length).toBeGreaterThan(20);
     expect(SP_HELP.userProfile.length).toBeGreaterThan(20);
     expect(SP_HELP.userProfilePrefs.length).toBeGreaterThan(20);

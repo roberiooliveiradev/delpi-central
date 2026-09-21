@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { RefreshCw } from "lucide-react";
 
 import { navigatePluginView } from "../../app/pluginNavigation";
@@ -24,6 +24,7 @@ import {
   buildUrlSearch,
   createDefaultQuery,
   parseQueryFromSearch,
+  sameDeliveriesQuery,
 } from "./query";
 import type {
   DeliveriesQuery,
@@ -35,16 +36,29 @@ type DeliveriesPageProps = {
   basePath: string;
 };
 
+type HistoryWriteMode = "replace" | "push" | "skip";
+
+/**
+ * URL history for deliveries filters.
+ * - Sibling list pages (PO/PR/Overview) write with replaceState only.
+ * - E9.S4 requires back/forward of filter state → pushState on user changes.
+ * - popstate rehydrates React query from window.location.search.
+ * Initial canonicalize / unit sync still uses replaceState.
+ */
 function readBrowserSearch(): string {
   if (typeof window === "undefined") return "";
   return window.location.search || "";
 }
 
-function replaceBrowserSearch(search: string) {
+function writeBrowserSearch(search: string, mode: Exclude<HistoryWriteMode, "skip">) {
   if (typeof window === "undefined") return;
   const next = `${window.location.pathname}${search}`;
   const current = `${window.location.pathname}${window.location.search || ""}`;
   if (next === current) return;
+  if (mode === "push") {
+    window.history.pushState(window.history.state, "", next);
+    return;
+  }
   window.history.replaceState(window.history.state, "", next);
 }
 
@@ -73,6 +87,7 @@ function sameBranches(left: readonly string[], right: readonly string[]): boolea
 export function DeliveriesPage({ basePath }: DeliveriesPageProps) {
   const session = useSuppliesSession();
   const units = session.allowedUnits;
+  const historyWriteModeRef = useRef<HistoryWriteMode>("replace");
 
   const [query, setQuery] = useState<DeliveriesQuery>(() =>
     parseQueryFromSearch(readBrowserSearch(), units),
@@ -91,13 +106,30 @@ export function DeliveriesPage({ basePath }: DeliveriesPageProps) {
     setQuery((current) => {
       const nextBranches = canonicalizeUiBranches(current.branches, units);
       if (sameBranches(nextBranches, current.branches)) return current;
+      historyWriteModeRef.current = "replace";
       return { ...current, branches: nextBranches };
     });
   }, [units]);
 
   useEffect(() => {
-    replaceBrowserSearch(buildUrlSearch(query));
+    const mode = historyWriteModeRef.current;
+    if (mode === "skip") {
+      historyWriteModeRef.current = "push";
+      return;
+    }
+    writeBrowserSearch(buildUrlSearch(query), mode);
+    historyWriteModeRef.current = "push";
   }, [query]);
+
+  useEffect(() => {
+    const onPopState = () => {
+      const next = parseQueryFromSearch(readBrowserSearch(), units);
+      historyWriteModeRef.current = "skip";
+      setQuery((current) => (sameDeliveriesQuery(current, next) ? current : next));
+    };
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, [units]);
 
   useEffect(() => {
     if (!units.length) return;
@@ -134,12 +166,14 @@ export function DeliveriesPage({ basePath }: DeliveriesPageProps) {
   const homeHref = buildPluginPath("home", basePath);
 
   const patchQuery = useCallback((patch: Partial<DeliveriesQuery>) => {
+    historyWriteModeRef.current = "push";
     setQuery((current) => ({ ...current, ...patch }));
   }, []);
 
   const reload = () => setReloadKey((value) => value + 1);
 
   const onClear = () => {
+    historyWriteModeRef.current = "push";
     setQuery(createDefaultQuery());
   };
 
@@ -244,7 +278,20 @@ export function DeliveriesPage({ basePath }: DeliveriesPageProps) {
           {loading ? <SuppliesLoadingCard title={C.loading} variant="panel" /> : null}
 
           {!loading && !error && items.length === 0 ? (
-            <SuppliesEmptyState title={C.emptyTitle} message={C.emptyMessage} />
+            <SuppliesEmptyState title={C.emptyTitle} message={C.emptyMessage}>
+              <div className="sp-deliveries__empty-actions">
+                <SuppliesActionButton type="button" variant="ghost" onClick={onClear}>
+                  {C.emptyClearAction}
+                </SuppliesActionButton>
+                <SuppliesActionButton
+                  type="button"
+                  variant="primary"
+                  onClick={() => navigatePluginView("help", { basePath })}
+                >
+                  {C.emptyHelpAction}
+                </SuppliesActionButton>
+              </div>
+            </SuppliesEmptyState>
           ) : null}
 
           {!loading && !error && items.length > 0 ? (
