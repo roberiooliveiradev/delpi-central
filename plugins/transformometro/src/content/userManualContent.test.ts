@@ -23,9 +23,17 @@ describe("Transforma+ user manual", () => {
     const linked = USER_MANUAL_CONTENT.sections.flatMap((section) => section.links ?? []);
     expect(
       linked
-        .filter((link) => link.where !== "Minhas tarefas" && link.where !== "Sala de interação")
+        .filter(
+          (link) =>
+            link.where !== "Minhas tarefas" &&
+            link.where !== "Sala de interação" &&
+            link.where !== "Workspace do processo",
+        )
         .every((link) => !/sala|tarefa/i.test(`${link.want} ${link.where} ${link.path ?? ""}`)),
     ).toBe(true);
+    const processes = USER_MANUAL_CONTENT.sections.find((section) => section.id === "processes");
+    expect(JSON.stringify(processes)).toMatch(/workspace/i);
+    expect(JSON.stringify(processes)).toMatch(/tarefas relacionadas/i);
     expect(USER_MANUAL_CONTENT.sections.map((section) => section.id)).toEqual([
       "home",
       "overview",

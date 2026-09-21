@@ -126,12 +126,26 @@ export const USER_MANUAL_CONTENT = {
     {
       id: "processes",
       title: "Meus processos",
-      intro: "Lista os processos disponíveis no portal.",
+      intro:
+        "Lista os processos e abre o workspace do processo: visão geral, melhorias, revisões, diagrama, tarefas da sala e Sala de interação no mesmo contexto.",
+      bullets: [
+        "Abra um processo para trabalhar no workspace. A árvore à esquerda separa processo-mestre, melhorias (instâncias) e revisões.",
+        "Processo-mestre não pertence a uma única unidade: unidade e departamento aparecem na melhoria.",
+        "Medições, investimentos e recursos compartilhados ficam em cada revisão — não invente pontuação no resumo.",
+        "Sala de interação abre a conversa canônica daquele processo. Tarefas relacionadas são só as criadas a partir de mensagens da sala.",
+        "Atas continuam em Atas; não há vínculo de ata ao processo neste workspace.",
+      ],
       links: [
         {
           want: "Trabalhar um processo",
           where: "Meus processos",
-          how: "Abra a lista e escolha o processo.",
+          how: "Abra a lista e escolha o processo. Use a árvore para mudar de seção; F5 mantém o caminho.",
+          path: TRANSFORMOMETRO_ROUTES.processes,
+        },
+        {
+          want: "Abrir a sala do processo",
+          where: "Workspace do processo",
+          how: "Use Sala de interação na árvore ou no rodapé do painel.",
           path: TRANSFORMOMETRO_ROUTES.processes,
         },
       ],
