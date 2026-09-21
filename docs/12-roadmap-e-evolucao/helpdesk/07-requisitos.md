@@ -28,6 +28,8 @@ Estado de cada um, até existir código: `ATENDIDO_NO_PLANO`. Nenhum está `PROV
 
 Formatação, HTML e imagem no corpo da conversa **não** são HD novo. Estendem HD-009, HD-010, HD-013 e HD-016. Inventário em [`12-conteudo-da-mensagem.md`](./12-conteudo-da-mensagem.md); sem autorização de código.
 
+Paridade da listagem com o GLPI do solicitante **não** é HD novo. Estende HD-008 e HD-016. Inventário em [`13-listagem-de-chamados.md`](./13-listagem-de-chamados.md); sem autorização de código.
+
 ## Herdados da plataforma
 
 Não viram HD próprio:

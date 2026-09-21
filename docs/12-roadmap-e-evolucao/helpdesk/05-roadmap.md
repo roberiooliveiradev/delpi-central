@@ -48,3 +48,5 @@ Não entra em `E1…E5`.
 H5 só começa com decisão nova. Não é continuação automática de H4.
 
 Corpo rico da mensagem (HTML, formatação, imagem no fio) **não** é H5. É inventário em [`12-conteudo-da-mensagem.md`](./12-conteudo-da-mensagem.md) e só vira plano depois de autorização explícita e do fechamento de H1–H4 daquele arquivo.
+
+Paridade da listagem (datas absolutas, resolução, busca no texto, período de abertura) **não** é H5 nem a bancada Super-Admin. É inventário em [`13-listagem-de-chamados.md`](./13-listagem-de-chamados.md).

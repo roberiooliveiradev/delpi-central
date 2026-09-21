@@ -14,7 +14,7 @@ O produto continua o do colaborador. O console do técnico permanece em `https:/
 | Foto | Superfície | O que se vê |
 |---|---|---|
 | Detalhe MFE, chamado 2 | `minhadelpi.com.br/apps/helpdesk/tickets/2` | seção Conversa, urgência Média, status Em atendimento (atribuído), duas bolhas à direita, data `19/02/2026`, arquivo como botão `Baixar 51-eQqV5j-…jpg`, campo Responder |
-| Lista MFE | `/apps/helpdesk` | cartões com título, urgência e status; um item Solucionado; sem busca, sem filtro, sem data, sem id |
+| Lista MFE | `/apps/helpdesk` | **publicado agora:** tabela + filtros (foto 21/09/2026). A frase antiga «cartões sem busca» está obsoleta; paridade em [`13-listagem-de-chamados.md`](./13-listagem-de-chamados.md) |
 | Detalhe GLPI, chamado 6288 | `helpdesk.centraldelpi.com.br/front/ticket.form.php?id=6288` | conversa com nome, data, foto do técnico, imagem no meio da mensagem, atores à direita, abas à esquerda |
 | Imagem no GLPI | o mesmo chamado | a foto abre no próprio fio, com o texto em volta |
 | Lista GLPI | `front/ticket.php` | busca, ordenação, colunas (id, título, entidade, status, datas, solicitante, técnico, categoria, último editor), paginação 15/128128, contadores do parque |
@@ -68,7 +68,7 @@ Pedido explícito das fotos: filtros e listagem de dados.
 
 Filtros: `createDashboardFiltersKit`. Lista: `HelpdeskDataTable` (`DataTable` do kit), com scroll horizontal intencional. Sem coluna de entidade, último editor ou contadores do parque. Técnico aparece, mas não ordena — a HLAPI não tem propriedade simples de atribuído.
 
-Não copiar da foto do GLPI para esta lista: entidade, data de solução, último editor, contadores do parque (1 000 novos, 128 128 linhas). Isso é a bancada.
+Não copiar da foto do GLPI para esta lista: entidade, último editor, contadores do parque (1 000 novos, 128 128 linhas). Isso é a bancada. Data de resolução e demais colunas do solicitante: [`13-listagem-de-chamados.md`](./13-listagem-de-chamados.md).
 
 ### 3.2 Arquivo — prévia, modal e download
 
@@ -193,4 +193,4 @@ Ainda não é etapa. Quando for planejada, a prova mínima é:
 
 ## 9. Fora deste inventário como autorização
 
-Este arquivo não abre E*.S*, não marca H5 como `PROVEN` e não liga a API legada. [`10-conversa-do-chamado.md`](./10-conversa-do-chamado.md) descreve a conversa já publicada. O que falta daqui para a frente é lista com filtro, dados no cartão, prévia e modal — mais as hipóteses C-01, A-07 e L-11, que precisam de evidência viva antes da receita.
+Este arquivo não abre E*.S*, não marca H5 como `PROVEN` e não liga a API legada. [`10-conversa-do-chamado.md`](./10-conversa-do-chamado.md) descreve a conversa já publicada. A paridade da listagem passou para [`13-listagem-de-chamados.md`](./13-listagem-de-chamados.md). O corpo da mensagem está em [`12-conteudo-da-mensagem.md`](./12-conteudo-da-mensagem.md).

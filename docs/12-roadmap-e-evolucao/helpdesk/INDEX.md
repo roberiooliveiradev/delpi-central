@@ -18,6 +18,7 @@ Telas e componentes: [`WIREFRAMES.md`](./WIREFRAMES.md).
 Conversa do chamado: [`10-conversa-do-chamado.md`](./10-conversa-do-chamado.md). A tela publicada está em [`WIREFRAMES.md`](./WIREFRAMES.md).
 Lacunas da experiência (inventário, sem autorização de código): [`11-lacunas-da-experiencia.md`](./11-lacunas-da-experiencia.md).
 Conteúdo da mensagem (formatação, imagem, HTML; inventário, sem autorização de código): [`12-conteudo-da-mensagem.md`](./12-conteudo-da-mensagem.md).
+Listagem de chamados (colunas, filtros, paridade GLPI; inventário, sem autorização de código): [`13-listagem-de-chamados.md`](./13-listagem-de-chamados.md).
 
 ## Roteamento rápido
 
@@ -26,6 +27,7 @@ o que a pessoa vê?          → 01 e WIREFRAMES.md
 de quem é o chamado?        → 02
 qual URL e qual JSON?       → 03
 o corpo da mensagem?        → 12 (HTML, formatação, imagem; inventário)
+a listagem de chamados?     → 13 (colunas, filtros, paridade GLPI; inventário)
 onde fica o segredo?        → 04
 o que vem depois do MVP?    → 05
 o que implementar agora?    → 06

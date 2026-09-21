@@ -52,7 +52,7 @@ Base do MFE: `/apps/helpdesk-api`.
 | `page` | página 1-based |
 | `page_size` | padrão 20, máximo 50 |
 
-O BFF pede `limit = page_size + 1` à HLAPI e devolve `has_more`. Não inventa total do parque. Status ou sort desconhecidos: 422 `validation_error`. `q` só conserva letra, número, espaço, hífen e underscore.
+O BFF pede `limit = page_size + 1` à HLAPI e devolve `has_more`. Não inventa total do parque. Evolução da grade (data absoluta, `solved_at`, busca no conteúdo, período de abertura) está só em [`13-listagem-de-chamados.md`](./13-listagem-de-chamados.md) e **não** está autorizada. Status ou sort desconhecidos: 422 `validation_error`. `q` só conserva letra, número, espaço, hífen e underscore.
 
 ```json
 {

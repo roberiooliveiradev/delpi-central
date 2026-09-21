@@ -90,6 +90,7 @@ O id não muda. O plugin iframe já é `helpdesk`, e o cliente OAuth de produç�
 | Como fica a conversa do chamado? | [`10-conversa-do-chamado.md`](./10-conversa-do-chamado.md); a tela publicada está em [`WIREFRAMES.md`](./WIREFRAMES.md) |
 | O que ainda falta na experiência? | [`11-lacunas-da-experiencia.md`](./11-lacunas-da-experiencia.md) — inventário, não é etapa de código |
 | O que a mensagem deve mostrar (HTML, imagem, formatação)? | [`12-conteudo-da-mensagem.md`](./12-conteudo-da-mensagem.md) — inventário, não é etapa de código |
+| O que a listagem deve mostrar (colunas, filtros, datas)? | [`13-listagem-de-chamados.md`](./13-listagem-de-chamados.md) — inventário, não é etapa de código |
 | O que a pessoa faz? | [`01-visao-produto.md`](./01-visao-produto.md) |
 | Quem é dono e o que já existe? | [`02-arquitetura.md`](./02-arquitetura.md) |
 | Qual é o contrato? | [`03-contrato.md`](./03-contrato.md) |

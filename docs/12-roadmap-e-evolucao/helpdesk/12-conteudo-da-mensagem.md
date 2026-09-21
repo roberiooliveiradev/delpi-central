@@ -317,7 +317,7 @@ Enquanto M-30 não existir, o helpdesk **não** implementa um renderer HTML pró
 |---|---|---|
 | M-40 | `helpTooltips.create` e `.detail` descrevem formatação e imagem no corpo | ALVO_LEITURA + ALVO_ESCRITA — mesmo entregável |
 | M-41 | F5 no detalhe mostra o mesmo HTML sanitizado | invariante de persistência (dono = GLPI) |
-| M-42 | Lista / `q` / cartão **não** passam a buscar HTML | FORA deste inventário (L-01 continua título) |
+| M-42 | Lista / `q` / cartão **não** passam a buscar HTML | FORA deste inventário; busca no texto da abertura é G-21 em [`13-listagem-de-chamados.md`](./13-listagem-de-chamados.md) |
 | M-43 | Log do BFF continua sem corpo da mensagem | invariante [`04-seguranca.md`](./04-seguranca.md) |
 
 ## 9. Ownership — produtores e consumidores

@@ -34,6 +34,8 @@ Teste de unidade da helpdesk-api usa GLPI falso. Teste do adapter pode usar o co
 
 Prova de formatação, XSS e imagem no corpo **não** entra nesta lista até haver autorização de código. Os casos estão em [`12-conteudo-da-mensagem.md`](./12-conteudo-da-mensagem.md) §16.
 
+Prova da grade (data absoluta, resolução, busca no conteúdo) está em [`13-listagem-de-chamados.md`](./13-listagem-de-chamados.md) §14 e também só depois de autorização.
+
 ## 3. Homologação E5.S2
 
 ```text
