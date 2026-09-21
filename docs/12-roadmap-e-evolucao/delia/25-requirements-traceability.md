@@ -127,18 +127,18 @@ OUT_OF_SCOPE_WITH_DECISION
 | CP-143 | Manifesto próprio da DÉLIA | DÉLIA/Core (`id=delia`) | schema/registration | LOCKED |
 | CP-144 | Gateway route própria API/MFE | Gateway (`/apps/delia-api/`, `/apps/delia`) | dev/prod parity | LOCKED |
 | CP-145 | Compose/deploy próprios | Infra (`delpi-delia-api`, `delpi-delia`) | independent service/start | LOCKED |
-| CP-148 | Portal federated full-page mount | Portal/DÉLIA MFE | authorized mount/F5 | LOCKED |
-| CP-149 | Global DÉLIA panel usando o mesmo MFE/runtime | Portal/DÉLIA MFE | surface parity | LOCKED |
+| CP-148 | Portal federated full-page mount | Portal/DÉLIA MFE | authorized mount/F5 | LOCKED — C2-T5 full-page AppHost preserved (same remote helpers) |
+| CP-149 | Global DÉLIA panel usando o mesmo MFE/runtime | Portal/DÉLIA MFE | surface parity | IMPLEMENTED_CURRENT_SCOPE — C2-T5 Portal panel + same `delia`/`./App`; C2 not complete |
 | CP-150 | JWT + Core/RBAC integration | DÉLIA API/Core | auth negatives | LOCKED |
 | CP-152 | Health + independent rollback/shutdown | DÉLIA/Infra | Chat-offline rollback | LOCKED |
 | CP-153 | Reuso obrigatório de `@delpi/plugin-ui`/shared federation | DÉLIA MFE | federation/UI conformance | LOCKED |
-| CP-155 | Entry point da DÉLIA amplamente disponibilizável conforme acesso/rollout | Portal/Core/DÉLIA MFE | access/visibility gate | LOCKED |
+| CP-155 | Entry point da DÉLIA amplamente disponibilizável conforme acesso/rollout | Portal/Core/DÉLIA MFE | access/visibility gate | LOCKED — C2-T5 strengthened: launcher only if `/me/apps` contains `id=delia` |
 
 ## 4. C2 — Portal Context + Platform Commands
 
 | ID | Requisito | Owner | Gate | Status |
 |---|---|---|---|---|
-| CP-001 | DÉLIA global no Portal | DÉLIA MFE + Portal | panel/full-page UX | LOCKED |
+| CP-001 | DÉLIA global no Portal | DÉLIA MFE + Portal | panel/full-page UX | IMPLEMENTED_CURRENT_SCOPE — C2-T5 global launcher/panel; C2_EXECUTED=NO |
 | CP-002 | Abrir app | Portal/CopilotBridge | authorized navigation | LOCKED |
 | CP-003 | Abrir rota | Portal/CopilotBridge | authorized navigation | LOCKED |
 | CP-004 | Abrir entidade | Portal + app contract | EntityRef/deep-link | LOCKED |
@@ -160,8 +160,8 @@ OUT_OF_SCOPE_WITH_DECISION
 | CP-068 | Proibir Business Action via DOM/click | Portal/DÉLIA Policy | negative gate | LOCKED |
 | CP-069 | SSO iframe sem token pelo bridge | Portal/App/Security | auth architecture | TO_INVENTORY |
 | CP-070 | Observabilidade iframe bridge | Portal/Observability | trace/redaction | LOCKED |
-| CP-156 | Paridade de RBAC/policy entre Global/Workspace/Meeting/Frontline | Portal/DÉLIA Policy | surface parity | LOCKED |
-| CP-159 | Contexto operacional OP/máquina/produto/operação/posto usa WorkspaceContext + EntityRef | Portal/MFE/DÉLIA | operational context contract | LOCKED — C2-T4: OP/PRODUCT/OPERATION sources proven; MACHINE/POSTO TO_INVENTORY; no Workspace runtime |
+| CP-156 | Paridade de RBAC/policy entre Global/Workspace/Meeting/Frontline | Portal/DÉLIA Policy | surface parity | PARTIAL — C2-T5 global/full-page share Core `/me/apps` + same host AuthZ hints; Meeting/Frontline surfaces do not exist |
+| CP-159 | Contexto operacional OP/máquina/produto/operação/posto usa WorkspaceContext + EntityRef | Portal/MFE/DÉLIA | operational context contract | LOCKED — inventory only; C2-T4/T4R1: OPERATIONAL_CONTEXT=TO_INVENTORY; no Workspace runtime after T5 |
 | CP-171 | Device metadata não substitui identidade/autorização | Portal/DÉLIA Security | shared-device/context negative | LOCKED — requirement only; not a C2 device runtime |
 
 ## 5. C3 — Intelligence Core + Extended Foundations
@@ -569,7 +569,7 @@ No CP promoted to PASS by documentation alone
 
 Related non-inventory CPs (CP-178/179 OT, CP-091 EntityRef, etc.) remain PLANNED/LOCKED per their rows; inventory evidence does not satisfy runtime gates.
 
-C2-T3: rows CP-001–CP-012, CP-025, CP-059, CP-061–CP-070, CP-156 and CP-159 stay `LOCKED` as requirements. That status is not `IMPLEMENTED_RUNTIME`. Host presentation and transient lifecycle are the only C2 behaviors with current tests. WorkspaceContext, operational OP/machine/product/operation/posto, global panel, typed command bus and DÉLIA iframe bridge are not runtime. CP-012 reasoning is C3.
+C2-T3: rows CP-002–CP-012, CP-025, CP-059, CP-061–CP-070 remain `LOCKED` as requirements. C2-T5 promotes CP-001/CP-149 to `IMPLEMENTED_CURRENT_SCOPE` for the Portal global surface only (`C2_EXECUTED=NO`). CP-156 is `PARTIAL`. Host presentation, transient lifecycle and the global panel are the current C2 runtime. WorkspaceContext, operational OP/machine/product/operation/posto, typed command bus and DÉLIA iframe bridge are not runtime. CP-012 reasoning is C3.
 
 ## 15. C0.S1 naming / physical ownership linkage — accepted review
 
@@ -579,8 +579,8 @@ Review: `ARCHITECTURE_REVIEW_C0_S1`; `REVIEWED_HEAD=c822f0e72495256c3459a4b36b9c
 | CP | Naming/ownership note (C0.S1 accepted) | Status unchanged |
 |---|---|---|
 | CP-130–CP-134, CP-140 | architecture gates; no path invent | PLANNED |
-| CP-138 | owner label → Portal/DÉLIA MFE; C2-T1D1 acceptance adds transient vs retained browser state, residency gate, centralized cleanup/removability; C2-T2 current shell = PARTIAL (transient root only; no retained boundary) | PLANNED |
-| CP-158 | C2-T1D1 acceptance adds User A → Portal logout → User B isolation for DÉLIA-owned browser state; C2-T2 unmount/remount PASS for current shell; future retained-state isolation not implemented | PLANNED |
+| CP-138 | owner label → Portal/DÉLIA MFE; C2-T1D1 acceptance adds transient vs retained browser state, residency gate, centralized cleanup/removability; C2-T2/T5 current shell + global panel = PARTIAL (transient root only; no retained boundary) | PLANNED |
+| CP-158 | C2-T1D1 acceptance adds User A → Portal logout → User B isolation for DÉLIA-owned browser state; C2-T2/T5 unmount/remount PASS for current transient shell/panel; future retained-state isolation not implemented | PLANNED — PARTIAL current transient scope |
 | CP-141 | path → `delia-api/` | LOCKED (C1) |
 | CP-142 | path → `plugins/delia/` | LOCKED (C1) |
 | CP-143 | `id=delia`; manifest source DÉLIA; registry Core | LOCKED (C1) |

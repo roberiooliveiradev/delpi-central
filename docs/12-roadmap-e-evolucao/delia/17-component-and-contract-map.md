@@ -958,6 +958,19 @@ ChatWorkspaceContext / TvWorkspaceContext = CHAT_ONLY ≠ product Workspace
 NO new host abstraction (single Portal producer; typed props suffice)
 ```
 
+C2-T5 global surface (additive Portal behavior; frozen host props unchanged):
+
+```text
+OWNER: Portal = launcher + panel chrome + host lifecycle; DÉLIA = federated ./App content
+DISCOVERY: AuthContext.apps from GET /core-api/me/apps; composition hook id=delia (not a second catalog; not RBAC)
+REMOTE: same resolveFederationEntry + exposedModule ./App as full-page AppHost
+SHARED HELPER: federatedRemoteHost load/mount/updateRoute/unmount (AppHost + global panel)
+HOST PROPS: same frozen set; no surface/WorkspaceContext/EntityRef/OP fields
+FULLPAGE RULE: hide launcher and unmount panel on /apps/delia(+children)
+PANEL STATE: TRANSIENT_UI_STATE (no localStorage/sessionStorage)
+NEW_HOST_FIELDS = NONE
+```
+
 C2-T4 owner/source inventory (no runtime Workspace; DÉLIA is not owner):
 
 ```text
