@@ -1,6 +1,6 @@
 # OTD de pedidos de venda — `/commercial/sales-order-otd`
 
-**Última atualização:** 2026-08-28  
+**Última atualização:** 2026-09-21  
 **Operação OpenAPI:** `get_sales_order_otd` (+ `…/summary`, `…/panel`, `…/series`, `…/lines/{…}`)  
 **Repositório:** `app/infrastructure/persistence/totvs/commercial_repositories/sales_order_otd_repository.py`  
 **SQL:** `sales_order_otd_sql.py`
@@ -28,6 +28,7 @@ GET /commercial/sales-order-otd/lines/{branch}/{order_number}/{line_item}
 | `customer_segment` | `weg` (cliente `000001`) ou `new_business` (demais clientes). |
 | `customer_codes` | CSV de códigos TOTVS a incluir (todas as lojas do código). |
 | `customer_code_stores` | CSV de pares `codigo\|loja` (ex.: `000001\|01,000001\|05`). **AND** com `customer_codes` quando ambos vêm. |
+| `customer_centers` | CSV de centros do cliente na amarração produto–cliente (`SA7.A7_XCENT`), ex.: `1320,1505`. O join só entra quando o parâmetro vem preenchido. Dois centros na mesma loja não se misturam. Ver [centro-cliente.md](./padroes-totvs/centro-cliente.md). |
 | `customer_names` / `exclude_customer_*` | Include/exclude por nome (LIKE) ou código. |
 | `status` (panel) | `on_time` \| `late` (opcional). |
 | `search` (panel) | Busca em pedido, cliente (código/nome), produto (código/descrição). |
@@ -41,6 +42,7 @@ GET /commercial/sales-order-otd/lines/{branch}/{order_number}/{line_item}
 | `SC6010` (C6) | Itens do pedido de venda |
 | `SC5010` (C5) | Cabeçalho do pedido (cliente, segmento) |
 | `SA1010` (A1) | Cliente — `A1_NOME`, `A1_NREDUZ` (nome reduzido) |
+| `SA7010` (A7) | Centro do cliente (`A7_XCENT`), só quando `customer_centers` vem preenchido |
 | `SB1010` (B1) | Produto — fallback de UM (`B1_UM`) e descrição |
 
 Leitura analítica com `WITH (NOLOCK)`.
@@ -104,6 +106,7 @@ Painel — campos de linha relevantes:
 | `customer_code` | `C5.C5_CLIENTE` |
 | `customer_store` | `C5.C5_LOJACLI` (loja do cliente) |
 | `customer_name` | Preferência `SA1.A1_NREDUZ`; se vazio, `SA1.A1_NOME` |
+| `customer_center` | Nas agregações por cliente (`by-customer`, `series-by-customer`), preenchido só quando o grupo código+loja tem um único `A7_XCENT`. Dois centros na mesma loja permanecem um grupo com o campo nulo. |
 | `customer_short_name` | `SA1.A1_NREDUZ` (nome reduzido do **cliente**) |
 | `unit` | `C6.C6_UM` com fallback `B1.B1_UM` (sem conversão) |
 | `days_diff` | Dias entre promessa e fatura (ou data de referência se aberta) |

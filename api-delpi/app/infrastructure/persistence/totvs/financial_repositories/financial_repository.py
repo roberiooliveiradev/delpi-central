@@ -12,6 +12,10 @@ from app.domain.services.commercial_analysis_filter_service import (
 from app.domain.services.commercial.commercial_rol_return_sql import (
     CommercialRolReturnSql,
 )
+from app.domain.totvs.protheus_customer_center import (
+    customer_center_filter_column,
+    customer_center_join_sql,
+)
 from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
 
@@ -32,6 +36,7 @@ class FinancialRepository(BaseRepository, FinancialQueryRepositoryPort):
         vendas_where, vendas_params, exists_where, exists_params, dev_where, dev_params = (
             self._rol_filter_clauses(request)
         )
+        sale_center_join, return_center_join = self._center_joins(request)
         fetch_limit = max(1, int(limit)) + 1
         sale_gross = CommercialRolReturnSql.sale_gross_sum_expr(d2_alias="D2")
         sale_net = CommercialRolReturnSql.sale_net_sum_expr(d2_alias="D2")
@@ -76,6 +81,7 @@ class FinancialRepository(BaseRepository, FinancialQueryRepositoryPort):
             FROM SD2010 D2 WITH (NOLOCK)
             {CommercialRolReturnSql.sale_customer_join(d2_alias="D2", a1_alias="A1", with_nolock=True)}
             {CommercialRolReturnSql.sale_tes_join(d2_alias="D2", f4_alias="F4", with_nolock=True)}
+            {sale_center_join}
             WHERE {vendas_where}
                 AND {eligibility}
             GROUP BY D2.D2_FILIAL, D2.D2_DOC, D2.D2_SERIE, D2.D2_CLIENTE, D2.D2_LOJA
@@ -102,6 +108,7 @@ class FinancialRepository(BaseRepository, FinancialQueryRepositoryPort):
                 AND A1D.A1_COD  = D1.D1_FORNECE
                 AND A1D.A1_LOJA = D1.D1_LOJA
             {CommercialRolReturnSql.tes_join(d1_alias="D1", f4_alias="F4D", with_nolock=True)}
+            {return_center_join}
             WHERE {dev_where}
                 AND {CommercialRolReturnSql.sales_return_predicate(d1_alias="D1", f4_alias="F4D")}
             GROUP BY D1.D1_FILIAL, D1.D1_DOC, D1.D1_SERIE, D1.D1_FORNECE, D1.D1_LOJA
@@ -127,6 +134,8 @@ class FinancialRepository(BaseRepository, FinancialQueryRepositoryPort):
             customer_segment=request.customer_segment,
             customer_codes=request.customer_codes,
             customer_names=request.customer_names,
+            customer_center_column=customer_center_filter_column(request.customer_centers),
+            customer_centers=request.customer_centers,
             exclude_customer_codes=request.exclude_customer_codes,
             exclude_customer_names=request.exclude_customer_names,
         )
@@ -148,6 +157,8 @@ class FinancialRepository(BaseRepository, FinancialQueryRepositoryPort):
             customer_segment=request.customer_segment,
             customer_codes=request.customer_codes,
             customer_names=request.customer_names,
+            customer_center_column=customer_center_filter_column(request.customer_centers),
+            customer_centers=request.customer_centers,
             exclude_customer_codes=request.exclude_customer_codes,
             exclude_customer_names=request.exclude_customer_names,
         )
@@ -161,10 +172,29 @@ class FinancialRepository(BaseRepository, FinancialQueryRepositoryPort):
             dev_params,
         )
 
+    @staticmethod
+    def _center_joins(request: GetRolRequest) -> tuple[str, str]:
+        centers = request.customer_centers
+        return (
+            customer_center_join_sql(
+                centers=centers,
+                product_column="D2.D2_COD",
+                customer_column="D2.D2_CLIENTE",
+                store_column="D2.D2_LOJA",
+            ),
+            customer_center_join_sql(
+                centers=centers,
+                product_column="D1.D1_COD",
+                customer_column="D1.D1_FORNECE",
+                store_column="D1.D1_LOJA",
+            ),
+        )
+
     def _load_rol(self, request: GetRolRequest) -> dict:
         vendas_where, vendas_params, exists_where, exists_params, dev_where, dev_params = (
             self._rol_filter_clauses(request)
         )
+        sale_center_join, return_center_join = self._center_joins(request)
 
         sql = f"""
         WITH VENDAS AS (
@@ -200,6 +230,7 @@ class FinancialRepository(BaseRepository, FinancialQueryRepositoryPort):
                      OR F4.F4_FILIAL = ''
                      OR F4.F4_FILIAL IS NULL
                 )
+            {sale_center_join}
 
             WHERE {vendas_where}
                 AND ISNULL(A1.A1_NOME, '') <> ''
@@ -262,6 +293,7 @@ class FinancialRepository(BaseRepository, FinancialQueryRepositoryPort):
                 AND A1D.A1_COD  = D1.D1_FORNECE
                 AND A1D.A1_LOJA = D1.D1_LOJA
             {CommercialRolReturnSql.tes_join(d1_alias="D1", f4_alias="F4D", with_nolock=True)}
+            {return_center_join}
 
             WHERE {dev_where}
                 AND {CommercialRolReturnSql.sales_return_predicate(d1_alias="D1", f4_alias="F4D")}

@@ -160,3 +160,28 @@ def test_series_by_customer_paginates_flat_items(_mock_get, _mock_set) -> None:
     assert result["pagination"]["total"] == 4
     assert result["pagination"]["has_more"] is True
     assert len(result["items"]) == 2
+
+
+@patch(_CACHE_SET)
+@patch(_CACHE_GET, return_value=None)
+def test_series_by_customer_centers_skip_top_customers(_mock_get, _mock_set) -> None:
+    repository = MagicMock()
+    repository.list_sales_order_otd_analysis_by_customer.return_value = [
+        _customer_row(code="000001", name="WEG AUTOMACAO", total_qty=8.0, otd_pct=100.0),
+    ]
+    use_case = GetSalesOrderOtdSeriesByCustomerUseCase(
+        sales_order_otd_repository=repository
+    )
+    use_case.execute(
+        GetSalesOrderOtdSeriesByCustomerRequest(
+            granularity="week",
+            date_start="2026-08-03",
+            date_end="2026-08-09",
+            customer_centers=["1320"],
+            top_customers=20,
+        )
+    )
+    assert repository.list_sales_order_otd_analysis_by_customer.call_count == 1
+    req = repository.list_sales_order_otd_analysis_by_customer.call_args.args[0]
+    assert req.customer_centers == ["1320"]
+    assert req.customer_codes is None

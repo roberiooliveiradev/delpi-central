@@ -12,7 +12,9 @@ from app.infrastructure.persistence.totvs.commercial_repositories.sales_order_ot
     build_sales_order_otd_sql,
     build_sales_order_otd_upcoming_promises_sql,
     build_sales_order_otd_worst_delays_sql,
+    build_sales_order_otd_analysis_by_customer_sql,
     compose_sales_order_otd_lines_params,
+    sales_order_otd_center_join,
     _list_order_clause,
 )
 
@@ -296,3 +298,57 @@ def test_build_sales_order_otd_insights_sql_shapes() -> None:
     assert "GROUP BY customer_code, customer_store" in recurring_sql
     assert "WHERE status = 'late'" in worst_sql
     assert "is_invoiced = 0" in upcoming_sql
+
+
+def test_sales_order_otd_center_filter_joins_sa7_and_keeps_1320() -> None:
+    where_clause, params = build_sales_order_otd_filters(
+        branch="01",
+        start_date="2026-08-01",
+        end_date="2026-08-31",
+        customer_segment=None,
+        customer_centers=["1320", "1505"],
+    )
+    sql, _ = build_sales_order_otd_analysis_by_customer_sql(
+        where_clause=where_clause,
+        center_join=sales_order_otd_center_join(["1320", "1505"]),
+    )
+    assert "SA7010" in sql
+    assert "GROUP BY" in sql
+    assert "SA7C.customer_center IN" in where_clause
+    assert "1320" in params
+    assert "1505" in params
+    assert "1700" not in params
+    assert "GROUP BY customer_code, customer_store" in sql
+
+
+def test_sales_order_otd_center_1100_differs_from_1200() -> None:
+    where_1100, params_1100 = build_sales_order_otd_filters(
+        branch=None,
+        start_date=None,
+        end_date=None,
+        customer_segment=None,
+        customer_centers=["1100"],
+    )
+    where_1200, params_1200 = build_sales_order_otd_filters(
+        branch=None,
+        start_date=None,
+        end_date=None,
+        customer_segment=None,
+        customer_centers=["1200"],
+    )
+    assert params_1100 != params_1200
+    assert "1100" in params_1100
+    assert "1200" not in params_1100
+    assert where_1100 != where_1200 or params_1100 != params_1200
+
+
+def test_sales_order_otd_without_centers_does_not_join_sa7() -> None:
+    where_clause, _params = build_sales_order_otd_filters(
+        branch="01",
+        start_date="2026-08-01",
+        end_date="2026-08-31",
+        customer_segment=None,
+    )
+    sql, _ = build_sales_order_otd_sql(where_clause=where_clause)
+    assert "SA7010" not in sql
+    assert "customer_center" not in where_clause

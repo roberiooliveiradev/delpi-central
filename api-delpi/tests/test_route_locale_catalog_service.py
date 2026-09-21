@@ -38,6 +38,8 @@ def test_global_param_locale_catalog():
     assert params["branch"]["locale"]["en"]["label"] == "Branch"
     assert params["branch"]["locale"]["pt-BR"]["label"] == "Filial"
     assert params["customer_codes"]["locale"]["pt-BR"]["label"] == "Códigos de clientes"
+    assert params["customer_centers"]["locale"]["pt-BR"]["label"] == "Centros do cliente"
+    assert params["customer_centers"]["locale"]["en"]["label"] == "Customer centers"
     assert params["include"]["locale"]["pt-BR"]["label"] == "Seções opcionais"
 
 

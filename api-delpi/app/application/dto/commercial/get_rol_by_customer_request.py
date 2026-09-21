@@ -16,6 +16,7 @@ class GetRolByCustomerRequest:
     customer_names: Optional[list[str]] = None
     exclude_customer_codes: Optional[list[str]] = None
     exclude_customer_names: Optional[list[str]] = None
+    customer_centers: Optional[list[str]] = None
     product_codes: Optional[list[str]] = None
     product_groups: Optional[list[str]] = None
     market: Optional[str] = None

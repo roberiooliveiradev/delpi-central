@@ -6,6 +6,9 @@ from app.domain.services.commercial_analysis_filter_request import (
     ALLOWED_INCLUDE_FLAGS,
     CommercialAnalysisFilterRequest,
 )
+from app.domain.services.commercial_customer_center_filter_service import (
+    CommercialCustomerCenterFilterService,
+)
 from app.domain.services.commercial_customer_code_store_filter_service import (
     CommercialCustomerCodeStoreFilterService,
 )
@@ -57,6 +60,8 @@ class CommercialAnalysisFilterService:
         customer_codes: Optional[list[str]] = None,
         customer_code_stores: Optional[list[tuple[str, str]]] = None,
         customer_names: Optional[list[str]] = None,
+        customer_center_column: Optional[str] = None,
+        customer_centers: Optional[list[str]] = None,
         exclude_customer_codes: Optional[list[str]] = None,
         exclude_customer_names: Optional[list[str]] = None,
     ) -> None:
@@ -79,6 +84,12 @@ class CommercialAnalysisFilterService:
                 customer_store_column,
                 customer_code_stores,
             )
+        if customer_center_column:
+            CommercialCustomerCenterFilterService.apply_to_query_builder(
+                qb,
+                customer_center_column,
+                customer_centers,
+            )
         CommercialCustomerCodesFilterService.apply_exclude_to_query_builder(
             qb,
             customer_code_column,
@@ -100,15 +111,18 @@ class CommercialAnalysisFilterService:
         customer_code_column: str,
         customer_name_column: Optional[str] = None,
         customer_store_column: Optional[str] = None,
+        customer_center_column: Optional[str] = None,
     ) -> None:
         cls.apply_to_query_builder(
             qb,
             customer_code_column=customer_code_column,
             customer_name_column=customer_name_column,
             customer_store_column=customer_store_column,
+            customer_center_column=customer_center_column,
             customer_segment=request.customer_segment,
             customer_codes=request.customer_codes,
             customer_code_stores=request.customer_code_stores,
+            customer_centers=request.customer_centers,
             customer_names=request.customer_names,
             exclude_customer_codes=request.exclude_customer_codes,
             exclude_customer_names=request.exclude_customer_names,

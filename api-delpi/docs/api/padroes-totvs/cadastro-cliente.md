@@ -11,6 +11,8 @@ Convenções Delpi ao buscar / identificar cliente TOTVS para Portal Comercial e
 
 Busca de vínculo de carteira (`search_active_customers`) deve casar em **código**, **`A1_NOME`** e **`A1_NREDUZ`**. Display preferencial: `COALESCE(NULLIF(RTRIM(A1_NREDUZ), ''), A1_NOME)`.
 
+O centro que separa unidades do mesmo código **não** é nome nem loja. Ele fica em `SA7.A7_XCENT`. Ver [centro-cliente.md](./centro-cliente.md).
+
 Referência de implementação: lookup NF (`TotvsInvoiceIssuanceLookupRepository.search_customers`) já inclui `A1_NREDUZ`.
 
 ## Bloqueio (`A1_MSBLQL`)

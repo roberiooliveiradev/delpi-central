@@ -158,6 +158,7 @@ class GetSalesOrderOtdSeriesUseCase:
                 customer_segment=request.customer_segment,
                 customer_codes=request.customer_codes,
                 customer_code_stores=request.customer_code_stores,
+                customer_centers=request.customer_centers,
                 customer_names=request.customer_names,
                 exclude_customer_codes=request.exclude_customer_codes,
                 exclude_customer_names=request.exclude_customer_names,

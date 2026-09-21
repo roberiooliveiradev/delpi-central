@@ -15,6 +15,10 @@ from app.domain.ports.commercial.commercial_rol_by_customer_repository_port impo
 from app.domain.services.commercial_analysis_filter_service import (
     CommercialAnalysisFilterService,
 )
+from app.domain.totvs.protheus_customer_center import (
+    customer_center_filter_column,
+    customer_center_join_sql,
+)
 from app.domain.services.commercial.commercial_rol_return_sql import (
     CommercialRolReturnSql,
 )
@@ -42,6 +46,8 @@ class CommercialRolByCustomerRepository(
             customer_segment=request.customer_segment,
             customer_codes=request.customer_codes,
             customer_names=request.customer_names,
+            customer_center_column=customer_center_filter_column(request.customer_centers),
+            customer_centers=request.customer_centers,
             exclude_customer_codes=request.exclude_customer_codes,
             exclude_customer_names=request.exclude_customer_names,
         )
@@ -72,6 +78,8 @@ class CommercialRolByCustomerRepository(
             customer_segment=request.customer_segment,
             customer_codes=request.customer_codes,
             customer_names=request.customer_names,
+            customer_center_column=customer_center_filter_column(request.customer_centers),
+            customer_centers=request.customer_centers,
             exclude_customer_codes=request.exclude_customer_codes,
             exclude_customer_names=request.exclude_customer_names,
         )
@@ -97,6 +105,53 @@ class CommercialRolByCustomerRepository(
                     ON  SB1D.D_E_L_E_T_ = ''
                     AND SB1D.B1_COD = D1.D1_COD
             """
+        centers = request.customer_centers
+        sale_center_join = customer_center_join_sql(
+            centers=centers,
+            product_column="D2.D2_COD",
+            customer_column="D2.D2_CLIENTE",
+            store_column="D2.D2_LOJA",
+        )
+        return_center_join = customer_center_join_sql(
+            centers=centers,
+            product_column="D1.D1_COD",
+            customer_column="D1.D1_FORNECE",
+            store_column="D1.D1_LOJA",
+        )
+        if centers:
+            sale_center_select = """,
+                    CASE
+                        WHEN COUNT(DISTINCT SA7C.customer_center) = 1
+                        THEN MAX(SA7C.customer_center)
+                        ELSE NULL
+                    END AS CUSTOMER_CENTER"""
+            return_center_select = sale_center_select
+            pair_center_select = """,
+                    CASE
+                        WHEN V.CUSTOMER_CENTER IS NULL THEN D.CUSTOMER_CENTER
+                        WHEN D.CUSTOMER_CENTER IS NULL
+                          OR D.CUSTOMER_CENTER = V.CUSTOMER_CENTER
+                        THEN V.CUSTOMER_CENTER
+                        ELSE NULL
+                    END AS CUSTOMER_CENTER"""
+            agg_center_select = """,
+                    CASE
+                        WHEN COUNT(DISTINCT CUSTOMER_CENTER) = 1
+                         AND COUNT(CUSTOMER_CENTER) = COUNT(*)
+                        THEN MAX(CUSTOMER_CENTER)
+                        ELSE NULL
+                    END AS CUSTOMER_CENTER"""
+            named_center_select = ",\n                    RA.CUSTOMER_CENTER"
+            ranked_center_select = "RN.CUSTOMER_CENTER,\n                    "
+            final_center_select = "CUSTOMER_CENTER,\n                "
+        else:
+            sale_center_select = ""
+            return_center_select = ""
+            pair_center_select = ""
+            agg_center_select = ""
+            named_center_select = ""
+            ranked_center_select = ""
+            final_center_select = ""
 
         sql = f"""
             WITH VENDAS AS (
@@ -106,6 +161,7 @@ class CommercialRolByCustomerRepository(
                     D2.D2_LOJA,
                     {CommercialRolReturnSql.sale_net_sum_expr(d2_alias="D2")} AS VLR_VENDA,
                     {CommercialRolReturnSql.sale_gross_sum_expr(d2_alias="D2")} AS VLR_BRUTO
+                    {sale_center_select}
                 FROM SD2010 D2 WITH (NOLOCK)
                 LEFT JOIN SA1010 A1 WITH (NOLOCK)
                     ON  A1.D_E_L_E_T_ = ''
@@ -120,6 +176,7 @@ class CommercialRolByCustomerRepository(
                          OR F4.F4_FILIAL IS NULL
                     )
                 {sb1_join}
+                {sale_center_join}
                 WHERE {vendas_where}
                     AND ISNULL(A1.A1_NOME, '') <> ''
                     AND ISNULL(D2.D2_TIPO, '') <> 'D'
@@ -172,6 +229,7 @@ class CommercialRolByCustomerRepository(
                     D1.D1_FORNECE,
                     D1.D1_LOJA,
                     {CommercialRolReturnSql.return_net_sum_expr(d1_alias="D1")} AS VLR_DEVOLUCAO
+                    {return_center_select}
                 FROM SD1010 D1 WITH (NOLOCK)
                 LEFT JOIN SA1010 A1D WITH (NOLOCK)
                     ON  A1D.D_E_L_E_T_ = ''
@@ -179,6 +237,7 @@ class CommercialRolByCustomerRepository(
                     AND A1D.A1_LOJA = D1.D1_LOJA
                 {CommercialRolReturnSql.tes_join(d1_alias="D1", f4_alias="F4D", with_nolock=True)}
                 {sb1d_join}
+                {return_center_join}
                 WHERE {dev_where}
                     AND {CommercialRolReturnSql.sales_return_predicate(d1_alias="D1", f4_alias="F4D")}
                 GROUP BY D1.D1_FILIAL, D1.D1_FORNECE, D1.D1_LOJA
@@ -189,6 +248,7 @@ class CommercialRolByCustomerRepository(
                     RTRIM(ISNULL(V.D2_LOJA, D.D1_LOJA)) AS LOJA,
                     ISNULL(V.VLR_VENDA, 0) - ISNULL(D.VLR_DEVOLUCAO, 0) AS ROL_CLIENTE,
                     ISNULL(V.VLR_BRUTO, 0) AS GROSS_CLIENTE
+                    {pair_center_select}
                 FROM VENDAS V
                 FULL OUTER JOIN DEVOLUCOES D
                     ON  D.D1_FILIAL  = V.D2_FILIAL
@@ -201,6 +261,7 @@ class CommercialRolByCustomerRepository(
                     LOJA,
                     SUM(ROL_CLIENTE) AS ROL_CLIENTE,
                     SUM(GROSS_CLIENTE) AS GROSS_CLIENTE
+                    {agg_center_select}
                 FROM ROL_POR_CLIENTE
                 GROUP BY COD_CLIENTE, LOJA
             ),
@@ -217,6 +278,7 @@ class CommercialRolByCustomerRepository(
                     NULLIF(RTRIM(ISNULL(SA1.A1_EST, '')), '') AS UF,
                     RA.ROL_CLIENTE,
                     RA.GROSS_CLIENTE
+                    {named_center_select}
                 FROM ROL_AGREGADO RA
                 LEFT JOIN SA1010 SA1 WITH (NOLOCK)
                     ON  SA1.D_E_L_E_T_ = ''
@@ -241,6 +303,7 @@ class CommercialRolByCustomerRepository(
                     RN.UF,
                     RN.ROL_CLIENTE,
                     RN.GROSS_CLIENTE,
+                    {ranked_center_select}
                     T.TOTAL_ROL,
                     T.TOTAL_GROSS,
                     T.CUSTOMERS_COUNT,
@@ -257,6 +320,7 @@ class CommercialRolByCustomerRepository(
                 UF,
                 ROL_CLIENTE,
                 GROSS_CLIENTE,
+                {final_center_select}
                 TOTAL_ROL,
                 TOTAL_GROSS,
                 CUSTOMERS_COUNT,
@@ -304,6 +368,7 @@ class CommercialRolByCustomerRepository(
                 cnpj=_optional_str(row.get("CNPJ")),
                 city=_optional_str(row.get("CIDADE")),
                 state=_optional_str(row.get("UF")),
+                customer_center=_optional_str(row.get("CUSTOMER_CENTER")),
                 rol=float(row.get("ROL_CLIENTE") or 0),
                 gross_revenue=float(row.get("GROSS_CLIENTE") or 0),
                 share_pct=_share(float(row.get("ROL_CLIENTE") or 0)),

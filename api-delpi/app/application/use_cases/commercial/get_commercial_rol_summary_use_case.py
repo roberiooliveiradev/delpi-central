@@ -39,6 +39,7 @@ class GetCommercialRolSummaryUseCase:
         customer_names: Optional[list[str]] = None,
         exclude_customer_codes: Optional[list[str]] = None,
         exclude_customer_names: Optional[list[str]] = None,
+        customer_centers: Optional[list[str]] = None,
     ) -> dict[str, Any]:
         start_iso = _to_iso_date(start_date)
         end_iso = _to_iso_date(end_date)
@@ -53,6 +54,7 @@ class GetCommercialRolSummaryUseCase:
                 customer_names=customer_names,
                 exclude_customer_codes=exclude_customer_codes,
                 exclude_customer_names=exclude_customer_names,
+                customer_centers=customer_centers,
             )
         )
         return {

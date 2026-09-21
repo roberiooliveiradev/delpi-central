@@ -6,6 +6,9 @@ from app.domain.services.commercial_analysis_filter_request import (
 from app.domain.services.commercial_analysis_filter_service import (
     CommercialAnalysisFilterService,
 )
+from app.domain.services.commercial_customer_center_filter_service import (
+    CommercialCustomerCenterFilterService,
+)
 from app.domain.services.commercial_customer_codes_filter_service import (
     CommercialCustomerCodesFilterService,
 )
@@ -119,6 +122,57 @@ def test_analysis_filter_codes_and_code_stores():
     assert "C5.C5_LOJACLI = ?" in where
     assert " AND " in where
     assert list(params) == ["000001", "000001", "01", "000001", "05"]
+
+
+def test_analysis_filter_customer_centers_in_list():
+    centers = CommercialCustomerCenterFilterService.normalize("1505,1320")
+    qb = QueryBuilder()
+    CommercialAnalysisFilterService.apply_to_query_builder(
+        qb,
+        customer_code_column="C5.C5_CLIENTE",
+        customer_center_column="SA7C.customer_center",
+        customer_centers=centers,
+    )
+    where, params = qb.build()
+    assert "SA7C.customer_center IN" in where
+    assert list(params) == ["1320", "1505"]
+
+
+def test_analysis_filter_customer_centers_order_is_stable():
+    assert CommercialCustomerCenterFilterService.normalize("1505,1320") == (
+        CommercialCustomerCenterFilterService.normalize("1320,1505")
+    )
+
+
+def test_customer_centers_1100_is_not_1200():
+    assert CommercialCustomerCenterFilterService.normalize("1100") != (
+        CommercialCustomerCenterFilterService.normalize("1200")
+    )
+
+
+def test_analysis_filter_customer_centers_blank_is_noop():
+    qb = QueryBuilder()
+    CommercialAnalysisFilterService.apply_to_query_builder(
+        qb,
+        customer_code_column="C5.C5_CLIENTE",
+        customer_center_column="SA7C.customer_center",
+        customer_centers=None,
+    )
+    where, _params = qb.build()
+    assert "customer_center" not in where
+    assert "1 = 0" not in where
+
+
+def test_analysis_filter_customer_centers_empty_list_matches_nothing():
+    qb = QueryBuilder()
+    CommercialAnalysisFilterService.apply_to_query_builder(
+        qb,
+        customer_code_column="C5.C5_CLIENTE",
+        customer_center_column="SA7C.customer_center",
+        customer_centers=[],
+    )
+    where, _params = qb.build()
+    assert "1 = 0" in where
 
 
 def test_analysis_filter_request_has_include_with_code_stores():

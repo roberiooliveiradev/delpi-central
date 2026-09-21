@@ -17,6 +17,7 @@ class RolByCustomerItem:
     cnpj: Optional[str] = None
     city: Optional[str] = None
     state: Optional[str] = None
+    customer_center: Optional[str] = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -26,6 +27,7 @@ class RolByCustomerItem:
             "cnpj": self.cnpj,
             "city": self.city,
             "state": self.state,
+            "customer_center": self.customer_center,
             "rol": self.rol,
             "gross_revenue": self.gross_revenue,
             "share_pct": self.share_pct,

@@ -74,6 +74,7 @@ class GetSalesOrderOtdSeriesByCustomerUseCase:
                         customer_segment=request.customer_segment,
                         customer_codes=customer_codes,
                         customer_code_stores=request.customer_code_stores,
+                        customer_centers=request.customer_centers,
                         customer_names=customer_names,
                         exclude_customer_codes=request.exclude_customer_codes,
                         exclude_customer_names=request.exclude_customer_names,
@@ -92,6 +93,7 @@ class GetSalesOrderOtdSeriesByCustomerUseCase:
                             "customer_code": row.get("customer_code"),
                             "customer_store": row.get("customer_store"),
                             "customer_name": row.get("customer_name"),
+                            "customer_center": row.get("customer_center"),
                             "branch": row.get("branch"),
                             "periodo": bucket.label,
                             "sort_key": bucket.key,
@@ -151,7 +153,7 @@ class GetSalesOrderOtdSeriesByCustomerUseCase:
         start_iso: Optional[str],
         end_iso: Optional[str],
     ) -> tuple[Optional[list[str]], Optional[list[str]]]:
-        if request.customer_codes or request.customer_code_stores:
+        if request.customer_codes or request.customer_code_stores or request.customer_centers:
             return (
                 list(request.customer_codes) if request.customer_codes else None,
                 request.customer_names,
@@ -167,6 +169,7 @@ class GetSalesOrderOtdSeriesByCustomerUseCase:
                 customer_segment=request.customer_segment,
                 customer_codes=None,
                 customer_code_stores=None,
+                customer_centers=None,
                 customer_names=None,
                 exclude_customer_codes=request.exclude_customer_codes,
                 exclude_customer_names=request.exclude_customer_names,

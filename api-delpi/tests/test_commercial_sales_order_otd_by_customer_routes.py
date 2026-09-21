@@ -214,6 +214,54 @@ def test_get_sales_order_otd_series_by_customer_returns_meta(mock_build) -> None
     assert payload["data"]["items"][0]["otd_pct"] == 50.0
 
 
+@patch(f"{_COMMERCIAL}.build_get_sales_order_otd_series_by_customer_use_case")
+def test_get_sales_order_otd_series_by_customer_accepts_customer_centers(mock_build) -> None:
+    import app.interface.http.routes.commercial.commercial_router as router_mod
+
+    use_case = MagicMock()
+    use_case.execute.return_value = {
+        "granularity": "week",
+        "start_date": "2026-08-03",
+        "end_date": "2026-08-09",
+        "branch": None,
+        "items": [],
+        "pagination": {"page": 1, "page_size": 50, "total": 0, "has_more": False},
+        "summary": {
+            "granularity": "week",
+            "truncated": False,
+            "customers_count": 0,
+            "buckets_count": 1,
+            "items_count": 0,
+        },
+    }
+    mock_build.return_value = use_case
+
+    response = router_mod.get_sales_order_otd_series_by_customer(
+        granularity="week",
+        start_date="2026-08-03",
+        end_date="2026-08-09",
+        branch=None,
+        customer_segment=None,
+        customer_codes=None,
+        customer_code_stores=None,
+        customer_centers="1505,1320",
+        customer_names=None,
+        exclude_customer_codes=None,
+        exclude_customer_names=None,
+        page=1,
+        page_size=50,
+        top_customers=20,
+    )
+    payload = body_json(response)
+    assert_envelope_meta(
+        payload,
+        operation_id="get_sales_order_otd_series_by_customer",
+        shape="paged_list",
+    )
+    req = use_case.execute.call_args.args[0]
+    assert req.customer_centers == ["1320", "1505"]
+
+
 @patch(f"{_COMMERCIAL}.build_get_sales_order_otd_by_customer_use_case")
 def test_get_sales_order_otd_by_customer_parses_code_stores(mock_build) -> None:
     import app.interface.http.routes.commercial.commercial_router as router_mod

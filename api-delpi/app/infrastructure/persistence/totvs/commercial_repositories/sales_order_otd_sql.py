@@ -5,6 +5,10 @@ from typing import Optional, Tuple
 from app.application.dto.commercial.get_sales_order_otd_panel_request import (
     GetSalesOrderOtdPanelRequest,
 )
+from app.domain.totvs.protheus_customer_center import (
+    CUSTOMER_CENTER_ALIAS,
+    customer_center_link_sql,
+)
 from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
 
 # Aberto sem fatura: atraso só depois que o dia prometido terminou (calendário).
@@ -35,6 +39,31 @@ _SB1_JOIN_SQL = """
                 AND B1.D_E_L_E_T_ = ''
 """.strip()
 
+
+def sales_order_otd_center_join(customer_centers: Optional[list[str]]) -> str:
+    """SA7 join only when a non-empty center filter is active."""
+    if not customer_centers:
+        return ""
+    return customer_center_link_sql(
+        product_column="C6.C6_PRODUTO",
+        customer_column="C5.C5_CLIENTE",
+        store_column="C5.C5_LOJACLI",
+    )
+
+
+def _customer_center_expr(center_join: str) -> str:
+    if center_join.strip():
+        return f"{CUSTOMER_CENTER_ALIAS}.customer_center"
+    return "CAST(NULL AS VARCHAR(20))"
+
+
+_CUSTOMER_CENTER_AGG_SQL = """
+            CASE
+                WHEN COUNT(DISTINCT customer_center) = 1 THEN MAX(customer_center)
+                ELSE NULL
+            END AS customer_center
+""".strip()
+
 _AGG_UNIT_SELECT_SQL = """
             CASE
                 WHEN COUNT(*) = 0 THEN NULL
@@ -63,6 +92,7 @@ _LIST_LINES_CTE = """
                 RTRIM(LTRIM(SA1.A1_NOME))
             ) AS customer_name,
             RTRIM(LTRIM(SA1.A1_NREDUZ)) AS customer_short_name,
+            {_center_expr} AS customer_center,
             C6.C6_QTDVEN AS qty_sold,
             C6.C6_QTDENT AS qty_delivered,
             CONVERT(VARCHAR(10), CONVERT(DATE, C6.C6_ENTREG, 112), 23) AS promised_date,
@@ -105,6 +135,7 @@ _LIST_LINES_CTE = """
             ON  SA1.A1_COD = C5.C5_CLIENTE
             AND SA1.A1_LOJA = C5.C5_LOJACLI
             AND SA1.D_E_L_E_T_ = ''
+        {center_join}
         WHERE {where_clause}
     )
 """
@@ -119,6 +150,7 @@ def build_sales_order_otd_filters(
     customer_codes: Optional[list[str]] = None,
     customer_code_stores: Optional[list[tuple[str, str]]] = None,
     customer_names: Optional[list[str]] = None,
+    customer_centers: Optional[list[str]] = None,
     exclude_customer_codes: Optional[list[str]] = None,
     exclude_customer_names: Optional[list[str]] = None,
 ) -> Tuple[str, tuple]:
@@ -153,6 +185,12 @@ def build_sales_order_otd_filters(
         customer_codes=customer_codes,
         customer_code_stores=customer_code_stores,
         customer_names=customer_names,
+        customer_center_column=(
+            f"{CUSTOMER_CENTER_ALIAS}.customer_center"
+            if customer_centers is not None
+            else None
+        ),
+        customer_centers=customer_centers,
         exclude_customer_codes=exclude_customer_codes,
         exclude_customer_names=exclude_customer_names,
     )
@@ -160,7 +198,7 @@ def build_sales_order_otd_filters(
     return qb.build()
 
 
-def _list_cte_sql(*, where_clause: str) -> str:
+def _list_cte_sql(*, where_clause: str, center_join: str = "") -> str:
     on_time_case = _SALES_ORDER_OTD_ON_TIME_CASE.replace("C6_DATFAT", "C6.C6_DATFAT").replace(
         "C6_ENTREG", "C6.C6_ENTREG"
     )
@@ -168,6 +206,8 @@ def _list_cte_sql(*, where_clause: str) -> str:
         where_clause=where_clause,
         _on_time_case=on_time_case,
         _line_unit=_LINE_UNIT_SQL,
+        _center_expr=_customer_center_expr(center_join),
+        center_join=center_join,
     )
 
 
@@ -175,6 +215,7 @@ def build_sales_order_otd_sql(
     *,
     where_clause: str,
     reference_end_date: Optional[str] = None,
+    center_join: str = "",
 ) -> Tuple[str, tuple]:
     # reference_end_date mantido na assinatura (call sites); aberto usa GETDATE().
     _ = reference_end_date
@@ -194,6 +235,7 @@ def build_sales_order_otd_sql(
                 ON  SA1.A1_COD = C5.C5_CLIENTE
                 AND SA1.A1_LOJA = C5.C5_LOJACLI
                 AND SA1.D_E_L_E_T_ = ''
+            {center_join}
             WHERE {where_clause}
         )
         SELECT
@@ -217,6 +259,7 @@ def build_sales_order_otd_analysis_summary_sql(
     *,
     where_clause: str,
     reference_end_date: Optional[str] = None,
+    center_join: str = "",
 ) -> Tuple[str, tuple]:
     """Summary with qty + fulfillment + OTD for consolidated analysis route."""
     _ = reference_end_date
@@ -244,6 +287,7 @@ def build_sales_order_otd_analysis_summary_sql(
                 ON  SA1.A1_COD = C5.C5_CLIENTE
                 AND SA1.A1_LOJA = C5.C5_LOJACLI
                 AND SA1.D_E_L_E_T_ = ''
+            {center_join}
             WHERE {where_clause}
         )
         SELECT
@@ -274,6 +318,7 @@ def build_sales_order_otd_analysis_by_customer_sql(
     *,
     where_clause: str,
     reference_end_date: Optional[str] = None,
+    center_join: str = "",
 ) -> Tuple[str, tuple]:
     _ = reference_end_date
     on_time = _SALES_ORDER_OTD_ON_TIME_CASE.replace("C6_DATFAT", "C6.C6_DATFAT").replace(
@@ -289,6 +334,7 @@ def build_sales_order_otd_analysis_by_customer_sql(
                     NULLIF(RTRIM(LTRIM(SA1.A1_NREDUZ)), ''),
                     RTRIM(LTRIM(SA1.A1_NOME))
                 ) AS customer_name,
+                {_customer_center_expr(center_join)} AS customer_center,
                 C6.C6_NUM,
                 C6.C6_ITEM,
                 CONVERT(FLOAT, ISNULL(C6.C6_QTDVEN, 0)) AS qty_sold,
@@ -304,12 +350,14 @@ def build_sales_order_otd_analysis_by_customer_sql(
                 ON  SA1.A1_COD = C5.C5_CLIENTE
                 AND SA1.A1_LOJA = C5.C5_LOJACLI
                 AND SA1.D_E_L_E_T_ = ''
+            {center_join}
             WHERE {where_clause}
         )
         SELECT
             customer_code,
             customer_store,
             MAX(customer_name) AS customer_name,
+            {_CUSTOMER_CENTER_AGG_SQL},
             MAX(branch) AS branch,
             COUNT(*) AS total_lines,
             SUM(qty_sold) AS total_qty,
@@ -431,10 +479,11 @@ def build_sales_order_otd_lines_count_sql(
     status: Optional[str],
     reference_end_date: Optional[str] = None,
     search: Optional[str] = None,
+    center_join: str = "",
 ) -> Tuple[str, tuple]:
     _ = reference_end_date
     post_where, search_params = _post_cte_where_clause(status=status, search=search)
-    list_cte = _list_cte_sql(where_clause=where_clause)
+    list_cte = _list_cte_sql(where_clause=where_clause, center_join=center_join)
 
     sql = f"""
         WITH {list_cte}
@@ -451,6 +500,7 @@ def build_sales_order_otd_lines_list_sql(
     where_clause: str,
     request: GetSalesOrderOtdPanelRequest,
     reference_end_date: Optional[str] = None,
+    center_join: str = "",
 ) -> Tuple[str, tuple]:
     _ = reference_end_date
     post_where, search_params = _post_cte_where_clause(
@@ -458,7 +508,7 @@ def build_sales_order_otd_lines_list_sql(
         search=request.search,
     )
     order_clause = _list_order_clause(request)
-    list_cte = _list_cte_sql(where_clause=where_clause)
+    list_cte = _list_cte_sql(where_clause=where_clause, center_join=center_join)
 
     sql = f"""
         WITH {list_cte}
@@ -476,9 +526,10 @@ def build_sales_order_otd_late_days_stats_sql(
     *,
     where_clause: str,
     reference_end_date: Optional[str] = None,
+    center_join: str = "",
 ) -> Tuple[str, tuple]:
     _ = reference_end_date
-    list_cte = _list_cte_sql(where_clause=where_clause)
+    list_cte = _list_cte_sql(where_clause=where_clause, center_join=center_join)
     sql = f"""
         WITH {list_cte},
         LATE_LINES AS (
@@ -500,9 +551,10 @@ def build_sales_order_otd_recurring_customers_sql(
     *,
     where_clause: str,
     reference_end_date: Optional[str] = None,
+    center_join: str = "",
 ) -> Tuple[str, tuple]:
     _ = reference_end_date
-    list_cte = _list_cte_sql(where_clause=where_clause)
+    list_cte = _list_cte_sql(where_clause=where_clause, center_join=center_join)
     sql = f"""
         WITH {list_cte}
         SELECT TOP 10
@@ -525,9 +577,10 @@ def build_sales_order_otd_worst_delays_sql(
     *,
     where_clause: str,
     reference_end_date: Optional[str] = None,
+    center_join: str = "",
 ) -> Tuple[str, tuple]:
     _ = reference_end_date
-    list_cte = _list_cte_sql(where_clause=where_clause)
+    list_cte = _list_cte_sql(where_clause=where_clause, center_join=center_join)
     sql = f"""
         WITH {list_cte}
         SELECT TOP 10 *
@@ -542,9 +595,10 @@ def build_sales_order_otd_upcoming_promises_sql(
     *,
     where_clause: str,
     reference_end_date: Optional[str] = None,
+    center_join: str = "",
 ) -> Tuple[str, tuple]:
     _ = reference_end_date
-    list_cte = _list_cte_sql(where_clause=where_clause)
+    list_cte = _list_cte_sql(where_clause=where_clause, center_join=center_join)
     sql = f"""
         WITH {list_cte}
         SELECT TOP 10 *
@@ -558,8 +612,9 @@ def build_sales_order_otd_upcoming_promises_sql(
 def build_sales_order_otd_line_detail_sql(
     *,
     where_clause: str,
+    center_join: str = "",
 ) -> str:
-    list_cte = _list_cte_sql(where_clause=where_clause)
+    list_cte = _list_cte_sql(where_clause=where_clause, center_join=center_join)
 
     return f"""
         WITH {list_cte}
@@ -578,6 +633,7 @@ def build_sales_order_otd_line_detail_where(
     customer_segment: Optional[str],
     customer_codes: Optional[list[str]] = None,
     customer_code_stores: Optional[list[tuple[str, str]]] = None,
+    customer_centers: Optional[list[str]] = None,
 ) -> Tuple[str, tuple]:
     where_clause, where_params = build_sales_order_otd_filters(
         branch=branch,
@@ -586,6 +642,7 @@ def build_sales_order_otd_line_detail_where(
         customer_segment=customer_segment,
         customer_codes=customer_codes,
         customer_code_stores=customer_code_stores,
+        customer_centers=customer_centers,
     )
     where_clause = (
         f"{where_clause} "

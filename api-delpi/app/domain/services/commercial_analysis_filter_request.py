@@ -20,6 +20,7 @@ class CommercialAnalysisFilterRequest:
     customer_segment: Optional[str] = None
     customer_codes: Optional[list[str]] = None
     customer_code_stores: Optional[list[tuple[str, str]]] = None
+    customer_centers: Optional[list[str]] = None
     customer_names: Optional[list[str]] = None
     exclude_customer_codes: Optional[list[str]] = None
     exclude_customer_names: Optional[list[str]] = None
@@ -78,4 +79,5 @@ class CommercialAnalysisFilterRequest:
             self.customer_codes is not None
             or self.customer_names is not None
             or self.customer_code_stores is not None
+            or self.customer_centers is not None
         )

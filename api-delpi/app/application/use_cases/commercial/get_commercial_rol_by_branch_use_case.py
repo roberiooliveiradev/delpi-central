@@ -43,6 +43,7 @@ class GetCommercialRolByBranchUseCase:
             "customer_names": request.customer_names,
             "exclude_customer_codes": request.exclude_customer_codes,
             "exclude_customer_names": request.exclude_customer_names,
+            "customer_centers": request.customer_centers,
         }
         rol_01 = self._financial.get_rol(
             GetRolRequest(

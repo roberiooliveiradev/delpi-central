@@ -22,6 +22,7 @@ def financial_rol_cache_key(request: GetRolRequest) -> str:
             _csv(request.customer_names),
             _csv(request.exclude_customer_codes),
             _csv(request.exclude_customer_names),
+            _csv(getattr(request, "customer_centers", None)),
         ]
     )
 

@@ -53,6 +53,7 @@ class GetCommercialRolSeriesUseCase:
                     customer_names=request.customer_names,
                     exclude_customer_codes=request.exclude_customer_codes,
                     exclude_customer_names=request.exclude_customer_names,
+                    customer_centers=request.customer_centers,
                 )
             )
             branch_rol = self._financial_query_repository.get_rol(
@@ -65,6 +66,7 @@ class GetCommercialRolSeriesUseCase:
                     customer_names=request.customer_names,
                     exclude_customer_codes=request.exclude_customer_codes,
                     exclude_customer_names=request.exclude_customer_names,
+                    customer_centers=request.customer_centers,
                 )
             )
 

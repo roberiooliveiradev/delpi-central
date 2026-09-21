@@ -26,8 +26,8 @@ Cada bloco do slide TV usa **uma** rota, sem `group_by`:
 ## Filtros
 
 - **`granularity`**: nas rotas `*_series*` (`day` \| `week` \| `month` \| `year`). Em `get_sales_order_otd_series` continua obrigatório; em **`get_sales_order_otd_series_by_customer`** é **opcional** (omitido → `week`).
-- **Carteira** (todas as rotas comerciais acima, exceto SI): `customer_segment`, `customer_codes`, `customer_code_stores` (pares `codigo|loja`), `customer_names`, `exclude_customer_codes`, `exclude_customer_names` — omitidos = sem filtro.
-- **`top_customers`** (só `series-by-customer`): default **20**, max **100**. Aplicado quando **não** há `customer_codes`, `customer_names` nem `customer_code_stores`; ranking pelo `total_qty` do intervalo completo antes de expandir os buckets.
+- **Carteira** (as 8 rotas de OTD e as 5 de ROL comercial acima, exceto SI): `customer_segment`, `customer_codes`, `customer_code_stores` (pares `codigo|loja`, só OTD), `customer_centers` (CSV de centros `SA7.A7_XCENT`; ver [centro-cliente.md](./padroes-totvs/centro-cliente.md)), `customer_names`, `exclude_customer_codes`, `exclude_customer_names` — omitidos = sem filtro e sem join `SA7`.
+- **`top_customers`** (só `series-by-customer`): default **20**, max **100**. Aplicado quando **não** há `customer_codes`, `customer_names`, `customer_code_stores` nem `customer_centers`; ranking pelo `total_qty` do intervalo completo antes de expandir os buckets.
 - Em `series-by-customer`, **todos** os filtros de query são opcionais (datas, filial, carteira, granularidade, paginação, top).
 - No editor TV, «Não definido aqui» omite o query param.
 
@@ -37,12 +37,12 @@ Cada bloco do slide TV usa **uma** rota, sem `group_by`:
 |------|-------------------|
 | ROL summary | `rol` (+ `gross_revenue`/`returns`/`discounts`) + tríade meta SI (`comparable_goal`, `goal_value`, `reference_goal`) + `rol_target_pct` |
 | ROL série | `points[]`: `periodo`, `rol_matrix`, `rol_branch` |
-| ROL cliente | `items[]`: `customer_*`, `rol`, `share_pct`, `rank` |
+| ROL cliente | `items[]`: `customer_*` (inclui `customer_center` quando o grupo tem um único centro), `rol`, `share_pct`, `rank` |
 | ROL filial | `items[]`: `branch`, `rol`, `gross_revenue`, `returns`, `discounts` |
 | OTD summary | `sales_order_otd_pct` + tríade meta SI + contagens |
 | OTD KPI | `sales_order_otd_pct` |
 | OTD série | `points[]`: `periodo`, `total_qty`, `fulfilled_qty`, `otd_pct`, `fulfillment_pct`, `total_lines`, `otd_filial_01`, `otd_filial_02`, `unit`, `mixed_units` |
-| OTD série por cliente | `items[]` flat (cliente × período) + `pagination` + `summary`; métricas iguais à OTD por cliente (+ `unit`/`mixed_units`) |
+| OTD série por cliente | `items[]` flat (cliente × período) + `pagination` + `summary`; métricas iguais à OTD por cliente (+ `customer_center`, `unit`/`mixed_units`) |
 | OTD cliente | `items[]` + `pagination` (métricas OTD/fulfillment + `unit`/`mixed_units`) |
 | OTD filial | `items[]`: `branch` + métricas (+ `unit`/`mixed_units`) |
 

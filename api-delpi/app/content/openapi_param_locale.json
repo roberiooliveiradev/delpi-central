@@ -407,6 +407,18 @@
         }
       }
     },
+    "customer_centers": {
+      "locale": {
+        "en": {
+          "label": "Customer centers",
+          "description": "Comma-separated customer center codes from the product-customer link (SA7.A7_XCENT), e.g. 1320,1505."
+        },
+        "pt-BR": {
+          "label": "Centros do cliente",
+          "description": "Lista CSV de centros do cliente na amarração produto–cliente (SA7.A7_XCENT), ex.: 1320,1505."
+        }
+      }
+    },
     "customer_names": {
       "locale": {
         "en": {

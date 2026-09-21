@@ -22,6 +22,7 @@ class GetSalesOrderOtdSeriesByCustomerRequest:
     customer_segment: Optional[str] = None
     customer_codes: Optional[list[str]] = None
     customer_code_stores: Optional[list[tuple[str, str]]] = None
+    customer_centers: Optional[list[str]] = None
     customer_names: Optional[list[str]] = None
     exclude_customer_codes: Optional[list[str]] = None
     exclude_customer_names: Optional[list[str]] = None
@@ -34,6 +35,7 @@ class GetSalesOrderOtdSeriesByCustomerRequest:
             bool(self.customer_codes)
             or bool(self.customer_names)
             or bool(self.customer_code_stores)
+            or bool(self.customer_centers)
         )
 
     def validate(self) -> None:
