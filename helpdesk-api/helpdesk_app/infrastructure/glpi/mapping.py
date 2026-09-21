@@ -197,6 +197,10 @@ def parse_ticket_detail(payload: dict, timeline_payload: dict | list) -> TicketD
         assigned_display_name=summary.assigned_display_name,
         requester_identity=_requester_identity(payload),
         status_id=summary.status_id,
+        can_followup=ticket_allows_followup(summary.status_id),
+        observers_display_name=_observer_names(payload),
+        solved_at=summary.solved_at,
+        closed_at=summary.closed_at,
     )
 
 
@@ -403,6 +407,27 @@ def _team_name(row: dict, role: str) -> str:
             continue
         return _person_name(member)
     return ""
+
+
+def _observer_names(row: dict) -> str:
+    team = row.get("team") or []
+    if not isinstance(team, list):
+        return ""
+    names: list[str] = []
+    for member in team:
+        if not isinstance(member, dict):
+            continue
+        if str(member.get("role") or "") != "observer":
+            continue
+        name = _person_name(member)
+        if name:
+            names.append(name)
+    return ", ".join(names)
+
+
+def ticket_allows_followup(status_id: int | None) -> bool:
+    """14-H1: Colaborador still posts follow-up on solved (5); closed (6) is 403."""
+    return status_id != 6
 
 
 def _person_name(value: dict) -> str:

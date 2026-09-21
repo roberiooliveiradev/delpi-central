@@ -36,11 +36,17 @@ export function ticketRecordFields(input: {
   category: string;
   urgency: string;
   assigned_display_name?: string;
+  observers_display_name?: string;
   created_at?: string;
   updated_at?: string;
-  now?: Date;
+  solved_at?: string;
+  closed_at?: string;
 }): TicketRecordField[] {
-  const now = input.now ?? new Date();
+  const created = absoluteDateTimeLabel(input.created_at ?? "");
+  const updated = absoluteDateTimeLabel(input.updated_at ?? "");
+  const solved = absoluteDateTimeLabel(input.solved_at ?? "");
+  const closed = absoluteDateTimeLabel(input.closed_at ?? "");
+  const observers = (input.observers_display_name ?? "").trim();
   return [
     { id: "id", label: "Chamado", value: String(input.id), present: input.id > 0 },
     { id: "category", label: "Categoria", value: input.category, present: input.category.trim().length > 0 },
@@ -52,16 +58,34 @@ export function ticketRecordFields(input: {
       present: (input.assigned_display_name ?? "").trim().length > 0,
     },
     {
+      id: "observers",
+      label: "Observador",
+      value: observers,
+      present: observers.length > 0,
+    },
+    {
       id: "created_at",
       label: "Aberto",
-      value: relativeTimeLabel(input.created_at ?? "", now),
-      present: Boolean(relativeTimeLabel(input.created_at ?? "", now)),
+      value: created,
+      present: Boolean(created),
     },
     {
       id: "updated_at",
       label: "Atualizado",
-      value: relativeTimeLabel(input.updated_at ?? "", now),
-      present: Boolean(relativeTimeLabel(input.updated_at ?? "", now)),
+      value: updated,
+      present: Boolean(updated),
+    },
+    {
+      id: "solved_at",
+      label: "Resolvido",
+      value: solved,
+      present: Boolean(solved),
+    },
+    {
+      id: "closed_at",
+      label: "Fechado",
+      value: closed,
+      present: Boolean(closed),
     },
   ];
 }

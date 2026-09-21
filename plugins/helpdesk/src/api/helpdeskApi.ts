@@ -96,6 +96,8 @@ export type TicketDetail = TicketSummary & {
   description_html?: string;
   requester_display_name: string;
   requester_mine: boolean;
+  can_followup?: boolean;
+  observers_display_name?: string;
   timeline: TimelineEntry[];
   attachments: TicketAttachment[];
 };

@@ -232,6 +232,10 @@ def test_attachment_download_uses_only_files_on_the_ticket():
     body = detail.json()
     assert body["created_at"] == "2026-09-21T11:00:00Z"
     assert body["status_id"] == 1
+    assert body["can_followup"] is True
+    assert body["observers_display_name"] == ""
+    assert "solved_at" in body
+    assert "closed_at" in body
     assert body["requester_display_name"] == "Robério Teixeira"
     assert body["requester_mine"] is False
     assert body["timeline"][0]["mine"] is False

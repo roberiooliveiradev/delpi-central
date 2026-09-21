@@ -542,6 +542,64 @@ def test_mapping_publishes_status_id_and_keeps_glpi_label():
     assert approval[0].status == "Aprovação"
 
 
+def test_detail_can_followup_false_only_when_closed_and_lists_observers():
+    from helpdesk_app.infrastructure.glpi.mapping import ticket_allows_followup
+
+    assert ticket_allows_followup(1) is True
+    assert ticket_allows_followup(5) is True
+    assert ticket_allows_followup(6) is False
+    assert ticket_allows_followup(None) is True
+
+    open_ticket = parse_ticket_detail(
+        {
+            "id": 20,
+            "name": "Aberto",
+            "content": "<p>oi</p>",
+            "status": {"id": 1, "name": "Novo"},
+            "urgency": 2,
+            "date_creation": "2026-09-21T10:00:00Z",
+            "date_mod": "2026-09-21T11:00:00Z",
+            "team": [
+                {"role": "requester", "display_name": "Ana"},
+                {"role": "observer", "firstname": "Lia", "realname": "Costa"},
+                {"role": "observer", "display_name": "Bruno Vista"},
+            ],
+        },
+        {"results": []},
+    )
+    assert open_ticket.can_followup is True
+    assert open_ticket.observers_display_name == "Lia Costa, Bruno Vista"
+
+    solved = parse_ticket_detail(
+        {
+            "id": 21,
+            "name": "Solucionado",
+            "content": "<p>ok</p>",
+            "status": {"id": 5, "name": "Solucionado"},
+            "urgency": 2,
+            "date_solve": "2026-09-21T12:00:00Z",
+        },
+        {"results": []},
+    )
+    assert solved.can_followup is True
+    assert solved.solved_at == "2026-09-21T12:00:00Z"
+    assert solved.observers_display_name == ""
+
+    closed = parse_ticket_detail(
+        {
+            "id": 22,
+            "name": "Fechado",
+            "content": "<p>fim</p>",
+            "status": {"id": 6, "name": "Fechado"},
+            "urgency": 2,
+            "date_close": "2026-09-21T13:00:00Z",
+        },
+        {"results": []},
+    )
+    assert closed.can_followup is False
+    assert closed.closed_at == "2026-09-21T13:00:00Z"
+
+
 def test_mapping_list_publishes_created_at_and_assigned():
     listed = parse_ticket_list(
         [

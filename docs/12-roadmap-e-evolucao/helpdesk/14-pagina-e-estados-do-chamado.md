@@ -162,10 +162,10 @@ HIPOTESE_A_VALIDAR   BLOQUEADO   CONSOLE_GLPI   H5   FORA
 |---|---|---|---|
 | P-01 | Título, id, status visível, categoria, urgência, técnico | IMPLEMENTADO | cartão |
 | P-02 | Conversar e responder em público | IMPLEMENTADO | [`10`](./10-conversa-do-chamado.md) |
-| P-03 | HTML / imagem no corpo | inventário [`12`](./12-conteudo-da-mensagem.md) | — |
-| P-04 | Data-hora absoluta no cabeçalho (aberto / atualizado / solução) | ALVO_LEITURA | mesmo instante do 13 |
-| P-05 | Observador só leitura (rótulo) | ALVO_LEITURA se o schema trouxer `team.observer` | BFF aditivo |
-| P-06 | Esconder Responder quando o GLPI não aceita acompanhamento (fechado, sem direito) | ALVO_LEITURA + HIPOTESE regra | BFF `can_followup`; MFE não inventa |
+| P-03 | HTML / imagem no corpo | **IMPLEMENTADO** E8 | [`12`](./12-conteudo-da-mensagem.md) |
+| P-04 | Data-hora absoluta no cabeçalho (aberto / atualizado / solução) | **IMPLEMENTADO** | cartão do detalhe |
+| P-05 | Observador só leitura (rótulo) | **IMPLEMENTADO** se `team.observer` | `observers_display_name` |
+| P-06 | Esconder Responder quando o GLPI não aceita acompanhamento (fechado, sem direito) | **IMPLEMENTADO** | `can_followup=false` só em status 6 |
 | P-07 | Aprovar / recusar solução | H5 | — |
 | P-08 | Reabrir fechado | H5 (matriz simplificada) | — |
 | P-09 | Pesquisa de satisfação | H5 | — |

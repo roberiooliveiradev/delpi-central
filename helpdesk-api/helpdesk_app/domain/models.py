@@ -102,6 +102,10 @@ class TicketDetail:
     requester_mine: bool = False
     status_id: int | None = None
     description_html: str = ""
+    can_followup: bool = True
+    observers_display_name: str = ""
+    solved_at: str = ""
+    closed_at: str = ""
 
 
 @dataclass(frozen=True)

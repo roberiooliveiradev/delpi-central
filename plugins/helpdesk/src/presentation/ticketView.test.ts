@@ -80,6 +80,21 @@ describe("ticketRecordFields", () => {
     expect(fields.find((field) => field.id === "urgency")?.present).toBe(false);
     expect(fields.find((field) => field.id === "assigned")?.present).toBe(false);
   });
+
+  it("usa data-hora absoluta e observador só quando existem", () => {
+    const fields = ticketRecordFields({
+      id: 8,
+      category: "Rede",
+      urgency: "Alta",
+      created_at: "2026-09-21T15:30:00Z",
+      updated_at: "2026-09-21T16:00:00Z",
+      solved_at: "2026-09-21T17:00:00Z",
+      observers_display_name: "Maria Observadora",
+    });
+    expect(fields.find((field) => field.id === "created_at")?.value).toMatch(/21\/09\/2026/);
+    expect(fields.find((field) => field.id === "observers")?.value).toBe("Maria Observadora");
+    expect(fields.find((field) => field.id === "closed_at")?.present).toBe(false);
+  });
 });
 
 describe("detailRecordHeading", () => {

@@ -30,6 +30,7 @@ import {
   nextTicketSort,
   parseTicketSort,
   ticketListSearch,
+  ticketRecordFields,
   TICKET_PAGE_SIZE_OPTIONS,
   TICKET_STATUS_FILTERS,
   type TicketListFilters,
@@ -580,6 +581,26 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
               title={detailRecordHeading(ticket.category, ticket.urgency).title}
               subtitle={[`#${ticket.id}`, ticket.assigned_display_name].filter(Boolean).join(" · ")}
               status={<HelpdeskStatusBadge label={ticket.status} variant={statusBadgeVariant(ticket.status_id)} />}
+              fields={ticketRecordFields({
+                id: ticket.id,
+                category: ticket.category,
+                urgency: ticket.urgency,
+                assigned_display_name: ticket.assigned_display_name,
+                observers_display_name: ticket.observers_display_name,
+                created_at: ticket.created_at,
+                updated_at: ticket.updated_at,
+                solved_at: ticket.solved_at,
+                closed_at: ticket.closed_at,
+              })
+                .filter((field) =>
+                  ["observers", "created_at", "updated_at", "solved_at", "closed_at"].includes(field.id),
+                )
+                .map((field) => ({
+                  id: field.id,
+                  label: field.label,
+                  value: field.value,
+                  present: field.present,
+                }))}
             />
             <HelpdeskMessageThread
               listAriaLabel="Conversa do chamado"
@@ -650,6 +671,7 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                 ) : null
               }
             />
+            {ticket.can_followup !== false ? (
             <form
               onSubmit={(event) => {
                 event.preventDefault();
@@ -683,6 +705,7 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                 </HelpdeskIconButton>
               </HelpdeskFormActions>
             </form>
+            ) : null}
           </>
         ) : null}
       </HelpdeskSectionCard>

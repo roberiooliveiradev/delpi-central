@@ -127,9 +127,13 @@ def get_ticket(request: Request, ticket_id: int):
         "urgency": ticket.urgency,
         "updated_at": ticket.updated_at,
         "created_at": ticket.created_at,
+        "solved_at": ticket.solved_at,
+        "closed_at": ticket.closed_at,
+        "can_followup": ticket.can_followup,
         "requester_display_name": ticket.requester_display_name,
         "requester_mine": ticket.requester_mine,
         "assigned_display_name": ticket.assigned_display_name,
+        "observers_display_name": ticket.observers_display_name,
         "description": ticket.description,
         "description_html": ticket.description_html,
         "timeline": [
