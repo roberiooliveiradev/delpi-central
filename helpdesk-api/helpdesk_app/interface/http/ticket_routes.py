@@ -91,6 +91,8 @@ def get_ticket(request: Request, ticket_id: int):
         "category": ticket.category,
         "urgency": ticket.urgency,
         "updated_at": ticket.updated_at,
+        "created_at": ticket.created_at,
+        "requester_display_name": ticket.requester_display_name,
         "description": ticket.description,
         "timeline": [
             {

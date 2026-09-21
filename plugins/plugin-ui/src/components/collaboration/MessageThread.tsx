@@ -40,6 +40,8 @@ export type MessageThreadItem = {
   mentions?: MentionTextItem[];
   deleted?: boolean;
   mine?: boolean;
+  /** Título curto acima do corpo. Ausente, a bolha continua só com o texto. */
+  headingText?: string | null;
   /** Content under the body (reactions, unfurl, attachments). */
   belowBody?: ReactNode;
 };
@@ -71,6 +73,7 @@ export type MessageThreadClassNames = {
   author: string;
   time: string;
   body: string;
+  heading: string;
   bodyRich: string;
   editSlot: string;
   itemEditing: string;
@@ -100,6 +103,13 @@ export type MessageThreadProps = {
   editingId?: string | null;
   /** In-place composer (or other editor) while `editingId` matches. */
   renderEditSlot?: (message: MessageThreadItem) => ReactNode;
+  /**
+   * `markdown` sanitiza o corpo (padrão das salas).
+   * `plain` mostra `bodyText` como texto, sem HTML.
+   */
+  bodyMode?: "markdown" | "plain";
+  /** Nas salas, a bolha «minha» omite nome e avatar. O helpdesk pede os dois. */
+  showMineIdentity?: boolean;
   /** Override body render (default: markdown sanitizado + MentionText no plano). */
   renderBody?: (message: MessageThreadItem) => ReactNode;
   onMentionActivate?: MentionTextPropsOnActivate;
@@ -156,6 +166,7 @@ export function messageThreadBemClasses(prefix: string): MessageThreadClassNames
     author: pair(`${base}__author`, `${ui}__author`),
     time: pair(`${base}__time`, `${ui}__time`),
     body: pair(`${base}__body`, `${ui}__body`),
+    heading: pair(`${base}__heading`, `${ui}__heading`),
     bodyRich: pair(
       `${base}__body ${base}__body--rich`,
       `${ui}__body ${ui}__body--rich`,
@@ -262,6 +273,13 @@ function defaultMessageBody(
   );
 }
 
+function plainMessageBody(
+  message: MessageThreadItem,
+  classNames: MessageThreadClassNames,
+): ReactNode {
+  return <span className={classNames.body}>{message.bodyText}</span>;
+}
+
 export function MessageThread({
   messages,
   classNames,
@@ -271,6 +289,8 @@ export function MessageThread({
   resolveActions,
   editingId = null,
   renderEditSlot,
+  bodyMode = "markdown",
+  showMineIdentity = false,
   renderBody,
   onMentionActivate,
   onParentQuoteClick,
@@ -341,6 +361,8 @@ export function MessageThread({
               resolveActions={resolveActions}
               resolveActionExtras={resolveActionExtras}
               renderEditSlot={renderEditSlot}
+              bodyMode={bodyMode}
+              showMineIdentity={showMineIdentity}
               renderBody={renderBody}
               onMentionActivate={onMentionActivate}
               onParentQuoteClick={onParentQuoteClick}
@@ -364,6 +386,8 @@ type MessageThreadTextItemProps = {
   resolveActions?: MessageThreadProps["resolveActions"];
   resolveActionExtras?: MessageThreadProps["resolveActionExtras"];
   renderEditSlot?: MessageThreadProps["renderEditSlot"];
+  bodyMode: "markdown" | "plain";
+  showMineIdentity: boolean;
   renderBody?: MessageThreadProps["renderBody"];
   onMentionActivate?: MessageThreadProps["onMentionActivate"];
   onParentQuoteClick?: MessageThreadProps["onParentQuoteClick"];
@@ -381,6 +405,8 @@ function MessageThreadTextItem({
   resolveActions,
   resolveActionExtras,
   renderEditSlot,
+  bodyMode,
+  showMineIdentity,
   renderBody,
   onMentionActivate,
   onParentQuoteClick,
@@ -401,19 +427,21 @@ function MessageThreadTextItem({
     <div className={classNames.editSlot}>{renderEditSlot?.(message)}</div>
   ) : (
     renderBody?.(message) ??
-    defaultMessageBody(
-      message,
-      classNames,
-      onMentionActivate,
-      resolveAttachmentImageSrc,
-      onAttachmentImageClick,
-    )
+    (bodyMode === "plain"
+      ? plainMessageBody(message, classNames)
+      : defaultMessageBody(
+          message,
+          classNames,
+          onMentionActivate,
+          resolveAttachmentImageSrc,
+          onAttachmentImageClick,
+        ))
   );
   const avatarName = (message.authorName ?? "").trim();
   const authorHref = (message.authorHref ?? "").trim();
   const authorLinkTitle = (message.authorLinkTitle ?? "").trim();
   const authorSrc = (message.authorSrc ?? "").trim() || null;
-  const showAvatar = Boolean(avatarName && !message.mine);
+  const showAvatar = Boolean(avatarName && (!message.mine || showMineIdentity));
   const avatar = showAvatar ? (
     authorHref && authorLinkTitle ? (
       <InitialsAvatar
@@ -437,7 +465,7 @@ function MessageThreadTextItem({
       />
     )
   ) : null;
-  const showAuthor = Boolean(avatarName && !message.mine);
+  const showAuthor = Boolean(avatarName && (!message.mine || showMineIdentity));
   const showHeading = showAuthor || Boolean(message.createdAtLabel);
 
   return (
@@ -517,6 +545,9 @@ function MessageThreadTextItem({
                     <p className={classNames.quoteBody}>{quoted.bodyText}</p>
                   </blockquote>
                 )
+              ) : null}
+              {(message.headingText ?? "").trim() ? (
+                <p className={classNames.heading}>{(message.headingText ?? "").trim()}</p>
               ) : null}
               {body}
               {isEditing ? null : message.belowBody}

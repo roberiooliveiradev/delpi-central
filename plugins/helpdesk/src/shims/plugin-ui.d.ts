@@ -668,6 +668,7 @@ declare module "@delpi/plugin-ui/index" {
     authorUserId?: string | null;
     authorSrc?: string | null;
     mine?: boolean;
+    headingText?: string | null;
     belowBody?: ReactNode;
   };
 
@@ -683,6 +684,8 @@ declare module "@delpi/plugin-ui/index" {
     messages: readonly MessageThreadItem[];
     listAriaLabel: string;
     emptyLabel: string;
+    bodyMode?: "markdown" | "plain";
+    showMineIdentity?: boolean;
     emptyContent?: ReactNode;
     portalScopeClassName?: string;
     className?: string;

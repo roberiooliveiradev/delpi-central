@@ -240,3 +240,53 @@ def test_mapping_keeps_followup_and_document_and_hides_task():
     )
     assert attachment_filename("../segredo.txt") == "segredo.txt"
     assert attachment_filename("   ") == "anexo"
+
+
+def test_mapping_publishes_requester_and_hides_private_followup():
+    detail = parse_ticket_detail(
+        {
+            "id": 1114,
+            "name": "Chamado teste",
+            "content": "<p>Texto da abertura</p>",
+            "status": {"name": "Novo"},
+            "urgency": 2,
+            "date_creation": "2026-09-21T10:00:00Z",
+            "date_mod": "2026-09-21T12:00:00Z",
+            "team": [
+                {"role": "assigned", "display_name": "Técnico"},
+                {"role": "requester", "display_name": "Robério Teixeira"},
+            ],
+        },
+        {
+            "results": [
+                {
+                    "type": "Followup",
+                    "item": {
+                        "id": 3,
+                        "content": "Público",
+                        "date_creation": "2026-09-21T11:00:00Z",
+                        "user": {"name": "Ana"},
+                        "is_private": 0,
+                    },
+                },
+                {
+                    "type": "Followup",
+                    "item": {
+                        "id": 4,
+                        "content": "Só o técnico",
+                        "is_private": True,
+                        "user": {"name": "Técnico"},
+                    },
+                },
+                {
+                    "type": "Followup",
+                    "item": {"id": 6, "content": "Sinal textual", "is_private": "1"},
+                },
+                {"type": "Task", "item": {"id": 5, "content": "interno"}},
+            ]
+        },
+    )
+    assert detail.requester_display_name == "Robério Teixeira"
+    assert detail.created_at == "2026-09-21T10:00:00Z"
+    assert detail.description == "Texto da abertura"
+    assert [entry.content for entry in detail.timeline] == ["Público"]

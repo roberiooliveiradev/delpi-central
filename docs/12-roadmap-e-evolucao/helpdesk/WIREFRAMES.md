@@ -72,9 +72,9 @@ O bloco escuro é `:root[data-theme="dark"] .dashboard-helpdesk`. Superfície, t
 | `createDashboardEmptyState` | `HelpdeskEmptyState` | Lista sem itens e sem erro |
 | `createDashboardStatusBadge` | `HelpdeskStatusBadge` | Status do chamado |
 | `createDashboardDataRecordCard` | `HelpdeskRecordCard` | Cada item da lista e o resumo do detalhe |
-| `createTimeline` | `HelpdeskTimeline` | Acompanhamentos |
+| `createDashboardMessageThread` | `HelpdeskMessageThread` | Abertura e acompanhamentos do detalhe, em texto puro |
 | `createDashboardTextField` | `HelpdeskTextField` | Título |
-| `createDashboardTextAreaField` | `HelpdeskTextArea` | Descrição e acompanhamento |
+| `createDashboardTextAreaField` | `HelpdeskTextArea` | Descrição e resposta |
 | `createDashboardSelectField` | `HelpdeskSelect` | Categoria (com busca) e urgência |
 | `createDashboardFormActions` | `HelpdeskFormActions` | Rodapé dos formulários e do vínculo |
 | `ActionButton` | — | Abrir chamado, autorizar, voltar, enviar |
@@ -157,14 +157,14 @@ Não há campo de solicitante nem de entidade. Sucesso navega para `/apps/helpde
 
 ## 3. Detalhe — `/apps/helpdesk/tickets/{id}`
 
-A tela publicada é a deste bloco. A conversa no formato do GLPI, ainda sem autorização para implementar, está em [`10-conversa-do-chamado.md`](./10-conversa-do-chamado.md).
+A tela publicada é a conversa abaixo. O inventário que a originou está em [`10-conversa-do-chamado.md`](./10-conversa-do-chamado.md).
 
 ```text
 HelpdeskPageHeader
   título: título do chamado, ou «Chamado» enquanto carrega
   [ Atualizar ]
 
-HelpdeskSectionCard  «Detalhe»  hint = helpTooltips.detail
+HelpdeskSectionCard  «Conversa»  hint = helpTooltips.detail
 
   carregando    │ ░░░ │  «Carregando chamado…»
   erro          ⚠  inclui chamado indisponível para esta pessoa
@@ -173,20 +173,24 @@ HelpdeskSectionCard  «Detalhe»  hint = helpTooltips.detail
      subtítulo = urgência
      ● status
 
-  descrição em parágrafo
+  HelpdeskMessageThread  bodyMode = plain
+    abertura
+      autor = requester_display_name
+      hora = tempo relativo de created_at
+      título = título do chamado
+      corpo = descrição em texto puro
+      Baixar = arquivos do chamado (não de uma resposta)
+    acompanhamento
+      autor, hora, texto
+      sem arquivo
 
-  HelpdeskTimeline
-    título = nome de quem escreveu, ou «Acompanhamento»
-    hora = created_at
-    detalhe = texto
-
-  Acompanhamento   [ texto ]  obrigatório  hint = helpTooltips.detail
+  Responder   [ texto ]  obrigatório  hint = helpTooltips.detail
   HelpdeskFormActions
     [ Voltar ]
-    [ Registrar acompanhamento ]
+    [ Enviar ]
 ```
 
-A timeline só mostra acompanhamentos. Tarefa de técnico não entra.
+A abertura existe mesmo sem acompanhamento. Tarefa, solução, aprovação e acompanhamento privado não entram. `mine` significa que o autor é o solicitante do chamado.
 
 ## 4. Fora destas rotas
 
@@ -202,7 +206,7 @@ Estas telas só entram depois de decisão nova. Quando entrarem, usam o kit abai
 
 | Capacidade | Onde | Componentes |
 |---|---|---|
-| Anexo | detalhe, abaixo da timeline | arquivos já ligados ao chamado, com `ActionButton` «Baixar». O envio de arquivo novo continua fora até a API do GLPI receber o binário. Sem dropzone próprio no CSS do MFE |
+| Anexo | detalhe, na bolha de abertura | arquivos do chamado, com `ActionButton` «Baixar». Não é o arquivo de um acompanhamento. O envio de arquivo novo continua fora até a API do GLPI receber o binário. Sem dropzone próprio no CSS do MFE |
 | Satisfação | detalhe, só se o status estiver solucionado | `HelpdeskSelect` ou botões `ActionButton` com os valores que o GLPI devolver. Sem componente de estrela no MFE |
 | Bancada do técnico | rota de menu `/apps/helpdesk/console`, fora do MFE | abre `helpdesk.centraldelpi.com.br` em nova aba, com `samlIdpId=1`, só para `helpdesk.console` |
 | Entidade | não há campo | continua a entidade padrão do usuário |

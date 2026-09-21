@@ -61,3 +61,89 @@ export function newIdempotencyKey(): string {
   }
   return `helpdesk-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
+
+export type ConversationSource = {
+  title: string;
+  description: string;
+  created_at: string;
+  requester_display_name: string;
+  timeline: {
+    id: number;
+    kind: string;
+    content: string;
+    created_at: string;
+    author_display_name: string;
+  }[];
+  attachments: { document_id: number }[];
+};
+
+export type ConversationMessage = {
+  id: string;
+  kind: "opening" | "followup";
+  headingText: string;
+  bodyText: string;
+  createdAtLabel: string;
+  authorName: string;
+  mine: boolean;
+  attachmentIds: number[];
+};
+
+export function relativeTimeLabel(value: string, now: Date): string {
+  const trimmed = value.trim();
+  const instant = Date.parse(trimmed);
+  if (!trimmed || Number.isNaN(instant)) return "";
+  const elapsed = now.getTime() - instant;
+  const minute = 60_000;
+  const hour = 60 * minute;
+  const day = 24 * hour;
+  if (elapsed < minute) return "agora";
+  if (elapsed < hour) {
+    const count = Math.floor(elapsed / minute);
+    return count === 1 ? "1 minuto atrás" : `${count} minutos atrás`;
+  }
+  if (elapsed < day) {
+    const count = Math.floor(elapsed / hour);
+    return count === 1 ? "1 hora atrás" : `${count} horas atrás`;
+  }
+  if (elapsed < 7 * day) {
+    const count = Math.floor(elapsed / day);
+    return count === 1 ? "1 dia atrás" : `${count} dias atrás`;
+  }
+  const date = new Date(instant);
+  const dayOfMonth = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  return `${dayOfMonth}/${month}/${date.getFullYear()}`;
+}
+
+function writtenByRequester(author: string, requester: string): boolean {
+  const authorName = author.trim();
+  const requesterName = requester.trim();
+  return requesterName.length > 0 && authorName === requesterName;
+}
+
+export function conversationMessages(ticket: ConversationSource, now: Date): ConversationMessage[] {
+  const requester = ticket.requester_display_name.trim();
+  const opening: ConversationMessage = {
+    id: "opening",
+    kind: "opening",
+    headingText: ticket.title.trim(),
+    bodyText: ticket.description,
+    createdAtLabel: relativeTimeLabel(ticket.created_at, now),
+    authorName: requester,
+    mine: requester.length > 0,
+    attachmentIds: ticket.attachments.map((file) => file.document_id),
+  };
+  const followups = ticket.timeline
+    .filter((entry) => entry.kind === "followup")
+    .map((entry): ConversationMessage => ({
+      id: String(entry.id),
+      kind: "followup",
+      headingText: "",
+      bodyText: entry.content,
+      createdAtLabel: relativeTimeLabel(entry.created_at, now),
+      authorName: entry.author_display_name.trim(),
+      mine: writtenByRequester(entry.author_display_name, requester),
+      attachmentIds: [],
+    }));
+  return [opening, ...followups];
+}

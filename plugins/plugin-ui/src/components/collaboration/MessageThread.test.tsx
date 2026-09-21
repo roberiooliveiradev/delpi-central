@@ -485,6 +485,76 @@ describe("MessageThread", () => {
     expect(rich?.innerHTML.toLowerCase()).toMatch(/<code\b/);
   });
 
+  it("renders heading and literal asterisks in plain mode", () => {
+    const { container } = render(
+      <MessageThread
+        classNames={classNames}
+        listAriaLabel="Messages"
+        emptyLabel="Empty"
+        bodyMode="plain"
+        messages={[
+          {
+            id: "plain",
+            kind: "text",
+            headingText: "Chamado teste",
+            bodyText: "texto *literal*",
+            authorName: "Ana",
+            createdAtLabel: "10:00",
+          },
+        ]}
+      />,
+    );
+    const heading = container.querySelector(".delpi-ui-message-thread__heading");
+    expect(heading?.textContent).toBe("Chamado teste");
+    const body = container.querySelector(".delpi-ui-message-thread__body");
+    expect(body?.textContent).toBe("texto *literal*");
+    expect(container.querySelector(".delpi-ui-message-thread__body--rich")).toBeNull();
+    expect(container.querySelector("strong")).toBeNull();
+  });
+
+  it("omits the heading when headingText is absent", () => {
+    const { container } = render(
+      <MessageThread
+        classNames={classNames}
+        listAriaLabel="Messages"
+        emptyLabel="Empty"
+        messages={[
+          {
+            id: "1",
+            kind: "text",
+            bodyText: "Só o corpo",
+            authorName: "Ana",
+            createdAtLabel: "10:00",
+          },
+        ]}
+      />,
+    );
+    expect(container.querySelector(".delpi-ui-message-thread__heading")).toBeNull();
+  });
+
+  it("shows name and avatar on a mine bubble only when asked", () => {
+    const { container } = render(
+      <MessageThread
+        classNames={classNames}
+        listAriaLabel="Messages"
+        emptyLabel="Empty"
+        showMineIdentity
+        messages={[
+          {
+            id: "mine",
+            kind: "text",
+            bodyText: "Abertura",
+            authorName: "Robério Teixeira",
+            createdAtLabel: "2 horas atrás",
+            mine: true,
+          },
+        ]}
+      />,
+    );
+    expect(screen.getByText("Robério Teixeira")).toBeTruthy();
+    expect(container.querySelector(".delpi-ui-message-thread__item--mine .delpi-ui-avatar")).not.toBeNull();
+  });
+
   it("keeps MentionText for plain body with @mention", () => {
     render(
       <MessageThread

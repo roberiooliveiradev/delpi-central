@@ -77,6 +77,8 @@ def parse_ticket_detail(payload: dict, timeline_payload: dict | list) -> TicketD
         description=description,
         timeline=timeline,
         attachments=attachments,
+        created_at=str(payload.get("date_creation") or ""),
+        requester_display_name=_requester_name(payload),
     )
 
 
@@ -116,6 +118,8 @@ def _timeline_entry(row: dict) -> TimelineEntry | None:
     if kind not in {"Followup", "ITILFollowup"}:
         return None
     row = payload
+    if _is_private(row):
+        return None
     user = row.get("user") or row.get("users_id") or {}
     author = ""
     if isinstance(user, dict):
@@ -166,6 +170,24 @@ def _results(payload: dict | list) -> list:
     if isinstance(results, list):
         return results
     return []
+
+
+def _requester_name(row: dict) -> str:
+    team = row.get("team") or []
+    if not isinstance(team, list):
+        return ""
+    for member in team:
+        if not isinstance(member, dict):
+            continue
+        if str(member.get("role") or "") != "requester":
+            continue
+        return display_text(member.get("display_name") or member.get("name") or member.get("realname"))
+    return ""
+
+
+def _is_private(row: dict) -> bool:
+    value = row.get("is_private")
+    return value is True or value == 1 or value == "1"
 
 
 def _named(value) -> str:

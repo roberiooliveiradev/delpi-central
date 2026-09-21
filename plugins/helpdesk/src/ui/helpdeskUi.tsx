@@ -1,8 +1,10 @@
+import { type ComponentProps } from "react";
 import {
   createDashboardDataRecordCard,
   createDashboardEmptyState,
   createDashboardFormActions,
   createDashboardLoadingState,
+  createDashboardMessageThread,
   createDashboardPageHeader,
   createDashboardSectionCard,
   createDashboardSelectField,
@@ -10,7 +12,6 @@ import {
   createDashboardStatusBadge,
   createDashboardTextAreaField,
   createDashboardTextField,
-  createTimeline,
   emptyStateCardBemClasses,
   formActionsBemClasses,
   loadingStateCardBemClasses,
@@ -56,7 +57,13 @@ export const HelpdeskLoadingState = createDashboardLoadingState({
   defaultMessage: "Carregando chamados…",
 });
 
-export const HelpdeskTimeline = createTimeline({ prefix: PREFIX });
+const HelpdeskMessageThreadView = createDashboardMessageThread(PREFIX);
+
+export function HelpdeskMessageThread(
+  props: Omit<ComponentProps<typeof HelpdeskMessageThreadView>, "bodyMode" | "showMineIdentity">,
+) {
+  return <HelpdeskMessageThreadView {...props} bodyMode="plain" showMineIdentity />;
+}
 
 export const HelpdeskStatusBadge = createDashboardStatusBadge({ prefix: PREFIX });
 

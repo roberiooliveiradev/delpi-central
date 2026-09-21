@@ -39,6 +39,8 @@ class FakeGlpi:
                 Attachment(2, "logo.png", "image/png"),
                 Attachment(4, "foto.jpg", "image/jpeg"),
             ),
+            "2026-09-21T11:00:00Z",
+            "Robério Teixeira",
         )
         self.files = {
             2: (b"png-bytes", "image/png"),

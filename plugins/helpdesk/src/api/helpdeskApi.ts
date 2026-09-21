@@ -72,6 +72,8 @@ export type TimelineEntry = {
 
 export type TicketDetail = TicketSummary & {
   description: string;
+  created_at: string;
+  requester_display_name: string;
   timeline: TimelineEntry[];
   attachments: TicketAttachment[];
 };

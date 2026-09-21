@@ -56,6 +56,8 @@ class TicketDetail:
     description: str
     timeline: tuple[TimelineEntry, ...]
     attachments: tuple[Attachment, ...] = ()
+    created_at: str = ""
+    requester_display_name: str = ""
 
 
 @dataclass(frozen=True)

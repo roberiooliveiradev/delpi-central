@@ -1,8 +1,9 @@
 # 10 — Conversa do chamado
 
-> **Status:** inventário. Não autoriza implementação e não altera [`06-plano-execucao.md`](./06-plano-execucao.md).
-> **Tela publicada hoje:** [`WIREFRAMES.md`](./WIREFRAMES.md) §3.
+> **Status:** a tela publicada está em [`WIREFRAMES.md`](./WIREFRAMES.md) §3. Este arquivo permanece o inventário da decisão.
 > **Contrato vigente:** [`03-contrato.md`](./03-contrato.md).
+>
+> O `createDashboardMessageThread` já saía pelo barrel do plugin-ui. A entrega estendeu o fio com título, texto puro e identidade na bolha do solicitante; não criou outro componente.
 
 Este documento descreve o que falta para o detalhe de Meus Chamados de TI parecer a conversa do GLPI, dentro do kit da Minha DELPI. As fotos de referência são o chamado `1114` em `helpdesk.centraldelpi.com.br/front/ticket.form.php?id=1114`, visto pela interface padrão (central), com o usuário Super-Admin.
 
@@ -37,18 +38,17 @@ Fontes: [Tickets](https://help.glpi-project.org/documentation/modules/assistance
 
 Papéis da equipe no schema `Ticket.team`: `requester`, `assigned`, `observer`. O autor da bolha de abertura é o membro `requester`. `user_recipient` é outro campo e não substitui o solicitante. O acompanhamento traz `user`, `content` (HTML), `date_creation`, `is_private` e `timeline_position`.
 
-## 3. O que a tela publicada já faz
+## 3. O que a tela publicada faz
 
-Em `/apps/helpdesk/tickets/{id}` hoje:
+Em `/apps/helpdesk/tickets/{id}`, como em [`WIREFRAMES.md`](./WIREFRAMES.md) §3:
 
 - cabeçalho do kit com o título e **Atualizar**;
 - cartão com categoria, urgência e status;
-- descrição em parágrafo, texto puro;
-- linha do tempo só de acompanhamentos (`createTimeline`), lista vertical, não bolha;
-- campo **Acompanhamento** e **Registrar acompanhamento**;
-- **Baixar** para arquivo já ligado ao chamado.
+- conversa: bolha de abertura (solicitante, tempo, título e descrição) e bolhas de acompanhamento;
+- **Baixar** na abertura, para arquivo já ligado ao chamado;
+- campo **Responder** e **Enviar**.
 
-Quando não há acompanhamento, a linha do tempo diz que não há evento, mesmo com a descrição do chamado visível acima. Na foto, essa descrição é a primeira mensagem.
+A abertura aparece mesmo sem acompanhamento. Tarefa e acompanhamento privado não entram.
 
 ## 4. Alvo visual
 
@@ -87,31 +87,23 @@ As iniciais saem do nome exibido. Não há foto nem armazenamento de avatar nest
 
 O `HelpdeskTimeline` atual (`createTimeline`) é uma trilha de eventos: título, hora e detalhe. Não é a bolha com avatar da foto.
 
-O kit já tem `MessageThread` em `plugins/plugin-ui/src/components/collaboration/MessageThread.tsx`: iniciais, bolha, lado «meu» / outro, hora, texto e um espaço `belowBody` para o anexo. Esse componente **não** está no `index` que o MFE importa.
+O kit já tem `MessageThread` em `plugins/plugin-ui/src/components/collaboration/MessageThread.tsx`: iniciais, bolha, lado «meu» / outro, hora, texto e um espaço `belowBody` para o anexo. O factory `createDashboardMessageThread` já saía pelo barrel que o MFE importa. A tela usa esse factory, com título, texto puro e o nome do solicitante visível na própria bolha. Nenhum CSS de bolha nasceu em `plugins/helpdesk`.
 
 `RoomConversationShell` é o chrome das salas de outro produto. O helpdesk não importa esse shell nem a regra de sala.
 
-Quando esta conversa for implementada, a ordem é:
-
-1. factory do `MessageThread` no `@delpi/plugin-ui`, exportada como as outras factories do helpdesk;
-2. o MFE só monta essa factory;
-3. nenhum CSS de bolha nasce em `plugins/helpdesk`.
-
 O compositor de resposta continua `HelpdeskTextArea` e `ActionButton`. `MentionComposer` fica nas salas; o acompanhamento desta entrega é texto puro, como o contrato já devolve.
 
-## 6. Contrato que ainda falta
+## 6. Contrato
 
-O BFF hoje não entrega o que a bolha de abertura precisa. O schema do GLPI tem o dado; o contrato de [`03-contrato.md`](./03-contrato.md) ainda não.
-
-| Necessidade da conversa | Onde está no GLPI 11.0.5 | No BFF hoje |
+| Necessidade da conversa | Onde está no GLPI 11.0.5 | No BFF |
 |---|---|---|
-| Instante da abertura | `Ticket.date_creation` | só `updated_at` |
-| Nome do solicitante | `Ticket.team[]` com `role=requester`; a limpeza da equipe também preserva `display_name` | ausente |
+| Instante da abertura | `Ticket.date_creation` | `created_at` no detalhe |
+| Nome do solicitante | `Ticket.team[]` com `role=requester`; a limpeza da equipe também preserva `display_name` | `requester_display_name` |
 | Texto da abertura | `Ticket.content` (HTML) | `description`, já em texto puro |
 | Acompanhamento | `Followup.user`, `content`, `date_creation` | `timeline[]` com `author_display_name`, `content`, `created_at` |
-| Acompanhamento privado | `Followup.is_private` | não publicado; a tela do solicitante não mostra privado |
-| Arquivo do chamado | `Timeline` tipo `Document`, `documents_id` | `attachments[]` e o download já publicados |
-| Arquivo de um acompanhamento | documento ligado ao follow-up, não ao chamado | a HLAPI do item `Followup` não devolve essa lista; o download atual é do chamado inteiro |
+| Acompanhamento privado | `Followup.is_private` | não entra em `timeline` |
+| Arquivo do chamado | `Timeline` tipo `Document`, `documents_id` | `attachments[]` e o download já publicados; a tela mostra o botão na abertura |
+| Arquivo de um acompanhamento | documento ligado ao follow-up, não ao chamado | a HLAPI do item `Followup` não devolve essa lista; o download continua do chamado inteiro |
 
 Texto visível continua passando pelo mesmo reparo de acento e pela remoção de HTML já feitos no tradutor. A conversa não volta a mostrar tag.
 
@@ -129,9 +121,9 @@ Enviar arquivo novo, tarefa, solução, aprovação, atores editáveis, SLA e en
 | Modelo, origem, pendência e acompanhamento privado | interface padrão; o solicitante só responde em público |
 | Verde, tipografia e três colunas do GLPI | o kit e uma coluna |
 
-## 8. Prova, quando houver implementação
+## 8. Prova
 
-Ainda não é etapa. Quando for executada, a prova mínima é:
+A prova automatizada cobre a abertura, o acompanhamento de outra pessoa, o solicitante vazio, a tarefa e o privado. A conferência no browser fica para quando o MFE for publicado.
 
 | Caso | Resultado |
 |---|---|

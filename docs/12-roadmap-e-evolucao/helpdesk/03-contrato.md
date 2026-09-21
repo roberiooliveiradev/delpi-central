@@ -58,7 +58,7 @@ Base do MFE: `/apps/helpdesk-api`.
 
 Lista vazia com sessão válida é `200` e `items: []`. Não é erro.
 
-`GET /tickets/{id}` inclui `description`, `timeline[]` com `id`, `kind` (`followup`), `content`, `created_at`, `author_display_name`, e `attachments[]` com `document_id`, `filename` e `mime`. A lista de anexos traz só arquivos já ligados àquele chamado. Lista vazia é `[]`.
+`GET /tickets/{id}` inclui `description`, `created_at` (instante de abertura), `requester_display_name` (primeiro membro de `team` com papel `requester`; vazio se não houver), `timeline[]` com `id`, `kind` (`followup`), `content`, `created_at`, `author_display_name`, e `attachments[]` com `document_id`, `filename` e `mime`. A lista de anexos traz só arquivos já ligados àquele chamado. Lista vazia é `[]`. Acompanhamento privado e tarefa não entram em `timeline`. Os campos novos são aditivos: a lista e as escritas não mudam.
 
 `GET /tickets/{id}/attachments/{document_id}` devolve o arquivo com o token da pessoa. O `document_id` precisa estar em `attachments` daquele chamado; caso contrário a resposta é 404, sem o corpo. O arquivo não é gravado na Minha DELPI: o BFF só repassa o download do GLPI.
 

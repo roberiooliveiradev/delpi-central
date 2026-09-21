@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { detailRecordHeading, statusBadgeVariant, ticketRecordFields, viewForTicketLoad } from "./ticketView";
+import {
+  conversationMessages,
+  detailRecordHeading,
+  relativeTimeLabel,
+  statusBadgeVariant,
+  ticketRecordFields,
+  viewForTicketLoad,
+} from "./ticketView";
 
 describe("viewForTicketLoad", () => {
   it("mostra a lista quando há chamados", () => {
@@ -71,5 +78,110 @@ describe("detailRecordHeading", () => {
 
   it("não inventa categoria quando os dois campos vêm vazios", () => {
     expect(detailRecordHeading(" ", "")).toEqual({ title: "Chamado" });
+  });
+});
+
+describe("conversationMessages", () => {
+  const now = new Date("2026-09-21T12:00:00Z");
+
+  it("abre com o solicitante, o título e o tempo relativo", () => {
+    const messages = conversationMessages(
+      {
+        title: "Chamado teste Api Minha delpi",
+        description: "Esse chamado é um teste",
+        created_at: "2026-09-21T10:00:00Z",
+        requester_display_name: "Robério Teixeira",
+        timeline: [],
+        attachments: [{ document_id: 2 }, { document_id: 4 }],
+      },
+      now,
+    );
+    expect(messages[0]).toMatchObject({
+      id: "opening",
+      kind: "opening",
+      headingText: "Chamado teste Api Minha delpi",
+      bodyText: "Esse chamado é um teste",
+      createdAtLabel: "2 horas atrás",
+      authorName: "Robério Teixeira",
+      mine: true,
+      attachmentIds: [2, 4],
+    });
+  });
+
+  it("mostra o acompanhamento de outra pessoa do outro lado, sem anexo", () => {
+    const messages = conversationMessages(
+      {
+        title: "Rede",
+        description: "Sem internet",
+        created_at: "2026-09-21T10:00:00Z",
+        requester_display_name: "Robério Teixeira",
+        timeline: [
+          {
+            id: 9,
+            kind: "followup",
+            content: "Cabo ok",
+            created_at: "2026-09-21T11:00:00Z",
+            author_display_name: "Ana",
+          },
+        ],
+        attachments: [{ document_id: 2 }],
+      },
+      now,
+    );
+    expect(messages[1]).toMatchObject({
+      id: "9",
+      kind: "followup",
+      authorName: "Ana",
+      mine: false,
+      bodyText: "Cabo ok",
+      createdAtLabel: "1 hora atrás",
+      attachmentIds: [],
+    });
+    expect(messages[0]?.attachmentIds).toEqual([2]);
+  });
+
+  it("não marca ninguém como meu quando o solicitante vem vazio e ignora tarefa", () => {
+    const messages = conversationMessages(
+      {
+        title: "Rede",
+        description: "Sem internet",
+        created_at: "",
+        requester_display_name: " ",
+        timeline: [
+          {
+            id: 3,
+            kind: "task",
+            content: "interno",
+            created_at: "2026-09-21T11:00:00Z",
+            author_display_name: "Técnico",
+          },
+        ],
+        attachments: [],
+      },
+      now,
+    );
+    expect(messages).toHaveLength(1);
+    expect(messages[0]?.mine).toBe(false);
+    expect(messages[0]?.createdAtLabel).toBe("");
+    expect(messages.some((message) => message.kind === "followup" && message.bodyText === "interno")).toBe(
+      false,
+    );
+    expect(messages.map((message) => message.kind)).not.toContain("task");
+  });
+});
+
+describe("relativeTimeLabel", () => {
+  const now = new Date("2026-09-21T12:00:00Z");
+
+  it("usa o calendário a partir de sete dias", () => {
+    const label = relativeTimeLabel("2026-09-14T12:00:00Z", now);
+    const date = new Date("2026-09-14T12:00:00Z");
+    const expected = `${String(date.getDate()).padStart(2, "0")}/${String(date.getMonth() + 1).padStart(2, "0")}/${date.getFullYear()}`;
+    expect(label).toBe(expected);
+    expect(label).not.toBe("7 dias atrás");
+  });
+
+  it("não inventa tempo para uma data ilegível", () => {
+    expect(relativeTimeLabel("não é data", now)).toBe("");
   });
 });

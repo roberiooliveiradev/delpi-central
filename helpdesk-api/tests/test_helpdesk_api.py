@@ -126,7 +126,10 @@ def test_attachment_download_uses_only_files_on_the_ticket():
     link(client)
     detail = client.get("/tickets/7", headers=auth_headers())
     assert detail.status_code == 200
-    assert detail.json()["attachments"] == [
+    body = detail.json()
+    assert body["created_at"] == "2026-09-21T11:00:00Z"
+    assert body["requester_display_name"] == "Robério Teixeira"
+    assert body["attachments"] == [
         {"document_id": 2, "filename": "logo.png", "mime": "image/png"},
         {"document_id": 4, "filename": "foto.jpg", "mime": "image/jpeg"},
     ]

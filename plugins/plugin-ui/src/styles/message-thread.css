@@ -145,6 +145,14 @@
   color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, var(--text-muted, #64748b)));
 }
 
+.delpi-ui-message-thread__heading {
+  margin: 0 0 0.25rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--delpi-ui-text, var(--text, #0f172a));
+}
+
 .delpi-ui-message-thread__body {
   font-size: 0.9375rem;
   line-height: 1.45;

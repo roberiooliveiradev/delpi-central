@@ -16,6 +16,7 @@ import {
 } from "../api/helpdeskApi";
 import { helpTooltips } from "../content/helpTooltips";
 import {
+  conversationMessages,
   detailRecordHeading,
   newIdempotencyKey,
   statusBadgeVariant,
@@ -27,6 +28,7 @@ import {
   HelpdeskEmptyState,
   HelpdeskFormActions,
   HelpdeskLoadingState,
+  HelpdeskMessageThread,
   HelpdeskPageHeader,
   HelpdeskRecordCard,
   HelpdeskSectionCard,
@@ -35,7 +37,6 @@ import {
   HelpdeskStatusBadge,
   HelpdeskTextArea,
   HelpdeskTextField,
-  HelpdeskTimeline,
 } from "../ui/helpdeskUi";
 
 const MESSAGES: Record<string, string> = {
@@ -262,7 +263,7 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
   return (
     <>
       <HelpdeskPageHeader title={ticket?.title || "Chamado"} onRefresh={load} refreshing={loading} />
-      <HelpdeskSectionCard title="Detalhe" hint={helpTooltips.detail}>
+      <HelpdeskSectionCard title="Conversa" hint={helpTooltips.detail}>
         {loading ? <HelpdeskLoadingState message="Carregando chamado…" /> : null}
         {errorText ? <HelpdeskStateBanner variant="error">{errorText}</HelpdeskStateBanner> : null}
         {ticket ? (
@@ -271,31 +272,40 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
               {...detailRecordHeading(ticket.category, ticket.urgency)}
               status={<HelpdeskStatusBadge label={ticket.status} variant={statusBadgeVariant(ticket.status)} />}
             />
-            <p>{ticket.description}</p>
-            <HelpdeskTimeline
-              items={ticket.timeline.map((entry) => ({
-                id: String(entry.id),
-                title: entry.author_display_name || "Acompanhamento",
-                timeLabel: entry.created_at,
-                detail: entry.content,
+            <HelpdeskMessageThread
+              listAriaLabel="Conversa do chamado"
+              emptyLabel="Nenhuma mensagem"
+              messages={conversationMessages(ticket, new Date()).map((message) => ({
+                id: message.id,
+                kind: message.kind,
+                headingText: message.headingText || undefined,
+                bodyText: message.bodyText,
+                createdAtLabel: message.createdAtLabel,
+                authorName: message.authorName || undefined,
+                mine: message.mine,
+                belowBody:
+                  message.attachmentIds.length > 0 ? (
+                    <div className="helpdesk-record-list">
+                      {message.attachmentIds.map((documentId) => {
+                        const file = ticket.attachments.find((item) => item.document_id === documentId);
+                        const filename = file?.filename || "anexo";
+                        return (
+                          <ActionButton
+                            key={documentId}
+                            onClick={() => {
+                              void downloadTicketAttachment(ticketId, documentId, filename).catch((error) => {
+                                setErrorText(messageFor(error).text);
+                              });
+                            }}
+                          >
+                            {`Baixar ${filename}`}
+                          </ActionButton>
+                        );
+                      })}
+                    </div>
+                  ) : undefined,
               }))}
             />
-            {(ticket.attachments ?? []).length > 0 ? (
-              <div className="helpdesk-record-list">
-                {(ticket.attachments ?? []).map((file) => (
-                  <ActionButton
-                    key={file.document_id}
-                    onClick={() => {
-                      void downloadTicketAttachment(ticketId, file.document_id, file.filename).catch((error) => {
-                        setErrorText(messageFor(error).text);
-                      });
-                    }}
-                  >
-                    {`Baixar ${file.filename || "anexo"}`}
-                  </ActionButton>
-                ))}
-              </div>
-            ) : null}
             <form
               onSubmit={(event) => {
                 event.preventDefault();
@@ -312,7 +322,7 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
               }}
             >
               <HelpdeskTextArea
-                label="Acompanhamento"
+                label="Responder"
                 hint={helpTooltips.detail}
                 value={content}
                 onChange={setContent}
@@ -323,7 +333,7 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                   Voltar
                 </ActionButton>
                 <ActionButton variant="primary" type="submit" disabled={saving}>
-                  {saving ? "Enviando…" : "Registrar acompanhamento"}
+                  {saving ? "Enviando…" : "Enviar"}
                 </ActionButton>
               </HelpdeskFormActions>
             </form>
