@@ -329,7 +329,12 @@ def test_mapping_publishes_sanitized_html_and_rewrites_owned_documents():
                     "type": "Followup",
                     "item": {
                         "id": 12,
-                        "content": "<p>Cabo <em>ok</em></p><script>bad()</script>",
+                        "content": (
+                            "<p>Cabo <em>ok</em></p>"
+                            '<p><img src="/front/document.send.php?docid=391" alt="mesma" /></p>'
+                            '<p><img src="/front/document.send.php?docid=999" alt="alheio-fu" /></p>'
+                            "<script>bad()</script>"
+                        ),
                         "date_creation": "2026-09-21T11:00:00Z",
                         "user": {"name": "Ana"},
                     },
@@ -349,7 +354,10 @@ def test_mapping_publishes_sanitized_html_and_rewrites_owned_documents():
     assert "javascript:" not in detail.description_html.lower()
     assert "onerror" not in detail.description_html.lower()
     assert detail.timeline[0].content == "Cabo ok"
-    assert detail.timeline[0].content_html == "<p>Cabo <em>ok</em></p>"
+    assert "/front/document.send.php" not in detail.timeline[0].content_html
+    assert 'src="/apps/helpdesk-api/tickets/1108/attachments/391"' in detail.timeline[0].content_html
+    assert "alheio-fu" not in detail.timeline[0].content_html
+    assert "<script" not in detail.timeline[0].content_html.lower()
     assert [item.document_id for item in detail.attachments] == [391]
     detail = parse_ticket_detail(
         {

@@ -150,13 +150,26 @@ describe("conversationMessages", () => {
           '<p><img src="/apps/helpdesk-api/tickets/1108/attachments/391" alt="placa" /></p>',
         created_at: "2026-09-21T10:00:00Z",
         requester_display_name: "Ana",
-        timeline: [],
+        timeline: [
+          {
+            id: 12,
+            kind: "followup",
+            content: "mesma",
+            content_html:
+              '<p><img src="/apps/helpdesk-api/tickets/1108/attachments/391" alt="mesma" /></p>',
+            created_at: "2026-09-21T11:00:00Z",
+            author_display_name: "Ana",
+            mine: false,
+          },
+        ],
         attachments: [{ document_id: 391 }],
       },
       now,
     );
     expect(messages[0].bodyHtml).toContain('data-attachment-id="391"');
     expect(listHelpdeskAttachmentIdsInHtml(messages[0].bodyHtml)).toEqual([391]);
+    expect(messages[1].bodyHtml).toContain('data-attachment-id="391"');
+    expect(messages[1].attachmentIds).toEqual([]);
   });
 
   it("escreve a data calendário quando o chamado é antigo", () => {

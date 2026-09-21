@@ -82,7 +82,7 @@ Pedido explícito das fotos: a imagem como prévia e um modal com download.
 | A-04 | PDF e outros tipos que o kit prevê | `FilePreviewModal` já distingue image/pdf/text/docx; arquivo sem prévia continua só download | IMPLEMENTADO | mesmo modal |
 | A-05 | Blob só na memória da página | a regra de upload persistente já proíbe gravar o arquivo na Minha DELPI | HERDADO | `URL.createObjectURL` + revoke |
 | A-06 | Documento de outro chamado | 404 sem bytes — não pode mudar | invariante | serviço atual |
-| A-07 | Imagem de um acompanhamento específico | no 6288 a foto está na mensagem do técnico; a HLAPI do Followup não devolve essa lista; hoje todos os `Document` da timeline vão para a abertura | HIPOTESE_A_VALIDAR | não inventar o vínculo |
+| A-07 | Imagem de um acompanhamento específico | P0 6288 inexistente; Followup sem lista de docs (12-H4 FORA); Document fica na abertura | FORA — não inventar vínculo por bolha |
 | A-08 | Enviar arquivo novo | HLAPI 11.0.5 só aceita JSON; API legada desligada | BLOQUEADO | decisão explícita para ligar a API antiga |
 
 Kit: `HelpdeskAttachmentPreviewStrip` e `FilePreviewModal` **já ligados**. A prévia usa o GET de download, `Accept: application/octet-stream`, limite 20 MB. Sem CSS de thumb no MFE.
@@ -100,7 +100,7 @@ A conversa em bolhas já foi publicada. As fotos mostram o corte que ainda falta
 | C-05 | Lado da bolha | no 2 as duas mensagens foram para a direita; `mine` era «autor = solicitante» | IMPLEMENTADO — `mine` no BFF por id GLPI ou e-mail; nome só rótulo |
 | C-06 | Título da abertura vs cartão de urgência | o cartão do 2 virou «Média» porque a categoria está vazia (`itilcategories_id=0`) | já documentado; não inventar categoria |
 | C-07 | Tarefa, solução, aprovação, atores, SLA | fotos do 6288 e 1101 | CONSOLE_GLPI — página/estados em [`14-pagina-e-estados-do-chamado.md`](./14-pagina-e-estados-do-chamado.md) |
-| C-08 | Formatação, HTML, imagem no corpo | o BFF remove tags; a bolha é `plain`; o 6288 tem imagem no fio | inventário em [`12-conteudo-da-mensagem.md`](./12-conteudo-da-mensagem.md) (markup, allowlist, contrato aditivo, H1–H4) — sem autorização de código |
+| C-08 | Formatação, HTML, imagem no corpo | allowlist BFF + `*_html` + rewrite + kit html | **IMPLEMENTADO** E8 — [`12`](./12-conteudo-da-mensagem.md) |
 
 ### 3.4 Abrir chamado
 

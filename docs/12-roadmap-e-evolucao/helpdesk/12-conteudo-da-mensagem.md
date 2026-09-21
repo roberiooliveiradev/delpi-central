@@ -1,6 +1,6 @@
 # 12 — Conteúdo da mensagem da conversa
 
-> **Status:** inventário. Ordem de código: [`16-plano-paridade.md`](./16-plano-paridade.md) E8 (HD-021, HD-022). Não altera [`06-plano-execucao.md`](./06-plano-execucao.md).
+> **Status:** leitura HTML + imagem autenticada **IMPLEMENTADAS** (E8); escrita rica E8.S3. Ordem restante: [`16-plano-paridade.md`](./16-plano-paridade.md) E9+. Não altera [`06-plano-execucao.md`](./06-plano-execucao.md).
 > **Pedido:** o componente de mensagem deve cobrir o que o GLPI já entrega no fio público do chamado (texto, formatação, imagem e afins). Este arquivo só documenta.
 > **Tela publicada:** [`WIREFRAMES.md`](./WIREFRAMES.md) §3 — hoje `bodyMode=plain` e descrição em texto puro. O desenho publicado **não** muda até haver autorização de código.
 > **Conversa (estrutura):** [`10-conversa-do-chamado.md`](./10-conversa-do-chamado.md).
@@ -277,7 +277,7 @@ FORA                  → não entra neste produto
 | M-05 | Título, citação, alinhamento e cor **se** vierem no HTML | ALVO_LEITURA | same allowlist |
 | M-06 | Tabela e bloco de código | ALVO_LEITURA | kit; tokens `--delpi-ui-*` |
 | M-07 | Menção visível (chip), sem usar o nome como identidade | ALVO_LEITURA | parse `data-user-id`; rótulo só visual |
-| M-08 | Imagem **no** corpo, autenticada | ALVO_LEITURA + HIPOTESE URL | rewrite `src` para o GET de anexo; clique reusa `FilePreviewModal` |
+| M-08 | Imagem **no** corpo, autenticada | IMPLEMENTADO | rewrite `document.send.php` → GET anexo; blob + `FilePreviewModal` |
 | M-09 | Documento ligado **àquela** mensagem | HIPOTESE_A_VALIDAR (A-07) | não inventar vínculo |
 | M-10 | Documento só do chamado, sem mensagem dona | IMPLEMENTADO hoje na abertura | invariante até A-07 |
 | M-11 | HTML de e-mail / Outlook sobrevive sanitizado | ALVO_LEITURA | mesmo sanitizer; irmão do P0 |
@@ -315,7 +315,7 @@ Enquanto M-30 não existir, o helpdesk **não** implementa um renderer HTML pró
 
 | ID | Capacidade | Estado |
 |---|---|---|
-| M-40 | `helpTooltips.create` e `.detail` descrevem formatação e imagem no corpo | IMPLEMENTADO (escrita); leitura de imagem no fio em E8.S2/S4 |
+| M-40 | `helpTooltips.create` e `.detail` descrevem formatação e imagem no corpo | IMPLEMENTADO |
 | M-41 | F5 no detalhe mostra o mesmo HTML sanitizado | invariante de persistência (dono = GLPI) |
 | M-42 | Lista / `q` / cartão **não** passam a buscar HTML | FORA deste inventário; busca no texto da abertura é G-21 em [`13-listagem-de-chamados.md`](./13-listagem-de-chamados.md) |
 | M-43 | Log do BFF continua sem corpo da mensagem | invariante [`04-seguranca.md`](./04-seguranca.md) |
@@ -396,11 +396,11 @@ Campos de rótulo (`title`, nomes) continuam em `display_text`. Conteúdo de men
 
 | Caso | Hoje | Alvo |
 |---|---|---|
-| P0 — chamado 6288 com imagem no fio | texto sem marca; imagem no máximo como anexo da abertura | texto formatado; imagem no lugar em que o GLPI a gravou, via BFF |
-| Irmão — listas e link num follow-up | uma linha corrida | lista e link clicável (https) |
+| P0 — imagem no fio (id 6288 **inexistente**; substituto **1108**) | — | **ATENDIDO** — `<img>` no HTML usa GET BFF; F5 sem cookie GLPI; `docid` alheio some; A-07 sem vínculo por bolha |
+| Irmão — listas e link num follow-up | uma linha corrida | **ATENDIDO** — HTML sanitizado na bolha |
 | Irmão — follow-up de e-mail | texto achatado | HTML sanitizado; `cid:` some |
-| Negativo — HTML com script | hoje some tudo; amanhã o script continua fora | allowlist; sem execução |
-| Negativo — `src` para host do GLPI | — | não sobrevive no HTML publicado |
+| Negativo — HTML com script | hoje some tudo; amanhã o script continua fora | **ATENDIDO** — allowlist; sem execução |
+| Negativo — `src` para host do GLPI | — | **ATENDIDO** — não sobrevive no HTML publicado |
 | Invariante | privado, tarefa, solução, entidade, upload novo | não mudam |
 | Identidade | id / e-mail | não volta a usar nome |
 | Contrato antigo | `description` texto | continua texto; HTML no campo novo |
@@ -426,7 +426,7 @@ Campos de rótulo (`title`, nomes) continuam em `display_text`. Conteúdo de men
 
 | ID | Falta | Bloqueia |
 |---|---|---|
-| H1–H4 | captura do `content` cru no 6288 e no 1114 | M-08, M-09 |
+| H1–H4 | captura do `content` cru (6288 inexistente; 1108/1045/467) | **fechado** em §15 — M-08 liberado; A-07 permanece FORA |
 | H5 menção | markup exato + lista HLAPI de mencionáveis | M-23, parte de M-07 se o atributo divergir |
 | H6 teto | tamanho máximo que o GLPI/BFF aceita | M-29 = 50 000 caracteres no BFF |
 
@@ -443,7 +443,7 @@ O id **6288 não existe** neste GLPI (`MAX(id)=1119`). Substitutos com `<img>`: 
 | H3 | **FORA** | 6288 inexistente; 1108 tem `<img>` **e** item Timeline `Document` (`documents_id`) |
 | H4 | **FORA** (A-07) | schema e JSON de `Followup` **não** listam documentos; `Document` é tipo irmão na Timeline |
 
-M-08 (rewrite de `document.send.php`) **desbloqueado**. M-09 / A-07 **não** desbloqueiam: a imagem no HTML e o `Document` da Timeline não vêm amarrados ao Followup.
+M-08 (rewrite de `document.send.php`) **IMPLEMENTADO** (E8.S1 + E8.S2 + E8.S4). M-09 / A-07 **não** desbloqueiam: a imagem no HTML e o `Document` da Timeline não vêm amarrados ao Followup — a bolha de acompanhamento **não** ganha `belowBody` inventado.
 
 ## 16. Prova, quando houver autorização
 

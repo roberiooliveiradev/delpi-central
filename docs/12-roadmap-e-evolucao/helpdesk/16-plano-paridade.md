@@ -1,6 +1,6 @@
 # 16 — Plano de paridade do solicitante
 
-> **Status:** em execução. **E8.S1–S3** e **E13.S1** entregues; **E8.S4** / **E9+** no plano.
+> **Status:** em execução. **E8** (S1–S4) e **E13.S1** entregues; **E9+** no plano.
 > **Não altera** [`06-plano-execucao.md`](./06-plano-execucao.md) (`E1…E5`).
 > **Ondas:** [`05-roadmap.md`](./05-roadmap.md) H6…H13.
 > **Inventários:** [`12`](./12-conteudo-da-mensagem.md) · [`13`](./13-listagem-de-chamados.md) · [`14`](./14-pagina-e-estados-do-chamado.md) · [`15`](./15-capacidades-glpi.md).
@@ -28,9 +28,9 @@ O colaborador passa a ver e gravar no Meus Chamados de TI o que o GLPI já entre
 | RQ-01 | `status_id` + badge/filtro por id; grupos pending/approval | **ATENDIDO** E7.S1 |
 | RQ-02 | Lista: data absoluta, período de abertura, page_size | **ATENDIDO** E7.S2 |
 | RQ-03 | Lista: solved_at / busca no content se H6 | **ATENDIDO** E7.S3 |
-| RQ-04 | HTML sanitizado na bolha | **ATENDIDO** E8.S1–S2; E8.S4 imagem no fio |
+| RQ-04 | HTML sanitizado na bolha | **ATENDIDO** E8.S1–S4 |
 | RQ-05 | Compositor rico abrir+responder | **ATENDIDO** E8.S3 |
-| RQ-06 | Imagem no corpo via BFF se H6 | DESBLOQUEADO — 12-H1 **PROVEN**; A-07 continua FORA → E8.S4 |
+| RQ-06 | Imagem no corpo via BFF se H6 | **ATENDIDO** E8.S4 — 12-H1 PROVEN; P0 6288 FORA (substituto 1108); A-07 continua FORA |
 | RQ-07 | Página: datas, can_followup, observador | ATENDIDO_NO_PLANO E9.S1 — `can_followup` só false no status 6 |
 | RQ-08 | Aprovar/reabrir/satisfação se HLAPI | PARCIAL — Solution/Validation **têm** path; Satisfaction **sem** path (CONSOLE) → E10 |
 | RQ-09 | TTR, vínculo, Form, observer write se H6 | TTR + observer **PROVEN**; Form + vínculo **FORA** → E11 |
@@ -218,10 +218,9 @@ Owner do corpo e do status: helpdesk-api. Owner da bolha/editor: plugin-ui. MFE 
 - **Teste:** F5 sem cookie GLPI; 404 de document alheio.
 - **Pronto:** P0 6288 perceptível ou documentado FORA.
 - **Commit:** `feat(helpdesk): mostra a imagem do fio pelo download autenticado.` **ou** docs de descarte.
+- **Estado:** **ATENDIDO** — rewrite + blob + modal já em E8.S1/S2; 12-H1 PROVEN; 12-H2/H3/H4 FORA; P0 **6288 FORA** (MAX id 1119; substituto **1108**); A-07 sem vínculo por bolha; prova de follow-up com `docid` próprio/alheio no mapping.
 
----
-
-## E9 — Página (H9)
+### E9 — Página (H9)
 
 ### E9.S1 — Cartão, Responder, observador
 

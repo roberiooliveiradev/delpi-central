@@ -84,7 +84,7 @@ Depende de H6 para imagem. Leitura HTML e escrita rica **não** dependem da imag
 | Allowlist no BFF + `description_html` / `content_html` | [`12`](./12-conteudo-da-mensagem.md) M-01…M-06 | HD-021 |
 | Modo HTML no `MessageThread` do kit | 12 M-30 | HD-021 |
 | `RichTextEditor` em abrir e responder; POST HTML | 12 M-20…M-22, M-28 | HD-022 |
-| Rewrite de `document.send.php` + modal | 12 M-08 — **12-H1 PROVEN** | HD-021 |
+| Rewrite de `document.send.php` + modal | 12 M-08 — **IMPLEMENTADO** (12-H1 PROVEN; P0 6288 FORA → 1108) | HD-021 |
 | Menção por `data-user-id`; `@` só com catálogo | 12 M-07, M-23 | HD-022 |
 | Sem colar imagem / upload | A-08 | HD-026 |
 
