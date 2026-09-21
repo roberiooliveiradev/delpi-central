@@ -901,6 +901,7 @@ export function InteractionRoomPage({
             ) : null}
             <MessageThread
               classNames={thread}
+              fill
               messages={messages.map((item) => {
                 const reactionChips = (item.reactions ?? []).map((reaction) => ({
                   ...reaction,
@@ -1058,7 +1059,7 @@ export function InteractionRoomPage({
   );
 
   return (
-    <div className={root}>
+    <div className={root} data-layout={layout}>
       <div
         className={
           layout === "thread" ? `${root}__grid ${root}__grid--thread` : `${root}__grid`

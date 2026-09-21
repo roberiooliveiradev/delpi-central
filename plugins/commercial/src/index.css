@@ -200,6 +200,18 @@
   position: relative;
 }
 
+/* Kit InteractionRoomPage no split: enche a coluna para o dock ficar no rodapé. */
+.dashboard-commercial .cm-room-workspace .cm-interaction-room,
+.dashboard-commercial .cm-resizable-columns__right > .cm-interaction-room {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  width: 100%;
+  align-self: stretch;
+}
+
 .dashboard-commercial .cm-room-workspace {
   display: flex;
   flex: 1 1 auto;
@@ -227,7 +239,8 @@
   align-self: stretch;
 }
 
-.dashboard-commercial .cm-resizable-columns__right > .cm-room-thread {
+.dashboard-commercial .cm-resizable-columns__right > .cm-room-thread,
+.dashboard-commercial .cm-resizable-columns__right .cm-room-thread {
   flex: 1 1 auto;
   min-height: 0;
   height: 100%;

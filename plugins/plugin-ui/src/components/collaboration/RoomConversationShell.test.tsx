@@ -71,7 +71,8 @@ describe("RoomConversationShell", () => {
     );
     expect(css).toMatch(/\.delpi-ui-room-panel \{/);
     expect(css).toMatch(
-      /\.delpi-ui-room-thread__msgs > \.delpi-ui-soft-empty/,
+      /\.delpi-ui-room-thread__msgs > \.delpi-ui-(?:soft-empty|message-thread)/,
     );
+    expect(css).toMatch(/empty-guidance--canvas/);
   });
 });

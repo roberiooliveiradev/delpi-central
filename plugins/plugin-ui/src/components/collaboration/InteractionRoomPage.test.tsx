@@ -90,6 +90,8 @@ describe("InteractionRoomPage", () => {
     expect(source).toMatch(/resolveExtraActions/);
     expect(source).toMatch(/renderComposer/);
     expect(source).toMatch(/layout === "thread"/);
+    expect(source).toMatch(/data-layout=\{layout\}/);
+    expect(source).toMatch(/\bfill\b/);
     expect(source).toMatch(/shouldStickThreadToBottom/);
     expect(source).toMatch(/onLoadOlder/);
     expect(source).toMatch(/resolveAttachmentImageSrc/);
