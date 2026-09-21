@@ -153,3 +153,68 @@ Isso **não** autoriza E10 / WF-15.
 ## Não persistido
 
 JWT, cookies, tokens, senhas, dados comerciais de linhas.
+
+---
+
+## Recovery / redeploy re-smoke (2026-09-21)
+
+Previous result preserved above: **GATE-FEATURE WF-07 = FAIL** (BFF prod 404).
+
+### Redeploy identity
+
+| Campo | Valor |
+|---|---|
+| Host | `operador@192.168.1.237` (`srv-api`) |
+| Procedure | `./infra/scripts/up-prod-sequential.sh --pull --build supplies-api` |
+| PROD HEAD | `38ec6ff92e6395fa68965aaea773cd7f49e8f708` (= `origin/main`) |
+| E9.S2 ancestral | `22c32e7173` — confirmado |
+| Image | `sha256:0674e104133dd96e4e3b277ba15538e607151992ee419cbf3fbb3e3970089bb2` |
+| Container | `delpi-supplies-api` recreated; Started `2026-09-21T19:43:23Z`; Health **healthy** |
+| Image proof | `deliveries_routes.py` exists; `create_app()` registra `/deliveries/late` |
+
+### Route after deploy
+
+| Check | Result |
+|---|---|
+| `GET /apps/supplies-api/health` | **200** |
+| `GET /apps/supplies-api/deliveries/late` sem sessão | **401** (não 404) |
+| Autenticado (Portal smoke) | **200** |
+
+### Federated re-smoke + probe
+
+- Happy path Todas/`late`: **200**, `items=6`, `total=6`, summary keys presentes, campos de recebimento MP (`receipt_entry_date`, `order_number`, …).
+- Unit 01/`late`: **200** + empty (`items=0`) — empty state UI.
+- Unit 02/`late`: **200**, `items=6`.
+- Todas/`on_time`: **200**, `items=20`, `total=194`.
+- Sort deep-link `sort_by=expected_delivery_date&sort_dir=desc&page=1`: **200**.
+- Empty window `2099-01`: **200** + `items=[]` + empty UI (não 404).
+- Pagination `page=2` (`on_time` Todas): **200**, `page=2`, first row ≠ page 1.
+- Performance Todas: ~3.5–5.5 s round-trip página→BFF — operacionalmente aceitável neste smoke.
+- Network: ZERO browser → `/api-delpi` / `/purchase-order-otd`.
+- NO DRILL: zero `a[href*='/purchase-orders/']`.
+- Help: sem «atrasos do dia»; período = digitação.
+- Console: sem pageErrors / errorLogs materiais; warnings não bloqueantes.
+- Residuais mantidos: 403 unidade real; dark theme toggle; sidebar mobile Portal.
+
+### RQ coverage (pós-recovery)
+
+| RQ | Resultado |
+|---|---|
+| RQ-E9-01 | PASS (403 unidade permanece residual/INCONCLUSIVE runtime) |
+| RQ-E9-02 | **PASS** |
+| RQ-E9-03 | PASS |
+| RQ-E9-04 | PASS |
+| RQ-E9-05 | PASS (sort query + page 2 server-side) |
+| RQ-E9-06 | PASS |
+| RQ-E9-07 | PASS (empty 200 + error path histórico) |
+| RQ-E9-08 | PASS |
+| RQ-E9-09 | PASS |
+| RQ-E9-10 | PASS (BFF-only + AuthZ testes; 403 runtime residual) |
+
+### Classificação pós-recovery
+
+```text
+GATE-FEATURE WF-07 = PASS
+```
+
+E9 / WF-07 = **FECHADA**. Próxima página candidata (sem implementação nesta tarefa): **E10 / WF-15 — Controle de Estoques** (requer autorização PO separada).

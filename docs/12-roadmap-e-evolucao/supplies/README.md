@@ -1,11 +1,11 @@
 # Portal Suprimentos — documentação mestra
 
-> **Status (2026-09-21):** implementação incremental em andamento · **E1–E8 concluídas** · **WF-06 GATE-FEATURE PASS** · **E9.S1–S5 executados** · **WF-07 GATE-FEATURE FAIL** ([evidência](./evidence/e9-wf07-federated-runtime-gate.md)) · [freeze P0](./evidence/e9-wf07-p0-contract-freeze.md)
-> **Readiness:** **GATE-E1 + GATE-ARCH + GATE-AUTHZ + GATE-RBAC PASS (local)** · E9 aberta até redeploy BFF + re-smoke
+> **Status (2026-09-21):** implementação incremental em andamento · **E1–E9 concluídas** · **WF-06 GATE-FEATURE PASS** · **WF-07 GATE-FEATURE PASS** ([evidência](./evidence/e9-wf07-federated-runtime-gate.md); recovery pós-redeploy BFF) · [freeze P0](./evidence/e9-wf07-p0-contract-freeze.md)
+> **Readiness:** **GATE-E1 + GATE-ARCH + GATE-AUTHZ + GATE-RBAC PASS (local)** · E9 / WF-07 fechada
 > **Modo de entrega:** **uma página por vez até DoD** — a próxima página só pode ser promovida a foco após fechamento da atual
-> **Página em foco:** **E9 / WF-07 Entregas / atrasos** — MFE prod OK; BFF prod 404 em `/deliveries/late`
-> **Últimas páginas fechadas:** **Início (WF-01)**, **Visão geral (WF-02/WF-02R)**, **OTD analytics (WF-OTD-A)**, **Solicitações de compras (WF-04)**, **Pedidos de compra (WF-05)** e **Detalhe do pedido (WF-06)**
-> **Próxima receita:** redeploy `supplies-api` (rota E9.S2) + re-smoke WF-07 — não promover E10 enquanto GATE FAIL
+> **Página candidata seguinte:** **E10 / WF-15 Controle de Estoques** — não autorizada/implementada nesta tarefa
+> **Últimas páginas fechadas:** **Início (WF-01)**, **Visão geral (WF-02/WF-02R)**, **OTD analytics (WF-OTD-A)**, **Solicitações de compras (WF-04)**, **Pedidos de compra (WF-05)**, **Detalhe do pedido (WF-06)** e **Entregas / atrasos (WF-07)**
+> **Próxima receita:** aguardar autorização PO para inventário/readiness de E10 / WF-15 — não iniciar implementação sem brief
 > **Id técnico:** `supplies` · **basePath:** `/apps/supplies` · **API:** `supplies-api` · gateway `/apps/supplies-api/` · **CSS root:** `.dashboard-supplies-portal`
 
 O Portal Suprimentos é o hub operacional, analítico e gerencial do domínio de Suprimentos na Minha DELPI. Ele substitui progressivamente experiências fragmentadas por jornadas coesas, preservando bounded contexts, RBAC central, paridade mensurável e rollback.
@@ -36,7 +36,7 @@ A documentação desta pasta deve obedecer à hierarquia vigente das regras `.cu
 | **E6 — SC C1 + GATE-FEATURE WF-04** | **concluída 2026-09-11** — BFF C1, lista/detalhe/export, kit-first, Help, testes; smoke federado `INCONCLUSIVE` |
 | **E7 — Pedidos lista + GATE-FEATURE WF-05** | **concluída 2026-09-11** — api-delpi SC7 aberto, BFF operations+unit, MFE kit-first |
 | **E8 — Detalhe do Pedido + GATE-FEATURE WF-06** | **concluída 2026-09-16** — ficha `/purchase-orders/:branch/:number`; smoke federado **PASS** em 2026-09-21 |
-| **E9 — Entregas / atrasos + P0 freeze** | **S1–S5 executados**; MFE prod OK; **GATE-FEATURE WF-07 FAIL** — BFF prod 404; [freeze](./evidence/e9-wf07-p0-contract-freeze.md); [evidência](./evidence/e9-wf07-federated-runtime-gate.md) |
+| **E9 — Entregas / atrasos + P0 freeze** | **FECHADA** — **GATE-FEATURE WF-07 PASS** após redeploy BFF; FAIL inicial preservado na [evidência](./evidence/e9-wf07-federated-runtime-gate.md); [freeze](./evidence/e9-wf07-p0-contract-freeze.md) |
 | RBAC alvo | revisado; menor catálogo suficiente (ADR-007) |
 | Authz Core-first | **GATE-AUTHZ PASS** — fail-closed na fronteira; permissions efetivas do Core, não claims JWT |
 | BIs externos | dump **local** 0/6 documentado; dump Core **produção** obrigatório antes do cutover |
@@ -57,7 +57,7 @@ A documentação desta pasta deve obedecer à hierarquia vigente das regras `.cu
 | **GATE-FEATURE WF-04** | **PASS** — smoke federado `INCONCLUSIVE` (não inferido) |
 | **GATE-FEATURE WF-05** | **PASS** — smoke federado `INCONCLUSIVE` (não inferido) |
 | **GATE-FEATURE WF-06** | **PASS** — smoke federado em `https://minhadelpi.com.br` em 2026-09-21; residual: 403 de unidade não executado ([evidência](./evidence/e8-wf06-federated-runtime-gate.md)) |
-| **GATE-FEATURE WF-07** | **FAIL** — MFE E9 em prod; BFF `/deliveries/late` 404 pós-auth ([evidência](./evidence/e9-wf07-federated-runtime-gate.md)) |
+| **GATE-FEATURE WF-07** | **PASS** — recovery 2026-09-21: redeploy `supplies-api` em `srv-api` + re-smoke 200 ([evidência](./evidence/e9-wf07-federated-runtime-gate.md)) |
 | **GATE-C2** | futuro; não autorizado enquanto prerequisites não forem provados |
 | **GATE-PARITY** | futuro; evidência quantitativa obrigatória |
 | **GATE-CUTOVER** | futuro; nenhum legado/BI pode permanecer `LEGADO_A_VALIDAR` |
@@ -226,7 +226,7 @@ Invariantes:
 
 ## 7. Próximo passo operacional
 
-**Único próximo passo autorizado pelo roadmap:** redeploy de `supplies-api` com a rota E9.S2 e re-smoke federado de WF-07. Não promover E10 enquanto `GATE-FEATURE WF-07 = FAIL`. Contrato: [P0 freeze](./evidence/e9-wf07-p0-contract-freeze.md); evidência: [gate](./evidence/e9-wf07-federated-runtime-gate.md).
+**Único próximo passo autorizado pelo roadmap:** inventário/readiness de **E10 / WF-15 — Controle de Estoques** somente após autorização explícita do Product Owner. E9/WF-07 permanece fechada com [GATE PASS](./evidence/e9-wf07-federated-runtime-gate.md). Não iniciar implementação de E10 nesta promoção documental.
 
 Revalidação 2026-09-21 (`4f3ed59483`): GATE-FEATURE WF-06 permanece **PASS**. Autorização do Product Owner e freeze P0 de E9 estão persistidos. P-03 continua bloqueando apenas paridade/depreciação do BI, não a construção da página nativa.
 
