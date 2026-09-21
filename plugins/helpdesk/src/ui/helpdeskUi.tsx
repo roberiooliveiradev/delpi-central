@@ -79,6 +79,8 @@ export const HelpdeskRecordCard = createDashboardDataRecordCard({ prefix: PREFIX
 
 const tableClassNames = dataTableBemClasses(PREFIX);
 
+export const helpdeskDataTableClassNames = tableClassNames;
+
 export function HelpdeskIconButton(props: ComponentProps<typeof IconButton>) {
   return <IconButton {...props} />;
 }

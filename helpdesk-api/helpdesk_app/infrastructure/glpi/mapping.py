@@ -57,6 +57,7 @@ _SORT_FIELDS = {
     "updated_at": "date_mod",
     "created_at": "date_creation",
     "solved_at": "date_solve",
+    "closed_at": "date_close",
 }
 _MAX_PAGE_SIZE = 50
 _DEFAULT_PAGE_SIZE = 20

@@ -326,3 +326,13 @@
     margin-block-start: 0.5rem;
   }
 }
+
+.dashboard-helpdesk a.helpdesk-ticket-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.dashboard-helpdesk a.helpdesk-ticket-link:hover,
+.dashboard-helpdesk a.helpdesk-ticket-link:focus-visible {
+  text-decoration: underline;
+}

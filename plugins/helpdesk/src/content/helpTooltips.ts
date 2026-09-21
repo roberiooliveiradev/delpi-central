@@ -1,6 +1,6 @@
 export const helpTooltips = {
   list:
-    "Aqui ficam os chamados de TI no seu nome, em tabela que preenche a tela e rola por dentro. Aberto, atualizado, resolvido e fechado mostram dia e hora. Acima da grade, o recorte ativo e a ordenação aparecem em chips; o botão de atualizar pede de novo ao helpdesk. Use Colunas para mostrar ou esconder campos — a preferência fica neste navegador. Clique no cabeçalho para ordenar (resolvido inclusive) ou abra a ordenação em níveis (até três). O mais (+) abre chamado; as setas mudam de página; o seletor define 10, 20 ou 50 por página; o X limpa o recorte. Chamado de outra pessoa e da lixeira não aparecem.",
+    "Aqui ficam os chamados de TI no seu nome, em tabela que preenche a tela e rola por dentro. Aberto, atualizado, resolvido e fechado mostram dia e hora. Acima da grade, o recorte ativo e a ordenação aparecem em chips; o botão de atualizar pede de novo ao helpdesk. Use Colunas para mostrar ou esconder campos — a preferência fica neste navegador. Clique no cabeçalho para ordenar (resolvido e fechado inclusive) ou abra a ordenação em níveis (até três). O número e o título são o endereço do chamado: Ctrl, Shift, Alt ou o clique do meio abrem em outra aba. O mais (+) abre chamado; as setas mudam de página; o seletor define 10, 20 ou 50 por página; o X limpa o recorte. Chamado de outra pessoa e da lixeira não aparecem.",
   filters:
     "A busca e os filtros pedem o recorte ao helpdesk. A busca acha no título ou no texto da abertura. O selo de estado usa o número do status (novo, em atendimento, pendente, aguardando aprovação, solucionado, fechado), não o texto. Pendentes e aguardando aprovação têm recorte próprio; Abertos continua incluindo os que esperam aprovação. Aberto de/até filtra pela data de abertura; atualizado de/até, pela última mudança. O construtor de filtros monta várias regras com E (AND) e grava o recorte na URL — o F5 mantém o mesmo critério. Grupos com OU, exportação, seleção em massa e mapa ficam no console do helpdesk. A ordenação também: o clique na coluna não reordena só esta página. Recorte vazio significa que nenhum chamado bate com o filtro, não que você não tenha chamados.",
   link:
@@ -79,7 +79,7 @@ export const helpTooltips = {
     created_at: "Data e hora de abertura.",
     updated_at: "Data e hora da última alteração.",
     solved_at: "Data e hora da solução, quando existir.",
-    closed_at: "Data e hora do fechamento, quando existir.",
+    closed_at: "Data e hora do fechamento, quando existir. Ordena pelo instante de fechamento no helpdesk.",
     requester: "Nome do solicitante (rótulo). O helpdesk não identifica pessoa pelo nome.",
   },
 } as const;

@@ -154,7 +154,7 @@ URL ?q=&status=&urgency_id=&category_id=&created_from=&created_to=&updated_from=
 
 | Superfície | Hoje |
 |---|---|
-| Colunas | id, título, status (badge por id), categoria, urgência, técnico, aberto, atualizado, resolução, fechamento (+ slots requester/entity ocultos) |
+| Colunas | id, título, status (badge por id), categoria, urgência, técnico, requerente, aberto, atualizado, resolução, fechamento (+ slots entity/last_editor ocultos) |
 | Datas na grade | data-hora absoluta (`absoluteDateTimeLabel`) |
 | Busca | título **ou** conteúdo (`q`) |
 | Filtros | status agrupado (`open`/`in_progress`/`solved`/`closed`/`pending`/`approval`), urgência, categoria, aberto de/até, atualizado de/até |
@@ -211,10 +211,10 @@ FORA                  → não entra neste produto
 | G-01 | Id, título, status, categoria, urgência, técnico, requerente, aberto, atualizado | **IMPLEMENTADO** | requerente é rótulo (G-05); não ordena |
 | G-02 | Data-hora absoluta na célula | **IMPLEMENTADO** | MFE `absoluteDateTimeLabel` |
 | G-03 | `solved_at` a partir de `date_solve` | **IMPLEMENTADO** | BFF aditivo |
-| G-04 | `closed_at` a partir de `date_close` | **IMPLEMENTADO** | BFF aditivo |
+| G-04 | `closed_at` a partir de `date_close` | **IMPLEMENTADO** | BFF aditivo; `sort=closed_at` → `date_close` |
 | G-05 | `requester_display_name` na lista | **IMPLEMENTADO** | mesmo `_requester_name` do detalhe; coluna opcional no catálogo |
 | G-06 | Ordenar por técnico | BLOQUEADO | `team` não é coluna SQL da HLAPI |
-| G-07 | Ordenar por resolução | **IMPLEMENTADO** | `sort=solved_at` → `date_solve` |
+| G-07 | Ordenar por resolução e fechamento | **IMPLEMENTADO** | `solved_at` → `date_solve`; `closed_at` → `date_close` |
 | G-08 | Coluna entidade / último editor / prioridade / tipo / impacto | CONSOLE_GLPI / FORA | — |
 | G-09 | Badge de status pelos tokens do kit | **IMPLEMENTADO** | por `status_id` |
 

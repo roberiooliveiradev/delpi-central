@@ -6,6 +6,7 @@
 declare module "@delpi/plugin-ui/index" {
   import type {
     ComponentType,
+    HTMLAttributes,
     MouseEvent,
     InputHTMLAttributes,
     ReactElement,
@@ -494,6 +495,8 @@ declare module "@delpi/plugin-ui/index" {
     rowKey: (row: T, index: number) => string;
     loading?: boolean;
     onRowClick?: (row: T) => void;
+    getRowClassName?: (row: T, index: number) => string | undefined;
+    getRowProps?: (row: T, index: number) => HTMLAttributes<HTMLTableRowElement> | undefined;
     layout?: "section" | "embedded" | "scroll";
     compact?: boolean;
     sortKey?: string | null;

@@ -37,7 +37,7 @@ a página e os estados?      → 14 (detalhe do solicitante + ciclo ITIL)
 o que o GLPI tem além disso? → 15 (matriz Assistência)
 onde fica o segredo?        → 04
 ondas do produto?           → 05 (H0…H14)
-o que implementar agora?    → G-05 entregue; próximo só com decisão nova (M-23, H12, H10 se HLAPI)
+o que implementar agora?    → href da lista + closed_at sort entregues; próximo só com decisão nova (M-23, H12, H10 se HLAPI)
 qual HD?                    → 07
 como fechar a etapa?        → 08 e 09
 já está em produção?        → evidence/execution-ledger

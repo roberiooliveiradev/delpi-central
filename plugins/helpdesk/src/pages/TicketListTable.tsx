@@ -1,3 +1,5 @@
+import type { MouseEvent, ReactNode } from "react";
+
 import { absoluteDateTimeLabel, statusBadgeVariant } from "../presentation/ticketView";
 import {
   resolveVisibleColumns,
@@ -6,7 +8,19 @@ import {
 } from "../presentation/ticketListViewModel";
 import type { TicketSummary } from "../api/helpdeskApi";
 import { helpTooltips } from "../content/helpTooltips";
-import { HelpdeskDataTable, HelpdeskStatusBadge } from "../ui/helpdeskUi";
+import {
+  followHelpdeskPath,
+  isModifiedHelpdeskClick,
+  ticketDetailPath,
+} from "../routing/helpdeskRoute";
+import { HelpdeskDataTable, HelpdeskStatusBadge, helpdeskDataTableClassNames } from "../ui/helpdeskUi";
+
+function eventFromTicketLink(event: { target: EventTarget | null }): boolean {
+  const node = event.target;
+  if (!(node instanceof Node)) return false;
+  const element = node instanceof Element ? node : node.parentElement;
+  return Boolean(element?.closest("a"));
+}
 
 export function TicketListTable({
   items,
@@ -38,7 +52,32 @@ export function TicketListTable({
       sortKey={sort.key}
       sortDirection={sort.direction}
       onSortChange={onSortChange}
-      onRowClick={(row) => onOpen(row.id)}
+      getRowClassName={() => helpdeskDataTableClassNames.rowClickable}
+      getRowProps={(row) => ({
+        tabIndex: 0,
+        role: "link",
+        onClick: (event) => {
+          if (eventFromTicketLink(event)) return;
+          const path = ticketDetailPath(row.id);
+          if (isModifiedHelpdeskClick(event)) {
+            followHelpdeskPath(path, event);
+            return;
+          }
+          onOpen(row.id);
+        },
+        onAuxClick: (event) => {
+          if (event.button !== 1) return;
+          if (eventFromTicketLink(event)) return;
+          event.preventDefault();
+          followHelpdeskPath(ticketDetailPath(row.id), event);
+        },
+        onKeyDown: (event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            onOpen(row.id);
+          }
+        },
+      })}
       columns={columns}
     />
   );
@@ -54,12 +93,30 @@ function toDataTableColumn(definition: TicketListColumnDefinition) {
   };
 }
 
+function TicketDetailLink({ ticketId, children }: { ticketId: number; children: ReactNode }) {
+  const href = ticketDetailPath(ticketId);
+  return (
+    <a
+      className="helpdesk-ticket-link"
+      href={href}
+      onClick={(event: MouseEvent<HTMLAnchorElement>) => {
+        event.stopPropagation();
+        if (isModifiedHelpdeskClick(event)) return;
+        event.preventDefault();
+        followHelpdeskPath(href);
+      }}
+    >
+      {children}
+    </a>
+  );
+}
+
 function renderColumn(key: TicketListColumnDefinition["key"], row: TicketSummary) {
   switch (key) {
     case "id":
-      return String(row.id);
+      return <TicketDetailLink ticketId={row.id}>{String(row.id)}</TicketDetailLink>;
     case "title":
-      return row.title;
+      return <TicketDetailLink ticketId={row.id}>{row.title}</TicketDetailLink>;
     case "status":
       return <HelpdeskStatusBadge label={row.status} variant={statusBadgeVariant(row.status_id)} />;
     case "category":

@@ -48,7 +48,7 @@ export type TicketListFilterGroup = {
 };
 
 export type TicketListSortLevel = {
-  field: TicketListSortKey | "closed_at";
+  field: TicketListSortKey;
   direction: "asc" | "desc";
 };
 
@@ -125,7 +125,7 @@ export const TICKET_LIST_COLUMN_CATALOG: readonly TicketListColumnDefinition[] =
   { key: "created_at", header: "Aberto", fixed: false, sortable: true, solicitante: true, defaultVisible: true },
   { key: "updated_at", header: "Atualizado", fixed: false, sortable: true, solicitante: true, defaultVisible: true },
   { key: "solved_at", header: "Resolvido", fixed: false, sortable: true, solicitante: true, defaultVisible: true },
-  { key: "closed_at", header: "Fechado", fixed: false, sortable: false, solicitante: true, defaultVisible: true },
+  { key: "closed_at", header: "Fechado", fixed: false, sortable: true, solicitante: true, defaultVisible: true },
   { key: "requester", header: "Requerente", fixed: false, sortable: false, solicitante: true, defaultVisible: false },
   { key: "entity", header: "Entidade", fixed: false, sortable: false, solicitante: false, defaultVisible: false },
   { key: "last_editor", header: "Última edição por", fixed: false, sortable: false, solicitante: false, defaultVisible: false },

@@ -520,6 +520,7 @@ def test_list_query_uses_rsql_and_rejects_injection():
     assert build_ticket_list_query(sort="urgency:desc").sort == "urgency:desc"
     assert build_ticket_list_query(sort="category:asc").sort == "category.name:asc"
     assert build_ticket_list_query(sort="solved_at:desc").sort == "date_solve:desc"
+    assert build_ticket_list_query(sort="closed_at:desc").sort == "date_close:desc"
     assert (
         build_ticket_list_query(sort="updated_at:desc,title:asc").sort
         == "date_mod:desc,name:asc"

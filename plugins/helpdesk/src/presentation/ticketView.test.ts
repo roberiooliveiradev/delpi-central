@@ -374,6 +374,7 @@ describe("ticket list filters", () => {
     expect(nextTicketSort("updated_at:desc", "title")).toBe("title:asc");
     expect(nextTicketSort("title:asc", "created_at")).toBe("created_at:desc");
     expect(nextTicketSort("updated_at:desc", "solved_at")).toBe("solved_at:desc");
+    expect(nextTicketSort("updated_at:desc", "closed_at")).toBe("closed_at:desc");
     expect(nextTicketSort("updated_at:desc", "assigned")).toBe("updated_at:desc");
   });
 });

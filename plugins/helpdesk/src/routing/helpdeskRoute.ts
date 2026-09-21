@@ -38,3 +38,29 @@ export function navigateHelpdesk(path: string) {
   window.history.pushState({}, "", path);
   window.dispatchEvent(new PopStateEvent("popstate"));
 }
+
+export function ticketDetailPath(ticketId: number | string): string {
+  return `/apps/helpdesk/tickets/${ticketId}`;
+}
+
+export function isModifiedHelpdeskClick(event: {
+  metaKey: boolean;
+  ctrlKey: boolean;
+  shiftKey: boolean;
+  altKey: boolean;
+  button?: number;
+}): boolean {
+  return event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button === 1;
+}
+
+export function followHelpdeskPath(
+  path: string,
+  event?: { metaKey: boolean; ctrlKey: boolean; shiftKey: boolean; altKey: boolean; button?: number },
+) {
+  if (typeof window === "undefined") return;
+  if (event && isModifiedHelpdeskClick(event)) {
+    window.open(path, "_blank", "noopener");
+    return;
+  }
+  navigateHelpdesk(path);
+}

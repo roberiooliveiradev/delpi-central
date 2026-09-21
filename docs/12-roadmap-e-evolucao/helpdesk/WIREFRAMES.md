@@ -115,7 +115,7 @@ Tom do badge, em `statusBadgeVariant` (**por `status_id`**):
 | `/apps/helpdesk/tickets/{id}` | Detalhe; `{id}` é só dígitos |
 | qualquer outro sob `/apps/helpdesk` | Banner de endereço não encontrado |
 
-O detalhe sobrevive a atualizar a página porque o id está no path. Clique normal no cartão usa `navigateHelpdesk`. Ctrl, Shift, Alt ou clique do meio seguem o `href`.
+Clique normal na linha usa `navigateHelpdesk`. Chamado e Título têm `href` estável; Ctrl, Shift, Alt ou clique do meio abrem o detalhe em outra aba.
 
 ## 1. Lista — `/apps/helpdesk`
 
@@ -145,10 +145,11 @@ HelpdeskSectionCard  «Meus chamados»  hint = helpTooltips.list
   vazio          ∅  «Você ainda não tem chamados.»
                  ∅  «Nenhum chamado neste recorte.»  se filtro ativo
   lista          HelpdeskDataTable  layout=scroll
-                    colunas ordenáveis: Chamado, Título, Status, Categoria, Urgência, Aberto, Atualizado
-                    Técnico sem ordenação (não é propriedade da HLAPI)
-                    clique na linha → /apps/helpdesk/tickets/{id}
-                    publicado: datas relativas. Alvo (13): absoluta + resolução se o GLPI trouxer
+                    colunas ordenáveis: Chamado, Título, Status, Categoria, Urgência, Aberto, Atualizado, Resolvido, Fechado
+                    Técnico e Requerente sem ordenação (não são propriedade SQL da HLAPI)
+                    Chamado e Título são <a href=/apps/helpdesk/tickets/{id}>; clique normal → navigateHelpdesk
+                    Ctrl, Shift, Alt ou clique do meio abrem o href
+                    datas absolutas; resolução e fechamento quando o GLPI trouxer
   [ ← ]  N  [ → ]  via has_more; sem total inventado
 ```
 

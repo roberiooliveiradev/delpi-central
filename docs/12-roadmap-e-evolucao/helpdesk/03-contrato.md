@@ -49,7 +49,7 @@ Base do MFE: `/apps/helpdesk-api`.
 | `category_id` | categoria do token |
 | `updated_from` / `updated_to` | `YYYY-MM-DD` em `date_mod` |
 | `created_from` / `created_to` | `YYYY-MM-DD` em `date_creation` |
-| `sort` | `updated_at:desc` (padrão), `created_at`, `solved_at`, `title`, `id`, `status`, `category`, `urgency` + `:asc\|:desc` |
+| `sort` | `updated_at:desc` (padrão), `created_at`, `solved_at`, `closed_at`, `title`, `id`, `status`, `category`, `urgency` + `:asc\|:desc` |
 | `page` | página 1-based |
 | `page_size` | padrão 20; a tela envia 10, 20 ou 50 (máximo 50) |
 
