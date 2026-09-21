@@ -1,56 +1,145 @@
 # 05 — Roadmap
 
-> **Ordem executável:** [`06-plano-execucao.md`](./06-plano-execucao.md)
-> **Este arquivo é a evolução macro. Não marca fase como feita.**
+> **Primeira entrega (E1…E5):** [`06-plano-execucao.md`](./06-plano-execucao.md) — **não reabrir**.
+> **Paridade do solicitante (E6…E12):** [`16-plano-paridade.md`](./16-plano-paridade.md).
+> **Inventários:** [`12`](./12-conteudo-da-mensagem.md) · [`13`](./13-listagem-de-chamados.md) · [`14`](./14-pagina-e-estados-do-chamado.md) · [`15`](./15-capacidades-glpi.md).
+> **Requisitos:** `HD-001…HD-026` em [`07-requisitos.md`](./07-requisitos.md).
+> Este arquivo é a evolução macro. Não marca fase como feita.
 
 ```text
 H0  Fundação GLPI                          PROVEN
 H1  BFF e sessão OAuth                     PROVEN
 H2  Leitura da lista                       PROVEN
-H3  Abertura e acompanhamento              PLANNED
+H3  Abertura e acompanhamento              PLANNED  (código na tela; ledger ao vivo aberto)
 H4  Tela nativa no lugar do iframe         PROVEN
-H5  Anexo, satisfação, bancada técnica     TARGET
+H6  Investigação HLAPI (gates)             TARGET   ← começa a paridade
+H7  Estados e lista do solicitante         TARGET
+H8  Corpo rico da mensagem                 TARGET
+H9  Página do chamado                      TARGET
+H10 Solução, reabrir, satisfação           TARGET   (ex-H5 do solicitante)
+H11 Condicionais (TTR, vínculo, Forms)     TARGET   só se H6 provar
+H12 Upload de arquivo novo                 BLOQUEADO até decisão + API
+—   Bancada / outro itemtype / HD-011      FORA
 ```
 
-## H0 — Fundação GLPI
+O antigo **H5** foi fatiado: download de anexo já é H4; o que restava virou H10 (solicitante), H12 (upload) e FORA (bancada).
 
-Já feito em produção e registrado no ledger: versão 11.0.5, API nova ligada, API legada desligada, cliente OAuth do BFF criado. Nenhuma etapa de código reabre essa fundação, salvo drift comprovado.
+## O que «implementar tudo» significa
 
-## H1 — BFF e sessão
+Tudo o que o **solicitante** já tem no GLPI e a Minha DELPI ainda não entrega, **desde que** a HLAPI 2.2 e as regras da plataforma deixem.
 
-`helpdesk-api` sobe na plataforma, completa o authorization code e guarda a sessão cifrada do usuário. Ainda sem tela de chamado.
+Não entra, mesmo neste roadmap:
 
-## H2 — Leitura
-
-Categorias, urgências, lista e detalhe, sempre com o token da pessoa.
-
-## H3 — Escrita
-
-Abrir chamado e incluir acompanhamento, com idempotência e sem retry de POST.
-
-## H4 — Tela
-
-MFE federado substitui o iframe. Ajuda in-app entra junto. O console do técnico no host do GLPI permanece.
-
-## H5 — Depois da primeira entrega
-
-Não entra em `E1…E5`.
-
-| Capacidade | Motivo de ficar para depois |
+| Fica fora | Por quê |
 |---|---|
-| Enviar arquivo novo | baixar o que já está no chamado **já está publicado**; upload continua fora (HLAPI JSON-only) |
-| Pesquisa de satisfação | fluxo posterior ao fechamento |
-| Fila, atribuição, tarefa, solução, validação | bancada do técnico, continua no GLPI |
-| Mudança e problema | outro itemtype |
-| Seletor de entidade | a primeira entrega usa a entidade padrão do usuário |
-| Restrição de IP no cliente OAuth | só quando o IP que o GLPI vê na chamada do BFF for estável |
+| Formulário de três colunas, abas, Kanban, PDF, massa, export, saved search | console — [`15`](./15-capacidades-glpi.md) X-60…X-76, X-82 |
+| Mudança, problema, inventário, entidade, delegação, anônimo | FORA / HD-011 |
+| PATCH de status, tarefa, privado, excluir Novo | console — [`14`](./14-pagina-e-estados-do-chamado.md) |
+| API legada / `password` grant | proibido |
+| Filtrar 128 128 no browser | invariante |
 
-H5 só começa com decisão nova. Não é continuação automática de H4.
+## H0…H4 — Primeira entrega
 
-Corpo rico da mensagem (HTML, formatação, imagem no fio) **não** é H5. É inventário em [`12-conteudo-da-mensagem.md`](./12-conteudo-da-mensagem.md) e só vira plano depois de autorização explícita e do fechamento de H1–H4 daquele arquivo.
+Sem mudança de escopo. Fechar **H3 no ledger** (abrir + acompanhar ao vivo) é pré-requisito de E5.S2 e **não bloqueia** H6: a tela já posta. Ordem: registrar H3 no ledger na primeira janela de homologação, em paralelo com H6 se preciso.
 
-Paridade da listagem (datas absolutas, resolução, busca no texto, período de abertura) **não** é H5 nem a bancada Super-Admin. É inventário em [`13-listagem-de-chamados.md`](./13-listagem-de-chamados.md).
+Detalhe das etapas: [`06`](./06-plano-execucao.md).
 
-Página do chamado e os sete estados ITIL **não** abrem o formulário de três colunas nem H5. Inventário em [`14-pagina-e-estados-do-chamado.md`](./14-pagina-e-estados-do-chamado.md). Aprovar/reabrir/pesquisa continuam H5.
+## H6 — Investigação (obrigatória, sem UI nova)
 
-Demais capacidades do módulo Assistência (Forms 11, TTR, vínculos, abas): [`15-capacidades-glpi.md`](./15-capacidades-glpi.md).
+Sem isto, H8 imagem, H11 e parte de H7/H9 são `NOT_READY`.
+
+Captura **só de chaves e formatos**, sem corpo pessoal em log e sem senha em commit. Chamados de referência: 6288, 1114, 1101.
+
+| Gate | Decide | Bloqueia se falhar |
+|---|---|---|
+| 12-H1…H4 | URL da `<img>`, data-URI, Document vs HTML, A-07 | H8 imagem inline / anexo por bolha |
+| 13-H1 | `content=like` | busca no texto (G-21) |
+| 13-H2 | `date_solve` / `date_close` no GET da lista | colunas `solved_at` / `closed_at` |
+| 14-H1 | follow-up em status 5/6 → 403? | esconder Responder |
+| 15-HX1…HX4 | Form API, observer no POST, TTR/SLA, linked tickets | H11 inteiro |
+
+Saída: atualizar 12–15 (HIPOTESE → PROVEN ou FORA) **antes** da etapa de código dependente.
+
+## H7 — Estados e lista
+
+Pronto em grande parte sem H6. Campos condicionais só depois do gate.
+
+| Entrega | Fonte | HD |
+|---|---|---|
+| `status_id` + badge/filtro por id | [`14`](./14-pagina-e-estados-do-chamado.md) S-01…S-07 | HD-019 |
+| Grupos `pending` e `approval`; `open` ainda inclui 10 | 14 + 13 G-23 | HD-019 |
+| Data-hora absoluta; `created_from`/`created_to`; `page_size` 10/20/50 | [`13`](./13-listagem-de-chamados.md) G-02, G-25, G-31 | HD-020 |
+| `solved_at` / `closed_at` e busca no `content` | 13 G-03, G-21 **se** H6 | HD-020 |
+| Ajuda da lista | HD-016 estendido | HD-016 |
+
+## H8 — Corpo da mensagem
+
+Depende de H6 para imagem. Leitura HTML e escrita rica **não** dependem da imagem.
+
+| Entrega | Fonte | HD |
+|---|---|---|
+| Allowlist no BFF + `description_html` / `content_html` | [`12`](./12-conteudo-da-mensagem.md) M-01…M-06 | HD-021 |
+| Modo HTML no `MessageThread` do kit | 12 M-30 | HD-021 |
+| `RichTextEditor` em abrir e responder; POST HTML | 12 M-20…M-22, M-28 | HD-022 |
+| Rewrite de `document.send.php` + modal | 12 M-08 **se** 12-H1/H2 | HD-021 |
+| Menção por `data-user-id`; `@` só com catálogo | 12 M-07, M-23 | HD-022 |
+| Sem colar imagem / upload | A-08 | HD-026 |
+
+## H9 — Página do chamado
+
+| Entrega | Fonte | HD |
+|---|---|---|
+| Datas absolutas no cartão | 14 P-04 | HD-023 |
+| `can_followup` esconde Responder | 14 P-06 **se** 14-H1 | HD-023 |
+| Observador só leitura | 14 P-05 **se** team.observer | HD-023 |
+| Sem três colunas / PATCH | invariante | — |
+
+## H10 — Fechar o ciclo (solicitante)
+
+Ex-H5 que **é** do colaborador, não da bancada.
+
+| Entrega | Fonte | HD |
+|---|---|---|
+| Ver solução e aprovar/recusar | 14 P-07, 15 X-46 | HD-024 |
+| Reabrir se a matriz simplificada deixar | 14 P-08 | HD-024 |
+| Pesquisa de satisfação | 15 X-51 | HD-024 |
+
+Cada item exige operação HLAPI (Solution / Validation / Satisfaction). Se H6 não achar a operação, a linha volta a CONSOLE e não se inventa tela.
+
+## H11 — Condicionais
+
+Só depois de H6. Uma linha morta **some do plano**, não vira tela vazia.
+
+| Entrega | Gate | HD |
+|---|---|---|
+| TTR visível | H-X3 | HD-025 |
+| Vínculos do próprio chamado (id + tipo) | H-X4 | HD-025 |
+| Observador na abertura | H-X2 | HD-025 |
+| Entrar num Form/catálogo já existente no GLPI | H-X1 | HD-025 |
+
+Sem reimplementar Formcreator. Sem criar vínculo, SLA ou item de inventário no MFE.
+
+## H12 — Upload
+
+BLOQUEADO. Desbloqueia só com decisão explícita de (a) ligar API legada — hoje proibida — ou (b) HLAPI passar a aceitar multipart. Até lá: N-01, M-24, M-25, A-08.
+
+## Dependências
+
+```text
+H0 → H1 → H2 → H3/H4
+                ↓
+               H6 ─────┬→ H8 (imagem) → H9
+                       ├→ H7 (solved_at / q no content)
+                       ├→ H10 (se houver operation)
+                       └→ H11 (se houver campo)
+H7 (status_id, datas absolutas, page_size) não espera H6
+H12 isolado
+```
+
+## Protocolo
+
+Cada subetapa de [`16`](./16-plano-paridade.md): revalidar → implementar o menor escopo correto → teste positive/irmão/negativo → ajuda se user-facing → commit helpdesk → push. Se H6 invalidar premissa: STOP-THE-LINE no subgrafo, corrigir 12–16, não forçar a tela.
+
+## Fora como autorização automática
+
+Bancada (X-61…X-76), Change/Problem, entidade, delegação, coletor, recorrente, anônimo, lixeira, Kanban. Continuam no host do GLPI com `helpdesk.console`.

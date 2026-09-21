@@ -1,6 +1,6 @@
 # 15 — Capacidades do GLPI × Meus Chamados de TI
 
-> **Status:** inventário. **Não autoriza implementação.** Não altera [`06-plano-execucao.md`](./06-plano-execucao.md).
+> **Status:** inventário. Destino ALVO/H5 do solicitante entra em [`16-plano-paridade.md`](./16-plano-paridade.md). Não altera [`06-plano-execucao.md`](./06-plano-execucao.md).
 > **Pedido:** preencher o que 12–14 ainda não listaram; corrigir drift com a tela e o contrato vigentes.
 > **Fontes:** [Opening a ticket](https://help.glpi-project.org/documentation/modules/assistance/tickets/ticketopening), [Manage tickets](https://help.glpi-project.org/documentation/modules/assistance/tickets/ticketmanagement), [Ticket life cycle](https://help.glpi-project.org/documentation/modules/assistance/tickets/ticketlifecycle), [Forms](https://help.glpi-project.org/faq/glpi/forms), HLAPI 2.2, código da helpdesk-api/MFE em 21/09/2026.
 > **Detalhe já fatiado:** mensagem [`12`](./12-conteudo-da-mensagem.md) · lista [`13`](./13-listagem-de-chamados.md) · página/estados [`14`](./14-pagina-e-estados-do-chamado.md).
@@ -13,7 +13,7 @@ Este arquivo é a **matriz completa** do módulo Assistência do GLPI 11 que toc
 |---|---|
 | IMPLEMENTADO | na Minha DELPI hoje |
 | ALVO | inventário em 12/13/14; sem código ainda |
-| H5 | [`05-roadmap.md`](./05-roadmap.md); só com decisão nova |
+| H10 / H11 / H12 | [`05-roadmap.md`](./05-roadmap.md) — H5 foi fatiado |
 | BLOQUEADO | evidência impede (HLAPI JSON-only, etc.) |
 | CONSOLE_GLPI | fica em `helpdesk.centraldelpi.com.br` |
 | FORA | não entra neste produto (outro itemtype, parque, HD-011) |
@@ -159,9 +159,7 @@ Mesma regra do 12: captura de chaves do JSON, sem logar corpo nem senha.
 
 ## 10. O que este arquivo não faz
 
-- não autoriza código, E*.S* ou H5;
-- não muda HD-001…HD-018;
-- não transforma CONSOLE em ALVO só porque a doc do GLPI lista a aba;
-- não substitui 12, 13 ou 14 — só cobre o resto e o índice.
+- não substitui 12, 13, 14 nem o [`16`](./16-plano-paridade.md);
+- não transforma CONSOLE em ALVO só porque a doc do GLPI lista a aba.
 
-Quando «implementar» for pedido, a ordem continua: fechar as H do arquivo dono (12, 13 ou 14) ou H-X1…H-X4 se a capacidade for uma destas linhas novas.
+Ordem de código da paridade: [`16-plano-paridade.md`](./16-plano-paridade.md).

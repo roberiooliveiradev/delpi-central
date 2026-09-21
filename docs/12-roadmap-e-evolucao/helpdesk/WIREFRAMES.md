@@ -10,7 +10,8 @@
 > **Corpo da mensagem (alvo, sem implementar):** [`12-conteudo-da-mensagem.md`](./12-conteudo-da-mensagem.md).
 > **Listagem (alvo, sem implementar):** [`13-listagem-de-chamados.md`](./13-listagem-de-chamados.md). A tela publicada abaixo permanece.
 > **Página e estados (alvo, sem implementar):** [`14-pagina-e-estados-do-chamado.md`](./14-pagina-e-estados-do-chamado.md).
-> **Matriz GLPI Assistência (sem implementar):** [`15-capacidades-glpi.md`](./15-capacidades-glpi.md).
+> **Matriz GLPI Assistência:** [`15-capacidades-glpi.md`](./15-capacidades-glpi.md).
+> **Ordem de paridade:** [`16-plano-paridade.md`](./16-plano-paridade.md). A tela publicada abaixo permanece até o S correspondente.
 
 Implementar uma tela deste módulo é montar as factories já nomeadas. Não criar `button`, `input`, `select`, `textarea`, card ou badge com CSS próprio.
 

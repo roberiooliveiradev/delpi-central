@@ -1,6 +1,6 @@
 # 13 — Listagem de chamados
 
-> **Status:** inventário e alvo. **Não autoriza implementação.** Não altera [`06-plano-execucao.md`](./06-plano-execucao.md). Não cria HD novo em [`07-requisitos.md`](./07-requisitos.md).
+> **Status:** inventário. Ordem de código: [`16-plano-paridade.md`](./16-plano-paridade.md) E7 (HD-019, HD-020). Não altera [`06-plano-execucao.md`](./06-plano-execucao.md).
 > **Pedido:** a listagem deve cobrir o que o GLPI já entrega para o solicitante achar e ler o próprio chamado. Este arquivo só documenta.
 > **Tela publicada:** [`WIREFRAMES.md`](./WIREFRAMES.md) §1 — tabela com filtros, sem total do parque.
 > **Fotos de 21/09/2026:** MFE `/apps/helpdesk` (tabela + filtros) e GLPI Super-Admin `front/ticket.php` (128 128 linhas). A segunda é bancada, não o produto.

@@ -1,6 +1,6 @@
 # 14 — Página do chamado e estados
 
-> **Status:** inventário e alvo. **Não autoriza implementação.** Não altera [`06-plano-execucao.md`](./06-plano-execucao.md). Não cria HD novo.
+> **Status:** inventário. Ordem de código: [`16-plano-paridade.md`](./16-plano-paridade.md) E7.S1 e E9 (HD-019, HD-023). Não altera [`06-plano-execucao.md`](./06-plano-execucao.md).
 > **Pedido:** a página do chamado e os estados devem cobrir o que o GLPI já entrega ao solicitante. Este arquivo só documenta.
 > **Tela publicada:** [`WIREFRAMES.md`](./WIREFRAMES.md) §3.
 > **Foto de 21/09/2026:** `front/ticket.form.php?id=1101` (interface central, Super-Admin) — três colunas, abas, atores, menu Responder.

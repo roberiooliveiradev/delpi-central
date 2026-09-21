@@ -1,9 +1,10 @@
 # 07 — Requisitos
 
-> **Única lista de requisitos deste produto:** `HD-001…HD-018`
-> **Ordem:** [`06-plano-execucao.md`](./06-plano-execucao.md)
+> **Lista de requisitos:** `HD-001…HD-026`
+> **Primeira entrega:** [`06-plano-execucao.md`](./06-plano-execucao.md) `E1…E5`
+> **Paridade:** [`16-plano-paridade.md`](./16-plano-paridade.md) `E6…E12`
 
-Estado de cada um, até existir código: `ATENDIDO_NO_PLANO`. Nenhum está `PROVEN` em runtime da Minha DELPI.
+`HD-001…HD-017` estão no produto publicado. `HD-018` / H3 ao vivo no ledger ainda fecha em E6.S0. `HD-019…HD-026` são a paridade.
 
 | ID | Requisito | Decisão | Etapa | Prova |
 |---|---|---|---|---|
@@ -24,15 +25,17 @@ Estado de cada um, até existir código: `ATENDIDO_NO_PLANO`. Nenhum está `PROV
 | HD-015 | Lista, formulário e detalhe com vazio, erro, loading e proibido | UI | E4.S2 | 403 não vira lista vazia; F5 no detalhe |
 | HD-016 | Ajuda in-app no mesmo entregável da tela | conteúdo do plugin | E4.S3 | manual cobre abrir e acompanhar |
 | HD-017 | Uma entrada Meus Chamados de TI no portal | corte do manifest iframe | E4.S4 | path antigo redireciona |
-| HD-018 | Prova positive, irmã e negativa, mais um usuário real | E5 | E5.S1, E5.S2 | ledger `PROVEN` só depois da homologação |
+| HD-018 | Prova positive, irmã e negativa, mais um usuário real | E5 + E6.S0 | E5.S1, E5.S2, E6.S0 | ledger H3 da escrita |
+| HD-019 | Estado do chamado por `status_id` (sete ids) e grupos pending/approval | badge e filtro por id | E7.S1 | [`14`](./14-pagina-e-estados-do-chamado.md) |
+| HD-020 | Lista do solicitante: data absoluta, abertura, page_size; solved/content se HLAPI | ADDITIVE | E7.S2, E7.S3 | [`13`](./13-listagem-de-chamados.md) |
+| HD-021 | Leitura do corpo em HTML sanitizado (+ imagem se H6) | BFF allowlist + kit html | E8.S1, E8.S2, E8.S4 | [`12`](./12-conteudo-da-mensagem.md) |
+| HD-022 | Escrita rica (abrir e responder) | `RichTextEditor`; sem colar imagem | E8.S3 | [`12`](./12-conteudo-da-mensagem.md) |
+| HD-023 | Página: datas, `can_followup`, observador só leitura | detalhe | E9.S1 | [`14`](./14-pagina-e-estados-do-chamado.md) |
+| HD-024 | Aprovar/recusar solução, reabrir, satisfação | só com operation HLAPI | E10.S1 | [`15`](./15-capacidades-glpi.md) X-46/X-50/X-51 |
+| HD-025 | TTR, vínculo, Form, observer na abertura | só se E6.S1 PROVEN | E11.S1 | [`15`](./15-capacidades-glpi.md) |
+| HD-026 | Upload de arquivo novo | BLOQUEADO | E12.S1 | A-08 |
 
-Formatação, HTML e imagem no corpo da conversa **não** são HD novo. Estendem HD-009, HD-010, HD-013 e HD-016. Inventário em [`12-conteudo-da-mensagem.md`](./12-conteudo-da-mensagem.md); sem autorização de código.
-
-Paridade da listagem com o GLPI do solicitante **não** é HD novo. Estende HD-008 e HD-016. Inventário em [`13-listagem-de-chamados.md`](./13-listagem-de-chamados.md); sem autorização de código.
-
-Página do chamado e estados ITIL **não** são HD novo. Estendem HD-009, HD-013, HD-015 e HD-016. Inventário em [`14-pagina-e-estados-do-chamado.md`](./14-pagina-e-estados-do-chamado.md); sem autorização de código.
-
-A matriz do módulo Assistência (Forms, SLA, vínculos, abas) **não** é HD novo. Inventário em [`15-capacidades-glpi.md`](./15-capacidades-glpi.md); sem autorização de código.
+Inventários 12–15 descrevem o alvo. A ordem de código é o [`16`](./16-plano-paridade.md).
 
 ## Herdados da plataforma
 
@@ -48,6 +51,7 @@ Não viram HD próprio:
 |---|---|
 | Anexo — envio de arquivo novo | `FORA_DO_ESCOPO_COM_JUSTIFICATIVA` — a API nova do GLPI 11.0.5 não recebe o binário; a API legada permanece desligada |
 | Anexo — listar e baixar os arquivos já ligados ao chamado | no detalhe, via `GET /tickets/{id}/attachments/{document_id}` |
-| Satisfação, fila técnica, mudança, problema, seletor de entidade | `FORA_DO_ESCOPO_COM_JUSTIFICATIVA` — onda H5 |
+| Satisfação do solicitante | HD-024 — só com HLAPI |
+| Fila técnica, mudança, problema, seletor de entidade | `FORA_DO_ESCOPO_COM_JUSTIFICATIVA` — console / HD-011 |
 | Corrigir o `entry` do iframe antes do MFE | `FORA_DO_ESCOPO_COM_JUSTIFICATIVA` — o iframe deixa de ser o produto em E4 |
 | Ligar API legada ou concessão password | proibido; não é requisito |

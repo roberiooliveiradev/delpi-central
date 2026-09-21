@@ -3,9 +3,10 @@
 > **Status:** primeira entrega publicada; leitura e tela `PROVEN` no ledger em 21/09/2026
 > **Fundação GLPI:** `PROVEN` em produção (21/09/2026)
 > **Produto:** Meus Chamados de TI — abertura e acompanhamento de chamados dentro da Minha DELPI, com o GLPI como dono do chamado
-> **Requisitos:** `HD-001…HD-018` em [`07-requisitos.md`](./07-requisitos.md)
-> **Próxima etapa:** H5 só com decisão nova. Inventários 12–15 não autorizam código. H3 (escrita ao vivo no ledger) continua `PLANNED`.
-> **Ordem de execução:** [`06-plano-execucao.md`](./06-plano-execucao.md)
+> **Requisitos:** `HD-001…HD-026` em [`07-requisitos.md`](./07-requisitos.md)
+> **Próxima execução de paridade:** [`16-plano-paridade.md`](./16-plano-paridade.md) `E6.S0` / `E6.S1` — só quando pedirem para executar.
+> **Ordem:** [`06-plano-execucao.md`](./06-plano-execucao.md) `E1…E5` · [`16-plano-paridade.md`](./16-plano-paridade.md) `E6…E12`
+> **Ondas:** [`05-roadmap.md`](./05-roadmap.md)
 > **Estado de execução:** [`evidence/execution-ledger.md`](./evidence/execution-ledger.md)
 
 Esta pasta decide o produto. Não autoriza implementação sozinha e não prova runtime da Minha DELPI. O GLPI em produção já está no estado descrito em [`02-arquitetura.md`](./02-arquitetura.md).
@@ -92,13 +93,15 @@ O id não muda. O plugin iframe já é `helpdesk`, e o cliente OAuth de produç�
 | O que a mensagem deve mostrar (HTML, imagem, formatação)? | [`12-conteudo-da-mensagem.md`](./12-conteudo-da-mensagem.md) — inventário, não é etapa de código |
 | O que a listagem deve mostrar (colunas, filtros, datas)? | [`13-listagem-de-chamados.md`](./13-listagem-de-chamados.md) — inventário, não é etapa de código |
 | O que a página do chamado e os estados devem mostrar? | [`14-pagina-e-estados-do-chamado.md`](./14-pagina-e-estados-do-chamado.md) — inventário, não é etapa de código |
-| O que o GLPI Assistência tem e ainda não estava fatiado? | [`15-capacidades-glpi.md`](./15-capacidades-glpi.md) — matriz; não é etapa de código |
+| O que o GLPI Assistência tem e ainda não estava fatiado? | [`15-capacidades-glpi.md`](./15-capacidades-glpi.md) |
+| Qual é a ordem da paridade? | [`16-plano-paridade.md`](./16-plano-paridade.md) |
 | O que a pessoa faz? | [`01-visao-produto.md`](./01-visao-produto.md) |
 | Quem é dono e o que já existe? | [`02-arquitetura.md`](./02-arquitetura.md) |
 | Qual é o contrato? | [`03-contrato.md`](./03-contrato.md) |
 | Como a identidade funciona? | [`04-seguranca.md`](./04-seguranca.md) |
 | Em que ondas o produto cresce? | [`05-roadmap.md`](./05-roadmap.md) |
-| Qual é a próxima etapa executável? | [`06-plano-execucao.md`](./06-plano-execucao.md) |
+| Qual é a próxima etapa executável? | [`06-plano-execucao.md`](./06-plano-execucao.md) (E1…E5) ou [`16-plano-paridade.md`](./16-plano-paridade.md) (E6…E12) |
+| Qual é a onda? | [`05-roadmap.md`](./05-roadmap.md) |
 | Qual requisito isso cobre? | [`07-requisitos.md`](./07-requisitos.md) |
 | Quando uma etapa está pronta? | [`08-definition-of-done.md`](./08-definition-of-done.md) |
 | Como provar? | [`09-testes-e-aceite.md`](./09-testes-e-aceite.md) |

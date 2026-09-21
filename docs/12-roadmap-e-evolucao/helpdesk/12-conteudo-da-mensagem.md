@@ -1,6 +1,6 @@
 # 12 — Conteúdo da mensagem da conversa
 
-> **Status:** inventário e alvo. **Não autoriza implementação.** Não altera [`06-plano-execucao.md`](./06-plano-execucao.md). Não cria HD novo em [`07-requisitos.md`](./07-requisitos.md).
+> **Status:** inventário. Ordem de código: [`16-plano-paridade.md`](./16-plano-paridade.md) E8 (HD-021, HD-022). Não altera [`06-plano-execucao.md`](./06-plano-execucao.md).
 > **Pedido:** o componente de mensagem deve cobrir o que o GLPI já entrega no fio público do chamado (texto, formatação, imagem e afins). Este arquivo só documenta.
 > **Tela publicada:** [`WIREFRAMES.md`](./WIREFRAMES.md) §3 — hoje `bodyMode=plain` e descrição em texto puro. O desenho publicado **não** muda até haver autorização de código.
 > **Conversa (estrutura):** [`10-conversa-do-chamado.md`](./10-conversa-do-chamado.md).
