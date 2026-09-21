@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   formatDocument,
+  formatFiscalModel,
   formatDurationMs,
   historyAssigneeName,
   historyEventLabel,
@@ -10,6 +11,15 @@ import {
   postingLeadTimeLabel,
   resolvePostedAt,
 } from "./format";
+
+describe("formatFiscalModel", () => {
+  it("rotula NF-e e NFS-e e deixa vazio sem modelo", () => {
+    expect(formatFiscalModel("nfe")).toBe("NF-e");
+    expect(formatFiscalModel("nfse")).toBe("NFS-e");
+    expect(formatFiscalModel(null)).toBe("—");
+    expect(formatFiscalModel("cte")).toBe("—");
+  });
+});
 
 describe("formatDocument", () => {
   it("apresenta número com 9 dígitos", () => {

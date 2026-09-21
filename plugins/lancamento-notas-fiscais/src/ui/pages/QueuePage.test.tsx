@@ -15,6 +15,7 @@ const sample: InvoicePostingRequest = {
   document_number: "00123456",
   document_match_key: "000123456",
   series: "1",
+  fiscal_model: "nfe",
   supplier_code: "000001",
   supplier_store: "01",
   supplier_name: "Alpha",

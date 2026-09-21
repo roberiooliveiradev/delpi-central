@@ -39,7 +39,9 @@ from app.domain.services.lancamento_notas_fiscais.fiscal_normalization import (
     FiscalNormalizationError,
     normalize_branch,
     normalize_document,
+    normalize_fiscal_model,
     normalize_series,
+    series_is_required,
     should_auto_resume_after_purchase_order_link,
 )
 from app.domain.services.lancamento_notas_fiscais.purchase_order_grouping_service import (
@@ -230,7 +232,11 @@ class CreateInvoicePostingRequestUseCase:
             document = normalize_document(
                 payload.get("document_number") or payload.get("document")
             )
-            series = normalize_series(payload.get("series"), required=True)
+            fiscal_model = normalize_fiscal_model(payload.get("fiscal_model"), required=True)
+            series = normalize_series(
+                payload.get("series"),
+                required=series_is_required(fiscal_model),
+            )
         except FiscalNormalizationError as exc:
             raise InvoicePostingValidationError(str(exc)) from exc
 
@@ -269,6 +275,7 @@ class CreateInvoicePostingRequestUseCase:
             "document_number": document.document_number,
             "document_match_key": document.document_match_key,
             "series": series,
+            "fiscal_model": fiscal_model,
             "supplier_code": supplier["supplier_code"],
             "supplier_store": supplier["supplier_store"],
             "supplier_name": supplier["supplier_name"],
@@ -293,6 +300,7 @@ class CreateInvoicePostingRequestUseCase:
                 "document_number": document.document_number,
                 "document_match_key": document.document_match_key,
                 "series": series,
+                "fiscal_model": fiscal_model,
                 "supplier_code": supplier["supplier_code"],
                 "supplier_store": supplier["supplier_store"],
             },
@@ -753,8 +761,22 @@ class UpdateInvoicePostingRequestUseCase:
                 )
                 _set("document_number", document.document_number)
                 _set("document_match_key", document.document_match_key)
+            next_model = current.get("fiscal_model")
+            if "fiscal_model" in payload:
+                next_model = normalize_fiscal_model(
+                    payload.get("fiscal_model"), required=True
+                )
+                _set("fiscal_model", next_model)
+            series_required = series_is_required(next_model)
             if "series" in payload:
-                _set("series", normalize_series(payload.get("series"), required=True))
+                _set(
+                    "series",
+                    normalize_series(payload.get("series"), required=series_required),
+                )
+            elif series_required and not str(current.get("series") or "").strip():
+                raise FiscalNormalizationError(
+                    "Informe a série da nota (como no Protheus)."
+                )
         except FiscalNormalizationError as exc:
             raise InvoicePostingValidationError(str(exc)) from exc
 

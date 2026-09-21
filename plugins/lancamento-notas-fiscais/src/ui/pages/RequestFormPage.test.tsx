@@ -73,6 +73,78 @@ describe("RequestFormPage", () => {
     expect(api.createRequest).not.toHaveBeenCalled();
   });
 
+  it("exige o tipo da nota no cadastro", async () => {
+    vi.mocked(api.searchSuppliers).mockResolvedValue([
+      {
+        supplier_code: "000001",
+        supplier_store: "01",
+        supplier_name: "Alpha",
+        supplier_short_name: "A",
+        tax_id: "123",
+        state: "SC",
+        blocked: false,
+      },
+    ]);
+    render(
+      <RequestFormPage mode="create" onCancel={() => undefined} onSuccess={() => undefined} />,
+    );
+    fireEvent.change(screen.getByLabelText("Número da nota"), {
+      target: { value: "123" },
+    });
+    fireEvent.change(screen.getByLabelText("Série"), { target: { value: "1" } });
+    fireEvent.change(screen.getByLabelText("Data de emissão"), {
+      target: { value: "2026-07-01" },
+    });
+    fireEvent.change(screen.getByLabelText("Valor"), { target: { value: "10" } });
+    fireEvent.change(screen.getByPlaceholderText(/mín\. 2 caracteres/i), {
+      target: { value: "Alpha" },
+    });
+    await waitFor(() => expect(screen.getByText(/000001\/01/)).toBeTruthy());
+    fireEvent.click(screen.getByText(/000001\/01/));
+    fireEvent.click(screen.getByTestId("btn-submit-request"));
+    expect(screen.getByText(/NF-e ou NFS-e/i)).toBeTruthy();
+    expect(api.createRequest).not.toHaveBeenCalled();
+  });
+
+  it("cadastra NFS-e sem série e mantém a série obrigatória na NF-e", async () => {
+    vi.mocked(api.searchSuppliers).mockResolvedValue([
+      {
+        supplier_code: "000001",
+        supplier_store: "01",
+        supplier_name: "Alpha",
+        supplier_short_name: "A",
+        tax_id: "123",
+        state: "SC",
+        blocked: false,
+      },
+    ]);
+    vi.mocked(api.createRequest).mockResolvedValue({ id: "nfse-1" } as never);
+    render(
+      <RequestFormPage mode="create" onCancel={() => undefined} onSuccess={() => undefined} />,
+    );
+
+    fireEvent.change(screen.getByLabelText("Número da nota"), { target: { value: "55" } });
+    fireEvent.change(screen.getByLabelText("Tipo da nota"), { target: { value: "nfe" } });
+    fireEvent.change(screen.getByLabelText("Data de emissão"), { target: { value: "2026-07-01" } });
+    fireEvent.change(screen.getByLabelText("Valor"), { target: { value: "10" } });
+    fireEvent.change(screen.getByPlaceholderText(/mín\. 2 caracteres/i), {
+      target: { value: "Alpha" },
+    });
+    await waitFor(() => expect(screen.getByText(/000001\/01/)).toBeTruthy());
+    fireEvent.click(screen.getByText(/000001\/01/));
+    fireEvent.click(screen.getByTestId("btn-submit-request"));
+    expect(screen.getByText(/Informe a série/i)).toBeTruthy();
+    expect(api.createRequest).not.toHaveBeenCalled();
+
+    fireEvent.change(screen.getByLabelText("Tipo da nota"), { target: { value: "nfse" } });
+    expect(screen.getByLabelText("Série").getAttribute("aria-required")).toBe("false");
+    fireEvent.click(screen.getByTestId("btn-submit-request"));
+    await waitFor(() => expect(api.createRequest).toHaveBeenCalled());
+    expect(api.createRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ fiscal_model: "nfse", series: "", document: "55" }),
+    );
+  });
+
   it("Enter avança o foco como Tab", () => {
     render(
       <RequestFormPage mode="create" onCancel={() => undefined} onSuccess={() => undefined} />,
@@ -107,6 +179,7 @@ describe("RequestFormPage", () => {
       target: { value: "123" },
     });
     fireEvent.change(screen.getByLabelText("Série"), { target: { value: "1" } });
+    fireEvent.change(screen.getByLabelText("Tipo da nota"), { target: { value: "nfe" } });
     fireEvent.change(screen.getByLabelText("Data de emissão"), {
       target: { value: "2026-07-01" },
     });
@@ -129,9 +202,10 @@ describe("RequestFormPage", () => {
         branch: "01",
         document: "123",
         series: "1",
+        fiscal_model: "nfe",
         supplier_code: "000001",
         supplier_store: "01",
-        amount: "10.5",
+        amount: 10.5,
       }),
     );
     expect(onSuccess).toHaveBeenCalledWith("new-1");
@@ -167,6 +241,7 @@ describe("RequestFormPage", () => {
       target: { value: "1" },
     });
     fireEvent.change(screen.getByLabelText("Série"), { target: { value: "1" } });
+    fireEvent.change(screen.getByLabelText("Tipo da nota"), { target: { value: "nfe" } });
     fireEvent.change(screen.getByLabelText("Data de emissão"), {
       target: { value: "2026-07-01" },
     });

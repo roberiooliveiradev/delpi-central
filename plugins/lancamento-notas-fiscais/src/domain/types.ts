@@ -52,12 +52,15 @@ export type LinkedPurchaseOrderSnapshot = {
   lines?: LinkedPurchaseOrderLine[];
 };
 
+export type FiscalModel = "nfe" | "nfse";
+
 export type InvoicePostingRequest = {
   id: string;
   branch_code: string;
   document_number: string;
   document_match_key: string;
   series: string;
+  fiscal_model: FiscalModel | null;
   supplier_code: string;
   supplier_store: string;
   supplier_name: string;
@@ -203,6 +206,7 @@ export type CreateRequestPayload = {
   branch: string;
   document: string;
   series?: string | null;
+  fiscal_model: FiscalModel;
   supplier_code: string;
   supplier_store: string;
   issue_date: string;
@@ -215,6 +219,7 @@ export type UpdateRequestPayload = {
   branch?: string;
   document?: string;
   series?: string | null;
+  fiscal_model?: FiscalModel | null;
   supplier_code?: string;
   supplier_store?: string;
   issue_date?: string;

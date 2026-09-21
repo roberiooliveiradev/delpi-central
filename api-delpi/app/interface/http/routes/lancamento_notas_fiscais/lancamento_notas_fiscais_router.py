@@ -71,6 +71,7 @@ class CreateRequestBody(BaseModel):
     branch_code: str = Field(..., alias="branch")
     document_number: str = Field(..., alias="document")
     series: str | None = None
+    fiscal_model: str
     supplier_code: str
     supplier_store: str
     issue_date: str

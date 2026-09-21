@@ -45,7 +45,7 @@ def _is_unique_violation(exc: BaseException) -> bool:
 SCHEMA = "lancamento_notas_fiscais"
 
 _REQUEST_COLUMNS = """
-    id, branch_code, document_number, document_match_key, series,
+    id, branch_code, document_number, document_match_key, series, fiscal_model,
     supplier_code, supplier_store, supplier_name, supplier_short_name,
     issue_date, amount, received_at, observation, status,
     block_reason, block_description,
@@ -117,12 +117,12 @@ class PostgresInvoicePostingRepository(PluginBaseRepository):
                 row = self.execute_returning_one(
                     f"""
                     INSERT INTO {SCHEMA}.invoice_posting_requests (
-                        branch_code, document_number, document_match_key, series,
+                        branch_code, document_number, document_match_key, series, fiscal_model,
                         supplier_code, supplier_store, supplier_name, supplier_short_name,
                         issue_date, amount, received_at, observation, status,
                         created_by_user_id, created_by_name
                     ) VALUES (
-                        %s, %s, %s, %s,
+                        %s, %s, %s, %s, %s,
                         %s, %s, %s, %s,
                         %s, %s, %s, %s, %s,
                         %s, %s
@@ -134,6 +134,7 @@ class PostgresInvoicePostingRepository(PluginBaseRepository):
                         request_fields["document_number"],
                         request_fields["document_match_key"],
                         request_fields["series"],
+                        request_fields["fiscal_model"],
                         request_fields["supplier_code"],
                         request_fields["supplier_store"],
                         request_fields["supplier_name"],

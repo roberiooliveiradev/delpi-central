@@ -29,7 +29,7 @@ Gateway → /apps/api-delpi/lancamento-notas-fiscais/*
 
 ## Funcionalidades
 
-- Cadastro de solicitação após recebimento físico (filial, nota, série, fornecedor, valor, data/hora)
+- Cadastro de solicitação após recebimento físico (filial, nota, série, tipo NF-e ou NFS-e, fornecedor, valor, data/hora)
 - Lista por `received_at` decrescente (mais recentes primeiro), filtros e cards no mobile
 - Refresh de conciliação ao abrir a fila (cooldown 45s) — não bloqueia a listagem
 - Conciliação automática SF1: match direto (SA2) e beneficiamento (`F1_TIPO=B` via CNPJ SA1↔SA2)

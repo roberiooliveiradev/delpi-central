@@ -36,6 +36,7 @@ describe("App deep link", () => {
         document_number: "000012078",
         document_match_key: "000012078",
         series: "",
+        fiscal_model: null,
         supplier_code: "000001",
         supplier_store: "01",
         supplier_name: "Alpha",

@@ -32,6 +32,33 @@ def normalize_document(raw: str | None) -> NormalizedDocument:
     )
 
 
+FISCAL_MODELS = frozenset({"nfe", "nfse"})
+_FISCAL_MODEL_ALIASES = {
+    "nfe": "nfe",
+    "nf-e": "nfe",
+    "nfse": "nfse",
+    "nfs-e": "nfse",
+}
+
+
+def normalize_fiscal_model(raw: str | None, *, required: bool = True) -> str | None:
+    """Modelo da nota na solicitação: ``nfe`` (NF-e) ou ``nfse`` (NFS-e)."""
+    token = str(raw or "").strip().lower().replace(" ", "")
+    if not token:
+        if required:
+            raise FiscalNormalizationError("Informe se a nota é NF-e ou NFS-e.")
+        return None
+    mapped = _FISCAL_MODEL_ALIASES.get(token)
+    if mapped not in FISCAL_MODELS:
+        raise FiscalNormalizationError("Tipo da nota deve ser NF-e ou NFS-e.")
+    return mapped
+
+
+def series_is_required(fiscal_model: str | None) -> bool:
+    """Série é obrigatória na NF-e. Na NFS-e pode ficar vazia."""
+    return fiscal_model != "nfse"
+
+
 def normalize_series(raw: str | None, *, required: bool = False) -> str:
     series = str(raw or "").strip().upper()
     if len(series) > 3:

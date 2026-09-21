@@ -19,6 +19,7 @@ import {
   formatDate,
   formatDateTime,
   formatDocument,
+  formatFiscalModel,
   formatMoney,
   historyAssigneeName,
   historyEventLabel,
@@ -242,6 +243,10 @@ export function RequestDetailPage({ requestId, onBack, onEdit }: Props) {
                 <div>
                   <dt>Nota</dt>
                   <dd>{formatDocument(request.document_number, request.series)}</dd>
+                </div>
+                <div>
+                  <dt>Tipo da nota</dt>
+                  <dd>{formatFiscalModel(request.fiscal_model)}</dd>
                 </div>
                 <div>
                   <dt>Emissão</dt>

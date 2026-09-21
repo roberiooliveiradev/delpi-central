@@ -96,7 +96,8 @@ Duplicidade em solicitação **não cancelada** → **409** com `existing_reques
 |-------|-------|-------------|
 | `branch_code` | `branch` | sim (`01`\|`02`) |
 | `document_number` | `document` | sim |
-| `series` | — | não |
+| `series` | — | sim na NF-e; opcional na NFS-e |
+| `fiscal_model` | — | sim (`nfe` = NF-e, `nfse` = NFS-e) |
 | `supplier_code` / `supplier_store` | — | sim |
 | `issue_date` | — | sim (ISO date) |
 | `amount` | — | sim |

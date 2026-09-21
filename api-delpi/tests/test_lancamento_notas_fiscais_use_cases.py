@@ -532,6 +532,7 @@ def _payload(**overrides: Any) -> dict[str, Any]:
         "branch": "01",
         "document": "123456",
         "series": "1",
+        "fiscal_model": "nfe",
         "supplier_code": "000001",
         "supplier_store": "01",
         "issue_date": "2026-07-01",
@@ -561,11 +562,43 @@ def test_create_valid_and_history() -> None:
     assert created["document_number"] == "000123456"
     assert created["document_match_key"] == "000123456"
     assert created["series"] == "1"
+    assert created["fiscal_model"] == "nfe"
     assert created["supplier_name"] == "Fornecedor Alpha"
     assert created["created_by_user_id"] == "u-create"
     hist = repo.list_history(created["id"])
     assert len(hist) == 1
     assert hist[0]["event_type"] == "created"
+
+
+def test_create_requires_fiscal_model() -> None:
+    uc = CreateInvoicePostingRequestUseCase(FakeRequests(), FakeSuppliers())
+    with pytest.raises(InvoicePostingValidationError):
+        uc.execute(_payload(fiscal_model=None), _creator())
+    with pytest.raises(InvoicePostingValidationError):
+        uc.execute(_payload(fiscal_model="cte"), _creator())
+
+
+def test_create_accepts_service_invoice_without_series() -> None:
+    created = CreateInvoicePostingRequestUseCase(FakeRequests(), FakeSuppliers()).execute(
+        _payload(fiscal_model="nfse", series="", document="888"),
+        _creator(),
+    )
+    assert created["fiscal_model"] == "nfse"
+    assert created["series"] == ""
+
+
+def test_create_still_requires_series_for_product_invoice() -> None:
+    uc = CreateInvoicePostingRequestUseCase(FakeRequests(), FakeSuppliers())
+    with pytest.raises(InvoicePostingValidationError):
+        uc.execute(_payload(fiscal_model="nfe", series=""), _creator())
+
+
+def test_create_accepts_service_invoice_model() -> None:
+    created = CreateInvoicePostingRequestUseCase(FakeRequests(), FakeSuppliers()).execute(
+        _payload(fiscal_model="NFS-e", document="999"),
+        _creator(),
+    )
+    assert created["fiscal_model"] == "nfse"
 
 
 def test_create_rejects_missing_and_blocked_supplier() -> None:

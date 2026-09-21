@@ -18,6 +18,12 @@ export function formatMoney(value: number): string {
   return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
+export function formatFiscalModel(value: string | null | undefined): string {
+  if (value === "nfe") return "NF-e";
+  if (value === "nfse") return "NFS-e";
+  return "—";
+}
+
 export function formatDocument(
   documentNumber: string,
   series: string | null | undefined,

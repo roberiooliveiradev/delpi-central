@@ -58,6 +58,13 @@ MIGRATION_V006 = (
     / PLUGIN_SLUG
     / "V006__linked_purchase_order_lines.sql"
 )
+MIGRATION_V007 = (
+    Path(__file__).resolve().parents[1]
+    / "migrations"
+    / "plugins"
+    / PLUGIN_SLUG
+    / "V007__fiscal_model.sql"
+)
 
 
 def _plugins_env_ready() -> bool:
@@ -126,6 +133,15 @@ def test_v005_migration_declares_linked_purchase_orders_many() -> None:
     assert "COALESCE(delivery_date" in sql
     assert "INSERT INTO lancamento_notas_fiscais.invoice_posting_request_linked_pos" in sql
     assert "linked_po_number" in sql
+
+
+def test_v007_migration_declares_fiscal_model() -> None:
+    sql = MIGRATION_V007.read_text(encoding="utf-8")
+    assert "fiscal_model" in sql
+    assert "ck_lnf_requests_fiscal_model" in sql
+    assert "'nfe'" in sql
+    assert "'nfse'" in sql
+    assert "ADD COLUMN IF NOT EXISTS fiscal_model" in sql
 
 
 def test_v006_migration_declares_linked_purchase_order_lines() -> None:

@@ -13,6 +13,7 @@ import {
   formatDate,
   formatDateTime,
   formatDocument,
+  formatFiscalModel,
   formatMoney,
   hasActiveFilters,
   linkedPurchaseOrderNumbersLabel,
@@ -324,6 +325,7 @@ export function QueuePage({ branch, highlightId, onCreate, onOpen }: Props) {
                     <th>Recebimento</th>
                     <th>Filial</th>
                     <th>Nota</th>
+                    <th>Tipo</th>
                     <th>Nº do pedido</th>
                     <th>Fornecedor</th>
                     <th>Emissão</th>
@@ -354,6 +356,7 @@ export function QueuePage({ branch, highlightId, onCreate, onOpen }: Props) {
                       <td className="lnf-cell-strong">
                         {formatDocument(row.document_number, row.series)}
                       </td>
+                      <td>{formatFiscalModel(row.fiscal_model)}</td>
                       <td data-testid={`queue-po-${row.id}`}>
                         {linkedPurchaseOrderNumbersLabel(row)}
                       </td>
@@ -406,7 +409,12 @@ export function QueuePage({ branch, highlightId, onCreate, onOpen }: Props) {
                     onClick={() => onOpen(row.id)}
                   >
                     <div className="lnf-queue-card__top">
-                      <strong>{formatDocument(row.document_number, row.series)}</strong>
+                      <div>
+                        <strong>{formatDocument(row.document_number, row.series)}</strong>
+                        <div className="lnf-muted lnf-cell-sub">
+                          {formatFiscalModel(row.fiscal_model)}
+                        </div>
+                      </div>
                       <StatusBadge status={row.status} />
                     </div>
                     <div className="lnf-cell-strong">{row.supplier_name}</div>

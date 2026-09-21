@@ -15,7 +15,7 @@ import {
   sanitizeAmountTyping,
   sanitizeDocumentTyping,
 } from "../../domain/fiscal";
-import type { CreateRequestPayload, Supplier } from "../../domain/types";
+import type { CreateRequestPayload, FiscalModel, Supplier } from "../../domain/types";
 import { branchLabel, type BranchCode } from "../../constants/branch";
 import { LnfPageHeader } from "../components/LnfPageHeader";
 import { SupplierSearch } from "../components/SupplierSearch";
@@ -32,6 +32,7 @@ type FormState = {
   branch: string;
   document: string;
   series: string;
+  fiscal_model: "" | FiscalModel;
   issue_date: string;
   amount: string;
   received_at: string;
@@ -57,6 +58,7 @@ function buildCreateForm(lockedBranch?: BranchCode): FormState {
     branch: lockedBranch ?? "01",
     document: "",
     series: "",
+    fiscal_model: "",
     issue_date: "",
     amount: "",
     received_at: toLocalInputValue(new Date()),
@@ -121,6 +123,7 @@ export function RequestFormPage({
     () => normalizeDocumentInput(form.document),
     [form.document],
   );
+  const seriesRequired = form.fiscal_model !== "nfse";
 
   useEffect(() => {
     if (mode === "create") {
@@ -143,6 +146,7 @@ export function RequestFormPage({
           branch: lockedBranch ?? r.branch_code,
           document: r.document_number.replace(/^0+/, "") || r.document_number,
           series: r.series ?? "",
+          fiscal_model: r.fiscal_model === "nfe" || r.fiscal_model === "nfse" ? r.fiscal_model : "",
           issue_date: r.issue_date,
           amount: String(r.amount).replace(".", ","),
           received_at: toLocalInputValue(r.received_at),
@@ -177,9 +181,13 @@ export function RequestFormPage({
     const errors: Record<string, string> = {};
     const doc = normalizeDocumentInput(form.document);
     const series = normalizeSeriesInput(form.series);
+    const fiscalModel = form.fiscal_model;
     if (!doc.digits) errors.document = "Informe o número da nota.";
     if (!(lockedBranch ?? form.branch)) errors.branch = "Selecione a filial.";
-    if (!series) errors.series = "Informe a série (como no Protheus).";
+    if (seriesRequired && !series) errors.series = "Informe a série (como no Protheus).";
+    if (fiscalModel !== "nfe" && fiscalModel !== "nfse") {
+      errors.fiscal_model = "Informe se a nota é NF-e ou NFS-e.";
+    }
     if (!supplier) errors.supplier = "Selecione o fornecedor.";
     if (!form.issue_date) errors.issue_date = "Informe a data de emissão.";
     const amountValue = parseAmountInput(form.amount);
@@ -190,7 +198,8 @@ export function RequestFormPage({
       Object.keys(errors).length > 0 ||
       !supplier ||
       !doc.digits ||
-      !series ||
+      (seriesRequired && !series) ||
+      (fiscalModel !== "nfe" && fiscalModel !== "nfse") ||
       amountValue === null
     ) {
       return;
@@ -200,6 +209,7 @@ export function RequestFormPage({
       branch: lockedBranch ?? form.branch,
       document: doc.digits,
       series,
+      fiscal_model: fiscalModel,
       supplier_code: supplier.supplier_code,
       supplier_store: supplier.supplier_store,
       issue_date: form.issue_date,
@@ -323,12 +333,40 @@ export function RequestFormPage({
                   }))
                 }
                 placeholder="Ex.: 1"
-                aria-required
+                aria-required={seriesRequired}
                 aria-invalid={Boolean(fieldErrors.series)}
               />
-              <span className="lnf-hint">Obrigatória — igual à série no Protheus.</span>
+              <span className="lnf-hint">
+                {form.fiscal_model === "nfse"
+                  ? "Opcional na NFS-e."
+                  : "Obrigatória na NF-e — igual à série no Protheus."}
+              </span>
               {fieldErrors.series ? (
                 <span className="lnf-error">{fieldErrors.series}</span>
+              ) : null}
+            </label>
+
+            <label className="lnf-field">
+              Tipo da nota
+              <select
+                aria-label="Tipo da nota"
+                value={form.fiscal_model}
+                onChange={(e) =>
+                  setForm((f) => ({
+                    ...f,
+                    fiscal_model: e.target.value === "nfse" ? "nfse" : e.target.value === "nfe" ? "nfe" : "",
+                  }))
+                }
+                aria-required
+                aria-invalid={Boolean(fieldErrors.fiscal_model)}
+              >
+                <option value="">Selecione</option>
+                <option value="nfe">NF-e</option>
+                <option value="nfse">NFS-e</option>
+              </select>
+              <span className="lnf-hint">Obrigatório — produto (NF-e) ou serviço (NFS-e).</span>
+              {fieldErrors.fiscal_model ? (
+                <span className="lnf-error">{fieldErrors.fiscal_model}</span>
               ) : null}
             </label>
 
