@@ -179,6 +179,23 @@ describe("KpiCard", () => {
     expect(onClick).toHaveBeenCalledTimes(1);
   });
 
+  it("exibe score/IDD e badge de período quando informados", () => {
+    render(
+      <KpiCard
+        title="Indicador"
+        value="12"
+        periodKindBadge="MTD"
+        iddScoreLabel="8,4"
+        icon={<span />}
+        classNames={kpiCardBemClasses("ds")}
+        labels={LABELS}
+      />,
+    );
+    expect(screen.getByText("IDD")).toBeTruthy();
+    expect(screen.getByText("8,4")).toBeTruthy();
+    expect(screen.getByText("MTD")).toBeTruthy();
+  });
+
   it("mostra placeholder quando loading", () => {
     render(
       <KpiCard

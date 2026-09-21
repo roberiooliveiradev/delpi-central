@@ -8,6 +8,7 @@ import {
   ClearFiltersButton,
   IconButton,
 } from "../../components/actions";
+import { alertQueueBemClasses } from "../../components/feedback/AlertQueue";
 import {
   RibbonGroup,
   ribbonGroupBemClasses,
@@ -61,10 +62,15 @@ import {
   sectionCardKaizenBemClasses,
   SimpleKpiCard,
   simpleKpiCardBemClasses,
+  EventsSection,
+  RecentAccessStrip,
   TopBarFavoritesStrip,
   topBarFavoritesStripBemClasses,
   TopBarUtilityCluster,
   topBarUtilityClusterBemClasses,
+  hubChipRowBemClasses,
+  routeChipBemClasses,
+  sectionCardPacBemClasses,
   UnderlineNav,
   underlineNavBemClasses,
   UserManual,
@@ -101,6 +107,17 @@ const progressTrackerCn = progressTrackerBemClasses(PUC_PREFIX);
 const topBarUtilityCn = topBarUtilityClusterBemClasses(PUC_PREFIX);
 const topBarFavoritesCn = topBarFavoritesStripBemClasses(PUC_PREFIX);
 const userManualCn = userManualBemClasses(PUC_PREFIX);
+const eventsSectionCn = {
+  section: sectionCardPacBemClasses(PUC_PREFIX),
+  queue: alertQueueBemClasses(PUC_PREFIX),
+};
+const recentAccessCn = {
+  row: hubChipRowBemClasses(PUC_PREFIX),
+  chip: routeChipBemClasses(PUC_PREFIX),
+};
+const eventsSectionLabels = {
+  titleHelpAriaLabel: (title: string) => `Ajuda: ${title}`,
+};
 
 function UnderlineNavDemo({ mode }: { mode: "navigation" | "tabs" }) {
   const [activeId, setActiveId] = useState("overview");
@@ -955,6 +972,58 @@ export const layoutCatalogEntries: CatalogEntryDraft[] = [
             openAriaLabel="Abrir favoritos"
             closeAriaLabel="Fechar favoritos"
             removeLabel={(label) => `Remover ${label}`}
+          />
+        ),
+      },
+    ],
+  },
+  {
+    id: "layout.EventsSection",
+    family: "layout",
+    exportName: "EventsSection",
+    title: "EventsSection",
+    description: "Chrome de eventos e interações. Não busca sinais de domínio.",
+    demos: [
+      {
+        id: "default",
+        label: "Lista",
+        render: () => (
+          <EventsSection
+            classNames={eventsSectionCn}
+            labels={eventsSectionLabels}
+            title="Eventos e interações"
+            items={[
+              {
+                id: "due",
+                title: "Revisões a vencer",
+                description: "Sinal de apresentação — o portal decide o dado.",
+                actionLabel: "Abrir",
+                onAction: () => undefined,
+              },
+            ]}
+          />
+        ),
+      },
+    ],
+  },
+  {
+    id: "layout.RecentAccessStrip",
+    family: "layout",
+    exportName: "RecentAccessStrip",
+    title: "RecentAccessStrip",
+    description: "Últimos acessos do hub. Persistência fica no portal.",
+    demos: [
+      {
+        id: "default",
+        label: "Faixa",
+        render: () => (
+          <RecentAccessStrip
+            classNames={recentAccessCn}
+            items={[
+              { id: "overview", label: "Visão geral" },
+              { id: "help", label: "Ajuda" },
+            ]}
+            onSelect={() => undefined}
           />
         ),
       },

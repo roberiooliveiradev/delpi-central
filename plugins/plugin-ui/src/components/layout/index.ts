@@ -493,6 +493,22 @@ export {
   type HubChipRowProps,
 } from "./HubChipRow";
 export {
+  RecentAccessStrip,
+  createDashboardRecentAccessStrip,
+  type DashboardRecentAccessStripProps,
+  type RecentAccessItem,
+  type RecentAccessStripClassNames,
+  type RecentAccessStripProps,
+} from "./RecentAccessStrip";
+export {
+  EventsSection,
+  createDashboardEventsSection,
+  type DashboardEventsSectionProps,
+  type EventsSectionClassNames,
+  type EventsSectionItem,
+  type EventsSectionProps,
+} from "./EventsSection";
+export {
   CommandPalette,
   createDashboardCommandPalette,
   commandPaletteBemClasses,

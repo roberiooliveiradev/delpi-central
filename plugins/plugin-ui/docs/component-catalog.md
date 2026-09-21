@@ -12,7 +12,7 @@ O app cobre **todos** os componentes React visuais listados em `src/catalog/visu
 |---------|----------------------|
 | actions | ActionButton, BackLink, IconButton, ClearFiltersButton |
 | help | HelpTooltip, KeyTip, FieldLabel, TabHintCell… |
-| layout | TopBar, TopBarSearchTrigger, UnderlineNav, PageHeader, EditorChrome, KpiCard, MetricKpiCard, InitialsAvatar, RibbonGroupsRow, ChartCard… |
+| layout | TopBar, TopBarSearchTrigger, TopBarFavoritesStrip, PageHero, EventsSection, RecentAccessStrip, EditorChrome, KpiCard, MetricKpiCard, InitialsAvatar, RibbonGroupsRow, ChartCard… |
 | feedback | EmptyState, **EmptyGuidance**, ModalShell, DrawerShell, ScreenLoading, InlineLoadingProgress, **AlertQueue**, **ScopeChipBar**, **WorklistItem**… |
 | forms | SelectField, DateField, MultiSelectField… |
 | data | DataTable, DataTableSection, CompactPagination, ConfigurablePresentationTable, **Timeline** (`ActivityTimeline` alias)… |
@@ -556,9 +556,33 @@ const classNames = chartCardBemClasses("dp", { withHeading: false, withActions: 
 
 **Padrão nos dashboards:** wrapper fino local reexporta `ChartCard` com `classNames` fixo do prefixo do plugin.
 
+### `PageHero`
+
+OWNS: eyebrow, título, descrição, actions, badge, highlights e body/filters.
+
+DOES NOT OWN: saudação personalizada, cálculo de métricas, filtros de domínio.
+
+Highlights aceitam `label`, `value`, `description?`, `tone?` e `loading?`. Não criar um segundo Hero.
+
+### `EventsSection`
+
+OWNS: chrome da seção de eventos e interações (`SectionCard` + `AlertQueue`).
+
+DOES NOT OWN: sourcing, prioridade de negócio, fila de tarefas.
+
+### `RecentAccessStrip`
+
+OWNS: faixa de chips de últimos acessos.
+
+DOES NOT OWN: persistência, navegação, autorização. Favoritos ficam na TopBar, não nesta faixa.
+
 ### `KpiCard`
 
 Cartão KPI departamental com valor, meta do período, opcional **Meta mês** (`reference_goal`), HelpTooltip nas linhas de meta, badges IDD e ícone. Textos fixos (`Meta`, `Nota IDD`, aria de badges) vêm do plugin via `labels`; apresentação via `buildKpiGoalPresentation` (`goalPrefix` / `goalHint` / `monthlyGoal*`).
+
+OWNS: apresentação de valor, meta, score e badges.
+
+DOES NOT OWN: fórmula de IDD, cálculo de meta, status “dentro da meta”.
 
 | Prop | Tipo | Descrição |
 |------|------|-----------|

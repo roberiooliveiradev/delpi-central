@@ -28,7 +28,8 @@ export function hubChipRowBemClasses(prefix: string): HubChipRowClassNames {
 }
 
 /**
- * Faixa rotulada de chips do hub (Favoritos / Últimos acessos).
+ * Faixa rotulada de chips do hub. Recentes usam `RecentAccessStrip`.
+ * Favoritos de rota ficam na TopBar, não nesta faixa.
  * CSS: `styles/hub-route-chips.css`.
  */
 export function HubChipRow({

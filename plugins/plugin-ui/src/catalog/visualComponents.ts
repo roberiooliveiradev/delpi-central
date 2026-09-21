@@ -109,8 +109,20 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
   }),
   vc("layout", "PageHero", {
     addedAt: "2026-08-06",
+    updatedAt: "2026-09-21",
+    changeNote: "Highlights aceitam description e loading; chrome sem domínio.",
     description:
-      "Card hero de overview/saudação (linguagem SI): eyebrow, título, descrição, highlights; density comfortable|compact.",
+      "Card hero de overview/saudação: eyebrow, título, descrição, actions, badge, highlights e body/filters.",
+  }),
+  vc("layout", "EventsSection", {
+    addedAt: "2026-09-21",
+    description:
+      "Chrome de eventos e interações (SectionCard + AlertQueue). Não busca nem prioriza sinais de domínio.",
+  }),
+  vc("layout", "RecentAccessStrip", {
+    addedAt: "2026-09-21",
+    description:
+      "Faixa de últimos acessos do hub. Não persiste rotas nem autoriza.",
   }),
   vc("layout", "ResizableColumns", {
     addedAt: "2026-08-19",

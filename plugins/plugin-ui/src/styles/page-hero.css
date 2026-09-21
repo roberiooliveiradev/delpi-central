@@ -122,6 +122,12 @@
   color: var(--delpi-ui-accent, var(--primary, #089bdb));
 }
 
+.delpi-ui-page-hero__highlight-description {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--delpi-ui-text-muted, var(--text-muted, rgba(17, 17, 17, 0.72)));
+}
+
 .delpi-ui-page-hero__highlight--warning {
   border-color: color-mix(in srgb, var(--delpi-ui-warning, #d97706) 35%, transparent);
   background: color-mix(

@@ -60,6 +60,29 @@ describe("PageHero", () => {
     expect(document.querySelector(".delpi-ui-page-hero__actions")).toBeTruthy();
   });
 
+  it("renderiza description e loading no highlight", () => {
+    const cn = pageHeroBemClasses("cm");
+    render(
+      <PageHero
+        classNames={cn}
+        title="Início"
+        highlights={[
+          {
+            id: "economy",
+            label: "Economia",
+            value: "R$ 10",
+            description: "Recorte do mês",
+            loading: true,
+          },
+        ]}
+      />,
+    );
+    expect(screen.getByText("Economia")).toBeTruthy();
+    expect(screen.getByText("…")).toBeTruthy();
+    expect(screen.getByText("Recorte do mês")).toBeTruthy();
+    expect(document.querySelector("[data-loading='true']")).toBeTruthy();
+  });
+
   it("aplica density compact no root", () => {
     const cn = pageHeroBemClasses("cm");
     const { container } = render(

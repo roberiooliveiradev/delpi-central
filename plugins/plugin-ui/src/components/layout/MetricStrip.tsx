@@ -1,5 +1,3 @@
-import type { ReactNode } from "react";
-
 import { delpiUiClass, withBemModifier } from "../../utils/delpiUiClass";
 import type { PageHeroHighlight, PageHeroHighlightTone } from "./PageHero";
 
@@ -9,6 +7,7 @@ export type MetricStripClassNames = {
   itemTone: (tone: Exclude<PageHeroHighlightTone, "neutral">) => string;
   label: string;
   value: string;
+  description: string;
 };
 
 export type MetricStripProps = {
@@ -31,6 +30,7 @@ export function metricStripBemClasses(prefix: string): MetricStripClassNames {
       pair(`${base}__item ${base}__item--${tone}`, `${ui}__item ${ui}__item--${tone}`),
     label: pair(`${base}__label`, `${ui}__label`),
     value: pair(`${base}__value`, `${ui}__value`),
+    description: pair(`${base}__description`, `${ui}__description`),
   };
 }
 
@@ -55,9 +55,17 @@ export function MetricStrip({
         const tone = item.tone && item.tone !== "neutral" ? item.tone : null;
         const tileClass = tone ? classNames.itemTone(tone) : classNames.item;
         return (
-          <div key={item.id} className={tileClass} data-tone={item.tone ?? "neutral"}>
+          <div
+            key={item.id}
+            className={tileClass}
+            data-tone={item.tone ?? "neutral"}
+            data-loading={item.loading ? "true" : undefined}
+          >
             <span className={classNames.label}>{item.label}</span>
-            <span className={classNames.value}>{item.value}</span>
+            <span className={classNames.value}>{item.loading ? "…" : item.value}</span>
+            {item.description ? (
+              <span className={classNames.description}>{item.description}</span>
+            ) : null}
           </div>
         );
       })}

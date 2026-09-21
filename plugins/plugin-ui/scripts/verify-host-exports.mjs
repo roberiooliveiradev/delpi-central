@@ -25,6 +25,8 @@ const REQUIRED_HOST_EXPORTS = [
   "createDashboardTopBarUtilityCluster",
   "createDashboardUserManual",
   "createDashboardEntityAvatarLabel",
+  "createDashboardEventsSection",
+  "createDashboardRecentAccessStrip",
 ];
 
 function findIndexExpose(dir) {

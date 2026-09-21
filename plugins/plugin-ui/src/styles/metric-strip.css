@@ -33,6 +33,12 @@
   font-variant-numeric: tabular-nums;
 }
 
+.delpi-ui-metric-strip__description {
+  font-size: 11px;
+  line-height: 1.35;
+  color: var(--delpi-text-muted, #656d76);
+}
+
 .delpi-ui-metric-strip__item--warning {
   border-color: color-mix(in srgb, var(--delpi-warning, #bf8700) 35%, transparent);
   background: color-mix(in srgb, var(--delpi-warning, #bf8700) 8%, var(--delpi-surface, #fff));

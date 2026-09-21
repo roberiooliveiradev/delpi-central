@@ -10,8 +10,12 @@ export type PageHeroHighlight = {
   id: string;
   label: ReactNode;
   value: ReactNode;
+  /** Linha auxiliar de apresentação — o portal decide o texto. */
+  description?: ReactNode;
   /** Tom visual do tile (ex.: atrasos > 0 → warning). */
   tone?: PageHeroHighlightTone;
+  /** Placeholder de valor enquanto o portal carrega o dado. */
+  loading?: boolean;
 };
 
 export type PageHeroClassNames = {
@@ -29,6 +33,7 @@ export type PageHeroClassNames = {
   highlightTone: (tone: Exclude<PageHeroHighlightTone, "neutral">) => string;
   highlightLabel: string;
   highlightValue: string;
+  highlightDescription: string;
   body: string;
 };
 
@@ -72,6 +77,10 @@ export function pageHeroBemClasses(prefix: string): PageHeroClassNames {
       ),
     highlightLabel: pair(`${base}__highlight-label`, `${ui}__highlight-label`),
     highlightValue: pair(`${base}__highlight-value`, `${ui}__highlight-value`),
+    highlightDescription: pair(
+      `${base}__highlight-description`,
+      `${ui}__highlight-description`,
+    ),
     body: pair(`${base}__body`, `${ui}__body`),
   };
 }
@@ -114,9 +123,19 @@ export function PageHero({
               const tone = item.tone && item.tone !== "neutral" ? item.tone : null;
               const tileClass = tone ? classNames.highlightTone(tone) : classNames.highlight;
               return (
-                <div key={item.id} className={tileClass} data-tone={item.tone ?? "neutral"}>
+                <div
+                  key={item.id}
+                  className={tileClass}
+                  data-tone={item.tone ?? "neutral"}
+                  data-loading={item.loading ? "true" : undefined}
+                >
                   <span className={classNames.highlightLabel}>{item.label}</span>
-                  <span className={classNames.highlightValue}>{item.value}</span>
+                  <span className={classNames.highlightValue}>
+                    {item.loading ? "…" : item.value}
+                  </span>
+                  {item.description ? (
+                    <span className={classNames.highlightDescription}>{item.description}</span>
+                  ) : null}
                 </div>
               );
             })}
