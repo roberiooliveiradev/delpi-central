@@ -1,6 +1,6 @@
 # 16 — Plano de paridade do solicitante
 
-> **Status:** em execução. **E6…E7** concluídos; **E8.S1** e **E13.S1** em entrega.
+> **Status:** em execução. **E8.S1** e **E13.S1** entregues; **E8.S2** em entrega.
 > **Não altera** [`06-plano-execucao.md`](./06-plano-execucao.md) (`E1…E5`).
 > **Ondas:** [`05-roadmap.md`](./05-roadmap.md) H6…H13.
 > **Inventários:** [`12`](./12-conteudo-da-mensagem.md) · [`13`](./13-listagem-de-chamados.md) · [`14`](./14-pagina-e-estados-do-chamado.md) · [`15`](./15-capacidades-glpi.md).
@@ -28,7 +28,7 @@ O colaborador passa a ver e gravar no Meus Chamados de TI o que o GLPI já entre
 | RQ-01 | `status_id` + badge/filtro por id; grupos pending/approval | **ATENDIDO** E7.S1 |
 | RQ-02 | Lista: data absoluta, período de abertura, page_size | **ATENDIDO** E7.S2 |
 | RQ-03 | Lista: solved_at / busca no content se H6 | **ATENDIDO** E7.S3 |
-| RQ-04 | HTML sanitizado na bolha | **ATENDIDO** E8.S1 (leitura BFF); E8.S2–S4 no plano |
+| RQ-04 | HTML sanitizado na bolha | **ATENDIDO** E8.S1–S2; E8.S3–S4 no plano |
 | RQ-05 | Compositor rico abrir+responder | ATENDIDO_NO_PLANO E8.S3 |
 | RQ-06 | Imagem no corpo via BFF se H6 | DESBLOQUEADO — 12-H1 **PROVEN**; A-07 continua FORA → E8.S4 |
 | RQ-07 | Página: datas, can_followup, observador | ATENDIDO_NO_PLANO E9.S1 — `can_followup` só false no status 6 |

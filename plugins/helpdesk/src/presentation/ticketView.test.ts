@@ -6,6 +6,7 @@ import {
   conversationMessages,
   detailRecordHeading,
   isTicketFilterActive,
+  listHelpdeskAttachmentIdsInHtml,
   nextTicketSort,
   parseTicketListFilters,
   parseTicketSort,
@@ -137,6 +138,24 @@ describe("conversationMessages", () => {
     );
     expect(messages[0]?.mine).toBe(true);
     expect(conversationAuthorSrc(messages[0].mine, "blob:me")).toBe("blob:me");
+  });
+
+  it("carimba data-attachment-id no HTML sanitizado do BFF", () => {
+    const messages = conversationMessages(
+      {
+        title: "Foto",
+        description: "placa",
+        description_html:
+          '<p><img src="/apps/helpdesk-api/tickets/1108/attachments/391" alt="placa" /></p>',
+        created_at: "2026-09-21T10:00:00Z",
+        requester_display_name: "Ana",
+        timeline: [],
+        attachments: [{ document_id: 391 }],
+      },
+      now,
+    );
+    expect(messages[0].bodyHtml).toContain('data-attachment-id="391"');
+    expect(listHelpdeskAttachmentIdsInHtml(messages[0].bodyHtml)).toEqual([391]);
   });
 
   it("escreve a data calendário quando o chamado é antigo", () => {

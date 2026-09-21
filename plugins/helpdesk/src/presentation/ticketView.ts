@@ -230,6 +230,7 @@ export function newIdempotencyKey(): string {
 export type ConversationSource = {
   title: string;
   description: string;
+  description_html?: string;
   created_at: string;
   requester_display_name: string;
   requester_mine?: boolean;
@@ -237,6 +238,7 @@ export type ConversationSource = {
     id: number;
     kind: string;
     content: string;
+    content_html?: string;
     created_at: string;
     author_display_name: string;
     mine?: boolean;
@@ -249,11 +251,35 @@ export type ConversationMessage = {
   kind: "opening" | "followup";
   headingText: string;
   bodyText: string;
+  bodyHtml: string;
   createdAtLabel: string;
   authorName: string;
   mine: boolean;
   attachmentIds: number[];
 };
+
+/** Marks BFF attachment URLs so MessageThread can resolve blobs and handle clicks. */
+export function stampHelpdeskAttachmentIds(html: string): string {
+  return String(html || "").replace(
+    /src=(["'])(\/apps\/helpdesk-api\/tickets\/\d+\/attachments\/(\d+))\1/gi,
+    (_full, quote: string, src: string, documentId: string) =>
+      `src=${quote}${src}${quote} data-attachment-id=${quote}${documentId}${quote}`,
+  );
+}
+
+export function listHelpdeskAttachmentIdsInHtml(html: string): number[] {
+  const ids: number[] = [];
+  const seen = new Set<number>();
+  const re = /\/apps\/helpdesk-api\/tickets\/\d+\/attachments\/(\d+)/gi;
+  let match: RegExpExecArray | null;
+  while ((match = re.exec(String(html || "")))) {
+    const id = Number(match[1]);
+    if (!Number.isFinite(id) || seen.has(id)) continue;
+    seen.add(id);
+    ids.push(id);
+  }
+  return ids;
+}
 
 export function relativeTimeLabel(value: string, now: Date): string {
   const trimmed = value.trim();
@@ -308,11 +334,13 @@ export function conversationAuthorSrc(mine: boolean, photoUrl: string | null | u
 
 export function conversationMessages(ticket: ConversationSource, now: Date): ConversationMessage[] {
   const requester = ticket.requester_display_name.trim();
+  const openingHtml = stampHelpdeskAttachmentIds(ticket.description_html || "");
   const opening: ConversationMessage = {
     id: "opening",
     kind: "opening",
     headingText: ticket.title.trim(),
     bodyText: ticket.description,
+    bodyHtml: openingHtml,
     createdAtLabel: openingTimeLabel(ticket.created_at, requester, now),
     authorName: requester,
     mine: ticket.requester_mine === true,
@@ -320,15 +348,19 @@ export function conversationMessages(ticket: ConversationSource, now: Date): Con
   };
   const followups = ticket.timeline
     .filter((entry) => entry.kind === "followup")
-    .map((entry): ConversationMessage => ({
-      id: String(entry.id),
-      kind: "followup",
-      headingText: "",
-      bodyText: entry.content,
-      createdAtLabel: relativeTimeLabel(entry.created_at, now),
-      authorName: entry.author_display_name.trim(),
-      mine: entry.mine === true,
-      attachmentIds: [],
-    }));
+    .map((entry): ConversationMessage => {
+      const bodyHtml = stampHelpdeskAttachmentIds(entry.content_html || "");
+      return {
+        id: String(entry.id),
+        kind: "followup",
+        headingText: "",
+        bodyText: entry.content,
+        bodyHtml,
+        createdAtLabel: relativeTimeLabel(entry.created_at, now),
+        authorName: entry.author_display_name.trim(),
+        mine: entry.mine === true,
+        attachmentIds: [],
+      };
+    });
   return [opening, ...followups];
 }

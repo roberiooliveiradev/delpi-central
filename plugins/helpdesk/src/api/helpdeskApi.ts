@@ -85,6 +85,7 @@ export type TimelineEntry = {
   id: number;
   kind: string;
   content: string;
+  content_html?: string;
   created_at: string;
   author_display_name: string;
   mine: boolean;
@@ -92,6 +93,7 @@ export type TimelineEntry = {
 
 export type TicketDetail = TicketSummary & {
   description: string;
+  description_html?: string;
   requester_display_name: string;
   requester_mine: boolean;
   timeline: TimelineEntry[];

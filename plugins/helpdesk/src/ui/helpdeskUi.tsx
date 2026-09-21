@@ -68,7 +68,7 @@ const HelpdeskMessageThreadView = createDashboardMessageThread(PREFIX);
 export function HelpdeskMessageThread(
   props: Omit<ComponentProps<typeof HelpdeskMessageThreadView>, "bodyMode" | "showMineIdentity" | "fill">,
 ) {
-  return <HelpdeskMessageThreadView {...props} bodyMode="plain" showMineIdentity fill />;
+  return <HelpdeskMessageThreadView {...props} bodyMode="html" showMineIdentity fill />;
 }
 
 export const HelpdeskStatusBadge = createDashboardStatusBadge({ prefix: PREFIX });

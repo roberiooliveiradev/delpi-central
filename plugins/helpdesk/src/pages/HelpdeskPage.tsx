@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { ActionButton } from "@delpi/plugin-ui/index";
+import { ActionButton, FilePreviewModal } from "@delpi/plugin-ui/index";
 import { AlignLeft, ChevronLeft, ChevronRight, FilterX, FolderTree, Gauge, Plus, Send, TicketPlus, Type } from "lucide-react";
 
 import {
@@ -7,10 +7,12 @@ import {
   beginGlpiLink,
   createFollowup,
   createTicket,
+  fetchTicketAttachmentBlob,
   getTicket,
   listCategories,
   listTickets,
   listUrgencies,
+  type TicketAttachment,
   type TicketDetail,
   type TicketSummary,
 } from "../api/helpdeskApi";
@@ -20,6 +22,7 @@ import {
   conversationMessages,
   detailRecordHeading,
   isTicketFilterActive,
+  listHelpdeskAttachmentIdsInHtml,
   newIdempotencyKey,
   parseTicketListFilters,
   statusBadgeVariant,
@@ -508,6 +511,8 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
   const [content, setContent] = useState("");
   const [saving, setSaving] = useState(false);
   const [idempotencyKey, setIdempotencyKey] = useState(newIdempotencyKey);
+  const [inlineThumbs, setInlineThumbs] = useState<Record<string, string>>({});
+  const [inlinePreview, setInlinePreview] = useState<TicketAttachment | null>(null);
   const myPhotoUrl = useMyPersonProfilePhoto();
 
   function load() {
@@ -522,6 +527,39 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
   useEffect(() => {
     load();
   }, [ticketId]);
+
+  useEffect(() => {
+    if (!ticket) {
+      setInlineThumbs({});
+      return;
+    }
+    const messages = conversationMessages(ticket, new Date());
+    const ids = new Set<number>();
+    for (const message of messages) {
+      for (const id of listHelpdeskAttachmentIdsInHtml(message.bodyHtml)) ids.add(id);
+    }
+    if (ids.size === 0) {
+      setInlineThumbs({});
+      return;
+    }
+    let cancelled = false;
+    const urls: string[] = [];
+    void Promise.all(
+      [...ids].map(async (documentId) => {
+        const blob = await fetchTicketAttachmentBlob(ticketId, documentId);
+        if (cancelled) return;
+        const url = URL.createObjectURL(blob);
+        urls.push(url);
+        setInlineThumbs((current) => ({ ...current, [String(documentId)]: url }));
+      }),
+    ).catch((error) => {
+      if (!cancelled) setErrorText(messageFor(error).text);
+    });
+    return () => {
+      cancelled = true;
+      urls.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [ticket, ticketId]);
 
   return (
     <HelpdeskPageStack>
@@ -545,11 +583,25 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
             <HelpdeskMessageThread
               listAriaLabel="Conversa do chamado"
               emptyLabel="Nenhuma mensagem"
+              resolveAttachmentImageSrc={(attachmentId) => inlineThumbs[attachmentId] || null}
+              onAttachmentImageClick={(attachmentId) => {
+                const documentId = Number(attachmentId);
+                if (!Number.isFinite(documentId)) return;
+                const known = ticket.attachments.find((item) => item.document_id === documentId);
+                setInlinePreview(
+                  known ?? {
+                    document_id: documentId,
+                    filename: "imagem",
+                    mime: "image/*",
+                  },
+                );
+              }}
               messages={conversationMessages(ticket, new Date()).map((message) => ({
                 id: message.id,
                 kind: message.kind,
                 headingText: message.headingText || undefined,
                 bodyText: message.bodyText,
+                bodyHtml: message.bodyHtml || undefined,
                 createdAtLabel: message.createdAtLabel,
                 authorName: message.authorName || undefined,
                 authorSrc: conversationAuthorSrc(message.mine, myPhotoUrl),
@@ -563,6 +615,39 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                     />
                   ) : undefined,
               }))}
+            />
+            <FilePreviewModal
+              open={Boolean(inlinePreview)}
+              title={inlinePreview?.filename || "Anexo"}
+              fileName={inlinePreview?.filename}
+              mimeType={inlinePreview?.mime}
+              source={
+                inlinePreview
+                  ? () => fetchTicketAttachmentBlob(ticketId, inlinePreview.document_id)
+                  : null
+              }
+              portalScopeClassName="dashboard-helpdesk"
+              onClose={() => setInlinePreview(null)}
+              headerActions={
+                inlinePreview ? (
+                  <ActionButton
+                    onClick={() => {
+                      void fetchTicketAttachmentBlob(ticketId, inlinePreview.document_id)
+                        .then((blob) => {
+                          const url = URL.createObjectURL(blob);
+                          const link = document.createElement("a");
+                          link.href = url;
+                          link.download = inlinePreview.filename || "anexo";
+                          link.click();
+                          URL.revokeObjectURL(url);
+                        })
+                        .catch((error) => setErrorText(messageFor(error).text));
+                    }}
+                  >
+                    Baixar
+                  </ActionButton>
+                ) : null
+              }
             />
             <form
               onSubmit={(event) => {
