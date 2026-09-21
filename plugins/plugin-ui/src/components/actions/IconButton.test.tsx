@@ -29,4 +29,13 @@ describe("IconButton", () => {
     );
     expect(container.querySelector(".delpi-ui-icon-btn--danger")).toBeTruthy();
   });
+
+  it("aplica tone primary", () => {
+    const { container } = render(
+      <IconButton aria-label="Enviar" tone="primary">
+        →
+      </IconButton>,
+    );
+    expect(container.querySelector(".delpi-ui-icon-btn--primary")).toBeTruthy();
+  });
 });

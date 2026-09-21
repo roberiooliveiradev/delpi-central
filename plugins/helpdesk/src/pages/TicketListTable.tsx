@@ -19,6 +19,7 @@ export function TicketListTable({
   return (
     <HelpdeskDataTable
       layout="scroll"
+      compact
       loading={loading}
       rows={items}
       rowKey={(row) => String(row.id)}

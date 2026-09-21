@@ -143,6 +143,7 @@ export type DataTableProps<T> = {
   sortDirection?: "asc" | "desc";
   onSortChange?: (columnKey: string) => void;
   layout?: "section" | "embedded" | "scroll";
+  compact?: boolean;
   mode?: "default" | "grid-preview";
   rowClickRole?: "button" | "none";
   onHeaderClick?: (column: DataTableColumn<T>, modifiers: DataTableSelectionModifiers) => void;
@@ -238,6 +239,7 @@ function buildTableClassName(
   layout: "section" | "embedded" | "scroll",
   isSortable: boolean,
   clickable: boolean,
+  compact: boolean,
   mode: "default" | "grid-preview",
   wrapText: boolean,
   hasFixedWidths: boolean,
@@ -249,11 +251,13 @@ function buildTableClassName(
   const tableTokens = classNames.table.split(/\s+/).filter(Boolean);
   return [
     classNames.table,
+    compact && classNames.compactTable ? classNames.compactTable : "",
     ...tableTokens.flatMap((token) => {
       const modifiers: string[] = [];
       if (layout === "section") modifiers.push(`${token}--section`);
       if (isSortable) modifiers.push(`${token}--sortable`);
       if (clickable) modifiers.push(`${token}--clickable`);
+      if (compact) modifiers.push(`${token}--compact`);
       if (mode === "grid-preview") modifiers.push(`${token}--grid-preview`);
       if (wrapText) modifiers.push(`${token}--wrap`);
       if (hasFixedWidths) modifiers.push(`${token}--fixed-cols`);
@@ -349,6 +353,7 @@ export function DataTable<T>({
   sortDirection = "asc",
   onSortChange,
   layout = "embedded",
+  compact = false,
   mode = "default",
   rowClickRole = "none",
   onHeaderClick,
@@ -396,6 +401,7 @@ export function DataTable<T>({
       layout,
       isSortable,
       Boolean(onRowClick),
+      compact,
       mode,
       wrapText,
       hasFixedWidths,

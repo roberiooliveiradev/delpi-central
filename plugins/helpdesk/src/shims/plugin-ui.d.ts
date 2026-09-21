@@ -55,6 +55,7 @@ declare module "@delpi/plugin-ui/index" {
     icon?: ReactNode;
     onRefresh?: () => void;
     refreshing?: boolean;
+    compact?: boolean;
     metaItems?: readonly PageHeaderMetaItem[];
     classNames: Record<string, string | undefined>;
     labels: { refresh: string; refreshing: string };
@@ -284,6 +285,19 @@ declare module "@delpi/plugin-ui/index" {
 
   export function ActionButton(props: ActionButtonProps): ReactElement;
 
+  export type IconButtonTone = "default" | "danger" | "primary";
+
+  export type IconButtonProps = {
+    children: ReactNode;
+    "aria-label": string;
+    tone?: IconButtonTone;
+    type?: "button" | "submit";
+    disabled?: boolean;
+    onClick?: () => void;
+  };
+
+  export function IconButton(props: IconButtonProps): ReactElement;
+
   export type FilePreviewModalProps = {
     open: boolean;
     title: string;
@@ -459,6 +473,7 @@ declare module "@delpi/plugin-ui/index" {
     loading?: boolean;
     onRowClick?: (row: T) => void;
     layout?: "section" | "embedded" | "scroll";
+    compact?: boolean;
     sortKey?: string | null;
     sortDirection?: "asc" | "desc";
     onSortChange?: (columnKey: string) => void;
@@ -497,7 +512,12 @@ declare module "@delpi/plugin-ui/index" {
   };
 
   export type DashboardFiltersKit = {
-    FiltersRow: ComponentType<{ children?: ReactNode; trailing?: ReactNode; variant?: "default" | "extended" }>;
+    FiltersRow: ComponentType<{
+      children?: ReactNode;
+      trailing?: ReactNode;
+      variant?: "default" | "extended";
+      compact?: boolean;
+    }>;
     FilterInputField: ComponentType<FilterInputFieldProps>;
     FilterSelectField: ComponentType<FilterSelectFieldProps>;
   };

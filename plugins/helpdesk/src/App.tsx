@@ -1,4 +1,5 @@
 import { configureHelpdeskClient } from "./api/helpdeskApi";
+import { configurePersonProfileClient } from "./api/personProfileApi";
 import { HelpdeskPage } from "./pages/HelpdeskPage";
 import { parseHelpdeskRoute, useHelpdeskRouterPath } from "./routing/helpdeskRoute";
 
@@ -9,6 +10,7 @@ export type AppProps = {
 
 export default function App({ getAccessToken, pathname: pathnameFromHost }: AppProps) {
   configureHelpdeskClient(() => getAccessToken?.());
+  configurePersonProfileClient(() => getAccessToken?.());
   const pathname = useHelpdeskRouterPath(pathnameFromHost);
   const route = parseHelpdeskRoute(pathname);
   return (

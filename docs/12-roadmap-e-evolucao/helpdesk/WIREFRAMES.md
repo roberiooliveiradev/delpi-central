@@ -82,7 +82,8 @@ O bloco escuro é `:root[data-theme="dark"] .dashboard-helpdesk`. Superfície, t
 | `createDashboardFiltersKit` | `HelpdeskFiltersRow` / `HelpdeskFilterInput` / `HelpdeskFilterSelect` | Recorte da lista |
 | `createDashboardAttachmentPreviewStrip` | `HelpdeskAttachmentPreviewStrip` | Miniaturas no `belowBody` da abertura |
 | `FilePreviewModal` | — | Prévia + Baixar; blob só na memória |
-| `ActionButton` | — | Abrir chamado, autorizar, voltar, enviar, paginação, Baixar |
+| `ActionButton` | — | Autorizar no helpdesk |
+| `IconButton` | `HelpdeskIconButton` | Abrir, limpar filtros, paginar, voltar, enviar |
 
 Texto de ajuda: `plugins/helpdesk/src/content/helpTooltips.ts`. O hint fica na prop `hint` do card ou do campo. Não colocar path de API no texto.
 
@@ -115,7 +116,7 @@ HelpdeskPageHeader
   [ Atualizar ]
 
 HelpdeskSectionCard  «Meus chamados»  hint = helpTooltips.list
-  actions: [ Abrir chamado ]
+  actions: [ + ]  aria-label Abrir chamado
 
   HelpdeskFiltersRow  hint = helpTooltips.filters
     Buscar ·····
@@ -137,7 +138,7 @@ HelpdeskSectionCard  «Meus chamados»  hint = helpTooltips.list
                     colunas ordenáveis: Chamado, Título, Status, Categoria, Urgência, Aberto, Atualizado
                     Técnico sem ordenação (não é propriedade da HLAPI)
                     clique na linha → /apps/helpdesk/tickets/{id}
-  [ Anterior ]  Página N  [ Próxima ]  via has_more; sem total inventado
+  [ ← ]  N  [ → ]  via has_more; sem total inventado
 ```
 
 Um estado por vez. Lista vazia só aparece com HTTP 200 e `items: []`. Proibido, vínculo e indisponível não podem parecer lista vazia.
@@ -163,8 +164,8 @@ HelpdeskSectionCard  «Abrir chamado»  hint = helpTooltips.create
                 Muito baixa | Baixa | Média | Alta | Muito alta
 
   HelpdeskFormActions
-    [ Voltar ]          → /apps/helpdesk
-    [ Enviar chamado ]  primary; rótulo «Enviando…» enquanto salva
+    [ ← ]  voltar
+    [ enviar ]  ícone; aria-label Enviar chamado
 ```
 
 Não há campo de solicitante nem de entidade. Sucesso navega para `/apps/helpdesk/tickets/{id}` devolvido pela API. A mesma intenção de envio reutiliza a `Idempotency-Key`; não há segundo clique automático.
@@ -201,8 +202,8 @@ HelpdeskSectionCard  «Conversa»  hint = helpTooltips.detail
 
   Responder   [ texto ]  obrigatório  hint = helpTooltips.detail
   HelpdeskFormActions
-    [ Voltar ]
-    [ Enviar ]
+    Responder   [ texto ]  3 linhas
+    [ ← ]  [ enviar ]
 ```
 
 A abertura existe mesmo sem acompanhamento. Tarefa, solução, aprovação e acompanhamento privado não entram. `mine` significa que o autor é o solicitante do chamado.

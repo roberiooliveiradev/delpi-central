@@ -5,6 +5,7 @@ import {
   createDashboardDataRecordCard,
   DataTable,
   dataTableBemClasses,
+  IconButton,
   createDashboardEmptyState,
   createDashboardFiltersKit,
   createDashboardFormActions,
@@ -75,6 +76,10 @@ export const HelpdeskStatusBadge = createDashboardStatusBadge({ prefix: PREFIX }
 export const HelpdeskRecordCard = createDashboardDataRecordCard({ prefix: PREFIX });
 
 const tableClassNames = dataTableBemClasses(PREFIX);
+
+export function HelpdeskIconButton(props: ComponentProps<typeof IconButton>) {
+  return <IconButton {...props} />;
+}
 
 export function HelpdeskDataTable<T extends object>(
   props: Omit<ComponentProps<typeof DataTable<T>>, "classNames" | "labels">,

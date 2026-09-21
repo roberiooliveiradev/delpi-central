@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { ActionButton } from "@delpi/plugin-ui/index";
+import { ChevronLeft, ChevronRight, FilterX, Plus, Send } from "lucide-react";
 
 import {
   HelpdeskApiError,
@@ -15,6 +16,7 @@ import {
 } from "../api/helpdeskApi";
 import { helpTooltips } from "../content/helpTooltips";
 import {
+  conversationAuthorSrc,
   conversationMessages,
   detailRecordHeading,
   isTicketFilterActive,
@@ -24,12 +26,12 @@ import {
   nextTicketSort,
   parseTicketSort,
   ticketListSearch,
-  ticketRecordFields,
   TICKET_STATUS_FILTERS,
   type TicketListFilters,
   viewForTicketLoad,
 } from "../presentation/ticketView";
 import { navigateHelpdesk, type HelpdeskRoute } from "../routing/helpdeskRoute";
+import { useMyPersonProfilePhoto } from "../presentation/useMyPersonProfilePhoto";
 import { TicketAttachmentPreview } from "./TicketAttachmentPreview";
 import { TicketListTable } from "./TicketListTable";
 import {
@@ -38,6 +40,7 @@ import {
   HelpdeskFilterSelect,
   HelpdeskFiltersRow,
   HelpdeskFormActions,
+  HelpdeskIconButton,
   HelpdeskLoadingState,
   HelpdeskMessageThread,
   HelpdeskPageHeader,
@@ -175,6 +178,7 @@ function TicketListPage() {
       <HelpdeskPageHeader
         title="Meus Chamados de TI"
         subtitle="Chamados no seu nome"
+        compact
         onRefresh={() => void load(filters)}
         refreshing={loading}
       />
@@ -182,28 +186,32 @@ function TicketListPage() {
         title="Meus chamados"
         hint={helpTooltips.list}
         actions={
-          <ActionButton variant="primary" onClick={() => navigateHelpdesk("/apps/helpdesk/tickets/new")}>
-            Abrir chamado
-          </ActionButton>
+          <HelpdeskIconButton
+            tone="primary"
+            aria-label="Abrir chamado"
+            onClick={() => navigateHelpdesk("/apps/helpdesk/tickets/new")}
+          >
+            <Plus size={16} aria-hidden />
+          </HelpdeskIconButton>
         }
       >
         {view === "link" ? null : (
-          <HelpdeskFiltersRow variant="extended" trailing={
+          <HelpdeskFiltersRow compact variant="extended" trailing={
             filterActive ? (
-              <ActionButton
+              <HelpdeskIconButton
+                aria-label="Limpar filtros"
                 onClick={() => {
                   const next = { ...currentListFilters(), q: "", status: "", urgency_id: "", category_id: "", updated_from: "", updated_to: "", page: 1, sort: filters.sort };
                   setQDraft("");
                   commitFilters(next);
                 }}
               >
-                Limpar filtros
-              </ActionButton>
+                <FilterX size={16} aria-hidden />
+              </HelpdeskIconButton>
             ) : null
           }>
             <HelpdeskFilterInput
               label="Buscar"
-              hint={helpTooltips.filters}
               type="search"
               value={qDraft}
               onChange={setQDraft}
@@ -287,21 +295,21 @@ function TicketListPage() {
         ) : null}
         {view === "list" || (view === "empty" && filters.page > 1) ? (
           <HelpdeskFormActions>
-            <ActionButton
+            <HelpdeskIconButton
+              aria-label="Página anterior"
               disabled={filters.page <= 1 || loading}
               onClick={() => commitFilters({ ...filters, page: Math.max(1, filters.page - 1) })}
             >
-              Anterior
-            </ActionButton>
-            <ActionButton disabled>
-              {`Página ${filters.page}`}
-            </ActionButton>
-            <ActionButton
+              <ChevronLeft size={16} aria-hidden />
+            </HelpdeskIconButton>
+            <span>{filters.page}</span>
+            <HelpdeskIconButton
+              aria-label="Próxima página"
               disabled={!hasMore || loading}
               onClick={() => commitFilters({ ...filters, page: filters.page + 1 })}
             >
-              Próxima
-            </ActionButton>
+              <ChevronRight size={16} aria-hidden />
+            </HelpdeskIconButton>
           </HelpdeskFormActions>
         ) : null}
       </HelpdeskSectionCard>
@@ -383,12 +391,17 @@ function CreateTicketPage() {
           options={urgencies.map((item) => ({ value: String(item.id), label: item.name }))}
         />
         <HelpdeskFormActions>
-          <ActionButton type="button" onClick={() => navigateHelpdesk("/apps/helpdesk")}>
-            Voltar
-          </ActionButton>
-          <ActionButton variant="primary" type="submit" disabled={saving || loading}>
-            {saving ? "Enviando…" : "Enviar chamado"}
-          </ActionButton>
+          <HelpdeskIconButton aria-label="Voltar" onClick={() => navigateHelpdesk("/apps/helpdesk")}>
+            <ChevronLeft size={16} aria-hidden />
+          </HelpdeskIconButton>
+          <HelpdeskIconButton
+            tone="primary"
+            type="submit"
+            aria-label={saving ? "Enviando" : "Enviar chamado"}
+            disabled={saving || loading}
+          >
+            <Send size={16} aria-hidden />
+          </HelpdeskIconButton>
         </HelpdeskFormActions>
       </form>
     </HelpdeskSectionCard>
@@ -402,6 +415,7 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
   const [content, setContent] = useState("");
   const [saving, setSaving] = useState(false);
   const [idempotencyKey, setIdempotencyKey] = useState(newIdempotencyKey);
+  const myPhotoUrl = useMyPersonProfilePhoto();
 
   function load() {
     setLoading(true);
@@ -418,23 +432,16 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
 
   return (
     <>
-      <HelpdeskPageHeader title={ticket?.title || "Chamado"} onRefresh={load} refreshing={loading} />
+      <HelpdeskPageHeader title={ticket?.title || "Chamado"} compact onRefresh={load} refreshing={loading} />
       <HelpdeskSectionCard title="Conversa" hint={helpTooltips.detail}>
         {loading ? <HelpdeskLoadingState message="Carregando chamado…" /> : null}
         {errorText ? <HelpdeskStateBanner variant="error">{errorText}</HelpdeskStateBanner> : null}
         {ticket ? (
           <>
             <HelpdeskRecordCard
-              {...detailRecordHeading(ticket.category, ticket.urgency)}
+              title={detailRecordHeading(ticket.category, ticket.urgency).title}
+              subtitle={[`#${ticket.id}`, ticket.assigned_display_name].filter(Boolean).join(" · ")}
               status={<HelpdeskStatusBadge label={ticket.status} variant={statusBadgeVariant(ticket.status)} />}
-              fields={ticketRecordFields({
-                id: ticket.id,
-                category: ticket.category,
-                urgency: ticket.urgency,
-                assigned_display_name: ticket.assigned_display_name,
-                created_at: ticket.created_at,
-                updated_at: ticket.updated_at,
-              }).filter((field) => field.id === "id" || field.id === "assigned")}
             />
             <HelpdeskMessageThread
               listAriaLabel="Conversa do chamado"
@@ -446,6 +453,7 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                 bodyText: message.bodyText,
                 createdAtLabel: message.createdAtLabel,
                 authorName: message.authorName || undefined,
+                authorSrc: conversationAuthorSrc(message.mine, myPhotoUrl),
                 mine: message.mine,
                 belowBody:
                   message.attachmentIds.length > 0 ? (
@@ -474,18 +482,23 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
             >
               <HelpdeskTextArea
                 label="Responder"
-                hint={helpTooltips.detail}
                 value={content}
                 onChange={setContent}
+                rows={3}
                 required
               />
               <HelpdeskFormActions>
-                <ActionButton type="button" onClick={() => navigateHelpdesk("/apps/helpdesk")}>
-                  Voltar
-                </ActionButton>
-                <ActionButton variant="primary" type="submit" disabled={saving}>
-                  {saving ? "Enviando…" : "Enviar"}
-                </ActionButton>
+                <HelpdeskIconButton aria-label="Voltar" onClick={() => navigateHelpdesk("/apps/helpdesk")}>
+                  <ChevronLeft size={16} aria-hidden />
+                </HelpdeskIconButton>
+                <HelpdeskIconButton
+                  tone="primary"
+                  type="submit"
+                  aria-label={saving ? "Enviando" : "Enviar"}
+                  disabled={saving}
+                >
+                  <Send size={16} aria-hidden />
+                </HelpdeskIconButton>
               </HelpdeskFormActions>
             </form>
           </>

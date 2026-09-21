@@ -14,9 +14,17 @@
   gap: 0.35rem;
   padding: 1rem 0.85rem;
   border-radius: 0.5rem;
+  /* Sem fallback claro fixo: sintetiza muted a partir de surface/text do host. */
   background: color-mix(
     in srgb,
-    var(--delpi-ui-surface-muted, var(--surface-muted, #f1f5f9)) 72%,
+    var(
+      --delpi-ui-surface-muted,
+      color-mix(
+        in srgb,
+        var(--delpi-ui-text, var(--text, #0f172a)) 8%,
+        var(--delpi-ui-surface, var(--surface, #ffffff))
+      )
+    ) 88%,
     transparent
   );
 }

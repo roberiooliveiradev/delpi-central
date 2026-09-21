@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  conversationAuthorSrc,
   conversationMessages,
   detailRecordHeading,
   isTicketFilterActive,
@@ -129,6 +130,12 @@ describe("conversationMessages", () => {
       now,
     );
     expect(messages[0].createdAtLabel).toBe("Criado em 19/02/2026");
+  });
+
+  it("só usa a foto da Minha DELPI na mensagem do próprio usuário", () => {
+    expect(conversationAuthorSrc(true, "blob:me")).toBe("blob:me");
+    expect(conversationAuthorSrc(false, "blob:me")).toBeUndefined();
+    expect(conversationAuthorSrc(true, "  ")).toBeUndefined();
   });
 
   it("mostra o acompanhamento de outra pessoa do outro lado, sem anexo", () => {

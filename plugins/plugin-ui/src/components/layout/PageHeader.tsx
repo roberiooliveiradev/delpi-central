@@ -70,10 +70,12 @@ function pair(local: string, canonical: string): string {
 function RefreshButton({
   onRefresh,
   refreshing,
+  compact,
   classNames,
   labels,
-}: Pick<PageHeaderProps, "onRefresh" | "refreshing" | "classNames" | "labels">) {
+}: Pick<PageHeaderProps, "onRefresh" | "refreshing" | "compact" | "classNames" | "labels">) {
   if (!onRefresh || !classNames.primaryButton) return null;
+  const label = refreshing ? labels.refreshing : labels.refresh;
 
   return (
     <button
@@ -81,13 +83,15 @@ function RefreshButton({
       className={classNames.primaryButton}
       onClick={onRefresh}
       disabled={refreshing}
+      aria-label={label}
+      title={label}
     >
       <RefreshCw
         size={16}
         aria-hidden={true}
         className={refreshing && classNames.spinClass ? classNames.spinClass : undefined}
       />
-      {refreshing ? labels.refreshing : labels.refresh}
+      {compact ? null : label}
     </button>
   );
 }
@@ -113,6 +117,7 @@ function BrandLayout(props: PageHeaderProps) {
         <RefreshButton
           onRefresh={onRefresh}
           refreshing={refreshing}
+          compact={props.compact}
           classNames={classNames}
           labels={labels}
         />
@@ -146,7 +151,7 @@ function BrandLayout(props: PageHeaderProps) {
 }
 
 function TitleRowLayout(props: PageHeaderProps) {
-  const { classNames, title, subtitle, icon, nav, actions, onRefresh, refreshing, labels } = props;
+  const { classNames, title, subtitle, icon, nav, actions, onRefresh, refreshing, compact, labels } = props;
 
   return (
     <>
@@ -176,6 +181,7 @@ function TitleRowLayout(props: PageHeaderProps) {
           <RefreshButton
             onRefresh={onRefresh}
             refreshing={refreshing}
+            compact={compact}
             classNames={classNames}
             labels={labels}
           />
@@ -253,6 +259,7 @@ function HeroLayout(props: PageHeaderProps) {
         <RefreshButton
           onRefresh={onRefresh}
           refreshing={refreshing}
+          compact={props.compact}
           classNames={classNames}
           labels={labels}
         />
@@ -341,6 +348,7 @@ export function pageHeaderTitleRowBemClasses(
   const button = options?.buttonClass ?? `${prefix}-btn ${prefix}-btn--primary`;
   return {
     root: pair(root, ui),
+    rootCompact: pair(`${root} ${root}--compact`, `${ui} ${ui}--compact`),
     titleWrap: pair(`${root}__title-wrap`, `${ui}__title-wrap`),
     titleRow: pair(`${root}__title-row`, `${ui}__title-row`),
     title: pair(`${root}__title`, `${ui}__title`),

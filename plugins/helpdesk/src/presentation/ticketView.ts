@@ -252,6 +252,12 @@ function openingTimeLabel(createdAt: string, requester: string, now: Date): stri
   return `Criado em ${time}`;
 }
 
+export function conversationAuthorSrc(mine: boolean, photoUrl: string | null | undefined): string | undefined {
+  if (!mine) return undefined;
+  const src = (photoUrl ?? "").trim();
+  return src || undefined;
+}
+
 function writtenByRequester(author: string, requester: string): boolean {
   const authorName = author.trim();
   const requesterName = requester.trim();

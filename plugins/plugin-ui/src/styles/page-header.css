@@ -85,6 +85,22 @@
   justify-content: flex-end;
 }
 
+.delpi-ui-page-header--compact {
+  align-items: center;
+}
+
+.delpi-ui-page-header--compact h1,
+.delpi-ui-page-header--compact .delpi-ui-page-header__title {
+  font-size: 1.25rem;
+}
+
+.delpi-ui-page-header--compact .delpi-ui-page-header__refresh,
+.delpi-ui-page-header--compact .delpi-ui-action-btn {
+  min-width: 36px;
+  min-height: 36px;
+  padding: 0 8px;
+}
+
 @media (max-width: 768px) {
   .delpi-ui-page-header:not(.delpi-ui-page-header--hero) {
     flex-direction: column;

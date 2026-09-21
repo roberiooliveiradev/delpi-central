@@ -4,10 +4,10 @@
 }
 
 .dashboard-helpdesk {
-  --helpdesk-page-padding: 24px;
-  --helpdesk-section-gap: 20px;
-  --helpdesk-card-radius: 18px;
-  --helpdesk-card-padding: 20px;
+  --helpdesk-page-padding: 16px;
+  --helpdesk-section-gap: 12px;
+  --helpdesk-card-radius: 12px;
+  --helpdesk-card-padding: 12px;
   --helpdesk-accent: var(--primary, #089bdb);
   --helpdesk-title: var(--secundary, #003866);
   --helpdesk-text: var(--text, #111111);
@@ -27,6 +27,11 @@
   --delpi-ui-card-padding: var(--helpdesk-card-padding);
   --delpi-ui-radius: var(--helpdesk-card-radius);
   --delpi-ui-section-gap: var(--helpdesk-section-gap);
+  --delpi-ui-control-height: 36px;
+  --delpi-ui-field-stack-gap: 6px;
+  --delpi-ui-form-actions-gap: 8px;
+  --delpi-ui-form-actions-block-start: 12px;
+  --delpi-ui-grid-gap: 10px;
 
   color: var(--helpdesk-text);
   padding: var(--helpdesk-page-padding);

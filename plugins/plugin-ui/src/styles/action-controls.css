@@ -212,6 +212,17 @@ a.delpi-ui-action-btn--link:visited {
   cursor: not-allowed;
 }
 
+.delpi-ui-icon-btn--primary {
+  background: var(--delpi-ui-accent, var(--primary, #089bdb));
+  border-color: var(--delpi-ui-accent, var(--primary, #089bdb));
+  color: #fff;
+}
+
+.delpi-ui-icon-btn--primary:hover:not(:disabled) {
+  color: #fff;
+  filter: brightness(1.05);
+}
+
 .delpi-ui-icon-btn--danger:hover:not(:disabled) {
   color: var(--delpi-ui-danger, #b42318);
   border-color: color-mix(
