@@ -1078,22 +1078,30 @@ C2-T3 / C2-PREFINAL-R1 / C2-FINAL: `LOCKED` em `25` para CP-001–CP-012, CP-025
 
 ## 5. Gate C3 — Intelligence + Capability Foundations
 
-### C3-T1 — Evidence / epistemic static conformance (expectations only)
+### C3-T1 — Evidence / epistemic static conformance (Architecture Review accepted; expectations only)
 
 ```text
-STATUS = STATIC_CONFORMANCE_EXPECTATION
+STATUS = FROZEN_ACCEPTED (static documentation evidence only)
+REVIEW = ARCHITECTURE_REVIEW_C3_T1
+VERDICT = ACCEPT_WITH_RESIDUAL
 RUNTIME_PASS = NOT_CLAIMED
+RUNTIME_TESTS = TEST_NOT_RUN
 OWNER = 21 §4B + 38
-C3_T2_IMPLEMENTS = YES
+C3_T1 = APPROVED
+C3_T2_AUTHORIZED = YES
+C3_T2_IMPLEMENTS = YES (future deterministic conformance; not executed here)
 ```
 
 Required future deterministic cases (C3-T2):
 
 - positive authoritative Evidence linkage with SourceRef;
 - sibling source type preserves the same epistemic/linkage semantics;
+- OBSERVATION remains non-FACT without automatic promotion;
 - unsupported/untrusted claim is not promoted to FACT;
+- FACT qualification does not depend on current-user live AuthZ (access checks remain separate);
 - unknown/missing state is preserved (missing ≠ false);
 - Prediction remains PREDICTION (PredictionRef);
+- Simulation remains separate typed result (SIMULATE ≠ APPLY);
 - recommendation remains non-authoritative;
 - derived Evidence retains parent/source lineage;
 - conflicting Evidence remains explicit (no fabricated reconciliation);

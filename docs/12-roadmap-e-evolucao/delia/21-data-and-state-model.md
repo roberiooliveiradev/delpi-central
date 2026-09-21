@@ -229,20 +229,32 @@ Usados transversalmente por APIs, web, connectors, Process Intelligence, analysi
 
 Nunca guardar credential em Source/Evidence/Outcome.
 
-## 4B. C3-T1 — Evidence / epistemic semantics + source linkage (candidate)
+## 4B. C3-T1 — Evidence / epistemic semantics + source linkage
 
 ```text
-STATUS = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+STATUS = FROZEN_ACCEPTED
+REVIEW = ARCHITECTURE_REVIEW_C3_T1
+REVIEWED_CANDIDATE_HEAD = fb5d63914511728b4c2546b5421da5071f0cb7c4
+REVIEW_REANCHOR_HEAD = 8634cca98cb285114d7494aa0d6b264bab8f0b2a
+VERDICT = ACCEPT_WITH_RESIDUAL
 TASK = C3-T1
+C3_T1 = APPROVED
+EVIDENCE_EPISTEMIC_SEMANTICS = FROZEN_ACCEPTED
+SOURCE_LINKAGE_SEMANTICS = FROZEN_ACCEPTED
 MODE = DOCUMENTATION / CONTRACT FREEZE ONLY
 RUNTIME = NONE
 PERSISTENCE = NONE
 OWN_MIGRATION_CHAIN = NOT_TRIGGERED_BY_C3_T1
 C0_SHARED_REFERENCE_SEMANTICS = FROZEN_ACCEPTED (reused; not redesigned)
-C3_STARTED = NO (unchanged)
-C3_EXECUTED = NO (unchanged)
+NO_PARALLEL_PRIMITIVE = YES
+NEW_RUNTIME_ABSTRACTIONS = NONE
+C3_STARTED = YES
+C3_EXECUTED = NO
+C3_T2_AUTHORIZED = YES
 PRODUCTION_READINESS = NOT_PROVEN
 THEMATIC_OWNER_DETAIL = 38-evidence-provenance-and-epistemic-ux.md
+FACT_STATUS != ACCESS_PERMISSION
+NOTE_SUPERSEDED_CANDIDATE: historical C3-T1 candidate markers live in ledger §6.62
 ```
 
 C3-T1 congela o **uso semântico** de Evidence/Source/epistemic para a inteligência futura. Não cria Evidence store, repository, schema, LLM, RAG, planner ou conversation runtime.
@@ -266,7 +278,38 @@ SourceRef != source-access grant
 citation/reference != permission
 epistemic class != authorization
 confidence != authority
+confidence != permission
+FACT_STATUS != ACCESS_PERMISSION
 ```
+
+### 4B.1A Epistemic qualification vs access authorization
+
+```text
+EPISTEMIC QUALIFICATION
+= "What is the epistemic status of this proposition?"
+  (source authority, provenance, source contract, validation,
+   freshness/version, method, limitations, derivation lineage)
+
+ACCESS / AUTHORIZATION
+= "May the current actor obtain, dereference, disclose or use
+   this protected source/evidence in this operation?"
+  (identity, Core effective RBAC, Domain final business AuthZ,
+   provider/source ACL, Policy/Decision, current operation/context)
+```
+
+```text
+permission does not establish epistemic truth
+epistemic truth does not grant permission
+loss of access does not retroactively make a true proposition false
+having source read permission does not make source content FACT
+EvidenceRef does not carry permission
+SourceRef does not carry permission
+epistemic class does not carry permission
+confidence does not carry authority
+confidence does not carry permission
+```
+
+Any current operation that obtains, dereferences, discloses or uses protected source/evidence MUST perform applicable live authorization/access checks. FACT does not bypass ACL/RBAC and does not automatically grant access.
 
 ### 4B.2 Shared refs reused (no redesign)
 
@@ -299,19 +342,32 @@ EvidenceRef
 
 A retrieval hit, citation string, summary, or model utterance is **not** Evidence automatically.
 
-### 4B.4 Epistemic classes (reuse canonical names from 38)
+### 4B.4 Epistemic classes (canonical)
 
-Canonical classes (do not rename):
+Canonical classes:
 
 ```text
-FACT           → observed in an authorized source under that source's authority
+OBSERVATION    → content directly captured, extracted or recorded from a source/input,
+                 with known provenance of the observation, but whose proposition about
+                 the world has not yet been qualified as FACT under applicable
+                 source-authority / validation semantics
+FACT           → proposition qualified as FACT under source authority + provenance +
+                 source-contract/validation + sufficient freshness/version (explicit class)
 CALCULATION    → derived by an identifiable method from inputs
 HYPOTHESIS     → possible explanation not confirmed
 CONCLUSION     → inference supported by sufficient Evidence
 RECOMMENDATION → suggested action; never authorization
 ```
 
-Separate typed results (not FACT classes):
+```text
+OBSERVATION != FACT
+OBSERVATION != authorization
+NO automatic OBSERVATION → FACT promotion
+```
+
+Examples of OBSERVATION (non-exhaustive): OCR extraction, VLM extraction, detected region/object, document statement, sensor-reported reading, user-provided statement.
+
+Separate typed results (not epistemic-class enum members):
 
 ```text
 PREDICTION   → PredictionRef contract; Prediction ≠ FACT
@@ -325,35 +381,38 @@ current/live | snapshot | cached-valid | stale | unknown   (38 §5)
 accepted | contested | missing | superseded                 (Evidence Board; 38 §9)
 ```
 
-Unvalidated OCR/VLM/extraction remains **non-FACT** with limitations until appropriate contextualization/validation (38 §6). Whether a first-class `OBSERVATION` enum is required is a residual for Architecture (see DISCOVERED_REQUIREMENT in ledger); until decided, do not invent a sixth class in runtime.
+Unvalidated OCR/VLM/extraction defaults to **OBSERVATION** (non-FACT) with limitations until appropriate contextualization/validation.
 
 ### 4B.5 Default epistemic treatment
 
 | Input kind | Default treatment | May become FACT only if |
 |---|---|---|
-| Authoritative live Domain/API response | FACT candidate under Domain authority | source contract + live AuthZ allow treating it as current authorized observation |
-| External webpage/content claim | untrusted CLAIM/content; not FACT | Domain/Policy later validates against authorized source |
+| Authoritative Domain/API response | FACT candidate when that Domain/API is authoritative for the proposition | provenance valid; freshness/version sufficient; source-contract semantics support the proposition (access to obtain/use the response is a separate AuthZ concern) |
+| External webpage/content claim | untrusted content; often OBSERVATION / Evidence candidate; not FACT | Domain/Policy later validates against an authoritative source |
 | Retrieved Knowledge content | Knowledge candidate / reference | published Organizational Knowledge gates pass (owner/version/ACL/review) |
-| Document / OCR / vision extraction | non-FACT observation with limitations | validated against authorized context/method |
+| Document / OCR / vision extraction | OBSERVATION with limitations | validated against authoritative context/method (no automatic promotion) |
 | Model inference / free-form generation | non-FACT (HYPOTHESIS/CONCLUSION/RECOMMENDATION as labeled) | never automatic; never from confidence alone |
 | Classification / forecast | non-FACT / PREDICTION as applicable | PredictionRef rules; never silent FACT |
 | Recommendation | RECOMMENDATION | never authorization |
 | Cached / stale material | stale/unknown limitation required when currency matters | only if source contract says cached-valid |
-| User statement | not Domain FACT | explicit user-confirmed personal class is Personal Memory, not Org FACT |
+| User statement | OBSERVATION / Personal Memory class as applicable; not Domain FACT | explicit user-confirmed personal class is Personal Memory, not Org FACT |
 | Derived synthesis | inherits weakest epistemic strength + lineage | only if promotion rules below are met |
 
 ### 4B.6 FACT promotion rules
 
-Required before treating a result as FACT:
+Required before treating a result as FACT (epistemic qualification):
 
 ```text
-1. identifiable SourceRef (or Domain-owned live contract equivalent)
-2. current permission-checked access path when dereferencing the source
-3. source authority remains with the original Domain/provider/owner
-4. freshness/version appropriate to the decision being made
-5. epistemic class explicitly FACT (not inferred from confidence)
-6. no secret/token stored in Evidence or model context
+1. identifiable source / provenance (SourceRef or Domain-owned live contract equivalent)
+2. source capable of being authoritative for the proposition
+3. applicable validation / source-contract semantics
+4. sufficient freshness/version for the decision being made
+5. epistemic class explicitly FACT (not inferred from confidence or permission)
+6. preserved limitations/lineage where material
+7. no secret/token stored in Evidence or model context
 ```
+
+Separately, any current operation that obtains, dereferences, discloses or uses protected source/evidence MUST perform applicable live authorization/access checks. Current-user AuthZ does **not** determine epistemic truth; FACT does not bypass ACL/RBAC.
 
 Never silently promote to FACT:
 
@@ -363,7 +422,8 @@ retrieval hit
 citation alone
 confidence score
 external page claim
-OCR/VLM raw extraction
+OCR/VLM raw extraction (defaults to OBSERVATION)
+OBSERVATION (no automatic OBSERVATION → FACT)
 Prediction / Prescription
 Recommendation
 simulation / scenario output
@@ -466,9 +526,12 @@ C3-T2 must implement deterministic conformance for at least:
 ```text
 positive authoritative Evidence linkage
 sibling source type preserving same semantics
+OBSERVATION remains non-FACT without automatic promotion
+FACT qualification independent of current-user live AuthZ (access separate)
 unsupported/untrusted claim not promoted to FACT
 unknown/missing state preserved
 Prediction remains PREDICTION
+Simulation remains separate typed result
 recommendation remains non-authoritative
 derived Evidence retains lineage
 conflicting Evidence remains explicit

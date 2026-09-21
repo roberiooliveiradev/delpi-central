@@ -434,22 +434,31 @@ REJECTED_META:
 WorkspaceContext shape = FROZEN_CANDIDATE (C0.S5 §22); ≠AuthZ/SoT/JWT/secret
 ```
 
-#### C3-T1 Evidence / epistemic semantic use (candidate)
+#### C3-T1 Evidence / epistemic semantic use (Architecture Review accepted)
 
 ```text
-STATUS = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+STATUS = FROZEN_ACCEPTED
+REVIEW = ARCHITECTURE_REVIEW_C3_T1
+REVIEWED_CANDIDATE_HEAD = fb5d63914511728b4c2546b5421da5071f0cb7c4
+REVIEW_REANCHOR_HEAD = 8634cca98cb285114d7494aa0d6b264bab8f0b2a
+VERDICT = ACCEPT_WITH_RESIDUAL
+C3_T1 = APPROVED
 OWNER_DOC = 21 §4B
 THEMATIC = 38-evidence-provenance-and-epistemic-ux.md
 REUSES = SourceRef, EvidenceRef, EntityRef, ModelRef, PredictionRef, OutcomeRef
-EPISTEMIC_CLASSES = FACT, CALCULATION, HYPOTHESIS, CONCLUSION, RECOMMENDATION
+EPISTEMIC_CLASSES = OBSERVATION, FACT, CALCULATION, HYPOTHESIS, CONCLUSION, RECOMMENDATION
 SEPARATE = PREDICTION (PredictionRef), SIMULATION (ScenarioRef)
+FACT_STATUS != ACCESS_PERMISSION
 NO_REDESIGN = C0 shared refs remain FROZEN_ACCEPTED
+NO_PARALLEL_PRIMITIVE = YES
 NO_RUNTIME = Evidence store / LLM / RAG / planner / conversation = NONE
-C3_STARTED = NO
-NEXT = Architecture / Coordination review of C3-T1; do not start C3-T2
+C3_STARTED = YES
+C3_EXECUTED = NO
+C3_T2_AUTHORIZED = YES
+NEXT = C3-T2 — EVIDENCE_EPISTEMIC_DOMAIN_MODEL_AND_CONFORMANCE
 ```
 
-Evidence coordination is owned by DÉLIA; original source/domain/provider remains authority for the underlying fact. EvidenceRef ≠ permission; SourceRef ≠ access grant; Prediction ≠ FACT; Recommendation ≠ authorization.
+Evidence coordination is owned by DÉLIA; original source/domain/provider remains authority for the underlying fact. EvidenceRef ≠ permission; SourceRef ≠ access grant; Prediction ≠ FACT; Recommendation ≠ authorization; OBSERVATION ≠ FACT; FACT_STATUS ≠ ACCESS_PERMISSION.
 
 ## 3A. Architecture / persistence / privacy / safety — C0.S4 freeze accepted
 

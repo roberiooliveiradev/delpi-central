@@ -18,15 +18,32 @@ source
 
 ## 2. Epistemic classes
 
+Canonical epistemic classes (Architecture Review C3-T1; `FROZEN_ACCEPTED` in `21` §4B):
+
 ```text
-FACT           → observado em fonte autorizada
+OBSERVATION    → conteúdo capturado/extraído/registrado de fonte/input com provenance
+                 conhecida, ainda não qualificado como FACT
+FACT           → proposição qualificada como FACT sob autoridade da fonte + provenance +
+                 contrato/validação + freshness/versão suficientes (classe explícita)
 CALCULATION    → derivado por método identificável
 HYPOTHESIS     → explicação possível não confirmada
 CONCLUSION     → inferência sustentada por evidence suficiente
 RECOMMENDATION → ação sugerida, nunca autorização
 ```
 
-Prediction/simulation permanecem classes próprias quando aplicáveis e não viram FACT.
+```text
+OBSERVATION != FACT
+OBSERVATION != authorization
+NO automatic OBSERVATION → FACT promotion
+FACT_STATUS != ACCESS_PERMISSION
+```
+
+Epistemic qualification (“qual é o status epistêmico?”) é distinto de access/authorization
+(“o ator atual pode obter/dereferenciar/divulgar/usar este source/evidence?”).
+Permission não estabelece verdade epistêmica; verdade epistêmica não concede permission.
+
+Prediction/simulation permanecem resultados tipados próprios quando aplicáveis e não entram
+no enum de classes epistêmicas nem viram FACT automaticamente.
 
 ## 3. Evidence contract
 
@@ -56,7 +73,7 @@ Stale/unknown exige limitation quando atualidade importa.
 
 ## 6. Multimodal Evidence
 
-Documento/desenho/imagem pode carregar source/file ref, page/sheet/region, observation, method/version, confidence, limitations e revision quando material. Output de OCR/VLM é observação não confiável até contextualização/validação apropriada.
+Documento/desenho/imagem pode carregar source/file ref, page/sheet/region, observation, method/version, confidence, limitations e revision quando material. Output de OCR/VLM defaults to **OBSERVATION** (non-FACT) até contextualização/validação apropriada; não há promoção automática OBSERVATION → FACT.
 
 ## 7. Business/API Evidence
 
@@ -85,12 +102,15 @@ Artifacts podem preservar refs/footnotes permitidos sem copiar PII/secrets desne
 
 Quando fontes divergem, mostrar conflict/recency/authority/limitations.
 
-Evidence nunca concede source access:
+Evidence nunca concede source access. EvidenceRef/SourceRef/epistemic class/confidence
+não carregam permission. Operações atuais que obtêm/dereferenciam/divulgam/usam
+source/evidence protegidos DEVEM aplicar live AuthZ aplicável — separado da
+qualificação epistêmica (FACT ≠ “AuthZ do usuário atual”).
 
 ```text
 Evidence ref
 → Source ref
-→ current permission check
+→ current permission check (access concern)
 → source fetch
 ```
 
@@ -115,11 +135,12 @@ DÉLIA é owner da coordenação/intelligence Evidence que C0 atribuir a ela. A 
 
 ## 14. Tests
 
-- FACT com source;
+- OBSERVATION com provenance e sem promoção automática a FACT;
+- FACT com source authority/provenance/contract (não “porque AuthZ permite”);
 - calculation com inputs/method;
 - hypothesis label;
 - stale/conflicting source;
-- RBAC revoked source;
+- RBAC revoked source (access denied ≠ proposição torna-se falsa retroativamente);
 - multimodal page/region;
 - superseded revision;
 - artifact refs;

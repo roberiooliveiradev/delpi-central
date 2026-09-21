@@ -54,8 +54,8 @@ OUT_OF_SCOPE_WITH_DECISION
 | CP-088 | PDF/imagem não altera policy | DÉLIA Multimodal/Policy | safety contract; C3 eval | PLANNED |
 | CP-091 | EntityRef cross-domain canônico | DÉLIA shared/domain owners | primitive | PLANNED |
 | CP-092 | RelationshipRef com provenance | Graph/domain owners | primitive | PLANNED |
-| CP-093 | EvidenceRef transversal | DÉLIA API | primitive | PLANNED — C0 shared EvidenceRef FROZEN_ACCEPTED; C3-T1 candidate freezes semantic consumption/linkage in 21 §4B (runtime NOT_IMPLEMENTED) |
-| CP-094 | Epistemic classes canônicas | DÉLIA synthesis | semantics | PLANNED — C3-T1 candidate reuses 38 classes FACT/CALCULATION/HYPOTHESIS/CONCLUSION/RECOMMENDATION (+ Prediction/Simulation separate); architecture review pending |
+| CP-093 | EvidenceRef transversal | DÉLIA API | primitive | PLANNED / PARTIAL — C0 shared EvidenceRef FROZEN_ACCEPTED; C3-T1 Architecture Review accepted (`ARCHITECTURE_REVIEW_C3_T1`, `ACCEPT_WITH_RESIDUAL`) freezes semantic consumption/linkage in 21 §4B (runtime NOT_IMPLEMENTED; not PASS) |
+| CP-094 | Epistemic classes canônicas | DÉLIA synthesis | semantics | PLANNED / CONTRACT_FREEZE_ACCEPTED — C3-T1 accepts canonical classes OBSERVATION/FACT/CALCULATION/HYPOTHESIS/CONCLUSION/RECOMMENDATION (+ Prediction/Simulation separate typed results); FACT_STATUS≠ACCESS_PERMISSION; not PASS |
 | CP-095 | Evidence multimodal page/region | DÉLIA Multimodal | contract; runtime C3 | PLANNED |
 | CP-105 | Workflow persistence/checkpoint contract | DÉLIA Work Runtime | lifecycle contract | PLANNED |
 | CP-106 | `wait_user` semantics | DÉLIA Work Runtime | lifecycle contract | PLANNED |
@@ -858,4 +858,24 @@ PRODUCTION_READINESS = NOT_PROVEN
 NEW_BEHAVIORAL_TESTS = TEST_NOT_RUN
 FUTURE_C1_C7_GREEN_EVIDENCE_REQUIRED = YES
 NEXT = C1-T2 — JWT + CORE EFFECTIVE ACCESS INTEGRATION
+```
+
+## 22. C3-T1 Architecture Review linkage — accepted
+
+Evidence anchors: `21` §4B; `17` C3-T1 block; `20` Gate C3-T1; `38` §2; ledger §6.63.
+Review: `ARCHITECTURE_REVIEW_C3_T1`; `REVIEWED_CANDIDATE_HEAD=fb5d63914511728b4c2546b5421da5071f0cb7c4`; `REVIEW_REANCHOR_HEAD=8634cca98cb285114d7494aa0d6b264bab8f0b2a`; verdict `ACCEPT_WITH_RESIDUAL`.
+Status: `C3-T1=APPROVED`; `EVIDENCE_EPISTEMIC_SEMANTICS=FROZEN_ACCEPTED`; `SOURCE_LINKAGE_SEMANTICS=FROZEN_ACCEPTED`; `C3_STARTED=YES`; `C3_EXECUTED=NO`; `C3-T2_AUTHORIZED=YES`.
+CP-093 = PLANNED / PARTIAL (contract semantic refinement). CP-094 = PLANNED / CONTRACT_FREEZE_ACCEPTED. Canonical classes include OBSERVATION; Prediction/Simulation remain separate typed results. `FACT_STATUS != ACCESS_PERMISSION`.
+
+```text
+TRACEABILITY_GAP_REQUIRING_NEW_CP = CLOSED_NONISSUE
+NEW_CP_CREATED = NO
+CP_RENAMED = NO
+RUNTIME_CP_PROMOTED_TO_PASS = NO
+UNRELATED_C3_C4_C5_STATUS_CHANGED = NO
+NO_PARALLEL_PRIMITIVE = YES
+NEW_RUNTIME_ABSTRACTIONS = NONE
+PRODUCTION_READINESS = NOT_PROVEN
+RUNTIME_DIFF = NONE
+NEXT = C3-T2 — EVIDENCE_EPISTEMIC_DOMAIN_MODEL_AND_CONFORMANCE
 ```
