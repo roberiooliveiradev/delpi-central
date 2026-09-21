@@ -42,7 +42,7 @@ Implementar uma tela deste módulo é montar as factories já nomeadas. Não cri
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-Largura: uma coluna. Em tela estreita o título do header quebra acima do atualizar; os cartões ocupam a largura do conteúdo. Sem largura fixa e sem tabela que exija rolagem horizontal.
+Largura: uma coluna, exceto **Abrir chamado**, que replica o recorte do GLPI (`col-lg-8` / `col-lg-4`): conteúdo à esquerda, classificação à direita. Em tela estreita o título do header quebra acima do atualizar e as duas faixas do formulário empilham. Sem largura fixa e sem tabela que exija rolagem horizontal.
 
 ## Tema claro e escuro
 
@@ -147,25 +147,31 @@ A ordenação do cabeçalho pede de novo ao helpdesk; não reordena só a págin
 
 ## 2. Abrir chamado — `/apps/helpdesk/tickets/new`
 
+O GLPI 11 (`templates/components/itilobject/layout.html.twig`) parte a abertura em `itil-left-side` (`col-lg-8`: título e descrição) e `itil-right-side` (`col-lg-4`: categoria, urgência e demais propriedades). Esta tela copia esse recorte. Não copia atores, entidade, tipo, itens nem o accordion do painel direito.
+
 ```text
 HelpdeskPageHeader
   [ ← ]  nav canto superior esquerdo  aria-label Voltar
   título: Abrir chamado
   [ Atualizar ] oculto nesta rota
 
-HelpdeskSectionCard  «Abrir chamado»  hint = helpTooltips.create
+HelpdeskSectionCard  «Abrir chamado»  hint = helpTooltips.create  fill
 
   carregando categorias   │ ░░░ │
   erro                    ⚠
 
-  Título        ·····   obrigatório   hint = helpTooltips.create
-  Descrição     [ texto ] obrigatório
-  Categoria     [Select v] obrigatório, searchable
-  Urgência      [Select v] obrigatório
-                Muito baixa | Baixa | Média | Alta | Muito alta
+  form.helpdesk-create-form
+    .helpdesk-create-layout          grid 2fr / 1fr; 1 coluna abaixo de 768px
+      main  (esquerda, ~2/3)
+        Título        ·····   obrigatório   hint = helpTooltips.create
+        Descrição     [ texto ] obrigatório, área alta (conteúdo do chamado)
+      aside (direita, ~1/3)
+        Categoria     [Select v] obrigatório, searchable
+        Urgência      [Select v] obrigatório
+                      Muito baixa | Baixa | Média | Alta | Muito alta
 
-  HelpdeskFormActions
-    [ enviar ]  ícone; aria-label Enviar chamado
+    HelpdeskFormActions              faixa inteira, abaixo das duas colunas
+      [ enviar ]  ícone; aria-label Enviar chamado
 ```
 
 Não há campo de solicitante nem de entidade. Sucesso navega para `/apps/helpdesk/tickets/{id}` devolvido pela API. A mesma intenção de envio reutiliza a `Idempotency-Key`; não há segundo clique automático.

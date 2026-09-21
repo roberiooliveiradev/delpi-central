@@ -93,3 +93,45 @@
   flex-direction: column;
   gap: var(--helpdesk-section-gap);
 }
+
+.dashboard-helpdesk .helpdesk-create-form {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  gap: var(--helpdesk-section-gap);
+}
+
+.dashboard-helpdesk .helpdesk-create-layout {
+  display: grid;
+  flex: 1 1 auto;
+  grid-template-columns: minmax(0, 2fr) minmax(16rem, 1fr);
+  gap: var(--helpdesk-section-gap);
+  min-height: 0;
+}
+
+.dashboard-helpdesk .helpdesk-create-layout__main,
+.dashboard-helpdesk .helpdesk-create-layout__aside {
+  display: flex;
+  flex-direction: column;
+  gap: var(--helpdesk-section-gap);
+  min-width: 0;
+}
+
+.dashboard-helpdesk .helpdesk-create-layout__aside {
+  padding-inline-start: var(--helpdesk-card-padding);
+  border-inline-start: 1px solid var(--helpdesk-border);
+}
+
+@media (max-width: 768px) {
+  .dashboard-helpdesk .helpdesk-create-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-helpdesk .helpdesk-create-layout__aside {
+    padding-inline-start: 0;
+    padding-block-start: var(--helpdesk-card-padding);
+    border-inline-start: 0;
+    border-block-start: 1px solid var(--helpdesk-border);
+  }
+}

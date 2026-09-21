@@ -28,7 +28,7 @@ O desenho fechado das telas, dos componentes do kit e do claro/escuro está em [
 
 ```text
 /apps/helpdesk                  lista em cartões
-/apps/helpdesk/tickets/new      título, descrição, categoria, urgência
+/apps/helpdesk/tickets/new      esquerda: título e descrição; direita: categoria e urgência
 /apps/helpdesk/tickets/{id}     resumo, descrição, linha do tempo, acompanhamento
 ```
 

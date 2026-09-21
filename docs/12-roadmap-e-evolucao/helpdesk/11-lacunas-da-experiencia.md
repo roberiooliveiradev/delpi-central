@@ -26,7 +26,7 @@ A lista do GLPI é a bancada Super-Admin. Meus Chamados de TI não copia essa gr
 | Capacidade | Onde |
 |---|---|
 | Lista dos chamados visíveis ao token | `GET /tickets` → tabela com ordenação de coluna |
-| Abrir chamado | título, descrição, categoria, urgência |
+| Abrir chamado | título e descrição à esquerda; categoria e urgência à direita |
 | Conversa | abertura + acompanhamentos em `HelpdeskMessageThread` |
 | Responder | texto + `Idempotency-Key` |
 | Arquivo já ligado ao chamado | botão Baixar; 404 se o `document_id` não for daquele chamado |

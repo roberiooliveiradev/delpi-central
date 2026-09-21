@@ -372,6 +372,7 @@ function CreateTicketPage() {
       {loading ? <HelpdeskLoadingState message="Carregando categorias…" /> : null}
       {errorText ? <HelpdeskStateBanner variant="error">{errorText}</HelpdeskStateBanner> : null}
       <form
+        className="helpdesk-create-form"
         onSubmit={(event) => {
           event.preventDefault();
           if (saving) return;
@@ -393,23 +394,35 @@ function CreateTicketPage() {
             });
         }}
       >
-        <HelpdeskTextField label="Título" hint={helpTooltips.create} value={title} onChange={setTitle} required />
-        <HelpdeskTextArea label="Descrição" value={description} onChange={setDescription} required />
-        <HelpdeskSelect
-          label="Categoria"
-          value={categoryId}
-          onChange={setCategoryId}
-          required
-          searchable
-          options={categories.map((item) => ({ value: String(item.id), label: item.name }))}
-        />
-        <HelpdeskSelect
-          label="Urgência"
-          value={urgencyId}
-          onChange={setUrgencyId}
-          required
-          options={urgencies.map((item) => ({ value: String(item.id), label: item.name }))}
-        />
+        <div className="helpdesk-create-layout">
+          <div className="helpdesk-create-layout__main">
+            <HelpdeskTextField label="Título" hint={helpTooltips.create} value={title} onChange={setTitle} required />
+            <HelpdeskTextArea
+              label="Descrição"
+              value={description}
+              onChange={setDescription}
+              required
+              rows={12}
+            />
+          </div>
+          <aside className="helpdesk-create-layout__aside" aria-label="Classificação do chamado">
+            <HelpdeskSelect
+              label="Categoria"
+              value={categoryId}
+              onChange={setCategoryId}
+              required
+              searchable
+              options={categories.map((item) => ({ value: String(item.id), label: item.name }))}
+            />
+            <HelpdeskSelect
+              label="Urgência"
+              value={urgencyId}
+              onChange={setUrgencyId}
+              required
+              options={urgencies.map((item) => ({ value: String(item.id), label: item.name }))}
+            />
+          </aside>
+        </div>
         <HelpdeskFormActions>
           <HelpdeskIconButton
             tone="primary"
