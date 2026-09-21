@@ -23,6 +23,8 @@ Estados: `PROVEN` | `PLANNED` | `TARGET` | `NOT_STARTED`.
 | G-05 | `requester_display_name` na lista | PROVEN | commit `d1fb8a0af`, 21/09/2026 |
 | lista.href | Chamado/título com path estável + meio-clique | PROVEN | commit `e0439aab9`, 21/09/2026 |
 | G-07+ | `sort=closed_at` → `date_close` | PROVEN | commit `e0439aab9`, 21/09/2026 |
+| G-32b | Voltar restaura recorte da lista | PROVEN | commit `2b7a258de`, 21/09/2026 |
+| cartão.urgência | subtítulo `#id · urgência · técnico` | PROVEN | commit `ed6a67b5b`, 21/09/2026 |
 
 H3 e H6 fechados. Paridade E6–E13 + verify-final concluídos. E14 (menção leitura M-07) entregue; M-23 (`@` no compositor) BLOQUEADO sem catálogo HLAPI. Residuais de produto: H10 CONSOLE, H12 BLOQUEADO. Sem senha neste arquivo.
 
