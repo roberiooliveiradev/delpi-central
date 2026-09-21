@@ -24,6 +24,13 @@ describe("interaction room fill CSS", () => {
     expect(css).not.toMatch(/\.cm-room-thread__body \{/);
     expect(css).not.toMatch(/\.cm-room-panel \{/);
     expect(css).toMatch(/\.cm-interaction-room-embed \{/);
+    expect(css).toMatch(/\.cm-interaction-room-host/);
+    expect(css).toMatch(
+      /\.cm-resizable-columns__right > \.cm-interaction-room-host/,
+    );
+    expect(css).toMatch(
+      /\.cm-interaction-room-host > \.cm-interaction-room/,
+    );
     const fillChunk = css.split("Sala: fill viewport")[1]?.slice(0, 2500) ?? "";
     expect(fillChunk).not.toMatch(/\.delpi-ui-/);
     expect(css).not.toMatch(/max-height:\s*40vh/);
@@ -72,7 +79,7 @@ describe("interaction room fill CSS", () => {
       /\.cm-room-inbox-pane \{[\s\S]*?border-right:\s*1px/,
     );
     expect(css).toMatch(
-      /\.cm-resizable-columns__right > \.cm-room-thread \{[\s\S]*?min-height:\s*0;/,
+      /\.cm-resizable-columns__right > \.cm-room-thread[\s\S]*?min-height:\s*0;/,
     );
     expect(css).toMatch(
       /\.cm-room-inbox-pane__body > \.cm-room-inbox-panel \{[\s\S]*?min-height:\s*0;/,

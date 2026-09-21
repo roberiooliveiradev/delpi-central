@@ -886,7 +886,11 @@ export function CommercialInteractionRoomHost({
   });
 
   return (
-    <section className={variant === "page" ? "cm-page-stack" : undefined}>
+    <section
+      className={
+        variant === "page" ? "cm-page-stack" : "cm-interaction-room-host"
+      }
+    >
       {initialLoading ? (
         <CommercialLoadingCard title={content.roomLoadingLabel} variant="panel" />
       ) : null}

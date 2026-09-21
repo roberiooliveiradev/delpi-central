@@ -16,6 +16,7 @@ describe("CommercialInteractionRoomHost", () => {
       /InteractionRoomPage as KitInteractionRoomPage/,
     );
     expect(source).toMatch(/layout="thread"/);
+    expect(source).toMatch(/cm-interaction-room-host/);
     expect(source).toMatch(/prefix="cm"/);
     expect(source).toMatch(/portalScopeClassName=\{CM_PORTAL_SCOPE\}/);
     expect(source).toMatch(/resolveExtraActions/);

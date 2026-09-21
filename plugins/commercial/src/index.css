@@ -200,7 +200,22 @@
   position: relative;
 }
 
-/* Kit InteractionRoomPage no split: enche a coluna para o dock ficar no rodapé. */
+/*
+ * Host pane (wrapper do kit no split): precisa preencher a coluna.
+ * Sem isso, height:100% em .cm-interaction-room não resolve e o dock flutua.
+ */
+.dashboard-commercial .cm-room-workspace .cm-interaction-room-host,
+.dashboard-commercial .cm-resizable-columns__right > .cm-interaction-room-host {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  width: 100%;
+  align-self: stretch;
+}
+
+.dashboard-commercial .cm-interaction-room-host > .cm-interaction-room,
 .dashboard-commercial .cm-room-workspace .cm-interaction-room,
 .dashboard-commercial .cm-resizable-columns__right > .cm-interaction-room {
   display: flex;
@@ -210,6 +225,15 @@
   height: 100%;
   width: 100%;
   align-self: stretch;
+}
+
+.dashboard-commercial .cm-interaction-room-embed > .cm-interaction-room-host {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  width: 100%;
 }
 
 .dashboard-commercial .cm-room-workspace {
