@@ -38,6 +38,8 @@ Prova da grade (data absoluta, resolução, busca no conteúdo) está em [`13-li
 
 Prova da página e dos sete status está em [`14-pagina-e-estados-do-chamado.md`](./14-pagina-e-estados-do-chamado.md) §11.
 
+A matriz do restante do GLPI Assistência está em [`15-capacidades-glpi.md`](./15-capacidades-glpi.md) e não tem prova de produto até uma linha deixar de ser CONSOLE/HIPOTESE.
+
 ## 3. Homologação E5.S2
 
 ```text

@@ -38,7 +38,7 @@ Não entra em `E1…E5`.
 
 | Capacidade | Motivo de ficar para depois |
 |---|---|
-| Anexo | listar e baixar os arquivos já ligados ao chamado. Enviar arquivo novo continua fora: a API nova do GLPI 11.0.5 não recebe o binário |
+| Enviar arquivo novo | baixar o que já está no chamado **já está publicado**; upload continua fora (HLAPI JSON-only) |
 | Pesquisa de satisfação | fluxo posterior ao fechamento |
 | Fila, atribuição, tarefa, solução, validação | bancada do técnico, continua no GLPI |
 | Mudança e problema | outro itemtype |
@@ -52,3 +52,5 @@ Corpo rico da mensagem (HTML, formatação, imagem no fio) **não** é H5. É in
 Paridade da listagem (datas absolutas, resolução, busca no texto, período de abertura) **não** é H5 nem a bancada Super-Admin. É inventário em [`13-listagem-de-chamados.md`](./13-listagem-de-chamados.md).
 
 Página do chamado e os sete estados ITIL **não** abrem o formulário de três colunas nem H5. Inventário em [`14-pagina-e-estados-do-chamado.md`](./14-pagina-e-estados-do-chamado.md). Aprovar/reabrir/pesquisa continuam H5.
+
+Demais capacidades do módulo Assistência (Forms 11, TTR, vínculos, abas): [`15-capacidades-glpi.md`](./15-capacidades-glpi.md).

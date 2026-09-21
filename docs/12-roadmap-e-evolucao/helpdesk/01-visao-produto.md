@@ -27,9 +27,9 @@ Estados obrigatórios em cada tela: carregando, vazio, erro, acesso negado.
 O desenho fechado das telas, dos componentes do kit e do claro/escuro está em [`WIREFRAMES.md`](./WIREFRAMES.md). A visão resumida:
 
 ```text
-/apps/helpdesk                  lista em cartões
+/apps/helpdesk                  tabela + filtros
 /apps/helpdesk/tickets/new      esquerda: título e descrição; direita: categoria e urgência
-/apps/helpdesk/tickets/{id}     resumo, descrição, linha do tempo, acompanhamento
+/apps/helpdesk/tickets/{id}     cartão (status, categoria, urgência) + conversa + responder
 ```
 
 Deep link do detalhe fica na URL do MFE (`/apps/helpdesk/tickets/{id}`), para sobreviver a atualizar a página.

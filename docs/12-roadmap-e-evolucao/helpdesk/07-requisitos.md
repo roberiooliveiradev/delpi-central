@@ -32,6 +32,8 @@ Paridade da listagem com o GLPI do solicitante **não** é HD novo. Estende HD-0
 
 Página do chamado e estados ITIL **não** são HD novo. Estendem HD-009, HD-013, HD-015 e HD-016. Inventário em [`14-pagina-e-estados-do-chamado.md`](./14-pagina-e-estados-do-chamado.md); sem autorização de código.
 
+A matriz do módulo Assistência (Forms, SLA, vínculos, abas) **não** é HD novo. Inventário em [`15-capacidades-glpi.md`](./15-capacidades-glpi.md); sem autorização de código.
+
 ## Herdados da plataforma
 
 Não viram HD próprio:

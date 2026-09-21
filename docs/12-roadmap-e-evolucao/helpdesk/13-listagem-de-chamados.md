@@ -26,7 +26,7 @@ Há dois fluxos distintos:
 | Leitura da grade | o que já está no chamado precisa aparecer na linha? |
 | Recorte | o que a pessoa pode pedir ao helpdesk para achar o chamado? |
 
-Isto **estende** HD-008 (listar) e HD-016 (ajuda). Não é HD-019. Não abre H5. Não muda a busca para HTML do corpo ([`12`](./12-conteudo-da-mensagem.md) M-42).
+Isto **estende** HD-008 (listar) e HD-016 (ajuda). Não é HD-019. Não abre H5. Não muda a busca para HTML do corpo ([`12`](./12-conteudo-da-mensagem.md) M-42). Saved search, export, massa e Forms: [`15`](./15-capacidades-glpi.md).
 
 ## 2. Fontes e grau de evidência
 

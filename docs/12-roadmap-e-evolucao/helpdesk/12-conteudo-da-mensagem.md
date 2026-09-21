@@ -487,3 +487,5 @@ Quando houver implementação, no **mesmo** entregável, sem path de API:
 - não autoriza investigação live que grave senha ou corpo em log.
 
 Quando o pedido passar de «documentar» para «implementar», a primeira subetapa é fechar H1–H4 no pipeline real e classificar a evolução do contrato (já pré-classificada aqui como ADDITIVE). Só então M-01…M-23 viram plano executável.
+
+Capacidades de Assistência que não são corpo da mensagem (Forms, SLA, vínculos): [`15-capacidades-glpi.md`](./15-capacidades-glpi.md).

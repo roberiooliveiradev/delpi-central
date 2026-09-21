@@ -1,6 +1,6 @@
 # 11 — Lacunas da experiência
 
-> **Status:** inventário da experiência. A onda de lista, filtros e prévia de anexo está em implementação. Não altera [`06-plano-execucao.md`](./06-plano-execucao.md).
+> **Status:** inventário histórico da experiência. Lista, filtros e prévia **já publicados**. Lacunas restantes e paridade GLPI: [`12`](./12-conteudo-da-mensagem.md)–[`15`](./15-capacidades-glpi.md). Não altera [`06-plano-execucao.md`](./06-plano-execucao.md).
 > **Tela publicada:** [`WIREFRAMES.md`](./WIREFRAMES.md).
 > **Conversa já especificada:** [`10-conversa-do-chamado.md`](./10-conversa-do-chamado.md).
 > **Contrato vigente:** [`03-contrato.md`](./03-contrato.md).
@@ -32,7 +32,7 @@ A lista do GLPI é a bancada Super-Admin. Meus Chamados de TI não copia essa gr
 | Arquivo já ligado ao chamado | botão Baixar; 404 se o `document_id` não for daquele chamado |
 | Console do técnico | rota `helpdesk.console`, fora do MFE |
 
-A lista já devolve `updated_at`. A tela não mostra. O detalhe já devolve `created_at`, `requester_display_name`, `attachments[].mime`. A tela não usa o mime para prévia e, na foto do chamado 2, o nome do solicitante não aparece.
+A lista mostra `updated_at` e `created_at` (relativo). O detalhe mostra solicitante na abertura, técnico no cartão e prévia de anexo pelo mime. Frases antigas («a tela não mostra data / mime / nome») são **drift** — corrigidas em 21/09/2026.
 
 ## 3. Ledger do que falta
 
@@ -53,17 +53,17 @@ Pedido explícito das fotos: filtros e listagem de dados.
 
 | ID | Lacuna | Evidência | Estado | Dono |
 |---|---|---|---|---|
-| L-01 | Busca por texto (título / conteúdo visível) | lista MFE sem campo; GLPI tem «Pesquisar» | IMPLEMENTADO | BFF `q` + `FilterInputField` |
+| L-01 | Busca por texto (título / conteúdo visível) | `q` no título publicado; conteúdo ainda não — G-21 no 13 | IMPLEMENTADO (título) | BFF `q` + `FilterInputField` |
 | L-02 | Filtro de status | a lista mistura Novo, Em atendimento e Solucionado; o subtítulo diz «abertos» | IMPLEMENTADO | BFF + `FilterSelectField` |
 | L-03 | Filtro de urgência | o dado já existe no cartão; não dá para restringir | IMPLEMENTADO | BFF + kit de filtro |
 | L-04 | Filtro de categoria | categorias já vêm de `GET /ticket-categories` | IMPLEMENTADO | BFF + filtro |
-| L-05 | Filtro de período (abertura ou última atualização) | GLPI tem data de abertura e última atualização; o MFE não mostra nenhuma | IMPLEMENTADO | BFF `updated_from`/`updated_to` + date |
+| L-05 | Filtro de período (abertura ou última atualização) | `updated_from`/`updated_to` publicados; período de **abertura** ainda não — G-25 no 13 | IMPLEMENTADO (atualização) | BFF + date |
 | L-06 | Id do chamado visível | GLPI coluna ID; MFE só o path | IMPLEMENTADO | apresentação; `id` já está no JSON |
 | L-07 | Data de abertura na lista | GLPI «Data de abertura»; BFF da lista não publica `created_at` | IMPLEMENTADO | `TicketSummary.created_at` |
-| L-08 | Data da última atualização na lista | contrato já tem `updated_at`; a tela ignora | IMPLEMENTADO | `ticketRecordFields` |
+| L-08 | Data da última atualização na lista | coluna «Atualizado» publicada (relativo; absoluta no 13) | IMPLEMENTADO | `TicketListTable` |
 | L-09 | Técnico atribuído na lista e no detalhe | GLPI «Atribuído»; o `team` com `role=assigned` já existe no ticket | IMPLEMENTADO | `assigned_display_name` |
 | L-10 | Ordenar (última atualização, abertura, título) | GLPI «Ordenado por Última atualização»; BFF devolve a ordem do GLPI sem parâmetro | IMPLEMENTADO | query `sort` |
-| L-11 | Paginação | GLPI 15 por página; BFF pede a coleção inteira de `GET /Assistance/Ticket` | IMPLEMENTADO | `page`/`has_more`; sem total inventado |
+| L-11 | Paginação | `page`/`has_more` publicados; a frase «BFF pede a coleção inteira» é drift | IMPLEMENTADO | `start`/`limit` +1 |
 | L-12 | Estado vazio com filtro ativo | hoje o vazio significa «nenhum chamado»; com filtro precisa dizer «nenhum neste recorte» | IMPLEMENTADO | apresentação + ajuda |
 
 Filtros: `createDashboardFiltersKit`. Lista: `HelpdeskDataTable` (`DataTable` do kit), com scroll horizontal intencional. Sem coluna de entidade, último editor ou contadores do parque. Técnico aparece, mas não ordena — a HLAPI não tem propriedade simples de atribuído.
@@ -85,7 +85,7 @@ Pedido explícito das fotos: a imagem como prévia e um modal com download.
 | A-07 | Imagem de um acompanhamento específico | no 6288 a foto está na mensagem do técnico; a HLAPI do Followup não devolve essa lista; hoje todos os `Document` da timeline vão para a abertura | HIPOTESE_A_VALIDAR | não inventar o vínculo |
 | A-08 | Enviar arquivo novo | HLAPI 11.0.5 só aceita JSON; API legada desligada | BLOQUEADO | decisão explícita para ligar a API antiga |
 
-Kit já existente: `createDashboardAttachmentPreviewStrip`, `FilePreviewModal`, `resolveFilePreviewKind`, `useFilePreviewLoader`. O helpdesk não os importa. A prévia usa o mesmo GET de download, com `Accept: application/octet-stream`, limite de 20 MB já no BFF. Sem CSS de thumb no MFE.
+Kit: `HelpdeskAttachmentPreviewStrip` e `FilePreviewModal` **já ligados**. A prévia usa o GET de download, `Accept: application/octet-stream`, limite 20 MB. Sem CSS de thumb no MFE.
 
 ### 3.3 Conversa — o que a foto do chamado 2 ainda não entrega
 
@@ -93,7 +93,7 @@ A conversa em bolhas já foi publicada. As fotos mostram o corte que ainda falta
 
 | ID | Lacuna | Evidência | Estado |
 |---|---|---|---|
-| C-01 | Nome do solicitante na abertura | chamado 2: bolha sem «Robério» / iniciais reais | IMPLEMENTADO no tradutor (`requester` ou `user_recipient`); lado da bolha depende do nome ao vivo |
+| C-01 | Nome do solicitante na abertura | rótulo no tradutor; `mine` por id/e-mail (não pelo nome) | IMPLEMENTADO |
 | C-02 | Nome de quem acompanhou | GLPI 6288 escreve Mainena e Michael; o MFE no 2 só mostra o relógio | IMPLEMENTADO no tradutor (`display_name` / nome completo) |
 | C-03 | «Criado em … por …» | o GLPI escreve a frase; o MFE só põe a data relativa ou `dd/mm/aaaa` | IMPLEMENTADO — rótulo «Criado em …» |
 | C-04 | Foto do técnico | o 6288 tem avatar com foto; este módulo não guarda foto | CONSOLE_GLPI / fora — iniciais bastam |
@@ -108,7 +108,8 @@ A conversa em bolhas já foi publicada. As fotos mostram o corte que ainda falta
 |---|---|---|
 | N-01 | Anexar arquivo na abertura | BLOQUEADO — mesmo motivo de A-08 |
 | N-02 | Escolher entidade ou abrir em nome de outro | fora — HD-011 |
-| N-03 | Modelo de chamado / origem / pendência | CONSOLE_GLPI |
+| N-03 | Modelo de chamado / origem / pendência | CONSOLE_GLPI — matriz em [`15-capacidades-glpi.md`](./15-capacidades-glpi.md) X-10 / X-15 |
+| N-04 | Formulários / catálogo de serviços GLPI 11 | HIPOTESE — X-09 no 15 |
 
 ### 3.5 Depois do fechamento e bancada
 
@@ -150,27 +151,26 @@ Uma coluna, kit da Minha DELPI, tokens `--delpi-ui-*`. Sem grade do GLPI e sem v
       [ Baixar ]
 ```
 
-Claro e escuro continuam no mapeamento já feito em `.dashboard-helpdesk`. Ajuda (`helpTooltips.list` e `.detail`) muda no mesmo entregável: filtrar, ver data, abrir a imagem, baixar. Sem path de API. O subtítulo «Chamados abertos no seu nome» deixa de mentir se a lista incluir Solucionado — ou o filtro padrão passa a ser «abertos», com Solucionado/Fechado como recorte explícito.
+Claro e escuro continuam no mapeamento já feito em `.dashboard-helpdesk`. Ajuda (`helpTooltips.list` e `.detail`) muda no mesmo entregável: filtrar, ver data, abrir a imagem, baixar. Sem path de API. O subtítulo publicado é «Chamados no seu nome». A lista default é Todos. Não reabrir essa correção.
 
-## 6. Hipótese da lista truncada
+## 6. Hipótese da lista truncada — encerrada em parte
 
-Na mesma sessão, o MFE mostrou uns seis chamados e o GLPI Super-Admin mostrou 128 128. Três leituras cabem:
+A paginação `start`/`limit` + `has_more` está publicada. A leitura que «o BFF só pede a primeira página e perde chamado» (H2 antigo) está **refutada pelo código**.
+
+Continuam válidas:
 
 ```text
-H1  o token OAuth do BFF enxerga só o perfil colaborador — lista pequena, filtro pode ser local
-H2  a HLAPI já pagina e o BFF só lê a primeira página — a pessoa perde chamado sem saber
-H3  o Super-Admin no MFE um dia recebe o parque inteiro — filtrar no browser é inaceitável
+H1  o token colaborador enxerga só o que o perfil vê — lista pequena é esperada
+H3  Super-Admin no MFE não justifica filtrar 128 128 no browser — invariante do 13
 ```
-
-Nenhuma está confirmada neste inventário. Antes de implementar L-01…L-11, a primeira subetapa é medir no `GET /Assistance/Ticket` de produção: quantos itens vêm, se há `start`/`limit`/`filter`, e o que o token do colaborador vê versus o do Super-Admin. Sem isso, não há receita de paginação.
 
 ## 7. O que não copiar
 
 | Peça da foto do GLPI | Decisão |
 |---|---|
-| 11 colunas e rolagem horizontal | o wireframe vigente: cartão em uma coluna |
+| 11 colunas da bancada | tabela do kit, colunas do solicitante — [`13`](./13-listagem-de-chamados.md) |
 | Contadores do parque | bancada |
-| Entidade, último editor, data de solução | bancada; a entidade segue a padrão do usuário |
+| Entidade, último editor | bancada; data de resolução é ALVO no 13, não «só bancada» |
 | Foto de perfil | iniciais |
 | Imagem embutida como HTML do GLPI | blob autenticado no modal do kit; sem HTML cru |
 | Abas, atores editáveis, excluir, salvar | console |
@@ -193,4 +193,4 @@ Ainda não é etapa. Quando for planejada, a prova mínima é:
 
 ## 9. Fora deste inventário como autorização
 
-Este arquivo não abre E*.S*, não marca H5 como `PROVEN` e não liga a API legada. [`10-conversa-do-chamado.md`](./10-conversa-do-chamado.md) descreve a conversa já publicada. A paridade da listagem passou para [`13-listagem-de-chamados.md`](./13-listagem-de-chamados.md). O corpo da mensagem está em [`12-conteudo-da-mensagem.md`](./12-conteudo-da-mensagem.md). A página e os estados estão em [`14-pagina-e-estados-do-chamado.md`](./14-pagina-e-estados-do-chamado.md).
+Este arquivo não abre E*.S*, não marca H5 como `PROVEN` e não liga a API legada. [`10-conversa-do-chamado.md`](./10-conversa-do-chamado.md) descreve a conversa já publicada. A paridade da listagem passou para [`13-listagem-de-chamados.md`](./13-listagem-de-chamados.md). O corpo da mensagem está em [`12-conteudo-da-mensagem.md`](./12-conteudo-da-mensagem.md). A página e os estados estão em [`14-pagina-e-estados-do-chamado.md`](./14-pagina-e-estados-do-chamado.md). O restante do módulo Assistência (Forms, SLA, vínculos, abas) está em [`15-capacidades-glpi.md`](./15-capacidades-glpi.md).

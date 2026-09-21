@@ -25,7 +25,7 @@ Dois fluxos distintos:
 | Página | o que a pessoa precisa ver além da bolha? |
 | Estado | quais status o GLPI tem e como a Minha DELPI os mostra e recorta? |
 
-Isto **estende** HD-009, HD-013, HD-015 e HD-016. Aprovar solução / reabrir / pesquisa = H5 ([`05-roadmap.md`](./05-roadmap.md)), não este inventário como autorização.
+Isto **estende** HD-009, HD-013, HD-015 e HD-016. Aprovar solução / reabrir / pesquisa = H5 ([`05-roadmap.md`](./05-roadmap.md)), não este inventário como autorização. Forms, TTR, vínculos e abas que não cabem aqui: [`15-capacidades-glpi.md`](./15-capacidades-glpi.md).
 
 ## 2. Fontes e grau de evidência
 

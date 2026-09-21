@@ -4,7 +4,7 @@
 > **Fundação GLPI:** `PROVEN` em produção (21/09/2026)
 > **Produto:** Meus Chamados de TI — abertura e acompanhamento de chamados dentro da Minha DELPI, com o GLPI como dono do chamado
 > **Requisitos:** `HD-001…HD-018` em [`07-requisitos.md`](./07-requisitos.md)
-> **Próxima etapa:** H5 só com decisão nova; a escrita ao vivo ainda não está no ledger
+> **Próxima etapa:** H5 só com decisão nova. Inventários 12–15 não autorizam código. H3 (escrita ao vivo no ledger) continua `PLANNED`.
 > **Ordem de execução:** [`06-plano-execucao.md`](./06-plano-execucao.md)
 > **Estado de execução:** [`evidence/execution-ledger.md`](./evidence/execution-ledger.md)
 
@@ -17,9 +17,9 @@ Meus Chamados de TI não é um segundo sistema de chamados e não é um conserto
 ```text
 Hoje, publicado                     Ainda aberto
 ---------------------------------  --------------------------------
-MFE em /apps/helpdesk              abertura e acompanhamento ao vivo no ledger
-helpdesk-api com sessão OAuth      H5 (anexo, satisfação, bancada)
-GLPI continua dono do chamado      —
+MFE em /apps/helpdesk              H3 ao vivo no ledger (POST já existe na tela)
+helpdesk-api com sessão OAuth      H5 (upload, satisfação, bancada)
+GLPI continua dono do chamado      inventários 12–15 (sem autorização)
 ```
 
 ```text
@@ -92,6 +92,7 @@ O id não muda. O plugin iframe já é `helpdesk`, e o cliente OAuth de produç�
 | O que a mensagem deve mostrar (HTML, imagem, formatação)? | [`12-conteudo-da-mensagem.md`](./12-conteudo-da-mensagem.md) — inventário, não é etapa de código |
 | O que a listagem deve mostrar (colunas, filtros, datas)? | [`13-listagem-de-chamados.md`](./13-listagem-de-chamados.md) — inventário, não é etapa de código |
 | O que a página do chamado e os estados devem mostrar? | [`14-pagina-e-estados-do-chamado.md`](./14-pagina-e-estados-do-chamado.md) — inventário, não é etapa de código |
+| O que o GLPI Assistência tem e ainda não estava fatiado? | [`15-capacidades-glpi.md`](./15-capacidades-glpi.md) — matriz; não é etapa de código |
 | O que a pessoa faz? | [`01-visao-produto.md`](./01-visao-produto.md) |
 | Quem é dono e o que já existe? | [`02-arquitetura.md`](./02-arquitetura.md) |
 | Qual é o contrato? | [`03-contrato.md`](./03-contrato.md) |
@@ -107,4 +108,4 @@ Mapa curto: [`INDEX.md`](./INDEX.md).
 
 ## 6. Fora da primeira entrega
 
-Anexo, pesquisa de satisfação, fila do técnico, mudança, problema, inventário, API legada do GLPI e gravação de chamado em banco da Minha DELPI. Detalhe em [`05-roadmap.md`](./05-roadmap.md).
+Upload de arquivo novo, pesquisa de satisfação, fila do técnico, mudança, problema, inventário, API legada e banco de chamado na Minha DELPI. Baixar anexo já publicado. Matriz completa em [`15-capacidades-glpi.md`](./15-capacidades-glpi.md).
