@@ -5,6 +5,7 @@ import {
   type TicketListColumnPreference,
 } from "../presentation/ticketListViewModel";
 import type { TicketSummary } from "../api/helpdeskApi";
+import { helpTooltips } from "../content/helpTooltips";
 import { HelpdeskDataTable, HelpdeskStatusBadge } from "../ui/helpdeskUi";
 
 export function TicketListTable({
@@ -47,6 +48,7 @@ function toDataTableColumn(definition: TicketListColumnDefinition) {
   return {
     key: definition.key,
     header: definition.header,
+    headerHint: helpTooltips.columns[definition.key as keyof typeof helpTooltips.columns],
     sortable: definition.sortable,
     render: (row: TicketSummary) => renderColumn(definition.key, row),
   };

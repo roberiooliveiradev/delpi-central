@@ -9,4 +9,65 @@ export const helpTooltips = {
     "À esquerda ficam título e descrição; à direita, categoria, urgência e observadores opcionais. A descrição aceita formatação (negrito, listas, links, título, tabela) — o mesmo editor da resposta. Não dá para colar imagem nem anexar arquivo na abertura. Observadores: números de usuário do helpdesk, separados por vírgula — o BFF só envia o papel observador, sem escolher solicitante nem entidade. O envio fica à direita, no rodapé. A categoria é a lista visível para o seu usuário. A seta no canto superior volta à lista. O chamado fica no seu usuário e na entidade padrão do helpdesk.",
   detail:
     "A conversa preenche a tela e rola. No cartão aparecem aberto, atualizado, resolvido e fechado em dia e hora; TTO/TTR e o observador só se o helpdesk trouxer. A resposta fica no rodapé no mesmo editor rico da abertura, enquanto o chamado aceitar acompanhamento — chamado fechado some o Responder. Aprovar solução, reabrir e pesquisa de satisfação ficam no console do helpdesk: a API nova ainda não entrega esses passos ao solicitante. A formatação do helpdesk aparece na bolha. Imagens do fio abrem em prévia ao clicar. Não dá para colar imagem nem enviar arquivo novo por aqui. A foto da Minha DELPI aparece só nas mensagens que o helpdesk reconhece como suas, pelo usuário ou pelo e-mail, não pelo nome. Nas outras, as iniciais de quem escreveu. A seta no canto superior volta à lista; o ícone de enviar grava a resposta. Arquivos ligados ao chamado ficam abaixo da abertura.",
-};
+
+  /** Controles da lista — um texto curto por superfície. */
+  listUi: {
+    refreshPage: "Pede de novo a lista ao helpdesk com o mesmo recorte da URL.",
+    openTicket: "Abre o formulário para registrar um chamado novo no seu nome.",
+    clearFilters: "Remove busca, status, urgência, categoria e datas; mantém a ordenação e o tamanho da página.",
+    search: "Busca no título ou no texto da abertura do chamado. Aguarda um instante antes de pedir ao helpdesk.",
+    status:
+      "Recorta pelo número do status no helpdesk: abertos (inclui aprovação), em atendimento, pendentes, aguardando aprovação, solucionados ou fechados.",
+    urgency: "Filtra pela urgência cadastrada no helpdesk. Todas mostra qualquer urgência.",
+    category: "Filtra pela categoria visível para o seu usuário. Todas mostra qualquer categoria.",
+    updatedFrom: "Só chamados cuja última atualização é neste dia ou depois.",
+    updatedTo: "Só chamados cuja última atualização é neste dia ou antes.",
+    createdFrom: "Só chamados abertos neste dia ou depois.",
+    createdTo: "Só chamados abertos neste dia ou antes.",
+    pageSize: "Quantos chamados o helpdesk devolve por página: 10, 20 ou 50.",
+    sortChip: "Mostra a ordenação ativa. Até três níveis; o primeiro é o que a grade destaca.",
+    filterChip: "Indica um critério do recorte que está na URL e sobrevive ao F5.",
+    filterBuilderToggle: "Abre ou fecha o construtor de regras com E (AND). O recorte aplicado vai para a URL.",
+    sortBuilderToggle: "Abre ou fecha a ordenação em níveis (até três campos).",
+    columns: "Mostra ou esconde colunas da grade. A preferência fica neste navegador.",
+    refreshList: "Atualiza só a grade com o recorte atual, sem limpar filtros.",
+    prevPage: "Volta para a página anterior do recorte.",
+    nextPage: "Avança para a próxima página quando o helpdesk indica que há mais.",
+    pageNumber: "Página atual da lista. O helpdesk não informa o total de páginas.",
+  },
+
+  filterBuilder: {
+    panel:
+      "Monte regras com E (AND). Ao aplicar, o recorte vai para a URL e o F5 mantém o critério. Grupos com OU ficam no console do helpdesk por enquanto.",
+    field: "Escolha o campo do filtro entre os que o helpdesk já aceita nesta lista.",
+    operator: "Operação da regra: contém, é, de ou até — conforme o campo.",
+    value: "Valor da regra. Vazio não entra no recorte ao aplicar.",
+    removeRule: "Remove esta regra do construtor. Só altera a lista depois de Aplicar.",
+    addRule: "Inclui outra regra E no construtor.",
+    clear: "Apaga todas as regras do construtor sem mudar a URL até você aplicar ou limpar pelos filtros de cima.",
+    apply: "Grava as regras na URL e pede a lista ao helpdesk.",
+  },
+
+  sortBuilder: {
+    panel: "Defina até três níveis de ordenação. O primeiro é o que a grade destaca no cabeçalho.",
+    field: "Campo usado neste nível de ordenação.",
+    direction: "Ascendente (A→Z / antigo→novo) ou descendente.",
+    removeLevel: "Remove este nível. Precisa restar pelo menos um.",
+    addLevel: "Inclui outro nível de ordenação (no máximo três).",
+    apply: "Grava a ordenação na URL e pede a lista ao helpdesk.",
+  },
+
+  columns: {
+    id: "Número do chamado no helpdesk.",
+    title: "Título informado na abertura.",
+    status: "Estado atual com o rótulo do helpdesk; o recorte usa o número do status.",
+    category: "Categoria do chamado.",
+    urgency: "Urgência cadastrada.",
+    assigned: "Técnico atribuído, quando o helpdesk informar.",
+    created_at: "Data e hora de abertura.",
+    updated_at: "Data e hora da última alteração.",
+    solved_at: "Data e hora da solução, quando existir.",
+    closed_at: "Data e hora do fechamento, quando existir.",
+    requester: "Nome do solicitante (rótulo).",
+  },
+} as const;

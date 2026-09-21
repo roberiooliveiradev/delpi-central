@@ -54,6 +54,7 @@ declare module "@delpi/plugin-ui/index" {
     eyebrow?: ReactNode;
     icon?: ReactNode;
     nav?: ReactNode;
+    actions?: ReactNode;
     onRefresh?: () => void;
     refreshing?: boolean;
     compact?: boolean;
@@ -479,6 +480,7 @@ declare module "@delpi/plugin-ui/index" {
   export type DataTableColumn<T> = {
     key: string;
     header: string;
+    headerHint?: string;
     render: (row: T) => ReactNode;
     sortable?: boolean;
     className?: string;
@@ -525,6 +527,7 @@ declare module "@delpi/plugin-ui/index" {
 
   export type FilterSelectFieldProps = {
     label: string;
+    hint?: string;
     value: string;
     onChange: (value: string) => void;
     options: readonly FilterSelectOption[];

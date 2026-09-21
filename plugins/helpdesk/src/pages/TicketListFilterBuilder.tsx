@@ -1,5 +1,7 @@
 import { Plus, Trash2 } from "lucide-react";
+import { ActionButton, HintAction } from "@delpi/plugin-ui/index";
 
+import { helpTooltips } from "../content/helpTooltips";
 import {
   newFilterRuleId,
   TICKET_LIST_BUILDER_FIELDS,
@@ -13,7 +15,6 @@ import {
   HelpdeskFormActions,
   HelpdeskIconButton,
 } from "../ui/helpdeskUi";
-import { ActionButton } from "@delpi/plugin-ui/index";
 
 type CatalogOption = { id: number; name: string };
 
@@ -36,6 +37,8 @@ export function TicketListFilterBuilder({
   urgencies: CatalogOption[];
   categories: CatalogOption[];
 }) {
+  const help = helpTooltips.filterBuilder;
+
   function updateRule(ruleId: string, patch: Partial<TicketListFilterRule>) {
     onChange({
       ...group,
@@ -65,19 +68,25 @@ export function TicketListFilterBuilder({
 
   return (
     <div className="helpdesk-filter-builder" aria-label="Construtor de filtros">
-      <p className="helpdesk-filter-builder__hint">
-        Regras com E (AND). O recorte vai para a URL e sobrevive ao F5. Grupos OU ficam para uma
-        evolução do contrato.
-      </p>
+      <p className="helpdesk-filter-builder__hint">{help.panel}</p>
       <ul className="helpdesk-filter-builder__rules">
         {group.rules.map((rule) => {
           const meta =
             TICKET_LIST_BUILDER_FIELDS.find((item) => item.key === rule.field) ??
             TICKET_LIST_BUILDER_FIELDS[0];
+          const operatorLabel =
+            meta.operator === "contains"
+              ? "contém"
+              : meta.operator === "gte"
+                ? "de"
+                : meta.operator === "lte"
+                  ? "até"
+                  : "é";
           return (
             <li key={rule.id} className="helpdesk-filter-builder__rule" data-kind={meta.input}>
               <HelpdeskFilterSelect
                 label="Campo"
+                hint={help.field}
                 value={rule.field}
                 onChange={(field) => {
                   const nextMeta =
@@ -93,12 +102,13 @@ export function TicketListFilterBuilder({
                   label: item.label,
                 }))}
               />
-              <span className="helpdesk-filter-builder__op" aria-hidden>
-                {meta.operator === "contains" ? "contém" : meta.operator === "gte" ? "de" : meta.operator === "lte" ? "até" : "é"}
-              </span>
+              <HintAction hint={help.operator} ariaLabel="Ajuda: operador">
+                <span className="helpdesk-filter-builder__op">{operatorLabel}</span>
+              </HintAction>
               {meta.input === "status" ? (
                 <HelpdeskFilterSelect
                   label="Valor"
+                  hint={help.value}
                   value={rule.value}
                   onChange={(value) => updateRule(rule.id, { value })}
                   options={[...TICKET_STATUS_FILTERS]}
@@ -107,6 +117,7 @@ export function TicketListFilterBuilder({
               {meta.input === "urgency" ? (
                 <HelpdeskFilterSelect
                   label="Valor"
+                  hint={help.value}
                   value={rule.value}
                   onChange={(value) => updateRule(rule.id, { value })}
                   options={[
@@ -118,6 +129,7 @@ export function TicketListFilterBuilder({
               {meta.input === "category" ? (
                 <HelpdeskFilterSelect
                   label="Valor"
+                  hint={help.value}
                   value={rule.value}
                   onChange={(value) => updateRule(rule.id, { value })}
                   options={[
@@ -129,29 +141,37 @@ export function TicketListFilterBuilder({
               {meta.input === "text" || meta.input === "date" ? (
                 <HelpdeskFilterInput
                   label="Valor"
+                  hint={help.value}
                   type={meta.input === "date" ? "date" : "search"}
                   value={rule.value}
                   onChange={(value) => updateRule(rule.id, { value })}
                 />
               ) : null}
-              <HelpdeskIconButton
-                aria-label="Remover regra"
-                onClick={() => removeRule(rule.id)}
-              >
-                <Trash2 size={14} aria-hidden />
-              </HelpdeskIconButton>
+              <span className="helpdesk-filter-builder__remove">
+                <HintAction hint={help.removeRule} ariaLabel="Ajuda: Remover regra">
+                  <HelpdeskIconButton aria-label="Remover regra" onClick={() => removeRule(rule.id)}>
+                    <Trash2 size={14} aria-hidden />
+                  </HelpdeskIconButton>
+                </HintAction>
+              </span>
             </li>
           );
         })}
       </ul>
       <HelpdeskFormActions>
-        <ActionButton onClick={addRule}>
-          <Plus size={14} aria-hidden /> Regra
-        </ActionButton>
-        <ActionButton onClick={onClear}>Limpar</ActionButton>
-        <ActionButton variant="primary" onClick={onApply}>
-          Aplicar
-        </ActionButton>
+        <HintAction hint={help.addRule} ariaLabel="Ajuda: Regra">
+          <ActionButton onClick={addRule}>
+            <Plus size={14} aria-hidden /> Regra
+          </ActionButton>
+        </HintAction>
+        <HintAction hint={help.clear} ariaLabel="Ajuda: Limpar">
+          <ActionButton onClick={onClear}>Limpar</ActionButton>
+        </HintAction>
+        <HintAction hint={help.apply} ariaLabel="Ajuda: Aplicar">
+          <ActionButton variant="primary" onClick={onApply}>
+            Aplicar
+          </ActionButton>
+        </HintAction>
       </HelpdeskFormActions>
     </div>
   );

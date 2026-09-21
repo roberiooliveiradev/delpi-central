@@ -2,9 +2,10 @@ import { useEffect, useState, type ReactNode } from "react";
 import {
   ActionButton,
   FilePreviewModal,
+  HintAction,
   TableColumnVisibilityMenu,
 } from "@delpi/plugin-ui/index";
-import { AlignLeft, ArrowUpDown, ChevronLeft, ChevronRight, FilterX, FolderTree, Gauge, ListFilter, Plus, Send, TicketPlus, Type } from "lucide-react";
+import { AlignLeft, ArrowUpDown, ChevronLeft, ChevronRight, FilterX, FolderTree, Gauge, ListFilter, Plus, RefreshCw, Send, TicketPlus, Type } from "lucide-react";
 
 import {
   HelpdeskApiError,
@@ -241,53 +242,68 @@ function TicketListPage() {
         title="Meus Chamados de TI"
         subtitle="Chamados no seu nome"
         compact
-        onRefresh={() => void load(filters)}
-        refreshing={loading}
+        actions={
+          <HintAction hint={helpTooltips.listUi.refreshPage} ariaLabel="Ajuda: Atualizar">
+            <HelpdeskIconButton
+              tone="primary"
+              aria-label="Atualizar"
+              disabled={loading}
+              onClick={() => void load(filters)}
+            >
+              <RefreshCw size={16} aria-hidden />
+            </HelpdeskIconButton>
+          </HintAction>
+        }
       />
       <HelpdeskSectionCard
         title="Meus chamados"
         hint={helpTooltips.list}
         fill
         actions={
-          <HelpdeskIconButton
-            tone="primary"
-            aria-label="Abrir chamado"
-            onClick={() => navigateHelpdesk("/apps/helpdesk/tickets/new")}
-          >
-            <Plus size={16} aria-hidden />
-          </HelpdeskIconButton>
+          <HintAction hint={helpTooltips.listUi.openTicket} ariaLabel="Ajuda: Abrir chamado">
+            <HelpdeskIconButton
+              tone="primary"
+              aria-label="Abrir chamado"
+              onClick={() => navigateHelpdesk("/apps/helpdesk/tickets/new")}
+            >
+              <Plus size={16} aria-hidden />
+            </HelpdeskIconButton>
+          </HintAction>
         }
       >
         {view === "link" ? null : (
           <HelpdeskFiltersRow compact variant="extended" trailing={
             filterActive ? (
-              <HelpdeskIconButton
-                aria-label="Limpar filtros"
-                onClick={() => {
-                  const next = {
-                    ...currentListFilters(),
-                    q: "",
-                    status: "",
-                    urgency_id: "",
-                    category_id: "",
-                    updated_from: "",
-                    updated_to: "",
-                    created_from: "",
-                    created_to: "",
-                    page: 1,
-                    sort: filters.sort,
-                    page_size: filters.page_size,
-                  };
-                  setQDraft("");
-                  commitFilters(next);
-                }}
-              >
-                <FilterX size={16} aria-hidden />
-              </HelpdeskIconButton>
+              <HintAction hint={helpTooltips.listUi.clearFilters} ariaLabel="Ajuda: Limpar filtros">
+                <HelpdeskIconButton
+                  aria-label="Limpar filtros"
+                  onClick={() => {
+                    const next = {
+                      ...currentListFilters(),
+                      q: "",
+                      status: "",
+                      urgency_id: "",
+                      category_id: "",
+                      updated_from: "",
+                      updated_to: "",
+                      created_from: "",
+                      created_to: "",
+                      page: 1,
+                      sort: filters.sort,
+                      page_size: filters.page_size,
+                    };
+                    setQDraft("");
+                    commitFilters(next);
+                  }}
+                >
+                  <FilterX size={16} aria-hidden />
+                </HelpdeskIconButton>
+              </HintAction>
             ) : null
           }>
             <HelpdeskFilterInput
               label="Buscar"
+              hint={helpTooltips.listUi.search}
               type="search"
               value={qDraft}
               onChange={setQDraft}
@@ -295,48 +311,56 @@ function TicketListPage() {
             />
             <HelpdeskFilterSelect
               label="Status"
+              hint={helpTooltips.listUi.status}
               value={filters.status}
               onChange={(status) => commitFilters({ ...filters, status, page: 1 })}
               options={[...TICKET_STATUS_FILTERS]}
             />
             <HelpdeskFilterSelect
               label="Urgência"
+              hint={helpTooltips.listUi.urgency}
               value={filters.urgency_id}
               onChange={(urgency_id) => commitFilters({ ...filters, urgency_id, page: 1 })}
               options={[{ value: "", label: "Todas" }, ...urgencies.map((item) => ({ value: String(item.id), label: item.name }))]}
             />
             <HelpdeskFilterSelect
               label="Categoria"
+              hint={helpTooltips.listUi.category}
               value={filters.category_id}
               onChange={(category_id) => commitFilters({ ...filters, category_id, page: 1 })}
               options={[{ value: "", label: "Todas" }, ...categories.map((item) => ({ value: String(item.id), label: item.name }))]}
             />
             <HelpdeskFilterInput
               label="Atualizado de"
+              hint={helpTooltips.listUi.updatedFrom}
               type="date"
               value={filters.updated_from}
               onChange={(updated_from) => commitFilters({ ...filters, updated_from, page: 1 })}
             />
             <HelpdeskFilterInput
               label="Atualizado até"
+              hint={helpTooltips.listUi.updatedTo}
               type="date"
               value={filters.updated_to}
               onChange={(updated_to) => commitFilters({ ...filters, updated_to, page: 1 })}
             />
             <HelpdeskFilterInput
               label="Aberto de"
+              hint={helpTooltips.listUi.createdFrom}
               type="date"
               value={filters.created_from}
               onChange={(created_from) => commitFilters({ ...filters, created_from, page: 1 })}
             />
             <HelpdeskFilterInput
               label="Aberto até"
+              hint={helpTooltips.listUi.createdTo}
               type="date"
               value={filters.created_to}
               onChange={(created_to) => commitFilters({ ...filters, created_to, page: 1 })}
             />
             <HelpdeskFilterSelect
               label="Por página"
+              hint={helpTooltips.listUi.pageSize}
               value={String(filters.page_size)}
               onChange={(page_size) =>
                 commitFilters({ ...filters, page_size: Number(page_size) || 20, page: 1 })
@@ -352,50 +376,62 @@ function TicketListPage() {
               void load(filters);
             }}
             filterBuilderToggle={
-              <HelpdeskIconButton
-                aria-label={showFilterBuilder ? "Fechar construtor de filtros" : "Abrir construtor de filtros"}
-                onClick={() => {
-                  setShowFilterBuilder((open) => {
-                    if (!open) {
-                      setBuilderGroup(ticketListViewModelFromFilters(filters, columnPreferences).filterRoot);
-                    }
-                    return !open;
-                  });
-                  setShowSortBuilder(false);
-                }}
+              <HintAction
+                hint={helpTooltips.listUi.filterBuilderToggle}
+                ariaLabel="Ajuda: Construtor de filtros"
               >
-                <ListFilter size={16} aria-hidden />
-              </HelpdeskIconButton>
+                <HelpdeskIconButton
+                  aria-label={showFilterBuilder ? "Fechar construtor de filtros" : "Abrir construtor de filtros"}
+                  onClick={() => {
+                    setShowFilterBuilder((open) => {
+                      if (!open) {
+                        setBuilderGroup(ticketListViewModelFromFilters(filters, columnPreferences).filterRoot);
+                      }
+                      return !open;
+                    });
+                    setShowSortBuilder(false);
+                  }}
+                >
+                  <ListFilter size={16} aria-hidden />
+                </HelpdeskIconButton>
+              </HintAction>
             }
             sortBuilderSlot={
-              <HelpdeskIconButton
-                aria-label={showSortBuilder ? "Fechar ordenação" : "Ordenação em níveis"}
-                onClick={() => {
-                  setShowSortBuilder((open) => {
-                    if (!open) setSortDraft(parseTicketSortLevels(filters.sort));
-                    return !open;
-                  });
-                  setShowFilterBuilder(false);
-                }}
+              <HintAction
+                hint={helpTooltips.listUi.sortBuilderToggle}
+                ariaLabel="Ajuda: Ordenação"
               >
-                <ArrowUpDown size={16} aria-hidden />
-              </HelpdeskIconButton>
+                <HelpdeskIconButton
+                  aria-label={showSortBuilder ? "Fechar ordenação" : "Ordenação em níveis"}
+                  onClick={() => {
+                    setShowSortBuilder((open) => {
+                      if (!open) setSortDraft(parseTicketSortLevels(filters.sort));
+                      return !open;
+                    });
+                    setShowFilterBuilder(false);
+                  }}
+                >
+                  <ArrowUpDown size={16} aria-hidden />
+                </HelpdeskIconButton>
+              </HintAction>
             }
             columnPreferencesSlot={
-              <TableColumnVisibilityMenu
-                columns={menuColumns}
-                visibility={visibility}
-                onToggleColumn={setColumnVisible}
-                onReset={resetPreferences}
-                onReorderColumns={reorderColumns}
-                labels={{
-                  trigger: "Colunas",
-                  panelTitle: "Colunas da lista",
-                  reset: "Restaurar padrão",
-                  hint: "A preferência fica neste navegador.",
-                  columnAriaLabel: (label) => `Mostrar coluna ${label}`,
-                }}
-              />
+              <HintAction hint={helpTooltips.listUi.columns} ariaLabel="Ajuda: Colunas">
+                <TableColumnVisibilityMenu
+                  columns={menuColumns}
+                  visibility={visibility}
+                  onToggleColumn={setColumnVisible}
+                  onReset={resetPreferences}
+                  onReorderColumns={reorderColumns}
+                  labels={{
+                    trigger: "Colunas",
+                    panelTitle: "Colunas da lista",
+                    reset: "Restaurar padrão",
+                    hint: helpTooltips.listUi.columns,
+                    columnAriaLabel: (label) => `Mostrar coluna ${label}`,
+                  }}
+                />
+              </HintAction>
             }
           />
         )}
@@ -471,21 +507,27 @@ function TicketListPage() {
         ) : null}
         {view === "list" || (view === "empty" && filters.page > 1) ? (
           <HelpdeskFormActions>
-            <HelpdeskIconButton
-              aria-label="Página anterior"
-              disabled={filters.page <= 1 || loading}
-              onClick={() => commitFilters({ ...filters, page: Math.max(1, filters.page - 1) })}
-            >
-              <ChevronLeft size={16} aria-hidden />
-            </HelpdeskIconButton>
-            <span>{filters.page}</span>
-            <HelpdeskIconButton
-              aria-label="Próxima página"
-              disabled={!hasMore || loading}
-              onClick={() => commitFilters({ ...filters, page: filters.page + 1 })}
-            >
-              <ChevronRight size={16} aria-hidden />
-            </HelpdeskIconButton>
+            <HintAction hint={helpTooltips.listUi.prevPage} ariaLabel="Ajuda: Página anterior">
+              <HelpdeskIconButton
+                aria-label="Página anterior"
+                disabled={filters.page <= 1 || loading}
+                onClick={() => commitFilters({ ...filters, page: Math.max(1, filters.page - 1) })}
+              >
+                <ChevronLeft size={16} aria-hidden />
+              </HelpdeskIconButton>
+            </HintAction>
+            <HintAction hint={helpTooltips.listUi.pageNumber} ariaLabel="Ajuda: Página atual">
+              <span>{filters.page}</span>
+            </HintAction>
+            <HintAction hint={helpTooltips.listUi.nextPage} ariaLabel="Ajuda: Próxima página">
+              <HelpdeskIconButton
+                aria-label="Próxima página"
+                disabled={!hasMore || loading}
+                onClick={() => commitFilters({ ...filters, page: filters.page + 1 })}
+              >
+                <ChevronRight size={16} aria-hidden />
+              </HelpdeskIconButton>
+            </HintAction>
           </HelpdeskFormActions>
         ) : null}
       </HelpdeskSectionCard>
