@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   StatusBadge,
+  TaskEditorFrame,
   UserDirectoryPicker,
   attachmentIdsInMarkdown,
   type DirectoryUserOption,
@@ -31,6 +32,8 @@ import { useCommercialConfirm } from "../../app/CommercialConfirmDialogProvider"
 import { useCommercialFloatingNotice } from "../../app/CommercialFloatingNoticeProvider";
 import { useDirectoryUserLabels } from "../../app/useDirectoryUserLabels";
 import {
+  cmSectionCardClassNames,
+  cmSectionLabels,
   cmStatusBadgeClassNames,
   CommercialActionButton,
   CommercialAttachmentPreviewStrip,
@@ -1261,7 +1264,9 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
 
       {canManageFollowups && formMode !== "closed" ? (
         <div ref={taskFormRef} className="cm-my-day-create">
-          <CommercialSectionCard
+          <TaskEditorFrame
+            classNames={cmSectionCardClassNames}
+            labels={cmSectionLabels}
             title={formMode === "edit" ? "Editar tarefa" : "Nova tarefa"}
             subtitle={
               formMode === "edit"
@@ -1273,18 +1278,26 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
                   : "Título, prazo, tipo, cliente, observação e anexos — padrão HubSpot/Pipedrive."
             }
             hint={formMode === "edit" ? CM_HELP.myDay.editTask : CM_HELP.myDay.newTask}
-            
-            
-            collapsible
-            open
-            onOpenChange={(next) => {
-              if (!next) closeTaskForm();
-            }}
-            actions={
-              <CommercialActionButton variant="ghost" onClick={closeTaskForm}>
-                Fechar
-              </CommercialActionButton>
-            }
+            reviewRows={[
+              { label: "Título", value: title.trim() || "—" },
+              {
+                label: "Responsável",
+                value:
+                  assigneeMode === "groups"
+                    ? assigneeGroupIds
+                        .map((id) => groupOptions.find((group) => group.id === id)?.name || id)
+                        .join(", ") || "—"
+                    : assigneePicker
+                        .map((user) => user.name || user.email)
+                        .join(", ") || (formMode === "create" ? "Eu" : "—"),
+              },
+              { label: "Prazo", value: dueDate || "—" },
+              { label: "Descrição", value: description.trim() || "—" },
+            ]}
+            onClose={closeTaskForm}
+            primaryLabel={formMode === "edit" ? "Salvar alterações" : "Criar tarefa"}
+            onPrimary={() => void (formMode === "edit" ? onSaveEdit() : onCreate())}
+            primaryBusy={formMode === "edit" ? savingEdit : creating}
           >
             <div className="cm-my-day-form">
               <div className="cm-my-day-form__title">
@@ -1505,30 +1518,8 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
                   />
                 </div>
               ) : null}
-              <div className="cm-my-day-form__actions">
-                <CommercialActionButton variant="ghost" onClick={closeTaskForm}>
-                  Cancelar
-                </CommercialActionButton>
-                {formMode === "edit" ? (
-                  <CommercialActionButton
-                    variant="primary"
-                    disabled={savingEdit}
-                    onClick={() => void onSaveEdit()}
-                  >
-                    {savingEdit ? "Salvando…" : "Salvar alterações"}
-                  </CommercialActionButton>
-                ) : (
-                  <CommercialActionButton
-                    variant="primary"
-                    disabled={creating}
-                    onClick={() => void onCreate()}
-                  >
-                    {creating ? "Criando…" : "Criar tarefa"}
-                  </CommercialActionButton>
-                )}
-              </div>
             </div>
-          </CommercialSectionCard>
+          </TaskEditorFrame>
         </div>
       ) : null}
       <TaskAttachmentPreviewModal
