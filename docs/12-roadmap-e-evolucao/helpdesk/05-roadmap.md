@@ -92,9 +92,9 @@ Depende de H6 para imagem. Leitura HTML e escrita rica **não** dependem da imag
 
 | Entrega | Fonte | HD |
 |---|---|---|
-| Datas absolutas no cartão | 14 P-04 | HD-023 |
-| `can_followup` esconde Responder | 14 P-06 — **só status 6** (14-H1) | HD-023 |
-| Observador só leitura | 14 P-05 **se** team.observer | HD-023 |
+| Datas absolutas no cartão | 14 P-04 — **IMPLEMENTADO** | HD-023 |
+| `can_followup` esconde Responder | 14 P-06 — **IMPLEMENTADO** (só status 6) | HD-023 |
+| Observador só leitura | 14 P-05 — **IMPLEMENTADO** se team.observer | HD-023 |
 | Sem três colunas / PATCH | invariante | — |
 
 ## H10 — Fechar o ciclo (solicitante)
