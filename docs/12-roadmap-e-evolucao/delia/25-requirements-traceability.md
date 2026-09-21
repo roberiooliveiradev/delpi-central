@@ -152,14 +152,14 @@ OUT_OF_SCOPE_WITH_DECISION
 | CP-012 | “Explique o que estou vendo” | DÉLIA API + Context | grounding | LOCKED |
 | CP-025 | Deep link após execução | Portal/MFE | result navigation | LOCKED |
 | CP-059 | Platform Capability Projection | Portal/DÉLIA API | Core authority | LOCKED |
-| CP-061 | Abrir iframe `PORTAL_ONLY` | Portal/CopilotBridge | authorized navigation | LOCKED |
-| CP-062 | Handshake seguro Portal↔iframe | Portal/IframeBridge | security contract | LOCKED |
-| CP-063 | Workspace Context de iframe | IframeBridge | normalization | LOCKED |
-| CP-064 | Comando visual genérico iframe | Portal/IframeBridge | declared capability | LOCKED |
-| CP-065 | Classificar iframe I0–I3 | Readiness | evidence | LOCKED |
-| CP-068 | Proibir Business Action via DOM/click | Portal/DÉLIA Policy | negative gate | LOCKED |
-| CP-069 | SSO iframe sem token pelo bridge | Portal/App/Security | auth architecture | TO_INVENTORY |
-| CP-070 | Observabilidade iframe bridge | Portal/Observability | trace/redaction | LOCKED |
+| CP-061 | Abrir iframe `PORTAL_ONLY` | Portal/CopilotBridge | authorized navigation | DEFER_UNTIL_REAL_CONSUMER for DÉLIA; Portal embedded open is a host primitive |
+| CP-062 | Handshake seguro Portal↔iframe | Portal/IframeBridge | security contract | PARTIAL platform primitive; not a DÉLIA contract; no version/capability negotiation |
+| CP-063 | Workspace Context de iframe | IframeBridge | normalization | DEFER_UNTIL_REAL_CONSUMER; no iframe WorkspaceContext runtime |
+| CP-064 | Comando visual genérico iframe | Portal/IframeBridge | declared capability | DEFER generic command bus; existing messages are navigation/theme only |
+| CP-065 | Classificar iframe I0–I3 | Readiness | evidence | DÉLIA NOT_APPLICABLE_CURRENTLY; live embedded rows beyond repo manifests stay TO_INVENTORY |
+| CP-068 | Proibir Business Action via DOM/click | Portal/DÉLIA Policy | negative gate | PARTIAL — current DÉLIA shell has no DOM business action; not future ACT approval |
+| CP-069 | SSO iframe sem token pelo bridge | Portal/App/Security | auth architecture | TO_INVENTORY for legacy Portal token postMessage; DÉLIA must not copy it |
+| CP-070 | Observabilidade iframe bridge | Portal/Observability | trace/redaction | TO_INVENTORY — no structured bridge trace in current host |
 | CP-156 | Paridade de RBAC/policy entre Global/Workspace/Meeting/Frontline | Portal/DÉLIA Policy | surface parity | PARTIAL — companion dock and full-page share Core `/me/apps` + same host AuthZ hints; Meeting/Frontline surfaces do not exist |
 | CP-159 | Contexto operacional OP/máquina/produto/operação/posto usa WorkspaceContext + EntityRef | Portal/MFE/DÉLIA | operational context contract | LOCKED — inventory only; C2-T4/T4R1: OPERATIONAL_CONTEXT=TO_INVENTORY; no Workspace runtime after T5 |
 | CP-171 | Device metadata não substitui identidade/autorização | Portal/DÉLIA Security | shared-device/context negative | LOCKED — requirement only; not a C2 device runtime |
@@ -569,7 +569,7 @@ No CP promoted to PASS by documentation alone
 
 Related non-inventory CPs (CP-178/179 OT, CP-091 EntityRef, etc.) remain PLANNED/LOCKED per their rows; inventory evidence does not satisfy runtime gates.
 
-C2-T3: rows CP-002–CP-012, CP-025, CP-059, CP-061–CP-070 remain `LOCKED` as requirements. C2-T5R3 keeps CP-001/CP-149 at `IMPLEMENTED_CURRENT_SCOPE` for the companion dock (`C2_EXECUTED=NO`). Product Master live smoke of the companion dock is `PASS` for render, non-modal, current route, dynamic reclamp, usable center app, pointer resize and keyboard resize. `LIVE_USER_A_USER_B` and portal logout E2E stay at their previous status. V1 modal UX is `SUPERSEDED_UX`. CP-156 is `PARTIAL`. Host presentation, transient dock state and full-page mount are the current C2 runtime. WorkspaceContext, operational OP/machine/product/operation/posto, typed command bus and DÉLIA iframe bridge are not runtime. CP-012 reasoning is C3.
+C2-T3: rows CP-002–CP-012, CP-025, CP-059 and CP-159 remain `LOCKED` as requirements. CP-061–CP-070 now carry T6 applicability notes and are not PASS. C2-T5R3 keeps CP-001/CP-149 at `IMPLEMENTED_CURRENT_SCOPE` for the companion dock (`C2_EXECUTED=NO`). Product Master live smoke of the companion dock is `PASS` for render, non-modal, current route, dynamic reclamp, usable center app, pointer resize and keyboard resize. C2-T6 inventories the existing Portal embedded host. DÉLIA full-page and companion dock stay federated. No DÉLIA iframe bridge was added. V1 modal UX is `SUPERSEDED_UX`. CP-156 is `PARTIAL`. Host presentation, transient dock state and full-page mount are the current C2 runtime. WorkspaceContext, operational OP/machine/product/operation/posto, typed command bus and DÉLIA iframe bridge are not runtime. CP-012 reasoning is C3. `LIVE_USER_A_USER_B` and portal logout E2E stay at their previous status.
 
 ## 15. C0.S1 naming / physical ownership linkage — accepted review
 

@@ -991,6 +991,19 @@ BROWSER_RETAINED_STATE = NONE
 LIVE_COMPANION_DOCK = PASS (Product Master smoke scope; see §6.57)
 ```
 
+C2-T6 iframe applicability (inventory only; no DÉLIA bridge):
+
+```text
+FULLPAGE_DELIA = federated AppHost, not iframe
+COMPANION_DOCK = federated ./App, not iframe
+REAL_DELIA_IFRAME_CONSUMER = NONE
+PORTAL_EMBEDDED_HOST = existing AppHost renderMode=embedded
+DELIA_TOKEN_OVER_IFRAME_BRIDGE = FORBIDDEN
+IFRAME_DELIA_BRIDGE = DEFER_UNTIL_REAL_CONSUMER
+NEW_HOST_FIELDS = NONE
+RUNTIME_CHANGE = NONE
+```
+
 C2-T4 owner/source inventory (no runtime Workspace; DÉLIA is not owner):
 
 ```text
