@@ -1,14 +1,14 @@
 # API-ROUTES — supplies-api e reuso api-delpi
 
-> **Revisado em 2026-09-16 contra o código atual.**  
+> **Revisado em 2026-09-16 contra o código atual.**
 > Arquitetura: `MFE → supplies-api → api-delpi | purchase-requests-api | strategic-indicators-api | Core`.
 >
 > O MFE **não** chama `api-delpi` nem `purchase-requests-api`. Downstreams:
 > `supplies-api → api-delpi` (pedidos) e `supplies-api → purchase-requests-api` (solicitações).
 
-Envelope alvo: `{ success, message, data, meta }`.  
-AuthN: JWT Keycloak.  
-AuthZ: permissions efetivas resolvidas pelo Core API; não usar lista de permissions dos claims JWT como fonte final.  
+Envelope alvo: `{ success, message, data, meta }`.
+AuthN: JWT Keycloak.
+AuthZ: permissions efetivas resolvidas pelo Core API; não usar lista de permissions dos claims JWT como fonte final.
 Target RBAC ([ADR-009](./adr/ADR-009-product-access-and-operational-data-scope.md)): rotas normais exigem `supplies.access`; administração exige `supplies.manage`. Unidade é filtro de dados `01`/`02`, não permission. SC do Portal é acompanhamento global via S2S confiável para `purchase-requests-api`. O standalone mantém o RBAC próprio.
 
 Status documental:
@@ -77,7 +77,7 @@ As rotas abaixo são **alvos de composição** e só entram em implementação q
 |---|---|---|---|---|---|
 | Pedidos | GET | `/purchase-orders` | `supplies.access` + unit | api-delpi `GET /supplies/purchase-orders` (SC7 aberto + `summary`) | **IMPLEMENTADO** |
 | Detalhe pedido | GET | `/purchase-orders/{branch}/{number}` | `supplies.access` + filtro de dados `01`/`02` + resource (universo aberto SC7) | api-delpi `GET /supplies/purchase-orders/{branch}/{order_number}` | **IMPLEMENTADO** |
-| Entregas | GET | `/deliveries/late` | `supplies.access` + filtro de dados `01`/`02` | api-delpi `GET /supplies/purchase-order-otd/panel` já existe; BFF ausente | PLANEJADO |
+| Entregas | GET | `/deliveries/late` | `supplies.access` + filtro de dados `01`/`02` | api-delpi `GET /supplies/purchase-order-otd/panel`; BFF ausente; [P0 freeze](./evidence/e9-wf07-p0-contract-freeze.md) | **CONTRATO FROZEN** — implementação pendente |
 | Estoque | GET | `/inventory/stock-value` | política a fechar na página | api-delpi stock-value | PLANEJADO |
 | Estoque | GET | `/inventory/stock-balances` | `supplies.access` + filtro de dados `01`/`02` | api-delpi stock-balances | PLANEJADO |
 | Giro | GET | `/inventory/turnover` | analytics + unit | api-delpi inventory-turnover | PLANEJADO |

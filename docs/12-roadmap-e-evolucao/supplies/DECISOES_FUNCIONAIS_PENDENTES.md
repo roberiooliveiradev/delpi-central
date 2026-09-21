@@ -2,7 +2,7 @@
 
 # DECISOES_FUNCIONAIS_PENDENTES — Portal Suprimentos
 
-> Revisado em 2026-09-16. Revalidado em 2026-09-21 (`24ee4ad48`): GATE-FEATURE WF-06 está PASS na [evidência federada](./evidence/e8-wf06-federated-runtime-gate.md). Não há neste repositório autorização do Product Owner para WF-07. P-03 continua bloqueio de paridade/depreciação, não a única trava da página nativa. Este arquivo contém apenas decisões que o repositório ainda não responde. Hipótese não vira receita executável.
+> Revisado em 2026-09-16. Revalidado em 2026-09-21 (`4f3ed59483`): GATE-FEATURE WF-06 está PASS. Autorização do Product Owner e P0 contract freeze de WF-07 estão persistidos em [e9-wf07-p0-contract-freeze.md](./evidence/e9-wf07-p0-contract-freeze.md). P-03 continua bloqueio de paridade/depreciação, não a construção da página nativa. Este arquivo contém apenas decisões que o repositório ainda não responde. Hipótese não vira receita executável.
 
 | ID | Pergunta | Impacto | Estado atual | Próxima decisão |
 |---|---|---|---|---|

@@ -1,10 +1,10 @@
 # IMPLEMENTATION-PLAN — Portal Suprimentos
 
-> **Status (revalidado 2026-09-21, `aa13f1075`):** plano executável revisado segundo `evidence-driven-execution.mdc`, `plan-construction.mdc` e `plan-execution.mdc`.
-> **Entregue:** E1–E8 (incluindo E8 / WF-06 detalhe do pedido). GATE-FEATURE WF-06 = **PASS** no smoke federado de 2026-09-21 ([evidência](./evidence/e8-wf06-federated-runtime-gate.md)). Residual: 403 de unidade não executado.
-> **Em foco:** nenhuma página — E9 / WF-07 Entregas **não autorizada**. Não há, neste repositório, registro persistido de autorização do Product Owner nem de contract freeze que libere a implementação.
-> **Próxima página candidata:** E9 WF-07 Entregas, bloqueada até essa autorização existir como evidência do repositório.
-> **Modo:** uma página user-facing por vez; etapas futuras abaixo são fila/grafo, não autorização de execução.
+> **Status (revalidado 2026-09-21, `4f3ed59483`):** plano executável revisado segundo `evidence-driven-execution.mdc`, `plan-construction.mdc` e `plan-execution.mdc`.
+> **Entregue:** E1–E8 (incluindo E8 / WF-06 detalhe do pedido). GATE-FEATURE WF-06 = **PASS** ([evidência](./evidence/e8-wf06-federated-runtime-gate.md)).
+> **Em foco:** **E9 / WF-07 Entregas / atrasos** — promoção AUTHORIZED; P0 **FROZEN** ([freeze](./evidence/e9-wf07-p0-contract-freeze.md)); implementação ainda não iniciada.
+> **Próxima receita:** `E9.S1` → `E9.S5` sem ultrapassar o freeze.
+> **Modo:** uma página user-facing por vez; etapas futuras abaixo são fila/grafo, não autorização automática.
 
 Referências: [README](./README.md), ADR-001..ADR-007, [WIREFRAMES](./WIREFRAMES.md), [API-ROUTES](./API-ROUTES.md), [DECISOES_FUNCIONAIS_PENDENTES](./DECISOES_FUNCIONAIS_PENDENTES.md), [HOMOLOGACAO-PARIDADE](./HOMOLOGACAO-PARIDADE.md).
 
@@ -48,7 +48,7 @@ Invariantes:
 | RQ-06 | SC C1 funcional + DoD da página | ATENDIDO — E6.S1–S5 |
 | RQ-07 | Pedidos de Compra (lista) | ATENDIDO — E7 |
 | RQ-08 | Detalhe do Pedido | ATENDIDO — E8 implementado; GATE-FEATURE WF-06 `PASS` |
-| RQ-09 | Entregas/Atrasos | BLOQUEADO — E9 sem autorização persistida do Product Owner |
+| RQ-09 | Entregas/Atrasos | ATENDIDO_NO_PLANO — promoção + P0 freeze; implementação = receita E9.S* |
 | RQ-10 | Estoque | BLOQUEADO pela fila — E10 |
 | RQ-11 | ESTSEG | BLOQUEADO pela fila — E11 |
 | RQ-12 | Análise de Consumo | BLOQUEADO pela fila — E12 |
@@ -158,12 +158,12 @@ Overview/OTD fechados com filtros/URL, 7 KPIs, metas SI, charts/gauges e Ajuda.
 
 ## E6.S1 — Gateway PR-api — COMPLETED
 
-**Entregue:** BFF C1 preservando CC fail-closed e unit scope.  
+**Entregue:** BFF C1 preservando CC fail-closed e unit scope.
 **Teste de referência:** `pytest supplies-api/tests/infrastructure/gateways/test_purchase_requests_gateway.py -q` + BFF route tests.
 
 ## E6.S2 — Lista/detalhe SC — COMPLETED FUNCIONAL
 
-**Entregue:** lista e detalhe via MFE BFF-only.  
+**Entregue:** lista e detalhe via MFE BFF-only.
 **Teste de referência:** `cd plugins/supplies && npm test -- PurchaseRequests`.
 
 ## E6.S3 — Export — COMPLETED
@@ -172,15 +172,15 @@ Overview/OTD fechados com filtros/URL, 7 KPIs, metas SI, charts/gauges e Ajuda.
 
 ## E6.S4 — Evidência C2 — COMPLETED DOCUMENTAL
 
-**Entregue:** inventário de schema/writers/jobs/cursors/subscriptions e estratégia single-writer.  
-**Evidência:** [evidence/e6-s4-c2-migration-evidence.md](./evidence/e6-s4-c2-migration-evidence.md).  
+**Entregue:** inventário de schema/writers/jobs/cursors/subscriptions e estratégia single-writer.
+**Evidência:** [evidence/e6-s4-c2-migration-evidence.md](./evidence/e6-s4-c2-migration-evidence.md).
 **Residual:** medir volumes HML/prod antes de E25.
 
 ## E6.S5 — Revalidar GATE-FEATURE WF-04 — COMPLETED 2026-09-11
 
-**Entregue:** kit-first (`PagePath`/`PageHero`/`FilterBar`/`SectionCard`/`ActionButton`), mapper 403, Help nos filtros, URL/F5, estados loading/empty/error/404, testes MFE estruturais + BFF/security verdes.  
-**Residual:** smoke federado Portal = `INCONCLUSIVE` neste ambiente; DataTable kit do `plugin-ui` fica para quando houver 2+ páginas tabulares no Portal (lista SC usa tabela de domínio com CSS de layout apenas).  
-**Teste:** `cd plugins/supplies && npm test -- --run src/features/purchase-requests` · `supplies-api/.venv/bin/pytest tests/interface/http/test_purchase_requests_bff.py tests/security/test_purchase_request_export.py tests/infrastructure/gateways/test_purchase_requests_gateway.py -q`.  
+**Entregue:** kit-first (`PagePath`/`PageHero`/`FilterBar`/`SectionCard`/`ActionButton`), mapper 403, Help nos filtros, URL/F5, estados loading/empty/error/404, testes MFE estruturais + BFF/security verdes.
+**Residual:** smoke federado Portal = `INCONCLUSIVE` neste ambiente; DataTable kit do `plugin-ui` fica para quando houver 2+ páginas tabulares no Portal (lista SC usa tabela de domínio com CSS de layout apenas).
+**Teste:** `cd plugins/supplies && npm test -- --run src/features/purchase-requests` · `supplies-api/.venv/bin/pytest tests/interface/http/test_purchase_requests_bff.py tests/security/test_purchase_request_export.py tests/infrastructure/gateways/test_purchase_requests_gateway.py -q`.
 **Commit sugerido:** `fix(supplies): fechar DoD de solicitações de compras`
 
 ---
@@ -209,7 +209,48 @@ Pré-condição: autorização explícita PO (E7 já PASS). Contrato de detalhe 
 
 ## E9 — WF-07 Entregas/Atrasos
 
-Pré-condição persistida neste plano: E8 com GATE-FEATURE PASS e autorização explícita do Product Owner registrada no repositório. O gate de E8 passou em 2026-09-21. A autorização de WF-07 continua ausente. Comparar regra do BI Atraso quando evidência produtiva existir; isso bloqueia **depreciação/paridade**, não a construção da página nativa se o contrato PO-OTD estiver confirmado e a página for autorizada. Fechar GATE-FEATURE.
+**Promoção AUTHORIZED** (Product Owner) + **P0 CONTRACT FROZEN** em 2026-09-21 — [evidence/e9-wf07-p0-contract-freeze.md](./evidence/e9-wf07-p0-contract-freeze.md).
+
+Pré-condições satisfeitas: E8 GATE-FEATURE PASS; autorização PO persistida; producer `GET /supplies/purchase-order-otd/panel` revalidado no HEAD.
+
+Contrato resumido:
+
+- BFF: `GET /deliveries/late` (gateway `/apps/supplies-api/deliveries/late`)
+- AuthZ: `supplies.access` + filtro `01`/`02` (ADR-009); sem permission de entregas
+- Semântica: `DIAS < 0` = late; período = `DT_DIGITACAO`; grão = recebimento MP
+- Todas ≠ omitir `branch` no producer (merge BFF 01+02)
+- MFE: `/apps/supplies/deliveries`; **NO DRILL P0** para ficha E8
+- P-03: não bloqueia a página nativa; bloqueia paridade/depreciação do BI
+
+### E9.S1 — Verificar producer + wiring BFF (sem mudar TOTVS)
+
+Revalidar panel no HEAD de implementação; adicionar read no gateway `supplies-api` apontando ao panel. Sem alteração de SQL/regra.
+
+**Teste:** smoke de contrato existente do producer; teste de gateway isolado se houver padrão.
+
+### E9.S2 — BFF `GET /deliveries/late`
+
+AuthZ + unit scope + defaults (`status=late`, mês corrente) + merge 01/02 + flatten `items` + mapeamento de erros. Fail-closed se Core ou perna upstream falhar.
+
+**Teste:** happy / 1 branch / Todas / 403 / 422 / 502 / sort / pagination / Core down.
+
+### E9.S3 — MFE página kit-first
+
+Substituir placeholder; FilterBar (unidade, período, status); DataTable; estados; URL sync. Sem drill P0.
+
+**Teste:** structural + vitest de filtros/URL/estados.
+
+### E9.S4 — Help + estados + URL
+
+Sync Manual / Quero→onde / FAQ / tooltips / glossário; corrigir «atrasos do dia» para a semântica de digitação do recebimento.
+
+**Teste:** chaves de Help / links do Manual.
+
+### E9.S5 — Suites + GATE-FEATURE WF-07
+
+Suites API+MFE + smoke federado Portal → BFF only. Só então classificar GATE-FEATURE.
+
+**Não executar E9.S* neste documento — freeze apenas.**
 
 ## E10 — WF-15 Controle de Estoques
 
@@ -229,7 +270,7 @@ Busca/lista. Se busca SA2/contrato fornecedor não estiver comprovada, manter `B
 
 ## E14 — WF-10 Fornecedor 360
 
-Composição TOTVS + PG. **Qualidade fica fora do P0 enquanto P-11 não estiver resolvido**; não usar “quando autorizada” como receita ambígua. Notas, quando existirem, seguem `supplies.access` + escopo de dados + ownership, sem permission CRUD preventiva. E9 não está autorizada; a AuthZ futura é `supplies.access`, sem permission própria.
+Composição TOTVS + PG. **Qualidade fica fora do P0 enquanto P-11 não estiver resolvido**; não usar “quando autorizada” como receita ambígua. Notas, quando existirem, seguem `supplies.access` + escopo de dados + ownership, sem permission CRUD preventiva. AuthZ de páginas futuras permanece `supplies.access`, sem permission própria.
 
 ## E15 — WF-11 OTD Fornecedores
 
@@ -365,11 +406,26 @@ todos:
     status: completed
     dependsOn: [e7-purchase-orders-list]
   - id: e9-deliveries
-    status: blocked
+    status: pending
     dependsOn: [e8-purchase-order-detail]
+  - id: e9-s1-producer-wiring
+    status: pending
+    dependsOn: [e9-deliveries]
+  - id: e9-s2-bff-deliveries-late
+    status: pending
+    dependsOn: [e9-s1-producer-wiring]
+  - id: e9-s3-mfe-page
+    status: pending
+    dependsOn: [e9-s2-bff-deliveries-late]
+  - id: e9-s4-help-url-states
+    status: pending
+    dependsOn: [e9-s3-mfe-page]
+  - id: e9-s5-feature-gate
+    status: pending
+    dependsOn: [e9-s4-help-url-states]
   - id: e10-inventory
     status: blocked
-    dependsOn: [e9-deliveries]
+    dependsOn: [e9-s5-feature-gate]
   - id: e11-safety-stock
     status: blocked
     dependsOn: [e10-inventory]

@@ -216,7 +216,7 @@ SectionCard "OTD no tempo"
 | Resource | pedido deve pertencer ao recorte autorizado |
 | Fonte | api-delpi `GET /supplies/purchase-orders/{branch}/{order_number}` via supplies-api |
 | Ações | ficha read-only; voltar à lista |
-| Estado | **implementado E8** (2026-09-16); smoke federado `INCONCLUSIVE` até prova live |
+| Estado | **implementado E8** (2026-09-16); smoke federado **PASS** ([evidência](./evidence/e8-wf06-federated-runtime-gate.md)) |
 | DoD | kit-first, estados, Help, deep link/F5/back, testes P/S/N |
 
 ### WF-07 — Entregas / Atrasos
@@ -225,8 +225,12 @@ SectionCard "OTD no tempo"
 |---|---|
 | Rota | `/deliveries` |
 | Capability | `supplies.access` |
-| Conteúdo | atrasos operacionais e drills autorizados |
+| BFF | `GET /deliveries/late` → api-delpi `GET /supplies/purchase-order-otd/panel` |
+| Conteúdo P0 | linhas de **recebimento MP** com status `late`/`on_time`; período = `DT_DIGITACAO`; sem drill para ficha PC |
+| Kit | PagePath/Hero, FilterBar, DataTable, estados, StatusBadge |
+| Freeze | [e9-wf07-p0-contract-freeze.md](./evidence/e9-wf07-p0-contract-freeze.md) |
 | Paridade | BI atraso só pode ser depreciado após comparação real; P-03 continua residual de cutover/paridade |
+| Estado | **PROMOTION AUTHORIZED** + **P0 FROZEN**; implementação ainda não iniciada |
 
 ### WF-08 — Importações
 

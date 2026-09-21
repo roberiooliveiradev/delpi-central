@@ -440,7 +440,8 @@ Roadmap ≠ autorização de implementação.
 | Capacidade | Estado atual | Evidência | Necessidade | Próximo passo |
 |---|---|---|---|---|
 | Portal SC/PC (E1–E7 impl.) | Existente (implementação) | `plugins/supplies`, `supplies-api`, README | Manter; evoluir qualidade SC | Homologar SUP-003/004 |
-| E8 / WF-06 detalhe PC | IMPLEMENTATION PRESENT / DEPLOYED; GATE PASS | [evidência federada](./evidence/e8-wf06-federated-runtime-gate.md) | Manter residual de 403 documentado | Não promover E9 sem autorização |
+| E8 / WF-06 detalhe PC | IMPLEMENTATION PRESENT / DEPLOYED; GATE PASS | [evidência federada](./evidence/e8-wf06-federated-runtime-gate.md) | Manter residual de 403 documentado | E9 já autorizada + freeze P0 |
+| E9 / WF-07 entregas | AUTHORIZED + P0 FROZEN; BFF/MFE ausentes | [freeze](./evidence/e9-wf07-p0-contract-freeze.md) | Implementar E9.S1–S5 | Não marcar GATE PASS sem smoke |
 | Overview + OTD KPI | Existente | KPI-FICHAS; `/analytics/otd` | Homologar universo OTD | P-03 |
 | ESTSEG | Parcial | `plugins/estoque-seguranca`; placeholder Portal | Absorção + fórmula ideal | E11 + homologação |
 | Fornecedor 360 / OTD página | Proposto | Placeholder `App.tsx` | Página nativa | Contrato SA2; P-11 |

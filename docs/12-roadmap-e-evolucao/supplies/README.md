@@ -1,11 +1,11 @@
 # Portal Suprimentos — documentação mestra
 
-> **Status (2026-09-21):** implementação incremental em andamento · **E1–E8 concluídas** · **WF-06 GATE-FEATURE PASS** no smoke federado de produção
-> **Readiness:** **GATE-E1 + GATE-ARCH + GATE-AUTHZ + GATE-RBAC PASS (local)**  
-> **Modo de entrega:** **uma página por vez até DoD** — a próxima página só pode ser promovida a foco após fechamento da atual  
-> **Página em foco:** **nenhuma** — E8 / WF-06 Detalhe do Pedido entregue; E9 / WF-07 Entregas **não autorizada**  
-> **Últimas páginas fechadas:** **Início (WF-01)**, **Visão geral (WF-02/WF-02R)**, **OTD analytics (WF-OTD-A)**, **Solicitações de compras (WF-04)**, **Pedidos de compra (WF-05)** e **Detalhe do pedido (WF-06)**  
-> **Próxima página candidata:** **Entregas / atrasos (WF-07)**, somente com autorização explícita do Product Owner  
+> **Status (2026-09-21):** implementação incremental em andamento · **E1–E8 concluídas** · **WF-06 GATE-FEATURE PASS** · **E9 P0 CONTRACT FROZEN** ([freeze](./evidence/e9-wf07-p0-contract-freeze.md))
+> **Readiness:** **GATE-E1 + GATE-ARCH + GATE-AUTHZ + GATE-RBAC PASS (local)** · E9 `READY_TO_EXECUTE`
+> **Modo de entrega:** **uma página por vez até DoD** — a próxima página só pode ser promovida a foco após fechamento da atual
+> **Página em foco:** **E9 / WF-07 Entregas / atrasos** — promoção AUTHORIZED; implementação ainda não iniciada
+> **Últimas páginas fechadas:** **Início (WF-01)**, **Visão geral (WF-02/WF-02R)**, **OTD analytics (WF-OTD-A)**, **Solicitações de compras (WF-04)**, **Pedidos de compra (WF-05)** e **Detalhe do pedido (WF-06)**
+> **Próxima receita:** executar `E9.S1`–`E9.S5` do [IMPLEMENTATION-PLAN](./IMPLEMENTATION-PLAN.md) sem ultrapassar o freeze
 > **Id técnico:** `supplies` · **basePath:** `/apps/supplies` · **API:** `supplies-api` · gateway `/apps/supplies-api/` · **CSS root:** `.dashboard-supplies-portal`
 
 O Portal Suprimentos é o hub operacional, analítico e gerencial do domínio de Suprimentos na Minha DELPI. Ele substitui progressivamente experiências fragmentadas por jornadas coesas, preservando bounded contexts, RBAC central, paridade mensurável e rollback.
@@ -36,6 +36,7 @@ A documentação desta pasta deve obedecer à hierarquia vigente das regras `.cu
 | **E6 — SC C1 + GATE-FEATURE WF-04** | **concluída 2026-09-11** — BFF C1, lista/detalhe/export, kit-first, Help, testes; smoke federado `INCONCLUSIVE` |
 | **E7 — Pedidos lista + GATE-FEATURE WF-05** | **concluída 2026-09-11** — api-delpi SC7 aberto, BFF operations+unit, MFE kit-first |
 | **E8 — Detalhe do Pedido + GATE-FEATURE WF-06** | **concluída 2026-09-16** — ficha `/purchase-orders/:branch/:number`; smoke federado **PASS** em 2026-09-21 |
+| **E9 — Entregas / atrasos + P0 freeze** | **autorizada + contrato FROZEN** 2026-09-21 — BFF/MFE ainda ausentes; [freeze](./evidence/e9-wf07-p0-contract-freeze.md) |
 | RBAC alvo | revisado; menor catálogo suficiente (ADR-007) |
 | Authz Core-first | **GATE-AUTHZ PASS** — fail-closed na fronteira; permissions efetivas do Core, não claims JWT |
 | BIs externos | dump **local** 0/6 documentado; dump Core **produção** obrigatório antes do cutover |
@@ -224,8 +225,8 @@ Invariantes:
 
 ## 7. Próximo passo operacional
 
-**Único próximo passo autorizado pelo roadmap:** Product Owner autorizar a promoção de **WF-07 Entregas / atrasos** em evidência persistida neste repositório. Sem essa autorização, a fila permanece bloqueada.
+**Único próximo passo autorizado pelo roadmap:** executar a receita **E9.S1–E9.S5** (Entregas / atrasos) dentro do [P0 freeze](./evidence/e9-wf07-p0-contract-freeze.md). Não implementar além do contrato congelado.
 
-Revalidação 2026-09-21 (`24ee4ad48`): GATE-FEATURE WF-06 está **PASS** no smoke federado de produção ([evidência](./evidence/e8-wf06-federated-runtime-gate.md)). Não há autorização persistida de implementação de E9. Alegação fora do repositório não libera WF-07.
+Revalidação 2026-09-21 (`4f3ed59483`): GATE-FEATURE WF-06 permanece **PASS**. Autorização do Product Owner e freeze P0 de E9 estão persistidos. P-03 continua bloqueando apenas paridade/depreciação do BI, não a construção da página nativa.
 
 Dump Core de produção dos BIs externos não bloqueia a fila de páginas; bloqueia decisões de paridade/depreciação/redirect e o `GATE-CUTOVER`.
