@@ -50,7 +50,7 @@ PKCE S256 é obrigatório no BFF. O cliente é confidencial: o segredo continua 
 - Escopo além de `api`.
 - `Change`, `Problem` ou rota de ativo através deste BFF.
 
-O escopo `api` no GLPI é largo: cobre a HLAPI que o perfil permitir, não só chamado. O recorte “só helpdesk da pessoa” é o perfil GLPI mais as rotas que a helpdesk-api publica. Os perfis de quem só abre chamado são `Self-Service (cópia)` (interface helpdesk) e `Colaborador - Chamados` (interface central). Eles não são reimplementados na Minha DELPI.
+O escopo `api` no GLPI é largo: cobre a HLAPI que o perfil permitir, não só chamado. O recorte “só helpdesk da pessoa” é o perfil GLPI mais as rotas que a helpdesk-api publica. Os perfis de quem só abre chamado são `Self-Service (cópia)` (interface helpdesk) e `Colaborador - Chamados` (interface central). Eles não são reimplementados na Minha DELPI. A HLAPI trata categoria como dropdown, não como campo do formulário: sem `itilcategory` READ o `GET /Dropdowns/ITILCategory` volta 403 mesmo com direito de abrir chamado. Esses perfis ficam com leitura do catálogo; criação e alteração de categoria continuam nos perfis de administração.
 
 ## 5. Sessão e saída
 

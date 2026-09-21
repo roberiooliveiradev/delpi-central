@@ -60,6 +60,7 @@ const MESSAGES: Record<string, string> = {
   not_found: "Este chamado não está disponível para você.",
   validation_error: "Revise os campos e envie de novo.",
   idempotency_key_required: "Não foi possível confirmar o envio. Atualize a página e tente outra vez.",
+  catalog_unavailable: "Não foi possível carregar as categorias do helpdesk.",
 };
 
 function messageFor(error: unknown): { code: string; text: string } {
@@ -344,15 +345,19 @@ function CreateTicketPage() {
 
   useEffect(() => {
     const controller = new AbortController();
-    void Promise.all([listCategories(controller.signal), listUrgencies(controller.signal)])
-      .then(([categoryBody, urgencyBody]) => {
-        setCategories(categoryBody.items);
-        setUrgencies(urgencyBody.items);
-        setCategoryId(categoryBody.items[0] ? String(categoryBody.items[0].id) : "");
-        setUrgencyId(urgencyBody.items[0] ? String(urgencyBody.items[0].id) : "");
-      })
-      .catch((error) => {
-        if (!controller.signal.aborted) setErrorText(messageFor(error).text);
+    void Promise.allSettled([listCategories(controller.signal), listUrgencies(controller.signal)])
+      .then(([categoryResult, urgencyResult]) => {
+        if (controller.signal.aborted) return;
+        if (urgencyResult.status === "fulfilled") {
+          setUrgencies(urgencyResult.value.items);
+          setUrgencyId(urgencyResult.value.items[0] ? String(urgencyResult.value.items[0].id) : "");
+        }
+        if (categoryResult.status === "fulfilled") {
+          setCategories(categoryResult.value.items);
+          setCategoryId(categoryResult.value.items[0] ? String(categoryResult.value.items[0].id) : "");
+          return;
+        }
+        setErrorText(MESSAGES.catalog_unavailable);
       })
       .finally(() => {
         if (!controller.signal.aborted) setLoading(false);

@@ -1,6 +1,6 @@
 """Tradução da HLAPI do GLPI 11.0.5 (API 2.2) para o contrato do BFF.
 
-Categoria: GET /api.php/v2.2/Dropdowns/ITILCategory
+Categoria: GET /api.php/v2.2/Dropdowns/ITILCategory?filter=is_helpdesk_visible==true
 Urgência: enum fixo do schema Ticket (1–5), não é dropdown.
 Chamado: /api.php/v2.2/Assistance/Ticket
 Acompanhamento: POST .../Timeline/Followup
@@ -70,11 +70,17 @@ def parse_categories(payload: dict | list) -> list[Category]:
     for row in rows:
         if not isinstance(row, dict) or "id" not in row:
             continue
+        if not _helpdesk_visible(row):
+            continue
         name = display_text(row.get("completename") or row.get("name"))
         if not name:
             continue
         categories.append(Category(id=int(row["id"]), name=name))
     return categories
+
+
+def payload_row_count(payload: dict | list) -> int:
+    return len(_results(payload))
 
 
 def parse_ticket_list(payload: dict | list) -> list[TicketSummary]:
@@ -329,6 +335,15 @@ def _sort_clause(value: str) -> str:
     if order not in {"asc", "desc"}:
         raise GlpiValidation("sort inválido.")
     return f"{mapped}:{order}"
+
+
+def _helpdesk_visible(row: dict) -> bool:
+    if "is_helpdesk_visible" not in row and "is_helpdeskvisible" not in row:
+        return True
+    value = row.get("is_helpdesk_visible")
+    if value is None:
+        value = row.get("is_helpdeskvisible")
+    return value is True or value == 1 or value == "1"
 
 
 def _is_deleted(row: dict) -> bool:

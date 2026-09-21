@@ -18,6 +18,7 @@ from helpdesk_app.infrastructure.glpi.mapping import (
     display_text,
     parse_categories,
     parse_created_id,
+    payload_row_count,
     parse_ticket_detail,
     parse_ticket_page,
     parse_token_set,
@@ -27,6 +28,9 @@ logger = logging.getLogger("helpdesk.glpi")
 
 _GET_ATTEMPTS = 3
 _MAX_ATTACHMENT_BYTES = 20 * 1024 * 1024
+_CATEGORY_PAGE = 50
+_CATEGORY_CAP = 500
+_HELPDESK_CATEGORY_FILTER = "is_helpdesk_visible==true"
 
 
 def _saml_idp_query(saml_idp_id: str) -> str:
@@ -111,8 +115,24 @@ class HttpxGlpiClient:
         return parse_token_set(payload)
 
     def list_categories(self, access_token: str) -> list[Category]:
-        payload = self._json("GET", "/api.php/v2.2/Dropdowns/ITILCategory", token=access_token)
-        return parse_categories(payload)
+        collected: list[Category] = []
+        start = 0
+        while start < _CATEGORY_CAP:
+            payload = self._json(
+                "GET",
+                "/api.php/v2.2/Dropdowns/ITILCategory",
+                token=access_token,
+                params={
+                    "start": start,
+                    "limit": _CATEGORY_PAGE,
+                    "filter": _HELPDESK_CATEGORY_FILTER,
+                },
+            )
+            collected.extend(parse_categories(payload))
+            if payload_row_count(payload) < _CATEGORY_PAGE:
+                break
+            start += _CATEGORY_PAGE
+        return collected
 
     def list_urgencies(self):
         return list(URGENCIES)

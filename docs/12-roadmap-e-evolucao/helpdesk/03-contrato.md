@@ -128,7 +128,7 @@ Chamadas com `Authorization: Bearer` do access token da pessoa e cabeçalho `GLP
 | Linha do tempo | `GET /api.php/v2.2/Assistance/Ticket/{id}/Timeline` |
 | Acompanhamento | `POST /api.php/v2.2/Assistance/Ticket/{id}/Timeline/Followup` |
 
-Categoria: `GET /api.php/v2.2/Dropdowns/ITILCategory`, usando `completename`. Urgência é o enum 1–5 do schema de Ticket (Muito baixa, Baixa, Média, Alta, Muito alta), não um dropdown.
+Categoria: `GET /api.php/v2.2/Dropdowns/ITILCategory?filter=is_helpdesk_visible==true`, usando `completename`, com página `start`/`limit`. A HLAPI não devolve o catálogo do formulário de chamado se o perfil não tiver leitura de `itilcategory`; quem só abre chamado precisa dessa leitura. Urgência é o enum 1–5 do schema de Ticket (Muito baixa, Baixa, Média, Alta, Muito alta), não um dropdown.
 
 Fora do mapa, mesmo que o escopo `api` permita: `Change`, `Problem`, ativo, inventário, GraphQL, tarefa de técnico, validação e solução. O BFF não publica rota para isso.
 

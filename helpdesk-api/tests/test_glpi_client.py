@@ -11,7 +11,7 @@ from helpdesk_app.infrastructure.glpi.mapping import (
     parse_ticket_detail,
     parse_ticket_list,
 )
-from helpdesk_app.domain.errors import GlpiNotFound, GlpiValidation
+from helpdesk_app.domain.errors import GlpiForbidden, GlpiNotFound, GlpiValidation
 
 
 def test_post_is_not_retried_and_get_retries_transient_status():
@@ -141,6 +141,70 @@ def test_mapping_keeps_followups_and_hides_tasks():
     assert [entry.kind for entry in detail.timeline] == ["followup"]
     categories = parse_categories({"results": [{"id": 2, "completename": "TI > Rede"}]})
     assert categories[0].name == "TI > Rede"
+
+
+def test_parse_categories_keeps_helpdesk_visible_and_drops_internal():
+    categories = parse_categories(
+        {
+            "results": [
+                {"id": 1, "completename": "Helpdesk", "is_helpdesk_visible": True},
+                {"id": 2, "completename": "Interna", "is_helpdesk_visible": False},
+                {"id": 3, "name": "Legado visível", "is_helpdeskvisible": 1},
+                {"id": 4, "name": "Sem campo"},
+            ]
+        }
+    )
+    assert [item.id for item in categories] == [1, 3, 4]
+
+
+def test_list_categories_filters_helpdesk_visible_and_pages():
+    calls: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls.append(request)
+        start = int(request.url.params.get("start") or 0)
+        if start == 0:
+            return httpx.Response(
+                206,
+                json={
+                    "results": [
+                        {"id": index, "completename": f"Cat {index}", "is_helpdesk_visible": True}
+                        for index in range(1, 51)
+                    ]
+                },
+            )
+        return httpx.Response(
+            200,
+            json={"results": [{"id": 51, "completename": "Última", "is_helpdesk_visible": True}]},
+        )
+
+    client = HttpxGlpiClient(
+        base_url="https://glpi.example",
+        client_id="id",
+        client_secret="super-secret",
+        redirect_uri="https://centraldelpi.com.br/apps/helpdesk-api/auth/glpi/callback",
+        transport=httpx.MockTransport(handler),
+    )
+    listed = client.list_categories("token")
+    assert [item.id for item in listed] == list(range(1, 52))
+    assert calls[0].url.params["filter"] == "is_helpdesk_visible==true"
+    assert calls[0].url.params["limit"] == "50"
+    assert calls[1].url.params["start"] == "50"
+
+
+def test_list_categories_maps_forbidden_without_retrying_as_success():
+    def handler(_request: httpx.Request) -> httpx.Response:
+        return httpx.Response(403, json={"error": "forbidden"})
+
+    client = HttpxGlpiClient(
+        base_url="https://glpi.example",
+        client_id="id",
+        client_secret="super-secret",
+        redirect_uri="https://centraldelpi.com.br/apps/helpdesk-api/auth/glpi/callback",
+        transport=httpx.MockTransport(handler),
+    )
+    with pytest.raises(GlpiForbidden):
+        client.list_categories("token")
 
 
 def test_mapping_repairs_legacy_text_and_strips_html():
