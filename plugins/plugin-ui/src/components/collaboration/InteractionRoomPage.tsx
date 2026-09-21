@@ -4,7 +4,7 @@
  */
 
 import { useEffect, useMemo, useRef, useState, type MouseEvent, type ReactNode } from "react";
-import { ArrowLeft, Copy, Files, MessageSquare, PanelRight, Pencil, Pin, RefreshCw, Reply, Search, Trash2 } from "lucide-react";
+import { ArrowLeft, Copy, Files, ListTodo, MessageSquare, PanelRight, Pencil, Pin, PinOff, RefreshCw, Reply, Search, Trash2 } from "lucide-react";
 
 import { ActionButton } from "../actions/ActionButton";
 import { EmptyGuidance, emptyGuidanceBemClasses } from "../feedback/EmptyGuidance";
@@ -153,6 +153,7 @@ export type InteractionRoomPageLabels = {
   unpin: string;
   edit: string;
   delete: string;
+  createTask: string;
   removeFile: string;
   attachmentsEmpty: string;
   attachmentOpenAriaLabel: (fileName: string) => string;
@@ -218,7 +219,8 @@ export const INTERACTION_ROOM_PAGE_LABELS_PT: InteractionRoomPageLabels = {
   pin: "Fixar",
   unpin: "Desafixar",
   edit: "Editar",
-  delete: "Remover",
+  delete: "Excluir",
+  createTask: "Criar tarefa",
   removeFile: "Remover",
   attachmentsEmpty: "Nenhum anexo",
   attachmentOpenAriaLabel: (fileName) => `Abrir ${fileName}`,
@@ -354,6 +356,10 @@ export type InteractionRoomPageProps = {
   onTogglePin?: (message: InteractionRoomMessage) => void;
   onEdit?: (message: InteractionRoomMessage) => void;
   onDelete?: (messageId: string) => void;
+  /** Criar tarefa a partir da mensagem — domínio no host. */
+  onCreateTask?: (message: InteractionRoomMessage) => void;
+  /** Dedup visual enquanto o host cria tarefa a partir desta mensagem. */
+  createTaskBusyMessageId?: string | null;
   onToggleReaction?: (messageId: string, code: string) => void;
   /** Ações de domínio após reply/pin/edit/delete. */
   resolveExtraActions?: (message: InteractionRoomMessage) => MessageThreadAction[];
@@ -446,6 +452,8 @@ export function InteractionRoomPage({
   onTogglePin,
   onEdit,
   onDelete,
+  onCreateTask,
+  createTaskBusyMessageId = null,
   onToggleReaction,
   resolveExtraActions,
   resolveActionExtras,
@@ -826,7 +834,7 @@ export function InteractionRoomPage({
         ) : (
           <RoomConversationChatColumn
             classNames={shell}
-            msgsRef={stickToBottom ? msgsRef : undefined}
+            msgsRef={msgsRef}
             onMsgsScroll={
               stickToBottom
                 ? (event) => {
@@ -979,6 +987,7 @@ export function InteractionRoomPage({
               onParentQuoteClick={focusMessage}
               onMentionActivate={onMentionActivate}
               portalScopeClassName={portalScopeClassName}
+              containWithinRef={msgsRef}
               actionsToolbarAriaLabel={labels.actionsToolbarAriaLabel}
               resolveAttachmentImageSrc={resolveAttachmentImageSrc}
               onAttachmentImageClick={onAttachmentImageClick}
@@ -1018,7 +1027,11 @@ export function InteractionRoomPage({
                   actions.push({
                     id: "pin",
                     label: source.pinned ? labels.unpin : labels.pin,
-                    icon: <Pin size={16} aria-hidden="true" />,
+                    icon: source.pinned ? (
+                      <PinOff size={16} aria-hidden="true" />
+                    ) : (
+                      <Pin size={16} aria-hidden="true" />
+                    ),
                     onClick: () => onTogglePin(source),
                   });
                 }
@@ -1037,6 +1050,21 @@ export function InteractionRoomPage({
                     danger: true,
                     icon: <Trash2 size={16} aria-hidden="true" />,
                     onClick: () => onDelete(source.id),
+                  });
+                }
+                if (
+                  onCreateTask &&
+                  !source.deleted &&
+                  source.kind !== "system" &&
+                  source.kind !== "task_ref" &&
+                  source.kind !== "pin"
+                ) {
+                  actions.push({
+                    id: "create-task",
+                    label: labels.createTask,
+                    icon: <ListTodo size={16} aria-hidden="true" />,
+                    disabled: createTaskBusyMessageId === source.id,
+                    onClick: () => onCreateTask(source),
                   });
                 }
                 const extras = resolveExtraActions?.(source) ?? [];

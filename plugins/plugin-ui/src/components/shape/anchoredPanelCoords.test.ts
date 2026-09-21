@@ -72,7 +72,23 @@ describe("resolveAnchoredPanelCoords", () => {
       margin: 8,
     });
     expect(next.placement).toBe("top");
-    // preferredLeft = 80 - 240 = -160 → clamp para margin 8
     expect(next.left).toBe(8);
+  });
+
+  it("preferred top with containRect flips below instead of invading header", () => {
+    const next = resolveAnchoredPanelCoords({
+      anchor: { left: 100, top: 90, right: 160, bottom: 130, width: 60, height: 40 },
+      panelWidth: 280,
+      panelHeight: 44,
+      viewportWidth: 1200,
+      viewportHeight: 800,
+      preferredPlacement: "top",
+      gap: 6,
+      margin: 8,
+      containRect: { left: 0, top: 72, right: 1200, bottom: 700 },
+    });
+    expect(next.placement).toBe("bottom");
+    expect(next.top).toBe(136);
+    expect(next.top).toBeGreaterThanOrEqual(72);
   });
 });

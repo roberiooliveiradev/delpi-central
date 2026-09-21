@@ -88,6 +88,11 @@ describe("InteractionRoomPage", () => {
     expect(source).toMatch(/reactionLabelForCode/);
     expect(source).toMatch(/resolveActionExtras/);
     expect(source).toMatch(/resolveExtraActions/);
+    expect(source).toMatch(/onCreateTask/);
+    expect(source).toMatch(/createTaskBusyMessageId/);
+    expect(source).toMatch(/containWithinRef=\{msgsRef\}/);
+    expect(source).toMatch(/id: "create-task"/);
+    expect(source).toMatch(/ListTodo/);
     expect(source).toMatch(/renderComposer/);
     expect(source).toMatch(/layout === "thread"/);
     expect(source).toMatch(/data-layout=\{layout\}/);
@@ -258,6 +263,32 @@ describe("InteractionRoomPage", () => {
       />,
     );
     expect(source).toMatch(/\[\.\.\.actions, \.\.\.extras\]/);
+  });
+
+  it("expõe Criar tarefa como ação canônica quando onCreateTask", () => {
+    const onCreateTask = vi.fn();
+    render(
+      <InteractionRoomPage
+        {...baseProps}
+        messages={[
+          {
+            id: "m1",
+            kind: "text",
+            bodyText: "Validar fluxo de compras",
+            createdAtLabel: "hoje",
+            authorName: "Ana",
+            mine: true,
+          },
+        ]}
+        onReply={() => undefined}
+        onTogglePin={() => undefined}
+        onEdit={() => undefined}
+        onDelete={() => undefined}
+        onCreateTask={onCreateTask}
+      />,
+    );
+    expect(source).toMatch(/labels\.createTask/);
+    expect(labels.createTask).toBe("Criar tarefa");
   });
 
   it("renderComposer substitui o MentionComposer do dock", () => {

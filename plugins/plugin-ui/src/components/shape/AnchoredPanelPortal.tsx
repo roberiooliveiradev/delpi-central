@@ -37,6 +37,11 @@ export type AnchoredPanelPortalProps = {
   /** Folga em px entre âncora e painel. */
   gap?: number;
   /**
+   * Elemento que delimita o clamp (ex.: scroller `__msgs`). Evita invadir
+   * header/TopBar fora da área de mensagens.
+   */
+  containWithinRef?: RefObject<HTMLElement | null>;
+  /**
    * Classe root do plugin MFE (ex.: `dashboard-tv-dashboard`).
    * Sem escopo, CSS do plugin sob `.dashboard-*` não aplica no body.
    * Se omitido, infere o ancestral `.dashboard-*` do âncora.
@@ -76,6 +81,7 @@ export function AnchoredPanelPortal({
   allowFlip = true,
   horizontalAlign = "start",
   gap,
+  containWithinRef,
   portalScopeClassName,
   onDismiss,
   exclusive = true,
@@ -99,6 +105,7 @@ export function AnchoredPanelPortal({
     allowFlip,
     horizontalAlign,
     ...(gap != null ? { gap } : null),
+    ...(containWithinRef ? { containWithinRef } : null),
   });
   const theme = useDelpiUiPortalTheme(open, anchorRef);
 

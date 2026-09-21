@@ -1,5 +1,12 @@
 export type AnchoredPanelPlacement = "bottom" | "top" | "right" | "left";
 
+export type AnchoredPanelContainRect = {
+  left: number;
+  top: number;
+  right: number;
+  bottom: number;
+};
+
 export type AnchoredPanelCoordsInput = {
   anchor: { left: number; top: number; right: number; bottom: number; width: number; height: number };
   panelWidth: number;
@@ -8,6 +15,12 @@ export type AnchoredPanelCoordsInput = {
   margin?: number;
   viewportWidth: number;
   viewportHeight: number;
+  /**
+   * Retângulo de contenção (ex.: scroller da thread). Quando informado, o clamp
+   * vertical/horizontal respeita esses limites em vez de só o viewport — evita
+   * a toolbar invadir header/TopBar fora da área de mensagens.
+   */
+  containRect?: AnchoredPanelContainRect;
   /** Preferência: usa se couber; senão tenta alternativas e cai para baixo/cima. */
   preferredPlacement?: AnchoredPanelPlacement;
   /**
@@ -41,14 +54,6 @@ function spaceLeft(anchor: AnchoredPanelCoordsInput["anchor"], gap: number): num
   return anchor.left - gap;
 }
 
-function spaceBelow(anchor: AnchoredPanelCoordsInput["anchor"], gap: number, vh: number): number {
-  return vh - anchor.bottom - gap;
-}
-
-function spaceAbove(anchor: AnchoredPanelCoordsInput["anchor"], gap: number): number {
-  return anchor.top - gap;
-}
-
 /**
  * Posiciona painel ancorado. Com `preferredPlacement: "right"|"left"`, fica ao lado
  * do gatilho quando há espaço; senão usa baixo/cima.
@@ -60,10 +65,19 @@ export function resolveAnchoredPanelCoords(input: AnchoredPanelCoordsInput): Anc
   const horizontalAlign = input.horizontalAlign === "end" ? "end" : "start";
   const { anchor, panelWidth, panelHeight, viewportWidth: vw, viewportHeight: vh } = input;
   const preferred = input.preferredPlacement ?? "bottom";
+  const contain = input.containRect;
+  const minTop = contain ? Math.max(margin, contain.top + margin) : margin;
+  const maxBottom = contain
+    ? Math.min(vh - margin, contain.bottom - margin)
+    : vh - margin;
+  const minLeft = contain ? Math.max(margin, contain.left + margin) : margin;
+  const maxRight = contain
+    ? Math.min(vw - margin, contain.right - margin)
+    : vw - margin;
 
   const alignVerticalBeside = (): number => {
     if (panelHeight <= 0) return anchor.top;
-    return clamp(anchor.top, margin, Math.max(margin, vh - panelHeight - margin));
+    return clamp(anchor.top, minTop, Math.max(minTop, maxBottom - panelHeight));
   };
 
   const alignHorizontalBelow = (): number => {
@@ -72,7 +86,7 @@ export function resolveAnchoredPanelCoords(input: AnchoredPanelCoordsInput): Anc
     }
     const preferredLeft =
       horizontalAlign === "end" ? anchor.right - panelWidth : anchor.left;
-    return clamp(preferredLeft, margin, Math.max(margin, vw - panelWidth - margin));
+    return clamp(preferredLeft, minLeft, Math.max(minLeft, maxRight - panelWidth));
   };
 
   const tryRight = (): AnchoredPanelCoords | null => {
@@ -95,27 +109,29 @@ export function resolveAnchoredPanelCoords(input: AnchoredPanelCoordsInput): Anc
 
   const tryBottom = (): AnchoredPanelCoords => {
     let top = anchor.bottom + gap;
-    if (panelHeight > 0 && top + panelHeight > vh - margin) {
+    if (panelHeight > 0 && top + panelHeight > maxBottom) {
       if (allowFlip) {
         const above = anchor.top - panelHeight - gap;
-        top = above >= margin ? above : Math.max(margin, vh - panelHeight - margin);
-        return { placement: above >= margin ? "top" : "bottom", left: alignHorizontalBelow(), top };
+        top = above >= minTop ? above : Math.max(minTop, maxBottom - panelHeight);
+        return { placement: above >= minTop ? "top" : "bottom", left: alignHorizontalBelow(), top };
       }
-      top = Math.max(margin, vh - panelHeight - margin);
+      top = Math.max(minTop, maxBottom - panelHeight);
     }
     return { placement: "bottom", left: alignHorizontalBelow(), top };
   };
 
   const tryTop = (): AnchoredPanelCoords => {
     let top = anchor.top - panelHeight - gap;
-    if (panelHeight > 0 && top < margin) {
+    if (panelHeight > 0 && top < minTop) {
       if (allowFlip) {
         const below = anchor.bottom + gap;
-        if (below + panelHeight <= vh - margin || spaceBelow(anchor, gap, vh) >= spaceAbove(anchor, gap)) {
+        const spaceDown = maxBottom - (anchor.bottom + gap);
+        const spaceUp = anchor.top - gap - minTop;
+        if (below + panelHeight <= maxBottom || spaceDown >= spaceUp) {
           return { placement: "bottom", left: alignHorizontalBelow(), top: below };
         }
       }
-      top = margin;
+      top = minTop;
     }
     return { placement: "top", left: alignHorizontalBelow(), top };
   };

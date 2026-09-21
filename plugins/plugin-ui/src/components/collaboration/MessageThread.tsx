@@ -1,4 +1,4 @@
-import { useRef, type MouseEventHandler, type ReactNode } from "react";
+import { useRef, type MouseEventHandler, type ReactNode, type RefObject } from "react";
 
 import { delpiUiClass } from "../../utils/delpiUiClass";
 import {
@@ -61,6 +61,8 @@ export type MessageThreadAction = {
   danger?: boolean;
   title?: string;
   icon?: ReactNode;
+  /** Busy / dedup — botão permanece visível mas não dispara. */
+  disabled?: boolean;
 };
 
 export type MessageThreadClassNames = {
@@ -128,6 +130,8 @@ export type MessageThreadProps = {
   resolveActionExtras?: (message: MessageThreadItem) => ReactNode;
   /** Escopo CSS do MFE nos portais (toolbar / menus). */
   portalScopeClassName?: string;
+  /** Scroller da thread — clamp da action bar (não invade header). */
+  containWithinRef?: RefObject<HTMLElement | null>;
   /** Nome acessível da toolbar de opções (host). */
   actionsToolbarAriaLabel?: string;
   /** Resolve URL autenticada para `attachment:{uuid}` no body. */
@@ -359,6 +363,7 @@ export function MessageThread({
   onParentQuoteClick,
   resolveActionExtras,
   portalScopeClassName,
+  containWithinRef,
   actionsToolbarAriaLabel,
   resolveAttachmentImageSrc,
   onAttachmentImageClick,
@@ -436,6 +441,7 @@ export function MessageThread({
               onMentionActivate={onMentionActivate}
               onParentQuoteClick={onParentQuoteClick}
               portalScopeClassName={portalScopeClassName}
+              containWithinRef={containWithinRef}
               actionsToolbarAriaLabel={actionsToolbarAriaLabel}
               resolveAttachmentImageSrc={resolveAttachmentImageSrc}
               onAttachmentImageClick={onAttachmentImageClick}
@@ -462,6 +468,7 @@ type MessageThreadTextItemProps = {
   onMentionActivate?: MessageThreadProps["onMentionActivate"];
   onParentQuoteClick?: MessageThreadProps["onParentQuoteClick"];
   portalScopeClassName?: string;
+  containWithinRef?: MessageThreadProps["containWithinRef"];
   actionsToolbarAriaLabel?: string;
   resolveAttachmentImageSrc?: MessageThreadProps["resolveAttachmentImageSrc"];
   onAttachmentImageClick?: MessageThreadProps["onAttachmentImageClick"];
@@ -482,6 +489,7 @@ function MessageThreadTextItem({
   onMentionActivate,
   onParentQuoteClick,
   portalScopeClassName,
+  containWithinRef,
   actionsToolbarAriaLabel,
   resolveAttachmentImageSrc,
   onAttachmentImageClick,
@@ -584,6 +592,7 @@ function MessageThreadTextItem({
                 actionExtras={actionExtras}
                 anchorRef={anchorRef}
                 alignEnd={!message.mine}
+                containWithinRef={containWithinRef}
                 portalScopeClassName={portalScopeClassName}
                 toolbarAriaLabel={actionsToolbarAriaLabel}
                 open={open}

@@ -19,6 +19,8 @@ export type MessageThreadActionsBarProps = {
   anchorRef: RefObject<HTMLElement | null>;
   /** Outros: alinhar à direita da bolha; minhas: à esquerda. */
   alignEnd?: boolean;
+  /** Scroller da thread — clamp da toolbar sem invadir o header. */
+  containWithinRef?: RefObject<HTMLElement | null>;
   portalScopeClassName?: string;
   toolbarAriaLabel?: string;
   open: boolean;
@@ -29,7 +31,7 @@ export type MessageThreadActionsBarProps = {
 
 /**
  * Toolbar de opções da mensagem em portal no body — flip top/bottom + clamp
- * horizontal no viewport (evita corte por overflow do scroll da thread).
+ * no scroller da thread (evita corte por overflow e invasão do header).
  */
 export function MessageThreadActionsBar({
   classNames,
@@ -37,6 +39,7 @@ export function MessageThreadActionsBar({
   actionExtras,
   anchorRef,
   alignEnd = false,
+  containWithinRef,
   portalScopeClassName,
   toolbarAriaLabel,
   open,
@@ -58,6 +61,7 @@ export function MessageThreadActionsBar({
       allowFlip
       horizontalAlign={alignEnd ? "end" : "start"}
       gap={6}
+      containWithinRef={containWithinRef}
       portalScopeClassName={portalScopeClassName}
       className={classNames.actions}
       role="toolbar"
@@ -78,6 +82,8 @@ export function MessageThreadActionsBar({
           className={action.danger ? classNames.actionDanger : classNames.action}
           aria-label={action.label}
           title={action.title ?? action.label}
+          disabled={Boolean(action.disabled)}
+          aria-busy={action.disabled || undefined}
           onClick={action.onClick}
         >
           {action.icon ?? action.label}

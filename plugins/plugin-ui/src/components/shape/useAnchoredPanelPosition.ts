@@ -3,6 +3,7 @@ import { useLayoutEffect, useState, type CSSProperties, type RefObject } from "r
 import { DELPI_UI_OVERLAY_Z_INDEX } from "../../overlayLayers";
 import {
   resolveAnchoredPanelCoords,
+  type AnchoredPanelContainRect,
   type AnchoredPanelPlacement,
 } from "./anchoredPanelCoords";
 
@@ -24,11 +25,20 @@ export type AnchoredPanelPositionOptions = {
   allowFlip?: boolean;
   /** Alinhamento horizontal em top/bottom. */
   horizontalAlign?: "start" | "end";
+  /** Contém o painel neste retângulo (ex.: scroller da thread). */
+  containRect?: AnchoredPanelContainRect | null;
+  /** Alternativa a containRect: lê o bounding rect a cada update. */
+  containWithinRef?: RefObject<HTMLElement | null>;
 };
 
 function resolvePositionOptions(
   options: number | AnchoredPanelPositionOptions | undefined,
-): Required<AnchoredPanelPositionOptions> {
+): Required<
+  Omit<AnchoredPanelPositionOptions, "containRect" | "containWithinRef">
+> & {
+  containRect: AnchoredPanelContainRect | null;
+  containWithinRef: RefObject<HTMLElement | null> | null;
+} {
   if (typeof options === "number") {
     return {
       gap: options,
@@ -36,6 +46,8 @@ function resolvePositionOptions(
       preferredPlacement: "bottom",
       allowFlip: true,
       horizontalAlign: "start",
+      containRect: null,
+      containWithinRef: null,
     };
   }
   return {
@@ -44,6 +56,8 @@ function resolvePositionOptions(
     preferredPlacement: options?.preferredPlacement ?? "bottom",
     allowFlip: options?.allowFlip !== false,
     horizontalAlign: options?.horizontalAlign === "end" ? "end" : "start",
+    containRect: options?.containRect ?? null,
+    containWithinRef: options?.containWithinRef ?? null,
   };
 }
 
@@ -53,8 +67,15 @@ export function useAnchoredPanelPosition(
   panelRef: RefObject<HTMLElement | null>,
   options: number | AnchoredPanelPositionOptions = 4,
 ): CSSProperties {
-  const { gap, matchAnchorWidth, preferredPlacement, allowFlip, horizontalAlign } =
-    resolvePositionOptions(options);
+  const {
+    gap,
+    matchAnchorWidth,
+    preferredPlacement,
+    allowFlip,
+    horizontalAlign,
+    containRect,
+    containWithinRef,
+  } = resolvePositionOptions(options);
   const [style, setStyle] = useState<CSSProperties>({
     position: "fixed",
     top: -9999,
@@ -91,6 +112,16 @@ export function useAnchoredPanelPosition(
       );
       const panelHeight = panel?.offsetHeight ?? 0;
 
+      const liveContain = containWithinRef?.current?.getBoundingClientRect();
+      const resolvedContain = liveContain
+        ? {
+            left: liveContain.left,
+            top: liveContain.top,
+            right: liveContain.right,
+            bottom: liveContain.bottom,
+          }
+        : containRect;
+
       const coords = resolveAnchoredPanelCoords({
         anchor: {
           left: rect.left,
@@ -110,6 +141,7 @@ export function useAnchoredPanelPosition(
         preferredPlacement,
         allowFlip,
         horizontalAlign,
+        ...(resolvedContain ? { containRect: resolvedContain } : null),
       });
 
       setStyle({
@@ -153,6 +185,11 @@ export function useAnchoredPanelPosition(
   }, [
     allowFlip,
     anchorRef,
+    containRect?.bottom,
+    containRect?.left,
+    containRect?.right,
+    containRect?.top,
+    containWithinRef,
     gap,
     horizontalAlign,
     matchAnchorWidth,
