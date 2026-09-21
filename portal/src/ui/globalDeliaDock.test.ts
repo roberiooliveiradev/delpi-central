@@ -13,6 +13,7 @@ import {
   isDeliaFullPagePath,
   resolveDeliaDockMaxWidth,
   resolveFocusReturnTarget,
+  reclampDeliaDockWidth,
   shouldKeepCompanionDockOpen,
   shouldRenderCompanionHandle,
 } from "./globalDeliaDock.ts";
@@ -293,6 +294,42 @@ describe("resize bounds", () => {
     assert.equal(adjustDeliaDockWidth(500, 1600, "Home"), DELIA_DOCK_MIN_WIDTH);
     assert.equal(adjustDeliaDockWidth(400, 1600, "End"), DELIA_DOCK_MAX_WIDTH);
     assert.equal(adjustDeliaDockWidth(440, 1600, "Escape"), 440);
+  });
+});
+
+describe("dynamic workspace reclamp", () => {
+  it("reduz 640px para 450px quando o workspace cai de 1600 para 1000", () => {
+    assert.equal(resolveDeliaDockMaxWidth(1600), 640);
+    assert.equal(reclampDeliaDockWidth(640, 1600), 640);
+    assert.equal(resolveDeliaDockMaxWidth(1000), 450);
+    const next = reclampDeliaDockWidth(640, 1000);
+    assert.equal(next, 450);
+    assert.ok(next <= resolveDeliaDockMaxWidth(1000));
+    assert.ok(next >= DELIA_DOCK_MIN_WIDTH);
+  });
+
+  it("não altera uma largura que continua válida", () => {
+    assert.equal(reclampDeliaDockWidth(440, 1600), 440);
+    assert.equal(reclampDeliaDockWidth(440, 1400), 440);
+  });
+
+  it("não restaura a largura anterior quando o workspace volta a crescer", () => {
+    const clamped = reclampDeliaDockWidth(640, 1000);
+    assert.equal(reclampDeliaDockWidth(clamped, 1600), 450);
+  });
+
+  it("não grava largura abaixo do mínimo quando o workspace fica inelegível", () => {
+    assert.equal(reclampDeliaDockWidth(640, 700), 640);
+    assert.equal(
+      shouldKeepCompanionDockOpen({
+        apps: [deliaApp()],
+        pathname: "/apps/my-requests",
+        viewportWidth: WIDE,
+        workspaceWidth: 700,
+        requestedOpen: true,
+      }),
+      false,
+    );
   });
 });
 

@@ -96,6 +96,17 @@ export function clampDeliaDockWidth(requested: number, workspaceWidth: number): 
   return Math.min(max, Math.max(DELIA_DOCK_MIN_WIDTH, requested));
 }
 
+/**
+ * Re-clamp a stored dock width after the workspace changes.
+ * An ineligible workspace keeps the current transient width and does not
+ * write a sub-minimum value. Growing the workspace does not restore a
+ * previously larger width.
+ */
+export function reclampDeliaDockWidth(currentWidth: number, workspaceWidth: number): number {
+  if (!canFitCompanionDock(workspaceWidth)) return currentWidth;
+  return clampDeliaDockWidth(currentWidth, workspaceWidth);
+}
+
 /** ArrowLeft widens the right dock. ArrowRight narrows it. Home/End jump to bounds. */
 export function adjustDeliaDockWidth(
   current: number,

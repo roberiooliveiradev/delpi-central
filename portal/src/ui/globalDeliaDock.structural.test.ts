@@ -29,6 +29,7 @@ describe("companion dock wiring", () => {
     assert.doesNotMatch(dockLogic, /permissions\.includes/);
     assert.match(dockLogic, /Do not consult permissions, roles, groups, or isSuperadmin/);
     assert.match(dock, /useFederatedRemoteMount/);
+    assert.match(dock, /reclampDeliaDockWidth/);
     assert.match(dock, /aria-label="DÉLIA"/);
     assert.match(dock, /aria-label="Abrir DÉLIA ao lado"/);
     assert.match(dock, /aria-label="Abrir página completa"/);

@@ -27,6 +27,7 @@ import {
   resolveDeliaDockMaxWidth,
   resolveDeliaExposedModule,
   resolveFocusReturnTarget,
+  reclampDeliaDockWidth,
   shouldKeepCompanionDockOpen,
   shouldRenderCompanionHandle,
 } from "./globalDeliaDock";
@@ -78,6 +79,13 @@ export function GlobalDeliaDockProvider({ children }: { children: ReactNode }) {
     observer.observe(workspace);
     return () => observer.disconnect();
   }, []);
+
+  useEffect(() => {
+    const next = reclampDeliaDockWidth(dockWidthRef.current, workspaceWidth);
+    if (next === dockWidthRef.current) return;
+    dockWidthRef.current = next;
+    setDockWidth(next);
+  }, [workspaceWidth]);
 
   useEffect(() => {
     if (handleVisible || dockOpen) return;
