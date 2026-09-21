@@ -209,6 +209,10 @@ export function dataTableBemClasses(prefix: string): DataTableClassNames {
       `${wrap} ${wrap}--embedded`,
       `${uiWrap} ${uiWrap}--embedded`,
     ),
+    scrollWrap: delpiUiClass(
+      `${wrap} ${wrap}--scroll`,
+      `${uiWrap} ${uiWrap}--scroll`,
+    ),
     table: tableDual,
     sortableTable: withBemModifier(tableDual, "sortable"),
     compactTable: withBemModifier(tableDual, "compact"),

@@ -83,6 +83,7 @@ declare module "@delpi/plugin-ui/index" {
     children?: ReactNode;
     actions?: ReactNode;
     className?: string;
+    fill?: boolean;
   };
 
   export function createDashboardSectionCard(config: {
@@ -731,6 +732,7 @@ declare module "@delpi/plugin-ui/index" {
     emptyContent?: ReactNode;
     portalScopeClassName?: string;
     className?: string;
+    fill?: boolean;
     resolveAttachmentImageSrc?: (
       attachmentId: string,
     ) => string | null | undefined;

@@ -407,6 +407,47 @@ describe("MessageThread", () => {
     ).toBe("/apps/commercial/users/u1");
   });
 
+  it("rola o fio quando fill está ligado", () => {
+    const { container } = render(
+      <MessageThread
+        fill
+        classNames={classNames}
+        listAriaLabel="Messages"
+        emptyLabel="Empty"
+        messages={[
+          {
+            id: "1",
+            kind: "text",
+            bodyText: "Hi",
+            authorName: "Bruno",
+            createdAtLabel: "10:00",
+          },
+        ]}
+      />,
+    );
+    expect(container.querySelector(".delpi-ui-message-thread--fill")).toBeTruthy();
+  });
+
+  it("não preenche a altura quando fill está desligado", () => {
+    const { container } = render(
+      <MessageThread
+        classNames={classNames}
+        listAriaLabel="Messages"
+        emptyLabel="Empty"
+        messages={[
+          {
+            id: "1",
+            kind: "text",
+            bodyText: "Hi",
+            authorName: "Bruno",
+            createdAtLabel: "10:00",
+          },
+        ]}
+      />,
+    );
+    expect(container.querySelector(".delpi-ui-message-thread--fill")).toBeNull();
+  });
+
   it("usa a foto do autor quando authorSrc está definido", () => {
     const { container } = render(
       <MessageThread

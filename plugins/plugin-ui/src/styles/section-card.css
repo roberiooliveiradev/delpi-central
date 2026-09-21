@@ -89,6 +89,38 @@
   min-width: 0;
 }
 
+.delpi-ui-section-card--fill {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+.delpi-ui-section-card--fill > .delpi-ui-section-card__header {
+  flex: 0 0 auto;
+}
+
+.delpi-ui-section-card--fill > .delpi-ui-section-card__body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  gap: var(--delpi-ui-section-gap, 12px);
+}
+
+.delpi-ui-section-card--fill > .delpi-ui-section-card__body > * {
+  flex-shrink: 0;
+}
+
+.delpi-ui-section-card--fill .delpi-ui-table-wrap--scroll,
+.delpi-ui-section-card--fill .delpi-ui-message-thread {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
 @media (max-width: 768px) {
   .delpi-ui-section-card__header {
     gap: 8px;

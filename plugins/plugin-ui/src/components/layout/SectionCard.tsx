@@ -30,6 +30,8 @@ export type SectionCardProps = {
   className?: string;
   classNames: SectionCardClassNames;
   labels: SectionCardLabels;
+  /** Preenche a altura do pai flex e deixa o corpo rolar o conteúdo. */
+  fill?: boolean;
   /** Quando true, o corpo pode ser ocultado pelo toggle no header. */
   collapsible?: boolean;
   /** Estado inicial (não controlado). Default: true (aberto). */
@@ -80,6 +82,7 @@ export function SectionCard({
   className,
   classNames,
   labels,
+  fill = false,
   collapsible = false,
   defaultOpen = true,
   open: openProp,
@@ -97,11 +100,14 @@ export function SectionCard({
 
   const sectionClass = [
     classNames.section,
+    fill ? "delpi-ui-section-card--fill" : null,
     collapsible && !isOpen ? "delpi-ui-section-card--collapsed" : null,
     className,
   ]
     .filter(Boolean)
     .join(" ");
+
+  const wrapBody = fill || collapsible;
 
   const expandLabel =
     labels.expandAriaLabel?.(title) ?? `Expandir seção ${title}`;
@@ -148,13 +154,13 @@ export function SectionCard({
         </div>
         {actions ? <div className={classNames.actions}>{actions}</div> : null}
       </div>
-      {collapsible ? (
-        isOpen ? (
-          <div id={bodyId} className={classNames.body}>
+      {wrapBody ? (
+        collapsible && !isOpen ? (
+          <div id={bodyId} className={classNames.body} hidden />
+        ) : (
+          <div id={collapsible ? bodyId : undefined} className={classNames.body}>
             {children}
           </div>
-        ) : (
-          <div id={bodyId} className={classNames.body} hidden />
         )
       ) : (
         children

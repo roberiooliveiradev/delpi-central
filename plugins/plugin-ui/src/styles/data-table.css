@@ -37,6 +37,23 @@
   z-index: 1;
 }
 
+.delpi-ui-table-wrap--scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  margin-bottom: 0;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--delpi-ui-border, var(--border, #e6e6e6));
+  border-radius: var(--delpi-ui-control-radius, 12px);
+  background: var(--delpi-ui-surface, var(--surface, #ffffff));
+}
+
+.delpi-ui-table-wrap--scroll table.delpi-ui-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
 table.delpi-ui-table {
   width: max-content;
   min-width: 100%;
@@ -1135,6 +1152,7 @@ table.delpi-ui-table td.delpi-ui-table__detail-cell {
   .delpi-ui-table-wrap,
   .delpi-ui-table-wrap--section,
   .delpi-ui-table-wrap--embedded,
+  .delpi-ui-table-wrap--scroll,
   .delpi-ui-table-section {
     overflow: visible !important;
     max-height: none !important;

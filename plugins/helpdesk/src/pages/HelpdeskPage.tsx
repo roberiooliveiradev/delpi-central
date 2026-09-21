@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { ActionButton } from "@delpi/plugin-ui/index";
 import { ChevronLeft, ChevronRight, FilterX, Plus, Send } from "lucide-react";
 
@@ -76,6 +76,10 @@ export function HelpdeskPage({ route }: { route: HelpdeskRoute }) {
     return <HelpdeskStateBanner variant="error">Endereço não encontrado em Meus Chamados de TI.</HelpdeskStateBanner>;
   }
   return <TicketListPage />;
+}
+
+function HelpdeskPageStack({ children }: { children: ReactNode }) {
+  return <div className="helpdesk-page-stack">{children}</div>;
 }
 
 function currentListFilters(): TicketListFilters {
@@ -174,7 +178,7 @@ function TicketListPage() {
   const filterActive = isTicketFilterActive(filters);
 
   return (
-    <>
+    <HelpdeskPageStack>
       <HelpdeskPageHeader
         title="Meus Chamados de TI"
         subtitle="Chamados no seu nome"
@@ -185,6 +189,7 @@ function TicketListPage() {
       <HelpdeskSectionCard
         title="Meus chamados"
         hint={helpTooltips.list}
+        fill
         actions={
           <HelpdeskIconButton
             tone="primary"
@@ -313,7 +318,7 @@ function TicketListPage() {
           </HelpdeskFormActions>
         ) : null}
       </HelpdeskSectionCard>
-    </>
+    </HelpdeskPageStack>
   );
 }
 
@@ -348,7 +353,8 @@ function CreateTicketPage() {
   }, []);
 
   return (
-    <HelpdeskSectionCard title="Abrir chamado" hint={helpTooltips.create}>
+    <HelpdeskPageStack>
+    <HelpdeskSectionCard title="Abrir chamado" hint={helpTooltips.create} fill>
       {loading ? <HelpdeskLoadingState message="Carregando categorias…" /> : null}
       {errorText ? <HelpdeskStateBanner variant="error">{errorText}</HelpdeskStateBanner> : null}
       <form
@@ -405,6 +411,7 @@ function CreateTicketPage() {
         </HelpdeskFormActions>
       </form>
     </HelpdeskSectionCard>
+    </HelpdeskPageStack>
   );
 }
 
@@ -431,9 +438,9 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
   }, [ticketId]);
 
   return (
-    <>
+    <HelpdeskPageStack>
       <HelpdeskPageHeader title={ticket?.title || "Chamado"} compact onRefresh={load} refreshing={loading} />
-      <HelpdeskSectionCard title="Conversa" hint={helpTooltips.detail}>
+      <HelpdeskSectionCard title="Conversa" hint={helpTooltips.detail} fill>
         {loading ? <HelpdeskLoadingState message="Carregando chamado…" /> : null}
         {errorText ? <HelpdeskStateBanner variant="error">{errorText}</HelpdeskStateBanner> : null}
         {ticket ? (
@@ -504,6 +511,6 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
           </>
         ) : null}
       </HelpdeskSectionCard>
-    </>
+    </HelpdeskPageStack>
   );
 }

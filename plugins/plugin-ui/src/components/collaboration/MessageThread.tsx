@@ -125,6 +125,8 @@ export type MessageThreadProps = {
   resolveAttachmentImageSrc?: (attachmentId: string) => string | null | undefined;
   /** Clique em imagem inline do body (lightbox no host). */
   onAttachmentImageClick?: (attachmentId: string) => void;
+  /** Rola o fio dentro da altura do pai flex, em vez de crescer a página. */
+  fill?: boolean;
   className?: string;
 };
 
@@ -299,9 +301,12 @@ export function MessageThread({
   actionsToolbarAriaLabel,
   resolveAttachmentImageSrc,
   onAttachmentImageClick,
+  fill = false,
   className,
 }: MessageThreadProps) {
-  const rootClass = [classNames.root, className].filter(Boolean).join(" ");
+  const rootClass = [classNames.root, fill ? "delpi-ui-message-thread--fill" : null, className]
+    .filter(Boolean)
+    .join(" ");
   const activeEditingId = (editingId ?? "").trim();
 
   if (messages.length === 0) {

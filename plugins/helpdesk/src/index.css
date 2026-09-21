@@ -40,6 +40,45 @@
   gap: var(--helpdesk-section-gap);
 }
 
+.dashboard-helpdesk.dashboard-page--fill {
+  height: 100%;
+  min-height: 0;
+  max-height: 100%;
+  overflow: hidden;
+}
+
+.dashboard-helpdesk .helpdesk-page-stack {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  gap: var(--helpdesk-section-gap);
+}
+
+.dashboard-helpdesk .helpdesk-page-stack > * {
+  flex-shrink: 0;
+}
+
+.dashboard-helpdesk .helpdesk-page-stack > :last-child {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+#root:has(> .dashboard-helpdesk.dashboard-page--fill) {
+  height: 100%;
+  min-height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+#root:has(> .dashboard-helpdesk.dashboard-page--fill) > .dashboard-page--fill {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+}
+
 :root[data-theme="dark"] .dashboard-helpdesk {
   --helpdesk-title: color-mix(in srgb, var(--primary, #089bdb) 72%, white);
   --helpdesk-text: rgba(255, 255, 255, 0.88);

@@ -26,7 +26,7 @@ Implementar uma tela deste módulo é montar as factories já nomeadas. Não cri
 | `●` | `HelpdeskStatusBadge` |
 | `▢` | `HelpdeskRecordCard` |
 
-**Root:** `.dashboard-helpdesk.dashboard-page` em `App.tsx`.
+**Root:** `.dashboard-helpdesk.dashboard-page.dashboard-page--fill` em `App.tsx`. A lista e a conversa preenchem a área do portal; a tabela e o fio rolam por dentro do card.
 
 **Chrome do portal:** a sidebar da Minha DELPI fica fora do MFE. Este módulo não desenha menu próprio.
 

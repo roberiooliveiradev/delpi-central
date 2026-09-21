@@ -7,6 +7,11 @@
   overflow: visible;
 }
 
+.delpi-ui-message-thread--fill {
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
 .delpi-ui-message-thread__list {
   display: flex;
   flex-direction: column;

@@ -338,4 +338,20 @@ describe("DataTable loading → dados (React #310)", () => {
 
     expect(screen.getByText("Ata 1")).toBeTruthy();
   });
+
+  it("usa o wrap de scroll quando layout=scroll", () => {
+    const { container } = render(
+      <DataTable
+        columns={[{ key: "nome", header: "Nome", render: (row: { nome: string }) => row.nome }]}
+        rows={[{ nome: "Chamado" }]}
+        rowKey={(_, index) => String(index)}
+        classNames={dataTableBemClasses("teste")}
+        labels={labels}
+        layout="scroll"
+      />,
+    );
+
+    expect(container.querySelector(".delpi-ui-table-wrap--scroll")).toBeTruthy();
+    expect(container.querySelector(".delpi-ui-table-wrap--embedded")).toBeNull();
+  });
 });

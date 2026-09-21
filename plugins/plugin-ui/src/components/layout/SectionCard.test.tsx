@@ -13,6 +13,39 @@ const labels = {
   collapseAriaLabel: (title: string) => `Recolher ${title}`,
 };
 
+describe("SectionCard fill", () => {
+  it("envolve o corpo e preenche a altura do pai", () => {
+    const { container } = render(
+      <SectionCard
+        title="Meus chamados"
+        fill
+        classNames={sectionCardPacBemClasses("cm")}
+        labels={labels}
+      >
+        <p>Tabela</p>
+      </SectionCard>,
+    );
+
+    expect(container.querySelector(".delpi-ui-section-card--fill")).toBeTruthy();
+    expect(container.querySelector(".delpi-ui-section-card__body")?.textContent).toContain("Tabela");
+  });
+
+  it("não envolve o corpo quando a seção não preenche nem recolhe", () => {
+    const { container } = render(
+      <SectionCard
+        title="Meus chamados"
+        classNames={sectionCardPacBemClasses("cm")}
+        labels={labels}
+      >
+        <p>Tabela</p>
+      </SectionCard>,
+    );
+
+    expect(container.querySelector(".delpi-ui-section-card--fill")).toBeNull();
+    expect(container.querySelector(".delpi-ui-section-card__body")).toBeNull();
+  });
+});
+
 describe("SectionCard collapsible", () => {
   it("recolhe e expande o corpo", () => {
     const onOpenChange = vi.fn();
