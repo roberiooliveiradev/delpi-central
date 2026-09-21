@@ -130,6 +130,8 @@ def test_mapping_keeps_followups_and_hides_tasks():
         },
     )
     assert detail.urgency == "Baixa"
+    assert detail.timeline[0].content == "Cabo ok"
+    assert detail.attachments == ()
     assert [entry.kind for entry in detail.timeline] == ["followup"]
     categories = parse_categories({"results": [{"id": 2, "completename": "TI > Rede"}]})
     assert categories[0].name == "TI > Rede"
@@ -205,3 +207,36 @@ def test_mapping_leaves_unrepairable_marker_unchanged():
     )
     assert detail.title == "Sinal \u251c isolado"
     assert detail.description == "Sem tag"
+
+
+def test_mapping_keeps_followup_and_document_and_hides_task():
+    from helpdesk_app.domain.models import Attachment
+    from helpdesk_app.infrastructure.glpi.mapping import attachment_filename
+
+    detail = parse_ticket_detail(
+        {"id": 1, "name": "Teste", "content": "Rede", "status": {"name": "Novo"}, "urgency": 2},
+        [
+            {
+                "type": "Followup",
+                "item": {
+                    "id": 8,
+                    "content": "Cabo ok",
+                    "date_creation": "2026-09-21T11:00:00Z",
+                    "user": {"name": "Ana"},
+                },
+            },
+            {
+                "type": "Document",
+                "item": {"id": 1, "documents_id": 2, "filename": "logo.png", "mime": "image/png"},
+            },
+            {"type": "Task", "item": {"id": 3, "content": "interno"}},
+            {"type": "Document", "item": {"documents_id": 4, "name": "foto.jpg", "mime": "image/jpeg"}},
+        ],
+    )
+    assert [entry.content for entry in detail.timeline] == ["Cabo ok"]
+    assert detail.attachments == (
+        Attachment(2, "logo.png", "image/png"),
+        Attachment(4, "foto.jpg", "image/jpeg"),
+    )
+    assert attachment_filename("../segredo.txt") == "segredo.txt"
+    assert attachment_filename("   ") == "anexo"

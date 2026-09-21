@@ -1,11 +1,13 @@
 from typing import Any
 
+from urllib.parse import quote
+
 from fastapi import APIRouter, Header, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel, ConfigDict, Field
 
 from helpdesk_app.domain.errors import HelpdeskError
-from helpdesk_app.infrastructure.glpi.mapping import URGENCIES
+from helpdesk_app.infrastructure.glpi.mapping import URGENCIES, attachment_filename
 from helpdesk_app.interface.http.actor import require_actor
 
 router = APIRouter(tags=["Helpdesk Tickets"])
@@ -100,7 +102,34 @@ def get_ticket(request: Request, ticket_id: int):
             }
             for entry in ticket.timeline
         ],
+        "attachments": [
+            {
+                "document_id": item.document_id,
+                "filename": item.filename,
+                "mime": item.mime,
+            }
+            for item in ticket.attachments
+        ],
     }
+
+
+@router.get("/tickets/{ticket_id}/attachments/{document_id}")
+def download_attachment(request: Request, ticket_id: int, document_id: int):
+    actor = require_actor(request)
+    try:
+        content, mime, filename = _tickets(request).attachment(actor.subject, ticket_id, document_id)
+    except HelpdeskError as exc:
+        return _error(exc, request)
+    safe_name = attachment_filename(filename)
+    ascii_name = "".join(char if char.isascii() and char not in "\r\n\"" else "_" for char in safe_name)
+    encoded_name = quote(safe_name)
+    return Response(
+        content=content,
+        media_type=mime or "application/octet-stream",
+        headers={
+            "Content-Disposition": f"attachment; filename=\"{ascii_name}\"; filename*=UTF-8''{encoded_name}"
+        },
+    )
 
 
 @router.post("/tickets")

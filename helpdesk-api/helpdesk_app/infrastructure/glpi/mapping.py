@@ -10,7 +10,15 @@ import html
 import re
 
 from helpdesk_app.domain.errors import GlpiValidation
-from helpdesk_app.domain.models import Category, TicketDetail, TicketSummary, TimelineEntry, TokenSet, Urgency
+from helpdesk_app.domain.models import (
+    Attachment,
+    Category,
+    TicketDetail,
+    TicketSummary,
+    TimelineEntry,
+    TokenSet,
+    Urgency,
+)
 
 # Rótulos pt_BR do GLPI para o enum documentado no schema Ticket.
 URGENCIES: tuple[Urgency, ...] = (
@@ -56,11 +64,9 @@ def parse_ticket_list(payload: dict | list) -> list[TicketSummary]:
 def parse_ticket_detail(payload: dict, timeline_payload: dict | list) -> TicketDetail:
     summary = _summary(payload)
     description = _text(payload.get("content"))
-    timeline = tuple(
-        entry
-        for entry in (_timeline_entry(row) for row in _results(timeline_payload))
-        if entry is not None
-    )
+    rows = [row for row in _results(timeline_payload) if isinstance(row, dict)]
+    timeline = tuple(entry for entry in (_timeline_entry(row) for row in rows) if entry is not None)
+    attachments = tuple(item for item in (_attachment(row) for row in rows) if item is not None)
     return TicketDetail(
         id=summary.id,
         title=summary.title,
@@ -70,6 +76,7 @@ def parse_ticket_detail(payload: dict, timeline_payload: dict | list) -> TicketD
         updated_at=summary.updated_at,
         description=description,
         timeline=timeline,
+        attachments=attachments,
     )
 
 
@@ -105,11 +112,10 @@ def _summary(row: dict) -> TicketSummary:
 
 
 def _timeline_entry(row: dict) -> TimelineEntry | None:
-    if not isinstance(row, dict):
-        return None
-    kind = str(row.get("type") or row.get("itemtype") or "")
+    kind, payload = _timeline_payload(row)
     if kind not in {"Followup", "ITILFollowup"}:
         return None
+    row = payload
     user = row.get("user") or row.get("users_id") or {}
     author = ""
     if isinstance(user, dict):
@@ -121,6 +127,36 @@ def _timeline_entry(row: dict) -> TimelineEntry | None:
         created_at=str(row.get("date_creation") or row.get("date") or ""),
         author_display_name=author,
     )
+
+
+def attachment_filename(value: str) -> str:
+    name = value.replace("\\", "/").split("/")[-1]
+    cleaned = "".join(char for char in name if char not in "\r\n\"")
+    cleaned = cleaned.strip().lstrip(".")
+    return (cleaned or "anexo")[:180]
+
+
+def _attachment(row: dict) -> Attachment | None:
+    kind, payload = _timeline_payload(row)
+    if kind not in {"Document", "Document_Item"}:
+        return None
+    document_id = payload.get("documents_id") or payload.get("document_id")
+    if isinstance(document_id, dict):
+        document_id = document_id.get("id")
+    if document_id in (None, ""):
+        return None
+    return Attachment(
+        document_id=int(document_id),
+        filename=display_text(payload.get("filename") or payload.get("name")),
+        mime=str(payload.get("mime") or ""),
+    )
+
+
+def _timeline_payload(row: dict) -> tuple[str, dict]:
+    nested = row.get("item")
+    if isinstance(nested, dict):
+        return str(row.get("type") or row.get("itemtype") or ""), nested
+    return str(row.get("type") or row.get("itemtype") or ""), row
 
 
 def _results(payload: dict | list) -> list:

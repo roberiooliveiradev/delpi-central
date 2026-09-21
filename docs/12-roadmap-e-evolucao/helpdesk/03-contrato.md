@@ -58,7 +58,11 @@ Base do MFE: `/apps/helpdesk-api`.
 
 Lista vazia com sessão válida é `200` e `items: []`. Não é erro.
 
-`GET /tickets/{id}` inclui `description` e `timeline[]` com `id`, `kind` (`followup` na primeira entrega), `content`, `created_at`, `author_display_name`.
+`GET /tickets/{id}` inclui `description`, `timeline[]` com `id`, `kind` (`followup`), `content`, `created_at`, `author_display_name`, e `attachments[]` com `document_id`, `filename` e `mime`. A lista de anexos traz só arquivos já ligados àquele chamado. Lista vazia é `[]`.
+
+`GET /tickets/{id}/attachments/{document_id}` devolve o arquivo com o token da pessoa. O `document_id` precisa estar em `attachments` daquele chamado; caso contrário a resposta é 404, sem o corpo. O arquivo não é gravado na Minha DELPI: o BFF só repassa o download do GLPI.
+
+Enviar um arquivo novo continua fora desta entrega. A API nova do GLPI 11.0.5 não aceita o binário do documento; o envio legado permanece desligado.
 
 ## 4. Escrita
 

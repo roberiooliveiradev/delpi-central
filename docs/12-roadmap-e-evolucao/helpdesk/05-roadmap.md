@@ -38,7 +38,7 @@ Não entra em `E1…E5`.
 
 | Capacidade | Motivo de ficar para depois |
 |---|---|
-| Anexo | outro contrato (documento na timeline) e limite de upload |
+| Anexo | listar e baixar os arquivos já ligados ao chamado. Enviar arquivo novo continua fora: a API nova do GLPI 11.0.5 não recebe o binário |
 | Pesquisa de satisfação | fluxo posterior ao fechamento |
 | Fila, atribuição, tarefa, solução, validação | bancada do técnico, continua no GLPI |
 | Mudança e problema | outro itemtype |

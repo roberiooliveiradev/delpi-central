@@ -38,6 +38,8 @@ Não viram HD próprio:
 
 | Item | Estado |
 |---|---|
-| Anexo, satisfação, fila técnica, mudança, problema, seletor de entidade | `FORA_DO_ESCOPO_COM_JUSTIFICATIVA` — onda H5 |
+| Anexo — envio de arquivo novo | `FORA_DO_ESCOPO_COM_JUSTIFICATIVA` — a API nova do GLPI 11.0.5 não recebe o binário; a API legada permanece desligada |
+| Anexo — listar e baixar os arquivos já ligados ao chamado | no detalhe, via `GET /tickets/{id}/attachments/{document_id}` |
+| Satisfação, fila técnica, mudança, problema, seletor de entidade | `FORA_DO_ESCOPO_COM_JUSTIFICATIVA` — onda H5 |
 | Corrigir o `entry` do iframe antes do MFE | `FORA_DO_ESCOPO_COM_JUSTIFICATIVA` — o iframe deixa de ser o produto em E4 |
 | Ligar API legada ou concessão password | proibido; não é requisito |

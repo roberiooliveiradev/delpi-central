@@ -73,6 +73,13 @@ export type TimelineEntry = {
 export type TicketDetail = TicketSummary & {
   description: string;
   timeline: TimelineEntry[];
+  attachments: TicketAttachment[];
+};
+
+export type TicketAttachment = {
+  document_id: number;
+  filename: string;
+  mime: string;
 };
 
 export function listTickets(signal?: AbortSignal) {
@@ -114,6 +121,20 @@ export function createFollowup(ticketId: string, content: string, idempotencyKey
     },
     body: JSON.stringify({ content }),
   });
+}
+
+export async function downloadTicketAttachment(ticketId: string, documentId: number, filename: string) {
+  const response = await fetch(`${BASE}/tickets/${ticketId}/attachments/${documentId}`, {
+    headers: headers(),
+  });
+  if (!response.ok) throw await readError(response);
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename || "anexo";
+  link.click();
+  URL.revokeObjectURL(url);
 }
 
 export async function beginGlpiLink(): Promise<string> {

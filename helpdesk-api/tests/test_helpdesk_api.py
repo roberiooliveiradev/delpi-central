@@ -121,6 +121,28 @@ def test_create_rejects_requester_field_and_missing_key():
     assert glpi.followups == []
 
 
+def test_attachment_download_uses_only_files_on_the_ticket():
+    client, glpi = build_client()
+    link(client)
+    detail = client.get("/tickets/7", headers=auth_headers())
+    assert detail.status_code == 200
+    assert detail.json()["attachments"] == [
+        {"document_id": 2, "filename": "logo.png", "mime": "image/png"},
+        {"document_id": 4, "filename": "foto.jpg", "mime": "image/jpeg"},
+    ]
+    downloaded = client.get("/tickets/7/attachments/2", headers=auth_headers())
+    assert downloaded.status_code == 200
+    assert downloaded.content == b"png-bytes"
+    assert downloaded.headers["content-type"].startswith("image/png")
+    sibling = client.get("/tickets/7/attachments/4", headers=auth_headers())
+    assert sibling.content == b"jpg-bytes"
+    foreign = client.get("/tickets/7/attachments/99", headers=auth_headers())
+    assert foreign.status_code == 404
+    assert foreign.json()["error"] == "not_found"
+    assert b"png-bytes" not in foreign.content
+    assert 99 not in glpi.downloaded
+
+
 def test_categories_come_from_glpi():
     client, _glpi = build_client()
     link(client)

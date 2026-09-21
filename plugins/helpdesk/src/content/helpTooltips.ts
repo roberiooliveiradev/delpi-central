@@ -6,5 +6,5 @@ export const helpTooltips = {
   create:
     "Informe título, descrição, categoria e urgência. O chamado fica no seu usuário e na entidade padrão do helpdesk. Não é possível abrir em nome de outra pessoa.",
   detail:
-    "O detalhe mostra a descrição e os acompanhamentos. Escreva um acompanhamento para complementar o chamado. Anexos e pesquisa de satisfação ficam no helpdesk, fora desta tela.",
+    "O detalhe mostra a descrição, os acompanhamentos e os arquivos já anexados ao chamado. Dá para baixar cada arquivo. Escreva um acompanhamento para complementar o chamado.",
 };

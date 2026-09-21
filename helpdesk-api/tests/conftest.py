@@ -8,7 +8,7 @@ from fastapi.testclient import TestClient
 from helpdesk_app.application.oauth_service import OAuthService
 from helpdesk_app.application.ticket_service import TicketService
 from helpdesk_app.domain.errors import GlpiForbidden, GlpiNotFound, HelpdeskError
-from helpdesk_app.domain.models import Category, TicketDetail, TicketSummary, TimelineEntry, TokenSet
+from helpdesk_app.domain.models import Attachment, Category, TicketDetail, TicketSummary, TimelineEntry, TokenSet
 from helpdesk_app.infrastructure.persistence.memory import (
     MemoryIdempotencyStore,
     MemorySessionStore,
@@ -35,7 +35,16 @@ class FakeGlpi:
             (
                 TimelineEntry(1, "followup", "Já reiniciei", "2026-09-21T13:00:00Z", "Ana"),
             ),
+            (
+                Attachment(2, "logo.png", "image/png"),
+                Attachment(4, "foto.jpg", "image/jpeg"),
+            ),
         )
+        self.files = {
+            2: (b"png-bytes", "image/png"),
+            4: (b"jpg-bytes", "image/jpeg"),
+        }
+        self.downloaded = []
         self.created = []
         self.followups = []
         self.calls = 0
@@ -80,6 +89,14 @@ class FakeGlpi:
             raise GlpiNotFound("ausente")
         self.followups.append((ticket_id, content))
         return 8
+
+    def download_attachment(self, access_token: str, document_id: int):
+        self.calls += 1
+        assert access_token
+        if document_id not in self.files:
+            raise GlpiNotFound("ausente")
+        self.downloaded.append(document_id)
+        return self.files[document_id]
 
 
 def build_client(glpi: FakeGlpi | None = None) -> tuple[TestClient, FakeGlpi]:

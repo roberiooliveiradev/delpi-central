@@ -1,4 +1,5 @@
 import logging
+from dataclasses import replace
 from urllib.parse import quote
 
 import httpx
@@ -10,10 +11,11 @@ from helpdesk_app.domain.errors import (
     GlpiUnavailable,
     GlpiValidation,
 )
-from helpdesk_app.domain.models import Category, TicketDetail, TicketSummary, TokenSet
+from helpdesk_app.domain.models import Attachment, Category, TicketDetail, TicketSummary, TokenSet
 from helpdesk_app.infrastructure.glpi.mapping import (
     URGENCIES,
     create_ticket_body,
+    display_text,
     parse_categories,
     parse_created_id,
     parse_ticket_detail,
@@ -24,6 +26,7 @@ from helpdesk_app.infrastructure.glpi.mapping import (
 logger = logging.getLogger("helpdesk.glpi")
 
 _GET_ATTEMPTS = 3
+_MAX_ATTACHMENT_BYTES = 20 * 1024 * 1024
 
 
 def _saml_idp_query(saml_idp_id: str) -> str:
@@ -127,7 +130,21 @@ class HttpxGlpiClient:
             f"/api.php/v2.2/Assistance/Ticket/{ticket_id}/Timeline",
             token=access_token,
         )
-        return parse_ticket_detail(ticket, timeline)
+        detail = parse_ticket_detail(ticket, timeline)
+        named = tuple(self._named_attachment(access_token, item) for item in detail.attachments)
+        return replace(detail, attachments=named)
+
+    def download_attachment(self, access_token: str, document_id: int) -> tuple[bytes, str]:
+        response = self._request(
+            "GET",
+            f"/api.php/v2.2/Management/Document/{document_id}/Download",
+            token=access_token,
+            accept="application/octet-stream",
+        )
+        if len(response.content) > _MAX_ATTACHMENT_BYTES:
+            raise GlpiValidation("O anexo excede o limite.")
+        media = response.headers.get("content-type", "application/octet-stream").split(";")[0].strip()
+        return response.content, media or "application/octet-stream"
 
     def create_ticket(
         self,
@@ -161,6 +178,20 @@ class HttpxGlpiClient:
         )
         return parse_created_id(payload)
 
+    def _named_attachment(self, access_token: str, item: Attachment) -> Attachment:
+        if item.filename:
+            return item
+        payload = self._json(
+            "GET",
+            f"/api.php/v2.2/Management/Document/{item.document_id}",
+            token=access_token,
+        )
+        return Attachment(
+            document_id=item.document_id,
+            filename=display_text(payload.get("filename") or payload.get("name")),
+            mime=str(payload.get("mime") or item.mime),
+        )
+
     def _form(self, path: str, data: dict) -> dict:
         return self._json("POST", path, form=data)
 
@@ -173,7 +204,25 @@ class HttpxGlpiClient:
         json_body: dict | None = None,
         form: dict | None = None,
     ) -> dict:
-        headers = {"Accept": "application/json", "GLPI-API-Version": "2.2.0"}
+        response = self._request(method, path, token=token, json_body=json_body, form=form)
+        if not response.content:
+            return {}
+        data = response.json()
+        if not isinstance(data, dict):
+            return {"results": data}
+        return data
+
+    def _request(
+        self,
+        method: str,
+        path: str,
+        *,
+        token: str | None = None,
+        json_body: dict | None = None,
+        form: dict | None = None,
+        accept: str = "application/json",
+    ) -> httpx.Response:
+        headers = {"Accept": accept, "GLPI-API-Version": "2.2.0"}
         if token:
             headers["Authorization"] = f"Bearer {token}"
         attempts = _GET_ATTEMPTS if method == "GET" else 1
@@ -197,12 +246,13 @@ class HttpxGlpiClient:
                 continue
             if response.status_code in {502, 503, 504} and method == "GET" and attempt < attempts - 1:
                 continue
-            return _interpret(response, method, path)
+            _raise_for_status(response, method, path)
+            return response
         logger.info("glpi_unavailable method=%s path=%s", method, path)
         raise GlpiUnavailable("GLPI indisponível.") from last_error
 
 
-def _interpret(response: httpx.Response, method: str, path: str) -> dict:
+def _raise_for_status(response: httpx.Response, method: str, path: str) -> None:
     logger.info("glpi_response method=%s path=%s status=%s", method, path, response.status_code)
     if response.status_code == 401:
         raise GlpiUnauthorized("Sessão do GLPI recusada.")
@@ -212,13 +262,5 @@ def _interpret(response: httpx.Response, method: str, path: str) -> dict:
         raise GlpiNotFound("Chamado não encontrado.")
     if response.status_code in {400, 422}:
         raise GlpiValidation("O GLPI recusou os dados enviados.")
-    if response.status_code >= 500:
-        raise GlpiUnavailable("GLPI indisponível.")
     if response.status_code >= 400:
         raise GlpiUnavailable("GLPI indisponível.")
-    if not response.content:
-        return {}
-    data = response.json()
-    if not isinstance(data, dict):
-        return {"results": data}
-    return data

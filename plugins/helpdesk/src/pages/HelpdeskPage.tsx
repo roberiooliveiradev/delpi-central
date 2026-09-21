@@ -6,6 +6,7 @@ import {
   beginGlpiLink,
   createFollowup,
   createTicket,
+  downloadTicketAttachment,
   getTicket,
   listCategories,
   listTickets,
@@ -279,6 +280,22 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                 detail: entry.content,
               }))}
             />
+            {(ticket.attachments ?? []).length > 0 ? (
+              <div className="helpdesk-record-list">
+                {(ticket.attachments ?? []).map((file) => (
+                  <ActionButton
+                    key={file.document_id}
+                    onClick={() => {
+                      void downloadTicketAttachment(ticketId, file.document_id, file.filename).catch((error) => {
+                        setErrorText(messageFor(error).text);
+                      });
+                    }}
+                  >
+                    {`Baixar ${file.filename || "anexo"}`}
+                  </ActionButton>
+                ))}
+              </div>
+            ) : null}
             <form
               onSubmit={(event) => {
                 event.preventDefault();

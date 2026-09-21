@@ -1,6 +1,12 @@
 from helpdesk_app.application.oauth_service import OAuthService
 from helpdesk_app.application.ports import GlpiGateway, IdempotencyStore
-from helpdesk_app.domain.errors import GlpiUnauthorized, GlpiValidation, LinkRequired, MissingIdempotencyKey
+from helpdesk_app.domain.errors import (
+    GlpiNotFound,
+    GlpiUnauthorized,
+    GlpiValidation,
+    LinkRequired,
+    MissingIdempotencyKey,
+)
 from helpdesk_app.domain.models import StoredResponse, TicketDetail, TicketSummary
 
 
@@ -18,6 +24,14 @@ class TicketService:
 
     def ticket(self, subject: str, ticket_id: int) -> TicketDetail:
         return self._glpi.get_ticket(self._token(subject), ticket_id)
+
+    def attachment(self, subject: str, ticket_id: int, document_id: int) -> tuple[bytes, str, str]:
+        ticket = self.ticket(subject, ticket_id)
+        match = next((item for item in ticket.attachments if item.document_id == document_id), None)
+        if match is None:
+            raise GlpiNotFound("Anexo não encontrado.")
+        content, mime = self._glpi.download_attachment(self._token(subject), document_id)
+        return content, mime, match.filename
 
     def create(
         self,

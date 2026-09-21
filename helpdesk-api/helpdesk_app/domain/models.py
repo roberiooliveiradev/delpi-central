@@ -39,6 +39,13 @@ class TimelineEntry:
 
 
 @dataclass(frozen=True)
+class Attachment:
+    document_id: int
+    filename: str
+    mime: str
+
+
+@dataclass(frozen=True)
 class TicketDetail:
     id: int
     title: str
@@ -48,6 +55,7 @@ class TicketDetail:
     updated_at: str
     description: str
     timeline: tuple[TimelineEntry, ...]
+    attachments: tuple[Attachment, ...] = ()
 
 
 @dataclass(frozen=True)

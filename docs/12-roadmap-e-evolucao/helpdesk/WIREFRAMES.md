@@ -200,7 +200,7 @@ Estas telas só entram depois de decisão nova. Quando entrarem, usam o kit abai
 
 | Capacidade | Onde | Componentes |
 |---|---|---|
-| Anexo | detalhe, abaixo da timeline | `createDashboardFileDropzone` para escolher; `FilePreviewModal` para ver. Envio continua sem retry e com `Idempotency-Key` |
+| Anexo | detalhe, abaixo da timeline | arquivos já ligados ao chamado, com `ActionButton` «Baixar». O envio de arquivo novo continua fora até a API do GLPI receber o binário. Sem dropzone próprio no CSS do MFE |
 | Satisfação | detalhe, só se o status estiver solucionado | `HelpdeskSelect` ou botões `ActionButton` com os valores que o GLPI devolver. Sem componente de estrela no MFE |
 | Bancada do técnico | rota de menu `/apps/helpdesk/console`, fora do MFE | abre `helpdesk.centraldelpi.com.br` em nova aba, com `samlIdpId=1`, só para `helpdesk.console` |
 | Entidade | não há campo | continua a entidade padrão do usuário |
