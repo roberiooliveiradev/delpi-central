@@ -63,3 +63,12 @@ O escopo `api` no GLPI é largo: cobre a HLAPI que o perfil permitir, não só c
 ## 6. Rede
 
 A helpdesk-api chama o GLPI com timeout. O host público `helpdesk.centraldelpi.com.br` é o mesmo que o navegador usa na autorização, para o cookie e o redirect baterem com o GLPI já publicado. Chamada interna direta ao container só entra se o `Host` e o certificado continuarem coerentes com esse nome; isso não muda o contrato.
+
+## 7. HTML do chamado (alvo, não publicado)
+
+O GLPI grava abertura e acompanhamento em HTML. Hoje o BFF achata isso em texto. Quando o corpo rico for autorizado ([`12-conteudo-da-mensagem.md`](./12-conteudo-da-mensagem.md)):
+
+- o BFF é a autoridade da allowlist e do rewrite de `document.send.php`;
+- o browser não busca o host do GLPI para imagem ou documento;
+- o kit só defende de novo, não substitui o sanitizer;
+- o log continua sem o corpo da mensagem.

@@ -25,6 +25,7 @@ Conteúdo da mensagem (formatação, imagem, HTML; inventário, sem autorizaçã
 o que a pessoa vê?          → 01 e WIREFRAMES.md
 de quem é o chamado?        → 02
 qual URL e qual JSON?       → 03
+o corpo da mensagem?        → 12 (HTML, formatação, imagem; inventário)
 onde fica o segredo?        → 04
 o que vem depois do MVP?    → 05
 o que implementar agora?    → 06

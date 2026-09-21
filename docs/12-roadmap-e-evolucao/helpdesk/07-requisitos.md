@@ -26,6 +26,8 @@ Estado de cada um, até existir código: `ATENDIDO_NO_PLANO`. Nenhum está `PROV
 | HD-017 | Uma entrada Meus Chamados de TI no portal | corte do manifest iframe | E4.S4 | path antigo redireciona |
 | HD-018 | Prova positive, irmã e negativa, mais um usuário real | E5 | E5.S1, E5.S2 | ledger `PROVEN` só depois da homologação |
 
+Formatação, HTML e imagem no corpo da conversa **não** são HD novo. Estendem HD-009, HD-010, HD-013 e HD-016. Inventário em [`12-conteudo-da-mensagem.md`](./12-conteudo-da-mensagem.md); sem autorização de código.
+
 ## Herdados da plataforma
 
 Não viram HD próprio:

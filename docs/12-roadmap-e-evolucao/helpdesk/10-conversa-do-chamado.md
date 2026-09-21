@@ -100,7 +100,7 @@ O compositor de resposta continua `HelpdeskTextArea` e `ActionButton`. `MentionC
 |---|---|---|
 | Instante da abertura | `Ticket.date_creation` | `created_at` no detalhe |
 | Nome do solicitante | `Ticket.team[]` com `role=requester`; a limpeza da equipe também preserva `display_name` | `requester_display_name` |
-| Texto da abertura | `Ticket.content` (HTML) | `description`, já em texto puro |
+| Texto da abertura | `Ticket.content` (HTML) | `description`, já em texto puro; HTML sanitizado só no alvo de [`12-conteudo-da-mensagem.md`](./12-conteudo-da-mensagem.md) |
 | Acompanhamento | `Followup.user`, `content`, `date_creation` | `timeline[]` com `author_display_name`, `content`, `created_at`, `mine` |
 | Autor da mensagem | `Followup.user.id` / `team[].id` e `GET /session` → `user_id`; e-mail do JWT se o GLPI trouxer e-mail | `mine` / `requester_mine` — nunca o nome |
 | Acompanhamento privado | `Followup.is_private` | não entra em `timeline` |

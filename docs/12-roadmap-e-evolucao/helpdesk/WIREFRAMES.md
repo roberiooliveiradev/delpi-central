@@ -75,7 +75,7 @@ O bloco escuro é `:root[data-theme="dark"] .dashboard-helpdesk`. Superfície, t
 | `createDashboardStatusBadge` | `HelpdeskStatusBadge` | Status do chamado |
 | `createDashboardDataRecordCard` | `HelpdeskRecordCard` | Resumo do detalhe |
 | `DataTable` | `HelpdeskDataTable` | Lista com ordenação de coluna |
-| `createDashboardMessageThread` | `HelpdeskMessageThread` | Abertura e acompanhamentos do detalhe, em texto puro |
+| `createDashboardMessageThread` | `HelpdeskMessageThread` | Abertura e acompanhamentos do detalhe, em texto puro. Alvo HTML: [`12-conteudo-da-mensagem.md`](./12-conteudo-da-mensagem.md) |
 | `createDashboardTextField` | `HelpdeskTextField` | Título |
 | `createDashboardTextAreaField` | `HelpdeskTextArea` | Descrição e resposta |
 | `createDashboardSelectField` | `HelpdeskSelect` | Categoria (com busca) e urgência |
@@ -198,18 +198,18 @@ HelpdeskSectionCard  «Conversa»  hint = helpTooltips.detail
      ● status
      Chamado / Técnico quando existirem
 
-  HelpdeskMessageThread  bodyMode = plain
+  HelpdeskMessageThread  bodyMode = plain   (publicado; alvo HTML em 12)
     abertura
       autor = requester_display_name
       hora = «Criado em …»
       título = título do chamado
-      corpo = descrição em texto puro
+      corpo = descrição em texto puro   (publicado)
       prévia = HelpdeskAttachmentPreviewStrip; clique abre FilePreviewModal com Baixar
     acompanhamento
       autor, hora, texto
       sem arquivo próprio (A-07 ainda não inventa o vínculo)
 
-  Responder   [ texto ]  obrigatório  hint = helpTooltips.detail
+  Responder   [ texto ]  obrigatório  hint = helpTooltips.detail   (publicado; alvo RichTextEditor em 12)
   HelpdeskFormActions
     Responder   [ texto ]  3 linhas
     [ enviar ]
