@@ -33,6 +33,7 @@ from tm_app.interface.http.routes.transformometro_routes import router as transf
 from tm_app.interface.http.routes.meeting_minutes_routes import router as meeting_minutes_router
 from tm_app.interface.http.routes.public_meeting_minutes_routes import public_router as public_meeting_minutes_router
 from tm_app.interface.http.routes.signature_profile_routes import router as signature_profile_router
+from tm_app.interface.http.routes.task_routes import router as task_router
 from tm_app.application.services.transformometro_realtime_hub import (
     transformometro_realtime_hub,
 )
@@ -161,6 +162,7 @@ app.include_router(meeting_minutes_router, prefix="/transformometro/atas")
 app.include_router(public_meeting_minutes_router, prefix="/public/meeting-minutes/sign-invites")
 app.include_router(public_meeting_minutes_router, prefix="/public/atas/sign-invites")
 app.include_router(signature_profile_router)
+app.include_router(task_router)
 app.include_router(crud_router)
 app.include_router(dashboard_router)
 app.include_router(integrations_router)

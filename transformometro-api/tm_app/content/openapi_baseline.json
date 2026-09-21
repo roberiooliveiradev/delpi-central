@@ -1,7 +1,7 @@
 {
   "version": 1,
   "generatedAt": "2026-09-21",
-  "operation_count": 174,
+  "operation_count": 180,
   "operations": [
     {
       "operationId": "post_liberar",
@@ -1046,6 +1046,42 @@
       "method": "GET",
       "path": "/public/meeting-minutes/sign-invites/{token}/signatures/{signature_id}/image",
       "module": "meeting_minutes_public"
+    },
+    {
+      "operationId": "list_my_transformometro_tasks",
+      "method": "GET",
+      "path": "/transformometro/my-tasks",
+      "module": "tasks"
+    },
+    {
+      "operationId": "create_transformometro_task",
+      "method": "POST",
+      "path": "/transformometro/tasks",
+      "module": "tasks"
+    },
+    {
+      "operationId": "get_transformometro_task",
+      "method": "GET",
+      "path": "/transformometro/tasks/{task_id}",
+      "module": "tasks"
+    },
+    {
+      "operationId": "update_transformometro_task",
+      "method": "PATCH",
+      "path": "/transformometro/tasks/{task_id}",
+      "module": "tasks"
+    },
+    {
+      "operationId": "cancel_transformometro_task",
+      "method": "POST",
+      "path": "/transformometro/tasks/{task_id}/cancel",
+      "module": "tasks"
+    },
+    {
+      "operationId": "complete_transformometro_task",
+      "method": "POST",
+      "path": "/transformometro/tasks/{task_id}/complete",
+      "module": "tasks"
     }
   ]
 }

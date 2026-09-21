@@ -383,6 +383,7 @@ _ROUTE_MODULES = (
     "tm_app.interface.http.routes.meeting_minutes_routes",
     "tm_app.interface.http.routes.public_meeting_minutes_routes",
     "tm_app.interface.http.routes.signature_profile_routes",
+    "tm_app.interface.http.routes.task_routes",
     "tm_app.interface.http.branch_access_http",
 )
 

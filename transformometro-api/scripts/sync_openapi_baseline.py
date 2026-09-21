@@ -43,6 +43,8 @@ def _module_for_path(path: str) -> str:
         return "integrations"
     if second in {"meeting-minutes", "signatures"}:
         return "meeting_minutes"
+    if second in {"my-tasks", "tasks"}:
+        return "tasks"
     return "crud"
 
 
