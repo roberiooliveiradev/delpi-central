@@ -3,7 +3,7 @@
 **Status:** planejamento executável canônico  
 **Autoridade de ordem:** **este documento é a única fonte de verdade para a sequência de implementação**  
 **Produto:** **DÉLIA**, aplicação standalone nova  
-**Próxima etapa:** `C2-T6 — IFRAME_APPLICABILITY_AND_SECURITY_BOUNDARY` (`C2-T5R1` lifecycle hardening recorded; `C2_IMPLEMENTATION_STARTED=YES`; `C2_EXECUTED=NO`; do not start T6; no iframe bridge)
+**Próxima etapa:** `C2-T5R2` live revalidation (`LIVE_GLOBAL_SURFACE=FAIL` until Product Master confirms the published launcher; `C2_EXECUTED=NO`; do not start T6)
 **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Baseline:** [`51-platform-integration-baseline.md`](./51-platform-integration-baseline.md)  
 **Bootstrap:** [`52-standalone-repository-and-bootstrap-plan.md`](./52-standalone-repository-and-bootstrap-plan.md)  
@@ -368,6 +368,7 @@ C2_T4 = OPERATIONAL_CONTEXT_INVENTORY_READY_FOR_REVIEW
 C2_T4R1 = STATUS_NORMALIZATION_READY_FOR_REVIEW
 C2_T5 = IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW
 C2_T5R1 = IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW
+C2_T5R2 = LIVE_GLOBAL_SURFACE_FAIL_BUNDLE_CONTAINS_T5
 C2_STARTED = YES
 C2_IMPLEMENTATION_STARTED = YES
 C2_EXECUTED = NO
@@ -385,7 +386,7 @@ BROWSER_STATE_RESIDENCY_POLICY = APPROVED (C2-T1D1)
 BROWSER_RETAINED_STATE_CURRENTLY_REQUIRED = NO
 CENTRALIZED_BROWSER_STATE_BOUNDARY = REQUIRED_ON_FIRST_RETAINED_STATE
 SHARED_DEVICE_ISOLATION_INVARIANT = FROZEN_ACCEPTED
-NEXT = C2-T6 — IFRAME_APPLICABILITY_AND_SECURITY_BOUNDARY (do not start automatically; no iframe bridge)
+NEXT = C2-T5R2 live revalidation (LIVE_GLOBAL_SURFACE=FAIL; do not start T6)
 ```
 
 ## C0.S2 — Authorities / bounded contexts
@@ -630,7 +631,7 @@ C2-T4R1: formal status OPERATIONAL_CONTEXT = TO_INVENTORY (MIXED is not a canoni
 WORKSPACE_CONTEXT_RUNTIME = DEFER
 C2_IMPLEMENTATION_STARTED = YES
 C2_EXECUTED = NO
-NEXT = C2-T6 iframe applicability (no new bridge by default)
+NEXT = C2-T5R2 live revalidation (no iframe bridge)
 C2-FINAL after those reviews
 Workspace binding remains unscheduled
 ```

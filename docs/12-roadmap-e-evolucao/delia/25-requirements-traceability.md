@@ -128,7 +128,7 @@ OUT_OF_SCOPE_WITH_DECISION
 | CP-144 | Gateway route própria API/MFE | Gateway (`/apps/delia-api/`, `/apps/delia`) | dev/prod parity | LOCKED |
 | CP-145 | Compose/deploy próprios | Infra (`delpi-delia-api`, `delpi-delia`) | independent service/start | LOCKED |
 | CP-148 | Portal federated full-page mount | Portal/DÉLIA MFE | authorized mount/F5 | LOCKED — C2-T5 full-page AppHost preserved (same remote helpers) |
-| CP-149 | Global DÉLIA panel usando o mesmo MFE/runtime | Portal/DÉLIA MFE | surface parity | IMPLEMENTED_CURRENT_SCOPE — C2-T5 Portal panel + same `delia`/`./App`; C2 not complete |
+| CP-149 | Global DÉLIA panel usando o mesmo MFE/runtime | Portal/DÉLIA MFE | surface parity | IMPLEMENTED_CURRENT_SCOPE (code) — live panel BLOCKED until launcher revalidation |
 | CP-150 | JWT + Core/RBAC integration | DÉLIA API/Core | auth negatives | LOCKED |
 | CP-152 | Health + independent rollback/shutdown | DÉLIA/Infra | Chat-offline rollback | LOCKED |
 | CP-153 | Reuso obrigatório de `@delpi/plugin-ui`/shared federation | DÉLIA MFE | federation/UI conformance | LOCKED |
@@ -138,7 +138,7 @@ OUT_OF_SCOPE_WITH_DECISION
 
 | ID | Requisito | Owner | Gate | Status |
 |---|---|---|---|---|
-| CP-001 | DÉLIA global no Portal | DÉLIA MFE + Portal | panel/full-page UX | IMPLEMENTED_CURRENT_SCOPE — C2-T5 global launcher/panel; C2_EXECUTED=NO |
+| CP-001 | DÉLIA global no Portal | DÉLIA MFE + Portal | panel/full-page UX | IMPLEMENTED_CURRENT_SCOPE (code) — live launcher FAIL pending revalidation; C2_EXECUTED=NO |
 | CP-002 | Abrir app | Portal/CopilotBridge | authorized navigation | LOCKED |
 | CP-003 | Abrir rota | Portal/CopilotBridge | authorized navigation | LOCKED |
 | CP-004 | Abrir entidade | Portal + app contract | EntityRef/deep-link | LOCKED |
