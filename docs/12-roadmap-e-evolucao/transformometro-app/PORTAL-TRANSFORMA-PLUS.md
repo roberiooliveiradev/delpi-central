@@ -46,7 +46,7 @@ FAVORITES = personalização individual, ainda sem contrato transversal
 
 TopBar funcional nesta revisão: Início, Visão geral, Meus processos, Administração. Buscar usa o Command Palette compartilhado só para caminhos do portal.
 
-TARGET, não PROVEN e não exibido: Sala de interação, Ajuda, Favoritos, Usuário. Minhas tarefas é a projeção das assinaturas pendentes do usuário, não um task store. A sala do Comercial não é reutilizada. `user_favorite_apps` do Core é favorito de app do portal, não atalho deste launcher.
+TARGET, não PROVEN e não exibido: Sala de interação, Ajuda, Favoritos, Usuário. Minhas tarefas une tarefas do domínio Transformômetro (`tm_tasks`) com a projeção das assinaturas pendentes. A assinatura não vira linha de tarefa. A sala do Comercial não é reutilizada. `user_favorite_apps` do Core é favorito de app do portal, não atalho deste launcher.
 
 O Início cataloga Operação, Gestão, Registros e Administração. Configurações não é card do Início: entra por Administração. Exportar/Importar fica em Registros.
 
@@ -210,7 +210,7 @@ Visão geral do processo: identificação, objetivo, escopo, responsáveis, revi
 | Área | Decisão |
 |---|---|
 | Sala | Não há capability compartilhada. Comercial é o owner das salas atuais. TO_INVENTORY / TARGET. Não implementar chat paralelo |
-| Tarefas | Projeção de `pending-signatures`. Sem task store. Revisão, responsável local e plano de ação ficam de fora: não há `user_id` |
+| Tarefas | Entidade `tm_tasks` do Transformômetro + projeção de `pending-signatures`. Sem task store de plataforma. Revisão, responsável local e plano de ação ficam de fora da fila automática |
 | Portfólio | Não criar agregado Portfolio. Se a fase H passar no Abstraction Gate, é read model de processos e melhorias já autorizados |
 
 ## 11. Administração, perfil, ajuda, busca, favoritos
