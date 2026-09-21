@@ -18,6 +18,8 @@ MFE supplies
 
 O JWT Keycloak identifica e autentica. **Authorization efetiva vem do Core API**; não confiar em `permissions`/`is_superadmin` dos claims como decisão final.
 
+IDD, classificação, metas e realizado estratégico da Visão geral têm owner **strategic-indicators-api**. A supplies-api lê isso por `api-delpi` `GET /dashboard/department-indicators` (`department_id=supplies`, `branch` opcional). O MFE não chama o SI. Não há segunda fórmula de IDD no Portal.
+
 Contrato vigente (ADR-009): o Portal só tem `supplies.access` e `supplies.manage`. Unidade é filtro `01`/`02`. A supplies-api chama `api-delpi` e `purchase-requests-api` com `X-Delpi-Caller-App: supplies-api` e `X-Delpi-Service-Token`. Sem esse par, o downstream não aplica a semântica do Portal.
 
 Não copiar os middlewares compartilhados:

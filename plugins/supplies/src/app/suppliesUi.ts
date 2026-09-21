@@ -28,6 +28,7 @@ import {
   createDashboardSelectField,
   createDashboardStateBanner,
   createDashboardStatusBadge,
+  createDashboardDepartmentScoreBadge,
   createDashboardTabularExportButtons,
   createDashboardTableFontSizeControls,
   createDashboardTextField,
@@ -136,6 +137,9 @@ export const SuppliesRecentAccessStrip = createDashboardRecentAccessStrip({
   prefix: UI_PREFIX,
 });
 export const SuppliesStatusBadge = createDashboardStatusBadge({ prefix: UI_PREFIX });
+export const SuppliesDepartmentScoreBadge = createDashboardDepartmentScoreBadge({
+  prefix: UI_PREFIX,
+});
 export const SuppliesActionButton = ActionButton;
 export const SuppliesClearFiltersButton = ClearFiltersButton;
 export const SuppliesAvatar = createInitialsAvatar(UI_PREFIX);

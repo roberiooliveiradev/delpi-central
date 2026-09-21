@@ -25,6 +25,46 @@ export type OverviewKpiCard = {
   goalMode: string | null;
   status: OverviewKpiStatus;
   source: string;
+  strategic?: OverviewKpiStrategic | null;
+};
+
+export type OverviewUnitValueMap = {
+  consolidated?: number | null;
+  "01"?: number | null;
+  "02"?: number | null;
+};
+
+export type OverviewKpiStrategic = {
+  indicatorId: string | null;
+  score: number | null;
+  realized: OverviewUnitValueMap;
+  goals: OverviewUnitValueMap;
+  goalValue: number | null;
+  comparableGoal: number | null;
+  referenceGoal: number | null;
+  goalMode: string | null;
+  goalPeriodKind: string | null;
+  goalPeriodPartial: boolean | null;
+  performanceDirection: "higher_is_better" | "lower_is_better" | null;
+  valueUnit: string | null;
+  valuePrefix: string | null;
+  valueSuffix: string | null;
+  valueDecimals: number | null;
+};
+
+export type OverviewDepartmentScore = {
+  score: number | null;
+  classification: string | null;
+};
+
+export type OverviewStrategicContext = {
+  departmentId: string;
+  scores: {
+    consolidated?: OverviewDepartmentScore;
+    "01"?: OverviewDepartmentScore;
+    "02"?: OverviewDepartmentScore;
+  };
+  partialSuccess: boolean;
 };
 
 export type OverviewPartialFailure = {
@@ -45,6 +85,14 @@ export type OverviewResponse = {
   };
   kpis: OverviewKpiCard[];
   partialFailures: OverviewPartialFailure[];
+  strategicContext?: OverviewStrategicContext;
+  siValueDrift?: Array<{
+    kpiId: string;
+    scope: string;
+    operationalValue: number;
+    siValue: number;
+    period: { from: string; to: string };
+  }>;
 };
 
 export type OverviewQuery = {

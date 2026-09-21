@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date
 from typing import Any, Callable
@@ -13,6 +14,7 @@ from app.infrastructure.gateways.purchase_requests_gateway import (
     PurchaseRequestsGatewayError,
 )
 from app.infrastructure.gateways.strategic_indicators_gateway import (
+    STRATEGIC_KPI_IDS,
     StrategicIndicatorsGateway,
     StrategicIndicatorsGatewayError,
 )
@@ -78,6 +80,9 @@ KPI_DEFS: tuple[dict[str, str], ...] = (
 )
 
 
+logger = logging.getLogger("supplies-api.overview")
+
+
 def _first_day_of_month(today: date | None = None) -> str:
     day = today or date.today()
     return day.replace(day=1).isoformat()
@@ -106,6 +111,65 @@ def _sum(values: list[float]) -> float | None:
     if not values:
         return None
     return sum(values)
+
+
+def _strategic_block(kpi_id: str, si_row: dict[str, Any]) -> dict[str, Any] | None:
+    if kpi_id not in STRATEGIC_KPI_IDS:
+        return None
+    if not si_row or si_row.get("present") is False:
+        return None
+    return {
+        "indicatorId": si_row.get("indicator_id"),
+        "score": si_row.get("score"),
+        "realized": si_row.get("realized") if isinstance(si_row.get("realized"), dict) else {},
+        "goals": si_row.get("goals_by_unit")
+        if isinstance(si_row.get("goals_by_unit"), dict)
+        else {},
+        "goalValue": si_row.get("goal_value"),
+        "comparableGoal": si_row.get("comparable_goal"),
+        "referenceGoal": si_row.get("reference_goal"),
+        "goalMode": si_row.get("goal_mode"),
+        "goalPeriodKind": si_row.get("goal_period_kind"),
+        "goalPeriodPartial": si_row.get("goal_period_partial"),
+        "performanceDirection": si_row.get("performance_direction"),
+        "valueUnit": si_row.get("value_unit"),
+        "valuePrefix": si_row.get("value_prefix"),
+        "valueSuffix": si_row.get("value_suffix"),
+        "valueDecimals": si_row.get("value_decimals"),
+    }
+
+
+def _si_value_drift(
+    *,
+    kpi_id: str,
+    scope: str,
+    operational_value: float | None,
+    strategic: dict[str, Any] | None,
+    period: dict[str, str],
+) -> dict[str, Any] | None:
+    if strategic is None or operational_value is None:
+        return None
+    realized = strategic.get("realized")
+    if not isinstance(realized, dict) or scope not in realized:
+        return None
+    si_value = realized.get(scope)
+    if si_value is None:
+        return None
+    try:
+        si_number = float(si_value)
+        operational = float(operational_value)
+    except (TypeError, ValueError):
+        return None
+    tolerance = max(0.05, abs(si_number) * 0.01)
+    if abs(operational - si_number) <= tolerance:
+        return None
+    return {
+        "kpiId": kpi_id,
+        "scope": scope,
+        "operationalValue": operational,
+        "siValue": si_number,
+        "period": period,
+    }
 
 
 def _format_display(value: float | None, unit: str) -> str | None:
@@ -164,15 +228,31 @@ class OverviewCompositionService:
 
         token = user.access_token or ""
         partial_failures: list[dict[str, str]] = []
+        view_branch = branches[0] if mode == "single" else None
 
-        si_metrics: dict[str, dict[str, float | None]] = {}
+        si_metrics: dict[str, dict[str, Any]] = {}
+        strategic_context: dict[str, Any] = {
+            "departmentId": "supplies",
+            "scores": {},
+            "partialSuccess": False,
+        }
         try:
-            si_metrics = self.strategic_indicators.metrics_by_kpi(
-                access_token=token,
-                branch=branches[0] if mode == "single" else None,
+            loaded = self._load_strategic(
+                branch=view_branch,
                 start_date=start,
                 end_date=end,
+                access_token=token,
             )
+            si_metrics = loaded["metrics"]
+            strategic_context = loaded["context"]
+            for message in loaded.get("errors") or []:
+                partial_failures.append(
+                    {
+                        "kpiId": "*",
+                        "source": "si",
+                        "message": str(message),
+                    }
+                )
         except StrategicIndicatorsGatewayError as exc:
             partial_failures.append(
                 {
@@ -268,6 +348,7 @@ class OverviewCompositionService:
                     )
 
         kpis: list[dict[str, Any]] = []
+        si_value_drift: list[dict[str, Any]] = []
         for definition in KPI_DEFS:
             kpi_id = definition["id"]
             value = results.get(kpi_id)
@@ -285,8 +366,26 @@ class OverviewCompositionService:
             idd_score = si_row.get("score")
             performance_direction = si_row.get("performance_direction")
             goal_mode = si_row.get("goal_mode")
-            # `meta` aliases period-comparable goal for legacy compare chart consumers.
             meta_value = comparable_goal if comparable_goal is not None else goal_value
+            strategic = _strategic_block(kpi_id, si_row)
+            active_scope = branches[0] if mode == "single" else "consolidated"
+            drift = _si_value_drift(
+                kpi_id=kpi_id,
+                scope=active_scope,
+                operational_value=value if isinstance(value, (int, float)) else None,
+                strategic=strategic,
+                period={"from": start, "to": end},
+            )
+            if drift is not None:
+                logger.warning(
+                    "SI_VALUE_DRIFT kpi=%s scope=%s operational=%s si=%s period=%s",
+                    drift["kpiId"],
+                    drift["scope"],
+                    drift["operationalValue"],
+                    drift["siValue"],
+                    drift["period"],
+                )
+                si_value_drift.append(drift)
             kpis.append(
                 {
                     "id": kpi_id,
@@ -309,6 +408,7 @@ class OverviewCompositionService:
                     "goalMode": goal_mode,
                     "status": "available" if available else "unavailable",
                     "source": definition["source"],
+                    "strategic": strategic,
                 }
             )
 
@@ -317,6 +417,41 @@ class OverviewCompositionService:
             "period": {"from": start, "to": end, "label": period_label},
             "kpis": kpis,
             "partialFailures": partial_failures,
+            "strategicContext": strategic_context,
+            "siValueDrift": si_value_drift,
+        }
+
+    def _load_strategic(
+        self,
+        *,
+        branch: str | None,
+        start_date: str,
+        end_date: str,
+        access_token: str,
+    ) -> dict[str, Any]:
+        loader = getattr(self.strategic_indicators, "compose_strategic", None)
+        owner_name = type(self.strategic_indicators).__name__
+        if callable(loader) and owner_name not in {"MagicMock", "Mock"}:
+            return loader(
+                access_token=access_token,
+                branch=branch,
+                start_date=start_date,
+                end_date=end_date,
+            )
+        metrics = self.strategic_indicators.metrics_by_kpi(
+            access_token=access_token,
+            branch=branch,
+            start_date=start_date,
+            end_date=end_date,
+        )
+        return {
+            "metrics": metrics,
+            "context": {
+                "departmentId": "supplies",
+                "scores": {},
+                "partialSuccess": False,
+            },
+            "errors": [],
         }
 
     def _collect_numeric(

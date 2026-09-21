@@ -37,6 +37,20 @@ Cards lado a lado podem ter naturezas temporais diferentes e devem deixar isso v
 
 A UI deve exibir período/competência ou indicação de “agora/snapshot” para não sugerir uma janela temporal única.
 
+## IDD e metas por unidade
+
+Owner de IDD, classificação, realizado estratégico e metas: **strategic-indicators-api**. O Portal não recalcula IDD e não cadastra meta.
+
+| KPI do Portal | indicator_id |
+|---|---|
+| KPI-OTD | `supplies-otd` |
+| KPI-STOCK-VALUE | `supplies-stock-value` |
+| KPI-TURNOVER | `supplies-stock-turnover` |
+| KPI-CPV | `supplies-cpv` |
+| KPI-SAVINGS | `supplies-negotiation-savings` |
+
+KPI-SC-OPEN e KPI-CRITICAL-MP não têm indicador SI. `goal_value` é meta cadastral; `comparable_goal` / `goals[unidade]` é a meta do período; `reference_goal` é a meta mês/referência.
+
 ---
 
 ## KPI-OTD — Pontualidade de compras

@@ -6,6 +6,7 @@ from app.application.services.overview_composition_service import OverviewCompos
 from app.create_app import create_app
 from app.domain.entities import AuthenticatedIdentity, EffectiveUser
 from app.infrastructure.gateways.delpi_api_gateway import DelpiApiGatewayError
+from app.infrastructure.gateways.strategic_indicators_gateway import StrategicIndicatorsGateway
 
 
 def _user(*, permissions: set[str], is_superadmin: bool = False) -> EffectiveUser:
@@ -206,3 +207,165 @@ def test_http_overview_positive(mock_resolve, mock_validate):
     body = response.get_json()
     assert len(body["kpis"]) == 7
     assert "partialFailures" in body
+
+
+def _strategic_user() -> EffectiveUser:
+    return _user(permissions={"supplies.access"})
+
+
+def _si_indicators(*, realized_02, goal_02, indicator_score=6.57):
+    rows = []
+    for indicator_id in (
+        "supplies-otd",
+        "supplies-stock-value",
+        "supplies-stock-turnover",
+        "supplies-cpv",
+        "supplies-negotiation-savings",
+    ):
+        rows.append(
+            {
+                "indicator_id": indicator_id,
+                "goal_value": 98.0,
+                "comparable_goal": 30.0,
+                "reference_goal": 90.0,
+                "goal_mode": "prorated",
+                "goal_period_kind": "accumulated",
+                "goal_period_partial": False,
+                "performance_direction": "lower_is_better",
+                "score": indicator_score,
+                "value_suffix": "%",
+                "value_decimals": 1,
+                "realized": {"consolidated": 95.0, "01": 96.1, "02": realized_02},
+                "goals": {"consolidated": 97.0, "01": 94.0, "02": goal_02},
+            }
+        )
+    return rows
+
+
+def _delpi_for_scopes(*, fail=False, score_02=6.0):
+    delpi = MagicMock()
+
+    def _get(_path, access_token=None, params=None, **_kwargs):
+        if fail:
+            raise RuntimeError("si down")
+        branch = (params or {}).get("branch")
+        if branch == "01":
+            score, classification = 8.2, "Bom"
+        elif branch == "02":
+            score, classification = score_02, ("Atencao" if score_02 is not None else None)
+        else:
+            score, classification = 7.4, "Regular"
+        return {
+            "item": {
+                "department_id": "supplies",
+                "score": score,
+                "classification": classification,
+                "partial_success": False,
+                "indicators": _si_indicators(realized_02=None, goal_02=None),
+            }
+        }
+
+    delpi.get.side_effect = _get
+    return delpi
+
+
+def test_overview_strategic_context_and_unit_maps():
+    gateway = StrategicIndicatorsGateway(delpi=_delpi_for_scopes())
+    result = OverviewCompositionService(
+        delpi_reads=_stub_reads(),
+        purchase_requests=MagicMock(count_open_requests=MagicMock(return_value=4)),
+        strategic_indicators=gateway,
+    ).compose(
+        _strategic_user(),
+        branch=None,
+        start_date="2026-09-01",
+        end_date="2026-09-08",
+    )
+
+    scores = result["strategicContext"]["scores"]
+    assert set(scores) == {"consolidated", "01", "02"}
+    assert scores["consolidated"]["score"] == 7.4
+    assert scores["01"]["classification"] == "Bom"
+    assert scores["02"]["score"] == 6.0
+    assert result["scope"]["mode"] == "consolidated"
+    assert result["period"]["from"] == "2026-09-01"
+    assert "partialFailures" in result
+
+    strategic_ids = (
+        "KPI-OTD",
+        "KPI-STOCK-VALUE",
+        "KPI-TURNOVER",
+        "KPI-CPV",
+        "KPI-SAVINGS",
+    )
+    for kpi_id in strategic_ids:
+        strategic = next(k for k in result["kpis"] if k["id"] == kpi_id)["strategic"]
+        assert strategic["indicatorId"]
+        assert strategic["realized"]["consolidated"] == 95.0
+        assert strategic["realized"]["01"] == 96.1
+        assert strategic["realized"]["02"] is None
+        assert strategic["goals"]["consolidated"] == 97.0
+        assert strategic["goals"]["01"] == 94.0
+        assert strategic["goals"]["02"] is None
+        assert strategic["score"] == 6.57
+        assert strategic["goalMode"] == "prorated"
+        assert strategic["goalPeriodKind"] == "accumulated"
+        assert strategic["performanceDirection"] == "lower_is_better"
+        assert strategic["goalValue"] == 98.0
+        assert strategic["comparableGoal"] == 30.0
+        assert strategic["referenceGoal"] == 90.0
+
+    by_id = {kpi["id"]: kpi for kpi in result["kpis"]}
+    assert by_id["KPI-SC-OPEN"]["strategic"] is None
+    assert by_id["KPI-CRITICAL-MP"]["strategic"] is None
+    assert by_id["KPI-OTD"]["value"] == 95.0
+    assert by_id["KPI-OTD"]["goalValue"] == 98.0
+    assert by_id["KPI-OTD"]["comparableGoal"] == 30.0
+    assert by_id["KPI-OTD"]["iddScore"] == 6.57
+    assert any(item["kpiId"] == "KPI-STOCK-VALUE" for item in result["siValueDrift"])
+
+
+def test_overview_branch_filter_keeps_only_selected_unit():
+    gateway = StrategicIndicatorsGateway(delpi=_delpi_for_scopes())
+    service = OverviewCompositionService(
+        delpi_reads=_stub_reads(),
+        purchase_requests=MagicMock(count_open_requests=MagicMock(return_value=1)),
+        strategic_indicators=gateway,
+    )
+    for branch in ("01", "02"):
+        result = service.compose(
+            _strategic_user(),
+            branch=branch,
+            start_date="2026-09-01",
+            end_date="2026-09-08",
+        )
+        assert set(result["strategicContext"]["scores"]) == {branch}
+        otd = next(k for k in result["kpis"] if k["id"] == "KPI-OTD")["strategic"]
+        assert set(otd["realized"]) == {branch}
+        assert set(otd["goals"]) == {branch}
+
+
+def test_overview_missing_department_score_stays_null():
+    gateway = StrategicIndicatorsGateway(delpi=_delpi_for_scopes(score_02=None))
+    result = OverviewCompositionService(
+        delpi_reads=_stub_reads(),
+        purchase_requests=MagicMock(count_open_requests=MagicMock(return_value=1)),
+        strategic_indicators=gateway,
+    ).compose(_strategic_user(), branch="02", start_date="2026-09-01", end_date="2026-09-08")
+    assert result["strategicContext"]["scores"]["02"]["score"] is None
+
+
+def test_overview_si_failure_keeps_operational_headline():
+    gateway = StrategicIndicatorsGateway(delpi=_delpi_for_scopes(fail=True))
+    result = OverviewCompositionService(
+        delpi_reads=_stub_reads(),
+        purchase_requests=MagicMock(count_open_requests=MagicMock(return_value=9)),
+        strategic_indicators=gateway,
+    ).compose(_strategic_user(), branch="01", start_date="2026-09-01", end_date="2026-09-08")
+    otd = next(k for k in result["kpis"] if k["id"] == "KPI-OTD")
+    assert otd["value"] == 95.0
+    assert otd["status"] == "available"
+    assert otd["strategic"] is None
+    assert result["strategicContext"]["scores"] == {}
+    assert any(item["source"] == "si" for item in result["partialFailures"])
+

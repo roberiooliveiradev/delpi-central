@@ -18,7 +18,13 @@ describe("Overview structural", () => {
     expect(page).toContain("periodKindBadge");
     expect(page).toContain("buildOverviewKpiPresentation");
     expect(page).toContain("goalPerformanceBadge");
-    expect(page).toContain("iddScoreLabel");
+    expect(page).toContain("SuppliesDepartmentScoreBadge");
+    expect(page).toContain("OverviewStrategicUnits");
+    expect(page).toContain("IDD Suprimentos");
+    expect(page).not.toContain("calculateIndicatorIddScore");
+    expect(page).not.toContain("strategic-indicators-api");
+    expect(page).not.toContain("api-delpi");
+    expect(page).not.toContain("purchase-requests-api");
     expect(page).not.toContain("comparisonTone");
     expect(page).toContain("sp-overview-kpi-grid");
     expect(page).toContain("sp-gestao-charts-grid");

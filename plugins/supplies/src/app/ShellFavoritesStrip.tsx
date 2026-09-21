@@ -34,10 +34,10 @@ export function ShellFavoritesStrip({ basePath }: ShellFavoritesStripProps) {
         label: hubRouteLabelByView(item.viewId) ?? item.label,
       }))}
       onSelect={(id: string) => {
-        navigatePluginView(id, { basePath });
+        navigatePluginView(id as HomeFavoriteItem["viewId"], { basePath });
       }}
       onRemove={(id: string) => {
-        removeHomeFavorite(id);
+        removeHomeFavorite(id as HomeFavoriteItem["viewId"]);
       }}
       title={copy.favoritesTitle}
       emptyLabel={copy.favoritesEmpty}

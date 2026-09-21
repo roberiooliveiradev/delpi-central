@@ -127,3 +127,91 @@ def test_metrics_by_kpi_closed_month_comparable_may_equal_reference():
     assert row["comparable_goal"] == 40.0
     assert row["reference_goal"] == 40.0
     assert row["performance_direction"] == "lower_is_better"
+
+
+def _department_item(*, score, classification, realized_02, goal_02):
+    indicators = []
+    for indicator_id in SI_INDICATOR_BY_KPI.values():
+        indicators.append(
+            {
+                "indicator_id": indicator_id,
+                "goal_value": 98.0,
+                "comparable_goal": 30.0,
+                "reference_goal": 90.0,
+                "goal_mode": "standard",
+                "goal_period_kind": "partial",
+                "goal_period_partial": True,
+                "performance_direction": "higher_is_better",
+                "score": 6.57,
+                "value_suffix": "%",
+                "value_decimals": 1,
+                "realized": {"consolidated": 95.0, "01": 96.1, "02": realized_02},
+                "goals": {"consolidated": 97.0, "01": 97.0, "02": goal_02},
+            }
+        )
+    return {
+        "department_id": "supplies",
+        "score": score,
+        "classification": classification,
+        "partial_success": False,
+        "indicators": indicators,
+    }
+
+
+def test_compose_strategic_keeps_unit_maps_and_does_not_recalculate_score():
+    delpi = MagicMock()
+
+    def _get(_path, access_token=None, params=None, **_kwargs):
+        branch = (params or {}).get("branch")
+        if branch == "01":
+            score, classification = 8.1, "Bom"
+        elif branch == "02":
+            score, classification = None, None
+        else:
+            score, classification = 7.25, "Regular"
+        return {
+            "item": _department_item(
+                score=score,
+                classification=classification,
+                realized_02=None,
+                goal_02=None,
+            )
+        }
+
+    delpi.get.side_effect = _get
+    gateway = StrategicIndicatorsGateway(delpi=delpi)
+    loaded = gateway.compose_strategic(
+        access_token="t",
+        branch=None,
+        start_date="2026-09-01",
+        end_date="2026-09-08",
+    )
+    assert delpi.get.call_count == 3
+    scores = loaded["context"]["scores"]
+    assert scores["consolidated"]["score"] == 7.25
+    assert scores["consolidated"]["classification"] == "Regular"
+    assert scores["01"]["score"] == 8.1
+    assert scores["02"]["score"] is None
+    assert scores["02"]["score"] != 0
+    otd = loaded["metrics"]["KPI-OTD"]
+    assert otd["score"] == 6.57
+    assert otd["realized"]["consolidated"] == 95.0
+    assert otd["realized"]["01"] == 96.1
+    assert otd["realized"]["02"] is None
+    assert otd["goals_by_unit"]["consolidated"] == 97.0
+    assert otd["goals_by_unit"]["01"] == 97.0
+    assert otd["goals_by_unit"]["02"] is None
+    assert otd["goal_period_kind"] == "partial"
+    assert otd["goal_mode"] == "standard"
+    assert otd["performance_direction"] == "higher_is_better"
+
+    single = gateway.compose_strategic(
+        access_token="t",
+        branch="01",
+        start_date="2026-09-01",
+        end_date="2026-09-08",
+    )
+    assert set(single["context"]["scores"]) == {"01"}
+    assert set(single["metrics"]["KPI-OTD"]["realized"]) == {"01"}
+    assert "02" not in single["metrics"]["KPI-OTD"]["goals_by_unit"]
+

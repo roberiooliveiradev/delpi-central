@@ -174,10 +174,37 @@ declare module "@delpi/plugin-ui/index" {
     count?: number;
   }>;
 
-  export function createDashboardUserManual(config: { prefix: string }): ComponentType<{
-    children: ReactNode;
-    className?: string;
-  }>;
+  export type DashboardUserManualKit = {
+    classNames: {
+      intro: string;
+      list: string;
+      toolLink: string;
+    };
+    Frame: ComponentType<{ children: ReactNode; className?: string }>;
+    Eyebrow: ComponentType<{ children: ReactNode }>;
+    Scope: ComponentType<{ children: ReactNode }>;
+    Section: ComponentType<{ id?: string; children: ReactNode }>;
+    Layout: ComponentType<{
+      title: string;
+      "aria-label": string;
+      items: ReadonlyArray<{ id: string; label: string; onSelect: () => void }>;
+      children: ReactNode;
+    }>;
+    Concepts: ComponentType<{
+      items: ReadonlyArray<{ term: string; meaning: ReactNode }>;
+    }>;
+    GuideTable: ComponentType<{
+      rows: ReadonlyArray<{ want: ReactNode; where: ReactNode; how: ReactNode }>;
+    }>;
+    Faq: ComponentType<{
+      items: ReadonlyArray<{ q: ReactNode; a: ReactNode }>;
+    }>;
+    Glossary: ComponentType<{
+      items: ReadonlyArray<{ term: string; meaning: ReactNode }>;
+    }>;
+  };
+
+  export function createDashboardUserManual(config: { prefix: string }): DashboardUserManualKit;
 
   export function createDashboardCommandPalette(config: {
     prefix: string;
@@ -338,6 +365,13 @@ declare module "@delpi/plugin-ui/index" {
   export function createDashboardStatusBadge(config: { prefix: string }): ComponentType<{
     label: string;
     variant?: "neutral" | "info" | "success" | "warning" | "danger";
+  }>;
+
+  export function createDashboardDepartmentScoreBadge(config: { prefix: string }): ComponentType<{
+    scoreLabel?: string | null;
+    classification?: string | null;
+    loading?: boolean;
+    label?: string;
   }>;
 
   export type KpiCardLabels = {

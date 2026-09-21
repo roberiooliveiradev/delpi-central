@@ -188,7 +188,7 @@ export const USER_MANUAL_CONTENT = {
         },
         {
           q: "Onde vejo o significado de cada KPI da Visão geral?",
-          a: "Nas fichas de indicadores e na Visão geral. Cada card mostra se o valor é intervalo, snapshot ou estado atual — não misture com o Início.",
+          a: "Nas fichas de indicadores e na Visão geral. Cada card mostra se o valor é intervalo, snapshot ou estado atual — não misture com o Início. O IDD Suprimentos e a nota do card vêm do Strategic Indicators. A meta do período acompanha o recorte; a meta mês é só referência cadastrada.",
         },
         {
           q: "Por que a lista de SC vem vazia?",

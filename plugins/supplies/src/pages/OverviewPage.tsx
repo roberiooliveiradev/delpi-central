@@ -11,13 +11,19 @@ import {
   Wallet,
 } from "lucide-react";
 
-import { getOverview, type OverviewKpiCard, type OverviewResponse } from "../api/overview";
+import {
+  getOverview,
+  type OverviewKpiCard,
+  type OverviewResponse,
+  type OverviewStrategicContext,
+} from "../api/overview";
 import { navigatePluginView } from "../app/pluginNavigation";
 import { buildPluginPath } from "../app/pluginRoutes";
 import { useSuppliesSession } from "../app/SuppliesSessionContext";
 import { SuppliesKpiCard } from "../app/suppliesKpiCard";
 import {
   SuppliesActionButton,
+  SuppliesDepartmentScoreBadge,
   SuppliesEmptyState,
   SuppliesLoadingCard,
   SuppliesPageHero,
@@ -35,7 +41,9 @@ import {
   mapOverviewFetchError,
   OVERVIEW_CONTENT,
 } from "../features/overview/overviewContent";
+import { OverviewStrategicUnits } from "../features/overview/OverviewStrategicUnits";
 import { buildOverviewKpiPresentation } from "../features/overview/overviewKpiPresentation";
+import { formatDepartmentScore } from "../features/overview/overviewStrategicBreakdown";
 import { resolvePeriodKindChip } from "../app/periodPreset";
 import { useOverviewFilters } from "../features/overview/useOverviewFilters";
 
@@ -160,6 +168,9 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
         title={OVERVIEW_CONTENT.indicatorsTitle}
         hint={OVERVIEW_CONTENT.indicatorsHint}
       >
+        {!loading && !error ? (
+          <OverviewDepartmentIdd scores={data?.strategicContext?.scores} />
+        ) : null}
         {loading ? (
           <SuppliesLoadingCard title={OVERVIEW_CONTENT.loadingKpisTitle} variant="panel" />
         ) : null}
@@ -219,6 +230,39 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
   );
 }
 
+const DEPARTMENT_SCORE_SCOPES = [
+  { key: "consolidated" as const, label: "Consolidado" },
+  { key: "01" as const, label: "Santa Catarina" },
+  { key: "02" as const, label: "Espírito Santo" },
+];
+
+function OverviewDepartmentIdd({
+  scores,
+}: {
+  scores?: OverviewStrategicContext["scores"];
+}) {
+  const badges = DEPARTMENT_SCORE_SCOPES.flatMap((scope) => {
+    const entry = scores?.[scope.key];
+    const scoreLabel = formatDepartmentScore(entry?.score);
+    if (!scoreLabel) return [];
+    return [
+      <SuppliesDepartmentScoreBadge
+        key={scope.key}
+        label={`IDD ${scope.label}`}
+        scoreLabel={scoreLabel}
+        classification={entry?.classification}
+      />,
+    ];
+  });
+  if (badges.length === 0) return null;
+  return (
+    <div className="sp-overview__idd">
+      <SuppliesSectionHintLabel label="IDD Suprimentos" hint={SP_HELP.overviewDepartmentIdd} />
+      {badges}
+    </div>
+  );
+}
+
 function OverviewKpiItem({
   kpi,
   periodKindBadge,
@@ -259,6 +303,7 @@ function OverviewKpiItem({
       goalScopeHint={presentation.goalScopeHint}
       goalPerformanceBadge={performance}
       iddScoreLabel={presentation.iddScoreLabel}
+      footer={<OverviewStrategicUnits strategic={kpi.strategic ?? null} />}
       icon={KPI_ICONS[kpi.id] ?? <BarChart3 size={22} strokeWidth={1.75} aria-hidden="true" />}
       className={unavailable ? "sp-overview__kpi--unavailable" : undefined}
     />
