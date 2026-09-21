@@ -32,6 +32,8 @@ function itemExportValue(
   switch (key) {
     case "nome_cliente":
       return item.nome_cliente || "";
+    case "customer_center":
+      return item.customer_center?.trim() || "";
     case "loja_cadastro":
       return item.loja_cadastro || "";
     case "filial":

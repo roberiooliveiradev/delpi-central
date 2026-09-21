@@ -21,6 +21,7 @@ export function buildIdentityCustomerSummary(input: {
   const nome =
     (input.nome || "").trim() ||
     `${codigo}/${loja}`;
+  const splitByCenter = Boolean(input.customerCenter?.trim());
 
   return {
     key,
@@ -40,10 +41,10 @@ export function buildIdentityCustomerSummary(input: {
     city: enrich?.city ?? null,
     state: enrich?.state ?? null,
     lastPurchaseDate: enrich?.last_purchase_date ?? null,
-    billed12m: enrich?.billed_12m ?? null,
+    billed12m: splitByCenter ? null : (enrich?.billed_12m ?? null),
     hasAvatar: enrich?.has_avatar ?? false,
-    billingTrend: enrich?.billing_trend ?? null,
-    billingTrendPct: enrich?.billing_trend_pct ?? null,
+    billingTrend: splitByCenter ? null : (enrich?.billing_trend ?? null),
+    billingTrendPct: splitByCenter ? null : (enrich?.billing_trend_pct ?? null),
     coverageKnown: Boolean(enrich),
     enrichmentAvailable: Boolean(enrich),
     sellerName: input.sellerName ?? null,

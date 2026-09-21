@@ -300,6 +300,7 @@ export function OpenOrdersTable({
           </div>
         );
       },
+      customer_center: (row) => row.customer_center?.trim() || "—",
       loja_cadastro: (row) => row.loja_cadastro || "—",
       filial: (row) => formatOperationalUnitCode(row.filial),
       pedido: (row) => {

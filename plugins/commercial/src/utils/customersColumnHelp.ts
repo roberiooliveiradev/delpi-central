@@ -27,6 +27,7 @@ export const CUSTOMER_ORDERS_COLUMN_HELP: Record<string, string> = {
 
 export const CUSTOMER_ORDER_LINES_COLUMN_HELP: Record<string, string> = {
   product: CM_HELP.customerDetail.orderLinesColumns.product,
+  center: CM_HELP.customerDetail.orderLinesColumns.center,
   ordered: CM_HELP.customerDetail.orderLinesColumns.ordered,
   delivered: CM_HELP.customerDetail.orderLinesColumns.delivered,
   balance: CM_HELP.customerDetail.orderLinesColumns.balance,

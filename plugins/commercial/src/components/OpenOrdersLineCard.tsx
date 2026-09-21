@@ -137,12 +137,23 @@ function renderCardValue(
               <strong className="cm-open-orders-client__name">{name}</strong>
             )}
             <span className="cm-open-orders-client__id">
-              {formatEntityTypeWithCodeStore(item.tipo_entidade, item.codigo_cadastro, null)}
+              {[
+                formatEntityTypeWithCodeStore(
+                  item.tipo_entidade,
+                  item.codigo_cadastro,
+                  null,
+                ),
+                center,
+              ]
+                .filter(Boolean)
+                .join(" · ")}
             </span>
           </div>
         </div>
       );
     }
+    case "customer_center":
+      return item.customer_center?.trim() || "—";
     case "loja_cadastro":
       return item.loja_cadastro || "—";
     case "filial":

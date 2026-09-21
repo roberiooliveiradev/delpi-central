@@ -4,6 +4,7 @@ import type { SortKey } from "./sortItems";
 
 export type TableColumnKey =
   | "nome_cliente"
+  | "customer_center"
   | "loja_cadastro"
   | "filial"
   | "pedido"
@@ -32,6 +33,7 @@ export type TableColumnDef = {
 /** Colunas default enxutas (WF-02R-T), com as três datas operacionais visíveis. */
 export const DEFAULT_VISIBLE_COLUMN_KEYS: readonly TableColumnKey[] = [
   "nome_cliente",
+  "customer_center",
   "pedido",
   "produto",
   "cobertura",
@@ -45,6 +47,7 @@ export const DEFAULT_VISIBLE_COLUMN_KEYS: readonly TableColumnKey[] = [
 
 export const TABLE_COLUMNS: TableColumnDef[] = [
   { key: "nome_cliente", label: "Cliente", sortable: true },
+  { key: "customer_center", label: "Centro", sortable: true },
   { key: "loja_cadastro", label: "Loja", sortable: true },
   { key: "filial", label: OPERATIONAL_UNIT_COLUMN_LABEL, sortable: true },
   { key: "pedido", label: "Pedido", sortable: true },

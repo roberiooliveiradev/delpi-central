@@ -166,7 +166,9 @@ export const CM_HELP = {
     cardAriaOpen: "Abrir detalhes da linha",
     columns: {
       nome_cliente:
-        "Nome do cliente no pedido. Clique para abrir a Conta 360 (código + loja).",
+        "Nome do cliente no pedido. Clique para abrir a Conta 360 (código + loja; o centro segue fora da URL).",
+      customer_center:
+        "Centro da amarração produto–cliente da linha. Sem centro, a loja inteira permanece no escopo.",
       loja_cadastro: "Loja vinculada ao cadastro do cliente.",
       filial: "Unidade em que o pedido foi registrado (Santa Catarina ou Espírito Santo).",
       pedido: "Número do pedido de venda e identificação do item.",
@@ -437,7 +439,8 @@ export const CM_HELP = {
       "Copia o telefone ou e-mail para a área de transferência.",
     accountData:
       "Resumo cadastral e comercial da conta no recorte disponível, incluindo última venda, faturamento, situação e próxima ação.",
-    billed12m: "Faturamento (NFs de saída) nos últimos 12 meses deste cliente.",
+    billed12m:
+      "Faturamento (NFs de saída) nos últimos 12 meses deste cliente. Com centro na Conta, o hero não mistura o total da loja — use Histórico de vendas para o faturamento do centro.",
     openValue: "Soma do saldo em aberto dos pedidos deste cliente.",
     openOrders: "Quantidade de pedidos distintos ainda em aberto.",
     ordersScopeEmpty:
@@ -511,6 +514,7 @@ export const CM_HELP = {
     },
     orderLinesColumns: {
       product: "Código do produto da linha do pedido.",
+      center: "Centro da amarração produto–cliente da linha.",
       ordered:
         "Quantidade pedida na linha (3 casas). Com Peças, converte só UM=MI (1 MI = 1000 PC).",
       delivered:

@@ -6,6 +6,7 @@ import { getLineStatusSortRank } from "./statusBadges";
 
 export type SortKey =
   | "nome_cliente"
+  | "customer_center"
   | "loja_cadastro"
   | "filial"
   | "pedido"
@@ -54,6 +55,14 @@ export function sortPedidosItems(
       case "nome_cliente":
         result = compareStrings(a.nome_cliente, b.nome_cliente);
         break;
+      case "customer_center": {
+        const centerA = (a.customer_center ?? "").trim();
+        const centerB = (b.customer_center ?? "").trim();
+        if (!centerA && centerB) result = 1;
+        else if (centerA && !centerB) result = -1;
+        else result = compareStrings(centerA, centerB);
+        break;
+      }
       case "loja_cadastro":
         result = compareStrings(a.loja_cadastro, b.loja_cadastro);
         break;

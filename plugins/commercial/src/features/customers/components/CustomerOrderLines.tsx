@@ -199,6 +199,11 @@ export function CustomerOrderLines({
   const columns: DataTableColumn<OpenOrdersTotvsItem>[] = [
     { key: "product", header: "Produto", render: (line) => line.produto?.trim() || "—" },
     {
+      key: "center",
+      header: "Centro",
+      render: (line) => line.customer_center?.trim() || "—",
+    },
+    {
       key: "ordered",
       header: "Pedida",
       align: "right",
@@ -283,6 +288,11 @@ export function CustomerOrderLines({
             subtitle={`Entrega ${formatDisplayDate(line.data_entrega)} · UM ${formatLineUnit(line.quantidade, line.unidade)}`}
             status={lineOverdueLabel(line)}
             fields={[
+              {
+                id: "center",
+                label: "Centro",
+                value: line.customer_center?.trim() || "—",
+              },
               {
                 id: "ordered",
                 label: "Pedida",

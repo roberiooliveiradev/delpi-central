@@ -4,6 +4,7 @@ import type { TableColumnKey } from "./tableColumns";
 /** Ajuda por coluna — tabela, cards e export de preferências usam a mesma fonte. */
 export const OPEN_ORDERS_COLUMN_HELP: Record<TableColumnKey, string> = {
   nome_cliente: CM_HELP.openOrders.columns.nome_cliente,
+  customer_center: CM_HELP.openOrders.columns.customer_center,
   loja_cadastro: CM_HELP.openOrders.columns.loja_cadastro,
   filial: CM_HELP.openOrders.columns.filial,
   pedido: CM_HELP.openOrders.columns.pedido,
