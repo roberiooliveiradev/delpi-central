@@ -16,6 +16,7 @@ Entrada: [`README.md`](./README.md).
 Visão e ondas: [`01-visao-produto.md`](./01-visao-produto.md), [`05-roadmap.md`](./05-roadmap.md).
 Telas e componentes: [`WIREFRAMES.md`](./WIREFRAMES.md).
 Conversa do chamado: [`10-conversa-do-chamado.md`](./10-conversa-do-chamado.md). A tela publicada está em [`WIREFRAMES.md`](./WIREFRAMES.md).
+Lacunas da experiência (inventário, sem autorização de código): [`11-lacunas-da-experiencia.md`](./11-lacunas-da-experiencia.md).
 
 ## Roteamento rápido
 

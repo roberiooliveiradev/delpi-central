@@ -6,6 +6,7 @@
 > **UI kit:** `@delpi/plugin-ui` via Module Federation · factories em [`plugins/helpdesk/src/ui/helpdeskUi.tsx`](../../../plugins/helpdesk/src/ui/helpdeskUi.tsx)
 > **Regras:** `plugins-reusable-components.mdc`, `plugins-visual-design-system.mdc`
 > **Estado:** lista, vínculo e detalhe publicados. H5 abaixo é especificação, não autorização para implementar.
+> **Lacunas (filtro, dados da lista, prévia de imagem):** [`11-lacunas-da-experiencia.md`](./11-lacunas-da-experiencia.md) — inventário, sem autorização de código.
 
 Implementar uma tela deste módulo é montar as factories já nomeadas. Não criar `button`, `input`, `select`, `textarea`, card ou badge com CSS próprio.
 
