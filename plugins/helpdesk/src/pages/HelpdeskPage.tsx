@@ -26,6 +26,7 @@ import {
   nextTicketSort,
   parseTicketSort,
   ticketListSearch,
+  TICKET_PAGE_SIZE_OPTIONS,
   TICKET_STATUS_FILTERS,
   type TicketListFilters,
   viewForTicketLoad,
@@ -128,8 +129,11 @@ function TicketListPage() {
         category_id: next.category_id || undefined,
         updated_from: next.updated_from || undefined,
         updated_to: next.updated_to || undefined,
+        created_from: next.created_from || undefined,
+        created_to: next.created_to || undefined,
         sort: next.sort || undefined,
         page: next.page,
+        page_size: next.page_size,
       });
       setItems(body.items);
       setHasMore(body.has_more);
@@ -215,7 +219,20 @@ function TicketListPage() {
               <HelpdeskIconButton
                 aria-label="Limpar filtros"
                 onClick={() => {
-                  const next = { ...currentListFilters(), q: "", status: "", urgency_id: "", category_id: "", updated_from: "", updated_to: "", page: 1, sort: filters.sort };
+                  const next = {
+                    ...currentListFilters(),
+                    q: "",
+                    status: "",
+                    urgency_id: "",
+                    category_id: "",
+                    updated_from: "",
+                    updated_to: "",
+                    created_from: "",
+                    created_to: "",
+                    page: 1,
+                    sort: filters.sort,
+                    page_size: filters.page_size,
+                  };
                   setQDraft("");
                   commitFilters(next);
                 }}
@@ -260,6 +277,26 @@ function TicketListPage() {
               type="date"
               value={filters.updated_to}
               onChange={(updated_to) => commitFilters({ ...filters, updated_to, page: 1 })}
+            />
+            <HelpdeskFilterInput
+              label="Aberto de"
+              type="date"
+              value={filters.created_from}
+              onChange={(created_from) => commitFilters({ ...filters, created_from, page: 1 })}
+            />
+            <HelpdeskFilterInput
+              label="Aberto até"
+              type="date"
+              value={filters.created_to}
+              onChange={(created_to) => commitFilters({ ...filters, created_to, page: 1 })}
+            />
+            <HelpdeskFilterSelect
+              label="Por página"
+              value={String(filters.page_size)}
+              onChange={(page_size) =>
+                commitFilters({ ...filters, page_size: Number(page_size) || 20, page: 1 })
+              }
+              options={[...TICKET_PAGE_SIZE_OPTIONS]}
             />
           </HelpdeskFiltersRow>
         )}

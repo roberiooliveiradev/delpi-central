@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  absoluteDateTimeLabel,
   conversationAuthorSrc,
   conversationMessages,
   detailRecordHeading,
@@ -264,6 +265,20 @@ describe("relativeTimeLabel", () => {
   });
 });
 
+describe("absoluteDateTimeLabel", () => {
+  it("mostra dia e hora do instante", () => {
+    const label = absoluteDateTimeLabel("2026-09-21T15:30:00Z");
+    const date = new Date("2026-09-21T15:30:00Z");
+    const expected = `${String(date.getDate()).padStart(2, "0")}/${String(date.getMonth() + 1).padStart(2, "0")}/${date.getFullYear()} ${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+    expect(label).toBe(expected);
+  });
+
+  it("não inventa rótulo para data ilegível", () => {
+    expect(absoluteDateTimeLabel("")).toBe("");
+    expect(absoluteDateTimeLabel("ontem")).toBe("");
+  });
+});
+
 describe("ticket list filters", () => {
   it("guarda o recorte na URL e detecta filtro ativo", () => {
     const search = ticketListSearch({
@@ -273,17 +288,31 @@ describe("ticket list filters", () => {
       category_id: "",
       updated_from: "",
       updated_to: "",
+      created_from: "2026-01-01",
+      created_to: "2026-01-31",
       sort: "updated_at:desc",
       page: 1,
+      page_size: 10,
     });
     expect(search).toContain("q=Monitor");
     expect(search).toContain("status=in_progress");
-    expect(isTicketFilterActive(parseTicketListFilters(search))).toBe(true);
+    expect(search).toContain("created_from=2026-01-01");
+    expect(search).toContain("created_to=2026-01-31");
+    expect(search).toContain("page_size=10");
+    const parsed = parseTicketListFilters(search);
+    expect(parsed.created_from).toBe("2026-01-01");
+    expect(parsed.page_size).toBe(10);
+    expect(isTicketFilterActive(parsed)).toBe(true);
     expect(isTicketFilterActive(parseTicketListFilters(""))).toBe(false);
   });
 
   it("não trata página sozinha como recorte", () => {
     expect(isTicketFilterActive(parseTicketListFilters("?page=2&sort=title:asc"))).toBe(false);
+  });
+
+  it("ignora page_size fora de 10/20/50", () => {
+    expect(parseTicketListFilters("?page_size=15").page_size).toBe(20);
+    expect(parseTicketListFilters("?page_size=50").page_size).toBe(50);
   });
 
   it("ordena pela coluna no helpdesk e inverte a mesma coluna", () => {

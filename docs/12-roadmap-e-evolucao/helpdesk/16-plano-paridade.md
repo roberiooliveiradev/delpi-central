@@ -26,7 +26,7 @@ O colaborador passa a ver e gravar no Meus Chamados de TI o que o GLPI já entre
 | RQ | Requisito | Estado no plano |
 |---|---|---|
 | RQ-01 | `status_id` + badge/filtro por id; grupos pending/approval | **ATENDIDO** E7.S1 |
-| RQ-02 | Lista: data absoluta, período de abertura, page_size | ATENDIDO_NO_PLANO E7.S2 |
+| RQ-02 | Lista: data absoluta, período de abertura, page_size | **ATENDIDO** E7.S2 |
 | RQ-03 | Lista: solved_at / busca no content se H6 | DESBLOQUEADO — 13-H1 e 13-H2 **PROVEN** → E7.S3 |
 | RQ-04 | HTML sanitizado na bolha | ATENDIDO_NO_PLANO E8.S1–S2 |
 | RQ-05 | Compositor rico abrir+responder | ATENDIDO_NO_PLANO E8.S3 |
@@ -143,7 +143,7 @@ Owner do corpo e do status: helpdesk-api. Owner da bolha/editor: plugin-ui. MFE 
 - **Evidência:** `_STATUS_GROUPS` e `_status_ids` já conhecem 1–6 e 10.
 - **Deps:** nenhuma.
 - **Teste:** positive id=1; irmão id=10 com `approval`; negativo `status=foo` 422; badge de «Aprovação» não depende do texto.
-- **Pronto:** GET lista/detalhe com `status_id`; UI filtra `pending`.
+- **Pronto:** GET lista/detalhe com `status_id`; UI filtra `pending`. **CUMPRIDO** 21/09/2026.
 - **Commit:** `feat(helpdesk): publica o id do estado e recorta pendente e aprovação.`
 
 ### E7.S2 — Datas absolutas e recorte de abertura
@@ -155,7 +155,7 @@ Owner do corpo e do status: helpdesk-api. Owner da bolha/editor: plugin-ui. MFE 
 - **Evidência:** 13 G-02, G-25, G-31; query `page_size` já existe.
 - **Deps:** nenhuma.
 - **Teste:** positive intervalo de abertura; irmão page_size=10 e has_more; negativo data inválida 422; F5 mantém query.
-- **Pronto:** foto 1114 mostra dia/hora; ajuda da lista atualizada.
+- **Pronto:** foto 1114 mostra dia/hora; ajuda da lista atualizada. **CUMPRIDO** 21/09/2026.
 - **Commit:** `feat(helpdesk): mostra a data completa e filtra pela abertura.`
 
 ### E7.S3 — Resolução e busca no conteúdo

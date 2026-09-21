@@ -73,9 +73,20 @@ export type TicketListFilters = {
   category_id: string;
   updated_from: string;
   updated_to: string;
+  created_from: string;
+  created_to: string;
   sort: string;
   page: number;
+  page_size: number;
 };
+
+export const TICKET_PAGE_SIZE_OPTIONS = [
+  { value: "10", label: "10 por página" },
+  { value: "20", label: "20 por página" },
+  { value: "50", label: "50 por página" },
+] as const;
+
+const ALLOWED_PAGE_SIZES = new Set([10, 20, 50]);
 
 export const TICKET_STATUS_FILTERS = [
   { value: "", label: "Todos" },
@@ -126,13 +137,17 @@ export const DEFAULT_TICKET_LIST_FILTERS: TicketListFilters = {
   category_id: "",
   updated_from: "",
   updated_to: "",
+  created_from: "",
+  created_to: "",
   sort: "updated_at:desc",
   page: 1,
+  page_size: 20,
 };
 
 export function parseTicketListFilters(search: string): TicketListFilters {
   const params = new URLSearchParams(search.startsWith("?") ? search.slice(1) : search);
   const page = Number(params.get("page") || "1");
+  const pageSize = Number(params.get("page_size") || String(DEFAULT_TICKET_LIST_FILTERS.page_size));
   return {
     q: (params.get("q") || "").trim(),
     status: (params.get("status") || "").trim(),
@@ -140,8 +155,11 @@ export function parseTicketListFilters(search: string): TicketListFilters {
     category_id: (params.get("category_id") || "").trim(),
     updated_from: (params.get("updated_from") || "").trim(),
     updated_to: (params.get("updated_to") || "").trim(),
+    created_from: (params.get("created_from") || "").trim(),
+    created_to: (params.get("created_to") || "").trim(),
     sort: (params.get("sort") || DEFAULT_TICKET_LIST_FILTERS.sort).trim(),
     page: Number.isInteger(page) && page > 0 ? page : 1,
+    page_size: ALLOWED_PAGE_SIZES.has(pageSize) ? pageSize : DEFAULT_TICKET_LIST_FILTERS.page_size,
   };
 }
 
@@ -153,8 +171,13 @@ export function ticketListSearch(filters: TicketListFilters): string {
   if (filters.category_id.trim()) params.set("category_id", filters.category_id.trim());
   if (filters.updated_from.trim()) params.set("updated_from", filters.updated_from.trim());
   if (filters.updated_to.trim()) params.set("updated_to", filters.updated_to.trim());
+  if (filters.created_from.trim()) params.set("created_from", filters.created_from.trim());
+  if (filters.created_to.trim()) params.set("created_to", filters.created_to.trim());
   if (filters.sort && filters.sort !== DEFAULT_TICKET_LIST_FILTERS.sort) params.set("sort", filters.sort);
   if (filters.page > 1) params.set("page", String(filters.page));
+  if (filters.page_size !== DEFAULT_TICKET_LIST_FILTERS.page_size) {
+    params.set("page_size", String(filters.page_size));
+  }
   const query = params.toString();
   return query ? `?${query}` : "";
 }
@@ -166,7 +189,9 @@ export function isTicketFilterActive(filters: TicketListFilters): boolean {
       || filters.urgency_id.trim()
       || filters.category_id.trim()
       || filters.updated_from.trim()
-      || filters.updated_to.trim(),
+      || filters.updated_to.trim()
+      || filters.created_from.trim()
+      || filters.created_to.trim(),
   );
 }
 
@@ -254,6 +279,18 @@ export function relativeTimeLabel(value: string, now: Date): string {
   const dayOfMonth = String(date.getDate()).padStart(2, "0");
   const month = String(date.getMonth() + 1).padStart(2, "0");
   return `${dayOfMonth}/${month}/${date.getFullYear()}`;
+}
+
+export function absoluteDateTimeLabel(value: string): string {
+  const trimmed = value.trim();
+  const instant = Date.parse(trimmed);
+  if (!trimmed || Number.isNaN(instant)) return "";
+  const date = new Date(instant);
+  const dayOfMonth = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  return `${dayOfMonth}/${month}/${date.getFullYear()} ${hours}:${minutes}`;
 }
 
 function openingTimeLabel(createdAt: string, requester: string, now: Date): string {

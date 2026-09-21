@@ -72,6 +72,8 @@ export type TicketListQuery = {
   category_id?: string;
   updated_from?: string;
   updated_to?: string;
+  created_from?: string;
+  created_to?: string;
   sort?: string;
   page?: number;
   page_size?: number;
@@ -108,6 +110,8 @@ export function listTickets(query: TicketListQuery = {}, signal?: AbortSignal) {
   if (query.category_id) params.set("category_id", query.category_id);
   if (query.updated_from) params.set("updated_from", query.updated_from);
   if (query.updated_to) params.set("updated_to", query.updated_to);
+  if (query.created_from) params.set("created_from", query.created_from);
+  if (query.created_to) params.set("created_to", query.created_to);
   if (query.sort) params.set("sort", query.sort);
   if (query.page && query.page > 1) params.set("page", String(query.page));
   if (query.page_size) params.set("page_size", String(query.page_size));

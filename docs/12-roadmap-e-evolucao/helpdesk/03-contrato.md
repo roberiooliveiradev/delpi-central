@@ -48,11 +48,12 @@ Base do MFE: `/apps/helpdesk-api`.
 | `urgency_id` | urgência 1–5 |
 | `category_id` | categoria do token |
 | `updated_from` / `updated_to` | `YYYY-MM-DD` em `date_mod` |
+| `created_from` / `created_to` | `YYYY-MM-DD` em `date_creation` |
 | `sort` | `updated_at:desc` (padrão), `created_at`, `title`, `id`, `status`, `category`, `urgency` + `:asc\|:desc` |
 | `page` | página 1-based |
-| `page_size` | padrão 20, máximo 50 |
+| `page_size` | padrão 20; a tela envia 10, 20 ou 50 (máximo 50) |
 
-O BFF pede `limit = page_size + 1` à HLAPI e devolve `has_more`. Não inventa total do parque. Evolução da grade (data absoluta, `solved_at`, busca no conteúdo, período de abertura) está só em [`13-listagem-de-chamados.md`](./13-listagem-de-chamados.md) e **não** está autorizada. Status ou sort desconhecidos: 422 `validation_error`. `q` só conserva letra, número, espaço, hífen e underscore.
+O BFF pede `limit = page_size + 1` à HLAPI e devolve `has_more`. Não inventa total do parque. Evolução da grade (`solved_at`, busca no conteúdo) está em [`13-listagem-de-chamados.md`](./13-listagem-de-chamados.md) e só entra com evidência H6. Status ou sort desconhecidos, ou data inválida: 422 `validation_error`. `q` só conserva letra, número, espaço, hífen e underscore.
 
 ```json
 {

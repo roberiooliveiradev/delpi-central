@@ -1,4 +1,4 @@
-import { relativeTimeLabel, statusBadgeVariant } from "../presentation/ticketView";
+import { absoluteDateTimeLabel, statusBadgeVariant } from "../presentation/ticketView";
 import type { TicketSummary } from "../api/helpdeskApi";
 import { HelpdeskDataTable, HelpdeskStatusBadge } from "../ui/helpdeskUi";
 
@@ -15,7 +15,6 @@ export function TicketListTable({
   onSortChange: (columnKey: string) => void;
   onOpen: (ticketId: number) => void;
 }) {
-  const now = new Date();
   return (
     <HelpdeskDataTable
       layout="scroll"
@@ -43,13 +42,13 @@ export function TicketListTable({
           key: "created_at",
           header: "Aberto",
           sortable: true,
-          render: (row) => relativeTimeLabel(row.created_at, now),
+          render: (row) => absoluteDateTimeLabel(row.created_at),
         },
         {
           key: "updated_at",
           header: "Atualizado",
           sortable: true,
-          render: (row) => relativeTimeLabel(row.updated_at, now),
+          render: (row) => absoluteDateTimeLabel(row.updated_at),
         },
       ]}
     />

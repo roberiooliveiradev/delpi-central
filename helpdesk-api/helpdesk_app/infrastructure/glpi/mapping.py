@@ -115,6 +115,8 @@ def build_ticket_list_query(
     category_id: int | None = None,
     updated_from: str = "",
     updated_to: str = "",
+    created_from: str = "",
+    created_to: str = "",
     sort: str = "updated_at:desc",
     page: int = 1,
     page_size: int = _DEFAULT_PAGE_SIZE,
@@ -141,6 +143,12 @@ def build_ticket_list_query(
         clauses.append(f"date_mod=ge={start_day}T00:00:00")
     if end_day:
         clauses.append(f"date_mod=le={end_day}T23:59:59")
+    created_start = _day(created_from, "created_from")
+    created_end = _day(created_to, "created_to")
+    if created_start:
+        clauses.append(f"date_creation=ge={created_start}T00:00:00")
+    if created_end:
+        clauses.append(f"date_creation=le={created_end}T23:59:59")
     safe_page = max(1, page)
     safe_size = min(_MAX_PAGE_SIZE, max(1, page_size))
     return TicketListQuery(

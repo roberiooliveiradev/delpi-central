@@ -420,6 +420,8 @@ def test_list_query_uses_rsql_and_rejects_injection():
         category_id=8,
         updated_from="2026-02-01",
         updated_to="2026-02-28",
+        created_from="2026-01-01",
+        created_to="2026-01-31",
         sort="created_at:asc",
         page=2,
         page_size=20,
@@ -432,6 +434,10 @@ def test_list_query_uses_rsql_and_rejects_injection():
     assert build_ticket_list_query(status="approval").filter.endswith("status.id==10")
     assert "urgency==3" in query.filter
     assert "category.id==8" in query.filter
+    assert "date_mod=ge=2026-02-01T00:00:00" in query.filter
+    assert "date_mod=le=2026-02-28T23:59:59" in query.filter
+    assert "date_creation=ge=2026-01-01T00:00:00" in query.filter
+    assert "date_creation=le=2026-01-31T23:59:59" in query.filter
     assert query.sort == "date_creation:asc"
     assert query.start == 20
     assert query.limit == 21
@@ -439,6 +445,13 @@ def test_list_query_uses_rsql_and_rejects_injection():
         build_ticket_list_query(status="admin")
     with pytest.raises(GlpiValidation):
         build_ticket_list_query(sort="entity:desc")
+    with pytest.raises(GlpiValidation):
+        build_ticket_list_query(created_from="21-09-2026")
+    with pytest.raises(GlpiValidation):
+        build_ticket_list_query(created_to="not-a-date")
+    sized = build_ticket_list_query(page_size=10)
+    assert sized.page_size == 10
+    assert sized.limit == 11
     assert build_ticket_list_query(sort="id:desc").sort == "id:desc"
     assert build_ticket_list_query(sort="status:asc").sort == "status.id:asc"
     assert build_ticket_list_query(sort="urgency:desc").sort == "urgency:desc"

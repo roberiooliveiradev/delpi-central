@@ -56,7 +56,15 @@ def test_list_publishes_dates_and_forwards_filter():
     link(client)
     listed = client.get(
         "/tickets",
-        params={"q": "Impressora", "status": "open", "sort": "updated_at:desc", "page": 1},
+        params={
+            "q": "Impressora",
+            "status": "open",
+            "sort": "updated_at:desc",
+            "page": 1,
+            "page_size": 10,
+            "created_from": "2026-01-01",
+            "created_to": "2026-01-31",
+        },
         headers=auth_headers(),
     )
     assert listed.status_code == 200
@@ -66,10 +74,14 @@ def test_list_publishes_dates_and_forwards_filter():
     assert body["items"][0]["status_id"] == 1
     assert "assigned_display_name" in body["items"][0]
     assert body["page"] == 1
+    assert body["page_size"] == 10
     assert glpi.last_list_query.filter.startswith("is_deleted==false")
     assert "name=like=*Impressora*" in glpi.last_list_query.filter
     assert "status.id=in=(1,10,2,3,4)" in glpi.last_list_query.filter
-    assert "status_id" in body["items"][0]
+    assert "date_creation=ge=2026-01-01T00:00:00" in glpi.last_list_query.filter
+    assert "date_creation=le=2026-01-31T23:59:59" in glpi.last_list_query.filter
+    assert glpi.last_list_query.page_size == 10
+    assert glpi.last_list_query.limit == 11
     pending = client.get("/tickets", params={"status": "pending"}, headers=auth_headers())
     assert pending.status_code == 200
     assert "status.id==4" in glpi.last_list_query.filter
@@ -80,6 +92,8 @@ def test_list_publishes_dates_and_forwards_filter():
     assert bad.status_code == 422
     foo = client.get("/tickets", params={"status": "foo"}, headers=auth_headers())
     assert foo.status_code == 422
+    bad_date = client.get("/tickets", params={"created_from": "21/01/2026"}, headers=auth_headers())
+    assert bad_date.status_code == 422
 
 
 def test_create_ticket_and_followup_are_idempotent():
