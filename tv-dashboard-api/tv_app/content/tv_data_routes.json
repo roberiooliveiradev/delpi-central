@@ -844,6 +844,156 @@
       ]
     },
     {
+      "operationId": "get_commercial_rol_by_customer_center",
+      "httpMethod": "GET",
+      "label": "ROL comercial por centro do cliente",
+      "category": "commercial",
+      "path": "/commercial/rol/by-customer-center",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "description": "ROL classificado pelo centro atual da amarração produto–cliente (SA7/ZC0). Sem snapshot histórico na nota.",
+      "paramSchema": {
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "format": "date",
+          "description": "Início do período (AAAA-MM-DD)."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "format": "date",
+          "description": "Fim do período (AAAA-MM-DD)."
+        },
+        "customer_segment": {
+          "type": "string",
+          "optional": true,
+          "label": "Segmento",
+          "enum": [
+            "weg",
+            "new_business"
+          ],
+          "description": "Filtra clientes: weg (WEG) ou new_business (novos negócios). Vazio = todos os segmentos."
+        },
+        "customer_codes": {
+          "type": "string",
+          "optional": true,
+          "label": "Códigos de clientes",
+          "description": "Lista CSV de códigos TOTVS de clientes a incluir (filtro de carteira)."
+        },
+        "customer_stores": {
+          "type": "string",
+          "optional": true,
+          "label": "Lojas do cliente",
+          "description": "Lista CSV de lojas TOTVS do cliente (A1_LOJA / D2_LOJA)."
+        },
+        "customer_names": {
+          "type": "string",
+          "optional": true,
+          "label": "Nomes de clientes (incluir)",
+          "description": "Lista CSV de nomes de clientes a incluir (correspondência parcial, LIKE)."
+        },
+        "customer_centers": {
+          "type": "string",
+          "optional": true,
+          "label": "Centros do cliente",
+          "description": "Lista CSV de centros do cliente na amarração produto–cliente (SA7.A7_XCENT), ex.: 1320,1505."
+        },
+        "exclude_customer_codes": {
+          "type": "string",
+          "optional": true,
+          "label": "Excluir códigos de clientes",
+          "description": "Lista CSV de códigos TOTVS de clientes a excluir do resultado."
+        },
+        "exclude_customer_names": {
+          "type": "string",
+          "optional": true,
+          "label": "Excluir nomes de clientes",
+          "description": "Lista CSV de nomes de clientes a excluir (correspondência parcial, NOT LIKE)."
+        },
+        "product_codes": {
+          "type": "string",
+          "optional": true,
+          "label": "Códigos de produtos",
+          "description": "Lista CSV de códigos de produto (SB1.B1_COD / D2_COD)."
+        },
+        "product_groups": {
+          "type": "string",
+          "optional": true,
+          "label": "Grupos de produto",
+          "description": "Lista CSV de famílias/grupos de produto (SB1.B1_GRUPO)."
+        },
+        "market": {
+          "type": "string",
+          "optional": true,
+          "label": "Mercado",
+          "description": "Filtro de mercado: domestic (CFOP 5/6) ou export (CFOP 7)."
+        },
+        "group_by": {
+          "type": "string",
+          "optional": true,
+          "label": "Agrupar por",
+          "default": "center",
+          "enum": [
+            "center",
+            "center_product"
+          ],
+          "description": "Como agregar o resultado (geral, filial, produto etc.)."
+        },
+        "limit": {
+          "type": "integer",
+          "optional": true,
+          "label": "Limite",
+          "default": 500,
+          "description": "Máximo de registros retornados pela API (ranking ou listagem truncada)."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido."
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "tableFields": "items",
+      "valueFields": [
+        "rol",
+        "gross_revenue",
+        "qty",
+        "share_pct"
+      ],
+      "valueFieldLabels": {
+        "customer_code": "Código cliente",
+        "customer_store": "Loja cliente",
+        "customer_name": "Cliente",
+        "customer_center": "Centro do cliente",
+        "customer_center_name": "Nome do centro",
+        "center_active": "Centro ativo",
+        "product_code": "Código produto",
+        "product_name": "Produto",
+        "rol": "ROL",
+        "gross_revenue": "Receita bruta",
+        "qty": "Quantidade",
+        "share_pct": "% participação",
+        "rank": "Ranking"
+      },
+      "whenToUse": "Use em tabela de ROL por centro do cliente. Itens sem cadastro aparecem como SEM CENTRO."
+    },
+    {
       "operationId": "get_commercial_rol_by_product",
       "httpMethod": "GET",
       "label": "Indicador — ROL por produto",

@@ -1,8 +1,8 @@
 {
   "version": 1,
   "baselineVersion": "3",
-  "operationCount": 693,
-  "stableCount": 691,
+  "operationCount": 704,
+  "stableCount": 702,
   "autoCount": 2,
   "recommendationCollisions": [],
   "autoByTag": {
@@ -67,6 +67,13 @@
       "stable": true
     },
     {
+      "operationId": "summarize_commercial_proposals_by_collaborator",
+      "method": "GET",
+      "path": "/commercial/proposals/collaborator-summary",
+      "tag": "Comercial",
+      "stable": true
+    },
+    {
       "operationId": "get_commercial_proposal",
       "method": "GET",
       "path": "/commercial/proposals/{proposal_number}",
@@ -91,6 +98,13 @@
       "operationId": "get_commercial_rol_by_customer",
       "method": "GET",
       "path": "/commercial/rol/by-customer",
+      "tag": "Comercial",
+      "stable": true
+    },
+    {
+      "operationId": "get_commercial_rol_by_customer_center",
+      "method": "GET",
+      "path": "/commercial/rol/by-customer-center",
       "tag": "Comercial",
       "stable": true
     },
@@ -1022,6 +1036,13 @@
       "operationId": "get_financial_pmr",
       "method": "GET",
       "path": "/financial/pmr",
+      "tag": "Financeiro",
+      "stable": true
+    },
+    {
+      "operationId": "get_financial_purchase_freight_links",
+      "method": "GET",
+      "path": "/financial/purchase-freight/links",
       "tag": "Financeiro",
       "stable": true
     },
@@ -2594,6 +2615,20 @@
       "stable": true
     },
     {
+      "operationId": "get_eficiencia_fabril_efficiency_series",
+      "method": "GET",
+      "path": "/production/eficiencia-fabril/efficiency-series",
+      "tag": "Produção",
+      "stable": true
+    },
+    {
+      "operationId": "get_production_factory_shifts",
+      "method": "GET",
+      "path": "/production/factory-shifts",
+      "tag": "Produção",
+      "stable": true
+    },
+    {
       "operationId": "get_production_losses_records",
       "method": "GET",
       "path": "/production/losses/records",
@@ -2772,6 +2807,13 @@
       "operationId": "get_production_unproductive_hours_ranking",
       "method": "GET",
       "path": "/production/unproductive-hours/ranking",
+      "tag": "Produção — Horas improdutivas",
+      "stable": true
+    },
+    {
+      "operationId": "get_production_unproductive_hours_series",
+      "method": "GET",
+      "path": "/production/unproductive-hours/series",
       "tag": "Produção — Horas improdutivas",
       "stable": true
     },
@@ -3479,6 +3521,20 @@
       "operationId": "create_audit_5s_area",
       "method": "POST",
       "path": "/quality/audit-5s/areas",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "update_audit_5s_area",
+      "method": "PATCH",
+      "path": "/quality/audit-5s/areas/{area_id}",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "set_audit_5s_area_children",
+      "method": "PUT",
+      "path": "/quality/audit-5s/areas/{area_id}/children",
       "tag": "Qualidade",
       "stable": true
     },
@@ -4309,6 +4365,20 @@
       "stable": true
     },
     {
+      "operationId": "get_personal_report_subscription",
+      "method": "GET",
+      "path": "/reports/personal-subscriptions/{provider_key}",
+      "tag": "Delpi Reports",
+      "stable": true
+    },
+    {
+      "operationId": "upsert_personal_report_subscription",
+      "method": "PUT",
+      "path": "/reports/personal-subscriptions/{provider_key}",
+      "tag": "Delpi Reports",
+      "stable": true
+    },
+    {
       "operationId": "list_report_providers",
       "method": "GET",
       "path": "/reports/providers",
@@ -4348,6 +4418,41 @@
       "method": "POST",
       "path": "/reports/schedules/process-pending",
       "tag": "Delpi Reports",
+      "stable": true
+    },
+    {
+      "operationId": "search_request_lookup_carriers",
+      "method": "GET",
+      "path": "/request-lookups/carriers",
+      "tag": "Request lookups",
+      "stable": true
+    },
+    {
+      "operationId": "list_request_lookup_open_sales_orders",
+      "method": "GET",
+      "path": "/request-lookups/open-sales-orders",
+      "tag": "Request lookups",
+      "stable": true
+    },
+    {
+      "operationId": "search_request_lookup_parties",
+      "method": "GET",
+      "path": "/request-lookups/parties",
+      "tag": "Request lookups",
+      "stable": true
+    },
+    {
+      "operationId": "search_request_lookup_products",
+      "method": "GET",
+      "path": "/request-lookups/products",
+      "tag": "Request lookups",
+      "stable": true
+    },
+    {
+      "operationId": "get_request_lookup_warehouse_01_balance",
+      "method": "GET",
+      "path": "/request-lookups/products/{code}/warehouse-01-balance",
+      "tag": "Request lookups",
       "stable": true
     },
     {

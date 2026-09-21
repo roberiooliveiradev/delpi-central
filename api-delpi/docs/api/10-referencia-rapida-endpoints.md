@@ -182,6 +182,9 @@ Legenda de permissões:
 | GET | `/commercial/new-clients-average` | A |
 | GET | `/commercial/new-clients-rol-pct` | A |
 | GET | `/commercial/rol/series` | A |
+| GET | `/commercial/rol/by-customer` | A |
+| GET | `/commercial/rol/by-product` | A |
+| GET | `/commercial/rol/by-customer-center` | A |
 
 ---
 

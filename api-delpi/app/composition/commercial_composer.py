@@ -34,6 +34,9 @@ from app.application.use_cases.commercial.get_commercial_rol_by_customer_use_cas
 from app.application.use_cases.commercial.get_commercial_rol_by_product_use_case import (
     GetCommercialRolByProductUseCase,
 )
+from app.application.use_cases.commercial.get_commercial_rol_by_customer_center_use_case import (
+    GetCommercialRolByCustomerCenterUseCase,
+)
 from app.application.use_cases.commercial.get_commercial_rol_by_branch_use_case import (
     GetCommercialRolByBranchUseCase,
 )
@@ -45,6 +48,9 @@ from app.infrastructure.persistence.totvs.commercial_repositories.commercial_rol
 )
 from app.infrastructure.persistence.totvs.commercial_repositories.commercial_rol_by_product_repository import (
     CommercialRolByProductRepository,
+)
+from app.infrastructure.persistence.totvs.commercial_repositories.commercial_rol_by_customer_center_repository import (
+    CommercialRolByCustomerCenterRepository,
 )
 from app.infrastructure.persistence.totvs.commercial_repositories.new_clients_rol_pct_repository import NewClientsRolPctRepository
 from app.application.use_cases.commercial.get_new_business_rol_pct_use_case import (
@@ -136,6 +142,14 @@ def build_get_commercial_rol_by_customer_use_case() -> GetCommercialRolByCustome
 def build_get_commercial_rol_by_product_use_case() -> GetCommercialRolByProductUseCase:
     return GetCommercialRolByProductUseCase(
         repository=CommercialRolByProductRepository()
+    )
+
+
+def build_get_commercial_rol_by_customer_center_use_case() -> (
+    GetCommercialRolByCustomerCenterUseCase
+):
+    return GetCommercialRolByCustomerCenterUseCase(
+        repository=CommercialRolByCustomerCenterRepository()
     )
 
 

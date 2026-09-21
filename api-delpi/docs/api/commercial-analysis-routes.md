@@ -14,6 +14,7 @@ Cada bloco do slide TV usa **uma** rota, sem `group_by`:
 | Série ROL | `get_commercial_rol_series` | `/commercial/rol/series` |
 | ROL por cliente | `get_commercial_rol_by_customer` | `/commercial/rol/by-customer` |
 | ROL por produto / família | `get_commercial_rol_by_product` | `/commercial/rol/by-product` |
+| ROL por centro do cliente | `get_commercial_rol_by_customer_center` | `/commercial/rol/by-customer-center` |
 | ROL por filial | `get_commercial_rol_by_branch` | `/commercial/rol/by-branch` |
 | KPI OTD + meta SI | `get_sales_order_otd_summary` | `/commercial/sales-order-otd/summary` |
 | KPI OTD | `get_sales_order_otd` | `/commercial/sales-order-otd` |
@@ -26,7 +27,9 @@ Cada bloco do slide TV usa **uma** rota, sem `group_by`:
 ## Filtros
 
 - **`granularity`**: nas rotas `*_series*` (`day` \| `week` \| `month` \| `year`). Em `get_sales_order_otd_series` continua obrigatório; em **`get_sales_order_otd_series_by_customer`** é **opcional** (omitido → `week`).
-- **Carteira** (as 8 rotas de OTD e as 5 de ROL comercial acima, exceto SI): `customer_segment`, `customer_codes`, `customer_code_stores` (pares `codigo|loja`, só OTD), `customer_centers` (CSV de centros `SA7.A7_XCENT`; ver [centro-cliente.md](./padroes-totvs/centro-cliente.md)), `customer_names`, `exclude_customer_codes`, `exclude_customer_names` — omitidos = sem filtro e sem join `SA7`.
+- **Carteira** (rotas de OTD e ROL comercial, exceto SI): `customer_segment`, `customer_codes`, `customer_code_stores` (pares `codigo|loja`, só OTD), `customer_centers` (CSV de centros `SA7.A7_XCENT`; ver [centro-cliente.md](./padroes-totvs/centro-cliente.md)), `customer_names`, `exclude_customer_codes`, `exclude_customer_names` — omitidos = sem filtro e sem join `SA7` **de filtro**. A rota `by-customer-center` sempre classifica com LEFT JOIN SA7/ZC0; `customer_centers` nesse caso restringe o recorte e exclui `SEM CENTRO`.
+- **`customer_stores`** (só `by-customer-center`): CSV de lojas (`D2_LOJA`), independente de `customer_codes`.
+- **`group_by`** em `by-customer-center`: `center` (agregado) ou `center_product` (centro + produto). `limit` cap 500.
 - **`top_customers`** (só `series-by-customer`): default **20**, max **100**. Aplicado quando **não** há `customer_codes`, `customer_names`, `customer_code_stores` nem `customer_centers`; ranking pelo `total_qty` do intervalo completo antes de expandir os buckets.
 - Em `series-by-customer`, **todos** os filtros de query são opcionais (datas, filial, carteira, granularidade, paginação, top).
 - No editor TV, «Não definido aqui» omite o query param.
@@ -38,6 +41,7 @@ Cada bloco do slide TV usa **uma** rota, sem `group_by`:
 | ROL summary | `rol` (+ `gross_revenue`/`returns`/`discounts`) + tríade meta SI (`comparable_goal`, `goal_value`, `reference_goal`) + `rol_target_pct` |
 | ROL série | `points[]`: `periodo`, `rol_matrix`, `rol_branch` |
 | ROL cliente | `items[]`: `customer_*` (inclui `customer_center` quando o grupo tem um único centro), `rol`, `share_pct`, `rank` |
+| ROL centro do cliente | `items[]` flat: `customer_code`, `customer_store`, `customer_center` (null = sem cadastro), `customer_center_name` (`SEM CENTRO` quando não classificado), `center_active`, `rol` / `gross_revenue` / `qty`; `group_by=center_product` preenche `product_*`. `summary.unclassified_rol` / `unclassified_qty` somam o recorte sem centro. Classificação pelo cadastro **atual** SA7/ZC0 (sem snapshot na NF). |
 | ROL filial | `items[]`: `branch`, `rol`, `gross_revenue`, `returns`, `discounts` |
 | OTD summary | `sales_order_otd_pct` + tríade meta SI + contagens |
 | OTD KPI | `sales_order_otd_pct` |
@@ -68,6 +72,7 @@ Slides legados com as compostas são remapeados no hydrate da tv-dashboard-api (
 - `app/application/use_cases/commercial/get_commercial_rol_summary_use_case.py`
 - `app/application/use_cases/commercial/get_commercial_rol_series_use_case.py`
 - `app/application/use_cases/commercial/get_commercial_rol_by_customer_use_case.py`
+- `app/application/use_cases/commercial/get_commercial_rol_by_customer_center_use_case.py`
 - `app/application/use_cases/commercial/get_commercial_rol_by_branch_use_case.py`
 - `app/application/use_cases/commercial/get_sales_order_otd_*_use_case.py`
 - `tv-dashboard-api/.../tv_commercial_composite_binding_migration_service.py`

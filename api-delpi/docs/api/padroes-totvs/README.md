@@ -25,7 +25,7 @@ Regras Cursor: **`totvs-product-patterns.mdc`** (quando **usar** e como **enriqu
 | Unidades de medida | [unidades-medida.md](./unidades-medida.md) | `MI`, BOM — resumo; detalhe no playbook |
 | Cadastro de produto | [cadastro-produto.md](./cadastro-produto.md) | `B1_TPMAT`, `B1_CUSTD`, `B1_REFEREN`, campos SB1 recorrentes |
 | Cadastro de cliente (SA1) | [cadastro-cliente.md](./cadastro-cliente.md) | `A1_NREDUZ` vs `A1_NOME`, bloqueio, loja `1`/`01`, busca carteira |
-| Centro do cliente (SA7) | [centro-cliente.md](./centro-cliente.md) | `A7_XCENT` na amarração produto–cliente; filtro `customer_centers` |
+| Centro do cliente (SA7 / ZC0) | [centro-cliente.md](./centro-cliente.md) | `A7_XCENT` na amarração produto–cliente; mestre `ZC0`; filtro `customer_centers`; classificação em `/commercial/rol/by-customer-center` |
 | CRM TOTVS (SIGATEC) | [crm-sigatec.md](./crm-sigatec.md) | Censo vivo + OV `AD1`, funis 000001/000002/000003, `AIJ`/`ADY`; colunas no playbook |
 | Materiais de terceiros / SB6 | [materiais-terceiros-sb6.md](./materiais-terceiros-sb6.md) | Remessa/retorno `B6_PODER3`, chave sem `B6_TPCF`, saldo atual |
 | Tempo padrão / eficiência | [apontamentos-tempo-padrao.md](./apontamentos-tempo-padrao.md) | `HY_TEMPAD` vs `HY_TEMPOM`; KPI OEE/SI/EF compartilham a mesma expressão |

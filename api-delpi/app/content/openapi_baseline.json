@@ -3,7 +3,7 @@
   "api_title": "API DELPI",
   "api_version": "1.0.0",
   "openapi_version": "3.0.3",
-  "operation_count": 703,
+  "operation_count": 704,
   "operations": [
     {
       "method": "POST",
@@ -3108,6 +3108,523 @@
         "presentationStrategy": "as_delivered"
       },
       "description": "Top customers by net operating revenue (ROL) for a period, with optional others bucket."
+    },
+    {
+      "method": "GET",
+      "path": "/commercial/rol/by-customer-center",
+      "operationId": "get_commercial_rol_by_customer_center",
+      "summary": "Commercial ROL by customer center",
+      "tags": [
+        "Comercial"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "start_date",
+          "in": "query",
+          "required": false,
+          "description": "Period start date (YYYY-MM-DD). Canonical HTTP name; prefer this over legacy aliases.",
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "name": "end_date",
+          "in": "query",
+          "required": false,
+          "description": "Period end date (YYYY-MM-DD). Canonical HTTP name; prefer this over legacy aliases.",
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "name": "customer_segment",
+          "in": "query",
+          "required": false,
+          "description": "Customer segment: weg or new_business.",
+          "enum": [
+            "weg",
+            "new_business"
+          ],
+          "type": "string"
+        },
+        {
+          "name": "customer_codes",
+          "in": "query",
+          "required": false,
+          "description": "CSV of TOTVS customer codes (portfolio filter).",
+          "type": "string"
+        },
+        {
+          "name": "customer_stores",
+          "in": "query",
+          "required": false,
+          "description": "CSV of TOTVS customer store codes (A1_LOJA / D2_LOJA).",
+          "type": "string"
+        },
+        {
+          "name": "customer_names",
+          "in": "query",
+          "required": false,
+          "description": "Comma-separated customer names to include (partial match, LIKE).",
+          "type": "string"
+        },
+        {
+          "name": "customer_centers",
+          "in": "query",
+          "required": false,
+          "description": "CSV of customer center codes from the product-customer link (SA7.A7_XCENT), e.g. 1320,1505.",
+          "type": "string"
+        },
+        {
+          "name": "exclude_customer_codes",
+          "in": "query",
+          "required": false,
+          "description": "Comma-separated TOTVS customer codes to exclude.",
+          "type": "string"
+        },
+        {
+          "name": "exclude_customer_names",
+          "in": "query",
+          "required": false,
+          "description": "Comma-separated customer names to exclude (partial match, NOT LIKE).",
+          "type": "string"
+        },
+        {
+          "name": "product_codes",
+          "in": "query",
+          "required": false,
+          "description": "CSV of product codes (SB1.B1_COD / D2_COD).",
+          "type": "string"
+        },
+        {
+          "name": "product_groups",
+          "in": "query",
+          "required": false,
+          "description": "CSV of product groups (SB1.B1_GRUPO).",
+          "type": "string"
+        },
+        {
+          "name": "market",
+          "in": "query",
+          "required": false,
+          "description": "Market filter: domestic (CFOP 5/6) or export (CFOP 7).",
+          "type": "string"
+        },
+        {
+          "name": "group_by",
+          "in": "query",
+          "required": false,
+          "description": "Aggregate by customer center, or by customer center and product.",
+          "type": "string",
+          "default": "center",
+          "enum": [
+            "center",
+            "center_product"
+          ]
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "description": "limit default=500 ge=1 le=500",
+          "type": "integer",
+          "default": 500
+        },
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed.",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "commercial_rol_by_customer_center",
+        "shape": "paged_list",
+        "category": "commercial",
+        "locale": {
+          "en": {
+            "summary": "Commercial ROL by customer center",
+            "description": "Net operating revenue (ROL) classified by the current product-customer center (SA7.A7_XCENT / ZC0). Unclassified items remain as SEM CENTRO. Classification uses the current cadastre, not a historical snapshot on the invoice.",
+            "label": "Commercial ROL by customer center"
+          },
+          "pt-BR": {
+            "summary": "ROL comercial por centro do cliente",
+            "description": "Receita operacional líquida classificada pelo centro atual da amarração produto–cliente (SA7.A7_XCENT / ZC0). Itens sem cadastro permanecem como SEM CENTRO. A classificação usa o cadastro vigente, sem snapshot histórico na nota.",
+            "label": "Indicador — ROL por centro do cliente"
+          }
+        },
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "customer_codes": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated TOTVS customer codes to include (portfolio filter).",
+                "label": "Customer codes"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de códigos TOTVS de clientes a incluir (filtro de carteira).",
+                "label": "Códigos de clientes"
+              }
+            }
+          },
+          "customer_centers": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated customer center codes from the product-customer link (SA7.A7_XCENT), e.g. 1320,1505.",
+                "label": "Customer centers"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de centros do cliente na amarração produto–cliente (SA7.A7_XCENT), ex.: 1320,1505.",
+                "label": "Centros do cliente"
+              }
+            }
+          },
+          "customer_stores": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated TOTVS customer store codes (A1_LOJA / D2_LOJA).",
+                "label": "Customer stores"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de lojas TOTVS do cliente (A1_LOJA / D2_LOJA).",
+                "label": "Lojas do cliente"
+              }
+            }
+          },
+          "customer_names": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated customer names to include (partial match, LIKE).",
+                "label": "Customer names (include)"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de nomes de clientes a incluir (correspondência parcial, LIKE).",
+                "label": "Nomes de clientes (incluir)"
+              }
+            }
+          },
+          "exclude_customer_codes": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated TOTVS customer codes to exclude from the result.",
+                "label": "Exclude customer codes"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de códigos TOTVS de clientes a excluir do resultado.",
+                "label": "Excluir códigos de clientes"
+              }
+            }
+          },
+          "exclude_customer_names": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated customer names to exclude (partial match, NOT LIKE).",
+                "label": "Exclude customer names"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de nomes de clientes a excluir (correspondência parcial, NOT LIKE).",
+                "label": "Excluir nomes de clientes"
+              }
+            }
+          },
+          "customer_segment": {
+            "locale": {
+              "en": {
+                "description": "Filter: weg or new_business. Empty = all segments.",
+                "label": "Segment"
+              },
+              "pt-BR": {
+                "description": "Filtra clientes: weg (WEG) ou new_business (novos negócios). Vazio = todos os segmentos.",
+                "label": "Segmento"
+              }
+            },
+            "enumLabels": {
+              "new_business": {
+                "en": {
+                  "label": "New business"
+                },
+                "pt-BR": {
+                  "label": "Novos negócios"
+                }
+              },
+              "weg": {
+                "en": {
+                  "label": "WEG"
+                },
+                "pt-BR": {
+                  "label": "WEG"
+                }
+              }
+            }
+          },
+          "end_date": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Fim do período (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "group_by": {
+            "locale": {
+              "en": {
+                "description": "Breakdown mode: none, customer or branch.",
+                "label": "Group by"
+              },
+              "pt-BR": {
+                "description": "Como agregar o resultado (geral, filial, produto etc.).",
+                "label": "Agrupar por"
+              }
+            },
+            "enumLabels": {
+              "branch": {
+                "en": {
+                  "label": "Branch"
+                },
+                "pt-BR": {
+                  "label": "Filial"
+                }
+              },
+              "customer": {
+                "en": {
+                  "label": "Customer"
+                },
+                "pt-BR": {
+                  "label": "Cliente"
+                }
+              },
+              "branch_summary": {
+                "en": {
+                  "label": "Branch summary"
+                },
+                "pt-BR": {
+                  "label": "Resumo por filial"
+                }
+              },
+              "day": {
+                "en": {
+                  "label": "Day"
+                },
+                "pt-BR": {
+                  "label": "Dia"
+                }
+              },
+              "day_work_center": {
+                "en": {
+                  "label": "Day × work center"
+                },
+                "pt-BR": {
+                  "label": "Dia × centro de trabalho"
+                }
+              },
+              "general": {
+                "en": {
+                  "label": "General"
+                },
+                "pt-BR": {
+                  "label": "Geral"
+                }
+              },
+              "none": {
+                "en": {
+                  "label": "None"
+                },
+                "pt-BR": {
+                  "label": "Nenhum"
+                }
+              },
+              "product": {
+                "en": {
+                  "label": "Product"
+                },
+                "pt-BR": {
+                  "label": "Produto"
+                }
+              },
+              "product_group": {
+                "en": {
+                  "label": "Product group"
+                },
+                "pt-BR": {
+                  "label": "Grupo de produto"
+                }
+              },
+              "center": {
+                "en": {
+                  "label": "Customer center"
+                },
+                "pt-BR": {
+                  "label": "Centro do cliente"
+                }
+              },
+              "center_product": {
+                "en": {
+                  "label": "Customer center and product"
+                },
+                "pt-BR": {
+                  "label": "Centro do cliente e produto"
+                }
+              },
+              "unit": {
+                "en": {
+                  "label": "Unit"
+                },
+                "pt-BR": {
+                  "label": "Unidade"
+                }
+              }
+            }
+          },
+          "limit": {
+            "locale": {
+              "en": {
+                "description": "Limit query parameter.",
+                "label": "Limit"
+              },
+              "pt-BR": {
+                "description": "Máximo de registros retornados pela API (ranking ou listagem truncada).",
+                "label": "Limite"
+              }
+            }
+          },
+          "product_codes": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated product codes (SB1.B1_COD / D2_COD).",
+                "label": "Product codes"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de códigos de produto (SB1.B1_COD / D2_COD).",
+                "label": "Códigos de produtos"
+              }
+            }
+          },
+          "product_groups": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated product groups (SB1.B1_GRUPO).",
+                "label": "Product groups"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de famílias/grupos de produto (SB1.B1_GRUPO).",
+                "label": "Grupos de produto"
+              }
+            }
+          },
+          "market": {
+            "locale": {
+              "en": {
+                "description": "Market filter: domestic (CFOP 5/6) or export (CFOP 7).",
+                "label": "Market"
+              },
+              "pt-BR": {
+                "description": "Filtro de mercado: domestic (CFOP 5/6) ou export (CFOP 7).",
+                "label": "Mercado"
+              }
+            },
+            "enumLabels": {
+              "domestic": {
+                "en": {
+                  "label": "Domestic"
+                },
+                "pt-BR": {
+                  "label": "Interno"
+                }
+              },
+              "export": {
+                "en": {
+                  "label": "Export"
+                },
+                "pt-BR": {
+                  "label": "Externo"
+                }
+              }
+            }
+          },
+          "start_date": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Início do período (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          }
+        },
+        "tv": {
+          "description": "Receita operacional líquida classificada pelo centro atual da amarração produto–cliente (SA7.A7_XCENT / ZC0). Itens sem cadastro permanecem como SEM CENTRO. A classificação usa o cadastro vigente, sem snapshot histórico na nota.",
+          "label": "Indicador — ROL por centro do cliente"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Net operating revenue (ROL) classified by the current product-customer center (SA7.A7_XCENT / ZC0). Unclassified items remain as SEM CENTRO. Classification uses the current cadastre, not a historical snapshot on the invoice."
     },
     {
       "method": "GET",

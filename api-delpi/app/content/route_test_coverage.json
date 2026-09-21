@@ -1,9 +1,9 @@
 {
   "version": 1,
-  "generatedAt": "2026-09-14",
-  "baselineOperationCount": 703,
-  "operationCount": 703,
-  "coveredCount": 628,
+  "generatedAt": "2026-09-21",
+  "baselineOperationCount": 704,
+  "operationCount": 704,
+  "coveredCount": 629,
   "gapCount": 74,
   "exemptCount": 1,
   "byModule": {
@@ -14,8 +14,8 @@
       "exempt": 0
     },
     "commercial": {
-      "total": 24,
-      "covered": 24,
+      "total": 25,
+      "covered": 25,
       "gap": 0,
       "exempt": 0
     },
@@ -327,6 +327,15 @@
       "path": "/commercial/rol/by-customer",
       "module": "commercial",
       "entity": "commercial_rol_by_customer",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_commercial_rol_by_customer_center",
+      "method": "GET",
+      "path": "/commercial/rol/by-customer-center",
+      "module": "commercial",
+      "entity": "commercial_rol_by_customer_center",
       "shape": "paged_list",
       "status": "covered"
     },
@@ -1949,15 +1958,6 @@
       "module": "inspecoes-processo",
       "entity": "inspecoes_processo_historico_detalhe",
       "shape": "object",
-      "status": "covered"
-    },
-    {
-      "operationId": "list_inspecoes_processo_operation_inspections",
-      "method": "GET",
-      "path": "/inspecoes-processo/operations/inspections",
-      "module": "inspecoes-processo",
-      "entity": "inspecoes_processo_operation_inspections",
-      "shape": "playbook_report",
       "status": "covered"
     },
     {
@@ -3676,15 +3676,6 @@
       "path": "/production/orders/by-op/{production_order}",
       "module": "production",
       "entity": "production_order_detail",
-      "shape": "playbook_report",
-      "status": "covered"
-    },
-    {
-      "operationId": "list_production_order_operation_materials",
-      "method": "GET",
-      "path": "/production/orders/{production_order}/operations/{operation}/materials",
-      "module": "production",
-      "entity": "production_order_operation_materials",
       "shape": "playbook_report",
       "status": "covered"
     },

@@ -185,6 +185,7 @@ def GRANULARITY_QUERY_WEEK():
 )
 
 COMMERCIAL_ANALYSIS_GROUP_BY_VALUES = ("none", "customer", "branch")
+COMMERCIAL_ROL_CENTER_GROUP_BY_VALUES = ("center", "center_product")
 
 
 def COMMERCIAL_ANALYSIS_GROUP_BY_QUERY():
@@ -193,6 +194,17 @@ def COMMERCIAL_ANALYSIS_GROUP_BY_QUERY():
         description="Breakdown mode: none, customer or branch.",
         pattern=_enum_pattern(COMMERCIAL_ANALYSIS_GROUP_BY_VALUES),
         enum=list(COMMERCIAL_ANALYSIS_GROUP_BY_VALUES),
+    )
+
+
+def COMMERCIAL_ROL_CENTER_GROUP_BY_QUERY():
+    return Query(
+        "center",
+        description=(
+            "Aggregate by customer center, or by customer center and product."
+        ),
+        pattern=_enum_pattern(COMMERCIAL_ROL_CENTER_GROUP_BY_VALUES),
+        enum=list(COMMERCIAL_ROL_CENTER_GROUP_BY_VALUES),
     )
 
 
