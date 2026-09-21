@@ -151,6 +151,34 @@ declare module "@delpi/plugin-ui/index" {
     } & React.RefAttributes<HTMLButtonElement>
   >;
 
+  export function createDashboardTopBarUtilityCluster(config: {
+    prefix: string;
+  }): ComponentType<{
+    children: ReactNode;
+    className?: string;
+  }>;
+
+  export function createDashboardTopBarFavoritesStrip(config: {
+    prefix: string;
+    portalScopeClassName?: string;
+  }): ComponentType<{
+    items: ReadonlyArray<{ id: string; label: string }>;
+    onSelect: (id: string) => void;
+    onRemove: (id: string) => void;
+    title: string;
+    emptyLabel?: string;
+    errorLabel?: string;
+    openAriaLabel: string;
+    closeAriaLabel: string;
+    removeLabel: (label: string) => string;
+    count?: number;
+  }>;
+
+  export function createDashboardUserManual(config: { prefix: string }): ComponentType<{
+    children: ReactNode;
+    className?: string;
+  }>;
+
   export function createDashboardCommandPalette(config: {
     prefix: string;
     portalScopeClassName: string;
@@ -197,7 +225,9 @@ declare module "@delpi/plugin-ui/index" {
       id: string;
       label: ReactNode;
       value: ReactNode;
+      description?: ReactNode;
       tone?: "neutral" | "warning" | "danger";
+      loading?: boolean;
     }>;
     density?: "comfortable" | "compact";
     "aria-label"?: string;
@@ -265,6 +295,44 @@ declare module "@delpi/plugin-ui/index" {
     onNavigate: () => void;
     onRemove?: () => void;
     removeLabel?: string;
+  }>;
+
+  export function createDashboardEventsSection(config: {
+    prefix: string;
+    labels: {
+      titleHelpAriaLabel: (title: string) => string;
+      expandAriaLabel?: (title: string) => string;
+      collapseAriaLabel?: (title: string) => string;
+    };
+    sectionClassNames?: Record<string, string>;
+  }): ComponentType<{
+    title: string;
+    subtitle?: string;
+    hint?: string;
+    actions?: ReactNode;
+    items: ReadonlyArray<{
+      id: string;
+      title: ReactNode;
+      description?: ReactNode;
+      tone?: "neutral" | "info" | "warning" | "danger";
+      leadingIcon?: ReactNode;
+      actionLabel?: string;
+      onAction?: () => void;
+    }>;
+    children?: ReactNode;
+    omitWhenEmpty?: boolean;
+    emptyMessage?: string;
+    listAriaLabel?: string;
+  }>;
+
+  export function createDashboardRecentAccessStrip(config: {
+    prefix: string;
+  }): ComponentType<{
+    items: ReadonlyArray<{ id: string; label: string; icon?: ReactNode }>;
+    onSelect: (id: string) => void;
+    label?: ReactNode;
+    maxVisible?: number;
+    "aria-label"?: string;
   }>;
 
   export function createDashboardStatusBadge(config: { prefix: string }): ComponentType<{

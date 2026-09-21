@@ -10,7 +10,9 @@ describe("Home launcher visual pattern", () => {
     const page = readFileSync(join(dir, "../../pages/HomePage.tsx"), "utf8");
     expect(page).toMatch(/SuppliesSectionRouteCard/);
     expect(page).toMatch(/SuppliesCatalogSearchBar/);
-    expect(page).toMatch(/SuppliesHubChipRow/);
+    expect(page).toMatch(/SuppliesEventsSection/);
+    expect(page).toMatch(/SuppliesRecentAccessStrip/);
+    expect(page).not.toMatch(/HOME\.favoritesTitle/);
     expect(page).toMatch(/SuppliesSectionCard/);
     expect(page).toMatch(/SuppliesLoadingCard/);
     expect(page).toMatch(/sp-home-sections-grid/);
@@ -23,7 +25,6 @@ describe("Home launcher visual pattern", () => {
     expect(page).toMatch(/SP_HELP\.home\.attention/);
     expect(page).toMatch(/SP_HELP\.home\.paths/);
     expect(page).toMatch(/SP_HELP\.home\.search/);
-    expect(page).toMatch(/SP_HELP\.home\.favorites/);
     expect(page).toMatch(/SP_HELP\.home\.recents/);
     expect(page).toMatch(/SECTION_HINTS/);
     expect(page).toMatch(/SuppliesSectionHintLabel/);

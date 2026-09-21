@@ -19,9 +19,9 @@ import {
   SuppliesActionButton,
   SuppliesCatalogSearchBar,
   SuppliesEmptyState,
-  SuppliesHubChipRow,
+  SuppliesEventsSection,
   SuppliesLoadingCard,
-  SuppliesRouteChip,
+  SuppliesRecentAccessStrip,
   SuppliesSectionHintLabel,
   SuppliesSectionCard,
   SuppliesSectionRouteCard,
@@ -212,39 +212,31 @@ export function HomePage({ basePath }: HomePageProps) {
     <section className="sp-page-stack sp-home-layout" aria-label="Início">
       <div className="sp-home-stack">
         {showAttentionPanel ? (
-          <SuppliesSectionCard
+          <SuppliesEventsSection
             title={HOME.attentionTitle}
             subtitle={HOME.attentionSubtitle}
             hint={SP_HELP.home.attention}
+            listAriaLabel={HOME.attentionTitle}
             actions={
               <SuppliesActionButton variant="ghost" onClick={reloadAttention}>
                 {HOME.attentionRefresh}
               </SuppliesActionButton>
             }
+            items={attentionCards.map((card) => ({
+              id: card.id,
+              title:
+                card.count == null ? card.title : `${card.title} · ${card.count}`,
+              description: card.description,
+              tone: card.status === "unavailable" ? "neutral" : "warning",
+              actionLabel: card.status === "unavailable" ? undefined : "Abrir",
+              onAction:
+                card.status === "unavailable" ? undefined : () => goToCard(card),
+            }))}
           >
             {partialMessages.length > 0 ? (
               <SuppliesStateBanner>{HOME.attentionPartial}</SuppliesStateBanner>
             ) : null}
-            <ul className="sp-home-attention-list">
-              {attentionCards.map((card) => (
-                <li key={card.id}>
-                  <button
-                    type="button"
-                    className="sp-home-attention-card"
-                    disabled={card.status === "unavailable"}
-                    onClick={() => goToCard(card)}
-                    title={card.description}
-                  >
-                    <span className="sp-home-attention-card__title">{card.title}</span>
-                    <span className="sp-home-attention-card__desc">{card.description}</span>
-                    <span className="sp-home-attention-card__count">
-                      {card.count == null ? "—" : String(card.count)}
-                    </span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </SuppliesSectionCard>
+          </SuppliesEventsSection>
         ) : null}
 
         {showQueueOk ? (
@@ -301,58 +293,24 @@ export function HomePage({ basePath }: HomePageProps) {
               />
             </div>
 
-            {visibleFavorites.length > 0 ? (
-              <SuppliesHubChipRow
-                label={
-                  <SuppliesSectionHintLabel
-                  label={HOME.favoritesTitle}
-                  hint={SP_HELP.home.favorites}
-                />
-                }
-                aria-label={HOME.favoritesTitle}
-              >
-                {visibleFavorites.map((item) => (
-                  <SuppliesRouteChip
-                    key={item.viewId}
-                    tone="pinned"
-                    label={item.label}
-                    onNavigate={() =>
-                      navigateRoute({ viewId: item.viewId, label: item.label })
-                    }
-                    onRemove={() =>
-                      toggleHomeFavorite({
-                        viewId: item.viewId,
-                        label: item.label,
-                      })
-                    }
-                    removeLabel={HOME.unpinLabel}
-                  />
-                ))}
-              </SuppliesHubChipRow>
-            ) : null}
-
-            {visibleRecents.length > 0 ? (
-              <SuppliesHubChipRow
-                label={
-                  <SuppliesSectionHintLabel
+            <SuppliesRecentAccessStrip
+              label={
+                <SuppliesSectionHintLabel
                   label={HOME.recentsTitle}
                   hint={SP_HELP.home.recents}
                 />
-                }
-                aria-label={HOME.recentsTitle}
-              >
-                {visibleRecents.map((item) => (
-                  <SuppliesRouteChip
-                    key={`${item.viewId}-${item.at}`}
-                    tone="recent"
-                    label={item.label}
-                    onNavigate={() =>
-                      navigateRoute({ viewId: item.viewId, label: item.label })
-                    }
-                  />
-                ))}
-              </SuppliesHubChipRow>
-            ) : null}
+              }
+              aria-label={HOME.recentsTitle}
+              items={visibleRecents.map((item) => ({
+                id: item.viewId,
+                label: item.label,
+              }))}
+              onSelect={(id: string) => {
+                const item = visibleRecents.find((entry) => entry.viewId === id);
+                if (!item) return;
+                navigateRoute({ viewId: item.viewId, label: item.label });
+              }}
+            />
 
             {sections.length === 0 ? (
               <SuppliesEmptyState title={HOME.pathsEmpty} message={HOME.pathsSubtitle} />

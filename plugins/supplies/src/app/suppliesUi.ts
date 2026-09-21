@@ -10,6 +10,8 @@ import {
   createDashboardEmptyState,
   createDashboardFiltersKit,
   createDashboardHubChipRow,
+  createDashboardEventsSection,
+  createDashboardRecentAccessStrip,
   createDashboardLoadingActivityCard,
   createDashboardDataCardsGrid,
   createDashboardDataCardsSortBar,
@@ -124,6 +126,14 @@ export const SuppliesCatalogSearchBar = createDashboardCatalogSearchBar({
 });
 export const SuppliesHubChipRow = createDashboardHubChipRow({ prefix: UI_PREFIX });
 export const SuppliesRouteChip = createDashboardRouteChip({ prefix: UI_PREFIX });
+export const SuppliesEventsSection = createDashboardEventsSection({
+  prefix: UI_PREFIX,
+  labels: spSectionLabels,
+  sectionClassNames: spSectionCardClassNames,
+});
+export const SuppliesRecentAccessStrip = createDashboardRecentAccessStrip({
+  prefix: UI_PREFIX,
+});
 export const SuppliesStatusBadge = createDashboardStatusBadge({ prefix: UI_PREFIX });
 export const SuppliesActionButton = ActionButton;
 export const SuppliesClearFiltersButton = ClearFiltersButton;

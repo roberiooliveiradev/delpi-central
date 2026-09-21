@@ -33,17 +33,17 @@ export function ShellFavoritesStrip({ basePath }: ShellFavoritesStripProps) {
         id: item.viewId,
         label: hubRouteLabelByView(item.viewId) ?? item.label,
       }))}
-      onSelect={(id) => {
+      onSelect={(id: string) => {
         navigatePluginView(id, { basePath });
       }}
-      onRemove={(id) => {
+      onRemove={(id: string) => {
         removeHomeFavorite(id);
       }}
       title={copy.favoritesTitle}
       emptyLabel={copy.favoritesEmpty}
       openAriaLabel={copy.favoritesMenuOpenAriaLabel}
       closeAriaLabel={copy.favoritesMenuCloseAriaLabel}
-      removeLabel={(label) => `${copy.unpinLabel}: ${label}`}
+      removeLabel={(label: string) => `${copy.unpinLabel}: ${label}`}
     />
   );
 }
