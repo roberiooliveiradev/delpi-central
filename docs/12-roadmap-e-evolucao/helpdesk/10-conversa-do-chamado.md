@@ -1,0 +1,144 @@
+# 10 — Conversa do chamado
+
+> **Status:** inventário. Não autoriza implementação e não altera [`06-plano-execucao.md`](./06-plano-execucao.md).
+> **Tela publicada hoje:** [`WIREFRAMES.md`](./WIREFRAMES.md) §3.
+> **Contrato vigente:** [`03-contrato.md`](./03-contrato.md).
+
+Este documento descreve o que falta para o detalhe de Meus Chamados de TI parecer a conversa do GLPI, dentro do kit da Minha DELPI. As fotos de referência são o chamado `1114` em `helpdesk.centraldelpi.com.br/front/ticket.form.php?id=1114`, visto pela interface padrão (central), com o usuário Super-Admin.
+
+## 1. O que a foto é
+
+A tela do GLPI tem três colunas mais uma barra fixa de salvar. O que a pessoa chama de chat é só a coluna do meio, na aba **Chamado**:
+
+| Peça vista | No chamado 1114 |
+|---|---|
+| Cabeçalho | ponto verde, título «Chamado teste Api Minha delpi (1114)», paginação 1/15 |
+| Mensagem de abertura | avatar «RT», fundo verde, «Criado em: 2 horas atrás por Robério Teixeira», título em negrito e a descrição |
+| Responder | menu com criar tarefa, adicionar solução, adicionar documento e pedir aprovação |
+| Barra inferior | excluir e salvar |
+
+O restante da foto é o console do técnico: abas (Estatísticas, Aprovações, Base de conhecimento, Itens, Custos, Projetos, Histórico), atores editáveis, itens, níveis de serviço e objetos relacionados. Isso continua em `https://helpdesk.centraldelpi.com.br` para quem tem `helpdesk.console`. Meus Chamados de TI não ganha essa moldura.
+
+A interface das fotos não é a interface simplificada de autoatendimento. Quem entra como colaborador no GLPI não vê o mesmo menu. O alvo da Minha DELPI é a conversa que o solicitante acompanha, não o formulário central inteiro.
+
+## 2. O que a documentação do GLPI define
+
+Fontes: [Tickets](https://help.glpi-project.org/documentation/modules/assistance/tickets), [Followup](https://help.glpi-project.org/documentation/modules/assistance/tabs/followup) e [Solution](https://help.glpi-project.org/documentation/modules/assistance/tabs/solution). A HLAPI 2.2 de produção (`/api.php/doc.json` no GLPI 11.0.5) confirma os campos citados abaixo.
+
+| Ação no GLPI | O que a documentação diz | No chat da Minha DELPI |
+|---|---|---|
+| Mensagem de abertura | o chamado nasce com título, conteúdo HTML e data de criação | primeira bolha da conversa |
+| Responder | acompanhamento: comentário, documento opcional, motivo de pendência; o chamado pode ir para pendente | só o comentário público, no compositor que já existe |
+| Acompanhamento privado, origem, modelo, promover a chamado | recursos da interface padrão, com direito de ver privado | ficam no console |
+| Tarefa | trabalho interno do técnico | fica no console; a timeline atual já esconde `Task` |
+| Solução | encerra o fluxo e pede aprovação do solicitante; sem resposta, fecha sozinho (15 dias por padrão da doc) | bolha futura, não desta conversa |
+| Aprovar ou recusar solução / pesquisa | direito «Approve solution / Reply survey (my ticket)», a partir do GLPI 11 | onda posterior, já fora em [`05-roadmap.md`](./05-roadmap.md) |
+| Documento | pode ir junto do acompanhamento ou da solução | baixar o que já está no chamado já está publicado; enviar arquivo novo continua bloqueado pela HLAPI |
+
+Papéis da equipe no schema `Ticket.team`: `requester`, `assigned`, `observer`. O autor da bolha de abertura é o membro `requester`. `user_recipient` é outro campo e não substitui o solicitante. O acompanhamento traz `user`, `content` (HTML), `date_creation`, `is_private` e `timeline_position`.
+
+## 3. O que a tela publicada já faz
+
+Em `/apps/helpdesk/tickets/{id}` hoje:
+
+- cabeçalho do kit com o título e **Atualizar**;
+- cartão com categoria, urgência e status;
+- descrição em parágrafo, texto puro;
+- linha do tempo só de acompanhamentos (`createTimeline`), lista vertical, não bolha;
+- campo **Acompanhamento** e **Registrar acompanhamento**;
+- **Baixar** para arquivo já ligado ao chamado.
+
+Quando não há acompanhamento, a linha do tempo diz que não há evento, mesmo com a descrição do chamado visível acima. Na foto, essa descrição é a primeira mensagem.
+
+## 4. Alvo visual
+
+Uma coluna, no chrome que o portal já desenha. Sem menu lateral de abas, sem coluna de atores e sem barra de salvar.
+
+```text
+HelpdeskPageHeader
+  título do chamado
+  [ Atualizar ]
+
+HelpdeskSectionCard  «Conversa»
+  ● status          categoria, se houver          urgência
+
+  bolha de abertura
+    avatar com as iniciais
+    nome do solicitante · tempo relativo
+    título
+    descrição em texto puro
+
+  bolha de acompanhamento
+    avatar · nome · tempo
+    texto
+    baixar arquivo, quando o arquivo estiver ligado a essa mensagem
+
+  HelpdeskTextArea  «Responder»
+  [ Enviar ]
+```
+
+Claro e escuro continuam nos tokens `--delpi-ui-*` já mapeados em `.dashboard-helpdesk`. O verde da bolha do GLPI não entra como cor fixa. A bolha de quem escreveu e a bolha de outra pessoa se distinguem pelo tom do kit (`mine` / a outra), não pela paleta do GLPI.
+
+O tempo «2 horas atrás» é formatação da tela a partir de `date_creation`. O JSON guarda o instante.
+
+As iniciais saem do nome exibido. Não há foto nem armazenamento de avatar neste módulo.
+
+## 5. Componente
+
+O `HelpdeskTimeline` atual (`createTimeline`) é uma trilha de eventos: título, hora e detalhe. Não é a bolha com avatar da foto.
+
+O kit já tem `MessageThread` em `plugins/plugin-ui/src/components/collaboration/MessageThread.tsx`: iniciais, bolha, lado «meu» / outro, hora, texto e um espaço `belowBody` para o anexo. Esse componente **não** está no `index` que o MFE importa.
+
+`RoomConversationShell` é o chrome das salas de outro produto. O helpdesk não importa esse shell nem a regra de sala.
+
+Quando esta conversa for implementada, a ordem é:
+
+1. factory do `MessageThread` no `@delpi/plugin-ui`, exportada como as outras factories do helpdesk;
+2. o MFE só monta essa factory;
+3. nenhum CSS de bolha nasce em `plugins/helpdesk`.
+
+O compositor de resposta continua `HelpdeskTextArea` e `ActionButton`. `MentionComposer` fica nas salas; o acompanhamento desta entrega é texto puro, como o contrato já devolve.
+
+## 6. Contrato que ainda falta
+
+O BFF hoje não entrega o que a bolha de abertura precisa. O schema do GLPI tem o dado; o contrato de [`03-contrato.md`](./03-contrato.md) ainda não.
+
+| Necessidade da conversa | Onde está no GLPI 11.0.5 | No BFF hoje |
+|---|---|---|
+| Instante da abertura | `Ticket.date_creation` | só `updated_at` |
+| Nome do solicitante | `Ticket.team[]` com `role=requester`; a limpeza da equipe também preserva `display_name` | ausente |
+| Texto da abertura | `Ticket.content` (HTML) | `description`, já em texto puro |
+| Acompanhamento | `Followup.user`, `content`, `date_creation` | `timeline[]` com `author_display_name`, `content`, `created_at` |
+| Acompanhamento privado | `Followup.is_private` | não publicado; a tela do solicitante não mostra privado |
+| Arquivo do chamado | `Timeline` tipo `Document`, `documents_id` | `attachments[]` e o download já publicados |
+| Arquivo de um acompanhamento | documento ligado ao follow-up, não ao chamado | a HLAPI do item `Followup` não devolve essa lista; o download atual é do chamado inteiro |
+
+Texto visível continua passando pelo mesmo reparo de acento e pela remoção de HTML já feitos no tradutor. A conversa não volta a mostrar tag.
+
+Enviar arquivo novo, tarefa, solução, aprovação, atores editáveis, SLA e entidade continuam fora. O envio de arquivo esbarra na HLAPI, que não recebe o binário; a API legada permanece desligada.
+
+## 7. O que não copiar
+
+| Peça da foto | Decisão |
+|---|---|
+| Abas Estatísticas, Aprovações, Base de conhecimento, Itens, Custos, Projetos, Histórico | console GLPI |
+| Atores, itens, níveis de serviço, objetos relacionados | console GLPI; a entidade segue a padrão do usuário |
+| Excluir e Salvar | o chamado não se edita por essa tela |
+| Paginação 1/15 entre chamados | a lista da Minha DELPI já é a navegação |
+| Criar tarefa, adicionar solução, pedir aprovação | console; solução e pesquisa ficam na onda posterior |
+| Modelo, origem, pendência e acompanhamento privado | interface padrão; o solicitante só responde em público |
+| Verde, tipografia e três colunas do GLPI | o kit e uma coluna |
+
+## 8. Prova, quando houver implementação
+
+Ainda não é etapa. Quando for executada, a prova mínima é:
+
+| Caso | Resultado |
+|---|---|
+| Positivo | o chamado 1114 abre com a bolha «RT / Robério Teixeira», o título e a descrição, sem «nenhum evento» no lugar dessa abertura |
+| Irmão | um acompanhamento de outra pessoa aparece como outra bolha, com o nome e a hora dele |
+| Negativo | tarefa, solução, aprovação e campo de ator não aparecem; acompanhamento privado não aparece para o solicitante |
+| Arquivo | o botão baixar continua só para documento daquele chamado |
+| Tema | claro e escuro usam o token do kit; recarregar a página mantém a mesma conversa |
+
+A ajuda in-app (`helpTooltips.detail`) muda no mesmo entregável, descrevendo responder e baixar, sem path de API.

@@ -157,6 +157,8 @@ Não há campo de solicitante nem de entidade. Sucesso navega para `/apps/helpde
 
 ## 3. Detalhe — `/apps/helpdesk/tickets/{id}`
 
+A tela publicada é a deste bloco. A conversa no formato do GLPI, ainda sem autorização para implementar, está em [`10-conversa-do-chamado.md`](./10-conversa-do-chamado.md).
+
 ```text
 HelpdeskPageHeader
   título: título do chamado, ou «Chamado» enquanto carrega
