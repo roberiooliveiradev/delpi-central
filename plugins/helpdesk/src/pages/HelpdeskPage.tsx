@@ -43,6 +43,14 @@ import {
   viewForTicketLoad,
 } from "../presentation/ticketView";
 import { navigateHelpdesk, type HelpdeskRoute } from "../routing/helpdeskRoute";
+import {
+  clearCreateDraft,
+  clearReplyDraft,
+  readCreateDraft,
+  readReplyDraft,
+  writeCreateDraft,
+  writeReplyDraft,
+} from "../presentation/ticketDraftStorage";
 import { useMyPersonProfilePhoto } from "../presentation/useMyPersonProfilePhoto";
 import {
   emptyFilterGroup,
@@ -542,11 +550,12 @@ function TicketListPage() {
 }
 
 function CreateTicketPage() {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [observerIdsInput, setObserverIdsInput] = useState("");
-  const [categoryId, setCategoryId] = useState("");
-  const [urgencyId, setUrgencyId] = useState("");
+  const savedDraft = readCreateDraft();
+  const [title, setTitle] = useState(savedDraft?.title ?? "");
+  const [description, setDescription] = useState(savedDraft?.description ?? "");
+  const [observerIdsInput, setObserverIdsInput] = useState(savedDraft?.observerIdsInput ?? "");
+  const [categoryId, setCategoryId] = useState(savedDraft?.categoryId ?? "");
+  const [urgencyId, setUrgencyId] = useState(savedDraft?.urgencyId ?? "");
   const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
   const [urgencies, setUrgencies] = useState<{ id: number; name: string }[]>([]);
   const [loading, setLoading] = useState(true);
@@ -559,13 +568,28 @@ function CreateTicketPage() {
     void Promise.allSettled([listCategories(controller.signal), listUrgencies(controller.signal)])
       .then(([categoryResult, urgencyResult]) => {
         if (controller.signal.aborted) return;
+        const draft = readCreateDraft();
         if (urgencyResult.status === "fulfilled") {
-          setUrgencies(urgencyResult.value.items);
-          setUrgencyId(urgencyResult.value.items[0] ? String(urgencyResult.value.items[0].id) : "");
+          const items = urgencyResult.value.items;
+          setUrgencies(items);
+          setUrgencyId((current) => {
+            if (current && items.some((item) => String(item.id) === current)) return current;
+            if (draft?.urgencyId && items.some((item) => String(item.id) === draft.urgencyId)) {
+              return draft.urgencyId;
+            }
+            return items[0] ? String(items[0].id) : "";
+          });
         }
         if (categoryResult.status === "fulfilled") {
-          setCategories(categoryResult.value.items);
-          setCategoryId(categoryResult.value.items[0] ? String(categoryResult.value.items[0].id) : "");
+          const items = categoryResult.value.items;
+          setCategories(items);
+          setCategoryId((current) => {
+            if (current && items.some((item) => String(item.id) === current)) return current;
+            if (draft?.categoryId && items.some((item) => String(item.id) === draft.categoryId)) {
+              return draft.categoryId;
+            }
+            return items[0] ? String(items[0].id) : "";
+          });
           return;
         }
         setErrorText(MESSAGES.catalog_unavailable);
@@ -575,6 +599,16 @@ function CreateTicketPage() {
       });
     return () => controller.abort();
   }, []);
+
+  useEffect(() => {
+    writeCreateDraft({
+      title,
+      description,
+      observerIdsInput,
+      categoryId,
+      urgencyId,
+    });
+  }, [title, description, observerIdsInput, categoryId, urgencyId]);
 
   return (
     <HelpdeskPageStack>
@@ -605,7 +639,10 @@ function CreateTicketPage() {
               },
               idempotencyKey,
             )
-              .then((created) => navigateHelpdesk(`/apps/helpdesk/tickets/${created.id}`))
+              .then((created) => {
+                clearCreateDraft();
+                navigateHelpdesk(`/apps/helpdesk/tickets/${created.id}`);
+              })
               .catch((error) => {
                 setErrorText(messageFor(error).text);
                 setSaving(false);
@@ -684,12 +721,20 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
   const [ticket, setTicket] = useState<TicketDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorText, setErrorText] = useState<string | null>(null);
-  const [content, setContent] = useState("");
+  const [content, setContent] = useState(() => readReplyDraft(ticketId));
   const [saving, setSaving] = useState(false);
   const [idempotencyKey, setIdempotencyKey] = useState(newIdempotencyKey);
   const [inlineThumbs, setInlineThumbs] = useState<Record<string, string>>({});
   const [inlinePreview, setInlinePreview] = useState<TicketAttachment | null>(null);
   const myPhotoUrl = useMyPersonProfilePhoto();
+
+  useEffect(() => {
+    setContent(readReplyDraft(ticketId));
+  }, [ticketId]);
+
+  useEffect(() => {
+    writeReplyDraft(ticketId, content);
+  }, [ticketId, content]);
 
   function load() {
     setLoading(true);
@@ -858,6 +903,7 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                 void createFollowup(ticketId, content.trim(), idempotencyKey)
                   .then(() => {
                     setContent("");
+                    clearReplyDraft(ticketId);
                     setIdempotencyKey(newIdempotencyKey());
                     load();
                   })
