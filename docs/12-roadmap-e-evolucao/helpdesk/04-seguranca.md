@@ -16,13 +16,15 @@ Uma não substitui a outra. Ter `helpdesk.access` não cria chamado se o perfil 
 
 1. A pessoa já está na Minha DELPI (Keycloak).
 2. `GET /auth/glpi/start` só responde se o JWT for válido e tiver `helpdesk.access`.
-3. O navegador abre `https://helpdesk.centraldelpi.com.br/api.php/authorize`.
-4. O GLPI vê a sessão SAML. Se não houver sessão, o samlsso manda ao Keycloak e volta.
-5. O GLPI devolve o código para a redirect URI cadastrada.
+3. O navegador abre `https://helpdesk.centraldelpi.com.br/?samlIdpId=1&redirect=…`, com a URL de `api.php/authorize` (state, PKCE e `accept=1`) codificada duas vezes.
+4. O samlsso dispara o IdP `Minha DELPI` (id 1), o mesmo do botão do helpdesk. Quem já tem sessão no Keycloak entra sem formulário. Quem já existe no GLPI é reconhecido pelo e-mail; quem não existe é criado pelo JIT já ligado nesse IdP. Não há usuário local com senha criado pela helpdesk-api.
+5. No retorno, o GLPI segue o `redirect` guardado e emite o código para a redirect URI cadastrada, sem a tela de consentimento.
 6. A helpdesk-api troca o código em `POST /api.php/token`, com o segredo do cliente, no servidor.
 7. O refresh token fica cifrado, ligado ao `sub` do JWT. Outro usuário não lê essa linha.
 
 O passo 3 é redirect do navegador. A helpdesk-api não chama `authorize` servidor a servidor: o cookie de sessão do GLPI está no browser.
+
+O samlsso grava o `redirect` em `glpi_plugin_samlsso_loginstates.redirect`. A coluna nasceu `varchar(255)` e não cabe a URL de autorização; em produção ela fica `TEXT`. Sem isso o retorno perde o state e o PKCE. O login direto no helpdesk continua com o formulário local, porque `enforce_sso` permanece desligado. Só a entrada vinda da Minha DELPI pede o IdP.
 
 ## 3. Cliente OAuth travado
 

@@ -2002,6 +2002,7 @@ services:
       GLPI_OAUTH_CLIENT_ID: ${GLPI_OAUTH_CLIENT_ID:-}
       GLPI_OAUTH_CLIENT_SECRET: ${GLPI_OAUTH_CLIENT_SECRET:-}
       GLPI_OAUTH_REDIRECT_URI: ${GLPI_OAUTH_REDIRECT_URI:-https://centraldelpi.com.br/apps/helpdesk-api/auth/glpi/callback}
+      GLPI_SAML_IDP_ID: ${GLPI_SAML_IDP_ID:-1}
       HELPDESK_TOKEN_ENCRYPTION_KEY: ${HELPDESK_TOKEN_ENCRYPTION_KEY:-}
 
     depends_on:

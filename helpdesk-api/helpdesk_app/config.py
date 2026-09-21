@@ -56,6 +56,7 @@ class Settings:
         "GLPI_OAUTH_REDIRECT_URI",
         default="https://centraldelpi.com.br/apps/helpdesk-api/auth/glpi/callback",
     )
+    GLPI_SAML_IDP_ID: str = _get_env("GLPI_SAML_IDP_ID", default="1") or ""
     HELPDESK_TOKEN_ENCRYPTION_KEY: str = (
         _get_env("HELPDESK_TOKEN_ENCRYPTION_KEY", default="") or ""
     )

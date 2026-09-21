@@ -12,6 +12,7 @@ Defina no ambiente do Compose. Não versione segredo.
 | `GLPI_OAUTH_CLIENT_ID` | cliente `minha-delpi-helpdesk` |
 | `GLPI_OAUTH_CLIENT_SECRET` | segredo do cliente, só no servidor |
 | `GLPI_OAUTH_REDIRECT_URI` | `https://centraldelpi.com.br/apps/helpdesk-api/auth/glpi/callback` |
+| `GLPI_SAML_IDP_ID` | id numérico do IdP samlsso; produção usa `1` (`Minha DELPI`) |
 | `HELPDESK_TOKEN_ENCRYPTION_KEY` | chave Fernet, distinta do segredo OAuth |
 | `HELPDESK_API_ROOT_PATH` | `/apps/helpdesk-api` |
 | `HELPDESK_RUN_MIGRATIONS_ON_STARTUP` | aplica o schema `helpdesk` |

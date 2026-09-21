@@ -51,6 +51,7 @@ def build_runtime():
         client_id=settings.GLPI_OAUTH_CLIENT_ID,
         client_secret=settings.GLPI_OAUTH_CLIENT_SECRET,
         redirect_uri=settings.GLPI_OAUTH_REDIRECT_URI,
+        saml_idp_id=settings.GLPI_SAML_IDP_ID,
         connect_timeout=settings.GLPI_HTTP_CONNECT_TIMEOUT,
         read_timeout=settings.GLPI_HTTP_READ_TIMEOUT,
     )

@@ -26,6 +26,14 @@ logger = logging.getLogger("helpdesk.glpi")
 _GET_ATTEMPTS = 3
 
 
+def _saml_idp_query(saml_idp_id: str) -> str:
+    if not saml_idp_id:
+        return ""
+    if not saml_idp_id.isdigit() or len(saml_idp_id) >= 3:
+        raise ValueError("GLPI_SAML_IDP_ID must be a numeric IdP id below 100")
+    return f"samlIdpId={saml_idp_id}&"
+
+
 class HttpxGlpiClient:
     def __init__(
         self,
@@ -34,6 +42,7 @@ class HttpxGlpiClient:
         client_id: str,
         client_secret: str,
         redirect_uri: str,
+        saml_idp_id: str = "1",
         connect_timeout: float = 5,
         read_timeout: float = 20,
         transport: httpx.BaseTransport | None = None,
@@ -42,6 +51,7 @@ class HttpxGlpiClient:
         self._client_id = client_id
         self._client_secret = client_secret
         self._redirect_uri = redirect_uri
+        self._saml_idp_id = saml_idp_id.strip()
         self._http = httpx.Client(
             timeout=httpx.Timeout(read_timeout, connect=connect_timeout),
             transport=transport,
@@ -60,11 +70,16 @@ class HttpxGlpiClient:
                 "code_challenge_method": "S256",
             }
         )
-        authorize = f"{self._base}/api.php/authorize?{params}"
+        authorize = f"{self._base}/api.php/authorize?{params}&accept=1"
         # GLPI 11.0.5 recria /authorize sem state nem PKCE quando a sessão
-        # ainda não existe. Entrar por /?redirect= faz o login SAML voltar
-        # para a URL original, com state e code_challenge intactos.
-        return f"{self._base}/?redirect={quote(authorize, safe='')}"
+        # ainda não existe. Com IdP, o samlsso guarda $_GET['redirect'] já
+        # decodificado e depois concatena sem escapar: duas codificações
+        # mantêm state e PKCE dentro do valor até o retorno do Keycloak.
+        saml = _saml_idp_query(self._saml_idp_id)
+        encoded = quote(authorize, safe="")
+        if saml:
+            encoded = quote(encoded, safe="")
+        return f"{self._base}/?{saml}redirect={encoded}"
 
     def exchange_code(self, *, code: str, code_verifier: str) -> TokenSet:
         payload = self._form(

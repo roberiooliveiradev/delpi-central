@@ -1,4 +1,7 @@
+from urllib.parse import unquote
+
 import httpx
+import pytest
 
 from helpdesk_app.domain.errors import GlpiUnavailable
 from helpdesk_app.infrastructure.glpi.http_client import HttpxGlpiClient
@@ -41,21 +44,65 @@ def test_post_is_not_retried_and_get_retries_transient_status():
     assert calls["get"] == 3
 
 
-def test_authorization_url_keeps_state_across_glpi_login():
+def test_authorization_url_starts_minha_delpi_saml_and_keeps_state():
+    client = HttpxGlpiClient(
+        base_url="https://helpdesk.example",
+        client_id="client",
+        client_secret="super-secret",
+        redirect_uri="https://centraldelpi.com.br/apps/helpdesk-api/auth/glpi/callback",
+        saml_idp_id="1",
+    )
+    url = client.authorization_url(state="abc_DEF-123", code_challenge="challenge")
+    assert url.startswith("https://helpdesk.example/?samlIdpId=1&redirect=")
+    stored_by_saml = unquote(url.split("redirect=", 1)[1])
+    assert "&" not in stored_by_saml
+    authorize = unquote(stored_by_saml)
+    assert authorize.startswith("https://helpdesk.example/api.php/authorize?")
+    assert "state=abc_DEF-123" in authorize
+    assert "code_challenge=challenge" in authorize
+    assert "code_challenge_method=S256" in authorize
+    assert "accept=1" in authorize
+
+
+def test_authorization_url_keeps_a_sibling_state():
     client = HttpxGlpiClient(
         base_url="https://helpdesk.example",
         client_id="client",
         client_secret="super-secret",
         redirect_uri="https://centraldelpi.com.br/apps/helpdesk-api/auth/glpi/callback",
     )
+    url = client.authorization_url(state="sibling_state", code_challenge="other-challenge")
+    authorize = unquote(unquote(url.split("redirect=", 1)[1]))
+    assert "state=sibling_state" in authorize
+    assert "state=abc_DEF-123" not in authorize
+
+
+def test_authorization_url_without_idp_does_not_force_saml():
+    client = HttpxGlpiClient(
+        base_url="https://helpdesk.example",
+        client_id="client",
+        client_secret="super-secret",
+        redirect_uri="https://centraldelpi.com.br/apps/helpdesk-api/auth/glpi/callback",
+        saml_idp_id="",
+    )
     url = client.authorization_url(state="abc_DEF-123", code_challenge="challenge")
+    assert "samlIdpId=" not in url
     assert url.startswith("https://helpdesk.example/?redirect=")
-    inner = url.split("redirect=", 1)[1]
-    assert "api.php%2Fauthorize" in inner
-    assert "state%3Dabc_DEF-123" in inner
-    assert "code_challenge%3Dchallenge" in inner
-    assert "code_challenge_method%3DS256" in inner
-    assert inner.startswith("https%3A%2F%2Fhelpdesk.example%2Fapi.php%2Fauthorize")
+    authorize = unquote(url.split("redirect=", 1)[1])
+    assert authorize.startswith("https://helpdesk.example/api.php/authorize?")
+    assert "state=abc_DEF-123" in authorize
+
+
+def test_authorization_url_rejects_non_numeric_idp():
+    client = HttpxGlpiClient(
+        base_url="https://helpdesk.example",
+        client_id="client",
+        client_secret="super-secret",
+        redirect_uri="https://centraldelpi.com.br/apps/helpdesk-api/auth/glpi/callback",
+        saml_idp_id="1;bypass",
+    )
+    with pytest.raises(ValueError):
+        client.authorization_url(state="abc", code_challenge="challenge")
 
 
 def test_mapping_keeps_followups_and_hides_tasks():
