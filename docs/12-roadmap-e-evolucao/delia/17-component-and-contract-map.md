@@ -988,7 +988,7 @@ NAVIGATION: dock stays mounted; updateRoute only
 FULL_PAGE: dock unmounts on /apps/delia(+children) and stays closed until explicit reopen
 NEW_HOST_FIELDS = NONE
 BROWSER_RETAINED_STATE = NONE
-LIVE_COMPANION_DOCK = TEST_NOT_RUN
+LIVE_COMPANION_DOCK = PASS (Product Master smoke scope; see §6.57)
 ```
 
 C2-T4 owner/source inventory (no runtime Workspace; DÉLIA is not owner):

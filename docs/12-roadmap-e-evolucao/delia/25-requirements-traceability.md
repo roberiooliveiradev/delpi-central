@@ -138,7 +138,7 @@ OUT_OF_SCOPE_WITH_DECISION
 
 | ID | Requisito | Owner | Gate | Status |
 |---|---|---|---|---|
-| CP-001 | DÉLIA global no Portal | DÉLIA MFE + Portal | panel/full-page UX | IMPLEMENTED_CURRENT_SCOPE (code) — companion dock live render PASS; LIVE_DYNAMIC_RECLAMP=TEST_NOT_RUN; C2_EXECUTED=NO |
+| CP-001 | DÉLIA global no Portal | DÉLIA MFE + Portal | panel/full-page UX | IMPLEMENTED_CURRENT_SCOPE — companion dock live smoke PASS for render, reclamp, pointer/keyboard and usable center app; C2_EXECUTED=NO |
 | CP-002 | Abrir app | Portal/CopilotBridge | authorized navigation | LOCKED |
 | CP-003 | Abrir rota | Portal/CopilotBridge | authorized navigation | LOCKED |
 | CP-004 | Abrir entidade | Portal + app contract | EntityRef/deep-link | LOCKED |
@@ -569,7 +569,7 @@ No CP promoted to PASS by documentation alone
 
 Related non-inventory CPs (CP-178/179 OT, CP-091 EntityRef, etc.) remain PLANNED/LOCKED per their rows; inventory evidence does not satisfy runtime gates.
 
-C2-T3: rows CP-002–CP-012, CP-025, CP-059, CP-061–CP-070 remain `LOCKED` as requirements. C2-T5R3 keeps CP-001/CP-149 at `IMPLEMENTED_CURRENT_SCOPE` for the companion dock (`C2_EXECUTED=NO`). Product Master live render of the dock is `PASS` for open/non-modal/route/sidebar scope only. C2-T5R3R1 proves dynamic width reclamp in unit tests; `LIVE_DYNAMIC_RECLAMP=TEST_NOT_RUN`. V1 modal UX is `SUPERSEDED_UX`. CP-156 is `PARTIAL`. Host presentation, transient dock state and full-page mount are the current C2 runtime. WorkspaceContext, operational OP/machine/product/operation/posto, typed command bus and DÉLIA iframe bridge are not runtime. CP-012 reasoning is C3.
+C2-T3: rows CP-002–CP-012, CP-025, CP-059, CP-061–CP-070 remain `LOCKED` as requirements. C2-T5R3 keeps CP-001/CP-149 at `IMPLEMENTED_CURRENT_SCOPE` for the companion dock (`C2_EXECUTED=NO`). Product Master live smoke of the companion dock is `PASS` for render, non-modal, current route, dynamic reclamp, usable center app, pointer resize and keyboard resize. `LIVE_USER_A_USER_B` and portal logout E2E stay at their previous status. V1 modal UX is `SUPERSEDED_UX`. CP-156 is `PARTIAL`. Host presentation, transient dock state and full-page mount are the current C2 runtime. WorkspaceContext, operational OP/machine/product/operation/posto, typed command bus and DÉLIA iframe bridge are not runtime. CP-012 reasoning is C3.
 
 ## 15. C0.S1 naming / physical ownership linkage — accepted review
 

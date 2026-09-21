@@ -3,7 +3,7 @@
 **Status:** planejamento executável canônico  
 **Autoridade de ordem:** **este documento é a única fonte de verdade para a sequência de implementação**  
 **Produto:** **DÉLIA**, aplicação standalone nova  
-**Próxima etapa:** `C2-T5R3R1` dynamic dock reclamp live smoke (`LIVE_DYNAMIC_RECLAMP=TEST_NOT_RUN`; `C2_EXECUTED=NO`; do not start T6)
+**Próxima etapa:** `C2-T6` iframe applicability inventory (`C2_EXECUTED=NO`; do not implement an iframe bridge)
 **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Baseline:** [`51-platform-integration-baseline.md`](./51-platform-integration-baseline.md)  
 **Bootstrap:** [`52-standalone-repository-and-bootstrap-plan.md`](./52-standalone-repository-and-bootstrap-plan.md)  
@@ -370,7 +370,7 @@ C2_T5 = IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW
 C2_T5R1 = IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW
 C2_T5R2 = LIVE_GLOBAL_SURFACE_FAIL_BUNDLE_CONTAINS_T5
 C2_T5R3 = IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW
-C2_T5R3R1 = IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW
+C2_T5R3R1 = ACCEPTED_CURRENT_SCOPE
 C2_STARTED = YES
 C2_IMPLEMENTATION_STARTED = YES
 C2_EXECUTED = NO
@@ -388,7 +388,7 @@ BROWSER_STATE_RESIDENCY_POLICY = APPROVED (C2-T1D1)
 BROWSER_RETAINED_STATE_CURRENTLY_REQUIRED = NO
 CENTRALIZED_BROWSER_STATE_BOUNDARY = REQUIRED_ON_FIRST_RETAINED_STATE
 SHARED_DEVICE_ISOLATION_INVARIANT = FROZEN_ACCEPTED
-NEXT = C2-T5R3R1 dynamic dock reclamp live smoke (LIVE_DYNAMIC_RECLAMP=TEST_NOT_RUN; do not start T6)
+NEXT = C2-T6 iframe applicability inventory (do not implement an iframe bridge)
 ```
 
 ## C0.S2 — Authorities / bounded contexts
@@ -633,7 +633,7 @@ C2-T4R1: formal status OPERATIONAL_CONTEXT = TO_INVENTORY (MIXED is not a canoni
 WORKSPACE_CONTEXT_RUNTIME = DEFER
 C2_IMPLEMENTATION_STARTED = YES
 C2_EXECUTED = NO
-NEXT = C2-T5R3R1 dynamic dock reclamp live smoke (no iframe bridge)
+NEXT = C2-T6 iframe applicability inventory (no iframe bridge)
 C2-FINAL after those reviews
 Workspace binding remains unscheduled
 ```
