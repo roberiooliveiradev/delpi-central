@@ -65,7 +65,8 @@ def test_list_publishes_dates_and_forwards_filter():
     assert body["items"][0]["created_at"] == ""
     assert "assigned_display_name" in body["items"][0]
     assert body["page"] == 1
-    assert glpi.last_list_query.filter.startswith("name=like=*Impressora*")
+    assert glpi.last_list_query.filter.startswith("is_deleted==false")
+    assert "name=like=*Impressora*" in glpi.last_list_query.filter
     assert "status.id=in=(1,10,2,3,4)" in glpi.last_list_query.filter
     bad = client.get("/tickets", params={"status": "drop-table"}, headers=auth_headers())
     assert bad.status_code == 422

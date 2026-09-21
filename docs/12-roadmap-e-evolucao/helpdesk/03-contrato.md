@@ -74,7 +74,7 @@ O BFF pede `limit = page_size + 1` à HLAPI e devolve `has_more`. Não inventa t
 }
 ```
 
-Lista vazia com sessão válida é `200`, `items: []` e `has_more: false`. Não é erro.
+Lista vazia com sessão válida é `200`, `items: []` e `has_more: false`. Não é erro. Chamado na lixeira do GLPI (`is_deleted`) não entra na lista; o detalhe responde 404, sem o corpo.
 
 `GET /tickets/{id}` inclui `description`, `created_at` (instante de abertura), `requester_display_name` (primeiro membro de `team` com papel `requester`; se faltar, `user_recipient`), `assigned_display_name` (primeiro `assigned` do `team`), `timeline[]` com `id`, `kind` (`followup`), `content`, `created_at`, `author_display_name`, e `attachments[]` com `document_id`, `filename` e `mime`. A lista de anexos traz só arquivos já ligados àquele chamado. Lista vazia é `[]`. Acompanhamento privado e tarefa não entram em `timeline`. Os campos novos são aditivos.
 

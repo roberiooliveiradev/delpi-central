@@ -9,7 +9,7 @@ Acompanhamento: POST .../Timeline/Followup
 import html
 import re
 
-from helpdesk_app.domain.errors import GlpiValidation
+from helpdesk_app.domain.errors import GlpiNotFound, GlpiValidation
 from helpdesk_app.domain.models import (
     Attachment,
     Category,
@@ -78,7 +78,11 @@ def parse_categories(payload: dict | list) -> list[Category]:
 
 
 def parse_ticket_list(payload: dict | list) -> list[TicketSummary]:
-    return [_summary(row) for row in _results(payload) if isinstance(row, dict)]
+    return [
+        _summary(row)
+        for row in _results(payload)
+        if isinstance(row, dict) and not _is_deleted(row)
+    ]
 
 
 def parse_ticket_page(payload: dict | list, query: TicketListQuery) -> TicketListPage:
@@ -104,7 +108,7 @@ def build_ticket_list_query(
     page: int = 1,
     page_size: int = _DEFAULT_PAGE_SIZE,
 ) -> TicketListQuery:
-    clauses: list[str] = []
+    clauses: list[str] = ["is_deleted==false"]
     term = _search_term(q)
     if term:
         clauses.append(f"name=like=*{term}*")
@@ -139,6 +143,8 @@ def build_ticket_list_query(
 
 
 def parse_ticket_detail(payload: dict, timeline_payload: dict | list) -> TicketDetail:
+    if _is_deleted(payload):
+        raise GlpiNotFound("Chamado não encontrado.")
     summary = _summary(payload)
     description = _text(payload.get("content"))
     rows = [row for row in _results(timeline_payload) if isinstance(row, dict)]
@@ -323,6 +329,11 @@ def _sort_clause(value: str) -> str:
     if order not in {"asc", "desc"}:
         raise GlpiValidation("sort inválido.")
     return f"{mapped}:{order}"
+
+
+def _is_deleted(row: dict) -> bool:
+    value = row.get("is_deleted")
+    return value is True or value == 1 or value == "1"
 
 
 def _is_private(row: dict) -> bool:

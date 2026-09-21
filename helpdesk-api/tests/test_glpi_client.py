@@ -11,7 +11,7 @@ from helpdesk_app.infrastructure.glpi.mapping import (
     parse_ticket_detail,
     parse_ticket_list,
 )
-from helpdesk_app.domain.errors import GlpiValidation
+from helpdesk_app.domain.errors import GlpiNotFound, GlpiValidation
 
 
 def test_post_is_not_retried_and_get_retries_transient_status():
@@ -311,6 +311,7 @@ def test_list_query_uses_rsql_and_rejects_injection():
         page=2,
         page_size=20,
     )
+    assert query.filter.startswith("is_deleted==false")
     assert "status==1" not in query.filter
     assert "name=like=*Monitorstatus1*" in query.filter
     assert "status.id=in=(1,10,2,3,4)" in query.filter
@@ -347,6 +348,21 @@ def test_mapping_list_publishes_created_at_and_assigned():
     assert listed[0].created_at == "2026-02-19T10:00:00Z"
     assert listed[0].assigned_display_name == "Ana Silva"
     assert listed[0].category == ""
+
+
+def test_mapping_list_drops_deleted_and_detail_hides_them():
+    listed = parse_ticket_list(
+        [
+            {"id": 1, "name": "Teste", "is_deleted": 1, "status": {"id": 1, "name": "Novo"}, "urgency": 2},
+            {"id": 11008, "name": "Ativo", "is_deleted": False, "status": {"id": 1, "name": "Novo"}, "urgency": 3},
+        ]
+    )
+    assert [row.id for row in listed] == [11008]
+    with pytest.raises(GlpiNotFound):
+        parse_ticket_detail(
+            {"id": 1, "name": "Teste", "is_deleted": True, "content": "Não deve vazar"},
+            {"results": []},
+        )
 
 
 def test_requester_falls_back_to_user_recipient():

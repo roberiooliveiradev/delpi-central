@@ -1,6 +1,6 @@
 export const helpTooltips = {
   list:
-    "Aqui ficam os chamados de TI no seu nome, em tabela. Clique no cabeçalho para ordenar pelo helpdesk. Um chamado de outra pessoa não aparece. Use os filtros para achar um chamado e Abrir chamado para registrar um novo.",
+    "Aqui ficam os chamados de TI no seu nome, em tabela. Clique no cabeçalho para ordenar pelo helpdesk. Chamado de outra pessoa e chamado da lixeira não aparecem. Use os filtros para achar um chamado e Abrir chamado para registrar um novo.",
   filters:
     "A busca e os filtros pedem o recorte ao helpdesk. A ordenação também: o clique na coluna não reordena só esta página. Recorte vazio significa que nenhum chamado bate com o filtro, não que você não tenha chamados.",
   link:
