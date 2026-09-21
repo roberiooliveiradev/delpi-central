@@ -9,7 +9,7 @@
 **Internet/External Connectors:** [`../55-internet-research-and-external-connectors.md`](../55-internet-research-and-external-connectors.md)  
 **Microsoft Teams:** [`../56-microsoft-teams-connector-and-meeting-integration.md`](../56-microsoft-teams-connector-and-meeting-integration.md)  
 **Autonomous Operations/Execution Hub:** [`../57-event-driven-autonomous-operations-and-automation-execution-hub.md`](../57-event-driven-autonomous-operations-and-automation-execution-hub.md)  
-**Next:** **C2-T2 — HOST_PRESENTATION_BINDING_AND_SESSION_ISOLATION** (`C2-T1` inventory freeze; `C2_STARTED=NO`; `C2_IMPLEMENTATION_STARTED=NO`; `C1_EXECUTED=YES`; `PRODUCTION_READINESS=NOT_PROVEN`).
+**Next:** revisão de **C2-T2** (`§6.48`; `C2_STARTED=YES`; `C2_IMPLEMENTATION_STARTED=NO`; `PRODUCTION_READINESS=NOT_PROVEN`). Não iniciar contexto operacional nem command bus automaticamente.
 
 ## 1. Ledger rule
 
@@ -105,8 +105,6 @@ BROWSER_STATE_RESIDENCY_POLICY = APPROVED
 BROWSER_RETAINED_STATE_CURRENTLY_REQUIRED = NO
 CENTRALIZED_BROWSER_STATE_BOUNDARY = REQUIRED_ON_FIRST_RETAINED_STATE
 SHARED_DEVICE_ISOLATION_INVARIANT = FROZEN_ACCEPTED
-C2_STARTED = YES
-C2_IMPLEMENTATION_STARTED = NO
 PORTAL_HOST_CONTRACT = FROZEN_ACCEPTED
 OPERATIONAL_CONTEXT = TO_INVENTORY
 NEW_BEHAVIORAL_TESTS = TEST_NOT_RUN
