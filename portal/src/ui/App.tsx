@@ -20,6 +20,7 @@ import { motion } from "framer-motion";
 import { Loader } from "./Loader";
 import { HomePage } from "./HomePage";
 import { AppHost } from "./AppHost";
+import { GlobalDeliaProvider } from "./GlobalDeliaSurface";
 import { LoginPage } from "./LoginPage";
 import { ConsentModal } from "./ConsentModal";
 import { PortalTour } from "../tour/PortalTour";
@@ -216,7 +217,8 @@ function AppShell() {
   );
 
   return (
-    <div className="app-shell">
+    <GlobalDeliaProvider>
+      <div className="app-shell">
       <Sidebar />
       <PortalTour />
 
@@ -407,7 +409,8 @@ function AppShell() {
       </div>
 
       <PortalMobileNavBar />
-    </div>
+      </div>
+    </GlobalDeliaProvider>
   );
 }
 

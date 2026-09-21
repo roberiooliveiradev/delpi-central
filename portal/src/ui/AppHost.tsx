@@ -31,8 +31,12 @@ import {
   resolveRouteAlternateUrl,
   toFederatedAppRouteProps,
 } from "./appHostEntry";
-import { ensurePortalFederationShareScope } from "../utils/federationShareScope";
 import { Button } from "../ui-kit";
+import {
+  loadFederatedExposedModule,
+  unmountFederatedRemote,
+  updateFederatedRemote,
+} from "./federatedRemoteHost";
 
 function normalize(path: string) {
   return path.startsWith("/") ? path : `/${path}`;
@@ -46,20 +50,6 @@ function getUrlOrigin(url: string | undefined) {
   } catch {
     return window.location.origin;
   }
-}
-
-async function loadFederatedContainer(entryUrl: string) {
-  const mod: any = await import(/* @vite-ignore */ entryUrl);
-
-  if (mod?.get) return mod;
-  if (mod?.default?.get) return mod.default;
-
-  throw new Error(`remoteEntry carregou, mas não expôs container.get(): ${entryUrl}`);
-}
-
-function getViteFederationShareScope() {
-  const w = window as any;
-  return w.__federation_shared__?.default ?? w.__federation_shared__ ?? {};
 }
 
 export const AppHost = () => {
@@ -440,30 +430,10 @@ export const AppHost = () => {
       federatedHostRef.current.innerHTML = "";
 
       try {
-        ensurePortalFederationShareScope();
-
-        const container = await loadFederatedContainer(federationEntry);
-
-        if (typeof container.init === "function") {
-          const shareScope = getViteFederationShareScope();
-
-          try {
-            await container.init(shareScope);
-          } catch {
-            // Alguns remotes podem já estar inicializados.
-          }
-        }
+        const exposedModule = (app as any).exposedModule ?? "./App";
+        const mod = await loadFederatedExposedModule(federationEntry, exposedModule);
 
         if (!isActive || !federatedHostRef.current) return;
-
-        const exposedModule = (app as any).exposedModule ?? "./App";
-
-        const factory = await container.get(exposedModule);
-        const mod = await Promise.resolve(typeof factory === "function" ? factory() : factory);
-
-        if (!mod?.mount) {
-          throw new Error(`Módulo exposto "${exposedModule}" não possui mount().`);
-        }
 
         const props = {
           getAccessToken,
@@ -502,13 +472,7 @@ export const AppHost = () => {
       const mounted = mountedModuleRef.current;
       mountedModuleRef.current = null;
 
-      if (mounted?.unmount) {
-        try {
-          mounted.unmount(mountEl ?? undefined);
-        } catch {
-          // Evita quebrar o host por falha no cleanup do plugin.
-        }
-      }
+      unmountFederatedRemote(mounted, mountEl);
 
       // Limpa sinais legados de layout imersivo (ex.: tv-dashboard-deck-active no html).
       document.documentElement.classList.remove("tv-dashboard-deck-active");
@@ -539,16 +503,7 @@ export const AppHost = () => {
       isSuperadmin: user?.is_superadmin,
     };
 
-    const mod = mountedModuleRef.current;
-
-    if (typeof mod.updateRoute === "function") {
-      mod.updateRoute(federatedHostRef.current, props);
-      return;
-    }
-
-    if (typeof mod.mount === "function") {
-      mod.mount(federatedHostRef.current, props);
-    }
+    updateFederatedRemote(mountedModuleRef.current, federatedHostRef.current, props);
   }, [
     app?.id,
     app?.renderMode,

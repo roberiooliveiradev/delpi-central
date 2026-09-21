@@ -7,8 +7,9 @@ Standalone federated frontend da DÉLIA (`plugins/delia/`).
 - pasta MFE independente
 - Module Federation (`./App` → `bootstrap.tsx`)
 - consumo runtime de `@delpi/plugin-ui`
-- mount / unmount / updateRoute compatíveis com Portal AppHost
+- mount / unmount / updateRoute compatíveis com Portal AppHost e com o painel global do Portal
 - shell mínimo + baseline responsivo/a11y
+- o Portal pode abrir a mesma federação `delia` / `./App` num painel global quando `/me/apps` inclui `id=delia`; a página completa continua em `/apps/delia`
 - manifesto de publicação: `delpi.manifest.json` (owner DÉLIA; registry owner = Core)
 - sem Chat runtime, sem captura de mídia automática
 - Gateway/Compose/registro Core live **ainda não** feitos nesta fase

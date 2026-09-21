@@ -6,6 +6,7 @@ import { CircleDashed, Grid, Menu, Moon, Sun } from "lucide-react";
 import { usePortalMobileNavVisible } from "../hooks/usePortalMobileNavVisible";
 import { useTheme, type Theme } from "../hooks/useTheme";
 import { openAppLauncher } from "../utils/appLauncher";
+import { GlobalDeliaMobileLauncher } from "../ui/GlobalDeliaSurface";
 import { expandPortalSidebar } from "../utils/sidebar";
 
 const THEME_OPTIONS: Array<{ value: Theme; label: string; icon: typeof Sun }> = [
@@ -71,6 +72,8 @@ export function PortalMobileNavBar() {
       >
         <Grid size={20} strokeWidth={2.1} aria-hidden="true" />
       </button>
+
+      <GlobalDeliaMobileLauncher />
 
       <div className="portal-mobile-nav__theme-wrap" ref={themeWrapRef}>
         <button
