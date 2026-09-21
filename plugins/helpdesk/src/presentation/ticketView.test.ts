@@ -5,6 +5,7 @@ import {
   conversationAuthorSrc,
   conversationMessages,
   detailRecordHeading,
+  detailRecordSubtitle,
   hasVisibleRichText,
   isTicketFilterActive,
   listHelpdeskAttachmentIdsInHtml,
@@ -109,6 +110,20 @@ describe("detailRecordHeading", () => {
 
   it("não inventa categoria quando os dois campos vêm vazios", () => {
     expect(detailRecordHeading(" ", "")).toEqual({ title: "Chamado" });
+  });
+});
+
+describe("detailRecordSubtitle", () => {
+  it("monta #id · urgência · técnico sem partes vazias", () => {
+    expect(
+      detailRecordSubtitle({
+        id: 1120,
+        urgency: "Média",
+        assigned_display_name: "Ana",
+      }),
+    ).toBe("#1120 · Média · Ana");
+    expect(detailRecordSubtitle({ id: 3, urgency: "", assigned_display_name: "  " })).toBe("#3");
+    expect(detailRecordSubtitle({ id: 0, urgency: "Alta" })).toBe("Alta");
   });
 });
 

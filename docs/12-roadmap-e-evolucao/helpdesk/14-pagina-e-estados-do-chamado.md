@@ -69,7 +69,7 @@ Quem entra como colaborador no GLPI **não** vê o menu da foto. Vê título, st
 
 ```text
 HelpdeskPageHeader   título · Voltar · Atualizar
-HelpdeskRecordCard   categoria | #id · técnico | badge por status_id · datas absolutas · observadores
+HelpdeskRecordCard   categoria | #id · urgência · técnico | badge por status_id · datas absolutas · observadores
 HelpdeskMessageThread  bodyMode=html  (abertura + acompanhamentos)
 HelpdeskRichTextField  Responder  (oculto se can_followup=false)
 ```

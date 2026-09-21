@@ -247,6 +247,21 @@ export function detailRecordHeading(category: string, urgency: string): { title:
   return { title: urgencyName || "Chamado" };
 }
 
+/** Subtitle for the detail card: #id · urgency · assigned (only present parts). */
+export function detailRecordSubtitle(input: {
+  id: number;
+  urgency: string;
+  assigned_display_name?: string;
+}): string {
+  return [
+    input.id > 0 ? `#${input.id}` : "",
+    input.urgency.trim(),
+    (input.assigned_display_name ?? "").trim(),
+  ]
+    .filter(Boolean)
+    .join(" · ");
+}
+
 const STATUS_BADGE_BY_ID: Record<number, "neutral" | "info" | "success" | "warning" | "danger"> = {
   1: "info",
   2: "warning",

@@ -26,6 +26,7 @@ import {
   conversationAuthorSrc,
   conversationMessages,
   detailRecordHeading,
+  detailRecordSubtitle,
   hasVisibleRichText,
   isTicketFilterActive,
   listHelpdeskAttachmentIdsInHtml,
@@ -805,7 +806,11 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
           <>
             <HelpdeskRecordCard
               title={detailRecordHeading(ticket.category, ticket.urgency).title}
-              subtitle={[`#${ticket.id}`, ticket.assigned_display_name].filter(Boolean).join(" · ")}
+              subtitle={detailRecordSubtitle({
+                id: ticket.id,
+                urgency: ticket.urgency,
+                assigned_display_name: ticket.assigned_display_name,
+              })}
               status={<HelpdeskStatusBadge label={ticket.status} variant={statusBadgeVariant(ticket.status_id)} />}
               fields={ticketRecordFields({
                 id: ticket.id,
