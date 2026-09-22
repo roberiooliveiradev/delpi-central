@@ -49,7 +49,9 @@ Definidas em `api-delpi/app/domain/quality/retrabalho/retrabalho_view_scope.py`.
 | `FONTE_CUSTO` | `fonteCusto` |
 | `MOTIVO` | `motivo` / `stop_reason` |
 | `DESCRICAO_MOTIVO` | `motivoDescricao` / `stop_reason_description` |
-| `OBSERVACAO` | `observacao` / `observation` (origem `H6_OBSERVA`, máx. 30 caracteres no Protheus) |
+| `OBSERVACAO` | `observacao` / `observation` (origem `H6_OBSERVA`) |
+
+> **Truncamento histórico:** até set/2026 `H6_OBSERVA` era `varchar(30)` no dicionário/SX3. Textos > 30 chars eram cortados **na gravação** do Protheus e **não são recuperáveis**. Expansão (120 chars): `api-delpi/scripts/expand_h6_observa_field.py --apply` (exige login TOTVS com `ALTER`/`UPDATE` em `SH6*` e `SX3*`).
 | `RECNO` | `recno` |
 
 ---

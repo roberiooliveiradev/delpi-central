@@ -96,7 +96,9 @@ Parâmetros: período e filtros opcionais iguais a `/retrabalhos/resumo`. `branc
 
 **`data`:** `items[]`, `page`, `pageSize`, `total`, `totalPages`.
 
-Cada item inclui `motivo` / `stop_reason` (código), `motivoDescricao` / `stop_reason_description` (`DESCRICAO_MOTIVO`) e `observacao` / `observation` (`H6_OBSERVA`, até 30 caracteres no Protheus).
+Cada item inclui `motivo` / `stop_reason` (código), `motivoDescricao` / `stop_reason_description` (`DESCRICAO_MOTIVO`) e `observacao` / `observation` (`H6_OBSERVA`).
+
+Observações históricas podem estar truncadas em 30 caracteres (limite antigo do campo no Protheus). Para ampliar o campo (novos apontamentos): `python scripts/expand_h6_observa_field.py --apply` com login que tenha `ALTER`/`UPDATE` no TOTVS.
 
 ---
 

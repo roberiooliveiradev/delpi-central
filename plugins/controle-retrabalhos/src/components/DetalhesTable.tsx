@@ -108,9 +108,11 @@ export function DetalhesTable({
         key: "observacao",
         header: "Observação",
         headerHint:
-          "Texto livre do apontamento (campo H6_OBSERVA no Protheus, até 30 caracteres).",
-        className: TABLE.colWide,
-        render: (item) => formatObservacao(item.observacao),
+          "Texto livre do apontamento (H6_OBSERVA no Protheus). Observações antigas podem estar cortadas em 30 caracteres — limite histórico do campo no TOTVS.",
+        render: (item) => {
+          const text = formatObservacao(item.observacao);
+          return text === "—" ? text : <span title={text}>{text}</span>;
+        },
       },
     ],
     [],
