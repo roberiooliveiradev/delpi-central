@@ -1,12 +1,12 @@
-import { useEffect, useId, useRef, useState } from "react";
-import { createPortal } from "react-dom";
-import { Camera, CheckCircle2, ImagePlus, Trash2, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Camera, CheckCircle2, ImagePlus, Trash2 } from "lucide-react";
 
 import type { ResponseAttachment } from "../api/audit5sApi";
 import {
   clearResponseAttachmentPreviewCache,
   fetchResponseAttachmentPreviewUrl,
 } from "../utils/responseAttachments";
+import { PhotoLightbox } from "./PhotoLightbox";
 
 type Props = {
   auditId: string;
@@ -30,8 +30,6 @@ export function CriterionPhotoSection({
   onRemove,
 }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const closeButtonRef = useRef<HTMLButtonElement>(null);
-  const lightboxTitleId = useId();
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [removing, setRemoving] = useState(false);
@@ -60,25 +58,6 @@ export function CriterionPhotoSection({
       active = false;
     };
   }, [attachment, auditId, criterionId]);
-
-  useEffect(() => {
-    if (!lightboxOpen) return;
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setLightboxOpen(false);
-      }
-    };
-    document.addEventListener("keydown", onKeyDown);
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    closeButtonRef.current?.focus();
-
-    return () => {
-      document.removeEventListener("keydown", onKeyDown);
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [lightboxOpen]);
 
   const openCameraPicker = () => {
     if (busy) return;
@@ -196,46 +175,15 @@ export function CriterionPhotoSection({
 
       {error ? <p className="a5s-criterion-photo__error">{error}</p> : null}
 
-      {lightboxOpen && previewUrl
-        ? createPortal(
-            <div
-              className="a5s-photo-lightbox"
-              role="presentation"
-              onClick={() => setLightboxOpen(false)}
-            >
-              <div
-                className="a5s-photo-lightbox__dialog"
-                role="dialog"
-                aria-modal="true"
-                aria-labelledby={lightboxTitleId}
-                onClick={(event) => event.stopPropagation()}
-              >
-                <div className="a5s-photo-lightbox__header">
-                  <h2 id={lightboxTitleId} className="a5s-photo-lightbox__title">
-                    Foto do critério
-                  </h2>
-                  <button
-                    ref={closeButtonRef}
-                    type="button"
-                    className="a5s-photo-lightbox__close"
-                    aria-label="Fechar visualização"
-                    onClick={() => setLightboxOpen(false)}
-                  >
-                    <X size={20} aria-hidden />
-                  </button>
-                </div>
-                <div className="a5s-photo-lightbox__body">
-                  <img
-                    src={previewUrl}
-                    alt="Foto ampliada do critério"
-                    className="a5s-photo-lightbox__image"
-                  />
-                </div>
-              </div>
-            </div>,
-            document.body,
-          )
-        : null}
+      {previewUrl ? (
+        <PhotoLightbox
+          open={lightboxOpen}
+          src={previewUrl}
+          title="Foto do critério"
+          alt="Foto ampliada do critério"
+          onClose={() => setLightboxOpen(false)}
+        />
+      ) : null}
     </div>
   );
 }
