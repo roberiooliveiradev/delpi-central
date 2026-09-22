@@ -749,6 +749,9 @@ def test_team_member_observer_body_is_hd011_safe():
     assert "username=like=*Micha*" in name_filter
     assert "email=like=*micha*" in name_filter
     assert name_filter.startswith("is_active==true;")
+    accent_filter = build_user_search_filter("robério")
+    assert "robério" in accent_filter
+    assert "roberio" in accent_filter
     assert build_user_search_filter("ana@delpi.com.br") == "is_active==true;email==ana@delpi.com.br"
     assert build_user_email_filter("Ana@Delpi.com.br") == "is_active==true;email==ana@delpi.com.br"
     noise = parse_catalog_users(

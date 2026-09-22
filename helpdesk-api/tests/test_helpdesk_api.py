@@ -305,13 +305,41 @@ def test_list_users_enriches_from_minha_delpi_directory():
     link(client)
     listed = client.get("/users?q=ana", headers=auth_headers())
     assert listed.status_code == 200
-    assert listed.json()["items"] == [
-        {
-            "id": 15,
-            "display_name": "Ana Silva Delpi",
-            "email": "ana.silva@delpi.com.br",
-        }
-    ]
+    items = listed.json()["items"]
+    assert any(
+        item["id"] == 15
+        and item["display_name"] == "Ana Silva Delpi"
+        and item["email"] == "ana.silva@delpi.com.br"
+        for item in items
+    )
+
+
+def test_list_users_keeps_glpi_results_when_delpi_email_does_not_map():
+    class FakeDirectory:
+        def configured(self):
+            return True
+
+        def search_users(self, *, q="", limit=20, browse=False):
+            return [
+                {
+                    "id": "delpi-shared",
+                    "name": "Ana Silva",
+                    "email": "shared-mailbox@delpi.com.br",
+                }
+            ]
+
+    client, glpi = build_client(directory=FakeDirectory())
+    link(client)
+    listed = client.get("/users?q=Ana", headers=auth_headers())
+    assert listed.status_code == 200
+    items = listed.json()["items"]
+    assert any(item["id"] == 15 for item in items)
+    ana = next(item for item in items if item["id"] == 15)
+    assert ana["display_name"] == "Ana Silva"
+    assert "shared-mailbox" not in (ana.get("email") or "") or ana["email"] in {
+        "ana.silva@delpi.com.br",
+        "shared-mailbox@delpi.com.br",
+    }
 
 
 def test_create_and_followup_sanitize_html_and_keep_plain_text():

@@ -1,4 +1,5 @@
 from dataclasses import replace
+import unicodedata
 
 from helpdesk_app.application.oauth_service import OAuthService
 from helpdesk_app.application.ports import GlpiGateway, IdempotencyStore
@@ -21,8 +22,15 @@ from helpdesk_app.infrastructure.glpi.mapping import (
     filter_assignable_catalog_users,
     normalize_assignee_id,
     normalize_observer_ids,
+    search_term_variants,
     solicitante_cycle_flags,
 )
+
+
+def _fold_name(value: str) -> str:
+    text = " ".join(str(value or "").split()).casefold()
+    decomposed = unicodedata.normalize("NFD", text)
+    return "".join(char for char in decomposed if unicodedata.category(char) != "Mn")
 
 
 class TicketService:
@@ -44,38 +52,79 @@ class TicketService:
     def users(self, subject: str, *, q: str = "", limit: int = 20) -> list[CatalogUser]:
         token = self._token(subject)
         safe_limit = max(1, min(int(limit or 20), 50))
-        directory = self._directory
-        if directory is not None and getattr(directory, "configured", lambda: False)():
-            term = (q or "").strip()
-            delpi_users = directory.search_users(
-                q=term,
-                limit=safe_limit,
-                browse=not term,
+        term = (q or "").strip()
+        by_id: dict[int, CatalogUser] = {}
+
+        def put(user: CatalogUser, *, prefer_name: str = "", prefer_email: str = "") -> None:
+            name = (prefer_name or user.display_name or "").strip() or user.display_name
+            email = (prefer_email or user.email or "").strip().lower()
+            previous = by_id.get(int(user.id))
+            if previous is None:
+                by_id[int(user.id)] = CatalogUser(id=int(user.id), display_name=name, email=email)
+                return
+            by_id[int(user.id)] = CatalogUser(
+                id=int(user.id),
+                display_name=name or previous.display_name,
+                email=email or previous.email,
             )
-            linked: list[CatalogUser] = []
-            for person in delpi_users:
+
+        # 1) Sempre busca no GLPI (nome/e-mail/username) — fonte do id atribuível.
+        for row in filter_assignable_catalog_users(
+            self._glpi.list_users(token, q=term, limit=safe_limit)
+        ):
+            put(row)
+
+        directory = self._directory
+        if directory is not None and getattr(directory, "configured", lambda: False)() and term:
+            delpi_hits: list[dict[str, str]] = []
+            seen_emails: set[str] = set()
+            # Variantes com/sem acento (Core ilike não dobra acento sozinho).
+            for variant in search_term_variants(term)[:4]:
+                for person in directory.search_users(q=variant, limit=safe_limit, browse=False):
+                    email = str(person.get("email") or "").strip().lower()
+                    key = email or str(person.get("id") or "")
+                    if not key or key in seen_emails:
+                        continue
+                    seen_emails.add(key)
+                    delpi_hits.append(person)
+
+            finder = getattr(self._glpi, "find_user_by_email", None)
+            for person in delpi_hits:
                 email = str(person.get("email") or "").strip().lower()
                 name = str(person.get("name") or "").strip()
-                if "@" not in email:
+                glpi_user = finder(token, email) if callable(finder) and "@" in email else None
+                if glpi_user is not None:
+                    put(glpi_user, prefer_name=name, prefer_email=email)
                     continue
-                finder = getattr(self._glpi, "find_user_by_email", None)
-                glpi_user = finder(token, email) if callable(finder) else None
-                if glpi_user is None:
+                # E-mail Delpi ≠ e-mail GLPI (ex.: inovacao@) — amarra pelo nome.
+                needle = _fold_name(name)
+                if not needle:
                     continue
-                linked.append(
-                    CatalogUser(
-                        id=int(glpi_user.id),
-                        display_name=name or glpi_user.display_name,
-                        email=email,
-                    )
+                matched = next(
+                    (
+                        row
+                        for row in by_id.values()
+                        if needle == _fold_name(row.display_name)
+                        or needle in _fold_name(row.display_name)
+                        or _fold_name(row.display_name) in needle
+                    ),
+                    None,
                 )
-                if len(linked) >= safe_limit:
-                    break
-            if linked or term:
-                return linked
-        return filter_assignable_catalog_users(
-            self._glpi.list_users(token, q=q, limit=safe_limit)
-        )
+                if matched is not None:
+                    put(matched, prefer_name=name or matched.display_name, prefer_email=email)
+                    continue
+                # Amplia pool GLPI com tokens do nome Delpi.
+                for token_q in [part for part in name.replace("-", " ").split() if len(part) >= 3][:2]:
+                    for row in filter_assignable_catalog_users(
+                        self._glpi.list_users(token, q=token_q, limit=safe_limit)
+                    ):
+                        put(row)
+                        if needle == _fold_name(row.display_name) or needle in _fold_name(
+                            row.display_name
+                        ):
+                            put(row, prefer_name=name or row.display_name, prefer_email=email)
+
+        return list(by_id.values())[:safe_limit]
 
     def capabilities(self, subject: str) -> dict:
         token = self._token(subject)

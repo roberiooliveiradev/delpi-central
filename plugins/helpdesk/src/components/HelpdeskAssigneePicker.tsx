@@ -1,7 +1,6 @@
 import { X } from "lucide-react";
 import { useCallback } from "react";
 import {
-  FieldLabel,
   UserDirectoryPicker,
   createInitialsAvatar,
   type DirectoryUserOption,
@@ -23,7 +22,7 @@ type Props = {
 };
 
 /**
- * Técnico atribuído — busca Minha DELPI (nome/e-mail via BFF) e grava o id GLPI.
+ * Técnico atribuído — busca nome/e-mail (Minha DELPI + GLPI via BFF) e grava o id GLPI.
  */
 export function HelpdeskAssigneePicker({
   label,
@@ -49,7 +48,6 @@ export function HelpdeskAssigneePicker({
 
   return (
     <div className="helpdesk-assignee-picker">
-      <FieldLabel label={label} hint={hint} />
       <UserDirectoryPicker
         value={selected}
         onChange={(users) => onChange(users[0] ?? null)}
@@ -82,7 +80,8 @@ export function HelpdeskAssigneePicker({
         labels={{
           title: label,
           hint,
-          placeholder: "Buscar por nome ou e-mail na Minha DELPI…",
+          placeholder: "Buscar por nome ou e-mail…",
+          empty: "Nenhum usuário encontrado.",
         }}
       />
       {!value ? <p className="helpdesk-assignee-picker__empty">{emptyLabel}</p> : null}

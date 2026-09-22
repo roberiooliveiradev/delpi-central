@@ -120,6 +120,8 @@ describe("Helpdesk list UX structural", () => {
     expect(picker).toContain("listUsers");
     expect(picker).toContain("UserDirectoryPicker");
     expect(picker).toContain("createInitialsAvatar");
+    expect(picker).not.toContain("FieldLabel");
+    expect(picker).toContain("Buscar por nome ou e-mail");
     const api = read("../api/helpdeskApi.ts");
     expect(api).toContain("/users");
     expect(api).toContain("/session/capabilities");

@@ -9,6 +9,7 @@ Solução (leitura): Timeline type Solution / ITILSolution → kind=solution
 
 import html
 import re
+import unicodedata
 from dataclasses import replace
 
 from helpdesk_app.application.services.message_html_sanitizer import sanitize_message_html
@@ -269,11 +270,31 @@ _SYSTEM_USERNAMES = frozenset(
 )
 
 
+def _fold_accents(value: str) -> str:
+    decomposed = unicodedata.normalize("NFD", value or "")
+    return "".join(char for char in decomposed if unicodedata.category(char) != "Mn")
+
+
+def search_term_variants(q: str) -> tuple[str, ...]:
+    """Case + accent variants so «robério» também acha «Roberio» e vice-versa."""
+    term = _search_term(str(q or "").strip())
+    if not term:
+        return ()
+    variants: list[str] = []
+    for base in (term, _fold_accents(term)):
+        if not base:
+            continue
+        for candidate in (base, base.lower(), base.upper(), base.capitalize(), base.title()):
+            if candidate and candidate not in variants:
+                variants.append(candidate)
+    return tuple(variants)
+
+
 def build_user_search_filter(q: str = "") -> str:
     """RSQL for Administration/User — always keyed by id in the response (G-A4).
 
-    Name search ORs case variants: GLPI/MySQL `=like=` is case-sensitive on this
-    collation, so typing `@micha` must still match `Michael`.
+    Name search ORs case/accent variants: GLPI/MySQL `=like=` is case-sensitive on this
+    collation, so typing `@micha` / `robério` must still match stored names.
     """
     term = _search_term(str(q or "").strip())
     base = "is_active==true"
@@ -283,10 +304,7 @@ def build_user_search_filter(q: str = "") -> str:
         return f"{base};id=={int(term)}"
     if "@" in term:
         return f"{base};email=={term.lower()}"
-    variants: list[str] = []
-    for candidate in (term, term.lower(), term.upper(), term.capitalize(), term.title()):
-        if candidate and candidate not in variants:
-            variants.append(candidate)
+    variants = search_term_variants(term)
     parts: list[str] = []
     for variant in variants:
         parts.extend(
