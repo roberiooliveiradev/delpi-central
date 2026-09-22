@@ -127,7 +127,7 @@ Path dedicado: `/apps/api-delpi/socket.io/` → `api-delpi:8000/socket.io/`.
 
 **Importante:** use `proxy_pass http://api-delpi:8000/socket.io;` **sem** `set $upstream_api_delpi` neste location. Variável dinâmica quebra o upgrade WebSocket (Engine.IO) — sintoma em prod: `WebSocket connection to wss://…/apps/api-delpi/socket.io/… failed` e colaboração 5S offline.
 
-Rotas HTTP `/apps/api-delpi/*` podem continuar com `$upstream_api_delpi` + resolver para sobreviver a `force-recreate` sem 502. Após recreate da api-delpi, reinicie o gateway: `docker restart delpi-gateway`.
+Rotas HTTP `/apps/api-delpi/*` usam `proxy_pass http://api-delpi:8000;` **estático** (igual ao socket). Variável + resolver já causou misroteamento silencioso para outro container quando o IP antigo foi reutilizado — sintoma: `Not Found` / OpenAPI de TV em `/apps/api-delpi/*`. Após `force-recreate api-delpi`, **sempre** `docker restart delpi-gateway` (502 alto é preferível a 404 do serviço errado).
 
 **Dev (`nginx.dev.conf`):** mesma regra — `proxy_pass` estático no socket; Core API em `location ^~ /socket.io` com `proxy_pass http://core-api:8000;` **sem** variável.
 
@@ -192,7 +192,8 @@ delpi-strategic-indicators, delpi-dashboard-lmps, delpi-minha-delpi-chat
 
 | Sintoma | Causa provável |
 |---|---|
-| 502 em `/apps/api-delpi/*` após recreate da API | Gateway com IP antigo do container; rebuild/restart do `delpi-gateway` ou confirme upstream dinâmico (`$upstream_api_delpi`) |
+| 502 em `/apps/api-delpi/*` após recreate da API | Gateway com IP antigo do container; `docker restart delpi-gateway` |
+| `Not Found` / OpenAPI «TV Dashboard» em `/apps/api-delpi/quality/audit-5s/*` (ou health com `"service":"tv-dashboard-api"`) | Gateway apontou IP stale da api-delpi para outro serviço; `docker restart delpi-gateway` e confirme `GET /apps/api-delpi/health` → `{"status":"online"}` **sem** campo `service` |
 | 502 em `/core-api` | `core-api` down ou fora da rede |
 | 404 em `/apps/X/assets/remoteEntry.js` | Container `delpi-X` inexistente ou id do manifesto ≠ segmento URL |
 | Login Keycloak errado | `KC_HOSTNAME` / `VITE_KC_URL` divergentes da URL pública |

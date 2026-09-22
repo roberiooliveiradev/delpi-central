@@ -420,6 +420,46 @@ def update_area(area_id: str, body: UpdateAreaBody = Body(...)):
         return error_response("Erro interno ao atualizar área.", status_code=500)
 
 
+@router.delete("/areas/{area_id}", operation_id="delete_audit_5s_area")
+@require_any_permission(AUDIT_5S_ADMIN_PERMISSIONS)
+def delete_area(area_id: str):
+    try:
+        repo = build_audit_5s_repository()
+        existing = repo.get_area(area_id)
+        if existing is None:
+            return error_response("Área não encontrada.", status_code=404)
+        denied = branch_access_error(
+            str(existing.get("branch_code") or ""),
+            require_admin=True,
+        )
+        if denied is not None:
+            return denied
+        repo.delete_area(area_id)
+        return api_delpi_success(
+            {"id": area_id, "deleted": True},
+            operation_id="delete_audit_5s_area",
+            message="Área excluída.",
+        )
+    except PluginsRepositoryError as exc:
+        message = str(exc)
+        status = (
+            422
+            if any(
+                token in message
+                for token in (
+                    "auditorias",
+                    "subáreas",
+                    "agregadora",
+                )
+            )
+            else 400
+        )
+        return error_response(message, status_code=status)
+    except Exception as exc:
+        log_error(f"Erro ao excluir área 5S: {exc}")
+        return error_response("Erro interno ao excluir área.", status_code=500)
+
+
 @router.put("/areas/{area_id}/children", operation_id="set_audit_5s_area_children")
 @require_any_permission(AUDIT_5S_ADMIN_PERMISSIONS)
 def set_area_children(area_id: str, body: SetAreaChildrenBody = Body(...)):

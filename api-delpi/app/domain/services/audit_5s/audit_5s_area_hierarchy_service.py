@@ -22,6 +22,15 @@ CHILD_BRANCH_MISMATCH_MESSAGE = "Subárea deve pertencer à mesma filial da agre
 CHILD_SELF_MESSAGE = "Área agregadora não pode ser vinculada a si mesma."
 PARENT_NOT_FOUND_MESSAGE = "Área agregadora não encontrada."
 CHILD_NOT_FOUND_MESSAGE = "Uma ou mais subáreas não foram encontradas."
+AREA_NAME_DUPLICATE_MESSAGE = "Já existe uma área com este nome nesta filial."
+AREA_DELETE_HAS_AUDITS_MESSAGE = (
+    "Não é possível excluir uma área que já possui auditorias."
+)
+AREA_DELETE_HAS_CHILDREN_MESSAGE = (
+    "Não é possível excluir uma área agregadora com subáreas vinculadas. "
+    "Remova as subáreas antes."
+)
+AREA_NOT_FOUND_MESSAGE = "Área não encontrada."
 
 
 class Audit5sAreaHierarchyError(ValueError):

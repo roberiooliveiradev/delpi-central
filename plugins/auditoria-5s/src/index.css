@@ -3068,6 +3068,11 @@ button.a5s-criterion-photo__thumb:focus-visible{
   gap: 16px;
   flex-wrap: wrap;
 }
+.dashboard-auditoria-5s .a5s-areas__intro-actions{
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
 .dashboard-auditoria-5s .a5s-areas__title{
   margin: 0 0 6px;
   font-size: 1.25rem;
@@ -3118,6 +3123,11 @@ button.a5s-criterion-photo__thumb:focus-visible{
   gap: 8px;
   color: var(--a5s-title);
 }
+.dashboard-auditoria-5s .a5s-areas__card-actions{
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
 .dashboard-auditoria-5s .a5s-areas__badge{
   display: inline-flex;
   padding: 2px 8px;
@@ -3128,13 +3138,26 @@ button.a5s-criterion-photo__thumb:focus-visible{
 }
 .dashboard-auditoria-5s .a5s-areas__children{
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 8px;
   margin: 12px 0 0;
   padding: 0;
   list-style: none;
 }
-.dashboard-auditoria-5s .a5s-areas__children li,
+.dashboard-auditoria-5s .a5s-areas__child-row{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px solid var(--a5s-border);
+  background: color-mix(in srgb, var(--a5s-surface) 80%, var(--app-canvas, #f8fafc));
+  color: var(--a5s-text, var(--text));
+  font-size: 0.875rem;
+}
+.dashboard-auditoria-5s .a5s-areas__children li:not(.a5s-areas__child-row),
 .dashboard-auditoria-5s .a5s-areas__chips li{
   padding: 6px 10px;
   border-radius: 999px;

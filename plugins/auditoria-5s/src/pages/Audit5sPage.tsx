@@ -587,7 +587,9 @@ export function Audit5sPage({ pathname, search }: Props) {
             : view === "catalog"
               ? "Edite e publique o catálogo de critérios desta filial."
               : view === "areas"
-                ? "Cadastre áreas agregadoras e vincule subáreas da filial 02."
+                ? branch === "02"
+                  ? "Gerencie áreas folha e agregadoras. Exclusão só sem auditorias e sem subáreas."
+                  : "Renomeie ou exclua áreas sem auditorias desta filial."
             : auditListSubtitle(branch);
 
   return (
@@ -608,7 +610,7 @@ export function Audit5sPage({ pathname, search }: Props) {
                 : view === "catalog"
                   ? "Critérios da auditoria"
                   : view === "areas"
-                    ? "Áreas agregadoras"
+                    ? "Áreas"
                 : undefined
           }
           subtitle={pageSubtitle}
@@ -690,7 +692,7 @@ export function Audit5sPage({ pathname, search }: Props) {
           }}
           onDenied={() => {
             setError(
-              "Áreas agregadoras só podem ser gerenciadas na rota Admin 5S da filial 02.",
+              "Áreas só podem ser gerenciadas na rota Admin 5S da filial.",
             );
             setView("list");
           }}
