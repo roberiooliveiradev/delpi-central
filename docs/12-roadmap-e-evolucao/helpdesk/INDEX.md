@@ -20,7 +20,7 @@ Telas e componentes: [`WIREFRAMES.md`](./WIREFRAMES.md).
 Conversa do chamado: [`10-conversa-do-chamado.md`](./10-conversa-do-chamado.md). A tela publicada está em [`WIREFRAMES.md`](./WIREFRAMES.md).
 Lacunas da experiência (inventário; estados sincronizados com o código): [`11-lacunas-da-experiencia.md`](./11-lacunas-da-experiencia.md).
 Conteúdo da mensagem (formatação, imagem, HTML): [`12-conteudo-da-mensagem.md`](./12-conteudo-da-mensagem.md).
-Formatação/seleção e mídia nos compositores (diagnóstico kit; sem autorização de código): [`plugins/plugin-ui/docs/rich-text-selection-format-study.md`](../../../plugins/plugin-ui/docs/rich-text-selection-format-study.md).
+Formatação/seleção e mídia nos compositores (diagnóstico + soluções prescritas no kit; sem autorização de código): [`plugins/plugin-ui/docs/rich-text-selection-format-study.md`](../../../plugins/plugin-ui/docs/rich-text-selection-format-study.md).
 Listagem de chamados (colunas, filtros, paridade GLPI): [`13-listagem-de-chamados.md`](./13-listagem-de-chamados.md).
 Página do chamado e estados (formulário GLPI × detalhe; ciclo ITIL): [`14-pagina-e-estados-do-chamado.md`](./14-pagina-e-estados-do-chamado.md).
 Capacidades do GLPI Assistência (Forms, SLA, vínculos, abas; matriz): [`15-capacidades-glpi.md`](./15-capacidades-glpi.md).

@@ -16,7 +16,7 @@
 | [refactoring-roadmap.md](./refactoring-roadmap.md) | Roadmap F1–F6 + **§ 8 Fase 7** (ondas 7.1–7.7) |
 | [export-catalog.md](./export-catalog.md) | Catálogo de exportação (CSV / Excel / PDF / PNG; E4 backlog) |
 | [chart-view-shell.md](./chart-view-shell.md) | Chart View Shell — famílias, inventário Portal, gaps Excel |
-| [rich-text-selection-format-study.md](./rich-text-selection-format-study.md) | Diagnóstico: formatação por seleção + mídia inline (`RichTextEditor` × `MentionComposer`) |
+| [rich-text-selection-format-study.md](./rich-text-selection-format-study.md) | Diagnóstico + soluções prescritas: formatação por seleção e mídia inline (`RichTextEditor` × `MentionComposer`) |
 | [../kaizometro/docs/UI-PLUGIN-UI.md](../kaizometro/docs/UI-PLUGIN-UI.md) | Migração UI concluída do kaizometro |
 
 **Início rápido:** [README.md](../README.md) na raiz do pacote.
