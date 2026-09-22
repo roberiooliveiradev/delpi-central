@@ -211,7 +211,7 @@ Legenda: **VIVO** = afeta runtime/content; **SHADOW** = observe/compare sem auth
 | Fast-path `intentBinding` registry | `ChatOperationalIntentFastPathService` — elegibilidade canônica sem registry list | **RETIRADO** *(F1)* | |
 | Copiar façade gpt-actions / Instructions para o Chat | — | **PROIBIDO** | Alinhar por link; nunca por cópia |
 
-Evidence histórica (não autoridade): [`../roadmap/llm-json-decoupling/`](../roadmap/llm-json-decoupling/) — J-R8 OID paralelo ✅. Gate residual F1: `tests/unit/application/services/test_f1_residual_selection_authority.py`. Gate residual F2: `tests/unit/domain/services/test_f2_residual_presentation_authority.py`. Gate residual F3: `tests/unit/domain/services/test_f3_residual_write_confirmation_authority.py`.
+Evidence histórica (não autoridade): [`../roadmap/llm-json-decoupling/`](../roadmap/llm-json-decoupling/) — J-R8 OID paralelo ✅. Gate residual F1: `tests/unit/application/services/test_f1_residual_selection_authority.py`. Gate residual F2: `tests/unit/domain/services/test_f2_residual_presentation_authority.py`. Gate residual F3: `tests/unit/domain/services/test_f3_residual_write_confirmation_authority.py`. Gate residual F4: `tests/unit/domain/services/test_f4_residual_eval_protocol_authority.py`. Gate residual F5: `tests/unit/application/services/test_f5_residual_anti_reintroduction.py`.
 
 ---
 
@@ -276,9 +276,9 @@ Pré-condição de cada epic: este playbook aprovado como referência. **Não ex
 |-------------|----------|--------------|
 | **F1 Cutover authority** | Registry/selectors deixam de selecionar; shadow só observe ou remove | **ATENDIDO (2026-09-22)** — seleção user-facing catalog/retrieval/planner; residual gate `test_f1_residual_selection_authority.py` |
 | **F2 Presentation schema-first** | Remover heurísticas path em KPI/SQL/profile hints que forem autoridade | **ATENDIDO (2026-09-22)** — entity/shape + payload; `entityPathHints` FALLBACK; gate `test_f2_residual_presentation_authority.py` |
-| **F3 Writes + handoff** | Confirmation uniforme; matriz §5 aplicada | **PARCIAL (2026-09-22)** — `should_block` ≡ bridge; sql/export allowlist; `allowWrite` create default False; TV handoff CANÔNICO; flags agent/provider + executor HTTP ainda DEAD/GAP |
-| **F4 Evals** | R1–R11 + smoke provider OpenAPI-only (API nunca vista) | Baseline×candidate; R9 outcome; sem dimensão INCONCLUSIVE em release |
-| **F5 CI anti-reintrodução** | Gate residual: registry predicates novos, pathContains, selector por provider | CI vermelho ao reintroduzir anti-padrão **VIVO** listado |
+| **F3 Writes + handoff** | Confirmation uniforme; matriz §5 aplicada | **ATENDIDO (2026-09-22)** — seleção≡execução≡executor; sql/export allowlist; `allowWrite` create False; flag agent NON_AUTHORITY; TV handoff CANÔNICO; gate `test_f3_residual_write_confirmation_authority.py` |
+| **F4 Evals** | R1–R11 + smoke provider OpenAPI-only (API nunca vista) | **PARCIAL (2026-09-22)** — protocolo R1–R11 + R10 write linkage locked (`test_f4_residual_eval_protocol_authority.py`); corpus live baseline×candidate permanece release-train |
+| **F5 CI anti-reintrodução** | Gate residual: registry predicates novos, pathContains, selector por provider | **ATENDIDO (2026-09-22)** — `test_f5_residual_anti_reintroduction.py` no workflow `minha-delpi-ai-api-presentation.yml` |
 
 Programa histórico relacionado (não reabrir como SoT): [`../roadmap/llm-json-decoupling/`](../roadmap/llm-json-decoupling/).
 

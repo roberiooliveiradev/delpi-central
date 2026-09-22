@@ -38,15 +38,15 @@
       "id": "agent_provider_requiresConfirmationForWrite_flag",
       "surface": "agent/provider requiresConfirmationForWrite persistence",
       "preStatus": "DEAD_HOT_PATH",
-      "postStatus": "DEAD_HOT_PATH",
-      "note": "Persisted/DTO only; not consulted by ChatWriteConfirmationService — F5/CI tombstone"
+      "postStatus": "NON_AUTHORITY",
+      "note": "Persisted/DTO/UI advisory; False cannot disable ChatWriteConfirmationService"
     },
     {
       "id": "executor_http_no_confirm",
       "surface": "ExecuteExternalActionUseCase /tools/execute",
       "preStatus": "AUTHORITY_GAP",
-      "postStatus": "AUTHORITY_GAP",
-      "note": "Chat path gated; direct tool execute still trusts caller — defense-in-depth deferred"
+      "postStatus": "RETIRED",
+      "owner": "ExecuteExternalActionUseCase._confirmation_block_result"
     },
     {
       "id": "tv_vista_handoff",

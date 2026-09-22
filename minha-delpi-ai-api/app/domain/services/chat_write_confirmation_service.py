@@ -35,6 +35,9 @@ class ChatWriteConfirmationService:
         F3 — aligned with OpenAPI-first bridge: parallel-safe reads (GET/HEAD,
         sql/export) never require write confirmation. Explicit
         ``requiresConfirmation: true`` on the action forces confirmation.
+
+        Agent/provider ``requiresConfirmationForWrite`` is **not** authority here:
+        ``False`` cannot disable sensitivity-based confirmation (UI advisory only).
         """
         if not isinstance(action, dict):
             return False

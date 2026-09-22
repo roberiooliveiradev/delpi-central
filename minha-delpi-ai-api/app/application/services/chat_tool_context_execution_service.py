@@ -220,6 +220,15 @@ class ChatToolContextExecutionService:
                 selected_tool = {**selected_tool, "arguments": arguments}
 
             if tool_name == "execute_external_action":
+                # F3 — always forward turn message for executor confirmation parity.
+                arguments = dict(selected_tool.get("arguments") or {})
+                parameters = dict(arguments.get("parameters") or {})
+                if raw_message:
+                    parameters.setdefault("userMessage", raw_message)
+                arguments["parameters"] = parameters
+                selected_tool = {**selected_tool, "arguments": arguments}
+
+            if tool_name == "execute_external_action":
                 external_index += 1
 
                 if on_stream_activity and tool_index not in parallel_outcomes:

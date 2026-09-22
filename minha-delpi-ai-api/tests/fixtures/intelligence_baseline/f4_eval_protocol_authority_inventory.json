@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "step": "F4.E0",
+  "program": "chat-openapi-first-refactor",
+  "epic": "F4",
+  "evaluatedAt": "2026-09-22",
+  "note": "Eval protocol authority inventory. Full R1–R11 corpus rollouts stay release-gated; this epic locks protocol + residual linkage.",
+  "items": [
+    {
+      "id": "r1_r11_protocol_doc",
+      "surface": "docs/testing/chat-ai-flow-families.md §1",
+      "preStatus": "CANONICAL",
+      "postStatus": "CANONICAL",
+      "owner": "ai-intelligence-evaluation.mdc + chat-ai-flow-families.md"
+    },
+    {
+      "id": "r10_write_confirmation_coverage",
+      "surface": "unit tests ChatWriteConfirmationService + executor gate",
+      "preStatus": "PARTIAL",
+      "postStatus": "COVERED",
+      "owner": "test_chat_write_confirmation_service + test_execute_external_action_write_confirmation"
+    },
+    {
+      "id": "f1_f3_residual_gates_linked",
+      "surface": "test_f1/f2/f3_residual_*",
+      "preStatus": "CANONICAL",
+      "postStatus": "CANONICAL"
+    },
+    {
+      "id": "full_corpus_baseline_candidate_live",
+      "surface": "R1–R11 baseline×candidate live suite",
+      "preStatus": "OUT_OF_BAND",
+      "postStatus": "OUT_OF_BAND",
+      "note": "Release train / smoke live — not blocked by F4 residual unit gate"
+    }
+  ]
+}

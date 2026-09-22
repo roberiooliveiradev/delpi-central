@@ -88,6 +88,17 @@ jobs:
       - name: Gate Playbook 12 consolidado (R12)
         run: PYTHONPATH=. python scripts/audit_presentation_coverage.py --check-playbook12
 
+      - name: Gate OpenAPI-first residual F1–F5
+        run: |
+          PYTHONPATH=. pytest \
+            tests/unit/application/services/test_f1_residual_selection_authority.py \
+            tests/unit/domain/services/test_f2_residual_presentation_authority.py \
+            tests/unit/domain/services/test_f3_residual_write_confirmation_authority.py \
+            tests/unit/application/use_cases/test_execute_external_action_write_confirmation.py \
+            tests/unit/domain/services/test_f4_residual_eval_protocol_authority.py \
+            tests/unit/application/services/test_f5_residual_anti_reintroduction.py \
+            -q
+
       - name: Gate Playbook 13 respostas humanizadas (P5)
         run: PYTHONPATH=. python scripts/audit_presentation_coverage.py --check-humanized-answer
 

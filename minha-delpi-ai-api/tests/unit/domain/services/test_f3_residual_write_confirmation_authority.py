@@ -114,3 +114,27 @@ def test_f3_negative_no_tv_copilot_mutation_tool_in_composer():
     source = _COMPOSER.read_text(encoding="utf-8")
     assert "tv-dashboard-copilot" not in source
     assert "TvDashboardCopilot" not in source
+
+
+def test_f3_agent_flag_not_authority_in_confirmation_service():
+    source = _CONFIRM.read_text(encoding="utf-8")
+    # Snake agent column never consulted for hot-path decisions.
+    assert "requires_confirmation_for_write" not in source
+    assert "UI advisory" in source or "cannot disable" in source.lower()
+
+
+def test_f3_executor_has_confirmation_block():
+    source = (
+        _APP / "application/use_cases/execute_external_action_use_case.py"
+    ).read_text(encoding="utf-8")
+    assert "_confirmation_block_result" in source
+    assert "confirmation_required" in source
+
+
+def test_f3_inventory_executor_and_flag_closed():
+    payload = json.loads(_INVENTORY.read_text(encoding="utf-8"))
+    by_id = {item["id"]: item for item in payload["items"]}
+    assert by_id["executor_http_no_confirm"]["postStatus"] == "RETIRED"
+    assert by_id["agent_provider_requiresConfirmationForWrite_flag"]["postStatus"] == (
+        "NON_AUTHORITY"
+    )

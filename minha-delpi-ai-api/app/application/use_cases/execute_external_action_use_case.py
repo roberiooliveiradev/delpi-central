@@ -30,6 +30,8 @@ class ExecuteExternalActionUseCase:
         "user_message",
         "presentationDetailFilter",
         "sessionResponseFormat",
+        "confirmed",
+        "userConfirmed",
     }
 
     def __init__(
@@ -84,6 +86,14 @@ class ExecuteExternalActionUseCase:
             arguments,
         )
         pipeline_parameters = self._extract_pipeline_parameters(arguments)
+        confirmation_block = self._confirmation_block_result(
+            provider=provider,
+            action=action,
+            pipeline_parameters=pipeline_parameters,
+        )
+        if confirmation_block is not None:
+            return confirmation_block
+
         arguments = self._drop_internal_unknown_parameters(action, arguments)
         arguments = self._ground_parameters(action, arguments, pipeline_parameters)
 
@@ -342,6 +352,57 @@ class ExecuteExternalActionUseCase:
             presenter=self.presenter,
             extract_response_meta=self._extract_api_delpi_response_meta,
         )
+
+    def _confirmation_block_result(
+        self,
+        *,
+        provider: dict,
+        action: dict,
+        pipeline_parameters: dict[str, Any],
+    ) -> dict | None:
+        """F3 — defense-in-depth: same rule as chat selection/execution gates."""
+        from app.domain.services.chat_write_confirmation_service import (
+            ChatWriteConfirmationService,
+        )
+
+        if not ChatWriteConfirmationService.action_requires_confirmation(action):
+            return None
+
+        message = str(
+            pipeline_parameters.get("userMessage")
+            or pipeline_parameters.get("user_message")
+            or pipeline_parameters.get("message")
+            or ""
+        ).strip()
+        explicit = pipeline_parameters.get("confirmed") in (True, "true", "1", 1)
+        explicit = explicit or pipeline_parameters.get("userConfirmed") in (
+            True,
+            "true",
+            "1",
+            1,
+        )
+
+        if explicit or ChatWriteConfirmationService.user_confirmed(message):
+            return None
+
+        action_path = str(action.get("path") or "")
+        return {
+            "provider": provider.get("providerKey"),
+            "actionId": action.get("actionId"),
+            "method": action.get("method"),
+            "path": action_path,
+            "statusCode": 0,
+            "ok": False,
+            "data": None,
+            "metadata": {
+                "blocked": True,
+                "blockReason": "confirmation_required",
+                "skippedHttp": True,
+                "sensitivity": action.get("sensitivity"),
+                "path": action_path,
+                "actionId": action.get("actionId"),
+            },
+        }
 
     def _validation_failure_result(
         self,

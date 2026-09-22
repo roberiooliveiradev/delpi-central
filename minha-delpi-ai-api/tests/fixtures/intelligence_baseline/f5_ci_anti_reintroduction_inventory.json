@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "step": "F5.E0",
+  "program": "chat-openapi-first-refactor",
+  "epic": "F5",
+  "evaluatedAt": "2026-09-22",
+  "gateMode": "fail_closed",
+  "note": "CI residual anti-reintroduction for OpenAPI-first Chat. Wired via minha-delpi-ai-api-presentation.yml pytest gate.",
+  "forbiddenSelectionKeys": [
+    "pathContains",
+    "pathContainsFromKey",
+    "customPredicate",
+    "preferredRouteId"
+  ],
+  "items": [
+    {
+      "id": "selection_path_oid_keys",
+      "postStatus": "RETIRED"
+    },
+    {
+      "id": "kpi_path_token_authority",
+      "postStatus": "RETIRED"
+    },
+    {
+      "id": "write_confirm_dual_gate",
+      "postStatus": "CANONICAL"
+    },
+    {
+      "id": "prioritization_noop",
+      "postStatus": "RETIRED"
+    }
+  ]
+}
