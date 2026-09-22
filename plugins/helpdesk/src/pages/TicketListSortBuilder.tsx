@@ -6,7 +6,7 @@ import {
   type TicketListSortLevel,
 } from "../presentation/ticketListViewModel";
 import { TICKET_LIST_SORTABLE_COLUMNS } from "../presentation/ticketView";
-import { HelpdeskFilterSelect, HelpdeskFormActions, HelpdeskIconButton } from "../ui/helpdeskUi";
+import { HelpdeskFilterSelect, HelpdeskIconButton } from "../ui/helpdeskUi";
 
 const SORT_OPTIONS = TICKET_LIST_SORTABLE_COLUMNS.map((key) => ({
   value: key,
@@ -94,7 +94,7 @@ export function TicketListSortBuilder({
           </li>
         ))}
       </ul>
-      <HelpdeskFormActions>
+      <div className="helpdesk-sort-builder__actions">
         {levels.length < 3 ? (
           <HintAction hint={help.addLevel} ariaLabel="Ajuda: Outra ordenação">
             <HelpdeskIconButton
@@ -126,7 +126,7 @@ export function TicketListSortBuilder({
             <Check size={16} aria-hidden />
           </HelpdeskIconButton>
         </HintAction>
-      </HelpdeskFormActions>
+      </div>
     </div>
   );
 }

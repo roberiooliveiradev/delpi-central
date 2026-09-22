@@ -12,7 +12,6 @@ import { TICKET_STATUS_FILTERS } from "../presentation/ticketView";
 import {
   HelpdeskFilterInput,
   HelpdeskFilterSelect,
-  HelpdeskFormActions,
   HelpdeskIconButton,
 } from "../ui/helpdeskUi";
 
@@ -158,7 +157,7 @@ export function TicketListFilterBuilder({
           );
         })}
       </ul>
-      <HelpdeskFormActions>
+      <div className="helpdesk-filter-builder__actions">
         <HintAction hint={help.addRule} ariaLabel="Ajuda: Adicionar regra">
           <HelpdeskIconButton aria-label="Adicionar regra" onClick={addRule}>
             <Plus size={16} aria-hidden />
@@ -174,7 +173,7 @@ export function TicketListFilterBuilder({
             <Check size={16} aria-hidden />
           </HelpdeskIconButton>
         </HintAction>
-      </HelpdeskFormActions>
+      </div>
     </div>
   );
 }
