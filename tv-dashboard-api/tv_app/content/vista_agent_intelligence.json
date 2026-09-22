@@ -1,7 +1,38 @@
 {
-  "version": "2026.09.22.9",
+  "version": "2026.09.22.10",
   "owner": "tv-dashboard-api",
   "source": "capability_surface.agent_directives via gpt_get_catalog",
+  "visual_impact": {
+    "principle": "TV_IMPACT_FIRST",
+    "summary": "Todo slide operacional novo ou refine visual deve parecer TV Delpi de impacto: fundo escuro tipado, cards brancos, KPI hero grande, gráfico com presença (area/bar), tabela banded — não canvas genérico ralo.",
+    "default_stack": [
+      "THEME_DELPI (gradient brand.bgFrom→bgTo)",
+      "TV_TITLE_STRIP ou heading bold onBg (typeScale.title/display)",
+      "1 KPI hero (kpiValueScale.hero / partChrome.kpi) OU ROW/GRID tipado",
+      "chartType=area (série) ou bar (categorias) em card branco",
+      "tablePreset=banded quando houver tabela",
+      "accent brand.accent em ícones/destaques; valueFormat currency/percent tipado"
+    ],
+    "rules": [
+      "Criar/refinar dashboard operacional → aplicar THEME_DELPI + recipe de impacto no mesmo lote (TV_KPI_HERO, TV_KPI_PLUS_CHART / _BAR/_PIE, TV_KPI_SERIES_TABLE, TV_HERO_PLUS_TABLE). Não entregar só blocos soltos sem tema.",
+      "Série temporal / 'melhore o gráfico' / tendência → preferir chartType=area (preenchimento com presença) em vez de line fina; line só se o usuário pedir explicitamente linha.",
+      "Comparação categórica → bar ou stacked_bar; composição → pie/doughnut com poucas fatias.",
+      "KPI: valor em escala hero/row/grid dos tokens (nunca abaixo de partChrome.kpi.valueMinFontSize); ícone accent; card brand.card; título onCardMuted.",
+      "Tabela TV → tablePreset=banded + header/body >= partChrome.table; alinhar moeda; destacar coluna de resultado líquido/principal via fieldLabels/formato — não tabela minimal cinza.",
+      "Hierarquia de impacto: 1 sinal hero + no máximo 3 secundários (maxPrimarySignalsPerSlide=4). Melhor 2 slides densos do que 1 overcrowded.",
+      "Contraste kiosk: títulos/legenda onBg sobre gradient; valores onCard sobre card branco; nunca texto cinza claro em fundo claro nem valor escuro em card escuro genérico.",
+      "Pedido 'mais impactante / impactante / premium / TV / kiosk / melhore o visual' → DESIGN_REFINE com este bloco: tema Delpi + tipografia/partes nos mínimos de impacto + area/bar + banded — executar no mesmo turno.",
+      "Usar designTokens.visualImpactHints do catalog quando presente; não inventar CSS/cores fora de brand/partChrome."
+    ],
+    "forbidden": [
+      "Slide operacional só com fundo branco/cinza flat sem THEME_DELPI",
+      "KPI com fonte miúda / sem card branco Delpi",
+      "Gráfico line fino como default de tendência TV",
+      "tablePreset=minimal como default de painel operacional",
+      "Empilhar >4 sinais primários ou frame widescreen único 'para parecer cheio'",
+      "Inventar gradientes/cores fora de designTokens.brand"
+    ]
+  },
   "execution_posture": {
     "principle": "EXECUTE_TYPED_CHANGE_NOW",
     "summary": "Pedido tipável de criar/alterar painel, gráfico, KPI, tabela, tema ou layout → chamar Actions neste turno e gravar (PREPARE/ACT). Proposta textual sem write = falha.",
@@ -202,21 +233,22 @@
     "principle": "TYPED_PRESENTATION_RECIPES",
     "summary": "Layouts/temas TV tipados Delpi (TV_KPI_HERO, TV_KPI_PLUS_CHART, TV_KPI_SERIES_TABLE, TV_TABLE_FOCUS, THEME_*). Emitir ops do catálogo — não inventar CSS.",
     "rules": [
-      "Pedido operacional genérico / TV → THEME_DELPI + recipe tipada (cards brand.card brancos + accent; não inventar cinza genérico).",
-      "'mais profissional/limpo' → THEME_DELPI (preferido) ou THEME_MIDNIGHT.",
-      "Multi-indicador (KPI+série+tabela) → TV_KPI_SERIES_TABLE.",
-      "Hierarquia: título → KPI → chart/tabela; contraste kiosk; frames proporcionais por tipo.",
+      "Pedido operacional genérico / TV → THEME_DELPI + recipe tipada de impacto (visual_impact) — cards brand.card + accent; não inventar cinza genérico.",
+      "'mais profissional/limpo/impactante/premium' → THEME_DELPI (preferido) + visual_impact.default_stack; THEME_MIDNIGHT só se pedido escuro genérico sem Delpi.",
+      "Multi-indicador (KPI+série+tabela) → TV_KPI_SERIES_TABLE (hero + area/bar + banded).",
+      "Hierarquia: título onBg → KPI hero → chart/tabela em cards; contraste kiosk; frames proporcionais por tipo.",
       "fontFamily preferir Inter, system-ui, sans-serif.",
       "Imagem só com assetId já existente neste HEAD.",
-      "Multi-KPI sem recipe → TV_KPI_ROW_2/3 ou TV_KPI_GRID_4 conforme contagem.",
-      "designTokens (brand + partChrome) do catalog são obrigatórios para densidade/tipografia/gutter."
+      "Multi-KPI sem recipe → TV_KPI_ROW_2/3 ou TV_KPI_GRID_4 conforme contagem (valores nas escalas tipadas).",
+      "designTokens (brand + partChrome + visualImpactHints) do catalog são obrigatórios para densidade/tipografia/gutter/impacto."
     ],
     "forbidden": [
       "customFonts upload",
       "Inventar assetId",
       "Tratar print como fonte de upload de mídia",
       "Frame widescreen único sem tipografia/parts proporcionais",
-      "Omitir THEME_DELPI em painel operacional Delpi"
+      "Omitir THEME_DELPI em painel operacional Delpi",
+      "Recipe sem hierarquia hero quando o pedido é dashboard TV de impacto"
     ]
   },
   "media_limits": {
@@ -246,7 +278,7 @@
     "DATA_INTERPRETATION": "Entender/explicar dados sem gravar até pedido explícito.",
     "PLAYLIST_CURATION": "Ordem, duração, slides, kiosk/TV — preferir update/reorder/move no existente (playlist_curation).",
     "COMPOUND_READY_SLIDE": "Pedido complexo de slide pronto — seguir compound_slide.pipeline + write_quality.",
-    "DESIGN_REFINE": "Ajuste visual tipado (chartType area/line/bar/pie, tema, KPIs, tabela, tipografia, densidade) no slide/seleção resolvidos — EXECUTAR agora via preview+commit; recipe/tokens + editorFocus; sem proposta-only."
+    "DESIGN_REFINE": "Ajuste visual tipado de impacto (THEME_DELPI, chartType area/bar, KPI hero, tablePreset=banded, tipografia/partChrome) no slide/seleção resolvidos — EXECUTAR agora via preview+commit; obedeça visual_impact; sem proposta-only."
   },
   "write_flow": {
     "skip_suggest_when_typable": true,
@@ -285,7 +317,9 @@
     "Inventar filial/branch sem playlistDefaults ou INFORMED.",
     "Ignorar editorFocus fresco e criar outra playlist/slide para 'este'.",
     "Empilhar vários KPIs no mesmo frame default sem recipe ROW/GRID.",
-    "Declarar VERIFIED com slide_layout_quality (overlap/overflow/densidade)."
+    "Declarar VERIFIED com slide_layout_quality (overlap/overflow/densidade).",
+    "Entregar painel operacional ralo (fundo claro flat, KPI miúdo, line fina, tabela minimal) quando visual_impact exige Delpi+hero+area/bar+banded.",
+    "Ignorar visual_impact / visualImpactHints em pedido de dashboard ou 'melhore o visual'."
   ],
   "auth_errors": {
     "401": "AuthN — pedir reconexão OAuth DELPI / permitir Action.",
@@ -303,15 +337,16 @@
   },
   "slide_design": {
     "principle": "TYPED_LAYOUT_BEFORE_FREEFORM",
-    "summary": "Layout TV: recipes/tokens Delpi antes de inventar frames. Gate slide_layout_quality no VERIFY.",
+    "summary": "Layout TV: recipes/tokens Delpi + visual_impact antes de inventar frames. Gate slide_layout_quality no VERIFY.",
     "rules": [
-      "Pedido operacional → THEME_DELPI + recipe (TV_KPI_HERO / ROW_2/3 / GRID_4 / SERIES_TABLE / HERO_PLUS_TABLE / TITLE_STRIP) no mesmo patch.",
+      "Pedido operacional → THEME_DELPI + recipe de impacto (TV_KPI_HERO / ROW_2/3 / GRID_4 / SERIES_TABLE / HERO_PLUS_TABLE / TITLE_STRIP / PLUS_CHART*) no mesmo patch — ver visual_impact.",
       "Tema Delpi: fundo gradient designTokens.brand.bgFrom→bgTo; cards brancos (brand.card); accent brand.accent; texto no card brand.onCard; títulos sobre o fundo brand.onBg.",
       "Dois/três/quatro KPIs → TV_KPI_ROW_* / TV_KPI_GRID_4 — não empilhar no mesmo frame.",
-      "Obedecer designTokens (safeMargin, gutter, typeScale, kpiValueScale, partChrome, maxPrimarySignalsPerSlide=4).",
+      "Obedecer designTokens (safeMargin, gutter, typeScale, kpiValueScale, partChrome, visualImpactHints, maxPrimarySignalsPerSlide=4).",
       "Partes KPI/chart/table/input: preferir recipe kpiParts/chartOptions; o commit completa defaults via partChrome se ausentes.",
       "Filtros compartilhados → patch_native_config.dataFilters; interativos → upsert_block type=input; defaults da programação → patch_playlist_data_defaults.",
-      "chartType tipado: série temporal line/area; categorias bar/stacked_bar; composição pie/doughnut (poucas fatias); não pie em série diária densa.",
+      "chartType tipado: série temporal preferir area (impacto TV); line só se pedido explícito; categorias bar/stacked_bar; composição pie/doughnut (poucas fatias); não pie em série diária densa.",
+      "Tabela operacional → tablePreset=banded por default (visual_impact).",
       "Após write: se OUTCOME_NOT_VERIFIED reason=slide_layout_quality → corrigir overlap/overflow/densidade/contraste/part_font_below_min.",
       "fontFamily só do allowlist."
     ],
@@ -320,7 +355,8 @@
       "Mais de 4 KPIs primários no mesmo slide",
       "Tipografia/cores aleatórias fora dos tokens/recipes",
       "KPI/chart/table com card escuro genérico quando o pedido é operacional Delpi (usar brand.card)",
-      "Ignorar editorFocus fresco para alterar 'este' bloco"
+      "Ignorar editorFocus fresco para alterar 'este' bloco",
+      "Default visual fraco (line fina / tabela minimal / KPI abaixo do mínimo de impacto)"
     ]
   }
 }

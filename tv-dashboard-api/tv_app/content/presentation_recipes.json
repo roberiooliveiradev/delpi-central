@@ -1658,8 +1658,8 @@
     },
     "chartTypeHints": {
       "temporal": [
-        "line",
-        "area"
+        "area",
+        "line"
       ],
       "categorical": [
         "bar",
@@ -1679,6 +1679,31 @@
           "doughnut"
         ]
       }
+    },
+    "visualImpactHints": {
+      "principle": "TV_IMPACT_FIRST",
+      "preferTheme": "THEME_DELPI",
+      "preferRecipes": [
+        "TV_KPI_HERO",
+        "TV_KPI_PLUS_CHART",
+        "TV_KPI_PLUS_CHART_BAR",
+        "TV_KPI_SERIES_TABLE",
+        "TV_HERO_PLUS_TABLE",
+        "TV_TITLE_STRIP"
+      ],
+      "temporalChartDefault": "area",
+      "tablePresetDefault": "banded",
+      "kpiEmphasis": "hero",
+      "maxPrimarySignalsPerSlide": 4,
+      "triggers": [
+        "impactante",
+        "mais impactante",
+        "premium",
+        "melhore o visual",
+        "visual tv",
+        "kiosk",
+        "dashboard"
+      ]
     }
   }
 }

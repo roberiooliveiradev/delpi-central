@@ -58,6 +58,24 @@ def test_execution_posture_execute_typed_change_now():
     )
 
 
+def test_visual_impact_tv_impact_first():
+    directives = VistaAgentIntelligenceService.agent_directives()
+    impact = directives["visual_impact"]
+    assert impact["principle"] == "TV_IMPACT_FIRST"
+    rules = " ".join(impact["rules"]).lower()
+    assert "theme_delpi" in rules
+    assert "area" in rules
+    assert "banded" in rules
+    stack = " ".join(impact["default_stack"]).lower()
+    assert "hero" in stack
+    assert any("impact" in str(item).lower() or "banded" in str(item).lower() for item in directives["anti_patterns"])
+    tokens = directives["presentation_recipes"]["catalog"]["designTokens"]
+    hints = tokens["visualImpactHints"]
+    assert hints["temporalChartDefault"] == "area"
+    assert hints["tablePresetDefault"] == "banded"
+    assert tokens["chartTypeHints"]["temporal"][0] == "area"
+
+
 def test_sibling_explicit_create_still_allowed_in_policy_text():
     rules = " ".join(
         VistaAgentIntelligenceService.agent_directives()["object_resolution"]["rules"]

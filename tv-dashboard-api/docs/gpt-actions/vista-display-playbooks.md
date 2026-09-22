@@ -152,7 +152,7 @@ Offer next step: refine keywords, clarify business question, or switch mode.
 | Need | Prefer |
 |---|---|
 | Single health number | KPI / big number |
-| Trend over time | Line / area (few series) |
+| Trend over time | **Area** (default TV impact) / line if user asks for line |
 | Compare categories | Bar |
 | Ranking / top-N | Ordered bar / list |
 | Status / traffic light | Status chip + short text |
@@ -170,16 +170,17 @@ Offer next step: refine keywords, clarify business question, or switch mode.
 
 ### 6.2b Design system checklist (live catalog)
 
-Obey `agent_directives.slide_design` + `presentation_recipes.catalog.designTokens` from `gpt_get_catalog` (not hardcoded Knowledge hex):
+Obey `agent_directives.slide_design` + `agent_directives.visual_impact` + `presentation_recipes.catalog.designTokens` from `gpt_get_catalog` (not hardcoded Knowledge hex):
 
-1. Prefer typed recipes (`TV_KPI_ROW_2/3`, `TV_KPI_GRID_4`, `TV_KPI_PLUS_CHART[_BAR|_PIE]`, `TV_FILTER_STRIP`, `TV_HERO_PLUS_TABLE`, …) before freeform frames.
+1. Prefer typed recipes (`TV_KPI_HERO`, `TV_KPI_ROW_2/3`, `TV_KPI_GRID_4`, `TV_KPI_PLUS_CHART[_BAR|_PIE]`, `TV_FILTER_STRIP`, `TV_HERO_PLUS_TABLE`, `TV_KPI_SERIES_TABLE`, …) before freeform frames.
 2. Tema Delpi: `designTokens.brand` — fundo `bgFrom→bgTo`, cards `card` (#ffffff), accent `#089bdb`, texto `onCard` / títulos `onBg`.
-3. Respect `maxPrimarySignalsPerSlide`, `safeMargin`, `gutter`, `typeScale`, `kpiValueScale`, `partChrome` (mínimos tipográficos KPI/chart/table/input).
-4. Filtros: slide → `patch_native_config.dataFilters` e/ou recipe `TV_FILTER_STRIP` (inputs); programação → `patch_playlist_data_defaults`.
-5. `chartType` tipado via `designTokens.chartTypeHints` (temporal→line/area; categorias→bar; composição→pie; nunca pie em série diária densa).
-6. `editorFocus` from `gpt_list_playlists` / `gpt_get_playlist_context` = INFORMED referent when fresh.
-7. VERIFY may return `OUTCOME_NOT_VERIFIED` with `reason=slide_layout_quality` (overlap/overflow/density/contrast/`part_font_below_min`) — fix and retry.
-8. Home MFE library list is live via WebSocket (`playlist_library_updated`); VISTA still uses READ Actions — do not invent IDs from Knowledge.
+3. **Impacto TV (default):** `visual_impact` / `visualImpactHints` — KPI hero nas escalas tipadas; série → `chartType=area`; tabela → `tablePreset=banded`; hierarquia 1 hero + ≤3 secundários.
+4. Respect `maxPrimarySignalsPerSlide`, `safeMargin`, `gutter`, `typeScale`, `kpiValueScale`, `partChrome` (mínimos tipográficos KPI/chart/table/input).
+5. Filtros: slide → `patch_native_config.dataFilters` e/ou recipe `TV_FILTER_STRIP` (inputs); programação → `patch_playlist_data_defaults`.
+6. `chartType` tipado via `designTokens.chartTypeHints` (temporal→**area**/line; categorias→bar; composição→pie; nunca pie em série diária densa).
+7. `editorFocus` from `gpt_list_playlists` / `gpt_get_playlist_context` = INFORMED referent when fresh.
+8. VERIFY may return `OUTCOME_NOT_VERIFIED` with `reason=slide_layout_quality` (overlap/overflow/density/contrast/`part_font_below_min`) — fix and retry.
+9. Home MFE library list is live via WebSocket (`playlist_library_updated`); VISTA still uses READ Actions — do not invent IDs from Knowledge.
 
 ### 6.3 Proposal hygiene
 
