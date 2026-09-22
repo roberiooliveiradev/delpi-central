@@ -1,5 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import { ActionButton, FilePreviewModal, resolveFilePreviewKind } from "@delpi/plugin-ui/index";
+import {
+  ActionButton,
+  FilePreviewModal,
+  HintAction,
+  resolveFilePreviewKind,
+} from "@delpi/plugin-ui/index";
 
 import {
   HelpdeskApiError,
@@ -7,6 +12,8 @@ import {
   fetchTicketAttachmentBlob,
   type TicketAttachment,
 } from "../api/helpdeskApi";
+import { helpTooltips } from "../content/helpTooltips";
+import { HelpdeskAttachmentPreviewStrip } from "../ui/helpdeskUi";
 
 function previewErrorText(error: unknown): string {
   if (error instanceof HelpdeskApiError) {
@@ -17,7 +24,6 @@ function previewErrorText(error: unknown): string {
   }
   return "Não foi possível abrir o arquivo.";
 }
-import { HelpdeskAttachmentPreviewStrip } from "../ui/helpdeskUi";
 
 export function TicketAttachmentPreview({
   ticketId,
@@ -73,7 +79,11 @@ export function TicketAttachmentPreview({
   return (
     <>
       <HelpdeskAttachmentPreviewStrip
-        heading="Arquivos do chamado"
+        heading={
+          <HintAction hint={helpTooltips.detailUi.attachments} ariaLabel="Ajuda: Arquivos do chamado">
+            <span className="delpi-ui-section-hint-label">Arquivos do chamado</span>
+          </HintAction>
+        }
         items={items}
         onOpen={(item) => {
           const file = attachments.find((entry) => String(entry.document_id) === item.id);
@@ -90,15 +100,19 @@ export function TicketAttachmentPreview({
         onClose={() => setPreview(null)}
         headerActions={
           preview ? (
-            <ActionButton
-              onClick={() => {
-                void downloadTicketAttachment(ticketId, preview.document_id, preview.filename || "anexo").catch(
-                  (error) => onError(previewErrorText(error)),
-                );
-              }}
-            >
-              Baixar
-            </ActionButton>
+            <HintAction hint={helpTooltips.detailUi.attachments} ariaLabel="Ajuda: Baixar anexo">
+              <ActionButton
+                onClick={() => {
+                  void downloadTicketAttachment(
+                    ticketId,
+                    preview.document_id,
+                    preview.filename || "anexo",
+                  ).catch((error) => onError(previewErrorText(error)));
+                }}
+              >
+                Baixar
+              </ActionButton>
+            </HintAction>
           ) : null
         }
       />

@@ -96,7 +96,7 @@ O bloco escuro é `:root[data-theme="dark"] .dashboard-helpdesk`. Superfície, t
 | `ActionButton` | — | Autorizar no helpdesk |
 | `IconButton` | `HelpdeskIconButton` | Abrir, limpar filtros, paginar, voltar, enviar |
 
-Texto de ajuda: `plugins/helpdesk/src/content/helpTooltips.ts`. O hint fica na prop `hint` do card ou do campo. Não colocar path de API no texto.
+Texto de ajuda: `plugins/helpdesk/src/content/helpTooltips.ts`. O hint fica na prop `hint` do card ou do campo (e `attachHint` no clipe). Textos curtos — uma frase por superfície. Não colocar path de API no texto.
 
 Tom do badge, em `statusBadgeVariant` (**por `status_id`**):
 

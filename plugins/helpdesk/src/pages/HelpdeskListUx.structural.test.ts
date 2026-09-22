@@ -83,4 +83,16 @@ describe("Helpdesk list UX structural", () => {
     expect(links).toContain("helpdesk.centraldelpi.com.br");
     expect(links).toContain("ticket.form.php");
   });
+
+  it("resposta e descrição têm help próprio + attachHint (não reusam o hint longo da seção)", () => {
+    const page = read("HelpdeskPage.tsx");
+    expect(page).toContain("attachHint={helpTooltips.createUi.attach}");
+    expect(page).toContain("hint={helpTooltips.detailUi.reply}");
+    expect(page).toContain("attachHint={helpTooltips.detailUi.attach}");
+    const replyBlock = page.slice(page.indexOf('label="Responder"'));
+    expect(replyBlock).not.toContain("hint={helpTooltips.detail}");
+    const ui = read("../ui/helpdeskUi.tsx");
+    expect(ui).toContain("attachHint");
+    expect(ui).toContain('ariaLabel="Ajuda: Anexar arquivo"');
+  });
 });

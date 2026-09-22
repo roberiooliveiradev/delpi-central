@@ -79,6 +79,28 @@ export function rewritePendingInlineImages(
   return next;
 }
 
+/**
+ * BFF attachment URLs require Bearer — `<img src>` alone returns 401.
+ * Composer may show a blob: preview; normalize to the public path before
+ * followup/draft persistence so the sanitizer and MessageThread stay aligned.
+ */
+export function normalizeInlineAttachmentSrcs(
+  html: string,
+  ticketId: string | number,
+): string {
+  return String(html || "").replace(
+    /<img\b([^>]*\bdata-attachment-id=["'](\d+)["'][^>]*)\/?>/gi,
+    (_full, attrs: string, documentId: string) => {
+      const src = attachmentPublicUrl(ticketId, Number(documentId));
+      let cleaned = String(attrs).replace(/\ssrc=["'][^"']*["']/i, ` src="${escapeAttr(src)}"`);
+      if (!/\ssrc=/i.test(cleaned)) {
+        cleaned = ` src="${escapeAttr(src)}"${cleaned}`;
+      }
+      return `<img${cleaned} />`;
+    },
+  );
+}
+
 export function stripPendingInlineImages(html: string): string {
   return String(html || "").replace(
     new RegExp(`<img\\b[^>]*\\b${PENDING_ATTR}=["'][^"']*["'][^>]*/?>`, "gi"),

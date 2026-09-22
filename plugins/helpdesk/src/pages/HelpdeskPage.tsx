@@ -43,8 +43,8 @@ import {
   viewForTicketLoad,
 } from "../presentation/ticketView";
 import {
-  attachmentPublicUrl,
   listPendingInlineIds,
+  normalizeInlineAttachmentSrcs,
   rewritePendingInlineImages,
   stripPendingInlineImages,
 } from "../presentation/inlineUpload";
@@ -669,6 +669,7 @@ function CreateTicketPage() {
               <HelpdeskRichTextField
                 label="Descrição"
                 hint={helpTooltips.createUi.description}
+                attachHint={helpTooltips.createUi.attach}
                 value={description}
                 onChange={setDescription}
                 minHeight={220}
@@ -742,7 +743,7 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
   }, [ticketId]);
 
   useEffect(() => {
-    writeReplyDraft(ticketId, content);
+    writeReplyDraft(ticketId, normalizeInlineAttachmentSrcs(content, ticketId));
   }, [ticketId, content]);
 
   function load() {
@@ -943,7 +944,8 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                 event.preventDefault();
                 if (saving || !hasVisibleRichText(content)) return;
                 setSaving(true);
-                void createFollowup(ticketId, content.trim(), idempotencyKey)
+                const payload = normalizeInlineAttachmentSrcs(content.trim(), ticketId);
+                void createFollowup(ticketId, payload, idempotencyKey)
                   .then(() => {
                     setContent("");
                     clearReplyDraft(ticketId);
@@ -956,7 +958,8 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
             >
               <HelpdeskRichTextField
                 label="Responder"
-                hint={helpTooltips.detail}
+                hint={helpTooltips.detailUi.reply}
+                attachHint={helpTooltips.detailUi.attach}
                 value={content}
                 onChange={setContent}
                 minHeight={120}
@@ -974,7 +977,8 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                       results.push({
                         kind: "uploaded",
                         documentId: uploaded.document_id,
-                        src: attachmentPublicUrl(ticketId, uploaded.document_id),
+                        // Bearer-protected public URL cannot load in <img>; blob previews like create flow.
+                        src: URL.createObjectURL(file),
                         alt: file.name || "imagem",
                       });
                     } else {

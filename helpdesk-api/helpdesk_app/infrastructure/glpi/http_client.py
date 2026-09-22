@@ -387,6 +387,8 @@ class HttpxGlpiClient:
         if response.status_code == 403:
             raise GlpiForbidden("O perfil no GLPI não permite esta ação.")
         if response.status_code in {400, 422}:
+            body = (response.text or "")[:300]
+            logger.info("glpi_legacy_document_rejected body=%s", body)
             raise GlpiValidation("O GLPI recusou o arquivo enviado.")
         raise GlpiUnavailable("GLPI indisponível.")
 

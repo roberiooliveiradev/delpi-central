@@ -77,7 +77,7 @@ if (\$urow) {
 if (!\$hasProfile) {
   \$DB->insert('glpi_profiles_users', [
     'users_id' => \$uid,
-    'profiles_id' => 1,
+    'profiles_id' => 6,
     'entities_id' => 0,
     'is_recursive' => 1,
     'is_dynamic' => 0,

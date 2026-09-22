@@ -20,6 +20,7 @@ import {
   DataTable,
   dataTableBemClasses,
   FieldLabel,
+  HintAction,
   IconButton,
   emptyStateCardBemClasses,
   formActionsBemClasses,
@@ -132,6 +133,8 @@ export type HelpdeskInlineUploadResult =
 export type HelpdeskRichTextFieldProps = {
   label: string;
   hint?: string;
+  /** Ajuda do botão clipe (anexar). */
+  attachHint?: string;
   value: string;
   onChange: (value: string) => void;
   icon?: ReactNode;
@@ -161,6 +164,7 @@ function clipboardImageFiles(data: DataTransfer | null | undefined): File[] {
 export function HelpdeskRichTextField({
   label,
   hint,
+  attachHint,
   value,
   onChange,
   icon,
@@ -253,14 +257,27 @@ export function HelpdeskRichTextField({
               void ingestFiles(files);
             }}
           />
-          <IconButton
-            type="button"
-            aria-label="Anexar arquivo"
-            disabled={disabled}
-            onClick={() => fileRef.current?.click()}
-          >
-            <Paperclip size={16} aria-hidden />
-          </IconButton>
+          {attachHint ? (
+            <HintAction hint={attachHint} ariaLabel="Ajuda: Anexar arquivo">
+              <IconButton
+                type="button"
+                aria-label="Anexar arquivo"
+                disabled={disabled}
+                onClick={() => fileRef.current?.click()}
+              >
+                <Paperclip size={16} aria-hidden />
+              </IconButton>
+            </HintAction>
+          ) : (
+            <IconButton
+              type="button"
+              aria-label="Anexar arquivo"
+              disabled={disabled}
+              onClick={() => fileRef.current?.click()}
+            >
+              <Paperclip size={16} aria-hidden />
+            </IconButton>
+          )}
         </div>
       ) : null}
     </div>

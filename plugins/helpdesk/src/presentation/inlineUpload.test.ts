@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   appendInlineImageHtml,
   listPendingInlineIds,
+  normalizeInlineAttachmentSrcs,
   rewritePendingInlineImages,
   stripPendingInlineImages,
 } from "./inlineUpload";
@@ -35,5 +36,23 @@ describe("inlineUpload", () => {
     expect(rewritten).not.toContain("data-attachment-pending");
     expect(stripPendingInlineImages(html)).toContain("<p>texto</p>");
     expect(stripPendingInlineImages(html)).not.toContain("img");
+  });
+
+  it("normaliza blob preview para URL pública do BFF no envio", () => {
+    const html = appendInlineImageHtml("<p>x</p>", {
+      src: "blob:http://localhost/preview",
+      documentId: 1177,
+      alt: "probe",
+    });
+    expect(html).toContain("blob:");
+    const normalized = normalizeInlineAttachmentSrcs(html, 1122);
+    expect(normalized).toContain('/apps/helpdesk-api/tickets/1122/attachments/1177');
+    expect(normalized).toContain('data-attachment-id="1177"');
+    expect(normalized).not.toContain("blob:");
+  });
+
+  it("não altera imgs sem data-attachment-id", () => {
+    const html = '<p><img src="https://cdn.example/a.png" alt="x" /></p>';
+    expect(normalizeInlineAttachmentSrcs(html, 1)).toBe(html);
   });
 });
