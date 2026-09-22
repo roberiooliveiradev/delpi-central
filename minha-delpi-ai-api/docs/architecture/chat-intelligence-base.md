@@ -118,6 +118,10 @@ Uma API OpenAPI externa nunca vista pelo repositório deve funcionar sem:
 
 Checklist: [`new-api-route-checklist.md`](./new-api-route-checklist.md).
 
+### Playbook de refatoração OpenAPI-first
+
+Estado residual (registry/selectors/presenters path-aware), alinhamento a técnicas VISTA/TÉO/DAVI/DÉLIA **sem** Chat=DÉLIA, matriz handoff vs execute e roadmap de epics futuros de código: [`chat-openapi-first-refactor-playbook.md`](./chat-openapi-first-refactor-playbook.md). O playbook é procedimento; em conflito, este documento e as regras `.cursor` vencem.
+
 ---
 
 ## 5. Retrieval e planner
@@ -378,6 +382,7 @@ Evitar god services, service por endpoint e dependência reversa.
 ## Referências vigentes
 
 - [`new-api-route-checklist.md`](./new-api-route-checklist.md)
+- [`chat-openapi-first-refactor-playbook.md`](./chat-openapi-first-refactor-playbook.md)
 - [`../api/04-actions-openapi.md`](../api/04-actions-openapi.md)
 - [`../testing/chat-ai-flow-families.md`](../testing/chat-ai-flow-families.md)
 - [`../roadmap/llm-json-decoupling/evidence/execution-ledger.md`](../roadmap/llm-json-decoupling/evidence/execution-ledger.md)
@@ -385,3 +390,5 @@ Evitar god services, service por endpoint e dependência reversa.
 - `.cursor/rules/chat-intelligence-base.mdc`
 - `.cursor/rules/openapi-first-universal-tool-routing.mdc`
 - `.cursor/rules/ai-intelligence-evaluation.mdc`
+- `.cursor/rules/custom-gpt-actions-integration.mdc` *(boundary Chat ≠ gpt-actions)*
+- `.cursor/rules/delia-execution-protocol.mdc` *(boundary Chat ≠ DÉLIA; não dono do Chat)*
