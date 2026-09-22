@@ -1,4 +1,4 @@
-"""Confirmação antes de actions de escrita/críticas — Playbook 08."""
+"""Confirmação antes de actions de escrita/críticas — Playbook 08 / F3."""
 
 from __future__ import annotations
 
@@ -30,7 +30,19 @@ class ChatWriteConfirmationService:
 
     @classmethod
     def action_requires_confirmation(cls, action: dict | None) -> bool:
+        """True when selection and execution must wait for user confirm.
+
+        F3 — aligned with OpenAPI-first bridge: parallel-safe reads (GET/HEAD,
+        sql/export) never require write confirmation. Explicit
+        ``requiresConfirmation: true`` on the action forces confirmation.
+        """
         if not isinstance(action, dict):
+            return False
+
+        if action.get("requiresConfirmation") is True:
+            return True
+
+        if cls.is_parallel_safe_read(action):
             return False
 
         sensitivity = str(action.get("sensitivity") or "").lower()
@@ -93,18 +105,17 @@ class ChatWriteConfirmationService:
         message: str | None,
         action: dict | None,
     ) -> bool:
+        """F3 — same rule as OpenAPI-first selection bridge.
+
+        ``action_requires_confirmation(action) and not user_confirmed(message)``.
+        """
         if not cls.action_requires_confirmation(action):
             return False
 
         if cls.user_confirmed(message):
             return False
 
-        if cls.message_requests_write(message):
-            return True
-
-        sensitivity = str((action or {}).get("sensitivity") or "").lower()
-
-        return sensitivity in {"destructive", "admin", "write"}
+        return True
 
     @classmethod
     def confirmation_prompt(cls, action: dict | None) -> str:

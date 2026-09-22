@@ -65,3 +65,28 @@ def test_pac_create_plan_requires_confirmation_before_write():
         message="confirmo. crie o plano PAC para NC externa na filial 01",
         action=action,
     )
+
+
+def test_post_without_write_sensitivity_still_blocked_without_confirm():
+    """F3 — selection/execution parity: sensitive method without confirm blocks."""
+    action = {
+        "method": "POST",
+        "path": "/widgets",
+        "sensitivity": "",
+        "summary": "Criar widget",
+    }
+    assert ChatWriteConfirmationService.action_requires_confirmation(action)
+    assert ChatWriteConfirmationService.should_block_execution(
+        message="cria o widget",
+        action=action,
+    )
+
+
+def test_sql_post_is_parallel_safe_and_skips_write_confirm():
+    action = {
+        "method": "POST",
+        "path": "/data/sql",
+        "sensitivity": "sql",
+    }
+    assert ChatWriteConfirmationService.is_parallel_safe_read(action)
+    assert not ChatWriteConfirmationService.action_requires_confirmation(action)

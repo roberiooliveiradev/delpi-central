@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "step": "F3.E0",
+  "program": "chat-openapi-first-refactor",
+  "epic": "F3",
+  "evaluatedAt": "2026-09-22",
+  "note": "Write confirmation + handoff inventory. postStatus reflects HEAD after F3 unify.",
+  "items": [
+    {
+      "id": "selection_execution_confirm_divergence",
+      "surface": "bridge action_requires_confirmation vs should_block_execution",
+      "preStatus": "AUTHORITY_DIVERGENT",
+      "postStatus": "RETIRED",
+      "owner": "ChatWriteConfirmationService.should_block_execution ≡ bridge"
+    },
+    {
+      "id": "sql_export_parallel_safe_allowlist",
+      "surface": "POST sensitivity sql/export confirmation",
+      "preStatus": "AUTHORITY_DIVERGENT",
+      "postStatus": "ALLOWLIST",
+      "owner": "is_parallel_safe_read → action_requires_confirmation False"
+    },
+    {
+      "id": "allow_write_create_default",
+      "surface": "agent_provider_routes create allowWrite default",
+      "preStatus": "AUTHORITY",
+      "postStatus": "RETIRED",
+      "owner": "default False (opt-in writes)"
+    },
+    {
+      "id": "action_requiresConfirmation_flag",
+      "surface": "action.requiresConfirmation explicit true",
+      "preStatus": "SHADOW",
+      "postStatus": "WIRED",
+      "owner": "ChatWriteConfirmationService.action_requires_confirmation"
+    },
+    {
+      "id": "agent_provider_requiresConfirmationForWrite_flag",
+      "surface": "agent/provider requiresConfirmationForWrite persistence",
+      "preStatus": "DEAD_HOT_PATH",
+      "postStatus": "DEAD_HOT_PATH",
+      "note": "Persisted/DTO only; not consulted by ChatWriteConfirmationService — F5/CI tombstone"
+    },
+    {
+      "id": "executor_http_no_confirm",
+      "surface": "ExecuteExternalActionUseCase /tools/execute",
+      "preStatus": "AUTHORITY_GAP",
+      "postStatus": "AUTHORITY_GAP",
+      "note": "Chat path gated; direct tool execute still trusts caller — defense-in-depth deferred"
+    },
+    {
+      "id": "tv_vista_handoff",
+      "surface": "ChatTvDashboardHandoffService + /data/copilot 410",
+      "preStatus": "CANONICAL",
+      "postStatus": "CANONICAL",
+      "owner": "handoff VISTA; zero mutation tool TV"
+    }
+  ]
+}

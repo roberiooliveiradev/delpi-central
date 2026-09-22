@@ -88,7 +88,7 @@ def create_agent_action_provider(agent_id: str):
             provider_key=provider_key,
             enabled=bool(payload.get("enabled", True)),
             allow_read=bool(payload.get("allowRead", True)),
-            allow_write=bool(payload.get("allowWrite", True)),
+            allow_write=bool(payload.get("allowWrite", False)),
             allow_admin=bool(payload.get("allowAdmin", False)),
             requires_confirmation_for_write=bool(
                 payload.get("requiresConfirmationForWrite", True)
