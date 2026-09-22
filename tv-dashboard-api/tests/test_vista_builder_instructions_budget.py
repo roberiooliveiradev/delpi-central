@@ -1,4 +1,4 @@
-"""Evals / drift gates for VISTA specialist Instructions + Knowledge."""
+"""Evals / drift gates for VISTA specialist Instructions + deployable intelligence."""
 
 from __future__ import annotations
 
@@ -11,8 +11,15 @@ PLAYBOOKS = (
     / "gpt-actions"
     / "vista-display-playbooks.md"
 )
+INTELLIGENCE = (
+    Path(__file__).resolve().parents[1]
+    / "tv_app"
+    / "content"
+    / "vista_agent_intelligence.json"
+)
 BUILDER_HARD_LIMIT = 8000
-PROJECT_TARGET_LIMIT = 7000
+# Stable Instructions only — mutable behavior lives in agent_directives.
+PROJECT_TARGET_LIMIT = 3500
 
 EXPECTED_OPS = (
     "gpt_get_catalog",
@@ -57,7 +64,7 @@ def test_vista_builder_core_keeps_required_invariants():
         "Search miss != proof of absence",
         "VISTA capability <= capability do usuário autenticado",
         "commit_now=true",
-        "vista-display-playbooks.md",
+        "agent_directives",
         "gpt_get_catalog",
         "gpt_commit_change",
         "confirmation != authorization",
@@ -71,27 +78,21 @@ def test_vista_builder_core_keeps_required_invariants():
         assert marker in block, marker
 
 
-def test_vista_modes_are_present():
+def test_vista_instructions_delegate_mutable_behavior_to_catalog():
     block = _builder_instructions_block()
-    for mode in (
-        "QUICK DISPLAY",
-        "GUIDED DASHBOARD",
-        "DATA INTERPRETATION",
-        "PLAYLIST CURATION",
-    ):
-        assert mode in block, mode
+    assert "capability_surface.agent_directives" in block
+    assert "object_resolution" in block
+    # Modes / anti-duplicidade detail must NOT live in Builder paste.
+    assert "QUICK DISPLAY" not in block
+    assert "ALTER_EXISTING_BEFORE_CREATE" not in block
 
 
 def test_vista_user_facing_language_is_portuguese_first():
     block = _builder_instructions_block()
     for marker in [
-        "## Linguagem com o usuário",
-        "português claro",
-        "OBSERVED/INFORMED → Informado/Observado",
-        "INFERRED → Hipótese",
-        "PROPOSED → Proposto",
-        "UNKNOWN → Ainda não sabemos",
-        "Não altere nomes técnicos ao chamar Actions",
+        "Português claro",
+        "Nunca invente",
+        "Actions",
     ]:
         assert marker in block, marker
 
@@ -99,32 +100,23 @@ def test_vista_user_facing_language_is_portuguese_first():
 def test_vista_authority_and_no_second_truth():
     block = _builder_instructions_block()
     assert "NÃO é fonte de verdade" in block or "nao e fonte" in block.lower()
-    assert "Knowledge nunca substitui dado vivo" in block
-    assert "Core = RBAC" in block or "Core = RBAC de plataforma" in block
-    assert "Sem SQL" in block or "sem SQL" in block.lower()
+    assert "Knowledge nunca substitui" in block
+    assert "sem sql" in block.lower()
 
 
-def test_vista_live_discovery_uses_official_actions_only():
-    block = _builder_instructions_block()
-    assert "gpt_search_data_routes" in block
-    assert "gpt_preview_data_block" in block
-    assert "Nunca invente operationId" in block
+def test_vista_live_discovery_ops_documented_in_doc():
+    text = DOC.read_text(encoding="utf-8")
     for op in EXPECTED_OPS:
-        assert op in DOC.read_text(encoding="utf-8"), op
+        assert op in text, op
 
 
-def test_vista_prepare_act_states_are_distinct():
+def test_vista_prepare_act_skeleton_in_instructions():
     block = _builder_instructions_block()
     for marker in [
-        "VALIDATED",
-        "CONFIRMED",
-        "COMMIT_ATTEMPTED",
-        "PERSISTED",
+        "commit_now=true",
+        "proposal_handle",
         "VERIFIED",
-        "commit attempted != persisted",
-        "PREVIEW != PERSISTED",
-        "NÃO pergunte “Confirma?”",
-        "commit_now",
+        "persisted=true",
     ]:
         assert marker in block, marker
 
@@ -146,19 +138,4 @@ def test_vista_playbooks_exist_and_forbid_new_actions_by_default():
 
 def test_vista_instructions_domain_intent_beats_image_generation():
     block = _builder_instructions_block()
-    assert "## Intenção de domínio" in block
-    assert "NÃO tratar automaticamente como geração de imagem" in block
-    assert "## Resultado desejado" in block
-    assert "## Pedido composto" in block
-    assert "LOTE COMPLETO" in block
-    assert "PlanCompiler" in block
-    assert "Pule gpt_suggest_change" in block
-    assert "commit_now=true" in block
-
-
-def test_vista_instructions_forbid_manual_editor_fallback():
-    block = _builder_instructions_block()
-    assert "## Anti-padrões (proibido)" in block
-    assert "não consigo gravar" in block
-    assert "patch_native_config" in block
-    assert "Copilot/chat interno retirado" in block
+    assert "Imagem só se o usuário pedir" in block or "arte/imagem" in block

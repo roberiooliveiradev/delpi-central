@@ -816,6 +816,8 @@ def test_catalog_and_openapi_http_smoke():
     assert data["catalogVersion"] == PresentationOpsContentService.catalog_version()
     assert "capability_surface" in data
     assert data["capability_surface"]["lifecycle"] == "GOVERNED_PREPARE_COMMIT_V2"
+    directives = data["capability_surface"]["agent_directives"]
+    assert directives["object_resolution"]["principle"] == "ALTER_EXISTING_BEFORE_CREATE"
 
 
 def _assert_object_schemas_have_properties(node: object, path: str = "") -> None:

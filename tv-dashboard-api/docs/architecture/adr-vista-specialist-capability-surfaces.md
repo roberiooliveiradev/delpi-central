@@ -20,6 +20,7 @@
 7c. **PresentationMutation owner (2026-09-22):** Deep-merge nested block patches (`style`/`frame`/`dataBinding`/`background`). HTTP `/data/copilot/*` → **410 Gone**. Chat skill/tool `tv_dashboard_copilot` and MFE Copilot dock retired. **DÉLIA** may consume the same mutation contract via a future capability adapter — **TARGET only (no code in this epic)**.
 7d. **Alias cleanup (2026-09-22):** Removed transitional `tv_copilot_patch_service` / `execution_context` / `plan_compiler` re-exports and `TvCopilotPatch*` type aliases. Canonical imports: `presentation_mutation`. Builder path: `to-presentation-ops` (`to-copilot-ops` → 410).
 7e. **Naming hygiene (2026-09-22):** Renamed remaining catalog/planner modules and JSON from `tv_copilot_*` to `presentation_*` / `presentation_ops_content.json` (`PresentationOpsContentService`, planners, nested contract, telemetry). No second mutation path.
+7f. **Deployable agent intelligence (2026-09-22):** Mutable VISTA behavior (`object_resolution` ALTER_EXISTING_BEFORE_CREATE, modes, write_flow, anti_patterns) lives in `vista_agent_intelligence.json` → `capability_surface.agent_directives` via `gpt_get_catalog`. GPT Builder Instructions stay **stable-only** (identity + authority + invariants). Evolving heuristics = API deploy, not re-paste Instructions.
 8. **Do not adopt TÉO entity surface** (`search_records` / `prepare_record_change`) — VISTA is playlist/presentation workflow, not multi-entity CRUD.
 9. **MCP** remains TARGET (Plugin + remote MCP). Do not create MCP in this change; keep application core adapter-ready.
 10. **Proposal store:** in-process with **ACCEPT_WITH_RESIDUAL** for current single-replica runtime.
@@ -29,6 +30,7 @@
 - Builder must **REIMPORT** OpenAPI and **REPLACE** Instructions after V2.
 - Client-supplied `ops` + `planDigest` are no longer commit authority.
 - Confirmation is enforced server-side (`CONFIRMATION_REQUIRED`).
-- Catalog projects `capability_surface` for discovery; AuthZ stays backend-first.
+- Catalog projects `capability_surface` (incl. live `agent_directives`) for discovery; AuthZ stays backend-first.
+- Builder Instructions are **stable-only**; mutation heuristics evolve via API deploy (`vista_agent_intelligence.json`).
 - Legacy `POST /data/copilot/*` returns **410 Gone** (successor: `/gpt-actions/v1`).
 - DÉLIA TV adapter = documental TARGET on PresentationMutation; zero runtime coupling in this HEAD.

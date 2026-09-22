@@ -50,7 +50,8 @@ Canonical domain capability (PresentationMutation / TvPresentationPatchV1)
 | Capability metadata | `capability_surface.py` + catalog projection |
 | Actions surface | `openapi_builder.py` → generated OpenAPI (**8** ops) |
 | Proposal store | in-process → **ACCEPT_WITH_RESIDUAL** |
-| GPT Instructions | `docs/gpt-actions/specialist-instructions.md` |
+| GPT Instructions (stable-only) | `docs/gpt-actions/specialist-instructions.md` |
+| Live agent directives (deploy) | `vista_agent_intelligence.json` → `capability_surface.agent_directives` |
 | Capability matrix | **this file** |
 | DÉLIA TV adapter | TARGET (document only; consume PresentationMutation) |
 

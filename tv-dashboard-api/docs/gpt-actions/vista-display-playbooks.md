@@ -460,3 +460,4 @@ Negative:
 - Asking the user to manually decompose API steps as the preferred UX → forbidden
 - Claiming “I cannot save / only guide / do it in the editor” when GPT Actions are available → forbidden (reconnect OAuth / call Action instead)
 - Treating retired Chat Copilot as proof that VISTA cannot write → forbidden (write path = eight Actions + PresentationMutation)
+- Creating a new playlist/slide/block to apply an alteration on an already identified object → forbidden (see live `capability_surface.agent_directives.object_resolution`; prefer ALTER_EXISTING_BEFORE_CREATE)

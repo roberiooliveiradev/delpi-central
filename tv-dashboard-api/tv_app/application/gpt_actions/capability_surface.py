@@ -3,6 +3,10 @@
 Catalog informs; backend authorizes. Descriptors are not AuthZ authority.
 Typed presentation ops remain owned by ``presentation_ops_content.json``
 (PresentationMutation / TvPresentationPatchV1).
+
+Mutable specialist intelligence (object resolution, modes, write heuristics)
+lives in ``vista_agent_intelligence.json`` and is projected as
+``agent_directives`` so it ships with API deploy — not GPT Builder paste.
 """
 
 from __future__ import annotations
@@ -10,6 +14,9 @@ from __future__ import annotations
 from typing import Any
 
 from tv_app.application.gpt_actions import GPT_ACTIONS_OPERATION_IDS
+from tv_app.application.gpt_actions.vista_agent_intelligence_service import (
+    VistaAgentIntelligenceService,
+)
 from tv_app.application.services.data.presentation_ops_content_service import PresentationOpsContentService
 
 
@@ -25,6 +32,7 @@ def build_capability_surface() -> dict[str, Any]:
     return {
         "lifecycle": "GOVERNED_PREPARE_COMMIT_V2",
         "mutation_owner": "PresentationMutation",
+        "agent_directives": VistaAgentIntelligenceService.agent_directives(),
         "action_surface_budget": {
             "importable_operations": len(GPT_ACTIONS_OPERATION_IDS),
             "platform_prefer_max": 30,
@@ -65,7 +73,9 @@ def build_capability_surface() -> dict[str, Any]:
                 "description": (
                     "Governed PresentationMutation compound change: PlanCompiler "
                     "topo-sort + as/*Ref; preview mints opaque proposal; additive "
-                    "commit_now; commit → TvPresentationWriteService + read-back."
+                    "commit_now; commit → TvPresentationWriteService + read-back. "
+                    "Resolve existing playlist/slide/block before create (see "
+                    "agent_directives.object_resolution)."
                 ),
                 "read_operations": ["gpt_get_catalog", "gpt_get_playlist_context"],
                 "write_operations": [
@@ -134,5 +144,7 @@ def build_capability_surface() -> dict[str, Any]:
             "new_typed_op_does_not_add_action": True,
             "no_generic_http_or_sql_proxy": True,
             "proposal_store": "in_process_accept_with_residual",
+            "agent_directives_are_live": True,
+            "builder_instructions_are_stable_only": True,
         },
     }

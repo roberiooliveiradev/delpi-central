@@ -1,0 +1,45 @@
+{
+  "version": "2026.09.22.1",
+  "owner": "tv-dashboard-api",
+  "source": "capability_surface.agent_directives via gpt_get_catalog",
+  "object_resolution": {
+    "principle": "ALTER_EXISTING_BEFORE_CREATE",
+    "summary": "Antes de criar, resolver o objeto que o usuário já referenciou. Alteração ≠ novo objeto.",
+    "rules": [
+      "Pedido de alteração (trocar, mudar, ajustar, atualizar, renomear, fundo/cor/estilo, duração, ordem) → preferir ops de mutação no objeto já identificado; NÃO create_playlist / add_blank_slide / novo upsert_block sem id existente.",
+      "Resolver target a partir de: (1) IDs INFORMADOS na conversa ou Actions anteriores; (2) gpt_list_playlists / gpt_get_playlist_context; (3) nome/título coincidente no contexto vivo. Nunca inventar UUID.",
+      "Pronomes e dêixis ('este slide', 'essa playlist', 'o fundo', 'o bloco') → vincular ao último recurso OBSERVED/INFORMED do mesmo tipo. Se ambíguo: UMA pergunta ou listar candidatos das Actions READ — não criar outro.",
+      "create_* / add_* somente quando o usuário pedir criação explícita OU a leitura autorizada provar que o objeto não existe.",
+      "Duplicar playlist/slide/bloco 'parecido' para aplicar um ajuste = falha. Corrija o existente (patch_native_config, update_slide, upsert_block com blockId existente, set_data_transform, etc.).",
+      "Fundo/cor/estilo de tela já conhecida → patch_native_config (ou upsert_block no blockId existente) com target.playlistId + target.slideId do contexto — nunca add_blank_slide só para recolorir."
+    ],
+    "required_reads_before_mutate": [
+      "gpt_list_playlists when playlistId unknown",
+      "gpt_get_playlist_context when slideId/blockId/revision unknown"
+    ]
+  },
+  "modes": {
+    "QUICK_DISPLAY": "Ajuste pontual de slide/bloco já conhecido — resolver objeto, mutar, não criar.",
+    "GUIDED_DASHBOARD": "Projetar/reorganizar painel ou playlist — criar só o que faltar após inventário READ.",
+    "DATA_INTERPRETATION": "Entender/explicar dados sem gravar até pedido explícito.",
+    "PLAYLIST_CURATION": "Ordem, duração, slides, kiosk/TV — preferir update/reorder/move no existente."
+  },
+  "write_flow": {
+    "skip_suggest_when_typable": true,
+    "additive": "Uma gpt_preview_change com lote tipado + commit_now=true + confirmation.confirmed=true + Idempotency-Key. Pedido do usuário = confirmação — não perguntar Confirma?.",
+    "destructive": "gpt_preview_change sem commit_now → plano → uma Confirma? → gpt_commit_change com proposal_handle opaco exato.",
+    "compound": "LOTE COMPLETO numa preview; PlanCompiler ordena; as/playlistRef/slideRef quando vários recursos; sem inventar UUID.",
+    "forbidden_handles": ["latest", "current", "null", "new"]
+  },
+  "anti_patterns": [
+    "Dizer que não consegue gravar / só orientar / faça no editor quando Actions existirem.",
+    "Criar objeto novo para aplicar alteração no existente.",
+    "Tutorial de UI como caminho principal para cor/fundo/estilo tipável.",
+    "Tratar Copilot/chat interno retirado como perda de write da VISTA.",
+    "Inventar operationId, playlistId, slideId, assetId ou proposal_handle."
+  ],
+  "auth_errors": {
+    "401": "AuthN — pedir reconexão OAuth DELPI / permitir Action.",
+    "403": "AuthZ — usuário sem permissão; não inventar bypass."
+  }
+}

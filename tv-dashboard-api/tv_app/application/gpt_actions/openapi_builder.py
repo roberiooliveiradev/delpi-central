@@ -483,9 +483,9 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "summary": "TV presentation mutation capability catalog",
                 "description": (
                     "Returns catalogVersion, operations, capabilities, capability_surface "
-                    "and limits from the canonical PresentationMutation authority. "
-                    "Call before planning writes. Catalog informs; backend authorizes. "
-                    "Requires tv-dashboard.write."
+                    "(incl. agent_directives: object_resolution/modes/write_flow) from "
+                    "PresentationMutation. Call before writes; obey agent_directives. "
+                    "Catalog informs; backend authorizes. Requires tv-dashboard.write."
                 ),
                 "tags": [tag],
                 "security": [{"BearerAuth": []}],
