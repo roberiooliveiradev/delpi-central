@@ -60,8 +60,10 @@ class CommitChangeBody(BaseModel):
 
 
 class DataPreviewBody(BaseModel):
-    block: dict[str, Any]
-    nativeConfig: dict[str, Any]
+    operationId: str | None = None
+    params: dict[str, Any] | None = None
+    block: dict[str, Any] | None = None
+    nativeConfig: dict[str, Any] | None = None
     playlistId: str | None = None
     playlistDefaults: dict[str, Any] | None = None
     forceRefresh: bool = False
@@ -171,8 +173,9 @@ def get_playlist_context(request: Request, playlist_id: str):
 @router.get("/data-routes")
 def search_data_routes(
     request: Request,
-    query: str | None = None,
-    limit: int = Query(default=20, ge=1, le=100),
+    query: str = Query(..., min_length=1, description="Business intent NL query (required)"),
+    limit: int = Query(default=8, ge=1, le=20),
+    category: str | None = Query(default=None, description="Optional catalog category filter"),
 ):
     cid = _correlation_id(request)
     try:
@@ -180,6 +183,7 @@ def search_data_routes(
             user=resolve_user(request),
             query=query,
             limit=limit,
+            category=category,
         )
         return ok(data)
     except Exception as exc:  # noqa: BLE001

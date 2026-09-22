@@ -15,7 +15,7 @@
       "get": {
         "operationId": "gpt_get_catalog",
         "summary": "TV presentation mutation capability catalog",
-        "description": "Returns catalogVersion, operations, capabilities, capability_surface (incl. agent_directives: object_resolution/modes/write_flow) from PresentationMutation. Call before writes; obey agent_directives. Catalog informs; backend authorizes. Requires tv-dashboard.write.",
+        "description": "Returns catalogVersion, operations, capabilities, capability_surface (incl. agent_directives: object_resolution/data_discovery/modes) from PresentationMutation. Call before writes; obey agent_directives. Catalog informs; backend authorizes. Requires tv-dashboard.write.",
         "tags": [
           "TV Dashboard GPT"
         ],
@@ -338,7 +338,7 @@
       "get": {
         "operationId": "gpt_search_data_routes",
         "summary": "Search allowlisted data routes",
-        "description": "Searches the TV data route catalog. Never invent operationId; only use returned route identifiers.",
+        "description": "Required NL query over the TV allowlist (owner-local discovery). Never dump the full catalog; never invent operationId. Miss does not prove absence — refine query. Returns compact DTO with paramSchema.",
         "tags": [
           "TV Dashboard GPT"
         ],
@@ -351,19 +351,31 @@
           {
             "name": "query",
             "in": "query",
+            "required": true,
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1
             },
-            "description": "Optional NL query; empty lists catalog head."
+            "description": "Business intent (ex.: otd comercial)."
           },
           {
             "name": "limit",
             "in": "query",
             "schema": {
               "type": "integer",
-              "default": 20
+              "default": 8,
+              "minimum": 1,
+              "maximum": 20
             },
-            "description": "Max routes to return."
+            "description": "Max routes (default 8, max 20)."
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Optional category filter (commercial, supplies, …)."
           }
         ],
         "responses": {
@@ -454,7 +466,7 @@
       "post": {
         "operationId": "gpt_preview_data_block",
         "summary": "Preview a data block without persisting",
-        "description": "Dry-run data resolution for a block using the same preview pipeline as the editor. No persistence.",
+        "description": "Prefer operationId+params from search hits; server validates paramSchema and builds the canonical binding. Legacy block+nativeConfig remains for editor-shaped clients. No persistence.",
         "tags": [
           "TV Dashboard GPT"
         ],
@@ -469,21 +481,28 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "block",
-                  "nativeConfig"
-                ],
                 "properties": {
+                  "operationId": {
+                    "type": "string",
+                    "description": "Preferred shortcut: allowlisted catalog operationId. Server builds canonical binding; do not invent block/nativeConfig."
+                  },
+                  "params": {
+                    "type": "object",
+                    "description": "Params validated against the route paramSchema (enums/required). Use values from gpt_search_data_routes paramSchema.",
+                    "x-delpi-gpt-opaque-object": true,
+                    "additionalProperties": true,
+                    "properties": {}
+                  },
                   "block": {
                     "type": "object",
-                    "description": "Editor-native block blob for dry-run resolution. Variability is unbounded across block types; runtime validates downstream. Not a second PresentationOps catalog.",
+                    "description": "Legacy editor block blob. Prefer operationId+params. Runtime validates downstream when provided.",
                     "x-delpi-gpt-opaque-object": true,
                     "additionalProperties": true,
                     "properties": {}
                   },
                   "nativeConfig": {
                     "type": "object",
-                    "description": "Editor-native slide config for dry-run resolution. Full canvas DTO; not a PresentationOps payload.",
+                    "description": "Legacy editor slide config for dry-run. Optional when operationId is provided.",
                     "x-delpi-gpt-opaque-object": true,
                     "additionalProperties": true,
                     "properties": {}
@@ -514,14 +533,9 @@
                 }
               },
               "example": {
-                "block": {
-                  "id": "blk-demo",
-                  "type": "kpi",
-                  "title": "Exemplo"
-                },
-                "nativeConfig": {
-                  "version": 1,
-                  "blocks": []
+                "operationId": "get_sales_order_otd_series",
+                "params": {
+                  "granularity": "week"
                 },
                 "forceRefresh": false
               }

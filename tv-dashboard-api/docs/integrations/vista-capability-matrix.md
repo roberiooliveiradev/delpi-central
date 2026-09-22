@@ -52,6 +52,7 @@ Canonical domain capability (PresentationMutation / TvPresentationPatchV1)
 | Proposal store | in-process → **ACCEPT_WITH_RESIDUAL** |
 | GPT Instructions (stable-only) | `docs/gpt-actions/specialist-instructions.md` — **no** feature heuristics |
 | Live agent directives (deploy) | `vista_agent_intelligence.json` → `capability_surface.agent_directives` |
+| Data route NL discovery | `TvDataRouteDiscoveryService` + `docs/data-route-nl-suggest.md` |
 | Instructions leak gate | `tests/test_vista_builder_instructions_budget.py` |
 | Capability matrix | **this file** |
 | DÉLIA TV adapter | TARGET (document only; consume PresentationMutation) |
@@ -98,6 +99,8 @@ Documented project guardrail: prefer **≤ ~30 importable operations**.
 | WORKFLOW | presentation_change (PresentationMutation) | `gpt_suggest_change`, `gpt_preview_change`, `gpt_commit_change` |
 | ANALYSIS | data_route_search, data_block_preview | `gpt_search_data_routes`, `gpt_preview_data_block` |
 | DISCOVERY | catalog | `gpt_get_catalog` |
+
+**ANALYSIS notes (CURRENT):** search = owner-local discovery over `tv_data_routes.json` (query required; compact DTO + `paramSchema`; miss ≠ absence). Preview prefers `{operationId, params}`. Heuristics: `agent_directives.data_discovery`. MFE `GET /data/routes` is editor-only (not a GPT Action).
 
 **Not applicable:** generic `search_records` / `prepare_record_change` (VISTA is not multi-entity CRUD).
 

@@ -1,5 +1,5 @@
 {
-  "version": "2026.09.22.2",
+  "version": "2026.09.22.3",
   "owner": "tv-dashboard-api",
   "source": "capability_surface.agent_directives via gpt_get_catalog",
   "object_resolution": {
@@ -63,6 +63,24 @@
       ]
     }
   },
+  "data_discovery": {
+    "principle": "OWNER_LOCAL_ROUTE_DISCOVERY",
+    "summary": "Buscar rotas só via gpt_search_data_routes (discovery owner-local no catálogo TV). Miss ≠ ausência. Params só do paramSchema.",
+    "rules": [
+      "gpt_search_data_routes exige query de intenção de negócio (domínio + indicador). Proibido query vazia ou dump enciclopédico de domínio no chat.",
+      "Use somente operationId retornado. Nunca inventar rota, path HTTP ou SQL.",
+      "searchMissDoesNotProveAbsence=true: refine a query; não declare que o dado não existe na empresa.",
+      "Params (ex. granularity) vêm do paramSchema do hit — não trial-and-error. Enum inválido → corrija, não chute.",
+      "gpt_preview_data_block preferir atalho {operationId, params}; não inventar block/nativeConfig de editor.",
+      "GET /data/routes completo é superfície do MFE editor — não é Action GPT."
+    ],
+    "forbidden": [
+      "Listar dezenas de rotas de um domínio no chat GPT",
+      "Inventar nativeConfig/block para 'testar' rota",
+      "Chutar params fora do paramSchema",
+      "Tratar miss de search como prova de ausência de dado"
+    ]
+  },
   "modes": {
     "QUICK_DISPLAY": "Ajuste pontual de slide/bloco já conhecido — resolver objeto, mutar, não criar.",
     "GUIDED_DASHBOARD": "Projetar/reorganizar painel ou playlist — criar só o que faltar após inventário READ.",
@@ -84,7 +102,9 @@
     "Tratar Copilot/chat interno retirado como perda de write da VISTA.",
     "Inventar operationId, playlistId, slideId, assetId ou proposal_handle.",
     "Tratar print de slide desejado como Image Generation ou recusar criar o slide tipado.",
-    "Paridade visual incompleta sem declarar o gap (fingir que ficou idêntico quando o catálogo não cobre)."
+    "Paridade visual incompleta sem declarar o gap (fingir que ficou idêntico quando o catálogo não cobre).",
+    "Dump enciclopédico de rotas de um domínio no chat GPT.",
+    "Trial-and-error de params fora do paramSchema / inventar block+nativeConfig para preview."
   ],
   "auth_errors": {
     "401": "AuthN — pedir reconexão OAuth DELPI / permitir Action.",

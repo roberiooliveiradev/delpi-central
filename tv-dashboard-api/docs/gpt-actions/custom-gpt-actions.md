@@ -113,6 +113,18 @@ This package documents the chain only; it does not apply migrations to remote en
 - Legacy ``POST /data/copilot/*`` returns **410 Gone** (use VISTA gpt-actions).
 - No generic entity CRUD Actions (``search_records`` / ``prepare_record_change``) — not VISTA's domain shape.
 
+## Data route discovery / preview (ANALYSIS)
+
+- ``gpt_search_data_routes``: **query obrigatória** (422 ``QUERY_REQUIRED`` se vazia). Ranking
+  owner-local (``TvDataRouteDiscoveryService`` sobre ``tv_data_routes.json``). Chat AI **não**
+  é autoridade deste path. DTO compacto + ``paramSchema``; ``searchMissDoesNotProveAbsence``.
+  Limit default 8 / max 20; ``category`` opcional. Sem dump enciclopédico no chat.
+- ``gpt_preview_data_block``: preferir atalho ``{operationId, params}`` (valida ``paramSchema``;
+  monta binding canônico). Shape legado ``block``+``nativeConfig`` permanece compatível.
+- Heurísticas mutáveis: ``agent_directives.data_discovery`` (deploy). MFE ``GET /data/routes``
+  continua listagem completa do editor — **não** é Action GPT.
+- Doc operacional: [`../data-route-nl-suggest.md`](../data-route-nl-suggest.md).
+
 ## Sync artifact
 
 ```bash

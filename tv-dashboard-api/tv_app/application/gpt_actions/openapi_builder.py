@@ -348,19 +348,30 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
 
     data_preview_schema = {
         "type": "object",
-        "required": ["block", "nativeConfig"],
         "properties": {
+            "operationId": {
+                "type": "string",
+                "description": (
+                    "Preferred shortcut: allowlisted catalog operationId. "
+                    "Server builds canonical binding; do not invent block/nativeConfig."
+                ),
+            },
+            "params": _opaque_object_schema(
+                description=(
+                    "Params validated against the route paramSchema (enums/required). "
+                    "Use values from gpt_search_data_routes paramSchema."
+                )
+            ),
             "block": _opaque_object_schema(
                 description=(
-                    "Editor-native block blob for dry-run resolution. Variability is "
-                    "unbounded across block types; runtime validates downstream. "
-                    "Not a second Copilot operation catalog."
+                    "Legacy editor block blob. Prefer operationId+params. "
+                    "Runtime validates downstream when provided."
                 )
             ),
             "nativeConfig": _opaque_object_schema(
                 description=(
-                    "Editor-native slide config for dry-run resolution. Full canvas "
-                    "DTO; not a Copilot op payload."
+                    "Legacy editor slide config for dry-run. Optional when "
+                    "operationId is provided."
                 )
             ),
             "playlistId": {"type": "string"},
@@ -483,7 +494,7 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "summary": "TV presentation mutation capability catalog",
                 "description": (
                     "Returns catalogVersion, operations, capabilities, capability_surface "
-                    "(incl. agent_directives: object_resolution/modes/write_flow) from "
+                    "(incl. agent_directives: object_resolution/data_discovery/modes) from "
                     "PresentationMutation. Call before writes; obey agent_directives. "
                     "Catalog informs; backend authorizes. Requires tv-dashboard.write."
                 ),
@@ -546,8 +557,10 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "operationId": "gpt_search_data_routes",
                 "summary": "Search allowlisted data routes",
                 "description": (
-                    "Searches the TV data route catalog. Never invent operationId; "
-                    "only use returned route identifiers."
+                    "Required NL query over the TV allowlist (owner-local discovery). "
+                    "Never dump the full catalog; never invent operationId. "
+                    "Miss does not prove absence — refine query. Returns compact "
+                    "DTO with paramSchema."
                 ),
                 "tags": [tag],
                 "security": [{"BearerAuth": []}],
@@ -555,14 +568,21 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                     {
                         "name": "query",
                         "in": "query",
-                        "schema": {"type": "string"},
-                        "description": "Optional NL query; empty lists catalog head.",
+                        "required": True,
+                        "schema": {"type": "string", "minLength": 1},
+                        "description": "Business intent (ex.: otd comercial).",
                     },
                     {
                         "name": "limit",
                         "in": "query",
-                        "schema": {"type": "integer", "default": 20},
-                        "description": "Max routes to return.",
+                        "schema": {"type": "integer", "default": 8, "minimum": 1, "maximum": 20},
+                        "description": "Max routes (default 8, max 20).",
+                    },
+                    {
+                        "name": "category",
+                        "in": "query",
+                        "schema": {"type": "string"},
+                        "description": "Optional category filter (commercial, supplies, …).",
                     },
                 ],
                 "responses": {"200": _ok_response("Data routes"), **_error_responses()},
@@ -573,20 +593,17 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "operationId": "gpt_preview_data_block",
                 "summary": "Preview a data block without persisting",
                 "description": (
-                    "Dry-run data resolution for a block using the same preview pipeline "
-                    "as the editor. No persistence."
+                    "Prefer operationId+params from search hits; server validates "
+                    "paramSchema and builds the canonical binding. Legacy "
+                    "block+nativeConfig remains for editor-shaped clients. No persistence."
                 ),
                 "tags": [tag],
                 "security": [{"BearerAuth": []}],
                 "requestBody": _json_body(
                     data_preview_schema,
                     example={
-                        "block": {
-                            "id": "blk-demo",
-                            "type": "kpi",
-                            "title": "Exemplo",
-                        },
-                        "nativeConfig": {"version": 1, "blocks": []},
+                        "operationId": "get_sales_order_otd_series",
+                        "params": {"granularity": "week"},
                         "forceRefresh": False,
                     },
                 ),

@@ -1106,7 +1106,7 @@ def test_gpt_request_opaque_objects_are_explicit():
             break
     assert preview_data is not None
     props = preview_data["requestBody"]["content"]["application/json"]["schema"]["properties"]
-    for key in ("block", "nativeConfig", "playlistDefaults", "previewOptions"):
+    for key in ("block", "nativeConfig", "playlistDefaults", "previewOptions", "params"):
         schema = props[key]
         assert schema["x-delpi-gpt-opaque-object"] is True
         assert schema["description"]

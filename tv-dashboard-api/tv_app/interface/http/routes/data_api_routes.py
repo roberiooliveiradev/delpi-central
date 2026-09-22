@@ -383,7 +383,7 @@ def list_data_routes_v2(request: Request):
 
 @router.post("/routes/suggest")
 def suggest_data_routes(request: Request, body: SuggestDataRoutesBody):
-    """NL → fontes do catálogo TV (ranking via chat base; intersect allowlist)."""
+    """NL → fontes do catálogo TV (discovery owner-local sobre allowlist)."""
     user = resolve_user(request)
     try:
         assert_permission(user, TV_READ)

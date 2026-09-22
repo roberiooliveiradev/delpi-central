@@ -73,3 +73,15 @@ def test_sibling_screenshot_does_not_authorize_uuid_invention():
     )
     assert "nunca" in epi.lower()
     assert "playlistId" in epi or "slideId" in epi
+
+
+def test_data_discovery_owner_local_no_dump():
+    directives = VistaAgentIntelligenceService.agent_directives()
+    discovery = directives["data_discovery"]
+    assert discovery["principle"] == "OWNER_LOCAL_ROUTE_DISCOVERY"
+    rules = " ".join(discovery["rules"])
+    assert "query" in rules.lower()
+    assert "paramSchema" in rules
+    assert "searchMissDoesNotProveAbsence" in rules or "Miss" in rules
+    forbidden = " ".join(discovery["forbidden"])
+    assert "dump" in forbidden.lower() or "Dump" in " ".join(directives["anti_patterns"])

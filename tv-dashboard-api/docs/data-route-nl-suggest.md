@@ -2,59 +2,44 @@
 
 ## Objetivo
 
-Permitir que o usuário descreva o dado em linguagem natural no modal **Fontes de dados** e receba 3–5 rotas do catálogo TV, com motivo legível — sem duplicar a inteligência de seleção do chat e sem executar a api-delpi automaticamente.
+Permitir que o usuário descreva o dado em linguagem natural (modal **Fontes de dados** no MFE ou Action GPT `gpt_search_data_routes`) e receba um top-K do catálogo TV allowlist — **sem** Chat AI como autoridade de ranking e **sem** dump enciclopédico de domínio.
 
 ## Fluxo
 
 ```text
-MFE (DataRoutesSidePanel)
-  → POST /apps/tv-dashboard-api/data/routes/suggest
-    → S2S POST minha-delpi-ai-api /chat/internal/operational-routes/suggest
-      → OperationalRouteSuggestionService (dry-run / ExternalActionSelection)
-    → intersect allowlist TvDataRouteCatalogService + enrich labels
-  → faixa «Sugestões» no DataRouteCatalogPanel → pickRoute atual
+MFE (DataRoutesSidePanel) ──┐
+                            ├→ TvDataRouteSuggestService
+GPT gpt_search_data_routes ─┘         ↓
+                            TvDataRouteDiscoveryService
+                                      ↓
+                            tv_data_routes.json (allowlist)
 ```
+
+- Ranking lexical/category/path/label/`whenToUse` **owner-local** em `tv-dashboard-api`.
+- Chat AI **não** é autoridade do suggest TV (`suggest_operational_routes` removido deste path).
+- `suggest_operational_params` do AI client permanece só para builder de params (fora do discovery).
 
 ## Contratos
 
 | Camada | Endpoint | Auth |
 |--------|----------|------|
-| Chat base | `POST /chat/internal/operational-routes/suggest` | Internal service token |
-| TV BFF | `POST /data/routes/suggest` | JWT `TV_READ` / `TV_WRITE` |
+| TV BFF (MFE) | `POST /data/routes/suggest` | JWT `TV_READ` / `TV_WRITE` |
+| GPT Action | `GET …/gpt-actions/data-routes?query=` | OAuth user + `TV_READ` |
+| MFE catálogo completo | `GET /data/routes` | JWT — **não** é superfície GPT |
 
-Body TV: `{ "query": string, "limit"?: 1–20 }`  
-Resposta: `{ suggestions: [rota catálogo + reason + score], query, total, degraded? }`
+Body suggest: `{ "query": string, "limit"?: 1–20, "category"?: string }`  
+Resposta: `{ suggestions: [rota + reason + score], query, total, searchMissDoesNotProveAbsence }`
 
-Se a AI estiver indisponível, o BFF devolve `suggestions: []` com `degraded: true` (HTTP 200). O MFE mantém busca substring local.
+GPT search: `query` **obrigatória** (422 se vazia); `limit` default 8 max 20; DTO compacto com `paramSchema`; envelope `searchMissDoesNotProveAbsence`.
 
-## Env
+## Regras
 
-| Variável | Default |
-|----------|---------|
-| `MINHA_DELPI_AI_API_URL` | `http://delpi-minha-delpi-ai-api:8000` |
-| `MINHA_DELPI_AI_API_TIMEOUT_SECONDS` | `20` |
-| `API_DELPI_INTERNAL_SERVICE_TOKEN` | **Obrigatório** — mesmo valor em `tv-dashboard-api` e `minha-delpi-ai-api` (header `X-Delpi-Service-Token`) |
+- Search miss ≠ ausência de dado na empresa — refine a query.
+- Params (ex. `granularity=week`) vêm do `paramSchema` do hit; preview GPT preferir `{ operationId, params }`.
+- Heurísticas mutáveis de discovery: `agent_directives.data_discovery` (não Instructions Builder).
 
-Em prod, o compose injeta o token nos dois serviços a partir de `infra/.env`. Conferência rápida:
+## UX (MFE)
 
-```bash
-docker exec delpi-tv-dashboard-api sh -c 'echo TV_TOKEN_LEN=${#API_DELPI_INTERNAL_SERVICE_TOKEN}'
-docker exec delpi-minha-delpi-ai-api sh -c 'echo AI_TOKEN_LEN=${#API_DELPI_INTERNAL_SERVICE_TOKEN}'
-# Ambos > 0 e iguais. Depois:
-docker exec delpi-tv-dashboard-api python -c "
-from tv_app.infrastructure.gateways.minha_delpi_ai_client import MinhaDelpiAiClient
-print(MinhaDelpiAiClient().suggest_operational_routes(query='ops em atraso', limit=3))
-"
-```
-
-Em Compose dev, o serviço `minha-delpi-ai-api` exige profile `chat` (ou `vision`).
-
-## UX (v1)
-
-- Um campo unificado: texto curto → só substring; frase (≥ 3 tokens ou ≥ 16 chars) → debounce 350 ms → suggest.
-- Clique na sugestão = mesmo fluxo do card do catálogo (detalhe → Usar esta fonte).
+- Um campo unificado: texto curto → substring local; frase → debounce → suggest owner-local.
+- Clique na sugestão = mesmo fluxo do card do catálogo.
 - **Não** auto-executa preview HTTP nem insere bloco no canvas.
-
-## Fora do v1
-
-Pré-preencher params, auto-preview no detalhe, «montar no slide» com confirmação — ver plano IA Fontes TV Dashboard.

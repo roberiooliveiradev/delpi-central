@@ -135,23 +135,48 @@ class GptActionsDispatchService:
         *,
         user: Any,
         query: str | None = None,
-        limit: int = 20,
+        limit: int = 8,
+        category: str | None = None,
     ) -> dict[str, Any]:
+        from tv_app.application.gpt_actions.data_route_gpt_support import project_route_for_gpt
+
         assert_permission(user, TV_READ)
         q = str(query or "").strip()
-        if q:
-            result = self._suggest.suggest(query=q, limit=limit)
-            items = result.get("suggestions") if isinstance(result, dict) else []
-            if not isinstance(items, list):
-                items = []
-            return {
-                "items": items,
-                "query": q,
-                "total": result.get("total") if isinstance(result, dict) else len(items),
-                "degraded": bool(result.get("degraded")) if isinstance(result, dict) else False,
-            }
-        items = self._catalog.list_routes()[: max(1, min(int(limit), 100))]
-        return {"items": items, "query": None, "total": len(items), "degraded": False}
+        if not q:
+            raise GptActionsError(
+                "Informe query com a intenção de negócio (ex.: otd comercial). "
+                "Listagem completa de rotas não é suportada nesta Action.",
+                code="QUERY_REQUIRED",
+                status_code=422,
+            )
+        cap = max(1, min(int(limit or 8), 20))
+        result = self._suggest.suggest(
+            query=q,
+            limit=cap,
+            category=str(category or "").strip() or None,
+        )
+        raw_items = result.get("suggestions") if isinstance(result, dict) else []
+        if not isinstance(raw_items, list):
+            raw_items = []
+        items = [
+            project_route_for_gpt(item)
+            for item in raw_items
+            if isinstance(item, dict)
+        ]
+        return {
+            "items": items,
+            "query": q,
+            "category": str(category or "").strip() or None,
+            "total": len(items),
+            "degraded": False,
+            "searchMissDoesNotProveAbsence": True,
+            "refineHints": [
+                "Refine com domínio + indicador (ex.: otd comercial, rol por filial).",
+                "Use apenas operationId retornado; miss não prova ausência.",
+            ]
+            if not items
+            else [],
+        }
 
     def preview_data_block(
         self,
@@ -160,6 +185,11 @@ class GptActionsDispatchService:
         body: dict[str, Any],
         authorization: str | None,
     ) -> dict[str, Any]:
+        from tv_app.application.gpt_actions.data_route_gpt_support import (
+            build_preview_block_from_route,
+            validate_route_params,
+        )
+
         assert_permission(user, TV_READ)
         playlist_id = str(body.get("playlistId") or "").strip()
         playlist_defaults = body.get("playlistDefaults")
@@ -182,10 +212,59 @@ class GptActionsDispatchService:
             if not isinstance(playlist_defaults, dict):
                 defaults = (access.playlist or {}).get("dataDefaults")
                 playlist_defaults = defaults if isinstance(defaults, dict) else {}
+
+        operation_id = str(body.get("operationId") or "").strip()
+        block_in = body.get("block") if isinstance(body.get("block"), dict) else None
+        native_in = body.get("nativeConfig") if isinstance(body.get("nativeConfig"), dict) else None
+
+        if operation_id:
+            route = self._catalog.get_route(operation_id)
+            if not route:
+                raise GptActionsError(
+                    f"operationId não está no catálogo TV allowlist: {operation_id}",
+                    code="UNKNOWN_OPERATION",
+                    status_code=422,
+                )
+            try:
+                params = validate_route_params(
+                    route,
+                    body.get("params") if isinstance(body.get("params"), dict) else {},
+                )
+            except ValueError as exc:
+                token = str(exc)
+                if token.startswith("PARAM_REQUIRED:"):
+                    parts = token.split(":")
+                    raise GptActionsError(
+                        f"Parâmetro obrigatório ausente: {parts[2] if len(parts) > 2 else parts[1]}",
+                        code="PARAM_REQUIRED",
+                        status_code=422,
+                        details={"field": parts[1] if len(parts) > 1 else None},
+                    ) from exc
+                if token.startswith("PARAM_INVALID:"):
+                    parts = token.split(":")
+                    raise GptActionsError(
+                        f"Parâmetro inválido: {parts[1] if len(parts) > 1 else token}",
+                        code="PARAM_INVALID",
+                        status_code=422,
+                        details={"raw": token},
+                    ) from exc
+                raise GptActionsError(token, code="INVALID_CHANGE", status_code=422) from exc
+            block = build_preview_block_from_route(route, params=params)
+            native_config: dict[str, Any] = {"version": 1, "blocks": [block]}
+        elif block_in is not None:
+            block = block_in
+            native_config = native_in or {"version": 1, "blocks": [block]}
+        else:
+            raise GptActionsError(
+                "Informe operationId+params ou block+nativeConfig.",
+                code="INVALID_CHANGE",
+                status_code=422,
+            )
+
         try:
-            cfg = self._validation.sanitize(body.get("nativeConfig") or {})
+            cfg = self._validation.sanitize(native_config)
             block = self._preview.preview_block(
-                body.get("block") or {},
+                block,
                 native_config=cfg,
                 authorization=authorization,
                 user=user,
@@ -205,7 +284,11 @@ class GptActionsDispatchService:
                 status_code=502,
                 retryable=True,
             ) from exc
-        return {"block": block, "persisted": False}
+        return {
+            "block": block,
+            "persisted": False,
+            "operationId": operation_id or None,
+        }
 
     def suggest_change(
         self,

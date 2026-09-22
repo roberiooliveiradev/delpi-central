@@ -670,15 +670,8 @@ class PresentationSuggestOpsService:
             from tv_app.application.services.data.tv_data_route_suggest_service import (
                 TvDataRouteSuggestService,
             )
-            from tv_app.infrastructure.gateways.minha_delpi_ai_client import (
-                MinhaDelpiAiClient,
-            )
 
-            # Copiloto precisa de resposta rápida; Assistente modal mantém timeout longo.
-            service = TvDataRouteSuggestService(
-                TvDataRouteCatalogService(),
-                ai_client=MinhaDelpiAiClient(timeout_seconds=2.0),
-            )
+            service = TvDataRouteSuggestService(TvDataRouteCatalogService())
             result = service.suggest(query=message, limit=limit)
         except Exception:
             return []

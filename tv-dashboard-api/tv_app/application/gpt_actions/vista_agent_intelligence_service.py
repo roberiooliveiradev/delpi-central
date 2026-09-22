@@ -48,6 +48,7 @@ class VistaAgentIntelligenceService:
             ),
             "object_resolution": doc.get("object_resolution") or {},
             "screenshot_parity": doc.get("screenshot_parity") or {},
+            "data_discovery": doc.get("data_discovery") or {},
             "modes": doc.get("modes") or {},
             "write_flow": doc.get("write_flow") or {},
             "anti_patterns": list(doc.get("anti_patterns") or []),
