@@ -66,7 +66,7 @@ def _ref_for(raw: dict[str, Any], resource: str) -> str | None:
     return token or None
 
 
-def compile_copilot_plan(
+def compile_presentation_plan(
     *,
     ops: list[Any],
     target: dict[str, Any] | None = None,

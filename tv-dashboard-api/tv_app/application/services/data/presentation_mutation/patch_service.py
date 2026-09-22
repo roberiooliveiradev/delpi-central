@@ -1,7 +1,7 @@
 """TvPresentationPatchV1 — typed presentation mutation reducer (canonical).
 
-Formerly branded ``TvCopilotPatchService``. Dry-run builds in-memory state;
-persistence goes through ``TvPresentationWriteService`` / CRUD.
+Dry-run builds in-memory state; persistence goes through
+``TvPresentationWriteService`` / CRUD.
 """
 
 from __future__ import annotations
@@ -39,7 +39,7 @@ from tv_app.application.services.data.tv_copilot_nested_contract import (
 )
 from tv_app.application.services.data.presentation_mutation.plan_compiler import (
     PlanCompileError,
-    compile_copilot_plan,
+    compile_presentation_plan,
 )
 from tv_app.application.services.data.tv_copilot_http_command_planner_service import (
     TvCopilotHttpCommandPlannerService,
@@ -78,10 +78,6 @@ class PresentationPatchError(ValueError):
     def __init__(self, message: str, *, code: str | None = None) -> None:
         super().__init__(message)
         self.code = code
-
-
-# Legacy alias — prefer PresentationPatchError.
-TvCopilotPatchError = PresentationPatchError
 
 
 def _new_block_id() -> str:
@@ -192,7 +188,7 @@ def _validate_op_required_fields(op_name: str, raw_op: dict[str, Any]) -> None:
         if not key or key == "op":
             continue
         if not _field_present(raw_op, key):
-            raise TvCopilotPatchError(
+            raise PresentationPatchError(
                 TvCopilotContentService.message("opMissingField", op=op_name, field=key)
             )
 
@@ -213,11 +209,11 @@ def _validate_target_for_ops(
         },
     )
     if requirements["requiresPlaylist"] and not playlist_id:
-        raise TvCopilotPatchError(TvCopilotContentService.message("missingPlaylist"))
+        raise PresentationPatchError(TvCopilotContentService.message("missingPlaylist"))
     if requirements["requiresSlide"] and not slide_id:
         if requirements["requiresPlaylist"] and not playlist_id:
-            raise TvCopilotPatchError(TvCopilotContentService.message("missingTarget"))
-        raise TvCopilotPatchError(TvCopilotContentService.message("missingSlide"))
+            raise PresentationPatchError(TvCopilotContentService.message("missingTarget"))
+        raise PresentationPatchError(TvCopilotContentService.message("missingSlide"))
 
 
 _NATIVE_OP_NAMES = frozenset(
@@ -290,7 +286,7 @@ class PresentationPatchService:
                 ops=len(result.get("appliedOps") or []),
             )
             return result
-        except TvCopilotPatchError as exc:
+        except PresentationPatchError as exc:
             record_copilot_event(
                 kind="preview",
                 ok=False,
@@ -335,7 +331,7 @@ class PresentationPatchService:
             result["persisted"] = False
             result["executionMode"] = "crud_http"
             return result
-        except TvCopilotPatchError as exc:
+        except PresentationPatchError as exc:
             record_copilot_event(
                 kind="apply",
                 ok=False,
@@ -358,21 +354,21 @@ class PresentationPatchService:
         actor_user_id = None
 
         if not isinstance(envelope, dict):
-            raise TvCopilotPatchError(TvCopilotContentService.message("invalidEnvelope"))
+            raise PresentationPatchError(TvCopilotContentService.message("invalidEnvelope"))
 
         ops = envelope.get("ops")
         if not isinstance(ops, list) or not ops:
-            raise TvCopilotPatchError(TvCopilotContentService.message("noOps"))
+            raise PresentationPatchError(TvCopilotContentService.message("noOps"))
 
         max_ops = TvCopilotContentService.setting_int("maxOpsPerPatch", 40)
         if len(ops) > max_ops:
-            raise TvCopilotPatchError(TvCopilotContentService.message("noOps"))
+            raise PresentationPatchError(TvCopilotContentService.message("noOps"))
 
         target = envelope.get("target") if isinstance(envelope.get("target"), dict) else {}
         try:
-            compiled = compile_copilot_plan(ops=ops, target=target)
+            compiled = compile_presentation_plan(ops=ops, target=target)
         except PlanCompileError as exc:
-            raise TvCopilotPatchError(str(exc), code=exc.code) from exc
+            raise PresentationPatchError(str(exc), code=exc.code) from exc
         ops = compiled.ordered_ops
 
         allowed = TvCopilotContentService.allowed_ops()
@@ -415,22 +411,22 @@ class PresentationPatchService:
             playlist_defaults = self._playlist_defaults(playlist_id)
             ctx.native_config = native_config
         elif needs_native and not creates_slide:
-            raise TvCopilotPatchError(TvCopilotContentService.message("missingTarget"))
+            raise PresentationPatchError(TvCopilotContentService.message("missingTarget"))
 
         for raw_op in ops:
             if not isinstance(raw_op, dict):
-                raise TvCopilotPatchError(TvCopilotContentService.message("unknownOp", op="?"))
+                raise PresentationPatchError(TvCopilotContentService.message("unknownOp", op="?"))
             op_name = str(raw_op.get("op") or "").strip()
             if op_name not in allowed:
                 record_copilot_event(kind="preview", ok=False, rejected_op=op_name)
-                raise TvCopilotPatchError(
+                raise PresentationPatchError(
                     TvCopilotContentService.message("unknownOp", op=op_name or "?")
                 )
             _validate_op_required_fields(op_name, raw_op)
             try:
                 validate_operation_payload(op_name, raw_op)
             except NestedContractError as exc:
-                raise TvCopilotPatchError(str(exc)) from exc
+                raise PresentationPatchError(str(exc)) from exc
 
             playlist_id = ctx.resolve_playlist_id(raw_op) or ctx.playlist_id
             slide_id = ctx.resolve_slide_id(raw_op) or ctx.slide_id
@@ -452,7 +448,7 @@ class PresentationPatchService:
 
             if op_name == "add_slide_from_preset":
                 if not playlist_id:
-                    raise TvCopilotPatchError(TvCopilotContentService.message("missingPlaylist"))
+                    raise PresentationPatchError(TvCopilotContentService.message("missingPlaylist"))
                 created_slide = self._op_add_slide_from_preset(
                     playlist_id,
                     raw_op,
@@ -485,7 +481,7 @@ class PresentationPatchService:
 
             if op_name == "add_blank_slide":
                 if not playlist_id:
-                    raise TvCopilotPatchError(TvCopilotContentService.message("missingPlaylist"))
+                    raise PresentationPatchError(TvCopilotContentService.message("missingPlaylist"))
                 created_slide = self._op_add_blank_slide(
                     playlist_id,
                     raw_op,
@@ -532,7 +528,7 @@ class PresentationPatchService:
 
             if op_name == "reorder_slides":
                 if not playlist_id:
-                    raise TvCopilotPatchError(TvCopilotContentService.message("missingPlaylist"))
+                    raise PresentationPatchError(TvCopilotContentService.message("missingPlaylist"))
                 reordered = self._op_reorder_slides(
                     playlist_id,
                     raw_op,
@@ -546,7 +542,7 @@ class PresentationPatchService:
 
             if op_name == "delete_slide":
                 if not playlist_id or not slide_id:
-                    raise TvCopilotPatchError(TvCopilotContentService.message("missingTarget"))
+                    raise PresentationPatchError(TvCopilotContentService.message("missingTarget"))
                 deleted = self._op_delete_slide(
                     playlist_id,
                     slide_id,
@@ -560,7 +556,7 @@ class PresentationPatchService:
 
             if op_name == "upsert_section":
                 if not playlist_id:
-                    raise TvCopilotPatchError(TvCopilotContentService.message("missingPlaylist"))
+                    raise PresentationPatchError(TvCopilotContentService.message("missingPlaylist"))
                 section = self._op_upsert_section(
                     playlist_id,
                     raw_op,
@@ -577,7 +573,7 @@ class PresentationPatchService:
 
             if op_name == "delete_section":
                 if not playlist_id:
-                    raise TvCopilotPatchError(TvCopilotContentService.message("missingPlaylist"))
+                    raise PresentationPatchError(TvCopilotContentService.message("missingPlaylist"))
                 deleted = self._op_delete_section(
                     playlist_id,
                     raw_op,
@@ -591,7 +587,7 @@ class PresentationPatchService:
 
             if op_name == "move_slide_to_section":
                 if not playlist_id or not slide_id:
-                    raise TvCopilotPatchError(TvCopilotContentService.message("missingTarget"))
+                    raise PresentationPatchError(TvCopilotContentService.message("missingTarget"))
                 moved = self._op_move_slide_to_section(
                     playlist_id,
                     slide_id,
@@ -608,7 +604,7 @@ class PresentationPatchService:
                 if creates_slide or ctx.native_config is not None:
                     native_config = ctx.ensure_native_config()
                 else:
-                    raise TvCopilotPatchError(TvCopilotContentService.message("missingTarget"))
+                    raise PresentationPatchError(TvCopilotContentService.message("missingTarget"))
 
             if op_name == "upsert_data_source":
                 self._op_upsert_data_source(native_config, raw_op)
@@ -625,7 +621,7 @@ class PresentationPatchService:
             elif op_name == "patch_native_config":
                 self._op_patch_native_config(native_config, raw_op)
             else:
-                raise TvCopilotPatchError(
+                raise PresentationPatchError(
                     TvCopilotContentService.message("unknownOp", op=op_name or "?")
                 )
             ctx.native_config = native_config
@@ -639,7 +635,7 @@ class PresentationPatchService:
         slide_id = ctx.slide_id
         result: dict[str, Any] = {
             "ok": True,
-            "version": "TvCopilotPatchV1",
+            "version": "TvPresentationPatchV1",
             "catalogVersion": TvCopilotContentService.catalog_version(),
             "appliedOps": applied,
             "target": {"playlistId": playlist_id, "slideId": slide_id},
@@ -661,7 +657,7 @@ class PresentationPatchService:
             try:
                 validate_comunicado_native_config(cleaned, user=user, catalog=self._catalog)
             except ValueError as exc:
-                raise TvCopilotPatchError(str(exc)) from exc
+                raise PresentationPatchError(str(exc)) from exc
             after_blocks = _blocks_of(cleaned)
             result["nativeConfig"] = cleaned
             result["diff"] = _diff_blocks(before_blocks, after_blocks)
@@ -683,7 +679,7 @@ class PresentationPatchService:
                 base_revision=base_revision,
             )
         except ValueError as exc:
-            raise TvCopilotPatchError(str(exc)) from exc
+            raise PresentationPatchError(str(exc)) from exc
 
         return result
 
@@ -718,9 +714,9 @@ class PresentationPatchService:
         try:
             return self._repo.get_slide(UUID(slide_id), playlist_id=UUID(playlist_id))
         except (SlideNotFoundError, ValueError) as exc:
-            raise TvCopilotPatchError(TvCopilotContentService.message("slideNotFound")) from exc
+            raise PresentationPatchError(TvCopilotContentService.message("slideNotFound")) from exc
         except PlaylistNotFoundError as exc:
-            raise TvCopilotPatchError(
+            raise PresentationPatchError(
                 TvCopilotContentService.message("playlistNotFound")
             ) from exc
 
@@ -756,12 +752,12 @@ class PresentationPatchService:
     def _op_upsert_data_source(self, cfg: dict[str, Any], op: dict[str, Any]) -> None:
         operation_id = str(op.get("operationId") or "").strip()
         if not operation_id:
-            raise TvCopilotPatchError(
+            raise PresentationPatchError(
                 TvCopilotContentService.message("operationNotInCatalog", operationId="")
             )
         route = self._catalog.get_route(operation_id)
         if not route:
-            raise TvCopilotPatchError(
+            raise PresentationPatchError(
                 TvCopilotContentService.message(
                     "operationNotInCatalog", operationId=operation_id
                 )
@@ -823,7 +819,7 @@ class PresentationPatchService:
                     block = candidate
                     break
         if block is None:
-            raise TvCopilotPatchError(
+            raise PresentationPatchError(
                 TvCopilotContentService.message("blockNotFound", blockId=block_id or "?")
             )
         steps = op.get("steps")
@@ -837,7 +833,7 @@ class PresentationPatchService:
     def _op_upsert_block(self, cfg: dict[str, Any], op: dict[str, Any]) -> None:
         block = op.get("block")
         if not isinstance(block, dict):
-            raise TvCopilotPatchError(
+            raise PresentationPatchError(
                 TvCopilotContentService.message("blockNotFound", blockId="?")
             )
         # Anti-padrão: nunca aceitar resolved / url solta / M script.
@@ -848,7 +844,7 @@ class PresentationPatchService:
         cleaned.pop("mScript", None)
         cleaned.pop("powerQueryM", None)
         if block.get("mScript") or block.get("powerQueryM"):
-            raise TvCopilotPatchError(TvCopilotContentService.message("mForbidden"))
+            raise PresentationPatchError(TvCopilotContentService.message("mForbidden"))
         block_id = str(cleaned.get("id") or "").strip() or _new_block_id()
         cleaned["id"] = block_id
         blocks = _blocks_of(cfg)
@@ -865,11 +861,11 @@ class PresentationPatchService:
     def _op_delete_block(self, cfg: dict[str, Any], op: dict[str, Any]) -> str | None:
         block_id = str(op.get("blockId") or "").strip()
         if not block_id:
-            raise TvCopilotPatchError(TvCopilotContentService.message("blockIdRequired"))
+            raise PresentationPatchError(TvCopilotContentService.message("blockIdRequired"))
         blocks = _blocks_of(cfg)
         kept = [b for b in blocks if str(b.get("id") or "") != block_id]
         if len(kept) == len(blocks):
-            raise TvCopilotPatchError(
+            raise PresentationPatchError(
                 TvCopilotContentService.message("blockNotFound", blockId=block_id)
             )
         cfg["blocks"] = kept
@@ -879,16 +875,16 @@ class PresentationPatchService:
         visual_id = str(op.get("visualId") or "").strip()
         data_source_id = str(op.get("dataSourceId") or "").strip()
         if not visual_id or not data_source_id:
-            raise TvCopilotPatchError(TvCopilotContentService.message("bindNeedIds"))
+            raise PresentationPatchError(TvCopilotContentService.message("bindNeedIds"))
         blocks = _blocks_of(cfg)
         visual = _find_block(blocks, visual_id)
         source = _find_block(blocks, data_source_id)
         if visual is None:
-            raise TvCopilotPatchError(
+            raise PresentationPatchError(
                 TvCopilotContentService.message("blockNotFound", blockId=visual_id)
             )
         if source is None:
-            raise TvCopilotPatchError(
+            raise PresentationPatchError(
                 TvCopilotContentService.message("blockNotFound", blockId=data_source_id)
             )
         visual["dataSourceId"] = data_source_id
@@ -901,10 +897,10 @@ class PresentationPatchService:
     def _op_patch_native_config(self, cfg: dict[str, Any], op: dict[str, Any]) -> None:
         patch = op.get("patch")
         if not isinstance(patch, dict) or not patch:
-            raise TvCopilotPatchError(TvCopilotContentService.message("patchRequired"))
+            raise PresentationPatchError(TvCopilotContentService.message("patchRequired"))
         unknown = [key for key in patch.keys() if str(key) not in _PATCH_NATIVE_KEYS]
         if unknown:
-            raise TvCopilotPatchError(TvCopilotContentService.message("patchKeysInvalid"))
+            raise PresentationPatchError(TvCopilotContentService.message("patchKeysInvalid"))
         for key in _PATCH_NATIVE_KEYS:
             if key in patch:
                 merge_native_config_key(cfg, str(key), patch[key])
@@ -932,7 +928,7 @@ class PresentationPatchService:
                 **payload,
             }
         if not actor_user_id:
-            raise TvCopilotPatchError(TvCopilotContentService.message("missingTarget"))
+            raise PresentationPatchError(TvCopilotContentService.message("missingTarget"))
         slide = self._repo.add_slide(
             UUID(playlist_id),
             payload,
@@ -966,7 +962,7 @@ class PresentationPatchService:
         if not persist:
             return {"id": slide_id, "preview": True, **payload}
         if not actor_user_id:
-            raise TvCopilotPatchError(TvCopilotContentService.message("missingTarget"))
+            raise PresentationPatchError(TvCopilotContentService.message("missingTarget"))
         try:
             slide = self._repo.update_slide(
                 UUID(playlist_id),
@@ -976,7 +972,7 @@ class PresentationPatchService:
                 reason="copilot_update_slide",
             )
         except (SlideNotFoundError, ValueError) as exc:
-            raise TvCopilotPatchError(TvCopilotContentService.message("slideNotFound")) from exc
+            raise PresentationPatchError(TvCopilotContentService.message("slideNotFound")) from exc
         notify_presentation_changed(
             playlist_id=playlist_id,
             reason="copilot_update_slide",
@@ -993,25 +989,25 @@ class PresentationPatchService:
     ) -> dict[str, Any]:
         items = op.get("items")
         if not isinstance(items, list) or not items:
-            raise TvCopilotPatchError(TvCopilotContentService.message("reorderItemsRequired"))
+            raise PresentationPatchError(TvCopilotContentService.message("reorderItemsRequired"))
         normalized: list[dict[str, Any]] = []
         for item in items:
             if not isinstance(item, dict):
-                raise TvCopilotPatchError(TvCopilotContentService.message("reorderItemsRequired"))
+                raise PresentationPatchError(TvCopilotContentService.message("reorderItemsRequired"))
             item_id = str(item.get("id") or "").strip()
             if not item_id or "sortOrder" not in item:
-                raise TvCopilotPatchError(TvCopilotContentService.message("reorderItemsRequired"))
+                raise PresentationPatchError(TvCopilotContentService.message("reorderItemsRequired"))
             try:
                 sort_order = int(item["sortOrder"])
             except (TypeError, ValueError) as exc:
-                raise TvCopilotPatchError(
+                raise PresentationPatchError(
                     TvCopilotContentService.message("reorderItemsRequired")
                 ) from exc
             normalized.append({"id": item_id, "sortOrder": sort_order})
         if not persist:
             return {"preview": True, "items": normalized}
         if not actor_user_id:
-            raise TvCopilotPatchError(TvCopilotContentService.message("missingTarget"))
+            raise PresentationPatchError(TvCopilotContentService.message("missingTarget"))
         slides = self._repo.reorder_slides(
             UUID(playlist_id),
             normalized,
@@ -1035,7 +1031,7 @@ class PresentationPatchService:
         if not persist:
             return {"id": slide_id, "preview": True, "deleted": True}
         if not actor_user_id:
-            raise TvCopilotPatchError(TvCopilotContentService.message("missingTarget"))
+            raise PresentationPatchError(TvCopilotContentService.message("missingTarget"))
         try:
             self._repo.delete_slide(
                 UUID(playlist_id),
@@ -1044,7 +1040,7 @@ class PresentationPatchService:
                 reason="copilot_delete_slide",
             )
         except (SlideNotFoundError, ValueError) as exc:
-            raise TvCopilotPatchError(TvCopilotContentService.message("slideNotFound")) from exc
+            raise PresentationPatchError(TvCopilotContentService.message("slideNotFound")) from exc
         notify_presentation_changed(
             playlist_id=playlist_id,
             reason="copilot_delete_slide",
@@ -1061,7 +1057,7 @@ class PresentationPatchService:
     ) -> dict[str, Any]:
         name = str(op.get("name") or "").strip()
         if not name:
-            raise TvCopilotPatchError(TvCopilotContentService.message("sectionNameRequired"))
+            raise PresentationPatchError(TvCopilotContentService.message("sectionNameRequired"))
         section_id = str(op.get("sectionId") or "").strip() or None
         if not persist:
             return {
@@ -1071,7 +1067,7 @@ class PresentationPatchService:
                 "updated": bool(section_id),
             }
         if not actor_user_id:
-            raise TvCopilotPatchError(TvCopilotContentService.message("missingTarget"))
+            raise PresentationPatchError(TvCopilotContentService.message("missingTarget"))
         try:
             if section_id:
                 section = self._repo.update_section(
@@ -1089,7 +1085,7 @@ class PresentationPatchService:
                     reason="copilot_upsert_section",
                 )
         except (SectionNotFoundError, ValueError) as exc:
-            raise TvCopilotPatchError(
+            raise PresentationPatchError(
                 TvCopilotContentService.message("sectionNotFound")
             ) from exc
         notify_presentation_changed(
@@ -1108,11 +1104,11 @@ class PresentationPatchService:
     ) -> dict[str, Any]:
         section_id = str(op.get("sectionId") or "").strip()
         if not section_id:
-            raise TvCopilotPatchError(TvCopilotContentService.message("sectionIdRequired"))
+            raise PresentationPatchError(TvCopilotContentService.message("sectionIdRequired"))
         if not persist:
             return {"id": section_id, "preview": True, "deleted": True}
         if not actor_user_id:
-            raise TvCopilotPatchError(TvCopilotContentService.message("missingTarget"))
+            raise PresentationPatchError(TvCopilotContentService.message("missingTarget"))
         try:
             self._repo.delete_section(
                 UUID(playlist_id),
@@ -1121,15 +1117,15 @@ class PresentationPatchService:
                 reason="copilot_delete_section",
             )
         except SectionNotFoundError as exc:
-            raise TvCopilotPatchError(
+            raise PresentationPatchError(
                 TvCopilotContentService.message("sectionNotFound")
             ) from exc
         except MainSectionProtectedError as exc:
-            raise TvCopilotPatchError(
+            raise PresentationPatchError(
                 TvCopilotContentService.message("sectionProtected")
             ) from exc
         except ValueError as exc:
-            raise TvCopilotPatchError(
+            raise PresentationPatchError(
                 TvCopilotContentService.message("sectionNotFound")
             ) from exc
         notify_presentation_changed(
@@ -1148,7 +1144,7 @@ class PresentationPatchService:
         actor_user_id: str | None,
     ) -> dict[str, Any]:
         if "sectionId" not in op:
-            raise TvCopilotPatchError(
+            raise PresentationPatchError(
                 TvCopilotContentService.message("opMissingField", op="move_slide_to_section", field="sectionId")
             )
         section_raw = op.get("sectionId")
@@ -1157,7 +1153,7 @@ class PresentationPatchService:
         if not persist:
             return {"id": slide_id, "preview": True, **payload}
         if not actor_user_id:
-            raise TvCopilotPatchError(TvCopilotContentService.message("missingTarget"))
+            raise PresentationPatchError(TvCopilotContentService.message("missingTarget"))
         try:
             slide = self._repo.update_slide(
                 UUID(playlist_id),
@@ -1167,7 +1163,7 @@ class PresentationPatchService:
                 reason="copilot_move_slide_section",
             )
         except (SlideNotFoundError, ValueError) as exc:
-            raise TvCopilotPatchError(TvCopilotContentService.message("slideNotFound")) from exc
+            raise PresentationPatchError(TvCopilotContentService.message("slideNotFound")) from exc
         notify_presentation_changed(
             playlist_id=playlist_id,
             reason="copilot_move_slide_section",
@@ -1185,11 +1181,11 @@ class PresentationPatchService:
     ) -> dict[str, Any]:
         preset_key = str(op.get("presetKey") or "").strip()
         if not preset_key:
-            raise TvCopilotPatchError(TvCopilotContentService.message("presetRequired"))
+            raise PresentationPatchError(TvCopilotContentService.message("presetRequired"))
         try:
             payload = resolve_preset_slide(preset_key)
         except SlidePresetNotFoundError as exc:
-            raise TvCopilotPatchError(
+            raise PresentationPatchError(
                 TvCopilotContentService.message("presetRequired")
             ) from exc
         branch = str(op.get("branch") or "").strip()
@@ -1213,7 +1209,7 @@ class PresentationPatchService:
                 "slideType": payload.get("slideType"),
             }
         if not actor_user_id:
-            raise TvCopilotPatchError(TvCopilotContentService.message("missingTarget"))
+            raise PresentationPatchError(TvCopilotContentService.message("missingTarget"))
         slide = self._repo.add_slide(
             UUID(playlist_id),
             payload,
@@ -1235,7 +1231,7 @@ class PresentationPatchService:
     ) -> dict[str, Any]:
         name = str(op.get("name") or "").strip()
         if not name:
-            raise TvCopilotPatchError(TvCopilotContentService.message("playlistNameRequired"))
+            raise PresentationPatchError(TvCopilotContentService.message("playlistNameRequired"))
         description = op.get("description")
         if not persist:
             return {
@@ -1245,7 +1241,7 @@ class PresentationPatchService:
                 "description": description,
             }
         if not actor_user_id:
-            raise TvCopilotPatchError(TvCopilotContentService.message("missingTarget"))
+            raise PresentationPatchError(TvCopilotContentService.message("missingTarget"))
         playlist = self._repo.create(
             name=name,
             description=str(description) if description is not None else None,
@@ -1280,7 +1276,3 @@ class PresentationPatchService:
                 )
         playlist["seededSlides"] = seeded
         return playlist
-
-
-# Legacy aliases — prefer PresentationPatch*.
-TvCopilotPatchService = PresentationPatchService

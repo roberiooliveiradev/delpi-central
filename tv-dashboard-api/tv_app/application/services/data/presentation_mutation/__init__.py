@@ -1,7 +1,6 @@
 """Canonical PresentationMutation — typed ops for VISTA / future DÉLIA.
 
 Owner of TvPresentationPatchV1. Persistence remains ``TvPresentationWriteService``.
-Legacy ``tv_copilot_*`` modules re-export from here during cutover.
 """
 
 from __future__ import annotations
@@ -21,13 +20,11 @@ from tv_app.application.services.data.presentation_mutation.merge import (
 from tv_app.application.services.data.presentation_mutation.patch_service import (
     PresentationPatchError,
     PresentationPatchService,
-    TvCopilotPatchError,
-    TvCopilotPatchService,
 )
 from tv_app.application.services.data.presentation_mutation.plan_compiler import (
     CompiledPlan,
     PlanCompileError,
-    compile_copilot_plan,
+    compile_presentation_plan,
 )
 
 __all__ = [
@@ -37,9 +34,7 @@ __all__ = [
     "PlanCompileError",
     "PresentationPatchError",
     "PresentationPatchService",
-    "TvCopilotPatchError",
-    "TvCopilotPatchService",
-    "compile_copilot_plan",
+    "compile_presentation_plan",
     "deep_merge_dicts",
     "is_synthetic_id",
     "merge_block_patch",

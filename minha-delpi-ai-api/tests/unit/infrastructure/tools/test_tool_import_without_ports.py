@@ -24,12 +24,6 @@ def _import_in_clean_process(module: str) -> subprocess.CompletedProcess[str]:
     )
 
 
-def test_tv_dashboard_copilot_tool_imports_without_ports():
-    result = _import_in_clean_process("app.infrastructure.tools.tv_dashboard_copilot_tool")
-
-    assert result.returncode == 0, result.stderr
-
-
 def test_tool_composer_imports_without_ports():
     result = _import_in_clean_process("app.composition.tool_composer")
 

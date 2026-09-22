@@ -24,9 +24,9 @@ from tv_app.application.gpt_actions.proposal_store import (
 )
 from tv_app.application.services.data.tv_copilot_content_service import TvCopilotContentService
 from tv_app.application.services.data.presentation_mutation import (
+    PresentationPatchError,
     PresentationPatchService,
 )
-from tv_app.application.services.data.tv_copilot_patch_service import TvCopilotPatchService
 from tv_app.application.services.tv_presentation_write_service import (
     PresentationWriteError,
     TvPresentationWriteService,
@@ -153,7 +153,7 @@ def test_preview_returns_typed_ops_not_string_applied_ops():
         ),
         patch.object(dispatch._access, "actor_id", return_value="actor-1"),
         patch.object(
-            TvCopilotPatchService,
+            PresentationPatchService,
             "preview",
             return_value={
                 # Canonical shape: names only
@@ -228,7 +228,7 @@ def test_preview_policy_from_catalog_authority_not_patch_echo():
             ),
             patch.object(dispatch._access, "actor_id", return_value="actor-1"),
             patch.object(
-                TvCopilotPatchService,
+                PresentationPatchService,
                 "preview",
                 return_value={
                     "appliedOps": [str(op["op"]) for op in ops],
@@ -932,7 +932,7 @@ def test_create_playlist_preview_then_commit_verified_family():
         ),
         patch.object(dispatch._access, "actor_id", return_value="actor-1"),
         patch.object(
-            TvCopilotPatchService,
+            PresentationPatchService,
             "preview",
             return_value={
                 "appliedOps": ["create_playlist"],
@@ -1139,7 +1139,7 @@ def test_openapi_artifact_matches_builder():
 
 
 def test_dispatch_maps_nested_contract_error_to_invalid_change():
-    from tv_app.application.services.data.tv_copilot_patch_service import TvCopilotPatchError
+    from tv_app.application.services.data.presentation_mutation import PresentationPatchError
 
     repo = MagicMock()
     writes = _writes_mock()
@@ -1153,9 +1153,9 @@ def test_dispatch_maps_nested_contract_error_to_invalid_change():
         ),
         patch.object(dispatch._access, "actor_id", return_value="actor-1"),
         patch.object(
-            TvCopilotPatchService,
+            PresentationPatchService,
             "preview",
-            side_effect=TvCopilotPatchError("fieldLabels deve ser um mapa string→string."),
+            side_effect=PresentationPatchError("fieldLabels deve ser um mapa string→string."),
         ),
     ):
         with pytest.raises(GptActionsError) as exc:
@@ -1401,7 +1401,7 @@ def test_preview_commit_now_direct_policy_verified_single_shot():
         ),
         patch.object(dispatch._access, "actor_id", return_value="actor-1"),
         patch.object(
-            TvCopilotPatchService,
+            PresentationPatchService,
             "preview",
             return_value={
                 "appliedOps": ["create_playlist"],
@@ -1447,7 +1447,7 @@ def test_preview_commit_now_confirm_policy_does_not_write():
         ),
         patch.object(dispatch._access, "actor_id", return_value="actor-1"),
         patch.object(
-            TvCopilotPatchService,
+            PresentationPatchService,
             "preview",
             return_value={
                 "appliedOps": ["delete_slide"],
@@ -1488,7 +1488,7 @@ def test_preview_commit_now_without_confirmation_requires_confirm():
     with (
         patch.object(dispatch._access, "actor_id", return_value="actor-1"),
         patch.object(
-            TvCopilotPatchService,
+            PresentationPatchService,
             "preview",
             return_value={
                 "appliedOps": ["create_playlist"],

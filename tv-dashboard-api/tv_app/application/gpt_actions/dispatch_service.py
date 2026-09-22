@@ -19,10 +19,6 @@ from tv_app.application.services.data.presentation_mutation import (
     PresentationPatchError,
     PresentationPatchService,
 )
-
-# Legacy aliases (tests / transitional wiring)
-TvCopilotPatchError = PresentationPatchError
-TvCopilotPatchService = PresentationPatchService
 from tv_app.application.services.data.tv_data_config_validation_service import (
     TvDataConfigValidationService,
 )
@@ -53,7 +49,7 @@ class GptActionsDispatchService:
         writes: TvPresentationWriteService,
         commit: TvGptCommitService,
         access: PlaylistAccessService | None = None,
-        patch: TvCopilotPatchService | None = None,
+        patch: PresentationPatchService | None = None,
         catalog: TvDataRouteCatalogService | None = None,
         validation: TvDataConfigValidationService | None = None,
         preview: TvDataPreviewService | None = None,
@@ -62,7 +58,7 @@ class GptActionsDispatchService:
         self._repo = repo
         self._writes = writes
         self._access = access or PlaylistAccessService()
-        self._patch = patch or TvCopilotPatchService()
+        self._patch = patch or PresentationPatchService()
         self._commit = commit
         self._catalog = catalog or TvDataRouteCatalogService()
         self._validation = validation or TvDataConfigValidationService()
@@ -266,7 +262,7 @@ class GptActionsDispatchService:
                 authorization=authorization,
                 include_fingerprint=True,
             )
-        except TvCopilotPatchError as exc:
+        except PresentationPatchError as exc:
             code = str(getattr(exc, "code", None) or "INVALID_CHANGE").strip() or "INVALID_CHANGE"
             raise GptActionsError(str(exc), code=code, status_code=422) from exc
 

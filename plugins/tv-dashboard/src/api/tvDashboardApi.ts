@@ -1321,15 +1321,3 @@ export async function downloadQrPng(playlistId: string) {
   return httpGetBlob(qrDownloadUrl(playlistId));
 }
 
-export async function builderSessionToCopilotOps(sessionId: string) {
-  return unwrap(
-    httpPost<
-      ApiEnvelope<{
-        ok: boolean;
-        ops: Array<Record<string, unknown>>;
-        primaryLocalId?: string;
-        preferredView?: string;
-      }>
-    >(`${API_BASE}/data/builder/sessions/${sessionId}/to-copilot-ops`, {}),
-  );
-}

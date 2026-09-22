@@ -1,4 +1,4 @@
-"""Testes TvCopilotPatchV1 — preview/apply sem M e sem resolved."""
+"""Testes PresentationMutation — preview/apply sem M e sem resolved."""
 
 from __future__ import annotations
 
@@ -10,9 +10,9 @@ from tv_app.application.services.data.tv_copilot_content_service import (
     TvCopilotContentService,
     clear_tv_copilot_content_cache,
 )
-from tv_app.application.services.data.tv_copilot_patch_service import (
-    TvCopilotPatchError,
-    TvCopilotPatchService,
+from tv_app.application.services.data.presentation_mutation import (
+    PresentationPatchError,
+    PresentationPatchService,
 )
 from tv_app.application.services.data.tv_copilot_telemetry import (
     reset_copilot_telemetry,
@@ -236,7 +236,7 @@ def _service(repo=None, monkeypatch=None):
             "tv_app.application.services.data.presentation_mutation.patch_service.validate_comunicado_native_config",
             lambda cfg, user=None, catalog=None: None,
         )
-    return TvCopilotPatchService(
+    return PresentationPatchService(
         catalog=_FakeCatalog({"op.demo": {"label": "Demo", "operationId": "op.demo"}}),
         repo=repo or _FakeRepo(),
         resolution=_FakeResolution(),
@@ -254,7 +254,7 @@ def test_capability_catalog_document_has_version_and_capabilities():
 def test_patch_target_validation_uses_operation_contract(monkeypatch):
     svc = _service(monkeypatch=monkeypatch)
 
-    with pytest.raises(TvCopilotPatchError, match="playlistId"):
+    with pytest.raises(PresentationPatchError, match="playlistId"):
         svc.preview(
             {
                 "target": {},
@@ -263,7 +263,7 @@ def test_patch_target_validation_uses_operation_contract(monkeypatch):
             user={},
         )
 
-    with pytest.raises(TvCopilotPatchError, match="slideId"):
+    with pytest.raises(PresentationPatchError, match="slideId"):
         svc.preview(
             {
                 "target": {"playlistId": PLAYLIST_ID},
@@ -354,7 +354,7 @@ def test_apply_plans_crud_http_without_persisting(monkeypatch):
 
 def test_rejects_unknown_op_and_unknown_operation_id(monkeypatch):
     svc = _service(monkeypatch=monkeypatch)
-    with pytest.raises(TvCopilotPatchError):
+    with pytest.raises(PresentationPatchError):
         svc.preview(
             {
                 "target": {"playlistId": PLAYLIST_ID, "slideId": SLIDE_ID},
@@ -362,7 +362,7 @@ def test_rejects_unknown_op_and_unknown_operation_id(monkeypatch):
             },
             user={},
         )
-    with pytest.raises(TvCopilotPatchError):
+    with pytest.raises(PresentationPatchError):
         svc.preview(
             {
                 "target": {"playlistId": PLAYLIST_ID, "slideId": SLIDE_ID},
@@ -382,7 +382,7 @@ def test_create_playlist_preview_and_m_forbidden_on_upsert_block(monkeypatch):
     assert preview["sideEffects"]["playlist"]["name"] == "Turno A"
     assert "refreshFilmstrip" in preview["sideEffectHints"]
 
-    with pytest.raises(TvCopilotPatchError):
+    with pytest.raises(PresentationPatchError):
         svc.preview(
             {
                 "target": {"playlistId": PLAYLIST_ID, "slideId": SLIDE_ID},
@@ -451,7 +451,7 @@ def test_patch_native_config_background(monkeypatch):
     }
     assert "replaceNativeConfig" in result["sideEffectHints"]
 
-    with pytest.raises(TvCopilotPatchError):
+    with pytest.raises(PresentationPatchError):
         svc.preview(
             {
                 "target": {"playlistId": PLAYLIST_ID, "slideId": SLIDE_ID},
@@ -638,7 +638,7 @@ def test_apply_traduz_erro_de_validacao_em_erro_de_patch(monkeypatch):
         _reject,
     )
 
-    with pytest.raises(TvCopilotPatchError, match="não permitida"):
+    with pytest.raises(PresentationPatchError, match="não permitida"):
         svc.apply(
             {
                 "target": {"playlistId": PLAYLIST_ID, "slideId": SLIDE_ID},
@@ -705,7 +705,7 @@ def test_nested_contract_positive_sibling_negative(monkeypatch):
     updated = next(b for b in ok_labels["nativeConfig"]["blocks"] if b["id"] == "src-a")
     assert updated["fieldLabels"]["idd"] == "IDD"
 
-    with pytest.raises(TvCopilotPatchError):
+    with pytest.raises(PresentationPatchError):
         svc.preview(
             {
                 "target": {"playlistId": PLAYLIST_ID, "slideId": SLIDE_ID},
@@ -713,7 +713,7 @@ def test_nested_contract_positive_sibling_negative(monkeypatch):
             },
             user={},
         )
-    with pytest.raises(TvCopilotPatchError, match="step"):
+    with pytest.raises(PresentationPatchError, match="step"):
         svc.preview(
             {
                 "target": {"playlistId": PLAYLIST_ID, "slideId": SLIDE_ID},
@@ -727,7 +727,7 @@ def test_nested_contract_positive_sibling_negative(monkeypatch):
             },
             user={},
         )
-    with pytest.raises(TvCopilotPatchError):
+    with pytest.raises(PresentationPatchError):
         svc.preview(
             {
                 "target": {"playlistId": PLAYLIST_ID},
@@ -735,7 +735,7 @@ def test_nested_contract_positive_sibling_negative(monkeypatch):
             },
             user={},
         )
-    with pytest.raises(TvCopilotPatchError):
+    with pytest.raises(PresentationPatchError):
         svc.preview(
             {
                 "target": {"playlistId": PLAYLIST_ID, "slideId": SLIDE_ID},
@@ -749,7 +749,7 @@ def test_nested_contract_positive_sibling_negative(monkeypatch):
             },
             user={},
         )
-    with pytest.raises(TvCopilotPatchError):
+    with pytest.raises(PresentationPatchError):
         svc.preview(
             {
                 "target": {"playlistId": PLAYLIST_ID, "slideId": SLIDE_ID},
@@ -763,7 +763,7 @@ def test_nested_contract_positive_sibling_negative(monkeypatch):
             },
             user={},
         )
-    with pytest.raises(TvCopilotPatchError):
+    with pytest.raises(PresentationPatchError):
         svc.preview(
             {
                 "target": {"playlistId": PLAYLIST_ID, "slideId": SLIDE_ID},

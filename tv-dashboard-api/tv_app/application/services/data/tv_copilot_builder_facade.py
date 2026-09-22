@@ -1,4 +1,4 @@
-"""Fachada: materialize do Data Builder → ops TvCopilotPatchV1 (sem segundo pipeline)."""
+"""Fachada: materialize do Data Builder → PresentationMutation ops (sem segundo pipeline)."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from tv_app.application.services.data.tv_data_builder_service import TvDataBuild
 from tv_app.application.services.tv_data_route_catalog_service import TvDataRouteCatalogService
 
 
-def materialize_session_to_copilot_ops(
+def materialize_session_to_presentation_ops(
     session_id: str,
     *,
     catalog: TvDataRouteCatalogService | None = None,

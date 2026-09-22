@@ -190,7 +190,7 @@
     "eliminar"
   ],
   "messages": {
-    "invalidEnvelope": "Envelope TvCopilotPatch inválido: informe target e ops.",
+    "invalidEnvelope": "Envelope PresentationMutation inválido: informe target e ops.",
     "unknownOp": "Operação não suportada: {op}.",
     "missingTarget": "Informe playlistId e slideId no target (exceto create_playlist).",
     "missingPlaylist": "Informe playlistId no target.",
@@ -1091,7 +1091,7 @@
           },
           "block": {
             "type": "object",
-            "description": "Smallest semantic block accepted by TvCopilotPatchV1 upsert_block. No resolved/url/mScript. Extra known editor keys may be present and are merged.",
+            "description": "Smallest semantic block accepted by TvPresentationPatchV1 upsert_block. No resolved/url/mScript. Extra known editor keys may be present and are merged.",
             "required": [
               "type"
             ],

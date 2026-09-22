@@ -1676,7 +1676,7 @@
                             },
                             "block": {
                               "type": "object",
-                              "description": "Smallest semantic block accepted by TvCopilotPatchV1 upsert_block. No resolved/url/mScript. Extra known editor keys may be present and are merged.",
+                              "description": "Smallest semantic block accepted by TvPresentationPatchV1 upsert_block. No resolved/url/mScript. Extra known editor keys may be present and are merged.",
                               "required": [
                                 "type"
                               ],

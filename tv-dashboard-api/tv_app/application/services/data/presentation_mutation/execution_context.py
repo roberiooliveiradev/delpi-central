@@ -1,4 +1,4 @@
-"""Shared execution slots/aliases for Copilot compound plans (preview + ACT)."""
+"""Shared execution slots/aliases for presentation compound plans (preview + ACT)."""
 
 from __future__ import annotations
 

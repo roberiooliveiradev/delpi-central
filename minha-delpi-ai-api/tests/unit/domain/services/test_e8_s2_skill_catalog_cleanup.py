@@ -26,7 +26,6 @@ _EXPECTED_HINTS = {
     "drawing-analysis-delpi": "product_analyser",
     "document-vision-delpi": "document_vision",
     "quality-action-plans-delpi": "quality_action_plans",
-    "tv-dashboard-copilot": "tv_dashboard_copilot",
 }
 
 

@@ -98,8 +98,8 @@ def test_merge_native_background_preserves_underlay():
 
 def test_preview_upsert_block_partial_style_keeps_color(monkeypatch):
     from uuid import uuid4
-    from tv_app.application.services.data.tv_copilot_patch_service import (
-        TvCopilotPatchService,
+    from tv_app.application.services.data.presentation_mutation import (
+        PresentationPatchService,
     )
 
     playlist_id = str(uuid4())
@@ -130,8 +130,6 @@ def test_preview_upsert_block_partial_style_keeps_color(monkeypatch):
             }
 
     svc = PresentationPatchService(repo=_Repo())
-    # Ensure legacy alias is the same class
-    assert TvCopilotPatchService is PresentationPatchService
 
     result = svc.preview(
         {

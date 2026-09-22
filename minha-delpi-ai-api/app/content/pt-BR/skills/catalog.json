@@ -151,25 +151,6 @@
         "submeter eficácia do plano PAC"
       ],
       "sortOrder": 35
-    },
-    {
-      "key": "tv-dashboard-copilot",
-      "label": "Copiloto TV Dashboard (retirado)",
-      "description": "Skill desligada. Mutações de TV Dashboard usam o especialista VISTA (gpt-actions / PresentationMutation).",
-      "policyFile": "tv-dashboard-copilot-skill.md",
-      "metadataFlag": "enabled",
-      "legacyMetadataFlag": "tvDashboardCopilot",
-      "executionPathHint": "tv_dashboard_copilot",
-      "isActive": false,
-      "aliases": [
-        "tv copilot",
-        "copiloto tv",
-        "tv dashboard",
-        "assistente tv",
-        "patch tipado tv"
-      ],
-      "examplePrompts": [],
-      "sortOrder": 40
     }
   ]
 }

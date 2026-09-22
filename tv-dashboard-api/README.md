@@ -53,7 +53,7 @@ Assistente conversacional de dados: [`docs/data-builder-chat.md`](./docs/data-bu
 | `POST` | `/data/builder/sessions/{id}/turn` | `TV_WRITE` | Mensagem NL / action → rascunho |
 | `POST` | `/data/builder/sessions/{id}/preview` | `TV_WRITE` | Prévia tabular do rascunho |
 | `POST` | `/data/builder/sessions/{id}/materialize` | `TV_WRITE` | Payload de `data_source`(+transform) para o slide |
-| `POST` | `/data/builder/sessions/{id}/to-copilot-ops` | `TV_WRITE` | Fachada: rascunho → ops TvCopilotPatch |
+| `POST` | `/data/builder/sessions/{id}/to-presentation-ops` | `TV_WRITE` | Fachada: rascunho → ops PresentationMutation |
 | `POST` | `/data/copilot/preview-patch` | `TV_WRITE` | Dry-run de patch tipado (+ fingerprint opcional) |
 | `POST` | `/data/copilot/apply-patch` | `TV_WRITE` | Aplica patch + notify (cache/WS); confirmação no chat |
 | `GET` | `/data/copilot/telemetry` | `TV_MANAGE` | Contadores preview/apply |

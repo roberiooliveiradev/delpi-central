@@ -33,10 +33,6 @@ from tv_app.application.services.tv_presentation_write_service import (
     TvPresentationWriteService,
 )
 
-# Transitional aliases for test monkeypatches / callers still using Copilot names.
-TvCopilotPatchError = PresentationPatchError
-TvCopilotPatchService = PresentationPatchService
-
 _NATIVE_CONFIG_OPS = frozenset(
     {
         "upsert_data_source",
@@ -101,12 +97,12 @@ class TvGptCommitService:
         *,
         writes: TvPresentationWriteService,
         idempotency: IdempotencyRepositoryPort,
-        patch: TvCopilotPatchService | None = None,
+        patch: PresentationPatchService | None = None,
         access: PlaylistAccessService | None = None,
     ) -> None:
         self._writes = writes
         self._idempotency = idempotency
-        self._patch = patch or TvCopilotPatchService()
+        self._patch = patch or PresentationPatchService()
         self._access = access or PlaylistAccessService()
 
     @staticmethod
@@ -446,7 +442,7 @@ class TvGptCommitService:
                 authorization=authorization,
                 include_fingerprint=False,
             )
-        except TvCopilotPatchError as exc:
+        except PresentationPatchError as exc:
             code = (
                 str(getattr(exc, "code", None) or "INVALID_CHANGE").strip()
                 or "INVALID_CHANGE"

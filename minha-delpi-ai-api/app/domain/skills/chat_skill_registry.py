@@ -340,8 +340,6 @@ class ChatSkillRegistry:
                 resolved["documentVision"] = bool(item["enabled"])
             if item["skillKey"] == QUALITY_ACTION_PLANS_SKILL_KEY:
                 resolved["qualityActionPlans"] = bool(item["enabled"])
-            if item["skillKey"] == TV_DASHBOARD_COPILOT_SKILL_KEY:
-                resolved["tvDashboardCopilot"] = bool(item["enabled"])
 
         if resolved["qualityActionPlans"]:
             from app.domain.services.chat_quality_action_plans_access_service import (

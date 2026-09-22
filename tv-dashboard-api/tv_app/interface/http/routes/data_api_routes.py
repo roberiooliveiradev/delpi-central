@@ -273,8 +273,8 @@ def get_data_builder_session(request: Request, session_id: str):
 
 @router.post("/builder/sessions/{session_id}/turn")
 def data_builder_turn(request: Request, session_id: str, body: BuilderTurnBody):
-    """Deprecated: turno NL do Builder. Preferir Copilot + POST /data/copilot/suggest-ops;
-    materialize tipado via POST .../to-copilot-ops (mesmo catálogo)."""
+    """Deprecated: turno NL do Builder. Preferir VISTA gpt_suggest_change;
+    materialize tipado via POST .../to-presentation-ops."""
     user = resolve_user(request)
     try:
         assert_permission(user, TV_WRITE)
@@ -313,24 +313,39 @@ def data_builder_materialize(request: Request, session_id: str):
     return ok(result, message="Modelo pronto para o slide.")
 
 
-@router.post("/builder/sessions/{session_id}/to-copilot-ops")
-def data_builder_to_copilot_ops(request: Request, session_id: str):
-    """Fachada A0: rascunho do builder → ops TvCopilotPatch (mesmo materialize, sem segundo pipeline)."""
+@router.post("/builder/sessions/{session_id}/to-presentation-ops")
+def data_builder_to_presentation_ops(request: Request, session_id: str):
+    """Draft Builder → PresentationMutation typed ops (same materialize, no second pipeline)."""
     user = resolve_user(request)
     try:
         assert_permission(user, TV_WRITE)
     except PermissionError as exc:
         return fail(str(exc), 403)
     from tv_app.application.services.data.tv_copilot_builder_facade import (
-        materialize_session_to_copilot_ops,
+        materialize_session_to_presentation_ops,
     )
 
-    result = materialize_session_to_copilot_ops(session_id, catalog=_catalog)
-    if result.get("message") == "session_not_found":
-        return fail("Sessão do assistente não encontrada ou expirada.", 404)
+    result = materialize_session_to_presentation_ops(session_id, catalog=_catalog)
     if not result.get("ok"):
-        return fail(str(result.get("message") or "Rascunho vazio."), 400, data=result)
-    return ok(result, message="Ops do copiloto geradas a partir do rascunho.")
+        msg = str(result.get("message") or "Falha ao materializar ops.")
+        if msg == "session_not_found":
+            return fail("Sessão do assistente não encontrada ou expirada.", 404)
+        return fail(msg, 400, data=result)
+    return ok(result, message="Ops de apresentação geradas a partir do rascunho.")
+
+
+@router.post("/builder/sessions/{session_id}/to-copilot-ops")
+def data_builder_to_copilot_ops_gone(request: Request, session_id: str):
+    """Gone — renamed to ``to-presentation-ops``."""
+    return fail(
+        "Endpoint renomeado para /data/builder/sessions/{id}/to-presentation-ops.",
+        410,
+        data={
+            "gone": True,
+            "successor": f"/data/builder/sessions/{session_id}/to-presentation-ops",
+            "mutationOwner": "PresentationMutation",
+        },
+    )
 
 
 @router.post("/builder/sessions/{session_id}/preview")
@@ -518,7 +533,7 @@ def validate_data_config(request: Request, body: ValidateDataConfigBody):
 
 
 class CopilotPatchBody(BaseModel):
-    """Envelope TvCopilotPatchV1."""
+    """Legacy body for retired /data/copilot routes."""
 
     target: dict[str, Any] = Field(default_factory=dict)
     ops: list[dict[str, Any]] = Field(default_factory=list)

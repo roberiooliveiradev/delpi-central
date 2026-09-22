@@ -11,7 +11,7 @@ O turno NL (`POST /data/builder/sessions/{id}/turn`) **não** é mais o caminho 
 | Caminho | Status |
 |---------|--------|
 | `POST /data/copilot/suggest-ops` | **Canônico** para NL → ops tipadas (catálogo TV) |
-| `POST /data/builder/sessions/{id}/to-copilot-ops` | **Único** caminho do rascunho Builder → mesmas ops do catálogo |
+| `POST /data/builder/sessions/{id}/to-presentation-ops` | **Único** caminho do rascunho Builder → mesmas ops do catálogo |
 | `POST /data/builder/sessions/{id}/turn` | **Deprecated** para mutação tipada — manter só rascunho/S2S legado; não evoluir encodings de bloco aqui |
 
 Doc do copiloto: [tv-copilot.md](./tv-copilot.md).
@@ -21,7 +21,7 @@ Doc do copiloto: [tv-copilot.md](./tv-copilot.md).
 | Fase | Superfície | Regra |
 |------|------------|-------|
 | **A0** | Chat portal + skill `tv-dashboard-copilot` | Sem remote MF; tool chama BFF `/data/copilot/*` |
-| **A1+** | Remote `./EmbeddedChat` na aba «Copiloto IA» | Permitido **somente** como host de UI; inteligência na `minha-delpi-ai-api`; mutação só via `TvCopilotPatchV1` |
+| **A1+** | Remote `./EmbeddedChat` na aba «Copiloto IA» | Permitido **somente** como host de UI; inteligência na `minha-delpi-ai-api`; mutação só via `TvPresentationPatchV1` |
 | **Rascunho** | `DataBuilderChatPanel` (aba Rascunho) | Continua; S2S suggest; **não** reimplementa pipeline LLM |
 
 **O que permanece no BFF:** allowlist de rotas, draft/session, materialize, `suggest-ops` / `preview-patch` / `apply-patch`, `SlideDataResolutionService`, persistência + `notify_presentation_changed`.
@@ -40,7 +40,7 @@ MFE (DataBuilderChatPanel — aba Rascunho)
   → POST .../materialize
   → createDataSourceBlock / addDataSourceBlock no slide
 
-Canônico → POST .../to-copilot-ops → ops TvCopilotPatch (mesmo catálogo do Copilot)
+Canônico → POST .../to-presentation-ops → ops PresentationMutation (mesmo catálogo do Copilot)
 ```
 
 ## Fluxo (copiloto)
@@ -84,7 +84,7 @@ No materialize, a fonte âncora leva o `dataTransform` (inclui `merge` com `sour
 | `POST` | `/builder/sessions/{id}/turn` | `TV_WRITE` | **Deprecated** p/ mutação tipada |
 | `POST` | `/builder/sessions/{id}/preview` | `TV_WRITE` | |
 | `POST` | `/builder/sessions/{id}/materialize` | `TV_WRITE` | |
-| `POST` | `/builder/sessions/{id}/to-copilot-ops` | `TV_WRITE` | **Canônico** rascunho → ops |
+| `POST` | `/builder/sessions/{id}/to-presentation-ops` | `TV_WRITE` | **Canônico** rascunho → ops |
 | `POST` | `/copilot/suggest-ops` | `TV_WRITE` | **Canônico** NL → ops |
 | `POST` | `/copilot/preview-patch` | `TV_WRITE` | |
 | `POST` | `/copilot/apply-patch` | `TV_WRITE` | |

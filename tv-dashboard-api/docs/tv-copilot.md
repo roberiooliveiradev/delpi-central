@@ -50,7 +50,7 @@ Patches tipados no modelo de slide/playlist via chat base (`tv_dashboard_copilot
 | `POST` | `/data/copilot/preview-patch` | `TV_WRITE` | Dry-run + diff + `httpCommands` + `baseRevision`; **não** persiste |
 | `POST` | `/data/copilot/apply-patch` | `TV_WRITE` | **Depreciado como writer:** mesmo plano do preview (`persisted: false`, `executionMode: crud_http`). Persistência = CRUD `/playlists/**` |
 | `GET` | `/data/copilot/telemetry` | `TV_MANAGE` | Contadores |
-| `POST` | `/data/builder/sessions/{id}/to-copilot-ops` | `TV_WRITE` | Materialize → mesmas ops do catálogo |
+| `POST` | `/data/builder/sessions/{id}/to-presentation-ops` | `TV_WRITE` | Materialize → mesmas ops do catálogo |
 
 ### `operations`: contrato executável
 
@@ -182,7 +182,7 @@ Chat → AI → preview-patch (dry-run + httpCommands)
          → notify_presentation_changed → editor WS
 ```
 
-- BFF (`TvCopilotPatchService`): redutor + `TvCopilotHttpCommandPlannerService` — **nunca** `update_slide` no apply.
+- BFF (`PresentationPatchService`): redutor + `TvCopilotHttpCommandPlannerService` — **nunca** `update_slide` no apply.
 - OCC: header `If-Match` / corpo `currentRevision` em 409; resposta `X-Playlist-Revision`.
 - Ops de canvas (`upsert_block`, `delete_block`, …) coalescem em **um** `PATCH` `nativeConfig`.
 
@@ -201,9 +201,9 @@ Chat → AI → preview-patch (dry-run + httpCommands)
 | Caminho | Status | Uso |
 |---------|--------|-----|
 | `POST /data/copilot/suggest-ops` | **canônico** | NL + `hostContext` → `ops[]` (BFF determinístico) |
-| `POST /data/builder/sessions/{id}/to-copilot-ops` | **canônico** | Rascunho materializado → mesmas ops do catálogo |
+| `POST /data/builder/sessions/{id}/to-presentation-ops` | **canônico** | Rascunho materializado → mesmas ops do catálogo |
 | `POST /data/builder/sessions/{id}/turn` (NL) | **deprecated** | Não é o caminho de mutação tipada; não evoluir novos encodings aqui |
 
-Materialize → `to-copilot-ops` usa o **mesmo** catálogo. Turn NL legado do Builder: **deprecated** — preferir Copilot + `suggest-ops` / skill.
+Materialize → `to-presentation-ops` usa o **mesmo** catálogo. Turn NL legado do Builder: **deprecated** — preferir Copilot + `suggest-ops` / skill.
 
 Ver também: [data-builder-chat.md](./data-builder-chat.md), regra `.cursor/rules/tv-dashboard-presentation-parity.mdc`.

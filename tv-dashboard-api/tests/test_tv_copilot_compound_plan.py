@@ -15,9 +15,9 @@ from tv_app.application.services.data.tv_copilot_content_service import (
     TvCopilotContentService,
     clear_tv_copilot_content_cache,
 )
-from tv_app.application.services.data.tv_copilot_plan_compiler import (
+from tv_app.application.services.data.presentation_mutation import (
     PlanCompileError,
-    compile_copilot_plan,
+    compile_presentation_plan,
 )
 from tv_app.infrastructure.persistence.repositories.idempotency_repository import (
     InMemoryIdempotencyRepository,
@@ -70,7 +70,7 @@ def test_plan_resource_requirements_satisfiable_after_create_chain():
 
 
 def test_compiler_reorders_shuffled_compound_ops():
-    compiled = compile_copilot_plan(ops=_compound_ops(), target={})
+    compiled = compile_presentation_plan(ops=_compound_ops(), target={})
     assert compiled.dependency_order == [
         "create_playlist",
         "add_blank_slide",
@@ -82,7 +82,7 @@ def test_compiler_reorders_shuffled_compound_ops():
 
 def test_compiler_rejects_unsatisfiable_upsert_without_slide():
     with pytest.raises(PlanCompileError) as caught:
-        compile_copilot_plan(
+        compile_presentation_plan(
             ops=[
                 {
                     "op": "upsert_block",
@@ -96,7 +96,7 @@ def test_compiler_rejects_unsatisfiable_upsert_without_slide():
 
 def test_compiler_rejects_unknown_ref():
     with pytest.raises(PlanCompileError) as caught:
-        compile_copilot_plan(
+        compile_presentation_plan(
             ops=[
                 {"op": "create_playlist", "name": "A", "as": "pl1"},
                 {
@@ -111,11 +111,11 @@ def test_compiler_rejects_unknown_ref():
 
 
 def test_preview_compound_mints_synthetic_ids_and_native_text():
-    from tv_app.application.services.data.tv_copilot_patch_service import (
-        TvCopilotPatchService,
+    from tv_app.application.services.data.presentation_mutation import (
+        PresentationPatchService,
     )
 
-    svc = TvCopilotPatchService()
+    svc = PresentationPatchService()
     result = svc.preview(
         {
             "target": {},
@@ -197,11 +197,11 @@ def test_dispatch_commit_now_compound_verified():
 
 
 def test_dispatch_compound_reorder_metamorphic_same_order():
-    from tv_app.application.services.data.tv_copilot_patch_service import (
-        TvCopilotPatchService,
+    from tv_app.application.services.data.presentation_mutation import (
+        PresentationPatchService,
     )
 
-    svc = TvCopilotPatchService()
+    svc = PresentationPatchService()
     a = svc.preview(
         {"target": {}, "ops": _compound_ops()},
         user=_superadmin(),

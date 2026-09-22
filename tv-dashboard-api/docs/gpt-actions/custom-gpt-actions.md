@@ -1,7 +1,7 @@
 """TV Dashboard — Custom GPT Actions (OAuth façade).
 
 Owner: ``tv-dashboard-api``. Custom GPT is an external consumer, not a second
-catalog or writer. Canonical capability contract remains ``TvCopilotPatchV1``
+catalog or writer. Canonical capability contract remains ``TvPresentationPatchV1``
 (``tv_copilot_content.json`` + Copilot services).
 
 ## Surface
@@ -106,7 +106,7 @@ This package documents the chain only; it does not apply migrations to remote en
 - Local editor draft is unknown: ``localDraftCoordination=unavailable_external``.
 - No binary media upload; keep ``assetId`` model.
 - Free M / DAX / SQL generation is forbidden; typed Copilot transforms only.
-- Legacy ``POST /data/copilot/apply-patch`` remains a non-persisting planner.
+- Legacy ``POST /data/copilot/*`` returns **410 Gone** (use VISTA gpt-actions).
 - No generic entity CRUD Actions (``search_records`` / ``prepare_record_change``) — not VISTA's domain shape.
 
 ## Sync artifact
