@@ -35,4 +35,12 @@ describe("Helpdesk list UX structural", () => {
     expect(css).toContain("--helpdesk-muted");
     expect(css).not.toContain("#64748b");
   });
+
+  it("lista de regras do builder tem teto de altura com scroll", () => {
+    const css = read("../index.css");
+    expect(css).toMatch(
+      /\.helpdesk-filter-builder__rules[\s\S]*?max-height:\s*min\(12\.5rem,\s*32vh\)/,
+    );
+    expect(css).toMatch(/\.helpdesk-filter-builder__rules[\s\S]*?overflow-y:\s*auto/);
+  });
 });
