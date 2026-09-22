@@ -67,6 +67,7 @@ import {
   clearHelpdeskDraftPendingFiles,
   pendingFilesMapToDraftRows,
   readHelpdeskDraftPendingFiles,
+  rekeyDraftFileToDocument,
   replyDraftPendingScope,
   writeHelpdeskDraftPendingFiles,
 } from "../presentation/helpdeskDraftPendingFiles";
@@ -853,6 +854,7 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
       if (cancelled || rows.length === 0) return;
       for (const row of rows) {
         pendingFilesRef.current.set(row.id, row.file);
+        // Keys are pending uuid and/or document id after upload rekey.
         attachmentPreview.seedFile(row.id, row.file);
       }
     });
@@ -1096,7 +1098,12 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                             documentId: uploaded.document_id,
                             ticketId,
                           };
-                          pendingFilesRef.current.delete(item.pendingId);
+                          // Keep File under document id for F5 re-seed (BFF src alone is not enough).
+                          rekeyDraftFileToDocument(
+                            pendingFilesRef.current,
+                            item.pendingId,
+                            uploaded.document_id,
+                          );
                         }
                         persistReplyPendingFiles();
                         if (Object.keys(mapping).length > 0) {

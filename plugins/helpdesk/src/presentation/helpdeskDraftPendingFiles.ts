@@ -67,6 +67,30 @@ export function replyDraftPendingScope(ticketId: string): string {
   return `reply:${String(ticketId).trim()}`;
 }
 
+/**
+ * After upload rewrite, keep File bytes under the document id so F5 can
+ * re-seed the blob without waiting on GET /attachments (Bearer).
+ */
+export function rekeyDraftFileToDocument(
+  map: Map<string, File>,
+  pendingId: string,
+  documentId: number | string,
+): void {
+  const pendingKey = String(pendingId || "").trim();
+  const docKey = String(documentId);
+  if (!pendingKey || !docKey) return;
+  const file = map.get(pendingKey);
+  map.delete(pendingKey);
+  if (file) map.set(docKey, file);
+}
+
+/** Snapshot Map → IDB rows (inline pending images only). */
+export function pendingFilesMapToDraftRows(
+  map: Map<string, File>,
+): HelpdeskDraftPendingFile[] {
+  return [...map.entries()].map(([id, file]) => ({ id, file }));
+}
+
 export async function readHelpdeskDraftPendingFiles(
   scope: string,
 ): Promise<HelpdeskDraftPendingFile[]> {
@@ -120,11 +144,4 @@ export async function writeHelpdeskDraftPendingFiles(
 
 export async function clearHelpdeskDraftPendingFiles(scope: string): Promise<void> {
   await writeHelpdeskDraftPendingFiles(scope, []);
-}
-
-/** Snapshot Map → IDB rows (inline pending images only). */
-export function pendingFilesMapToDraftRows(
-  map: Map<string, File>,
-): HelpdeskDraftPendingFile[] {
-  return [...map.entries()].map(([id, file]) => ({ id, file }));
 }
