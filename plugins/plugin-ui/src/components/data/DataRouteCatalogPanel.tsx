@@ -108,6 +108,19 @@ const DISPLAY_KIND_LABELS: Record<DataRouteDisplayKind, string> = {
   table: "Tabela",
 };
 
+/** Aliases PT/EN para tokens de busca no catálogo (category keys EN, labels PT). */
+function expandCatalogSearchToken(token: string): string[] {
+  const t = token.toLowerCase();
+  if (t === "comercial" || t === "commercial") return ["comercial", "commercial"];
+  if (t === "suprimento" || t === "suprimentos" || t === "supplies") {
+    return ["suprimento", "suprimentos", "supplies"];
+  }
+  if (t === "producao" || t === "produção" || t === "production") {
+    return ["producao", "produção", "production"];
+  }
+  return [t];
+}
+
 export function resolveDataRouteDisplayKinds(item: {
   displayKinds?: DataRouteDisplayKind[];
   metaShape?: string;
@@ -284,6 +297,7 @@ export function DataRouteCatalogPanel({
         if (!kindFilters.some((kind) => kinds.includes(kind))) return false;
       }
       if (!applySubstring) return true;
+      const tokens = q.split(/\s+/).filter(Boolean);
       const haystack = [
         item.label,
         item.id,
@@ -296,7 +310,11 @@ export function DataRouteCatalogPanel({
       ]
         .join(" ")
         .toLowerCase();
-      return haystack.includes(q);
+      // AND de tokens (+ alias PT/EN de categoria): «otd comercial» casa otd +
+      // commercial/Comercial; frase contiguidade falhava.
+      return tokens.every((token) =>
+        expandCatalogSearchToken(token).some((variant) => haystack.includes(variant)),
+      );
     });
   }, [categoryFilter, categoryLabels, enriched, kindFilters, query, showSuggestionsBand]);
 

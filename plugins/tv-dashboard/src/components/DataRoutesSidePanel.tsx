@@ -39,7 +39,7 @@ import { DeckPropertySection } from "./deck/DeckPropertySection";
 type WizardView = DataInsertPreferredView | "source_only";
 
 const SUGGEST_DEBOUNCE_MS = 350;
-const SUGGEST_LIMIT = 5;
+const SUGGEST_LIMIT = 8;
 
 const CATEGORY_ORDER = [
   "production",

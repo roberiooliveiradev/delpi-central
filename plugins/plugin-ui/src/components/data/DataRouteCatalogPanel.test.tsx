@@ -367,6 +367,22 @@ describe("DataRouteCatalogPanel", () => {
     expect(screen.getByText("2 filtros · 1 obrigatório")).toBeTruthy();
   });
 
+  it("busca multi-token AND encontra otd+domínio mesmo sem frase contiguidade", () => {
+    render(
+      <DataRouteCatalogPanel
+        items={ITEMS}
+        onSelect={vi.fn()}
+        categoryLabels={{ production: "Produção", products: "Produtos" }}
+        categoryOrder={["production", "products"]}
+      />,
+    );
+
+    fireEvent.change(screen.getByRole("searchbox"), { target: { value: "oee produção" } });
+    expect(screen.getByText("OEE geral")).toBeTruthy();
+    expect(screen.getByText("OEE — série")).toBeTruthy();
+    expect(screen.queryByText("Produtos — busca")).toBeNull();
+  });
+
   it("renderiza faixa de sugestões NL com motivo e mantém pick no detalhe", () => {
     const onSelect = vi.fn();
     const onQueryChange = vi.fn();

@@ -40,6 +40,6 @@ GPT search: `query` **obrigatória** (422 se vazia); `limit` default 8 max 20; D
 
 ## UX (MFE)
 
-- Um campo unificado: texto curto → substring local; frase → debounce → suggest owner-local.
+- Um campo unificado: texto curto (1 token) → só substring; frase (≥ 2 tokens ou ≥ 12 chars) → debounce 350 ms → suggest owner-local.
 - Clique na sugestão = mesmo fluxo do card do catálogo.
 - **Não** auto-executa preview HTTP nem insere bloco no canvas.
