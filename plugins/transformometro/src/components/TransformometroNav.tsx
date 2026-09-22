@@ -18,6 +18,7 @@ import {
   visiblePortalTopBarItems,
 } from "../constants/portalExperience";
 import { PortalFavoritesTrigger } from "./PortalFavoritesTrigger";
+import { PortalTopBarUserIdentity } from "./PortalTopBarUserIdentity";
 import { useCanManagePortal } from "../state/portalChrome";
 
 type PortalTopBarProps = {
@@ -87,6 +88,7 @@ export function PortalTopBar({ currentPath, onNavigate }: PortalTopBarProps) {
             <PortalFavoritesTrigger onNavigate={onNavigate} />
           </TopBarUtilityCluster>
         }
+        actions={<PortalTopBarUserIdentity />}
       />
       <CommandPalette
         classNames={PALETTE}

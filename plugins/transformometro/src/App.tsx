@@ -203,7 +203,11 @@ function AppRoutes({ getAccessToken, pathname: pathnameFromHost }: AppProps) {
 
 export default function App(props: AppProps) {
   return (
-    <PortalChromeProvider permissions={props.permissions} isSuperadmin={props.isSuperadmin}>
+    <PortalChromeProvider
+      permissions={props.permissions}
+      isSuperadmin={props.isSuperadmin}
+      getAccessToken={props.getAccessToken}
+    >
       <ConfirmDialogProvider>
         <UnsavedChangesGuardProvider>
           <FloatingNoticeProvider>

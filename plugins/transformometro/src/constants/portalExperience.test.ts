@@ -64,7 +64,7 @@ describe("Portal Transforma+ navigation", () => {
     expect(visible).toContain("Exportar / Importar");
   });
 
-  it("mantém usuário fora da TopBar", () => {
+  it("mantém item Usuário fora da nav; identity fica no slot actions", () => {
     expect(DEFERRED_NAV_ITEMS.map((item) => item.label)).toEqual(["Usuário"]);
     expect(DEFERRED_NAV_ITEMS.every((item) => item.status === "TO_INVENTORY")).toBe(true);
     const topIds = PORTAL_TOPBAR_ITEMS.map((item) => item.id);
@@ -73,6 +73,25 @@ describe("Portal Transforma+ navigation", () => {
     }
     expect(topIds).toContain("help");
     expect(topIds).toContain("interaction");
+  });
+
+  it("process detail/instance/revision mantêm Meus processos active", () => {
+    const processoId = "fa81824d-1c88-4472-bb0b-f91359b517c8";
+    const instanciaId = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
+    const revisaoId = "11111111-2222-3333-4444-555555555555";
+    expect(resolvePortalTopBarId(`${TRANSFORMOMETRO_ROUTES.processes}/${processoId}`)).toBe(
+      "processes",
+    );
+    expect(
+      resolvePortalTopBarId(
+        `${TRANSFORMOMETRO_ROUTES.processes}/${processoId}/instancias/${instanciaId}`,
+      ),
+    ).toBe("processes");
+    expect(
+      resolvePortalTopBarId(
+        `${TRANSFORMOMETRO_ROUTES.processes}/${processoId}/instancias/${instanciaId}/revisoes/${revisaoId}`,
+      ),
+    ).toBe("processes");
   });
 
   it("preserva deep links fora da TopBar", () => {
