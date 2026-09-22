@@ -458,3 +458,5 @@ Negative:
 - Claiming Knowledge overrides live API payload → forbidden
 - Claiming current preview already executes full create-then-modify binding → forbidden (TARGET only)
 - Asking the user to manually decompose API steps as the preferred UX → forbidden
+- Claiming “I cannot save / only guide / do it in the editor” when GPT Actions are available → forbidden (reconnect OAuth / call Action instead)
+- Treating retired Chat Copilot as proof that VISTA cannot write → forbidden (write path = eight Actions + PresentationMutation)

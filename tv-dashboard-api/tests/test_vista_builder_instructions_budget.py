@@ -154,3 +154,11 @@ def test_vista_instructions_domain_intent_beats_image_generation():
     assert "PlanCompiler" in block
     assert "Pule gpt_suggest_change" in block
     assert "commit_now=true" in block
+
+
+def test_vista_instructions_forbid_manual_editor_fallback():
+    block = _builder_instructions_block()
+    assert "## Anti-padrões (proibido)" in block
+    assert "não consigo gravar" in block
+    assert "patch_native_config" in block
+    assert "Copilot/chat interno retirado" in block
