@@ -37,6 +37,7 @@ A documentação desta pasta deve obedecer à hierarquia vigente das regras `.cu
 | **E7 — Pedidos lista + GATE-FEATURE WF-05** | **concluída 2026-09-11** — api-delpi SC7 aberto, BFF operations+unit, MFE kit-first |
 | **E8 — Detalhe do Pedido + GATE-FEATURE WF-06** | **concluída 2026-09-16** — ficha `/purchase-orders/:branch/:number`; smoke federado **PASS** em 2026-09-21 |
 | **E9 — Entregas / atrasos + P0 freeze** | **FECHADA** — **GATE-FEATURE WF-07 PASS** após redeploy BFF; FAIL inicial preservado na [evidência](./evidence/e9-wf07-federated-runtime-gate.md); [freeze](./evidence/e9-wf07-p0-contract-freeze.md) |
+| **E10 — Controle de Estoques (WF-15)** | **IN PROGRESS** — S1/S2 PASS; **S3 MFE PASS**; Help/smoke/GATE = S4 |
 | RBAC alvo | revisado; menor catálogo suficiente (ADR-007) |
 | Authz Core-first | **GATE-AUTHZ PASS** — fail-closed na fronteira; permissions efetivas do Core, não claims JWT |
 | BIs externos | dump **local** 0/6 documentado; dump Core **produção** obrigatório antes do cutover |
