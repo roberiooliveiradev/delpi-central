@@ -867,6 +867,53 @@ export type StockBalancesReportPayload = {
   };
 };
 
+export type ProductionOrderLine = {
+  production_order: string;
+  op_key: string;
+  product_code: string;
+  product_description: string;
+  issue_date: string | null;
+  planned_start_date: string | null;
+  due_date: string | null;
+  finish_date: string | null;
+  planned_qty: number;
+  pending_qty: number;
+  observation: string | null;
+  is_open: boolean;
+  is_mother: boolean;
+  branch: string;
+};
+
+export type ProductionOrdersReportPayload = {
+  branch: string;
+  report_id: string;
+  filters: {
+    op_key: string;
+    product_code: string;
+    mother_only: boolean | null;
+    open_only: boolean | null;
+    unbounded_delivery: boolean;
+    delivery_start: string | null;
+    delivery_end: string | null;
+    actual_end_start: string | null;
+    actual_end_end: string | null;
+    sort: string;
+  };
+  summary: {
+    order_count: number;
+    open_count: number;
+    planned_qty_sum: number;
+    pending_qty_sum: number;
+  };
+  items: ProductionOrderLine[];
+  pagination: {
+    page: number;
+    page_size: number;
+    total: number;
+    total_pages: number;
+  };
+};
+
 export type Product3DModel = {
   product_code: string;
   original_filename: string;

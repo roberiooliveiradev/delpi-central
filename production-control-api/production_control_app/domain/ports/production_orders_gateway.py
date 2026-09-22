@@ -30,6 +30,41 @@ class ProductionOrdersGateway(Protocol):
     ) -> dict[str, Any]:
         ...
 
+    def fetch_pcp_orders_catalog(
+        self,
+        *,
+        branch: str,
+        page: int,
+        page_size: int,
+        sort: str,
+        open_only: bool | None,
+        mother_only: bool | None,
+        unbounded_delivery: bool,
+        op_key: str | None = None,
+        product_code: str | None = None,
+        delivery_start: str | None = None,
+        delivery_end: str | None = None,
+        actual_end_start: str | None = None,
+        actual_end_end: str | None = None,
+    ) -> dict[str, Any]:
+        ...
+
+    def fetch_pcp_orders_catalog_summary(
+        self,
+        *,
+        branch: str,
+        open_only: bool | None,
+        mother_only: bool | None,
+        unbounded_delivery: bool,
+        op_key: str | None = None,
+        product_code: str | None = None,
+        delivery_start: str | None = None,
+        delivery_end: str | None = None,
+        actual_end_start: str | None = None,
+        actual_end_end: str | None = None,
+    ) -> dict[str, Any]:
+        ...
+
     def fetch_production_otd(
         self,
         *,

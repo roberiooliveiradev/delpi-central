@@ -4845,6 +4845,18 @@
         }
       }
     },
+    "unbounded_delivery": {
+      "locale": {
+        "en": {
+          "label": "Unbounded delivery window",
+          "description": "When true, skip the default 12-month delivery window and the 24-month cap. Optional delivery dates still apply."
+        },
+        "pt-BR": {
+          "label": "Janela de entrega sem recorte padrão",
+          "description": "Quando verdadeiro, ignora a janela padrão de 12 meses e o teto de 24 meses. Datas de entrega informadas continuam valendo."
+        }
+      }
+    },
     "inspecao_status": {
       "locale": {
         "en": {

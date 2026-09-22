@@ -18,7 +18,7 @@ View TOTVS `dbo.VW_PCP_ORDENS_PRODUCAO` (`NOLOCK`). Flags: `FL_OP_EM_ABERTO` / `
 
 ## Filtros (EN)
 
-Comuns: `branch`, `delivery_start` / `delivery_end` (`DT_ENTREGA`; default últimos 12 meses), `actual_end_start` / `actual_end_end`, `op_key`, `product_code`, `warehouse`, `mother_only`, `open_only`, `delayed_only`.
+Comuns: `branch`, `delivery_start` / `delivery_end` (`DT_ENTREGA`; default últimos 12 meses), `unbounded_delivery` (pula a janela padrão e o teto de 24 meses; datas opcionais ainda filtram), `actual_end_start` / `actual_end_end`, `op_key`, `product_code`, `warehouse`, `mother_only`, `open_only`, `delayed_only`.
 
 Items: `page`, `page_size`, `sort` (`delivery_desc|asc`, `issue_*`, `delay_*`, `qty_*`, `op_*`).
 
@@ -33,3 +33,4 @@ Ranking: `rank_by` (`product` \| `warehouse` \| `op`), `metric` (`order_qty` \| 
 - `/production/orders/open|finished|…` — playbook por `reference_date` em SC2010 (não substituído).
 - `/production/otd` — KPI prazo/atraso.
 - Esta família — listagem de OPs por entrega prevista e flags da view.
+- Relatório de OPs do Portal PCP (`production-control-api` `/reports/production-orders`) usa `open_only=true` + `unbounded_delivery=true` por padrão (OPs com `C2_DATRF` / `FL_OP_EM_ABERTO` em aberto, sem recorte de 12 meses).

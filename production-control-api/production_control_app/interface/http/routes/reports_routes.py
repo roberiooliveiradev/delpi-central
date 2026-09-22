@@ -68,6 +68,50 @@ def get_stock_balances_report(
     return ok(data)
 
 
+@router.get("/reports/production-orders")
+def get_production_orders_report(
+    request: Request,
+    branch: str = Query(..., description="Filial TOTVS (01 ou 02)"),
+    opKey: str = Query("", description="Chave ou número da OP"),
+    productCode: str = Query("", description="Código do produto"),
+    motherOnly: str | None = Query("all", description="yes, no ou all"),
+    openOnly: str | None = Query("yes", description="yes, no ou all"),
+    deliveryStart: str | None = Query(None, description="Início da entrega prevista (YYYY-MM-DD)"),
+    deliveryEnd: str | None = Query(None, description="Fim da entrega prevista (YYYY-MM-DD)"),
+    actualEndStart: str | None = Query(None, description="Início do fim real (YYYY-MM-DD)"),
+    actualEndEnd: str | None = Query(None, description="Fim do fim real (YYYY-MM-DD)"),
+    sort: str | None = Query(None, description="Ordenação da listagem"),
+    page: int = Query(1, ge=1),
+    pageSize: int | None = Query(None, alias="pageSize", ge=1, le=200),
+):
+    user = resolve_user(request)
+    try:
+        data = build_reports_service().production_orders(
+            user,
+            branch=branch,
+            op_key=opKey,
+            product_code=productCode,
+            mother_only=motherOnly,
+            open_only=openOnly,
+            delivery_start=deliveryStart,
+            delivery_end=deliveryEnd,
+            actual_end_start=actualEndStart,
+            actual_end_end=actualEndEnd,
+            sort=sort,
+            page=page,
+            page_size=pageSize,
+        )
+    except InvalidBranch as exc:
+        return fail(str(exc), 422)
+    except BranchAccessDenied as exc:
+        return fail(str(exc), 403)
+    except PermissionError as exc:
+        return fail(str(exc), 403)
+    except DelpiGatewayError as exc:
+        return fail(str(exc), 502)
+    return ok(data)
+
+
 @router.get("/reports/stock-balances/email-schedule")
 def get_stock_balances_email_schedule(
     request: Request,

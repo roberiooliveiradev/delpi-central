@@ -113,6 +113,40 @@ def test_items_returns_paged_list_shape(mock_builder, pcp_orders_client: TestCli
     assert payload["meta"]["entity"] == "production_pcp_orders_items"
     assert payload["meta"]["shape"] == "paged_list"
     assert payload["data"]["items"][0]["product_description"] == "Produto X"
+    request = use_case.execute.call_args.args[0]
+    assert request.open_only is True
+    assert request.period.unbounded_delivery is False
+
+
+@patch(
+    "app.interface.http.routes.production.pcp_orders_router"
+    ".build_get_production_pcp_orders_items_use_case"
+)
+def test_items_unbounded_delivery_skips_default_window(
+    mock_builder, pcp_orders_client: TestClient
+) -> None:
+    use_case = MagicMock()
+    use_case.execute.return_value = {
+        "filters": {"branch": "01", "unbounded_delivery": True, "open_only": True},
+        "items": [],
+        "pagination": {"page": 1, "page_size": 50, "total": 0, "total_pages": 1},
+    }
+    mock_builder.return_value = use_case
+
+    response = pcp_orders_client.get(
+        "/production/pcp-orders/items",
+        params={
+            "branch": "01",
+            "open_only": True,
+            "unbounded_delivery": True,
+        },
+    )
+    assert response.status_code == 200
+    request = use_case.execute.call_args.args[0]
+    assert request.open_only is True
+    assert request.period.unbounded_delivery is True
+    assert request.period.delivery_start is None
+    assert request.period.delivery_end is None
 
 
 @patch(

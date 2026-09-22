@@ -59,9 +59,10 @@ def _as_bool(value: bool | str | None) -> bool | None:
 
 @dataclass(frozen=True, slots=True)
 class PcpOrdersPeriod:
-    delivery_start: date
-    delivery_end: date
+    delivery_start: date | None
+    delivery_end: date | None
     branch: str | None
+    unbounded_delivery: bool = False
 
     @classmethod
     def resolve(
@@ -70,6 +71,7 @@ class PcpOrdersPeriod:
         branch: str | None,
         delivery_start: str | None = None,
         delivery_end: str | None = None,
+        unbounded_delivery: bool | str | None = False,
     ) -> PcpOrdersPeriod:
         from app.domain.totvs.protheus_branches import optional_concrete_branch
 
@@ -86,6 +88,19 @@ class PcpOrdersPeriod:
             raise ValueError("delivery_start inválida. Use o formato YYYY-MM-DD.")
         if delivery_end and parsed_end is None:
             raise ValueError("delivery_end inválida. Use o formato YYYY-MM-DD.")
+
+        unbounded = _as_bool(unbounded_delivery) is True
+        if unbounded:
+            if parsed_start and parsed_end and parsed_start > parsed_end:
+                raise ValueError(
+                    "delivery_start não pode ser posterior a delivery_end."
+                )
+            return cls(
+                delivery_start=parsed_start,
+                delivery_end=parsed_end,
+                branch=normalized_branch,
+                unbounded_delivery=True,
+            )
 
         if parsed_start is None and parsed_end is None:
             end = date.today()
@@ -105,20 +120,35 @@ class PcpOrdersPeriod:
             raise ValueError(
                 f"Período máximo permitido: {MAX_MONTHS_WINDOW} meses."
             )
-        return cls(delivery_start=start, delivery_end=end, branch=normalized_branch)
+        return cls(
+            delivery_start=start,
+            delivery_end=end,
+            branch=normalized_branch,
+            unbounded_delivery=False,
+        )
 
     def filter_kwargs(self) -> dict[str, Any]:
         return {
-            "delivery_start": self.delivery_start.isoformat(),
-            "delivery_end": self.delivery_end.isoformat(),
+            "delivery_start": (
+                self.delivery_start.isoformat() if self.delivery_start else None
+            ),
+            "delivery_end": (
+                self.delivery_end.isoformat() if self.delivery_end else None
+            ),
             "branch": self.branch,
+            "unbounded_delivery": self.unbounded_delivery,
         }
 
-    def periodo_dict(self) -> dict[str, str | None]:
+    def periodo_dict(self) -> dict[str, str | bool | None]:
         return {
-            "delivery_start": self.delivery_start.isoformat(),
-            "delivery_end": self.delivery_end.isoformat(),
+            "delivery_start": (
+                self.delivery_start.isoformat() if self.delivery_start else None
+            ),
+            "delivery_end": (
+                self.delivery_end.isoformat() if self.delivery_end else None
+            ),
             "branch": self.branch,
+            "unbounded_delivery": self.unbounded_delivery,
         }
 
 

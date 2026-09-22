@@ -1,8 +1,13 @@
-"""Relatórios do Portal PCP — saldos e futuros recortes.
+"""Relatórios do Portal PCP — saldos e ordens de produção.
 
 O dump de saldos na api-delpi é paginado e, no BFF, é remontado inteiro antes
 do filtro de prefixo/busca. Sem cache, cada troca de página no MFE repetia
 várias idas ao TOTVS — o mesmo padrão de Demanda/Materiais (snapshot + TTL).
+
+O relatório de OPs pagina na api-delpi (`/production/pcp-orders`) com
+`open_only` + `unbounded_delivery` por padrão, para não perder entrega futura
+no recorte de 12 meses. Janela de `C2_DATRF` (`actual_end_*`) só vale para
+OPs encerradas (`open_only=false`).
 """
 
 from __future__ import annotations
@@ -35,6 +40,22 @@ _SORT_KEYS = frozenset(
     }
 )
 
+_PRODUCTION_ORDER_SORT_KEYS = frozenset(
+    {
+        "delivery_desc",
+        "delivery_asc",
+        "issue_desc",
+        "issue_asc",
+        "delay_desc",
+        "delay_asc",
+        "qty_desc",
+        "qty_asc",
+        "op_asc",
+        "op_desc",
+    }
+)
+_DEFAULT_PRODUCTION_ORDER_SORT = "op_asc"
+
 
 @lru_cache(maxsize=1)
 def _settings() -> dict[str, Any]:
@@ -46,6 +67,21 @@ def _cache_ttl_seconds() -> int:
         return max(0, int(_settings().get("cacheTtlSeconds") or 120))
     except (TypeError, ValueError):
         return 120
+
+
+def _tri_state_bool(value: Any, *, default: bool | None) -> bool | None:
+    if value is None or value == "":
+        return default
+    if isinstance(value, bool):
+        return value
+    text = str(value).strip().lower()
+    if text in {"yes", "true", "1", "sim", "s"}:
+        return True
+    if text in {"no", "false", "0", "nao", "não", "n"}:
+        return False
+    if text in {"all", "any", "*"}:
+        return None
+    return default
 
 
 def _text(value: Any) -> str:
@@ -384,6 +420,123 @@ class ReportsService:
             "scheduleKind": str(schedule.get("scheduleKind") or "weekdays"),
             "nextRunAt": schedule.get("nextRunAt"),
             "definitionId": definition.get("id"),
+        }
+
+    def production_orders(
+        self,
+        user: object | None,
+        *,
+        branch: str,
+        op_key: str = "",
+        product_code: str = "",
+        mother_only: Any = None,
+        open_only: Any = True,
+        delivery_start: str | None = None,
+        delivery_end: str | None = None,
+        actual_end_start: str | None = None,
+        actual_end_end: str | None = None,
+        sort: str | None = None,
+        page: int = 1,
+        page_size: int | None = None,
+    ) -> dict[str, Any]:
+        self._authorize(user, branch=branch)
+        cfg = _settings()
+        resolved_sort = _text(sort) or _DEFAULT_PRODUCTION_ORDER_SORT
+        if resolved_sort not in _PRODUCTION_ORDER_SORT_KEYS:
+            resolved_sort = _DEFAULT_PRODUCTION_ORDER_SORT
+        page = max(1, int(page or 1))
+        max_page_size = max(1, min(int(cfg.get("maxPageSize") or 200), 200))
+        default_page_size = max(1, int(cfg.get("defaultPageSize") or 50))
+        size = max(1, min(int(page_size or default_page_size), max_page_size))
+        resolved_open_only = _tri_state_bool(open_only, default=True)
+        resolved_mother_only = _tri_state_bool(mother_only, default=None)
+        has_delivery_window = bool(_text(delivery_start) or _text(delivery_end))
+        unbounded_delivery = not has_delivery_window
+        closed_only = resolved_open_only is False
+        actual_end_start_resolved = _text(actual_end_start) if closed_only else None
+        actual_end_end_resolved = _text(actual_end_end) if closed_only else None
+        filters = {
+            "branch": branch,
+            "page": page,
+            "page_size": size,
+            "sort": resolved_sort,
+            "open_only": resolved_open_only,
+            "mother_only": resolved_mother_only,
+            "unbounded_delivery": unbounded_delivery,
+            "op_key": _text(op_key) or None,
+            "product_code": _text(product_code) or None,
+            "delivery_start": _text(delivery_start) or None,
+            "delivery_end": _text(delivery_end) or None,
+            "actual_end_start": actual_end_start_resolved,
+            "actual_end_end": actual_end_end_resolved,
+        }
+        try:
+            items_payload = self._gateway.fetch_pcp_orders_catalog(**filters)
+            summary_payload = self._gateway.fetch_pcp_orders_catalog_summary(
+                **{key: value for key, value in filters.items() if key not in {"page", "page_size", "sort"}}
+            )
+        except DelpiGatewayError:
+            raise
+
+        items_data = _unwrap_data(items_payload)
+        summary_data = _unwrap_data(summary_payload)
+        upstream_summary = (
+            summary_data.get("summary") if isinstance(summary_data.get("summary"), dict) else {}
+        )
+        pagination = items_data.get("pagination") if isinstance(items_data.get("pagination"), dict) else {}
+        total = int(pagination.get("total") or 0)
+        size_out = int(pagination.get("page_size") or size)
+        page_out = int(pagination.get("page") or page)
+        return {
+            "branch": branch,
+            "report_id": "production-orders",
+            "filters": {
+                "op_key": _text(op_key),
+                "product_code": _text(product_code),
+                "mother_only": resolved_mother_only,
+                "open_only": resolved_open_only,
+                "unbounded_delivery": unbounded_delivery,
+                "delivery_start": _text(delivery_start) or None,
+                "delivery_end": _text(delivery_end) or None,
+                "actual_end_start": actual_end_start_resolved,
+                "actual_end_end": actual_end_end_resolved,
+                "sort": resolved_sort,
+            },
+            "summary": {
+                "order_count": int(upstream_summary.get("total_orders") or total),
+                "open_count": int(upstream_summary.get("open_orders") or 0),
+                "planned_qty_sum": _float(upstream_summary.get("planned_qty_sum")),
+                "pending_qty_sum": _float(upstream_summary.get("pending_qty_sum")),
+            },
+            "items": [self._map_production_order(item, branch) for item in _unwrap_items(items_payload)],
+            "pagination": {
+                "page": page_out,
+                "page_size": size_out,
+                "total": total,
+                "total_pages": max(1, (total + size_out - 1) // size_out) if total else 1,
+            },
+        }
+
+    @staticmethod
+    def _map_production_order(item: dict[str, Any], branch: str) -> dict[str, Any]:
+        production_order = _text(item.get("production_order") or item.get("op_key"))
+        return {
+            "production_order": production_order,
+            "op_key": _text(item.get("op_key")) or production_order,
+            "product_code": _text(item.get("product_code")),
+            "product_description": _text(
+                item.get("product_description") or item.get("description")
+            ),
+            "issue_date": _text(item.get("issue_date")) or None,
+            "planned_start_date": _text(item.get("planned_start_date")) or None,
+            "due_date": _text(item.get("due_date")) or None,
+            "finish_date": _text(item.get("finish_date")) or None,
+            "planned_qty": _float(item.get("planned_qty")),
+            "pending_qty": _float(item.get("pending_qty")),
+            "observation": _text(item.get("observation")) or None,
+            "is_open": bool(item.get("is_open")),
+            "is_mother": bool(item.get("is_mother")),
+            "branch": _text(item.get("branch")) or branch,
         }
 
     def _load_balances(

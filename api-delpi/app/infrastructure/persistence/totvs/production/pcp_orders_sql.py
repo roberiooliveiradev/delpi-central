@@ -91,8 +91,8 @@ def _branch_filter_sql(branch: str | None) -> tuple[str, list[str]]:
 
 def build_base_where(
     *,
-    delivery_start: str,
-    delivery_end: str,
+    delivery_start: str | None,
+    delivery_end: str | None,
     branch: str | None,
     actual_end_start: str | None = None,
     actual_end_end: str | None = None,
@@ -102,15 +102,29 @@ def build_base_where(
     mother_only: bool | None = None,
     open_only: bool | None = None,
     delayed_only: bool | None = None,
+    unbounded_delivery: bool | None = False,
 ) -> tuple[str, tuple]:
     branch_sql, branch_params = _branch_filter_sql(branch)
-    clauses = [
-        "v.DT_ENTREGA IS NOT NULL",
-        "v.DT_ENTREGA >= ?",
-        "v.DT_ENTREGA <= ?",
-        branch_sql,
-    ]
-    params: list = [delivery_start, delivery_end, *branch_params]
+    clauses: list[str] = []
+    params: list = []
+    if unbounded_delivery:
+        if delivery_start:
+            clauses.append("v.DT_ENTREGA IS NOT NULL AND v.DT_ENTREGA >= ?")
+            params.append(delivery_start)
+        if delivery_end:
+            clauses.append("v.DT_ENTREGA IS NOT NULL AND v.DT_ENTREGA <= ?")
+            params.append(delivery_end)
+    else:
+        clauses.extend(
+            [
+                "v.DT_ENTREGA IS NOT NULL",
+                "v.DT_ENTREGA >= ?",
+                "v.DT_ENTREGA <= ?",
+            ]
+        )
+        params.extend([delivery_start, delivery_end])
+    clauses.append(branch_sql)
+    params.extend(branch_params)
 
     if actual_end_start:
         clauses.append("v.DT_REAL_FIM IS NOT NULL AND v.DT_REAL_FIM >= ?")

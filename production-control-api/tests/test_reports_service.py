@@ -77,6 +77,55 @@ class FakeGateway:
         }
 
 
+    def fetch_pcp_orders_catalog(self, **kwargs: Any) -> dict[str, Any]:
+        self.calls.append({"catalog": kwargs})
+        items = getattr(self, "order_items", None) or [
+            {
+                "production_order": "24437001001",
+                "op_key": "24437001001",
+                "product_code": "90262031",
+                "product_description": "WEG MOT",
+                "issue_date": "2026-04-02",
+                "planned_start_date": "2026-10-28",
+                "due_date": "2026-10-28",
+                "finish_date": None,
+                "planned_qty": 0.1,
+                "pending_qty": 0.1,
+                "observation": "WEG_MOT",
+                "is_open": True,
+                "is_mother": True,
+                "branch": kwargs.get("branch") or "01",
+            }
+        ]
+        return {
+            "success": True,
+            "data": {
+                "items": items,
+                "pagination": {
+                    "page": kwargs.get("page") or 1,
+                    "page_size": kwargs.get("page_size") or 50,
+                    "total": len(items),
+                },
+            },
+        }
+
+    def fetch_pcp_orders_catalog_summary(self, **kwargs: Any) -> dict[str, Any]:
+        self.calls.append({"catalog_summary": kwargs})
+        items = getattr(self, "order_items", None)
+        count = len(items) if items is not None else 1
+        return {
+            "success": True,
+            "data": {
+                "summary": {
+                    "total_orders": count,
+                    "open_orders": count,
+                    "planned_qty_sum": 0.1,
+                    "pending_qty_sum": 0.1,
+                }
+            },
+        }
+
+
 def _user(*permissions: str):
     return SimpleNamespace(is_superadmin=False, permissions=list(permissions))
 
@@ -203,13 +252,16 @@ def test_stock_balances_refresh_bypasses_cache() -> None:
     assert len(gateway.calls) > calls_after_first
 
 
-def test_reports_catalog_lists_stock_balances() -> None:
+def test_reports_catalog_lists_stock_balances_and_production_orders() -> None:
     gateway = FakeGateway()
     service = _service(gateway)
     catalog = service.list_catalog(_user(*FULL_PERMS), branch="01")
-    assert catalog["reports"][0]["id"] == "stock-balances"
+    ids = [item["id"] for item in catalog["reports"]]
+    assert ids == ["stock-balances", "production-orders"]
     assert catalog["reports"][0]["icon"] == "warehouse"
     assert catalog["reports"][0]["eyebrow"] == "Estoque"
+    assert catalog["reports"][1]["icon"] == "clipboard-list"
+    assert catalog["reports"][1]["eyebrow"] == "Produção"
 
 
 def test_email_schedule_defaults_when_missing() -> None:
@@ -258,3 +310,138 @@ def test_upsert_email_schedule_maps_response() -> None:
     assert payload["hour"] == 8
     assert payload["minute"] == 15
     assert payload["definitionId"] == "def-1"
+
+
+def test_production_orders_defaults_to_open_unbounded() -> None:
+    gateway = FakeGateway()
+    service = _service(gateway)
+    payload = service.production_orders(_user(*FULL_PERMS), branch="01")
+
+    catalog_calls = [call["catalog"] for call in gateway.calls if "catalog" in call]
+    assert catalog_calls[0]["open_only"] is True
+    assert catalog_calls[0]["unbounded_delivery"] is True
+    assert catalog_calls[0]["mother_only"] is None
+    assert catalog_calls[0]["sort"] == "op_asc"
+    assert payload["report_id"] == "production-orders"
+    assert payload["items"][0]["production_order"] == "24437001001"
+    assert payload["items"][0]["product_code"] == "90262031"
+    assert payload["items"][0]["planned_qty"] == 0.1
+    assert payload["items"][0]["pending_qty"] == 0.1
+    assert payload["items"][0]["observation"] == "WEG_MOT"
+    assert payload["summary"]["order_count"] == 1
+    assert payload["filters"]["open_only"] is True
+    assert payload["filters"]["unbounded_delivery"] is True
+
+
+def test_production_orders_passes_mother_and_product_filters() -> None:
+    gateway = FakeGateway()
+    service = _service(gateway)
+    payload = service.production_orders(
+        _user(*FULL_PERMS),
+        branch="02",
+        op_key="244370",
+        product_code="90262031",
+        mother_only=True,
+        open_only=True,
+        sort="delivery_asc",
+    )
+    catalog_calls = [call["catalog"] for call in gateway.calls if "catalog" in call]
+    assert catalog_calls[0]["branch"] == "02"
+    assert catalog_calls[0]["op_key"] == "244370"
+    assert catalog_calls[0]["product_code"] == "90262031"
+    assert catalog_calls[0]["mother_only"] is True
+    assert catalog_calls[0]["sort"] == "delivery_asc"
+    assert payload["filters"]["mother_only"] is True
+
+
+def test_production_orders_uses_delivery_window_when_dates_are_set() -> None:
+    gateway = FakeGateway()
+    service = _service(gateway)
+    payload = service.production_orders(
+        _user(*FULL_PERMS),
+        branch="01",
+        delivery_start="2026-01-01",
+        delivery_end="2026-12-31",
+        open_only=False,
+    )
+    catalog_calls = [call["catalog"] for call in gateway.calls if "catalog" in call]
+    assert catalog_calls[0]["unbounded_delivery"] is False
+    assert catalog_calls[0]["delivery_start"] == "2026-01-01"
+    assert catalog_calls[0]["delivery_end"] == "2026-12-31"
+    assert catalog_calls[0]["open_only"] is False
+    assert payload["filters"]["unbounded_delivery"] is False
+
+
+def test_production_orders_all_skips_open_flag() -> None:
+    gateway = FakeGateway()
+    service = _service(gateway)
+    payload = service.production_orders(_user(*FULL_PERMS), branch="01", open_only="all")
+    catalog_calls = [call["catalog"] for call in gateway.calls if "catalog" in call]
+    assert catalog_calls[0]["open_only"] is None
+    assert payload["filters"]["open_only"] is None
+
+
+def test_production_orders_passes_actual_end_only_when_closed() -> None:
+    gateway = FakeGateway()
+    service = _service(gateway)
+    payload = service.production_orders(
+        _user(*FULL_PERMS),
+        branch="01",
+        open_only=False,
+        actual_end_start="2026-01-01",
+        actual_end_end="2026-06-30",
+    )
+    catalog_calls = [call["catalog"] for call in gateway.calls if "catalog" in call]
+    assert catalog_calls[0]["open_only"] is False
+    assert catalog_calls[0]["actual_end_start"] == "2026-01-01"
+    assert catalog_calls[0]["actual_end_end"] == "2026-06-30"
+    assert payload["filters"]["actual_end_start"] == "2026-01-01"
+    assert payload["filters"]["actual_end_end"] == "2026-06-30"
+
+
+def test_production_orders_drops_actual_end_when_open() -> None:
+    gateway = FakeGateway()
+    service = _service(gateway)
+    payload = service.production_orders(
+        _user(*FULL_PERMS),
+        branch="01",
+        open_only=True,
+        actual_end_start="2026-01-01",
+        actual_end_end="2026-06-30",
+    )
+    catalog_calls = [call["catalog"] for call in gateway.calls if "catalog" in call]
+    assert catalog_calls[0]["open_only"] is True
+    assert catalog_calls[0]["actual_end_start"] is None
+    assert catalog_calls[0]["actual_end_end"] is None
+    assert payload["filters"]["actual_end_start"] is None
+    assert payload["filters"]["actual_end_end"] is None
+
+
+def test_production_orders_drops_actual_end_when_all() -> None:
+    gateway = FakeGateway()
+    service = _service(gateway)
+    payload = service.production_orders(
+        _user(*FULL_PERMS),
+        branch="01",
+        open_only="all",
+        actual_end_start="2026-01-01",
+        actual_end_end="2026-06-30",
+    )
+    catalog_calls = [call["catalog"] for call in gateway.calls if "catalog" in call]
+    assert catalog_calls[0]["open_only"] is None
+    assert catalog_calls[0]["actual_end_start"] is None
+    assert catalog_calls[0]["actual_end_end"] is None
+    assert payload["filters"]["actual_end_start"] is None
+
+
+def test_production_orders_rejects_unknown_sort() -> None:
+    gateway = FakeGateway()
+    service = _service(gateway)
+    payload = service.production_orders(
+        _user(*FULL_PERMS),
+        branch="01",
+        sort="not-a-sort",
+    )
+    catalog_calls = [call["catalog"] for call in gateway.calls if "catalog" in call]
+    assert catalog_calls[0]["sort"] == "op_asc"
+    assert payload["filters"]["sort"] == "op_asc"

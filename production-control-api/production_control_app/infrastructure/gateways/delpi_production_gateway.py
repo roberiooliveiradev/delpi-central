@@ -12,6 +12,46 @@ from delpi_auth.request_context import get_current_user, get_request_authorizati
 from delpi_auth.service_token import apply_internal_service_headers, internal_service_authorization
 
 
+def _bool_query(value: bool | None) -> str | None:
+    if value is None:
+        return None
+    return "true" if value else "false"
+
+
+def _pcp_orders_catalog_params(
+    *,
+    branch: str,
+    open_only: bool | None,
+    mother_only: bool | None,
+    unbounded_delivery: bool,
+    op_key: str | None = None,
+    product_code: str | None = None,
+    delivery_start: str | None = None,
+    delivery_end: str | None = None,
+    actual_end_start: str | None = None,
+    actual_end_end: str | None = None,
+    page: int | None = None,
+    page_size: int | None = None,
+    sort: str | None = None,
+) -> dict[str, Any]:
+    params: dict[str, Any] = {
+        "branch": branch,
+        "unbounded_delivery": _bool_query(unbounded_delivery),
+        "open_only": _bool_query(open_only),
+        "mother_only": _bool_query(mother_only),
+        "op_key": op_key,
+        "product_code": product_code,
+        "delivery_start": delivery_start,
+        "delivery_end": delivery_end,
+        "actual_end_start": actual_end_start,
+        "actual_end_end": actual_end_end,
+        "page": page,
+        "page_size": page_size,
+        "sort": sort,
+    }
+    return params
+
+
 def _normalize_bearer(raw: str) -> str:
     value = raw.strip()
     return value if value.startswith("Bearer ") else f"Bearer {value}"
@@ -112,6 +152,74 @@ class DelpiProductionGateway:
                 "page_size": page_size,
                 "sort": sort,
             },
+        )
+
+    def fetch_pcp_orders_catalog(
+        self,
+        *,
+        branch: str,
+        page: int,
+        page_size: int,
+        sort: str,
+        open_only: bool | None,
+        mother_only: bool | None,
+        unbounded_delivery: bool,
+        op_key: str | None = None,
+        product_code: str | None = None,
+        delivery_start: str | None = None,
+        delivery_end: str | None = None,
+        actual_end_start: str | None = None,
+        actual_end_end: str | None = None,
+    ) -> dict[str, Any]:
+        return self._request(
+            "GET",
+            "/production/pcp-orders/items",
+            params=_pcp_orders_catalog_params(
+                branch=branch,
+                page=page,
+                page_size=page_size,
+                sort=sort,
+                open_only=open_only,
+                mother_only=mother_only,
+                unbounded_delivery=unbounded_delivery,
+                op_key=op_key,
+                product_code=product_code,
+                delivery_start=delivery_start,
+                delivery_end=delivery_end,
+                actual_end_start=actual_end_start,
+                actual_end_end=actual_end_end,
+            ),
+        )
+
+    def fetch_pcp_orders_catalog_summary(
+        self,
+        *,
+        branch: str,
+        open_only: bool | None,
+        mother_only: bool | None,
+        unbounded_delivery: bool,
+        op_key: str | None = None,
+        product_code: str | None = None,
+        delivery_start: str | None = None,
+        delivery_end: str | None = None,
+        actual_end_start: str | None = None,
+        actual_end_end: str | None = None,
+    ) -> dict[str, Any]:
+        return self._request(
+            "GET",
+            "/production/pcp-orders/summary",
+            params=_pcp_orders_catalog_params(
+                branch=branch,
+                open_only=open_only,
+                mother_only=mother_only,
+                unbounded_delivery=unbounded_delivery,
+                op_key=op_key,
+                product_code=product_code,
+                delivery_start=delivery_start,
+                delivery_end=delivery_end,
+                actual_end_start=actual_end_start,
+                actual_end_end=actual_end_end,
+            ),
         )
 
     def fetch_production_otd(

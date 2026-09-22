@@ -25,7 +25,7 @@ export type PpcRoute = {
 const DEMAND_STATUSES = new Set(["late", "at_risk", "covered_by_order", "covered_by_stock"]);
 const MATERIALS_ISSUES = new Set(["excess", "shortage", "pa-shortage"]);
 const MATERIALS_SET_STATUSES = new Set(["shortage", "no_commitment", "ok", "all"]);
-const REPORT_IDS = new Set(["stock-balances"]);
+const REPORT_IDS = new Set(["stock-balances", "production-orders"]);
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
