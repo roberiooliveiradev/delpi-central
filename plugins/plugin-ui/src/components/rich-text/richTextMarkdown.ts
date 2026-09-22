@@ -351,6 +351,17 @@ export function applyAttachmentImageSources(
   }
 }
 
+/**
+ * Persist path: rewrite display `blob:`/`data:` src back to a stable URL from `persist`.
+ * Same contract as resolve — one owner for attachment img identity (`data-attachment-id`).
+ */
+export function persistAttachmentImageSources(
+  html: string,
+  persist?: ResolveAttachmentImageSrc,
+): string {
+  return applyAttachmentImageSources(html, persist);
+}
+
 export function richTextHtmlToMarkdown(html: string): string {
   const source = (html ?? "").trim();
   if (!source || source === "<p></p>") return "";

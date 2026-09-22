@@ -27,10 +27,13 @@ import { prettyPrintRichTextHtml, stripDangerousRichTextTags } from "./richTextH
 import { applyRichTextImageWidth, fitRichTextImageToContainer, resolveRichTextImageResizeHandlePosition } from "./richTextImageResize";
 import { RICH_TEXT_LABELS } from "./richTextLabels";
 import {
+  applyAttachmentImageSources,
   clipboardHasUsefulHtml,
   clipboardLooksLikeMarkdown,
   markdownToRichTextHtml,
+  persistAttachmentImageSources,
   richTextHtmlToMarkdown,
+  type ResolveAttachmentImageSrc,
 } from "./richTextMarkdown";
 import { normalizeRichTextPastedHtml } from "./richTextTable";
 
@@ -47,6 +50,13 @@ export type RichTextEditorProps = {
   /** Escopo CSS do host para portais (select/cor/modal de link). Ex.: `dashboard-cipa`. */
   portalScopeClassName?: string;
   minHeight?: number;
+  /**
+   * Display: resolve `data-attachment-id` → blob/authenticated URL (MessageThread contract).
+   * Persist value must stay on stable public paths — use `persistAttachmentImageSrc`.
+   */
+  resolveAttachmentImageSrc?: ResolveAttachmentImageSrc;
+  /** Persist: rewrite display blob src back to stable URL before onChange. */
+  persistAttachmentImageSrc?: ResolveAttachmentImageSrc;
 };
 
 type LinkDialogState =
@@ -87,6 +97,8 @@ export function RichTextEditor({
   ariaLabel = "Editor de texto",
   portalScopeClassName,
   minHeight = 200,
+  resolveAttachmentImageSrc,
+  persistAttachmentImageSrc,
 }: RichTextEditorProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const ref = useRef<HTMLDivElement>(null);
@@ -110,9 +122,11 @@ export function RichTextEditor({
 
   const resolvedHtml = useMemo(() => {
     const raw = value || "<p></p>";
-    if (!/<table[\s>]/i.test(raw)) return raw;
-    return normalizeRichTextPastedHtml(raw) || raw;
-  }, [value]);
+    const withTables = /<table[\s>]/i.test(raw)
+      ? normalizeRichTextPastedHtml(raw) || raw
+      : raw;
+    return applyAttachmentImageSources(withTables, resolveAttachmentImageSrc);
+  }, [value, resolveAttachmentImageSrc]);
 
   useEffect(() => {
     if (mode !== "edit" || disabled || sourceMode || !ref.current || focusedRef.current) {
@@ -122,6 +136,15 @@ export function RichTextEditor({
       ref.current.innerHTML = resolvedHtml;
     }
   }, [mode, disabled, sourceMode, resolvedHtml]);
+
+  useEffect(() => {
+    const editorEl = ref.current;
+    if (!editorEl || sourceMode || disabled || !resolveAttachmentImageSrc) return;
+    const next = applyAttachmentImageSources(editorEl.innerHTML, resolveAttachmentImageSrc);
+    if (next !== editorEl.innerHTML) {
+      editorEl.innerHTML = next;
+    }
+  }, [resolveAttachmentImageSrc, sourceMode, disabled]);
 
   useEffect(() => {
     return () => {
@@ -186,8 +209,12 @@ export function RichTextEditor({
   }, []);
 
   const emitChange = useCallback(() => {
-    onChange(ref.current?.innerHTML || "");
-  }, [onChange]);
+    const raw = ref.current?.innerHTML || "";
+    const persisted = persistAttachmentImageSrc
+      ? persistAttachmentImageSources(raw, persistAttachmentImageSrc)
+      : raw;
+    onChange(persisted);
+  }, [onChange, persistAttachmentImageSrc]);
 
   const fitUntypedImages = useCallback(() => {
     const editorEl = ref.current;

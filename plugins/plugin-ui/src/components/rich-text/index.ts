@@ -23,6 +23,7 @@ export {
 } from "./richTextHtmlAssist";
 export {
   applyAttachmentImageSources,
+  persistAttachmentImageSources,
   clipboardHasUsefulHtml,
   clipboardLooksLikeMarkdown,
   enhanceAttachmentImagesInHtml,

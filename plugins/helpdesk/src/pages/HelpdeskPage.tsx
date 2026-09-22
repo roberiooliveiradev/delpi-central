@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   ActionButton,
   FilePreviewModal,
@@ -30,11 +30,11 @@ import {
   detailRecordSubtitle,
   hasVisibleRichText,
   isTicketFilterActive,
-  listHelpdeskAttachmentIdsInHtml,
   newIdempotencyKey,
   parseObserverIdsInput,
   parseTicketListFilters,
   statusBadgeVariant,
+  stampHelpdeskAttachmentIds,
   nextTicketSort,
   parseTicketSort,
   ticketListSearch,
@@ -43,12 +43,13 @@ import {
   viewForTicketLoad,
 } from "../presentation/ticketView";
 import {
-  hydrateInlineAttachmentSrcs,
+  attachmentPublicUrl,
   listPendingInlineIds,
   normalizeInlineAttachmentSrcs,
   rewritePendingInlineImages,
   stripPendingInlineImages,
 } from "../presentation/inlineUpload";
+import { useAuthenticatedAttachmentSrcs } from "../presentation/useAuthenticatedAttachmentSrcs";
 import type { HelpdeskInlineUploadResult } from "../ui/helpdeskUi";
 import { helpdeskListPaginationBounds } from "../presentation/listPagination";
 import { glpiTicketFormUrl } from "../presentation/glpiPublicLinks";
@@ -735,39 +736,31 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
   const [ticket, setTicket] = useState<TicketDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorText, setErrorText] = useState<string | null>(null);
-  const [content, setContent] = useState(() => readReplyDraft(ticketId));
+  const [content, setContent] = useState(() =>
+    normalizeInlineAttachmentSrcs(stampHelpdeskAttachmentIds(readReplyDraft(ticketId)), ticketId),
+  );
   const [saving, setSaving] = useState(false);
   const [idempotencyKey, setIdempotencyKey] = useState(newIdempotencyKey);
-  const [inlineThumbs, setInlineThumbs] = useState<Record<string, string>>({});
   const [inlinePreview, setInlinePreview] = useState<TicketAttachment | null>(null);
   const myPhotoUrl = useMyPersonProfilePhoto();
-  const draftObjectUrlsRef = useRef<string[]>([]);
+
+  const conversationHtml = useMemo(() => {
+    if (!ticket) return "";
+    return conversationMessages(ticket, new Date())
+      .map((message) => message.bodyHtml || "")
+      .join("\n");
+  }, [ticket]);
+
+  const attachmentPreview = useAuthenticatedAttachmentSrcs({
+    ticketId,
+    html: `${content}\n${conversationHtml}`,
+    fetchBlob: fetchTicketAttachmentBlob,
+    extraDocumentIds: ticket?.attachments.map((item) => item.document_id),
+  });
 
   useEffect(() => {
-    let cancelled = false;
-    draftObjectUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
-    draftObjectUrlsRef.current = [];
-    const draft = readReplyDraft(ticketId);
-    void hydrateInlineAttachmentSrcs(draft, ticketId, fetchTicketAttachmentBlob).then(
-      ({ html, objectUrls }) => {
-        if (cancelled) {
-          objectUrls.forEach((url) => URL.revokeObjectURL(url));
-          return;
-        }
-        draftObjectUrlsRef.current = objectUrls;
-        setContent(html);
-      },
-    );
-    return () => {
-      cancelled = true;
-      draftObjectUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
-      draftObjectUrlsRef.current = [];
-    };
-  }, [ticketId]);
-
-  useEffect(() => {
-    writeReplyDraft(ticketId, normalizeInlineAttachmentSrcs(content, ticketId));
-  }, [ticketId, content]);
+    writeReplyDraft(ticketId, attachmentPreview.persistHtml(content));
+  }, [ticketId, content, attachmentPreview.persistHtml]);
 
   function load() {
     setLoading(true);
@@ -781,41 +774,6 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
   useEffect(() => {
     load();
   }, [ticketId]);
-
-  useEffect(() => {
-    if (!ticket) {
-      setInlineThumbs({});
-      return;
-    }
-    const messages = conversationMessages(ticket, new Date());
-    const ids = new Set<number>();
-    for (const message of messages) {
-      for (const id of listHelpdeskAttachmentIdsInHtml(message.bodyHtml)) ids.add(id);
-    }
-    if (ids.size === 0) {
-      setInlineThumbs({});
-      return;
-    }
-    let cancelled = false;
-    const urls: string[] = [];
-    void Promise.all(
-      [...ids].map(async (documentId) => {
-        try {
-          const blob = await fetchTicketAttachmentBlob(ticketId, documentId);
-          if (cancelled) return;
-          const url = URL.createObjectURL(blob);
-          urls.push(url);
-          setInlineThumbs((current) => ({ ...current, [String(documentId)]: url }));
-        } catch {
-          // Soft-fail: bolha fica sem preview; não derruba a página inteira.
-        }
-      }),
-    );
-    return () => {
-      cancelled = true;
-      urls.forEach((url) => URL.revokeObjectURL(url));
-    };
-  }, [ticket, ticketId]);
 
   return (
     <HelpdeskPageStack>
@@ -897,7 +855,7 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
             <HelpdeskMessageThread
               listAriaLabel="Conversa do chamado"
               emptyLabel="Nenhuma mensagem"
-              resolveAttachmentImageSrc={(attachmentId) => inlineThumbs[attachmentId] || null}
+              resolveAttachmentImageSrc={attachmentPreview.resolveAttachmentImageSrc}
               onAttachmentImageClick={(attachmentId) => {
                 const documentId = Number(attachmentId);
                 if (!Number.isFinite(documentId)) return;
@@ -969,7 +927,7 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                 event.preventDefault();
                 if (saving || !hasVisibleRichText(content)) return;
                 setSaving(true);
-                const payload = normalizeInlineAttachmentSrcs(content.trim(), ticketId);
+                const payload = attachmentPreview.persistHtml(content.trim());
                 void createFollowup(ticketId, payload, idempotencyKey)
                   .then(() => {
                     setContent("");
@@ -986,8 +944,10 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                 hint={helpTooltips.detailUi.reply}
                 attachHint={helpTooltips.detailUi.attach}
                 value={content}
-                onChange={setContent}
+                onChange={(next) => setContent(attachmentPreview.persistHtml(next))}
                 minHeight={120}
+                resolveAttachmentImageSrc={attachmentPreview.resolveAttachmentImageSrc}
+                persistAttachmentImageSrc={attachmentPreview.persistAttachmentImageSrc}
                 onUploadFiles={async (files) => {
                   const results: HelpdeskInlineUploadResult[] = [];
                   let uploadedAny = false;
@@ -999,11 +959,11 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                         newIdempotencyKey(),
                       );
                       uploadedAny = true;
+                      attachmentPreview.seedFile(uploaded.document_id, file);
                       results.push({
                         kind: "uploaded",
                         documentId: uploaded.document_id,
-                        // Bearer-protected public URL cannot load in <img>; blob previews like create flow.
-                        src: URL.createObjectURL(file),
+                        src: attachmentPublicUrl(ticketId, uploaded.document_id),
                         alt: file.name || "imagem",
                       });
                     } else {

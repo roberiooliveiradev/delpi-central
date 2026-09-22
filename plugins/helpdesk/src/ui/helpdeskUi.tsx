@@ -150,6 +150,10 @@ export type HelpdeskRichTextFieldProps = {
   onUploadFiles?: (files: File[]) => Promise<HelpdeskInlineUploadResult[]>;
   onUploadError?: (error: unknown) => void;
   accept?: string;
+  /** Kit contract: display blob for `data-attachment-id` (MessageThread parity). */
+  resolveAttachmentImageSrc?: (attachmentId: string) => string | null | undefined;
+  /** Kit contract: persist stable BFF URL before onChange. */
+  persistAttachmentImageSrc?: (attachmentId: string) => string | null | undefined;
 };
 
 /** Same RichTextEditor for open + reply (M-28). H12 adds paste/attach without MentionComposer. */
@@ -166,6 +170,8 @@ export function HelpdeskRichTextField({
   onUploadFiles,
   onUploadError,
   accept = "image/*,.pdf,.png,.jpg,.jpeg,.gif,.webp,.doc,.docx,.xls,.xlsx,.txt",
+  resolveAttachmentImageSrc,
+  persistAttachmentImageSrc,
 }: HelpdeskRichTextFieldProps) {
   const fileRef = useRef<HTMLInputElement>(null);
   const uploadingRef = useRef(false);
@@ -257,6 +263,8 @@ export function HelpdeskRichTextField({
         portalScopeClassName="dashboard-helpdesk"
         minHeight={minHeight}
         ariaLabel={ariaLabel ?? label}
+        resolveAttachmentImageSrc={resolveAttachmentImageSrc}
+        persistAttachmentImageSrc={persistAttachmentImageSrc}
       />
       {onUploadFiles ? (
         <div className="helpdesk-rich-text-field__attach">

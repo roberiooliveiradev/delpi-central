@@ -347,6 +347,8 @@ declare module "@delpi/plugin-ui/index" {
     ariaLabel?: string;
     portalScopeClassName?: string;
     minHeight?: number;
+    resolveAttachmentImageSrc?: (attachmentId: string) => string | null | undefined;
+    persistAttachmentImageSrc?: (attachmentId: string) => string | null | undefined;
   };
 
   export function RichTextEditor(props: RichTextEditorProps): ReactElement;
