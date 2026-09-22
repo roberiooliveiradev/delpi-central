@@ -468,8 +468,9 @@ C3_T5_AUTHORIZED = YES
 C3_T5_EXECUTED = NO
 C3_T5 = APPROVED
 C3_T6_AUTHORIZED = YES
-C3_T6 = NOT_STARTED
-NEXT = C3-T6
+C3_T6 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+C3_T7_AUTHORIZED = NO
+NEXT = ARCHITECTURE_REVIEW_C3_T6
 REVIEW = ARCHITECTURE_REVIEW_C3_T5
 VERDICT = ACCEPT_WITH_RESIDUAL
 BLOCKER_1_TOTAL_EPISTEMIC_ORDERING = RESOLVED
@@ -485,7 +486,7 @@ EPISTEMIC_CLASS_GLOBAL_ORDERING = NONE
 REAL_DELPI_OPENAPI_COVERAGE = NOT_PROVEN
 ```
 
-Evidence coordination is owned by DÉLIA; original source/domain/provider remains authority for the underlying fact. EvidenceRef ≠ permission; SourceRef ≠ access grant / ≠ source authority itself; Prediction ≠ FACT; Recommendation ≠ authorization; OBSERVATION ≠ FACT; FACT_STATUS ≠ ACCESS_PERMISSION. C3-T2 APPROVED (`ARCHITECTURE_REVIEW_C3_T2R1` `ACCEPT_WITH_RESIDUAL`). C3-T3 APPROVED (`ARCHITECTURE_REVIEW_C3_T3R1` `ACCEPT_WITH_RESIDUAL`); provider-neutral `ModelInvocationPort` + lineage/EvalIdentity; ModelInvocationResult ≠ EvalResult; C3-T4 APPROVED (`ARCHITECTURE_REVIEW_C3_T4R1` `ACCEPT_WITH_RESIDUAL`); `UnderstandStructuredInput` (BOUNDED_SOURCE_OBSERVATION_EXTRACTION; source OBSERVATION ≠ world FACT); C3-T5 APPROVED (`ARCHITECTURE_REVIEW_C3_T5` `ACCEPT_WITH_RESIDUAL`); OpenAPI→CapabilityProjection TEST_FIXTURE foundation; Evidence store / RAG / planner / conversation remain NOT_IMPLEMENTED; real provider adapter = NONE; `REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN`; C3_EXECUTED=NO.
+Evidence coordination is owned by DÉLIA; original source/domain/provider remains authority for the underlying fact. EvidenceRef ≠ permission; SourceRef ≠ access grant / ≠ source authority itself; Prediction ≠ FACT; Recommendation ≠ authorization; OBSERVATION ≠ FACT; FACT_STATUS ≠ ACCESS_PERMISSION. C3-T2 APPROVED (`ARCHITECTURE_REVIEW_C3_T2R1` `ACCEPT_WITH_RESIDUAL`). C3-T3 APPROVED (`ARCHITECTURE_REVIEW_C3_T3R1` `ACCEPT_WITH_RESIDUAL`); provider-neutral `ModelInvocationPort` + lineage/EvalIdentity; ModelInvocationResult ≠ EvalResult; C3-T4 APPROVED (`ARCHITECTURE_REVIEW_C3_T4R1` `ACCEPT_WITH_RESIDUAL`); `UnderstandStructuredInput` (BOUNDED_SOURCE_OBSERVATION_EXTRACTION; source OBSERVATION ≠ world FACT); C3-T5 APPROVED (`ARCHITECTURE_REVIEW_C3_T5` `ACCEPT_WITH_RESIDUAL`); OpenAPI→CapabilityProjection TEST_FIXTURE foundation; C3-T6 candidate Expertise/Playbook/Knowledge governance + retrieval contracts (no store/RAG/RetrievalPort); Evidence store / RAG / planner / conversation remain NOT_IMPLEMENTED; real provider adapter = NONE; `REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN`; C3_EXECUTED=NO.
 
 #### C3-T3 Model invocation / eval lineage (APPROVED)
 
@@ -549,8 +550,9 @@ C3_T5 = APPROVED
 C3_T5_AUTHORIZED = YES
 C3_T5_EXECUTED = NO
 C3_T6_AUTHORIZED = YES
-C3_T6 = NOT_STARTED
-NEXT = C3-T6
+C3_T6 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+C3_T7_AUTHORIZED = NO
+NEXT = ARCHITECTURE_REVIEW_C3_T6
 NOTE_SUPERSEDED_CANDIDATE: historical C3-T4 / C3-T4R1 candidate markers live in ledger §6.70–§6.71
 ```
 
@@ -577,8 +579,33 @@ PREPARE = NONE
 ACT = NONE
 PERSISTENCE = NONE
 C3_T6_AUTHORIZED = YES
-C3_T6 = NOT_STARTED
-NEXT = C3-T6
+C3_T6 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+C3_T7_AUTHORIZED = NO
+NEXT = ARCHITECTURE_REVIEW_C3_T6
+```
+
+#### C3-T6 Expertise / Knowledge Governance + Retrieval Contracts (CANDIDATE)
+
+```text
+STATUS = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+OWNER = delia-api domain/expertise + domain/knowledge
+EXPERTISE = ExpertisePack (versioned; != authorization)
+PLAYBOOK = DomainPlaybook / PlaybookStep (guidance only; != execution / ACT)
+KNOWLEDGE_CANDIDATE != PUBLISHED_ORGANIZATIONAL_KNOWLEDGE
+LIFECYCLE = CANDIDATE → REVIEWED → EVALUATED → PUBLISHED (+ DEPRECATED/REVOKED)
+RETRIEVAL_CONTRACTS = KnowledgeRetrievalRequest / Hit / Result
+RETRIEVAL_PORT = DEFERRED
+REUSES = EvidenceRef, SourceRef
+PHYSICAL_STORE = NONE / TO_INVENTORY
+RAG = NONE
+VECTOR_STORE = NONE
+REGISTRY = NONE
+PLANNER = NONE
+CONVERSATION = NONE
+ACT = NONE
+PERSISTENCE = NONE
+C3_T7_AUTHORIZED = NO
+NEXT = ARCHITECTURE_REVIEW_C3_T6
 ```
 
 ## 3A. Architecture / persistence / privacy / safety — C0.S4 freeze accepted

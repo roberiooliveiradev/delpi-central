@@ -1201,7 +1201,7 @@ C3_T4_AUTHORIZED = YES
 C3_T4_EXECUTED = NO
 TEST_MODULES = tests/test_model_invocation_foundation.py + tests/test_model_invocation_architecture.py
 PRODUCTION_READINESS = NOT_PROVEN
-NEXT = C3-T6
+NEXT = ARCHITECTURE_REVIEW_C3_T6
 ```
 
 Required deterministic cases (C3-T3) — implemented; Architecture Review accepted (`ARCHITECTURE_REVIEW_C3_T3R1` `ACCEPT_WITH_RESIDUAL`):
@@ -1274,10 +1274,11 @@ C3_T5 = APPROVED
 C3_T5_AUTHORIZED = YES
 C3_T5_EXECUTED = NO
 C3_T6_AUTHORIZED = YES
-C3_T6 = NOT_STARTED
+C3_T6 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+C3_T7_AUTHORIZED = NO
 TEST_MODULES = tests/test_structured_understanding_foundation.py + tests/test_structured_understanding_architecture.py
 PRODUCTION_READINESS = NOT_PROVEN
-NEXT = C3-T6
+NEXT = ARCHITECTURE_REVIEW_C3_T6
 ```
 
 Required deterministic cases (C3-T4R1) — implemented; Architecture Review accepted (`ARCHITECTURE_REVIEW_C3_T4R1` `ACCEPT_WITH_RESIDUAL`):
@@ -1869,8 +1870,9 @@ ARCHITECTURE_ENFORCEMENT = FAIL / OUTSIDE_TASK_BASELINE
 CURSOR_RULES_GOVERNANCE = pre-existing red
 PRODUCTION_READINESS = NOT_PROVEN
 C3_T6_AUTHORIZED = YES
-C3_T6 = NOT_STARTED
-NEXT = C3-T6
+C3_T6 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+C3_T7_AUTHORIZED = NO
+NEXT = ARCHITECTURE_REVIEW_C3_T6
 ```
 
 Implementation SHA: `84c249bee0182ebf514142a24cb8bbea4090ca26`.
@@ -1890,3 +1892,44 @@ Executed isolated module suite: `python -m pytest -q` over the C3-T5 content-equ
 GitHub `Architecture Enforcement` run `35717733644` on the implementation SHA: **FAIL** in pre-existing `scripts.ci.test_audit_gpt_actions_openapi.GptActionsOpenApiAuditTest.test_current_repo_artifacts_pass`, reporting three Transformômetro GPT Actions write operations without typed examples. The failing artifact predates C3-T5 and is outside this task. Later architecture steps were skipped by that workflow failure.
 
 `FULL_DELIA_API_SUITE = TEST_NOT_RUN` because the available execution environment could not clone GitHub and the repository workflow does not execute the full `delia-api` pytest suite. Do not promote this evidence to repository-wide PASS.
+
+## C3-T6 — Expertise / Knowledge Governance + Retrieval Contracts (CANDIDATE)
+
+```text
+STATUS = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+BASE_HEAD = 86729dc5ba1aa21463271989feb3e4cc215ea218
+C3_T7_AUTHORIZED = NO
+PRODUCTION_READINESS = NOT_PROVEN
+NEXT = ARCHITECTURE_REVIEW_C3_T6
+```
+
+Evidence (executed locally in `delia-api`):
+
+```text
+COMMAND = .venv/bin/python -m pytest tests/test_knowledge_governance_foundation.py tests/test_knowledge_governance_architecture.py -v --tb=no
+RESULT = PASS
+TEST_COUNT = 15
+FAILURES = 0
+SKIPS = 0
+
+COMMAND = .venv/bin/python -m pytest tests/test_evidence_epistemic_conformance.py tests/test_model_invocation_foundation.py tests/test_model_invocation_architecture.py tests/test_structured_understanding_foundation.py tests/test_structured_understanding_architecture.py tests/test_capability_catalog_foundation.py tests/test_capability_catalog_architecture.py tests/test_knowledge_governance_foundation.py tests/test_knowledge_governance_architecture.py -v --tb=no
+RESULT = PASS
+TEST_COUNT = 126
+FAILURES = 0
+SKIPS = 0
+
+COMMAND = .venv/bin/python -m pytest -v --tb=no
+RESULT = PASS
+TEST_COUNT = 161
+FAILURES = 0
+SKIPS = 0
+```
+
+Coverage notes:
+- Expertise/Playbook grant no RBAC/ACT; CapabilityProjection refs do not authorize ACT;
+- KnowledgeCandidate cannot be PUBLISHED; publication eligibility fail-closed;
+- untrusted content cannot mutate governance or self-publish;
+- personal/session/transient cannot auto-promote to Organizational Knowledge;
+- retrieval hit/rank/score ≠ FACT / Evidence / permission;
+- no KnowledgeRepository/Registry/VectorStore/RAG/RetrievalPort/planner/ACT;
+- EvidenceRef/SourceRef reused (no second primitives).

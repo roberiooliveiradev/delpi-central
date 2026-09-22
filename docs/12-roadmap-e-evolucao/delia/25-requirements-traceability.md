@@ -48,9 +48,9 @@ OUT_OF_SCOPE_WITH_DECISION
 | CP-055 | Prompt/tool/context injection safety | DÉLIA Policy | security semantics | PLANNED / CONTRIBUTION ONLY — C3-T3 invocation boundary rejects untrusted mutation of authority/policy metadata; full Policy/runtime injection platform NOT_IMPLEMENTED; not CP PASS |
 | CP-056 | Secret redaction | todos os owners | redaction contract | PLANNED / CONTRIBUTION ONLY — C3-T3 rejects secret/token fields in invocation input/output and omits them from safe observability; platform-wide redaction runtime NOT_IMPLEMENTED; not CP PASS |
 | CP-057 | Idempotency semantics de writes | Domain API + DÉLIA orchestration | C0 contract; runtime C5 | PLANNED |
-| CP-072 | Expertise Pack versionado | DÉLIA API | primitive/schema | PLANNED |
-| CP-075 | Domain Playbook versionado | DÉLIA API/domain owners | primitive/schema | PLANNED |
-| CP-077 | Expertise não concede RBAC | Core/DÉLIA Policy | invariant | PLANNED |
+| CP-072 | Expertise Pack versionado | DÉLIA API | primitive/schema | PLANNED / CONTRIBUTION ONLY — C3-T6 `ExpertisePack` identity/version/owner foundation; Expertise Studio/runtime/Marketplace NOT_IMPLEMENTED; not CP PASS |
+| CP-075 | Domain Playbook versionado | DÉLIA API/domain owners | primitive/schema | PLANNED / CONTRIBUTION ONLY — C3-T6 `DomainPlaybook`/`PlaybookStep` guidance foundation; workflow/Marketplace runtime NOT_IMPLEMENTED; not CP PASS |
+| CP-077 | Expertise não concede RBAC | Core/DÉLIA Policy | invariant | PLANNED / CONTRIBUTION ONLY — C3-T6 deterministic negative (`grants_rbac`/`grants_authorization`/`grants_act` = False); full Policy/RBAC program NOT_IMPLEMENTED; not CP PASS |
 | CP-088 | PDF/imagem não altera policy | DÉLIA Multimodal/Policy | safety contract; C3 eval | PLANNED |
 | CP-091 | EntityRef cross-domain canônico | DÉLIA shared/domain owners | primitive | PLANNED |
 | CP-092 | RelationshipRef com provenance | Graph/domain owners | primitive | PLANNED |
@@ -332,20 +332,20 @@ C6 habilita Product Work e Watch `OBSERVE|ADVISE|PREPARE` por default. `PREPARE`
 | CP-169 | Frontline Mode no mesmo MFE/API | DÉLIA MFE/API | frontline surface parity | LOCKED |
 | CP-170 | Hands-free voice com fallback touch/text | DÉLIA Frontline | noisy/permission/accessibility tests | LOCKED |
 | CP-172 | Training assistance referencia procedimento/desenho/revisão vigente | DÉLIA Knowledge/Domain owners | source freshness | LOCKED |
-| CP-173 | Observação de processo gera somente Knowledge/Experience candidate | DÉLIA Knowledge | candidate provenance | LOCKED |
-| CP-174 | Meeting/frontline candidate exige review/eval antes de virar conhecimento publicado | DÉLIA Knowledge/Expertise | governed learning | LOCKED |
+| CP-173 | Observação de processo gera somente Knowledge/Experience candidate | DÉLIA Knowledge | candidate provenance | LOCKED / FOUNDATION CONTRIBUTION — C3-T6 candidate≠published semantics; Meeting/Process observation runtime NOT_IMPLEMENTED; not CP PASS |
+| CP-174 | Meeting/frontline candidate exige review/eval antes de virar conhecimento publicado | DÉLIA Knowledge/Expertise | governed learning | LOCKED / FOUNDATION CONTRIBUTION — C3-T6 publication eligibility requires review/eval/version/provenance; Meeting/Frontline runtime NOT_IMPLEMENTED; not CP PASS |
 | CP-181 | Meeting/Frontline accessibility e large-touch/shared-device UX | DÉLIA MFE | accessibility/frontline gate | LOCKED |
 | CP-191 | Meeting pode associar face/voz enrolled a participante com confidence/correção | DÉLIA Meeting/Biometric | participant identity gate | LOCKED |
 | CP-192 | Frontline pode usar biometria para identity assistance sem substituir sessão/RBAC | DÉLIA Frontline/Biometric | shared-device identity gate | LOCKED |
 | CP-193 | Human Observation analisa somente padrões operacionais observáveis com Evidence/provenance | DÉLIA Frontline/Knowledge | process observation gate | LOCKED |
 | CP-207 | Provider push/webhook/subscription normaliza para EventEnvelope com authenticity/dedupe/reconciliation | DÉLIA Connectors/Events | webhook lifecycle gate | LOCKED |
-| CP-208 | External source só vira user/org Knowledge por candidate→review/eval/publish; nunca auto-truth | DÉLIA Knowledge/Governance | external learning gate | LOCKED |
-| CP-212 | Personal connection data não vira shared Knowledge/Case/Room sem sharing/promotion explícito | DÉLIA Privacy/Knowledge | personal-data isolation gate | LOCKED |
+| CP-208 | External source só vira user/org Knowledge por candidate→review/eval/publish; nunca auto-truth | DÉLIA Knowledge/Governance | external learning gate | LOCKED / FOUNDATION CONTRIBUTION — C3-T6 fail-closed publish path + untrusted content cannot self-publish; External Connector runtime NOT_IMPLEMENTED; not CP PASS |
+| CP-212 | Personal connection data não vira shared Knowledge/Case/Room sem sharing/promotion explícito | DÉLIA Privacy/Knowledge | personal-data isolation gate | LOCKED / FOUNDATION CONTRIBUTION — C3-T6 Personal/session origin cannot auto-promote to Organizational Knowledge; Personal Memory/External Connection runtime NOT_IMPLEMENTED; not CP PASS |
 | CP-213 | Subscription expiry/missed events/revocation exigem renewal/reconciliation/degraded state truthful | DÉLIA Connectors/Work | external event reliability gate | LOCKED |
 | CP-218 | Teams change notifications de mensagens/canais/reuniões/transcrições/gravações, quando suportadas, entram por autenticidade→EventEnvelope→dedupe/reconciliation | DÉLIA Teams/Events | Teams event lifecycle gate | LOCKED |
 | CP-220 | Teams meeting artifacts podem alimentar ata viva, Evidence, Task, Case, Room e Watch sem transformar transcript em decisão/ação automática | DÉLIA Teams/Meeting/Work | Teams meeting-to-work gate | LOCKED |
 | CP-221 | App/tab/bot da DÉLIA no Teams, quando implementado, usa a mesma DÉLIA API, Core/RBAC, Policy, Evidence e Work runtime; nenhum `teams-copilot-api` paralelo | DÉLIA Teams/MFE/Platform | same-runtime surface gate | LOCKED |
-| CP-224 | Chat privado, canal restrito, transcript e recording do Teams preservam source ACL; não viram shared Knowledge/Case/Room sem autorização/promotion explícita | DÉLIA Teams/Privacy/Knowledge | Teams private-resource isolation gate | LOCKED |
+| CP-224 | Chat privado, canal restrito, transcript e recording do Teams preservam source ACL; não viram shared Knowledge/Case/Room sem autorização/promotion explícita | DÉLIA Teams/Privacy/Knowledge | Teams private-resource isolation gate | LOCKED / FOUNDATION CONTRIBUTION — C3-T6 generic private/personal ≠ shared Organizational Knowledge invariant; Teams runtime/ACL evaluation NOT_IMPLEMENTED; not CP PASS |
 | CP-241 | Watch suporta `PREPARE` como estado/mode distinto de `ACT`, permitindo preparar ação sem side effect | DÉLIA Watch/Work/Policy | prepare-vs-act gate | LOCKED |
 | CP-242 | Automation Hub Admin expõe automations/executions/workers/exceptions, owner/version/executor/status/outcome/evidence sem virar segundo workflow engine | DÉLIA Automation Admin/MFE/API | admin ownership/observability gate | LOCKED |
 | CP-243 | Event-driven notification/escalation usa recipients/severity/dedupe/SLA/channel policy e pode combinar Minha DELPI/email/Teams/WhatsApp Business | DÉLIA Notifications/Watch | notification orchestration gate | LOCKED |
@@ -1080,5 +1080,48 @@ CP-235 = LOCKED / CONTRIBUTION ONLY
 MASS_PROMOTION = NONE
 RUNTIME_CP_PROMOTED_TO_PASS = NO
 NEW_CP_CREATED = NO
-NEXT = C3-T6
+NEXT = ARCHITECTURE_REVIEW_C3_T6
+```
+
+## 29. C3-T6 Expertise / Knowledge Governance + Retrieval Contracts — candidate
+
+```text
+C3_T6 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+C3_T7_AUTHORIZED = NO
+C3_STARTED = YES
+C3_EXECUTED = NO
+C3_T1 = APPROVED
+C3_T2 = APPROVED
+C3_T3 = APPROVED
+C3_T4 = APPROVED
+C3_T5 = APPROVED
+EXPERTISE_FOUNDATION = IMPLEMENTED
+PLAYBOOK_FOUNDATION = IMPLEMENTED
+KNOWLEDGE_GOVERNANCE_FOUNDATION = IMPLEMENTED
+RETRIEVAL_CONTRACTS = IMPLEMENTED
+RETRIEVAL_PORT = DEFERRED
+PHYSICAL_KNOWLEDGE_STORE = NONE / TO_INVENTORY
+PERSISTENCE = NONE
+MIGRATION = NONE
+RAG = NONE
+VECTOR_STORE = NONE
+PLANNER = NONE
+CONVERSATION_RUNTIME = NONE
+TOOL_EXECUTION = NONE
+PREPARE_SIDE_EFFECT = NONE
+ACT = NONE
+CP-072 = PLANNED / CONTRIBUTION ONLY
+CP-075 = PLANNED / CONTRIBUTION ONLY
+CP-077 = PLANNED / CONTRIBUTION ONLY
+CP-173 = LOCKED / FOUNDATION CONTRIBUTION
+CP-174 = LOCKED / FOUNDATION CONTRIBUTION
+CP-208 = LOCKED / FOUNDATION CONTRIBUTION
+CP-212 = LOCKED / FOUNDATION CONTRIBUTION
+CP-224 = LOCKED / FOUNDATION CONTRIBUTION
+MASS_PROMOTION = NONE
+RUNTIME_CP_PROMOTED_TO_PASS = NO
+NEW_CP_CREATED = NO
+PRODUCTION_READINESS = NOT_PROVEN
+REAL_DELPI_OPENAPI_COVERAGE = NOT_PROVEN
+NEXT = ARCHITECTURE_REVIEW_C3_T6
 ```

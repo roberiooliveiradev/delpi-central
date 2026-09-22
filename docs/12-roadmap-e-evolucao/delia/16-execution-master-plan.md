@@ -3,7 +3,7 @@
 **Status:** planejamento executável canônico  
 **Autoridade de ordem:** **este documento é a única fonte de verdade para a sequência de implementação**  
 **Produto:** **DÉLIA**, aplicação standalone nova  
-**Próxima etapa:** `C3-T6` (`C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO`; `C3-T1..T5=APPROVED`; `C3_T6_AUTHORIZED=YES`; `C3-T6=NOT_STARTED`; do not claim C3 complete; `PRODUCTION_READINESS=NOT_PROVEN`; `REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN`)
+**Próxima etapa:** `ARCHITECTURE_REVIEW_C3_T6` (`C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO`; `C3-T1..T5=APPROVED`; `C3_T6_AUTHORIZED=YES`; `C3-T6=CANDIDATE_FOR_ARCHITECTURE_REVIEW`; `C3_T7_AUTHORIZED=NO`; do not claim C3 complete; `PRODUCTION_READINESS=NOT_PROVEN`; `REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN`)
 **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Baseline:** [`51-platform-integration-baseline.md`](./51-platform-integration-baseline.md)  
 **Bootstrap:** [`52-standalone-repository-and-bootstrap-plan.md`](./52-standalone-repository-and-bootstrap-plan.md)  
@@ -406,7 +406,7 @@ BROWSER_STATE_RESIDENCY_POLICY = APPROVED (C2-T1D1)
 BROWSER_RETAINED_STATE_CURRENTLY_REQUIRED = NO
 CENTRALIZED_BROWSER_STATE_BOUNDARY = REQUIRED_ON_FIRST_RETAINED_STATE
 SHARED_DEVICE_ISOLATION_INVARIANT = FROZEN_ACCEPTED
-NEXT = C3-T6
+NEXT = ARCHITECTURE_REVIEW_C3_T6
 ```
 
 C3 initial bounded DAG (Coordination-approved dependency order; not the numbered foundation inventory):
@@ -418,8 +418,8 @@ C3-T1 Evidence / epistemic semantics + source linkage = APPROVED (21 §4B; ARCHI
 → C3-T3 Minimal Model Invocation + Eval/Lineage Foundation = APPROVED (ARCHITECTURE_REVIEW_C3_T3R1 ACCEPT_WITH_RESIDUAL; IMPLEMENTATION_HEAD=2ba28950e)
 → C3-T4 Structured Understanding Vertical Slice = APPROVED (ARCHITECTURE_REVIEW_C3_T4R1 ACCEPT_WITH_RESIDUAL; IMPLEMENTATION_HEAD=89bb5ad352)
 → C3-T5 OpenAPI Action Catalog + Capability Projection = APPROVED (ARCHITECTURE_REVIEW_C3_T5 ACCEPT_WITH_RESIDUAL; IMPLEMENTATION_HEAD=84c249bee0)
-→ C3-T6 Expertise / Knowledge Governance + Retrieval Contracts (AUTHORIZED; NOT_STARTED)
-→ C3-T7 FAST|OPERATIONAL|REASONING + Structured Planner Foundation
+→ C3-T6 Expertise / Knowledge Governance + Retrieval Contracts = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+→ C3-T7 FAST|OPERATIONAL|REASONING + Structured Planner Foundation (NOT_AUTHORIZED)
 → C3-T8 Conversation / Session Interaction Foundation
 EVIDENCE_BEFORE_MODEL = YES
 EVIDENCE_BEFORE_PLANNER = YES
@@ -440,7 +440,8 @@ C3_T5 = APPROVED
 C3_T5_AUTHORIZED = YES
 C3_T5_EXECUTED = NO
 C3_T6_AUTHORIZED = YES
-C3_T6 = NOT_STARTED
+C3_T6 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+C3_T7_AUTHORIZED = NO
 ```
 
 ## C0.S2 — Authorities / bounded contexts
@@ -699,7 +700,7 @@ C3_T2_AUTHORIZED = YES
 C3_T3_AUTHORIZED = YES
 C3_T3_EXECUTED = NO
 PRODUCTION_READINESS = NOT_PROVEN
-NEXT = C3-T6
+NEXT = ARCHITECTURE_REVIEW_C3_T6
 C3_T3 = APPROVED
 C3_T4 = APPROVED
 C3_T4_AUTHORIZED = YES
@@ -708,9 +709,10 @@ C3_T5 = APPROVED
 C3_T5_AUTHORIZED = YES
 C3_T5_EXECUTED = NO
 C3_T6_AUTHORIZED = YES
-C3_T6 = NOT_STARTED
+C3_T6 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+C3_T7_AUTHORIZED = NO
 REAL_DELPI_OPENAPI_COVERAGE = NOT_PROVEN
-C2-FINAL accepted with residual; C3-T1..T5 APPROVED (`ARCHITECTURE_REVIEW_C3_T5` ACCEPT_WITH_RESIDUAL); C3-T6 authorized, not started
+C2-FINAL accepted with residual; C3-T1..T5 APPROVED (`ARCHITECTURE_REVIEW_C3_T5` ACCEPT_WITH_RESIDUAL); C3-T6 candidate ready for Architecture Review
 Workspace binding remains unscheduled
 ```
 
@@ -949,11 +951,45 @@ C3_T1_T4_FULL_REGRESSION_ON_FINAL_HEAD = TEST_NOT_RUN
 ARCHITECTURE_ENFORCEMENT = FAIL / OUTSIDE_TASK_BASELINE
 CURSOR_RULES_GOVERNANCE = pre-existing red
 C3_T6_AUTHORIZED = YES
-C3_T6 = NOT_STARTED
+C3_T6 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+C3_T7_AUTHORIZED = NO
 C3_EXECUTED = NO
 PRODUCTION_READINESS = NOT_PROVEN
-NEXT = C3-T6
+NEXT = ARCHITECTURE_REVIEW_C3_T6
 NOTE_SUPERSEDED_CANDIDATE: historical C3-T5 candidate markers live in ledger candidate block / §6.73 review
 ```
 
 C3-T5 does not classify operation character from HTTP verb. Semantic projection requires an explicit governed declaration; missing/duplicate identity or missing semantic declaration fails closed as non-projectable. OpenAPI security metadata is descriptive only and never becomes current-user permission, Core RBAC, Domain AuthZ or ACT authorization. The GitHub Architecture Enforcement run for the implementation SHA failed in a pre-existing Transformômetro GPT Actions repository check outside this task; no C3-T5 file was identified by that failing test. Real DELPI OpenAPI coverage remains `NOT_PROVEN`.
+
+### C3-T6 — Expertise / Knowledge Governance + Retrieval Contracts (CANDIDATE)
+
+```text
+TASK = C3-T6 — Expertise / Knowledge Governance + Retrieval Contracts
+STATE = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+BASE_HEAD = 86729dc5ba1aa21463271989feb3e4cc215ea218
+EXPERTISE_FOUNDATION = IMPLEMENTED
+PLAYBOOK_FOUNDATION = IMPLEMENTED
+KNOWLEDGE_GOVERNANCE_FOUNDATION = IMPLEMENTED
+RETRIEVAL_CONTRACTS = IMPLEMENTED (provider-neutral request/hit/result + eligibility filter)
+RETRIEVAL_PORT = DEFERRED (Abstraction Gate; no Application consumer)
+PHYSICAL_KNOWLEDGE_STORE = NONE / TO_INVENTORY
+KNOWLEDGE_REPOSITORY = NONE
+RAG = NONE
+VECTOR_STORE = NONE
+EMBEDDING_RUNTIME = NONE
+PLANNER = NONE
+CONVERSATION_RUNTIME = NONE
+TOOL_EXECUTION = NONE
+PREPARE_SIDE_EFFECT = NONE
+ACT = NONE
+PERSISTENCE = NONE
+MIGRATION = NONE
+MARKETPLACE = NONE
+PERSONAL_MEMORY_RUNTIME = NONE
+C3_T7_AUTHORIZED = NO
+C3_EXECUTED = NO
+PRODUCTION_READINESS = NOT_PROVEN
+NEXT = ARCHITECTURE_REVIEW_C3_T6
+```
+
+C3-T6 establishes governed Expertise/Playbook value objects and Knowledge candidate→review/eval→publish semantics without physical store, RAG, vector index, registry, planner, conversation, PREPARE or ACT. Retrieval contracts are provider-neutral; `KnowledgeRetrievalPort` is deferred. Expertise/Playbook/Knowledge grant no authorization. Personal/session origin cannot auto-promote to Organizational Knowledge. EvidenceRef/SourceRef are reused.
