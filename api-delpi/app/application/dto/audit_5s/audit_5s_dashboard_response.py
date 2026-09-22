@@ -56,12 +56,20 @@ class Audit5sDashboardPagination:
     page_size: int
     total: int
 
+    @classmethod
+    def from_paged_count(cls, payload: dict[str, Any]) -> Audit5sDashboardPagination:
+        """Map canonical paged_count envelope (may include total_pages/is_complete)."""
+        return cls(
+            page=int(payload["page"]),
+            page_size=int(payload["page_size"]),
+            total=int(payload["total"]),
+        )
+
     @property
     def total_pages(self) -> int:
         if self.page_size <= 0:
             return 0
         return (self.total + self.page_size - 1) // self.page_size
-
 
     def to_dict(self) -> dict[str, Any]:
         return PaginationEnvelopeBuilder.paged_count(
