@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { EmptyState, emptyStateCardBemClasses } from "@delpi/plugin-ui/index";
+import { EmptyState, emptyStateCardBemClasses, HelpTooltip } from "@delpi/plugin-ui/index";
+import { RefreshCw } from "lucide-react";
 
 import { DataTable } from "../../components/DataTable";
 import { InlineErrorState } from "../../components/ErrorStateBox";
@@ -8,6 +9,7 @@ import { DS_GHOST_BTN } from "../../components/ghostChrome";
 import { TmStatusBadge } from "../../components/tmChromeUi";
 import { cenarioLabel } from "../../content/cenarioLabels";
 import { beneficioCalculoLabel } from "../../content/beneficioCalculoLabels";
+import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { TransformometroHttpError } from "../../data/api/transformometroHttp";
 import {
   fetchInvestimentos,
@@ -39,6 +41,9 @@ import {
 } from "./buildRevisionComparisonView";
 import { MeasurementComparisonTable } from "./MeasurementComparisonTable";
 import { instanciaNavLabel } from "./processWorkspaceNav";
+import { ResultsContextHeader } from "./ResultsContextHeader";
+import { ResultsProvenanceLegend } from "./ResultsProvenanceLegend";
+import { ResultsSectionBlock } from "./ResultsSectionBlock";
 import { RevisionCompareSummary } from "./RevisionCompareSummary";
 
 type Props = {
@@ -52,6 +57,8 @@ type Props = {
 };
 
 const EMPTY = emptyStateCardBemClasses("ds");
+const H = TM_HELP_TOOLTIPS.resultados;
+const SCENARIO_SELECT_THRESHOLD = 5;
 
 type RevisionBundle = {
   medicao: Medicao | null;
@@ -62,7 +69,7 @@ type RevisionBundle = {
 
 /**
  * Resultados — Redesign & Compare V1 (composição frontend).
- * Sem aggregate/DTO/backend novo. Referência = `revisao_referencia_id` do domínio.
+ * Sem aggregate/DTO/backend novo. Referência vem do domínio (campo canônico na revisão).
  */
 export function ProcessResultsSection({
   processoId,
@@ -253,20 +260,28 @@ export function ProcessResultsSection({
         }
       : undefined;
 
+  const tertiaryOpenLink = (label: string, onClick: () => void) => (
+    <button type="button" className="ds-link tm-processo-results-tertiary" onClick={onClick}>
+      {label}
+    </button>
+  );
+
   return (
     <section
       className="ds-card tm-processo-workspace-panel tm-processo-results"
       aria-labelledby="tm-process-resultados-title"
       data-results-mode={comparison.mode}
     >
-      <h2 id="tm-process-resultados-title" className="ds-section-title">
-        Resultados
-      </h2>
-      <p className="ds-hint">
-        Redesign &amp; Compare: AS-IS é a revisão de referência do domínio; TO-BE é o cenário
-        selecionado. Benefícios e totais do comparativo são <strong>calculados</strong> — não
-        confundir com resultado observado em campo.
-      </p>
+      <div className="tm-processo-results__intro">
+        <h2 id="tm-process-resultados-title" className="ds-section-title">
+          Resultados
+        </h2>
+        <p className="tm-processo-results__lede">
+          {H.intro}
+          <HelpTooltip content={H.naturezaLegenda} ariaLabel="Ajuda: Natureza dos dados" />
+        </p>
+        <ResultsProvenanceLegend />
+      </div>
 
       {comparison.mode === "no_instance" ? (
         <EmptyState
@@ -305,86 +320,90 @@ export function ProcessResultsSection({
           data-selected-revisao={comparison.selectedRevisionId ?? undefined}
           data-reference-revisao={comparison.referenceRevisionId ?? undefined}
         >
-          <header className="tm-processo-results-context" aria-label="Contexto da comparação">
-            <dl className="tm-processo-results-context__grid">
-              <div>
-                <dt>Melhoria</dt>
-                <dd>
-                  {instanciaNavLabel(comparison.instance)}
-                  {instancias.length > 1 ? (
-                    <>
-                      {" · "}
-                      <button
-                        type="button"
-                        className="ds-link"
-                        onClick={() => setSelectedInstanciaId(null)}
-                      >
-                        Trocar
-                      </button>
-                    </>
-                  ) : null}
-                </dd>
-              </div>
-              <div>
-                <dt>Cenário</dt>
-                <dd>
-                  {comparison.toBe
-                    ? `${revisaoDisplayLabel(comparison.toBe)} · ${cenarioLabel(comparison.toBe.cenario_tipo)}`
-                    : "—"}
-                  {comparison.toBe && !comparison.toBe.revisao_ativa ? (
-                    <>
-                      {" "}
-                      <TmStatusBadge label="inativa" variant="neutral" />
-                    </>
-                  ) : null}
-                  {comparison.toBe?.revisao_ativa ? (
-                    <>
-                      {" "}
-                      <TmStatusBadge label="ativa" variant="success" />
-                    </>
-                  ) : null}
-                </dd>
-              </div>
-              <div>
-                <dt>Referência</dt>
-                <dd>
-                  {comparison.mode === "legacy_reference_missing"
-                    ? "Não definida"
-                    : comparison.asIs
-                      ? `${revisaoDisplayLabel(comparison.asIs)} · ${cenarioLabel(comparison.asIs.cenario_tipo)}`
-                      : comparison.mode === "baseline_only"
-                        ? "Linha de base (própria)"
-                        : "—"}
-                </dd>
-              </div>
-            </dl>
-          </header>
+          <ResultsContextHeader
+            instance={comparison.instance}
+            toBe={comparison.toBe}
+            asIs={comparison.asIs}
+            mode={comparison.mode}
+            canChangeInstance={instancias.length > 1}
+            onChangeInstance={() => setSelectedInstanciaId(null)}
+            onOpenRevision={
+              comparison.selectedRevisionId
+                ? () => openRevisionSection(comparison.selectedRevisionId!, "medicao")
+                : undefined
+            }
+          />
 
           {comparison.scopedRevisoes.length > 1 ? (
-            <div className="tm-processo-results-revisao-picker" role="group" aria-label="Cenário (TO-BE)">
-              <p className="ds-hint">Selecione o cenário (revisão TO-BE) neste contexto:</p>
-              <ul className="tm-processo-results-instance-picker">
-                {comparison.scopedRevisoes.map((revisao) => (
-                  <li key={revisao.revisao_id}>
-                    <button
-                      type="button"
-                      className={DS_GHOST_BTN}
-                      aria-pressed={comparison.selectedRevisionId === revisao.revisao_id}
-                      onClick={() => setSelectedRevisaoId(revisao.revisao_id)}
-                    >
-                      {revisaoDisplayLabel(revisao)} · {cenarioLabel(revisao.cenario_tipo)}
-                      {!revisao.revisao_ativa ? " · inativa" : ""}
-                    </button>
-                  </li>
-                ))}
-              </ul>
+            <div
+              className="tm-processo-results-revisao-picker"
+              role="group"
+              aria-label="Trocar cenário"
+            >
+              <div className="tm-processo-results-revisao-picker__head">
+                <p className="tm-processo-results-block__helper">
+                  Trocar cenário
+                </p>
+                <HelpTooltip
+                  content="Escolha o cenário proposto (TO-BE). A referência (AS-IS) continua definida pelo cadastro da revisão."
+                  ariaLabel="Ajuda: Trocar cenário"
+                />
+              </div>
+              {comparison.scopedRevisoes.length >= SCENARIO_SELECT_THRESHOLD ? (
+                <label className="tm-processo-results-revisao-select">
+                  <span className="sr-only">Cenário proposto</span>
+                  <select
+                    value={comparison.selectedRevisionId ?? ""}
+                    onChange={(event) =>
+                      setSelectedRevisaoId(event.target.value || null)
+                    }
+                  >
+                    <option value="">Selecione um cenário…</option>
+                    {comparison.scopedRevisoes.map((revisao) => (
+                      <option key={revisao.revisao_id} value={revisao.revisao_id}>
+                        {revisaoDisplayLabel(revisao)} · {cenarioLabel(revisao.cenario_tipo)}
+                        {!revisao.revisao_ativa ? " · inativa" : ""}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : (
+                <ul className="tm-processo-results-scenario-list" role="listbox" aria-label="Cenários">
+                  {comparison.scopedRevisoes.map((revisao) => {
+                    const selected = comparison.selectedRevisionId === revisao.revisao_id;
+                    return (
+                      <li key={revisao.revisao_id}>
+                        <button
+                          type="button"
+                          role="option"
+                          aria-selected={selected}
+                          className={
+                            selected
+                              ? "tm-processo-results-scenario tm-processo-results-scenario--selected"
+                              : "tm-processo-results-scenario"
+                          }
+                          onClick={() => setSelectedRevisaoId(revisao.revisao_id)}
+                        >
+                          <span className="tm-processo-results-scenario__label">
+                            {revisaoDisplayLabel(revisao)}
+                          </span>
+                          <span className="tm-processo-results-scenario__meta">
+                            {cenarioLabel(revisao.cenario_tipo)}
+                            {!revisao.revisao_ativa ? " · inativa" : ""}
+                          </span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
             </div>
           ) : null}
 
           {comparison.mode === "no_revision" ? (
             <EmptyState
               classNames={EMPTY}
-              title="Sem revisões"
+              title="Sem cenário"
               defaultMessage="Ainda não há cenário para comparação."
             />
           ) : null}
@@ -392,30 +411,27 @@ export function ProcessResultsSection({
           {comparison.mode === "needs_revision_selection" ? (
             <EmptyState
               classNames={EMPTY}
-              title="Revisão necessária"
-              defaultMessage="Selecione uma revisão para visualizar medição, investimentos e recursos."
+              title="Cenário necessário"
+              defaultMessage="Selecione um cenário para visualizar a comparação."
             />
           ) : null}
 
-          {comparison.mode === "legacy_reference_missing" ? (
+          {comparison.mode === "legacy_reference_missing" ||
+          comparison.mode === "reference_not_in_scope" ? (
             <EmptyState
               classNames={EMPTY}
               title="Referência ausente"
-              defaultMessage="Esta revisão não possui referência de comparação definida."
-            />
-          ) : null}
-
-          {comparison.mode === "reference_not_in_scope" ? (
-            <EmptyState
-              classNames={EMPTY}
-              title="Referência fora do contexto"
-              defaultMessage="Esta revisão não possui referência de comparação definida."
+              defaultMessage="Este cenário não possui uma referência de comparação definida."
             />
           ) : null}
 
           {(comparison.mode === "pair" || comparison.mode === "baseline_only") && comparison.toBe ? (
-            <div className="tm-processo-results-block" data-results-block="compare-summary">
-              <h3 className="ds-subsection-title">Comparação</h3>
+            <ResultsSectionBlock
+              id="compare-summary"
+              title="Resumo da comparação"
+              help={H.intro}
+              helper="AS-IS é a referência; TO-BE é o cenário proposto; DELTA é a diferença calculada."
+            >
               <RevisionCompareSummary
                 mode={comparison.mode === "pair" ? "pair" : "baseline_only"}
                 asIsLabel={
@@ -436,13 +452,13 @@ export function ProcessResultsSection({
                 }
                 calculatedSummary={calculatedSummary}
               />
-            </div>
+            </ResultsSectionBlock>
           ) : null}
 
           {loading && scopedComparisonItems.length === 0 ? (
             <LoadingActivityCard
-              title="Carregando comparação calculada"
-              description="Buscando totais calculados das revisões deste contexto."
+              title="Carregando comparação"
+              description="Buscando totais calculados deste contexto."
             />
           ) : null}
 
@@ -451,40 +467,11 @@ export function ProcessResultsSection({
               title={
                 errorStatus === 403 || errorStatus === 401
                   ? describeHttpErrorTitle(errorStatus)
-                  : "Falha ao carregar comparação calculada"
+                  : "Falha ao carregar comparação"
               }
               message={error}
               onAction={errorStatus === 403 ? undefined : () => void loadComparison()}
             />
-          ) : null}
-
-          {!loading &&
-          !error &&
-          loadedOnce &&
-          scopedComparisonItems.length === 0 &&
-          comparison.scopedRevisoes.length > 0 ? (
-            <EmptyState
-              classNames={EMPTY}
-              title="Sem comparação"
-              defaultMessage="Ainda não há baseline/medição comparável."
-            />
-          ) : null}
-
-          {scopedComparisonItems.length > 0 ? (
-            <div className="tm-processo-results-comparison" data-results-block="comparativo-tabela">
-              <h3 className="ds-subsection-title">Comparação calculada</h3>
-              <p className="ds-hint">
-                Totais e breakdowns são <strong>CALCULADOS</strong> pelo contrato de comparação —
-                não são economia realizada observada.
-              </p>
-              <div className="tm-processo-results-table-scroll">
-                <DataTable
-                  columns={columns}
-                  rows={scopedComparisonItems}
-                  rowKey={(row) => row.revisao_id}
-                />
-              </div>
-            </div>
           ) : null}
 
           {comparison.selectedRevisionId &&
@@ -494,8 +481,8 @@ export function ProcessResultsSection({
             <>
               {(revisionLoading || asIsLoading) && !toBeBundle ? (
                 <LoadingActivityCard
-                  title="Carregando indicadores da revisão"
-                  description="Medição, investimentos e recursos do mesmo contexto selecionado."
+                  title="Carregando indicadores"
+                  description="Medição, investimentos e recursos do cenário selecionado."
                 />
               ) : null}
 
@@ -504,7 +491,7 @@ export function ProcessResultsSection({
                   title={
                     revisionErrorStatus === 403 || revisionErrorStatus === 401
                       ? describeHttpErrorTitle(revisionErrorStatus)
-                      : "Falha ao carregar dados da revisão"
+                      : "Falha ao carregar dados do cenário"
                   }
                   message={revisionError}
                   onAction={
@@ -517,19 +504,15 @@ export function ProcessResultsSection({
 
               {!revisionLoading && !revisionError && toBeBundle ? (
                 <>
-                  <div className="tm-processo-results-block" data-results-block="medicoes">
-                    <div className="tm-processo-results-block__head">
-                      <h3 className="ds-subsection-title">Indicadores operacionais</h3>
-                      <button
-                        type="button"
-                        className="ds-link"
-                        onClick={() =>
-                          openRevisionSection(comparison.selectedRevisionId!, "medicao")
-                        }
-                      >
-                        Abrir na revisão
-                      </button>
-                    </div>
+                  <ResultsSectionBlock
+                    id="medicoes"
+                    title="Indicadores operacionais"
+                    help={H.indicadores}
+                    helper="Compare os indicadores da referência e do cenário. Δ é diferença numérica — sem classificar ganho ou perda."
+                    action={tertiaryOpenLink("Ver na revisão", () =>
+                      openRevisionSection(comparison.selectedRevisionId!, "medicao"),
+                    )}
+                  >
                     {comparison.mode === "pair" ? (
                       <MeasurementComparisonTable
                         rows={measurementRows}
@@ -547,30 +530,96 @@ export function ProcessResultsSection({
                     ) : (
                       <EmptyState
                         classNames={EMPTY}
-                        title="Sem medição"
-                        defaultMessage="Sem medição informada para este cenário."
+                        title="Sem indicadores"
+                        defaultMessage="Não há indicadores informados para este cenário."
                       />
                     )}
-                  </div>
+                  </ResultsSectionBlock>
 
-                  <div className="tm-processo-results-block" data-results-block="investimentos">
-                    <div className="tm-processo-results-block__head">
-                      <h3 className="ds-subsection-title">Investimentos</h3>
-                      <button
-                        type="button"
-                        className="ds-link"
-                        onClick={() =>
-                          openRevisionSection(comparison.selectedRevisionId!, "investimentos")
-                        }
-                      >
-                        Abrir na revisão
-                      </button>
-                    </div>
-                    <p className="ds-hint">
-                      Investimento do cenário selecionado
-                      {comparison.mode === "pair" ? " (TO-BE / PROPOSTO)" : ""}. Sem fabricar
-                      investimento AS-IS.
-                    </p>
+                  {!loading &&
+                  !error &&
+                  loadedOnce &&
+                  scopedComparisonItems.length === 0 &&
+                  comparison.scopedRevisoes.length > 0 ? (
+                    <EmptyState
+                      classNames={EMPTY}
+                      title="Sem comparação detalhada"
+                      defaultMessage="Ainda não há baseline/medição comparável."
+                    />
+                  ) : null}
+
+                  {scopedComparisonItems.length > 0 ? (
+                    <ResultsSectionBlock
+                      id="comparativo-tabela"
+                      title="Comparação detalhada"
+                      help={H.comparacaoDetalhada}
+                      helper="Totais e breakdowns calculados. Complementam o resumo — não substituem a leitura AS-IS / TO-BE / DELTA."
+                    >
+                      <div className="tm-processo-results-table-scroll tm-processo-results-table-scroll--detail">
+                        <DataTable
+                          columns={columns}
+                          rows={scopedComparisonItems}
+                          rowKey={(row) => row.revisao_id}
+                        />
+                      </div>
+                    </ResultsSectionBlock>
+                  ) : null}
+
+                  <ResultsSectionBlock
+                    id="beneficios"
+                    title="Benefícios calculados"
+                    help={H.beneficios}
+                    helper="Estimativas derivadas da comparação — não são benefícios já obtidos em campo."
+                  >
+                    {toBeComparison ? (
+                      <div className="tm-processo-results-benefits">
+                        <p className="tm-processo-results-benefits__meta">
+                          Categoria: {beneficioCalculoLabel(toBeComparison.beneficio_calculo_categoria)}
+                        </p>
+                        <ul className="tm-processo-results-benefits__grid">
+                          <BenefitKpi
+                            label="Economia líquida/mês"
+                            value={formatProcessoNumber(toBeComparison.totais.economia_liquida_mes)}
+                            emphasis
+                          />
+                          <BenefitKpi
+                            label="Economia bruta"
+                            value={formatProcessoNumber(toBeComparison.totais.economia_bruta)}
+                          />
+                          <BenefitKpi
+                            label="Horas economizadas/mês"
+                            value={formatProcessoNumber(toBeComparison.totais.horas_economizadas_mes)}
+                            emphasis
+                          />
+                          <BenefitKpi
+                            label="Investimento total/mês"
+                            value={formatProcessoNumber(toBeComparison.totais.investimento_total_mes)}
+                            emphasis
+                          />
+                          <BenefitKpi
+                            label="Ganho de capacidade"
+                            value={formatProcessoNumber(toBeComparison.totais.ganho_capacidade)}
+                          />
+                        </ul>
+                      </div>
+                    ) : (
+                      <EmptyState
+                        classNames={EMPTY}
+                        title="Sem benefício calculado"
+                        defaultMessage="Ainda não há baseline/medição comparável."
+                      />
+                    )}
+                  </ResultsSectionBlock>
+
+                  <ResultsSectionBlock
+                    id="investimentos"
+                    title="Investimentos"
+                    help={H.investimentos}
+                    helper="Valores necessários para viabilizar o cenário proposto. Sem fabricar investimento da referência."
+                    action={tertiaryOpenLink("Ver na revisão", () =>
+                      openRevisionSection(comparison.selectedRevisionId!, "investimentos"),
+                    )}
+                  >
                     {toBeBundle.investimentos.length === 0 ? (
                       <EmptyState
                         classNames={EMPTY}
@@ -591,25 +640,17 @@ export function ProcessResultsSection({
                         }}
                       />
                     )}
-                  </div>
+                  </ResultsSectionBlock>
 
-                  <div className="tm-processo-results-block" data-results-block="recursos">
-                    <div className="tm-processo-results-block__head">
-                      <h3 className="ds-subsection-title">Recursos e custos</h3>
-                      <button
-                        type="button"
-                        className="ds-link"
-                        onClick={() =>
-                          openRevisionSection(comparison.selectedRevisionId!, "recursos")
-                        }
-                      >
-                        Abrir na revisão
-                      </button>
-                    </div>
-                    <p className="ds-hint">
-                      Vínculos desta revisão. Custos unitários do catálogo permanecem em
-                      Configurações → Recursos compartilhados.
-                    </p>
+                  <ResultsSectionBlock
+                    id="recursos"
+                    title="Recursos e custos"
+                    help={H.recursos}
+                    helper="Recursos associados ao cenário selecionado. Custos unitários do catálogo continuam em Configurações → Recursos compartilhados."
+                    action={tertiaryOpenLink("Ver na revisão", () =>
+                      openRevisionSection(comparison.selectedRevisionId!, "recursos"),
+                    )}
+                  >
                     {toBeBundle.vinculos.length === 0 ? (
                       <EmptyState
                         classNames={EMPTY}
@@ -631,122 +672,80 @@ export function ProcessResultsSection({
                         }}
                       />
                     )}
-                  </div>
+                  </ResultsSectionBlock>
 
-                  <div className="tm-processo-results-block" data-results-block="beneficios">
-                    <h3 className="ds-subsection-title">Benefícios calculados</h3>
-                    {toBeComparison ? (
-                      <dl className="ds-dl-grid">
-                        <div>
-                          <dt>Categoria de cálculo</dt>
-                          <dd>
-                            {beneficioCalculoLabel(toBeComparison.beneficio_calculo_categoria)}
-                          </dd>
-                        </div>
-                        <div>
-                          <dt>Economia bruta (CALCULADO)</dt>
-                          <dd>{formatProcessoNumber(toBeComparison.totais.economia_bruta)}</dd>
-                        </div>
-                        <div>
-                          <dt>Economia líquida/mês (CALCULADO)</dt>
-                          <dd>
-                            {formatProcessoNumber(toBeComparison.totais.economia_liquida_mes)}
-                          </dd>
-                        </div>
-                        <div>
-                          <dt>Horas economizadas/mês (CALCULADO)</dt>
-                          <dd>
-                            {formatProcessoNumber(toBeComparison.totais.horas_economizadas_mes)}
-                          </dd>
-                        </div>
-                        <div>
-                          <dt>Ganho de capacidade (CALCULADO)</dt>
-                          <dd>{formatProcessoNumber(toBeComparison.totais.ganho_capacidade)}</dd>
-                        </div>
-                        <div>
-                          <dt>Investimento total/mês (CALCULADO)</dt>
-                          <dd>
-                            {formatProcessoNumber(toBeComparison.totais.investimento_total_mes)}
-                          </dd>
-                        </div>
-                      </dl>
-                    ) : (
-                      <EmptyState
-                        classNames={EMPTY}
-                        title="Sem benefício calculado"
-                        defaultMessage="Ainda não há baseline/medição comparável."
-                      />
-                    )}
-                  </div>
-
-                  <div className="tm-processo-results-block" data-results-block="estrutura-fluxo">
-                    <h3 className="ds-subsection-title">Mapeamento e fluxo alterados</h3>
-                    <p className="ds-hint">
-                      Diff estrutural de nós (mantido/alterado/incluído/removido) depende do overlay
-                      da revisão. Nesta V1 a comparação detalhada abre nas seções canônicas —
-                      sem inventar graph-diff no frontend.
-                    </p>
+                  <ResultsSectionBlock
+                    id="estrutura-fluxo"
+                    title="Impacto no processo"
+                    help={H.impactoProcesso}
+                    helper="Consulte onde a estrutura e o fluxo do processo foram alterados neste cenário."
+                  >
                     {!showHeavyStructure ? (
                       <button
                         type="button"
                         className={DS_GHOST_BTN}
                         onClick={() => setShowHeavyStructure(true)}
                       >
-                        Mostrar atalhos de mapeamento e fluxo
+                        Ver mapeamento e fluxo
                       </button>
                     ) : (
-                      <ul className="tm-processo-results-structure-links">
-                        {comparison.asIs && comparison.mode === "pair" ? (
-                          <>
-                            <li>
-                              <button
-                                type="button"
-                                className="ds-link"
-                                onClick={() =>
-                                  openRevisionSection(comparison.asIs!.revisao_id, "mapeamento")
-                                }
-                              >
-                                Mapeamento AS-IS ({revisaoDisplayLabel(comparison.asIs)})
-                              </button>
-                            </li>
-                            <li>
-                              <button
-                                type="button"
-                                className="ds-link"
-                                onClick={() =>
-                                  openRevisionSection(comparison.asIs!.revisao_id, "diagrama")
-                                }
-                              >
-                                Fluxo AS-IS ({revisaoDisplayLabel(comparison.asIs)})
-                              </button>
-                            </li>
-                          </>
-                        ) : null}
-                        <li>
-                          <button
-                            type="button"
-                            className="ds-link"
-                            onClick={() =>
-                              openRevisionSection(comparison.selectedRevisionId!, "mapeamento")
-                            }
-                          >
-                            Mapeamento do cenário (TO-BE)
-                          </button>
-                        </li>
-                        <li>
-                          <button
-                            type="button"
-                            className="ds-link"
-                            onClick={() =>
-                              openRevisionSection(comparison.selectedRevisionId!, "diagrama")
-                            }
-                          >
-                            Fluxo do cenário (TO-BE)
-                          </button>
-                        </li>
-                      </ul>
+                      <div className="tm-processo-results-structure">
+                        <p className="tm-processo-results-block__helper">
+                          Consulte o mapeamento da revisão para visualizar as alterações disponíveis.
+                        </p>
+                        <ul className="tm-processo-results-structure-links">
+                          {comparison.asIs && comparison.mode === "pair" ? (
+                            <>
+                              <li>
+                                <button
+                                  type="button"
+                                  className="ds-link"
+                                  onClick={() =>
+                                    openRevisionSection(comparison.asIs!.revisao_id, "mapeamento")
+                                  }
+                                >
+                                  Ver estrutura (referência)
+                                </button>
+                              </li>
+                              <li>
+                                <button
+                                  type="button"
+                                  className="ds-link"
+                                  onClick={() =>
+                                    openRevisionSection(comparison.asIs!.revisao_id, "diagrama")
+                                  }
+                                >
+                                  Ver fluxo (referência)
+                                </button>
+                              </li>
+                            </>
+                          ) : null}
+                          <li>
+                            <button
+                              type="button"
+                              className="ds-link"
+                              onClick={() =>
+                                openRevisionSection(comparison.selectedRevisionId!, "mapeamento")
+                              }
+                            >
+                              Ver estrutura do cenário
+                            </button>
+                          </li>
+                          <li>
+                            <button
+                              type="button"
+                              className="ds-link"
+                              onClick={() =>
+                                openRevisionSection(comparison.selectedRevisionId!, "diagrama")
+                              }
+                            >
+                              Ver fluxo do cenário
+                            </button>
+                          </li>
+                        </ul>
+                      </div>
                     )}
-                  </div>
+                  </ResultsSectionBlock>
                 </>
               ) : null}
             </>
@@ -755,17 +754,45 @@ export function ProcessResultsSection({
       ) : null}
 
       {comparison.instanceId ? (
-        <div className="tm-processo-workspace-overview__actions">
+        <div className="tm-processo-results__utility">
           <button
             type="button"
-            className={DS_GHOST_BTN}
+            className="tm-processo-results-refresh"
             disabled={loading}
+            title={H.atualizar}
+            aria-label={H.atualizar}
             onClick={() => void loadComparison()}
           >
-            {loading ? "Atualizando…" : "Atualizar comparação"}
+            <RefreshCw size={14} aria-hidden />
+            <span>{loading ? "Atualizando…" : "Atualizar comparação"}</span>
+            <HelpTooltip content={H.atualizar} ariaLabel="Ajuda: Atualizar comparação" />
           </button>
         </div>
       ) : null}
     </section>
+  );
+}
+
+function BenefitKpi({
+  label,
+  value,
+  emphasis,
+}: {
+  label: string;
+  value: string;
+  emphasis?: boolean;
+}) {
+  return (
+    <li
+      className={
+        emphasis
+          ? "tm-processo-results-benefit-kpi tm-processo-results-benefit-kpi--emphasis"
+          : "tm-processo-results-benefit-kpi"
+      }
+    >
+      <span className="tm-processo-results-benefit-kpi__label">{label}</span>
+      <strong className="tm-processo-results-benefit-kpi__value">{value}</strong>
+      <TmStatusBadge label="CALCULADO" variant="neutral" />
+    </li>
   );
 }

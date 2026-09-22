@@ -88,7 +88,7 @@ describe("ProcessResultsSection context isolation", () => {
   });
 
   it("CASE F/G: comparação distingue calculado e não inventa authority", () => {
-    expect(resultsSection).toMatch(/Comparação calculada/);
+    expect(resultsSection).toMatch(/Comparação detalhada/);
     expect(resultsSection).toMatch(/fetchProcessoComparativo/);
     expect(resultsSection).toMatch(/Ainda não há baseline\/medição comparável/);
     expect(resultsSection).toMatch(/legacy_reference_missing/);

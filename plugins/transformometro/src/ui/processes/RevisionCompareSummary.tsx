@@ -1,9 +1,14 @@
+import { HelpTooltip } from "@delpi/plugin-ui/index";
+
 import { TmStatusBadge } from "../../components/tmChromeUi";
+import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { formatProcessoNumber } from "../../utils/processoDetailTables";
 import {
   provenanceLabelText,
   type ProvenanceLabel,
 } from "./buildRevisionComparisonView";
+
+const H = TM_HELP_TOOLTIPS.resultados;
 
 type Props = {
   asIsLabel: string;
@@ -36,23 +41,37 @@ export function RevisionCompareSummary({
       role="group"
       aria-label="Comparação AS-IS, TO-BE e Delta"
     >
-      <article className="tm-revision-compare-summary__card" aria-labelledby="tm-cmp-asis-title">
-        <h4 id="tm-cmp-asis-title" className="tm-revision-compare-summary__role">
-          AS-IS
-        </h4>
+      <article
+        className="tm-revision-compare-summary__card tm-revision-compare-summary__card--asis"
+        aria-labelledby="tm-cmp-asis-title"
+      >
+        <div className="tm-revision-compare-summary__role-row">
+          <h4 id="tm-cmp-asis-title" className="tm-revision-compare-summary__role">
+            AS-IS
+          </h4>
+          <HelpTooltip content={H.asIs} ariaLabel="Ajuda: AS-IS" />
+        </div>
+        <p className="tm-revision-compare-summary__helper">Referência atual</p>
         <p className="tm-revision-compare-summary__value">{asIsLabel}</p>
         <TmStatusBadge label={provenanceLabelText(asIsProvenance)} variant="neutral" />
         {calculatedSummary?.asIsEconomy != null ? (
-          <p className="ds-hint">
-            Economia líquida/mês (calc.): {formatProcessoNumber(calculatedSummary.asIsEconomy)}
+          <p className="tm-revision-compare-summary__metric">
+            Economia líquida/mês: {formatProcessoNumber(calculatedSummary.asIsEconomy)}
           </p>
         ) : null}
       </article>
 
-      <article className="tm-revision-compare-summary__card" aria-labelledby="tm-cmp-tobe-title">
-        <h4 id="tm-cmp-tobe-title" className="tm-revision-compare-summary__role">
-          TO-BE
-        </h4>
+      <article
+        className="tm-revision-compare-summary__card tm-revision-compare-summary__card--tobe"
+        aria-labelledby="tm-cmp-tobe-title"
+      >
+        <div className="tm-revision-compare-summary__role-row">
+          <h4 id="tm-cmp-tobe-title" className="tm-revision-compare-summary__role">
+            TO-BE
+          </h4>
+          <HelpTooltip content={H.toBe} ariaLabel="Ajuda: TO-BE" />
+        </div>
+        <p className="tm-revision-compare-summary__helper">Cenário proposto</p>
         {mode === "baseline_only" || !toBeLabel ? (
           <p className="tm-revision-compare-summary__value">
             Ainda não há cenário para comparação.
@@ -64,25 +83,32 @@ export function RevisionCompareSummary({
               <TmStatusBadge label={provenanceLabelText(toBeProvenance)} variant="neutral" />
             ) : null}
             {calculatedSummary?.toBeEconomy != null ? (
-              <p className="ds-hint">
-                Economia líquida/mês (calc.): {formatProcessoNumber(calculatedSummary.toBeEconomy)}
+              <p className="tm-revision-compare-summary__metric">
+                Economia líquida/mês: {formatProcessoNumber(calculatedSummary.toBeEconomy)}
               </p>
             ) : null}
           </>
         )}
       </article>
 
-      <article className="tm-revision-compare-summary__card" aria-labelledby="tm-cmp-delta-title">
-        <h4 id="tm-cmp-delta-title" className="tm-revision-compare-summary__role">
-          DELTA
-        </h4>
+      <article
+        className="tm-revision-compare-summary__card tm-revision-compare-summary__card--delta"
+        aria-labelledby="tm-cmp-delta-title"
+      >
+        <div className="tm-revision-compare-summary__role-row">
+          <h4 id="tm-cmp-delta-title" className="tm-revision-compare-summary__role">
+            DELTA
+          </h4>
+          <HelpTooltip content={H.delta} ariaLabel="Ajuda: DELTA" />
+        </div>
+        <p className="tm-revision-compare-summary__helper">Diferença calculada</p>
         {mode === "pair" && calculatedSummary?.deltaEconomy != null ? (
           <>
-            <p className="tm-revision-compare-summary__value">
+            <p className="tm-revision-compare-summary__value tm-revision-compare-summary__value--emphasis">
               {formatSigned(calculatedSummary.deltaEconomy)}
             </p>
             <TmStatusBadge label="CALCULADO" variant="neutral" />
-            <p className="ds-hint">Diferença de economia líquida/mês (contrato de comparação).</p>
+            <p className="tm-revision-compare-summary__metric">Economia líquida/mês</p>
           </>
         ) : (
           <p className="tm-revision-compare-summary__value">Indisponível</p>

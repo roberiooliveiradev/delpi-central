@@ -479,4 +479,30 @@ export const TM_HELP_TOOLTIPS = {
     scope:
       "Pelo GPT dá para analisar o dashboard e cadastrar processos, melhorias, revisões, medições, investimentos, catálogos e atas (envio/finalização). Assinatura manuscrita e uploads ficam só na Minha DELPI.",
   },
+  /** Resultados — Redesign & Compare (linguagem de produto). */
+  resultados: {
+    intro:
+      "Compare o cenário proposto com a revisão usada como referência. Valores calculados não representam resultados já realizados.",
+    asIs: "Estado usado como referência para a comparação.",
+    toBe: "Cenário proposto nesta revisão.",
+    delta: "Diferença entre o cenário proposto e a referência. É um valor calculado — não classifica automaticamente ganho ou perda.",
+    informado: "Valor registrado na revisão de referência.",
+    proposto: "Valor do cenário ainda não realizado em campo.",
+    calculado: "Valor derivado automaticamente a partir dos dados das revisões.",
+    dadoRevisao: "Dado disponível na revisão, sem classificação adicional de origem.",
+    indicadores:
+      "Métricas operacionais lado a lado: referência (AS-IS), cenário (TO-BE) e diferença. A diferença só aparece quando ambos os lados têm o mesmo tipo de dado.",
+    comparacaoDetalhada:
+      "Tabela com totais e breakdowns calculados das revisões deste contexto. Complementa o resumo AS-IS / TO-BE / DELTA — não substitui a leitura do resumo.",
+    investimentos: "Valores necessários para viabilizar o cenário proposto. Não inventamos investimento da referência.",
+    recursos:
+      "Recursos associados ao cenário selecionado. Custos unitários do catálogo continuam em Configurações → Recursos compartilhados.",
+    beneficios:
+      "Totais estimados a partir da comparação. São benefícios calculados — não benefícios já obtidos em campo.",
+    impactoProcesso:
+      "Consulte onde a estrutura e o fluxo do processo foram alterados neste cenário. A edição detalhada fica nas seções de mapeamento e diagrama da revisão.",
+    atualizar: "Atualizar os dados da comparação.",
+    naturezaLegenda:
+      "INFORMADO: registrado na referência. PROPOSTO: cenário ainda não realizado. CALCULADO: derivado automaticamente.",
+  },
 } as const;
