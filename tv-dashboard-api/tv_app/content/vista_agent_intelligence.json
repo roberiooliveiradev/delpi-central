@@ -1,7 +1,45 @@
 {
-  "version": "2026.09.22.11",
+  "version": "2026.09.22.12",
   "owner": "tv-dashboard-api",
   "source": "capability_surface.agent_directives via gpt_get_catalog",
+  "shape_chrome": {
+    "principle": "SHAPE_CHROME_COMBO",
+    "summary": "Toda forma de impacto combina fill/stroke + borderRadius + boxShadow tipados (designTokens.shapeChrome). Não deixar shape flat sem acabamento quando for card/callout/faixa.",
+    "style_keys": [
+      "fill",
+      "backgroundColor",
+      "stroke",
+      "strokeWidth",
+      "borderRadius",
+      "boxShadow",
+      "opacity",
+      "zIndex"
+    ],
+    "presets": {
+      "card_surface": "Card branco sobre fundo Delpi: fill/backgroundColor=brand.card, stroke suave (#e2e8f0 ou accent 20%), strokeWidth=1, borderRadius=16, boxShadow=elevated (tokens).",
+      "accent_bar": "Faixa/destaque: fill=brand.accent, stroke transparente ou #003866, borderRadius=8–12, sombra leve ou nenhuma.",
+      "callout": "Callout insight: card_surface + stroke accent strokeWidth=2 + borderRadius=16 + boxShadow elevated.",
+      "pill_badge": "Badge/status: fill accent ou verde/âmbar tipado, borderRadius=999 (pill), strokeWidth=0, sombra suave.",
+      "ghost_frame": "Moldura: fill transparent, stroke accent, strokeWidth=2–3, borderRadius=16, sem sombra pesada."
+    },
+    "rules": [
+      "Ao criar/ajustar type=shape (ou chrome de card composto): aplicar SEMPRE a combinação tipada do preset adequado — nunca só fill plano sem radius/sombra em cards.",
+      "Usar designTokens.shapeChrome.presets / shadows / radii do catalog; boxShadow = string CSS tipada dos tokens (não inventar glow roxo/neon).",
+      "Cards e callouts → borderRadius 16 + shadow elevated (paridade KPI/chart DECK).",
+      "Barras/accent strips → radius menor (8–12); badges → pill (999).",
+      "Contraste: fill branco + texto onCard; fill accent + texto branco; fill navy (#003866/#0d2840) + texto branco.",
+      "strokeWidth 0–1 para cards limpos; 2–3 para ghost/outline; evitar contorno preto grosso em painel Delpi TV.",
+      "Combinar no mesmo grupo: shape chrome + heading/text (zIndex shape < texto) — shape atrás, tipografia na frente.",
+      "Pedido 'sombra / arredondado / borda / premium / polish' → DESIGN_REFINE aplicando shape_chrome nos shapes/cards existentes no mesmo turno."
+    ],
+    "forbidden": [
+      "Shape card flat (sem borderRadius e sem boxShadow) em painel operacional de impacto",
+      "Inventar boxShadow/cores fora de shapeChrome/brand",
+      "Glow neon / sombra colorida agressiva / radius 0 em cards TV",
+      "stroke preto grosso (#000) como default Delpi em cards brancos",
+      "opacity < 0.85 em shapes de dado (legibilidade TV)"
+    ]
+  },
   "composed_visuals": {
     "principle": "COMPOSE_TYPED_BLOCKS",
     "summary": "Além de kpi_view/chart_view/table_view, combinar heading+text+shape(+icon) com dados vivos (dataSourceId + textProjection / contentRuns.dataRef) e groupId — componentes compostos tipados, não CSS inventado.",
@@ -20,26 +58,28 @@
       "how": [
         "upsert_data_source (params vivos) → upsert_block type=text|heading|shape com dataSourceId + textProjection {field, format|displayFormat, prefix/suffix}",
         "Narrativa mista: contentRuns com trechos estáticos + dataRef.field para interpolar valores no mesmo texto",
-        "Card custom: shape (fundo brand.card, borderRadius, accent) + heading (rótulo) + text/shape (valor projetado) + opcional icon — mesmo groupId",
+        "Card custom: shape com shape_chrome.card_surface/callout (fill+radius+shadow+stroke) + heading (rótulo) + text/shape (valor projetado) + opcional icon — mesmo groupId",
         "bind_visual liga o visual ao data_source quando o bloco já existe; text/shape/heading também aceitam dataSourceId direto no upsert"
       ]
     },
     "rules": [
       "Recipes padrão (TV_KPI_*) são ponto de partida — não teto. Após recipe ou em DESIGN_REFINE, COMPOR blocos tipados extras (formas, textos com dado, ícones, faixas) para impacto e narrativa.",
       "Dado em texto/forma: sempre field INFORMED do preview/paramSchema (gpt_preview_data_block). Nunca inventar field de textProjection.",
-      "Componente próprio = grupo de upsert_block com o mesmo groupId (ex.: grp_transforma_hero), frames relativos, tokens Delpi — não um único bloco widescreen.",
+      "Componente próprio = grupo de upsert_block com o mesmo groupId (ex.: grp_transforma_hero), frames relativos, tokens Delpi + shape_chrome — não um único bloco widescreen.",
+      "Toda shape de card/callout/faixa DEVE combinar fill/stroke + borderRadius + boxShadow conforme shape_chrome (não shape nua).",
       "Preferir shape+text projetado para callouts/status; kpi_view quando for métrica hero standard; chart/table para séries/grades.",
       "Misturar: KPI/chart padrão + faixa de insight (text com textProjection) + shape accent bar + heading de seção no mesmo lote compound.",
-      "Pedido 'crie componente / card custom / callout / badge / forma com número / texto com dado' → COMPOSE_TYPED_BLOCKS no mesmo turno (execution_posture).",
-      "Obedecer visual_impact (contraste, tipografia partChrome) em cada parte do composto.",
-      "Recipe TV_COMPOSED_DATA_CARD = esqueleto; substituir textProjection.field pelo campo real do preview antes do commit."
+      "Pedido 'crie componente / card custom / callout / badge / forma com número / texto com dado' → COMPOSE_TYPED_BLOCKS + shape_chrome no mesmo turno (execution_posture).",
+      "Obedecer visual_impact (contraste, tipografia partChrome) e shape_chrome em cada parte do composto.",
+      "Recipe TV_COMPOSED_DATA_CARD = esqueleto com chrome; substituir textProjection.field pelo campo real do preview antes do commit."
     ],
     "forbidden": [
       "Só usar kpi_view/chart_view/table_view quando o pedido pede callout/forma/texto com dado/componente custom",
       "Inventar field de textProjection sem evidência do preview/rota",
       "Inventar tipo de bloco fora do enum tipado (sem 'custom_widget' paralelo)",
       "Componente composto sem groupId quando há 2+ partes que devem mover juntas",
-      "Texto estático fingindo valor vivo quando há data_source disponível"
+      "Texto estático fingindo valor vivo quando há data_source disponível",
+      "Shape de card sem combinação radius+shadow+cores tipadas (shape_chrome)"
     ]
   },
   "visual_impact": {
@@ -321,8 +361,8 @@
     "DATA_INTERPRETATION": "Entender/explicar dados sem gravar até pedido explícito.",
     "PLAYLIST_CURATION": "Ordem, duração, slides, kiosk/TV — preferir update/reorder/move no existente (playlist_curation).",
     "COMPOUND_READY_SLIDE": "Pedido complexo de slide pronto — seguir compound_slide.pipeline + write_quality.",
-    "DESIGN_REFINE": "Ajuste visual tipado de impacto (THEME_DELPI, chartType area/bar, KPI hero, tablePreset=banded, tipografia/partChrome, compostos shape/text com textProjection) no slide/seleção resolvidos — EXECUTAR agora via preview+commit; obedeça visual_impact + composed_visuals; sem proposta-only.",
-    "COMPOSE_CUSTOM": "Montar componente próprio com blocos tipados (shape+heading+text/icon + dados via textProjection/groupId) — não inventar widget fora do catálogo."
+    "DESIGN_REFINE": "Ajuste visual tipado de impacto (THEME_DELPI, chartType area/bar, KPI hero, tablePreset=banded, tipografia/partChrome, compostos shape/text com textProjection, shape_chrome radius/shadow/stroke) no slide/seleção resolvidos — EXECUTAR agora via preview+commit; obedeça visual_impact + composed_visuals + shape_chrome; sem proposta-only.",
+    "COMPOSE_CUSTOM": "Montar componente próprio com blocos tipados (shape+heading+text/icon + dados via textProjection/groupId + shape_chrome) — não inventar widget fora do catálogo."
   },
   "write_flow": {
     "skip_suggest_when_typable": true,
@@ -365,7 +405,8 @@
     "Entregar painel operacional ralo (fundo claro flat, KPI miúdo, line fina, tabela minimal) quando visual_impact exige Delpi+hero+area/bar+banded.",
     "Ignorar visual_impact / visualImpactHints em pedido de dashboard ou 'melhore o visual'.",
     "Recusar composição com text/shape/heading + textProjection quando o catálogo tipado já cobre (só orientar o editor).",
-    "Usar apenas views padrão quando o pedido pede callout, forma com número ou componente custom."
+    "Usar apenas views padrão quando o pedido pede callout, forma com número ou componente custom.",
+    "Shape/card flat sem borderRadius+boxShadow tipados quando shape_chrome exige acabamento."
   ],
   "auth_errors": {
     "401": "AuthN — pedir reconexão OAuth DELPI / permitir Action.",
@@ -390,7 +431,7 @@
       "Dois/três/quatro KPIs → TV_KPI_ROW_* / TV_KPI_GRID_4 — não empilhar no mesmo frame.",
       "Obedecer designTokens (safeMargin, gutter, typeScale, kpiValueScale, partChrome, visualImpactHints, maxPrimarySignalsPerSlide=4).",
       "Partes KPI/chart/table/input: preferir recipe kpiParts/chartOptions; o commit completa defaults via partChrome se ausentes.",
-      "Compostos: shape/heading/text(+icon) com dataSourceId+textProjection e groupId — fields só do preview (composed_visuals).",
+      "Compostos: shape/heading/text(+icon) com dataSourceId+textProjection e groupId — fields só do preview (composed_visuals); chrome fill+radius+shadow via shape_chrome.",
       "Filtros compartilhados → patch_native_config.dataFilters; interativos → upsert_block type=input; defaults da programação → patch_playlist_data_defaults.",
       "chartType tipado: série temporal preferir area (impacto TV); line só se pedido explícito; categorias bar/stacked_bar; composição pie/doughnut (poucas fatias); não pie em série diária densa.",
       "Tabela operacional → tablePreset=banded por default (visual_impact).",

@@ -100,6 +100,7 @@ def test_composed_visuals_compose_typed_blocks():
     assert recipe is not None
     ops = " ".join(str(op) for op in recipe.get("ops") or [])
     assert "shape" in ops and "textProjection" in ops
+    assert "boxShadow" in ops and "borderRadius" in ops
     hints = directives["presentation_recipes"]["catalog"]["designTokens"]["visualImpactHints"]
     assert "text" in hints["composeWith"]
     assert "heading" in hints["textDataBinding"]["blockTypes"]
@@ -108,6 +109,27 @@ def test_composed_visuals_compose_typed_blocks():
     props = spec["inputSchema"]["properties"]["block"]["properties"]
     assert "textProjection" in props
     assert "contentRuns" in props
+    style_props = props["style"]["properties"]
+    assert "boxShadow" in style_props and "borderRadius" in style_props
+
+
+def test_shape_chrome_combo():
+    from tv_app.application.services.data.presentation_recipe_service import (
+        clear_presentation_recipes_cache,
+    )
+
+    clear_presentation_recipes_cache()
+    clear_vista_agent_intelligence_cache()
+    directives = VistaAgentIntelligenceService.agent_directives()
+    chrome = directives["shape_chrome"]
+    assert chrome["principle"] == "SHAPE_CHROME_COMBO"
+    assert "borderRadius" in chrome["style_keys"]
+    assert "boxShadow" in chrome["style_keys"]
+    assert "card_surface" in chrome["presets"]
+    tokens = directives["presentation_recipes"]["catalog"]["designTokens"]["shapeChrome"]
+    assert tokens["presets"]["card_surface"]["borderRadius"] == 16
+    assert "elevated" in tokens["shadows"]
+    assert any("flat" in str(item).lower() or "boxshadow" in str(item).lower() for item in directives["anti_patterns"])
 
 
 def test_sibling_explicit_create_still_allowed_in_policy_text():

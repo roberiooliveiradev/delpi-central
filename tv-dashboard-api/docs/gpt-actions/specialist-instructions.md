@@ -20,8 +20,8 @@ Budget: Instructions **<= 3.500** caracteres (núcleo estável). Detalhe operaci
 
 Não colocar no paste do Builder (vai em `vista_agent_intelligence.json` + deploy):
 
-- nomes de seções mutáveis (`object_resolution`, `screenshot_parity`, `write_flow`, `anti_patterns`, `modes`, `execution_posture`, `visual_impact`, `composed_visuals` específicos);
-- princípios/códigos de política (`ALTER_EXISTING_BEFORE_CREATE`, `PRINT_TO_TYPED_SLIDE_PARITY`, `EXECUTE_TYPED_CHANGE_NOW`, `TV_IMPACT_FIRST`, `COMPOSE_TYPED_BLOCKS`, `VISUAL_PARITY`, `QUICK_DISPLAY`, …);
+- nomes de seções mutáveis (`object_resolution`, `screenshot_parity`, `write_flow`, `anti_patterns`, `modes`, `execution_posture`, `visual_impact`, `composed_visuals`, `shape_chrome` específicos);
+- princípios/códigos de política (`ALTER_EXISTING_BEFORE_CREATE`, `PRINT_TO_TYPED_SLIDE_PARITY`, `EXECUTE_TYPED_CHANGE_NOW`, `TV_IMPACT_FIRST`, `COMPOSE_TYPED_BLOCKS`, `SHAPE_CHROME_COMBO`, `VISUAL_PARITY`, `QUICK_DISPLAY`, …);
 - pipelines passo-a-passo, listas de ops de exemplo para um caso, mapeamento print→bloco, anti-duplicidade detalhada;
 - qualquer regra que você esperaria mudar no próximo deploy sem recolocar o GPT.
 

@@ -552,9 +552,12 @@
       },
       "style": {
         "zIndex": 1,
-        "fill": "#089bdb",
-        "stroke": "#0d2840",
-        "backgroundColor": "#089bdb"
+        "fill": "#ffffff",
+        "backgroundColor": "#ffffff",
+        "stroke": "#e2e8f0",
+        "strokeWidth": 1,
+        "borderRadius": 16,
+        "boxShadow": "0 1px 2px rgba(15, 23, 42, 0.06), 0 12px 28px rgba(15, 23, 42, 0.10)"
       }
     },
     "image": {
@@ -1428,7 +1431,7 @@
               },
               "style": {
                 "type": "object",
-                "description": "Optional visual style. Known keys listed; extras allowed.",
+                "description": "Optional visual style. For shapes/cards prefer fill+stroke+strokeWidth+borderRadius+boxShadow combo from designTokens.shapeChrome.",
                 "additionalProperties": true,
                 "properties": {
                   "zIndex": {
@@ -1457,6 +1460,22 @@
                   },
                   "fill": {
                     "type": "string"
+                  },
+                  "stroke": {
+                    "type": "string"
+                  },
+                  "strokeWidth": {
+                    "type": "number"
+                  },
+                  "borderRadius": {
+                    "type": "number"
+                  },
+                  "boxShadow": {
+                    "type": "string",
+                    "description": "CSS box-shadow; prefer designTokens.shapeChrome.shadows.elevated|soft|none"
+                  },
+                  "opacity": {
+                    "type": "number"
                   },
                   "objectFit": {
                     "type": "string"

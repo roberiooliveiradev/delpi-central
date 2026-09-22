@@ -1876,7 +1876,7 @@
                                 },
                                 "style": {
                                   "type": "object",
-                                  "description": "Optional visual style. Known keys listed; extras allowed.",
+                                  "description": "Optional visual style. For shapes/cards prefer fill+stroke+strokeWidth+borderRadius+boxShadow combo from designTokens.shapeChrome.",
                                   "additionalProperties": true,
                                   "properties": {
                                     "zIndex": {
@@ -1905,6 +1905,22 @@
                                     },
                                     "fill": {
                                       "type": "string"
+                                    },
+                                    "stroke": {
+                                      "type": "string"
+                                    },
+                                    "strokeWidth": {
+                                      "type": "number"
+                                    },
+                                    "borderRadius": {
+                                      "type": "number"
+                                    },
+                                    "boxShadow": {
+                                      "type": "string",
+                                      "description": "CSS box-shadow; prefer designTokens.shapeChrome.shadows.elevated|soft|none"
+                                    },
+                                    "opacity": {
+                                      "type": "number"
                                     },
                                     "objectFit": {
                                       "type": "string"
