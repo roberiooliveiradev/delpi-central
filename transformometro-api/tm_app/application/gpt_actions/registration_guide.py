@@ -111,6 +111,7 @@ def build_registration_guide() -> dict[str, Any]:
             ),
         },
         "write_contract_rules": {
+            "surface": "GOVERNED_PREPARE_COMMIT_V2",
             "priority": (
                 "entity_schemas.<entity> is the primary write contract. "
                 "If the generic Action signature diverges, follow the entity schema. "
@@ -118,23 +119,44 @@ def build_registration_guide() -> dict[str, Any]:
                 "revision_*_overlay/impact_effort_matrix) are listed in entity_schemas — "
                 "do not treat catalog.entities presence alone as 'no write contract'."
             ),
+            "entity_write_flow": (
+                "ENTITY CRUD: gpt_prepare_record_change "
+                "{entity, operation, record_id?, changes{...}} → SHOW proposal → "
+                "EXPLICIT CONFIRMATION → gpt_commit_proposal "
+                "{proposal_handle, confirmation:true} → AUTHORITATIVE READ-BACK → VERIFY. "
+                "PREPARE = NO WRITE. commit_proposal is NOT a generic executor "
+                "(only opaque proposal_handle from PREPARE)."
+            ),
+            "changes_wrapper": (
+                "Put canonical fields under changes.<field>. "
+                "Do not nest entity fields under changes.conteudo/payload/attributes/metadata "
+                "unless that entity contract requires it (document entities use changes.conteudo)."
+            ),
             "action_wrapper": (
-                "Always send {data:{...}}. Put canonical fields at data.<field>. "
-                "Do not nest entity fields under data.conteudo/payload/attributes/metadata "
+                "V2 uses changes (not a top-level data wrapper on prepare_record_change). "
+                "Put canonical fields at changes.<field>. "
+                "Do not nest under changes.conteudo/payload/attributes/metadata "
                 "unless that entity contract requires it (document entities use conteudo)."
             ),
+            "legacy_removed_from_builder": (
+                "gpt_create_record, gpt_update_record, gpt_delete_record, "
+                "gpt_duplicate_record, gpt_commit_improvement_package are NOT on the "
+                "Builder-visible OpenAPI. Do not call them. Backend HTTP shims may exist "
+                "as LEGACY_TRANSITIONAL only."
+            ),
             "anti_pattern": (
-                "shared_resource with nome_recurso/tipo_custo/recorrencia inside data.conteudo "
-                "is invalid; those fields belong directly under data. "
+                "shared_resource with nome_recurso/tipo_custo/recorrencia inside changes.conteudo "
+                "is invalid; those fields belong directly under changes. "
                 "Also invalid: inventing entity names like 'mapeamento'/'diagrama'/'ata'/'filial'/'setor'/'documentacao' — "
                 "use decomposition_tree / revision_decomposition_overlay / process_diagram / "
-                "meeting_minute / process_document / branch / department."
+                "meeting_minute / process_document / branch / department. "
+                "Also invalid: calling gpt_create_record / gpt_update_record as current surface."
             ),
             "before_write": [
-                "Call gpt_get_catalog and read entity_schemas for the exact entity.",
+                "Call gpt_get_catalog and read entity_schemas + capability_surface.",
                 "Check required fields, exact names, enums, dates, numeric types, IDs.",
                 "Use IDs from authoritative read-back for relationships (e.g. resource_link).",
-                "User confirmation does not waive contract validation.",
+                "User confirmation does not waive contract validation or AuthZ.",
             ],
             "on_validation_error": [
                 "Do not repeat the same payload shape.",
@@ -143,7 +165,7 @@ def build_registration_guide() -> dict[str, Any]:
                 "If contract remains unresolved: do not improvise; do not write.",
             ],
             "success_requires": [
-                "authoritative write result",
+                "authoritative commit result",
                 "read_back",
                 "verify",
             ],
@@ -308,9 +330,9 @@ def build_registration_guide() -> dict[str, Any]:
                 "notes": [
                     "Need filial_id OR todas_filiais_ativas=true.",
                     "setor_ids must have at least one department.",
-                    "Create body also needs processo_id in data.",
+                    "Create: prepare_record_change operation=create with changes.processo_id + instance fields.",
                     "Corporate/all-units instance: todas_filiais_ativas=true and omit filial_id "
-                    "(use gpt_create_record entity=instance; improvement package still needs "
+                    "(use gpt_prepare_record_change entity=instance; improvement package still needs "
                     "baseline or scenario for revisions).",
                 ],
             },
@@ -427,7 +449,8 @@ def build_registration_guide() -> dict[str, Any]:
                 "notes": [
                     "Catalog resource only. Monthly amount history uses entity=resource_cost.",
                     "Update merges omitted fields from the current row.",
-                    "Put nome_recurso/tipo_custo/recorrencia directly under data — never under data.conteudo.",
+                    "Put nome_recurso/tipo_custo/recorrencia directly under changes — never under changes.conteudo.",
+                    "Write via gpt_prepare_record_change → gpt_commit_proposal.",
                 ],
             },
             "resource_cost": {
@@ -484,18 +507,20 @@ def build_registration_guide() -> dict[str, Any]:
                 "enums": {"meeting_type": list(MEETING_MINUTE_TYPES)},
                 "defaults": {"meeting_type": "ordinary"},
                 "notes": [
-                    "Create/update via gpt_create_record / gpt_update_record entity=meeting_minute.",
+                    "ENTITY CRUD: gpt_prepare_record_change entity=meeting_minute "
+                    "(create|update|delete) → gpt_commit_proposal.",
                     "unit_code is the filial code (01|02; zero-padded by backend).",
                     "meeting_date MUST be YYYY-MM-DD (not DD/MM/AAAA).",
                     "start_time/end_time: HH:MM or HH:MM:SS (not 14h30).",
                     "Optional UUIDs: omit or null — never send empty string \"\".",
-                    "Workflow send/finalize/cancel uses gpt_meeting_minute_workflow — not create/update.",
+                    "WORKFLOW send/finalize/cancel: gpt_meeting_minute_workflow (PREPARE) "
+                    "→ gpt_commit_proposal — not generic record update.",
                     "Extras (pending_signatures/audit/versions/participants/signers/resend/"
-                    "create_version/generate_from_transcript): gpt_meeting_minute_manage. "
-                    "resend requires data.confirm_resend=true.",
+                    "create_version/generate_from_transcript): gpt_meeting_minute_manage (PREPARE) "
+                    "→ gpt_commit_proposal. resend requires confirm_resend=true in the manage body.",
                     "Handwritten signature PNG/PDF/public magic-link remain UI-only / not exposed.",
                     "Binary evidence upload/download remains UI-only (BLOCKED_BY_PLATFORM); "
-                    "link/metadata evidence uses gpt_list_evidence / gpt_manage_evidence.",
+                    "link/metadata evidence uses gpt_list_evidence / gpt_manage_evidence → commit.",
                     "Alias: ata → meeting_minute.",
                     "Not process_document (Markdown process knowledge).",
                 ],
@@ -506,10 +531,13 @@ def build_registration_guide() -> dict[str, Any]:
                 "enums": {},
                 "defaults": {"content_md": ""},
                 "notes": [
-                    "Process textual documentation (Markdown). Search: parent_id=processo_id.",
-                    "Create: data.processo_id + data.title (+ optional data.content_md).",
-                    "Get/update/delete: id=document_id (UUID PK).",
-                    "Update may send title and/or content_md only.",
+                    "ENTITY kind. Process textual documentation (Markdown). "
+                    "Search: parent_id=processo_id. No dedicated Action/MCP tools.",
+                    "Create: gpt_prepare_record_change operation=create "
+                    "changes={processo_id, title, content_md?} → gpt_commit_proposal.",
+                    "Get/update/delete: id=document_id (UUID PK) via get_record / "
+                    "prepare_record_change update|delete → commit_proposal.",
+                    "Update may send title and/or content_md only under changes.",
                     "AuthZ: transformometro.access (same as domain HTTP).",
                     "≠ meeting_minute / ata; ≠ flowchart_v1; ≠ structured AS-IS/TO-BE state.",
                     "Do not dump all documents into process context — consult on demand.",
@@ -521,8 +549,10 @@ def build_registration_guide() -> dict[str, Any]:
                 "enums": {},
                 "defaults": {},
                 "notes": [
-                    "Upsert via gpt_create_record or gpt_update_record (id=processo_id).",
-                    "conteudo.format must be decomposition_tree_v1; format_version=1.",
+                    "Upsert via gpt_prepare_record_change (create|update; id=processo_id) "
+                    "→ gpt_commit_proposal.",
+                    "conteudo.format must be decomposition_tree_v1; format_version=1 "
+                    "(field remains changes.conteudo).",
                     "conteudo.nodes[]: id, level (processo_chave|tarefa|sub_tarefa), "
                     "ordem, label, parent_id (null for processo_chave).",
                     "This is the shared WBS/mapeamento macro — not per-revision prose.",
@@ -541,7 +571,8 @@ def build_registration_guide() -> dict[str, Any]:
                 "notes": [
                     "Upsert; id on update path = instancia_id.",
                     "Which WBS nodes from the process tree apply to this instance.",
-                    "Fields go under data (not inside conteudo).",
+                    "Fields go under changes (not inside conteudo).",
+                    "Write: gpt_prepare_record_change → gpt_commit_proposal.",
                 ],
             },
             "revision_decomposition_overlay": {
@@ -584,7 +615,8 @@ def build_registration_guide() -> dict[str, Any]:
                 "defaults": {"inherit_all": True, "include_boundary_edges": False},
                 "notes": [
                     "Upsert; id=instancia_id. Scope of macro diagram nodes for the instance.",
-                    "Fields under data (not conteudo). Unlike WBS scope, no include_descendants.",
+                    "Fields under changes (not conteudo). Unlike WBS scope, no include_descendants.",
+                    "Write: gpt_prepare_record_change → gpt_commit_proposal.",
                 ],
             },
             "revision_diagram_overlay": {
@@ -607,7 +639,8 @@ def build_registration_guide() -> dict[str, Any]:
                 "defaults": {},
                 "notes": [
                     "Update only (no create). id=revisao_id.",
-                    "Use gpt_update_record entity=impact_effort_matrix.",
+                    "Use gpt_prepare_record_change operation=update entity=impact_effort_matrix "
+                    "→ gpt_commit_proposal.",
                 ],
             },
         },

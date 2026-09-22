@@ -494,9 +494,15 @@ def test_registration_guide_exposes_entity_schemas():
     assert "write_contract_rules" in guide
     rules = guide["write_contract_rules"]
     assert "entity_schemas" in rules["priority"]
+    assert rules["surface"] == "GOVERNED_PREPARE_COMMIT_V2"
+    assert "gpt_prepare_record_change" in rules["entity_write_flow"]
+    assert "gpt_commit_proposal" in rules["entity_write_flow"]
+    assert "changes" in rules["changes_wrapper"]
     assert "conteudo" in rules["action_wrapper"]
     assert "shared_resource" in rules["anti_pattern"]
     assert "mapeamento" in rules["anti_pattern"]
+    assert "gpt_create_record" in rules["legacy_removed_from_builder"]
+    assert "gpt_create_record" in rules["anti_pattern"]
     assert guide["entity_schemas"]["instance"]["enums"]["fase_melhoria"] == list(
         FASE_MELHORIA
     )

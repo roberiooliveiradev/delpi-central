@@ -117,13 +117,13 @@ OPERATIONAL_SEQUENCE = [
     "READ CONTRACT (gpt_get_catalog.registration_guide.package_hints)",
     "RESOLVE IDs / CONTEXT (gpt_search_records / gpt_get_process_context)",
     "PREPARE nested package payload",
-    "VALIDATE PACKAGE (gpt_validate_improvement_package)",
+    "VALIDATE PACKAGE (gpt_validate_improvement_package) = PREPARE WORKFLOW",
     "REQUIRE ready=true (ready=false is checklist, not tool failure)",
-    "SHOW USER the exact package",
+    "SHOW USER the exact package / proposal",
     "EXPLICIT CONFIRMATION",
-    "COMMIT (gpt_commit_improvement_package)",
-    "READ-BACK / VERIFY (gpt_get_record / gpt_get_process_context)",
-    "OPTIONAL RECALCULATE (recalculate=true only after successful commit)",
+    "COMMIT (gpt_commit_proposal) — ACT stage; not gpt_commit_improvement_package",
+    "AUTHORITATIVE READ-BACK / VERIFY (gpt_get_record / gpt_get_process_context)",
+    "OPTIONAL RECALCULATE (recalculate flag bound in proposal; only after successful commit)",
 ]
 
 
@@ -225,8 +225,9 @@ def build_package_hints() -> dict[str, Any]:
         "dry_run_first": False,
         "process_context_operationId": "gpt_get_process_context",
         "compatibility": (
-            "commit dry_run remains supported for backward compatibility; "
-            "specialists should use gpt_validate_improvement_package."
+            "Legacy HTTP gpt_commit_improvement_package / dry_run remain "
+            "LEGACY_TRANSITIONAL (include_in_schema=False). "
+            "Specialists must use gpt_validate_improvement_package then gpt_commit_proposal."
         ),
         "canonical_package_shape": {
             "top_level": list(PACKAGE_TOP_LEVEL_KEYS),
@@ -287,8 +288,10 @@ def build_package_hints() -> dict[str, Any]:
         "governed_document_writes": {
             "diagram": "Use only when surface_supports.persist_diagram_via_gpt=true and live manage authorization succeeds.",
             "decomposition": "Use only when surface_supports.persist_decomposition_via_gpt=true and live manage authorization succeeds.",
-            "flow": "PREPARE → SHOW → CONFIRM → WRITE → VERIFY",
+            "flow": "PREPARE → SHOW → CONFIRM → COMMIT → AUTHORITATIVE READ-BACK → VERIFY",
             "support_is_not_authorization": True,
+            "commit_via": "gpt_commit_proposal",
+            "note": "COMMIT is the ACT stage; not a direct create/update Action.",
         },
         "ui_only_persist": [
             "binary evidence uploads",

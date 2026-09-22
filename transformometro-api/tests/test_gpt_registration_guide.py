@@ -33,7 +33,9 @@ def test_registration_guide_does_not_mark_governed_document_writes_ui_only():
     assert governed["support_is_not_authorization"] is True
     assert "surface_supports.persist_diagram_via_gpt=true" in governed["diagram"]
     assert "surface_supports.persist_decomposition_via_gpt=true" in governed["decomposition"]
-    assert governed["flow"] == "PREPARE → SHOW → CONFIRM → WRITE → VERIFY"
+    assert governed["flow"] == (
+        "PREPARE → SHOW → CONFIRM → COMMIT → AUTHORITATIVE READ-BACK → VERIFY"
+    )
 
 
 def test_registration_flow_routes_only_unsupported_followups_to_ui():
