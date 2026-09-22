@@ -669,7 +669,17 @@
   justify-items: start;
 }
 
+.dashboard-supplies-portal .sp-inventory__error {
+  display: grid;
+  gap: 0.65rem;
+  justify-items: start;
+}
+
 .dashboard-supplies-portal .sp-deliveries .delpi-ui-data-list-toolbar {
+  flex-wrap: wrap;
+}
+
+.dashboard-supplies-portal .sp-inventory .delpi-ui-data-list-toolbar {
   flex-wrap: wrap;
 }
 
@@ -679,7 +689,20 @@
   font-variant-numeric: tabular-nums;
 }
 
+.dashboard-supplies-portal .sp-inventory__freshness {
+  font-size: 0.75rem;
+  color: var(--sp-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
 .dashboard-supplies-portal .sp-deliveries__empty-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.dashboard-supplies-portal .sp-inventory__empty-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;

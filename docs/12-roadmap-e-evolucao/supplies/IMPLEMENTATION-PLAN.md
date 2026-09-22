@@ -3,8 +3,8 @@
 > **Status (revalidado 2026-09-21, `4f3ed59483`):** plano executável revisado segundo `evidence-driven-execution.mdc`, `plan-construction.mdc` e `plan-execution.mdc`.
 > **Entregue:** E1–E8 (incluindo E8 / WF-06 detalhe do pedido). GATE-FEATURE WF-06 = **PASS** ([evidência](./evidence/e8-wf06-federated-runtime-gate.md)).
 > **Entregue adicional:** E9 / WF-07 — **GATE-FEATURE WF-07 = PASS** após recovery redeploy ([evidência](./evidence/e9-wf07-federated-runtime-gate.md)).
-> **Candidata seguinte:** **E10 / WF-15 Controle de Estoques** — fila apenas; **não autorizada/implementada** sem brief PO.
-> **Próxima receita:** readiness E10 somente com autorização PO (não iniciar nesta tarefa).
+> **Em foco:** **E10 / WF-15 Controle de Estoques** — **IN PROGRESS** · E10.S1 PASS · E10.S2 PASS · **E10.S3 PASS (MFE)** · E10.S4 BLOCKED até brief.
+> **Próxima receita:** E10.S4 (Help + smoke autenticado/federado + GATE-FEATURE) — não iniciar automaticamente.
 > **Modo:** uma página user-facing por vez; etapas futuras abaixo são fila/grafo, não autorização automática.
 
 Referências: [README](./README.md), ADR-001..ADR-007, [WIREFRAMES](./WIREFRAMES.md), [API-ROUTES](./API-ROUTES.md), [DECISOES_FUNCIONAIS_PENDENTES](./DECISOES_FUNCIONAIS_PENDENTES.md), [HOMOLOGACAO-PARIDADE](./HOMOLOGACAO-PARIDADE.md).
@@ -255,9 +255,25 @@ Suites API (41 PASS) + MFE (156 PASS) + build PASS. Smoke inicial: BFF prod **40
 
 **GATE-FEATURE WF-07 = PASS.** E9 / WF-07 = **FECHADA**. E10 permanece candidata sem autorização de implementação.
 
-## E10 — WF-15 Controle de Estoques
+## E10 — WF-15 Controle de Estoques — IN PROGRESS
 
-Página própria. Não misturar ESTSEG. Confirmar política de capability da rota de stock-value antes de executar.
+Página própria de posição física (`B2_QATU`). Não misturar ESTSEG. Capability: `supplies.access` + filtro `01`/`02` (ADR-009).
+
+### E10.S1 — api-delpi stock-balances — PASS
+
+Contrato producer estendido (`only_positive=false` default path). SHA `abf47ec1cb`.
+
+### E10.S2 — BFF supplies-api — PASS
+
+`GET /inventory/stock-balances/summary` + `GET /inventory/stock-balances/items`. SHA `379ac45937`. Residual: `S2_AUTHENTICATED_BFF_SMOKE = INCONCLUSIVE`.
+
+### E10.S3 — MFE `/apps/supplies/inventory` — PASS
+
+Placeholder removido; página **Controle de Estoques** kit-first; BFF-only; Hero Produtos/Armazéns/Valor; filtros Unidade+Armazém; tabela preserva zero/negativo/UM null/armazém sem label/código vazio; sort allowlist; paginação server-side; URL/F5. Help final = S4.
+
+### E10.S4 — Help + smoke + GATE — BLOCKED
+
+Não iniciar automaticamente. Owner do Help sync, smoke autenticado BFF e GATE-FEATURE E10.
 
 ## E11 — WF-16 Estoque de Segurança
 

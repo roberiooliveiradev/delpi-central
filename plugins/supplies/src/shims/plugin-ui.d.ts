@@ -273,6 +273,14 @@ declare module "@delpi/plugin-ui/index" {
     error?: ReactNode;
   }>;
 
+  export function portalUserProfileAccessBemClasses(prefix: string): {
+    access: string;
+    accessGroup: string;
+    accessHeading: string;
+    accessBadges: string;
+    accessList: string;
+  };
+
   export function createDashboardTopBarUserIdentity(config: {
     prefix: string;
   }): ComponentType<{

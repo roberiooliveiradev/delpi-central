@@ -1,11 +1,11 @@
 # Portal Suprimentos — documentação mestra
 
-> **Status (2026-09-21):** implementação incremental em andamento · **E1–E9 concluídas** · **WF-06 GATE-FEATURE PASS** · **WF-07 GATE-FEATURE PASS** ([evidência](./evidence/e9-wf07-federated-runtime-gate.md); recovery pós-redeploy BFF) · [freeze P0](./evidence/e9-wf07-p0-contract-freeze.md)
-> **Readiness:** **GATE-E1 + GATE-ARCH + GATE-AUTHZ + GATE-RBAC PASS (local)** · E9 / WF-07 fechada
+> **Status (2026-09-22):** implementação incremental em andamento · **E1–E9 concluídas** · **E10 / WF-15 IN PROGRESS** (S1–S3) · **WF-06/WF-07 GATE-FEATURE PASS**
+> **Readiness:** **GATE-E1 + GATE-ARCH + GATE-AUTHZ + GATE-RBAC PASS (local)** · E9 fechada · E10 em execução
 > **Modo de entrega:** **uma página por vez até DoD** — a próxima página só pode ser promovida a foco após fechamento da atual
-> **Página candidata seguinte:** **E10 / WF-15 Controle de Estoques** — não autorizada/implementada nesta tarefa
+> **Página em foco:** **E10 / WF-15 Controle de Estoques** — api-delpi + BFF + MFE implementados; Help + smoke final = E10.S4
 > **Últimas páginas fechadas:** **Início (WF-01)**, **Visão geral (WF-02/WF-02R)**, **OTD analytics (WF-OTD-A)**, **Solicitações de compras (WF-04)**, **Pedidos de compra (WF-05)**, **Detalhe do pedido (WF-06)** e **Entregas / atrasos (WF-07)**
-> **Próxima receita:** aguardar autorização PO para inventário/readiness de E10 / WF-15 — não iniciar implementação sem brief
+> **Próxima receita:** E10.S4 — Help sync + smoke autenticado/federado + GATE-FEATURE E10 (não iniciar automaticamente)
 > **Id técnico:** `supplies` · **basePath:** `/apps/supplies` · **API:** `supplies-api` · gateway `/apps/supplies-api/` · **CSS root:** `.dashboard-supplies-portal`
 
 O Portal Suprimentos é o hub operacional, analítico e gerencial do domínio de Suprimentos na Minha DELPI. Ele substitui progressivamente experiências fragmentadas por jornadas coesas, preservando bounded contexts, RBAC central, paridade mensurável e rollback.
@@ -226,7 +226,7 @@ Invariantes:
 
 ## 7. Próximo passo operacional
 
-**Único próximo passo autorizado pelo roadmap:** inventário/readiness de **E10 / WF-15 — Controle de Estoques** somente após autorização explícita do Product Owner. E9/WF-07 permanece fechada com [GATE PASS](./evidence/e9-wf07-federated-runtime-gate.md). Não iniciar implementação de E10 nesta promoção documental.
+**Único próximo passo autorizado pelo roadmap:** **E10.S4** — Help sync + smoke autenticado BFF/federado + evidência + GATE-FEATURE E10. E10 permanece **IN PROGRESS** até S4. Não iniciar E11. Residual preservado: `S2_AUTHENTICATED_BFF_SMOKE = INCONCLUSIVE`.
 
 Revalidação 2026-09-21 (`4f3ed59483`): GATE-FEATURE WF-06 permanece **PASS**. Autorização do Product Owner e freeze P0 de E9 estão persistidos. P-03 continua bloqueando apenas paridade/depreciação do BI, não a construção da página nativa.
 

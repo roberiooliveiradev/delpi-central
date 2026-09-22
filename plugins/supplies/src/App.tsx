@@ -18,6 +18,7 @@ import { PlaceholderPage } from "./pages/PlaceholderPage";
 import { UserManualPage } from "./features/help/UserManualPage";
 import { OtdAnalyticsPage } from "./features/analytics/OtdAnalyticsPage";
 import { DeliveriesPage } from "./features/deliveries/DeliveriesPage";
+import { InventoryPage } from "./features/inventory/InventoryPage";
 import { PurchaseOrderDetailPage } from "./features/purchase-orders/PurchaseOrderDetailPage";
 import { PurchaseOrdersPage } from "./features/purchase-orders/PurchaseOrdersPage";
 import { PurchaseRequestDetailPage } from "./features/purchase-requests/PurchaseRequestDetailPage";
@@ -45,10 +46,6 @@ const PLACEHOLDER: Partial<
   products: {
     title: "Produtos",
     description: "Composição 360 entra depois da fundação do shell.",
-  },
-  inventory: {
-    title: "Estoque",
-    description: "Composição operacional entra depois da fundação do shell.",
   },
   safety_stock: {
     title: "Estoque de segurança",
@@ -166,6 +163,8 @@ function AppRoutes({
     );
   } else if (view === "deliveries") {
     content = <DeliveriesPage basePath={basePath} />;
+  } else if (view === "inventory") {
+    content = <InventoryPage basePath={basePath} />;
   } else {
     const placeholder = PLACEHOLDER[view];
     content = placeholder ? (
