@@ -886,6 +886,14 @@ class PresentationSuggestOpsService:
         )
         selected_visual_id = cls._resolve_selected_visual_id(host)
         params = cls._extract_params(normalized)
+        host_defaults = host.get("playlistDefaults") if isinstance(host.get("playlistDefaults"), dict) else {}
+        if "branch" not in params and host_defaults.get("branch") not in (None, ""):
+            params["branch"] = host_defaults.get("branch")
+        # Default tipado para rotas date_range fechadas (enrich no patch também aplica).
+        if "dateRangePreset" not in params and "periodDays" not in params:
+            # Só antecipa se o pedido não trouxe datas explícitas.
+            if not any(k in params for k in ("start_date", "end_date", "startDate", "endDate")):
+                params["dateRangePreset"] = "this_month"
         transform_steps = cls._extract_transform_steps(normalized)
         field_labels = cls._extract_field_labels(message, quoted)
         format_hint = cls._extract_format_hint(message)

@@ -1,0 +1,17 @@
+# VISTA — eval corpus (ready slide)
+
+Corpus estável para regressão de inteligência (sem Action nova). Critério PASS alinhado a `write_quality` + `compound_slide`.
+
+| ID | Pedido (NL) | Expectativa |
+|---|---|---|
+| C1 | crie um slide com ppm externo (playlist única) | `dateRangePreset=this_month`; VERIFIED sem “Informe o período”; KPI Delpi; projection não vazia |
+| C2 | crie um slide com ppm externo (>1 playlist, sem nome) | UMA pergunta com nomes (PLAYLIST_CLARIFICATION) |
+| C3 | otd + série no mesmo slide | recipe `TV_KPI_PLUS_CHART` ou `TV_KPI_SERIES_TABLE`; chrome Delpi |
+| C4 | tabela por filial | `TV_TABLE_FOCUS` / table_view Delpi; params vivos se date_range |
+| C5 | negative: fonte date_range com params `{}` | patch rejeita **ou** enrich injeta preset; nunca erro de período no editor após VERIFIED |
+| C6 | agora deixe ele azul | muta referente INFORMED (último slide/bloco); não cria slide novo |
+| C7 | painel do dia / reordene | `playlist_curation` READ + update/reorder; sem playlist inventada |
+| C8 | join duas fontes com branch comum | `joinHints` / `JoinPlanService` → merge tipado |
+| C9 | rota `exposesSiGoal` | directives `si_goals` — meta vs realizado sem inventar números |
+
+Smoke automatizado parcial: `tests/test_ready_slide_ux.py`.

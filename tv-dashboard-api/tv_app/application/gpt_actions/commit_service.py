@@ -1124,6 +1124,28 @@ class TvGptCommitService:
                 details["checks"].append({"op": op, "ok": ok, "slideId": sid})
                 if not ok:
                     return False, details
+                from tv_app.application.services.data.ready_slide_quality_service import (
+                    ReadySlideQualityService,
+                )
+                from tv_app.application.services.tv_data_route_catalog_service import (
+                    TvDataRouteCatalogService,
+                )
+
+                catalog = TvDataRouteCatalogService()
+                quality_issues = ReadySlideQualityService.collect_native_quality_issues(
+                    want if isinstance(want, dict) else persisted,
+                    catalog=catalog,
+                )
+                if quality_issues:
+                    details["checks"].append(
+                        {
+                            "op": op,
+                            "ok": False,
+                            "reason": "ready_slide_quality",
+                            "issues": quality_issues[:8],
+                        }
+                    )
+                    return False, details
 
             else:
                 details["checks"].append(

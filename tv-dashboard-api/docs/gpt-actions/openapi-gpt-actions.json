@@ -15,7 +15,7 @@
       "get": {
         "operationId": "gpt_get_catalog",
         "summary": "TV presentation mutation capability catalog",
-        "description": "Returns catalogVersion, operations, capabilities, capability_surface (incl. agent_directives: object_resolution/data_discovery/modes) from PresentationMutation. Call before writes; obey agent_directives. Catalog informs; backend authorizes. Requires tv-dashboard.write.",
+        "description": "Returns catalogVersion, operations, capabilities, capability_surface (incl. agent_directives: object_resolution/data_discovery/data_transform/modes) from PresentationMutation. Call before writes; obey agent_directives. Catalog informs; backend authorizes. Requires tv-dashboard.write.",
         "tags": [
           "TV Dashboard GPT"
         ],
@@ -1829,6 +1829,93 @@
                                       "type": "string"
                                     }
                                   }
+                                },
+                                "chartType": {
+                                  "type": "string",
+                                  "description": "For chart_view: line|bar|area|pie|…"
+                                },
+                                "tablePreset": {
+                                  "type": "string",
+                                  "description": "For table_view: banded|minimal|grid|…"
+                                },
+                                "kpiProjection": {
+                                  "type": "object",
+                                  "additionalProperties": true,
+                                  "description": "KPI field binding. Prefer metrics[].format|displayFormat (number|percent|currency|raw). Never leave empty after bind_visual.",
+                                  "x-delpi-gpt-opaque-object": true,
+                                  "properties": {}
+                                },
+                                "kpiOptions": {
+                                  "type": "object",
+                                  "additionalProperties": true,
+                                  "description": "KPI card options: valueFormat / displayValueFormat (auto|number|currency|percent|compact|raw).",
+                                  "properties": {
+                                    "valueFormat": {
+                                      "type": "string",
+                                      "enum": [
+                                        "auto",
+                                        "number",
+                                        "currency",
+                                        "percent",
+                                        "compact",
+                                        "raw"
+                                      ]
+                                    },
+                                    "decimalPlaces": {
+                                      "type": "number"
+                                    }
+                                  }
+                                },
+                                "chartOptions": {
+                                  "type": "object",
+                                  "additionalProperties": true,
+                                  "description": "Chart options including valueFormat.",
+                                  "properties": {
+                                    "valueFormat": {
+                                      "type": "string",
+                                      "enum": [
+                                        "auto",
+                                        "number",
+                                        "currency",
+                                        "percent",
+                                        "compact",
+                                        "raw"
+                                      ]
+                                    }
+                                  }
+                                },
+                                "chartProjection": {
+                                  "type": "object",
+                                  "additionalProperties": true,
+                                  "description": "Chart axes/series binding — do not leave empty after bind_visual.",
+                                  "x-delpi-gpt-opaque-object": true,
+                                  "properties": {}
+                                },
+                                "tableProjection": {
+                                  "type": "object",
+                                  "additionalProperties": true,
+                                  "description": "Table columns; columns[].valueFormat = auto|number|currency|percent.",
+                                  "x-delpi-gpt-opaque-object": true,
+                                  "properties": {}
+                                },
+                                "tableOptions": {
+                                  "type": "object",
+                                  "additionalProperties": true,
+                                  "x-delpi-gpt-opaque-object": true,
+                                  "properties": {}
+                                },
+                                "fieldLabels": {
+                                  "type": "object",
+                                  "additionalProperties": {
+                                    "type": "string"
+                                  }
+                                },
+                                "dataTransform": {
+                                  "type": "object",
+                                  "additionalProperties": true,
+                                  "description": "Prefer set_data_transform; if present must be {steps} only.",
+                                  "x-delpi-gpt-opaque-object": true,
+                                  "properties": {}
                                 }
                               }
                             },
@@ -2012,7 +2099,7 @@
                     "name": "Testando a VISTA"
                   }
                 ],
-                "catalogVersion": "2026.09.15.1",
+                "catalogVersion": "2026.09.22.ready2",
                 "commit_now": true,
                 "confirmation": {
                   "confirmed": true

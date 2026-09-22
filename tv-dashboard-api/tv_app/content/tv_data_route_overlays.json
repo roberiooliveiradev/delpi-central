@@ -87,6 +87,16 @@
         "ppm",
         "ppmValue"
       ],
+      "valueFieldTypes": {
+        "value": "number",
+        "ppm": "number",
+        "ppmValue": "number",
+        "total_produzido_un": "number",
+        "total_devolvido_un": "number",
+        "target": "number",
+        "comparable_goal": "number",
+        "goal_value": "number"
+      },
       "valueFieldLabels": {
         "value": "Valor",
         "ppm": "PPM",
@@ -117,6 +127,14 @@
         "ppm",
         "ppmValue"
       ],
+      "valueFieldTypes": {
+        "value": "number",
+        "ppm": "number",
+        "ppmValue": "number",
+        "target": "number",
+        "comparable_goal": "number",
+        "goal_value": "number"
+      },
       "valueFieldLabels": {
         "value": "Valor",
         "ppm": "PPM",

@@ -1,14 +1,15 @@
 {
-  "version": "2026.09.22.6",
+  "version": "2026.09.22.7",
   "owner": "tv-dashboard-api",
   "source": "capability_surface.agent_directives via gpt_get_catalog",
   "object_resolution": {
     "principle": "ALTER_EXISTING_BEFORE_CREATE",
-    "summary": "Antes de criar, resolver o objeto que o usuário já referenciou. Alteração ≠ novo objeto.",
+    "summary": "Antes de criar, resolver o objeto que o usuário já referenciou. Alteração ≠ novo objeto. Referente multi-turn = último slide/bloco INFORMED.",
     "rules": [
       "Pedido de alteração (trocar, mudar, ajustar, atualizar, renomear, fundo/cor/estilo, duração, ordem) → preferir ops de mutação no objeto já identificado; NÃO create_playlist / add_blank_slide / novo upsert_block sem id existente.",
       "Resolver target a partir de: (1) IDs INFORMADOS na conversa ou Actions anteriores; (2) gpt_list_playlists / gpt_get_playlist_context; (3) nome/título coincidente no contexto vivo. Nunca inventar UUID.",
-      "Pronomes e dêixis ('este slide', 'essa playlist', 'o fundo', 'o bloco') → vincular ao último recurso OBSERVED/INFORMED do mesmo tipo. Se ambíguo: UMA pergunta ou listar candidatos das Actions READ — não criar outro.",
+      "Pronomes e dêixis ('este slide', 'essa playlist', 'o fundo', 'o bloco', 'ele', 'esse', 'o gráfico', 'o kpi', 'a tabela') → vincular ao último recurso OBSERVED/INFORMED do mesmo tipo. Se ambíguo: UMA pergunta ou listar candidatos das Actions READ — não criar outro.",
+      "PLAYLIST_CLARIFICATION: gpt_list_playlists quando playlistId unknown. Se 0 playlists → create_playlist só com pedido explícito. Se exatamente 1 → usar. Se >1 e o usuário NÃO nomeou playlist → UMA pergunta com nomes (não escolher silenciosamente). Se nomeou/INFORMED → resolver e seguir.",
       "create_* / add_* somente quando o usuário pedir criação explícita OU a leitura autorizada provar que o objeto não existe.",
       "Duplicar playlist/slide/bloco 'parecido' para aplicar um ajuste = falha. Corrija o existente (patch_native_config, update_slide, upsert_block com blockId existente, set_data_transform, etc.).",
       "Fundo/cor/estilo de tela já conhecida → patch_native_config (ou upsert_block no blockId existente) com target.playlistId + target.slideId do contexto — nunca add_blank_slide só para recolorir."
@@ -18,9 +19,48 @@
       "gpt_get_playlist_context when slideId/blockId/revision unknown"
     ]
   },
+  "playlist_curation": {
+    "principle": "READ_BEFORE_CURATE",
+    "summary": "Duração, ordem kiosk e 'painel do dia' = inventário READ + mutação no existente; não criar playlist silenciosa.",
+    "rules": [
+      "Antes de curar: gpt_list_playlists e/ou gpt_get_playlist_context.",
+      "Duração → update_slide.durationSec no slide resolvido.",
+      "Ordem kiosk/TV → reorder_slides / move_slide_to_section.",
+      "'Painel do dia' / programação do dia → compound sobre playlist INFORMED ou clarificada (PLAYLIST_CLARIFICATION); não inventar nova playlist.",
+      "Preferir update/reorder no existente a create_playlist."
+    ]
+  },
+  "branch_scope": {
+    "principle": "INHERIT_THEN_ASK",
+    "summary": "Filial/escopo: herdar playlistDefaults.branch; UMA pergunta se várias filiais sem INFORMED.",
+    "rules": [
+      "upsert_data_source.params.branch ← playlistDefaults.branch quando existir e NL não informar filial.",
+      "Se o usuário tiver várias filiais no contexto e não INFORMED → UMA pergunta.",
+      "Nunca inventar código de filial."
+    ]
+  },
+  "si_goals": {
+    "principle": "CONTRACT_SI_GOAL",
+    "summary": "Rotas com exposesSiGoal=true → sugerir meta vs realizado no mesmo slide (projeção/segundo visual tipado).",
+    "rules": [
+      "Só use campos de meta presentes no contrato/overlay da rota (ex.: target, comparable_goal, goal_value).",
+      "Não inventar meta numérica sem evidência da rota/preview.",
+      "Preferir recipe ou upsert_block com métrica de meta ao lado do realizado."
+    ]
+  },
+  "write_quality": {
+    "principle": "NO_FALSE_VERIFIED",
+    "summary": "VERIFIED exige slide tratado: params vivos, sem resolved.error, projection não vazia em visuals de dados.",
+    "rules": [
+      "Antes do commit: gpt_preview_data_block deve retornar dado OK (não erro de período/filtro).",
+      "Rotas date_range fechadas: sempre dateRangePreset=this_month (ou datas/periodDays INFORMED) em upsert_data_source — nunca params {}.",
+      "Após bind/composite: projection + formato preenchidos (owner-local ou upsert_block).",
+      "Se o write path emitir OUTCOME_NOT_VERIFIED / erro de qualidade → corrigir params/projection; não dizer ao usuário que salvou com sucesso."
+    ]
+  },
   "screenshot_parity": {
     "principle": "PRINT_TO_TYPED_SLIDE_PARITY",
-    "summary": "Print/anexo de como o usuário quer o slide = pedido de paridade visual via ops tipadas — não gerar arte e não só orientar.",
+    "summary": "Print/anexo = paridade visual via ops tipadas densas (multi-bloco) — não gerar arte e não só orientar.",
     "when": [
       "Usuário anexa print/screenshot/foto do editor, TV, mockup ou referência e pede criar/ajustar 'igual', 'assim', 'como na imagem', 'reproduza', 'copie este layout'.",
       "Print + texto de ajuste ('fundo como no print', 'títulos assim') no mesmo turno."
@@ -32,14 +72,14 @@
       "Significado de métricas sem rota confirmada = INFERRED/PROPOSED até gpt_search_data_routes / gpt_preview_data_block."
     ],
     "pipeline": [
-      "1) Classificar: criar novo slide/playlist OU alterar objeto já resolvido (object_resolution).",
-      "2) Decompor o print em camadas: fundo/canvas; títulos e textos; KPIs/cards; gráficos; tabelas; outros blocos; hierarquia e alinhamento aproximado.",
-      "3) Mapear cada camada às ops tipadas do catálogo vivo (gpt_get_catalog): tipicamente add_blank_slide + patch_native_config(background) + N× upsert_block (type text|kpi|chart|table…) com frame/style; upsert_data_source + set_data_transform quando houver dado vivo.",
-      "4) Cores → #RRGGBB canônico; tipografia/peso/alinhamento → style do bloco; posição/tamanho relativo → frame do upsert_block o mais próximo possível do print.",
-      "5) Textos legíveis no print → conteúdo dos blocos text/kpi labels; não inventar frases que não aparecem.",
-      "6) Se o print mostra indicadores operacionais: gpt_search_data_routes pelos rótulos visíveis; se houver match, preview + bind; se não, criar bloco estático com o valor/rótulo visível e declarar lacuna de binding (PROPOSED) sem inventar operationId.",
-      "7) Um LOTE COMPLETO numa gpt_preview_change (additive: commit_now=true). PlanCompiler ordena. Sem fatiar 'primeiro o slide, depois me pergunte'.",
-      "8) Após VERIFIED: resumir em português o que ficou igual e o que o catálogo não cobre (paridade honest). Não fingir 100% se faltou capability."
+      "1) Classificar: criar novo slide/playlist OU alterar objeto já resolvido (object_resolution + PLAYLIST_CLARIFICATION).",
+      "2) Decompor o print em camadas densas: fundo/canvas; títulos; KPIs/cards; gráficos; tabelas; formas/grade; outros; hierarquia e alinhamento.",
+      "3) Mapear cada camada às ops tipadas (upsert_block / patch_native_config / add_*_from_route) + presentation_recipes Delpi quando for painel operacional.",
+      "4) Frames relativos ao print (não um único bloco esticado); tipografia/parts proporcionais — preferir múltiplos upsert_block.",
+      "5) Textos legíveis → conteúdo dos blocos; não inventar frases ausentes.",
+      "6) Indicadores: search + preview + bind + projection auto; declarar gap se rota não existir.",
+      "7) Um LOTE COMPLETO numa gpt_preview_change (additive: commit_now=true).",
+      "8) Após VERIFIED: resumir paridade honest (o que cobriu / gaps)."
     ],
     "parity_bar": {
       "must_match": [
@@ -53,13 +93,14 @@
         "posição/tamanho exatos em px",
         "fontes proprietárias fora do editor",
         "sombras/efeitos sem campo no catálogo",
-        "imagens rastreadas do print (sem upload de asset via Actions)"
+        "imagens rastreadas do print (sem upload de asset via Actions neste HEAD)"
       ],
       "forbidden_shortcuts": [
         "Responder só com tutorial de cliques no editor",
         "Gerar imagem do slide em vez de criar slide real",
         "Criar slide vazio e pedir que o usuário monte o resto",
-        "Inventar UUIDs ou rotas de dados 'parecidas'"
+        "Inventar UUIDs ou rotas de dados 'parecidas'",
+        "Um único bloco widescreen cobrindo o print inteiro"
       ]
     }
   },
@@ -73,7 +114,7 @@
       "Curadoria de 1–2 rotas só é permitida DEPOIS de listar a família OU quando o usuário já escolheu uma forma (ex.: 'só a série', 'só o KPI').",
       "searchMissDoesNotProveAbsence=true: refine a query; não declare que o dado não existe na empresa.",
       "Params (ex. granularity) vêm do paramSchema do hit — não trial-and-error. Enum inválido → corrija, não chute.",
-      "gpt_preview_data_block preferir atalho {operationId, params}; não inventar block/nativeConfig de editor.",
+      "gpt_preview_data_block preferir atalho {operationId, params}; usar joinHints/formatHints do payload; não inventar block/nativeConfig de editor.",
       "GET /data/routes completo é superfície do MFE editor — não é Action GPT."
     ],
     "forbidden": [
@@ -89,8 +130,9 @@
     "summary": "Transform = set_data_transform com steps tipados allowlisted. M/script/v2/DAX/SQL proibidos (mForbidden). Produto M desligado.",
     "rules": [
       "SoT: dataTransform = { steps: [...] }. Ops tipadas do catálogo (keepRows, merge, select, rename, …).",
-      "Unir fontes: step op=merge com sourceId da outra data_source do slide — nunca script M NestedJoin.",
-      "Chaves de join: preferir interseção de colunas (branch/filial/codigo/id/periodo/op). Se confidence baixa, UMA pergunta ou use campo INFORMED — não inventar.",
+      "Unir fontes: step op=merge com sourceId da outra data_source — usar joinHints/JoinPlan do preview; nunca script M NestedJoin.",
+      "Chaves de join: interseção de colunas (branch/filial/codigo/id/periodo). Confidence baixa → UMA pergunta — não inventar.",
+      "select/rename/fieldLabels/top-N: resolver colunas de NL/aspas ou clarificar UMA vez — nunca emitir {{placeholders}} quebrados.",
       "Nunca emitir language/script/version:2 nem smuggle via upsert_block.dataTransform.",
       "Editor M / workbench / compile-mutate não fazem parte do caminho VISTA."
     ],
@@ -98,30 +140,35 @@
       "Script M livre / Power Query M / DAX / SQL",
       "dataTransform.version=2 ou dataTransform.script",
       "Orientar o usuário a 'abrir o editor M'",
-      "Inventar leftKey/rightKey sem schema/preview comum"
+      "Inventar leftKey/rightKey sem schema/preview comum",
+      "Emitir steps com {{placeholders}} não resolvidos"
     ]
   },
   "compound_slide": {
     "principle": "READY_COMPOUND_SLIDE",
-    "summary": "Pedido complexo → um lote compound: rotas + merge tipado + visuals com projeção/formato + recipe de layout.",
+    "summary": "Pedido complexo → um lote compound: playlist clarificada + rotas + params vivos + merge tipado + visuals com projeção/formato + recipe Delpi (KPI/chart/table/texto/forma).",
     "pipeline": [
-      "1) gpt_get_catalog → obedecer agent_directives (compound_slide, data_transform, presentation_recipes, display_format).",
-      "2) gpt_search_data_routes (PRESENT_ALL_SEARCH_HITS) → escolher família KPI/série/tabela.",
-      "3) gpt_preview_data_block para schemas/amostras quando for unir ou formatar.",
-      "4) upsert_data_source (N fontes) + set_data_transform merge com leftKey/rightKey confiáveis.",
-      "5) add_*_from_route OU upsert_block visual + bind_visual — depois SEMPRE upsert_block com kpiProjection/chartProjection/tableProjection NÃO vazios + formato.",
-      "6) Aplicar presentation_recipes (TV_KPI_HERO / TV_KPI_PLUS_CHART / TV_TABLE_FOCUS / THEME_*) via patch_native_config + frames/styles.",
-      "7) Uma gpt_preview_change compound + commit_now=true (additive)."
+      "1) gpt_get_catalog → obedecer agent_directives (compound_slide, write_quality, presentation_recipes, display_format, playlist_curation).",
+      "2) PLAYLIST_CLARIFICATION (list; perguntar se >1 sem nome).",
+      "3) gpt_search_data_routes (PRESENT_ALL_SEARCH_HITS) → escolher família KPI/série/tabela.",
+      "4) gpt_preview_data_block com params (dateRangePreset=this_month padrão se date_range fechada) — deve retornar dado OK.",
+      "5) upsert_data_source (N fontes, params completos + branch herdado) + set_data_transform merge via joinHints quando 2+ fontes.",
+      "6) add_*_from_route OU upsert_block visual + bind_visual — SEMPRE projection NÃO vazia + formato (auto ou upsert).",
+      "7) presentation_recipes Delpi (TV_KPI_HERO / TV_KPI_PLUS_CHART / TV_KPI_SERIES_TABLE / TV_TABLE_FOCUS / THEME_DELPI) + chrome tipado em todos os blocos.",
+      "8) Uma gpt_preview_change compound + commit_now=true; só aceitar VERIFIED sem erro de filtro/projection."
     ],
     "forbidden": [
       "Parar em bind_visual com projection {}",
       "Composite sem formato quando o pedido pede %/R$/inteiro",
-      "Fatiar o pedido em vários chats sem necessidade"
+      "Fatiar o pedido em vários chats sem necessidade",
+      "Escolher playlist silenciosamente quando há >1 e o usuário não nomeou",
+      "Persistir fonte date_range com params {}",
+      "Declarar sucesso com OUTCOME_NOT_VERIFIED ou resolved.error no editor"
     ]
   },
   "display_format": {
     "principle": "TYPED_DISPLAY_FORMAT",
-    "summary": "Formatar via kpiOptions/chartOptions/tableProjection valueFormat|displayFormat (number|currency|percent|raw). Inferir de valueFieldTypes / nome do campo / NL.",
+    "summary": "Formatar via kpiOptions/chartOptions/tableProjection valueFormat|displayFormat. Inferir de valueFieldTypes / nome do campo / NL / projeção automática.",
     "rules": [
       "Percentual/% → valueFormat=percent.",
       "R$/reais/moeda → currency BRL.",
@@ -132,25 +179,40 @@
   },
   "presentation_recipes": {
     "principle": "TYPED_PRESENTATION_RECIPES",
-    "summary": "Layouts/temas TV tipados (TV_KPI_HERO, TV_KPI_PLUS_CHART, TV_TABLE_FOCUS, THEME_DELPI/MIDNIGHT/LIGHT). Emitir ops do catálogo de recipes — não inventar CSS.",
+    "summary": "Layouts/temas TV tipados Delpi (TV_KPI_HERO, TV_KPI_PLUS_CHART, TV_KPI_SERIES_TABLE, TV_TABLE_FOCUS, THEME_*). Emitir ops do catálogo — não inventar CSS.",
     "rules": [
-      "Pedido 'mais profissional/limpo/TV' → THEME_MIDNIGHT ou THEME_DELPI.",
-      "Hierarquia: título → KPI → chart/tabela; contraste kiosk.",
+      "Pedido operacional genérico / TV → THEME_DELPI + defaults tipados do bloco (não card branco genérico).",
+      "'mais profissional/limpo' → THEME_MIDNIGHT ou THEME_DELPI.",
+      "Multi-indicador (KPI+série+tabela) → TV_KPI_SERIES_TABLE.",
+      "Hierarquia: título → KPI → chart/tabela; contraste kiosk; frames proporcionais por tipo.",
       "fontFamily preferir Inter, system-ui, sans-serif.",
-      "Imagem só com assetId já existente; sem upload via Actions."
+      "Imagem só com assetId já existente neste HEAD."
     ],
     "forbidden": [
       "customFonts upload",
       "Inventar assetId",
-      "Tratar print como fonte de upload de mídia"
+      "Tratar print como fonte de upload de mídia",
+      "Frame widescreen único sem tipografia/parts proporcionais"
     ]
   },
   "media_limits": {
     "principle": "ASSET_ID_ONLY",
-    "summary": "Blocos image/video e fundo image exigem assetId já existente na playlist. Sem Action de upload neste HEAD.",
+    "summary": "Blocos image/video e fundo image exigem assetId já existente. Upload governado = TARGET (Abstraction/Action Surface Gate antes de Action nova).",
     "rules": [
-      "Sem assetId INFORMED → declare gap; use cor/gradiente ou peça ao usuário escolher mídia no editor.",
-      "Print/screenshot = VISUAL_PARITY tipada, não Image Generation nem upload implícito."
+      "Sem assetId INFORMED → declare gap; use cor/gradiente Delpi ou peça mídia no editor.",
+      "Print/screenshot = VISUAL_PARITY tipada, não Image Generation nem upload implícito.",
+      "Quando existir capability tipada de upload, atualizar este bloco; até lá ASSET_ID_ONLY."
+    ],
+    "status": "PROVEN_LIMIT",
+    "uploadCapability": "TARGET"
+  },
+  "mcp_delia": {
+    "principle": "SAME_PRESENTATION_MUTATION",
+    "summary": "MCP VISTA e adapter DÉLIA TV = TARGET: mesmo contrato PresentationMutation; sem HTTP Actions ad hoc; sem duplicar regras.",
+    "status": "TARGET",
+    "rules": [
+      "Não implementar write TV via Chat interno.",
+      "Futuro adapter consome PresentationMutation / capability surface — não nova superfície paralela."
     ]
   },
   "modes": {
@@ -158,14 +220,14 @@
     "GUIDED_DASHBOARD": "Projetar/reorganizar painel ou playlist — criar só o que faltar após inventário READ.",
     "VISUAL_PARITY": "Print/anexo de referência → reproduzir slide com paridade via ops tipadas (screenshot_parity).",
     "DATA_INTERPRETATION": "Entender/explicar dados sem gravar até pedido explícito.",
-    "PLAYLIST_CURATION": "Ordem, duração, slides, kiosk/TV — preferir update/reorder/move no existente.",
-    "COMPOUND_READY_SLIDE": "Pedido complexo de slide pronto — seguir compound_slide.pipeline."
+    "PLAYLIST_CURATION": "Ordem, duração, slides, kiosk/TV — preferir update/reorder/move no existente (playlist_curation).",
+    "COMPOUND_READY_SLIDE": "Pedido complexo de slide pronto — seguir compound_slide.pipeline + write_quality."
   },
   "write_flow": {
     "skip_suggest_when_typable": true,
     "additive": "Uma gpt_preview_change com lote tipado + commit_now=true + confirmation.confirmed=true + Idempotency-Key. Pedido do usuário = confirmação — não perguntar Confirma?.",
     "destructive": "gpt_preview_change sem commit_now → plano → uma Confirma? → gpt_commit_change com proposal_handle opaco exato.",
-    "compound": "LOTE COMPLETO numa preview; PlanCompiler ordena; as/playlistRef/slideRef quando vários recursos; sem inventar UUID. Após bind/composite, proyección+formato obrigatórios.",
+    "compound": "LOTE COMPLETO numa preview; PlanCompiler ordena; as/playlistRef/slideRef quando vários recursos; sem inventar UUID. Após bind/composite, proyección+formato obrigatórios. VERIFIED só com write_quality.",
     "forbidden_handles": ["latest", "current", "null", "new"]
   },
   "anti_patterns": [
@@ -181,7 +243,12 @@
     "Trial-and-error de params fora do paramSchema / inventar block+nativeConfig para preview.",
     "Emitir script M / dataTransform.version=2 / orientar editor M (transform = só steps tipados).",
     "bind_visual / add_*_from_route sem upsert_block de projeção+formato quando o slide deve ficar pronto.",
-    "Inventar join keys sem colunas em comum / sem confirmação."
+    "Inventar join keys sem colunas em comum / sem confirmação.",
+    "Escolher playlist silenciosamente quando há >1 e o usuário não nomeou.",
+    "Persistir fonte date_range com params {} / entregar slide com 'Informe o período'.",
+    "Declarar VERIFIED/sucesso com resolved.error ou projection vazia no visual de dados.",
+    "Emitir steps transform com {{placeholders}} não resolvidos.",
+    "Inventar filial/branch sem playlistDefaults ou INFORMED."
   ],
   "auth_errors": {
     "401": "AuthN — pedir reconexão OAuth DELPI / permitir Action.",

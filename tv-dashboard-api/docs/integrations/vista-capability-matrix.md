@@ -113,13 +113,17 @@ Owner-local services (not new GPT Actions):
 
 | Concern | Module | Status |
 |---|---|---|
-| Join keys for merge | `JoinPlanService` + `propose_join` | **PROVEN** deterministic intersection |
-| Display format hints | `DisplayFormatHintsService` + `displayFormatHints` | **PROVEN** NL / field / valueFieldTypes |
-| Layout/theme recipes | `PresentationRecipeService` + `presentation_recipes.json` | **PROVEN** TV_KPI_* / THEME_* |
-| Compound ready slide | `agent_directives.compound_slide` | **PROVEN** pipeline directive |
-| Media | `assetId` only | **PROVEN** limit; upload **NONE** |
-| Color ramps TV | `presentation_recipes.colorRamps` + `colorVocabulary` | **PROVEN** |
-| Preview join/format hints | `gpt_preview_data_block.joinHints` / `formatHints` | **PROVEN** (no new Action) |
+| Join keys for merge | `JoinPlanService` + `propose_join` + preview `joinHints` | **PROVEN** |
+| Display format hints | `DisplayFormatHintsService` + `displayFormatHints` | **PROVEN** |
+| Auto projection pós-bind | `VisualProjectionService` | **PROVEN** |
+| Ready-slide quality gate | `ReadySlideQualityService` (params / projection / resolved.error) | **PROVEN** |
+| Layout/theme recipes | `PresentationRecipeService` + `presentation_recipes.json` (incl. `TV_KPI_SERIES_TABLE`) | **PROVEN** |
+| Compound ready slide | `agent_directives.compound_slide` + `write_quality` | **PROVEN** |
+| Playlist clarification / curation | `object_resolution` + `playlist_curation` | **PROVEN** directives |
+| Branch / SI goals | `branch_scope` + `si_goals` | **PROVEN** directives |
+| Media | `assetId` only | **PROVEN** limit; upload **TARGET** (`media_limits.uploadCapability`) |
+| MCP / DÉLIA TV | `mcp_delia` | **TARGET** (same PresentationMutation) |
+| Eval corpus | `docs/gpt-actions/vista-ready-slide-eval-corpus.md` | **PROVEN** checklist |
 
 DTOs (internal): `JoinPlanProposal`, `FormatHint`, `PresentationRecipeId` in `domain/presentation_intelligence`.
 

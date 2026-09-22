@@ -1,5 +1,5 @@
 {
-  "catalogVersion": "2026.09.15.1",
+  "catalogVersion": "2026.09.22.ready2",
   "sideEffectHintCatalog": [
     "refreshFilmstrip",
     "replaceNativeConfig",
@@ -376,7 +376,8 @@
     "transformStepUnknown": "set_data_transform não aceita o step «{stepOp}». Use apenas steps allowlisted do catálogo.",
     "fieldLabelsInvalid": "fieldLabels deve ser um mapa string→string.",
     "paramsInvalid": "params deve ser um objeto com valores primitivos (string/number/boolean).",
-    "patchNestedInvalid": "patch_native_config.patch.{field} tem tipo inválido."
+    "patchNestedInvalid": "patch_native_config.patch.{field} tem tipo inválido.",
+    "readySlideQualityFailed": "Slide não ficou pronto para TV: {issues}. Corrija params/projeção antes de considerar VERIFIED."
   },
   "placeholderClarifications": {
     "backgroundColor": "suggestNeedColor",
@@ -508,7 +509,7 @@
       },
       "style": {
         "fontSize": 28,
-        "color": "auto",
+        "color": "#ffffff",
         "fontFamily": "Inter, system-ui, sans-serif",
         "textAlign": "center",
         "verticalAlign": "top",
@@ -527,8 +528,8 @@
         "h": 18
       },
       "style": {
-        "fontSize": 56,
-        "color": "auto",
+        "fontSize": 48,
+        "color": "#ffffff",
         "fontFamily": "Inter, system-ui, sans-serif",
         "textAlign": "center",
         "verticalAlign": "middle",
@@ -547,7 +548,10 @@
         "h": 30
       },
       "style": {
-        "zIndex": 1
+        "zIndex": 1,
+        "fill": "#089bdb",
+        "stroke": "#0d2840",
+        "backgroundColor": "#089bdb"
       }
     },
     "image": {
@@ -582,73 +586,153 @@
         "h": 18
       },
       "style": {
-        "zIndex": 1
+        "zIndex": 1,
+        "backgroundColor": "#0d2840",
+        "color": "#ffffff"
       }
     },
     "data_kpi": {
       "frame": {
-        "x": 5,
-        "y": 28,
-        "w": 28,
-        "h": 22
+        "x": 18,
+        "y": 22,
+        "w": 36,
+        "h": 42
       },
       "style": {
-        "zIndex": 2
+        "fontFamily": "Inter, system-ui, sans-serif",
+        "color": "#ffffff",
+        "zIndex": 2,
+        "backgroundColor": "#0d2840",
+        "fontSize": 28
+      },
+      "kpiParts": {
+        "card": {
+          "style": {
+            "fill": "#0d2840",
+            "backgroundColor": "#0d2840",
+            "borderRadius": 16
+          }
+        },
+        "title": {
+          "style": {
+            "fontSize": 28,
+            "color": "#e2e8f0"
+          }
+        },
+        "value": {
+          "style": {
+            "fontSize": 80,
+            "color": "#ffffff",
+            "fontWeight": "bold"
+          }
+        },
+        "icon": {
+          "style": {
+            "iconSize": 48,
+            "color": "#089bdb"
+          }
+        }
       }
     },
     "kpi_view": {
       "frame": {
-        "x": 5,
-        "y": 28,
-        "w": 28,
-        "h": 22
+        "x": 18,
+        "y": 22,
+        "w": 36,
+        "h": 42
       },
       "style": {
-        "zIndex": 2
+        "fontFamily": "Inter, system-ui, sans-serif",
+        "color": "#ffffff",
+        "zIndex": 2,
+        "backgroundColor": "#0d2840",
+        "fontSize": 28
+      },
+      "kpiParts": {
+        "card": {
+          "style": {
+            "fill": "#0d2840",
+            "backgroundColor": "#0d2840",
+            "borderRadius": 16
+          }
+        },
+        "title": {
+          "style": {
+            "fontSize": 28,
+            "color": "#e2e8f0"
+          }
+        },
+        "value": {
+          "style": {
+            "fontSize": 80,
+            "color": "#ffffff",
+            "fontWeight": "bold"
+          }
+        },
+        "icon": {
+          "style": {
+            "iconSize": 48,
+            "color": "#089bdb"
+          }
+        }
       }
     },
     "data_chart": {
       "frame": {
         "x": 10,
-        "y": 28,
-        "w": 80,
-        "h": 45
+        "y": 22,
+        "w": 78,
+        "h": 52
       },
       "style": {
-        "zIndex": 2
+        "fontFamily": "Inter, system-ui, sans-serif",
+        "color": "#ffffff",
+        "zIndex": 2,
+        "backgroundColor": "#0a1628"
       }
     },
     "chart_view": {
       "frame": {
         "x": 10,
-        "y": 28,
-        "w": 80,
-        "h": 45
+        "y": 22,
+        "w": 78,
+        "h": 52
       },
       "style": {
-        "zIndex": 2
+        "fontFamily": "Inter, system-ui, sans-serif",
+        "color": "#ffffff",
+        "zIndex": 2,
+        "backgroundColor": "#0a1628"
       }
     },
     "data_table": {
       "frame": {
         "x": 5,
-        "y": 55,
+        "y": 18,
         "w": 90,
-        "h": 35
+        "h": 70
       },
       "style": {
-        "zIndex": 2
+        "fontFamily": "Inter, system-ui, sans-serif",
+        "color": "#ffffff",
+        "zIndex": 2,
+        "backgroundColor": "#0a1628",
+        "fontSize": 18
       }
     },
     "table_view": {
       "frame": {
         "x": 5,
-        "y": 55,
+        "y": 18,
         "w": 90,
-        "h": 35
+        "h": 70
       },
       "style": {
-        "zIndex": 2
+        "fontFamily": "Inter, system-ui, sans-serif",
+        "color": "#ffffff",
+        "zIndex": 2,
+        "backgroundColor": "#0a1628",
+        "fontSize": 18
       }
     }
   },
@@ -1370,7 +1454,9 @@
               "kpiProjection": {
                 "type": "object",
                 "additionalProperties": true,
-                "description": "KPI field binding. Prefer metrics[].format|displayFormat (number|percent|currency|raw). Never leave empty after bind_visual."
+                "description": "KPI field binding. Prefer metrics[].format|displayFormat (number|percent|currency|raw). Never leave empty after bind_visual.",
+                "x-delpi-gpt-opaque-object": true,
+                "properties": {}
               },
               "kpiOptions": {
                 "type": "object",
@@ -1379,9 +1465,18 @@
                 "properties": {
                   "valueFormat": {
                     "type": "string",
-                    "enum": ["auto", "number", "currency", "percent", "compact", "raw"]
+                    "enum": [
+                      "auto",
+                      "number",
+                      "currency",
+                      "percent",
+                      "compact",
+                      "raw"
+                    ]
                   },
-                  "decimalPlaces": { "type": "number" }
+                  "decimalPlaces": {
+                    "type": "number"
+                  }
                 }
               },
               "chartOptions": {
@@ -1391,32 +1486,49 @@
                 "properties": {
                   "valueFormat": {
                     "type": "string",
-                    "enum": ["auto", "number", "currency", "percent", "compact", "raw"]
+                    "enum": [
+                      "auto",
+                      "number",
+                      "currency",
+                      "percent",
+                      "compact",
+                      "raw"
+                    ]
                   }
                 }
               },
               "chartProjection": {
                 "type": "object",
                 "additionalProperties": true,
-                "description": "Chart axes/series binding — do not leave empty after bind_visual."
+                "description": "Chart axes/series binding — do not leave empty after bind_visual.",
+                "x-delpi-gpt-opaque-object": true,
+                "properties": {}
               },
               "tableProjection": {
                 "type": "object",
                 "additionalProperties": true,
-                "description": "Table columns; columns[].valueFormat = auto|number|currency|percent."
+                "description": "Table columns; columns[].valueFormat = auto|number|currency|percent.",
+                "x-delpi-gpt-opaque-object": true,
+                "properties": {}
               },
               "tableOptions": {
                 "type": "object",
-                "additionalProperties": true
+                "additionalProperties": true,
+                "x-delpi-gpt-opaque-object": true,
+                "properties": {}
               },
               "fieldLabels": {
                 "type": "object",
-                "additionalProperties": { "type": "string" }
+                "additionalProperties": {
+                  "type": "string"
+                }
               },
               "dataTransform": {
                 "type": "object",
                 "additionalProperties": true,
-                "description": "Prefer set_data_transform; if present must be {steps} only."
+                "description": "Prefer set_data_transform; if present must be {steps} only.",
+                "x-delpi-gpt-opaque-object": true,
+                "properties": {}
               }
             }
           }
@@ -1971,7 +2083,9 @@
         {
           "op": "upsert_data_source",
           "operationId": "{{operationId}}",
-          "params": {},
+          "params": {
+            "dateRangePreset": "this_month"
+          },
           "blockId": "{{newDataSourceId}}",
           "displayMode": "kpi",
           "label": "{{routeLabel}}"
@@ -1982,13 +2096,44 @@
             "id": "{{newVisualId}}",
             "type": "kpi_view",
             "frame": {
-              "x": 10,
-              "y": 28,
-              "w": 28,
-              "h": 22
+              "x": 18,
+              "y": 22,
+              "w": 36,
+              "h": 42
             },
             "style": {
-              "zIndex": 2
+              "zIndex": 2,
+              "color": "#ffffff",
+              "backgroundColor": "#0d2840",
+              "fontFamily": "Inter, system-ui, sans-serif"
+            },
+            "kpiParts": {
+              "card": {
+                "style": {
+                  "fill": "#0d2840",
+                  "backgroundColor": "#0d2840",
+                  "borderRadius": 16
+                }
+              },
+              "title": {
+                "style": {
+                  "fontSize": 28,
+                  "color": "#e2e8f0"
+                }
+              },
+              "value": {
+                "style": {
+                  "fontSize": 80,
+                  "color": "#ffffff",
+                  "fontWeight": "bold"
+                }
+              },
+              "icon": {
+                "style": {
+                  "iconSize": 48,
+                  "color": "#089bdb"
+                }
+              }
             }
           }
         },
@@ -2029,7 +2174,9 @@
         {
           "op": "upsert_data_source",
           "operationId": "{{operationId}}",
-          "params": {},
+          "params": {
+            "dateRangePreset": "this_month"
+          },
           "blockId": "{{newDataSourceId}}",
           "displayMode": "chart",
           "label": "{{routeLabel}}"
@@ -2041,12 +2188,15 @@
             "type": "chart_view",
             "frame": {
               "x": 10,
-              "y": 28,
-              "w": 80,
-              "h": 45
+              "y": 22,
+              "w": 78,
+              "h": 52
             },
             "style": {
-              "zIndex": 2
+              "zIndex": 2,
+              "color": "#f8fafc",
+              "backgroundColor": "#0a1628",
+              "fontFamily": "Inter, system-ui, sans-serif"
             }
           }
         },
@@ -2086,7 +2236,9 @@
         {
           "op": "upsert_data_source",
           "operationId": "{{operationId}}",
-          "params": {},
+          "params": {
+            "dateRangePreset": "this_month"
+          },
           "blockId": "{{newDataSourceId}}",
           "displayMode": "table",
           "label": "{{routeLabel}}"
@@ -2098,12 +2250,15 @@
             "type": "table_view",
             "frame": {
               "x": 5,
-              "y": 28,
+              "y": 18,
               "w": 90,
-              "h": 45
+              "h": 70
             },
             "style": {
-              "zIndex": 2
+              "zIndex": 2,
+              "color": "#f1f5f9",
+              "backgroundColor": "#0a1628",
+              "fontFamily": "Inter, system-ui, sans-serif"
             }
           }
         },

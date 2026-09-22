@@ -1,5 +1,5 @@
 {
-  "version": "2026.09.22.1",
+  "version": "2026.09.22.2",
   "fontFamilyAllowlist": [
     "Inter, system-ui, sans-serif",
     "system-ui, sans-serif",
@@ -14,9 +14,9 @@
   },
   "recipes": {
     "TV_KPI_HERO": {
-      "label": "KPI hero TV",
+      "label": "KPI hero TV Delpi",
       "themeKey": "delpi",
-      "description": "Fundo escuro DELPI + título + um KPI grande.",
+      "description": "Fundo Delpi + título + KPI card navy proporcional.",
       "markers": [
         "kpi hero",
         "kpi grande",
@@ -40,7 +40,7 @@
           "op": "upsert_block",
           "block": {
             "type": "heading",
-            "frame": { "x": 4, "y": 6, "w": 92, "h": 12 },
+            "frame": { "x": 6, "y": 6, "w": 88, "h": 12 },
             "style": {
               "fontSize": 40,
               "fontWeight": "bold",
@@ -54,19 +54,39 @@
           "op": "upsert_block",
           "block": {
             "type": "kpi_view",
-            "frame": { "x": 8, "y": 24, "w": 84, "h": 52 },
+            "frame": { "x": 18, "y": 22, "w": 36, "h": 42 },
             "style": {
               "color": "#ffffff",
-              "fontFamily": "Inter, system-ui, sans-serif"
+              "fontFamily": "Inter, system-ui, sans-serif",
+              "backgroundColor": "#0d2840",
+              "zIndex": 2
+            },
+            "kpiParts": {
+              "card": {
+                "style": {
+                  "fill": "#0d2840",
+                  "backgroundColor": "#0d2840",
+                  "borderRadius": 16
+                }
+              },
+              "title": {
+                "style": { "fontSize": 28, "color": "#e2e8f0", "fontWeight": "600" }
+              },
+              "value": {
+                "style": { "fontSize": 80, "color": "#ffffff", "fontWeight": "bold" }
+              },
+              "icon": {
+                "style": { "iconSize": 48, "color": "#089bdb" }
+              }
             }
           }
         }
       ]
     },
     "TV_KPI_PLUS_CHART": {
-      "label": "KPI + gráfico TV",
-      "themeKey": "midnight",
-      "description": "KPI à esquerda e chart à direita em fundo meia-noite.",
+      "label": "KPI + gráfico Delpi",
+      "themeKey": "delpi",
+      "description": "KPI card + chart em fundo Delpi.",
       "markers": [
         "kpi e gráfico",
         "kpi e grafico",
@@ -78,7 +98,12 @@
         {
           "op": "patch_native_config",
           "patch": {
-            "background": { "type": "color", "value": "#0f172a" }
+            "background": {
+              "type": "gradient",
+              "from": "#05070a",
+              "to": "#0d2840",
+              "angle": 180
+            }
           }
         },
         {
@@ -89,7 +114,7 @@
             "style": {
               "fontSize": 32,
               "fontWeight": "bold",
-              "color": "#f8fafc",
+              "color": "#ffffff",
               "fontFamily": "Inter, system-ui, sans-serif"
             }
           }
@@ -98,8 +123,17 @@
           "op": "upsert_block",
           "block": {
             "type": "kpi_view",
-            "frame": { "x": 4, "y": 18, "w": 30, "h": 70 },
-            "style": { "color": "#f8fafc", "fontFamily": "Inter, system-ui, sans-serif" }
+            "frame": { "x": 4, "y": 18, "w": 28, "h": 56 },
+            "style": {
+              "color": "#ffffff",
+              "backgroundColor": "#0d2840",
+              "fontFamily": "Inter, system-ui, sans-serif"
+            },
+            "kpiParts": {
+              "card": { "style": { "fill": "#0d2840", "backgroundColor": "#0d2840" } },
+              "value": { "style": { "fontSize": 64, "color": "#ffffff" } },
+              "title": { "style": { "fontSize": 22, "color": "#e2e8f0" } }
+            }
           }
         },
         {
@@ -107,16 +141,103 @@
           "block": {
             "type": "chart_view",
             "chartType": "line",
-            "frame": { "x": 38, "y": 18, "w": 58, "h": 70 },
-            "style": { "color": "#f8fafc", "fontFamily": "Inter, system-ui, sans-serif" }
+            "frame": { "x": 36, "y": 18, "w": 60, "h": 56 },
+            "style": {
+              "color": "#f8fafc",
+              "backgroundColor": "#0a1628",
+              "fontFamily": "Inter, system-ui, sans-serif"
+            },
+            "chartOptions": { "valueFormat": "number" }
+          }
+        }
+      ]
+    },
+    "TV_KPI_SERIES_TABLE": {
+      "label": "KPI + série + tabela Delpi",
+      "themeKey": "delpi",
+      "description": "Hierarquia tipada: título, KPI, série e tabela.",
+      "markers": [
+        "kpi e série e tabela",
+        "kpi serie tabela",
+        "painel otd",
+        "multi indicador",
+        "kpi series table",
+        "painel completo"
+      ],
+      "ops": [
+        {
+          "op": "patch_native_config",
+          "patch": {
+            "background": {
+              "type": "gradient",
+              "from": "#05070a",
+              "to": "#0d2840",
+              "angle": 180
+            }
+          }
+        },
+        {
+          "op": "upsert_block",
+          "block": {
+            "type": "heading",
+            "frame": { "x": 3, "y": 3, "w": 94, "h": 8 },
+            "style": {
+              "fontSize": 28,
+              "fontWeight": "bold",
+              "color": "#ffffff",
+              "fontFamily": "Inter, system-ui, sans-serif"
+            }
+          }
+        },
+        {
+          "op": "upsert_block",
+          "block": {
+            "type": "kpi_view",
+            "frame": { "x": 3, "y": 14, "w": 22, "h": 36 },
+            "style": {
+              "color": "#ffffff",
+              "backgroundColor": "#0d2840",
+              "fontFamily": "Inter, system-ui, sans-serif"
+            },
+            "kpiParts": {
+              "card": { "style": { "fill": "#0d2840", "backgroundColor": "#0d2840" } },
+              "value": { "style": { "fontSize": 56, "color": "#ffffff" } },
+              "title": { "style": { "fontSize": 18, "color": "#e2e8f0" } }
+            }
+          }
+        },
+        {
+          "op": "upsert_block",
+          "block": {
+            "type": "chart_view",
+            "chartType": "line",
+            "frame": { "x": 28, "y": 14, "w": 69, "h": 36 },
+            "style": {
+              "color": "#f8fafc",
+              "backgroundColor": "#0a1628",
+              "fontFamily": "Inter, system-ui, sans-serif"
+            }
+          }
+        },
+        {
+          "op": "upsert_block",
+          "block": {
+            "type": "table_view",
+            "tablePreset": "banded",
+            "frame": { "x": 3, "y": 54, "w": 94, "h": 42 },
+            "style": {
+              "color": "#f1f5f9",
+              "backgroundColor": "#0a1628",
+              "fontFamily": "Inter, system-ui, sans-serif"
+            }
           }
         }
       ]
     },
     "TV_TABLE_FOCUS": {
-      "label": "Tabela foco TV",
-      "themeKey": "factory",
-      "description": "Tabela dominante com título curto.",
+      "label": "Tabela foco Delpi",
+      "themeKey": "delpi",
+      "description": "Tabela dominante em fundo Delpi.",
       "markers": [
         "tabela em destaque",
         "foco tabela",
@@ -129,9 +250,9 @@
           "patch": {
             "background": {
               "type": "gradient",
-              "from": "#1e293b",
-              "to": "#334155",
-              "angle": 135
+              "from": "#05070a",
+              "to": "#0d2840",
+              "angle": 180
             }
           }
         },
@@ -143,7 +264,7 @@
             "style": {
               "fontSize": 28,
               "fontWeight": "bold",
-              "color": "#f1f5f9",
+              "color": "#ffffff",
               "fontFamily": "Inter, system-ui, sans-serif"
             }
           }
@@ -154,7 +275,11 @@
             "type": "table_view",
             "tablePreset": "banded",
             "frame": { "x": 4, "y": 16, "w": 92, "h": 76 },
-            "style": { "color": "#f1f5f9", "fontFamily": "Inter, system-ui, sans-serif" }
+            "style": {
+              "color": "#f1f5f9",
+              "backgroundColor": "#0a1628",
+              "fontFamily": "Inter, system-ui, sans-serif"
+            }
           }
         }
       ]

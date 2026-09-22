@@ -155,6 +155,35 @@ class JoinPlanService:
         return 0.58
 
     @classmethod
+    def merge_step_from_join_hints(
+        cls,
+        join_hints: dict[str, Any] | None,
+        *,
+        source_id: str,
+    ) -> dict[str, Any] | None:
+        """Converte joinHints do preview em step merge tipado para o lote compound."""
+        if not isinstance(join_hints, dict):
+            return None
+        proposal_raw = join_hints.get("proposal")
+        if not isinstance(proposal_raw, dict):
+            return None
+        left = str(proposal_raw.get("leftKey") or "").strip()
+        right = str(proposal_raw.get("rightKey") or "").strip()
+        confidence = float(proposal_raw.get("confidence") or 0)
+        if not left or not right or confidence < cls.MIN_CONFIDENCE:
+            return None
+        sid = str(source_id or "").strip()
+        if not sid:
+            return None
+        return {
+            "op": "merge",
+            "sourceId": sid,
+            "leftKey": left,
+            "rightKey": right,
+            "join": str(proposal_raw.get("join") or "left"),
+        }
+
+    @classmethod
     def merge_step_for_source(
         cls,
         proposal: JoinPlanProposal,

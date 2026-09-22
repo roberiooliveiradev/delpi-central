@@ -767,6 +767,15 @@ class PresentationPatchService:
             )
         block_id = str(op.get("blockId") or "").strip() or _new_block_id()
         params = op.get("params") if isinstance(op.get("params"), dict) else {}
+        from tv_app.application.services.data.ready_slide_quality_service import (
+            ReadySlideQualityService,
+        )
+
+        params = ReadySlideQualityService.enrich_data_source_params(route, params)
+        try:
+            ReadySlideQualityService.assert_data_source_params_ready(route, params)
+        except ValueError as exc:
+            raise PresentationPatchError(str(exc)) from exc
         label = op.get("label") or route.get("label") or operation_id
         blocks = _blocks_of(cfg)
         existing = _find_block(blocks, block_id)
@@ -951,10 +960,28 @@ class PresentationPatchService:
             )
         visual["dataSourceId"] = data_source_id
         visual.pop("resolved", None)
+        binding = (
+            source.get("dataBinding")
+            if isinstance(source.get("dataBinding"), dict)
+            else {}
+        )
+        operation_id = str(binding.get("operationId") or "").strip()
+        route = self._catalog.get_route(operation_id) if operation_id else None
+        from tv_app.application.services.data.ready_slide_quality_service import (
+            ReadySlideQualityService,
+        )
+        from tv_app.application.services.data.visual_projection_service import (
+            VisualProjectionService,
+        )
+
+        if ReadySlideQualityService.projection_is_empty(visual):
+            patched = VisualProjectionService.apply_to_block(dict(visual), route)
+            visual.update(patched)
         block_type = str(visual.get("type") or "").strip()
         projection_key = _VISUAL_PROJECTION_DEFAULTS.get(block_type)
         if projection_key and not isinstance(visual.get(projection_key), dict):
-            visual[projection_key] = {}
+            # Fallback mínimo se a rota não tiver valueFields.
+            visual[projection_key] = visual.get(projection_key) or {}
 
     def _op_patch_native_config(self, cfg: dict[str, Any], op: dict[str, Any]) -> None:
         patch = op.get("patch")
