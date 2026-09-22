@@ -177,12 +177,13 @@ Obey `agent_directives.slide_design` + `agent_directives.visual_impact` + `prese
 3. **Impacto TV (default):** `visual_impact` / `visualImpactHints` — KPI hero nas escalas tipadas; série → `chartType=area`; tabela → `tablePreset=banded`; hierarquia 1 hero + ≤3 secundários.
 4. **Composição tipada:** `composed_visuals` — combinar `shape`/`heading`/`text`/`icon` com `dataSourceId` + `textProjection` (ou `contentRuns[].dataRef`) e `groupId` para cards/callouts próprios além de `kpi_view`/`chart_view`/`table_view`. Recipe `TV_COMPOSED_DATA_CARD` = esqueleto.
 5. **Chrome de forma:** `shape_chrome` / `designTokens.shapeChrome` — sempre combinar `fill` + `stroke`/`strokeWidth` + `borderRadius` + `boxShadow` (presets `card_surface`, `callout`, `accent_bar`, `pill_badge`, `ghost_frame`). Sem card flat.
-6. Respect `maxPrimarySignalsPerSlide`, `safeMargin`, `gutter`, `typeScale`, `kpiValueScale`, `partChrome` (mínimos tipográficos KPI/chart/table/input).
-7. Filtros: slide → `patch_native_config.dataFilters` e/ou recipe `TV_FILTER_STRIP` (inputs); programação → `patch_playlist_data_defaults`.
-8. `chartType` tipado via `designTokens.chartTypeHints` (temporal→**area**/line; categorias→bar; composição→pie; nunca pie em série diária densa).
-9. `editorFocus` from `gpt_list_playlists` / `gpt_get_playlist_context` = INFORMED referent when fresh.
-10. VERIFY may return `OUTCOME_NOT_VERIFIED` with `reason=slide_layout_quality` (overlap/overflow/density/contrast/`part_font_below_min`) — fix and retry.
-11. Home MFE library list is live via WebSocket (`playlist_library_updated`); VISTA still uses READ Actions — do not invent IDs from Knowledge.
+6. **Hierarquia tipográfica (todas as famílias):** `partChrome.hierarchy` = `PRIMARY_DRIVES_DEPENDENTS` — KPI value→title/icon; chart title→legend/axis; table body↔header; input control→label/icon; `groupId` compostos. O commit rebalanceia mesmo em blocos INFORMED.
+7. Respect `maxPrimarySignalsPerSlide`, `safeMargin`, `gutter`, `typeScale`, `kpiValueScale`, `partChrome` (mínimos tipográficos KPI/chart/table/input).
+8. Filtros: slide → `patch_native_config.dataFilters` e/ou recipe `TV_FILTER_STRIP` (inputs); programação → `patch_playlist_data_defaults`.
+9. `chartType` tipado via `designTokens.chartTypeHints` (temporal→**area**/line; categorias→bar; composição→pie; nunca pie em série diária densa).
+10. `editorFocus` from `gpt_list_playlists` / `gpt_get_playlist_context` = INFORMED referent when fresh.
+11. VERIFY may return `OUTCOME_NOT_VERIFIED` with `reason=slide_layout_quality` (overlap/overflow/density/contrast/`part_font_below_min`) — fix and retry.
+12. Home MFE library list is live via WebSocket (`playlist_library_updated`); VISTA still uses READ Actions — do not invent IDs from Knowledge.
 
 ### 6.3 Proposal hygiene
 
