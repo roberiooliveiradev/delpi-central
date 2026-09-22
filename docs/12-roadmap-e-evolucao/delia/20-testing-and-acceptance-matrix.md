@@ -1095,28 +1095,48 @@ C3_T2_IMPLEMENTS = YES
 ### C3-T2 / C3-T2R1 — Evidence epistemic domain model + deterministic conformance
 
 ```text
-STATUS = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+STATUS = APPROVED (Architecture Review accepted; domain/conformance scope only)
 OWNER = delia-api/app/domain/evidence/
 CANONICAL = 21 §4B.13 + this gate + 38
-PRIOR_REVIEW = ARCHITECTURE_REVIEW_C3_T2 VERDICT=REWORK
+PRIOR_REVIEW = ARCHITECTURE_REVIEW_C3_T2 VERDICT=REWORK (historical)
 REWORK = C3-T2R1
-TEST_EVIDENCE = PASS (targeted conformance + delia-api suite on evaluated SHA)
-ARCHITECTURE_REVIEW = PENDING (ARCHITECTURE_REVIEW_C3_T2R1)
+REVIEW = ARCHITECTURE_REVIEW_C3_T2R1
+VERDICT = ACCEPT_WITH_RESIDUAL
+IMPLEMENTATION_HEAD = d444e75f735fa78524efa4099c7e1695ff1637ec
+REVIEW_REANCHOR_HEAD = b71dd1fe6807f4554f52cab06fa0e6cf7a5439f3
+TARGETED_CONFORMANCE = PASS 26/26
+  COMMAND = cd delia-api && python -m pytest tests/test_evidence_epistemic_conformance.py -q
+  EVALUATED_SHA = d444e75f735fa78524efa4099c7e1695ff1637ec
+FULL_DELIA_API_SUITE = PASS 61/61
+  COMMAND = cd delia-api && python -m pytest -q
+  EVALUATED_SHA = d444e75f735fa78524efa4099c7e1695ff1637ec
+NOTE: suite PASS = C3-T2 epistemic/conformance + delia-api regression evidence only;
+  ≠ production readiness; ≠ model/RAG/planner/conversation readiness; ≠ C3 complete
 RUNTIME_EVIDENCE_STORE = NOT_IMPLEMENTED
 MODEL_INVOCATION = NOT_IMPLEMENTED
 RAG = NOT_IMPLEMENTED
 PLANNER = NOT_IMPLEMENTED
 CONVERSATION = NOT_IMPLEMENTED
-C3_T2 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+C3_T2 = APPROVED
 C3_EXECUTED = NO
-C3_T3_AUTHORIZED = NO
+C3_T3_AUTHORIZED = YES
+C3_T3_EXECUTED = NO
 TEST_MODULE = tests/test_evidence_epistemic_conformance.py
 NO_TOTAL_EPISTEMIC_ORDERING = YES
+_EPISTEMIC_STRENGTH = REJECTED / REMOVED
+epistemically_weaker = REJECTED / REMOVED
 TYPED_RESULT_KIND = SOLE_DISCRIMINATOR
 SOURCE_REF = IDENTITY_ONLY
+authority_capability = REJECTED / REMOVED
+SourceAuthorityCapability = REJECTED / REMOVED
+BLOCKER_1_TOTAL_EPISTEMIC_ORDERING = RESOLVED
+BLOCKER_2_TYPED_RESULT_DUPLICATION = RESOLVED
+BLOCKER_3_SOURCE_REF_AUTHORITY = RESOLVED
+BLOCKERS = NONE
+PRODUCTION_READINESS = NOT_PROVEN
 ```
 
-Required deterministic cases (C3-T2R1) — implemented (test PASS; review pending):
+Required deterministic cases (C3-T2R1) — implemented and Architecture-Review accepted:
 
 - positive authoritative Evidence linkage with SourceRef;
 - sibling source type preserves the same epistemic/linkage semantics;

@@ -9,7 +9,7 @@
 **Internet/External Connectors:** [`../55-internet-research-and-external-connectors.md`](../55-internet-research-and-external-connectors.md)  
 **Microsoft Teams:** [`../56-microsoft-teams-connector-and-meeting-integration.md`](../56-microsoft-teams-connector-and-meeting-integration.md)  
 **Autonomous Operations/Execution Hub:** [`../57-event-driven-autonomous-operations-and-automation-execution-hub.md`](../57-event-driven-autonomous-operations-and-automation-execution-hub.md)  
-**Next:** `ARCHITECTURE_REVIEW_C3_T2R1` (`C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO`; `C3-T1=APPROVED`; `C3-T2=CANDIDATE_FOR_ARCHITECTURE_REVIEW` after C3-T2R1). Não iniciar C3-T3; não autoaprovar C3-T2.
+**Next:** `C3-T3 — Minimal Model Invocation + Eval/Lineage Foundation` (`C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO`; `C3-T1=APPROVED`; `C3-T2=APPROVED` via `ARCHITECTURE_REVIEW_C3_T2R1` `ACCEPT_WITH_RESIDUAL`; `C3_T3_AUTHORIZED=YES`; `C3_T3_EXECUTED=NO`). Não iniciar C3-T3 neste passo; não reivindicar C3 complete.
 
 ## 1. Ledger rule
 
@@ -26,7 +26,7 @@ Estado factual de inventory usa `PROVEN | TO_INVENTORY`; planejamento usa `PLANN
 | C0 Platform + Architecture + Privacy/Security/Data/Automation/AI Foundations | **NOT_STARTED** | **C1 bootstrap continues (T2 review → next C1 step)** | C0.S0..=C0.S7=APPROVED; FOUNDATION_FREEZE=APPROVED; C1_AUTHORIZED=YES; C1_STARTED=YES |
 | C1 Standalone Bootstrap | ACCEPTED_WITH_RESIDUAL | — | C1-FINAL §6.45 |
 | C2 Portal + Operational Context + Commands | ACCEPTED_WITH_RESIDUAL | — | C2-FINAL §6.61; `C2_EXECUTED=YES` |
-| C3 Intelligence + Capability Foundations | AUTHORIZED / STARTED | ARCHITECTURE_REVIEW_C3_T2R1 | C3-T1 APPROVED §6.63; C3-T2 REWORK then C3-T2R1 candidate §6.65; `C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO` |
+| C3 Intelligence + Capability Foundations | AUTHORIZED / STARTED | C3-T3 — Minimal Model Invocation + Eval/Lineage Foundation | C3-T1 APPROVED §6.63; C3-T2 APPROVED §6.66 (`ARCHITECTURE_REVIEW_C3_T2R1` ACCEPT_WITH_RESIDUAL; IMPLEMENTATION_HEAD=`d444e75f7`); `C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO`; `C3_T3_AUTHORIZED=YES` |
 | C4 Governed Reads + Graph/Semantics/Analysis/Predictive Discovery | LOCKED | — | C3 foundations |
 | C5 Governed Writes + Executors + Durable/Recurring Work + Artifacts/Prescriptive Prepare | LOCKED | — | C4 reads/evidence |
 | C6 Product Work + Process Intelligence + Control Tower + Meeting/Frontline + Ecosystem | LOCKED | — | C5 governed-write/durable foundation |
@@ -3065,6 +3065,94 @@ BLOCKERS: NONE
 NEXT: ARCHITECTURE_REVIEW_C3_T2R1
 ```
 
+## 6.66 C3-T2R2 — PERSIST_ARCHITECTURE_REVIEW_DECISION
+
+```text
+DATE: 2026-09-21
+STEP: C3-T2R2
+NAME: PERSIST_ARCHITECTURE_REVIEW_DECISION
+MODE: DOCUMENTATION / ARCHITECTURE REVIEW PERSISTENCE ONLY
+REVIEW: ARCHITECTURE_REVIEW_C3_T2R1
+REVIEWED_IMPLEMENTATION_HEAD: d444e75f735fa78524efa4099c7e1695ff1637ec
+REVIEW_REANCHOR_HEAD: b71dd1fe6807f4554f52cab06fa0e6cf7a5439f3
+PRIOR_C3_T2_BIND_HEAD: a48cebd390ce7e051061efd073184a8fbcde0504
+BASE_HEAD: 834c0a0384a8d9fcb4f8bb88758e543bd7653eba
+POST_REANCHOR_DELTA: OUTSIDE_TASK (helpdesk; delia path empty b71dd1fe6..BASE_HEAD)
+WORKING_TREE_PRESERVED: transformometro chrome/UI dirty files (not staged)
+VERDICT: ACCEPT_WITH_RESIDUAL
+C3_T1: APPROVED
+C3_T2: APPROVED
+C3_STARTED: YES
+C3_EXECUTED: NO
+C3_T3_AUTHORIZED: YES
+C3_T3_EXECUTED: NO
+PRODUCTION_READINESS: NOT_PROVEN
+EXECUTION_DRIFT: NONE
+
+BLOCKER_1_TOTAL_EPISTEMIC_ORDERING: RESOLVED
+BLOCKER_2_TYPED_RESULT_DUPLICATION: RESOLVED
+BLOCKER_3_SOURCE_REF_AUTHORITY: RESOLVED
+BLOCKERS: NONE
+
+_EPISTEMIC_STRENGTH: REJECTED / REMOVED
+epistemically_weaker: REJECTED / REMOVED
+EPISTEMIC_CLASS_GLOBAL_ORDERING: NONE
+TypedResultKind: sole canonical discriminator
+TypedResultPlaceholder: REJECTED / REMOVED
+SourceRef: identity / origin reference only
+authority_capability: REJECTED / REMOVED
+SourceAuthorityCapability: REJECTED / REMOVED
+FACT_STATUS: != ACCESS_PERMISSION
+NO_PARALLEL_PRIMITIVE: YES
+
+CANONICAL_EPISTEMIC_CLASSES:
+  OBSERVATION, FACT, CALCULATION, HYPOTHESIS, CONCLUSION, RECOMMENDATION
+SEPARATE_TYPED_RESULTS:
+  PREDICTION, SIMULATION
+
+TARGETED_CONFORMANCE: PASS 26/26
+  COMMAND: cd delia-api && python -m pytest tests/test_evidence_epistemic_conformance.py -q
+  EVALUATED_SHA: d444e75f735fa78524efa4099c7e1695ff1637ec
+FULL_DELIA_API_SUITE: PASS 61/61
+  COMMAND: cd delia-api && python -m pytest -q
+  EVALUATED_SHA: d444e75f735fa78524efa4099c7e1695ff1637ec
+NOTE: evidence scoped to C3-T2 epistemic/conformance + delia-api regression only
+
+RESIDUALS (NON_BLOCKING):
+  R1 "weakest epistemic strength" must not be read as total ordering (clarified in 21/38)
+  R2 target_class CONCLUSION/HYPOTHESIS/RECOMMENDATION ≠ sufficient support / business AuthZ
+  R3 source authority remains proposition/context-specific and external to SourceRef
+  R4 CP-093/CP-094 remain PLANNED/PARTIAL (no PASS promotion)
+
+CP-093: PLANNED / PARTIAL
+CP-094: PLANNED / PARTIAL
+RUNTIME_CP_PROMOTED_TO_PASS: NO
+NEW_CP_CREATED: NO
+CP_RENAMED: NO
+UNRELATED_REQUIREMENT_STATUS_CHANGED: NO
+
+RUNTIME_DIFF: NONE (persistence task only; reviewed implementation already at d444e75f7)
+PERSISTENCE: NONE
+OWN_MIGRATION_CHAIN: NOT_TRIGGERED_BY_C3_T2R2
+MODEL_CALL: NONE
+RAG: NONE
+VECTOR_STORE: NONE
+PLANNER: NONE
+CONVERSATION_RUNTIME: NONE
+ACT: NONE
+NEW_RUNTIME_ABSTRACTIONS: NONE
+
+HISTORICAL_PRESERVED:
+  §6.64 C3-T2 candidate / CANDIDATE_FOR_ARCHITECTURE_REVIEW
+  ARCHITECTURE_REVIEW_C3_T2 = REWORK
+  §6.65 C3-T2R1 rework candidate
+  SUPERSEDED_BY this review for current-state markers only
+
+NEXT: C3-T3 — Minimal Model Invocation + Eval/Lineage Foundation
+PERSISTENCE_HEAD: <this documentation persistence commit>
+BIND_HEAD: <optional bind commit>
+```
+
 ## 7. Canonical phase mapping
 
 ```text
@@ -3273,4 +3361,4 @@ SAFETY_INTERLOCK_BYPASS
 
 ## 14. First execution
 
-Historical C0.S0..C0.S7 remain **APPROVED** / `FOUNDATION_FREEZE=APPROVED`. C1-T1..T6D1 completed standalone bootstrap. **C1-FINAL** (`§6.45`) accepted bootstrap with non-blocking residuals (`TYPESCRIPT_ISOLATED`, `CORE_CONTEXT_LIVE_NETWORK`). `C1_EXECUTED=YES`. `C1_BOOTSTRAP_ACCEPTANCE=ACCEPT_WITH_RESIDUAL`. `C1_BOOTSTRAP_RUNTIME_READINESS=PROVEN` (bootstrap scope). `PRODUCTION_READINESS=NOT_PROVEN`. `C2_AUTHORIZED=YES`. `C0=NOT_STARTED`. **C2-T1** (`§6.46`) froze the current Portal host/route contract. Operational WorkspaceContext remains `TO_INVENTORY`. `C2_STARTED=NO`. `C2_IMPLEMENTATION_STARTED=NO`. **C2-T1D1** (`§6.47`) approved `BROWSER_STATE_RESIDENCY_POLICY`. No retained browser state is required now. **C2-T2** (`§6.48`) verified the existing host lifecycle. No new logout stack or storage boundary. `C2_STARTED=YES`. `C2_IMPLEMENTATION_STARTED=NO`. `C2_EXECUTED=NO`. **C2-T3** (`§6.49`) froze the remaining C2 order. **C2-T4** (`§6.50`) inventoried operational authorities: OP/PRODUCT/OPERATION proven via api-delpi; MACHINE/POSTO `TO_INVENTORY`; Workspace remains `DEFER`. **C2-T4R1** (`§6.51`) removed illegal formal status `OPERATIONAL_CONTEXT=MIXED` and restored `OPERATIONAL_CONTEXT=TO_INVENTORY` while preserving the proven OP/product/operation sub-facts. **C2-T5** (`§6.52`) implemented the approved Portal global DÉLIA surface using the same federated remote `delia` / `./App`. **C2-T5R1** (`§6.53`) hardened stale async mount and dialog focus, and corrected the stale T4R1 SHA in §6.52. **C2-T5R2** (`§6.54`) recorded Product Master `LIVE_GLOBAL_SURFACE=FAIL` and proved the public Portal bundle published `2026-09-21T13:42:11Z` already contains the T5R1 launcher. Product Master later confirmed that V1 launcher and panel were live and rejected the modal UX. **C2-T5R3** (`§6.55`) replaced that surface with a non-modal companion dock. Product Master then confirmed the live dock render on `/apps/my-requests` (non-modal, no backdrop, special launcher removed, normal app entry preserved). **C2-T5R3R1** (`§6.56`) reclamps the transient dock width when the workspace narrows. **C2-T5R3R1L1** (`§6.57`) records Product Master acceptance of the requested live smoke, including dynamic reclamp. **C2-T6** (`§6.58`) froze iframe applicability: DÉLIA stays federated; the existing Portal embedded host is not a DÉLIA bridge. `C2_EXECUTED=NO`. Next bounded task: **C2-FINAL — C2 acceptance review** (do not start C3; do not implement an iframe bridge). **C2-T6R1** (`§6.59`) restored canonical CP statuses for CP-061–CP-070 and recorded Portal/Transformômetro security follow-up as owner work, not a C2 blocker. **C2-PREFINAL-R1** (`§6.60`) restored CP-001/CP-149/CP-156 to `LOCKED` and corrected the stale CP-149 live note. **C2-FINAL** (`§6.61`) accepted C2 with residual: `C2_EXECUTED=YES`; `C3_AUTHORIZED=YES`; `C3_STARTED=NO`; next = C3 FIRST-BOUNDED-TASK DEFINITION. **C3-T1** (`§6.62`) persisted Evidence/epistemic contract candidate (`CANDIDATE_FOR_ARCHITECTURE_REVIEW`); historical only. **C3-T1R1** (`§6.63`) persists `ARCHITECTURE_REVIEW_C3_T1` = `ACCEPT_WITH_RESIDUAL`; `C3-T1=APPROVED`; `EVIDENCE_EPISTEMIC_SEMANTICS=FROZEN_ACCEPTED`; `SOURCE_LINKAGE_SEMANTICS=FROZEN_ACCEPTED`; `OBSERVATION=FIRST_CLASS_EPISTEMIC_CLASS`; `FACT_STATUS≠ACCESS_PERMISSION`; `C3_STARTED=YES`; `C3_EXECUTED=NO`; `C3-T2_AUTHORIZED=YES`. **C3-T2** (`§6.64`) candidate was **REWORK** by Architecture Review. **C3-T2R1** (`§6.65`) corrects domain model/conformance (no total EpistemicClass ranking; TypedResultKind sole discriminator; SourceRef identity-only); `C3_T2=CANDIDATE_FOR_ARCHITECTURE_REVIEW`; `C3_T3_AUTHORIZED=NO`; `C3_EXECUTED=NO`; next = ARCHITECTURE_REVIEW_C3_T2R1.
+Historical C0.S0..C0.S7 remain **APPROVED** / `FOUNDATION_FREEZE=APPROVED`. C1-T1..T6D1 completed standalone bootstrap. **C1-FINAL** (`§6.45`) accepted bootstrap with non-blocking residuals (`TYPESCRIPT_ISOLATED`, `CORE_CONTEXT_LIVE_NETWORK`). `C1_EXECUTED=YES`. `C1_BOOTSTRAP_ACCEPTANCE=ACCEPT_WITH_RESIDUAL`. `C1_BOOTSTRAP_RUNTIME_READINESS=PROVEN` (bootstrap scope). `PRODUCTION_READINESS=NOT_PROVEN`. `C2_AUTHORIZED=YES`. `C0=NOT_STARTED`. **C2-T1** (`§6.46`) froze the current Portal host/route contract. Operational WorkspaceContext remains `TO_INVENTORY`. `C2_STARTED=NO`. `C2_IMPLEMENTATION_STARTED=NO`. **C2-T1D1** (`§6.47`) approved `BROWSER_STATE_RESIDENCY_POLICY`. No retained browser state is required now. **C2-T2** (`§6.48`) verified the existing host lifecycle. No new logout stack or storage boundary. `C2_STARTED=YES`. `C2_IMPLEMENTATION_STARTED=NO`. `C2_EXECUTED=NO`. **C2-T3** (`§6.49`) froze the remaining C2 order. **C2-T4** (`§6.50`) inventoried operational authorities: OP/PRODUCT/OPERATION proven via api-delpi; MACHINE/POSTO `TO_INVENTORY`; Workspace remains `DEFER`. **C2-T4R1** (`§6.51`) removed illegal formal status `OPERATIONAL_CONTEXT=MIXED` and restored `OPERATIONAL_CONTEXT=TO_INVENTORY` while preserving the proven OP/product/operation sub-facts. **C2-T5** (`§6.52`) implemented the approved Portal global DÉLIA surface using the same federated remote `delia` / `./App`. **C2-T5R1** (`§6.53`) hardened stale async mount and dialog focus, and corrected the stale T4R1 SHA in §6.52. **C2-T5R2** (`§6.54`) recorded Product Master `LIVE_GLOBAL_SURFACE=FAIL` and proved the public Portal bundle published `2026-09-21T13:42:11Z` already contains the T5R1 launcher. Product Master later confirmed that V1 launcher and panel were live and rejected the modal UX. **C2-T5R3** (`§6.55`) replaced that surface with a non-modal companion dock. Product Master then confirmed the live dock render on `/apps/my-requests` (non-modal, no backdrop, special launcher removed, normal app entry preserved). **C2-T5R3R1** (`§6.56`) reclamps the transient dock width when the workspace narrows. **C2-T5R3R1L1** (`§6.57`) records Product Master acceptance of the requested live smoke, including dynamic reclamp. **C2-T6** (`§6.58`) froze iframe applicability: DÉLIA stays federated; the existing Portal embedded host is not a DÉLIA bridge. `C2_EXECUTED=NO`. Next bounded task: **C2-FINAL — C2 acceptance review** (do not start C3; do not implement an iframe bridge). **C2-T6R1** (`§6.59`) restored canonical CP statuses for CP-061–CP-070 and recorded Portal/Transformômetro security follow-up as owner work, not a C2 blocker. **C2-PREFINAL-R1** (`§6.60`) restored CP-001/CP-149/CP-156 to `LOCKED` and corrected the stale CP-149 live note. **C2-FINAL** (`§6.61`) accepted C2 with residual: `C2_EXECUTED=YES`; `C3_AUTHORIZED=YES`; `C3_STARTED=NO`; next = C3 FIRST-BOUNDED-TASK DEFINITION. **C3-T1** (`§6.62`) persisted Evidence/epistemic contract candidate (`CANDIDATE_FOR_ARCHITECTURE_REVIEW`); historical only. **C3-T1R1** (`§6.63`) persists `ARCHITECTURE_REVIEW_C3_T1` = `ACCEPT_WITH_RESIDUAL`; `C3-T1=APPROVED`; `EVIDENCE_EPISTEMIC_SEMANTICS=FROZEN_ACCEPTED`; `SOURCE_LINKAGE_SEMANTICS=FROZEN_ACCEPTED`; `OBSERVATION=FIRST_CLASS_EPISTEMIC_CLASS`; `FACT_STATUS≠ACCESS_PERMISSION`; `C3_STARTED=YES`; `C3_EXECUTED=NO`; `C3-T2_AUTHORIZED=YES`. **C3-T2** (`§6.64`) candidate was **REWORK** by Architecture Review. **C3-T2R1** (`§6.65`) rework implementation at `d444e75f7`. **C3-T2R2** (`§6.66`) persists `ARCHITECTURE_REVIEW_C3_T2R1` = `ACCEPT_WITH_RESIDUAL`; `C3_T2=APPROVED`; `C3_T3_AUTHORIZED=YES`; `C3_T3_EXECUTED=NO`; `C3_EXECUTED=NO`; `PRODUCTION_READINESS=NOT_PROVEN`; next = C3-T3.

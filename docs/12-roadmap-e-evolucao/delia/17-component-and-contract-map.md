@@ -454,14 +454,23 @@ NO_PARALLEL_PRIMITIVE = YES
 NO_RUNTIME = Evidence store / LLM / RAG / planner / conversation = NONE
 C3_STARTED = YES
 C3_EXECUTED = NO
-C3_T2 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+C3_T2 = APPROVED
 C3_T2_AUTHORIZED = YES
-C3_T2_IMPL = delia-api/app/domain/evidence/ (C3-T2R1)
-C3_T3_AUTHORIZED = NO
-NEXT = ARCHITECTURE_REVIEW_C3_T2R1
+C3_T2_IMPL = delia-api/app/domain/evidence/ (C3-T2R1; IMPLEMENTATION_HEAD=d444e75f7)
+C3_T3_AUTHORIZED = YES
+C3_T3_EXECUTED = NO
+NEXT = C3-T3 — Minimal Model Invocation + Eval/Lineage Foundation
+REVIEW = ARCHITECTURE_REVIEW_C3_T2R1
+VERDICT = ACCEPT_WITH_RESIDUAL
+BLOCKER_1_TOTAL_EPISTEMIC_ORDERING = RESOLVED
+BLOCKER_2_TYPED_RESULT_DUPLICATION = RESOLVED
+BLOCKER_3_SOURCE_REF_AUTHORITY = RESOLVED
+TYPED_RESULT_KIND = sole canonical discriminator
+SOURCE_REF = identity/origin only
+EPISTEMIC_CLASS_GLOBAL_ORDERING = NONE
 ```
 
-Evidence coordination is owned by DÉLIA; original source/domain/provider remains authority for the underlying fact. EvidenceRef ≠ permission; SourceRef ≠ access grant / ≠ source authority itself; Prediction ≠ FACT; Recommendation ≠ authorization; OBSERVATION ≠ FACT; FACT_STATUS ≠ ACCESS_PERMISSION. C3-T2R1 rework candidate (no total EpistemicClass ranking; TypedResultKind sole discriminator; SourceRef identity-only); Evidence store remains NOT_IMPLEMENTED; Architecture Review pending.
+Evidence coordination is owned by DÉLIA; original source/domain/provider remains authority for the underlying fact. EvidenceRef ≠ permission; SourceRef ≠ access grant / ≠ source authority itself; Prediction ≠ FACT; Recommendation ≠ authorization; OBSERVATION ≠ FACT; FACT_STATUS ≠ ACCESS_PERMISSION. C3-T2 APPROVED (`ARCHITECTURE_REVIEW_C3_T2R1` `ACCEPT_WITH_RESIDUAL`); Evidence store / model invocation / RAG / planner / conversation remain NOT_IMPLEMENTED; C3_EXECUTED=NO.
 
 ## 3A. Architecture / persistence / privacy / safety — C0.S4 freeze accepted
 

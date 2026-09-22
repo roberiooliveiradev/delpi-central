@@ -251,17 +251,24 @@ NEW_RUNTIME_ABSTRACTIONS = NONE
 C3_STARTED = YES
 C3_EXECUTED = NO
 C3_T2_AUTHORIZED = YES
-C3_T2 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+C3_T2 = APPROVED
 PRODUCTION_READINESS = NOT_PROVEN
 THEMATIC_OWNER_DETAIL = 38-evidence-provenance-and-epistemic-ux.md
 FACT_STATUS != ACCESS_PERMISSION
 NOTE_SUPERSEDED_CANDIDATE: historical C3-T1 candidate markers live in ledger §6.62
-C3_T2_IMPLEMENTATION = delia-api/app/domain/evidence/ (C3-T2R1 rework candidate; no store)
+C3_T2_IMPLEMENTATION = delia-api/app/domain/evidence/ (C3-T2R1 APPROVED; IMPLEMENTATION_HEAD=d444e75f7; no store)
+REVIEW = ARCHITECTURE_REVIEW_C3_T2R1
+VERDICT = ACCEPT_WITH_RESIDUAL
 NOTE_C3_T2R1: total epistemic ordering removed; TypedResultKind sole discriminator;
   SourceRef identity-only; source authority = FactQualificationCriteria input
+BLOCKER_1_TOTAL_EPISTEMIC_ORDERING = RESOLVED
+BLOCKER_2_TYPED_RESULT_DUPLICATION = RESOLVED
+BLOCKER_3_SOURCE_REF_AUTHORITY = RESOLVED
+C3_T3_AUTHORIZED = YES
+C3_T3_EXECUTED = NO
 ```
 
-C3-T1 congela o **uso semântico** de Evidence/Source/epistemic para a inteligência futura. Não cria Evidence store, repository, schema, LLM, RAG, planner ou conversation runtime. C3-T2R1 corrige o domain model/tests para o freeze C3-T1 sem inventar política; estado = `CANDIDATE_FOR_ARCHITECTURE_REVIEW`.
+C3-T1 congela o **uso semântico** de Evidence/Source/epistemic para a inteligência futura. Não cria Evidence store, repository, schema, LLM, RAG, planner ou conversation runtime. C3-T2R1 domain model/tests foram aceitos por `ARCHITECTURE_REVIEW_C3_T2R1` (`ACCEPT_WITH_RESIDUAL`; `C3_T2=APPROVED`); store/model/RAG/planner/conversation continuam fora de escopo.
 
 ### 4B.1 Ownership
 
@@ -272,10 +279,12 @@ CANONICAL SOURCE OF ORIGINAL FACT: Domain API / provider / document owner / proc
 CONSUMERS (future): multimodal, Evidence Board, Internet Research, connectors, Teams,
   Process Intelligence, Prediction, Model lineage, Knowledge, planner, synthesis
 CONTRACT: this §4B + C0.S3 SourceRef/EvidenceRef/ModelRef/PredictionRef + thematic 38
-CURRENT IMPLEMENTATION: C3-T2R1 CANDIDATE_FOR_ARCHITECTURE_REVIEW — domain model + conformance in delia-api/app/domain/evidence/
+CURRENT IMPLEMENTATION: C3-T2 APPROVED (ARCHITECTURE_REVIEW_C3_T2R1 ACCEPT_WITH_RESIDUAL;
+  IMPLEMENTATION_HEAD=d444e75f735fa78524efa4099c7e1695ff1637ec) — domain model + conformance in delia-api/app/domain/evidence/
   (no Evidence store / repository / LLM / RAG / planner / conversation;
    SourceRef identity-only; TypedResultKind sole typed-result discriminator;
-   no global EpistemicClass numeric ordering)
+   no global EpistemicClass numeric ordering;
+   _EPISTEMIC_STRENGTH / epistemically_weaker / SourceAuthorityCapability = REJECTED/REMOVED)
 ```
 
 ```text
@@ -542,9 +551,9 @@ Personal Memory != Organizational Knowledge
 raw media / biometric remain separate classes
 ```
 
-### 4B.13 C3-T2 / C3-T2R1 conformance expectations (candidate; test PASS ≠ Architecture Review)
+### 4B.13 C3-T2 / C3-T2R1 conformance expectations (APPROVED; not Evidence-store / model-runtime PASS)
 
-C3-T2R1 implements deterministic conformance (`tests/test_evidence_epistemic_conformance.py`) for at least:
+C3-T2R1 deterministic conformance (`tests/test_evidence_epistemic_conformance.py`) is Architecture-Review accepted for at least:
 
 ```text
 positive authoritative Evidence linkage

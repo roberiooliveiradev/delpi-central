@@ -36,14 +36,20 @@ OBSERVATION != FACT
 OBSERVATION != authorization
 NO automatic OBSERVATION → FACT promotion
 FACT_STATUS != ACCESS_PERMISSION
+EpistemicClass values are semantic kinds (not a global numeric / ordinal strength scale)
+_EPISTEMIC_STRENGTH / epistemically_weaker = REJECTED (C3-T2R1)
 ```
 
 Epistemic qualification (“qual é o status epistêmico?”) é distinto de access/authorization
 (“o ator atual pode obter/dereferenciar/divulgar/usar este source/evidence?”).
 Permission não estabelece verdade epistêmica; verdade epistêmica não concede permission.
 
-Prediction/simulation permanecem resultados tipados próprios quando aplicáveis e não entram
-no enum de classes epistêmicas nem viram FACT automaticamente.
+Prediction/simulation permanecem resultados tipados próprios (`TypedResultKind` = sole discriminator)
+quando aplicáveis e não entram no enum de classes epistêmicas nem viram FACT automaticamente.
+
+SourceRef is identity/origin reference only (`authority_capability` / `SourceAuthorityCapability` = REJECTED).
+Source authority for a proposition is external deterministic qualification
+(e.g. `FactQualificationCriteria.source_authoritative_for_proposition`), not a SourceRef field.
 
 ## 3. Evidence contract
 
