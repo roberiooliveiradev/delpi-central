@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { PUC_PREFIX } from "../../app/bemPrefix";
 import {
@@ -728,8 +729,10 @@ function CompactPaginationDemo() {
       labels={{
         info: ({ page: p, totalPages, total }) => `Pág. ${p}/${totalPages} · ${total} itens`,
         pageSizeLabel: "Por página",
-        previous: "Anterior",
-        next: "Próxima",
+        previous: <ChevronLeft size={16} aria-hidden />,
+        next: <ChevronRight size={16} aria-hidden />,
+        previousAriaLabel: "Página anterior",
+        nextAriaLabel: "Próxima página",
         navigationAriaLabel: "Paginação compacta",
       }}
     />

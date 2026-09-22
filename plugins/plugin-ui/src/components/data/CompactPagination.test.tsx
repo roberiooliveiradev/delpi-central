@@ -96,4 +96,29 @@ describe("CompactPagination", () => {
 
     expect(container.firstChild).toBeNull();
   });
+
+  it("aceita ícones ReactNode com aria-label explícito", () => {
+    render(
+      <CompactPagination
+        page={2}
+        pageSize={20}
+        total={60}
+        onPageChange={vi.fn()}
+        classNames={classNames}
+        labels={{
+          info: ({ page }) => `Página ${page}`,
+          previous: <span data-testid="prev-icon" aria-hidden />,
+          next: <span data-testid="next-icon" aria-hidden />,
+          previousAriaLabel: "Página anterior",
+          nextAriaLabel: "Próxima página",
+          navigationAriaLabel: "Paginação",
+        }}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "Página anterior" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Próxima página" })).toBeTruthy();
+    expect(screen.getByTestId("prev-icon")).toBeTruthy();
+    expect(screen.getByTestId("next-icon")).toBeTruthy();
+  });
 });

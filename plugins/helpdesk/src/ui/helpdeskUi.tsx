@@ -1,4 +1,5 @@
 import { type ComponentProps, type ReactNode } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
   attachmentPreviewStripBemClasses,
   createCompactPagination,
@@ -172,8 +173,10 @@ export const HelpdeskCompactPagination = createCompactPagination({
   labels: {
     info: ({ page }) => `Página ${page}`,
     pageSizeLabel: "Por página",
-    previous: "Anterior",
-    next: "Próxima",
+    previous: <ChevronLeft size={16} aria-hidden />,
+    next: <ChevronRight size={16} aria-hidden />,
+    previousAriaLabel: "Página anterior",
+    nextAriaLabel: "Próxima página",
     navigationAriaLabel: "Paginação da lista de chamados",
   },
 });

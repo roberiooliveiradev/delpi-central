@@ -563,8 +563,10 @@ declare module "@delpi/plugin-ui/index" {
       pageSize: number;
     }) => string;
     pageSizeLabel?: string;
-    previous: string;
-    next: string;
+    previous: ReactNode;
+    next: ReactNode;
+    previousAriaLabel?: string;
+    nextAriaLabel?: string;
     navigationAriaLabel: string;
   };
 

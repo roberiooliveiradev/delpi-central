@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, type ReactNode } from "react";
 
 import { HelpTooltip } from "../help/HelpTooltip";
 import { ToolbarSelectControl } from "../forms/ToolbarSelectField";
@@ -21,8 +21,12 @@ export type CompactPaginationLayout = "grouped" | "flat";
 export type CompactPaginationLabels = {
   info: (args: { page: number; totalPages: number; total: number; pageSize: number }) => string;
   pageSizeLabel?: string;
-  previous: string;
-  next: string;
+  /** Texto ou ícone (ex.: ChevronLeft). Com nó React, informe `previousAriaLabel`. */
+  previous: ReactNode;
+  /** Texto ou ícone (ex.: ChevronRight). Com nó React, informe `nextAriaLabel`. */
+  next: ReactNode;
+  previousAriaLabel?: string;
+  nextAriaLabel?: string;
   navigationAriaLabel: string;
 };
 
@@ -48,6 +52,12 @@ export type CompactPaginationProps = {
   classNames: CompactPaginationClassNames;
   labels: CompactPaginationLabels;
 };
+
+function navButtonAccessibleName(label: ReactNode, explicit?: string, fallback?: string): string {
+  if (explicit?.trim()) return explicit.trim();
+  if (typeof label === "string" && label.trim()) return label.trim();
+  return fallback ?? "Navegar";
+}
 
 export function compactPaginationBemClasses(
   prefix: string,
@@ -124,14 +134,21 @@ export function CompactPagination({
   );
 
   function renderNavButton(
-    label: string,
+    label: ReactNode,
+    accessibleName: string,
     disabled: boolean,
     onClick: () => void,
     hint?: string,
     hintAriaLabel?: string,
   ) {
     const button = (
-      <button type="button" className={classNames.ghostBtn} disabled={disabled} onClick={onClick}>
+      <button
+        type="button"
+        className={classNames.ghostBtn}
+        disabled={disabled}
+        onClick={onClick}
+        aria-label={accessibleName}
+      >
         {label}
       </button>
     );
@@ -142,7 +159,7 @@ export function CompactPagination({
           {button}
           <HelpTooltip
             content={hint}
-            ariaLabel={hintAriaLabel ?? `Ajuda: ${label.toLowerCase()}`}
+            ariaLabel={hintAriaLabel ?? `Ajuda: ${accessibleName.toLowerCase()}`}
             className={classNames.actionHelp}
           />
         </div>
@@ -152,10 +169,18 @@ export function CompactPagination({
     return button;
   }
 
+  const previousName = navButtonAccessibleName(
+    labels.previous,
+    labels.previousAriaLabel,
+    "Página anterior",
+  );
+  const nextName = navButtonAccessibleName(labels.next, labels.nextAriaLabel, "Próxima página");
+
   const actionsNode = (
     <div className={classNames.actions}>
       {renderNavButton(
         labels.previous,
+        previousName,
         !canPrev,
         () => onPageChange(page - 1),
         hints?.previous,
@@ -163,6 +188,7 @@ export function CompactPagination({
       )}
       {renderNavButton(
         labels.next,
+        nextName,
         !canNext,
         () => onPageChange(page + 1),
         hints?.next,

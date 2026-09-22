@@ -43,4 +43,14 @@ describe("Helpdesk list UX structural", () => {
     );
     expect(css).toMatch(/\.helpdesk-filter-builder__rules[\s\S]*?overflow-y:\s*auto/);
   });
+
+  it("paginação compacta usa ChevronLeft/Right com aria-label", () => {
+    const ui = read("../ui/helpdeskUi.tsx");
+    expect(ui).toContain("ChevronLeft");
+    expect(ui).toContain("ChevronRight");
+    expect(ui).toContain('previousAriaLabel: "Página anterior"');
+    expect(ui).toContain('nextAriaLabel: "Próxima página"');
+    const css = read("../index.css");
+    expect(css).toContain(".helpdesk-pagination__actions");
+  });
 });

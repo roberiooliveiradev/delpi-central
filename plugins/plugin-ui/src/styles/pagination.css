@@ -220,6 +220,13 @@
   flex-shrink: 0;
 }
 
+/* Botões só com ícone (ChevronLeft/Right) — quadrados como controles da tabela */
+.delpi-ui-pagination--compact .delpi-ui-pagination__actions .delpi-ui-ghost-btn:has(> svg:only-child) {
+  width: var(--delpi-ui-control-height, 36px);
+  min-width: var(--delpi-ui-control-height, 36px);
+  padding-inline: 0;
+}
+
 .delpi-ui-pagination__size {
   display: inline-flex;
   flex-direction: row;

@@ -246,6 +246,22 @@
   cursor: help;
 }
 
+.dashboard-helpdesk .helpdesk-pagination.delpi-ui-pagination--compact {
+  gap: 8px;
+  padding: 0;
+  margin-block-start: 0;
+}
+
+.dashboard-helpdesk .helpdesk-pagination__actions .delpi-ui-ghost-btn,
+.dashboard-helpdesk .helpdesk-pagination__actions .helpdesk-btn {
+  width: var(--delpi-ui-control-height, 32px);
+  min-width: var(--delpi-ui-control-height, 32px);
+  padding-inline: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 @media (max-width: 768px) {
   .dashboard-helpdesk .helpdesk-filter-builder__rule > .helpdesk-filter-box,
   .dashboard-helpdesk .helpdesk-sort-builder__level > .helpdesk-filter-box {
