@@ -9,6 +9,8 @@ export const USER_PROFILE_CONTENT = {
   identitySubtitle: "Dados do diretório Minha DELPI (somente leitura neste Portal).",
   shortcutsTitle: "Atalhos",
   shortcutsSubtitle: "Caminhos liberados no Portal Suprimentos.",
+  shortcutsAriaLabel: "Atalhos do Portal Suprimentos",
+  editIdentity: "Editar no Meu Perfil",
   preferencesTitle: "Preferências",
   preferencesSubtitle: "Valem só neste Portal — distinta do perfil global Minha DELPI.",
   preferencesOther:

@@ -60,21 +60,13 @@ export const CM_HELP = {
   users: {
     profile:
       "Perfil no Portal Comercial (diretório/equipe): nome e e-mail; foto, cargo e contatos com precedência do Meu Perfil Minha DELPI. O avatar da TopBar abre o perfil deste Portal (`/users/:id`); o nome abre Minha Carteira. Identidade global: `/profile` no shell Minha DELPI.",
-    jobTitle: "Cargo exibido no Comercial. Não sincroniza RH nesta fase.",
-    phoneE164:
-      "Telefone fixo no formato E.164 (+ e DDI), ex.: +551133334444. Usado no atalho Ligar.",
-    mobileE164:
-      "Celular no formato E.164 (+ e DDI), ex.: +5511999999999. Alternativa ao telefone no atalho Ligar.",
-    phoneIsWhatsapp:
-      "Marca o telefone como WhatsApp (atalho WhatsApp neste perfil). Só um número por vez.",
-    mobileIsWhatsapp:
-      "Marca o celular como WhatsApp (atalho WhatsApp neste perfil). Só um número por vez.",
     portfolios: "Carteiras do usuário com papel, quantidade de clientes e membros.",
     access:
       "Permissões commercial.* e capacidades efetivas desta sessão (somente no próprio perfil).",
     shortcuts:
       "Atalhos do Portal e de contato (e-mail, ligar, WhatsApp). Gestores veem Mandar tarefa em perfis de outros usuários.",
-    editMode: "Ativa o modo edição para alterar cargo, foto e contatos do perfil.",
+    editMode:
+      "Abre o Meu Perfil da Minha DELPI (`/profile`) para alterar foto, cargo e contatos. Este Portal mostra a identidade em leitura.",
   },
   myDay: {
     worklist:

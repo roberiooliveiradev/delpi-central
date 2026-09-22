@@ -581,54 +581,11 @@
 
 /* Compactação ≤720px: dual-class `.delpi-ui-topbar-collapse-label` (kit). */
 
-/* Perfil WF-USER */
-.dashboard-supplies-portal .sp-user-profile__grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: var(--sp-grid-gap, 16px);
-}
-
-.dashboard-supplies-portal .sp-user-profile__identity {
-  display: flex;
-  gap: 1rem;
-  align-items: flex-start;
-}
-
-.dashboard-supplies-portal .sp-user-profile__identity dl {
-  display: grid;
-  gap: 0.65rem;
-  margin: 0;
-}
-
-.dashboard-supplies-portal .sp-user-profile__identity dt {
-  font-size: 0.75rem;
-  color: var(--sp-text-muted);
-}
-
-.dashboard-supplies-portal .sp-user-profile__identity dd {
-  margin: 0.15rem 0 0;
-  font-weight: 600;
-}
-
+/* Perfil WF-USER — path/hero/identidade/atalhos vêm de `.delpi-ui-portal-user-profile*` (kit). */
 .dashboard-supplies-portal .sp-user-profile__note {
   margin: 0.75rem 0 0;
   color: var(--sp-text-muted);
   font-size: 0.875rem;
-}
-
-.dashboard-supplies-portal .sp-user-profile__shortcuts {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.dashboard-supplies-portal .sp-user-profile__shortcuts .sp-home__chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
 }
 
 .dashboard-supplies-portal .sp-user-profile__prefs {
@@ -662,12 +619,6 @@
   margin: 0;
   padding: 0;
   list-style: none;
-}
-
-.dashboard-supplies-portal .sp-user-profile__error {
-  display: grid;
-  gap: 0.65rem;
-  justify-items: start;
 }
 
 /* Pedidos de compra — layout de domínio (chrome = plugin-ui) */

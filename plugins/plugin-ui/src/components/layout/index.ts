@@ -321,6 +321,21 @@ export {
   type PagePathProps,
 } from "./PagePath";
 export {
+  PORTAL_USER_PROFILE_LABELS_PT,
+  PortalUserProfilePage,
+  createDashboardPortalUserProfilePage,
+  portalUserProfilePageBemClasses,
+  type DashboardPortalUserProfilePageProps,
+  type PortalUserProfileHero,
+  type PortalUserProfileIdentity,
+  type PortalUserProfileIdentityField,
+  type PortalUserProfilePagePath,
+  type PortalUserProfilePageClassNames,
+  type PortalUserProfilePageLabels,
+  type PortalUserProfilePageProps,
+  type PortalUserProfileShortcut,
+} from "./PortalUserProfilePage";
+export {
   TopBar,
   createDashboardTopBar,
   topBarBemClasses,

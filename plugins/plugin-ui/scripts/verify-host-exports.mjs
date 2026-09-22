@@ -52,6 +52,10 @@ const REQUIRED_HOST_EXPORTS = [
   "createDashboardRoomSharedItemList",
   "InteractionRoomPage",
   "INTERACTION_ROOM_PAGE_LABELS_PT",
+  "PortalUserProfilePage",
+  "createDashboardPortalUserProfilePage",
+  "portalUserProfilePageBemClasses",
+  "PORTAL_USER_PROFILE_LABELS_PT",
   "reactionLabelForCode",
   "aggregateReactionBarItems",
 ];

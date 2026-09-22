@@ -3,8 +3,14 @@ import {
   BookOpen,
   Home,
   LayoutDashboard,
+  Pencil,
   ShoppingCart,
 } from "lucide-react";
+import {
+  HOST_SELF_PROFILE_PATH,
+  createDashboardPortalUserProfilePage,
+  navigateHostPath,
+} from "@delpi/plugin-ui/index";
 
 import { getUserProfile, patchUserProfile, type SuppliesUserProfile } from "../../api/userProfileApi";
 import { navigatePluginPath, navigatePluginView } from "../../app/pluginNavigation";
@@ -17,14 +23,14 @@ import { useSuppliesSession } from "../../app/SuppliesSessionContext";
 import { useMyPersonProfile } from "../../app/useMyPersonProfile";
 import {
   SuppliesActionButton,
-  SuppliesAvatar,
   SuppliesLoadingCard,
-  SuppliesPageHero,
   SuppliesTitleWithHelp,
-  SuppliesPagePath,
   SuppliesSectionCard,
   SuppliesStateBanner,
   SuppliesStatusBadge,
+  spSectionCardClassNames,
+  spSectionLabels,
+  UI_PREFIX,
 } from "../../app/suppliesUi";
 import { SP_HELP } from "../../content/helpTooltips";
 import { USER_PROFILE_CONTENT as C } from "./userProfileContent";
@@ -33,6 +39,27 @@ type UserProfilePageProps = {
   basePath: string;
   userId: string;
 };
+
+/** Visual e comportamento do perfil vêm do kit; Suprimentos entrega dados, copy e seções. */
+const SuppliesPortalUserProfilePage = createDashboardPortalUserProfilePage({
+  prefix: UI_PREFIX,
+  classNames: { section: spSectionCardClassNames },
+  labels: {
+    section: spSectionLabels,
+    pageAriaLabel: C.pageAriaLabel,
+    identityTitle: C.identityTitle,
+    identitySubtitle: C.identitySubtitle,
+    shortcutsTitle: C.shortcutsTitle,
+    shortcutsSubtitle: C.shortcutsSubtitle,
+    shortcutsAriaLabel: C.shortcutsAriaLabel,
+    nameLabel: C.nameLabel,
+    emailLabel: C.emailLabel,
+    jobTitleLabel: C.jobTitleLabel,
+    phoneLabel: C.phoneLabel,
+    mobileLabel: C.mobileLabel,
+    whatsappLabel: C.whatsappLabel,
+  },
+});
 
 function readReturnTo(): { href: string; label: string } {
   if (typeof window === "undefined") {
@@ -167,195 +194,174 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
     ? profile.allowedUnits
     : session.allowedUnits;
 
+  const busy = loading || session.loading;
+  const ready = !busy && Boolean(profile);
+
   return (
-    <div className="sp-page-stack sp-user-profile" aria-label={C.pageAriaLabel}>
-      <SuppliesPagePath
-        back={{
+    <SuppliesPortalUserProfilePage
+      className="sp-page-stack sp-user-profile"
+      pagePath={{
+        back: {
           label: back.label,
           href: back.href,
           onNavigate: (event) => {
             event.preventDefault();
             navigatePluginPath(back.href);
           },
-        }}
-        items={[]}
-        current={profile?.name || "Perfil"}
-      />
-
-      {loading || session.loading ? <SuppliesLoadingCard title={C.loading} variant="panel" /> : null}
-
-      {forbidden ? (
-        <SuppliesStateBanner variant="error">{C.forbidden}</SuppliesStateBanner>
-      ) : null}
-
-      {error ? (
-        <div className="sp-user-profile__error">
-          <SuppliesStateBanner variant="error">{error}</SuppliesStateBanner>
-          <SuppliesActionButton variant="ghost" onClick={() => setReloadKey((v) => v + 1)}>
-            {C.retry}
-          </SuppliesActionButton>
-        </div>
-      ) : null}
-
-      {!loading && !session.loading && profile ? (
-        <>
-          <SuppliesPageHero
-            eyebrow="Portal Suprimentos"
-            title={
-              <SuppliesTitleWithHelp title={profile.name} hint={SP_HELP.userProfile} />
-            }
-            description={profile.email || C.hostProfileNote}
-            badge={
-              <>
-                <SuppliesStatusBadge
-                  label={profile.isSelf ? C.badgeSelf : C.badgeAdminView}
-                  variant={profile.isSelf ? "success" : "info"}
-                />
-                {units.length > 0 ? (
+        },
+        current: profile?.name || "Perfil",
+      }}
+      loading={busy}
+      loadingNode={<SuppliesLoadingCard title={C.loading} variant="panel" />}
+      error={
+        forbidden ? (
+          <SuppliesStateBanner variant="error">{C.forbidden}</SuppliesStateBanner>
+        ) : error ? (
+          <>
+            <SuppliesStateBanner variant="error">{error}</SuppliesStateBanner>
+            <SuppliesActionButton variant="ghost" onClick={() => setReloadKey((v) => v + 1)}>
+              {C.retry}
+            </SuppliesActionButton>
+          </>
+        ) : null
+      }
+      hero={
+        ready && profile
+          ? {
+              eyebrow: C.backFallback,
+              title: (
+                <SuppliesTitleWithHelp title={profile.name} hint={SP_HELP.userProfile} />
+              ),
+              description: profile.email || C.hostProfileNote,
+              density: "compact",
+              badge: (
+                <>
                   <SuppliesStatusBadge
-                    label={`${C.unitsLabel}: ${units.join(", ")}`}
-                    variant="info"
+                    label={profile.isSelf ? C.badgeSelf : C.badgeAdminView}
+                    variant={profile.isSelf ? "success" : "info"}
                   />
-                ) : null}
-              </>
-            }
-          />
-
-          <div className="sp-user-profile__grid">
-            <SuppliesSectionCard title={C.identityTitle} subtitle={C.identitySubtitle}>
-              <div className="sp-user-profile__identity">
-                <SuppliesAvatar
-                  name={profile.name}
-                  src={isSelf === true ? photoUrl : null}
-                  size="lg"
-                />
-                <dl>
-                  <div>
-                    <dt>{C.nameLabel}</dt>
-                    <dd>{profile.name}</dd>
-                  </div>
-                  <div>
-                    <dt>{C.emailLabel}</dt>
-                    <dd>{profile.email || "—"}</dd>
-                  </div>
-                  {isSelf === true ? (
-                    <>
-                      <div>
-                        <dt>{C.jobTitleLabel}</dt>
-                        <dd>{personProfile?.job_title?.trim() || "—"}</dd>
-                      </div>
-                      <div>
-                        <dt>{C.phoneLabel}</dt>
-                        <dd>{personProfile?.phone_e164?.trim() || "—"}</dd>
-                      </div>
-                      <div>
-                        <dt>{C.mobileLabel}</dt>
-                        <dd>{personProfile?.mobile_e164?.trim() || "—"}</dd>
-                      </div>
-                      <div>
-                        <dt>{C.whatsappLabel}</dt>
-                        <dd>{personProfile?.whatsapp_e164?.trim() || "—"}</dd>
-                      </div>
-                    </>
-                  ) : null}
-                </dl>
-              </div>
-              <p className="sp-user-profile__note">{C.hostProfileNote}</p>
-            </SuppliesSectionCard>
-
-            <SuppliesSectionCard title={C.shortcutsTitle} subtitle={C.shortcutsSubtitle}>
-              <ul className="sp-user-profile__shortcuts">
-                {shortcuts.map((item) => (
-                  <li key={item.id}>
-                    <button type="button" className="sp-home__chip" onClick={item.onSelect}>
-                      {item.icon}
-                      <span>{item.label}</span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </SuppliesSectionCard>
-          </div>
-
-          <SuppliesSectionCard
-            title={C.preferencesTitle}
-            subtitle={C.preferencesSubtitle}
-            hint={SP_HELP.userProfilePrefs}
-          >
-            {profile.isSelf ? (
-              <form
-                className="sp-user-profile__prefs"
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  void onSave();
-                }}
-              >
-                <label>
-                  <span>{C.defaultBranchLabel}</span>
-                  <select
-                    value={defaultBranch}
-                    onChange={(event) => setDefaultBranch(event.target.value)}
-                  >
-                    <option value="">{C.defaultBranchEmpty}</option>
-                    {session.allowedUnits.map((unit) => (
-                      <option key={unit} value={unit}>
-                        {unit}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  <span>{C.tableDensityLabel}</span>
-                  <select
-                    value={tableDensity}
-                    onChange={(event) =>
-                      setTableDensity(event.target.value as "comfortable" | "compact")
-                    }
-                  >
-                    <option value="comfortable">{C.densityComfortable}</option>
-                    <option value="compact">{C.densityCompact}</option>
-                  </select>
-                </label>
-                <SuppliesActionButton variant="primary" type="submit" disabled={saving}>
-                  {saving ? C.saving : C.save}
-                </SuppliesActionButton>
-                {saveMessage ? (
-                  <SuppliesStateBanner variant="success">{saveMessage}</SuppliesStateBanner>
-                ) : null}
-                {saveError ? (
-                  <SuppliesStateBanner variant="error">{saveError}</SuppliesStateBanner>
-                ) : null}
-              </form>
-            ) : (
-              <p className="sp-user-profile__note">{C.preferencesOther}</p>
-            )}
-          </SuppliesSectionCard>
-
-          <SuppliesSectionCard title={C.accessTitle} subtitle={C.accessSubtitle}>
-            {profile.isSelf && profile.capabilities ? (
-              <ul className="sp-user-profile__caps">
-                {Object.entries(profile.capabilities).map(([key, enabled]) => (
-                  <li key={key}>
+                  {units.length > 0 ? (
                     <SuppliesStatusBadge
-                      label={`${key}: ${enabled ? "sim" : "não"}`}
-                      variant={enabled ? "success" : "neutral"}
+                      label={`${C.unitsLabel}: ${units.join(", ")}`}
+                      variant="info"
+                    />
+                  ) : null}
+                </>
+              ),
+            }
+          : undefined
+      }
+      identityHint={SP_HELP.userProfile}
+      identity={
+        ready && profile
+          ? {
+              name: profile.name,
+              email: profile.email,
+              photoUrl: isSelf === true ? photoUrl : null,
+              colorKey: userId,
+              jobTitle: isSelf === true ? personProfile?.job_title : null,
+              phone: isSelf === true ? personProfile?.phone_e164 : null,
+              mobile: isSelf === true ? personProfile?.mobile_e164 : null,
+              whatsapp: isSelf === true ? personProfile?.whatsapp_e164 : null,
+              showEmptyFields: isSelf === true,
+              note: C.hostProfileNote,
+              actions:
+                isSelf === true ? (
+                  <SuppliesActionButton
+                    variant="primary"
+                    onClick={() => navigateHostPath(HOST_SELF_PROFILE_PATH)}
+                  >
+                    <Pencil size={16} aria-hidden="true" />
+                    {C.editIdentity}
+                  </SuppliesActionButton>
+                ) : null,
+            }
+          : null
+      }
+      shortcuts={ready ? shortcuts : undefined}
+      sections={
+        ready && profile ? (
+          <>
+            <SuppliesSectionCard
+              title={C.preferencesTitle}
+              subtitle={C.preferencesSubtitle}
+              hint={SP_HELP.userProfilePrefs}
+            >
+              {profile.isSelf ? (
+                <form
+                  className="sp-user-profile__prefs"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    void onSave();
+                  }}
+                >
+                  <label>
+                    <span>{C.defaultBranchLabel}</span>
+                    <select
+                      value={defaultBranch}
+                      onChange={(event) => setDefaultBranch(event.target.value)}
+                    >
+                      <option value="">{C.defaultBranchEmpty}</option>
+                      {session.allowedUnits.map((unit) => (
+                        <option key={unit} value={unit}>
+                          {unit}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    <span>{C.tableDensityLabel}</span>
+                    <select
+                      value={tableDensity}
+                      onChange={(event) =>
+                        setTableDensity(event.target.value as "comfortable" | "compact")
+                      }
+                    >
+                      <option value="comfortable">{C.densityComfortable}</option>
+                      <option value="compact">{C.densityCompact}</option>
+                    </select>
+                  </label>
+                  <SuppliesActionButton variant="primary" type="submit" disabled={saving}>
+                    {saving ? C.saving : C.save}
+                  </SuppliesActionButton>
+                  {saveMessage ? (
+                    <SuppliesStateBanner variant="success">{saveMessage}</SuppliesStateBanner>
+                  ) : null}
+                  {saveError ? (
+                    <SuppliesStateBanner variant="error">{saveError}</SuppliesStateBanner>
+                  ) : null}
+                </form>
+              ) : (
+                <p className="sp-user-profile__note">{C.preferencesOther}</p>
+              )}
+            </SuppliesSectionCard>
+
+            <SuppliesSectionCard title={C.accessTitle} subtitle={C.accessSubtitle}>
+              {profile.isSelf && profile.capabilities ? (
+                <ul className="sp-user-profile__caps">
+                  {Object.entries(profile.capabilities).map(([key, enabled]) => (
+                    <li key={key}>
+                      <SuppliesStatusBadge
+                        label={`${key}: ${enabled ? "sim" : "não"}`}
+                        variant={enabled ? "success" : "neutral"}
+                      />
+                    </li>
+                  ))}
+                  <li>
+                    <SuppliesStatusBadge
+                      label={`${C.unitsLabel}: ${units.join(", ") || "—"}`}
+                      variant="info"
                     />
                   </li>
-                ))}
-                <li>
-                  <SuppliesStatusBadge
-                    label={`${C.unitsLabel}: ${units.join(", ") || "—"}`}
-                    variant="info"
-                  />
-                </li>
-              </ul>
-            ) : (
-              <p className="sp-user-profile__note">{C.accessOther}</p>
-            )}
-          </SuppliesSectionCard>
-        </>
-      ) : null}
-    </div>
+                </ul>
+              ) : (
+                <p className="sp-user-profile__note">{C.accessOther}</p>
+              )}
+            </SuppliesSectionCard>
+          </>
+        ) : null
+      }
+    />
   );
 }
 

@@ -1,0 +1,25 @@
+/** Copy do perfil do diretório no Portal Transforma+. */
+export const PERSON_DIRECTORY_LABELS = {
+  pageAriaLabel: "Perfil do usuário no Portal Transforma+",
+  eyebrow: "Portal Transforma+",
+  back: "Portal Transforma+",
+  currentFallback: "Perfil",
+  loading: "Carregando perfil…",
+  error: "Não foi possível carregar este perfil.",
+  nameFallback: "Usuário",
+  identityTitle: "Identidade",
+  identitySubtitle: "Dados do diretório Minha DELPI (somente leitura neste Portal).",
+  shortcutsTitle: "Atalhos",
+  shortcutsSubtitle: "Áreas do Portal Transforma+.",
+  shortcutsAriaLabel: "Atalhos do Portal Transforma+",
+  badgeSelf: "Você",
+  badgeDirectory: "Diretório",
+  descriptionSelf:
+    "Seu perfil neste Portal. Foto, cargo e contatos editam-se no Meu Perfil Minha DELPI.",
+  descriptionOther: "Perfil do diretório neste Portal (somente leitura).",
+  editIdentity: "Editar perfil",
+  shortcutHome: "Início",
+  shortcutTasks: "Minhas tarefas",
+  shortcutRooms: "Sala de interação",
+  shortcutProcesses: "Meus processos",
+} as const;

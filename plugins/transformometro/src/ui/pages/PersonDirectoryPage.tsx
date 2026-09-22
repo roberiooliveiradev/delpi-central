@@ -2,13 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import {
   ActionButton,
   HOST_SELF_PROFILE_PATH,
-  InitialsAvatar,
-  PageHero,
-  SectionCard,
-  initialsAvatarBemClasses,
+  createDashboardPortalUserProfilePage,
   navigateHostPath,
-  pageHeroBemClasses,
-  sectionCardPacBemClasses,
 } from "@delpi/plugin-ui/index";
 import {
   CheckSquare,
@@ -19,6 +14,9 @@ import {
 } from "lucide-react";
 
 import { PortalTopBar } from "../../components/TransformometroNav";
+import { TransformometroShell } from "../../components/TransformometroShell";
+import { TmStatusBadge } from "../../components/tmChromeUi";
+import { PERSON_DIRECTORY_LABELS as L } from "../../content/personDirectoryLabels";
 import { lookupDirectoryUsers } from "../../data/api/directoryUsersApi";
 import { downloadPersonProfilePhoto } from "../../data/api/transformometroInteractionApi";
 import { fetchMeProfile } from "../../data/api/meApi";
@@ -31,12 +29,19 @@ type Props = {
   onNavigate: (path: string) => void;
 };
 
-const HERO = pageHeroBemClasses("ds");
-const AVATAR = initialsAvatarBemClasses("ds");
-const SECTION = sectionCardPacBemClasses("ds");
-const SECTION_LABELS = {
-  titleHelpAriaLabel: (title: string) => `Ajuda: ${title}`,
-};
+/** Visual e comportamento do perfil vêm do kit; Transforma+ entrega dados, copy e atalhos. */
+const TmPortalUserProfilePage = createDashboardPortalUserProfilePage({
+  prefix: "ds",
+  portalScopeClassName: "dashboard-transformometro",
+  labels: {
+    pageAriaLabel: L.pageAriaLabel,
+    identityTitle: L.identityTitle,
+    identitySubtitle: L.identitySubtitle,
+    shortcutsTitle: L.shortcutsTitle,
+    shortcutsSubtitle: L.shortcutsSubtitle,
+    shortcutsAriaLabel: L.shortcutsAriaLabel,
+  },
+});
 
 type Shortcut = {
   id: string;
@@ -106,7 +111,7 @@ export function PersonDirectoryPage({
       .then(([users, blob]) => {
         if (controller.signal.aborted) return;
         const hit = users[0];
-        setName(hit?.name?.trim() || "Usuário");
+        setName(hit?.name?.trim() || L.nameFallback);
         setEmail(hit?.email?.trim() || null);
         if (blob) {
           objectUrl = URL.createObjectURL(blob);
@@ -118,7 +123,7 @@ export function PersonDirectoryPage({
       })
       .catch(() => {
         if (controller.signal.aborted) return;
-        setError("Não foi possível carregar este perfil.");
+        setError(L.error);
         setLoading(false);
       });
 
@@ -132,25 +137,25 @@ export function PersonDirectoryPage({
     () => [
       {
         id: "home",
-        label: "Início",
+        label: L.shortcutHome,
         path: TRANSFORMOMETRO_ROUTES.home,
         icon: Home,
       },
       {
         id: "tasks",
-        label: "Minhas tarefas",
+        label: L.shortcutTasks,
         path: TRANSFORMOMETRO_ROUTES.myTasks,
         icon: CheckSquare,
       },
       {
         id: "rooms",
-        label: "Sala de interação",
+        label: L.shortcutRooms,
         path: TRANSFORMOMETRO_ROUTES.interactionRooms,
         icon: MessagesSquare,
       },
       {
         id: "processes",
-        label: "Meus processos",
+        label: L.shortcutProcesses,
         path: TRANSFORMOMETRO_ROUTES.processes,
         icon: Workflow,
       },
@@ -158,118 +163,81 @@ export function PersonDirectoryPage({
     [],
   );
 
-  const showBody = !loading && !meLoading && !error;
+  const busy = loading || meLoading;
+  const ready = !busy && !error;
 
   return (
-    <div className="tm-page">
+    <TransformometroShell>
       <PortalTopBar
         currentPath={pathname ?? `${TRANSFORMOMETRO_ROUTES.home}/users/${userId}`}
         onNavigate={onNavigate}
       />
-      <div className="tm-page__body" style={{ padding: "1rem 1.25rem" }}>
-        <ActionButton
-          variant="ghost"
-          type="button"
-          onClick={() => onNavigate(TRANSFORMOMETRO_ROUTES.home)}
-        >
-          ← Voltar
-        </ActionButton>
-        {loading || meLoading ? (
-          <p>Carregando perfil…</p>
-        ) : error ? (
-          <p role="alert">{error}</p>
-        ) : showBody ? (
-          <>
-            <div
-              style={{
-                display: "flex",
-                gap: "1rem",
-                alignItems: "flex-start",
-                justifyContent: "space-between",
-                marginTop: "1rem",
-                flexWrap: "wrap",
-              }}
-            >
-              <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
-                <InitialsAvatar
-                  classNames={AVATAR}
-                  name={name}
-                  src={photoUrl}
-                  size="lg"
-                  alt=""
-                />
-                <PageHero
-                  classNames={HERO}
-                  title={name}
-                  description={
-                    isSelf === true
-                      ? "Seu perfil neste Portal. Foto, cargo e contatos editam-se no Meu Perfil Minha DELPI."
-                      : "Perfil do diretório neste Portal (somente leitura)."
-                  }
-                />
-              </div>
-              {isSelf === true ? (
-                <ActionButton
-                  variant="primary"
-                  type="button"
-                  onClick={() => navigateHostPath(HOST_SELF_PROFILE_PATH)}
-                >
-                  <Pencil size={16} aria-hidden />
-                  Editar perfil
-                </ActionButton>
-              ) : null}
-            </div>
-
-            <div
-              style={{
-                display: "grid",
-                gap: "1rem",
-                gridTemplateColumns: "repeat(auto-fit, minmax(16rem, 1fr))",
-                marginTop: "1.25rem",
-              }}
-            >
-              <SectionCard classNames={SECTION} labels={SECTION_LABELS} title="Identidade">
-                <dl>
-                  <div>
-                    <dt>Nome</dt>
-                    <dd>{name}</dd>
-                  </div>
-                  {email ? (
-                    <div>
-                      <dt>E-mail</dt>
-                      <dd>{email}</dd>
-                    </div>
-                  ) : null}
-                </dl>
-              </SectionCard>
-
-              <SectionCard
-                classNames={SECTION}
-                labels={SECTION_LABELS}
-                title="Atalhos"
-                subtitle="Áreas do Portal Transforma+."
-              >
-                <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
-                  {shortcuts.map((item) => {
-                    const Icon = item.icon;
-                    return (
-                      <ActionButton
-                        key={item.id}
-                        variant="secondary"
-                        type="button"
-                        onClick={() => onNavigate(item.path)}
-                      >
-                        <Icon size={16} aria-hidden />
-                        {item.label}
-                      </ActionButton>
-                    );
-                  })}
-                </div>
-              </SectionCard>
-            </div>
-          </>
-        ) : null}
-      </div>
-    </div>
+      <TmPortalUserProfilePage
+        pagePath={{
+          back: {
+            label: L.back,
+            href: TRANSFORMOMETRO_ROUTES.home,
+            onNavigate: (event) => {
+              event.preventDefault();
+              onNavigate(TRANSFORMOMETRO_ROUTES.home);
+            },
+          },
+          current: name || L.currentFallback,
+        }}
+        loading={busy}
+        loadingNode={<p>{L.loading}</p>}
+        error={error ? <p>{error}</p> : null}
+        hero={
+          ready
+            ? {
+                eyebrow: L.eyebrow,
+                title: name,
+                description:
+                  isSelf === true ? L.descriptionSelf : L.descriptionOther,
+                badge: (
+                  <TmStatusBadge
+                    label={isSelf === true ? L.badgeSelf : L.badgeDirectory}
+                    variant={isSelf === true ? "success" : "info"}
+                  />
+                ),
+                actions:
+                  isSelf === true ? (
+                    <ActionButton
+                      variant="primary"
+                      type="button"
+                      onClick={() => navigateHostPath(HOST_SELF_PROFILE_PATH)}
+                    >
+                      <Pencil size={16} aria-hidden />
+                      {L.editIdentity}
+                    </ActionButton>
+                  ) : undefined,
+              }
+            : undefined
+        }
+        identity={
+          ready
+            ? {
+                name,
+                email,
+                photoUrl,
+                colorKey: userId,
+              }
+            : null
+        }
+        shortcuts={
+          ready
+            ? shortcuts.map((item) => {
+                const Icon = item.icon;
+                return {
+                  id: item.id,
+                  label: item.label,
+                  icon: <Icon size={16} aria-hidden />,
+                  onSelect: () => onNavigate(item.path),
+                };
+              })
+            : undefined
+        }
+      />
+    </TransformometroShell>
   );
 }

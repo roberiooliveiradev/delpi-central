@@ -33,6 +33,13 @@ export {
   InteractionRoomPage,
   INTERACTION_ROOM_PAGE_LABELS_PT,
 } from "./components/collaboration/InteractionRoomPage";
+/** Perfil de usuário dos portais — consumido só por hosts MFE. */
+export {
+  PORTAL_USER_PROFILE_LABELS_PT,
+  PortalUserProfilePage,
+  createDashboardPortalUserProfilePage,
+  portalUserProfilePageBemClasses,
+} from "./components/layout/PortalUserProfilePage";
 export * from "./brand";
 export * from "./theme";
 /**

@@ -267,6 +267,11 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
     description:
       "Página completa Minhas tarefas (hero + status + worklist + editor). OWNS composição; DOES NOT OWN domínio/API/AuthZ.",
   }),
+  vc("layout", "PortalUserProfilePage", {
+    addedAt: "2026-09-22",
+    description:
+      "Perfil de usuário de um portal (path + hero + identidade|atalhos + seções). OWNS composição e rótulos genéricos; DOES NOT OWN HTTP, AuthZ, rotas ou preferências.",
+  }),
   vc("forms", "TaskSearchField", {
     addedAt: "2026-09-21",
     description: "Campo de busca da fila. OWNS input; DOES NOT OWN a consulta.",

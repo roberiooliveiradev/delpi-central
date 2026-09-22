@@ -1,0 +1,112 @@
+/**
+ * PortalUserProfilePage — .delpi-ui-portal-user-profile*
+ * Layout unificado do perfil de usuário dos portais (path → hero → identidade|atalhos → seções).
+ */
+
+.delpi-ui-portal-user-profile {
+  display: flex;
+  flex-direction: column;
+  gap: var(--delpi-ui-section-gap, 24px);
+  min-width: 0;
+  width: 100%;
+}
+
+.delpi-ui-portal-user-profile__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  min-width: 0;
+}
+
+.delpi-ui-portal-user-profile__sections {
+  display: flex;
+  flex-direction: column;
+  gap: var(--delpi-ui-section-gap, 24px);
+  min-width: 0;
+}
+
+.delpi-ui-portal-user-profile__status,
+.delpi-ui-portal-user-profile__error,
+.delpi-ui-portal-user-profile__loading {
+  display: grid;
+  gap: 10px;
+  justify-items: start;
+  min-width: 0;
+}
+
+.delpi-ui-portal-user-profile__identity {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.delpi-ui-portal-user-profile__identity-avatar {
+  flex: 0 0 auto;
+}
+
+.delpi-ui-portal-user-profile__identity-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px 20px;
+  margin: 0;
+  min-width: 0;
+  flex: 1 1 220px;
+}
+
+.delpi-ui-portal-user-profile__field {
+  min-width: 0;
+}
+
+.delpi-ui-portal-user-profile__field-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.7)));
+}
+
+.delpi-ui-portal-user-profile__field-value {
+  margin: 4px 0 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--delpi-ui-text, var(--text, #111111));
+  overflow-wrap: anywhere;
+}
+
+.delpi-ui-portal-user-profile__note {
+  margin: 14px 0 0;
+  font-size: 13px;
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.7)));
+}
+
+.delpi-ui-portal-user-profile__identity-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.delpi-ui-portal-user-profile__shortcuts {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
+
+@media (max-width: 640px) {
+  .delpi-ui-portal-user-profile__identity-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .delpi-ui-portal-user-profile__shortcuts > .delpi-ui-action-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}

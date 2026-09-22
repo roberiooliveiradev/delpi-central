@@ -177,6 +177,96 @@ declare module "@delpi/plugin-ui/index" {
   export const HOST_SELF_PROFILE_PATH: "/profile";
   export function navigateHostPath(path: string): void;
 
+  export type PortalUserProfileShortcut = {
+    id: string;
+    label: ReactNode;
+    icon?: ReactNode;
+    title?: string;
+    onSelect: () => void;
+  };
+
+  export type PortalUserProfileIdentity = {
+    name: string;
+    email?: string | null;
+    jobTitle?: string | null;
+    phone?: string | null;
+    mobile?: string | null;
+    whatsapp?: string | null;
+    photoUrl?: string | null;
+    colorKey?: string;
+    previewTitle?: string;
+    previewAriaLabel?: string;
+    portalScopeClassName?: string;
+    showEmptyFields?: boolean;
+    extraFields?: ReadonlyArray<{
+      id: string;
+      label: ReactNode;
+      value: ReactNode;
+      icon?: ReactNode;
+    }>;
+    note?: ReactNode;
+    actions?: ReactNode;
+  };
+
+  export function createDashboardPortalUserProfilePage(config: {
+    prefix: string;
+    classNames?: {
+      pagePath?: unknown;
+      hero?: unknown;
+      section?: unknown;
+      avatar?: unknown;
+    };
+    labels?: Partial<{
+      pageAriaLabel: string;
+      identityTitle: string;
+      identitySubtitle: string;
+      shortcutsTitle: string;
+      shortcutsSubtitle: string;
+      shortcutsAriaLabel: string;
+      nameLabel: string;
+      emailLabel: string;
+      jobTitleLabel: string;
+      phoneLabel: string;
+      mobileLabel: string;
+      whatsappLabel: string;
+      emptyValue: string;
+      section: {
+        titleHelpAriaLabel: (title: string) => string;
+        expandAriaLabel?: (title: string) => string;
+        collapseAriaLabel?: (title: string) => string;
+      };
+    }>;
+  }): ComponentType<{
+    className?: string;
+    pagePath?: {
+      back: { label: string; href: string; onNavigate?: MouseEventHandler<HTMLAnchorElement> };
+      items?: ReadonlyArray<{
+        id: string;
+        label: string;
+        href: string;
+        onNavigate?: MouseEventHandler<HTMLAnchorElement>;
+      }>;
+      current: string;
+    };
+    hero?: {
+      eyebrow?: ReactNode;
+      title: ReactNode;
+      description?: ReactNode;
+      badge?: ReactNode;
+      actions?: ReactNode;
+      density?: "comfortable" | "compact";
+    };
+    identity?: PortalUserProfileIdentity | null;
+    identityHint?: string;
+    shortcuts?: ReadonlyArray<PortalUserProfileShortcut>;
+    shortcutsHint?: string;
+    sections?: ReactNode;
+    loading?: boolean;
+    loadingNode?: ReactNode;
+    status?: ReactNode;
+    error?: ReactNode;
+  }>;
+
   export function createDashboardTopBarUserIdentity(config: {
     prefix: string;
   }): ComponentType<{

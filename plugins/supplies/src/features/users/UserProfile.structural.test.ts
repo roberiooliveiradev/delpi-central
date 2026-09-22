@@ -29,6 +29,17 @@ describe("UserProfile", () => {
     expect(api).not.toMatch(/purchase-requests-api/);
   });
 
+  it("compõe o perfil com o kit PortalUserProfilePage", () => {
+    const page = readFileSync(join(dir, "UserProfilePage.tsx"), "utf8");
+    expect(page).toMatch(/createDashboardPortalUserProfilePage/);
+    /** Layout de identidade/atalhos é do kit — sem CSS paralelo no MFE. */
+    expect(page).not.toMatch(
+      /sp-user-profile__(grid|identity|shortcuts|error)\b/,
+    );
+    /** Identidade é leitura; editar abre o Meu Perfil da Minha DELPI. */
+    expect(page).toMatch(/HOST_SELF_PROFILE_PATH/);
+  });
+
   it("acesso self ok · outro sem admin negado · admin ok", () => {
     const selfId = "self-1";
     const caps = {

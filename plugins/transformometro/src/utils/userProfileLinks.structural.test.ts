@@ -45,11 +45,26 @@ describe("Transforma+ user profile routes", () => {
       join(dir, "../ui/pages/PersonDirectoryPage.tsx"),
       "utf8",
     );
-    expect(page).toMatch(/Editar perfil/);
+    const labels = readFileSync(
+      join(dir, "../content/personDirectoryLabels.ts"),
+      "utf8",
+    );
+    expect(labels).toMatch(/Editar perfil/);
+    expect(labels).toMatch(/Minhas tarefas/);
     expect(page).toMatch(/HOST_SELF_PROFILE_PATH/);
     expect(page).toMatch(/navigateHostPath/);
-    expect(page).toMatch(/Minhas tarefas/);
     expect(page).toMatch(/isSelf === true/);
+  });
+
+  it("PersonDirectoryPage compõe o kit PortalUserProfilePage", () => {
+    const page = readFileSync(
+      join(dir, "../ui/pages/PersonDirectoryPage.tsx"),
+      "utf8",
+    );
+    expect(page).toMatch(/createDashboardPortalUserProfilePage/);
+    /** Chrome da página é o shell canônico do MFE — sem wrapper ad hoc com style inline. */
+    expect(page).toMatch(/TransformometroShell/);
+    expect(page).not.toMatch(/style=\{\{/);
   });
 
   it("InteractionRooms liga autores/participantes ao perfil do portal", () => {

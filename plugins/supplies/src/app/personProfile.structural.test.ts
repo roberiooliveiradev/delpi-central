@@ -21,7 +21,7 @@ describe("person profile Core sync", () => {
     const page = readFileSync(join(dir, "../features/users/UserProfilePage.tsx"), "utf8");
     const hook = readFileSync(join(dir, "useMyPersonProfile.ts"), "utf8");
     expect(slots).toContain("useMyPersonProfile");
-    expect(slots).toContain("src={photoUrl}");
+    expect(slots).toContain("avatarUrl={photoUrl}");
     expect(page).toContain("useMyPersonProfile");
     expect(page).toContain("jobTitleLabel");
     expect(hook).toContain(DELPI_PERSON_PROFILE_CHANGED_EVENT);
