@@ -164,8 +164,65 @@ def test_mean_of_means_dashboard_formula():
     assert mean_of_means([80.0, 60.0]) == 70.0
 
 
+@_user_patch()
+@patch(f"{_AUDIT}.branch_audit_allowed", return_value=True)
+@patch(f"{_AUDIT}.branch_admin_allowed", return_value=True)
+@patch(f"{_AUDIT}.branch_access_error", return_value=None)
+@patch(f"{_AUDIT}.build_audit_5s_repository")
+def test_delete_audit_5s_area_returns_meta(
+    mock_build, _access, _admin, _audit, _user
+) -> None:
+    from app.interface.http.routes.quality.audit_5s_operational_router import (
+        delete_area,
+    )
+
+    repo = MagicMock()
+    repo.get_area.return_value = {
+        "id": "area-1",
+        "branch_code": "02",
+        "name": "Montagem",
+        "active": True,
+        "children_count": 0,
+        "is_aggregator": False,
+        "is_sub_area": False,
+    }
+    mock_build.return_value = repo
+    response = delete_area(area_id="area-1")
+    assert_envelope_meta(body_json(response), operation_id="delete_audit_5s_area")
+    repo.delete_area.assert_called_once_with("area-1")
+
+
+@_user_patch()
+@patch(f"{_AUDIT}.branch_admin_allowed", return_value=True)
+@patch(f"{_AUDIT}.branch_access_error", return_value=None)
+@patch(f"{_AUDIT}.build_audit_5s_repository")
+def test_delete_audit_5s_area_rejects_when_has_audits(
+    mock_build, _access, _admin, _user
+) -> None:
+    from app.interface.http.routes.quality.audit_5s_operational_router import (
+        delete_area,
+    )
+
+    repo = MagicMock()
+    repo.get_area.return_value = {
+        "id": "area-1",
+        "branch_code": "01",
+        "name": "Usinagem",
+        "children_count": 0,
+    }
+    repo.delete_area.side_effect = PluginsRepositoryError(
+        "Não é possível excluir uma área que já possui auditorias."
+    )
+    mock_build.return_value = repo
+    response = delete_area(area_id="area-1")
+    body = body_json(response)
+    assert body.get("success") is False
+    assert response.status_code == 422
+
+
 def test_route_contracts_include_area_hierarchy_operations() -> None:
     from app.interface.http.route_contract_registry import ROUTE_CONTRACTS
 
     assert "update_audit_5s_area" in ROUTE_CONTRACTS
+    assert "delete_audit_5s_area" in ROUTE_CONTRACTS
     assert "set_audit_5s_area_children" in ROUTE_CONTRACTS

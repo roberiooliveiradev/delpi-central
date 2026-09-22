@@ -163,6 +163,13 @@ export async function updateArea(
   return unwrapApiDelpiEnvelope(res, "Erro na API de auditoria 5S");
 }
 
+export async function deleteArea(areaId: string) {
+  const res = await httpDelete<ApiEnvelope<{ id: string; deleted: boolean }>>(
+    `${API_BASE}/areas/${encodeURIComponent(areaId)}`,
+  );
+  return unwrapApiDelpiEnvelope(res, "Erro na API de auditoria 5S");
+}
+
 export type SetAreaChildrenResult = AuditArea & {
   children?: AuditArea[];
 };

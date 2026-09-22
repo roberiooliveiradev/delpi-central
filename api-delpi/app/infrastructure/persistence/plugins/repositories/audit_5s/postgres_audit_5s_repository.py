@@ -5,6 +5,8 @@ from app.application.services.pagination_envelope_builder import PaginationEnvel
 from datetime import date
 from typing import Any
 
+from psycopg.errors import UniqueViolation
+
 from app.application.dto.audit_5s.get_audit_5s_dashboard_request import (
     GetAudit5sDashboardRequest,
 )
@@ -12,8 +14,13 @@ from app.application.dto.audit_5s.list_audit_5s_nc_board_request import (
     ListAudit5sNcBoardRequest,
 )
 from app.domain.services.audit_5s.audit_5s_area_hierarchy_service import (
+    AREA_DELETE_HAS_AUDITS_MESSAGE,
+    AREA_DELETE_HAS_CHILDREN_MESSAGE,
+    AREA_NAME_DUPLICATE_MESSAGE,
+    AREA_NOT_FOUND_MESSAGE,
     Audit5sAreaHierarchyError,
     assert_area_auditable,
+    children_count,
     enrich_area_hierarchy_fields,
     mean_of_means,
     validate_set_children,
@@ -173,15 +180,19 @@ class PostgresAudit5sRepository(PluginBaseRepository):
         name: str,
         created_by_user_id: str | None,
     ) -> dict[str, Any]:
-        row = self.execute_returning_one(
-            """
-            INSERT INTO quality.audit_5s_areas (
-                branch_code, name, created_by_user_id
-            ) VALUES (%s, %s, %s)
-            RETURNING id, branch_code, name, active, created_at, parent_area_id
-            """,
-            (branch_code, name.strip(), created_by_user_id),
-        )
+        try:
+            row = self.execute_returning_one(
+                """
+                INSERT INTO quality.audit_5s_areas (
+                    branch_code, name, created_by_user_id
+                ) VALUES (%s, %s, %s)
+                RETURNING id, branch_code, name, active, created_at, parent_area_id
+                """,
+                (branch_code, name.strip(), created_by_user_id),
+            )
+        except PluginsRepositoryError as exc:
+            self._reraise_area_name_conflict(exc)
+            raise
         if not row:
             raise PluginsRepositoryError("Falha ao cadastrar área auditada.")
         return enrich_area_hierarchy_fields({**row, "children_count": 0, "parent_area_name": None})
@@ -195,7 +206,7 @@ class PostgresAudit5sRepository(PluginBaseRepository):
     ) -> dict[str, Any]:
         area = self.get_area(area_id)
         if not area:
-            raise PluginsRepositoryError("Área não encontrada.")
+            raise PluginsRepositoryError(AREA_NOT_FOUND_MESSAGE)
         fields: list[str] = []
         params: list[Any] = []
         if name is not None:
@@ -211,18 +222,46 @@ class PostgresAudit5sRepository(PluginBaseRepository):
             raise PluginsRepositoryError("Nenhuma alteração informada.")
         fields.append("updated_at = NOW()")
         params.append(area_id)
-        self.execute(
-            f"""
-            UPDATE quality.audit_5s_areas
-               SET {", ".join(fields)}
-             WHERE id = %s
-            """,
-            tuple(params),
-        )
+        try:
+            self.execute(
+                f"""
+                UPDATE quality.audit_5s_areas
+                   SET {", ".join(fields)}
+                 WHERE id = %s
+                """,
+                tuple(params),
+            )
+        except PluginsRepositoryError as exc:
+            self._reraise_area_name_conflict(exc)
+            raise
         updated = self.get_area(area_id)
         if not updated:
             raise PluginsRepositoryError("Área não encontrada após atualização.")
         return updated
+
+    def delete_area(self, area_id: str) -> None:
+        area = self.get_area(area_id)
+        if not area:
+            raise PluginsRepositoryError(AREA_NOT_FOUND_MESSAGE)
+        if children_count(area) > 0:
+            raise PluginsRepositoryError(AREA_DELETE_HAS_CHILDREN_MESSAGE)
+        if self.count_audits_for_area(area_id) > 0:
+            raise PluginsRepositoryError(AREA_DELETE_HAS_AUDITS_MESSAGE)
+        self.execute(
+            """
+            DELETE FROM quality.audit_5s_areas
+             WHERE id = %s
+            """,
+            (area_id,),
+        )
+
+    @staticmethod
+    def _reraise_area_name_conflict(exc: PluginsRepositoryError) -> None:
+        cause: BaseException | None = exc.__cause__
+        while cause is not None:
+            if isinstance(cause, UniqueViolation):
+                raise PluginsRepositoryError(AREA_NAME_DUPLICATE_MESSAGE) from exc
+            cause = cause.__cause__
 
     def set_area_children(
         self,

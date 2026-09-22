@@ -27,7 +27,8 @@ A área auditada **não** é texto livre na hora da auditoria. O fluxo é:
 
 1. **Cadastro de áreas** — usuários com permissão de auditoria podem cadastrar novas áreas (folhas) conforme a necessidade da filial.
 2. **Seleção na auditoria** — ao iniciar ou editar o cabeçalho, a área é escolhida na lista cadastrada da filial (**somente folhas** — áreas que não são agregadoras).
-3. **Áreas agregadoras (filial 02)** — somente admin (`auditoria-5s.admin.filial-02`, rota `/apps/auditoria-5s/filial-02/admin`) pode criar uma área maior e vincular áreas existentes como subáreas.
+3. **Edição / exclusão (admin)** — somente admin (`auditoria-5s.admin.filial-XX`, rota `/filial-XX/admin`) pode renomear áreas e excluir áreas **sem** auditorias (e agregadoras sem subáreas).
+4. **Áreas agregadoras (filial 02)** — somente admin (`auditoria-5s.admin.filial-02`) pode criar uma área maior e vincular áreas existentes como subáreas.
 
 ### 2.1 Regras do cadastro
 
@@ -37,6 +38,7 @@ A área auditada **não** é texto livre na hora da auditoria. O fluxo é:
 | Nome | Obrigatório; único por filial (case-insensitive) |
 | Ativação | Área pode ser desativada (`active=false`); não aparece em novas auditorias |
 | Histórico | Auditorias antigas mantêm referência à área mesmo se desativada depois |
+| Exclusão | Só admin; bloqueada se existir qualquer auditoria na área ou se houver subáreas vinculadas |
 | Responsável pela área | Informado no **cabeçalho da auditoria**, não no cadastro da área |
 
 ### 2.2 Hierarquia (somente filial 02)
@@ -64,6 +66,7 @@ Endpoints:
 - `GET /quality/audit-5s/areas?branch=01` — listagem (ativas por padrão; inclui campos de hierarquia)
 - `POST /quality/audit-5s/areas` — cadastrar nova área na filial
 - `PATCH /quality/audit-5s/areas/{id}` — renomear ou desativar (admin)
+- `DELETE /quality/audit-5s/areas/{id}` — excluir se sem auditorias e sem subáreas (admin)
 - `PUT /quality/audit-5s/areas/{id}/children` — substituir subáreas (admin, filial 02)
 
 ---

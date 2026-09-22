@@ -307,7 +307,7 @@ export function AuditListView({
               Critérios
             </button>
           ) : null}
-          {canAdmin && branch === "02" && onOpenAreas ? (
+          {canAdmin && onOpenAreas ? (
             <button type="button" className="a5s-btn a5s-btn--ghost a5s-btn--header" onClick={onOpenAreas}>
               <MapPinned size={16} aria-hidden />
               Áreas
