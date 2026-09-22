@@ -61,6 +61,7 @@ import {
   isMachineLoadFinishedOperation,
   machineLoadRowModifierClass,
 } from "../utils/machineLoadStatus";
+import { mergeActiveOrderIntoMachineLoadQueue } from "../utils/machineLoadVisibleReorder";
 import { buildPpcHref, navigatePpc } from "../utils/routeParser";
 
 const tableClassNames = dataTableBemClasses("ppc");
@@ -533,8 +534,12 @@ export function MachineLoadPage({
   );
 
   const onReorder = useCallback(
-    (nextRows: MachineLoadOperation[]) => {
-      if (sequenceBusy || hideFinished) return;
+    (nextVisible: MachineLoadOperation[]) => {
+      if (sequenceBusy) return;
+      const nextRows = hideFinished
+        ? mergeActiveOrderIntoMachineLoadQueue(rows, nextVisible)
+        : nextVisible;
+      if (nextRows === rows) return;
       void persistOrder(nextRows, {
         previousKeys: keysFromOperations(rows),
         pushUndo: true,
@@ -611,13 +616,9 @@ export function MachineLoadPage({
               type="button"
               className="ppc-load__drag-handle"
               aria-label={copy.machineLoad.dragHandle}
-              title={
-                hideFinished
-                  ? copy.machineLoad.hideFinished.reorderDisabled
-                  : copy.machineLoad.dragHandle
-              }
-              disabled={hideFinished || sequenceBusy}
-              {...(hideFinished ? {} : reorder.handleProps(Math.max(0, rowIndex)))}
+              title={copy.machineLoad.dragHandle}
+              disabled={sequenceBusy}
+              {...(sequenceBusy ? {} : reorder.handleProps(Math.max(0, rowIndex)))}
             >
               <GripVertical size={16} strokeWidth={1.75} aria-hidden />
             </button>
@@ -694,7 +695,7 @@ export function MachineLoadPage({
         render: (row: MachineLoadOperation) => formatIsoDate(row.pa_due_date),
       },
     ],
-    [displayRows, hideFinished, reorder, sequenceBusy],
+    [displayRows, reorder, sequenceBusy],
   );
 
   const goTo = (next: {
@@ -978,11 +979,12 @@ export function MachineLoadPage({
             {activeCenter?.work_center_name ? (
               <p className="ppc-load__center-name">{activeCenter.work_center_name}</p>
             ) : null}
-            {displayRows.length > 1 && !hideFinished ? (
-              <p className="ppc-load__sequence-hint">{copy.machineLoad.sequenceHint}</p>
-            ) : null}
-            {hideFinished ? (
-              <p className="ppc-load__sequence-hint">{copy.machineLoad.hideFinished.reorderDisabled}</p>
+            {displayRows.length > 1 ? (
+              <p className="ppc-load__sequence-hint">
+                {hideFinished
+                  ? copy.machineLoad.hideFinished.reorderWhileHidden
+                  : copy.machineLoad.sequenceHint}
+              </p>
             ) : null}
             <DataTable
               columns={columns}
@@ -1000,7 +1002,7 @@ export function MachineLoadPage({
                   .join(" ") || undefined
               }
               getRowProps={(row, index) => ({
-                ...(hideFinished ? {} : reorder.rowDropProps(index)),
+                ...reorder.rowDropProps(index),
                 "data-ppc-locate-key": machineLoadLocateRowKey(row),
                 onContextMenu: (event: MouseEvent) => {
                   event.preventDefault();
