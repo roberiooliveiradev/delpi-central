@@ -248,19 +248,70 @@
 
 .dashboard-helpdesk .helpdesk-list-pagination {
   display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 0.35rem;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
   margin-block-start: 0.35rem;
+  padding-block-start: 0.5rem;
+  border-top: 1px solid var(--helpdesk-border, var(--delpi-ui-border, #334155));
 }
 
 .dashboard-helpdesk .helpdesk-list-pagination .delpi-ui-table-page-size {
-  align-self: flex-start;
+  flex: 0 0 auto;
+  margin: 0;
 }
 
 .dashboard-helpdesk .helpdesk-list-pagination .delpi-ui-pagination {
+  flex: 1 1 12rem;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px 12px;
   margin-top: 0;
-  padding-top: 0.5rem;
+  padding-top: 0;
+  border-top: none;
+  width: auto;
+  min-width: 0;
+}
+
+.dashboard-helpdesk .helpdesk-list-pagination .delpi-ui-pagination__controls {
+  width: auto;
+  flex: 0 1 auto;
+  justify-content: flex-end;
+  min-height: 0;
+}
+
+.dashboard-helpdesk .helpdesk-list-pagination .delpi-ui-pagination__info {
+  flex: 1 1 auto;
+  text-align: right;
+  min-width: min(100%, 14rem);
+}
+
+@media (max-width: 640px) {
+  .dashboard-helpdesk .helpdesk-list-pagination {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .dashboard-helpdesk .helpdesk-list-pagination .delpi-ui-pagination {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .dashboard-helpdesk .helpdesk-list-pagination .delpi-ui-pagination__controls {
+    justify-content: center;
+    width: 100%;
+  }
+
+  .dashboard-helpdesk .helpdesk-list-pagination .delpi-ui-pagination__info {
+    text-align: center;
+    min-width: 0;
+  }
 }
 
 .dashboard-helpdesk .helpdesk-list-pagination .delpi-ui-pagination__controls .delpi-ui-ghost-btn:has(> svg:only-child) {

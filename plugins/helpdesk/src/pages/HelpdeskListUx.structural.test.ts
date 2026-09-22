@@ -58,5 +58,6 @@ describe("Helpdesk list UX structural", () => {
     expect(ui).not.toContain("createCompactPagination");
     const css = read("../index.css");
     expect(css).toContain(".helpdesk-list-pagination");
+    expect(css).toMatch(/\.helpdesk-list-pagination[\s\S]*?flex-direction:\s*row/);
   });
 });
