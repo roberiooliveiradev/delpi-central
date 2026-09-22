@@ -1,4 +1,13 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  BarChart3,
+  BookOpen,
+  BriefcaseBusiness,
+  CalendarCheck,
+  FolderKanban,
+  Home,
+  MessagesSquare,
+} from "lucide-react";
 import {
   CommandPalette,
   TopBar,
@@ -31,6 +40,19 @@ const NAV = underlineNavBemClasses("ds");
 const SEARCH = topBarSearchTriggerBemClasses("ds");
 const UTILITY = topBarUtilityClusterBemClasses("ds");
 const PALETTE = commandPaletteBemClasses("ds");
+
+const ICON_PROPS = { size: 16, strokeWidth: 1.75, "aria-hidden": true as const };
+
+/** Ícones alinhados ao padrão do portal Comercial (lucide 16 / 1.75). */
+const PORTAL_TOPBAR_ICONS: Record<string, ReactNode> = {
+  home: <Home {...ICON_PROPS} />,
+  overview: <BarChart3 {...ICON_PROPS} />,
+  interaction: <MessagesSquare {...ICON_PROPS} />,
+  tasks: <CalendarCheck {...ICON_PROPS} />,
+  processes: <FolderKanban {...ICON_PROPS} />,
+  administration: <BriefcaseBusiness {...ICON_PROPS} />,
+  help: <BookOpen {...ICON_PROPS} />,
+};
 
 function isEditableTarget(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false;
@@ -66,6 +88,7 @@ export function PortalTopBar({ currentPath, onNavigate }: PortalTopBarProps) {
         items={items.map((item) => ({
           id: item.id,
           label: item.label,
+          icon: PORTAL_TOPBAR_ICONS[item.id],
           onSelect: () => onNavigate(item.path),
         }))}
         activeId={activeId}
