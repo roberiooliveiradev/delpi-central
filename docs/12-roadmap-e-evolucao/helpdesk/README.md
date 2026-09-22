@@ -1,6 +1,6 @@
 # Meus Chamados de TI
 
-> **Status:** primeira entrega + paridade do solicitante **publicadas** (E1–E13 + E14 menção leitura + **H12 upload live**). Ledger 21/09/2026.
+> **Status:** primeira entrega + paridade do solicitante **publicadas** (E1–E13 + E14 menção leitura + **H12 upload live** + **P0 colar/F5**). Ledger 22/09/2026.
 > **Fundação GLPI:** `PROVEN` em produção (21/09/2026)
 > **Produto:** Meus Chamados de TI — abertura e acompanhamento de chamados dentro da Minha DELPI, com o GLPI como dono do chamado
 > **Requisitos:** `HD-001…HD-027` em [`07-requisitos.md`](./07-requisitos.md)
@@ -16,12 +16,12 @@ Esta pasta decide o produto. Não autoriza implementação sozinha e não prova 
 Meus Chamados de TI não é um segundo sistema de chamados e não é um conserto do iframe atual.
 
 ```text
-Hoje, publicado                              Ainda aberto / parque / urgente
+Hoje, publicado                              Ainda aberto / parque
 -------------------------------------------  --------------------------------
-MFE /apps/helpdesk + HTML + builder AND      **P0** colar + F5 imagem (DRIFT H12 UX)
-helpdesk-api OAuth + contrato ADDITIVE       M-23 @ escrita (BLOQUEADO)
-H12 Document upload BFF live                 H10 ciclo write (CONSOLE)
-GLPI dono do chamado                         bancada / Change / HD-011 (FORA)
+MFE /apps/helpdesk + HTML + builder AND      M-23 @ escrita (BLOQUEADO)
+helpdesk-api OAuth + contrato ADDITIVE       H10 ciclo write (CONSOLE)
+H12 Document upload BFF live                 bancada / Change / HD-011 (FORA)
+P0 colar + F5 preview (kit + IDB)            —
 E14 chips de menção na bolha
 ```
 
@@ -103,7 +103,7 @@ O id não muda. O plugin iframe já é `helpdesk`, e o cliente OAuth de produç�
 | Qual é o contrato? | [`03-contrato.md`](./03-contrato.md) |
 | Como a identidade funciona? | [`04-seguranca.md`](./04-seguranca.md) |
 | Em que ondas o produto cresce? | [`05-roadmap.md`](./05-roadmap.md) |
-| Qual é a próxima etapa executável? | **P0 urgente:** colar imagem + F5 preview no compositor (alinhar à sala de interação). Depois: M-23 `@`, H10 write se HLAPI. Ledger: [`evidence/execution-ledger.md`](./evidence/execution-ledger.md) · roadmap [`05`](./05-roadmap.md) §Próximo código |
+| Qual é a próxima etapa executável? | Rebuild remote→MFE + ACEITE live Snipping. Depois: M-23 `@`, H10 write se HLAPI. Ledger: [`evidence/execution-ledger.md`](./evidence/execution-ledger.md) · roadmap [`05`](./05-roadmap.md) §Próximo código |
 | Qual é a onda? | [`05-roadmap.md`](./05-roadmap.md) |
 | Qual requisito isso cobre? | [`07-requisitos.md`](./07-requisitos.md) |
 | Quando uma etapa está pronta? | [`08-definition-of-done.md`](./08-definition-of-done.md) |

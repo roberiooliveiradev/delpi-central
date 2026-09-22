@@ -176,8 +176,10 @@ export function HelpdeskRichTextField({
   /** Host only materializes File → src/attrs; kit inserts at caret (S-P2). */
   const materializeUploads = async (
     files: File[],
-  ): Promise<RichTextInlineImageInsert[] | void> => {
-    if (!onUploadFiles || disabled || uploadingRef.current || files.length === 0) return;
+  ): Promise<RichTextInlineImageInsert[]> => {
+    if (!onUploadFiles || disabled || uploadingRef.current || files.length === 0) {
+      return [];
+    }
     uploadingRef.current = true;
     try {
       const results = await onUploadFiles(files);

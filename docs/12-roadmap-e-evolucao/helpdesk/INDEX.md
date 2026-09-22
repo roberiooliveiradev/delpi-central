@@ -39,7 +39,7 @@ a página e os estados?      → 14 (detalhe do solicitante + ciclo ITIL)
 o que o GLPI tem além disso? → 15 (matriz Assistência)
 onde fica o segredo?        → 04
 ondas do produto?           → 05 (H0…H14)
-o que implementar agora?    → **P0 urgente** colar + F5 imagem (paridade sala); depois M-23 @ / H10 write
+o que implementar agora?    → rebuild remote→MFE + ACEITE live Snipping; depois M-23 @ / H10 write
 qual HD?                    → 07
 como fechar a etapa?        → 08 e 09
 já está em produção?        → evidence/execution-ledger

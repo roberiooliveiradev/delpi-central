@@ -158,14 +158,12 @@ Ordem: componentes e tipos **já** no MFE; builder e prefs só depois de H7 est�
 
 **Rodapé da lista (21/09/2026):** `HelpdeskListPaginationFooter` via `createDashboardPaginationKit` do plugin-ui; ajuda em `HintAction` (sem `?` soltos). Evidência: ledger `lista.ux.pagination`.
 
-## Próximo código — melhorias urgentes (22/09/2026)
+## Próximo código — após P0 colar/F5 (22/09/2026)
 
-A evidência H12 «colar/preview» ficou **STALE** frente ao runtime: colar e F5 da imagem no compositor do helpdesk **quebram** na superfície publicada. A sala de interação (`MentionComposer` / `InteractionRoomPage`) é a referência canônica.
+P0 colar + F5 preview **corrigido no código** (ledger H12.* PROVEN unitário/wiring). Em publish: rebuild fase `remote` (`plugin-ui`) antes do MFE; ACEITE live Snipping pós-deploy.
 
 | Prioridade | Item | Estado | Dono / alvo |
 |---|---|---|---|
-| **P0 urgente** | Colar imagem (Ctrl+V / Snipping Tool) no `HelpdeskRichTextField` | **DRIFT** — não confiar em H12.paste.snipping PROVEN | Kit: `RichTextEditor.onPasteImages` + `richTextClipboardImages` (paridade MentionComposer); host helpdesk só faz upload/pending |
-| **P0 urgente** | Preview autenticado após F5 / reload do rascunho | **DRIFT** — blob no state / resolve incompleto | Contrato único: persist path BFF + `data-attachment-id`; display via `resolveAttachmentImageSrc` (salas) |
 | P1 | M-23 menção `@` na escrita | BLOQUEADO | catálogo HLAPI |
 | P1 | H10 aprovar/reabrir/satisfação | CONSOLE | operações HLAPI do solicitante |
 
@@ -174,9 +172,10 @@ fonte canônica de paste/imagem no compositor
   MentionComposer + richTextClipboardImages + resolveAttachmentImageSrc
   → RichTextEditor.onPasteImages (mesmo fluxo)
   → HelpdeskRichTextField consome; sem clipboard paralelo no MFE
+  → draft: path BFF / attachment:pending:{id} + IDB File (nunca blob: no sessionStorage)
 ```
 
-H12 Document upload (BFF/live) permanece válido; o que reabre é **só** a UX de colar/preview no MFE.
+H12 Document upload (BFF/live) permanece válido.
 
 ## Dependências
 

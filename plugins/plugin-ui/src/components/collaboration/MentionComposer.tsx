@@ -114,11 +114,13 @@ import {
 import {
   buildInlineImageInserts,
   clipboardHtmlHasProse,
+  collectPasteImageFiles,
   INLINE_IMAGE_FIGURE_SELECTOR,
   insertComposerInlineImageAtCaret,
   isComposerInlineImageFile,
   materializeClipboardHtmlInlineImages,
-  uniqueClipboardImageFiles,
+  readClipboardImageFiles,
+  shouldTryAsyncClipboardImageRead,
   type MentionComposerInlineImageInsert,
 } from "./mentionComposerInlineImage";
 
@@ -772,7 +774,7 @@ export function MentionComposer({
     if (!el) return;
     const html = event.clipboardData?.getData("text/html") ?? "";
     const text = event.clipboardData?.getData("text/plain") ?? "";
-    const imageFiles = uniqueClipboardImageFiles(event.clipboardData);
+    const imageFiles = collectPasteImageFiles(event.clipboardData);
     const hasProse =
       clipboardHtmlHasProse(html) || Boolean(text.replace(/\s+/g, " ").trim());
     const richHtml = clipboardHasUsefulHtml(html);
@@ -826,6 +828,17 @@ export function MentionComposer({
 
     if (imageFiles.length > 0) {
       insertInlineImages(imageFiles);
+      return;
+    }
+
+    // Win Snipping Tool: empty FileList — same async path as RichTextEditor.
+    if (shouldTryAsyncClipboardImageRead(event.clipboardData)) {
+      void (async () => {
+        const asyncFiles = await readClipboardImageFiles();
+        if (asyncFiles.length > 0) {
+          insertInlineImages(asyncFiles);
+        }
+      })();
       return;
     }
 

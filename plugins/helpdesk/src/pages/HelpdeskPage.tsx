@@ -48,7 +48,6 @@ import {
   rewritePendingInlineImages,
   stripPendingInlineImages,
 } from "../presentation/inlineUpload";
-import { useAuthenticatedAttachmentSrcs } from "../presentation/useAuthenticatedAttachmentSrcs";
 import type { HelpdeskInlineUploadResult } from "../ui/helpdeskUi";
 import { helpdeskListPaginationBounds } from "../presentation/listPagination";
 import { glpiTicketFormUrl } from "../presentation/glpiPublicLinks";
@@ -63,6 +62,18 @@ import {
   writeCreateDraft,
   writeReplyDraft,
 } from "../presentation/ticketDraftStorage";
+import {
+  HELPDESK_CREATE_DRAFT_SCOPE,
+  clearHelpdeskDraftPendingFiles,
+  pendingFilesMapToDraftRows,
+  readHelpdeskDraftPendingFiles,
+  replyDraftPendingScope,
+  writeHelpdeskDraftPendingFiles,
+} from "../presentation/helpdeskDraftPendingFiles";
+import {
+  persistHelpdeskAttachmentHtml,
+  useAuthenticatedAttachmentSrcs,
+} from "../presentation/useAuthenticatedAttachmentSrcs";
 import { useMyPersonProfilePhoto } from "../presentation/useMyPersonProfilePhoto";
 import {
   emptyFilterGroup,
@@ -515,7 +526,9 @@ function TicketListPage() {
 function CreateTicketPage() {
   const savedDraft = readCreateDraft();
   const [title, setTitle] = useState(savedDraft?.title ?? "");
-  const [description, setDescription] = useState(savedDraft?.description ?? "");
+  const [description, setDescription] = useState(() =>
+    persistHelpdeskAttachmentHtml(savedDraft?.description ?? ""),
+  );
   const [observerIdsInput, setObserverIdsInput] = useState(savedDraft?.observerIdsInput ?? "");
   const [categoryId, setCategoryId] = useState(savedDraft?.categoryId ?? "");
   const [urgencyId, setUrgencyId] = useState(savedDraft?.urgencyId ?? "");
@@ -525,6 +538,7 @@ function CreateTicketPage() {
   const [saving, setSaving] = useState(false);
   const [errorText, setErrorText] = useState<string | null>(null);
   const [idempotencyKey] = useState(newIdempotencyKey);
+  const [pendingHydrated, setPendingHydrated] = useState(0);
   const pendingFilesRef = useRef<Map<string, File>>(new Map());
   const pendingPreviewUrlsRef = useRef<Map<string, string>>(new Map());
 
@@ -539,6 +553,27 @@ function CreateTicketPage() {
       }
       pendingPreviewUrlsRef.current.clear();
     };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    void readHelpdeskDraftPendingFiles(HELPDESK_CREATE_DRAFT_SCOPE).then((rows) => {
+      if (cancelled) return;
+      for (const row of rows) {
+        pendingFilesRef.current.set(row.id, row.file);
+      }
+      if (rows.length > 0) setPendingHydrated((n) => n + 1);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const persistCreatePendingFiles = useCallback(() => {
+    void writeHelpdeskDraftPendingFiles(
+      HELPDESK_CREATE_DRAFT_SCOPE,
+      pendingFilesMapToDraftRows(pendingFilesRef.current),
+    );
   }, []);
 
   useEffect(() => {
@@ -581,21 +616,32 @@ function CreateTicketPage() {
   useEffect(() => {
     writeCreateDraft({
       title,
-      description,
+      description: persistHelpdeskAttachmentHtml(description),
       observerIdsInput,
       categoryId,
       urgencyId,
     });
   }, [title, description, observerIdsInput, categoryId, urgencyId]);
 
-  const resolveCreatePendingSrc = useCallback((attachmentId: string) => {
-    const cached = pendingPreviewUrlsRef.current.get(attachmentId);
-    if (cached) return cached;
-    const file = pendingFilesRef.current.get(attachmentId);
-    if (!file) return null;
-    const url = URL.createObjectURL(file);
-    pendingPreviewUrlsRef.current.set(attachmentId, url);
-    return url;
+  const resolveCreatePendingSrc = useCallback(
+    (attachmentId: string) => {
+      const cached = pendingPreviewUrlsRef.current.get(attachmentId);
+      if (cached) return cached;
+      const file = pendingFilesRef.current.get(attachmentId);
+      if (!file) return null;
+      const url = URL.createObjectURL(file);
+      pendingPreviewUrlsRef.current.set(attachmentId, url);
+      return url;
+    },
+    // pendingHydrated forces re-bind after IDB restore so RichTextEditor re-resolves srcs
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [pendingHydrated],
+  );
+
+  const persistCreatePendingSrc = useCallback((attachmentId: string) => {
+    const pending = String(attachmentId || "").trim();
+    if (!pending) return null;
+    return `attachment:pending:${pending}`;
   }, []);
 
   const queuePendingFiles = async (files: File[]): Promise<HelpdeskInlineUploadResult[]> => {
@@ -617,6 +663,7 @@ function CreateTicketPage() {
         });
       }
     }
+    persistCreatePendingFiles();
     return results;
   };
 
@@ -681,6 +728,7 @@ function CreateTicketPage() {
                   }
                 }
                 clearCreateDraft();
+                void clearHelpdeskDraftPendingFiles(HELPDESK_CREATE_DRAFT_SCOPE);
                 navigateHelpdesk(`/apps/helpdesk/tickets/${created.id}`);
               })
               .catch((error) => {
@@ -704,12 +752,13 @@ function CreateTicketPage() {
                 hint={helpTooltips.createUi.description}
                 attachHint={helpTooltips.createUi.attach}
                 value={description}
-                onChange={setDescription}
+                onChange={(next) => setDescription(persistHelpdeskAttachmentHtml(next))}
                 minHeight={220}
                 icon={<AlignLeft size={14} aria-hidden />}
                 onUploadFiles={queuePendingFiles}
                 onUploadError={(error) => setErrorText(messageFor(error).text)}
                 resolveAttachmentImageSrc={resolveCreatePendingSrc}
+                persistAttachmentImageSrc={persistCreatePendingSrc}
               />
             </div>
             <aside className="helpdesk-create-layout__aside" aria-label="Classificação do chamado">
@@ -766,12 +815,16 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
   const [loading, setLoading] = useState(true);
   const [errorText, setErrorText] = useState<string | null>(null);
   const [content, setContent] = useState(() =>
-    normalizeInlineAttachmentSrcs(stampHelpdeskAttachmentIds(readReplyDraft(ticketId)), ticketId),
+    persistHelpdeskAttachmentHtml(
+      normalizeInlineAttachmentSrcs(stampHelpdeskAttachmentIds(readReplyDraft(ticketId)), ticketId),
+      ticketId,
+    ),
   );
   const [saving, setSaving] = useState(false);
   const [idempotencyKey, setIdempotencyKey] = useState(newIdempotencyKey);
   const [inlinePreview, setInlinePreview] = useState<TicketAttachment | null>(null);
   const myPhotoUrl = useMyPersonProfilePhoto();
+  const pendingFilesRef = useRef<Map<string, File>>(new Map());
 
   const conversationHtml = useMemo(() => {
     if (!ticket) return "";
@@ -786,6 +839,27 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
     fetchBlob: fetchTicketAttachmentBlob,
     extraDocumentIds: ticket?.attachments.map((item) => item.document_id),
   });
+
+  const persistReplyPendingFiles = useCallback(() => {
+    void writeHelpdeskDraftPendingFiles(
+      replyDraftPendingScope(ticketId),
+      pendingFilesMapToDraftRows(pendingFilesRef.current),
+    );
+  }, [ticketId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void readHelpdeskDraftPendingFiles(replyDraftPendingScope(ticketId)).then((rows) => {
+      if (cancelled || rows.length === 0) return;
+      for (const row of rows) {
+        pendingFilesRef.current.set(row.id, row.file);
+        attachmentPreview.seedFile(row.id, row.file);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [ticketId, attachmentPreview.seedFile]);
 
   useEffect(() => {
     writeReplyDraft(ticketId, attachmentPreview.persistHtml(content));
@@ -961,6 +1035,8 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                   .then(() => {
                     setContent("");
                     clearReplyDraft(ticketId);
+                    pendingFilesRef.current.clear();
+                    void clearHelpdeskDraftPendingFiles(replyDraftPendingScope(ticketId));
                     setIdempotencyKey(newIdempotencyKey());
                     load();
                   })
@@ -990,6 +1066,7 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                       continue;
                     }
                     const pendingId = newIdempotencyKey();
+                    pendingFilesRef.current.set(pendingId, file);
                     const src = attachmentPreview.seedFile(pendingId, file);
                     results.push({
                       kind: "pending",
@@ -999,6 +1076,7 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                     });
                     pendingUploads.push({ pendingId, file });
                   }
+                  persistReplyPendingFiles();
                   if (pendingUploads.length > 0) {
                     void (async () => {
                       const mapping: Record<string, { documentId: number; ticketId: string }> = {};
@@ -1014,7 +1092,9 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                             documentId: uploaded.document_id,
                             ticketId,
                           };
+                          pendingFilesRef.current.delete(item.pendingId);
                         }
+                        persistReplyPendingFiles();
                         if (Object.keys(mapping).length > 0) {
                           setContent((current) =>
                             attachmentPreview.persistHtml(

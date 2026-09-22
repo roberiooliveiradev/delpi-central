@@ -16,18 +16,34 @@ export type FetchTicketAttachmentBlob = (
   documentId: number,
 ) => Promise<Blob>;
 
-/** Stable HTML for draft/API — stamped ids + public BFF paths (never blob:). */
+/**
+ * Stable HTML for draft/API:
+ *   data-attachment-id → BFF public path (when ticketId known)
+ *   data-attachment-pending → attachment:pending:{id} (never blob:/data:)
+ */
 export function persistHelpdeskAttachmentHtml(
   html: string,
-  ticketId: string | number,
+  ticketId?: string | number | null,
 ): string {
-  const stamped = stampHelpdeskAttachmentIds(html || "");
-  return stamped.replace(
-    /<img\b([^>]*\bdata-attachment-id=["'](\d+)["'][^>]*)\/?>/gi,
-    (_full, attrs: string, documentId: string) => {
-      const src = attachmentPublicUrl(ticketId, Number(documentId));
-      let cleaned = String(attrs).replace(/\ssrc=["'][^"']*["']/i, ` src="${src}"`);
-      if (!/\ssrc=/i.test(cleaned)) cleaned = ` src="${src}"${cleaned}`;
+  let next = stampHelpdeskAttachmentIds(html || "");
+  const ticket = ticketId != null ? String(ticketId).trim() : "";
+  if (ticket) {
+    next = next.replace(
+      /<img\b([^>]*\bdata-attachment-id=["'](\d+)["'][^>]*)\/?>/gi,
+      (_full, attrs: string, documentId: string) => {
+        const src = attachmentPublicUrl(ticket, Number(documentId));
+        let cleaned = String(attrs).replace(/\ssrc=["'][^"']*["']/i, ` src="${src}"`);
+        if (!/\ssrc=/i.test(cleaned)) cleaned = ` src="${src}"${cleaned}`;
+        return `<img${cleaned} />`;
+      },
+    );
+  }
+  return next.replace(
+    /<img\b([^>]*\bdata-attachment-pending=["']([^"']+)["'][^>]*)\/?>/gi,
+    (_full, attrs: string, pendingId: string) => {
+      const token = `attachment:pending:${pendingId}`;
+      let cleaned = String(attrs).replace(/\ssrc=["'][^"']*["']/i, ` src="${token}"`);
+      if (!/\ssrc=/i.test(cleaned)) cleaned = ` src="${token}"${cleaned}`;
       return `<img${cleaned} />`;
     },
   );
@@ -155,8 +171,13 @@ export function useAuthenticatedAttachmentSrcs(args: {
   const persistAttachmentImageSrc = useCallback(
     (attachmentId: string) => {
       const id = Number(attachmentId);
-      if (!Number.isFinite(id) || id <= 0) return null;
-      return attachmentPublicUrl(ticketId, id);
+      if (Number.isFinite(id) && id > 0) {
+        return attachmentPublicUrl(ticketId, id);
+      }
+      const pending = String(attachmentId || "").trim();
+      if (!pending) return null;
+      // Pending uuid — stable token so draft/F5 never keeps blob:
+      return `attachment:pending:${pending}`;
     },
     [ticketId],
   );

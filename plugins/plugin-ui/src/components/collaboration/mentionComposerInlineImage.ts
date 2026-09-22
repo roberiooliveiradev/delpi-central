@@ -8,8 +8,11 @@
 import type { RichTextAlign } from "../rich-text/richTextCommands";
 import {
   collectClipboardImageFiles,
+  collectPasteImageFiles,
   extractClipboardHtmlImageFiles,
   isRichTextClipboardImageFile,
+  readClipboardImageFiles,
+  shouldTryAsyncClipboardImageRead,
   uniqueClipboardImageFiles,
 } from "../rich-text/richTextClipboardImages";
 
@@ -37,7 +40,10 @@ export function isComposerInlineImageFile(file: File): boolean {
 
 export {
   collectClipboardImageFiles,
+  collectPasteImageFiles,
   extractClipboardHtmlImageFiles,
+  readClipboardImageFiles,
+  shouldTryAsyncClipboardImageRead,
   uniqueClipboardImageFiles,
 };
 

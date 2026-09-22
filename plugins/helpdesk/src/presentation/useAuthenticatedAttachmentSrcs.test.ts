@@ -24,4 +24,13 @@ describe("persistHelpdeskAttachmentHtml", () => {
     const html = '<p><img src="https://cdn.example/a.png" alt="x" /></p>';
     expect(persistHelpdeskAttachmentHtml(html, 1)).toContain("https://cdn.example/a.png");
   });
+
+  it("pending: blob vira token estável (F5 sem File em memória)", () => {
+    const html =
+      '<p><img src="blob:http://localhost/dead" alt="print" data-attachment-pending="abc-1" /></p>';
+    const persisted = persistHelpdeskAttachmentHtml(html);
+    expect(persisted).toContain('src="attachment:pending:abc-1"');
+    expect(persisted).toContain('data-attachment-pending="abc-1"');
+    expect(persisted).not.toContain("blob:");
+  });
 });

@@ -143,4 +143,85 @@ describe("RichTextEditor", () => {
     expect(editor.style.display).not.toBe("none");
     expect(editor.getAttribute("contenteditable")).toBe("true");
   });
+
+  it("positive: onPasteImages materializa File e insert no caret", async () => {
+    const onChange = vi.fn();
+    const onPasteImages = vi.fn(async (files: File[]) =>
+      files.map((file) => ({
+        src: "blob:http://localhost/preview",
+        pendingId: "pend-1",
+        alt: file.name,
+      })),
+    );
+    const { container } = render(
+      <RichTextEditor value="<p></p>" onChange={onChange} onPasteImages={onPasteImages} />,
+    );
+    const editor = container.querySelector(".delpi-ui-rich-text__editor") as HTMLElement;
+    const file = new File([new Uint8Array([1, 2, 3])], "shot.png", { type: "image/png" });
+    const clipboardData = {
+      files: {
+        length: 1,
+        0: file,
+        item: (i: number) => (i === 0 ? file : null),
+        [Symbol.iterator]: function* () {
+          yield file;
+        },
+      },
+      items: [{ kind: "file", type: "image/png", getAsFile: () => file }],
+      types: ["Files", "image/png"],
+      getData: () => "",
+    };
+    fireEvent.paste(editor, { clipboardData });
+    await vi.waitFor(() => expect(onPasteImages).toHaveBeenCalled());
+    expect(onPasteImages.mock.calls[0]?.[0]?.[0]?.name).toBe("shot.png");
+    await vi.waitFor(() => expect(onChange).toHaveBeenCalled());
+    const last = onChange.mock.calls.at(-1)?.[0] as string;
+    expect(last).toMatch(/data-attachment-pending=["']pend-1["']/);
+  });
+
+  it("irmão: paste Markdown sem onPasteImages continua convertendo texto", () => {
+    const onChange = vi.fn();
+    const { container } = render(
+      <RichTextEditor value="<p></p>" onChange={onChange} />,
+    );
+    const editor = container.querySelector(".delpi-ui-rich-text__editor") as HTMLElement;
+    fireEvent.paste(editor, {
+      clipboardData: {
+        getData: (type: string) =>
+          type === "text/plain" ? "# Título\n\n**negrito**" : "",
+        files: { length: 0, item: () => null, [Symbol.iterator]: function* () {} },
+        items: [],
+        types: ["text/plain"],
+      },
+    });
+    expect(onChange).toHaveBeenCalled();
+    const last = onChange.mock.calls.at(-1)?.[0] as string;
+    expect(last).toMatch(/<h1>|<h2>/);
+  });
+
+  it("negativo: sem onPasteImages, imagem no clipboard não chama host", () => {
+    const onChange = vi.fn();
+    const { container } = render(
+      <RichTextEditor value="<p></p>" onChange={onChange} />,
+    );
+    const editor = container.querySelector(".delpi-ui-rich-text__editor") as HTMLElement;
+    const file = new File([new Uint8Array([1])], "x.png", { type: "image/png" });
+    fireEvent.paste(editor, {
+      clipboardData: {
+        files: {
+          length: 1,
+          0: file,
+          item: (i: number) => (i === 0 ? file : null),
+          [Symbol.iterator]: function* () {
+            yield file;
+          },
+        },
+        items: [{ kind: "file", type: "image/png", getAsFile: () => file }],
+        types: ["Files"],
+        getData: () => "",
+      },
+    });
+    // Sem handler, paste de imagem não é o contrato H12 — não inventa insert.
+    expect(editor.querySelector("img")).toBeNull();
+  });
 });
