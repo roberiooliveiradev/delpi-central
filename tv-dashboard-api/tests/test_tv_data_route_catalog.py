@@ -288,7 +288,7 @@ def test_param_inherited_from_slide():
     )
 
 
-def test_project_branch_params_playlist_branch_onto_refugo_filial():
+def test_project_branch_params_playlist_branch_onto_legacy_filial_schema():
     projected = project_branch_params_onto_route_schema(
         {"branch": "01", "dateRangePreset": "today"},
         {"filial": {"type": "string", "optional": True}},

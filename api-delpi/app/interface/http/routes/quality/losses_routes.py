@@ -70,10 +70,10 @@ def get_quality_scrap_cost_pct(
     )
     try:
         request = build_refugos_query_request(
-            filial=branch,
+            branch=branch,
             data_inicio=start_date,
             data_fim=end_date,
-            require_filial=False,
+            require_branch=False,
         )
     except ValueError as exc:
         log_error(f"Erro de validação ao carregar custo de refugo / ROL (quality): {exc}")
@@ -129,10 +129,10 @@ def get_quality_rework_cost_pct(
     )
     try:
         request = build_retrabalho_query_request(
-            filial=branch,
+            branch=branch,
             data_inicio=start_date,
             data_fim=end_date,
-            require_filial=False,
+            require_branch=False,
         )
     except ValueError as exc:
         log_error(
@@ -231,10 +231,10 @@ def get_quality_scrap_cost_pct_series(
 ):
     def fetch_metrics(scope_branch, bucket_start, bucket_end):
         request = build_refugos_query_request(
-            filial=scope_branch,
+            branch=scope_branch,
             data_inicio=bucket_start,
             data_fim=bucket_end,
-            require_filial=False,
+            require_branch=False,
         )
         result = build_get_refugos_scrap_cost_pct_use_case().execute(request)
         return {
@@ -274,10 +274,10 @@ def get_quality_rework_cost_pct_series(
 ):
     def fetch_metrics(scope_branch, bucket_start, bucket_end):
         request = build_retrabalho_query_request(
-            filial=scope_branch,
+            branch=scope_branch,
             data_inicio=bucket_start,
             data_fim=bucket_end,
-            require_filial=False,
+            require_branch=False,
         )
         result = build_get_retrabalho_rework_cost_pct_use_case().execute(request)
         return {

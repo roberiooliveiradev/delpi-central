@@ -22349,7 +22349,7 @@
       "description": "Indicador — Refugos filtros.",
       "whenToUse": "Use quando precisar de: Indicador — Refugos filtros.",
       "paramSchema": {
-        "filial": {
+        "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
@@ -22411,7 +22411,7 @@
       "description": "Ranking de refugos por dimensão com valor (R$) e participação percentual (sharePct/percentual).",
       "whenToUse": "Use para ranking de refugo por motivo, matéria-prima, produto acabado, centro de trabalho ou colaborador.",
       "paramSchema": {
-        "filial": {
+        "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
@@ -22524,7 +22524,7 @@
       "description": "Lista paginada de perdas (refugo) com MP, PA, motivo, quantidade e custo valorizado.",
       "whenToUse": "Usar em tabela ou exportação dos apontamentos individuais de refugo no período.",
       "paramSchema": {
-        "filial": {
+        "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
@@ -22614,7 +22614,7 @@
       "description": "Indicadores de perdas (refugo) no período: quantidade, custo valorizado e ocorrências.",
       "whenToUse": "Usar em card KPI ou painel antes da listagem ou ranking de refugos.",
       "paramSchema": {
-        "filial": {
+        "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
@@ -22688,9 +22688,9 @@
       ],
       "metaShape": "scalar",
       "description": "Custo de refugo sobre o ROL financeiro líquido no período. Filial opcional: omitida consolida todas. Filtros opcionais (mp, pa, op, motivo, centro de trabalho) só no numerador.",
-      "whenToUse": "Usar no card KPI de custo de refugo / ROL. Mesmo período de /financial/rol; omita filial para consolidado.",
+      "whenToUse": "Usar no card KPI de custo de refugo / ROL. Mesmo período de /financial/rol; omita branch para consolidado.",
       "paramSchema": {
-        "filial": {
+        "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
@@ -22782,7 +22782,7 @@
       "description": "Relatório operacional — Refugos serie.",
       "whenToUse": "Use quando precisar de: Relatório operacional — Refugos serie.",
       "paramSchema": {
-        "filial": {
+        "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
@@ -23333,7 +23333,7 @@
       "metaShape": "list",
       "description": "Consulta operacional: «Lista — Retrabalho horas improdutivas colaboradores».",
       "paramSchema": {
-        "filial": {
+        "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
@@ -23415,7 +23415,7 @@
       "description": "Lista paginada de apontamentos de retrabalho (parada) com horas, custo, recurso, operador e motivo.",
       "whenToUse": "Usar em tabela ou exportação dos apontamentos individuais de retrabalho no período.",
       "paramSchema": {
-        "filial": {
+        "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
@@ -23515,7 +23515,7 @@
       "metaShape": "scalar",
       "description": "Indicador numérico para «Retrabalho horas improdutivas filtros».",
       "paramSchema": {
-        "filial": {
+        "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
@@ -23573,7 +23573,7 @@
       "metaShape": "list",
       "description": "Consulta operacional: «Lista — Retrabalho horas improdutivas mensal».",
       "paramSchema": {
-        "filial": {
+        "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
@@ -23636,7 +23636,7 @@
       "metaShape": "list",
       "description": "Consulta operacional: «Lista — Retrabalho horas improdutivas recursos».",
       "paramSchema": {
-        "filial": {
+        "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
@@ -23718,7 +23718,7 @@
       "description": "Indicadores de apontamentos de retrabalho (parada): horas, custo e destaques por recurso ou operador.",
       "whenToUse": "Usar em card KPI ou painel antes da listagem ou ranking de retrabalho.",
       "paramSchema": {
-        "filial": {
+        "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
@@ -23780,9 +23780,9 @@
       ],
       "metaShape": "scalar",
       "description": "Custo de retrabalho sobre o ROL financeiro líquido no período. Filial opcional: omitida consolida todas. Filtros opcionais (recurso, centro de custo, operador) só no numerador.",
-      "whenToUse": "Usar no card KPI de custo de retrabalho / ROL. Mesmo período de /financial/rol; omita filial para consolidado.",
+      "whenToUse": "Usar no card KPI de custo de retrabalho / ROL. Mesmo período de /financial/rol; omita branch para consolidado.",
       "paramSchema": {
-        "filial": {
+        "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",

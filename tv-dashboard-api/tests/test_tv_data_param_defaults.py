@@ -267,14 +267,14 @@ def test_gateway_fills_granularity_for_commercial_series_shape():
     assert "date_start" not in query
 
 
-def test_gateway_maps_smoke_dates_to_retrabalho_keys_and_filial():
+def test_gateway_maps_smoke_dates_to_retrabalho_keys_and_branch():
     query = _build_query_params(
         {
             "paramStrategy": "direct",
             "dateRangeKeys": ["dataInicio", "dataFim"],
             "defaultParams": {"periodDays": 30},
             "paramSchema": {
-                "filial": {"type": "string", "optional": False},
+                "branch": {"type": "string", "optional": False},
                 "dataInicio": {"type": "string", "optional": True},
                 "dataFim": {"type": "string", "optional": True},
             },
@@ -282,7 +282,7 @@ def test_gateway_maps_smoke_dates_to_retrabalho_keys_and_filial():
         {"date_start": "2026-03-01", "date_end": "2026-03-31"},
     )
     assert query == {
-        "filial": "01",
+        "branch": "01",
         "dataInicio": "2026-03-01",
         "dataFim": "2026-03-31",
     }

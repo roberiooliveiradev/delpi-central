@@ -142,3 +142,53 @@ def test_quality_rework_cost_pct_returns_envelope(
     assert body["data"]["comparable_goal"] == 0.1
     assert "rework_cost_pct" in (body["meta"].get("fields") or {})
     assert mock_enrich.call_args.kwargs["source_key"] == goal_keys.QUALITY_REWORK_COST_PCT
+
+
+@patch(
+    "app.interface.http.routes.quality.losses_routes.enrich_dashboard_metric",
+    side_effect=lambda payload, **kwargs: payload,
+)
+@patch(
+    "app.interface.http.routes.quality.losses_routes.build_get_refugos_scrap_cost_pct_use_case"
+)
+def test_quality_scrap_cost_pct_passes_branch_to_use_case(
+    mock_builder, _mock_enrich, quality_losses_client: TestClient
+) -> None:
+    """Regressão: builders de refugos/retrabalho não aceitam mais kwarg filial."""
+    use_case = MagicMock()
+    use_case.execute.return_value = {"branch": "01", "scrap_cost_pct": 1.2}
+    mock_builder.return_value = use_case
+
+    response = quality_losses_client.get(
+        "/quality/scrap-cost-pct",
+        params={"branch": "01", "start_date": "2026-06-01", "end_date": "2026-06-30"},
+    )
+
+    assert response.status_code == 200
+    request = use_case.execute.call_args.args[0]
+    assert request.period.branch == "01"
+
+
+@patch(
+    "app.interface.http.routes.quality.losses_routes.enrich_dashboard_metric",
+    side_effect=lambda payload, **kwargs: payload,
+)
+@patch(
+    "app.interface.http.routes.quality.losses_routes.build_get_retrabalho_rework_cost_pct_use_case"
+)
+def test_quality_rework_cost_pct_passes_branch_to_use_case(
+    mock_builder, _mock_enrich, quality_losses_client: TestClient
+) -> None:
+    use_case = MagicMock()
+    use_case.execute.return_value = {"branch": "02", "rework_cost_pct": 0.4}
+    mock_builder.return_value = use_case
+
+    response = quality_losses_client.get(
+        "/quality/rework-cost-pct",
+        params={"branch": "02", "start_date": "2026-06-01", "end_date": "2026-06-30"},
+    )
+
+    assert response.status_code == 200
+    request = use_case.execute.call_args.args[0]
+    assert request.period.branch == "02"
+
