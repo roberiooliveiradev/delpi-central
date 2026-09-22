@@ -132,14 +132,42 @@ export function collectPasteImageFiles(data: DataTransfer | null | undefined): F
 /** True when clipboard types/items suggest an image even if File is not exposed yet. */
 export function clipboardLooksLikeImagePaste(data: DataTransfer | null | undefined): boolean {
   if (!data) return false;
-  const types = Array.from(data.types || []);
-  if (types.some((type) => type.toLowerCase().startsWith("image/"))) return true;
+  const types = Array.from(data.types || []).map((type) => type.toLowerCase());
+  if (types.some((type) => type.startsWith("image/"))) return true;
   for (const item of Array.from(data.items || [])) {
     if ((item.type || "").toLowerCase().startsWith("image/")) return true;
+  }
+  // Chromium/Win Snipping Tool: often only "Files" with an empty FileList in the sync paste.
+  if (types.includes("files") && !(data.files && data.files.length > 0)) {
+    const text = (data.getData("text/plain") || "").trim();
+    const html = data.getData("text/html") || "";
+    if (!text && !/<p\b|<div\b|<span\b|<br\b/i.test(html)) return true;
   }
   const html = data.getData("text/html") || "";
   return /<img\b/i.test(html);
 }
+
+/**
+ * When to block the default paste and try `navigator.clipboard.read()`.
+ * Narrower than looks-like: do not steal Word/HTML prose pastes that only mention &lt;img&gt;.
+ */
+export function shouldTryAsyncClipboardImageRead(
+  data: DataTransfer | null | undefined,
+): boolean {
+  if (!data) return false;
+  const types = Array.from(data.types || []).map((type) => type.toLowerCase());
+  if (types.some((type) => type.startsWith("image/"))) return true;
+  for (const item of Array.from(data.items || [])) {
+    if ((item.type || "").toLowerCase().startsWith("image/")) return true;
+  }
+  if (!(data.files && data.files.length > 0) && types.includes("files")) {
+    const text = (data.getData("text/plain") || "").trim();
+    const html = data.getData("text/html") || "";
+    if (!text && !/<p\b|<div\b|<span\b|<br\b/i.test(html)) return true;
+  }
+  return false;
+}
+
 
 /**
  * Async fallback when paste DataTransfer has no File (some Win Snipping Tool / Edge cases).

@@ -4,6 +4,7 @@ import {
   clipboardLooksLikeImagePaste,
   collectPasteImageFiles,
   extractClipboardHtmlImageFiles,
+  shouldTryAsyncClipboardImageRead,
 } from "./clipboardImages";
 
 function fileListOf(...files: File[]): FileList {
@@ -74,6 +75,28 @@ describe("clipboardImages", () => {
       getData: () => "olá",
     } as unknown as DataTransfer;
     expect(clipboardLooksLikeImagePaste(plain)).toBe(false);
+  });
+
+  it("Snipping Tool: types Files vazio dispara leitura async", () => {
+    const dt = {
+      types: ["Files"],
+      items: [],
+      files: fileListOf(),
+      getData: () => "",
+    } as unknown as DataTransfer;
+    expect(clipboardLooksLikeImagePaste(dt)).toBe(true);
+    expect(shouldTryAsyncClipboardImageRead(dt)).toBe(true);
+  });
+
+  it("negativo async: HTML com prosa não bloqueia o paste padrão", () => {
+    const dt = {
+      types: ["text/html", "text/plain"],
+      items: [],
+      files: fileListOf(),
+      getData: (type: string) =>
+        type === "text/html" ? "<p>olá <img src=\"file:///x.png\" /></p>" : "olá",
+    } as unknown as DataTransfer;
+    expect(shouldTryAsyncClipboardImageRead(dt)).toBe(false);
   });
 
   it("negativo: texto sem imagem não vira File", () => {

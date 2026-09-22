@@ -126,6 +126,10 @@
 .delpi-ui-rich-text__editor,
 .delpi-ui-rich-text--preview {
   min-height: 160px;
+  max-height: min(50vh, 28rem);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 14px 16px;
   color: var(--delpi-ui-text, #111);
   line-height: 1.55;

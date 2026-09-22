@@ -38,9 +38,9 @@ import { Paperclip } from "lucide-react";
 
 import { appendInlineImageHtml } from "../presentation/inlineUpload";
 import {
-  clipboardLooksLikeImagePaste,
   collectPasteImageFiles,
   readClipboardImageFiles,
+  shouldTryAsyncClipboardImageRead,
 } from "../presentation/clipboardImages";
 
 export { usePersistedViewLayout };
@@ -210,7 +210,7 @@ export function HelpdeskRichTextField({
       void ingestFiles(syncFiles);
       return;
     }
-    if (!clipboardLooksLikeImagePaste(event.clipboardData)) return;
+    if (!shouldTryAsyncClipboardImageRead(event.clipboardData)) return;
     // Win Snipping Tool / Edge: image hinted but File not in DataTransfer — read async.
     event.preventDefault();
     event.stopPropagation();
@@ -220,6 +220,7 @@ export function HelpdeskRichTextField({
         await ingestFiles(asyncFiles);
         return;
       }
+      // Permission denied / empty — do not leave the user with a silent no-op.
       onUploadError?.(
         new Error(
           "Não foi possível ler a imagem da área de transferência. Use o clipe ou arraste o arquivo.",

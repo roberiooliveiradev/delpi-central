@@ -430,6 +430,10 @@
 .dashboard-helpdesk .helpdesk-rich-text-field [contenteditable="true"] {
   flex: 1 1 auto;
   min-height: 10rem;
+  max-height: min(42vh, 22rem);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 @media (max-width: 768px) {

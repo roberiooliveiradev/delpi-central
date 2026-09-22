@@ -24,7 +24,7 @@ import {
   tryDeleteRichTextAtEmphasisBoundary,
 } from "./richTextDeleteBoundary";
 import { prettyPrintRichTextHtml, stripDangerousRichTextTags } from "./richTextHtmlFormat";
-import { applyRichTextImageWidth } from "./richTextImageResize";
+import { applyRichTextImageWidth, fitRichTextImageToContainer, resolveRichTextImageResizeHandlePosition } from "./richTextImageResize";
 import { RICH_TEXT_LABELS } from "./richTextLabels";
 import {
   clipboardHasUsefulHtml,
@@ -166,20 +166,60 @@ export function RichTextEditor({
       if (node !== img) node.classList.remove("delpi-ui-rich-text__img--selected");
     });
     img.classList.add("delpi-ui-rich-text__img--selected");
-    const rect = img.getBoundingClientRect();
-    const rootRect = rootEl.getBoundingClientRect();
+    const handle = resolveRichTextImageResizeHandlePosition({
+      img,
+      root: rootEl,
+      editor: editorEl,
+    });
     setSelectedImage({
       element: img,
-      top: rect.top - rootRect.top,
-      left: rect.left - rootRect.left,
-      width: rect.width,
-      height: rect.height,
+      top: handle.top,
+      left: handle.left,
+      width: handle.width,
+      height: handle.height,
     });
+    try {
+      img.scrollIntoView({ block: "nearest", inline: "nearest" });
+    } catch {
+      /* ignore */
+    }
   }, []);
 
   const emitChange = useCallback(() => {
     onChange(ref.current?.innerHTML || "");
   }, [onChange]);
+
+  const fitUntypedImages = useCallback(() => {
+    const editorEl = ref.current;
+    if (!editorEl) return false;
+    const containerWidth = editorEl.clientWidth || 0;
+    let changed = false;
+    for (const node of Array.from(editorEl.querySelectorAll("img"))) {
+      const img = node as HTMLImageElement;
+      const apply = () => {
+        if (fitRichTextImageToContainer(img, containerWidth)) changed = true;
+      };
+      if (img.complete && (img.naturalWidth > 0 || img.getBoundingClientRect().width > 0)) {
+        apply();
+      } else {
+        img.addEventListener(
+          "load",
+          () => {
+            if (fitRichTextImageToContainer(img, editorEl.clientWidth || containerWidth)) {
+              emitChange();
+            }
+          },
+          { once: true },
+        );
+      }
+    }
+    return changed;
+  }, [emitChange]);
+
+  useEffect(() => {
+    if (sourceMode || disabled) return;
+    if (fitUntypedImages()) emitChange();
+  }, [resolvedHtml, sourceMode, disabled, fitUntypedImages, emitChange]);
 
   useEffect(() => {
     if (!selectedImage) return;
@@ -444,7 +484,16 @@ export function RichTextEditor({
           }
           syncSelectedImage(null);
         }}
-        onInput={emitChange}
+        onScroll={() => {
+          if (selectedImage) syncSelectedImage(selectedImage.element);
+        }}
+        onInput={() => {
+          if (fitUntypedImages()) {
+            emitChange();
+            return;
+          }
+          emitChange();
+        }}
         onMouseUp={syncActiveLink}
         onKeyUp={syncActiveLink}
         onBeforeInput={(event) => {
@@ -514,8 +563,8 @@ export function RichTextEditor({
           type="button"
           className="delpi-ui-rich-text__img-resize"
           style={{
-            top: selectedImage.top + selectedImage.height - 6,
-            left: selectedImage.left + selectedImage.width - 6,
+            top: selectedImage.top,
+            left: selectedImage.left,
           }}
           aria-label={RICH_TEXT_LABELS.imageResize}
           title={RICH_TEXT_LABELS.imageResize}
