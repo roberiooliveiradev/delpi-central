@@ -39,8 +39,9 @@ describe("applyFormat", () => {
     const span = editor.querySelector("span");
     expect(span?.style.fontSize).toBe("24px");
     expect(span?.textContent).toBe("bcd");
-    // trecho formatado; texto fora do span permanece no <p>
+    // trecho formatado; texto fora do span permanece no <p> sem herdar via bloco
     expect(editor.textContent).toBe("abcdef");
+    expect((editor.querySelector("p") as HTMLElement).style.fontSize).toBe("");
 
     document.body.removeChild(editor);
   });

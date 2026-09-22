@@ -100,6 +100,32 @@ describe("applyRichTextFontSize", () => {
     document.body.removeChild(editor);
   });
 
+  it("seleção parcial não stamp font-size no <p> (só o trecho)", () => {
+    const editor = document.createElement("div");
+    editor.contentEditable = "true";
+    editor.innerHTML = "<p>adfisdf</p>";
+    document.body.appendChild(editor);
+
+    const text = editor.querySelector("p")!.firstChild as Text;
+    const range = document.createRange();
+    range.setStart(text, 5);
+    range.setEnd(text, 7);
+    const selection = window.getSelection()!;
+    selection.removeAllRanges();
+    selection.addRange(range);
+
+    applyRichTextFontSize(editor, 33);
+
+    const paragraph = editor.querySelector("p") as HTMLElement;
+    const span = editor.querySelector("span") as HTMLElement;
+    expect(span?.textContent).toBe("df");
+    expect(span?.style.fontSize).toBe("33px");
+    expect(paragraph.style.fontSize).toBe("");
+    expect(editor.textContent).toBe("adfisdf");
+
+    document.body.removeChild(editor);
+  });
+
   it("aplica font-size inline em heading (vence CSS do editor)", () => {
     const editor = document.createElement("div");
     editor.className = "delpi-ui-rich-text__editor";

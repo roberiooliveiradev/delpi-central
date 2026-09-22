@@ -214,7 +214,24 @@ function fragmentHasBlockChild(fragment: DocumentFragment): boolean {
   return Array.from(fragment.childNodes).some((child) => isRichTextBlockElement(child));
 }
 
-/** Alinha font-size dos ancestrais inline até o bloco (HTML do Word com spans aninhados). */
+/** True when the live range equals the full contents of `block` (not a partial slice). */
+function rangeCoversBlockContents(range: Range, block: HTMLElement): boolean {
+  const full = document.createRange();
+  full.selectNodeContents(block);
+  try {
+    return (
+      range.compareBoundaryPoints(Range.START_TO_START, full) === 0 &&
+      range.compareBoundaryPoints(Range.END_TO_END, full) === 0
+    );
+  } catch {
+    return false;
+  }
+}
+
+/** Alinha font-size dos ancestrais *inline* (HTML colado com spans aninhados).
+ * Nunca grava font-size em bloco (`p`/`h2`/…) — isso faria a herança CSS
+ * ampliar texto fora da seleção (intent inline).
+ */
 function propagateRichTextFontSizeToAncestors(
   from: Node | null,
   editor: HTMLElement,
@@ -223,17 +240,18 @@ function propagateRichTextFontSizeToAncestors(
   let el: HTMLElement | null =
     from instanceof HTMLElement ? from : from?.parentElement ?? null;
   while (el && el !== editor) {
+    if (isRichTextBlockHtmlElement(el)) break;
     el.style.fontSize = sizeCss;
     if (el.tagName === "FONT") el.removeAttribute("size");
-    if (isRichTextBlockHtmlElement(el)) break;
     el = el.parentElement;
   }
 }
 
 /**
- * Aplica tamanho em px via style inline em toda a seleção.
+ * Aplica tamanho em px via style inline na seleção.
  * Não usa `execCommand("fontSize")` (escala legada 1–7).
- * Com caret colapsado, aplica no bloco contendo o cursor (p/h2/li/…).
+ * Caret colapsado → pending span (próximo digitar); seleção → wrap no Range.
+ * Seleção do bloco inteiro → também stamp no bloco (vence CSS de h2 etc.).
  */
 export function applyRichTextFontSize(editor: HTMLElement | null, fontSizePx: number) {
   if (!editor) return;
@@ -267,6 +285,10 @@ export function applyRichTextFontSize(editor: HTMLElement | null, fontSizePx: nu
     return;
   }
 
+  const containingBlock = findClosestRichTextBlock(range.commonAncestorContainer, editor);
+  const coversWholeBlock =
+    containingBlock != null && rangeCoversBlockContents(range, containingBlock);
+
   const fragment = range.extractContents();
   stampRichTextFontSize(fragment, sizeCss);
 
@@ -290,7 +312,12 @@ export function applyRichTextFontSize(editor: HTMLElement | null, fontSizePx: nu
   span.style.fontSize = sizeCss;
   span.appendChild(fragment);
   range.insertNode(span);
-  propagateRichTextFontSizeToAncestors(span, editor, sizeCss);
+  if (coversWholeBlock && containingBlock) {
+    // Full-block selection (ex.: título): stamp no bloco para vencer CSS do editor.
+    stampRichTextFontSize(containingBlock, sizeCss);
+  } else {
+    propagateRichTextFontSizeToAncestors(span, editor, sizeCss);
+  }
   selection.removeAllRanges();
   const next = document.createRange();
   next.selectNodeContents(span);
