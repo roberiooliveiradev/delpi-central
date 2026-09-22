@@ -27,6 +27,8 @@ import {
   loadingStateCardBemClasses,
   pageHeaderTitleRowBemClasses,
   RichTextEditor,
+  type RichTextEditorHandle,
+  type RichTextInlineImageInsert,
   sectionCardPacBemClasses,
   selectFieldPacClasses,
   stateBannerBemClasses,
@@ -36,7 +38,6 @@ import {
 } from "@delpi/plugin-ui/index";
 import { Paperclip } from "lucide-react";
 
-import { appendInlineImageHtml } from "../presentation/inlineUpload";
 
 export { usePersistedViewLayout };
 
@@ -169,36 +170,46 @@ export function HelpdeskRichTextField({
   persistAttachmentImageSrc,
 }: HelpdeskRichTextFieldProps) {
   const fileRef = useRef<HTMLInputElement>(null);
+  const editorRef = useRef<RichTextEditorHandle>(null);
   const uploadingRef = useRef(false);
-  const valueRef = useRef(value);
-  valueRef.current = value;
 
-  const ingestFiles = async (files: File[]) => {
+  /** Host only materializes File → src/attrs; kit inserts at caret (S-P2). */
+  const materializeUploads = async (
+    files: File[],
+  ): Promise<RichTextInlineImageInsert[] | void> => {
     if (!onUploadFiles || disabled || uploadingRef.current || files.length === 0) return;
     uploadingRef.current = true;
     try {
       const results = await onUploadFiles(files);
-      let next = valueRef.current;
-      for (const item of results) {
+      return results.map((item): RichTextInlineImageInsert => {
         if (item.kind === "uploaded") {
-          next = appendInlineImageHtml(next, {
+          return {
             src: item.src,
             documentId: item.documentId,
             alt: item.alt,
-          });
-        } else {
-          next = appendInlineImageHtml(next, {
-            src: item.src,
-            pendingId: item.pendingId,
-            alt: item.alt,
-          });
+          };
         }
-      }
-      if (next !== valueRef.current) onChange(next);
+        return {
+          src: item.src,
+          pendingId: item.pendingId,
+          alt: item.alt,
+        };
+      });
     } catch (error) {
-      onUploadError?.(error);
+      throw error;
     } finally {
       uploadingRef.current = false;
+    }
+  };
+
+  const ingestViaEditor = async (files: File[]) => {
+    try {
+      const inserts = await materializeUploads(files);
+      if (inserts && inserts.length > 0) {
+        editorRef.current?.insertInlineImages(inserts);
+      }
+    } catch (error) {
+      onUploadError?.(error);
     }
   };
 
@@ -210,7 +221,7 @@ export function HelpdeskRichTextField({
     if (files.length === 0) return;
     event.preventDefault();
     event.stopPropagation();
-    void ingestFiles(files);
+    void ingestViaEditor(files);
   };
 
   return (
@@ -223,6 +234,7 @@ export function HelpdeskRichTextField({
     >
       <FieldLabel className="helpdesk-field__label" label={label} hint={hint} icon={icon} />
       <RichTextEditor
+        ref={editorRef}
         value={value}
         onChange={onChange}
         disabled={disabled}
@@ -231,7 +243,7 @@ export function HelpdeskRichTextField({
         ariaLabel={ariaLabel ?? label}
         resolveAttachmentImageSrc={resolveAttachmentImageSrc}
         persistAttachmentImageSrc={persistAttachmentImageSrc}
-        onPasteImages={onUploadFiles && !disabled ? ingestFiles : undefined}
+        onPasteImages={onUploadFiles && !disabled ? materializeUploads : undefined}
         onPasteImagesError={onUploadError}
       />
       {onUploadFiles ? (
@@ -245,7 +257,7 @@ export function HelpdeskRichTextField({
             onChange={(event) => {
               const files = Array.from(event.target.files || []);
               event.target.value = "";
-              void ingestFiles(files);
+              void ingestViaEditor(files);
             }}
           />
           {attachHint ? (

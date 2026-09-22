@@ -1,75 +1,17 @@
-export { RichTextEditor, type RichTextEditorMode, type RichTextEditorProps } from "./RichTextEditor";
-export { RichTextLinkDialog, type RichTextLinkDialogProps } from "./RichTextLinkDialog";
-export { RichTextSourceEditor, type RichTextSourceEditorProps } from "./RichTextSourceEditor";
-export { RichTextToolbar, type RichTextSourceKind } from "./RichTextToolbar";
 export {
-  RICH_TEXT_FONT_FAMILIES,
-  RICH_TEXT_FONT_SIZE_DEFAULT,
-  RICH_TEXT_FONT_SIZE_PRESETS,
-} from "./richTextConfig";
+  RichTextEditor,
+  type RichTextEditorHandle,
+  type RichTextEditorMode,
+  type RichTextEditorProps,
+  type RichTextPasteImagesHandler,
+} from "./RichTextEditor";
+export type { RichTextInlineImageInsert } from "./richTextInlineImage";
 export {
-  prettyPrintRichTextHtml,
-  stripDangerousRichTextTags,
-  wrapOrphanRichTextNodes,
-} from "./richTextHtmlFormat";
-export {
-  applyRichTextHtmlAutoClose,
-  applyRichTextSourceSuggestion,
-  listRichTextCssPropertySuggestions,
-  listRichTextHtmlTagSuggestions,
-  resolveRichTextSourceSuggestions,
-  RICH_TEXT_CSS_SUGGEST_PROPERTIES,
-  RICH_TEXT_HTML_SUGGEST_TAGS,
-} from "./richTextHtmlAssist";
-export {
-  applyAttachmentImageSources,
-  persistAttachmentImageSources,
-  clipboardHasUsefulHtml,
-  clipboardLooksLikeMarkdown,
-  enhanceAttachmentImagesInHtml,
-  markdownToRichTextHtml,
-  normalizeRichTextHtmlForMarkdown,
-  richTextHtmlToMarkdown,
-  type ResolveAttachmentImageSrc,
-} from "./richTextMarkdown";
-export {
-  clipboardLooksLikeImagePaste,
-  collectClipboardImageFiles,
-  collectPasteImageFiles,
-  extractClipboardHtmlImageFiles,
-  isRichTextClipboardImageFile,
-  readClipboardImageFiles,
-  shouldTryAsyncClipboardImageRead,
-  uniqueClipboardImageFiles,
-} from "./richTextClipboardImages";
-export {
-  listInlineAttachmentIdsFromMarkdown,
-  listInlinePendingIdsFromMarkdown,
-  parseMarkdownImages,
-  rewriteInlinePendingInMarkdown,
-  type MarkdownImageToken,
-} from "./markdownImageTokens";
-export {
-  applyRichTextImageWidth,
-  clampRichTextImageWidth,
-  clearRichTextImageInlineSizeStyles,
-  fitRichTextImageToContainer,
-  resolveRichTextImageNaturalSize,
-  resolveRichTextImageResizeHandlePosition,
-  RICH_TEXT_IMAGE_DEFAULT_MAX_WIDTH,
-  RICH_TEXT_IMAGE_MAX_WIDTH,
-  RICH_TEXT_IMAGE_MIN_WIDTH,
-  type RichTextImageSize,
-} from "./richTextImageResize";
-export {
-  buildRichTextTableHtml,
-  insertRichTextTable,
-  normalizeRichTextPastedHtml,
-} from "./richTextTable";
-export {
-  DeckContentRunsView,
-  plainTextFromDeckContentRuns,
-  shouldPersistDeckContentRuns,
-  type DeckContentRun,
-  type DeckContentRunStyle,
-} from "./deckContentRuns";
+  applyFormat,
+  formatIntent,
+  resolveFormatTarget,
+  type ApplyFormatOptions,
+  type FormatIntent,
+  type FormatIntentClass,
+  type FormatTarget,
+} from "./formatApply";

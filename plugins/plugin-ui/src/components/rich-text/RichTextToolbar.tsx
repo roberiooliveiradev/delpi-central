@@ -39,11 +39,7 @@ import { HintAction } from "../help/HintAction";
 import { AnchoredPanelPortal } from "../shape/AnchoredPanelPortal";
 import { RibbonColorPicker } from "../shape/RibbonColorPicker";
 import {
-  applyRichTextAlign,
-  applyRichTextFontFamily,
-  applyRichTextFontSize,
   getRichTextSelectionRange,
-  insertRichTextHorizontalRule,
   queryRichTextAlign,
   queryRichTextCommandState,
   queryRichTextFontSize,
@@ -51,6 +47,7 @@ import {
   runRichTextCommand,
   type RichTextAlign,
 } from "./richTextCommands";
+import { applyFormat, formatIntent } from "./formatApply";
 import {
   clampRichTextFontSize,
   RICH_TEXT_FONT_FAMILIES,
@@ -201,17 +198,31 @@ export function RichTextToolbar({
     refreshFormatState();
   }
 
+  function applyIntent(intent: Parameters<typeof applyFormat>[1]) {
+    withEditor((editor) => {
+      applyFormat(editor, intent, { savedRange: savedRangeRef.current });
+    });
+  }
+
   function applyFontSize(nextRaw: number) {
     const next = clampRichTextFontSize(nextRaw);
     setFontSize(next);
-    withEditor((editor) => applyRichTextFontSize(editor, next));
-    // Reafirma após refreshFormatState: HTML colado pode mentir no computed style.
+    applyIntent(formatIntent.fontSize(next));
     setFontSize(next);
   }
 
   return (
     <div className="delpi-ui-rich-text-ribbon" role="toolbar" aria-label={RICH_TEXT_LABELS.toolbar}>
-      <section className="delpi-ui-rich-text-ribbon__cluster" aria-label={RICH_TEXT_LABELS.fontSection}>
+      <section
+        className="delpi-ui-rich-text-ribbon__cluster"
+        aria-label={RICH_TEXT_LABELS.fontSection}
+        onMouseDown={(event) => {
+          // S-F2: keep contentEditable selection when interacting with font controls.
+          if ((event.target as HTMLElement).closest("button, input, [role='combobox']")) {
+            event.preventDefault();
+          }
+        }}
+      >
         <HintAction
           hint={RICH_TEXT_LABELS.fontFamilyHint}
           ariaLabel={`Ajuda: ${RICH_TEXT_LABELS.fontFamily}`}
@@ -221,7 +232,7 @@ export function RichTextToolbar({
             value={fontFamily}
             onChange={(value) => {
               setFontFamily(value);
-              withEditor((editor) => applyRichTextFontFamily(editor, value));
+              applyIntent(formatIntent.fontName(value));
             }}
             options={RICH_TEXT_FONT_FAMILIES.map((font) => ({
               value: font.value,
@@ -289,7 +300,7 @@ export function RichTextToolbar({
           ariaLabel={RICH_TEXT_LABELS.bold}
           active={boldActive}
           disabled={formatDisabled}
-          onClick={() => withEditor((editor) => runRichTextCommand(editor, "bold"))}
+          onClick={() => applyIntent(formatIntent.bold())}
         >
           <Bold size={15} aria-hidden="true" />
         </RichTextIconButton>
@@ -298,7 +309,7 @@ export function RichTextToolbar({
           ariaLabel={RICH_TEXT_LABELS.italic}
           active={italicActive}
           disabled={formatDisabled}
-          onClick={() => withEditor((editor) => runRichTextCommand(editor, "italic"))}
+          onClick={() => applyIntent(formatIntent.italic())}
         >
           <Italic size={15} aria-hidden="true" />
         </RichTextIconButton>
@@ -307,7 +318,7 @@ export function RichTextToolbar({
           ariaLabel={RICH_TEXT_LABELS.underline}
           active={underlineActive}
           disabled={formatDisabled}
-          onClick={() => withEditor((editor) => runRichTextCommand(editor, "underline"))}
+          onClick={() => applyIntent(formatIntent.underline())}
         >
           <Underline size={15} aria-hidden="true" />
         </RichTextIconButton>
@@ -316,7 +327,7 @@ export function RichTextToolbar({
           ariaLabel={RICH_TEXT_LABELS.strikethrough}
           active={strikeActive}
           disabled={formatDisabled}
-          onClick={() => withEditor((editor) => runRichTextCommand(editor, "strikeThrough"))}
+          onClick={() => applyIntent(formatIntent.strikeThrough())}
         >
           <Strikethrough size={15} aria-hidden="true" />
         </RichTextIconButton>
@@ -340,7 +351,7 @@ export function RichTextToolbar({
               onChange={(color) => {
                 if (formatDisabled) return;
                 setTextColor(color);
-                withEditor((editor) => runRichTextCommand(editor, "foreColor", color));
+                applyIntent(formatIntent.foreColor(color));
               }}
             />
           </span>
@@ -365,7 +376,7 @@ export function RichTextToolbar({
               onChange={(color) => {
                 if (formatDisabled) return;
                 setHighlightColor(color);
-                withEditor((editor) => runRichTextCommand(editor, "hiliteColor", color));
+                applyIntent(formatIntent.hiliteColor(color));
               }}
             />
           </span>
@@ -374,7 +385,7 @@ export function RichTextToolbar({
           hint={RICH_TEXT_LABELS.clearFormatting}
           ariaLabel={RICH_TEXT_LABELS.clearFormatting}
           disabled={formatDisabled}
-          onClick={() => withEditor((editor) => runRichTextCommand(editor, "removeFormat"))}
+          onClick={() => applyIntent(formatIntent.removeFormat())}
         >
           <RemoveFormatting size={15} aria-hidden="true" />
         </RichTextIconButton>
@@ -382,7 +393,7 @@ export function RichTextToolbar({
           hint={RICH_TEXT_LABELS.heading}
           ariaLabel={RICH_TEXT_LABELS.heading}
           disabled={formatDisabled}
-          onClick={() => withEditor((editor) => runRichTextCommand(editor, "formatBlock", "h2"))}
+          onClick={() => applyIntent(formatIntent.formatBlock("h2"))}
         >
           <Heading2 size={15} aria-hidden="true" />
         </RichTextIconButton>
@@ -408,9 +419,7 @@ export function RichTextToolbar({
             ariaLabel={label}
             active={alignActive === align}
             disabled={formatDisabled}
-            onClick={() =>
-              withEditor((editor) => applyRichTextAlign(editor, align as RichTextAlign))
-            }
+            onClick={() => applyIntent(formatIntent.align(align as RichTextAlign))}
           >
             <Icon size={15} aria-hidden="true" />
           </RichTextIconButton>
@@ -421,9 +430,7 @@ export function RichTextToolbar({
           ariaLabel={RICH_TEXT_LABELS.bulletList}
           active={bulletActive}
           disabled={formatDisabled}
-          onClick={() =>
-            withEditor((editor) => runRichTextCommand(editor, "insertUnorderedList"))
-          }
+          onClick={() => applyIntent(formatIntent.unorderedList())}
         >
           <List size={15} aria-hidden="true" />
         </RichTextIconButton>
@@ -432,9 +439,7 @@ export function RichTextToolbar({
           ariaLabel={RICH_TEXT_LABELS.orderedList}
           active={orderedActive}
           disabled={formatDisabled}
-          onClick={() =>
-            withEditor((editor) => runRichTextCommand(editor, "insertOrderedList"))
-          }
+          onClick={() => applyIntent(formatIntent.orderedList())}
         >
           <ListOrdered size={15} aria-hidden="true" />
         </RichTextIconButton>
@@ -442,7 +447,7 @@ export function RichTextToolbar({
           hint={RICH_TEXT_LABELS.outdent}
           ariaLabel={RICH_TEXT_LABELS.outdent}
           disabled={formatDisabled}
-          onClick={() => withEditor((editor) => runRichTextCommand(editor, "outdent"))}
+          onClick={() => applyIntent(formatIntent.outdent())}
         >
           <Outdent size={15} aria-hidden="true" />
         </RichTextIconButton>
@@ -450,7 +455,7 @@ export function RichTextToolbar({
           hint={RICH_TEXT_LABELS.indent}
           ariaLabel={RICH_TEXT_LABELS.indent}
           disabled={formatDisabled}
-          onClick={() => withEditor((editor) => runRichTextCommand(editor, "indent"))}
+          onClick={() => applyIntent(formatIntent.indent())}
         >
           <Indent size={15} aria-hidden="true" />
         </RichTextIconButton>
@@ -474,7 +479,7 @@ export function RichTextToolbar({
           hint={RICH_TEXT_LABELS.horizontalRuleHint}
           ariaLabel={RICH_TEXT_LABELS.horizontalRule}
           disabled={formatDisabled}
-          onClick={() => withEditor((editor) => insertRichTextHorizontalRule(editor))}
+          onClick={() => applyIntent(formatIntent.horizontalRule())}
         >
           <Minus size={15} aria-hidden="true" />
         </RichTextIconButton>

@@ -1,7 +1,9 @@
 import { ExternalLink, Pencil, Unlink } from "lucide-react";
 import {
+  forwardRef,
   useCallback,
   useEffect,
+  useImperativeHandle,
   useMemo,
   useRef,
   useState,
@@ -9,6 +11,7 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from "react";
 
+import { applyFormat, formatIntent } from "./formatApply";
 import { RichTextLinkDialog } from "./RichTextLinkDialog";
 import { RichTextSourceEditor } from "./RichTextSourceEditor";
 import { RichTextToolbar, type RichTextSourceKind } from "./RichTextToolbar";
@@ -25,6 +28,9 @@ import {
 } from "./richTextDeleteBoundary";
 import { prettyPrintRichTextHtml, stripDangerousRichTextTags } from "./richTextHtmlFormat";
 import { applyRichTextImageWidth, fitRichTextImageToContainer, resolveRichTextImageResizeHandlePosition } from "./richTextImageResize";
+import {
+  type RichTextInlineImageInsert,
+} from "./richTextInlineImage";
 import { RICH_TEXT_LABELS } from "./richTextLabels";
 import {
   collectPasteImageFiles,
@@ -44,6 +50,20 @@ import { normalizeRichTextPastedHtml } from "./richTextTable";
 
 export type RichTextEditorMode = "edit" | "preview";
 export type { RichTextSourceKind };
+export type { RichTextInlineImageInsert };
+
+/** Host materializes File → src/attrs; kit inserts at caret (S-P). */
+export type RichTextPasteImagesHandler = (
+  files: File[],
+) =>
+  | void
+  | Promise<void>
+  | RichTextInlineImageInsert[]
+  | Promise<RichTextInlineImageInsert[]>;
+
+export type RichTextEditorHandle = {
+  insertInlineImages: (items: readonly RichTextInlineImageInsert[]) => void;
+};
 
 export type RichTextEditorProps = {
   value: string;
@@ -63,10 +83,10 @@ export type RichTextEditorProps = {
   /** Persist: rewrite display blob src back to stable URL before onChange. */
   persistAttachmentImageSrc?: ResolveAttachmentImageSrc;
   /**
-   * Interaction-room parity: intercept image paste (files / data: / async clipboard.read).
-   * Host uploads or materializes pending imgs — same contract as MentionComposer.
+   * Materialize clipboard/attach files → insert payloads.
+   * When the handler returns inserts, the kit places them at the caret (S-P1).
    */
-  onPasteImages?: (files: File[]) => void | Promise<void>;
+  onPasteImages?: RichTextPasteImagesHandler;
   /** Called when async clipboard.read fails after a screenshot-like paste. */
   onPasteImagesError?: (error: unknown) => void;
 };
@@ -100,22 +120,26 @@ function sanitizeEditorHtml(html: string): string {
   return cleaned || "<p></p>";
 }
 
-export function RichTextEditor({
-  value,
-  onChange,
-  mode = "edit",
-  disabled = false,
-  className,
-  ariaLabel = "Editor de texto",
-  portalScopeClassName,
-  minHeight = 200,
-  resolveAttachmentImageSrc,
-  persistAttachmentImageSrc,
-  onPasteImages,
-  onPasteImagesError,
-}: RichTextEditorProps) {
+export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorProps>(
+  function RichTextEditor(
+    {
+      value,
+      onChange,
+      mode = "edit",
+      disabled = false,
+      className,
+      ariaLabel = "Editor de texto",
+      portalScopeClassName,
+      minHeight = 200,
+      resolveAttachmentImageSrc,
+      persistAttachmentImageSrc,
+      onPasteImages,
+      onPasteImagesError,
+    },
+    handleRef,
+  ) {
   const rootRef = useRef<HTMLDivElement>(null);
-  const ref = useRef<HTMLDivElement>(null);
+  const editorRef = useRef<HTMLDivElement>(null);
   const focusedRef = useRef(false);
   const sourceDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [sourceKind, setSourceKind] = useState<RichTextSourceKind>("visual");
@@ -143,16 +167,16 @@ export function RichTextEditor({
   }, [value, resolveAttachmentImageSrc]);
 
   useEffect(() => {
-    if (mode !== "edit" || disabled || sourceMode || !ref.current || focusedRef.current) {
+    if (mode !== "edit" || disabled || sourceMode || !editorRef.current || focusedRef.current) {
       return;
     }
-    if (ref.current.innerHTML !== resolvedHtml) {
-      ref.current.innerHTML = resolvedHtml;
+    if (editorRef.current.innerHTML !== resolvedHtml) {
+      editorRef.current.innerHTML = resolvedHtml;
     }
   }, [mode, disabled, sourceMode, resolvedHtml]);
 
   useEffect(() => {
-    const editorEl = ref.current;
+    const editorEl = editorRef.current;
     if (!editorEl || sourceMode || disabled || !resolveAttachmentImageSrc) return;
     const next = applyAttachmentImageSources(editorEl.innerHTML, resolveAttachmentImageSrc);
     if (next !== editorEl.innerHTML) {
@@ -168,7 +192,7 @@ export function RichTextEditor({
 
   /** Badge segue o link sob o cursor/seleção (posição relativa ao root). */
   const syncActiveLink = useCallback(() => {
-    const editorEl = ref.current;
+    const editorEl = editorRef.current;
     const rootEl = rootRef.current;
     if (!editorEl || !rootEl) {
       setActiveLink(null);
@@ -190,7 +214,7 @@ export function RichTextEditor({
   }, []);
 
   const syncSelectedImage = useCallback((img: HTMLImageElement | null) => {
-    const editorEl = ref.current;
+    const editorEl = editorRef.current;
     const rootEl = rootRef.current;
     if (!img || !editorEl || !rootEl || !editorEl.contains(img)) {
       setSelectedImage((current) => {
@@ -223,15 +247,40 @@ export function RichTextEditor({
   }, []);
 
   const emitChange = useCallback(() => {
-    const raw = ref.current?.innerHTML || "";
+    const raw = editorRef.current?.innerHTML || "";
     const persisted = persistAttachmentImageSrc
       ? persistAttachmentImageSources(raw, persistAttachmentImageSrc)
       : raw;
     onChange(persisted);
   }, [onChange, persistAttachmentImageSrc]);
 
+  const insertInlineImages = useCallback(
+    (items: readonly RichTextInlineImageInsert[]) => {
+      const editorEl = editorRef.current;
+      if (!editorEl || items.length === 0) return;
+      for (const item of items) {
+        if (!item.src) continue;
+        applyFormat(editorEl, formatIntent.image(item));
+      }
+      const containerWidth = editorEl.clientWidth || 0;
+      for (const node of Array.from(editorEl.querySelectorAll("img"))) {
+        fitRichTextImageToContainer(node as HTMLImageElement, containerWidth);
+      }
+      emitChange();
+    },
+    [emitChange],
+  );
+
+  useImperativeHandle(
+    handleRef,
+    () => ({
+      insertInlineImages,
+    }),
+    [insertInlineImages],
+  );
+
   const fitUntypedImages = useCallback(() => {
-    const editorEl = ref.current;
+    const editorEl = editorRef.current;
     if (!editorEl) return false;
     const containerWidth = editorEl.clientWidth || 0;
     let changed = false;
@@ -264,7 +313,7 @@ export function RichTextEditor({
 
   useEffect(() => {
     if (!selectedImage) return;
-    if (!ref.current?.contains(selectedImage.element)) {
+    if (!editorRef.current?.contains(selectedImage.element)) {
       syncSelectedImage(null);
     }
   }, [value, selectedImage, syncSelectedImage]);
@@ -286,7 +335,7 @@ export function RichTextEditor({
       const session = imageResizeRef.current;
       if (!session) return;
       const delta = moveEvent.clientX - session.startX;
-      const containerWidth = ref.current?.clientWidth ?? undefined;
+      const containerWidth = editorRef.current?.clientWidth ?? undefined;
       applyRichTextImageWidth(session.img, session.startWidth + delta, { containerWidth });
       syncSelectedImage(session.img);
     };
@@ -330,13 +379,13 @@ export function RichTextEditor({
   }
 
   function currentEditorHtml(): string {
-    return ref.current?.innerHTML || value || "<p></p>";
+    return editorRef.current?.innerHTML || value || "<p></p>";
   }
 
   function applyHtmlToVisual(cleaned: string) {
     requestAnimationFrame(() => {
-      if (ref.current) {
-        ref.current.innerHTML = cleaned;
+      if (editorRef.current) {
+        editorRef.current.innerHTML = cleaned;
       }
     });
   }
@@ -389,7 +438,7 @@ export function RichTextEditor({
 
   function handleRequestLink() {
     if (sourceMode) return;
-    const editorEl = ref.current;
+    const editorEl = editorRef.current;
     if (!editorEl) return;
     const anchor = findRichTextLinkAtSelection(editorEl);
     if (anchor) {
@@ -407,7 +456,7 @@ export function RichTextEditor({
   }
 
   function handleLinkSubmit(url: string) {
-    const editorEl = ref.current;
+    const editorEl = editorRef.current;
     if (!editorEl || !linkDialog) return;
     const normalized = normalizeRichTextLinkUrl(url);
     if (!normalized) return;
@@ -433,13 +482,21 @@ export function RichTextEditor({
 
     // Same owner as MentionComposer: image paste never relies on MFE wrapper capture.
     if (onPasteImages) {
+      const applyHostInserts = async (files: File[]) => {
+        try {
+          const result = await Promise.resolve(onPasteImages(files));
+          if (Array.isArray(result) && result.length > 0) {
+            insertInlineImages(result);
+          }
+        } catch (error) {
+          onPasteImagesError?.(error);
+        }
+      };
       const syncFiles = collectPasteImageFiles(event.clipboardData);
       if (syncFiles.length > 0) {
         event.preventDefault();
         event.stopPropagation();
-        void Promise.resolve(onPasteImages(syncFiles)).catch((error) => {
-          onPasteImagesError?.(error);
-        });
+        void applyHostInserts(syncFiles);
         return;
       }
       if (shouldTryAsyncClipboardImageRead(event.clipboardData)) {
@@ -448,11 +505,7 @@ export function RichTextEditor({
         void (async () => {
           const asyncFiles = await readClipboardImageFiles();
           if (asyncFiles.length > 0) {
-            try {
-              await onPasteImages(asyncFiles);
-            } catch (error) {
-              onPasteImagesError?.(error);
-            }
+            await applyHostInserts(asyncFiles);
             return;
           }
           onPasteImagesError?.(
@@ -472,7 +525,7 @@ export function RichTextEditor({
       const normalized = normalizeRichTextPastedHtml(html);
       if (!normalized) return;
       event.preventDefault();
-      insertRichTextHtmlFragment(ref.current, normalized);
+      insertRichTextHtmlFragment(editorRef.current, normalized);
       emitChange();
       return;
     }
@@ -480,7 +533,7 @@ export function RichTextEditor({
     if (!clipboardHasUsefulHtml(html) && clipboardLooksLikeMarkdown(plain)) {
       event.preventDefault();
       const converted = sanitizeEditorHtml(markdownToRichTextHtml(plain));
-      insertRichTextHtmlFragment(ref.current, converted);
+      insertRichTextHtmlFragment(editorRef.current, converted);
       emitChange();
     }
   }
@@ -498,7 +551,7 @@ export function RichTextEditor({
   return (
     <div className={rootClass} ref={rootRef}>
       <RichTextToolbar
-        editorRef={ref}
+        editorRef={editorRef}
         disabled={disabled}
         sourceKind={sourceKind}
         onSourceKindChange={handleSourceKindChange}
@@ -533,7 +586,7 @@ export function RichTextEditor({
         invalidar Ranges da toolbar — remount quebrava negrito/alinhamento.
       */}
       <div
-        ref={ref}
+        ref={editorRef}
         className="delpi-ui-rich-text__editor"
         style={{ minHeight, display: sourceMode ? "none" : undefined }}
         contentEditable={!sourceMode}
@@ -552,13 +605,33 @@ export function RichTextEditor({
         }}
         onClick={(event) => {
           if (sourceMode || disabled) return;
-          const target = event.target;
-          if (target instanceof HTMLImageElement && ref.current?.contains(target)) {
+          const target = event.target as HTMLElement | null;
+          const removeBtn = target?.closest?.("[data-inline-image-remove]");
+          if (removeBtn) {
+            event.preventDefault();
+            event.stopPropagation();
+            const host = removeBtn.closest(
+              "span.delpi-ui-mention-composer__inline-image, span.delpi-ui-rich-text__inline-image",
+            );
+            if (host) {
+              host.remove();
+              syncSelectedImage(null);
+              emitChange();
+            }
+            return;
+          }
+          if (target instanceof HTMLImageElement && editorRef.current?.contains(target)) {
             syncSelectedImage(target);
             setActiveLink(null);
             return;
           }
           syncSelectedImage(null);
+        }}
+        onMouseDown={(event) => {
+          const target = event.target as HTMLElement | null;
+          if (target?.closest?.("[data-inline-image-remove]")) {
+            event.preventDefault();
+          }
         }}
         onScroll={() => {
           if (selectedImage) syncSelectedImage(selectedImage.element);
@@ -581,7 +654,7 @@ export function RichTextEditor({
           ) {
             return;
           }
-          const editorEl = ref.current;
+          const editorEl = editorRef.current;
           if (!editorEl) return;
           const direction =
             inputType === "deleteContentBackward" ? "backward" : "forward";
@@ -663,4 +736,6 @@ export function RichTextEditor({
       />
     </div>
   );
-}
+});
+
+RichTextEditor.displayName = "RichTextEditor";

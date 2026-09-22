@@ -257,12 +257,7 @@ export function applyRichTextFontSize(editor: HTMLElement | null, fontSizePx: nu
   const sizeCss = `${Math.round(fontSizePx)}px`;
 
   if (range.collapsed) {
-    const block = findClosestRichTextBlock(range.startContainer, editor);
-    if (block) {
-      stampRichTextFontSize(block, sizeCss);
-      return;
-    }
-
+    // S-F1: caret = pending format for next typing — never stamp the whole block.
     const span = document.createElement("span");
     span.style.fontSize = sizeCss;
     const marker = document.createTextNode("\u200B");

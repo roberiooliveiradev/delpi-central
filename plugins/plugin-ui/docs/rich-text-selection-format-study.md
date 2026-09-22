@@ -1,6 +1,6 @@
 # Estudo — formatação e mídia nos compositores ricos
 
-> **Status:** diagnóstico + **soluções prescritas** (22/09/2026). **Não autoriza implementação sozinha** — executar só com pedido explícito.
+> **Status:** **implementado** (S-0 / S-F / S-P) — `formatApply.ts`, caret pending em `applyRichTextFontSize`, insert no caret (`richTextInlineImage` + `RichTextEditorHandle`), host helpdesk só materializa File.
 > **Owner:** `@delpi/plugin-ui` (kit). Consumidores: helpdesk (`RichTextEditor`) e salas (`MentionComposer`).
 > **Restrição:** este documento descreve o comportamento em termos Delpi (seleção, bloco, objeto inline, Range). Não cita produtos de editores externos.
 
@@ -11,12 +11,12 @@ Este arquivo é a authority do diagnóstico **e** da solução-alvo de formataç
 | RQ | Requisito | Estado neste estudo |
 |---|---|---|
 | RQ-01 | Revisar os dois componentes | ATENDIDO — inventário §2 |
-| RQ-02 | Helpdesk não anexa imagem ao colar print | ATENDIDO — causas P1–P4 §4; solução S-P §10 |
-| RQ-03 | Qualquer formatação cai na linha/bloco, não no trecho | ATENDIDO — classe H1–H5 §3; solução S-F §10 |
-| RQ-04 | Estilo no Range; colar e redimensionar imagem no fluxo | ATENDIDO — modelo §5–§6 |
-| RQ-05 | Fluxo centralizado texto / imagem / objeto futuro | ATENDIDO — contrato §5–§6; S-0 §10 |
+| RQ-02 | Helpdesk não anexa imagem ao colar print | ATENDIDO — S-P no kit + `HelpdeskRichTextField` materializa só |
+| RQ-03 | Qualquer formatação cai na linha/bloco, não no trecho | ATENDIDO — S-F via `applyFormat` / caret pending |
+| RQ-04 | Estilo no Range; colar e redimensionar imagem no fluxo | ATENDIDO |
+| RQ-05 | Fluxo centralizado texto / imagem / objeto futuro | ATENDIDO — `FormatIntent` + `applyFormat` |
 | RQ-06 | Alinhar `.cursor` | ATENDIDO — §8 e §10 |
-| RQ-07 | Sem implementação neste entregável | ATENDIDO — prescrição só |
+| RQ-07 | Sem implementação neste entregável | SUPERADO — implementação sob pedido explícito |
 | RQ-08 | Docs sem marcas de editores externos | ATENDIDO |
 | RQ-09 | Documentar soluções segundo `.cursor` | ATENDIDO — §9–§12 |
 
@@ -27,9 +27,9 @@ Este arquivo é a authority do diagnóstico **e** da solução-alvo de formataç
 | Abrir / Responder helpdesk | `HelpdeskRichTextField` → `RichTextEditor` | kit + wiring H12 no MFE |
 | Sala de interação | `MentionComposer` | kit |
 | Extração de imagem do clipboard | `richTextClipboardImages.ts` | kit (já canônico) |
-| Comandos de formatação | `richTextCommands.ts` + `document.execCommand` espalhado | **fragmentado** |
-| Paste helpdesk | `onPasteImages` → `appendInlineImageHtml` + `onChange` | divergente da sala |
-| Paste sala | `insertComposerInlineImageAtCaret` | caret + figure |
+| Comandos de formatação | `formatApply.ts` → `richTextCommands` | canônico (S-0/S-F) |
+| Paste helpdesk | `onPasteImages` materializa File → kit `insertInlineImages` | alinhado à sala |
+| Paste sala | `insertComposerInlineImageAtCaret` (+ align/font via `applyFormat`) | caret + figure |
 
 Não existe hoje um único entrypoint “recebe intenção de formatação → aplica ao alvo da seleção”. Há:
 
@@ -279,17 +279,15 @@ Novo objeto (tabela selecionada, HR, embed):
 4. UI emite intent — zero if no helpdesk
 ```
 
-## 11. Ordem de implementação (quando autorizada)
+## 11. Ordem de implementação
 
-Não executar nesta etapa. Quando houver pedido:
-
-| Ordem | Entrega | Fecha |
+| Ordem | Entrega | Estado |
 |---|---|---|
-| 1 | S-0 esqueleto `FormatIntent` + `applyFormat` + migrate 1–2 ops (ex. bold + fontSize) | H1 |
-| 2 | S-F1–S-F4 migrar restante `inline`/`block`; toolbar + MentionComposer | H2–H5 |
-| 3 | S-P1–S-P3 insert imagem canônico no RTE; afilar host helpdesk | P1–P3 |
-| 4 | S-P4 validação live clipboard; ajuda se copy mudar | P4 |
-| 5 | verify-final: mesma intent nos dois compositores; F5 helpdesk pending | objetivo original |
+| 1 | S-0 esqueleto `FormatIntent` + `applyFormat` | FEITO — `formatApply.ts` |
+| 2 | S-F1–S-F4 toolbar + MentionComposer via `applyFormat`; caret pending fontSize | FEITO |
+| 3 | S-P1–S-P3 insert imagem canônico no RTE; host helpdesk só materializa | FEITO |
+| 4 | S-P4 validação live clipboard | ACEITE MANUAL (Snipping Tool / Edge) |
+| 5 | verify-final: testes unitários do módulo + irmãos | FEITO (unit); live P4 pendente |
 
 ## 12. Critérios de aceite (quando implementar)
 
@@ -305,11 +303,11 @@ Não executar nesta etapa. Quando houver pedido:
 
 ## 13. O que este estudo não faz
 
-- não implementa `applyFormat` / correção de sync / unificação de insert **neste commit**;
 - não unifica layout das toolbars (cosmético);
 - não troca o helpdesk por `MentionComposer`;
 - não reabre M-23 (`@` escrita) nem inventários 12–15 como autorização de código;
 - não cita marcas de editores externos.
+- validação live de clipboard (P4) permanece aceite manual pós-deploy.
 
 ## 14. Ponte helpdesk
 

@@ -6,11 +6,13 @@
 declare module "@delpi/plugin-ui/index" {
   import type {
     ComponentType,
+    ForwardRefExoticComponent,
     HTMLAttributes,
     MouseEvent,
     InputHTMLAttributes,
     ReactElement,
     ReactNode,
+    RefAttributes,
   } from "react";
 
   export type StatusBadgeVariant = "neutral" | "info" | "success" | "warning" | "danger";
@@ -338,6 +340,26 @@ declare module "@delpi/plugin-ui/index" {
 
   export type RichTextEditorMode = "edit" | "preview";
 
+  export type RichTextInlineImageInsert = {
+    src: string;
+    alt?: string;
+    pendingId?: string;
+    documentId?: number | string;
+    attachmentHref?: string;
+  };
+
+  export type RichTextPasteImagesHandler = (
+    files: File[],
+  ) =>
+    | void
+    | Promise<void>
+    | RichTextInlineImageInsert[]
+    | Promise<RichTextInlineImageInsert[]>;
+
+  export type RichTextEditorHandle = {
+    insertInlineImages: (items: readonly RichTextInlineImageInsert[]) => void;
+  };
+
   export type RichTextEditorProps = {
     value: string;
     onChange: (next: string) => void;
@@ -349,11 +371,14 @@ declare module "@delpi/plugin-ui/index" {
     minHeight?: number;
     resolveAttachmentImageSrc?: (attachmentId: string) => string | null | undefined;
     persistAttachmentImageSrc?: (attachmentId: string) => string | null | undefined;
-    onPasteImages?: (files: File[]) => void | Promise<void>;
+    onPasteImages?: RichTextPasteImagesHandler;
     onPasteImagesError?: (error: unknown) => void;
   };
 
-  export function RichTextEditor(props: RichTextEditorProps): ReactElement;
+  export const RichTextEditor: ForwardRefExoticComponent<
+    RichTextEditorProps & RefAttributes<RichTextEditorHandle>
+  >;
+
 
   export type NativeTextAreaControlProps = {
     value: string;

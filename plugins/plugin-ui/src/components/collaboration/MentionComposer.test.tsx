@@ -216,7 +216,7 @@ describe("MentionComposer", () => {
     expect(source).not.toMatch(/<RichTextToolbar|<RichTextEditor/);
     expect(source).not.toMatch(/setInlineImageFigureAlign/);
     expect(source).toMatch(/ensureComposerParagraphFlow\(el\)/);
-    expect(source).toMatch(/applyRichTextAlign\(el,/);
+    expect(source).toMatch(/applyFormat\(el,\s*formatIntent\.align/);
     expect(source).toMatch(/insertComposerParagraph\(surface\)/);
     expect(source).toMatch(/insertComposerInlineImageAtCaret/);
     expect(source).not.toMatch(/inlineImageBlockHtml/);

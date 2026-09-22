@@ -75,7 +75,7 @@ describe("applyRichTextFontSize", () => {
     document.body.removeChild(editor);
   });
 
-  it("com caret colapsado aplica no bloco (p/h2), não só no próximo digitar", () => {
+  it("com caret colapsado cria span pending (não stamp no parágrafo)", () => {
     const editor = document.createElement("div");
     editor.contentEditable = "true";
     editor.innerHTML = "<p>parágrafo</p>";
@@ -92,7 +92,10 @@ describe("applyRichTextFontSize", () => {
     applyRichTextFontSize(editor, 20);
 
     const paragraph = editor.querySelector("p");
-    expect(paragraph?.style.fontSize).toBe("20px");
+    expect(paragraph?.style.fontSize).toBe("");
+    const span = editor.querySelector("span");
+    expect(span?.style.fontSize).toBe("20px");
+    expect(span?.textContent).toBe("\u200B");
 
     document.body.removeChild(editor);
   });

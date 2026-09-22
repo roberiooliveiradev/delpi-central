@@ -46,8 +46,6 @@ import {
 } from "../layout/EditorHistoryActions";
 import { delpiUiClass } from "../../utils/delpiUiClass";
 import {
-  applyRichTextAlign,
-  applyRichTextFontSize,
   getRichTextSelectionRange,
   insertRichTextHtmlFragment,
   queryRichTextAlign,
@@ -55,15 +53,7 @@ import {
   restoreRichTextSelection,
   type RichTextAlign,
 } from "../rich-text/richTextCommands";
-
-function tryDocumentExecCommand(command: string, value?: string): boolean {
-  try {
-    if (typeof document.execCommand !== "function") return false;
-    return Boolean(document.execCommand(command, false, value));
-  } catch {
-    return false;
-  }
-}
+import { applyFormat, formatIntent } from "../rich-text/formatApply";
 import {
   applyAttachmentImageSources,
   clipboardHasUsefulHtml,
@@ -131,6 +121,15 @@ import {
   uniqueClipboardImageFiles,
   type MentionComposerInlineImageInsert,
 } from "./mentionComposerInlineImage";
+
+function tryDocumentExecCommand(command: string, value?: string): boolean {
+  try {
+    if (typeof document.execCommand !== "function") return false;
+    return Boolean(document.execCommand(command, false, value));
+  } catch {
+    return false;
+  }
+}
 
 export type { MentionComposerPendingAttachment } from "./mentionComposerPending";
 
@@ -690,7 +689,7 @@ export function MentionComposer({
     restoreSelectionForMutation();
     commitBeforeMutation();
     ensureComposerParagraphFlow(el);
-    applyRichTextAlign(el, align);
+    applyFormat(el, formatIntent.align(align));
     setAlignActive(queryRichTextAlign(el) ?? align);
     lastStableRef.current = readSnapshot();
     refreshHistoryFlags();
@@ -703,7 +702,7 @@ export function MentionComposer({
     const next = clampComposerFontSize(nextRaw);
     restoreSelectionForMutation();
     commitBeforeMutation();
-    applyRichTextFontSize(el, next);
+    applyFormat(el, formatIntent.fontSize(next));
     setFontSize(next);
     lastStableRef.current = readSnapshot();
     refreshHistoryFlags();
