@@ -92,7 +92,7 @@ class GetAudit5sDashboardUseCase:
             summary=Audit5sDashboardSummary(**data["summary"]),
             charts=Audit5sDashboardCharts(**data["charts"]),
             items=[Audit5sDashboardItem(**item) for item in data["items"]],
-            pagination=Audit5sDashboardPagination(**data["pagination"]),
+            pagination=Audit5sDashboardPagination.from_paged_count(data["pagination"]),
         )
 
     @staticmethod
