@@ -81,20 +81,22 @@ describe("Process Workspace IA consolidation", () => {
 
 describe("ProcessResultsSection context isolation", () => {
   it("CASE C/T: múltiplas instâncias exigem seleção explícita", () => {
-    expect(resultsSection).toMatch(/requiresInstanceSelection/);
+    expect(resultsSection).toMatch(/needs_instance_selection/);
     expect(resultsSection).toMatch(/Selecione uma melhoria para visualizar este conteúdo/);
-    expect(resultsSection).toMatch(/if \(requiresInstanceSelection\) return selectedInstanciaId/);
-    expect(resultsSection).toMatch(/data-selected-instancia=\{contextInstanciaId\}/);
+    expect(resultsSection).toMatch(/buildRevisionComparisonView/);
+    expect(resultsSection).toMatch(/data-selected-instancia=\{comparison\.instanceId\}/);
   });
 
   it("CASE F/G: comparação distingue calculado e não inventa authority", () => {
     expect(resultsSection).toMatch(/Comparação calculada/);
     expect(resultsSection).toMatch(/fetchProcessoComparativo/);
     expect(resultsSection).toMatch(/Ainda não há baseline\/medição comparável/);
+    expect(resultsSection).toMatch(/legacy_reference_missing/);
   });
 
-  it("CASE T: scoped revisões usam um único contextInstanciaId", () => {
-    expect(resultsSection).toMatch(/data-selected-instancia=\{contextInstanciaId\}/);
+  it("CASE T: scoped revisões usam um único comparison.instanceId", () => {
+    expect(resultsSection).toMatch(/data-selected-instancia=\{comparison\.instanceId\}/);
+    expect(resultsSection).toMatch(/filterComparativoByRevisoes/);
     expect(resultsSection).toMatch(/scopedComparisonItems/);
   });
 });

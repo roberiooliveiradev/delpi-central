@@ -14,10 +14,11 @@ const docs = readFileSync(join(root, "ui/processes/ProcessDocumentationSection.t
 const detail = readFileSync(join(root, "ui/pages/ProcessDetailPage.tsx"), "utf8");
 
 describe("Process Workspace finalization — Results composition", () => {
-  it("compõe medição/investimentos/recursos inline read-only no mesmo contextInstanciaId", () => {
-    expect(results).toMatch(/data-selected-instancia=\{contextInstanciaId\}/);
-    expect(results).toMatch(/data-selected-revisao=\{contextRevisaoId/);
-    expect(results).toMatch(/RevisionMeasurementSection/);
+  it("compõe comparação + investimentos/recursos read-only no mesmo comparison.instanceId", () => {
+    expect(results).toMatch(/data-selected-instancia=\{comparison\.instanceId\}/);
+    expect(results).toMatch(/data-selected-revisao=\{comparison\.selectedRevisionId/);
+    expect(results).toMatch(/data-reference-revisao=\{comparison\.referenceRevisionId/);
+    expect(results).toMatch(/buildRevisionComparisonView/);
     expect(results).toMatch(/RevisionInvestmentsSection/);
     expect(results).toMatch(/RevisionSharedResourcesSection/);
     expect(results).toMatch(/readOnly/);
@@ -29,16 +30,15 @@ describe("Process Workspace finalization — Results composition", () => {
   });
 
   it("CASE multiple instance: exige seleção explícita e não usa fallback arbitrário", () => {
-    expect(results).toMatch(/requiresInstanceSelection/);
+    expect(results).toMatch(/needs_instance_selection/);
     expect(results).toMatch(/Selecione uma melhoria para visualizar este conteúdo/);
-    expect(results).toMatch(/if \(requiresInstanceSelection\) return selectedInstanciaId/);
-    expect(results).toMatch(/if \(instancias\.length === 1\) return instancias\[0\]/);
+    expect(results).toMatch(/buildRevisionComparisonView/);
   });
 
   it("CASE cross-instance: comparison e bundle usam o mesmo contexto filtrado", () => {
+    expect(results).toMatch(/filterComparativoByRevisoes/);
     expect(results).toMatch(/scopedComparisonItems/);
-    expect(results).toMatch(/allowed\.has\(row\.revisao_id\)/);
-    expect(results).toMatch(/loadRevisionBundle\(contextRevisaoId\)/);
+    expect(results).toMatch(/loadToBeBundle\(comparison\.selectedRevisionId/);
     expect(results).toMatch(/setSelectedRevisaoId\(null\)/);
   });
 
@@ -50,7 +50,7 @@ describe("Process Workspace finalization — Results composition", () => {
 
   it("lazy: comparação e bundle só com active", () => {
     expect(results).toMatch(/if \(!active\) return/);
-    expect(results).toMatch(/if \(!active \|\| !contextRevisaoId\)/);
+    expect(results).toMatch(/if \(!active \|\| !comparison\.selectedRevisionId\)/);
   });
 });
 

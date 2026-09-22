@@ -5,8 +5,10 @@ import { DataTable } from "../../components/DataTable";
 import { InlineErrorState } from "../../components/ErrorStateBox";
 import { LoadingActivityCard } from "../../components/LoadingActivityCard";
 import { DS_GHOST_BTN } from "../../components/ghostChrome";
+import { TmStatusBadge } from "../../components/tmChromeUi";
 import { cenarioLabel } from "../../content/cenarioLabels";
 import { beneficioCalculoLabel } from "../../content/beneficioCalculoLabels";
+import { TransformometroHttpError } from "../../data/api/transformometroHttp";
 import {
   fetchInvestimentos,
   fetchMedicao,
@@ -22,13 +24,22 @@ import {
   type Revisao,
   type VinculoRecurso,
 } from "../../data/api/transformometroApi";
+import { describeHttpErrorTitle } from "../../utils/apiErrorMessage";
 import { buildComparativoColumns, formatProcessoNumber } from "../../utils/processoDetailTables";
 import { buildProcessoPath } from "../../utils/routeParser";
 import { revisaoDisplayLabel } from "../../utils/revisaoLabels";
 import { RevisionInvestmentsSection } from "../revision/registration/RevisionInvestmentsSection";
-import { RevisionMeasurementSection } from "../revision/registration/RevisionMeasurementSection";
 import { RevisionSharedResourcesSection } from "../revision/registration/RevisionSharedResourcesSection";
+import {
+  buildMeasurementComparisonRows,
+  buildRevisionComparisonView,
+  filterComparativoByRevisoes,
+  findComparativoItem,
+  provenanceForRevisionRole,
+} from "./buildRevisionComparisonView";
+import { MeasurementComparisonTable } from "./MeasurementComparisonTable";
 import { instanciaNavLabel } from "./processWorkspaceNav";
+import { RevisionCompareSummary } from "./RevisionCompareSummary";
 
 type Props = {
   processoId: string;
@@ -50,8 +61,8 @@ type RevisionBundle = {
 };
 
 /**
- * Resultados — composição frontend de comparison + medição/investimentos/recursos
- * read-only das capabilities existentes. Sem aggregate/DTO novo.
+ * Resultados — Redesign & Compare V1 (composição frontend).
+ * Sem aggregate/DTO/backend novo. Referência = `revisao_referencia_id` do domínio.
  */
 export function ProcessResultsSection({
   processoId,
@@ -65,52 +76,55 @@ export function ProcessResultsSection({
   const [items, setItems] = useState<ProcessoComparativoItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [errorStatus, setErrorStatus] = useState<number | null>(null);
   const [loadedOnce, setLoadedOnce] = useState(false);
-  /** Explicit selection only — never silent fallback when multiple instances. */
   const [selectedInstanciaId, setSelectedInstanciaId] = useState<string | null>(null);
   const [selectedRevisaoId, setSelectedRevisaoId] = useState<string | null>(null);
-  const [revisionBundle, setRevisionBundle] = useState<RevisionBundle | null>(null);
+  const [toBeBundle, setToBeBundle] = useState<RevisionBundle | null>(null);
+  const [asIsMedicao, setAsIsMedicao] = useState<Medicao | null>(null);
   const [revisionLoading, setRevisionLoading] = useState(false);
+  const [asIsLoading, setAsIsLoading] = useState(false);
   const [revisionError, setRevisionError] = useState<string | null>(null);
+  const [revisionErrorStatus, setRevisionErrorStatus] = useState<number | null>(null);
+  const [showHeavyStructure, setShowHeavyStructure] = useState(false);
 
-  const requiresInstanceSelection = instancias.length > 1;
-  const contextInstanciaId = useMemo(() => {
-    if (instancias.length === 1) return instancias[0]!.instancia_id;
-    if (requiresInstanceSelection) return selectedInstanciaId;
-    return null;
-  }, [instancias, requiresInstanceSelection, selectedInstanciaId]);
+  const comparison = useMemo(
+    () =>
+      buildRevisionComparisonView({
+        processId: processoId,
+        instancias,
+        revisoes,
+        selectedInstanciaId,
+        selectedRevisaoId,
+      }),
+    [instancias, processoId, revisoes, selectedInstanciaId, selectedRevisaoId],
+  );
 
-  const scopedRevisoes = useMemo(() => {
-    if (!contextInstanciaId) return [];
-    const needle = contextInstanciaId.toLowerCase();
-    return revisoes.filter((row) => String(row.instancia_id ?? "").toLowerCase() === needle);
-  }, [contextInstanciaId, revisoes]);
+  const scopedComparisonItems = useMemo(
+    () => filterComparativoByRevisoes(items, comparison.scopedRevisoes),
+    [comparison.scopedRevisoes, items],
+  );
 
-  const contextRevisaoId = useMemo(() => {
-    if (scopedRevisoes.length === 1) return scopedRevisoes[0]!.revisao_id;
-    if (scopedRevisoes.length > 1) return selectedRevisaoId;
-    return null;
-  }, [scopedRevisoes, selectedRevisaoId]);
-
-  const scopedComparisonItems = useMemo(() => {
-    if (!contextInstanciaId) return [];
-    const allowed = new Set(scopedRevisoes.map((row) => row.revisao_id));
-    return items.filter((row) => allowed.has(row.revisao_id));
-  }, [contextInstanciaId, items, scopedRevisoes]);
-
-  const selectedComparison = useMemo(
-    () => scopedComparisonItems.find((row) => row.revisao_id === contextRevisaoId) ?? null,
-    [contextRevisaoId, scopedComparisonItems],
+  const toBeComparison = useMemo(
+    () => findComparativoItem(scopedComparisonItems, comparison.selectedRevisionId),
+    [comparison.selectedRevisionId, scopedComparisonItems],
+  );
+  const asIsComparison = useMemo(
+    () => findComparativoItem(scopedComparisonItems, comparison.asIs?.revisao_id ?? null),
+    [comparison.asIs?.revisao_id, scopedComparisonItems],
   );
 
   const loadComparison = useCallback(async () => {
     setLoading(true);
     setError(null);
+    setErrorStatus(null);
     try {
       const data = await fetchProcessoComparativo(processoId, getAccessToken);
       setItems(data.items ?? []);
       setLoadedOnce(true);
     } catch (reason) {
+      const status = reason instanceof TransformometroHttpError ? reason.status : null;
+      setErrorStatus(status);
       setError(
         reason instanceof Error
           ? reason.message
@@ -129,14 +143,18 @@ export function ProcessResultsSection({
 
   useEffect(() => {
     setSelectedRevisaoId(null);
-    setRevisionBundle(null);
+    setToBeBundle(null);
+    setAsIsMedicao(null);
     setRevisionError(null);
-  }, [contextInstanciaId]);
+    setRevisionErrorStatus(null);
+    setShowHeavyStructure(false);
+  }, [comparison.instanceId]);
 
-  const loadRevisionBundle = useCallback(
+  const loadToBeBundle = useCallback(
     async (revisaoId: string) => {
       setRevisionLoading(true);
       setRevisionError(null);
+      setRevisionErrorStatus(null);
       try {
         const [medicao, investimentos, vinculos, recursos] = await Promise.all([
           fetchMedicao(revisaoId, getAccessToken),
@@ -144,14 +162,16 @@ export function ProcessResultsSection({
           fetchVinculos(revisaoId, getAccessToken),
           fetchRecursos(getAccessToken),
         ]);
-        setRevisionBundle({
+        setToBeBundle({
           medicao,
           investimentos: investimentos.items ?? [],
           vinculos: vinculos.items ?? [],
           recursos: recursos.items ?? [],
         });
       } catch (reason) {
-        setRevisionBundle(null);
+        setToBeBundle(null);
+        const status = reason instanceof TransformometroHttpError ? reason.status : null;
+        setRevisionErrorStatus(status);
         setRevisionError(
           reason instanceof Error
             ? reason.message
@@ -164,38 +184,91 @@ export function ProcessResultsSection({
     [getAccessToken],
   );
 
+  const loadAsIsMedicao = useCallback(
+    async (revisaoId: string) => {
+      setAsIsLoading(true);
+      try {
+        const medicao = await fetchMedicao(revisaoId, getAccessToken);
+        setAsIsMedicao(medicao);
+      } catch {
+        setAsIsMedicao(null);
+      } finally {
+        setAsIsLoading(false);
+      }
+    },
+    [getAccessToken],
+  );
+
   useEffect(() => {
-    if (!active || !contextRevisaoId) {
-      setRevisionBundle(null);
+    if (!active || !comparison.selectedRevisionId) {
+      setToBeBundle(null);
       return;
     }
-    void loadRevisionBundle(contextRevisaoId);
-  }, [active, contextRevisaoId, loadRevisionBundle]);
+    if (
+      comparison.mode === "pair" ||
+      comparison.mode === "baseline_only" ||
+      comparison.mode === "legacy_reference_missing"
+    ) {
+      void loadToBeBundle(comparison.selectedRevisionId);
+    }
+  }, [active, comparison.mode, comparison.selectedRevisionId, loadToBeBundle]);
+
+  useEffect(() => {
+    if (!active || comparison.mode !== "pair" || !comparison.asIs) {
+      setAsIsMedicao(null);
+      return;
+    }
+    void loadAsIsMedicao(comparison.asIs.revisao_id);
+  }, [active, comparison.asIs, comparison.mode, loadAsIsMedicao]);
+
+  const measurementRows = useMemo(
+    () =>
+      buildMeasurementComparisonRows(
+        comparison.mode === "pair" ? asIsMedicao : comparison.mode === "baseline_only" ? toBeBundle?.medicao ?? null : null,
+        comparison.mode === "pair" ? toBeBundle?.medicao ?? null : null,
+      ),
+    [asIsMedicao, comparison.mode, toBeBundle?.medicao],
+  );
 
   const columns = useMemo(() => buildComparativoColumns(), []);
-  const activeRevisao = scopedRevisoes.find((row) => row.revisao_id === contextRevisaoId) ?? null;
 
-  const openRevisionSection = (section: "medicao" | "investimentos" | "recursos") => {
-    if (!contextInstanciaId || !contextRevisaoId) return;
-    onNavigate(
-      `${buildProcessoPath(processoId, contextRevisaoId, contextInstanciaId)}#${section}`,
-    );
+  const openRevisionSection = (
+    revisaoId: string,
+    section: "medicao" | "investimentos" | "recursos" | "mapeamento" | "diagrama",
+  ) => {
+    if (!comparison.instanceId) return;
+    onNavigate(`${buildProcessoPath(processoId, revisaoId, comparison.instanceId)}#${section}`);
   };
+
+  const calculatedSummary =
+    comparison.mode === "pair"
+      ? {
+          asIsEconomy: asIsComparison?.totais.economia_liquida_mes ?? null,
+          toBeEconomy: toBeComparison?.totais.economia_liquida_mes ?? null,
+          deltaEconomy:
+            asIsComparison != null && toBeComparison != null
+              ? (toBeComparison.totais.economia_liquida_mes ?? 0) -
+                (asIsComparison.totais.economia_liquida_mes ?? 0)
+              : null,
+        }
+      : undefined;
 
   return (
     <section
       className="ds-card tm-processo-workspace-panel tm-processo-results"
       aria-labelledby="tm-process-resultados-title"
+      data-results-mode={comparison.mode}
     >
       <h2 id="tm-process-resultados-title" className="ds-section-title">
         Resultados
       </h2>
       <p className="ds-hint">
-        Comparação e benefícios <strong>calculados</strong> a partir das medições informadas nas
-        revisões. Não confundir com resultado observado em campo.
+        Redesign &amp; Compare: AS-IS é a revisão de referência do domínio; TO-BE é o cenário
+        selecionado. Benefícios e totais do comparativo são <strong>calculados</strong> — não
+        confundir com resultado observado em campo.
       </p>
 
-      {instancias.length === 0 ? (
+      {comparison.mode === "no_instance" ? (
         <EmptyState
           classNames={EMPTY}
           title="Sem melhorias"
@@ -203,7 +276,7 @@ export function ProcessResultsSection({
         />
       ) : null}
 
-      {requiresInstanceSelection && !selectedInstanciaId ? (
+      {comparison.mode === "needs_instance_selection" ? (
         <EmptyState
           classNames={EMPTY}
           title="Contexto necessário"
@@ -225,44 +298,82 @@ export function ProcessResultsSection({
         </EmptyState>
       ) : null}
 
-      {contextInstanciaId ? (
+      {comparison.instanceId && comparison.instance ? (
         <div
           className="tm-processo-results-scoped"
-          data-selected-instancia={contextInstanciaId}
-          data-selected-revisao={contextRevisaoId ?? undefined}
+          data-selected-instancia={comparison.instanceId}
+          data-selected-revisao={comparison.selectedRevisionId ?? undefined}
+          data-reference-revisao={comparison.referenceRevisionId ?? undefined}
         >
-          <p className="ds-hint">
-            Melhoria:{" "}
-            {instanciaNavLabel(
-              instancias.find((row) => row.instancia_id === contextInstanciaId)!,
-            )}
-            {requiresInstanceSelection ? (
-              <>
-                {" · "}
-                <button
-                  type="button"
-                  className="ds-link"
-                  onClick={() => setSelectedInstanciaId(null)}
-                >
-                  Trocar
-                </button>
-              </>
-            ) : null}
-          </p>
+          <header className="tm-processo-results-context" aria-label="Contexto da comparação">
+            <dl className="tm-processo-results-context__grid">
+              <div>
+                <dt>Melhoria</dt>
+                <dd>
+                  {instanciaNavLabel(comparison.instance)}
+                  {instancias.length > 1 ? (
+                    <>
+                      {" · "}
+                      <button
+                        type="button"
+                        className="ds-link"
+                        onClick={() => setSelectedInstanciaId(null)}
+                      >
+                        Trocar
+                      </button>
+                    </>
+                  ) : null}
+                </dd>
+              </div>
+              <div>
+                <dt>Cenário</dt>
+                <dd>
+                  {comparison.toBe
+                    ? `${revisaoDisplayLabel(comparison.toBe)} · ${cenarioLabel(comparison.toBe.cenario_tipo)}`
+                    : "—"}
+                  {comparison.toBe && !comparison.toBe.revisao_ativa ? (
+                    <>
+                      {" "}
+                      <TmStatusBadge label="inativa" variant="neutral" />
+                    </>
+                  ) : null}
+                  {comparison.toBe?.revisao_ativa ? (
+                    <>
+                      {" "}
+                      <TmStatusBadge label="ativa" variant="success" />
+                    </>
+                  ) : null}
+                </dd>
+              </div>
+              <div>
+                <dt>Referência</dt>
+                <dd>
+                  {comparison.mode === "legacy_reference_missing"
+                    ? "Não definida"
+                    : comparison.asIs
+                      ? `${revisaoDisplayLabel(comparison.asIs)} · ${cenarioLabel(comparison.asIs.cenario_tipo)}`
+                      : comparison.mode === "baseline_only"
+                        ? "Linha de base (própria)"
+                        : "—"}
+                </dd>
+              </div>
+            </dl>
+          </header>
 
-          {scopedRevisoes.length > 1 ? (
-            <div className="tm-processo-results-revisao-picker" role="group" aria-label="Revisão">
-              <p className="ds-hint">Selecione a revisão (baseline/cenário) neste contexto:</p>
+          {comparison.scopedRevisoes.length > 1 ? (
+            <div className="tm-processo-results-revisao-picker" role="group" aria-label="Cenário (TO-BE)">
+              <p className="ds-hint">Selecione o cenário (revisão TO-BE) neste contexto:</p>
               <ul className="tm-processo-results-instance-picker">
-                {scopedRevisoes.map((revisao) => (
+                {comparison.scopedRevisoes.map((revisao) => (
                   <li key={revisao.revisao_id}>
                     <button
                       type="button"
                       className={DS_GHOST_BTN}
-                      aria-pressed={contextRevisaoId === revisao.revisao_id}
+                      aria-pressed={comparison.selectedRevisionId === revisao.revisao_id}
                       onClick={() => setSelectedRevisaoId(revisao.revisao_id)}
                     >
                       {revisaoDisplayLabel(revisao)} · {cenarioLabel(revisao.cenario_tipo)}
+                      {!revisao.revisao_ativa ? " · inativa" : ""}
                     </button>
                   </li>
                 ))}
@@ -270,12 +381,62 @@ export function ProcessResultsSection({
             </div>
           ) : null}
 
-          {scopedRevisoes.length === 0 ? (
+          {comparison.mode === "no_revision" ? (
             <EmptyState
               classNames={EMPTY}
               title="Sem revisões"
-              defaultMessage="Ainda não há baseline/medição comparável."
+              defaultMessage="Ainda não há cenário para comparação."
             />
+          ) : null}
+
+          {comparison.mode === "needs_revision_selection" ? (
+            <EmptyState
+              classNames={EMPTY}
+              title="Revisão necessária"
+              defaultMessage="Selecione uma revisão para visualizar medição, investimentos e recursos."
+            />
+          ) : null}
+
+          {comparison.mode === "legacy_reference_missing" ? (
+            <EmptyState
+              classNames={EMPTY}
+              title="Referência ausente"
+              defaultMessage="Esta revisão não possui referência de comparação definida."
+            />
+          ) : null}
+
+          {comparison.mode === "reference_not_in_scope" ? (
+            <EmptyState
+              classNames={EMPTY}
+              title="Referência fora do contexto"
+              defaultMessage="Esta revisão não possui referência de comparação definida."
+            />
+          ) : null}
+
+          {(comparison.mode === "pair" || comparison.mode === "baseline_only") && comparison.toBe ? (
+            <div className="tm-processo-results-block" data-results-block="compare-summary">
+              <h3 className="ds-subsection-title">Comparação</h3>
+              <RevisionCompareSummary
+                mode={comparison.mode === "pair" ? "pair" : "baseline_only"}
+                asIsLabel={
+                  comparison.asIs
+                    ? `${revisaoDisplayLabel(comparison.asIs)} · ${cenarioLabel(comparison.asIs.cenario_tipo)}`
+                    : "—"
+                }
+                toBeLabel={
+                  comparison.mode === "baseline_only"
+                    ? null
+                    : `${revisaoDisplayLabel(comparison.toBe)} · ${cenarioLabel(comparison.toBe.cenario_tipo)}`
+                }
+                asIsProvenance={provenanceForRevisionRole("as_is", comparison.asIs)}
+                toBeProvenance={
+                  comparison.mode === "pair"
+                    ? provenanceForRevisionRole("to_be", comparison.toBe)
+                    : null
+                }
+                calculatedSummary={calculatedSummary}
+              />
+            </div>
           ) : null}
 
           {loading && scopedComparisonItems.length === 0 ? (
@@ -287,13 +448,21 @@ export function ProcessResultsSection({
 
           {error ? (
             <InlineErrorState
-              title="Falha ao carregar comparação calculada"
+              title={
+                errorStatus === 403 || errorStatus === 401
+                  ? describeHttpErrorTitle(errorStatus)
+                  : "Falha ao carregar comparação calculada"
+              }
               message={error}
-              onAction={() => void loadComparison()}
+              onAction={errorStatus === 403 ? undefined : () => void loadComparison()}
             />
           ) : null}
 
-          {!loading && !error && loadedOnce && scopedComparisonItems.length === 0 && scopedRevisoes.length > 0 ? (
+          {!loading &&
+          !error &&
+          loadedOnce &&
+          scopedComparisonItems.length === 0 &&
+          comparison.scopedRevisoes.length > 0 ? (
             <EmptyState
               classNames={EMPTY}
               title="Sem comparação"
@@ -302,11 +471,11 @@ export function ProcessResultsSection({
           ) : null}
 
           {scopedComparisonItems.length > 0 ? (
-            <div className="tm-processo-results-comparison">
+            <div className="tm-processo-results-comparison" data-results-block="comparativo-tabela">
               <h3 className="ds-subsection-title">Comparação calculada</h3>
               <p className="ds-hint">
-                Totais e breakdowns são <strong>calculados</strong> — não são economia realizada
-                observada.
+                Totais e breakdowns são <strong>CALCULADOS</strong> pelo contrato de comparação —
+                não são economia realizada observada.
               </p>
               <div className="tm-processo-results-table-scroll">
                 <DataTable
@@ -318,53 +487,68 @@ export function ProcessResultsSection({
             </div>
           ) : null}
 
-          {contextRevisaoId && activeRevisao ? (
+          {comparison.selectedRevisionId &&
+          (comparison.mode === "pair" ||
+            comparison.mode === "baseline_only" ||
+            comparison.mode === "legacy_reference_missing") ? (
             <>
-              {revisionLoading ? (
+              {(revisionLoading || asIsLoading) && !toBeBundle ? (
                 <LoadingActivityCard
-                  title="Carregando capacidade da revisão"
+                  title="Carregando indicadores da revisão"
                   description="Medição, investimentos e recursos do mesmo contexto selecionado."
                 />
               ) : null}
 
               {revisionError ? (
                 <InlineErrorState
-                  title="Falha ao carregar dados da revisão"
+                  title={
+                    revisionErrorStatus === 403 || revisionErrorStatus === 401
+                      ? describeHttpErrorTitle(revisionErrorStatus)
+                      : "Falha ao carregar dados da revisão"
+                  }
                   message={revisionError}
-                  onAction={() => void loadRevisionBundle(contextRevisaoId)}
+                  onAction={
+                    revisionErrorStatus === 403
+                      ? undefined
+                      : () => void loadToBeBundle(comparison.selectedRevisionId!)
+                  }
                 />
               ) : null}
 
-              {!revisionLoading && !revisionError && revisionBundle ? (
+              {!revisionLoading && !revisionError && toBeBundle ? (
                 <>
                   <div className="tm-processo-results-block" data-results-block="medicoes">
                     <div className="tm-processo-results-block__head">
-                      <h3 className="ds-subsection-title">Medições</h3>
+                      <h3 className="ds-subsection-title">Indicadores operacionais</h3>
                       <button
                         type="button"
                         className="ds-link"
-                        onClick={() => openRevisionSection("medicao")}
+                        onClick={() =>
+                          openRevisionSection(comparison.selectedRevisionId!, "medicao")
+                        }
                       >
                         Abrir na revisão
                       </button>
                     </div>
-                    {revisionBundle.medicao ? (
-                      <RevisionMeasurementSection
-                        embeddedInCard
-                        readOnly
-                        medicao={revisionBundle.medicao}
-                        beneficioCalculoCategoria={
-                          activeRevisao.beneficio_calculo_categoria ??
-                          selectedComparison?.beneficio_calculo_categoria
-                        }
-                        onChange={() => undefined}
-                        onSubmit={(event) => event.preventDefault()}
+                    {comparison.mode === "pair" ? (
+                      <MeasurementComparisonTable
+                        rows={measurementRows}
+                        hasAsIsMeasurement={Boolean(asIsMedicao)}
+                        hasToBeMeasurement={Boolean(toBeBundle.medicao)}
+                        pairMode
+                      />
+                    ) : toBeBundle.medicao ? (
+                      <MeasurementComparisonTable
+                        rows={buildMeasurementComparisonRows(toBeBundle.medicao, null)}
+                        hasAsIsMeasurement
+                        hasToBeMeasurement={false}
+                        pairMode={false}
                       />
                     ) : (
                       <EmptyState
                         classNames={EMPTY}
                         title="Sem medição"
-                        defaultMessage="Ainda não há baseline/medição comparável."
+                        defaultMessage="Sem medição informada para este cenário."
                       />
                     )}
                   </div>
@@ -375,23 +559,38 @@ export function ProcessResultsSection({
                       <button
                         type="button"
                         className="ds-link"
-                        onClick={() => openRevisionSection("investimentos")}
+                        onClick={() =>
+                          openRevisionSection(comparison.selectedRevisionId!, "investimentos")
+                        }
                       >
                         Abrir na revisão
                       </button>
                     </div>
-                    <RevisionInvestmentsSection
-                      embeddedInCard
-                      readOnly
-                      revisaoId={contextRevisaoId}
-                      options={options}
-                      investimentos={revisionBundle.investimentos}
-                      getAccessToken={getAccessToken}
-                      onError={setRevisionError}
-                      onReload={async () => {
-                        await loadRevisionBundle(contextRevisaoId);
-                      }}
-                    />
+                    <p className="ds-hint">
+                      Investimento do cenário selecionado
+                      {comparison.mode === "pair" ? " (TO-BE / PROPOSTO)" : ""}. Sem fabricar
+                      investimento AS-IS.
+                    </p>
+                    {toBeBundle.investimentos.length === 0 ? (
+                      <EmptyState
+                        classNames={EMPTY}
+                        title="Sem investimentos"
+                        defaultMessage="Nenhum investimento registrado para este cenário."
+                      />
+                    ) : (
+                      <RevisionInvestmentsSection
+                        embeddedInCard
+                        readOnly
+                        revisaoId={comparison.selectedRevisionId}
+                        options={options}
+                        investimentos={toBeBundle.investimentos}
+                        getAccessToken={getAccessToken}
+                        onError={setRevisionError}
+                        onReload={async () => {
+                          await loadToBeBundle(comparison.selectedRevisionId!);
+                        }}
+                      />
+                    )}
                   </div>
 
                   <div className="tm-processo-results-block" data-results-block="recursos">
@@ -400,66 +599,74 @@ export function ProcessResultsSection({
                       <button
                         type="button"
                         className="ds-link"
-                        onClick={() => openRevisionSection("recursos")}
+                        onClick={() =>
+                          openRevisionSection(comparison.selectedRevisionId!, "recursos")
+                        }
                       >
                         Abrir na revisão
                       </button>
                     </div>
                     <p className="ds-hint">
-                      Vínculos e rateio desta revisão. Histórico de custos unitários do recurso
-                      permanece em Configurações → Recursos compartilhados (owner do catálogo).
+                      Vínculos desta revisão. Custos unitários do catálogo permanecem em
+                      Configurações → Recursos compartilhados.
                     </p>
-                    <RevisionSharedResourcesSection
-                      embeddedInCard
-                      readOnly
-                      revisaoId={contextRevisaoId}
-                      options={options}
-                      recursos={revisionBundle.recursos}
-                      vinculos={revisionBundle.vinculos}
-                      getAccessToken={getAccessToken}
-                      onError={setRevisionError}
-                      onReload={async () => {
-                        await loadRevisionBundle(contextRevisaoId);
-                      }}
-                    />
+                    {toBeBundle.vinculos.length === 0 ? (
+                      <EmptyState
+                        classNames={EMPTY}
+                        title="Sem recursos"
+                        defaultMessage="Nenhum recurso vinculado a este cenário."
+                      />
+                    ) : (
+                      <RevisionSharedResourcesSection
+                        embeddedInCard
+                        readOnly
+                        revisaoId={comparison.selectedRevisionId}
+                        options={options}
+                        recursos={toBeBundle.recursos}
+                        vinculos={toBeBundle.vinculos}
+                        getAccessToken={getAccessToken}
+                        onError={setRevisionError}
+                        onReload={async () => {
+                          await loadToBeBundle(comparison.selectedRevisionId!);
+                        }}
+                      />
+                    )}
                   </div>
 
                   <div className="tm-processo-results-block" data-results-block="beneficios">
                     <h3 className="ds-subsection-title">Benefícios calculados</h3>
-                    {selectedComparison ? (
+                    {toBeComparison ? (
                       <dl className="ds-dl-grid">
                         <div>
                           <dt>Categoria de cálculo</dt>
                           <dd>
-                            {beneficioCalculoLabel(selectedComparison.beneficio_calculo_categoria)}
+                            {beneficioCalculoLabel(toBeComparison.beneficio_calculo_categoria)}
                           </dd>
                         </div>
                         <div>
-                          <dt>Economia bruta (calc.)</dt>
-                          <dd>{formatProcessoNumber(selectedComparison.totais.economia_bruta)}</dd>
+                          <dt>Economia bruta (CALCULADO)</dt>
+                          <dd>{formatProcessoNumber(toBeComparison.totais.economia_bruta)}</dd>
                         </div>
                         <div>
-                          <dt>Economia líquida/mês (calc.)</dt>
+                          <dt>Economia líquida/mês (CALCULADO)</dt>
                           <dd>
-                            {formatProcessoNumber(selectedComparison.totais.economia_liquida_mes)}
+                            {formatProcessoNumber(toBeComparison.totais.economia_liquida_mes)}
                           </dd>
                         </div>
                         <div>
-                          <dt>Horas economizadas/mês (calc.)</dt>
+                          <dt>Horas economizadas/mês (CALCULADO)</dt>
                           <dd>
-                            {formatProcessoNumber(selectedComparison.totais.horas_economizadas_mes)}
+                            {formatProcessoNumber(toBeComparison.totais.horas_economizadas_mes)}
                           </dd>
                         </div>
                         <div>
-                          <dt>Ganho de capacidade (calc.)</dt>
-                          <dd>{formatProcessoNumber(selectedComparison.totais.ganho_capacidade)}</dd>
+                          <dt>Ganho de capacidade (CALCULADO)</dt>
+                          <dd>{formatProcessoNumber(toBeComparison.totais.ganho_capacidade)}</dd>
                         </div>
                         <div>
-                          <dt>Investimento total/mês (calc.)</dt>
+                          <dt>Investimento total/mês (CALCULADO)</dt>
                           <dd>
-                            {formatProcessoNumber(
-                              selectedComparison.totais.investimento_total_mes,
-                            )}
+                            {formatProcessoNumber(toBeComparison.totais.investimento_total_mes)}
                           </dd>
                         </div>
                       </dl>
@@ -471,22 +678,83 @@ export function ProcessResultsSection({
                       />
                     )}
                   </div>
+
+                  <div className="tm-processo-results-block" data-results-block="estrutura-fluxo">
+                    <h3 className="ds-subsection-title">Mapeamento e fluxo alterados</h3>
+                    <p className="ds-hint">
+                      Diff estrutural de nós (mantido/alterado/incluído/removido) depende do overlay
+                      da revisão. Nesta V1 a comparação detalhada abre nas seções canônicas —
+                      sem inventar graph-diff no frontend.
+                    </p>
+                    {!showHeavyStructure ? (
+                      <button
+                        type="button"
+                        className={DS_GHOST_BTN}
+                        onClick={() => setShowHeavyStructure(true)}
+                      >
+                        Mostrar atalhos de mapeamento e fluxo
+                      </button>
+                    ) : (
+                      <ul className="tm-processo-results-structure-links">
+                        {comparison.asIs && comparison.mode === "pair" ? (
+                          <>
+                            <li>
+                              <button
+                                type="button"
+                                className="ds-link"
+                                onClick={() =>
+                                  openRevisionSection(comparison.asIs!.revisao_id, "mapeamento")
+                                }
+                              >
+                                Mapeamento AS-IS ({revisaoDisplayLabel(comparison.asIs)})
+                              </button>
+                            </li>
+                            <li>
+                              <button
+                                type="button"
+                                className="ds-link"
+                                onClick={() =>
+                                  openRevisionSection(comparison.asIs!.revisao_id, "diagrama")
+                                }
+                              >
+                                Fluxo AS-IS ({revisaoDisplayLabel(comparison.asIs)})
+                              </button>
+                            </li>
+                          </>
+                        ) : null}
+                        <li>
+                          <button
+                            type="button"
+                            className="ds-link"
+                            onClick={() =>
+                              openRevisionSection(comparison.selectedRevisionId!, "mapeamento")
+                            }
+                          >
+                            Mapeamento do cenário (TO-BE)
+                          </button>
+                        </li>
+                        <li>
+                          <button
+                            type="button"
+                            className="ds-link"
+                            onClick={() =>
+                              openRevisionSection(comparison.selectedRevisionId!, "diagrama")
+                            }
+                          >
+                            Fluxo do cenário (TO-BE)
+                          </button>
+                        </li>
+                      </ul>
+                    )}
+                  </div>
                 </>
               ) : null}
             </>
           ) : null}
-
-          {scopedRevisoes.length > 1 && !selectedRevisaoId ? (
-            <EmptyState
-              classNames={EMPTY}
-              title="Revisão necessária"
-              defaultMessage="Selecione uma revisão para visualizar medição, investimentos e recursos."
-            />
-          ) : null}
         </div>
       ) : null}
 
-      {contextInstanciaId ? (
+      {comparison.instanceId ? (
         <div className="tm-processo-workspace-overview__actions">
           <button
             type="button"
