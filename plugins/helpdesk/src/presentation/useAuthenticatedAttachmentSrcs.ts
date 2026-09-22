@@ -5,9 +5,13 @@
  *   display       →  blob: via resolveAttachmentImageSrc (Bearer fetch)
  *
  * Same contract as MessageThread / MentionComposer — never store blob: in draft state.
+ *
+ * Hard fetch failures (404/403) are remembered for the ticket session so a missing
+ * document cannot re-hit the BFF on every keystroke (gateway rate-limit storm).
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { HelpdeskApiError } from "../api/helpdeskApi";
 import { attachmentPublicUrl, listPendingInlineIds } from "./inlineUpload";
 import { listHelpdeskAttachmentIdsInHtml, stampHelpdeskAttachmentIds } from "./ticketView";
 
@@ -106,6 +110,80 @@ export function pruneAttachmentSrcs(
   return next;
 }
 
+/** True when prune would change identity of the src map (avoids setState storms). */
+export function attachmentSrcMapsEqual(
+  left: Record<string, string>,
+  right: Record<string, string>,
+): boolean {
+  const leftKeys = Object.keys(left);
+  const rightKeys = Object.keys(right);
+  if (leftKeys.length !== rightKeys.length) return false;
+  for (const key of leftKeys) {
+    if (left[key] !== right[key]) return false;
+  }
+  return true;
+}
+
+/**
+ * Collect stable attachment cache keys from composer + conversation HTML.
+ * Signature string is order-independent so typing alone does not invalidate.
+ */
+export function collectAttachmentCacheKeys(
+  html: string,
+  extraDocumentIds: readonly number[] | undefined,
+  pendingAliases: Readonly<Record<string, string>>,
+): string[] {
+  const stamped = stampHelpdeskAttachmentIds(html || "");
+  const keys = new Set<string>();
+  for (const id of listHelpdeskAttachmentIdsInHtml(stamped)) {
+    keys.add(String(id));
+  }
+  for (const pendingId of listPendingInlineIds(stamped)) {
+    keys.add(pendingId);
+  }
+  for (const id of extraDocumentIds || []) {
+    if (Number.isFinite(id) && id > 0) keys.add(String(id));
+  }
+  for (const docId of Object.values(pendingAliases)) {
+    if (docId) keys.add(docId);
+  }
+  return [...keys].sort();
+}
+
+export function attachmentKeysSignature(keys: readonly string[]): string {
+  return keys.join("\0");
+}
+
+/** Skip BFF fetch when blob already seeded or document already hard-failed. */
+export function shouldFetchAttachmentBlob(
+  documentId: string,
+  srcs: Record<string, string>,
+  failedIds: ReadonlySet<string>,
+  inFlightIds: ReadonlySet<string>,
+): boolean {
+  const key = String(documentId || "").trim();
+  if (!key) return false;
+  if (srcs[key]) return false;
+  if (failedIds.has(key)) return false;
+  if (inFlightIds.has(key)) return false;
+  return true;
+}
+
+/** 404/403 must not retry — production storm vector when HTML keeps the BFF path. */
+export function isHardAttachmentFetchFailure(error: unknown): boolean {
+  if (error instanceof HelpdeskApiError) {
+    if (error.status === 404 || error.status === 403) return true;
+    if (
+      error.code === "not_found" ||
+      error.code === "forbidden" ||
+      error.code === "glpi_forbidden"
+    ) {
+      return true;
+    }
+  }
+  return false;
+}
+
 export function useAuthenticatedAttachmentSrcs(args: {
   ticketId: string;
   html: string;
@@ -127,24 +205,25 @@ export function useAuthenticatedAttachmentSrcs(args: {
   srcsRef.current = srcs;
   const ownedUrlsRef = useRef<Set<string>>(new Set());
   const pendingToDocumentRef = useRef<Record<string, string>>({});
+  const failedDocumentIdsRef = useRef<Set<string>>(new Set());
+  const inFlightDocumentIdsRef = useRef<Set<string>>(new Set());
+  const keysSignatureRef = useRef("");
+  const attachmentKeysStableRef = useRef<string[]>([]);
 
   const attachmentKeys = useMemo(() => {
-    const stamped = stampHelpdeskAttachmentIds(html || "");
-    const keys = new Set<string>();
-    for (const id of listHelpdeskAttachmentIdsInHtml(stamped)) {
-      keys.add(String(id));
+    const next = collectAttachmentCacheKeys(
+      html,
+      extraDocumentIds,
+      pendingToDocumentRef.current,
+    );
+    const signature = attachmentKeysSignature(next);
+    if (signature === keysSignatureRef.current) {
+      // Preserve referential equality when only surrounding HTML text changed.
+      return attachmentKeysStableRef.current;
     }
-    for (const pendingId of listPendingInlineIds(stamped)) {
-      keys.add(pendingId);
-    }
-    for (const id of extraDocumentIds || []) {
-      if (Number.isFinite(id) && id > 0) keys.add(String(id));
-    }
-    // Keep document ids that pending aliases still point at (focused DOM may lag HTML).
-    for (const docId of Object.values(pendingToDocumentRef.current)) {
-      if (docId) keys.add(docId);
-    }
-    return [...keys].sort();
+    keysSignatureRef.current = signature;
+    attachmentKeysStableRef.current = next;
+    return next;
   }, [html, extraDocumentIds]);
 
   const documentIds = useMemo(
@@ -154,6 +233,11 @@ export function useAuthenticatedAttachmentSrcs(args: {
         .filter((id) => Number.isFinite(id) && id > 0)
         .sort((a, b) => a - b),
     [attachmentKeys],
+  );
+
+  const documentIdsSignature = useMemo(
+    () => documentIds.join(","),
+    [documentIds],
   );
 
   const revokeOwned = useCallback((url: string) => {
@@ -166,30 +250,57 @@ export function useAuthenticatedAttachmentSrcs(args: {
     }
   }, []);
 
+  // New ticket → clear hard-fail + in-flight gates.
+  useEffect(() => {
+    failedDocumentIdsRef.current = new Set();
+    inFlightDocumentIdsRef.current = new Set();
+    keysSignatureRef.current = "";
+  }, [ticketId]);
+
   useEffect(() => {
     let cancelled = false;
     const needed = new Set(attachmentKeys);
 
-    setSrcs((current) => pruneAttachmentSrcs(current, needed, revokeOwned));
+    setSrcs((current) => {
+      const pruned = pruneAttachmentSrcs(current, needed, revokeOwned);
+      return attachmentSrcMapsEqual(current, pruned) ? current : pruned;
+    });
 
     void Promise.all(
       documentIds.map(async (documentId) => {
         const key = String(documentId);
-        if (srcsRef.current[key]) return;
+        if (
+          !shouldFetchAttachmentBlob(
+            key,
+            srcsRef.current,
+            failedDocumentIdsRef.current,
+            inFlightDocumentIdsRef.current,
+          )
+        ) {
+          return;
+        }
+        inFlightDocumentIdsRef.current.add(key);
         try {
           const blob = await fetchBlob(ticketId, documentId);
           if (cancelled) return;
           const url = URL.createObjectURL(blob);
           ownedUrlsRef.current.add(url);
+          failedDocumentIdsRef.current.delete(key);
           setSrcs((current) => {
             if (current[key]) {
               revokeOwned(url);
               return current;
             }
-            return { ...current, [key]: url };
+            const next = { ...current, [key]: url };
+            srcsRef.current = next;
+            return next;
           });
-        } catch {
-          /* soft-fail: preview stays broken until retry */
+        } catch (error) {
+          if (isHardAttachmentFetchFailure(error)) {
+            failedDocumentIdsRef.current.add(key);
+          }
+        } finally {
+          inFlightDocumentIdsRef.current.delete(key);
         }
       }),
     );
@@ -197,7 +308,8 @@ export function useAuthenticatedAttachmentSrcs(args: {
     return () => {
       cancelled = true;
     };
-  }, [attachmentKeys, documentIds, ticketId, fetchBlob, revokeOwned]);
+    // documentIdsSignature keeps numeric ids stable across referential churn.
+  }, [attachmentKeys, documentIdsSignature, ticketId, fetchBlob, revokeOwned, documentIds]);
 
   useEffect(() => {
     return () => {
@@ -210,6 +322,8 @@ export function useAuthenticatedAttachmentSrcs(args: {
       }
       ownedUrlsRef.current.clear();
       pendingToDocumentRef.current = {};
+      failedDocumentIdsRef.current = new Set();
+      inFlightDocumentIdsRef.current = new Set();
     };
   }, []);
 
@@ -241,6 +355,7 @@ export function useAuthenticatedAttachmentSrcs(args: {
   const seedBlobUrl = useCallback(
     (documentId: number | string, blobUrl: string) => {
       const key = String(documentId);
+      failedDocumentIdsRef.current.delete(key);
       setSrcs((current) => {
         const previous = current[key];
         if (previous && previous !== blobUrl) revokeOwned(previous);
@@ -271,6 +386,7 @@ export function useAuthenticatedAttachmentSrcs(args: {
     );
     pendingToDocumentRef.current = transferred.pendingToDocument;
     srcsRef.current = transferred.srcs;
+    failedDocumentIdsRef.current.delete(String(documentId));
     setSrcs(transferred.srcs);
     return transferred.url;
   }, []);

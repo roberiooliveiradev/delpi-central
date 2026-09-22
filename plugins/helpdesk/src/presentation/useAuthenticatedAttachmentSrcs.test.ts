@@ -1,9 +1,15 @@
 import { describe, expect, it, vi } from "vitest";
 
+import { HelpdeskApiError } from "../api/helpdeskApi";
 import {
+  attachmentKeysSignature,
+  attachmentSrcMapsEqual,
+  collectAttachmentCacheKeys,
+  isHardAttachmentFetchFailure,
   persistHelpdeskAttachmentHtml,
   pruneAttachmentSrcs,
   resolveAttachmentDisplaySrc,
+  shouldFetchAttachmentBlob,
   transferPendingSrcMaps,
 } from "./useAuthenticatedAttachmentSrcs";
 
@@ -81,5 +87,49 @@ describe("transferPendingSrcMaps + resolve alias", () => {
     );
     expect(pruned).toEqual({});
     expect(revoke).toHaveBeenCalledWith("blob:http://localhost/orphan");
+  });
+});
+
+describe("attachment fetch storm gates", () => {
+  it("positive: keys signature estável quando só o texto ao redor muda", () => {
+    const extra = [10];
+    const aliases = {};
+    const withImage =
+      '<p>a</p><p><img data-attachment-id="1201" src="/apps/helpdesk-api/tickets/1/attachments/1201" /></p>';
+    const typedMore =
+      '<p>ajhgdghas ajhsdhsadas</p><p><img data-attachment-id="1201" src="/apps/helpdesk-api/tickets/1/attachments/1201" /></p>';
+    const a = collectAttachmentCacheKeys(withImage, extra, aliases);
+    const b = collectAttachmentCacheKeys(typedMore, extra, aliases);
+    expect(attachmentKeysSignature(a)).toBe(attachmentKeysSignature(b));
+    expect(a).toEqual(["10", "1201"]);
+  });
+
+  it("irmão: 404 hard-fail não refetcha; seed presente também não", () => {
+    const failed = new Set(["1201"]);
+    const inFlight = new Set<string>();
+    expect(
+      shouldFetchAttachmentBlob("1201", {}, failed, inFlight),
+    ).toBe(false);
+    expect(
+      shouldFetchAttachmentBlob("1201", { "1201": "blob:x" }, new Set(), inFlight),
+    ).toBe(false);
+    expect(
+      shouldFetchAttachmentBlob("1202", {}, failed, inFlight),
+    ).toBe(true);
+  });
+
+  it("negativo: erro de rede não é hard-fail (pode retentar depois)", () => {
+    expect(isHardAttachmentFetchFailure(new Error("network"))).toBe(false);
+    expect(isHardAttachmentFetchFailure(new HelpdeskApiError("not_found", 404))).toBe(true);
+    expect(isHardAttachmentFetchFailure(new HelpdeskApiError("forbidden", 403))).toBe(true);
+    expect(isHardAttachmentFetchFailure(new HelpdeskApiError("request_failed", 500))).toBe(
+      false,
+    );
+  });
+
+  it("prune igual não deve forçar novo mapa", () => {
+    const map = { "1201": "blob:a" };
+    expect(attachmentSrcMapsEqual(map, { "1201": "blob:a" })).toBe(true);
+    expect(attachmentSrcMapsEqual(map, { "1201": "blob:b" })).toBe(false);
   });
 });

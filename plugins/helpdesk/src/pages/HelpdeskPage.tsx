@@ -1106,7 +1106,9 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                             ),
                           );
                         }
-                        load();
+                        // Do not load() here: compose-time image upload must keep the
+                        // local blob seed. Reloading the ticket while the Document is
+                        // not yet in attachments retriggers GET→404 storms.
                       } catch (error) {
                         setErrorText(messageFor(error).text);
                       }
