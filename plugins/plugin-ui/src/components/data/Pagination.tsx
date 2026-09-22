@@ -1,4 +1,5 @@
 import { useEffect, useId, useMemo, useState, type ReactElement } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { HelpTooltip } from "../help/HelpTooltip";
 import { ToolbarSelectControl } from "../forms/ToolbarSelectField";
@@ -102,7 +103,9 @@ export type PaginationHints = {
 export type PaginationLabels = {
   navigationAriaLabel: string;
   pagesAriaLabel: string;
+  /** Nome acessível do botão anterior (o controle renderiza ChevronLeft). */
   previous: string;
+  /** Nome acessível do botão próxima (o controle renderiza ChevronRight). */
   next: string;
   info: (args: {
     rangeStart: number;
@@ -239,9 +242,10 @@ export function Pagination({
             className={classNames.ghostBtn}
             disabled={!canPrev}
             onClick={() => onPageChange(page - 1)}
+            aria-label={labels.previous}
             aria-disabled={!canPrev}
           >
-            {labels.previous}
+            <ChevronLeft size={16} aria-hidden="true" />
           </button>
           {hints?.previous && classNames.actionHelp ? (
             <HelpTooltip
@@ -291,9 +295,10 @@ export function Pagination({
             className={classNames.ghostBtn}
             disabled={!canNext}
             onClick={() => onPageChange(page + 1)}
+            aria-label={labels.next}
             aria-disabled={!canNext}
           >
-            {labels.next}
+            <ChevronRight size={16} aria-hidden="true" />
           </button>
           {hints?.next && classNames.actionHelp ? (
             <HelpTooltip

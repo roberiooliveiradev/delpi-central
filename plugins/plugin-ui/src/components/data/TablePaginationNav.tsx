@@ -1,3 +1,5 @@
+import { ChevronLeft, ChevronRight } from "lucide-react";
+
 import { delpiUiClass } from "../../utils/delpiUiClass";
 
 export type TablePaginationNavClassNames = {
@@ -8,7 +10,9 @@ export type TablePaginationNavClassNames = {
 };
 
 export type TablePaginationNavLabels = {
+  /** Nome acessível do botão anterior (o controle renderiza ChevronLeft). */
   previous: string;
+  /** Nome acessível do botão próxima (o controle renderiza ChevronRight). */
   next: string;
   navigationAriaLabel: string;
   infoBeforeCurrent: string;
@@ -63,8 +67,9 @@ export function TablePaginationNav({
         className={classNames.navButton}
         disabled={!canPrev}
         onClick={() => onPageChange(page - 1)}
+        aria-label={labels.previous}
       >
-        {labels.previous}
+        <ChevronLeft size={16} aria-hidden="true" />
       </button>
       <p className={classNames.info}>
         {labels.infoBeforeCurrent}
@@ -76,8 +81,9 @@ export function TablePaginationNav({
         className={classNames.navButton}
         disabled={!canNext}
         onClick={() => onPageChange(page + 1)}
+        aria-label={labels.next}
       >
-        {labels.next}
+        <ChevronRight size={16} aria-hidden="true" />
       </button>
     </div>
   );

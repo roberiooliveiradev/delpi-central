@@ -23,6 +23,8 @@ describe("TablePaginationNav", () => {
     );
 
     expect(screen.getByRole("navigation", { name: "Paginação" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Anterior" }).querySelector("svg")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Próxima" }).querySelector("svg")).toBeTruthy();
     expect(screen.getByText("2")).toBeTruthy();
     expect(screen.getByText(/ de 3/)).toBeTruthy();
   });
