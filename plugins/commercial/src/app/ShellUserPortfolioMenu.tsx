@@ -10,7 +10,6 @@ import { CommercialTopBarUserIdentity } from "./commercialUi";
 import {
   buildUserProfileHref,
   navigatePluginView,
-  navigateUserProfile,
 } from "./pluginNavigation";
 import { profileLinkTitle } from "../content/entityLinkHints";
 import { usePortfolioScope } from "./PortfolioScopeContext";
@@ -95,12 +94,6 @@ export function ShellUserPortfolioMenu({
     [basePath, userId],
   );
 
-  const goToPortalProfile = useCallback(() => {
-    setOpen(false);
-    if (!userId) return;
-    navigateUserProfile(userId, { basePath });
-  }, [basePath, userId]);
-
   const goToPortfolio = useCallback(
     (portfolio: ShellUserPortfolioOption) => {
       setOpen(false);
@@ -158,14 +151,6 @@ export function ShellUserPortfolioMenu({
       avatarUrl={photoObjectUrl}
       portalScopeClassName="dashboard-commercial"
       avatarHref={portalProfileHref ?? undefined}
-      onAvatarNavigate={
-        portalProfileHref
-          ? (event) => {
-              event.preventDefault();
-              goToPortalProfile();
-            }
-          : undefined
-      }
       avatarTitle={profileTitle}
       onLabelClick={portfolioInteractive ? onPortfolioClick : undefined}
       labelAriaLabel={portfolioAriaLabel}

@@ -107,6 +107,7 @@ function resolveWhatsappE164(
 export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
   const {
     currentUserId,
+    loading: scopeLoading,
     canManagePortfolios,
     canViewWorklist,
     canManageFollowups,
@@ -135,12 +136,16 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
   const [mePermissions, setMePermissions] = useState<string[]>([]);
   const [meIsSuperadmin, setMeIsSuperadmin] = useState(false);
 
-  const isSelf = useMemo(() => {
+  /** null = ainda não sabemos o usuário da sessão (evita flash de “outro usuário”). */
+  const isSelf = useMemo((): boolean | null => {
+    if (scopeLoading) return null;
     const me = (currentUserId || "").trim();
-    return Boolean(me && me === userId.trim());
-  }, [currentUserId, userId]);
+    if (!me) return null;
+    return me === userId.trim();
+  }, [currentUserId, scopeLoading, userId]);
 
-  const canEdit = isSelf;
+  const canEdit = isSelf === true;
+  const isOther = isSelf === false;
 
   const reload = useCallback(
     async (signal?: AbortSignal) => {
@@ -176,7 +181,7 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
   }, [userId]);
 
   useEffect(() => {
-    if (!isSelf) {
+    if (isSelf !== true) {
       setMePermissions([]);
       setMeIsSuperadmin(false);
       return undefined;
@@ -226,7 +231,7 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
   );
   const capabilityItems = useMemo(
     () =>
-      isSelf
+      isSelf === true
         ? listGrantedCapabilities({
             access: canViewWorklist || canViewAnalytics || canViewProposals,
             manage: canManagePortfolios || canUseTeamScope,
@@ -252,7 +257,7 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
   const canAssignTaskToProfile =
     Boolean(canManageFollowups) &&
     Boolean(canViewWorklistTeam || isAdmin) &&
-    !isSelf;
+    isOther;
 
   const syncContactDraftFromProfile = (data: UserProfileDto | null | undefined) => {
     setJobTitle((data?.job_title || "").trim());
@@ -456,7 +461,7 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
     });
   };
 
-  if (loading) {
+  if (loading || scopeLoading) {
     return <CommercialLoadingCard title="Carregando perfil…" />;
   }
 
@@ -501,7 +506,7 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
         badge={
           <span className="cm-nav-row">
             <CommercialStatusBadge label={USER_ACCESS_COPY.appBadge} variant="success" />
-            {meIsSuperadmin && isSelf ? (
+            {meIsSuperadmin && isSelf === true ? (
               <CommercialStatusBadge label={USER_ACCESS_COPY.superadmin} variant="warning" />
             ) : null}
             <CommercialStatusBadge
@@ -856,7 +861,7 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
         subtitle={USER_ACCESS_COPY.accessSubtitle}
         hint={CM_HELP.users.access}
       >
-        {isSelf ? (
+        {isSelf === true ? (
           <div className="cm-user-profile__access">
             {capabilityItems.length > 0 ? (
               <div className="cm-user-profile__access-group">
@@ -888,8 +893,10 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
               )}
             </div>
           </div>
-        ) : (
+        ) : isOther ? (
           <p className="cm-muted">{USER_ACCESS_COPY.accessSelfOnly}</p>
+        ) : (
+          <p className="cm-muted">Carregando acessos…</p>
         )}
       </CommercialSectionCard>
 

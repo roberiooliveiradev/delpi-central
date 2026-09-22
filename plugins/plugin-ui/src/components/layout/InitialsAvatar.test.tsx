@@ -94,6 +94,22 @@ describe("InitialsAvatar", () => {
     expect(parentClick).not.toHaveBeenCalled();
   });
 
+  it("com href sem onNavigate não engole o clique (Portal sameAppAnchor)", () => {
+    const parentClick = vi.fn();
+    render(
+      <div onClick={parentClick}>
+        <InitialsAvatar
+          name="Acme"
+          classNames={classNames}
+          href="/apps/commercial/users/u1"
+          title="Abrir perfil"
+        />
+      </div>,
+    );
+    fireEvent.click(screen.getByRole("link", { name: "Abrir perfil" }));
+    expect(parentClick).toHaveBeenCalled();
+  });
+
   it("com href renderiza link sem lightbox e chama onNavigate", () => {
     const onNavigate = vi.fn((event: { preventDefault: () => void }) => {
       event.preventDefault();

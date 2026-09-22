@@ -39,12 +39,14 @@ describe("PluginShell TopBar collapse", () => {
     expect(slots).toMatch(/searchTriggerRef/);
     expect(slots).toMatch(/SuppliesTopBarUserIdentity/);
     expect(slots).toMatch(/buildUserProfilePath/);
+    expect(slots).toMatch(/avatarHref/);
     expect(slots).toMatch(/HOST_SELF_PROFILE_PATH/);
     expect(slots).toMatch(/\/profile/);
     expect(slots).toMatch(/portalPreferencesLabel/);
     expect(slots).toMatch(/hostProfileLabel/);
     expect(slots).toMatch(/navigatePluginPath/);
     expect(slots).toMatch(/navigateHostPath/);
+    expect(slots).not.toMatch(/onAvatarNavigate=\{portalProfileHref \? goToPortalProfile/);
   });
 
   it("exporta modo hamburger com trigger overflow", () => {

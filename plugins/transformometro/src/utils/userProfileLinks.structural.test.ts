@@ -40,6 +40,18 @@ describe("Transforma+ user profile routes", () => {
     expect(links).not.toMatch(/navigateHostPath/);
   });
 
+  it("PersonDirectoryPage tem atalhos e Editar → /profile para o próprio", () => {
+    const page = readFileSync(
+      join(dir, "../ui/pages/PersonDirectoryPage.tsx"),
+      "utf8",
+    );
+    expect(page).toMatch(/Editar perfil/);
+    expect(page).toMatch(/HOST_SELF_PROFILE_PATH/);
+    expect(page).toMatch(/navigateHostPath/);
+    expect(page).toMatch(/Minhas tarefas/);
+    expect(page).toMatch(/isSelf === true/);
+  });
+
   it("InteractionRooms liga autores/participantes ao perfil do portal", () => {
     const source = readFileSync(
       join(dir, "../ui/pages/InteractionRoomsPage.tsx"),

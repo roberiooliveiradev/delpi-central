@@ -49,8 +49,13 @@ function readReturnTo(): { href: string; label: string } {
 
 export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
   const session = useSuppliesSession();
-  const isSelf = Boolean(session.userId && session.userId === userId);
-  const { profile: personProfile, photoUrl } = useMyPersonProfile(isSelf);
+  const isSelf = useMemo((): boolean | null => {
+    if (session.loading) return null;
+    const me = (session.userId || "").trim();
+    if (!me) return null;
+    return me === userId;
+  }, [session.loading, session.userId, userId]);
+  const { profile: personProfile, photoUrl } = useMyPersonProfile(isSelf === true);
   const [profile, setProfile] = useState<SuppliesUserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -177,7 +182,7 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
         current={profile?.name || "Perfil"}
       />
 
-      {loading ? <SuppliesLoadingCard title={C.loading} variant="panel" /> : null}
+      {loading || session.loading ? <SuppliesLoadingCard title={C.loading} variant="panel" /> : null}
 
       {forbidden ? (
         <SuppliesStateBanner variant="error">{C.forbidden}</SuppliesStateBanner>
@@ -192,7 +197,7 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
         </div>
       ) : null}
 
-      {!loading && profile ? (
+      {!loading && !session.loading && profile ? (
         <>
           <SuppliesPageHero
             eyebrow="Portal Suprimentos"
@@ -221,7 +226,7 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
               <div className="sp-user-profile__identity">
                 <SuppliesAvatar
                   name={profile.name}
-                  src={isSelf ? photoUrl : null}
+                  src={isSelf === true ? photoUrl : null}
                   size="lg"
                 />
                 <dl>
@@ -233,7 +238,7 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
                     <dt>{C.emailLabel}</dt>
                     <dd>{profile.email || "—"}</dd>
                   </div>
-                  {isSelf ? (
+                  {isSelf === true ? (
                     <>
                       <div>
                         <dt>{C.jobTitleLabel}</dt>

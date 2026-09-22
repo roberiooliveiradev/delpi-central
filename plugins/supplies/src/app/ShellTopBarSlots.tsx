@@ -118,7 +118,6 @@ export function ShellTopBarActions({ basePath }: ShellTopBarActionsProps) {
         loading={loading}
         portalScopeClassName="dashboard-supplies-portal"
         avatarHref={portalProfileHref ?? undefined}
-        onAvatarNavigate={portalProfileHref ? goToPortalProfile : undefined}
         avatarTitle={SHELL_NAV_CONTENT.userMenu.profileTitle}
         onLabelClick={() => setMenuOpen((open) => !open)}
         labelAriaLabel={SHELL_NAV_CONTENT.userMenu.menuOpenAriaLabel}

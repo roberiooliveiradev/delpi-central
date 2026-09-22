@@ -38,15 +38,14 @@ describe("ShellUserPortfolioMenu (TopBar)", () => {
     const menu = readFileSync(join(src, "app/ShellUserPortfolioMenu.tsx"), "utf8");
     assert.match(menu, /CommercialTopBarUserIdentity/);
     assert.match(menu, /avatarHref/);
-    assert.match(menu, /onAvatarNavigate/);
-    assert.match(menu, /goToPortalProfile/);
-    assert.match(menu, /navigateUserProfile/);
+    assert.match(menu, /portalProfileHref/);
     assert.match(menu, /buildUserProfileHref/);
     assert.match(menu, /userProfilePhotoAbsoluteUrl/);
     assert.match(menu, /menuItems/);
     assert.doesNotMatch(menu, /HOST_SELF_PROFILE_PATH/);
     assert.doesNotMatch(menu, /navigateHostPath/);
     assert.doesNotMatch(menu, /goToHostProfile/);
+    assert.doesNotMatch(menu, /event\.preventDefault\(\);\s*goToPortalProfile/);
     assert.doesNotMatch(menu, /previewable=\{hasPhoto\}/);
     assert.doesNotMatch(menu, /openProfileFromPreview/);
     assert.doesNotMatch(menu, /cm-shell-user__trigger/);

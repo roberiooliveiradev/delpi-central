@@ -139,14 +139,15 @@ export function InitialsAvatar(props: InitialsAvatarProps) {
         aria-label={aria || undefined}
         style={src ? undefined : initialStyle}
         onClick={(event) => {
-          event.stopPropagation();
           if (!shouldHandleInlineNavClick(event)) {
             return;
           }
           if (!props.onNavigate) {
+            // Leave click bubbling to Portal sameAppAnchorNavigation (React Router).
             return;
           }
           event.preventDefault();
+          event.stopPropagation();
           props.onNavigate(event);
         }}
       >

@@ -13,9 +13,15 @@ export function hasShellAdmission(capabilities: SuppliesCapabilityFlags): boolea
 
 export function canAccessUserProfile(
   targetUserId: string,
-  session: { userId: string | null; capabilities: SuppliesCapabilityFlags },
+  session: {
+    userId: string | null;
+    capabilities: SuppliesCapabilityFlags;
+    loading?: boolean;
+  },
 ): boolean {
   if (!hasShellAdmission(session.capabilities)) return false;
+  // Enquanto a sessão ainda carrega o userId, não negar o próprio deep link.
+  if (session.loading && !session.userId) return true;
   if (session.userId && targetUserId === session.userId) return true;
   return session.capabilities.manage;
 }
