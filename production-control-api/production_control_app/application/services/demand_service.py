@@ -144,6 +144,10 @@ class DemandService:
         self._cache.set(branch, lines)
         return lines
 
+    def branch_lines(self, branch: str, *, refresh: bool = False) -> list[DemandLine]:
+        """Snapshot da filial sem RBAC — uso interno (detectores / overview)."""
+        return self._load_lines(branch, refresh=refresh)
+
     # ------------------------------------------------------------ filtering
 
     def _matches(self, line: DemandLine, query: DemandQuery) -> bool:

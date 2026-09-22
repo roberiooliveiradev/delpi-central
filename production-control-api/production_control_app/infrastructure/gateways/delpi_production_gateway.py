@@ -266,6 +266,27 @@ class DelpiProductionGateway:
             },
         )
 
+    def fetch_production_shared_structure_intermediates(
+        self,
+        *,
+        branch: str,
+        movement_from: str,
+        lookback_days: int,
+        page: int,
+        page_size: int,
+    ) -> dict[str, Any]:
+        return self._request(
+            "GET",
+            "/production/shared-structure-intermediates",
+            params={
+                "branch": branch,
+                "movement_from": movement_from,
+                "lookback_days": lookback_days,
+                "page": page,
+                "page_size": page_size,
+            },
+        )
+
     def fetch_production_appointments_series(
         self,
         *,

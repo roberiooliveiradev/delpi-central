@@ -96,6 +96,10 @@ _ENTITY_LABELS: dict[str, str] = {
         "conjuntos de OP cujas quantidades de intermediários divergem da estrutura "
         "para a quantidade da OP mãe"
     ),
+    "production_shared_structure_intermediates": (
+        "intermediários PI/PA usados na estrutura vigente de mais de um PA com "
+        "apontamento produtivo recente"
+    ),
     "production_unproductive_hours_series": (
         "série diária de horas improdutivas (paradas) apontadas pelo PCP"
     ),

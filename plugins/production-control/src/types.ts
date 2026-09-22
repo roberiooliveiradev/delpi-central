@@ -121,7 +121,59 @@ export type QuantityMismatchOrderSetItem = {
   over_components: QuantityMismatchComponent[];
 };
 
-export type ProblemDetectorItem = IncompleteOrderSetItem | QuantityMismatchOrderSetItem;
+/** PA que compartilha um intermediário na estrutura vigente. */
+export type SharedStructureFinishedProduct = {
+  product_code: string;
+  description: string | null;
+  bom_level: number;
+};
+
+/** Intermediário PI/PA usado por mais de um PA ativo. */
+export type SharedStructureIntermediateItem = {
+  id: string;
+  kind: string;
+  severity: IssueSeverity;
+  intermediate_code: string | null;
+  intermediate_description: string | null;
+  intermediate_type: string | null;
+  shared_pa_count: number;
+  finished_products: SharedStructureFinishedProduct[];
+  root_code?: string | null;
+  root_description?: string | null;
+};
+
+export type ProblemDetectorItem =
+  | IncompleteOrderSetItem
+  | QuantityMismatchOrderSetItem
+  | UncoveredDemandItem
+  | SharedStructureIntermediateItem;
+
+/** Linha de demanda sem cobertura (estoque/OP) ou com OP após a entrega. */
+export type UncoveredDemandItem = {
+  id: string;
+  kind: string;
+  severity: IssueSeverity;
+  issue_kind: "uncovered" | "late_op";
+  branch: string | null;
+  sales_order: string | null;
+  line_item: string | null;
+  customer_name: string | null;
+  customer_code: string | null;
+  customer_order: string | null;
+  product_code: string | null;
+  open_quantity: number;
+  uncovered_quantity: number;
+  allocated_stock: number;
+  covered_by_orders: number;
+  covering_orders: DemandCoveringOrder[];
+  due_date: string | null;
+  coverage_date: string | null;
+  status: DemandStatus;
+  days_late: number;
+  /** Compatível com o filtro genérico da grade (produto). */
+  root_code?: string | null;
+  root_description?: string | null;
+};
 
 export type ProblemDetectorItemsPayload = {
   branch: string;

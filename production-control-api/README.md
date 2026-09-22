@@ -168,6 +168,8 @@ Título, descrição, ícone, ordem, severidade, tamanho de página e exclusões
 |---|---|---|
 | `incomplete-order-sets` | `GET /production/production-order-sets/incomplete` | `critical` quando falta componente, `attention` quando só sobra; recorte de emissão (`issuedFromDays`, 730 por padrão) e exclusões por prefixo do raiz ou por código de componente |
 | `order-set-quantity-mismatches` | `GET /production/production-order-sets/quantity-mismatches` | `critical` quando quantidade abaixo do esperado, `attention` quando só acima; mesma janela de emissão e exclusões |
+| `uncovered-demand-lines` | cobertura da aba Demanda (`DemandCoverageService`) | `critical` com saldo sem estoque/OP; `attention` quando a OP só termina depois da entrega |
+| `shared-structure-intermediates` | `GET /production/shared-structure-intermediates` | `attention` quando PI/PA aparece em ≥2 PAs com apontamento nos últimos 365 dias |
 
 O recorte de emissão existe porque a Delpi arrasta conjuntos abertos desde os anos 2000: sem ele o conjunto furado da semana fica soterrado. A api-delpi devolve o diff bruto (estrutura × OPs criadas) e nada da regra do consumidor.
 

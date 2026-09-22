@@ -3848,6 +3848,15 @@
       "status": "covered"
     },
     {
+      "operationId": "get_production_shared_structure_intermediates",
+      "method": "GET",
+      "path": "/production/shared-structure-intermediates",
+      "module": "production",
+      "entity": "production_shared_structure_intermediates",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
       "operationId": "get_production_cost_pct",
       "method": "GET",
       "path": "/production/production_cost_pct",

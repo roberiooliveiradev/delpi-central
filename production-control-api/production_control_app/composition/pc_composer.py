@@ -11,6 +11,14 @@ from production_control_app.application.services.detectors.order_set_quantity_mi
     DETECTOR_ID as DETECTOR_QUANTITY_MISMATCHES,
     OrderSetQuantityMismatchesDetector,
 )
+from production_control_app.application.services.detectors.uncovered_demand_detector import (
+    DETECTOR_ID as DETECTOR_UNCOVERED_DEMAND,
+    UncoveredDemandDetector,
+)
+from production_control_app.application.services.detectors.shared_structure_intermediates_detector import (
+    DETECTOR_ID as DETECTOR_SHARED_STRUCTURE,
+    SharedStructureIntermediatesDetector,
+)
 from production_control_app.application.services.delivery_map_drawing_service import (
     DeliveryMapDrawingService,
 )
@@ -124,6 +132,14 @@ def build_problem_detectors(
         DETECTOR_QUANTITY_MISMATCHES: OrderSetQuantityMismatchesDetector(
             resolved,
             settings=detector_entry(DETECTOR_QUANTITY_MISMATCHES) or {},
+        ),
+        DETECTOR_UNCOVERED_DEMAND: UncoveredDemandDetector(
+            resolved,
+            settings=detector_entry(DETECTOR_UNCOVERED_DEMAND) or {},
+        ),
+        DETECTOR_SHARED_STRUCTURE: SharedStructureIntermediatesDetector(
+            resolved,
+            settings=detector_entry(DETECTOR_SHARED_STRUCTURE) or {},
         ),
     }
 

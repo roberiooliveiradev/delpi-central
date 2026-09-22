@@ -54,6 +54,7 @@ from app.interface.http.routes.production import unproductive_hours_router
 from app.interface.http.routes.production import pcp_orders_router
 from app.interface.http.routes.production import machine_load_router
 from app.interface.http.routes.production import production_order_sets_router
+from app.interface.http.routes.production import shared_structure_intermediates_router
 from app.interface.http.routes.purchases import purchases_router
 from app.interface.http.routes.engineering import engineering_router
 from app.interface.http.routes.quality import quality_router
@@ -277,6 +278,7 @@ app.include_router(unproductive_hours_router.router)
 app.include_router(pcp_orders_router.router)
 app.include_router(machine_load_router.router)
 app.include_router(production_order_sets_router.router)
+app.include_router(shared_structure_intermediates_router.router)
 app.include_router(production_appointments_router.router)
 app.include_router(purchases_router.router)
 app.include_router(engineering_router.router)
