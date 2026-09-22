@@ -585,7 +585,8 @@ export function ProcessDetailPage({
                   },
                 ]}
               />
-              <div data-subsection="estrutura" hidden={mapeamentoFocus !== "estrutura"}>
+              {mapeamentoFocus === "estrutura" ? (
+              <div data-subsection="estrutura">
                 <div className="tm-processo-composed-card tm-processo-composed-card--first">
                   <h3 className="ds-subsection-title">Macro composto (visão vigente)</h3>
                   <p className="ds-hint">
@@ -637,7 +638,9 @@ export function ProcessDetailPage({
                   }
                 />
               </div>
-              <div data-subsection="fluxo" hidden={mapeamentoFocus !== "fluxo"}>
+              ) : null}
+              {mapeamentoFocus === "fluxo" ? (
+              <div data-subsection="fluxo">
                 <div className="tm-processo-composed-card tm-processo-composed-card--first">
                   <h3 className="ds-subsection-title">Diagrama composto (visão vigente)</h3>
                   <p className="ds-hint">
@@ -683,6 +686,7 @@ export function ProcessDetailPage({
                   editContent={null}
                 />
               </div>
+              ) : null}
             </div>
           </ProcessWorkspaceSectionPanel>
         ) : null}
@@ -713,14 +717,17 @@ export function ProcessDetailPage({
                   },
                 ]}
               />
-              <div data-subsection="documentos" hidden={documentacaoFocus !== "documentos"}>
+              {documentacaoFocus === "documentos" ? (
+              <div data-subsection="documentos">
                 <ProcessDocumentationSection
                   processoId={processoId}
                   getAccessToken={getAccessToken}
                   onNavigate={onNavigate}
                 />
               </div>
-              <div data-subsection="arquivos" hidden={documentacaoFocus !== "arquivos"}>
+              ) : null}
+              {documentacaoFocus === "arquivos" ? (
+              <div data-subsection="arquivos">
                 <EditableSectionCard
                   title="Arquivos do processo"
                   description="Documentos de referência do processo-mestre — POP, instruções, planilhas e links."
@@ -750,6 +757,7 @@ export function ProcessDetailPage({
                   }
                 />
               </div>
+              ) : null}
             </div>
           </ProcessWorkspaceSectionPanel>
         ) : null}
@@ -777,7 +785,8 @@ export function ProcessDetailPage({
                   },
                 ]}
               />
-              <div data-subsection="lista" hidden={melhoriasFocus !== "lista"}>
+              {melhoriasFocus === "lista" ? (
+              <div data-subsection="lista">
                 <ProcessInstancesPanel
                   instancias={instancias}
                   selectedInstanciaId={null}
@@ -811,7 +820,9 @@ export function ProcessDetailPage({
                   }}
                 />
               </div>
-              <div data-subsection="priorizacao" hidden={melhoriasFocus !== "priorizacao"}>
+              ) : null}
+              {melhoriasFocus === "priorizacao" ? (
+              <div data-subsection="priorizacao">
                 <ProcessImpactEffortMatrixSection
                   processoId={processoId}
                   processoLabel={processo.nome_processo}
@@ -821,6 +832,7 @@ export function ProcessDetailPage({
                   resyncVersion={panelResyncVersion}
                 />
               </div>
+              ) : null}
             </div>
           </ProcessWorkspaceSectionPanel>
         ) : null}
@@ -831,6 +843,7 @@ export function ProcessDetailPage({
               processoId={processoId}
               instancias={instancias}
               revisoes={revisoes}
+              options={options}
               getAccessToken={getAccessToken}
               onNavigate={onNavigate}
               active={activeSection === "resultados"}

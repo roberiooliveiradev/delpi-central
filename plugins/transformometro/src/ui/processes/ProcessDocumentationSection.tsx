@@ -242,7 +242,7 @@ export function ProcessDocumentationSection({
       <div className="tm-process-documentation__header">
         <div>
           <h2 id="tm-process-documentacao-title" className="ds-section-title">
-            Documentação
+            Documentos
           </h2>
           <p className="ds-hint">
             Documentos em Markdown que descrevem o processo. Não substituem diagrama, revisão
@@ -275,11 +275,7 @@ export function ProcessDocumentationSection({
               classNames={EMPTY}
               title="Sem documentação"
               defaultMessage="Nenhum documento de processo registrado."
-            >
-              <button type="button" className="ds-btn ds-btn--primary" onClick={startCreate}>
-                Novo documento
-              </button>
-            </EmptyState>
+            />
           ) : null}
           <ul className="tm-process-documentation__items">
             {items.map((item) => {

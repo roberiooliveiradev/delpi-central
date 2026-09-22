@@ -88,13 +88,13 @@ describe("ProcessResultsSection context isolation", () => {
   });
 
   it("CASE F/G: comparação distingue calculado e não inventa authority", () => {
-    expect(resultsSection).toMatch(/Comparação \(calculado\)/);
+    expect(resultsSection).toMatch(/Comparação calculada/);
     expect(resultsSection).toMatch(/fetchProcessoComparativo/);
     expect(resultsSection).toMatch(/Ainda não há baseline\/medição comparável/);
   });
 
   it("CASE T: scoped revisões usam um único contextInstanciaId", () => {
-    expect(resultsSection).toMatch(/const contextInstanciaId = resolvedInstanciaId/);
-    expect(resultsSection).toMatch(/buildProcessoPath\(processoId, revisao\.revisao_id, contextInstanciaId\)/);
+    expect(resultsSection).toMatch(/data-selected-instancia=\{contextInstanciaId\}/);
+    expect(resultsSection).toMatch(/scopedComparisonItems/);
   });
 });
