@@ -1,6 +1,11 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
-import { persistHelpdeskAttachmentHtml } from "./useAuthenticatedAttachmentSrcs";
+import {
+  persistHelpdeskAttachmentHtml,
+  pruneAttachmentSrcs,
+  resolveAttachmentDisplaySrc,
+  transferPendingSrcMaps,
+} from "./useAuthenticatedAttachmentSrcs";
 
 describe("persistHelpdeskAttachmentHtml", () => {
   it("positive: blob no DOM vira URL pública estável no rascunho", () => {
@@ -32,5 +37,49 @@ describe("persistHelpdeskAttachmentHtml", () => {
     expect(persisted).toContain('src="attachment:pending:abc-1"');
     expect(persisted).toContain('data-attachment-pending="abc-1"');
     expect(persisted).not.toContain("blob:");
+  });
+});
+
+describe("transferPendingSrcMaps + resolve alias", () => {
+  it("positive: após upload, pending ainda resolve o mesmo blob", () => {
+    const blob = "blob:http://localhost/live";
+    const transferred = transferPendingSrcMaps(
+      { "pend-1": blob },
+      {},
+      "pend-1",
+      1177,
+    );
+    expect(transferred.url).toBe(blob);
+    expect(transferred.srcs["1177"]).toBe(blob);
+    expect(transferred.srcs["pend-1"]).toBeUndefined();
+    expect(
+      resolveAttachmentDisplaySrc("pend-1", transferred.srcs, transferred.pendingToDocument),
+    ).toBe(blob);
+    expect(
+      resolveAttachmentDisplaySrc("1177", transferred.srcs, transferred.pendingToDocument),
+    ).toBe(blob);
+  });
+
+  it("irmão: prune não revoga blob ainda referenciado pelo document id", () => {
+    const revoke = vi.fn();
+    const blob = "blob:http://localhost/shared";
+    const pruned = pruneAttachmentSrcs(
+      { "pend-1": blob, "1177": blob },
+      new Set(["1177"]),
+      revoke,
+    );
+    expect(pruned).toEqual({ "1177": blob });
+    expect(revoke).not.toHaveBeenCalled();
+  });
+
+  it("negativo: prune revoga blob órfão", () => {
+    const revoke = vi.fn();
+    const pruned = pruneAttachmentSrcs(
+      { "pend-1": "blob:http://localhost/orphan" },
+      new Set(),
+      revoke,
+    );
+    expect(pruned).toEqual({});
+    expect(revoke).toHaveBeenCalledWith("blob:http://localhost/orphan");
   });
 });

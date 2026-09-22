@@ -49,6 +49,63 @@ export function persistHelpdeskAttachmentHtml(
   );
 }
 
+/** Resolve display blob: direct id, or pending→document alias after upload rewrite. */
+export function resolveAttachmentDisplaySrc(
+  attachmentId: string,
+  srcs: Record<string, string>,
+  pendingToDocument: Record<string, string>,
+): string | null {
+  const id = String(attachmentId || "").trim();
+  if (!id) return null;
+  if (srcs[id]) return srcs[id];
+  const documentId = pendingToDocument[id];
+  if (documentId && srcs[documentId]) return srcs[documentId];
+  return null;
+}
+
+/**
+ * Move seed blob from pending key → document id without revoking the object URL.
+ * Keeps a pending→document alias so a focused editor still resolving
+ * `data-attachment-pending` keeps showing the image after upload rewrite.
+ */
+export function transferPendingSrcMaps(
+  srcs: Record<string, string>,
+  pendingToDocument: Record<string, string>,
+  pendingId: string,
+  documentId: string | number,
+): { srcs: Record<string, string>; pendingToDocument: Record<string, string>; url: string | null } {
+  const pendingKey = String(pendingId || "").trim();
+  const docKey = String(documentId);
+  if (!pendingKey || !docKey) {
+    return { srcs, pendingToDocument, url: null };
+  }
+  const url = srcs[pendingKey] || null;
+  const nextSrcs = { ...srcs };
+  const nextAlias = { ...pendingToDocument, [pendingKey]: docKey };
+  if (url) {
+    nextSrcs[docKey] = url;
+    delete nextSrcs[pendingKey];
+  }
+  return { srcs: nextSrcs, pendingToDocument: nextAlias, url };
+}
+
+/** Prune srcs to needed keys; only revoke blob URLs that no remaining key references. */
+export function pruneAttachmentSrcs(
+  current: Record<string, string>,
+  needed: ReadonlySet<string>,
+  revoke: (url: string) => void,
+): Record<string, string> {
+  const next: Record<string, string> = {};
+  for (const [id, url] of Object.entries(current)) {
+    if (needed.has(id)) next[id] = url;
+  }
+  const retained = new Set(Object.values(next));
+  for (const [id, url] of Object.entries(current)) {
+    if (!needed.has(id) && !retained.has(url)) revoke(url);
+  }
+  return next;
+}
+
 export function useAuthenticatedAttachmentSrcs(args: {
   ticketId: string;
   html: string;
@@ -61,12 +118,15 @@ export function useAuthenticatedAttachmentSrcs(args: {
   persistAttachmentImageSrc: (attachmentId: string) => string | null;
   seedBlobUrl: (documentId: number | string, blobUrl: string) => void;
   seedFile: (documentId: number | string, file: File) => string;
+  /** After upload: keep preview while DOM still has data-attachment-pending. */
+  transferPendingSeed: (pendingId: string, documentId: number | string) => string | null;
 } {
   const { ticketId, html, fetchBlob, extraDocumentIds } = args;
   const [srcs, setSrcs] = useState<Record<string, string>>({});
   const srcsRef = useRef(srcs);
   srcsRef.current = srcs;
   const ownedUrlsRef = useRef<Set<string>>(new Set());
+  const pendingToDocumentRef = useRef<Record<string, string>>({});
 
   const attachmentKeys = useMemo(() => {
     const stamped = stampHelpdeskAttachmentIds(html || "");
@@ -79,6 +139,10 @@ export function useAuthenticatedAttachmentSrcs(args: {
     }
     for (const id of extraDocumentIds || []) {
       if (Number.isFinite(id) && id > 0) keys.add(String(id));
+    }
+    // Keep document ids that pending aliases still point at (focused DOM may lag HTML).
+    for (const docId of Object.values(pendingToDocumentRef.current)) {
+      if (docId) keys.add(docId);
     }
     return [...keys].sort();
   }, [html, extraDocumentIds]);
@@ -106,17 +170,7 @@ export function useAuthenticatedAttachmentSrcs(args: {
     let cancelled = false;
     const needed = new Set(attachmentKeys);
 
-    setSrcs((current) => {
-      const next: Record<string, string> = {};
-      for (const [id, url] of Object.entries(current)) {
-        if (needed.has(id)) {
-          next[id] = url;
-        } else {
-          revokeOwned(url);
-        }
-      }
-      return next;
-    });
+    setSrcs((current) => pruneAttachmentSrcs(current, needed, revokeOwned));
 
     void Promise.all(
       documentIds.map(async (documentId) => {
@@ -155,6 +209,7 @@ export function useAuthenticatedAttachmentSrcs(args: {
         }
       }
       ownedUrlsRef.current.clear();
+      pendingToDocumentRef.current = {};
     };
   }, []);
 
@@ -164,7 +219,8 @@ export function useAuthenticatedAttachmentSrcs(args: {
   );
 
   const resolveAttachmentImageSrc = useCallback(
-    (attachmentId: string) => srcs[attachmentId] || null,
+    (attachmentId: string) =>
+      resolveAttachmentDisplaySrc(attachmentId, srcs, pendingToDocumentRef.current),
     [srcs],
   );
 
@@ -189,7 +245,9 @@ export function useAuthenticatedAttachmentSrcs(args: {
         const previous = current[key];
         if (previous && previous !== blobUrl) revokeOwned(previous);
         ownedUrlsRef.current.add(blobUrl);
-        return { ...current, [key]: blobUrl };
+        const next = { ...current, [key]: blobUrl };
+        srcsRef.current = next;
+        return next;
       });
     },
     [revokeOwned],
@@ -204,11 +262,25 @@ export function useAuthenticatedAttachmentSrcs(args: {
     [seedBlobUrl],
   );
 
+  const transferPendingSeed = useCallback((pendingId: string, documentId: number | string) => {
+    const transferred = transferPendingSrcMaps(
+      srcsRef.current,
+      pendingToDocumentRef.current,
+      pendingId,
+      documentId,
+    );
+    pendingToDocumentRef.current = transferred.pendingToDocument;
+    srcsRef.current = transferred.srcs;
+    setSrcs(transferred.srcs);
+    return transferred.url;
+  }, []);
+
   return {
     persistHtml,
     resolveAttachmentImageSrc,
     persistAttachmentImageSrc,
     seedBlobUrl,
     seedFile,
+    transferPendingSeed,
   };
 }

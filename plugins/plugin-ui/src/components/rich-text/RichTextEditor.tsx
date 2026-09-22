@@ -39,6 +39,7 @@ import {
 } from "./richTextClipboardImages";
 import {
   applyAttachmentImageSources,
+  patchLiveAttachmentImageSources,
   clipboardHasUsefulHtml,
   clipboardLooksLikeMarkdown,
   markdownToRichTextHtml,
@@ -178,11 +179,9 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
   useEffect(() => {
     const editorEl = editorRef.current;
     if (!editorEl || sourceMode || disabled || !resolveAttachmentImageSrc) return;
-    const next = applyAttachmentImageSources(editorEl.innerHTML, resolveAttachmentImageSrc);
-    if (next !== editorEl.innerHTML) {
-      editorEl.innerHTML = next;
-    }
-  }, [resolveAttachmentImageSrc, sourceMode, disabled]);
+    // In-place src patch — safe while focused (does not replace innerHTML / caret).
+    patchLiveAttachmentImageSources(editorEl, resolveAttachmentImageSrc);
+  }, [resolveAttachmentImageSrc, value, sourceMode, disabled]);
 
   useEffect(() => {
     return () => {

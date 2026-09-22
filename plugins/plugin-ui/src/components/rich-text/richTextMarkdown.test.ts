@@ -30,6 +30,29 @@ describe("clipboardHasUsefulHtml", () => {
   });
 });
 
+describe("patchLiveAttachmentImageSources", () => {
+  it("positive: atualiza src in-place sem trocar o nó", async () => {
+    const { patchLiveAttachmentImageSources } = await import("./richTextMarkdown");
+    const root = document.createElement("div");
+    root.innerHTML =
+      '<p><img src="attachment:pending:p1" data-attachment-pending="p1" alt="x" /></p>';
+    const img = root.querySelector("img")!;
+    const changed = patchLiveAttachmentImageSources(root, (id) =>
+      id === "p1" ? "blob:http://localhost/ok" : null,
+    );
+    expect(changed).toBe(true);
+    expect(img.getAttribute("src")).toBe("blob:http://localhost/ok");
+    expect(root.contains(img)).toBe(true);
+  });
+
+  it("negativo: sem resolve não altera", async () => {
+    const { patchLiveAttachmentImageSources } = await import("./richTextMarkdown");
+    const root = document.createElement("div");
+    root.innerHTML = '<p><img src="blob:a" data-attachment-pending="p1" /></p>';
+    expect(patchLiveAttachmentImageSources(root)).toBe(false);
+  });
+});
+
 describe("normalizeRichTextHtmlForMarkdown", () => {
   it("envolve pre solto em code e troca br por newline", () => {
     const out = normalizeRichTextHtmlForMarkdown("<pre>a<br>b</pre>");

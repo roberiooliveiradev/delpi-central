@@ -352,6 +352,34 @@ export function applyAttachmentImageSources(
 }
 
 /**
+ * In-place src patch for a live contentEditable (keeps caret / selection).
+ * Returns true when at least one img src changed.
+ */
+export function patchLiveAttachmentImageSources(
+  root: ParentNode,
+  resolve?: ResolveAttachmentImageSrc,
+): boolean {
+  if (!resolve) return false;
+  let changed = false;
+  const imgs = root.querySelectorAll(
+    "img[data-attachment-id], img[data-attachment-pending]",
+  );
+  for (const img of Array.from(imgs)) {
+    const id =
+      img.getAttribute("data-attachment-id") ||
+      img.getAttribute("data-attachment-pending") ||
+      "";
+    if (!id) continue;
+    const src = resolve(id);
+    if (!src || img.getAttribute("src") === src) continue;
+    img.setAttribute("src", src);
+    img.setAttribute("loading", "lazy");
+    changed = true;
+  }
+  return changed;
+}
+
+/**
  * Persist path: rewrite display `blob:`/`data:` src back to a stable URL from `persist`.
  * Same contract as resolve — one owner for attachment img identity (`data-attachment-id`).
  */

@@ -1087,7 +1087,11 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                             item.file,
                             newIdempotencyKey(),
                           );
-                          attachmentPreview.seedFile(uploaded.document_id, item.file);
+                          // Keep focused-editor preview: alias pending→document without revoking blob.
+                          attachmentPreview.transferPendingSeed(
+                            item.pendingId,
+                            uploaded.document_id,
+                          );
                           mapping[item.pendingId] = {
                             documentId: uploaded.document_id,
                             ticketId,
