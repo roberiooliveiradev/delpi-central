@@ -373,11 +373,121 @@
   white-space: nowrap;
 }
 
+/* Identity chip — avatar + nome (+ menu). Tokens genéricos; sem --cm-* / --sp-*. */
+.delpi-ui-topbar-user {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  max-width: min(100%, 260px);
+  text-decoration: none;
+  color: inherit;
+}
+
+.delpi-ui-topbar-user__profile,
+.delpi-ui-topbar-user__label {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  margin: 0;
+  border: 1px solid transparent;
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-text, var(--text, #111)) 4%,
+    transparent
+  );
+  color: var(--delpi-ui-text, var(--text, #111));
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: background 160ms ease, border-color 160ms ease;
+}
+
+.delpi-ui-topbar-user__profile {
+  flex: 0 0 auto;
+  padding: 4px;
+  border-radius: 999px;
+}
+
+.delpi-ui-topbar-user__profile--static {
+  cursor: default;
+}
+
+.delpi-ui-topbar-user__label {
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+  padding: 4px 10px 4px 8px;
+  border-radius: 999px;
+  text-align: left;
+}
+
+a.delpi-ui-topbar-user:hover .delpi-ui-topbar-user__profile,
+a.delpi-ui-topbar-user:hover .delpi-ui-topbar-user__label,
+button.delpi-ui-topbar-user__label:hover {
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 12%,
+    transparent
+  );
+  border-color: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 28%,
+    transparent
+  );
+}
+
+a.delpi-ui-topbar-user:focus-visible,
+button.delpi-ui-topbar-user__label:focus-visible {
+  outline: 2px solid color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 70%,
+    transparent
+  );
+  outline-offset: 2px;
+}
+
+.delpi-ui-topbar-user--open .delpi-ui-topbar-user__label {
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 14%,
+    transparent
+  );
+  border-color: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 32%,
+    transparent
+  );
+}
+
+.delpi-ui-topbar-user--open .delpi-ui-topbar-user__label > svg:last-child {
+  transform: rotate(180deg);
+}
+
+.delpi-ui-topbar-user--disabled .delpi-ui-topbar-user__label {
+  cursor: default;
+  opacity: 0.78;
+}
+
+.delpi-ui-topbar-user--loading {
+  opacity: 0.72;
+}
+
+.delpi-ui-topbar-user__name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 @media (max-width: 720px) {
   .delpi-ui-topbar-collapse-label,
   .delpi-ui-topbar-search__label,
   .delpi-ui-topbar-search__kbd,
-  .delpi-ui-topbar-favorites__label {
+  .delpi-ui-topbar-favorites__label,
+  .delpi-ui-topbar-user__name {
     position: absolute;
     width: 1px;
     height: 1px;
@@ -395,13 +505,20 @@
     padding-inline: 0.55rem;
     gap: 0;
   }
+
+  .delpi-ui-topbar-user__label {
+    padding-inline: 0.35rem;
+    gap: 0;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .delpi-ui-topbar,
   .delpi-ui-topbar__actions,
   .delpi-ui-topbar-search,
-  .delpi-ui-topbar-favorites__trigger {
+  .delpi-ui-topbar-favorites__trigger,
+  .delpi-ui-topbar-user__profile,
+  .delpi-ui-topbar-user__label {
     transition: none;
   }
 }

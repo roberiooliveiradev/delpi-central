@@ -67,6 +67,8 @@ import {
   RecentAccessStrip,
   TopBarFavoritesStrip,
   topBarFavoritesStripBemClasses,
+  TopBarUserIdentity,
+  topBarUserIdentityBemClasses,
   TopBarUtilityCluster,
   topBarUtilityClusterBemClasses,
   hubChipRowBemClasses,
@@ -108,6 +110,8 @@ const sectionBlockCn = sectionBlockBemClasses(PUC_PREFIX);
 const progressTrackerCn = progressTrackerBemClasses(PUC_PREFIX);
 const topBarUtilityCn = topBarUtilityClusterBemClasses(PUC_PREFIX);
 const topBarFavoritesCn = topBarFavoritesStripBemClasses(PUC_PREFIX);
+const topBarUserCn = topBarUserIdentityBemClasses(PUC_PREFIX);
+const topBarUserAvatarCn = initialsAvatarBemClasses(PUC_PREFIX);
 const userManualCn = userManualBemClasses(PUC_PREFIX);
 const eventsSectionCn = {
   section: sectionCardPacBemClasses(PUC_PREFIX),
@@ -1002,6 +1006,27 @@ export const layoutCatalogEntries: CatalogEntryDraft[] = [
             openAriaLabel="Abrir favoritos"
             closeAriaLabel="Fechar favoritos"
             removeLabel={(label) => `Remover ${label}`}
+          />
+        ),
+      },
+    ],
+  },
+  {
+    id: "layout.TopBarUserIdentity",
+    family: "layout",
+    exportName: "TopBarUserIdentity",
+    title: "TopBarUserIdentity",
+    description: "Chrome de identidade da TopBar (avatar + nome). Sem fetch/AuthZ.",
+    demos: [
+      {
+        id: "default",
+        label: "Display",
+        render: () => (
+          <TopBarUserIdentity
+            classNames={topBarUserCn}
+            avatarClassNames={topBarUserAvatarCn}
+            displayName="Robério Oliveira"
+            fallbackLabel="Usuário"
           />
         ),
       },

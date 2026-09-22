@@ -89,6 +89,9 @@ export {
 export {
   createDashboardTopBarUtilityCluster,
 } from "./components/layout/TopBarUtilityCluster";
+export {
+  createDashboardTopBarUserIdentity,
+} from "./components/layout/TopBarUserIdentity";
 export { createDashboardUserManual } from "./components/layout/UserManual";
 export { createDashboardEntityAvatarLabel } from "./components/layout/EntityAvatarLabel";
 export { createDashboardEventsSection } from "./components/layout/EventsSection";

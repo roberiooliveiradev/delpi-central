@@ -23,6 +23,7 @@ const REQUIRED_HOST_EXPORTS = [
   "getColorFamilyDefinition",
   "createDashboardTopBarFavoritesStrip",
   "createDashboardTopBarUtilityCluster",
+  "createDashboardTopBarUserIdentity",
   "createDashboardUserManual",
   "createDashboardEntityAvatarLabel",
   "createDashboardEventsSection",

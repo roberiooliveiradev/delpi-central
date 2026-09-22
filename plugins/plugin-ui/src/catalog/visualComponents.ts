@@ -97,6 +97,11 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
     description:
       "Gatilho e painel de favoritos da TopBar; persistência fica no portal consumidor.",
   }),
+  vc("layout", "TopBarUserIdentity", {
+    addedAt: "2026-09-21",
+    description:
+      "Chrome de identidade da TopBar (avatar + nome + menu opcional). Não busca usuário nem AuthZ.",
+  }),
   vc("layout", "UserManual", {
     addedAt: "2026-09-18",
     description:

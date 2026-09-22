@@ -12,7 +12,7 @@ O app cobre **todos** os componentes React visuais listados em `src/catalog/visu
 |---------|----------------------|
 | actions | ActionButton, BackLink, IconButton, ClearFiltersButton |
 | help | HelpTooltip, KeyTip, FieldLabel, TabHintCell… |
-| layout | TopBar, TopBarSearchTrigger, TopBarFavoritesStrip, PageHero, EventsSection, RecentAccessStrip, EditorChrome, KpiCard, MetricKpiCard, InitialsAvatar, RibbonGroupsRow, ChartCard, QuickPeriodSelector… |
+| layout | TopBar, TopBarSearchTrigger, TopBarFavoritesStrip, TopBarUserIdentity, PageHero, EventsSection, RecentAccessStrip, EditorChrome, KpiCard, MetricKpiCard, InitialsAvatar, RibbonGroupsRow, ChartCard, QuickPeriodSelector… |
 | feedback | EmptyState, **EmptyGuidance**, ModalShell, DrawerShell, ScreenLoading, InlineLoadingProgress, **AlertQueue**, **ScopeChipBar**, **WorklistItem**… |
 | forms | SelectField, DateField, MultiSelectField… |
 | data | DataTable, DataTableSection, CompactPagination, ConfigurablePresentationTable, **Timeline** (`ActivityTimeline` alias)… |

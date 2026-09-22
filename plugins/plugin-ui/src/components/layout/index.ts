@@ -356,6 +356,15 @@ export {
   type TopBarFavoritesStripProps,
 } from "./TopBarFavoritesStrip";
 export {
+  TopBarUserIdentity,
+  createDashboardTopBarUserIdentity,
+  topBarUserIdentityBemClasses,
+  type DashboardTopBarUserIdentityProps,
+  type TopBarUserIdentityClassNames,
+  type TopBarUserIdentityMenuItem,
+  type TopBarUserIdentityProps,
+} from "./TopBarUserIdentity";
+export {
   UserManual,
   UserManualConcepts,
   UserManualEyebrow,
