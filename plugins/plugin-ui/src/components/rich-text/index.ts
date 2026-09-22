@@ -29,3 +29,10 @@ export {
   type ApplyRichTextInlineCssOptions,
   type RichTextInlineCssPatch,
 } from "./richTextCommands";
+export {
+  DeckContentRunsView,
+  plainTextFromDeckContentRuns,
+  shouldPersistDeckContentRuns,
+  type DeckContentRun,
+  type DeckContentRunStyle,
+} from "./deckContentRuns";
