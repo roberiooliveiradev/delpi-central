@@ -3149,8 +3149,8 @@ HISTORICAL_PRESERVED:
   SUPERSEDED_BY this review for current-state markers only
 
 NEXT: C3-T3 — Minimal Model Invocation + Eval/Lineage Foundation
-PERSISTENCE_HEAD: <this documentation persistence commit>
-BIND_HEAD: <optional bind commit>
+PERSISTENCE_HEAD: 947712ec654f5d27d39f2d4e2b0f4fdc03e4fcd7
+BIND_HEAD: <pending bind commit>
 ```
 
 ## 7. Canonical phase mapping
