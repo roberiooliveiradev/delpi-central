@@ -29,9 +29,10 @@ Quais rotas de dados posso usar no meu painel?
 ## Knowledge + Instructions
 
 1. Colar **somente** o bloco `Instructions (colar no GPT Builder)` de [`specialist-instructions.md`](./specialist-instructions.md) — núcleo **estável** (raramente muda).
-2. Inteligência mutável (anti-duplicidade, modos, write heuristics) sobe no deploy via `gpt_get_catalog` → `capability_surface.agent_directives` (`vista_agent_intelligence.json`). **Não** colar isso em Instructions.
+2. Inteligência mutável (anti-duplicidade, print/paridade, modos, write heuristics) sobe no deploy via `gpt_get_catalog` → `capability_surface.agent_directives` (`vista_agent_intelligence.json`). **Não** colar isso em Instructions. **Não** enumerar seções novas do JSON no bloco estável.
 3. Adicionar [`vista-display-playbooks.md`](./vista-display-playbooks.md) como Knowledge File (visualização; não substitui agent_directives).
-4. Após editar Instructions (raro), rodar: `pytest tests/test_vista_builder_instructions_budget.py tests/test_vista_agent_intelligence.py -q`
+4. Após editar Instructions (raro) **ou** o JSON de inteligência, rodar: `pytest tests/test_vista_builder_instructions_budget.py tests/test_vista_agent_intelligence.py -q`
+5. **Anti-padrão:** “feature nova → expandir Instructions”. Correto: “feature nova → `vista_agent_intelligence.json` + deploy”.
 
 ## Pré-requisitos HTTP (já verificáveis)
 

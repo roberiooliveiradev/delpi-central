@@ -51,3 +51,25 @@ def test_negative_duplicate_for_color_change_is_forbidden():
         VistaAgentIntelligenceService.agent_directives()["object_resolution"]["rules"]
     )
     assert "nunca add_blank_slide" in rules.lower() or "add_blank_slide" in rules
+
+
+def test_screenshot_parity_maps_print_to_typed_slide():
+    directives = VistaAgentIntelligenceService.agent_directives()
+    parity = directives["screenshot_parity"]
+    assert parity["principle"] == "PRINT_TO_TYPED_SLIDE_PARITY"
+    assert "VISUAL_PARITY" in directives["modes"]
+    pipeline = " ".join(parity["pipeline"])
+    assert "upsert_block" in pipeline
+    assert "patch_native_config" in pipeline
+    assert "gpt_preview_change" in pipeline
+    forbidden = " ".join(parity["parity_bar"]["forbidden_shortcuts"])
+    assert "Image Generation" in forbidden or "imagem" in forbidden.lower()
+    assert any("print" in str(item).lower() for item in directives["anti_patterns"])
+
+
+def test_sibling_screenshot_does_not_authorize_uuid_invention():
+    epi = " ".join(
+        VistaAgentIntelligenceService.agent_directives()["screenshot_parity"]["epistemology"]
+    )
+    assert "nunca" in epi.lower()
+    assert "playlistId" in epi or "slideId" in epi

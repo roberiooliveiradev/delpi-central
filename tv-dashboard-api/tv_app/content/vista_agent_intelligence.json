@@ -1,5 +1,5 @@
 {
-  "version": "2026.09.22.1",
+  "version": "2026.09.22.2",
   "owner": "tv-dashboard-api",
   "source": "capability_surface.agent_directives via gpt_get_catalog",
   "object_resolution": {
@@ -18,9 +18,55 @@
       "gpt_get_playlist_context when slideId/blockId/revision unknown"
     ]
   },
+  "screenshot_parity": {
+    "principle": "PRINT_TO_TYPED_SLIDE_PARITY",
+    "summary": "Print/anexo de como o usuário quer o slide = pedido de paridade visual via ops tipadas — não gerar arte e não só orientar.",
+    "when": [
+      "Usuário anexa print/screenshot/foto do editor, TV, mockup ou referência e pede criar/ajustar 'igual', 'assim', 'como na imagem', 'reproduza', 'copie este layout'.",
+      "Print + texto de ajuste ('fundo como no print', 'títulos assim') no mesmo turno."
+    ],
+    "not_image_generation": "Print de referência de slide/painel ≠ pedido de Image Generation. Só Image Generation se o usuário pedir explicitamente arte/ilustração/mockup externo separado da TV.",
+    "epistemology": [
+      "Layout/cores/textos/posição visíveis no print = INFORMED (evidência visual do usuário).",
+      "playlistId/slideId/revision/permissão = nunca tirados do print; só de Actions READ ou IDs INFORMADOS na conversa.",
+      "Significado de métricas sem rota confirmada = INFERRED/PROPOSED até gpt_search_data_routes / gpt_preview_data_block."
+    ],
+    "pipeline": [
+      "1) Classificar: criar novo slide/playlist OU alterar objeto já resolvido (object_resolution).",
+      "2) Decompor o print em camadas: fundo/canvas; títulos e textos; KPIs/cards; gráficos; tabelas; outros blocos; hierarquia e alinhamento aproximado.",
+      "3) Mapear cada camada às ops tipadas do catálogo vivo (gpt_get_catalog): tipicamente add_blank_slide + patch_native_config(background) + N× upsert_block (type text|kpi|chart|table…) com frame/style; upsert_data_source + set_data_transform quando houver dado vivo.",
+      "4) Cores → #RRGGBB canônico; tipografia/peso/alinhamento → style do bloco; posição/tamanho relativo → frame do upsert_block o mais próximo possível do print.",
+      "5) Textos legíveis no print → conteúdo dos blocos text/kpi labels; não inventar frases que não aparecem.",
+      "6) Se o print mostra indicadores operacionais: gpt_search_data_routes pelos rótulos visíveis; se houver match, preview + bind; se não, criar bloco estático com o valor/rótulo visível e declarar lacuna de binding (PROPOSED) sem inventar operationId.",
+      "7) Um LOTE COMPLETO numa gpt_preview_change (additive: commit_now=true). PlanCompiler ordena. Sem fatiar 'primeiro o slide, depois me pergunte'.",
+      "8) Após VERIFIED: resumir em português o que ficou igual e o que o catálogo não cobre (paridade honest). Não fingir 100% se faltou capability."
+    ],
+    "parity_bar": {
+      "must_match": [
+        "fundo/cor dominante do canvas",
+        "títulos e textos principais legíveis",
+        "quantidade e tipo aproximado de blocos (KPI vs texto vs gráfico vs tabela)",
+        "hierarquia visual (destaque vs secundário)",
+        "contraste TV/kiosk quando o print for operacional"
+      ],
+      "best_effort": [
+        "posição/tamanho exatos em px",
+        "fontes proprietárias fora do editor",
+        "sombras/efeitos sem campo no catálogo",
+        "imagens rastreadas do print (sem upload de asset via Actions)"
+      ],
+      "forbidden_shortcuts": [
+        "Responder só com tutorial de cliques no editor",
+        "Gerar imagem do slide em vez de criar slide real",
+        "Criar slide vazio e pedir que o usuário monte o resto",
+        "Inventar UUIDs ou rotas de dados 'parecidas'"
+      ]
+    }
+  },
   "modes": {
     "QUICK_DISPLAY": "Ajuste pontual de slide/bloco já conhecido — resolver objeto, mutar, não criar.",
     "GUIDED_DASHBOARD": "Projetar/reorganizar painel ou playlist — criar só o que faltar após inventário READ.",
+    "VISUAL_PARITY": "Print/anexo de referência → reproduzir slide com paridade via ops tipadas (screenshot_parity).",
     "DATA_INTERPRETATION": "Entender/explicar dados sem gravar até pedido explícito.",
     "PLAYLIST_CURATION": "Ordem, duração, slides, kiosk/TV — preferir update/reorder/move no existente."
   },
@@ -36,7 +82,9 @@
     "Criar objeto novo para aplicar alteração no existente.",
     "Tutorial de UI como caminho principal para cor/fundo/estilo tipável.",
     "Tratar Copilot/chat interno retirado como perda de write da VISTA.",
-    "Inventar operationId, playlistId, slideId, assetId ou proposal_handle."
+    "Inventar operationId, playlistId, slideId, assetId ou proposal_handle.",
+    "Tratar print de slide desejado como Image Generation ou recusar criar o slide tipado.",
+    "Paridade visual incompleta sem declarar o gap (fingir que ficou idêntico quando o catálogo não cobre)."
   ],
   "auth_errors": {
     "401": "AuthN — pedir reconexão OAuth DELPI / permitir Action.",

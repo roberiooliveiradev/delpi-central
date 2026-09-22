@@ -81,10 +81,63 @@ def test_vista_builder_core_keeps_required_invariants():
 def test_vista_instructions_delegate_mutable_behavior_to_catalog():
     block = _builder_instructions_block()
     assert "capability_surface.agent_directives" in block
-    assert "object_resolution" in block
-    # Modes / anti-duplicidade detail must NOT live in Builder paste.
+    assert "por completo" in block
+    # Section names / heuristics must NOT live in Builder paste.
+    assert "object_resolution" not in block
+    assert "screenshot_parity" not in block
     assert "QUICK DISPLAY" not in block
     assert "ALTER_EXISTING_BEFORE_CREATE" not in block
+    assert "PRINT_TO_TYPED_SLIDE_PARITY" not in block
+
+
+def test_builder_instructions_must_not_leak_intelligence_json_keys():
+    """Regression gate: feature heuristics stay in deployable JSON, not Builder paste."""
+    import json
+
+    intelligence = json.loads(INTELLIGENCE.read_text(encoding="utf-8"))
+    block = _builder_instructions_block()
+    # Top-level behavioral sections (except metadata).
+    forbidden_keys = {
+        key
+        for key in intelligence.keys()
+        if key
+        not in {
+            "version",
+            "owner",
+            "source",
+            "auth_errors",  # codes may be paraphrased; still prefer catalog
+        }
+    }
+    for key in sorted(forbidden_keys):
+        assert key not in block, f"Instructions leaked intelligence key: {key}"
+
+    # Explicit principles / mode ids from nested structures.
+    forbidden_tokens: list[str] = []
+    resolution = intelligence.get("object_resolution") or {}
+    if isinstance(resolution, dict) and resolution.get("principle"):
+        forbidden_tokens.append(str(resolution["principle"]))
+    parity = intelligence.get("screenshot_parity") or {}
+    if isinstance(parity, dict) and parity.get("principle"):
+        forbidden_tokens.append(str(parity["principle"]))
+    modes = intelligence.get("modes") or {}
+    if isinstance(modes, dict):
+        forbidden_tokens.extend(str(name) for name in modes.keys())
+    for token in forbidden_tokens:
+        assert token not in block, f"Instructions leaked intelligence token: {token}"
+
+
+def test_specialist_doc_documents_forbidden_instructions_gate():
+    text = DOC.read_text(encoding="utf-8")
+    assert "PROIBIDO no bloco Instructions" in text
+    assert "vista_agent_intelligence.json" in text
+    assert "test_vista_builder_instructions_budget.py" in text
+
+
+def test_vista_instructions_domain_intent_beats_image_generation():
+    block = _builder_instructions_block()
+    assert "Image Generation" in block
+    assert "arte/imagem externa" in block or "arte/imagem" in block
+    assert "agent_directives" in block
 
 
 def test_vista_user_facing_language_is_portuguese_first():
@@ -132,10 +185,6 @@ def test_vista_playbooks_exist_and_forbid_new_actions_by_default():
     assert "CURRENT LIMITATION (PROVEN)" not in text or "PlanCompiler" in text
     assert "PlanCompiler" in text or "synthetic" in text.lower()
     assert "Never infer a UUID from a screenshot" in text
+    assert "VISUAL_PARITY" in text or "screenshot_parity" in text
     assert "ninth Action" in text
     assert "commit_now" in text
-
-
-def test_vista_instructions_domain_intent_beats_image_generation():
-    block = _builder_instructions_block()
-    assert "Imagem só se o usuário pedir" in block or "arte/imagem" in block

@@ -286,7 +286,9 @@ TV-first when the utterance uses slide, tela, playlist, apresentação, painel, 
 
 Image generation only when the user explicitly asks for imagem, ilustração, arte, mockup, render, figura, or equivalent **external** visual intent.
 
-Screenshot / attached image: may inform `INFERRED` UI context (visible name, apparent selection, layout, labels). It is **not** an authoritative `playlistId`, `slideId`, permission, revision, or save-state. Never infer a UUID from a screenshot. Ambiguous resource → `gpt_list_playlists` / `gpt_get_playlist_context`.
+**Screenshot / print of desired slide:** treat as **VISUAL_PARITY** intent (create/adjust a real TV slide). Obey live `capability_surface.agent_directives.screenshot_parity` (`PRINT_TO_TYPED_SLIDE_PARITY`). Decompose the print into typed ops (background, text/KPI/chart/table blocks, data bind when routes match) in one compound preview. Do **not** answer with editor click tutorials or generate an image of the slide.
+
+Screenshot / attached image: layout/colors/labels are `INFORMED` visual evidence. It is **not** an authoritative `playlistId`, `slideId`, permission, revision, or save-state. Never infer a UUID from a screenshot. Ambiguous resource → `gpt_list_playlists` / `gpt_get_playlist_context`. Report honest gaps when the catalog cannot express a detail from the print.
 
 ### 12.2 Intent Frame (TARGET vocabulary — not an authority)
 

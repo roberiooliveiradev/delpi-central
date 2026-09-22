@@ -358,18 +358,33 @@ ACT material só é `VERIFIED` quando fonte autoritativa prova o resultado (recu
 
 ## Instructions e Knowledge
 
-Manter separados:
+Manter separados — e, quando o owner tiver **inteligência deployável** (padrão VISTA), três camadas:
 
 ```text
-specialist-instructions.md
-Knowledge methodology / playbooks
+specialist-instructions.md          → estável (Builder paste; quase nunca muda)
+agent_directives / intelligence JSON → mutável (sobe no deploy via catalog Action)
+Knowledge methodology / playbooks   → display/metodologia (não vence catálogo vivo)
 ```
 
-Instructions: identidade, missão, comportamento, epistemologia, tool workflow, write governance, limites. Não colar metodologia inteira no prompt.
+### Instructions (Builder) — só o que não muda
 
-Knowledge: métodos, playbooks, interpretação, vocabulário, heurísticas.
+Permitido: identidade, missão, autoridade, epistemologia estável, “obedeça agent_directives vivos”, esqueleto PREPARE/ACT, limites AuthN/AuthZ, proibição de inventar IDs.
 
-Knowledge **não** é fonte de valores operacionais atuais, permissões, catálogo mutável, records nem autorização. Dados atuais vêm de Actions/APIs autoritativas.
+**Proibido** no paste do Builder:
+
+- heurísticas de produto que mudam a cada sprint (anti-duplicidade, print→paridade, mode router detalhado, pipelines de caso);
+- nomes de seções/princípios do JSON de inteligência (`object_resolution`, `screenshot_parity`, `ALTER_*`, `PRINT_*`, …);
+- segunda fonte de verdade de catálogo, ops tipadas ou AuthZ.
+
+Evoluir comportamento = editar o artefato deployável + deploy da API owner — **não** recolar Instructions.
+
+### Knowledge
+
+Knowledge: métodos, playbooks, interpretação, vocabulário, heurísticas de display.
+
+Knowledge **não** é fonte de valores operacionais atuais, permissões, catálogo mutável, records, autorização nem políticas de mutação que já vivem em `agent_directives`/catalog. Dados atuais vêm de Actions/APIs autoritativas. Knowledge **não** substitui `agent_directives` vivos.
+
+### Epistemologia (quando analítico)
 
 Especialistas analíticos preferem estados explícitos:
 
@@ -394,6 +409,7 @@ Pacote Builder, quando o produto tiver especialista completo (Abstraction Gate: 
 └── gpt-builder-go-live.md
 ```
 
+Quando houver inteligência mutável deployável, documentar também o JSON/serviço projetado no catalog (ex. VISTA: `vista_agent_intelligence.json` → `capability_surface.agent_directives`) e um teste que **falha** se o paste de Instructions contiver chaves/princípios desse JSON.
 ## Go-live e evidência
 
 Configuração externa **não** é provada por documentação no repo. Separar:

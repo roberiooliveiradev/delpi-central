@@ -41,7 +41,11 @@ OAuth client ``chatgpt-tv-dashboard`` is a **TEMPORARY_BRIDGE_CLIENT**
 (``MANUAL_CONFIGURATION_REQUIRED`` in Keycloak + GPT Builder). Go-live checklist:
 ``docs/gpt-actions/gpt-builder-go-live.md``. Specialist persona **VISTA**:
 ``docs/gpt-actions/specialist-instructions.md`` + Knowledge
-``docs/gpt-actions/vista-display-playbooks.md``. This package owns the HTTP façade;
+``docs/gpt-actions/vista-display-playbooks.md`` + live
+``capability_surface.agent_directives`` from ``vista_agent_intelligence.json``
+(via ``gpt_get_catalog``). **Instructions = stable-only**; mutation heuristics
+(object resolution, screenshot parity, modes, …) evolve by API deploy — never by
+expanding the Builder paste. This package owns the HTTP façade;
 it does not auto-provision the client. Durable target remains Plugin + MCP
 (Custom GPT bridge is temporary).
 
