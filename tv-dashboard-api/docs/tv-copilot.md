@@ -134,8 +134,10 @@ Composites rota → visual + bind:
 Façade OAuth em `/gpt-actions/v1` (ver `docs/gpt-actions/custom-gpt-actions.md`).
 
 - **Não** é owner do catálogo — continua `tv_copilot_content.json` / Copilot services.
-- PREPARE = suggest/preview; ACT = `gpt_commit_change` via `TvPresentationWriteService`
-  (mesmo write boundary das rotas CRUD UI). Sem loopback HTTP.
+- PREPARE = suggest/preview; preview mints opaque ``proposal_handle`` (NO WRITE).
+  ACT = ``gpt_commit_change`` with ``proposal_handle`` + ``confirmation`` only,
+  via ``TvPresentationWriteService`` (mesmo write boundary das rotas CRUD UI).
+  Sem loopback HTTP; sem ``ops``/``planDigest`` no commit.
 - Draft local do MFE permanece `unavailable_external` para o Custom GPT.
 
 ## Chat base (consumer)

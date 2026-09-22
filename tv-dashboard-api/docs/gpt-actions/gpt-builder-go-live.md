@@ -39,6 +39,7 @@ Quais rotas de dados posso usar no meu painel?
 |------|--------|
 | OpenAPI público | `https://minhadelpi.com.br/apps/tv-dashboard-api/gpt-actions/v1/openapi.json` |
 | Esperado | OpenAPI **3.1.x**, `servers.url` absoluto HTTPS, **8** operationIds, lifecycle **GOVERNED_PREPARE_COMMIT_V2** |
+| Descriptions | cada `operation.description` **≤ 300** chars (limite GPT Builder) |
 | Anônimo protegido | `GET …/catalog` → **401** |
 
 OperationIds importados (somente estes):

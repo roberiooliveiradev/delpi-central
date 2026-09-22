@@ -359,7 +359,10 @@ A later step may depend on a resource produced earlier (`created.slide`, `create
 - Do not invent temporary IDs as authoritative resource IDs.
 - Authoritative IDs come from runtime creation / read-back.
 
-**PROVEN:** `gpt_commit_change` already executes accepted ops in order, stop-on-first-failure, and tracks `created` playlist/slide during that ACT. Authoritative verification exists (`VERIFIED` / `PARTIAL` / `OUTCOME_NOT_VERIFIED`).
+**PROVEN:** `gpt_commit_change` executes the **server-bound** proposal ops in order
+(stop-on-first-failure), tracks `created` playlist/slide during that ACT, and
+requires authoritative verification (`VERIFIED` / `PARTIAL` / `OUTCOME_NOT_VERIFIED`).
+Client does not re-send ops on commit — only `proposal_handle` + confirmation.
 
 **CURRENT LIMITATION (PROVEN):** preview of `add_blank_slide` does not persist a slide and returns no authoritative `id`. Some native-config ops therefore cannot be fully evaluated as a create-then-modify chain at preview time. **COMPOUND PREVIEW = TARGET** (synthetic in-memory binding). Do not describe current preview as fully dependency-aware.
 
