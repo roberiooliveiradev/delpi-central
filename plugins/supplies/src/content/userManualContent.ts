@@ -52,7 +52,7 @@ export const USER_MANUAL_CONTENT = {
     {
       term: "Perfil do Portal vs perfil Minha DELPI",
       meaning:
-        "O avatar na TopBar abre o Meu Perfil Minha DELPI (/profile) — foto, cargo e contatos. O nome abre o menu com Preferências do Portal Suprimentos (filial padrão, densidade).",
+        "O avatar na TopBar abre o perfil do Portal Suprimentos (`/users/:id`). O nome abre o menu com Meu perfil Minha DELPI (`/profile`) e Preferências do Portal.",
     },
   ],
   scopeNote:
@@ -168,7 +168,7 @@ export const USER_MANUAL_CONTENT = {
         "Operações — pedidos, entregas, fornecedores, produtos, estoque e ESTSEG.",
         "Indicadores / Negociações — recorte analítico quando liberado.",
         "Administração — mappings e configurações.",
-        "Perfil — avatar na TopBar abre /profile do host; preferências deste Portal ficam no menu do nome (Preferências do Portal).",
+        "Perfil — avatar na TopBar abre o perfil deste Portal; Meu perfil Minha DELPI e Preferências ficam no menu do nome.",
         "Ajuda — este manual, FAQ e glossário.",
       ],
     },
@@ -258,11 +258,11 @@ export const USER_MANUAL_CONTENT = {
         },
         {
           q: "Onde altero a filial padrão ou a densidade das tabelas?",
-          a: "Clique no nome na TopBar → Preferências do Portal. Foto, cargo e contatos: clique no avatar (abre /profile do host). Não existe página /preferences separada.",
+          a: "Clique no nome na TopBar → Preferências do Portal (ou no avatar, que abre o perfil deste Portal). Foto, cargo e contatos: menu do nome → Meu perfil Minha DELPI (/profile). Não existe página /preferences separada.",
         },
         {
           q: "Qual a diferença entre o perfil do Portal e o /profile da Minha DELPI?",
-          a: "O avatar abre /profile (identidade global Minha DELPI). O menu do nome inclui Preferências do Portal Suprimentos (units, densidade, filial padrão). A página /users/:id do plugin continua sendo o editor de preferências locais.",
+          a: "O avatar abre o perfil do Portal Suprimentos (`/users/:id` — preferências locais). O menu do nome inclui Meu perfil Minha DELPI (`/profile` — identidade global) e Preferências do Portal.",
         },
         {
           q: "Alterei a foto no Meu Perfil e o Suprimentos não mudou?",

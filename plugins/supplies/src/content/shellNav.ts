@@ -62,7 +62,7 @@ export const SHELL_NAV_CONTENT = {
   },
   userMenu: {
     nameFallback: "Usuário",
-    profileTitle: "Abrir meu perfil Minha DELPI",
+    profileTitle: "Abrir meu perfil do Portal",
     profileAriaLabel: "Abrir meu perfil",
     menuOpenAriaLabel: "Abrir menu do usuário",
     menuAriaLabel: "Conta e preferências",

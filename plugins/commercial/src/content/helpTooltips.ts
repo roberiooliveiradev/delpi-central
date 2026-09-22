@@ -59,7 +59,7 @@ export const CM_HELP = {
   },
   users: {
     profile:
-      "Perfil no Portal Comercial (diretório/equipe): nome e e-mail; foto, cargo e contatos com precedência do Meu Perfil Minha DELPI. O avatar da TopBar do próprio usuário abre /profile do host; o nome abre Minha Carteira.",
+      "Perfil no Portal Comercial (diretório/equipe): nome e e-mail; foto, cargo e contatos com precedência do Meu Perfil Minha DELPI. O avatar da TopBar abre o perfil deste Portal (`/users/:id`); o nome abre Minha Carteira. Identidade global: `/profile` no shell Minha DELPI.",
     jobTitle: "Cargo exibido no Comercial. Não sincroniza RH nesta fase.",
     phoneE164:
       "Telefone fixo no formato E.164 (+ e DDI), ex.: +551133334444. Usado no atalho Ligar.",

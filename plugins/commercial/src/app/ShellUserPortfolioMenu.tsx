@@ -7,7 +7,11 @@ import {
   userProfilePhotoAbsoluteUrl,
 } from "../api/userProfileApi";
 import { CommercialTopBarUserIdentity } from "./commercialUi";
-import { navigatePluginView } from "./pluginNavigation";
+import {
+  buildUserProfileHref,
+  navigatePluginView,
+  navigateUserProfile,
+} from "./pluginNavigation";
 import { profileLinkTitle } from "../content/entityLinkHints";
 import { usePortfolioScope } from "./PortfolioScopeContext";
 import {
@@ -17,9 +21,6 @@ import {
 } from "./shellUserPortfolioNav";
 import { SHELL_NAV_CONTENT } from "../content/shellNav";
 
-/** Canonical Minha DELPI self-profile (Portal host). Commercial user pages stay for directory/others. */
-const HOST_SELF_PROFILE_PATH = "/profile";
-
 type ShellUserPortfolioMenuProps = {
   basePath: string;
   /** Nome completo para avatar + rótulo (fallback se ausente). */
@@ -28,7 +29,8 @@ type ShellUserPortfolioMenuProps = {
 
 /**
  * Adapter Comercial: chrome shared (TopBarUserIdentity) + domínio de carteira.
- * Avatar → `/profile` (identidade canônica). Nome/chevron → Minha Carteira (0/1/N).
+ * Avatar → perfil do Portal Comercial (`/users/:id`). Nome/chevron → Minha Carteira (0/1/N).
+ * Identidade global Minha DELPI (`/profile`) fica no shell do host (sidebar).
  */
 export function ShellUserPortfolioMenu({
   basePath,
@@ -88,10 +90,16 @@ export function ShellUserPortfolioMenu({
     };
   }, [userId]);
 
-  const goToHostProfile = useCallback(() => {
+  const portalProfileHref = useMemo(
+    () => (userId ? buildUserProfileHref(userId, { basePath }) : null),
+    [basePath, userId],
+  );
+
+  const goToPortalProfile = useCallback(() => {
     setOpen(false);
-    window.location.assign(HOST_SELF_PROFILE_PATH);
-  }, []);
+    if (!userId) return;
+    navigateUserProfile(userId, { basePath });
+  }, [basePath, userId]);
 
   const goToPortfolio = useCallback(
     (portfolio: ShellUserPortfolioOption) => {
@@ -149,8 +157,15 @@ export function ShellUserPortfolioMenu({
       fallbackLabel={copy.nameFallback}
       avatarUrl={photoObjectUrl}
       portalScopeClassName="dashboard-commercial"
-      avatarHref={HOST_SELF_PROFILE_PATH}
-      onAvatarNavigate={goToHostProfile}
+      avatarHref={portalProfileHref ?? undefined}
+      onAvatarNavigate={
+        portalProfileHref
+          ? (event) => {
+              event.preventDefault();
+              goToPortalProfile();
+            }
+          : undefined
+      }
       avatarTitle={profileTitle}
       onLabelClick={portfolioInteractive ? onPortfolioClick : undefined}
       labelAriaLabel={portfolioAriaLabel}

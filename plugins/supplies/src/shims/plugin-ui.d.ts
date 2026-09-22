@@ -174,6 +174,9 @@ declare module "@delpi/plugin-ui/index" {
     count?: number;
   }>;
 
+  export const HOST_SELF_PROFILE_PATH: "/profile";
+  export function navigateHostPath(path: string): void;
+
   export function createDashboardTopBarUserIdentity(config: {
     prefix: string;
   }): ComponentType<{
@@ -186,7 +189,7 @@ declare module "@delpi/plugin-ui/index" {
     title?: string;
     ariaLabel?: string;
     avatarHref?: string;
-    onAvatarNavigate?: () => void;
+    onAvatarNavigate?: (event?: unknown) => void;
     avatarTitle?: string;
     onLabelClick?: () => void;
     labelAriaLabel?: string;

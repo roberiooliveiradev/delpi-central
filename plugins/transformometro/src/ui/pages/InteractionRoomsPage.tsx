@@ -27,6 +27,11 @@ import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
 import { TmNativeTextAreaField, TmNativeTextField } from "../../components/ui/tmNativeFormFields";
 import { TRANSFORMOMETRO_ROUTES, buildInteractionRoomPath } from "../../constants/routes";
 import { fetchMeProfile } from "../../data/api/meApi";
+import {
+  buildTransformometroUserPath,
+  navigateTransformometroUserProfile,
+  transformometroUserLinkTitle,
+} from "../../utils/userProfileLinks";
 import { searchDirectoryUsers } from "../../data/api/transformometroMeetingMinutesApi";
 import {
   INTERACTION_MESSAGE_MAX_LENGTH,
@@ -766,6 +771,9 @@ export function InteractionRoomsPage({ getAccessToken, pathname, roomId, onNavig
     () =>
       (messages ?? []).map((item) => {
         const removed = Boolean(item.deleted_at);
+        const authorId = item.author_user_id;
+        const resolvedAuthor = authorName(authorId);
+        const authorPath = buildTransformometroUserPath(authorId);
         return {
           id: item.id,
           kind: "text",
@@ -773,23 +781,36 @@ export function InteractionRoomsPage({ getAccessToken, pathname, roomId, onNavig
           createdAtLabel: item.edited_at
             ? `${formatDateTime(item.created_at)} · editada`
             : formatDateTime(item.created_at),
-          authorName: authorName(item.author_user_id),
-          authorUserId: item.author_user_id,
-          authorSrc: photoFor(item.author_user_id),
+          authorName: resolvedAuthor,
+          authorUserId: authorId,
+          authorSrc: photoFor(authorId),
+          authorHref: authorPath ?? undefined,
+          authorLinkTitle: authorPath
+            ? transformometroUserLinkTitle(resolvedAuthor)
+            : undefined,
+          onAuthorNavigate: authorPath
+            ? (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                navigateTransformometroUserProfile(authorId, meId);
+              }
+            : undefined,
           parentId: item.parent_id,
-          mine: Boolean(meId && item.author_user_id === meId),
+          mine: Boolean(meId && authorId === meId),
           deleted: removed,
           pinned: Boolean(item.pinned),
           mentions: (item.mentions ?? []).map((mention) => {
             const label = (mention.label ?? "").replace(/^@/, "").trim() || mention.label;
             const resolved = authorName(mention.user_id, label);
+            const mentionPath = buildTransformometroUserPath(mention.user_id);
             return {
-              kind: "user",
+              kind: "user" as const,
               id: mention.user_id,
               label,
               avatarName: resolved,
               title: `Menção: ${resolved}`,
               avatarSrc: photoFor(mention.user_id) ?? undefined,
+              href: mentionPath ?? undefined,
             };
           }),
           reactions: reactionItems(item, meId),
@@ -811,12 +832,24 @@ export function InteractionRoomsPage({ getAccessToken, pathname, roomId, onNavig
     for (const item of messages ?? []) {
       if (!seen.has(item.author_user_id)) seen.set(item.author_user_id, authorName(item.author_user_id));
     }
-    return [...seen.entries()].map(([id, name]) => ({
-      id,
-      name,
-      src: photoFor(id),
-    }));
-  }, [authorName, messages, photoFor]);
+    return [...seen.entries()].map(([id, name]) => {
+      const href = buildTransformometroUserPath(id) ?? undefined;
+      return {
+        id,
+        name,
+        src: photoFor(id),
+        href,
+        title: href ? transformometroUserLinkTitle(name) : undefined,
+        onNavigate: href
+          ? (event: { preventDefault: () => void; stopPropagation: () => void }) => {
+              event.preventDefault();
+              event.stopPropagation();
+              navigateTransformometroUserProfile(id, meId);
+            }
+          : undefined,
+      };
+    });
+  }, [authorName, meId, messages, photoFor]);
 
   const sharedItems = useMemo<InteractionRoomSharedItem[]>(() => {
     const files: InteractionRoomSharedItem[] = shared.map((file) => ({
@@ -999,8 +1032,10 @@ export function InteractionRoomsPage({ getAccessToken, pathname, roomId, onNavig
             { user_id: hit.id, label },
           ];
         }}
-        onMentionActivate={(_item: MentionTextItem) => {
-          /* Chip ativável (acessível); TM não tem perfil de usuário próprio. */
+        onMentionActivate={(item: MentionTextItem) => {
+          const id = (item.id || "").trim();
+          if (!id) return;
+          navigateTransformometroUserProfile(id, meId);
         }}
         replyTo={
           replyTarget

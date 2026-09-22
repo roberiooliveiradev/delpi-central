@@ -1,7 +1,9 @@
 /**
  * Decide se um clique em <a> deve virar navigate() do React Router
- * (mesmo app federado/embedded) em vez de reload completo do documento.
+ * (mesmo app federado/embedded ou shell do Portal) em vez de reload completo.
  */
+
+import { isHostShellPath } from "./hostNavigation";
 
 export type SameAppAnchorClickInput = {
   defaultPrevented: boolean;
@@ -44,6 +46,9 @@ function pathIsWithinApp(pathname: string, appBasePath: string): boolean {
 /**
  * Retorna o destino (`pathname + search + hash`) para `navigate()`, ou `null`
  * se o clique deve seguir o comportamento nativo do browser.
+ *
+ * Inclui paths do shell do Portal (`/profile`, `/privacy`, …) para que o MFE
+ * federado saia do AppHost via React Router em vez de reload → Home.
  */
 export function resolveSameAppSpaNavigation(
   event: SameAppAnchorClickInput,
@@ -67,7 +72,10 @@ export function resolveSameAppSpaNavigation(
   }
 
   if (url.origin !== options.currentOrigin) return null;
-  if (!pathIsWithinApp(url.pathname, options.appBasePath)) return null;
+
+  const withinApp = pathIsWithinApp(url.pathname, options.appBasePath);
+  const hostShell = isHostShellPath(url.pathname);
+  if (!withinApp && !hostShell) return null;
 
   const next = `${url.pathname}${url.search}${url.hash}`;
   const current = `${options.currentPathname}${options.currentSearch}${options.currentHash}`;

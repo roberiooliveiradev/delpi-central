@@ -25,6 +25,7 @@ import { MeetingMinuteSignPage } from "./ui/pages/MeetingMinuteSignPage";
 import { MeetingMinutesPendingPage } from "./ui/pages/MeetingMinutesPendingPage";
 import { MyTasksPage } from "./ui/pages/MyTasksPage";
 import { InteractionRoomsPage } from "./ui/pages/InteractionRoomsPage";
+import { PersonDirectoryPage } from "./ui/pages/PersonDirectoryPage";
 import { MySignaturePage } from "./ui/pages/MySignaturePage";
 import { DiagramEditorPage } from "./ui/pages/DiagramEditorPage";
 import { useDelpiPortalBridge } from "./hooks/useDelpiPortalBridge";
@@ -77,6 +78,15 @@ function AppRoutes({ getAccessToken, pathname: pathnameFromHost }: AppProps) {
         getAccessToken={getAccessToken}
         pathname={pathname}
         roomId={route.roomId}
+        onNavigate={onNavigate}
+      />
+    );
+  } else if (route.view === "user" && route.userId) {
+    page = (
+      <PersonDirectoryPage
+        getAccessToken={getAccessToken}
+        pathname={pathname}
+        userId={route.userId}
         onNavigate={onNavigate}
       />
     );

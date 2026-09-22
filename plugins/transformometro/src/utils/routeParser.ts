@@ -7,6 +7,7 @@ export type TransformometroView =
   | "dashboard"
   | "myTasks"
   | "interactionRooms"
+  | "user"
   | "administration"
   | "dados"
   | "configuracoes"
@@ -42,6 +43,7 @@ export type ParsedTransformometroRoute = {
   recursoId?: string;
   ataId?: string;
   roomId?: string;
+  userId?: string;
   legacyRevisaoPath?: boolean;
 };
 
@@ -108,6 +110,10 @@ export function parseTransformometroPath(pathname: string): ParsedTransformometr
   const interactionRoomMatch = path.match(/^\/apps\/transformometro\/interaction-rooms\/([^/]+)$/);
   if (interactionRoomMatch) {
     return { view: "interactionRooms", roomId: interactionRoomMatch[1] };
+  }
+  const userMatch = path.match(/^\/apps\/transformometro\/users\/([^/]+)$/);
+  if (userMatch?.[1]) {
+    return { view: "user", userId: decodeURIComponent(userMatch[1]) };
   }
   if (path === TRANSFORMOMETRO_ROUTES.meetingMinutes) return { view: "atas" };
   if (path === `${TRANSFORMOMETRO_ROUTES.meetingMinutes}/new`) return { view: "ataNew" };

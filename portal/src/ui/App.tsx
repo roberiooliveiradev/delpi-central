@@ -39,6 +39,7 @@ import { MyProfile } from "./MyProfile";
 import { NotificationsPage } from "./NotificationsPage";
 import { PrivacyPage } from "./PrivacyPage";
 import { PrivacyPolicyPage } from "./PrivacyPolicyPage";
+import { useHostNavigateListener } from "./useHostNavigateListener";
 
 import { ConfirmDialogProvider } from "../components/ConfirmDialogProvider";
 import { ApiClient } from "../data/apiClient";
@@ -96,6 +97,7 @@ function normalizeAppBasePath(basePath: string) {
 function AppShell() {
   const { routes, apps, notifications } = useContext(AuthContext);
   const desktopToastSeededRef = useRef(false);
+  useHostNavigateListener();
 
   useEffect(() => {
     installImportantNotificationAudioUnlock();

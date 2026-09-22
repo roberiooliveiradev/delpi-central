@@ -8,20 +8,24 @@ import {
 import { fetchMeProfile } from "../data/api/meApi";
 import { useMyPersonProfilePhotoUrl } from "../hooks/useMyPersonProfilePhotoUrl";
 import { usePortalAccessToken } from "../state/portalChrome";
+import {
+  buildTransformometroUserPath,
+  navigateTransformometroUserProfile,
+  transformometroUserLinkTitle,
+} from "../utils/userProfileLinks";
 
 const USER = topBarUserIdentityBemClasses("ds");
 const AVATAR = initialsAvatarBemClasses("ds");
 
-/** Canonical Minha DELPI self-profile (Portal host) — TM does not own identity. */
-const HOST_SELF_PROFILE_PATH = "/profile";
-
 /**
- * Identity chrome da TopBar — nome/foto via Core; clique abre `/profile` do host.
- * Sem página de perfil do Transformômetro e sem menu de domínio inventado.
+ * Identity chrome da TopBar — nome/foto via Core; clique abre o perfil
+ * do Portal Transforma+ (`/apps/transformometro/users/:id`).
+ * Identidade global Minha DELPI (`/profile`) fica no shell do host (sidebar).
  */
 export function PortalTopBarUserIdentity() {
   const getAccessToken = usePortalAccessToken();
   const [displayName, setDisplayName] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const photoUrl = useMyPersonProfilePhotoUrl(true, getAccessToken);
 
@@ -32,12 +36,14 @@ export function PortalTopBarUserIdentity() {
       .then((profile) => {
         if (!controller.signal.aborted) {
           setDisplayName(profile.name || null);
+          setUserId(profile.id || null);
           setLoading(false);
         }
       })
       .catch(() => {
         if (!controller.signal.aborted) {
           setDisplayName(null);
+          setUserId(null);
           setLoading(false);
         }
       });
@@ -45,6 +51,7 @@ export function PortalTopBarUserIdentity() {
   }, [getAccessToken]);
 
   const label = (displayName ?? "").trim() || "Usuário";
+  const href = userId ? buildTransformometroUserPath(userId) : null;
 
   return (
     <TopBarUserIdentity
@@ -55,9 +62,17 @@ export function PortalTopBarUserIdentity() {
       avatarUrl={photoUrl}
       loading={loading}
       portalScopeClassName="dashboard-transformometro"
-      href={HOST_SELF_PROFILE_PATH}
-      title="Abrir meu perfil Minha DELPI"
-      ariaLabel={`Abrir meu perfil: ${label}`}
+      href={href ?? undefined}
+      title={href ? transformometroUserLinkTitle(label) : undefined}
+      ariaLabel={href ? `Abrir meu perfil: ${label}` : undefined}
+      onNavigate={
+        href && userId
+          ? (event) => {
+              event.preventDefault();
+              navigateTransformometroUserProfile(userId, userId);
+            }
+          : undefined
+      }
     />
   );
 }
