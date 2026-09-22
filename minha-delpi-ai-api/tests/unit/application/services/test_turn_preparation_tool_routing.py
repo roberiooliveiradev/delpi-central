@@ -319,7 +319,7 @@ def test_resolve_skip_tool_flags_allows_tv_surface_in_common_chat():
         workspace_context={
             "userActivatedAgent": False,
             "actionsEnabled": False,
-            "skills": {"tvDashboardCopilot": True},
+            "skills": {},
             "tvDashboardHostContext": {
                 "surface": "tv-dashboard",
                 "playlistId": "pl-1",
@@ -339,7 +339,7 @@ def test_tv_surface_mutation_bypasses_operational_parameter_guards():
         workspace_context={
             "userActivatedAgent": False,
             "actionsEnabled": False,
-            "skills": {"tvDashboardCopilot": True},
+            "skills": {},
             "tvDashboardHostContext": {
                 "surface": "tv-dashboard",
                 "playlistId": "pl-1",

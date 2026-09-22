@@ -35,7 +35,7 @@ def test_sql1_create_simple_select_mode():
 
 def test_tv_slide_request_does_not_activate_sql_specialist():
     tv_ctx = {
-        "skills": {"sqlAuthoring": True, "tvDashboardCopilot": True},
+        "skills": {"sqlAuthoring": True},
         "tvDashboardHostContext": {
             "surface": "tv-dashboard",
             "playlistId": "pl-1",

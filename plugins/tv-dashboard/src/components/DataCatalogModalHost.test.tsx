@@ -67,7 +67,7 @@ describe("DataCatalogModalHost (modal host-contained)", () => {
     const dialog = document.querySelector(".td-modal--data-catalog");
     expect(dialog).toBeTruthy();
     expect(dialog?.getAttribute("role")).toBe("dialog");
-    expect(dialog?.getAttribute("aria-label")).toBe("Assistente de dados");
+    expect(dialog?.getAttribute("aria-label")).toBe("Fontes de dados");
     expect(screen.getByTestId("data-builder-chat")).toBeTruthy();
     expect(document.querySelector('[data-modal-contained="true"]')).toBeTruthy();
   });
@@ -75,7 +75,7 @@ describe("DataCatalogModalHost (modal host-contained)", () => {
   it("fecha pelo botão Fechar e limpa âncora/modo", () => {
     render(<DataCatalogModalHost />);
 
-    fireEvent.click(screen.getByLabelText("Fechar assistente"));
+    fireEvent.click(screen.getByLabelText("Fechar fontes de dados"));
 
     expect(setDataCatalogModalOpen).toHaveBeenCalledWith(false);
     expect(setDataCatalogMode).toHaveBeenCalledWith("insert");

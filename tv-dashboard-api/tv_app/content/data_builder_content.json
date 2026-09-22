@@ -1,7 +1,7 @@
 {
   "messages": {
-    "welcome": "Escolha Pesquisa (catálogo) ou Assistente IA. Ajuste filial e período abaixo e descreva ou busque o dado para o slide.",
-    "sessionCreated": "Sessão do assistente de dados iniciada.",
+    "welcome": "Busque no catálogo (ex.: OEE, OTD, estoque). Ajuste filial e período e use «Usar no slide» quando o rascunho estiver pronto.",
+    "sessionCreated": "Sessão de fontes de dados iniciada.",
     "suggestHeader": "Encontrei {count} fonte(s) para «{query}»:",
     "suggestEmpty": "Não encontrei fontes para essa frase. Tente termos como OEE, OTD, estoque ou PCP.",
     "suggestDegraded": "Sugestões da IA indisponíveis no momento. Tente de novo ou descreva a rota pelo nome.",

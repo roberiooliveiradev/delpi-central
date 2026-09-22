@@ -22,6 +22,7 @@
 7e. **Naming hygiene (2026-09-22):** Renamed remaining catalog/planner modules and JSON from `tv_copilot_*` to `presentation_*` / `presentation_ops_content.json` (`PresentationOpsContentService`, planners, nested contract, telemetry). No second mutation path.
 7f. **Deployable agent intelligence (2026-09-22):** Mutable VISTA behavior (`object_resolution` ALTER_EXISTING_BEFORE_CREATE, `screenshot_parity` PRINT_TO_TYPED_SLIDE_PARITY, modes, write_flow, anti_patterns) lives in `vista_agent_intelligence.json` → `capability_surface.agent_directives` via `gpt_get_catalog`. GPT Builder Instructions stay **stable-only** (identity + authority + invariants + “obey agent_directives in full”). Evolving heuristics = API deploy, not re-paste Instructions. **Forbidden:** expanding Builder Instructions with feature heuristics (regression gate in `test_vista_builder_instructions_budget.py`).
 7g. **Owner-local data route discovery (2026-09-22):** `TvDataRouteDiscoveryService` ranks the TV allowlist for GPT `gpt_search_data_routes` and MFE `POST /data/routes/suggest`. Chat AI is **not** authority for TV suggest. Search requires NL query (no catalog dump). Preview accepts `{operationId, params}` validated against `paramSchema`. Live heuristics: `agent_directives.data_discovery` (`OWNER_LOCAL_ROUTE_DISCOVERY`).
+7h. **Chat handoff only (2026-09-22):** Internal Chat no longer mutates TV. Skill/tool `tv_dashboard_copilot` removed; content bundle `tv_dashboard_handoff` detects TV intent and returns a **direct answer** pointing users to **VISTA**. MFE modal is catalog-only («Fontes de dados»). Builder `POST …/turn` with `message` → `422 NL_TURN_RETIRED`. DÉLIA TV adapter remains TARGET on PresentationMutation (no runtime in this epic).
 8. **Do not adopt TÉO entity surface** (`search_records` / `prepare_record_change`) — VISTA is playlist/presentation workflow, not multi-entity CRUD.
 9. **MCP** remains TARGET (Plugin + remote MCP). Do not create MCP in this change; keep application core adapter-ready.
 10. **Proposal store:** in-process with **ACCEPT_WITH_RESIDUAL** for current single-replica runtime.
@@ -34,4 +35,5 @@
 - Catalog projects `capability_surface` (incl. live `agent_directives`) for discovery; AuthZ stays backend-first.
 - Builder Instructions are **stable-only**; mutation heuristics evolve via API deploy (`vista_agent_intelligence.json`).
 - Legacy `POST /data/copilot/*` returns **410 Gone** (successor: `/gpt-actions/v1`).
+- Internal Chat: TV intent → VISTA handoff only (no mutation tool).
 - DÉLIA TV adapter = documental TARGET on PresentationMutation; zero runtime coupling in this HEAD.

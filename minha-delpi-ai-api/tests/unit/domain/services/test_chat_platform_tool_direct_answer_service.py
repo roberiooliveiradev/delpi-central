@@ -114,25 +114,13 @@ def test_format_ignores_unknown_tool():
     )
 
 
-def test_format_tv_dashboard_copilot_preview_asks_confirmation():
-    answer = ChatPlatformToolDirectAnswerService.format(
-        "tv_dashboard_copilot",
-        data={
-            "ok": True,
-            "appliedOps": ["add_slide_from_preset"],
-            "sideEffects": {
-                "slides": [
-                    {
-                        "title": "Slide personalizado",
-                        "presetKey": "preset_comunicado",
-                    }
-                ]
-            },
-        },
-        metadata={"ok": True, "mode": "preview"},
-        message="crie um slide",
+def test_format_ignores_retired_tv_dashboard_copilot_tool():
+    assert (
+        ChatPlatformToolDirectAnswerService.format(
+            "tv_dashboard_copilot",
+            data={"ok": True, "appliedOps": ["add_slide_from_preset"]},
+            metadata={"ok": True, "mode": "preview"},
+            message="crie um slide",
+        )
+        is None
     )
-
-    assert answer is not None
-    assert "preset_comunicado" in answer
-    assert "pode aplicar" in answer.lower() or "confirmo" in answer.lower()

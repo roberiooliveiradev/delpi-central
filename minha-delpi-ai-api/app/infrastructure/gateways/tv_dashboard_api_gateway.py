@@ -1,4 +1,4 @@
-"""Cliente HTTP do BFF TV Dashboard (copiloto → preview + CRUD /playlists)."""
+"""Cliente HTTP do BFF TV Dashboard (CRUD /playlists; copiloto legado 410)."""
 
 from __future__ import annotations
 
@@ -17,8 +17,9 @@ class TvDashboardApiGateway:
         self.timeout = timeout if timeout is not None else Settings.TV_DASHBOARD_API_TIMEOUT_SECONDS
 
     def get_capabilities(self, access_token: str) -> dict[str, Any]:
-        """GET /data/copilot/capabilities — catálogo versionado (sem ops embutidas na AI)."""
-        return self._get("/data/copilot/capabilities", access_token=access_token)
+        """Legado `/data/copilot/capabilities` — retirado (410)."""
+        del access_token
+        return {"_ok": False, "_httpStatus": 410, "detail": "TV_COPILOT_GONE"}
 
     def suggest_ops(
         self,
@@ -27,15 +28,9 @@ class TvDashboardApiGateway:
         host_context: dict[str, Any] | None,
         access_token: str,
     ) -> dict[str, Any]:
-        """POST /data/copilot/suggest-ops — NL + host → ops tipadas no BFF."""
-        return self._post(
-            "/data/copilot/suggest-ops",
-            {
-                "message": str(message or ""),
-                "hostContext": host_context if isinstance(host_context, dict) else {},
-            },
-            access_token=access_token,
-        )
+        """Legado `/data/copilot/suggest-ops` — retirado (410)."""
+        del message, host_context, access_token
+        return {"_ok": False, "_httpStatus": 410, "detail": "TV_COPILOT_GONE"}
 
     def preview_patch(
         self,
@@ -44,15 +39,9 @@ class TvDashboardApiGateway:
         access_token: str,
         include_fingerprint: bool = True,
     ) -> dict[str, Any]:
-        return self._post(
-            "/data/copilot/preview-patch",
-            {
-                "target": envelope.get("target") or {},
-                "ops": envelope.get("ops") or [],
-                "includeFingerprint": include_fingerprint,
-            },
-            access_token=access_token,
-        )
+        """Legado `/data/copilot/preview-patch` — retirado (410)."""
+        del envelope, access_token, include_fingerprint
+        return {"_ok": False, "_httpStatus": 410, "detail": "TV_COPILOT_GONE"}
 
     def apply_patch(
         self,
@@ -60,15 +49,9 @@ class TvDashboardApiGateway:
         *,
         access_token: str,
     ) -> dict[str, Any]:
-        """Legado: dry-run no BFF. Persistência via ``execute_crud_command``."""
-        return self._post(
-            "/data/copilot/apply-patch",
-            {
-                "target": envelope.get("target") or {},
-                "ops": envelope.get("ops") or [],
-            },
-            access_token=access_token,
-        )
+        """Legado `/data/copilot/apply-patch` — retirado (410)."""
+        del envelope, access_token
+        return {"_ok": False, "_httpStatus": 410, "detail": "TV_COPILOT_GONE"}
 
     def execute_crud_command(
         self,

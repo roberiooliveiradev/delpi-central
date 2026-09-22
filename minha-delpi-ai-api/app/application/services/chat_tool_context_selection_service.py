@@ -158,7 +158,7 @@ class ChatToolContextSelectionService:
                             "toolCalls": [],
                             "nativeToolCalling": native_meta,
                             "directAnswer": (
-                                ChatTvDashboardCopilotIntentService.copilot_path_failed_message()
+                                ChatTvDashboardCopilotIntentService.redirect_to_vista_message()
                             ),
                             "skipRag": True,
                             "currentMessage": raw_message,

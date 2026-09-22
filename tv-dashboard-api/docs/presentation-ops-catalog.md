@@ -153,24 +153,19 @@ Façade OAuth em `/gpt-actions/v1` (ver `docs/gpt-actions/custom-gpt-actions.md`
 
 ## Chat base (consumer)
 
-- Skill genérica: `tv-dashboard-copilot` (sem listar ops no markdown)
-- Tool: `tv_dashboard_copilot` (`mode=preview|apply`)
-  - `preview` / `apply` pedem plano fresco ao BFF (`preview-patch`)
-  - **Apply não grava no BFF:** a AI executa `httpCommands` nas rotas CRUD
-    `/playlists/**` com o JWT do usuário, `If-Match` / revisão encadeada e allowlist
-  - Mutação bem-sucedida publica `presentation_updated` (mesmo WS do editor)
-- `direct` usa `apply` no mesmo turno; exclusão `confirm` usa preview e aguarda confirmação
-- Env: `TV_DASHBOARD_API_BASE_URL`
+- Skill/tool `tv-dashboard-copilot` / `tv_dashboard_copilot`: **removidos**.
+- Pedido TV no Chat interno → handoff (`tv_dashboard_handoff`) com direct answer
+  orientando o especialista **VISTA** (`/gpt-actions/v1`). Sem tool de mutação.
+- Mutação tipada: só VISTA Actions + PresentationMutation (ou editor MFE).
+- Env legado `TV_DASHBOARD_API_BASE_URL` permanece para CRUD allowlist se algum
+  caminho residual ainda existir; caminhos `/data/copilot/*` respondem 410.
 
 ## Embed (A1)
 
-- Remote MF: `minha-delpi-chat` → `./EmbeddedChat`
-- Host envia `hostContext`: `surface`, `playlistId`, `slideId`, seleção, fontes,
-  `hasLocalDraft`, `presetKey` e resumo do foco.
-- Antes de enviar o turno: `flushBeforeMutation` persiste drafts locais do editor.
-- Draft local pendente bloqueia mutação remota com clarificação; nunca sobrescreve o editor.
-- Após CRUD: o editor sincroniza só pelo WS `presentation_updated` (sem evento paralelo
-  `delpi:tv-copilot:playlist-mutated`). Preview continua local (`replaceNativeConfig`).
+- Remote MF: `minha-delpi-chat` → `./EmbeddedChat` (uso geral; dock Copilot TV retirado).
+- Host pode enviar `hostContext` TV (`surface`, `playlistId`, `slideId`); o Chat
+  responde com handoff VISTA — não aplica patch no editor via tool.
+- Draft local do editor: modal «Fontes de dados» (catálogo + builder actions).
 
 ## Persistência canônica (CRUD HTTP)
 

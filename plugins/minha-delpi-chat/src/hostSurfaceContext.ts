@@ -146,51 +146,9 @@ export type TvCopilotPreviewPatchPayload = {
   sideEffectHints?: TvCopilotSideEffectHint[] | null;
 };
 
-type TvCopilotHostBridge = {
-  onPreviewPatch?: (payload: TvCopilotPreviewPatchPayload) => void;
-  onApplyPatchResult?: (payload: {
-    ok: boolean;
-    persisted?: boolean;
-    target?: { playlistId?: string | null; slideId?: string | null };
-    sideEffectHints?: TvCopilotSideEffectHint[] | null;
-    sideEffects?: Record<string, unknown> | null;
-  }) => void;
-};
-
-function readHostBridge(): TvCopilotHostBridge | null {
-  if (typeof window === "undefined") return null;
-  return (
-    (window as unknown as { __DELPI_TV_COPILOT_HOST__?: TvCopilotHostBridge })
-      .__DELPI_TV_COPILOT_HOST__ ?? null
-  );
-}
-
-function readObjectField(
-  primary: Record<string, unknown>,
-  fallback: Record<string, unknown>,
-  key: string,
-): Record<string, unknown> | null {
-  const fromPrimary = primary[key];
-  if (fromPrimary && typeof fromPrimary === "object" && !Array.isArray(fromPrimary)) {
-    return fromPrimary as Record<string, unknown>;
-  }
-  const fromFallback = fallback[key];
-  if (fromFallback && typeof fromFallback === "object" && !Array.isArray(fromFallback)) {
-    return fromFallback as Record<string, unknown>;
-  }
-  return null;
-}
-
-function readHints(
-  primary: Record<string, unknown>,
-  fallback: Record<string, unknown>,
-): TvCopilotSideEffectHint[] {
-  return normalizeStringList(primary.sideEffectHints ?? fallback.sideEffectHints);
-}
-
 /**
- * Repassa resultado da tool tv_dashboard_copilot ao host TV (preview local / apply).
- * Inclui `sideEffectHints` do BFF para apply genérico no MFE (sem if por op).
+ * Legado: tool `tv_dashboard_copilot` removida — handoff VISTA no Chat.
+ * Mantido como no-op para não quebrar callers do embed.
  */
 export function notifyHostOfTvCopilotToolCalls(
   toolCalls: Array<{
@@ -199,62 +157,5 @@ export function notifyHostOfTvCopilotToolCalls(
     metadata?: Record<string, unknown> | null;
   }>,
 ): void {
-  const bridge = readHostBridge();
-  if (!bridge) return;
-
-  for (const call of toolCalls) {
-    if (call.name !== "tv_dashboard_copilot") continue;
-    const meta = call.metadata && typeof call.metadata === "object" ? call.metadata : {};
-    const nested =
-      meta.data && typeof meta.data === "object"
-        ? (meta.data as Record<string, unknown>)
-        : null;
-    const data = nested ?? meta;
-    const mode = String(
-      (call.arguments && call.arguments.mode) || meta.mode || "preview",
-    ).toLowerCase();
-    const ok = meta.ok !== false && meta.blocked !== true;
-
-    const sideEffects = readObjectField(data, meta, "sideEffects");
-    const sideEffectHints = readHints(data, meta);
-
-    if (mode === "apply") {
-      bridge.onApplyPatchResult?.({
-        ok,
-        persisted: Boolean(data.persisted ?? meta.persisted),
-        target:
-          (data.target && typeof data.target === "object"
-            ? (data.target as { playlistId?: string | null; slideId?: string | null })
-            : undefined) ??
-          (meta.target && typeof meta.target === "object"
-            ? (meta.target as { playlistId?: string | null; slideId?: string | null })
-            : undefined),
-        sideEffectHints,
-        sideEffects,
-      });
-      continue;
-    }
-
-    let nativeConfig =
-      data.nativeConfig && typeof data.nativeConfig === "object"
-        ? (data.nativeConfig as Record<string, unknown>)
-        : null;
-    if (!nativeConfig && sideEffects?.slides && Array.isArray(sideEffects.slides)) {
-      const first = sideEffects.slides[0];
-      if (first && typeof first === "object" && "nativeConfig" in first) {
-        const nc = (first as { nativeConfig?: unknown }).nativeConfig;
-        if (nc && typeof nc === "object") {
-          nativeConfig = nc as Record<string, unknown>;
-        }
-      }
-    }
-
-    bridge.onPreviewPatch?.({
-      nativeConfig,
-      diff: data.diff && typeof data.diff === "object" ? (data.diff as Record<string, unknown>) : null,
-      ops: Array.isArray(call.arguments?.ops) ? (call.arguments?.ops as unknown[]) : undefined,
-      sideEffects,
-      sideEffectHints,
-    });
-  }
+  void toolCalls;
 }

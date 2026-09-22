@@ -17,7 +17,6 @@ DRAWING_ANALYSIS_SKILL_KEY = "drawing-analysis-delpi"
 DOCUMENT_VISION_SKILL_KEY = "document-vision-delpi"
 QUALITY_ACTION_PLANS_SKILL_KEY = "quality-action-plans-delpi"
 QUALITY_ACTION_PLANS_PATH_TOKEN = "/quality/action-plans"
-TV_DASHBOARD_COPILOT_SKILL_KEY = "tv-dashboard-copilot"
 DRAWING_ANALYSER_ACTION_ID = "get_product_analyser"
 DRAWING_ANALYSER_PATH_TOKEN = "/analyser"
 
@@ -321,7 +320,6 @@ class ChatSkillRegistry:
             "documentVision": False,
             "qualityActionPlans": False,
             "qualityActionPlansReadOnly": False,
-            "tvDashboardCopilot": False,
         }
 
         for item in bindings:

@@ -394,10 +394,10 @@ def test_classify_bare_programacao_stays_unclear_or_fallback():
     assert route.intent != "operational_query" or route.sub_intent != "schedule_today_lookup"
 
 
-def test_resolve_executed_tv_copilot_claims_oee_turn():
+def test_resolve_executed_tv_handoff_claims_slide_turn():
     route = ChatIntentRouterService.resolve_executed(
         message="adicione o modelo de dados oee",
-        pipeline_stages=["ingress", "tools", "post_tool", "skip_rag"],
+        pipeline_stages=["ingress", "platform_direct_answer", "post_tool", "skip_rag"],
         workspace_context={
             "tvDashboardHostContext": {
                 "surface": "tv-dashboard",
@@ -405,22 +405,13 @@ def test_resolve_executed_tv_copilot_claims_oee_turn():
                 "slideId": "sl-1",
             }
         },
-        tool_calls=[
-            {
-                "name": "tv_dashboard_copilot",
-                "arguments": {"mode": "apply"},
-                "metadata": {"ok": True},
-            }
-        ],
+        tool_calls=[],
         skip_rag=True,
-        direct_answer="Alteração aplicada.",
+        direct_answer="Use o especialista VISTA.",
     )
 
     assert route.intent == "platform_action"
-    assert route.sub_intent == "tv_dashboard_copilot"
-    assert route.decision == "platform_action"
-    assert route.reason == "platform_tool_executed"
-    assert "platform_tool_executed" in route.flags
+    assert route.sub_intent == "tv_dashboard_handoff"
 
 
 def test_resolve_executed_drawing_analysis_beats_tools():

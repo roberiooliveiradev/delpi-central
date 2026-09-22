@@ -93,8 +93,7 @@ class ChatHostSurfaceContextService:
     ) -> bool:
         """Tools internas de surface no chat comum (sem agente OpenAPI).
 
-        Espelha a exceção de ``web_search``: o embed TV declara surface e precisa
-        chamar ``tv_dashboard_copilot`` sem ativar agente operacional.
+        Pedidos TV no chat comum ativam handoff VISTA (direct answer), não tool.
         """
         workspace = workspace_context if isinstance(workspace_context, dict) else {}
         skills = workspace.get("skills") if isinstance(workspace.get("skills"), dict) else {}
@@ -185,14 +184,8 @@ class ChatHostSurfaceContextService:
         arguments: dict | None,
         workspace_context: dict | None,
     ) -> dict:
-        if tool_name != "tv_dashboard_copilot":
-            return dict(arguments or {})
-
-        host = cls.host_from_workspace(workspace_context)
-        return ChatTvDashboardCopilotIntentService.merge_target_into_arguments(
-            arguments,
-            host,
-        )
+        del tool_name, workspace_context
+        return dict(arguments or {})
 
     @classmethod
     def build_platform_tool_call(
@@ -202,35 +195,6 @@ class ChatHostSurfaceContextService:
         workspace_context: dict | None = None,
         previous_messages: list | None = None,
     ) -> dict | None:
-        """Somente apply por confirmação (histórico). Preview vem do BFF via application.
-
-        Mantido para compatibilidade de testes de apply; seleção completa:
-        ``ChatTvDashboardPlatformToolSelectionService``.
-        """
-        if not cls.allows_common_chat_platform_tools(
-            workspace_context,
-            message=message,
-        ):
-            return None
-
-        from app.domain.services.chat_write_confirmation_service import (
-            ChatWriteConfirmationService,
-        )
-
-        if not ChatWriteConfirmationService.user_confirmed(message):
-            return None
-
-        call = ChatTvDashboardCopilotIntentService.build_apply_tool_call_from_history(
-            previous_messages
-        )
-        if not call:
-            return None
-
-        return {
-            **call,
-            "arguments": cls.merge_tool_arguments(
-                "tv_dashboard_copilot",
-                call.get("arguments") if isinstance(call.get("arguments"), dict) else {},
-                workspace_context,
-            ),
-        }
+        """Tool TV Copilot removida — nunca mintar platform tool call."""
+        del message, workspace_context, previous_messages
+        return None

@@ -1,9 +1,8 @@
-"""Assistente de dados TV — turn determinístico + materialize para o slide."""
+"""Catálogo de fontes TV — draft actions + materialize (sem turno NL / Chat AI)."""
 
 from __future__ import annotations
 
 import logging
-import re
 import uuid
 from typing import Any
 
@@ -32,6 +31,12 @@ from tv_app.application.services.data.tv_data_route_suggest_service import (
 from tv_app.application.services.tv_data_route_catalog_service import TvDataRouteCatalogService
 
 logger = logging.getLogger(__name__)
+
+
+class NlTurnRetiredError(ValueError):
+    """NL message turns were removed; use catalog actions or VISTA."""
+
+    code = "NL_TURN_RETIRED"
 
 
 def _msg(
@@ -77,6 +82,15 @@ class TvDataBuilderService:
         authorization: str | None = None,
         user: Any = None,
     ) -> dict[str, Any] | None:
+        has_action = isinstance(action, dict) and bool(action)
+        has_message = bool(str(message or "").strip())
+        if has_message and not has_action:
+            raise NlTurnRetiredError(
+                "Turno NL do Builder retirado. Use o catálogo de fontes ou o especialista VISTA."
+            )
+        if not has_action:
+            raise ValueError("Informe action.")
+
         preview_requested = False
 
         def mutator(payload: dict[str, Any]) -> dict[str, Any]:
@@ -85,36 +99,19 @@ class TvDataBuilderService:
             messages = list(payload.get("messages") or [])
             preview = payload.get("preview")
 
-            if action and isinstance(action, dict):
-                kind = str(action.get("type") or action.get("action") or "").strip()
-                if kind == "preview":
-                    preview_requested = True
-                    messages.append(
-                        _msg(
-                            "assistant",
-                            TvDataBuilderContentService.message("previewRequested"),
-                            tool="preview",
-                        )
+            kind = str(action.get("type") or action.get("action") or "").strip()
+            if kind == "preview":
+                preview_requested = True
+                messages.append(
+                    _msg(
+                        "assistant",
+                        TvDataBuilderContentService.message("previewRequested"),
+                        tool="preview",
                     )
-                else:
-                    draft, new_messages, preview = self._apply_action(draft, action, preview)
-                    messages.extend(new_messages)
+                )
             else:
-                text = str(message or "").strip()
-                if text:
-                    messages.append(_msg("user", text))
-                    if TvDataBuilderContentService.matches("preview", text):
-                        preview_requested = True
-                        messages.append(
-                            _msg(
-                                "assistant",
-                                TvDataBuilderContentService.message("previewRequested"),
-                                tool="preview",
-                            )
-                        )
-                    else:
-                        draft, new_messages, preview = self._interpret(text, draft, preview)
-                        messages.extend(new_messages)
+                draft, new_messages, preview = self._apply_action(draft, action, preview)
+                messages.extend(new_messages)
 
             return {
                 **payload,
@@ -403,49 +400,6 @@ class TvDataBuilderService:
         )
         return draft, messages, preview
 
-    def _interpret(
-        self,
-        text: str,
-        draft: dict[str, Any],
-        preview: Any,
-    ) -> tuple[dict[str, Any], list[dict[str, Any]], Any]:
-        content = TvDataBuilderContentService
-
-        if content.matches("markReady", text):
-            return self._tool_mark_ready(draft, preview)
-
-        if content.matches("removeSource", text):
-            return self._tool_remove_source(draft, operation_id=text, preview=preview)
-
-        if content.matches("proposeJoin", text):
-            key = self._guess_join_key(text)
-            return self._tool_propose_join(draft, left_key=key, right_key=key, preview=preview)
-
-        if content.matches("setColumns", text):
-            cols = self._parse_columns(text)
-            if cols:
-                return self._tool_set_columns(draft, cols, preview)
-
-        params = self._parse_params_from_message(text)
-        if params and (draft.get("sources") or []):
-            # Enriquece com S2S when disponível (não bloqueia se AI cair).
-            try:
-                from tv_app.infrastructure.gateways.minha_delpi_ai_client import MinhaDelpiAiClient
-
-                primary = find_source(draft, local_id=str(draft.get("primaryLocalId") or ""))
-                op_id = str((primary or {}).get("operationId") or "") or None
-                remote = MinhaDelpiAiClient().suggest_operational_params(query=text, operation_id=op_id)
-                remote_params = remote.get("params") if isinstance(remote, dict) else None
-                if isinstance(remote_params, dict):
-                    for key, value in remote_params.items():
-                        if value is not None and value != "" and key not in params:
-                            params[key] = value
-            except Exception as exc:  # noqa: BLE001
-                logger.debug("suggest-params S2S skipped: %s", exc)
-            return self._tool_set_params(draft, params, preview=preview)
-
-        return self._tool_suggest(draft, text, preview)
-
     def _tool_suggest(
         self,
         draft: dict[str, Any],
@@ -607,47 +561,3 @@ class TvDataBuilderService:
             draft = {**draft, "status": "ready"}
             text = TvDataBuilderContentService.message("markReady", count=len(sources))
         return draft, [_msg("assistant", text, tool="mark_ready")], preview
-
-    @staticmethod
-    def _parse_columns(text: str) -> list[str]:
-        # «só colunas OP, days_late e filial» ou «colunas: a, b»
-        lowered = text.lower()
-        for marker in ("colunas:", "colunas ", "só ", "apenas "):
-            idx = lowered.find(marker)
-            if idx >= 0:
-                tail = text[idx + len(marker) :]
-                parts = re.split(r"[,;]| e ", tail, flags=re.IGNORECASE)
-                cols = []
-                for part in parts:
-                    token = re.sub(r"[^a-zA-Z0-9_]+", "", part.strip().replace(" ", "_"))
-                    if token and token.lower() not in {"colunas", "coluna", "so", "apenas"}:
-                        cols.append(token)
-                return cols
-        return []
-
-    @staticmethod
-    def _guess_join_key(text: str) -> str:
-        lowered = text.lower()
-        for key in ("days_late", "operation_id", "product_code", "op", "ordem"):
-            if key in lowered:
-                return "op" if key in {"op", "ordem"} else key
-        return "op"
-
-    @classmethod
-    def _parse_params_from_message(cls, text: str) -> dict[str, Any]:
-        params: dict[str, Any] = {}
-        branch = TvDataBuilderContentService.first_group("branch", text)
-        if branch:
-            # normalize «filial 01» capture
-            token = branch.upper().replace("FILIAL", "").replace("BRANCH", "").strip()
-            token = re.sub(r"\s+", "", token)
-            if token in {"1", "01"}:
-                token = "01"
-            elif token in {"2", "02"}:
-                token = "02"
-            if token:
-                params["branch"] = token
-        days = TvDataBuilderContentService.first_group("periodDays", text)
-        if days and days.isdigit():
-            params["periodDays"] = int(days)
-        return params

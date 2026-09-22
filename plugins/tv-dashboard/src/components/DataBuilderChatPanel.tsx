@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   createDataSourceBlock,
   type ComunicadoBlock,
@@ -15,10 +15,8 @@ import {
   suggestDataRoutes,
   type BranchScope,
   type DataBuilderDraft,
-  type DataBuilderMessage,
   type DataBuilderPreviewTable,
   type DataBuilderSession,
-  type DataBuilderSuggestionCard,
   type TvDataRouteCatalogItem,
 } from "../api/tvDashboardApi";
 import { DATA_BUILDER_CHAT_CONTENT as C } from "../content/dataBuilderChatContent";
@@ -45,8 +43,6 @@ type Props = {
   branchScope?: BranchScope | null;
   onInserted?: () => void;
 };
-
-type DiscoveryMode = "search" | "ai";
 
 const SUGGEST_DEBOUNCE_MS = 350;
 const SUGGEST_LIMIT = 8;
@@ -99,9 +95,7 @@ function remapTransformSourceIds(
   return { ...transform, steps } as DataTransform;
 }
 
-function normalizePreview(
-  preview: unknown,
-): DataBuilderPreviewTable | null {
+function normalizePreview(preview: unknown): DataBuilderPreviewTable | null {
   if (!preview || typeof preview !== "object") return null;
   const row = preview as Record<string, unknown>;
   const columns = Array.isArray(row.columns) ? row.columns.map(String) : [];
@@ -113,12 +107,6 @@ function normalizePreview(
   return { columns, rows, rowCount };
 }
 
-function isPreviewIntent(text: string): boolean {
-  return /\b(pr[eé]via|preview|mostre(?:\s+uma)?\s+pr[eé]via|mostrar(?:\s+a)?\s+pr[eé]via|gera(?:r)?\s+(?:a\s+)?pr[eé]via)\b/i.test(
-    text,
-  );
-}
-
 export function DataBuilderChatPanel({
   mode = "insert",
   branchScope = null,
@@ -127,8 +115,6 @@ export function DataBuilderChatPanel({
   const { addDataSourceBlock, replaceSelectedDataRoute, playlistId, playlistDefaults, config } =
     useComunicadoEditor();
   const [session, setSession] = useState<DataBuilderSession | null>(null);
-  const [discoveryMode, setDiscoveryMode] = useState<DiscoveryMode>("search");
-  const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [previewTable, setPreviewTable] = useState<DataBuilderPreviewTable | null>(null);
@@ -142,7 +128,6 @@ export function DataBuilderChatPanel({
   const [suggestionsDegraded, setSuggestionsDegraded] = useState(false);
   const [sourceFiltersOpen, setSourceFiltersOpen] = useState(false);
   const [previewExpanded, setPreviewExpanded] = useState(false);
-  const listRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -188,7 +173,6 @@ export function DataBuilderChatPanel({
   }, []);
 
   useEffect(() => {
-    if (discoveryMode !== "search") return;
     const trimmed = catalogQuery.trim();
     if (!shouldRequestDataRouteSuggestions(trimmed)) {
       setSuggestions([]);
@@ -241,13 +225,7 @@ export function DataBuilderChatPanel({
       cancelled = true;
       window.clearTimeout(handle);
     };
-  }, [catalogQuery, discoveryMode]);
-
-  useEffect(() => {
-    const el = listRef.current;
-    if (!el) return;
-    el.scrollTop = el.scrollHeight;
-  }, [session?.messages?.length, busy, previewTable]);
+  }, [catalogQuery]);
 
   const draft: DataBuilderDraft = session?.draft ?? { sources: [], status: "draft" };
   const primarySource =
@@ -298,7 +276,7 @@ export function DataBuilderChatPanel({
     if (table) setPreviewTable(table);
   }
 
-  async function runTurn(body: { message?: string; action?: Record<string, unknown> }) {
+  async function runTurn(body: { action?: Record<string, unknown> }) {
     if (!session?.id || busy) return;
     setBusy(true);
     setError(null);
@@ -310,34 +288,6 @@ export function DataBuilderChatPanel({
     } finally {
       setBusy(false);
     }
-  }
-
-  function handleSend() {
-    const text = input.trim();
-    if (!text || !session?.id) return;
-
-    if (discoveryMode === "search") {
-      return;
-    }
-
-    setInput("");
-    if (isPreviewIntent(text)) {
-      void handlePreview(text);
-      return;
-    }
-    void runTurn({ message: text });
-  }
-
-  function handleAddSuggestion(card: DataBuilderSuggestionCard) {
-    if (!card.operationId) return;
-    const route = routes.find((entry) => entry.operationId === card.operationId);
-    void runTurn({
-      action: {
-        type: "add_source",
-        operationId: card.operationId,
-        params: route ? buildRouteDefaultParams(route) : {},
-      },
-    });
   }
 
   function handleAddRoute(route: TvDataRouteCatalogItem, params?: DataRouteTestParams) {
@@ -375,22 +325,11 @@ export function DataBuilderChatPanel({
     });
   }
 
-  async function handlePreview(userText?: string) {
+  async function handlePreview() {
     if (!session?.id || busy) return;
     setBusy(true);
     setError(null);
     try {
-      if (userText) {
-        const next = await dataBuilderTurn(session.id, { message: userText });
-        applySession(next);
-        const table = normalizePreview(next.preview);
-        setPreviewTable(table);
-        setPreviewExpanded(Boolean(table));
-        if (table && !table.columns.length && !table.rowCount) {
-          setError(C.previewEmpty);
-        }
-        return;
-      }
       const result = await previewDataBuilderSession(session.id);
       if (result.session) applySession(result.session);
       const table = normalizePreview(result.preview);
@@ -437,55 +376,33 @@ export function DataBuilderChatPanel({
         return;
       }
 
-      if (mode === "replace") {
-        const primary = blocks.find((b) => b.isPrimary) || blocks[0]!;
-        const created = createDataSourceBlock(primary.dataBinding.operationId, {
-          label: primary.dataBinding.label,
-          defaultParams: primary.dataBinding.params ?? {},
-        }) as ComunicadoDataSourceBlock;
-        if (primary.queryName) created.queryName = primary.queryName;
-        if (primary.dataTransform) {
-          created.dataTransform = primary.dataTransform as DataTransform;
-        }
-        replaceSelectedDataRoute(created);
-        onInserted?.();
-        return;
-      }
-
       const idMap: Record<string, string> = {};
-      const createdBlocks: ComunicadoDataSourceBlock[] = [];
-      for (const spec of blocks) {
-        const created = createDataSourceBlock(spec.dataBinding.operationId, {
-          label: spec.dataBinding.label,
-          defaultParams: spec.dataBinding.params ?? {},
-        }) as ComunicadoDataSourceBlock;
-        if (spec.queryName) created.queryName = spec.queryName;
-        idMap[spec.localId] = created.id;
-        createdBlocks.push(created);
+      const created: ComunicadoDataSourceBlock[] = [];
+      for (const block of blocks) {
+        if (!block || typeof block !== "object") continue;
+        const row = block as ComunicadoBlock;
+        if (row.type !== "data_source") continue;
+        const draftLocalId = String((row as { draftLocalId?: string }).draftLocalId || "");
+        const nextBlock = { ...row } as ComunicadoDataSourceBlock;
+        delete (nextBlock as { draftLocalId?: string }).draftLocalId;
+        if (mode === "replace" && created.length === 0) {
+          replaceSelectedDataRoute(nextBlock);
+        } else {
+          addDataSourceBlock(nextBlock);
+        }
+        created.push(nextBlock);
+        if (draftLocalId) idMap[draftLocalId] = nextBlock.id;
       }
 
-      const primaryLocal = result.primaryLocalId || blocks[0]?.localId;
-      let primaryBlock: ComunicadoBlock | null = null;
-      for (let index = 0; index < createdBlocks.length; index += 1) {
-        const spec = blocks[index]!;
-        const block = createdBlocks[index]!;
-        if (spec.dataTransform) {
-          block.dataTransform = remapTransformSourceIds(
-            spec.dataTransform as DataTransform,
-            idMap,
-          );
-        }
-        const isPrimary = spec.localId === primaryLocal || spec.isPrimary;
-        if (isPrimary && !primaryBlock) {
-          primaryBlock = block;
-          addDataSourceBlock(block, {
-            preferredView:
-              (result.preferredView as "table" | "kpi" | "series" | undefined) || "table",
-          });
-        } else {
-          addDataSourceBlock(block);
-        }
+      if (created.length > 1) {
+        const remapped = created.map((block) => {
+          const transform = remapTransformSourceIds(block.dataTransform, idMap);
+          return transform ? { ...block, dataTransform: transform } : block;
+        });
+        void remapped;
       }
+
+      if (result.session) applySession(result.session);
       onInserted?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : C.materializeError);
@@ -494,7 +411,7 @@ export function DataBuilderChatPanel({
     }
   }
 
-  const canMaterialize = (draft.sources?.length ?? 0) > 0 && !busy;
+  const canMaterialize = Boolean(session?.id) && draft.sources.length > 0 && !busy;
   const table = previewTable;
   const primarySchema = primaryRoute
     ? visibleParamSchema(
@@ -509,143 +426,39 @@ export function DataBuilderChatPanel({
   return (
     <div className="td-data-builder-chat">
       <header className="td-data-builder-chat__chrome">
-        <div className="td-data-builder-chat__modes" role="tablist" aria-label="Modo de descoberta">
-          <button
-            type="button"
-            role="tab"
-            aria-selected={discoveryMode === "search"}
-            className={[
-              "td-btn td-btn--sm",
-              discoveryMode === "search" ? "td-btn--primary" : "td-btn--ghost",
-            ].join(" ")}
-            onClick={() => setDiscoveryMode("search")}
-          >
-            {C.modeSearch}
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={discoveryMode === "ai"}
-            className={[
-              "td-btn td-btn--sm",
-              discoveryMode === "ai" ? "td-btn--primary" : "td-btn--ghost",
-            ].join(" ")}
-            onClick={() => setDiscoveryMode("ai")}
-          >
-            {C.modeAi}
-          </button>
-        </div>
-        <p className="td-data-builder-chat__mode-hint">
-          {discoveryMode === "search" ? C.modeSearchHint : C.modeAiHint}
-        </p>
+        <p className="td-data-builder-chat__mode-hint">{C.catalogHint}</p>
       </header>
 
       <div className="td-data-builder-chat__main">
-        {discoveryMode === "search" ? (
-          <div className="td-data-builder-chat__catalog" data-discovery="search">
-            <DataRouteCatalogPanel
-              items={catalogItems}
-              onSelect={(item, params) => {
-                const route = routes.find((entry) => entry.operationId === item.id);
-                if (route) handleAddRoute(route, params);
-              }}
-              onTestRoute={handleTestCatalogRoute}
-              density="compact"
-              confirmLabel={C.addSuggestion}
-              searchPlaceholder={DATA_ROUTE_CATALOG_CONTENT.searchPlaceholder}
-              emptyMessage={C.catalogEmpty}
-              loading={routesLoading}
-              error={routesError}
-              categoryLabels={CATEGORY_LABELS}
-              categoryOrder={CATEGORY_ORDER}
-              suggestions={suggestions}
-              suggestionsLoading={suggestionsLoading}
-              suggestionsQuery={suggestionsQuery}
-              suggestionsDegraded={suggestionsDegraded}
-              onQueryChange={setCatalogQuery}
-            />
-            {busy ? <p className="td-data-builder-chat__status">{C.loading}</p> : null}
-            {error ? (
-              <p className="td-data-builder-chat__status td-data-builder-chat__status--error" role="alert">
-                {error}
-              </p>
-            ) : null}
-          </div>
-        ) : (
-          <div className="td-data-builder-chat__ai" data-discovery="ai">
-            <div ref={listRef} className="td-data-builder-chat__messages" aria-live="polite">
-              {(session?.messages || []).map((message: DataBuilderMessage) => (
-                <div
-                  key={message.id}
-                  className={[
-                    "td-data-builder-chat__bubble",
-                    message.role === "user"
-                      ? "td-data-builder-chat__bubble--user"
-                      : "td-data-builder-chat__bubble--assistant",
-                  ].join(" ")}
-                >
-                  <p className="td-data-builder-chat__text">{message.text}</p>
-                  {message.suggestions?.length ? (
-                    <ul className="td-data-builder-chat__suggestions">
-                      {message.suggestions.map((card) => (
-                        <li key={`${message.id}-${card.operationId}`}>
-                          <div className="td-data-builder-chat__suggestion-card">
-                            <div>
-                              <strong>{card.label || card.operationId}</strong>
-                              {card.reason ? <small>{card.reason}</small> : null}
-                            </div>
-                            <button
-                              type="button"
-                              className="td-btn td-btn--sm td-btn--primary"
-                              disabled={busy || !card.operationId}
-                              onClick={() => handleAddSuggestion(card)}
-                            >
-                              {C.addSuggestion}
-                            </button>
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : null}
-                </div>
-              ))}
-              {busy ? <p className="td-data-builder-chat__status">{C.loading}</p> : null}
-              {error ? (
-                <p
-                  className="td-data-builder-chat__status td-data-builder-chat__status--error"
-                  role="alert"
-                >
-                  {error}
-                </p>
-              ) : null}
-            </div>
-            <div className="td-data-builder-chat__composer">
-              <input
-                type="text"
-                className="td-data-builder-chat__input"
-                placeholder={C.placeholderAi}
-                value={input}
-                disabled={!session || busy}
-                onChange={(event) => setInput(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") {
-                    event.preventDefault();
-                    handleSend();
-                  }
-                }}
-                aria-label={C.placeholderAi}
-              />
-              <button
-                type="button"
-                className="td-btn td-btn--sm td-btn--primary"
-                disabled={!session || busy || !input.trim()}
-                onClick={handleSend}
-              >
-                {C.send}
-              </button>
-            </div>
-          </div>
-        )}
+        <div className="td-data-builder-chat__catalog" data-discovery="search">
+          <DataRouteCatalogPanel
+            items={catalogItems}
+            onSelect={(item, params) => {
+              const route = routes.find((entry) => entry.operationId === item.id);
+              if (route) handleAddRoute(route, params);
+            }}
+            onTestRoute={handleTestCatalogRoute}
+            density="compact"
+            confirmLabel={C.addSuggestion}
+            searchPlaceholder={DATA_ROUTE_CATALOG_CONTENT.searchPlaceholder}
+            emptyMessage={C.catalogEmpty}
+            loading={routesLoading}
+            error={routesError}
+            categoryLabels={CATEGORY_LABELS}
+            categoryOrder={CATEGORY_ORDER}
+            suggestions={suggestions}
+            suggestionsLoading={suggestionsLoading}
+            suggestionsQuery={suggestionsQuery}
+            suggestionsDegraded={suggestionsDegraded}
+            onQueryChange={setCatalogQuery}
+          />
+          {busy ? <p className="td-data-builder-chat__status">{C.loading}</p> : null}
+          {error ? (
+            <p className="td-data-builder-chat__status td-data-builder-chat__status--error" role="alert">
+              {error}
+            </p>
+          ) : null}
+        </div>
       </div>
 
       <footer className="td-data-builder-chat__draft-tray" aria-label={C.draftTitle}>

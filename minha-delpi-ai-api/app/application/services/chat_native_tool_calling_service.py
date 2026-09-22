@@ -74,20 +74,10 @@ class ChatNativeToolCallingService:
             return {"selections": [], "meta": meta}
 
         tv_catalog = None
-        if access_token and shortlist and "tv_dashboard_copilot" in set(shortlist):
-            try:
-                from app.application.services.chat_tv_dashboard_catalog_service import (
-                    ChatTvDashboardCatalogService,
-                )
-
-                tv_catalog = ChatTvDashboardCatalogService.get_catalog(access_token)
-            except Exception:  # noqa: BLE001 — native segue com schema base
-                tv_catalog = None
-
         schemas = self.schema_service.build_openai_tools(
             allowed_tool_names=shortlist,
             tools_registry=tools_registry,
-            tv_capability_catalog=tv_catalog if isinstance(tv_catalog, dict) else None,
+            tv_capability_catalog=None,
         )
 
         meta["schemaCount"] = len(schemas)

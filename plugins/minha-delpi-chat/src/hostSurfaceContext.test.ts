@@ -78,72 +78,27 @@ describe("buildTvDashboardHostContext", () => {
 });
 
 describe("notifyHostOfTvCopilotToolCalls", () => {
-  beforeEach(() => {
-    (globalThis as { window?: unknown }).window = {
-      __DELPI_TV_COPILOT_HOST__: undefined,
-    };
-  });
-
-  it("repassa sideEffectHints e nativeConfig no preview (sem if por op)", () => {
+  it("é no-op — tool TV Copilot removida (handoff VISTA)", () => {
     const onPreviewPatch = vi.fn();
-    (globalThis as { window: { __DELPI_TV_COPILOT_HOST__: unknown } }).window =
-      {
-        __DELPI_TV_COPILOT_HOST__: { onPreviewPatch },
-      };
+    const onApplyPatchResult = vi.fn();
+    (globalThis as { window: { __DELPI_TV_COPILOT_HOST__: unknown } }).window = {
+      __DELPI_TV_COPILOT_HOST__: { onPreviewPatch, onApplyPatchResult },
+    };
 
     notifyHostOfTvCopilotToolCalls([
       {
         name: "tv_dashboard_copilot",
         arguments: { mode: "preview", ops: [{ op: "upsert_block" }] },
-        metadata: {
-          ok: true,
-          data: {
-            nativeConfig: { version: 4, blocks: [{ id: "a", type: "text" }] },
-            sideEffects: { removedBlockIds: [] },
-            sideEffectHints: ["replaceNativeConfig"],
-            diff: { addedBlockIds: ["a"] },
-          },
-        },
+        metadata: { ok: true },
       },
-    ]);
-
-    expect(onPreviewPatch).toHaveBeenCalledTimes(1);
-    expect(onPreviewPatch.mock.calls[0][0]).toMatchObject({
-      nativeConfig: { version: 4, blocks: [{ id: "a", type: "text" }] },
-      sideEffectHints: ["replaceNativeConfig"],
-      ops: [{ op: "upsert_block" }],
-    });
-  });
-
-  it("repassa sideEffectHints no apply", () => {
-    const onApplyPatchResult = vi.fn();
-    (globalThis as { window: { __DELPI_TV_COPILOT_HOST__: unknown } }).window =
-      {
-        __DELPI_TV_COPILOT_HOST__: { onApplyPatchResult },
-      };
-
-    notifyHostOfTvCopilotToolCalls([
       {
         name: "tv_dashboard_copilot",
         arguments: { mode: "apply" },
-        metadata: {
-          ok: true,
-          data: {
-            persisted: true,
-            target: { playlistId: "pl", slideId: "sl" },
-            sideEffectHints: ["refreshFilmstrip"],
-          },
-        },
+        metadata: { ok: true },
       },
     ]);
 
-    expect(onApplyPatchResult).toHaveBeenCalledWith(
-      expect.objectContaining({
-        ok: true,
-        persisted: true,
-        sideEffectHints: ["refreshFilmstrip"],
-        target: { playlistId: "pl", slideId: "sl" },
-      }),
-    );
+    expect(onPreviewPatch).not.toHaveBeenCalled();
+    expect(onApplyPatchResult).not.toHaveBeenCalled();
   });
 });

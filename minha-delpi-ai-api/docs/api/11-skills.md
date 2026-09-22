@@ -136,14 +136,12 @@ Execução SQL no chat comum **não** é permitida via external actions.
 - **Metadata legado:** `qualityActionPlans` em `resolve_runtime_flags` / prompt.
 - **Modo só consulta (Onda 5.7):** provider `api-delpi` com `allowWrite: false` expõe só actions `sensitivity: read` (GET). Runtime define `qualityActionPlansReadOnly: true` e injeta policy adicional — indicadores e listagens sem gravação.
 
-### Skill `tv-dashboard-copilot`
+### Handoff TV Dashboard → VISTA
 
-- **Comportamento (retirado):** skill/tool Chat `tv_dashboard_copilot` e BFF `/data/copilot/*` desligados (410). Mutation canônica: VISTA `/gpt-actions/v1` + PresentationMutation.
-- **Escritas:** `mode=apply` exige confirmação (`ChatWriteConfirmationService`); `preview` é dry-run.
-- **Não faz:** Power Query M, `resolved` no `native_config`, `renderPlan` como modelo de slide.
-- **Host:** remote MF `./EmbeddedChat` no editor TV (aba Copiloto) ou chat portal com skill ativa.
-- **Env:** `TV_DASHBOARD_API_BASE_URL` (default `http://delpi-tv-dashboard-api:8000`).
-- **Doc:** `tv-dashboard-api/docs/presentation-ops-catalog.md`.
+- **Skill/tool `tv-dashboard-copilot` / `tv_dashboard_copilot`:** removidos do Chat interno.
+- **Comportamento:** frases/markers/surface TV (`tv_dashboard_handoff.json`) geram **direct answer** orientando o especialista **VISTA** (Custom GPT Actions `/gpt-actions/v1` + PresentationMutation). Nunca emite tool call de mutação.
+- **BFF `/data/copilot/*`:** 410 Gone (legado).
+- **Editor TV:** modal «Fontes de dados» (catálogo + draft actions); mutação tipada no VISTA.
 
 ### Skill `company-knowledge`
 

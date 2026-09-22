@@ -1,13 +1,13 @@
+/**
+ * Catálogo de fontes de dados — workbench host-contained (Inserir / Trocar rota).
+ * Mutações assistidas por IA: especialista VISTA (gpt-actions), não chat no editor.
+ */
 import { DATA_BUILDER_CHAT_CONTENT } from "../content/dataBuilderChatContent";
 import type { BranchScope } from "../api/tvDashboardApi";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { DataBuilderChatPanel } from "./DataBuilderChatPanel";
 import { HostContainedModal } from "./ui/Modal";
 
-/**
- * Assistente de dados — workbench host-contained (Inserir / Trocar rota).
- * Mutações assistidas por IA: especialista VISTA (gpt-actions), não dock no editor.
- */
 export function DataCatalogModalHost({ branchScope = null }: { branchScope?: BranchScope | null }) {
   const {
     dataCatalogModalOpen,
@@ -34,7 +34,7 @@ export function DataCatalogModalHost({ branchScope = null }: { branchScope?: Bra
       open={dataCatalogModalOpen}
       title={title}
       onClose={closeCatalog}
-      closeAriaLabel="Fechar assistente"
+      closeAriaLabel="Fechar fontes de dados"
       className="td-modal--data-catalog"
     >
       <DataBuilderChatPanel

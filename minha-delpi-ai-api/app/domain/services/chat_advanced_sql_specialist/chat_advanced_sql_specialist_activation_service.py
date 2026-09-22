@@ -104,14 +104,12 @@ class ChatAdvancedSqlSpecialistActivationService:
             ChatHostSurfaceContextService,
         )
         from app.domain.services.chat_tv_dashboard_copilot_intent_service import (
-            TV_DASHBOARD_COPILOT_SKILL_FLAG,
             ChatTvDashboardCopilotIntentService,
         )
 
         workspace = workspace_context if isinstance(workspace_context, dict) else {}
         host = workspace.get("tvDashboardHostContext") or workspace.get("hostContext")
         host_dict = host if isinstance(host, dict) else None
-        skills = workspace.get("skills") if isinstance(workspace.get("skills"), dict) else {}
 
         if ChatHostSurfaceContextService.is_tv_mutation_turn(
             message,
@@ -123,9 +121,7 @@ class ChatAdvancedSqlSpecialistActivationService:
         # (ex.: monte + tabela) são SQL authoring comum e não devem sequestrar.
         if ChatTvDashboardCopilotIntentService.matches_explicit_phrase(message):
             return True
-        return bool(skills.get(TV_DASHBOARD_COPILOT_SKILL_FLAG)) and bool(
-            ChatTvDashboardCopilotIntentService.has_mutation_verb(message)
-        )
+        return False
 
     @classmethod
     def _has_explicit_sql_signal(cls, message: str | None) -> bool:

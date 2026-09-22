@@ -97,7 +97,7 @@ def test_materialize_attaches_transform_on_primary():
     service.turn(sid, action={"type": "add_source", "operationId": "get_pcp"})
     service.turn(sid, action={"type": "propose_join", "leftKey": "op", "rightKey": "op"})
     service.turn(sid, action={"type": "set_columns", "columns": ["op", "days_late"]})
-    service.turn(sid, message="filial 01")
+    service.turn(sid, action={"type": "set_params", "params": {"branch": "01"}})
 
     result = service.materialize(sid)
     assert result["ok"] is True
@@ -127,13 +127,13 @@ def test_turn_suggest_returns_cards():
     )
     service = TvDataBuilderService(catalog, store=store, suggest=suggest)
     session = service.create_session()
-    next_session = service.turn(session["id"], message="ops em atraso pcp")
+    next_session = service.turn(session["id"], action={"type": "suggest_sources", "query": "ops em atraso pcp"})
     last = next_session["messages"][-1]
     assert last["role"] == "assistant"
     assert last["suggestions"][0]["operationId"] == "get_pcp_items"
 
 
-def test_preview_intent_does_not_suggest():
+def test_preview_action_does_not_suggest():
     store = TvDataBuilderSessionStore()
     catalog = _FakeCatalog(
         {"get_otd": {"operationId": "get_otd", "label": "OTD", "parameters": []}}
@@ -147,7 +147,7 @@ def test_preview_intent_does_not_suggest():
     sid = session["id"]
     service.turn(sid, action={"type": "add_source", "operationId": "get_otd"})
 
-    next_session = service.turn(sid, message="mostre uma prévia")
+    next_session = service.turn(sid, action={"type": "preview"})
     assistant_tools = [
         m.get("tool")
         for m in next_session["messages"]
@@ -155,6 +155,20 @@ def test_preview_intent_does_not_suggest():
     ]
     assert "suggest_sources" not in assistant_tools[-3:]
     assert "preview" in assistant_tools
+
+
+def test_nl_message_turn_retired():
+    from tv_app.application.services.data.tv_data_builder_service import NlTurnRetiredError
+
+    store = TvDataBuilderSessionStore()
+    catalog = _FakeCatalog({})
+    service = TvDataBuilderService(catalog, store=store, suggest=_FakeSuggest())
+    session = service.create_session()
+    try:
+        service.turn(session["id"], message="otd comercial")
+        raise AssertionError("expected NlTurnRetiredError")
+    except NlTurnRetiredError as exc:
+        assert exc.code == "NL_TURN_RETIRED"
 
 
 def test_extract_preview_table_from_resolved_preview():

@@ -1,8 +1,8 @@
 """Superfície do host na classificação de intenção.
 
 No editor TV, «escreva um texto "Bem-vindos"» é comando de slide, não redação.
-Sem o hostContext no classify, o roteador marcava text_task e o turno nunca
-chegava à tool do copiloto.
+Sem o hostContext no classify, o roteador marcava text_task; com host, o handoff
+VISTA / platform path deve prevalecer sobre text_task puro.
 """
 
 from __future__ import annotations
@@ -15,7 +15,7 @@ from app.domain.services.chat_intent_router_service import ChatIntentRouterServi
 configure_domain_infrastructure_ports()
 
 _TV_WORKSPACE = {
-    "skills": {"tvDashboardCopilot": True},
+    "skills": {},
     "tvDashboardHostContext": {
         "surface": "tv-dashboard",
         "playlistId": "pl-1",

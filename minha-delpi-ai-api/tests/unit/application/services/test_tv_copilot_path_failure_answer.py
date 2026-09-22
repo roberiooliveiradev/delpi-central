@@ -1,10 +1,4 @@
-"""Falha no copiloto TV não pode degradar em resposta inventada.
-
-Na superfície TV Dashboard o usuário pediu uma mutação («crie um slide»). Se o
-caminho do copiloto quebra e o turno segue para o LLM sem tool, o modelo
-descreve um slide em markdown que nunca foi criado. O turno deve responder o
-motivo factual.
-"""
+"""Falha no caminho TV → handoff VISTA (não inventar slide)."""
 
 from __future__ import annotations
 
@@ -76,7 +70,7 @@ def _broken_tv_selection(monkeypatch):
     )
 
 
-def test_tv_surface_answers_factual_reason_when_copilot_path_fails():
+def test_tv_surface_answers_vista_handoff_when_path_fails():
     host = _FakeHost(
         {
             "tvDashboardHostContext": {
@@ -89,17 +83,17 @@ def test_tv_surface_answers_factual_reason_when_copilot_path_fails():
     outcome = _select(host)
 
     assert outcome.early_result is not None, (
-        "o turno TV deve encerrar com motivo factual em vez de seguir para o LLM"
+        "o turno TV deve encerrar com handoff VISTA em vez de seguir para o LLM"
     )
     assert (
         outcome.early_result["directAnswer"]
-        == ChatTvDashboardCopilotIntentService.copilot_path_failed_message()
+        == ChatTvDashboardCopilotIntentService.redirect_to_vista_message()
     )
     assert outcome.early_result["toolCalls"] == []
 
 
-def test_non_tv_surface_does_not_answer_with_tv_reason():
+def test_non_tv_surface_does_not_answer_with_vista_handoff():
     outcome = _select(_FakeHost(None))
 
     direct = (outcome.early_result or {}).get("directAnswer")
-    assert direct != ChatTvDashboardCopilotIntentService.copilot_path_failed_message()
+    assert direct != ChatTvDashboardCopilotIntentService.redirect_to_vista_message()

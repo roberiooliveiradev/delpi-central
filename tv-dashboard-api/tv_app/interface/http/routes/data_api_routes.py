@@ -273,24 +273,38 @@ def get_data_builder_session(request: Request, session_id: str):
 
 @router.post("/builder/sessions/{session_id}/turn")
 def data_builder_turn(request: Request, session_id: str, body: BuilderTurnBody):
-    """Deprecated: turno NL do Builder. Preferir VISTA gpt_suggest_change;
-    materialize tipado via POST .../to-presentation-ops."""
+    """Action-only draft mutations (add_source, set_params, …). NL message turns retired."""
     user = resolve_user(request)
     try:
         assert_permission(user, TV_WRITE)
     except PermissionError as exc:
         return fail(str(exc), 403)
-    if not (body.message and str(body.message).strip()) and not body.action:
-        return fail("Informe message ou action.", 400)
-    from tv_app.application.services.data.tv_data_builder_service import TvDataBuilderService
-
-    session = TvDataBuilderService(_catalog).turn(
-        session_id,
-        message=body.message,
-        action=body.action,
-        authorization=request.headers.get("Authorization"),
-        user=user,
+    has_action = isinstance(body.action, dict) and bool(body.action)
+    has_message = bool(body.message and str(body.message).strip())
+    if has_message and not has_action:
+        return fail(
+            "Turno NL do Builder retirado. Use o catálogo de fontes ou o especialista VISTA.",
+            422,
+        )
+    if not has_action:
+        return fail("Informe action.", 400)
+    from tv_app.application.services.data.tv_data_builder_service import (
+        NlTurnRetiredError,
+        TvDataBuilderService,
     )
+
+    try:
+        session = TvDataBuilderService(_catalog).turn(
+            session_id,
+            message=body.message,
+            action=body.action,
+            authorization=request.headers.get("Authorization"),
+            user=user,
+        )
+    except NlTurnRetiredError as exc:
+        return fail(str(exc), 422)
+    except ValueError as exc:
+        return fail(str(exc), 400)
     if not session:
         return fail("Sessão do assistente não encontrada ou expirada.", 404)
     return ok(session, message="Turno aplicado.")

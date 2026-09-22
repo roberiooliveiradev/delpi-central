@@ -1,4 +1,4 @@
-"""Intenção do Copiloto TV Dashboard — surface/confirmação (ops vêm do BFF)."""
+"""Intenção / handoff TV Dashboard → especialista VISTA (sem tool de mutação)."""
 
 from __future__ import annotations
 
@@ -10,13 +10,13 @@ from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
 
-_BUNDLE = "tv_dashboard_copilot_intent"
+_BUNDLE = "tv_dashboard_handoff"
 TV_DASHBOARD_SURFACE = "tv-dashboard"
 TV_DASHBOARD_COPILOT_SKILL_FLAG = "tvDashboardCopilot"
 
 
 class ChatTvDashboardCopilotIntentService:
-    """Detecta surface/pedido TV leve; ops tipadas vêm do BFF (suggest-ops)."""
+    """Detecta pedido/surface TV e orienta handoff VISTA; não emite tool calls."""
 
     @classmethod
     def _list(cls, *path: str) -> tuple[str, ...]:
@@ -33,6 +33,16 @@ class ChatTvDashboardCopilotIntentService:
             ChatMessageNormalizationService.normalize_for_matching(item)
             for item in cls._list("phrases")
             if str(item).strip()
+        )
+
+    @classmethod
+    def redirect_to_vista_message(cls) -> str:
+        return cls._text(
+            "redirectToVista",
+            default=(
+                "Alterações de programação e slides TV são feitas pelo especialista "
+                "VISTA (Custom GPT Actions), não por este Chat."
+            ),
         )
 
     @classmethod
@@ -173,49 +183,9 @@ class ChatTvDashboardCopilotIntentService:
         cls,
         previous_messages: list | None,
     ) -> dict | None:
-        """Reusa ops do **último** preview bem-sucedido de ``tv_dashboard_copilot``.
-
-        A confirmação vale para a prévia mais recente. Preview que falhou, foi
-        bloqueado ou já virou apply não é reaproveitado — o chamador responde
-        que não há prévia pendente em vez de gravar um patch antigo.
-        """
-        call = cls.last_tool_call_in_history(previous_messages)
-        if not isinstance(call, dict):
-            return None
-
-        call_meta = call.get("metadata") if isinstance(call.get("metadata"), dict) else {}
-        if call_meta.get("ok") is False or call_meta.get("blocked"):
-            return None
-
-        arguments = call.get("arguments") if isinstance(call.get("arguments"), dict) else {}
-        mode = str(arguments.get("mode") or call_meta.get("mode") or "preview").lower()
-        if mode == "apply":
-            return None
-
-        ops = arguments.get("ops")
-        if not isinstance(ops, list) or not ops:
-            return None
-
-        target = arguments.get("target")
-        confirmation_policy = str(
-            arguments.get("confirmationPolicy") or "confirm"
-        ).strip().lower()
-        if confirmation_policy != "confirm":
-            return None
-        return {
-            "name": "tv_dashboard_copilot",
-            "arguments": {
-                "mode": "apply",
-                "ops": list(ops),
-                "target": dict(target) if isinstance(target, dict) else {},
-                "confirmationPolicy": "confirm",
-                "risk": str(arguments.get("risk") or "destructive"),
-            },
-            "reason": cls._text(
-                "applySelectionReason",
-                default="Confirmação — apply do patch TV Dashboard.",
-            ),
-        }
+        """Tool TV Copilot removida — nunca mintar apply a partir do histórico."""
+        del previous_messages
+        return None
 
     @classmethod
     def requires_confirmation(cls, arguments: dict | None) -> bool:
@@ -441,9 +411,9 @@ class ChatTvDashboardCopilotIntentService:
         host_context: dict | None = None,
         already_enabled: bool = False,
     ) -> bool:
-        if already_enabled:
-            return True
-        return cls.is_tv_copilot_turn(message, host_context=host_context)
+        """Skill/tool TV Copilot removidos — nunca reativar flag de mutação no Chat."""
+        del message, host_context, already_enabled
+        return False
 
     @classmethod
     def build_host_prompt_section(
@@ -557,16 +527,14 @@ class ChatTvDashboardCopilotIntentService:
         message: str | None,
         host_context: dict | None = None,
     ) -> dict:
+        """Propagates host context; skill flag no longer enabled (handoff-only)."""
+        del message
         workspace = dict(workspace_context or {})
         skills = dict(workspace.get("skills") or {}) if isinstance(workspace.get("skills"), dict) else {}
         normalized_host = cls.normalize_host_context(host_context)
 
-        if cls.should_enable_skill(
-            message,
-            host_context=normalized_host,
-            already_enabled=bool(skills.get(TV_DASHBOARD_COPILOT_SKILL_FLAG)),
-        ):
-            skills[TV_DASHBOARD_COPILOT_SKILL_FLAG] = True
+        # Never set tvDashboardCopilot — mutation owned by VISTA.
+        skills.pop(TV_DASHBOARD_COPILOT_SKILL_FLAG, None)
 
         workspace["skills"] = skills
         if normalized_host:

@@ -158,14 +158,7 @@ class ChatTurnPreparationPostToolResolutionService:
         tv_mutation_turn = ChatHostSurfaceContextService.is_tv_mutation_turn(
             message,
             workspace_context=workspace_context,
-            has_suggested_ops=bool(
-                isinstance(tool_context, dict)
-                and any(
-                    str(item.get("name") or "") == "tv_dashboard_copilot"
-                    for item in (tool_context.get("toolCalls") or [])
-                    if isinstance(item, dict)
-                )
-            ),
+            has_suggested_ops=False,
         )
         if tv_mutation_turn:
             skip_rag = True

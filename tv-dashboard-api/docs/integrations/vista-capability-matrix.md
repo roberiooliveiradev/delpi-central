@@ -38,6 +38,8 @@ Canonical domain capability (PresentationMutation / TvPresentationPatchV1)
 - Catalog informs; backend authorizes (`capability_surface` ≠ AuthZ).
 - Nested block patches deep-merge (`style`/`frame`/`dataBinding`/`background`); explicit `null` clears.
 - `/data/copilot/*` is **410 Gone**; Chat Copilot skill/tool and MFE dock are retired.
+- Internal Chat TV intent → **handoff** (`tv_dashboard_handoff` direct answer → VISTA); never mint mutation tools.
+- DÉLIA TV capability adapter = **TARGET** (same PresentationMutation contract; no code in this HEAD).
 
 ## Source of truth
 
@@ -53,6 +55,7 @@ Canonical domain capability (PresentationMutation / TvPresentationPatchV1)
 | GPT Instructions (stable-only) | `docs/gpt-actions/specialist-instructions.md` — **no** feature heuristics |
 | Live agent directives (deploy) | `vista_agent_intelligence.json` → `capability_surface.agent_directives` |
 | Data route NL discovery | `TvDataRouteDiscoveryService` + `docs/data-route-nl-suggest.md` |
+| Chat TV intent | `tv_dashboard_handoff` (direct answer → VISTA; no mutation tool) |
 | Instructions leak gate | `tests/test_vista_builder_instructions_budget.py` |
 | Capability matrix | **this file** |
 | DÉLIA TV adapter | TARGET (document only; consume PresentationMutation) |
