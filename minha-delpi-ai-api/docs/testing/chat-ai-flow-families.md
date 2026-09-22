@@ -150,7 +150,7 @@ As famílias F01–F24 continuam sendo a taxonomia de cobertura, não um conjunt
 | F14 | Memória / follow-up / grounding |
 | F15 | Revisão/busca da conversa |
 | F16 | Tarefas textuais e mixed tasks |
-| F17 | TV Dashboard copilot |
+| F17 | TV Dashboard handoff → VISTA (direct answer; zero mutation tool) |
 | F18 | PAC / qualidade |
 | F19 | Identidade / small talk |
 | F20 | Fontes de projeto |

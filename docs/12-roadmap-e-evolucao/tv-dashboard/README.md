@@ -5,6 +5,17 @@
 
 Sistema de **programações rotativas** para TVs corporativas: gestão autenticada no portal e **link público sem login** para exibição em loop (modo kiosk).
 
+### IA — VISTA e Chat
+
+| Superfície | Papel |
+|---|---|
+| **VISTA** (`/gpt-actions/v1`) | Especialista externo / mutação tipada (PREPARE→COMMIT) |
+| **Chat interno** | Handoff para VISTA — sem tool de mutação TV |
+| **Fontes de dados** (MFE) | Catálogo + draft actions; sem NL no editor |
+| **`/data/copilot/*`** | **410 Gone** |
+
+Fontes canônicas: [vista-capability-matrix](../../../tv-dashboard-api/docs/integrations/vista-capability-matrix.md) · [presentation-ops-catalog](../../../tv-dashboard-api/docs/presentation-ops-catalog.md) · [ADR VISTA surfaces](../../../tv-dashboard-api/docs/architecture/adr-vista-specialist-capability-surfaces.md) · [Chat playbook handoff](../../../minha-delpi-ai-api/docs/architecture/chat-openapi-first-refactor-playbook.md).
+
 ---
 
 ## Visão geral

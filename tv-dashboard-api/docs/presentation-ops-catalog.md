@@ -108,10 +108,10 @@ Composites rota → visual + bind:
 
 `catalogVersion` muda quando o JSON de capabilities muda. A AI cacheia por versão — **proibido** materializar o catálogo no repo da AI.
 
-## Matriz de paridade — Copilot (modelo) vs Fora
+## Matriz de paridade — VISTA / PresentationMutation vs Fora
 
-| Capacidade do editor | Copilot | Notas |
-|----------------------|---------|--------|
+| Capacidade do editor | VISTA / PresentationMutation | Notas |
+|----------------------|------------------------------|--------|
 | Criar playlist | sim | `create_playlist` |
 | Slide a partir de preset | sim | `add_slide_from_preset` |
 | Slide blank `custom_message` | sim | `add_blank_slide` |
@@ -148,17 +148,18 @@ Façade OAuth em `/gpt-actions/v1` (ver `docs/gpt-actions/custom-gpt-actions.md`
   Sem loopback HTTP; sem ``ops``/``planDigest`` no commit.
 - Draft local do MFE permanece `unavailable_external` para o Custom GPT.
 
-## Chat base (consumer)
+## Chat interno (consumer — handoff only)
 
 - Skill/tool Chat TV Copilot: **removidos**.
 - Pedido TV no Chat interno → handoff (`tv_dashboard_handoff` / `ChatTvDashboardHandoffService`)
   com direct answer orientando o especialista **VISTA** (`/gpt-actions/v1`). Sem tool de mutação.
 - Mutação tipada: só VISTA Actions + PresentationMutation (ou editor MFE).
 - `/data/copilot/*` → **410 Gone**.
+- Chat interno ≠ VISTA ≠ DÉLIA (app standalone); ver playbook Chat OpenAPI-first.
 
 ## Embed (A1)
 
-- Remote MF: `minha-delpi-chat` → `./EmbeddedChat` (hostContext ambient; dock Copilot TV retirado).
+- Remote MF: `minha-delpi-chat` → `./EmbeddedChat` (hostContext ambient; dock Copilot TV **retirado**).
 - Pedidos de mutação no embed → handoff VISTA (não aplica patch via tool).
 - Draft local do editor: modal «Fontes de dados» (catálogo + builder actions).
 

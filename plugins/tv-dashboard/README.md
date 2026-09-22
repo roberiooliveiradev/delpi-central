@@ -10,6 +10,13 @@ Políticas de dados por tipo de gráfico (pizza, série, scatter…): [PLAYBOOK-
 Dois escopos de seleção: [playbook §19.19](../../docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-EXCELENCIA.md#1919-dois-escopos-de-seleção--chrome-de-partes-jul2026)
 **Exportação MDD (padrão de slides/programação):** [MDD — Minha Delpi Deck](../../docs/12-roadmap-e-evolucao/tv-dashboard/MDD-MINHA-DELPI-DECK.md)
 
+### IA / VISTA (mutação tipada)
+
+- **Especialista VISTA** (Custom GPT Actions `/gpt-actions/v1`) é o consumidor IA canônico de mutação de programação/slides — ver [vista-capability-matrix](../../tv-dashboard-api/docs/integrations/vista-capability-matrix.md) e [presentation-ops-catalog](../../tv-dashboard-api/docs/presentation-ops-catalog.md).
+- Modal **Fontes de dados** = catálogo + draft actions (sem NL no editor; `NL_TURN_RETIRED`).
+- Suggest de rotas = owner-local `POST /data/routes/suggest` (não Chat base).
+- Chat interno Minha DELPI: **handoff** para VISTA (`tv_dashboard_handoff`); zero tool de mutação TV. `/data/copilot/*` → **410 Gone**. Dock Copilot no editor: **retirado**.
+
 ### GR de Vendas (backlog Comercial → TV)
 
 **GR de Vendas** (Manual do Líder Nível 02) é prioridade ago/2026 do alinhamento Comercial, mas a **implementação de slides/playlists** vive neste app (**tv-dashboard** + `tv-dashboard-api`), não no MFE `commercial`. Fonte de indicadores: painéis/rotas já expostos pelo Portal Comercial e pela **api-delpi** (quando o contrato existir). Checklist de conteúdo quando Junior/Laércio fecharem o modelo — ver [ATA-ALINHAMENTO-AGO2026-2.md](../../docs/12-roadmap-e-evolucao/commercial/ATA-ALINHAMENTO-AGO2026-2.md) §4 / §35.
@@ -169,7 +176,7 @@ o cálculo das diferenças permanece no backend.
 
 | Aba / painel | Função |
 |---|---|
-| **Inserir → Dados** | Catálogo de rotas GET (`DataRouteCatalogPanel`) → NL suggest (chat base) + substring → insere `data_source` |
+| **Inserir → Dados** | Catálogo de rotas GET (`DataRouteCatalogPanel`) → suggest owner-local (`POST /data/routes/suggest`) + substring → insere `data_source` |
 | **Inserir → Gráficos / Tabelas** | Insere `chart_view` ou `table_view` |
 | **Elemento → Conexão de dados** | Dropdown **Fonte de dados** (`dataSourceId`) |
 | **Elemento → Elementos do gráfico / KPI / tabela** | Visibilidade de partes; com parte selecionada → inspetor da parte |

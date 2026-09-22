@@ -38,7 +38,7 @@ Power Query M: a [Fase 7](../docs/12-roadmap-e-evolucao/tv-dashboard/FASE-7-STAT
 | **Dados (blocos api-delpi)** | `/data` — catálogo, preview, validação |
 | Dados (legado) | `/data-routes` — alias enriquecido do catálogo |
 
-Assistente de fontes (catálogo + draft actions): [`docs/data-builder-chat.md`](./docs/data-builder-chat.md). Catálogo de ops / PresentationMutation: [`docs/presentation-ops-catalog.md`](./docs/presentation-ops-catalog.md). Descoberta NL: [`docs/data-route-nl-suggest.md`](./docs/data-route-nl-suggest.md).
+Fontes de dados (catálogo + draft actions): [`docs/data-builder-chat.md`](./docs/data-builder-chat.md). Catálogo de ops / PresentationMutation: [`docs/presentation-ops-catalog.md`](./docs/presentation-ops-catalog.md). Descoberta NL owner-local: [`docs/data-route-nl-suggest.md`](./docs/data-route-nl-suggest.md). Especialista VISTA (matriz canônica): [`docs/integrations/vista-capability-matrix.md`](./docs/integrations/vista-capability-matrix.md).
 
 ### API `/data` (admin — JWT + RBAC)
 

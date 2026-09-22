@@ -11,12 +11,12 @@ Do not duplicate the full matrix in Instructions, Knowledge, or DÉLIA docs — 
 
 | Role | Authority |
 |---|---|
-| **DÉLIA** | IA / experiência de orquestração da DELPI |
-| **VISTA** | Specialist/capability de painéis operacionais / TV |
+| **VISTA** | Specialist/capability de painéis operacionais / TV (`/gpt-actions/v1`) |
 | **TV Dashboard** | Domain authority (playlists, slides, data blocks, PresentationMutation) |
+| **Chat interno (Minha DELPI)** | Handoff only (`tv_dashboard_handoff`) — **não** muta TV; **não** é VISTA nem DÉLIA |
+| **DÉLIA** | App standalone industrial — **≠** Chat; adapter TV = **TARGET** (mesmo contrato PresentationMutation; sem HTTP neste HEAD) |
 | **MCP** | Adapter futuro (TARGET Plugin + remote MCP) — **não implementado neste HEAD** |
 | **GPT Actions** | Adapter compacto **GOVERNED_PREPARE_COMMIT_V2** (Builder-importable) |
-| **DÉLIA ↔ TV** | **TARGET** — future capability adapter on the same PresentationMutation contract (no HTTP adapter in this HEAD) |
 
 ```text
 Canonical domain capability (PresentationMutation / TvPresentationPatchV1)

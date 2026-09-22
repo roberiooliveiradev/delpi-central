@@ -1,5 +1,7 @@
 # Catálogo de fontes (TV Dashboard)
 
+> **Nome de arquivo legado** (`data-builder-chat`): a superfície é o modal **Fontes de dados** (catálogo/actions), não um chat NL no editor.
+
 ## Objetivo
 
 Permitir escolher rotas allowlistadas, ajustar filtros e materializar blocos

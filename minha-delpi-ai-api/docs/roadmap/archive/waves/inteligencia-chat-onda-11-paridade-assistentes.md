@@ -1,6 +1,7 @@
 # Inteligência do chat — Onda 11: Paridade com ChatGPT/Gemini (roteamento e velocidade)
 
-**Status:** concluída (maio/2026)  
+**Status:** concluída (maio/2026) · **LEGADO** (arquivo em `roadmap/archive/`)  
+**Não usar como SoT de TV:** suggest TV é owner-local (`TvDataRouteDiscoveryService`); mutação TV = VISTA; Chat = handoff (`tv_dashboard_handoff`). Ver `tv-dashboard-api/docs/data-route-nl-suggest.md` e `vista-capability-matrix.md`.  
 **Origem:** pergunta de produto em 28/mai/2026 — *«Como o ChatGPT/Gemini sabem qual rota usar nas actions? Pesquise na internet; o modelo está lento e pouco assertivo.»*  
 **Pré-requisitos:** [Ondas 1–10](./inteligencia-chat-onda-10.md), [arquitetura chat base](../../../architecture/chat-intelligence-base.md)
 
@@ -266,7 +267,7 @@ curl -s -X POST 'http://localhost/auth/realms/delpi/protocol/openid-connect/toke
 | 2026-05-30 | 11.6: `web_search`, RBAC formal (`/admin/rbac/profiles`), rotas NC PostgreSQL 5S. |
 | 2026-05-30 | `web_search` evoluído: sanitização de query (TYCO), fallback Wikipedia PT, fontes clicáveis, síntese LLM multi-seção (`web_search_synthesis`). |
 | 2026-05-30 | `web_search`: painel **Fontes · N** (`webSearchResearch`), provider **SearXNG** OSS no compose dev, ordem `auto` estendida. |
-| 2026-07-31 | **Cross-app:** dry-run `POST /chat/internal/operational-routes/suggest` reutilizado pelo TV Dashboard (`POST /data/routes/suggest`) — mesma seleção determinística do chat base; ver `tv-dashboard-api/docs/data-route-nl-suggest.md`. |
+| 2026-07-31 | **Cross-app (histórico):** dry-run suggest reutilizado pelo TV — **superseded**: discovery owner-local em `tv-dashboard-api` (`data-route-nl-suggest.md`); Chat não é autoridade de suggest TV. |
 
 ---
 

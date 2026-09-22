@@ -180,7 +180,8 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
       "Imagens e vídeos da biblioteca da playlist ou upload (vídeo até 500 MB; preferir ≤1080p).",
     insertIllustrationsGroup: "Biblioteca visual de formas, linhas e ícones editáveis.",
     insertDataGroup: "Fontes de dados, KPI, gráficos e tabelas desacoplados no slide.",
-    insertDataSource: "Abre o catálogo de rotas api-delpi em um modal para inserir uma fonte de dados no palco.",
+    insertDataSource:
+      "Abre o modal Fontes de dados (catálogo api-delpi) para inserir uma fonte no palco. Mutações tipadas de programação/slides por IA ficam no especialista VISTA — não há Assistente IA no editor.",
     insertChart: "Escolha o tipo de gráfico e conecte-o a uma fonte de dados no inspetor.",
     insertKpi: "Insere um card KPI. Conecte a uma fonte de dados e configure ícone, textos e cores.",
     insertTable: "Escolha o tamanho ou estilo da tabela e conecte-a a uma fonte de dados.",
@@ -206,7 +207,10 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     tableBorders: "Visibilidade, cor, peso e estilo da grade (caneta).",
     tableOpenFrameShape: "Seleciona a moldura e abre preenchimento/contorno na aba Forma.",
     tableFrameChrome: "Preenchimento e contorno da moldura da tabela.",
-    openDataPanel: "Abre o painel de fontes de dados.",
+    openDataPanel:
+      "Abre o painel/modal de fontes de dados (catálogo + parâmetros). Para alterar programação ou slides com IA, use o especialista VISTA.",
+    vistaSpecialist:
+      "Alterações tipadas de programação e slides por IA são feitas no especialista VISTA (Custom GPT Actions), não neste editor nem no Chat interno.",
     chartLabels: "Título, legenda, rótulos de dados e tabela.",
     chartAxes: "Eixos, grade, meta e ordenação A→Z das categorias (centros de trabalho).",
     chartGaugeMeta:
@@ -226,7 +230,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
       "Configurações da tela atual: título exibido no filmstrip, tempo na rotação e filtros operacionais (quando aplicável).",
     playlist:
       "Parâmetros globais da apresentação: resolução da TV, transição entre telas, duração padrão e link público.",
-    data: "Catálogo de rotas api-delpi e configuração de fontes de dados para gráficos e tabelas.",
+    data: "Catálogo de rotas api-delpi e configuração de fontes de dados para gráficos e tabelas. Mutação tipada por IA: especialista VISTA (não Assistente no editor).",
     layers:
       "Painel de Seleção: ordem de aparição na TV, pilha visual e visibilidade dos elementos.",
   },
