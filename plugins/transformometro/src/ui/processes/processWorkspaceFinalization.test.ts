@@ -26,7 +26,7 @@ describe("Process Workspace finalization — Results composition", () => {
     expect(results).toMatch(/fetchInvestimentos/);
     expect(results).toMatch(/fetchVinculos/);
     expect(results).toMatch(/Benefícios calculados/);
-    expect(results).toMatch(/Comparação detalhada/);
+    expect(results).toMatch(/Ver comparação detalhada/);
   });
 
   it("CASE multiple instance: exige seleção explícita e não usa fallback arbitrário", () => {

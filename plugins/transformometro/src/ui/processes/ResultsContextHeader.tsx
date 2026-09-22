@@ -1,15 +1,12 @@
-import { HelpTooltip } from "@delpi/plugin-ui/index";
+import type { ReactNode } from "react";
 
 import { DS_GHOST_BTN } from "../../components/ghostChrome";
 import { TmStatusBadge } from "../../components/tmChromeUi";
 import { cenarioLabel } from "../../content/cenarioLabels";
-import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import type { ProcessoInstancia, Revisao } from "../../data/api/transformometroApi";
 import { revisaoDisplayLabel } from "../../utils/revisaoLabels";
 import type { ComparisonMode } from "./buildRevisionComparisonView";
 import { instanciaNavLabel } from "./processWorkspaceNav";
-
-const H = TM_HELP_TOOLTIPS.resultados;
 
 type Props = {
   instance: ProcessoInstancia;
@@ -19,6 +16,8 @@ type Props = {
   canChangeInstance: boolean;
   onChangeInstance: () => void;
   onOpenRevision?: () => void;
+  /** Scenario picker rendered inside the same context card (visual integration). */
+  scenarioPicker?: ReactNode;
 };
 
 export function ResultsContextHeader({
@@ -29,6 +28,7 @@ export function ResultsContextHeader({
   canChangeInstance,
   onChangeInstance,
   onOpenRevision,
+  scenarioPicker,
 }: Props) {
   const referenceLabel =
     mode === "legacy_reference_missing" || mode === "reference_not_in_scope"
@@ -44,26 +44,17 @@ export function ResultsContextHeader({
       <div className="tm-processo-results-context__intro">
         <h3 className="tm-processo-results-context__heading">Contexto da comparação</h3>
         <p className="tm-processo-results-context__lede">
-          Confira a melhoria, o cenário proposto e a referência usada na comparação.
+          Melhoria, cenário proposto e referência usados nesta leitura.
         </p>
       </div>
 
       <dl className="tm-processo-results-context__grid">
         <div className="tm-processo-results-context__item">
-          <dt>
-            Melhoria analisada
-            <HelpTooltip
-              content="Melhoria operacional (instância) cujo cenário você está analisando."
-              ariaLabel="Ajuda: Melhoria analisada"
-            />
-          </dt>
+          <dt>Melhoria analisada</dt>
           <dd>{instanciaNavLabel(instance)}</dd>
         </div>
         <div className="tm-processo-results-context__item">
-          <dt>
-            Cenário proposto
-            <HelpTooltip content={H.toBe} ariaLabel="Ajuda: Cenário proposto" />
-          </dt>
+          <dt>Cenário proposto</dt>
           <dd>
             {toBe ? (
               <>
@@ -82,13 +73,14 @@ export function ResultsContextHeader({
           </dd>
         </div>
         <div className="tm-processo-results-context__item">
-          <dt>
-            Referência atual
-            <HelpTooltip content={H.asIs} ariaLabel="Ajuda: Referência atual" />
-          </dt>
+          <dt>Referência atual (AS-IS)</dt>
           <dd>{referenceLabel}</dd>
         </div>
       </dl>
+
+      {scenarioPicker ? (
+        <div className="tm-processo-results-context__scenario">{scenarioPicker}</div>
+      ) : null}
 
       <div className="tm-processo-results-context__actions">
         {canChangeInstance ? (
@@ -97,7 +89,11 @@ export function ResultsContextHeader({
           </button>
         ) : null}
         {toBe && onOpenRevision ? (
-          <button type="button" className="ds-link tm-processo-results-context__link" onClick={onOpenRevision}>
+          <button
+            type="button"
+            className="ds-link tm-processo-results-context__link"
+            onClick={onOpenRevision}
+          >
             Abrir revisão
           </button>
         ) : null}

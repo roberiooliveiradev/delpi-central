@@ -9,9 +9,10 @@ const viewModel = readFileSync(join(root, "ui/processes/buildRevisionComparisonV
 const detailPage = readFileSync(join(root, "ui/pages/ProcessDetailPage.tsx"), "utf8");
 const summary = readFileSync(join(root, "ui/processes/RevisionCompareSummary.tsx"), "utf8");
 const contextHeader = readFileSync(join(root, "ui/processes/ResultsContextHeader.tsx"), "utf8");
+const measurement = readFileSync(join(root, "ui/processes/MeasurementComparisonTable.tsx"), "utf8");
 const help = readFileSync(join(root, "content/helpTooltips.ts"), "utf8");
 
-describe("ProcessResultsSection — Redesign & Compare V1 UX", () => {
+describe("ProcessResultsSection — Redesign & Compare V1 UX polish", () => {
   it("CASE I/T: múltiplas instâncias exigem seleção; um único contexto", () => {
     expect(source).toMatch(/buildRevisionComparisonView/);
     expect(source).toMatch(/Selecione uma melhoria para visualizar este conteúdo/);
@@ -42,7 +43,7 @@ describe("ProcessResultsSection — Redesign & Compare V1 UX", () => {
     expect(summary).toMatch(/Diferença calculada/);
   });
 
-  it("CASE D/L/O/P: medição, benefícios calculados e provenance", () => {
+  it("CASE D/L/O/P: medição, benefícios calculados e provenance nos headers", () => {
     expect(source).toMatch(/MeasurementComparisonTable/);
     expect(source).toMatch(/Não há indicadores informados para este cenário/);
     expect(source).toMatch(/Benefícios calculados/);
@@ -50,6 +51,11 @@ describe("ProcessResultsSection — Redesign & Compare V1 UX", () => {
     expect(source).toMatch(/provenanceForRevisionRole/);
     expect(source).not.toMatch(/BENEFÍCIOS REALIZADOS/);
     expect(source).not.toMatch(/Benefícios obtidos/);
+    expect(measurement).toMatch(/AS-IS · INFORMADO/);
+    expect(measurement).toMatch(/TO-BE · PROPOSTO/);
+    expect(measurement).toMatch(/Δ · CALCULADO/);
+    expect(measurement).not.toMatch(/TmStatusBadge/);
+    expect(measurement).not.toMatch(/HelpTooltip/);
   });
 
   it("CASE Q/R: forbidden ≠ empty; erro local", () => {
@@ -86,20 +92,37 @@ describe("ProcessResultsSection — Redesign & Compare V1 UX", () => {
     expect(source).toMatch(/Configurações → Recursos compartilhados/);
   });
 
-  it("UX: contexto didático, help, hierarquia de botões e seções", () => {
+  it("UX polish: ordem narrativa, ações explícitas, disclosure detalhada, cenário no contexto", () => {
     expect(contextHeader).toMatch(/Melhoria analisada/);
     expect(contextHeader).toMatch(/Cenário proposto/);
     expect(contextHeader).toMatch(/Referência atual/);
+    expect(contextHeader).toMatch(/scenarioPicker/);
     expect(contextHeader).toMatch(/Trocar melhoria/);
+    expect(source).toMatch(/scenarioPicker=\{scenarioPicker\}/);
+    expect(source).toMatch(/Ver medição/);
+    expect(source).toMatch(/Ver investimentos/);
+    expect(source).toMatch(/Ver recursos/);
+    expect(source).not.toMatch(/Ver na revisão/);
+    expect(source).toMatch(/Ver comparação detalhada/);
+    expect(source).toMatch(/tm-processo-results-detail-disclosure/);
     expect(source).toMatch(/ResultsProvenanceLegend/);
-    expect(source).toMatch(/ResultsSectionBlock/);
-    expect(source).toMatch(/Comparação detalhada/);
     expect(source).toMatch(/Indicadores operacionais/);
-    expect(source).toMatch(/tm-processo-results-refresh/);
-    expect(source).toMatch(/Atualizar comparação/);
-    expect(source).toMatch(/HelpTooltip/);
+    expect(source).toMatch(/Benefícios calculados/);
     expect(help).toMatch(/resultados:/);
     expect(source).not.toMatch(/revisao_referencia_id/);
     expect(source).not.toMatch(/contrato de comparação/);
+
+    const indicadoresIdx = source.indexOf('id="medicoes"');
+    const beneficiosIdx = source.indexOf('id="beneficios"');
+    const investimentosIdx = source.indexOf('id="investimentos"');
+    const recursosIdx = source.indexOf('id="recursos"');
+    const impactoIdx = source.indexOf('id="estrutura-fluxo"');
+    const detalhadaIdx = source.indexOf("Ver comparação detalhada");
+    expect(indicadoresIdx).toBeGreaterThan(-1);
+    expect(beneficiosIdx).toBeGreaterThan(indicadoresIdx);
+    expect(investimentosIdx).toBeGreaterThan(beneficiosIdx);
+    expect(recursosIdx).toBeGreaterThan(investimentosIdx);
+    expect(impactoIdx).toBeGreaterThan(recursosIdx);
+    expect(detalhadaIdx).toBeGreaterThan(impactoIdx);
   });
 });

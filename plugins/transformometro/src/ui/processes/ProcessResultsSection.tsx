@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { EmptyState, emptyStateCardBemClasses, HelpTooltip } from "@delpi/plugin-ui/index";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { EmptyState, emptyStateCardBemClasses } from "@delpi/plugin-ui/index";
 import { RefreshCw } from "lucide-react";
 
 import { DataTable } from "../../components/DataTable";
@@ -231,7 +231,11 @@ export function ProcessResultsSection({
   const measurementRows = useMemo(
     () =>
       buildMeasurementComparisonRows(
-        comparison.mode === "pair" ? asIsMedicao : comparison.mode === "baseline_only" ? toBeBundle?.medicao ?? null : null,
+        comparison.mode === "pair"
+          ? asIsMedicao
+          : comparison.mode === "baseline_only"
+            ? toBeBundle?.medicao ?? null
+            : null,
         comparison.mode === "pair" ? toBeBundle?.medicao ?? null : null,
       ),
     [asIsMedicao, comparison.mode, toBeBundle?.medicao],
@@ -266,6 +270,63 @@ export function ProcessResultsSection({
     </button>
   );
 
+  const scenarioPicker: ReactNode =
+    comparison.scopedRevisoes.length > 1 ? (
+      <div
+        className="tm-processo-results-revisao-picker"
+        role="group"
+        aria-label="Trocar cenário"
+      >
+        <p className="tm-processo-results-block__helper">Trocar cenário</p>
+        {comparison.scopedRevisoes.length >= SCENARIO_SELECT_THRESHOLD ? (
+          <label className="tm-processo-results-revisao-select">
+            <span className="sr-only">Cenário proposto</span>
+            <select
+              value={comparison.selectedRevisionId ?? ""}
+              onChange={(event) => setSelectedRevisaoId(event.target.value || null)}
+            >
+              <option value="">Selecione um cenário…</option>
+              {comparison.scopedRevisoes.map((revisao) => (
+                <option key={revisao.revisao_id} value={revisao.revisao_id}>
+                  {revisaoDisplayLabel(revisao)} · {cenarioLabel(revisao.cenario_tipo)}
+                  {!revisao.revisao_ativa ? " · inativa" : ""}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : (
+          <ul className="tm-processo-results-scenario-list" role="listbox" aria-label="Cenários">
+            {comparison.scopedRevisoes.map((revisao) => {
+              const selected = comparison.selectedRevisionId === revisao.revisao_id;
+              return (
+                <li key={revisao.revisao_id}>
+                  <button
+                    type="button"
+                    role="option"
+                    aria-selected={selected}
+                    className={
+                      selected
+                        ? "tm-processo-results-scenario tm-processo-results-scenario--selected"
+                        : "tm-processo-results-scenario"
+                    }
+                    onClick={() => setSelectedRevisaoId(revisao.revisao_id)}
+                  >
+                    <span className="tm-processo-results-scenario__label">
+                      {revisaoDisplayLabel(revisao)}
+                    </span>
+                    <span className="tm-processo-results-scenario__meta">
+                      {cenarioLabel(revisao.cenario_tipo)}
+                      {!revisao.revisao_ativa ? " · inativa" : ""}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+    ) : null;
+
   return (
     <section
       className="ds-card tm-processo-workspace-panel tm-processo-results"
@@ -276,10 +337,7 @@ export function ProcessResultsSection({
         <h2 id="tm-process-resultados-title" className="ds-section-title">
           Resultados
         </h2>
-        <p className="tm-processo-results__lede">
-          {H.intro}
-          <HelpTooltip content={H.naturezaLegenda} ariaLabel="Ajuda: Natureza dos dados" />
-        </p>
+        <p className="tm-processo-results__lede">{H.intro}</p>
         <ResultsProvenanceLegend />
       </div>
 
@@ -332,73 +390,8 @@ export function ProcessResultsSection({
                 ? () => openRevisionSection(comparison.selectedRevisionId!, "medicao")
                 : undefined
             }
+            scenarioPicker={scenarioPicker}
           />
-
-          {comparison.scopedRevisoes.length > 1 ? (
-            <div
-              className="tm-processo-results-revisao-picker"
-              role="group"
-              aria-label="Trocar cenário"
-            >
-              <div className="tm-processo-results-revisao-picker__head">
-                <p className="tm-processo-results-block__helper">
-                  Trocar cenário
-                </p>
-                <HelpTooltip
-                  content="Escolha o cenário proposto (TO-BE). A referência (AS-IS) continua definida pelo cadastro da revisão."
-                  ariaLabel="Ajuda: Trocar cenário"
-                />
-              </div>
-              {comparison.scopedRevisoes.length >= SCENARIO_SELECT_THRESHOLD ? (
-                <label className="tm-processo-results-revisao-select">
-                  <span className="sr-only">Cenário proposto</span>
-                  <select
-                    value={comparison.selectedRevisionId ?? ""}
-                    onChange={(event) =>
-                      setSelectedRevisaoId(event.target.value || null)
-                    }
-                  >
-                    <option value="">Selecione um cenário…</option>
-                    {comparison.scopedRevisoes.map((revisao) => (
-                      <option key={revisao.revisao_id} value={revisao.revisao_id}>
-                        {revisaoDisplayLabel(revisao)} · {cenarioLabel(revisao.cenario_tipo)}
-                        {!revisao.revisao_ativa ? " · inativa" : ""}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              ) : (
-                <ul className="tm-processo-results-scenario-list" role="listbox" aria-label="Cenários">
-                  {comparison.scopedRevisoes.map((revisao) => {
-                    const selected = comparison.selectedRevisionId === revisao.revisao_id;
-                    return (
-                      <li key={revisao.revisao_id}>
-                        <button
-                          type="button"
-                          role="option"
-                          aria-selected={selected}
-                          className={
-                            selected
-                              ? "tm-processo-results-scenario tm-processo-results-scenario--selected"
-                              : "tm-processo-results-scenario"
-                          }
-                          onClick={() => setSelectedRevisaoId(revisao.revisao_id)}
-                        >
-                          <span className="tm-processo-results-scenario__label">
-                            {revisaoDisplayLabel(revisao)}
-                          </span>
-                          <span className="tm-processo-results-scenario__meta">
-                            {cenarioLabel(revisao.cenario_tipo)}
-                            {!revisao.revisao_ativa ? " · inativa" : ""}
-                          </span>
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </div>
-          ) : null}
 
           {comparison.mode === "no_revision" ? (
             <EmptyState
@@ -429,7 +422,6 @@ export function ProcessResultsSection({
             <ResultsSectionBlock
               id="compare-summary"
               title="Resumo da comparação"
-              help={H.intro}
               helper="AS-IS é a referência; TO-BE é o cenário proposto; DELTA é a diferença calculada."
             >
               <RevisionCompareSummary
@@ -508,8 +500,8 @@ export function ProcessResultsSection({
                     id="medicoes"
                     title="Indicadores operacionais"
                     help={H.indicadores}
-                    helper="Compare os indicadores da referência e do cenário. Δ é diferença numérica — sem classificar ganho ou perda."
-                    action={tertiaryOpenLink("Ver na revisão", () =>
+                    helper="Compare referência e cenário. Δ é CALCULADO — AS-IS e TO-BE vêm das revisões."
+                    action={tertiaryOpenLink("Ver medição", () =>
                       openRevisionSection(comparison.selectedRevisionId!, "medicao"),
                     )}
                   >
@@ -536,35 +528,6 @@ export function ProcessResultsSection({
                     )}
                   </ResultsSectionBlock>
 
-                  {!loading &&
-                  !error &&
-                  loadedOnce &&
-                  scopedComparisonItems.length === 0 &&
-                  comparison.scopedRevisoes.length > 0 ? (
-                    <EmptyState
-                      classNames={EMPTY}
-                      title="Sem comparação detalhada"
-                      defaultMessage="Ainda não há baseline/medição comparável."
-                    />
-                  ) : null}
-
-                  {scopedComparisonItems.length > 0 ? (
-                    <ResultsSectionBlock
-                      id="comparativo-tabela"
-                      title="Comparação detalhada"
-                      help={H.comparacaoDetalhada}
-                      helper="Totais e breakdowns calculados. Complementam o resumo — não substituem a leitura AS-IS / TO-BE / DELTA."
-                    >
-                      <div className="tm-processo-results-table-scroll tm-processo-results-table-scroll--detail">
-                        <DataTable
-                          columns={columns}
-                          rows={scopedComparisonItems}
-                          rowKey={(row) => row.revisao_id}
-                        />
-                      </div>
-                    </ResultsSectionBlock>
-                  ) : null}
-
                   <ResultsSectionBlock
                     id="beneficios"
                     title="Benefícios calculados"
@@ -574,12 +537,15 @@ export function ProcessResultsSection({
                     {toBeComparison ? (
                       <div className="tm-processo-results-benefits">
                         <p className="tm-processo-results-benefits__meta">
-                          Categoria: {beneficioCalculoLabel(toBeComparison.beneficio_calculo_categoria)}
+                          Categoria:{" "}
+                          {beneficioCalculoLabel(toBeComparison.beneficio_calculo_categoria)}
                         </p>
                         <ul className="tm-processo-results-benefits__grid">
                           <BenefitKpi
                             label="Economia líquida/mês"
-                            value={formatProcessoNumber(toBeComparison.totais.economia_liquida_mes)}
+                            value={formatProcessoNumber(
+                              toBeComparison.totais.economia_liquida_mes,
+                            )}
                             emphasis
                           />
                           <BenefitKpi
@@ -588,12 +554,16 @@ export function ProcessResultsSection({
                           />
                           <BenefitKpi
                             label="Horas economizadas/mês"
-                            value={formatProcessoNumber(toBeComparison.totais.horas_economizadas_mes)}
+                            value={formatProcessoNumber(
+                              toBeComparison.totais.horas_economizadas_mes,
+                            )}
                             emphasis
                           />
                           <BenefitKpi
                             label="Investimento total/mês"
-                            value={formatProcessoNumber(toBeComparison.totais.investimento_total_mes)}
+                            value={formatProcessoNumber(
+                              toBeComparison.totais.investimento_total_mes,
+                            )}
                             emphasis
                           />
                           <BenefitKpi
@@ -616,7 +586,7 @@ export function ProcessResultsSection({
                     title="Investimentos"
                     help={H.investimentos}
                     helper="Valores necessários para viabilizar o cenário proposto. Sem fabricar investimento da referência."
-                    action={tertiaryOpenLink("Ver na revisão", () =>
+                    action={tertiaryOpenLink("Ver investimentos", () =>
                       openRevisionSection(comparison.selectedRevisionId!, "investimentos"),
                     )}
                   >
@@ -647,7 +617,7 @@ export function ProcessResultsSection({
                     title="Recursos e custos"
                     help={H.recursos}
                     helper="Recursos associados ao cenário selecionado. Custos unitários do catálogo continuam em Configurações → Recursos compartilhados."
-                    action={tertiaryOpenLink("Ver na revisão", () =>
+                    action={tertiaryOpenLink("Ver recursos", () =>
                       openRevisionSection(comparison.selectedRevisionId!, "recursos"),
                     )}
                   >
@@ -677,7 +647,6 @@ export function ProcessResultsSection({
                   <ResultsSectionBlock
                     id="estrutura-fluxo"
                     title="Impacto no processo"
-                    help={H.impactoProcesso}
                     helper="Consulte onde a estrutura e o fluxo do processo foram alterados neste cenário."
                   >
                     {!showHeavyStructure ? (
@@ -691,7 +660,8 @@ export function ProcessResultsSection({
                     ) : (
                       <div className="tm-processo-results-structure">
                         <p className="tm-processo-results-block__helper">
-                          Consulte o mapeamento da revisão para visualizar as alterações disponíveis.
+                          Consulte o mapeamento da revisão para visualizar as alterações
+                          disponíveis.
                         </p>
                         <ul className="tm-processo-results-structure-links">
                           {comparison.asIs && comparison.mode === "pair" ? (
@@ -701,7 +671,10 @@ export function ProcessResultsSection({
                                   type="button"
                                   className="ds-link"
                                   onClick={() =>
-                                    openRevisionSection(comparison.asIs!.revisao_id, "mapeamento")
+                                    openRevisionSection(
+                                      comparison.asIs!.revisao_id,
+                                      "mapeamento",
+                                    )
                                   }
                                 >
                                   Ver estrutura (referência)
@@ -725,7 +698,10 @@ export function ProcessResultsSection({
                               type="button"
                               className="ds-link"
                               onClick={() =>
-                                openRevisionSection(comparison.selectedRevisionId!, "mapeamento")
+                                openRevisionSection(
+                                  comparison.selectedRevisionId!,
+                                  "mapeamento",
+                                )
                               }
                             >
                               Ver estrutura do cenário
@@ -746,6 +722,41 @@ export function ProcessResultsSection({
                       </div>
                     )}
                   </ResultsSectionBlock>
+
+                  {!loading &&
+                  !error &&
+                  loadedOnce &&
+                  scopedComparisonItems.length === 0 &&
+                  comparison.scopedRevisoes.length > 0 ? (
+                    <EmptyState
+                      classNames={EMPTY}
+                      title="Sem comparação detalhada"
+                      defaultMessage="Ainda não há baseline/medição comparável."
+                    />
+                  ) : null}
+
+                  {scopedComparisonItems.length > 0 ? (
+                    <details
+                      className="tm-processo-results-detail-disclosure"
+                      data-results-block="comparativo-tabela"
+                    >
+                      <summary className="tm-processo-results-detail-disclosure__summary">
+                        Ver comparação detalhada
+                      </summary>
+                      <div className="tm-processo-results-detail-disclosure__body">
+                        <p className="tm-processo-results-block__helper">
+                          Totais e breakdowns calculados — aprofundamento técnico do resumo.
+                        </p>
+                        <div className="tm-processo-results-table-scroll tm-processo-results-table-scroll--detail">
+                          <DataTable
+                            columns={columns}
+                            rows={scopedComparisonItems}
+                            rowKey={(row) => row.revisao_id}
+                          />
+                        </div>
+                      </div>
+                    </details>
+                  ) : null}
                 </>
               ) : null}
             </>
@@ -765,7 +776,6 @@ export function ProcessResultsSection({
           >
             <RefreshCw size={14} aria-hidden />
             <span>{loading ? "Atualizando…" : "Atualizar comparação"}</span>
-            <HelpTooltip content={H.atualizar} ariaLabel="Ajuda: Atualizar comparação" />
           </button>
         </div>
       ) : null}

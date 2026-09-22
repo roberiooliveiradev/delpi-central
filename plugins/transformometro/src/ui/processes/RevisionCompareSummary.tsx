@@ -26,6 +26,7 @@ type Props = {
 
 /**
  * Visual AS-IS × TO-BE × DELTA summary — labels textuais, não só cor.
+ * Help só nos três conceitos ambíguos (AS-IS / TO-BE / DELTA).
  */
 export function RevisionCompareSummary({
   asIsLabel,

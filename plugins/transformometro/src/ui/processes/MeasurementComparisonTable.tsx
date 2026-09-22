@@ -1,13 +1,10 @@
-import { EmptyState, emptyStateCardBemClasses, HelpTooltip } from "@delpi/plugin-ui/index";
+import { EmptyState, emptyStateCardBemClasses } from "@delpi/plugin-ui/index";
 
 import { DataTable } from "../../components/DataTable";
-import { TmStatusBadge } from "../../components/tmChromeUi";
-import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { formatProcessoNumber } from "../../utils/processoDetailTables";
 import type { MeasurementCompareRow } from "./buildRevisionComparisonView";
 
 const EMPTY = emptyStateCardBemClasses("ds");
-const H = TM_HELP_TOOLTIPS.resultados;
 
 type Props = {
   rows: MeasurementCompareRow[];
@@ -16,6 +13,10 @@ type Props = {
   pairMode: boolean;
 };
 
+/**
+ * Indicadores: AS-IS / TO-BE são dados da revisão; Δ é CALCULADO (apresentação).
+ * Provenance fica nos headers — não no nome de cada métrica.
+ */
 export function MeasurementComparisonTable({
   rows,
   hasAsIsMeasurement,
@@ -53,30 +54,24 @@ export function MeasurementComparisonTable({
               <span className="tm-measurement-compare__metric">
                 <span className="tm-measurement-compare__metric-name">{row.label}</span>
                 <span className="tm-measurement-compare__unit">({row.unitHint})</span>
-                {row.deltaKind === "CALCULATED_PRESENTATION" ? (
-                  <span className="tm-measurement-compare__nature">
-                    <TmStatusBadge label="CALCULADO" variant="neutral" />
-                    <HelpTooltip content={H.calculado} ariaLabel="Ajuda: CALCULADO" />
-                  </span>
-                ) : null}
               </span>
             ),
           },
           {
             key: "asis",
-            header: "AS-IS",
+            header: pairMode ? "AS-IS · INFORMADO" : "Valor · INFORMADO",
             render: (row) =>
               row.asIsValue == null ? "—" : formatProcessoNumber(row.asIsValue),
           },
           {
             key: "tobe",
-            header: "TO-BE",
+            header: "TO-BE · PROPOSTO",
             render: (row) =>
               row.toBeValue == null ? "—" : formatProcessoNumber(row.toBeValue),
           },
           {
             key: "delta",
-            header: "Δ",
+            header: "Δ · CALCULADO",
             render: (row) => {
               if (row.delta == null) return "—";
               const signed =
@@ -90,6 +85,12 @@ export function MeasurementComparisonTable({
         rows={rows}
         rowKey={(row) => row.id}
       />
+      {pairMode ? (
+        <p className="tm-measurement-compare__caption">
+          AS-IS e TO-BE vêm das revisões. Δ é diferença numérica de apresentação — sem classificar
+          ganho ou perda.
+        </p>
+      ) : null}
     </div>
   );
 }
