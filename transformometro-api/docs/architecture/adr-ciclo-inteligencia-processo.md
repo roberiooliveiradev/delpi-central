@@ -24,7 +24,7 @@ A lacuna de produto está entre mapeamento e melhoria: resultados de negócio de
 5. **Achados e hipóteses causais** não entram como colunas do processo-mestre nem como nós obrigatórios da árvore. Se a fase 2 provar a lacuna, o agregado é do diagnóstico, ligado por referência ao processo/instância/revisão/nó.
 6. **Arquitetura corporativa** (cadeia de valor → macroprocesso → processo-chave) não reutiliza a árvore de um processo individual. A árvore atual usa `processo_chave` como nível **dentro** do mestre.
 7. **Exposição TÉO:** capability parity ≠ route parity ≠ tool count. CRUD novo, se um dia existir, prefere `search_records` / `get_record` / prepare-create-update-delete e as Actions genéricas. Não criar `get_sipoc`, `create_finding`, `gpt_create_kpi` sem operação de domínio que não caiba no contrato genérico.
-8. MCP e GPT Actions permanecem adapters. GPT Actions continua `LEGACY_TRANSITIONAL_BRIDGE`.
+8. MCP e GPT Actions permanecem adapters. GPT Actions lifecycle atual: `GOVERNED_PREPARE_COMMIT_V2`. MCP: `CAPABILITY_GOVERNED_V2`.
 
 ## Consequências
 

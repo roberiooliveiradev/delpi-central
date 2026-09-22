@@ -1,13 +1,16 @@
 # Transformômetro — Custom GPT (OpenAI Actions) · persona TÉO
 
-> **Lifecycle:** `LEGACY_TRANSITIONAL_BRIDGE` — Custom GPT Actions permanece enquanto o Custom GPT atual funcionar.  
-> **Target Plugin/Agent:** MCP FULL CRUD — ver [`../integrations/openai-plugin-mcp.md`](../integrations/openai-plugin-mcp.md) (client `mcp-transformometro`).  
+> **Lifecycle:** `GOVERNED_PREPARE_COMMIT_V2` — Builder-visible surface is prepare/commit.  
+> **Legacy HTTP shims** (`gpt_create_record` / `gpt_update_record` / `gpt_delete_record` /
+> `gpt_duplicate_record` / `gpt_commit_improvement_package`): **LEGACY_TRANSITIONAL**
+> (`include_in_schema=False`) — not model guidance.  
+> **Target Plugin/Agent:** MCP `CAPABILITY_GOVERNED_V2` (20 tools) — ver [`../integrations/openai-plugin-mcp.md`](../integrations/openai-plugin-mcp.md) (client `mcp-transformometro`).  
 > **Padrão transversal:** [padrao-custom-gpt-actions-oauth.md](../../../docs/11-padroes-de-desenvolvimento/padrao-custom-gpt-actions-oauth.md)  
 > Este arquivo é a **instância** Transformômetro (paths, client, operations). Para Action Plans e outros produtos, seguir o padrão geral e espelhar esta estrutura.  
 > **Persona user-facing:** [TÉO — Especialista em Transformação Digital](./specialist-instructions.md) (produto = Transformômetro; TÉO ≠ novo serviço/bounded context).  
 > **Capability matrix (canônica):** [`../integrations/teo-capability-matrix.md`](../integrations/teo-capability-matrix.md) — paridade Actions/MCP/DÉLIA + Action Surface Budget.
 
-Superfície compacta para o **ChatGPT Custom GPT** (TÉO) analisar, cadastrar e editar o Transformômetro sem expor as ~150 rotas internas (limite ~30 operations por schema da OpenAI).
+Superfície compacta para o **ChatGPT Custom GPT** (TÉO) analisar, cadastrar e editar o Transformômetro sem expor as ~150 rotas internas (budget ~30; atual **18** operations importáveis).
 
 ## Arquivos
 
@@ -35,65 +38,80 @@ PYTHONPATH=.:../shared python scripts/sync_gpt_actions_openapi.py
 
 ## Operations (18 no schema importado — V2 prepare/commit)
 
-| operationId | Método / path |
-|-------------|----------------|
-| `gpt_get_my_context` | `GET .../me` (contexto pessoal mínimo — **não** autorização) |
-| `gpt_get_catalog` | `GET .../catalog` (inclui `registration_guide`, `diagram_catalog` canônico BPMN/flowchart_v1, enums `fase_melhoria` / `prioridade_melhoria`) |
-| `gpt_get_methodology_guide` | `GET .../methodology-guide?method=&task=` (READ-only; mesma fonte do MCP; não é fato nem escrita) |
-| `gpt_get_process_context` | `GET .../process-context?process_id=&instance_id=&revision_id=` (projeção efêmera read-only) |
-| `gpt_analyze` | `GET .../analysis?view=meta\|summary\|processes\|instances\|rows` |
-| `gpt_search_records` | `GET .../records/{entity}` (`instance_id` para revisões de uma melhoria) |
-| `gpt_get_record` | `GET .../records/{entity}/{id}` |
-| `gpt_create_record` | `POST .../records/{entity}` |
-| `gpt_update_record` | `PUT .../records/{entity}/{id}` |
-| `gpt_delete_record` | `DELETE .../records/{entity}/{id}` |
-| `gpt_duplicate_record` | `POST .../records/{entity}/{id}/duplicate` |
-| `gpt_activate_revision` | `POST .../revisions/{id}/activate` |
-| `gpt_recalculate_dashboard` | `POST .../dashboard/recalculate` |
-| `gpt_meeting_minute_workflow` | `POST .../meeting-minutes/{id}/workflow` |
-| `gpt_validate_improvement_package` | `POST .../improvement-packages/validate` (no-write; `ready`/`missing`) |
-| `gpt_commit_improvement_package` | `POST .../improvement-packages` (commit real; `dry_run` só compatibilidade) |
-| `gpt_list_evidence` | `GET .../evidence?scope=process\|revision&parent_id=` (metadados; sem binary) |
-| `gpt_manage_evidence` | `POST .../evidence/manage` (`create_link`\|`update_description`\|`delete` + `confirm_delete`) |
-| `gpt_get_process_timeline` | `GET .../processes/{processo_id}/timeline` (audit do processo) |
-| `gpt_adjust_shared_resource_cost` | `POST .../shared-resources/adjust-cost` (`registrar_reajuste` canônico) |
-| `gpt_meeting_minute_manage` | `POST .../meeting-minutes/manage` (extras; não duplica send/finalize/cancel) |
+| operationId | Método / path | Kind |
+|-------------|----------------|------|
+| `gpt_get_my_context` | `GET .../me` | READ / context (não AuthZ) |
+| `gpt_get_catalog` | `GET .../catalog` | READ / discovery |
+| `gpt_get_methodology_guide` | `GET .../methodology-guide` | READ / methodology |
+| `gpt_get_process_context` | `GET .../process-context` | READ / composition |
+| `gpt_analyze` | `GET .../analysis` | ANALYSIS |
+| `gpt_search_records` | `GET .../records/{entity}` | ENTITY READ |
+| `gpt_get_record` | `GET .../records/{entity}/{id}` | ENTITY READ |
+| `gpt_prepare_record_change` | `POST .../records/prepare-change` | ENTITY PREPARE |
+| `gpt_commit_proposal` | `POST .../proposals/commit` | COMMON COMMIT (ACT) |
+| `gpt_activate_revision` | `POST .../revisions/{id}/activate` | WORKFLOW PREPARE |
+| `gpt_recalculate_dashboard` | `POST .../dashboard/recalculate` | WORKFLOW PREPARE |
+| `gpt_meeting_minute_workflow` | `POST .../meeting-minutes/{id}/workflow` | WORKFLOW PREPARE |
+| `gpt_validate_improvement_package` | `POST .../improvement-packages/validate` | WORKFLOW PREPARE |
+| `gpt_list_evidence` | `GET .../evidence` | READ |
+| `gpt_manage_evidence` | `POST .../evidence/manage` | WORKFLOW PREPARE |
+| `gpt_get_process_timeline` | `GET .../processes/{id}/timeline` | READ |
+| `gpt_adjust_shared_resource_cost` | `POST .../shared-resources/adjust-cost` | WORKFLOW PREPARE |
+| `gpt_meeting_minute_manage` | `POST .../meeting-minutes/manage` | WORKFLOW PREPARE |
+
+### Legacy (NOT Builder-visible)
+
+| Legacy | Replacement | Public? |
+|---|---|---|
+| `gpt_create_record` / `gpt_update_record` / `gpt_delete_record` / `gpt_duplicate_record` | `gpt_prepare_record_change` + `gpt_commit_proposal` | No |
+| `gpt_commit_improvement_package` | `gpt_validate_improvement_package` + `gpt_commit_proposal` | No |
 
 ### Capacidade × superfície (TM-GPI-006)
 
 | Capacidade | Classificação |
 |---|---|
 | Contexto pessoal (nome/e-mail/cargo) | **SUPPORTED_BY_TÉO** (`gpt_get_my_context`) — perfil ≠ autorização |
-| Link/metadata de evidência (processo/revisão) | **SUPPORTED_BY_TÉO** (`gpt_list_evidence` / `gpt_manage_evidence`) |
+| Link/metadata de evidência (processo/revisão) | **SUPPORTED_BY_TÉO** (`gpt_list_evidence` / `gpt_manage_evidence` → `gpt_commit_proposal`) |
 | Upload/download binário de evidência | **BLOCKED_BY_PLATFORM** / **SUPPORTED_BY_UI_ONLY** |
 | Timeline de auditoria do processo | **SUPPORTED_BY_TÉO** (`gpt_get_process_timeline`) |
-| Reajuste semântico de custo de recurso compartilhado | **SUPPORTED_BY_TÉO** (`gpt_adjust_shared_resource_cost`) |
-| Ata: send/finalize/cancel | **SUPPORTED_BY_TÉO** (`gpt_meeting_minute_workflow`) |
-| Ata: pending/audit/versions/participants/signers/resend/create_version/generate_from_transcript | **SUPPORTED_BY_TÉO** (`gpt_meeting_minute_manage`) |
+| Reajuste semântico de custo de recurso compartilhado | **SUPPORTED_BY_TÉO** (`gpt_adjust_shared_resource_cost` → commit) |
+| Ata: send/finalize/cancel | **SUPPORTED_BY_TÉO** (`gpt_meeting_minute_workflow` → commit) |
+| Ata: pending/audit/versions/participants/signers/resend/create_version/generate_from_transcript | **SUPPORTED_BY_TÉO** (`gpt_meeting_minute_manage` → commit) |
 | Assinatura PNG / PDF / magic-link público | **NOT_EXPOSED_BY_DESIGN** / **SUPPORTED_BY_UI_ONLY** |
 | Proxy HTTP genérico, locks, websocket, backup JSON, S2S | **NOT_EXPOSED_BY_DESIGN** |
+| Tasks / Interaction Room | **DOMAIN_ONLY_BY_DESIGN** |
 
 Proveniência: ata = registro formal; áudio/vídeo = evidência original quando governada; transcript = representação derivada; resumo TÉO = conteúdo derivado. Não converter derivado em evidência autoritativa.
 
 `gpt_get_process_context` monta o Process Business Graph / Process Intelligence Context a partir dos records e services canônicos. Sem persistência de grafo. Comparativo/composição/stats ficam restritos ao escopo de filial visível. Distinga `as_is` (AS_IS), `current_composed` (CURRENT_COMPOSED) e `to_be` (TO_BE). `surface_supports` ≠ autorização de write. Na facade GPT, `setor_id` aceita UUID **ou** `codigo_setor` (ex. `comercial`); `gpt_analyze(view=instances)` honra `processo_id`.
 
-**Governed user-parity (TM-GPI-002):** writes de diagrama/WBS usam `DiagramWriteService` / `DecompositionWriteService` (mesmos validators da UI). Mermaid é derivado no servidor. Persistência via GPT só após confirmação conversacional + Action consequential + AuthZ manage + read-back (`verified`). Draft Mermaid no chat = PROPOSED / NOT SAVED.
+**Governed user-parity (TM-GPI-002):** ENTITY writes usam `gpt_prepare_record_change` → `gpt_commit_proposal`. WORKFLOW writes usam specialized PREPARE → o mesmo `gpt_commit_proposal`. Diagramas/WBS usam `DiagramWriteService` / `DecompositionWriteService` (validators da UI). Mermaid é derivado no servidor. Confirmação conversacional ≠ AuthZ. Sucesso = verified + authoritative read-back. Draft Mermaid no chat = PROPOSED / NOT SAVED.
 
 **Diagram catalog (TM-GPI-009):** TÉO **deve** descobrir tipos de nó/aresta de `flowchart_v1` em `gpt_get_catalog.diagram_catalog` (`build_bpmn_catalog_for_api()` — mesma fonte de `GET /diagrama/catalogo`). Não inferir tipos só de exemplos; exemplos não são exaustivos. Não inventar tipos fora do catálogo. Não restringir a `start`/`process`/`end` quando o catálogo lista `decision`, gateways, tasks, etc.
 
 `GET .../openapi.json` continua público só para o botão **Importar de URL**. Não entra no schema: o GPT Builder trata esse path como OpenAPI 3.1 e rejeita o documento.
 
-`entity` enum: `branch`, `department`, `process`, `instance`, `revision`, `measurement`, `investment`, `shared_resource`, `resource_cost`, `resource_link`, `meeting_minute`, `decomposition_tree`, `instance_decomposition_scope`, `revision_decomposition_overlay`, `process_diagram`, `instance_diagram_scope`, `revision_diagram_overlay`, `impact_effort_matrix`.
+`entity` enum: inclui `process_document` e demais entidades CRUD do catalog. **Nova ENTITY CRUD ≠ nova Action** — usa prepare/commit genéricos.
 
-Bodies de write usam `{ "data": { ... } }` com os **mesmos campos canônicos** do CRUD/UI da entidade. O wrapper `data` é da Action; os campos específicos **não** devem ser empacotados em `conteudo`/`payload`/`attributes`/`metadata`, exceto entities de documento (diagram/decomposition) onde o contrato exige `conteudo`.
+Bodies ENTITY V2 usam `gpt_prepare_record_change` com `{ entity, operation, record_id?, changes: { ... } }` (campos canônicos da UI sob `changes`). Não empacotar em `conteudo`/`payload`/`attributes`/`metadata`, exceto entities de documento (diagram/decomposition) onde o contrato exige `changes.conteudo`.
 
-Antes de qualquer gravação: `gpt_get_catalog` → `registration_guide.entity_schemas.<entity>` (required/optional/enums/defaults/notes). Se a assinatura genérica da Action divergir do schema da entidade, **prevalece o schema canônico**. Após erro de validação: não repetir a estrutura; reler catálogo; read-back para evitar persistência parcial/duplicata. Sucesso só com read-back autoritativo.
+Antes de qualquer gravação: `gpt_get_catalog` → `registration_guide.entity_schemas.<entity>` + `capability_surface`. Schema canônico da entidade prevalece. Após erro: não repetir; reler catálogo; read-back. Sucesso só com read-back autoritativo + verify.
+
+Fluxo canônico:
+
+```text
+UNDERSTAND → READ CURRENT STATE → PREPARE EXACT CHANGE → VALIDATE
+→ SHOW USER → EXPLICIT CONFIRMATION → COMMIT → AUTHORITATIVE READ-BACK
+→ VERIFY → REPORT OUTCOME
+```
 
 Exemplos:
 
 ```json
 {
-  "data": {
+  "entity": "shared_resource",
+  "operation": "create",
+  "changes": {
     "nome_recurso": "Embaixador Robério",
     "tipo_custo": "mao_obra",
     "recorrencia": "mensal",
@@ -103,7 +121,7 @@ Exemplos:
 }
 ```
 
-Errado (não fazer): colocar `nome_recurso` / `tipo_custo` / `recorrencia` dentro de `data.conteudo` para `shared_resource`.
+Errado (não fazer): colocar `nome_recurso` / `tipo_custo` / `recorrencia` dentro de `changes.conteudo` para `shared_resource`.
 
 `resource_link` deve usar `revisao_id` e `recurso_compartilhado_id` obtidos por read-back, nunca IDs inventados.
 
@@ -167,9 +185,9 @@ Checklist operacional: [`gpt-builder-go-live.md`](./gpt-builder-go-live.md).
 2. Authentication → OAuth (valores da tabela acima).
 3. Colar o bloco Instructions de [`specialist-instructions.md`](./specialist-instructions.md) (**REPLACE INSTRUCTIONS**).
 4. Adicionar [`teo-method-playbooks.md`](./teo-method-playbooks.md) como Knowledge do GPT (metodologia; não authority de dados).
-5. OpenAPI: reimportar porque o schema passou a incluir `gpt_get_methodology_guide`. O número **14** actions é HISTORICAL.
+5. OpenAPI: reimportar **somente** quando o schema mudar. Contrato importável = **18** operationIds (`GOVERNED_PREPARE_COMMIT_V2`). Inventários 20/21 = HISTORICAL.
 
-Fluxo guiado preferido: `gpt_get_catalog` → ler `registration_guide.package_hints` → entrevista → `gpt_validate_improvement_package` (`ready=true`) → confirmar → `gpt_commit_improvement_package`.
+Fluxo guiado preferido: `gpt_get_catalog` → `registration_guide.package_hints` → entrevista → `gpt_validate_improvement_package` (`ready=true`) → SHOW → EXPLICIT CONFIRMATION → `gpt_commit_proposal`.
 
 ### Envelope canônico do improvement package
 
@@ -181,9 +199,9 @@ process + instance + baseline? + scenario?
 
 - Reuso: `process.processo_id` / `instance.instancia_id`.
 - Cenário: campos de revisão **somente** em `scenario.revision` (nunca flat em `scenario`).
-- Validar com `gpt_validate_improvement_package` (nunca escreve; flags de write no body são ignoradas).
-- `gpt_commit_improvement_package` com `dry_run=true` permanece só por compatibilidade.
-- Pacote incompleto → HTTP 200, `ready=false`, `missing[]`, sem escrita.
+- Validar com `gpt_validate_improvement_package` (PREPARE; nunca escreve).
+- Commit via `gpt_commit_proposal` (opaque `proposal_handle`). `gpt_commit_improvement_package` = LEGACY_TRANSITIONAL off-schema.
+- Pacote incompleto → proposal com `ready=false` / `act_allowed=false`, sem escrita.
 - Não há dialeto flat→nested; um único contrato.
 Method playbooks (SIPOC, Lean, Ishikawa, CTP, TDR, KPI, SWOT…) são reasoning/conversa via Instructions+Knowledge; **não** geram novas Actions.
 

@@ -10,8 +10,8 @@
 | [`architecture/`](./architecture/) | Contratos, ADRs e realtime. Alvos não implementados: [ciclo](./architecture/adr-ciclo-inteligencia-processo.md) · [Portal Transforma+](./architecture/adr-portal-transforma-plus.md) |
 | [`domain/`](./domain/) | Regras de cálculo e categorias de benefício |
 | [`schemas/`](./schemas/) | JSON Schemas canônicos (flowchart, WBS, matriz) |
-| [`gpt-actions/`](./gpt-actions/) | Custom GPT OpenAI · persona **TÉO** (OAuth, OpenAPI, instructions) — **LEGACY_TRANSITIONAL_BRIDGE** |
-| [`integrations/`](./integrations/) | Plugin/MCP TÉO FULL CRUD (`mcp-transformometro`) — **TARGET** agentes |
+| [`gpt-actions/`](./gpt-actions/) | Custom GPT OpenAI · persona **TÉO** — **GOVERNED_PREPARE_COMMIT_V2** (18 ops) |
+| [`integrations/`](./integrations/) | Plugin/MCP TÉO **CAPABILITY_GOVERNED_V2** (20 tools, `mcp-transformometro`) |
 | [`chat/`](./chat/) | Snapshot OpenAPI read-only do Chat Minha DELPI |
 | [`meeting-minutes/`](./meeting-minutes/) | Atas Transforma+ / Kimi |
 | [`archive/`](./archive/) | Status de playbooks entregues e histórico (não é fonte vigente) |
@@ -23,7 +23,7 @@
 | Subir / deployar a API | [operations/DEPLOYMENT.md](./operations/DEPLOYMENT.md) · [operations/DEVELOPMENT.md](./operations/DEVELOPMENT.md) |
 | Fórmulas oficiais | [domain/regras-de-calculo.md](./domain/regras-de-calculo.md) |
 | Custom GPT (**TÉO**) Actions bridge | [gpt-actions/custom-gpt-actions.md](./gpt-actions/custom-gpt-actions.md) · [gpt-actions/specialist-instructions.md](./gpt-actions/specialist-instructions.md) |
-| Plugin/MCP (**TÉO**) FULL CRUD | [integrations/openai-plugin-mcp.md](./integrations/openai-plugin-mcp.md) · [integrations/keycloak-mcp-client-runbook.md](./integrations/keycloak-mcp-client-runbook.md) |
+| Plugin/MCP (**TÉO**) capability-driven V2 | [integrations/openai-plugin-mcp.md](./integrations/openai-plugin-mcp.md) · [integrations/keycloak-mcp-client-runbook.md](./integrations/keycloak-mcp-client-runbook.md) |
 | **TÉO Capability Matrix (canônica)** | [integrations/teo-capability-matrix.md](./integrations/teo-capability-matrix.md) |
 | Chat Minha DELPI (read-only) | [chat/agent-openapi.md](./chat/agent-openapi.md) |
 | Atas + Kimi | [meeting-minutes/kimi.md](./meeting-minutes/kimi.md) |

@@ -94,7 +94,8 @@ gpt_analyze para resultados. KPI: nome, definição, unidade, fórmula, direçã
 1. No GPT Builder, **REPLACE INSTRUCTIONS** com o bloco acima.
 2. Adicionar/atualizar [`teo-method-playbooks.md`](./teo-method-playbooks.md) em **Knowledge**.
 3. Não colar os playbooks completos em Instructions.
-4. Esperado: **18 Actions** importáveis (V2: `gpt_prepare_record_change` + `gpt_commit_proposal`; sem CRUD genérico nem `gpt_commit_improvement_package`). Inclui `gpt_get_methodology_guide`. `openapi.json` não entra na contagem. Reimportar o OpenAPI no GPT Builder depois deste schema.
+4. Esperado: **18 Actions** importáveis (V2). Sem CRUD genérico nem `gpt_commit_improvement_package` no schema. Inclui `gpt_get_methodology_guide`. Reimportar OpenAPI **somente** se o schema mudou.
 5. Auth OAuth: `chatgpt-transformometro`.
-6. Após qualquer mudança no bloco, rodar o teste de budget antes de atualizar o Builder.
-7. Detalhes operacionais: [custom-gpt-actions.md](./custom-gpt-actions.md) · [gpt-builder-go-live.md](./gpt-builder-go-live.md).
+6. Após qualquer mudança no bloco Instructions, rodar o teste de budget antes de atualizar o Builder.
+7. Detalhes: [custom-gpt-actions.md](./custom-gpt-actions.md) · [gpt-builder-go-live.md](./gpt-builder-go-live.md) · matriz [../integrations/teo-capability-matrix.md](../integrations/teo-capability-matrix.md).
+8. Catalog/registration_guide V2 ensina `prepare_record_change` + `commit_proposal` (não `gpt_create_record`).

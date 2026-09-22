@@ -90,7 +90,7 @@ Resumo operacional:
 - Method Router escolhe o menor método suficiente; `INFERRED != FACT`; `PROPOSED != SAVED`.
 - `gpt_get_catalog` + `registration_guide.entity_schemas` antes de qualquer gravação.
 - Schema canônico da entidade prevalece sobre a assinatura genérica da Action; não empacotar campos em `conteudo` (exceto documentos).
-- Envelope nested (`process` + `instance` + `scenario.revision`) → `gpt_validate_improvement_package` → `ready=true` → mostrar → confirmar → `gpt_commit_improvement_package`.
+- Envelope nested (`process` + `instance` + `scenario.revision`) → `gpt_validate_improvement_package` → `ready=true` → mostrar → confirmar → `gpt_commit_proposal`.
 - Diagramas/WBS: draft = PROPOSED; persistência governada com validators, manage AuthZ e read-back.
 - Após write rejeitado: read-back antes de retry; evitar duplicata.
 - Evidência: links/metadados via `gpt_list_evidence` / `gpt_manage_evidence`; upload/download binário permanece UI-only / BLOCKED_BY_PLATFORM.

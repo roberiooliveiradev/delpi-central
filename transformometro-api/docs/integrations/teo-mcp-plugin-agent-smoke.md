@@ -46,10 +46,11 @@ PYTHONPATH=.:../shared pytest tests/test_teo_mcp_contract.py tests/test_teo_mcp_
 | Keycloak production apply | **PROVEN** |
 | ChatGPT Plugin create + OAuth | **PASS** |
 | Tools discovery 32/32 (2026-09-17) | **HISTORICAL PASS** |
-| Tools discovery 33/33 including `get_methodology_guide` | **TEST_NOT_RUN** until published-app refresh |
-| READ live (`get_my_context` / `get_catalog` / `search_records`) | **PASS** |
-| PREPARE via ChatGPT | **TEST_NOT_RUN** |
-| ACT / WRITE BUSINESS OUTCOME via ChatGPT | **TEST_NOT_RUN** |
-| GPT Actions legacy bridge | **LEGACY_TRANSITIONAL_BRIDGE** — 21 importable ops after methodology; 20 on 2026-09-17 is HISTORICAL |
+| Tools discovery 20/20 including `get_methodology_guide`, `prepare_record_change`, `commit_proposal` | revalidar no app publicado |
+| GPT Actions surface | **GOVERNED_PREPARE_COMMIT_V2** — 18 importable; 20/21 = HISTORICAL |
+| READ live (`get_my_context` / `get_catalog` / `search_records`) | **PASS** (revalidate after catalog guidance deploy) |
+| PREPARE via ChatGPT | **PROVEN** if observed; else **TEST_NOT_RUN** |
+| COMMIT via ChatGPT | **TEST_NOT_RUN** |
+| Wrong-user proposal | **TEST_NOT_RUN** |
 | Agent Studio live | PENDING |
-| Proposal store horizontal scale | TARGET (single replica ACCEPTED_WITH_RESIDUAL) |
+| Proposal store horizontal scale | TO_REVIEW if scale-out (single replica ACCEPT_WITH_RESIDUAL) |

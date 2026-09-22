@@ -37,6 +37,34 @@ Canonical domain capability
 - Entity writes: `gpt_prepare_record_change` → opaque `proposal_handle` → `gpt_commit_proposal`.
 - Specialized workflows: Action = PREPARE; commit via the same `gpt_commit_proposal` (not a generic proxy).
 
+## Source of truth
+
+| Concern | Canonical source |
+|---|---|
+| Domain rules | Transformômetro Application/Domain |
+| Entity contracts | `entities.py` + `registration_guide.entity_schemas` |
+| Capability metadata | `capability_descriptors` + catalog `capability_surface` |
+| Actions surface | `openapi_builder.py` → generated OpenAPI (18 ops) |
+| MCP surface | `constants.py` / `server.py` registration (20 tools) |
+| AuthZ | Core RBAC + domain enforcement |
+| GPT Instructions | `docs/gpt-actions/specialist-instructions.md` |
+| Methodology | `teo-method-playbooks.md` + `query_methodology_guide` |
+| Runtime status | deploy + acceptance evidence (not docs alone) |
+| Capability matrix | **this file** |
+
+## PREPARE / CONFIRM / COMMIT (canonical flow)
+
+```text
+UNDERSTAND → READ CURRENT STATE → PREPARE EXACT CHANGE → VALIDATE
+→ SHOW USER → EXPLICIT CONFIRMATION → COMMIT → AUTHORITATIVE READ-BACK
+→ VERIFY → REPORT OUTCOME
+```
+
+- COMMIT = ACT stage (`gpt_commit_proposal` / MCP `commit_proposal`).
+- Explicit confirmation ≠ AuthZ (backend revalidates on commit).
+- Technical 2xx ≠ business outcome (need verified read-back).
+- Proposal store: in-process, single-replica → **ACCEPT_WITH_RESIDUAL**.
+
 ## GPT ACTION SURFACE BUDGET
 
 Documented project guardrail (not an external vendor claim): prefer **≤ ~30 importable operations** (`custom-gpt-actions-integration.mdc` + `test_openapi_has_at_most_30_operations`).

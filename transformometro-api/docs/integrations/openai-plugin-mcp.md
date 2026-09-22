@@ -54,29 +54,30 @@ Workspace Agent / ChatGPT Plugin (TÉO)
 
 ```text
 TEO_MCP_SURFACE = CAPABILITY_GOVERNED_V2
-READ + PREPARE + ACT = REQUIRED
+READ + PREPARE + COMMON COMMIT = REQUIRED
 DAVI_READ_ONLY_COPY = FORBIDDEN
 ```
 
 ### Capability vs tools
 
 ```text
-21 GPT Actions capabilities
+18 GPT Actions importable
 ≠
 20 MCP tools
 ```
 
-No MCP atual, 1 capability GPT pode decompor-se em READ / PREPARE / ACT.
+No MCP atual, 1 capability GPT pode decompor-se em READ / PREPARE; writes convergem em `commit_proposal`.
 
 | Métrica | Valor | Classificação |
 |---|---|---|
-| GPT Actions importable | **21**, incluindo `gpt_get_methodology_guide` | CURRENT no código |
-| GPT Actions em 2026-09-17 | 20 | HISTORICAL |
-| MCP tools registered | **20** (10 READ + 1 ANALYSIS + 8 PREPARE + 1 commit_proposal) | código; ChatGPT rediscovery = TEST_NOT_RUN |
+| GPT Actions importable | **18** (`GOVERNED_PREPARE_COMMIT_V2`) | CURRENT |
+| GPT Actions 20/21 | HISTORICAL | — |
+| MCP tools registered | **20** (10 READ + 1 ANALYSIS + 8 PREPARE + 1 commit_proposal) | CURRENT (código + deploy) |
+| MCP before V2 | 33 | HISTORICAL |
 | Unbound ACT | 0 | PROVEN |
-| ACT input | somente `proposal_handle` | PROVEN (código) |
+| COMMIT input | somente `proposal_handle` (+ confirmation) | PROVEN |
 
-`33 ≠ 21` **não** é regression. A metodologia existe nas duas superfícies pela mesma fonte. Writes MCP continuam PREPARE/ACT. Ver `teo-mcp-capability-parity.md`.
+`18 ≠ 20` **não** é regression (meeting manage projeta READ/ANALYSIS/PREPARE). Ver `teo-mcp-capability-parity.md`.
 
 ## Methodology guide
 
@@ -84,7 +85,7 @@ No MCP atual, 1 capability GPT pode decompor-se em READ / PREPARE / ACT.
 Agent Instructions = coordenação
 query_methodology_guide = fonte única
 MCP get_methodology_guide = adapter
-GPT gpt_get_methodology_guide = adapter legado
+GPT gpt_get_methodology_guide = adapter
 Transformômetro domain = dados e regras finais
 ```
 
@@ -92,18 +93,18 @@ A capability é READ-only. Método não autoriza, não persiste e não transform
 
 Fonte editorial: `docs/gpt-actions/teo-method-playbooks.md`. Runtime: `tm_app/application/methodology/guide.py`.
 
-GPT Builder: reimportar o OpenAPI depois do deploy. O app MCP publicado não muda de schema nesta Action.
+GPT Builder: reimportar OpenAPI **somente** se o schema Actions mudar. Catalog/registration guidance muda no runtime sem reimport.
 
 ## Write governance (MCP)
 
 ```text
-PREPARE → proposal_handle
-ACT → proposal_handle only
+PREPARE → opaque proposal_handle
+COMMIT (ACT stage) → proposal_handle only via commit_proposal
 ```
 
 Proposal (server-side) contém: actor binding, exact change, state fingerprint, expiration, expected postcondition.
 
-ACT: revalida AuthZ + fingerprint → executa exact change → authoritative read-back → verifica outcome.
+COMMIT: revalida AuthZ + fingerprint → executa exact change → authoritative read-back → verifica outcome.
 
 Se read-back falhar:
 
@@ -114,12 +115,13 @@ OUTCOME_VERIFICATION_FAILED
 | Item | Estado |
 |---|---|
 | Proposal store | in-process, TTL ≈ 15 min |
-| Replicas (prod) | 1 |
-| `CURRENT SINGLE-REPLICA OPERATION` | **ACCEPTED_WITH_RESIDUAL** |
-| Shared proposal store (Redis etc.) | **TARGET** se escala horizontal |
+| Replicas (prod) | 1 (uvicorn single process) |
+| Suitability | **ACCEPT_WITH_RESIDUAL** |
+| Shared proposal store (Redis/DB) | **TO_REVIEW** se workers/replicas > 1 ou prepare/commit cross-process |
 
 Incomplete packages: `ready=false` / `act_allowed=false` → NO WRITE.
 Honor `confirm_*`. MCP metadata / OAuth scopes ≠ RBAC.
+DÉLIA **não** é obrigatoriamente MCP client — target: capability contract/core.
 
 ## Shared OAuth vs isolated resource
 
@@ -151,7 +153,7 @@ Detalhes Keycloak: [keycloak-mcp-client-runbook.md](./keycloak-mcp-client-runboo
 
 | Surface | Client | Lifecycle |
 |---|---|---|
-| GPT Actions | `chatgpt-transformometro` | **LEGACY_TRANSITIONAL_BRIDGE** (21 importable operationIds; `gpt_get_openapi_schema` continua meta) |
+| GPT Actions | `chatgpt-transformometro` | **GOVERNED_PREPARE_COMMIT_V2** (18 importable; legacy CRUD shims off-schema; `gpt_get_openapi_schema` meta) |
 | MCP Plugin | `mcp-transformometro` | **CURRENT** para agents |
 
 Não remover GPT Actions nesta fase. Critério futuro de depreciação:
@@ -181,7 +183,7 @@ Verificação corrigida (produção):
 | GPT Actions importable em 2026-09-17 | 20 (HISTORICAL) |
 | GPT Actions importable no código | 21 |
 | MCP tools em 2026-09-17 | 32 (HISTORICAL) |
-| MCP tools no código | 33 |
+| MCP tools no código | 20 (`CAPABILITY_GOVERNED_V2`; before=33 HISTORICAL) |
 | Replicas | 1 | PASS |
 
 ## ChatGPT Plugin acceptance (PROVEN)
@@ -190,7 +192,7 @@ Verificação corrigida (produção):
 |---|---|
 | Plugin criado (`TÉO — Transformômetro`) | PASS |
 | OAuth user connection | PASS |
-| Tools discovery | 32/32 PASS em 2026-09-17; código atual = **33** (`get_methodology_guide`). Rediscovery no app publicado = **TEST_NOT_RUN** |
+| Tools discovery | código atual = **20**. 33 = HISTORICAL. Rediscovery no app publicado = revalidar (pode já ter ocorrido) |
 | `get_my_context` | PASS |
 | `get_catalog` | PASS |
 | `search_records` (entity=process, q=Transforma → PROC-0001 ativo; diagram_node_count=115; decomposition_node_count=64) | PASS |

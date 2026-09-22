@@ -2,7 +2,7 @@
 
 > **Specialist brand:** TÉO — Especialista em Transformação Digital
 > **Technical client id:** `mcp-transformometro` (do not rename to `mcp-teo` / do not reuse `chatgpt-transformometro`)
-> **Surface:** FULL CRUD (READ + PREPARE + ACT) — not DAVI READ-only.
+> **Surface:** `CAPABILITY_GOVERNED_V2` (READ + PREPARE + commit_proposal) — not DAVI READ-only.
 
 > **KEYCLOAK_CONFIG = APPLIED_EVALUATE_PROVEN** (produção, 2026-09-17, host `srv-api`).
 > ChatGPT Plugin OAuth + tool discovery + READ live = **PROVEN**.
@@ -183,7 +183,7 @@ https://minhadelpi.com.br/apps/transformometro-api/.well-known/oauth-protected-r
 
 | Client | Surface | Status |
 |---|---|---|
-| `chatgpt-transformometro` | Custom GPT Actions `/gpt-actions/v1` | **LEGACY_TRANSITIONAL_BRIDGE** — 21 importable operationIds; manter até parity + writes aceitos + período de transição |
+| `chatgpt-transformometro` | Custom GPT Actions `/gpt-actions/v1` | **GOVERNED_PREPARE_COMMIT_V2** — 18 importable operationIds; CRUD/package commit legacy off-schema |
 | `mcp-transformometro` | Plugin MCP `/mcp` | **CURRENT** para agents (READ live PROVEN; PREPARE/ACT ChatGPT = TEST_NOT_RUN) |
 
 ## ENVIRONMENT PROVENANCE GATE
