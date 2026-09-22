@@ -48,6 +48,9 @@ describe("UserProfile", () => {
     expect(page).not.toMatch(/emptyValue:\s*["']—["']/);
     expect(page).not.toMatch(/badgeAdminView|Leitura admin/);
     expect(page).not.toMatch(/preferencesOther/);
+    expect(page).toMatch(/accessTitle/);
+    expect(page).toMatch(/accessCapabilitiesHeading|Capacidades da sessão/);
+    expect(page).toMatch(/jobTitle:/);
     expect(page).toMatch(/unitsLabel/);
     expect(page).toMatch(/preferencesTitle/);
   });

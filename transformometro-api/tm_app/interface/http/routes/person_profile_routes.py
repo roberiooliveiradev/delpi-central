@@ -62,6 +62,48 @@ def list_person_profile_photo_flags(request: Request, ids: str = Query(default="
 
 
 @router.get(
+    "/person-profiles/{user_id}",
+    operation_id="get_transformometro_person_profile",
+)
+def get_person_profile(request: Request, user_id: str):
+    """Identidade corporativa transversal (cargo/contatos) via Core S2S."""
+    if denied := _require_access(request):
+        return denied
+    uid = (user_id or "").strip()
+    if not uid:
+        return fail("user_id inválido.", 400)
+    profile = _gateway.get_person_profile(uid)
+    if profile is None:
+        return ok(
+            {
+                "user_id": uid,
+                "job_title": None,
+                "phone_e164": None,
+                "mobile_e164": None,
+                "whatsapp_e164": None,
+                "has_photo": False,
+            }
+        )
+
+    def text(key: str) -> str | None:
+        value = profile.get(key)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+        return None
+
+    return ok(
+        {
+            "user_id": str(profile.get("user_id") or uid),
+            "job_title": text("job_title"),
+            "phone_e164": text("phone_e164"),
+            "mobile_e164": text("mobile_e164"),
+            "whatsapp_e164": text("whatsapp_e164"),
+            "has_photo": bool(profile.get("has_photo")),
+        }
+    )
+
+
+@router.get(
     "/person-profiles/{user_id}/photo",
     operation_id="get_transformometro_person_profile_photo",
 )

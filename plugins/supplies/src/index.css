@@ -621,6 +621,54 @@
   list-style: none;
 }
 
+.dashboard-supplies-portal .sp-user-profile__access {
+  display: grid;
+  gap: 18px;
+}
+
+.dashboard-supplies-portal .sp-user-profile__access-group {
+  display: grid;
+  gap: 10px;
+}
+
+.dashboard-supplies-portal .sp-user-profile__access-heading {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 650;
+}
+
+.dashboard-supplies-portal .sp-user-profile__permission-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.dashboard-supplies-portal .sp-user-profile__permission-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px 16px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--sp-border, #e6e6e6) 80%, transparent);
+  background: color-mix(in srgb, var(--sp-text, #111) 3%, transparent);
+}
+
+.dashboard-supplies-portal .sp-user-profile__permission-list code {
+  font-size: 0.8rem;
+  opacity: 0.85;
+}
+
+.dashboard-supplies-portal .sp-nav-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
 /* Pedidos de compra — layout de domínio (chrome = plugin-ui) */
 .dashboard-supplies-portal .sp-purchase-orders__filters {
   display: grid;

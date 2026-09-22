@@ -149,6 +149,27 @@ export async function downloadPersonProfilePhoto(
   return response.blob();
 }
 
+export type PersonProfileIdentityDto = {
+  user_id: string;
+  job_title: string | null;
+  phone_e164: string | null;
+  mobile_e164: string | null;
+  whatsapp_e164: string | null;
+  has_photo: boolean;
+};
+
+/** Identidade corporativa transversal (qualquer usuário) via facade TM → Core S2S. */
+export function fetchPersonProfileIdentity(
+  userId: string,
+  getAccessToken?: () => string | undefined,
+): Promise<PersonProfileIdentityDto> {
+  const uid = userId.trim();
+  return request<PersonProfileIdentityDto>(
+    `/person-profiles/${encodeURIComponent(uid)}`,
+    getAccessToken,
+  );
+}
+
 export function postInteractionMessage(
   roomId: string,
   content: string,

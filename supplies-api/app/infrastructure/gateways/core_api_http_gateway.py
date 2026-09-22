@@ -114,3 +114,39 @@ class CoreApiHttpGateway:
                 "email": email,
             }
         return result
+
+    def get_person_profile(self, user_id: str) -> dict | None:
+        """S2S Core person-profile (cargo/contatos). Soft-fail None se indisponível."""
+        uid = (user_id or "").strip()
+        token = (Settings.CORE_API_INTEGRATIONS_SERVICE_TOKEN or "").strip()
+        if not uid or not token:
+            return None
+        url = urljoin(self.base_url, f"integrations/person-profiles/{uid}")
+        auth = token if token.lower().startswith("bearer ") else f"Bearer {token}"
+        service = token[7:].strip() if token.lower().startswith("bearer ") else token
+        try:
+            response = requests.get(
+                url,
+                headers={
+                    "Authorization": auth,
+                    "X-Delpi-Service-Token": service,
+                    "X-Delpi-Caller-App": "supplies-api",
+                    "Accept": "application/json",
+                },
+                timeout=self.timeout,
+            )
+        except requests.RequestException:
+            logger.exception("core_api_person_profile_failed user_id=%s", uid)
+            return None
+        if response.status_code >= 400:
+            logger.warning(
+                "core_api_person_profile_rejected status=%s user_id=%s",
+                response.status_code,
+                uid,
+            )
+            return None
+        try:
+            payload = response.json()
+        except ValueError:
+            return None
+        return payload if isinstance(payload, dict) else None

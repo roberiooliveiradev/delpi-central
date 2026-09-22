@@ -6,10 +6,17 @@ export type SuppliesUserProfile = {
   userId: string;
   name: string;
   email: string;
+  jobTitle?: string | null;
+  phone?: string | null;
+  mobile?: string | null;
+  whatsapp?: string | null;
+  hasPhoto?: boolean;
   isSelf: boolean;
   preferences: Pick<SuppliesPreferences, "userId" | "defaultBranch" | "tableDensity">;
   capabilities: SuppliesCapabilityFlags | null;
   allowedUnits: string[];
+  isSuperadmin?: boolean | null;
+  permissions?: string[] | null;
 };
 
 export type PatchSuppliesUserProfilePayload = {

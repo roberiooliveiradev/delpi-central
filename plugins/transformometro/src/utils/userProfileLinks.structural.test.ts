@@ -56,7 +56,7 @@ describe("Transforma+ user profile routes", () => {
     expect(page).toMatch(/isSelf=\{isSelf\}/);
     expect(page).toMatch(/onEditSelf=/);
     expect(page).toMatch(/LoadingActivityCard/);
-    expect(page).toMatch(/fetchMyPersonProfile/);
+    expect(page).toMatch(/fetchPersonProfileIdentity/);
     expect(page).toMatch(/jobTitle:/);
     expect(page).toMatch(/accessTitle/);
     expect(page).toMatch(/usePortalSessionAccess/);

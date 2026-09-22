@@ -89,6 +89,33 @@ class CorePersonProfileS2SGateway:
                 out[uid] = bool(row.get("has_photo"))
         return out
 
+    def get_person_profile(self, user_id: str) -> dict[str, Any] | None:
+        """Full Core person-profile for any user_id (S2S). Soft-fail None."""
+        uid = (user_id or "").strip()
+        if not uid or not self.configured():
+            return None
+        try:
+            response = httpx.get(
+                f"{self.core_api_url}/integrations/person-profiles/{uid}",
+                headers=self._headers(),
+                timeout=self.timeout,
+            )
+        except Exception:
+            logger.exception("tm_person_profile_get_failed user_id=%s", uid)
+            return None
+        if response.status_code >= 400:
+            logger.warning(
+                "tm_person_profile_get_rejected status=%s user_id=%s",
+                response.status_code,
+                uid,
+            )
+            return None
+        try:
+            payload: Any = response.json()
+        except ValueError:
+            return None
+        return payload if isinstance(payload, dict) else None
+
     def get_photo_bytes(self, user_id: str) -> tuple[bytes, str, str] | None:
         """Returns (content, content_type, file_name) or None when missing/unavailable."""
         uid = (user_id or "").strip()

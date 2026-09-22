@@ -195,6 +195,27 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
 
   const busy = loading || session.loading;
   const ready = !busy && Boolean(profile);
+  const jobTitle =
+    (profile?.jobTitle ?? personProfile?.job_title ?? "") || null;
+  const heroDescription =
+    (typeof jobTitle === "string" && jobTitle.trim()) ||
+    (profile?.email || "").trim() ||
+    undefined;
+
+  const permissionItems = useMemo(() => {
+    const codes = [...new Set((profile?.permissions ?? []).map((c) => String(c).trim()).filter(Boolean))];
+    return codes
+      .filter(
+        (code) =>
+          code === C.permissionAccessCode || code === C.permissionManageCode,
+      )
+      .sort((a, b) => a.localeCompare(b, "pt-BR"))
+      .map((code) => ({
+        code,
+        label:
+          code === C.permissionManageCode ? C.permissionManage : C.permissionAccess,
+      }));
+  }, [profile?.permissions]);
 
   return (
     <SuppliesPortalUserProfilePage
@@ -245,7 +266,7 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
               title: (
                 <SuppliesTitleWithHelp title={profile.name} hint={SP_HELP.userProfile} />
               ),
-              description: (profile.email || "").trim() || undefined,
+              description: heroDescription,
             }
           : undefined
       }
@@ -257,14 +278,10 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
               email: profile.email,
               photoUrl: isSelf === true ? photoUrl : null,
               colorKey: userId,
-              ...(isSelf === true
-                ? {
-                    jobTitle: personProfile?.job_title ?? null,
-                    phone: personProfile?.phone_e164 ?? null,
-                    mobile: personProfile?.mobile_e164 ?? null,
-                    whatsapp: personProfile?.whatsapp_e164 ?? null,
-                  }
-                : {}),
+              jobTitle: profile.jobTitle ?? personProfile?.job_title ?? null,
+              phone: profile.phone ?? personProfile?.phone_e164 ?? null,
+              mobile: profile.mobile ?? personProfile?.mobile_e164 ?? null,
+              whatsapp: profile.whatsapp ?? personProfile?.whatsapp_e164 ?? null,
             }
           : null
       }
@@ -325,25 +342,59 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
             ) : null}
 
             <SuppliesSectionCard title={C.accessTitle} subtitle={C.accessSubtitle}>
-              {profile.isSelf && profile.capabilities ? (
-                <ul className="sp-user-profile__caps">
-                  {Object.entries(profile.capabilities).map(([key, enabled]) => (
-                    <li key={key}>
-                      <SuppliesStatusBadge
-                        label={`${key}: ${enabled ? "sim" : "não"}`}
-                        variant={enabled ? "success" : "neutral"}
-                      />
-                    </li>
-                  ))}
-                  <li>
-                    <SuppliesStatusBadge
-                      label={`${C.unitsLabel}: ${units.join(", ") || "—"}`}
-                      variant="info"
-                    />
-                  </li>
-                </ul>
+              {profile.isSelf ? (
+                <div className="sp-user-profile__access">
+                  {profile.isSuperadmin ? (
+                    <div className="sp-user-profile__access-group">
+                      <h3 className="sp-user-profile__access-heading">
+                        {C.accessContextHeading}
+                      </h3>
+                      <div className="sp-nav-row">
+                        <SuppliesStatusBadge label={C.superadmin} variant="warning" />
+                      </div>
+                    </div>
+                  ) : null}
+                  <div className="sp-user-profile__access-group">
+                    <h3 className="sp-user-profile__access-heading">
+                      {C.accessCapabilitiesHeading}
+                    </h3>
+                    <div className="sp-nav-row">
+                      {profile.capabilities?.access || profile.isSuperadmin ? (
+                        <SuppliesStatusBadge label={C.capabilityAccess} variant="info" />
+                      ) : null}
+                      {profile.capabilities?.manage || profile.isSuperadmin ? (
+                        <SuppliesStatusBadge label={C.capabilityManage} variant="info" />
+                      ) : null}
+                      {units.length > 0 ? (
+                        <SuppliesStatusBadge
+                          label={`${C.unitsLabel}: ${units.join(", ")}`}
+                          variant="info"
+                        />
+                      ) : null}
+                    </div>
+                  </div>
+                  <div className="sp-user-profile__access-group">
+                    <h3 className="sp-user-profile__access-heading">
+                      {C.accessPermissionsHeading}
+                    </h3>
+                    {permissionItems.length > 0 ? (
+                      <ul className="sp-user-profile__permission-list">
+                        {permissionItems.map((item) => (
+                          <li key={item.code}>
+                            <strong>{item.label}</strong>
+                            <code>{item.code}</code>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="sp-user-profile__note">{C.accessSelfOnly}</p>
+                    )}
+                  </div>
+                </div>
+              ) : isSelf === false ? (
+                <p className="sp-user-profile__note">{C.accessSelfOnly}</p>
               ) : (
-                <p className="sp-user-profile__note">{C.accessOther}</p>
+                <p className="sp-user-profile__note">{C.accessLoading}</p>
               )}
             </SuppliesSectionCard>
           </>

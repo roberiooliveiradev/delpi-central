@@ -20,12 +20,12 @@ import { TransformometroShell } from "../../components/TransformometroShell";
 import { TmStatusBadge } from "../../components/tmChromeUi";
 import { PERSON_DIRECTORY_LABELS as L } from "../../content/personDirectoryLabels";
 import {
-  fetchMyPersonProfile,
-  lookupDirectoryUsers,
-  type MyPersonProfile,
-} from "../../data/api/directoryUsersApi";
-import { downloadPersonProfilePhoto } from "../../data/api/transformometroInteractionApi";
+  fetchPersonProfileIdentity,
+  downloadPersonProfilePhoto,
+  type PersonProfileIdentityDto,
+} from "../../data/api/transformometroInteractionApi";
 import { fetchMeProfile } from "../../data/api/meApi";
+import { lookupDirectoryUsers } from "../../data/api/directoryUsersApi";
 import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
 import {
   TRANSFORMOMETRO_ACCESS_PERMISSION,
@@ -83,7 +83,7 @@ export function PersonDirectoryPage({
   const [name, setName] = useState<string>("");
   const [email, setEmail] = useState<string | null>(null);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
-  const [personProfile, setPersonProfile] = useState<MyPersonProfile | null>(null);
+  const [personProfile, setPersonProfile] = useState<PersonProfileIdentityDto | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -153,12 +153,13 @@ export function PersonDirectoryPage({
   }, [getAccessToken, userId]);
 
   useEffect(() => {
-    if (isSelf !== true) {
-      setPersonProfile(null);
+    const id = userId.trim();
+    if (!id || loading || error) {
+      if (!id || error) setPersonProfile(null);
       return undefined;
     }
     const controller = new AbortController();
-    void fetchMyPersonProfile(getAccessToken, controller.signal)
+    void fetchPersonProfileIdentity(id, getAccessToken)
       .then((profile) => {
         if (!controller.signal.aborted) setPersonProfile(profile);
       })
@@ -166,7 +167,7 @@ export function PersonDirectoryPage({
         if (!controller.signal.aborted) setPersonProfile(null);
       });
     return () => controller.abort();
-  }, [getAccessToken, isSelf]);
+  }, [getAccessToken, userId, loading, error]);
 
   const shortcuts = useMemo<Shortcut[]>(
     () => [
@@ -217,7 +218,7 @@ export function PersonDirectoryPage({
 
   const busy = loading || meLoading;
   const ready = !busy && !error;
-  const jobTitle = isSelf === true ? personProfile?.job_title ?? null : null;
+  const jobTitle = personProfile?.job_title ?? null;
   const supporting =
     (jobTitle || "").trim() || (email || "").trim() || undefined;
 
@@ -264,14 +265,10 @@ export function PersonDirectoryPage({
                 email,
                 photoUrl,
                 colorKey: userId,
-                ...(isSelf === true
-                  ? {
-                      jobTitle: personProfile?.job_title ?? null,
-                      phone: personProfile?.phone_e164 ?? null,
-                      mobile: personProfile?.mobile_e164 ?? null,
-                      whatsapp: personProfile?.whatsapp_e164 ?? null,
-                    }
-                  : {}),
+                jobTitle: personProfile?.job_title ?? null,
+                phone: personProfile?.phone_e164 ?? null,
+                mobile: personProfile?.mobile_e164 ?? null,
+                whatsapp: personProfile?.whatsapp_e164 ?? null,
               }
             : null
         }

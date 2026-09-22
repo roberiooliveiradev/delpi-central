@@ -14,6 +14,11 @@ class Settings:
 
     CORE_API_BASE_URL = os.getenv("CORE_API_BASE_URL", "http://core-api:8000")
     CORE_API_TIMEOUT_SECONDS = float(os.getenv("CORE_API_TIMEOUT", "10"))
+    CORE_API_INTEGRATIONS_SERVICE_TOKEN = (
+        os.getenv("CORE_API_INTEGRATIONS_SERVICE_TOKEN")
+        or os.getenv("API_DELPI_INTERNAL_SERVICE_TOKEN")
+        or ""
+    )
 
     DELPI_API_URL = os.getenv("DELPI_API_URL", "http://delpi-api-delpi:8000")
     DELPI_API_TIMEOUT_SECONDS = float(os.getenv("DELPI_API_TIMEOUT", "30"))

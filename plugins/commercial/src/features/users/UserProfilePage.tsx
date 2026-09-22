@@ -357,7 +357,10 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
   const displayName = profile
     ? directoryUserLabelOrFallback({ name: profile.name })
     : "";
-  const heroDescription = (profile?.job_title ?? "").trim() || undefined;
+  const heroDescription =
+    (profile?.job_title ?? "").trim() ||
+    (profile?.email ?? "").trim() ||
+    undefined;
   const pathSearch =
     typeof window !== "undefined" ? window.location.search : "";
   const back = resolvePagePathBack(

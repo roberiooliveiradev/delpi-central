@@ -102,6 +102,52 @@ class UserProfileService:
             "tableDensity": row.get("table_density") or "comfortable",
         }
 
+    def _person_identity_fields(self, target_user_id: str) -> dict:
+        """Campos transversais Minha DELPI (Core). Ausência → null (UI: Não informado)."""
+        empty = {
+            "jobTitle": None,
+            "phone": None,
+            "mobile": None,
+            "whatsapp": None,
+            "hasPhoto": False,
+        }
+        try:
+            raw = self.core_gateway.get_person_profile(target_user_id)
+        except Exception:
+            return empty
+        if not isinstance(raw, dict):
+            return empty
+
+        def text(key: str) -> str | None:
+            value = raw.get(key)
+            if isinstance(value, str) and value.strip():
+                return value.strip()
+            return None
+
+        return {
+            "jobTitle": text("job_title"),
+            "phone": text("phone_e164"),
+            "mobile": text("mobile_e164"),
+            "whatsapp": text("whatsapp_e164"),
+            "hasPhoto": bool(raw.get("has_photo")),
+        }
+
+    def _self_access_block(self, actor: EffectiveUser) -> dict:
+        from app.application.security.supplies_permissions import (
+            SUPPLIES_ACCESS,
+            SUPPLIES_MANAGE,
+        )
+
+        codes = sorted(
+            code
+            for code in actor.permissions
+            if isinstance(code, str) and code in {SUPPLIES_ACCESS, SUPPLIES_MANAGE}
+        )
+        return {
+            "isSuperadmin": bool(actor.is_superadmin),
+            "permissions": codes,
+        }
+
     def get(self, actor: EffectiveUser, target_user_id: str) -> dict:
         target = (target_user_id or "").strip()
         self._assert_can_view(actor, target)
@@ -110,20 +156,31 @@ class UserProfileService:
         preferences = (
             self.preferences.get(actor) if is_self else self._preferences_for(target)
         )
+        person = self._person_identity_fields(target)
 
         payload: dict = {
             "userId": identity["userId"],
             "name": identity["name"],
             "email": identity["email"],
+            "jobTitle": person["jobTitle"],
+            "phone": person["phone"],
+            "mobile": person["mobile"],
+            "whatsapp": person["whatsapp"],
+            "hasPhoto": person["hasPhoto"],
             "isSelf": is_self,
             "preferences": preferences,
             "capabilities": None,
             "allowedUnits": [],
+            "isSuperadmin": None,
+            "permissions": None,
         }
         if is_self:
             caps = self.capabilities.resolve(actor)
             payload["capabilities"] = caps["capabilities"]
             payload["allowedUnits"] = caps["allowedUnits"]
+            access = self._self_access_block(actor)
+            payload["isSuperadmin"] = access["isSuperadmin"]
+            payload["permissions"] = access["permissions"]
         return payload
 
     def patch(self, actor: EffectiveUser, target_user_id: str, payload: dict) -> dict:

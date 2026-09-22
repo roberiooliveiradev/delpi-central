@@ -66,8 +66,9 @@ describe("user profile self-only + expand photo", () => {
     assert.doesNotMatch(page, /label=\{USER_ACCESS_COPY\.appBadge\}/);
     assert.doesNotMatch(page, /aboutTitle|aboutBody/);
     assert.match(page, /directoryUserLabelOrFallback\(\{ name: profile\.name \}\)/);
-    assert.match(page, /heroDescription = \(profile\?\.job_title/);
-    assert.doesNotMatch(page, /heroDescription = \[profile\.email/);
+    assert.match(page, /heroDescription =/);
+    assert.match(page, /profile\?\.job_title/);
+    assert.match(page, /profile\?\.email/);
   });
 
   it("CTA Editar só via onEditSelf do kit — sem actions/note manuais no Hero/Identity", () => {
