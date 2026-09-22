@@ -1331,3 +1331,14 @@ def test_proposal_changed_on_revision_conflict():
             idempotency_key="stale-rev",
         )
     assert caught.value.code == "PROPOSAL_CHANGED"
+
+
+def test_openapi_operation_descriptions_fit_builder_budget():
+    """GPT Builder rejects operation descriptions longer than 300 chars."""
+    doc = build_gpt_actions_openapi()
+    for methods in doc["paths"].values():
+        for op in methods.values():
+            if not isinstance(op, dict) or not op.get("operationId"):
+                continue
+            desc = op.get("description") or ""
+            assert len(desc) <= 300, (op["operationId"], len(desc), desc)

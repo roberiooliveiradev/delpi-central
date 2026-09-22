@@ -555,9 +555,8 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "description": (
                     "PREPARE dry-run TvCopilotPatchV1. NO WRITE. Returns opaque "
                     "proposal_handle, typed ops, risk, confirmationPolicy, diff. "
-                    "Does not expose httpCommands. When confirmationPolicy=confirm, "
-                    "show the plan and obtain explicit user OK before gpt_commit_change. "
-                    "Do not use for data-only preview (use gpt_preview_data_block)."
+                    "No httpCommands. If confirmationPolicy=confirm, get explicit "
+                    "user OK before gpt_commit_change. Not for data-only preview."
                 ),
                 "tags": [tag],
                 "security": [{"BearerAuth": []}],
@@ -577,10 +576,9 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "operationId": "gpt_commit_change",
                 "summary": "Commit a previously previewed change",
                 "description": (
-                    "COMMIT previously prepared proposal. WRITE. Input is only "
-                    "proposal_handle + confirmation (+ Idempotency-Key). Does not accept "
-                    "ops, target, route, SQL, or tool_name. Revalidates AuthZ, expiry, "
-                    "and playlist revision; authoritative read-back required. "
+                    "COMMIT prepared proposal. WRITE. Body: proposal_handle + "
+                    "confirmation (+ Idempotency-Key). No ops/target/SQL/tool_name. "
+                    "Revalidates AuthZ, expiry, revision; requires read-back. "
                     "confirmation.confirmed must be true. Not a generic executor."
                 ),
                 "tags": [tag],

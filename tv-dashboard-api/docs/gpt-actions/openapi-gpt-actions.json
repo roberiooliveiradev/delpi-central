@@ -739,7 +739,7 @@
       "post": {
         "operationId": "gpt_preview_change",
         "summary": "Preview typed change without persisting",
-        "description": "PREPARE dry-run TvCopilotPatchV1. NO WRITE. Returns opaque proposal_handle, typed ops, risk, confirmationPolicy, diff. Does not expose httpCommands. When confirmationPolicy=confirm, show the plan and obtain explicit user OK before gpt_commit_change. Do not use for data-only preview (use gpt_preview_data_block).",
+        "description": "PREPARE dry-run TvCopilotPatchV1. NO WRITE. Returns opaque proposal_handle, typed ops, risk, confirmationPolicy, diff. No httpCommands. If confirmationPolicy=confirm, get explicit user OK before gpt_commit_change. Not for data-only preview.",
         "tags": [
           "TV Dashboard GPT"
         ],
@@ -1919,7 +1919,7 @@
       "post": {
         "operationId": "gpt_commit_change",
         "summary": "Commit a previously previewed change",
-        "description": "COMMIT previously prepared proposal. WRITE. Input is only proposal_handle + confirmation (+ Idempotency-Key). Does not accept ops, target, route, SQL, or tool_name. Revalidates AuthZ, expiry, and playlist revision; authoritative read-back required. confirmation.confirmed must be true. Not a generic executor.",
+        "description": "COMMIT prepared proposal. WRITE. Body: proposal_handle + confirmation (+ Idempotency-Key). No ops/target/SQL/tool_name. Revalidates AuthZ, expiry, revision; requires read-back. confirmation.confirmed must be true. Not a generic executor.",
         "tags": [
           "TV Dashboard GPT"
         ],
