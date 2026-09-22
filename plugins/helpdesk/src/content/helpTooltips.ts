@@ -54,6 +54,7 @@ export const helpTooltips = {
 
   /** Paginação completa do kit (mesmo padrão do dashboard-commercial). */
   pagination: {
+    nav: "Setas para página anterior ou próxima; números e Ir para quando houver mais de uma página. O resumo mostra a faixa exibida — o helpdesk não devolve o total exato; a última página conhecida avança enquanto houver mais itens.",
     info: "Faixa exibida e página atual. O helpdesk não devolve o total exato — a última página conhecida avança enquanto houver mais itens.",
     pageSize: "Quantos chamados pedir por página (10, 20 ou 50). Ao mudar, a lista volta à página 1.",
     jump: "Digite o número da página e pressione Enter ou saia do campo.",

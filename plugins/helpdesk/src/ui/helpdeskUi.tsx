@@ -37,6 +37,7 @@ import {
 export { usePersistedViewLayout };
 
 export {
+  HelpdeskListPaginationFooter,
   HelpdeskPagination,
   HelpdeskTablePageSizeSelect,
   HELPDESK_PAGE_SIZE_OPTIONS,

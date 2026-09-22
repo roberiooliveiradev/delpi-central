@@ -1,5 +1,6 @@
 import {
   createDashboardPaginationKit,
+  HintAction,
   type PageJumpValidationReason,
 } from "@delpi/plugin-ui/index";
 
@@ -12,13 +13,6 @@ export const HELPDESK_PAGE_SIZE_OPTIONS = [10, 20, 50] as const;
 
 const kit = createDashboardPaginationKit({
   prefix: "helpdesk",
-  hints: {
-    pageSize: P.pageSize,
-    previous: P.previous,
-    next: P.next,
-    info: P.info,
-    jump: P.jump,
-  },
   tablePageSizeLabels: {
     label: "Por página",
     selectAriaLabel: "Quantidade de chamados por página",
@@ -49,6 +43,46 @@ const kit = createDashboardPaginationKit({
   },
 });
 
-/** Paginação completa do kit (setas + páginas + Ir para + helps) — mesmo padrão do dashboard-commercial. */
 export const HelpdeskPagination = kit.Pagination;
 export const HelpdeskTablePageSizeSelect = kit.TablePageSizeSelect;
+
+export type HelpdeskListPaginationFooterProps = {
+  page: number;
+  pageSize: number;
+  total: number;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (pageSize: number) => void;
+};
+
+/** Rodapé da lista: Por página + paginação do kit, ajuda via HintAction (sem ícones ?). */
+export function HelpdeskListPaginationFooter({
+  page,
+  pageSize,
+  total,
+  onPageChange,
+  onPageSizeChange,
+}: HelpdeskListPaginationFooterProps) {
+  return (
+    <div className="helpdesk-list-pagination">
+      <HintAction hint={helpTooltips.listUi.pageSize} ariaLabel="Ajuda: Por página">
+        <div className="helpdesk-list-pagination__page-size" role="group" aria-label="Por página">
+          <HelpdeskTablePageSizeSelect
+            pageSize={pageSize}
+            pageSizeOptions={[...HELPDESK_PAGE_SIZE_OPTIONS]}
+            onPageSizeChange={onPageSizeChange}
+          />
+        </div>
+      </HintAction>
+      <HintAction hint={P.nav} ariaLabel="Ajuda: Paginação">
+        <div className="helpdesk-list-pagination__nav">
+          <HelpdeskPagination
+            page={page}
+            pageSize={pageSize}
+            total={total}
+            onPageChange={onPageChange}
+          />
+        </div>
+      </HintAction>
+    </div>
+  );
+}

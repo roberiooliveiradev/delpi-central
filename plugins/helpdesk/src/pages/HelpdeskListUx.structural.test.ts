@@ -16,9 +16,9 @@ describe("Helpdesk list UX structural", () => {
     expect(page).toContain("TicketListFilterBuilder");
     expect(page).toContain("HelpdeskSegmentToggle");
     expect(page).toContain("TicketListCards");
-    expect(page).toContain("HelpdeskPagination");
-    expect(page).toContain("HelpdeskTablePageSizeSelect");
+    expect(page).toContain("HelpdeskListPaginationFooter");
     expect(page).not.toContain("HelpdeskCompactPagination");
+    expect(page).not.toContain("HelpdeskTablePageSizeSelect");
     expect(page).toContain("HELPDESK_TICKET_LIST_VIEW_LAYOUT_KEY");
     expect(page).toContain("usePersistedViewLayout");
   });
@@ -46,18 +46,20 @@ describe("Helpdesk list UX structural", () => {
     expect(css).toMatch(/\.helpdesk-filter-builder__rules[\s\S]*?overflow-y:\s*auto/);
   });
 
-  it("paginação usa createDashboardPaginationKit com hints como dashboard-commercial", () => {
+  it("paginação usa kit + HintAction no rodapé (sem ícones ? do HelpTooltip)", () => {
     const pagination = read("../components/Pagination.tsx");
     expect(pagination).toContain("createDashboardPaginationKit");
-    expect(pagination).toContain("hints:");
-    expect(pagination).toContain('previous: "Anterior"');
-    expect(pagination).toContain("HelpdeskPagination");
-    expect(pagination).toContain("HelpdeskTablePageSizeSelect");
+    expect(pagination).not.toContain("hints:");
+    expect(pagination).toContain("HintAction");
+    expect(pagination).toContain("HelpdeskListPaginationFooter");
     const ui = read("../ui/helpdeskUi.tsx");
     expect(ui).toContain('from "../components/Pagination"');
     expect(ui).not.toContain("createCompactPagination");
     const css = read("../index.css");
     expect(css).toContain(".helpdesk-list-pagination");
-    expect(css).toMatch(/\.helpdesk-list-pagination[\s\S]*?flex-direction:\s*row/);
+    expect(css).toContain(".helpdesk-list-pagination__nav");
+    expect(css).toMatch(
+      /\.helpdesk-list-pagination[\s\S]*?pagination__action-help[\s\S]*?display:\s*none/,
+    );
   });
 });
