@@ -10,7 +10,6 @@ import {
 } from "../utils/normalizeSelectionRibbonTab";
 import { resolveSlideBatchRibbonTab } from "../utils/resolveSlideBatchRibbonTab";
 import { DECK_TAB_KEYTIPS } from "../utils/deckKeyTips";
-import { useOptionalTvCopilotDock } from "../context/tvCopilotDockContext";
 import { useOptionalComunicadoEditor } from "./comunicadoEditorContext";
 import { DeckRibbonGroups } from "./deck/DeckRibbonGroups";
 import { DeckKeyTip } from "./DeckKeyTip";
@@ -137,7 +136,6 @@ export function DeckEditorChrome({
   variant = "playlist",
 }: Props) {
   const editor = useOptionalComunicadoEditor();
-  const copilotDock = useOptionalTvCopilotDock();
   const hasSelection = Boolean(editor && editor.selectedIds.length > 0);
   const isTableSelection = editor?.selected?.type === "table_view";
   const hasDataBoundSelection = Boolean(
@@ -190,12 +188,6 @@ export function DeckEditorChrome({
     }
   }, [activeTab, tabs, isCustomSlide]);
 
-  /** Se o dock do Copiloto foi fechado enquanto a aba estava ativa, volta ao ribbon padrão. */
-  useEffect(() => {
-    if (activeTab === "copilot" && copilotDock && !copilotDock.visible) {
-      setActiveTab(resolveDefaultRibbonTab(tabs, isCustomSlide));
-    }
-  }, [activeTab, copilotDock, copilotDock?.visible, tabs, isCustomSlide]);
 
   useEffect(() => {
     if (!hasSelection || !isCustomSlide) return;
@@ -250,11 +242,6 @@ export function DeckEditorChrome({
       if (!isRibbonContentTab(activeTab)) {
         setActiveTab(resolveDefaultRibbonTab(tabs, isCustomSlide));
       }
-      return;
-    }
-    if (tab === "copilot") {
-      copilotDock?.openDock();
-      setActiveTab("copilot");
       return;
     }
     setActiveTab(tab);

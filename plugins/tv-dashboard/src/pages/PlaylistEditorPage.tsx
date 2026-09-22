@@ -63,11 +63,9 @@ import {
 } from "../context/deckEditorHistoryContext";
 import { KeyboardShortcutsTipsProvider } from "../context/KeyboardShortcutsTipsProvider";
 import { DeckKeyTipsProvider } from "../context/DeckKeyTipsProvider";
-import { TvCopilotDockProvider } from "../context/tvCopilotDockContext";
 import { EditorShortcutsProvider } from "../keyboard";
 import { KeyboardShortcutsCatalogModal } from "../components/KeyboardShortcutsCatalogModal";
 import { PlaylistRenameDialog } from "../components/PlaylistRenameDialog";
-import { TvCopilotDockSlot } from "../components/TvCopilotDock";
 import { TvDashboardScreenLoading } from "../components/TvDashboardScreenLoading";
 import { useConfirm } from "../context/ConfirmDialogProvider";
 import { useDeckEditorHistory } from "../hooks/useDeckEditorHistory";
@@ -2201,7 +2199,6 @@ export function PlaylistEditorPage({
     <DeckEditorHistoryProvider value={deckHistoryValue}>
       <KeyboardShortcutsTipsProvider>
       <DeckKeyTipsProvider>
-      <TvCopilotDockProvider>
       <div className="td-deck td-deck--editor">
       {isCustomSlide && selectedSlide && editorComunicadoValue ? (
         <ComunicadoEditorProvider
@@ -2232,13 +2229,6 @@ export function PlaylistEditorPage({
           <DeckEditorChrome {...chromeProps} />
           <DeckWorkspace
             {...workspaceProps}
-            copilotPanel={
-              <TvCopilotDockSlot
-                playlistId={playlistId}
-                slideId={selectedSlide?.id ?? null}
-                branchScope={branchScope}
-              />
-            }
             stage={
               !selectedSlide ? (
                 <div className="td-deck-stage__empty">
@@ -2296,7 +2286,6 @@ export function PlaylistEditorPage({
         busy={exportBusy}
       />
       <KeyboardShortcutsCatalogModal />
-      </TvCopilotDockProvider>
       </DeckKeyTipsProvider>
       </KeyboardShortcutsTipsProvider>
     </DeckEditorHistoryProvider>

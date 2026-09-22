@@ -229,11 +229,11 @@ def _service(repo=None, monkeypatch=None):
             return cleaned
 
         monkeypatch.setattr(
-            "tv_app.application.services.data.tv_copilot_patch_service.sanitize_and_hydrate_comunicado_config",
+            "tv_app.application.services.data.presentation_mutation.patch_service.sanitize_and_hydrate_comunicado_config",
             _sanitize,
         )
         monkeypatch.setattr(
-            "tv_app.application.services.data.tv_copilot_patch_service.validate_comunicado_native_config",
+            "tv_app.application.services.data.presentation_mutation.patch_service.validate_comunicado_native_config",
             lambda cfg, user=None, catalog=None: None,
         )
     return TvCopilotPatchService(
@@ -318,7 +318,7 @@ def test_apply_plans_crud_http_without_persisting(monkeypatch):
     notified: list[dict[str, Any]] = []
 
     monkeypatch.setattr(
-        "tv_app.application.services.data.tv_copilot_patch_service.notify_presentation_changed",
+        "tv_app.application.services.data.presentation_mutation.patch_service.notify_presentation_changed",
         lambda **kwargs: notified.append(kwargs),
     )
 
@@ -634,7 +634,7 @@ def test_apply_traduz_erro_de_validacao_em_erro_de_patch(monkeypatch):
         raise ValueError("Rota de dados não permitida para o seu perfil.")
 
     monkeypatch.setattr(
-        "tv_app.application.services.data.tv_copilot_patch_service.validate_comunicado_native_config",
+        "tv_app.application.services.data.presentation_mutation.patch_service.validate_comunicado_native_config",
         _reject,
     )
 

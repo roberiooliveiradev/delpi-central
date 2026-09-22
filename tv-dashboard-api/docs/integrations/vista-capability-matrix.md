@@ -13,34 +13,38 @@ Do not duplicate the full matrix in Instructions, Knowledge, or DÉLIA docs — 
 |---|---|
 | **DÉLIA** | IA / experiência de orquestração da DELPI |
 | **VISTA** | Specialist/capability de painéis operacionais / TV |
-| **TV Dashboard** | Domain authority (playlists, slides, data blocks, Copilot ops) |
+| **TV Dashboard** | Domain authority (playlists, slides, data blocks, PresentationMutation) |
 | **MCP** | Adapter futuro (TARGET Plugin + remote MCP) — **não implementado neste HEAD** |
 | **GPT Actions** | Adapter compacto **GOVERNED_PREPARE_COMMIT_V2** (Builder-importable) |
+| **DÉLIA ↔ TV** | **TARGET** — future capability adapter on the same PresentationMutation contract (no HTTP adapter in this HEAD) |
 
 ```text
-Canonical domain capability (TvCopilotPatchV1)
-  → Application / write services
-    → HTTP domain API (UI)
-    → GPT Action adapter
+Canonical domain capability (PresentationMutation / TvPresentationPatchV1)
+  → TvPresentationWriteService
+    → HTTP domain API (UI editor)
+    → GPT Action adapter (VISTA)
     → MCP adapter (TARGET)
-    → DÉLIA capability adapter (PLANNED — not proven)
+    → DÉLIA capability adapter (TARGET — not implemented)
 ```
 
 **Rules**
 
 - Capability parity ≠ transport parity.
-- New typed Copilot op ≠ new GPT Action.
+- New typed presentation op ≠ new GPT Action.
 - `VISTA capability ≤ authenticated user capability`.
 - No generic proxy (`call_any_route`, SQL, arbitrary HTTP).
 - Presentation writes: `gpt_preview_change` → opaque `proposal_handle` → `gpt_commit_change`.
 - `gpt_commit_change` is **not** a generic executor (only server-side prepared proposals).
 - Catalog informs; backend authorizes (`capability_surface` ≠ AuthZ).
+- Nested block patches deep-merge (`style`/`frame`/`dataBinding`/`background`); explicit `null` clears.
+- `/data/copilot/*` is **410 Gone**; Chat Copilot skill/tool and MFE dock are retired.
 
 ## Source of truth
 
 | Concern | Canonical source |
 |---|---|
-| Domain rules / typed ops | `tv_copilot_content.json` + Copilot services |
+| Domain rules / typed ops | `tv_copilot_content.json` + `presentation_mutation/` |
+| Mutation engine | `PresentationPatchService` |
 | Write boundary | `TvPresentationWriteService` |
 | Resource AuthZ | `PlaylistAccessService` + Core RBAC |
 | Capability metadata | `capability_surface.py` + catalog projection |
@@ -48,6 +52,7 @@ Canonical domain capability (TvCopilotPatchV1)
 | Proposal store | in-process → **ACCEPT_WITH_RESIDUAL** |
 | GPT Instructions | `docs/gpt-actions/specialist-instructions.md` |
 | Capability matrix | **this file** |
+| DÉLIA TV adapter | TARGET (document only; consume PresentationMutation) |
 
 ## PREPARE / CONFIRM / COMMIT
 
@@ -80,7 +85,7 @@ Documented project guardrail: prefer **≤ ~30 importable operations**.
 | Importable operations | 8 | **8** |
 | Added | opaque proposal + confirmation on commit; `capability_surface` | contract evolution |
 | Removed from Builder | client `ops`/`planDigest` as commit authority | — |
-| Legacy off-schema | `POST /data/copilot/apply-patch` (non-persisting planner) | yes |
+| Legacy off-schema | `POST /data/copilot/*` → **410 Gone** | yes |
 | Remaining margin vs ≤30 | 22 | **22** |
 
 ## Capability taxonomy
@@ -88,7 +93,7 @@ Documented project guardrail: prefer **≤ ~30 importable operations**.
 | Kind | Capability | Actions |
 |---|---|---|
 | ENTITY (read) | playlist aggregate | `gpt_list_playlists`, `gpt_get_playlist_context` |
-| WORKFLOW | presentation_change (TvCopilotPatchV1) | `gpt_suggest_change`, `gpt_preview_change`, `gpt_commit_change` |
+| WORKFLOW | presentation_change (PresentationMutation) | `gpt_suggest_change`, `gpt_preview_change`, `gpt_commit_change` |
 | ANALYSIS | data_route_search, data_block_preview | `gpt_search_data_routes`, `gpt_preview_data_block` |
 | DISCOVERY | catalog | `gpt_get_catalog` |
 

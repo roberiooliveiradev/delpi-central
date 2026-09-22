@@ -14,8 +14,8 @@
     "/gpt-actions/v1/catalog": {
       "get": {
         "operationId": "gpt_get_catalog",
-        "summary": "TV Copilot capability catalog",
-        "description": "Returns catalogVersion, operations, capabilities, capability_surface and limits from the canonical TvCopilotPatchV1 authority. Call before planning writes. Catalog informs; backend authorizes. Requires tv-dashboard.write.",
+        "summary": "TV presentation mutation capability catalog",
+        "description": "Returns catalogVersion, operations, capabilities, capability_surface and limits from the canonical PresentationMutation authority. Call before planning writes. Catalog informs; backend authorizes. Requires tv-dashboard.write.",
         "tags": [
           "TV Dashboard GPT"
         ],
@@ -615,8 +615,8 @@
     "/gpt-actions/v1/changes/suggest": {
       "post": {
         "operationId": "gpt_suggest_change",
-        "summary": "Suggest typed Copilot ops from NL",
-        "description": "Uses the canonical Copilot planner. Returns ready|clarification|unsupported|error with typed ops — no free M/SQL. Example: create a playlist named Testando a VISTA.",
+        "summary": "Suggest typed presentation ops from NL",
+        "description": "Uses the canonical presentation planner. Returns ready|clarification|unsupported|error with typed ops — no free M/SQL. Example: create a playlist named Testando a VISTA.",
         "tags": [
           "TV Dashboard GPT"
         ],
@@ -739,7 +739,7 @@
       "post": {
         "operationId": "gpt_preview_change",
         "summary": "Preview typed change without persisting",
-        "description": "PREPARE TvCopilotPatchV1 compound plan. Server topo-sorts ops (as/playlistRef/slideRef). NO WRITE by default. Additive: commit_now=true + confirmation + Idempotency-Key → PREPARE+COMMIT. Destructive ignores commit_now.",
+        "description": "PREPARE PresentationMutation compound plan. Server topo-sorts ops (as/playlistRef/slideRef). NO WRITE by default. Additive: commit_now=true + confirmation + Idempotency-Key → PREPARE+COMMIT. Destructive ignores commit_now.",
         "tags": [
           "TV Dashboard GPT"
         ],
@@ -774,7 +774,7 @@
                   },
                   "ops": {
                     "type": "array",
-                    "description": "Typed Copilot ops from the canonical TV catalog (objects with op — never bare strings). Shape projected from TvCopilotContentService.",
+                    "description": "Typed presentation ops from the canonical TV catalog (objects with op — never bare strings). Shape projected from TvCopilotContentService.",
                     "minItems": 1,
                     "items": {
                       "oneOf": [
@@ -1952,7 +1952,7 @@
                           "title": "upsert_section"
                         }
                       ],
-                      "description": "One canonical TV Copilot operation."
+                      "description": "One canonical PresentationMutation operation."
                     }
                   },
                   "catalogVersion": {

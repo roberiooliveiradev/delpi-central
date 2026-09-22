@@ -15,10 +15,14 @@ from tv_app.application.services.data.tv_copilot_command_planner_service import 
     TvCopilotCommandPlannerService,
 )
 from tv_app.application.services.data.tv_copilot_content_service import TvCopilotContentService
-from tv_app.application.services.data.tv_copilot_patch_service import (
-    TvCopilotPatchError,
-    TvCopilotPatchService,
+from tv_app.application.services.data.presentation_mutation import (
+    PresentationPatchError,
+    PresentationPatchService,
 )
+
+# Legacy aliases (tests / transitional wiring)
+TvCopilotPatchError = PresentationPatchError
+TvCopilotPatchService = PresentationPatchService
 from tv_app.application.services.data.tv_data_config_validation_service import (
     TvDataConfigValidationService,
 )

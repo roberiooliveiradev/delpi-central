@@ -72,6 +72,7 @@ def _skills_from_json() -> tuple[ChatSkillDefinition, ...]:
                 execution_derived_key=(
                     str(item["executionDerivedKey"]) if item.get("executionDerivedKey") else None
                 ),
+                is_active=bool(item.get("isActive", True)),
             )
         )
 
@@ -149,7 +150,11 @@ class ChatSkillRegistry:
 
     @classmethod
     def list_catalog(cls) -> list[dict]:
-        return [cls._definition_to_catalog(item) for item in _skills()]
+        return [
+            cls._definition_to_catalog(item)
+            for item in _skills()
+            if item.is_active
+        ]
 
     @classmethod
     def get(cls, skill_key: str) -> ChatSkillDefinition | None:

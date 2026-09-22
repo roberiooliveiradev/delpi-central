@@ -51,10 +51,10 @@ describe("deck chrome tab fallback contract", () => {
     expect(selectionSrc).not.toMatch(/setRibbonTabRequest\("layers"\)/);
   });
 
-  it("aba Copiloto abre o dock lateral (sem faixa de ribbon)", () => {
-    expect(chrome).toMatch(/tab === "copilot"/);
-    expect(chrome).toMatch(/copilotDock\?\.openDock/);
-    expect(tabsMeta).toMatch(/id: "copilot"/);
+  it("não expõe aba/dock Copiloto (retirado — VISTA gpt-actions)", () => {
+    expect(chrome).not.toMatch(/tab === "copilot"/);
+    expect(chrome).not.toMatch(/copilotDock/);
+    expect(tabsMeta).not.toMatch(/id: "copilot"/);
   });
 
   it("multi-seleção de telas abre a aba Tela, não Elemento", () => {

@@ -1,7 +1,8 @@
 """Capability surface descriptors for VISTA GPT catalog projection.
 
 Catalog informs; backend authorizes. Descriptors are not AuthZ authority.
-Typed Copilot ops remain owned by ``tv_copilot_content.json``.
+Typed presentation ops remain owned by ``tv_copilot_content.json``
+(PresentationMutation / TvPresentationPatchV1).
 """
 
 from __future__ import annotations
@@ -23,6 +24,7 @@ def build_capability_surface() -> dict[str, Any]:
     )
     return {
         "lifecycle": "GOVERNED_PREPARE_COMMIT_V2",
+        "mutation_owner": "PresentationMutation",
         "action_surface_budget": {
             "importable_operations": len(GPT_ACTIONS_OPERATION_IDS),
             "platform_prefer_max": 30,
@@ -61,9 +63,9 @@ def build_capability_surface() -> dict[str, Any]:
                 "kind": "WORKFLOW",
                 "owner": "tv-dashboard-api",
                 "description": (
-                    "Governed TvCopilotPatchV1 compound change: PlanCompiler topo-sort "
-                    "+ as/*Ref; preview mints opaque proposal; additive commit_now; "
-                    "commit → authoritative read-back."
+                    "Governed PresentationMutation compound change: PlanCompiler "
+                    "topo-sort + as/*Ref; preview mints opaque proposal; additive "
+                    "commit_now; commit → TvPresentationWriteService + read-back."
                 ),
                 "read_operations": ["gpt_get_catalog", "gpt_get_playlist_context"],
                 "write_operations": [
@@ -72,6 +74,7 @@ def build_capability_surface() -> dict[str, Any]:
                     "gpt_commit_change",
                 ],
                 "typed_ops_authority": "tv_copilot_content.json",
+                "mutation_engine": "presentation_mutation.PresentationPatchService",
                 "typed_ops_count": len(ops),
                 "destructive_typed_ops": destructive,
                 "prepare_act_policy": {

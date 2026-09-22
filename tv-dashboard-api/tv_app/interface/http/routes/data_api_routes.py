@@ -530,6 +530,21 @@ class SuggestOpsBody(BaseModel):
     hostContext: dict[str, Any] = Field(default_factory=dict)
 
 
+def _copilot_gone():
+    """HTTP surface /data/copilot/* retired — use VISTA gpt-actions + PresentationMutation."""
+    return fail(
+        "Endpoint /data/copilot retirado. Use VISTA em /gpt-actions/v1 "
+        "(preview/commit) com PresentationMutation.",
+        410,
+        data={
+            "gone": True,
+            "successor": "/gpt-actions/v1",
+            "mutationOwner": "PresentationMutation",
+            "docs": "docs/gpt-actions/",
+        },
+    )
+
+
 def _copilot_actor(user: Any) -> str | None:
     from tv_app.application.services.playlist_access_service import PlaylistAccessService
 
@@ -537,11 +552,7 @@ def _copilot_actor(user: Any) -> str | None:
 
 
 def _copilot_unexpected_failure(kind: str, ops: list[dict[str, Any]] | None):
-    """Falha não prevista no patch: log com as ops + motivo factual ao chamador.
-
-    Sem isso o copiloto da IA recebia 500 com «Internal server error» e o usuário
-    via só «não foi possível aplicar», sem saber qual operação quebrou.
-    """
+    """Legacy helper retained for import stability; routes now return 410."""
     from tv_app.application.services.data.tv_copilot_content_service import (
         TvCopilotContentService,
     )
@@ -558,142 +569,29 @@ def _copilot_unexpected_failure(kind: str, ops: list[dict[str, Any]] | None):
 
 @router.get("/copilot/capabilities")
 def copilot_capabilities(request: Request):
-    """Catálogo versionado de ops tipadas (fonte de verdade para a AI / host)."""
-    user = resolve_user(request)
-    try:
-        assert_permission(user, TV_WRITE)
-    except PermissionError as exc:
-        return fail(str(exc), 403)
-    from tv_app.application.services.data.tv_copilot_content_service import (
-        TvCopilotContentService,
-    )
-
-    return ok(TvCopilotContentService.capability_catalog_document())
+    """Gone — capability catalog lives under VISTA ``gpt_get_catalog``."""
+    return _copilot_gone()
 
 
 @router.post("/copilot/suggest-ops")
 def copilot_suggest_ops(request: Request, body: SuggestOpsBody):
-    """NL + hostContext → ops tipadas (determinístico no BFF; sem LLM)."""
-    user = resolve_user(request)
-    try:
-        assert_permission(user, TV_WRITE)
-    except PermissionError as exc:
-        return fail(str(exc), 403)
-    from tv_app.application.services.data.tv_copilot_command_planner_service import (
-        TvCopilotCommandPlannerService,
-    )
-
-    authorization = request.headers.get("authorization") or request.headers.get(
-        "Authorization"
-    )
-    plan = TvCopilotCommandPlannerService.plan(
-        message=body.message,
-        host_context=body.hostContext,
-        authorization=authorization,
-        user=user,
-    )
-    result = TvCopilotCommandPlannerService.to_suggest_payload(plan)
-    return ok(result, message=str(result.get("reason") or "Sugestão gerada."))
+    """Gone — use ``gpt_suggest_change`` on /gpt-actions/v1."""
+    return _copilot_gone()
 
 
 @router.post("/copilot/preview-patch")
 def copilot_preview_patch(request: Request, body: CopilotPatchBody):
-    """Dry-run do patch tipado (sem persistir; opcional fingerprint via SlideDataResolution)."""
-    user = resolve_user(request)
-    try:
-        assert_permission(user, TV_WRITE)
-    except PermissionError as exc:
-        return fail(str(exc), 403)
-
-    playlist_id = str((body.target or {}).get("playlistId") or "").strip()
-    if playlist_id:
-        try:
-            guarded = require_playlist_access(request, UUID(playlist_id), need="edit")
-        except ValueError:
-            return fail("playlistId inválido.", 422)
-        if is_access_error(guarded):
-            return guarded
-
-    from tv_app.application.services.data.tv_copilot_patch_service import (
-        TvCopilotPatchError,
-        TvCopilotPatchService,
-    )
-
-    try:
-        result = TvCopilotPatchService(catalog=_catalog).preview(
-            {"target": body.target, "ops": body.ops},
-            user=user,
-            authorization=request.headers.get("Authorization"),
-            include_fingerprint=bool(body.includeFingerprint),
-        )
-    except TvCopilotPatchError as exc:
-        return fail(str(exc), 422)
-    except Exception:
-        return _copilot_unexpected_failure("preview", body.ops)
-    return ok(result, message=str(result.get("message") or "Prévia gerada."))
+    """Gone — use ``gpt_preview_change`` on /gpt-actions/v1."""
+    return _copilot_gone()
 
 
 @router.post("/copilot/apply-patch")
 def copilot_apply_patch(request: Request, body: CopilotPatchBody):
-    """Planner de compatibilidade — não persiste.
-
-    Retorna o mesmo plano do preview com ``persisted=false`` e
-    ``executionMode=crud_http``. Persistência ocorre via writer canônico
-    (CRUD ``/playlists/**`` ou ``POST /gpt-actions/v1/changes/commit``).
-    """
-    user = resolve_user(request)
-    try:
-        assert_permission(user, TV_WRITE)
-    except PermissionError as exc:
-        return fail(str(exc), 403)
-
-    actor = _copilot_actor(user)
-    if not actor:
-        return fail("Usuário não identificado.", 401)
-
-    playlist_id = str((body.target or {}).get("playlistId") or "").strip()
-    ops = body.ops or []
-    creating_playlist = any(
-        isinstance(op, dict) and str(op.get("op") or "") == "create_playlist" for op in ops
-    )
-    if playlist_id:
-        try:
-            guarded = require_playlist_access(request, UUID(playlist_id), need="edit")
-        except ValueError:
-            return fail("playlistId inválido.", 422)
-        if is_access_error(guarded):
-            return guarded
-    elif not creating_playlist:
-        return fail("Informe playlistId no target.", 422)
-
-    from tv_app.application.services.data.tv_copilot_patch_service import (
-        TvCopilotPatchError,
-        TvCopilotPatchService,
-    )
-
-    try:
-        result = TvCopilotPatchService(catalog=_catalog).apply(
-            {"target": body.target, "ops": body.ops},
-            user=user,
-            authorization=request.headers.get("Authorization"),
-            actor_user_id=actor,
-        )
-    except TvCopilotPatchError as exc:
-        return fail(str(exc), 422)
-    except Exception:
-        return _copilot_unexpected_failure("apply", body.ops)
-    return ok(result, message=str(result.get("message") or "Patch aplicado."))
+    """Gone — use ``gpt_commit_change`` / commit_now on /gpt-actions/v1."""
+    return _copilot_gone()
 
 
 @router.get("/copilot/telemetry")
 def copilot_telemetry(request: Request):
-    user = resolve_user(request)
-    try:
-        assert_permission(user, TV_MANAGE)
-    except PermissionError as exc:
-        return fail(str(exc), 403)
-    from tv_app.application.services.data.tv_copilot_telemetry import (
-        copilot_telemetry_snapshot,
-    )
-
-    return ok(copilot_telemetry_snapshot())
+    """Gone — Copilot HTTP surface retired."""
+    return _copilot_gone()

@@ -154,12 +154,13 @@
     },
     {
       "key": "tv-dashboard-copilot",
-      "label": "Copiloto TV Dashboard",
-      "description": "Aplica patches tipados em programações e slides do TV Dashboard via catálogo do BFF. Não gera Power Query M. Preview livre; apply só com confirmação.",
+      "label": "Copiloto TV Dashboard (retirado)",
+      "description": "Skill desligada. Mutações de TV Dashboard usam o especialista VISTA (gpt-actions / PresentationMutation).",
       "policyFile": "tv-dashboard-copilot-skill.md",
       "metadataFlag": "enabled",
       "legacyMetadataFlag": "tvDashboardCopilot",
       "executionPathHint": "tv_dashboard_copilot",
+      "isActive": false,
       "aliases": [
         "tv copilot",
         "copiloto tv",
@@ -167,12 +168,7 @@
         "assistente tv",
         "patch tipado tv"
       ],
-      "examplePrompts": [
-        "crie um slide nesta programação",
-        "escreva um texto neste slide",
-        "apague o bloco selecionado",
-        "pode aplicar"
-      ],
+      "examplePrompts": [],
       "sortOrder": 40
     }
   ]

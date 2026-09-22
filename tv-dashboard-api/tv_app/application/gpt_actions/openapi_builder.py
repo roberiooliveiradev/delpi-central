@@ -168,13 +168,13 @@ def _typed_ops_schema() -> dict[str, Any]:
     return {
         "type": "array",
         "description": (
-            "Typed Copilot ops from the canonical TV catalog (objects with op — "
+            "Typed presentation ops from the canonical TV catalog (objects with op — "
             "never bare strings). Shape projected from TvCopilotContentService."
         ),
         "minItems": 1,
         "items": {
             "oneOf": branches,
-            "description": "One canonical TV Copilot operation.",
+            "description": "One canonical PresentationMutation operation.",
         },
     }
 
@@ -480,10 +480,10 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
         f"{base}/catalog": {
             "get": {
                 "operationId": "gpt_get_catalog",
-                "summary": "TV Copilot capability catalog",
+                "summary": "TV presentation mutation capability catalog",
                 "description": (
                     "Returns catalogVersion, operations, capabilities, capability_surface "
-                    "and limits from the canonical TvCopilotPatchV1 authority. "
+                    "and limits from the canonical PresentationMutation authority. "
                     "Call before planning writes. Catalog informs; backend authorizes. "
                     "Requires tv-dashboard.write."
                 ),
@@ -596,9 +596,9 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
         f"{base}/changes/suggest": {
             "post": {
                 "operationId": "gpt_suggest_change",
-                "summary": "Suggest typed Copilot ops from NL",
+                "summary": "Suggest typed presentation ops from NL",
                 "description": (
-                    "Uses the canonical Copilot planner. Returns ready|clarification|"
+                    "Uses the canonical presentation planner. Returns ready|clarification|"
                     "unsupported|error with typed ops — no free M/SQL. "
                     "Example: create a playlist named Testando a VISTA."
                 ),
@@ -618,7 +618,7 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "operationId": "gpt_preview_change",
                 "summary": "Preview typed change without persisting",
                 "description": (
-                    "PREPARE TvCopilotPatchV1 compound plan. Server topo-sorts ops "
+                    "PREPARE PresentationMutation compound plan. Server topo-sorts ops "
                     "(as/playlistRef/slideRef). NO WRITE by default. Additive: "
                     "commit_now=true + confirmation + Idempotency-Key → PREPARE+COMMIT. "
                     "Destructive ignores commit_now."

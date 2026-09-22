@@ -1,4 +1,4 @@
-"""Semantic commit of TvCopilotPatchV1 ops via shared presentation write boundary.
+"""Semantic commit of PresentationMutation ops via shared presentation write boundary.
 
 No HTTP loopback. No second catalog. Executes ops through TvPresentationWriteService.
 """
@@ -21,10 +21,10 @@ from tv_app.application.gpt_actions.proposal_store import (
 )
 from tv_app.application.ports import IdempotencyRepositoryPort
 from tv_app.application.services.data.tv_copilot_content_service import TvCopilotContentService
-from tv_app.application.services.data.tv_copilot_execution_context import ExecutionContext
-from tv_app.application.services.data.tv_copilot_patch_service import (
-    TvCopilotPatchError,
-    TvCopilotPatchService,
+from tv_app.application.services.data.presentation_mutation import (
+    ExecutionContext,
+    PresentationPatchError,
+    PresentationPatchService,
 )
 from tv_app.application.services.playlist_access_service import PlaylistAccessService
 from tv_app.application.services.tv_presentation_write_service import (
@@ -32,6 +32,10 @@ from tv_app.application.services.tv_presentation_write_service import (
     RevisionConflictError,
     TvPresentationWriteService,
 )
+
+# Transitional aliases for test monkeypatches / callers still using Copilot names.
+TvCopilotPatchError = PresentationPatchError
+TvCopilotPatchService = PresentationPatchService
 
 _NATIVE_CONFIG_OPS = frozenset(
     {

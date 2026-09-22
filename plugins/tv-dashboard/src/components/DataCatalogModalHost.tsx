@@ -6,7 +6,7 @@ import { HostContainedModal } from "./ui/Modal";
 
 /**
  * Assistente de dados — workbench host-contained (Inserir / Trocar rota).
- * Copiloto IA fica na sidebar do editor (aba «Copiloto» na top bar).
+ * Mutações assistidas por IA: especialista VISTA (gpt-actions), não dock no editor.
  */
 export function DataCatalogModalHost({ branchScope = null }: { branchScope?: BranchScope | null }) {
   const {

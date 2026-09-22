@@ -23,6 +23,9 @@ from tv_app.application.gpt_actions.proposal_store import (
     reset_proposal_store_for_tests,
 )
 from tv_app.application.services.data.tv_copilot_content_service import TvCopilotContentService
+from tv_app.application.services.data.presentation_mutation import (
+    PresentationPatchService,
+)
 from tv_app.application.services.data.tv_copilot_patch_service import TvCopilotPatchService
 from tv_app.application.services.tv_presentation_write_service import (
     PresentationWriteError,
@@ -1557,3 +1560,94 @@ def test_http_preview_accepts_idempotency_key_in_body_for_commit_now():
     data = body.get("data") or body
     assert data.get("commit_now_applied") is True
     assert data.get("status") == "VERIFIED"
+
+
+def test_vista_preview_partial_style_preserves_color_via_presentation_mutation(monkeypatch):
+    """VISTA gpt-actions uses PresentationMutation; partial style keeps prior color."""
+    from uuid import UUID
+
+    playlist_id = str(uuid4())
+    slide_id = str(uuid4())
+
+    class _Repo:
+        def get_by_id(self, pid):
+            return {"id": str(pid), "revision": 2, "dataDefaults": {}}
+
+        def get_slide(self, sid, playlist_id=None):
+            return {
+                "id": str(sid),
+                "nativeConfig": {
+                    "version": 5,
+                    "blocks": [
+                        {
+                            "id": "txt-1",
+                            "type": "text",
+                            "content": "Oi",
+                            "style": {
+                                "color": "#ff0000",
+                                "fontSize": 28,
+                                "fontWeight": "normal",
+                            },
+                            "frame": {"x": 0, "y": 0, "w": 20, "h": 8},
+                        }
+                    ],
+                },
+            }
+
+    writes = _writes_mock()
+    commit = TvGptCommitService(writes=writes, idempotency=InMemoryIdempotencyRepository())
+    dispatch = GptActionsDispatchService(
+        repo=_Repo(),
+        writes=writes,
+        commit=commit,
+        patch=PresentationPatchService(repo=_Repo()),
+    )
+
+    with (
+        patch.object(
+            dispatch._access,
+            "resolve",
+            return_value=SimpleNamespace(can_edit=True, can_read=True, level="owner"),
+        ),
+        patch.object(dispatch._access, "actor_id", return_value="actor-1"),
+    ):
+        public = dispatch.preview_change(
+            user=_superadmin(),
+            target={"playlistId": playlist_id, "slideId": slide_id},
+            ops=[
+                {
+                    "op": "upsert_block",
+                    "block": {
+                        "id": "txt-1",
+                        "type": "text",
+                        "style": {"fontSize": 48, "fontWeight": "bold"},
+                    },
+                }
+            ],
+            catalog_version=TvCopilotContentService.catalog_version(),
+            authorization=None,
+        )
+
+    # Public preview hides nativeConfig; assert via private patch path parity
+    patch_result = dispatch._patch.preview(
+        {
+            "target": {"playlistId": playlist_id, "slideId": slide_id},
+            "ops": [
+                {
+                    "op": "upsert_block",
+                    "block": {
+                        "id": "txt-1",
+                        "type": "text",
+                        "style": {"fontSize": 48, "fontWeight": "bold"},
+                    },
+                }
+            ],
+        },
+        user=_superadmin(),
+    )
+    block = next(b for b in patch_result["nativeConfig"]["blocks"] if b["id"] == "txt-1")
+    assert block["style"]["color"] == "#ff0000"
+    assert block["style"]["fontSize"] == 48
+    assert block["style"]["fontWeight"] == "bold"
+    assert public.get("proposal_handle")
+    assert isinstance(dispatch._patch, PresentationPatchService)

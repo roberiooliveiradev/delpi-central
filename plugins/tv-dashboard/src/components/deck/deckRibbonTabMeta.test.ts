@@ -105,22 +105,23 @@ describe("deckRibbonTabMeta (Elemento / Tabela / Dados / Camadas)", () => {
     ]);
   });
 
-  it("sempre inclui Programação, Copiloto, Inserir e Camadas em slide custom", () => {
+  it("sempre inclui Programação, Inserir e Camadas em slide custom (sem Copiloto)", () => {
     const tabs = resolveDeckRibbonTabs(true);
     expect(tabs.map((tab) => tab.id)).toEqual(
-      expect.arrayContaining(["playlist", "copilot", "slide", "insert", "layers"]),
+      expect.arrayContaining(["playlist", "slide", "insert", "layers"]),
     );
     expect(tabs.find((tab) => tab.id === "playlist")?.label).toBe("Programação");
-    expect(tabs.find((tab) => tab.id === "copilot")?.label).toBe("Copiloto");
+    expect(tabs.some((tab) => (tab.id as string) === "copilot")).toBe(false);
     expect(tabs.some((tab) => tab.id === "element")).toBe(false);
-    expect(tabs.some((tab) => tab.id === "home")).toBe(false);
+    expect(tabs.some((tab) => (tab.id as string) === "home")).toBe(false);
   });
 
-  it("Copiloto permanece visível sem slide custom", () => {
+  it("sem slide custom permanece Programação/Tela e sem aba Copiloto", () => {
     const tabs = resolveDeckRibbonTabs(false);
     expect(tabs.map((tab) => tab.id)).toEqual(
-      expect.arrayContaining(["playlist", "copilot", "slide"]),
+      expect.arrayContaining(["playlist", "slide"]),
     );
+    expect(tabs.some((tab) => (tab.id as string) === "copilot")).toBe(false);
     expect(tabs.some((tab) => tab.id === "insert")).toBe(false);
   });
 

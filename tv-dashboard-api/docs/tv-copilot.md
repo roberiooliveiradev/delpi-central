@@ -1,4 +1,13 @@
-# Copiloto TV Dashboard (TvCopilotPatchV1)
+# Copiloto TV Dashboard — RETIRADO (histórico)
+
+> **Status:** superfície HTTP `/data/copilot/*` e skill Chat `tv-dashboard-copilot` foram **desligadas**.
+> Mutation canônica: **PresentationMutation** (`tv_app/application/services/data/presentation_mutation/`).
+> Consumidor IA: **VISTA** `/gpt-actions/v1` (preview/commit) + `TvPresentationWriteService`.
+> Endpoints `/data/copilot/*` respondem **410 Gone**.
+
+Documento abaixo mantido como histórico de contrato tipado (ops).
+
+---
 
 ## Objetivo
 
