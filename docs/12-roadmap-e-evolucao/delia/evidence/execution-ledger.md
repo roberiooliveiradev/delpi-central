@@ -9,7 +9,7 @@
 **Internet/External Connectors:** [`../55-internet-research-and-external-connectors.md`](../55-internet-research-and-external-connectors.md)  
 **Microsoft Teams:** [`../56-microsoft-teams-connector-and-meeting-integration.md`](../56-microsoft-teams-connector-and-meeting-integration.md)  
 **Autonomous Operations/Execution Hub:** [`../57-event-driven-autonomous-operations-and-automation-execution-hub.md`](../57-event-driven-autonomous-operations-and-automation-execution-hub.md)  
-**Next:** `C3-T4 — STRUCTURED_UNDERSTANDING_VERTICAL_SLICE` (`C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO`; `C3-T1=APPROVED`; `C3-T2=APPROVED`; `C3-T3=APPROVED` via `ARCHITECTURE_REVIEW_C3_T3R1` `ACCEPT_WITH_RESIDUAL`; `C3_T4_AUTHORIZED=YES`). Não iniciar C3-T4 neste passo; não reivindicar C3 complete.
+**Next:** `ARCHITECTURE_REVIEW_C3_T4` (`C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO`; `C3-T1=APPROVED`; `C3-T2=APPROVED`; `C3-T3=APPROVED`; `C3-T4=CANDIDATE_FOR_ARCHITECTURE_REVIEW`; `C3_T5_AUTHORIZED=NO`). Não iniciar C3-T5; não autoaprovar C3-T4.
 
 ## 1. Ledger rule
 
@@ -26,7 +26,7 @@ Estado factual de inventory usa `PROVEN | TO_INVENTORY`; planejamento usa `PLANN
 | C0 Platform + Architecture + Privacy/Security/Data/Automation/AI Foundations | **NOT_STARTED** | **C1 bootstrap continues (T2 review → next C1 step)** | C0.S0..=C0.S7=APPROVED; FOUNDATION_FREEZE=APPROVED; C1_AUTHORIZED=YES; C1_STARTED=YES |
 | C1 Standalone Bootstrap | ACCEPTED_WITH_RESIDUAL | — | C1-FINAL §6.45 |
 | C2 Portal + Operational Context + Commands | ACCEPTED_WITH_RESIDUAL | — | C2-FINAL §6.61; `C2_EXECUTED=YES` |
-| C3 Intelligence + Capability Foundations | AUTHORIZED / STARTED | C3-T4 — STRUCTURED_UNDERSTANDING_VERTICAL_SLICE | C3-T1 APPROVED §6.63; C3-T2 APPROVED §6.66; C3-T3 APPROVED §6.69 (`ARCHITECTURE_REVIEW_C3_T3R1` ACCEPT_WITH_RESIDUAL; IMPLEMENTATION_HEAD=`2ba28950e`); `C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO`; `C3_T4_AUTHORIZED=YES` |
+| C3 Intelligence + Capability Foundations | AUTHORIZED / STARTED | ARCHITECTURE_REVIEW_C3_T4 | C3-T1..T3 APPROVED; C3-T4 candidate §6.70; `C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO`; `C3_T5_AUTHORIZED=NO` |
 | C4 Governed Reads + Graph/Semantics/Analysis/Predictive Discovery | LOCKED | — | C3 foundations |
 | C5 Governed Writes + Executors + Durable/Recurring Work + Artifacts/Prescriptive Prepare | LOCKED | — | C4 reads/evidence |
 | C6 Product Work + Process Intelligence + Control Tower + Meeting/Frontline + Ecosystem | LOCKED | — | C5 governed-write/durable foundation |
@@ -128,11 +128,14 @@ C3_T3 = APPROVED (§6.69; ARCHITECTURE_REVIEW_C3_T3R1 ACCEPT_WITH_RESIDUAL)
 C3_T3_EXECUTED = NO
 C3_T4_AUTHORIZED = YES
 C3_T4_EXECUTED = NO
+C3_T4 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+STRUCTURED_UNDERSTANDING_FOUNDATION = IMPLEMENTED
 MODEL_INVOCATION_FOUNDATION = IMPLEMENTED
 FABRICATED_EVAL_PASS = RESOLVED
 REAL_PROVIDER_ADAPTER = NONE
 REAL_MODEL_CALL = BLOCKED_BY_EXTERNAL_CONFIGURATION
 REAL_MODEL_EVAL = TEST_NOT_RUN / BLOCKED
+C3_T5_AUTHORIZED = NO
 EVIDENCE_EPISTEMIC_SEMANTICS = FROZEN_ACCEPTED
 SOURCE_LINKAGE_SEMANTICS = FROZEN_ACCEPTED
 PRODUCTION_READINESS = NOT_PROVEN
@@ -3419,6 +3422,81 @@ BLOCKERS: NONE
 NEXT: C3-T4 — STRUCTURED_UNDERSTANDING_VERTICAL_SLICE
 PERSISTENCE_HEAD: 4220f13d4f64b488a4961aea017b7b1ffa383324
 BIND_HEAD: baab037348dae9f3daf23cbbf8931615348c8d52
+```
+
+## 6.70 C3-T4 — STRUCTURED_UNDERSTANDING_VERTICAL_SLICE
+
+```text
+DATE: 2026-09-21
+STEP: C3-T4
+NAME: STRUCTURED_UNDERSTANDING_VERTICAL_SLICE
+MODE: BOUNDED IMPLEMENTATION — SOURCE OBSERVATION EXTRACTION
+BASE_HEAD: 14cf22af18e18522ab9105414fe214d8d862ede7
+C3_T3R1_REVIEW_BIND: baab037348dae9f3daf23cbbf8931615348c8d52
+POST_BIND_CLASSIFICATION: OUTSIDE_TASK until this candidate (api-delpi/helpdesk already on remote; delia path unchanged until C3-T4)
+WORKING_TREE_PRESERVED: commercial/plugin-ui/supplies/transformometro dirty (excluded)
+EXECUTION_DRIFT: NONE
+
+SELECTED_VERTICAL_SLICE: BOUNDED_SOURCE_OBSERVATION_EXTRACTION
+USE_CASE: UnderstandStructuredInput
+SCHEMA: c3t4.source_observation_extraction@1
+REUSES: InvokeModel, ModelInvocationPort, EpistemicClass, EvidenceRef, SourceRef, ModelRef, EvalBindRequest/EvalIdentity
+CONTENT_MODEL: StructuredObservation (OBSERVATION only) + LimitationNote
+CLAIM_PROPOSITION_MODEL: DEFERRED
+ENTITY_EXTRACTION_BOUNDARY: DEFERRED
+RELATIONSHIP_BOUNDARY: DEFERRED
+SOURCE_OBSERVATION != WORLD_FACT
+MODEL_OUTPUT_AUTO_FACT: NO
+FABRICATED_EVAL_PASS: NONE (no EvalResult in SU flow)
+
+C3_STARTED: YES
+C3_EXECUTED: NO
+C3_T1: APPROVED
+C3_T2: APPROVED
+C3_T3: APPROVED
+C3_T4: CANDIDATE_FOR_ARCHITECTURE_REVIEW
+C3_T4_SELF_APPROVED: NO
+C3_T5_AUTHORIZED: NO
+PRODUCTION_READINESS: NOT_PROVEN
+
+REAL_PROVIDER_GATE: BLOCKED
+REAL_PROVIDER_ADAPTER: NONE
+REAL_MODEL_CALL: BLOCKED_BY_EXTERNAL_CONFIGURATION
+REAL_MODEL_EVAL: TEST_NOT_RUN / BLOCKED
+REAL_MODEL_STRUCTURED_UNDERSTANDING_QUALITY: TEST_NOT_RUN / BLOCKED
+REAL_MODEL_GROUNDING: TEST_NOT_RUN / BLOCKED
+REAL_MODEL_GENERALIZATION: TEST_NOT_RUN / BLOCKED
+PERSISTENCE: NONE
+MIGRATION: NONE
+OWN_MIGRATION_CHAIN: NOT_TRIGGERED_BY_C3_T4
+RAG: NONE
+VECTOR_STORE: NONE
+PLANNER: NONE
+CONVERSATION_RUNTIME: NONE
+TOOL_EXECUTION: NONE
+ACT: NONE
+NEW_RUNTIME_ABSTRACTIONS: StructuredUnderstandingId + StructuredObservation + LimitationNote + content/result/request + UnderstandStructuredInput
+SPECULATIVE_RUNTIME_ABSTRACTIONS: NONE
+
+TARGETED_C3_T4: PASS 23/23
+TARGETED_C3_REGRESSION: PASS 86/86
+FULL_DELIA_API_SUITE: PASS 121/121
+  COMMANDS:
+    cd delia-api && python -m pytest tests/test_structured_understanding_foundation.py tests/test_structured_understanding_architecture.py -q
+    cd delia-api && python -m pytest tests/test_structured_understanding_foundation.py tests/test_structured_understanding_architecture.py tests/test_model_invocation_foundation.py tests/test_model_invocation_architecture.py tests/test_evidence_epistemic_conformance.py -q
+    cd delia-api && python -m pytest -q
+EVALUATED_SHA: <implementation commit>
+NOTE: PASS = deterministic conformance only; ≠ real-model quality/grounding/generalization
+
+CP-055: PLANNED / CONTRIBUTION ONLY (unchanged)
+CP-056: PLANNED / CONTRIBUTION ONLY (unchanged)
+CP-093: PLANNED / PARTIAL (unchanged)
+CP-094: PLANNED / PARTIAL (unchanged)
+CP-304: LOCKED / LINEAGE FOUNDATION ACCEPTED (unchanged)
+NEW_CP_CREATED: NO
+RUNTIME_CP_PROMOTED_TO_PASS: NO
+
+NEXT: ARCHITECTURE_REVIEW_C3_T4
 ```
 
 ## 7. Canonical phase mapping

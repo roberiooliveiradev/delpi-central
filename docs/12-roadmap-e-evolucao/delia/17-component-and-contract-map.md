@@ -462,7 +462,10 @@ C3_T3 = APPROVED
 C3_T3_IMPL = delia-api/app/domain/model_invocation/ + application/model_invocation/ + TEST_ONLY adapter
 REAL_PROVIDER_ADAPTER = NONE
 C3_T4_AUTHORIZED = YES
-NEXT = C3-T4 — STRUCTURED_UNDERSTANDING_VERTICAL_SLICE
+C3_T4 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+C3_T4_IMPL = delia-api/app/domain/structured_understanding/ + application/structured_understanding/
+C3_T5_AUTHORIZED = NO
+NEXT = ARCHITECTURE_REVIEW_C3_T4
 REVIEW = ARCHITECTURE_REVIEW_C3_T3R1
 VERDICT = ACCEPT_WITH_RESIDUAL
 BLOCKER_1_TOTAL_EPISTEMIC_ORDERING = RESOLVED
@@ -474,7 +477,7 @@ SOURCE_REF = identity/origin only
 EPISTEMIC_CLASS_GLOBAL_ORDERING = NONE
 ```
 
-Evidence coordination is owned by DÉLIA; original source/domain/provider remains authority for the underlying fact. EvidenceRef ≠ permission; SourceRef ≠ access grant / ≠ source authority itself; Prediction ≠ FACT; Recommendation ≠ authorization; OBSERVATION ≠ FACT; FACT_STATUS ≠ ACCESS_PERMISSION. C3-T2 APPROVED (`ARCHITECTURE_REVIEW_C3_T2R1` `ACCEPT_WITH_RESIDUAL`). C3-T3 APPROVED (`ARCHITECTURE_REVIEW_C3_T3R1` `ACCEPT_WITH_RESIDUAL`); provider-neutral `ModelInvocationPort` + lineage/EvalIdentity; ModelInvocationResult ≠ EvalResult; Evidence store / RAG / planner / conversation remain NOT_IMPLEMENTED; real provider adapter = NONE; C3_EXECUTED=NO.
+Evidence coordination is owned by DÉLIA; original source/domain/provider remains authority for the underlying fact. EvidenceRef ≠ permission; SourceRef ≠ access grant / ≠ source authority itself; Prediction ≠ FACT; Recommendation ≠ authorization; OBSERVATION ≠ FACT; FACT_STATUS ≠ ACCESS_PERMISSION. C3-T2 APPROVED (`ARCHITECTURE_REVIEW_C3_T2R1` `ACCEPT_WITH_RESIDUAL`). C3-T3 APPROVED (`ARCHITECTURE_REVIEW_C3_T3R1` `ACCEPT_WITH_RESIDUAL`); provider-neutral `ModelInvocationPort` + lineage/EvalIdentity; ModelInvocationResult ≠ EvalResult; C3-T4 candidate adds `UnderstandStructuredInput` (BOUNDED_SOURCE_OBSERVATION_EXTRACTION; source OBSERVATION ≠ world FACT); Evidence store / RAG / planner / conversation remain NOT_IMPLEMENTED; real provider adapter = NONE; C3_EXECUTED=NO.
 
 #### C3-T3 Model invocation / eval lineage (APPROVED)
 
@@ -498,6 +501,23 @@ LINEAGE != AUTHORIZATION
 PERSISTENCE = NONE
 C3_T4_AUTHORIZED = YES
 C3_T4_EXECUTED = NO
+```
+
+#### C3-T4 Structured Understanding (candidate)
+
+```text
+STATUS = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+SLICE = BOUNDED_SOURCE_OBSERVATION_EXTRACTION
+OWNER = delia-api domain/application structured_understanding
+USE_CASE = UnderstandStructuredInput
+REUSES = InvokeModel, ModelInvocationPort, EpistemicClass, EvidenceRef, SourceRef, ModelRef, EvalIdentity
+SCHEMA = c3t4.source_observation_extraction@1
+SOURCE_OBSERVATION != WORLD_FACT
+MODEL_OUTPUT_AUTO_FACT = NO
+REAL_PROVIDER_ADAPTER = NONE
+PERSISTENCE = NONE
+C3_T5_AUTHORIZED = NO
+NEXT = ARCHITECTURE_REVIEW_C3_T4
 ```
 
 ## 3A. Architecture / persistence / privacy / safety — C0.S4 freeze accepted

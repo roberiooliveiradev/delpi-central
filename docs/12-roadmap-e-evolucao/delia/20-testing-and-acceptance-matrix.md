@@ -1201,7 +1201,7 @@ C3_T4_AUTHORIZED = YES
 C3_T4_EXECUTED = NO
 TEST_MODULES = tests/test_model_invocation_foundation.py + tests/test_model_invocation_architecture.py
 PRODUCTION_READINESS = NOT_PROVEN
-NEXT = C3-T4 — STRUCTURED_UNDERSTANDING_VERTICAL_SLICE
+NEXT = ARCHITECTURE_REVIEW_C3_T4
 ```
 
 Required deterministic cases (C3-T3) — implemented; Architecture Review accepted (`ARCHITECTURE_REVIEW_C3_T3R1` `ACCEPT_WITH_RESIDUAL`):
@@ -1225,6 +1225,50 @@ Required deterministic cases (C3-T3) — implemented; Architecture Review accept
 - test adapter classified as TEST_ONLY;
 - Domain/Application contain no provider SDK dependency;
 - real-provider exposure denied while gate is unproven.
+
+### C3-T4 — Structured Understanding vertical slice
+
+```text
+STATUS = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+SLICE = BOUNDED_SOURCE_OBSERVATION_EXTRACTION
+OWNER = delia-api/app/domain/structured_understanding/ + application/structured_understanding/
+USE_CASE = UnderstandStructuredInput
+REUSES = InvokeModel + DeterministicTestAdapter (TEST_ONLY)
+STRUCTURED_UNDERSTANDING_CONFORMANCE = PASS (deterministic)
+REAL_MODEL_STRUCTURED_UNDERSTANDING_QUALITY = TEST_NOT_RUN / BLOCKED
+REAL_MODEL_GROUNDING = TEST_NOT_RUN / BLOCKED
+REAL_MODEL_GENERALIZATION = TEST_NOT_RUN / BLOCKED
+REAL_MODEL_EVAL = TEST_NOT_RUN / BLOCKED
+SOURCE_OBSERVATION != WORLD_FACT
+MODEL_OUTPUT_AUTO_FACT = NO
+PERSISTENCE = NONE
+MIGRATION = NONE
+RAG = NONE
+PLANNER = NONE
+CONVERSATION_RUNTIME = NONE
+TOOL_EXECUTION = NONE
+ACT = NONE
+C3_STARTED = YES
+C3_EXECUTED = NO
+C3_T5_AUTHORIZED = NO
+TEST_MODULES = tests/test_structured_understanding_foundation.py + tests/test_structured_understanding_architecture.py
+PRODUCTION_READINESS = NOT_PROVEN
+NEXT = ARCHITECTURE_REVIEW_C3_T4
+```
+
+Required deterministic cases (C3-T4) — implemented; Architecture Review pending:
+
+- positive source-content observation extraction;
+- source OBSERVATION ≠ world FACT;
+- observation/item FACT claim rejected;
+- result-level FACT claim rejected;
+- EvidenceRef/SourceRef/ModelRef/lineage preserved;
+- EvalIdentity may bind without EvalResult/PASS;
+- conflicting observations preserved (no fabricated reconciliation);
+- missing/insufficient evidence ≠ false / ≠ world absence;
+- secret/CoT/tool-call outputs rejected;
+- Recommendation/result does not authorize ACT;
+- confidence does not establish FACT.
 
 ### Planner/OpenAPI/Expertise
 

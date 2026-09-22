@@ -98,9 +98,108 @@ class DeterministicTestAdapter:
                 duration_ms=5,
             )
 
+        if request.output_schema_id.startswith("c3t4."):
+            return self._structured_understanding_payload(request, generated_at)
+
         output = {field: f"deterministic:{request.task_purpose_id}" for field in request.expected_fields}
         return ProviderInvocationPayload(
             structured_output=output,
+            generated_at=generated_at,
+            finish_status=InvocationFinishStatus.COMPLETED,
+            usage=UsageMetadata(input_units=4, output_units=6, unit_kind="tokens"),
+            duration_ms=7,
+        )
+
+    def _structured_understanding_payload(
+        self,
+        request: ModelInvocationRequest,
+        generated_at: str,
+    ) -> ProviderInvocationPayload:
+        if self._behavior == "su_claim_fact":
+            return ProviderInvocationPayload(
+                structured_output={
+                    "observations": [
+                        {
+                            "field_key": "machine_status",
+                            "content": "Machine X stopped at 14:32",
+                            "epistemic_class": "FACT",
+                        }
+                    ],
+                    "limitations": [],
+                    "conflict_present": False,
+                },
+                generated_at=generated_at,
+                duration_ms=5,
+            )
+        if self._behavior == "su_conflict":
+            return ProviderInvocationPayload(
+                structured_output={
+                    "observations": [
+                        {
+                            "field_key": "machine_status",
+                            "content": "Machine X stopped at 14:32",
+                            "epistemic_class": "OBSERVATION",
+                        },
+                        {
+                            "field_key": "machine_status",
+                            "content": "Machine X remained running at 14:32",
+                            "epistemic_class": "OBSERVATION",
+                        },
+                    ],
+                    "limitations": [{"code": "conflicting_evidence"}],
+                    "conflict_present": True,
+                },
+                generated_at=generated_at,
+                duration_ms=6,
+            )
+        if self._behavior == "su_missing":
+            return ProviderInvocationPayload(
+                structured_output={
+                    "observations": [],
+                    "limitations": [{"code": "insufficient_evidence"}],
+                    "conflict_present": False,
+                },
+                generated_at=generated_at,
+                duration_ms=4,
+            )
+        if self._behavior == "su_result_claim_fact":
+            return ProviderInvocationPayload(
+                structured_output={
+                    "observations": [
+                        {
+                            "field_key": "machine_status",
+                            "content": "Machine X stopped at 14:32",
+                            "epistemic_class": "OBSERVATION",
+                        }
+                    ],
+                    "epistemic_class": "FACT",
+                    "limitations": [],
+                    "conflict_present": False,
+                },
+                generated_at=generated_at,
+                duration_ms=5,
+            )
+        if self._behavior == "su_invalid_schema":
+            return ProviderInvocationPayload(
+                structured_output={"answer": "not-observations"},
+                generated_at=generated_at,
+                duration_ms=3,
+            )
+
+        # Default positive: source-content observation extraction
+        return ProviderInvocationPayload(
+            structured_output={
+                "observations": [
+                    {
+                        "field_key": "machine_status",
+                        "content": "the source states that Machine X stopped at 14:32",
+                        "epistemic_class": "OBSERVATION",
+                        "limitations": [],
+                    }
+                ],
+                "limitations": [],
+                "conflict_present": False,
+            },
             generated_at=generated_at,
             finish_status=InvocationFinishStatus.COMPLETED,
             usage=UsageMetadata(input_units=4, output_units=6, unit_kind="tokens"),

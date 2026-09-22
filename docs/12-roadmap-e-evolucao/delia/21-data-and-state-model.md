@@ -269,12 +269,15 @@ C3_T3_EXECUTED = NO
 C3_T3 = APPROVED
 C3_T3_IMPLEMENTATION = delia-api/app/domain/model_invocation/ + application/model_invocation/ (no store; no real provider)
 C3_T4_AUTHORIZED = YES
+C3_T4 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+C3_T4_IMPLEMENTATION = delia-api/app/domain/structured_understanding/ + application/structured_understanding/
+C3_T5_AUTHORIZED = NO
 REVIEW_C3_T3 = ARCHITECTURE_REVIEW_C3_T3R1
 VERDICT_C3_T3 = ACCEPT_WITH_RESIDUAL
 FABRICATED_EVAL_PASS = RESOLVED
 ```
 
-C3-T1 congela o **uso semântico** de Evidence/Source/epistemic para a inteligência futura. Não cria Evidence store, repository, schema, LLM, RAG, planner ou conversation runtime. C3-T2R1 domain model/tests foram aceitos por `ARCHITECTURE_REVIEW_C3_T2R1` (`ACCEPT_WITH_RESIDUAL`; `C3_T2=APPROVED`). C3-T3 foundation aceita por `ARCHITECTURE_REVIEW_C3_T3R1` (`ACCEPT_WITH_RESIDUAL`; `C3_T3=APPROVED`); store/RAG/planner/conversation/real provider remain out of scope.
+C3-T1 congela o **uso semântico** de Evidence/Source/epistemic para a inteligência futura. Não cria Evidence store, repository, schema, LLM, RAG, planner ou conversation runtime. C3-T2R1 domain model/tests foram aceitos por `ARCHITECTURE_REVIEW_C3_T2R1` (`ACCEPT_WITH_RESIDUAL`; `C3_T2=APPROVED`). C3-T3 foundation aceita por `ARCHITECTURE_REVIEW_C3_T3R1` (`ACCEPT_WITH_RESIDUAL`; `C3_T3=APPROVED`). C3-T4 candidate adds bounded Structured Understanding (`BOUNDED_SOURCE_OBSERVATION_EXTRACTION`); store/RAG/planner/conversation/real provider remain out of scope.
 
 ### 4C. C3-T3 — Model invocation / eval lineage
 
@@ -305,6 +308,26 @@ PERSISTENCE = NONE
 ```
 
 C3-T3 does not persist invocations, does not call a real provider, and does not materialize EvidenceItem from model output.
+
+### 4D. C3-T4 — Structured Understanding (candidate)
+
+```text
+STATUS = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+SLICE = BOUNDED_SOURCE_OBSERVATION_EXTRACTION
+OWNER = DÉLIA (delia-api domain/application structured_understanding)
+USE_CASE = UnderstandStructuredInput
+REUSES = InvokeModel + ModelInvocationLineage + EpistemicClass + EvidenceRef/SourceRef/ModelRef
+CONTENT = StructuredObservation[] (source-content OBSERVATION only)
+SOURCE_OBSERVATION != WORLD_FACT
+MODEL_OUTPUT_AUTO_FACT = NO
+CLAIM_PROPOSITION_MODEL = DEFERRED
+ENTITY_EXTRACTION_BOUNDARY = DEFERRED
+RELATIONSHIP_BOUNDARY = DEFERRED
+REAL_PROVIDER = BLOCKED_BY_EXTERNAL_CONFIGURATION
+REAL_MODEL_STRUCTURED_UNDERSTANDING_QUALITY = TEST_NOT_RUN / BLOCKED
+PERSISTENCE = NONE
+C3_T5_AUTHORIZED = NO
+```
 
 ### 4B.1 Ownership
 
