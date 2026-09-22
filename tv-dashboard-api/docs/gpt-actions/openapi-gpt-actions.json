@@ -739,13 +739,24 @@
       "post": {
         "operationId": "gpt_preview_change",
         "summary": "Preview typed change without persisting",
-        "description": "PREPARE dry-run TvCopilotPatchV1. NO WRITE. Returns opaque proposal_handle, typed ops, risk, confirmationPolicy, diff. No httpCommands. If confirmationPolicy=confirm, get explicit user OK before gpt_commit_change. Not for data-only preview.",
+        "description": "PREPARE TvCopilotPatchV1. NO WRITE by default. Returns opaque proposal_handle. For additive (confirmationPolicy=direct), set commit_now=true + confirmation + Idempotency-Key to PREPARE+COMMIT in one call. Destructive policy ignores commit_now.",
         "tags": [
           "TV Dashboard GPT"
         ],
         "security": [
           {
             "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Required when commit_now=true (or use body idempotency_key)."
           }
         ],
         "requestBody": {
@@ -1815,6 +1826,35 @@
                   "catalogVersion": {
                     "type": "string",
                     "description": "Must match gpt_get_catalog.catalogVersion."
+                  },
+                  "commit_now": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "If true and confirmationPolicy=direct, PREPARE+COMMIT in one call (requires confirmation + Idempotency-Key). Ignored when policy=confirm."
+                  },
+                  "confirmation": {
+                    "oneOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "confirmed"
+                        ],
+                        "properties": {
+                          "confirmed": {
+                            "type": "boolean"
+                          }
+                        },
+                        "additionalProperties": false
+                      }
+                    ],
+                    "description": "Required when commit_now=true (confirmed must be true)."
+                  },
+                  "idempotency_key": {
+                    "type": "string",
+                    "description": "Fallback when Idempotency-Key header is missing. Required for commit_now."
                   }
                 }
               },
@@ -1826,14 +1866,19 @@
                     "name": "Testando a VISTA"
                   }
                 ],
-                "catalogVersion": "2026.09.15.1"
+                "catalogVersion": "2026.09.15.1",
+                "commit_now": true,
+                "confirmation": {
+                  "confirmed": true
+                },
+                "idempotency_key": "vista-create-playlist-1"
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Change preview",
+            "description": "Change preview or verified commit",
             "content": {
               "application/json": {
                 "schema": {
@@ -1919,7 +1964,7 @@
       "post": {
         "operationId": "gpt_commit_change",
         "summary": "Commit a previously previewed change",
-        "description": "COMMIT prepared proposal. WRITE. Body: proposal_handle + confirmation (+ Idempotency-Key). No ops/target/SQL/tool_name. Revalidates AuthZ, expiry, revision; requires read-back. confirmation.confirmed must be true. Not a generic executor.",
+        "description": "COMMIT prepared proposal. WRITE. Body: exact proposal_handle + confirmation (+ Idempotency-Key). Never invent handle (no latest). Prefer commit_now on preview for additive direct policies.",
         "tags": [
           "TV Dashboard GPT"
         ],
@@ -1953,8 +1998,8 @@
                 "properties": {
                   "proposal_handle": {
                     "type": "string",
-                    "minLength": 1,
-                    "description": "Opaque handle from gpt_preview_change. Server-side authority; do not invent or alter. COMMIT does not accept ops/target."
+                    "minLength": 8,
+                    "description": "Exact opaque string from gpt_preview_change.proposal_handle. Never invent values like latest/current/null."
                   },
                   "confirmation": {
                     "oneOf": [
@@ -1977,6 +2022,10 @@
                       }
                     ],
                     "description": "Explicit user confirmation. Conversational OK is not AuthZ; backend revalidates permission and proposal binding."
+                  },
+                  "idempotency_key": {
+                    "type": "string",
+                    "description": "Fallback if Idempotency-Key header is omitted."
                   }
                 },
                 "additionalProperties": false

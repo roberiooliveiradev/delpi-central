@@ -1342,3 +1342,218 @@ def test_openapi_operation_descriptions_fit_builder_budget():
                 continue
             desc = op.get("description") or ""
             assert len(desc) <= 300, (op["operationId"], len(desc), desc)
+
+
+def test_commit_rejects_invented_proposal_handle_aliases():
+    from tv_app.application.gpt_actions.proposal_store import parse_proposal_handle
+
+    for alias in ("latest", "current", "null", "new", "undefined", ""):
+        with pytest.raises(GptActionsError) as caught:
+            parse_proposal_handle(alias)
+        assert caught.value.code == "PROPOSAL_NOT_FOUND"
+        assert "latest" in caught.value.message or "inventado" in caught.value.message.lower()
+
+    service = TvGptCommitService(
+        writes=_writes_mock(),
+        idempotency=InMemoryIdempotencyRepository(),
+        access=MagicMock(),
+    )
+    with pytest.raises(GptActionsError) as caught:
+        service.commit(
+            user=_superadmin(),
+            actor_id="actor-1",
+            proposal_handle="latest",
+            confirmation={"confirmed": True},
+            idempotency_key="alias-latest",
+        )
+    assert caught.value.code == "PROPOSAL_NOT_FOUND"
+    service._writes.create_playlist.assert_not_called()
+
+
+def test_preview_commit_now_direct_policy_verified_single_shot():
+    writes = _writes_mock()
+    new_id = uuid4()
+    writes.create_playlist.return_value = {
+        "id": str(new_id),
+        "name": "Slide Teste",
+    }
+    writes.get_revision.return_value = 1
+    writes.list_slides.return_value = []
+    writes.list_sections.return_value = []
+    writes.get_playlist.return_value = {
+        "id": str(new_id),
+        "name": "Slide Teste",
+    }
+    ops = [{"op": "create_playlist", "name": "Slide Teste"}]
+    catalog = TvCopilotContentService.catalog_version()
+    idem = InMemoryIdempotencyRepository()
+    commit = TvGptCommitService(writes=writes, idempotency=idem)
+    dispatch = GptActionsDispatchService(repo=MagicMock(), writes=writes, commit=commit)
+
+    with (
+        patch.object(
+            dispatch._access,
+            "resolve",
+            return_value=SimpleNamespace(can_edit=True, can_read=True, level="owner"),
+        ),
+        patch.object(dispatch._access, "actor_id", return_value="actor-1"),
+        patch.object(
+            TvCopilotPatchService,
+            "preview",
+            return_value={
+                "appliedOps": ["create_playlist"],
+                "baseRevision": None,
+                "diff": {},
+                "fingerprint": "fp",
+                "message": "ok",
+            },
+        ),
+    ):
+        result = dispatch.preview_change(
+            user=_superadmin(),
+            target={},
+            ops=ops,
+            catalog_version=catalog,
+            authorization=None,
+            commit_now=True,
+            confirmation={"confirmed": True},
+            idempotency_key="commit-now-direct-1",
+        )
+
+    assert result["commit_now_applied"] is True
+    assert result["status"] == "VERIFIED"
+    assert result.get("persisted") is True
+    writes.create_playlist.assert_called_once()
+
+
+def test_preview_commit_now_confirm_policy_does_not_write():
+    writes = _writes_mock()
+    playlist_id = uuid4()
+    ops = [{"op": "delete_slide", "slideId": str(uuid4())}]
+    catalog = TvCopilotContentService.catalog_version()
+    commit = TvGptCommitService(
+        writes=writes, idempotency=InMemoryIdempotencyRepository()
+    )
+    dispatch = GptActionsDispatchService(repo=MagicMock(), writes=writes, commit=commit)
+
+    with (
+        patch.object(
+            dispatch._access,
+            "resolve",
+            return_value=SimpleNamespace(can_edit=True, can_read=True, level="owner"),
+        ),
+        patch.object(dispatch._access, "actor_id", return_value="actor-1"),
+        patch.object(
+            TvCopilotPatchService,
+            "preview",
+            return_value={
+                "appliedOps": ["delete_slide"],
+                "baseRevision": 3,
+                "diff": {},
+                "fingerprint": "fp",
+                "message": "ok",
+            },
+        ),
+    ):
+        result = dispatch.preview_change(
+            user=_superadmin(),
+            target={"playlistId": str(playlist_id)},
+            ops=ops,
+            catalog_version=catalog,
+            authorization=None,
+            commit_now=True,
+            confirmation={"confirmed": True},
+            idempotency_key="commit-now-confirm-ignored",
+        )
+
+    assert result["confirmationPolicy"] == "confirm"
+    assert result.get("commit_now_applied") is False
+    assert result.get("persisted") is False
+    assert result["proposal_handle"]
+    writes.delete_slide.assert_not_called()
+
+
+def test_preview_commit_now_without_confirmation_requires_confirm():
+    writes = _writes_mock()
+    ops = [{"op": "create_playlist", "name": "Needs Confirm"}]
+    catalog = TvCopilotContentService.catalog_version()
+    commit = TvGptCommitService(
+        writes=writes, idempotency=InMemoryIdempotencyRepository()
+    )
+    dispatch = GptActionsDispatchService(repo=MagicMock(), writes=writes, commit=commit)
+
+    with (
+        patch.object(dispatch._access, "actor_id", return_value="actor-1"),
+        patch.object(
+            TvCopilotPatchService,
+            "preview",
+            return_value={
+                "appliedOps": ["create_playlist"],
+                "baseRevision": None,
+                "diff": {},
+                "fingerprint": "fp",
+                "message": "ok",
+            },
+        ),
+    ):
+        with pytest.raises(GptActionsError) as caught:
+            dispatch.preview_change(
+                user=_superadmin(),
+                target={},
+                ops=ops,
+                catalog_version=catalog,
+                authorization=None,
+                commit_now=True,
+                confirmation={"confirmed": False},
+                idempotency_key="commit-now-no-confirm",
+            )
+    assert caught.value.code == "CONFIRMATION_REQUIRED"
+    writes.create_playlist.assert_not_called()
+
+
+def test_http_preview_accepts_idempotency_key_in_body_for_commit_now():
+    client = TestClient(app)
+    captured: dict = {}
+
+    def _fake_preview(**kwargs):
+        captured.update(kwargs)
+        return {
+            "status": "VERIFIED",
+            "commit_now_applied": True,
+            "persisted": True,
+            "proposal_handle": "opaque.handle",
+        }
+
+    with (
+        patch(
+            "tv_app.interface.http.routes.gpt_actions_routes.resolve_user",
+            return_value=_superadmin(),
+        ),
+        patch(
+            "tv_app.middleware.auth_middleware._base_jwt_middleware",
+            side_effect=_bypass_auth_middleware,
+        ),
+        patch(
+            "tv_app.interface.http.routes.gpt_actions_routes._dispatch.preview_change",
+            side_effect=lambda **kw: _fake_preview(**kw),
+        ),
+    ):
+        response = client.post(
+            "/gpt-actions/v1/changes/preview",
+            json={
+                "target": {},
+                "ops": [{"op": "create_playlist", "name": "Body Key"}],
+                "catalogVersion": TvCopilotContentService.catalog_version(),
+                "commit_now": True,
+                "confirmation": {"confirmed": True},
+                "idempotency_key": "body-idem-key-1",
+            },
+        )
+    assert response.status_code == 200, response.text
+    assert captured.get("commit_now") is True
+    assert captured.get("idempotency_key") == "body-idem-key-1"
+    assert captured.get("confirmation") == {"confirmed": True}
+    body = response.json()
+    data = body.get("data") or body
+    assert data.get("commit_now_applied") is True
+    assert data.get("status") == "VERIFIED"

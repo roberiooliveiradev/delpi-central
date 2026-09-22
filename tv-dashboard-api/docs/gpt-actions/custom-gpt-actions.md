@@ -47,12 +47,21 @@ it does not auto-provision the client. Durable target remains Plugin + MCP
 
 ## PREPARE vs ACT
 
-- Suggest = NL planner (does **not** mint a proposal).
-- Preview = PREPARE (``persisted=false``). Returns opaque ``proposal_handle``;
-  typed ops remain visible for the model to explain the plan; never exposes
-  ``httpCommands`` on the public GPT DTO.
-- Commit = ACT via shared ``TvPresentationWriteService``. Input is **only**
-  ``proposal_handle`` + ``confirmation`` (+ ``Idempotency-Key``). No client
+- Suggest = NL planner (optional; does **not** mint a proposal). Skip when the
+  user intent is already a typed op (e.g. create slide/playlist).
+- Preview = PREPARE. Returns opaque ``proposal_handle``; typed ops visible for
+  explanation; never exposes ``httpCommands`` on the public GPT DTO.
+- **Additive single-shot** (``confirmationPolicy=direct``): call
+  ``gpt_preview_change`` with ``commit_now=true`` + ``confirmation.confirmed=true``
+  + ``Idempotency-Key`` (header) or body ``idempotency_key``. Server PREPARE+COMMIT
+  in one request → ``status=VERIFIED``. User intent = confirmation; no chat
+  “Confirma?” loop. One ChatGPT Allow dialog for that Action.
+- **Destructive** (``confirmationPolicy=confirm``): preview without ``commit_now``
+  (``commit_now`` is ignored if set) → one conversational confirm →
+  ``gpt_commit_change`` with the **exact** opaque handle. Invented aliases
+  (``latest``, ``current``, …) → ``PROPOSAL_NOT_FOUND``.
+- Standalone commit = ACT via shared ``TvPresentationWriteService``. Input is
+  **only** ``proposal_handle`` + ``confirmation`` (+ idempotency). No client
   ``ops``/``target``/``planDigest`` authority. No HTTP loopback against ``/playlists/**``.
 
 ## OCC / catalog / proposal / idempotency

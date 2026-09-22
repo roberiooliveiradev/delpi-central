@@ -232,6 +232,9 @@ class GptActionsDispatchService:
         ops: list[Any],
         catalog_version: str | None,
         authorization: str | None,
+        commit_now: bool = False,
+        confirmation: dict[str, Any] | bool | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         assert_permission(user, TV_WRITE)
         actor = self._actor(user)
@@ -271,6 +274,7 @@ class GptActionsDispatchService:
         base_revision_int = int(base_revision) if base_revision is not None else None
         # Policy authority is the Copilot catalog — not patch-service echo.
         policy = TvCopilotContentService.aggregate_ops_policy(typed_ops)
+        confirmation_policy = str(policy["confirmationPolicy"] or "direct").strip().lower()
         proposal = create_proposal(
             actor_id=actor,
             target=envelope["target"],
@@ -279,12 +283,12 @@ class GptActionsDispatchService:
             catalog_version=envelope["catalogVersion"],
             base_revision=base_revision_int,
             risk=policy["risk"],
-            confirmation_policy=str(policy["confirmationPolicy"] or "direct"),
+            confirmation_policy=confirmation_policy,
             side_effect_hints=list(policy["sideEffectHints"] or []),
             meta={"diff": result.get("diff"), "fingerprint": result.get("fingerprint")},
         )
         proposal_handle = get_proposal_store().put(proposal)
-        return {
+        preview_payload = {
             "target": envelope["target"],
             "ops": typed_ops,
             "operationNames": operation_names,
@@ -301,6 +305,51 @@ class GptActionsDispatchService:
             "canCommit": True,
             "persisted": False,
             "message": result.get("message"),
+        }
+
+        if not commit_now:
+            return preview_payload
+
+        if confirmation_policy == "confirm":
+            preview_payload["message"] = (
+                "commit_now ignorado: confirmationPolicy=confirm exige "
+                "confirmação explícita do usuário e gpt_commit_change com o "
+                "proposal_handle exato deste preview."
+            )
+            preview_payload["commit_now_applied"] = False
+            return preview_payload
+
+        if not TvGptCommitService._normalize_confirmation(confirmation):
+            raise GptActionsError(
+                "commit_now=true exige confirmation.confirmed=true "
+                "(policy direct). Nada foi gravado.",
+                code="CONFIRMATION_REQUIRED",
+                status_code=400,
+            )
+
+        key = str(idempotency_key or "").strip()
+        if not key:
+            raise GptActionsError(
+                "commit_now=true exige Idempotency-Key (header) ou "
+                "idempotency_key no body.",
+                code="INVALID_CHANGE",
+                status_code=422,
+            )
+
+        outcome = self._commit.commit(
+            user=user,
+            actor_id=actor,
+            proposal_handle=proposal_handle,
+            confirmation=confirmation,
+            idempotency_key=key,
+            authorization=authorization,
+        )
+        return {
+            **preview_payload,
+            **outcome,
+            "proposal_handle": proposal_handle,
+            "commit_now_applied": True,
+            "persisted": bool(outcome.get("persisted", True)),
         }
 
     def commit_change(

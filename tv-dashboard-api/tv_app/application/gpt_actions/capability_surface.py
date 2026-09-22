@@ -78,6 +78,11 @@ def build_capability_surface() -> dict[str, Any]:
                     "suggest": "gpt_suggest_change",
                     "commit": "gpt_commit_change",
                     "commit_input": ["proposal_handle", "confirmation"],
+                    "additive_single_shot": {
+                        "operation": "gpt_preview_change",
+                        "commit_now": True,
+                        "when": "confirmationPolicy=direct",
+                    },
                     "opaque_proposal": True,
                 },
                 "confirmation_policy": {

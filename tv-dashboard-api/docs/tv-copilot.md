@@ -134,9 +134,13 @@ Composites rota → visual + bind:
 Façade OAuth em `/gpt-actions/v1` (ver `docs/gpt-actions/custom-gpt-actions.md`).
 
 - **Não** é owner do catálogo — continua `tv_copilot_content.json` / Copilot services.
-- PREPARE = suggest/preview; preview mints opaque ``proposal_handle`` (NO WRITE).
-  ACT = ``gpt_commit_change`` with ``proposal_handle`` + ``confirmation`` only,
-  via ``TvPresentationWriteService`` (mesmo write boundary das rotas CRUD UI).
+- PREPARE = suggest/preview; preview mints opaque ``proposal_handle``.
+  Additive (``confirmationPolicy=direct``): ``commit_now=true`` + confirmation
+  on the same preview → PREPARE+COMMIT (1 ChatGPT Allow). Destructive:
+  preview then ``gpt_commit_change`` with the exact handle after one user OK.
+  Never invent handles (``latest`` → ``PROPOSAL_NOT_FOUND``).
+  Standalone ACT = ``proposal_handle`` + ``confirmation`` only, via
+  ``TvPresentationWriteService`` (mesmo write boundary das rotas CRUD UI).
   Sem loopback HTTP; sem ``ops``/``planDigest`` no commit.
 - Draft local do MFE permanece `unavailable_external` para o Custom GPT.
 

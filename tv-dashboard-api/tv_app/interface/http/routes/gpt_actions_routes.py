@@ -48,11 +48,15 @@ class PreviewChangeBody(BaseModel):
     target: dict[str, Any] | None = None
     ops: list[dict[str, Any]] = Field(default_factory=list)
     catalogVersion: str | None = None
+    commit_now: bool = False
+    confirmation: dict[str, Any] | bool | None = None
+    idempotency_key: str | None = None
 
 
 class CommitChangeBody(BaseModel):
     proposal_handle: str = Field(min_length=1)
     confirmation: dict[str, Any] | bool
+    idempotency_key: str | None = None
 
 
 class DataPreviewBody(BaseModel):
@@ -212,7 +216,11 @@ def suggest_change(request: Request, body: SuggestBody):
 
 
 @router.post("/changes/preview")
-def preview_change(request: Request, body: PreviewChangeBody):
+def preview_change(
+    request: Request,
+    body: PreviewChangeBody,
+    idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
+):
     cid = _correlation_id(request)
     try:
         data = _dispatch.preview_change(
@@ -221,6 +229,9 @@ def preview_change(request: Request, body: PreviewChangeBody):
             ops=body.ops,
             catalog_version=body.catalogVersion,
             authorization=request.headers.get("Authorization"),
+            commit_now=bool(body.commit_now),
+            confirmation=body.confirmation,
+            idempotency_key=(idempotency_key or body.idempotency_key or ""),
         )
         return ok(data)
     except Exception as exc:  # noqa: BLE001
@@ -239,7 +250,7 @@ def commit_change(
             user=resolve_user(request),
             proposal_handle=body.proposal_handle,
             confirmation=body.confirmation,
-            idempotency_key=idempotency_key or "",
+            idempotency_key=(idempotency_key or body.idempotency_key or ""),
             authorization=request.headers.get("Authorization"),
         )
         return ok(data, message="Commit verificado.")

@@ -151,11 +151,12 @@ AuthN = Keycloak; AuthZ plataforma = Core; AuthZ recurso = TV. Conta OpenAI **n�
 |--------|--------|
 | RBAC | sem permissão → 403; `tv-dashboard.read` → reads; `tv-dashboard.write` → PREPARE/ACT conforme contrato |
 | READ | catalog, playlists, context, data-routes |
-| PREPARE | data-preview / suggest / preview → `persisted=false`, revision estável, `proposal_handle` + `catalogVersion` |
-| ACT | playlist de teste; preferir `update_slide` reversível; `Idempotency-Key` + `proposal_handle` + `confirmation.confirmed=true` → `VERIFIED` + cleanup |
+| PREPARE | data-preview / suggest / preview → `persisted=false` + `proposal_handle` (salvo se só PREPARE) |
+| ACT additive | `gpt_preview_change` com `commit_now=true` + `confirmation` + Idempotency-Key (header ou body) → `VERIFIED` em 1 Action |
+| ACT destructive | preview → confirmação conversacional → `gpt_commit_change` com handle **exato** (nunca `latest`) |
 | Idempotency | mesmo key+payload → replay; key+payload diferente → 409 `IDEMPOTENCY_CONFLICT` |
-| OCC / proposal | revision stale → 409 `PROPOSAL_CHANGED`; expired → `PROPOSAL_EXPIRED` |
-| Destructive | confirmação explícita obrigatória; backend exige `confirmation.confirmed=true` |
+| OCC / proposal | revision stale → 409 `PROPOSAL_CHANGED`; expired → `PROPOSAL_EXPIRED`; alias inventado → `PROPOSAL_NOT_FOUND` |
+| Destructive | confirmação explícita obrigatória; `commit_now` ignorado quando `confirmationPolicy=confirm` |
 
 ## 4. Fora de escopo deste bridge
 

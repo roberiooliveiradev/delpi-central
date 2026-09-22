@@ -369,6 +369,32 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "type": "string",
                 "description": "Must match gpt_get_catalog.catalogVersion.",
             },
+            "commit_now": {
+                "type": "boolean",
+                "default": False,
+                "description": (
+                    "If true and confirmationPolicy=direct, PREPARE+COMMIT in one call "
+                    "(requires confirmation + Idempotency-Key). Ignored when policy=confirm."
+                ),
+            },
+            "confirmation": {
+                "oneOf": [
+                    {"type": "boolean"},
+                    {
+                        "type": "object",
+                        "required": ["confirmed"],
+                        "properties": {"confirmed": {"type": "boolean"}},
+                        "additionalProperties": False,
+                    },
+                ],
+                "description": "Required when commit_now=true (confirmed must be true).",
+            },
+            "idempotency_key": {
+                "type": "string",
+                "description": (
+                    "Fallback when Idempotency-Key header is missing. Required for commit_now."
+                ),
+            },
         },
     }
 
@@ -378,10 +404,10 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
         "properties": {
             "proposal_handle": {
                 "type": "string",
-                "minLength": 1,
+                "minLength": 8,
                 "description": (
-                    "Opaque handle from gpt_preview_change. Server-side authority; "
-                    "do not invent or alter. COMMIT does not accept ops/target."
+                    "Exact opaque string from gpt_preview_change.proposal_handle. "
+                    "Never invent values like latest/current/null."
                 ),
             },
             "confirmation": {
@@ -406,6 +432,10 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                     "Explicit user confirmation. Conversational OK is not AuthZ; "
                     "backend revalidates permission and proposal binding."
                 ),
+            },
+            "idempotency_key": {
+                "type": "string",
+                "description": "Fallback if Idempotency-Key header is omitted.",
             },
         },
         "additionalProperties": False,
@@ -553,22 +583,34 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "operationId": "gpt_preview_change",
                 "summary": "Preview typed change without persisting",
                 "description": (
-                    "PREPARE dry-run TvCopilotPatchV1. NO WRITE. Returns opaque "
-                    "proposal_handle, typed ops, risk, confirmationPolicy, diff. "
-                    "No httpCommands. If confirmationPolicy=confirm, get explicit "
-                    "user OK before gpt_commit_change. Not for data-only preview."
+                    "PREPARE TvCopilotPatchV1. NO WRITE by default. Returns opaque "
+                    "proposal_handle. For additive (confirmationPolicy=direct), set "
+                    "commit_now=true + confirmation + Idempotency-Key to PREPARE+COMMIT "
+                    "in one call. Destructive policy ignores commit_now."
                 ),
                 "tags": [tag],
                 "security": [{"BearerAuth": []}],
+                "parameters": [
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": False,
+                        "schema": {"type": "string"},
+                        "description": "Required when commit_now=true (or use body idempotency_key).",
+                    }
+                ],
                 "requestBody": _json_body(
                     preview_schema,
                     example={
                         "target": {},
                         "ops": create_ops,
                         "catalogVersion": catalog_version,
+                        "commit_now": True,
+                        "confirmation": {"confirmed": True},
+                        "idempotency_key": "vista-create-playlist-1",
                     },
                 ),
-                "responses": {"200": _ok_response("Change preview"), **_error_responses()},
+                "responses": {"200": _ok_response("Change preview or verified commit"), **_error_responses()},
             }
         },
         f"{base}/changes/commit": {
@@ -576,10 +618,9 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "operationId": "gpt_commit_change",
                 "summary": "Commit a previously previewed change",
                 "description": (
-                    "COMMIT prepared proposal. WRITE. Body: proposal_handle + "
-                    "confirmation (+ Idempotency-Key). No ops/target/SQL/tool_name. "
-                    "Revalidates AuthZ, expiry, revision; requires read-back. "
-                    "confirmation.confirmed must be true. Not a generic executor."
+                    "COMMIT prepared proposal. WRITE. Body: exact proposal_handle + "
+                    "confirmation (+ Idempotency-Key). Never invent handle (no latest). "
+                    "Prefer commit_now on preview for additive direct policies."
                 ),
                 "tags": [tag],
                 "security": [{"BearerAuth": []}],

@@ -191,19 +191,16 @@ PROPOSTA DE TELA / PROPOSED
 
 ### 7.3 Change path
 
-Always:
-
 ```text
-gpt_get_catalog
-→ typed ops only (from catalog)
-→ gpt_suggest_change and/or gpt_preview_change
-→ show confirmationPolicy / risk
-→ explicit user confirmation
-→ gpt_commit_change with Idempotency-Key + proposal_handle + confirmation.confirmed=true
-→ verify VERIFIED + authoritative context
+gpt_get_catalog → typed ops only
+→ [additive / direct] gpt_preview_change(commit_now=true, confirmation, Idempotency-Key)
+     → VERIFIED (1 ChatGPT Allow; no chat “Confirma?”)
+→ [destructive / confirm] gpt_preview_change → one “Confirma?” → gpt_commit_change(exact handle)
+     → VERIFIED
 ```
 
-Prefer reversible ops (e.g. `update_slide`) for exploratory edits. Destructive ops (`risk=destructive`, `confirmationPolicy=confirm`): PREVIEW only unless product confirmation policy is fully available and user confirms specifically.
+Skip `gpt_suggest_change` when ops are already clear. Never invent `proposal_handle`
+(`latest` etc.). Prefer reversible ops (e.g. `update_slide`) for exploratory edits.
 
 ## 8. QUICK DISPLAY playbook
 

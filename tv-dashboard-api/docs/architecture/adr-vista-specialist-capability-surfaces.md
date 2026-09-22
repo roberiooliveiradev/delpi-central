@@ -13,6 +13,7 @@
 5. Canonical matrix: [`../integrations/vista-capability-matrix.md`](../integrations/vista-capability-matrix.md).
 6. Forbidden: generic Action proxies; SQL/HTTP arbitrary execution; local GPT RBAC; service-account impersonation of end users.
 7. **GPT Actions V2 (2026-09-22):** Writes use opaque server-side proposals — `gpt_preview_change` mints `proposal_handle`; `gpt_commit_change` accepts only `proposal_handle` + `confirmation` (+ `Idempotency-Key`). Lifecycle: `GOVERNED_PREPARE_COMMIT_V2`. Importable ops remain **8**.
+7a. **Additive single-shot (2026-09-22):** For `confirmationPolicy=direct`, `gpt_preview_change` accepts `commit_now=true` + confirmation (+ idempotency header or body `idempotency_key`) to PREPARE+COMMIT in one Action. Destructive policy ignores `commit_now`. Invented handle aliases (`latest`, …) → `PROPOSAL_NOT_FOUND`.
 8. **Do not adopt TÉO entity surface** (`search_records` / `prepare_record_change`) — VISTA is playlist/presentation workflow, not multi-entity CRUD.
 9. **MCP** remains TARGET (Plugin + remote MCP). Do not create MCP in this change; keep application core adapter-ready.
 10. **Proposal store:** in-process with **ACCEPT_WITH_RESIDUAL** for current single-replica runtime.

@@ -56,8 +56,7 @@ def test_vista_builder_core_keeps_required_invariants():
         "TECHNICAL SUCCESS != VERIFIED BUSINESS OUTCOME",
         "Search miss != proof of absence",
         "VISTA capability <= capability do usuário autenticado",
-        "EXPLICIT CONFIRMATION",
-        "AUTHORITATIVE READ-BACK",
+        "commit_now=true",
         "vista-display-playbooks.md",
         "gpt_get_catalog",
         "gpt_commit_change",
@@ -65,6 +64,8 @@ def test_vista_builder_core_keeps_required_invariants():
         "2xx != verified",
         "401=AuthN",
         "403=AuthZ",
+        "proposal_handle",
+        "latest",
     ]
     for marker in required:
         assert marker in block, marker
@@ -122,6 +123,8 @@ def test_vista_prepare_act_states_are_distinct():
         "VERIFIED",
         "commit attempted != persisted",
         "PREVIEW != PERSISTED",
+        "NÃO pergunte “Confirma?”",
+        "commit_now",
     ]:
         assert marker in block, marker
 
@@ -138,6 +141,7 @@ def test_vista_playbooks_exist_and_forbid_new_actions_by_default():
     assert "COMPOUND PREVIEW = TARGET" in text
     assert "Never infer a UUID from a screenshot" in text
     assert "ninth Action" in text
+    assert "commit_now" in text
 
 
 def test_vista_instructions_domain_intent_beats_image_generation():
@@ -147,4 +151,5 @@ def test_vista_instructions_domain_intent_beats_image_generation():
     assert "## Resultado desejado" in block
     assert "## Pedido composto" in block
     assert "LIMITAÇÃO ATUAL (PROVEN)" in block
-    assert "TARGET:" in block
+    assert "TARGET" in block
+    assert "Pule gpt_suggest_change" in block

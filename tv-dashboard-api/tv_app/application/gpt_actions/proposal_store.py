@@ -41,13 +41,36 @@ def mint_proposal_handle(proposal_id: str) -> str:
     return f"{_b64(proposal_id.encode('utf-8'))}.{_b64(digest)}"
 
 
+_FORBIDDEN_HANDLE_ALIASES = frozenset(
+    {
+        "latest",
+        "current",
+        "null",
+        "none",
+        "undefined",
+        "new",
+        "prev",
+        "previous",
+        "last",
+        "this",
+        "handle",
+        "proposal",
+        "proposal_handle",
+    }
+)
+
+
 def parse_proposal_handle(handle: str) -> str:
     raw = (handle or "").strip()
-    if not raw or "." not in raw:
+    alias = raw.lower()
+    if not raw or alias in _FORBIDDEN_HANDLE_ALIASES or len(raw) < 8 or "." not in raw:
         raise GptActionsError(
-            "proposal_handle inválido ou ausente.",
+            "proposal_handle inválido ou inventado. Copie exatamente o "
+            "proposal_handle retornado por gpt_preview_change "
+            "(nunca use 'latest', 'current' ou placeholders).",
             code="PROPOSAL_NOT_FOUND",
             status_code=400,
+            details={"hint": "copy_exact_proposal_handle_from_preview"},
         )
     left, right = raw.split(".", 1)
     try:
@@ -57,11 +80,15 @@ def parse_proposal_handle(handle: str) -> str:
         ).digest()
         if not hmac.compare_digest(expected, _unb64(right)):
             raise ValueError("bad mac")
+    except GptActionsError:
+        raise
     except Exception as exc:
         raise GptActionsError(
-            "proposal_handle inválido.",
+            "proposal_handle inválido. Copie exatamente o valor retornado "
+            "por gpt_preview_change; não invente identificadores.",
             code="PROPOSAL_NOT_FOUND",
             status_code=400,
+            details={"hint": "copy_exact_proposal_handle_from_preview"},
         ) from exc
     return proposal_id
 

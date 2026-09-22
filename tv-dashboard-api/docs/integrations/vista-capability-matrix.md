@@ -52,16 +52,20 @@ Canonical domain capability (TvCopilotPatchV1)
 ## PREPARE / CONFIRM / COMMIT
 
 ```text
-UNDERSTAND → READ CURRENT STATE → PREPARE EXACT CHANGE (preview)
-→ SHOW USER → EXPLICIT CONFIRMATION → COMMIT(proposal_handle, confirmation)
+UNDERSTAND → READ CURRENT STATE → PREPARE (gpt_preview_change)
+→ [direct] commit_now=true + confirmation → PREPARE+COMMIT same request
+→ [confirm] SHOW USER → one conversational Confirma? → gpt_commit_change(handle)
 → AUTHORITATIVE READ-BACK → VERIFY → REPORT OUTCOME
 ```
 
-- `gpt_suggest_change` = NL planner (does **not** mint proposal).
-- `gpt_preview_change` = PREPARE + mint opaque handle (`persisted=false`).
-- `gpt_commit_change` = ACT (`proposal_handle` + `confirmation` + `Idempotency-Key` only).
-- Explicit confirmation ≠ AuthZ.
-- Technical 2xx ≠ business outcome.
+- `gpt_suggest_change` = NL planner (optional; skip when intent is already typed).
+- `gpt_preview_change` = PREPARE + mint opaque handle; with `commit_now=true` +
+  `confirmation` when aggregated `confirmationPolicy=direct` → PREPARE+COMMIT
+  in one Action (`commit_now_applied=true`, `status=VERIFIED`).
+- Destructive (`confirmationPolicy=confirm`): `commit_now` is ignored; use
+  `gpt_commit_change` with the **exact** `proposal_handle` after one user OK.
+- Never invent handles (`latest` etc.) → `PROPOSAL_NOT_FOUND`.
+- Explicit confirmation ≠ AuthZ. Technical 2xx ≠ business outcome.
 
 ## GPT ACTION SURFACE BUDGET
 
