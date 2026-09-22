@@ -54,7 +54,7 @@ https://<host-publico>/apps/transformometro-api/transformometro/gpt-actions/v1/o
 
 Alternativa: colar `docs/gpt-actions/openapi-gpt-actions.json`.
 
-Esperado: **21** operations importáveis, incluindo `gpt_get_methodology_guide` (`gpt_get_my_context`, `gpt_get_process_context`, `gpt_analyze`, `gpt_get_catalog`, `gpt_validate_improvement_package`, `gpt_commit_improvement_package`, `gpt_list_evidence`, `gpt_manage_evidence`, `gpt_get_process_timeline`, `gpt_adjust_shared_resource_cost`, `gpt_meeting_minute_manage`, …). O GET `openapi.json` (`gpt_get_openapi_schema`) não aparece como Action. O inventário de 20 operations em 2026-09-17 é HISTORICAL.
+Esperado: **18** operations importáveis (V2), incluindo `gpt_get_methodology_guide`, `gpt_prepare_record_change`, `gpt_commit_proposal` (`gpt_get_my_context`, `gpt_get_process_context`, `gpt_analyze`, `gpt_get_catalog`, `gpt_validate_improvement_package`, `gpt_list_evidence`, `gpt_manage_evidence`, `gpt_get_process_timeline`, `gpt_adjust_shared_resource_cost`, `gpt_meeting_minute_manage`, …). Sem `gpt_commit_improvement_package` no schema (commit via `gpt_commit_proposal`). O GET `openapi.json` não aparece como Action. Inventários de 20/21 operations são HISTORICAL.
 
 O ChatGPT **rejeita** `servers.url` relativo (`/apps/transformometro-api`). Se aparecer «Não foi possível encontrar uma URL válida em `servers`», altere no editor para:
 
@@ -96,7 +96,7 @@ Resumo operacional:
 - Evidência: links/metadados via `gpt_list_evidence` / `gpt_manage_evidence`; upload/download binário permanece UI-only / BLOCKED_BY_PLATFORM.
 - Assinatura manuscrita PNG/PDF/magic-link público: UI-only / NOT_EXPOSED_BY_DESIGN.
 - Timeline de processo, reajuste canônico de custo e extras de ata: Actions semânticas dedicadas (não proxy genérico).
-- REIMPORT OpenAPI quando o schema mudar. No código, o contrato importável tem **21** operationIds (`GPT_ACTIONS_OPERATION_IDS`). **20** é HISTORICAL (2026-09-17). Este checklist não prova que o Builder já foi reimportado.
+- REIMPORT OpenAPI quando o schema mudar. No código, o contrato importável tem **18** operationIds (`GPT_ACTIONS_OPERATION_IDS`, lifecycle `GOVERNED_PREPARE_COMMIT_V2`). **20/21** são HISTORICAL. Este checklist não prova que o Builder já foi reimportado.
 - `gpt_get_my_context` = contexto pessoal (nome/cargo), não permissões.
 
 ## 4. Fechar redirects com o GPT ID real
@@ -113,7 +113,7 @@ https://chat.openai.com/aip/g-YOUR-GPT-ID/oauth/callback
 - Name = **TÉO — Especialista em Transformação Digital**
 - Instructions aceitas sem erro de 8.000 caracteres
 - `teo-method-playbooks.md` presente em Knowledge
-- GPT lista as **21** Actions do contrato no código, depois de reimport manual. O critério antigo de **20** é HISTORICAL. Reimport no Builder = TEST_NOT_RUN neste documento
+- GPT lista as **18** Actions do contrato no código, depois de reimport manual. Critérios antigos de **20/21** são HISTORICAL. Reimport no Builder = TEST_NOT_RUN neste documento
 - OAuth pede **Sign in**
 - `gpt_analyze` / `gpt_get_catalog` / `gpt_get_process_context` respondem sem erro de token/redirect
 - `gpt_get_catalog` devolve `registration_guide`

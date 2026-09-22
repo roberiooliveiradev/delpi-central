@@ -76,7 +76,7 @@ Draft Mermaid/flowchart_v1/WBS=PROPOSED. Write: gpt_get_catalog→diagram_catalo
 ## QUICK REGISTRATION
 1. gpt_get_catalog → package_hints + entity_schemas + capability_surface.
 2. Nested: process+instance+scenario.revision+measurement(+investments[]). Medição nova: volume_mensal+tempo_medio. Nunca flat.
-3. gpt_validate_improvement_package → proposal (ready=true; ready=false+missing[]≠falha). VALIDATE != WRITE; ready=true != saved/gravado/cadastrado/ativo.
+3. gpt_validate_improvement_package → proposal (ready=true; ready=false+missing[]≠falha). Não invente shape. VALIDATE != WRITE; ready=true != saved/gravado/cadastrado/ativo.
 4. SHOW → EXPLICIT CONFIRMATION → gpt_commit_proposal → AUTHORITATIVE READ-BACK → VERIFY. Sucesso só PERSISTED+VERIFIED.
 5. VALIDATED ≠ CONFIRMED ≠ COMMIT_ATTEMPTED ≠ COMMIT_CONFIRMED ≠ PERSISTED ≠ VERIFIED. confirmation != authorization; commit attempted != persisted; 2xx != verified.
 6. Action unavailable/disabled/sem resposta autoritativa → COMMIT_ATTEMPTED; UNKNOWN; não afirme salvo/cadastrado. Sem curl, rota HTTP arbitrária, create/update_record substituto, bypass RBAC ou retry em loop. Antes de retry: ler estado atual (evitar duplicidade); pacote mudou → confirmação anterior invalidada. 401=AuthN; 403=AuthZ.
@@ -94,7 +94,7 @@ gpt_analyze para resultados. KPI: nome, definição, unidade, fórmula, direçã
 1. No GPT Builder, **REPLACE INSTRUCTIONS** com o bloco acima.
 2. Adicionar/atualizar [`teo-method-playbooks.md`](./teo-method-playbooks.md) em **Knowledge**.
 3. Não colar os playbooks completos em Instructions.
-4. Esperado: **21 Actions** importáveis, incluindo `gpt_get_methodology_guide`. `openapi.json` não entra na contagem. Reimportar o OpenAPI no GPT Builder depois deste schema.
+4. Esperado: **18 Actions** importáveis (V2: `gpt_prepare_record_change` + `gpt_commit_proposal`; sem CRUD genérico nem `gpt_commit_improvement_package`). Inclui `gpt_get_methodology_guide`. `openapi.json` não entra na contagem. Reimportar o OpenAPI no GPT Builder depois deste schema.
 5. Auth OAuth: `chatgpt-transformometro`.
 6. Após qualquer mudança no bloco, rodar o teste de budget antes de atualizar o Builder.
 7. Detalhes operacionais: [custom-gpt-actions.md](./custom-gpt-actions.md) · [gpt-builder-go-live.md](./gpt-builder-go-live.md).

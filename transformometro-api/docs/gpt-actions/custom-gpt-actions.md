@@ -33,7 +33,7 @@ cd transformometro-api
 PYTHONPATH=.:../shared python scripts/sync_gpt_actions_openapi.py
 ```
 
-## Operations (21 no schema importado)
+## Operations (18 no schema importado — V2 prepare/commit)
 
 | operationId | Método / path |
 |-------------|----------------|
@@ -163,7 +163,7 @@ Checklist operacional: [`gpt-builder-go-live.md`](./gpt-builder-go-live.md).
 
 1. Create GPT → Actions → Import from URL  
    `https://<host>/apps/transformometro-api/transformometro/gpt-actions/v1/openapi.json`  
-   ou cole o conteúdo de `docs/gpt-actions/openapi-gpt-actions.json` (esperar **21** actions importáveis).
+   ou cole o conteúdo de `docs/gpt-actions/openapi-gpt-actions.json` (esperar **18** actions importáveis — V2).
 2. Authentication → OAuth (valores da tabela acima).
 3. Colar o bloco Instructions de [`specialist-instructions.md`](./specialist-instructions.md) (**REPLACE INSTRUCTIONS**).
 4. Adicionar [`teo-method-playbooks.md`](./teo-method-playbooks.md) como Knowledge do GPT (metodologia; não authority de dados).
