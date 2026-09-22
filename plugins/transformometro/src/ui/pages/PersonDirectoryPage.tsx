@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   HOST_SELF_PROFILE_PATH,
+  SectionCard,
   createDashboardPortalUserProfilePage,
   navigateHostPath,
+  sectionCardPacBemClasses,
 } from "@delpi/plugin-ui/index";
 import {
   CheckSquare,
@@ -15,11 +17,21 @@ import { InlineErrorState } from "../../components/ErrorStateBox";
 import { LoadingActivityCard } from "../../components/LoadingActivityCard";
 import { PortalTopBar } from "../../components/TransformometroNav";
 import { TransformometroShell } from "../../components/TransformometroShell";
+import { TmStatusBadge } from "../../components/tmChromeUi";
 import { PERSON_DIRECTORY_LABELS as L } from "../../content/personDirectoryLabels";
-import { lookupDirectoryUsers } from "../../data/api/directoryUsersApi";
+import {
+  fetchMyPersonProfile,
+  lookupDirectoryUsers,
+  type MyPersonProfile,
+} from "../../data/api/directoryUsersApi";
 import { downloadPersonProfilePhoto } from "../../data/api/transformometroInteractionApi";
 import { fetchMeProfile } from "../../data/api/meApi";
 import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
+import {
+  TRANSFORMOMETRO_ACCESS_PERMISSION,
+  TRANSFORMOMETRO_MANAGE_PERMISSION,
+  usePortalSessionAccess,
+} from "../../state/portalChrome";
 
 type Props = {
   getAccessToken?: () => string | undefined;
@@ -42,6 +54,11 @@ const TmPortalUserProfilePage = createDashboardPortalUserProfilePage({
   },
 });
 
+const SECTION = sectionCardPacBemClasses("ds");
+const SECTION_LABELS = {
+  titleHelpAriaLabel: (title: string) => `Ajuda: ${title}`,
+};
+
 type Shortcut = {
   id: string;
   label: string;
@@ -51,8 +68,8 @@ type Shortcut = {
 
 /**
  * Perfil do diretório no Portal Transforma+.
- * Modo leitura: identidade + atalhos do portal.
- * Editar (próprio): abre Meu Perfil Minha DELPI (`/profile`) para foto/cargo/contatos.
+ * Identidade corporativa (cargo/contatos) e acesso da sessão são transversais Minha DELPI.
+ * Editar (próprio): abre Meu Perfil Minha DELPI (`/profile`).
  */
 export function PersonDirectoryPage({
   getAccessToken,
@@ -60,11 +77,13 @@ export function PersonDirectoryPage({
   userId,
   onNavigate,
 }: Props) {
+  const session = usePortalSessionAccess();
   const [meId, setMeId] = useState<string | null>(null);
   const [meLoading, setMeLoading] = useState(true);
   const [name, setName] = useState<string>("");
   const [email, setEmail] = useState<string | null>(null);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [personProfile, setPersonProfile] = useState<MyPersonProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -102,6 +121,7 @@ export function PersonDirectoryPage({
     let objectUrl: string | null = null;
     setLoading(true);
     setError(null);
+    setPersonProfile(null);
 
     void Promise.all([
       lookupDirectoryUsers([id], controller.signal, getAccessToken),
@@ -131,6 +151,22 @@ export function PersonDirectoryPage({
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
   }, [getAccessToken, userId]);
+
+  useEffect(() => {
+    if (isSelf !== true) {
+      setPersonProfile(null);
+      return undefined;
+    }
+    const controller = new AbortController();
+    void fetchMyPersonProfile(getAccessToken, controller.signal)
+      .then((profile) => {
+        if (!controller.signal.aborted) setPersonProfile(profile);
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setPersonProfile(null);
+      });
+    return () => controller.abort();
+  }, [getAccessToken, isSelf]);
 
   const shortcuts = useMemo<Shortcut[]>(
     () => [
@@ -162,9 +198,28 @@ export function PersonDirectoryPage({
     [],
   );
 
+  const permissionItems = useMemo(() => {
+    const codes = [...new Set(session.permissions.map((code) => code.trim()).filter(Boolean))]
+      .filter(
+        (code) =>
+          code === TRANSFORMOMETRO_ACCESS_PERMISSION ||
+          code === TRANSFORMOMETRO_MANAGE_PERMISSION,
+      )
+      .sort((a, b) => a.localeCompare(b, "pt-BR"));
+    return codes.map((code) => ({
+      code,
+      label:
+        code === TRANSFORMOMETRO_MANAGE_PERMISSION
+          ? L.permissionManage
+          : L.permissionAccess,
+    }));
+  }, [session.permissions]);
+
   const busy = loading || meLoading;
   const ready = !busy && !error;
-  const supporting = (email || "").trim() || undefined;
+  const jobTitle = isSelf === true ? personProfile?.job_title ?? null : null;
+  const supporting =
+    (jobTitle || "").trim() || (email || "").trim() || undefined;
 
   return (
     <TransformometroShell>
@@ -209,6 +264,14 @@ export function PersonDirectoryPage({
                 email,
                 photoUrl,
                 colorKey: userId,
+                ...(isSelf === true
+                  ? {
+                      jobTitle: personProfile?.job_title ?? null,
+                      phone: personProfile?.phone_e164 ?? null,
+                      mobile: personProfile?.mobile_e164 ?? null,
+                      whatsapp: personProfile?.whatsapp_e164 ?? null,
+                    }
+                  : {}),
               }
             : null
         }
@@ -224,6 +287,60 @@ export function PersonDirectoryPage({
                 };
               })
             : undefined
+        }
+        sections={
+          ready ? (
+            <SectionCard
+              classNames={SECTION}
+              labels={SECTION_LABELS}
+              title={L.accessTitle}
+              subtitle={L.accessSubtitle}
+            >
+              {isSelf === true ? (
+                <div className="ds-user-profile__access">
+                  {session.isSuperadmin ? (
+                    <div className="ds-user-profile__access-group">
+                      <h3 className="ds-user-profile__access-heading">Contexto admin</h3>
+                      <div className="ds-nav-row">
+                        <TmStatusBadge label={L.superadmin} variant="warning" />
+                      </div>
+                    </div>
+                  ) : null}
+                  <div className="ds-user-profile__access-group">
+                    <h3 className="ds-user-profile__access-heading">Capacidades da sessão</h3>
+                    <div className="ds-nav-row">
+                      {session.permissions.includes(TRANSFORMOMETRO_ACCESS_PERMISSION) ||
+                      session.isSuperadmin ? (
+                        <TmStatusBadge label={L.capabilityAccess} variant="info" />
+                      ) : null}
+                      {session.canManage ? (
+                        <TmStatusBadge label={L.capabilityManage} variant="info" />
+                      ) : null}
+                    </div>
+                  </div>
+                  <div className="ds-user-profile__access-group">
+                    <h3 className="ds-user-profile__access-heading">Permissões RBAC</h3>
+                    {permissionItems.length > 0 ? (
+                      <ul className="ds-user-profile__permission-list">
+                        {permissionItems.map((item) => (
+                          <li key={item.code}>
+                            <strong>{item.label}</strong>
+                            <code>{item.code}</code>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="ds-muted">{L.accessSelfOnly}</p>
+                    )}
+                  </div>
+                </div>
+              ) : isSelf === false ? (
+                <p className="ds-muted">{L.accessSelfOnly}</p>
+              ) : (
+                <p className="ds-muted">{L.accessLoading}</p>
+              )}
+            </SectionCard>
+          ) : null
         }
       />
     </TransformometroShell>

@@ -1,13 +1,20 @@
 import { createContext, useContext, type ReactNode } from "react";
 
-const MANAGE_PERMISSION = "transformometro.manage";
+export const TRANSFORMOMETRO_ACCESS_PERMISSION = "transformometro.access";
+export const TRANSFORMOMETRO_MANAGE_PERMISSION = "transformometro.manage";
 
 type PortalChromeValue = {
   canManage: boolean;
+  isSuperadmin: boolean;
+  permissions: readonly string[];
   getAccessToken?: () => string | undefined;
 };
 
-const PortalChromeContext = createContext<PortalChromeValue>({ canManage: false });
+const PortalChromeContext = createContext<PortalChromeValue>({
+  canManage: false,
+  isSuperadmin: false,
+  permissions: [],
+});
 
 type PortalChromeProviderProps = {
   permissions?: readonly string[];
@@ -23,10 +30,19 @@ export function PortalChromeProvider({
   getAccessToken,
   children,
 }: PortalChromeProviderProps) {
+  const codes = permissions ?? [];
+  const superadmin = isSuperadmin === true;
   const canManage =
-    isSuperadmin === true || (permissions ?? []).includes(MANAGE_PERMISSION);
+    superadmin || codes.includes(TRANSFORMOMETRO_MANAGE_PERMISSION);
   return (
-    <PortalChromeContext.Provider value={{ canManage, getAccessToken }}>
+    <PortalChromeContext.Provider
+      value={{
+        canManage,
+        isSuperadmin: superadmin,
+        permissions: codes,
+        getAccessToken,
+      }}
+    >
       {children}
     </PortalChromeContext.Provider>
   );
@@ -34,6 +50,15 @@ export function PortalChromeProvider({
 
 export function useCanManagePortal(): boolean {
   return useContext(PortalChromeContext).canManage;
+}
+
+export function usePortalSessionAccess(): {
+  canManage: boolean;
+  isSuperadmin: boolean;
+  permissions: readonly string[];
+} {
+  const { canManage, isSuperadmin, permissions } = useContext(PortalChromeContext);
+  return { canManage, isSuperadmin, permissions };
 }
 
 export function usePortalAccessToken(): (() => string | undefined) | undefined {

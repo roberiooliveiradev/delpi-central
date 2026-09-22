@@ -40,11 +40,20 @@ export async function lookupDirectoryUsers(
     .filter((item) => item.id && item.name);
 }
 
-export async function fetchMyPersonProfilePhotoBlob(
+/** Identidade global Minha DELPI (cargo/contatos/foto) — só do usuário autenticado. */
+export type MyPersonProfile = {
+  job_title: string | null;
+  phone_e164: string | null;
+  mobile_e164: string | null;
+  whatsapp_e164: string | null;
+  has_photo: boolean;
+};
+
+export async function fetchMyPersonProfile(
   getAccessToken?: () => string | undefined,
   signal?: AbortSignal,
-): Promise<Blob | null> {
-  const meta = await fetch("/core-api/me/person-profile", {
+): Promise<MyPersonProfile | null> {
+  const response = await fetch("/core-api/me/person-profile", {
     method: "GET",
     signal,
     headers: {
@@ -52,9 +61,31 @@ export async function fetchMyPersonProfilePhotoBlob(
       ...buildAuthHeaders(getAccessToken),
     },
   });
-  if (!meta.ok) return null;
-  const profile = (await meta.json()) as { has_photo?: unknown };
-  if (!profile.has_photo) return null;
+  if (!response.ok) return null;
+  const profile = (await response.json()) as {
+    job_title?: unknown;
+    phone_e164?: unknown;
+    mobile_e164?: unknown;
+    whatsapp_e164?: unknown;
+    has_photo?: unknown;
+  };
+  const asText = (value: unknown): string | null =>
+    typeof value === "string" && value.trim() ? value.trim() : null;
+  return {
+    job_title: asText(profile.job_title),
+    phone_e164: asText(profile.phone_e164),
+    mobile_e164: asText(profile.mobile_e164),
+    whatsapp_e164: asText(profile.whatsapp_e164),
+    has_photo: Boolean(profile.has_photo),
+  };
+}
+
+export async function fetchMyPersonProfilePhotoBlob(
+  getAccessToken?: () => string | undefined,
+  signal?: AbortSignal,
+): Promise<Blob | null> {
+  const profile = await fetchMyPersonProfile(getAccessToken, signal);
+  if (!profile?.has_photo) return null;
 
   const photo = await fetch("/core-api/me/person-profile/photo", {
     method: "GET",
