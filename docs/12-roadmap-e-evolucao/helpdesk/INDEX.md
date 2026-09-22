@@ -20,6 +20,7 @@ Telas e componentes: [`WIREFRAMES.md`](./WIREFRAMES.md).
 Conversa do chamado: [`10-conversa-do-chamado.md`](./10-conversa-do-chamado.md). A tela publicada está em [`WIREFRAMES.md`](./WIREFRAMES.md).
 Lacunas da experiência (inventário; estados sincronizados com o código): [`11-lacunas-da-experiencia.md`](./11-lacunas-da-experiencia.md).
 Conteúdo da mensagem (formatação, imagem, HTML): [`12-conteudo-da-mensagem.md`](./12-conteudo-da-mensagem.md).
+Formatação/seleção e mídia nos compositores (diagnóstico kit; sem autorização de código): [`plugins/plugin-ui/docs/rich-text-selection-format-study.md`](../../../plugins/plugin-ui/docs/rich-text-selection-format-study.md).
 Listagem de chamados (colunas, filtros, paridade GLPI): [`13-listagem-de-chamados.md`](./13-listagem-de-chamados.md).
 Página do chamado e estados (formulário GLPI × detalhe; ciclo ITIL): [`14-pagina-e-estados-do-chamado.md`](./14-pagina-e-estados-do-chamado.md).
 Capacidades do GLPI Assistência (Forms, SLA, vínculos, abas; matriz): [`15-capacidades-glpi.md`](./15-capacidades-glpi.md).
@@ -32,6 +33,7 @@ o que a pessoa vê?          → 01 e WIREFRAMES.md
 de quem é o chamado?        → 02
 qual URL e qual JSON?       → 03
 o corpo da mensagem?        → 12 (HTML, formatação, imagem; E14 menção)
+formatação no trecho / colar imagem no compositor? → plugin-ui/docs/rich-text-selection-format-study.md
 a listagem de chamados?     → 13 (colunas, filtros, builder AND)
 a página e os estados?      → 14 (detalhe do solicitante + ciclo ITIL)
 o que o GLPI tem além disso? → 15 (matriz Assistência)

@@ -6,6 +6,7 @@
 > **Contrato:** [`03-contrato.md`](./03-contrato.md) + campos HTML aditivos. Menção: [`evidence/e14-mentions.md`](./evidence/e14-mentions.md).
 > **Identidade:** id do GLPI ou e-mail; nome é rótulo, nunca chave. [`04-seguranca.md`](./04-seguranca.md).
 > **Lacuna de experiência:** C-08 em [`11-lacunas-da-experiencia.md`](./11-lacunas-da-experiencia.md).
+> **Formatação por seleção / colar imagem no compositor:** diagnóstico do kit em [`plugins/plugin-ui/docs/rich-text-selection-format-study.md`](../../../plugins/plugin-ui/docs/rich-text-selection-format-study.md) (não autoriza implementação).
 
 Este documento responde: o que o GLPI considera conteúdo de uma mensagem, o markup que a HLAPI 2.2 devolve, o que a Minha DELPI **entrega hoje**, e o que permanece BLOQUEADO / CONSOLE.
 
