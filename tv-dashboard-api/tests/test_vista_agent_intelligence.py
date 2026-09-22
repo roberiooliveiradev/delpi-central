@@ -76,6 +76,40 @@ def test_visual_impact_tv_impact_first():
     assert tokens["chartTypeHints"]["temporal"][0] == "area"
 
 
+def test_composed_visuals_compose_typed_blocks():
+    from tv_app.application.services.data.presentation_recipe_service import (
+        PresentationRecipeService,
+        clear_presentation_recipes_cache,
+    )
+    from tv_app.application.services.data.presentation_ops_content_service import (
+        PresentationOpsContentService,
+        clear_presentation_ops_content_cache,
+    )
+
+    clear_presentation_recipes_cache()
+    clear_presentation_ops_content_cache()
+    clear_vista_agent_intelligence_cache()
+    directives = VistaAgentIntelligenceService.agent_directives()
+    composed = directives["composed_visuals"]
+    assert composed["principle"] == "COMPOSE_TYPED_BLOCKS"
+    rules = " ".join(composed["rules"]).lower()
+    assert "textprojection" in rules.replace(" ", "").replace("_", "")
+    assert "groupid" in rules.replace(" ", "").replace("_", "")
+    assert "COMPOSE_CUSTOM" in directives["modes"]
+    recipe = PresentationRecipeService.get("TV_COMPOSED_DATA_CARD")
+    assert recipe is not None
+    ops = " ".join(str(op) for op in recipe.get("ops") or [])
+    assert "shape" in ops and "textProjection" in ops
+    hints = directives["presentation_recipes"]["catalog"]["designTokens"]["visualImpactHints"]
+    assert "text" in hints["composeWith"]
+    assert "heading" in hints["textDataBinding"]["blockTypes"]
+    spec = PresentationOpsContentService.operation_spec("upsert_block")
+    assert spec is not None
+    props = spec["inputSchema"]["properties"]["block"]["properties"]
+    assert "textProjection" in props
+    assert "contentRuns" in props
+
+
 def test_sibling_explicit_create_still_allowed_in_policy_text():
     rules = " ".join(
         VistaAgentIntelligenceService.agent_directives()["object_resolution"]["rules"]

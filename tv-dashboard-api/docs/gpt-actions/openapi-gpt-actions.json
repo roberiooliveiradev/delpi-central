@@ -1793,6 +1793,64 @@
                                 "dataSourceId": {
                                   "type": "string"
                                 },
+                                "textProjection": {
+                                  "type": "object",
+                                  "additionalProperties": true,
+                                  "description": "Bind live field onto heading|text|shape: {field, format|displayFormat, aggregation?, prefix?, suffix?, fallback?}. Field must come from data preview/paramSchema.",
+                                  "properties": {
+                                    "field": {
+                                      "type": "string"
+                                    },
+                                    "format": {
+                                      "type": "string",
+                                      "enum": [
+                                        "auto",
+                                        "number",
+                                        "currency",
+                                        "percent",
+                                        "compact",
+                                        "raw"
+                                      ]
+                                    },
+                                    "aggregation": {
+                                      "type": "string"
+                                    },
+                                    "prefix": {
+                                      "type": "string"
+                                    },
+                                    "suffix": {
+                                      "type": "string"
+                                    },
+                                    "fallback": {
+                                      "type": "string"
+                                    }
+                                  }
+                                },
+                                "contentRuns": {
+                                  "type": "array",
+                                  "description": "Rich text runs; optional dataRef.field to interpolate live values inside heading/text/shape.",
+                                  "items": {
+                                    "type": "object",
+                                    "additionalProperties": true,
+                                    "properties": {
+                                      "text": {
+                                        "type": "string"
+                                      },
+                                      "dataRef": {
+                                        "type": "object",
+                                        "additionalProperties": true,
+                                        "properties": {
+                                          "field": {
+                                            "type": "string"
+                                          },
+                                          "format": {
+                                            "type": "string"
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                },
                                 "hidden": {
                                   "type": "boolean"
                                 },

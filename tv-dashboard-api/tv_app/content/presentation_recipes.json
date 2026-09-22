@@ -1554,6 +1554,99 @@
           }
         }
       ]
+    },
+    "TV_COMPOSED_DATA_CARD": {
+      "label": "Card composto (forma + textos com dado)",
+      "themeKey": "delpi",
+      "description": "Componente próprio: shape card + heading + text. VISTA liga dataSourceId e troca textProjection.field pelo campo real do preview; mesmo groupId.",
+      "markers": [
+        "card composto",
+        "componente custom",
+        "forma com dado",
+        "callout dados",
+        "texto com dado",
+        "badge métrica",
+        "shape card"
+      ],
+      "ops": [
+        {
+          "op": "patch_native_config",
+          "patch": {
+            "background": {
+              "type": "gradient",
+              "from": "#05070a",
+              "to": "#0d2840",
+              "angle": 180
+            }
+          }
+        },
+        {
+          "op": "upsert_block",
+          "block": {
+            "type": "shape",
+            "groupId": "grp_composed_data_card",
+            "frame": {
+              "x": 8,
+              "y": 22,
+              "w": 36,
+              "h": 48
+            },
+            "style": {
+              "fill": "#ffffff",
+              "backgroundColor": "#ffffff",
+              "borderRadius": 16,
+              "stroke": "#089bdb",
+              "zIndex": 1
+            }
+          }
+        },
+        {
+          "op": "upsert_block",
+          "block": {
+            "type": "heading",
+            "groupId": "grp_composed_data_card",
+            "content": "Indicador",
+            "frame": {
+              "x": 11,
+              "y": 26,
+              "w": 30,
+              "h": 10
+            },
+            "style": {
+              "fontSize": 22,
+              "fontWeight": "600",
+              "color": "#475569",
+              "fontFamily": "Inter, system-ui, sans-serif",
+              "zIndex": 2
+            }
+          }
+        },
+        {
+          "op": "upsert_block",
+          "block": {
+            "type": "text",
+            "groupId": "grp_composed_data_card",
+            "content": "—",
+            "frame": {
+              "x": 11,
+              "y": 38,
+              "w": 30,
+              "h": 22
+            },
+            "style": {
+              "fontSize": 56,
+              "fontWeight": "bold",
+              "color": "#0f172a",
+              "fontFamily": "Inter, system-ui, sans-serif",
+              "zIndex": 2
+            },
+            "textProjection": {
+              "field": "value",
+              "format": "number"
+            }
+          }
+        }
+      ]
     }
   },
   "designTokens": {
@@ -1689,12 +1782,34 @@
         "TV_KPI_PLUS_CHART_BAR",
         "TV_KPI_SERIES_TABLE",
         "TV_HERO_PLUS_TABLE",
-        "TV_TITLE_STRIP"
+        "TV_TITLE_STRIP",
+        "TV_COMPOSED_DATA_CARD"
       ],
       "temporalChartDefault": "area",
       "tablePresetDefault": "banded",
       "kpiEmphasis": "hero",
       "maxPrimarySignalsPerSlide": 4,
+      "composeWith": [
+        "shape",
+        "heading",
+        "text",
+        "icon"
+      ],
+      "textDataBinding": {
+        "blockTypes": [
+          "heading",
+          "text",
+          "shape"
+        ],
+        "require": [
+          "dataSourceId",
+          "textProjection.field"
+        ],
+        "optional": [
+          "contentRuns[].dataRef",
+          "groupId"
+        ]
+      },
       "triggers": [
         "impactante",
         "mais impactante",
@@ -1702,7 +1817,11 @@
         "melhore o visual",
         "visual tv",
         "kiosk",
-        "dashboard"
+        "dashboard",
+        "componente custom",
+        "callout",
+        "forma com dado",
+        "texto com dado"
       ]
     }
   }
