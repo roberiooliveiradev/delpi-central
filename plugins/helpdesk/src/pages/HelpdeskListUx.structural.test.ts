@@ -119,6 +119,10 @@ describe("Helpdesk list UX structural", () => {
     expect(page).toContain("assignee_id: canAssign === true && assignee?.id ? Number(assignee.id) : undefined");
     expect(page).toContain("canAssign !== true");
     expect(page).toContain("HelpdeskAssigneePicker");
+    expect(page).toContain("assigneeFromCreateDraft");
+    expect(page).toContain("assigneeName:");
+    expect(page).toContain("assigneeEmail:");
+    expect(page).toContain("assigneeDirectoryUserId:");
     expect(page).not.toMatch(/canAssign \? \([\s\S]*HelpdeskAssigneePicker[\s\S]*HelpdeskSelect/);
     expect(picker).toContain("listUsers");
     expect(picker).toContain("UserDirectoryPicker");

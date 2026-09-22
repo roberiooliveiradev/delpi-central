@@ -20,6 +20,7 @@ import {
   listCategories,
   listTickets,
   listUrgencies,
+  listUsers,
   rejectTicketSolution,
   rejectTicketValidation,
   setTicketAssignee,
@@ -62,6 +63,7 @@ import { solicitanteLifecycleCue, timelineHasSolution } from "../presentation/so
 import { navigateHelpdesk, type HelpdeskRoute } from "../routing/helpdeskRoute";
 import { lastHelpdeskListPath, rememberHelpdeskListPath } from "../presentation/listNavigationMemory";
 import {
+  assigneeFromCreateDraft,
   clearCreateDraft,
   clearReplyDraft,
   readCreateDraft,
@@ -552,9 +554,7 @@ function CreateTicketPage() {
   );
   const [observerIdsInput, setObserverIdsInput] = useState(savedDraft?.observerIdsInput ?? "");
   const [assignee, setAssignee] = useState<HelpdeskAssigneeValue | null>(() =>
-    savedDraft?.assigneeId
-      ? { id: savedDraft.assigneeId, name: `Usuário ${savedDraft.assigneeId}`, email: "" }
-      : null,
+    assigneeFromCreateDraft(savedDraft),
   );
   /** null = ainda carregando capabilities — evita flash select→input. */
   const [canAssign, setCanAssign] = useState<boolean | null>(null);
@@ -657,10 +657,40 @@ function CreateTicketPage() {
       description: persistHelpdeskAttachmentHtml(description),
       observerIdsInput,
       assigneeId: assignee?.id ?? "",
+      assigneeName: assignee?.name ?? "",
+      assigneeEmail: assignee?.email ?? "",
+      assigneeDirectoryUserId: assignee?.directoryUserId ?? "",
+      assigneeHasPhoto: Boolean(assignee?.hasPhoto),
       categoryId,
       urgencyId,
     });
   }, [title, description, observerIdsInput, assignee, categoryId, urgencyId]);
+
+  /** Rascunho legado (só id) — rehidrata nome/e-mail/foto via GET /users. */
+  useEffect(() => {
+    const id = (assignee?.id || "").trim();
+    if (!id || !/^\d+$/.test(id)) return;
+    const stubName = !assignee?.name?.trim() || /^Usuário\s+\d+$/i.test(assignee.name.trim());
+    if (!stubName) return;
+    const controller = new AbortController();
+    void listUsers({ q: id, limit: 5 }, controller.signal)
+      .then((result) => {
+        if (controller.signal.aborted) return;
+        const match = (result.items || []).find((row) => String(row.id) === id);
+        if (!match) return;
+        setAssignee({
+          id: String(match.id),
+          name: (match.display_name || "").trim() || `Usuário ${match.id}`,
+          email: (match.email || "").trim(),
+          directoryUserId: (match.directory_user_id || "").trim() || undefined,
+          hasPhoto: Boolean(match.has_photo),
+        });
+      })
+      .catch(() => {
+        /* soft-fail — mantém snapshot local */
+      });
+    return () => controller.abort();
+  }, [assignee?.id, assignee?.name]);
 
   const resolveCreatePendingSrc = useCallback(
     (attachmentId: string) => {

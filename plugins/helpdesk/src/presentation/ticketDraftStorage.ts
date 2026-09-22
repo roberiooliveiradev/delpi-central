@@ -1,10 +1,23 @@
 /** Session drafts for create/reply — survive F5, clear on successful send or tab close. */
 
+export type HelpdeskCreateDraftAssignee = {
+  id: string;
+  name: string;
+  email: string;
+  directoryUserId?: string;
+  hasPhoto?: boolean;
+};
+
 export type HelpdeskCreateDraft = {
   title: string;
   description: string;
   observerIdsInput: string;
   assigneeId: string;
+  /** Snapshot do técnico — evita «Usuário {id}» no F5. */
+  assigneeName: string;
+  assigneeEmail: string;
+  assigneeDirectoryUserId: string;
+  assigneeHasPhoto: boolean;
   categoryId: string;
   urgencyId: string;
 };
@@ -33,16 +46,39 @@ function writeJson(key: string, value: unknown): void {
   }
 }
 
+function asString(value: unknown): string {
+  return typeof value === "string" ? value : "";
+}
+
+export function assigneeFromCreateDraft(
+  draft: HelpdeskCreateDraft | null | undefined,
+): HelpdeskCreateDraftAssignee | null {
+  const id = (draft?.assigneeId || "").trim();
+  if (!id) return null;
+  const name = (draft?.assigneeName || "").trim() || `Usuário ${id}`;
+  return {
+    id,
+    name,
+    email: (draft?.assigneeEmail || "").trim(),
+    directoryUserId: (draft?.assigneeDirectoryUserId || "").trim() || undefined,
+    hasPhoto: Boolean(draft?.assigneeHasPhoto),
+  };
+}
+
 export function readCreateDraft(): HelpdeskCreateDraft | null {
   const draft = readJson<Partial<HelpdeskCreateDraft>>(CREATE_KEY);
   if (!draft || typeof draft !== "object") return null;
   return {
-    title: typeof draft.title === "string" ? draft.title : "",
-    description: typeof draft.description === "string" ? draft.description : "",
-    observerIdsInput: typeof draft.observerIdsInput === "string" ? draft.observerIdsInput : "",
-    assigneeId: typeof draft.assigneeId === "string" ? draft.assigneeId : "",
-    categoryId: typeof draft.categoryId === "string" ? draft.categoryId : "",
-    urgencyId: typeof draft.urgencyId === "string" ? draft.urgencyId : "",
+    title: asString(draft.title),
+    description: asString(draft.description),
+    observerIdsInput: asString(draft.observerIdsInput),
+    assigneeId: asString(draft.assigneeId),
+    assigneeName: asString(draft.assigneeName),
+    assigneeEmail: asString(draft.assigneeEmail),
+    assigneeDirectoryUserId: asString(draft.assigneeDirectoryUserId),
+    assigneeHasPhoto: Boolean(draft.assigneeHasPhoto),
+    categoryId: asString(draft.categoryId),
+    urgencyId: asString(draft.urgencyId),
   };
 }
 

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
+  assigneeFromCreateDraft,
   clearCreateDraft,
   clearReplyDraft,
   readCreateDraft,
@@ -44,6 +45,10 @@ describe("ticketDraftStorage", () => {
       description: "<p>Não imprime</p>",
       observerIdsInput: "15",
       assigneeId: "22",
+      assigneeName: "Ana Silva",
+      assigneeEmail: "ana@delpi.com.br",
+      assigneeDirectoryUserId: "delpi-ana",
+      assigneeHasPhoto: true,
       categoryId: "3",
       urgencyId: "2",
     });
@@ -52,18 +57,56 @@ describe("ticketDraftStorage", () => {
       description: "<p>Não imprime</p>",
       observerIdsInput: "15",
       assigneeId: "22",
+      assigneeName: "Ana Silva",
+      assigneeEmail: "ana@delpi.com.br",
+      assigneeDirectoryUserId: "delpi-ana",
+      assigneeHasPhoto: true,
       categoryId: "3",
       urgencyId: "2",
+    });
+    expect(assigneeFromCreateDraft(readCreateDraft())).toEqual({
+      id: "22",
+      name: "Ana Silva",
+      email: "ana@delpi.com.br",
+      directoryUserId: "delpi-ana",
+      hasPhoto: true,
     });
     writeCreateDraft({
       title: "",
       description: "",
       observerIdsInput: "",
       assigneeId: "",
+      assigneeName: "",
+      assigneeEmail: "",
+      assigneeDirectoryUserId: "",
+      assigneeHasPhoto: false,
       categoryId: "",
       urgencyId: "",
     });
     expect(readCreateDraft()).toBeNull();
+  });
+
+  it("F5 legado: só assigneeId vira snapshot Usuário {id}", () => {
+    sessionStorage.setItem(
+      "helpdesk:ticket-create-draft:v1",
+      JSON.stringify({
+        title: "x",
+        description: "",
+        observerIdsInput: "",
+        assigneeId: "11",
+        categoryId: "",
+        urgencyId: "",
+      }),
+    );
+    const draft = readCreateDraft();
+    expect(draft?.assigneeId).toBe("11");
+    expect(assigneeFromCreateDraft(draft)).toEqual({
+      id: "11",
+      name: "Usuário 11",
+      email: "",
+      directoryUserId: undefined,
+      hasPhoto: false,
+    });
   });
 
   it("preserva a resposta por chamado e limpa após clear", () => {
