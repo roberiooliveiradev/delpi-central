@@ -68,24 +68,34 @@ class TicketService:
                 email=email or previous.email,
             )
 
-        # 1) Sempre busca no GLPI (nome/e-mail/username) — fonte do id atribuível.
-        for row in filter_assignable_catalog_users(
-            self._glpi.list_users(token, q=term, limit=safe_limit)
-        ):
-            put(row)
+        # 1) Sempre busca no GLPI (nome/username) — fonte do id atribuível.
+        try:
+            for row in filter_assignable_catalog_users(
+                self._glpi.list_users(token, q=term, limit=safe_limit)
+            ):
+                put(row)
+        except GlpiValidation:
+            pass
 
         directory = self._directory
         if directory is not None and getattr(directory, "configured", lambda: False)() and term:
             delpi_hits: list[dict[str, str]] = []
-            seen_emails: set[str] = set()
-            # Variantes com/sem acento (Core ilike não dobra acento sozinho).
-            for variant in search_term_variants(term)[:4]:
+            seen_keys: set[str] = set()
+            queries: list[str] = []
+            if "@" in term:
+                queries.append(term.lower())
+                queries.append(term.split("@", 1)[0])
+            queries.extend(list(search_term_variants(term))[:4])
+            for variant in queries:
+                variant = (variant or "").strip()
+                if not variant:
+                    continue
                 for person in directory.search_users(q=variant, limit=safe_limit, browse=False):
                     email = str(person.get("email") or "").strip().lower()
                     key = email or str(person.get("id") or "")
-                    if not key or key in seen_emails:
+                    if not key or key in seen_keys:
                         continue
-                    seen_emails.add(key)
+                    seen_keys.add(key)
                     delpi_hits.append(person)
 
             finder = getattr(self._glpi, "find_user_by_email", None)
@@ -96,7 +106,6 @@ class TicketService:
                 if glpi_user is not None:
                     put(glpi_user, prefer_name=name, prefer_email=email)
                     continue
-                # E-mail Delpi ≠ e-mail GLPI (ex.: inovacao@) — amarra pelo nome.
                 needle = _fold_name(name)
                 if not needle:
                     continue
@@ -113,15 +122,19 @@ class TicketService:
                 if matched is not None:
                     put(matched, prefer_name=name or matched.display_name, prefer_email=email)
                     continue
-                # Amplia pool GLPI com tokens do nome Delpi.
                 for token_q in [part for part in name.replace("-", " ").split() if len(part) >= 3][:2]:
-                    for row in filter_assignable_catalog_users(
-                        self._glpi.list_users(token, q=token_q, limit=safe_limit)
-                    ):
+                    try:
+                        rows = filter_assignable_catalog_users(
+                            self._glpi.list_users(token, q=token_q, limit=safe_limit)
+                        )
+                    except GlpiValidation:
+                        continue
+                    for row in rows:
                         put(row)
-                        if needle == _fold_name(row.display_name) or needle in _fold_name(
-                            row.display_name
-                        ):
+                        folded = _fold_name(row.display_name)
+                        if needle == folded or needle in folded or folded in needle:
+                            put(row, prefer_name=name or row.display_name, prefer_email=email)
+                        elif email and (row.email or "").lower() == email:
                             put(row, prefer_name=name or row.display_name, prefer_email=email)
 
         return list(by_id.values())[:safe_limit]

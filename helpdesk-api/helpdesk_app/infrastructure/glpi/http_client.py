@@ -30,7 +30,6 @@ from helpdesk_app.infrastructure.glpi.mapping import (
     apply_viewer_identity,
     apply_validation_viewer,
     attachment_filename,
-    build_user_email_filter,
     build_user_search_filter,
     create_ticket_body,
     display_text,
@@ -336,37 +335,40 @@ class HttpxGlpiClient:
         return parse_catalog_users(payload)
 
     def find_user_by_email(self, access_token: str, email: str) -> CatalogUser | None:
+        """Match GLPI user by emails[] in list payload (email is not an RSQL property)."""
+        from helpdesk_app.infrastructure.glpi.mapping import _emails, _results
+
         normalized = str(email or "").strip().lower()
         if "@" not in normalized:
             return None
-        try:
-            payload = self._json(
-                "GET",
-                "/api.php/v2.2/Administration/User",
-                token=access_token,
-                params={
-                    "start": 0,
-                    "limit": 5,
-                    "filter": build_user_email_filter(normalized),
-                    "sort": "id:asc",
-                },
-            )
-            found = parse_catalog_users(payload)
-            for user in found:
-                if (user.email or "").lower() == normalized:
-                    return user
-            if found:
-                return CatalogUser(
-                    id=found[0].id,
-                    display_name=found[0].display_name,
-                    email=normalized,
-                )
-        except (GlpiValidation, GlpiNotFound, GlpiForbidden, GlpiUnavailable, GlpiUnauthorized):
-            pass
         local = normalized.split("@", 1)[0]
-        for user in self.list_users(access_token, q=local, limit=50):
-            if (user.email or "").lower() == normalized:
-                return user
+        # Local-part as name/username hint (ex.: michael@…); mailbox aliases (ti@) need name search.
+        for query in (local,):
+            try:
+                payload = self._json(
+                    "GET",
+                    "/api.php/v2.2/Administration/User",
+                    token=access_token,
+                    params={
+                        "start": 0,
+                        "limit": 50,
+                        "filter": build_user_search_filter(query),
+                        "sort": "id:asc",
+                    },
+                )
+            except (GlpiValidation, GlpiNotFound, GlpiForbidden, GlpiUnavailable, GlpiUnauthorized):
+                continue
+            matched_rows: list[dict] = []
+            for row in _results(payload):
+                if not isinstance(row, dict):
+                    continue
+                emails = {item.lower() for item in _emails(row)}
+                if normalized in emails:
+                    matched_rows.append(row)
+            if matched_rows:
+                users = parse_catalog_users(matched_rows)
+                if users:
+                    return replace(users[0], email=normalized)
         return None
 
     def can_assign_tickets(self, access_token: str) -> bool:

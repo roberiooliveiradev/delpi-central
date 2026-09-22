@@ -293,8 +293,9 @@ def search_term_variants(q: str) -> tuple[str, ...]:
 def build_user_search_filter(q: str = "") -> str:
     """RSQL for Administration/User — always keyed by id in the response (G-A4).
 
-    Name search ORs case/accent variants: GLPI/MySQL `=like=` is case-sensitive on this
-    collation, so typing `@micha` / `robério` must still match stored names.
+    HLAPI User **não** filtra por `email` / `name` (Unknown property → 400).
+    Busca em username/firstname/realname com variantes de caixa (MySQL like
+    case-sensitive nesta collação: «michael» ≠ «Michael»).
     """
     term = _search_term(str(q or "").strip())
     base = "is_active==true"
@@ -302,9 +303,9 @@ def build_user_search_filter(q: str = "") -> str:
         return base
     if term.isdigit():
         return f"{base};id=={int(term)}"
-    if "@" in term:
-        return f"{base};email=={term.lower()}"
-    variants = search_term_variants(term)
+    # E-mail: usa só o local-part nos campos de nome (email não é propriedade RSQL).
+    search = term.split("@", 1)[0] if "@" in term else term
+    variants = search_term_variants(search)
     parts: list[str] = []
     for variant in variants:
         parts.extend(
@@ -312,17 +313,18 @@ def build_user_search_filter(q: str = "") -> str:
                 f"username=like=*{variant}*",
                 f"realname=like=*{variant}*",
                 f"firstname=like=*{variant}*",
-                f"email=like=*{variant}*",
             ]
         )
     return f"{base};({','.join(parts)})"
 
 
 def build_user_email_filter(email: str) -> str:
+    """Legacy helper — HLAPI User rejects `email` filters; prefer client-side match."""
     normalized = _email(email)
     if not normalized:
         raise GlpiValidation("email inválido.")
-    return f"is_active==true;email=={normalized}"
+    local = normalized.split("@", 1)[0]
+    return build_user_search_filter(local)
 
 
 def is_usable_catalog_label(name: str) -> bool:

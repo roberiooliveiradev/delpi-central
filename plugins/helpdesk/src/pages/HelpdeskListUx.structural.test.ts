@@ -116,7 +116,10 @@ describe("Helpdesk list UX structural", () => {
     expect(page).toContain("helpdesk-assign-panel");
     expect(page).toContain("helpTooltips.createUi.assignee");
     expect(page).toContain("helpTooltips.detailUi.assignee");
-    expect(page).toContain("assignee_id: canAssign && assignee?.id ? Number(assignee.id) : undefined");
+    expect(page).toContain("assignee_id: canAssign === true && assignee?.id ? Number(assignee.id) : undefined");
+    expect(page).toContain("canAssign !== true");
+    expect(page).toContain("HelpdeskAssigneePicker");
+    expect(page).not.toMatch(/canAssign \? \([\s\S]*HelpdeskAssigneePicker[\s\S]*HelpdeskSelect/);
     expect(picker).toContain("listUsers");
     expect(picker).toContain("UserDirectoryPicker");
     expect(picker).toContain("createInitialsAvatar");

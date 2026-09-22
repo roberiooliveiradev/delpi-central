@@ -550,7 +550,8 @@ function CreateTicketPage() {
       ? { id: savedDraft.assigneeId, name: `Usuário ${savedDraft.assigneeId}`, email: "" }
       : null,
   );
-  const [canAssign, setCanAssign] = useState(false);
+  /** null = ainda carregando capabilities — evita flash select→input. */
+  const [canAssign, setCanAssign] = useState<boolean | null>(null);
   const [categoryId, setCategoryId] = useState(savedDraft?.categoryId ?? "");
   const [urgencyId, setUrgencyId] = useState(savedDraft?.urgencyId ?? "");
   const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
@@ -610,6 +611,8 @@ function CreateTicketPage() {
         const draft = readCreateDraft();
         if (capsResult.status === "fulfilled") {
           setCanAssign(Boolean(capsResult.value.can_assign));
+        } else {
+          setCanAssign(false);
         }
         if (urgencyResult.status === "fulfilled") {
           const items = urgencyResult.value.items;
@@ -727,7 +730,7 @@ function CreateTicketPage() {
                 category_id: Number(categoryId),
                 urgency_id: Number(urgencyId),
                 observer_ids: parseObserverIdsInput(observerIdsInput),
-                assignee_id: canAssign && assignee?.id ? Number(assignee.id) : undefined,
+                assignee_id: canAssign === true && assignee?.id ? Number(assignee.id) : undefined,
               },
               idempotencyKey,
             )
@@ -814,15 +817,14 @@ function CreateTicketPage() {
                 options={urgencies.map((item) => ({ value: String(item.id), label: item.name }))}
                 icon={<Gauge size={14} aria-hidden />}
               />
-              {canAssign ? (
-                <HelpdeskAssigneePicker
-                  label="Técnico atribuído"
-                  hint={helpTooltips.createUi.assignee}
-                  value={assignee}
-                  onChange={setAssignee}
-                  emptyLabel="Sem técnico"
-                />
-              ) : null}
+              <HelpdeskAssigneePicker
+                label="Técnico atribuído"
+                hint={helpTooltips.createUi.assignee}
+                value={assignee}
+                onChange={setAssignee}
+                emptyLabel="Sem técnico"
+                disabled={canAssign !== true || saving || loading}
+              />
               <HelpdeskTextField
                 label="Observadores"
                 hint={helpTooltips.createUi.observers}
