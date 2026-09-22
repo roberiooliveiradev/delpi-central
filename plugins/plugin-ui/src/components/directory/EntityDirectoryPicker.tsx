@@ -131,6 +131,15 @@ export function EntityDirectoryPicker({
   const visibleResults = results.filter((entity) => !selectedIds.has(entity.id));
   const title = labels?.title || "Entidades";
   const hint = (labels?.hint || "").trim();
+  const showSearch = !atLimit;
+
+  useEffect(() => {
+    if (!showSearch && (query || results.length > 0 || searching)) {
+      setQuery("");
+      setResults([]);
+      setSearching(false);
+    }
+  }, [showSearch, query, results.length, searching]);
 
   return (
     <div className={["delpi-ui-user-directory-picker", className].filter(Boolean).join(" ")}>
@@ -150,14 +159,49 @@ export function EntityDirectoryPicker({
           )}
         </span>
       </div>
-      <input
-        className="delpi-ui-user-directory-picker__input"
-        value={query}
-        disabled={disabled}
-        placeholder={labels?.placeholder || "Buscar…"}
-        onChange={(e) => setQuery(e.target.value)}
-      />
-      {searching ? (
+      {showSelectedList && value.length > 0 ? (
+        <div
+          className="delpi-ui-tag-list delpi-ui-user-directory-picker__selected"
+          aria-label={labels?.selectedAriaLabel || "Selecionados"}
+        >
+          {value.map((entity) => {
+            const label = entityDirectoryLabel(entity);
+            const onRemove = () =>
+              onChange(value.filter((item) => item.id !== entity.id));
+            if (renderSelectedChip) {
+              return (
+                <span key={entity.id}>
+                  {renderSelectedChip({ entity, label, disabled, onRemove })}
+                </span>
+              );
+            }
+            return (
+              <span key={entity.id} className="delpi-ui-tag-chip">
+                <span>{label}</span>
+                <button
+                  type="button"
+                  className="delpi-ui-tag-chip__remove"
+                  disabled={disabled}
+                  aria-label={`Remover ${label}`}
+                  onClick={onRemove}
+                >
+                  <X size={14} aria-hidden="true" />
+                </button>
+              </span>
+            );
+          })}
+        </div>
+      ) : null}
+      {showSearch ? (
+        <input
+          className="delpi-ui-user-directory-picker__input"
+          value={query}
+          disabled={disabled}
+          placeholder={labels?.placeholder || "Buscar…"}
+          onChange={(e) => setQuery(e.target.value)}
+        />
+      ) : null}
+      {showSearch && searching ? (
         <div className="delpi-ui-user-directory-picker__searching">
           <LoadingActivityBadge
             label={labels?.searching || "Buscando…"}
@@ -166,7 +210,7 @@ export function EntityDirectoryPicker({
           />
         </div>
       ) : null}
-      {!searching && query.trim().length >= 2 && visibleResults.length === 0 ? (
+      {showSearch && !searching && query.trim().length >= 2 && visibleResults.length === 0 ? (
         <p className="delpi-ui-user-directory-picker__status">
           {results.length > 0
             ? labels?.emptySelected ||
@@ -174,7 +218,7 @@ export function EntityDirectoryPicker({
             : labels?.empty || "Nenhum resultado encontrado."}
         </p>
       ) : null}
-      {visibleResults.length > 0 ? (
+      {showSearch && visibleResults.length > 0 ? (
         <ul className="delpi-ui-user-directory-picker__results">
           {visibleResults.map((entity) => (
             <li key={entity.id}>
@@ -211,39 +255,6 @@ export function EntityDirectoryPicker({
             </li>
           ))}
         </ul>
-      ) : null}
-      {showSelectedList && value.length > 0 ? (
-        <div
-          className="delpi-ui-tag-list delpi-ui-user-directory-picker__selected"
-          aria-label={labels?.selectedAriaLabel || "Selecionados"}
-        >
-          {value.map((entity) => {
-            const label = entityDirectoryLabel(entity);
-            const onRemove = () =>
-              onChange(value.filter((item) => item.id !== entity.id));
-            if (renderSelectedChip) {
-              return (
-                <span key={entity.id}>
-                  {renderSelectedChip({ entity, label, disabled, onRemove })}
-                </span>
-              );
-            }
-            return (
-              <span key={entity.id} className="delpi-ui-tag-chip">
-                <span>{label}</span>
-                <button
-                  type="button"
-                  className="delpi-ui-tag-chip__remove"
-                  disabled={disabled}
-                  aria-label={`Remover ${label}`}
-                  onClick={onRemove}
-                >
-                  <X size={14} aria-hidden="true" />
-                </button>
-              </span>
-            );
-          })}
-        </div>
       ) : null}
     </div>
   );

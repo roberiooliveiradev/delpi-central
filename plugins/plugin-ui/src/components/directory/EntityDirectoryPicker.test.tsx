@@ -11,7 +11,11 @@ const entities = [
 
 const searchEntities = vi.fn().mockResolvedValue([]);
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  searchEntities.mockReset();
+  searchEntities.mockResolvedValue([]);
+});
 
 describe("EntityDirectoryPicker", () => {
   it("mostra chips dos selecionados com × por padrão", () => {
@@ -38,7 +42,7 @@ describe("EntityDirectoryPicker", () => {
 
     render(
       <EntityDirectoryPicker
-        value={[entities[0]]}
+        value={[]}
         onChange={onChange}
         searchEntities={searchEntities}
         maxSelected={1}
@@ -58,6 +62,21 @@ describe("EntityDirectoryPicker", () => {
     expect(onChange).toHaveBeenCalledWith([
       { id: "p3", label: "Carla Dias", secondary: "003/01" },
     ]);
+  });
+
+  it("com maxSelected=1 esconde o campo de busca quando há seleção", () => {
+    render(
+      <EntityDirectoryPicker
+        value={[entities[0]]}
+        onChange={() => {}}
+        searchEntities={searchEntities}
+        maxSelected={1}
+        labels={{ placeholder: "Buscar entidade" }}
+      />,
+    );
+
+    expect(screen.queryByPlaceholderText("Buscar entidade")).toBeNull();
+    expect(screen.getByText("ACME Indústria · 001/01")).toBeTruthy();
   });
 
   it("permite multi-seleção até maxSelected", async () => {
@@ -91,11 +110,7 @@ describe("EntityDirectoryPicker", () => {
     ]);
   });
 
-  it("desabilita novas escolhas quando atLimit e maxSelected>1", async () => {
-    searchEntities.mockResolvedValueOnce([
-      { id: "p3", label: "Gamma", secondary: "G1" },
-    ]);
-
+  it("esconde a busca quando atLimit (maxSelected atingido)", () => {
     render(
       <EntityDirectoryPicker
         value={entities}
@@ -106,21 +121,13 @@ describe("EntityDirectoryPicker", () => {
       />,
     );
 
-    fireEvent.change(screen.getByPlaceholderText("Buscar produto"), {
-      target: { value: "Gam" },
-    });
-
-    await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Gamma · G1" })).toBeTruthy();
-    });
-
-    expect(
-      (screen.getByRole("button", { name: "Gamma · G1" }) as HTMLButtonElement).disabled,
-    ).toBe(true);
+    expect(screen.queryByPlaceholderText("Buscar produto")).toBeNull();
+    expect(screen.getByText("ACME Indústria · 001/01")).toBeTruthy();
+    expect(screen.getByText("Beta Comércio · 002/01")).toBeTruthy();
   });
 
   it("omite da lista quem já está selecionado", async () => {
-    searchEntities.mockResolvedValueOnce([
+    searchEntities.mockResolvedValue([
       entities[0],
       { id: "p3", label: "Carla Dias", secondary: "003/01" },
     ]);
@@ -224,12 +231,10 @@ describe("EntityDirectoryPicker", () => {
 
   it("mostra LoadingActivityBadge animado enquanto busca", async () => {
     let resolveSearch: (value: typeof entities) => void = () => {};
-    searchEntities.mockImplementationOnce(
-      () =>
-        new Promise((resolve) => {
-          resolveSearch = resolve;
-        }),
-    );
+    const pending = new Promise<typeof entities>((resolve) => {
+      resolveSearch = resolve;
+    });
+    searchEntities.mockImplementation(() => pending);
 
     render(
       <EntityDirectoryPicker

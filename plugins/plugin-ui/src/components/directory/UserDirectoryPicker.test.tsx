@@ -62,7 +62,7 @@ describe("UserDirectoryPicker", () => {
 
     render(
       <UserDirectoryPicker
-        value={[users[0]]}
+        value={[]}
         onChange={onChange}
         searchUsers={searchUsers}
         maxSelected={1}
