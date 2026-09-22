@@ -57,7 +57,7 @@ def _request(path: str, headers: dict | None = None) -> Request:
 
 
 def test_contract_freeze_full_crud() -> None:
-    assert TEO_MCP_SURFACE == "FULL_CRUD_GOVERNED"
+    assert TEO_MCP_SURFACE == "CAPABILITY_GOVERNED_V2"
     assert MCP_PREDEFINED_CLIENT_ID == "mcp-transformometro"
     assert CANONICAL_MCP_RESOURCE_URL.endswith("/apps/transformometro-api/mcp")
     assert GPT_ACTIONS_LIFECYCLE == "GOVERNED_PREPARE_COMMIT_V2"
@@ -85,11 +85,14 @@ def test_tool_parity_with_gpt_actions_operation_ids() -> None:
     assert GPT_TO_MCP_TOOLS["gpt_get_methodology_guide"] == ("get_methodology_guide",)
     assert TOOL_CLASS["get_methodology_guide"] == "READ"
     assert TOOL_CLASS["prepare_improvement_package"] == "PREPARE"
-    assert TOOL_CLASS["act_create_record"] == "ACT"
+    assert TOOL_CLASS["prepare_record_change"] == "PREPARE"
+    assert TOOL_CLASS["commit_proposal"] == "ACT"
     assert TOOL_CLASS["get_catalog"] == "READ"
     assert TOOL_CLASS["generate_from_transcript"] == "ANALYSIS"
     assert any(TOOL_CLASS[n] == "ACT" for n in MCP_TOOL_NAMES)
     assert any(TOOL_CLASS[n] == "PREPARE" for n in MCP_TOOL_NAMES)
+    assert "act_create_record" not in TOOL_CLASS
+    assert "prepare_create_record" not in TOOL_CLASS
     # Gate: no capability loss after PREPARE/ACT split
     assert len(GPT_ACTIONS_OPERATION_IDS) == len(GPT_TO_MCP_TOOLS)
     assert len(MCP_TOOL_NAMES) >= len(GPT_ACTIONS_OPERATION_IDS)
@@ -108,22 +111,17 @@ def test_list_tools_exposes_governed_full_crud_tools() -> None:
     names = [t.name for t in tools]
     assert set(names) == set(MCP_TOOL_NAMES)
     assert "get_methodology_guide" in names
-    assert len(names) == 33
-    assert "prepare_create_record" in names
-    assert "act_create_record" in names
+    assert len(names) == 20
+    assert "prepare_record_change" in names
+    assert "commit_proposal" in names
     assert "prepare_improvement_package" in names
-    assert "act_commit_improvement_package" in names
+    assert "prepare_create_record" not in names
+    assert "act_create_record" not in names
+    assert "act_commit_improvement_package" not in names
     for tool in tools:
         assert tool.securitySchemes == TEO_MCP_SECURITY_SCHEMES  # type: ignore[attr-defined]
         ann = tool.annotations
-        if tool.name.startswith("act_") and tool.name in {
-            "act_delete_record",
-            "act_activate_revision",
-            "act_manage_evidence",
-            "act_commit_improvement_package",
-            "act_meeting_minute_workflow",
-            "act_meeting_minute_manage",
-        }:
+        if tool.name == "commit_proposal":
             assert ann is not None and ann.destructiveHint is True
         if TOOL_CLASS[tool.name] in {"READ", "ANALYSIS"}:
             assert ann is not None and ann.readOnlyHint is True
@@ -243,7 +241,10 @@ def test_manage_evidence_requires_confirm_delete_flag_in_description() -> None:
     tools = {t.name: t for t in asyncio.run(mcp.list_tools())}
     desc = tools["prepare_manage_evidence"].description or ""
     assert "confirm_delete" in desc
-    commit = tools["act_commit_improvement_package"].description or ""
+    commit = tools["commit_proposal"].description or ""
     assert "proposal_handle" in commit
     prepare_pkg = tools["prepare_improvement_package"].description or ""
-    assert "act_commit_improvement_package" in prepare_pkg
+    assert "commit_proposal" in prepare_pkg
+    assert "prepare_record_change" in tools
+    assert "execute_capability" not in tools
+    assert "invoke_tool" not in tools

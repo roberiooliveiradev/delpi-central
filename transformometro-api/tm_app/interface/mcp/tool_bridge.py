@@ -3,7 +3,8 @@
 Rebuilds a Starlette Request from delpi_auth context so AuthZ helpers that
 read ``request.state.user`` keep working without duplicating RBAC.
 
-Material writes: PREPARE → opaque proposal_handle → ACT (no model-trusted mutation).
+Material writes: PREPARE → opaque proposal_handle → commit_proposal
+(no model-trusted mutation; capability comes from the stored proposal).
 """
 
 from __future__ import annotations
@@ -33,6 +34,7 @@ from tm_app.application.gpt_actions.dispatch_service import (
     GptActionsDispatchService,
     GptActionsError,
 )
+from tm_app.application.gpt_actions.governed_actions_facade import GovernedActionsFacade
 from tm_app.application.gpt_actions.improvement_package_service import (
     GuidedImprovementPackageService,
 )
@@ -55,6 +57,7 @@ logger = logging.getLogger(__name__)
 _dispatch = GptActionsDispatchService()
 _packages = GuidedImprovementPackageService(_dispatch)
 _orchestrator = GovernedWriteOrchestrator(_dispatch, _packages)
+_governed = GovernedActionsFacade(orchestrator=_orchestrator, dispatch=_dispatch)
 _process_context = ProcessContextService()
 _user_context = UserContextService(person_profile_reader=CorePersonProfileGateway())
 
@@ -204,24 +207,24 @@ def _prepare(capability: str, args: dict[str, Any]) -> CallToolResult:
         if not data.get("act_allowed", True):
             return _ok_result(
                 data,
-                "Proposal prepared but not ready for ACT (see validation_result).",
+                "Proposal prepared but not ready for commit (see validation_result).",
             )
         return _ok_result(
             data,
-            "Governed proposal prepared. Confirm with the matching act_* tool using proposal_handle.",
+            "Governed proposal prepared. Confirm with commit_proposal(proposal_handle).",
         )
     except Exception as exc:
         return handle_tool_error(exc)
 
 
 def _act(capability: str, proposal_handle: str | None) -> CallToolResult:
+    """Internal ACT by known capability (legacy test helpers). Prefer commit_proposal."""
     try:
         request = build_mcp_request()
         data = _orchestrator.act(
             request, capability=capability, proposal_handle=proposal_handle
         )
         if not data.get("verified"):
-            # Must never present unverified write as success.
             return _error_result(
                 "Write may have occurred but outcome was not verified.",
                 status_code=409,
@@ -447,26 +450,86 @@ def tool_generate_from_transcript(
 # --- PREPARE tools --------------------------------------------------------
 
 
+def tool_prepare_record_change(
+    entity: str,
+    operation: str,
+    record_id: str | None = None,
+    changes: dict | None = None,
+) -> CallToolResult:
+    """Generic ENTITY prepare (create|update|delete|duplicate) → proposal_handle."""
+    try:
+        request = build_mcp_request()
+        data = _governed.prepare_record_change(
+            request,
+            entity=entity,
+            operation=operation,
+            record_id=record_id,
+            changes=changes or {},
+        )
+        prop = data.get("proposal") if isinstance(data.get("proposal"), dict) else {}
+        if prop and not prop.get("act_allowed", True):
+            return _ok_result(
+                data,
+                "Proposal prepared but not ready for commit (see validation_result).",
+            )
+        return _ok_result(
+            data,
+            "Governed proposal prepared. Confirm with commit_proposal(proposal_handle).",
+        )
+    except Exception as exc:
+        return handle_tool_error(exc)
+
+
+def tool_commit_proposal(
+    proposal_handle: str, confirmation: bool = True
+) -> CallToolResult:
+    """Common governed commit: opaque handle only; capability from stored proposal."""
+    try:
+        request = build_mcp_request()
+        data = _governed.commit_proposal(
+            request,
+            proposal_handle=proposal_handle,
+            confirmation=confirmation,
+        )
+        post = data.get("postcondition") or {}
+        if not post.get("verified"):
+            return _error_result(
+                "Write may have occurred but outcome was not verified.",
+                status_code=409,
+                error_code=OUTCOME_VERIFICATION_FAILED,
+                data=data,
+            )
+        return _ok_result(data, "Write verified against authoritative read-back.")
+    except Exception as exc:
+        return handle_tool_error(exc)
+
+
+# Legacy bridge helpers (not registered as MCP tools) — delegate to V2 surface.
+
+
 def tool_prepare_create_record(entity: str, data: dict | None = None) -> CallToolResult:
-    return _prepare("create_record", {"entity": entity, "data": data or {}})
+    return tool_prepare_record_change(
+        entity=entity, operation="create", changes=data or {}
+    )
 
 
 def tool_prepare_update_record(
     entity: str, id: str, data: dict | None = None
 ) -> CallToolResult:
-    return _prepare("update_record", {"entity": entity, "id": id, "data": data or {}})
+    return tool_prepare_record_change(
+        entity=entity, operation="update", record_id=id, changes=data or {}
+    )
 
 
 def tool_prepare_delete_record(entity: str, id: str) -> CallToolResult:
-    return _prepare("delete_record", {"entity": entity, "id": id})
+    return tool_prepare_record_change(entity=entity, operation="delete", record_id=id)
 
 
 def tool_prepare_duplicate_record(
     entity: str, id: str, data: dict | None = None
 ) -> CallToolResult:
-    return _prepare(
-        "duplicate_record",
-        {"entity": entity, "id": id, "data": data or {}},
+    return tool_prepare_record_change(
+        entity=entity, operation="duplicate", record_id=id, changes=data or {}
     )
 
 
@@ -580,51 +643,51 @@ def tool_prepare_meeting_minute_manage(
     )
 
 
-# --- ACT tools (proposal_handle only) -------------------------------------
+# --- Legacy ACT helpers (delegate to common commit; not MCP-registered) ---
 
 
 def tool_act_create_record(proposal_handle: str) -> CallToolResult:
-    return _act(ACT_TOOL_CAPABILITY["act_create_record"], proposal_handle)
+    return tool_commit_proposal(proposal_handle)
 
 
 def tool_act_update_record(proposal_handle: str) -> CallToolResult:
-    return _act(ACT_TOOL_CAPABILITY["act_update_record"], proposal_handle)
+    return tool_commit_proposal(proposal_handle)
 
 
 def tool_act_delete_record(proposal_handle: str) -> CallToolResult:
-    return _act(ACT_TOOL_CAPABILITY["act_delete_record"], proposal_handle)
+    return tool_commit_proposal(proposal_handle)
 
 
 def tool_act_duplicate_record(proposal_handle: str) -> CallToolResult:
-    return _act(ACT_TOOL_CAPABILITY["act_duplicate_record"], proposal_handle)
+    return tool_commit_proposal(proposal_handle)
 
 
 def tool_act_activate_revision(proposal_handle: str) -> CallToolResult:
-    return _act(ACT_TOOL_CAPABILITY["act_activate_revision"], proposal_handle)
+    return tool_commit_proposal(proposal_handle)
 
 
 def tool_act_recalculate_dashboard(proposal_handle: str) -> CallToolResult:
-    return _act(ACT_TOOL_CAPABILITY["act_recalculate_dashboard"], proposal_handle)
+    return tool_commit_proposal(proposal_handle)
 
 
 def tool_act_meeting_minute_workflow(proposal_handle: str) -> CallToolResult:
-    return _act(ACT_TOOL_CAPABILITY["act_meeting_minute_workflow"], proposal_handle)
+    return tool_commit_proposal(proposal_handle)
 
 
 def tool_act_commit_improvement_package(proposal_handle: str) -> CallToolResult:
-    return _act(ACT_TOOL_CAPABILITY["act_commit_improvement_package"], proposal_handle)
+    return tool_commit_proposal(proposal_handle)
 
 
 def tool_act_manage_evidence(proposal_handle: str) -> CallToolResult:
-    return _act(ACT_TOOL_CAPABILITY["act_manage_evidence"], proposal_handle)
+    return tool_commit_proposal(proposal_handle)
 
 
 def tool_act_adjust_shared_resource_cost(proposal_handle: str) -> CallToolResult:
-    return _act(ACT_TOOL_CAPABILITY["act_adjust_shared_resource_cost"], proposal_handle)
+    return tool_commit_proposal(proposal_handle)
 
 
 def tool_act_meeting_minute_manage(proposal_handle: str) -> CallToolResult:
-    return _act(ACT_TOOL_CAPABILITY["act_meeting_minute_manage"], proposal_handle)
+    return tool_commit_proposal(proposal_handle)
 
 
 # Back-compat aliases used by older smoke tests (map to prepare/act semantics).

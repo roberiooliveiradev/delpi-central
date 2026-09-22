@@ -1,4 +1,4 @@
-"""FastMCP server — TÉO FULL CRUD with governed PREPARE → ACT writes."""
+"""FastMCP server — TÉO capability-driven MCP (PREPARE → commit_proposal)."""
 
 from __future__ import annotations
 
@@ -90,7 +90,10 @@ def create_mcp_server() -> FastMCP:
     @mcp.tool(
         name="get_catalog",
         title="Get catalog",
-        description="Catalog options, registration_guide, diagram_catalog.",
+        description=(
+            "Discovery catalog: entities, workflows, analysis, registration_guide, "
+            "diagram_catalog, capability_surface. Use before writes."
+        ),
         annotations=_annotations("get_catalog", "Get catalog"),
         meta=meta,
     )
@@ -265,64 +268,43 @@ def create_mcp_server() -> FastMCP:
     ) -> CallToolResult:
         return bridge.tool_generate_from_transcript(minute_id=minute_id, data=data)
 
-    # --- PREPARE ----------------------------------------------------------
+    # --- PREPARE (generic entity + specialized workflows) -----------------
 
     @mcp.tool(
-        name="prepare_create_record",
-        title="Prepare create record",
+        name="prepare_record_change",
+        title="Prepare record change",
         description=(
-            "PREPARE: exact create change → proposal_handle. "
-            "Then call act_create_record with that handle only."
+            "PREPARE only (no write): conventional ENTITY CRUD "
+            "(create|update|delete|duplicate) for catalog entities "
+            "(e.g. process_document). Returns opaque proposal_handle. "
+            "Do NOT use for business workflows (revision activation, "
+            "evidence, meeting minutes, packages, cost adjustment) — "
+            "use the specialized prepare_* tools instead. "
+            "Then call commit_proposal(proposal_handle)."
         ),
-        annotations=_annotations("prepare_create_record", "Prepare create record"),
+        annotations=_annotations("prepare_record_change", "Prepare record change"),
         meta=meta,
     )
-    def prepare_create_record(entity: str, data: dict | None = None) -> CallToolResult:
-        return bridge.tool_prepare_create_record(entity=entity, data=data)
-
-    @mcp.tool(
-        name="prepare_update_record",
-        title="Prepare update record",
-        description=(
-            "PREPARE: exact update → proposal_handle. "
-            "May note confirm_vigencia_change for revision dates."
-        ),
-        annotations=_annotations("prepare_update_record", "Prepare update record"),
-        meta=meta,
-    )
-    def prepare_update_record(
-        entity: str, id: str, data: dict | None = None
+    def prepare_record_change(
+        entity: str,
+        operation: str,
+        record_id: str | None = None,
+        changes: dict | None = None,
     ) -> CallToolResult:
-        return bridge.tool_prepare_update_record(entity=entity, id=id, data=data)
-
-    @mcp.tool(
-        name="prepare_delete_record",
-        title="Prepare delete record",
-        description="PREPARE: soft-delete proposal → proposal_handle.",
-        annotations=_annotations("prepare_delete_record", "Prepare delete record"),
-        meta=meta,
-    )
-    def prepare_delete_record(entity: str, id: str) -> CallToolResult:
-        return bridge.tool_prepare_delete_record(entity=entity, id=id)
-
-    @mcp.tool(
-        name="prepare_duplicate_record",
-        title="Prepare duplicate record",
-        description="PREPARE: duplicate process/instance/revision → proposal_handle.",
-        annotations=_annotations(
-            "prepare_duplicate_record", "Prepare duplicate record"
-        ),
-        meta=meta,
-    )
-    def prepare_duplicate_record(
-        entity: str, id: str, data: dict | None = None
-    ) -> CallToolResult:
-        return bridge.tool_prepare_duplicate_record(entity=entity, id=id, data=data)
+        return bridge.tool_prepare_record_change(
+            entity=entity,
+            operation=operation,
+            record_id=record_id,
+            changes=changes,
+        )
 
     @mcp.tool(
         name="prepare_activate_revision",
         title="Prepare activate revision",
-        description="PREPARE: activate revision proposal (overwrites current).",
+        description=(
+            "PREPARE WORKFLOW: activate revision (overwrites current). "
+            "Not a generic entity update. Then commit_proposal."
+        ),
         annotations=_annotations(
             "prepare_activate_revision", "Prepare activate revision"
         ),
@@ -334,7 +316,10 @@ def create_mcp_server() -> FastMCP:
     @mcp.tool(
         name="prepare_recalculate_dashboard",
         title="Prepare recalculate dashboard",
-        description="PREPARE: materialised dashboard cache recalculate proposal.",
+        description=(
+            "PREPARE WORKFLOW: materialised dashboard cache recalculate. "
+            "Then commit_proposal."
+        ),
         annotations=_annotations(
             "prepare_recalculate_dashboard", "Prepare recalculate dashboard"
         ),
@@ -356,7 +341,10 @@ def create_mcp_server() -> FastMCP:
     @mcp.tool(
         name="prepare_meeting_minute_workflow",
         title="Prepare meeting minute workflow",
-        description="PREPARE: send|finalize|cancel meeting minute → proposal_handle.",
+        description=(
+            "PREPARE WORKFLOW: send|finalize|cancel meeting minute. "
+            "Then commit_proposal."
+        ),
         annotations=_annotations(
             "prepare_meeting_minute_workflow", "Prepare meeting minute workflow"
         ),
@@ -373,9 +361,9 @@ def create_mcp_server() -> FastMCP:
         name="prepare_improvement_package",
         title="Prepare improvement package",
         description=(
-            "PREPARE: validate package + AuthZ + governed proposal_handle. "
-            "Incomplete packages return ready=false and act_allowed=false (NO WRITE). "
-            "Commit only via act_commit_improvement_package(proposal_handle)."
+            "PREPARE WORKFLOW: validate package + AuthZ + proposal_handle (NO WRITE). "
+            "Incomplete packages: ready=false / act_allowed=false. "
+            "Commit only via commit_proposal(proposal_handle)."
         ),
         annotations=_annotations(
             "prepare_improvement_package", "Prepare improvement package"
@@ -403,8 +391,9 @@ def create_mcp_server() -> FastMCP:
         name="prepare_manage_evidence",
         title="Prepare manage evidence",
         description=(
-            "PREPARE: create_link|update_description|delete. "
-            "delete requires confirm_delete=true in the prepared change."
+            "PREPARE WORKFLOW: create_link|update_description|delete evidence. "
+            "Not generic file CRUD. delete needs confirm_delete in prepare. "
+            "Then commit_proposal."
         ),
         annotations=_annotations("prepare_manage_evidence", "Prepare manage evidence"),
         meta=meta,
@@ -431,7 +420,10 @@ def create_mcp_server() -> FastMCP:
     @mcp.tool(
         name="prepare_adjust_shared_resource_cost",
         title="Prepare adjust shared resource cost",
-        description="PREPARE: shared-resource cost adjustment → proposal_handle.",
+        description=(
+            "PREPARE WORKFLOW: shared-resource cost adjustment with domain rules. "
+            "Then commit_proposal."
+        ),
         annotations=_annotations(
             "prepare_adjust_shared_resource_cost",
             "Prepare adjust shared resource cost",
@@ -455,9 +447,10 @@ def create_mcp_server() -> FastMCP:
         name="prepare_meeting_minute_manage",
         title="Prepare meeting minute manage",
         description=(
-            "PREPARE: write actions for atas (resend/...). "
+            "PREPARE WORKFLOW: write actions for atas (resend/...). "
             "resend requires data.confirm_resend=true. "
-            "READ actions → meeting_minute_read; transcript → generate_from_transcript."
+            "READ → meeting_minute_read; transcript → generate_from_transcript. "
+            "Then commit_proposal."
         ),
         annotations=_annotations(
             "prepare_meeting_minute_manage", "Prepare meeting minute manage"
@@ -473,141 +466,27 @@ def create_mcp_server() -> FastMCP:
             action=action, minute_id=minute_id, data=data
         )
 
-    # --- ACT (proposal_handle only) ---------------------------------------
-
-    def _act_desc(name: str) -> str:
-        return (
-            f"ACT: execute the exact prepared {name} change. "
-            "Accepts only proposal_handle from the matching prepare_* tool. "
-            "Revalidates AuthZ, fingerprint, and verifies authoritative read-back."
-        )
+    # --- COMMON COMMIT (proposal_handle only; not a generic executor) -----
 
     @mcp.tool(
-        name="act_create_record",
-        title="Act create record",
-        description=_act_desc("create_record"),
-        annotations=_annotations("act_create_record", "Act create record"),
-        meta=meta,
-    )
-    def act_create_record(proposal_handle: str) -> CallToolResult:
-        return bridge.tool_act_create_record(proposal_handle=proposal_handle)
-
-    @mcp.tool(
-        name="act_update_record",
-        title="Act update record",
-        description=_act_desc("update_record"),
-        annotations=_annotations("act_update_record", "Act update record"),
-        meta=meta,
-    )
-    def act_update_record(proposal_handle: str) -> CallToolResult:
-        return bridge.tool_act_update_record(proposal_handle=proposal_handle)
-
-    @mcp.tool(
-        name="act_delete_record",
-        title="Act delete record",
-        description=_act_desc("delete_record"),
-        annotations=_annotations("act_delete_record", "Act delete record"),
-        meta=meta,
-    )
-    def act_delete_record(proposal_handle: str) -> CallToolResult:
-        return bridge.tool_act_delete_record(proposal_handle=proposal_handle)
-
-    @mcp.tool(
-        name="act_duplicate_record",
-        title="Act duplicate record",
-        description=_act_desc("duplicate_record"),
-        annotations=_annotations("act_duplicate_record", "Act duplicate record"),
-        meta=meta,
-    )
-    def act_duplicate_record(proposal_handle: str) -> CallToolResult:
-        return bridge.tool_act_duplicate_record(proposal_handle=proposal_handle)
-
-    @mcp.tool(
-        name="act_activate_revision",
-        title="Act activate revision",
-        description=_act_desc("activate_revision"),
-        annotations=_annotations("act_activate_revision", "Act activate revision"),
-        meta=meta,
-    )
-    def act_activate_revision(proposal_handle: str) -> CallToolResult:
-        return bridge.tool_act_activate_revision(proposal_handle=proposal_handle)
-
-    @mcp.tool(
-        name="act_recalculate_dashboard",
-        title="Act recalculate dashboard",
-        description=_act_desc("recalculate_dashboard"),
-        annotations=_annotations(
-            "act_recalculate_dashboard", "Act recalculate dashboard"
-        ),
-        meta=meta,
-    )
-    def act_recalculate_dashboard(proposal_handle: str) -> CallToolResult:
-        return bridge.tool_act_recalculate_dashboard(proposal_handle=proposal_handle)
-
-    @mcp.tool(
-        name="act_meeting_minute_workflow",
-        title="Act meeting minute workflow",
-        description=_act_desc("meeting_minute_workflow"),
-        annotations=_annotations(
-            "act_meeting_minute_workflow", "Act meeting minute workflow"
-        ),
-        meta=meta,
-    )
-    def act_meeting_minute_workflow(proposal_handle: str) -> CallToolResult:
-        return bridge.tool_act_meeting_minute_workflow(proposal_handle=proposal_handle)
-
-    @mcp.tool(
-        name="act_commit_improvement_package",
-        title="Act commit improvement package",
+        name="commit_proposal",
+        title="Commit proposal",
         description=(
-            "ACT: commit the exact prepared improvement package. "
-            "proposal_handle only — does not accept a different package payload."
+            "ACT/COMMIT: execute the exact prepared change. "
+            "Accepts only proposal_handle (and optional confirmation flags already "
+            "bound in the proposal). Does NOT accept entity/operation/changes/"
+            "tool_name. Revalidates AuthZ, user binding, fingerprint, then "
+            "authoritative read-back. Use after any prepare_* tool."
         ),
-        annotations=_annotations(
-            "act_commit_improvement_package", "Act commit improvement package"
-        ),
+        annotations=_annotations("commit_proposal", "Commit proposal"),
         meta=meta,
     )
-    def act_commit_improvement_package(proposal_handle: str) -> CallToolResult:
-        return bridge.tool_act_commit_improvement_package(
-            proposal_handle=proposal_handle
+    def commit_proposal(
+        proposal_handle: str, confirmation: bool = True
+    ) -> CallToolResult:
+        return bridge.tool_commit_proposal(
+            proposal_handle=proposal_handle, confirmation=confirmation
         )
-
-    @mcp.tool(
-        name="act_manage_evidence",
-        title="Act manage evidence",
-        description=_act_desc("manage_evidence"),
-        annotations=_annotations("act_manage_evidence", "Act manage evidence"),
-        meta=meta,
-    )
-    def act_manage_evidence(proposal_handle: str) -> CallToolResult:
-        return bridge.tool_act_manage_evidence(proposal_handle=proposal_handle)
-
-    @mcp.tool(
-        name="act_adjust_shared_resource_cost",
-        title="Act adjust shared resource cost",
-        description=_act_desc("adjust_shared_resource_cost"),
-        annotations=_annotations(
-            "act_adjust_shared_resource_cost", "Act adjust shared resource cost"
-        ),
-        meta=meta,
-    )
-    def act_adjust_shared_resource_cost(proposal_handle: str) -> CallToolResult:
-        return bridge.tool_act_adjust_shared_resource_cost(
-            proposal_handle=proposal_handle
-        )
-
-    @mcp.tool(
-        name="act_meeting_minute_manage",
-        title="Act meeting minute manage",
-        description=_act_desc("meeting_minute_manage"),
-        annotations=_annotations(
-            "act_meeting_minute_manage", "Act meeting minute manage"
-        ),
-        meta=meta,
-    )
-    def act_meeting_minute_manage(proposal_handle: str) -> CallToolResult:
-        return bridge.tool_act_meeting_minute_manage(proposal_handle=proposal_handle)
 
     registered = {t.name for t in mcp._tool_manager.list_tools()}
     missing = set(MCP_TOOL_NAMES) - registered

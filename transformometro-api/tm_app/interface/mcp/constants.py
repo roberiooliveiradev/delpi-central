@@ -2,8 +2,9 @@
 
 Technical ids are not branding. Do not rename for «TÉO».
 
-Write surface uses PREPARE → opaque proposal_handle → ACT (governed writes).
-GPT Actions V2 shares the same GovernedWriteOrchestrator via prepare/commit.
+Write surface (V2): PREPARE → opaque proposal_handle → commit_proposal.
+Entity CRUD uses prepare_record_change; specialized workflows keep explicit PREPARE.
+GPT Actions V2 shares the same GovernedWriteOrchestrator / GovernedActionsFacade.
 """
 
 from __future__ import annotations
@@ -20,7 +21,8 @@ MCP_AUTH_MODEL = "TRANSPORT_REQUIRES_OAUTH"
 # GPT Actions Builder surface is prepare/commit governed (legacy CRUD shims remain off-OpenAPI).
 GPT_ACTIONS_LIFECYCLE = "GOVERNED_PREPARE_COMMIT_V2"
 
-TEO_MCP_SURFACE = "FULL_CRUD_GOVERNED"
+# MCP Plugin surface: capability-driven (generic entity + common commit + specialized PREPARE).
+TEO_MCP_SURFACE = "CAPABILITY_GOVERNED_V2"
 
 # ---------------------------------------------------------------------------
 # Capability parity: GPT operationId → MCP tool names (1→N allowed)
@@ -34,25 +36,8 @@ GPT_TO_MCP_TOOLS: dict[str, tuple[str, ...]] = {
     "gpt_analyze": ("analyze",),
     "gpt_search_records": ("search_records",),
     "gpt_get_record": ("get_record",),
-    "gpt_prepare_record_change": (
-        "prepare_create_record",
-        "prepare_update_record",
-        "prepare_delete_record",
-        "prepare_duplicate_record",
-    ),
-    "gpt_commit_proposal": (
-        "act_create_record",
-        "act_update_record",
-        "act_delete_record",
-        "act_duplicate_record",
-        "act_activate_revision",
-        "act_recalculate_dashboard",
-        "act_meeting_minute_workflow",
-        "act_commit_improvement_package",
-        "act_manage_evidence",
-        "act_adjust_shared_resource_cost",
-        "act_meeting_minute_manage",
-    ),
+    "gpt_prepare_record_change": ("prepare_record_change",),
+    "gpt_commit_proposal": ("commit_proposal",),
     "gpt_activate_revision": ("prepare_activate_revision",),
     "gpt_recalculate_dashboard": ("prepare_recalculate_dashboard",),
     "gpt_meeting_minute_workflow": ("prepare_meeting_minute_workflow",),
@@ -78,6 +63,7 @@ TOOL_TO_GPT_OPERATION: dict[str, str] = {
 MCP_NATIVE_TOOLS: frozenset[str] = frozenset()
 
 # READ | PREPARE | ACT | ANALYSIS (non-persist)
+# ACT class retained for commit_proposal (common governed commit).
 TOOL_CLASS: dict[str, str] = {
     "get_my_context": "READ",
     "get_catalog": "READ",
@@ -90,10 +76,7 @@ TOOL_CLASS: dict[str, str] = {
     "get_process_timeline": "READ",
     "meeting_minute_read": "READ",
     "generate_from_transcript": "ANALYSIS",
-    "prepare_create_record": "PREPARE",
-    "prepare_update_record": "PREPARE",
-    "prepare_delete_record": "PREPARE",
-    "prepare_duplicate_record": "PREPARE",
+    "prepare_record_change": "PREPARE",
     "prepare_activate_revision": "PREPARE",
     "prepare_recalculate_dashboard": "PREPARE",
     "prepare_meeting_minute_workflow": "PREPARE",
@@ -101,53 +84,59 @@ TOOL_CLASS: dict[str, str] = {
     "prepare_manage_evidence": "PREPARE",
     "prepare_adjust_shared_resource_cost": "PREPARE",
     "prepare_meeting_minute_manage": "PREPARE",
-    "act_create_record": "ACT",
-    "act_update_record": "ACT",
-    "act_delete_record": "ACT",
-    "act_duplicate_record": "ACT",
-    "act_activate_revision": "ACT",
-    "act_recalculate_dashboard": "ACT",
-    "act_meeting_minute_workflow": "ACT",
-    "act_commit_improvement_package": "ACT",
-    "act_manage_evidence": "ACT",
-    "act_adjust_shared_resource_cost": "ACT",
-    "act_meeting_minute_manage": "ACT",
+    "commit_proposal": "ACT",
 }
 
-# Destructive / overwriting ACTs — annotations must be truthful.
-DESTRUCTIVE_ACT_TOOLS: frozenset[str] = frozenset(
-    {
-        "act_delete_record",
-        "act_manage_evidence",  # delete op
-        "act_activate_revision",  # overwrites current
-        "act_meeting_minute_workflow",  # cancel/finalize consequential
-        "act_meeting_minute_manage",  # resend/overwrite-ish
-        "act_commit_improvement_package",  # multi-write
-    }
-)
+# commit_proposal may execute destructive capabilities → truthful annotation.
+DESTRUCTIVE_ACT_TOOLS: frozenset[str] = frozenset({"commit_proposal"})
 
 MCP_TOOL_NAMES: tuple[str, ...] = tuple(TOOL_CLASS.keys())
 
-# ACT tool name → governed capability key
+MCP_SURFACE_BUDGET = {
+    "before_total": 33,
+    "before": {"READ": 10, "ANALYSIS": 1, "PREPARE": 11, "ACT": 11},
+    "after_total": len(MCP_TOOL_NAMES),
+    "after": {
+        "READ": sum(1 for v in TOOL_CLASS.values() if v == "READ"),
+        "ANALYSIS": sum(1 for v in TOOL_CLASS.values() if v == "ANALYSIS"),
+        "PREPARE": sum(1 for v in TOOL_CLASS.values() if v == "PREPARE"),
+        "ACT": sum(1 for v in TOOL_CLASS.values() if v == "ACT"),
+    },
+    "principle": (
+        "Eliminate mechanical CRUD PREPARE/ACT pairs; keep specialized business PREPARE; "
+        "common commit_proposal; new CRUD entity ⇒ 0 new MCP tools."
+    ),
+}
+
+# Legacy tool names removed from registration (V1 mechanical pairs).
+# Bridge wrappers may still exist for unit tests; not discoverable via list_tools.
+MCP_LEGACY_REMOVED_TOOLS: frozenset[str] = frozenset(
+    {
+        "prepare_create_record",
+        "prepare_update_record",
+        "prepare_delete_record",
+        "prepare_duplicate_record",
+        "act_create_record",
+        "act_update_record",
+        "act_delete_record",
+        "act_duplicate_record",
+        "act_activate_revision",
+        "act_recalculate_dashboard",
+        "act_meeting_minute_workflow",
+        "act_commit_improvement_package",
+        "act_manage_evidence",
+        "act_adjust_shared_resource_cost",
+        "act_meeting_minute_manage",
+    }
+)
+
+# Kept for internal bridge compatibility / residual checks (capability keys).
 ACT_TOOL_CAPABILITY: dict[str, str] = {
-    "act_create_record": "create_record",
-    "act_update_record": "update_record",
-    "act_delete_record": "delete_record",
-    "act_duplicate_record": "duplicate_record",
-    "act_activate_revision": "activate_revision",
-    "act_recalculate_dashboard": "recalculate_dashboard",
-    "act_meeting_minute_workflow": "meeting_minute_workflow",
-    "act_commit_improvement_package": "commit_improvement_package",
-    "act_manage_evidence": "manage_evidence",
-    "act_adjust_shared_resource_cost": "adjust_shared_resource_cost",
-    "act_meeting_minute_manage": "meeting_minute_manage",
+    "commit_proposal": "",  # capability derived from stored proposal
 }
 
 PREPARE_TOOL_CAPABILITY: dict[str, str] = {
-    "prepare_create_record": "create_record",
-    "prepare_update_record": "update_record",
-    "prepare_delete_record": "delete_record",
-    "prepare_duplicate_record": "duplicate_record",
+    "prepare_record_change": "create_record",  # operation selects exact capability
     "prepare_activate_revision": "activate_revision",
     "prepare_recalculate_dashboard": "recalculate_dashboard",
     "prepare_meeting_minute_workflow": "meeting_minute_workflow",

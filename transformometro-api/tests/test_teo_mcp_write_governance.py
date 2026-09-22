@@ -37,9 +37,6 @@ from tm_app.application.gpt_actions.dispatch_service import (
     GptActionsError,
 )
 from tm_app.interface.mcp.tool_bridge import (
-    tool_act_activate_revision,
-    tool_act_create_record,
-    tool_act_recalculate_dashboard,
     tool_commit_improvement_package,
     tool_get_catalog,
     tool_manage_evidence,
@@ -479,14 +476,20 @@ class TestMcpBridgeGoverned:
             reset_request_authorization(auth_token)
             reset_current_user(user_token)
 
-    def test_act_create_verified_false_is_error(self):
+    def test_commit_verified_false_is_error(self):
         user_token, auth_token = self._auth()
         try:
             with patch(
-                "tm_app.interface.mcp.tool_bridge._orchestrator.act",
-                return_value={"verified": False, "data": {}},
+                "tm_app.interface.mcp.tool_bridge._governed.commit_proposal",
+                return_value={
+                    "status": "ok",
+                    "postcondition": {"verified": False},
+                    "data": {},
+                },
             ):
-                result = tool_act_create_record("fake.handle")
+                from tm_app.interface.mcp.tool_bridge import tool_commit_proposal
+
+                result = tool_commit_proposal("fake.handle")
             assert result.isError is True
             assert (
                 result.structuredContent["data"]["error_code"]

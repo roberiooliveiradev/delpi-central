@@ -45,7 +45,7 @@ Workspace Agent / ChatGPT Plugin (TÉO)
   → Keycloak end-user identity (mcp-transformometro)
   → MCP Streamable HTTP /apps/transformometro-api/mcp
   → interface/mcp adapter
-  → application services + governed writes (FULL_CRUD_GOVERNED)
+  → application services + governed writes (CAPABILITY_GOVERNED_V2)
   → canonical AuthZ (capability ≤ user)
   → Postgres transformometro
 ```
@@ -53,7 +53,7 @@ Workspace Agent / ChatGPT Plugin (TÉO)
 ## Surface policy
 
 ```text
-TEO_MCP_SURFACE = FULL_CRUD_GOVERNED
+TEO_MCP_SURFACE = CAPABILITY_GOVERNED_V2
 READ + PREPARE + ACT = REQUIRED
 DAVI_READ_ONLY_COPY = FORBIDDEN
 ```
@@ -63,7 +63,7 @@ DAVI_READ_ONLY_COPY = FORBIDDEN
 ```text
 21 GPT Actions capabilities
 ≠
-33 MCP tools
+20 MCP tools
 ```
 
 No MCP atual, 1 capability GPT pode decompor-se em READ / PREPARE / ACT.
@@ -72,7 +72,7 @@ No MCP atual, 1 capability GPT pode decompor-se em READ / PREPARE / ACT.
 |---|---|---|
 | GPT Actions importable | **21**, incluindo `gpt_get_methodology_guide` | CURRENT no código |
 | GPT Actions em 2026-09-17 | 20 | HISTORICAL |
-| MCP tools registered | **33** (10 READ + 1 ANALYSIS + 11 PREPARE + 11 ACT) | código; ChatGPT 33/33 = TEST_NOT_RUN |
+| MCP tools registered | **20** (10 READ + 1 ANALYSIS + 8 PREPARE + 1 commit_proposal) | código; ChatGPT rediscovery = TEST_NOT_RUN |
 | Unbound ACT | 0 | PROVEN |
 | ACT input | somente `proposal_handle` | PROVEN (código) |
 

@@ -174,7 +174,7 @@ https://minhadelpi.com.br/apps/transformometro-api/.well-known/oauth-protected-r
 | Métrica | Valor |
 |---|---|
 | GPT Actions capabilities (legacy) | **21** importable operationIds (`gpt_get_methodology_guide` included). 20 was the 2026-09-17 inventory. |
-| MCP tools | **33** (10 READ including `get_methodology_guide` + 1 ANALYSIS + 11 PREPARE + 11 ACT) |
+| MCP tools | **20** (10 READ including `get_methodology_guide` + 1 ANALYSIS + 8 PREPARE + 1 commit_proposal) |
 | Capability coverage | **20/20** |
 
 `32 ≠ 20` **não** é regression: 1 capability GPT pode virar READ + PREPARE + ACT.

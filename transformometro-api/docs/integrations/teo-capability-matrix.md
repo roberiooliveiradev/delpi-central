@@ -71,7 +71,7 @@ Rejected by policy: `gpt_call_any_route`, `gpt_http_proxy`, `gpt_run_sql`, `gpt_
 
 | Capability | Domain | Action mapping | MCP mapping | DÉLIA | Classification |
 |---|---|---|---|---|---|
-| **Process Documentation** | PROVEN CRUD | **C `EXISTING_CATALOG_ENTITY`** `process_document` | Same CRUD tools (search/get/prepare/act) | PLANNED | **FULL_PARITY** (Actions+MCP); DÉLIA PLANNED |
+| **Process Documentation** | PROVEN CRUD | **C `EXISTING_CATALOG_ENTITY`** `process_document` | `search_records` / `get_record` / `prepare_record_change` / `commit_proposal` | PLANNED | **FULL_PARITY** (Actions+MCP); DÉLIA PLANNED |
 | **Tasks** (`tm_tasks`) | PROVEN | **NOT_EXPOSED** — lifecycle (complete/cancel/my-tasks) ≠ clean CRUD; avoid signature-projection confusion | NOT_EXPOSED | NOT_APPLICABLE | **DOMAIN_ONLY_BY_DESIGN** |
 | **Interaction Room** | PROVEN | **NOT_EXPOSED** — human collaboration; TÉO is not a room participant | NOT_EXPOSED | NOT_APPLICABLE | **DOMAIN_ONLY_BY_DESIGN** |
 | **Process Workspace** | UI composition | **DOMAIN_COMPOSITION_ONLY** — consume underlying reads | same | same | **NOT_APPLICABLE** |
@@ -95,14 +95,14 @@ Justification: list/get/create/update/delete fit governed allowlisted CRUD with 
 | Methodology guide | TM | R | `get_methodology_guide` | `gpt_get_methodology_guide` | PLANNED | view | FULL_PARITY* |
 | Process context | TM | R | `get_process_context` | `gpt_get_process_context` | PLANNED | view/process | FULL_PARITY* |
 | Dashboard analyze | TM | R | `analyze` | `gpt_analyze` | PLANNED | dashboard | FULL_PARITY* |
-| Entity CRUD (17 legacy + process_document) | TM | R/W | search/get + prepare/act_*_record | gpt_*_record | PLANNED | per entity | FULL_PARITY* |
-| Activate revision | TM | W | prepare/act_activate_revision | `gpt_activate_revision` | PLANNED | revisao manage | FULL_PARITY* |
-| Recalculate dashboard | TM | W | prepare/act_recalculate | `gpt_recalculate_dashboard` | PLANNED | dashboard | FULL_PARITY* |
-| Improvement package | TM | W | prepare_improvement / act_commit | validate + commit | PLANNED | package AuthZ | FULL_PARITY* |
-| Evidence link/metadata | TM | R/W | list + prepare/act_manage | list + manage | PLANNED | manage + confirm_delete | FULL_PARITY* |
+| Entity CRUD (17 legacy + process_document) | TM | R/W | search/get + prepare_record_change + commit_proposal | gpt_prepare_record_change + gpt_commit_proposal | PLANNED | per entity | FULL_PARITY* |
+| Activate revision | TM | W | prepare_activate_revision → commit_proposal | `gpt_activate_revision` + commit | PLANNED | revisao manage | FULL_PARITY* |
+| Recalculate dashboard | TM | W | prepare_recalculate_dashboard → commit_proposal | `gpt_recalculate_dashboard` + commit | PLANNED | dashboard | FULL_PARITY* |
+| Improvement package | TM | W | prepare_improvement_package → commit_proposal | validate + commit | PLANNED | package AuthZ | FULL_PARITY* |
+| Evidence link/metadata | TM | R/W | list + prepare_manage_evidence → commit_proposal | list + manage + commit | PLANNED | manage + confirm_delete | FULL_PARITY* |
 | Process timeline | TM | R | `get_process_timeline` | `gpt_get_process_timeline` | PLANNED | view | FULL_PARITY* |
-| Shared resource cost adjust | TM | W | prepare/act_adjust | `gpt_adjust_shared_resource_cost` | PLANNED | parity | FULL_PARITY* |
-| Meeting minute workflow/manage | TM | R/W | read + prepare/act | workflow + manage | PLANNED | minutes svc | FULL_PARITY* |
+| Shared resource cost adjust | TM | W | prepare_adjust_shared_resource_cost → commit_proposal | `gpt_adjust_shared_resource_cost` + commit | PLANNED | parity | FULL_PARITY* |
+| Meeting minute workflow/manage | TM | R/W | prepare_* + commit_proposal (+ read/analysis) | gpt_meeting_* + commit | PLANNED | minutes svc | FULL_PARITY* |
 | **Process documentation** | TM | R/W | via record tools | via record entity | PLANNED | `transformometro.access` | FULL_PARITY* |
 | Tasks | TM | R/W | — | — | — | access | DOMAIN_ONLY_BY_DESIGN |
 | Interaction room | TM | R/W | — | — | — | access | DOMAIN_ONLY_BY_DESIGN |
@@ -116,16 +116,17 @@ Justification: list/get/create/update/delete fit governed allowlisted CRUD with 
 |---|---|---|---|---|
 | Process document | User JWT → use case `require_access` | Same dispatch → use case | Must use user delegation when built | `ProcessDocumentUseCases` |
 | Entity CRUD (other) | Same as GPT services | Same | PLANNED | Domain + branch_access helpers |
-| Writes governed | PREPARE/ACT + confirm flags | Conversational confirm + backend AuthZ | Must show + human confirm before ACT | Orchestrator / services |
+| Writes governed | PREPARE → commit_proposal + confirm flags | Conversational confirm + backend AuthZ | Must show + human confirm before commit | Orchestrator / services |
+| MCP tool count | **20** (`CAPABILITY_GOVERNED_V2`) | — | — | constants.MCP_SURFACE_BUDGET |
 
 Profile/cargo/department/context ≠ AuthZ. Service account must not impersonate user on MCP `/mcp`.
 
-## PREPARE / ACT parity (writes)
+## PREPARE / COMMIT parity (writes)
 
-| Capability | PREPARE | Confirm | ACT | Read-back | Surfaces |
+| Capability | PREPARE | Confirm | COMMIT | Read-back | Surfaces |
 |---|---|---|---|---|---|
-| create/update/delete record (incl. process_document) | MCP prepare_* | MCP proposal; Actions conversational | MCP act_*; Actions direct write | Yes | MCP + Actions |
-| activate / package / evidence / cost / meeting | MCP prepare_* | confirm_* where required | MCP act_* | Yes | MCP + Actions |
+| create/update/delete/duplicate record (incl. process_document) | MCP `prepare_record_change` | MCP proposal; Actions conversational | MCP/Actions `commit_proposal` | Yes | MCP + Actions |
+| activate / package / evidence / cost / meeting | MCP specialized `prepare_*` | confirm_* where required | MCP/Actions `commit_proposal` | Yes | MCP + Actions |
 | Tasks / Room | N/A | N/A | N/A | N/A | Not exposed |
 
 ## DÉLIA readiness
