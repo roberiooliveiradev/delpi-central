@@ -1753,6 +1753,8 @@
         "bodyMinFontSize": 14,
         "defaultHeaderFontSize": 18,
         "defaultBodyFontSize": 16,
+        "headerToBodyMinRatio": 1.12,
+        "bodyToHeaderMinRatio": 0.85,
         "cardFill": "#ffffff",
         "fg": "#0f172a"
       },
@@ -1761,9 +1763,31 @@
         "controlMinFontSize": 16,
         "defaultLabelFontSize": 16,
         "defaultControlFontSize": 18,
+        "iconMinSize": 18,
+        "defaultIconSize": 22,
+        "labelToControlMinRatio": 0.85,
+        "controlToLabelMinRatio": 1.1,
+        "iconToControlMinRatio": 1.15,
         "cardFill": "#ffffff",
         "fg": "#0f172a",
         "accent": "#089bdb"
+      },
+      "textBound": {
+        "absoluteMinFontSize": 16,
+        "headingMinFontSize": 28,
+        "textMinFontSize": 22,
+        "shapeMinFontSize": 36
+      },
+      "composed": {
+        "siblingToPrimaryMinRatio": 0.4,
+        "headingToPrimaryMinRatio": 0.45,
+        "labelToPrimaryMinRatio": 0.28,
+        "valueSiblingMinRatio": 0.85,
+        "absoluteMinFontSize": 16
+      },
+      "hierarchy": {
+        "principle": "PRIMARY_DRIVES_DEPENDENTS",
+        "summary": "Primary size (KPI value / chart title / table body / input control / group max) drives dependents; never leave internals at absolute min when primary is large. Applies on every commit including INFORMED blocks."
       }
     },
     "chartTypeHints": {

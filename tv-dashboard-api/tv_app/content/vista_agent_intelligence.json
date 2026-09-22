@@ -1,5 +1,5 @@
 {
-  "version": "2026.09.22.13",
+  "version": "2026.09.22.14",
   "owner": "tv-dashboard-api",
   "source": "capability_surface.agent_directives via gpt_get_catalog",
   "shape_chrome": {
@@ -407,7 +407,8 @@
     "Recusar composição com text/shape/heading + textProjection quando o catálogo tipado já cobre (só orientar o editor).",
     "Usar apenas views padrão quando o pedido pede callout, forma com número ou componente custom.",
     "Shape/card flat sem borderRadius+boxShadow tipados quando shape_chrome exige acabamento.",
-    "Aumentar só kpiParts.value.fontSize sem reescalar title/icon/unit (título/ícone miúdos no card)."
+    "Aumentar só kpiParts.value.fontSize sem reescalar title/icon/unit (título/ícone miúdos no card).",
+    "Aumentar tipografia primary de chart/table/input/composto sem reescalar dependentes (PRIMARY_DRIVES_DEPENDENTS)."
   ],
   "auth_errors": {
     "401": "AuthN — pedir reconexão OAuth DELPI / permitir Action.",
@@ -431,12 +432,13 @@
       "Tema Delpi: fundo gradient designTokens.brand.bgFrom→bgTo; cards brancos (brand.card); accent brand.accent; texto no card brand.onCard; títulos sobre o fundo brand.onBg.",
       "Dois/três/quatro KPIs → TV_KPI_ROW_* / TV_KPI_GRID_4 — não empilhar no mesmo frame.",
       "Obedecer designTokens (safeMargin, gutter, typeScale, kpiValueScale, partChrome, visualImpactHints, maxPrimarySignalsPerSlide=4).",
-      "Partes KPI/chart/table/input: preferir recipe kpiParts/chartOptions; o commit completa defaults via partChrome se ausentes.",
-      "KPI hierarchy: ao mudar valor (fontSize), SEMPRE ajustar no mesmo upsert title.fontSize + icon.iconSize (+ unit) — ratios partChrome.titleToValueMinRatio / iconToValueMinRatio. Não deixar título/ícone no mínimo enquanto o valor está hero.",
+      "Partes KPI/chart/table/input/texto: preferir recipe + partChrome; o commit rebalanceia hierarquia (PRIMARY_DRIVES_DEPENDENTS) em todas as famílias.",
+      "KPI hierarchy: ao mudar valor (fontSize), SEMPRE ajustar no mesmo upsert title.fontSize + icon.iconSize (+ unit) — ratios partChrome. O commit também corrige se faltar.",
+      "Chart hierarchy: titleFontSize → legendFontSize + axisFontSize (+ chartParts). Table: body ↔ header. Input: control ↔ label/icon.",
+      "Compostos groupId: o maior valor tipográfico do grupo puxa heading/text/shape irmãos (composed.* ratios).",
       "Compostos: shape/heading/text(+icon) com dataSourceId+textProjection e groupId — fields só do preview (composed_visuals); chrome fill+radius+shadow via shape_chrome.",
       "Filtros compartilhados → patch_native_config.dataFilters; interativos → upsert_block type=input; defaults da programação → patch_playlist_data_defaults.",
       "chartType tipado: série temporal preferir area (impacto TV); line só se pedido explícito; categorias bar/stacked_bar; composição pie/doughnut (poucas fatias); não pie em série diária densa.",
-      "Gráfico: se titleFontSize sobe, subir legendFontSize/axisFontSize (partChrome.chart ratios).",
       "Tabela operacional → tablePreset=banded por default (visual_impact).",
       "Após write: se OUTCOME_NOT_VERIFIED reason=slide_layout_quality → corrigir overlap/overflow/densidade/contraste/part_font_below_min.",
       "fontFamily só do allowlist."
@@ -449,7 +451,8 @@
       "Ignorar editorFocus fresco para alterar 'este' bloco",
       "Default visual fraco (line fina / tabela minimal / KPI abaixo do mínimo de impacto)",
       "Recusar textProjection em heading/text/shape quando o pedido pede dado em texto/forma",
-      "KPI com value grande e title/icon no mínimo absoluto (desproporção interna)"
+      "KPI/chart/table/input com primary grande e dependentes no mínimo absoluto (desproporção interna)",
+      "Escalar só um campo tipográfico sem hierarquia de partes do mesmo componente"
     ]
   }
 }

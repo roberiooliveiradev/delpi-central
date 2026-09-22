@@ -191,6 +191,86 @@ def test_part_chrome_negative_balanced_kpi_unchanged():
     assert after_parts["value"]["style"]["fontSize"] == before["value"]
 
 
+def test_part_chrome_rebalances_chart_table_input_and_composed_group():
+    cfg = {
+        "version": 5,
+        "blocks": [
+            {
+                "id": "c1",
+                "type": "chart_view",
+                "frame": {"x": 4, "y": 40, "w": 92, "h": 50},
+                "chartOptions": {
+                    "titleFontSize": 32,
+                    "legendFontSize": 12,
+                    "axisFontSize": 10,
+                },
+            },
+            {
+                "id": "t1",
+                "type": "table_view",
+                "frame": {"x": 4, "y": 4, "w": 90, "h": 40},
+                "tableOptions": {"bodyFontSize": 22, "headerFontSize": 14},
+            },
+            {
+                "id": "i1",
+                "type": "input",
+                "frame": {"x": 4, "y": 2, "w": 40, "h": 12},
+                "input": {"paramKey": "branch", "targetScope": "slide"},
+                "inputParts": {
+                    "control": {"style": {"fontSize": 24}},
+                    "label": {"style": {"fontSize": 12}},
+                },
+            },
+            {
+                "id": "h1",
+                "type": "heading",
+                "groupId": "grp_x",
+                "content": "Label",
+                "style": {"fontSize": 14},
+                "frame": {"x": 10, "y": 10, "w": 30, "h": 8},
+            },
+            {
+                "id": "v1",
+                "type": "text",
+                "groupId": "grp_x",
+                "content": "—",
+                "dataSourceId": "src",
+                "textProjection": {"field": "value", "format": "number"},
+                "style": {"fontSize": 64},
+                "frame": {"x": 10, "y": 20, "w": 30, "h": 20},
+            },
+        ],
+    }
+    assert SlidePartChromeService.apply_missing_defaults(cfg) is True
+    chart_opts = cfg["blocks"][0]["chartOptions"]
+    assert chart_opts["legendFontSize"] >= 22
+    assert chart_opts["axisFontSize"] >= 19
+    table_opts = cfg["blocks"][1]["tableOptions"]
+    assert table_opts["headerFontSize"] >= table_opts["bodyFontSize"]
+    assert table_opts["headerFontSize"] >= 24
+    input_parts = cfg["blocks"][2]["inputParts"]
+    assert input_parts["label"]["style"]["fontSize"] >= 20
+    heading = cfg["blocks"][3]
+    assert heading["style"]["fontSize"] >= 28  # ~64 * 0.45
+
+
+def test_part_chrome_negative_static_caption_not_forced_hero():
+    cfg = {
+        "version": 5,
+        "blocks": [
+            {
+                "id": "cap",
+                "type": "text",
+                "content": "nota de rodapé",
+                "style": {"fontSize": 16},
+                "frame": {"x": 4, "y": 90, "w": 90, "h": 8},
+            }
+        ],
+    }
+    SlidePartChromeService.apply_missing_defaults(cfg)
+    assert cfg["blocks"][0]["style"]["fontSize"] == 16
+
+
 def test_layout_gate_part_font_below_min():
     cfg = {
         "version": 5,
