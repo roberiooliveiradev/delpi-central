@@ -1201,7 +1201,7 @@ C3_T4_AUTHORIZED = YES
 C3_T4_EXECUTED = NO
 TEST_MODULES = tests/test_model_invocation_foundation.py + tests/test_model_invocation_architecture.py
 PRODUCTION_READINESS = NOT_PROVEN
-NEXT = C3-T5 — OPENAPI_ACTION_CATALOG_CAPABILITY_PROJECTION
+NEXT = C3-T6
 ```
 
 Required deterministic cases (C3-T3) — implemented; Architecture Review accepted (`ARCHITECTURE_REVIEW_C3_T3R1` `ACCEPT_WITH_RESIDUAL`):
@@ -1270,11 +1270,14 @@ ACT = NONE
 C3_STARTED = YES
 C3_EXECUTED = NO
 C3_T4 = APPROVED
+C3_T5 = APPROVED
 C3_T5_AUTHORIZED = YES
 C3_T5_EXECUTED = NO
+C3_T6_AUTHORIZED = YES
+C3_T6 = NOT_STARTED
 TEST_MODULES = tests/test_structured_understanding_foundation.py + tests/test_structured_understanding_architecture.py
 PRODUCTION_READINESS = NOT_PROVEN
-NEXT = C3-T5 — OPENAPI_ACTION_CATALOG_CAPABILITY_PROJECTION
+NEXT = C3-T6
 ```
 
 Required deterministic cases (C3-T4R1) — implemented; Architecture Review accepted (`ARCHITECTURE_REVIEW_C3_T4R1` `ACCEPT_WITH_RESIDUAL`):
@@ -1850,7 +1853,25 @@ Qualquer gate REQUIRED em `FAIL | INCONCLUSIVE | PENDING | TEST_NOT_RUN | STALE_
 Documentação, target, schema candidate ou commit documental não promovem gate a PASS. Evidence vale somente para o SHA/config realmente avaliados.
 
 
-## C3-T5 — OpenAPI Action Catalog / Capability Projection candidate evidence
+## C3-T5 — OpenAPI Action Catalog / Capability Projection (APPROVED; fixture evidence referenced)
+
+```text
+STATUS = APPROVED
+REVIEW = ARCHITECTURE_REVIEW_C3_T5
+VERDICT = ACCEPT_WITH_RESIDUAL
+REVIEWED_HEAD = 1663aee66a7ce8574107967cf3ed88360824a0b6
+IMPLEMENTATION_HEAD = 84c249bee0182ebf514142a24cb8bbea4090ca26
+REAL_DELPI_OPENAPI_COVERAGE = NOT_PROVEN
+SOURCE_SEMANTIC_DECLARATION_FOR_REAL_CONTRACTS = NOT_PROVEN
+FULL_DELIA_API_SUITE = TEST_NOT_RUN
+C3_T1_T4_FULL_REGRESSION_ON_FINAL_HEAD = TEST_NOT_RUN
+ARCHITECTURE_ENFORCEMENT = FAIL / OUTSIDE_TASK_BASELINE
+CURSOR_RULES_GOVERNANCE = pre-existing red
+PRODUCTION_READINESS = NOT_PROVEN
+C3_T6_AUTHORIZED = YES
+C3_T6 = NOT_STARTED
+NEXT = C3-T6
+```
 
 Implementation SHA: `84c249bee0182ebf514142a24cb8bbea4090ca26`.
 
@@ -1864,7 +1885,7 @@ Fixture/conformance proof:
 - Domain capability model imports no OpenAPI/parser/framework dependency;
 - no generic proxy, generic SQL, planner, model call, RAG, vector store, Automation Hub execution or persistence introduced.
 
-Executed isolated module suite: `python -m pytest -q` over the C3-T5 content-equivalent sandbox → **18 passed, 0 failed, 0 skipped**. This is fixture/module evidence, not repository-wide DELIA API evidence.
+Executed isolated module suite: `python -m pytest -q` over the C3-T5 content-equivalent sandbox → **18 passed, 0 failed, 0 skipped**. This is fixture/module evidence, not repository-wide DELIA API evidence. Do not relabel as newly executed by Architecture Review persistence.
 
 GitHub `Architecture Enforcement` run `35717733644` on the implementation SHA: **FAIL** in pre-existing `scripts.ci.test_audit_gpt_actions_openapi.GptActionsOpenApiAuditTest.test_current_repo_artifacts_pass`, reporting three Transformômetro GPT Actions write operations without typed examples. The failing artifact predates C3-T5 and is outside this task. Later architecture steps were skipped by that workflow failure.
 

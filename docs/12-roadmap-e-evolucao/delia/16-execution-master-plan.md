@@ -3,7 +3,7 @@
 **Status:** planejamento executável canônico  
 **Autoridade de ordem:** **este documento é a única fonte de verdade para a sequência de implementação**  
 **Produto:** **DÉLIA**, aplicação standalone nova  
-**Próxima etapa:** `ARCHITECTURE_REVIEW_C3_T5` (`C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO`; `C3-T1..T4=APPROVED`; `C3-T5=CANDIDATE_FOR_ARCHITECTURE_REVIEW`; `C3_T6_AUTHORIZED=NO`; do not claim C3 complete)
+**Próxima etapa:** `C3-T6` (`C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO`; `C3-T1..T5=APPROVED`; `C3_T6_AUTHORIZED=YES`; `C3-T6=NOT_STARTED`; do not claim C3 complete; `PRODUCTION_READINESS=NOT_PROVEN`; `REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN`)
 **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Baseline:** [`51-platform-integration-baseline.md`](./51-platform-integration-baseline.md)  
 **Bootstrap:** [`52-standalone-repository-and-bootstrap-plan.md`](./52-standalone-repository-and-bootstrap-plan.md)  
@@ -406,7 +406,7 @@ BROWSER_STATE_RESIDENCY_POLICY = APPROVED (C2-T1D1)
 BROWSER_RETAINED_STATE_CURRENTLY_REQUIRED = NO
 CENTRALIZED_BROWSER_STATE_BOUNDARY = REQUIRED_ON_FIRST_RETAINED_STATE
 SHARED_DEVICE_ISOLATION_INVARIANT = FROZEN_ACCEPTED
-NEXT = C3-T5 — OPENAPI_ACTION_CATALOG_CAPABILITY_PROJECTION
+NEXT = C3-T6
 ```
 
 C3 initial bounded DAG (Coordination-approved dependency order; not the numbered foundation inventory):
@@ -417,8 +417,8 @@ C3-T1 Evidence / epistemic semantics + source linkage = APPROVED (21 §4B; ARCHI
 → C3-T2R1 rework = APPROVED (ARCHITECTURE_REVIEW_C3_T2R1 ACCEPT_WITH_RESIDUAL; IMPLEMENTATION_HEAD=d444e75f7)
 → C3-T3 Minimal Model Invocation + Eval/Lineage Foundation = APPROVED (ARCHITECTURE_REVIEW_C3_T3R1 ACCEPT_WITH_RESIDUAL; IMPLEMENTATION_HEAD=2ba28950e)
 → C3-T4 Structured Understanding Vertical Slice = APPROVED (ARCHITECTURE_REVIEW_C3_T4R1 ACCEPT_WITH_RESIDUAL; IMPLEMENTATION_HEAD=89bb5ad352)
-→ C3-T5 OpenAPI Action Catalog + Capability Projection (AUTHORIZED; do not start here)
-→ C3-T6 Expertise / Knowledge Governance + Retrieval Contracts
+→ C3-T5 OpenAPI Action Catalog + Capability Projection = APPROVED (ARCHITECTURE_REVIEW_C3_T5 ACCEPT_WITH_RESIDUAL; IMPLEMENTATION_HEAD=84c249bee0)
+→ C3-T6 Expertise / Knowledge Governance + Retrieval Contracts (AUTHORIZED; NOT_STARTED)
 → C3-T7 FAST|OPERATIONAL|REASONING + Structured Planner Foundation
 → C3-T8 Conversation / Session Interaction Foundation
 EVIDENCE_BEFORE_MODEL = YES
@@ -436,8 +436,11 @@ C3_T3_EXECUTED = NO
 C3_T4 = APPROVED
 C3_T4_AUTHORIZED = YES
 C3_T4_EXECUTED = NO
+C3_T5 = APPROVED
 C3_T5_AUTHORIZED = YES
 C3_T5_EXECUTED = NO
+C3_T6_AUTHORIZED = YES
+C3_T6 = NOT_STARTED
 ```
 
 ## C0.S2 — Authorities / bounded contexts
@@ -696,14 +699,18 @@ C3_T2_AUTHORIZED = YES
 C3_T3_AUTHORIZED = YES
 C3_T3_EXECUTED = NO
 PRODUCTION_READINESS = NOT_PROVEN
-NEXT = C3-T5 — OPENAPI_ACTION_CATALOG_CAPABILITY_PROJECTION
+NEXT = C3-T6
 C3_T3 = APPROVED
 C3_T4 = APPROVED
 C3_T4_AUTHORIZED = YES
 C3_T4_EXECUTED = NO
+C3_T5 = APPROVED
 C3_T5_AUTHORIZED = YES
 C3_T5_EXECUTED = NO
-C2-FINAL accepted with residual; C3-T1..T4 APPROVED (`ARCHITECTURE_REVIEW_C3_T4R1` ACCEPT_WITH_RESIDUAL); C3-T5 authorized, not executed
+C3_T6_AUTHORIZED = YES
+C3_T6 = NOT_STARTED
+REAL_DELPI_OPENAPI_COVERAGE = NOT_PROVEN
+C2-FINAL accepted with residual; C3-T1..T5 APPROVED (`ARCHITECTURE_REVIEW_C3_T5` ACCEPT_WITH_RESIDUAL); C3-T6 authorized, not started
 Workspace binding remains unscheduled
 ```
 
@@ -911,17 +918,21 @@ C0.S0
 
 Nenhuma capability temática `53–66` precede o Foundation Freeze.
 
-### C3-T5 — OpenAPI Action Catalog + Capability Projection candidate
+### C3-T5 — OpenAPI Action Catalog + Capability Projection (APPROVED)
 
 ```text
+REVIEW = ARCHITECTURE_REVIEW_C3_T5
+REVIEWED_HEAD = 1663aee66a7ce8574107967cf3ed88360824a0b6
 IMPLEMENTATION_HEAD = 84c249bee0182ebf514142a24cb8bbea4090ca26
-C3-T5 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+VERDICT = ACCEPT_WITH_RESIDUAL
+C3-T5 = APPROVED
 OPENAPI_ACTION_CATALOG_FOUNDATION = IMPLEMENTED (bounded TEST_FIXTURE proof)
 CAPABILITY_PROJECTION = IMPLEMENTED
 CAPABILITY_DISCOVERY_AUTHORIZATION_SEPARATION = PASS (fixture/conformance)
 OPERATION_CHARACTER_SEMANTICS = IMPLEMENTED
 SOURCE_CONTRACT = TEST_FIXTURE
 REAL_DELPI_OPENAPI_COVERAGE = NOT_PROVEN
+SOURCE_SEMANTIC_DECLARATION_FOR_REAL_CONTRACTS = NOT_PROVEN
 MODEL_CALL = NONE
 RAG = NONE
 VECTOR_STORE = NONE
@@ -934,10 +945,15 @@ AUTOMATION_HUB_EXECUTION = NONE
 PERSISTENCE = NONE
 MIGRATION = NONE
 FULL_DELIA_API_SUITE = TEST_NOT_RUN
-ARCHITECTURE_ENFORCEMENT = FAIL (OUTSIDE_TASK baseline: transformometro GPT Actions examples)
-C3_T6_AUTHORIZED = NO
+C3_T1_T4_FULL_REGRESSION_ON_FINAL_HEAD = TEST_NOT_RUN
+ARCHITECTURE_ENFORCEMENT = FAIL / OUTSIDE_TASK_BASELINE
+CURSOR_RULES_GOVERNANCE = pre-existing red
+C3_T6_AUTHORIZED = YES
+C3_T6 = NOT_STARTED
+C3_EXECUTED = NO
 PRODUCTION_READINESS = NOT_PROVEN
-NEXT = ARCHITECTURE_REVIEW_C3_T5
+NEXT = C3-T6
+NOTE_SUPERSEDED_CANDIDATE: historical C3-T5 candidate markers live in ledger candidate block / §6.73 review
 ```
 
-C3-T5 does not classify operation character from HTTP verb. Semantic projection requires an explicit governed declaration; missing/duplicate identity or missing semantic declaration fails closed as non-projectable. OpenAPI security metadata is descriptive only and never becomes current-user permission, Core RBAC, Domain AuthZ or ACT authorization. The GitHub Architecture Enforcement run for the implementation SHA failed in a pre-existing Transformômetro GPT Actions repository check outside this task; no C3-T5 file was identified by that failing test.
+C3-T5 does not classify operation character from HTTP verb. Semantic projection requires an explicit governed declaration; missing/duplicate identity or missing semantic declaration fails closed as non-projectable. OpenAPI security metadata is descriptive only and never becomes current-user permission, Core RBAC, Domain AuthZ or ACT authorization. The GitHub Architecture Enforcement run for the implementation SHA failed in a pre-existing Transformômetro GPT Actions repository check outside this task; no C3-T5 file was identified by that failing test. Real DELPI OpenAPI coverage remains `NOT_PROVEN`.

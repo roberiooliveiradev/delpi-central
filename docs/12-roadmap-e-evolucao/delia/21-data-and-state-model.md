@@ -273,14 +273,20 @@ C3_T4 = APPROVED
 C3_T4_IMPLEMENTATION = delia-api/app/domain/structured_understanding/ + application/structured_understanding/
 C3_T5_AUTHORIZED = YES
 C3_T5_EXECUTED = NO
+C3_T5 = APPROVED
+C3_T6_AUTHORIZED = YES
+C3_T6 = NOT_STARTED
 REVIEW_C3_T3 = ARCHITECTURE_REVIEW_C3_T3R1
 VERDICT_C3_T3 = ACCEPT_WITH_RESIDUAL
 REVIEW_C3_T4 = ARCHITECTURE_REVIEW_C3_T4R1
 VERDICT_C3_T4 = ACCEPT_WITH_RESIDUAL
+REVIEW_C3_T5 = ARCHITECTURE_REVIEW_C3_T5
+VERDICT_C3_T5 = ACCEPT_WITH_RESIDUAL
 FABRICATED_EVAL_PASS = RESOLVED
+REAL_DELPI_OPENAPI_COVERAGE = NOT_PROVEN
 ```
 
-C3-T1 congela o **uso semântico** de Evidence/Source/epistemic para a inteligência futura. Não cria Evidence store, repository, schema, LLM, RAG, planner ou conversation runtime. C3-T2R1 domain model/tests foram aceitos por `ARCHITECTURE_REVIEW_C3_T2R1` (`ACCEPT_WITH_RESIDUAL`; `C3_T2=APPROVED`). C3-T3 foundation aceita por `ARCHITECTURE_REVIEW_C3_T3R1` (`ACCEPT_WITH_RESIDUAL`; `C3_T3=APPROVED`). C3-T4 Structured Understanding aceito por `ARCHITECTURE_REVIEW_C3_T4R1` (`ACCEPT_WITH_RESIDUAL`; `C3_T4=APPROVED`; `BOUNDED_SOURCE_OBSERVATION_EXTRACTION`); store/RAG/planner/conversation/real provider remain out of scope.
+C3-T1 congela o **uso semântico** de Evidence/Source/epistemic para a inteligência futura. Não cria Evidence store, repository, schema, LLM, RAG, planner ou conversation runtime. C3-T2R1 domain model/tests foram aceitos por `ARCHITECTURE_REVIEW_C3_T2R1` (`ACCEPT_WITH_RESIDUAL`; `C3_T2=APPROVED`). C3-T3 foundation aceita por `ARCHITECTURE_REVIEW_C3_T3R1` (`ACCEPT_WITH_RESIDUAL`; `C3_T3=APPROVED`). C3-T4 Structured Understanding aceito por `ARCHITECTURE_REVIEW_C3_T4R1` (`ACCEPT_WITH_RESIDUAL`; `C3_T4=APPROVED`; `BOUNDED_SOURCE_OBSERVATION_EXTRACTION`); C3-T5 OpenAPI/CapabilityProjection aceito por `ARCHITECTURE_REVIEW_C3_T5` (`ACCEPT_WITH_RESIDUAL`; `C3_T5=APPROVED`; `REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN`); store/RAG/planner/conversation/real provider remain out of scope.
 
 ### 4C. C3-T3 — Model invocation / eval lineage
 
@@ -353,6 +359,9 @@ REAL_MODEL_STRUCTURED_UNDERSTANDING_QUALITY = TEST_NOT_RUN / BLOCKED
 PERSISTENCE = NONE
 C3_T5_AUTHORIZED = YES
 C3_T5_EXECUTED = NO
+C3_T5 = APPROVED
+C3_T6_AUTHORIZED = YES
+C3_T6 = NOT_STARTED
 NOTE_SUPERSEDED_CANDIDATE: historical candidate/rework markers live in ledger §6.70–§6.71
 ```
 
