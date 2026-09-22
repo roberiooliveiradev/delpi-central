@@ -1,4 +1,5 @@
 import { useMemo, type ReactNode } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { HelpTooltip } from "../help/HelpTooltip";
 import { ToolbarSelectControl } from "../forms/ToolbarSelectField";
@@ -57,6 +58,13 @@ function navButtonAccessibleName(label: ReactNode, explicit?: string, fallback?:
   if (explicit?.trim()) return explicit.trim();
   if (typeof label === "string" && label.trim()) return label.trim();
   return fallback ?? "Navegar";
+}
+
+/** Texto → Chevron padrão; ReactNode customizado (já ícone) é preservado. */
+function navButtonContent(label: ReactNode, direction: "previous" | "next"): ReactNode {
+  if (typeof label !== "string") return label;
+  const Icon = direction === "previous" ? ChevronLeft : ChevronRight;
+  return <Icon size={16} aria-hidden="true" />;
 }
 
 export function compactPaginationBemClasses(
@@ -179,7 +187,7 @@ export function CompactPagination({
   const actionsNode = (
     <div className={classNames.actions}>
       {renderNavButton(
-        labels.previous,
+        navButtonContent(labels.previous, "previous"),
         previousName,
         !canPrev,
         () => onPageChange(page - 1),
@@ -187,7 +195,7 @@ export function CompactPagination({
         "Ajuda: página anterior",
       )}
       {renderNavButton(
-        labels.next,
+        navButtonContent(labels.next, "next"),
         nextName,
         !canNext,
         () => onPageChange(page + 1),

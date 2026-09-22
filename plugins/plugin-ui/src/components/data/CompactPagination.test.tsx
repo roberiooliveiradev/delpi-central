@@ -121,4 +121,23 @@ describe("CompactPagination", () => {
     expect(screen.getByTestId("prev-icon")).toBeTruthy();
     expect(screen.getByTestId("next-icon")).toBeTruthy();
   });
+
+  it("converte labels string Anterior/Próxima em setas Chevron", () => {
+    render(
+      <CompactPagination
+        page={2}
+        pageSize={25}
+        total={100}
+        onPageChange={vi.fn()}
+        classNames={classNames}
+        labels={labels}
+      />,
+    );
+
+    const previous = screen.getByRole("button", { name: "Anterior" });
+    const next = screen.getByRole("button", { name: "Próxima" });
+    expect(previous.querySelector("svg")).toBeTruthy();
+    expect(next.querySelector("svg")).toBeTruthy();
+    expect(previous.textContent?.trim()).toBe("");
+  });
 });
