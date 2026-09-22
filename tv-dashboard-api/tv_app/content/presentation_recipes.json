@@ -1714,12 +1714,25 @@
         "unitMinFontSize": 16,
         "iconMinSize": 32,
         "defaultTitleFontSize": 22,
+        "defaultTitleFontSizeByDensity": {
+          "hero": 28,
+          "row": 22,
+          "grid": 18
+        },
         "defaultValueFontSize": {
           "hero": 80,
           "row": 56,
           "grid": 44
         },
         "defaultIconSize": 36,
+        "defaultIconSizeByDensity": {
+          "hero": 56,
+          "row": 44,
+          "grid": 36
+        },
+        "titleToValueMinRatio": 0.35,
+        "iconToValueMinRatio": 0.55,
+        "unitToValueMinRatio": 0.22,
         "cardFill": "#ffffff",
         "titleColor": "#475569",
         "valueColor": "#0f172a",
@@ -1730,6 +1743,8 @@
         "legendMinFontSize": 14,
         "axisMinFontSize": 12,
         "defaultTitleFontSize": 22,
+        "legendToTitleMinRatio": 0.7,
+        "axisToTitleMinRatio": 0.6,
         "cardFill": "#ffffff",
         "fg": "#0f172a"
       },

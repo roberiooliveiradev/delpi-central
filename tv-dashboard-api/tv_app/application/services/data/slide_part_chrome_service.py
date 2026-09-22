@@ -1,7 +1,9 @@
 """Apply designTokens.partChrome defaults to TV slide blocks on commit.
 
 Fills missing / below-min typography and card chrome for KPI, chart, table, input.
-Never overwrites INFORMED block ids (same contract as SlideAutoLayoutService).
+Rebalances KPI title/icon/unit when value font was scaled without internal parts.
+Never overwrites INFORMED block frames (defaults fill still skips informed ids);
+hierarchy rebalance still runs so VISTA value bumps do not leave tiny titles/icons.
 """
 
 from __future__ import annotations
@@ -75,6 +77,143 @@ def _set_if_missing_or_below(
     return False
 
 
+def _as_float(value: Any) -> float | None:
+    if isinstance(value, (int, float)):
+        return float(value)
+    return None
+
+
+def _density_map_int(raw: Any, density: str, fallback: int) -> int:
+    if isinstance(raw, dict):
+        try:
+            return int(raw.get(density) or raw.get("row") or fallback)
+        except (TypeError, ValueError):
+            return fallback
+    try:
+        return int(raw) if raw is not None else fallback
+    except (TypeError, ValueError):
+        return fallback
+
+
+def _bump_to_at_least(style: dict[str, Any], key: str, target: int) -> bool:
+    """Raise numeric style[key] to target when missing or below. Never shrinks."""
+    if target <= 0:
+        return False
+    cur = _as_float(style.get(key))
+    if cur is None:
+        style[key] = target
+        return True
+    if cur + 0.5 < float(target):
+        style[key] = target
+        return True
+    return False
+
+
+def _kpi_value_font_size(block: dict[str, Any]) -> float | None:
+    parts = block.get("kpiParts") if isinstance(block.get("kpiParts"), dict) else {}
+    value = parts.get("value") if isinstance(parts.get("value"), dict) else {}
+    value_style = value.get("style") if isinstance(value.get("style"), dict) else {}
+    size = _as_float(value_style.get("fontSize"))
+    if size is not None:
+        return size
+    style = block.get("style") if isinstance(block.get("style"), dict) else {}
+    return _as_float(style.get("fontSize"))
+
+
+def _rebalance_kpi_hierarchy(block: dict[str, Any], chrome: dict[str, Any]) -> bool:
+    """Scale title/icon/unit up when value font dwarfs internal parts (TV readability)."""
+    kpi = chrome.get("kpi") if isinstance(chrome.get("kpi"), dict) else {}
+    if not kpi:
+        return False
+    value_fs = _kpi_value_font_size(block)
+    if value_fs is None or value_fs <= 0:
+        return False
+
+    density = _kpi_density(block.get("frame") if isinstance(block.get("frame"), dict) else None)
+    title_ratio = float(kpi.get("titleToValueMinRatio") or 0.35)
+    icon_ratio = float(kpi.get("iconToValueMinRatio") or 0.55)
+    unit_ratio = float(kpi.get("unitToValueMinRatio") or 0.22)
+
+    title_min = float(kpi.get("titleMinFontSize") or 18)
+    icon_min = float(kpi.get("iconMinSize") or 32)
+    unit_min = float(kpi.get("unitMinFontSize") or 16)
+
+    title_by_density = _density_map_int(
+        kpi.get("defaultTitleFontSizeByDensity") or kpi.get("defaultTitleFontSize"),
+        density,
+        22,
+    )
+    icon_by_density = _density_map_int(
+        kpi.get("defaultIconSizeByDensity") or kpi.get("defaultIconSize"),
+        density,
+        36,
+    )
+
+    target_title = max(
+        int(title_min),
+        title_by_density,
+        int(round(value_fs * title_ratio)),
+    )
+    # Keep title secondary to value (never larger than half the value).
+    target_title = min(target_title, max(int(title_min), int(round(value_fs * 0.5))))
+
+    target_icon = max(
+        int(icon_min),
+        icon_by_density,
+        int(round(value_fs * icon_ratio)),
+    )
+    target_unit = max(int(unit_min), int(round(value_fs * unit_ratio)))
+
+    parts = _ensure_dict(block, "kpiParts")
+    changed = False
+    title_style = _ensure_nested_style(parts, "title")
+    if _bump_to_at_least(title_style, "fontSize", target_title):
+        changed = True
+    if title_style.get("color") in (None, ""):
+        title_style["color"] = kpi.get("titleColor") or "#475569"
+        changed = True
+
+    icon_style = _ensure_nested_style(parts, "icon")
+    if _bump_to_at_least(icon_style, "iconSize", target_icon):
+        changed = True
+    if icon_style.get("color") in (None, ""):
+        icon_style["color"] = kpi.get("iconColor") or "#089bdb"
+        changed = True
+
+    unit_part = parts.get("unit")
+    if isinstance(unit_part, dict) or "unit" in parts:
+        unit_style = _ensure_nested_style(parts, "unit")
+        if _bump_to_at_least(unit_style, "fontSize", target_unit):
+            changed = True
+
+    return changed
+
+
+def _rebalance_chart_hierarchy(block: dict[str, Any], chrome: dict[str, Any]) -> bool:
+    """Keep legend/axis readable when chart title was bumped."""
+    chart = chrome.get("chart") if isinstance(chrome.get("chart"), dict) else {}
+    if not chart:
+        return False
+    opts = block.get("chartOptions")
+    if not isinstance(opts, dict):
+        return False
+    title_fs = _as_float(opts.get("titleFontSize"))
+    if title_fs is None or title_fs <= 0:
+        return False
+    legend_ratio = float(chart.get("legendToTitleMinRatio") or 0.7)
+    axis_ratio = float(chart.get("axisToTitleMinRatio") or 0.6)
+    legend_min = float(chart.get("legendMinFontSize") or 14)
+    axis_min = float(chart.get("axisMinFontSize") or 12)
+    target_legend = max(int(legend_min), int(round(title_fs * legend_ratio)))
+    target_axis = max(int(axis_min), int(round(title_fs * axis_ratio)))
+    changed = False
+    if _bump_to_at_least(opts, "legendFontSize", target_legend):
+        changed = True
+    if _bump_to_at_least(opts, "axisFontSize", target_axis):
+        changed = True
+    return changed
+
+
 def _apply_kpi(block: dict[str, Any], chrome: dict[str, Any]) -> bool:
     kpi = chrome.get("kpi") if isinstance(chrome.get("kpi"), dict) else {}
     if not kpi:
@@ -108,7 +247,11 @@ def _apply_kpi(block: dict[str, Any], chrome: dict[str, Any]) -> bool:
 
     title_style = _ensure_nested_style(parts, "title")
     title_min = float(kpi.get("titleMinFontSize") or 18)
-    title_def = int(kpi.get("defaultTitleFontSize") or 22)
+    title_def = _density_map_int(
+        kpi.get("defaultTitleFontSizeByDensity") or kpi.get("defaultTitleFontSize"),
+        density,
+        22,
+    )
     if _set_if_missing_or_below(title_style, "fontSize", title_def, min_value=title_min):
         changed = True
     if title_style.get("color") in (None, ""):
@@ -123,7 +266,6 @@ def _apply_kpi(block: dict[str, Any], chrome: dict[str, Any]) -> bool:
     if value_style.get("color") in (None, ""):
         value_style["color"] = on_card
         changed = True
-    # Prefer FitText when frame exists and no explicit typographyMode
     if value_style.get("typographyMode") in (None, ""):
         value_style["typographyMode"] = "auto"
         changed = True
@@ -137,7 +279,11 @@ def _apply_kpi(block: dict[str, Any], chrome: dict[str, Any]) -> bool:
 
     icon_style = _ensure_nested_style(parts, "icon")
     icon_min = float(kpi.get("iconMinSize") or 32)
-    icon_def = int(kpi.get("defaultIconSize") or 36)
+    icon_def = _density_map_int(
+        kpi.get("defaultIconSizeByDensity") or kpi.get("defaultIconSize"),
+        density,
+        36,
+    )
     if _set_if_missing_or_below(icon_style, "iconSize", icon_def, min_value=icon_min):
         changed = True
     if icon_style.get("color") in (None, ""):
@@ -249,15 +395,21 @@ class SlidePartChromeService:
             if not isinstance(block, dict):
                 continue
             bid = str(block.get("id") or "")
-            if bid and bid in informed:
-                continue
+            skip_fill = bool(bid and bid in informed)
             btype = str(block.get("type") or "")
             if btype in _KPI_TYPES:
-                changed_any = _apply_kpi(block, chrome) or changed_any
+                if not skip_fill:
+                    changed_any = _apply_kpi(block, chrome) or changed_any
+                # Always rebalance hierarchy (informed value bumps leave tiny title/icon).
+                changed_any = _rebalance_kpi_hierarchy(block, chrome) or changed_any
             elif btype in _CHART_TYPES:
-                changed_any = _apply_chart(block, chrome) or changed_any
+                if not skip_fill:
+                    changed_any = _apply_chart(block, chrome) or changed_any
+                changed_any = _rebalance_chart_hierarchy(block, chrome) or changed_any
             elif btype in _TABLE_TYPES:
-                changed_any = _apply_table(block, chrome) or changed_any
+                if not skip_fill:
+                    changed_any = _apply_table(block, chrome) or changed_any
             elif btype in _INPUT_TYPES:
-                changed_any = _apply_input(block, chrome) or changed_any
+                if not skip_fill:
+                    changed_any = _apply_input(block, chrome) or changed_any
         return changed_any

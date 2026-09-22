@@ -102,7 +102,8 @@ def test_part_chrome_sibling_chart_table_input():
     assert cfg["blocks"][2]["inputParts"]["label"]["style"]["fontSize"] >= 14
 
 
-def test_part_chrome_negative_skips_informed():
+def test_part_chrome_negative_skips_informed_fill_but_rebalances_hierarchy():
+    """Informed blocks skip default fill; disproportionate title/icon still rebalance."""
     cfg = {
         "version": 5,
         "blocks": [
@@ -116,6 +117,78 @@ def test_part_chrome_negative_skips_informed():
     }
     assert SlidePartChromeService.apply_missing_defaults(cfg, informed_block_ids={"k1"}) is False
     assert "kpiParts" not in cfg["blocks"][0]
+
+    cfg2 = {
+        "version": 5,
+        "blocks": [
+            {
+                "id": "k2",
+                "type": "kpi_view",
+                "frame": {"x": 4, "y": 18, "w": 28, "h": 28},
+                "kpiParts": {
+                    "value": {"style": {"fontSize": 90}},
+                    "title": {"style": {"fontSize": 16}},
+                    "icon": {"style": {"iconSize": 28}},
+                },
+            }
+        ],
+    }
+    assert SlidePartChromeService.apply_missing_defaults(cfg2, informed_block_ids={"k2"}) is True
+    parts = cfg2["blocks"][0]["kpiParts"]
+    assert parts["title"]["style"]["fontSize"] >= 31  # ~90 * 0.35
+    assert parts["icon"]["style"]["iconSize"] >= 49  # ~90 * 0.55
+
+
+def test_part_chrome_rebalances_kpi_when_value_dwarfs_title_icon():
+    cfg = {
+        "version": 5,
+        "blocks": [
+            {
+                "id": "k1",
+                "type": "kpi_view",
+                "frame": {"x": 4, "y": 18, "w": 30, "h": 36},
+                "kpiParts": {
+                    "value": {"style": {"fontSize": 80}},
+                    "title": {"style": {"fontSize": 18}},
+                    "icon": {"style": {"iconSize": 32}},
+                },
+            }
+        ],
+    }
+    assert SlidePartChromeService.apply_missing_defaults(cfg) is True
+    parts = cfg["blocks"][0]["kpiParts"]
+    assert parts["title"]["style"]["fontSize"] >= 28
+    assert parts["icon"]["style"]["iconSize"] >= 44
+
+
+def test_part_chrome_negative_balanced_kpi_unchanged():
+    cfg = {
+        "version": 5,
+        "blocks": [
+            {
+                "id": "k1",
+                "type": "kpi_view",
+                "frame": {"x": 4, "y": 18, "w": 30, "h": 36},
+                "style": {"backgroundColor": "#ffffff", "color": "#0f172a"},
+                "kpiParts": {
+                    "card": {"style": {"fill": "#ffffff", "backgroundColor": "#ffffff", "borderRadius": 16}},
+                    "value": {"style": {"fontSize": 56, "color": "#0f172a", "typographyMode": "auto"}},
+                    "title": {"style": {"fontSize": 22, "color": "#475569"}},
+                    "icon": {"style": {"iconSize": 44, "color": "#089bdb"}},
+                },
+            }
+        ],
+    }
+    before = {
+        "title": cfg["blocks"][0]["kpiParts"]["title"]["style"]["fontSize"],
+        "icon": cfg["blocks"][0]["kpiParts"]["icon"]["style"]["iconSize"],
+        "value": cfg["blocks"][0]["kpiParts"]["value"]["style"]["fontSize"],
+    }
+    SlidePartChromeService.apply_missing_defaults(cfg)
+    after_parts = cfg["blocks"][0]["kpiParts"]
+    assert after_parts["title"]["style"]["fontSize"] == before["title"]
+    assert after_parts["icon"]["style"]["iconSize"] == before["icon"]
+    assert after_parts["value"]["style"]["fontSize"] == before["value"]
 
 
 def test_layout_gate_part_font_below_min():
