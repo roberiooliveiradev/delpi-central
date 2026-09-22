@@ -44,6 +44,7 @@ export const RICH_TEXT_LABELS = {
   linkOpen: "Abrir link em nova aba",
   linkEditAction: "Editar link",
   linkRemove: "Remover link",
+  imageResize: "Redimensionar imagem",
   sourceHtml: "Editar HTML",
   sourceMarkdown: "Editar Markdown",
   sourceVisual: "Voltar ao visual",

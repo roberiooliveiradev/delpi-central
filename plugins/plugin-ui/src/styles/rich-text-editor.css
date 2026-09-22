@@ -137,6 +137,40 @@
   outline-offset: -2px;
 }
 
+.delpi-ui-rich-text__editor img,
+.delpi-ui-rich-text--preview img {
+  max-width: 100%;
+  height: auto;
+  vertical-align: middle;
+  cursor: pointer;
+}
+
+.delpi-ui-rich-text__editor img.delpi-ui-rich-text__img--selected {
+  outline: 2px solid var(--delpi-ui-accent, #089bdb);
+  outline-offset: 2px;
+  cursor: default;
+}
+
+.delpi-ui-rich-text__img-resize {
+  position: absolute;
+  z-index: 3;
+  box-sizing: border-box;
+  width: 12px;
+  height: 12px;
+  padding: 0;
+  margin: 0;
+  border: 2px solid var(--delpi-ui-surface, #fff);
+  border-radius: 2px;
+  background: var(--delpi-ui-accent, #089bdb);
+  cursor: nwse-resize;
+  touch-action: none;
+}
+
+.delpi-ui-rich-text__img-resize:focus-visible {
+  outline: 2px solid var(--delpi-ui-accent, #089bdb);
+  outline-offset: 2px;
+}
+
 .delpi-ui-rich-text__source-wrap {
   display: flex;
   flex-direction: column;

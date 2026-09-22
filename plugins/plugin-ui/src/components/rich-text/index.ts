@@ -39,6 +39,15 @@ export {
   type MarkdownImageToken,
 } from "./markdownImageTokens";
 export {
+  applyRichTextImageWidth,
+  clampRichTextImageWidth,
+  clearRichTextImageInlineSizeStyles,
+  resolveRichTextImageNaturalSize,
+  RICH_TEXT_IMAGE_MAX_WIDTH,
+  RICH_TEXT_IMAGE_MIN_WIDTH,
+  type RichTextImageSize,
+} from "./richTextImageResize";
+export {
   buildRichTextTableHtml,
   insertRichTextTable,
   normalizeRichTextPastedHtml,

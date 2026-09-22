@@ -6,6 +6,7 @@ import {
   useRef,
   useState,
   type ClipboardEvent,
+  type PointerEvent as ReactPointerEvent,
 } from "react";
 
 import { RichTextLinkDialog } from "./RichTextLinkDialog";
@@ -23,6 +24,7 @@ import {
   tryDeleteRichTextAtEmphasisBoundary,
 } from "./richTextDeleteBoundary";
 import { prettyPrintRichTextHtml, stripDangerousRichTextTags } from "./richTextHtmlFormat";
+import { applyRichTextImageWidth } from "./richTextImageResize";
 import { RICH_TEXT_LABELS } from "./richTextLabels";
 import {
   clipboardHasUsefulHtml,
@@ -58,6 +60,14 @@ type ActiveLinkState = {
   left: number;
 };
 
+type SelectedImageState = {
+  element: HTMLImageElement;
+  top: number;
+  left: number;
+  width: number;
+  height: number;
+};
+
 const SOURCE_CHANGE_DEBOUNCE_MS = 150;
 
 function sanitizeEditorHtml(html: string): string {
@@ -86,6 +96,12 @@ export function RichTextEditor({
   const [sourceDraft, setSourceDraft] = useState("");
   const [linkDialog, setLinkDialog] = useState<LinkDialogState | null>(null);
   const [activeLink, setActiveLink] = useState<ActiveLinkState | null>(null);
+  const [selectedImage, setSelectedImage] = useState<SelectedImageState | null>(null);
+  const imageResizeRef = useRef<{
+    img: HTMLImageElement;
+    startX: number;
+    startWidth: number;
+  } | null>(null);
   const sourceMode = sourceKind !== "visual";
   const rootClass = useMemo(
     () => ["delpi-ui-rich-text", className].filter(Boolean).join(" "),
@@ -136,9 +152,74 @@ export function RichTextEditor({
     });
   }, []);
 
+  const syncSelectedImage = useCallback((img: HTMLImageElement | null) => {
+    const editorEl = ref.current;
+    const rootEl = rootRef.current;
+    if (!img || !editorEl || !rootEl || !editorEl.contains(img)) {
+      setSelectedImage((current) => {
+        current?.element.classList.remove("delpi-ui-rich-text__img--selected");
+        return null;
+      });
+      return;
+    }
+    editorEl.querySelectorAll("img.delpi-ui-rich-text__img--selected").forEach((node) => {
+      if (node !== img) node.classList.remove("delpi-ui-rich-text__img--selected");
+    });
+    img.classList.add("delpi-ui-rich-text__img--selected");
+    const rect = img.getBoundingClientRect();
+    const rootRect = rootEl.getBoundingClientRect();
+    setSelectedImage({
+      element: img,
+      top: rect.top - rootRect.top,
+      left: rect.left - rootRect.left,
+      width: rect.width,
+      height: rect.height,
+    });
+  }, []);
+
   const emitChange = useCallback(() => {
     onChange(ref.current?.innerHTML || "");
   }, [onChange]);
+
+  useEffect(() => {
+    if (!selectedImage) return;
+    if (!ref.current?.contains(selectedImage.element)) {
+      syncSelectedImage(null);
+    }
+  }, [value, selectedImage, syncSelectedImage]);
+
+  const handleImageResizePointerDown = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    if (!selectedImage || disabled || sourceMode) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const img = selectedImage.element;
+    const handle = event.currentTarget;
+    imageResizeRef.current = {
+      img,
+      startX: event.clientX,
+      startWidth: img.getBoundingClientRect().width || Number(img.getAttribute("width")) || 320,
+    };
+    handle.setPointerCapture(event.pointerId);
+
+    const onMove = (moveEvent: PointerEvent) => {
+      const session = imageResizeRef.current;
+      if (!session) return;
+      const delta = moveEvent.clientX - session.startX;
+      const containerWidth = ref.current?.clientWidth ?? undefined;
+      applyRichTextImageWidth(session.img, session.startWidth + delta, { containerWidth });
+      syncSelectedImage(session.img);
+    };
+    const onUp = (upEvent: PointerEvent) => {
+      handle.releasePointerCapture(upEvent.pointerId);
+      handle.removeEventListener("pointermove", onMove);
+      handle.removeEventListener("pointerup", onUp);
+      imageResizeRef.current = null;
+      emitChange();
+      syncSelectedImage(img);
+    };
+    handle.addEventListener("pointermove", onMove);
+    handle.addEventListener("pointerup", onUp);
+  };
 
   const flushHtmlSourceDraft = useCallback(
     (draft: string) => {
@@ -353,6 +434,16 @@ export function RichTextEditor({
           setActiveLink(null);
           emitChange();
         }}
+        onClick={(event) => {
+          if (sourceMode || disabled) return;
+          const target = event.target;
+          if (target instanceof HTMLImageElement && ref.current?.contains(target)) {
+            syncSelectedImage(target);
+            setActiveLink(null);
+            return;
+          }
+          syncSelectedImage(null);
+        }}
         onInput={emitChange}
         onMouseUp={syncActiveLink}
         onKeyUp={syncActiveLink}
@@ -416,6 +507,21 @@ export function RichTextEditor({
             <Unlink size={13} aria-hidden="true" />
           </button>
         </div>
+      ) : null}
+
+      {!sourceMode && selectedImage ? (
+        <button
+          type="button"
+          className="delpi-ui-rich-text__img-resize"
+          style={{
+            top: selectedImage.top + selectedImage.height - 6,
+            left: selectedImage.left + selectedImage.width - 6,
+          }}
+          aria-label={RICH_TEXT_LABELS.imageResize}
+          title={RICH_TEXT_LABELS.imageResize}
+          onMouseDown={(event) => event.preventDefault()}
+          onPointerDown={handleImageResizePointerDown}
+        />
       ) : null}
 
       <RichTextLinkDialog
