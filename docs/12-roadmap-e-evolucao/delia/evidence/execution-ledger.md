@@ -3274,7 +3274,7 @@ TARGETED_FOUNDATION: PASS 37/37
   COMMAND: cd delia-api && python -m pytest tests/test_model_invocation_foundation.py tests/test_model_invocation_architecture.py -q
 FULL_DELIA_API_SUITE: PASS 98/98
   COMMAND: cd delia-api && python -m pytest -q
-EVALUATED_SHA: <implementation commit>
+EVALUATED_SHA: 2ba28950e7bec3b6fd1a323718df049ed0576b08
 NOTE: PASS = foundation conformance + delia-api regression only; ≠ real model eval; ≠ production readiness
 
 CP-055: PLANNED (unchanged)
