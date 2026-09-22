@@ -5,7 +5,7 @@ Textos de usuário e **listas de termos** para consultas de produto (intenção,
 Relacionado:
 
 - [chat-intelligence-base.md](./chat-intelligence-base.md) — pipeline do chat base
-- [chat-assistant-content-presentation.md](./chat-assistant-content-presentation.md) — multi-rota no MFE
+- [chat-assistant-content-presentation.md](presentation-intelligence.md) — multi-rota no MFE
 - [changelog multi-rota](../changelog/2026-06-apresentacao-multi-rota-produto.md)
 
 ---

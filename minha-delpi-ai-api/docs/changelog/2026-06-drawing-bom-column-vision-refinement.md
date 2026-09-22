@@ -3,7 +3,7 @@
 **Data:** 20/06/2026  
 **Commit:** `8e7556b43` (15.8.4–15.8.6)  
 **Escopo:** skill desenho orquestra visão do chat base; usuário não envia print/zoom.  
-**Playbook:** [`playbook_bom_colunar_visao_skill_desenho.md`](../roadmap/melhorias/playbook_bom_colunar_visao_skill_desenho.md)
+**Playbook:** [`playbook_bom_colunar_visao_skill_desenho.md`](../roadmap/archive/melhorias/package/playbook_bom_colunar_visao_skill_desenho.md)
 
 ---
 

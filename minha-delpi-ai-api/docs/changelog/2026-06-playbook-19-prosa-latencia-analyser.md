@@ -150,8 +150,8 @@ Objetivo: respostas operacionais decoupled em **≤ ~10 s** sem segunda passagem
 
 ## Referências
 
-- [`playbook-19-inferencia-llm-universal.md`](../roadmap/playbook-19-inferencia-llm-universal.md) § 7
+- [`playbook-19-inferencia-llm-universal.md`](../roadmap/archive/playbooks/playbook-19-inferencia-llm-universal.md) § 7
 - [`chat-response-modes.md`](../architecture/chat-response-modes.md)
-- [`rag-context-min-score-calibracao.md`](../roadmap/rag-context-min-score-calibracao.md) § Homologação de latência
-- [`chat-assistant-content-presentation.md`](../architecture/chat-assistant-content-presentation.md) § Prosa LLM desacoplada
+- [`rag-context-min-score-calibracao.md`](../roadmap/archive/misc/rag-context-min-score-calibracao.md) § Homologação de latência
+- [`chat-assistant-content-presentation.md`](../architecture/presentation-intelligence.md) § Prosa LLM desacoplada
 - Changelog anterior: [`2026-06-playbook-18-prosa-template-llm.md`](./2026-06-playbook-18-prosa-template-llm.md)

@@ -34,10 +34,10 @@ Uploads multipart devem enviar apenas o header de autorização; não defina man
 
 | Documento | Conteúdo |
 |-----------|----------|
-| [`../roadmap/admin-minha-delpi-chat.md`](../roadmap/admin-minha-delpi-chat.md) | Itens 1–15 do painel admin (concluídos) |
-| [`../roadmap/admin-fluxos-revisao.md`](../roadmap/admin-fluxos-revisao.md) | Revisão set/2026 — manter / melhorar / remover da jornada (só doc) |
-| [`../roadmap/agentes-gestao-melhorias.md`](../roadmap/agentes-gestao-melhorias.md) | Gestão de agentes — ondas 1–7 (concluídas) |
-| [`../roadmap/melhorias-futuras.md`](../roadmap/melhorias-futuras.md) | Melhorias pós-roadmap (concluídas; RBAC core pendente) |
+| [`../roadmap/admin-minha-delpi-chat.md`](../roadmap/archive/misc/admin-minha-delpi-chat.md) | Itens 1–15 do painel admin (concluídos) |
+| [`../roadmap/admin-fluxos-revisao.md`](../roadmap/active/admin-fluxos-revisao.md) | Revisão set/2026 — manter / melhorar / remover da jornada (só doc) |
+| [`../roadmap/agentes-gestao-melhorias.md`](../roadmap/archive/misc/agentes-gestao-melhorias.md) | Gestão de agentes — ondas 1–7 (concluídas) |
+| [`../roadmap/melhorias-futuras.md`](../roadmap/active/melhorias-futuras.md) | Melhorias pós-roadmap (concluídas; RBAC core pendente) |
 | [`../roadmap/README.md`](../roadmap/README.md) | Índice do roadmap (inteligência do chat, ondas 1–12) |
 | [`../changelog/2026-05-inteligencia-chat-entregas.md`](../changelog/2026-05-inteligencia-chat-entregas.md) | Entregas maio/2026: SQL produção, Normas, download, bundle agente |
 | [`../changelog/2026-07-technical-description-drawing-pi-mp.md`](../changelog/2026-07-technical-description-drawing-pi-mp.md) | jul/2026: skill MP+50xx + classificação PI/MP no desenho |
@@ -59,8 +59,8 @@ Plugin (UI): [`../../../plugins/minha-delpi-chat/README.md`](../../../plugins/mi
 | `06-knowledge.md` | Ingestão e busca na base de conhecimento. |
 | [`../knowledge/README.md`](../knowledge/README.md) | Documentos RAG para agentes (ex.: [`api-delpi-rotas-agente.md`](../knowledge/api-delpi-rotas-agente.md)). |
 | [`../architecture/chat-intelligence-base.md`](../architecture/chat-intelligence-base.md) | Pipeline, identidade do assistente (RAG+LLM), `adminDebug`, roteamento api-delpi. |
-| [`../roadmap/rag-context-min-score-calibracao.md`](../roadmap/rag-context-min-score-calibracao.md) | Calibração de `RAG_CONTEXT_MIN_SCORE` e `RAG_IDENTITY_QUESTION_MIN_SCORE`. |
-| [`../roadmap/api-delpi-chat-intelligence-audit.md`](../roadmap/api-delpi-chat-intelligence-audit.md) | Auditoria de rotas, regressão e erros conhecidos. |
+| [`../roadmap/rag-context-min-score-calibracao.md`](../roadmap/archive/misc/rag-context-min-score-calibracao.md) | Calibração de `RAG_CONTEXT_MIN_SCORE` e `RAG_IDENTITY_QUESTION_MIN_SCORE`. |
+| [`../roadmap/api-delpi-chat-intelligence-audit.md`](../roadmap/archive/audits/api-delpi-chat-intelligence-audit.md) | Auditoria de rotas, regressão e erros conhecidos. |
 | `07-tools.md` | Execução de tools internas. |
 | `08-admin.md` | Endpoints administrativos, métricas, LLM, auditoria e knowledge admin. |
 | `09-deploy-migrations-schema.md` | Migrações, schema audit e fluxo de deploy. |

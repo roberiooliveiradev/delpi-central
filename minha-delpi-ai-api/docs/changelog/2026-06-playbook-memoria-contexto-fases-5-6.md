@@ -1,6 +1,6 @@
 # Changelog — playbook memória e contexto (Fases 5–6)
 
-Entrega alinhada a [`playbook-memoria-e-contexto.md`](../roadmap/playbook-memoria-e-contexto.md) §81 e [`session-memory.md`](../architecture/session-memory.md).
+Entrega alinhada a [`playbook-memoria-e-contexto.md`](../roadmap/archive/playbooks/playbook-memoria-e-contexto.md) §81 e [`session-memory.md`](../architecture/session-memory.md).
 
 **Commits:** `da03bf0b` (Fase 5) · `bf17fada` (Fase 6)
 

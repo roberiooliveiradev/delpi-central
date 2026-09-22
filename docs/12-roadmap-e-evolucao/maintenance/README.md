@@ -51,6 +51,6 @@ Ver [status-atual.md](./status-atual.md). **Fases 0–2 concluídas**; RBAC mani
 ## Referências
 
 - Legado: repositório `MiniAplicadores` / `InstructionsGPT.md`
-- Contrato envelope api-delpi: [playbook-10-contrato-respostas-api-delpi.md](../../../minha-delpi-ai-api/docs/roadmap/playbook-10-contrato-respostas-api-delpi.md)
+- Contrato envelope api-delpi: [playbook-10-contrato-respostas-api-delpi.md](../../../minha-delpi-ai-api/docs/roadmap/archive/playbooks/playbook-10-contrato-respostas-api-delpi.md)
 - Padrão integração (Transformômetro): [integration-contracts.md](../../../transformometro-api/docs/architecture/integration-contracts.md)
 - Registrar plugin no portal: [registrar-plugin.md](../../10-guias-operacionais/registrar-plugin.md)

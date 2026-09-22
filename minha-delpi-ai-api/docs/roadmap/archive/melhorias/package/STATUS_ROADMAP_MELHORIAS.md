@@ -1,0 +1,115 @@
+# Status — roadmap `docs/roadmap/melhorias` (12/06/2026, revisão doc↔código)
+
+Índice de **fechamento documental** dos 40 arquivos desta pasta.  
+**Concluído** = implementado no código ou arquivado como referência estável. **Parcial** = entregas iniciais + backlog explícito. **Aguardando** = depende de aprovação de produto.
+
+Arquitetura transversal: [`../../architecture/chat-intelligence-base.md`](../../architecture/chat-intelligence-base.md) · Changelog: [`../../changelog/2026-05-melhorias-playbooks.md`](../../changelog/2026-05-melhorias-playbooks.md).
+
+---
+
+## Raiz (`melhorias/`)
+
+| Arquivo | Status | Notas |
+|---------|--------|-------|
+| [README.md](./README.md) | Concluído | Índice vivo; smokes e serviços |
+| [STATUS_ROADMAP_MELHORIAS.md](./STATUS_ROADMAP_MELHORIAS.md) | Concluído | Este arquivo |
+| [playbook_memoria_sessao_preferencias_minha_delpi_chat.md](./playbook_memoria_sessao_preferencias_minha_delpi_chat.md) | Concluído | Fases 1–5 — `ChatConversationMemoryService` |
+| [playbook-memoria-e-contexto.md](../../playbooks/playbook-memoria-e-contexto.md) | **Concluído** | Fases 1–9 + contexto livre, Q&A, UX modais (jun/2026) |
+| [playbook_contexto_assertividade_minha_delpi_chat.md](./playbook_contexto_assertividade_minha_delpi_chat.md) | Concluído | Fases 1–5 (memória, assertividade, avaliação) |
+| [playbook_interatividade_botoes_minha_delpi_chat.md](./playbook_interatividade_botoes_minha_delpi_chat.md) | Concluído | Fases 1–5 + menus contextuais (tabela, árvore, gráfico, chip) |
+| [playbook_assistente_administrativo_textos_minha_delpi_chat.md](./playbook_assistente_administrativo_textos_minha_delpi_chat.md) | **Concluído** | Menu Textos MFE (F3); F1–2 + F4–5 → [`playbook-especialista-editor-textos.md`](../../playbooks/playbook-especialista-editor-textos.md) F1–7 |
+| [playbook_correcao_texto_minha_delpi_chat.md](./playbook_correcao_texto_minha_delpi_chat.md) | Concluído | Fases 1–6 + lousa bidirecional; agregado §23 backlog |
+| [playbook_escrita_emails_minha_delpi_chat.md](./playbook_escrita_emails_minha_delpi_chat.md) | Concluído | Fases 1–5 + preferências de sessão |
+| [playbook_chat_interativo_descontraido_minha_delpi.md](./playbook_chat_interativo_descontraido_minha_delpi.md) | Parcial | `personality_playbook.json`, starters |
+| [playbook_melhoria_pesquisa_web_minha_delpi_chat.md](./playbook_melhoria_pesquisa_web_minha_delpi_chat.md) | Concluído | Fases 1–5 + salvar fontes no projeto |
+| [playbook_autoajuda_autoconhecimento_chat_minha_delpi.md](./playbook_autoajuda_autoconhecimento_chat_minha_delpi.md) | Concluído | Fases 1–5 (catálogo, painel ?, personalização, identity sync) |
+| [playbook_ampliacao_graficos_minha_delpi_chat.md](./playbook_ampliacao_graficos_minha_delpi_chat.md) | **Concluído (MVP)** | F1–4 + `AgentMiniDashboard`; refinamentos PNG multi-painel → backlog |
+| [playbook_skill_analise_desenhos_delpi.md](./playbook_skill_analise_desenhos_delpi.md) | Parcial | MVP Onda 12; extração carimbo/cotas → [Onda 14](../../../active/inteligencia-chat-onda-14-ocr-hierarquico-desenhos.md) |
+| [playbook_skill_visao_documentos_ocr_delpi.md](./playbook_skill_visao_documentos_ocr_delpi.md) | Parcial | MVP Onda 13 — OCR PDF/imagem; regiões hierárquicas → Onda 14 |
+| [playbook_ocr_hierarquico_desenhos_delpi.md](./playbook_ocr_hierarquico_desenhos_delpi.md) | **Parcial** | Onda 14: 14.1–14.4 + 14.7 ✅; homologação 13/13; 14.5–14.6 BOM/cotas ⬜ |
+| [playbook_validacao_desenhos_delpi_roadmap.md](./playbook_validacao_desenhos_delpi_roadmap.md) | **Parcial** | Onda 15: 15.0–15.7 ✅; **15.8** BOM colunar → [playbook_bom_colunar_visao_skill_desenho.md](./playbook_bom_colunar_visao_skill_desenho.md) |
+| [playbook_skill_desenho_desacoplamento.md](./playbook_skill_desenho_desacoplamento.md) | **Backlog** | Fases A–E — policy fina, registry completo, LLM render-only, testes por regra |
+| [playbook_bom_colunar_visao_skill_desenho.md](./playbook_bom_colunar_visao_skill_desenho.md) | **Backlog** | Fase 15.8 — OCR coluna QTD, loop skill→visão, assertividade 95% |
+| [sugestoes_perguntas_minha_delpi_chat_ia.md](./sugestoes_perguntas_minha_delpi_chat_ia.md) | Concluído | Referência de homologação |
+
+### Análises (`analise_*.md`)
+
+| Arquivo | Status |
+|---------|--------|
+| [analise_column_labels_minha_delpi_chat_ia.md](./analise_column_labels_minha_delpi_chat_ia.md) | Concluído (referência) → `ExternalActionColumnLabelService` |
+| [analise_external_action_responses_minha_delpi_chat_ia.md](./analise_external_action_responses_minha_delpi_chat_ia.md) | Concluído (referência) → `external_action_responses.json` |
+| [analise_identity_minha_delpi_chat_ia.md](./analise_identity_minha_delpi_chat_ia.md) | Concluído (referência) → `identity.json`, «quem sou eu» |
+| [analise_operational_parameters_minha_delpi_chat_ia.md](./analise_operational_parameters_minha_delpi_chat_ia.md) | Concluído (referência) → refinamento filial/armazém |
+| [analise_small_talk_minha_delpi_chat_ia.md](./analise_small_talk_minha_delpi_chat_ia.md) | Concluído (referência) → `ChatSmallTalkService` |
+| [analise_stream_minha_delpi_chat_ia.md](./analise_stream_minha_delpi_chat_ia.md) | Concluído (referência) → streaming / atividades |
+| [analise_utility_answers_minha_delpi_chat_ia.md](./analise_utility_answers_minha_delpi_chat_ia.md) | Concluído (referência) → respostas utilitárias |
+
+---
+
+## Pacote `playbooks_melhoria_minha_delpi_chat/`
+
+| Playbook | Status | Código / smoke principal |
+|----------|--------|---------------------------|
+| [01 — Roteamento](./playbooks_melhoria_minha_delpi_chat/01_roteamento_inteligente_de_intencoes.md) | Concluído (MVP) | Evoluído em roteamento de intenção + `smoke_intent_route.py` |
+| [02 — Roteamento intenção](./playbook_roteamento_intencao_minha_delpi_chat.md) | **Concluído** | R1–R15, desambiguação produto, admin `/metrics/intent-routing/summary`, chips MFE |
+| [03 — Especialista textos](./playbook_especialista_textos_minha_delpi_chat.md) | **Concluído** (F1–7) | Spec: [`playbook-especialista-editor-textos.md`](../../playbooks/playbook-especialista-editor-textos.md) · T1–T32 · pós-MVP: TextArtifact, E2E LLM |
+| [02 — Operacional](./playbooks_melhoria_minha_delpi_chat/02_respostas_operacionais_delpi.md) | Concluído (MVP) | Actions, presenter, vendas/estoque, smokes operacionais |
+| [03 — Agentes](./playbooks_melhoria_minha_delpi_chat/03_agentes_especialistas.md) | Concluído (MVP) | Agentes, providers, builder, especialização |
+| [04 — RAG](./playbooks_melhoria_minha_delpi_chat/04_rag_e_conhecimento_interno.md) | Concluído (MVP) | RAG, skill `company-knowledge` |
+| [05 — Feedback](./playbooks_melhoria_minha_delpi_chat/05_feedback_e_melhoria_continua.md) | Concluído (MVP) | Avaliações admin, thumbs, métricas apresentação |
+| [06 — Canvas](./playbooks_melhoria_minha_delpi_chat/06_lousa_canvas_area_de_trabalho.md) | Concluído (MVP) | `ChatCanvasIntentService`, lousa MFE bidirecional |
+| [07 — Anexos](./playbooks_melhoria_minha_delpi_chat/07_anexos_e_arquivos.md) | Concluído (MVP) | Index PDF/XLSX/CSV + welcome; `smoke_attachment_index_welcome.py` |
+| [08 — Segurança](./playbooks_melhoria_minha_delpi_chat/08_seguranca_permissoes_confianca.md) | Concluído (MVP) | SQL safety, trust badges, confirmação escrita, `smoke_sql_safety.py` |
+| [09 — Gráficos](./playbooks_melhoria_minha_delpi_chat/09_dashboards_graficos_apresentacao_rica.md) | **Concluído** | [`playbook-09-apresentacao-rica.md`](../../playbooks/playbook-09-apresentacao-rica.md) F1–6 + PB ampliado F1–4 |
+| [10 — Onboarding](./playbooks_melhoria_minha_delpi_chat/10_onboarding_e_adoção_de_usuarios.md) | **Concluído (MVP)** | `ChatOnboardingService`, tour MFE, marcos, perfis; backlog: PDF/vídeo treinamento |
+| [11 — Admin UX](./playbooks_melhoria_minha_delpi_chat/11_admin_ux_reorganizacao_abas.md) | **Concluído (shell)** | 6 seções + sidebar no MFE (`admin-v3-sidebar`); diagnóstico “10 abas” é histórico. Veredito de evolução: [`../admin-fluxos-revisao.md`](../../../active/admin-fluxos-revisao.md) |
+
+---
+
+## Playbook 11 — mockups (`11_admin_ux_reorganizacao_abas/`)
+
+| Arquivo | Status |
+|---------|--------|
+| [00_processo_refatoracao.md](./playbooks_melhoria_minha_delpi_chat/11_admin_ux_reorganizacao_abas/00_processo_refatoracao.md) | Histórico — shell 6 seções já no MFE; ver [`admin-fluxos-revisao.md`](../../../active/admin-fluxos-revisao.md) |
+| [mockups/README.md](./playbooks_melhoria_minha_delpi_chat/11_admin_ux_reorganizacao_abas/mockups/README.md) | Concluído |
+| [mockups/01–10](./playbooks_melhoria_minha_delpi_chat/11_admin_ux_reorganizacao_abas/mockups/) | Concluído (incrementos no MFE + KPI strips) |
+| [mockups/11_painel_e_navegacao.md](./playbooks_melhoria_minha_delpi_chat/11_admin_ux_reorganizacao_abas/mockups/11_painel_e_navegacao.md) | Implementado no shell (`admin-v3-sidebar`); refinamentos de produto → [`admin-fluxos-revisao.md`](../../../active/admin-fluxos-revisao.md) |
+
+Navegação em 6 seções **já entregue**. Itens ainda opcionais de UX (drawer auditoria, layout 3 colunas simulação, gráficos interativos) seguem o backlog da revisão de fluxos, não bloqueiam o shell.
+
+---
+
+## Smokes relacionados
+
+| Script | Playbook / tema |
+|--------|-----------------|
+| `smoke_intent_route.py` | 01 |
+| `smoke_operational_routing.py` | 02 |
+| `smoke_product_sales_routing.py` | 02 (vendas) |
+| `smoke_follow_up_chips.py` | Contexto + interatividade |
+| `smoke_context_assertiveness_multiturn.py` | Contexto |
+| `smoke_session_memory_persist.py` | Contexto Fase 4 |
+| `smoke_sql_safety.py` | 08 |
+| `smoke_admin_endpoints.py` | 11 |
+| `smoke_identity_profile.py` | Identity |
+| `run_onda11_validation.sh` | Regressão pacote |
+| `smoke_system_table_routing.py` | Metadados Protheus `/system` |
+| `smoke_attachment_index_welcome.py` | 07 — upload + welcome + summaries |
+| `smoke_api_delpi_domain_routing.py` | Auditoria api-delpi — 9 domínios mock |
+| `run_memory_context_validation.sh` | Memória/contexto — pins, Q&A, multiturno |
+
+**Backlog ativo:** [BACKLOG_ROADMAP.md](../../../active/BACKLOG_ROADMAP.md).
+
+---
+
+## Regra de encerramento
+
+Nenhum arquivo desta pasta exige reimplementação completa do escopo original dos playbooks — o fechamento é:
+
+1. **Código** nas fases acordadas (chat base primeiro).
+2. **Status** neste índice e no README.
+3. **Backlog** explícito nos playbooks 10–11 e fases 2+ de pesquisa web / gráficos.
+
+Última revisão em lote: **03/06/2026** — playbook memória/contexto fechado (Fases 1–9 + Q&A); ver [`../../changelog/2026-06-contexto-manual-e-roadmap.md`](../../changelog/2026-06-contexto-manual-e-roadmap.md).
+
+**Fora do escopo desta pasta (backlog ativo):** Admin mockup 11 (aprovação produto), **Onda 14** (OCR hierárquico desenhos), refinamentos VLM/Docling pós-Onda 13, infra TOTVS dev — [`BACKLOG_ROADMAP.md`](../../../active/BACKLOG_ROADMAP.md).

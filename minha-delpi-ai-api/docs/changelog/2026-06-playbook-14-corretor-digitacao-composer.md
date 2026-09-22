@@ -4,9 +4,9 @@
 
 O chat **já tolerava** typos operacionais na API via `ChatMessageNormalizationService` (matching silencioso), mas o usuário **não via** a correção antes do envio. O Playbook 14 fecha essa lacuna com sugestões **determinísticas**, **confirmadas pelo usuário**, reutilizando o vocabulário existente e a aprendizagem contínua.
 
-**Distinto de:** habilidade «corrija este texto» (LLM, parágrafos inteiros) — ver [playbook_correcao_texto](../roadmap/melhorias/playbook_correcao_texto_minha_delpi_chat.md).
+**Distinto de:** habilidade «corrija este texto» (LLM, parágrafos inteiros) — ver [playbook_correcao_texto](../roadmap/archive/melhorias/package/playbook_correcao_texto_minha_delpi_chat.md).
 
-Relacionado: [playbook-14](../roadmap/playbook-14-corretor-digitacao-chat.md), [chat-intelligence-base § typos](../architecture/chat-intelligence-base.md), [smoke U2b](../testing/smoke-operacional-manual.md).
+Relacionado: [playbook-14](../roadmap/archive/playbooks/playbook-14-corretor-digitacao-chat.md), [chat-intelligence-base § typos](../architecture/chat-intelligence-base.md), [smoke U2b](../testing/smoke-operacional-manual.md).
 
 ---
 

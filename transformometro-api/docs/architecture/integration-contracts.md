@@ -189,6 +189,6 @@ Uma linha por **instância operacional**; `id` = `instancia_id` (UUID); incluir 
 | Doc / código | Caminho |
 |--------------|---------|
 | Playbook 18 | `docs/12-roadmap-e-evolucao/transformometro-app/PLAYBOOK-18-instancias-filial-setor-escopo.md` |
-| Playbook contrato api-delpi | `minha-delpi-ai-api/docs/roadmap/playbook-10-contrato-respostas-api-delpi.md` |
+| Playbook contrato api-delpi | `minha-delpi-ai-api/docs/roadmap/archive/playbooks/playbook-10-contrato-respostas-api-delpi.md` |
 | Inventário rotas | `api-delpi/docs/roadmaps/fase-0-inventario-contrato-respostas.md` |
 | SI engenharia | `si_app/infrastructure/gateways/delpi_engineering_gateway.py` |

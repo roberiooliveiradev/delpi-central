@@ -33,4 +33,4 @@ Saída: arquivos nesta pasta + ingestão na base RAG (`scope: global`).
 - «Explique o código intermediário 5023… CB1,50VERD-…» → skill `technical-description-delpi` + doc Intermediate Product Codes.
 - «Qual a descrição do produto X?» → API REST (cadastro existente) — **não** usa Normas como lookup.
 
-Checklist **N1–N17:** [`../../testing/smoke-operacional-manual.md`](../../testing/smoke-operacional-manual.md).
+Checklist **N1–N17:** [`../../../testing/smoke-operacional-manual.md`](../../../testing/smoke-operacional-manual.md).

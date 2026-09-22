@@ -2,7 +2,7 @@
 
 Documentação da camada de navegação do painel administrativo do Minha DELPI Chat (MFE `plugins/minha-delpi-chat`), após a migração **admin-v3-sidebar** (jun/2026).
 
-Complementa o [Playbook 11](../../../minha-delpi-ai-api/docs/roadmap/melhorias/playbooks_melhoria_minha_delpi_chat/11_admin_ux_reorganizacao_abas.md) (domínios e seções) e o [Playbook 12](../../../minha-delpi-ai-api/docs/roadmap/melhorias/playbooks_melhoria_minha_delpi_chat/12_admin_ui_refatoracao_componentes.md) (primitivos visuais).
+Complementa o [Playbook 11](../../../minha-delpi-ai-api/docs/roadmap/archive/melhorias/package/playbooks_melhoria_minha_delpi_chat/11_admin_ux_reorganizacao_abas.md) (domínios e seções) e o [Playbook 12](../../../minha-delpi-ai-api/docs/roadmap/archive/melhorias/package/playbooks_melhoria_minha_delpi_chat/12_admin_ui_refatoracao_componentes.md) (primitivos visuais).
 
 ---
 

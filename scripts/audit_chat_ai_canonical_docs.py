@@ -40,12 +40,13 @@ CANONICAL_FILES = (
     "minha-delpi-ai-api/docs/flows/03-tools-rag-agentic.md",
     "minha-delpi-ai-api/docs/flows/04-operacional-e-apresentacao.md",
     "minha-delpi-ai-api/docs/roadmap/README.md",
-    "minha-delpi-ai-api/docs/roadmap/openapi-first-universal-tool-routing.md",
+    "minha-delpi-ai-api/docs/architecture/openapi-first-universal-tool-routing.md",
     "plugins/minha-delpi-chat/README.md",
     "docs/08-plugins/minha-delpi-chat/documentacao-tecnica.md",
 )
 
 REMOVED_DOCS = (
+    # Paths that must not reappear at the old canonical locations (Git history only).
     "minha-delpi-ai-api/docs/roadmap/prompt-refatoracao-motor-selecao-actions-openapi-first-set2026.md",
     "minha-delpi-ai-api/docs/roadmap/docie-desacoplamento-selecao-rotas-openapi.md",
     "minha-delpi-ai-api/docs/roadmap/audit-chat-base-familias-fluxos-set2026.md",
@@ -92,7 +93,7 @@ OPENAPI_FIRST_REQUIRED = (
     "minha-delpi-ai-api/docs/architecture/chat-intelligence-base.md",
     "minha-delpi-ai-api/docs/architecture/new-api-route-checklist.md",
     "minha-delpi-ai-api/docs/api/04-actions-openapi.md",
-    "minha-delpi-ai-api/docs/roadmap/openapi-first-universal-tool-routing.md",
+    "minha-delpi-ai-api/docs/architecture/openapi-first-universal-tool-routing.md",
 )
 
 

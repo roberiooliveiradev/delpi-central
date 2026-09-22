@@ -4,7 +4,7 @@ Script: `scripts/smoke_api_delpi_domain_routing.py`
 
 ## Objetivo
 
-Garantir que o **chat base** seleciona a action correta por domínio da [auditoria api-delpi](../roadmap/api-delpi-chat-intelligence-audit.md), **sem** depender de SQL Server / api-delpi online.
+Garantir que o **chat base** seleciona a action correta por domínio da [auditoria api-delpi](../roadmap/archive/audits/api-delpi-chat-intelligence-audit.md), **sem** depender de SQL Server / api-delpi online.
 
 ## Camadas
 

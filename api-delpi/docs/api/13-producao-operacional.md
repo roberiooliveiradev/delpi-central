@@ -2,7 +2,7 @@
 
 **Status:** implementado (jun/2026)  
 **Parent:** [`playbook-producao-consumo-compras-perdas-op.md`](./padroes-totvs/playbooks/playbook-producao-consumo-compras-perdas-op.md)
-**Integração chat:** [`playbook-15-rotas-operacionais-sem-sql.md`](../../../minha-delpi-ai-api/docs/roadmap/playbook-15-rotas-operacionais-sem-sql.md)
+**Integração chat:** [`playbook-15-rotas-operacionais-sem-sql.md`](../../../minha-delpi-ai-api/docs/roadmap/archive/playbooks/playbook-15-rotas-operacionais-sem-sql.md)
 
 Rotas REST que encapsulam SQL validado de produção, consumo, perdas, OPs e ranking de compras — **preferir estas rotas** em vez de `POST /data/sql` quando o agente tiver a action habilitada.
 

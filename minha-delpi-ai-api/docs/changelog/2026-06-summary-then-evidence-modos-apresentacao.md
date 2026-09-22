@@ -16,7 +16,7 @@ Pergunta de referência: *«qual o status do produto 90262404 na fábrica hoje?�
 
 **Princípio:** em `summary_then_evidence`, a interpretação vive na **prosa do chat**; visuais são **evidência** renderizada por componentes. Markdown embutido (tabelas, árvore, gráfico, composição) é exclusivo do modo **Texto** explícito.
 
-Relacionado: [playbook-13](../roadmap/playbook-13-respostas-humanizadas-dados.md), [chat-assistant-content-presentation.md](../architecture/chat-assistant-content-presentation.md), commit `fe62999f` (narrativa sem card).
+Relacionado: [playbook-13](../roadmap/archive/playbooks/playbook-13-respostas-humanizadas-dados.md), [chat-assistant-content-presentation.md](../architecture/presentation-intelligence.md), commit `fe62999f` (narrativa sem card).
 
 ---
 

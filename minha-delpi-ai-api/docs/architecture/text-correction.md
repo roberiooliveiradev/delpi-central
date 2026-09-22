@@ -57,4 +57,4 @@ Homologação (offline + HTTP opcional):
 
 Inclusão na regressão Onda 11: `scripts/run_onda11_validation.sh`.
 
-Playbook: [`../roadmap/melhorias/playbook_correcao_texto_minha_delpi_chat.md`](../roadmap/melhorias/playbook_correcao_texto_minha_delpi_chat.md).
+Playbook: [`../roadmap/archive/melhorias/package/playbook_correcao_texto_minha_delpi_chat.md`](../roadmap/archive/melhorias/package/playbook_correcao_texto_minha_delpi_chat.md).

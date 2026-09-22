@@ -26,8 +26,8 @@ Arquivos desta pasta são pensados para **ingestão na base de conhecimento** (`
 | [domains/gpt-instructions/](./domains/gpt-instructions/) | Markdown **adaptado** (rotas api-delpi) gerado por `scripts/sync_gpt_instructions_knowledge.py` |
 | [domains/global/](./domains/global/) | **Conhecimento global** (`company-knowledge`) — Normas, GPT_instructions, O Arquiteto |
 | [domains/agents/minha-delpi-chat/](./domains/agents/minha-delpi-chat/) | **Bundle exportável** das fontes do agente (nomes normalizados + `manifest.json`) |
-| [../roadmap/api-delpi-chat-intelligence-audit.md](../roadmap/api-delpi-chat-intelligence-audit.md) | Auditoria técnica rota a rota, erros conhecidos, testes de regressão (dev) |
-| [../roadmap/playbook-15-rotas-operacionais-sem-sql.md](../roadmap/playbook-15-rotas-operacionais-sem-sql.md) | Roadmap: rotas REST produção/consumo/compras/perdas (substituir `/data/sql`) |
+| [../roadmap/api-delpi-chat-intelligence-audit.md](../roadmap/archive/audits/api-delpi-chat-intelligence-audit.md) | Auditoria técnica rota a rota, erros conhecidos, testes de regressão (dev) |
+| [../roadmap/playbook-15-rotas-operacionais-sem-sql.md](../roadmap/archive/playbooks/playbook-15-rotas-operacionais-sem-sql.md) | Roadmap: rotas REST produção/consumo/compras/perdas (substituir `/data/sql`) |
 
 ## Documentação técnica relacionada
 
@@ -41,9 +41,9 @@ Arquivos desta pasta são pensados para **ingestão na base de conhecimento** (`
 | Módulos api-delpi | [`../../../api-delpi/docs/api/06-modulos-departamentais.md`](../../../api-delpi/docs/api/06-modulos-departamentais.md) |
 | Policy injetada em runtime | [`../../app/domain/prompt_policies/api-delpi-routes.md`](../../app/domain/prompt_policies/api-delpi-routes.md) |
 | Inteligência (ondas 1–11) | [`../roadmap/README.md`](../roadmap/README.md) |
-| Análise de desenhos PDF (backlog) | [`../roadmap/inteligencia-chat-onda-12-skill-analise-desenhos-pdf.md`](../roadmap/inteligencia-chat-onda-12-skill-analise-desenhos-pdf.md) |
+| Análise de desenhos PDF (backlog) | [`../roadmap/inteligencia-chat-onda-12-skill-analise-desenhos-pdf.md`](../roadmap/active/inteligencia-chat-onda-12-skill-analise-desenhos-pdf.md) |
 | Arquitetura chat base | [`../architecture/chat-intelligence-base.md`](../architecture/chat-intelligence-base.md) |
-| Playbook 15 — rotas sem SQL | [`../roadmap/playbook-15-rotas-operacionais-sem-sql.md`](../roadmap/playbook-15-rotas-operacionais-sem-sql.md) |
+| Playbook 15 — rotas sem SQL | [`../roadmap/playbook-15-rotas-operacionais-sem-sql.md`](../roadmap/archive/playbooks/playbook-15-rotas-operacionais-sem-sql.md) |
 | Perfis inteligência do chat (dev/prod) | [`chat-intelligence-settings-profiles.md`](./chat-intelligence-settings-profiles.md) |
 | Changelog maio/2026 | [`../changelog/2026-05-inteligencia-chat-entregas.md`](../changelog/2026-05-inteligencia-chat-entregas.md) |
 
@@ -71,4 +71,4 @@ Sempre que rotas ou comportamento de seleção mudarem na api-delpi ou no pipeli
 5. **Exportar bundle do agente:** `PYTHONPATH=/app python scripts/export_agent_knowledge_bundle.py --agent-key minha-delpi-chat` → `docs/knowledge/domains/agents/minha-delpi-chat/`
 6. **Smoke melhorias GPT/SQL:** conferir perfil em [`chat-intelligence-settings-profiles.md`](./chat-intelligence-settings-profiles.md); perguntas G1–G14 / N1–N14 em [`../testing/smoke-operacional-manual.md`](../testing/smoke-operacional-manual.md); script `PYTHONPATH=/app python scripts/smoke_gpt_instructions_improvements.py [user_id] [session_id]`
 7. Reindexar `api-delpi-rotas-agente.md` na base de conhecimento
-8. Revisar [`../roadmap/api-delpi-chat-intelligence-audit.md`](../roadmap/api-delpi-chat-intelligence-audit.md) e rodar a suíte de regressão documentada em [`../architecture/chat-intelligence-base.md`](../architecture/chat-intelligence-base.md)
+8. Revisar [`../roadmap/api-delpi-chat-intelligence-audit.md`](../roadmap/archive/audits/api-delpi-chat-intelligence-audit.md) e rodar a suíte de regressão documentada em [`../architecture/chat-intelligence-base.md`](../architecture/chat-intelligence-base.md)

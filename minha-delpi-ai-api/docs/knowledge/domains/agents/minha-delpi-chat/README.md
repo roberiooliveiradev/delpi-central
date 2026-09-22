@@ -22,7 +22,7 @@ docker compose -f infra/docker-compose.dev.yml exec -T -e PYTHONPATH=/app minha-
 
 ## O que não entra aqui
 
-Documentos **globais** (`company-knowledge`) ficam em [`../global/`](../global/) — ex.: `normas-tecnicas-delpi.md`.
+Documentos **globais** (`company-knowledge`) ficam em [`../global/`](../../global/) — ex.: `normas-tecnicas-delpi.md`.
 
 ## Download na UI
 

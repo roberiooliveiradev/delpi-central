@@ -5,7 +5,7 @@
 Hoje: `openai_compatible` + `KIMI_*` (OpenRouter). Para Ollama local: `LLM_PROVIDER=ollama`. Não apontar `http://ollama:11434` fora dos gateways de infra.
 
 Guia: [tutorial-conectar-llm-externo.md](./tutorial-conectar-llm-externo.md)  
-Playbook: [playbook-24-llm-provider-pluggable-jul2026.md](../roadmap/playbook-24-llm-provider-pluggable-jul2026.md)  
+Playbook: [playbook-24-llm-provider-pluggable-jul2026.md](../roadmap/archive/playbooks/playbook-24-llm-provider-pluggable-jul2026.md)  
 Regra Cursor: `llm-stack-centralized.mdc`.
 
 ---

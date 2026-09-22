@@ -130,6 +130,6 @@ Queries WinForms — **não copiar** para `maint_app`:
 
 ## 7. Playbook envelope
 
-Todas as rotas api-delpi novas devem seguir [playbook-10-contrato-respostas-api-delpi.md](../../minha-delpi-ai-api/docs/roadmap/playbook-10-contrato-respostas-api-delpi.md).
+Todas as rotas api-delpi novas devem seguir [playbook-10-contrato-respostas-api-delpi.md](../../minha-delpi-ai-api/docs/roadmap/archive/playbooks/playbook-10-contrato-respostas-api-delpi.md).
 
 Gateway da API dedicada lê **somente** `data` do envelope ao mapear para entidades de domínio.

@@ -83,7 +83,7 @@ Resposta: `204 No Content`
 
 ### POST `/chat/projects/{projectId}/share`
 
-> **Desabilitado (jun/2026):** retorna `501 feature_not_enabled`. Ver [projetos-colaborativos-futuro.md](../roadmap/projetos-colaborativos-futuro.md).
+> **Desabilitado (jun/2026):** retorna `501 feature_not_enabled`. Ver [projetos-colaborativos-futuro.md](../roadmap/archive/misc/projetos-colaborativos-futuro.md).
 
 Compartilha projeto.
 

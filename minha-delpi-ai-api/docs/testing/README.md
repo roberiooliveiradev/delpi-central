@@ -22,6 +22,9 @@ Ela define:
 
 Roadmaps, changelogs, perguntas datadas e arquivos de evidence anteriores **não definem PASS**.
 
+Homologações datadas: [`archive/`](./archive/).  
+Packs de avaliação live (ex-operations): [`evidence/smoke-packages/`](./evidence/smoke-packages/).
+
 Um `PASS` de harness estrutural (paths/kinds/prosa sem SQL) **não** é PASS de release em pedido composto/UI enquanto L1–L4 não forem avaliadas.
 
 ---

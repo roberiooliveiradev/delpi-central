@@ -98,7 +98,7 @@ Formatos office legados:
 
 PDF escaneado na indexação: quando o texto embutido fica abaixo do limiar (`document_vision.json` → `pdfExtraction.attachmentIndex`), a API rasteriza páginas com Tesseract antes de gravar chunks RAG.
 
-Matriz completa: `docs/roadmap/playbook-17-importacao-arquivos-e-fontes-unificada.md` § 12.  
+Matriz completa: `docs/roadmap/archive/playbooks/playbook-17-importacao-arquivos-e-fontes-unificada.md` § 12.  
 Limites detalhados: `docs/architecture/chat-workspace-file-extraction-limits.md`.
 
 ## Migração / anexos antigos

@@ -18,10 +18,10 @@ Executar após mudanças em contexto, chips ou presenter (com stack e Keycloak n
 |--------|---------------------------------------------|
 | **Inteligência operacional (10 perguntas E2E)** | `python scripts/smoke_operational_intelligence_e2e.py` — ver [`smoke-operational-intelligence-e2e.md`](smoke-operational-intelligence-e2e.md) |
 | **Playbooks produto (data + sessão ativa)** | `python scripts/smoke_playbook_product_routes.py` — ver [`../changelog/2026-06-playbook-rotas-sessao-ativa-parametros.md`](../changelog/2026-06-playbook-rotas-sessao-ativa-parametros.md) |
-| **Perguntas manuais (playbook MP/PA + apresentação jun/2026)** | [`perguntas-teste-chat-jun2026.md`](perguntas-teste-chat-jun2026.md) — roteiro copiar/colar + registro OK/Falha |
+| **Perguntas manuais (playbook MP/PA + apresentação jun/2026)** | [`perguntas-teste-chat-jun2026.md`](archive/perguntas-teste-chat-jun2026.md) — roteiro copiar/colar + registro OK/Falha |
 | **Smoke E2E perguntas jun/2026** | `python scripts/smoke_perguntas_teste_chat_jun2026.py` — 16 single-turn + multi-turn; ver homologação 09/jun no doc acima |
-| **DOCIE produto + PB15 (jun/2026)** | [`homologacao-docie-produto-pb15-jun2026.md`](homologacao-docie-produto-pb15-jun2026.md) — `smoke_playbook_product_routes.py` + `smoke_playbook_production_operational.py` |
-| **Apresentação generalizada (homologação)** | [`presentation-homologation-jun2026.md`](presentation-homologation-jun2026.md) + `scripts/audit_presentation_coverage.py --check-profiles` |
+| **DOCIE produto + PB15 (jun/2026)** | [`homologacao-docie-produto-pb15-jun2026.md`](archive/homologacao-docie-produto-pb15-jun2026.md) — `smoke_playbook_product_routes.py` + `smoke_playbook_production_operational.py` |
+| **Apresentação generalizada (homologação)** | [`presentation-homologation-jun2026.md`](archive/presentation-homologation-jun2026.md) + `scripts/audit_presentation_coverage.py --check-profiles` |
 | **KPIs empresa (12 perguntas, sem produto)** | `python scripts/smoke_empresa_kpi_e2e.py` — ver [`smoke-operational-intelligence-e2e.md`](smoke-operational-intelligence-e2e.md#smoke-empresa--kpi-sem-produto) |
 | Chips «Próximos passos» | `python scripts/smoke_follow_up_chips.py` |
 | Catálogo + onboarding | `python scripts/smoke_features_catalog.py` |
@@ -97,7 +97,7 @@ Perguntas de hora/data/saudação passam por `ChatMessageNormalizationService` a
 
 ### Corretor de digitação no composer (Playbook 14)
 
-Requer `CHAT_TYPING_CORRECTION_ENABLED=true` (default) e MFE atualizado. Documentação: [playbook-14](../roadmap/playbook-14-corretor-digitacao-chat.md), [changelog](../changelog/2026-06-playbook-14-corretor-digitacao-composer.md).
+Requer `CHAT_TYPING_CORRECTION_ENABLED=true` (default) e MFE atualizado. Documentação: [playbook-14](../roadmap/archive/playbooks/playbook-14-corretor-digitacao-chat.md), [changelog](../changelog/2026-06-playbook-14-corretor-digitacao-composer.md).
 
 | # | Passo | Esperado |
 |---|-------|----------|
@@ -678,7 +678,7 @@ docker run --rm -v "$(pwd)/plugins/minha-delpi-chat:/app" -w /app node:22-alpine
 
 ## Playbook fabril + preço MP / simulador PA (jun/2026)
 
-Roteiro completo com produtos homologados, desambiguação e apresentação: **[`perguntas-teste-chat-jun2026.md`](perguntas-teste-chat-jun2026.md)**.
+Roteiro completo com produtos homologados, desambiguação e apresentação: **[`perguntas-teste-chat-jun2026.md`](archive/perguntas-teste-chat-jun2026.md)**.
 
 ### Amostra mínima (mesma conversa onde indicado)
 
@@ -704,7 +704,7 @@ SMOKE_MP_CODE=10080001 SMOKE_PA_CODE=90261255 SMOKE_PRODUCT_CODE=90269002 \
 
 ## Apresentação — preferência, chips e refinamento (jun/2026)
 
-Detalhes AP1–AP15 em [`perguntas-teste-chat-jun2026.md`](perguntas-teste-chat-jun2026.md).
+Detalhes AP1–AP15 em [`perguntas-teste-chat-jun2026.md`](archive/perguntas-teste-chat-jun2026.md).
 
 | # | Sequência | O que observar |
 |---|-----------|----------------|

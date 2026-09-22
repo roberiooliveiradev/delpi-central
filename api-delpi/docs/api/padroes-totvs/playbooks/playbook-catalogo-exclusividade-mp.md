@@ -2,7 +2,7 @@
 
 **Status:** implementado (jun/2026)  
 **Parent:** [`playbook-estrutura-produto-exclusividade-mp.md`](./playbook-estrutura-produto-exclusividade-mp.md)  
-**Relacionado:** [`playbook-15-rotas-operacionais-sem-sql.md`](../../../../../minha-delpi-ai-api/docs/roadmap/playbook-15-rotas-operacionais-sem-sql.md)
+**Relacionado:** [`playbook-15-rotas-operacionais-sem-sql.md`](../../../../../minha-delpi-ai-api/docs/roadmap/archive/playbooks/playbook-15-rotas-operacionais-sem-sql.md)
 
 ---
 
@@ -292,7 +292,7 @@ Fixtures: `tests/fixtures/exclusive_raw_material_catalog.json`
 
 ## 8. Integração chat (minha-delpi-ai-api)
 
-Doc: [`playbook-15-anexo-catalogo-exclusividade-mp.md`](../../../../../minha-delpi-ai-api/docs/roadmap/playbook-15-anexo-catalogo-exclusividade-mp.md)
+Doc: [`playbook-15-anexo-catalogo-exclusividade-mp.md`](../../../../../minha-delpi-ai-api/docs/roadmap/archive/playbooks/playbook-15-anexo-catalogo-exclusividade-mp.md)
 
 Resumo:
 
@@ -351,7 +351,7 @@ Frases chat: ver anexo chat §5.
 | [playbook-estrutura-produto-exclusividade-mp.md](./playbook-estrutura-produto-exclusividade-mp.md) | SQL e regras |
 | [product_playbook_repository.py](../../../../app/infrastructure/persistence/totvs/product_repositories/product_playbook_repository.py) | Implementação atual |
 | [fase-0-inventario-contrato-respostas.md](../../../roadmaps/fase-0-inventario-contrato-respostas.md) | Contratos existentes |
-| [playbook-10-contrato-respostas-api-delpi.md](../../../../../minha-delpi-ai-api/docs/roadmap/playbook-10-contrato-respostas-api-delpi.md) | meta.shape |
+| [playbook-10-contrato-respostas-api-delpi.md](../../../../../minha-delpi-ai-api/docs/roadmap/archive/playbooks/playbook-10-contrato-respostas-api-delpi.md) | meta.shape |
 
 ---
 

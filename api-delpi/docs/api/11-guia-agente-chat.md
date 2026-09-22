@@ -7,7 +7,7 @@ Este documento orienta a **seleção automática de rotas** quando um agente do 
 
 **Última revisão:** jun/2026 (playbooks fabril + Playbook 15 operacional sem SQL).
 
-**Roadmap — padronizar JSON para IA:** [`playbook-10-contrato-respostas-api-delpi.md`](../../../minha-delpi-ai-api/docs/roadmap/playbook-10-contrato-respostas-api-delpi.md) (índice api-delpi: [`docs/roadmaps/playbook-contrato-respostas-ia.md`](../roadmaps/playbook-contrato-respostas-ia.md)).
+**Roadmap — padronizar JSON para IA:** [`playbook-10-contrato-respostas-api-delpi.md`](../../../minha-delpi-ai-api/docs/roadmap/archive/playbooks/playbook-10-contrato-respostas-api-delpi.md) (índice api-delpi: [`docs/roadmaps/playbook-contrato-respostas-ia.md`](../roadmaps/playbook-contrato-respostas-ia.md)).
 
 **Após alterar rotas ou `operationId`:** [12-procedimento-reimport-openapi.md](./12-procedimento-reimport-openapi.md).
 

@@ -2,7 +2,7 @@
 
 **Data:** 19/06/2026  
 **Escopo:** falsos positivos/negativos em 90262834 e 90263622; regras declarativas em JSON.  
-**Playbook:** [`playbook_validacao_desenhos_delpi_roadmap.md`](../roadmap/melhorias/playbook_validacao_desenhos_delpi_roadmap.md)
+**Playbook:** [`playbook_validacao_desenhos_delpi_roadmap.md`](../roadmap/archive/melhorias/package/playbook_validacao_desenhos_delpi_roadmap.md)
 
 Princípio: Python **só carrega lógica**; vocabulário, limiares e templates em `drawing_validation.json`, `drawing_validation_rules.json` e `drawing_stamp.json`.
 

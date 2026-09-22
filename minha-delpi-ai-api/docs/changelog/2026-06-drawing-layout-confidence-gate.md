@@ -42,7 +42,7 @@ Com OCR parcial e `hasTitleBlock: false`:
 ## Documentação
 
 - [chat-drawing-page-layout-analysis.md](../architecture/chat-drawing-page-layout-analysis.md)
-- [playbook_validacao_desenhos_delpi_roadmap.md](../roadmap/melhorias/playbook_validacao_desenhos_delpi_roadmap.md) § 15.7
+- [playbook_validacao_desenhos_delpi_roadmap.md](../roadmap/archive/melhorias/package/playbook_validacao_desenhos_delpi_roadmap.md) § 15.7
 
 ## CI sugerido
 

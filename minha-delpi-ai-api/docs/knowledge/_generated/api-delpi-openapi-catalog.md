@@ -1,6 +1,6 @@
 # Catálogo OpenAPI — api-delpi (gerado automaticamente)
 
-**Provider:** `api-delpi` · **Rotas:** 714 · **Gerado em:** 2026-09-22 00:07 UTC
+**Provider:** `api-delpi` · **Rotas:** 717 · **Gerado em:** 2026-09-22 13:47 UTC
 
 > Não edite manualmente. Regenerado por `scripts/sync_api_delpi_openapi.py`.
 
@@ -623,11 +623,18 @@
 | `GET` | `/production/machine-load/operations` | `get_production_machine_load_operations` | Machine load operations |
 | `GET` | `/production/machine-load/work-centers` | `get_production_machine_load_work_centers` | Machine load work centers |
 
-## Produção — Conjuntos de OP (1)
+## Produção — Conjuntos de OP (2)
 
 | Método | Path | operationId | Summary |
 |--------|------|-------------|---------|
 | `GET` | `/production/production-order-sets/incomplete` | `get_production_order_sets_incomplete` | Incomplete production order sets |
+| `GET` | `/production/production-order-sets/quantity-mismatches` | `get_production_order_sets_quantity_mismatches` | Production order sets with intermediate quantity mismatches |
+
+## Produção — Estrutura compartilhada (1)
+
+| Método | Path | operationId | Summary |
+|--------|------|-------------|---------|
+| `GET` | `/production/shared-structure-intermediates` | `get_production_shared_structure_intermediates` | Lista paginada — Intermediários pi/pa usados na estrutura vigente de mais de um pa com apontamento produtivo recente |
 
 ## Produção — Horas improdutivas (4)
 
@@ -655,7 +662,7 @@
 | `GET` | `/propostas-comerciais/{proposta_interna}/pdf` | `export_proposta_comercial_pdf` | Export Proposta Comercial Pdf Route |
 | `POST` | `/propostas-comerciais/{proposta_interna}/pdf` | `export_proposta_comercial_pdf_with_overrides` | Export proposal commercial PDF with overrides |
 
-## Qualidade (148)
+## Qualidade (149)
 
 | Método | Path | operationId | Summary |
 |--------|------|-------------|---------|
@@ -708,6 +715,7 @@
 | `GET` | `/quality/audit-5s/areas` | `list_audit_5s_areas` | List Areas |
 | `POST` | `/quality/audit-5s/areas` | `create_audit_5s_area` | Create audit 5S area |
 | `PATCH` | `/quality/audit-5s/areas/{area_id}` | `update_audit_5s_area` | Update audit 5S area |
+| `DELETE` | `/quality/audit-5s/areas/{area_id}` | `delete_audit_5s_area` | Delete Area |
 | `PUT` | `/quality/audit-5s/areas/{area_id}/children` | `set_audit_5s_area_children` | Set audit 5S area children |
 | `GET` | `/quality/audit-5s/audits` | `list_audit_5s_audits` | List Audits |
 | `POST` | `/quality/audit-5s/audits` | `create_audit_5s_audit` | Create audit 5S audit |

@@ -2,9 +2,9 @@
 
 A área admin é organizada por ambientes isolados. Cada aba ou bloco complexo deve ficar em sua própria pasta, com componente e CSS próprios.
 
-**Revisão de fluxos:** [`admin-fluxos-revisao.md`](../../../../../../minha-delpi-ai-api/docs/roadmap/admin-fluxos-revisao.md) — ondas 1–14 (Studio, Observe, presets, debug, HITL, Manual…).
+**Revisão de fluxos:** [`admin-fluxos-revisao.md`](../../../../../../minha-delpi-ai-api/docs/roadmap/active/admin-fluxos-revisao.md) — ondas 1–14 (Studio, Observe, presets, debug, HITL, Manual…).
 
-**Plano do restante do BC:** [`admin-fluxos-plano-implementacao-restante.md`](../../../../../../minha-delpi-ai-api/docs/roadmap/admin-fluxos-plano-implementacao-restante.md).
+**Plano do restante do BC:** [`admin-fluxos-plano-implementacao-restante.md`](../../../../../../minha-delpi-ai-api/docs/roadmap/active/admin-fluxos-plano-implementacao-restante.md).
 
 Ajuda in-app: catálogo único em `src/content/adminHelpTooltips.ts`.
 
@@ -88,8 +88,8 @@ Primitivos com dual-class do kit: `AdminTabHeader`, `AdminKpiCard`, `AdminDataTa
 
 ## Roadmap de UI
 
-- Navegação (6 seções): [11_admin_ux_reorganizacao_abas.md](../../../minha-delpi-ai-api/docs/roadmap/melhorias/playbooks_melhoria_minha_delpi_chat/11_admin_ux_reorganizacao_abas.md)
-- Componentes e layout: [12_admin_ui_refatoracao_componentes.md](../../../minha-delpi-ai-api/docs/roadmap/melhorias/playbooks_melhoria_minha_delpi_chat/12_admin_ui_refatoracao_componentes.md)
+- Navegação (6 seções): [11_admin_ux_reorganizacao_abas.md](../../../minha-delpi-ai-api/docs/roadmap/archive/melhorias/package/playbooks_melhoria_minha_delpi_chat/11_admin_ux_reorganizacao_abas.md)
+- Componentes e layout: [12_admin_ui_refatoracao_componentes.md](../../../minha-delpi-ai-api/docs/roadmap/archive/melhorias/package/playbooks_melhoria_minha_delpi_chat/12_admin_ui_refatoracao_componentes.md)
 - Baseline visual: `12_admin_ui_refatoracao_componentes/baseline/`
 
 ## QA manual (smoke)

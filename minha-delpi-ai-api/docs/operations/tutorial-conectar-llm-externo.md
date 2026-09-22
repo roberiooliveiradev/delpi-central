@@ -4,7 +4,7 @@ Passo a passo para usar **APIs externas** (OpenAI, Azure, Groq, Together, vLLM r
 
 **Público:** operação, DevOps e desenvolvedores que configuram ambiente — **sem alterar código**.
 
-**Referências:** [playbook-24](../roadmap/playbook-24-llm-provider-pluggable-jul2026.md) · [llm-provider-switch.md](./llm-provider-switch.md) · [changelog jul/2026](../changelog/2026-07-playbook-24-llm-provider-pluggable.md)
+**Referências:** [playbook-24](../roadmap/archive/playbooks/playbook-24-llm-provider-pluggable-jul2026.md) · [llm-provider-switch.md](./llm-provider-switch.md) · [changelog jul/2026](../changelog/2026-07-playbook-24-llm-provider-pluggable.md)
 
 ---
 
@@ -410,7 +410,7 @@ Remova `llmProviderOverride` dos agentes se tiver configurado override.
 
 ## 12. Próximos passos
 
-- Arquitetura completa: [playbook-24](../roadmap/playbook-24-llm-provider-pluggable-jul2026.md)
+- Arquitetura completa: [playbook-24](../roadmap/archive/playbooks/playbook-24-llm-provider-pluggable-jul2026.md)
 - Referência rápida operacional: [llm-provider-switch.md](./llm-provider-switch.md)
 - Variáveis de infra: `infra/README-ambiente.md`
 - Adicionar provider **não** OpenAI-compatible: exige novo gateway em `infrastructure/llm/` + entrada em `provider_registry.py` (desenvolvimento — ver playbook §3.4)

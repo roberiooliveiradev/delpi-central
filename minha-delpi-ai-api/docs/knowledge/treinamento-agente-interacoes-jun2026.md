@@ -17,7 +17,7 @@ Roteiro **copiar e colar** para sessões de treinamento, demo ou homologação c
 | `90261255` | PA — simulador de impacto de custos (BOM multinível); **PA padrão para demo fabril** se `90269002` não existir no Totvs |
 | `90269002` | Playbook fabril — produção, expedição, status integrado (**validar cadastro no ambiente antes da sessão**) |
 
-> **Nota (jun/2026):** follow-ups «desse produto» e «e a expedição?» dependem de contexto da sessão (`operationalFocus`). A data do turno playbook anterior é **reutilizada** em «e a expedição?» sem repetir «hoje». O ranker semântico **não** substitui rota playbook quando há herança de produto. Ver playbook [`playbook-follow-up-operacional-desacoplado-jun2026.md`](../roadmap/melhorias/playbook-follow-up-operacional-desacoplado-jun2026.md).
+> **Nota (jun/2026):** follow-ups «desse produto» e «e a expedição?» dependem de contexto da sessão (`operationalFocus`). A data do turno playbook anterior é **reutilizada** em «e a expedição?» sem repetir «hoje». O ranker semântico **não** substitui rota playbook quando há herança de produto. Ver playbook [`playbook-follow-up-operacional-desacoplado-jun2026.md`](../roadmap/archive/melhorias/package/playbook-follow-up-operacional-desacoplado-jun2026.md).
 
 **Antes da sessão:** confirmar no Totvs qual PA existe (`90269002` ou `90261255`) e usar o **mesmo código** nas interações 2 e 5.
 
@@ -131,8 +131,8 @@ Com perfil admin, abra **adminDebug** nas interações 2 ou 3 e mostre:
 | Documento | Conteúdo |
 |-----------|----------|
 | [api-delpi-rotas-agente.md](./api-delpi-rotas-agente.md) | Mapa intenção → rota |
-| [../testing/perguntas-teste-chat-jun2026.md](../testing/perguntas-teste-chat-jun2026.md) | Roteiro ampliado (fabril, MP, apresentação) |
-| [../roadmap/playbook-chat-preco-mp-simulador-custos-pa.md](../roadmap/playbook-chat-preco-mp-simulador-custos-pa.md) | Preço MP + simulador PA |
+| [../testing/perguntas-teste-chat-jun2026.md](../testing/archive/perguntas-teste-chat-jun2026.md) | Roteiro ampliado (fabril, MP, apresentação) |
+| [../roadmap/playbook-chat-preco-mp-simulador-custos-pa.md](../roadmap/archive/playbooks/playbook-chat-preco-mp-simulador-custos-pa.md) | Preço MP + simulador PA |
 | [../../../api-delpi/docs/api/11-guia-agente-chat.md](../../../api-delpi/docs/api/11-guia-agente-chat.md) | Guia api-delpi para agentes |
 
 **Smoke automatizado (opcional):**

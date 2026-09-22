@@ -657,4 +657,4 @@ Perguntas **sem código de PA** («quais MPs são exclusivas?», «quais produto
 **Não** adicionar flag `exclusive_raw_material` em `/products/{code}/structure` por default — consulta global de exclusividade é cara e quebra expectativa de consumidores da árvore BOM.
 
 Playbook completo: [`playbook-catalogo-exclusividade-mp.md`](./playbook-catalogo-exclusividade-mp.md)  
-Integração chat: [`playbook-15-anexo-catalogo-exclusividade-mp.md`](../../../../../minha-delpi-ai-api/docs/roadmap/playbook-15-anexo-catalogo-exclusividade-mp.md).
+Integração chat: [`playbook-15-anexo-catalogo-exclusividade-mp.md`](../../../../../minha-delpi-ai-api/docs/roadmap/archive/playbooks/playbook-15-anexo-catalogo-exclusividade-mp.md).

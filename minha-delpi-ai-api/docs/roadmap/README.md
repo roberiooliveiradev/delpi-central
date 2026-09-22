@@ -1,62 +1,52 @@
 # Roadmap — Minha DELPI AI
 
-Este diretório contém somente planejamento que ainda é válido para evolução futura. **Roadmap não é fonte canônica de arquitetura nem de critério de testes.**
+Este diretório contém **apenas planejamento ainda válido** e um arquivo histórico organizado.  
+**Roadmap não é fonte canônica de arquitetura nem de critério de testes.**
 
-Para implementar no estado atual, consultar primeiro:
+Para implementar no estado atual:
 
 | Responsabilidade | Fonte vigente |
 |------------------|---------------|
 | Arquitetura do chat | [`../architecture/chat-intelligence-base.md`](../architecture/chat-intelligence-base.md) |
+| OpenAPI-first (roteamento) | [`../architecture/openapi-first-universal-tool-routing.md`](../architecture/openapi-first-universal-tool-routing.md) |
 | Nova API/action | [`../architecture/new-api-route-checklist.md`](../architecture/new-api-route-checklist.md) |
 | Actions OpenAPI | [`../api/04-actions-openapi.md`](../api/04-actions-openapi.md) |
 | Evals da IA | [`../testing/chat-ai-flow-families.md`](../testing/chat-ai-flow-families.md) |
 | Desenvolvimento | [`../development/guia-desenvolvimento.md`](../development/guia-desenvolvimento.md) |
-| Regras Cursor | `.cursor/rules/development-standards-index.mdc` |
 
-## Roadmaps ativos
+## Estrutura
+
+```text
+roadmap/
+  active/                 # planejamento ainda executável
+  llm-json-decoupling/    # iniciativa aberta (evidence preservada)
+  archive/                # playbooks/ondas/melhorias fechados — NÃO SoT
+  README.md               # este arquivo
+```
+
+## Ativos
 
 | Documento | Conteúdo |
 |-----------|----------|
-| [`admin-fluxos-revisao.md`](./admin-fluxos-revisao.md) | Veredito manter/melhorar/remover dos fluxos admin do chat (ondas 1–8). |
-| [`admin-fluxos-plano-implementacao-restante.md`](./admin-fluxos-plano-implementacao-restante.md) | **Plano executável** do restante do BC admin (ondas 9+: presets, debug, HITL, Studio, kit). |
-| [`openapi-first-universal-tool-routing.md`](./openapi-first-universal-tool-routing.md) | Arquitetura vigente e critérios de aceite do roteamento universal de Actions. |
-| [`llm-json-decoupling/README.md`](./llm-json-decoupling/README.md) | **Iniciativa ativa** para remover catálogos técnicos e NLU hardcoded em `app/content`, migrando routing para OpenAPI/Action Catalog e semântica contextual para LLM estruturado. Inclui prompt mestre, roadmap e planos por fluxo. |
-| [`melhorias-futuras.md`](./melhorias-futuras.md) | Backlog de melhorias futuras explicitamente não implementadas. |
-| [`melhorias/BACKLOG_ROADMAP.md`](./melhorias/BACKLOG_ROADMAP.md) | Backlog priorizado quando aplicável. |
+| [`llm-json-decoupling/README.md`](./llm-json-decoupling/README.md) | Remover catálogos técnicos / NLU hardcoded → OpenAPI + LLM |
+| [`active/admin-fluxos-revisao.md`](./active/admin-fluxos-revisao.md) | Veredito fluxos admin |
+| [`active/admin-fluxos-plano-implementacao-restante.md`](./active/admin-fluxos-plano-implementacao-restante.md) | Plano restante BC admin |
+| [`active/BACKLOG_ROADMAP.md`](./active/BACKLOG_ROADMAP.md) | Backlog priorizado (desenho/OCR etc.) |
+| [`active/melhorias-futuras.md`](./active/melhorias-futuras.md) | Itens explicitamente futuros |
+| [`active/inteligencia-chat-onda-12-*.md`](./active/) …14 | Ondas desenho/OCR ainda parciais |
 
-## Política de limpeza documental
+## Arquivo histórico
 
-Documento técnico concluído, substituído ou contraditório **não permanece no repositório como guia histórico**.
+Playbooks numerados, ondas 1–11, pacote `melhorias/` concluído e audits datados vivem em [`archive/`](./archive/README.md).
 
-```text
-decisão antiga útil apenas para auditoria
-→ histórico do Git
+Use `archive/` só para auditoria. Implementação segue `architecture/` + `.cursor/rules`.
 
-decisão ainda válida
-→ incorporar na fonte canônica atual
-
-documento substituído/contraditório
-→ remover do working tree
-```
-
-Regras:
-
-- não manter playbook concluído que ensine arquitetura diferente da vigente;
-- não manter redirecionamento, aviso “legado”, “histórico” ou “use o novo” como substituto da remoção;
-- não deixar links para documentos removidos;
-- não duplicar a arquitetura vigente em vários roadmaps;
-- decisões ainda válidas devem ser absorvidas pelas fontes canônicas antes da remoção do documento antigo;
-- Git history é a fonte para investigação histórica, não o working tree indexável pelo Cursor.
-
-## Antes de iniciar uma implementação
+## Política
 
 ```text
-instruções oficiais
-→ development-standards-index.mdc
-→ regra especializada
-→ arquitetura/API vigentes
-→ protocolo de eval R1–R11
-→ código/contrato atual
+decisão ainda válida → absorver em architecture/api/testing
+iniciativa aberta → active/ ou llm-json-decoupling/
+fechado / contraditório → archive/ (evidência) ou Git history
 ```
 
-Para mudanças de inteligência, o fluxo obrigatório é baseline → implementação → candidate → R1–R11 → live/surface validation.
+Não indexar `archive/` como guia de implementação.

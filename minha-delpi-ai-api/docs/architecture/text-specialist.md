@@ -1,6 +1,6 @@
 # Especialista em textos (editor textual DELPI)
 
-**Playbook:** [`../roadmap/playbook-especialista-editor-textos.md`](../roadmap/playbook-especialista-editor-textos.md) — **Concluído (03/06/2026)**, Fases 1–7.
+**Playbook:** [`../roadmap/playbook-especialista-editor-textos.md`](../roadmap/archive/playbooks/playbook-especialista-editor-textos.md) — **Concluído (03/06/2026)**, Fases 1–7.
 
 ## Status de entrega
 

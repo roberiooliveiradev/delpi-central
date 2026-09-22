@@ -1,7 +1,7 @@
 # Changelog — Playbook inteligência do chat
 
 **Data:** 03/06/2026
-**Escopo:** [`docs/roadmap/playbook-inteligencia.md`](../roadmap/playbook-inteligencia.md) — entender perguntas simples, typos, preferências, erros e UX de streaming.
+**Escopo:** [`docs/roadmap/playbook-inteligencia.md`](../roadmap/archive/playbooks/playbook-inteligencia.md) — entender perguntas simples, typos, preferências, erros e UX de streaming.
 **Arquitetura:** detalhes em [`docs/architecture/chat-intelligence-base.md`](../architecture/chat-intelligence-base.md).
 
 Princípio: *pergunta simples → resposta simples*; usar ferramenta só quando necessário; admitir quando não entendeu; avisar e **contornar** erros.
@@ -12,7 +12,7 @@ Princípio: *pergunta simples → resposta simples*; usar ferramenta só quando 
 
 Entradas como «oq vc faz», «cmo», «cm», «qm», «qual eh», «seu nom», «vc s chama», «naum/num entendi» passam a normalizar para a forma canônica antes do roteamento, evitando que pequenos erros de digitação caiam em ferramenta ou LLM desnecessários.
 
-**UI (jun/2026):** [Playbook 14](../roadmap/playbook-14-corretor-digitacao-chat.md) — chip pré-envio no composer (`POST /chat/typing-suggestions`); [changelog](../changelog/2026-06-playbook-14-corretor-digitacao-composer.md).
+**UI (jun/2026):** [Playbook 14](../roadmap/archive/playbooks/playbook-14-corretor-digitacao-chat.md) — chip pré-envio no composer (`POST /chat/typing-suggestions`); [changelog](../changelog/2026-06-playbook-14-corretor-digitacao-composer.md).
 
 ---
 

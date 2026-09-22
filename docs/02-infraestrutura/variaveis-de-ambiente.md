@@ -165,7 +165,7 @@ Definidas no Compose (dev) — ver também `minha-delpi-ai-api` settings:
 | `EXTERNAL_ACTION_SEMANTIC_RANK_ENABLED` | `true` recomendado — ranking semântico de actions via embeddings |
 | `MAX_CONTEXT_CHUNKS` | Chunks RAG máximos. **Recomendado:** `8` |
 | `MAX_CONTEXT_CHARS` | Chars máximos de contexto RAG. **Recomendado:** `12000` |
-| `RAG_CONTEXT_MIN_SCORE` | Default `0.35` (fallback `RAG_ASSERTIVENESS_MIN_SCORE`). Prod operacional: `0.40`–`0.45`. Ver [rag-context-min-score-calibracao.md](../../minha-delpi-ai-api/docs/roadmap/rag-context-min-score-calibracao.md) |
+| `RAG_CONTEXT_MIN_SCORE` | Default `0.35` (fallback `RAG_ASSERTIVENESS_MIN_SCORE`). Prod operacional: `0.40`–`0.45`. Ver [rag-context-min-score-calibracao.md](../../minha-delpi-ai-api/docs/roadmap/archive/misc/rag-context-min-score-calibracao.md) |
 | `CHAT_FAST_PATH_MAX_CHARS` | Máximo de caracteres para fast path (sem LLM). **Recomendado:** `30` |
 | `CHAT_ASSISTANT_IDENTITY_DIRECT_ENABLED` | `true` (default) — «quem te criou» etc. usam `identity.json` sem RAG/LLM; `false` para homologar RAG+LLM |
 | `CHAT_UTILITY_DIRECT_ENABLED` | `true` (default) — «que horas são?», «que dia é hoje?» etc. usam `utility_answers.json` com hora real, sem LLM. Typos (`que hors são?`, `q horas`) são corrigidos por `ChatMessageNormalizationService` antes do match |

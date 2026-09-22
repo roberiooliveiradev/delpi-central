@@ -41,7 +41,7 @@ Colaboração multiusuário (share editor/viewer, contexto compartilhado entre c
 | **Feature flag** | `PROJECT_COLLABORATION_ENABLED = False` em `app/domain/features/chat_project_collaboration.py` |
 | **API** | Rotas de share retornam **501**; listagem ignora shares; `shareConversationContext` ignorado no PATCH |
 | **MFE** | Seções «Compartilhamento» removidas do settings; badges editor/viewer ocultos em `ChatProjectsPage` |
-| **Roadmap** | [`projetos-colaborativos-futuro.md`](../roadmap/projetos-colaborativos-futuro.md) |
+| **Roadmap** | [`projetos-colaborativos-futuro.md`](../roadmap/archive/misc/projetos-colaborativos-futuro.md) |
 
 ---
 
@@ -140,6 +140,6 @@ docker compose -f docker-compose.dev.yml --env-file .env up --build -d --force-r
 |--------|-----------|
 | PATCH sessão (`projectId`) | [`02-chat-sessoes-mensagens.md`](../api/02-chat-sessoes-mensagens.md) |
 | Projetos (API) | [`05-projetos-fontes-anexos-artefatos.md`](../api/05-projetos-fontes-anexos-artefatos.md) |
-| Colaboração futura | [`projetos-colaborativos-futuro.md`](../roadmap/projetos-colaborativos-futuro.md) |
+| Colaboração futura | [`projetos-colaborativos-futuro.md`](../roadmap/archive/misc/projetos-colaborativos-futuro.md) |
 | Ícones portal (referência) | `portal/src/ui/admin/modals/IconPickerModal.tsx` |
 | Status plataforma | [`status-atual.md`](../../../docs/12-roadmap-e-evolucao/minha-delpi-chat/status-atual.md) |

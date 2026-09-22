@@ -73,4 +73,4 @@ Análise estruturada (`ChatTurnAnalysisService`) só abre no gate (baixa confian
 
 ## Documentação de produto
 
-Playbook completo: `docs/roadmap/melhorias/playbook_roteamento_intencao_minha_delpi_chat.md`
+Playbook completo: `docs/roadmap/archive/melhorias/package/playbook_roteamento_intencao_minha_delpi_chat.md`

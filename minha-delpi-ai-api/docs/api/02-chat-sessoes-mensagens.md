@@ -314,7 +314,7 @@ Sugestões determinísticas de typos operacionais **antes do envio** (composer).
 
 Desligado quando `CHAT_TYPING_CORRECTION_ENABLED=false`. Regras aprendidas carregadas via `ChatLearnedNormalizationService.ensure_loaded()`.
 
-Documentação: [playbook-14](../roadmap/playbook-14-corretor-digitacao-chat.md), [changelog jun/2026](../changelog/2026-06-playbook-14-corretor-digitacao-composer.md).
+Documentação: [playbook-14](../roadmap/archive/playbooks/playbook-14-corretor-digitacao-chat.md), [changelog jun/2026](../changelog/2026-06-playbook-14-corretor-digitacao-composer.md).
 
 ---
 
@@ -469,7 +469,7 @@ Com `CHAT_PERSIST_BEFORE_PLAYBACK=false`, tokens chegam em `event: token` até `
 
 Resposta curta no chat («Coloquei …» / «Atualizei a lousa …»); conteúdo completo em `canvas_open` / `canvasOpen`. Ver [`../architecture/chat-intelligence-base.md`](../architecture/chat-intelligence-base.md).
 
-**Apresentação rica:** `toolCalls[].metadata` expõe `presentation`, `tablePresentation`, `treePresentation`, `chartPresentation`, `textPresentation` e `presentationDecision` (`layoutMode`, `visualOrder`, `availableViews`). O plugin renderiza tudo em **`ChatAssistantContent`** (barra de troca entre formatos nativos disponíveis). O campo `answer` não deve repetir os mesmos dados em markdown tabular — ver [`../architecture/chat-assistant-content-presentation.md`](../architecture/chat-assistant-content-presentation.md).
+**Apresentação rica:** `toolCalls[].metadata` expõe `presentation`, `tablePresentation`, `treePresentation`, `chartPresentation`, `textPresentation` e `presentationDecision` (`layoutMode`, `visualOrder`, `availableViews`). O plugin renderiza tudo em **`ChatAssistantContent`** (barra de troca entre formatos nativos disponíveis). O campo `answer` não deve repetir os mesmos dados em markdown tabular — ver [`../architecture/presentation-intelligence.md`](../architecture/presentation-intelligence.md).
 
 ### Comportamento do pipeline (referência)
 
@@ -700,4 +700,4 @@ Documentação detalhada:
 - [Camadas de preparação antes do LLM](../architecture/chat-pre-llm-layers.md)
 - [Arquitetura — inteligência no chat base](../architecture/chat-intelligence-base.md)
 - [Mapa de rotas api-delpi para agentes](../knowledge/api-delpi-rotas-agente.md)
-- [Auditoria e testes de regressão](../roadmap/api-delpi-chat-intelligence-audit.md)
+- [Auditoria e testes de regressão](../roadmap/archive/audits/api-delpi-chat-intelligence-audit.md)

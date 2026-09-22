@@ -3,7 +3,7 @@
 **Status:** vigente (jun/2026)  
 **Público:** desenvolvimento e operação  
 **Pipeline:** `ChatWorkspaceFileTextExtractionService` → `ChatAttachmentTextExtractor` (fachada)  
-**Relacionado:** [playbook-17](../roadmap/playbook-17-importacao-arquivos-e-fontes-unificada.md) · [chat-pdf-document-extraction.md](./chat-pdf-document-extraction.md) · [chat-attachment-storage.md](../operations/chat-attachment-storage.md)
+**Relacionado:** [playbook-17](../roadmap/archive/playbooks/playbook-17-importacao-arquivos-e-fontes-unificada.md) · [chat-pdf-document-extraction.md](./chat-pdf-document-extraction.md) · [chat-attachment-storage.md](../operations/chat-attachment-storage.md)
 
 ---
 
@@ -13,7 +13,7 @@ Limites aplicados na **extração de texto para indexação** (anexo de sessão,
 
 | Fluxo | Onde ver limites |
 |-------|------------------|
-| Visão de documento no turno (VLM, Docling, OCR completo) | `CHAT_DOCUMENT_VISION_*`, `document_vision.json`, [playbook visão/OCR](../roadmap/melhorias/playbook_skill_visao_documentos_ocr_delpi.md) |
+| Visão de documento no turno (VLM, Docling, OCR completo) | `CHAT_DOCUMENT_VISION_*`, `document_vision.json`, [playbook visão/OCR](../roadmap/archive/melhorias/package/playbook_skill_visao_documentos_ocr_delpi.md) |
 | Análise de desenho DELPI | `CHAT_DRAWING_PDF_MAX_PAGES` (padrão **10**), perfil `drawing_delpi` |
 | Chunking RAG pós-extração | `IngestKnowledgeDocumentUseCase` / pipeline de embeddings (sem truncar o texto extraído antes do chunk) |
 

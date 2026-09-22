@@ -1,6 +1,6 @@
 # Changelog — contexto, memória de turno e assertividade (maio/2026)
 
-Entrega alinhada ao [playbook de contexto](../roadmap/melhorias/playbook_contexto_assertividade_minha_delpi_chat.md) (Fases 1–2 e 5) e correções correlatas de produto/presenter no chat base.
+Entrega alinhada ao [playbook de contexto](../roadmap/archive/melhorias/package/playbook_contexto_assertividade_minha_delpi_chat.md) (Fases 1–2 e 5) e correções correlatas de produto/presenter no chat base.
 
 ---
 
@@ -66,7 +66,7 @@ Motivo **Perdeu o contexto** (`lost_context`) em `personality_playbook.json` e `
 
 - [`../architecture/chat-intelligence-base.md`](../architecture/chat-intelligence-base.md) — seção memória/assertividade
 - [`../api/02-chat-sessoes-mensagens.md`](../api/02-chat-sessoes-mensagens.md) — metadata `contextAssertiveness`, `adminDebug.memory`
-- [`../roadmap/melhorias/README.md`](../roadmap/melhorias/README.md) — índice e status
+- [`../roadmap/archive/melhorias/package/README.md`](../roadmap/archive/melhorias/package/README.md) — índice e status
 
 ## Fase 4 — Memória persistida (maio/2026)
 

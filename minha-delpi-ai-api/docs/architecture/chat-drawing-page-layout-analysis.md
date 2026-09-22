@@ -163,7 +163,7 @@ Metadata em `pdf_extract.extractionQualityRetry`: `attemptCount`, `selectedAttem
 
 **Operação:** retentativas com OCR regional + EasyOCR consomem RAM; default **2 passagens** com liberação de cache entre elas. Em WSL, parar serviços pesados (ex.: Ollama) antes de batch OCR; aumentar swap se necessário.
 
-Doc relacionada: [playbook validação desenhos](../roadmap/melhorias/playbook_validacao_desenhos_delpi_roadmap.md) § Fase 15.7.
+Doc relacionada: [playbook validação desenhos](../roadmap/archive/melhorias/package/playbook_validacao_desenhos_delpi_roadmap.md) § Fase 15.7.
 
 ---
 

@@ -1,7 +1,7 @@
 # ADR 007 — Provedores LLM plugáveis por porta
 
 **Status:** Aceito (jul/2026)  
-**Playbook:** [playbook-24-llm-provider-pluggable-jul2026.md](../../roadmap/playbook-24-llm-provider-pluggable-jul2026.md)
+**Playbook:** [playbook-24-llm-provider-pluggable-jul2026.md](../../roadmap/archive/playbooks/playbook-24-llm-provider-pluggable-jul2026.md)
 
 ## Contexto
 

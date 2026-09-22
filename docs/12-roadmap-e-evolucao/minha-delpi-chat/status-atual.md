@@ -22,9 +22,9 @@ O Minha DELPI Chat é um microfrontend oficial da plataforma com backend dedicad
 | Roadmap admin | [minha-delpi-ai-api/docs/roadmap/admin-minha-delpi-chat.md](../../../minha-delpi-ai-api/docs/roadmap/admin-minha-delpi-chat.md) |
 | Gestão de agentes | [minha-delpi-ai-api/docs/roadmap/agentes-gestao-melhorias.md](../../../minha-delpi-ai-api/docs/roadmap/agentes-gestao-melhorias.md) |
 | Inteligência do chat | [minha-delpi-ai-api/docs/roadmap/README.md](../../../minha-delpi-ai-api/docs/roadmap/README.md) |
-| Onda 6 (inteligência) | [inteligencia-chat-onda-6.md](../../../minha-delpi-ai-api/docs/roadmap/inteligencia-chat-onda-6.md) |
-| Onda 7 (inteligência) | [inteligencia-chat-onda-7.md](../../../minha-delpi-ai-api/docs/roadmap/inteligencia-chat-onda-7.md) |
-| Calibração RAG | [rag-context-min-score-calibracao.md](../../../minha-delpi-ai-api/docs/roadmap/rag-context-min-score-calibracao.md) |
+| Onda 6 (inteligência) | [inteligencia-chat-onda-6.md](../../../minha-delpi-ai-api/docs/roadmap/archive/waves/inteligencia-chat-onda-6.md) |
+| Onda 7 (inteligência) | [inteligencia-chat-onda-7.md](../../../minha-delpi-ai-api/docs/roadmap/archive/waves/inteligencia-chat-onda-7.md) |
+| Calibração RAG | [rag-context-min-score-calibracao.md](../../../minha-delpi-ai-api/docs/roadmap/archive/misc/rag-context-min-score-calibracao.md) |
 | Guia api-delpi para agentes | [api-delpi-rotas-agente.md](../../../minha-delpi-ai-api/docs/knowledge/api-delpi-rotas-agente.md) |
 | Melhorias futuras | [minha-delpi-ai-api/docs/roadmap/melhorias-futuras.md](../../../minha-delpi-ai-api/docs/roadmap/melhorias-futuras.md) |
 | **Changelog workspace jun/2026** | [2026-06-workspace-projetos-agentes-ui.md](../../../minha-delpi-ai-api/docs/changelog/2026-06-workspace-projetos-agentes-ui.md) |
@@ -124,7 +124,7 @@ Entregas documentadas em [2026-06-workspace-projetos-agentes-ui.md](../../../min
 - **Inteligência Onda 9:** concluída — colunas preferenciais por tipo de dado, build com shared/delpi_auth, modal expandir, copiar API, streaming direct response, estabilidade memória (ctx 2048)
 - **Inteligência Onda 10:** concluída — rotas `/products/{code}` e `/summary`, vocabulário e scoring de intent, fix OVs vs produto, títulos contextuais no presenter, doc RAG `api-delpi-rotas-agente.md` revisado
 - **Melhorias futuras:** concluídas neste repositório — ver `melhorias-futuras.md`
-- **Playbooks melhorias (pacote 01–10):** fechados como MVP/Concluído — [`STATUS_ROADMAP_MELHORIAS.md`](../../../minha-delpi-ai-api/docs/roadmap/melhorias/STATUS_ROADMAP_MELHORIAS.md); backlog: mockup admin 11, Ondas 12/13 refinamentos, Onda 14 BOM/cotas
+- **Playbooks melhorias (pacote 01–10):** fechados como MVP/Concluído — [`STATUS_ROADMAP_MELHORIAS.md`](../../../minha-delpi-ai-api/docs/roadmap/archive/melhorias/package/STATUS_ROADMAP_MELHORIAS.md); backlog: mockup admin 11, Ondas 12/13 refinamentos, Onda 14 BOM/cotas
 - **Playbook 15 (rotas operacionais):** concluído api-delpi + chat — doc [`13-producao-operacional.md`](../../../api-delpi/docs/api/13-producao-operacional.md)
 - **Playbook 17 (ingestão unificada):** MVP concluído (kit UI + policy); orchestrator em backlog
 - **Pendente externo:** RBAC com perfis formais no `core-api`
@@ -174,7 +174,7 @@ GET  /apps/minha-delpi-ai/api/chat/capabilities
 
 ## Inteligência do chat (Onda 6) — concluída
 
-Roadmap: [`inteligencia-chat-onda-6.md`](../../../minha-delpi-ai-api/docs/roadmap/inteligencia-chat-onda-6.md).
+Roadmap: [`inteligencia-chat-onda-6.md`](../../../minha-delpi-ai-api/docs/roadmap/archive/waves/inteligencia-chat-onda-6.md).
 
 | Entrega | Status |
 |---------|--------|
@@ -212,7 +212,7 @@ Roadmap: [`inteligencia-chat-onda-6.md`](../../../minha-delpi-ai-api/docs/roadma
 
 ## Inteligência do chat (Onda 10) — concluída
 
-Roadmap: [`inteligencia-chat-onda-10.md`](../../../minha-delpi-ai-api/docs/roadmap/inteligencia-chat-onda-10.md).
+Roadmap: [`inteligencia-chat-onda-10.md`](../../../minha-delpi-ai-api/docs/roadmap/archive/waves/inteligencia-chat-onda-10.md).
 
 | Entrega | Status |
 |---------|--------|
@@ -275,7 +275,7 @@ CHAT_PERSIST_BEFORE_PLAYBACK=true
 - Metadados OpenAPI centralizados em `api-delpi/app/interface/http/openapi_agent_metadata.py`
 - Guia técnico: [`api-delpi/docs/api/11-guia-agente-chat.md`](../../../api-delpi/docs/api/11-guia-agente-chat.md)
 - Documento RAG (ingestão): [`api-delpi-rotas-agente.md`](../../../minha-delpi-ai-api/docs/knowledge/api-delpi-rotas-agente.md)
-- Onda 10: [`inteligencia-chat-onda-10.md`](../../../minha-delpi-ai-api/docs/roadmap/inteligencia-chat-onda-10.md)
+- Onda 10: [`inteligencia-chat-onda-10.md`](../../../minha-delpi-ai-api/docs/roadmap/archive/waves/inteligencia-chat-onda-10.md)
 
 ## Próximas evoluções sugeridas
 

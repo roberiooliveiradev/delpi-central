@@ -128,7 +128,7 @@ O pipeline **detecta a própria incerteza** (sinais conflitantes, confiança OCR
 - Tutorial RAG: [`../knowledge/domains/agents/minha-delpi-chat/produto-conversao-unidades-protheus.txt`](../knowledge/domains/agents/minha-delpi-chat/produto-conversao-unidades-protheus.txt)
 - Sync ingest: [`../../scripts/sync_drawing_agent_knowledge.py`](../../scripts/sync_drawing_agent_knowledge.py)
 - Playbook api-delpi: [`../../../api-delpi/docs/api/padroes-totvs/playbooks/playbook-conversao-unidades-protheus.md`](../../../api-delpi/docs/api/padroes-totvs/playbooks/playbook-conversao-unidades-protheus.md)
-- Desacoplamento skill: [`../roadmap/melhorias/playbook_skill_desenho_desacoplamento.md`](../roadmap/melhorias/playbook_skill_desenho_desacoplamento.md)
+- Desacoplamento skill: [`../roadmap/archive/melhorias/package/playbook_skill_desenho_desacoplamento.md`](../roadmap/archive/melhorias/package/playbook_skill_desenho_desacoplamento.md)
 - Inteligência chat base (desenho): [`chat-intelligence-base.md`](./chat-intelligence-base.md)
 - Cotas e estrutura no relatório: [`../changelog/2026-06-drawing-cotas-estrutura-relatorio.md`](../changelog/2026-06-drawing-cotas-estrutura-relatorio.md)
 - Infra prod (latência LLM): [`../../../infra/README-ambiente.md`](../../../infra/README-ambiente.md) § LLM chat

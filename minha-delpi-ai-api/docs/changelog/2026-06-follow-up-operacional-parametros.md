@@ -21,7 +21,7 @@ Homologação do roteiro de treinamento expôs follow-ups («e a expedição?»,
 
 ## Playbook
 
-[`playbook-follow-up-operacional-desacoplado-jun2026.md`](../roadmap/melhorias/playbook-follow-up-operacional-desacoplado-jun2026.md)
+[`playbook-follow-up-operacional-desacoplado-jun2026.md`](../roadmap/archive/melhorias/package/playbook-follow-up-operacional-desacoplado-jun2026.md)
 
 ## Testes
 

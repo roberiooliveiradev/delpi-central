@@ -176,4 +176,4 @@ Rebuild da imagem. Imagem significativamente maior; preferível em hosts com GPU
 ## Referência arquitetural
 
 - [chat-pdf-document-extraction.md](../architecture/chat-pdf-document-extraction.md)
-- [playbook_skill_visao_documentos_ocr_delpi.md](../roadmap/melhorias/playbook_skill_visao_documentos_ocr_delpi.md)
+- [playbook_skill_visao_documentos_ocr_delpi.md](../roadmap/archive/melhorias/package/playbook_skill_visao_documentos_ocr_delpi.md)

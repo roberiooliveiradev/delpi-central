@@ -12,7 +12,7 @@ Revisão completa dos **sete modos** do seletor do chat (Automático + seis form
 2. Modo **Tabela** em rotas de estrutura/BOM perdia a tabela primária após dedup + prune (rich stack preservava árvore; prune removia `presentation` duplicada).
 3. Modo **Documento** (`canvas`) não tinha sync de decisão/renderPlan antes do pipeline final.
 
-Relacionado: [playbook-13 §8.6](../roadmap/playbook-13-respostas-humanizadas-dados.md#86-p6--mfe-render-only-próxima-fase), [summary_then_evidence](./2026-06-summary-then-evidence-modos-apresentacao.md), [chat-assistant-content-presentation.md](../architecture/chat-assistant-content-presentation.md).
+Relacionado: [playbook-13 §8.6](../roadmap/archive/playbooks/playbook-13-respostas-humanizadas-dados.md#86-p6--mfe-render-only-próxima-fase), [summary_then_evidence](./2026-06-summary-then-evidence-modos-apresentacao.md), [chat-assistant-content-presentation.md](../architecture/presentation-intelligence.md).
 
 ---
 
@@ -177,5 +177,5 @@ Hard refresh no browser (`Ctrl+Shift+R`) após recriar o MFE.
 ## Referências cruzadas
 
 - Gate CI: `.github/workflows/minha-delpi-ai-api-presentation.yml`
-- Homologação amostral: [`presentation-homologation-jun2026.md`](../testing/presentation-homologation-jun2026.md)
+- Homologação amostral: [`presentation-homologation-jun2026.md`](../testing/archive/presentation-homologation-jun2026.md)
 - Baseline Playbook 12: `docs/architecture/presentation-refactor-baseline-jun2026.json`

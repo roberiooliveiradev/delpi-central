@@ -109,4 +109,4 @@ Textos de activity: `app/content/pt-BR/assistant/stream.json`.
 - [chat-intelligence-base.md](../architecture/chat-intelligence-base.md)
 - [chat-pre-llm-layers.md](../architecture/chat-pre-llm-layers.md)
 - Prep detalhado: [02](./02-inteligencia-pre-llm.md) · Tools: [03](./03-tools-rag-agentic.md)
-- Playbook 11: [playbook-11-clean-architecture-chat-api.md](../roadmap/playbook-11-clean-architecture-chat-api.md)
+- Playbook 11: [playbook-11-clean-architecture-chat-api.md](../roadmap/archive/playbooks/playbook-11-clean-architecture-chat-api.md)

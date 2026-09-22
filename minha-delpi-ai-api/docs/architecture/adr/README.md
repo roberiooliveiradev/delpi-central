@@ -14,4 +14,4 @@ Registro curto de decisões estruturais do chat. Formato: **contexto → decisã
 
 **Quando criar um ADR:** mudança que afeta pipeline do chat, contrato de camadas, bundles de conteúdo ou política de testes/CI — não para cada feature de produto.
 
-**Referências:** [`chat-intelligence-base.md`](../chat-intelligence-base.md), [`playbook-11-clean-architecture-chat-api.md`](../../roadmap/playbook-11-clean-architecture-chat-api.md).
+**Referências:** [`chat-intelligence-base.md`](../chat-intelligence-base.md), [`playbook-11-clean-architecture-chat-api.md`](../../roadmap/archive/playbooks/playbook-11-clean-architecture-chat-api.md).

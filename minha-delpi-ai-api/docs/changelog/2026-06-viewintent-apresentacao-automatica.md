@@ -33,8 +33,8 @@
 
 - Checklist rota nova: [new-api-route-checklist.md](../architecture/new-api-route-checklist.md)
 - Pipeline e serviços: [chat-intelligence-base.md](../architecture/chat-intelligence-base.md) (Playbook 09)
-- Contrato metadata: [chat-assistant-content-presentation.md](../architecture/chat-assistant-content-presentation.md)
-- Playbook: [playbook-09-apresentacao-rica.md](../roadmap/playbook-09-apresentacao-rica.md) (caso P17)
+- Contrato metadata: [chat-assistant-content-presentation.md](../architecture/presentation-intelligence.md)
+- Playbook: [playbook-09-apresentacao-rica.md](../roadmap/archive/playbooks/playbook-09-apresentacao-rica.md) (caso P17)
 
 ---
 
@@ -47,4 +47,4 @@ cd minha-delpi-ai-api
 .venv/bin/python -m pytest tests/unit/domain/services/test_chat_presentation_decision_scores.py -q
 ```
 
-Homologação: [presentation-homologation-jun2026.md](../testing/presentation-homologation-jun2026.md).
+Homologação: [presentation-homologation-jun2026.md](../testing/archive/presentation-homologation-jun2026.md).

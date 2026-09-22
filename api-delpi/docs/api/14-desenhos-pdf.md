@@ -128,7 +128,7 @@ A skill **`drawing-analysis-delpi`** consome estas rotas quando o usuário pede 
 | `API_DELPI_INTERNAL_SERVICE_TOKEN` | Fallback server-to-server quando não há JWT do usuário |
 | `CHAT_ATTACHMENT_STORAGE_PATH` | Raiz do cache `drawing-library-cache` |
 
-Doc chat: [`minha-delpi-ai-api/docs/architecture/chat-pdf-document-extraction.md`](../../../minha-delpi-ai-api/docs/architecture/chat-pdf-document-extraction.md) · playbook: [`playbook_skill_analise_desenhos_delpi.md`](../../../minha-delpi-ai-api/docs/roadmap/melhorias/playbook_skill_analise_desenhos_delpi.md).
+Doc chat: [`minha-delpi-ai-api/docs/architecture/chat-pdf-document-extraction.md`](../../../minha-delpi-ai-api/docs/architecture/chat-pdf-document-extraction.md) · playbook: [`playbook_skill_analise_desenhos_delpi.md`](../../../minha-delpi-ai-api/docs/roadmap/archive/melhorias/package/playbook_skill_analise_desenhos_delpi.md).
 
 ## Testes
 

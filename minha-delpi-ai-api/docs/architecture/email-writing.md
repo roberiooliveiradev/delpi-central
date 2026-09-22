@@ -1,7 +1,7 @@
 # Arquitetura — Escrita de e-mails no chat base
 
 **Status:** vigente (maio/2026)  
-**Playbook:** [`../roadmap/melhorias/playbook_escrita_emails_minha_delpi_chat.md`](../roadmap/melhorias/playbook_escrita_emails_minha_delpi_chat.md)
+**Playbook:** [`../roadmap/archive/melhorias/package/playbook_escrita_emails_minha_delpi_chat.md`](../roadmap/archive/melhorias/package/playbook_escrita_emails_minha_delpi_chat.md)
 
 ---
 

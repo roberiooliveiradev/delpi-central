@@ -48,7 +48,7 @@ docker exec delpi-minha-delpi-ai-api python3 scripts/sync_api_delpi_openapi.py -
 O script usa o pipeline em fases do Playbook 16: cadastra rotas sem embed bloqueante e reindexa embeddings em seguida. Regenera  
 `minha-delpi-ai-api/docs/knowledge/_generated/api-delpi-openapi-catalog.md`.
 
-**UI (builder):** «Atualizar rotas» dispara import assíncrono com barra de progresso — [Playbook 16](../../../minha-delpi-ai-api/docs/roadmap/playbook-16-openapi-import-async-e-readiness-operacional.md).
+**UI (builder):** «Atualizar rotas» dispara import assíncrono com barra de progresso — [Playbook 16](../../../minha-delpi-ai-api/docs/roadmap/archive/playbooks/playbook-16-openapi-import-async-e-readiness-operacional.md).
 
 **Readiness pós-deploy:**
 
@@ -101,4 +101,4 @@ cd plugins/dashboard-supplies && npm run build
 
 Tipos TS: `shared/api-delpi-envelope/types.ts` (espelhado em `plugins/*/src/types/api.ts`).
 
-Relacionado: [Playbook 10 — contrato de respostas](../../../minha-delpi-ai-api/docs/roadmap/playbook-10-contrato-respostas-api-delpi.md).
+Relacionado: [Playbook 10 — contrato de respostas](../../../minha-delpi-ai-api/docs/roadmap/archive/playbooks/playbook-10-contrato-respostas-api-delpi.md).

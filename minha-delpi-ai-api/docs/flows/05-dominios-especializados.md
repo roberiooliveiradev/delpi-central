@@ -107,8 +107,8 @@ flowchart LR
 
 ### Links
 
-- [playbook-especialista-sql-avancado.md](../roadmap/playbook-especialista-sql-avancado.md)
-- Vocabulary: [vocabulary-centralization-jun2026.md](../architecture/vocabulary-centralization-jun2026.md)
+- [playbook-especialista-sql-avancado.md](../roadmap/archive/playbooks/playbook-especialista-sql-avancado.md)
+- Vocabulary: [vocabulary-centralization-jun2026.md](../architecture/archive/vocabulary-centralization-jun2026.md)
 
 ---
 
@@ -154,7 +154,7 @@ flowchart LR
 
 ### Links
 
-- [playbook-05-anexos-lousa.md](../roadmap/playbook-05-anexos-lousa.md)
+- [playbook-05-anexos-lousa.md](../roadmap/archive/playbooks/playbook-05-anexos-lousa.md)
 
 ---
 

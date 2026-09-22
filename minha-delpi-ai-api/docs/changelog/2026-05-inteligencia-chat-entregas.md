@@ -123,5 +123,5 @@ Entregas documentadas após a última atualização ampla do checklist manual (*
 |--------|-----------|
 | Arquitetura completa | [`../architecture/chat-intelligence-base.md`](../architecture/chat-intelligence-base.md) |
 | Mapa GPT_instructions | [`../knowledge/gpt-instructions-coverage-map.md`](../knowledge/gpt-instructions-coverage-map.md) |
-| Onda 12 (PDF desenhos) | [`../roadmap/inteligencia-chat-onda-12-skill-analise-desenhos-pdf.md`](../roadmap/inteligencia-chat-onda-12-skill-analise-desenhos-pdf.md) |
+| Onda 12 (PDF desenhos) | [`../roadmap/inteligencia-chat-onda-12-skill-analise-desenhos-pdf.md`](../roadmap/active/inteligencia-chat-onda-12-skill-analise-desenhos-pdf.md) |
 | Checklist manual | [`../testing/smoke-operacional-manual.md`](../testing/smoke-operacional-manual.md) |

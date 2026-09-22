@@ -1,6 +1,6 @@
 # Fase 0 — Inventário e baseline (contrato api-delpi)
 
-**Playbook:** [`playbook-10-contrato-respostas-api-delpi.md`](../../../minha-delpi-ai-api/docs/roadmap/playbook-10-contrato-respostas-api-delpi.md)  
+**Playbook:** [`playbook-10-contrato-respostas-api-delpi.md`](../../../minha-delpi-ai-api/docs/roadmap/archive/playbooks/playbook-10-contrato-respostas-api-delpi.md)  
 **Data:** jun/2026  
 **Status:** baseline congelado para fases 1–7
 

@@ -1,6 +1,6 @@
 # Playbook api-delpi — Produção operacional, compras ranking e perdas
 
-**Parent:** [`minha-delpi-ai-api/docs/roadmap/playbook-15-rotas-operacionais-sem-sql.md`](../../../../../minha-delpi-ai-api/docs/roadmap/playbook-15-rotas-operacionais-sem-sql.md)  
+**Parent:** [`minha-delpi-ai-api/docs/roadmap/archive/playbooks/playbook-15-rotas-operacionais-sem-sql.md`](../../../../../minha-delpi-ai-api/docs/roadmap/archive/playbooks/playbook-15-rotas-operacionais-sem-sql.md)  
 **Status:** implementado Fases 1–4 (jun/2026) — 15 rotas REST + integração chat base  
 **Público:** desenvolvimento api-delpi  
 **Doc API:** [`13-producao-operacional.md`](../../13-producao-operacional.md)
@@ -287,5 +287,5 @@ Fases 1–4 entregues conforme §Resumo executivo. Pós-deploy: `sync_api_delpi_
 | allowed_tables | `api-delpi/app/config/allowed_tables.json` |
 | Envelope | `api-delpi/app/core/responses.py` |
 | Produto preço MP (modelo) | `product_raw_material_price_repository.py` |
-| Playbook master | [`playbook-15-rotas-operacionais-sem-sql.md`](../../../../../minha-delpi-ai-api/docs/roadmap/playbook-15-rotas-operacionais-sem-sql.md) |
-| Chat integration | [`playbook-15-chat-integracao-producao-suprimentos.md`](../../../../../minha-delpi-ai-api/docs/roadmap/playbook-15-chat-integracao-producao-suprimentos.md) |
+| Playbook master | [`playbook-15-rotas-operacionais-sem-sql.md`](../../../../../minha-delpi-ai-api/docs/roadmap/archive/playbooks/playbook-15-rotas-operacionais-sem-sql.md) |
+| Chat integration | [`playbook-15-chat-integracao-producao-suprimentos.md`](../../../../../minha-delpi-ai-api/docs/roadmap/archive/playbooks/playbook-15-chat-integracao-producao-suprimentos.md) |

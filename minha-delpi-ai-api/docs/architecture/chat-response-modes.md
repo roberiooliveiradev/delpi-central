@@ -2,7 +2,7 @@
 
 Documentação canônica dos modos `responseMode` enviados pelo composer e resolvidos em `ChatResponseModeService`.
 
-Relacionado: [`chat-intelligence-base.md`](./chat-intelligence-base.md), [`chat-assistant-content-presentation.md`](./chat-assistant-content-presentation.md), bundle `assistant/response_modes.json`, `assistant/operational_narrative_synthesis.json`.
+Relacionado: [`chat-intelligence-base.md`](./chat-intelligence-base.md), [`chat-assistant-content-presentation.md`](presentation-intelligence.md), bundle `assistant/response_modes.json`, `assistant/operational_narrative_synthesis.json`.
 
 ---
 
@@ -42,7 +42,7 @@ Os modos são **perfis de geração LLM** (`LlmGenerationConfig`) com presets di
 
 Gate canônico: `ChatPresentationProseDeliveryService` (`template` \| `llm` \| `direct`) → intenção em `ChatOperationalNarrativeSynthesisService` + `ChatResponseModeService.apply_turn_direct_answer_policy`.
 
-Playbooks: [`playbook-18`](../roadmap/playbook-18-prosa-template-llm-desacoplamento.md), [`playbook-19`](../roadmap/playbook-19-inferencia-llm-universal.md).
+Playbooks: [`playbook-18`](../roadmap/archive/playbooks/playbook-18-prosa-template-llm-desacoplamento.md), [`playbook-19`](../roadmap/archive/playbooks/playbook-19-inferencia-llm-universal.md).
 
 O composer envia `responseMode` (`fast` | `normal` | `thinker`). `llm_generation_scope` propaga o preset a **todas** as chamadas LLM do turno.
 
@@ -77,7 +77,7 @@ Defaults calibrados para **assertividade** (temperatura baixa, contexto ampliado
 | **Normal** | `qwen2.5:1.5b` | 256 | 1536 | 0.1 | `product-overview.md` | `operational-synthesis.md` |
 | **Pensador** | `qwen2.5:3b` | 512 | 2048 | 0.15 | `product-overview-thinker.md` | `operational-synthesis-thinker.md` |
 
-Preset global quando variáveis explícitas não estão no `.env`: `CHAT_LLM_LATENCY_PROFILE=operational_cpu` → `LLM_MAX_TOKENS=320`, `OLLAMA_NUM_CTX=1024` (`llm_latency_profile.py`). Ver [`rag-context-min-score-calibracao.md`](../roadmap/rag-context-min-score-calibracao.md).
+Preset global quando variáveis explícitas não estão no `.env`: `CHAT_LLM_LATENCY_PROFILE=operational_cpu` → `LLM_MAX_TOKENS=320`, `OLLAMA_NUM_CTX=1024` (`llm_latency_profile.py`). Ver [`rag-context-min-score-calibracao.md`](../roadmap/archive/misc/rag-context-min-score-calibracao.md).
 
 ---
 

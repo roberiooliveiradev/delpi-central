@@ -4,7 +4,7 @@ Agentes são **chats com camadas extras**: prompt de sistema, skills, actions Op
 
 Actions externas/OpenAPI são **configuradas por agente** (subset permitido); a execução e o pipeline seguem o mesmo motor do chat.
 
-Roadmap de evolução da gestão (UI + API): [`../roadmap/agentes-gestao-melhorias.md`](../roadmap/agentes-gestao-melhorias.md) (ondas 1–7 concluídas).
+Roadmap de evolução da gestão (UI + API): [`../roadmap/agentes-gestao-melhorias.md`](../roadmap/archive/misc/agentes-gestao-melhorias.md) (ondas 1–7 concluídas).
 
 ## Comportamento no chat (runtime)
 

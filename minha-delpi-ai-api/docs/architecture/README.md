@@ -11,11 +11,14 @@ Este diretório contém somente fontes arquiteturais atuais. Implementação dev
 |------:|-------|------------------|
 | 1 | [`chat-intelligence-base.md`](./chat-intelligence-base.md) | Pipeline transversal do chat, contexto, tools, RAG, segurança e apresentação |
 | 1b | [`presentation-intelligence.md`](./presentation-intelligence.md) | Profile, labels PT-BR, PresentationSpec, validator/compiler, optional composer |
-| 2 | [`new-api-route-checklist.md`](./new-api-route-checklist.md) | Nova API/Action OpenAPI |
-| 2b | [`chat-openapi-first-refactor-playbook.md`](./chat-openapi-first-refactor-playbook.md) | Refatoração OpenAPI-first: anti-padrões, Chat≠DÉLIA, handoff, epics futuros (procedimento; não SoT) |
-| 3 | [`assistant-content-catalog.md`](./assistant-content-catalog.md) | Conteúdo declarativo do assistente sem duplicar contrato técnico |
-| 4 | [`../testing/chat-ai-flow-families.md`](../testing/chat-ai-flow-families.md) | Protocolo canônico R1–R11 |
-| 5 | [`../flows/README.md`](../flows/README.md) | Fluxos operacionais vigentes |
+| 2 | [`openapi-first-universal-tool-routing.md`](./openapi-first-universal-tool-routing.md) | Roteamento universal OpenAPI → Action Catalog → retrieval/planner |
+| 3 | [`new-api-route-checklist.md`](./new-api-route-checklist.md) | Nova API/Action OpenAPI |
+| 3b | [`chat-openapi-first-refactor-playbook.md`](./chat-openapi-first-refactor-playbook.md) | Refatoração OpenAPI-first: anti-padrões, Chat≠DÉLIA, handoff (procedimento; não SoT) |
+| 4 | [`assistant-content-catalog.md`](./assistant-content-catalog.md) | Conteúdo declarativo do assistente sem duplicar contrato técnico |
+| 5 | [`../testing/chat-ai-flow-families.md`](../testing/chat-ai-flow-families.md) | Protocolo canônico R1–R11 |
+| 6 | [`../flows/README.md`](../flows/README.md) | Fluxos operacionais vigentes |
+| — | [`adr/`](./adr/) | ADRs aceitos |
+| — | [`archive/`](./archive/), [`baselines/`](./baselines/) | Audits/snapshots — não ordem de leitura |
 
 ## Arquitetura do turno
 

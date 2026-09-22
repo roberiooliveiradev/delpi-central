@@ -1,6 +1,6 @@
 # Changelog — contexto manual, Q&A e fechamento documental (jun/2026)
 
-Extensões pós-Fase 9 do [playbook memória e contexto](../roadmap/playbook-memoria-e-contexto.md) e sincronização do índice [STATUS_ROADMAP_MELHORIAS](../roadmap/melhorias/STATUS_ROADMAP_MELHORIAS.md).
+Extensões pós-Fase 9 do [playbook memória e contexto](../roadmap/archive/playbooks/playbook-memoria-e-contexto.md) e sincronização do índice [STATUS_ROADMAP_MELHORIAS](../roadmap/archive/melhorias/package/STATUS_ROADMAP_MELHORIAS.md).
 
 ---
 
@@ -57,11 +57,11 @@ MFE: `npm run test -- --run src/ui/chatContextFromMessage.test.ts`
 
 ## 6. Fechamento documental do pacote melhorias (03/06/2026)
 
-- [STATUS_ROADMAP_MELHORIAS.md](../roadmap/melhorias/STATUS_ROADMAP_MELHORIAS.md) — playbooks 01–10 como **Concluído (MVP)** ou **Concluído**; memória/contexto e editor de textos fechados.
-- [BACKLOG_ROADMAP.md](../roadmap/melhorias/BACKLOG_ROADMAP.md) — apenas mockup 11 (produto), Ondas 12/13, refinamentos baixos e infra TOTVS.
+- [STATUS_ROADMAP_MELHORIAS.md](../roadmap/archive/melhorias/package/STATUS_ROADMAP_MELHORIAS.md) — playbooks 01–10 como **Concluído (MVP)** ou **Concluído**; memória/contexto e editor de textos fechados.
+- [BACKLOG_ROADMAP.md](../roadmap/active/BACKLOG_ROADMAP.md) — apenas mockup 11 (produto), Ondas 12/13, refinamentos baixos e infra TOTVS.
 
 ## 7. Roadmap — backlog ativo
 
-Ver [BACKLOG_ROADMAP.md](../roadmap/melhorias/BACKLOG_ROADMAP.md).
+Ver [BACKLOG_ROADMAP.md](../roadmap/active/BACKLOG_ROADMAP.md).
 
 **Memória e contexto (playbook principal):** fechado nas Fases 1–9 + extensões acima.

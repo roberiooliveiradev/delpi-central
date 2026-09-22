@@ -4,7 +4,7 @@ Melhorias no chat operacional quando o usuário pede **dois ou mais escopos** do
 
 Documentação de arquitetura:
 
-- [`../architecture/chat-assistant-content-presentation.md`](../architecture/chat-assistant-content-presentation.md) (seção **Consulta multi-rota**)
+- [`../architecture/presentation-intelligence.md`](../architecture/presentation-intelligence.md) (seção **Consulta multi-rota**)
 - [`../architecture/chat-intelligence-base.md`](../architecture/chat-intelligence-base.md)
 - [`../architecture/product-operational-content.md`](../architecture/product-operational-content.md) (JSON central + pluralidade)
 

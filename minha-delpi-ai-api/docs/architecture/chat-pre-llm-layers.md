@@ -272,4 +272,4 @@ LLM                    → só síntese; não re-executa APIs sem necessidade
 - Use cases: `stream_chat_message_use_case.py`, `send_chat_message_use_case.py`
 - Orquestração inteligência: `chat_intelligence_pipeline_service.py`
 - Policies LLM: `app/domain/prompt_policies/`
-- Roadmap onda 1: [`../roadmap/inteligencia-chat-onda-1.md`](../roadmap/inteligencia-chat-onda-1.md)
+- Roadmap onda 1: [`../roadmap/inteligencia-chat-onda-1.md`](../roadmap/archive/waves/inteligencia-chat-onda-1.md)

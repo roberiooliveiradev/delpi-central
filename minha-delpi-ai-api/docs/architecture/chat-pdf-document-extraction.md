@@ -2,7 +2,7 @@
 
 **Status:** vigente (jun/2026)  
 **Público:** desenvolvimento `minha-delpi-ai-api`  
-**Relacionado:** [chat-intelligence-base.md](./chat-intelligence-base.md) · [playbook visão/OCR](../roadmap/melhorias/playbook_skill_visao_documentos_ocr_delpi.md) · [playbook OCR hierárquico desenhos](../roadmap/melhorias/playbook_ocr_hierarquico_desenhos_delpi.md)
+**Relacionado:** [chat-intelligence-base.md](./chat-intelligence-base.md) · [playbook visão/OCR](../roadmap/archive/melhorias/package/playbook_skill_visao_documentos_ocr_delpi.md) · [playbook OCR hierárquico desenhos](../roadmap/archive/melhorias/package/playbook_ocr_hierarquico_desenhos_delpi.md)
 
 ---
 
@@ -181,9 +181,9 @@ Tolerâncias numéricas do checklist dimensional ficam em **`drawing_validation.
 
 Orquestração: `ChatDrawingValidationOrchestrationService` → `ChatDrawingStructureValidationService.build_check_items`.
 
-Roadmap de novos validadores (estrutura recursiva, inspeção, multipágina): [playbook Onda 15](../roadmap/melhorias/playbook_validacao_desenhos_delpi_roadmap.md).
+Roadmap de novos validadores (estrutura recursiva, inspeção, multipágina): [playbook Onda 15](../roadmap/archive/melhorias/package/playbook_validacao_desenhos_delpi_roadmap.md).
 
-**BOM colunar e assertividade 95%:** o chat base entrega tabelas genéricas; a skill desenho interpreta BOM e orquestra refinamento — [playbook 15.8](../roadmap/melhorias/playbook_bom_colunar_visao_skill_desenho.md) § 0.
+**BOM colunar e assertividade 95%:** o chat base entrega tabelas genéricas; a skill desenho interpreta BOM e orquestra refinamento — [playbook 15.8](../roadmap/archive/melhorias/package/playbook_bom_colunar_visao_skill_desenho.md) § 0.
 
 ### Extração de cotas (`ChatDrawingDimensionsExtractionService`)
 

@@ -66,7 +66,10 @@ Live composto/UI exige ainda as camadas **L1–L4** (R-tools / R-facts / R-ui / 
 
 ## Regra para documentação datada
 
-Arquivos em `roadmap/`, `changelog/` e evidências anteriores podem existir para registro de evolução, mas **não são fonte de instrução atual**. Se um documento datado contradizer uma fonte canônica vigente, ele deve ser corrigido/removido; o Cursor não deve reconciliar as duas arquiteturas.
+Arquivos em `roadmap/active/`, `roadmap/llm-json-decoupling/`, `roadmap/archive/`, `changelog/` e `testing/evidence/` podem existir para evolução ou auditoria, mas **não são fonte de instrução atual**. Se um documento datado contradizer uma fonte canônica vigente, a fonte canônica vence; o Cursor não deve reconciliar as duas arquiteturas.
+
+Estrutura: `architecture/` (SoT) · `api/` · `flows/` · `testing/` · `operations/` (runbooks) · `knowledge/` · `roadmap/{active,archive,llm-json-decoupling}` · `changelog/`.
+
 
 ## Regras Cursor principais
 

@@ -4,7 +4,7 @@ Este arquivo é o **ponto de entrada no repositório api-delpi** para o roadmap 
 
 **Documento completo (roadmap, fases, compatibilidade com consumidores):**
 
-[`minha-delpi-ai-api/docs/roadmap/playbook-10-contrato-respostas-api-delpi.md`](../../../minha-delpi-ai-api/docs/roadmap/playbook-10-contrato-respostas-api-delpi.md)
+[`minha-delpi-ai-api/docs/roadmap/archive/playbooks/playbook-10-contrato-respostas-api-delpi.md`](../../../minha-delpi-ai-api/docs/roadmap/archive/playbooks/playbook-10-contrato-respostas-api-delpi.md)
 
 **Fase 0 (inventário + fixtures):**
 

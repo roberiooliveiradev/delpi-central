@@ -6,7 +6,7 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 
 | Entrega | Detalhe |
 |---------|---------|
-| Playbook | [`playbook-especialista-editor-textos.md`](../roadmap/playbook-especialista-editor-textos.md) marcado **Concluído** (Fases 1–7, §49) |
+| Playbook | [`playbook-especialista-editor-textos.md`](../roadmap/archive/playbooks/playbook-especialista-editor-textos.md) marcado **Concluído** (Fases 1–7, §49) |
 | Preferências §20 | `ChatTextTaskPreferenceService` persistente («de agora em diante», merge por turno) |
 | Intenções | `text.extract_decisions`, subtipos FAQ/glossário/release notes/procedimento, tom §19 |
 | Admin §47 | Feedback textual agregado em `text-tasks/summary` + `AdminTextTaskMetrics` |

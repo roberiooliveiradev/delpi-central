@@ -2,8 +2,8 @@
 
 ## Documentação
 
-- Playbook: [playbook-12-apresentacao-declarativa-refatoracao.md](../roadmap/playbook-12-apresentacao-declarativa-refatoracao.md)
-- Segunda onda de generalização do pipeline de apresentação (pós onda 1 em [apresentacao-dados-generalizada-jun2026.md](../roadmap/apresentacao-dados-generalizada-jun2026.md))
+- Playbook: [playbook-12-apresentacao-declarativa-refatoracao.md](../roadmap/archive/playbooks/playbook-12-apresentacao-declarativa-refatoracao.md)
+- Segunda onda de generalização do pipeline de apresentação (pós onda 1 em [apresentacao-dados-generalizada-jun2026.md](../roadmap/archive/misc/apresentacao-dados-generalizada-jun2026.md))
 
 ## Fase R0 — baseline e inventário
 
