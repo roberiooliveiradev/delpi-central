@@ -263,31 +263,11 @@ class ChatOperationalResponseProfileService:
 
     @classmethod
     def is_no_chart_route(cls, entity: str | None, path: str) -> bool:
+        """F2 — no-chart authority is entity-only (noChartEntities)."""
         from app.domain.services.chat_presentation_profile_service import (
             ChatPresentationProfileService,
         )
 
-        if ChatPresentationProfileService.is_no_chart_entity(entity):
-            return True
-
-        lowered = str(path or "").lower()
-
-        return any(
-            fragment in lowered
-            for fragment in (
-                "/suppliers",
-                "/customers",
-                "/structure",
-                "/parents",
-                "/guide",
-                "/inspection",
-                "/search",
-                "/purchases",
-                "/sales",
-                "/internal-movements",
-                "/inbound-invoice",
-                "/outbound-invoice",
-                "/prices",
-            )
-        )
+        del path  # path fragments retired; callers may still pass path for API parity
+        return ChatPresentationProfileService.is_no_chart_entity(entity)
 

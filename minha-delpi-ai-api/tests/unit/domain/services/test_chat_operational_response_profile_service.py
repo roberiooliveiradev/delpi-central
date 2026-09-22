@@ -171,3 +171,8 @@ def test_entity_or_path_matches_and_no_chart_route() -> None:
         "supplies_cpv",
         "/supplies/cpv",
     )
+    # F2 — path alone is not no-chart authority
+    assert not ChatOperationalResponseProfileService.is_no_chart_route(
+        None,
+        "/products/1/structure",
+    )

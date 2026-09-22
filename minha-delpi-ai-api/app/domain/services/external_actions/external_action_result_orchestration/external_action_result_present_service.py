@@ -95,9 +95,13 @@ class ExternalActionResultPresentService:
 
                 rows = root.get("rows") if isinstance(root.get("rows"), list) else None
 
-                if rows is None and (
-                    ExternalActionSqlCapabilityService.is_sql_execution_context(path=path)
-                    or ExternalActionSqlCapabilityService.is_sql_result_payload(root)
+                # F2 — payload/shape first; path markers only as capability fallback.
+                if rows is None and ExternalActionSqlCapabilityService.is_sql_result_payload(
+                    root
+                ):
+                    rows = host._sql()._coerce_sql_row_list(root)
+                elif rows is None and ExternalActionSqlCapabilityService.is_sql_execution_context(
+                    path=path
                 ):
                     rows = host._sql()._coerce_sql_row_list(root)
 

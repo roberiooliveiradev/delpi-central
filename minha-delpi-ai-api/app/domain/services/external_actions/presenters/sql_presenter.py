@@ -148,8 +148,8 @@ class ExternalActionSqlPresenter:
                     "titleTodayFallback",
                 )
 
-            if ExternalActionSqlCapabilityService.is_sql_execution_context(path=path) or (
-                ExternalActionSqlCapabilityService.is_sql_result_payload(root)
+            if ExternalActionSqlCapabilityService.is_sql_result_payload(root) or (
+                ExternalActionSqlCapabilityService.is_sql_execution_context(path=path)
             ):
                 return ExternalActionResponseContentService.get("sql", "defaultTitle")
 
@@ -171,8 +171,8 @@ class ExternalActionSqlPresenter:
                     "emptyTodayFallback",
                 )
 
-            if ExternalActionSqlCapabilityService.is_sql_execution_context(path=path) or (
-                ExternalActionSqlCapabilityService.is_sql_result_payload(root)
+            if ExternalActionSqlCapabilityService.is_sql_result_payload(root) or (
+                ExternalActionSqlCapabilityService.is_sql_execution_context(path=path)
             ):
                 total = root.get("total_resultsets")
 

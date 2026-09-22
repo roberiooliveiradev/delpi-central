@@ -160,7 +160,9 @@ flowchart TB
   CatalogPath --> ExecOK[executor_JWT]
 ```
 
-**F1 (2026-09-22):** cutover de autoridade de seleção concluído. ActionId user-facing = OpenAPI-first (`OpenApiFirstSelectionBridgeService` / `ExternalActionSelectionService`). Registry/`OperationalRoute*`/`customPredicate` de rota / selectors path-OID / follow-up `preferredRouteId`/`routeSegment` **não** são mais autoridade de seleção. Residuais de apresentação path-aware permanecem em **F2**.
+**F1 (2026-09-22):** cutover de autoridade de seleção concluído. ActionId user-facing = OpenAPI-first (`OpenApiFirstSelectionBridgeService` / `ExternalActionSelectionService`). Registry/`OperationalRoute*`/`customPredicate` de rota / selectors path-OID / follow-up `preferredRouteId`/`routeSegment` **não** são mais autoridade de seleção.
+
+**F2 (2026-09-22):** apresentação schema-first — KPI/no-chart sem path tokens; `column_labels.operationIdContains` casa OID real (senão keys-only); SQL present prefere payload; `entityPathHints` = FALLBACK.
 
 ### 3.3 Alvo (desenho — epics F2–F5)
 
@@ -195,21 +197,21 @@ Legenda: **VIVO** = afeta runtime/content; **SHADOW** = observe/compare sem auth
 | `pathContains` residual em **seleção**/priorização | prioritization `apply()` noop; group-by path match → None | **RETIRADO** *(F1)* | Presenters path = F2 |
 | `routeSegment` / `preferredRouteId` follow-up | `operational_follow_up_routing.json`; APIs retornam `None` | **RETIRADO** *(F1)* | Continuidade via `follow_up_type` + grants |
 | `paginatedPathFragments` | registry vocabulary vazio; pagination por params/coverage | **RETIRADO** *(F1)* | |
-| Presenters KPI/SQL path-aware | `presenters/kpi_chart/*`, `presenters/sql_presenter.py` | **VIVO** | **F2** |
-| Profile `entityPathHints` | `chat_presentation_profile_path_service.py`; `presentation_profiles.json` | **VIVO** | **F2** |
+| Presenters KPI/SQL path-aware | `presenters/kpi_chart/*`, `presenters/sql_presenter.py` | **RETIRADO** *(F2)* | KPI = entity/shape; SQL present = payload first; path markers só capability |
+| Profile `entityPathHints` | `chat_presentation_profile_path_service.py`; `presentation_profiles.json` | **FALLBACK** *(F2)* | `meta.entity` first; hints só sem entity; `entityPathHintsAuthority=false` |
 | Gate `if path` no motor genérico | `scripts/audit_presentation_path_ifs.py` → 0 | **RETIRADO** | Não reabrir condicionais no core |
 | TV Copilot / mutation tools no Chat | skill flag stripped; `/data/copilot/*` 410 | **RETIRADO** | Substituído por handoff VISTA |
 | Handoff TV→VISTA | `chat_tv_dashboard_handoff_service.py`; `tv_dashboard_handoff.json` | **VIVO** *(padrão correto)* | Direct answer; zero mutation tool |
 | Skills tipadas restantes | `chat_skill_registry.py` (sql, drawing, document-vision, PAC, …) | **VIVO** | Flags/policies; não recriar skill de mutação TV |
 | S2S como execute user-facing | internals suggest/sync only; gateway `user_token` | **RETIRADO** | S2S ≠ autoridade de action do usuário |
-| Selectors `operationIdContains*` de **seleção** | `siblingDisambiguation=[]`; group-by JSON scrub | **RETIRADO** *(F1)* | `column_labels.operationIdContains` = **F2** |
+| Selectors `operationIdContains*` de **seleção** | `siblingDisambiguation=[]`; group-by JSON scrub | **RETIRADO** *(F1)* | `column_labels.operationIdContains` casa **OID real** ou keys-only *(F2)* |
 | Hardcode `operationId` em skill policy | `quality-action-plans-delpi-skill.md`, `drawing-analysis-delpi-skill.md` | **VIVO** | Enumeração em policy de skill (fora do planner universal) |
 | Planner enumerando rotas no prompt | `openapi_tool_routing.json` — “Never invent operationIds outside the catalog” | **RETIRADO** *(anti-padrão)* | Comportamento correto; preservar |
 | Mirror CI `autoTierCRoutes` | lint demoted to warnings (non-authority) | **SHADOW**/CI | Drift de cobertura; não authority user-facing |
 | Fast-path `intentBinding` registry | `ChatOperationalIntentFastPathService` — elegibilidade canônica sem registry list | **RETIRADO** *(F1)* | |
 | Copiar façade gpt-actions / Instructions para o Chat | — | **PROIBIDO** | Alinhar por link; nunca por cópia |
 
-Evidence histórica (não autoridade): [`../roadmap/llm-json-decoupling/`](../roadmap/llm-json-decoupling/) — J-R8 OID paralelo ✅. Gate residual F1: `tests/unit/application/services/test_f1_residual_selection_authority.py`.
+Evidence histórica (não autoridade): [`../roadmap/llm-json-decoupling/`](../roadmap/llm-json-decoupling/) — J-R8 OID paralelo ✅. Gate residual F1: `tests/unit/application/services/test_f1_residual_selection_authority.py`. Gate residual F2: `tests/unit/domain/services/test_f2_residual_presentation_authority.py`.
 
 ---
 
@@ -273,7 +275,7 @@ Pré-condição de cada epic: este playbook aprovado como referência. **Não ex
 | Epic futuro | Objetivo | DoD sugerido |
 |-------------|----------|--------------|
 | **F1 Cutover authority** | Registry/selectors deixam de selecionar; shadow só observe ou remove | **ATENDIDO (2026-09-22)** — seleção user-facing catalog/retrieval/planner; residual gate `test_f1_residual_selection_authority.py` |
-| **F2 Presentation schema-first** | Remover heurísticas path em KPI/SQL/profile hints que forem autoridade | Presenter genérico + schema; audit path-ifs continua 0; residual search |
+| **F2 Presentation schema-first** | Remover heurísticas path em KPI/SQL/profile hints que forem autoridade | **ATENDIDO (2026-09-22)** — entity/shape + payload; `entityPathHints` FALLBACK; gate `test_f2_residual_presentation_authority.py` |
 | **F3 Writes + handoff** | Confirmation uniforme; matriz §5 aplicada | Write sem confirm = FAIL; TV continua handoff; sem mutation tool TV |
 | **F4 Evals** | R1–R11 + smoke provider OpenAPI-only (API nunca vista) | Baseline×candidate; R9 outcome; sem dimensão INCONCLUSIVE em release |
 | **F5 CI anti-reintrodução** | Gate residual: registry predicates novos, pathContains, selector por provider | CI vermelho ao reintroduzir anti-padrão **VIVO** listado |

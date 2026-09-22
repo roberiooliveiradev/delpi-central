@@ -2,21 +2,8 @@
 
 from __future__ import annotations
 
-NO_CHART_PATHS = (
-        "/suppliers",
-        "/customers",
-        "/structure",
-        "/parents",
-        "/guide",
-        "/inspection",
-        "/search",
-        "/purchases",
-        "/sales",
-        "/internal-movements",
-        "/inbound-invoice",
-        "/outbound-invoice",
-        "/prices",
-    )
+# F2 — path fragment no-chart authority retired; use noChartEntities / is_no_chart_entity.
+NO_CHART_PATHS: tuple[str, ...] = ()
 
 CHART_WORTHY_NUMERIC_KEYS = {
         "quantity",

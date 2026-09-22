@@ -1988,6 +1988,11 @@
   },
   "cleanupMeta": {
     "pathRulesDeletedAt": "E10.S4",
-    "pathRulesCountRemoved": 49
+    "pathRulesCountRemoved": 49,
+    "entityPathHintsAuthority": false,
+    "entityPathHintsFallbackOnlyAt": "F2",
+    "kpiPathTokenAuthorityRemovedAt": "F2",
+    "noChartPathFragmentAuthorityRemovedAt": "F2",
+    "columnLabelsOperationIdPathHaystackRemovedAt": "F2"
   }
 }

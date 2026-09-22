@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "step": "F2.E0",
+  "program": "chat-openapi-first-refactor",
+  "epic": "F2",
+  "evaluatedAt": "2026-09-22",
+  "note": "Pre/post F2 freeze. AUTHORITY items must become RETIRED or FALLBACK-only. Cold schema-driven path preserved.",
+  "coldPathPreserved": [
+    "app/domain/services/chat_schema_driven_presentation_service.py",
+    "app/domain/services/openapi_presentation_profile_deriver_service.py",
+    "scripts/audit_presentation_path_ifs.py"
+  ],
+  "items": [
+    {
+      "id": "kpi_path_token_detection",
+      "surface": "kpi_chart_detection_service.looks_like_kpi_response path token list",
+      "preStatus": "AUTHORITY",
+      "postStatus": "RETIRED",
+      "owner": "entity (kpiPresent) + payload shape"
+    },
+    {
+      "id": "no_chart_path_fragments",
+      "surface": "is_no_chart_route path fragment tuple + NO_CHART_PATHS",
+      "preStatus": "AUTHORITY",
+      "postStatus": "RETIRED",
+      "owner": "noChartEntities / is_no_chart_entity"
+    },
+    {
+      "id": "column_labels_operationIdContains_on_path",
+      "surface": "column_labels._profile_matches matches operationIdContains against path",
+      "preStatus": "AUTHORITY",
+      "postStatus": "RETIRED",
+      "owner": "operationId real or keys-only detect"
+    },
+    {
+      "id": "sql_presentation_path_before_payload",
+      "surface": "present/sql title/empty prefer path markers over is_sql_result_payload",
+      "preStatus": "AUTHORITY",
+      "postStatus": "RETIRED",
+      "owner": "is_sql_result_payload first; path = capability fallback only"
+    },
+    {
+      "id": "entityPathHints",
+      "surface": "presentation_profiles.entityPathHints + resolve_entity_from_path",
+      "preStatus": "AUTHORITY",
+      "postStatus": "FALLBACK",
+      "owner": "meta.entity first; path hints only when entity absent"
+    },
+    {
+      "id": "sql_capability_selection_path_markers",
+      "surface": "ExternalActionSqlCapabilityService.is_sql_execution_action path markers",
+      "preStatus": "AUTHORITY",
+      "postStatus": "KEEP_SELECTION",
+      "note": "Action capability scoring — out of F2 presentation scope"
+    },
+    {
+      "id": "audit_presentation_path_ifs",
+      "surface": "scripts/audit_presentation_path_ifs.py --check",
+      "preStatus": "RETIRED",
+      "postStatus": "RETIRED",
+      "note": "Must stay 0"
+    }
+  ]
+}

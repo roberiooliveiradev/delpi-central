@@ -23,6 +23,7 @@ class ChatPresentationTableProfileInferenceService:
         entity: str | None = None,
         sample_row: dict[str, Any] | None = None,
         column_labels: ExternalActionColumnLabelService | None = None,
+        operation_id: str = "",
     ) -> str | None:
         token = str(entity or "").strip()
 
@@ -35,7 +36,11 @@ class ChatPresentationTableProfileInferenceService:
         labels = column_labels or ExternalActionColumnLabelService()
 
         if isinstance(sample_row, dict) and sample_row:
-            detected = labels.detect_table_profile(sample_row, path=path)
+            detected = labels.detect_table_profile(
+                sample_row,
+                path=path,
+                operation_id=operation_id,
+            )
 
             if detected:
                 return detected

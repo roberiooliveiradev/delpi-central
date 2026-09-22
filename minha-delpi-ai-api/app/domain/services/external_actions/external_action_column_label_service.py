@@ -849,7 +849,13 @@ class ExternalActionColumnLabelService:
 
         return formats
 
-    def detect_table_profile(self, row: dict, *, path: str = "") -> str | None:
+    def detect_table_profile(
+        self,
+        row: dict,
+        *,
+        path: str = "",
+        operation_id: str = "",
+    ) -> str | None:
         if not isinstance(row, dict):
             return None
 
@@ -857,6 +863,7 @@ class ExternalActionColumnLabelService:
         profiles = content.get("tableProfiles") or {}
         priority = content.get("profilePriority") or list(profiles.keys())
         lowered_path = str(path or "").lower()
+        operation_token = str(operation_id or "").strip()
 
         for profile_name in priority:
             profile = profiles.get(profile_name)
@@ -866,7 +873,12 @@ class ExternalActionColumnLabelService:
 
             detect = profile.get("detect") or {}
 
-            if not self._profile_matches(row, detect, lowered_path):
+            if not self._profile_matches(
+                row,
+                detect,
+                lowered_path,
+                operation_id=operation_token,
+            ):
                 continue
 
             return str(profile_name)
@@ -1005,6 +1017,7 @@ class ExternalActionColumnLabelService:
         schema_labels: dict[str, str] | None = None,
         schema_formats: dict[str, str] | None = None,
         skip_keys: frozenset[str] | None = None,
+        operation_id: str = "",
     ) -> list[dict[str, str]]:
         dict_items = [item for item in items if isinstance(item, dict)]
 
@@ -1029,7 +1042,11 @@ class ExternalActionColumnLabelService:
         resolved_profile = profile_name
 
         if not resolved_profile:
-            resolved_profile = self.detect_table_profile(dict_items[0], path=path)
+            resolved_profile = self.detect_table_profile(
+                dict_items[0],
+                path=path,
+                operation_id=operation_id,
+            )
 
         label_hints_profile = resolved_profile
         ordered_keys = self.order_keys_with_preferred_hints(
@@ -1065,6 +1082,8 @@ class ExternalActionColumnLabelService:
         row: dict,
         detect: dict,
         lowered_path: str,
+        *,
+        operation_id: str = "",
     ) -> bool:
         path_contains = detect.get("pathContains") or []
         operation_tokens = detect.get("operationIdContains") or []
@@ -1072,14 +1091,17 @@ class ExternalActionColumnLabelService:
         if path_contains and not any(token in lowered_path for token in path_contains):
             return False
 
+        # F2 — operationIdContains matches real operationId only; never path haystack.
+        # Without operationId, fall through to key/shape detect (keys-only).
         if operation_tokens:
-            hay = lowered_path.replace("-", "_")
-            if not any(
-                str(token).strip().lower().replace("-", "_") in hay
-                for token in operation_tokens
-                if str(token or "").strip()
-            ):
-                return False
+            oid = str(operation_id or "").strip().lower().replace("-", "_")
+            if oid:
+                if not any(
+                    str(token).strip().lower().replace("-", "_") in oid
+                    for token in operation_tokens
+                    if str(token or "").strip()
+                ):
+                    return False
 
         any_keys = detect.get("anyKeys") or []
 

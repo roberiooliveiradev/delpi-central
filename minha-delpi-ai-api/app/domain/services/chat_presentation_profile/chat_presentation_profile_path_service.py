@@ -168,6 +168,7 @@ class ChatPresentationProfilePathService:
 
     @classmethod
     def resolve_entity_from_path(cls, path: str | None) -> str | None:
+        """F2 — FALLBACK only: invent entity from path when meta.entity is absent."""
         lowered = presentation_profile_service().path_lowered(path).rstrip("/")
 
         if not lowered:

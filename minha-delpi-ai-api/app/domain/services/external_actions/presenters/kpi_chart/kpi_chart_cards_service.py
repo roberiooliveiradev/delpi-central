@@ -13,7 +13,6 @@ from app.domain.services.chat_presentation_profile_service import (
 )
 from app.domain.services.external_actions.presenters.kpi_chart.kpi_chart_constants import (
     CHART_WORTHY_NUMERIC_KEYS,
-    NO_CHART_PATHS,
 )
 
 if TYPE_CHECKING:

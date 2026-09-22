@@ -151,7 +151,7 @@ class ChatPresentationProfileResolveService:
         if not shape_token and isinstance(delpi_metadata, dict):
             shape_token = str(delpi_metadata.get("shape") or "").strip() or None
 
-        # E7.S4 — path-only: resolver entity do path antes do shape OpenAPI.
+        # F2 — entityPathHints are FALLBACK only when meta.entity is absent.
         if not entity_token and path:
             entity_token = (
                 presentation_profile_service().resolve_entity_from_path(path) or None
@@ -184,14 +184,7 @@ class ChatPresentationProfileResolveService:
 
             return presentation_profile_service()._stamp_openapi_presentation_strategy(profile, delpi_metadata)
 
-        # Fallback pathRules: entidade OpenAPI sem shape ainda mapeia listagens
-        # (ex.: /production/schedule/today → playbook_report) em vez de generic.
-        if key == "generic" and path:
-            path_key = presentation_profile_service().resolve_profile_key(path, None)
-
-            if path_key and path_key != "generic":
-                key = path_key
-
+        # F2 — pathRules retired (count=0); do not reintroduce path-only profile key.
         merged = dict(presentation_profile_service().node("defaults") or {})
         merged.update(cls.profile(key))
         merged["profileKey"] = key

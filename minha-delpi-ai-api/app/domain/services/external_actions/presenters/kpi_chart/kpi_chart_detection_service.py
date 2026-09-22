@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import re
 from typing import TYPE_CHECKING, Any
 
 from app.domain.services.chat_operational_response_profile_service import (
@@ -12,8 +11,6 @@ from app.domain.services.chat_presentation_profile_service import (
     ChatPresentationProfileService,
 )
 from app.domain.services.external_actions.presenters.kpi_chart.kpi_chart_constants import (
-    CHART_WORTHY_NUMERIC_KEYS,
-    NO_CHART_PATHS,
     SERIES_LIST_KEYS,
 )
 
@@ -21,7 +18,6 @@ if TYPE_CHECKING:
     from app.domain.services.external_actions.presenters.kpi_chart_presenter import (
         ExternalActionKpiChartPresenter,
     )
-
 
 
 class ExternalActionKpiChartDetectionService:
@@ -33,6 +29,9 @@ class ExternalActionKpiChartDetectionService:
         *,
         entity: str | None = None,
     ) -> bool:
+        """F2 — entity/shape authority; path tokens are not authority."""
+        del presenter  # host reserved for parity with other kpi delegates
+
         if not isinstance(root, dict):
             return False
 
@@ -40,35 +39,6 @@ class ExternalActionKpiChartDetectionService:
             return False
 
         if entity and ChatOperationalResponseProfileService.is_kpi_entity(entity):
-            return True
-
-        kpi_paths = (
-            "cpv",
-            "otd",
-            "inventory-turnover",
-            "stock-value",
-            "giro",
-            "turnover",
-            "kpi",
-            "indicator",
-            "snapshot",
-            "ebitda",
-            "pmr",
-            "pdi",
-            "completion",
-            "closing-rate",
-            "new-clients",
-            "new-business",
-            "depreciation",
-            "labor_cost",
-            "production_cost",
-            "effectiveness",
-            "delivery",
-            "/rol",
-            "rol/",
-        )
-
-        if any(token in path for token in kpi_paths):
             return True
 
         kpi_keys = ("value", "percentage", "current", "previous", "target", "meta")
@@ -98,4 +68,3 @@ class ExternalActionKpiChartDetectionService:
                 return True
 
         return False
-
