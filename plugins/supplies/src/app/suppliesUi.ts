@@ -37,6 +37,7 @@ import {
   createDashboardTopBarSearchTrigger,
   createDashboardTopBarFavoritesStrip,
   createDashboardTopBarUtilityCluster,
+  createDashboardTopBarUserIdentity,
   createDashboardUserManual,
   createDashboardViewTransition,
   createFilterBarShell,
@@ -88,6 +89,9 @@ export const SuppliesTopBarUtilityCluster = createDashboardTopBarUtilityCluster(
 export const SuppliesTopBarFavoritesStrip = createDashboardTopBarFavoritesStrip({
   prefix: UI_PREFIX,
   portalScopeClassName: SP_PORTAL_SCOPE,
+});
+export const SuppliesTopBarUserIdentity = createDashboardTopBarUserIdentity({
+  prefix: UI_PREFIX,
 });
 export const SuppliesUserManual = createDashboardUserManual({ prefix: UI_PREFIX });
 export const SuppliesCommandPalette = createDashboardCommandPalette({

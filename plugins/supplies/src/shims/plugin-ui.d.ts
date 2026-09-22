@@ -174,6 +174,21 @@ declare module "@delpi/plugin-ui/index" {
     count?: number;
   }>;
 
+  export function createDashboardTopBarUserIdentity(config: {
+    prefix: string;
+  }): ComponentType<{
+    displayName: string | null;
+    fallbackLabel?: string;
+    avatarUrl?: string | null;
+    loading?: boolean;
+    href?: string;
+    onNavigate?: (event: unknown) => void;
+    title?: string;
+    ariaLabel?: string;
+    portalScopeClassName?: string;
+    className?: string;
+  }>;
+
   export type DashboardUserManualKit = {
     classNames: {
       intro: string;

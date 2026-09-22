@@ -37,7 +37,7 @@ describe("PluginShell TopBar collapse", () => {
     expect(slots).toMatch(/SuppliesTopBarSearchTrigger/);
     expect(slots).toMatch(/ShellFavoritesStrip/);
     expect(slots).toMatch(/searchTriggerRef/);
-    expect(slots).toMatch(/sp-shell-user/);
+    expect(slots).toMatch(/SuppliesTopBarUserIdentity/);
     expect(slots).toMatch(/buildUserProfilePath/);
   });
 

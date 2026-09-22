@@ -12,8 +12,8 @@ import { ShellFavoritesStrip } from "./ShellFavoritesStrip";
 import { useSuppliesSession } from "./SuppliesSessionContext";
 import { useMyPersonProfile } from "./useMyPersonProfile";
 import {
-  SuppliesAvatar,
   SuppliesTopBarSearchTrigger,
+  SuppliesTopBarUserIdentity,
   SuppliesTopBarUtilityCluster,
 } from "./suppliesUi";
 
@@ -52,53 +52,56 @@ type ShellTopBarActionsProps = {
 };
 
 /**
- * Slot actions — avatar+nome → perfil self.
+ * Slot actions — avatar+nome → perfil self (chrome shared TopBarUserIdentity).
  * Foto vem da Core (person-profile); prefs do Portal ficam em /users/:id.
- * Ajuda fica só na nav; coexistência fica no Manual (padrão Comercial).
  */
 export function ShellTopBarActions({ basePath }: ShellTopBarActionsProps) {
   const session = useSuppliesSession();
   const [displayName, setDisplayName] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   const { photoUrl } = useMyPersonProfile(Boolean(session.userId));
 
   useEffect(() => {
     const controller = new AbortController();
+    setLoading(true);
     void fetchMeProfile(controller.signal)
-      .then((profile) => setDisplayName(profile.name || null))
+      .then((profile) => {
+        if (!controller.signal.aborted) {
+          setDisplayName(profile.name || null);
+          setLoading(false);
+        }
+      })
       .catch(() => {
-        if (!controller.signal.aborted) setDisplayName(null);
+        if (!controller.signal.aborted) {
+          setDisplayName(null);
+          setLoading(false);
+        }
       });
     return () => controller.abort();
   }, []);
 
   const userId = session.userId;
+  if (!userId) return null;
+
+  const href = buildUserProfilePath(userId, basePath, buildSelfProfileSearch(basePath));
   const label =
     (displayName || "").trim() ||
     firstNameFromDisplay(displayName) ||
     SHELL_NAV_CONTENT.userMenu.nameFallback;
-  const href = userId
-    ? buildUserProfilePath(userId, basePath, buildSelfProfileSearch(basePath))
-    : undefined;
 
   return (
     <div className="sp-shell-actions">
-      {href ? (
-        <a
-          className="sp-shell-user"
-          href={href}
-          title={SHELL_NAV_CONTENT.userMenu.profileTitle}
-          aria-label={SHELL_NAV_CONTENT.userMenu.profileAriaLabel}
-          onClick={(event) => {
-            if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-            if (event.button !== 0) return;
-            event.preventDefault();
-            navigatePluginPath(href);
-          }}
-        >
-          <SuppliesAvatar name={label} src={photoUrl} size="sm" />
-          <span className="sp-shell-user__name delpi-ui-topbar-collapse-label">{label}</span>
-        </a>
-      ) : null}
+      <SuppliesTopBarUserIdentity
+        displayName={displayName}
+        fallbackLabel={SHELL_NAV_CONTENT.userMenu.nameFallback}
+        avatarUrl={photoUrl}
+        loading={loading}
+        href={href}
+        title={SHELL_NAV_CONTENT.userMenu.profileTitle}
+        ariaLabel={SHELL_NAV_CONTENT.userMenu.profileAriaLabel}
+        portalScopeClassName="dashboard-supplies-portal"
+        onNavigate={() => navigatePluginPath(href)}
+      />
     </div>
   );
 }
