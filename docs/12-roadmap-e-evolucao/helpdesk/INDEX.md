@@ -7,7 +7,7 @@ Entrada: [`README.md`](./README.md).
 1. Instruções oficiais e regras `.cursor` da plataforma — autoridade superior a esta pasta.
 2. [`06-plano-execucao.md`](./06-plano-execucao.md) — ordem `E1…E5` (primeira entrega, não reabrir).
 2b. [`16-plano-paridade.md`](./16-plano-paridade.md) — ordem `E6…E13` (paridade do solicitante, **concluída**).
-2c. [`evidence/e14-mentions.md`](./evidence/e14-mentions.md) — menção leitura (M-07); M-23 park.
+2c. [`evidence/e14-mentions.md`](./evidence/e14-mentions.md) — menção leitura (M-07) + escrita M-23 **PROVEN**.
 3. [`02-arquitetura.md`](./02-arquitetura.md) — ownership e estado `PROVEN`.
 4. [`03-contrato.md`](./03-contrato.md) — contrato do BFF e mapa para a HLAPI.
 5. [`04-seguranca.md`](./04-seguranca.md) — OAuth, sessão e segredos.
@@ -39,7 +39,7 @@ a página e os estados?      → 14 (detalhe do solicitante + ciclo ITIL)
 o que o GLPI tem além disso? → 15 (matriz Assistência)
 onde fica o segredo?        → 04
 ondas do produto?           → 05 (H0…H14)
-o que implementar agora?    → residual bancada FORA; HLAPI nativa H10 quando upstream existir
+o que implementar agora?    → residual bancada FORA; H13 OR/export/massa CONSOLE; HLAPI nativa de solução/satisfação quando upstream existir
 qual HD?                    → 07
 como fechar a etapa?        → 08 e 09
 já está em produção?        → evidence/execution-ledger

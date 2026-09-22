@@ -40,6 +40,15 @@ Flags no detalhe (backend-first): `can_accept_solution`, `can_reject_solution`, 
 - Formulário de satisfação 1–5 quando `can_submit_satisfaction` (status 6).
 - CTA «Abrir no helpdesk» permanece para aprovação (status 10) e fallback sem capability.
 
+## Aprovação (TicketValidation) — HLAPI nativa
+
+| Operação BFF | HLAPI | Prova live |
+|---|---|---|
+| `POST /tickets/{id}/validations/{vid}/accept` | `PATCH …/Timeline/Validation/{vid}` status **3** | ticket **1145** val **5** |
+| `POST /tickets/{id}/validations/{vid}/reject` | status **4** | sibling no mesmo path |
+
+Flags: `validations[]`, `can_decide_validation` / `mine_to_decide` quando `requested_approver_id` = viewer e status waiting (**2**).
+
 ## Fora
 
 Bancada / Change / Problem / `helpdesk.console` / HD-011.

@@ -35,7 +35,7 @@ O recorte não mudou: colaborador achar, abrir e acompanhar o **próprio** chama
 | Kit de anexo «o helpdesk não importa» | importa em `helpdeskUi.tsx` | [`11`](./11-lacunas-da-experiencia.md) §3.2 |
 | `mine` pelo nome | id GLPI ou e-mail | [`11`](./11-lacunas-da-experiencia.md) C-01 |
 | L-01…L-11 ainda por medir | paginação e filtros **publicados**; H2 da lista velha está morto | [`11`](./11-lacunas-da-experiencia.md) §6 |
-| H5 = «listar e baixar anexo» | baixar **já publicado**; envio = **H12 PROVEN**; satisfação/bancada = H10/CONSOLE | [`05`](./05-roadmap.md) |
+| H5 = «listar e baixar anexo» | baixar **já publicado**; envio = **H12 PROVEN**; ciclo write = **H10 PROVEN**; bancada = FORA | [`05`](./05-roadmap.md) |
 | Data de solução = só bancada | coluna útil ao solicitante; alvo no 13 | [`11`](./11-lacunas-da-experiencia.md) §7 |
 | Pasta não prova que a API existe | MFE e BFF estão publicados; o ledger prova runtime | [`INDEX.md`](./INDEX.md) |
 
@@ -93,12 +93,12 @@ Doc: [Manage tickets](https://help.glpi-project.org/documentation/modules/assist
 | X-43 | Documento no follow-up | baixar + enviar **IMPLEMENTADOS** (H12); vínculo por bolha A-07 FORA |
 | X-44 | Motivo de pendência + lembretes | CONSOLE_GLPI — status Pendente no 14 |
 | X-45 | Tarefa (e tarefa planejada → status 3) | CONSOLE_GLPI |
-| X-46 | Solução + aprovação do solicitante | **CONSOLE** E10 — [`evidence/e10-cycle-console.md`](./evidence/e10-cycle-console.md) |
-| X-47 | Validação / etapas de aprovação | CONSOLE_GLPI |
+| X-46 | Solução + aprovação do solicitante | **PROVEN** H10 Branch B (legado) + leitura HLAPI — [`evidence/e10-cycle-console.md`](./evidence/e10-cycle-console.md) |
+| X-47 | Validação / etapas de aprovação | **PROVEN** HLAPI `Timeline/Validation` PATCH — BFF `validations/{id}/accept|reject` |
 | X-48 | Menção a usuário | **leitura + escrita IMPLEMENTADAS** (M-07 / M-23) |
 | X-49 | Excluir chamado Novo sem ação | CONSOLE_GLPI — [`14`](./14-pagina-e-estados-do-chamado.md) P-10 |
-| X-50 | Reabrir fechado | **CONSOLE** E10 — PATCH status 403 no Colaborador |
-| X-51 | Pesquisa de satisfação | **CONSOLE** E10 — sem path HLAPI |
+| X-50 | Reabrir fechado | **PROVEN** via `solution/reject` (add_reopen) — não PATCH Colaborador |
+| X-51 | Pesquisa de satisfação | **PROVEN** H10 Branch B (`TicketSatisfaction` legado; HLAPI ainda 404) |
 
 ## 6. Matriz — abas do formulário central
 
@@ -146,7 +146,7 @@ Estes não abrem etapa sozinhos. Só deixam de ser lacuna invisível.
 | X-13 | Observador na abertura | o GLPI simplificado deixa adicionar watcher | **IMPLEMENTADO** `observer_ids` → TeamMember |
 | X-28 | TTR visível | «até quando deve ser resolvido» | **IMPLEMENTADO** `sla_ttr` / `sla_tto` |
 | X-29 | Vínculo (duplicata / filho) | o solicitante vê que o 1101 é duplicata do 1090 | **FORA** (H-X4); criar vínculo CONSOLE |
-| X-46 | Aprovar solução | já era H5; permanece | **leitura** solução IMPLEMENTADA; aprovar/recusar **CONSOLE** (E10) |
+| X-46 | Aprovar solução | já era H5; permanece | **PROVEN** H10 Branch B (legado) — [`e10`](./evidence/e10-cycle-console.md) |
 | G-05 | Requerente na lista | mesmo rótulo do detalhe | **IMPLEMENTADO** `requester_display_name` |
 | H12 | Upload de anexo (Document-only) | solicitante cola/anexa na Minha DELPI | **PROVEN** live — [`05`](./05-roadmap.md) H12 |
 | M-23 | Menção `@` na escrita | compositor | **IMPLEMENTADO** — `RichTextEditor` + `GET /users` |
@@ -162,7 +162,7 @@ Não promover X-09 a tela de catálogo sem endpoint. Não copiar Formcreator/plu
 | H-X3 | **PROVEN** | lista e detalhe trazem `date_solve`, `date_close`, `sla_ttr.{id,name}`, `sla_tto.{id,name}`. Não há campo `time_to_resolve`. |
 | H-X4 | **FORA** | GET Ticket **não** inclui vínculos. Schema `Ticket_Ticket` existe; `GET /Assistance/Ticket_Ticket` = 404. |
 
-`TicketSatisfaction` existe no schema e **não** tem path (404). Solution e Validation **têm** `GET/POST …/Timeline/Solution` e `…/Validation`, mas **não** substituem o aceitar/recusar solução do solicitante na HLAPI atual — ver [`evidence/e10-cycle-console.md`](./evidence/e10-cycle-console.md).
+`TicketSatisfaction` **não** tem path HLAPI (404) — satisfação no BFF usa legado **PROVEN**. Solution write do solicitante também é legado. Validation **tem** `GET/PATCH …/Timeline/Validation` e o BFF expõe accept/reject — ver [`evidence/e10-cycle-console.md`](./evidence/e10-cycle-console.md).
 
 ## 10. O que este arquivo não faz
 

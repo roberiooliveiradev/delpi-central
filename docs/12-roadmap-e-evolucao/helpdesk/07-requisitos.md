@@ -4,7 +4,7 @@
 > **Primeira entrega:** [`06-plano-execucao.md`](./06-plano-execucao.md) `E1…E5`
 > **Paridade:** [`16-plano-paridade.md`](./16-plano-paridade.md) `E6…E13`
 
-`HD-001…HD-018` estão no produto publicado (H3 no ledger via E6.S0). `HD-019…HD-027` da paridade E6–E13 estão **entregues** (HD-024 CONSOLE; **HD-026 PROVEN** via exceção H12 Document-only). Menção leitura: E14 / M-07. Inventários 12–15 descrevem o estado vigente + o que permanece park.
+`HD-001…HD-018` estão no produto publicado (H3 no ledger via E6.S0). `HD-019…HD-027` da paridade E6–E13 estão **entregues** (**HD-024 PROVEN** H10 ciclo + Validation; **HD-026 PROVEN** via H12 Document + LEGACY_*). Menção leitura + escrita: E14 / M-07 / M-23. Inventários 12–15 descrevem o estado vigente + o que permanece park (bancada).
 
 | ID | Requisito | Decisão | Etapa | Prova |
 |---|---|---|---|---|
@@ -31,7 +31,7 @@
 | HD-021 | Leitura do corpo em HTML sanitizado (+ imagem se H6) | BFF allowlist + kit html | E8.S1, E8.S2, E8.S4 | [`12`](./12-conteudo-da-mensagem.md) |
 | HD-022 | Escrita rica (abrir e responder) | `RichTextEditor`; colar/clipe/redimensionar imagem (H12) | E8.S3 + H12 | [`12`](./12-conteudo-da-mensagem.md) |
 | HD-023 | Página: datas, `can_followup`, observador só leitura | detalhe | E9.S1 | [`14`](./14-pagina-e-estados-do-chamado.md) |
-| HD-024 | Aprovar/recusar solução, reabrir, satisfação | **CONSOLE** — sem operação HLAPI do solicitante | E10.S1 | [`evidence/e10-cycle-console.md`](./evidence/e10-cycle-console.md) |
+| HD-024 | Aprovar/recusar solução, reabrir, satisfação, validação | **PROVEN** — Branch B legado + TicketValidation HLAPI | E10/H10 | [`evidence/e10-cycle-console.md`](./evidence/e10-cycle-console.md) |
 | HD-025 | TTR, vínculo, Form, observer na abertura | TTR+observer **IMPLEMENTADOS**; Form/vínculo FORA | E11.S1 | [`15`](./15-capacidades-glpi.md) |
 | HD-026 | Upload de arquivo novo | **PROVEN** — `POST …/attachments` via apirest Document (exceção H12); HLAPI continua JSON-only | H12 | A-08 fechado por exceção |
 | HD-027 | Listagem dinâmica: modelo/colunas/toolbar agora; builder AND/OR e prefs depois | sem export/massa/mapa | E13.S1, E13.S2 | [`13`](./13-listagem-de-chamados.md) G-50…G-55 |
@@ -52,7 +52,7 @@ Não viram HD próprio:
 |---|---|
 | Anexo — envio de arquivo novo | **ATENDIDO** (HD-026 / H12) — Document via API legada; HLAPI continua sem multipart |
 | Anexo — listar e baixar os arquivos já ligados ao chamado | no detalhe, via `GET /tickets/{id}/attachments/{document_id}` |
-| Satisfação do solicitante | HD-024 — só com HLAPI |
+| Satisfação do solicitante | HD-024 — **PROVEN** via legado |
 | Fila técnica, mudança, problema, seletor de entidade | `FORA_DO_ESCOPO_COM_JUSTIFICATIVA` — console / HD-011 |
 | Corrigir o `entry` do iframe antes do MFE | `FORA_DO_ESCOPO_COM_JUSTIFICATIVA` — o iframe deixa de ser o produto em E4 |
-| API legada como caminho geral / `password` grant | proibido; H12 Document-only gated é a única exceção |
+| API legada como caminho geral / `password` grant | proibido; H12 Document + H10 ciclo gated é a exceção autorizada |

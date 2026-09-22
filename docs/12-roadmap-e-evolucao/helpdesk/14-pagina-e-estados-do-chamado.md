@@ -24,7 +24,7 @@ Dois fluxos distintos:
 | Página | o que a pessoa precisa ver além da bolha? |
 | Estado | quais status o GLPI tem e como a Minha DELPI os mostra e recorta? |
 
-Isto **estende** HD-009, HD-013, HD-015 e HD-016. Aprovar solução / reabrir / pesquisa = H10 write (CONSOLE até HLAPI; ponte UX «Abrir no helpdesk» já PROVEN) — [`05-roadmap.md`](./05-roadmap.md). Forms, TTR, vínculos e abas: [`15-capacidades-glpi.md`](./15-capacidades-glpi.md).
+Isto **estende** HD-009, HD-013, HD-015 e HD-016. Aprovar solução / reabrir / pesquisa = H10 write **PROVEN** (Branch B legado); TicketValidation = **PROVEN** (HLAPI) — [`05-roadmap.md`](./05-roadmap.md). Forms, TTR, vínculos e abas: [`15-capacidades-glpi.md`](./15-capacidades-glpi.md).
 
 ## 2. Fontes e grau de evidência
 
@@ -54,7 +54,7 @@ Três colunas + barra inferior. Interface **central**, não a simplificada.
 | Esquerda | Chamado, Estatísticas, Aprovações, Base de conhecimento, Itens, Custos, Projetos, Problemas, Mudanças, Contratos, Histórico, PDF | CONSOLE_GLPI |
 | Centro | abertura («Criado em … por …»), descrição | conversa — [`10`](./10-conversa-do-chamado.md) + [`12`](./12-conteudo-da-mensagem.md) |
 | Direita | Atores (requerente, observador, atribuído), Itens, Níveis de serviço, objetos relacionados | ler técnico/solicitante SIM; editar e o resto CONSOLE |
-| Responder ▾ | tarefa, solução, documento, aprovação | comentário público + documento H12 SIM; tarefa/solução/aprovação CONSOLE |
+| Responder ▾ | tarefa, solução, documento, aprovação | comentário público + documento H12 SIM; solução/satisfação/validação H10 **PROVEN**; tarefa CONSOLE |
 | Rodapé | excluir, salvar | CONSOLE — o MFE não edita o chamado |
 
 Na foto 1101 o atribuído está vazio e o status é Novo (ponto verde). Isso é estado válido: chamado recém-aberto, sem técnico.
@@ -233,7 +233,7 @@ GLPI Ticket.status {id, name}
 | Filtrar | [`13`](./13-listagem-de-chamados.md) | S-05, S-06 |
 | Conversar | detalhe | [`10`](./10-conversa-do-chamado.md) / [`12`](./12-conteudo-da-mensagem.md) |
 | Fechado sem resposta | detalhe | P-06 |
-| Aprovar / pesquisar | detalhe | H10 (CONSOLE + ponte UX) |
+| Aprovar / pesquisar | detalhe | H10 **PROVEN** (legado + Validation HLAPI) |
 | Console | host GLPI | abas da foto 1101 |
 | Ajuda | `helpTooltips.detail` | estados em português do GLPI, sem id técnico |
 
@@ -260,7 +260,7 @@ GLPI Ticket.status {id, name}
 | D-02 | Sete status fixos; `status_id` é a chave | doc lifecycle |
 | D-03 | Rótulo = `name` do GLPI; sem tabela PT no BFF | uma fonte |
 | D-04 | Sem PATCH de Ticket / status / atores | contrato atual |
-| D-05 | Aprovar, reabrir, satisfação = H10 (write CONSOLE; leitura/ponte PROVEN) | 05 |
+| D-05 | Aprovar, reabrir, satisfação = H10 **PROVEN**; Validation HLAPI **PROVEN** | 05 |
 | D-06 | Excluir Novo = console | P-10 |
 | D-07 | Tipo/prioridade/impacto fora | lifecycle + formulário só urgência |
 | D-08 | `open` não perde o 10 até existir `approval` | compat |
@@ -295,7 +295,7 @@ No mesmo entregável de código, sem path de API:
 
 | Tooltip | Alvo |
 |---|---|
-| `helpTooltips.detail` | o selo é o estado no helpdesk (novo, em atendimento, pendente, solucionado, fechado, aguardando aprovação). Responder some quando o chamado não aceita mais mensagem. Aprovar/reabrir/satisfação: console GLPI + ponte H10 (não H5 genérico) |
+| `helpTooltips.detail` | o selo é o estado no helpdesk (novo, em atendimento, pendente, solucionado, fechado, aguardando aprovação). Responder some quando o chamado não aceita mais mensagem. Aprovar/reabrir/satisfação/validação: **na Minha DELPI** (H10 PROVEN); CTA GLPI só residual |
 
 ## 13. O que este arquivo não faz
 

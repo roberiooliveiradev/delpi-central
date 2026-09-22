@@ -1,6 +1,6 @@
 # 11 — Lacunas da experiência
 
-> **Status:** inventário histórico. L-01…L-12, C-08 e G-05 **IMPLEMENTADOS**. A-08/H12 Document upload BFF **PROVEN**; **colar + F5 preview = PROVEN** (kit + IDB + HTML estável). Residuais: M-23 `@`, H10 ciclo write. Paridade: [`12`](./12-conteudo-da-mensagem.md)–[`15`](./15-capacidades-glpi.md). Não altera [`06-plano-execucao.md`](./06-plano-execucao.md).
+> **Status:** inventário histórico. L-01…L-12, C-08 e G-05 **IMPLEMENTADOS**. A-08/H12 Document upload BFF **PROVEN**; **colar + F5 preview = PROVEN**. **H10 ciclo write + TicketValidation PROVEN**. Residuais de produto: bancada FORA. Paridade: [`12`](./12-conteudo-da-mensagem.md)–[`15`](./15-capacidades-glpi.md). Não altera [`06-plano-execucao.md`](./06-plano-execucao.md).
 > **Tela publicada:** [`WIREFRAMES.md`](./WIREFRAMES.md).
 > **Conversa:** [`10-conversa-do-chamado.md`](./10-conversa-do-chamado.md).
 > **Contrato vigente:** [`03-contrato.md`](./03-contrato.md).
@@ -118,9 +118,9 @@ Já estavam no fatia H5→H10/bancada. Continuam fora desta onda, salvo decisão
 
 | ID | Lacuna | Estado |
 |---|---|---|
-| H-01 | Aprovar ou recusar solução | CONSOLE_GLPI / H10 write |
-| H-02 | Pesquisa de satisfação | H10 write |
-| H-03 | Fila, atribuição, tarefa, validação | CONSOLE_GLPI |
+| H-01 | Aprovar ou recusar solução | **IMPLEMENTADO** H10 Branch B |
+| H-02 | Pesquisa de satisfação | **IMPLEMENTADO** H10 Branch B |
+| H-03 | Fila, atribuição, tarefa, validação | atribuição + validação **IMPLEMENTADAS**; tarefa CONSOLE_GLPI |
 | H-04 | Mudança e problema | outro itemtype |
 | H-05 | Itens, custos, base de conhecimento, histórico, estatísticas | CONSOLE_GLPI |
 | H-06 | Seletor de entidade | HD-011 / FORA |
@@ -194,4 +194,4 @@ Ainda não é etapa. Quando for planejada, a prova mínima é:
 
 ## 9. Fora deste inventário como autorização
 
-Inventário histórico: L/C/G fechados; A-08/H12 **PROVEN** (Document-only). Não reabre API legada além de H12. Residuais: M-23, H10 write. Conversa: [`10`](./10-conversa-do-chamado.md). Listagem: [`13`](./13-listagem-de-chamados.md). Mensagem: [`12`](./12-conteudo-da-mensagem.md). Página: [`14`](./14-pagina-e-estados-do-chamado.md). Capacidades: [`15`](./15-capacidades-glpi.md).
+Inventário histórico: L/C/G fechados; A-08/H12 **PROVEN**; H10 ciclo + TicketValidation **PROVEN**. Residuais de produto: bancada FORA. Conversa: [`10`](./10-conversa-do-chamado.md). Listagem: [`13`](./13-listagem-de-chamados.md). Mensagem: [`12`](./12-conteudo-da-mensagem.md). Página: [`14`](./14-pagina-e-estados-do-chamado.md). Capacidades: [`15`](./15-capacidades-glpi.md).

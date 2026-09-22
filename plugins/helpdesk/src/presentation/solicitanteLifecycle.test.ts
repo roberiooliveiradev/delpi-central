@@ -10,6 +10,16 @@ describe("timelineHasSolution", () => {
 });
 
 describe("solicitanteLifecycleCue", () => {
+  it("validação pendente para mim tem prioridade", () => {
+    const cue = solicitanteLifecycleCue({
+      statusId: 10,
+      hasSolution: false,
+      canDecideValidation: true,
+    });
+    expect(cue?.id).toBe("approval_native");
+    expect(cue?.showValidationActions).toBe(true);
+  });
+
   it("capacidade nativa → ações no MFE", () => {
     const cue = solicitanteLifecycleCue({
       statusId: 5,

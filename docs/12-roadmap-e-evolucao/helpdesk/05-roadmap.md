@@ -15,13 +15,13 @@ H3  Abertura e acompanhamento              PROVEN
 H4  Tela nativa no lugar do iframe         PROVEN
 H6  Investigação HLAPI (gates)             PROVEN
 H7  Estados e lista do solicitante         ENTREGUE
-H8  Corpo rico da mensagem                 ENTREGUE  (menção leitura E14; @ escrita BLOQUEADA sem catálogo)
+H8  Corpo rico da mensagem                 ENTREGUE  (menção leitura E14; @ escrita M-23 PROVEN)
 H9  Página do chamado                      ENTREGUE
-H10 Solução, reabrir, satisfação           **PROVEN** Branch B (legado apirest; leitura HLAPI)
+H10 Solução, reabrir, satisfação           **PROVEN** Branch B (legado) + TicketValidation HLAPI
 H11 Condicionais (TTR, observer)           ENTREGUE  Forms e vínculo riscados (H6)
-H12 Upload de arquivo novo                 PROVEN live (Document-only + LEGACY_*)
+H12 Upload de arquivo novo                 PROVEN live (Document + ciclo H10 compartilham LEGACY_*)
 H13 Listagem dinâmica (modelo → builder)   ENTREGUE  AND builder + multi-sort + prefs + rodapé kit paginação (G-32e); OR/export/massa CONSOLE
-H14 Menções na conversa (leitura)          ENTREGUE  M-07 chips; M-23 park
+H14 Menções na conversa                    ENTREGUE  M-07 chips + M-23 escrita
 —   Bancada / outro itemtype / HD-011      FORA
 ```
 
@@ -38,7 +38,7 @@ Não entra, mesmo neste roadmap:
 | Formulário de três colunas, abas, Kanban, PDF, massa, export, saved search, mapa | console — [`15`](./15-capacidades-glpi.md) X-60…X-76, X-82 |
 | Mudança, problema, inventário, entidade, delegação, anônimo | FORA / HD-011 |
 | PATCH de status, tarefa, privado, excluir Novo | console — [`14`](./14-pagina-e-estados-do-chamado.md) |
-| API legada como caminho geral / `password` grant | proibido (exceção H12 Document-only) |
+| API legada como caminho geral / `password` grant | proibido (exceção H12 Document + H10 ciclo solicitante, gated) |
 | Filtrar 128 128 no browser | invariante |
 
 ## H0…H4 — Primeira entrega
@@ -89,7 +89,7 @@ Depende de H6 para imagem. Leitura HTML e escrita rica **não** dependem da imag
 | Rewrite de `document.send.php` + modal | 12 M-08 — **IMPLEMENTADO** (12-H1 PROVEN; P0 6288 FORA → 1108) | HD-021 |
 | Menção por `data-user-id` (chip na bolha) | 12 M-07 — **IMPLEMENTADO** E14 | HD-022 |
 | `@` no compositor | 12 M-23 — **IMPLEMENTADO** (RichTextEditor + GET /users) | HD-022 |
-| Colar imagem / upload | H12 — **PROVEN** live (exceção Document-only) | HD-026 |
+| Colar imagem / upload | H12 — **PROVEN** live (legado Document + LEGACY_*) | HD-026 |
 | Redimensionar imagem no compositor | plugin-ui `RichTextEditor` — **PROVEN** | HD-022 |
 
 ## H9 — Página do chamado
@@ -110,8 +110,9 @@ Ex-H5 que **é** do colaborador, não da bancada.
 | Ver solução e aprovar/recusar | 14 P-07, 15 X-46 — **leitura** HLAPI; **write** Branch B legado (`ITILFollowup` add_close/reopen) **PROVEN** | HD-024 |
 | Reabrir se a matriz simplificada deixar | 14 P-08 — **PROVEN** via `solution/reject` (não PATCH Colaborador) | HD-024 |
 | Pesquisa de satisfação | 15 X-51 — **PROVEN** via `TicketSatisfaction` legado (HLAPI ainda 404) | HD-024 |
+| Etapas de aprovação (TicketValidation) | 15 X-47 — **PROVEN** HLAPI `PATCH …/Timeline/Validation` | HD-024 |
 
-HLAPI do ciclo continua ausente (re-gate 22/09). Produto autorizou exceção legada no mesmo padrão H12 Document — ver [`evidence/e10-cycle-console.md`](./evidence/e10-cycle-console.md).
+HLAPI **não** fecha solução/satisfação (re-gate 22/09). Produto autorizou exceção legada no mesmo padrão H12 Document para o ciclo; Validação usa HLAPI nativa — ver [`evidence/e10-cycle-console.md`](./evidence/e10-cycle-console.md).
 
 ## H11 — Condicionais
 
@@ -128,7 +129,7 @@ Sem reimplementar Formcreator. Sem criar vínculo, SLA ou item de inventário no
 
 ## H12 — Upload
 
-**Exceção de produto autorizada (21/09/2026) e go-live PROVEN no mesmo dia:** HLAPI não tem multipart; o BFF usa **só** a API legada `apirest.php/Document` com App-Token + User-Token do usuário técnico de upload, gated por `GLPI_LEGACY_UPLOAD_ENABLED`. Perfil do técnico: Technician (`profiles_id` 6) — Colaborador bloqueia `Document_Item`→Ticket.
+**Exceção de produto autorizada (21/09/2026) e go-live PROVEN no mesmo dia:** HLAPI não tem multipart; o BFF usa a API legada `apirest.php/Document` com App-Token + User-Token do usuário técnico, gated por `GLPI_LEGACY_UPLOAD_ENABLED`. A **mesma** sessão legada cobre o ciclo H10 (aceite/recusa/satisfação). Perfil do técnico: Technician (`profiles_id` 6) — Colaborador bloqueia `Document_Item`→Ticket.
 
 | Peça | Estado |
 |---|---|
@@ -141,7 +142,7 @@ Sem reimplementar Formcreator. Sem criar vínculo, SLA ou item de inventário no
 
 Variáveis: `GLPI_LEGACY_UPLOAD_ENABLED`, `GLPI_LEGACY_APP_TOKEN`, `GLPI_LEGACY_USER_TOKEN`, `GLPI_LEGACY_MAX_UPLOAD_BYTES`.
 
-**Não** reabre a API legada para outras operações; **não** substitui HLAPI para leitura/escrita de chamado.
+A flag `GLPI_LEGACY_*` cobre Document (H12) e o ciclo do solicitante (H10). **Não** substitui HLAPI para leitura/escrita genérica de chamado; **não** abre bancada/Change.
 
 ## H13 — Listagem dinâmica
 
@@ -166,8 +167,9 @@ P0 colar + F5 preview **corrigido no código** (ledger H12.* PROVEN unitário/wi
 |---|---|---|---|
 | P1 | M-23 menção `@` na escrita | **IMPLEMENTADO** | create/reply + span por id |
 | P1 | H10 aprovar/reabrir/satisfação | **PROVEN** (Branch B) | BFF legado + MFE `can_*` |
+| P1 | H10 TicketValidation | **PROVEN** (HLAPI) | BFF `validations/{id}/accept|reject` |
 
-Residual de produto: bancada / Change / `helpdesk.console` (FORA).
+Residual de produto: bancada / Change / `helpdesk.console` (FORA). H13 OR/export/massa permanece CONSOLE.
 
 ```text
 fonte canônica de paste/imagem no compositor

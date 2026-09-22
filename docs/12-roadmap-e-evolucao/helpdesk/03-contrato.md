@@ -159,6 +159,15 @@ HLAPI não fecha o ciclo; o BFF usa `apirest` após ACL OAuth (mesmo token técn
 
 Não solicitante → 403. Status incoerente → 422. Legado desligado → 503.
 
+### Aprovação (TicketValidation — HLAPI)
+
+| Método | Path | Efeito |
+|---|---|---|
+| POST | `/tickets/{id}/validations/{validation_id}/accept` | body opcional `{ "content": "…" }` → status 3 |
+| POST | `/tickets/{id}/validations/{validation_id}/reject` | body opcional `{ "content": "…" }` → status 4 |
+
+Só o aprovador designado (`mine_to_decide`). Detalhe publica `validations[]` e `can_decide_validation`.
+
 ## 5. Mapa para o GLPI
 
 Chamadas com `Authorization: Bearer` do access token da pessoa e cabeçalho `GLPI-API-Version: 2.2.0`.

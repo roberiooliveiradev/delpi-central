@@ -94,6 +94,18 @@ class Attachment:
 
 
 @dataclass(frozen=True)
+class TicketValidation:
+    """GLPI Assistance Timeline Validation (approve / refuse)."""
+
+    id: int
+    status: int
+    submission_comment: str = ""
+    approval_comment: str = ""
+    requested_approver_id: int | None = None
+    mine_to_decide: bool = False
+
+
+@dataclass(frozen=True)
 class TicketDetail:
     id: int
     title: str
@@ -120,6 +132,9 @@ class TicketDetail:
     can_submit_satisfaction: bool = False
     satisfaction: int | None = None
     satisfaction_comment: str = ""
+    # TicketValidation (HLAPI Timeline/Validation) — approver can decide when status=waiting.
+    validations: tuple[TicketValidation, ...] = ()
+    can_decide_validation: bool = False
     observers_display_name: str = ""
     solved_at: str = ""
     closed_at: str = ""

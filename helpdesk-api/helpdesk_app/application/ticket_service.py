@@ -329,6 +329,49 @@ class TicketService:
         self._idempotency.save(subject, operation, key, stored)
         return stored
 
+    def decide_validation(
+        self,
+        subject: str,
+        ticket_id: int,
+        validation_id: int,
+        *,
+        accept: bool,
+        comment: str = "",
+        viewer_email: str = "",
+        idempotency_key: str | None,
+    ) -> StoredResponse:
+        key = _require_key(idempotency_key)
+        action = "accept" if accept else "reject"
+        operation = f"validation_{action}:{ticket_id}:{validation_id}"
+        existing = self._idempotency.get(subject, operation, key)
+        if existing is not None:
+            return existing
+        token = self._token(subject)
+        detail = self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
+        match = next((item for item in detail.validations if item.id == validation_id), None)
+        if match is None:
+            raise GlpiNotFound("Aprovação não encontrada.")
+        if not match.mine_to_decide:
+            raise GlpiForbidden("Só o aprovador designado pode decidir esta validação.")
+        self._glpi.decide_ticket_validation(
+            token,
+            ticket_id,
+            validation_id,
+            accept=accept,
+            comment=(comment or "").strip(),
+        )
+        refreshed = self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
+        stored = StoredResponse(
+            status_code=200,
+            body={
+                "id": validation_id,
+                "status": 3 if accept else 4,
+                "can_decide_validation": refreshed.can_decide_validation,
+            },
+        )
+        self._idempotency.save(subject, operation, key, stored)
+        return stored
+
     def _with_cycle_flags(self, token: str, detail: TicketDetail) -> TicketDetail:
         legacy_on = True
         enabled_fn = getattr(self._glpi, "legacy_cycle_enabled", None)

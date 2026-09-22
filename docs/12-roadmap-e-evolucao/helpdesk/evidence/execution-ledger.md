@@ -6,7 +6,7 @@ Estados: `PROVEN` | `PLANNED` | `TARGET` | `NOT_STARTED`.
 |---|---|---|---|
 | H0.1 | GLPI 11.0.5 no container `inventario-ti-glpi-1` | PROVEN | arquivo de versão `11.0.5` no container, 21/09/2026 |
 | H0.2 | `enable_hlapi = 1` | PROVEN | `glpi_configs`, 21/09/2026 |
-| H0.3 | `enable_api` (API legada) — exceção H12 Document-only | PROVEN | produção 21/09/2026: `enable_glpi_legacy_api.sh` + App-Token cifrado + `GLPI_LEGACY_*` no `helpdesk-api`; initSession 200 |
+| H0.3 | `enable_api` (API legada) — exceção H12 Document + H10 ciclo solicitante | PROVEN | produção 21–22/09/2026: `enable_glpi_legacy_api.sh` + App-Token cifrado + `GLPI_LEGACY_*` no `helpdesk-api`; initSession 200 |
 | H0.4 | API 2.2.0 | PROVEN | `Router::API_VERSION` e URL `/api.php/v2.2` |
 | H0.5 | Cliente `minha-delpi-helpdesk` ativo, grant `authorization_code`, escopo `api`, redirect do BFF | PROVEN | `glpi_oauthclients` id 1, 21/09/2026 |
 | H0.6 | SSO SAML Keycloak | PROVEN | plugin `samlsso` instalado; tutorial do repositório |
@@ -30,6 +30,8 @@ Estados: `PROVEN` | `PLANNED` | `TARGET` | `NOT_STARTED`.
 | H10.solicitante.bridge | CTA «Abrir no helpdesk» residual (aprovação 10 / fallback) | PROVEN | `glpiTicketFormUrl` + cue; 22/09/2026 |
 | H10.write.legacy | Aceitar/recusar/satisfação via apirest (Branch B, paridade H12) | PROVEN | BFF `solution/accept|reject` + `satisfaction`; live ticket **1141**; 22/09/2026 |
 | H10.write.mfe | Botões + form no detalhe gated por `can_*` | PROVEN | `HelpdeskPage` + `solicitanteLifecycle`; 121 testes MFE; 22/09/2026 |
+| H10.validation.hlapi | Aceitar/recusar `TicketValidation` via HLAPI PATCH | PROVEN | BFF `validations/{id}/accept|reject`; live ticket **1145** val **5**; 22/09/2026 |
+| H10.validation.mfe | Cue + botões quando `can_decide_validation` | PROVEN | `solicitanteLifecycle` + HelpdeskPage; 123 testes MFE; 22/09/2026 |
 | H12.upload.bff | `POST /tickets/{id}/attachments` via apirest Document + App-Token + User-Token técnico | PROVEN | BFF + testes FakeGlpi/MockTransport; live Document+Ticket 201, 21/09/2026 |
 | H12.upload.mfe | Colar/arrastar/clipe no compositor (abrir + responder) | PROVEN | kit `onPasteImages` + IDB pending F5; testes RichTextEditor + persist pending; build helpdesk+plugin-ui 22/09/2026 |
 | H12.upload.live | enable_api + `GLPI_LEGACY_*` + tech user Technician (profiles_id 6) em produção | PROVEN | env no container `delpi-helpdesk-api`; docs 1177/1178 no chamado **1122**; commit deploy `3e34b1226` / `0afc3154a`, 21/09/2026 |
@@ -45,4 +47,4 @@ Estados: `PROVEN` | `PLANNED` | `TARGET` | `NOT_STARTED`.
 
 ## Resumo vigente (22/09/2026)
 
-H3 e H6 fechados. Paridade E6–E13 + verify-final concluídos. E14 (menção leitura M-07) entregue. **Atribuição/reatribuição no MFE (E0–E4) PROVEN**. **M-23 (`@` na escrita) PROVEN**. **H10 write Branch B PROVEN** (legado `ITILFollowup`/`TicketSatisfaction` + MFE). **H12 Document upload BFF/live PROVEN**. Residual: bancada FORA. Sem senha neste arquivo.
+H3 e H6 fechados. Paridade E6–E13 + verify-final concluídos. E14 (menção leitura M-07) entregue. **Atribuição/reatribuição no MFE (E0–E4) PROVEN**. **M-23 (`@` na escrita) PROVEN**. **H10 write Branch B PROVEN** + **TicketValidation HLAPI PROVEN**. **H12 Document upload BFF/live PROVEN**. Residual: bancada FORA. Sem senha neste arquivo.

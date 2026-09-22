@@ -1,13 +1,13 @@
 /**
  * Lifecycle cues for the solicitante detail page.
- * H10 Branch B: accept / reject / satisfaction via BFF when capabilities allow;
- * approval (status 10) still bridges to GLPI.
+ * H10: accept/reject/satisfaction via BFF; Validation approve via HLAPI.
  */
 
 export type SolicitanteLifecycleCueId =
   | "solved_native"
   | "closed_satisfaction"
   | "closed_done"
+  | "approval_native"
   | "approval_pending"
   | "solved_needs_glpi"
   | "closed";
@@ -19,6 +19,7 @@ export type SolicitanteLifecycleCue = {
   ctaLabel?: string;
   showNativeActions?: boolean;
   showSatisfactionForm?: boolean;
+  showValidationActions?: boolean;
 };
 
 export function timelineHasSolution(
@@ -33,12 +34,23 @@ export function solicitanteLifecycleCue(input: {
   canAcceptSolution?: boolean;
   canRejectSolution?: boolean;
   canSubmitSatisfaction?: boolean;
+  canDecideValidation?: boolean;
   satisfaction?: number | null;
 }): SolicitanteLifecycleCue | null {
   const statusId = input.statusId == null ? null : Number(input.statusId);
   const canAccept = Boolean(input.canAcceptSolution);
   const canReject = Boolean(input.canRejectSolution);
   const canSat = Boolean(input.canSubmitSatisfaction);
+  const canValidation = Boolean(input.canDecideValidation);
+
+  if (canValidation) {
+    return {
+      id: "approval_native",
+      variant: "default",
+      message: "Há uma aprovação pendente para você. Aceite ou recuse por aqui.",
+      showValidationActions: true,
+    };
+  }
 
   if (statusId === 6) {
     if (canSat) {
@@ -89,7 +101,7 @@ export function solicitanteLifecycleCue(input: {
       id: "approval_pending",
       variant: "default",
       message:
-        "Este chamado aguarda aprovação. Você acompanha aqui; se precisar agir no fluxo de aprovação do helpdesk, abra o chamado lá.",
+        "Este chamado aguarda aprovação. Você acompanha aqui; se precisar agir e a aprovação não aparecer, abra o chamado no helpdesk.",
       ctaLabel: "Abrir no helpdesk",
     };
   }

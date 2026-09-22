@@ -22,11 +22,13 @@ from helpdesk_app.domain.models import (
     TicketDetail,
     TicketListPage,
     TicketListQuery,
+    TicketValidation,
     TokenSet,
 )
 from helpdesk_app.infrastructure.glpi.mapping import (
     URGENCIES,
     apply_viewer_identity,
+    apply_validation_viewer,
     create_ticket_body,
     display_text,
     parse_categories,
@@ -35,6 +37,7 @@ from helpdesk_app.infrastructure.glpi.mapping import (
     payload_row_count,
     parse_ticket_detail,
     parse_ticket_page,
+    parse_ticket_validations,
     parse_token_set,
     parse_viewer_identity,
     team_member_observer_body,
@@ -194,12 +197,57 @@ class HttpxGlpiClient:
             f"/api.php/v2.2/Assistance/Ticket/{ticket_id}/Timeline",
             token=access_token,
         )
+        validations_payload: dict | list = []
+        try:
+            validations_payload = self._json(
+                "GET",
+                f"/api.php/v2.2/Assistance/Ticket/{ticket_id}/Timeline/Validation",
+                token=access_token,
+            )
+        except (GlpiForbidden, GlpiNotFound, GlpiUnavailable, GlpiValidation):
+            logger.info("glpi_ticket_validations_unavailable ticket_id=%s", ticket_id)
+            validations_payload = []
+        viewer = self._viewer_identity(access_token, viewer_email)
         detail = apply_viewer_identity(
             parse_ticket_detail(ticket, timeline),
-            self._viewer_identity(access_token, viewer_email),
+            viewer,
+        )
+        validations = apply_validation_viewer(
+            parse_ticket_validations(validations_payload),
+            viewer,
         )
         named = tuple(self._named_attachment(access_token, item) for item in detail.attachments)
-        return replace(detail, attachments=named)
+        return replace(
+            detail,
+            attachments=named,
+            validations=validations,
+            can_decide_validation=any(item.mine_to_decide for item in validations),
+        )
+
+    def decide_ticket_validation(
+        self,
+        access_token: str,
+        ticket_id: int,
+        validation_id: int,
+        *,
+        accept: bool,
+        comment: str = "",
+    ) -> None:
+        """Approve or refuse a waiting TicketValidation via HLAPI PATCH."""
+        ticket_id = int(ticket_id)
+        validation_id = int(validation_id)
+        if ticket_id <= 0 or validation_id <= 0:
+            raise GlpiValidation("validation_id inválido.")
+        status = 3 if accept else 4
+        self._json(
+            "PATCH",
+            f"/api.php/v2.2/Assistance/Ticket/{ticket_id}/Timeline/Validation/{validation_id}",
+            token=access_token,
+            json_body={
+                "status": status,
+                "approval_comment": str(comment or ""),
+            },
+        )
 
     def _viewer_identity(self, access_token: str, viewer_email: str) -> PersonIdentity:
         try:

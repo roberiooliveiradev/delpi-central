@@ -33,6 +33,8 @@ export const helpTooltips = {
     acceptSolution: "Aceita a solução e fecha o chamado no helpdesk.",
     rejectSolution: "Recusa a solução e reabre o chamado para novo atendimento.",
     submitSatisfaction: "Envia sua nota de 1 a 5 e o comentário opcional.",
+    acceptValidation: "Aceita a etapa de aprovação deste chamado.",
+    rejectValidation: "Recusa a etapa de aprovação deste chamado.",
     attachments: "Arquivos ligados ao chamado. Clique para prévia ou baixar.",
   },
 

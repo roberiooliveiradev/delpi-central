@@ -564,3 +564,78 @@ def test_solicitante_accept_reject_satisfaction_cycle():
     assert detail_after.json()["can_submit_satisfaction"] is False
     assert detail_after.json()["satisfaction"] == 5
 
+
+def test_validation_accept_reject_for_designated_approver():
+    from dataclasses import replace
+
+    from helpdesk_app.domain.models import TicketValidation
+
+    client, glpi = build_client()
+    link(client)
+    glpi.detail = replace(
+        glpi.detail,
+        validations=(
+            TicketValidation(
+                id=9,
+                status=2,
+                submission_comment="pode?",
+                requested_approver_id=1,
+                mine_to_decide=True,
+            ),
+        ),
+        can_decide_validation=True,
+    )
+    detail = client.get("/tickets/7", headers=auth_headers())
+    assert detail.json()["can_decide_validation"] is True
+    assert detail.json()["validations"][0]["mine_to_decide"] is True
+
+    accepted = client.post(
+        "/tickets/7/validations/9/accept",
+        json={"content": "sim"},
+        headers={**auth_headers(), "Idempotency-Key": "val-acc"},
+    )
+    assert accepted.status_code == 200
+    assert accepted.json()["status"] == 3
+    assert glpi.validation_decisions[-1][:3] == (7, 9, True)
+
+    glpi.detail = replace(
+        glpi.detail,
+        validations=(
+            TicketValidation(
+                id=10,
+                status=2,
+                submission_comment="ainda?",
+                requested_approver_id=1,
+                mine_to_decide=True,
+            ),
+        ),
+        can_decide_validation=True,
+    )
+    refused = client.post(
+        "/tickets/7/validations/10/reject",
+        json={"content": "nao"},
+        headers={**auth_headers(), "Idempotency-Key": "val-rej"},
+    )
+    assert refused.status_code == 200
+    assert refused.json()["status"] == 4
+
+    glpi.detail = replace(
+        glpi.detail,
+        validations=(
+            TicketValidation(
+                id=11,
+                status=2,
+                submission_comment="outro",
+                requested_approver_id=99,
+                mine_to_decide=False,
+            ),
+        ),
+        can_decide_validation=False,
+    )
+    foreign = client.post(
+        "/tickets/7/validations/11/accept",
+        json={},
+        headers={**auth_headers(), "Idempotency-Key": "val-foreign"},
+    )
+    assert foreign.status_code == 403
+

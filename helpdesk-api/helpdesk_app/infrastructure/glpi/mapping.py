@@ -22,6 +22,7 @@ from helpdesk_app.domain.models import (
     TicketListPage,
     TicketListQuery,
     TicketSummary,
+    TicketValidation,
     TimelineEntry,
     TokenSet,
     Urgency,
@@ -447,6 +448,77 @@ def apply_viewer_identity(detail: TicketDetail, viewer: PersonIdentity) -> Ticke
         timeline=tuple(
             replace(entry, mine=same_person(entry.author_identity, viewer)) for entry in detail.timeline
         ),
+    )
+
+
+VALIDATION_WAITING = 2
+VALIDATION_ACCEPTED = 3
+VALIDATION_REFUSED = 4
+
+
+def parse_ticket_validations(payload: dict | list) -> tuple[TicketValidation, ...]:
+    rows = _results(payload)
+    items: list[TicketValidation] = []
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        kind, body = _timeline_payload(row)
+        kind_l = str(kind or "").lower()
+        if kind_l and kind_l not in {"validation", "ticketvalidation", "itilvalidation"}:
+            continue
+        if not kind_l and body.get("requested_approver_id") is None and body.get("status") is None:
+            continue
+        raw_id = body.get("id")
+        if isinstance(raw_id, dict):
+            raw_id = raw_id.get("id")
+        try:
+            validation_id = int(raw_id)
+        except (TypeError, ValueError):
+            continue
+        if validation_id <= 0:
+            continue
+        try:
+            status = int(body.get("status"))
+        except (TypeError, ValueError):
+            continue
+        approver = body.get("requested_approver_id")
+        if isinstance(approver, dict):
+            approver = approver.get("id")
+        try:
+            approver_id = int(approver) if approver not in (None, "") else None
+        except (TypeError, ValueError):
+            approver_id = None
+        items.append(
+            TicketValidation(
+                id=validation_id,
+                status=status,
+                submission_comment=display_text(
+                    body.get("submission_comment") or body.get("comment_submission")
+                ),
+                approval_comment=display_text(
+                    body.get("approval_comment") or body.get("comment_validation")
+                ),
+                requested_approver_id=approver_id if approver_id and approver_id > 0 else None,
+            )
+        )
+    return tuple(items)
+
+
+def apply_validation_viewer(
+    validations: tuple[TicketValidation, ...],
+    viewer: PersonIdentity,
+) -> tuple[TicketValidation, ...]:
+    viewer_id = viewer.user_id
+    return tuple(
+        replace(
+            item,
+            mine_to_decide=bool(
+                viewer_id
+                and item.requested_approver_id == viewer_id
+                and item.status == VALIDATION_WAITING
+            ),
+        )
+        for item in validations
     )
 
 

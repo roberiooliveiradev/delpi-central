@@ -28,7 +28,7 @@ Há dois fluxos distintos. Um não implica o outro:
 | Leitura | o que já está no GLPI precisa aparecer na bolha? |
 | Escrita | o que a pessoa pode gravar ao abrir ou responder? |
 
-Isto **estende** HD-009 (detalhe), HD-010 (abrir), HD-013 (acompanhamento) e HD-016 (ajuda). Não é HD-019. Upload de anexo novo = H12 (PROVEN, Document-only); satisfação/bancada = H10/CONSOLE — não abrem por este inventário.
+Isto **estende** HD-009 (detalhe), HD-010 (abrir), HD-013 (acompanhamento) e HD-016 (ajuda). Não é HD-019. Upload de anexo novo = H12 **PROVEN**; ciclo solução/satisfação = H10 **PROVEN**; bancada = FORA — não abrem por este inventário.
 
 ## 2. Fontes e grau de evidência
 

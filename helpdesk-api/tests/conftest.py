@@ -80,6 +80,7 @@ class FakeGlpi:
         self.accepted_solutions: list[tuple[int, str]] = []
         self.rejected_solutions: list[tuple[int, str]] = []
         self.satisfactions: dict[int, tuple[int, str]] = {}
+        self.validation_decisions: list[tuple[int, int, bool, str]] = []
         self.legacy_cycle = True
         # document_id → ticket_id for Document_Item membership (may lag Timeline).
         self.document_links: dict[int, int] = {2: 7, 4: 7}
@@ -265,6 +266,43 @@ class FakeGlpi:
         if int(ticket_id) in self.satisfactions:
             raise GlpiValidation("Pesquisa de satisfação já registrada.")
         self.satisfactions[int(ticket_id)] = (int(satisfaction), str(comment or ""))
+
+    def decide_ticket_validation(
+        self,
+        access_token: str,
+        ticket_id: int,
+        validation_id: int,
+        *,
+        accept: bool,
+        comment: str = "",
+    ) -> None:
+        from dataclasses import replace
+
+        self.calls += 1
+        assert access_token
+        updated = []
+        found = False
+        for item in self.detail.validations:
+            if item.id == validation_id:
+                found = True
+                updated.append(
+                    replace(
+                        item,
+                        status=3 if accept else 4,
+                        approval_comment=str(comment or ""),
+                        mine_to_decide=False,
+                    )
+                )
+            else:
+                updated.append(item)
+        if not found:
+            raise GlpiNotFound("ausente")
+        self.detail = replace(
+            self.detail,
+            validations=tuple(updated),
+            can_decide_validation=any(item.mine_to_decide for item in updated),
+        )
+        self.validation_decisions.append((ticket_id, validation_id, accept, comment))
 
 
 def build_client(glpi: FakeGlpi | None = None) -> tuple[TestClient, FakeGlpi]:

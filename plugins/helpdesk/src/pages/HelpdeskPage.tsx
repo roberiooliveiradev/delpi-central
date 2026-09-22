@@ -10,6 +10,7 @@ import { AlignLeft, ArrowUpDown, ChevronLeft, ExternalLink, FilterX, FolderTree,
 import {
   HelpdeskApiError,
   acceptTicketSolution,
+  acceptTicketValidation,
   beginGlpiLink,
   createFollowup,
   createTicket,
@@ -21,6 +22,7 @@ import {
   listUrgencies,
   listUsers,
   rejectTicketSolution,
+  rejectTicketValidation,
   setTicketAssignee,
   submitTicketSatisfaction,
   uploadTicketAttachment,
@@ -1061,7 +1063,7 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                   ariaLabel="Ajuda: Confirmar atribuição"
                 >
                   <ActionButton
-                    variant="secondary"
+                    variant="default"
                     type="button"
                     disabled={
                       assignSaving ||
@@ -1086,9 +1088,11 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                 canAcceptSolution: ticket.can_accept_solution,
                 canRejectSolution: ticket.can_reject_solution,
                 canSubmitSatisfaction: ticket.can_submit_satisfaction,
+                canDecideValidation: ticket.can_decide_validation,
                 satisfaction: ticket.satisfaction,
               });
               if (!cue) return null;
+              const pendingValidations = (ticket.validations ?? []).filter((item) => item.mine_to_decide);
               const runCycle = (action: "accept" | "reject") => {
                 setCycleSaving(true);
                 setErrorText(null);
@@ -1115,6 +1119,22 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                 )
                   .then(() => {
                     setSatisfactionComment("");
+                    setCycleKey(newIdempotencyKey());
+                    load();
+                  })
+                  .catch((error) => setErrorText(messageFor(error).text))
+                  .finally(() => setCycleSaving(false));
+              };
+              const runValidation = (validationId: number, action: "accept" | "reject") => {
+                setCycleSaving(true);
+                setErrorText(null);
+                const runner =
+                  action === "accept"
+                    ? acceptTicketValidation(ticketId, validationId, cycleNote, cycleKey)
+                    : rejectTicketValidation(ticketId, validationId, cycleNote, cycleKey);
+                void runner
+                  .then(() => {
+                    setCycleNote("");
                     setCycleKey(newIdempotencyKey());
                     load();
                   })
@@ -1177,7 +1197,7 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                               ariaLabel="Ajuda: Recusar solução"
                             >
                               <ActionButton
-                                variant="secondary"
+                                variant="default"
                                 type="button"
                                 disabled={cycleSaving}
                                 onClick={() => runCycle("reject")}
@@ -1187,6 +1207,55 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                             </HintAction>
                           ) : null}
                         </div>
+                      </div>
+                    ) : null}
+                    {cue.showValidationActions ? (
+                      <div className="helpdesk-lifecycle-actions">
+                        {pendingValidations.map((item) => (
+                          <div key={item.id} className="helpdesk-lifecycle-validation">
+                            {item.submission_comment ? (
+                              <p className="helpdesk-lifecycle-cue__text">{item.submission_comment}</p>
+                            ) : null}
+                            <label className="helpdesk-lifecycle-note">
+                              <span>Comentário (opcional)</span>
+                              <input
+                                type="text"
+                                value={cycleNote}
+                                onChange={(event) => setCycleNote(event.target.value)}
+                                disabled={cycleSaving}
+                                maxLength={2000}
+                              />
+                            </label>
+                            <div className="helpdesk-lifecycle-actions__buttons">
+                              <HintAction
+                                hint={helpTooltips.detailUi.acceptValidation}
+                                ariaLabel="Ajuda: Aceitar aprovação"
+                              >
+                                <ActionButton
+                                  variant="primary"
+                                  type="button"
+                                  disabled={cycleSaving}
+                                  onClick={() => runValidation(item.id, "accept")}
+                                >
+                                  {cycleSaving ? "Salvando…" : "Aceitar aprovação"}
+                                </ActionButton>
+                              </HintAction>
+                              <HintAction
+                                hint={helpTooltips.detailUi.rejectValidation}
+                                ariaLabel="Ajuda: Recusar aprovação"
+                              >
+                                <ActionButton
+                                  variant="default"
+                                  type="button"
+                                  disabled={cycleSaving}
+                                  onClick={() => runValidation(item.id, "reject")}
+                                >
+                                  Recusar aprovação
+                                </ActionButton>
+                              </HintAction>
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     ) : null}
                     {cue.showSatisfactionForm ? (

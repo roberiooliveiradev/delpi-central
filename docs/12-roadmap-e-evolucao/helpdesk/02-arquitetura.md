@@ -90,7 +90,7 @@ Acompanhamento no GLPI: `POST /Assistance/Ticket/{id}/Timeline/Followup`.
 |---|---|
 | Iframe com o host certo | Não entrega a tela nativa pedida |
 | Browser chama a HLAPI | Expõe cliente OAuth e foge do BFF da plataforma |
-| API legada + App-Token + conta técnica **como caminho geral** | Proibido — HLAPI em nome do usuário; H12 Document-only é a única exceção gated |
+| API legada + App-Token + conta técnica **como caminho geral** | Proibido — HLAPI em nome do usuário; H12 Document + H10 ciclo gated é a exceção autorizada |
 | Token do Keycloak aceito pelo GLPI | O GLPI 11.0.5 emite o token dele; o Keycloak entra pela sessão SAML já configurada |
 | Chamado gravado na Minha DELPI | Segunda fonte de verdade |
 

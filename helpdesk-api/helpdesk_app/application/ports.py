@@ -79,6 +79,16 @@ class GlpiGateway(Protocol):
         comment: str = "",
     ) -> None: ...
 
+    def decide_ticket_validation(
+        self,
+        access_token: str,
+        ticket_id: int,
+        validation_id: int,
+        *,
+        accept: bool,
+        comment: str = "",
+    ) -> None: ...
+
 
 class StateStore(Protocol):
     def save(self, *, state: str, subject: str, code_verifier: str, expires_at) -> None: ...

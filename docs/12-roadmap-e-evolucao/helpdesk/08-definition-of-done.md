@@ -10,7 +10,7 @@ Uma etapa só fecha quando o aceite dela no plano de execução e os itens abaix
 ```text
 [ ] GLPI continua dono do chamado
 [ ] api-delpi não é chamada por este módulo
-[ ] enable_api só na exceção H12 Document-only (App-Token + User-Token técnico); não vira caminho geral
+[ ] enable_api só na exceção H12 Document + H10 ciclo (App-Token + User-Token técnico); não vira caminho geral
 [ ] cliente OAuth permanece authorization_code + escopo api
 [ ] segredo e tokens fora do MFE, do Git e do log
 [ ] helpdesk.access é o portão do portal; o perfil GLPI é o direito do chamado

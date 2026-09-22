@@ -2,7 +2,7 @@
 
 > **Status:** a tela publicada está em [`WIREFRAMES.md`](./WIREFRAMES.md) §3 (`bodyMode=html` + `HelpdeskRichTextField`).
 > **Contrato vigente:** [`03-contrato.md`](./03-contrato.md) + `description_html` / `content_html`.
-> **Corpo da mensagem:** [`12-conteudo-da-mensagem.md`](./12-conteudo-da-mensagem.md) — vigente; M-23 park.
+> **Corpo da mensagem:** [`12-conteudo-da-mensagem.md`](./12-conteudo-da-mensagem.md) — vigente; M-23 **PROVEN**.
 > **Página (abas, atores, ciclo de status):** [`14-pagina-e-estados-do-chamado.md`](./14-pagina-e-estados-do-chamado.md).
 > **Menção leitura:** [`evidence/e14-mentions.md`](./evidence/e14-mentions.md).
 

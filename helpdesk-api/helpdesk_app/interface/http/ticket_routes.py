@@ -185,6 +185,18 @@ def get_ticket(request: Request, ticket_id: int):
         "can_submit_satisfaction": ticket.can_submit_satisfaction,
         "satisfaction": ticket.satisfaction,
         "satisfaction_comment": ticket.satisfaction_comment,
+        "can_decide_validation": ticket.can_decide_validation,
+        "validations": [
+            {
+                "id": item.id,
+                "status": item.status,
+                "submission_comment": item.submission_comment,
+                "approval_comment": item.approval_comment,
+                "requested_approver_id": item.requested_approver_id,
+                "mine_to_decide": item.mine_to_decide,
+            }
+            for item in ticket.validations
+        ],
         "observers_display_name": ticket.observers_display_name,
         "description": ticket.description,
         "description_html": ticket.description_html,
@@ -383,6 +395,54 @@ def put_satisfaction(
             ticket_id,
             satisfaction=body.satisfaction,
             comment=body.comment,
+            viewer_email=actor.email,
+            idempotency_key=idempotency_key,
+        )
+    except HelpdeskError as exc:
+        return _error(exc, request)
+    return JSONResponse(status_code=stored.status_code, content=stored.body)
+
+
+@router.post("/tickets/{ticket_id}/validations/{validation_id}/accept")
+def accept_validation(
+    request: Request,
+    ticket_id: int,
+    validation_id: int,
+    body: SolutionDecisionBody,
+    idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
+):
+    actor = require_actor(request)
+    try:
+        stored = _tickets(request).decide_validation(
+            actor.subject,
+            ticket_id,
+            validation_id,
+            accept=True,
+            comment=body.content,
+            viewer_email=actor.email,
+            idempotency_key=idempotency_key,
+        )
+    except HelpdeskError as exc:
+        return _error(exc, request)
+    return JSONResponse(status_code=stored.status_code, content=stored.body)
+
+
+@router.post("/tickets/{ticket_id}/validations/{validation_id}/reject")
+def reject_validation(
+    request: Request,
+    ticket_id: int,
+    validation_id: int,
+    body: SolutionDecisionBody,
+    idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
+):
+    actor = require_actor(request)
+    try:
+        stored = _tickets(request).decide_validation(
+            actor.subject,
+            ticket_id,
+            validation_id,
+            accept=False,
+            comment=body.content,
             viewer_email=actor.email,
             idempotency_key=idempotency_key,
         )

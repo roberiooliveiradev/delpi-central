@@ -7,7 +7,7 @@
 > **Regras:** `plugins-reusable-components.mdc`, `plugins-visual-design-system.mdc`
 > **Estado:** lista/compositor/upload Document **publicados**. **P0 urgente:** colar + F5 imagem (alinhar à sala). H10 write e M-23 `@` permanecem park.
 > **Lacunas restantes:** [`11-lacunas-da-experiencia.md`](./11-lacunas-da-experiencia.md).
-> **Corpo da mensagem:** [`12-conteudo-da-mensagem.md`](./12-conteudo-da-mensagem.md) (vigente; M-23 park).
+> **Corpo da mensagem:** [`12-conteudo-da-mensagem.md`](./12-conteudo-da-mensagem.md) (vigente; M-23 **PROVEN**).
 > **Listagem:** [`13-listagem-de-chamados.md`](./13-listagem-de-chamados.md) (vigente).
 > **Página e estados:** [`14-pagina-e-estados-do-chamado.md`](./14-pagina-e-estados-do-chamado.md).
 > **Matriz GLPI Assistência:** [`15-capacidades-glpi.md`](./15-capacidades-glpi.md).
@@ -244,7 +244,7 @@ H12 (colar/clipe/arrastar/redimensionar) **já está publicado**. As telas abaix
 |---|---|---|
 | Anexo (envio) | compositor abrir + responder | **PROVEN** H12 — clipe/colar/arrastar; preview `blob:`; resize canto SE; `POST …/attachments` |
 | Anexo (lista/baixar) | detalhe | arquivos do chamado + prévia; `ActionButton` «Baixar» |
-| Satisfação | detalhe, se solucionado | `HelpdeskSelect` / `ActionButton` com valores do GLPI — H10 write (CONSOLE até HLAPI) |
+| Satisfação | detalhe, se fechado | form 1–5 + comentário — H10 **PROVEN** (`can_submit_satisfaction`) |
 | Bancada do técnico | rota `/apps/helpdesk/console`, fora do MFE | abre host GLPI com `samlIdpId=1`, só `helpdesk.console` |
 | Entidade | não há campo | entidade padrão do usuário (HD-011) |
 

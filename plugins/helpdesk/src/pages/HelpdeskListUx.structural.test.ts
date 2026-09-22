@@ -73,12 +73,14 @@ describe("Helpdesk list UX structural", () => {
     expect(replyBlock).not.toContain("HelpdeskIconButton");
   });
 
-  it("ciclo do solicitante: ações nativas H10 + CTA GLPI residual", () => {
+  it("ciclo do solicitante: ações nativas H10 + validação + CTA GLPI residual", () => {
     const page = read("HelpdeskPage.tsx");
     expect(page).toContain("solicitanteLifecycleCue");
     expect(page).toContain("acceptTicketSolution");
     expect(page).toContain("rejectTicketSolution");
     expect(page).toContain("submitTicketSatisfaction");
+    expect(page).toContain("acceptTicketValidation");
+    expect(page).toContain("rejectTicketValidation");
     expect(page).toContain("glpiTicketFormUrl");
     expect(page).toContain("helpdesk-lifecycle-cue");
     expect(page).not.toMatch(/add_close|add_reopen/);

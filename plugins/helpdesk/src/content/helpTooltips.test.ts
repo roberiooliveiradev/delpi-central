@@ -49,6 +49,11 @@ describe("helpTooltips budget", () => {
     expect(helpTooltips.detailUi.submitSatisfaction).toMatch(/nota|1 a 5|avalia/i);
   });
 
+  it("cobre aprovação TicketValidation", () => {
+    expect(helpTooltips.detailUi.acceptValidation).toMatch(/aceit|aprova/i);
+    expect(helpTooltips.detailUi.rejectValidation).toMatch(/recus|aprova/i);
+  });
+
   it("não reintroduz o bloco filters órfão da FiltersRow antiga", () => {
     expect(helpTooltips).not.toHaveProperty("filters");
   });

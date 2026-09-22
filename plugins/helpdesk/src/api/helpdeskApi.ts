@@ -94,6 +94,15 @@ export type TimelineEntry = {
   mine: boolean;
 };
 
+export type TicketValidation = {
+  id: number;
+  status: number;
+  submission_comment?: string;
+  approval_comment?: string;
+  requested_approver_id?: number | null;
+  mine_to_decide?: boolean;
+};
+
 export type TicketDetail = TicketSummary & {
   description: string;
   description_html?: string;
@@ -104,8 +113,10 @@ export type TicketDetail = TicketSummary & {
   can_accept_solution?: boolean;
   can_reject_solution?: boolean;
   can_submit_satisfaction?: boolean;
+  can_decide_validation?: boolean;
   satisfaction?: number | null;
   satisfaction_comment?: string;
+  validations?: TicketValidation[];
   assigned_user_id?: number | null;
   observers_display_name?: string;
   timeline: TimelineEntry[];
@@ -248,6 +259,44 @@ export function submitTicketSatisfaction(
       comment: body.comment ?? "",
     }),
   });
+}
+
+export function acceptTicketValidation(
+  ticketId: string,
+  validationId: number,
+  content: string,
+  idempotencyKey: string,
+) {
+  return request<{ id: number; status: number; can_decide_validation: boolean }>(
+    `/tickets/${ticketId}/validations/${validationId}/accept`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Idempotency-Key": idempotencyKey,
+      },
+      body: JSON.stringify({ content }),
+    },
+  );
+}
+
+export function rejectTicketValidation(
+  ticketId: string,
+  validationId: number,
+  content: string,
+  idempotencyKey: string,
+) {
+  return request<{ id: number; status: number; can_decide_validation: boolean }>(
+    `/tickets/${ticketId}/validations/${validationId}/reject`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Idempotency-Key": idempotencyKey,
+      },
+      body: JSON.stringify({ content }),
+    },
+  );
 }
 
 export async function fetchTicketAttachmentBlob(ticketId: string, documentId: number): Promise<Blob> {
