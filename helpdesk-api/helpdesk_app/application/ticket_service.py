@@ -2,6 +2,7 @@ from helpdesk_app.application.oauth_service import OAuthService
 from helpdesk_app.application.ports import GlpiGateway, IdempotencyStore
 from helpdesk_app.application.services.message_html_sanitizer import (
     MAX_MESSAGE_HTML_CHARS,
+    extract_bff_attachment_refs,
     prepare_outbound_message_html,
 )
 from helpdesk_app.domain.errors import (
@@ -116,6 +117,15 @@ class TicketService:
         key = _require_key(idempotency_key)
         ticket = self.ticket(subject, ticket_id, viewer_email="")
         allowed = {item.document_id for item in ticket.attachments}
+        # H12: after upload, re-read once if HTML refs are not yet in attachments.
+        html_refs = {
+            doc_id
+            for ref_ticket, doc_id in extract_bff_attachment_refs(content)
+            if ref_ticket == ticket_id
+        }
+        if html_refs - allowed:
+            ticket = self.ticket(subject, ticket_id, viewer_email="")
+            allowed = {item.document_id for item in ticket.attachments}
         content_html = _prepare_message_html(
             content,
             "content",

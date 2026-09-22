@@ -101,6 +101,8 @@ function isSafeUrl(value: string): boolean {
     return true;
   }
   if (raw.startsWith("attachment:")) return true;
+  // Same-page object URLs for authenticated attachment preview (helpdesk / salas).
+  if (raw.startsWith("blob:")) return true;
   try {
     const parsed = new URL(raw, "https://example.invalid");
     return SAFE_URL_PROTOCOLS.has(parsed.protocol);

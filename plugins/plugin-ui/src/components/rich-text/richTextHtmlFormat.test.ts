@@ -62,6 +62,19 @@ describe("stripDangerousRichTextTags", () => {
     expect(cleaned).toContain("<p>a</p>");
     expect(cleaned).toContain("<p>b</p>");
   });
+
+  it("preserva blob: em src de imagem (preview autenticado)", () => {
+    const cleaned = stripDangerousRichTextTags(
+      '<p><img src="blob:http://localhost/uuid" alt="foto" data-attachment-id="12" /></p>',
+    );
+    expect(cleaned).toContain('src="blob:http://localhost/uuid"');
+    expect(cleaned).toContain('data-attachment-id="12"');
+  });
+
+  it("remove javascript: em src", () => {
+    const cleaned = stripDangerousRichTextTags('<p><img src="javascript:alert(1)" alt="x" /></p>');
+    expect(cleaned.toLowerCase()).not.toContain("javascript:");
+  });
 });
 
 describe("wrapOrphanRichTextNodes", () => {

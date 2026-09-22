@@ -343,6 +343,12 @@ def _attachment(row: dict) -> Attachment | None:
     document_id = payload.get("documents_id") or payload.get("document_id")
     if isinstance(document_id, dict):
         document_id = document_id.get("id")
+    # HLAPI Timeline type Document often exposes the document's own id as `id`
+    # (no documents_id). Prefer documents_id when present (Document_Item).
+    if document_id in (None, "") and kind == "Document":
+        document_id = payload.get("id")
+        if isinstance(document_id, dict):
+            document_id = document_id.get("id")
     if document_id in (None, ""):
         return None
     return Attachment(

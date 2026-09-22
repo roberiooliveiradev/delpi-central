@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   appendInlineImageHtml,
+  hydrateInlineAttachmentSrcs,
   listPendingInlineIds,
   normalizeInlineAttachmentSrcs,
   rewritePendingInlineImages,
@@ -54,5 +55,36 @@ describe("inlineUpload", () => {
   it("não altera imgs sem data-attachment-id", () => {
     const html = '<p><img src="https://cdn.example/a.png" alt="x" /></p>';
     expect(normalizeInlineAttachmentSrcs(html, 1)).toBe(html);
+  });
+
+  it("hidrata URL pública do BFF para blob no reload do compositor", async () => {
+    const html = normalizeInlineAttachmentSrcs(
+      appendInlineImageHtml("", {
+        src: "blob:stale",
+        documentId: 1177,
+        alt: "Captura de tela 2026-02-14 095917.png",
+      }),
+      1122,
+    );
+    expect(html).toContain("/apps/helpdesk-api/tickets/1122/attachments/1177");
+    const { html: hydrated, objectUrls } = await hydrateInlineAttachmentSrcs(
+      html,
+      1122,
+      async () => new Blob([new Uint8Array([1, 2, 3])], { type: "image/png" }),
+    );
+    expect(hydrated).toContain("blob:");
+    expect(hydrated).not.toContain("/apps/helpdesk-api/tickets/1122/attachments/1177");
+    expect(objectUrls).toHaveLength(1);
+    objectUrls.forEach((url) => URL.revokeObjectURL(url));
+  });
+
+  it("hidrata: negativo — falha de fetch mantém URL pública", async () => {
+    const html =
+      '<p><img src="/apps/helpdesk-api/tickets/1122/attachments/1" data-attachment-id="1" alt="x" /></p>';
+    const { html: hydrated, objectUrls } = await hydrateInlineAttachmentSrcs(html, 1122, async () => {
+      throw new Error("401");
+    });
+    expect(hydrated).toBe(html);
+    expect(objectUrls).toEqual([]);
   });
 });

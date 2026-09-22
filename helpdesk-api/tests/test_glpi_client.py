@@ -467,6 +467,22 @@ def test_mapping_keeps_followup_and_document_and_hides_task():
     assert attachment_filename("   ") == "anexo"
 
 
+def test_mapping_document_uses_own_id_when_documents_id_absent():
+    detail = parse_ticket_detail(
+        {"id": 1122, "name": "Teste", "content": "x", "status": {"name": "Novo"}, "urgency": 1},
+        [
+            {
+                "type": "Document",
+                "item": {"id": 1177, "name": "Captura.png", "filename": "Captura.png", "mime": "image/png"},
+            },
+            {
+                "type": "Document_Item",
+                "item": {"id": 99, "documents_id": 1178, "name": "image.png", "mime": "image/png"},
+            },
+        ],
+    )
+    assert [item.document_id for item in detail.attachments] == [1177, 1178]
+
 def test_mapping_publishes_requester_and_hides_private_followup():
     detail = parse_ticket_detail(
         {

@@ -43,6 +43,7 @@ import {
   viewForTicketLoad,
 } from "../presentation/ticketView";
 import {
+  hydrateInlineAttachmentSrcs,
   listPendingInlineIds,
   normalizeInlineAttachmentSrcs,
   rewritePendingInlineImages,
@@ -740,9 +741,28 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
   const [inlineThumbs, setInlineThumbs] = useState<Record<string, string>>({});
   const [inlinePreview, setInlinePreview] = useState<TicketAttachment | null>(null);
   const myPhotoUrl = useMyPersonProfilePhoto();
+  const draftObjectUrlsRef = useRef<string[]>([]);
 
   useEffect(() => {
-    setContent(readReplyDraft(ticketId));
+    let cancelled = false;
+    draftObjectUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
+    draftObjectUrlsRef.current = [];
+    const draft = readReplyDraft(ticketId);
+    void hydrateInlineAttachmentSrcs(draft, ticketId, fetchTicketAttachmentBlob).then(
+      ({ html, objectUrls }) => {
+        if (cancelled) {
+          objectUrls.forEach((url) => URL.revokeObjectURL(url));
+          return;
+        }
+        draftObjectUrlsRef.current = objectUrls;
+        setContent(html);
+      },
+    );
+    return () => {
+      cancelled = true;
+      draftObjectUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
+      draftObjectUrlsRef.current = [];
+    };
   }, [ticketId]);
 
   useEffect(() => {
@@ -780,15 +800,17 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
     const urls: string[] = [];
     void Promise.all(
       [...ids].map(async (documentId) => {
-        const blob = await fetchTicketAttachmentBlob(ticketId, documentId);
-        if (cancelled) return;
-        const url = URL.createObjectURL(blob);
-        urls.push(url);
-        setInlineThumbs((current) => ({ ...current, [String(documentId)]: url }));
+        try {
+          const blob = await fetchTicketAttachmentBlob(ticketId, documentId);
+          if (cancelled) return;
+          const url = URL.createObjectURL(blob);
+          urls.push(url);
+          setInlineThumbs((current) => ({ ...current, [String(documentId)]: url }));
+        } catch {
+          // Soft-fail: bolha fica sem preview; não derruba a página inteira.
+        }
       }),
-    ).catch((error) => {
-      if (!cancelled) setErrorText(messageFor(error).text);
-    });
+    );
     return () => {
       cancelled = true;
       urls.forEach((url) => URL.revokeObjectURL(url));
@@ -989,7 +1011,7 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                       uploadedAny = true;
                     }
                   }
-                  if (uploadedAny && results.length === 0) load();
+                  if (uploadedAny) load();
                   return results;
                 }}
                 onUploadError={(error) => setErrorText(messageFor(error).text)}

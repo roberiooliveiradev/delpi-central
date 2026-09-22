@@ -101,6 +101,81 @@ export function normalizeInlineAttachmentSrcs(
   );
 }
 
+/**
+ * Reply draft persists BFF paths (stable). `<img src>` without Bearer → 401.
+ * Reload must fetch blobs and rewrite src for the composer preview.
+ */
+export async function hydrateInlineAttachmentSrcs(
+  html: string,
+  ticketId: string | number,
+  fetchBlob: (ticketId: string, documentId: number) => Promise<Blob>,
+): Promise<{ html: string; objectUrls: string[] }> {
+  const source = String(html || "");
+  const ids = listDocumentIdsInHtml(source);
+  if (ids.length === 0) {
+    return { html: source, objectUrls: [] };
+  }
+  const objectUrls: string[] = [];
+  const byId = new Map<number, string>();
+  await Promise.all(
+    ids.map(async (documentId) => {
+      try {
+        const blob = await fetchBlob(String(ticketId), documentId);
+        const url = URL.createObjectURL(blob);
+        objectUrls.push(url);
+        byId.set(documentId, url);
+      } catch {
+        // Leave the public path; caller may show a soft warning.
+      }
+    }),
+  );
+  if (byId.size === 0) {
+    return { html: source, objectUrls };
+  }
+  let next = source;
+  for (const [documentId, blobUrl] of byId) {
+    const publicSrc = attachmentPublicUrl(ticketId, documentId);
+    const publicRe = new RegExp(
+      `(<img\\b[^>]*\\bsrc=["'])${escapeRegExp(publicSrc)}(["'][^>]*>)`,
+      "gi",
+    );
+    next = next.replace(publicRe, `$1${blobUrl}$2`);
+    const idRe = new RegExp(
+      `<img\\b([^>]*\\bdata-attachment-id=["']${documentId}["'][^>]*)\\/?>`,
+      "gi",
+    );
+    next = next.replace(idRe, (_full, attrs: string) => {
+      let cleaned = String(attrs).replace(/\ssrc=["'][^"']*["']/i, ` src="${escapeAttr(blobUrl)}"`);
+      if (!/\ssrc=/i.test(cleaned)) {
+        cleaned = ` src="${escapeAttr(blobUrl)}"${cleaned}`;
+      }
+      return `<img${cleaned} />`;
+    });
+  }
+  return { html: next, objectUrls };
+}
+
+function listDocumentIdsInHtml(html: string): number[] {
+  const ids: number[] = [];
+  const seen = new Set<number>();
+  const fromPath = /\/apps\/helpdesk-api\/tickets\/\d+\/attachments\/(\d+)/gi;
+  const fromAttr = /data-attachment-id=["'](\d+)["']/gi;
+  let match: RegExpExecArray | null;
+  while ((match = fromPath.exec(html))) {
+    const id = Number(match[1]);
+    if (!Number.isFinite(id) || seen.has(id)) continue;
+    seen.add(id);
+    ids.push(id);
+  }
+  while ((match = fromAttr.exec(html))) {
+    const id = Number(match[1]);
+    if (!Number.isFinite(id) || seen.has(id)) continue;
+    seen.add(id);
+    ids.push(id);
+  }
+  return ids;
+}
+
 export function stripPendingInlineImages(html: string): string {
   return String(html || "").replace(
     new RegExp(`<img\\b[^>]*\\b${PENDING_ATTR}=["'][^"']*["'][^>]*/?>`, "gi"),
