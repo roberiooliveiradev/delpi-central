@@ -24,4 +24,15 @@ describe("Portal topbar global chrome", () => {
     expect(rooms).not.toMatch(/PortalTopBar/);
     expect(person).not.toMatch(/PortalTopBar/);
   });
+
+  it("PortalTopBar passa ícones lucide nos itens (padrão portal Comercial)", () => {
+    const nav = readFileSync(join(root, "components/TransformometroNav.tsx"), "utf8");
+    expect(nav).toMatch(/PORTAL_TOPBAR_ICONS/);
+    expect(nav).toMatch(/icon: PORTAL_TOPBAR_ICONS\[item\.id\]/);
+    expect(nav).toMatch(/from "lucide-react"/);
+    expect(nav).toMatch(/Home/);
+    expect(nav).toMatch(/MessagesSquare/);
+    expect(nav).toMatch(/FolderKanban/);
+    expect(nav).toMatch(/BookOpen/);
+  });
 });
