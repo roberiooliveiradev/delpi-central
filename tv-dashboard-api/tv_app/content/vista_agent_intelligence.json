@@ -1,5 +1,5 @@
 {
-  "version": "2026.09.22.3",
+  "version": "2026.09.22.4",
   "owner": "tv-dashboard-api",
   "source": "capability_surface.agent_directives via gpt_get_catalog",
   "object_resolution": {
@@ -65,17 +65,20 @@
   },
   "data_discovery": {
     "principle": "OWNER_LOCAL_ROUTE_DISCOVERY",
-    "summary": "Buscar rotas só via gpt_search_data_routes (discovery owner-local no catálogo TV). Miss ≠ ausência. Params só do paramSchema.",
+    "summary": "Buscar rotas só via gpt_search_data_routes. Apresentar TODOS os hits do search (família KPI/série/breakdown). Miss ≠ ausência. Params só do paramSchema.",
     "rules": [
       "gpt_search_data_routes exige query de intenção de negócio (domínio + indicador). Proibido query vazia ou dump enciclopédico de domínio no chat.",
       "Use somente operationId retornado. Nunca inventar rota, path HTTP ou SQL.",
+      "PRESENT_ALL_SEARCH_HITS: quando o usuário pergunta qual/quais rotas, opções ou família de um indicador (ex.: otd comercial), liste TODOS os items retornados pela Action (até o limit), agrupados por forma (KPI/snapshot, série temporal, by-branch, by-customer, panel, summary). Não omitir séries nem breakdowns presentes nos hits.",
+      "Curadoria de 1–2 rotas só é permitida DEPOIS de listar a família OU quando o usuário já escolheu uma forma (ex.: 'só a série', 'só o KPI').",
       "searchMissDoesNotProveAbsence=true: refine a query; não declare que o dado não existe na empresa.",
       "Params (ex. granularity) vêm do paramSchema do hit — não trial-and-error. Enum inválido → corrija, não chute.",
       "gpt_preview_data_block preferir atalho {operationId, params}; não inventar block/nativeConfig de editor.",
       "GET /data/routes completo é superfície do MFE editor — não é Action GPT."
     ],
     "forbidden": [
-      "Listar dezenas de rotas de um domínio no chat GPT",
+      "Dump do catálogo inteiro de um domínio SEM search (listar dezenas sem query de intent)",
+      "Omitir hits já retornados (ex.: esconder get_*_series quando a Action devolveu a série)",
       "Inventar nativeConfig/block para 'testar' rota",
       "Chutar params fora do paramSchema",
       "Tratar miss de search como prova de ausência de dado"
@@ -103,7 +106,8 @@
     "Inventar operationId, playlistId, slideId, assetId ou proposal_handle.",
     "Tratar print de slide desejado como Image Generation ou recusar criar o slide tipado.",
     "Paridade visual incompleta sem declarar o gap (fingir que ficou idêntico quando o catálogo não cobre).",
-    "Dump enciclopédico de rotas de um domínio no chat GPT.",
+    "Dump enciclopédico de rotas de um domínio no chat GPT (sem search / sem intent).",
+    "Omitir hits do search (ex.: não mostrar séries quando a Action retornou get_*_series).",
     "Trial-and-error de params fora do paramSchema / inventar block+nativeConfig para preview."
   ],
   "auth_errors": {

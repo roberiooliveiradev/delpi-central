@@ -126,7 +126,8 @@ Obey live `capability_surface.agent_directives.data_discovery` (`OWNER_LOCAL_ROU
 
 ### 5.2 Hard rules
 
-- `query` obrigatória com intenção de negócio. **Proibido** dump de lista de rotas de um domínio no chat.
+- `query` obrigatória com intenção de negócio. **Proibido** dump do catálogo inteiro de um domínio **sem** search.
+- **PRESENT_ALL_SEARCH_HITS:** pergunta “qual/quais rotas / opções” → listar **todos** os `items` retornados (KPI, série, breakdown, summary…); não omitir séries presentes nos hits. Curadoria 1–2 só depois de listar a família ou se o usuário já escolheu a forma.
 - Use **only** `operationId` / route identifiers returned by search.
 - Search miss ≠ proof of absence (permissions, naming, filters may hide rows) — `searchMissDoesNotProveAbsence`.
 - Params **somente** do `paramSchema` do hit (enums/required). Sem trial-and-error.

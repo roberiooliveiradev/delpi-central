@@ -83,5 +83,8 @@ def test_data_discovery_owner_local_no_dump():
     assert "query" in rules.lower()
     assert "paramSchema" in rules
     assert "searchMissDoesNotProveAbsence" in rules or "Miss" in rules
+    assert "PRESENT_ALL_SEARCH_HITS" in rules
+    assert "série" in rules.lower() or "series" in rules.lower()
     forbidden = " ".join(discovery["forbidden"])
+    assert "omitir" in forbidden.lower() or "Omitir" in " ".join(directives["anti_patterns"])
     assert "dump" in forbidden.lower() or "Dump" in " ".join(directives["anti_patterns"])
