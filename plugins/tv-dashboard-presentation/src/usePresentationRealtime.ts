@@ -467,14 +467,10 @@ export function usePresentationRealtime({
       presenceHandlerRef.current?.([]);
     }
 
-    function onPageHide() {
-      tearDownPresenceSocket();
-    }
-
     /**
      * SPA: sair do plugin sem fechar a aba não dispara pagehide — o socket de
      * presença do editor ficava vivo. Só aplica com `presence` (editor);
-     * kiosk/prévia em `/p/...` devem manter o WS de `presentation_updated`.
+     * kiosk/prévia em `/p/...` e library-ws devem manter o WS de updates.
      */
     function guardPortalPath() {
       if (!presence) return;
@@ -483,9 +479,33 @@ export function usePresentationRealtime({
       tearDownPresenceSocket();
     }
 
+    function onPageHide() {
+      if (presence) {
+        tearDownPresenceSocket();
+        return;
+      }
+      // Library / kiosk: close without locking reconnect (bfcache / tab suspend).
+      try {
+        ws?.close();
+      } catch {
+        // ignore
+      }
+      ws = null;
+      connectionHandlerRef.current?.(false);
+    }
+
+    function onPageShow() {
+      if (presence || closedByUser) return;
+      if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) {
+        return;
+      }
+      connect();
+    }
+
     connect();
 
     window.addEventListener("pagehide", onPageHide);
+    window.addEventListener("pageshow", onPageShow);
     if (presence) {
       window.addEventListener("popstate", guardPortalPath);
       pathGuardTimer = window.setInterval(guardPortalPath, 1000);
@@ -493,6 +513,7 @@ export function usePresentationRealtime({
 
     return () => {
       window.removeEventListener("pagehide", onPageHide);
+      window.removeEventListener("pageshow", onPageShow);
       window.removeEventListener("popstate", guardPortalPath);
       if (updateTimerRef.current != null) {
         window.clearTimeout(updateTimerRef.current);

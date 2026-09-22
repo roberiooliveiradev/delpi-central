@@ -14,7 +14,6 @@ import {
   updatePlaylist,
   type Playlist,
 } from "../api/tvDashboardApi";
-import { getAccessToken } from "../api/httpClient";
 import { DeckImportModal } from "../components/DeckImportModal";
 import { PlaylistHomeContextMenu } from "../components/PlaylistHomeContextMenu";
 import { PlaylistHomeThumb } from "../components/PlaylistHomeThumb";
@@ -22,7 +21,10 @@ import { PlaylistRenameDialog } from "../components/PlaylistRenameDialog";
 import { TvDashboardScreenLoading } from "../components/TvDashboardScreenLoading";
 import { TvPreviewDetailCard } from "../components/TvPreviewDetailCard";
 import { useConfirm } from "../context/ConfirmDialogProvider";
-import { usePlaylistLibrarySync } from "../hooks/usePlaylistLibrarySync";
+import {
+  useLibrarySoftRefreshOnFocus,
+  usePlaylistLibrarySync,
+} from "../hooks/usePlaylistLibrarySync";
 import { TvLibraryPageLayout } from "../layout/TvLibraryPageLayout";
 import { TvFilterBarShell, TvNavigationCard, TvPageHeader } from "../layout/tvUi";
 import { tvDashboardNotice } from "../utils/tvDashboardNotice";
@@ -119,14 +121,15 @@ export function PlaylistsPage({
     void load();
   }, [load]);
 
-  const accessToken = getAccessToken();
+  const softLoad = useCallback(() => {
+    void load({ soft: true });
+  }, [load]);
+
   usePlaylistLibrarySync({
-    accessToken,
-    enabled: Boolean(accessToken),
-    onLibraryUpdated: () => {
-      void load({ soft: true });
-    },
+    enabled: true,
+    onLibraryUpdated: softLoad,
   });
+  useLibrarySoftRefreshOnFocus(softLoad);
 
   const patchItem = useCallback((updated: Playlist) => {
     setItems((prev) => prev.map((item) => (item.id === updated.id ? { ...item, ...updated } : item)));
