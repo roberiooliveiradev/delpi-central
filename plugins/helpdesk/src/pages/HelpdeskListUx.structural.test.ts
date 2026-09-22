@@ -138,9 +138,10 @@ describe("Helpdesk list UX structural", () => {
     expect(api).toContain("/assignee");
     expect(api).toContain("email?: string");
     const ui = read("../ui/helpdeskUi.tsx");
-    expect(ui).toContain("createDashboardScreenLoading");
-    expect(ui).toContain("HelpdeskScreenLoading");
-    expect(page).toContain("HelpdeskScreenLoading");
+    expect(ui).toContain("createDashboardLoadingActivityCard");
+    expect(ui).toContain("HelpdeskLoadingCard");
+    expect(ui).not.toContain("createDashboardScreenLoading");
+    expect(page).toContain("HelpdeskLoadingCard");
     expect(page).toContain("Carregando chamado");
   });
 

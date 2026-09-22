@@ -18,13 +18,13 @@ import {
   createDashboardEmptyState,
   createDashboardFiltersKit,
   createDashboardFormActions,
+  createDashboardLoadingActivityCard,
   createDashboardLoadingState,
   createDashboardMessageThread,
   createDashboardPageHeader,
   createDashboardSectionCard,
   createDashboardSegmentToggle,
   createDashboardSelectField,
-  createDashboardScreenLoading,
   createDashboardStateBanner,
   createDashboardStatusBadge,
   createDashboardTextAreaField,
@@ -39,7 +39,6 @@ import {
   loadingStateCardBemClasses,
   pageHeaderTitleRowBemClasses,
   RichTextEditor,
-  screenLoadingBemClasses,
   type MentionMenuHit,
   type RichTextEditorHandle,
   type RichTextInlineImageInsert,
@@ -108,13 +107,15 @@ export const HelpdeskLoadingState = createDashboardLoadingState({
   defaultMessage: "Carregando chamados…",
 });
 
-/** Splash de página — ScreenLoading do plugin-ui (badge + pulse). */
-export const HelpdeskScreenLoading = createDashboardScreenLoading({
-  classNames: screenLoadingBemClasses(PREFIX),
-  defaultLabel: "Carregando",
-  variant: "embedded",
-  tone: "brand",
-  logoSrc: "/logoMinhaDelpi.svg",
+/** Loading local de página/seção — mesmo padrão dos dashboards (`LoadingActivityCard`). */
+export const HelpdeskLoadingCard = createDashboardLoadingActivityCard({
+  prefix: PREFIX,
+  labels: {
+    progressRemaining: (remainingPercent) => `Faltam ${remainingPercent}%`,
+    progressAriaDeterminate: (remainingPercent) =>
+      `Carregamento: faltam ${remainingPercent} por cento`,
+    progressAriaIndeterminate: "Carregamento em andamento",
+  },
 });
 
 const HelpdeskMessageThreadView = createDashboardMessageThread(PREFIX);

@@ -111,7 +111,7 @@ import {
   HelpdeskIconButton,
   HelpdeskAttachButton,
   HelpdeskListPaginationFooter,
-  HelpdeskScreenLoading,
+  HelpdeskLoadingCard,
   HelpdeskMessageThread,
   HelpdeskPageHeader,
   HelpdeskRecordCard,
@@ -470,7 +470,13 @@ function TicketListPage() {
             }}
           />
         ) : null}
-        {view === "loading" ? <HelpdeskScreenLoading label="Carregando chamados…" /> : null}
+        {view === "loading" ? (
+          <HelpdeskLoadingCard
+            title="Carregando chamados…"
+            description="Buscando seus chamados no helpdesk."
+            variant="panel"
+          />
+        ) : null}
         {view === "forbidden" || view === "unavailable" || view === "error" ? (
           <HelpdeskStateBanner variant="error">{errorText}</HelpdeskStateBanner>
         ) : null}
@@ -710,7 +716,13 @@ function CreateTicketPage() {
         icon={<TicketPlus size={18} aria-hidden />}
       />
       <HelpdeskSectionCard title="Abrir chamado" hint={helpTooltips.create} fill>
-        {loading ? <HelpdeskScreenLoading label="Carregando categorias…" /> : null}
+        {loading ? (
+          <HelpdeskLoadingCard
+            title="Carregando categorias…"
+            description="Preparando o formulário de abertura."
+            variant="panel"
+          />
+        ) : null}
         {errorText ? <HelpdeskStateBanner variant="error">{errorText}</HelpdeskStateBanner> : null}
         <form
           className="helpdesk-create-form"
@@ -1008,7 +1020,13 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
         refreshing={loading}
       />
       <HelpdeskSectionCard title="Conversa" hint={helpTooltips.detail} fill>
-        {loading ? <HelpdeskScreenLoading label="Carregando chamado…" /> : null}
+        {loading ? (
+          <HelpdeskLoadingCard
+            title="Carregando chamado…"
+            description="Buscando conversa, anexos e status."
+            variant="panel"
+          />
+        ) : null}
         {errorText ? <HelpdeskStateBanner variant="error">{errorText}</HelpdeskStateBanner> : null}
         {ticket ? (
           <>
