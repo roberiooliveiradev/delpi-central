@@ -78,6 +78,8 @@ type Props = {
   onBrowseModeChange?: (mode: ProcessoListBrowseMode) => void;
   /** Quando true, o toggle Processos/Departamentos fica no Hero da página. */
   hideBrowseToggle?: boolean;
+  /** Quando true, oculta a contagem da toolbar (ex.: highlight do Hero é o owner). */
+  hideRecordCount?: boolean;
 };
 
 function viewModeIcon(mode: ProcessoListViewMode) {
@@ -197,6 +199,7 @@ export function ProcessFolderBrowser({
   browseMode: browseModeProp,
   onBrowseModeChange,
   hideBrowseToggle = false,
+  hideRecordCount = false,
 }: Props) {
   const P = TM_HELP_TOOLTIPS.processos;
   const [browseModeState, setBrowseModeState] = useState<ProcessoListBrowseMode>(() =>
@@ -367,37 +370,37 @@ export function ProcessFolderBrowser({
         </div>
       ) : null}
 
-      <div className="tm-processo-browser__browse-row">
-        <div className="tm-processo-browser__browse-label">
-          <FieldLabel
-            className="tm-field__label"
-            label="Visualizar por"
-            hint={P.visaoOrganizacao}
-          />
-          {browseMode === "departamento" && selectedDepartamento ? (
-            <nav className="tm-processo-browser__breadcrumb" aria-label="Navegação por departamento">
-              <button
-                type="button"
-                className="tm-processo-browser__breadcrumb-back"
-                onClick={handleBackToDepartamentos}
-              >
-                <ChevronLeft size={16} aria-hidden="true" />
-                Departamentos
-              </button>
-              <span className="tm-processo-browser__breadcrumb-sep" aria-hidden="true">
-                /
-              </span>
-              <span className="tm-processo-browser__breadcrumb-current">{selectedDepartamento.label}</span>
-            </nav>
-          ) : (
+      {browseMode === "departamento" && selectedDepartamento ? (
+        <div className="tm-processo-browser__browse-row tm-processo-browser__browse-row--drill">
+          <nav className="tm-processo-browser__breadcrumb" aria-label="Navegação por departamento">
+            <button
+              type="button"
+              className="tm-processo-browser__breadcrumb-back"
+              onClick={handleBackToDepartamentos}
+            >
+              <ChevronLeft size={16} aria-hidden="true" />
+              Departamentos
+            </button>
+            <span className="tm-processo-browser__breadcrumb-sep" aria-hidden="true">
+              /
+            </span>
+            <span className="tm-processo-browser__breadcrumb-current">{selectedDepartamento.label}</span>
+          </nav>
+        </div>
+      ) : !hideBrowseToggle ? (
+        <div className="tm-processo-browser__browse-row">
+          <div className="tm-processo-browser__browse-label">
+            <FieldLabel
+              className="tm-field__label"
+              label="Visualizar por"
+              hint={P.visaoOrganizacao}
+            />
             <p className="ds-hint tm-processo-browser__browse-hint">
               {browseMode === "departamento"
-                ? "Pastas por departamento do escopo (preferência salva neste navegador)."
+                ? "Agrupamento por departamento do escopo (preferência salva neste navegador)."
                 : "Listagem plana de macroprocessos (preferência salva neste navegador)."}
             </p>
-          )}
-        </div>
-        {!hideBrowseToggle ? (
+          </div>
           <div className="tm-processo-browser__browse-toggle">
             <SegmentToggle
               ariaLabel="Visualizar listagem por processos ou departamentos"
@@ -412,8 +415,8 @@ export function ProcessFolderBrowser({
               onChange={handleBrowseModeChange}
             />
           </div>
-        ) : null}
-      </div>
+        </div>
+      ) : null}
 
       {filters ? <div className="tm-processo-browser__filters">{filters}</div> : null}
 
@@ -480,7 +483,9 @@ export function ProcessFolderBrowser({
               );
             })}
           </div>
-          <span className={`${SECTION_CN.meta} tm-processo-browser__count`}>{countLabel}</span>
+          {hideRecordCount ? null : (
+            <span className={`${SECTION_CN.meta} tm-processo-browser__count`}>{countLabel}</span>
+          )}
         </div>
       </div>
 

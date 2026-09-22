@@ -620,17 +620,6 @@
   align-items: center;
 }.dashboard-transformometro .tm-processo-workspace-chrome__more{
   position: relative;
-}.dashboard-transformometro .tm-processo-workspace-chrome__more-menu{
-  position: absolute;
-  right: 0;
-  top: calc(100% + 0.35rem);
-  z-index: 5;
-  min-width: 12rem;
-  padding: 0.35rem;
-  border: 1px solid var(--ds-border);
-  border-radius: var(--ds-radius-sm, 0.5rem);
-  background: var(--ds-surface);
-  box-shadow: 0 8px 24px color-mix(in srgb, #000 12%, transparent);
 }.dashboard-transformometro .tm-processo-workspace-chrome__notices{
   color: var(--ds-text-muted);
   font-size: var(--ds-font-sm);

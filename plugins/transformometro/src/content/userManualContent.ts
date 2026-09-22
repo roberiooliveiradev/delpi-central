@@ -127,8 +127,9 @@ export const USER_MANUAL_CONTENT = {
       id: "processes",
       title: "Meus processos",
       intro:
-        "Lista os processos e abre o workspace do processo: visão geral, melhorias, revisões, diagrama, documentação Markdown, tarefas da sala e Sala de interação no mesmo contexto.",
+        "Lista os processos com filtros e contagem no Hero. Abre o workspace com caminho, Hero e abas horizontais: visão geral, melhorias, revisões, diagrama, documentação Markdown, tarefas e Sala de interação.",
       bullets: [
+        "No Hero da lista: Processos/Departamentos, busca, status, Atualizar e Novo processo. Ordenação e modos de visualização ficam na barra da listagem.",
         "Abra um processo para trabalhar no workspace. O caminho, o Hero e as abas horizontais organizam o processo, melhorias e revisões.",
         "Processo-mestre não pertence a uma única unidade: unidade e departamento aparecem na melhoria.",
         "Medições, investimentos e recursos compartilhados ficam em cada revisão — não invente pontuação no resumo.",
@@ -141,7 +142,7 @@ export const USER_MANUAL_CONTENT = {
         {
           want: "Trabalhar um processo",
           where: "Meus processos",
-          how: "Abra a lista e escolha o processo. Use a árvore para mudar de seção; F5 mantém o caminho.",
+          how: "Abra a lista e escolha o processo. Use o caminho e as abas do Hero para mudar de seção; F5 mantém o caminho.",
           path: TRANSFORMOMETRO_ROUTES.processes,
         },
         {
@@ -153,7 +154,7 @@ export const USER_MANUAL_CONTENT = {
         {
           want: "Abrir a sala do processo",
           where: "Workspace do processo",
-          how: "Use Sala de interação na árvore ou no rodapé do painel.",
+          how: "Use Sala de interação no Hero do processo ou a aba Sala de interação.",
           path: TRANSFORMOMETRO_ROUTES.processes,
         },
       ],
@@ -173,7 +174,7 @@ export const USER_MANUAL_CONTENT = {
         {
           want: "Abrir documentação",
           where: "Workspace do processo",
-          how: "Na árvore do processo, escolha Documentação.",
+          how: "Nas abas horizontais do processo, escolha Documentação.",
           path: TRANSFORMOMETRO_ROUTES.processes,
         },
       ],

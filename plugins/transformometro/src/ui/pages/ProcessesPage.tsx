@@ -318,6 +318,7 @@ export function ProcessesPage({
         browseMode={browseMode}
         onBrowseModeChange={setBrowseMode}
         hideBrowseToggle
+        hideRecordCount
         emptyMessage={
           httpStatus != null
             ? processListPlaceholder(httpStatus, error)

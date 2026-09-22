@@ -23,5 +23,14 @@ describe("Process experience parity wiring", () => {
     expect(page).toMatch(/highlights=\{heroHighlights\}/);
     expect(page).toMatch(/tm-processo-list-hero-controls/);
     expect(page).toMatch(/hideBrowseToggle/);
+    expect(page).toMatch(/hideRecordCount/);
+  });
+
+  it("workspace overflow usa menu canônico e highlight de arquivos", () => {
+    const chrome = readFileSync(join(root, "ui/processes/ProcessWorkspaceChrome.tsx"), "utf8");
+    expect(chrome).toMatch(/AnchoredPanelPortal/);
+    expect(chrome).toMatch(/ContextMenuItem/);
+    expect(chrome).toMatch(/id: "arquivos"/);
+    expect(chrome).not.toMatch(/tm-processo-workspace-chrome__more-menu/);
   });
 });

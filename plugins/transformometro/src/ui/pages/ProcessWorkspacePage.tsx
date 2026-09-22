@@ -15,6 +15,7 @@ import {
   type ProcessoInstancia,
   type Revisao,
 } from "../../data/api/transformometroApi";
+import { fetchProcessoArquivos } from "../../data/api/transformometroProcessoArquivoApi";
 import { subscribeWorkspaceTreeRefresh } from "../../utils/navigation";
 import { buildProcessoPath } from "../../utils/routeParser";
 import type { ParsedTransformometroRoute } from "../../utils/routeParser";
@@ -74,6 +75,7 @@ export function ProcessWorkspacePage({
   const [processo, setProcesso] = useState<Processo | null>(null);
   const [instancias, setInstancias] = useState<ProcessoInstancia[]>([]);
   const [revisoes, setRevisoes] = useState<Revisao[]>([]);
+  const [arquivosCount, setArquivosCount] = useState(0);
   const [treePartialError, setTreePartialError] = useState<string | null>(null);
   const missingRevisaoRefreshKey = useRef<string | null>(null);
 
@@ -87,6 +89,12 @@ export function ProcessWorkspacePage({
       setRevisoes: (value) => setRevisoes(value as Revisao[]),
       setTreePartialError,
     });
+    try {
+      const arquivos = await fetchProcessoArquivos(processoId, getAccessToken);
+      setArquivosCount(arquivos.length);
+    } catch {
+      /* partial: overview still owns the detailed arquivos panel */
+    }
   }, [getAccessToken, processoId]);
 
   const activeRevisao = useMemo(
@@ -276,6 +284,7 @@ export function ProcessWorkspacePage({
       processo={processo}
       instancias={instancias}
       revisoes={revisoes}
+      arquivosCount={arquivosCount}
       processoId={processoId}
       instanciaId={route.instanciaId}
       revisaoId={route.revisaoId}

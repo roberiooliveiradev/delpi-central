@@ -1,9 +1,13 @@
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, useRef, useState, type ReactNode } from "react";
 import { Copy, MessagesSquare, MoreHorizontal, Trash2 } from "lucide-react";
-import type { PageHeroHighlight } from "@delpi/plugin-ui/index";
+import {
+  AnchoredPanelPortal,
+  ContextMenuItem,
+  type PageHeroHighlight,
+} from "@delpi/plugin-ui/index";
 
 import { TmPageHero, TmPagePath, TmStatusBadge, TmUnderlineNav } from "../../components/tmChromeUi";
-import { DS_GHOST_BTN, dsGhostBtn } from "../../components/ghostChrome";
+import { DS_GHOST_BTN } from "../../components/ghostChrome";
 import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
 import type { Processo, ProcessoInstancia, Revisao } from "../../data/api/transformometroApi";
 import { computeProcessoListCompletion } from "../../utils/processoCompletion";
@@ -29,6 +33,7 @@ type Props = {
   processo: Processo | null;
   instancias: ProcessoInstancia[];
   revisoes: Revisao[];
+  arquivosCount?: number;
   processoId: string;
   instanciaId?: string;
   revisaoId?: string;
@@ -49,9 +54,9 @@ function processHighlights(
   processo: Processo,
   instancias: ProcessoInstancia[],
   revisoes: Revisao[],
+  arquivosCount: number,
 ): PageHeroHighlight[] {
   const completion = computeProcessoListCompletion(processo);
-  const diagramNodes = processo.setup_stats?.diagram_node_count ?? 0;
   return [
     {
       id: "preenchimento",
@@ -70,9 +75,9 @@ function processHighlights(
       value: String(revisoes.length),
     },
     {
-      id: "diagrama",
-      label: "Diagrama",
-      value: diagramNodes > 0 ? `${diagramNodes} nós` : "—",
+      id: "arquivos",
+      label: "Arquivos",
+      value: String(arquivosCount),
     },
   ];
 }
@@ -82,6 +87,7 @@ export function ProcessWorkspaceChrome({
   processo,
   instancias,
   revisoes,
+  arquivosCount = 0,
   processoId,
   instanciaId,
   revisaoId,
@@ -98,6 +104,8 @@ export function ProcessWorkspaceChrome({
   onDelete,
 }: Props) {
   const [moreOpen, setMoreOpen] = useState(false);
+  const moreAnchorRef = useRef<HTMLDivElement | null>(null);
+  const morePanelRef = useRef<HTMLDivElement | null>(null);
   const processesHref = TRANSFORMOMETRO_ROUTES.processes;
   const processoHref = `${TRANSFORMOMETRO_ROUTES.processes}/${processoId}`;
 
@@ -134,7 +142,7 @@ export function ProcessWorkspaceChrome({
       });
     }
     return items;
-  }, [activeInstancia, instanciaId, processo?.codigo_processo, processoHref, view]);
+  }, [activeInstancia, instanciaId, processo?.codigo_processo, processoHref, processoId, view]);
 
   const nav: ReactNode =
     view === "processo" ? (
@@ -190,7 +198,7 @@ export function ProcessWorkspaceChrome({
 
   const highlights =
     view === "processo" && processo
-      ? processHighlights(processo, instancias, revisoes)
+      ? processHighlights(processo, instancias, revisoes, arquivosCount)
       : undefined;
 
   return (
@@ -262,10 +270,11 @@ export function ProcessWorkspaceChrome({
                 <Copy size={16} aria-hidden />
                 Duplicar
               </button>
-              <div className="tm-processo-workspace-chrome__more">
+              <div ref={moreAnchorRef} className="tm-processo-workspace-chrome__more">
                 <button
                   type="button"
                   className={DS_GHOST_BTN}
+                  aria-label="Mais ações do processo"
                   aria-expanded={moreOpen}
                   aria-haspopup="menu"
                   disabled={!processo}
@@ -274,22 +283,30 @@ export function ProcessWorkspaceChrome({
                   <MoreHorizontal size={16} aria-hidden />
                   Mais
                 </button>
-                {moreOpen ? (
-                  <div className="tm-processo-workspace-chrome__more-menu" role="menu">
-                    <button
-                      type="button"
-                      role="menuitem"
-                      className={dsGhostBtn("danger")}
-                      onClick={() => {
-                        setMoreOpen(false);
-                        onDelete();
-                      }}
-                    >
-                      <Trash2 size={16} aria-hidden />
-                      Excluir processo
-                    </button>
-                  </div>
-                ) : null}
+                <AnchoredPanelPortal
+                  open={moreOpen}
+                  anchorRef={moreAnchorRef}
+                  panelRef={morePanelRef}
+                  className="delpi-ui-context-menu"
+                  variant="bare"
+                  role="menu"
+                  aria-label="Ações do processo"
+                  preferredPlacement="bottom"
+                  horizontalAlign="end"
+                  gap={10}
+                  portalScopeClassName="dashboard-transformometro"
+                  onDismiss={() => setMoreOpen(false)}
+                >
+                  <ContextMenuItem
+                    label="Excluir processo"
+                    icon={Trash2}
+                    destructive
+                    onSelect={() => {
+                      setMoreOpen(false);
+                      onDelete();
+                    }}
+                  />
+                </AnchoredPanelPortal>
               </div>
             </div>
           ) : undefined
