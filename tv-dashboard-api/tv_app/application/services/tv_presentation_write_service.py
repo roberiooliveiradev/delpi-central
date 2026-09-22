@@ -66,6 +66,33 @@ class RevisionConflictError(PresentationWriteError):
         self.current_revision = int(current_revision)
 
 
+_PLAYLIST_DEFAULT_SCALAR_TYPES = (str, int, float, bool, type(None))
+
+
+def _sanitize_playlist_data_defaults(raw: dict[str, Any]) -> dict[str, Any]:
+    """Shallow scalar defaults only (branch, period, dates, …)."""
+    out: dict[str, Any] = {}
+    if not isinstance(raw, dict):
+        raise PresentationWriteError(
+            "dataDefaults deve ser um objeto.",
+            status_code=422,
+            code="INVALID_CHANGE",
+        )
+    for key, value in raw.items():
+        key_s = str(key or "").strip()
+        if not key_s or len(key_s) > 64:
+            continue
+        if isinstance(value, _PLAYLIST_DEFAULT_SCALAR_TYPES):
+            out[key_s] = value
+            continue
+        raise PresentationWriteError(
+            f"dataDefaults.«{key_s}» deve ser escalar (string/número/boolean/null).",
+            status_code=422,
+            code="INVALID_CHANGE",
+        )
+    return out
+
+
 class TvPresentationWriteService:
     """Application owner for playlist/slide/section persistence (UI + GPT)."""
 
@@ -128,6 +155,48 @@ class TvPresentationWriteService:
                 user_ids=[actor_user_id],
                 reason="created",
                 playlist_id=pid,
+            )
+        return playlist
+
+    def patch_playlist_data_defaults(
+        self,
+        playlist_id: UUID,
+        *,
+        data_defaults: dict[str, Any],
+        actor_user_id: str,
+        expected_revision: int | None = None,
+        replace: bool = False,
+    ) -> dict[str, Any]:
+        """Merge or replace playlist.dataDefaults (filtros de programação)."""
+        from tv_app.application.services.presentation_change_notifier import (
+            notify_playlist_library_changed,
+        )
+
+        self.assert_expected_revision(playlist_id, expected_revision)
+        current = self.get_playlist(playlist_id)
+        existing = current.get("dataDefaults")
+        if not isinstance(existing, dict):
+            existing = {}
+        cleaned = _sanitize_playlist_data_defaults(data_defaults)
+        if replace:
+            next_defaults = cleaned
+        else:
+            next_defaults = {**existing, **cleaned}
+        playlist = self._repo.update_data_defaults(
+            playlist_id,
+            next_defaults,
+            actor_user_id=actor_user_id,
+            reason="playlist_data_defaults",
+        )
+        notify_presentation_changed(
+            playlist_id=str(playlist_id),
+            reason="playlist_data_defaults",
+        )
+        if actor_user_id:
+            notify_playlist_library_changed(
+                user_ids=[actor_user_id],
+                reason="updated",
+                playlist_id=str(playlist_id),
             )
         return playlist
 

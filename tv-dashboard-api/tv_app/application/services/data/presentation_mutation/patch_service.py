@@ -450,6 +450,22 @@ class PresentationPatchService:
                 playlist_mutated = playlist_mutated or bool(persist)
                 continue
 
+            if op_name == "patch_playlist_data_defaults":
+                if not playlist_id:
+                    raise PresentationPatchError(
+                        PresentationOpsContentService.message("missingPlaylist")
+                    )
+                patched_playlist = self._op_patch_playlist_data_defaults(
+                    playlist_id,
+                    raw_op,
+                    persist=persist,
+                    actor_user_id=actor_user_id,
+                )
+                side_effects["playlist"] = patched_playlist
+                applied.append(op_name)
+                playlist_mutated = playlist_mutated or bool(persist)
+                continue
+
             if op_name == "add_slide_from_preset":
                 if not playlist_id:
                     raise PresentationPatchError(PresentationOpsContentService.message("missingPlaylist"))
@@ -637,8 +653,15 @@ class PresentationPatchService:
             from tv_app.application.services.data.slide_auto_layout_service import (
                 SlideAutoLayoutService,
             )
+            from tv_app.application.services.data.slide_part_chrome_service import (
+                SlidePartChromeService,
+            )
 
             SlideAutoLayoutService.apply_kpi_row_if_needed(
+                native_config,
+                informed_block_ids=informed_frame_ids,
+            )
+            SlidePartChromeService.apply_missing_defaults(
                 native_config,
                 informed_block_ids=informed_frame_ids,
             )
@@ -1390,3 +1413,43 @@ class PresentationPatchService:
                 )
         playlist["seededSlides"] = seeded
         return playlist
+
+    def _op_patch_playlist_data_defaults(
+        self,
+        playlist_id: str,
+        op: dict[str, Any],
+        *,
+        persist: bool,
+        actor_user_id: str | None,
+    ) -> dict[str, Any]:
+        raw_defaults = op.get("dataDefaults")
+        if not isinstance(raw_defaults, dict):
+            raise PresentationPatchError(
+                PresentationOpsContentService.message("playlistDefaultsRequired")
+            )
+        replace = bool(op.get("replace"))
+        if not persist:
+            existing = self._playlist_defaults(playlist_id) or {}
+            merged = {**existing, **raw_defaults} if not replace else dict(raw_defaults)
+            return {
+                "id": playlist_id,
+                "preview": True,
+                "dataDefaults": merged,
+            }
+        if not actor_user_id:
+            raise PresentationPatchError(PresentationOpsContentService.message("missingTarget"))
+        from tv_app.application.services.tv_presentation_write_service import (
+            PresentationWriteError,
+            TvPresentationWriteService,
+        )
+
+        writes = TvPresentationWriteService(self._repo)
+        try:
+            return writes.patch_playlist_data_defaults(
+                UUID(playlist_id),
+                data_defaults=raw_defaults,
+                actor_user_id=actor_user_id,
+                replace=replace,
+            )
+        except PresentationWriteError as exc:
+            raise PresentationPatchError(str(exc)) from exc

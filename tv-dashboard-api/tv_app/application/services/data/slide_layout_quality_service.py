@@ -201,6 +201,8 @@ class SlideLayoutQualityService:
                         f"low_contrast:{block.get('id') or block.get('type')}:{ratio:.1f}"
                     )
 
+        issues.extend(_collect_part_font_issues(blocks, tokens))
+
         # Dedup preserve order
         seen: set[str] = set()
         out: list[str] = []
@@ -209,3 +211,95 @@ class SlideLayoutQualityService:
                 seen.add(item)
                 out.append(item)
         return out
+
+
+def _collect_part_font_issues(
+    blocks: list[Any],
+    tokens: Mapping[str, Any],
+) -> list[str]:
+    """Flag KPI/chart/table/input typography below designTokens.partChrome mins."""
+    chrome = tokens.get("partChrome")
+    if not isinstance(chrome, dict):
+        return []
+    issues: list[str] = []
+    kpi_chrome = chrome.get("kpi") if isinstance(chrome.get("kpi"), dict) else {}
+    chart_chrome = chrome.get("chart") if isinstance(chrome.get("chart"), dict) else {}
+    table_chrome = chrome.get("table") if isinstance(chrome.get("table"), dict) else {}
+    input_chrome = chrome.get("input") if isinstance(chrome.get("input"), dict) else {}
+
+    for block in blocks:
+        if not isinstance(block, dict):
+            continue
+        btype = str(block.get("type") or "")
+        bid = str(block.get("id") or btype)
+
+        if btype in _KPI_TYPES and kpi_chrome:
+            parts = block.get("kpiParts") if isinstance(block.get("kpiParts"), dict) else {}
+            title_fs = _part_font_size(parts, "title")
+            title_min = float(kpi_chrome.get("titleMinFontSize") or 18)
+            if title_fs is not None and title_fs < title_min:
+                issues.append(f"part_font_below_min:{bid}:title:{title_fs}<{title_min}")
+            value_fs = _part_font_size(parts, "value")
+            density = _kpi_density_for_gate(block.get("frame"))
+            value_mins = kpi_chrome.get("valueMinFontSize")
+            if not isinstance(value_mins, dict):
+                value_mins = {}
+            value_min = float(value_mins.get(density) or value_mins.get("row") or 40)
+            if value_fs is not None and value_fs < value_min:
+                issues.append(f"part_font_below_min:{bid}:value:{value_fs}<{value_min}")
+            icon = parts.get("icon") if isinstance(parts.get("icon"), dict) else {}
+            icon_style = icon.get("style") if isinstance(icon.get("style"), dict) else {}
+            icon_size = icon_style.get("iconSize")
+            icon_min = float(kpi_chrome.get("iconMinSize") or 32)
+            if isinstance(icon_size, (int, float)) and float(icon_size) < icon_min:
+                issues.append(f"part_font_below_min:{bid}:icon:{icon_size}<{icon_min}")
+
+        elif btype in {"chart_view", "data_chart"} and chart_chrome:
+            opts = block.get("chartOptions") if isinstance(block.get("chartOptions"), dict) else {}
+            title_fs = opts.get("titleFontSize")
+            title_min = float(chart_chrome.get("titleMinFontSize") or 18)
+            if isinstance(title_fs, (int, float)) and float(title_fs) < title_min:
+                issues.append(f"part_font_below_min:{bid}:chart_title:{title_fs}<{title_min}")
+
+        elif btype in {"table_view", "data_table"} and table_chrome:
+            opts = block.get("tableOptions") if isinstance(block.get("tableOptions"), dict) else {}
+            body_fs = opts.get("bodyFontSize")
+            body_min = float(table_chrome.get("bodyMinFontSize") or 14)
+            if isinstance(body_fs, (int, float)) and float(body_fs) < body_min:
+                issues.append(f"part_font_below_min:{bid}:table_body:{body_fs}<{body_min}")
+
+        elif btype == "input" and input_chrome:
+            parts = block.get("inputParts") if isinstance(block.get("inputParts"), dict) else {}
+            label_fs = _part_font_size(parts, "label")
+            label_min = float(input_chrome.get("labelMinFontSize") or 14)
+            if label_fs is not None and label_fs < label_min:
+                issues.append(f"part_font_below_min:{bid}:input_label:{label_fs}<{label_min}")
+
+    return issues
+
+
+def _part_font_size(parts: Mapping[str, Any], key: str) -> float | None:
+    part = parts.get(key)
+    if not isinstance(part, dict):
+        return None
+    style = part.get("style")
+    if not isinstance(style, dict):
+        return None
+    fs = style.get("fontSize")
+    if isinstance(fs, (int, float)):
+        return float(fs)
+    return None
+
+
+def _kpi_density_for_gate(frame: Any) -> str:
+    if not isinstance(frame, dict):
+        return "row"
+    try:
+        area = float(frame.get("w", 0)) * float(frame.get("h", 0))
+    except (TypeError, ValueError):
+        return "row"
+    if area >= 2200:
+        return "hero"
+    if area <= 900:
+        return "grid"
+    return "row"

@@ -17,5 +17,9 @@ Corpus estável para regressão de inteligência (sem Action nova). Critério PA
 | C11 | quatro indicadores em grade | `TV_KPI_GRID_4`; ≤ `maxPrimarySignalsPerSlide` |
 | C12 | negative: overlap / contraste baixo | `OUTCOME_NOT_VERIFIED` `slide_layout_quality` |
 | C13 | mude o bloco selecionado (editor aberto) | `editorFocus.selectedIds` INFORMED; não criar slide novo |
+| C14 | painel operacional Delpi | `THEME_DELPI` + cards `brand.card` brancos + accent; partes ≥ `partChrome` |
+| C15 | filtros período/filial no slide | `TV_FILTER_STRIP` e/ou `dataFilters` + inputs |
+| C16 | defaults da programação | `patch_playlist_data_defaults` (branch/período) |
+| C17 | comparação categórica | `TV_KPI_PLUS_CHART_BAR` / `chartType=bar`; negative: pie em série diária |
 
-Smoke automatizado parcial: `tests/test_ready_slide_ux.py`, `tests/test_slide_layout_quality.py`, `tests/test_editor_focus_store.py`.
+Smoke automatizado parcial: `tests/test_ready_slide_ux.py`, `tests/test_slide_layout_quality.py`, `tests/test_slide_part_chrome.py`, `tests/test_editor_focus_store.py`.

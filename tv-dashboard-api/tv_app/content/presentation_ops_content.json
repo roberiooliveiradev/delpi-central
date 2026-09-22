@@ -1,5 +1,5 @@
 {
-  "catalogVersion": "2026.09.22.ready2",
+  "catalogVersion": "2026.09.22.ready3",
   "sideEffectHintCatalog": [
     "refreshFilmstrip",
     "replaceNativeConfig",
@@ -32,7 +32,9 @@
     "aço": "#334155",
     "aco": "#334155",
     "kiosk claro": "#f8fafc",
-    "contraste tv": "#020617"
+    "contraste tv": "#020617",
+    "azul brand": "#003866",
+    "azul escuro delpi": "#003866"
   },
   "nlRouteHints": {
     "oee": "get_overall_equipment_effectiveness_pct",
@@ -377,7 +379,8 @@
     "fieldLabelsInvalid": "fieldLabels deve ser um mapa string→string.",
     "paramsInvalid": "params deve ser um objeto com valores primitivos (string/number/boolean).",
     "patchNestedInvalid": "patch_native_config.patch.{field} tem tipo inválido.",
-    "readySlideQualityFailed": "Slide não ficou pronto para TV: {issues}. Corrija params/projeção antes de considerar VERIFIED."
+    "readySlideQualityFailed": "Slide não ficou pronto para TV: {issues}. Corrija params/projeção antes de considerar VERIFIED.",
+    "playlistDefaultsRequired": "patch_playlist_data_defaults exige um objeto dataDefaults."
   },
   "placeholderClarifications": {
     "backgroundColor": "suggestNeedColor",
@@ -2049,6 +2052,75 @@
         "playlist"
       ],
       "consumes": []
+    },
+    "patch_playlist_data_defaults": {
+      "requiresPlaylist": true,
+      "requiresSlide": false,
+      "risk": "mutation",
+      "confirmationPolicy": "direct",
+      "sideEffectHints": [
+        "refreshFilmstrip"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "op",
+          "dataDefaults"
+        ],
+        "properties": {
+          "op": {
+            "const": "patch_playlist_data_defaults"
+          },
+          "dataDefaults": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Defaults da programação (merge). Keys tipadas: branch/filial, dateRangePreset, start_date/end_date, periodDays, competence, etc.",
+            "properties": {
+              "branch": {
+                "type": "string"
+              },
+              "filial": {
+                "type": "string"
+              },
+              "dateRangePreset": {
+                "type": "string"
+              },
+              "start_date": {
+                "type": "string"
+              },
+              "end_date": {
+                "type": "string"
+              },
+              "periodDays": {
+                "type": [
+                  "integer",
+                  "string"
+                ]
+              },
+              "competence": {
+                "type": "string"
+              }
+            }
+          },
+          "replace": {
+            "type": "boolean",
+            "description": "Se true, substitui dataDefaults inteiro; default false = deep-merge shallow keys."
+          }
+        },
+        "example": {
+          "op": "patch_playlist_data_defaults",
+          "dataDefaults": {
+            "branch": "01",
+            "dateRangePreset": "this_month"
+          }
+        }
+      },
+      "produces": [
+        "playlist"
+      ],
+      "consumes": [
+        "playlist"
+      ]
     }
   },
   "capabilities": [
@@ -2812,6 +2884,33 @@
       "payloadTemplate": {
         "op": "create_playlist",
         "name": "{{name}}"
+      }
+    },
+    {
+      "key": "patch_playlist_data_defaults",
+      "op": "patch_playlist_data_defaults",
+      "whenToUse": "Definir ou atualizar filtros/defaults da programação (playlist.dataDefaults): filial, período, etc.",
+      "contentMarkers": [
+        "filtro da programação",
+        "filtros da programação",
+        "default da playlist",
+        "defaults da programação",
+        "filtro de programação",
+        "dataDefaults",
+        "padrão da programação",
+        "filial padrão da programação"
+      ],
+      "excludeMarkers": [
+        "filtro do slide",
+        "filtros do slide",
+        "dataFilters",
+        "bloco input",
+        "filtro interativo"
+      ],
+      "actionTermSet": "update",
+      "payloadTemplate": {
+        "op": "patch_playlist_data_defaults",
+        "dataDefaults": {}
       }
     }
   ]

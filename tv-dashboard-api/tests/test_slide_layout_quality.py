@@ -35,9 +35,12 @@ def test_design_tokens_projected():
     tokens = cat.get("designTokens") or {}
     assert tokens.get("maxPrimarySignalsPerSlide") == 4
     assert "typeScale" in tokens
+    assert tokens.get("brand", {}).get("card") == "#ffffff"
+    assert "partChrome" in tokens
     assert "TV_KPI_ROW_2" in cat["recipes"]
     assert "TV_KPI_GRID_4" in cat["recipes"]
     assert "TV_HERO_PLUS_TABLE" in cat["recipes"]
+    assert "TV_FILTER_STRIP" in cat["recipes"]
 
 
 def test_row_recipes_no_overlap():

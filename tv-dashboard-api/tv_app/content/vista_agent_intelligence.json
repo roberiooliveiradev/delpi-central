@@ -149,13 +149,13 @@
     "principle": "READY_COMPOUND_SLIDE",
     "summary": "Pedido complexo → um lote compound: playlist clarificada + rotas + params vivos + merge tipado + visuals com projeção/formato + recipe Delpi (KPI/chart/table/texto/forma).",
     "pipeline": [
-      "7) presentation_recipes Delpi (TV_KPI_HERO / TV_KPI_ROW_2/3 / TV_KPI_GRID_4 / TV_KPI_PLUS_CHART / TV_KPI_SERIES_TABLE / TV_HERO_PLUS_TABLE / TV_TABLE_FOCUS / THEME_DELPI) + chrome tipado + designTokens.",
+      "7) presentation_recipes Delpi (TV_KPI_HERO / TV_KPI_ROW_2/3 / TV_KPI_GRID_4 / TV_KPI_PLUS_CHART[_BAR|_PIE] / TV_FILTER_STRIP / TV_KPI_SERIES_TABLE / TV_HERO_PLUS_TABLE / TV_TABLE_FOCUS / THEME_DELPI) + chrome tipado + designTokens.",
       "2) PLAYLIST_CLARIFICATION (list; perguntar se >1 sem nome).",
       "3) gpt_search_data_routes (PRESENT_ALL_SEARCH_HITS) → escolher família KPI/série/tabela.",
       "4) gpt_preview_data_block com params (dateRangePreset=this_month padrão se date_range fechada) — deve retornar dado OK.",
       "5) upsert_data_source (N fontes, params completos + branch herdado) + set_data_transform merge via joinHints quando 2+ fontes.",
       "6) add_*_from_route OU upsert_block visual + bind_visual — SEMPRE projection NÃO vazia + formato (auto ou upsert).",
-      "7) presentation_recipes Delpi (TV_KPI_HERO / TV_KPI_ROW_2/3 / TV_KPI_GRID_4 / TV_KPI_PLUS_CHART / TV_KPI_SERIES_TABLE / TV_HERO_PLUS_TABLE / TV_TABLE_FOCUS / THEME_DELPI) + chrome tipado + designTokens.",
+      "7) presentation_recipes Delpi (TV_KPI_HERO / TV_KPI_ROW_2/3 / TV_KPI_GRID_4 / TV_KPI_PLUS_CHART[_BAR|_PIE] / TV_FILTER_STRIP / TV_KPI_SERIES_TABLE / TV_HERO_PLUS_TABLE / TV_TABLE_FOCUS / THEME_DELPI) + chrome tipado + designTokens.",
       "8) Uma gpt_preview_change compound + commit_now=true; só aceitar VERIFIED sem erro de filtro/projection."
     ],
     "forbidden": [
@@ -182,20 +182,21 @@
     "principle": "TYPED_PRESENTATION_RECIPES",
     "summary": "Layouts/temas TV tipados Delpi (TV_KPI_HERO, TV_KPI_PLUS_CHART, TV_KPI_SERIES_TABLE, TV_TABLE_FOCUS, THEME_*). Emitir ops do catálogo — não inventar CSS.",
     "rules": [
-      "Pedido operacional genérico / TV → THEME_DELPI + defaults tipados do bloco (não card branco genérico).",
-      "'mais profissional/limpo' → THEME_MIDNIGHT ou THEME_DELPI.",
+      "Pedido operacional genérico / TV → THEME_DELPI + recipe tipada (cards brand.card brancos + accent; não inventar cinza genérico).",
+      "'mais profissional/limpo' → THEME_DELPI (preferido) ou THEME_MIDNIGHT.",
       "Multi-indicador (KPI+série+tabela) → TV_KPI_SERIES_TABLE.",
       "Hierarquia: título → KPI → chart/tabela; contraste kiosk; frames proporcionais por tipo.",
       "fontFamily preferir Inter, system-ui, sans-serif.",
       "Imagem só com assetId já existente neste HEAD.",
       "Multi-KPI sem recipe → TV_KPI_ROW_2/3 ou TV_KPI_GRID_4 conforme contagem.",
-      "designTokens do catalog são obrigatórios para densidade/tipografia/gutter."
+      "designTokens (brand + partChrome) do catalog são obrigatórios para densidade/tipografia/gutter."
     ],
     "forbidden": [
       "customFonts upload",
       "Inventar assetId",
       "Tratar print como fonte de upload de mídia",
-      "Frame widescreen único sem tipografia/parts proporcionais"
+      "Frame widescreen único sem tipografia/parts proporcionais",
+      "Omitir THEME_DELPI em painel operacional Delpi"
     ]
   },
   "media_limits": {
@@ -280,16 +281,21 @@
     "principle": "TYPED_LAYOUT_BEFORE_FREEFORM",
     "summary": "Layout TV: recipes/tokens Delpi antes de inventar frames. Gate slide_layout_quality no VERIFY.",
     "rules": [
-      "Pedido operacional → THEME_DELPI + recipe (TV_KPI_HERO / ROW_2/3 / GRID_4 / SERIES_TABLE / HERO_PLUS_TABLE / TITLE_STRIP).",
+      "Pedido operacional → THEME_DELPI + recipe (TV_KPI_HERO / ROW_2/3 / GRID_4 / SERIES_TABLE / HERO_PLUS_TABLE / TITLE_STRIP) no mesmo patch.",
+      "Tema Delpi: fundo gradient designTokens.brand.bgFrom→bgTo; cards brancos (brand.card); accent brand.accent; texto no card brand.onCard; títulos sobre o fundo brand.onBg.",
       "Dois/três/quatro KPIs → TV_KPI_ROW_* / TV_KPI_GRID_4 — não empilhar no mesmo frame.",
-      "Obedecer designTokens do catalog (safeMargin, gutter, typeScale, maxPrimarySignalsPerSlide=4).",
-      "Após write: se OUTCOME_NOT_VERIFIED reason=slide_layout_quality → corrigir overlap/overflow/densidade/contraste.",
-      "fontFamily só do allowlist; contraste kiosk (texto claro em fundo Delpi)."
+      "Obedecer designTokens (safeMargin, gutter, typeScale, kpiValueScale, partChrome, maxPrimarySignalsPerSlide=4).",
+      "Partes KPI/chart/table/input: preferir recipe kpiParts/chartOptions; o commit completa defaults via partChrome se ausentes.",
+      "Filtros compartilhados → patch_native_config.dataFilters; interativos → upsert_block type=input; defaults da programação → patch_playlist_data_defaults.",
+      "chartType tipado: série temporal line/area; categorias bar/stacked_bar; composição pie/doughnut (poucas fatias); não pie em série diária densa.",
+      "Após write: se OUTCOME_NOT_VERIFIED reason=slide_layout_quality → corrigir overlap/overflow/densidade/contraste/part_font_below_min.",
+      "fontFamily só do allowlist."
     ],
     "forbidden": [
       "Frame widescreen único cobrindo o slide de dados",
       "Mais de 4 KPIs primários no mesmo slide",
       "Tipografia/cores aleatórias fora dos tokens/recipes",
+      "KPI/chart/table com card escuro genérico quando o pedido é operacional Delpi (usar brand.card)",
       "Ignorar editorFocus fresco para alterar 'este' bloco"
     ]
   }

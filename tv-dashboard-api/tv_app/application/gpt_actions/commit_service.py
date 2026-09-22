@@ -552,6 +552,36 @@ class TvGptCommitService:
                         status_code=422,
                     )
 
+                    continue
+
+                if op_name == "patch_playlist_data_defaults":
+                    raw_defaults = raw.get("dataDefaults")
+                    if not isinstance(raw_defaults, dict):
+                        raise GptActionsError(
+                            PresentationOpsContentService.message("playlistDefaultsRequired"),
+                            code="INVALID_CHANGE",
+                            status_code=422,
+                        )
+                    replace = bool(raw.get("replace"))
+                    playlist = self._writes.patch_playlist_data_defaults(
+                        current_playlist,
+                        data_defaults=raw_defaults,
+                        actor_user_id=actor_id,
+                        expected_revision=chain_revision,
+                        replace=replace,
+                    )
+                    chain_revision = self._writes.get_revision(current_playlist)
+                    applied.append(
+                        {
+                            "op": op_name,
+                            "playlistId": str(current_playlist),
+                            "expected": {
+                                "dataDefaults": playlist.get("dataDefaults") or {},
+                            },
+                        }
+                    )
+                    continue
+
                 if op_name == "add_blank_slide":
                     title = str(raw.get("title") or "").strip() or PresentationOpsContentService.setting_str(
                         "defaultSlideTitle", "Slide personalizado"

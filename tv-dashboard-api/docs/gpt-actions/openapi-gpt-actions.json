@@ -1144,6 +1144,70 @@
                           "type": "object",
                           "required": [
                             "op",
+                            "dataDefaults"
+                          ],
+                          "properties": {
+                            "op": {
+                              "const": "patch_playlist_data_defaults",
+                              "type": "string"
+                            },
+                            "dataDefaults": {
+                              "type": "object",
+                              "additionalProperties": true,
+                              "description": "Defaults da programação (merge). Keys tipadas: branch/filial, dateRangePreset, start_date/end_date, periodDays, competence, etc.",
+                              "properties": {
+                                "branch": {
+                                  "type": "string"
+                                },
+                                "filial": {
+                                  "type": "string"
+                                },
+                                "dateRangePreset": {
+                                  "type": "string"
+                                },
+                                "start_date": {
+                                  "type": "string"
+                                },
+                                "end_date": {
+                                  "type": "string"
+                                },
+                                "periodDays": {
+                                  "type": [
+                                    "integer",
+                                    "string"
+                                  ]
+                                },
+                                "competence": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            "replace": {
+                              "type": "boolean",
+                              "description": "Se true, substitui dataDefaults inteiro; default false = deep-merge shallow keys."
+                            },
+                            "as": {
+                              "type": "string",
+                              "description": "Local alias for the resource this op produces (compound plans)."
+                            },
+                            "playlistRef": {
+                              "type": "string",
+                              "description": "Alias or authoritative playlist UUID. Omit to use current playlist slot."
+                            }
+                          },
+                          "example": {
+                            "op": "patch_playlist_data_defaults",
+                            "dataDefaults": {
+                              "branch": "01",
+                              "dateRangePreset": "this_month"
+                            }
+                          },
+                          "title": "patch_playlist_data_defaults"
+                        },
+                        {
+                          "type": "object",
+                          "required": [
+                            "op",
                             "items"
                           ],
                           "example": {
@@ -2099,7 +2163,7 @@
                     "name": "Testando a VISTA"
                   }
                 ],
-                "catalogVersion": "2026.09.22.ready2",
+                "catalogVersion": "2026.09.22.ready3",
                 "commit_now": true,
                 "confirmation": {
                   "confirmed": true

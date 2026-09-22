@@ -98,6 +98,15 @@ class PresentationRepositoryPort(Protocol):
 
     def list_sections(self, playlist_id: UUID) -> list[dict[str, Any]]: ...
 
+    def update_data_defaults(
+        self,
+        playlist_id: UUID,
+        data_defaults: dict[str, Any],
+        *,
+        actor_user_id: str,
+        reason: str = "playlist_data_defaults",
+    ) -> dict[str, Any]: ...
+
     def list_playlists(
         self,
         *,

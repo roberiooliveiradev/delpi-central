@@ -1,5 +1,5 @@
 {
-  "version": "2026.09.22.3",
+  "version": "2026.09.22.10",
   "fontFamilyAllowlist": [
     "Inter, system-ui, sans-serif",
     "system-ui, sans-serif",
@@ -9,7 +9,8 @@
     "delpi_navy": [
       "#05070a",
       "#0d2840",
-      "#089bdb"
+      "#089bdb",
+      "#ffffff"
     ],
     "midnight": [
       "#0f172a",
@@ -85,30 +86,30 @@
               "h": 70
             },
             "style": {
-              "color": "#ffffff",
+              "color": "#0f172a",
               "fontFamily": "Inter, system-ui, sans-serif",
-              "backgroundColor": "#0d2840",
+              "backgroundColor": "#ffffff",
               "zIndex": 2
             },
             "kpiParts": {
               "card": {
                 "style": {
-                  "fill": "#0d2840",
-                  "backgroundColor": "#0d2840",
+                  "fill": "#ffffff",
+                  "backgroundColor": "#ffffff",
                   "borderRadius": 16
                 }
               },
               "title": {
                 "style": {
                   "fontSize": 22,
-                  "color": "#e2e8f0",
+                  "color": "#475569",
                   "fontWeight": "600"
                 }
               },
               "value": {
                 "style": {
                   "fontSize": 56,
-                  "color": "#ffffff",
+                  "color": "#0f172a",
                   "fontWeight": "bold"
                 }
               },
@@ -132,30 +133,30 @@
               "h": 70
             },
             "style": {
-              "color": "#ffffff",
+              "color": "#0f172a",
               "fontFamily": "Inter, system-ui, sans-serif",
-              "backgroundColor": "#0d2840",
+              "backgroundColor": "#ffffff",
               "zIndex": 2
             },
             "kpiParts": {
               "card": {
                 "style": {
-                  "fill": "#0d2840",
-                  "backgroundColor": "#0d2840",
+                  "fill": "#ffffff",
+                  "backgroundColor": "#ffffff",
                   "borderRadius": 16
                 }
               },
               "title": {
                 "style": {
                   "fontSize": 22,
-                  "color": "#e2e8f0",
+                  "color": "#475569",
                   "fontWeight": "600"
                 }
               },
               "value": {
                 "style": {
                   "fontSize": 56,
-                  "color": "#ffffff",
+                  "color": "#0f172a",
                   "fontWeight": "bold"
                 }
               },
@@ -222,30 +223,30 @@
               "h": 70
             },
             "style": {
-              "color": "#ffffff",
+              "color": "#0f172a",
               "fontFamily": "Inter, system-ui, sans-serif",
-              "backgroundColor": "#0d2840",
+              "backgroundColor": "#ffffff",
               "zIndex": 2
             },
             "kpiParts": {
               "card": {
                 "style": {
-                  "fill": "#0d2840",
-                  "backgroundColor": "#0d2840",
+                  "fill": "#ffffff",
+                  "backgroundColor": "#ffffff",
                   "borderRadius": 16
                 }
               },
               "title": {
                 "style": {
                   "fontSize": 22,
-                  "color": "#e2e8f0",
+                  "color": "#475569",
                   "fontWeight": "600"
                 }
               },
               "value": {
                 "style": {
                   "fontSize": 48,
-                  "color": "#ffffff",
+                  "color": "#0f172a",
                   "fontWeight": "bold"
                 }
               },
@@ -269,30 +270,30 @@
               "h": 70
             },
             "style": {
-              "color": "#ffffff",
+              "color": "#0f172a",
               "fontFamily": "Inter, system-ui, sans-serif",
-              "backgroundColor": "#0d2840",
+              "backgroundColor": "#ffffff",
               "zIndex": 2
             },
             "kpiParts": {
               "card": {
                 "style": {
-                  "fill": "#0d2840",
-                  "backgroundColor": "#0d2840",
+                  "fill": "#ffffff",
+                  "backgroundColor": "#ffffff",
                   "borderRadius": 16
                 }
               },
               "title": {
                 "style": {
                   "fontSize": 22,
-                  "color": "#e2e8f0",
+                  "color": "#475569",
                   "fontWeight": "600"
                 }
               },
               "value": {
                 "style": {
                   "fontSize": 48,
-                  "color": "#ffffff",
+                  "color": "#0f172a",
                   "fontWeight": "bold"
                 }
               },
@@ -316,30 +317,30 @@
               "h": 70
             },
             "style": {
-              "color": "#ffffff",
+              "color": "#0f172a",
               "fontFamily": "Inter, system-ui, sans-serif",
-              "backgroundColor": "#0d2840",
+              "backgroundColor": "#ffffff",
               "zIndex": 2
             },
             "kpiParts": {
               "card": {
                 "style": {
-                  "fill": "#0d2840",
-                  "backgroundColor": "#0d2840",
+                  "fill": "#ffffff",
+                  "backgroundColor": "#ffffff",
                   "borderRadius": 16
                 }
               },
               "title": {
                 "style": {
                   "fontSize": 22,
-                  "color": "#e2e8f0",
+                  "color": "#475569",
                   "fontWeight": "600"
                 }
               },
               "value": {
                 "style": {
                   "fontSize": 48,
-                  "color": "#ffffff",
+                  "color": "#0f172a",
                   "fontWeight": "bold"
                 }
               },
@@ -406,30 +407,30 @@
               "h": 40
             },
             "style": {
-              "color": "#ffffff",
+              "color": "#0f172a",
               "fontFamily": "Inter, system-ui, sans-serif",
-              "backgroundColor": "#0d2840",
+              "backgroundColor": "#ffffff",
               "zIndex": 2
             },
             "kpiParts": {
               "card": {
                 "style": {
-                  "fill": "#0d2840",
-                  "backgroundColor": "#0d2840",
+                  "fill": "#ffffff",
+                  "backgroundColor": "#ffffff",
                   "borderRadius": 16
                 }
               },
               "title": {
                 "style": {
                   "fontSize": 22,
-                  "color": "#e2e8f0",
+                  "color": "#475569",
                   "fontWeight": "600"
                 }
               },
               "value": {
                 "style": {
                   "fontSize": 44,
-                  "color": "#ffffff",
+                  "color": "#0f172a",
                   "fontWeight": "bold"
                 }
               },
@@ -453,30 +454,30 @@
               "h": 40
             },
             "style": {
-              "color": "#ffffff",
+              "color": "#0f172a",
               "fontFamily": "Inter, system-ui, sans-serif",
-              "backgroundColor": "#0d2840",
+              "backgroundColor": "#ffffff",
               "zIndex": 2
             },
             "kpiParts": {
               "card": {
                 "style": {
-                  "fill": "#0d2840",
-                  "backgroundColor": "#0d2840",
+                  "fill": "#ffffff",
+                  "backgroundColor": "#ffffff",
                   "borderRadius": 16
                 }
               },
               "title": {
                 "style": {
                   "fontSize": 22,
-                  "color": "#e2e8f0",
+                  "color": "#475569",
                   "fontWeight": "600"
                 }
               },
               "value": {
                 "style": {
                   "fontSize": 44,
-                  "color": "#ffffff",
+                  "color": "#0f172a",
                   "fontWeight": "bold"
                 }
               },
@@ -500,30 +501,30 @@
               "h": 40
             },
             "style": {
-              "color": "#ffffff",
+              "color": "#0f172a",
               "fontFamily": "Inter, system-ui, sans-serif",
-              "backgroundColor": "#0d2840",
+              "backgroundColor": "#ffffff",
               "zIndex": 2
             },
             "kpiParts": {
               "card": {
                 "style": {
-                  "fill": "#0d2840",
-                  "backgroundColor": "#0d2840",
+                  "fill": "#ffffff",
+                  "backgroundColor": "#ffffff",
                   "borderRadius": 16
                 }
               },
               "title": {
                 "style": {
                   "fontSize": 22,
-                  "color": "#e2e8f0",
+                  "color": "#475569",
                   "fontWeight": "600"
                 }
               },
               "value": {
                 "style": {
                   "fontSize": 44,
-                  "color": "#ffffff",
+                  "color": "#0f172a",
                   "fontWeight": "bold"
                 }
               },
@@ -547,30 +548,30 @@
               "h": 40
             },
             "style": {
-              "color": "#ffffff",
+              "color": "#0f172a",
               "fontFamily": "Inter, system-ui, sans-serif",
-              "backgroundColor": "#0d2840",
+              "backgroundColor": "#ffffff",
               "zIndex": 2
             },
             "kpiParts": {
               "card": {
                 "style": {
-                  "fill": "#0d2840",
-                  "backgroundColor": "#0d2840",
+                  "fill": "#ffffff",
+                  "backgroundColor": "#ffffff",
                   "borderRadius": 16
                 }
               },
               "title": {
                 "style": {
                   "fontSize": 22,
-                  "color": "#e2e8f0",
+                  "color": "#475569",
                   "fontWeight": "600"
                 }
               },
               "value": {
                 "style": {
                   "fontSize": 44,
-                  "color": "#ffffff",
+                  "color": "#0f172a",
                   "fontWeight": "bold"
                 }
               },
@@ -636,30 +637,30 @@
               "h": 80
             },
             "style": {
-              "color": "#ffffff",
+              "color": "#0f172a",
               "fontFamily": "Inter, system-ui, sans-serif",
-              "backgroundColor": "#0d2840",
+              "backgroundColor": "#ffffff",
               "zIndex": 2
             },
             "kpiParts": {
               "card": {
                 "style": {
-                  "fill": "#0d2840",
-                  "backgroundColor": "#0d2840",
+                  "fill": "#ffffff",
+                  "backgroundColor": "#ffffff",
                   "borderRadius": 16
                 }
               },
               "title": {
                 "style": {
                   "fontSize": 22,
-                  "color": "#e2e8f0",
+                  "color": "#475569",
                   "fontWeight": "600"
                 }
               },
               "value": {
                 "style": {
                   "fontSize": 64,
-                  "color": "#ffffff",
+                  "color": "#0f172a",
                   "fontWeight": "bold"
                 }
               },
@@ -684,9 +685,9 @@
             },
             "style": {
               "fontFamily": "Inter, system-ui, sans-serif",
-              "color": "#ffffff",
+              "color": "#0f172a",
               "zIndex": 2,
-              "backgroundColor": "#0a1628",
+              "backgroundColor": "#ffffff",
               "fontSize": 18
             }
           }
@@ -808,30 +809,30 @@
               "h": 42
             },
             "style": {
-              "color": "#ffffff",
+              "color": "#0f172a",
               "fontFamily": "Inter, system-ui, sans-serif",
-              "backgroundColor": "#0d2840",
+              "backgroundColor": "#ffffff",
               "zIndex": 2
             },
             "kpiParts": {
               "card": {
                 "style": {
-                  "fill": "#0d2840",
-                  "backgroundColor": "#0d2840",
+                  "fill": "#ffffff",
+                  "backgroundColor": "#ffffff",
                   "borderRadius": 16
                 }
               },
               "title": {
                 "style": {
                   "fontSize": 28,
-                  "color": "#e2e8f0",
+                  "color": "#475569",
                   "fontWeight": "600"
                 }
               },
               "value": {
                 "style": {
                   "fontSize": 80,
-                  "color": "#ffffff",
+                  "color": "#0f172a",
                   "fontWeight": "bold"
                 }
               },
@@ -898,27 +899,36 @@
               "h": 56
             },
             "style": {
-              "color": "#ffffff",
-              "backgroundColor": "#0d2840",
+              "color": "#0f172a",
+              "backgroundColor": "#ffffff",
               "fontFamily": "Inter, system-ui, sans-serif"
             },
             "kpiParts": {
               "card": {
                 "style": {
-                  "fill": "#0d2840",
-                  "backgroundColor": "#0d2840"
+                  "fill": "#ffffff",
+                  "backgroundColor": "#ffffff",
+                  "borderRadius": 16
                 }
               },
               "value": {
                 "style": {
                   "fontSize": 64,
-                  "color": "#ffffff"
+                  "color": "#0f172a",
+                  "fontWeight": "bold"
                 }
               },
               "title": {
                 "style": {
                   "fontSize": 22,
-                  "color": "#e2e8f0"
+                  "color": "#475569",
+                  "fontWeight": "600"
+                }
+              },
+              "icon": {
+                "style": {
+                  "color": "#089bdb",
+                  "iconSize": 36
                 }
               }
             }
@@ -936,8 +946,8 @@
               "h": 56
             },
             "style": {
-              "color": "#f8fafc",
-              "backgroundColor": "#0a1628",
+              "color": "#0f172a",
+              "backgroundColor": "#ffffff",
               "fontFamily": "Inter, system-ui, sans-serif"
             },
             "chartOptions": {
@@ -1000,27 +1010,36 @@
               "h": 36
             },
             "style": {
-              "color": "#ffffff",
-              "backgroundColor": "#0d2840",
+              "color": "#0f172a",
+              "backgroundColor": "#ffffff",
               "fontFamily": "Inter, system-ui, sans-serif"
             },
             "kpiParts": {
               "card": {
                 "style": {
-                  "fill": "#0d2840",
-                  "backgroundColor": "#0d2840"
+                  "fill": "#ffffff",
+                  "backgroundColor": "#ffffff",
+                  "borderRadius": 16
                 }
               },
               "value": {
                 "style": {
                   "fontSize": 56,
-                  "color": "#ffffff"
+                  "color": "#0f172a",
+                  "fontWeight": "bold"
                 }
               },
               "title": {
                 "style": {
                   "fontSize": 18,
-                  "color": "#e2e8f0"
+                  "color": "#475569",
+                  "fontWeight": "600"
+                }
+              },
+              "icon": {
+                "style": {
+                  "color": "#089bdb",
+                  "iconSize": 36
                 }
               }
             }
@@ -1038,8 +1057,8 @@
               "h": 36
             },
             "style": {
-              "color": "#f8fafc",
-              "backgroundColor": "#0a1628",
+              "color": "#0f172a",
+              "backgroundColor": "#ffffff",
               "fontFamily": "Inter, system-ui, sans-serif"
             }
           }
@@ -1057,7 +1076,7 @@
             },
             "style": {
               "color": "#f1f5f9",
-              "backgroundColor": "#0a1628",
+              "backgroundColor": "#ffffff",
               "fontFamily": "Inter, system-ui, sans-serif"
             }
           }
@@ -1117,7 +1136,7 @@
             },
             "style": {
               "color": "#f1f5f9",
-              "backgroundColor": "#0a1628",
+              "backgroundColor": "#ffffff",
               "fontFamily": "Inter, system-ui, sans-serif"
             }
           }
@@ -1191,6 +1210,350 @@
           }
         }
       ]
+    },
+    "TV_KPI_PLUS_CHART_BAR": {
+      "label": "KPI + gráfico de barras Delpi",
+      "themeKey": "delpi",
+      "description": "Título + KPI + chart_view bar (comparação categórica).",
+      "markers": [
+        "kpi e barras",
+        "kpi bar chart",
+        "gráfico de barras",
+        "grafico de barras",
+        "kpi plus bar",
+        "comparação em barras"
+      ],
+      "ops": [
+        {
+          "op": "patch_native_config",
+          "patch": {
+            "background": {
+              "type": "gradient",
+              "from": "#05070a",
+              "to": "#0d2840",
+              "angle": 180
+            }
+          }
+        },
+        {
+          "op": "upsert_block",
+          "block": {
+            "type": "heading",
+            "frame": {
+              "x": 4,
+              "y": 4,
+              "w": 92,
+              "h": 10
+            },
+            "style": {
+              "fontSize": 32,
+              "fontWeight": "bold",
+              "color": "#ffffff",
+              "fontFamily": "Inter, system-ui, sans-serif"
+            }
+          }
+        },
+        {
+          "op": "upsert_block",
+          "block": {
+            "type": "kpi_view",
+            "frame": {
+              "x": 4,
+              "y": 18,
+              "w": 28,
+              "h": 56
+            },
+            "style": {
+              "color": "#0f172a",
+              "backgroundColor": "#ffffff",
+              "fontFamily": "Inter, system-ui, sans-serif"
+            },
+            "kpiParts": {
+              "card": {
+                "style": {
+                  "fill": "#ffffff",
+                  "backgroundColor": "#ffffff",
+                  "borderRadius": 16
+                }
+              },
+              "value": {
+                "style": {
+                  "fontSize": 64,
+                  "color": "#0f172a",
+                  "fontWeight": "bold"
+                }
+              },
+              "title": {
+                "style": {
+                  "fontSize": 22,
+                  "color": "#475569",
+                  "fontWeight": "600"
+                }
+              },
+              "icon": {
+                "style": {
+                  "color": "#089bdb",
+                  "iconSize": 36
+                }
+              }
+            }
+          }
+        },
+        {
+          "op": "upsert_block",
+          "block": {
+            "type": "chart_view",
+            "chartType": "bar",
+            "frame": {
+              "x": 36,
+              "y": 18,
+              "w": 60,
+              "h": 56
+            },
+            "style": {
+              "color": "#0f172a",
+              "backgroundColor": "#ffffff",
+              "fontFamily": "Inter, system-ui, sans-serif"
+            },
+            "chartOptions": {
+              "valueFormat": "number"
+            }
+          }
+        }
+      ]
+    },
+    "TV_KPI_PLUS_CHART_PIE": {
+      "label": "KPI + pizza Delpi",
+      "themeKey": "delpi",
+      "description": "Título + KPI + chart_view pie (poucas fatias / composição).",
+      "markers": [
+        "kpi e pizza",
+        "kpi pie",
+        "gráfico pizza",
+        "grafico pizza",
+        "composição pizza",
+        "doughnut"
+      ],
+      "ops": [
+        {
+          "op": "patch_native_config",
+          "patch": {
+            "background": {
+              "type": "gradient",
+              "from": "#05070a",
+              "to": "#0d2840",
+              "angle": 180
+            }
+          }
+        },
+        {
+          "op": "upsert_block",
+          "block": {
+            "type": "heading",
+            "frame": {
+              "x": 4,
+              "y": 4,
+              "w": 92,
+              "h": 10
+            },
+            "style": {
+              "fontSize": 32,
+              "fontWeight": "bold",
+              "color": "#ffffff",
+              "fontFamily": "Inter, system-ui, sans-serif"
+            }
+          }
+        },
+        {
+          "op": "upsert_block",
+          "block": {
+            "type": "kpi_view",
+            "frame": {
+              "x": 4,
+              "y": 18,
+              "w": 28,
+              "h": 56
+            },
+            "style": {
+              "color": "#0f172a",
+              "backgroundColor": "#ffffff",
+              "fontFamily": "Inter, system-ui, sans-serif"
+            },
+            "kpiParts": {
+              "card": {
+                "style": {
+                  "fill": "#ffffff",
+                  "backgroundColor": "#ffffff",
+                  "borderRadius": 16
+                }
+              },
+              "value": {
+                "style": {
+                  "fontSize": 64,
+                  "color": "#0f172a",
+                  "fontWeight": "bold"
+                }
+              },
+              "title": {
+                "style": {
+                  "fontSize": 22,
+                  "color": "#475569",
+                  "fontWeight": "600"
+                }
+              },
+              "icon": {
+                "style": {
+                  "color": "#089bdb",
+                  "iconSize": 36
+                }
+              }
+            }
+          }
+        },
+        {
+          "op": "upsert_block",
+          "block": {
+            "type": "chart_view",
+            "chartType": "pie",
+            "frame": {
+              "x": 36,
+              "y": 18,
+              "w": 60,
+              "h": 56
+            },
+            "style": {
+              "color": "#0f172a",
+              "backgroundColor": "#ffffff",
+              "fontFamily": "Inter, system-ui, sans-serif"
+            },
+            "chartOptions": {
+              "valueFormat": "number"
+            }
+          }
+        }
+      ]
+    },
+    "TV_FILTER_STRIP": {
+      "label": "Faixa de filtros Delpi",
+      "themeKey": "delpi",
+      "description": "Fundo Delpi + dois inputs (período e filial) para filtros de tela interativos.",
+      "markers": [
+        "faixa de filtros",
+        "filtros do slide",
+        "filter strip",
+        "barra de filtros",
+        "inputs de filtro",
+        "filtro período filial"
+      ],
+      "ops": [
+        {
+          "op": "patch_native_config",
+          "patch": {
+            "background": {
+              "type": "gradient",
+              "from": "#05070a",
+              "to": "#0d2840",
+              "angle": 180
+            },
+            "dataFilters": {
+              "dateRangePreset": "this_month"
+            }
+          }
+        },
+        {
+          "op": "upsert_block",
+          "block": {
+            "type": "heading",
+            "frame": {
+              "x": 3,
+              "y": 3,
+              "w": 94,
+              "h": 8
+            },
+            "style": {
+              "fontSize": 28,
+              "fontWeight": "bold",
+              "color": "#ffffff",
+              "fontFamily": "Inter, system-ui, sans-serif"
+            },
+            "content": "Filtros"
+          }
+        },
+        {
+          "op": "upsert_block",
+          "block": {
+            "type": "input",
+            "frame": {
+              "x": 3,
+              "y": 14,
+              "w": 46,
+              "h": 14
+            },
+            "style": {
+              "backgroundColor": "#ffffff",
+              "color": "#0f172a",
+              "fontFamily": "Inter, system-ui, sans-serif",
+              "borderRadius": 12
+            },
+            "input": {
+              "paramKey": "dateRangePreset",
+              "targetScope": "slide",
+              "defaultValue": "this_month"
+            },
+            "inputParts": {
+              "label": {
+                "style": {
+                  "fontSize": 16,
+                  "color": "#475569"
+                }
+              },
+              "control": {
+                "style": {
+                  "fontSize": 18,
+                  "color": "#0f172a"
+                }
+              }
+            }
+          }
+        },
+        {
+          "op": "upsert_block",
+          "block": {
+            "type": "input",
+            "frame": {
+              "x": 51,
+              "y": 14,
+              "w": 46,
+              "h": 14
+            },
+            "style": {
+              "backgroundColor": "#ffffff",
+              "color": "#0f172a",
+              "fontFamily": "Inter, system-ui, sans-serif",
+              "borderRadius": 12
+            },
+            "input": {
+              "paramKey": "branch",
+              "targetScope": "slide",
+              "defaultValue": "all"
+            },
+            "inputParts": {
+              "label": {
+                "style": {
+                  "fontSize": 16,
+                  "color": "#475569"
+                }
+              },
+              "control": {
+                "style": {
+                  "fontSize": 18,
+                  "color": "#0f172a"
+                }
+              }
+            }
+          }
+        }
+      ]
     }
   },
   "designTokens": {
@@ -1224,9 +1587,98 @@
       {
         "fg": "#0f172a",
         "bg": "#f8fafc"
+      },
+      {
+        "fg": "#0f172a",
+        "bg": "#ffffff"
+      },
+      {
+        "fg": "#089bdb",
+        "bg": "#ffffff"
       }
     ],
     "overlapAreaThresholdPct": 8,
-    "widescreenCoverageThresholdPct": 90
+    "widescreenCoverageThresholdPct": 90,
+    "brand": {
+      "bgFrom": "#05070a",
+      "bgTo": "#0d2840",
+      "card": "#ffffff",
+      "accent": "#089bdb",
+      "onCard": "#0f172a",
+      "onCardMuted": "#475569",
+      "onBg": "#ffffff"
+    },
+    "partChrome": {
+      "kpi": {
+        "titleMinFontSize": 18,
+        "valueMinFontSize": {
+          "hero": 64,
+          "row": 48,
+          "grid": 40
+        },
+        "unitMinFontSize": 16,
+        "iconMinSize": 32,
+        "defaultTitleFontSize": 22,
+        "defaultValueFontSize": {
+          "hero": 80,
+          "row": 56,
+          "grid": 44
+        },
+        "defaultIconSize": 36,
+        "cardFill": "#ffffff",
+        "titleColor": "#475569",
+        "valueColor": "#0f172a",
+        "iconColor": "#089bdb"
+      },
+      "chart": {
+        "titleMinFontSize": 18,
+        "legendMinFontSize": 14,
+        "axisMinFontSize": 12,
+        "defaultTitleFontSize": 22,
+        "cardFill": "#ffffff",
+        "fg": "#0f172a"
+      },
+      "table": {
+        "headerMinFontSize": 16,
+        "bodyMinFontSize": 14,
+        "defaultHeaderFontSize": 18,
+        "defaultBodyFontSize": 16,
+        "cardFill": "#ffffff",
+        "fg": "#0f172a"
+      },
+      "input": {
+        "labelMinFontSize": 14,
+        "controlMinFontSize": 16,
+        "defaultLabelFontSize": 16,
+        "defaultControlFontSize": 18,
+        "cardFill": "#ffffff",
+        "fg": "#0f172a",
+        "accent": "#089bdb"
+      }
+    },
+    "chartTypeHints": {
+      "temporal": [
+        "line",
+        "area"
+      ],
+      "categorical": [
+        "bar",
+        "stacked_bar"
+      ],
+      "composition": [
+        "pie",
+        "doughnut"
+      ],
+      "funnel": [
+        "funnel",
+        "waterfall"
+      ],
+      "forbidden": {
+        "dense_daily_series": [
+          "pie",
+          "doughnut"
+        ]
+      }
+    }
   }
 }

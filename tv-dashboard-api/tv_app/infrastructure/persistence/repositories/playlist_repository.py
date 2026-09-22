@@ -597,6 +597,21 @@ class PlaylistRepository:
             conn.commit()
         return _row_to_playlist(row)
 
+    def update_data_defaults(
+        self,
+        playlist_id: UUID,
+        data_defaults: dict[str, Any],
+        *,
+        actor_user_id: str,
+        reason: str = "playlist_data_defaults",
+    ) -> dict[str, Any]:
+        return self.update(
+            playlist_id,
+            actor_user_id=actor_user_id,
+            reason=reason,
+            data_defaults=data_defaults,
+        )
+
     def set_active(
         self,
         playlist_id: UUID,
