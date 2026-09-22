@@ -267,6 +267,24 @@ export const PORTAL_SEARCH_CATALOG: readonly PortalCatalogItem[] = [
     placement: "launcher" as const,
     status: "FUNCTIONAL" as const,
   })),
+  {
+    id: "meeting-minutes-pending",
+    label: "Assinaturas pendentes",
+    description: "Atas aguardando sua assinatura.",
+    path: TRANSFORMOMETRO_ROUTES.meetingMinutesPending,
+    group: "Registros",
+    placement: "target",
+    status: "FUNCTIONAL",
+  },
+  {
+    id: "my-signature",
+    label: "Minha assinatura",
+    description: "Cadastre ou atualize a assinatura usada nas atas.",
+    path: TRANSFORMOMETRO_ROUTES.mySignature,
+    group: "Registros",
+    placement: "target",
+    status: "FUNCTIONAL",
+  },
 ];
 
 export function filterPortalCatalog(

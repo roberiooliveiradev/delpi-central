@@ -21,7 +21,6 @@ import {
 
 import type { AppProps } from "../../App";
 import { TransformometroShell } from "../../components/TransformometroShell";
-import { PortalTopBar } from "../../components/TransformometroNav";
 import { HostContainedWideDialog } from "../../components/ui/Modal";
 import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
 import { TmNativeTextAreaField, TmNativeTextField } from "../../components/ui/tmNativeFormFields";
@@ -911,7 +910,6 @@ export function InteractionRoomsPage({ getAccessToken, pathname, roomId, onNavig
 
   return (
     <TransformometroShell fillViewport>
-      <PortalTopBar currentPath={pathname ?? TRANSFORMOMETRO_ROUTES.interactionRooms} onNavigate={onNavigate} />
       <InteractionRoomPage
         labels={{
           ...INTERACTION_ROOM_PAGE_LABELS_PT,

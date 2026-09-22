@@ -16,7 +16,6 @@ import {
 
 import { InlineErrorState } from "../../components/ErrorStateBox";
 import { LoadingActivityCard } from "../../components/LoadingActivityCard";
-import { PortalTopBar } from "../../components/TransformometroNav";
 import { TransformometroShell } from "../../components/TransformometroShell";
 import { TmStatusBadge } from "../../components/tmChromeUi";
 import { PERSON_DIRECTORY_LABELS as L } from "../../content/personDirectoryLabels";
@@ -228,10 +227,6 @@ export function PersonDirectoryPage({
 
   return (
     <TransformometroShell>
-      <PortalTopBar
-        currentPath={pathname ?? `${TRANSFORMOMETRO_ROUTES.home}/users/${userId}`}
-        onNavigate={onNavigate}
-      />
       <TmPortalUserProfilePage
         isSelf={isSelf}
         onEditSelf={

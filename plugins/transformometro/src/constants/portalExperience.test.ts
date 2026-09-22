@@ -158,6 +158,12 @@ describe("Portal Transforma+ navigation", () => {
     expect(filterPortalCatalog("tarefas").map((item) => item.path)).toContain(
       TRANSFORMOMETRO_ROUTES.myTasks,
     );
+    expect(filterPortalCatalog("assinatura").map((item) => item.path)).toContain(
+      TRANSFORMOMETRO_ROUTES.mySignature,
+    );
+    expect(filterPortalCatalog("pendentes").map((item) => item.path)).toContain(
+      TRANSFORMOMETRO_ROUTES.meetingMinutesPending,
+    );
     expect(isPortalSearchShortcut({ key: "k", ctrlKey: true, metaKey: false })).toBe(true);
     expect(isPortalSearchShortcut({ key: "K", ctrlKey: false, metaKey: true })).toBe(true);
     expect(isPortalSearchShortcut({ key: "k", ctrlKey: false, metaKey: false })).toBe(false);

@@ -3,6 +3,17 @@
 }.dashboard-transformometro,
 .dashboard-transformometro *{
   box-sizing: border-box;
+}
+/* Frame do App: TopBar do portal em todas as rotas (única montagem). */
+.tm-portal-frame.dashboard-transformometro{
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+}.tm-portal-frame__body{
+  min-width: 0;
+  flex: 1 1 auto;
 }.dashboard-transformometro{
   --ds-page-padding: 24px;
   --ds-section-gap: 20px;
@@ -614,10 +625,11 @@
   gap: 0.75rem;
   min-width: 0;
 }
-/* Primeira faixa (path + hero do processo) permanece visível ao rolar em todos os escopos. */
+/* Primeira faixa (path + hero do processo) permanece visível ao rolar em todos os escopos.
+ * Offset abaixo da TopBar sticky do portal (App). */
 .dashboard-transformometro .tm-processo-workspace__chrome{
   position: sticky;
-  top: 0;
+  top: var(--tm-portal-topbar-sticky-offset, 3.25rem);
   z-index: 12;
   padding-bottom: 0.35rem;
   background: color-mix(in srgb, var(--ds-page-bg, var(--bg, #0b1c2c)) 92%, transparent);

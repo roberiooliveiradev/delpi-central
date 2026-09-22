@@ -4,7 +4,6 @@ import { PageHero, pageHeroBemClasses, LoadingActivityBadge, type PageHeroHighli
 
 import { PORTAL_PRODUCT_NAME } from "../constants/portalExperience";
 import { DS_GHOST_BTN } from "./ghostChrome";
-import { PortalTopBar } from "./TransformometroNav";
 import "./PageHeader.css";
 
 type PageHeaderProps = {
@@ -12,8 +11,10 @@ type PageHeaderProps = {
   subtitle: ReactNode;
   eyebrow?: ReactNode;
   lead?: ReactNode;
+  /** @deprecated TopBar do portal vive no App; mantido só por compatibilidade de call sites. */
   currentPath?: string;
-  onNavigate: (path: string) => void;
+  /** @deprecated TopBar do portal vive no App; mantido só por compatibilidade de call sites. */
+  onNavigate?: (path: string) => void;
   onRefresh?: () => void;
   refreshing?: boolean;
   actions?: ReactNode;
@@ -29,8 +30,6 @@ export function PageHeader({
   subtitle,
   eyebrow = PORTAL_PRODUCT_NAME,
   lead,
-  currentPath,
-  onNavigate,
   onRefresh,
   refreshing = false,
   actions,
@@ -40,7 +39,6 @@ export function PageHeader({
 }: PageHeaderProps) {
   return (
     <>
-      <PortalTopBar currentPath={currentPath} onNavigate={onNavigate} />
       {lead}
       <PageHero
         classNames={HERO}

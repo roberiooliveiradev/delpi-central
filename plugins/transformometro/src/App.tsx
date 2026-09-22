@@ -1,6 +1,7 @@
 import { useEffect, type ReactNode } from "react";
 
 import { PageTransition } from "./components/PageTransition";
+import { PortalTopBar } from "./components/TransformometroNav";
 import { ConfirmDialogProvider } from "./components/ui/ConfirmDialogProvider";
 import {
   UnsavedChangesGuardProvider,
@@ -208,7 +209,14 @@ function AppRoutes({ getAccessToken, pathname: pathnameFromHost }: AppProps) {
     );
   }
 
-  return <PageTransition transitionKey={transitionKey}>{page}</PageTransition>;
+  return (
+    <div className="tm-portal-frame dashboard-transformometro">
+      <PortalTopBar currentPath={pathname} onNavigate={onNavigate} />
+      <div className="tm-portal-frame__body">
+        <PageTransition transitionKey={transitionKey}>{page}</PageTransition>
+      </div>
+    </div>
+  );
 }
 
 export default function App(props: AppProps) {
