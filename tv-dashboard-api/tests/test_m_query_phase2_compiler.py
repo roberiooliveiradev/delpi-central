@@ -272,11 +272,14 @@ def test_compile_and_functions_http_use_envelope_and_tv_read_rbac():
             },
         )
         functions = client.get("/data/m/functions?profile=m-delpi-v1")
-    assert compiled.status_code == 200
-    assert compiled.json()["success"] is True
-    assert compiled.json()["data"]["outputStepName"] == "X"
+        capabilities = client.get("/data/m/capabilities")
+    # Product M authoring off: compile gated; functions/capabilities remain for dormant code.
+    assert compiled.status_code == 404
     assert functions.status_code == 200
     assert functions.json()["data"]["total"] >= 14
+    assert capabilities.status_code == 200
+    assert capabilities.json()["data"]["enabled"] is False
+    assert capabilities.json()["data"]["writeV2Enabled"] is False
 
     with patch(
         "tv_app.interface.http.routes.data_api_routes.resolve_user",
@@ -314,5 +317,5 @@ def test_compile_endpoint_never_calls_preview_or_fetch_services():
             "/data/m/compile",
             json={"script": "let X = Table.FirstN(Fonte, 1) in X"},
         )
-    assert response.status_code == 200
+    assert response.status_code == 404
     preview.assert_not_called()

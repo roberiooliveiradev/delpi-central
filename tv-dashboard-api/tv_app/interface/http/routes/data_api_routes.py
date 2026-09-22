@@ -94,6 +94,13 @@ def compile_m_query(request: Request, body: MCompileBody):
         assert_permission(user, TV_READ)
     except PermissionError as exc:
         return fail(str(exc), 403)
+    if not bool(m_query_setting("enabled", False)) or not bool(
+        m_query_setting("writeV2Enabled", False)
+    ):
+        return fail(
+            "Editor M desativado. Use Preparar dados com etapas tipadas (steps).",
+            404,
+        )
     result = _m_compiler.compile(
         MCompileRequest(
             profile=body.profile,
@@ -215,6 +222,13 @@ def mutate_m_query(request: Request, body: MMutationBody):
         assert_permission(user, TV_READ)
     except PermissionError as exc:
         return fail(str(exc), 403)
+    if not bool(m_query_setting("enabled", False)) or not bool(
+        m_query_setting("writeV2Enabled", False)
+    ):
+        return fail(
+            "Editor M desativado. Use Preparar dados com etapas tipadas (steps).",
+            404,
+        )
     compile_request = MCompileRequest(
         profile=body.profile,
         script=body.script,

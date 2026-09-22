@@ -83,16 +83,9 @@ class TvDataConfigValidationService:
                 routes_for_filters.append(route)
             prefix = f"blocks[{index}]"
             transform_result = read_data_transform(block.get("dataTransform"))
-            if (
-                transform_result.version == DATA_TRANSFORM_V2
-                and not bool(m_query_setting("writeV2Enabled", False))
-            ):
-                issues.append(
-                    {
-                        "field": f"{prefix}.dataTransform",
-                        "message": message("dataTransformV2WriteDisabled"),
-                    }
-                )
+            # Existing v2 transforms remain valid for dual-read compat while M
+            # authoring is off. New writes cannot create v2 (writeV2Enabled=false
+            # + sanitize_data_transform_for_persistence).
             if not route:
                 issues.append(
                     {

@@ -494,7 +494,7 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "summary": "TV presentation mutation capability catalog",
                 "description": (
                     "Returns catalogVersion, operations, capabilities, capability_surface "
-                    "(incl. agent_directives: object_resolution/data_discovery/modes) from "
+                    "(incl. agent_directives: object_resolution/data_discovery/data_transform/modes) from "
                     "PresentationMutation. Call before writes; obey agent_directives. "
                     "Catalog informs; backend authorizes. Requires tv-dashboard.write."
                 ),

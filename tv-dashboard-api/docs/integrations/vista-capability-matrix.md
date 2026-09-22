@@ -105,6 +105,8 @@ Documented project guardrail: prefer **≤ ~30 importable operations**.
 
 **ANALYSIS notes (CURRENT):** search = owner-local discovery over `tv_data_routes.json` (query required; compact DTO + `paramSchema`; miss ≠ absence). Preview prefers `{operationId, params}`. Heuristics: `agent_directives.data_discovery`. MFE `GET /data/routes` is editor-only (not a GPT Action).
 
+**Transform SoT (CURRENT):** `dataTransform = { steps: [...] }` only. VISTA writes via `set_data_transform` (typed step allowlist). Free M / DAX / SQL → `mForbidden`. Product M workbench is **off** (`mQuery.enabled`/`writeV2Enabled`/`advancedEditorEnabled`=false); legacy v2 scripts may still execute in dual-read for saved playlists. Heuristics: `agent_directives.data_transform`.
+
 **Not applicable:** generic `search_records` / `prepare_record_change` (VISTA is not multi-entity CRUD).
 
 ## Action inventory

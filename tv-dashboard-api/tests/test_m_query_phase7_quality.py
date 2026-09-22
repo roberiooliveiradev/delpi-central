@@ -25,10 +25,10 @@ def _compile(**overrides):
     return MCompileRequest(**values)
 
 
-def test_phase7_pilot_enables_core_and_keeps_expensive_features_off():
-    assert m_query_setting("enabled", False) is True
-    assert m_query_setting("writeV2Enabled", False) is True
-    assert m_query_setting("advancedEditorEnabled", False) is True
+def test_phase7_product_disables_m_authoring_keeps_expensive_features_off():
+    assert m_query_setting("enabled", True) is False
+    assert m_query_setting("writeV2Enabled", True) is False
+    assert m_query_setting("advancedEditorEnabled", True) is False
     assert m_query_setting("profilingEnabled", True) is False
     assert m_query_setting("explainPlanEnabled", True) is False
     assert m_query_setting("compileCacheEnabled", True) is False

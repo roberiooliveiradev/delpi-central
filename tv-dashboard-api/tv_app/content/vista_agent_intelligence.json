@@ -1,5 +1,5 @@
 {
-  "version": "2026.09.22.4",
+  "version": "2026.09.22.5",
   "owner": "tv-dashboard-api",
   "source": "capability_surface.agent_directives via gpt_get_catalog",
   "object_resolution": {
@@ -84,6 +84,21 @@
       "Tratar miss de search como prova de ausência de dado"
     ]
   },
+  "data_transform": {
+    "principle": "TYPED_STEPS_ONLY",
+    "summary": "Transform = set_data_transform com steps tipados allowlisted. M/script/v2/DAX/SQL proibidos (mForbidden). Produto M desligado.",
+    "rules": [
+      "SoT: dataTransform = { steps: [...] }. Ops tipadas do catálogo (keepRows, merge, select, rename, …).",
+      "Unir fontes: step op=merge com sourceId da outra data_source do slide — nunca script M NestedJoin.",
+      "Nunca emitir language/script/version:2 nem smuggle via upsert_block.dataTransform.",
+      "Editor M / workbench / compile-mutate não fazem parte do caminho VISTA."
+    ],
+    "forbidden": [
+      "Script M livre / Power Query M / DAX / SQL",
+      "dataTransform.version=2 ou dataTransform.script",
+      "Orientar o usuário a 'abrir o editor M'"
+    ]
+  },
   "modes": {
     "QUICK_DISPLAY": "Ajuste pontual de slide/bloco já conhecido — resolver objeto, mutar, não criar.",
     "GUIDED_DASHBOARD": "Projetar/reorganizar painel ou playlist — criar só o que faltar após inventário READ.",
@@ -108,7 +123,8 @@
     "Paridade visual incompleta sem declarar o gap (fingir que ficou idêntico quando o catálogo não cobre).",
     "Dump enciclopédico de rotas de um domínio no chat GPT (sem search / sem intent).",
     "Omitir hits do search (ex.: não mostrar séries quando a Action retornou get_*_series).",
-    "Trial-and-error de params fora do paramSchema / inventar block+nativeConfig para preview."
+    "Trial-and-error de params fora do paramSchema / inventar block+nativeConfig para preview.",
+    "Emitir script M / dataTransform.version=2 / orientar editor M (transform = só steps tipados)."
   ],
   "auth_errors": {
     "401": "AuthN — pedir reconexão OAuth DELPI / permitir Action.",

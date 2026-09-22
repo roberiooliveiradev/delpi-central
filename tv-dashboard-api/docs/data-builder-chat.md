@@ -19,6 +19,8 @@ MFE (Fontes de dados)
 
 Turno com message NL → 422 NL_TURN_RETIRED
 Suggest de rotas NL no catálogo → POST /data/routes/suggest (discovery owner-local)
+Materialize com merge → steps tipados (`op: merge`); remap de `sourceId` no MFE ao inserir.
+Transform SoT do slide = `{ steps }` (não script M).
 ```
 
 ## APIs

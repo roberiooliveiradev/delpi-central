@@ -377,7 +377,7 @@ export function DataBuilderChatPanel({
       }
 
       const idMap: Record<string, string> = {};
-      const created: ComunicadoDataSourceBlock[] = [];
+      const prepared: ComunicadoDataSourceBlock[] = [];
       for (const block of blocks) {
         if (!block || typeof block !== "object") continue;
         const row = block as ComunicadoBlock;
@@ -385,21 +385,25 @@ export function DataBuilderChatPanel({
         const draftLocalId = String((row as { draftLocalId?: string }).draftLocalId || "");
         const nextBlock = { ...row } as ComunicadoDataSourceBlock;
         delete (nextBlock as { draftLocalId?: string }).draftLocalId;
-        if (mode === "replace" && created.length === 0) {
+        prepared.push(nextBlock);
+        if (draftLocalId) idMap[draftLocalId] = nextBlock.id;
+      }
+
+      const finalized =
+        prepared.length > 1
+          ? prepared.map((block) => {
+              const transform = remapTransformSourceIds(block.dataTransform, idMap);
+              return transform ? { ...block, dataTransform: transform } : block;
+            })
+          : prepared;
+
+      for (let index = 0; index < finalized.length; index += 1) {
+        const nextBlock = finalized[index];
+        if (mode === "replace" && index === 0) {
           replaceSelectedDataRoute(nextBlock);
         } else {
           addDataSourceBlock(nextBlock);
         }
-        created.push(nextBlock);
-        if (draftLocalId) idMap[draftLocalId] = nextBlock.id;
-      }
-
-      if (created.length > 1) {
-        const remapped = created.map((block) => {
-          const transform = remapTransformSourceIds(block.dataTransform, idMap);
-          return transform ? { ...block, dataTransform: transform } : block;
-        });
-        void remapped;
       }
 
       if (result.session) applySession(result.session);

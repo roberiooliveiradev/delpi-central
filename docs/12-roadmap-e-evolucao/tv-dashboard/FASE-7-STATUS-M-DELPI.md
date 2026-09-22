@@ -1,14 +1,22 @@
 # Fase 7 — Qualidade, profiling e otimização M DELPI
 
-**Status:** implementação concluída em 2026-07-17; piloto funcional ativado em produção
+**Status produto (2026-09):** fluxo M **DESATIVADO** no produto (`mQuery.enabled`,
+`writeV2Enabled`, `advancedEditorEnabled` = `false`). Código M e testes unitários
+permanecem retidos (dormant). Authoring canônico = `dataTransform.steps` (modal
+Preparar dados / Combinar) + VISTA `set_data_transform`.
+
+**Status histórico:** implementação concluída em 2026-07-17; piloto funcional
+esteve ativo e foi desligado em favor do SoT tipado (steps).
+
 **Baseline:** `b715840eb`
 
 ## Resultado
 
 A Fase 7 foi implementada no pipeline canônico do backend. Profiling e explain
 não são decisões do browser: a UI somente solicita e apresenta contratos
-calculados pelo servidor. O piloto habilita runtime, escrita v2, editor avançado
-e telemetria; recursos de maior custo permanecem desligados.
+calculados pelo servidor. Com o produto em modo steps-only, compile/mutate HTTP
+respondem 404; dual-read de scripts v2 legados no enrichment permanece para
+compatibilidade de playlists já salvas.
 
 ## Contratos entregues
 
@@ -18,7 +26,7 @@ e telemetria; recursos de maior custo permanecem desligados.
   `deadlineMs`; resposta opcional com `columnProfile`, `stepMetrics` e
   `explainPlan`;
 - `GET /data/m/capabilities`: flags finais de profiling, explain, caches e
-  telemetria;
+  telemetria (workbench só se `enabled` ∧ `writeV2Enabled`);
 - profiling amostrado e opt-in com válida/vazia/erro, distinct/repeated,
   distinct ratio e min/max somente para tipos ordenáveis homogêneos;
 - explain classifica operações potencialmente caras e marca todas as etapas
@@ -51,49 +59,43 @@ As métricas por etapa expõem somente cardinalidade e tempo.
 O painel local `DataPrepareQualityPanel` oferece **Analisar perfil** sob demanda,
 estado `aria-pressed`, status anunciável, qualidade/distribuição por coluna e
 `details` para o plano. Não foi criado componente no `plugin-ui`: não existe
-segundo consumidor.
+segundo consumidor. Com flags off, o compositor `DataPrepareModal` usa só o
+fluxo legado de etapas tipadas (ribbon Combinar / steps).
 
-## Flags do piloto
+## Flags canônicas (produto)
 
-Estão `true`: `enabled`, `writeV2Enabled`, `advancedEditorEnabled` e
-`phase7TelemetryEnabled`. Permanecem `false`: `profilingEnabled`,
-`explainPlanEnabled`, `compileCacheEnabled` e `previewCacheEnabled`.
+Estão `false`: `enabled`, `writeV2Enabled`, `advancedEditorEnabled`,
+`profilingEnabled`, `explainPlanEnabled`, `compileCacheEnabled` e
+`previewCacheEnabled`. `phase7TelemetryEnabled` pode permanecer `true` sem
+expor o workbench.
 
-## Rollout recomendado
+## Rollout / reativação (somente se produto decidir)
 
-1. manter tudo desligado e executar testes/carga em ambiente não produtivo;
-2. ativar telemetria e cache de compilação para grupo interno;
-3. validar taxa de erro, hit ratio, memória e p95 de compile;
-4. ativar explain para o piloto;
-5. ativar preview cache com TTL curto, verificando isolamento por usuário;
-6. ativar profiling apenas no piloto e medir p95/cancelamentos;
-7. ampliar gradualmente somente após metas de produto definidas e comprovadas.
+1. backfill ou inventário de transforms v2 → steps;
+2. ligar `enabled` + `writeV2Enabled` em ambiente controlado;
+3. só então `advancedEditorEnabled` e recursos caros (profiling/explain/caches).
 
-Rollback: desligar primeiro `profilingEnabled` e `previewCacheEnabled`; depois
-`explainPlanEnabled` e `compileCacheEnabled`. O fluxo M das Fases 0–6 permanece
-funcional e os caches locais expiram/reiniciam sem migração.
+Rollback do produto M: manter as três flags de authoring em `false`. Código
+`m_query` e rotas `/data/m/*` ficam dormant sem remoção.
 
 ## Checklist e gaps
 
 - [x] profiling opt-in e amostrado;
 - [x] qualidade, distribuição, distinct e min/max seguros;
 - [x] explain e métricas por etapa;
-- [x] cache TTL/LRU particionado;
+- [x] caches TTL/LRU particionados;
 - [x] deadline backend e AbortController frontend;
-- [x] telemetria sem conteúdo sensível;
-- [x] capabilities e UI acessível;
-- [x] testes adversariais de chave, isolamento, amostragem e deadline;
-- [ ] definir meta oficial de p95 com Produto/SRE;
-- [ ] coletar evidência de carga e consumo de memória no ambiente alvo;
-- [ ] validar cancelamento por desconexão no proxy ASGI em homologação;
-- [ ] validar min/max com datasets reais de datas/durações;
-- [ ] decidir TTL e limites finais por telemetria.
+- [x] telemetria sem PII/script;
+- [x] capabilities e UI acessível (workbench gated);
+- [x] produto desativado; SoT = steps tipados;
+- [ ] backfill opcional v2→steps (fora deste cutover);
+- [ ] meta oficial de p95 se M for reativado.
 
-## Decisão de ativação
+## Decisão de produto
 
-O piloto funcional foi autorizado em produção para validar o fluxo M real. A
-ativação de profiling, explain e caches continua condicionada a evidência de
-carga, p95, cancelamento e isolamento de memória.
+Fluxo M **desligado** no produto. Novos transforms = `{ steps }`. Scripts v2
+existentes: dual-read no enrichment. Reativar M exige decisão explícita +
+inventário/backfill.
 
 ## Validação local
 

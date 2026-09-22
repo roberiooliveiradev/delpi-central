@@ -1,12 +1,16 @@
 # Playbook de Implementação — Power Query M no TV Dashboard
 
+> **Status produto (2026-09):** fluxo M **DESATIVADO**. Código `m_query` retido;
+> authoring = `dataTransform.steps` (Preparar dados / Combinar) + VISTA
+> `set_data_transform`. Ver [FASE-7-STATUS-M-DELPI.md](./FASE-7-STATUS-M-DELPI.md).
+>
 > **Produto:** Minha DELPI — plugin Painéis TV  
 > **Repositório:** `roberiooliveiradev/delpi-central`  
 > **Escopo:** `plugins/tv-dashboard`, `plugins/tv-dashboard-presentation`, `plugins/plugin-ui` e `tv-dashboard-api`  
 > **Baseline inspecionada:** branch `main`, commit `095dabdbad44dbdb000f165a9fe0cdc13c6ee334`  
 > **Versão deste playbook:** 1.0  
 > **Data:** 2026-07-16  
-> **Status:** Fases 0–7 implementadas; Fase 7 aguarda evidência para ativação
+> **Status histórico:** Fases 0–7 implementadas; produto M desligado (código dormant)
 
 ---
 

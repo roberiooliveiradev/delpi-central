@@ -1618,7 +1618,7 @@ api-delpi → data (cru em resolved.data)
 | **Query** | `data_source.dataTransform.steps` | Só steps (nunca rows) |
 | **View** | `chartProjection` / `kpiProjection` / `tableProjection` | Campos/agregação/cor de série |
 
-UI: modal **Preparar dados** (`DataPrepareModal`) — consultas = fontes `data_source` (rotas api-delpi); grid + etapas aplicadas + ribbon Página Inicial / Transformar / Adicionar coluna / Combinar (`DataPrepareRibbon`: botões de ação → formulário só da ação ativa). Entrada no inspetor: «Abrir preparação de dados…».
+UI: modal **Preparar dados** (`DataPrepareModal`) — consultas = fontes `data_source` (rotas api-delpi); grid + etapas aplicadas + ribbon Página Inicial / Transformar / Adicionar coluna / Combinar (`DataPrepareRibbon`: botões de ação → formulário só da ação ativa). Entrada no inspetor: «Abrir preparação de dados…». **SoT de transform = `dataTransform.steps`.** Fluxo M-DELPI / workbench desativado no produto (código retido dormant).
 
 **Engine Query (steps):** rename, select, filter, addColumn, replace, sort, keepRows/removeRows, changeType, fillDown, firstRowAsHeader, groupBy, pivot, unpivot, merge (left join entre fontes do slide via `siblingTables`). **Cálculo sempre no backend** (`tv_data_transform_service` via enrichment / `POST /data/preview-block`). O TS `dataTransform.ts` é só espelho de teste — o modal chama a API para a prévia (não recalcula no browser).
 

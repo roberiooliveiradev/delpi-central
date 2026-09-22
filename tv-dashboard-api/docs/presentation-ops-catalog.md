@@ -123,7 +123,7 @@ Composites rota → visual + bind:
 | Remover bloco | sim | `delete_block` |
 | Fonte / modelo de dados | sim | `create_data_source`, `update_data_source` |
 | Fonte + KPI/chart/table (composite) | sim | `add_*_from_route` |
-| Transform tipado (subset) | sim | `set_data_transform` + `transformStepHints` |
+| Transform tipado (subset) | sim | `set_data_transform` + `transformStepHints` — SoT = `{ steps }` |
 | Bind visual (+ projections no MFE) | sim | `bind_visual`; sync via `useSyncViewDataLinks` |
 | Fundo / dataFilters / speakerNotes | sim | `patch_native_config` (whitelist) |
 | Mídia via `assetId` | sim | `upsert_block` com `assetId` (sem `url` solto / M) |
@@ -131,7 +131,7 @@ Composites rota → visual + bind:
 | Undo / redo local | **Fora** | Histórico de editor, não modelo remoto |
 | Export PPTX | **Fora** | Canal aparte |
 | QR / editores / admin playlist | **Fora** | Governança |
-| Script M / DAX / SQL livre | **Fora** | Intencional (`mForbidden`) |
+| Script M / DAX / SQL / workbench M | **Fora** | Intencional (`mForbidden`); produto M desativado |
 
 ## Custom GPT Actions (consumer externo)
 

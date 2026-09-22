@@ -159,6 +159,66 @@ def test_merge_with_sibling_tables():
     ]
 
 
+def test_enrichment_detects_merge_steps_for_sibling_pass():
+    from tv_app.application.services.comunicado_data_enrichment_service import (
+        ComunicadoDataEnrichmentService,
+    )
+
+    needs = ComunicadoDataEnrichmentService._transform_needs_siblings
+    assert needs(
+        {
+            "type": "data_source",
+            "dataTransform": {
+                "steps": [
+                    {
+                        "op": "merge",
+                        "sourceId": "other",
+                        "leftKey": "a",
+                        "rightKey": "b",
+                    }
+                ]
+            },
+        }
+    )
+    assert not needs(
+        {
+            "type": "data_source",
+            "dataTransform": {"steps": [{"op": "keepRows", "count": 1, "from": "top"}]},
+        }
+    )
+    # v2 legado usa query_bindings/plan — não o pass siblingTables de steps merge.
+    assert not needs(
+        {
+            "type": "data_source",
+            "dataTransform": {
+                "version": 2,
+                "language": "m-delpi-v1",
+                "script": "let X = Fonte in X",
+            },
+        }
+    )
+
+
+def test_legacy_v2_still_applies_when_m_authoring_disabled():
+    from tv_app.application.services.data.tv_data_transform_service import (
+        apply_data_transform_to_payload,
+    )
+    from tv_app.application.services.tv_dashboard_content_service import m_query_setting
+
+    assert m_query_setting("enabled", True) is False
+    data, applied, table = apply_data_transform_to_payload(
+        [{"a": 1}, {"a": 2}, {"a": 3}],
+        {
+            "version": 2,
+            "language": "m-delpi-v1",
+            "script": "let X = Table.FirstN(Fonte, 2) in X",
+        },
+    )
+    assert applied is True
+    assert table is not None
+    assert len(table["rows"]) == 2
+
+
 def test_keep_rows_fill_down_change_type():
     next_table = apply_data_transform_steps(
         {

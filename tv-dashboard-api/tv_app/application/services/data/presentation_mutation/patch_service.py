@@ -22,6 +22,9 @@ from tv_app.application.services.data.slide_data_resolution_service import (
 from tv_app.application.services.data.presentation_ops_content_service import (
     PresentationOpsContentService,
 )
+from tv_app.application.services.data.data_transform_contract import (
+    sanitize_data_transform_for_persistence,
+)
 from tv_app.application.services.data.presentation_mutation.execution_context import (
     ExecutionContext,
     is_synthetic_id,
@@ -783,7 +786,9 @@ class PresentationPatchService:
             existing["dataBinding"] = merge_data_binding(prior_binding, binding)
             existing.pop("resolved", None)
             if isinstance(op.get("dataTransform"), dict):
-                existing["dataTransform"] = op["dataTransform"]
+                existing["dataTransform"] = self._sanitize_vista_data_transform(
+                    op["dataTransform"]
+                )
             if isinstance(op.get("fieldLabels"), dict):
                 existing["fieldLabels"] = {
                     str(k): str(v)
@@ -799,7 +804,9 @@ class PresentationPatchService:
             }
         )
         if isinstance(op.get("dataTransform"), dict):
-            block["dataTransform"] = op["dataTransform"]
+            block["dataTransform"] = self._sanitize_vista_data_transform(
+                op["dataTransform"]
+            )
         if isinstance(op.get("fieldLabels"), dict):
             block["fieldLabels"] = {
                 str(k): str(v)
@@ -809,7 +816,35 @@ class PresentationPatchService:
         blocks.append(block)
         cfg["blocks"] = blocks
 
+    def _sanitize_vista_data_transform(self, raw: dict[str, Any]) -> dict[str, Any]:
+        if (
+            raw.get("script") is not None
+            or raw.get("language") is not None
+            or raw.get("version") == 2
+        ):
+            raise PresentationPatchError(PresentationOpsContentService.message("mForbidden"))
+        sanitized = sanitize_data_transform_for_persistence(raw)
+        if sanitized is None:
+            return {"steps": []}
+        if sanitized.get("script") is not None or sanitized.get("version") == 2:
+            raise PresentationPatchError(PresentationOpsContentService.message("mForbidden"))
+        return sanitized
+
     def _op_set_data_transform(self, cfg: dict[str, Any], op: dict[str, Any]) -> None:
+        if (
+            op.get("script") is not None
+            or op.get("language") is not None
+            or op.get("version") == 2
+            or (
+                isinstance(op.get("dataTransform"), dict)
+                and (
+                    op["dataTransform"].get("script") is not None
+                    or op["dataTransform"].get("language") is not None
+                    or op["dataTransform"].get("version") == 2
+                )
+            )
+        ):
+            raise PresentationPatchError(PresentationOpsContentService.message("mForbidden"))
         block_id = str(op.get("blockId") or "").strip()
         blocks = _blocks_of(cfg)
         block = _find_block(blocks, block_id) if block_id else None
@@ -824,9 +859,11 @@ class PresentationPatchService:
             )
         steps = op.get("steps")
         if steps is None and isinstance(op.get("dataTransform"), dict):
-            transform = op["dataTransform"]
+            transform = self._sanitize_vista_data_transform(op["dataTransform"])
         else:
-            transform = {"steps": list(steps) if isinstance(steps, list) else []}
+            transform = self._sanitize_vista_data_transform(
+                {"steps": list(steps) if isinstance(steps, list) else []}
+            )
         block["dataTransform"] = transform
         block.pop("resolved", None)
 
@@ -845,6 +882,19 @@ class PresentationPatchService:
         cleaned.pop("powerQueryM", None)
         if block.get("mScript") or block.get("powerQueryM"):
             raise PresentationPatchError(PresentationOpsContentService.message("mForbidden"))
+        raw_transform = cleaned.get("dataTransform")
+        if isinstance(raw_transform, dict) and (
+            raw_transform.get("script") is not None
+            or raw_transform.get("language") is not None
+            or raw_transform.get("version") == 2
+        ):
+            raise PresentationPatchError(PresentationOpsContentService.message("mForbidden"))
+        if isinstance(raw_transform, dict):
+            sanitized = sanitize_data_transform_for_persistence(raw_transform)
+            if sanitized is None:
+                cleaned.pop("dataTransform", None)
+            else:
+                cleaned["dataTransform"] = sanitized
         block_id = str(cleaned.get("id") or "").strip() or _new_block_id()
         cleaned["id"] = block_id
         blocks = _blocks_of(cfg)

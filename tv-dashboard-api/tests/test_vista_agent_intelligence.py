@@ -88,3 +88,15 @@ def test_data_discovery_owner_local_no_dump():
     forbidden = " ".join(discovery["forbidden"])
     assert "omitir" in forbidden.lower() or "Omitir" in " ".join(directives["anti_patterns"])
     assert "dump" in forbidden.lower() or "Dump" in " ".join(directives["anti_patterns"])
+
+
+def test_data_transform_typed_steps_only():
+    directives = VistaAgentIntelligenceService.agent_directives()
+    transform = directives["data_transform"]
+    assert transform["principle"] == "TYPED_STEPS_ONLY"
+    rules = " ".join(transform["rules"])
+    assert "steps" in rules.lower()
+    assert "merge" in rules.lower()
+    forbidden = " ".join(transform["forbidden"])
+    assert "script" in forbidden.lower() or "M" in forbidden
+    assert any("script M" in str(item) or "steps tipados" in str(item) for item in directives["anti_patterns"])

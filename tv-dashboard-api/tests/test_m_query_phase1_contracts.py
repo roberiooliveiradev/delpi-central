@@ -107,10 +107,15 @@ def test_dual_reader_executes_v1_and_v2_without_persisting_runtime_artifacts():
 
     assert v1.status == DataTransformReadStatus.READY
     assert v1.executable is True
-    # Piloto funcional ativo: v2 executa; ast/plan/rows nunca são persistidos.
+    # Dual-read: v2 legado ainda executa com M off; ast/plan/rows nunca persistem.
     assert v2.status == DataTransformReadStatus.READY
     assert v2.executable is True
     assert set(v2.normalized or {}) == {"version", "language", "script"}
+    assert any(
+        d.code == "m.execution_legacy_compat"
+        for d in v2.diagnostics
+        if getattr(d, "code", None)
+    )
 
 
 def test_single_write_flag_keeps_v1_off_and_emits_only_v2_on():
@@ -120,6 +125,8 @@ def test_single_write_flag_keeps_v1_off_and_emits_only_v2_on():
         legacy,
         write_v2_enabled=False,
     ) == legacy
+    # Canonical settings: writeV2Enabled=false → new writes stay steps.
+    assert sanitize_data_transform_for_persistence(legacy) == legacy
     written = sanitize_data_transform_for_persistence(legacy, write_v2_enabled=True)
     assert written is not None
     assert set(written) == {"version", "language", "script"}
@@ -127,7 +134,7 @@ def test_single_write_flag_keeps_v1_off_and_emits_only_v2_on():
     assert "Table.RenameColumns" in written["script"]
 
 
-def test_config_validation_accepts_v2_write_while_pilot_is_enabled():
+def test_config_validation_accepts_legacy_v2_for_dual_read_compat():
     service = TvDataConfigValidationService()
     result = service.validate(
         {
@@ -149,7 +156,7 @@ def test_config_validation_accepts_v2_write_while_pilot_is_enabled():
         }
     )
 
-    # Piloto funcional ativo (writeV2Enabled): script v2 válido é aceito.
+    # M authoring off: legacy v2 still valid for dual-read (not a write-path error).
     assert not any(issue["field"].endswith(".dataTransform") for issue in result["issues"])
 
 

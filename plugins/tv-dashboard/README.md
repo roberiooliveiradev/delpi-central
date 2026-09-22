@@ -21,7 +21,7 @@ Dois escopos de seleção: [playbook §19.19](../../docs/12-roadmap-e-evolucao/t
 
 **GR de Vendas** (Manual do Líder Nível 02) é prioridade ago/2026 do alinhamento Comercial, mas a **implementação de slides/playlists** vive neste app (**tv-dashboard** + `tv-dashboard-api`), não no MFE `commercial`. Fonte de indicadores: painéis/rotas já expostos pelo Portal Comercial e pela **api-delpi** (quando o contrato existir). Checklist de conteúdo quando Junior/Laércio fecharem o modelo — ver [ATA-ALINHAMENTO-AGO2026-2.md](../../docs/12-roadmap-e-evolucao/commercial/ATA-ALINHAMENTO-AGO2026-2.md) §4 / §35.
 
-Power Query M: [playbook](../../docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-POWER-QUERY-M.md) · [status da Fase 7](../../docs/12-roadmap-e-evolucao/tv-dashboard/FASE-7-STATUS-M-DELPI.md). O editor avançado usa o textarea canônico do kit, mas recebe realce, autocomplete/contexto, diagnostics, formatter e rename do backend. Busca de etapa, DAG simples e undo/redo vivem somente no draft local; o browser não analisa nem executa M. O piloto funcional está ativo com telemetria segura; profiling, explain e caches continuam desligados.
+Power Query M: [playbook](../../docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-POWER-QUERY-M.md) · [status da Fase 7](../../docs/12-roadmap-e-evolucao/tv-dashboard/FASE-7-STATUS-M-DELPI.md). **Produto:** M desativado; Preparar dados = etapas tipadas (`steps`) + Combinar. Código workbench/`m_query` retido dormant.
 
 ---
 
@@ -44,15 +44,8 @@ Power Query M: [playbook](../../docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK
 - **Pasteboard / paridade:** editor usa `overflow:visible` (pasteboard); apresentação/prévia clipam na moldura via `DesignViewportStage`. Frames fora de 0–100% mantêm posição (API não clampa). Ver `.cursor/rules/tv-dashboard-editor-pasteboard.mdc`
 - **Avisos:** `FloatingNoticeStack` (toast no topo, auto-dismiss) via `NoticeDialogProvider` — não modal. Confirmações: `HostContainedDialog`. Workbench: `HostContainedModal`. Anti-padrão: `.cursor/rules/mfe-modal-host-contained.mdc`
 - **Fidelidade prévia/TV:** `RichComunicadoStage` canônico; abrir prévia faz flush + overlay do shell local (não payload stale). Prévia de validação usa `surface=kiosk` + `enableHiddenPause` como a TV; filmstrip continua `preview`/`transform`. `preview-payload?parity=tv` (default na página de prévia) enriquece como `/present/`. Anti-padrão: `.cursor/rules/tv-dashboard-presentation-parity.mdc`
-- **Preparar dados (M DELPI):** workbench de consultas em modal via `createHostContainedModalShell` do `@delpi/plugin-ui` — ocupa a área útil do MFE e não cobre a sidebar/chrome da Minha DELPI
-- **Preparar dados M (Fase 7):** editor multiline e ribbon das fases anteriores,
-  profiling opt-in, qualidade/distribuição amostradas, explain e tempo por etapa;
-  AbortController cancela requests e o backend aplica deadline
-- **Prévia M (`DataTable` grid-preview):** grade com bordas, wrap, resize/autofit de colunas, seleção de coluna/linha/célula, sort no cabeçalho (etapa M) e drag para reordenar colunas; Ctrl+C copia a seleção em TSV
-- **Semântica de células:** `null`, texto vazio, campo ausente e erro M localizado são estados distintos; `0` e `false` permanecem valores. A grade usa `DataCellValue` do `@delpi/plugin-ui`, erros exibem tooltip/ARIA e a cópia TSV preserva `null`, `ausente` e `#ERROR:<code>`.
-- **Fluxo único da prévia M:** abrir, compilar, mutar, trocar etapa e solicitar profiling convergem em `useDataQueryWorkbench.preview`; refresh da mesma consulta mantém as linhas na tela, troca de consulta descarta dados anteriores e respostas atrasadas são rejeitadas por `queryId` + sequência.
-- **Schema correto na recompilação:** `sourceColumns` preserva as colunas originais da `Fonte`, enquanto `columns` representa a etapa selecionada; rename/remove nunca realimenta o compilador com o schema final.
-- **Status da prévia:** o rodapé informa carga inicial, atualização, aplicação, quantidade de linhas, alterações pendentes e erros de célula sem substituir a grade por um loading intermitente.
+- **Preparar dados:** modal de etapas tipadas (`dataTransform.steps`) via `createHostContainedModalShell` do `@delpi/plugin-ui` — ribbon Página Inicial / Transformar / Adicionar coluna / **Combinar**; unir fontes = `op: merge` + `siblingTables`. Workbench M inacessível com flags off (código dormant em `features/data-query`).
+- **Prévia tabular:** grade no modal Preparar dados; cálculo sempre no backend (`POST /data/preview-block` / enrichment).
 - **Tabela live incremental:** rotas paginadas carregam a próxima página ao chegar ao fim do scroll; cabeçalho seleciona a coluna inteira, com alças de largura e quebra automática
 - **Períodos relativos:** hoje; esta semana/mês/trimestre/ano; semana/mês/trimestre/ano anteriores; últimos 7/30/90/N dias; ou datas fixas. As datas relativas são recalculadas no fetch.
 - **Séries temporais fiéis à API:** a granularidade da rota é preservada (ex.: `day` = um dia por linha), sem reagrupar datas em faixas; a tabela recebe todos os pontos retornados pela API (até 366 pontos em séries anuais diárias).

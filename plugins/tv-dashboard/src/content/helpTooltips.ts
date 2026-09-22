@@ -481,7 +481,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
   /** Modal Preparar dados (Power Query). */
   dataPrepare: {
     modal:
-      "Ambiente de preparação: consultas (rotas), etapas aplicadas e prévia tabular. Clique esquerdo seleciona/desseleciona; botão direito abre ações.",
+      "Ambiente de preparação com etapas tipadas: consultas (rotas), etapas aplicadas e prévia tabular. Unir fontes = aba Combinar. Clique esquerdo seleciona/desseleciona; botão direito abre ações.",
     ribbon:
       "Faixa de transformações. Escolha a aba e depois a ação — o formulário aparece só para a ação ativa.",
     tabHome: "Atualizar prévia, escolher colunas, promover cabeçalhos e aplicar preset da rota.",

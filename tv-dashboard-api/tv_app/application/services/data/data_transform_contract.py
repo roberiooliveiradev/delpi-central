@@ -151,21 +151,8 @@ def read_data_transform(
                 canonical_script=None,
                 diagnostics=diagnostics,
             )
-        if not bool(m_query_setting("enabled", False)):
-            return DataTransformReadResult(
-                version=DATA_TRANSFORM_V2,
-                status=DataTransformReadStatus.FEATURE_DISABLED,
-                normalized=normalized,
-                plan=None,
-                canonical_script=normalized["script"],
-                diagnostics=(
-                    _diagnostic(
-                        "m.execution_feature_disabled",
-                        "A execução de scripts M ainda não está habilitada.",
-                        severity=DiagnosticSeverity.WARNING,
-                    ),
-                ),
-            )
+        # Product authoring M is off (enabled/writeV2 false), but persisted v2
+        # scripts still compile+execute for dual-read compatibility until backfill.
         from tv_app.application.services.data.m_query.m_compiler import (
             MCompileRequest,
             MQueryCompiler,
@@ -181,13 +168,22 @@ def read_data_transform(
                 culture=culture or str(m_query_setting("defaultCulture", "pt-BR")),
             )
         )
+        diagnostics = list(compiled.diagnostics)
+        if not bool(m_query_setting("enabled", False)):
+            diagnostics.append(
+                _diagnostic(
+                    "m.execution_legacy_compat",
+                    "M está desativado no produto; script v2 legado executado só por compatibilidade.",
+                    severity=DiagnosticSeverity.WARNING,
+                )
+            )
         return DataTransformReadResult(
             version=DATA_TRANSFORM_V2,
             status=DataTransformReadStatus.READY if compiled.valid else DataTransformReadStatus.INVALID,
             normalized=normalized,
             plan=compiled.plan,
             canonical_script=compiled.canonical_script or normalized["script"],
-            diagnostics=compiled.diagnostics,
+            diagnostics=tuple(diagnostics),
         )
     return DataTransformReadResult(
         version=None,

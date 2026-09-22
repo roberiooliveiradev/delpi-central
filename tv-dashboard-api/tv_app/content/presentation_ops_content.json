@@ -218,7 +218,7 @@
     "createPlaylistOk": "Programação «{name}» criada.",
     "addSlideOk": "Slide adicionado a partir do preset «{presetKey}».",
     "fingerprintSkipped": "Fingerprint de resolução omitido (sem blocos data_source ou falha na resolução).",
-    "mForbidden": "O copiloto não gera nem aceita script M livre — use ops tipadas.",
+    "mForbidden": "Script M livre não é aceito. Use etapas tipadas (set_data_transform.steps). O editor M está desativado no produto.",
     "suggestEmptyMessage": "Mensagem vazia — nenhuma op sugerida.",
     "suggestNoMatch": "Não identifiquei uma operação do catálogo do Copiloto para esse pedido. Exemplos: «adicione um texto», «crie um slide», «adicione um KPI de OEE», «adicione um modelo de dados de OEE».",
     "suggestOk": "Sugestão gerada a partir do catálogo ({count} op(s)).",

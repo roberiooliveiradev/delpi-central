@@ -83,14 +83,14 @@ def test_m_corpus_freezes_required_security_and_language_categories():
     } <= invalid_codes
 
 
-def test_m_query_settings_expose_the_controlled_pilot_rollout():
+def test_m_query_settings_product_disables_m_authoring():
     settings = _load_settings()["mQuery"]
 
     assert settings["profile"] == "m-delpi-v1"
     assert settings["defaultCulture"] == "pt-BR"
-    assert settings["enabled"] is True
-    assert settings["writeV2Enabled"] is True
-    assert settings["advancedEditorEnabled"] is True
+    assert settings["enabled"] is False
+    assert settings["writeV2Enabled"] is False
+    assert settings["advancedEditorEnabled"] is False
     assert settings["profilingEnabled"] is False
     assert settings["explainPlanEnabled"] is False
     assert settings["compileCacheEnabled"] is False

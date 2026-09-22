@@ -687,6 +687,24 @@ def test_nested_contract_positive_sibling_negative(monkeypatch):
     )
     source = next(b for b in ok_transform["nativeConfig"]["blocks"] if b["id"] == "src-a")
     assert source["dataTransform"]["steps"][0]["op"] == "keepRows"
+    assert "script" not in source["dataTransform"]
+    assert source["dataTransform"].get("version") != 2
+
+    with pytest.raises(PresentationPatchError, match="etapas tipadas|Script M|não é aceito"):
+        svc.preview(
+            {
+                "target": {"playlistId": PLAYLIST_ID, "slideId": SLIDE_ID},
+                "ops": [
+                    {
+                        "op": "set_data_transform",
+                        "blockId": "src-a",
+                        "steps": [{"op": "keepRows", "count": 1, "from": "top"}],
+                        "script": "let X = Fonte in X",
+                    }
+                ],
+            },
+            user={},
+        )
 
     ok_labels = svc.preview(
         {

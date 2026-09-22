@@ -825,7 +825,7 @@ function LegacyDataPrepareModal({ open, onClose, initialSourceId = null }: Props
   );
 }
 
-/** Compositor fino: rollout seguro legado ou workbench M conforme capability server-side. */
+/** Compositor: workbench M só se capabilities server-side (produto = steps/legado). */
 export function DataPrepareModal(props: Props) {
   const { capabilities } = useDataQueryCapabilities();
   return canUseMWorkbench(capabilities) ? (
