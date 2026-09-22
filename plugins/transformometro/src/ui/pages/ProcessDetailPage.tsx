@@ -217,6 +217,28 @@ export function ProcessDetailPage({
     window.history.replaceState(null, "", window.location.pathname);
   }, [processoId]);
 
+  useEffect(() => {
+    if (!embedded || !embeddedActive || !onHeroExtrasChange) return;
+    onHeroExtrasChange(
+      <CollaborativePresenceBanner
+        layout="items"
+        presence={sectionEdit.presence}
+        lockError={sectionEdit.lockError}
+        realtimeNotice={sectionEdit.realtimeNotice}
+        onDismissRealtimeNotice={sectionEdit.clearRealtimeNotice}
+      />,
+    );
+    return () => onHeroExtrasChange(null);
+  }, [
+    embedded,
+    embeddedActive,
+    onHeroExtrasChange,
+    sectionEdit.presence,
+    sectionEdit.lockError,
+    sectionEdit.realtimeNotice,
+    sectionEdit.clearRealtimeNotice,
+  ]);
+
   async function handleStartEditProcesso() {
     const acquired = await sectionEdit.startEdit("processo");
     if (acquired !== false) {
@@ -758,27 +780,6 @@ export function ProcessDetailPage({
         ) : null}
     </>
   );
-
-  useEffect(() => {
-    if (!embedded || !onHeroExtrasChange) return;
-    onHeroExtrasChange(
-      <CollaborativePresenceBanner
-        layout="items"
-        presence={sectionEdit.presence}
-        lockError={sectionEdit.lockError}
-        realtimeNotice={sectionEdit.realtimeNotice}
-        onDismissRealtimeNotice={sectionEdit.clearRealtimeNotice}
-      />,
-    );
-    return () => onHeroExtrasChange(null);
-  }, [
-    embedded,
-    onHeroExtrasChange,
-    sectionEdit.presence,
-    sectionEdit.lockError,
-    sectionEdit.realtimeNotice,
-    sectionEdit.clearRealtimeNotice,
-  ]);
 
   const pageBody = (
     <>

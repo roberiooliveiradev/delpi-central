@@ -460,6 +460,33 @@ export function InstanceDetailPage({
 
   useProcessWorkspacePanelActions(panelSidebarActions, embedded && embeddedActive);
 
+  useEffect(() => {
+    if (!embedded || !embeddedActive || !onHeroExtrasChange) return;
+    onHeroExtrasChange(
+      <CollaborativePresenceBanner
+        layout="items"
+        presence={sectionEdit.presence}
+        lockError={sectionEdit.lockError}
+        realtimeNotice={sectionEdit.realtimeNotice}
+        onDismissRealtimeNotice={sectionEdit.clearRealtimeNotice}
+      />,
+    );
+    return () => onHeroExtrasChange(null);
+  }, [
+    embedded,
+    embeddedActive,
+    onHeroExtrasChange,
+    sectionEdit.presence,
+    sectionEdit.lockError,
+    sectionEdit.realtimeNotice,
+    sectionEdit.clearRealtimeNotice,
+  ]);
+
+  useEffect(() => {
+    if (!options) return;
+    onFiliaisAtivasCount?.(options.filiais.length);
+  }, [onFiliaisAtivasCount, options]);
+
   if (loading && !instancia) {
     const loader = (
       <LoadingActivityCard
@@ -780,32 +807,6 @@ export function InstanceDetailPage({
       </InstanceWorkspaceSectionPanel>
     </div>
   );
-
-  useEffect(() => {
-    if (!embedded || !onHeroExtrasChange) return;
-    onHeroExtrasChange(
-      <CollaborativePresenceBanner
-        layout="items"
-        presence={sectionEdit.presence}
-        lockError={sectionEdit.lockError}
-        realtimeNotice={sectionEdit.realtimeNotice}
-        onDismissRealtimeNotice={sectionEdit.clearRealtimeNotice}
-      />,
-    );
-    return () => onHeroExtrasChange(null);
-  }, [
-    embedded,
-    onHeroExtrasChange,
-    sectionEdit.presence,
-    sectionEdit.lockError,
-    sectionEdit.realtimeNotice,
-    sectionEdit.clearRealtimeNotice,
-  ]);
-
-  useEffect(() => {
-    if (!options) return;
-    onFiliaisAtivasCount?.(options.filiais.length);
-  }, [onFiliaisAtivasCount, options]);
 
   const pageBody = (
     <>

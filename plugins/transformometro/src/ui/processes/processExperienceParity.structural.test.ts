@@ -65,4 +65,16 @@ describe("Hero consolidation density", () => {
     expect(page).toMatch(/omitHeroSummary=\{embedded\}/);
     expect(read).toMatch(/omitHeroSummary/);
   });
+
+  it("sync de heroExtras no workspace respeita Rules of Hooks (efeito antes de early return)", () => {
+    for (const rel of ["ui/pages/ProcessDetailPage.tsx", "ui/pages/InstanceDetailPage.tsx"]) {
+      const source = readFileSync(join(root, rel), "utf8");
+      const heroEffect = source.indexOf("onHeroExtrasChange(");
+      const loadingReturn = source.indexOf("if (loading && !");
+      expect(heroEffect).toBeGreaterThan(-1);
+      expect(loadingReturn).toBeGreaterThan(-1);
+      expect(heroEffect).toBeLessThan(loadingReturn);
+      expect(source).toMatch(/embeddedActive \|\| !onHeroExtrasChange/);
+    }
+  });
 });
