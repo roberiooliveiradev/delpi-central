@@ -269,15 +269,18 @@ C3_T3_EXECUTED = NO
 C3_T3 = APPROVED
 C3_T3_IMPLEMENTATION = delia-api/app/domain/model_invocation/ + application/model_invocation/ (no store; no real provider)
 C3_T4_AUTHORIZED = YES
-C3_T4 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+C3_T4 = APPROVED
 C3_T4_IMPLEMENTATION = delia-api/app/domain/structured_understanding/ + application/structured_understanding/
-C3_T5_AUTHORIZED = NO
+C3_T5_AUTHORIZED = YES
+C3_T5_EXECUTED = NO
 REVIEW_C3_T3 = ARCHITECTURE_REVIEW_C3_T3R1
 VERDICT_C3_T3 = ACCEPT_WITH_RESIDUAL
+REVIEW_C3_T4 = ARCHITECTURE_REVIEW_C3_T4R1
+VERDICT_C3_T4 = ACCEPT_WITH_RESIDUAL
 FABRICATED_EVAL_PASS = RESOLVED
 ```
 
-C3-T1 congela o **uso semântico** de Evidence/Source/epistemic para a inteligência futura. Não cria Evidence store, repository, schema, LLM, RAG, planner ou conversation runtime. C3-T2R1 domain model/tests foram aceitos por `ARCHITECTURE_REVIEW_C3_T2R1` (`ACCEPT_WITH_RESIDUAL`; `C3_T2=APPROVED`). C3-T3 foundation aceita por `ARCHITECTURE_REVIEW_C3_T3R1` (`ACCEPT_WITH_RESIDUAL`; `C3_T3=APPROVED`). C3-T4 candidate adds bounded Structured Understanding (`BOUNDED_SOURCE_OBSERVATION_EXTRACTION`); store/RAG/planner/conversation/real provider remain out of scope.
+C3-T1 congela o **uso semântico** de Evidence/Source/epistemic para a inteligência futura. Não cria Evidence store, repository, schema, LLM, RAG, planner ou conversation runtime. C3-T2R1 domain model/tests foram aceitos por `ARCHITECTURE_REVIEW_C3_T2R1` (`ACCEPT_WITH_RESIDUAL`; `C3_T2=APPROVED`). C3-T3 foundation aceita por `ARCHITECTURE_REVIEW_C3_T3R1` (`ACCEPT_WITH_RESIDUAL`; `C3_T3=APPROVED`). C3-T4 Structured Understanding aceito por `ARCHITECTURE_REVIEW_C3_T4R1` (`ACCEPT_WITH_RESIDUAL`; `C3_T4=APPROVED`; `BOUNDED_SOURCE_OBSERVATION_EXTRACTION`); store/RAG/planner/conversation/real provider remain out of scope.
 
 ### 4C. C3-T3 — Model invocation / eval lineage
 
@@ -309,30 +312,48 @@ PERSISTENCE = NONE
 
 C3-T3 does not persist invocations, does not call a real provider, and does not materialize EvidenceItem from model output.
 
-### 4D. C3-T4 — Structured Understanding (candidate)
+### 4D. C3-T4 — Structured Understanding (APPROVED)
 
 ```text
-STATUS = CANDIDATE_FOR_ARCHITECTURE_REVIEW
-REWORK = C3-T4R1 (contract/provenance)
+STATUS = APPROVED
+REVIEW = ARCHITECTURE_REVIEW_C3_T4R1
+REVIEWED_IMPLEMENTATION_HEAD = 89bb5ad352b134ac6f8558c829a7f8720bc920d6
+VERDICT = ACCEPT_WITH_RESIDUAL
+PRIOR_BLOCKER_CALLER_EPISTEMIC_SELECTOR = RESOLVED
+PRIOR_BLOCKER_PROVENANCE_OVERCLAIM = RESOLVED
+PRIOR_BLOCKER_CONFIDENCE_CONTRACT = RESOLVED
+BLOCKERS = NONE
 SLICE = BOUNDED_SOURCE_OBSERVATION_EXTRACTION
+STRUCTURED_UNDERSTANDING_BOUNDARY = ACCEPT
 OWNER = DÉLIA (delia-api domain/application structured_understanding)
 USE_CASE = UnderstandStructuredInput
 REUSES = InvokeModel + ModelInvocationLineage + EpistemicClass + EvidenceRef/SourceRef/ModelRef
 CONTENT = StructuredObservation[] (source-content OBSERVATION only)
-OUTPUT_EPISTEMIC_CLASS = OBSERVATION_BY_CAPABILITY_CONTRACT (no caller selector)
-SOURCE_INPUT_CARDINALITY = EXACTLY_ONE SourceRef
-OBSERVATION_SOURCE_LINKAGE = inherit exact bounded SourceRef
-OBSERVATION_EVIDENCE_LINKAGE = NONE (EvidenceRef stays request/result/lineage only)
-CONFIDENCE_CONTRACT = DEFERRED / REMOVED
+OUTPUT_EPISTEMIC_CLASS = OBSERVATION_BY_CAPABILITY_CONTRACT
+declared_result_epistemic_class = REMOVED
+StructuredUnderstandingRequest has no declared_result_epistemic_class
+StructuredUnderstandingResult has no confidence
+StructuredObservation.source_ref = singular exact bounded SourceRef
+StructuredObservation.evidence_refs = REMOVED
+SOURCE_INPUT_CARDINALITY = EXACTLY_ONE SourceRef (0/N fail closed)
+OBSERVATION_SOURCE_LINKAGE = SINGULAR_BOUNDED_SOURCE
+OBSERVATION_EVIDENCE_LINKAGE = NONE_BY_DESIGN
+EvidenceRef[] = request/result/invocation-lineage context only (!= per-observation support)
+PROVENANCE_MODEL = ACCEPT
+CONFIDENCE = REMOVED / DEFERRED
+OUTPUT_SCHEMA_MODEL = ACCEPT (schema_id=c3t4.source_observation_extraction; schema_version=1; SchemaRegistry=NOT REQUIRED)
 SOURCE_OBSERVATION != WORLD_FACT
 MODEL_OUTPUT_AUTO_FACT = NO
+FACT qualification remains outside this capability
 CLAIM_PROPOSITION_MODEL = DEFERRED
 ENTITY_EXTRACTION_BOUNDARY = DEFERRED
 RELATIONSHIP_BOUNDARY = DEFERRED
 REAL_PROVIDER = BLOCKED_BY_EXTERNAL_CONFIGURATION
 REAL_MODEL_STRUCTURED_UNDERSTANDING_QUALITY = TEST_NOT_RUN / BLOCKED
 PERSISTENCE = NONE
-C3_T5_AUTHORIZED = NO
+C3_T5_AUTHORIZED = YES
+C3_T5_EXECUTED = NO
+NOTE_SUPERSEDED_CANDIDATE: historical candidate/rework markers live in ledger §6.70–§6.71
 ```
 
 ### 4B.1 Ownership
