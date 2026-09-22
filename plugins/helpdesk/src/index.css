@@ -4,10 +4,10 @@
 }
 
 .dashboard-helpdesk {
-  --helpdesk-page-padding: 16px;
-  --helpdesk-section-gap: 12px;
+  --helpdesk-page-padding: 12px;
+  --helpdesk-section-gap: 8px;
   --helpdesk-card-radius: 12px;
-  --helpdesk-card-padding: 12px;
+  --helpdesk-card-padding: 8px;
   --helpdesk-accent: var(--primary, #089bdb);
   --helpdesk-title: var(--secundary, #003866);
   --helpdesk-text: var(--text, #111111);
@@ -29,11 +29,11 @@
   --delpi-ui-card-padding: var(--helpdesk-card-padding);
   --delpi-ui-radius: var(--helpdesk-card-radius);
   --delpi-ui-section-gap: var(--helpdesk-section-gap);
-  --delpi-ui-control-height: 36px;
-  --delpi-ui-field-stack-gap: 6px;
-  --delpi-ui-form-actions-gap: 8px;
-  --delpi-ui-form-actions-block-start: 12px;
-  --delpi-ui-grid-gap: 10px;
+  --delpi-ui-control-height: 32px;
+  --delpi-ui-field-stack-gap: 4px;
+  --delpi-ui-form-actions-gap: 6px;
+  --delpi-ui-form-actions-block-start: 6px;
+  --delpi-ui-grid-gap: 8px;
 
   color: var(--helpdesk-text);
   padding: var(--helpdesk-page-padding);
@@ -96,14 +96,14 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 6px;
 }
 
 .dashboard-helpdesk .helpdesk-list-toolbar__leading {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   min-width: 0;
 }
 
@@ -140,8 +140,8 @@
 .dashboard-helpdesk .helpdesk-filter-builder,
 .dashboard-helpdesk .helpdesk-sort-builder {
   display: grid;
-  gap: 0.75rem;
-  padding: 0.85rem 1rem;
+  gap: 0.4rem;
+  padding: 0.5rem 0.75rem;
   border: 1px solid var(--helpdesk-border);
   border-radius: 0.75rem;
   background: color-mix(in srgb, var(--helpdesk-surface) 92%, transparent);
@@ -151,7 +151,7 @@
 .dashboard-helpdesk .helpdesk-sort-builder__header {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem;
+  gap: 0.4rem;
   align-items: center;
   justify-content: space-between;
 }
@@ -167,15 +167,15 @@
 .dashboard-helpdesk .helpdesk-sort-builder__hint {
   margin: 0;
   color: var(--helpdesk-text-muted);
-  font-size: 0.85rem;
-  line-height: 1.35;
+  font-size: 0.8125rem;
+  line-height: 1.3;
   max-width: 52rem;
 }
 
 .dashboard-helpdesk .helpdesk-filter-builder__rules,
 .dashboard-helpdesk .helpdesk-sort-builder__levels {
   display: grid;
-  gap: 0.65rem;
+  gap: 0.4rem;
   list-style: none;
   margin: 0;
   padding: 0;
@@ -186,7 +186,7 @@
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
-  gap: 0.5rem 0.65rem;
+  gap: 0.35rem 0.5rem;
 }
 
 .dashboard-helpdesk .helpdesk-filter-builder__rule > .helpdesk-filter-box,
@@ -199,9 +199,9 @@
 .dashboard-helpdesk .helpdesk-filter-builder__op {
   flex: 0 0 auto;
   align-self: center;
-  margin-block-start: 1.15rem;
+  margin-block-start: 0.85rem;
   color: var(--helpdesk-text-muted);
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   white-space: nowrap;
 }
 
@@ -217,7 +217,7 @@
   justify-content: center;
   flex: 0 0 auto;
   align-self: center;
-  margin-block-start: 1.15rem;
+  margin-block-start: 0.85rem;
   width: 1.75rem;
   height: 1.75rem;
   border-radius: 999px;
@@ -230,13 +230,13 @@
 .dashboard-helpdesk .helpdesk-sort-builder__actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: 0.35rem;
   align-items: center;
 }
 
-.dashboard-helpdesk .helpdesk-list-toolbar__chip[data-kind="sort"],
-.dashboard-helpdesk .helpdesk-list-toolbar__chip[data-kind="filter"] {
-  cursor: help;
+.dashboard-helpdesk .helpdesk-section-card__body,
+.dashboard-helpdesk .delpi-ui-section-card__body {
+  gap: var(--helpdesk-section-gap);
 }
 
 @media (max-width: 768px) {
