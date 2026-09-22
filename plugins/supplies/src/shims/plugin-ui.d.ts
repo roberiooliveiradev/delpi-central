@@ -185,6 +185,25 @@ declare module "@delpi/plugin-ui/index" {
     onNavigate?: (event: unknown) => void;
     title?: string;
     ariaLabel?: string;
+    avatarHref?: string;
+    onAvatarNavigate?: () => void;
+    avatarTitle?: string;
+    onLabelClick?: () => void;
+    labelAriaLabel?: string;
+    labelHasPopup?: boolean | "menu";
+    labelExpanded?: boolean;
+    labelEnd?: ReactNode;
+    labelDisabled?: boolean;
+    menuItems?: ReadonlyArray<{
+      id: string;
+      label: string;
+      onSelect: () => void;
+      disabled?: boolean;
+      icon?: ComponentType<{ size?: number | string; strokeWidth?: number | string }>;
+    }>;
+    menuAriaLabel?: string;
+    open?: boolean;
+    onOpenChange?: (open: boolean) => void;
     portalScopeClassName?: string;
     className?: string;
   }>;

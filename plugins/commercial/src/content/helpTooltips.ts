@@ -59,7 +59,7 @@ export const CM_HELP = {
   },
   users: {
     profile:
-      "Perfil do usuário no Portal Comercial: nome e e-mail do diretório; foto, cargo e contatos com precedência do perfil da plataforma (Portal). Sem dados no Portal, usa a extensão Comercial.",
+      "Perfil no Portal Comercial (diretório/equipe): nome e e-mail; foto, cargo e contatos com precedência do Meu Perfil Minha DELPI. O avatar da TopBar do próprio usuário abre /profile do host; o nome abre Minha Carteira.",
     jobTitle: "Cargo exibido no Comercial. Não sincroniza RH nesta fase.",
     phoneE164:
       "Telefone fixo no formato E.164 (+ e DDI), ex.: +551133334444. Usado no atalho Ligar.",
@@ -811,7 +811,7 @@ export const CM_HELP = {
     groupCreateName: "Nome do grupo operacional (visível na Equipe e no MyDay).",
     groupRename: "Altera o nome de exibição do grupo. O tipo (kind) não muda aqui.",
     teamColPerson:
-      "Pessoa com acesso ao Portal Comercial (avatar e nome; clique abre o perfil).",
+      "Pessoa com acesso ao Portal Comercial (avatar e nome; clique abre o perfil Comercial).",
     teamColOnline: "Presença em tempo real no Portal (online/offline).",
     teamColGroups: "Grupos operacionais dos quais a pessoa é membro.",
     teamColPortfolios: "Carteiras às quais a pessoa tem acesso.",

@@ -356,17 +356,6 @@ export const MyProfile = () => {
             <div className="profile-info-strip">
               <ProfileField label="Nome" value={user?.name} />
               <ProfileField label="Email" value={user?.email} mono />
-              <ProfileField
-                label="ID"
-                value={user?.id}
-                mono
-                title={user?.id}
-              />
-              <ProfileField
-                label="Superadmin"
-                value={user?.is_superadmin ? "Sim" : "Não"}
-                badge={user?.is_superadmin ? "yes" : "no"}
-              />
             </div>
 
             <PersonProfileEditor userName={user?.name} />

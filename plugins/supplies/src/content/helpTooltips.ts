@@ -182,7 +182,7 @@ export const SP_HELP = {
   deliveriesTableMeta:
     "Colunas visíveis e total de linhas do recorte filtrado (não só a página atual). Pedido aparece como texto — não abre ficha nesta página.",
   userProfile:
-    "Perfil do Portal Suprimentos: identidade Minha DELPI (foto, cargo e contatos da Core, só leitura), atalhos por capability e preferências (filial padrão e densidade). Edite foto/cargo/contatos em /profile do Portal host.",
+    "Preferências do Portal Suprimentos (filial padrão e densidade) e atalhos por capability. Identidade global (foto, cargo, contatos) edita-se no Meu Perfil Minha DELPI (/profile) — abra pelo avatar na TopBar.",
   userProfilePrefs:
     "Filial padrão e densidade de tabelas valem só neste Portal. Só você edita o próprio perfil; administradores podem ler outros usuários.",
   forbiddenUnit:

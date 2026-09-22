@@ -52,7 +52,7 @@ export const USER_MANUAL_CONTENT = {
     {
       term: "Perfil do Portal vs perfil Minha DELPI",
       meaning:
-        "O avatar na TopBar mostra a foto do Meu Perfil (Core) e abre o perfil do Portal Suprimentos (filial padrão, densidade, units). Foto, cargo e contatos editam-se em /profile do host; preferências deste Portal editam-se no perfil do plugin.",
+        "O avatar na TopBar abre o Meu Perfil Minha DELPI (/profile) — foto, cargo e contatos. O nome abre o menu com Preferências do Portal Suprimentos (filial padrão, densidade).",
     },
   ],
   scopeNote:
@@ -168,7 +168,7 @@ export const USER_MANUAL_CONTENT = {
         "Operações — pedidos, entregas, fornecedores, produtos, estoque e ESTSEG.",
         "Indicadores / Negociações — recorte analítico quando liberado.",
         "Administração — mappings e configurações.",
-        "Perfil — avatar na TopBar (foto da Core); preferências do Portal (unidade padrão e densidade); foto/cargo/contatos no /profile do host.",
+        "Perfil — avatar na TopBar abre /profile do host; preferências deste Portal ficam no menu do nome (Preferências do Portal).",
         "Ajuda — este manual, FAQ e glossário.",
       ],
     },
@@ -258,11 +258,11 @@ export const USER_MANUAL_CONTENT = {
         },
         {
           q: "Onde altero a filial padrão ou a densidade das tabelas?",
-          a: "No perfil do Portal Suprimentos: clique no avatar/nome na TopBar. Não existe página /preferences separada. O /profile do host Minha DELPI é outra tela (identidade global).",
+          a: "Clique no nome na TopBar → Preferências do Portal. Foto, cargo e contatos: clique no avatar (abre /profile do host). Não existe página /preferences separada.",
         },
         {
           q: "Qual a diferença entre o perfil do Portal e o /profile da Minha DELPI?",
-          a: "O perfil do plugin mostra a identidade global (foto, cargo e contatos da Core, só leitura) e guarda preferências deste Portal (units, capabilities, filial padrão, densidade). Foto/cargo/contatos editam-se em /profile do host; prefs de Suprimentos editam-se no avatar do plugin.",
+          a: "O avatar abre /profile (identidade global Minha DELPI). O menu do nome inclui Preferências do Portal Suprimentos (units, densidade, filial padrão). A página /users/:id do plugin continua sendo o editor de preferências locais.",
         },
         {
           q: "Alterei a foto no Meu Perfil e o Suprimentos não mudou?",

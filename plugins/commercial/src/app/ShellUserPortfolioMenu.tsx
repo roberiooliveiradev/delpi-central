@@ -7,8 +7,7 @@ import {
   userProfilePhotoAbsoluteUrl,
 } from "../api/userProfileApi";
 import { CommercialTopBarUserIdentity } from "./commercialUi";
-import { navigatePluginView, navigateUserProfile, buildUserProfileHref } from "./pluginNavigation";
-import { currentReturnNav } from "./commercialNavigationReturn";
+import { navigatePluginView } from "./pluginNavigation";
 import { profileLinkTitle } from "../content/entityLinkHints";
 import { usePortfolioScope } from "./PortfolioScopeContext";
 import {
@@ -18,6 +17,9 @@ import {
 } from "./shellUserPortfolioNav";
 import { SHELL_NAV_CONTENT } from "../content/shellNav";
 
+/** Canonical Minha DELPI self-profile (Portal host). Commercial user pages stay for directory/others. */
+const HOST_SELF_PROFILE_PATH = "/profile";
+
 type ShellUserPortfolioMenuProps = {
   basePath: string;
   /** Nome completo para avatar + rótulo (fallback se ausente). */
@@ -26,7 +28,7 @@ type ShellUserPortfolioMenuProps = {
 
 /**
  * Adapter Comercial: chrome shared (TopBarUserIdentity) + domínio de carteira.
- * Avatar → perfil. Nome/chevron → Minha Carteira (0/1/N).
+ * Avatar → `/profile` (identidade canônica). Nome/chevron → Minha Carteira (0/1/N).
  */
 export function ShellUserPortfolioMenu({
   basePath,
@@ -86,14 +88,10 @@ export function ShellUserPortfolioMenu({
     };
   }, [userId]);
 
-  const goToProfile = useCallback(() => {
-    if (!userId) return;
+  const goToHostProfile = useCallback(() => {
     setOpen(false);
-    navigateUserProfile(userId, {
-      basePath,
-      returnNav: currentReturnNav("Portal Comercial"),
-    });
-  }, [basePath, userId]);
+    window.location.assign(HOST_SELF_PROFILE_PATH);
+  }, []);
 
   const goToPortfolio = useCallback(
     (portfolio: ShellUserPortfolioOption) => {
@@ -126,12 +124,6 @@ export function ShellUserPortfolioMenu({
           ? copy.menuCloseAriaLabel
           : copy.menuOpenAriaLabel;
 
-  const profileHref = userId
-    ? buildUserProfileHref(userId, {
-        basePath,
-        returnNav: currentReturnNav("Portal Comercial"),
-      })
-    : undefined;
   const profileTitle = profileLinkTitle(label);
 
   const menuItems =
@@ -157,8 +149,8 @@ export function ShellUserPortfolioMenu({
       fallbackLabel={copy.nameFallback}
       avatarUrl={photoObjectUrl}
       portalScopeClassName="dashboard-commercial"
-      avatarHref={profileHref}
-      onAvatarNavigate={userId ? goToProfile : undefined}
+      avatarHref={HOST_SELF_PROFILE_PATH}
+      onAvatarNavigate={goToHostProfile}
       avatarTitle={profileTitle}
       onLabelClick={portfolioInteractive ? onPortfolioClick : undefined}
       labelAriaLabel={portfolioAriaLabel}

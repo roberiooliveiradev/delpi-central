@@ -12,7 +12,13 @@ import { usePortalAccessToken } from "../state/portalChrome";
 const USER = topBarUserIdentityBemClasses("ds");
 const AVATAR = initialsAvatarBemClasses("ds");
 
-/** Identity chrome da TopBar — display-only (TM sem página de perfil própria). */
+/** Canonical Minha DELPI self-profile (Portal host) — TM does not own identity. */
+const HOST_SELF_PROFILE_PATH = "/profile";
+
+/**
+ * Identity chrome da TopBar — nome/foto via Core; clique abre `/profile` do host.
+ * Sem página de perfil do Transformômetro e sem menu de domínio inventado.
+ */
 export function PortalTopBarUserIdentity() {
   const getAccessToken = usePortalAccessToken();
   const [displayName, setDisplayName] = useState<string | null>(null);
@@ -38,6 +44,8 @@ export function PortalTopBarUserIdentity() {
     return () => controller.abort();
   }, [getAccessToken]);
 
+  const label = (displayName ?? "").trim() || "Usuário";
+
   return (
     <TopBarUserIdentity
       classNames={USER}
@@ -47,7 +55,9 @@ export function PortalTopBarUserIdentity() {
       avatarUrl={photoUrl}
       loading={loading}
       portalScopeClassName="dashboard-transformometro"
-      ariaLabel={displayName ? `Usuário: ${displayName}` : "Usuário"}
+      href={HOST_SELF_PROFILE_PATH}
+      title="Abrir meu perfil Minha DELPI"
+      ariaLabel={`Abrir meu perfil: ${label}`}
     />
   );
 }

@@ -62,7 +62,11 @@ export const SHELL_NAV_CONTENT = {
   },
   userMenu: {
     nameFallback: "Usuário",
-    profileTitle: "Abrir meu perfil no Portal Suprimentos",
-    profileAriaLabel: "Abrir perfil",
+    profileTitle: "Abrir meu perfil Minha DELPI",
+    profileAriaLabel: "Abrir meu perfil",
+    menuOpenAriaLabel: "Abrir menu do usuário",
+    menuAriaLabel: "Conta e preferências",
+    hostProfileLabel: "Meu perfil Minha DELPI",
+    portalPreferencesLabel: "Preferências do Portal",
   },
 } as const;

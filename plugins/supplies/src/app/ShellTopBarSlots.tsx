@@ -1,5 +1,6 @@
 import type { RefObject } from "react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { Settings2 } from "lucide-react";
 
 import { fetchMeProfile, firstNameFromDisplay } from "../api/meApi";
 import { SHELL_NAV_CONTENT } from "../content/shellNav";
@@ -16,6 +17,9 @@ import {
   SuppliesTopBarUserIdentity,
   SuppliesTopBarUtilityCluster,
 } from "./suppliesUi";
+
+/** Canonical Minha DELPI self-profile (Portal host). */
+const HOST_SELF_PROFILE_PATH = "/profile";
 
 type ShellTopBarSecondaryProps = {
   basePath: string;
@@ -52,13 +56,14 @@ type ShellTopBarActionsProps = {
 };
 
 /**
- * Slot actions — avatar+nome → perfil self (chrome shared TopBarUserIdentity).
- * Foto vem da Core (person-profile); prefs do Portal ficam em /users/:id.
+ * Slot actions — avatar → `/profile` (identidade canônica Minha DELPI).
+ * Nome abre menu com preferências do Portal Suprimentos (domínio local).
  */
 export function ShellTopBarActions({ basePath }: ShellTopBarActionsProps) {
   const session = useSuppliesSession();
   const [displayName, setDisplayName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [menuOpen, setMenuOpen] = useState(false);
   const { photoUrl } = useMyPersonProfile(Boolean(session.userId));
 
   useEffect(() => {
@@ -81,9 +86,24 @@ export function ShellTopBarActions({ basePath }: ShellTopBarActionsProps) {
   }, []);
 
   const userId = session.userId;
+  const goToHostProfile = useCallback(() => {
+    setMenuOpen(false);
+    window.location.assign(HOST_SELF_PROFILE_PATH);
+  }, []);
+
+  const goToPortalPreferences = useCallback(() => {
+    if (!userId) return;
+    setMenuOpen(false);
+    const href = buildUserProfilePath(
+      userId,
+      basePath,
+      buildSelfProfileSearch(basePath),
+    );
+    navigatePluginPath(href);
+  }, [basePath, userId]);
+
   if (!userId) return null;
 
-  const href = buildUserProfilePath(userId, basePath, buildSelfProfileSearch(basePath));
   const label =
     (displayName || "").trim() ||
     firstNameFromDisplay(displayName) ||
@@ -96,11 +116,31 @@ export function ShellTopBarActions({ basePath }: ShellTopBarActionsProps) {
         fallbackLabel={SHELL_NAV_CONTENT.userMenu.nameFallback}
         avatarUrl={photoUrl}
         loading={loading}
-        href={href}
-        title={SHELL_NAV_CONTENT.userMenu.profileTitle}
-        ariaLabel={SHELL_NAV_CONTENT.userMenu.profileAriaLabel}
         portalScopeClassName="dashboard-supplies-portal"
-        onNavigate={() => navigatePluginPath(href)}
+        avatarHref={HOST_SELF_PROFILE_PATH}
+        onAvatarNavigate={goToHostProfile}
+        avatarTitle={SHELL_NAV_CONTENT.userMenu.profileTitle}
+        onLabelClick={() => setMenuOpen((open) => !open)}
+        labelAriaLabel={SHELL_NAV_CONTENT.userMenu.menuOpenAriaLabel}
+        labelHasPopup="menu"
+        labelExpanded={menuOpen}
+        open={menuOpen}
+        onOpenChange={setMenuOpen}
+        menuAriaLabel={SHELL_NAV_CONTENT.userMenu.menuAriaLabel}
+        menuItems={[
+          {
+            id: "host-profile",
+            label: SHELL_NAV_CONTENT.userMenu.hostProfileLabel,
+            onSelect: goToHostProfile,
+          },
+          {
+            id: "portal-preferences",
+            label: SHELL_NAV_CONTENT.userMenu.portalPreferencesLabel,
+            icon: Settings2,
+            onSelect: goToPortalPreferences,
+          },
+        ]}
+        ariaLabel={`Usuário: ${label}`}
       />
     </div>
   );
