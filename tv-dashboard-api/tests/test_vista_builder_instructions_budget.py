@@ -137,8 +137,8 @@ def test_vista_playbooks_exist_and_forbid_new_actions_by_default():
     assert "Knowledge **never** replaces live data" in text or "never** replaces live data" in text
     assert "INFERRED != FACT" in text
     assert "Intent Resolution / Desired Outcome" in text
-    assert "CURRENT LIMITATION (PROVEN)" in text
-    assert "COMPOUND PREVIEW = TARGET" in text
+    assert "CURRENT LIMITATION (PROVEN)" not in text or "PlanCompiler" in text
+    assert "PlanCompiler" in text or "synthetic" in text.lower()
     assert "Never infer a UUID from a screenshot" in text
     assert "ninth Action" in text
     assert "commit_now" in text
@@ -150,6 +150,7 @@ def test_vista_instructions_domain_intent_beats_image_generation():
     assert "NÃO tratar automaticamente como geração de imagem" in block
     assert "## Resultado desejado" in block
     assert "## Pedido composto" in block
-    assert "LIMITAÇÃO ATUAL (PROVEN)" in block
-    assert "TARGET" in block
+    assert "LOTE COMPLETO" in block
+    assert "PlanCompiler" in block
     assert "Pule gpt_suggest_change" in block
+    assert "commit_now=true" in block

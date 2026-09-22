@@ -356,12 +356,15 @@ A later step may depend on a resource produced earlier (`created.slide`, `create
 - Do not invent temporary IDs as authoritative resource IDs.
 - Authoritative IDs come from runtime creation / read-back.
 
-**PROVEN:** `gpt_commit_change` executes the **server-bound** proposal ops in order
-(stop-on-first-failure), tracks `created` playlist/slide during that ACT, and
-requires authoritative verification (`VERIFIED` / `PARTIAL` / `OUTCOME_NOT_VERIFIED`).
-Client does not re-send ops on commit — only `proposal_handle` + confirmation.
+**PROVEN:** `gpt_commit_change` / `commit_now` executes the **server-bound**
+proposal ops in PlanCompiler order (stop-on-first-failure), tracks `created`
+playlist/slide during that ACT, and requires authoritative verification.
+Client does not re-send ops on commit — only `proposal_handle` + confirmation
+(or additive `commit_now` on preview).
 
-**CURRENT LIMITATION (PROVEN):** preview of `add_blank_slide` does not persist a slide and returns no authoritative `id`. Some native-config ops therefore cannot be fully evaluated as a create-then-modify chain at preview time. **COMPOUND PREVIEW = TARGET** (synthetic in-memory binding). Do not describe current preview as fully dependency-aware.
+**PROVEN:** compound preview is dependency-aware — synthetic IDs (`syn:…`) +
+in-memory nativeConfig binding for create→slide→block chains. Declaration
+order may be arbitrary; runtime topo-sorts via produces/consumes.
 
 ### 12.6 Confirmation of a compound plan
 

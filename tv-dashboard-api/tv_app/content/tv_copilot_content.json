@@ -604,7 +604,14 @@
             }
           }
         }
-      }
+      },
+      "produces": [
+        "dataSource"
+      ],
+      "consumes": [
+        "playlist",
+        "slide"
+      ]
     },
     "set_data_transform": {
       "requiresPlaylist": true,
@@ -1049,7 +1056,12 @@
             }
           }
         }
-      }
+      },
+      "produces": [],
+      "consumes": [
+        "playlist",
+        "slide"
+      ]
     },
     "upsert_block": {
       "requiresPlaylist": true,
@@ -1222,7 +1234,14 @@
             }
           }
         }
-      }
+      },
+      "produces": [
+        "block"
+      ],
+      "consumes": [
+        "playlist",
+        "slide"
+      ]
     },
     "delete_block": {
       "requiresPlaylist": true,
@@ -1247,7 +1266,12 @@
             "type": "string"
           }
         }
-      }
+      },
+      "produces": [],
+      "consumes": [
+        "playlist",
+        "slide"
+      ]
     },
     "bind_visual": {
       "requiresPlaylist": true,
@@ -1275,7 +1299,12 @@
             "type": "string"
           }
         }
-      }
+      },
+      "produces": [],
+      "consumes": [
+        "playlist",
+        "slide"
+      ]
     },
     "patch_native_config": {
       "requiresPlaylist": true,
@@ -1400,7 +1429,12 @@
             }
           }
         }
-      }
+      },
+      "produces": [],
+      "consumes": [
+        "playlist",
+        "slide"
+      ]
     },
     "add_slide_from_preset": {
       "requiresPlaylist": true,
@@ -1427,7 +1461,13 @@
             "type": "string"
           }
         }
-      }
+      },
+      "produces": [
+        "slide"
+      ],
+      "consumes": [
+        "playlist"
+      ]
     },
     "add_blank_slide": {
       "requiresPlaylist": true,
@@ -1450,7 +1490,13 @@
             "type": "string"
           }
         }
-      }
+      },
+      "produces": [
+        "slide"
+      ],
+      "consumes": [
+        "playlist"
+      ]
     },
     "update_slide": {
       "requiresPlaylist": true,
@@ -1479,7 +1525,12 @@
             "type": "boolean"
           }
         }
-      }
+      },
+      "produces": [],
+      "consumes": [
+        "playlist",
+        "slide"
+      ]
     },
     "reorder_slides": {
       "requiresPlaylist": true,
@@ -1535,7 +1586,11 @@
             }
           }
         }
-      }
+      },
+      "produces": [],
+      "consumes": [
+        "playlist"
+      ]
     },
     "delete_slide": {
       "requiresPlaylist": true,
@@ -1555,7 +1610,12 @@
             "const": "delete_slide"
           }
         }
-      }
+      },
+      "produces": [],
+      "consumes": [
+        "playlist",
+        "slide"
+      ]
     },
     "upsert_section": {
       "requiresPlaylist": true,
@@ -1582,7 +1642,13 @@
             "type": "string"
           }
         }
-      }
+      },
+      "produces": [
+        "section"
+      ],
+      "consumes": [
+        "playlist"
+      ]
     },
     "delete_section": {
       "requiresPlaylist": true,
@@ -1606,7 +1672,11 @@
             "type": "string"
           }
         }
-      }
+      },
+      "produces": [],
+      "consumes": [
+        "playlist"
+      ]
     },
     "move_slide_to_section": {
       "requiresPlaylist": true,
@@ -1633,7 +1703,12 @@
             ]
           }
         }
-      }
+      },
+      "produces": [],
+      "consumes": [
+        "playlist",
+        "slide"
+      ]
     },
     "create_playlist": {
       "requiresPlaylist": false,
@@ -1670,7 +1745,11 @@
           "op": "create_playlist",
           "name": "Testando a VISTA"
         }
-      }
+      },
+      "produces": [
+        "playlist"
+      ],
+      "consumes": []
     }
   },
   "capabilities": [

@@ -23,10 +23,19 @@ from tv_app.application.services.data.slide_data_resolution_service import (
 from tv_app.application.services.data.tv_copilot_content_service import (
     TvCopilotContentService,
 )
+from tv_app.application.services.data.tv_copilot_execution_context import (
+    ExecutionContext,
+    is_synthetic_id,
+    mint_synthetic_id,
+)
 from tv_app.application.services.data.tv_copilot_nested_contract import (
     NestedContractError,
     patch_native_keys,
     validate_operation_payload,
+)
+from tv_app.application.services.data.tv_copilot_plan_compiler import (
+    PlanCompileError,
+    compile_copilot_plan,
 )
 from tv_app.application.services.data.tv_copilot_http_command_planner_service import (
     TvCopilotHttpCommandPlannerService,
@@ -61,6 +70,10 @@ _VISUAL_PROJECTION_DEFAULTS = {
 
 class TvCopilotPatchError(ValueError):
     """Erro de validação do envelope / ops."""
+
+    def __init__(self, message: str, *, code: str | None = None) -> None:
+        super().__init__(message)
+        self.code = code
 
 
 def _new_block_id() -> str:
@@ -182,16 +195,37 @@ def _validate_target_for_ops(
     playlist_id: str | None,
     slide_id: str | None,
 ) -> None:
-    """Valida target mínimo via ``operations`` do catálogo (fonte única)."""
+    """Valida target mínimo respeitando produces do próprio plano (pós compile)."""
     typed = [op for op in ops if isinstance(op, dict)]
-    policy = TvCopilotContentService.aggregate_ops_policy(typed)
-    if policy["requiresPlaylist"] and not playlist_id:
+    requirements = TvCopilotContentService.plan_resource_requirements(
+        typed,
+        {
+            "playlistId": playlist_id or "",
+            "slideId": slide_id or "",
+        },
+    )
+    if requirements["requiresPlaylist"] and not playlist_id:
         raise TvCopilotPatchError(TvCopilotContentService.message("missingPlaylist"))
-    if policy["requiresSlide"] and not slide_id:
-        if policy["requiresPlaylist"] and not playlist_id:
+    if requirements["requiresSlide"] and not slide_id:
+        if requirements["requiresPlaylist"] and not playlist_id:
             raise TvCopilotPatchError(TvCopilotContentService.message("missingTarget"))
         raise TvCopilotPatchError(TvCopilotContentService.message("missingSlide"))
 
+
+_NATIVE_OP_NAMES = frozenset(
+    {
+        "upsert_data_source",
+        "set_data_transform",
+        "upsert_block",
+        "delete_block",
+        "bind_visual",
+        "patch_native_config",
+    }
+)
+
+
+def _op_name_of(raw: dict[str, Any]) -> str:
+    return str(raw.get("op") or "").strip()
 
 def _collect_side_effect_hints(applied: list[str]) -> list[str]:
     ordered: list[str] = []
@@ -327,14 +361,21 @@ class TvCopilotPatchService:
             raise TvCopilotPatchError(TvCopilotContentService.message("noOps"))
 
         target = envelope.get("target") if isinstance(envelope.get("target"), dict) else {}
+        try:
+            compiled = compile_copilot_plan(ops=ops, target=target)
+        except PlanCompileError as exc:
+            raise TvCopilotPatchError(str(exc), code=exc.code) from exc
+        ops = compiled.ordered_ops
+
         allowed = TvCopilotContentService.allowed_ops()
         applied: list[str] = []
         side_effects: dict[str, Any] = {}
         removed_block_ids: list[str] = []
         playlist_mutated = False
 
-        playlist_id = str(target.get("playlistId") or "").strip() or None
-        slide_id = str(target.get("slideId") or "").strip() or None
+        ctx = ExecutionContext.from_target(target)
+        playlist_id = ctx.playlist_id
+        slide_id = ctx.slide_id
         _validate_target_for_ops(
             ops,
             playlist_id=playlist_id,
@@ -344,18 +385,18 @@ class TvCopilotPatchService:
         playlist_defaults: dict[str, Any] | None = None
         before_blocks: list[dict[str, Any]] = []
 
-        _validate_target_for_ops(ops, playlist_id=playlist_id, slide_id=slide_id)
-
         needs_native = any(
+            isinstance(op, dict) and _op_name_of(op) in _NATIVE_OP_NAMES for op in ops
+        )
+        creates_slide = any(
             isinstance(op, dict)
-            and "replaceNativeConfig"
-            in TvCopilotContentService.side_effect_hints_for_op(
-                str(op.get("op") or "").strip()
-            )
+            and _op_name_of(op) in {"add_blank_slide", "add_slide_from_preset"}
             for op in ops
         )
 
-        if needs_native:
+        if needs_native and playlist_id and slide_id and not (
+            is_synthetic_id(playlist_id) or is_synthetic_id(slide_id)
+        ):
             slide = self._load_slide(playlist_id or "", slide_id or "")
             native_config = copy.deepcopy(slide.get("nativeConfig") or {})
             if not isinstance(native_config, dict):
@@ -364,6 +405,9 @@ class TvCopilotPatchService:
                 native_config["version"] = 5
             before_blocks = copy.deepcopy(_blocks_of(native_config))
             playlist_defaults = self._playlist_defaults(playlist_id)
+            ctx.native_config = native_config
+        elif needs_native and not creates_slide:
+            raise TvCopilotPatchError(TvCopilotContentService.message("missingTarget"))
 
         for raw_op in ops:
             if not isinstance(raw_op, dict):
@@ -380,20 +424,27 @@ class TvCopilotPatchService:
             except NestedContractError as exc:
                 raise TvCopilotPatchError(str(exc)) from exc
 
+            playlist_id = ctx.resolve_playlist_id(raw_op) or ctx.playlist_id
+            slide_id = ctx.resolve_slide_id(raw_op) or ctx.slide_id
+
             if op_name == "create_playlist":
                 created = self._op_create_playlist(
                     raw_op,
                     persist=persist,
                     actor_user_id=actor_user_id,
                 )
+                if not created.get("id"):
+                    created["id"] = mint_synthetic_id("playlist")
+                ctx.set_playlist(str(created["id"]), op=raw_op)
+                playlist_id = ctx.playlist_id
                 side_effects["playlist"] = created
-                if created.get("id"):
-                    playlist_id = str(created["id"])
                 applied.append(op_name)
                 playlist_mutated = playlist_mutated or bool(persist)
                 continue
 
             if op_name == "add_slide_from_preset":
+                if not playlist_id:
+                    raise TvCopilotPatchError(TvCopilotContentService.message("missingPlaylist"))
                 created_slide = self._op_add_slide_from_preset(
                     playlist_id,
                     raw_op,
@@ -401,26 +452,59 @@ class TvCopilotPatchService:
                     persist=persist,
                     actor_user_id=actor_user_id,
                 )
-                side_effects.setdefault("slides", []).append(created_slide)
-                if created_slide.get("id") and not slide_id:
-                    slide_id = str(created_slide["id"])
-                    native_config = copy.deepcopy(created_slide.get("nativeConfig") or {})
-                    if isinstance(native_config, dict):
+                if not created_slide.get("id"):
+                    created_slide["id"] = mint_synthetic_id("slide")
+                    created_slide["nativeConfig"] = copy.deepcopy(
+                        created_slide.get("nativeConfig")
+                        or {"version": 5, "headline": "", "subtitle": "", "blocks": []}
+                    )
+                ctx.set_slide(
+                    str(created_slide["id"]),
+                    op=raw_op,
+                    native_config=created_slide.get("nativeConfig")
+                    if isinstance(created_slide.get("nativeConfig"), dict)
+                    else None,
+                )
+                slide_id = ctx.slide_id
+                if ctx.native_config is not None:
+                    native_config = ctx.native_config
+                    if not before_blocks:
                         before_blocks = copy.deepcopy(_blocks_of(native_config))
+                side_effects.setdefault("slides", []).append(created_slide)
                 applied.append(op_name)
                 playlist_mutated = playlist_mutated or bool(persist)
                 continue
 
             if op_name == "add_blank_slide":
+                if not playlist_id:
+                    raise TvCopilotPatchError(TvCopilotContentService.message("missingPlaylist"))
                 created_slide = self._op_add_blank_slide(
                     playlist_id,
                     raw_op,
                     persist=persist,
                     actor_user_id=actor_user_id,
                 )
+                if not created_slide.get("id"):
+                    created_slide["id"] = mint_synthetic_id("slide")
+                blank_native = created_slide.get("nativeConfig")
+                if not isinstance(blank_native, dict):
+                    blank_native = {
+                        "version": 5,
+                        "headline": "",
+                        "subtitle": "",
+                        "blocks": [],
+                    }
+                    created_slide["nativeConfig"] = blank_native
+                ctx.set_slide(
+                    str(created_slide["id"]),
+                    op=raw_op,
+                    native_config=blank_native,
+                )
+                slide_id = ctx.slide_id
+                native_config = ctx.native_config
+                if not before_blocks and native_config is not None:
+                    before_blocks = copy.deepcopy(_blocks_of(native_config))
                 side_effects.setdefault("slides", []).append(created_slide)
-                if created_slide.get("id") and not slide_id:
-                    slide_id = str(created_slide["id"])
                 applied.append(op_name)
                 playlist_mutated = playlist_mutated or bool(persist)
                 continue
@@ -475,6 +559,9 @@ class TvCopilotPatchService:
                     persist=persist,
                     actor_user_id=actor_user_id,
                 )
+                if not section.get("id"):
+                    section["id"] = mint_synthetic_id("section")
+                ctx.set_section(str(section["id"]), op=raw_op)
                 side_effects.setdefault("sections", []).append(section)
                 applied.append(op_name)
                 playlist_mutated = playlist_mutated or bool(persist)
@@ -510,7 +597,10 @@ class TvCopilotPatchService:
                 continue
 
             if native_config is None:
-                raise TvCopilotPatchError(TvCopilotContentService.message("missingTarget"))
+                if creates_slide or ctx.native_config is not None:
+                    native_config = ctx.ensure_native_config()
+                else:
+                    raise TvCopilotPatchError(TvCopilotContentService.message("missingTarget"))
 
             if op_name == "upsert_data_source":
                 self._op_upsert_data_source(native_config, raw_op)
@@ -530,12 +620,15 @@ class TvCopilotPatchService:
                 raise TvCopilotPatchError(
                     TvCopilotContentService.message("unknownOp", op=op_name or "?")
                 )
+            ctx.native_config = native_config
             applied.append(op_name)
 
         hints = _collect_side_effect_hints(applied)
         if removed_block_ids:
             side_effects["removedBlockIds"] = list(removed_block_ids)
 
+        playlist_id = ctx.playlist_id
+        slide_id = ctx.slide_id
         result: dict[str, Any] = {
             "ok": True,
             "version": "TvCopilotPatchV1",
@@ -547,14 +640,16 @@ class TvCopilotPatchService:
             "playlistDefaults": playlist_defaults,
             "persisted": False,
             "executionMode": "crud_http",
+            "orderedOps": ops,
+            "dependencyOrder": compiled.dependency_order,
+            "aliasMap": ctx.alias_map_public(),
+            "compileDigest": compiled.compile_digest,
         }
 
         if native_config is not None:
             cleaned = sanitize_and_hydrate_comunicado_config(
                 native_config, catalog=self._catalog
             )
-            # Validação de dados/RBAC devolve ValueError; virar erro de patch para o
-            # usuário ver o motivo (422) em vez de 500 opaco.
             try:
                 validate_comunicado_native_config(cleaned, user=user, catalog=self._catalog)
             except ValueError as exc:
@@ -566,19 +661,22 @@ class TvCopilotPatchService:
         base_revision = self._playlist_revision(playlist_id)
         result["baseRevision"] = base_revision
         try:
-            result["httpCommands"] = TvCopilotHttpCommandPlannerService.build(
-                ops=ops,
-                target=result["target"],
-                native_config=result.get("nativeConfig"),
-                base_revision=base_revision,
-            )
+            if is_synthetic_id(playlist_id) or is_synthetic_id(slide_id):
+                result["httpCommands"] = []
+            else:
+                result["httpCommands"] = TvCopilotHttpCommandPlannerService.build(
+                    ops=ops,
+                    target=result["target"],
+                    native_config=result.get("nativeConfig"),
+                    base_revision=base_revision,
+                )
         except ValueError as exc:
             raise TvCopilotPatchError(str(exc)) from exc
 
         return result
 
     def _playlist_revision(self, playlist_id: str | None) -> int | None:
-        if not playlist_id or playlist_id.startswith("{"):
+        if not playlist_id or playlist_id.startswith("{") or is_synthetic_id(playlist_id):
             return None
         try:
             playlist = self._repo.get_by_id(UUID(str(playlist_id)))
@@ -593,7 +691,7 @@ class TvCopilotPatchService:
 
     def _playlist_defaults(self, playlist_id: str | None) -> dict[str, Any] | None:
         """dataDefaults da programação — contexto opcional, nunca quebra o patch."""
-        if not playlist_id:
+        if not playlist_id or is_synthetic_id(playlist_id):
             return None
         try:
             playlist = self._repo.get_by_id(UUID(str(playlist_id)))

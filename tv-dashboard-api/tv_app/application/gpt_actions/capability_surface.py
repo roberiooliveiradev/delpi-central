@@ -61,8 +61,9 @@ def build_capability_surface() -> dict[str, Any]:
                 "kind": "WORKFLOW",
                 "owner": "tv-dashboard-api",
                 "description": (
-                    "Governed TvCopilotPatchV1 change: suggest → preview (opaque proposal) "
-                    "→ explicit confirmation → commit_proposal → authoritative read-back."
+                    "Governed TvCopilotPatchV1 compound change: PlanCompiler topo-sort "
+                    "+ as/*Ref; preview mints opaque proposal; additive commit_now; "
+                    "commit → authoritative read-back."
                 ),
                 "read_operations": ["gpt_get_catalog", "gpt_get_playlist_context"],
                 "write_operations": [
@@ -84,6 +85,8 @@ def build_capability_surface() -> dict[str, Any]:
                         "when": "confirmationPolicy=direct",
                     },
                     "opaque_proposal": True,
+                    "compound_plan": True,
+                    "plan_compiler": "topo_sort",
                 },
                 "confirmation_policy": {
                     "always_require_confirmed_true": True,

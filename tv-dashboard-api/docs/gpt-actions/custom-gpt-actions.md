@@ -54,8 +54,8 @@ it does not auto-provision the client. Durable target remains Plugin + MCP
 - **Additive single-shot** (``confirmationPolicy=direct``): call
   ``gpt_preview_change`` with ``commit_now=true`` + ``confirmation.confirmed=true``
   + ``Idempotency-Key`` (header) or body ``idempotency_key``. Server PREPARE+COMMIT
-  in one request → ``status=VERIFIED``. User intent = confirmation; no chat
-  “Confirma?” loop. One ChatGPT Allow dialog for that Action.
+  in one request → ``status=VERIFIED``. Compound lots (playlist+slide+block) are
+  PlanCompiler-ordered; do not split in chat.
 - **Destructive** (``confirmationPolicy=confirm``): preview without ``commit_now``
   (``commit_now`` is ignored if set) → one conversational confirm →
   ``gpt_commit_change`` with the **exact** opaque handle. Invented aliases

@@ -21,6 +21,7 @@ from tv_app.application.gpt_actions.proposal_store import (
 )
 from tv_app.application.ports import IdempotencyRepositoryPort
 from tv_app.application.services.data.tv_copilot_content_service import TvCopilotContentService
+from tv_app.application.services.data.tv_copilot_execution_context import ExecutionContext
 from tv_app.application.services.data.tv_copilot_patch_service import (
     TvCopilotPatchError,
     TvCopilotPatchService,
@@ -442,10 +443,14 @@ class TvGptCommitService:
                 include_fingerprint=False,
             )
         except TvCopilotPatchError as exc:
+            code = (
+                str(getattr(exc, "code", None) or "INVALID_CHANGE").strip()
+                or "INVALID_CHANGE"
+            )
             err = {
-                "status": "INVALID_CHANGE",
+                "status": code,
                 "_raise": True,
-                "_code": "INVALID_CHANGE",
+                "_code": code,
                 "_statusCode": 422,
                 "message": str(exc),
             }
@@ -455,17 +460,22 @@ class TvGptCommitService:
                 request_fingerprint=request_fingerprint,
                 snapshot=err,
             )
-            raise GptActionsError(str(exc), code="INVALID_CHANGE", status_code=422) from exc
+            raise GptActionsError(str(exc), code=code, status_code=422) from exc
 
         applied: list[dict[str, Any]] = []
         outcome: dict[str, Any] = {"appliedOps": [], "created": {}}
+        ctx = ExecutionContext.from_target(target if isinstance(target, dict) else {})
         current_playlist = playlist_uuid
+        if current_playlist is not None:
+            ctx.playlist_id = str(current_playlist)
         current_slide_raw = str((target or {}).get("slideId") or "").strip() or None
         current_slide = (
             self._parse_uuid_prewrite(current_slide_raw, field="slideId")
             if current_slide_raw
             else None
         )
+        if current_slide is not None:
+            ctx.slide_id = str(current_slide)
         pending_native = False
         chain_revision: int | None = expected_revision
         expected_native_for_verify: dict[str, Any] | None = None
@@ -492,6 +502,7 @@ class TvGptCommitService:
                         actor_user_id=actor_id,
                     )
                     current_playlist = UUID(str(playlist["id"]))
+                    ctx.set_playlist(str(current_playlist), op=raw)
                     outcome["created"]["playlistId"] = str(current_playlist)
                     applied.append(
                         {
@@ -525,6 +536,14 @@ class TvGptCommitService:
                                 }
                             )
                     continue
+
+                resolved_playlist = ctx.resolve_playlist_id(raw)
+                if resolved_playlist:
+                    try:
+                        current_playlist = UUID(str(resolved_playlist))
+                        ctx.playlist_id = str(current_playlist)
+                    except ValueError:
+                        pass
 
                 if current_playlist is None:
                     raise GptActionsError(
@@ -561,6 +580,7 @@ class TvGptCommitService:
                     )
                     chain_revision = self._writes.get_revision(current_playlist)
                     current_slide = UUID(str(slide["id"]))
+                    ctx.set_slide(str(current_slide), op=raw)
                     outcome["created"]["slideId"] = str(current_slide)
                     applied.append(
                         {
@@ -584,6 +604,7 @@ class TvGptCommitService:
                     )
                     chain_revision = self._writes.get_revision(current_playlist)
                     current_slide = UUID(str(slide["id"]))
+                    ctx.set_slide(str(current_slide), op=raw)
                     outcome["created"]["slideId"] = str(current_slide)
                     applied.append(
                         {

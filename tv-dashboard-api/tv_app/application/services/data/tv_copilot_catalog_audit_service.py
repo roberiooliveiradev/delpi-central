@@ -18,6 +18,8 @@ class TvCopilotCatalogAuditService:
             "confirmationPolicy",
             "sideEffectHints",
             "inputSchema",
+            "produces",
+            "consumes",
         }
     )
 
@@ -50,6 +52,28 @@ class TvCopilotCatalogAuditService:
                 errors.append(f"op {op_name}: risk inválido")
             if spec.get("confirmationPolicy") not in {"direct", "confirm"}:
                 errors.append(f"op {op_name}: confirmationPolicy inválida")
+            produces = spec.get("produces")
+            consumes = spec.get("consumes")
+            if not isinstance(produces, list):
+                errors.append(f"op {op_name}: produces deve ser lista")
+            if not isinstance(consumes, list):
+                errors.append(f"op {op_name}: consumes deve ser lista")
+            allowed_resources = {
+                "playlist",
+                "slide",
+                "section",
+                "block",
+                "dataSource",
+            }
+            for field_name, values in (("produces", produces), ("consumes", consumes)):
+                if not isinstance(values, list):
+                    continue
+                for raw in values:
+                    token = str(raw or "").strip()
+                    if token not in allowed_resources:
+                        errors.append(
+                            f"op {op_name}: {field_name} inválido ({token!r})"
+                        )
 
         unreferenced = set(operations).difference(referenced)
         for op_name in sorted(unreferenced):

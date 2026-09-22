@@ -739,7 +739,7 @@
       "post": {
         "operationId": "gpt_preview_change",
         "summary": "Preview typed change without persisting",
-        "description": "PREPARE TvCopilotPatchV1. NO WRITE by default. Returns opaque proposal_handle. For additive (confirmationPolicy=direct), set commit_now=true + confirmation + Idempotency-Key to PREPARE+COMMIT in one call. Destructive policy ignores commit_now.",
+        "description": "PREPARE TvCopilotPatchV1 compound plan. Server topo-sorts ops (as/playlistRef/slideRef). NO WRITE by default. Additive: commit_now=true + confirmation + Idempotency-Key → PREPARE+COMMIT. Destructive ignores commit_now.",
         "tags": [
           "TV Dashboard GPT"
         ],
@@ -790,6 +790,18 @@
                             },
                             "title": {
                               "type": "string"
+                            },
+                            "as": {
+                              "type": "string",
+                              "description": "Local alias for the resource this op produces (compound plans)."
+                            },
+                            "playlistRef": {
+                              "type": "string",
+                              "description": "Alias or authoritative playlist UUID. Omit to use current playlist slot."
+                            },
+                            "slideRef": {
+                              "type": "string",
+                              "description": "Alias or authoritative slide UUID. Omit to use current slide slot."
                             }
                           },
                           "title": "add_blank_slide"
@@ -810,6 +822,18 @@
                             },
                             "branch": {
                               "type": "string"
+                            },
+                            "as": {
+                              "type": "string",
+                              "description": "Local alias for the resource this op produces (compound plans)."
+                            },
+                            "playlistRef": {
+                              "type": "string",
+                              "description": "Alias or authoritative playlist UUID. Omit to use current playlist slot."
+                            },
+                            "slideRef": {
+                              "type": "string",
+                              "description": "Alias or authoritative slide UUID. Omit to use current slide slot."
                             }
                           },
                           "title": "add_slide_from_preset"
@@ -831,6 +855,14 @@
                             },
                             "dataSourceId": {
                               "type": "string"
+                            },
+                            "playlistRef": {
+                              "type": "string",
+                              "description": "Alias or authoritative playlist UUID. Omit to use current playlist slot."
+                            },
+                            "slideRef": {
+                              "type": "string",
+                              "description": "Alias or authoritative slide UUID. Omit to use current slide slot."
                             }
                           },
                           "title": "bind_visual"
@@ -857,6 +889,14 @@
                               "items": {
                                 "type": "string"
                               }
+                            },
+                            "as": {
+                              "type": "string",
+                              "description": "Local alias for the resource this op produces (compound plans)."
+                            },
+                            "playlistRef": {
+                              "type": "string",
+                              "description": "Alias or authoritative playlist UUID. Omit to use current playlist slot."
                             }
                           },
                           "example": {
@@ -878,6 +918,14 @@
                             },
                             "blockId": {
                               "type": "string"
+                            },
+                            "playlistRef": {
+                              "type": "string",
+                              "description": "Alias or authoritative playlist UUID. Omit to use current playlist slot."
+                            },
+                            "slideRef": {
+                              "type": "string",
+                              "description": "Alias or authoritative slide UUID. Omit to use current slide slot."
                             }
                           },
                           "title": "delete_block"
@@ -895,6 +943,10 @@
                             },
                             "sectionId": {
                               "type": "string"
+                            },
+                            "playlistRef": {
+                              "type": "string",
+                              "description": "Alias or authoritative playlist UUID. Omit to use current playlist slot."
                             }
                           },
                           "title": "delete_section"
@@ -908,6 +960,14 @@
                             "op": {
                               "const": "delete_slide",
                               "type": "string"
+                            },
+                            "playlistRef": {
+                              "type": "string",
+                              "description": "Alias or authoritative playlist UUID. Omit to use current playlist slot."
+                            },
+                            "slideRef": {
+                              "type": "string",
+                              "description": "Alias or authoritative slide UUID. Omit to use current slide slot."
                             }
                           },
                           "title": "delete_slide"
@@ -928,6 +988,14 @@
                                 "string",
                                 "null"
                               ]
+                            },
+                            "playlistRef": {
+                              "type": "string",
+                              "description": "Alias or authoritative playlist UUID. Omit to use current playlist slot."
+                            },
+                            "slideRef": {
+                              "type": "string",
+                              "description": "Alias or authoritative slide UUID. Omit to use current slide slot."
                             }
                           },
                           "title": "move_slide_to_section"
@@ -1046,6 +1114,14 @@
                                   }
                                 }
                               }
+                            },
+                            "playlistRef": {
+                              "type": "string",
+                              "description": "Alias or authoritative playlist UUID. Omit to use current playlist slot."
+                            },
+                            "slideRef": {
+                              "type": "string",
+                              "description": "Alias or authoritative slide UUID. Omit to use current slide slot."
                             }
                           },
                           "title": "patch_native_config"
@@ -1095,6 +1171,10 @@
                                   }
                                 }
                               }
+                            },
+                            "playlistRef": {
+                              "type": "string",
+                              "description": "Alias or authoritative playlist UUID. Omit to use current playlist slot."
                             }
                           },
                           "title": "reorder_slides"
@@ -1533,6 +1613,14 @@
                                   }
                                 ]
                               }
+                            },
+                            "playlistRef": {
+                              "type": "string",
+                              "description": "Alias or authoritative playlist UUID. Omit to use current playlist slot."
+                            },
+                            "slideRef": {
+                              "type": "string",
+                              "description": "Alias or authoritative slide UUID. Omit to use current slide slot."
                             }
                           },
                           "title": "set_data_transform"
@@ -1555,6 +1643,14 @@
                             },
                             "isActive": {
                               "type": "boolean"
+                            },
+                            "playlistRef": {
+                              "type": "string",
+                              "description": "Alias or authoritative playlist UUID. Omit to use current playlist slot."
+                            },
+                            "slideRef": {
+                              "type": "string",
+                              "description": "Alias or authoritative slide UUID. Omit to use current slide slot."
                             }
                           },
                           "title": "update_slide"
@@ -1721,6 +1817,18 @@
                                   }
                                 }
                               }
+                            },
+                            "as": {
+                              "type": "string",
+                              "description": "Local alias for the resource this op produces (compound plans)."
+                            },
+                            "playlistRef": {
+                              "type": "string",
+                              "description": "Alias or authoritative playlist UUID. Omit to use current playlist slot."
+                            },
+                            "slideRef": {
+                              "type": "string",
+                              "description": "Alias or authoritative slide UUID. Omit to use current slide slot."
                             }
                           },
                           "title": "upsert_block"
@@ -1795,6 +1903,18 @@
                               "additionalProperties": {
                                 "type": "string"
                               }
+                            },
+                            "as": {
+                              "type": "string",
+                              "description": "Local alias for the resource this op produces (compound plans)."
+                            },
+                            "playlistRef": {
+                              "type": "string",
+                              "description": "Alias or authoritative playlist UUID. Omit to use current playlist slot."
+                            },
+                            "slideRef": {
+                              "type": "string",
+                              "description": "Alias or authoritative slide UUID. Omit to use current slide slot."
                             }
                           },
                           "title": "upsert_data_source"
@@ -1815,6 +1935,18 @@
                             },
                             "sectionId": {
                               "type": "string"
+                            },
+                            "as": {
+                              "type": "string",
+                              "description": "Local alias for the resource this op produces (compound plans)."
+                            },
+                            "playlistRef": {
+                              "type": "string",
+                              "description": "Alias or authoritative playlist UUID. Omit to use current playlist slot."
+                            },
+                            "sectionRef": {
+                              "type": "string",
+                              "description": "Alias or authoritative section UUID. Omit to use current section slot."
                             }
                           },
                           "title": "upsert_section"

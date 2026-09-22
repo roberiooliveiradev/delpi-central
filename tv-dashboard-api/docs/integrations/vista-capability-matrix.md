@@ -62,6 +62,9 @@ UNDERSTAND → READ CURRENT STATE → PREPARE (gpt_preview_change)
 - `gpt_preview_change` = PREPARE + mint opaque handle; with `commit_now=true` +
   `confirmation` when aggregated `confirmationPolicy=direct` → PREPARE+COMMIT
   in one Action (`commit_now_applied=true`, `status=VERIFIED`).
+- **Compound plans (PROVEN):** PlanCompiler topo-sorts typed ops (`produces`/
+  `consumes`, optional `as`/`*Ref`); preview uses synthetic IDs; ACT binds real
+  IDs. Declaration order may be shuffled.
 - Destructive (`confirmationPolicy=confirm`): `commit_now` is ignored; use
   `gpt_commit_change` with the **exact** `proposal_handle` after one user OK.
 - Never invent handles (`latest` etc.) → `PROPOSAL_NOT_FOUND`.

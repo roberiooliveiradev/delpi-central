@@ -116,6 +116,41 @@ def _project_operation_input_schemas() -> list[dict[str, Any]]:
             schema["properties"] = props
         if "op" not in props:
             props["op"] = {"type": "string", "const": op_name}
+        # Compound plan chaining (optional; PlanCompiler resolves order + refs).
+        produces = spec.get("produces") if isinstance(spec.get("produces"), list) else []
+        consumes = spec.get("consumes") if isinstance(spec.get("consumes"), list) else []
+        if produces:
+            props.setdefault(
+                "as",
+                {
+                    "type": "string",
+                    "description": "Local alias for the resource this op produces (compound plans).",
+                },
+            )
+        if "playlist" in consumes or "playlist" in produces:
+            props.setdefault(
+                "playlistRef",
+                {
+                    "type": "string",
+                    "description": "Alias or authoritative playlist UUID. Omit to use current playlist slot.",
+                },
+            )
+        if "slide" in consumes or "slide" in produces:
+            props.setdefault(
+                "slideRef",
+                {
+                    "type": "string",
+                    "description": "Alias or authoritative slide UUID. Omit to use current slide slot.",
+                },
+            )
+        if "section" in consumes or "section" in produces:
+            props.setdefault(
+                "sectionRef",
+                {
+                    "type": "string",
+                    "description": "Alias or authoritative section UUID. Omit to use current section slot.",
+                },
+            )
         required = schema.get("required")
         if isinstance(required, list) and "op" not in required:
             schema["required"] = ["op", *required]
@@ -583,10 +618,10 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "operationId": "gpt_preview_change",
                 "summary": "Preview typed change without persisting",
                 "description": (
-                    "PREPARE TvCopilotPatchV1. NO WRITE by default. Returns opaque "
-                    "proposal_handle. For additive (confirmationPolicy=direct), set "
-                    "commit_now=true + confirmation + Idempotency-Key to PREPARE+COMMIT "
-                    "in one call. Destructive policy ignores commit_now."
+                    "PREPARE TvCopilotPatchV1 compound plan. Server topo-sorts ops "
+                    "(as/playlistRef/slideRef). NO WRITE by default. Additive: "
+                    "commit_now=true + confirmation + Idempotency-Key → PREPARE+COMMIT. "
+                    "Destructive ignores commit_now."
                 ),
                 "tags": [tag],
                 "security": [{"BearerAuth": []}],

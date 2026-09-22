@@ -288,6 +288,75 @@ class TvCopilotContentService:
         }
 
     @classmethod
+    def operation_produces(cls, op: str) -> list[str]:
+        spec = cls.operation_spec(op) or {}
+        raw = spec.get("produces")
+        if not isinstance(raw, list):
+            return []
+        return [str(item).strip() for item in raw if str(item).strip()]
+
+    @classmethod
+    def operation_consumes(cls, op: str) -> list[str]:
+        spec = cls.operation_spec(op) or {}
+        raw = spec.get("consumes")
+        if not isinstance(raw, list):
+            return []
+        return [str(item).strip() for item in raw if str(item).strip()]
+
+    @classmethod
+    def plan_resource_requirements(
+        cls,
+        ops: list[dict[str, Any]],
+        target: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """External resource needs after walking ops in the given (ordered) sequence.
+
+        Resources produced earlier in the plan satisfy later consumes. Target
+        playlistId/slideId seed the available set.
+        """
+        target_obj = target if isinstance(target, dict) else {}
+        available: set[str] = set()
+        if str(target_obj.get("playlistId") or "").strip():
+            available.add("playlist")
+        if str(target_obj.get("slideId") or "").strip():
+            available.add("slide")
+        if str(target_obj.get("sectionId") or "").strip():
+            available.add("section")
+
+        external_playlist = False
+        external_slide = False
+        external_section = False
+        unsatisfied: list[dict[str, str]] = []
+
+        for raw in ops:
+            if not isinstance(raw, dict):
+                continue
+            name = str(raw.get("op") or "").strip()
+            if not name:
+                continue
+            for resource in cls.operation_consumes(name):
+                if resource in available:
+                    continue
+                unsatisfied.append({"op": name, "resource": resource})
+                if resource == "playlist":
+                    external_playlist = True
+                elif resource == "slide":
+                    external_slide = True
+                elif resource == "section":
+                    external_section = True
+            for resource in cls.operation_produces(name):
+                available.add(resource)
+
+        return {
+            "requiresPlaylist": external_playlist,
+            "requiresSlide": external_slide,
+            "requiresSection": external_section,
+            "available": sorted(available),
+            "unsatisfied": unsatisfied,
+            "satisfiable": len(unsatisfied) == 0,
+        }
+
+    @classmethod
     def side_effect_hint_catalog(cls) -> list[str]:
         raw = _load().get("sideEffectHintCatalog")
         if not isinstance(raw, list):

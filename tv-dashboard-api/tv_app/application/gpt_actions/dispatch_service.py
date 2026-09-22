@@ -263,8 +263,16 @@ class GptActionsDispatchService:
                 include_fingerprint=True,
             )
         except TvCopilotPatchError as exc:
-            raise GptActionsError(str(exc), code="INVALID_CHANGE", status_code=422) from exc
+            code = str(getattr(exc, "code", None) or "INVALID_CHANGE").strip() or "INVALID_CHANGE"
+            raise GptActionsError(str(exc), code=code, status_code=422) from exc
 
+        # Prefer compiler-ordered ops for the proposal (source of truth for ACT).
+        ordered_ops = result.get("orderedOps")
+        stored_ops = (
+            [op for op in ordered_ops if isinstance(op, dict)]
+            if isinstance(ordered_ops, list) and ordered_ops
+            else typed_ops
+        )
         # appliedOps from patch service is list[str] — expose as operationNames only.
         applied_names = result.get("appliedOps") or []
         operation_names = [
@@ -273,24 +281,33 @@ class GptActionsDispatchService:
         base_revision = result.get("baseRevision")
         base_revision_int = int(base_revision) if base_revision is not None else None
         # Policy authority is the Copilot catalog — not patch-service echo.
-        policy = TvCopilotContentService.aggregate_ops_policy(typed_ops)
+        policy = TvCopilotContentService.aggregate_ops_policy(stored_ops)
         confirmation_policy = str(policy["confirmationPolicy"] or "direct").strip().lower()
         proposal = create_proposal(
             actor_id=actor,
             target=envelope["target"],
-            ops=typed_ops,
+            ops=stored_ops,
             operation_names=operation_names,
             catalog_version=envelope["catalogVersion"],
             base_revision=base_revision_int,
             risk=policy["risk"],
             confirmation_policy=confirmation_policy,
             side_effect_hints=list(policy["sideEffectHints"] or []),
-            meta={"diff": result.get("diff"), "fingerprint": result.get("fingerprint")},
+            meta={
+                "diff": result.get("diff"),
+                "fingerprint": result.get("fingerprint"),
+                "compileDigest": result.get("compileDigest"),
+                "dependencyOrder": result.get("dependencyOrder"),
+                "aliasKeys": sorted((result.get("aliasMap") or {}).keys())
+                if isinstance(result.get("aliasMap"), dict)
+                else [],
+                "nativeConfig": result.get("nativeConfig"),
+            },
         )
         proposal_handle = get_proposal_store().put(proposal)
         preview_payload = {
             "target": envelope["target"],
-            "ops": typed_ops,
+            "ops": stored_ops,
             "operationNames": operation_names,
             "catalogVersion": envelope["catalogVersion"],
             "baseRevision": base_revision,
@@ -305,6 +322,10 @@ class GptActionsDispatchService:
             "canCommit": True,
             "persisted": False,
             "message": result.get("message"),
+            "dependencyOrder": result.get("dependencyOrder"),
+            "aliasMap": result.get("aliasMap"),
+            "compileDigest": result.get("compileDigest"),
+            "orderedOps": stored_ops,
         }
 
         if not commit_now:
