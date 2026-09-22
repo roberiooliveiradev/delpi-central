@@ -4415,6 +4415,46 @@ body.td-composer--marqueeing *{
     linear-gradient(#089bdb, #089bdb) 8px 12px / 24px 2px no-repeat,
     #f8fafc;
 }
+/* Mini-card KPI — tema Claro / Escuro */
+.dashboard-tv-dashboard .td-chart-style-menu__style-thumb--kpi-claro{
+  background:
+    linear-gradient(#0f172a, #0f172a) 8px 7px / 18px 3px no-repeat,
+    linear-gradient(#089bdb, #089bdb) 8px 13px / 22px 6px no-repeat,
+    radial-gradient(circle at 34px 18px, color-mix(in srgb, #089bdb 18%, #fff) 5px, transparent 6px),
+    #ffffff;
+}
+.dashboard-tv-dashboard .td-chart-style-menu__style-thumb--kpi-escuro{
+  background:
+    linear-gradient(#e2e8f0, #e2e8f0) 8px 7px / 18px 3px no-repeat,
+    linear-gradient(#47bfff, #47bfff) 8px 13px / 22px 6px no-repeat,
+    radial-gradient(circle at 34px 18px, color-mix(in srgb, #47bfff 22%, #0f172a) 5px, transparent 6px),
+    #0f172a;
+}
+/* Mini-card KPI — tom semântico (faixa de valor tintada) */
+.dashboard-tv-dashboard .td-chart-style-menu__style-thumb--kpi-tone-default{
+  background:
+    linear-gradient(#64748b, #64748b) 8px 7px / 16px 3px no-repeat,
+    linear-gradient(#0f172a, #0f172a) 8px 13px / 22px 6px no-repeat,
+    #f8fafc;
+}
+.dashboard-tv-dashboard .td-chart-style-menu__style-thumb--kpi-tone-positive{
+  background:
+    linear-gradient(#64748b, #64748b) 8px 7px / 16px 3px no-repeat,
+    linear-gradient(#16a34a, #16a34a) 8px 13px / 22px 6px no-repeat,
+    #f8fafc;
+}
+.dashboard-tv-dashboard .td-chart-style-menu__style-thumb--kpi-tone-negative{
+  background:
+    linear-gradient(#64748b, #64748b) 8px 7px / 16px 3px no-repeat,
+    linear-gradient(#dc2626, #dc2626) 8px 13px / 22px 6px no-repeat,
+    #f8fafc;
+}
+.dashboard-tv-dashboard .td-chart-style-menu__style-thumb--kpi-tone-warning{
+  background:
+    linear-gradient(#64748b, #64748b) 8px 7px / 16px 3px no-repeat,
+    linear-gradient(#ea580c, #ea580c) 8px 13px / 22px 6px no-repeat,
+    #f8fafc;
+}
 .dashboard-tv-dashboard .td-deck-ribbon__split{
   display: flex;
   align-items: center;

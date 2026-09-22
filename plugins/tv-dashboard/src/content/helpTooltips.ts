@@ -200,7 +200,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     tableStyles:
       "Presets Claros/Médios/Escuros da tabela. Na faixa: «Alterar estilos» (mesmo painel do pincel flutuante).",
     kpiAppearance:
-      "Presets Claro/Escuro e tons (positivo, negativo, atenção) do card KPI. Na faixa: «Alterar estilos» (mesmo painel do pincel flutuante).",
+      "Tema Claro/Escuro e tom semântico (padrão, positivo, negativo, atenção) do card KPI. Na faixa: «Alterar estilos» (mesmo painel do pincel flutuante).",
     tableStyleOptions:
       "Inclui ou remove elementos da tabela (título, cabeçalho, totais, listras, primeira/última coluna e bordas). Cada item abre Mostrar/Ocultar — igual ao «Adicionar elemento» do gráfico.",
     tableTypography:

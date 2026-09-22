@@ -2,11 +2,18 @@ import type { ComunicadoKpiOptions } from "@delpi/tv-dashboard-presentation";
 import { DECK_KPI_DEFAULTS } from "@delpi/plugin-ui/index";
 
 export type KpiAppearanceRecipe = {
-  id: string;
+  id: "claro" | "escuro";
   label: string;
   patch: Partial<ComunicadoKpiOptions>;
 };
 
+export type KpiToneOption = {
+  id: string;
+  value: NonNullable<ComunicadoKpiOptions["tone"]>;
+  label: string;
+};
+
+/** Tema do card (fundo / contraste) — ortogonal ao tom semântico. */
 export const KPI_APPEARANCE_RECIPES: KpiAppearanceRecipe[] = [
   {
     id: "claro",
@@ -26,36 +33,26 @@ export const KPI_APPEARANCE_RECIPES: KpiAppearanceRecipe[] = [
       tone: "default",
     },
   },
-  {
-    id: "positivo",
-    label: "Positivo",
-    patch: { tone: "positive", valueColor: "auto" },
-  },
-  {
-    id: "negativo",
-    label: "Negativo",
-    patch: { tone: "negative", valueColor: "auto" },
-  },
-  {
-    id: "atencao",
-    label: "Atenção",
-    patch: { tone: "warning", valueColor: "auto" },
-  },
 ];
 
+/** Tom semântico do valor/ícone — independente do tema Claro/Escuro. */
+export const KPI_TONE_OPTIONS: KpiToneOption[] = [
+  { id: "default", value: "default", label: "Padrão" },
+  { id: "positive", value: "positive", label: "Positivo" },
+  { id: "negative", value: "negative", label: "Negativo" },
+  { id: "warning", value: "warning", label: "Atenção" },
+];
+
+/**
+ * Match só por tema (fundo). Tom escolhido depois não desmarca Claro/Escuro.
+ */
 export function isKpiAppearanceRecipeActive(
   recipe: KpiAppearanceRecipe,
   options: ComunicadoKpiOptions,
 ): boolean {
-  const tone = options.tone ?? "default";
-  if (recipe.patch.tone && recipe.patch.tone !== tone) return false;
-  if (
-    recipe.patch.backgroundColor &&
-    (options.backgroundColor ?? DECK_KPI_DEFAULTS.backgroundColor) !== recipe.patch.backgroundColor
-  ) {
-    return false;
-  }
-  return true;
+  const bg = options.backgroundColor ?? DECK_KPI_DEFAULTS.backgroundColor;
+  const expected = recipe.patch.backgroundColor ?? DECK_KPI_DEFAULTS.backgroundColor;
+  return bg === expected;
 }
 
 export function applyKpiAppearanceRecipe(
@@ -63,4 +60,22 @@ export function applyKpiAppearanceRecipe(
   options: ComunicadoKpiOptions,
 ): ComunicadoKpiOptions {
   return { ...options, ...recipe.patch };
+}
+
+export function isKpiToneActive(
+  tone: KpiToneOption,
+  options: ComunicadoKpiOptions,
+): boolean {
+  return (options.tone ?? "default") === tone.value;
+}
+
+export function applyKpiTone(
+  tone: KpiToneOption,
+  options: ComunicadoKpiOptions,
+): ComunicadoKpiOptions {
+  return {
+    ...options,
+    tone: tone.value,
+    valueColor: "auto",
+  };
 }

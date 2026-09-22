@@ -20,9 +20,24 @@ describe("kpi ribbon layout contract", () => {
     expect(section).toContain('label="Alterar estilos"');
     expect(section).toContain("useRibbonSectionPopoverSurface");
     expect(section).not.toContain("td-deck-ribbon__kpi-appearance");
-    /* Menu só dentro do popover / surface colapsada — não como filho direto da band. */
     expect(section).toMatch(
       /DeckRibbonTilePopover[\s\S]*KpiColorsStylesMenu|inSectionPopover[\s\S]*KpiColorsStylesMenu/,
     );
+  });
+
+  it("menu KPI usa thumbs estilo gráfico e não mistura tom em aparência", () => {
+    const menu = readFileSync(join(here, "KpiColorsStylesMenu.tsx"), "utf8");
+    expect(menu).toContain("td-chart-style-menu__style-thumb--kpi-");
+    expect(menu).toContain("td-chart-style-menu__hint");
+    expect(menu).toContain("KPI_TONE_OPTIONS");
+    expect(menu).toContain("KPI_APPEARANCE_RECIPES");
+    const appearanceBlock = menu.slice(
+      menu.indexOf("Estilos de aparência"),
+      menu.indexOf(">Tom</h4>"),
+    );
+    expect(appearanceBlock).toContain("KPI_APPEARANCE_RECIPES");
+    expect(appearanceBlock).toContain("style-thumb--kpi-${recipe.id}");
+    expect(appearanceBlock).not.toContain("KPI_TONE_OPTIONS");
+    expect(appearanceBlock).not.toContain("Positivo");
   });
 });
