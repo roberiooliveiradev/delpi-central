@@ -73,7 +73,7 @@ export function KpiColorsStylesMenu({ options, onApplyOptions, footer }: Props) 
         </div>
       </section>
 
-      {footer}
+      {footer ? <div className="td-chart-style-menu__footer">{footer}</div> : null}
     </div>
   );
 }
