@@ -32,6 +32,9 @@ class StructuredUnderstandingRequest:
     """Bounded source-observation extraction request.
 
     source_text is a TEST FIXTURE / bounded input — not authoritative Domain SoT.
+    Epistemic class is fixed by capability semantics (OBSERVATION), not caller preference.
+    source_refs must be exactly one SourceRef for this slice.
+    evidence_refs are request/result/lineage context only — not per-observation support claims.
     """
 
     understanding_id: StructuredUnderstandingId
@@ -43,12 +46,11 @@ class StructuredUnderstandingRequest:
     output_schema_version: str
     instruction_lineage: InstructionLineage
     timeout_seconds: float
+    source_refs: tuple[SourceRef, ...]
     evidence_refs: tuple[EvidenceRef, ...] = ()
-    source_refs: tuple[SourceRef, ...] = ()
     authority_policy: AuthorityPolicySnapshot = field(default_factory=AuthorityPolicySnapshot)
     untrusted_external_metadata: Mapping[str, Any] = field(default_factory=dict)
     eval_bind: EvalBindRequest | None = None
-    declared_result_epistemic_class: EpistemicClass | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -63,7 +65,6 @@ class StructuredUnderstandingResult:
     model_ref: ModelRef
     lineage: ModelInvocationLineage
     generated_at: str
-    confidence: float | None = None
 
     def is_fact(self) -> bool:
         return False

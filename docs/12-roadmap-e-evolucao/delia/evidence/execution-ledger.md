@@ -9,7 +9,7 @@
 **Internet/External Connectors:** [`../55-internet-research-and-external-connectors.md`](../55-internet-research-and-external-connectors.md)  
 **Microsoft Teams:** [`../56-microsoft-teams-connector-and-meeting-integration.md`](../56-microsoft-teams-connector-and-meeting-integration.md)  
 **Autonomous Operations/Execution Hub:** [`../57-event-driven-autonomous-operations-and-automation-execution-hub.md`](../57-event-driven-autonomous-operations-and-automation-execution-hub.md)  
-**Next:** `ARCHITECTURE_REVIEW_C3_T4` (`C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO`; `C3-T1=APPROVED`; `C3-T2=APPROVED`; `C3-T3=APPROVED`; `C3-T4=CANDIDATE_FOR_ARCHITECTURE_REVIEW`; `C3_T5_AUTHORIZED=NO`). Não iniciar C3-T5; não autoaprovar C3-T4.
+**Next:** `ARCHITECTURE_REVIEW_C3_T4R1` (`C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO`; `C3-T1=APPROVED`; `C3-T2=APPROVED`; `C3-T3=APPROVED`; `C3-T4=CANDIDATE_FOR_ARCHITECTURE_REVIEW`; `C3_T5_AUTHORIZED=NO`). Não iniciar C3-T5; não autoaprovar C3-T4.
 
 ## 1. Ledger rule
 
@@ -26,7 +26,7 @@ Estado factual de inventory usa `PROVEN | TO_INVENTORY`; planejamento usa `PLANN
 | C0 Platform + Architecture + Privacy/Security/Data/Automation/AI Foundations | **NOT_STARTED** | **C1 bootstrap continues (T2 review → next C1 step)** | C0.S0..=C0.S7=APPROVED; FOUNDATION_FREEZE=APPROVED; C1_AUTHORIZED=YES; C1_STARTED=YES |
 | C1 Standalone Bootstrap | ACCEPTED_WITH_RESIDUAL | — | C1-FINAL §6.45 |
 | C2 Portal + Operational Context + Commands | ACCEPTED_WITH_RESIDUAL | — | C2-FINAL §6.61; `C2_EXECUTED=YES` |
-| C3 Intelligence + Capability Foundations | AUTHORIZED / STARTED | ARCHITECTURE_REVIEW_C3_T4 | C3-T1..T3 APPROVED; C3-T4 candidate §6.70; `C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO`; `C3_T5_AUTHORIZED=NO` |
+| C3 Intelligence + Capability Foundations | AUTHORIZED / STARTED | ARCHITECTURE_REVIEW_C3_T4R1 | C3-T1..T3 APPROVED; C3-T4R1 candidate §6.71; `C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO`; `C3_T5_AUTHORIZED=NO` |
 | C4 Governed Reads + Graph/Semantics/Analysis/Predictive Discovery | LOCKED | — | C3 foundations |
 | C5 Governed Writes + Executors + Durable/Recurring Work + Artifacts/Prescriptive Prepare | LOCKED | — | C4 reads/evidence |
 | C6 Product Work + Process Intelligence + Control Tower + Meeting/Frontline + Ecosystem | LOCKED | — | C5 governed-write/durable foundation |
@@ -3497,6 +3497,72 @@ NEW_CP_CREATED: NO
 RUNTIME_CP_PROMOTED_TO_PASS: NO
 
 NEXT: ARCHITECTURE_REVIEW_C3_T4
+```
+
+## 6.71 C3-T4R1 — STRUCTURED_UNDERSTANDING_CONTRACT_REWORK
+
+```text
+DATE: 2026-09-21
+STEP: C3-T4R1
+NAME: STRUCTURED_UNDERSTANDING_CONTRACT_REWORK
+MODE: BOUNDED REWORK — CONTRACT / PROVENANCE
+BASE_HEAD: 379ac45937a777a8e10f7ae419721a8555c0d0c9
+PRIOR_REVIEW: ARCHITECTURE_REVIEW_C3_T4 VERDICT=REWORK
+PRIOR_IMPLEMENTATION_HEAD: 3a96ff1b9cdfb2376b31494ae72bf42be289b90a
+REVIEW_REANCHOR_HEAD: 3ac6058744fe1d8716d25155d0b8dfe9892abade
+POST_REANCHOR: OUTSIDE_TASK (helpdesk H12 + portal TopBars + supplies inventory BFF); delia path empty until this rework
+WORKING_TREE_PRESERVED: helpdesk dirty (excluded)
+EXECUTION_DRIFT: NONE
+
+CORRECTIONS:
+  declared_result_epistemic_class = REMOVED
+  OUTPUT_EPISTEMIC_CLASS = OBSERVATION_BY_CAPABILITY_CONTRACT
+  confidence runtime field = REMOVED / DEFERRED
+  confidence_does_not_establish_fact helper = REMOVED
+  SOURCE_INPUT_CARDINALITY = EXACTLY_ONE
+  OBSERVATION_SOURCE_LINKAGE = inherit exact SourceRef
+  OBSERVATION_EVIDENCE_LINKAGE = NONE (no wholesale EvidenceRef propagation)
+  StructuredObservation.evidence_refs = REMOVED
+  PROVENANCE_OVERCLAIM = RESOLVED
+
+CANONICAL_BASIS:
+  brief preferred default + 21 §4D silent on observation-level EvidenceRef;
+  EvidenceRef remains coordination reference on request/result/lineage
+
+C3_T4: CANDIDATE_FOR_ARCHITECTURE_REVIEW
+C3_T4_SELF_APPROVED: NO
+C3_T5_AUTHORIZED: NO
+C3_STARTED: YES
+C3_EXECUTED: NO
+PRODUCTION_READINESS: NOT_PROVEN
+BLOCKERS: NONE
+
+TARGETED_C3_T4: PASS 30/30
+C3_REGRESSION: PASS 93/93
+FULL_DELIA_API_SUITE: PASS 128/128
+EVALUATED_SHA: <implementation commit>
+NOTE: deterministic conformance only; ≠ real-model quality
+
+CP-055/056: PLANNED / CONTRIBUTION ONLY (unchanged)
+CP-093/094: PLANNED / PARTIAL (unchanged)
+CP-304: LOCKED / LINEAGE FOUNDATION ACCEPTED (unchanged)
+NEW_CP_CREATED: NO
+RUNTIME_CP_PROMOTED_TO_PASS: NO
+
+PERSISTENCE: NONE
+MIGRATION: NONE
+OWN_MIGRATION_CHAIN: NOT_TRIGGERED_BY_C3_T4R1
+REAL_PROVIDER_ADAPTER: NONE
+REAL_MODEL_CALL: BLOCKED_BY_EXTERNAL_CONFIGURATION
+REAL_MODEL_EVAL: TEST_NOT_RUN / BLOCKED
+NEW_RUNTIME_ABSTRACTIONS: NONE
+SPECULATIVE_RUNTIME_ABSTRACTIONS: NONE
+
+HISTORICAL_PRESERVED:
+  §6.70 C3-T4 initial candidate
+  ARCHITECTURE_REVIEW_C3_T4 = REWORK
+
+NEXT: ARCHITECTURE_REVIEW_C3_T4R1
 ```
 
 ## 7. Canonical phase mapping

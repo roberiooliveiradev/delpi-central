@@ -96,7 +96,23 @@ def test_understand_use_case_reuses_invoke_model_and_does_not_fabricate_eval_pas
     assert "InvokeModel" in source
     assert "EvalResult(" not in source
     assert "EvalOutcome.PASS" not in source
-    assert "ModelInvocationPort" not in source or "InvokeModel" in source
+    assert "declared_result_epistemic_class" not in source
+    assert "confidence" not in source
+
+
+def test_no_caller_epistemic_selector_or_confidence_contract():
+    from app.application.structured_understanding.contracts import (
+        StructuredUnderstandingRequest,
+        StructuredUnderstandingResult,
+    )
+    from app.domain.structured_understanding.model import StructuredObservation
+    from dataclasses import fields
+
+    assert "declared_result_epistemic_class" not in {
+        f.name for f in fields(StructuredUnderstandingRequest)
+    }
+    assert "confidence" not in {f.name for f in fields(StructuredUnderstandingResult)}
+    assert "evidence_refs" not in {f.name for f in fields(StructuredObservation)}
 
 
 def test_composition_root_does_not_wire_structured_understanding():

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from app.domain.evidence.model import EpistemicClass, EvidenceRef, SourceRef
+from app.domain.evidence.model import EpistemicClass, SourceRef
 
 
 @dataclass(frozen=True, slots=True)
@@ -40,13 +40,16 @@ class StructuredObservation:
 
     Semantic meaning: the bounded source contains/states/represents `content`
     for `field_key`. Does not establish world truth.
+
+    Provenance: inherits exactly the single bounded SourceRef of the slice.
+    EvidenceRef support is not asserted at observation level (no wholesale
+    request-EvidenceRef propagation).
     """
 
     field_key: str
     content: str
+    source_ref: SourceRef
     epistemic_class: EpistemicClass = EpistemicClass.OBSERVATION
-    evidence_refs: tuple[EvidenceRef, ...] = ()
-    source_refs: tuple[SourceRef, ...] = ()
     limitations: tuple[LimitationNote, ...] = ()
 
     def __post_init__(self) -> None:

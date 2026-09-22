@@ -1201,7 +1201,7 @@ C3_T4_AUTHORIZED = YES
 C3_T4_EXECUTED = NO
 TEST_MODULES = tests/test_model_invocation_foundation.py + tests/test_model_invocation_architecture.py
 PRODUCTION_READINESS = NOT_PROVEN
-NEXT = ARCHITECTURE_REVIEW_C3_T4
+NEXT = ARCHITECTURE_REVIEW_C3_T4R1
 ```
 
 Required deterministic cases (C3-T3) — implemented; Architecture Review accepted (`ARCHITECTURE_REVIEW_C3_T3R1` `ACCEPT_WITH_RESIDUAL`):
@@ -1230,6 +1230,7 @@ Required deterministic cases (C3-T3) — implemented; Architecture Review accept
 
 ```text
 STATUS = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+REWORK = C3-T4R1
 SLICE = BOUNDED_SOURCE_OBSERVATION_EXTRACTION
 OWNER = delia-api/app/domain/structured_understanding/ + application/structured_understanding/
 USE_CASE = UnderstandStructuredInput
@@ -1239,6 +1240,10 @@ REAL_MODEL_STRUCTURED_UNDERSTANDING_QUALITY = TEST_NOT_RUN / BLOCKED
 REAL_MODEL_GROUNDING = TEST_NOT_RUN / BLOCKED
 REAL_MODEL_GENERALIZATION = TEST_NOT_RUN / BLOCKED
 REAL_MODEL_EVAL = TEST_NOT_RUN / BLOCKED
+OUTPUT_EPISTEMIC_CLASS = OBSERVATION_BY_CAPABILITY_CONTRACT
+SOURCE_INPUT_CARDINALITY = EXACTLY_ONE
+PROVENANCE_OVERCLAIM = RESOLVED
+CONFIDENCE_CONTRACT = DEFERRED / REMOVED
 SOURCE_OBSERVATION != WORLD_FACT
 MODEL_OUTPUT_AUTO_FACT = NO
 PERSISTENCE = NONE
@@ -1253,22 +1258,26 @@ C3_EXECUTED = NO
 C3_T5_AUTHORIZED = NO
 TEST_MODULES = tests/test_structured_understanding_foundation.py + tests/test_structured_understanding_architecture.py
 PRODUCTION_READINESS = NOT_PROVEN
-NEXT = ARCHITECTURE_REVIEW_C3_T4
+NEXT = ARCHITECTURE_REVIEW_C3_T4R1
 ```
 
-Required deterministic cases (C3-T4) — implemented; Architecture Review pending:
+Required deterministic cases (C3-T4R1) — implemented; Architecture Review pending:
 
 - positive source-content observation extraction;
 - source OBSERVATION ≠ world FACT;
+- no caller epistemic-class selector;
 - observation/item FACT claim rejected;
 - result-level FACT claim rejected;
-- EvidenceRef/SourceRef/ModelRef/lineage preserved;
+- exactly one SourceRef required (0/N fail closed);
+- observations inherit only that bounded SourceRef;
+- request EvidenceRefs not blindly copied into observations;
+- EvidenceRef/SourceRef/ModelRef/lineage preserved at result level;
 - EvalIdentity may bind without EvalResult/PASS;
+- no confidence runtime field;
 - conflicting observations preserved (no fabricated reconciliation);
 - missing/insufficient evidence ≠ false / ≠ world absence;
 - secret/CoT/tool-call outputs rejected;
-- Recommendation/result does not authorize ACT;
-- confidence does not establish FACT.
+- Recommendation/result does not authorize ACT.
 
 ### Planner/OpenAPI/Expertise
 

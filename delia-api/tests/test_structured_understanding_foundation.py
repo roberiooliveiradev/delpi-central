@@ -1,4 +1,4 @@
-"""C3-T4 Structured Understanding foundation tests.
+"""C3-T4R1 Structured Understanding foundation tests.
 
 Deterministic TEST_ONLY adapter. Not real-model quality evidence.
 """
@@ -13,10 +13,12 @@ from app.application.model_invocation.contracts import EvalBindRequest
 from app.application.model_invocation.invoke_model import InvokeModel
 from app.application.structured_understanding.contracts import (
     StructuredUnderstandingRequest,
+    StructuredUnderstandingResult,
 )
 from app.application.structured_understanding.errors import (
     EPISTEMIC_VIOLATION,
     FORBIDDEN_RESULT_FIELD,
+    INVALID_REQUEST,
     INVALID_STRUCTURED_RESULT,
     UNSUPPORTED_SCHEMA,
     StructuredUnderstandingError,
@@ -34,11 +36,13 @@ from app.domain.model_invocation.model import (
     InstructionLineage,
     ModelInvocationId,
 )
-from app.domain.structured_understanding.model import StructuredUnderstandingId
+from app.domain.structured_understanding.model import (
+    StructuredObservation,
+    StructuredUnderstandingId,
+)
 from app.domain.structured_understanding.rules import (
     SCHEMA_SOURCE_OBSERVATION_V1,
     SCHEMA_VERSION_V1,
-    confidence_does_not_establish_fact,
 )
 from app.infrastructure.model_invocation.deterministic_test_adapter import (
     DeterministicTestAdapter,
@@ -47,6 +51,10 @@ from app.infrastructure.model_invocation.deterministic_test_adapter import (
 
 def _model() -> ModelRef:
     return ModelRef(model_id="delia-test-model", version="0.0-test", owner_ref="delia")
+
+
+def _source() -> SourceRef:
+    return SourceRef(source_id="src-su-1", source_system="fixture")
 
 
 def _request(**overrides) -> StructuredUnderstandingRequest:
@@ -65,7 +73,7 @@ def _request(**overrides) -> StructuredUnderstandingRequest:
         ),
         timeout_seconds=5.0,
         evidence_refs=(EvidenceRef("ev-su-1"),),
-        source_refs=(SourceRef(source_id="src-su-1", source_system="fixture"),),
+        source_refs=(_source(),),
         eval_bind=EvalBindRequest(
             eval_id="c3t4.foundation.positive",
             target_sha="target-sha-su",
@@ -90,13 +98,28 @@ def test_positive_source_observation_extraction():
     obs = result.content.observations[0]
     assert obs.epistemic_class is EpistemicClass.OBSERVATION
     assert obs.is_world_fact() is False
+    assert obs.source_ref == _source()
     assert "source states" in obs.content
     assert result.evidence_refs == (EvidenceRef("ev-su-1"),)
-    assert result.source_refs[0].source_id == "src-su-1"
+    assert result.source_refs == (_source(),)
     assert result.model_ref == _model()
     assert result.lineage.model_ref == _model()
-    assert result.lineage.instruction_lineage.instruction_id == "c3t4.observation"
-    assert result.lineage.configuration_lineage.output_schema_id == SCHEMA_SOURCE_OBSERVATION_V1
+
+
+def test_request_has_no_caller_epistemic_selector():
+    names = {f.name for f in fields(StructuredUnderstandingRequest)}
+    assert "declared_result_epistemic_class" not in names
+
+
+def test_result_has_no_confidence_contract():
+    names = {f.name for f in fields(StructuredUnderstandingResult)}
+    assert "confidence" not in names
+
+
+def test_observation_has_no_evidence_refs_field():
+    names = {f.name for f in fields(StructuredObservation)}
+    assert "evidence_refs" not in names
+    assert "source_ref" in names
 
 
 def test_source_observation_is_not_world_fact():
@@ -105,8 +128,6 @@ def test_source_observation_is_not_world_fact():
     assert obs.epistemic_class is EpistemicClass.OBSERVATION
     assert obs.is_world_fact() is False
     assert result.is_world_fact() is False
-    # Source statement extraction must not be treated as verified world event.
-    assert "Machine X stopped" in obs.content or "source states" in obs.content
 
 
 def test_observation_item_claiming_fact_is_rejected():
@@ -121,13 +142,45 @@ def test_result_level_fact_claim_is_rejected():
     assert exc.value.code == EPISTEMIC_VIOLATION
 
 
-def test_declared_fact_request_is_rejected():
+def test_exactly_one_source_ref_accepted():
+    result = _execute()
+    assert len(result.source_refs) == 1
+    assert result.content.observations[0].source_ref == result.source_refs[0]
+
+
+def test_zero_source_refs_fail_closed():
     with pytest.raises(StructuredUnderstandingError) as exc:
-        _execute(request=_request(declared_result_epistemic_class=EpistemicClass.FACT))
-    assert exc.value.code == EPISTEMIC_VIOLATION
+        _execute(request=_request(source_refs=()))
+    assert exc.value.code == INVALID_REQUEST
+    assert "exactly one SourceRef" in exc.value.message
 
 
-def test_evidence_and_source_refs_preserved():
+def test_multiple_source_refs_fail_closed():
+    other = SourceRef(source_id="src-su-2", source_system="fixture")
+    with pytest.raises(StructuredUnderstandingError) as exc:
+        _execute(request=_request(source_refs=(_source(), other)))
+    assert exc.value.code == INVALID_REQUEST
+    assert "exactly one SourceRef" in exc.value.message
+
+
+def test_evidence_refs_not_blindly_copied_into_observations():
+    refs = (EvidenceRef("ev-a"), EvidenceRef("ev-b"))
+    result = _execute(request=_request(evidence_refs=refs))
+    assert result.evidence_refs == refs
+    assert result.lineage.evidence_refs == refs
+    for obs in result.content.observations:
+        assert not hasattr(obs, "evidence_refs")
+
+
+def test_source_ref_is_not_authority_or_access_grant():
+    result = _execute()
+    src = result.source_refs[0]
+    assert not hasattr(src, "authority_capability")
+    assert result.lineage.grants_source_access() is False
+    assert result.lineage.grants_authorization() is False
+
+
+def test_evidence_and_source_refs_preserved_at_result_lineage():
     result = _execute()
     assert result.evidence_refs[0].evidence_id == "ev-su-1"
     assert result.lineage.evidence_refs[0].evidence_id == "ev-su-1"
@@ -146,6 +199,7 @@ def test_conflicting_observations_preserved():
     result = _execute("su_conflict")
     assert result.content.conflict_present is True
     assert len(result.content.observations) == 2
+    assert all(obs.source_ref == _source() for obs in result.content.observations)
     assert any(note.code == "conflicting_evidence" for note in result.content.limitations)
     assert result.is_fact() is False
 
@@ -191,13 +245,6 @@ def test_tool_calls_do_not_execute():
 def test_recommendation_does_not_authorize_act():
     result = _execute()
     assert result.authorizes_act() is False
-
-
-def test_confidence_does_not_establish_fact():
-    assert confidence_does_not_establish_fact(0.99) is True
-    result = _execute()
-    assert result.confidence is None
-    assert result.is_fact() is False
 
 
 def test_lineage_does_not_grant_authorization():

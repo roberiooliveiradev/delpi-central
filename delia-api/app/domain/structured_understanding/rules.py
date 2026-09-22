@@ -1,4 +1,4 @@
-"""Deterministic Structured Understanding invariants (C3-T4).
+"""Deterministic Structured Understanding invariants (C3-T4 / C3-T4R1).
 
 Reuses Evidence + model-invocation guards. Does not invent FACT from model output.
 """
@@ -8,7 +8,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import Any
 
-from app.domain.evidence.model import EpistemicClass, EvidenceRef, SourceRef
+from app.domain.evidence.model import EpistemicClass, SourceRef
 from app.domain.model_invocation.rules import (
     ModelInvocationDomainError,
     guard_invocation_payload,
@@ -67,8 +67,7 @@ def parse_limitation_notes(raw: Any) -> tuple[LimitationNote, ...]:
 def parse_structured_observations(
     raw_observations: Any,
     *,
-    evidence_refs: tuple[EvidenceRef, ...],
-    source_refs: tuple[SourceRef, ...],
+    bounded_source: SourceRef,
 ) -> tuple[StructuredObservation, ...]:
     if not isinstance(raw_observations, Sequence) or isinstance(raw_observations, (str, bytes)):
         raise StructuredUnderstandingDomainError("observations must be a list")
@@ -105,9 +104,8 @@ def parse_structured_observations(
                 StructuredObservation(
                     field_key=field_key,
                     content=content,
+                    source_ref=bounded_source,
                     epistemic_class=epistemic,
-                    evidence_refs=evidence_refs,
-                    source_refs=source_refs,
                     limitations=limitations,
                 )
             )
@@ -119,8 +117,7 @@ def parse_structured_observations(
 def build_content_from_structured_output(
     structured_output: Mapping[str, Any],
     *,
-    evidence_refs: tuple[EvidenceRef, ...],
-    source_refs: tuple[SourceRef, ...],
+    bounded_source: SourceRef,
 ) -> StructuredUnderstandingContent:
     try:
         guard_invocation_payload(dict(structured_output))
@@ -147,8 +144,7 @@ def build_content_from_structured_output(
 
     observations = parse_structured_observations(
         structured_output.get("observations"),
-        evidence_refs=evidence_refs,
-        source_refs=source_refs,
+        bounded_source=bounded_source,
     )
     limitations = parse_limitation_notes(structured_output.get("limitations"))
     conflict_raw = structured_output.get("conflict_present", False)
@@ -169,9 +165,3 @@ def build_content_from_structured_output(
         limitations=limitations,
         conflict_present=conflict_raw,
     )
-
-
-def confidence_does_not_establish_fact(confidence: float | None) -> bool:
-    """High confidence never promotes epistemic class to FACT."""
-    _ = confidence
-    return True

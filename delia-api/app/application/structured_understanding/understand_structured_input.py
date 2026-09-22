@@ -1,4 +1,4 @@
-"""UnderstandStructuredInput — C3-T4 bounded vertical slice.
+"""UnderstandStructuredInput — C3-T4 / C3-T4R1 bounded vertical slice.
 
 BOUNDED_SOURCE_OBSERVATION_EXTRACTION on top of InvokeModel.
 Not chat, planner, RAG, tool execution, or ACT.
@@ -27,7 +27,6 @@ from app.domain.structured_understanding.rules import (
     SCHEMA_VERSION_V1,
     StructuredUnderstandingDomainError,
     build_content_from_structured_output,
-    confidence_does_not_establish_fact,
     reject_world_fact_promotion,
 )
 
@@ -43,12 +42,7 @@ class UnderstandStructuredInput:
     def execute(
         self, request: StructuredUnderstandingRequest
     ) -> StructuredUnderstandingResult:
-        self._validate_request(request)
-        if request.declared_result_epistemic_class is EpistemicClass.FACT:
-            raise StructuredUnderstandingError(
-                EPISTEMIC_VIOLATION,
-                "declared structured understanding FACT is forbidden",
-            )
+        bounded_source = self._validate_request(request)
 
         invocation_request = ModelInvocationRequest(
             invocation_id=request.invocation_id,
@@ -75,8 +69,7 @@ class UnderstandStructuredInput:
         try:
             content = build_content_from_structured_output(
                 model_result.structured_output,
-                evidence_refs=request.evidence_refs,
-                source_refs=request.source_refs,
+                bounded_source=bounded_source,
             )
         except StructuredUnderstandingDomainError as exc:
             message = str(exc)
@@ -91,16 +84,10 @@ class UnderstandStructuredInput:
             raise StructuredUnderstandingError(code, message) from exc
 
         result_class = EpistemicClass.OBSERVATION
-        if not content.observations:
-            # No observation produced — result remains non-FACT; class stays OBSERVATION
-            # with explicit limitations (missing != false / != world absence).
-            result_class = EpistemicClass.OBSERVATION
         try:
             reject_world_fact_promotion(result_class)
         except StructuredUnderstandingDomainError as exc:
             raise StructuredUnderstandingError(EPISTEMIC_VIOLATION, str(exc)) from exc
-
-        _ = confidence_does_not_establish_fact(None)
 
         return StructuredUnderstandingResult(
             understanding_id=request.understanding_id,
@@ -113,10 +100,9 @@ class UnderstandStructuredInput:
             model_ref=request.model_ref,
             lineage=model_result.lineage,
             generated_at=model_result.generated_at,
-            confidence=None,
         )
 
-    def _validate_request(self, request: StructuredUnderstandingRequest) -> None:
+    def _validate_request(self, request: StructuredUnderstandingRequest):
         if request.output_schema_id != SCHEMA_SOURCE_OBSERVATION_V1:
             raise StructuredUnderstandingError(
                 UNSUPPORTED_SCHEMA,
@@ -138,3 +124,9 @@ class UnderstandStructuredInput:
                 INVALID_REQUEST,
                 "timeout_seconds must be in (0, 30]",
             )
+        if len(request.source_refs) != 1:
+            raise StructuredUnderstandingError(
+                INVALID_REQUEST,
+                "BOUNDED_SOURCE_OBSERVATION_EXTRACTION requires exactly one SourceRef",
+            )
+        return request.source_refs[0]

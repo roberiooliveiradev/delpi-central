@@ -313,11 +313,17 @@ C3-T3 does not persist invocations, does not call a real provider, and does not 
 
 ```text
 STATUS = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+REWORK = C3-T4R1 (contract/provenance)
 SLICE = BOUNDED_SOURCE_OBSERVATION_EXTRACTION
 OWNER = DÉLIA (delia-api domain/application structured_understanding)
 USE_CASE = UnderstandStructuredInput
 REUSES = InvokeModel + ModelInvocationLineage + EpistemicClass + EvidenceRef/SourceRef/ModelRef
 CONTENT = StructuredObservation[] (source-content OBSERVATION only)
+OUTPUT_EPISTEMIC_CLASS = OBSERVATION_BY_CAPABILITY_CONTRACT (no caller selector)
+SOURCE_INPUT_CARDINALITY = EXACTLY_ONE SourceRef
+OBSERVATION_SOURCE_LINKAGE = inherit exact bounded SourceRef
+OBSERVATION_EVIDENCE_LINKAGE = NONE (EvidenceRef stays request/result/lineage only)
+CONFIDENCE_CONTRACT = DEFERRED / REMOVED
 SOURCE_OBSERVATION != WORLD_FACT
 MODEL_OUTPUT_AUTO_FACT = NO
 CLAIM_PROPOSITION_MODEL = DEFERRED
