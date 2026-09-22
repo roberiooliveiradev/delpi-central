@@ -71,6 +71,28 @@ class OpenApiFirstSelectionBridgeService:
         mode_decision: OpenApiPlannerModeDecision | None = None,
     ) -> list[dict[str, Any]]:
         del mode_decision
+        # Defense in depth: block operational REST when the user is authoring SQL.
+        # Owner of the rule is ChatSqlAuthoringGuidanceService; preflight used to
+        # enforce this before F1 OpenAPI-first cutover and must remain wired here.
+        from app.domain.services.chat_sql_authoring_guidance_service import (
+            ChatSqlAuthoringGuidanceService,
+        )
+        from app.domain.services.chat_message_normalization_service import (
+            ChatMessageNormalizationService,
+        )
+        from app.domain.services.operational_route_matcher_service import (
+            OperationalRouteMatcherService,
+        )
+
+        if ChatSqlAuthoringGuidanceService.is_custom_sql_authoring(message):
+            normalized = (
+                ChatMessageNormalizationService.normalize_for_matching(message) or ""
+            )
+            if not OperationalRouteMatcherService.looks_like_system_metadata_question(
+                normalized
+            ):
+                return []
+
         execution_context = self._execution_context(
             workspace_context,
             previous_messages=previous_messages,

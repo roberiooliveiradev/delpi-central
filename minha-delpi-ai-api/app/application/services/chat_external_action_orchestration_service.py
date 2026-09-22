@@ -36,6 +36,27 @@ class ChatExternalActionOrchestrationService:
         if ChatWebSearchIntentService.blocks_external_action_selection(message):
             return []
 
+        # Custom SQL authoring («crie um sql…») must not select operational REST via
+        # OpenAPI retrieval. System-metadata questions still proceed (schema prefetch).
+        from app.domain.services.chat_sql_authoring_guidance_service import (
+            ChatSqlAuthoringGuidanceService,
+        )
+        from app.domain.services.chat_message_normalization_service import (
+            ChatMessageNormalizationService,
+        )
+        from app.domain.services.operational_route_matcher_service import (
+            OperationalRouteMatcherService,
+        )
+
+        if ChatSqlAuthoringGuidanceService.is_custom_sql_authoring(message):
+            normalized = (
+                ChatMessageNormalizationService.normalize_for_matching(message) or ""
+            )
+            if not OperationalRouteMatcherService.looks_like_system_metadata_question(
+                normalized
+            ):
+                return []
+
         from app.domain.services.chat_active_query_session_service import (
             ChatActiveQuerySessionService,
         )

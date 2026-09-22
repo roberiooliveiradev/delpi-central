@@ -561,3 +561,65 @@ def test_plan_revise_message_resolved_overrides_inherited_dates():
     assert planned[0]["parameters"]["start_date"] == "01-08-2026"
     assert planned[0]["parameters"]["end_date"] == "31-08-2026"
     assert planned[0]["parameters"]["branch"] == "01"
+
+
+class _StockReviseSelectionStub:
+    def __init__(self):
+        self.repository = self
+
+    def list_actions(self):
+        return [
+            {
+                "actionId": "api_delpi.products.get_product_stock",
+                "operationId": "get_product_stock",
+                "path": "/products/{code}/stock",
+                "parametersSchema": [
+                    {"name": "code", "in": "path", "required": True},
+                ],
+            }
+        ]
+
+    def _list_allowed_candidates(self, message, *, allowed_action_ids, limit):
+        return [
+            action
+            for action in self.list_actions()
+            if action["actionId"] in set(allowed_action_ids)
+        ]
+
+
+def test_plan_revise_swaps_product_code_and_path():
+    selection = _StockReviseSelectionStub()
+    workspace = {
+        "turnGrounding": {
+            "status": "grounded",
+            "stage": "grounded_revise_query",
+            "followUp": {
+                "decision": "revise_last_query",
+                "continuityMode": "consume_last_action",
+                "slotDelta": {"code": "10080001"},
+            },
+            "excerpt": {"title": "Estoque", "preview": "saldo"},
+        },
+        "workingMemory": {
+            "lastResultExcerpt": {"title": "Estoque", "preview": "saldo", "rowCount": 6},
+            "lastAction": {
+                "actionId": "api_delpi.products.get_product_stock",
+                "name": "get_product_stock",
+                "path": "/products/10080022/stock",
+                "operationId": "get_product_stock",
+                "params": {"code": "10080022"},
+            },
+        },
+    }
+
+    planned = ChatGroundedCapabilityPlanningService.plan_actions(
+        selection,
+        message="e o do 10080001?",
+        allowed_action_ids=["api_delpi.products.get_product_stock"],
+        workspace_context=workspace,
+    )
+
+    assert len(planned) == 1
+    assert planned[0]["parameters"]["code"] == "10080001"
+    assert planned[0]["path"] == "/products/10080001/stock"
+    assert "10080022" not in str(planned[0]["parameters"])

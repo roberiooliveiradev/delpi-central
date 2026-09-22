@@ -73,6 +73,83 @@ class ChatToolContextSelectionService:
             if isinstance(working, dict):
                 memory_snapshot = working
 
+        from app.domain.services.chat_sql_authoring_guidance_service import (
+            ChatSqlAuthoringGuidanceService,
+        )
+
+        # Fail-closed before native/OpenAPI selection: custom SQL authoring is not REST.
+        if ChatSqlAuthoringGuidanceService.is_custom_sql_authoring(message):
+            from app.domain.services.chat_advanced_sql_specialist_service import (
+                ChatAdvancedSqlSpecialistService,
+            )
+            from app.domain.services.chat_advanced_sql_specialist.chat_advanced_sql_specialist_prompt_service import (
+                ChatAdvancedSqlSpecialistPromptService,
+            )
+            from app.domain.services.chat_sql_intent_vocabulary_service import (
+                ChatSqlIntentVocabularyService,
+            )
+
+            native_meta = {"used": False, "providerSupports": False}
+            # Prefer raw_message for authoring extraction; fall back to selection message.
+            authoring_source = str(raw_message or message or "").strip()
+            sql_text = ChatAdvancedSqlSpecialistPromptService._authoring_sql_from_message(
+                authoring_source,
+                [],
+            )
+            if not sql_text:
+                sql_text = ChatAdvancedSqlSpecialistPromptService._authoring_sql_from_message(
+                    message,
+                    [],
+                )
+            authored = ""
+            if sql_text:
+                intro = ChatSqlIntentVocabularyService.text(
+                    "advancedSqlSpecialist",
+                    "authoringHints",
+                    "protheusPhysicalTable",
+                )
+                authored = f"{intro}\n\n```sql\n{sql_text}\n```".strip()
+
+            workspace_for_sql = dict(workspace_context_early or {})
+            skills = dict(workspace_for_sql.get("skills") or {})
+            skills["sqlAuthoring"] = True
+            workspace_for_sql["skills"] = skills
+            previous_ws = getattr(host, "_build_workspace_context", None)
+            host._build_workspace_context = workspace_for_sql
+            try:
+                result_payload = {
+                    "context": "",
+                    "toolCalls": [],
+                    "nativeToolCalling": native_meta,
+                    "skipRag": True,
+                    "currentMessage": authoring_source or raw_message,
+                }
+                if authored:
+                    result_payload["directAnswer"] = authored
+                else:
+                    result_payload["sqlRequiresLlm"] = True
+                    result_payload["skipRag"] = False
+                finalized = host._finalize_tool_context_result(
+                    message=raw_message,
+                    previous_messages=previous_messages,
+                    result=result_payload,
+                )
+            finally:
+                host._build_workspace_context = previous_ws
+
+            if authored and isinstance(finalized, dict):
+                finalized = dict(finalized)
+                finalized["directAnswer"] = authored
+                finalized["skipRag"] = True
+                finalized["toolCalls"] = []
+                finalized.pop("sqlRequiresLlm", None)
+            logger.info(
+                "custom_sql_authoring_early_result has_sql=%s",
+                bool(authored and "```sql" in authored.lower()),
+            )
+            ChatPipelineTimings.mark_current("selection_plan_done")
+            return ToolSelectionOutcome(early_result=finalized)
+
         skip_llm_tool_selection = ChatOperationalIntentFastPathService.should_skip_llm_tool_selection(
             message,
             conversation_context=conversation_context,
@@ -536,6 +613,9 @@ class ChatToolContextSelectionService:
             from app.domain.services.chat_sql_production_query_service import (
                 ChatSqlProductionQueryService,
             )
+            from app.domain.services.chat_sql_authoring_guidance_service import (
+                ChatSqlAuthoringGuidanceService,
+            )
 
             for resolver in (
                 ChatSqlProductionQueryService,
@@ -544,12 +624,22 @@ class ChatToolContextSelectionService:
                 sql_resolution = resolver.resolve(message)
 
                 if sql_resolution and sql_resolution.mode == "authoring":
-                    from app.domain.services.chat_sql_authoring_guidance_service import (
-                        ChatSqlAuthoringGuidanceService,
-                    )
-
                     if ChatSqlAuthoringGuidanceService.is_custom_sql_authoring(message):
-                        break
+                        # Custom authoring: no operational tools; specialist/LLM elaborates SQL.
+                        return ToolSelectionOutcome(
+                            early_result=host._finalize_tool_context_result(
+                                message=raw_message,
+                                previous_messages=previous_messages,
+                                result={
+                                    "context": "",
+                                    "toolCalls": [],
+                                    "nativeToolCalling": native_meta,
+                                    "skipRag": False,
+                                    "sqlRequiresLlm": True,
+                                    "currentMessage": raw_message,
+                                },
+                            ),
+                        )
 
                     return ToolSelectionOutcome(
                         early_result=host._finalize_tool_context_result(
@@ -567,6 +657,43 @@ class ChatToolContextSelectionService:
                             },
                         ),
                     )
+
+            # Custom SQL authoring without inventory/production template: still skip REST
+            # and prefer deterministic authoring SQL when the specialist can synthesize it.
+            if ChatSqlAuthoringGuidanceService.is_custom_sql_authoring(message):
+                from app.domain.services.chat_advanced_sql_specialist_service import (
+                    ChatAdvancedSqlSpecialistService,
+                )
+
+                finalized = host._finalize_tool_context_result(
+                    message=raw_message,
+                    previous_messages=previous_messages,
+                    result={
+                        "context": "",
+                        "toolCalls": [],
+                        "nativeToolCalling": native_meta,
+                        "skipRag": False,
+                        "sqlRequiresLlm": True,
+                        "currentMessage": raw_message,
+                    },
+                )
+                snap = (
+                    finalized.get("sqlAdvanced")
+                    if isinstance(finalized, dict)
+                    and isinstance(finalized.get("sqlAdvanced"), dict)
+                    else None
+                )
+                if snap is not None:
+                    authored = ChatAdvancedSqlSpecialistService.ensure_required_sql_block(
+                        "",
+                        snapshot=snap,
+                    )
+                    if authored and "```sql" in authored.lower():
+                        finalized = dict(finalized)
+                        finalized["directAnswer"] = authored
+                        finalized["skipRag"] = True
+                        finalized.pop("sqlRequiresLlm", None)
+                return ToolSelectionOutcome(early_result=finalized)
 
         if (
             actions_enabled

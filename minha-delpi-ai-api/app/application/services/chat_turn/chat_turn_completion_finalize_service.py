@@ -48,6 +48,21 @@ class ChatTurnCompletionFinalizeService:
             and isinstance(turn.tool_context.get("sqlAdvanced"), dict)
             else None
         )
+        if sql_snapshot is None and isinstance(turn.tool_context, dict):
+            # Recover authoring snapshot when selection set direct SQL but metadata was trimmed.
+            from app.domain.services.chat_sql_intent_service import ChatSqlIntentService
+
+            if ChatSqlIntentService.is_authoring_request(turn.message):
+                sql_snapshot = ChatAdvancedSqlSpecialistService.build_pipeline_snapshot(
+                    message=turn.message,
+                    workspace_context=turn.workspace_context,
+                    previous_messages=turn.previous_messages,
+                    tool_calls=tool_calls if isinstance(tool_calls, list) else None,
+                )
+        if isinstance(sql_snapshot, dict):
+            sql_snapshot = {**sql_snapshot, "message": turn.message}
+            if isinstance(turn.tool_context, dict):
+                turn.tool_context["sqlAdvanced"] = sql_snapshot
         answer = ChatAdvancedSqlSpecialistService.ensure_required_sql_block(
             answer,
             snapshot=sql_snapshot,
@@ -212,6 +227,10 @@ class ChatTurnCompletionFinalizeService:
         effect = str(context.get("responseModeEffect") or "").strip()
         has_tools = bool(tool_calls)
         is_synthesis = ChatOperationalNarrativeSynthesisService.is_llm_synthesis_effect(effect)
+
+        # SQL authoring must keep ```sql``` fences — leak guard is for operational prose.
+        if context.get("sqlRequiresLlm") or isinstance(context.get("sqlAdvanced"), dict):
+            return answer
 
         from app.domain.services.chat_llm_generation_context_service import (
             consume_reasoning_fallback,

@@ -353,7 +353,48 @@ class ChatFollowUpTurnInterpretationService:
                 delta["start_date"] = shifted.start_date
                 delta["end_date"] = shifted.end_date
 
+        # Product code swap («e o do 10080001?») — same family as branch/period slots.
+        code_delta = cls._extract_product_code_slot(message, last_action)
+        if code_delta:
+            delta["code"] = code_delta
+
         return delta
+
+    @classmethod
+    def _extract_product_code_slot(
+        cls,
+        message: str,
+        last_action: dict[str, Any] | None,
+    ) -> str | None:
+        from app.domain.services.chat_analysis_intent_service import (
+            ChatAnalysisIntentService,
+        )
+        from app.domain.services.chat_product_query_intent_service import (
+            ChatProductQueryIntentService,
+        )
+
+        explicit = ChatProductQueryIntentService.extract_product_code(message)
+        if not explicit:
+            return None
+
+        last_code = ""
+        if isinstance(last_action, dict):
+            params = last_action.get("params")
+            if isinstance(params, dict):
+                last_code = str(
+                    params.get("code") or params.get("productCode") or ""
+                ).strip()
+            if not last_code:
+                last_code = str(
+                    ChatAnalysisIntentService.extract_product_code_from_tool_path(
+                        str(last_action.get("path") or "")
+                    )
+                    or ""
+                ).strip()
+
+        if last_code and last_code == explicit:
+            return None
+        return explicit
 
     @classmethod
     def _has_revise_slot_trigger(cls, normalized: str) -> bool:

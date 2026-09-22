@@ -480,3 +480,33 @@ def test_enrich_merges_when_multiple_scopes_requested():
     assert any("/summary" in path for path in paths), paths
     assert any("/stock" in path for path in paths), paths
     assert any("/structure" in path for path in paths), paths
+
+
+def test_custom_sql_authoring_blocks_operational_openapi_plan():
+    """«crie um sql…» must not fan-out to operational REST via OpenAPI retrieval."""
+    repo = _CatalogRepository(
+        [
+            _action(
+                "api_delpi.produ_o_operacional.list_production_machine_program_top_intermediates",
+                "/production/machine-programs/top-intermediates",
+                "list_production_machine_program_top_intermediates",
+                summary="Top intermediários de programa de máquina",
+                description="Lista produtos intermediários mais programados",
+            ),
+            _action(
+                "stock",
+                "/products/{code}/stock",
+                "get_product_stock",
+                summary="Estoque do produto",
+            ),
+        ]
+    )
+    planned = ChatExternalActionOrchestrationService.plan_actions(
+        _Selection(repo),
+        message="crie um SQL que liste os 10 primeiros produtos do grupo 1008",
+        allowed_action_ids=[
+            "api_delpi.produ_o_operacional.list_production_machine_program_top_intermediates",
+            "stock",
+        ],
+    )
+    assert planned == []

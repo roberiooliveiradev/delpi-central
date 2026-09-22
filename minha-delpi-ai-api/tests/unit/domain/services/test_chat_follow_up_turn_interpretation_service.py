@@ -307,3 +307,57 @@ def test_classifier_cannot_revise_after_topic_switch_to_financial():
     )
     assert overridden.decision == "new_intent"
     assert overridden.reason == "topic_switch"
+
+
+def test_revise_product_code_swap_after_stock():
+    """«e o do 10080001?» after stock of another code → revise with code slot."""
+    stock = {
+        "name": "get_product_stock",
+        "path": "/products/10080022/stock",
+        "apiRouteDomain": "product",
+        "params": {"code": "10080022"},
+    }
+    result = ChatFollowUpTurnInterpretationService.interpret(
+        message="e o do 10080001?",
+        last_action=stock,
+        last_result_excerpt={
+            "title": "Estoque",
+            "preview": "saldo 17657",
+            "rowCount": 6,
+        },
+    )
+    assert result.decision == "revise_last_query"
+    assert result.slot_delta.get("code") == "10080001"
+    assert (
+        ChatTurnGroundingService.resolve_grounded_stage(
+            message="e o do 10080001?",
+            excerpt={"title": "Estoque", "preview": "saldo"},
+            last_action=stock,
+        )
+        == "grounded_revise_query"
+    )
+
+
+def test_same_product_code_does_not_emit_code_slot():
+    stock = {
+        "name": "get_product_stock",
+        "path": "/products/10080022/stock",
+        "apiRouteDomain": "product",
+        "params": {"code": "10080022"},
+    }
+    result = ChatFollowUpTurnInterpretationService.interpret(
+        message="estoque do 10080022 de novo",
+        last_action=stock,
+    )
+    assert result.slot_delta.get("code") is None
+
+
+def test_branch_revise_unchanged_when_no_product_code():
+    result = ChatFollowUpTurnInterpretationService.interpret(
+        message="somente da filial 01",
+        last_action=_ROL_ACTION,
+        last_result_excerpt=_EXCERPT,
+    )
+    assert result.decision == "revise_last_query"
+    assert result.slot_delta.get("branch") == "01"
+    assert "code" not in result.slot_delta

@@ -173,7 +173,7 @@ class ChatAdvancedSqlSpecialistPromptService:
     ) -> str:
         text = str(answer or "").strip()
 
-        if not text or "```sql" in text.lower():
+        if "```sql" in text.lower():
             return text
 
         if not sql_specialist_service().requires_llm_response(snapshot):
@@ -195,9 +195,23 @@ class ChatAdvancedSqlSpecialistPromptService:
                 "protheusPhysicalTable",
             )
 
-            return f"{intro}\n\n```sql\n{authored}\n```\n\n{text}".strip() if text else (
-                f"{intro}\n\n```sql\n{authored}\n```"
+            sql_block = f"{intro}\n\n```sql\n{authored}\n```"
+            if not text:
+                return sql_block
+            # Drop LLM safe-fallback / empty synthesis when deterministic SQL exists.
+            from app.domain.services.chat_llm_synthesis_delivery_content_service import (
+                ChatLlmSynthesisDeliveryContentService,
             )
+
+            fallback = str(
+                ChatLlmSynthesisDeliveryContentService.safe_fallback_answer() or ""
+            ).strip()
+            if not text or (fallback and (text == fallback or fallback in text)):
+                return sql_block
+            return f"{sql_block}\n\n{text}".strip()
+
+        if not text:
+            return text
 
         discovery = (
             snapshot.get("schemaDiscovery")

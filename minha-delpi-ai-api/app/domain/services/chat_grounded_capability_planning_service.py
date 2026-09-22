@@ -372,10 +372,29 @@ class ChatGroundedCapabilityPlanningService:
             if value not in (None, "")
         }
         delta = slot_delta if isinstance(slot_delta, dict) else {}
-        for key in ("branch", "start_date", "end_date"):
+        for key in ("branch", "start_date", "end_date", "code"):
             value = delta.get(key)
             if value not in (None, ""):
                 merged[key] = str(value)
+        # Keep productCode alias in sync when the slot swaps the product.
+        code_value = delta.get("code")
+        if code_value not in (None, ""):
+            merged["code"] = str(code_value)
+            if "productCode" in base_params or "product_code" in base_params:
+                merged["productCode"] = str(code_value)
+                if "product_code" in base_params:
+                    merged["product_code"] = str(code_value)
+            old_code = str(
+                base_params.get("code") or base_params.get("productCode") or ""
+            ).strip()
+            path = str(matched.get("path") or "").strip()
+            new_code = str(code_value)
+            if "{code}" in path:
+                path = path.replace("{code}", new_code)
+            elif old_code and old_code != new_code and old_code in path:
+                path = path.replace(old_code, new_code)
+            if path and path != str(matched.get("path") or "").strip():
+                matched = {**matched, "path": path}
 
         # Se o delta só trouxe filial, ainda resolva período explícito da mensagem («deste mês»).
         if delta.get("start_date") in (None, "") or delta.get("end_date") in (None, ""):
@@ -538,8 +557,15 @@ class ChatGroundedCapabilityPlanningService:
             for item in (schema or [])
             if isinstance(item, dict) and item.get("name")
         }
-        # Continuity: só filial/datas. Nunca inventar granularity/limit/period como query.
-        continuity = {"branch", "start_date", "end_date"}
+        # Continuity: filial/datas/código de produto. Nunca inventar granularity/limit/period.
+        continuity = {
+            "branch",
+            "start_date",
+            "end_date",
+            "code",
+            "productCode",
+            "product_code",
+        }
         if schema_names:
             allowed = schema_names | continuity
         else:

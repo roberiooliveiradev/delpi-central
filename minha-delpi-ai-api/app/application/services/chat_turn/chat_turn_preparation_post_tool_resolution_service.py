@@ -228,12 +228,15 @@ class ChatTurnPreparationPostToolResolutionService:
                     previous_messages=history_source,
                 )
                 or ChatSqlIntentService.is_sql_conversation_turn(message)
+                or ChatSqlIntentService.is_authoring_request(message)
+                or isinstance(tool_context.get("sqlAdvanced"), dict)
                 or ChatPresentationFormatRefinementService.looks_like_format_refinement(
                     message,
                 )
             )
         ):
             direct_answer = str(tool_context.get("directAnswer") or "").strip()
+            skip_rag = True
         elif session_memory_direct:
             direct_answer = session_memory_direct
         elif attachment_welcome_direct:
