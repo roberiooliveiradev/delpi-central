@@ -116,6 +116,7 @@ describe("home hub stack", () => {
     const userMenu = readSrc("app/ShellUserPortfolioMenu.tsx");
     assert.match(favorites, /CommercialTopBarFavoritesStrip/);
     assert.doesNotMatch(favorites, /cm-shell-favorites__trigger-label/);
-    assert.match(userMenu, /cm-shell-user__name delpi-ui-topbar-collapse-label/);
+    assert.match(userMenu, /CommercialTopBarUserIdentity/);
+    assert.match(userMenu, /delpi-ui-topbar-collapse-label|TopBarUserIdentity/);
   });
 });

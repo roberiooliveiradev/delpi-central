@@ -37,12 +37,12 @@ describe("ShellUserPortfolioMenu (TopBar)", () => {
   it("avatar na TopBar sempre abre o perfil (zoom só na página de perfil)", () => {
     const menu = readFileSync(join(src, "app/ShellUserPortfolioMenu.tsx"), "utf8");
     assert.match(menu, /navigateUserProfile/);
-    assert.match(menu, /cm-shell-user__profile/);
-    assert.match(menu, /cm-shell-user__portfolio/);
+    assert.match(menu, /CommercialTopBarUserIdentity/);
+    assert.match(menu, /avatarHref/);
+    assert.match(menu, /onAvatarNavigate/);
     assert.match(menu, /goToProfile/);
     assert.match(menu, /userProfilePhotoAbsoluteUrl/);
-    assert.match(menu, /previewable=\{false\}/);
-    assert.match(menu, /onClick=\{goToProfile\}/);
+    assert.match(menu, /menuItems/);
     assert.doesNotMatch(menu, /previewable=\{hasPhoto\}/);
     assert.doesNotMatch(menu, /openProfileFromPreview/);
     assert.doesNotMatch(menu, /cm-shell-user__trigger/);

@@ -22,6 +22,7 @@ import {
   createDashboardTopBarSearchTrigger,
   createDashboardTopBarFavoritesStrip,
   createDashboardTopBarUtilityCluster,
+  createDashboardTopBarUserIdentity,
   createDashboardUserManual,
   createDashboardHubChipRow,
   createDashboardRouteChip,
@@ -204,6 +205,9 @@ export const CommercialTopBarUtilityCluster = createDashboardTopBarUtilityCluste
 export const CommercialTopBarFavoritesStrip = createDashboardTopBarFavoritesStrip({
   prefix: UI_PREFIX,
   portalScopeClassName: CM_PORTAL_SCOPE,
+});
+export const CommercialTopBarUserIdentity = createDashboardTopBarUserIdentity({
+  prefix: UI_PREFIX,
 });
 export const CommercialUserManual = createDashboardUserManual({ prefix: UI_PREFIX });
 export const CommercialTopBar = createDashboardTopBar({ prefix: UI_PREFIX });

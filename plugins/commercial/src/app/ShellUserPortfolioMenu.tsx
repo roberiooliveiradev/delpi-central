@@ -1,8 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  AnchoredPanelPortal,
-  ContextMenuItem,
-} from "@delpi/plugin-ui/index";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { BriefcaseBusiness, ChevronDown } from "lucide-react";
 
 import { httpGetBlob } from "../api/httpClient";
@@ -10,7 +6,7 @@ import {
   getUserProfile,
   userProfilePhotoAbsoluteUrl,
 } from "../api/userProfileApi";
-import { CommercialAvatar } from "./commercialUi";
+import { CommercialTopBarUserIdentity } from "./commercialUi";
 import { navigatePluginView, navigateUserProfile, buildUserProfileHref } from "./pluginNavigation";
 import { currentReturnNav } from "./commercialNavigationReturn";
 import { profileLinkTitle } from "../content/entityLinkHints";
@@ -29,8 +25,8 @@ type ShellUserPortfolioMenuProps = {
 };
 
 /**
- * Slot da TopBar: clique no avatar (com ou sem foto) abre o perfil.
- * Zoom da foto fica só na página de perfil. Nome/chevron abre Minha Carteira.
+ * Adapter Comercial: chrome shared (TopBarUserIdentity) + domínio de carteira.
+ * Avatar → perfil. Nome/chevron → Minha Carteira (0/1/N).
  */
 export function ShellUserPortfolioMenu({
   basePath,
@@ -39,8 +35,6 @@ export function ShellUserPortfolioMenu({
   const { myPortfolios, setSellerIdFilter, currentUserId } = usePortfolioScope();
   const [open, setOpen] = useState(false);
   const [photoObjectUrl, setPhotoObjectUrl] = useState<string | null>(null);
-  const rootRef = useRef<HTMLDivElement>(null);
-  const panelRef = useRef<HTMLDivElement>(null);
   const copy = SHELL_NAV_CONTENT.userMenu;
 
   const mode = useMemo(
@@ -137,106 +131,45 @@ export function ShellUserPortfolioMenu({
         basePath,
         returnNav: currentReturnNav("Portal Comercial"),
       })
-    : null;
+    : undefined;
   const profileTitle = profileLinkTitle(label);
 
-  const avatar = profileHref ? (
-    <CommercialAvatar
-      name={label}
-      size="sm"
-      alt=""
-      src={photoObjectUrl}
-      href={profileHref}
-      title={profileTitle}
-      onNavigate={goToProfile}
-      portalScopeClassName="dashboard-commercial"
-    />
-  ) : (
-    <CommercialAvatar
-      name={label}
-      size="sm"
-      alt=""
-      src={photoObjectUrl}
-      previewable={false}
-      portalScopeClassName="dashboard-commercial"
-    />
-  );
+  const menuItems =
+    mode.kind === "menu"
+      ? mode.portfolios.map((portfolio) => ({
+          id: portfolio.id,
+          label: portfolio.displayName,
+          icon: BriefcaseBusiness,
+          onSelect: () => goToPortfolio(portfolio),
+        }))
+      : undefined;
+
+  const labelEnd =
+    mode.kind === "menu" ? (
+      <ChevronDown size={16} strokeWidth={1.75} aria-hidden="true" />
+    ) : mode.kind === "direct" ? (
+      <BriefcaseBusiness size={16} strokeWidth={1.75} aria-hidden="true" />
+    ) : null;
 
   return (
-    <div
-      ref={rootRef}
-      className={[
-        "cm-shell-user",
-        portfolioInteractive ? null : "cm-shell-user--disabled",
-        open ? "cm-shell-user--open" : null,
-      ]
-        .filter(Boolean)
-        .join(" ")}
-    >
-      {userId && profileHref ? (
-        <span className="cm-shell-user__profile">{avatar}</span>
-      ) : (
-        <span className="cm-shell-user__profile cm-shell-user__profile--static">
-          {avatar}
-        </span>
-      )}
-
-      {portfolioInteractive ? (
-        <button
-          type="button"
-          className="cm-shell-user__portfolio"
-          aria-label={portfolioAriaLabel}
-          aria-haspopup={mode.kind === "menu" ? "menu" : undefined}
-          aria-expanded={mode.kind === "menu" ? open : undefined}
-          onClick={onPortfolioClick}
-        >
-          <span className="cm-shell-user__name delpi-ui-topbar-collapse-label">{label}</span>
-          {mode.kind === "menu" ? (
-            <ChevronDown
-              className="cm-shell-user__chevron"
-              size={16}
-              strokeWidth={1.75}
-              aria-hidden="true"
-            />
-          ) : (
-            <BriefcaseBusiness
-              className="cm-shell-user__portfolio-icon"
-              size={16}
-              strokeWidth={1.75}
-              aria-hidden="true"
-            />
-          )}
-        </button>
-      ) : (
-        <div className="cm-shell-user__portfolio" aria-label={portfolioAriaLabel}>
-          <span className="cm-shell-user__name delpi-ui-topbar-collapse-label">{label}</span>
-        </div>
-      )}
-
-      {mode.kind === "menu" ? (
-        <AnchoredPanelPortal
-          open={open}
-          anchorRef={rootRef}
-          panelRef={panelRef}
-          className="delpi-ui-context-menu"
-          variant="bare"
-          role="menu"
-          aria-label={copy.menuAriaLabel}
-          preferredPlacement="bottom"
-          gap={6}
-          portalScopeClassName="dashboard-commercial"
-          onDismiss={() => setOpen(false)}
-        >
-          {mode.portfolios.map((portfolio) => (
-            <ContextMenuItem
-              key={portfolio.id}
-              label={portfolio.displayName}
-              icon={BriefcaseBusiness}
-              onSelect={() => goToPortfolio(portfolio)}
-            />
-          ))}
-        </AnchoredPanelPortal>
-      ) : null}
-    </div>
+    <CommercialTopBarUserIdentity
+      displayName={displayName}
+      fallbackLabel={copy.nameFallback}
+      avatarUrl={photoObjectUrl}
+      portalScopeClassName="dashboard-commercial"
+      avatarHref={profileHref}
+      onAvatarNavigate={userId ? goToProfile : undefined}
+      avatarTitle={profileTitle}
+      onLabelClick={portfolioInteractive ? onPortfolioClick : undefined}
+      labelAriaLabel={portfolioAriaLabel}
+      labelHasPopup={mode.kind === "menu" ? "menu" : false}
+      labelExpanded={mode.kind === "menu" ? open : undefined}
+      labelDisabled={!portfolioInteractive}
+      labelEnd={labelEnd}
+      menuItems={menuItems}
+      menuAriaLabel={copy.menuAriaLabel}
+      open={mode.kind === "menu" ? open : false}
+      onOpenChange={mode.kind === "menu" ? setOpen : undefined}
+    />
   );
 }
