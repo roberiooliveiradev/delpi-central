@@ -126,7 +126,7 @@
 .delpi-ui-rich-text__editor,
 .delpi-ui-rich-text--preview {
   min-height: 160px;
-  max-height: min(50vh, 28rem);
+  max-height: min(70vh, 40rem);
   overflow-x: auto;
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -524,26 +524,46 @@
   }
 }
 
-/* Inline paste/attach image (parity with MentionComposer dual class). */
+/* Inline paste/attach in RichTextEditor — full size (resize attrs); not chat thumbnails. */
 .delpi-ui-rich-text__inline-image {
   position: relative;
   display: inline-block;
   vertical-align: baseline;
-  max-width: min(100%, 14rem);
-  max-height: 8rem;
-  margin: 0 0.15rem;
+  max-width: none;
+  max-height: none;
+  margin: 0.25rem 0.15rem;
   border-radius: 0.5rem;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .delpi-ui-rich-text__inline-image img {
   display: inline;
   width: auto;
-  max-width: 100%;
+  max-width: none;
   height: auto;
-  max-height: 8rem;
-  object-fit: contain;
+  max-height: none;
   vertical-align: baseline;
+}
+
+/*
+ * Insert uses dual class (mention + rich-text). MentionComposer thumbs stay 8rem;
+ * inside the rich-text editor those limits must not clip enlarge/natural paste.
+ */
+.delpi-ui-rich-text__editor .delpi-ui-mention-composer__inline-image,
+.delpi-ui-rich-text__editor .delpi-ui-rich-text__inline-image {
+  max-width: none;
+  max-height: none;
+  overflow: visible;
+  background: transparent;
+}
+
+.delpi-ui-rich-text__editor .delpi-ui-mention-composer__inline-image img,
+.delpi-ui-rich-text__editor .delpi-ui-rich-text__inline-image img {
+  max-width: none;
+  max-height: none;
+  width: auto;
+  height: auto;
+  object-fit: unset;
 }
 
 .delpi-ui-rich-text__inline-image-remove {
