@@ -90,7 +90,7 @@ O bloco escuro é `:root[data-theme="dark"] .dashboard-helpdesk`. Superfície, t
 | `createDashboardFiltersKit` | `HelpdeskFilterInput` / `HelpdeskFilterSelect` | Regras do construtor de filtros |
 | `createDashboardSegmentToggle` | `HelpdeskSegmentToggle` | Tabela \| Cards |
 | `createDashboardDataCardsGrid` | `HelpdeskDataCardsGrid` | Grade de cards |
-| `createCompactPagination` | `HelpdeskCompactPagination` | Página + Por página (has_more) |
+| `createDashboardPaginationKit` | `HelpdeskListPaginationFooter` | Por página + paginação completa do kit (`HintAction`; has_more) |
 | `createDashboardAttachmentPreviewStrip` | `HelpdeskAttachmentPreviewStrip` | Miniaturas no `belowBody` da abertura |
 | `FilePreviewModal` | — | Prévia + Baixar; blob só na memória |
 | `ActionButton` | — | Autorizar no helpdesk |
@@ -155,7 +155,10 @@ HelpdeskSectionCard  «Meus chamados»  hint = helpTooltips.list
                     Ctrl, Shift, Alt ou clique do meio abrem o href
                     datas absolutas; resolução e fechamento quando o GLPI trouxer
   lista cards    DataCardsGrid + HelpdeskRecordCard (#id · urgência · técnico)
-  CompactPagination  Página N · Por página 10/20/50 · Anterior / Próxima  via has_more; sem total inventado
+  HelpdeskListPaginationFooter  (mesma linha)
+    Por página 10/20/50  (HintAction)
+    setas · números · Ir para · «Exibindo … · Página N de M»  (HintAction no bloco nav)
+    has_more no BFF; total de páginas estimado; sem ícones ? soltos
 ```
 
 Um estado por vez. Lista vazia só aparece com HTTP 200 e `items: []`. Proibido, vínculo e indisponível não podem parecer lista vazia.

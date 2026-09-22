@@ -139,9 +139,9 @@ Uma coluna, kit da Minha DELPI, tokens `--delpi-ui-*`. Sem grade do GLPI e sem v
 /apps/helpdesk
   HelpdeskPageHeader
   HelpdeskSectionCard  «Meus chamados»
-    FiltersRow          busca, status, urgência, categoria, período
-    HelpdeskDataTable   colunas com ordenação no helpdesk
-    paginação Anterior / Próxima via has_more
+    TicketListFilterBuilder   único editor do recorte (AND)
+    HelpdeskDataTable | DataCardsGrid
+    HelpdeskListPaginationFooter   Por página + kit (setas, Ir para, resumo; HintAction)
 
 /apps/helpdesk/tickets/{id}
   Conversa  (já publicada)

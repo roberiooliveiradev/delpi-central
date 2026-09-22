@@ -20,7 +20,7 @@ H9  Página do chamado                      ENTREGUE
 H10 Solução, reabrir, satisfação           CONSOLE  (E10.S1 — sem operação HLAPI do solicitante)
 H11 Condicionais (TTR, observer)           ENTREGUE  Forms e vínculo riscados (H6)
 H12 Upload de arquivo novo                 BLOQUEADO até decisão + API
-H13 Listagem dinâmica (modelo → builder)   ENTREGUE  AND builder + multi-sort + prefs localStorage; OR/export/massa CONSOLE
+H13 Listagem dinâmica (modelo → builder)   ENTREGUE  AND builder + multi-sort + prefs + rodapé kit paginação (G-32e); OR/export/massa CONSOLE
 H14 Menções na conversa (leitura)          ENTREGUE  M-07 chips; M-23 park
 —   Bancada / outro itemtype / HD-011      FORA
 ```
@@ -141,6 +141,18 @@ O GLPI central tem builder de critérios, multi-sort, preferência de colunas e 
 | Export / massa / mapa / saved search | G-56 | — (CONSOLE) |
 
 Ordem: componentes e tipos **já** no MFE; builder e prefs só depois de H7 estável e contrato RSQL ADDITIVE.
+
+**Rodapé da lista (21/09/2026):** `HelpdeskListPaginationFooter` via `createDashboardPaginationKit` do plugin-ui; ajuda em `HintAction` (sem `?` soltos). Evidência: ledger `lista.ux.pagination`.
+
+## Próximo código (sem nova decisão de produto/HLAPI)
+
+Nada obrigatório no MFE/BFF do solicitante. Desbloqueios possíveis:
+
+| Item | Estado | Desbloqueio |
+|---|---|---|
+| M-23 menção `@` na escrita | BLOQUEADO | catálogo HLAPI de usuários/grupos |
+| H12 upload novo anexo | BLOQUEADO | multipart HLAPI + política de storage |
+| H10 aprovar/reabrir/satisfação | CONSOLE | operações HLAPI do solicitante |
 
 ## Dependências
 

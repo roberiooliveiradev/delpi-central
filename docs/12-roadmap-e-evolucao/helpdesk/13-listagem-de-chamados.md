@@ -1,7 +1,7 @@
 # 13 — Listagem de chamados
 
 > **Status:** inventário sincronizado com o código (E7 + H13). Paridade [`16-plano-paridade.md`](./16-plano-paridade.md) **concluída**. Não altera [`06-plano-execucao.md`](./06-plano-execucao.md).
-> **Tela publicada:** [`WIREFRAMES.md`](./WIREFRAMES.md) §1 — tabela com filtros, datas absolutas, `solved_at`/`closed_at`, `requester_display_name`, `q` no conteúdo, `pending`/`approval`, `created_*`, `page_size`, builder AND.
+> **Tela publicada:** [`WIREFRAMES.md`](./WIREFRAMES.md) §1 — tabela/cards, builder AND, rodapé `createDashboardPaginationKit` + `HintAction`, datas absolutas, `solved_at`/`closed_at`, `requester_display_name`, `q` no conteúdo, `pending`/`approval`, `created_*`.
 > **Fotos de 21/09/2026:** MFE `/apps/helpdesk` e GLPI Super-Admin `front/ticket.php` (bancada, não o produto).
 > **Contrato vigente:** [`03-contrato.md`](./03-contrato.md).
 > **Lacunas antigas da lista:** L-01…L-12 em [`11-lacunas-da-experiencia.md`](./11-lacunas-da-experiencia.md) — sincronizadas com este arquivo.
@@ -242,6 +242,7 @@ FORA                  → não entra neste produto
 | G-32b | Voltar do detalhe/abertura restaura o recorte | **IMPLEMENTADO** | `listNavigationMemory` + seta Voltar |
 | G-32c | Filtros só no construtor; page_size na paginação | **IMPLEMENTADO** | sem FiltersRow no topo |
 | G-32d | Toggle Tabela \| Cards (localStorage) | **IMPLEMENTADO** | `usePersistedViewLayout` + DataCardsGrid |
+| G-32e | Rodapé paginação do kit (setas, Ir para, resumo) + ajuda no controle | **IMPLEMENTADO** | `HelpdeskListPaginationFooter`; commits `4ea3ae19d`…`1d999772a` |
 | G-33 | Vazio vs recorte vazio | **IMPLEMENTADO** |
 | G-34 | 403/409 não viram lista vazia | **IMPLEMENTADO** |
 | G-35 | Lixeira fora da lista | **IMPLEMENTADO** |
