@@ -1,5 +1,13 @@
-import { useRef, type ComponentProps, type DragEvent, type ReactNode } from "react";
 import {
+  forwardRef,
+  useImperativeHandle,
+  useRef,
+  type ComponentProps,
+  type DragEvent,
+  type ReactNode,
+} from "react";
+import {
+  ActionButton,
   attachmentPreviewStripBemClasses,
   createDashboardAttachmentPreviewStrip,
   createDashboardDataCardsGrid,
@@ -131,17 +139,25 @@ export type HelpdeskInlineUploadResult =
   | { kind: "uploaded"; documentId: number; src: string; alt?: string }
   | { kind: "pending"; pendingId: string; src: string; alt?: string };
 
+export type HelpdeskRichTextFieldHandle = {
+  openAttachPicker: () => void;
+};
+
 export type HelpdeskRichTextFieldProps = {
   label: string;
   hint?: string;
-  /** Ajuda do botão clipe (anexar). */
+  /** Ajuda do botão clipe (anexar) — só usada se `showAttachButton`. */
   attachHint?: string;
   value: string;
   onChange: (value: string) => void;
   icon?: ReactNode;
   ariaLabel?: string;
   minHeight?: number;
+  /** Occupy remaining flex height in create/reply layouts. */
+  fill?: boolean;
   disabled?: boolean;
+  /** When false (default), host places Anexar next to Enviar via `openAttachPicker`. */
+  showAttachButton?: boolean;
   /** H12 — colar/arrastar imagem ou escolher arquivo. */
   onUploadFiles?: (files: File[]) => Promise<HelpdeskInlineUploadResult[]>;
   onUploadError?: (error: unknown) => void;
@@ -152,26 +168,77 @@ export type HelpdeskRichTextFieldProps = {
   persistAttachmentImageSrc?: (attachmentId: string) => string | null | undefined;
 };
 
-/** Same RichTextEditor for open + reply (M-28). H12 adds paste/attach without MentionComposer. */
-export function HelpdeskRichTextField({
-  label,
+/** CTA Anexar — placed next to Enviar in form actions. */
+export function HelpdeskAttachButton({
   hint,
-  attachHint,
-  value,
-  onChange,
-  icon,
-  ariaLabel,
-  minHeight = 180,
   disabled,
-  onUploadFiles,
-  onUploadError,
-  accept = "image/*,.pdf,.png,.jpg,.jpeg,.gif,.webp,.doc,.docx,.xls,.xlsx,.txt",
-  resolveAttachmentImageSrc,
-  persistAttachmentImageSrc,
-}: HelpdeskRichTextFieldProps) {
+  onClick,
+  className,
+}: {
+  hint?: string;
+  disabled?: boolean;
+  onClick: () => void;
+  className?: string;
+}) {
+  const button = (
+    <ActionButton
+      type="button"
+      variant="ghost"
+      className={className}
+      aria-label="Anexar"
+      disabled={disabled}
+      onClick={onClick}
+    >
+      <Paperclip size={16} aria-hidden />
+      Anexar
+    </ActionButton>
+  );
+  if (!hint) return button;
+  return (
+    <HintAction hint={hint} ariaLabel="Ajuda: Anexar arquivo">
+      {button}
+    </HintAction>
+  );
+}
+
+/** Same RichTextEditor for open + reply (M-28). H12 adds paste/attach without MentionComposer. */
+export const HelpdeskRichTextField = forwardRef<
+  HelpdeskRichTextFieldHandle,
+  HelpdeskRichTextFieldProps
+>(function HelpdeskRichTextField(
+  {
+    label,
+    hint,
+    attachHint,
+    value,
+    onChange,
+    icon,
+    ariaLabel,
+    minHeight = 180,
+    fill = false,
+    disabled,
+    showAttachButton = false,
+    onUploadFiles,
+    onUploadError,
+    accept = "image/*,.pdf,.png,.jpg,.jpeg,.gif,.webp,.doc,.docx,.xls,.xlsx,.txt",
+    resolveAttachmentImageSrc,
+    persistAttachmentImageSrc,
+  },
+  ref,
+) {
   const fileRef = useRef<HTMLInputElement>(null);
   const editorRef = useRef<RichTextEditorHandle>(null);
   const uploadingRef = useRef(false);
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      openAttachPicker: () => {
+        fileRef.current?.click();
+      },
+    }),
+    [],
+  );
 
   /** Host only materializes File → src/attrs; kit inserts at caret (S-P2). */
   const materializeUploads = async (
@@ -228,7 +295,13 @@ export function HelpdeskRichTextField({
 
   return (
     <div
-      className="helpdesk-field helpdesk-rich-text-field"
+      className={[
+        "helpdesk-field",
+        "helpdesk-rich-text-field",
+        fill ? "helpdesk-rich-text-field--fill" : null,
+      ]
+        .filter(Boolean)
+        .join(" ")}
       onDrop={onDrop}
       onDragOver={(event) => {
         if (onUploadFiles && !disabled) event.preventDefault();
@@ -240,6 +313,7 @@ export function HelpdeskRichTextField({
         value={value}
         onChange={onChange}
         disabled={disabled}
+        fill={fill}
         portalScopeClassName="dashboard-helpdesk"
         minHeight={minHeight}
         ariaLabel={ariaLabel ?? label}
@@ -249,45 +323,31 @@ export function HelpdeskRichTextField({
         onPasteImagesError={onUploadError}
       />
       {onUploadFiles ? (
+        <input
+          ref={fileRef}
+          type="file"
+          accept={accept}
+          multiple
+          hidden
+          onChange={(event) => {
+            const files = Array.from(event.target.files || []);
+            event.target.value = "";
+            void ingestViaEditor(files);
+          }}
+        />
+      ) : null}
+      {onUploadFiles && showAttachButton ? (
         <div className="helpdesk-rich-text-field__attach">
-          <input
-            ref={fileRef}
-            type="file"
-            accept={accept}
-            multiple
-            hidden
-            onChange={(event) => {
-              const files = Array.from(event.target.files || []);
-              event.target.value = "";
-              void ingestViaEditor(files);
-            }}
+          <HelpdeskAttachButton
+            hint={attachHint}
+            disabled={disabled}
+            onClick={() => fileRef.current?.click()}
           />
-          {attachHint ? (
-            <HintAction hint={attachHint} ariaLabel="Ajuda: Anexar arquivo">
-              <IconButton
-                type="button"
-                aria-label="Anexar arquivo"
-                disabled={disabled}
-                onClick={() => fileRef.current?.click()}
-              >
-                <Paperclip size={16} aria-hidden />
-              </IconButton>
-            </HintAction>
-          ) : (
-            <IconButton
-              type="button"
-              aria-label="Anexar arquivo"
-              disabled={disabled}
-              onClick={() => fileRef.current?.click()}
-            >
-              <Paperclip size={16} aria-hidden />
-            </IconButton>
-          )}
         </div>
       ) : null}
     </div>
   );
-}
+});
 
 const helpdeskFilters = createDashboardFiltersKit({
   prefix: PREFIX,

@@ -369,6 +369,7 @@ declare module "@delpi/plugin-ui/index" {
     ariaLabel?: string;
     portalScopeClassName?: string;
     minHeight?: number;
+    fill?: boolean;
     resolveAttachmentImageSrc?: (attachmentId: string) => string | null | undefined;
     persistAttachmentImageSrc?: (attachmentId: string) => string | null | undefined;
     onPasteImages?: RichTextPasteImagesHandler;

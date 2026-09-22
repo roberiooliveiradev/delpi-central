@@ -98,6 +98,7 @@ import {
   HelpdeskEmptyState,
   HelpdeskFormActions,
   HelpdeskIconButton,
+  HelpdeskAttachButton,
   HelpdeskListPaginationFooter,
   HelpdeskLoadingState,
   HelpdeskMessageThread,
@@ -112,6 +113,7 @@ import {
   HelpdeskTextField,
   usePersistedViewLayout,
 } from "../ui/helpdeskUi";
+import type { HelpdeskRichTextFieldHandle } from "../ui/helpdeskUi";
 
 const MESSAGES: Record<string, string> = {
   forbidden: "Você não tem permissão para Meus Chamados de TI.",
@@ -543,6 +545,7 @@ function CreateTicketPage() {
   const [pendingHydrated, setPendingHydrated] = useState(0);
   const pendingFilesRef = useRef<Map<string, File>>(new Map());
   const pendingPreviewUrlsRef = useRef<Map<string, string>>(new Map());
+  const createComposerRef = useRef<HelpdeskRichTextFieldHandle>(null);
 
   useEffect(() => {
     return () => {
@@ -750,12 +753,13 @@ function CreateTicketPage() {
                 icon={<Type size={14} aria-hidden />}
               />
               <HelpdeskRichTextField
+                ref={createComposerRef}
                 label="Descrição"
                 hint={helpTooltips.createUi.description}
-                attachHint={helpTooltips.createUi.attach}
                 value={description}
                 onChange={(next) => setDescription(persistHelpdeskAttachmentHtml(next))}
-                minHeight={220}
+                minHeight={180}
+                fill
                 icon={<AlignLeft size={14} aria-hidden />}
                 onUploadFiles={queuePendingFiles}
                 onUploadError={(error) => setErrorText(messageFor(error).text)}
@@ -791,6 +795,12 @@ function CreateTicketPage() {
                 icon={<Users size={14} aria-hidden />}
               />
               <div className="helpdesk-create-layout__aside-actions">
+                <HelpdeskAttachButton
+                  hint={helpTooltips.createUi.attach}
+                  disabled={saving || loading}
+                  className="helpdesk-compose-attach"
+                  onClick={() => createComposerRef.current?.openAttachPicker()}
+                />
                 <HintAction hint={helpTooltips.createUi.send} ariaLabel="Ajuda: Enviar chamado">
                   <ActionButton
                     variant="primary"
@@ -831,6 +841,7 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
   const [pendingHydrated, setPendingHydrated] = useState(0);
   const myPhotoUrl = useMyPersonProfilePhoto();
   const pendingFilesRef = useRef<Map<string, File>>(new Map());
+  const replyComposerRef = useRef<HelpdeskRichTextFieldHandle>(null);
 
   const conversationHtml = useMemo(() => {
     if (!ticket) return "";
@@ -1050,6 +1061,7 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
             />
             {ticket.can_followup !== false && draftFilesReady ? (
             <form
+              className="helpdesk-reply-form"
               onSubmit={(event) => {
                 event.preventDefault();
                 if (saving || !hasVisibleRichText(content)) return;
@@ -1069,12 +1081,13 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
               }}
             >
               <HelpdeskRichTextField
+                ref={replyComposerRef}
                 label="Responder"
                 hint={helpTooltips.detailUi.reply}
-                attachHint={helpTooltips.detailUi.attach}
                 value={content}
                 onChange={(next) => setContent(attachmentPreview.persistHtml(next))}
                 minHeight={120}
+                fill
                 resolveAttachmentImageSrc={resolveReplyAttachmentImageSrc}
                 persistAttachmentImageSrc={attachmentPreview.persistAttachmentImageSrc}
                 onUploadFiles={async (files) => {
@@ -1158,6 +1171,12 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                 onUploadError={(error) => setErrorText(messageFor(error).text)}
               />
               <HelpdeskFormActions align="end">
+                <HelpdeskAttachButton
+                  hint={helpTooltips.detailUi.attach}
+                  disabled={saving}
+                  className="helpdesk-compose-attach"
+                  onClick={() => replyComposerRef.current?.openAttachPicker()}
+                />
                 <HintAction hint={helpTooltips.detailUi.send} ariaLabel="Ajuda: Enviar resposta">
                   <ActionButton
                     variant="primary"

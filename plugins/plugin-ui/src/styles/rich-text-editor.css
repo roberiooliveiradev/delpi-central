@@ -136,6 +136,22 @@
   font-size: 14px;
 }
 
+/* Page composers (helpdesk create/reply): fill remaining flex height. */
+.delpi-ui-rich-text--fill {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+}
+
+.delpi-ui-rich-text--fill .delpi-ui-rich-text__editor,
+.delpi-ui-rich-text--fill .delpi-ui-rich-text--preview,
+.delpi-ui-rich-text--fill .delpi-ui-rich-text__source-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+  height: auto;
+}
+
 .delpi-ui-rich-text__editor:focus {
   outline: 2px solid var(--delpi-ui-accent, #089bdb);
   outline-offset: -2px;

@@ -84,15 +84,19 @@ describe("Helpdesk list UX structural", () => {
     expect(links).toContain("ticket.form.php");
   });
 
-  it("resposta e descrição têm help próprio + attachHint (não reusam o hint longo da seção)", () => {
+  it("resposta e descrição têm help próprio + Anexar ao lado de Enviar", () => {
     const page = read("HelpdeskPage.tsx");
-    expect(page).toContain("attachHint={helpTooltips.createUi.attach}");
+    expect(page).toContain("hint={helpTooltips.createUi.attach}");
     expect(page).toContain("hint={helpTooltips.detailUi.reply}");
-    expect(page).toContain("attachHint={helpTooltips.detailUi.attach}");
+    expect(page).toContain("hint={helpTooltips.detailUi.attach}");
+    expect(page).toContain("HelpdeskAttachButton");
+    expect(page).toContain("openAttachPicker");
     const replyBlock = page.slice(page.indexOf('label="Responder"'));
     expect(replyBlock).not.toContain("hint={helpTooltips.detail}");
+    expect(replyBlock).toContain("HelpdeskAttachButton");
     const ui = read("../ui/helpdeskUi.tsx");
-    expect(ui).toContain("attachHint");
+    expect(ui).toContain("HelpdeskAttachButton");
     expect(ui).toContain('ariaLabel="Ajuda: Anexar arquivo"');
+    expect(ui).toMatch(/Paperclip[\s\S]*Anexar/);
   });
 });

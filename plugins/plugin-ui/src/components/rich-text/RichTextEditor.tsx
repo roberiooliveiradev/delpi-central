@@ -76,6 +76,8 @@ export type RichTextEditorProps = {
   /** Escopo CSS do host para portais (select/cor/modal de link). Ex.: `dashboard-cipa`. */
   portalScopeClassName?: string;
   minHeight?: number;
+  /** Grow to fill a flex parent (composer in page layouts). Drops the default max-height cap. */
+  fill?: boolean;
   /**
    * Display: resolve `data-attachment-id` → blob/authenticated URL (MessageThread contract).
    * Persist value must stay on stable public paths — use `persistAttachmentImageSrc`.
@@ -132,6 +134,7 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
       ariaLabel = "Editor de texto",
       portalScopeClassName,
       minHeight = 200,
+      fill = false,
       resolveAttachmentImageSrc,
       persistAttachmentImageSrc,
       onPasteImages,
@@ -155,8 +158,11 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
   } | null>(null);
   const sourceMode = sourceKind !== "visual";
   const rootClass = useMemo(
-    () => ["delpi-ui-rich-text", className].filter(Boolean).join(" "),
-    [className],
+    () =>
+      ["delpi-ui-rich-text", fill ? "delpi-ui-rich-text--fill" : null, className]
+        .filter(Boolean)
+        .join(" "),
+    [className, fill],
   );
 
   const resolvedHtml = useMemo(() => {
