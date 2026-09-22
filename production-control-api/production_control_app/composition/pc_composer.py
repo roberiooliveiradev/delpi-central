@@ -7,6 +7,10 @@ from production_control_app.application.services.detectors.incomplete_order_sets
     DETECTOR_ID as DETECTOR_INCOMPLETE_ORDER_SETS,
     IncompleteOrderSetsDetector,
 )
+from production_control_app.application.services.detectors.order_set_quantity_mismatches_detector import (
+    DETECTOR_ID as DETECTOR_QUANTITY_MISMATCHES,
+    OrderSetQuantityMismatchesDetector,
+)
 from production_control_app.application.services.delivery_map_drawing_service import (
     DeliveryMapDrawingService,
 )
@@ -116,6 +120,10 @@ def build_problem_detectors(
         DETECTOR_INCOMPLETE_ORDER_SETS: IncompleteOrderSetsDetector(
             resolved,
             settings=detector_entry(DETECTOR_INCOMPLETE_ORDER_SETS) or {},
+        ),
+        DETECTOR_QUANTITY_MISMATCHES: OrderSetQuantityMismatchesDetector(
+            resolved,
+            settings=detector_entry(DETECTOR_QUANTITY_MISMATCHES) or {},
         ),
     }
 

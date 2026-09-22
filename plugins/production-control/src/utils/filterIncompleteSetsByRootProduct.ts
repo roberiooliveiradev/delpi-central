@@ -1,4 +1,4 @@
-import type { IncompleteOrderSetItem } from "../types";
+import type { ProblemDetectorItem } from "../types";
 
 /** Normaliza código/texto para comparação (maiúsculas, sem espaços laterais). */
 export function normalizeRootProductQuery(query: string): string {
@@ -10,7 +10,7 @@ export function normalizeRootProductQuery(query: string): string {
  * Query vazia = todos os itens.
  */
 export function matchesRootProductQuery(
-  item: Pick<IncompleteOrderSetItem, "root_code" | "root_description">,
+  item: Pick<ProblemDetectorItem, "root_code" | "root_description">,
   query: string,
 ): boolean {
   const needle = normalizeRootProductQuery(query);
@@ -24,10 +24,10 @@ export function matchesRootProductQuery(
   return code.includes(needle) || description.includes(needle);
 }
 
-export function filterIncompleteSetsByRootProduct(
-  items: readonly IncompleteOrderSetItem[],
+export function filterIncompleteSetsByRootProduct<T extends ProblemDetectorItem>(
+  items: readonly T[],
   query: string,
-): IncompleteOrderSetItem[] {
+): T[] {
   const needle = normalizeRootProductQuery(query);
   if (!needle) return [...items];
   return items.filter((item) => matchesRootProductQuery(item, needle));

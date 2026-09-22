@@ -37,6 +37,7 @@ def test_router_exposes_the_incomplete_route() -> None:
     paths = {route.path for route in router.routes if hasattr(route, "path")}
     assert router.prefix == "/production/production-order-sets"
     assert "/production/production-order-sets/incomplete" in paths
+    assert "/production/production-order-sets/quantity-mismatches" in paths
 
 
 @patch(
@@ -85,6 +86,58 @@ def test_incomplete_returns_paged_list_envelope(
     assert payload["meta"]["entity"] == "production_order_sets_incomplete"
     assert payload["meta"]["shape"] == "paged_list"
     assert payload["data"]["items"][0]["set_key"] == "24719201"
+
+
+@patch(
+    "app.interface.http.routes.production.production_order_sets_router"
+    ".build_get_production_order_sets_quantity_mismatches_use_case"
+)
+def test_quantity_mismatches_returns_paged_list_envelope(
+    mock_builder, order_sets_client: TestClient
+) -> None:
+    use_case = MagicMock()
+    use_case.execute.return_value = {
+        "items": [
+            {
+                "branch": "01",
+                "set_number": "247192",
+                "set_item": "01",
+                "set_key": "24719201",
+                "root_quantity": 2.0,
+                "under_count": 1,
+                "over_count": 0,
+            }
+        ],
+        "page": 1,
+        "page_size": 50,
+        "total": 1,
+        "total_pages": 1,
+        "pagination": {
+            "page": 1,
+            "page_size": 50,
+            "total": 1,
+            "total_pages": 1,
+            "is_complete": True,
+        },
+        "filters": {"branch": "01", "issued_from": None},
+        "summary": {"checked_set_count": 491, "mismatch_set_count": 1},
+    }
+    mock_builder.return_value = use_case
+
+    response = order_sets_client.get(
+        "/production/production-order-sets/quantity-mismatches",
+        params={"branch": "01"},
+    )
+
+    assert response.status_code == 200
+    payload = _body(response)
+    assert (
+        payload["meta"]["operationId"]
+        == "get_production_order_sets_quantity_mismatches"
+    )
+    assert payload["meta"]["entity"] == "production_order_sets_quantity_mismatches"
+    assert payload["meta"]["shape"] == "paged_list"
+    assert payload["data"]["items"][0]["root_quantity"] == 2.0
 
 
 def test_invalid_branch_is_rejected_by_the_query_pattern(
@@ -225,3 +278,83 @@ def test_mapper_keeps_sets_apart_by_item_within_the_same_number() -> None:
     items = ProductionOrderSetMapper.map_sets(rows)
 
     assert [item["set_key"] for item in items] == ["10000001", "10000002"]
+
+
+def test_quantity_mapper_groups_under_and_over_components() -> None:
+    rows = [
+        {
+            "branch": "01",
+            "set_number": "247192",
+            "set_item": "01",
+            "root_code": "90263364",
+            "root_description": "CABO",
+            "root_type": "PA",
+            "root_order_key": "24719201001",
+            "root_quantity": 2.0,
+            "due_date": "2026-08-24",
+            "reference_date": "20260812",
+            "order_count": 3,
+            "open_order_count": 3,
+            "under_count": 1,
+            "over_count": 1,
+            "component_code": "50090002",
+            "component_description": "SEPARADOR",
+            "component_type": "PI",
+            "bom_level": 2,
+            "component_order_key": "24719201003",
+            "expected_quantity": 4.0,
+            "actual_quantity": 2.0,
+            "delta_quantity": -2.0,
+            "is_under": 1,
+            "is_over": 0,
+        },
+        {
+            "branch": "01",
+            "set_number": "247192",
+            "set_item": "01",
+            "root_code": "90263364",
+            "root_description": "CABO",
+            "root_type": "PA",
+            "root_order_key": "24719201001",
+            "root_quantity": 2.0,
+            "due_date": "2026-08-24",
+            "reference_date": "20260812",
+            "order_count": 3,
+            "open_order_count": 3,
+            "under_count": 1,
+            "over_count": 1,
+            "component_code": "50319902",
+            "component_description": "CHICOTE",
+            "component_type": "PI",
+            "bom_level": 1,
+            "component_order_key": "24719201004",
+            "expected_quantity": 2.0,
+            "actual_quantity": 3.0,
+            "delta_quantity": 1.0,
+            "is_under": 0,
+            "is_over": 1,
+        },
+    ]
+
+    items = ProductionOrderSetMapper.map_quantity_mismatch_sets(rows)
+
+    assert len(items) == 1
+    item = items[0]
+    assert item["set_key"] == "24719201"
+    assert item["root_quantity"] == 2.0
+    assert item["under_components"][0]["expected_quantity"] == 4.0
+    assert item["under_components"][0]["actual_quantity"] == 2.0
+    assert item["over_components"][0]["delta_quantity"] == 1.0
+    assert ProductionOrderSetMapper.map_quantity_mismatch_summary(
+        {
+            "checked_set_count": 10,
+            "mismatch_set_count": 2,
+            "under_set_count": 1,
+            "over_set_count": 1,
+        }
+    ) == {
+        "checked_set_count": 10,
+        "mismatch_set_count": 2,
+        "under_set_count": 1,
+        "over_set_count": 1,
+    }

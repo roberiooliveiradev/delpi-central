@@ -316,3 +316,295 @@ def build_incomplete_sets_query(
         ORDER BY PG.set_rank ASC, D.is_missing DESC, D.component_code ASC;
     """
     return query, (*params, offset, offset + page_size)
+
+
+def build_quantity_mismatch_preamble(
+    *,
+    branch: str | None = None,
+    issued_from: str | None = None,
+) -> tuple[str, list]:
+    """Batch que materializa ``#SET_ROOT``, ``#BOM`` e ``#QTY_DIFF``.
+
+    Mesmo universo do incomplete; o diff é por **quantidade** (INNER JOIN):
+    esperado = ``C2_QUANT`` da mãe × ``G1_QUANT`` acumulada; criado =
+    ``SUM(C2_QUANT)`` das filhas do mesmo código. Comparação em ``DECIMAL``
+    estrito — qualquer diferença entra no detector.
+    """
+    branch_sql, branch_params = _branch_filter_sql(branch)
+    params: list = [*branch_params]
+
+    issued_filter = ""
+    if issued_from:
+        issued_filter = (
+            "\n           AND MIN(CASE WHEN OP.C2_SEQUEN = "
+            f"'{MOTHER_ORDER_SEQUENCE}' THEN OP.C2_EMISSAO END) >= ?"
+        )
+        params.append(issued_from)
+    params.append(MAX_BOM_DEPTH)
+
+    anchor_validity = ProductBomValidityFilterService.validity_filter_sql(
+        alias="G1", reference_param="R.reference_date"
+    )
+    recursive_validity = ProductBomValidityFilterService.validity_filter_sql(
+        alias="C", reference_param="B.reference_date"
+    )
+
+    sql = f"""
+        SET NOCOUNT ON;
+        DROP TABLE IF EXISTS #SET_ROOT;
+        DROP TABLE IF EXISTS #BOM;
+        DROP TABLE IF EXISTS #QTY_DIFF;
+        DROP TABLE IF EXISTS #PER_SET;
+
+        SELECT
+            OP.C2_FILIAL AS branch,
+            OP.C2_NUM AS set_number,
+            OP.C2_ITEM AS set_item,
+            MIN(CASE WHEN OP.C2_SEQUEN = '{MOTHER_ORDER_SEQUENCE}'
+                     THEN OP.C2_PRODUTO END) AS root_code,
+            MIN(CASE WHEN OP.C2_SEQUEN = '{MOTHER_ORDER_SEQUENCE}'
+                     THEN OP.C2_OP END) AS root_order_key,
+            MIN(CASE WHEN OP.C2_SEQUEN = '{MOTHER_ORDER_SEQUENCE}'
+                     THEN OP.C2_EMISSAO END) AS reference_date,
+            MIN(CASE WHEN OP.C2_SEQUEN = '{MOTHER_ORDER_SEQUENCE}'
+                     THEN OP.C2_DATPRF END) AS root_due_date,
+            CAST(MIN(CASE WHEN OP.C2_SEQUEN = '{MOTHER_ORDER_SEQUENCE}'
+                          THEN OP.C2_QUANT END) AS DECIMAL(18, 6)) AS root_quantity,
+            COUNT(*) AS order_count,
+            SUM(CASE WHEN OP.C2_QUANT > OP.C2_QUJE
+                          AND {sc2_finish_date_empty_sql("OP")}
+                     THEN 1 ELSE 0 END) AS open_order_count
+        INTO #SET_ROOT
+        FROM {PRODUCTION_ORDER_TABLE} OP WITH (NOLOCK)
+        JOIN (
+            SELECT C2_FILIAL, C2_NUM, C2_ITEM
+            FROM {PRODUCTION_ORDER_TABLE} WITH (NOLOCK)
+            WHERE D_E_L_E_T_ = ''
+              AND C2_QUANT > C2_QUJE
+              AND {sc2_finish_date_empty_sql("")}
+              AND {branch_sql}
+            GROUP BY C2_FILIAL, C2_NUM, C2_ITEM
+        ) S
+            ON S.C2_FILIAL = OP.C2_FILIAL
+           AND S.C2_NUM = OP.C2_NUM
+           AND S.C2_ITEM = OP.C2_ITEM
+        WHERE OP.D_E_L_E_T_ = ''
+        GROUP BY OP.C2_FILIAL, OP.C2_NUM, OP.C2_ITEM
+        HAVING MIN(CASE WHEN OP.C2_SEQUEN = '{MOTHER_ORDER_SEQUENCE}'
+                        THEN OP.C2_PRODUTO END) IS NOT NULL{issued_filter};
+
+        CREATE CLUSTERED INDEX IX_SET_ROOT ON #SET_ROOT (branch, set_number, set_item);
+
+        WITH ROOT_REFS AS (
+            SELECT DISTINCT root_code, reference_date FROM #SET_ROOT
+        ), BOM_RAW AS (
+            SELECT
+                R.root_code,
+                R.reference_date,
+                G1.G1_COMP AS component_code,
+                1 AS bom_level,
+                CAST(G1.G1_QUANT AS DECIMAL(18, 6)) AS accumulated_qty
+            FROM ROOT_REFS R
+            JOIN {PRODUCT_STRUCTURE_TABLE} G1 WITH (NOLOCK)
+                ON G1.G1_COD = R.root_code
+               AND G1.D_E_L_E_T_ = ''{anchor_validity}
+            UNION ALL
+            SELECT
+                B.root_code,
+                B.reference_date,
+                C.G1_COMP,
+                B.bom_level + 1,
+                CAST(
+                    B.accumulated_qty * CAST(C.G1_QUANT AS DECIMAL(18, 6))
+                    AS DECIMAL(18, 6)
+                )
+            FROM BOM_RAW B
+            JOIN {PRODUCT_STRUCTURE_TABLE} C WITH (NOLOCK)
+                ON C.G1_COD = B.component_code
+               AND C.D_E_L_E_T_ = ''{recursive_validity}
+            WHERE B.bom_level < ?
+        )
+        SELECT
+            root_code,
+            reference_date,
+            component_code,
+            MIN(bom_level) AS bom_level,
+            SUM(accumulated_qty) AS accumulated_qty
+        INTO #BOM
+        FROM BOM_RAW
+        GROUP BY root_code, reference_date, component_code;
+
+        CREATE CLUSTERED INDEX IX_BOM ON #BOM (root_code, reference_date);
+
+        SELECT
+            E.branch,
+            E.set_number,
+            E.set_item,
+            E.component_code,
+            E.bom_level,
+            A.order_key,
+            E.expected_qty,
+            A.actual_qty,
+            CAST(A.actual_qty - E.expected_qty AS DECIMAL(18, 6)) AS delta_qty,
+            CASE WHEN A.actual_qty < E.expected_qty THEN 1 ELSE 0 END AS is_under,
+            CASE WHEN A.actual_qty > E.expected_qty THEN 1 ELSE 0 END AS is_over
+        INTO #QTY_DIFF
+        FROM (
+            SELECT
+                SR.branch,
+                SR.set_number,
+                SR.set_item,
+                B.component_code,
+                MIN(B.bom_level) AS bom_level,
+                CAST(
+                    SR.root_quantity * SUM(B.accumulated_qty) AS DECIMAL(18, 6)
+                ) AS expected_qty
+            FROM #SET_ROOT SR
+            JOIN #BOM B
+                ON B.root_code = SR.root_code
+               AND B.reference_date = SR.reference_date
+            JOIN {PRODUCT_TABLE} P WITH (NOLOCK)
+                ON P.B1_COD = B.component_code
+               AND P.D_E_L_E_T_ = ''
+               AND P.B1_TIPO IN ({_ORDER_BEARING_TYPES_SQL})
+            WHERE B.component_code <> SR.root_code
+            GROUP BY
+                SR.branch, SR.set_number, SR.set_item, SR.root_quantity,
+                B.component_code
+        ) E
+        INNER JOIN (
+            SELECT
+                OP.C2_FILIAL AS branch,
+                OP.C2_NUM AS set_number,
+                OP.C2_ITEM AS set_item,
+                OP.C2_PRODUTO AS component_code,
+                MIN(OP.C2_OP) AS order_key,
+                CAST(SUM(OP.C2_QUANT) AS DECIMAL(18, 6)) AS actual_qty
+            FROM #SET_ROOT SR
+            JOIN {PRODUCTION_ORDER_TABLE} OP WITH (NOLOCK)
+                ON OP.C2_FILIAL = SR.branch
+               AND OP.C2_NUM = SR.set_number
+               AND OP.C2_ITEM = SR.set_item
+               AND OP.D_E_L_E_T_ = ''
+               AND OP.C2_SEQUEN <> '{MOTHER_ORDER_SEQUENCE}'
+            GROUP BY OP.C2_FILIAL, OP.C2_NUM, OP.C2_ITEM, OP.C2_PRODUTO
+        ) A
+            ON A.branch = E.branch
+           AND A.set_number = E.set_number
+           AND A.set_item = E.set_item
+           AND A.component_code = E.component_code
+        WHERE A.actual_qty <> E.expected_qty;
+
+        CREATE CLUSTERED INDEX IX_QTY_DIFF ON #QTY_DIFF (branch, set_number, set_item);
+
+        SELECT
+            SR.branch, SR.set_number, SR.set_item,
+            SR.root_code, SR.root_order_key, SR.reference_date, SR.root_due_date,
+            SR.root_quantity, SR.order_count, SR.open_order_count,
+            SUM(CASE WHEN D.is_under = 1 THEN 1 ELSE 0 END) AS under_count,
+            SUM(CASE WHEN D.is_over = 1 THEN 1 ELSE 0 END) AS over_count
+        INTO #PER_SET
+        FROM #SET_ROOT SR
+        LEFT JOIN #QTY_DIFF D
+            ON D.branch = SR.branch
+           AND D.set_number = SR.set_number
+           AND D.set_item = SR.set_item
+        GROUP BY
+            SR.branch, SR.set_number, SR.set_item,
+            SR.root_code, SR.root_order_key, SR.reference_date, SR.root_due_date,
+            SR.root_quantity, SR.order_count, SR.open_order_count;
+    """
+    return sql, params
+
+
+def build_quantity_mismatch_sets_summary_query(
+    *,
+    branch: str | None = None,
+    issued_from: str | None = None,
+) -> tuple[str, tuple]:
+    """Contagem do universo e dos conjuntos com quantidade divergente."""
+    preamble, params = build_quantity_mismatch_preamble(
+        branch=branch, issued_from=issued_from
+    )
+    query = f"""
+        {preamble}
+
+        SELECT
+            COUNT(*) AS checked_set_count,
+            SUM(CASE WHEN under_count > 0 OR over_count > 0 THEN 1 ELSE 0 END)
+                AS mismatch_set_count,
+            SUM(CASE WHEN under_count > 0 THEN 1 ELSE 0 END) AS under_set_count,
+            SUM(CASE WHEN over_count > 0 THEN 1 ELSE 0 END) AS over_set_count
+        FROM #PER_SET;
+    """
+    return query, tuple(params)
+
+
+def build_quantity_mismatch_sets_query(
+    *,
+    offset: int,
+    page_size: int,
+    branch: str | None = None,
+    issued_from: str | None = None,
+) -> tuple[str, tuple]:
+    """Uma linha por (conjunto, componente com qtd divergente) da página."""
+    preamble, params = build_quantity_mismatch_preamble(
+        branch=branch, issued_from=issued_from
+    )
+    query = f"""
+        {preamble}
+
+        WITH MISMATCHED AS (
+            SELECT
+                SR.*,
+                {_DUE_DATE_EXPR} AS due_date
+            FROM #PER_SET SR
+            LEFT JOIN {PRODUCTION_ORDERS_VIEW} V WITH (NOLOCK)
+                ON V.FILIAL = SR.branch
+               AND V.OP_CHAVE = SR.root_order_key
+            WHERE SR.under_count > 0 OR SR.over_count > 0
+        ), PAGE AS (
+            SELECT *, ROW_NUMBER() OVER (ORDER BY {_PAGE_ORDER_BY}) AS set_rank
+            FROM MISMATCHED
+        )
+        SELECT
+            LTRIM(RTRIM(PG.branch)) AS branch,
+            LTRIM(RTRIM(PG.set_number)) AS set_number,
+            LTRIM(RTRIM(PG.set_item)) AS set_item,
+            LTRIM(RTRIM(PG.root_code)) AS root_code,
+            LTRIM(RTRIM(ISNULL(RP.B1_DESC, ''))) AS root_description,
+            LTRIM(RTRIM(ISNULL(RP.B1_TIPO, ''))) AS root_type,
+            LTRIM(RTRIM(PG.root_order_key)) AS root_order_key,
+            PG.root_quantity AS root_quantity,
+            PG.due_date AS due_date,
+            PG.reference_date AS reference_date,
+            PG.order_count AS order_count,
+            PG.open_order_count AS open_order_count,
+            PG.under_count AS under_count,
+            PG.over_count AS over_count,
+            LTRIM(RTRIM(ISNULL(D.component_code, ''))) AS component_code,
+            LTRIM(RTRIM(ISNULL(CP.B1_DESC, ''))) AS component_description,
+            LTRIM(RTRIM(ISNULL(CP.B1_TIPO, ''))) AS component_type,
+            ISNULL(D.bom_level, 0) AS bom_level,
+            LTRIM(RTRIM(ISNULL(D.order_key, ''))) AS component_order_key,
+            D.expected_qty AS expected_quantity,
+            D.actual_qty AS actual_quantity,
+            D.delta_qty AS delta_quantity,
+            ISNULL(D.is_under, 0) AS is_under,
+            ISNULL(D.is_over, 0) AS is_over,
+            PG.set_rank AS set_rank
+        FROM PAGE PG
+        LEFT JOIN {PRODUCT_TABLE} RP WITH (NOLOCK)
+            ON RP.B1_COD = PG.root_code
+           AND RP.D_E_L_E_T_ = ''
+        LEFT JOIN #QTY_DIFF D
+            ON D.branch = PG.branch
+           AND D.set_number = PG.set_number
+           AND D.set_item = PG.set_item
+        LEFT JOIN {PRODUCT_TABLE} CP WITH (NOLOCK)
+            ON CP.B1_COD = D.component_code
+           AND CP.D_E_L_E_T_ = ''
+        WHERE PG.set_rank > ? AND PG.set_rank <= ?
+        ORDER BY PG.set_rank ASC, D.is_under DESC, D.component_code ASC;
+    """
+    return query, (*params, offset, offset + page_size)

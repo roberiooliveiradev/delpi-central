@@ -22,6 +22,11 @@ Sonda no TOTVS Delpi (ago/2026), filial 01, conjuntos com saldo em aberto:
   época e continua correto depois de uma troca de engenharia. Medindo a filial
   01, comparar contra hoje acusava 147 conjuntos com falta *e* sobra ao mesmo
   tempo (assinatura clássica de troca de versão); pela emissão sobram 3.
+- Quantidade esperada do intermediário =
+  ``C2_QUANT`` da mãe × soma da ``G1_QUANT`` acumulada na explosão multinível.
+  O detector de quantidade compara com ``C2_QUANT`` da OP filha em
+  ``DECIMAL`` estrito (sem tolerância); falta/sobra de *existência* fica no
+  detector de conjunto incompleto.
 
 O join com a SG1/SB1 é feito em ``CHAR`` nativo, sem ``RTRIM`` — recortar a
 coluna indexada derruba o índice e a consulta passa de ~2 s para timeout.

@@ -8197,6 +8197,23 @@
         }
       }
     },
+    "get_production_order_sets_quantity_mismatches": {
+      "category": "production",
+      "locale": {
+        "en": {
+          "summary": "Production order sets with intermediate quantity mismatches",
+          "description": "Production order sets whose child intermediate quantities differ from the bill of materials requirement for the mother order quantity, listing under and over components.",
+          "whenToUse": "Use when the set has the right products but the wrong intermediate quantities relative to the finished-good order.",
+          "label": "Order set quantity mismatches"
+        },
+        "pt-BR": {
+          "summary": "Conjuntos de OP com quantidade de intermediário divergente",
+          "description": "Conjuntos de OP cujas quantidades das ordens filhas de intermediários divergem da necessidade da estrutura para a quantidade da OP mãe, com abaixo e acima.",
+          "whenToUse": "Usar quando o conjunto tem os produtos certos, mas as quantidades dos intermediários não batem com a OP do produto acabado.",
+          "label": "Quantidades incorretas no conjunto"
+        }
+      }
+    },
     "get_production_pcp_orders_ranking": {
       "category": "production",
       "locale": {

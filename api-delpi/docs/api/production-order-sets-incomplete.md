@@ -32,7 +32,7 @@ flowchart TD
 | Estrutura | Explodida multinível a partir do raiz, comparação por código distinto |
 | Componentes que devem ter OP | `B1_TIPO IN ('PI','PA')`, excluindo o próprio raiz; `MP` nunca entra |
 | Vigência da estrutura | Lida na **emissão da OP mãe** (`C2_EMISSAO`), via `ProductBomValidityFilterService` |
-| Quantidade | Não validada — só a existência do produto no conjunto |
+| Quantidade | Não validada — só a existência do produto no conjunto. Ver [quantity-mismatches](./production-order-sets-quantity-mismatches.md) |
 | Conjunto sem OP mãe viva | Fora do universo (sem raiz não há estrutura esperada) |
 | Severidade | **Não** é decidida aqui — a api-delpi devolve o diff bruto; a regra é do consumidor |
 

@@ -41,3 +41,29 @@ class ProductionOrderSetsResponseAssembler:
                 },
             },
         )
+
+    @staticmethod
+    def to_quantity_mismatch_sets(
+        rows: list[dict[str, Any]],
+        *,
+        summary_row: dict[str, Any] | None,
+        request: IncompleteOrderSetsRequest,
+    ) -> dict[str, Any]:
+        items = ProductionOrderSetMapper.map_quantity_mismatch_sets(rows)
+        summary = ProductionOrderSetMapper.map_quantity_mismatch_summary(summary_row)
+        branch = request.branch
+        return build_paged_list_envelope(
+            page=request.page,
+            page_size=request.page_size,
+            total=summary["mismatch_set_count"],
+            items=items,
+            extra={
+                "filters": request.filters_dict(),
+                "summary": {
+                    **summary,
+                    "branch": branch,
+                    "branch_filter_applied": branch is not None,
+                    "consolidated_across_branches": branch is None,
+                },
+            },
+        )

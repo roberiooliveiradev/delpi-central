@@ -68,6 +68,12 @@ export type OrderSetComponent = {
   production_order?: string | null;
 };
 
+export type QuantityMismatchComponent = OrderSetComponent & {
+  expected_quantity: number;
+  actual_quantity: number;
+  delta_quantity: number;
+};
+
 /** Conjunto (C2_NUM + C2_ITEM) cujas OPs não batem com a estrutura do produto raiz. */
 export type IncompleteOrderSetItem = {
   id: string;
@@ -92,11 +98,36 @@ export type IncompleteOrderSetItem = {
   extra_components: OrderSetComponent[];
 };
 
+/** Conjunto com quantidade de intermediário diferente da estrutura × OP mãe. */
+export type QuantityMismatchOrderSetItem = {
+  id: string;
+  kind: string;
+  severity: IssueSeverity;
+  branch: string | null;
+  set_key: string | null;
+  set_number: string | null;
+  set_item: string | null;
+  root_code: string | null;
+  root_description: string | null;
+  root_order: string | null;
+  root_quantity: number;
+  due_date: string | null;
+  issued_at: string | null;
+  order_count: number;
+  open_order_count: number;
+  under_count: number;
+  over_count: number;
+  under_components: QuantityMismatchComponent[];
+  over_components: QuantityMismatchComponent[];
+};
+
+export type ProblemDetectorItem = IncompleteOrderSetItem | QuantityMismatchOrderSetItem;
+
 export type ProblemDetectorItemsPayload = {
   branch: string;
   detector: ProblemDetector;
   summary: Record<string, number | string | null>;
-  items: IncompleteOrderSetItem[];
+  items: ProblemDetectorItem[];
   pagination: {
     page: number;
     page_size: number;

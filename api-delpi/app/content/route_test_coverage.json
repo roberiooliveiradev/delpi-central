@@ -1,9 +1,9 @@
 {
   "version": 1,
   "generatedAt": "2026-09-21",
-  "baselineOperationCount": 704,
-  "operationCount": 704,
-  "coveredCount": 629,
+  "baselineOperationCount": 715,
+  "operationCount": 715,
+  "coveredCount": 640,
   "gapCount": 74,
   "exemptCount": 1,
   "byModule": {
@@ -14,8 +14,8 @@
       "exempt": 0
     },
     "commercial": {
-      "total": 25,
-      "covered": 25,
+      "total": 27,
+      "covered": 27,
       "gap": 0,
       "exempt": 0
     },
@@ -61,6 +61,12 @@
       "gap": 0,
       "exempt": 0
     },
+    "gpt-actions": {
+      "total": 2,
+      "covered": 2,
+      "gap": 0,
+      "exempt": 0
+    },
     "guias-procedimentos": {
       "total": 29,
       "covered": 29,
@@ -86,8 +92,8 @@
       "exempt": 0
     },
     "inspecoes-processo": {
-      "total": 8,
-      "covered": 8,
+      "total": 9,
+      "covered": 9,
       "gap": 0,
       "exempt": 0
     },
@@ -128,8 +134,8 @@
       "exempt": 0
     },
     "production": {
-      "total": 50,
-      "covered": 50,
+      "total": 52,
+      "covered": 52,
       "gap": 0,
       "exempt": 0
     },
@@ -200,8 +206,8 @@
       "exempt": 0
     },
     "supplies": {
-      "total": 30,
-      "covered": 28,
+      "total": 34,
+      "covered": 32,
       "gap": 2,
       "exempt": 0
     },
@@ -238,6 +244,24 @@
       "module": "commercial",
       "entity": "sales_conversion_rate_series",
       "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_commercial_customer_center_assignments",
+      "method": "GET",
+      "path": "/commercial/customer-center-assignments",
+      "module": "commercial",
+      "entity": "commercial_customer_center_assignment",
+      "shape": "list",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_commercial_customer_centers",
+      "method": "GET",
+      "path": "/commercial/customer-centers",
+      "module": "commercial",
+      "entity": "commercial_customer_center",
+      "shape": "list",
       "status": "covered"
     },
     {
@@ -1564,6 +1588,24 @@
       "status": "covered"
     },
     {
+      "operationId": "gpt_get_catalog",
+      "method": "GET",
+      "path": "/gpt-actions/v1/catalog",
+      "module": "gpt-actions",
+      "entity": "gpt_actions_catalog",
+      "shape": "composite_analysis",
+      "status": "covered"
+    },
+    {
+      "operationId": "gpt_search_products",
+      "method": "GET",
+      "path": "/gpt-actions/v1/products/search",
+      "module": "gpt-actions",
+      "entity": "gpt_product_search",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
       "operationId": "update_guias_procedimentos_admin_attachment",
       "method": "PUT",
       "path": "/guias-procedimentos/admin/attachments/{attachment_id}",
@@ -1958,6 +2000,15 @@
       "module": "inspecoes-processo",
       "entity": "inspecoes_processo_historico_detalhe",
       "shape": "object",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_inspecoes_processo_operation_inspections",
+      "method": "GET",
+      "path": "/inspecoes-processo/operations/inspections",
+      "module": "inspecoes-processo",
+      "entity": "inspecoes_processo_operation_inspections",
+      "shape": "playbook_report",
       "status": "covered"
     },
     {
@@ -3707,6 +3758,15 @@
       "status": "covered"
     },
     {
+      "operationId": "list_production_order_operation_materials",
+      "method": "GET",
+      "path": "/production/orders/{production_order}/operations/{operation}/materials",
+      "module": "production",
+      "entity": "production_order_operation_materials",
+      "shape": "playbook_report",
+      "status": "covered"
+    },
+    {
       "operationId": "get_production_otd",
       "method": "GET",
       "path": "/production/otd",
@@ -3775,6 +3835,15 @@
       "path": "/production/production-order-sets/incomplete",
       "module": "production",
       "entity": "production_order_sets_incomplete",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_production_order_sets_quantity_mismatches",
+      "method": "GET",
+      "path": "/production/production-order-sets/quantity-mismatches",
+      "module": "production",
+      "entity": "production_order_sets_quantity_mismatches",
       "shape": "paged_list",
       "status": "covered"
     },
@@ -6173,12 +6242,48 @@
       "status": "covered"
     },
     {
+      "operationId": "list_supplies_purchase_orders",
+      "method": "GET",
+      "path": "/supplies/purchase-orders",
+      "module": "supplies",
+      "entity": "supplies_purchase_order_line",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "export_supplies_purchase_orders",
+      "method": "GET",
+      "path": "/supplies/purchase-orders/export",
+      "module": "supplies",
+      "entity": "supplies_purchase_order_line_export",
+      "shape": "document_export",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_supplies_purchase_order",
+      "method": "GET",
+      "path": "/supplies/purchase-orders/{branch}/{order_number}",
+      "module": "supplies",
+      "entity": "supplies_purchase_order",
+      "shape": "product_snapshot",
+      "status": "covered"
+    },
+    {
       "operationId": "list_supplies_purchase_request_lines",
       "method": "GET",
       "path": "/supplies/purchase-requests/lines",
       "module": "supplies",
       "entity": "supplies_purchase_request_line",
       "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "export_supplies_purchase_request_lines",
+      "method": "GET",
+      "path": "/supplies/purchase-requests/lines/export",
+      "module": "supplies",
+      "entity": "supplies_purchase_request_line_export",
+      "shape": "document_export",
       "status": "covered"
     },
     {

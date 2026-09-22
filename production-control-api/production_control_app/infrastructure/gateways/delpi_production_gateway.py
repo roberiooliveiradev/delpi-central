@@ -247,6 +247,25 @@ class DelpiProductionGateway:
             },
         )
 
+    def fetch_production_order_sets_quantity_mismatches(
+        self,
+        *,
+        branch: str,
+        issued_from: str | None,
+        page: int,
+        page_size: int,
+    ) -> dict[str, Any]:
+        return self._request(
+            "GET",
+            "/production/production-order-sets/quantity-mismatches",
+            params={
+                "branch": branch,
+                "issued_from": issued_from,
+                "page": page,
+                "page_size": page_size,
+            },
+        )
+
     def fetch_production_appointments_series(
         self,
         *,

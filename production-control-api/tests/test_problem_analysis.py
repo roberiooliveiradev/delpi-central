@@ -12,6 +12,10 @@ from production_control_app.application.services.detectors.incomplete_order_sets
     DETECTOR_ID,
     IncompleteOrderSetsDetector,
 )
+from production_control_app.application.services.detectors.order_set_quantity_mismatches_detector import (
+    DETECTOR_ID as QTY_DETECTOR_ID,
+    OrderSetQuantityMismatchesDetector,
+)
 from production_control_app.application.services.problem_analysis_service import (
     ProblemAnalysisService,
 )
@@ -74,6 +78,8 @@ class FakeSetsGateway:
         items: list[dict[str, Any]] | None = None,
         summary: dict[str, Any] | None = None,
         *,
+        quantity_items: list[dict[str, Any]] | None = None,
+        quantity_summary: dict[str, Any] | None = None,
         error: Exception | None = None,
     ) -> None:
         self.items = items or []
@@ -82,6 +88,13 @@ class FakeSetsGateway:
             "incomplete_set_count": len(self.items),
             "missing_set_count": len(self.items),
             "extra_set_count": 0,
+        }
+        self.quantity_items = quantity_items or []
+        self.quantity_summary = quantity_summary or {
+            "checked_set_count": 500,
+            "mismatch_set_count": len(self.quantity_items),
+            "under_set_count": len(self.quantity_items),
+            "over_set_count": 0,
         }
         self.error = error
         self.calls: list[dict[str, Any]] = []
@@ -96,6 +109,7 @@ class FakeSetsGateway:
     ) -> dict[str, Any]:
         self.calls.append(
             {
+                "kind": "incomplete",
                 "branch": branch,
                 "issued_from": issued_from,
                 "page": page,
@@ -116,6 +130,72 @@ class FakeSetsGateway:
                 },
             },
         }
+
+    def fetch_production_order_sets_quantity_mismatches(
+        self,
+        *,
+        branch: str,
+        issued_from: str | None,
+        page: int,
+        page_size: int,
+    ) -> dict[str, Any]:
+        self.calls.append(
+            {
+                "kind": "quantity",
+                "branch": branch,
+                "issued_from": issued_from,
+                "page": page,
+                "page_size": page_size,
+            }
+        )
+        if self.error is not None:
+            raise self.error
+        return {
+            "success": True,
+            "data": {
+                "items": self.quantity_items,
+                "summary": self.quantity_summary,
+                "pagination": {
+                    "page": page,
+                    "page_size": page_size,
+                    "total": self.quantity_summary["mismatch_set_count"],
+                },
+            },
+        }
+
+
+def _qty_row(**overrides: Any) -> dict[str, Any]:
+    row = {
+        "branch": "01",
+        "set_number": "247192",
+        "set_item": "01",
+        "set_key": "24719201",
+        "root_code": "90263364",
+        "root_description": "CABO",
+        "root_order": "24719201001",
+        "root_quantity": 2.0,
+        "due_date": "2026-08-24",
+        "issued_at": "2026-08-12",
+        "order_count": 3,
+        "open_order_count": 3,
+        "under_count": 1,
+        "over_count": 0,
+        "under_components": [
+            {
+                "product_code": "50090002",
+                "description": "SEPARADOR",
+                "product_type": "PI",
+                "bom_level": 2,
+                "production_order": "24719201003",
+                "expected_quantity": 4.0,
+                "actual_quantity": 2.0,
+                "delta_quantity": -2.0,
+            }
+        ],
+        "over_components": [],
+    }
+    row.update(overrides)
+    return row
 
 
 def _service(gateway: FakeSetsGateway, **detector_kwargs: Any) -> ProblemAnalysisService:
@@ -157,10 +237,14 @@ def test_map_delayed_order_severity_from_days() -> None:
 def test_catalog_declares_incomplete_order_sets_detector() -> None:
     ids = [entry["id"] for entry in detector_catalog()]
     assert DETECTOR_ID in ids
+    assert QTY_DETECTOR_ID in ids
     entry = detector_entry(DETECTOR_ID)
     assert entry is not None
     assert entry["title"]
     assert entry["description"]
+    qty_entry = detector_entry(QTY_DETECTOR_ID)
+    assert qty_entry is not None
+    assert qty_entry["title"] == "Quantidades incorretas"
 
 
 def test_cards_come_from_catalog_and_detector_summary() -> None:
@@ -335,6 +419,60 @@ def test_routes_expose_cards_and_detector_items(monkeypatch: pytest.MonkeyPatch)
 
     assert client.get("/problem-analysis/nao-existe", params={"branch": "01"}).status_code == 404
     assert client.get("/problem-analysis", params={"branch": "99"}).status_code == 422
+
+
+def test_quantity_mismatch_detector_maps_under_and_over() -> None:
+    over_row = _qty_row(
+        under_count=0,
+        over_count=1,
+        under_components=[],
+        over_components=[
+            {
+                "product_code": "50319902",
+                "description": "CHICOTE",
+                "product_type": "PI",
+                "bom_level": 1,
+                "production_order": "24719201004",
+                "expected_quantity": 2.0,
+                "actual_quantity": 3.0,
+                "delta_quantity": 1.0,
+            }
+        ],
+    )
+    gateway = FakeSetsGateway(quantity_items=[_qty_row(), over_row])
+    settings = detector_entry(QTY_DETECTOR_ID) or {}
+    detector = OrderSetQuantityMismatchesDetector(gateway, settings=settings)
+    service = ProblemAnalysisService({QTY_DETECTOR_ID: detector})
+    payload = service.detector_items(
+        _user(*FULL_PERMS), branch="01", detector_id=QTY_DETECTOR_ID
+    )
+    under_item, over_item = payload["items"]
+    assert under_item["id"] == f"{QTY_DETECTOR_ID}:01|24719201"
+    assert under_item["severity"] == "critical"
+    assert under_item["under_count"] == 1
+    assert under_item["under_components"][0]["expected_quantity"] == 4.0
+    assert over_item["severity"] == "attention"
+    assert over_item["over_count"] == 1
+
+    cards = service.list_detectors(_user(*FULL_PERMS), branch="01")
+    assert cards["detectors"][0]["metrics"]["under_set_count"] == 2
+
+
+def test_routes_expose_quantity_mismatch_detector(monkeypatch: pytest.MonkeyPatch) -> None:
+    gateway = FakeSetsGateway(quantity_items=[_qty_row()])
+    client = _client(gateway, monkeypatch)
+
+    cards = client.get("/problem-analysis", params={"branch": "01"})
+    assert cards.status_code == 200
+    ids = [item["id"] for item in cards.json()["data"]["detectors"]]
+    assert DETECTOR_ID in ids
+    assert QTY_DETECTOR_ID in ids
+
+    items = client.get(f"/problem-analysis/{QTY_DETECTOR_ID}", params={"branch": "01"})
+    assert items.status_code == 200
+    payload = items.json()["data"]
+    assert payload["items"][0]["set_key"] == "24719201"
+    assert payload["items"][0]["root_quantity"] == 2.0
 
 
 def test_branch_gate_rejects_other_filial() -> None:

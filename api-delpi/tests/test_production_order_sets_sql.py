@@ -104,3 +104,57 @@ def test_temp_tables_are_dropped_before_reuse() -> None:
 
     for table in ("#SET_ROOT", "#BOM", "#DIFF", "#PER_SET"):
         assert f"DROP TABLE IF EXISTS {table};" in query
+
+
+def test_quantity_mismatch_summary_uses_decimal_and_strict_inequality() -> None:
+    query, params = sql.build_quantity_mismatch_sets_summary_query(branch="01")
+
+    assert "G1_QUANT" in query
+    assert "DECIMAL(18, 6)" in query
+    assert "A.actual_qty <> E.expected_qty" in query
+    assert "INNER JOIN" in query
+    assert "#QTY_DIFF" in query
+    assert "mismatch_set_count" in query
+    assert "under_set_count" in query
+    assert "over_set_count" in query
+    assert params == ("01", MAX_BOM_DEPTH)
+
+
+def test_quantity_mismatch_expected_qty_multiplies_mother_by_accumulated_bom() -> None:
+    query, _ = sql.build_quantity_mismatch_sets_summary_query(branch="01")
+
+    assert "SR.root_quantity * SUM(B.accumulated_qty)" in query
+    assert "CAST(G1.G1_QUANT AS DECIMAL(18, 6)) AS accumulated_qty" in query
+    assert "B.accumulated_qty * CAST(C.G1_QUANT AS DECIMAL(18, 6))" in query
+
+
+def test_quantity_mismatch_page_exposes_expected_actual_delta() -> None:
+    query, params = sql.build_quantity_mismatch_sets_query(
+        offset=0, page_size=50, branch="02", issued_from="20250101"
+    )
+
+    assert "expected_quantity" in query
+    assert "actual_quantity" in query
+    assert "delta_quantity" in query
+    assert "is_under" in query
+    assert "is_over" in query
+    assert "WHERE SR.under_count > 0 OR SR.over_count > 0" in query
+    assert params == ("02", "20250101", MAX_BOM_DEPTH, 0, 50)
+
+
+def test_quantity_mismatch_temp_tables_are_dropped() -> None:
+    query, _ = sql.build_quantity_mismatch_sets_query(
+        offset=0, page_size=10, branch="01"
+    )
+
+    for table in ("#SET_ROOT", "#BOM", "#QTY_DIFF", "#PER_SET"):
+        assert f"DROP TABLE IF EXISTS {table};" in query
+    assert "#DIFF" not in query or "DROP TABLE IF EXISTS #DIFF" not in query
+
+
+def test_quantity_mismatch_excludes_raw_material_and_root() -> None:
+    query, _ = sql.build_quantity_mismatch_sets_summary_query(branch="01")
+
+    assert "P.B1_TIPO IN ('PI', 'PA')" in query
+    assert "B.component_code <> SR.root_code" in query
+    assert "OP.C2_SEQUEN <> '001'" in query

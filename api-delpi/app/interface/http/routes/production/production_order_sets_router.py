@@ -17,6 +17,7 @@ from app.application.dto.production.production_order_sets_request import (
 from app.application.security.api_delpi_permissions import KPI_PRODUCTION_ACCESS
 from app.composition.production_order_sets_composer import (
     build_get_production_order_sets_incomplete_use_case,
+    build_get_production_order_sets_quantity_mismatches_use_case,
 )
 from app.core.exceptions import DatabaseConnectionError
 from app.core.responses import error_response
@@ -52,6 +53,25 @@ _INCOMPLETE_SET_FIELDS = {
     "extra_count": {"label": "Sobrando", "type": "integer"},
     "missing_components": {"label": "Componentes faltando", "type": "array"},
     "extra_components": {"label": "Componentes sobrando", "type": "array"},
+}
+
+_QUANTITY_MISMATCH_FIELDS = {
+    "set_key": {"label": "Conjunto", "type": "string"},
+    "set_number": {"label": "Número", "type": "string"},
+    "set_item": {"label": "Item", "type": "string"},
+    "root_code": {"label": "Produto raiz", "type": "string"},
+    "root_description": {"label": "Descrição do produto raiz", "type": "string"},
+    "root_type": {"label": "Tipo do produto raiz", "type": "string"},
+    "root_order": {"label": "OP mãe", "type": "string"},
+    "root_quantity": {"label": "Quantidade da OP mãe", "type": "number"},
+    "due_date": {"label": "Entrega", "type": "string", "format": "date"},
+    "issued_at": {"label": "Emissão", "type": "string", "format": "date"},
+    "order_count": {"label": "OPs do conjunto", "type": "integer"},
+    "open_order_count": {"label": "OPs em aberto", "type": "integer"},
+    "under_count": {"label": "Abaixo do esperado", "type": "integer"},
+    "over_count": {"label": "Acima do esperado", "type": "integer"},
+    "under_components": {"label": "Intermediários abaixo", "type": "array"},
+    "over_components": {"label": "Intermediários acima", "type": "array"},
 }
 
 
@@ -105,3 +125,45 @@ def get_production_order_sets_incomplete(
         )
     except Exception as exc:
         return _handle_errors("buscar conjuntos de OP incompletos", exc)
+
+
+@router.get(
+    "/quantity-mismatches",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "get_production_order_sets_quantity_mismatches",
+        path="/production/production-order-sets/quantity-mismatches",
+    ),
+)
+@require_any_permission(KPI_PRODUCTION_ACCESS)
+def get_production_order_sets_quantity_mismatches(
+    branch: str | None = BRANCH_QUERY_OPTIONAL(),
+    issued_from: Optional[str] = Query(
+        default=None,
+        description=(
+            "Earliest mother order issue date (C2_EMISSAO, YYYY-MM-DD). "
+            "Without it the check spans every open set, including decades-old ones."
+        ),
+    ),
+    page: int = Query(default=1, ge=1, description="Page number (1-based)."),
+    page_size: int = PAGE_SIZE_QUERY("page_50_200", description="Page size."),
+):
+    try:
+        request = IncompleteOrderSetsRequest.from_params(
+            branch=branch,
+            issued_from=issued_from,
+            page=page,
+            page_size=page_size,
+        )
+        result = build_get_production_order_sets_quantity_mismatches_use_case().execute(
+            request
+        )
+        return api_delpi_success(
+            result,
+            operation_id="get_production_order_sets_quantity_mismatches",
+            message="Conjuntos de OP com quantidade divergente buscados com sucesso.",
+            fields=_QUANTITY_MISMATCH_FIELDS,
+        )
+    except Exception as exc:
+        return _handle_errors(
+            "buscar conjuntos de OP com quantidade divergente", exc
+        )

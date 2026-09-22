@@ -1,8 +1,8 @@
 {
   "version": 1,
   "baselineVersion": "3",
-  "operationCount": 704,
-  "stableCount": 702,
+  "operationCount": 715,
+  "stableCount": 713,
   "autoCount": 2,
   "recommendationCollisions": [],
   "autoByTag": {
@@ -28,6 +28,20 @@
       "operationId": "get_sales_conversion_rate_series",
       "method": "GET",
       "path": "/commercial/closing-rate/series",
+      "tag": "Comercial",
+      "stable": true
+    },
+    {
+      "operationId": "list_commercial_customer_center_assignments",
+      "method": "GET",
+      "path": "/commercial/customer-center-assignments",
+      "tag": "Comercial",
+      "stable": true
+    },
+    {
+      "operationId": "list_commercial_customer_centers",
+      "method": "GET",
+      "path": "/commercial/customer-centers",
       "tag": "Comercial",
       "stable": true
     },
@@ -1061,6 +1075,20 @@
       "stable": true
     },
     {
+      "operationId": "gpt_get_catalog",
+      "method": "GET",
+      "path": "/gpt-actions/v1/catalog",
+      "tag": "API DELPI GPT Actions (legacy)",
+      "stable": true
+    },
+    {
+      "operationId": "gpt_search_products",
+      "method": "GET",
+      "path": "/gpt-actions/v1/products/search",
+      "tag": "API DELPI GPT Actions (legacy)",
+      "stable": true
+    },
+    {
       "operationId": "update_guias_procedimentos_admin_attachment",
       "method": "PUT",
       "path": "/guias-procedimentos/admin/attachments/{attachment_id}",
@@ -1365,6 +1393,13 @@
       "operationId": "get_inspecoes_processo_historico_detalhe",
       "method": "GET",
       "path": "/inspecoes-processo/historico/detalhe",
+      "tag": "Inspeções de Processo",
+      "stable": true
+    },
+    {
+      "operationId": "list_inspecoes_processo_operation_inspections",
+      "method": "GET",
+      "path": "/inspecoes-processo/operations/inspections",
       "tag": "Inspeções de Processo",
       "stable": true
     },
@@ -2727,6 +2762,13 @@
       "stable": true
     },
     {
+      "operationId": "list_production_order_operation_materials",
+      "method": "GET",
+      "path": "/production/orders/{production_order}/operations/{operation}/materials",
+      "tag": "Produção operacional",
+      "stable": true
+    },
+    {
       "operationId": "get_production_otd",
       "method": "GET",
       "path": "/production/otd",
@@ -2779,6 +2821,13 @@
       "operationId": "get_production_order_sets_incomplete",
       "method": "GET",
       "path": "/production/production-order-sets/incomplete",
+      "tag": "Produção — Conjuntos de OP",
+      "stable": true
+    },
+    {
+      "operationId": "get_production_order_sets_quantity_mismatches",
+      "method": "GET",
+      "path": "/production/production-order-sets/quantity-mismatches",
       "tag": "Produção — Conjuntos de OP",
       "stable": true
     },
@@ -4647,9 +4696,37 @@
       "stable": true
     },
     {
+      "operationId": "list_supplies_purchase_orders",
+      "method": "GET",
+      "path": "/supplies/purchase-orders",
+      "tag": "Suprimentos — Pedidos de compra",
+      "stable": true
+    },
+    {
+      "operationId": "export_supplies_purchase_orders",
+      "method": "GET",
+      "path": "/supplies/purchase-orders/export",
+      "tag": "Suprimentos — Pedidos de compra",
+      "stable": true
+    },
+    {
+      "operationId": "get_supplies_purchase_order",
+      "method": "GET",
+      "path": "/supplies/purchase-orders/{branch}/{order_number}",
+      "tag": "Suprimentos — Pedidos de compra",
+      "stable": true
+    },
+    {
       "operationId": "list_supplies_purchase_request_lines",
       "method": "GET",
       "path": "/supplies/purchase-requests/lines",
+      "tag": "Suprimentos — Solicitações de compra",
+      "stable": true
+    },
+    {
+      "operationId": "export_supplies_purchase_request_lines",
+      "method": "GET",
+      "path": "/supplies/purchase-requests/lines/export",
       "tag": "Suprimentos — Solicitações de compra",
       "stable": true
     },
