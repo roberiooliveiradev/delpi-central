@@ -27,7 +27,7 @@ class GetRefugosSerieUseCase:
             granularity=request.granularity,
             date_start=date_start,
             date_end_exclusive=date_end_exclusive,
-            branch=request.period.filial,
+            branch=request.period.branch,
             **request.filter_kwargs(),
         )
 
@@ -50,7 +50,7 @@ class GetRefugosSerieUseCase:
             "points": points,
             "branchFilterApplied": True,
             "summary": {
-                "branch": request.period.filial,
+                "branch": request.period.branch,
                 "branch_filter_applied": True,
                 "period": {
                     "start": request.period.start_date.isoformat(),

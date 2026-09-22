@@ -31,7 +31,7 @@ Plugin consumidor: `plugins/controle-retrabalhos` · View: [ESPECIFICACAO-VIEW.m
 
 | Parâmetro | Alias | Descrição |
 |---|---|---|
-| `filial` | — | Filial Protheus `01` (SC) ou `02` (ES) — **obrigatório** (exceto `/health`) |
+| `branch` | — | Filial Protheus `01` (SC) ou `02` (ES); omitir/`all` = consolidado (exige permissão das duas filiais ou `.view`) |
 | `data_inicio` | `dataInicio` | Data inicial `YYYY-MM-DD` (default: 12 meses atrás) |
 | `data_fim` | `dataFim` | Data final `YYYY-MM-DD` (default: hoje) |
 | `recurso` | — | Filtro opcional por recurso |
@@ -57,7 +57,7 @@ Combina o custo de retrabalho do período (`/retrabalhos/resumo` → `totalCusto
 | `filters_applied` | `recurso`, `centro_custo`, `codigo_operador` (afetam só o numerador) |
 | `financial_context` | Contexto do ROL (receita bruta, devoluções, etc.) |
 
-Parâmetros: período e filtros opcionais iguais a `/retrabalhos/resumo`. `filial` é **opcional** — omitida consolida SC+ES (`01`+`02`) no numerador e no ROL.
+Parâmetros: período e filtros opcionais iguais a `/retrabalhos/resumo`. `branch` é **opcional** — omitida consolida SC+ES (`01`+`02`) no numerador e no ROL.
 
 ---
 
@@ -69,7 +69,7 @@ Parâmetros: período e filtros opcionais iguais a `/retrabalhos/resumo`. `filia
 
 | Campo | Descrição |
 |---|---|
-| `periodo` | `{ dataInicio, dataFim, filial }` |
+| `periodo` | `{ start_date, end_date, branch }` |
 | `totalApontamentos` | Quantidade de apontamentos RT |
 | `totalHoras` | Horas improdutivas |
 | `totalCusto` | Custo de parada (R$) |
@@ -113,12 +113,12 @@ export TOKEN="$(bash infra/scripts/get-dev-token.sh)"
 
 curl -s -H "Authorization: Bearer $TOKEN" \
      -H "X-Delpi-Caller-App: controle-retrabalhos" \
-     "http://localhost/apps/api-delpi/retrabalhos/resumo?filial=01" \
+     "http://localhost/apps/api-delpi/retrabalhos/resumo?branch=01" \
   | jq '.meta, .data.totalHoras'
 
 curl -s -H "Authorization: Bearer $TOKEN" \
      -H "X-Delpi-Caller-App: controle-retrabalhos" \
-     "http://localhost/apps/api-delpi/retrabalhos/detalhes?filial=01&page=1&pageSize=25" \
+     "http://localhost/apps/api-delpi/retrabalhos/detalhes?branch=01&page=1&pageSize=25" \
   | jq '.meta.shape, .data.total'
 ```
 

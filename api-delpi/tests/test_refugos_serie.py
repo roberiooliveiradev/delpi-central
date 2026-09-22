@@ -8,7 +8,7 @@ from app.application.use_cases.refugos.get_refugos_serie_use_case import (
 
 def test_serie_request_auto_picks_day_for_short_period() -> None:
     request = RefugosSerieRequest.from_query(
-        filial="01",
+        branch="01",
         data_inicio="2026-07-01",
         data_fim="2026-07-15",
         granularity="auto",
@@ -18,7 +18,7 @@ def test_serie_request_auto_picks_day_for_short_period() -> None:
 
 def test_serie_request_auto_picks_month_for_long_period() -> None:
     request = RefugosSerieRequest.from_query(
-        filial="01",
+        branch="01",
         data_inicio="2026-01-01",
         data_fim="2026-07-15",
         granularity="auto",
@@ -34,7 +34,7 @@ def test_serie_use_case_formats_day_buckets() -> None:
     ]
     result = GetRefugosSerieUseCase(repo).execute(
         RefugosSerieRequest.from_query(
-            filial="01",
+            branch="01",
             data_inicio="2026-07-13",
             data_fim="2026-07-14",
             granularity="day",

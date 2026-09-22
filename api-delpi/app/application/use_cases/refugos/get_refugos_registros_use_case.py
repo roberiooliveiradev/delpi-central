@@ -61,7 +61,6 @@ def _map_registro_item(row: dict[str, Any]) -> dict[str, Any]:
         "operator_code": operator_code,
         "operator_name": operator_name,
         # camelCase PT (legado MFE)
-        "filial": branch,
         "dataPerda": loss_date,
         "op": production_order,
         "pa": finished_product,
@@ -94,13 +93,13 @@ class GetRefugosRegistrosUseCase:
         total = self._repository.count_registros(
             date_start=date_start,
             date_end_exclusive=date_end_exclusive,
-            branch=request.query.period.filial,
+            branch=request.query.period.branch,
             **filters,
         )
         rows = self._repository.get_registros(
             date_start=date_start,
             date_end_exclusive=date_end_exclusive,
-            branch=request.query.period.filial,
+            branch=request.query.period.branch,
             offset=offset,
             page_size=page_size,
             **filters,
@@ -114,7 +113,7 @@ class GetRefugosRegistrosUseCase:
             extra={
                 "periodo": request.periodo_dict(),
                 "summary": {
-                    "branch": request.query.period.filial,
+                    "branch": request.query.period.branch,
                     "branch_filter_applied": True,
                     "period": {
                         "start": request.query.period.start_date.isoformat(),

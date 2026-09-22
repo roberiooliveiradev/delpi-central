@@ -30,7 +30,7 @@ class GetRefugosRankingsUseCase:
             dimension=request.dimension,
             date_start=date_start,
             date_end_exclusive=date_end_exclusive,
-            branch=request.period.filial,
+            branch=request.period.branch,
             limit=limit,
             **request.filter_kwargs(),
         )
@@ -76,7 +76,7 @@ class GetRefugosRankingsUseCase:
             "summary": {
                 "total_records": len(items),
                 "total_valor": round_cost(total_valor),
-                "branch": request.period.filial,
+                "branch": request.period.branch,
                 "branch_filter_applied": True,
                 "period": {
                     "start": request.period.start_date.isoformat(),

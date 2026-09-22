@@ -6,7 +6,6 @@ from fastapi import Query
 
 from app.interface.http.query_param_enums import (
     BRANCH_QUERY_OPTIONAL,
-    BRANCH_QUERY_REQUIRED,
     RETRABALHO_ORDER_BY_DETALHES_QUERY,
     RETRABALHO_ORDER_BY_RANKING_QUERY,
     SORT_DIR_QUERY_ALIAS_ORDER_DIR_DESC,
@@ -27,7 +26,7 @@ from app.utils.logger import log_error
 
 def build_retrabalho_query_request(
     *,
-    filial: str | None,
+    branch: str | None,
     data_inicio: Optional[str] = None,
     data_fim: Optional[str] = None,
     recurso: Optional[str] = None,
@@ -35,10 +34,10 @@ def build_retrabalho_query_request(
     codigo_operador: Optional[str] = None,
     order_by: Optional[str] = None,
     limit: Optional[int] = None,
-    require_filial: bool = True,
+    require_branch: bool = True,
 ) -> RetrabalhoQueryRequest:
     return RetrabalhoQueryRequest.from_query(
-        filial=filial,
+        branch=branch,
         data_inicio=data_inicio,
         data_fim=data_fim,
         recurso=recurso,
@@ -46,13 +45,13 @@ def build_retrabalho_query_request(
         codigo_operador=codigo_operador,
         order_by=order_by,
         limit=limit,
-        require_filial=require_filial,
+        require_branch=require_branch,
     )
 
 
 def build_retrabalho_detalhes_request(
     *,
-    filial: str | None,
+    branch: str | None,
     data_inicio: Optional[str] = None,
     data_fim: Optional[str] = None,
     recurso: Optional[str] = None,
@@ -62,10 +61,10 @@ def build_retrabalho_detalhes_request(
     page_size: int = DEFAULT_PAGE_SIZE,
     order_by: Optional[str] = None,
     order_dir: Optional[str] = None,
-    require_filial: bool = True,
+    require_branch: bool = True,
 ) -> RetrabalhoDetalhesRequest:
     return RetrabalhoDetalhesRequest.from_query(
-        filial=filial,
+        branch=branch,
         data_inicio=data_inicio,
         data_fim=data_fim,
         recurso=recurso,
@@ -75,7 +74,7 @@ def build_retrabalho_detalhes_request(
         page_size=page_size,
         order_by=order_by,
         order_dir=order_dir,
-        require_filial=require_filial,
+        require_branch=require_branch,
     )
 
 
@@ -111,11 +110,7 @@ def execute_retrabalho_route(
         )
 
 
-def FILIAL_QUERY():
-    return BRANCH_QUERY_REQUIRED()
-
-
-def FILIAL_QUERY_OPTIONAL():
+def BRANCH_QUERY():
     return BRANCH_QUERY_OPTIONAL()
 
 

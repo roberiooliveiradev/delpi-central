@@ -34,7 +34,7 @@ export function buildRegistroDetailPath(
   item: ScrapRegistroItem,
 ): string {
   const params = new URLSearchParams();
-  setParam(params, "filial", item.filial);
+  setParam(params, "branch", item.branch);
   setParam(params, "dataPerda", item.dataPerda);
   setParam(params, "op", item.op);
   setParam(params, "pa", item.pa);
@@ -69,7 +69,7 @@ export function readRegistroFromSearch(search: string): ScrapRegistroItem | null
       : Number(custoRaw);
 
   return {
-    filial: params.get("filial") ?? "",
+    branch: params.get("branch") ?? "",
     dataPerda,
     op: params.get("op") ?? "",
     pa: params.get("pa") ?? "",

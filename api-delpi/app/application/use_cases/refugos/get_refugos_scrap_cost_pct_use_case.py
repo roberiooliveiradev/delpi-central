@@ -26,7 +26,7 @@ class GetRefugosScrapCostPctUseCase:
         day_start, day_end_exclusive = request.period.day_closed_open()
         month_start, month_end_exclusive = request.period.month_closed_open()
         start_iso, end_iso = request.period.iso_range()
-        branch = request.period.filial
+        branch = request.period.branch
         branch_filter_applied = not is_all_branches(branch)
         consolidated = not branch_filter_applied
         rol_branch = None if consolidated else branch

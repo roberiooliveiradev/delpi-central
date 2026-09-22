@@ -14,7 +14,7 @@ class GetRetrabalhoMensalUseCase:
         rows = self._repository.get_mensal(
             start_date=start_date,
             end_date=end_date,
-            branch=request.period.filial,
+            branch=request.period.branch,
             recurso=request.recurso,
             centro_custo=request.centro_custo,
             codigo_operador=request.codigo_operador,

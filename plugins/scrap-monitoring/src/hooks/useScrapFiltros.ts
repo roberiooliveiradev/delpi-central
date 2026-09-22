@@ -13,7 +13,7 @@ const emptyFiltros: ScrapFiltrosData = {
 function hasPeriod(
   filters: ScrapQueryFilters | null,
 ): filters is ScrapQueryFilters {
-  return Boolean(filters?.filial && filters.start_date && filters.end_date);
+  return Boolean(filters?.branch && filters.start_date && filters.end_date);
 }
 
 export function useScrapFiltros(appliedFilters: ScrapQueryFilters | null) {
@@ -36,7 +36,7 @@ export function useScrapFiltros(appliedFilters: ScrapQueryFilters | null) {
 
     const controller = new AbortController();
     const period = {
-      filial: appliedFilters.filial,
+      branch: appliedFilters.branch,
       start_date: appliedFilters.start_date,
       end_date: appliedFilters.end_date,
     };
@@ -70,7 +70,7 @@ export function useScrapFiltros(appliedFilters: ScrapQueryFilters | null) {
     void run();
     return () => controller.abort();
   }, [
-    appliedFilters?.filial,
+    appliedFilters?.branch,
     appliedFilters?.start_date,
     appliedFilters?.end_date,
     reloadKey,

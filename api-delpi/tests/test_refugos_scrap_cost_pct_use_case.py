@@ -11,14 +11,14 @@ from app.application.use_cases.refugos.get_refugos_scrap_cost_pct_use_case impor
 
 def _request(
     *,
-    filial: str = "01",
+    branch: str = "01",
     data_inicio: str = "2026-06-01",
     data_fim: str = "2026-06-30",
     mp: str | None = None,
 ) -> RefugosQueryRequest:
     return RefugosQueryRequest(
         period=RefugosPeriod.resolve(
-            filial=filial,
+            branch=branch,
             data_inicio=data_inicio,
             data_fim=data_fim,
         ),
@@ -105,10 +105,10 @@ def test_consolidated_when_filial_omitted() -> None:
 
     request = RefugosQueryRequest(
         period=RefugosPeriod.resolve(
-            filial=None,
+            branch=None,
             data_inicio="2026-06-01",
             data_fim="2026-06-30",
-            require_filial=False,
+            require_branch=False,
         )
     )
     result = GetRefugosScrapCostPctUseCase(refugos_repo, financial_repo).execute(request)

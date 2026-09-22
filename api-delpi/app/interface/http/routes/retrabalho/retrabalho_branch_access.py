@@ -15,13 +15,13 @@ _GATE = BranchAccessGate(
 )
 
 
-def branch_view_allowed(filial: str) -> bool:
-    return _GATE.branch_view_allowed(filial)
+def branch_view_allowed(branch: str) -> bool:
+    return _GATE.branch_view_allowed(branch)
 
 
 def consolidated_view_allowed() -> bool:
     return _GATE.consolidated_view_allowed()
 
 
-def branch_access_error(filial: str | None):
-    return _GATE.branch_access_error(filial)
+def branch_access_error(branch: str | None):
+    return _GATE.branch_access_error(branch)

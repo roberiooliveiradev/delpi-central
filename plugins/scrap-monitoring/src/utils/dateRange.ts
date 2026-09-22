@@ -143,7 +143,7 @@ function optionalFilter(value: string | undefined): string | undefined {
 }
 
 export function filtersFromFormState(
-  filial: string,
+  branch: string,
   state: {
     start_date: string;
     end_date: string;
@@ -155,7 +155,7 @@ export function filtersFromFormState(
   },
 ) {
   return {
-    filial,
+    branch,
     start_date: state.start_date,
     end_date: state.end_date,
     mp: optionalFilter(state.mp),

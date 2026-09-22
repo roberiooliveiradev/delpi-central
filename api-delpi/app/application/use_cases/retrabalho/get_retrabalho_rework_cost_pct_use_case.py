@@ -23,7 +23,7 @@ class GetRetrabalhoReworkCostPctUseCase:
 
     def execute(self, request: RetrabalhoQueryRequest) -> dict:
         start_iso, end_iso = request.period.iso_range()
-        branch = request.period.filial
+        branch = request.period.branch
         branch_filter_applied = not is_all_branches(branch)
         consolidated = not branch_filter_applied
         repo_branch = None if consolidated else branch

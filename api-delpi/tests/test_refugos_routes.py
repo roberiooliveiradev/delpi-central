@@ -46,7 +46,7 @@ def test_router_exposes_all_endpoints(refugos_client: TestClient) -> None:
 @patch(
     "app.interface.http.routes.refugos.refugos_router.build_get_refugos_resumo_use_case"
 )
-def test_resumo_allows_consolidated_without_filial(
+def test_resumo_allows_consolidated_without_branch(
     mock_builder, _mock_branch, refugos_client: TestClient
 ) -> None:
     use_case = MagicMock()
@@ -79,7 +79,7 @@ def test_resumo_returns_envelope(mock_builder, _mock_branch, refugos_client: Tes
     }
     mock_builder.return_value = use_case
 
-    response = refugos_client.get("/refugos/resumo", params={"filial": "01"})
+    response = refugos_client.get("/refugos/resumo", params={"branch": "01"})
     body = _body(response)
 
     assert response.status_code == 200
@@ -111,7 +111,7 @@ def test_scrap_cost_pct_returns_envelope(
 
     response = refugos_client.get(
         "/refugos/scrap_cost_pct",
-        params={"filial": "01", "dataInicio": "2026-06-01", "dataFim": "2026-06-30"},
+        params={"branch": "01", "dataInicio": "2026-06-01", "dataFim": "2026-06-30"},
     )
     body = _body(response)
 
@@ -172,7 +172,7 @@ def test_rankings_returns_playbook_meta(
 
     response = refugos_client.get(
         "/refugos/rankings",
-        params={"filial": "01", "dimension": "motivo"},
+        params={"branch": "01", "dimension": "motivo"},
     )
     body = _body(response)
 
@@ -204,7 +204,7 @@ def test_serie_returns_playbook_meta(
     }
     mock_builder.return_value = use_case
 
-    response = refugos_client.get("/refugos/serie", params={"filial": "01"})
+    response = refugos_client.get("/refugos/serie", params={"branch": "01"})
     body = _body(response)
 
     assert response.status_code == 200
@@ -244,7 +244,7 @@ def test_registros_returns_paged_meta(
 
     response = refugos_client.get(
         "/refugos/registros",
-        params={"filial": "01", "page": 1, "pageSize": 25},
+        params={"branch": "01", "page": 1, "pageSize": 25},
     )
     body = _body(response)
 
@@ -262,7 +262,7 @@ def test_registros_returns_paged_meta(
 def test_resumo_returns_403_when_branch_denied(
     _mock_branch, refugos_client: TestClient
 ) -> None:
-    response = refugos_client.get("/refugos/resumo", params={"filial": "02"})
+    response = refugos_client.get("/refugos/resumo", params={"branch": "02"})
     assert response.status_code == 403
 
 
@@ -294,7 +294,7 @@ def test_filtros_returns_envelope(
     mock_builder.return_value = MagicMock(
         execute=MagicMock(return_value={"motivos": [], "recursos": []})
     )
-    response = refugos_client.get("/refugos/filtros", params={"filial": "01"})
+    response = refugos_client.get("/refugos/filtros", params={"branch": "01"})
     body = _body(response)
     assert response.status_code == 200
     assert body["meta"]["operationId"] == "get_refugos_filtros"

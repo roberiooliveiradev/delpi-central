@@ -6,7 +6,6 @@ from fastapi import Query
 
 from app.interface.http.query_param_enums import (
     BRANCH_QUERY_OPTIONAL,
-    BRANCH_QUERY_REQUIRED,
     GRANULARITY_QUERY_DAY_MONTH_AUTO,
     REFUGOS_DIMENSION_QUERY,
 )
@@ -25,7 +24,7 @@ from app.utils.logger import log_error
 
 def build_refugos_query_request(
     *,
-    filial: str | None,
+    branch: str | None,
     data_inicio: Optional[str] = None,
     data_fim: Optional[str] = None,
     dimension: Optional[str] = None,
@@ -35,10 +34,10 @@ def build_refugos_query_request(
     motivo: Optional[str] = None,
     recurso: Optional[str] = None,
     limit: Optional[int] = None,
-    require_filial: bool = True,
+    require_branch: bool = True,
 ) -> RefugosQueryRequest:
     return RefugosQueryRequest.from_query(
-        filial=filial,
+        branch=branch,
         data_inicio=data_inicio,
         data_fim=data_fim,
         dimension=dimension,
@@ -48,13 +47,13 @@ def build_refugos_query_request(
         motivo=motivo,
         recurso=recurso,
         limit=limit,
-        require_filial=require_filial,
+        require_branch=require_branch,
     )
 
 
 def build_refugos_serie_request(
     *,
-    filial: str | None,
+    branch: str | None,
     data_inicio: Optional[str] = None,
     data_fim: Optional[str] = None,
     granularity: Optional[str] = None,
@@ -63,10 +62,10 @@ def build_refugos_serie_request(
     op: Optional[str] = None,
     motivo: Optional[str] = None,
     recurso: Optional[str] = None,
-    require_filial: bool = True,
+    require_branch: bool = True,
 ) -> RefugosSerieRequest:
     return RefugosSerieRequest.from_query(
-        filial=filial,
+        branch=branch,
         data_inicio=data_inicio,
         data_fim=data_fim,
         granularity=granularity,
@@ -75,13 +74,13 @@ def build_refugos_serie_request(
         op=op,
         motivo=motivo,
         recurso=recurso,
-        require_filial=require_filial,
+        require_branch=require_branch,
     )
 
 
 def build_refugos_registros_request(
     *,
-    filial: str | None,
+    branch: str | None,
     data_inicio: Optional[str] = None,
     data_fim: Optional[str] = None,
     mp: Optional[str] = None,
@@ -91,10 +90,10 @@ def build_refugos_registros_request(
     recurso: Optional[str] = None,
     page: int = DEFAULT_PAGE,
     page_size: int = DEFAULT_PAGE_SIZE,
-    require_filial: bool = True,
+    require_branch: bool = True,
 ) -> RefugosRegistrosRequest:
     return RefugosRegistrosRequest.from_query(
-        filial=filial,
+        branch=branch,
         data_inicio=data_inicio,
         data_fim=data_fim,
         mp=mp,
@@ -104,7 +103,7 @@ def build_refugos_registros_request(
         recurso=recurso,
         page=page,
         page_size=page_size,
-        require_filial=require_filial,
+        require_branch=require_branch,
     )
 
 
@@ -139,11 +138,7 @@ def execute_refugos_route(
         )
 
 
-def FILIAL_QUERY():
-    return BRANCH_QUERY_REQUIRED()
-
-
-def FILIAL_QUERY_OPTIONAL():
+def BRANCH_QUERY():
     return BRANCH_QUERY_OPTIONAL()
 
 

@@ -11,7 +11,7 @@ export type FilterFormState = {
 };
 
 export type ScrapQueryFilters = {
-  filial: string;
+  branch: string;
   start_date: string;
   end_date: string;
   mp?: string;
@@ -22,12 +22,9 @@ export type ScrapQueryFilters = {
 };
 
 export type ScrapPeriodo = {
-  start_date?: string;
-  end_date?: string;
-  /** Legado api-delpi — preferir start_date/end_date na leitura defensiva. */
-  dataInicio?: string;
-  dataFim?: string;
-  filial: string;
+  start_date: string;
+  end_date: string;
+  branch: string;
 };
 
 export type ScrapResumo = {
@@ -79,7 +76,7 @@ export type ScrapSerieData = {
 };
 
 export type ScrapRegistroItem = {
-  filial: string;
+  branch: string;
   dataPerda: string;
   op: string;
   pa: string;

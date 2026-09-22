@@ -1,14 +1,11 @@
 export type RetrabalhoPeriodo = {
-  start_date?: string;
-  end_date?: string;
-  /** Legado api-delpi — preferir start_date/end_date na leitura defensiva. */
-  dataInicio?: string;
-  dataFim?: string;
-  filial: string;
+  start_date: string;
+  end_date: string;
+  branch: string;
 };
 
 export type RetrabalhoQueryFilters = {
-  filial: string;
+  branch: string;
   start_date: string;
   end_date: string;
 };
@@ -71,7 +68,7 @@ export type RetrabalhoColaboradorItem = {
 
 export type RetrabalhoDetalheItem = {
   dataReferencia: string;
-  filial: string;
+  branch: string;
   op: string;
   produto: string;
   operacao: string;

@@ -43,7 +43,7 @@ def test_router_exposes_all_endpoints(retrabalho_client: TestClient) -> None:
 @patch(
     "app.interface.http.routes.retrabalho.retrabalho_router.build_get_retrabalho_resumo_use_case"
 )
-def test_resumo_allows_consolidated_without_filial(
+def test_resumo_allows_consolidated_without_branch(
     mock_builder, _mock_branch, retrabalho_client: TestClient
 ) -> None:
     use_case = MagicMock()
@@ -76,7 +76,7 @@ def test_resumo_returns_envelope(mock_builder, _mock_branch, retrabalho_client: 
     }
     mock_builder.return_value = use_case
 
-    response = retrabalho_client.get("/retrabalhos/resumo", params={"filial": "01"})
+    response = retrabalho_client.get("/retrabalhos/resumo", params={"branch": "01"})
     body = _body(response)
 
     assert response.status_code == 200
@@ -108,7 +108,7 @@ def test_rework_cost_pct_returns_envelope(
 
     response = retrabalho_client.get(
         "/retrabalhos/rework_cost_pct",
-        params={"filial": "01", "dataInicio": "2026-06-01", "dataFim": "2026-06-30"},
+        params={"branch": "01", "dataInicio": "2026-06-01", "dataFim": "2026-06-30"},
     )
     body = _body(response)
 
@@ -179,7 +179,7 @@ def test_detalhes_returns_paged_meta(mock_builder, _mock_branch, retrabalho_clie
 
     response = retrabalho_client.get(
         "/retrabalhos/detalhes",
-        params={"filial": "01", "page": 1, "pageSize": 25},
+        params={"branch": "01", "page": 1, "pageSize": 25},
     )
     body = _body(response)
 
@@ -201,11 +201,36 @@ def test_resumo_denies_filial_without_permission(mock_branch, retrabalho_client:
         status_code=403,
     )
 
-    response = retrabalho_client.get("/retrabalhos/resumo", params={"filial": "02"})
+    response = retrabalho_client.get("/retrabalhos/resumo", params={"branch": "02"})
     body = _body(response)
 
     assert response.status_code == 403
     assert body["success"] is False
+
+
+@patch(
+    "app.interface.http.routes.retrabalho.retrabalho_router.branch_access_error",
+    return_value=None,
+)
+@patch(
+    "app.interface.http.routes.retrabalho.retrabalho_router.build_get_retrabalho_resumo_use_case"
+)
+def test_resumo_wire_uses_branch_not_legacy_filial_query(
+    mock_builder, mock_branch, retrabalho_client: TestClient
+) -> None:
+    """Regressão: query legado ?filial=01 não alimenta o Depends (só ?branch=)."""
+    use_case = MagicMock()
+    use_case.execute.return_value = {"totalApontamentos": 0}
+    mock_builder.return_value = use_case
+
+    legacy = retrabalho_client.get("/retrabalhos/resumo", params={"filial": "01"})
+    assert legacy.status_code == 200
+    mock_branch.assert_called_with(None)
+
+    mock_branch.reset_mock()
+    canonical = retrabalho_client.get("/retrabalhos/resumo", params={"branch": "01"})
+    assert canonical.status_code == 200
+    mock_branch.assert_called_with("01")
 
 
 @patch(
@@ -235,7 +260,7 @@ def test_filtros_returns_envelope(
     mock_builder.return_value = MagicMock(
         execute=MagicMock(return_value={"recursos": [], "centrosCusto": []})
     )
-    response = retrabalho_client.get("/retrabalhos/filtros", params={"filial": "01"})
+    response = retrabalho_client.get("/retrabalhos/filtros", params={"branch": "01"})
     body = _body(response)
     assert response.status_code == 200
     assert body["meta"]["operationId"] == "get_retrabalhos_filtros"
@@ -252,7 +277,7 @@ def test_mensal_returns_envelope(
     mock_builder, _mock_branch, retrabalho_client: TestClient
 ) -> None:
     mock_builder.return_value = MagicMock(execute=MagicMock(return_value={"points": []}))
-    response = retrabalho_client.get("/retrabalhos/mensal", params={"filial": "01"})
+    response = retrabalho_client.get("/retrabalhos/mensal", params={"branch": "01"})
     body = _body(response)
     assert response.status_code == 200
     assert body["meta"]["operationId"] == "get_retrabalhos_mensal"
@@ -270,7 +295,7 @@ def test_recursos_returns_envelope(
     mock_builder, _mock_branch, retrabalho_client: TestClient
 ) -> None:
     mock_builder.return_value = MagicMock(execute=MagicMock(return_value={"items": []}))
-    response = retrabalho_client.get("/retrabalhos/recursos", params={"filial": "01"})
+    response = retrabalho_client.get("/retrabalhos/recursos", params={"branch": "01"})
     body = _body(response)
     assert response.status_code == 200
     assert body["meta"]["operationId"] == "get_retrabalhos_recursos"
@@ -289,7 +314,7 @@ def test_colaboradores_returns_envelope(
 ) -> None:
     mock_builder.return_value = MagicMock(execute=MagicMock(return_value={"items": []}))
     response = retrabalho_client.get(
-        "/retrabalhos/colaboradores", params={"filial": "01"}
+        "/retrabalhos/colaboradores", params={"branch": "01"}
     )
     body = _body(response)
     assert response.status_code == 200

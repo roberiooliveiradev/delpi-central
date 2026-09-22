@@ -25,7 +25,7 @@ class RefugosQueryRequest:
     def from_query(
         cls,
         *,
-        filial: str | None,
+        branch: str | None,
         data_inicio: str | None = None,
         data_fim: str | None = None,
         dimension: str | None = None,
@@ -35,13 +35,13 @@ class RefugosQueryRequest:
         motivo: str | None = None,
         recurso: str | None = None,
         limit: int | None = None,
-        require_filial: bool = True,
+        require_branch: bool = True,
     ) -> RefugosQueryRequest:
         period = RefugosPeriod.resolve(
-            filial=filial,
+            branch=branch,
             data_inicio=data_inicio,
             data_fim=data_fim,
-            require_filial=require_filial,
+            require_branch=require_branch,
         )
         normalized_dimension = cls._normalize_optional(dimension)
         if normalized_dimension is not None:

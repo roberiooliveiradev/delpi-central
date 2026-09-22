@@ -21,7 +21,7 @@ async function getEnvelope<T>(path: string, options: RequestOptions = {}): Promi
 
 function baseQuery(filters: RetrabalhoQueryFilters) {
   return {
-    filial: filters.filial,
+    branch: filters.branch,
     start_date: filters.start_date,
     end_date: filters.end_date,
   };

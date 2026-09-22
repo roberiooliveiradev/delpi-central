@@ -12,7 +12,7 @@ describe("filtersFromFormState", () => {
     const form = createDefaultFilterFormState(new Date("2026-07-15T12:00:00"));
     const result = filtersFromFormState("01", form);
 
-    expect(result.filial).toBe("01");
+    expect(result.branch).toBe("01");
     expect(result.start_date).toBe("2026-07-01");
     expect(result.end_date).toBe("2026-07-15");
     expect(result.mp).toBeUndefined();
@@ -34,7 +34,7 @@ describe("filtersFromFormState", () => {
     });
 
     expect(result).toMatchObject({
-      filial: "02",
+      branch: "02",
       mp: "90001234",
       pa: "PA01",
       op: "OP1",

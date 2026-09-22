@@ -17,7 +17,7 @@ class GetRefugosResumoUseCase:
         row = self._repository.get_resumo(
             date_start=date_start,
             date_end_exclusive=date_end_exclusive,
-            branch=request.period.filial,
+            branch=request.period.branch,
             day_start=day_start,
             day_end_exclusive=day_end_exclusive,
             month_start=month_start,
@@ -35,7 +35,7 @@ class GetRefugosResumoUseCase:
             "valorMes": round_cost(row.get("valor_mes")),
             "branchFilterApplied": True,
             "summary": {
-                "branch": request.period.filial,
+                "branch": request.period.branch,
                 "branch_filter_applied": True,
                 "period": {
                     "start": request.period.start_date.isoformat(),

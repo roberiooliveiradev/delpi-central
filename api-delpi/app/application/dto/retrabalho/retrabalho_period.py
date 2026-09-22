@@ -32,26 +32,26 @@ def _months_inclusive(start: date, end: date) -> int:
 class RetrabalhoPeriod:
     start_date: date
     end_date: date
-    filial: str
+    branch: str
 
     @classmethod
     def resolve(
         cls,
         *,
-        filial: str | None,
+        branch: str | None,
         data_inicio: str | None = None,
         data_fim: str | None = None,
-        require_filial: bool = True,
+        require_branch: bool = True,
     ) -> RetrabalhoPeriod:
         try:
-            normalized_filial = normalize_branch_scope(filial)
+            normalized_branch = normalize_branch_scope(branch)
         except ValueError as exc:
             raise ValueError(
-                f'filial inválida. Use {", ".join(repr(v) for v in BRANCH_SCOPE_VALUES)}.'
+                f'branch inválida. Use {", ".join(repr(v) for v in BRANCH_SCOPE_VALUES)}.'
             ) from exc
 
-        if require_filial and is_all_branches(normalized_filial):
-            raise ValueError("filial é obrigatória.")
+        if require_branch and is_all_branches(normalized_branch):
+            raise ValueError("branch é obrigatória.")
 
         utils = Utils()
         parsed_start = utils.parse_date(data_inicio) if data_inicio else None
@@ -65,7 +65,7 @@ class RetrabalhoPeriod:
         if parsed_start is None and parsed_end is None:
             end = date.today()
             start = _default_period_start(end)
-            return cls(start_date=start, end_date=end, filial=normalized_filial)
+            return cls(start_date=start, end_date=end, branch=normalized_branch)
 
         if parsed_start is None or parsed_end is None:
             raise ValueError("Informe dataInicio e dataFim juntas, ou omita ambas.")
@@ -79,7 +79,7 @@ class RetrabalhoPeriod:
         return cls(
             start_date=parsed_start,
             end_date=parsed_end,
-            filial=normalized_filial,
+            branch=normalized_branch,
         )
 
     def iso_range(self) -> tuple[str, str]:
@@ -87,4 +87,4 @@ class RetrabalhoPeriod:
 
     def periodo_dict(self) -> dict[str, str]:
         start, end = self.iso_range()
-        return {"dataInicio": start, "dataFim": end, "filial": self.filial}
+        return {"start_date": start, "end_date": end, "branch": self.branch}

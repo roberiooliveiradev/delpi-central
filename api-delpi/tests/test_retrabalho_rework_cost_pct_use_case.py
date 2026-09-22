@@ -11,14 +11,14 @@ from app.application.use_cases.retrabalho.get_retrabalho_rework_cost_pct_use_cas
 
 def _request(
     *,
-    filial: str = "01",
+    branch: str = "01",
     data_inicio: str = "2026-06-01",
     data_fim: str = "2026-06-30",
     recurso: str | None = None,
 ) -> RetrabalhoQueryRequest:
     return RetrabalhoQueryRequest(
         period=RetrabalhoPeriod.resolve(
-            filial=filial,
+            branch=branch,
             data_inicio=data_inicio,
             data_fim=data_fim,
         ),
@@ -104,10 +104,10 @@ def test_consolidated_when_filial_omitted() -> None:
 
     request = RetrabalhoQueryRequest(
         period=RetrabalhoPeriod.resolve(
-            filial=None,
+            branch=None,
             data_inicio="2026-06-01",
             data_fim="2026-06-30",
-            require_filial=False,
+            require_branch=False,
         )
     )
     result = GetRetrabalhoReworkCostPctUseCase(retrabalho_repo, financial_repo).execute(

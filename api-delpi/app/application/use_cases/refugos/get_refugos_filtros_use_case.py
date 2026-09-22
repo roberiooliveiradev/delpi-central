@@ -14,7 +14,7 @@ class GetRefugosFiltrosUseCase:
         raw = self._repository.get_filtros(
             date_start=date_start,
             date_end_exclusive=date_end_exclusive,
-            branch=request.period.filial,
+            branch=request.period.branch,
         )
 
         def _code_label_items(rows: list[dict]) -> list[dict]:

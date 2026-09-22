@@ -71,7 +71,7 @@ function ControleRetrabalhosContent({ branchRoute, totvsBranch }: ContentProps) 
   }, [debouncedFilters, totvsBranch, validationError]);
 
   const appliedFiltersKey = appliedFilters
-    ? `${appliedFilters.filial}|${appliedFilters.start_date}|${appliedFilters.end_date}`
+    ? `${appliedFilters.branch}|${appliedFilters.start_date}|${appliedFilters.end_date}`
     : "";
 
   useEffect(() => {
@@ -116,8 +116,8 @@ function ControleRetrabalhosContent({ branchRoute, totvsBranch }: ContentProps) 
             {resumo?.periodo ? (
               <>
                 {" "}
-                · {formatDatePtBr((resumo.periodo.start_date ?? resumo.periodo.dataInicio ?? ""))} a{" "}
-                {formatDatePtBr((resumo.periodo.end_date ?? resumo.periodo.dataFim ?? ""))}
+                · {formatDatePtBr(resumo.periodo.start_date)} a{" "}
+                {formatDatePtBr(resumo.periodo.end_date)}
               </>
             ) : null}
           </>

@@ -30,7 +30,7 @@ class GetRetrabalhoRecursosUseCase:
         rows = self._repository.get_ranking_recursos(
             start_date=start_date,
             end_date=end_date,
-            branch=request.period.filial,
+            branch=request.period.branch,
             recurso=request.recurso,
             centro_custo=request.centro_custo,
             codigo_operador=request.codigo_operador,
@@ -54,7 +54,7 @@ class GetRetrabalhoColaboradoresUseCase:
         rows = self._repository.get_ranking_colaboradores(
             start_date=start_date,
             end_date=end_date,
-            branch=request.period.filial,
+            branch=request.period.branch,
             recurso=request.recurso,
             centro_custo=request.centro_custo,
             codigo_operador=request.codigo_operador,

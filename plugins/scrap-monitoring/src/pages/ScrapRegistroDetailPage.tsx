@@ -122,7 +122,7 @@ export function ScrapRegistroDetailPage({
               <DetailCard title="Identificação" titleHint={D.identification}>
                 <DetailFieldGrid
                   fields={[
-                    { label: "Filial", value: filialLabel(registro.filial, branchRoute) },
+                    { label: "Filial", value: filialLabel(registro.branch, branchRoute) },
                     { label: "Data", value: formatDatePtBr(registro.dataPerda) },
                     { label: "Ordem de produção", value: registro.op || "—" },
                     {

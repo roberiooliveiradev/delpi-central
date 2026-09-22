@@ -167,11 +167,11 @@ export function createDefaultFilterFormState(referenceDate = new Date()) {
 }
 
 export function filtersFromFormState(
-  filial: string,
+  branch: string,
   state: { start_date: string; end_date: string },
 ) {
   return {
-    filial,
+    branch,
     start_date: state.start_date,
     end_date: state.end_date,
   };

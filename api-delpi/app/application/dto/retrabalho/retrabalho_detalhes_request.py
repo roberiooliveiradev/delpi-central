@@ -27,7 +27,7 @@ class RetrabalhoDetalhesRequest:
     def from_query(
         cls,
         *,
-        filial: str | None,
+        branch: str | None,
         data_inicio: str | None = None,
         data_fim: str | None = None,
         recurso: str | None = None,
@@ -37,16 +37,16 @@ class RetrabalhoDetalhesRequest:
         page_size: int = DEFAULT_PAGE_SIZE,
         order_by: str | None = None,
         order_dir: str | None = None,
-        require_filial: bool = True,
+        require_branch: bool = True,
     ) -> RetrabalhoDetalhesRequest:
         base = RetrabalhoQueryRequest.from_query(
-            filial=filial,
+            branch=branch,
             data_inicio=data_inicio,
             data_fim=data_fim,
             recurso=recurso,
             centro_custo=centro_custo,
             codigo_operador=codigo_operador,
-            require_filial=require_filial,
+            require_branch=require_branch,
         )
         normalized_sort_by = str(order_by or DEFAULT_SORT_BY).strip().lower() or DEFAULT_SORT_BY
         normalized_sort_dir = str(order_dir or DEFAULT_SORT_DIR).strip().lower() or DEFAULT_SORT_DIR

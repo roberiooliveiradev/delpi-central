@@ -34,7 +34,7 @@ def test_detalhes_envelope_has_pagination_is_complete_and_en_aliases() -> None:
     ]
     use_case = GetRetrabalhoDetalhesUseCase(repo)
     request = RetrabalhoDetalhesRequest.from_query(
-        filial="01",
+        branch="01",
         data_inicio="2026-07-01",
         data_fim="2026-07-31",
         page=1,
@@ -45,7 +45,7 @@ def test_detalhes_envelope_has_pagination_is_complete_and_en_aliases() -> None:
 
     item = result["items"][0]
     assert item["hours"] == item["tempoHoras"] == 1.5
-    assert item["branch"] == item["filial"] == "01"
+    assert item["branch"] == "01"
     assert item["reference_date"] == item["dataReferencia"]
     assert item["cost_center"] == item["centroCusto"] == "CC1"
     assert result["pagination"]["is_complete"] is True

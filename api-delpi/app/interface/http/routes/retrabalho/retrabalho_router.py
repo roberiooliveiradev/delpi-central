@@ -35,13 +35,13 @@ from app.interface.http.period_query_params import (
 from app.interface.http.routes.retrabalho.retrabalho_route_helpers import (
     CENTRO_CUSTO_QUERY,
     CODIGO_OPERADOR_QUERY,
-    FILIAL_QUERY_OPTIONAL,
+    BRANCH_QUERY,
     LIMIT_QUERY,
     ORDER_BY_DETALHES_QUERY,
     ORDER_BY_RANKING_QUERY,
     ORDER_DIR_QUERY,
     PAGE_QUERY,
-        RECURSO_QUERY,
+    RECURSO_QUERY,
     build_retrabalho_detalhes_request,
     build_retrabalho_query_request,
     execute_retrabalho_route,
@@ -89,7 +89,7 @@ def get_retrabalhos_health_route():
 )
 @require_any_permission(CONTROLE_RETRABALHO_READ_PERMISSIONS)
 def get_retrabalhos_filtros_route(
-    filial: Optional[str] = FILIAL_QUERY_OPTIONAL(),
+    branch: Optional[str] = BRANCH_QUERY(),
     start_date: Optional[str] = START_DATE_QUERY(),
     end_date: Optional[str] = END_DATE_QUERY(),
     dataInicio: Optional[str] = LEGACY_DATA_INICIO_QUERY(),
@@ -101,16 +101,16 @@ def get_retrabalhos_filtros_route(
         dataInicio=dataInicio,
         dataFim=dataFim,
     )
-    filial_error = branch_access_error(filial)
-    if filial_error:
-        return filial_error
+    branch_error = branch_access_error(branch)
+    if branch_error:
+        return branch_error
 
     try:
         request = build_retrabalho_query_request(
-            filial=filial,
+            branch=branch,
             data_inicio=start_date,
             data_fim=end_date,
-            require_filial=False,
+            require_branch=False,
         )
     except ValueError as exc:
         log_error(f"Erro de validação ao carregar filtros de retrabalhos: {exc}")
@@ -134,7 +134,7 @@ def get_retrabalhos_filtros_route(
 )
 @require_any_permission(CONTROLE_RETRABALHO_READ_PERMISSIONS)
 def get_retrabalhos_resumo_route(
-    filial: Optional[str] = FILIAL_QUERY_OPTIONAL(),
+    branch: Optional[str] = BRANCH_QUERY(),
     start_date: Optional[str] = START_DATE_QUERY(),
     end_date: Optional[str] = END_DATE_QUERY(),
     dataInicio: Optional[str] = LEGACY_DATA_INICIO_QUERY(),
@@ -149,19 +149,19 @@ def get_retrabalhos_resumo_route(
         dataInicio=dataInicio,
         dataFim=dataFim,
     )
-    filial_error = branch_access_error(filial)
-    if filial_error:
-        return filial_error
+    branch_error = branch_access_error(branch)
+    if branch_error:
+        return branch_error
 
     try:
         request = build_retrabalho_query_request(
-            filial=filial,
+            branch=branch,
             data_inicio=start_date,
             data_fim=end_date,
             recurso=recurso,
             centro_custo=centro_custo,
             codigo_operador=codigo_operador,
-            require_filial=False,
+            require_branch=False,
         )
     except ValueError as exc:
         log_error(f"Erro de validação ao carregar resumo de retrabalhos: {exc}")
@@ -185,7 +185,7 @@ def get_retrabalhos_resumo_route(
 )
 @require_any_permission(CONTROLE_RETRABALHO_READ_PERMISSIONS)
 def get_retrabalhos_rework_cost_pct(
-    filial: Optional[str] = FILIAL_QUERY_OPTIONAL(),
+    branch: Optional[str] = BRANCH_QUERY(),
     start_date: Optional[str] = START_DATE_QUERY(),
     end_date: Optional[str] = END_DATE_QUERY(),
     dataInicio: Optional[str] = LEGACY_DATA_INICIO_QUERY(),
@@ -200,19 +200,19 @@ def get_retrabalhos_rework_cost_pct(
         dataInicio=dataInicio,
         dataFim=dataFim,
     )
-    filial_error = branch_access_error(filial)
-    if filial_error:
-        return filial_error
+    branch_error = branch_access_error(branch)
+    if branch_error:
+        return branch_error
 
     try:
         request = build_retrabalho_query_request(
-            filial=filial,
+            branch=branch,
             data_inicio=start_date,
             data_fim=end_date,
             recurso=recurso,
             centro_custo=centro_custo,
             codigo_operador=codigo_operador,
-            require_filial=False,
+            require_branch=False,
         )
     except ValueError as exc:
         log_error(f"Erro de validação ao carregar rework cost / ROL: {exc}")
@@ -247,7 +247,7 @@ def get_retrabalhos_rework_cost_pct(
 )
 @require_any_permission(CONTROLE_RETRABALHO_READ_PERMISSIONS)
 def get_retrabalhos_mensal_route(
-    filial: Optional[str] = FILIAL_QUERY_OPTIONAL(),
+    branch: Optional[str] = BRANCH_QUERY(),
     start_date: Optional[str] = START_DATE_QUERY(),
     end_date: Optional[str] = END_DATE_QUERY(),
     dataInicio: Optional[str] = LEGACY_DATA_INICIO_QUERY(),
@@ -262,19 +262,19 @@ def get_retrabalhos_mensal_route(
         dataInicio=dataInicio,
         dataFim=dataFim,
     )
-    filial_error = branch_access_error(filial)
-    if filial_error:
-        return filial_error
+    branch_error = branch_access_error(branch)
+    if branch_error:
+        return branch_error
 
     try:
         request = build_retrabalho_query_request(
-            filial=filial,
+            branch=branch,
             data_inicio=start_date,
             data_fim=end_date,
             recurso=recurso,
             centro_custo=centro_custo,
             codigo_operador=codigo_operador,
-            require_filial=False,
+            require_branch=False,
         )
     except ValueError as exc:
         log_error(f"Erro de validação ao carregar série mensal de retrabalhos: {exc}")
@@ -298,7 +298,7 @@ def get_retrabalhos_mensal_route(
 )
 @require_any_permission(CONTROLE_RETRABALHO_READ_PERMISSIONS)
 def get_retrabalhos_recursos_route(
-    filial: Optional[str] = FILIAL_QUERY_OPTIONAL(),
+    branch: Optional[str] = BRANCH_QUERY(),
     start_date: Optional[str] = START_DATE_QUERY(),
     end_date: Optional[str] = END_DATE_QUERY(),
     dataInicio: Optional[str] = LEGACY_DATA_INICIO_QUERY(),
@@ -315,13 +315,13 @@ def get_retrabalhos_recursos_route(
         dataInicio=dataInicio,
         dataFim=dataFim,
     )
-    filial_error = branch_access_error(filial)
-    if filial_error:
-        return filial_error
+    branch_error = branch_access_error(branch)
+    if branch_error:
+        return branch_error
 
     try:
         request = build_retrabalho_query_request(
-            filial=filial,
+            branch=branch,
             data_inicio=start_date,
             data_fim=end_date,
             recurso=recurso,
@@ -329,7 +329,7 @@ def get_retrabalhos_recursos_route(
             codigo_operador=codigo_operador,
             order_by=order_by,
             limit=limit,
-            require_filial=False,
+            require_branch=False,
         )
     except ValueError as exc:
         log_error(f"Erro de validação ao carregar ranking de recursos: {exc}")
@@ -353,7 +353,7 @@ def get_retrabalhos_recursos_route(
 )
 @require_any_permission(CONTROLE_RETRABALHO_READ_PERMISSIONS)
 def get_retrabalhos_colaboradores_route(
-    filial: Optional[str] = FILIAL_QUERY_OPTIONAL(),
+    branch: Optional[str] = BRANCH_QUERY(),
     start_date: Optional[str] = START_DATE_QUERY(),
     end_date: Optional[str] = END_DATE_QUERY(),
     dataInicio: Optional[str] = LEGACY_DATA_INICIO_QUERY(),
@@ -370,13 +370,13 @@ def get_retrabalhos_colaboradores_route(
         dataInicio=dataInicio,
         dataFim=dataFim,
     )
-    filial_error = branch_access_error(filial)
-    if filial_error:
-        return filial_error
+    branch_error = branch_access_error(branch)
+    if branch_error:
+        return branch_error
 
     try:
         request = build_retrabalho_query_request(
-            filial=filial,
+            branch=branch,
             data_inicio=start_date,
             data_fim=end_date,
             recurso=recurso,
@@ -384,7 +384,7 @@ def get_retrabalhos_colaboradores_route(
             codigo_operador=codigo_operador,
             order_by=order_by,
             limit=limit,
-            require_filial=False,
+            require_branch=False,
         )
     except ValueError as exc:
         log_error(f"Erro de validação ao carregar ranking de colaboradores: {exc}")
@@ -408,7 +408,7 @@ def get_retrabalhos_colaboradores_route(
 )
 @require_any_permission(CONTROLE_RETRABALHO_READ_PERMISSIONS)
 def get_retrabalhos_detalhes_route(
-    filial: Optional[str] = FILIAL_QUERY_OPTIONAL(),
+    branch: Optional[str] = BRANCH_QUERY(),
     start_date: Optional[str] = START_DATE_QUERY(),
     end_date: Optional[str] = END_DATE_QUERY(),
     dataInicio: Optional[str] = LEGACY_DATA_INICIO_QUERY(),
@@ -427,13 +427,13 @@ def get_retrabalhos_detalhes_route(
         dataInicio=dataInicio,
         dataFim=dataFim,
     )
-    filial_error = branch_access_error(filial)
-    if filial_error:
-        return filial_error
+    branch_error = branch_access_error(branch)
+    if branch_error:
+        return branch_error
 
     try:
         request = build_retrabalho_detalhes_request(
-            filial=filial,
+            branch=branch,
             data_inicio=start_date,
             data_fim=end_date,
             recurso=recurso,
@@ -443,7 +443,7 @@ def get_retrabalhos_detalhes_route(
             page_size=page_size,
             order_by=order_by,
             order_dir=order_dir,
-            require_filial=False,
+            require_branch=False,
         )
     except ValueError as exc:
         log_error(f"Erro de validação ao carregar detalhes de retrabalhos: {exc}")

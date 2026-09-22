@@ -39,7 +39,7 @@ const emptyDashboard: RetrabalhoDashboardData = {
 function hasRequiredFilters(
   filters: RetrabalhoQueryFilters | null,
 ): filters is RetrabalhoQueryFilters {
-  return Boolean(filters?.filial && filters.start_date && filters.end_date);
+  return Boolean(filters?.branch && filters.start_date && filters.end_date);
 }
 
 function firstRejectedReason(

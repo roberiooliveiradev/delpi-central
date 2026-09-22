@@ -99,7 +99,7 @@ function ScrapMonitoringContent({
 
   const appliedFiltersKey = appliedFilters
     ? [
-        appliedFilters.filial,
+        appliedFilters.branch,
         appliedFilters.start_date,
         appliedFilters.end_date,
         appliedFilters.mp ?? "",
@@ -186,7 +186,7 @@ function ScrapMonitoringContent({
   const permissionDenied = isPermissionError(dashboardError);
   const branchLabel = BRANCH_ROUTE_LABELS[branchRoute];
   const periodoLabel = resumo?.periodo
-    ? `${formatDatePtBr((resumo.periodo.start_date ?? resumo.periodo.dataInicio ?? ""))} — ${formatDatePtBr((resumo.periodo.end_date ?? resumo.periodo.dataFim ?? ""))}`
+    ? `${formatDatePtBr(resumo.periodo.start_date)} — ${formatDatePtBr(resumo.periodo.end_date)}`
     : `${formatDatePtBr(debouncedFilters.start_date)} — ${formatDatePtBr(debouncedFilters.end_date)}`;
 
   return (

@@ -36,7 +36,7 @@ from app.interface.http.period_query_params import (
 )
 from app.interface.http.routes.refugos.refugos_route_helpers import (
     DIMENSION_QUERY,
-    FILIAL_QUERY_OPTIONAL,
+    BRANCH_QUERY,
     GRANULARITY_QUERY,
     LIMIT_QUERY,
     MOTIVO_QUERY,
@@ -85,7 +85,7 @@ def get_refugos_health_route():
 )
 @require_any_permission(SCRAP_MONITORING_READ_PERMISSIONS)
 def get_refugos_filtros_route(
-    filial: Optional[str] = FILIAL_QUERY_OPTIONAL(),
+    branch: Optional[str] = BRANCH_QUERY(),
     start_date: Optional[str] = START_DATE_QUERY(),
     end_date: Optional[str] = END_DATE_QUERY(),
     dataInicio: Optional[str] = LEGACY_DATA_INICIO_QUERY(),
@@ -97,16 +97,16 @@ def get_refugos_filtros_route(
         dataInicio=dataInicio,
         dataFim=dataFim,
     )
-    filial_error = branch_access_error(filial)
-    if filial_error:
-        return filial_error
+    branch_error = branch_access_error(branch)
+    if branch_error:
+        return branch_error
 
     try:
         request = build_refugos_query_request(
-            filial=filial,
+            branch=branch,
             data_inicio=start_date,
             data_fim=end_date,
-            require_filial=False,
+            require_branch=False,
         )
     except ValueError as exc:
         log_error(f"Erro de validação ao carregar filtros de refugos: {exc}")
@@ -130,7 +130,7 @@ def get_refugos_filtros_route(
 )
 @require_any_permission(SCRAP_MONITORING_READ_PERMISSIONS)
 def get_refugos_resumo_route(
-    filial: Optional[str] = FILIAL_QUERY_OPTIONAL(),
+    branch: Optional[str] = BRANCH_QUERY(),
     start_date: Optional[str] = START_DATE_QUERY(),
     end_date: Optional[str] = END_DATE_QUERY(),
     dataInicio: Optional[str] = LEGACY_DATA_INICIO_QUERY(),
@@ -147,13 +147,13 @@ def get_refugos_resumo_route(
         dataInicio=dataInicio,
         dataFim=dataFim,
     )
-    filial_error = branch_access_error(filial)
-    if filial_error:
-        return filial_error
+    branch_error = branch_access_error(branch)
+    if branch_error:
+        return branch_error
 
     try:
         request = build_refugos_query_request(
-            filial=filial,
+            branch=branch,
             data_inicio=start_date,
             data_fim=end_date,
             mp=mp,
@@ -161,7 +161,7 @@ def get_refugos_resumo_route(
             op=op,
             motivo=motivo,
             recurso=recurso,
-            require_filial=False,
+            require_branch=False,
         )
     except ValueError as exc:
         log_error(f"Erro de validação ao carregar resumo de refugos: {exc}")
@@ -185,7 +185,7 @@ def get_refugos_resumo_route(
 )
 @require_any_permission(SCRAP_MONITORING_READ_PERMISSIONS)
 def get_refugos_scrap_cost_pct(
-    filial: Optional[str] = FILIAL_QUERY_OPTIONAL(),
+    branch: Optional[str] = BRANCH_QUERY(),
     start_date: Optional[str] = START_DATE_QUERY(),
     end_date: Optional[str] = END_DATE_QUERY(),
     dataInicio: Optional[str] = LEGACY_DATA_INICIO_QUERY(),
@@ -202,13 +202,13 @@ def get_refugos_scrap_cost_pct(
         dataInicio=dataInicio,
         dataFim=dataFim,
     )
-    filial_error = branch_access_error(filial)
-    if filial_error:
-        return filial_error
+    branch_error = branch_access_error(branch)
+    if branch_error:
+        return branch_error
 
     try:
         request = build_refugos_query_request(
-            filial=filial,
+            branch=branch,
             data_inicio=start_date,
             data_fim=end_date,
             mp=mp,
@@ -216,7 +216,7 @@ def get_refugos_scrap_cost_pct(
             op=op,
             motivo=motivo,
             recurso=recurso,
-            require_filial=False,
+            require_branch=False,
         )
     except ValueError as exc:
         log_error(f"Erro de validação ao carregar scrap cost / ROL: {exc}")
@@ -251,7 +251,7 @@ def get_refugos_scrap_cost_pct(
 )
 @require_any_permission(SCRAP_MONITORING_READ_PERMISSIONS)
 def get_refugos_rankings_route(
-    filial: Optional[str] = FILIAL_QUERY_OPTIONAL(),
+    branch: Optional[str] = BRANCH_QUERY(),
     dimension: str = DIMENSION_QUERY(),
     start_date: Optional[str] = START_DATE_QUERY(),
     end_date: Optional[str] = END_DATE_QUERY(),
@@ -270,13 +270,13 @@ def get_refugos_rankings_route(
         dataInicio=dataInicio,
         dataFim=dataFim,
     )
-    filial_error = branch_access_error(filial)
-    if filial_error:
-        return filial_error
+    branch_error = branch_access_error(branch)
+    if branch_error:
+        return branch_error
 
     try:
         request = build_refugos_query_request(
-            filial=filial,
+            branch=branch,
             data_inicio=start_date,
             data_fim=end_date,
             dimension=dimension,
@@ -286,7 +286,7 @@ def get_refugos_rankings_route(
             motivo=motivo,
             recurso=recurso,
             limit=limit,
-            require_filial=False,
+            require_branch=False,
         )
     except ValueError as exc:
         log_error(f"Erro de validação ao carregar rankings de refugos: {exc}")
@@ -312,7 +312,7 @@ def get_refugos_rankings_route(
 )
 @require_any_permission(SCRAP_MONITORING_READ_PERMISSIONS)
 def get_refugos_serie_route(
-    filial: Optional[str] = FILIAL_QUERY_OPTIONAL(),
+    branch: Optional[str] = BRANCH_QUERY(),
     start_date: Optional[str] = START_DATE_QUERY(),
     end_date: Optional[str] = END_DATE_QUERY(),
     dataInicio: Optional[str] = LEGACY_DATA_INICIO_QUERY(),
@@ -330,13 +330,13 @@ def get_refugos_serie_route(
         dataInicio=dataInicio,
         dataFim=dataFim,
     )
-    filial_error = branch_access_error(filial)
-    if filial_error:
-        return filial_error
+    branch_error = branch_access_error(branch)
+    if branch_error:
+        return branch_error
 
     try:
         request = build_refugos_serie_request(
-            filial=filial,
+            branch=branch,
             data_inicio=start_date,
             data_fim=end_date,
             granularity=granularity,
@@ -345,7 +345,7 @@ def get_refugos_serie_route(
             op=op,
             motivo=motivo,
             recurso=recurso,
-            require_filial=False,
+            require_branch=False,
         )
     except ValueError as exc:
         log_error(f"Erro de validação ao carregar série de refugos: {exc}")
@@ -369,7 +369,7 @@ def get_refugos_serie_route(
 )
 @require_any_permission(SCRAP_MONITORING_READ_PERMISSIONS)
 def get_refugos_registros_route(
-    filial: Optional[str] = FILIAL_QUERY_OPTIONAL(),
+    branch: Optional[str] = BRANCH_QUERY(),
     start_date: Optional[str] = START_DATE_QUERY(),
     end_date: Optional[str] = END_DATE_QUERY(),
     dataInicio: Optional[str] = LEGACY_DATA_INICIO_QUERY(),
@@ -388,13 +388,13 @@ def get_refugos_registros_route(
         dataInicio=dataInicio,
         dataFim=dataFim,
     )
-    filial_error = branch_access_error(filial)
-    if filial_error:
-        return filial_error
+    branch_error = branch_access_error(branch)
+    if branch_error:
+        return branch_error
 
     try:
         request = build_refugos_registros_request(
-            filial=filial,
+            branch=branch,
             data_inicio=start_date,
             data_fim=end_date,
             mp=mp,
@@ -404,7 +404,7 @@ def get_refugos_registros_route(
             recurso=recurso,
             page=page,
             page_size=page_size,
-            require_filial=False,
+            require_branch=False,
         )
     except ValueError as exc:
         log_error(f"Erro de validação ao carregar registros de refugos: {exc}")

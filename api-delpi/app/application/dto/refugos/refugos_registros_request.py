@@ -20,7 +20,7 @@ class RefugosRegistrosRequest:
     def from_query(
         cls,
         *,
-        filial: str | None,
+        branch: str | None,
         data_inicio: str | None = None,
         data_fim: str | None = None,
         mp: str | None = None,
@@ -30,10 +30,10 @@ class RefugosRegistrosRequest:
         recurso: str | None = None,
         page: int | None = None,
         page_size: int | None = None,
-        require_filial: bool = True,
+        require_branch: bool = True,
     ) -> RefugosRegistrosRequest:
         query = RefugosQueryRequest.from_query(
-            filial=filial,
+            branch=branch,
             data_inicio=data_inicio,
             data_fim=data_fim,
             mp=mp,
@@ -41,7 +41,7 @@ class RefugosRegistrosRequest:
             op=op,
             motivo=motivo,
             recurso=recurso,
-            require_filial=require_filial,
+            require_branch=require_branch,
         )
         return cls(
             query=query,

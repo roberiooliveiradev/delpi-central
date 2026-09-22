@@ -14,7 +14,7 @@ class GetRetrabalhoFiltrosUseCase:
         payload = self._repository.get_filtros(
             start_date=start_date,
             end_date=end_date,
-            branch=request.period.filial,
+            branch=request.period.branch,
         )
 
         recursos = [

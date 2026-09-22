@@ -22,7 +22,7 @@ class RetrabalhoQueryRequest:
     def from_query(
         cls,
         *,
-        filial: str | None,
+        branch: str | None,
         data_inicio: str | None = None,
         data_fim: str | None = None,
         recurso: str | None = None,
@@ -30,13 +30,13 @@ class RetrabalhoQueryRequest:
         codigo_operador: str | None = None,
         order_by: str | None = None,
         limit: int | None = None,
-        require_filial: bool = True,
+        require_branch: bool = True,
     ) -> RetrabalhoQueryRequest:
         period = RetrabalhoPeriod.resolve(
-            filial=filial,
+            branch=branch,
             data_inicio=data_inicio,
             data_fim=data_fim,
-            require_filial=require_filial,
+            require_branch=require_branch,
         )
         normalized_order = str(order_by or "horas").strip().lower() or "horas"
         if normalized_order not in {"horas", "custo"}:

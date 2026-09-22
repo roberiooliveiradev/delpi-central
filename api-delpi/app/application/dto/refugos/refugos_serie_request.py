@@ -23,7 +23,7 @@ class RefugosSerieRequest:
     def from_query(
         cls,
         *,
-        filial: str | None,
+        branch: str | None,
         data_inicio: str | None = None,
         data_fim: str | None = None,
         granularity: str | None = None,
@@ -32,13 +32,13 @@ class RefugosSerieRequest:
         op: str | None = None,
         motivo: str | None = None,
         recurso: str | None = None,
-        require_filial: bool = True,
+        require_branch: bool = True,
     ) -> RefugosSerieRequest:
         period = RefugosPeriod.resolve(
-            filial=filial,
+            branch=branch,
             data_inicio=data_inicio,
             data_fim=data_fim,
-            require_filial=require_filial,
+            require_branch=require_branch,
         )
         raw = (granularity or "auto").strip().lower() or "auto"
         if raw not in SERIE_GRANULARITIES:

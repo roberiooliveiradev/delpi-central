@@ -16,7 +16,7 @@ describe("scrap routes", () => {
 
   it("serializa e lê registro do detalhe", () => {
     const path = buildRegistroDetailPath("SC", {
-      filial: "01",
+      branch: "01",
       dataPerda: "2026-07-01",
       op: "OP1",
       pa: "PA1",

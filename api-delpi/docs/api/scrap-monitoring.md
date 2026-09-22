@@ -34,7 +34,7 @@ Plugin consumidor: `plugins/scrap-monitoring` · Filiais: SC=`01`, ES=`02`.
 
 | Parâmetro | Alias | Descrição |
 |---|---|---|
-| `filial` | — | Filial Protheus `01` (SC) ou `02` (ES) — **obrigatório** (exceto `/health`) |
+| `branch` | — | Filial Protheus `01` (SC) ou `02` (ES); omitir/`all` = consolidado (exige permissão das duas filiais ou `.view`) |
 | `dataInicio` | `dataInicio` | Data inicial `YYYY-MM-DD` (default: 1º dia do mês atual) |
 | `dataFim` | `dataFim` | Data final `YYYY-MM-DD` (default: hoje) |
 | `mp` | — | Filtro opcional por código de matéria-prima |
@@ -91,7 +91,7 @@ Combina o custo de refugo do período (`/refugos/resumo` → `totalValor`) com o
 | `filters_applied` | `mp`, `pa`, `op`, `motivo`, `recurso` (afetam só o numerador) |
 | `financial_context` | Contexto do ROL (receita bruta, devoluções, etc.) |
 
-Parâmetros: período e filtros opcionais iguais a `/refugos/resumo`. `filial` é **opcional** — omitida consolida SC+ES (`01`+`02`) no numerador e no ROL.
+Parâmetros: período e filtros opcionais iguais a `/refugos/resumo`. `branch` é **opcional** — omitida consolida SC+ES (`01`+`02`) no numerador e no ROL.
 
 ---
 
@@ -132,8 +132,8 @@ Campos extras por item: `paDescricao` (descrição do PA via SC2/SB1), `custoUni
 
 ```bash
 curl -sS -H "Authorization: Bearer $TOKEN" \
-  "$API/refugos/resumo?filial=01&dataInicio=2026-04-01&dataFim=2026-04-27"
+  "$API/refugos/resumo?branch=01&dataInicio=2026-04-01&dataFim=2026-04-27"
 
 curl -sS -H "Authorization: Bearer $TOKEN" \
-  "$API/refugos/rankings?filial=01&dimension=motivo&dataInicio=2026-04-01&dataFim=2026-04-27"
+  "$API/refugos/rankings?branch=01&dimension=motivo&dataInicio=2026-04-01&dataFim=2026-04-27"
 ```

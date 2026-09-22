@@ -54,7 +54,7 @@ def test_rankings_motivo_label_is_code_dash_description() -> None:
     ]
     use_case = GetRefugosRankingsUseCase(repo)
     request = RefugosQueryRequest.from_query(
-        filial="01",
+        branch="01",
         data_inicio="2026-07-01",
         data_fim="2026-07-31",
         dimension="motivo",
@@ -97,7 +97,7 @@ def test_registros_motivo_is_code_dash_description() -> None:
     ]
     use_case = GetRefugosRegistrosUseCase(repo)
     request = RefugosRegistrosRequest.from_query(
-        filial="01",
+        branch="01",
         data_inicio="2026-07-01",
         data_fim="2026-07-31",
     )

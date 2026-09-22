@@ -47,7 +47,6 @@ def _map_detalhe_item(row: dict[str, Any]) -> dict[str, Any]:
         "recno": recno,
         # camelCase PT (legado MFE)
         "dataReferencia": reference_date,
-        "filial": branch,
         "op": production_order,
         "produto": product_code,
         "operacao": operation,
@@ -76,7 +75,7 @@ class GetRetrabalhoDetalhesUseCase:
         common = {
             "start_date": start_date,
             "end_date": end_date,
-            "branch": request.query.period.filial,
+            "branch": request.query.period.branch,
             "recurso": request.query.recurso,
             "centro_custo": request.query.centro_custo,
             "codigo_operador": request.query.codigo_operador,
