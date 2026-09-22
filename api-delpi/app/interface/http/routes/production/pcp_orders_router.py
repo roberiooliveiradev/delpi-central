@@ -108,6 +108,7 @@ class PcpOrdersCommonQuery:
         mother_only: bool | None = None,
         open_only: bool | None = None,
         delayed_only: bool | None = None,
+        unbounded_delivery: bool | None = None,
     ) -> None:
         self.branch = branch
         self.delivery_start = delivery_start
@@ -120,6 +121,7 @@ class PcpOrdersCommonQuery:
         self.mother_only = mother_only
         self.open_only = open_only
         self.delayed_only = delayed_only
+        self.unbounded_delivery = unbounded_delivery
 
 
 def pcp_orders_common_query(
@@ -167,6 +169,13 @@ def pcp_orders_common_query(
         default=None,
         description="When true, only delayed orders (FL_ATRASADA=Sim).",
     ),
+    unbounded_delivery: bool = Query(
+        default=False,
+        description=(
+            "When true, skip the default 12-month DT_ENTREGA window and the "
+            "24-month cap. Optional delivery_start/delivery_end still apply."
+        ),
+    ),
 ) -> PcpOrdersCommonQuery:
     return PcpOrdersCommonQuery(
         branch=branch,
@@ -180,6 +189,7 @@ def pcp_orders_common_query(
         mother_only=mother_only,
         open_only=open_only,
         delayed_only=delayed_only,
+        unbounded_delivery=unbounded_delivery,
     )
 
 
@@ -188,6 +198,7 @@ def _filter_request(common: PcpOrdersCommonQuery) -> PcpOrdersFilterRequest:
         branch=common.branch,
         delivery_start=common.delivery_start,
         delivery_end=common.delivery_end,
+        unbounded_delivery=common.unbounded_delivery,
     )
     return PcpOrdersFilterRequest.from_params(
         period=period,
@@ -263,6 +274,7 @@ def get_production_pcp_orders_items(
             branch=common.branch,
             delivery_start=common.delivery_start,
             delivery_end=common.delivery_end,
+            unbounded_delivery=common.unbounded_delivery,
         )
         request = PcpOrdersItemsRequest.from_params(
             period=period,
@@ -316,6 +328,7 @@ def get_production_pcp_orders_ranking(
             branch=common.branch,
             delivery_start=common.delivery_start,
             delivery_end=common.delivery_end,
+            unbounded_delivery=common.unbounded_delivery,
         )
         request = PcpOrdersRankingRequest.from_params(
             period=period,

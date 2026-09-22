@@ -19,6 +19,7 @@ import type {
   Product3DModelListPayload,
   ReportsCatalogPayload,
   StockBalancesReportPayload,
+  ProductionOrdersReportPayload,
   Subplugin,
 } from "../types";
 
@@ -84,6 +85,41 @@ export async function fetchStockBalancesReport(params: {
     data: StockBalancesReportPayload;
   }>(ppcApiUrl(`/reports/stock-balances?${search.toString()}`), { signal: params.signal });
   return unwrapEnvelope(envelope, "Não foi possível carregar o relatório de saldos.");
+}
+
+export async function fetchProductionOrdersReport(params: {
+  branch: string;
+  opKey?: string;
+  productCode?: string;
+  motherOnly?: "yes" | "no" | "all";
+  openOnly?: "yes" | "no" | "all";
+  deliveryStart?: string | null;
+  deliveryEnd?: string | null;
+  actualEndStart?: string | null;
+  actualEndEnd?: string | null;
+  sort?: string | null;
+  page?: number;
+  pageSize?: number;
+  signal?: AbortSignal;
+}): Promise<ProductionOrdersReportPayload> {
+  const search = new URLSearchParams({ branch: params.branch });
+  if (params.opKey) search.set("opKey", params.opKey);
+  if (params.productCode) search.set("productCode", params.productCode);
+  if (params.motherOnly) search.set("motherOnly", params.motherOnly);
+  if (params.openOnly) search.set("openOnly", params.openOnly);
+  if (params.deliveryStart) search.set("deliveryStart", params.deliveryStart);
+  if (params.deliveryEnd) search.set("deliveryEnd", params.deliveryEnd);
+  if (params.actualEndStart) search.set("actualEndStart", params.actualEndStart);
+  if (params.actualEndEnd) search.set("actualEndEnd", params.actualEndEnd);
+  if (params.sort) search.set("sort", params.sort);
+  if (params.page) search.set("page", String(params.page));
+  if (params.pageSize) search.set("pageSize", String(params.pageSize));
+  const envelope = await httpGet<{
+    success: boolean;
+    message?: string;
+    data: ProductionOrdersReportPayload;
+  }>(ppcApiUrl(`/reports/production-orders?${search.toString()}`), { signal: params.signal });
+  return unwrapEnvelope(envelope, "Não foi possível carregar o relatório de ordens de produção.");
 }
 
 export type StockBalancesEmailSchedule = {

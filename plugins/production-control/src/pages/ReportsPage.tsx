@@ -3,11 +3,12 @@ import {
   createDashboardLoadingActivityCard,
   navigationCardBemClasses,
 } from "@delpi/plugin-ui/index";
-import { ArrowLeft, FileSpreadsheet, Package, Warehouse } from "lucide-react";
+import { ArrowLeft, ClipboardList, FileSpreadsheet, Package, Warehouse } from "lucide-react";
 import type { ReactNode } from "react";
 import { useCallback, useState } from "react";
 
 import { PpcWorkspaceHeader } from "../components/PpcWorkspaceHeader";
+import { ProductionOrdersReportPanel } from "../components/ProductionOrdersReportPanel";
 import { StockBalancesReportPanel } from "../components/StockBalancesReportPanel";
 import { copy } from "../content/copy";
 import { helpTooltips } from "../content/helpTooltips";
@@ -17,7 +18,7 @@ import { buildPpcHref, navigatePpc } from "../utils/routeParser";
 
 const navCardClassNames = navigationCardBemClasses("ppc");
 
-const KNOWN_REPORTS = new Set(["stock-balances"]);
+const KNOWN_REPORTS = new Set(["stock-balances", "production-orders"]);
 
 const LoadingCard = createDashboardLoadingActivityCard({
   prefix: "ppc",
@@ -31,6 +32,7 @@ const LoadingCard = createDashboardLoadingActivityCard({
 function reportIcon(icon: string | null | undefined): ReactNode {
   if (icon === "warehouse") return <Warehouse size={18} strokeWidth={1.75} aria-hidden />;
   if (icon === "package") return <Package size={18} strokeWidth={1.75} aria-hidden />;
+  if (icon === "clipboard-list") return <ClipboardList size={18} strokeWidth={1.75} aria-hidden />;
   return <FileSpreadsheet size={18} strokeWidth={1.75} aria-hidden />;
 }
 
@@ -38,6 +40,7 @@ function reportTitle(reportId: string, cards: ReportsCatalogItem[]): string {
   const fromCatalog = cards.find((item) => item.id === reportId)?.label;
   if (fromCatalog) return fromCatalog;
   if (reportId === "stock-balances") return copy.reports.stockBalances.tab;
+  if (reportId === "production-orders") return copy.reports.productionOrders.tab;
   return copy.reports.title;
 }
 
@@ -45,6 +48,7 @@ function reportSubtitle(reportId: string, cards: ReportsCatalogItem[]): string {
   const fromCatalog = cards.find((item) => item.id === reportId)?.description;
   if (fromCatalog) return fromCatalog;
   if (reportId === "stock-balances") return copy.reports.stockBalances.tableHint;
+  if (reportId === "production-orders") return copy.reports.productionOrders.tableHint;
   return copy.reports.subtitle;
 }
 
@@ -151,6 +155,10 @@ export function ReportsPage({ branch, reportId }: ReportsPageProps) {
 
       {activeId === "stock-balances" ? (
         <StockBalancesReportPanel branch={branch} onRefreshReady={onRefreshReady} />
+      ) : null}
+
+      {activeId === "production-orders" ? (
+        <ProductionOrdersReportPanel branch={branch} onRefreshReady={onRefreshReady} />
       ) : null}
     </div>
   );

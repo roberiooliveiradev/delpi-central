@@ -32,6 +32,16 @@ describe("parsePpcPath", () => {
     expect(route.reportId).toBe("stock-balances");
   });
 
+  it("reads the production-orders report deep link", () => {
+    const route = parsePpcPath(
+      "/apps/production-control/reports",
+      "?branch=01&report=production-orders",
+      "02",
+    );
+    expect(route.subpluginId).toBe("reports");
+    expect(route.reportId).toBe("production-orders");
+  });
+
   it("ignores unknown report ids", () => {
     const route = parsePpcPath(
       "/apps/production-control/reports",
@@ -106,6 +116,16 @@ describe("buildPpcHref", () => {
         reportId: "stock-balances",
       }),
     ).toBe("/apps/production-control/reports?branch=02&report=stock-balances");
+  });
+
+  it("serializes the production-orders report deep link", () => {
+    expect(
+      buildPpcHref({
+        subpluginId: "reports",
+        branch: "01",
+        reportId: "production-orders",
+      }),
+    ).toBe("/apps/production-control/reports?branch=01&report=production-orders");
   });
 
   it("serializes the demand filters", () => {

@@ -22,7 +22,7 @@ export const helpTooltips = {
   deliveryMap:
     "OPs mãe de PA com saldo em aberto, agrupadas pela data prevista de entrega. O primeiro bloco reúne hoje e atrasadas. Observações vêm do TOTVS (C2_OBS). MP-OK e Feedback são marcações manuais do PCP. A barra de progresso carrega só nas 3 primeiras tabelas (hoje+atrasadas primeiro); demais datas ficam sem barra. Linha riscada só quando o conjunto atinge 100%. A lista congela até clicar em Atualizar.",
   reports:
-    "Relatórios operacionais do Portal PCP. A entrada lista cards do catálogo; ao abrir um card você entra na página do relatório, com voltar ao catálogo. Na filial 01 o saldo lista só códigos 9…; na 02 códigos 8… e 9….",
+    "Relatórios operacionais do Portal PCP. A entrada lista cards do catálogo; ao abrir um card você entra na página do relatório, com voltar ao catálogo. Saldos: na filial 01 só códigos 9…; na 02 códigos 8… e 9…. Ordens de produção: padrão em aberto (sem data real de fim). Para OPs encerradas, filtra também pela data real de fim (C2_DATRF). Colunas: nº da OP, produto, emissão, início, entrega, quantidade, saldo e observações.",
   productModels:
     "Anexe um arquivo .glb ao código do produto da ordem de produção (PI ou PA). No cockpit, o operador vê o 3D na operação daquele produto; o desenho PDF continua sendo o do PA.",
 } as const;

@@ -2,6 +2,8 @@ import {
   createDashboardDataTableKit,
   createDashboardLoadingActivityCard,
   createDashboardPaginationKit,
+  dataTableBemClasses,
+  type DataTableClassNames,
 } from "@delpi/plugin-ui/index";
 
 import { copy } from "../content/copy";
@@ -27,7 +29,21 @@ const paginationKit = createDashboardPaginationKit({
   },
 });
 
-const kit = createDashboardDataTableKit({
+function withSentenceHeaders(classNames: DataTableClassNames): DataTableClassNames {
+  const extra = classNames.sentenceHeadersWrap;
+  if (!extra) return classNames;
+  return {
+    ...classNames,
+    wrap: [classNames.wrap, extra].filter(Boolean).join(" "),
+    wrapSection: [classNames.wrapSection, extra].filter(Boolean).join(" "),
+    wrapEmbedded: [classNames.wrapEmbedded, extra].filter(Boolean).join(" "),
+    scrollWrap: classNames.scrollWrap
+      ? [classNames.scrollWrap, extra].filter(Boolean).join(" ")
+      : classNames.scrollWrap,
+  };
+}
+
+const kitConfig = {
   prefix: "ppc",
   labels: copy.tableSection,
   LoadingActivityCard,
@@ -37,7 +53,14 @@ const kit = createDashboardDataTableKit({
   useLoadingProgress,
   useTrackedSingleFetchProgress,
   defaultPageSize: 50,
+};
+
+const kit = createDashboardDataTableKit(kitConfig);
+const sentenceHeaderKit = createDashboardDataTableKit({
+  ...kitConfig,
+  tableClassNames: withSentenceHeaders(dataTableBemClasses("ppc")),
 });
 
 export const DataTableSection = kit.DataTableSection;
+export const SentenceHeaderDataTableSection = sentenceHeaderKit.DataTableSection;
 export type { DataTableColumn } from "@delpi/plugin-ui/index";

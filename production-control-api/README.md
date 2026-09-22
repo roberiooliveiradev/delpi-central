@@ -26,6 +26,7 @@ BFF do **Portal PCP**. Dono do catálogo de subplugins, da **gestão à vista**,
 | GET | `/problem-analysis/{detectorId}?branch=01\|02&page=&pageSize=` | JWT + análise + filial |
 | GET | `/reports?branch=01\|02` | JWT + `reports.view` + filial |
 | GET | `/reports/stock-balances?branch=&search=&sort=&page=&pageSize=&refresh=` | JWT + `reports.view` + filial |
+| GET | `/reports/production-orders?branch=&opKey=&productCode=&openOnly=&motherOnly=&deliveryStart=&deliveryEnd=&actualEndStart=&actualEndEnd=&sort=&page=&pageSize=` | JWT + `reports.view` + filial |
 | GET | `/reports/stock-balances/email-schedule?branch=` | JWT + `reports.view` + filial (agenda pessoal Delpi Reports) |
 | PUT | `/reports/stock-balances/email-schedule?branch=` | JWT + `reports.view` + filial (body: hour, minute, enabled) |
 | GET | `/public/machine-load/{token}?branch=01\|02&workCenter=` | público (token do cockpit) |
@@ -41,6 +42,8 @@ BFF do **Portal PCP**. Dono do catálogo de subplugins, da **gestão à vista**,
 | WS | `/public/machine-load/{token}/ws?branch=01\|02` | público (token do cockpit) |
 
 Envelope `{ success, message, data }`.
+
+`GET /reports/production-orders` pagina a view PCP (`/production/pcp-orders/items` + `/summary`) com padrão **em aberto** e **sem janela de 12 meses** (`unbounded_delivery`), para listar OPs cuja data de entrega ainda está no futuro. `openOnly` / `motherOnly` aceitam `yes|no|all`. `actualEndStart` / `actualEndEnd` (`C2_DATRF`) só entram quando `openOnly=no`.
 
 `GET /overview` agrega OTD do mês corrente (`/production/otd` + `/otd/series`), volume diário de PAs (`/production/appointments/series` — só `qty_produced`, com `weekday_average` excluindo sáb/dom), o checklist **a faturar até hoje** (`billing_due_today`: pedidos com `data_entrega` ≤ hoje + recently-closed com `C6_DATFAT` = hoje; check amarelo = estoque FIFO, verde = faturado) e a fila de OPs atrasadas (`/production/pcp-orders/items?delayed_only=true`). A fila de atraso considera só produtos cujo código começa com `8` ou `9` (`delayedProductCodePrefixes` em `content/overview.json`).
 

@@ -10,6 +10,7 @@
   "defaultSort": "product_code_asc",
   "defaultPageSize": 50,
   "maxPageSize": 5000,
+  "productionOrdersMaxPageSize": 200,
   "fetchPageSize": 500,
   "maxFetchPages": 40,
   "cacheTtlSeconds": 120,
@@ -20,6 +21,13 @@
       "description": "Saldo positivo no armazém 01.",
       "icon": "warehouse",
       "eyebrow": "Estoque"
+    },
+    {
+      "id": "production-orders",
+      "label": "Ordens de produção",
+      "description": "OPs em aberto (sem data real de fim), com emissão, início, entrega, quantidade, saldo e observações.",
+      "icon": "clipboard-list",
+      "eyebrow": "Produção"
     }
   ]
 }

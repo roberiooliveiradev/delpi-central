@@ -85,6 +85,8 @@ O terceiro card (`?issue=pa-shortage&q=90263114`) é uma **consulta**: o PCP inf
 
 **Modelos 3D:** tela autenticada (`…/product-models`) para anexar um `.glb` ao código DELPI do produto da ordem de produção — o mesmo `product_code` da fila (PI nas operações intermediárias, PA na última). Reenvio substitui o arquivo vigente. No cockpit, a aba **3D** só aparece na operação cujo produto é aquele código; o desenho PDF **continua sendo o do PA**. Operações de PI não herdam o GLB anexado no PA.
 
+**Relatórios:** catálogo de cards (`GET /reports`). **Saldos** lista PA com saldo positivo no armazém 01. **Ordens de produção** (`?report=production-orders`) lista OPs da view PCP (`GET /reports/production-orders` → api-delpi `/production/pcp-orders/items`). O padrão é **em aberto** (sem data real de fim / `C2_DATRF` vazio), sem recorte de 12 meses de entrega. Colunas: nº da OP, produto, emissão, início, entrega, quantidade, saldo e observações; **Data fim** entra quando o recorte é de OPs encerradas. Filtros: OP, produto, em aberto, OP mãe, janela opcional de entrega e, só nas encerradas, janela de fim real (`C2_DATRF`). **Exportar Excel** baixa o recorte filtrado.
+
 ## API
 
 Base: `/apps/production-control-api`
@@ -115,6 +117,9 @@ Base: `/apps/production-control-api`
 | GET | `/public/machine-load/{token}?branch=&workCenter=` | Cockpit do operador (público, somente leitura) |
 | GET | `/public/machine-load/{token}/drawings/{paCode}/pdf?branch=` | PDF do desenho do PA lido da pasta do FILESERVER montada no BFF (público, PA precisa estar na fila) |
 | GET | `/public/machine-load/{token}/models/{productCode}/glb?branch=` | GLB do produto da OP (público; o `product_code` precisa estar como produto de alguma OP na fila) |
+| GET | `/reports?branch=` | Catálogo de relatórios |
+| GET | `/reports/stock-balances?branch=&search=&sort=&page=&pageSize=&refresh=` | Relatório de saldos |
+| GET | `/reports/production-orders?branch=&opKey=&productCode=&openOnly=&motherOnly=&deliveryStart=&deliveryEnd=&actualEndStart=&actualEndEnd=&sort=&page=&pageSize=` | Relatório de OPs |
 | GET | `/product-3d-models` | Lista os modelos 3D anexados |
 | PUT | `/product-3d-models/{productCode}` | Anexa ou substitui o `.glb` do produto (multipart `file`) |
 | DELETE | `/product-3d-models/{productCode}` | Remove o modelo 3D do produto |
@@ -124,7 +129,7 @@ Contrato TOTVS (não duplicado aqui): [production-pcp-orders.md](../../api-delpi
 
 ## Permissões
 
-`production-control.access`, `production-control.demand.view`, `production-control.machine-load.view`, `production-control.problem-analysis.view`, `production-control.materials.view`, `production-control.delivery-map.view`, `production-control.product-3d-models.manage`, `production-control.view.filial-01`, `production-control.view.filial-02`. A rail só mostra Materiais / Mapa de entrega / Modelos 3D para quem tem a permissão correspondente — o grant no Keycloak é operação (código e manifesto já declaram a permissão).
+`production-control.access`, `production-control.demand.view`, `production-control.machine-load.view`, `production-control.problem-analysis.view`, `production-control.materials.view`, `production-control.delivery-map.view`, `production-control.reports.view`, `production-control.product-3d-models.manage`, `production-control.view.filial-01`, `production-control.view.filial-02`. A rail só mostra Materiais / Mapa de entrega / Relatórios / Modelos 3D para quem tem a permissão correspondente — o grant no Keycloak é operação (código e manifesto já declaram a permissão).
 
 ## Desenvolvimento
 
