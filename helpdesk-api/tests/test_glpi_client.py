@@ -1,5 +1,7 @@
 from urllib.parse import unquote
 
+import json
+
 import httpx
 import pytest
 
@@ -888,6 +890,15 @@ def test_legacy_document_upload_uses_apirest_with_app_token():
             assert request.headers.get("Session-Token") == "sess-1"
             assert request.headers.get("App-Token") == "app-token-x"
             return httpx.Response(201, json={"id": 55})
+        if request.url.path.endswith("/apirest.php/Document/55/Document_Item"):
+            return httpx.Response(200, json=[])
+        if request.url.path.endswith("/apirest.php/Document_Item"):
+            assert request.headers.get("Session-Token") == "sess-1"
+            body = json.loads(request.content.decode())
+            assert body["input"]["documents_id"] == 55
+            assert body["input"]["items_id"] == 7
+            assert body["input"]["itemtype"] == "Ticket"
+            return httpx.Response(201, json={"id": 1})
         if request.url.path.endswith("/apirest.php/killSession"):
             return httpx.Response(200, json={})
         return httpx.Response(404, json={"error": "missing"})
@@ -928,4 +939,5 @@ def test_legacy_document_upload_uses_apirest_with_app_token():
     assert uploaded.document_id == 55
     assert uploaded.filename == "placa.png"
     assert any("/apirest.php/Document" in item for item in calls)
+    assert any("/apirest.php/Document_Item" in item for item in calls)
     assert any("killSession" in item for item in calls)

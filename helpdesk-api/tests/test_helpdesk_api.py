@@ -290,6 +290,50 @@ def test_attachment_download_uses_only_files_on_the_ticket():
     assert 99 not in glpi.downloaded
 
 
+def test_attachment_download_allows_linked_doc_missing_from_timeline():
+    """H12: upload cria Document_Item; Timeline pode omitir — GET ainda libera."""
+    client, glpi = build_client()
+    link(client)
+    glpi.attach_uploads_to_timeline = False
+    uploaded = client.post(
+        "/tickets/7/attachments",
+        files={"file": ("print.png", b"img", "image/png")},
+        headers={**auth_headers(), "Idempotency-Key": "up-lag"},
+    )
+    assert uploaded.status_code == 201
+    document_id = uploaded.json()["document_id"]
+    assert document_id not in {item.document_id for item in glpi.detail.attachments}
+    downloaded = client.get(f"/tickets/7/attachments/{document_id}", headers=auth_headers())
+    assert downloaded.status_code == 200
+    assert downloaded.content == b"img"
+    alien = client.get("/tickets/7/attachments/99", headers=auth_headers())
+    assert alien.status_code == 404
+
+
+def test_followup_keeps_inline_image_when_doc_only_on_document_item():
+    client, glpi = build_client()
+    link(client)
+    glpi.attach_uploads_to_timeline = False
+    uploaded = client.post(
+        "/tickets/7/attachments",
+        files={"file": ("placa.png", b"png-new", "image/png")},
+        headers={**auth_headers(), "Idempotency-Key": "up-follow-lag"},
+    )
+    document_id = uploaded.json()["document_id"]
+    follow = client.post(
+        "/tickets/7/followups",
+        json={
+            "content": (
+                f'<p>foto</p><p><img src="/apps/helpdesk-api/tickets/7/attachments/{document_id}" '
+                'alt="placa" /></p>'
+            )
+        },
+        headers={**auth_headers(), "Idempotency-Key": "follow-lag"},
+    )
+    assert follow.status_code == 201
+    assert f"attachments/{document_id}" in glpi.followups[0][1]
+
+
 def test_attachment_upload_via_legacy_path():
     client, glpi = build_client()
     link(client)

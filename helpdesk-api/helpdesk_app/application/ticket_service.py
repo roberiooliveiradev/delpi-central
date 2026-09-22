@@ -32,11 +32,16 @@ class TicketService:
         return self._glpi.get_ticket(self._token(subject), ticket_id, viewer_email=viewer_email)
 
     def attachment(self, subject: str, ticket_id: int, document_id: int) -> tuple[bytes, str, str]:
+        token = self._token(subject)
         ticket = self.ticket(subject, ticket_id, viewer_email="")
         match = next((item for item in ticket.attachments if item.document_id == document_id), None)
         if match is None:
-            raise GlpiNotFound("Anexo não encontrado.")
-        content, mime = self._glpi.download_attachment(self._token(subject), document_id)
+            # H12: Timeline HLAPI pode omitir Document_Item recém-criado via upload legado.
+            if not self._glpi.ticket_owns_document(token, ticket_id, document_id):
+                raise GlpiNotFound("Anexo não encontrado.")
+            content, mime = self._glpi.download_attachment(token, document_id)
+            return content, mime, "anexo"
+        content, mime = self._glpi.download_attachment(token, document_id)
         return content, mime, match.filename
 
     def upload_attachment(
@@ -126,6 +131,11 @@ class TicketService:
         if html_refs - allowed:
             ticket = self.ticket(subject, ticket_id, viewer_email="")
             allowed = {item.document_id for item in ticket.attachments}
+        # H12: Document_Item via legacy upload may still be absent from Timeline.
+        token = self._token(subject)
+        for doc_id in html_refs - allowed:
+            if self._glpi.ticket_owns_document(token, ticket_id, doc_id):
+                allowed.add(doc_id)
         content_html = _prepare_message_html(
             content,
             "content",

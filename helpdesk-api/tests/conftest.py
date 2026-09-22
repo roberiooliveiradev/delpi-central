@@ -69,7 +69,11 @@ class FakeGlpi:
         self.followups = []
         self.observers = []
         self.uploads = []
+        # document_id → ticket_id for Document_Item membership (may lag Timeline).
+        self.document_links: dict[int, int] = {2: 7, 4: 7}
         self.calls = 0
+        # When False, upload does not appear on ticket.attachments (Timeline lag).
+        self.attach_uploads_to_timeline = True
 
     def authorization_url(self, *, state: str, code_challenge: str) -> str:
         return f"https://glpi.example/authorize?state={state}&challenge={code_challenge}"
@@ -128,6 +132,11 @@ class FakeGlpi:
         self.downloaded.append(document_id)
         return self.files[document_id]
 
+    def ticket_owns_document(self, access_token: str, ticket_id: int, document_id: int) -> bool:
+        self.calls += 1
+        assert access_token
+        return self.document_links.get(int(document_id)) == int(ticket_id)
+
     def upload_ticket_document(
         self,
         access_token: str,
@@ -149,7 +158,8 @@ class FakeGlpi:
         attachment = Attachment(document_id, filename, mime or "application/octet-stream")
         self.uploads.append((ticket_id, filename, content, mime))
         self.files[document_id] = (content, mime or "application/octet-stream")
-        if self.detail.id == ticket_id:
+        self.document_links[document_id] = ticket_id
+        if self.attach_uploads_to_timeline and self.detail.id == ticket_id:
             self.detail = replace(
                 self.detail,
                 attachments=self.detail.attachments + (attachment,),

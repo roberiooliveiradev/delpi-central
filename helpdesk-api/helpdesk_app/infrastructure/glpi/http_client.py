@@ -290,9 +290,38 @@ class HttpxGlpiClient:
                 mime=(mime or "application/octet-stream").split(";")[0].strip()
                 or "application/octet-stream",
             )
+            # UploadManifest items_id is not always enough for Timeline visibility.
+            self._legacy_ensure_document_item(
+                session_token=session_token,
+                document_id=document_id,
+                ticket_id=ticket_id,
+            )
         finally:
             self._legacy_kill_session(session_token)
         return Attachment(document_id=document_id, filename=safe_name, mime=mime or "")
+
+    def ticket_owns_document(self, access_token: str, ticket_id: int, document_id: int) -> bool:
+        """True when Document_Item links document_id to this Ticket (legacy check).
+
+        Caller must already have proven ticket ACL (get_ticket / GET Ticket).
+        """
+        ticket_id = int(ticket_id)
+        document_id = int(document_id)
+        if ticket_id <= 0 or document_id <= 0:
+            return False
+        # OAuth subject can see the ticket before we open the technical session.
+        self._json("GET", f"/api.php/v2.2/Assistance/Ticket/{ticket_id}", token=access_token)
+        if not self._legacy_upload_enabled or not self._legacy_app_token or not self._legacy_user_token:
+            return False
+        session_token = self._legacy_init_session()
+        try:
+            return self._legacy_document_linked_to_ticket(
+                session_token=session_token,
+                document_id=document_id,
+                ticket_id=ticket_id,
+            )
+        finally:
+            self._legacy_kill_session(session_token)
 
     def _legacy_init_session(self) -> str:
         """Open apirest session with App-Token + dedicated user_token (H12 Document only).
@@ -338,6 +367,114 @@ class HttpxGlpiClient:
             )
         except httpx.HTTPError:
             logger.info("glpi_legacy_kill_failed")
+
+    def _legacy_ensure_document_item(
+        self,
+        *,
+        session_token: str,
+        document_id: int,
+        ticket_id: int,
+    ) -> None:
+        """POST Document_Item so Timeline/membership can see the upload (H12)."""
+        if self._legacy_document_linked_to_ticket(
+            session_token=session_token,
+            document_id=document_id,
+            ticket_id=ticket_id,
+        ):
+            return
+        self.post_calls += 1
+        try:
+            response = self._http.post(
+                f"{self._base}/apirest.php/Document_Item",
+                headers={
+                    "Accept": "application/json",
+                    "Content-Type": "application/json",
+                    "App-Token": self._legacy_app_token,
+                    "Session-Token": session_token,
+                },
+                json={
+                    "input": {
+                        "documents_id": int(document_id),
+                        "itemtype": "Ticket",
+                        "items_id": int(ticket_id),
+                    }
+                },
+            )
+        except httpx.TimeoutException as exc:
+            raise GlpiUnavailable("GLPI indisponível.") from exc
+        logger.info(
+            "glpi_legacy_document_item status=%s document_id=%s ticket_id=%s",
+            response.status_code,
+            document_id,
+            ticket_id,
+        )
+        if response.status_code in {200, 201}:
+            return
+        # Already linked / duplicate — treat as success for membership.
+        if response.status_code in {400, 422}:
+            body = (response.text or "")[:240]
+            logger.info("glpi_legacy_document_item_dup_or_reject body=%s", body)
+            if self._legacy_document_linked_to_ticket(
+                session_token=session_token,
+                document_id=document_id,
+                ticket_id=ticket_id,
+            ):
+                return
+            raise GlpiValidation("O GLPI não ligou o documento ao chamado.")
+        if response.status_code == 401:
+            raise GlpiUnauthorized("Sessão do GLPI recusada.")
+        if response.status_code == 403:
+            raise GlpiForbidden("O perfil no GLPI não permite esta ação.")
+        raise GlpiUnavailable("GLPI indisponível.")
+
+    def _legacy_document_linked_to_ticket(
+        self,
+        *,
+        session_token: str,
+        document_id: int,
+        ticket_id: int,
+    ) -> bool:
+        try:
+            response = self._http.request(
+                "GET",
+                f"{self._base}/apirest.php/Document/{int(document_id)}/Document_Item",
+                headers={
+                    "Accept": "application/json",
+                    "App-Token": self._legacy_app_token,
+                    "Session-Token": session_token,
+                },
+            )
+        except httpx.TimeoutException:
+            return False
+        except httpx.HTTPError:
+            return False
+        if response.status_code != 200 or not response.content:
+            return False
+        try:
+            data = response.json()
+        except ValueError:
+            return False
+        rows = data if isinstance(data, list) else data.get("data") if isinstance(data, dict) else None
+        if not isinstance(rows, list):
+            # Single object form
+            if isinstance(data, dict) and data.get("itemtype"):
+                rows = [data]
+            else:
+                return False
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+            itemtype = str(row.get("itemtype") or "")
+            items_id = row.get("items_id")
+            if isinstance(items_id, dict):
+                items_id = items_id.get("id")
+            try:
+                linked = int(items_id)
+            except (TypeError, ValueError):
+                continue
+            if itemtype == "Ticket" and linked == int(ticket_id):
+                return True
+        return False
 
     def _legacy_post_document(
         self,
