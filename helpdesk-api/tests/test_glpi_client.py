@@ -192,6 +192,49 @@ def test_mapping_keeps_followups_and_hides_tasks():
     assert categories[0].name == "TI > Rede"
 
 
+def test_mapping_keeps_solution_and_hides_validation():
+    detail = parse_ticket_detail(
+        {
+            "id": 5,
+            "name": "VPN",
+            "content": "Sem acesso",
+            "status": {"id": 5, "name": "Solucionado"},
+            "category": {"id": 2, "name": "Rede"},
+            "urgency": 3,
+            "date_mod": "2026-09-21T12:00:00Z",
+            "date_solve": "2026-09-21T12:00:00Z",
+        },
+        {
+            "results": [
+                {
+                    "type": "Followup",
+                    "item": {
+                        "id": 10,
+                        "content": "Reinicie o cliente",
+                        "date_creation": "2026-09-21T11:00:00Z",
+                        "user": {"firstname": "Ana", "realname": "Silva"},
+                    },
+                },
+                {
+                    "type": "Solution",
+                    "item": {
+                        "id": 11,
+                        "content": "<p>Cliente reiniciado; VPN ok.</p>",
+                        "date_creation": "2026-09-21T12:00:00Z",
+                        "user": {"firstname": "Ana", "realname": "Silva"},
+                    },
+                },
+                {"type": "Validation", "item": {"id": 12, "content": "pedido interno"}},
+                {"type": "Task", "item": {"id": 13, "content": "tarefa interna"}},
+            ]
+        },
+    )
+    assert [entry.kind for entry in detail.timeline] == ["followup", "solution"]
+    assert detail.timeline[1].content == "Cliente reiniciado; VPN ok."
+    assert "<p>" not in detail.timeline[1].content
+    assert "Cliente reiniciado" in detail.timeline[1].content_html
+
+
 def test_parse_categories_keeps_helpdesk_visible_and_drops_internal():
     categories = parse_categories(
         {

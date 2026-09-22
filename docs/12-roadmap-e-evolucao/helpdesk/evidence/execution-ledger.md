@@ -27,7 +27,8 @@ Estados: `PROVEN` | `PLANNED` | `TARGET` | `NOT_STARTED`.
 | cartão.urgência | subtítulo `#id · urgência · técnico` | PROVEN | commit `ed6a67b5b`, 21/09/2026 |
 | lista.ux | Filtros só no builder; Tabela\|Cards; page_size na paginação; tema dark | PROVEN | 21/09/2026 |
 | lista.ux.pagination | Rodapé `createDashboardPaginationKit` (setas, Ir para, resumo); `HintAction` sem ícones ?; `HelpdeskListPaginationFooter` | PROVEN | commit `1d999772a`, 21/09/2026 |
+| H10.solution.read | Bolha `kind=solution` na conversa (Timeline Solution) | PROVEN | testes mapping + conversationMessages, 21/09/2026 |
 
-H3 e H6 fechados. Paridade E6–E13 + verify-final concluídos. E14 (menção leitura M-07) entregue; M-23 (`@` no compositor) BLOQUEADO sem catálogo HLAPI. Residuais de produto: H10 CONSOLE, H12 BLOQUEADO. Sem senha neste arquivo.
+H3 e H6 fechados. Paridade E6–E13 + verify-final concluídos. E14 (menção leitura M-07) entregue; M-23 (`@` no compositor) BLOQUEADO sem catálogo HLAPI. H10: **leitura** da solução PROVEN; write (aprovar/reabrir/satisfação) CONSOLE. H12 BLOQUEADO. Sem senha neste arquivo.
 
 Segredo do cliente OAuth não é registrado aqui.

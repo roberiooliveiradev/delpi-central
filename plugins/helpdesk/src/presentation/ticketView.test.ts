@@ -285,6 +285,48 @@ describe("conversationMessages", () => {
     expect(messages.map((message) => message.kind)).not.toContain("task");
   });
 
+  it("mostra a solução da timeline com título Solução e ignora validation", () => {
+    const messages = conversationMessages(
+      {
+        title: "VPN",
+        description: "Sem acesso",
+        created_at: "2026-09-21T10:00:00Z",
+        requester_display_name: "Ana",
+        requester_mine: true,
+        timeline: [
+          {
+            id: 10,
+            kind: "followup",
+            content: "Reinicie o cliente",
+            created_at: "2026-09-21T11:00:00Z",
+            author_display_name: "Técnico",
+          },
+          {
+            id: 11,
+            kind: "solution",
+            content: "Cliente reiniciado; VPN ok.",
+            content_html: "<p>Cliente reiniciado; VPN ok.</p>",
+            created_at: "2026-09-21T12:00:00Z",
+            author_display_name: "Técnico",
+          },
+          {
+            id: 12,
+            kind: "validation",
+            content: "pedido interno",
+            created_at: "2026-09-21T12:05:00Z",
+            author_display_name: "Chefe",
+          },
+        ],
+        attachments: [],
+      },
+      now,
+    );
+    expect(messages.map((message) => message.kind)).toEqual(["opening", "followup", "solution"]);
+    expect(messages[2]?.headingText).toBe("Solução");
+    expect(messages[2]?.bodyText).toBe("Cliente reiniciado; VPN ok.");
+    expect(messages.some((message) => message.bodyText === "pedido interno")).toBe(false);
+  });
+
   it("não usa o nome do autor para decidir o lado da bolha", () => {
     const messages = conversationMessages(
       {

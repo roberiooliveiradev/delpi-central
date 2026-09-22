@@ -33,8 +33,8 @@ Fontes: [Tickets](https://help.glpi-project.org/documentation/modules/assistance
 | Responder | acompanhamento: comentário, documento opcional, motivo de pendência; o chamado pode ir para pendente | só o comentário público, no compositor que já existe |
 | Acompanhamento privado, origem, modelo, promover a chamado | recursos da interface padrão, com direito de ver privado | ficam no console |
 | Tarefa | trabalho interno do técnico | fica no console; a timeline atual já esconde `Task` |
-| Solução | encerra o fluxo e pede aprovação do solicitante; sem resposta, fecha sozinho (15 dias por padrão da doc) | bolha futura, não desta conversa |
-| Aprovar ou recusar solução / pesquisa | direito «Approve solution / Reply survey (my ticket)», a partir do GLPI 11 | onda posterior, já fora em [`05-roadmap.md`](./05-roadmap.md) |
+| Solução | encerra o fluxo e pede aprovação do solicitante; sem resposta, fecha sozinho (15 dias por padrão da doc) | bolha **leitura** `kind=solution` (título «Solução»); sem botões |
+| Aprovar ou recusar solução / pesquisa | direito «Approve solution / Reply survey (my ticket)», a partir do GLPI 11 | CONSOLE — HLAPI sem `add_close` / Satisfaction ([`e10-cycle-console.md`](./evidence/e10-cycle-console.md)) |
 | Documento | pode ir junto do acompanhamento ou da solução | baixar o que já está no chamado já está publicado; enviar arquivo novo continua bloqueado pela HLAPI |
 
 Papéis da equipe no schema `Ticket.team`: `requester`, `assigned`, `observer`. O autor da bolha de abertura é o membro `requester`. `user_recipient` é outro campo e não substitui o solicitante. O acompanhamento traz `user`, `content` (HTML), `date_creation`, `is_private` e `timeline_position`.
@@ -74,6 +74,10 @@ HelpdeskSectionCard  «Conversa»
     content_html
     baixar arquivo, quando o arquivo estiver ligado a essa mensagem (A-07)
 
+  bolha de solução  (quando a Timeline trouxer Solution)
+    heading «Solução»
+    content_html  — só leitura; sem Aprovar/Recusar
+
   HelpdeskRichTextField  «Responder»  (oculto se can_followup=false)
   [ Enviar ]
 ```
@@ -101,7 +105,8 @@ O compositor de resposta e o de abertura usam o mesmo `HelpdeskRichTextField` (`
 | Instante da abertura | `Ticket.date_creation` | `created_at` no detalhe |
 | Nome do solicitante | `Ticket.team[]` com `role=requester`; a limpeza da equipe também preserva `display_name` | `requester_display_name` |
 | Texto da abertura | `Ticket.content` (HTML) | `description` (texto) + `description_html` (sanitizado) |
-| Acompanhamento | `Followup.user`, `content`, `date_creation` | `timeline[]` com `author_display_name`, `content`, `content_html`, `created_at`, `mine` |
+| Acompanhamento | `Followup.user`, `content`, `date_creation` | `timeline[]` `kind=followup` com `author_display_name`, `content`, `content_html`, `created_at`, `mine` |
+| Solução (leitura) | Timeline `Solution` / `ITILSolution` | `timeline[]` `kind=solution` — sem write |
 | Autor da mensagem | `Followup.user.id` / `team[].id` e `GET /session` → `user_id`; e-mail do JWT se o GLPI trouxer e-mail | `mine` / `requester_mine` — nunca o nome |
 | Acompanhamento privado | `Followup.is_private` | não entra em `timeline` |
 | Arquivo do chamado | `Timeline` tipo `Document`, `documents_id` | `attachments[]` e o download já publicados; a tela mostra o botão na abertura |
@@ -109,7 +114,7 @@ O compositor de resposta e o de abertura usam o mesmo `HelpdeskRichTextField` (`
 
 Texto plano derivado continua no campo `description` / `content` (busca, aria, fallback). A bolha renderiza o HTML sanitizado — não tags cruas do GLPI.
 
-Enviar arquivo novo, tarefa, solução, aprovação, atores editáveis e entidade continuam fora. O envio de arquivo esbarra na HLAPI, que não recebe o binário; a API legada permanece desligada.
+Enviar arquivo novo, tarefa, **escrever** solução, aprovação, atores editáveis e entidade continuam fora. Ler a solução publicada já entra na conversa. O envio de arquivo esbarra na HLAPI, que não recebe o binário; a API legada permanece desligada.
 
 ## 7. O que não copiar
 
@@ -131,7 +136,8 @@ A prova automatizada cobre a abertura, o acompanhamento de outra pessoa, o solic
 |---|---|
 | Positivo | o chamado 1114 abre com a bolha «RT / Robério Teixeira», o título e a descrição, sem «nenhum evento» no lugar dessa abertura |
 | Irmão | um acompanhamento de outra pessoa aparece como outra bolha, com o nome e a hora dele |
-| Negativo | tarefa, solução, aprovação e campo de ator não aparecem; acompanhamento privado não aparece para o solicitante |
+| Negativo | tarefa, Validation, aprovação e campo de ator não aparecem; acompanhamento privado não aparece; sem botões Aprovar/Recusar |
+| Solução | bolha `kind=solution` com título «Solução» quando a Timeline trouxer |
 | Arquivo | o botão baixar continua só para documento daquele chamado |
 | Tema | claro e escuro usam o token do kit; recarregar a página mantém a mesma conversa |
 

@@ -146,7 +146,7 @@ Estes não abrem etapa sozinhos. Só deixam de ser lacuna invisível.
 | X-13 | Observador na abertura | o GLPI simplificado deixa adicionar watcher | **IMPLEMENTADO** `observer_ids` → TeamMember |
 | X-28 | TTR visível | «até quando deve ser resolvido» | **IMPLEMENTADO** `sla_ttr` / `sla_tto` |
 | X-29 | Vínculo (duplicata / filho) | o solicitante vê que o 1101 é duplicata do 1090 | **FORA** (H-X4); criar vínculo CONSOLE |
-| X-46 | Aprovar solução | já era H5; permanece | **CONSOLE** (E10) |
+| X-46 | Aprovar solução | já era H5; permanece | **leitura** solução IMPLEMENTADA; aprovar/recusar **CONSOLE** (E10) |
 | G-05 | Requerente na lista | mesmo rótulo do detalhe | **IMPLEMENTADO** `requester_display_name` |
 | H12 / M-23 | upload / `@` escrita | HLAPI | BLOQUEADO |
 

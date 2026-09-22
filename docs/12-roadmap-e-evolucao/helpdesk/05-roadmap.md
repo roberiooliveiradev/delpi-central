@@ -17,7 +17,7 @@ H6  Investigação HLAPI (gates)             PROVEN
 H7  Estados e lista do solicitante         ENTREGUE
 H8  Corpo rico da mensagem                 ENTREGUE  (menção leitura E14; @ escrita BLOQUEADA sem catálogo)
 H9  Página do chamado                      ENTREGUE
-H10 Solução, reabrir, satisfação           CONSOLE  (E10.S1 — sem operação HLAPI do solicitante)
+H10 Solução, reabrir, satisfação           LEITURA solução ENTREGUE; write CONSOLE (E10.S1)
 H11 Condicionais (TTR, observer)           ENTREGUE  Forms e vínculo riscados (H6)
 H12 Upload de arquivo novo                 BLOQUEADO até decisão + API
 H13 Listagem dinâmica (modelo → builder)   ENTREGUE  AND builder + multi-sort + prefs + rodapé kit paginação (G-32e); OR/export/massa CONSOLE
@@ -106,7 +106,7 @@ Ex-H5 que **é** do colaborador, não da bancada.
 
 | Entrega | Fonte | HD |
 |---|---|---|
-| Ver solução e aprovar/recusar | 14 P-07, 15 X-46 — **CONSOLE** E10 | HD-024 |
+| Ver solução e aprovar/recusar | 14 P-07, 15 X-46 — **leitura** solução IMPLEMENTADA; aprovar/recusar **CONSOLE** E10 | HD-024 |
 | Reabrir se a matriz simplificada deixar | 14 P-08 — **CONSOLE** (PATCH 403) | HD-024 |
 | Pesquisa de satisfação | 15 X-51 — **CONSOLE** (sem path) | HD-024 |
 
@@ -152,7 +152,7 @@ Nada obrigatório no MFE/BFF do solicitante. Desbloqueios possíveis:
 |---|---|---|
 | M-23 menção `@` na escrita | BLOQUEADO | catálogo HLAPI de usuários/grupos |
 | H12 upload novo anexo | BLOQUEADO | multipart HLAPI + política de storage |
-| H10 aprovar/reabrir/satisfação | CONSOLE | operações HLAPI do solicitante |
+| H10 aprovar/reabrir/satisfação | CONSOLE (leitura da solução já entregue) | operações HLAPI do solicitante |
 
 ## Dependências
 

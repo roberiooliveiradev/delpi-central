@@ -305,7 +305,7 @@ export type ConversationSource = {
 
 export type ConversationMessage = {
   id: string;
-  kind: "opening" | "followup";
+  kind: "opening" | "followup" | "solution";
   headingText: string;
   bodyText: string;
   bodyHtml: string;
@@ -428,14 +428,15 @@ export function conversationMessages(ticket: ConversationSource, now: Date): Con
     mine: ticket.requester_mine === true,
     attachmentIds: ticket.attachments.map((file) => file.document_id),
   };
-  const followups = ticket.timeline
-    .filter((entry) => entry.kind === "followup")
+  const replies = ticket.timeline
+    .filter((entry) => entry.kind === "followup" || entry.kind === "solution")
     .map((entry): ConversationMessage => {
       const bodyHtml = stampHelpdeskAttachmentIds(entry.content_html || "");
+      const isSolution = entry.kind === "solution";
       return {
         id: String(entry.id),
-        kind: "followup",
-        headingText: "",
+        kind: isSolution ? "solution" : "followup",
+        headingText: isSolution ? "Solução" : "",
         bodyText: entry.content,
         bodyHtml,
         createdAtLabel: relativeTimeLabel(entry.created_at, now),
@@ -444,5 +445,5 @@ export function conversationMessages(ticket: ConversationSource, now: Date): Con
         attachmentIds: [],
       };
     });
-  return [opening, ...followups];
+  return [opening, ...replies];
 }

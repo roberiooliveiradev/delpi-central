@@ -4,6 +4,7 @@ Categoria: GET /api.php/v2.2/Dropdowns/ITILCategory?filter=is_helpdesk_visible==
 Urgência: enum fixo do schema Ticket (1–5), não é dropdown.
 Chamado: /api.php/v2.2/Assistance/Ticket
 Acompanhamento: POST .../Timeline/Followup
+Solução (leitura): Timeline type Solution / ITILSolution → kind=solution
 """
 
 import html
@@ -292,7 +293,8 @@ def _timeline_entry(
     allowed_document_ids: set[int],
 ) -> TimelineEntry | None:
     kind, payload = _timeline_payload(row)
-    if kind not in {"Followup", "ITILFollowup"}:
+    entry_kind = _timeline_kind(kind)
+    if entry_kind is None:
         return None
     row = payload
     if _is_private(row):
@@ -309,13 +311,22 @@ def _timeline_entry(
     content = _text(content_html) if content_html else _text(row.get("content"))
     return TimelineEntry(
         id=int(row.get("id") or 0),
-        kind="followup",
+        kind=entry_kind,
         content=content,
         content_html=content_html,
         created_at=str(row.get("date_creation") or row.get("date") or ""),
         author_display_name=author,
         author_identity=_person_identity(user if isinstance(user, dict) else {}),
     )
+
+
+def _timeline_kind(raw: str) -> str | None:
+    """Map HLAPI Timeline types the requester may read. Task/Validation stay console."""
+    if raw in {"Followup", "ITILFollowup"}:
+        return "followup"
+    if raw in {"Solution", "ITILSolution"}:
+        return "solution"
+    return None
 
 
 def attachment_filename(value: str) -> str:

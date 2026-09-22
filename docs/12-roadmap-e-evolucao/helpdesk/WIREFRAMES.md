@@ -232,7 +232,7 @@ HelpdeskSectionCard  «Conversa»  hint = helpTooltips.detail
     [ enviar ]
 ```
 
-A abertura existe mesmo sem acompanhamento. Tarefa, solução, aprovação e acompanhamento privado não entram. `mine` e `requester_mine` vêm do BFF (id do GLPI ou e-mail). A tela não compara nome. A foto da Core só entra nessa bolha; as outras usam iniciais. Rascunho de resposta em `sessionStorage` sobrevive a F5.
+A abertura existe mesmo sem acompanhamento. Tarefa, Validation, aprovação e acompanhamento privado não entram. Solução da Timeline entra como bolha com título «Solução» (só leitura). `mine` e `requester_mine` vêm do BFF (id do GLPI ou e-mail). A tela não compara nome. A foto da Core só entra nessa bolha; as outras usam iniciais. Rascunho de resposta em `sessionStorage` sobrevive a F5.
 
 ## 4. Fora destas rotas
 
