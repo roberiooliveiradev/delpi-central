@@ -326,7 +326,10 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
     imageResizeRef.current = {
       img,
       startX: event.clientX,
-      startWidth: img.getBoundingClientRect().width || Number(img.getAttribute("width")) || 320,
+      startWidth:
+        Number(img.getAttribute("width")) ||
+        img.getBoundingClientRect().width ||
+        320,
     };
     handle.setPointerCapture(event.pointerId);
 
@@ -334,8 +337,7 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
       const session = imageResizeRef.current;
       if (!session) return;
       const delta = moveEvent.clientX - session.startX;
-      const containerWidth = editorRef.current?.clientWidth ?? undefined;
-      applyRichTextImageWidth(session.img, session.startWidth + delta, { containerWidth });
+      applyRichTextImageWidth(session.img, session.startWidth + delta);
       syncSelectedImage(session.img);
     };
     const onUp = (upEvent: PointerEvent) => {

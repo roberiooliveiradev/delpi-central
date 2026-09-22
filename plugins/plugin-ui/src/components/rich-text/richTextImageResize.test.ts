@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  RICH_TEXT_IMAGE_MAX_WIDTH,
   applyRichTextImageWidth,
   clampRichTextImageWidth,
   fitRichTextImageToContainer,
@@ -9,10 +10,14 @@ import {
 } from "./richTextImageResize";
 
 describe("richTextImageResize", () => {
-  it("limita largura ao teto do container e ao mínimo", () => {
+  it("limita largura ao teto BFF e ao mínimo", () => {
     expect(clampRichTextImageWidth(10)).toBe(48);
-    expect(clampRichTextImageWidth(900, { containerWidth: 400 })).toBe(400);
+    expect(clampRichTextImageWidth(9000)).toBe(RICH_TEXT_IMAGE_MAX_WIDTH);
     expect(clampRichTextImageWidth(200, { min: 80, max: 180 })).toBe(180);
+  });
+
+  it("não prende o teto à largura do container (ampliar além do editor)", () => {
+    expect(clampRichTextImageWidth(900, { containerWidth: 400 })).toBe(900);
   });
 
   it("aplica width/height HTML preservando proporção", () => {
@@ -23,6 +28,7 @@ describe("richTextImageResize", () => {
     expect(size).toEqual({ width: 200, height: 100 });
     expect(img.getAttribute("width")).toBe("200");
     expect(img.getAttribute("height")).toBe("100");
+    expect(img.style.maxWidth).toBe("none");
   });
 
   it("resolve tamanho natural com fallback", () => {
@@ -30,16 +36,24 @@ describe("richTextImageResize", () => {
     expect(resolveRichTextImageNaturalSize(img).width).toBeGreaterThan(0);
   });
 
-  it("encaixa imagem grande sem width no container", () => {
+  it("positive: cola no tamanho real (não encolhe para a coluna)", () => {
     const img = document.createElement("img");
     Object.defineProperty(img, "naturalWidth", { value: 1600 });
     Object.defineProperty(img, "naturalHeight", { value: 900 });
     const size = fitRichTextImageToContainer(img, 400);
-    expect(size?.width).toBeLessThanOrEqual(400);
-    expect(img.getAttribute("width")).toBeTruthy();
+    expect(size?.width).toBe(1600);
+    expect(img.getAttribute("width")).toBe("1600");
   });
 
-  it("não sobrescreve width já escolhido", () => {
+  it("irmão: recorta só no teto BFF 4096", () => {
+    const img = document.createElement("img");
+    Object.defineProperty(img, "naturalWidth", { value: 5000 });
+    Object.defineProperty(img, "naturalHeight", { value: 2000 });
+    const size = fitRichTextImageToContainer(img, 400);
+    expect(size?.width).toBe(4096);
+  });
+
+  it("negativo: não sobrescreve width já escolhido", () => {
     const img = document.createElement("img");
     img.setAttribute("width", "220");
     Object.defineProperty(img, "naturalWidth", { value: 1600 });

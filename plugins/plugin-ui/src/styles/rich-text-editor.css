@@ -127,7 +127,7 @@
 .delpi-ui-rich-text--preview {
   min-height: 160px;
   max-height: min(50vh, 28rem);
-  overflow-x: hidden;
+  overflow-x: auto;
   overflow-y: auto;
   overscroll-behavior: contain;
   padding: 14px 16px;
@@ -141,7 +141,14 @@
   outline-offset: -2px;
 }
 
-.delpi-ui-rich-text__editor img,
+/* Compose: honor width/height attrs (natural paste + enlarge). Preview stays fluid. */
+.delpi-ui-rich-text__editor img {
+  max-width: none;
+  height: auto;
+  vertical-align: middle;
+  cursor: pointer;
+}
+
 .delpi-ui-rich-text--preview img {
   max-width: 100%;
   height: auto;

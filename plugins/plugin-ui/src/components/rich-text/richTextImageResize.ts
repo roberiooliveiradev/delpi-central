@@ -1,9 +1,12 @@
-/** Resize selected `<img>` inside RichTextEditor via width/height attrs (BFF allowlist). */
+/** Resize selected `<img>` inside RichTextEditor via width/height attrs (BFF allowlist ≤4096). */
 
 export const RICH_TEXT_IMAGE_MIN_WIDTH = 48;
-export const RICH_TEXT_IMAGE_MAX_WIDTH = 1200;
-/** Default compose width when the image has no width yet (paste/attach). */
-export const RICH_TEXT_IMAGE_DEFAULT_MAX_WIDTH = 520;
+/** Align with helpdesk-api / BFF img width allowlist. */
+export const RICH_TEXT_IMAGE_MAX_WIDTH = 4096;
+/**
+ * @deprecated Paste uses natural size (capped at MAX). Kept for callers that pass defaultMaxWidth.
+ */
+export const RICH_TEXT_IMAGE_DEFAULT_MAX_WIDTH = RICH_TEXT_IMAGE_MAX_WIDTH;
 
 export type RichTextImageSize = {
   width: number;
@@ -15,10 +18,8 @@ export function clampRichTextImageWidth(
   options?: { min?: number; max?: number; containerWidth?: number },
 ): number {
   const min = options?.min ?? RICH_TEXT_IMAGE_MIN_WIDTH;
-  let max = options?.max ?? RICH_TEXT_IMAGE_MAX_WIDTH;
-  if (options?.containerWidth && options.containerWidth > 0) {
-    max = Math.min(max, Math.floor(options.containerWidth));
-  }
+  // Do not clamp to containerWidth: author may enlarge beyond the editor (scroll).
+  const max = options?.max ?? RICH_TEXT_IMAGE_MAX_WIDTH;
   if (max < min) return min;
   return Math.max(min, Math.min(max, Math.round(width)));
 }
@@ -45,37 +46,32 @@ export function applyRichTextImageWidth(
   img.setAttribute("height", String(height));
   img.style.width = `${width}px`;
   img.style.height = `${height}px`;
-  img.style.maxWidth = "100%";
+  // Explicit size must win over stylesheet max-width:100% so enlarge is visible.
+  img.style.maxWidth = "none";
   return { width, height };
 }
 
 /**
- * Fit oversized images into the editor on insert (paste/attach) when no width attr yet.
- * No-op if the author already chose width/height.
+ * Stamp natural pixel size on insert (paste/attach) when no width attr yet.
+ * Only caps at RICH_TEXT_IMAGE_MAX_WIDTH — does not shrink to the editor column.
  */
 export function fitRichTextImageToContainer(
   img: HTMLImageElement,
-  containerWidth: number,
-  options?: { defaultMaxWidth?: number },
+  _containerWidth: number,
+  options?: { defaultMaxWidth?: number; maxWidth?: number },
 ): RichTextImageSize | null {
   if (img.getAttribute("width")) return null;
   const natural = resolveRichTextImageNaturalSize(img);
-  const budget = Math.max(
-    RICH_TEXT_IMAGE_MIN_WIDTH,
-    Math.floor((containerWidth > 0 ? containerWidth : RICH_TEXT_IMAGE_DEFAULT_MAX_WIDTH) * 0.92),
-  );
-  const defaultMax = options?.defaultMaxWidth ?? RICH_TEXT_IMAGE_DEFAULT_MAX_WIDTH;
-  const target = Math.min(natural.width, budget, defaultMax);
-  if (target >= natural.width && natural.width <= budget) {
-    // Still stamp attrs so resize/sanitizer stay stable.
-    return applyRichTextImageWidth(img, natural.width, { containerWidth: budget });
-  }
-  return applyRichTextImageWidth(img, target, { containerWidth: budget });
+  const max =
+    options?.maxWidth ?? options?.defaultMaxWidth ?? RICH_TEXT_IMAGE_MAX_WIDTH;
+  const target = Math.min(natural.width, Math.max(RICH_TEXT_IMAGE_MIN_WIDTH, max));
+  return applyRichTextImageWidth(img, target, { max });
 }
 
 export function clearRichTextImageInlineSizeStyles(img: HTMLImageElement): void {
   img.style.removeProperty("width");
   img.style.removeProperty("height");
+  img.style.removeProperty("max-width");
 }
 
 /** SE handle position relative to `root`, clamped to the visible image∩editor box. */
