@@ -79,6 +79,11 @@
 
 .delpi-ui-page-hero__badge {
   flex: 0 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
 }
 
 .delpi-ui-page-hero__actions {

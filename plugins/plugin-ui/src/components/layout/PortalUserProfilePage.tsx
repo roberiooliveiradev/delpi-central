@@ -176,7 +176,7 @@ export const PORTAL_USER_PROFILE_LABELS_PT: PortalUserProfilePageLabels = {
   phoneLabel: "Telefone",
   mobileLabel: "Celular",
   whatsappLabel: "WhatsApp",
-  emptyValue: "—",
+  emptyValue: "Não informado",
   section: {
     titleHelpAriaLabel: (title: string) => `Ajuda: ${title}`,
   },

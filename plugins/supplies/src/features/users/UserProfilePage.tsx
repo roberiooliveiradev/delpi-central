@@ -58,6 +58,7 @@ const SuppliesPortalUserProfilePage = createDashboardPortalUserProfilePage({
     phoneLabel: C.phoneLabel,
     mobileLabel: C.mobileLabel,
     whatsappLabel: C.whatsappLabel,
+    emptyValue: C.emptyValue,
   },
 });
 
@@ -199,7 +200,7 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
 
   return (
     <SuppliesPortalUserProfilePage
-      className="sp-page-stack sp-user-profile"
+      className="sp-user-profile"
       pagePath={{
         back: {
           label: back.label,
@@ -232,14 +233,13 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
               title: (
                 <SuppliesTitleWithHelp title={profile.name} hint={SP_HELP.userProfile} />
               ),
-              description: profile.email || C.hostProfileNote,
-              density: "compact",
+              description: (profile.email || "").trim() || undefined,
+              density: "comfortable",
               badge: (
                 <>
-                  <SuppliesStatusBadge
-                    label={profile.isSelf ? C.badgeSelf : C.badgeAdminView}
-                    variant={profile.isSelf ? "success" : "info"}
-                  />
+                  {profile.isSelf ? (
+                    <SuppliesStatusBadge label={C.badgeSelf} variant="success" />
+                  ) : null}
                   {units.length > 0 ? (
                     <SuppliesStatusBadge
                       label={`${C.unitsLabel}: ${units.join(", ")}`}
@@ -248,6 +248,16 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
                   ) : null}
                 </>
               ),
+              actions:
+                isSelf === true ? (
+                  <SuppliesActionButton
+                    variant="primary"
+                    onClick={() => navigateHostPath(HOST_SELF_PROFILE_PATH)}
+                  >
+                    <Pencil size={16} aria-hidden="true" />
+                    {C.editIdentity}
+                  </SuppliesActionButton>
+                ) : undefined,
             }
           : undefined
       }
@@ -265,16 +275,6 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
               whatsapp: isSelf === true ? personProfile?.whatsapp_e164 : null,
               showEmptyFields: isSelf === true,
               note: C.hostProfileNote,
-              actions:
-                isSelf === true ? (
-                  <SuppliesActionButton
-                    variant="primary"
-                    onClick={() => navigateHostPath(HOST_SELF_PROFILE_PATH)}
-                  >
-                    <Pencil size={16} aria-hidden="true" />
-                    {C.editIdentity}
-                  </SuppliesActionButton>
-                ) : null,
             }
           : null
       }
@@ -282,12 +282,12 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
       sections={
         ready && profile ? (
           <>
-            <SuppliesSectionCard
-              title={C.preferencesTitle}
-              subtitle={C.preferencesSubtitle}
-              hint={SP_HELP.userProfilePrefs}
-            >
-              {profile.isSelf ? (
+            {profile.isSelf ? (
+              <SuppliesSectionCard
+                title={C.preferencesTitle}
+                subtitle={C.preferencesSubtitle}
+                hint={SP_HELP.userProfilePrefs}
+              >
                 <form
                   className="sp-user-profile__prefs"
                   onSubmit={(event) => {
@@ -331,10 +331,8 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
                     <SuppliesStateBanner variant="error">{saveError}</SuppliesStateBanner>
                   ) : null}
                 </form>
-              ) : (
-                <p className="sp-user-profile__note">{C.preferencesOther}</p>
-              )}
-            </SuppliesSectionCard>
+              </SuppliesSectionCard>
+            ) : null}
 
             <SuppliesSectionCard title={C.accessTitle} subtitle={C.accessSubtitle}>
               {profile.isSelf && profile.capabilities ? (

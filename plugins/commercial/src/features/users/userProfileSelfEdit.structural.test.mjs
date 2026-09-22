@@ -48,18 +48,35 @@ describe("user profile self-only + expand photo", () => {
     );
   });
 
-  it("hero usa só nome/cargo e badge Portal Comercial", () => {
+  it("hero usa eyebrow Portal Comercial, Você no self e cargo no supporting", () => {
     const page = readFileSync(
       join(src, "features/users/UserProfilePage.tsx"),
       "utf8",
     );
     const copy = readFileSync(join(src, "content/userAccess.json"), "utf8");
     assert.match(copy, /"appBadge": "Portal Comercial"/);
-    assert.match(page, /USER_ACCESS_COPY\.appBadge/);
-    assert.doesNotMatch(page, /label=["']Commercial["']/);
+    assert.match(copy, /"badgeSelf": "Você"/);
+    assert.match(copy, /"editIdentity": "Editar no Meu Perfil"/);
+    assert.match(page, /eyebrow: USER_ACCESS_COPY\.appBadge/);
+    assert.match(page, /USER_ACCESS_COPY\.badgeSelf/);
+    assert.doesNotMatch(page, /label=\{USER_ACCESS_COPY\.appBadge\}/);
+    assert.doesNotMatch(page, /aboutTitle|aboutBody/);
     assert.match(page, /directoryUserLabelOrFallback\(\{ name: profile\.name \}\)/);
     assert.match(page, /heroDescription = \(profile\?\.job_title/);
     assert.doesNotMatch(page, /heroDescription = \[profile\.email/);
+  });
+
+  it("CTA Editar só no Hero — sem duplicar na Identidade", () => {
+    const page = readFileSync(
+      join(src, "features/users/UserProfilePage.tsx"),
+      "utf8",
+    );
+    assert.match(page, /actions: canEdit \?/);
+    assert.match(page, /note: USER_ACCESS_COPY\.identityHostNote,/);
+    assert.doesNotMatch(
+      page,
+      /note: USER_ACCESS_COPY\.identityHostNote,\s*\n\s*actions:/,
+    );
   });
 
   it("identidade exibe contatos E.164 e mantém atalhos de contato/tarefa", () => {

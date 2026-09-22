@@ -371,7 +371,7 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
 
   return (
     <CommercialPortalUserProfilePage
-      className="cm-user-profile cm-page-stack"
+      className="cm-user-profile"
       pagePath={{
         back: {
           label: back.label,
@@ -395,25 +395,23 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
       hero={
         ready && profile
           ? {
+              eyebrow: USER_ACCESS_COPY.appBadge,
               title: displayName,
               description: heroDescription,
+              density: "comfortable",
               badge: (
-                <span className="cm-nav-row">
-                  <CommercialStatusBadge
-                    label={USER_ACCESS_COPY.appBadge}
-                    variant="success"
-                  />
-                  {meIsSuperadmin && isSelf === true ? (
+                <>
+                  {isSelf === true ? (
                     <CommercialStatusBadge
-                      label={USER_ACCESS_COPY.superadmin}
-                      variant="warning"
+                      label={USER_ACCESS_COPY.badgeSelf}
+                      variant="success"
                     />
                   ) : null}
                   <CommercialStatusBadge
                     label={formatPortfoliosCount(profile.portfolios.length)}
                     variant="info"
                   />
-                </span>
+                </>
               ),
               actions: canEdit ? (
                 <CommercialActionButton
@@ -446,15 +444,6 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
                 ? USER_ACCESS_COPY.enlargePhoto.replace("{name}", displayName)
                 : undefined,
               note: USER_ACCESS_COPY.identityHostNote,
-              actions: canEdit ? (
-                <CommercialActionButton
-                  variant="ghost"
-                  onClick={() => navigateHostPath(HOST_SELF_PROFILE_PATH)}
-                >
-                  <Pencil size={16} aria-hidden />
-                  {USER_ACCESS_COPY.editIdentity}
-                </CommercialActionButton>
-              ) : null,
             }
           : null
       }
@@ -594,6 +583,17 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
             >
               {isSelf === true ? (
                 <div className="cm-user-profile__access">
+                  {meIsSuperadmin ? (
+                    <div className="cm-user-profile__access-group">
+                      <h3 className="cm-user-profile__access-heading">Contexto admin</h3>
+                      <div className="cm-nav-row">
+                        <CommercialStatusBadge
+                          label={USER_ACCESS_COPY.superadmin}
+                          variant="warning"
+                        />
+                      </div>
+                    </div>
+                  ) : null}
                   {capabilityItems.length > 0 ? (
                     <div className="cm-user-profile__access-group">
                       <h3 className="cm-user-profile__access-heading">
@@ -631,10 +631,6 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
               ) : (
                 <p className="cm-muted">Carregando acessos…</p>
               )}
-            </CommercialSectionCard>
-
-            <CommercialSectionCard title={USER_ACCESS_COPY.aboutTitle}>
-              <p className="cm-muted">{USER_ACCESS_COPY.aboutBody}</p>
             </CommercialSectionCard>
           </>
         ) : null

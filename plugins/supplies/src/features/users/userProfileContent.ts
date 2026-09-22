@@ -13,8 +13,6 @@ export const USER_PROFILE_CONTENT = {
   editIdentity: "Editar no Meu Perfil",
   preferencesTitle: "Preferências",
   preferencesSubtitle: "Valem só neste Portal — distinta do perfil global Minha DELPI.",
-  preferencesOther:
-    "Preferências só podem ser alteradas no próprio perfil.",
   accessTitle: "Acesso",
   accessSubtitle: "Capabilities e filiais efetivas neste Portal.",
   accessOther: "O bloco de acesso aparece apenas no seu próprio perfil.",
@@ -24,6 +22,7 @@ export const USER_PROFILE_CONTENT = {
   phoneLabel: "Telefone",
   mobileLabel: "Celular",
   whatsappLabel: "WhatsApp",
+  emptyValue: "Não informado",
   defaultBranchLabel: "Filial padrão",
   defaultBranchEmpty: "Nenhuma (usar a primeira liberada)",
   tableDensityLabel: "Densidade de tabelas",
@@ -35,12 +34,11 @@ export const USER_PROFILE_CONTENT = {
   saveError: "Não foi possível salvar as preferências.",
   unitsLabel: "Filiais",
   hostProfileNote:
-    "Foto, cargo e contatos vêm do Meu Perfil da Minha DELPI (/profile). Aqui só dá para editar preferências deste Portal.",
+    "Foto, cargo e contatos são gerenciados no Meu Perfil da Minha DELPI.",
   helpAriaLabel: "Ajuda: perfil do Portal Suprimentos",
   shortcutHome: "Início",
   shortcutOverview: "Visão geral",
   shortcutSc: "Solicitações",
   shortcutHelp: "Ajuda",
   badgeSelf: "Você",
-  badgeAdminView: "Leitura admin",
 } as const;

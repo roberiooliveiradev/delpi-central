@@ -49,11 +49,29 @@ describe("Transforma+ user profile routes", () => {
       join(dir, "../content/personDirectoryLabels.ts"),
       "utf8",
     );
-    expect(labels).toMatch(/Editar perfil/);
+    expect(labels).toMatch(/Editar no Meu Perfil/);
     expect(labels).toMatch(/Minhas tarefas/);
+    expect(labels).not.toMatch(/badgeDirectory|Diretório/);
     expect(page).toMatch(/HOST_SELF_PROFILE_PATH/);
     expect(page).toMatch(/navigateHostPath/);
     expect(page).toMatch(/isSelf === true/);
+    expect(page).toMatch(/LoadingActivityCard/);
+    expect(page).toMatch(/identityHostNote/);
+  });
+
+  it("navegação de usuário no portal ≠ Meu Perfil host", () => {
+    const topBar = readFileSync(
+      join(dir, "../components/PortalTopBarUserIdentity.tsx"),
+      "utf8",
+    );
+    const page = readFileSync(
+      join(dir, "../ui/pages/PersonDirectoryPage.tsx"),
+      "utf8",
+    );
+    expect(topBar).toMatch(/buildTransformometroUserPath/);
+    expect(topBar).not.toMatch(/HOST_SELF_PROFILE_PATH/);
+    expect(page).toMatch(/HOST_SELF_PROFILE_PATH/);
+    expect(page).toMatch(/createDashboardPortalUserProfilePage/);
   });
 
   it("PersonDirectoryPage compõe o kit PortalUserProfilePage", () => {

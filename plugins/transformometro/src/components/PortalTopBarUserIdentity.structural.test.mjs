@@ -9,19 +9,17 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "../..");
 const src = join(root, "src");
 
 describe("PortalTopBarUserIdentity", () => {
-  it("abre o perfil canônico do host (/profile) sem página TM própria", () => {
+  it("abre o perfil do Portal Transforma+ (/users/:id), não só /profile do host", () => {
     const identity = readFileSync(
       join(src, "components/PortalTopBarUserIdentity.tsx"),
       "utf8",
     );
-    assert.match(identity, /HOST_SELF_PROFILE_PATH/);
-    assert.match(identity, /\/profile/);
-    assert.match(identity, /href=\{HOST_SELF_PROFILE_PATH\}/);
+    assert.match(identity, /buildTransformometroUserPath/);
+    assert.match(identity, /navigateTransformometroUserProfile/);
+    assert.doesNotMatch(identity, /HOST_SELF_PROFILE_PATH/);
     assert.match(identity, /fetchMeProfile/);
     assert.match(identity, /useMyPersonProfilePhotoUrl/);
     assert.doesNotMatch(identity, /display-only/);
-    assert.doesNotMatch(identity, /navigateUserProfile/);
-    assert.doesNotMatch(identity, /\/apps\/transformometro\/.*profile/);
   });
 
   it("TopBar expõe identity no slot actions", () => {

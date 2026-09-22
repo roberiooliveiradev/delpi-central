@@ -31,6 +31,7 @@ describe("UserProfile", () => {
 
   it("compõe o perfil com o kit PortalUserProfilePage", () => {
     const page = readFileSync(join(dir, "UserProfilePage.tsx"), "utf8");
+    const content = readFileSync(join(dir, "userProfileContent.ts"), "utf8");
     expect(page).toMatch(/createDashboardPortalUserProfilePage/);
     /** Layout de identidade/atalhos é do kit — sem CSS paralelo no MFE. */
     expect(page).not.toMatch(
@@ -38,6 +39,12 @@ describe("UserProfile", () => {
     );
     /** Identidade é leitura; editar abre o Meu Perfil da Minha DELPI. */
     expect(page).toMatch(/HOST_SELF_PROFILE_PATH/);
+    expect(page).toMatch(/density: "comfortable"/);
+    expect(page).toMatch(/badgeSelf/);
+    expect(page).not.toMatch(/badgeAdminView|Leitura admin/);
+    expect(page).not.toMatch(/preferencesOther/);
+    expect(content).toMatch(/Editar no Meu Perfil/);
+    expect(content).toMatch(/gerenciados no Meu Perfil/);
   });
 
   it("acesso self ok · outro sem admin negado · admin ok", () => {

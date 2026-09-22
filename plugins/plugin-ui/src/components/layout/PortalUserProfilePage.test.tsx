@@ -68,7 +68,7 @@ describe("PortalUserProfilePage", () => {
     expect(screen.queryAllByRole("textbox")).toHaveLength(0);
   });
 
-  it("mostra `—` nos contatos vazios quando o host pede showEmptyFields", () => {
+  it("mostra «Não informado» nos contatos vazios quando o host pede showEmptyFields", () => {
     render(
       <PortalUserProfilePage
         classNames={CLASS_NAMES}
@@ -77,7 +77,7 @@ describe("PortalUserProfilePage", () => {
     );
 
     expect(screen.getByText("Celular")).toBeTruthy();
-    expect(screen.getAllByText("—").length).toBeGreaterThan(1);
+    expect(screen.getAllByText("Não informado").length).toBeGreaterThan(1);
   });
 
   it("dispara onSelect do atalho clicado", () => {

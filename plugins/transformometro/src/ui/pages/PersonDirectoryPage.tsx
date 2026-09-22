@@ -13,6 +13,8 @@ import {
   Workflow,
 } from "lucide-react";
 
+import { InlineErrorState } from "../../components/ErrorStateBox";
+import { LoadingActivityCard } from "../../components/LoadingActivityCard";
 import { PortalTopBar } from "../../components/TransformometroNav";
 import { TransformometroShell } from "../../components/TransformometroShell";
 import { TmStatusBadge } from "../../components/tmChromeUi";
@@ -165,6 +167,7 @@ export function PersonDirectoryPage({
 
   const busy = loading || meLoading;
   const ready = !busy && !error;
+  const supporting = (email || "").trim() || undefined;
 
   return (
     <TransformometroShell>
@@ -185,21 +188,19 @@ export function PersonDirectoryPage({
           current: name || L.currentFallback,
         }}
         loading={busy}
-        loadingNode={<p>{L.loading}</p>}
-        error={error ? <p>{error}</p> : null}
+        loadingNode={<LoadingActivityCard title={L.loading} />}
+        error={error ? <InlineErrorState title={L.error} message={error} /> : null}
         hero={
           ready
             ? {
                 eyebrow: L.eyebrow,
                 title: name,
-                description:
-                  isSelf === true ? L.descriptionSelf : L.descriptionOther,
-                badge: (
-                  <TmStatusBadge
-                    label={isSelf === true ? L.badgeSelf : L.badgeDirectory}
-                    variant={isSelf === true ? "success" : "info"}
-                  />
-                ),
+                description: supporting,
+                density: "comfortable",
+                badge:
+                  isSelf === true ? (
+                    <TmStatusBadge label={L.badgeSelf} variant="success" />
+                  ) : undefined,
                 actions:
                   isSelf === true ? (
                     <ActionButton
@@ -221,6 +222,7 @@ export function PersonDirectoryPage({
                 email,
                 photoUrl,
                 colorKey: userId,
+                note: L.identityHostNote,
               }
             : null
         }
