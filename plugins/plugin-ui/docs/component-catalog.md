@@ -564,6 +564,16 @@ DOES NOT OWN: identidade do usuário, cálculo de métricas, filtros de domínio
 
 Highlights aceitam `label`, `value`, `description?`, `tone?` e `loading?`. Não criar um segundo Hero.
 
+### `PortalUserProfilePage`
+
+Página de perfil de usuário de um portal: `PagePath` → `PageHero` → grid `Identidade | Atalhos` → `sections` do portal.
+
+OWNS: hierarquia visual, linhas de identidade (nome, e-mail, cargo, telefone, celular, WhatsApp), atalhos e estados de loading/status/erro.
+
+DOES NOT OWN: HTTP, AuthZ, resolução de `isSelf`, paths `/apps/*`, preferências, carteiras, grupos e copy de produto.
+
+Identidade é somente leitura — editar foto/cargo/contatos é `/profile` da Minha DELPI, acionado pelo host via `hero.actions` ou `identity.actions`. Seções de domínio entram por `sections`. Rótulos genéricos vêm de `PORTAL_USER_PROFILE_LABELS_PT` e podem ser sobrescritos por `labels`.
+
 ### `formatPortalGreeting`
 
 OWNS: apresentação de período do dia + primeiro nome.
@@ -1584,7 +1594,7 @@ Ver [migration-catalog.md](./migration-catalog.md) para plugins pendentes.
 |--------|-----|
 | `SignaturePad` | Canvas de assinatura manuscrita (PNG) com undo/redo, espessura e DPI |
 | `SignatureCapturePanel` | Painel Desenhar / Digitar / Upload + prévia nome+traço |
-| `RichTextEditor` | WYSIWYG com toolbar linear (fonte/tamanho stepper, formatação, listas, link, tabela) + preview; modos **Visual / HTML / Markdown** (fonte monoespaçada); paste Markdown→HTML (GFM); sugestão de tags/`style` CSS no modo HTML; paste de tabelas normalizado; link via `RichTextLinkDialog`. Storage do consumidor continua HTML. Round-trip MD cobre GFM básico (títulos, listas, ênfase, links, tabelas simples) — HTML com estilos/tabelas ricas pode simplificar no modo Markdown. |
+| `RichTextEditor` | WYSIWYG com toolbar linear (fonte/tamanho stepper, formatação, listas, link, tabela) + preview; modos **Visual / HTML / Markdown**; paste Markdown→HTML (GFM); paste de tabelas normalizado; link via `RichTextLinkDialog`. **Imagens:** `onPasteImages` + `richTextClipboardImages` (mesma captura da sala: files XOR items, data:, async `clipboard.read`); `resolveAttachmentImageSrc` / `persistAttachmentImageSrc` (contrato MessageThread). Storage do consumidor continua HTML. |
 | `RichTextLinkDialog` | Diálogo de inserir/editar link do editor (sem `window.prompt`) |
 | `RichTextSourceEditor` | Textarea da fonte (`assistMode: html \| plain`); autocomplete de tags/CSS só no modo HTML |
 | `RichTextToolbar` | Faixa de formatação reutilizável (tipografia, parágrafo, inserção de tabela via `TableInsertCatalogPanel`, botões Visual/HTML/Markdown) |

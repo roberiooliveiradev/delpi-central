@@ -43,7 +43,7 @@ Prova da página e dos sete status está em [`14-pagina-e-estados-do-chamado.md`
 | Caso | Entrada | Esperado |
 |---|---|---|
 | Positive | multipart + `Idempotency-Key` + flag on | 201 `{ document_id, filename, mime }`; Document+Ticket no GLPI |
-| Irmão | colar print (Snipping Tool / data: / clipboard.read) no compositor | upload + `img` no path autenticado do BFF |
+| Irmão | colar print (Snipping Tool / data: / clipboard.read) no compositor | **P0 urgente** — deve usar `RichTextEditor.onPasteImages` (paridade sala); ledger STALE até re-provar |
 | Irmão | redimensionar imagem no editor | `width`/`height` HTML persistem após sanitizer |
 | Negativo | flag off / token ausente | 503 `glpi_feature_disabled` |
 | Negativo | CSS `width` no `style` | removido pelo sanitizer; atributos HTML ok |

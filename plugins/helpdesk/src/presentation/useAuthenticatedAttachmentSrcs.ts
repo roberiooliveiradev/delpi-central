@@ -8,7 +8,7 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { attachmentPublicUrl } from "./inlineUpload";
+import { attachmentPublicUrl, listPendingInlineIds } from "./inlineUpload";
 import { listHelpdeskAttachmentIdsInHtml, stampHelpdeskAttachmentIds } from "./ticketView";
 
 export type FetchTicketAttachmentBlob = (
@@ -43,8 +43,8 @@ export function useAuthenticatedAttachmentSrcs(args: {
   persistHtml: (html: string) => string;
   resolveAttachmentImageSrc: (attachmentId: string) => string | null;
   persistAttachmentImageSrc: (attachmentId: string) => string | null;
-  seedBlobUrl: (documentId: number, blobUrl: string) => void;
-  seedFile: (documentId: number, file: File) => string;
+  seedBlobUrl: (documentId: number | string, blobUrl: string) => void;
+  seedFile: (documentId: number | string, file: File) => string;
 } {
   const { ticketId, html, fetchBlob, extraDocumentIds } = args;
   const [srcs, setSrcs] = useState<Record<string, string>>({});
@@ -52,14 +52,29 @@ export function useAuthenticatedAttachmentSrcs(args: {
   srcsRef.current = srcs;
   const ownedUrlsRef = useRef<Set<string>>(new Set());
 
-  const documentIds = useMemo(() => {
+  const attachmentKeys = useMemo(() => {
     const stamped = stampHelpdeskAttachmentIds(html || "");
-    const ids = new Set<number>(listHelpdeskAttachmentIdsInHtml(stamped));
-    for (const id of extraDocumentIds || []) {
-      if (Number.isFinite(id) && id > 0) ids.add(id);
+    const keys = new Set<string>();
+    for (const id of listHelpdeskAttachmentIdsInHtml(stamped)) {
+      keys.add(String(id));
     }
-    return [...ids].sort((a, b) => a - b);
+    for (const pendingId of listPendingInlineIds(stamped)) {
+      keys.add(pendingId);
+    }
+    for (const id of extraDocumentIds || []) {
+      if (Number.isFinite(id) && id > 0) keys.add(String(id));
+    }
+    return [...keys].sort();
   }, [html, extraDocumentIds]);
+
+  const documentIds = useMemo(
+    () =>
+      attachmentKeys
+        .map((key) => Number(key))
+        .filter((id) => Number.isFinite(id) && id > 0)
+        .sort((a, b) => a - b),
+    [attachmentKeys],
+  );
 
   const revokeOwned = useCallback((url: string) => {
     if (!ownedUrlsRef.current.has(url)) return;
@@ -73,7 +88,7 @@ export function useAuthenticatedAttachmentSrcs(args: {
 
   useEffect(() => {
     let cancelled = false;
-    const needed = new Set(documentIds.map(String));
+    const needed = new Set(attachmentKeys);
 
     setSrcs((current) => {
       const next: Record<string, string> = {};
@@ -112,7 +127,7 @@ export function useAuthenticatedAttachmentSrcs(args: {
     return () => {
       cancelled = true;
     };
-  }, [documentIds, ticketId, fetchBlob, revokeOwned]);
+  }, [attachmentKeys, documentIds, ticketId, fetchBlob, revokeOwned]);
 
   useEffect(() => {
     return () => {
@@ -147,7 +162,7 @@ export function useAuthenticatedAttachmentSrcs(args: {
   );
 
   const seedBlobUrl = useCallback(
-    (documentId: number, blobUrl: string) => {
+    (documentId: number | string, blobUrl: string) => {
       const key = String(documentId);
       setSrcs((current) => {
         const previous = current[key];
@@ -160,7 +175,7 @@ export function useAuthenticatedAttachmentSrcs(args: {
   );
 
   const seedFile = useCallback(
-    (documentId: number, file: File) => {
+    (documentId: number | string, file: File) => {
       const url = URL.createObjectURL(file);
       seedBlobUrl(documentId, url);
       return url;

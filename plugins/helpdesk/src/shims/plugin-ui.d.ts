@@ -349,6 +349,8 @@ declare module "@delpi/plugin-ui/index" {
     minHeight?: number;
     resolveAttachmentImageSrc?: (attachmentId: string) => string | null | undefined;
     persistAttachmentImageSrc?: (attachmentId: string) => string | null | undefined;
+    onPasteImages?: (files: File[]) => void | Promise<void>;
+    onPasteImagesError?: (error: unknown) => void;
   };
 
   export function RichTextEditor(props: RichTextEditorProps): ReactElement;
@@ -1075,6 +1077,15 @@ declare module "@delpi/plugin-ui/index" {
     reset: () => void;
     filterColumns: <T extends { key: string }>(columns: readonly T[]) => T[];
   };
+
+  export function uniqueClipboardImageFiles(data: DataTransfer | null | undefined): File[];
+  export function collectClipboardImageFiles(data: DataTransfer | null | undefined): File[];
+  export function collectPasteImageFiles(data: DataTransfer | null | undefined): File[];
+  export function extractClipboardHtmlImageFiles(html: string | null | undefined): File[];
+  export function clipboardLooksLikeImagePaste(data: DataTransfer | null | undefined): boolean;
+  export function shouldTryAsyncClipboardImageRead(data: DataTransfer | null | undefined): boolean;
+  export function readClipboardImageFiles(): Promise<File[]>;
+  export function isRichTextClipboardImageFile(file: File): boolean;
 }
 
 declare module "@delpi/plugin-ui/styles" {}

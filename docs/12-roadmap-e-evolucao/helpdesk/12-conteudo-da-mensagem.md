@@ -291,7 +291,8 @@ FORA                  → não entra neste produto
 | M-22 | Título, tabela, código, cor, alinhamento no compositor | IMPLEMENTADO | toolbar do `RichTextEditor` |
 | M-23 | Menção no compositor (`@`) | **BLOQUEADO** — sem path HLAPI de mencionáveis por id | só com id; sem `MentionComposer` das salas |
 | M-24 | Inserir imagem ou arquivo novo no envio | **IMPLEMENTADO** H12 | `uploadTicketAttachment` + Document |
-| M-25 | Colar imagem da área de transferência | **IMPLEMENTADO** H12 | `clipboardImages` (Snipping Tool / data: / clipboard.read) |
+| M-25 | Colar imagem da área de transferência | **URGENTE / DRIFT** — runtime quebra; alvo = paridade `MentionComposer` via `RichTextEditor.onPasteImages` | kit `richTextClipboardImages` + host upload |
+| M-25b | Preview autenticado após F5 no compositor | **URGENTE / DRIFT** — imagem quebra no reload | `resolveAttachmentImageSrc` + persist path BFF (contrato das salas) |
 | M-26 | Editar mensagem já gravada | CONSOLE_GLPI | a doc do GLPI tem Edit; o BFF não publica PATCH |
 | M-27 | Modelo, origem, pendência no envio | CONSOLE_GLPI | follow-up doc |
 | M-28 | Abrir e responder compartilham o mesmo compositor | IMPLEMENTADO | `HelpdeskRichTextField` |

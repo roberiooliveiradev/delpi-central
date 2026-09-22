@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   ActionButton,
   FilePreviewModal,
@@ -43,7 +43,6 @@ import {
   viewForTicketLoad,
 } from "../presentation/ticketView";
 import {
-  attachmentPublicUrl,
   listPendingInlineIds,
   normalizeInlineAttachmentSrcs,
   rewritePendingInlineImages,
@@ -527,6 +526,20 @@ function CreateTicketPage() {
   const [errorText, setErrorText] = useState<string | null>(null);
   const [idempotencyKey] = useState(newIdempotencyKey);
   const pendingFilesRef = useRef<Map<string, File>>(new Map());
+  const pendingPreviewUrlsRef = useRef<Map<string, string>>(new Map());
+
+  useEffect(() => {
+    return () => {
+      for (const url of pendingPreviewUrlsRef.current.values()) {
+        try {
+          URL.revokeObjectURL(url);
+        } catch {
+          /* ignore */
+        }
+      }
+      pendingPreviewUrlsRef.current.clear();
+    };
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -575,16 +588,31 @@ function CreateTicketPage() {
     });
   }, [title, description, observerIdsInput, categoryId, urgencyId]);
 
+  const resolveCreatePendingSrc = useCallback((attachmentId: string) => {
+    const cached = pendingPreviewUrlsRef.current.get(attachmentId);
+    if (cached) return cached;
+    const file = pendingFilesRef.current.get(attachmentId);
+    if (!file) return null;
+    const url = URL.createObjectURL(file);
+    pendingPreviewUrlsRef.current.set(attachmentId, url);
+    return url;
+  }, []);
+
   const queuePendingFiles = async (files: File[]): Promise<HelpdeskInlineUploadResult[]> => {
     const results: HelpdeskInlineUploadResult[] = [];
     for (const file of files) {
       const pendingId = newIdempotencyKey();
       pendingFilesRef.current.set(pendingId, file);
-      if (file.type.startsWith("image/")) {
+      if (file.type.startsWith("image/") || /\.(png|jpe?g|gif|webp|bmp)$/i.test(file.name || "")) {
+        let src = pendingPreviewUrlsRef.current.get(pendingId);
+        if (!src) {
+          src = URL.createObjectURL(file);
+          pendingPreviewUrlsRef.current.set(pendingId, src);
+        }
         results.push({
           kind: "pending",
           pendingId,
-          src: URL.createObjectURL(file),
+          src,
           alt: file.name || "imagem",
         });
       }
@@ -681,6 +709,7 @@ function CreateTicketPage() {
                 icon={<AlignLeft size={14} aria-hidden />}
                 onUploadFiles={queuePendingFiles}
                 onUploadError={(error) => setErrorText(messageFor(error).text)}
+                resolveAttachmentImageSrc={resolveCreatePendingSrc}
               />
             </div>
             <aside className="helpdesk-create-layout__aside" aria-label="Classificação do chamado">
@@ -949,29 +978,58 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                 resolveAttachmentImageSrc={attachmentPreview.resolveAttachmentImageSrc}
                 persistAttachmentImageSrc={attachmentPreview.persistAttachmentImageSrc}
                 onUploadFiles={async (files) => {
+                  // InteractionRoom parity: pending local first, upload rewrite after.
                   const results: HelpdeskInlineUploadResult[] = [];
-                  let uploadedAny = false;
+                  const pendingUploads: { pendingId: string; file: File }[] = [];
                   for (const file of files) {
-                    if (file.type.startsWith("image/")) {
-                      const uploaded = await uploadTicketAttachment(
-                        ticketId,
-                        file,
-                        newIdempotencyKey(),
-                      );
-                      uploadedAny = true;
-                      attachmentPreview.seedFile(uploaded.document_id, file);
-                      results.push({
-                        kind: "uploaded",
-                        documentId: uploaded.document_id,
-                        src: attachmentPublicUrl(ticketId, uploaded.document_id),
-                        alt: file.name || "imagem",
-                      });
-                    } else {
+                    const isImage =
+                      file.type.startsWith("image/") ||
+                      /\.(png|jpe?g|gif|webp|bmp)$/i.test(file.name || "");
+                    if (!isImage) {
                       await uploadTicketAttachment(ticketId, file, newIdempotencyKey());
-                      uploadedAny = true;
+                      continue;
                     }
+                    const pendingId = newIdempotencyKey();
+                    const src = attachmentPreview.seedFile(pendingId, file);
+                    results.push({
+                      kind: "pending",
+                      pendingId,
+                      src,
+                      alt: file.name || "imagem",
+                    });
+                    pendingUploads.push({ pendingId, file });
                   }
-                  if (uploadedAny) load();
+                  if (pendingUploads.length > 0) {
+                    void (async () => {
+                      const mapping: Record<string, { documentId: number; ticketId: string }> = {};
+                      try {
+                        for (const item of pendingUploads) {
+                          const uploaded = await uploadTicketAttachment(
+                            ticketId,
+                            item.file,
+                            newIdempotencyKey(),
+                          );
+                          attachmentPreview.seedFile(uploaded.document_id, item.file);
+                          mapping[item.pendingId] = {
+                            documentId: uploaded.document_id,
+                            ticketId,
+                          };
+                        }
+                        if (Object.keys(mapping).length > 0) {
+                          setContent((current) =>
+                            attachmentPreview.persistHtml(
+                              rewritePendingInlineImages(current, mapping),
+                            ),
+                          );
+                        }
+                        load();
+                      } catch (error) {
+                        setErrorText(messageFor(error).text);
+                      }
+                    })();
+                  } else if (files.length > 0) {
+                    load();
+                  }
                   return results;
                 }}
                 onUploadError={(error) => setErrorText(messageFor(error).text)}

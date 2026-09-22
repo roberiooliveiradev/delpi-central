@@ -28,13 +28,14 @@ Estados: `PROVEN` | `PLANNED` | `TARGET` | `NOT_STARTED`.
 | H10.solution.read | Bolha `kind=solution` na conversa (Timeline Solution) | PROVEN | testes mapping + conversationMessages, 21/09/2026 |
 | H10.solicitante.bridge | CTA «Abrir no helpdesk» em solucionado/fechado/aprovação (deep link GLPI) | PROVEN | `glpiTicketFormUrl` + `solicitanteLifecycleCue`, 21/09/2026 |
 | H12.upload.bff | `POST /tickets/{id}/attachments` via apirest Document + App-Token + User-Token técnico | PROVEN | BFF + testes FakeGlpi/MockTransport; live Document+Ticket 201, 21/09/2026 |
-| H12.upload.mfe | Colar/arrastar/clipe no compositor (abrir + responder) | PROVEN | `HelpdeskRichTextField` + `inlineUpload` + `clipboardImages`, 21/09/2026 |
+| H12.upload.mfe | Colar/arrastar/clipe no compositor (abrir + responder) | **STALE_EVIDENCE** | Runtime 22/09/2026: colar e F5 quebram; reabrir como P0 — ver [`05-roadmap.md`](../05-roadmap.md) §Próximo código |
 | H12.upload.live | enable_api + `GLPI_LEGACY_*` + tech user Technician (profiles_id 6) em produção | PROVEN | env no container `delpi-helpdesk-api`; docs 1177/1178 no chamado **1122**; commit deploy `3e34b1226` / `0afc3154a`, 21/09/2026 |
-| H12.preview.blob | Preview no compositor via `blob:` (GET anexo exige Bearer) | PROVEN | `normalizeInlineAttachmentSrcs` no envio; commit `3e34b1226` |
-| H12.paste.snipping | Ctrl+V Snipping Tool (mime vazio / data: / clipboard.read) | PROVEN | `clipboardImages.ts`; commit `0afc3154a` |
+| H12.preview.blob | Preview no compositor via `blob:` (GET anexo exige Bearer) | **STALE_EVIDENCE** | F5 continua quebrando preview; alvo = contrato salas (`resolveAttachmentImageSrc`) |
+| H12.paste.snipping | Ctrl+V Snipping Tool (mime vazio / data: / clipboard.read) | **STALE_EVIDENCE** | Não reproduz estável no helpdesk; centralizar em kit `richTextClipboardImages` + `onPasteImages` |
+| H12.kit.centralize | Paste/imagem no `RichTextEditor` alinhado à sala | PLANNED | `onPasteImages` + pending-first no reply; owner kit |
 | H12.resize | Redimensionar imagem no `RichTextEditor` (width/height HTML) | PROVEN | plugin-ui `richTextImageResize`; commit `298bb2404` |
 | H12.help | Helps curtos + `attachHint` / reply / attachments | PROVEN | `helpTooltips.ts` + testes de teto; 21/09/2026 |
 
-## Resumo vigente (21/09/2026)
+## Resumo vigente (22/09/2026)
 
-H3 e H6 fechados. Paridade E6–E13 + verify-final concluídos. E14 (menção leitura M-07) entregue; M-23 (`@` no compositor) **BLOQUEADO** sem catálogo HLAPI. H10: **leitura** da solução + ponte UX ao GLPI PROVEN; write (aprovar/reabrir/satisfação) continua no GLPI (CONSOLE). **H12 upload live PROVEN** (exceção Document-only na API legada; não reabre HLAPI multipart). Residuais de produto: M-23, H10 write se HLAPI, bancada FORA. Sem senha neste arquivo.
+H3 e H6 fechados. Paridade E6–E13 + verify-final concluídos. E14 (menção leitura M-07) entregue; M-23 (`@` no compositor) **BLOQUEADO** sem catálogo HLAPI. H10: **leitura** da solução + ponte UX ao GLPI PROVEN; write continua CONSOLE. **H12 Document upload BFF/live PROVEN**; **UX colar + F5 preview = STALE / P0 urgente** (alinhar à sala de interação). Residuais: M-23, H10 write, bancada FORA. Sem senha neste arquivo.

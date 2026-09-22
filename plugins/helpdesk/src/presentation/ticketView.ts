@@ -355,9 +355,16 @@ export function hasVisibleRichText(html: string): boolean {
 export function listHelpdeskAttachmentIdsInHtml(html: string): number[] {
   const ids: number[] = [];
   const seen = new Set<number>();
-  const re = /\/apps\/helpdesk-api\/tickets\/\d+\/attachments\/(\d+)/gi;
+  const fromPath = /\/apps\/helpdesk-api\/tickets\/\d+\/attachments\/(\d+)/gi;
+  const fromAttr = /data-attachment-id=["'](\d+)["']/gi;
   let match: RegExpExecArray | null;
-  while ((match = re.exec(String(html || "")))) {
+  while ((match = fromPath.exec(String(html || "")))) {
+    const id = Number(match[1]);
+    if (!Number.isFinite(id) || seen.has(id)) continue;
+    seen.add(id);
+    ids.push(id);
+  }
+  while ((match = fromAttr.exec(String(html || "")))) {
     const id = Number(match[1]);
     if (!Number.isFinite(id) || seen.has(id)) continue;
     seen.add(id);

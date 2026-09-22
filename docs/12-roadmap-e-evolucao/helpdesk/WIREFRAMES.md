@@ -5,7 +5,7 @@
 > **API:** `/apps/helpdesk-api` (o navegador não chama o GLPI nem a api-delpi)
 > **UI kit:** `@delpi/plugin-ui` via Module Federation · factories em [`plugins/helpdesk/src/ui/helpdeskUi.tsx`](../../../plugins/helpdesk/src/ui/helpdeskUi.tsx)
 > **Regras:** `plugins-reusable-components.mdc`, `plugins-visual-design-system.mdc`
-> **Estado:** lista com filtros/builder, conversa HTML, compositor rico, prévia de anexo, **upload/colar/redimensionar (H12)** e helps curtos **publicados**. H10 write e M-23 `@` permanecem park.
+> **Estado:** lista/compositor/upload Document **publicados**. **P0 urgente:** colar + F5 imagem (alinhar à sala). H10 write e M-23 `@` permanecem park.
 > **Lacunas restantes:** [`11-lacunas-da-experiencia.md`](./11-lacunas-da-experiencia.md).
 > **Corpo da mensagem:** [`12-conteudo-da-mensagem.md`](./12-conteudo-da-mensagem.md) (vigente; M-23 park).
 > **Listagem:** [`13-listagem-de-chamados.md`](./13-listagem-de-chamados.md) (vigente).

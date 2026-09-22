@@ -33,6 +33,16 @@ export {
   type ResolveAttachmentImageSrc,
 } from "./richTextMarkdown";
 export {
+  clipboardLooksLikeImagePaste,
+  collectClipboardImageFiles,
+  collectPasteImageFiles,
+  extractClipboardHtmlImageFiles,
+  isRichTextClipboardImageFile,
+  readClipboardImageFiles,
+  shouldTryAsyncClipboardImageRead,
+  uniqueClipboardImageFiles,
+} from "./richTextClipboardImages";
+export {
   listInlineAttachmentIdsFromMarkdown,
   listInlinePendingIdsFromMarkdown,
   parseMarkdownImages,

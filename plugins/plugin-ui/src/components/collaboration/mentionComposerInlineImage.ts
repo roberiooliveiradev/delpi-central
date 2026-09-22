@@ -2,9 +2,16 @@
  * Inline images in MentionComposer (paste/drop at caret) — Word-like:
  * span+img inside the paragraph so caret can sit left/right on the same line.
  * Persist as markdown `![alt](attachment:pending:{id})` via Turndown.
+ *
+ * Clipboard file extraction is owned by `richTextClipboardImages` (shared with RichTextEditor).
  */
-import { resolveFilePreviewKind } from "../preview/resolveFilePreviewKind";
 import type { RichTextAlign } from "../rich-text/richTextCommands";
+import {
+  collectClipboardImageFiles,
+  extractClipboardHtmlImageFiles,
+  isRichTextClipboardImageFile,
+  uniqueClipboardImageFiles,
+} from "../rich-text/richTextClipboardImages";
 
 export type MentionComposerInlineImageInsert = {
   pendingId: string;
@@ -25,68 +32,20 @@ export const INLINE_IMAGE_FIGURE_SELECTOR =
 const PENDING_ATTR = "data-attachment-pending";
 
 export function isComposerInlineImageFile(file: File): boolean {
-  return resolveFilePreviewKind({ fileName: file.name, mimeType: file.type }) === "image";
+  return isRichTextClipboardImageFile(file);
 }
+
+export {
+  collectClipboardImageFiles,
+  extractClipboardHtmlImageFiles,
+  uniqueClipboardImageFiles,
+};
 
 export function newInlineImagePendingId(): string {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
     return crypto.randomUUID().replace(/-/g, "").slice(0, 16);
   }
   return `img${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
-}
-
-function clipboardImageFingerprint(file: File): string {
-  return `${file.name}|${file.size}|${file.type}|${file.lastModified}`;
-}
-
-function pushUniqueImages(out: File[], seen: Set<string>, file: File): void {
-  if (!isComposerInlineImageFile(file)) return;
-  const key = clipboardImageFingerprint(file);
-  if (seen.has(key)) return;
-  seen.add(key);
-  out.push(file);
-}
-
-function collectImagesFromFileList(list: FileList | null | undefined): File[] {
-  if (!list?.length) return [];
-  const out: File[] = [];
-  const seen = new Set<string>();
-  for (const file of Array.from(list)) pushUniqueImages(out, seen, file);
-  return out;
-}
-
-function collectImagesFromItems(items: DataTransferItemList | null | undefined): File[] {
-  if (!items?.length) return [];
-  const out: File[] = [];
-  const seen = new Set<string>();
-  for (const item of Array.from(items)) {
-    if (item.kind !== "file") continue;
-    const file = item.getAsFile();
-    if (file) pushUniqueImages(out, seen, file);
-  }
-  return out;
-}
-
-/**
- * Clipboard images once per capture.
- * Prefer `files`; only fall back to `items` when `files` has no images.
- * Dedup by fingerprint (name|size|type|lastModified) — Chromium often exposes
- * the same screenshot as two distinct `File` objects in files + items.
- */
-export function uniqueClipboardImageFiles(
-  data: DataTransfer | null | undefined,
-): File[] {
-  if (!data) return [];
-  const fromFiles = collectImagesFromFileList(data.files);
-  if (fromFiles.length > 0) return fromFiles;
-  return collectImagesFromItems(data.items);
-}
-
-/** @deprecated Prefer `uniqueClipboardImageFiles` (same behavior). */
-export function collectClipboardImageFiles(
-  data: DataTransfer | null | undefined,
-): File[] {
-  return uniqueClipboardImageFiles(data);
 }
 
 function dataUrlToImageFile(dataUrl: string, fileName: string): File | null {
@@ -107,35 +66,11 @@ function dataUrlToImageFile(dataUrl: string, fileName: string): File | null {
     }
     const ext = mime.split("/")[1]?.split("+")[0] || "png";
     const name = fileName.includes(".") ? fileName : `${fileName || "image"}.${ext}`;
-    return new File([bytes], name, { type: mime });
+    const part = new Uint8Array(bytes.byteLength);
+    part.set(bytes);
+    return new File([part], name, { type: mime });
   } catch {
     return null;
-  }
-}
-
-/**
- * HTML-only paste (no clipboard files): at most one File per unique data: image src.
- * Ignores http(s) (policy) and blob: (async; screenshots usually arrive via files).
- */
-export function extractClipboardHtmlImageFiles(html: string | null | undefined): File[] {
-  const source = (html ?? "").trim();
-  if (!source || typeof DOMParser === "undefined") return [];
-  if (!/<img\b/i.test(source)) return [];
-  try {
-    const doc = new DOMParser().parseFromString(source, "text/html");
-    const out: File[] = [];
-    const seen = new Set<string>();
-    for (const img of Array.from(doc.querySelectorAll("img"))) {
-      const src = (img.getAttribute("src") || "").trim();
-      if (!src.startsWith("data:")) continue;
-      if (seen.has(src)) continue;
-      seen.add(src);
-      const file = dataUrlToImageFile(src, img.getAttribute("alt") || "image");
-      if (file) out.push(file);
-    }
-    return out;
-  } catch {
-    return [];
   }
 }
 

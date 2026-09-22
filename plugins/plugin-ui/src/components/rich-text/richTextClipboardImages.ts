@@ -1,8 +1,15 @@
-/** Clipboard image extraction for paste (Snipping Tool / Ctrl+V) — aligned with MentionComposer. */
+/**
+ * Canonical clipboard image extraction for paste (RichTextEditor + MentionComposer).
+ *
+ * Interaction-room parity:
+ *   files XOR items (uniqueClipboardImageFiles)
+ *   + data: imgs in text/html
+ *   + async navigator.clipboard.read() for Win Snipping Tool empty FileList
+ */
+import { resolveFilePreviewKind } from "../preview/resolveFilePreviewKind";
 
-function isImageFile(file: File): boolean {
-  if ((file.type || "").toLowerCase().startsWith("image/")) return true;
-  return /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(file.name || "");
+export function isRichTextClipboardImageFile(file: File): boolean {
+  return resolveFilePreviewKind({ fileName: file.name, mimeType: file.type }) === "image";
 }
 
 function defaultImageName(mime: string): string {
@@ -15,34 +22,42 @@ function normalizeClipboardFile(file: File, declaredType?: string): File {
   const type = (file.type || declaredType || "").trim();
   const name = (file.name || "").trim();
   if (type && type === file.type && name) return file;
-  if (!type.startsWith("image/") && !isImageFile(file)) return file;
-  const nextType = type.startsWith("image/") ? type : file.type || "image/png";
+  const looksImage =
+    type.toLowerCase().startsWith("image/") || isRichTextClipboardImageFile(file);
+  if (!looksImage) return file;
+  const nextType = type.toLowerCase().startsWith("image/")
+    ? type
+    : file.type || "image/png";
   const nextName = name || defaultImageName(nextType);
   if (nextType === file.type && nextName === file.name) return file;
   return new File([file], nextName, { type: nextType, lastModified: file.lastModified });
 }
 
-function fingerprint(file: File): string {
+function clipboardImageFingerprint(file: File): string {
   return `${file.name}|${file.size}|${file.type}|${file.lastModified}`;
 }
 
-function pushUnique(out: File[], seen: Set<string>, file: File): void {
-  if (!isImageFile(file)) return;
-  const key = fingerprint(file);
+function pushUniqueImages(out: File[], seen: Set<string>, file: File): void {
+  if (!isRichTextClipboardImageFile(file) && !(file.type || "").toLowerCase().startsWith("image/")) {
+    return;
+  }
+  const key = clipboardImageFingerprint(file);
   if (seen.has(key)) return;
   seen.add(key);
   out.push(file);
 }
 
-function fromFileList(list: FileList | null | undefined): File[] {
+function collectImagesFromFileList(list: FileList | null | undefined): File[] {
   if (!list?.length) return [];
   const out: File[] = [];
   const seen = new Set<string>();
-  for (const file of Array.from(list)) pushUnique(out, seen, normalizeClipboardFile(file));
+  for (const file of Array.from(list)) {
+    pushUniqueImages(out, seen, normalizeClipboardFile(file));
+  }
   return out;
 }
 
-function fromItems(items: DataTransferItemList | null | undefined): File[] {
+function collectImagesFromItems(items: DataTransferItemList | null | undefined): File[] {
   if (!items?.length) return [];
   const out: File[] = [];
   const seen = new Set<string>();
@@ -50,7 +65,7 @@ function fromItems(items: DataTransferItemList | null | undefined): File[] {
     if (item.kind !== "file") continue;
     const raw = item.getAsFile();
     if (!raw) continue;
-    pushUnique(out, seen, normalizeClipboardFile(raw, item.type));
+    pushUniqueImages(out, seen, normalizeClipboardFile(raw, item.type));
   }
   return out;
 }
@@ -78,6 +93,26 @@ function dataUrlToImageFile(dataUrl: string, fileName: string): File | null {
   } catch {
     return null;
   }
+}
+
+/**
+ * Clipboard images once per capture.
+ * Prefer `files`; only fall back to `items` when `files` has no images.
+ */
+export function uniqueClipboardImageFiles(
+  data: DataTransfer | null | undefined,
+): File[] {
+  if (!data) return [];
+  const fromFiles = collectImagesFromFileList(data.files);
+  if (fromFiles.length > 0) return fromFiles;
+  return collectImagesFromItems(data.items);
+}
+
+/** @deprecated Prefer `uniqueClipboardImageFiles` (same behavior). */
+export function collectClipboardImageFiles(
+  data: DataTransfer | null | undefined,
+): File[] {
+  return uniqueClipboardImageFiles(data);
 }
 
 /** HTML-only paste: one File per unique data: image src (ignores http(s)/file://). */
@@ -118,14 +153,12 @@ export function extractClipboardHtmlImageFiles(html: string | null | undefined):
 
 /**
  * Sync image files from a paste DataTransfer.
- * Prefer `files`, then `items`, then data: images in text/html.
+ * Prefer files XOR items, then data: images in text/html.
  */
 export function collectPasteImageFiles(data: DataTransfer | null | undefined): File[] {
   if (!data) return [];
-  const fromFiles = fromFileList(data.files);
-  if (fromFiles.length > 0) return fromFiles;
-  const fromItemList = fromItems(data.items);
-  if (fromItemList.length > 0) return fromItemList;
+  const fromClipboard = uniqueClipboardImageFiles(data);
+  if (fromClipboard.length > 0) return fromClipboard;
   return extractClipboardHtmlImageFiles(data.getData("text/html"));
 }
 
@@ -149,7 +182,7 @@ export function clipboardLooksLikeImagePaste(data: DataTransfer | null | undefin
 
 /**
  * When to block the default paste and try `navigator.clipboard.read()`.
- * Narrower than looks-like: do not steal Word/HTML prose pastes that only mention &lt;img&gt;.
+ * Do not steal Word/HTML prose pastes that only mention &lt;img&gt;.
  */
 export function shouldTryAsyncClipboardImageRead(
   data: DataTransfer | null | undefined,
@@ -168,9 +201,8 @@ export function shouldTryAsyncClipboardImageRead(
   return false;
 }
 
-
 /**
- * Async fallback when paste DataTransfer has no File (some Win Snipping Tool / Edge cases).
+ * Async fallback when paste DataTransfer has no File (Win Snipping Tool / Edge).
  * Must be called during a user gesture; clipboardData snapshot should already be consumed sync.
  */
 export async function readClipboardImageFiles(): Promise<File[]> {
@@ -185,7 +217,7 @@ export async function readClipboardImageFiles(): Promise<File[]> {
         if (!type.toLowerCase().startsWith("image/")) continue;
         const blob = await item.getType(type);
         const file = new File([blob], defaultImageName(type), { type });
-        pushUnique(out, seen, file);
+        pushUniqueImages(out, seen, file);
       }
     }
     return out;

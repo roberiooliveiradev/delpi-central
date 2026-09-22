@@ -27,6 +27,11 @@ import { prettyPrintRichTextHtml, stripDangerousRichTextTags } from "./richTextH
 import { applyRichTextImageWidth, fitRichTextImageToContainer, resolveRichTextImageResizeHandlePosition } from "./richTextImageResize";
 import { RICH_TEXT_LABELS } from "./richTextLabels";
 import {
+  collectPasteImageFiles,
+  readClipboardImageFiles,
+  shouldTryAsyncClipboardImageRead,
+} from "./richTextClipboardImages";
+import {
   applyAttachmentImageSources,
   clipboardHasUsefulHtml,
   clipboardLooksLikeMarkdown,
@@ -57,6 +62,13 @@ export type RichTextEditorProps = {
   resolveAttachmentImageSrc?: ResolveAttachmentImageSrc;
   /** Persist: rewrite display blob src back to stable URL before onChange. */
   persistAttachmentImageSrc?: ResolveAttachmentImageSrc;
+  /**
+   * Interaction-room parity: intercept image paste (files / data: / async clipboard.read).
+   * Host uploads or materializes pending imgs — same contract as MentionComposer.
+   */
+  onPasteImages?: (files: File[]) => void | Promise<void>;
+  /** Called when async clipboard.read fails after a screenshot-like paste. */
+  onPasteImagesError?: (error: unknown) => void;
 };
 
 type LinkDialogState =
@@ -99,6 +111,8 @@ export function RichTextEditor({
   minHeight = 200,
   resolveAttachmentImageSrc,
   persistAttachmentImageSrc,
+  onPasteImages,
+  onPasteImagesError,
 }: RichTextEditorProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const ref = useRef<HTMLDivElement>(null);
@@ -415,7 +429,42 @@ export function RichTextEditor({
   }
 
   function handlePaste(event: ClipboardEvent<HTMLDivElement>) {
-    if (sourceMode) return;
+    if (sourceMode || disabled) return;
+
+    // Same owner as MentionComposer: image paste never relies on MFE wrapper capture.
+    if (onPasteImages) {
+      const syncFiles = collectPasteImageFiles(event.clipboardData);
+      if (syncFiles.length > 0) {
+        event.preventDefault();
+        event.stopPropagation();
+        void Promise.resolve(onPasteImages(syncFiles)).catch((error) => {
+          onPasteImagesError?.(error);
+        });
+        return;
+      }
+      if (shouldTryAsyncClipboardImageRead(event.clipboardData)) {
+        event.preventDefault();
+        event.stopPropagation();
+        void (async () => {
+          const asyncFiles = await readClipboardImageFiles();
+          if (asyncFiles.length > 0) {
+            try {
+              await onPasteImages(asyncFiles);
+            } catch (error) {
+              onPasteImagesError?.(error);
+            }
+            return;
+          }
+          onPasteImagesError?.(
+            new Error(
+              "Não foi possível ler a imagem da área de transferência. Use o clipe ou arraste o arquivo.",
+            ),
+          );
+        })();
+        return;
+      }
+    }
+
     const html = event.clipboardData?.getData("text/html");
     const plain = event.clipboardData?.getData("text/plain") ?? "";
 

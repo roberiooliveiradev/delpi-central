@@ -1,4 +1,4 @@
-import { useRef, type ClipboardEvent, type ComponentProps, type DragEvent, type ReactNode } from "react";
+import { useRef, type ComponentProps, type DragEvent, type ReactNode } from "react";
 import {
   attachmentPreviewStripBemClasses,
   createDashboardAttachmentPreviewStrip,
@@ -37,11 +37,6 @@ import {
 import { Paperclip } from "lucide-react";
 
 import { appendInlineImageHtml } from "../presentation/inlineUpload";
-import {
-  collectPasteImageFiles,
-  readClipboardImageFiles,
-  shouldTryAsyncClipboardImageRead,
-} from "../presentation/clipboardImages";
 
 export { usePersistedViewLayout };
 
@@ -207,34 +202,6 @@ export function HelpdeskRichTextField({
     }
   };
 
-  const onPasteCapture = (event: ClipboardEvent<HTMLDivElement>) => {
-    if (!onUploadFiles || disabled) return;
-    const syncFiles = collectPasteImageFiles(event.clipboardData);
-    if (syncFiles.length > 0) {
-      event.preventDefault();
-      event.stopPropagation();
-      void ingestFiles(syncFiles);
-      return;
-    }
-    if (!shouldTryAsyncClipboardImageRead(event.clipboardData)) return;
-    // Win Snipping Tool / Edge: image hinted but File not in DataTransfer — read async.
-    event.preventDefault();
-    event.stopPropagation();
-    void (async () => {
-      const asyncFiles = await readClipboardImageFiles();
-      if (asyncFiles.length > 0) {
-        await ingestFiles(asyncFiles);
-        return;
-      }
-      // Permission denied / empty — do not leave the user with a silent no-op.
-      onUploadError?.(
-        new Error(
-          "Não foi possível ler a imagem da área de transferência. Use o clipe ou arraste o arquivo.",
-        ),
-      );
-    })();
-  };
-
   const onDrop = (event: DragEvent<HTMLDivElement>) => {
     if (!onUploadFiles || disabled) return;
     const files = Array.from(event.dataTransfer?.files || []).filter((file) =>
@@ -249,7 +216,6 @@ export function HelpdeskRichTextField({
   return (
     <div
       className="helpdesk-field helpdesk-rich-text-field"
-      onPasteCapture={onPasteCapture}
       onDrop={onDrop}
       onDragOver={(event) => {
         if (onUploadFiles && !disabled) event.preventDefault();
@@ -265,6 +231,8 @@ export function HelpdeskRichTextField({
         ariaLabel={ariaLabel ?? label}
         resolveAttachmentImageSrc={resolveAttachmentImageSrc}
         persistAttachmentImageSrc={persistAttachmentImageSrc}
+        onPasteImages={onUploadFiles && !disabled ? ingestFiles : undefined}
+        onPasteImagesError={onUploadError}
       />
       {onUploadFiles ? (
         <div className="helpdesk-rich-text-field__attach">

@@ -158,15 +158,25 @@ Ordem: componentes e tipos **já** no MFE; builder e prefs só depois de H7 est�
 
 **Rodapé da lista (21/09/2026):** `HelpdeskListPaginationFooter` via `createDashboardPaginationKit` do plugin-ui; ajuda em `HintAction` (sem `?` soltos). Evidência: ledger `lista.ux.pagination`.
 
-## Próximo código (sem nova decisão de produto/HLAPI)
+## Próximo código — melhorias urgentes (22/09/2026)
 
-Nada obrigatório no MFE/BFF do solicitante. Desbloqueios possíveis:
+A evidência H12 «colar/preview» ficou **STALE** frente ao runtime: colar e F5 da imagem no compositor do helpdesk **quebram** na superfície publicada. A sala de interação (`MentionComposer` / `InteractionRoomPage`) é a referência canônica.
 
-| Item | Estado | Desbloqueio |
-|---|---|---|
-| M-23 menção `@` na escrita | BLOQUEADO | catálogo HLAPI de usuários/grupos |
-| H12 upload novo anexo | **PROVEN** live | — |
-| H10 aprovar/reabrir/satisfação | CONSOLE no GLPI; **ponte UX** «Abrir no helpdesk» entregue | operações HLAPI do solicitante |
+| Prioridade | Item | Estado | Dono / alvo |
+|---|---|---|---|
+| **P0 urgente** | Colar imagem (Ctrl+V / Snipping Tool) no `HelpdeskRichTextField` | **DRIFT** — não confiar em H12.paste.snipping PROVEN | Kit: `RichTextEditor.onPasteImages` + `richTextClipboardImages` (paridade MentionComposer); host helpdesk só faz upload/pending |
+| **P0 urgente** | Preview autenticado após F5 / reload do rascunho | **DRIFT** — blob no state / resolve incompleto | Contrato único: persist path BFF + `data-attachment-id`; display via `resolveAttachmentImageSrc` (salas) |
+| P1 | M-23 menção `@` na escrita | BLOQUEADO | catálogo HLAPI |
+| P1 | H10 aprovar/reabrir/satisfação | CONSOLE | operações HLAPI do solicitante |
+
+```text
+fonte canônica de paste/imagem no compositor
+  MentionComposer + richTextClipboardImages + resolveAttachmentImageSrc
+  → RichTextEditor.onPasteImages (mesmo fluxo)
+  → HelpdeskRichTextField consome; sem clipboard paralelo no MFE
+```
+
+H12 Document upload (BFF/live) permanece válido; o que reabre é **só** a UX de colar/preview no MFE.
 
 ## Dependências
 

@@ -16,12 +16,12 @@ Esta pasta decide o produto. Não autoriza implementação sozinha e não prova 
 Meus Chamados de TI não é um segundo sistema de chamados e não é um conserto do iframe atual.
 
 ```text
-Hoje, publicado                              Ainda aberto / parque
+Hoje, publicado                              Ainda aberto / parque / urgente
 -------------------------------------------  --------------------------------
-MFE /apps/helpdesk + HTML + builder AND      H10 ciclo write (CONSOLE)
+MFE /apps/helpdesk + HTML + builder AND      **P0** colar + F5 imagem (DRIFT H12 UX)
 helpdesk-api OAuth + contrato ADDITIVE       M-23 @ escrita (BLOQUEADO)
-H12 upload (colar/clipe/arrastar) live       bancada / Change / HD-011 (FORA)
-GLPI dono do chamado
+H12 Document upload BFF live                 H10 ciclo write (CONSOLE)
+GLPI dono do chamado                         bancada / Change / HD-011 (FORA)
 E14 chips de menção na bolha
 ```
 
@@ -103,7 +103,7 @@ O id não muda. O plugin iframe já é `helpdesk`, e o cliente OAuth de produç�
 | Qual é o contrato? | [`03-contrato.md`](./03-contrato.md) |
 | Como a identidade funciona? | [`04-seguranca.md`](./04-seguranca.md) |
 | Em que ondas o produto cresce? | [`05-roadmap.md`](./05-roadmap.md) |
-| Qual é a próxima etapa executável? | H12 **PROVEN** live. Próximo código só com decisão nova (M-23 `@`, H10 ciclo write se HLAPI). Ledger: [`evidence/execution-ledger.md`](./evidence/execution-ledger.md) |
+| Qual é a próxima etapa executável? | **P0 urgente:** colar imagem + F5 preview no compositor (alinhar à sala de interação). Depois: M-23 `@`, H10 write se HLAPI. Ledger: [`evidence/execution-ledger.md`](./evidence/execution-ledger.md) · roadmap [`05`](./05-roadmap.md) §Próximo código |
 | Qual é a onda? | [`05-roadmap.md`](./05-roadmap.md) |
 | Qual requisito isso cobre? | [`07-requisitos.md`](./07-requisitos.md) |
 | Quando uma etapa está pronta? | [`08-definition-of-done.md`](./08-definition-of-done.md) |
