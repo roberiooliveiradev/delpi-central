@@ -3,7 +3,7 @@
 **Status:** visão canônica de produto  
 **Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
 **Standalone boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
-**Requirements:** `CP-001…CP-310`
+**Requirements:** `CP-001…CP-332`
 
 ## 1. Definição
 
@@ -13,6 +13,7 @@ Ela não é apenas um assistente de chat. O target combina:
 
 ```text
 Continuous Operational Intelligence
++ Operational Incident Intelligence
 + Process Intelligence
 + Decision Intelligence
 + Governed Automation Orchestration
@@ -21,6 +22,8 @@ Continuous Operational Intelligence
 ```
 
 Possui API/MFE/persistence/manifest/deploy próprios e não depende do Minha DELPI Chat.
+
+Operational Incident Intelligence (product intent): sobre componentes com observability autorizada e integrada, a DÉLIA deve perceber falhas, correlacionar sinais, formar incidentes, investigar causa (hipótese ≠ fato confirmado), identificar responsável, avisar humanos e acompanhar recuperação — sem autocorrigir nesta capability.
 
 ## 2. North Star
 

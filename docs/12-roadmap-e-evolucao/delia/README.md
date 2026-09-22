@@ -2,7 +2,7 @@
 
 > **Status:** `PLANNED / NOT_STARTED`
 > **Produto:** aplicação nova e standalone de Continuous Operational Intelligence
-> **Requirements:** `CP-001…CP-316`
+> **Requirements:** `CP-001…CP-332`
 > **Specs temáticas:** `53–66`
 > **Próxima etapa:** `C1-T2 — JWT + CORE EFFECTIVE ACCESS INTEGRATION` (`C0.S0..=C0.S7=APPROVED`; `FOUNDATION_FREEZE=APPROVED`; `C1_AUTHORIZED=YES`; `C1_STARTED=YES`; `C1_EXECUTED=NO`)
 > **Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)

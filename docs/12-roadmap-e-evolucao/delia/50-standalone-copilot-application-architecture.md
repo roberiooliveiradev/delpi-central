@@ -133,6 +133,8 @@ C0.S0 revalida quais assets/contratos estão disponíveis no HEAD de execução 
 
 Execução técnica de automações materiais usa o Automation Hub por contrato quando aplicável; a DÉLIA permanece owner de intelligence/context, Evidence, Policy, Decision, Work/orquestração e coordenação da verificação de Outcome.
 
+**Operational Incident Intelligence** (capability `TARGET`/`PLANNED`; ver `57` §35 e `CP-317–CP-332`) estende essa ownership de inteligência para investigação/correlação de incidentes técnicos e acompanhamento de recuperação. Fontes de observabilidade, logs, traces, metrics, deploy e estado de infraestrutura permanecem com seus owners autoritativos. Nesta capability a DÉLIA não executa remediação técnica autônoma.
+
 ## 5. Surfaces sobre o mesmo runtime
 
 A DÉLIA deve suportar diferentes experiências sem criar produtos/runtimes paralelos:

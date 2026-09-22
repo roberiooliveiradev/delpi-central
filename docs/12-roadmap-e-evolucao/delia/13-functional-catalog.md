@@ -2,7 +2,7 @@
 
 **Status:** `TARGET` — catálogo funcional temático  
 **Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
-**Requirements:** [`25-requirements-traceability.md`](./25-requirements-traceability.md) — `CP-001…CP-316`
+**Requirements:** [`25-requirements-traceability.md`](./25-requirements-traceability.md) — `CP-001…CP-332`
 
 ## 1. Objetivo
 

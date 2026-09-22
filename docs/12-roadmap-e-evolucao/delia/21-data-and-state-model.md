@@ -1497,6 +1497,54 @@ verifiedAt?
 
 Notification success não altera Outcome.
 
+## 17A. Operational Incident Intelligence state
+
+Capability product: Continuous Operational Intelligence / Operational Incident Intelligence (`TARGET` / `PLANNED`; thematic `57` §35; requirements `CP-317–CP-332`).
+
+`OperationalIncident` is DÉLIA-owned **intelligence/coordination state**, not the authoritative telemetry store.
+
+Candidate conceptual fields (not a frozen physical schema in this phase):
+
+```text
+incidentId
+detectedAt / environment
+affectedApplication / affectedComponent / affectedCapability
+severity / status
+firstSeen / lastSeen / occurrenceCount
+symptoms[]
+evidenceRefs[]
+deploymentRef / versionRef / shaRef
+rootCauseStatus / rootCauseSummary / rootCauseEvidenceRefs[]
+ownerRef / responsibleTeamRef
+humanReviewStatus
+resolutionRef / resolvedAt
+outcomeStatus / outcomeEvidenceRefs[]
+```
+
+`RootCauseAssessmentStatus` (assessment lifecycle; **not** an `EpistemicClass` member):
+
+```text
+UNKNOWN
+HYPOTHESIS
+SUPPORTED
+HUMAN_CONFIRMED
+DISPROVEN
+```
+
+Invariants:
+
+```text
+OperationalIncident != log/trace/metric SoT
+EvidenceRef != source authority
+RootCauseAssessmentStatus.HYPOTHESIS != FACT
+MODEL OUTPUT != confirmed root cause
+technical action success != incident outcome verified
+investigation access != extra AuthZ grant
+resolved incident != published Organizational Knowledge
+```
+
+No Incident Engine / RCA Engine / Observability Platform is introduced by documenting these candidates. Persist only when C0/lifecycle prove owner, consumers and retention.
+
 ## 18. Process Intelligence state
 
 Preferir event-log projections e refs em vez de copiar todos os sistemas.

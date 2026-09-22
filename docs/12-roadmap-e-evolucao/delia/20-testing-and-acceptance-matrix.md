@@ -417,7 +417,7 @@ CP-051, CP-055, CP-056, CP-057, CP-091, CP-093, CP-109, CP-110
 CP-130..140, CP-150, CP-157, CP-175, CP-176, CP-178, CP-179
 CP-182, CP-183, CP-188, CP-189, CP-190, CP-194..199, CP-209, CP-214
 CP-223, CP-227..231, CP-249+, CP-262+, CP-268+, CP-274+, CP-280+
-CP-287+, CP-295+, CP-302+, CP-311..316
+CP-287+, CP-295+, CP-302+, CP-311..316, CP-317..332
 ```
 
 ```text
@@ -1577,6 +1577,45 @@ retry/restart → no duplicate send
 paused/cancelled definition → no send
 creator loses permission before next run → no send
 provider accepted request but outcome unverifiable → PENDING/INCONCLUSIVE, not false success
+```
+
+### Operational Incident Intelligence
+
+Para `CP-317–CP-332`, provar (quando runtime existir) no mínimo:
+
+**Coverage / ownership**
+
+- somente fontes de observability autorizadas/integradas alimentam intake;
+- ausência de integração ≠ cobertura universal da Minha DELPI;
+- OperationalIncident referencia Evidence; não se torna SoT de log/trace/metric;
+- Investigation não amplia Core/domain AuthZ.
+
+**Correlation / root cause**
+
+- ocorrências relacionadas podem colapsar em um incidente lógico;
+- `RootCauseAssessmentStatus` distingue `UNKNOWN|HYPOTHESIS|SUPPORTED|HUMAN_CONFIRMED|DISPROVEN`;
+- model output / correlation / deploy proximity / test pass / error disappearance não promovem automaticamente `HUMAN_CONFIRMED`/FACT.
+
+**Human path / remediation boundary**
+
+- human review é obrigatório antes de correção material nesta capability;
+- notify/surface usa contratos existentes; provider específico não é assumido PROVEN;
+- nenhum path de auto code-change/commit/PR/merge/deploy/rollback/DB/config remediation.
+
+**Outcome / learning**
+
+- technical success / ticket close / human “fixed” claim ≠ incident outcome verified;
+- recovery verification consulta fonte apropriada quando possível;
+- incident Evidence → Learning Candidate only; no auto Organizational Knowledge publish.
+
+Negativos obrigatórios:
+
+```text
+unintegrated component claimed as monitored → FAIL
+hypothesis labeled as confirmed without human/evidence gate → FAIL
+autonomous remediation ACT from OII capability → FAIL
+resolved solely because deploy occurred → FAIL / INCONCLUSIVE
+secret/token present in investigation prompt/Evidence/common log → FAIL
 ```
 
 ### Process opportunity governance

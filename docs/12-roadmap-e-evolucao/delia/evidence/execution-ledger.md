@@ -4174,3 +4174,51 @@ POST_REVIEW_DELIA_RUNTIME_DIFF: EMPTY → EXECUTION_DRIFT=NONE
 CANONICAL_SOURCE: 16 C3-T6R1 APPROVED; 17 C3-T6R1; 20 C3-T6R1; 21; 25 §31; this ledger
 NEXT: C3-T7 — FAST | OPERATIONAL | REASONING + STRUCTURED_PLANNER_FOUNDATION
 ```
+
+## 6.77 DELIA-OII-001 — Operational Incident Intelligence documentation / requirements integration
+
+```text
+TASK = DELIA-OII-001 / OPERATIONAL_INCIDENT_INTELLIGENCE_DOCUMENTATION_INTEGRATION
+MODE = DOCUMENTATION + ARCHITECTURE INTEGRATION + REQUIREMENTS / TRACEABILITY + CONTRACT CONCEPT
+IMPLEMENTATION = DOCUMENTATION ONLY
+RUNTIME_DIFF = NONE
+BASE_HEAD = a314a6708eb9171873bb4e66643e6b1e956b7a13
+PHASE_ADVANCE = NONE
+ARCHITECTURE_DECISION_REQUIRED = NONE (fits existing Continuous Operational Intelligence / Watch / Evidence / Decision / Work cycle; 16 phase order unchanged)
+NEW_BOUNDED_CONTEXT = NONE
+NEW_RUNTIME_ABSTRACTIONS = NONE
+NEW_OBSERVABILITY_PLATFORM = NONE
+AUTONOMOUS_REMEDIATION = NOT_INTRODUCED
+
+PRODUCT_CAPABILITY = Operational Incident Intelligence = TARGET / PLANNED
+OBSERVABILITY_SOURCES = TO_INVENTORY until inventoried per component
+COVERAGE_CLAIM = integrated + authorized observability + sufficient contract/evidence (NOT universal Minha DELPI monitoring as current fact)
+
+FACTS_PROVEN_BY_THIS_TASK = documentation incorporation only
+TO_INVENTORY = notification delivery providers; observability backends/collectors; concrete correlation algorithms; per-component observability integrations
+PLANNED / TARGET = OII capability + OperationalIncident conceptual model + RootCauseAssessmentStatus + CP-317–CP-332
+PROVEN_RUNTIME_OII = NO
+
+REQUIREMENT_GAP_CLOSED =
+  dedicated CP-317–CP-332 for OII (prior partial coverage via CP-051/056/093–094/101–103/118/125/231–234/239–240/243–244/258 insufficient as first-class capability)
+
+FILES_CHANGED =
+  57 §35 (primary thematic formalization)
+  25 CP-317–CP-332 + ranges/rules/linkage
+  24 product specification + negatives
+  21 §17A conceptual state
+  17 critical separation (capability ≠ new BC)
+  20 acceptance/negative gates
+  03 capability family examples
+  50 ownership note
+  01 product vision
+  INDEX routing
+  this ledger event
+
+NOT_CHANGED =
+  16-execution-master-plan (no material phase/order change)
+  runtime code / migrations / collectors / agents / LLM prompts
+
+STATUS = IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW
+ACCEPT = NOT_DECLARED (GPT architecture review owns accept)
+```

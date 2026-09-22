@@ -13,7 +13,7 @@ Entrada principal: [`README.md`](./README.md).
 7. [`52-standalone-repository-and-bootstrap-plan.md`](./52-standalone-repository-and-bootstrap-plan.md) — physical/bootstrap target.
 8. [`21-data-and-state-model.md`](./21-data-and-state-model.md) — state/persistence/retention.
 9. [`20-testing-and-acceptance-matrix.md`](./20-testing-and-acceptance-matrix.md) — tests/gates.
-10. [`25-requirements-traceability.md`](./25-requirements-traceability.md) — `CP-001…CP-316` single requirement authority.
+10. [`25-requirements-traceability.md`](./25-requirements-traceability.md) — `CP-001…CP-332` single requirement authority.
 11. arquitetura técnica / product spec.
 12. specs temáticas `53–66`.
 13. [`evidence/execution-ledger.md`](./evidence/execution-ledger.md) — execution state/evidence.
@@ -71,7 +71,7 @@ Cross-cutting capability map: [`67-market-capability-expansion-and-intelligence-
 - [`54-biometric-identity-and-human-observation-governance.md`](./54-biometric-identity-and-human-observation-governance.md)
 - [`55-internet-research-and-external-connectors.md`](./55-internet-research-and-external-connectors.md)
 - [`56-microsoft-teams-connector-and-meeting-integration.md`](./56-microsoft-teams-connector-and-meeting-integration.md)
-- [`57-event-driven-autonomous-operations-and-automation-execution-hub.md`](./57-event-driven-autonomous-operations-and-automation-execution-hub.md) — includes Recurring Governed Work / Scheduling target and boundaries
+- [`57-event-driven-autonomous-operations-and-automation-execution-hub.md`](./57-event-driven-autonomous-operations-and-automation-execution-hub.md) — includes Recurring Governed Work / Scheduling and Operational Incident Intelligence targets and boundaries
 - [`58-process-intelligence-and-process-mining.md`](./58-process-intelligence-and-process-mining.md)
 - [`59-ai-control-tower-and-digital-workforce-governance.md`](./59-ai-control-tower-and-digital-workforce-governance.md)
 - [`60-agent-interoperability-mcp-a2a-and-tool-protocols.md`](./60-agent-interoperability-mcp-a2a-and-tool-protocols.md)
@@ -108,6 +108,32 @@ C6 Watch still has no autonomous ACT by default
 runtime implementation = not PROVEN until evidence
 ```
 
+## Operational Incident Intelligence
+
+```text
+Product target / semantics        → 57 §35
+Canonical order / phase mapping   → 16 (unchanged; OII fits C0 inventory + C4/C6 paths)
+Owner / contract boundary         → 17 (capability; not new BC)
+State / persistence candidates    → 21 §17A
+Acceptance / negative gates       → 20
+Requirements                      → CP-317–CP-332 in 25
+Product specification             → 24
+Standalone ownership note         → 50
+Execution evidence/status         → ledger
+```
+
+Interpretation:
+
+```text
+Operational Incident Intelligence = TARGET / PLANNED first-class capability
+coverage = integrated + authorized observability + sufficient contract/evidence
+DÉLIA = investigation/correlation/human-review/outcome coordination
+observability sources = remain SoT for telemetry
+human correction = existing engineering/delivery process
+no autonomous remediation in this capability
+runtime = not PROVEN by this documentation task
+```
+
 ## Reference-only / superseded
 
 ```text
@@ -142,6 +168,7 @@ internet/external?             → 55
 Teams?                         → 56
 autonomous operations/RPA?     → 57
 scheduled/recurring work?      → 57 + 16/17/20/21/25 CP-311–316
+operational incident intel?    → 57 §35 + 17/20/21/24/25 CP-317–332
 Process Mining?                → 58
 AI governance/control tower?   → 59
 MCP/A2A?                       → 60

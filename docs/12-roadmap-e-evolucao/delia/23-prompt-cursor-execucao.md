@@ -60,7 +60,7 @@ PERCEBER
 14. `22-cursor-execution-protocol.md`
 15. `evidence/execution-ledger.md`
 
-Precedência é definida por `48`. `16` é a única authority de ordem. `25` é a única authority `CP-*` (`CP-001…CP-316`).
+Precedência é definida por `48`. `16` é a única authority de ordem. `25` é a única authority `CP-*` (`CP-001…CP-332`).
 
 ## 4. Specs temáticas ativas
 

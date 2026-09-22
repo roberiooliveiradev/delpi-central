@@ -251,6 +251,14 @@ Personal vs Organizational Knowledge:
   Conversation history != Personal Memory
   Session context != Personal Memory
   Candidate knowledge != published organizational knowledge
+
+Operational Incident Intelligence (capability; not a new BC):
+  uses Signal + Evidence + Watch/Decision/Work + Notification + Outcome + Learning Candidate
+  OperationalIncident = DÉLIA coordination/investigation state
+  Observability source systems remain SoT for logs/traces/metrics/health
+  root-cause HYPOTHESIS != HUMAN_CONFIRMED != FACT
+  no autonomous remediation in this capability
+  Control Tower "incidents" (AI asset governance) != OperationalIncident (technical health)
 ```
 
 #### 2.3.5 Boundary integration rule

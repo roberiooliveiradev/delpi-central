@@ -9,7 +9,7 @@
 **Biometric/Human Observation:** [`54-biometric-identity-and-human-observation-governance.md`](./54-biometric-identity-and-human-observation-governance.md)  
 **Internet/External Connectors:** [`55-internet-research-and-external-connectors.md`](./55-internet-research-and-external-connectors.md)  
 **Microsoft Teams:** [`56-microsoft-teams-connector-and-meeting-integration.md`](./56-microsoft-teams-connector-and-meeting-integration.md)  
-**Autonomous Operations/Execution Hub:** [`57-event-driven-autonomous-operations-and-automation-execution-hub.md`](./57-event-driven-autonomous-operations-and-automation-execution-hub.md)  
+**Autonomous Operations/Execution Hub:** [`57-event-driven-autonomous-operations-and-automation-execution-hub.md`](./57-event-driven-autonomous-operations-and-automation-execution-hub.md) (incl. Recurring Governed Work + Operational Incident Intelligence)
 **Process Intelligence:** [`58-process-intelligence-and-process-mining.md`](./58-process-intelligence-and-process-mining.md)  
 **AI Control Tower:** [`59-ai-control-tower-and-digital-workforce-governance.md`](./59-ai-control-tower-and-digital-workforce-governance.md)  
 **MCP/A2A:** [`60-agent-interoperability-mcp-a2a-and-tool-protocols.md`](./60-agent-interoperability-mcp-a2a-and-tool-protocols.md)  
@@ -117,6 +117,7 @@ OUT_OF_SCOPE_WITH_DECISION
 | CP-295 | C0 inventaria factory network, Edge platforms/devices, MDM, local inference, offline requirements, time sync, OT segmentation e cache/update owners | DÉLIA Edge/Industrial/Infrastructure | edge/offline foundation inventory | PLANNED |
 | CP-302 | C0 inventaria model providers, local ML models, registries/MLOps, datasets/evals, CI/CD, package catalogs/signing e supply-chain controls | DÉLIA Model Governance/Control Tower | model/marketplace foundation inventory | PLANNED |
 | CP-311 | C0 congela Recurring Governed Work: owner da definição versus owner do timer/scheduler físico, recurrence/timezone/DST, misfire/missed-run, overlap, idempotência por ocorrência, background identity/AuthZ/revoke, pause/cancel e Outcome boundaries | DÉLIA Work/Architecture/Automation/Security | recurring-work foundation contract | PLANNED |
+| CP-317 | C0 congela Operational Incident Intelligence: cobertura limitada a componentes com observability/integration autorizada; DÉLIA coordena Evidence/incidente/investigação/human-review/outcome sem se tornar SoT de logs/traces/metrics/deploy/repo/infra/domain; sem novo BC Incident Management/Observability/RCA nem remediação autônoma | DÉLIA Operational Intelligence/Architecture/Security | operational-incident foundation contract | PLANNED |
 
 ## 3. C1 — Standalone Application Bootstrap
 
@@ -361,6 +362,21 @@ C6 habilita Product Work e Watch `OBSERVE|ADVISE|PREPARE` por default. `PREPARE`
 | CP-305 | Capability Marketplace oferece lifecycle draft/review/approved/published/deprecated/revoked para packs/playbooks/Watches/automations/connectors/MCP/A2A/templates/models | DÉLIA Marketplace/Admin | marketplace lifecycle gate | LOCKED |
 | CP-306 | Model lifecycle monitora quality/input/calibration drift, latency, availability, cost e correction/outcome metrics conforme model type | DÉLIA Model Governance/Observability | model drift gate | LOCKED |
 | CP-316 | Product UX permite inspecionar Recurring Governed Work com status, recurrence/timezone, next scheduled occurrence quando derivável, last occurrence/outcome e ações governadas pause/resume/cancel, sem transformar schedule admin em permission authority | DÉLIA Work/MFE/Admin | recurring-work product UX gate | LOCKED |
+| CP-318 | Operational Incident Intelligence realiza intake somente de sinais/erros/anomalias de fontes de observabilidade autorizadas e integradas com contrato/evidence suficiente; ausência de integração não implica cobertura universal | DÉLIA Operational Intelligence/Events | authorized signal intake gate | LOCKED |
+| CP-319 | Incidentes referenciam Evidence/Source lineage sem copiar ownership das fontes autoritativas; EvidenceRef ≠ SoT de log/trace/metric | DÉLIA Evidence/Operational Intelligence | evidence lineage gate | LOCKED |
+| CP-320 | Múltiplas ocorrências relacionadas podem ser representadas como um OperationalIncident lógico (correlação/dedupe); clustering concreto exige design/eval/evidence e não cria Incident Engine antecipado | DÉLIA Operational Intelligence/Events | incident correlation gate | LOCKED |
+| CP-321 | Investigação identifica, quando derivável, affected application/component/capability e refs de ambiente/versão/deploy/SHA como contexto — sem tratar proximidade temporal de deploy como causa confirmada | DÉLIA Operational Intelligence | affected-scope identification gate | LOCKED |
+| CP-322 | Root-cause usa `RootCauseAssessmentStatus` (`UNKNOWN`/`HYPOTHESIS`/`SUPPORTED`/`HUMAN_CONFIRMED`/`DISPROVEN`), distinto de EpistemicClass; status é explícito e auditável | DÉLIA Operational Intelligence/Evidence | root-cause status gate | LOCKED |
+| CP-323 | Output de modelo, correlação, deploy relacionado, teste passando ou desaparecimento de erro não promovem automaticamente causa confirmada; `MODEL OUTPUT != FACT` e `confidence != authority` | DÉLIA Operational Intelligence/Policy | hypothesis-vs-fact gate | LOCKED |
+| CP-324 | Após investigação material, a capability identifica owner humano / responsible team quando o mapeamento existir; ausência de owner mapeado permanece explícita | DÉLIA Operational Intelligence/Core/owners | owner identification gate | LOCKED |
+| CP-325 | Correção nesta capability exige Human Review; DÉLIA apresenta incidente/Evidence/hipótese-ou-causa/owner e solicita avaliação humana antes de qualquer ação corretiva material | DÉLIA Operational Intelligence/Policy/Work | human-review required gate | LOCKED |
+| CP-326 | Incidentes relevantes podem gerar notification/alert/work item/incident surface para responsáveis, via contratos existentes; provider de delivery específico não é presumido PROVEN | DÉLIA Notifications/Work/Operational Intelligence | human notify/surface gate | LOCKED |
+| CP-327 | Operational Incident Intelligence não autoriza remediação técnica autônoma: sem auto code-change, commit, PR, merge, deploy, rollback, correção de banco ou alteração de configuração de produção | DÉLIA Operational Intelligence/Policy/Security | no autonomous remediation gate | LOCKED |
+| CP-328 | Resolução de incidente exige Outcome verification quando tecnicamente possível na fonte apropriada; deploy/ticket fechado/declaração humana/worker success/teste passando ≠ outcome verified | DÉLIA Operational Intelligence/Outcome | incident outcome verification gate | LOCKED |
+| CP-329 | Investigação opera sob least privilege e não concede AuthZ adicional além das permissões já aplicáveis às fontes/contratos | DÉLIA Operational Intelligence/Security/Core | least-privilege investigation gate | LOCKED |
+| CP-330 | Tokens/credentials/raw secrets nunca entram em prompt/embeddings/common logs/Evidence de investigação; telemetria sensível respeita classification/retention/redaction existentes | DÉLIA Security/Operational Intelligence | sensitive-data investigation gate | LOCKED |
+| CP-331 | Quando REASONING/IA for usado para RCA, preservar grounding, Evidence refs, model/version/config, limitations, generalization, safety e task outcome conforme materialidade; caminho FAST/determinístico é preferido quando suficiente | DÉLIA Operational Intelligence/Evals | RCA AI grounding/eval gate | LOCKED |
+| CP-332 | Evidence de incidente resolvido pode gerar Learning Candidate; publicação em Organizational Knowledge/Policy/procedure/automation exige owner/review/eval/version — nunca promoção automática | DÉLIA Knowledge/Operational Intelligence | incident learning governance gate | LOCKED |
 
 ## 9. C7 — Advanced Autonomy + Advanced Intelligence + Scale/Rollout
 
@@ -428,6 +444,7 @@ Esses IDs não podem ser reativados como dependência da DÉLIA.
 - `L5 = allowlisted autonomous execute within explicit limits`; permanece C7 e OFF por default;
 - Watch autonomous ACT permanece C7; Watch C6 é `OBSERVE|ADVISE|PREPARE` por default;
 - Recurring Governed Work temporal não é Watch autônomo: C5 pode executar ocorrência L4 bounded, mas `schedule != permission` e cada ocorrência material revalida live AuthZ/Policy/Decision;
+- Operational Incident Intelligence (`CP-317–CP-332`) é capability first-class de Continuous Operational Intelligence: observa/investiga/explica/notifica/acompanha; nesta capability não há remediação autônoma nem promoção de hipótese de modelo a FACT; cobertura = componentes com observability autorizada, não “toda a Minha DELPI” como fato atual;
 - timer/scheduler físico continua `TO_INVENTORY` até C0 provar owner/contrato; isso não rebaixa a capability de produto Recurring Governed Work;
 - modality/biometric result não pode criar bypass de RBAC/policy;
 - biometric identity é candidate association, não permission authority;
@@ -535,6 +552,7 @@ CP-287–CP-294  Predictive/Prescriptive Intelligence / Operational Twin
 CP-295–CP-301  Edge/Offline Industrial DÉLIA
 CP-302–CP-310  AI Model Lifecycle / Capability Marketplace
 CP-311–CP-316  Recurring Governed Work / Scheduling
+CP-317–CP-332  Operational Incident Intelligence
 ```
 
 Todas as faixas temáticas são subordinadas à ordem de `16`. Nenhuma spec temática cria fase, runtime, requirement authority ou permission authority paralela.
@@ -560,6 +578,7 @@ Status vocabulary: inventory **EVIDENCED** ≠ CP **PASS** ≠ C0.S0 COMPLETE.
 | CP-295 | Edge/offline inventory | N | EVIDENCED (Edge NOT_PROVEN; Pulse DOMAIN_LOCAL) | PLANNED |
 | CP-302 | model/MLOps/catalog inventory | O | EVIDENCED (Registry/Marketplace NOT_PROVEN) | PLANNED |
 | CP-311 | Recurring Work owner vs timer freeze | D | EVIDENCED PARTIAL (definition TARGET; physical scheduler TO_INVENTORY) | PLANNED |
+| CP-317 | Operational Incident Intelligence foundation freeze | E/I + observability owners | PLANNED (capability TARGET; observability sources TO_INVENTORY until inventoried) | PLANNED |
 
 ```text
 CLOSED_NONISSUE: no dedicated C0.S0-A…T CP IDs are required; tasks map via thematic CPs above
@@ -642,6 +661,7 @@ Review: `ARCHITECTURE_REVIEW_C0_S2`; `REVIEWED_HEAD=8bae12a250f2362603211a93c65b
 | Work / Durable | CP-105–109 | Work≠executor technical state |
 | Automation separation | CP-227–230 | Hub = technical execution |
 | Recurring Work | CP-311 | definition=DÉLIA; timer=TO_INVENTORY |
+| Operational Incident Intelligence | CP-317–332 | capability≠new BC; Evidence≠SoT; no autonomous remediation |
 | Process Intelligence | CP-249–251 | MODULE_IN_DELIA; source truth external |
 | Control Tower | CP-256–257 | MODULE_IN_DELIA; ≠planner/permission |
 | Personal Memory | CP-268–269 | ≠Org Knowledge≠AuthZ |
@@ -650,7 +670,7 @@ Review: `ARCHITECTURE_REVIEW_C0_S2`; `REVIEWED_HEAD=8bae12a250f2362603211a93c65b
 | Predictive / Twin | CP-287–288 | prediction≠FACT; simulate≠apply |
 | Edge | CP-295–296 | no DÉLIA Edge runtime; offline≠↑AuthZ |
 | MCP/A2A | CP-262–263 | discovery≠approval |
-| Observability | CP-051, CP-056 | correlation≠authority transfer |
+| Observability | CP-051, CP-056, CP-317–330 | correlation≠authority transfer; OII≠telemetry SoT |
 | Safety / OT | CP-178–179 | DÉLIA≠safety controller |
 | Biometric | CP-183–184 | match≠AuthN/AuthZ |
 

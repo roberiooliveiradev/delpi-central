@@ -3,7 +3,7 @@
 > **Status:** planejamento canônico  
 > **Produto:** aplicação standalone nova de Continuous Operational Intelligence  
 > **Autoridade de execução:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
-> **Requirements:** `CP-001…CP-316`  
+> **Requirements:** `CP-001…CP-332`  
 > **Próxima etapa:** `C1-T2 — JWT + CORE EFFECTIVE ACCESS INTEGRATION` (`C0.S7=APPROVED`; `FOUNDATION_FREEZE=APPROVED`; `C1_AUTHORIZED=YES`; `C1_STARTED=YES`; `C1_EXECUTED=NO`)
 
 Este documento mostra a evolução macro. Ordem atômica, dependências e gates vivem somente em `16`. Nada neste roadmap prova runtime implementado ou fase concluída.

@@ -751,3 +751,289 @@ scheduled report→email anchor works without open chat session
 ```
 
 Sem evidence obrigatória: `PENDING`/`INCONCLUSIVE`, nunca PASS.
+
+## 35. Operational Incident Intelligence
+
+### 35.1 Decisão de produto
+
+**Operational Incident Intelligence é capability `TARGET` / `PLANNED` de primeira classe da DÉLIA**, dentro do ciclo de Continuous Operational Intelligence — não um segundo planner, nem um bounded context paralelo de Incident Management / Observability / RCA.
+
+Intent preservado:
+
+```text
+DÉLIA observa, investiga, explica, registra e acompanha.
+Nesta capability, DÉLIA não se autocorrige.
+```
+
+Objetivo:
+
+```text
+detectar erros/anomalias técnicas relevantes
+→ coletar/referenciar Evidence de fontes autorizadas
+→ correlacionar e agrupar em incidente lógico
+→ investigar e registrar causa-raiz ou hipótese
+→ identificar owner humano
+→ notificar / surface para avaliação humana
+→ acompanhar recuperação após intervenção humana
+→ verificar restabelecimento do comportamento esperado
+```
+
+Explicitamente fora desta capability:
+
+```text
+alterar código autonomamente
+commit / merge / abrir PR automaticamente
+deploy / rollback
+corrigir banco
+alterar configuração de produção
+remediação técnica autônoma
+promover hipótese de modelo a FACT
+```
+
+Correção permanece:
+
+```text
+HUMAN REVIEW → HUMAN DECISION → EXISTING ENGINEERING / DELIVERY PROCESS
+```
+
+### 35.2 Limite semântico de cobertura
+
+Não documentar como fato técnico atual:
+
+```text
+"DÉLIA monitora absolutamente qualquer componente da Minha DELPI"
+```
+
+Cobertura correta:
+
+```text
+componente integrado
++ fonte de observabilidade autorizada
++ contrato/evidence suficiente
+```
+
+```text
+PRODUCT CAPABILITY = TARGET / PLANNED conforme authority
+OBSERVABILITY SOURCE = PROVEN somente quando inventariada
+INTEGRATION = PROVEN somente com evidence
+RUNTIME = não assumir
+```
+
+### 35.3 Ownership preservado
+
+```text
+Keycloak        = identity / SSO
+Core            = apps / routes / RBAC / platform governance
+Domain APIs     = authoritative domain data / business rules
+Portal          = host / navigation / published context
+Observability / source systems = authoritative technical telemetry (owner real da fonte)
+Automation Hub  = technical execution lifecycle
+Humans / engineering owners = evaluation and corrective action
+
+DÉLIA
+= intelligence
++ Evidence coordination
++ Policy / Decision
++ Work / orchestration
++ incident investigation / correlation / human-review / outcome-verification coordination
+```
+
+DÉLIA **não** se torna source of truth de logs, traces, metrics, deployment state, repository state, infrastructure state ou domain state.
+
+DÉLIA mantém (quando ownership/lifecycle justificados):
+
+```text
+Evidence refs
++ derived correlation
++ incident state
++ investigation state
++ root-cause assessment
++ human-review state
++ outcome-verification state
+```
+
+### 35.4 Fluxo no ciclo operacional existente
+
+Encaixa no ciclo de Continuous Operational Intelligence / Watch / Decision / Work — sem ciclo paralelo:
+
+```text
+ERROR / ANOMALY / SIGNAL
+→ OBSERVE
+→ COLLECT / REFERENCE EVIDENCE
+→ CORRELATE
+→ INCIDENT
+→ INVESTIGATE
+→ ROOT CAUSE ASSESSMENT
+→ IDENTIFY OWNER
+→ HUMAN REVIEW REQUIRED
+→ NOTIFY / SURFACE
+→ HUMAN CORRECTION
+→ OBSERVE RECOVERY
+→ VERIFY OUTCOME
+→ RESOLVE INCIDENT
+```
+
+Mapeamento conceitual (não implica runtime):
+
+```text
+Signal / EventEnvelope     → intake autorizado
+Evidence / EvidenceRef     → referência a fontes; ≠ SoT
+Watch OBSERVE|ADVISE|PREPARE → observação / alerta grounded / preparação
+Decision / Policy          → routing FAST|OPERATIONAL|REASONING; human review gate
+Work / Task / Case / Inbox → surface e acompanhamento humano
+Notification               → intent de avisar responsáveis (provider = TO_INVENTORY)
+Outcome verification       → pós-correção em fonte autoritativa
+Learning Candidate         → candidato; nunca publish automático
+```
+
+### 35.5 OperationalIncident (modelo conceitual mínimo)
+
+Conceito: `OperationalIncident` — estado de inteligência/coordenação da DÉLIA, não cópia da telemetria autoritativa.
+
+Campos candidatos (não schema físico congelado nesta fase):
+
+```text
+incident_id
+detected_at / environment
+affected_application / affected_component / affected_capability
+severity / status
+first_seen / last_seen / occurrence_count
+symptoms[]
+evidence_refs[]
+deployment_ref / version_ref / sha_ref   (refs; ≠ causa confirmada)
+root_cause_status / root_cause_summary / root_cause_evidence_refs[]
+owner_ref / responsible_team_ref
+human_review_status
+resolution_ref / resolved_at
+outcome_status / outcome_evidence_refs[]
+```
+
+Múltiplas ocorrências relacionadas podem formar **um** incidente lógico (ex.: 3.000 exceptions idênticas ≠ 3.000 alertas humanos independentes). Algoritmo concreto de clustering/dedupe permanece sujeito a design/eval/evidence posterior.
+
+### 35.6 Root-cause assessment semantics
+
+Status canônico de avaliação de causa-raiz (`RootCauseAssessmentStatus`) — distinto de `EpistemicClass`:
+
+```text
+UNKNOWN
+HYPOTHESIS
+SUPPORTED
+HUMAN_CONFIRMED
+DISPROVEN
+```
+
+Regras obrigatórias:
+
+```text
+MODEL OUTPUT != FACT
+correlation != causation
+deploy temporalmente relacionado != causa confirmada
+test passing != root cause confirmed
+error disappearing != proof of original root cause
+confidence != authority
+confidence != fact
+```
+
+Hipótese pode carregar summary, confidence quando metodologicamente válida, evidence_refs, counter_evidence, limitations, generated_at e model/config refs quando IA participar — sem promover autoridade.
+
+### 35.7 Fontes candidatas de correlação
+
+Candidatas (não runtime existente por esta documentação):
+
+```text
+application/frontend/API errors, exceptions, logs, traces, metrics
+health checks, jobs/workers, queues
+integration/provider/database operational signals
+deployment / release / version / Git SHA metadata
+configuration / contract / recent code changes
+```
+
+Cada fonte real exige posteriormente: owner, source, contract, security, retention, freshness, access rules, evidence semantics e runtime proof.
+
+Não inventar collectors, agents, databases, queues ou observability platforms nesta decisão.
+
+### 35.8 Human review, notification, outcome, learning
+
+Após investigação:
+
+```text
+DÉLIA apresenta incidente + Evidence + hipótese/causa + owner
+→ solicita/recomenda avaliação humana
+→ humano decide e corrige pelos processos legítimos
+→ DÉLIA pode acompanhar e verificar outcome
+```
+
+Notificação/surfacing pode usar notification, alert, work item ou incident surface conforme contratos existentes. Providers (email/Teams/WhatsApp/PagerDuty/Slack/SMS/push) **não** são presumidos implementados; delivery contracts = `TO_INVENTORY` até proof.
+
+Não marcar resolvido apenas porque:
+
+```text
+deploy ocorreu | ticket fechado | humano declarou "corrigido"
+| worker success | teste passou
+```
+
+Quando tecnicamente possível, verificar evidência posterior na fonte apropriada (taxa de erro, endpoint, health, recorrência da exception, workflow esperado).
+
+```text
+technical action success != incident outcome verified
+```
+
+Learning:
+
+```text
+Incident Evidence → learning candidate → owner/review → eval → version → publish
+```
+
+Correção isolada **não** muda automaticamente Organizational Knowledge, Policy, procedure ou automation.
+
+### 35.9 AI / decision path
+
+Preferir caminho mínimo suficiente:
+
+```text
+FAST        → detection/rules/thresholds/state determinísticos
+OPERATIONAL → contexto estruturado / correlação
+REASONING   → investigação multi-fonte / hipótese de RCA
+```
+
+Não enviar repositório/logs/traces inteiros ao modelo. Quando IA participar de RCA: grounding, Evidence refs, model/version/config, limitations, generalization, safety e task outcome conforme materialidade.
+
+### 35.10 Security / privacy
+
+```text
+least privilege
+data minimization
+tenant/user/context isolation quando aplicável
+secret protection / retention / audit
+```
+
+Investigação **não** concede autorização adicional. Nunca enviar tokens/credentials/raw secrets a prompt/embeddings/common logs. Logs/traces sensíveis respeitam classificação e policies existentes.
+
+### 35.11 Abstraction Gate
+
+Não criar agora, sem gate:
+
+```text
+Incident Engine | RCA Engine | Observability Platform | Correlation Platform
+bounded context Incident Management / Observability / RCA
+```
+
+Reuse preferencial: Signal, Evidence, Decision, Work, Outcome, Notification, Learning Candidate.
+
+### 35.12 Phase mapping
+
+```text
+C0  = inventory de fontes/observability owners/contracts; coverage freeze; no new SoT
+C3  = Evidence/epistemic + FAST|OPERATIONAL|REASONING foundations (já materiais)
+C4  = read-only anomaly/signal evaluation quando authorized reads existirem
+C6  = Watch OBSERVE|ADVISE|PREPARE + human review/notify/surface + learning candidates
+C5/C7 ACT = fora do escopo default desta capability (remediação permanece humana)
+```
+
+Não altera ordem C0–C7 de `16`. Não promove TARGET→PROVEN sem runtime evidence.
+
+### 35.13 Requirements
+
+Authority: `CP-317–CP-332` em [`25-requirements-traceability.md`](./25-requirements-traceability.md).
+
+Cobertura parcial herdada (não substitui OII first-class): CP-051, CP-056, CP-093–094, CP-101–103, CP-118/125, CP-231–234, CP-239–240, CP-243–244, CP-258.

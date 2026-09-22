@@ -4,7 +4,7 @@
 **Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
 **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Patterns:** [`49-architecture-and-design-patterns-standard.md`](./49-architecture-and-design-patterns-standard.md)  
-**Requirements:** `CP-001…CP-316`  
+**Requirements:** `CP-001…CP-332`  
 **Specs temáticas:** `53–66`
 
 ## 1. Objetivo

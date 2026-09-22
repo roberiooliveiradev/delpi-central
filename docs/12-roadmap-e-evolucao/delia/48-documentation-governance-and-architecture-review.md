@@ -44,7 +44,7 @@ Ledger registra estado; não redefine arquitetura.
 | `21` | state/persistence/retention |
 | `20` | tests/gates |
 | `23` | Cursor master prompt |
-| `25` | requirements `CP-001…CP-316` |
+| `25` | requirements `CP-001…CP-332` |
 | `67` | cross-cutting market/intelligence capability map |
 | `68` | naming/product identity |
 | ledger | current execution/evidence |
@@ -208,6 +208,34 @@ runtime implementation = not PROVEN by documentation
 
 A busca indexada por código/documentação não é authority de ausência: `search miss != feature absent`. Ausência material exige leitura direta das authorities prováveis antes de classificar.
 
+### F42 — Continuous Operational Intelligence sem Operational Incident Intelligence first-class
+
+`01/24/57` já descreviam Continuous Operational Intelligence, Watch, Evidence, Outcome e learning candidates, e `25` já cobria parcialmente correlação/anomaly/HITL/Outcome (`CP-051`, `CP-101–103`, `CP-231–234`, `CP-239–244`), porém faltava capability explícita de **Operational Incident Intelligence** com limites de cobertura, ownership de telemetria, hipótese≠causa confirmada, human review obrigatório e proibição de remediação autônoma.
+
+Correção:
+
+```text
+CP-317–CP-332
++ 57 §35 target semantics
++ 17 capability≠new BC separation
++ 20 acceptance/negative gates
++ 21 §17A conceptual state
++ 24/01/03/50 product + ownership alignment
++ INDEX/README/12/13/22/23/48 range + ledger event
+```
+
+Resultado semântico:
+
+```text
+Operational Incident Intelligence = TARGET / PLANNED first-class capability
+coverage = integrated + authorized observability + sufficient contract/evidence
+DÉLIA = investigate/correlate/notify/follow-up; sources remain SoT
+human correction = existing engineering process
+no autonomous remediation in this capability
+16 phase order unchanged
+runtime = not PROVEN by documentation
+```
+
 ## 8. Foundation invariants após C0.S7
 
 ```text
@@ -222,6 +250,10 @@ Schedule != Permission
 Stored Schedule Intent != Eternal Authorization
 Graph != Semantic Layer
 Personal Memory != Organizational Knowledge
+Operational Incident Intelligence = DÉLIA investigation/correlation capability; telemetry sources remain SoT
+OperationalIncident != log/trace/metric authority
+Root-cause HYPOTHESIS != confirmed FACT
+OII does not authorize autonomous remediation
 Process Mining != employee scoring
 Control Tower != business permission authority
 MCP/A2A discovery != approval
@@ -361,7 +393,7 @@ duplicate numeric prefixes presented as one canonical sequence
 
 ```text
 PROGRAM = PLANNED / NOT_STARTED
-REQUIREMENTS = CP-001…CP-316
+REQUIREMENTS = CP-001…CP-332
 THEMATIC_SPECS = 53–66
 CROSS_CUTTING = 67–68
 C0.S0 = APPROVED

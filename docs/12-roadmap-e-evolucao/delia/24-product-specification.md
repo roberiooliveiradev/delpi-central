@@ -4,7 +4,7 @@
 **Produto:** aplicação standalone nova  
 **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Ordem:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
-**Rastreabilidade:** [`25-requirements-traceability.md`](./25-requirements-traceability.md) — `CP-001…CP-316`  
+**Rastreabilidade:** [`25-requirements-traceability.md`](./25-requirements-traceability.md) — `CP-001…CP-332`  
 **Specs temáticas:** `53–66`
 
 ## 1. Definição
@@ -441,6 +441,30 @@ This does **not** mean all ACT is deferred to C7. Governed L4 execution of expli
 
 Recurring Governed Work is not represented by enabling `Watch ACT`: a recurring time trigger is a previously defined bounded Work recurrence whose material occurrences still pass C5 live gates.
 
+### Operational Incident Intelligence
+
+First-class Continuous Operational Intelligence capability (`TARGET` / `PLANNED`; thematic: [`57`](./57-event-driven-autonomous-operations-and-automation-execution-hub.md) §35; requirements `CP-317–CP-332`).
+
+```text
+authorized observability signal
+→ Evidence refs
+→ correlate → OperationalIncident
+→ investigate (hypothesis ≠ confirmed root cause)
+→ identify human owner
+→ human review / notify / surface
+→ human correction via existing engineering process
+→ observe recovery → verify outcome
+```
+
+Coverage is limited to components with authorized, integrated observability sources and sufficient contract/evidence — not “every Minha DELPI component” as current fact.
+
+DÉLIA does **not** own logs/traces/metrics/deploy/repo/infra/domain SoT. This capability does **not** authorize autonomous code change, commit, PR, merge, deploy, rollback, DB/config remediation, or promoting model output to FACT.
+
+```text
+DÉLIA observes, investigates, explains, records and follows up.
+In this capability, DÉLIA does not self-heal.
+```
+
 ## 26. Organizational Knowledge / Governed Learning
 
 ```text
@@ -477,8 +501,13 @@ undefined/implicit timezone/misfire/overlap semantics
 Automation Hub becoming business permission/planner authority
 DÉLIA bypassing technical execution boundary with ad hoc executor internals
 free-form LLM/RPA/Edge→machine actuation
+Operational Incident Intelligence covering “all Minha DELPI components” without authorized observability
+OperationalIncident becoming log/trace/metric SoT
+model RCA hypothesis promoted to FACT/HUMAN_CONFIRMED without evidence/human confirmation
+autonomous code/commit/PR/merge/deploy/rollback/DB/config remediation via OII
+technical success/ticket close treated as verified incident outcome
+incident resolution auto-publishing Organizational Knowledge
 ```
-
 ## 28. Administration
 
 Role-gated product surfaces can include:
@@ -578,6 +607,6 @@ Edge cached current procedure/model
 
 ## 31. Product Complete
 
-Release complete for declared scope requires CP coverage through current authority (`CP-001…CP-316`), standalone independence, correct owners, tests/gates, safe data/model/tool/scheduler lifecycle, verified outcomes, privacy/security/safety, observability/rollback and no material unresolved drift.
+Release complete for declared scope requires CP coverage through current authority (`CP-001…CP-332`), standalone independence, correct owners, tests/gates, safe data/model/tool/scheduler lifecycle, verified outcomes, privacy/security/safety, observability/rollback and no material unresolved drift.
 
 Estado real vive no execution ledger. Documentation alone does not prove runtime implementation or advance phase.

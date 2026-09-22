@@ -157,6 +157,20 @@ Executor mapping/version may change without changing capability ID/planner seman
 - `scenario.*` yields isolated ScenarioRef, never production write;
 - `artifact.*` creates/versioned ArtifactRef when that contract is frozen.
 
+## 11A. Operational Incident Intelligence capabilities
+
+TARGET semantic examples (not a hardcoded catalog; not runtime proof):
+
+```text
+incident.observe
+incident.correlate
+incident.investigate
+incident.notify
+incident.verify_outcome
+```
+
+These compose Signal/Evidence/Watch/Decision/Work/Notification/Outcome/Learning Candidate. They never grant observability SoT ownership, AuthZ elevation, or autonomous remediation.
+
 ## 12. Platform capability
 
 Derived from Core/Portal authorized routes + generic platform actions when contracts are proven. Portal resolves target and revalidates. No `app→URL` AI catalog.
