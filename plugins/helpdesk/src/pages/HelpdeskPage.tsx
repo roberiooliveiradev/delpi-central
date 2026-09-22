@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   ActionButton,
   FilePreviewModal,
@@ -17,6 +17,7 @@ import {
   listCategories,
   listTickets,
   listUrgencies,
+  uploadTicketAttachment,
   type TicketAttachment,
   type TicketDetail,
   type TicketSummary,
@@ -41,6 +42,13 @@ import {
   type TicketListFilters,
   viewForTicketLoad,
 } from "../presentation/ticketView";
+import {
+  attachmentPublicUrl,
+  listPendingInlineIds,
+  rewritePendingInlineImages,
+  stripPendingInlineImages,
+} from "../presentation/inlineUpload";
+import type { HelpdeskInlineUploadResult } from "../ui/helpdeskUi";
 import { helpdeskListPaginationBounds } from "../presentation/listPagination";
 import { glpiTicketFormUrl } from "../presentation/glpiPublicLinks";
 import { solicitanteLifecycleCue, timelineHasSolution } from "../presentation/solicitanteLifecycle";
@@ -512,6 +520,7 @@ function CreateTicketPage() {
   const [saving, setSaving] = useState(false);
   const [errorText, setErrorText] = useState<string | null>(null);
   const [idempotencyKey] = useState(newIdempotencyKey);
+  const pendingFilesRef = useRef<Map<string, File>>(new Map());
 
   useEffect(() => {
     const controller = new AbortController();
@@ -560,6 +569,23 @@ function CreateTicketPage() {
     });
   }, [title, description, observerIdsInput, categoryId, urgencyId]);
 
+  const queuePendingFiles = async (files: File[]): Promise<HelpdeskInlineUploadResult[]> => {
+    const results: HelpdeskInlineUploadResult[] = [];
+    for (const file of files) {
+      const pendingId = newIdempotencyKey();
+      pendingFilesRef.current.set(pendingId, file);
+      if (file.type.startsWith("image/")) {
+        results.push({
+          kind: "pending",
+          pendingId,
+          src: URL.createObjectURL(file),
+          alt: file.name || "imagem",
+        });
+      }
+    }
+    return results;
+  };
+
   return (
     <HelpdeskPageStack>
       <HelpdeskPageHeader
@@ -579,17 +605,47 @@ function CreateTicketPage() {
             if (saving || !title.trim() || !hasVisibleRichText(description)) return;
             setSaving(true);
             setErrorText(null);
+            const pendingIds = [
+              ...new Set([...listPendingInlineIds(description), ...pendingFilesRef.current.keys()]),
+            ];
+            const openingHtml = stripPendingInlineImages(description).trim() || "<p>Anexo(s)</p>";
             void createTicket(
               {
                 title: title.trim(),
-                description: description.trim(),
+                description: openingHtml,
                 category_id: Number(categoryId),
                 urgency_id: Number(urgencyId),
                 observer_ids: parseObserverIdsInput(observerIdsInput),
               },
               idempotencyKey,
             )
-              .then((created) => {
+              .then(async (created) => {
+                const ticketId = String(created.id);
+                const mapping: Record<string, { documentId: number; ticketId: string }> = {};
+                for (const pendingId of pendingIds) {
+                  const file = pendingFilesRef.current.get(pendingId);
+                  if (!file) continue;
+                  const uploaded = await uploadTicketAttachment(
+                    ticketId,
+                    file,
+                    `${idempotencyKey}:file:${pendingId}`,
+                  );
+                  if (file.type.startsWith("image/")) {
+                    mapping[pendingId] = { documentId: uploaded.document_id, ticketId };
+                  }
+                  pendingFilesRef.current.delete(pendingId);
+                }
+                if (Object.keys(mapping).length > 0) {
+                  const rewritten = rewritePendingInlineImages(description, mapping);
+                  const imageBlocks = rewritten.match(/<p>\s*<img\b[\s\S]*?<\/p>/gi) || [];
+                  if (imageBlocks.length > 0) {
+                    await createFollowup(
+                      ticketId,
+                      imageBlocks.join(""),
+                      `${idempotencyKey}:images`,
+                    );
+                  }
+                }
                 clearCreateDraft();
                 navigateHelpdesk(`/apps/helpdesk/tickets/${created.id}`);
               })
@@ -616,6 +672,7 @@ function CreateTicketPage() {
                 onChange={setDescription}
                 minHeight={220}
                 icon={<AlignLeft size={14} aria-hidden />}
+                onUploadFiles={queuePendingFiles}
               />
             </div>
             <aside className="helpdesk-create-layout__aside" aria-label="Classificação do chamado">
@@ -901,6 +958,28 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                 value={content}
                 onChange={setContent}
                 minHeight={120}
+                onUploadFiles={async (files) => {
+                  const results: HelpdeskInlineUploadResult[] = [];
+                  for (const file of files) {
+                    if (file.type.startsWith("image/")) {
+                      const uploaded = await uploadTicketAttachment(
+                        ticketId,
+                        file,
+                        newIdempotencyKey(),
+                      );
+                      results.push({
+                        kind: "uploaded",
+                        documentId: uploaded.document_id,
+                        src: attachmentPublicUrl(ticketId, uploaded.document_id),
+                        alt: file.name || "imagem",
+                      });
+                    } else {
+                      await uploadTicketAttachment(ticketId, file, newIdempotencyKey());
+                      // Non-image: stays on the ticket attachment strip after reload.
+                    }
+                  }
+                  return results;
+                }}
               />
               <HelpdeskFormActions align="end">
                 <HintAction hint={helpTooltips.detailUi.send} ariaLabel="Ajuda: Enviar resposta">

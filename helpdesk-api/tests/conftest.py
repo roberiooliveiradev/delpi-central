@@ -7,7 +7,7 @@ from fastapi.testclient import TestClient
 
 from helpdesk_app.application.oauth_service import OAuthService
 from helpdesk_app.application.ticket_service import TicketService
-from helpdesk_app.domain.errors import GlpiForbidden, GlpiNotFound, HelpdeskError
+from helpdesk_app.domain.errors import GlpiForbidden, GlpiNotFound, GlpiValidation, HelpdeskError
 from helpdesk_app.domain.models import (
     Attachment,
     Category,
@@ -68,6 +68,7 @@ class FakeGlpi:
         self.created = []
         self.followups = []
         self.observers = []
+        self.uploads = []
         self.calls = 0
 
     def authorization_url(self, *, state: str, code_challenge: str) -> str:
@@ -126,6 +127,34 @@ class FakeGlpi:
             raise GlpiNotFound("ausente")
         self.downloaded.append(document_id)
         return self.files[document_id]
+
+    def upload_ticket_document(
+        self,
+        access_token: str,
+        *,
+        ticket_id: int,
+        filename: str,
+        content: bytes,
+        mime: str,
+    ):
+        from dataclasses import replace
+
+        self.calls += 1
+        assert access_token
+        if ticket_id == 99:
+            raise GlpiNotFound("ausente")
+        if not content:
+            raise GlpiValidation("Arquivo vazio.")
+        document_id = 100 + len(self.uploads)
+        attachment = Attachment(document_id, filename, mime or "application/octet-stream")
+        self.uploads.append((ticket_id, filename, content, mime))
+        self.files[document_id] = (content, mime or "application/octet-stream")
+        if self.detail.id == ticket_id:
+            self.detail = replace(
+                self.detail,
+                attachments=self.detail.attachments + (attachment,),
+            )
+        return attachment
 
 
 def build_client(glpi: FakeGlpi | None = None) -> tuple[TestClient, FakeGlpi]:

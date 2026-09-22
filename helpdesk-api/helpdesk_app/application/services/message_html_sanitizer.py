@@ -100,6 +100,9 @@ _HREFLESS_ANCHOR_RE = re.compile(r"(?is)<a\b(?![^>]*\bhref\s*=)[^>]*>(.*?)</a>")
 _FOREIGN_IMG_RE = re.compile(
     r"""(?is)<img\b(?![^>]*\bsrc\s*=\s*[\"']/apps/helpdesk-api/tickets/)[^>]*/?>"""
 )
+_BFF_IMG_RE = re.compile(
+    r"""(?is)<img\b([^>]*\bsrc\s*=\s*[\"']/apps/helpdesk-api/tickets/(\d+)/attachments/(\d+)[^\"']*[\"'][^>]*)/?>"""
+)
 _FOREIGN_DOC_ANCHOR_RE = re.compile(
     r"""(?is)<a\b[^>]*\bhref\s*=\s*[\"'][^\"']*document\.send\.php[^\"']*[\"'][^>]*>(.*?)</a>"""
 )
@@ -124,6 +127,7 @@ def sanitize_message_html(
     text = _rewrite_document_urls(text, ticket_id=ticket_id, allowed_document_ids=allowed)
     text = _FOREIGN_DOC_ANCHOR_RE.sub(r"\1", text)
     text = _FOREIGN_IMG_RE.sub("", text)
+    text = _filter_bff_images(text, ticket_id=int(ticket_id), allowed_document_ids=allowed)
     text = _encode_styles(text)
     cleaned = bleach.clean(
         text,
@@ -139,25 +143,64 @@ def sanitize_message_html(
     return cleaned.strip()
 
 
+def _filter_bff_images(html: str, *, ticket_id: int, allowed_document_ids: set[int]) -> str:
+    def _repl(match: re.Match[str]) -> str:
+        ref_ticket = int(match.group(2))
+        document_id = int(match.group(3))
+        if ticket_id <= 0 or ref_ticket != ticket_id or document_id not in allowed_document_ids:
+            return ""
+        return match.group(0)
+
+    return _BFF_IMG_RE.sub(_repl, html)
+
 _TAG_RE = re.compile(r"<[^>]+>")
+_BFF_ATTACHMENT_RE = re.compile(
+    rf"""(?ix)
+    {_API_PREFIX}/tickets/(\d+)/attachments/(\d+)
+    """
+)
 
 
 def message_html_has_visible_text(html: str) -> bool:
     plain = html_lib.unescape(_TAG_RE.sub(" ", html or ""))
-    return bool(plain.strip())
+    if plain.strip():
+        return True
+    # H12 — mensagem só com imagem anexada via BFF ainda é conteúdo válido.
+    return bool(_BFF_ATTACHMENT_RE.search(html or ""))
 
 
-def prepare_outbound_message_html(raw_html: str | None) -> str:
+def extract_bff_attachment_refs(html: str | None) -> list[tuple[int, int]]:
+    """Return (ticket_id, document_id) pairs referenced in BFF attachment URLs."""
+    found: list[tuple[int, int]] = []
+    seen: set[tuple[int, int]] = set()
+    for match in _BFF_ATTACHMENT_RE.finditer(str(html or "")):
+        ref = (int(match.group(1)), int(match.group(2)))
+        if ref in seen:
+            continue
+        seen.add(ref)
+        found.append(ref)
+    return found
+
+
+def prepare_outbound_message_html(
+    raw_html: str | None,
+    *,
+    ticket_id: int = 0,
+    allowed_document_ids: Collection[int] = (),
+) -> str:
     """Sanitize HTML for create/followup before sending to GLPI.
 
-    Write path has no ticket attachments yet for new tickets, and follow-ups
-    must not invent document links — so document_ids are empty and foreign
-    imgs are stripped (no paste-image / upload in the compositor).
+    Create (ticket_id=0) strips every image. Follow-up keeps only imgs whose
+    document_id belongs to this ticket (H12 upload → BFF URL → send).
     """
     text = str(raw_html or "")
     if not text.strip():
         return ""
-    cleaned = sanitize_message_html(text, ticket_id=0, allowed_document_ids=())
+    cleaned = sanitize_message_html(
+        text,
+        ticket_id=int(ticket_id),
+        allowed_document_ids=allowed_document_ids if ticket_id > 0 else (),
+    )
     if not message_html_has_visible_text(cleaned):
         return ""
     return cleaned

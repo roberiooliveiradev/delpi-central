@@ -1,6 +1,7 @@
 from typing import Protocol
 
 from helpdesk_app.domain.models import (
+    Attachment,
     Category,
     OAuthSession,
     PendingAuthorization,
@@ -40,6 +41,16 @@ class GlpiGateway(Protocol):
     def add_followup(self, access_token: str, ticket_id: int, content: str) -> int: ...
 
     def download_attachment(self, access_token: str, document_id: int) -> tuple[bytes, str]: ...
+
+    def upload_ticket_document(
+        self,
+        access_token: str,
+        *,
+        ticket_id: int,
+        filename: str,
+        content: bytes,
+        mime: str,
+    ) -> Attachment: ...
 
 
 class StateStore(Protocol):

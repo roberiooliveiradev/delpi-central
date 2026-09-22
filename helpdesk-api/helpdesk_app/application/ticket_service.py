@@ -38,6 +38,39 @@ class TicketService:
         content, mime = self._glpi.download_attachment(self._token(subject), document_id)
         return content, mime, match.filename
 
+    def upload_attachment(
+        self,
+        subject: str,
+        ticket_id: int,
+        *,
+        filename: str,
+        content: bytes,
+        mime: str,
+        idempotency_key: str | None,
+    ) -> StoredResponse:
+        key = _require_key(idempotency_key)
+        operation = f"upload_attachment:{ticket_id}"
+        existing = self._idempotency.get(subject, operation, key)
+        if existing is not None:
+            return existing
+        uploaded = self._glpi.upload_ticket_document(
+            self._token(subject),
+            ticket_id=ticket_id,
+            filename=filename,
+            content=content,
+            mime=mime,
+        )
+        stored = StoredResponse(
+            status_code=201,
+            body={
+                "document_id": uploaded.document_id,
+                "filename": uploaded.filename,
+                "mime": uploaded.mime,
+            },
+        )
+        self._idempotency.save(subject, operation, key, stored)
+        return stored
+
     def create(
         self,
         subject: str,
@@ -51,7 +84,8 @@ class TicketService:
     ) -> StoredResponse:
         key = _require_key(idempotency_key)
         _validate_text(title, "title")
-        description_html = _prepare_message_html(description, "description")
+        # Opening has no ticket yet — strip every document image (upload after create).
+        description_html = _prepare_message_html(description, "description", ticket_id=0)
         observers = normalize_observer_ids(observer_ids)
         operation = "create_ticket"
         existing = self._idempotency.get(subject, operation, key)
@@ -80,7 +114,14 @@ class TicketService:
         idempotency_key: str | None,
     ) -> StoredResponse:
         key = _require_key(idempotency_key)
-        content_html = _prepare_message_html(content, "content")
+        ticket = self.ticket(subject, ticket_id, viewer_email="")
+        allowed = {item.document_id for item in ticket.attachments}
+        content_html = _prepare_message_html(
+            content,
+            "content",
+            ticket_id=ticket_id,
+            allowed_document_ids=allowed,
+        )
         operation = f"followup:{ticket_id}"
         existing = self._idempotency.get(subject, operation, key)
         if existing is not None:
@@ -110,12 +151,22 @@ def _validate_text(value: str, field: str) -> None:
         raise GlpiValidation(f"{field} é obrigatório.")
 
 
-def _prepare_message_html(value: str, field: str) -> str:
+def _prepare_message_html(
+    value: str,
+    field: str,
+    *,
+    ticket_id: int = 0,
+    allowed_document_ids: set[int] | frozenset[int] | None = None,
+) -> str:
     if value is None:
         raise GlpiValidation(f"{field} é obrigatório.")
     if len(value) > MAX_MESSAGE_HTML_CHARS:
         raise GlpiValidation(f"{field} excede o tamanho máximo permitido.")
-    cleaned = prepare_outbound_message_html(value)
+    cleaned = prepare_outbound_message_html(
+        value,
+        ticket_id=ticket_id,
+        allowed_document_ids=allowed_document_ids or (),
+    )
     if not cleaned:
         raise GlpiValidation(f"{field} é obrigatório.")
     return cleaned

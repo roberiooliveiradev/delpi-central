@@ -290,6 +290,53 @@ def test_attachment_download_uses_only_files_on_the_ticket():
     assert 99 not in glpi.downloaded
 
 
+def test_attachment_upload_via_legacy_path():
+    client, glpi = build_client()
+    link(client)
+    first = client.post(
+        "/tickets/7/attachments",
+        files={"file": ("placa.png", b"png-new", "image/png")},
+        headers={**auth_headers(), "Idempotency-Key": "up-1"},
+    )
+    assert first.status_code == 201
+    body = first.json()
+    assert body["document_id"] == 100
+    assert body["filename"] == "placa.png"
+    assert body["mime"] == "image/png"
+    assert glpi.uploads == [(7, "placa.png", b"png-new", "image/png")]
+    replay = client.post(
+        "/tickets/7/attachments",
+        files={"file": ("placa.png", b"png-new", "image/png")},
+        headers={**auth_headers(), "Idempotency-Key": "up-1"},
+    )
+    assert replay.status_code == 201
+    assert replay.json() == body
+    assert len(glpi.uploads) == 1
+    follow = client.post(
+        "/tickets/7/followups",
+        json={
+            "content": (
+                '<p>foto</p><p><img src="/apps/helpdesk-api/tickets/7/attachments/100" alt="placa" /></p>'
+            )
+        },
+        headers={**auth_headers(), "Idempotency-Key": "up-follow"},
+    )
+    assert follow.status_code == 201
+    assert "attachments/100" in glpi.followups[0][1]
+    foreign_img = client.post(
+        "/tickets/7/followups",
+        json={
+            "content": (
+                '<p>x</p><p><img src="/apps/helpdesk-api/tickets/99/attachments/100" alt="x" /></p>'
+            )
+        },
+        headers={**auth_headers(), "Idempotency-Key": "up-foreign"},
+    )
+    assert foreign_img.status_code == 201
+    assert "attachments/100" not in glpi.followups[1][1]
+    assert "img" not in glpi.followups[1][1].lower()
+
+
 def test_categories_come_from_glpi():
     client, _glpi = build_client()
     link(client)

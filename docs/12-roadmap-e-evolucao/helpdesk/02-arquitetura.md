@@ -97,7 +97,7 @@ Acompanhamento no GLPI: `POST /Assistance/Ticket/{id}/Timeline/Followup`.
 ## 6. Invariantes
 
 - GLPI em `helpdesk.centraldelpi.com.br` continua no ar para quem opera a fila.
-- `enable_api` permanece 0.
+- `enable_api` permanece 0 **até** a exceção H12 (Document only) ser ativada com App-Token e `GLPI_LEGACY_UPLOAD_ENABLED`.
 - O cliente OAuth não ganha concessão `password` nem `client_credentials`.
 - O escopo do cliente permanece `api`.
 - A redirect URI do cliente permanece exatamente a URL da tabela acima.

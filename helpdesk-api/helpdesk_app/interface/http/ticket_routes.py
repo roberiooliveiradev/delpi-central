@@ -2,11 +2,11 @@ from typing import Any
 
 from urllib.parse import quote
 
-from fastapi import APIRouter, Header, Request
+from fastapi import APIRouter, File, Header, Request, UploadFile
 from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel, ConfigDict, Field
 
-from helpdesk_app.domain.errors import HelpdeskError
+from helpdesk_app.domain.errors import HelpdeskError, GlpiValidation
 from helpdesk_app.infrastructure.glpi.mapping import URGENCIES, attachment_filename, build_ticket_list_query
 from helpdesk_app.interface.http.actor import require_actor
 
@@ -182,6 +182,31 @@ def download_attachment(request: Request, ticket_id: int, document_id: int):
             "Content-Disposition": f"attachment; filename=\"{ascii_name}\"; filename*=UTF-8''{encoded_name}"
         },
     )
+
+
+@router.post("/tickets/{ticket_id}/attachments")
+async def upload_attachment(
+    request: Request,
+    ticket_id: int,
+    file: UploadFile = File(...),
+    idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
+):
+    actor = require_actor(request)
+    raw = await file.read()
+    try:
+        if not raw:
+            raise GlpiValidation("Arquivo vazio.")
+        stored = _tickets(request).upload_attachment(
+            actor.subject,
+            ticket_id,
+            filename=file.filename or "anexo",
+            content=raw,
+            mime=file.content_type or "application/octet-stream",
+            idempotency_key=idempotency_key,
+        )
+    except HelpdeskError as exc:
+        return _error(exc, request)
+    return JSONResponse(status_code=stored.status_code, content=stored.body)
 
 
 @router.post("/tickets")

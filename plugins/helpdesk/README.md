@@ -15,7 +15,7 @@ A composição de cada tela, os estados e o claro/escuro estão em [`WIREFRAMES.
 - A primeira abertura pede autorização no helpdesk, com a sessão já existente.
 - Chamado e título na lista têm `href` estável; Ctrl/meio-clique abrem em outra aba.
 - Rascunho de abertura e de resposta sobrevive ao F5 neste navegador até o envio.
-- Baixar anexo já ligado ao chamado está publicado. Enviar arquivo novo, `@` no compositor, aprovar/reabrir/satisfação e fila técnica ficam fora até decisão + HLAPI.
+- Baixar e **enviar** anexo (colar imagem / clipe) estão no BFF+MFE (H12). Go-live exige `enable_api` + `GLPI_LEGACY_APP_TOKEN` no ambiente. `@` no compositor, aprovar/reabrir/satisfação e fila técnica ficam fora até HLAPI/decisão.
 
 O path antigo `/helpdesk` redireciona para `/apps/helpdesk`.
 

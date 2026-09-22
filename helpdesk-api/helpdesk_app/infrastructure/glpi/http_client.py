@@ -1,4 +1,6 @@
+import json
 import logging
+import re
 from dataclasses import replace
 from urllib.parse import quote
 
@@ -10,6 +12,7 @@ from helpdesk_app.domain.errors import (
     GlpiUnauthorized,
     GlpiUnavailable,
     GlpiValidation,
+    GlpiFeatureDisabled,
 )
 from helpdesk_app.domain.models import (
     Attachment,
@@ -33,6 +36,7 @@ from helpdesk_app.infrastructure.glpi.mapping import (
     parse_token_set,
     parse_viewer_identity,
     team_member_observer_body,
+    attachment_filename,
 )
 
 logger = logging.getLogger("helpdesk.glpi")
@@ -42,6 +46,7 @@ _MAX_ATTACHMENT_BYTES = 20 * 1024 * 1024
 _CATEGORY_PAGE = 50
 _CATEGORY_CAP = 500
 _HELPDESK_CATEGORY_FILTER = "is_helpdesk_visible==true"
+_SAFE_UPLOAD_NAME = re.compile(r"[^\w.\- ()\[\]]+", re.UNICODE)
 
 
 def _saml_idp_query(saml_idp_id: str) -> str:
@@ -63,6 +68,9 @@ class HttpxGlpiClient:
         saml_idp_id: str = "1",
         connect_timeout: float = 5,
         read_timeout: float = 20,
+        legacy_upload_enabled: bool = False,
+        legacy_app_token: str = "",
+        legacy_max_upload_bytes: int = _MAX_ATTACHMENT_BYTES,
         transport: httpx.BaseTransport | None = None,
     ):
         self._base = base_url.rstrip("/")
@@ -70,6 +78,9 @@ class HttpxGlpiClient:
         self._client_secret = client_secret
         self._redirect_uri = redirect_uri
         self._saml_idp_id = saml_idp_id.strip()
+        self._legacy_upload_enabled = bool(legacy_upload_enabled)
+        self._legacy_app_token = (legacy_app_token or "").strip()
+        self._legacy_max_upload_bytes = max(1, int(legacy_max_upload_bytes))
         self._http = httpx.Client(
             timeout=httpx.Timeout(read_timeout, connect=connect_timeout),
             transport=transport,
@@ -241,6 +252,155 @@ class HttpxGlpiClient:
         )
         return parse_created_id(payload)
 
+    def upload_ticket_document(
+        self,
+        access_token: str,
+        *,
+        ticket_id: int,
+        filename: str,
+        content: bytes,
+        mime: str,
+    ) -> Attachment:
+        """Upload via legacy apirest Document (HLAPI has no multipart). Product-authorized H12."""
+        if not self._legacy_upload_enabled:
+            raise GlpiFeatureDisabled("Upload de anexo desligado neste ambiente.")
+        if not self._legacy_app_token:
+            raise GlpiFeatureDisabled("App-Token da API legada não configurado.")
+        if not content:
+            raise GlpiValidation("Arquivo vazio.")
+        if len(content) > self._legacy_max_upload_bytes:
+            raise GlpiValidation("O anexo excede o limite.")
+        safe_name = _safe_upload_filename(filename)
+        ticket_id = int(ticket_id)
+        if ticket_id <= 0:
+            raise GlpiValidation("ticket_id inválido.")
+        # Ensure the ticket is visible to this OAuth subject before legacy write.
+        self._json("GET", f"/api.php/v2.2/Assistance/Ticket/{ticket_id}", token=access_token)
+        session_token = self._legacy_init_session(access_token)
+        try:
+            document_id = self._legacy_post_document(
+                session_token=session_token,
+                ticket_id=ticket_id,
+                filename=safe_name,
+                content=content,
+                mime=(mime or "application/octet-stream").split(";")[0].strip()
+                or "application/octet-stream",
+            )
+        finally:
+            self._legacy_kill_session(session_token)
+        return Attachment(document_id=document_id, filename=safe_name, mime=mime or "")
+
+    def _legacy_init_session(self, oauth_access_token: str) -> str:
+        """Open apirest session as the OAuth person (App-Token + user_token bridge)."""
+        # GLPI 11.0.5 apirest expects user_token OR basic auth — not HLAPI Bearer.
+        # Bridge authorized for H12: pass the OAuth access token as user_token first;
+        # some deployments also accept Bearer on initSession — try both.
+        errors: list[str] = []
+        for authorization in (
+            f"user_token {oauth_access_token}",
+            f"Bearer {oauth_access_token}",
+        ):
+            try:
+                response = self._http.request(
+                    "GET",
+                    f"{self._base}/apirest.php/initSession",
+                    headers={
+                        "Accept": "application/json",
+                        "Content-Type": "application/json",
+                        "App-Token": self._legacy_app_token,
+                        "Authorization": authorization,
+                    },
+                )
+            except httpx.TimeoutException as exc:
+                raise GlpiUnavailable("GLPI indisponível.") from exc
+            logger.info(
+                "glpi_legacy_init status=%s auth=%s",
+                response.status_code,
+                authorization.split(" ", 1)[0],
+            )
+            if response.status_code == 200:
+                data = response.json() if response.content else {}
+                token = data.get("session_token") if isinstance(data, dict) else None
+                if token:
+                    return str(token)
+                errors.append("session_token ausente")
+                continue
+            if response.status_code in {401, 403}:
+                errors.append(f"http_{response.status_code}")
+                continue
+            if response.status_code >= 400:
+                errors.append(f"http_{response.status_code}")
+                continue
+        logger.info("glpi_legacy_init_failed errors=%s", ",".join(errors) or "unknown")
+        raise GlpiUnavailable(
+            "API legada recusou a sessão. Confira enable_api, App-Token e ponte OAuth→user_token."
+        )
+
+    def _legacy_kill_session(self, session_token: str) -> None:
+        try:
+            self._http.request(
+                "GET",
+                f"{self._base}/apirest.php/killSession",
+                headers={
+                    "Accept": "application/json",
+                    "App-Token": self._legacy_app_token,
+                    "Session-Token": session_token,
+                },
+            )
+        except httpx.HTTPError:
+            logger.info("glpi_legacy_kill_failed")
+
+    def _legacy_post_document(
+        self,
+        *,
+        session_token: str,
+        ticket_id: int,
+        filename: str,
+        content: bytes,
+        mime: str,
+    ) -> int:
+        manifest = {
+            "input": {
+                "name": filename,
+                "_filename": [filename],
+                "itemtype": "Ticket",
+                "items_id": ticket_id,
+            }
+        }
+        self.post_calls += 1
+        try:
+            response = self._http.post(
+                f"{self._base}/apirest.php/Document",
+                headers={
+                    "Accept": "application/json",
+                    "App-Token": self._legacy_app_token,
+                    "Session-Token": session_token,
+                },
+                files={
+                    "uploadManifest": (None, json.dumps(manifest), "application/json"),
+                    "filename[]": (filename, content, mime),
+                },
+            )
+        except httpx.TimeoutException as exc:
+            raise GlpiUnavailable("GLPI indisponível.") from exc
+        logger.info("glpi_legacy_document status=%s", response.status_code)
+        if response.status_code in {200, 201}:
+            data = response.json() if response.content else {}
+            if isinstance(data, dict):
+                raw = data.get("id")
+                if isinstance(raw, dict):
+                    raw = raw.get("id")
+                if raw is not None:
+                    return int(raw)
+            raise GlpiValidation("O GLPI não devolveu o id do documento.")
+        if response.status_code == 401:
+            raise GlpiUnauthorized("Sessão do GLPI recusada.")
+        if response.status_code == 403:
+            raise GlpiForbidden("O perfil no GLPI não permite esta ação.")
+        if response.status_code in {400, 422}:
+            raise GlpiValidation("O GLPI recusou o arquivo enviado.")
+        raise GlpiUnavailable("GLPI indisponível.")
+
     def _named_attachment(self, access_token: str, item: Attachment) -> Attachment:
         if item.filename:
             return item
@@ -330,3 +490,9 @@ def _raise_for_status(response: httpx.Response, method: str, path: str) -> None:
         raise GlpiValidation("O GLPI recusou os dados enviados.")
     if response.status_code >= 400:
         raise GlpiUnavailable("GLPI indisponível.")
+
+
+def _safe_upload_filename(value: str) -> str:
+    name = attachment_filename(value)
+    cleaned = _SAFE_UPLOAD_NAME.sub("_", name).strip(" ._")
+    return (cleaned or "anexo")[:180]

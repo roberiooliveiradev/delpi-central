@@ -8,5 +8,6 @@ python-jose[cryptography]
 httpx
 pytest
 cryptography
+python-multipart
 
 bleach

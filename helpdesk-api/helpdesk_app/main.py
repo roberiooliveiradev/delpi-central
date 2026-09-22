@@ -54,6 +54,9 @@ def build_runtime():
         saml_idp_id=settings.GLPI_SAML_IDP_ID,
         connect_timeout=settings.GLPI_HTTP_CONNECT_TIMEOUT,
         read_timeout=settings.GLPI_HTTP_READ_TIMEOUT,
+        legacy_upload_enabled=settings.GLPI_LEGACY_UPLOAD_ENABLED,
+        legacy_app_token=settings.GLPI_LEGACY_APP_TOKEN,
+        legacy_max_upload_bytes=settings.GLPI_LEGACY_MAX_UPLOAD_BYTES,
     )
     states = PostgresStateStore(cipher)
     sessions = PostgresSessionStore(cipher)

@@ -19,7 +19,7 @@ H8  Corpo rico da mensagem                 ENTREGUE  (menção leitura E14; @ es
 H9  Página do chamado                      ENTREGUE
 H10 Solução, reabrir, satisfação           LEITURA solução ENTREGUE; write CONSOLE (E10.S1)
 H11 Condicionais (TTR, observer)           ENTREGUE  Forms e vínculo riscados (H6)
-H12 Upload de arquivo novo                 BLOQUEADO até decisão + API
+H12 Upload de arquivo novo                 BFF+MFE ENTREGUES; go-live: enable_api + App-Token
 H13 Listagem dinâmica (modelo → builder)   ENTREGUE  AND builder + multi-sort + prefs + rodapé kit paginação (G-32e); OR/export/massa CONSOLE
 H14 Menções na conversa (leitura)          ENTREGUE  M-07 chips; M-23 park
 —   Bancada / outro itemtype / HD-011      FORA
@@ -127,7 +127,16 @@ Sem reimplementar Formcreator. Sem criar vínculo, SLA ou item de inventário no
 
 ## H12 — Upload
 
-BLOQUEADO. Desbloqueia só com decisão explícita de (a) ligar API legada — hoje proibida — ou (b) HLAPI passar a aceitar multipart. Até lá: N-01, M-24, M-25, A-08.
+**Exceção de produto autorizada (21/09/2026):** HLAPI não tem multipart; o BFF usa **só** a API legada `apirest.php/Document` com App-Token, gated por `GLPI_LEGACY_UPLOAD_ENABLED`.
+
+| Peça | Estado |
+|---|---|
+| `POST /apps/helpdesk-api/tickets/{id}/attachments` | ENTREGUE |
+| Colar / arrastar / clipe no compositor | ENTREGUE |
+| `enable_api=1` + App-Token no GLPI de produção | TARGET — `helpdesk-api/scripts/enable_glpi_legacy_api.sh` |
+| Ponte OAuth access_token → `initSession` (user_token/Bearer) | TARGET — validar live |
+
+Variáveis: `GLPI_LEGACY_UPLOAD_ENABLED`, `GLPI_LEGACY_APP_TOKEN`, `GLPI_LEGACY_MAX_UPLOAD_BYTES`.
 
 ## H13 — Listagem dinâmica
 
@@ -151,7 +160,7 @@ Nada obrigatório no MFE/BFF do solicitante. Desbloqueios possíveis:
 | Item | Estado | Desbloqueio |
 |---|---|---|
 | M-23 menção `@` na escrita | BLOQUEADO | catálogo HLAPI de usuários/grupos |
-| H12 upload novo anexo | BLOQUEADO | multipart HLAPI + política de storage |
+| H12 upload novo anexo | BFF+MFE ENTREGUES | go-live: enable_api + App-Token + evidência live da ponte OAuth |
 | H10 aprovar/reabrir/satisfação | CONSOLE no GLPI; **ponte UX** «Abrir no helpdesk» entregue | operações HLAPI do solicitante |
 
 ## Dependências

@@ -1,4 +1,4 @@
-import { type ComponentProps, type ReactNode } from "react";
+import { useRef, type ClipboardEvent, type ComponentProps, type DragEvent, type ReactNode } from "react";
 import {
   attachmentPreviewStripBemClasses,
   createDashboardAttachmentPreviewStrip,
@@ -33,6 +33,9 @@ import {
   textFieldPacClasses,
   usePersistedViewLayout,
 } from "@delpi/plugin-ui/index";
+import { Paperclip } from "lucide-react";
+
+import { appendInlineImageHtml } from "../presentation/inlineUpload";
 
 export { usePersistedViewLayout };
 
@@ -122,6 +125,10 @@ export const HelpdeskTextArea = createDashboardTextAreaField({
   classNames: textAreaFieldBemClasses(PREFIX),
 });
 
+export type HelpdeskInlineUploadResult =
+  | { kind: "uploaded"; documentId: number; src: string; alt?: string }
+  | { kind: "pending"; pendingId: string; src: string; alt?: string };
+
 export type HelpdeskRichTextFieldProps = {
   label: string;
   hint?: string;
@@ -131,9 +138,12 @@ export type HelpdeskRichTextFieldProps = {
   ariaLabel?: string;
   minHeight?: number;
   disabled?: boolean;
+  /** H12 — colar/arrastar imagem ou escolher arquivo. */
+  onUploadFiles?: (files: File[]) => Promise<HelpdeskInlineUploadResult[]>;
+  accept?: string;
 };
 
-/** Same RichTextEditor for open + reply (M-28). No MentionComposer / image paste. */
+/** Same RichTextEditor for open + reply (M-28). H12 adds paste/attach without MentionComposer. */
 export function HelpdeskRichTextField({
   label,
   hint,
@@ -143,9 +153,66 @@ export function HelpdeskRichTextField({
   ariaLabel,
   minHeight = 180,
   disabled,
+  onUploadFiles,
+  accept = "image/*,.pdf,.png,.jpg,.jpeg,.gif,.webp,.doc,.docx,.xls,.xlsx,.txt",
 }: HelpdeskRichTextFieldProps) {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const uploadingRef = useRef(false);
+
+  const ingestFiles = async (files: File[]) => {
+    if (!onUploadFiles || disabled || uploadingRef.current || files.length === 0) return;
+    uploadingRef.current = true;
+    try {
+      const results = await onUploadFiles(files);
+      let next = value;
+      for (const item of results) {
+        if (item.kind === "uploaded") {
+          next = appendInlineImageHtml(next, {
+            src: item.src,
+            documentId: item.documentId,
+            alt: item.alt,
+          });
+        } else {
+          next = appendInlineImageHtml(next, {
+            src: item.src,
+            pendingId: item.pendingId,
+            alt: item.alt,
+          });
+        }
+      }
+      if (next !== value) onChange(next);
+    } finally {
+      uploadingRef.current = false;
+    }
+  };
+
+  const onPaste = (event: ClipboardEvent<HTMLDivElement>) => {
+    if (!onUploadFiles || disabled) return;
+    const files = Array.from(event.clipboardData?.files || []).filter((file) => file.type.startsWith("image/"));
+    if (files.length === 0) return;
+    event.preventDefault();
+    event.stopPropagation();
+    void ingestFiles(files);
+  };
+
+  const onDrop = (event: DragEvent<HTMLDivElement>) => {
+    if (!onUploadFiles || disabled) return;
+    const files = Array.from(event.dataTransfer?.files || []);
+    if (files.length === 0) return;
+    event.preventDefault();
+    event.stopPropagation();
+    void ingestFiles(files);
+  };
+
   return (
-    <div className="helpdesk-field helpdesk-rich-text-field">
+    <div
+      className="helpdesk-field helpdesk-rich-text-field"
+      onPaste={onPaste}
+      onDrop={onDrop}
+      onDragOver={(event) => {
+        if (onUploadFiles && !disabled) event.preventDefault();
+      }}
+    >
       <FieldLabel className="helpdesk-field__label" label={label} hint={hint} icon={icon} />
       <RichTextEditor
         value={value}
@@ -155,6 +222,30 @@ export function HelpdeskRichTextField({
         minHeight={minHeight}
         ariaLabel={ariaLabel ?? label}
       />
+      {onUploadFiles ? (
+        <div className="helpdesk-rich-text-field__attach">
+          <input
+            ref={fileRef}
+            type="file"
+            accept={accept}
+            multiple
+            hidden
+            onChange={(event) => {
+              const files = Array.from(event.target.files || []);
+              event.target.value = "";
+              void ingestFiles(files);
+            }}
+          />
+          <IconButton
+            type="button"
+            aria-label="Anexar arquivo"
+            disabled={disabled}
+            onClick={() => fileRef.current?.click()}
+          >
+            <Paperclip size={16} aria-hidden />
+          </IconButton>
+        </div>
+      ) : null}
     </div>
   );
 }

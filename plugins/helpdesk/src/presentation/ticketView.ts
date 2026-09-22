@@ -346,7 +346,10 @@ export function hasVisibleRichText(html: string): boolean {
     .replace(/<[^>]+>/g, " ")
     .replace(/\s+/g, " ")
     .trim();
-  return plain.length > 0;
+  if (plain.length > 0) return true;
+  // H12 — só imagem anexada ainda conta como conteúdo.
+  return /\/apps\/helpdesk-api\/tickets\/\d+\/attachments\/\d+/i.test(html || "")
+    || /data-attachment-pending=/i.test(html || "");
 }
 
 export function listHelpdeskAttachmentIdsInHtml(html: string): number[] {

@@ -46,3 +46,8 @@ class GlpiUnavailable(HelpdeskError):
 class GlpiValidation(HelpdeskError):
     code = "validation_error"
     status_code = 422
+
+
+class GlpiFeatureDisabled(HelpdeskError):
+    code = "glpi_feature_disabled"
+    status_code = 503

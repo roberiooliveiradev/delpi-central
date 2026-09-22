@@ -192,6 +192,31 @@ export async function downloadTicketAttachment(ticketId: string, documentId: num
   URL.revokeObjectURL(url);
 }
 
+export async function uploadTicketAttachment(
+  ticketId: string,
+  file: File,
+  idempotencyKey: string,
+): Promise<TicketAttachment> {
+  const form = new FormData();
+  form.append("file", file, file.name || "anexo");
+  const response = await fetch(`${BASE}/tickets/${ticketId}/attachments`, {
+    method: "POST",
+    headers: headers({ "Idempotency-Key": idempotencyKey }),
+    body: form,
+  });
+  if (!response.ok) throw await readError(response);
+  const body = (await response.json()) as {
+    document_id: number;
+    filename: string;
+    mime: string;
+  };
+  return {
+    document_id: body.document_id,
+    filename: body.filename,
+    mime: body.mime,
+  };
+}
+
 export async function beginGlpiLink(): Promise<string> {
   const body = await request<{ authorize_url: string }>("/auth/glpi/start");
   if (!body.authorize_url) {

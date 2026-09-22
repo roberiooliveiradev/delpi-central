@@ -413,6 +413,11 @@
   min-height: 0;
 }
 
+.dashboard-helpdesk .helpdesk-rich-text-field__attach {
+  display: flex;
+  justify-content: flex-end;
+}
+
 .dashboard-helpdesk .helpdesk-rich-text-field .delpi-ui-rich-text {
   display: flex;
   flex: 1 1 auto;

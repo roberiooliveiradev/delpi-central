@@ -8,7 +8,7 @@ Estados: `PROVEN` | `PLANNED` | `TARGET` | `NOT_STARTED`.
 |---|---|---|---|
 | H0.1 | GLPI 11.0.5 no container `inventario-ti-glpi-1` | PROVEN | arquivo de versão `11.0.5` no container, 21/09/2026 |
 | H0.2 | `enable_hlapi = 1` | PROVEN | `glpi_configs`, 21/09/2026 |
-| H0.3 | `enable_api = 0` | PROVEN | `glpi_configs`, 21/09/2026 |
+| H0.3 | `enable_api` (API legada) | TARGET | H12 autorizada; script `helpdesk-api/scripts/enable_glpi_legacy_api.sh`; ligar em produção + App-Token |
 | H0.4 | API 2.2.0 | PROVEN | `Router::API_VERSION` e URL `/api.php/v2.2` |
 | H0.5 | Cliente `minha-delpi-helpdesk` ativo, grant `authorization_code`, escopo `api`, redirect do BFF | PROVEN | `glpi_oauthclients` id 1, 21/09/2026 |
 | H0.6 | SSO SAML Keycloak | PROVEN | plugin `samlsso` instalado; tutorial do repositório |
@@ -29,7 +29,10 @@ Estados: `PROVEN` | `PLANNED` | `TARGET` | `NOT_STARTED`.
 | lista.ux.pagination | Rodapé `createDashboardPaginationKit` (setas, Ir para, resumo); `HintAction` sem ícones ?; `HelpdeskListPaginationFooter` | PROVEN | commit `1d999772a`, 21/09/2026 |
 | H10.solution.read | Bolha `kind=solution` na conversa (Timeline Solution) | PROVEN | testes mapping + conversationMessages, 21/09/2026 |
 | H10.solicitante.bridge | CTA «Abrir no helpdesk» em solucionado/fechado/aprovação (deep link GLPI) | PROVEN | `glpiTicketFormUrl` + `solicitanteLifecycleCue`, 21/09/2026 |
+| H12.upload.bff | `POST /tickets/{id}/attachments` via apirest Document + App-Token | PROVEN | BFF + testes FakeGlpi/MockTransport, 21/09/2026 |
+| H12.upload.mfe | Colar/arrastar/clipe no compositor (abrir + responder) | PROVEN | `HelpdeskRichTextField` + `inlineUpload`, 21/09/2026 |
+| H12.upload.live | enable_api + App-Token + ponte OAuth→session no GLPI de produção | TARGET | ops script; falta evidência live |
 
-H3 e H6 fechados. Paridade E6–E13 + verify-final concluídos. E14 (menção leitura M-07) entregue; M-23 (`@` no compositor) BLOQUEADO sem catálogo HLAPI. H10: **leitura** da solução + ponte UX ao GLPI PROVEN; write (aprovar/reabrir/satisfação) continua no GLPI (CONSOLE). H12 BLOQUEADO. Sem senha neste arquivo.
+H3 e H6 fechados. Paridade E6–E13 + verify-final concluídos. E14 (menção leitura M-07) entregue; M-23 (`@` no compositor) BLOQUEADO sem catálogo HLAPI. H10: **leitura** da solução + ponte UX ao GLPI PROVEN; write (aprovar/reabrir/satisfação) continua no GLPI (CONSOLE). H12: BFF+MFE entregues; go-live depende de `enable_api` + `GLPI_LEGACY_APP_TOKEN`. Sem senha neste arquivo.
 
 Segredo do cliente OAuth não é registrado aqui.

@@ -853,3 +853,62 @@ def test_requester_falls_back_to_user_recipient():
         {"results": []},
     )
     assert detail.requester_display_name == "Robério Teixeira"
+
+
+def test_legacy_document_upload_uses_apirest_with_app_token():
+    from helpdesk_app.domain.errors import GlpiFeatureDisabled
+
+    calls: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls.append(f"{request.method} {request.url.path}")
+        if request.url.path.endswith("/Assistance/Ticket/7"):
+            return httpx.Response(200, json={"id": 7, "name": "t"})
+        if request.url.path.endswith("/apirest.php/initSession"):
+            assert request.headers.get("App-Token") == "app-token-x"
+            assert request.headers.get("Authorization", "").startswith("user_token ")
+            return httpx.Response(200, json={"session_token": "sess-1"})
+        if request.url.path.endswith("/apirest.php/Document"):
+            assert request.headers.get("Session-Token") == "sess-1"
+            assert request.headers.get("App-Token") == "app-token-x"
+            return httpx.Response(201, json={"id": 55})
+        if request.url.path.endswith("/apirest.php/killSession"):
+            return httpx.Response(200, json={})
+        return httpx.Response(404, json={"error": "missing"})
+
+    disabled = HttpxGlpiClient(
+        base_url="https://glpi.example",
+        client_id="id",
+        client_secret="super-secret",
+        redirect_uri="https://centraldelpi.com.br/apps/helpdesk-api/auth/glpi/callback",
+        transport=httpx.MockTransport(handler),
+    )
+    with pytest.raises(GlpiFeatureDisabled):
+        disabled.upload_ticket_document(
+            "oauth",
+            ticket_id=7,
+            filename="a.png",
+            content=b"x",
+            mime="image/png",
+        )
+
+    client = HttpxGlpiClient(
+        base_url="https://glpi.example",
+        client_id="id",
+        client_secret="super-secret",
+        redirect_uri="https://centraldelpi.com.br/apps/helpdesk-api/auth/glpi/callback",
+        legacy_upload_enabled=True,
+        legacy_app_token="app-token-x",
+        transport=httpx.MockTransport(handler),
+    )
+    uploaded = client.upload_ticket_document(
+        "oauth-access",
+        ticket_id=7,
+        filename="placa.png",
+        content=b"png-bytes",
+        mime="image/png",
+    )
+    assert uploaded.document_id == 55
+    assert uploaded.filename == "placa.png"
+    assert any("/apirest.php/Document" in item for item in calls)
+    assert any("killSession" in item for item in calls)

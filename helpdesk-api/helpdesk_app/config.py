@@ -66,6 +66,16 @@ class Settings:
     GLPI_HTTP_READ_TIMEOUT: float = float(
         _get_env("GLPI_HTTP_READ_TIMEOUT", default="20") or "20"
     )
+    # H12 exception (product-authorized): legacy apirest Document upload only.
+    GLPI_LEGACY_UPLOAD_ENABLED: bool = (
+        str(_get_env("GLPI_LEGACY_UPLOAD_ENABLED", default="false") or "false").lower()
+        in {"1", "true", "yes", "on"}
+    )
+    GLPI_LEGACY_APP_TOKEN: str = _get_env("GLPI_LEGACY_APP_TOKEN", default="") or ""
+    GLPI_LEGACY_MAX_UPLOAD_BYTES: int = int(
+        _get_env("GLPI_LEGACY_MAX_UPLOAD_BYTES", default=str(20 * 1024 * 1024))
+        or str(20 * 1024 * 1024)
+    )
 
 
 settings = Settings()
