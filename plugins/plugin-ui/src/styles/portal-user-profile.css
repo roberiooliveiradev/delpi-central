@@ -63,6 +63,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  margin: 0;
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.02em;
@@ -72,6 +73,7 @@
 
 .delpi-ui-portal-user-profile__field-value {
   margin: 4px 0 0;
+  padding: 0;
   font-size: 14px;
   font-weight: 600;
   color: var(--delpi-ui-text, var(--text, #111111));
@@ -90,6 +92,66 @@
   flex-wrap: wrap;
   gap: 8px;
   min-width: 0;
+}
+
+/* Acesso da sessão (Superadmin / capacidades / RBAC) — chrome transversal dos portais. */
+.delpi-ui-portal-user-profile__access {
+  display: grid;
+  gap: 18px;
+  min-width: 0;
+}
+
+.delpi-ui-portal-user-profile__access-group {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.delpi-ui-portal-user-profile__access-heading {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 650;
+  color: var(--delpi-ui-text, var(--text, #111111));
+}
+
+.delpi-ui-portal-user-profile__access-badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.delpi-ui-portal-user-profile__access-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.delpi-ui-portal-user-profile__access-list > li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px 16px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid
+    color-mix(in srgb, var(--delpi-ui-border, var(--border, #e6e6e6)) 80%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-text, var(--text, #111111)) 3%,
+    transparent
+  );
+}
+
+.delpi-ui-portal-user-profile__access-list code {
+  font-size: 0.8rem;
+  opacity: 0.85;
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.7)));
 }
 
 @media (max-width: 640px) {

@@ -4,6 +4,7 @@ import {
   SectionCard,
   createDashboardPortalUserProfilePage,
   navigateHostPath,
+  portalUserProfileAccessBemClasses,
   sectionCardPacBemClasses,
 } from "@delpi/plugin-ui/index";
 import {
@@ -55,6 +56,7 @@ const TmPortalUserProfilePage = createDashboardPortalUserProfilePage({
 });
 
 const SECTION = sectionCardPacBemClasses("ds");
+const ACCESS = portalUserProfileAccessBemClasses("ds");
 const SECTION_LABELS = {
   titleHelpAriaLabel: (title: string) => `Ajuda: ${title}`,
 };
@@ -124,7 +126,9 @@ export function PersonDirectoryPage({
     setPersonProfile(null);
 
     void Promise.all([
-      lookupDirectoryUsers([id], controller.signal, getAccessToken),
+      lookupDirectoryUsers([id], controller.signal, getAccessToken, {
+        revealEmail: true,
+      }),
       downloadPersonProfilePhoto(id, getAccessToken).catch(() => null),
     ])
       .then(([users, blob]) => {
@@ -294,18 +298,18 @@ export function PersonDirectoryPage({
               subtitle={L.accessSubtitle}
             >
               {isSelf === true ? (
-                <div className="ds-user-profile__access">
+                <div className={ACCESS.access}>
                   {session.isSuperadmin ? (
-                    <div className="ds-user-profile__access-group">
-                      <h3 className="ds-user-profile__access-heading">Contexto admin</h3>
-                      <div className="ds-nav-row">
+                    <div className={ACCESS.accessGroup}>
+                      <h3 className={ACCESS.accessHeading}>Contexto admin</h3>
+                      <div className={ACCESS.accessBadges}>
                         <TmStatusBadge label={L.superadmin} variant="warning" />
                       </div>
                     </div>
                   ) : null}
-                  <div className="ds-user-profile__access-group">
-                    <h3 className="ds-user-profile__access-heading">Capacidades da sessão</h3>
-                    <div className="ds-nav-row">
+                  <div className={ACCESS.accessGroup}>
+                    <h3 className={ACCESS.accessHeading}>Capacidades da sessão</h3>
+                    <div className={ACCESS.accessBadges}>
                       {session.permissions.includes(TRANSFORMOMETRO_ACCESS_PERMISSION) ||
                       session.isSuperadmin ? (
                         <TmStatusBadge label={L.capabilityAccess} variant="info" />
@@ -315,10 +319,10 @@ export function PersonDirectoryPage({
                       ) : null}
                     </div>
                   </div>
-                  <div className="ds-user-profile__access-group">
-                    <h3 className="ds-user-profile__access-heading">Permissões RBAC</h3>
+                  <div className={ACCESS.accessGroup}>
+                    <h3 className={ACCESS.accessHeading}>Permissões RBAC</h3>
                     {permissionItems.length > 0 ? (
-                      <ul className="ds-user-profile__permission-list">
+                      <ul className={ACCESS.accessList}>
                         {permissionItems.map((item) => (
                           <li key={item.code}>
                             <strong>{item.label}</strong>

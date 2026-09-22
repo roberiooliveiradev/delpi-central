@@ -32,12 +32,13 @@ describe("UserProfile", () => {
   it("compõe o perfil com o kit — chrome self não é local", () => {
     const page = readFileSync(join(dir, "UserProfilePage.tsx"), "utf8");
     expect(page).toMatch(/createDashboardPortalUserProfilePage/);
+    expect(page).toMatch(/portalUserProfileAccessBemClasses/);
     expect(page).toMatch(/isSelf=\{isSelf\}/);
     expect(page).toMatch(/onEditSelf=/);
     expect(page).toMatch(/contextBadges=/);
     expect(page).toMatch(/HOST_SELF_PROFILE_PATH/);
     expect(page).not.toMatch(
-      /sp-user-profile__(grid|identity|shortcuts|error)\b/,
+      /sp-user-profile__(grid|identity|shortcuts|error|access)\b/,
     );
     expect(page).not.toMatch(/density:\s*"comfortable"/);
     expect(page).not.toMatch(/badgeSelf/);

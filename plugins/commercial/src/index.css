@@ -1166,12 +1166,12 @@
   width: 100%;
 }
 
-.dashboard-commercial .cm-administration-groups .cm-user-profile__permission-list li.cm-row-actions {
+.dashboard-commercial .cm-administration-groups .cm-portal-user-profile__access-list li.cm-row-actions {
   flex-wrap: nowrap;
   align-items: center;
 }
 
-.dashboard-commercial .cm-administration-groups .cm-user-profile__permission-list li.cm-row-actions strong {
+.dashboard-commercial .cm-administration-groups .cm-portal-user-profile__access-list li.cm-row-actions strong {
   flex: 1 1 auto;
   min-width: 0;
 }
@@ -2255,48 +2255,7 @@
   }
 }
 
-/* Perfil de usuário — path/hero/identidade/atalhos vêm de `.delpi-ui-portal-user-profile*` (kit). */
-.dashboard-commercial .cm-user-profile__access {
-  display: grid;
-  gap: 18px;
-}
-
-.dashboard-commercial .cm-user-profile__access-group {
-  display: grid;
-  gap: 10px;
-}
-
-.dashboard-commercial .cm-user-profile__access-heading {
-  margin: 0;
-  font-size: var(--cm-font-sm, 0.875rem);
-  font-weight: 650;
-}
-
-.dashboard-commercial .cm-user-profile__permission-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 8px;
-}
-
-.dashboard-commercial .cm-user-profile__permission-list li {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px 16px;
-  padding: 10px 12px;
-  border-radius: 12px;
-  border: 1px solid color-mix(in srgb, var(--cm-border, #e6e6e6) 80%, transparent);
-  background: color-mix(in srgb, var(--cm-text, #111) 3%, transparent);
-}
-
-.dashboard-commercial .cm-user-profile__permission-list code {
-  font-size: 12px;
-  opacity: 0.78;
-}
-
+/* Perfil de usuário — path/hero/identidade/atalhos/acesso vêm de `.delpi-ui-portal-user-profile*` (kit). */
 .dashboard-commercial .cm-user-profile__portfolio-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));

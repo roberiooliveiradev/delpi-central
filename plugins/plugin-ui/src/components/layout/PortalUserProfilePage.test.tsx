@@ -8,6 +8,7 @@ import {
   PORTAL_USER_PROFILE_LABELS_PT,
   PortalUserProfilePage,
   createDashboardPortalUserProfilePage,
+  portalUserProfileAccessBemClasses,
   portalUserProfilePageBemClasses,
 } from "./PortalUserProfilePage";
 
@@ -222,5 +223,16 @@ describe("PortalUserProfilePage", () => {
     expect(container.querySelector(".delpi-ui-portal-user-profile")).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Atalhos do Portal" })).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Identidade" })).toBeTruthy();
+  });
+
+  it("access BEM dual-class é canônico para chrome de Acesso", () => {
+    const access = portalUserProfileAccessBemClasses("cm");
+    expect(access.access).toContain("delpi-ui-portal-user-profile__access");
+    expect(access.accessList).toContain(
+      "delpi-ui-portal-user-profile__access-list",
+    );
+    expect(access.accessBadges).toContain(
+      "delpi-ui-portal-user-profile__access-badges",
+    );
   });
 });

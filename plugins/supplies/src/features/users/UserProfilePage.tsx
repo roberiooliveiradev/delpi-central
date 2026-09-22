@@ -1,15 +1,16 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import {
+  HOST_SELF_PROFILE_PATH,
+  createDashboardPortalUserProfilePage,
+  navigateHostPath,
+  portalUserProfileAccessBemClasses,
+} from "@delpi/plugin-ui/index";
 import {
   BookOpen,
   Home,
   LayoutDashboard,
   ShoppingCart,
 } from "lucide-react";
-import {
-  HOST_SELF_PROFILE_PATH,
-  createDashboardPortalUserProfilePage,
-  navigateHostPath,
-} from "@delpi/plugin-ui/index";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 
 import { getUserProfile, patchUserProfile, type SuppliesUserProfile } from "../../api/userProfileApi";
 import { navigatePluginPath, navigatePluginView } from "../../app/pluginNavigation";
@@ -59,6 +60,8 @@ const SuppliesPortalUserProfilePage = createDashboardPortalUserProfilePage({
     whatsappLabel: C.whatsappLabel,
   },
 });
+
+const ACCESS = portalUserProfileAccessBemClasses(UI_PREFIX);
 
 function readReturnTo(): { href: string; label: string } {
   if (typeof window === "undefined") {
@@ -343,22 +346,22 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
 
             <SuppliesSectionCard title={C.accessTitle} subtitle={C.accessSubtitle}>
               {profile.isSelf ? (
-                <div className="sp-user-profile__access">
+                <div className={ACCESS.access}>
                   {profile.isSuperadmin ? (
-                    <div className="sp-user-profile__access-group">
-                      <h3 className="sp-user-profile__access-heading">
+                    <div className={ACCESS.accessGroup}>
+                      <h3 className={ACCESS.accessHeading}>
                         {C.accessContextHeading}
                       </h3>
-                      <div className="sp-nav-row">
+                      <div className={ACCESS.accessBadges}>
                         <SuppliesStatusBadge label={C.superadmin} variant="warning" />
                       </div>
                     </div>
                   ) : null}
-                  <div className="sp-user-profile__access-group">
-                    <h3 className="sp-user-profile__access-heading">
+                  <div className={ACCESS.accessGroup}>
+                    <h3 className={ACCESS.accessHeading}>
                       {C.accessCapabilitiesHeading}
                     </h3>
-                    <div className="sp-nav-row">
+                    <div className={ACCESS.accessBadges}>
                       {profile.capabilities?.access || profile.isSuperadmin ? (
                         <SuppliesStatusBadge label={C.capabilityAccess} variant="info" />
                       ) : null}
@@ -373,12 +376,12 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
                       ) : null}
                     </div>
                   </div>
-                  <div className="sp-user-profile__access-group">
-                    <h3 className="sp-user-profile__access-heading">
+                  <div className={ACCESS.accessGroup}>
+                    <h3 className={ACCESS.accessHeading}>
                       {C.accessPermissionsHeading}
                     </h3>
                     {permissionItems.length > 0 ? (
-                      <ul className="sp-user-profile__permission-list">
+                      <ul className={ACCESS.accessList}>
                         {permissionItems.map((item) => (
                           <li key={item.code}>
                             <strong>{item.label}</strong>

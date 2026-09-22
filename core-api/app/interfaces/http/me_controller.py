@@ -550,12 +550,22 @@ def lookup_directory_users():
         "app"
     )
     app_id = (str(app_id).strip() if app_id else "") or None
+    # Perfis de portal / SMTP precisam do endereço real (paridade com search).
+    reveal_raw = None
+    if isinstance(body, dict):
+        reveal_raw = body.get("reveal_email")
+    if reveal_raw is None:
+        reveal_raw = request.args.get("reveal_email")
+    reveal_email = _truthy_query_flag(
+        str(reveal_raw) if reveal_raw is not None else None
+    )
 
     try:
         with SqlAlchemyUnitOfWork() as uow:
             results = LookupDirectoryUsersUseCase(uow).execute(
                 user_ids=[str(item) for item in raw_ids if item],
                 app_id=app_id,
+                mask_email=not reveal_email,
             )
     except Exception as exc:
         logger.exception("lookup_directory_users_failed")

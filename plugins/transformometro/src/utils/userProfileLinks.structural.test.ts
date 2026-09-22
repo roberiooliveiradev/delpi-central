@@ -88,9 +88,12 @@ describe("Transforma+ user profile routes", () => {
       "utf8",
     );
     expect(page).toMatch(/createDashboardPortalUserProfilePage/);
+    expect(page).toMatch(/portalUserProfileAccessBemClasses/);
+    expect(page).toMatch(/revealEmail:\s*true/);
     /** Chrome da página é o shell canônico do MFE — sem wrapper ad hoc com style inline. */
     expect(page).toMatch(/TransformometroShell/);
     expect(page).not.toMatch(/style=\{\{/);
+    expect(page).not.toMatch(/ds-user-profile__access\b/);
   });
 
   it("InteractionRooms liga autores/participantes ao perfil do portal", () => {

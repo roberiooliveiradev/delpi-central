@@ -1,4 +1,8 @@
-import { UserDirectoryPicker, type DirectoryUserOption } from "@delpi/plugin-ui/index";
+import {
+  UserDirectoryPicker,
+  portalUserProfileAccessBemClasses,
+  type DirectoryUserOption,
+} from "@delpi/plugin-ui/index";
 import { Pencil, Plus, RefreshCw, Trash2, UsersRound, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -30,6 +34,7 @@ import {
   CommercialStateBanner,
   CommercialStatusBadge,
   CommercialTextField,
+  UI_PREFIX,
 } from "../../app/commercialUi";
 import { useCommercialConfirm } from "../../app/CommercialConfirmDialogProvider";
 import { useCommercialFloatingNotice } from "../../app/CommercialFloatingNoticeProvider";
@@ -49,6 +54,8 @@ import { withPersonAvatarSrc } from "../../utils/orgFlowPersonAvatars";
 import { useUserProfilePhotoUrls } from "../../hooks/useUserProfilePhotoUrls";
 import { TaskUserChipAvatar } from "../my-day/TaskUserChipAvatar";
 import { AdministrationSubNav } from "./AdministrationSubNav";
+
+const ACCESS = portalUserProfileAccessBemClasses(UI_PREFIX);
 
 type AdministrationGroupsPageProps = {
   basePath: string;
@@ -634,7 +641,7 @@ export function AdministrationGroupsPage({ basePath }: AdministrationGroupsPageP
                   {group.members.length === 0 ? (
                     <p className="cm-muted">{copy.noMembers}</p>
                   ) : (
-                    <ul className="cm-user-profile__permission-list">
+                    <ul className={ACCESS.accessList}>
                       {group.members.map((member) => {
                         const name = labelFor(
                           member.user_id,

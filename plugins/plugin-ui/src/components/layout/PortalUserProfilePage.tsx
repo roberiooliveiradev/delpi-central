@@ -112,6 +112,14 @@ export type PortalUserProfilePagePath = {
   current: string;
 };
 
+export type PortalUserProfileAccessClassNames = {
+  access: string;
+  accessGroup: string;
+  accessHeading: string;
+  accessBadges: string;
+  accessList: string;
+};
+
 export type PortalUserProfilePageClassNames = {
   root: string;
   grid: string;
@@ -132,7 +140,7 @@ export type PortalUserProfilePageClassNames = {
   section: SectionCardClassNames;
   avatar: InitialsAvatarClassNames;
   selfBadge: StatusBadgeClassNames;
-};
+} & PortalUserProfileAccessClassNames;
 
 export type PortalUserProfilePageLabels = {
   pageAriaLabel: string;
@@ -211,6 +219,25 @@ export const PORTAL_USER_PROFILE_LABELS_PT: PortalUserProfilePageLabels = {
   },
 };
 
+/**
+ * Classes BEM do bloco «Acesso na plataforma» (chrome transversal).
+ * Hosts usam nas seções de domínio; o CSS canônico é `.delpi-ui-portal-user-profile__*`.
+ */
+export function portalUserProfileAccessBemClasses(
+  prefix: string,
+): PortalUserProfileAccessClassNames {
+  const pair = (local: string, canonical: string) => delpiUiClass(local, canonical);
+  const base = `${prefix}-portal-user-profile`;
+  const ui = "delpi-ui-portal-user-profile";
+  return {
+    access: pair(`${base}__access`, `${ui}__access`),
+    accessGroup: pair(`${base}__access-group`, `${ui}__access-group`),
+    accessHeading: pair(`${base}__access-heading`, `${ui}__access-heading`),
+    accessBadges: pair(`${base}__access-badges`, `${ui}__access-badges`),
+    accessList: pair(`${base}__access-list`, `${ui}__access-list`),
+  };
+}
+
 export function portalUserProfilePageBemClasses(
   prefix: string,
   overrides?: Partial<
@@ -238,6 +265,7 @@ export function portalUserProfilePageBemClasses(
     status: pair(`${base}__status`, `${ui}__status`),
     error: pair(`${base}__error`, `${ui}__error`),
     loading: pair(`${base}__loading`, `${ui}__loading`),
+    ...portalUserProfileAccessBemClasses(prefix),
     pagePath: overrides?.pagePath ?? pagePathBemClasses(prefix),
     hero: overrides?.hero ?? pageHeroBemClasses(prefix),
     section: overrides?.section ?? sectionCardPacBemClasses(prefix),

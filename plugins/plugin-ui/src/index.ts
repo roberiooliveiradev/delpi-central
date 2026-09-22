@@ -38,6 +38,7 @@ export {
   PORTAL_USER_PROFILE_LABELS_PT,
   PortalUserProfilePage,
   createDashboardPortalUserProfilePage,
+  portalUserProfileAccessBemClasses,
   portalUserProfilePageBemClasses,
 } from "./components/layout/PortalUserProfilePage";
 export * from "./brand";

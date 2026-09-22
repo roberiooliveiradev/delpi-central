@@ -3,6 +3,7 @@ import {
   HOST_SELF_PROFILE_PATH,
   createDashboardPortalUserProfilePage,
   navigateHostPath,
+  portalUserProfileAccessBemClasses,
 } from "@delpi/plugin-ui/index";
 import {
   BriefcaseBusiness,
@@ -93,6 +94,8 @@ const CommercialPortalUserProfilePage = createDashboardPortalUserProfilePage({
     whatsappLabel: USER_ACCESS_COPY.whatsappLabel,
   },
 });
+
+const ACCESS = portalUserProfileAccessBemClasses(UI_PREFIX);
 
 export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
   const {
@@ -569,11 +572,11 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
               hint={CM_HELP.users.access}
             >
               {isSelf === true ? (
-                <div className="cm-user-profile__access">
+                <div className={ACCESS.access}>
                   {meIsSuperadmin ? (
-                    <div className="cm-user-profile__access-group">
-                      <h3 className="cm-user-profile__access-heading">Contexto admin</h3>
-                      <div className="cm-nav-row">
+                    <div className={ACCESS.accessGroup}>
+                      <h3 className={ACCESS.accessHeading}>Contexto admin</h3>
+                      <div className={ACCESS.accessBadges}>
                         <CommercialStatusBadge
                           label={USER_ACCESS_COPY.superadmin}
                           variant="warning"
@@ -582,11 +585,11 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
                     </div>
                   ) : null}
                   {capabilityItems.length > 0 ? (
-                    <div className="cm-user-profile__access-group">
-                      <h3 className="cm-user-profile__access-heading">
+                    <div className={ACCESS.accessGroup}>
+                      <h3 className={ACCESS.accessHeading}>
                         Capacidades da sessão
                       </h3>
-                      <div className="cm-nav-row">
+                      <div className={ACCESS.accessBadges}>
                         {capabilityItems.map((item) => (
                           <CommercialStatusBadge
                             key={item.key}
@@ -597,10 +600,10 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
                       </div>
                     </div>
                   ) : null}
-                  <div className="cm-user-profile__access-group">
-                    <h3 className="cm-user-profile__access-heading">Permissões RBAC</h3>
+                  <div className={ACCESS.accessGroup}>
+                    <h3 className={ACCESS.accessHeading}>Permissões RBAC</h3>
                     {permissionItems.length > 0 ? (
-                      <ul className="cm-user-profile__permission-list">
+                      <ul className={ACCESS.accessList}>
                         {permissionItems.map((item) => (
                           <li key={item.code}>
                             <strong>{item.label}</strong>

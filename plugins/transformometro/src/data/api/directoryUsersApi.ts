@@ -11,9 +11,15 @@ export async function lookupDirectoryUsers(
   userIds: readonly string[],
   signal?: AbortSignal,
   getAccessToken?: () => string | undefined,
+  options?: { revealEmail?: boolean },
 ): Promise<DirectoryUserHit[]> {
   const ids = [...new Set(userIds.map((id) => id.trim()).filter(Boolean))];
   if (ids.length === 0) return [];
+
+  const body: { ids: string[]; reveal_email?: boolean } = { ids };
+  if (options?.revealEmail) {
+    body.reveal_email = true;
+  }
 
   const response = await fetch("/core-api/me/directory/users/lookup", {
     method: "POST",
@@ -23,7 +29,7 @@ export async function lookupDirectoryUsers(
       "Content-Type": "application/json",
       ...buildAuthHeaders(getAccessToken),
     },
-    body: JSON.stringify({ ids }),
+    body: JSON.stringify(body),
   });
   if (!response.ok) {
     throw new Error("Não foi possível consultar o diretório de usuários.");
