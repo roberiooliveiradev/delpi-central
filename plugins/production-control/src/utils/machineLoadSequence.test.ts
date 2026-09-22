@@ -6,6 +6,7 @@ import {
   keysFromOperations,
   type SequenceKey,
 } from "../hooks/useMachineLoadSequenceHistory";
+import { mergeActiveOrderIntoMachineLoadQueue } from "./machineLoadVisibleReorder";
 
 describe("moveArrayItem", () => {
   it("moves an item forward", () => {
@@ -94,3 +95,64 @@ function rowsFixture() {
     { production_order: "C", operation_code: "01" },
   ];
 }
+
+describe("mergeActiveOrderIntoMachineLoadQueue", () => {
+  const full = [
+    {
+      production_order: "F1",
+      operation_code: "01",
+      operation_pending_qty: 0,
+      label: "finished-top",
+    },
+    {
+      production_order: "A",
+      operation_code: "01",
+      operation_pending_qty: 10,
+      label: "active-a",
+    },
+    {
+      production_order: "F2",
+      operation_code: "01",
+      operation_pending_qty: 0,
+      label: "finished-mid",
+    },
+    {
+      production_order: "B",
+      operation_code: "01",
+      operation_pending_qty: 5,
+      label: "active-b",
+    },
+    {
+      production_order: "C",
+      operation_code: "01",
+      operation_pending_qty: 3,
+      label: "active-c",
+    },
+  ];
+
+  it("reorders only active slots and pins finished positions (positive)", () => {
+    const reorderedActive = [full[4]!, full[1]!, full[3]!];
+    expect(mergeActiveOrderIntoMachineLoadQueue(full, reorderedActive).map((row) => row.label)).toEqual([
+      "finished-top",
+      "active-c",
+      "finished-mid",
+      "active-a",
+      "active-b",
+    ]);
+  });
+
+  it("returns the visible list unchanged when it is already the full queue (sibling)", () => {
+    const onlyActive = full.filter((row) => (row.operation_pending_qty ?? 0) > 0);
+    const reordered = [onlyActive[1]!, onlyActive[0]!, onlyActive[2]!];
+    expect(mergeActiveOrderIntoMachineLoadQueue(onlyActive, reordered).map((row) => row.label)).toEqual([
+      "active-b",
+      "active-a",
+      "active-c",
+    ]);
+  });
+
+  it("keeps the full queue when the active set does not match (negative)", () => {
+    const incomplete = [full[1]!, full[3]!];
+    expect(mergeActiveOrderIntoMachineLoadQueue(full, incomplete)).toBe(full);
+  });
+});

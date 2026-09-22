@@ -130,14 +130,17 @@ export const copy = {
     hideFinished: {
       show: "Ocultar finalizadas",
       hide: "Mostrar finalizadas",
-      hintShow: "Esconde da vista as operações já apontadas. Elas continuam na fila congelada.",
+      hintShow:
+        "Esconde da vista as operações já apontadas. Você ainda pode reordenar as ativas; as ocultas permanecem na posição.",
       hintHide: "Volta a exibir as operações já apontadas nesta fila.",
       withCount: (count: number) =>
         count === 1 ? "Ocultar finalizadas (1)" : `Ocultar finalizadas (${count})`,
       showingHidden: (count: number) =>
         count === 1 ? "Mostrar finalizadas (1)" : `Mostrar finalizadas (${count})`,
       empty: "Todas as operações deste centro já foram apontadas.",
-      reorderDisabled: "Desative «Ocultar finalizadas» para reordenar a fila.",
+      /** Hint sob a tabela com filtro ativo — DnD das ativas liberado. */
+      reorderWhileHidden:
+        "Arraste as linhas ativas para reordenar · finalizadas ocultas permanecem na posição · Ctrl+Z desfaz",
     },
     tabsAria: "Centros de trabalho",
     emptyCenters: "Nenhuma operação alocada no período.",
