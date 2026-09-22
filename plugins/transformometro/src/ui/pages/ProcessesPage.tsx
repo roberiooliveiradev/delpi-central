@@ -17,9 +17,10 @@ import {
 import { PROCESS_LIST_EMPTY_MESSAGE, PORTAL_PAGE_COPY, buildProcessListQuery, processListPlaceholder } from "../../constants/portalExperience";
 import { describeHttpErrorTitle } from "../../utils/apiErrorMessage";
 import { TransformometroHttpError } from "../../data/api/transformometroHttp";
-import { FieldLabel, NativeTextControl } from "@delpi/plugin-ui/index";
+import { FieldLabel, NativeTextControl, type PageHeroHighlight } from "@delpi/plugin-ui/index";
 import { SelectField } from "../../components/ui/SelectField";
 import { mapSelectOptions } from "../../components/ui/selectTypes";
+import { SegmentToggle } from "../../components/SegmentToggle";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { useScrollToRef } from "../../hooks/useScrollToRef";
 import { useTransformometroCatalogWatch } from "../../hooks/useTransformometroCatalogWatch";
@@ -31,6 +32,12 @@ const P = TM_HELP_TOOLTIPS.processos;
 import { ProcessFormFields } from "../processes/ProcessFormFields";
 import { ProcessScopeFields } from "../processes/ProcessScopeFields";
 import { ProcessFolderBrowser } from "../processes/ProcessFolderBrowser";
+import {
+  PROCESSO_LIST_BROWSE_MODES,
+  readProcessoListBrowseMode,
+  writeProcessoListBrowseMode,
+  type ProcessoListBrowseMode,
+} from "../processes/processListBrowseMode";
 import {
   defaultProcessoEscopoForCreate,
   hasProcessoEscopo,
@@ -68,10 +75,28 @@ export function ProcessesPage({
   const { ref: formSectionRef, scrollToRef: scrollToForm } = useScrollToRef<HTMLElement>();
   const [statusFilter, setStatusFilter] = useState("");
   const [searchQ, setSearchQ] = useState("");
+  const [browseMode, setBrowseMode] = useState<ProcessoListBrowseMode>(() =>
+    readProcessoListBrowseMode(),
+  );
+
+  useEffect(() => {
+    writeProcessoListBrowseMode(browseMode);
+  }, [browseMode]);
 
   const listParams = useMemo(
     () => buildProcessListQuery(searchQ, statusFilter),
     [searchQ, statusFilter],
+  );
+
+  const heroHighlights = useMemo<PageHeroHighlight[]>(
+    () => [
+      {
+        id: "count",
+        label: "Processos",
+        value: loading ? "…" : String(items.length),
+      },
+    ],
+    [items.length, loading],
   );
 
   const load = useCallback(async () => {
@@ -188,13 +213,51 @@ export function ProcessesPage({
         onNavigate={onNavigate}
         onRefresh={() => void load()}
         refreshing={refreshing}
+        highlights={heroHighlights}
         actions={
           <button type="button" className="ds-primary-btn" onClick={startCreate}>
             <Plus size={16} />
             Novo processo
           </button>
         }
-      />
+      >
+        <div className="tm-processo-list-hero-controls">
+          <SegmentToggle
+            ariaLabel="Visualizar listagem por processos ou departamentos"
+            idPrefix="tm-proc-browse"
+            prefix="ds"
+            size="md"
+            options={PROCESSO_LIST_BROWSE_MODES.map((mode) => ({
+              value: mode.id,
+              label: mode.label,
+            }))}
+            value={browseMode}
+            onChange={(value) => setBrowseMode(value as ProcessoListBrowseMode)}
+          />
+          <section className={DS_FILTERS_ROW_EXTENDED}>
+            <div className={DS_FILTER_BOX_WIDE}>
+              <FieldLabel className="tm-field__label" label="Buscar" hint={P.busca} />
+              <NativeTextControl
+                id="tm-proc-q"
+                type="search"
+                placeholder="Nome ou código…"
+                value={searchQ}
+                onChange={setSearchQ}
+              />
+            </div>
+            <SelectField
+              id="tm-proc-list-status"
+              label="Status"
+              hint={P.filtroStatus}
+              value={statusFilter}
+              onChange={setStatusFilter}
+              allowEmpty
+              emptyLabel="Todos"
+              options={mapSelectOptions(options?.status_processo ?? [])}
+            />
+          </section>
+        </div>
+      </PageHeader>
 
       <StatusAlerts
         error={error}
@@ -252,6 +315,9 @@ export function ProcessesPage({
         items={items}
         loading={loading}
         refreshing={refreshing}
+        browseMode={browseMode}
+        onBrowseModeChange={setBrowseMode}
+        hideBrowseToggle
         emptyMessage={
           httpStatus != null
             ? processListPlaceholder(httpStatus, error)
@@ -260,30 +326,6 @@ export function ProcessesPage({
         detailColumns={detailColumns}
         onOpen={(row) => onOpenProcesso(row.processo_id)}
         onNavigate={onNavigate}
-        filters={
-          <section className={DS_FILTERS_ROW_EXTENDED}>
-            <div className={DS_FILTER_BOX_WIDE}>
-              <FieldLabel className="tm-field__label" label="Buscar" hint={P.busca} />
-              <NativeTextControl
-                id="tm-proc-q"
-                type="search"
-                placeholder="Nome ou código…"
-                value={searchQ}
-                onChange={setSearchQ}
-              />
-            </div>
-            <SelectField
-              id="tm-proc-list-status"
-              label="Status"
-              hint={P.filtroStatus}
-              value={statusFilter}
-              onChange={setStatusFilter}
-              allowEmpty
-              emptyLabel="Todos"
-              options={mapSelectOptions(options?.status_processo ?? [])}
-            />
-          </section>
-        }
       />
     </TransformometroShell>
   );

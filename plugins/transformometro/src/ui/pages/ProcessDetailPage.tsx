@@ -23,7 +23,7 @@ import { StatusAlerts } from "../../components/StatusAlerts";
 import { TransformometroShell } from "../../components/TransformometroShell";
 import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
-import { valuesEqual, PageHero, pageHeroBemClasses, StatusBadge, statusBadgeBemClasses } from "@delpi/plugin-ui/index";
+import { valuesEqual } from "@delpi/plugin-ui/index";
 import {
   buildProcessoDiagramaEditPath,
   buildInstanciaPath,
@@ -79,14 +79,10 @@ import {
 } from "../processes/ProcessWorkspaceShell";
 import {
   buildProcessoSectionHref,
-  resolveActiveWorkspaceNodeId,
 } from "../processes/processWorkspaceNav";
 import type { ProcessoWorkspaceSectionId } from "../processes/processWorkspaceNav";
 import { ProcessWorkspaceSectionPanel } from "../processes/ProcessWorkspaceSectionPanel";
 import { DS_GHOST_BTN, dsGhostBtn } from "../../components/ghostChrome";
-
-const EMBEDDED_HERO = pageHeroBemClasses("ds");
-const STATUS_BADGE = statusBadgeBemClasses("ds");
 
 type Props = Pick<AppProps, "getAccessToken"> & {
   processoId: string;
@@ -329,7 +325,6 @@ export function ProcessDetailPage({
   }
 
   const activeSection = useProcessoWorkspaceSection();
-  const activeNodeId = resolveActiveWorkspaceNodeId({ view: "processo", section: activeSection });
   const [mountedSections, setMountedSections] = useState<Set<ProcessoWorkspaceSectionId>>(
     () => new Set([activeSection])
   );
@@ -417,21 +412,14 @@ export function ProcessDetailPage({
           <section className="ds-card tm-processo-workspace-panel">
             <h2 className="ds-section-title">Visão geral</h2>
             <p className="ds-hint">
-              Resumo do cadastro do processo-mestre. Use a árvore à esquerda para abrir cada tópico,
-              melhoria ou revisão. Medições, investimentos e recursos ficam em cada revisão.
+              Resumo do cadastro do processo-mestre. Use as abas acima para abrir cada tópico.
+              Melhorias e revisões ficam na aba Melhorias; medições, investimentos e recursos ficam
+              em cada revisão.
             </p>
             <ProcessFormProgress completion={setupCompletion} title="Preenchimento do cadastro" />
             <div className="tm-processo-workspace-overview">
               <ProcessReadView processo={processo} activeFilialCount={options.filiais.length} />
               <dl className="ds-dl-grid tm-processo-workspace-overview__stats">
-                <div>
-                  <dt>Melhorias</dt>
-                  <dd>{instancias.length}</dd>
-                </div>
-                <div>
-                  <dt>Revisões</dt>
-                  <dd>{revisoes.length}</dd>
-                </div>
                 <div>
                   <dt>Arquivos</dt>
                   <dd>{arquivosCount}</dd>
@@ -480,6 +468,13 @@ export function ProcessDetailPage({
                   onClick={() => onNavigate(buildProcessoSectionHref(processoId, "timeline"))}
                 >
                   Linha do tempo
+                </button>
+                <button
+                  type="button"
+                  className="ds-link"
+                  onClick={() => onNavigate(buildProcessoSectionHref(processoId, "documentacao"))}
+                >
+                  Documentação
                 </button>
               </nav>
             </div>
@@ -764,26 +759,7 @@ export function ProcessDetailPage({
 
   const pageBody = (
     <>
-      {embedded ? (
-        <PageHero
-          classNames={EMBEDDED_HERO}
-          density="compact"
-          eyebrow="PROCESSO"
-          title={processo.nome_processo}
-          description={`${processo.codigo_processo}${
-            processo.familia_processo ? ` · família ${processo.familia_processo}` : ""
-          }`}
-          badge={
-            processo.status_processo ? (
-              <StatusBadge
-                label={processo.status_processo}
-                variant="neutral"
-                classNames={STATUS_BADGE}
-              />
-            ) : null
-          }
-        />
-      ) : (
+      {embedded ? null : (
         <PageHeader
           title={`${processo.codigo_processo} — ${processo.nome_processo}`}
           subtitle={[processo.status_processo, processo.familia_processo ? `família ${processo.familia_processo}` : null]
@@ -796,7 +772,7 @@ export function ProcessDetailPage({
             <>
               <button type="button" className={DS_GHOST_BTN} onClick={onBack}>
                 <ArrowLeft size={16} />
-                Lista
+                Meus processos
               </button>
               <button
                 type="button"
@@ -839,21 +815,7 @@ export function ProcessDetailPage({
         onDismissRealtimeNotice={sectionEdit.clearRealtimeNotice}
       />
 
-      {embedded ? (
-        sectionPanels
-      ) : (
-        <ProcessWorkspaceShell
-          processoId={processoId}
-          activeNodeId={activeNodeId}
-          getAccessToken={getAccessToken}
-          onNavigate={onNavigate}
-          processo={processo}
-          instancias={instancias}
-          revisoes={revisoes}
-        >
-          {sectionPanels}
-        </ProcessWorkspaceShell>
-      )}
+      {embedded ? sectionPanels : <ProcessWorkspaceShell>{sectionPanels}</ProcessWorkspaceShell>}
     </>
   );
 

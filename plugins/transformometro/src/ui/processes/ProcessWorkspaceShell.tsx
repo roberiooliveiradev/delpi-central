@@ -1,29 +1,8 @@
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-  useSyncExternalStore,
-  type CSSProperties,
-  type ReactNode,
-} from "react";
+import type { CSSProperties, ReactNode } from "react";
+import { useSyncExternalStore } from "react";
 
-import {
-  fetchProcesso,
-  fetchProcessoInstancias,
-  fetchRevisoes,
-  type Processo,
-  type ProcessoInstancia,
-  type Revisao,
-} from "../../data/api/transformometroApi";
-import {
-  fetchInstanciaMatrizImpactoEsforco,
-  type MatrizImpactoPonto,
-} from "../../data/api/transformometroMatrixApi";
 import { TRANSFORMOMETRO_WORKSPACE_HASH_EVENT } from "../../utils/navigation";
-import { ProcessWorkspaceSidebar } from "./ProcessWorkspaceSidebar";
 import {
-  buildProcessoWorkspaceTree,
   defaultInstanciaSection,
   defaultRevisaoSection,
   parseInstanciaSectionFromHash,
@@ -34,143 +13,28 @@ import {
   type RevisaoWorkspaceSectionId,
 } from "./processWorkspaceNav";
 import { ProcessWorkspacePanelActionsProvider } from "./processWorkspacePanelActions";
-import { useProcessWorkspaceSidebarLayout } from "./useProcessWorkspaceSidebarLayout";
 
 type Props = {
-  processoId: string;
-  activeNodeId: string;
-  getAccessToken?: () => string | undefined;
-  onNavigate: (href: string) => void;
   children: ReactNode;
-  processo?: Processo | null;
-  instancias?: ProcessoInstancia[];
-  revisoes?: Revisao[];
-  backActions?: ReactNode;
-  processActions?: ReactNode;
-  persistentActions?: ReactNode;
+  /** Faixa superior: path + hero + nav horizontal. */
+  chrome?: ReactNode;
+  className?: string;
+  style?: CSSProperties;
 };
 
-export function ProcessWorkspaceShell({
-  processoId,
-  activeNodeId,
-  getAccessToken,
-  onNavigate,
-  children,
-  processo: processoProp,
-  instancias: instanciasProp,
-  revisoes: revisoesProp,
-  backActions,
-  processActions,
-  persistentActions,
-}: Props) {
-  const [processo, setProcesso] = useState<Processo | null>(processoProp ?? null);
-  const [instancias, setInstancias] = useState<ProcessoInstancia[]>(instanciasProp ?? []);
-  const [revisoes, setRevisoes] = useState<Revisao[]>(revisoesProp ?? []);
-  const [matrixByRevisaoId, setMatrixByRevisaoId] = useState<Record<string, MatrizImpactoPonto>>({});
-
-  const loadSidebarData = useCallback(async () => {
-    if (processoProp && instanciasProp && revisoesProp) return;
-    try {
-      const [proc, inst, revs] = await Promise.all([
-        processoProp ? Promise.resolve(processoProp) : fetchProcesso(processoId, getAccessToken),
-        instanciasProp
-          ? Promise.resolve({ items: instanciasProp })
-          : fetchProcessoInstancias(processoId, getAccessToken),
-        revisoesProp ? Promise.resolve({ items: revisoesProp }) : fetchRevisoes(processoId, getAccessToken),
-      ]);
-      if (!processoProp) setProcesso(proc);
-      if (!instanciasProp) setInstancias(inst.items);
-      if (!revisoesProp) setRevisoes(revs.items);
-    } catch {
-      if (!processoProp) setProcesso(null);
-    }
-  }, [getAccessToken, instanciasProp, processoId, processoProp, revisoesProp]);
-
-  useEffect(() => {
-    setProcesso(processoProp ?? null);
-    setInstancias(instanciasProp ?? []);
-    setRevisoes(revisoesProp ?? []);
-  }, [instanciasProp, processoProp, revisoesProp]);
-
-  useEffect(() => {
-    void loadSidebarData();
-  }, [loadSidebarData]);
-
-  useEffect(() => {
-    if (instancias.length === 0) {
-      setMatrixByRevisaoId({});
-      return;
-    }
-    let cancelled = false;
-    void (async () => {
-      try {
-        const responses = await Promise.all(
-          instancias.map((instancia) =>
-            fetchInstanciaMatrizImpactoEsforco(instancia.instancia_id, getAccessToken, {
-              incluir_baseline: true,
-            })
-          )
-        );
-        if (cancelled) return;
-        const next: Record<string, MatrizImpactoPonto> = {};
-        for (const response of responses) {
-          for (const ponto of response.pontos) {
-            next[ponto.revisao_id] = ponto;
-          }
-        }
-        setMatrixByRevisaoId(next);
-      } catch {
-        if (!cancelled) setMatrixByRevisaoId({});
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [getAccessToken, instancias, revisoes]);
-
-  const treeNodes = useMemo(() => {
-    if (!processo) return [];
-    return buildProcessoWorkspaceTree({ processo, instancias, revisoes, matrixByRevisaoId });
-  }, [instancias, matrixByRevisaoId, processo, revisoes]);
-
-  const { collapsed, toggleCollapsed, startResize, sidebarWidthPx } = useProcessWorkspaceSidebarLayout();
-
-  const workspaceStyle = {
-    "--tm-workspace-sidebar-width": `${sidebarWidthPx}px`,
-  } as CSSProperties;
+/**
+ * Shell do Process Workspace — conteúdo em largura total.
+ * Navegação primária é horizontal (UnderlineNav), não árvore de pastas.
+ */
+export function ProcessWorkspaceShell({ children, chrome, className, style }: Props) {
+  const rootClass = ["tm-processo-workspace", "tm-processo-workspace--flat", className]
+    .filter(Boolean)
+    .join(" ");
 
   return (
     <ProcessWorkspacePanelActionsProvider>
-      <div
-        className={`tm-processo-workspace${collapsed ? " tm-processo-workspace--sidebar-collapsed" : ""}`}
-        style={workspaceStyle}
-      >
-        <div className="tm-processo-workspace-sidebar-shell">
-          <ProcessWorkspaceSidebar
-            processoCode={processo?.codigo_processo ?? "…"}
-            processoLabel={processo?.nome_processo ?? "Processo"}
-            nodes={treeNodes}
-            activeNodeId={activeNodeId}
-            onNavigate={onNavigate}
-            backActions={backActions}
-            processActions={processActions}
-            persistentActions={persistentActions}
-            collapsed={collapsed}
-            onToggleCollapsed={toggleCollapsed}
-          />
-          {!collapsed ? (
-            <div
-              className="tm-processo-workspace-sidebar__resize-handle"
-              role="separator"
-              aria-orientation="vertical"
-              aria-label="Redimensionar barra lateral"
-              aria-valuenow={sidebarWidthPx}
-              aria-valuemin={220}
-              aria-valuemax={480}
-              onPointerDown={startResize}
-            />
-          ) : null}
-        </div>
+      <div className={rootClass} style={style}>
+        {chrome ? <div className="tm-processo-workspace__chrome">{chrome}</div> : null}
         <div className="tm-processo-workspace__main">
           <div className="tm-processo-workspace__sections">{children}</div>
         </div>
@@ -198,7 +62,7 @@ export function useProcessoWorkspaceSection(): ProcessoWorkspaceSectionId {
   return useSyncExternalStore(
     subscribeWorkspaceSection,
     readWorkspaceSectionSnapshot,
-    () => "visao-geral"
+    () => "visao-geral",
   );
 }
 
@@ -210,7 +74,7 @@ export function useRevisaoWorkspaceSection(cenarioTipo?: string | null): Revisao
   return useSyncExternalStore(
     subscribeWorkspaceSection,
     () => readRevisaoSectionSnapshot(cenarioTipo),
-    () => defaultRevisaoSection(cenarioTipo)
+    () => defaultRevisaoSection(cenarioTipo),
   );
 }
 
@@ -222,6 +86,6 @@ export function useInstanciaWorkspaceSection(): InstanciaWorkspaceSectionId {
   return useSyncExternalStore(
     subscribeWorkspaceSection,
     readInstanciaSectionSnapshot,
-    () => defaultInstanciaSection()
+    () => defaultInstanciaSection(),
   );
 }

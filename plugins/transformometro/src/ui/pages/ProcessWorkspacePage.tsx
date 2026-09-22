@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, Copy, MessagesSquare, Trash2 } from "lucide-react";
 
 import type { AppProps } from "../../App";
 import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
@@ -24,6 +23,7 @@ import { useTransformometroCatalogWatch } from "../../hooks/useTransformometroCa
 import { InstanceDetailPage } from "../pages/InstanceDetailPage";
 import { ProcessDetailPage } from "../pages/ProcessDetailPage";
 import { RevisionDetailPage } from "../pages/RevisionDetailPage";
+import { ProcessWorkspaceChrome } from "../processes/ProcessWorkspaceChrome";
 import { ProcessWorkspacePanel } from "../processes/ProcessWorkspacePanel";
 import {
   ProcessWorkspaceShell,
@@ -31,11 +31,7 @@ import {
   useProcessoWorkspaceSection,
   useRevisaoWorkspaceSection,
 } from "../processes/ProcessWorkspaceShell";
-import { DS_GHOST_BTN, dsGhostBtn } from "../../components/ghostChrome";
-import {
-  resolveActiveWorkspaceNodeId,
-  resolveWorkspacePanelKey,
-} from "../processes/processWorkspaceNav";
+import { resolveWorkspacePanelKey } from "../processes/processWorkspaceNav";
 import { reloadProcessWorkspaceTree } from "../processes/reloadProcessWorkspaceTree";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
@@ -95,7 +91,7 @@ export function ProcessWorkspacePage({
 
   const activeRevisao = useMemo(
     () => revisoes.find((row) => row.revisao_id === route.revisaoId) ?? null,
-    [revisoes, route.revisaoId]
+    [revisoes, route.revisaoId],
   );
   const activeRevisaoSection = useRevisaoWorkspaceSection(activeRevisao?.cenario_tipo);
 
@@ -106,34 +102,8 @@ export function ProcessWorkspacePage({
         instanciaId: route.instanciaId,
         revisaoId: route.revisaoId,
       }),
-    [route.instanciaId, route.revisaoId, route.view]
+    [route.instanciaId, route.revisaoId, route.view],
   );
-
-  const activeNodeId = useMemo(() => {
-    if (route.view === "revisao" && route.revisaoId) {
-      return resolveActiveWorkspaceNodeId({
-        view: "revisao",
-        revisaoId: route.revisaoId,
-        instanciaId: route.instanciaId,
-        revisaoSection: activeRevisaoSection,
-      });
-    }
-    if (route.view === "instancia" && route.instanciaId) {
-      return resolveActiveWorkspaceNodeId({
-        view: "instancia",
-        instanciaId: route.instanciaId,
-        instanciaSection: activeInstanciaSection,
-      });
-    }
-    return resolveActiveWorkspaceNodeId({ view: "processo", section: activeSection });
-  }, [
-    activeInstanciaSection,
-    activeRevisaoSection,
-    activeSection,
-    route.instanciaId,
-    route.revisaoId,
-    route.view,
-  ]);
 
   useEffect(() => {
     setMountedPanels((current) => {
@@ -155,7 +125,6 @@ export function ProcessWorkspacePage({
     });
   }, [reloadWorkspaceTree]);
 
-  // Tempo real: create/update/delete de melhoria/revisão (fan-out na sala do processo).
   useTransformometroEntityWatch({
     entities: [{ entityType: "processo", entityId: processoId }],
     getAccessToken,
@@ -166,7 +135,6 @@ export function ProcessWorkspacePage({
     },
   });
 
-  // Import JSON / mutações de catálogo: árvore também escuta catalog:processo.
   useTransformometroCatalogWatch({
     catalogId: "processo",
     getAccessToken,
@@ -177,7 +145,6 @@ export function ProcessWorkspacePage({
     },
   });
 
-  // Self-heal: revisão aberta na URL ainda não está na árvore (ex.: criada/duplicada sem refresh).
   useEffect(() => {
     if (route.view !== "revisao" || !route.revisaoId) return;
     if (revisoes.some((row) => row.revisao_id === route.revisaoId)) {
@@ -243,56 +210,6 @@ export function ProcessWorkspacePage({
     }
   }
 
-  const processBackAction = (
-    <button type="button" className={`${DS_GHOST_BTN} tm-processo-workspace-sidebar__action-btn`} onClick={onBack}>
-      <ArrowLeft size={16} />
-      Lista
-    </button>
-  );
-
-  const persistentRoomActions = (
-    <>
-      <button
-        type="button"
-        className={`${DS_GHOST_BTN} tm-processo-workspace-sidebar__action-btn`}
-        disabled={!processo || openingRoom}
-        onClick={() => void handleOpenInteractionRoom()}
-      >
-        <MessagesSquare size={16} />
-        Sala de interação
-      </button>
-      {roomError ? (
-        <p role="alert">{roomError}</p>
-      ) : null}
-      {treePartialError ? (
-        <p role="status">{treePartialError}</p>
-      ) : null}
-    </>
-  );
-
-  const processCrudActions = (
-    <>
-      <button
-        type="button"
-        className={`${DS_GHOST_BTN} tm-processo-workspace-sidebar__action-btn`}
-        disabled={!processo}
-        onClick={() => void handleDuplicateProcesso()}
-      >
-        <Copy size={16} />
-        Duplicar processo
-      </button>
-      <button
-        type="button"
-        className={`${dsGhostBtn('danger')} tm-processo-workspace-sidebar__action-btn`}
-        disabled={!processo}
-        onClick={() => void handleDeleteProcesso()}
-      >
-        <Trash2 size={16} />
-        Excluir processo
-      </button>
-    </>
-  );
-
   function renderPanel(panelKey: string) {
     const isActive = panelKey === activePanelKey;
     const view = panelViewFromKey(panelKey);
@@ -322,7 +239,9 @@ export function ProcessWorkspacePage({
           getAccessToken={getAccessToken}
           processoId={processoId}
           instanciaId={instanciaId}
-          pathname={pathname ?? `${TRANSFORMOMETRO_ROUTES.processos}/${processoId}/instancias/${instanciaId}`}
+          pathname={
+            pathname ?? `${TRANSFORMOMETRO_ROUTES.processos}/${processoId}/instancias/${instanciaId}`
+          }
           onNavigate={onNavigate}
         />
       );
@@ -351,26 +270,34 @@ export function ProcessWorkspacePage({
     return null;
   }
 
+  const chrome = (
+    <ProcessWorkspaceChrome
+      view={route.view as "processo" | "instancia" | "revisao"}
+      processo={processo}
+      instancias={instancias}
+      revisoes={revisoes}
+      processoId={processoId}
+      instanciaId={route.instanciaId}
+      revisaoId={route.revisaoId}
+      activeProcessoSection={activeSection}
+      activeInstanciaSection={activeInstanciaSection}
+      activeRevisaoSection={activeRevisaoSection}
+      onNavigate={onNavigate}
+      onBack={onBack}
+      onOpenRoom={() => void handleOpenInteractionRoom()}
+      openingRoom={openingRoom}
+      roomError={roomError}
+      treePartialError={treePartialError}
+      onDuplicate={() => void handleDuplicateProcesso()}
+      onDelete={() => void handleDeleteProcesso()}
+    />
+  );
+
   return (
     <TransformometroShell>
-      <ProcessWorkspaceShell
-        processoId={processoId}
-        activeNodeId={activeNodeId}
-        getAccessToken={getAccessToken}
-        onNavigate={onNavigate}
-        processo={processo}
-        instancias={instancias}
-        revisoes={revisoes}
-        processActions={route.view === "processo" ? processCrudActions : undefined}
-        persistentActions={persistentRoomActions}
-        backActions={processBackAction}
-      >
+      <ProcessWorkspaceShell chrome={chrome}>
         {Array.from(visiblePanels).map((panelKey) => (
-          <ProcessWorkspacePanel
-            key={panelKey}
-            panelId={panelKey}
-            active={panelKey === activePanelKey}
-          >
+          <ProcessWorkspacePanel key={panelKey} panelId={panelKey} active={panelKey === activePanelKey}>
             {renderPanel(panelKey)}
           </ProcessWorkspacePanel>
         ))}
@@ -379,7 +306,9 @@ export function ProcessWorkspacePage({
   );
 }
 
-export function isProcessWorkspaceRoute(route: ParsedTransformometroRoute): route is ParsedTransformometroRoute & {
+export function isProcessWorkspaceRoute(
+  route: ParsedTransformometroRoute,
+): route is ParsedTransformometroRoute & {
   processoId: string;
   view: "processo" | "instancia" | "revisao";
 } {

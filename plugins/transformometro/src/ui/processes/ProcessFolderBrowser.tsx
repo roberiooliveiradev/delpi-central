@@ -73,6 +73,11 @@ type Props = {
   detailColumns: DataTableColumn<Processo>[];
   onOpen: (processo: Processo) => void;
   onNavigate: (path: string) => void;
+  /** Controlled browse mode (Processos / Departamentos). */
+  browseMode?: ProcessoListBrowseMode;
+  onBrowseModeChange?: (mode: ProcessoListBrowseMode) => void;
+  /** Quando true, o toggle Processos/Departamentos fica no Hero da página. */
+  hideBrowseToggle?: boolean;
 };
 
 function viewModeIcon(mode: ProcessoListViewMode) {
@@ -189,16 +194,26 @@ export function ProcessFolderBrowser({
   detailColumns,
   onOpen,
   onNavigate,
+  browseMode: browseModeProp,
+  onBrowseModeChange,
+  hideBrowseToggle = false,
 }: Props) {
   const P = TM_HELP_TOOLTIPS.processos;
-  const [browseMode, setBrowseMode] = useState<ProcessoListBrowseMode>(() => readProcessoListBrowseMode());
+  const [browseModeState, setBrowseModeState] = useState<ProcessoListBrowseMode>(() =>
+    readProcessoListBrowseMode(),
+  );
+  const browseMode = browseModeProp ?? browseModeState;
+  const setBrowseMode = (mode: ProcessoListBrowseMode) => {
+    onBrowseModeChange?.(mode);
+    if (browseModeProp === undefined) setBrowseModeState(mode);
+  };
   const [selectedDepartamentoKey, setSelectedDepartamentoKey] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ProcessoListViewMode>(() => readProcessoListViewMode());
   const [sort, setSort] = useState<ProcessoListSort>(() => readProcessoListSort());
 
   useEffect(() => {
-    writeProcessoListBrowseMode(browseMode);
-  }, [browseMode]);
+    if (browseModeProp === undefined) writeProcessoListBrowseMode(browseModeState);
+  }, [browseModeProp, browseModeState]);
 
   useEffect(() => {
     writeProcessoListViewMode(viewMode);
@@ -382,20 +397,22 @@ export function ProcessFolderBrowser({
             </p>
           )}
         </div>
-        <div className="tm-processo-browser__browse-toggle">
-          <SegmentToggle
-            ariaLabel="Visualizar listagem por processos ou departamentos"
-            idPrefix="tm-proc-browse"
-            prefix="ds"
-            size="md"
-            options={PROCESSO_LIST_BROWSE_MODES.map((mode) => ({
-              value: mode.id,
-              label: mode.label,
-            }))}
-            value={browseMode}
-            onChange={handleBrowseModeChange}
-          />
-        </div>
+        {!hideBrowseToggle ? (
+          <div className="tm-processo-browser__browse-toggle">
+            <SegmentToggle
+              ariaLabel="Visualizar listagem por processos ou departamentos"
+              idPrefix="tm-proc-browse"
+              prefix="ds"
+              size="md"
+              options={PROCESSO_LIST_BROWSE_MODES.map((mode) => ({
+                value: mode.id,
+                label: mode.label,
+              }))}
+              value={browseMode}
+              onChange={handleBrowseModeChange}
+            />
+          </div>
+        ) : null}
       </div>
 
       {filters ? <div className="tm-processo-browser__filters">{filters}</div> : null}

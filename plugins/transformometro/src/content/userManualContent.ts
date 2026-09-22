@@ -129,12 +129,13 @@ export const USER_MANUAL_CONTENT = {
       intro:
         "Lista os processos e abre o workspace do processo: visão geral, melhorias, revisões, diagrama, documentação Markdown, tarefas da sala e Sala de interação no mesmo contexto.",
       bullets: [
-        "Abra um processo para trabalhar no workspace. A árvore à esquerda separa processo-mestre, melhorias (instâncias) e revisões.",
+        "Abra um processo para trabalhar no workspace. O caminho, o Hero e as abas horizontais organizam o processo, melhorias e revisões.",
         "Processo-mestre não pertence a uma única unidade: unidade e departamento aparecem na melhoria.",
         "Medições, investimentos e recursos compartilhados ficam em cada revisão — não invente pontuação no resumo.",
         "Documentação do processo guarda textos em Markdown (criar, visualizar, editar e excluir). Não substitui diagrama, revisão nem dados estruturados.",
         "Sala de interação abre a conversa canônica daquele processo. Tarefas relacionadas são só as criadas a partir de mensagens da sala.",
         "Atas continuam em Atas; não há vínculo de ata ao processo neste workspace.",
+        "Não há árvore de pastas: a hierarquia Processo → Melhoria → Revisão aparece no caminho e na aba Melhorias.",
       ],
       links: [
         {

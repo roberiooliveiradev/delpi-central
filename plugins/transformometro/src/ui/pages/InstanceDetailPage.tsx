@@ -70,10 +70,7 @@ import {
   useInstanciaWorkspaceSection,
 } from "../processes/ProcessWorkspaceShell";
 import { InstanceWorkspaceSectionPanel } from "../processes/InstanceWorkspaceSectionPanel";
-import {
-  resolveActiveWorkspaceNodeId,
-  type InstanciaWorkspaceSectionId,
-} from "../processes/processWorkspaceNav";
+import { type InstanciaWorkspaceSectionId } from "../processes/processWorkspaceNav";
 import { useProcessWorkspacePanelActions } from "../processes/processWorkspacePanelActions";
 import { InstanciaDiagramEscopoSection } from "../../components/diagram/sections/InstanciaDiagramEscopoSection";
 import { InstanciaDecompositionEscopoSection } from "../../components/decomposition/InstanciaDecompositionEscopoSection";
@@ -849,25 +846,7 @@ export function InstanceDetailPage({
         </p>
       ) : null}
 
-      {embedded ? (
-        instanciaMain
-      ) : (
-        <ProcessWorkspaceShell
-          processoId={processoId}
-          activeNodeId={resolveActiveWorkspaceNodeId({
-            view: "instancia",
-            instanciaId,
-            instanciaSection: activeSection,
-          })}
-          getAccessToken={getAccessToken}
-          onNavigate={onNavigate}
-          processo={processo}
-          instancias={allInstancias}
-          revisoes={allRevisoes}
-        >
-          {instanciaMain}
-        </ProcessWorkspaceShell>
-      )}
+      {embedded ? instanciaMain : <ProcessWorkspaceShell>{instanciaMain}</ProcessWorkspaceShell>}
     </>
   );
 

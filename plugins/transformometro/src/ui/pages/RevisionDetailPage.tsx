@@ -28,7 +28,7 @@ import { createCoalescedAsyncRunner } from "../../utils/coalescedAsync";
 import { cenarioLabel } from "../../content/cenarioLabels";
 import { RevisionRegistrationPanel } from "./RevisionRegistrationPanel";
 import { ProcessWorkspaceShell, useRevisaoWorkspaceSection } from "../processes/ProcessWorkspaceShell";
-import { resolveActiveWorkspaceNodeId, type RevisaoWorkspaceSectionId } from "../processes/processWorkspaceNav";
+import { type RevisaoWorkspaceSectionId } from "../processes/processWorkspaceNav";
 import { DS_GHOST_BTN } from "../../components/ghostChrome";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
@@ -228,26 +228,7 @@ export function RevisionDetailPage({
         onDismissError={() => reportError(null)}
       />
 
-      {embedded ? (
-        revisaoMain
-      ) : (
-        <ProcessWorkspaceShell
-          processoId={processoId}
-          activeNodeId={resolveActiveWorkspaceNodeId({
-            view: "revisao",
-            revisaoId,
-            instanciaId: resolvedInstanciaId,
-            revisaoSection: activeSection,
-          })}
-          getAccessToken={getAccessToken}
-          onNavigate={onNavigate}
-          processo={processo}
-          instancias={allInstancias}
-          revisoes={allRevisoes}
-        >
-          {revisaoMain}
-        </ProcessWorkspaceShell>
-      )}
+      {embedded ? revisaoMain : <ProcessWorkspaceShell>{revisaoMain}</ProcessWorkspaceShell>}
     </>
   );
 
