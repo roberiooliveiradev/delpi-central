@@ -24,6 +24,19 @@ export {
 export * from "./components/menu";
 export * from "./components/signature";
 export * from "./components/rich-text";
+/**
+ * Hosts TV (presentation) importam paint de runs via Index.
+ * `export *` sozinho pode sumir no tree-shake MF → React #130 (undefined).
+ */
+export {
+  DeckContentRunsView,
+  plainTextFromDeckContentRuns,
+  shouldPersistDeckContentRuns,
+} from "./components/rich-text/deckContentRuns";
+export type {
+  DeckContentRun,
+  DeckContentRunStyle,
+} from "./components/rich-text/deckContentRuns";
 export * from "./components/ribbon";
 export * from "./components/directory";
 export * from "./components/document";
