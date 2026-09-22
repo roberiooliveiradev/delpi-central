@@ -359,6 +359,13 @@ class GovernedWriteOrchestrator:
         minute_id = str(args.get("id") or args.get("minute_id") or "").strip()
         action = str(args.get("action") or "").strip()
         reason = args.get("reason")
+        # AuthZ at PREPARE (same manage gate as ACT send/finalize/cancel).
+        try:
+            self._dispatch._minutes._load(request.state.user, "manage", minute_id)
+        except PermissionError as exc:
+            raise GptActionsError(str(exc), 403) from exc
+        except LookupError as exc:
+            raise GptActionsError(str(exc), 404) from exc
         current = self._dispatch.get_record(request, "meeting_minute", minute_id)
         return {
             "resource_type": "meeting_minute",
@@ -404,14 +411,9 @@ class GovernedWriteOrchestrator:
             "activate_scenario": bool(args.get("activate_scenario", False)),
             "recalculate": bool(args.get("recalculate", False)),
         }
+        # Structural checklist only at PREPARE. Referential preflight runs on ACT/commit.
         validation = self._packages.validate(request, body)
         ready = bool(validation.get("ready"))
-        # Preflight refs when ready (AuthZ-sensitive lookups)
-        if ready:
-            try:
-                self._packages._preflight_existing_refs(request, body)
-            except GptActionsError as exc:
-                _raise_gpt(exc)
         return {
             "resource_type": "improvement_package",
             "resource_id": str(

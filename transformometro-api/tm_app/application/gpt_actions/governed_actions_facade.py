@@ -98,7 +98,24 @@ class GovernedActionsFacade:
         public = self._orchestrator.prepare(
             request, capability=capability, args=args
         )
-        return self._proposal_envelope(operation=operation_label, public=public)
+        envelope = self._proposal_envelope(operation=operation_label, public=public)
+        # Flatten validation fields for GPT readability (package PREPARE = dry-run).
+        vr = envelope.get("validation_result")
+        if isinstance(vr, dict) and "ready" in vr:
+            envelope["ready"] = bool(vr.get("ready"))
+            envelope["missing"] = list(vr.get("missing") or [])
+            if "checklist" in vr:
+                envelope["checklist"] = vr.get("checklist")
+            envelope["dry_run"] = True
+            envelope["hints"] = {
+                "activate_scenario": False,
+                "recalculate": False,
+                "note": (
+                    "Write flags are ignored on PREPARE; "
+                    "commit uses the bound proposal only."
+                ),
+            }
+        return envelope
 
     def commit_proposal(
         self,

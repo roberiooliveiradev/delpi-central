@@ -140,9 +140,17 @@ def _handle(exc: Exception):
     if isinstance(exc, GovernedWriteError):
         payload = dict(exc.data or {})
         payload.setdefault("error_code", exc.code)
-        return fail(exc.message, exc.status_code, data=payload)
+        # Custom GPT disables Actions on opaque HTTP 404 — map to 400.
+        status = 400 if exc.status_code == 404 else exc.status_code
+        if exc.status_code == 404:
+            payload.setdefault("not_found", True)
+        return fail(exc.message, status, data=payload)
     if isinstance(exc, GptActionsError):
-        return fail(exc.message, exc.status_code, data=exc.data)
+        status = 400 if exc.status_code == 404 else exc.status_code
+        data = dict(exc.data or {})
+        if exc.status_code == 404:
+            data.setdefault("not_found", True)
+        return fail(exc.message, status, data=data)
     status, message, data = public_error_parts(exc)
     if status >= 500 and data.get("error_kind") == "internal":
         logger.exception("gpt_actions_unhandled")

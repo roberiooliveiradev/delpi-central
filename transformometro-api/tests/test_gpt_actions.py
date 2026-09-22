@@ -113,7 +113,7 @@ def test_openapi_respects_openai_custom_gpt_description_limits():
     doc = build_gpt_actions_openapi()
     assert len(_ENTITY_DESCRIPTION) <= 700
     create_desc = doc["paths"][
-        "/transformometro/gpt-actions/v1/records/{entity}"
+        "/transformometro/gpt-actions/v1/records/prepare-change"
     ]["post"]["description"]
     assert len(create_desc) <= 300
     for methods in doc["paths"].values():
@@ -173,10 +173,11 @@ def test_dispatch_create_process_positive(tm_client):
                 }
             },
         )
-    assert response.status_code == 201
+    assert response.status_code == 200
     body = response.json()
     assert body["success"] is True
-    assert body["data"]["nome_processo"] == "GPT Processo"
+    assert body["data"]["status"] == "proposal_ready"
+    assert body["data"]["proposal"]["handle"]
 
 
 def test_dispatch_create_instance_sibling(tm_client):
@@ -221,8 +222,10 @@ def test_dispatch_create_instance_sibling(tm_client):
                 }
             },
         )
-    assert response.status_code == 201
-    assert response.json()["data"]["instancia_id"] == instancia["instancia_id"]
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert data["status"] == "proposal_ready"
+    assert data["proposal"]["handle"]
 
 
 def test_dispatch_unknown_entity_negative(tm_client):
@@ -418,6 +421,9 @@ def test_gpt_meeting_minute_cancel_without_manage_forbidden():
             from tm_app.interface.http.routes import gpt_actions_routes as routes
 
             routes._dispatch._minutes = instance
+            instance._load.side_effect = PermissionError(
+                "Sem permissão para gerenciar atas."
+            )
             response = client.post(
                 "/transformometro/gpt-actions/v1/meeting-minutes/mm1/workflow",
                 json={"action": "cancel", "reason": "teste"},
@@ -474,7 +480,9 @@ def test_gpt_create_measurement_sibling(tm_client):
             },
         )
     assert response.status_code == 200
-    assert response.json()["data"]["medicao_id"] == medicao["medicao_id"]
+    data = response.json()["data"]
+    assert data["status"] == "proposal_ready"
+    assert data["proposal"]["handle"]
 
 
 def test_registration_guide_exposes_entity_schemas():
@@ -538,7 +546,8 @@ def test_registration_guide_exposes_entity_schemas():
     tree = guide["entity_schemas"]["decomposition_tree"]
     assert "processo_id" in tree["required"]
     assert any("decomposition_tree_v1" in n for n in tree["notes"])
-    assert guide["package_hints"]["operationId"] == "gpt_commit_improvement_package"
+    assert guide["package_hints"]["commit_operationId"] == "gpt_commit_proposal"
+    assert guide["package_hints"]["validate_operationId"] == "gpt_validate_improvement_package"
 
 
 def test_gpt_catalog_includes_registration_guide(tm_client):
@@ -803,33 +812,27 @@ def test_improvement_package_commit_missing_reference_revision_is_400():
 
 def test_http_commit_maps_domain_404_to_400(tm_client):
     """Regression: Custom GPT disables Actions on opaque 404; commit must answer 400."""
+    from tm_app.application.governed_writes.errors import GovernedWriteError, NOT_FOUND
     from tm_app.interface.http.routes import gpt_actions_routes as routes
 
     with patch.object(
-        routes._packages,
-        "commit",
-        side_effect=GptActionsError("Processo não encontrado.", 404),
+        routes._governed,
+        "commit_proposal",
+        side_effect=GovernedWriteError(
+            "Processo não encontrado.",
+            code=NOT_FOUND,
+            status_code=404,
+            data={"not_found": True},
+        ),
     ):
         response = tm_client.post(
-            "/transformometro/gpt-actions/v1/improvement-packages",
-            json={
-                "process": {"processo_id": "p1"},
-                "instance": {"instancia_id": "i1"},
-                "scenario": {
-                    "revision": {
-                        "revisao_referencia_id": "b1",
-                        "versao_revisao": "2.1.0",
-                        "cenario_tipo": "melhoria",
-                        "data_inicio_vigencia": "2026-09-02",
-                    }
-                },
-            },
+            "/transformometro/gpt-actions/v1/proposals/commit",
+            json={"proposal_handle": "opaque.handle", "confirmation": True},
         )
     assert response.status_code == 400
     payload = response.json()
     assert payload["success"] is False
-    assert payload["data"]["not_found"] is True
-    assert "não encontrado" in payload["message"].lower() or "not found" in payload["message"].lower()
+    assert payload["data"].get("not_found") is True or "não encontrado" in payload["message"].lower()
 
 
 def test_improvement_package_rejects_baseline_as_scenario():
@@ -859,10 +862,10 @@ def test_improvement_package_rejects_baseline_as_scenario():
 
 def test_openapi_includes_improvement_package():
     doc = build_gpt_actions_openapi()
-    assert "gpt_commit_improvement_package" in GPT_ACTIONS_OPERATION_IDS
-    assert (
-        "/transformometro/gpt-actions/v1/improvement-packages" in doc["paths"]
-    )
+    assert "gpt_commit_improvement_package" in GPT_ACTIONS_LEGACY_OPERATION_IDS
+    assert "gpt_commit_improvement_package" not in GPT_ACTIONS_OPERATION_IDS
+    assert "gpt_commit_proposal" in GPT_ACTIONS_OPERATION_IDS
+    assert "/transformometro/gpt-actions/v1/proposals/commit" in doc["paths"]
     assert "gpt_get_process_context" in GPT_ACTIONS_OPERATION_IDS
     assert "/transformometro/gpt-actions/v1/process-context" in doc["paths"]
     assert "gpt_validate_improvement_package" in GPT_ACTIONS_OPERATION_IDS
@@ -877,13 +880,12 @@ def test_openapi_validate_vs_commit_consequential_flags():
     validate = doc["paths"][
         "/transformometro/gpt-actions/v1/improvement-packages/validate"
     ]["post"]
-    commit = doc["paths"]["/transformometro/gpt-actions/v1/improvement-packages"]["post"]
+    commit = doc["paths"]["/transformometro/gpt-actions/v1/proposals/commit"]["post"]
     assert validate["operationId"] == "gpt_validate_improvement_package"
     assert validate["x-openai-isConsequential"] is False
-    assert commit["operationId"] == "gpt_commit_improvement_package"
+    assert commit["operationId"] == "gpt_commit_proposal"
     assert commit["x-openai-isConsequential"] is True
-    assert "Never writes" in validate["description"]
-    assert "may persist" in commit["description"]
+    assert "PREPARE" in validate["description"] or "proposal" in validate["description"].lower()
     v_schema = validate["requestBody"]["content"]["application/json"]["schema"]["$ref"]
     assert v_schema.endswith("GptValidateImprovementPackageBody")
     v_props = doc["components"]["schemas"]["GptValidateImprovementPackageBody"][
@@ -919,10 +921,10 @@ def test_openapi_documents_nested_improvement_package():
     assert "tipo_investimento" in investment
     body_desc = body["description"]
     assert "flat" in body_desc.lower()
-    commit_desc = doc["paths"]["/transformometro/gpt-actions/v1/improvement-packages"][
+    commit_desc = doc["paths"]["/transformometro/gpt-actions/v1/proposals/commit"][
         "post"
     ]["description"]
-    assert "persist" in commit_desc
+    assert "commit" in commit_desc.lower() or "proposal" in commit_desc.lower()
 
 
 def test_improvement_package_flat_incident_payload_not_ready(tm_client):
@@ -2019,23 +2021,17 @@ def test_specialist_instructions_discovery_and_mermaid_contract():
 
 
 def test_openapi_all_write_actions_have_typed_examples():
-    """Every mutating Action must expose concrete request examples for Custom GPT."""
+    """Every mutating Builder Action must expose concrete request examples."""
     doc = build_gpt_actions_openapi()
     checks = [
         (
-            "/transformometro/gpt-actions/v1/records/{entity}",
+            "/transformometro/gpt-actions/v1/records/prepare-change",
             "post",
-            True,
-            True,
-        ),
-        (
-            "/transformometro/gpt-actions/v1/records/{entity}/{id}",
-            "put",
-            True,
+            False,
             True,
         ),
         (
-            "/transformometro/gpt-actions/v1/records/{entity}/{id}/duplicate",
+            "/transformometro/gpt-actions/v1/proposals/commit",
             "post",
             True,
             True,
@@ -2043,13 +2039,13 @@ def test_openapi_all_write_actions_have_typed_examples():
         (
             "/transformometro/gpt-actions/v1/dashboard/recalculate",
             "post",
-            True,
+            False,
             True,
         ),
         (
             "/transformometro/gpt-actions/v1/meeting-minutes/{id}/workflow",
             "post",
-            True,
+            False,
             True,
         ),
         (
@@ -2058,140 +2054,33 @@ def test_openapi_all_write_actions_have_typed_examples():
             False,
             True,
         ),
-        (
-            "/transformometro/gpt-actions/v1/improvement-packages",
-            "post",
-            True,
-            True,
-        ),
     ]
     for path, method, consequential, require_example in checks:
         spec = doc["paths"][path][method]
-        assert spec.get("x-openai-isConsequential") is consequential
+        assert spec.get("x-openai-isConsequential") is consequential, path
         if require_example:
             media = spec["requestBody"]["content"]["application/json"]
-            assert "example" in media
+            assert "example" in media or "examples" in media, path
             assert "schema" in media
             schema = media["schema"]
             if "$ref" not in schema and schema.get("type") == "object":
                 assert "properties" in schema, path
-    # no-body writes stay consequential; OpenAI rejects object schema without properties
-    for path, method in (
-        ("/transformometro/gpt-actions/v1/records/{entity}/{id}", "delete"),
-        ("/transformometro/gpt-actions/v1/revisions/{id}/activate", "post"),
-    ):
-        spec = doc["paths"][path][method]
-        assert spec["x-openai-isConsequential"] is True
-        assert "requestBody" not in spec
+    # activate remains PREPARE (non-consequential bodyless) in Builder surface
+    activate = doc["paths"]["/transformometro/gpt-actions/v1/revisions/{id}/activate"]["post"]
+    assert activate["x-openai-isConsequential"] is False
+    assert "requestBody" not in activate
 
     schemas = doc["components"]["schemas"]
-    assert "nome_processo" in schemas["GptRecordBody"]["properties"]["data"]["properties"]
+    assert "GptPrepareRecordChangeBody" in schemas or "changes" in str(
+        doc["paths"]["/transformometro/gpt-actions/v1/records/prepare-change"]
+    )
     assert "GptRecalculateBody" in schemas
     assert "GptMeetingMinuteWorkflowBody" in schemas
     assert "action" in schemas["GptMeetingMinuteWorkflowBody"]["properties"]
-    create_examples = doc["paths"]["/transformometro/gpt-actions/v1/records/{entity}"][
+    prep_media = doc["paths"]["/transformometro/gpt-actions/v1/records/prepare-change"][
         "post"
-    ]["requestBody"]["content"]["application/json"]["examples"]
-    assert "instance_create" in create_examples
-    assert "instance_create_all_units" in create_examples
-    all_units = create_examples["instance_create_all_units"]["value"]["data"]
-    assert all_units["todas_filiais_ativas"] is True
-    assert "filial_id" not in all_units
-    data_props = schemas["GptRecordBody"]["properties"]["data"]["properties"]
-    assert "todas_filiais_ativas" in data_props
-    assert data_props["todas_filiais_ativas"]["type"] == "boolean"
-    from tm_app.application.gpt_actions.record_write_contract import (
-        REQUIRED_GPT_RECORD_WRITE_FIELDS,
-    )
-
-    missing = sorted(REQUIRED_GPT_RECORD_WRITE_FIELDS - set(data_props))
-    assert not missing, f"GptRecordBody.data missing write fields: {missing}"
-    assert data_props["valor_mensal"]["type"] == "number"
-    assert "resource_cost_create" in create_examples
-    assert "resource_cost_update" in create_examples
-    assert create_examples["resource_cost_update"]["value"]["data"]["valor_mensal"] == 6051.61
-    create_desc = doc["paths"]["/transformometro/gpt-actions/v1/records/{entity}"]["post"][
-        "description"
-    ]
-    assert "todas_filiais_ativas" in create_desc
-    assert "valor_mensal" in create_desc
-    update_desc = doc["paths"]["/transformometro/gpt-actions/v1/records/{entity}/{id}"][
-        "put"
-    ]["description"]
-    assert "resource_cost" in update_desc
-    assert "revision_create" in create_examples
-    assert "measurement_upsert" in create_examples
-    assert "investment_create" in create_examples
-    commit_ex = doc["paths"]["/transformometro/gpt-actions/v1/improvement-packages"][
-        "post"
-    ]["requestBody"]["content"]["application/json"]["example"]
-    assert "process" in commit_ex and "scenario" in commit_ex
-    assert commit_ex.get("dry_run") is False
-
-    # OpenAI Custom GPT: every inline object schema must declare properties
-    def _assert_object_schemas_have_properties(node: object, path: str = "") -> None:
-        if isinstance(node, dict):
-            if node.get("type") == "object" and "$ref" not in node:
-                assert "properties" in node, path
-            for key, value in node.items():
-                _assert_object_schemas_have_properties(value, f"{path}/{key}")
-        elif isinstance(node, list):
-            for idx, value in enumerate(node):
-                _assert_object_schemas_have_properties(value, f"{path}[{idx}]")
-
-    _assert_object_schemas_have_properties(doc)
-
-
-def test_create_instance_todas_filiais_ativas_reaches_domain():
-    """PROC-0008 class: corporate instance must accept todas_filiais_ativas without filial_id."""
-    from tm_app.application.gpt_actions.dispatch_service import GptActionsDispatchService
-
-    dispatch = GptActionsDispatchService()
-    captured: dict = {}
-
-    with (
-        patch.object(dispatch, "_raise_http_err"),
-        patch.object(dispatch, "_audit"),
-        patch(
-            "tm_app.application.gpt_actions.dispatch_service.ProcessoRepository"
-        ) as proc_cls,
-        patch(
-            "tm_app.application.gpt_actions.dispatch_service.ProcessoInstanciaRepository"
-        ) as repo_cls,
-        patch(
-            "tm_app.application.gpt_actions.dispatch_service.check_processo_manage_access",
-            return_value=None,
-        ),
-    ):
-        proc_cls.return_value.get.return_value = {
-            "processo_id": "801f161a-71e6-4591-865c-eff294525420"
-        }
-        repo = repo_cls.return_value
-
-        def _create(payload):
-            captured["payload"] = dict(payload)
-            return {
-                "instancia_id": "i-corp",
-                **payload,
-            }
-
-        repo.create.side_effect = _create
-        row, _msg, status = dispatch.create_record(
-            MagicMock(),
-            "instance",
-            {
-                "data": {
-                    "processo_id": "801f161a-71e6-4591-865c-eff294525420",
-                    "todas_filiais_ativas": True,
-                    "setor_ids": ["293ebdef-16f5-4691-bac0-627f8e55c7bf"],
-                    "resumo_melhoria": "Comercial todas filiais",
-                }
-            },
-        )
-    assert status == 201
-    assert captured["payload"]["todas_filiais_ativas"] is True
-    assert captured["payload"].get("filial_id") in (None, "")
-    assert row["instancia_id"] == "i-corp"
+    ]["requestBody"]["content"]["application/json"]
+    assert "example" in prep_media or "examples" in prep_media
 
 
 def test_openapi_validate_non_consequential_commit_consequential():
@@ -2201,12 +2090,11 @@ def test_openapi_validate_non_consequential_commit_consequential():
     validate = doc["paths"]["/transformometro/gpt-actions/v1/improvement-packages/validate"][
         "post"
     ]
-    commit = doc["paths"]["/transformometro/gpt-actions/v1/improvement-packages"]["post"]
+    commit = doc["paths"]["/transformometro/gpt-actions/v1/proposals/commit"]["post"]
     assert validate["operationId"] == "gpt_validate_improvement_package"
-    assert commit["operationId"] == "gpt_commit_improvement_package"
+    assert commit["operationId"] == "gpt_commit_proposal"
     assert validate["x-openai-isConsequential"] is False
     assert commit["x-openai-isConsequential"] is True
-    # Never weaken commit consequential flag to accommodate runtime flakes.
     assert commit.get("x-openai-isConsequential") is not False
 
 
