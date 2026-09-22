@@ -70,6 +70,7 @@ class HttpxGlpiClient:
         read_timeout: float = 20,
         legacy_upload_enabled: bool = False,
         legacy_app_token: str = "",
+        legacy_user_token: str = "",
         legacy_max_upload_bytes: int = _MAX_ATTACHMENT_BYTES,
         transport: httpx.BaseTransport | None = None,
     ):
@@ -80,6 +81,7 @@ class HttpxGlpiClient:
         self._saml_idp_id = saml_idp_id.strip()
         self._legacy_upload_enabled = bool(legacy_upload_enabled)
         self._legacy_app_token = (legacy_app_token or "").strip()
+        self._legacy_user_token = (legacy_user_token or "").strip()
         self._legacy_max_upload_bytes = max(1, int(legacy_max_upload_bytes))
         self._http = httpx.Client(
             timeout=httpx.Timeout(read_timeout, connect=connect_timeout),
@@ -266,6 +268,8 @@ class HttpxGlpiClient:
             raise GlpiFeatureDisabled("Upload de anexo desligado neste ambiente.")
         if not self._legacy_app_token:
             raise GlpiFeatureDisabled("App-Token da API legada não configurado.")
+        if not self._legacy_user_token:
+            raise GlpiFeatureDisabled("User-Token da API legada não configurado.")
         if not content:
             raise GlpiValidation("Arquivo vazio.")
         if len(content) > self._legacy_max_upload_bytes:
@@ -276,7 +280,7 @@ class HttpxGlpiClient:
             raise GlpiValidation("ticket_id inválido.")
         # Ensure the ticket is visible to this OAuth subject before legacy write.
         self._json("GET", f"/api.php/v2.2/Assistance/Ticket/{ticket_id}", token=access_token)
-        session_token = self._legacy_init_session(access_token)
+        session_token = self._legacy_init_session()
         try:
             document_id = self._legacy_post_document(
                 session_token=session_token,
@@ -290,50 +294,35 @@ class HttpxGlpiClient:
             self._legacy_kill_session(session_token)
         return Attachment(document_id=document_id, filename=safe_name, mime=mime or "")
 
-    def _legacy_init_session(self, oauth_access_token: str) -> str:
-        """Open apirest session as the OAuth person (App-Token + user_token bridge)."""
-        # GLPI 11.0.5 apirest expects user_token OR basic auth — not HLAPI Bearer.
-        # Bridge authorized for H12: pass the OAuth access token as user_token first;
-        # some deployments also accept Bearer on initSession — try both.
-        errors: list[str] = []
-        for authorization in (
-            f"user_token {oauth_access_token}",
-            f"Bearer {oauth_access_token}",
-        ):
-            try:
-                response = self._http.request(
-                    "GET",
-                    f"{self._base}/apirest.php/initSession",
-                    headers={
-                        "Accept": "application/json",
-                        "Content-Type": "application/json",
-                        "App-Token": self._legacy_app_token,
-                        "Authorization": authorization,
-                    },
-                )
-            except httpx.TimeoutException as exc:
-                raise GlpiUnavailable("GLPI indisponível.") from exc
-            logger.info(
-                "glpi_legacy_init status=%s auth=%s",
-                response.status_code,
-                authorization.split(" ", 1)[0],
+    def _legacy_init_session(self) -> str:
+        """Open apirest session with App-Token + dedicated user_token (H12 Document only).
+
+        OAuth Bearer is HLAPI-only. Upload runs as technical user after HLAPI ACL check.
+        """
+        try:
+            response = self._http.request(
+                "GET",
+                f"{self._base}/apirest.php/initSession",
+                headers={
+                    "Accept": "application/json",
+                    "Content-Type": "application/json",
+                    "App-Token": self._legacy_app_token,
+                    "Authorization": f"user_token {self._legacy_user_token}",
+                },
             )
-            if response.status_code == 200:
-                data = response.json() if response.content else {}
-                token = data.get("session_token") if isinstance(data, dict) else None
-                if token:
-                    return str(token)
-                errors.append("session_token ausente")
-                continue
-            if response.status_code in {401, 403}:
-                errors.append(f"http_{response.status_code}")
-                continue
-            if response.status_code >= 400:
-                errors.append(f"http_{response.status_code}")
-                continue
-        logger.info("glpi_legacy_init_failed errors=%s", ",".join(errors) or "unknown")
+        except httpx.TimeoutException as exc:
+            raise GlpiUnavailable("GLPI indisponível.") from exc
+        logger.info("glpi_legacy_init status=%s", response.status_code)
+        if response.status_code == 200:
+            data = response.json() if response.content else {}
+            token = data.get("session_token") if isinstance(data, dict) else None
+            if token:
+                return str(token)
+            raise GlpiUnavailable("API legada não devolveu session_token.")
+        body = (response.text or "")[:240]
+        logger.info("glpi_legacy_init_failed status=%s body=%s", response.status_code, body)
         raise GlpiUnavailable(
-            "API legada recusou a sessão. Confira enable_api, App-Token e ponte OAuth→user_token."
+            "API legada recusou a sessão. Confira enable_api, App-Token cifrado e User-Token."
         )
 
     def _legacy_kill_session(self, session_token: str) -> None:

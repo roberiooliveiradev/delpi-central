@@ -899,6 +899,7 @@ def test_legacy_document_upload_uses_apirest_with_app_token():
         redirect_uri="https://centraldelpi.com.br/apps/helpdesk-api/auth/glpi/callback",
         legacy_upload_enabled=True,
         legacy_app_token="app-token-x",
+        legacy_user_token="user-token-x",
         transport=httpx.MockTransport(handler),
     )
     uploaded = client.upload_ticket_document(

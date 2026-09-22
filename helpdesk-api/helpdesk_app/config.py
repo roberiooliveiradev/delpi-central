@@ -72,6 +72,7 @@ class Settings:
         in {"1", "true", "yes", "on"}
     )
     GLPI_LEGACY_APP_TOKEN: str = _get_env("GLPI_LEGACY_APP_TOKEN", default="") or ""
+    GLPI_LEGACY_USER_TOKEN: str = _get_env("GLPI_LEGACY_USER_TOKEN", default="") or ""
     GLPI_LEGACY_MAX_UPLOAD_BYTES: int = int(
         _get_env("GLPI_LEGACY_MAX_UPLOAD_BYTES", default=str(20 * 1024 * 1024))
         or str(20 * 1024 * 1024)

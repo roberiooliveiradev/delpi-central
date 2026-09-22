@@ -103,6 +103,7 @@ const MESSAGES: Record<string, string> = {
   forbidden: "Você não tem permissão para Meus Chamados de TI.",
   glpi_forbidden: "O helpdesk recusou este chamado para o seu usuário.",
   glpi_unavailable: "O helpdesk está indisponível. Tente novamente em instantes.",
+  glpi_feature_disabled: "O envio de anexo está desligado neste ambiente.",
   not_found: "Este chamado não está disponível para você.",
   validation_error: "Revise os campos e envie de novo.",
   idempotency_key_required: "Não foi possível confirmar o envio. Atualize a página e tente outra vez.",
@@ -673,6 +674,7 @@ function CreateTicketPage() {
                 minHeight={220}
                 icon={<AlignLeft size={14} aria-hidden />}
                 onUploadFiles={queuePendingFiles}
+                onUploadError={(error) => setErrorText(messageFor(error).text)}
               />
             </div>
             <aside className="helpdesk-create-layout__aside" aria-label="Classificação do chamado">
@@ -960,6 +962,7 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                 minHeight={120}
                 onUploadFiles={async (files) => {
                   const results: HelpdeskInlineUploadResult[] = [];
+                  let uploadedAny = false;
                   for (const file of files) {
                     if (file.type.startsWith("image/")) {
                       const uploaded = await uploadTicketAttachment(
@@ -967,6 +970,7 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                         file,
                         newIdempotencyKey(),
                       );
+                      uploadedAny = true;
                       results.push({
                         kind: "uploaded",
                         documentId: uploaded.document_id,
@@ -975,11 +979,13 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                       });
                     } else {
                       await uploadTicketAttachment(ticketId, file, newIdempotencyKey());
-                      // Non-image: stays on the ticket attachment strip after reload.
+                      uploadedAny = true;
                     }
                   }
+                  if (uploadedAny && results.length === 0) load();
                   return results;
                 }}
+                onUploadError={(error) => setErrorText(messageFor(error).text)}
               />
               <HelpdeskFormActions align="end">
                 <HintAction hint={helpTooltips.detailUi.send} ariaLabel="Ajuda: Enviar resposta">

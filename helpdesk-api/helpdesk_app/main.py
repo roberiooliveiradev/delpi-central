@@ -56,6 +56,7 @@ def build_runtime():
         read_timeout=settings.GLPI_HTTP_READ_TIMEOUT,
         legacy_upload_enabled=settings.GLPI_LEGACY_UPLOAD_ENABLED,
         legacy_app_token=settings.GLPI_LEGACY_APP_TOKEN,
+        legacy_user_token=settings.GLPI_LEGACY_USER_TOKEN,
         legacy_max_upload_bytes=settings.GLPI_LEGACY_MAX_UPLOAD_BYTES,
     )
     states = PostgresStateStore(cipher)

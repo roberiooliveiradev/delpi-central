@@ -140,8 +140,22 @@ export type HelpdeskRichTextFieldProps = {
   disabled?: boolean;
   /** H12 — colar/arrastar imagem ou escolher arquivo. */
   onUploadFiles?: (files: File[]) => Promise<HelpdeskInlineUploadResult[]>;
+  onUploadError?: (error: unknown) => void;
   accept?: string;
 };
+
+function clipboardImageFiles(data: DataTransfer | null | undefined): File[] {
+  if (!data) return [];
+  const fromFiles = Array.from(data.files || []).filter((file) => file.type.startsWith("image/"));
+  if (fromFiles.length > 0) return fromFiles;
+  const fromItems: File[] = [];
+  for (const item of Array.from(data.items || [])) {
+    if (item.kind !== "file" || !item.type.startsWith("image/")) continue;
+    const file = item.getAsFile();
+    if (file) fromItems.push(file);
+  }
+  return fromItems;
+}
 
 /** Same RichTextEditor for open + reply (M-28). H12 adds paste/attach without MentionComposer. */
 export function HelpdeskRichTextField({
@@ -154,6 +168,7 @@ export function HelpdeskRichTextField({
   minHeight = 180,
   disabled,
   onUploadFiles,
+  onUploadError,
   accept = "image/*,.pdf,.png,.jpg,.jpeg,.gif,.webp,.doc,.docx,.xls,.xlsx,.txt",
 }: HelpdeskRichTextFieldProps) {
   const fileRef = useRef<HTMLInputElement>(null);
@@ -181,14 +196,16 @@ export function HelpdeskRichTextField({
         }
       }
       if (next !== value) onChange(next);
+    } catch (error) {
+      onUploadError?.(error);
     } finally {
       uploadingRef.current = false;
     }
   };
 
-  const onPaste = (event: ClipboardEvent<HTMLDivElement>) => {
+  const onPasteCapture = (event: ClipboardEvent<HTMLDivElement>) => {
     if (!onUploadFiles || disabled) return;
-    const files = Array.from(event.clipboardData?.files || []).filter((file) => file.type.startsWith("image/"));
+    const files = clipboardImageFiles(event.clipboardData);
     if (files.length === 0) return;
     event.preventDefault();
     event.stopPropagation();
@@ -207,7 +224,7 @@ export function HelpdeskRichTextField({
   return (
     <div
       className="helpdesk-field helpdesk-rich-text-field"
-      onPaste={onPaste}
+      onPasteCapture={onPasteCapture}
       onDrop={onDrop}
       onDragOver={(event) => {
         if (onUploadFiles && !disabled) event.preventDefault();
