@@ -5,7 +5,7 @@ import {
   HintAction,
   TableColumnVisibilityMenu,
 } from "@delpi/plugin-ui/index";
-import { AlignLeft, ArrowUpDown, ChevronLeft, FilterX, FolderTree, Gauge, ListFilter, Plus, RefreshCw, Send, TicketPlus, Type, Users } from "lucide-react";
+import { AlignLeft, ArrowUpDown, ChevronLeft, ExternalLink, FilterX, FolderTree, Gauge, ListFilter, Plus, RefreshCw, Send, TicketPlus, Type, Users } from "lucide-react";
 
 import {
   HelpdeskApiError,
@@ -42,6 +42,8 @@ import {
   viewForTicketLoad,
 } from "../presentation/ticketView";
 import { helpdeskListPaginationBounds } from "../presentation/listPagination";
+import { glpiTicketFormUrl } from "../presentation/glpiPublicLinks";
+import { solicitanteLifecycleCue, timelineHasSolution } from "../presentation/solicitanteLifecycle";
 import { navigateHelpdesk, type HelpdeskRoute } from "../routing/helpdeskRoute";
 import { lastHelpdeskListPath, rememberHelpdeskListPath } from "../presentation/listNavigationMemory";
 import {
@@ -777,6 +779,36 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                   present: field.present,
                 }))}
             />
+            {(() => {
+              const cue = solicitanteLifecycleCue({
+                statusId: ticket.status_id,
+                hasSolution: timelineHasSolution(ticket.timeline),
+              });
+              if (!cue) return null;
+              return (
+                <div className="helpdesk-lifecycle-cue">
+                  <HelpdeskStateBanner variant={cue.variant}>
+                    <div className="helpdesk-lifecycle-cue__row">
+                      <p className="helpdesk-lifecycle-cue__text">{cue.message}</p>
+                      <HintAction hint={helpTooltips.detailUi.openInGlpi} ariaLabel="Ajuda: Abrir no helpdesk">
+                        <ActionButton
+                          variant="primary"
+                          type="button"
+                          className="helpdesk-lifecycle-cue__cta"
+                          aria-label={cue.ctaLabel}
+                          onClick={() => {
+                            window.open(glpiTicketFormUrl(ticket.id), "_blank", "noopener,noreferrer");
+                          }}
+                        >
+                          <ExternalLink size={16} aria-hidden />
+                          {cue.ctaLabel}
+                        </ActionButton>
+                      </HintAction>
+                    </div>
+                  </HelpdeskStateBanner>
+                </div>
+              );
+            })()}
             <HelpdeskMessageThread
               listAriaLabel="Conversa do chamado"
               emptyLabel="Nenhuma mensagem"

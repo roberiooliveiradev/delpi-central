@@ -72,4 +72,15 @@ describe("Helpdesk list UX structural", () => {
     expect(replyBlock).toContain("ActionButton");
     expect(replyBlock).not.toContain("HelpdeskIconButton");
   });
+
+  it("ciclo do solicitante: aviso + CTA glpiTicketFormUrl sem inventar approve na HLAPI", () => {
+    const page = read("HelpdeskPage.tsx");
+    expect(page).toContain("solicitanteLifecycleCue");
+    expect(page).toContain("glpiTicketFormUrl");
+    expect(page).toContain("helpdesk-lifecycle-cue");
+    expect(page).not.toMatch(/add_close|add_reopen|TicketSatisfaction/);
+    const links = read("../presentation/glpiPublicLinks.ts");
+    expect(links).toContain("helpdesk.centraldelpi.com.br");
+    expect(links).toContain("ticket.form.php");
+  });
 });

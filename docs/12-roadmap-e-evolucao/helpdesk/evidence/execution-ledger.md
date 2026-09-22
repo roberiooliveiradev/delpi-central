@@ -28,7 +28,8 @@ Estados: `PROVEN` | `PLANNED` | `TARGET` | `NOT_STARTED`.
 | lista.ux | Filtros só no builder; Tabela\|Cards; page_size na paginação; tema dark | PROVEN | 21/09/2026 |
 | lista.ux.pagination | Rodapé `createDashboardPaginationKit` (setas, Ir para, resumo); `HintAction` sem ícones ?; `HelpdeskListPaginationFooter` | PROVEN | commit `1d999772a`, 21/09/2026 |
 | H10.solution.read | Bolha `kind=solution` na conversa (Timeline Solution) | PROVEN | testes mapping + conversationMessages, 21/09/2026 |
+| H10.solicitante.bridge | CTA «Abrir no helpdesk» em solucionado/fechado/aprovação (deep link GLPI) | PROVEN | `glpiTicketFormUrl` + `solicitanteLifecycleCue`, 21/09/2026 |
 
-H3 e H6 fechados. Paridade E6–E13 + verify-final concluídos. E14 (menção leitura M-07) entregue; M-23 (`@` no compositor) BLOQUEADO sem catálogo HLAPI. H10: **leitura** da solução PROVEN; write (aprovar/reabrir/satisfação) CONSOLE. H12 BLOQUEADO. Sem senha neste arquivo.
+H3 e H6 fechados. Paridade E6–E13 + verify-final concluídos. E14 (menção leitura M-07) entregue; M-23 (`@` no compositor) BLOQUEADO sem catálogo HLAPI. H10: **leitura** da solução + ponte UX ao GLPI PROVEN; write (aprovar/reabrir/satisfação) continua no GLPI (CONSOLE). H12 BLOQUEADO. Sem senha neste arquivo.
 
 Segredo do cliente OAuth não é registrado aqui.

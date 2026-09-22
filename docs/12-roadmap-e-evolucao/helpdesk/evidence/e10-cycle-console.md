@@ -18,8 +18,9 @@ Data: 21/09/2026. Sem senha / corpo pessoal.
 - Sem PATCH de status / reabrir.
 - Sem inventar payload legado (`_accepted`, `add_close`) na HLAPI.
 
-## O que o MFE faz (leitura)
+## O que o MFE faz (leitura + ponte)
 
 - Bolha «Solução» quando a Timeline do GLPI traz `Solution` / `ITILSolution`.
+- Em solucionado / fechado / aguardando aprovação: aviso com CTA **Abrir no helpdesk** → `ticket.form.php?id=` via SSO (`samlIdpId=1`), sem exigir `helpdesk.console` e sem inventar approve na HLAPI.
 
 Quando a HLAPI documentar a operação do solicitante (follow-up especial ou Validation de solução), abrir **novo** plano — não reaproveitar E10.S1 como receita inventada.

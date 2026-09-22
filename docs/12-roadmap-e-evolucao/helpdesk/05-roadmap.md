@@ -152,7 +152,7 @@ Nada obrigatório no MFE/BFF do solicitante. Desbloqueios possíveis:
 |---|---|---|
 | M-23 menção `@` na escrita | BLOQUEADO | catálogo HLAPI de usuários/grupos |
 | H12 upload novo anexo | BLOQUEADO | multipart HLAPI + política de storage |
-| H10 aprovar/reabrir/satisfação | CONSOLE (leitura da solução já entregue) | operações HLAPI do solicitante |
+| H10 aprovar/reabrir/satisfação | CONSOLE no GLPI; **ponte UX** «Abrir no helpdesk» entregue | operações HLAPI do solicitante |
 
 ## Dependências
 

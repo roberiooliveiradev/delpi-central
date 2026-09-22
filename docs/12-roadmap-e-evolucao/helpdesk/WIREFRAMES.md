@@ -216,20 +216,14 @@ HelpdeskSectionCard  «Conversa»  hint = helpTooltips.detail
      ● status
      Chamado / Técnico quando existirem
 
+  HelpdeskRecordCard …
+  [ aviso ciclo ]  se solucionado / fechado / approval — CTA Abrir no helpdesk (GLPI)
   HelpdeskMessageThread  bodyMode = html
-    abertura
-      autor = requester_display_name
-      hora = «Criado em …»
-      título = título do chamado
-      corpo = description_html (sanitizado; chips de menção)
-      prévia = HelpdeskAttachmentPreviewStrip; clique abre FilePreviewModal com Baixar
-    acompanhamento
-      autor, hora, content_html
-      sem arquivo próprio (A-07 ainda não inventa o vínculo)
-
-  Responder   [ HTML ]  obrigatório  hint = helpTooltips.detail   (oculto se can_followup=false)
+    …
+    solução  heading «Solução»  (leitura)
+  Responder   [ HTML ]  …  (oculto se can_followup=false)
   HelpdeskFormActions  align=end
-    ActionButton primary  [ Send ] Enviar   HintAction = helpTooltips.detailUi.send
+    ActionButton primary  [ Send ] Enviar
 ```
 
 A abertura existe mesmo sem acompanhamento. Tarefa, Validation, aprovação e acompanhamento privado não entram. Solução da Timeline entra como bolha com título «Solução» (só leitura). `mine` e `requester_mine` vêm do BFF (id do GLPI ou e-mail). A tela não compara nome. A foto da Core só entra nessa bolha; as outras usam iniciais. Rascunho de resposta em `sessionStorage` sobrevive a F5.
