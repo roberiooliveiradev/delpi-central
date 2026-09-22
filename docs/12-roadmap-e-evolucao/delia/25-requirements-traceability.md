@@ -180,7 +180,7 @@ OUT_OF_SCOPE_WITH_DECISION
 | CP-086 | Unknown Expertise Pack sem planner patch | DÉLIA API | generalization | LOCKED |
 | CP-087 | Metamorphic rename de Expertise Pack | DÉLIA Evals | equivalence | LOCKED |
 | CP-089 | Packs referência Qualidade + Engenharia | DÉLIA/domain owners | pilot evals | LOCKED |
-| CP-151 | OpenAPI ingestion + Action Catalog próprios da DÉLIA | DÉLIA API | independent catalog/importer | LOCKED |
+| CP-151 | OpenAPI ingestion + Action Catalog próprios da DÉLIA | DÉLIA API | independent catalog/importer | LOCKED / CONTRIBUTION ONLY — C3-T5 candidate adds deterministic bounded OpenAPI→CapabilityProjection ingestion on TEST_FIXTURE; real DELPI API coverage/full runtime not proven; not CP PASS |
 | CP-160 | Speech-to-text/text-to-speech baseline por ports/adapters quando priorizado | DÉLIA Media | voice eval/provider abstraction | LOCKED |
 | CP-161 | Voice command preserva mesma RBAC/policy/Decision semantics do texto | DÉLIA Policy/Planner | modality parity | LOCKED |
 | CP-162 | Camera/image Evidence com frame/region/confidence/limitations | DÉLIA Multimodal | visual evidence eval | LOCKED |
@@ -193,7 +193,7 @@ OUT_OF_SCOPE_WITH_DECISION
 | CP-187 | Liveness/anti-spoof obrigatório quando a finalidade exigir confiança adicional | DÉLIA Biometric/Security | replay/photo/deepfake eval | LOCKED |
 | CP-200 | Internet Research usa search + safe fetch + SourceRef/EvidenceRef + freshness/provenance | DÉLIA Internet Research | grounded research eval | LOCKED |
 | CP-201 | Connector runtime é provider-neutral; planner não contém branches Gmail/Outlook/WhatsApp | DÉLIA Connectors/Planner | provider generalization | LOCKED |
-| CP-205 | Connector capabilities são semânticas/contract-driven e separadas de endpoints específicos | DÉLIA Capability/Connectors | capability contract gate | LOCKED |
+| CP-205 | Connector capabilities são semânticas/contract-driven e separadas de endpoints específicos | DÉLIA Capability/Connectors | capability contract gate | LOCKED / CONTRIBUTION ONLY — C3-T5 projection keeps semantic identity distinct from method/path and requires governed semantic declaration; connector runtime not implemented; not CP PASS |
 | CP-215 | Teams é capability family do Microsoft 365 connector; planner não depende de Graph paths nem cria runtime Teams separado | DÉLIA Teams/Connectors/Planner | Teams provider-neutral architecture | LOCKED |
 | CP-232 | DÉLIA suporta decision-path routing `FAST | OPERATIONAL | REASONING`; nem todo evento chama LLM | DÉLIA Intelligence/Policy | decision-path routing eval | LOCKED |
 | CP-233 | Business readiness/anomaly material usa deterministic Policy/Specification sobre fatos autoritativos; LLM não é única autoridade da decisão | DÉLIA Policy/Domain owners | deterministic-decision gate | LOCKED |
@@ -218,7 +218,7 @@ OUT_OF_SCOPE_WITH_DECISION
 | CP-029 | Recomendar próximos passos | DÉLIA synthesis | contextual/allowed | LOCKED |
 | CP-043 | Unknown OpenAPI provider | DÉLIA API | full-chain unknown | LOCKED |
 | CP-044 | Metamorphic provider/path/opId | DÉLIA Evals | metamorphic | LOCKED |
-| CP-058 | Business Capability Projection | DÉLIA API | no duplicate authority | LOCKED |
+| CP-058 | Business Capability Projection | DÉLIA API | no duplicate authority | LOCKED / CONTRIBUTION ONLY — C3-T5 runtime CapabilityProjection preserves PROJECTION_ONLY and capability≠authorization/execution; real Domain catalog binding not proven; not CP PASS |
 | CP-090 | DELPI Business Graph mínimo | DÉLIA Graph/domain owners | permission traversal | LOCKED |
 | CP-128 | Business Graph sibling onboarding | DÉLIA Graph | no planner hardcode | LOCKED |
 | CP-202 | External reads suportam fontes conectadas autorizadas sem vazar dados entre usuários/conexões | DÉLIA Connectors/Privacy | read isolation gate | LOCKED |
@@ -277,7 +277,7 @@ L5 AUTONOMOUS EXECUTE = C7 only, OFF by default
 | CP-203 | External write/send/create/update é capability distinta de read e exige policy/Decision/outcome verification | DÉLIA External Actions | external write gate | LOCKED |
 | CP-204 | Draft/preview é separado de send; mensagem sugerida nunca é enviada implicitamente | DÉLIA Communication/MFE | draft-send separation | LOCKED |
 | CP-217 | Teams reply/send são capabilities governadas distintas de read/draft, com target preview, policy/Decision Gate e verified outcome | DÉLIA Teams/External Actions | Teams write gate | LOCKED |
-| CP-235 | Automation Capability Registry/Projection mapeia capability semântica a executor versionado sem expor clicks/seletores/provider UI ao planner | DÉLIA Automation/Capability | executor abstraction gate | LOCKED |
+| CP-235 | Automation Capability Registry/Projection mapeia capability semântica a executor versionado sem expor clicks/seletores/provider UI ao planner | DÉLIA Automation/Capability | executor abstraction gate | LOCKED / CONTRIBUTION ONLY — C3-T5 provides semantic projection foundation only; no executor mapping/registry/Automation Hub execution exists; not CP PASS |
 | CP-236 | API/Function/RPA/Computer-Use executors implementam Port+Adapter substituível; RPA não é authority de business rule | DÉLIA Automation/Architecture | executor substitution gate | LOCKED |
 | CP-237 | AutomationExecution possui lifecycle/correlation/inputHash/attempt/idempotency/timeout/error/outcome refs e impede dupla execução após retry/resume | DÉLIA Automation/Work | execution lifecycle gate | LOCKED |
 | CP-238 | RPA worker/queue execution, quando priorizada, possui worker health/lease/concurrency/environment/package-version/credential isolation/audit | DÉLIA RPA/Infrastructure/Security | RPA execution reliability gate | LOCKED |
@@ -1029,4 +1029,20 @@ RUNTIME_CP_PROMOTED_TO_PASS = NO
 UNRELATED_REQUIREMENT_STATUS_CHANGED = NO
 PRODUCTION_READINESS = NOT_PROVEN
 NEXT = C3-T5 — OPENAPI_ACTION_CATALOG_CAPABILITY_PROJECTION
+```
+
+
+## C3-T5 traceability note
+
+```text
+IMPLEMENTATION_HEAD = 84c249bee0182ebf514142a24cb8bbea4090ca26
+CP-151 = LOCKED / CONTRIBUTION ONLY
+CP-058 = LOCKED / CONTRIBUTION ONLY
+CP-205 = LOCKED / CONTRIBUTION ONLY
+CP-235 = LOCKED / CONTRIBUTION ONLY
+MASS_PROMOTION = NONE
+FULL_DELIA_API_SUITE = TEST_NOT_RUN
+C3-T5 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+C3_T6_AUTHORIZED = NO
+PRODUCTION_READINESS = NOT_PROVEN
 ```

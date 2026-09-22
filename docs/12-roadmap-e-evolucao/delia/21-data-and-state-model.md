@@ -1902,3 +1902,25 @@ Persistir state machine somente quando lifecycle real justificar.
 - technical executor success as business success without required verification;
 - global unrestricted `autonomyLevel=L5`;
 - free-form machine-control state as DÉLIA authority.
+
+
+## C3-T5 — Runtime CapabilityProjection foundation
+
+Implementation candidate: `84c249bee0182ebf514142a24cb8bbea4090ca26`.
+
+`CapabilityProjection` now has a minimal runtime representation inside the DÉLIA domain while preserving the C0 freeze:
+
+```text
+CapabilityProjection
+= projection-only semantic capability metadata
+!= current-user authorization
+!= Core RBAC
+!= Domain business authorization
+!= provider credential
+!= execution grant
+!= Automation Hub technical truth
+```
+
+The bounded OpenAPI adapter remains Infrastructure-only. It projects source owner/contract/version/hash, stable `operationId`, semantic identity, canonical operation character, bounded input/output/error descriptors, descriptive security metadata and explicitly declared idempotency/reversibility/postcondition semantics.
+
+Operation character is not inferred from HTTP method. C3-T5 found no canonical real DELPI OpenAPI extension or other real-source semantic classification contract to bind now; therefore the foundation uses explicit governed declarations in TEST_FIXTURE evidence, and unknown/ambiguous operations are not projectable. No persistence or catalog database is introduced.

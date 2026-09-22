@@ -3,7 +3,7 @@
 **Status:** planejamento executável canônico  
 **Autoridade de ordem:** **este documento é a única fonte de verdade para a sequência de implementação**  
 **Produto:** **DÉLIA**, aplicação standalone nova  
-**Próxima etapa:** `C3-T5 — OPENAPI_ACTION_CATALOG_CAPABILITY_PROJECTION` (`C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO`; `C3-T1..T4=APPROVED`; `C3_T5_AUTHORIZED=YES`; do not execute C3-T5 here; do not claim C3 complete)
+**Próxima etapa:** `ARCHITECTURE_REVIEW_C3_T5` (`C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO`; `C3-T1..T4=APPROVED`; `C3-T5=CANDIDATE_FOR_ARCHITECTURE_REVIEW`; `C3_T6_AUTHORIZED=NO`; do not claim C3 complete)
 **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Baseline:** [`51-platform-integration-baseline.md`](./51-platform-integration-baseline.md)  
 **Bootstrap:** [`52-standalone-repository-and-bootstrap-plan.md`](./52-standalone-repository-and-bootstrap-plan.md)  
@@ -910,3 +910,34 @@ C0.S0
 ```
 
 Nenhuma capability temática `53–66` precede o Foundation Freeze.
+
+### C3-T5 — OpenAPI Action Catalog + Capability Projection candidate
+
+```text
+IMPLEMENTATION_HEAD = 84c249bee0182ebf514142a24cb8bbea4090ca26
+C3-T5 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+OPENAPI_ACTION_CATALOG_FOUNDATION = IMPLEMENTED (bounded TEST_FIXTURE proof)
+CAPABILITY_PROJECTION = IMPLEMENTED
+CAPABILITY_DISCOVERY_AUTHORIZATION_SEPARATION = PASS (fixture/conformance)
+OPERATION_CHARACTER_SEMANTICS = IMPLEMENTED
+SOURCE_CONTRACT = TEST_FIXTURE
+REAL_DELPI_OPENAPI_COVERAGE = NOT_PROVEN
+MODEL_CALL = NONE
+RAG = NONE
+VECTOR_STORE = NONE
+PLANNER = NONE
+CONVERSATION_RUNTIME = NONE
+TOOL_EXECUTION = NONE
+PREPARE = NONE
+ACT = NONE
+AUTOMATION_HUB_EXECUTION = NONE
+PERSISTENCE = NONE
+MIGRATION = NONE
+FULL_DELIA_API_SUITE = TEST_NOT_RUN
+ARCHITECTURE_ENFORCEMENT = FAIL (OUTSIDE_TASK baseline: transformometro GPT Actions examples)
+C3_T6_AUTHORIZED = NO
+PRODUCTION_READINESS = NOT_PROVEN
+NEXT = ARCHITECTURE_REVIEW_C3_T5
+```
+
+C3-T5 does not classify operation character from HTTP verb. Semantic projection requires an explicit governed declaration; missing/duplicate identity or missing semantic declaration fails closed as non-projectable. OpenAPI security metadata is descriptive only and never becomes current-user permission, Core RBAC, Domain AuthZ or ACT authorization. The GitHub Architecture Enforcement run for the implementation SHA failed in a pre-existing Transformômetro GPT Actions repository check outside this task; no C3-T5 file was identified by that failing test.

@@ -1848,3 +1848,24 @@ STALE_NONREPRODUCIBLE_EVIDENCE
 Qualquer gate REQUIRED em `FAIL | INCONCLUSIVE | PENDING | TEST_NOT_RUN | STALE_EVIDENCE` bloqueia a fase. Nunca enfraquecer teste para fazer candidate passar.
 
 Documentação, target, schema candidate ou commit documental não promovem gate a PASS. Evidence vale somente para o SHA/config realmente avaliados.
+
+
+## C3-T5 — OpenAPI Action Catalog / Capability Projection candidate evidence
+
+Implementation SHA: `84c249bee0182ebf514142a24cb8bbea4090ca26`.
+
+Fixture/conformance proof:
+- deterministic bounded OpenAPI fixture; not a real DELPI API coverage claim;
+- POST may classify as READ and GET may classify as PREPARE only through explicit governed declaration;
+- missing semantic declaration, missing `operationId`, and duplicate `operationId` fail closed;
+- OpenAPI OAuth/security metadata does not grant authorization;
+- CapabilityProjection carries no current-user permission or execution grant;
+- ACT metadata does not execute or authorize ACT;
+- Domain capability model imports no OpenAPI/parser/framework dependency;
+- no generic proxy, generic SQL, planner, model call, RAG, vector store, Automation Hub execution or persistence introduced.
+
+Executed isolated module suite: `python -m pytest -q` over the C3-T5 content-equivalent sandbox → **18 passed, 0 failed, 0 skipped**. This is fixture/module evidence, not repository-wide DELIA API evidence.
+
+GitHub `Architecture Enforcement` run `35717733644` on the implementation SHA: **FAIL** in pre-existing `scripts.ci.test_audit_gpt_actions_openapi.GptActionsOpenApiAuditTest.test_current_repo_artifacts_pass`, reporting three Transformômetro GPT Actions write operations without typed examples. The failing artifact predates C3-T5 and is outside this task. Later architecture steps were skipped by that workflow failure.
+
+`FULL_DELIA_API_SUITE = TEST_NOT_RUN` because the available execution environment could not clone GitHub and the repository workflow does not execute the full `delia-api` pytest suite. Do not promote this evidence to repository-wide PASS.
