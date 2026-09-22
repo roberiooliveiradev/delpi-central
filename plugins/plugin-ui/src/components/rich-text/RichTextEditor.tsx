@@ -177,13 +177,6 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
   }, [mode, disabled, sourceMode, resolvedHtml]);
 
   useEffect(() => {
-    const editorEl = editorRef.current;
-    if (!editorEl || sourceMode || disabled || !resolveAttachmentImageSrc) return;
-    // In-place src patch — safe while focused (does not replace innerHTML / caret).
-    patchLiveAttachmentImageSources(editorEl, resolveAttachmentImageSrc);
-  }, [resolveAttachmentImageSrc, value, sourceMode, disabled]);
-
-  useEffect(() => {
     return () => {
       if (sourceDebounceRef.current) clearTimeout(sourceDebounceRef.current);
     };
@@ -306,6 +299,15 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
   }, [emitChange]);
 
   useEffect(() => {
+    const editorEl = editorRef.current;
+    if (!editorEl || sourceMode || disabled || !resolveAttachmentImageSrc) return;
+    // In-place src patch — safe while focused (does not replace innerHTML / caret).
+    if (patchLiveAttachmentImageSources(editorEl, resolveAttachmentImageSrc)) {
+      if (fitUntypedImages()) emitChange();
+    }
+  }, [resolveAttachmentImageSrc, value, sourceMode, disabled, fitUntypedImages, emitChange]);
+
+  useEffect(() => {
     if (sourceMode || disabled) return;
     if (fitUntypedImages()) emitChange();
   }, [resolvedHtml, sourceMode, disabled, fitUntypedImages, emitChange]);
@@ -337,7 +339,7 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
       const session = imageResizeRef.current;
       if (!session) return;
       const delta = moveEvent.clientX - session.startX;
-      applyRichTextImageWidth(session.img, session.startWidth + delta);
+      applyRichTextImageWidth(session.img, session.startWidth + delta, { lockHeight: true });
       syncSelectedImage(session.img);
     };
     const onUp = (upEvent: PointerEvent) => {

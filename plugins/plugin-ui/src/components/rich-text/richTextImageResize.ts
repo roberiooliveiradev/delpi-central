@@ -3,10 +3,8 @@
 export const RICH_TEXT_IMAGE_MIN_WIDTH = 48;
 /** Align with helpdesk-api / BFF img width allowlist. */
 export const RICH_TEXT_IMAGE_MAX_WIDTH = 4096;
-/**
- * @deprecated Paste uses natural size (capped at MAX). Kept for callers that pass defaultMaxWidth.
- */
-export const RICH_TEXT_IMAGE_DEFAULT_MAX_WIDTH = RICH_TEXT_IMAGE_MAX_WIDTH;
+/** Compose paste: fit into the editor column (author can still enlarge past this). */
+export const RICH_TEXT_IMAGE_DEFAULT_MAX_WIDTH = 720;
 
 export type RichTextImageSize = {
   width: number;
@@ -18,7 +16,7 @@ export function clampRichTextImageWidth(
   options?: { min?: number; max?: number; containerWidth?: number },
 ): number {
   const min = options?.min ?? RICH_TEXT_IMAGE_MIN_WIDTH;
-  // Do not clamp to containerWidth: author may enlarge beyond the editor (scroll).
+  // Resize may exceed the column (editor scrolls). Do not clamp to containerWidth here.
   const max = options?.max ?? RICH_TEXT_IMAGE_MAX_WIDTH;
   if (max < min) return min;
   return Math.max(min, Math.min(max, Math.round(width)));
@@ -33,11 +31,21 @@ export function resolveRichTextImageNaturalSize(img: HTMLImageElement): RichText
   };
 }
 
-/** Keep aspect ratio; persist via HTML width/height (not CSS — sanitizer strips width style). */
+/** True when src is the compose loading placeholder (must never drive fit/resize). */
+export function isRichTextImagePlaceholderSrc(src: string | null | undefined): boolean {
+  const value = String(src || "").trim();
+  return value.startsWith("data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP");
+}
+
+/**
+ * Keep aspect ratio; persist via HTML width/height (sanitizer strips width style).
+ * - fit (default): width attr + width style, height auto, max-width 100% so the column can shrink.
+ * - lockHeight: enlarge handle — fixed px box, may exceed column (editor scrolls).
+ */
 export function applyRichTextImageWidth(
   img: HTMLImageElement,
   nextWidth: number,
-  options?: { min?: number; max?: number; containerWidth?: number },
+  options?: { min?: number; max?: number; containerWidth?: number; lockHeight?: boolean },
 ): RichTextImageSize {
   const natural = resolveRichTextImageNaturalSize(img);
   const width = clampRichTextImageWidth(nextWidth, options);
@@ -45,33 +53,52 @@ export function applyRichTextImageWidth(
   img.setAttribute("width", String(width));
   img.setAttribute("height", String(height));
   img.style.width = `${width}px`;
-  img.style.height = `${height}px`;
-  // Explicit size must win over stylesheet max-width:100% so enlarge is visible.
-  img.style.maxWidth = "none";
+  if (options?.lockHeight) {
+    img.style.height = `${height}px`;
+    img.style.maxWidth = "none";
+  } else {
+    img.style.height = "auto";
+    img.style.maxWidth = "100%";
+  }
   return { width, height };
 }
 
 /**
- * Stamp natural pixel size on insert (paste/attach) when no width attr yet.
- * Only caps at RICH_TEXT_IMAGE_MAX_WIDTH — does not shrink to the editor column.
+ * On paste/attach: fit into the editor column so writing stays usable.
+ * Enlarge via handle can still go up to RICH_TEXT_IMAGE_MAX_WIDTH.
+ * Skips placeholder / unloaded images so a 1×1 GIF never locks width=48.
  */
 export function fitRichTextImageToContainer(
   img: HTMLImageElement,
-  _containerWidth: number,
+  containerWidth: number,
   options?: { defaultMaxWidth?: number; maxWidth?: number },
 ): RichTextImageSize | null {
   if (img.getAttribute("width")) return null;
+  if (isRichTextImagePlaceholderSrc(img.getAttribute("src") || img.src)) return null;
+  if (img.naturalWidth > 0 && img.naturalWidth <= 1 && img.naturalHeight <= 1) return null;
   const natural = resolveRichTextImageNaturalSize(img);
-  const max =
-    options?.maxWidth ?? options?.defaultMaxWidth ?? RICH_TEXT_IMAGE_MAX_WIDTH;
-  const target = Math.min(natural.width, Math.max(RICH_TEXT_IMAGE_MIN_WIDTH, max));
-  return applyRichTextImageWidth(img, target, { max });
+  if (natural.width <= 1) return null;
+  const column = Math.max(
+    RICH_TEXT_IMAGE_MIN_WIDTH,
+    Math.floor((containerWidth > 0 ? containerWidth : RICH_TEXT_IMAGE_DEFAULT_MAX_WIDTH) * 0.92),
+  );
+  const softMax = options?.defaultMaxWidth ?? RICH_TEXT_IMAGE_DEFAULT_MAX_WIDTH;
+  const hardMax = options?.maxWidth ?? RICH_TEXT_IMAGE_MAX_WIDTH;
+  const target = Math.min(natural.width, column, softMax, hardMax);
+  return applyRichTextImageWidth(img, target, { max: hardMax, lockHeight: false });
 }
 
 export function clearRichTextImageInlineSizeStyles(img: HTMLImageElement): void {
   img.style.removeProperty("width");
   img.style.removeProperty("height");
   img.style.removeProperty("max-width");
+}
+
+/** After blob replace: drop sizes that were never author-chosen so fit can re-run. */
+export function clearRichTextImageSizeForRefit(img: HTMLImageElement): void {
+  img.removeAttribute("width");
+  img.removeAttribute("height");
+  clearRichTextImageInlineSizeStyles(img);
 }
 
 /** SE handle position relative to `root`, clamped to the visible image∩editor box. */

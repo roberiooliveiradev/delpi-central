@@ -126,8 +126,46 @@ export function insertRichTextInlineImageAtCaret(
   frag.appendChild(zwspAfter);
   range.insertNode(frag);
 
+  // Block image with no text after → ensure a paragraph below for typing.
+  const hostP =
+    span.closest("p,li,h1,h2,h3,h4,h5,h6,td,th") || span.parentElement;
+  let caretNode: Text | HTMLElement = zwspAfter;
+  let caretOffset = zwspAfter.length;
+  if (hostP && editor.contains(hostP)) {
+    let hasTextAfter = false;
+    for (let node: ChildNode | null = zwspAfter.nextSibling; node; node = node.nextSibling) {
+      if (node.nodeType === Node.TEXT_NODE) {
+        if ((node.textContent || "").replace(/\u200b/g, "").length > 0) {
+          hasTextAfter = true;
+          break;
+        }
+        continue;
+      }
+      if (node.nodeType === Node.ELEMENT_NODE) {
+        const el = node as Element;
+        if (el.tagName.toLowerCase() === "br") continue;
+        hasTextAfter = true;
+        break;
+      }
+    }
+    if (!hasTextAfter) {
+      let follow = hostP.nextElementSibling;
+      if (!follow || follow.tagName.toLowerCase() !== "p") {
+        follow = editor.ownerDocument.createElement("p");
+        follow.appendChild(editor.ownerDocument.createElement("br"));
+        hostP.parentNode?.insertBefore(follow, hostP.nextSibling);
+      }
+      caretNode = follow as HTMLElement;
+      caretOffset = 0;
+    }
+  }
+
   const after = editor.ownerDocument.createRange();
-  after.setStart(zwspAfter, zwspAfter.length);
+  if (caretNode instanceof Text) {
+    after.setStart(caretNode, caretOffset);
+  } else {
+    after.setStart(caretNode, Math.min(caretOffset, caretNode.childNodes.length));
+  }
   after.collapse(true);
   selection?.removeAllRanges();
   selection?.addRange(after);

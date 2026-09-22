@@ -311,14 +311,32 @@ export type ResolveAttachmentImageSrc = (
   attachmentId: string,
 ) => string | null | undefined;
 
+/** Stable persist tokens / BFF paths are not browser-loadable without a blob. */
+export function isNonDisplayAttachmentSrc(src: string | null | undefined): boolean {
+  const value = String(src || "").trim();
+  if (!value) return true;
+  if (value.startsWith("attachment:")) return true;
+  if (value.includes("/apps/helpdesk-api/") && value.includes("/attachments/")) return true;
+  return false;
+}
+
+/** 1×1 transparent GIF — avoids broken-icon flash while blob seed catches up. */
+export const ATTACHMENT_SRC_PLACEHOLDER =
+  "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==";
+
+function isAttachmentPlaceholderSrc(src: string | null | undefined): boolean {
+  const value = String(src || "").trim();
+  return value.startsWith("data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP");
+}
+
 /** Resolve `src` for `<img data-attachment-id|data-attachment-pending>` (bubble + composer). */
 export function applyAttachmentImageSources(
   html: string,
   resolve?: ResolveAttachmentImageSrc,
 ): string {
   if (
-    !resolve ||
-    (!html.includes("data-attachment-id") && !html.includes("data-attachment-pending"))
+    !html.includes("data-attachment-id") &&
+    !html.includes("data-attachment-pending")
   ) {
     return html;
   }
@@ -339,10 +357,15 @@ export function applyAttachmentImageSources(
         img.getAttribute("data-attachment-pending") ||
         "";
       if (!id) continue;
-      const src = resolve(id);
-      if (src) {
-        img.setAttribute("src", src);
+      const resolved = resolve?.(id);
+      if (resolved) {
+        img.setAttribute("src", resolved);
         img.setAttribute("loading", "lazy");
+        continue;
+      }
+      // Never leave attachment:pending / BFF URL as live src (breaks compose + F5 flash).
+      if (isNonDisplayAttachmentSrc(img.getAttribute("src"))) {
+        img.setAttribute("src", ATTACHMENT_SRC_PLACEHOLDER);
       }
     }
     return root.innerHTML;
@@ -354,6 +377,7 @@ export function applyAttachmentImageSources(
 /**
  * In-place src patch for a live contentEditable (keeps caret / selection).
  * Returns true when at least one img src changed.
+ * When blob replaces a placeholder, clears width/height so compose fit can re-run.
  */
 export function patchLiveAttachmentImageSources(
   root: ParentNode,
@@ -371,10 +395,27 @@ export function patchLiveAttachmentImageSources(
       "";
     if (!id) continue;
     const src = resolve(id);
-    if (!src || img.getAttribute("src") === src) continue;
-    img.setAttribute("src", src);
-    img.setAttribute("loading", "lazy");
-    changed = true;
+    const current = img.getAttribute("src");
+    if (src) {
+      if (current === src) continue;
+      const fromPlaceholder =
+        isAttachmentPlaceholderSrc(current) || isNonDisplayAttachmentSrc(current);
+      img.setAttribute("src", src);
+      img.setAttribute("loading", "lazy");
+      if (fromPlaceholder) {
+        img.removeAttribute("width");
+        img.removeAttribute("height");
+        (img as HTMLImageElement).style.removeProperty("width");
+        (img as HTMLImageElement).style.removeProperty("height");
+        (img as HTMLImageElement).style.removeProperty("max-width");
+      }
+      changed = true;
+      continue;
+    }
+    if (isNonDisplayAttachmentSrc(current)) {
+      img.setAttribute("src", ATTACHMENT_SRC_PLACEHOLDER);
+      changed = true;
+    }
   }
   return changed;
 }

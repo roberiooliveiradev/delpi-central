@@ -112,7 +112,7 @@ describe("applyFormat", () => {
 });
 
 describe("insertRichTextInlineImageAtCaret", () => {
-  it("insere imagem no caret dentro do mesmo parágrafo", () => {
+  it("insere imagem no caret dentro do mesmo parágrafo quando há texto depois", () => {
     const editor = document.createElement("div");
     editor.contentEditable = "true";
     editor.innerHTML = "<p>antesdepois</p>";
@@ -131,6 +131,31 @@ describe("insertRichTextInlineImageAtCaret", () => {
     expect(p.textContent).toContain("antes");
     expect(p.textContent).toContain("depois");
     expect(editor.querySelectorAll("p")).toHaveLength(1);
+
+    document.body.removeChild(editor);
+  });
+
+  it("irmão: imagem sozinha abre parágrafo abaixo para escrita", () => {
+    const editor = document.createElement("div");
+    editor.contentEditable = "true";
+    editor.innerHTML = "<p><br></p>";
+    document.body.appendChild(editor);
+    const selection = window.getSelection();
+    const range = document.createRange();
+    range.selectNodeContents(editor.querySelector("p")!);
+    range.collapse(true);
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+
+    insertRichTextInlineImageAtCaret(editor, {
+      src: "blob:preview",
+      pendingId: "solo",
+      alt: "shot",
+    });
+
+    const paragraphs = editor.querySelectorAll("p");
+    expect(paragraphs.length).toBeGreaterThanOrEqual(2);
+    expect(paragraphs[0]?.querySelector("img")).not.toBeNull();
 
     document.body.removeChild(editor);
   });

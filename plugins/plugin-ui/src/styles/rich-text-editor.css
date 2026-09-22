@@ -141,9 +141,9 @@
   outline-offset: -2px;
 }
 
-/* Compose: honor width/height attrs (natural paste + enlarge). Preview stays fluid. */
+/* Compose: fluid by default; enlarge sets inline max-width:none. */
 .delpi-ui-rich-text__editor img {
-  max-width: none;
+  max-width: 100%;
   height: auto;
   vertical-align: middle;
   cursor: pointer;
@@ -524,46 +524,55 @@
   }
 }
 
-/* Inline paste/attach in RichTextEditor — full size (resize attrs); not chat thumbnails. */
+/* Inline paste/attach in RichTextEditor — block so typing continues on the next line. */
 .delpi-ui-rich-text__inline-image {
   position: relative;
-  display: inline-block;
+  display: block;
   vertical-align: baseline;
-  max-width: none;
+  max-width: 100%;
   max-height: none;
-  margin: 0.25rem 0.15rem;
+  margin: 0.5rem 0;
   border-radius: 0.5rem;
   overflow: visible;
 }
 
 .delpi-ui-rich-text__inline-image img {
-  display: inline;
+  display: block;
   width: auto;
-  max-width: none;
+  max-width: 100%;
   height: auto;
   max-height: none;
   vertical-align: baseline;
 }
 
 /*
- * Insert uses dual class (mention + rich-text). MentionComposer thumbs stay 8rem;
- * inside the rich-text editor those limits must not clip enlarge/natural paste.
+ * Insert uses dual class (mention + rich-text). MentionComposer thumbs stay 8rem / 14rem;
+ * inside the rich-text editor those limits must not clip compose or enlarge.
+ * Specificity beats `.delpi-ui-mention-composer__inline-image` alone.
  */
-.delpi-ui-rich-text__editor .delpi-ui-mention-composer__inline-image,
-.delpi-ui-rich-text__editor .delpi-ui-rich-text__inline-image {
-  max-width: none;
+.delpi-ui-rich-text__editor span.delpi-ui-mention-composer__inline-image,
+.delpi-ui-rich-text__editor span.delpi-ui-rich-text__inline-image {
+  display: block;
+  max-width: 100%;
   max-height: none;
   overflow: visible;
   background: transparent;
 }
 
-.delpi-ui-rich-text__editor .delpi-ui-mention-composer__inline-image img,
-.delpi-ui-rich-text__editor .delpi-ui-rich-text__inline-image img {
-  max-width: none;
-  max-height: none;
+.delpi-ui-rich-text__editor span.delpi-ui-mention-composer__inline-image img,
+.delpi-ui-rich-text__editor span.delpi-ui-rich-text__inline-image img {
+  display: block;
   width: auto;
+  max-width: 100%;
+  max-height: none;
   height: auto;
   object-fit: unset;
+}
+
+/* Enlarge handle sets max-width:none inline — allow scroll past the column. */
+.delpi-ui-rich-text__editor span.delpi-ui-rich-text__inline-image img[style*="max-width: none"],
+.delpi-ui-rich-text__editor span.delpi-ui-mention-composer__inline-image img[style*="max-width: none"] {
+  max-width: none;
 }
 
 .delpi-ui-rich-text__inline-image-remove {
