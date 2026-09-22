@@ -3,8 +3,17 @@ export {
   type RichTextEditorHandle,
   type RichTextEditorMode,
   type RichTextEditorProps,
+  type RichTextMentionLabels,
   type RichTextPasteImagesHandler,
+  type MentionMenuHit,
 } from "./RichTextEditor";
+export {
+  buildGlpiUserMentionLabel,
+  createGlpiUserMentionElement,
+  insertGlpiUserMentionAtPlainRange,
+  isGlpiUserMentionId,
+  refreshActiveUserMention,
+} from "./richTextUserMention";
 export type { RichTextInlineImageInsert } from "./richTextInlineImage";
 export {
   applyFormat,

@@ -10,12 +10,39 @@ describe("timelineHasSolution", () => {
 });
 
 describe("solicitanteLifecycleCue", () => {
-  it("solucionado ou com solução → CTA no helpdesk", () => {
+  it("capacidade nativa → ações no MFE", () => {
+    const cue = solicitanteLifecycleCue({
+      statusId: 5,
+      hasSolution: true,
+      canAcceptSolution: true,
+      canRejectSolution: true,
+    });
+    expect(cue?.id).toBe("solved_native");
+    expect(cue?.showNativeActions).toBe(true);
+  });
+
+  it("solucionado sem capability → CTA no helpdesk", () => {
     expect(solicitanteLifecycleCue({ statusId: 5, hasSolution: false })?.id).toBe("solved_needs_glpi");
     expect(solicitanteLifecycleCue({ statusId: 2, hasSolution: true })?.id).toBe("solved_needs_glpi");
   });
 
-  it("fechado tem prioridade sobre solução", () => {
+  it("fechado com pesquisa disponível", () => {
+    const cue = solicitanteLifecycleCue({
+      statusId: 6,
+      hasSolution: true,
+      canSubmitSatisfaction: true,
+    });
+    expect(cue?.id).toBe("closed_satisfaction");
+    expect(cue?.showSatisfactionForm).toBe(true);
+  });
+
+  it("fechado já avaliado", () => {
+    expect(
+      solicitanteLifecycleCue({ statusId: 6, hasSolution: true, satisfaction: 4 })?.id,
+    ).toBe("closed_done");
+  });
+
+  it("fechado sem capability → CTA", () => {
     expect(solicitanteLifecycleCue({ statusId: 6, hasSolution: true })?.id).toBe("closed");
   });
 

@@ -15,9 +15,10 @@ Estados: `PROVEN` | `PLANNED` | `TARGET` | `NOT_STARTED`.
 | H2 | Leitura de chamados | PROVEN | lista real do usuário logado na mesma sessão |
 | H3 | Abertura e acompanhamento | PROVEN | perfil Colaborador — Chamados, `user_id` 69, 21/09/2026: `POST /Assistance/Ticket` → id **1120**; `POST …/Timeline/Followup` → id **593**. Super-Admin (sessão irmã) também criou **1119** + follow-up **591**. Sem senha neste arquivo. |
 | H4 | MFE nativo | PROVEN | menu Meus Chamados de TI em `/apps/helpdesk`, sem iframe |
-| H5 | Anexo, satisfação, bancada técnica | TARGET | fatiado: download H4; upload H12 **PROVEN**; ciclo write H10 CONSOLE — [`05-roadmap.md`](../05-roadmap.md) |
+| H5 | Anexo, satisfação, bancada técnica | TARGET | fatiado: download H4; upload H12 **PROVEN**; ciclo write H10 **PROVEN** (legado) — [`05-roadmap.md`](../05-roadmap.md) |
 | H6 | Gates HLAPI da paridade | PROVEN | 21/09/2026 — vereditos em [`12`](../12-conteudo-da-mensagem.md) §15, [`13`](../13-listagem-de-chamados.md) §13, [`14`](../14-pagina-e-estados-do-chamado.md) §10, [`15`](../15-capacidades-glpi.md) §9 |
-| H14 | Menção leitura (chips) | PROVEN | E14 — [`e14-mentions.md`](./e14-mentions.md); M-23 park |
+| H14 | Menção leitura (chips) | PROVEN | E14 — [`e14-mentions.md`](./e14-mentions.md) |
+| M-23 | Menção `@` no compositor (create + reply) | PROVEN | kit + GET /users; 403 Colaborador corrigido (GLPI user READ + filtro case-insensitive) — [`e4-m23-users-403.md`](./e4-m23-users-403.md); 22/09/2026 |
 | G-05 | `requester_display_name` na lista | PROVEN | commit `d1fb8a0af`, 21/09/2026 |
 | lista.href | Chamado/título com path estável + meio-clique | PROVEN | commit `e0439aab9`, 21/09/2026 |
 | G-07+ | `sort=closed_at` → `date_close` | PROVEN | commit `e0439aab9`, 21/09/2026 |
@@ -26,7 +27,9 @@ Estados: `PROVEN` | `PLANNED` | `TARGET` | `NOT_STARTED`.
 | lista.ux | Filtros só no builder; Tabela\|Cards; page_size na paginação; tema dark | PROVEN | 21/09/2026 |
 | lista.ux.pagination | Rodapé `createDashboardPaginationKit` (setas, Ir para, resumo); `HintAction` sem ícones ?; `HelpdeskListPaginationFooter` | PROVEN | commit `1d999772a`, 21/09/2026 |
 | H10.solution.read | Bolha `kind=solution` na conversa (Timeline Solution) | PROVEN | testes mapping + conversationMessages, 21/09/2026 |
-| H10.solicitante.bridge | CTA «Abrir no helpdesk» em solucionado/fechado/aprovação (deep link GLPI) | PROVEN | `glpiTicketFormUrl` + `solicitanteLifecycleCue`, 21/09/2026 |
+| H10.solicitante.bridge | CTA «Abrir no helpdesk» residual (aprovação 10 / fallback) | PROVEN | `glpiTicketFormUrl` + cue; 22/09/2026 |
+| H10.write.legacy | Aceitar/recusar/satisfação via apirest (Branch B, paridade H12) | PROVEN | BFF `solution/accept|reject` + `satisfaction`; live ticket **1141**; 22/09/2026 |
+| H10.write.mfe | Botões + form no detalhe gated por `can_*` | PROVEN | `HelpdeskPage` + `solicitanteLifecycle`; 121 testes MFE; 22/09/2026 |
 | H12.upload.bff | `POST /tickets/{id}/attachments` via apirest Document + App-Token + User-Token técnico | PROVEN | BFF + testes FakeGlpi/MockTransport; live Document+Ticket 201, 21/09/2026 |
 | H12.upload.mfe | Colar/arrastar/clipe no compositor (abrir + responder) | PROVEN | kit `onPasteImages` + IDB pending F5; testes RichTextEditor + persist pending; build helpdesk+plugin-ui 22/09/2026 |
 | H12.upload.live | enable_api + `GLPI_LEGACY_*` + tech user Technician (profiles_id 6) em produção | PROVEN | env no container `delpi-helpdesk-api`; docs 1177/1178 no chamado **1122**; commit deploy `3e34b1226` / `0afc3154a`, 21/09/2026 |
@@ -35,7 +38,11 @@ Estados: `PROVEN` | `PLANNED` | `TARGET` | `NOT_STARTED`.
 | H12.kit.centralize | Paste/imagem no `RichTextEditor` alinhado à sala | PROVEN | mesmo `collectPasteImageFiles` / async; host só materializa |
 | H12.resize | Redimensionar imagem no `RichTextEditor` (width/height HTML) | PROVEN | plugin-ui `richTextImageResize`; commit `298bb2404` |
 | H12.help | Helps curtos + `attachHint` / reply / attachments | PROVEN | `helpTooltips.ts` + testes de teto; 21/09/2026 |
+| E0.assignee.gates | HLAPI `TeamMember role=assigned` + reassign + `GET /Administration/User` por id (Colaborador e Technician) | PROVEN | [`e0-assignee-gates.md`](./e0-assignee-gates.md); tickets 1131/1132; 22/09/2026 |
+| E1.assignee.bff | `assignee_id`, `PUT …/assignee`, `GET /users`, `can_assign` | PROVEN | `ticket_service` + `http_client` + contrato §4; 48 testes API no container |
+| E2.assignee.mfe | Create picker + detalhe atribuir/reatribuir gated por `can_assign` | PROVEN | `HelpdeskPage` + `helpdeskApi`; structural + help; 116 testes MFE |
+| E4.assignee.live | Client BFF live assign/reassign + catálogo (tech + Brenda Colaborador) | PROVEN | tickets **1133**/**1134**; `can_assign=true`; 22/09/2026 |
 
 ## Resumo vigente (22/09/2026)
 
-H3 e H6 fechados. Paridade E6–E13 + verify-final concluídos. E14 (menção leitura M-07) entregue; M-23 (`@` no compositor) **BLOQUEADO** sem catálogo HLAPI. H10: **leitura** da solução + ponte UX ao GLPI PROVEN; write continua CONSOLE. **H12 Document upload BFF/live PROVEN**; **P0 colar + F5 preview corrigido no código** (kit + IDB + HTML estável) — rebuild `plugin-ui` remote antes do MFE em publish. Residuais: M-23, H10 write, bancada FORA. Sem senha neste arquivo.
+H3 e H6 fechados. Paridade E6–E13 + verify-final concluídos. E14 (menção leitura M-07) entregue. **Atribuição/reatribuição no MFE (E0–E4) PROVEN**. **M-23 (`@` na escrita) PROVEN**. **H10 write Branch B PROVEN** (legado `ITILFollowup`/`TicketSatisfaction` + MFE). **H12 Document upload BFF/live PROVEN**. Residual: bancada FORA. Sem senha neste arquivo.

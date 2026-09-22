@@ -17,7 +17,7 @@ H6  Investigação HLAPI (gates)             PROVEN
 H7  Estados e lista do solicitante         ENTREGUE
 H8  Corpo rico da mensagem                 ENTREGUE  (menção leitura E14; @ escrita BLOQUEADA sem catálogo)
 H9  Página do chamado                      ENTREGUE
-H10 Solução, reabrir, satisfação           LEITURA solução ENTREGUE; write CONSOLE (E10.S1)
+H10 Solução, reabrir, satisfação           **PROVEN** Branch B (legado apirest; leitura HLAPI)
 H11 Condicionais (TTR, observer)           ENTREGUE  Forms e vínculo riscados (H6)
 H12 Upload de arquivo novo                 PROVEN live (Document-only + LEGACY_*)
 H13 Listagem dinâmica (modelo → builder)   ENTREGUE  AND builder + multi-sort + prefs + rodapé kit paginação (G-32e); OR/export/massa CONSOLE
@@ -88,7 +88,7 @@ Depende de H6 para imagem. Leitura HTML e escrita rica **não** dependem da imag
 | `RichTextEditor` em abrir e responder; POST HTML | 12 M-20…M-22, M-28 | HD-022 |
 | Rewrite de `document.send.php` + modal | 12 M-08 — **IMPLEMENTADO** (12-H1 PROVEN; P0 6288 FORA → 1108) | HD-021 |
 | Menção por `data-user-id` (chip na bolha) | 12 M-07 — **IMPLEMENTADO** E14 | HD-022 |
-| `@` no compositor | 12 M-23 — **BLOQUEADO** sem catálogo HLAPI | HD-022 |
+| `@` no compositor | 12 M-23 — **IMPLEMENTADO** (RichTextEditor + GET /users) | HD-022 |
 | Colar imagem / upload | H12 — **PROVEN** live (exceção Document-only) | HD-026 |
 | Redimensionar imagem no compositor | plugin-ui `RichTextEditor` — **PROVEN** | HD-022 |
 
@@ -107,11 +107,11 @@ Ex-H5 que **é** do colaborador, não da bancada.
 
 | Entrega | Fonte | HD |
 |---|---|---|
-| Ver solução e aprovar/recusar | 14 P-07, 15 X-46 — **leitura** solução IMPLEMENTADA; aprovar/recusar **CONSOLE** E10 | HD-024 |
-| Reabrir se a matriz simplificada deixar | 14 P-08 — **CONSOLE** (PATCH 403) | HD-024 |
-| Pesquisa de satisfação | 15 X-51 — **CONSOLE** (sem path) | HD-024 |
+| Ver solução e aprovar/recusar | 14 P-07, 15 X-46 — **leitura** HLAPI; **write** Branch B legado (`ITILFollowup` add_close/reopen) **PROVEN** | HD-024 |
+| Reabrir se a matriz simplificada deixar | 14 P-08 — **PROVEN** via `solution/reject` (não PATCH Colaborador) | HD-024 |
+| Pesquisa de satisfação | 15 X-51 — **PROVEN** via `TicketSatisfaction` legado (HLAPI ainda 404) | HD-024 |
 
-Cada item exige operação HLAPI (Solution / Validation / Satisfaction). Se H6 não achar a operação, a linha volta a CONSOLE e não se inventa tela.
+HLAPI do ciclo continua ausente (re-gate 22/09). Produto autorizou exceção legada no mesmo padrão H12 Document — ver [`evidence/e10-cycle-console.md`](./evidence/e10-cycle-console.md).
 
 ## H11 — Condicionais
 
@@ -164,8 +164,10 @@ P0 colar + F5 preview **corrigido no código** (ledger H12.* PROVEN unitário/wi
 
 | Prioridade | Item | Estado | Dono / alvo |
 |---|---|---|---|
-| P1 | M-23 menção `@` na escrita | BLOQUEADO | catálogo HLAPI |
-| P1 | H10 aprovar/reabrir/satisfação | CONSOLE | operações HLAPI do solicitante |
+| P1 | M-23 menção `@` na escrita | **IMPLEMENTADO** | create/reply + span por id |
+| P1 | H10 aprovar/reabrir/satisfação | **PROVEN** (Branch B) | BFF legado + MFE `can_*` |
+
+Residual de produto: bancada / Change / `helpdesk.console` (FORA).
 
 ```text
 fonte canônica de paste/imagem no compositor

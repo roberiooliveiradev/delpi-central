@@ -4,6 +4,7 @@ export type HelpdeskCreateDraft = {
   title: string;
   description: string;
   observerIdsInput: string;
+  assigneeId: string;
   categoryId: string;
   urgencyId: string;
 };
@@ -39,6 +40,7 @@ export function readCreateDraft(): HelpdeskCreateDraft | null {
     title: typeof draft.title === "string" ? draft.title : "",
     description: typeof draft.description === "string" ? draft.description : "",
     observerIdsInput: typeof draft.observerIdsInput === "string" ? draft.observerIdsInput : "",
+    assigneeId: typeof draft.assigneeId === "string" ? draft.assigneeId : "",
     categoryId: typeof draft.categoryId === "string" ? draft.categoryId : "",
     urgencyId: typeof draft.urgencyId === "string" ? draft.urgencyId : "",
   };
@@ -49,6 +51,7 @@ export function writeCreateDraft(draft: HelpdeskCreateDraft): void {
     !draft.title.trim() &&
     !draft.description.trim() &&
     !draft.observerIdsInput.trim() &&
+    !draft.assigneeId &&
     !draft.categoryId &&
     !draft.urgencyId;
   if (empty) {

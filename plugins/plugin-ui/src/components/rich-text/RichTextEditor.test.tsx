@@ -224,4 +224,76 @@ describe("RichTextEditor", () => {
     // Sem handler, paste de imagem não é o contrato H12 — não inventa insert.
     expect(editor.querySelector("img")).toBeNull();
   });
+
+  it("abre query de menção ao digitar @An", () => {
+    const onMentionQueryChange = vi.fn();
+    const { container } = render(
+      <RichTextEditor
+        value="<p></p>"
+        onChange={() => undefined}
+        onMentionQueryChange={onMentionQueryChange}
+      />,
+    );
+    const editor = container.querySelector(".delpi-ui-rich-text__editor") as HTMLElement;
+    editor.innerHTML = "<p>@An</p>";
+    const textNode = editor.querySelector("p")!.firstChild as Text;
+    const range = document.createRange();
+    range.setStart(textNode, 3);
+    range.collapse(true);
+    window.getSelection()?.removeAllRanges();
+    window.getSelection()?.addRange(range);
+    fireEvent.input(editor);
+    expect(onMentionQueryChange).toHaveBeenCalledWith("An");
+  });
+
+  it("insere span data-user-id ao selecionar hit", () => {
+    const onChange = vi.fn();
+    const hits = [{ id: "69", kind: "user", label: "Ana" }];
+    const { container } = render(
+      <RichTextEditor
+        value="<p></p>"
+        onChange={onChange}
+        mentionHits={hits}
+        onMentionQueryChange={() => undefined}
+      />,
+    );
+    const editor = container.querySelector(".delpi-ui-rich-text__editor") as HTMLElement;
+    editor.innerHTML = "<p>Oi @A</p>";
+    const textNode = editor.querySelector("p")!.firstChild as Text;
+    const range = document.createRange();
+    range.setStart(textNode, 5);
+    range.collapse(true);
+    window.getSelection()?.removeAllRanges();
+    window.getSelection()?.addRange(range);
+    fireEvent.input(editor);
+    fireEvent.mouseDown(screen.getByRole("option", { name: /Ana/ }));
+    const span = editor.querySelector('span[data-user-id="69"]');
+    expect(span).toBeTruthy();
+    expect(span!.getAttribute("data-user-mention")).toBe("true");
+    expect(span!.textContent).toBe("@Ana");
+    expect(onChange).toHaveBeenCalled();
+    const html = String(onChange.mock.calls.at(-1)?.[0] ?? "");
+    expect(html).toContain('data-user-id="69"');
+  });
+
+  it("negativo: @ no meio da palavra não abre menção", () => {
+    const onMentionQueryChange = vi.fn();
+    const { container } = render(
+      <RichTextEditor
+        value="<p></p>"
+        onChange={() => undefined}
+        onMentionQueryChange={onMentionQueryChange}
+      />,
+    );
+    const editor = container.querySelector(".delpi-ui-rich-text__editor") as HTMLElement;
+    editor.innerHTML = "<p>email@An</p>";
+    const textNode = editor.querySelector("p")!.firstChild as Text;
+    const range = document.createRange();
+    range.setStart(textNode, 8);
+    range.collapse(true);
+    window.getSelection()?.removeAllRanges();
+    window.getSelection()?.addRange(range);
+    fireEvent.input(editor);
+    expect(onMentionQueryChange).toHaveBeenCalledWith(null);
+  });
 });

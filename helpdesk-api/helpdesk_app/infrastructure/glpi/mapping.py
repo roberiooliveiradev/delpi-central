@@ -15,6 +15,7 @@ from helpdesk_app.application.services.message_html_sanitizer import sanitize_me
 from helpdesk_app.domain.errors import GlpiNotFound, GlpiValidation
 from helpdesk_app.domain.models import (
     Attachment,
+    CatalogUser,
     Category,
     PersonIdentity,
     TicketDetail,
@@ -197,6 +198,7 @@ def parse_ticket_detail(payload: dict, timeline_payload: dict | list) -> TicketD
         created_at=summary.created_at,
         requester_display_name=summary.requester_display_name,
         assigned_display_name=summary.assigned_display_name,
+        assigned_user_id=_team_user_id(payload, "assigned"),
         requester_identity=_requester_identity(payload),
         status_id=summary.status_id,
         can_followup=ticket_allows_followup(summary.status_id),
@@ -233,6 +235,70 @@ def team_member_observer_body(user_id: int) -> dict:
     if user_id <= 0:
         raise GlpiValidation("observer_id inválido.")
     return {"type": "User", "role": "observer", "id": int(user_id)}
+
+
+def team_member_assigned_body(user_id: int) -> dict:
+    """HD-011: only type/role/id — never requester or entity."""
+    if user_id <= 0:
+        raise GlpiValidation("assignee_id inválido.")
+    return {"type": "User", "role": "assigned", "id": int(user_id)}
+
+
+def normalize_assignee_id(raw) -> int | None:
+    if raw is None or raw == "":
+        return None
+    try:
+        user_id = int(raw)
+    except (TypeError, ValueError) as exc:
+        raise GlpiValidation("assignee_id inválido.") from exc
+    if user_id <= 0:
+        raise GlpiValidation("assignee_id inválido.")
+    return user_id
+
+
+def build_user_search_filter(q: str = "") -> str:
+    """RSQL for Administration/User — always keyed by id in the response (G-A4).
+
+    Name search ORs case variants: GLPI/MySQL `=like=` is case-sensitive on this
+    collation, so typing `@micha` must still match `Michael`.
+    """
+    term = _search_term(str(q or "").strip())
+    base = "is_active==true"
+    if not term:
+        return base
+    if term.isdigit():
+        return f"{base};id=={int(term)}"
+    variants: list[str] = []
+    for candidate in (term, term.lower(), term.upper(), term.capitalize(), term.title()):
+        if candidate and candidate not in variants:
+            variants.append(candidate)
+    parts: list[str] = []
+    for variant in variants:
+        parts.extend(
+            [
+                f"username=like=*{variant}*",
+                f"realname=like=*{variant}*",
+                f"firstname=like=*{variant}*",
+            ]
+        )
+    return f"{base};({','.join(parts)})"
+
+
+def parse_catalog_users(payload: dict | list) -> list[CatalogUser]:
+    users: list[CatalogUser] = []
+    for row in _results(payload):
+        if not isinstance(row, dict):
+            continue
+        raw_id = row.get("id")
+        try:
+            user_id = int(raw_id)
+        except (TypeError, ValueError):
+            continue
+        if user_id <= 0:
+            continue
+        name = _person_name(row) or display_text(row.get("username")) or str(user_id)
+        users.append(CatalogUser(id=user_id, display_name=name))
+    return users
 
 
 def normalize_observer_ids(raw) -> tuple[int, ...]:
@@ -462,6 +528,25 @@ def _team_name(row: dict, role: str) -> str:
     return ""
 
 
+def _team_user_id(row: dict, role: str) -> int | None:
+    team = row.get("team") or []
+    if not isinstance(team, list):
+        return None
+    for member in team:
+        if not isinstance(member, dict):
+            continue
+        if str(member.get("role") or "") != role:
+            continue
+        raw = member.get("id")
+        try:
+            user_id = int(raw)
+        except (TypeError, ValueError):
+            continue
+        if user_id > 0:
+            return user_id
+    return None
+
+
 def _observer_names(row: dict) -> str:
     team = row.get("team") or []
     if not isinstance(team, list):
@@ -481,6 +566,25 @@ def _observer_names(row: dict) -> str:
 def ticket_allows_followup(status_id: int | None) -> bool:
     """14-H1: Colaborador still posts follow-up on solved (5); closed (6) is 403."""
     return status_id != 6
+
+
+def timeline_has_solution(timeline: tuple) -> bool:
+    return any(getattr(entry, "kind", None) == "solution" for entry in (timeline or ()))
+
+
+def solicitante_cycle_flags(
+    *,
+    requester_mine: bool,
+    status_id: int | None,
+    satisfaction_submitted: bool,
+    legacy_enabled: bool,
+) -> tuple[bool, bool, bool]:
+    """Backend-first H10 capabilities (legacy apirest). Returns accept, reject, submit_satisfaction."""
+    if not legacy_enabled or not requester_mine:
+        return False, False, False
+    can_decide = status_id == 5
+    can_sat = status_id == 6 and not satisfaction_submitted
+    return can_decide, can_decide, can_sat
 
 
 def _person_name(value: dict) -> str:

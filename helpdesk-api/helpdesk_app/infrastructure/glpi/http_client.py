@@ -16,6 +16,7 @@ from helpdesk_app.domain.errors import (
 )
 from helpdesk_app.domain.models import (
     Attachment,
+    CatalogUser,
     Category,
     PersonIdentity,
     TicketDetail,
@@ -29,6 +30,7 @@ from helpdesk_app.infrastructure.glpi.mapping import (
     create_ticket_body,
     display_text,
     parse_categories,
+    parse_catalog_users,
     parse_created_id,
     payload_row_count,
     parse_ticket_detail,
@@ -36,6 +38,8 @@ from helpdesk_app.infrastructure.glpi.mapping import (
     parse_token_set,
     parse_viewer_identity,
     team_member_observer_body,
+    team_member_assigned_body,
+    build_user_search_filter,
     attachment_filename,
 )
 
@@ -127,16 +131,20 @@ class HttpxGlpiClient:
         return parse_token_set(payload)
 
     def refresh(self, refresh_token: str) -> TokenSet:
-        payload = self._form(
-            "/api.php/token",
-            {
-                "grant_type": "refresh_token",
-                "refresh_token": refresh_token,
-                "client_id": self._client_id,
-                "client_secret": self._client_secret,
-            },
-        )
-        return parse_token_set(payload)
+        try:
+            payload = self._form(
+                "/api.php/token",
+                {
+                    "grant_type": "refresh_token",
+                    "refresh_token": refresh_token,
+                    "client_id": self._client_id,
+                    "client_secret": self._client_secret,
+                },
+            )
+            return parse_token_set(payload)
+        except GlpiValidation as exc:
+            # GLPI returns 400 invalid_grant for expired/rotated refresh — not a form bug.
+            raise GlpiUnauthorized("Refresh token do GLPI recusado.") from exc
 
     def list_categories(self, access_token: str) -> list[Category]:
         collected: list[Category] = []
@@ -245,6 +253,47 @@ class HttpxGlpiClient:
             json_body=body,
         )
 
+    def add_ticket_assignee(self, access_token: str, ticket_id: int, user_id: int) -> None:
+        body = team_member_assigned_body(user_id)
+        self._json(
+            "POST",
+            f"/api.php/v2.2/Assistance/Ticket/{int(ticket_id)}/TeamMember",
+            token=access_token,
+            json_body=body,
+        )
+
+    def remove_ticket_assignee(self, access_token: str, ticket_id: int, user_id: int) -> None:
+        body = team_member_assigned_body(user_id)
+        self._json(
+            "DELETE",
+            f"/api.php/v2.2/Assistance/Ticket/{int(ticket_id)}/TeamMember",
+            token=access_token,
+            json_body=body,
+        )
+
+    def list_users(self, access_token: str, *, q: str = "", limit: int = 20) -> list[CatalogUser]:
+        safe_limit = max(1, min(int(limit or 20), 50))
+        payload = self._json(
+            "GET",
+            "/api.php/v2.2/Administration/User",
+            token=access_token,
+            params={
+                "start": 0,
+                "limit": safe_limit,
+                "filter": build_user_search_filter(q),
+                "sort": "id:asc",
+            },
+        )
+        return parse_catalog_users(payload)
+
+    def can_assign_tickets(self, access_token: str) -> bool:
+        """Backend-first capability: catalog-by-id must be readable (E0 G-A4)."""
+        try:
+            self.list_users(access_token, q="", limit=1)
+            return True
+        except GlpiForbidden:
+            return False
+
     def add_followup(self, access_token: str, ticket_id: int, content: str) -> int:
         payload = self._json(
             "POST",
@@ -264,12 +313,7 @@ class HttpxGlpiClient:
         mime: str,
     ) -> Attachment:
         """Upload via legacy apirest Document (HLAPI has no multipart). Product-authorized H12."""
-        if not self._legacy_upload_enabled:
-            raise GlpiFeatureDisabled("Upload de anexo desligado neste ambiente.")
-        if not self._legacy_app_token:
-            raise GlpiFeatureDisabled("App-Token da API legada não configurado.")
-        if not self._legacy_user_token:
-            raise GlpiFeatureDisabled("User-Token da API legada não configurado.")
+        self._legacy_require_ready()
         if not content:
             raise GlpiValidation("Arquivo vazio.")
         if len(content) > self._legacy_max_upload_bytes:
@@ -311,7 +355,7 @@ class HttpxGlpiClient:
             return False
         # OAuth subject can see the ticket before we open the technical session.
         self._json("GET", f"/api.php/v2.2/Assistance/Ticket/{ticket_id}", token=access_token)
-        if not self._legacy_upload_enabled or not self._legacy_app_token or not self._legacy_user_token:
+        if not self._legacy_ready():
             return False
         session_token = self._legacy_init_session()
         try:
@@ -323,10 +367,187 @@ class HttpxGlpiClient:
         finally:
             self._legacy_kill_session(session_token)
 
-    def _legacy_init_session(self) -> str:
-        """Open apirest session with App-Token + dedicated user_token (H12 Document only).
+    def accept_ticket_solution(self, access_token: str, ticket_id: int, content: str = "") -> None:
+        """Close solved ticket via legacy ITILFollowup add_close (H10 Branch B)."""
+        self._legacy_cycle_write(
+            access_token,
+            ticket_id,
+            content=content or "Solução aceita.",
+            add_close=True,
+            add_reopen=False,
+        )
 
-        OAuth Bearer is HLAPI-only. Upload runs as technical user after HLAPI ACL check.
+    def reject_ticket_solution(self, access_token: str, ticket_id: int, content: str = "") -> None:
+        """Reopen solved/closed ticket via legacy ITILFollowup add_reopen (H10 Branch B)."""
+        self._legacy_cycle_write(
+            access_token,
+            ticket_id,
+            content=content or "Solução recusada.",
+            add_close=False,
+            add_reopen=True,
+        )
+
+    def get_ticket_satisfaction(
+        self, access_token: str, ticket_id: int
+    ) -> tuple[int, str] | None:
+        """Return (score, comment) when TicketSatisfaction exists; else None."""
+        ticket_id = int(ticket_id)
+        if ticket_id <= 0:
+            raise GlpiValidation("ticket_id inválido.")
+        self._json("GET", f"/api.php/v2.2/Assistance/Ticket/{ticket_id}", token=access_token)
+        if not self._legacy_ready():
+            raise GlpiFeatureDisabled("Ciclo legado desligado neste ambiente.")
+        session_token = self._legacy_init_session()
+        try:
+            rows = self._legacy_get_json(
+                session_token, f"/apirest.php/Ticket/{ticket_id}/TicketSatisfaction"
+            )
+        finally:
+            self._legacy_kill_session(session_token)
+        if not isinstance(rows, list) or not rows:
+            return None
+        row = rows[0] if isinstance(rows[0], dict) else {}
+        raw = row.get("satisfaction")
+        if raw in (None, ""):
+            return None
+        try:
+            score = int(raw)
+        except (TypeError, ValueError):
+            return None
+        return score, str(row.get("comment") or "")
+
+    def submit_ticket_satisfaction(
+        self,
+        access_token: str,
+        ticket_id: int,
+        *,
+        satisfaction: int,
+        comment: str = "",
+    ) -> None:
+        ticket_id = int(ticket_id)
+        if ticket_id <= 0:
+            raise GlpiValidation("ticket_id inválido.")
+        if satisfaction not in {1, 2, 3, 4, 5}:
+            raise GlpiValidation("satisfaction inválida.")
+        self._legacy_require_ready()
+        self._json("GET", f"/api.php/v2.2/Assistance/Ticket/{ticket_id}", token=access_token)
+        session_token = self._legacy_init_session()
+        try:
+            self._legacy_post_json(
+                session_token,
+                "/apirest.php/TicketSatisfaction",
+                {
+                    "input": {
+                        "tickets_id": ticket_id,
+                        "satisfaction": int(satisfaction),
+                        "comment": str(comment or ""),
+                    }
+                },
+            )
+        finally:
+            self._legacy_kill_session(session_token)
+
+    def legacy_cycle_enabled(self) -> bool:
+        return self._legacy_ready()
+
+    def _legacy_cycle_write(
+        self,
+        access_token: str,
+        ticket_id: int,
+        *,
+        content: str,
+        add_close: bool,
+        add_reopen: bool,
+    ) -> None:
+        ticket_id = int(ticket_id)
+        if ticket_id <= 0:
+            raise GlpiValidation("ticket_id inválido.")
+        self._legacy_require_ready()
+        self._json("GET", f"/api.php/v2.2/Assistance/Ticket/{ticket_id}", token=access_token)
+        body: dict = {
+            "input": {
+                "itemtype": "Ticket",
+                "items_id": ticket_id,
+                "content": content,
+            }
+        }
+        if add_close:
+            body["input"]["add_close"] = 1
+        if add_reopen:
+            body["input"]["add_reopen"] = 1
+        session_token = self._legacy_init_session()
+        try:
+            self._legacy_post_json(session_token, "/apirest.php/ITILFollowup", body)
+        finally:
+            self._legacy_kill_session(session_token)
+
+    def _legacy_ready(self) -> bool:
+        return bool(
+            self._legacy_upload_enabled and self._legacy_app_token and self._legacy_user_token
+        )
+
+    def _legacy_require_ready(self) -> None:
+        if not self._legacy_upload_enabled:
+            raise GlpiFeatureDisabled("Operação legada desligada neste ambiente.")
+        if not self._legacy_app_token:
+            raise GlpiFeatureDisabled("App-Token da API legada não configurado.")
+        if not self._legacy_user_token:
+            raise GlpiFeatureDisabled("User-Token da API legada não configurado.")
+
+    def _legacy_get_json(self, session_token: str, path: str):
+        try:
+            response = self._http.request(
+                "GET",
+                f"{self._base}{path}",
+                headers={
+                    "Accept": "application/json",
+                    "Content-Type": "application/json",
+                    "App-Token": self._legacy_app_token,
+                    "Session-Token": session_token,
+                },
+            )
+        except httpx.TimeoutException as exc:
+            raise GlpiUnavailable("GLPI indisponível.") from exc
+        logger.info("glpi_legacy_get path=%s status=%s", path, response.status_code)
+        if response.status_code == 200:
+            if not response.content:
+                return []
+            data = response.json()
+            return data
+        if response.status_code == 404:
+            return []
+        _raise_for_status(response, "GET", path)
+        return []
+
+    def _legacy_post_json(self, session_token: str, path: str, body: dict) -> dict:
+        try:
+            response = self._http.request(
+                "POST",
+                f"{self._base}{path}",
+                headers={
+                    "Accept": "application/json",
+                    "Content-Type": "application/json",
+                    "App-Token": self._legacy_app_token,
+                    "Session-Token": session_token,
+                },
+                json=body,
+            )
+        except httpx.TimeoutException as exc:
+            raise GlpiUnavailable("GLPI indisponível.") from exc
+        logger.info("glpi_legacy_post path=%s status=%s", path, response.status_code)
+        if response.status_code in {200, 201}:
+            data = response.json() if response.content else {}
+            return data if isinstance(data, dict) else {"results": data}
+        body_text = (response.text or "")[:300]
+        if response.status_code == 400 and "Duplicate" in body_text:
+            raise GlpiValidation("Pesquisa de satisfação já registrada.")
+        _raise_for_status(response, "POST", path)
+        return {}
+
+    def _legacy_init_session(self) -> str:
+        """Open apirest session with App-Token + dedicated user_token (H12/H10).
+
+        OAuth Bearer is HLAPI-only. Legacy writes run as technical user after HLAPI ACL check.
         """
         try:
             response = self._http.request(

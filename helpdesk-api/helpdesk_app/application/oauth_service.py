@@ -4,7 +4,7 @@ import secrets
 from datetime import datetime, timedelta, timezone
 
 from helpdesk_app.application.ports import GlpiGateway, SessionStore, StateStore
-from helpdesk_app.domain.errors import GlpiUnauthorized, InvalidOAuthState, LinkRequired
+from helpdesk_app.domain.errors import GlpiUnauthorized, GlpiValidation, InvalidOAuthState, LinkRequired
 from helpdesk_app.domain.models import OAuthSession
 
 STATE_TTL = timedelta(minutes=10)
@@ -68,7 +68,7 @@ class OAuthService:
     def _refresh(self, session: OAuthSession) -> OAuthSession:
         try:
             tokens = self._glpi.refresh(session.refresh_token)
-        except GlpiUnauthorized as exc:
+        except (GlpiUnauthorized, GlpiValidation) as exc:
             self._sessions.delete(session.subject)
             raise LinkRequired("A sessão do GLPI expirou. Autorize de novo.") from exc
         updated = OAuthSession(

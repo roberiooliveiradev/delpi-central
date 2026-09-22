@@ -8,9 +8,15 @@ import {
   useRef,
   useState,
   type ClipboardEvent,
+  type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
 } from "react";
 
+import {
+  MentionMenu,
+  mentionMenuBemClasses,
+  type MentionMenuHit,
+} from "../collaboration/MentionMenu";
 import { applyFormat, formatIntent } from "./formatApply";
 import { RichTextLinkDialog } from "./RichTextLinkDialog";
 import { RichTextSourceEditor } from "./RichTextSourceEditor";
@@ -48,10 +54,16 @@ import {
   type ResolveAttachmentImageSrc,
 } from "./richTextMarkdown";
 import { normalizeRichTextPastedHtml } from "./richTextTable";
+import {
+  insertGlpiUserMentionAtPlainRange,
+  refreshActiveUserMention,
+  type ActiveMentionQuery,
+} from "./richTextUserMention";
 
 export type RichTextEditorMode = "edit" | "preview";
 export type { RichTextSourceKind };
 export type { RichTextInlineImageInsert };
+export type { MentionMenuHit };
 
 /** Host materializes File → src/attrs; kit inserts at caret (S-P). */
 export type RichTextPasteImagesHandler = (
@@ -64,6 +76,11 @@ export type RichTextPasteImagesHandler = (
 
 export type RichTextEditorHandle = {
   insertInlineImages: (items: readonly RichTextInlineImageInsert[]) => void;
+};
+
+export type RichTextMentionLabels = {
+  listAriaLabel: string;
+  emptyLabel: string;
 };
 
 export type RichTextEditorProps = {
@@ -92,7 +109,21 @@ export type RichTextEditorProps = {
   onPasteImages?: RichTextPasteImagesHandler;
   /** Called when async clipboard.read fails after a screenshot-like paste. */
   onPasteImagesError?: (error: unknown) => void;
+  /**
+   * Optional @ mention (GLPI-style HTML spans). Host supplies hits; kit inserts
+   * `span[data-user-mention][data-user-id]` — not MentionComposer markdown tokens.
+   */
+  mentionHits?: readonly MentionMenuHit[];
+  onMentionQueryChange?: (query: string | null) => void;
+  mentionLabels?: RichTextMentionLabels;
 };
+
+const DEFAULT_MENTION_LABELS: RichTextMentionLabels = {
+  listAriaLabel: "Sugestões de menção",
+  emptyLabel: "Nenhum usuário encontrado",
+};
+
+const RICH_TEXT_MENTION_MENU = mentionMenuBemClasses("delpi-ui-rich-text");
 
 type LinkDialogState =
   | { mode: "create"; range: Range | null }
@@ -139,6 +170,9 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
       persistAttachmentImageSrc,
       onPasteImages,
       onPasteImagesError,
+      mentionHits = [],
+      onMentionQueryChange,
+      mentionLabels,
     },
     handleRef,
   ) {
@@ -151,12 +185,16 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
   const [linkDialog, setLinkDialog] = useState<LinkDialogState | null>(null);
   const [activeLink, setActiveLink] = useState<ActiveLinkState | null>(null);
   const [selectedImage, setSelectedImage] = useState<SelectedImageState | null>(null);
+  const [activeMention, setActiveMention] = useState<ActiveMentionQuery | null>(null);
   const imageResizeRef = useRef<{
     img: HTMLImageElement;
     startX: number;
     startWidth: number;
   } | null>(null);
   const sourceMode = sourceKind !== "visual";
+  const mentionsEnabled = typeof onMentionQueryChange === "function";
+  const resolvedMentionLabels = mentionLabels ?? DEFAULT_MENTION_LABELS;
+  const mentionMenuOpen = mentionsEnabled && Boolean(activeMention) && !disabled && !sourceMode;
   const rootClass = useMemo(
     () =>
       ["delpi-ui-rich-text", fill ? "delpi-ui-rich-text--fill" : null, className]
@@ -244,6 +282,19 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
     }
   }, []);
 
+  const refreshMentionState = useCallback(() => {
+    if (!mentionsEnabled || sourceMode || disabled) {
+      setActiveMention(null);
+      return;
+    }
+    setActiveMention(refreshActiveUserMention(editorRef.current));
+  }, [mentionsEnabled, sourceMode, disabled]);
+
+  useEffect(() => {
+    if (!mentionsEnabled) return;
+    onMentionQueryChange?.(activeMention ? activeMention.query : null);
+  }, [activeMention, mentionsEnabled, onMentionQueryChange]);
+
   const emitChange = useCallback(() => {
     const raw = editorRef.current?.innerHTML || "";
     const persisted = persistAttachmentImageSrc
@@ -251,6 +302,28 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
       : raw;
     onChange(persisted);
   }, [onChange, persistAttachmentImageSrc]);
+
+  const applyMentionHit = useCallback(
+    (hit: MentionMenuHit) => {
+      const editorEl = editorRef.current;
+      if (!editorEl || !activeMention) return;
+      const ok = insertGlpiUserMentionAtPlainRange(
+        editorEl,
+        activeMention.start,
+        activeMention.end,
+        hit,
+      );
+      setActiveMention(null);
+      if (ok) {
+        emitChange();
+        requestAnimationFrame(() => {
+          editorEl.focus();
+          refreshMentionState();
+        });
+      }
+    },
+    [activeMention, emitChange, refreshMentionState],
+  );
 
   const insertInlineImages = useCallback(
     (items: readonly RichTextInlineImageInsert[]) => {
@@ -612,6 +685,13 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
           setActiveLink(null);
           emitChange();
         }}
+        onKeyDown={(event: ReactKeyboardEvent<HTMLDivElement>) => {
+          if (!mentionMenuOpen) return;
+          if (event.key === "Escape") {
+            event.preventDefault();
+            setActiveMention(null);
+          }
+        }}
         onClick={(event) => {
           if (sourceMode || disabled) return;
           const target = event.target as HTMLElement | null;
@@ -648,12 +728,20 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
         onInput={() => {
           if (fitUntypedImages()) {
             emitChange();
+            refreshMentionState();
             return;
           }
           emitChange();
+          refreshMentionState();
         }}
-        onMouseUp={syncActiveLink}
-        onKeyUp={syncActiveLink}
+        onMouseUp={() => {
+          syncActiveLink();
+          refreshMentionState();
+        }}
+        onKeyUp={() => {
+          syncActiveLink();
+          refreshMentionState();
+        }}
         onBeforeInput={(event) => {
           if (sourceMode) return;
           const inputType = event.nativeEvent.inputType;
@@ -743,6 +831,20 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
         onSubmit={handleLinkSubmit}
         onClose={() => setLinkDialog(null)}
       />
+
+      {mentionsEnabled ? (
+        <MentionMenu
+          open={mentionMenuOpen}
+          anchorRef={editorRef}
+          hits={mentionHits}
+          classNames={RICH_TEXT_MENTION_MENU}
+          listAriaLabel={resolvedMentionLabels.listAriaLabel}
+          emptyLabel={resolvedMentionLabels.emptyLabel}
+          portalScopeClassName={portalScopeClassName}
+          onSelect={applyMentionHit}
+          onDismiss={() => setActiveMention(null)}
+        />
+      ) : null}
     </div>
   );
 });

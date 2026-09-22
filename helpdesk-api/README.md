@@ -19,13 +19,18 @@ Defina no ambiente do Compose. Não versione segredo.
 | `PUBLIC_BASE_URL` | origem do portal após o callback |
 | `PLUGINS_DB_*` | Postgres dos plugins |
 | `JWT_SECRET` e `KEYCLOAK_*` | mesmo contrato das outras APIs de módulo |
-| `GLPI_LEGACY_UPLOAD_ENABLED` | H12 — `true` liga upload Document via API legada (default `false`) |
+| `GLPI_LEGACY_UPLOAD_ENABLED` | H12/H10 — `true` liga sessão limada apirest (Document + ciclo solicitante; default `false`) |
 | `GLPI_LEGACY_APP_TOKEN` | App-Token do cliente apirest (cifrado no GLPI; valor plaintext no env do BFF) |
-| `GLPI_LEGACY_USER_TOKEN` | User-Token do usuário técnico de upload (`minha-delpi-upload`, perfil Technician) |
+| `GLPI_LEGACY_USER_TOKEN` | User-Token do usuário técnico (`minha-delpi-upload`, perfil Technician) |
 | `GLPI_LEGACY_MAX_UPLOAD_BYTES` | teto do multipart (default `20971520`) |
 
 Gere a chave de cifra com `python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"` no host, e coloque o valor só no `.env` da infra.
 
-## H12 — upload (Document)
+## H12 / H10 — API legada (Document + ciclo)
 
-HLAPI não recebe binário. Com a flag ligada, `POST /tickets/{id}/attachments` usa `apirest.php/Document` + App-Token + User-Token técnico. Provisionamento: `scripts/enable_glpi_legacy_api.sh`. Não reabre a API legada para outras operações. Detalhe e prova: `docs/12-roadmap-e-evolucao/helpdesk/05-roadmap.md` §H12 e ledger `H12.upload.*`.
+HLAPI não recebe binário nem fecha o ciclo do solicitante. Com a flag ligada, o BFF usa `apirest.php` + App-Token + User-Token técnico **depois** de provar ACL com o Bearer OAuth:
+
+- H12: `POST /tickets/{id}/attachments` → `Document` + `Document_Item`
+- H10: `POST …/solution/accept|reject` → `ITILFollowup` (`add_close` / `add_reopen`); `PUT …/satisfaction` → `TicketSatisfaction`
+
+Provisionamento: `scripts/enable_glpi_legacy_api.sh`. Evidência: ledger `H12.upload.*` / `H10.write.*` e `evidence/e10-cycle-console.md`.

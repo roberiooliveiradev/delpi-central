@@ -1,6 +1,6 @@
 # 12 — Conteúdo da mensagem da conversa
 
-> **Status:** leitura HTML + imagem + escrita rica **IMPLEMENTADAS** (E8); menção leitura **IMPLEMENTADA** (E14 / M-07). Escrita `@` **BLOQUEADA** (M-23). Paridade E6–E13 fechada. Não altera [`06-plano-execucao.md`](./06-plano-execucao.md).
+> **Status:** leitura HTML + imagem + escrita rica **IMPLEMENTADAS** (E8); menção leitura **IMPLEMENTADA** (E14 / M-07); menção escrita `@` **IMPLEMENTADA** (M-23). Paridade E6–E13 fechada. Não altera [`06-plano-execucao.md`](./06-plano-execucao.md).
 > **Tela publicada:** [`WIREFRAMES.md`](./WIREFRAMES.md) §3 — `bodyMode=html`, `description_html` / `content_html`, compositor `HelpdeskRichTextField`.
 > **Conversa (estrutura):** [`10-conversa-do-chamado.md`](./10-conversa-do-chamado.md).
 > **Contrato:** [`03-contrato.md`](./03-contrato.md) + campos HTML aditivos. Menção: [`evidence/e14-mentions.md`](./evidence/e14-mentions.md).
@@ -91,7 +91,7 @@ O que o BFF deve **esperar** no `content` cru — não inventar outro formato.
 - texto do chip = conteúdo do nó (rótulo);
 - **proibido** casar menção pelo nome.
 
-Perfil GLPI pode desligar ou restringir menção (Assistance: Disabled / Full / Restricted aos atores). O BFF **lê** o que já foi gravado; não precisa reimplementar essa política na leitura. Na escrita, a lista de quem pode ser mencionado depende do perfil — HIPOTESE até haver endpoint HLAPI de atores/usuários mencionáveis; sem isso M-23 não vira etapa.
+Perfil GLPI pode desligar ou restringir menção (Assistance: Disabled / Full / Restricted aos atores). O BFF **lê** o que já foi gravado e na escrita reutiliza `GET /users` (mesmo catálogo do assignee). Falha de write por política Restricted = `glpi_forbidden` — o BFF não inventa matriz de atores.
 
 **Imagem embutida** (CONFIRMADO_NO_CODIGO upstream; produção HIPOTESE H1/H2):
 
@@ -156,7 +156,7 @@ Lido no schema do GLPI 11.0.5 (`ITILController`):
 
 POST de abertura e de acompanhamento aceita `content` string. A HLAPI não define multipart. Por isso HTML no JSON é o caminho de escrita rica; binário de arquivo novo não é.
 
-Não há, neste inventário, operação HLAPI de “usuários mencionáveis” confirmada. **M-23 = BLOQUEADO** até existir path PROVEN que liste usuários por **id** (não por nome). M-07 (chip na leitura) **IMPLEMENTADO** E14 via `enrichGlpiUserMentionSpans`.
+Catálogo de usuários por id: `GET /users` (BFF → HLAPI `Administration/User`) — **PROVEN** na onda assignee. **M-23 = IMPLEMENTADO**: `@` no create/reply grava `span[data-user-mention][data-user-id]` via kit `RichTextEditor` + `listUsers`. M-07 (chip na leitura) **IMPLEMENTADO** E14 via `enrichGlpiUserMentionSpans`.
 
 ## 5. O que a Minha DELPI faz hoje
 
@@ -181,8 +181,8 @@ GLPI HTML
 | Kit `MessageThread` | `html` (helpdesk), `markdown`, `plain` |
 | Kit strip | defesa no cliente após o BFF |
 | Kit `RichTextEditor` | toolbar WYSIWYG (ênfase, cor, H2, lista, alinhamento, fonte, tabela, link, HR, fonte HTML/MD); **sem** botão de imagem |
-| Kit `MentionComposer` | salas; `@` + cola imagem; **proibido** no helpdesk para `@` (M-23); cola/upload H12 usa `HelpdeskRichTextField` |
-| Ajuda | `helpTooltips.create` / `.detail` descrevem formatação, imagem no corpo e menção leitura |
+| Kit `MentionComposer` | salas; `@` markdown por label — **não** usado no helpdesk; M-23 usa `RichTextEditor` + span por id |
+| Ajuda | `helpTooltips.create` / `.detail` descrevem formatação, imagem no corpo e `@` para mencionar |
 
 **Causa histórica do achatamento (corrigida):** o tradutor usava `display_text` no corpo. Hoje o corpo passa pelo sanitizer canônico do BFF.
 
@@ -205,7 +205,7 @@ O GLPI 11 carrega TinyMCE em toda página. A doc oficial não lista os botões; 
 | Tabela | sim | sim | leitura + escrita |
 | Código | sim | modo fonte + bloco | leitura + escrita |
 | Citação | sim | via HTML | leitura; escrita se o kit já emitir |
-| Menção `@` | plugin TinyMCE | `MentionText` / `MentionComposer` (salas, por **label**) | leitura por `data-user-id` (E14); escrita BLOQUEADA (M-23) |
+| Menção `@` | plugin TinyMCE | `RichTextEditor` + `MentionMenu` (helpdesk, por **id**); salas usam `MentionComposer` (label) | leitura + escrita por `data-user-id` (E14 / M-23) |
 | Imagem no corpo | insert/colar → Documento | `MentionComposer` cola blob | leitura reescrita; escrita BLOQUEADA |
 | Vídeo / iframe / objeto | TinyMCE media (se ligado) | strip remove | **fora** — nunca publicar |
 | Emoji | possível | unicode | unicode no texto; sem sprite do GLPI |
@@ -290,7 +290,7 @@ FORA                  → não entra neste produto
 | M-20 | Compositor rico no lugar do textarea (parágrafo, ênfase, lista, link) | IMPLEMENTADO | `HelpdeskRichTextField` → `RichTextEditor` |
 | M-21 | POST `content` em HTML sanitizado, não texto achatado | IMPLEMENTADO | BFF `prepare_outbound_message_html` |
 | M-22 | Título, tabela, código, cor, alinhamento no compositor | IMPLEMENTADO | toolbar do `RichTextEditor` |
-| M-23 | Menção no compositor (`@`) | **BLOQUEADO** — sem path HLAPI de mencionáveis por id | só com id; sem `MentionComposer` das salas |
+| M-23 | Menção no compositor (`@`) | **IMPLEMENTADO** | `RichTextEditor` + `GET /users` → span `data-user-id`; sem `MentionComposer` das salas |
 | M-24 | Inserir imagem ou arquivo novo no envio | **IMPLEMENTADO** H12 | `uploadTicketAttachment` + Document |
 | M-25 | Colar imagem da área de transferência | **URGENTE / DRIFT** — runtime quebra; alvo = paridade `MentionComposer` via `RichTextEditor.onPasteImages` | kit `richTextClipboardImages` + host upload |
 | M-25b | Preview autenticado após F5 no compositor | **URGENTE / DRIFT** — imagem quebra no reload | `resolveAttachmentImageSrc` + persist path BFF (contrato das salas) |
@@ -311,7 +311,7 @@ FORA                  → não entra neste produto
 | M-34 | Chip de menção a partir de `data-user-id`, sem casar `@nome` | **IMPLEMENTADO** E14 | `enrichGlpiUserMentionSpans` no kit |
 | M-35 | `resolveAttachmentImageSrc` para `document_id` do BFF (não `attachment:{uuid}` das salas) | **IMPLEMENTADO** (adapter no host / rewrite BFF) |
 
-Enquanto M-23 estiver BLOQUEADO, o helpdesk **não** importa `MentionComposer` das salas.
+O helpdesk **não** importa `MentionComposer` das salas; M-23 reutiliza só `detectActiveMention` + `MentionMenu` no `RichTextEditor`.
 
 ### 8.4 Satélites
 
@@ -429,7 +429,7 @@ Campos de rótulo (`title`, nomes) continuam em `display_text`. Conteúdo de men
 | ID | Falta | Bloqueia |
 |---|---|---|
 | H1–H4 | captura do `content` cru (6288 inexistente; 1108/1045/467) | **fechado** em §15 — M-08 liberado; A-07 permanece FORA |
-| H5 menção | lista HLAPI de mencionáveis por **id** | M-23 **BLOQUEADO**; M-07 **IMPLEMENTADO** E14 (attrs `data-user-*` confirmados no bleach) |
+| H5 menção | lista HLAPI de usuários por **id** via `GET /users` | M-23 **IMPLEMENTADO**; M-07 **IMPLEMENTADO** E14 (attrs `data-user-*` no bleach) |
 | H6 teto | tamanho máximo que o GLPI/BFF aceita | M-29 = 50 000 caracteres no BFF |
 
 ## 15. Hipóteses de imagem — vereditos (E6.S1, 21/09/2026)
@@ -452,9 +452,9 @@ M-08 (rewrite de `document.send.php`) **IMPLEMENTADO** (E8.S1 + E8.S2 + E8.S4). 
 | ID | Veredito | Evidência |
 |---|---|---|
 | M-07 leitura | **IMPLEMENTADO** | BFF preserva `data-user-mention`/`data-user-id` (dígitos); kit `enrichGlpiUserMentionSpans` + `MessageThread` `bodyMode=html` aplica chip; identidade = id, rótulo = texto do span |
-| M-23 escrita `@` | **BLOQUEADO** | sem operação HLAPI de usuários mencionáveis confirmada neste inventário; não inventar catálogo por nome; sem `MentionComposer` |
+| M-23 escrita `@` | **IMPLEMENTADO** | create/reply → `RichTextEditor` + `GET /users` → span `data-user-id`; sem `MentionComposer` das salas |
 
-Desbloqueio de M-23 exige novo gate PROVEN (path + schema) e plano próprio — não reabre E8/E14.
+M-23 fechado com catálogo assignee (`GET /users`). Não reabrir E8/E14.
 
 ## 16. Prova, quando houver autorização
 

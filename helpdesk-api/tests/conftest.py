@@ -68,12 +68,25 @@ class FakeGlpi:
         self.created = []
         self.followups = []
         self.observers = []
+        self.assignees = []
+        self.removed_assignees = []
+        self.users = [
+            SimpleNamespace(id=2, display_name="glpi"),
+            SimpleNamespace(id=15, display_name="Ana Silva"),
+            SimpleNamespace(id=22, display_name="Bruno Costa"),
+        ]
+        self.can_assign = True
         self.uploads = []
+        self.accepted_solutions: list[tuple[int, str]] = []
+        self.rejected_solutions: list[tuple[int, str]] = []
+        self.satisfactions: dict[int, tuple[int, str]] = {}
+        self.legacy_cycle = True
         # document_id → ticket_id for Document_Item membership (may lag Timeline).
         self.document_links: dict[int, int] = {2: 7, 4: 7}
         self.calls = 0
         # When False, upload does not appear on ticket.attachments (Timeline lag).
         self.attach_uploads_to_timeline = True
+        self.refresh_error: Exception | None = None
 
     def authorization_url(self, *, state: str, code_challenge: str) -> str:
         return f"https://glpi.example/authorize?state={state}&challenge={code_challenge}"
@@ -83,6 +96,8 @@ class FakeGlpi:
         return self.tokens_by_code[code]
 
     def refresh(self, refresh_token: str) -> TokenSet:
+        if self.refresh_error is not None:
+            raise self.refresh_error
         return TokenSet("access-new", refresh_token, 3600)
 
     def list_categories(self, access_token: str):
@@ -116,6 +131,47 @@ class FakeGlpi:
         assert "requester" not in str(user_id)
         assert "entity" not in str(user_id)
         self.observers.append((ticket_id, user_id, access_token))
+
+    def add_ticket_assignee(self, access_token: str, ticket_id: int, user_id: int):
+        from dataclasses import replace
+
+        self.calls += 1
+        assert access_token
+        assert "requester" not in str(user_id)
+        assert "entity" not in str(user_id)
+        self.assignees.append((ticket_id, user_id, access_token))
+        if self.detail.id == ticket_id:
+            name = next((u.display_name for u in self.users if u.id == user_id), f"User {user_id}")
+            self.detail = replace(self.detail, assigned_user_id=user_id, assigned_display_name=name)
+
+    def remove_ticket_assignee(self, access_token: str, ticket_id: int, user_id: int):
+        from dataclasses import replace
+
+        self.calls += 1
+        assert access_token
+        self.removed_assignees.append((ticket_id, user_id, access_token))
+        if self.detail.id == ticket_id and self.detail.assigned_user_id == user_id:
+            self.detail = replace(self.detail, assigned_user_id=None, assigned_display_name="")
+
+    def list_users(self, access_token: str, *, q: str = "", limit: int = 20):
+        self.calls += 1
+        assert access_token
+        if not self.can_assign:
+            raise GlpiForbidden("negado")
+        term = (q or "").strip().lower()
+        rows = self.users
+        if term:
+            rows = [
+                u
+                for u in rows
+                if term in str(u.id) or term in u.display_name.lower()
+            ]
+        return rows[: max(1, min(int(limit or 20), 50))]
+
+    def can_assign_tickets(self, access_token: str) -> bool:
+        self.calls += 1
+        assert access_token
+        return bool(self.can_assign)
 
     def add_followup(self, access_token: str, ticket_id: int, content: str):
         self.calls += 1
@@ -165,6 +221,50 @@ class FakeGlpi:
                 attachments=self.detail.attachments + (attachment,),
             )
         return attachment
+
+    def legacy_cycle_enabled(self) -> bool:
+        return bool(self.legacy_cycle)
+
+    def accept_ticket_solution(self, access_token: str, ticket_id: int, content: str = "") -> None:
+        from dataclasses import replace
+
+        self.calls += 1
+        assert access_token
+        if ticket_id == 99:
+            raise GlpiNotFound("ausente")
+        self.accepted_solutions.append((ticket_id, content))
+        if self.detail.id == ticket_id:
+            self.detail = replace(self.detail, status_id=6, status="Fechado", can_followup=False)
+
+    def reject_ticket_solution(self, access_token: str, ticket_id: int, content: str = "") -> None:
+        from dataclasses import replace
+
+        self.calls += 1
+        assert access_token
+        if ticket_id == 99:
+            raise GlpiNotFound("ausente")
+        self.rejected_solutions.append((ticket_id, content))
+        if self.detail.id == ticket_id:
+            self.detail = replace(self.detail, status_id=1, status="Novo", can_followup=True)
+
+    def get_ticket_satisfaction(self, access_token: str, ticket_id: int):
+        self.calls += 1
+        assert access_token
+        return self.satisfactions.get(int(ticket_id))
+
+    def submit_ticket_satisfaction(
+        self,
+        access_token: str,
+        ticket_id: int,
+        *,
+        satisfaction: int,
+        comment: str = "",
+    ) -> None:
+        self.calls += 1
+        assert access_token
+        if int(ticket_id) in self.satisfactions:
+            raise GlpiValidation("Pesquisa de satisfação já registrada.")
+        self.satisfactions[int(ticket_id)] = (int(satisfaction), str(comment or ""))
 
 
 def build_client(glpi: FakeGlpi | None = None) -> tuple[TestClient, FakeGlpi]:

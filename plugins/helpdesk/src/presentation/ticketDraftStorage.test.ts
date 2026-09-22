@@ -43,6 +43,7 @@ describe("ticketDraftStorage", () => {
       title: "Impressora",
       description: "<p>Não imprime</p>",
       observerIdsInput: "15",
+      assigneeId: "22",
       categoryId: "3",
       urgencyId: "2",
     });
@@ -50,6 +51,7 @@ describe("ticketDraftStorage", () => {
       title: "Impressora",
       description: "<p>Não imprime</p>",
       observerIdsInput: "15",
+      assigneeId: "22",
       categoryId: "3",
       urgencyId: "2",
     });
@@ -57,6 +59,7 @@ describe("ticketDraftStorage", () => {
       title: "",
       description: "",
       observerIdsInput: "",
+      assigneeId: "",
       categoryId: "",
       urgencyId: "",
     });

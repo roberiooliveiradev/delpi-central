@@ -723,8 +723,11 @@ def test_mapping_list_requester_falls_back_to_user_recipient():
 
 def test_team_member_observer_body_is_hd011_safe():
     from helpdesk_app.infrastructure.glpi.mapping import (
+        normalize_assignee_id,
         normalize_observer_ids,
+        team_member_assigned_body,
         team_member_observer_body,
+        build_user_search_filter,
     )
 
     body = team_member_observer_body(15)
@@ -732,10 +735,23 @@ def test_team_member_observer_body_is_hd011_safe():
     assert "requester" not in body
     assert "entity" not in body
     assert normalize_observer_ids([15, 15, 22]) == (15, 22)
+    assigned = team_member_assigned_body(22)
+    assert assigned == {"type": "User", "role": "assigned", "id": 22}
+    assert "requester" not in assigned
+    assert normalize_assignee_id(22) == 22
+    assert normalize_assignee_id(None) is None
+    assert build_user_search_filter("") == "is_active==true"
+    assert "id==15" in build_user_search_filter("15")
+    name_filter = build_user_search_filter("micha")
+    assert "username=like=*micha*" in name_filter
+    assert "username=like=*Micha*" in name_filter
+    assert name_filter.startswith("is_active==true;")
     with pytest.raises(GlpiValidation):
         team_member_observer_body(0)
     with pytest.raises(GlpiValidation):
         normalize_observer_ids([-1])
+    with pytest.raises(GlpiValidation):
+        team_member_assigned_body(0)
 
 
 def test_mapping_list_publishes_solved_and_closed_instants():
@@ -941,3 +957,51 @@ def test_legacy_document_upload_uses_apirest_with_app_token():
     assert any("/apirest.php/Document" in item for item in calls)
     assert any("/apirest.php/Document_Item" in item for item in calls)
     assert any("killSession" in item for item in calls)
+
+
+def test_legacy_cycle_accept_reject_satisfaction():
+    calls: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls.append(f"{request.method} {request.url.path}")
+        if request.url.path.endswith("/Assistance/Ticket/7"):
+            return httpx.Response(200, json={"id": 7, "name": "t", "status": {"id": 5}})
+        if request.url.path.endswith("/apirest.php/initSession"):
+            return httpx.Response(200, json={"session_token": "sess-cycle"})
+        if request.url.path.endswith("/apirest.php/ITILFollowup"):
+            body = json.loads(request.content.decode())
+            assert body["input"]["items_id"] == 7
+            assert body["input"]["itemtype"] == "Ticket"
+            assert "add_close" in body["input"] or "add_reopen" in body["input"]
+            return httpx.Response(201, json={"id": 1})
+        if request.url.path.endswith("/apirest.php/TicketSatisfaction"):
+            body = json.loads(request.content.decode())
+            assert body["input"]["tickets_id"] == 7
+            assert body["input"]["satisfaction"] == 4
+            return httpx.Response(201, json={"id": 7})
+        if request.url.path.endswith("/apirest.php/Ticket/7/TicketSatisfaction"):
+            return httpx.Response(
+                200,
+                json=[{"id": 1, "tickets_id": 7, "satisfaction": 4, "comment": "ok"}],
+            )
+        if request.url.path.endswith("/apirest.php/killSession"):
+            return httpx.Response(200, json={})
+        return httpx.Response(404, json={"error": "missing"})
+
+    client = HttpxGlpiClient(
+        base_url="https://glpi.example",
+        client_id="id",
+        client_secret="super-secret",
+        redirect_uri="https://centraldelpi.com.br/apps/helpdesk-api/auth/glpi/callback",
+        legacy_upload_enabled=True,
+        legacy_app_token="app-token-x",
+        legacy_user_token="user-token-x",
+        transport=httpx.MockTransport(handler),
+    )
+    client.accept_ticket_solution("oauth", 7, "aceito")
+    client.reject_ticket_solution("oauth", 7, "recuso")
+    client.submit_ticket_satisfaction("oauth", 7, satisfaction=4, comment="ok")
+    assert client.get_ticket_satisfaction("oauth", 7) == (4, "ok")
+    assert any("ITILFollowup" in item for item in calls)
+    assert any("TicketSatisfaction" in item for item in calls)
+

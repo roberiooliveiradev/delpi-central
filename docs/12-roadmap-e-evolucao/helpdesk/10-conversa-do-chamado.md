@@ -97,7 +97,7 @@ O kit já tem `MessageThread` em `plugins/plugin-ui/src/components/collaboration
 
 `RoomConversationShell` é o chrome das salas de outro produto. O helpdesk não importa esse shell nem a regra de sala.
 
-O compositor de resposta e o de abertura usam o mesmo `HelpdeskRichTextField` (`RichTextEditor` do kit). Colar / arrastar / clipe (H12) e redimensionar imagem (canto SE) estão publicados. `MentionComposer` das salas continua fora — M-23 `@` BLOQUEADO sem catálogo HLAPI.
+O compositor de resposta e o de abertura usam o mesmo `HelpdeskRichTextField` (`RichTextEditor` do kit). Colar / arrastar / clipe (H12), redimensionar imagem e menção `@` (M-23, span por `data-user-id`) estão publicados. `MentionComposer` das salas continua fora.
 
 ## 6. Contrato
 

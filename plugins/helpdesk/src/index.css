@@ -490,6 +490,19 @@
   margin-block: 0.75rem 0.25rem;
 }
 
+.dashboard-helpdesk .helpdesk-assign-panel {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem 1rem;
+  margin-block: 0.75rem 0.25rem;
+}
+
+.dashboard-helpdesk .helpdesk-assign-panel > *:first-child {
+  flex: 1 1 16rem;
+  min-width: 12rem;
+}
+
 .dashboard-helpdesk .helpdesk-lifecycle-cue__row {
   display: flex;
   flex-wrap: wrap;
@@ -507,6 +520,32 @@
 .dashboard-helpdesk .helpdesk-lifecycle-cue__cta {
   flex: 0 0 auto;
   gap: 0.4rem;
+}
+
+.dashboard-helpdesk .helpdesk-lifecycle-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.dashboard-helpdesk .helpdesk-lifecycle-actions__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+}
+
+.dashboard-helpdesk .helpdesk-lifecycle-note {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+}
+
+.dashboard-helpdesk .helpdesk-lifecycle-note input,
+.dashboard-helpdesk .helpdesk-lifecycle-note select {
+  min-height: 2.25rem;
+  padding: 0.35rem 0.6rem;
 }
 
 @media (max-width: 640px) {

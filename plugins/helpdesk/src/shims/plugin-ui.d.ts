@@ -360,6 +360,21 @@ declare module "@delpi/plugin-ui/index" {
     insertInlineImages: (items: readonly RichTextInlineImageInsert[]) => void;
   };
 
+  export type MentionMenuHit = {
+    id: string;
+    kind: string;
+    label: string;
+    subtitle?: string;
+    groupLabel?: string;
+    avatarSrc?: string | null;
+    avatarName?: string | null;
+  };
+
+  export type RichTextMentionLabels = {
+    listAriaLabel: string;
+    emptyLabel: string;
+  };
+
   export type RichTextEditorProps = {
     value: string;
     onChange: (next: string) => void;
@@ -374,6 +389,9 @@ declare module "@delpi/plugin-ui/index" {
     persistAttachmentImageSrc?: (attachmentId: string) => string | null | undefined;
     onPasteImages?: RichTextPasteImagesHandler;
     onPasteImagesError?: (error: unknown) => void;
+    mentionHits?: readonly MentionMenuHit[];
+    onMentionQueryChange?: (query: string | null) => void;
+    mentionLabels?: RichTextMentionLabels;
   };
 
   export const RichTextEditor: ForwardRefExoticComponent<

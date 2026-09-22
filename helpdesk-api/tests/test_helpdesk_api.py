@@ -36,6 +36,34 @@ def test_delete_session_unlinks_only_the_subject():
     assert client.get("/auth/glpi/session", headers=auth_headers("user-a")).json()["linked"] is False
 
 
+def test_refresh_failure_asks_relink_not_validation_error():
+    """GLPI 400 on refresh_token must surface as glpi_link_required (409), not 422."""
+    from datetime import datetime, timezone
+
+    from helpdesk_app.domain.errors import GlpiValidation
+    from helpdesk_app.domain.models import OAuthSession
+
+    client, glpi = build_client()
+    link(client)
+    glpi.refresh_error = GlpiValidation("O GLPI recusou os dados enviados.")
+    oauth = client.app.state.oauth
+    session = oauth._sessions.get("user-a")
+    assert session is not None
+    oauth._sessions.save(
+        OAuthSession(
+            subject=session.subject,
+            access_token=session.access_token,
+            refresh_token=session.refresh_token,
+            access_expires_at=datetime(2020, 1, 1, tzinfo=timezone.utc),
+        )
+    )
+    response = client.get("/tickets", headers=auth_headers())
+    assert response.status_code == 409
+    assert response.json()["error"] == "glpi_link_required"
+    assert response.json()["authorize_url"].endswith("/auth/glpi/start")
+    assert oauth._sessions.get("user-a") is None
+
+
 def test_list_empty_is_ok_and_detail_hides_foreign_ticket():
     client, glpi = build_client()
     link(client)
@@ -164,6 +192,80 @@ def test_create_attaches_observers_without_requester_or_entity():
     assert forbidden.status_code == 422
 
 
+def test_create_attaches_assignee_hd011_safe():
+    client, glpi = build_client()
+    link(client)
+    created = client.post(
+        "/tickets",
+        json={
+            "title": "Com técnico",
+            "description": "Preciso de atendimento",
+            "category_id": 3,
+            "urgency_id": 3,
+            "assignee_id": 15,
+        },
+        headers={**auth_headers(), "Idempotency-Key": "intent-assign-create"},
+    )
+    assert created.status_code == 201
+    assert glpi.assignees == [(42, 15, "access-a")]
+
+
+def test_set_assignee_positive_and_reassign_sibling():
+    client, glpi = build_client()
+    link(client)
+    first = client.put(
+        "/tickets/7/assignee",
+        json={"user_id": 15},
+        headers={**auth_headers(), "Idempotency-Key": "intent-assign-1"},
+    )
+    assert first.status_code == 200
+    assert first.json()["user_id"] == 15
+    assert glpi.assignees[-1][:2] == (7, 15)
+
+    second = client.put(
+        "/tickets/7/assignee",
+        json={"user_id": 22},
+        headers={**auth_headers(), "Idempotency-Key": "intent-assign-2"},
+    )
+    assert second.status_code == 200
+    assert second.json()["user_id"] == 22
+    assert glpi.removed_assignees[-1][:2] == (7, 15)
+    assert glpi.assignees[-1][:2] == (7, 22)
+
+
+def test_set_assignee_negative_forbidden_and_invalid():
+    client, glpi = build_client()
+    link(client)
+    glpi.can_assign = False
+    forbidden_users = client.get("/users", headers=auth_headers())
+    assert forbidden_users.status_code == 403
+    assert forbidden_users.json()["error"] == "glpi_forbidden"
+
+    glpi.can_assign = True
+    caps = client.get("/session/capabilities", headers=auth_headers())
+    assert caps.status_code == 200
+    assert caps.json() == {"can_assign": True}
+
+    detail = client.get("/tickets/7", headers=auth_headers())
+    assert detail.status_code == 200
+    assert detail.json()["can_assign"] is True
+
+    bad = client.put(
+        "/tickets/7/assignee",
+        json={"user_id": 0},
+        headers={**auth_headers(), "Idempotency-Key": "intent-assign-bad"},
+    )
+    assert bad.status_code == 422
+
+
+def test_list_users_returns_id_and_display_name():
+    client, glpi = build_client()
+    link(client)
+    listed = client.get("/users?q=Ana", headers=auth_headers())
+    assert listed.status_code == 200
+    assert listed.json()["items"] == [{"id": 15, "display_name": "Ana Silva"}]
+
+
 def test_create_and_followup_sanitize_html_and_keep_plain_text():
     client, glpi = build_client()
     link(client)
@@ -185,6 +287,7 @@ def test_create_and_followup_sanitize_html_and_keep_plain_text():
         "/tickets",
         json={
             "title": "Teclado",
+
             "description": "Só texto puro",
             "category_id": 3,
             "urgency_id": 3,
@@ -388,3 +491,76 @@ def test_categories_come_from_glpi():
     assert response.json()["items"] == [{"id": 3, "name": "Hardware"}]
     urgencies = client.get("/urgencies", headers=auth_headers())
     assert [item["id"] for item in urgencies.json()["items"]] == [1, 2, 3, 4, 5]
+
+
+def test_solicitante_accept_reject_satisfaction_cycle():
+    from dataclasses import replace
+
+    from helpdesk_app.domain.models import TimelineEntry
+
+    client, glpi = build_client()
+    link(client)
+    glpi.detail = replace(
+        glpi.detail,
+        status_id=5,
+        status="Solucionado",
+        requester_mine=True,
+        timeline=(TimelineEntry(9, "solution", "Pronto", "2026-09-22T10:00:00Z", "Ana"),),
+    )
+    detail = client.get("/tickets/7", headers=auth_headers())
+    assert detail.status_code == 200
+    body = detail.json()
+    assert body["can_accept_solution"] is True
+    assert body["can_reject_solution"] is True
+    assert body["can_submit_satisfaction"] is False
+
+    denied = client.post(
+        "/tickets/7/solution/accept",
+        json={},
+        headers={**auth_headers(), "Idempotency-Key": "acc-denied"},
+    )
+    # still mine — should work
+    assert denied.status_code == 200
+    assert denied.json()["status_id"] == 6
+    assert glpi.accepted_solutions == [(7, "Solução aceita.")]
+
+    glpi.detail = replace(glpi.detail, status_id=5, status="Solucionado", requester_mine=False)
+    foreign = client.post(
+        "/tickets/7/solution/accept",
+        json={"content": "ok"},
+        headers={**auth_headers(), "Idempotency-Key": "acc-foreign"},
+    )
+    assert foreign.status_code == 403
+
+    glpi.detail = replace(glpi.detail, status_id=5, status="Solucionado", requester_mine=True)
+    rejected = client.post(
+        "/tickets/7/solution/reject",
+        json={"content": "ainda falha"},
+        headers={**auth_headers(), "Idempotency-Key": "rej-1"},
+    )
+    assert rejected.status_code == 200
+    assert rejected.json()["status_id"] == 1
+    assert glpi.rejected_solutions[-1] == (7, "ainda falha")
+
+    glpi.detail = replace(glpi.detail, status_id=6, status="Fechado", requester_mine=True, can_followup=False)
+    closed = client.get("/tickets/7", headers=auth_headers())
+    assert closed.json()["can_submit_satisfaction"] is True
+    sat = client.put(
+        "/tickets/7/satisfaction",
+        json={"satisfaction": 5, "comment": "ótimo"},
+        headers={**auth_headers(), "Idempotency-Key": "sat-1"},
+    )
+    assert sat.status_code == 201
+    assert sat.json() == {"satisfaction": 5, "comment": "ótimo"}
+    again = client.put(
+        "/tickets/7/satisfaction",
+        json={"satisfaction": 1},
+        headers={**auth_headers(), "Idempotency-Key": "sat-2"},
+    )
+    assert again.status_code == 422
+    got = client.get("/tickets/7/satisfaction", headers=auth_headers())
+    assert got.json() == {"satisfaction": 5, "comment": "ótimo"}
+    detail_after = client.get("/tickets/7", headers=auth_headers())
+    assert detail_after.json()["can_submit_satisfaction"] is False
+    assert detail_after.json()["satisfaction"] == 5
+

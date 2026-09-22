@@ -73,12 +73,15 @@ describe("Helpdesk list UX structural", () => {
     expect(replyBlock).not.toContain("HelpdeskIconButton");
   });
 
-  it("ciclo do solicitante: aviso + CTA glpiTicketFormUrl sem inventar approve na HLAPI", () => {
+  it("ciclo do solicitante: ações nativas H10 + CTA GLPI residual", () => {
     const page = read("HelpdeskPage.tsx");
     expect(page).toContain("solicitanteLifecycleCue");
+    expect(page).toContain("acceptTicketSolution");
+    expect(page).toContain("rejectTicketSolution");
+    expect(page).toContain("submitTicketSatisfaction");
     expect(page).toContain("glpiTicketFormUrl");
     expect(page).toContain("helpdesk-lifecycle-cue");
-    expect(page).not.toMatch(/add_close|add_reopen|TicketSatisfaction/);
+    expect(page).not.toMatch(/add_close|add_reopen/);
     const links = read("../presentation/glpiPublicLinks.ts");
     expect(links).toContain("helpdesk.centraldelpi.com.br");
     expect(links).toContain("ticket.form.php");
@@ -100,6 +103,23 @@ describe("Helpdesk list UX structural", () => {
     expect(ui).toMatch(/Paperclip[\s\S]*Anexar/);
   });
 
+  it("atribuição: picker no create/detail gated por can_assign + API users/assignee", () => {
+    const page = read("HelpdeskPage.tsx");
+    expect(page).toContain("getSessionCapabilities");
+    expect(page).toContain("listUsers");
+    expect(page).toContain("setTicketAssignee");
+    expect(page).toContain("canAssign");
+    expect(page).toContain("ticket.can_assign");
+    expect(page).toContain("helpdesk-assign-panel");
+    expect(page).toContain("helpTooltips.createUi.assignee");
+    expect(page).toContain("helpTooltips.detailUi.assignee");
+    expect(page).toContain('assignee_id: canAssign && assigneeId ? Number(assigneeId) : undefined');
+    const api = read("../api/helpdeskApi.ts");
+    expect(api).toContain("/users");
+    expect(api).toContain("/session/capabilities");
+    expect(api).toContain("/assignee");
+  });
+
   it("compose usa ConversationFileDropLayer do kit (sem onDrop ad hoc)", () => {
     const ui = read("../ui/helpdeskUi.tsx");
     expect(ui).toContain("createDashboardConversationFileDropLayer");
@@ -112,5 +132,23 @@ describe("Helpdesk list UX structural", () => {
     expect(ui).not.toMatch(/onDrop=\{onDrop\}/);
     expect(ui).not.toMatch(/onDragOver=\{/);
     expect(ui).not.toMatch(/dataTransfer\?\.files/);
+  });
+
+  it("M-23 menção @: create/reply ligam enableMentions + listUsers no campo", () => {
+    const page = read("HelpdeskPage.tsx");
+    const createBlock = page.slice(
+      page.indexOf('label="Descrição"'),
+      page.indexOf('label="Categoria"'),
+    );
+    expect(createBlock).toContain("enableMentions");
+    const replyBlock = page.slice(page.indexOf('label="Responder"'));
+    expect(replyBlock).toContain("enableMentions");
+    const ui = read("../ui/helpdeskUi.tsx");
+    expect(ui).toContain("enableMentions");
+    expect(ui).toContain("listUsers");
+    expect(ui).toContain("onMentionQueryChange");
+    expect(ui).toContain("mentionHits");
+    expect(ui).not.toContain("MentionComposer");
+    expect(page).not.toContain("MentionComposer");
   });
 });

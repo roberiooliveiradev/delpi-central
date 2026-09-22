@@ -1,7 +1,10 @@
 import {
   forwardRef,
+  useCallback,
+  useEffect,
   useImperativeHandle,
   useRef,
+  useState,
   type ComponentProps,
   type ReactNode,
 } from "react";
@@ -35,6 +38,7 @@ import {
   loadingStateCardBemClasses,
   pageHeaderTitleRowBemClasses,
   RichTextEditor,
+  type MentionMenuHit,
   type RichTextEditorHandle,
   type RichTextInlineImageInsert,
   sectionCardPacBemClasses,
@@ -46,6 +50,7 @@ import {
 } from "@delpi/plugin-ui/index";
 import { Paperclip } from "lucide-react";
 
+import { listUsers } from "../api/helpdeskApi";
 
 export { usePersistedViewLayout };
 
@@ -58,6 +63,11 @@ export {
 
 const PREFIX = "helpdesk";
 const selectClasses = selectFieldPacClasses(PREFIX);
+const MENTION_SEARCH_DEBOUNCE_MS = 250;
+const HELPDESK_MENTION_LABELS = {
+  listAriaLabel: "Sugestões de menção",
+  emptyLabel: "Nenhum usuário encontrado",
+};
 
 /** Overlay de arrastar-para-anexar — paridade InteractionRoom (plugin-ui). */
 export const HelpdeskConversationFileDrop =
@@ -172,6 +182,11 @@ export type HelpdeskRichTextFieldProps = {
   resolveAttachmentImageSrc?: (attachmentId: string) => string | null | undefined;
   /** Kit contract: persist stable BFF URL before onChange. */
   persistAttachmentImageSrc?: (attachmentId: string) => string | null | undefined;
+  /**
+   * M-23 — digitar @ busca GET /users e grava span data-user-id.
+   * Ligado no create e reply (mesmo campo).
+   */
+  enableMentions?: boolean;
 };
 
 /** CTA Anexar — placed next to Enviar in form actions. */
@@ -207,7 +222,7 @@ export function HelpdeskAttachButton({
   );
 }
 
-/** Same RichTextEditor for open + reply (M-28). H12 adds paste/attach without MentionComposer. */
+/** Same RichTextEditor for open + reply (M-28). H12 paste/attach; M-23 @ via GET /users. */
 export const HelpdeskRichTextField = forwardRef<
   HelpdeskRichTextFieldHandle,
   HelpdeskRichTextFieldProps
@@ -229,12 +244,16 @@ export const HelpdeskRichTextField = forwardRef<
     accept = "image/*,.pdf,.png,.jpg,.jpeg,.gif,.webp,.doc,.docx,.xls,.xlsx,.txt",
     resolveAttachmentImageSrc,
     persistAttachmentImageSrc,
+    enableMentions = false,
   },
   ref,
 ) {
   const fileRef = useRef<HTMLInputElement>(null);
   const editorRef = useRef<RichTextEditorHandle>(null);
   const uploadingRef = useRef(false);
+  const mentionDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mentionAbortRef = useRef<AbortController | null>(null);
+  const [mentionHits, setMentionHits] = useState<MentionMenuHit[]>([]);
 
   useImperativeHandle(
     ref,
@@ -244,6 +263,46 @@ export const HelpdeskRichTextField = forwardRef<
       },
     }),
     [],
+  );
+
+  useEffect(() => {
+    return () => {
+      if (mentionDebounceRef.current) clearTimeout(mentionDebounceRef.current);
+      mentionAbortRef.current?.abort();
+    };
+  }, []);
+
+  const handleMentionQueryChange = useCallback(
+    (query: string | null) => {
+      if (!enableMentions) return;
+      if (mentionDebounceRef.current) clearTimeout(mentionDebounceRef.current);
+      mentionAbortRef.current?.abort();
+      if (query === null) {
+        setMentionHits([]);
+        return;
+      }
+      mentionDebounceRef.current = setTimeout(() => {
+        const controller = new AbortController();
+        mentionAbortRef.current = controller;
+        void listUsers({ q: query, limit: 20 }, controller.signal)
+          .then((result) => {
+            if (controller.signal.aborted) return;
+            setMentionHits(
+              (result.items || []).map((user) => ({
+                id: String(user.id),
+                kind: "user",
+                label: user.display_name || String(user.id),
+                avatarName: user.display_name || String(user.id),
+              })),
+            );
+          })
+          .catch(() => {
+            if (controller.signal.aborted) return;
+            setMentionHits([]);
+          });
+      }, MENTION_SEARCH_DEBOUNCE_MS);
+    },
+    [enableMentions],
   );
 
   /** Host only materializes File → src/attrs; kit inserts at caret (S-P2). */
@@ -304,6 +363,9 @@ export const HelpdeskRichTextField = forwardRef<
         persistAttachmentImageSrc={persistAttachmentImageSrc}
         onPasteImages={onUploadFiles && !disabled ? materializeUploads : undefined}
         onPasteImagesError={onUploadError}
+        mentionHits={enableMentions ? mentionHits : undefined}
+        onMentionQueryChange={enableMentions ? handleMentionQueryChange : undefined}
+        mentionLabels={enableMentions ? HELPDESK_MENTION_LABELS : undefined}
       />
       {onUploadFiles ? (
         <input

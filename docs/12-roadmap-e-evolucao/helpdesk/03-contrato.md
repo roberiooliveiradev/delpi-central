@@ -83,13 +83,13 @@ Lista vazia com sessão válida é `200`, `items: []` e `has_more: false`. Não 
 
 `status` na lista e no detalhe é o **rótulo** do GLPI. `status_id` é o id ITIL (1, 2, 3, 4, 5, 6, 10), aditivo. `open` continua incluindo 10. `pending` e `approval` recortam 4 e 10. Ciclo e badges: [`14-pagina-e-estados-do-chamado.md`](./14-pagina-e-estados-do-chamado.md).
 
-`GET /tickets/{id}` inclui `description`, `description_html` (HTML sanitizado, aditivo), `created_at` (instante de abertura), `solved_at` / `closed_at` (aditivos, vazios se o GLPI não trouxer), `sla_ttr` / `sla_tto` (rótulos do SLA, aditivos), `status` (rótulo), `status_id` (id ITIL, aditivo), `can_followup` (aditivo: **false só se `status_id==6`**; solucionado 5 ainda aceita acompanhamento), `requester_display_name` (primeiro membro de `team` com papel `requester`; se faltar, `user_recipient`), `requester_mine`, `assigned_display_name` (primeiro `assigned` do `team`), `observers_display_name` (rótulos de `team` com papel `observer`, unidos por vírgula; vazio se não houver), `timeline[]` com `id`, `kind` (`followup` | `solution`), `content`, `content_html` (aditivo), `created_at`, `author_display_name`, `mine`, e `attachments[]` com `document_id`, `filename` e `mime`. `description` e `timeline[].content` continuam **texto puro**, derivados do HTML já sanitizado. `description_html` / `content_html` passam pela allowlist do BFF ([`12-conteudo-da-mensagem.md`](./12-conteudo-da-mensagem.md) §7): sem `script`/`on*`/`javascript:`; `src`/`href` de `document.send.php` só viram o GET autenticado se o `docid` estiver em `attachments` daquele chamado — caso contrário a imagem some. `kind=solution` é leitura da Timeline `Solution`/`ITILSolution` — sem botão aprovar/recusar (H10 write continua CONSOLE). O nome de pessoa é só rótulo. `mine` / `requester_mine` vêm do id do usuário na sessão HLAPI (`GET /session` → `user_id`) ou do e-mail do JWT contra o e-mail do autor; nome nunca identifica pessoa. O nome visível usa o rótulo mais completo entre `firstname`+`realname` e `display_name`. A lista de anexos traz só arquivos já ligados àquele chamado. Lista vazia é `[]`. Acompanhamento privado, tarefa e Validation não entram em `timeline`. Os campos novos são aditivos.
+`GET /tickets/{id}` inclui `description`, `description_html` (HTML sanitizado, aditivo), `created_at` (instante de abertura), `solved_at` / `closed_at` (aditivos, vazios se o GLPI não trouxer), `sla_ttr` / `sla_tto` (rótulos do SLA, aditivos), `status` (rótulo), `status_id` (id ITIL, aditivo), `can_followup` (aditivo: **false só se `status_id==6`**; solucionado 5 ainda aceita acompanhamento), `requester_display_name` (primeiro membro de `team` com papel `requester`; se faltar, `user_recipient`), `requester_mine`, `assigned_display_name` (primeiro `assigned` do `team`), `observers_display_name` (rótulos de `team` com papel `observer`, unidos por vírgula; vazio se não houver), `timeline[]` com `id`, `kind` (`followup` | `solution`), `content`, `content_html` (aditivo), `created_at`, `author_display_name`, `mine`, e `attachments[]` com `document_id`, `filename` e `mime`. `description` e `timeline[].content` continuam **texto puro**, derivados do HTML já sanitizado. `description_html` / `content_html` passam pela allowlist do BFF ([`12-conteudo-da-mensagem.md`](./12-conteudo-da-mensagem.md) §7): sem `script`/`on*`/`javascript:`; `src`/`href` de `document.send.php` só viram o GET autenticado se o `docid` estiver em `attachments` daquele chamado — caso contrário a imagem some. `kind=solution` é leitura da Timeline `Solution`/`ITILSolution`. Com H10 Branch B, o detalhe também publica `can_accept_solution` / `can_reject_solution` / `can_submit_satisfaction` (e `satisfaction` / `satisfaction_comment` quando já respondida) — **backend-first**, só se `requester_mine` e status coerente e legado ligado. O nome de pessoa é só rótulo. `mine` / `requester_mine` vêm do id do usuário na sessão HLAPI (`GET /session` → `user_id`) ou do e-mail do JWT contra o e-mail do autor; nome nunca identifica pessoa. O nome visível usa o rótulo mais completo entre `firstname`+`realname` e `display_name`. A lista de anexos traz só arquivos já ligados àquele chamado. Lista vazia é `[]`. Acompanhamento privado, tarefa e Validation não entram em `timeline`. Os campos novos são aditivos.
 
 A lista (`GET /tickets`) também publica `sla_ttr` / `sla_tto` e `requester_display_name` aditivos quando o GLPI os envia. `requester_display_name` segue a mesma regra do detalhe: primeiro `team` com papel `requester`; se faltar, `user_recipient`. Nome é só rótulo.
 
 `GET /tickets/{id}/attachments/{document_id}` devolve o arquivo com o token da pessoa (Bearer). O `document_id` precisa estar em `attachments` daquele chamado; caso contrário a resposta é 404, sem o corpo. O arquivo não é gravado na Minha DELPI: o BFF só repassa o download do GLPI. Por isso o compositor **não** usa essa URL como `src` de `<img>` sem resolver blob autenticado.
 
-`POST /tickets/{id}/attachments` (multipart, H12) grava um Documento no GLPI via API legada (`apirest.php/Document` + App-Token + User-Token técnico), liga ao Ticket e devolve `{ document_id, filename, mime }`. Cabeçalho `Idempotency-Key` obrigatório. Feature flag `GLPI_LEGACY_UPLOAD_ENABLED`; sem flag/token → `503` / feature disabled. Não reabre a API legada para outras operações.
+`POST /tickets/{id}/attachments` (multipart, H12) grava um Documento no GLPI via API legada (`apirest.php/Document` + App-Token + User-Token técnico), liga ao Ticket e devolve `{ document_id, filename, mime }`. Cabeçalho `Idempotency-Key` obrigatório. Feature flag `GLPI_LEGACY_UPLOAD_ENABLED`; sem flag/token → `503` / feature disabled. A mesma sessão legada cobre o ciclo H10 (aceite/recusa/satisfação) — ver §4.
 
 Imagens no HTML de follow-up/descrição: `src` só no path `/apps/helpdesk-api/tickets/{id}/attachments/{document_id}`; `width`/`height` numéricos (≤4096) passam na allowlist. CSS `width`/`height` em `style` **não** entram na allowlist de estilo — o resize do editor persiste pelos atributos HTML.
 
@@ -105,13 +105,16 @@ Cabeçalho `Idempotency-Key` obrigatório, gerado na intenção de envio e reuti
   "description": "string | HTML",
   "category_id": 1,
   "urgency_id": 3,
-  "observer_ids": [15, 22]
+  "observer_ids": [15, 22],
+  "assignee_id": 15
 }
 ```
 
 `description` e `content` do follow-up aceitam **texto puro ou HTML**. O BFF re-sanitiza com a mesma allowlist da leitura ([`12`](./12-conteudo-da-mensagem.md) §7) antes de gravar no GLPI: remove `script`/`on*`/`javascript:`, imagens estrangeiras e `document.send.php` sem `docid` permitido. Payload com mais de **50 000** caracteres (M-29) ou sem texto visível após a limpeza: `422 validation_error`. Título continua texto puro.
 
 `observer_ids` (aditivo, opcional) é a lista de ids de usuário do GLPI. Depois de criar o chamado, o BFF chama `POST …/TeamMember` só com `{type: User, role: observer, id}` — **sem** `requester` nem `entity` (HD-011). Lista vazia ou ausente = nenhum observador. Máximo 10 ids.
+
+`assignee_id` (aditivo, opcional) é o id do técnico atribuído. Depois de criar, o BFF chama `POST …/TeamMember` com `{type: User, role: assigned, id}` (mesmo contrato HD-011). Ausente = sem atribuído na abertura.
 
 Não existe campo de solicitante nem de entidade. O BFF não reenvia esses campos ao GLPI. O chamado nasce na entidade padrão do usuário do token.
 
@@ -123,6 +126,18 @@ Resposta `201`:
 
 Repetir a mesma chave depois de sucesso devolve o mesmo `id`, sem segundo chamado.
 
+`PUT /tickets/{id}/assignee` — atribuir ou reatribuir (idempotente). Exige `Idempotency-Key`.
+
+```json
+{ "user_id": 15 }
+```
+
+Resposta `200`: `{ "user_id": 15, "assigned_display_name": "Ana Silva" }`. Se já houver atribuído diferente, o BFF remove o anterior (`DELETE …/TeamMember` com o mesmo body type/role/id) e cria o novo.
+
+`GET /users?q=&limit=20` — catálogo por **id** (HLAPI `Administration/User`, filtro RSQL). Resposta: `{ "items": [{ "id": 15, "display_name": "Ana Silva" }] }`. Sem lista só por nome.
+
+`GET /session/capabilities` — `{ "can_assign": true|false }` derivado do direito real de listar usuários no GLPI (nunca flag só no MFE). O detalhe do chamado também inclui `can_assign`, `assigned_user_id` e `assigned_display_name`.
+
 `POST /tickets/{id}/followups`
 
 ```json
@@ -130,6 +145,19 @@ Repetir a mesma chave depois de sucesso devolve o mesmo `id`, sem segundo chamad
 ```
 
 Também exige `Idempotency-Key`. Resposta `201` com `{ "id": 1 }`.
+
+### Ciclo do solicitante (H10 Branch B — legado)
+
+HLAPI não fecha o ciclo; o BFF usa `apirest` após ACL OAuth (mesmo token técnico de H12). Só o solicitante (`requester_mine`). `Idempotency-Key` obrigatório nas escritas.
+
+| Método | Path | Efeito |
+|---|---|---|
+| POST | `/tickets/{id}/solution/accept` | body opcional `{ "content": "…" }` → fecha (status 6) |
+| POST | `/tickets/{id}/solution/reject` | body opcional `{ "content": "…" }` → reabre (status 1) |
+| GET | `/tickets/{id}/satisfaction` | `{ "satisfaction": 1..5, "comment": "…" }` ou 404 |
+| PUT | `/tickets/{id}/satisfaction` | `{ "satisfaction": 1..5, "comment": "…" }` → 201; duplicata → 422 |
+
+Não solicitante → 403. Status incoerente → 422. Legado desligado → 503.
 
 ## 5. Mapa para o GLPI
 

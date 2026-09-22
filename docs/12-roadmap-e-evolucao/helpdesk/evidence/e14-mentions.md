@@ -1,10 +1,22 @@
-# E14 — Menção leitura (M-07) / park escrita (M-23)
+# E14 — Menção leitura (M-07) / escrita (M-23)
 
-> Evidência E14.S2. Complementa [`12-conteudo-da-mensagem.md`](../12-conteudo-da-mensagem.md) §15b.
+> Evidência E14 (leitura) + M-23 (escrita). Complementa [`12-conteudo-da-mensagem.md`](../12-conteudo-da-mensagem.md).
 
 | Item | Estado | Motivo |
 |---|---|---|
-| M-07 chip na bolha | **IMPLEMENTADO** | `enrichGlpiUserMentionSpans` no plugin-ui; BFF já allowlistava attrs |
-| M-23 `@` no compositor | **BLOQUEADO** | sem path HLAPI de mencionáveis por **id**; proibido casar por nome; sem `MentionComposer` |
+| M-07 chip na bolha | **IMPLEMENTADO** | `enrichGlpiUserMentionSpans` no plugin-ui; BFF allowlista attrs |
+| M-23 `@` no compositor | **IMPLEMENTADO** | `RichTextEditor` + `detectActiveMention` + `MentionMenu`; hits de `GET /users`; insert `span[data-user-mention][data-user-id]` (só dígitos). Create + reply via `HelpdeskRichTextField enableMentions`. Sem `MentionComposer` das salas. |
 
-Não abrir UI de `@` até gate PROVEN + plano novo.
+## Cadeia escrita (M-23)
+
+```text
+@query no RichTextEditor
+  → onMentionQueryChange (debounce)
+  → listUsers / GET /users
+  → MentionMenu
+  → insert span data-user-id
+  → POST ticket/followup (sanitizer preserva attrs)
+  → leitura M-07 chipa
+```
+
+Catálogo por id **PROVEN** em [`e0-assignee-gates.md`](./e0-assignee-gates.md).

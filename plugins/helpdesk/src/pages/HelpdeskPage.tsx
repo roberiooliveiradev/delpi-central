@@ -5,19 +5,26 @@ import {
   HintAction,
   TableColumnVisibilityMenu,
 } from "@delpi/plugin-ui/index";
-import { AlignLeft, ArrowUpDown, ChevronLeft, ExternalLink, FilterX, FolderTree, Gauge, ListFilter, Plus, RefreshCw, Send, TicketPlus, Type, Users } from "lucide-react";
+import { AlignLeft, ArrowUpDown, ChevronLeft, ExternalLink, FilterX, FolderTree, Gauge, ListFilter, Plus, RefreshCw, Send, TicketPlus, Type, UserRound, Users } from "lucide-react";
 
 import {
   HelpdeskApiError,
+  acceptTicketSolution,
   beginGlpiLink,
   createFollowup,
   createTicket,
   fetchTicketAttachmentBlob,
+  getSessionCapabilities,
   getTicket,
   listCategories,
   listTickets,
   listUrgencies,
+  listUsers,
+  rejectTicketSolution,
+  setTicketAssignee,
+  submitTicketSatisfaction,
   uploadTicketAttachment,
+  type CatalogUser,
   type TicketAttachment,
   type TicketDetail,
   type TicketSummary,
@@ -534,6 +541,9 @@ function CreateTicketPage() {
     persistHelpdeskAttachmentHtml(savedDraft?.description ?? ""),
   );
   const [observerIdsInput, setObserverIdsInput] = useState(savedDraft?.observerIdsInput ?? "");
+  const [assigneeId, setAssigneeId] = useState(savedDraft?.assigneeId ?? "");
+  const [canAssign, setCanAssign] = useState(false);
+  const [catalogUsers, setCatalogUsers] = useState<CatalogUser[]>([]);
   const [categoryId, setCategoryId] = useState(savedDraft?.categoryId ?? "");
   const [urgencyId, setUrgencyId] = useState(savedDraft?.urgencyId ?? "");
   const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
@@ -583,10 +593,21 @@ function CreateTicketPage() {
 
   useEffect(() => {
     const controller = new AbortController();
-    void Promise.allSettled([listCategories(controller.signal), listUrgencies(controller.signal)])
-      .then(([categoryResult, urgencyResult]) => {
+    void Promise.allSettled([
+      listCategories(controller.signal),
+      listUrgencies(controller.signal),
+      getSessionCapabilities(controller.signal),
+      listUsers({ limit: 50 }, controller.signal),
+    ])
+      .then(([categoryResult, urgencyResult, capsResult, usersResult]) => {
         if (controller.signal.aborted) return;
         const draft = readCreateDraft();
+        if (capsResult.status === "fulfilled") {
+          setCanAssign(Boolean(capsResult.value.can_assign));
+        }
+        if (usersResult.status === "fulfilled") {
+          setCatalogUsers(usersResult.value.items);
+        }
         if (urgencyResult.status === "fulfilled") {
           const items = urgencyResult.value.items;
           setUrgencies(items);
@@ -623,10 +644,11 @@ function CreateTicketPage() {
       title,
       description: persistHelpdeskAttachmentHtml(description),
       observerIdsInput,
+      assigneeId,
       categoryId,
       urgencyId,
     });
-  }, [title, description, observerIdsInput, categoryId, urgencyId]);
+  }, [title, description, observerIdsInput, assigneeId, categoryId, urgencyId]);
 
   const resolveCreatePendingSrc = useCallback(
     (attachmentId: string) => {
@@ -702,6 +724,7 @@ function CreateTicketPage() {
                 category_id: Number(categoryId),
                 urgency_id: Number(urgencyId),
                 observer_ids: parseObserverIdsInput(observerIdsInput),
+                assignee_id: canAssign && assigneeId ? Number(assigneeId) : undefined,
               },
               idempotencyKey,
             )
@@ -760,6 +783,7 @@ function CreateTicketPage() {
                 onChange={(next) => setDescription(persistHelpdeskAttachmentHtml(next))}
                 minHeight={180}
                 fill
+                enableMentions
                 icon={<AlignLeft size={14} aria-hidden />}
                 onUploadFiles={queuePendingFiles}
                 onUploadError={(error) => setErrorText(messageFor(error).text)}
@@ -787,6 +811,22 @@ function CreateTicketPage() {
                 options={urgencies.map((item) => ({ value: String(item.id), label: item.name }))}
                 icon={<Gauge size={14} aria-hidden />}
               />
+              {canAssign ? (
+                <HelpdeskSelect
+                  label="Técnico atribuído"
+                  hint={helpTooltips.createUi.assignee}
+                  value={assigneeId}
+                  onChange={setAssigneeId}
+                  searchable
+                  allowEmpty
+                  emptyLabel="Sem técnico"
+                  options={catalogUsers.map((item) => ({
+                    value: String(item.id),
+                    label: item.display_name,
+                  }))}
+                  icon={<UserRound size={14} aria-hidden />}
+                />
+              ) : null}
               <HelpdeskTextField
                 label="Observadores"
                 hint={helpTooltips.createUi.observers}
@@ -837,6 +877,15 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
   const [inlinePreview, setInlinePreview] = useState<TicketAttachment | null>(null);
   /** False until IDB draft files are read — editor must not paint placeholder before seed (H4). */
   const [draftFilesReady, setDraftFilesReady] = useState(false);
+  const [assigneePick, setAssigneePick] = useState("");
+  const [catalogUsers, setCatalogUsers] = useState<CatalogUser[]>([]);
+  const [assignSaving, setAssignSaving] = useState(false);
+  const [assignKey, setAssignKey] = useState(newIdempotencyKey);
+  const [cycleNote, setCycleNote] = useState("");
+  const [cycleSaving, setCycleSaving] = useState(false);
+  const [cycleKey, setCycleKey] = useState(newIdempotencyKey);
+  const [satisfactionScore, setSatisfactionScore] = useState(5);
+  const [satisfactionComment, setSatisfactionComment] = useState("");
   /** Bumps resolve identity after IDB seed (create parity). */
   const [pendingHydrated, setPendingHydrated] = useState(0);
   const myPhotoUrl = useMyPersonProfilePhoto();
@@ -904,7 +953,17 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
     setLoading(true);
     setErrorText(null);
     void getTicket(ticketId)
-      .then(setTicket)
+      .then((next) => {
+        setTicket(next);
+        setAssigneePick(next.assigned_user_id ? String(next.assigned_user_id) : "");
+        if (next.can_assign) {
+          void listUsers({ limit: 50 })
+            .then((result) => setCatalogUsers(result.items))
+            .catch(() => setCatalogUsers([]));
+        } else {
+          setCatalogUsers([]);
+        }
+      })
       .catch((error) => setErrorText(messageFor(error).text))
       .finally(() => setLoading(false));
   }
@@ -912,6 +971,29 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
   useEffect(() => {
     load();
   }, [ticketId]);
+
+  function assignTechnician() {
+    if (!ticket?.can_assign || !assigneePick || assignSaving) return;
+    const userId = Number(assigneePick);
+    if (!Number.isFinite(userId) || userId <= 0) return;
+    setAssignSaving(true);
+    setErrorText(null);
+    void setTicketAssignee(ticketId, userId, assignKey)
+      .then((result) => {
+        setTicket((current) =>
+          current
+            ? {
+                ...current,
+                assigned_user_id: result.user_id,
+                assigned_display_name: result.assigned_display_name,
+              }
+            : current,
+        );
+        setAssignKey(newIdempotencyKey());
+      })
+      .catch((error) => setErrorText(messageFor(error).text))
+      .finally(() => setAssignSaving(false));
+  }
 
   return (
     <HelpdeskPageStack>
@@ -960,32 +1042,194 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                   present: field.present,
                 }))}
             />
+            {ticket.can_assign ? (
+              <div className="helpdesk-assign-panel" aria-label="Atribuir técnico">
+                <HelpdeskSelect
+                  label={ticket.assigned_user_id ? "Reatribuir técnico" : "Atribuir técnico"}
+                  hint={helpTooltips.detailUi.assignee}
+                  value={assigneePick}
+                  onChange={setAssigneePick}
+                  searchable
+                  options={catalogUsers.map((item) => ({
+                    value: String(item.id),
+                    label: item.display_name,
+                  }))}
+                  icon={<UserRound size={14} aria-hidden />}
+                />
+                <HintAction
+                  hint={helpTooltips.detailUi.assigneeAction}
+                  ariaLabel="Ajuda: Confirmar atribuição"
+                >
+                  <ActionButton
+                    variant="secondary"
+                    type="button"
+                    disabled={
+                      assignSaving ||
+                      !assigneePick ||
+                      Number(assigneePick) === Number(ticket.assigned_user_id || 0)
+                    }
+                    onClick={assignTechnician}
+                  >
+                    {assignSaving
+                      ? "Salvando…"
+                      : ticket.assigned_user_id
+                        ? "Reatribuir"
+                        : "Atribuir"}
+                  </ActionButton>
+                </HintAction>
+              </div>
+            ) : null}
             {(() => {
               const cue = solicitanteLifecycleCue({
                 statusId: ticket.status_id,
                 hasSolution: timelineHasSolution(ticket.timeline),
+                canAcceptSolution: ticket.can_accept_solution,
+                canRejectSolution: ticket.can_reject_solution,
+                canSubmitSatisfaction: ticket.can_submit_satisfaction,
+                satisfaction: ticket.satisfaction,
               });
               if (!cue) return null;
+              const runCycle = (action: "accept" | "reject") => {
+                setCycleSaving(true);
+                setErrorText(null);
+                const runner =
+                  action === "accept"
+                    ? acceptTicketSolution(ticketId, cycleNote, cycleKey)
+                    : rejectTicketSolution(ticketId, cycleNote, cycleKey);
+                void runner
+                  .then(() => {
+                    setCycleNote("");
+                    setCycleKey(newIdempotencyKey());
+                    load();
+                  })
+                  .catch((error) => setErrorText(messageFor(error).text))
+                  .finally(() => setCycleSaving(false));
+              };
+              const runSatisfaction = () => {
+                setCycleSaving(true);
+                setErrorText(null);
+                void submitTicketSatisfaction(
+                  ticketId,
+                  { satisfaction: satisfactionScore, comment: satisfactionComment },
+                  cycleKey,
+                )
+                  .then(() => {
+                    setSatisfactionComment("");
+                    setCycleKey(newIdempotencyKey());
+                    load();
+                  })
+                  .catch((error) => setErrorText(messageFor(error).text))
+                  .finally(() => setCycleSaving(false));
+              };
               return (
                 <div className="helpdesk-lifecycle-cue">
                   <HelpdeskStateBanner variant={cue.variant}>
                     <div className="helpdesk-lifecycle-cue__row">
                       <p className="helpdesk-lifecycle-cue__text">{cue.message}</p>
-                      <HintAction hint={helpTooltips.detailUi.openInGlpi} ariaLabel="Ajuda: Abrir no helpdesk">
-                        <ActionButton
-                          variant="primary"
-                          type="button"
-                          className="helpdesk-lifecycle-cue__cta"
-                          aria-label={cue.ctaLabel}
-                          onClick={() => {
-                            window.open(glpiTicketFormUrl(ticket.id), "_blank", "noopener,noreferrer");
-                          }}
-                        >
-                          <ExternalLink size={16} aria-hidden />
-                          {cue.ctaLabel}
-                        </ActionButton>
-                      </HintAction>
+                      {cue.ctaLabel ? (
+                        <HintAction hint={helpTooltips.detailUi.openInGlpi} ariaLabel="Ajuda: Abrir no helpdesk">
+                          <ActionButton
+                            variant="primary"
+                            type="button"
+                            className="helpdesk-lifecycle-cue__cta"
+                            aria-label={cue.ctaLabel}
+                            onClick={() => {
+                              window.open(glpiTicketFormUrl(ticket.id), "_blank", "noopener,noreferrer");
+                            }}
+                          >
+                            <ExternalLink size={16} aria-hidden />
+                            {cue.ctaLabel}
+                          </ActionButton>
+                        </HintAction>
+                      ) : null}
                     </div>
+                    {cue.showNativeActions ? (
+                      <div className="helpdesk-lifecycle-actions">
+                        <label className="helpdesk-lifecycle-note">
+                          <span>Comentário (opcional)</span>
+                          <input
+                            type="text"
+                            value={cycleNote}
+                            onChange={(event) => setCycleNote(event.target.value)}
+                            disabled={cycleSaving}
+                            maxLength={2000}
+                          />
+                        </label>
+                        <div className="helpdesk-lifecycle-actions__buttons">
+                          {ticket.can_accept_solution ? (
+                            <HintAction
+                              hint={helpTooltips.detailUi.acceptSolution}
+                              ariaLabel="Ajuda: Aceitar solução"
+                            >
+                              <ActionButton
+                                variant="primary"
+                                type="button"
+                                disabled={cycleSaving}
+                                onClick={() => runCycle("accept")}
+                              >
+                                {cycleSaving ? "Salvando…" : "Aceitar solução"}
+                              </ActionButton>
+                            </HintAction>
+                          ) : null}
+                          {ticket.can_reject_solution ? (
+                            <HintAction
+                              hint={helpTooltips.detailUi.rejectSolution}
+                              ariaLabel="Ajuda: Recusar solução"
+                            >
+                              <ActionButton
+                                variant="secondary"
+                                type="button"
+                                disabled={cycleSaving}
+                                onClick={() => runCycle("reject")}
+                              >
+                                Recusar / reabrir
+                              </ActionButton>
+                            </HintAction>
+                          ) : null}
+                        </div>
+                      </div>
+                    ) : null}
+                    {cue.showSatisfactionForm ? (
+                      <div className="helpdesk-lifecycle-actions">
+                        <label className="helpdesk-lifecycle-note">
+                          <span>Nota (1–5)</span>
+                          <select
+                            value={satisfactionScore}
+                            onChange={(event) => setSatisfactionScore(Number(event.target.value))}
+                            disabled={cycleSaving}
+                          >
+                            {[1, 2, 3, 4, 5].map((score) => (
+                              <option key={score} value={score}>
+                                {score}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <label className="helpdesk-lifecycle-note">
+                          <span>Comentário (opcional)</span>
+                          <input
+                            type="text"
+                            value={satisfactionComment}
+                            onChange={(event) => setSatisfactionComment(event.target.value)}
+                            disabled={cycleSaving}
+                            maxLength={2000}
+                          />
+                        </label>
+                        <HintAction
+                          hint={helpTooltips.detailUi.submitSatisfaction}
+                          ariaLabel="Ajuda: Enviar avaliação"
+                        >
+                          <ActionButton
+                            variant="primary"
+                            type="button"
+                            disabled={cycleSaving}
+                            onClick={runSatisfaction}
+                          >
+                            {cycleSaving ? "Enviando…" : "Enviar avaliação"}
+                          </ActionButton>
+                        </HintAction>
+                      </div>
+                    ) : null}
                   </HelpdeskStateBanner>
                 </div>
               );
@@ -1088,6 +1332,7 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                 onChange={(next) => setContent(attachmentPreview.persistHtml(next))}
                 minHeight={120}
                 fill
+                enableMentions
                 resolveAttachmentImageSrc={resolveReplyAttachmentImageSrc}
                 persistAttachmentImageSrc={attachmentPreview.persistAttachmentImageSrc}
                 onUploadFiles={async (files) => {

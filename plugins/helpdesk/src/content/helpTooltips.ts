@@ -4,7 +4,7 @@ export const helpTooltips = {
   list: "Chamados de TI no seu nome. Use tabela ou cards, filtros, ordenação e paginação; o + abre um novo.",
   link: "Na primeira vez, autorize o helpdesk com o mesmo login da Minha DELPI para ver seus chamados.",
   create:
-    "Preencha título e descrição; à direita, categoria, urgência e observadores. O rascunho sobrevive ao F5 até o envio.",
+    "Título e descrição; à direita categoria, urgência, técnico (se permitido) e observadores. O rascunho sobrevive ao F5.",
   detail:
     "Conversa do chamado. Responda no rodapé enquanto estiver aberto; solução e arquivos aparecem no fio.",
 
@@ -12,10 +12,11 @@ export const helpTooltips = {
     back: "Volta à lista com o mesmo recorte, sem gravar este formulário.",
     title: "Assunto curto do chamado. Obrigatório.",
     description:
-      "Descreva o problema (formatação, clipe, colar ou arrastar). Clique na imagem e arraste o canto para redimensionar.",
+      "Formatação, @ para mencionar, clipe, colar ou arrastar. Arraste o canto da imagem para redimensionar.",
     attach: "Anexa por clipe ou arrastar. Na abertura, o envio sobe depois de criar o chamado.",
     category: "Categoria visível para você no helpdesk. Obrigatória.",
     urgency: "Urgência do chamado. Obrigatória.",
+    assignee: "Opcional. Técnico que vai atender; a lista vem do helpdesk conforme o seu perfil.",
     observers: "Opcional. IDs de usuário do helpdesk, separados por vírgula (só observador).",
     send: "Grava o chamado no seu nome e abre a conversa.",
   },
@@ -23,10 +24,15 @@ export const helpTooltips = {
   detailUi: {
     back: "Volta à lista com o mesmo recorte (filtros e página).",
     reply:
-      "Acompanhamento com formatação, clipe, colar ou arrastar. Clique na imagem e arraste o canto para redimensionar.",
+      "Formatação, @ para mencionar, clipe, colar ou arrastar. Arraste o canto da imagem para redimensionar.",
     attach: "Anexa por clipe ou arrastar; imagem entra no texto da resposta.",
     send: "Grava o acompanhamento público. Em chamado fechado o botão some.",
-    openInGlpi: "Abre este chamado no helpdesk (GLPI) para aprovar, reabrir ou responder pesquisa.",
+    assignee: "Escolha o técnico responsável. Só aparece se o helpdesk permitir atribuir no seu perfil.",
+    assigneeAction: "Grava a atribuição ou reatribuição neste chamado.",
+    openInGlpi: "Abre este chamado no helpdesk (GLPI) para fluxos que ainda não estão na Minha DELPI.",
+    acceptSolution: "Aceita a solução e fecha o chamado no helpdesk.",
+    rejectSolution: "Recusa a solução e reabre o chamado para novo atendimento.",
+    submitSatisfaction: "Envia sua nota de 1 a 5 e o comentário opcional.",
     attachments: "Arquivos ligados ao chamado. Clique para prévia ou baixar.",
   },
 

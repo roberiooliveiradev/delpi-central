@@ -27,6 +27,12 @@ class Category:
 
 
 @dataclass(frozen=True)
+class CatalogUser:
+    id: int
+    display_name: str
+
+
+@dataclass(frozen=True)
 class Urgency:
     id: int
     name: str
@@ -101,11 +107,19 @@ class TicketDetail:
     created_at: str = ""
     requester_display_name: str = ""
     assigned_display_name: str = ""
+    assigned_user_id: int | None = None
     requester_identity: PersonIdentity = PersonIdentity()
     requester_mine: bool = False
     status_id: int | None = None
     description_html: str = ""
     can_followup: bool = True
+    can_assign: bool = False
+    # H10 Branch B — solicitante cycle via legacy apirest (accept/reject/satisfaction).
+    can_accept_solution: bool = False
+    can_reject_solution: bool = False
+    can_submit_satisfaction: bool = False
+    satisfaction: int | None = None
+    satisfaction_comment: str = ""
     observers_display_name: str = ""
     solved_at: str = ""
     closed_at: str = ""

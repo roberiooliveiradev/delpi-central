@@ -95,7 +95,7 @@ Doc: [Manage tickets](https://help.glpi-project.org/documentation/modules/assist
 | X-45 | Tarefa (e tarefa planejada → status 3) | CONSOLE_GLPI |
 | X-46 | Solução + aprovação do solicitante | **CONSOLE** E10 — [`evidence/e10-cycle-console.md`](./evidence/e10-cycle-console.md) |
 | X-47 | Validação / etapas de aprovação | CONSOLE_GLPI |
-| X-48 | Menção a usuário | **leitura IMPLEMENTADA** E14 (M-07); escrita `@` **BLOQUEADA** (M-23) |
+| X-48 | Menção a usuário | **leitura + escrita IMPLEMENTADAS** (M-07 / M-23) |
 | X-49 | Excluir chamado Novo sem ação | CONSOLE_GLPI — [`14`](./14-pagina-e-estados-do-chamado.md) P-10 |
 | X-50 | Reabrir fechado | **CONSOLE** E10 — PATCH status 403 no Colaborador |
 | X-51 | Pesquisa de satisfação | **CONSOLE** E10 — sem path HLAPI |
@@ -149,7 +149,7 @@ Estes não abrem etapa sozinhos. Só deixam de ser lacuna invisível.
 | X-46 | Aprovar solução | já era H5; permanece | **leitura** solução IMPLEMENTADA; aprovar/recusar **CONSOLE** (E10) |
 | G-05 | Requerente na lista | mesmo rótulo do detalhe | **IMPLEMENTADO** `requester_display_name` |
 | H12 | Upload de anexo (Document-only) | solicitante cola/anexa na Minha DELPI | **PROVEN** live — [`05`](./05-roadmap.md) H12 |
-| M-23 | Menção `@` na escrita | compositor | **BLOQUEADO** — sem catálogo HLAPI |
+| M-23 | Menção `@` na escrita | compositor | **IMPLEMENTADO** — `RichTextEditor` + `GET /users` |
 
 Não promover X-09 a tela de catálogo sem endpoint. Não copiar Formcreator/plugin.
 

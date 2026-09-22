@@ -100,9 +100,21 @@ export type TicketDetail = TicketSummary & {
   requester_display_name: string;
   requester_mine: boolean;
   can_followup?: boolean;
+  can_assign?: boolean;
+  can_accept_solution?: boolean;
+  can_reject_solution?: boolean;
+  can_submit_satisfaction?: boolean;
+  satisfaction?: number | null;
+  satisfaction_comment?: string;
+  assigned_user_id?: number | null;
   observers_display_name?: string;
   timeline: TimelineEntry[];
   attachments: TicketAttachment[];
+};
+
+export type CatalogUser = {
+  id: number;
+  display_name: string;
 };
 
 export type TicketAttachment = {
@@ -143,6 +155,18 @@ export function listUrgencies(signal?: AbortSignal) {
   return request<{ items: { id: number; name: string }[] }>("/urgencies", { signal });
 }
 
+export function listUsers(query: { q?: string; limit?: number } = {}, signal?: AbortSignal) {
+  const params = new URLSearchParams();
+  if (query.q) params.set("q", query.q);
+  if (query.limit) params.set("limit", String(query.limit));
+  const suffix = params.toString() ? `?${params}` : "";
+  return request<{ items: CatalogUser[] }>(`/users${suffix}`, { signal });
+}
+
+export function getSessionCapabilities(signal?: AbortSignal) {
+  return request<{ can_assign: boolean }>("/session/capabilities", { signal });
+}
+
 export function createTicket(
   body: {
     title: string;
@@ -150,6 +174,7 @@ export function createTicket(
     category_id: number;
     urgency_id: number;
     observer_ids?: number[];
+    assignee_id?: number | null;
   },
   idempotencyKey: string,
 ) {
@@ -163,6 +188,17 @@ export function createTicket(
   });
 }
 
+export function setTicketAssignee(ticketId: string, userId: number, idempotencyKey: string) {
+  return request<{ user_id: number; assigned_display_name: string }>(`/tickets/${ticketId}/assignee`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      "Idempotency-Key": idempotencyKey,
+    },
+    body: JSON.stringify({ user_id: userId }),
+  });
+}
+
 export function createFollowup(ticketId: string, content: string, idempotencyKey: string) {
   return request<{ id: number }>(`/tickets/${ticketId}/followups`, {
     method: "POST",
@@ -171,6 +207,46 @@ export function createFollowup(ticketId: string, content: string, idempotencyKey
       "Idempotency-Key": idempotencyKey,
     },
     body: JSON.stringify({ content }),
+  });
+}
+
+export function acceptTicketSolution(ticketId: string, content: string, idempotencyKey: string) {
+  return request<{ id: number; status_id: number | null }>(`/tickets/${ticketId}/solution/accept`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Idempotency-Key": idempotencyKey,
+    },
+    body: JSON.stringify({ content }),
+  });
+}
+
+export function rejectTicketSolution(ticketId: string, content: string, idempotencyKey: string) {
+  return request<{ id: number; status_id: number | null }>(`/tickets/${ticketId}/solution/reject`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Idempotency-Key": idempotencyKey,
+    },
+    body: JSON.stringify({ content }),
+  });
+}
+
+export function submitTicketSatisfaction(
+  ticketId: string,
+  body: { satisfaction: number; comment?: string },
+  idempotencyKey: string,
+) {
+  return request<{ satisfaction: number; comment: string }>(`/tickets/${ticketId}/satisfaction`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      "Idempotency-Key": idempotencyKey,
+    },
+    body: JSON.stringify({
+      satisfaction: body.satisfaction,
+      comment: body.comment ?? "",
+    }),
   });
 }
 

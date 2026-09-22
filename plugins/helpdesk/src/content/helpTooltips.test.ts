@@ -31,10 +31,22 @@ describe("helpTooltips budget", () => {
 
   it("cobre anexar/colar/arrastar na abertura e na resposta", () => {
     expect(helpTooltips.createUi.attach).toMatch(/anex|arrastar/i);
-    expect(helpTooltips.createUi.description).toMatch(/cole|clipe|anex|arrastar/i);
+    expect(helpTooltips.createUi.description).toMatch(/cole|clipe|anex|arrastar|@|mencion/i);
     expect(helpTooltips.detailUi.attach).toMatch(/anex|arrastar/i);
-    expect(helpTooltips.detailUi.reply).toMatch(/cole|clipe|anex|arrastar/i);
+    expect(helpTooltips.detailUi.reply).toMatch(/cole|clipe|anex|arrastar|@|mencion/i);
     expect(helpTooltips.detailUi.attachments).toMatch(/arquivo/i);
+  });
+
+  it("cobre atribuição de técnico na abertura e no detalhe", () => {
+    expect(helpTooltips.createUi.assignee).toMatch(/técnico|perfil/i);
+    expect(helpTooltips.detailUi.assignee).toMatch(/técnico|atribu/i);
+    expect(helpTooltips.detailUi.assigneeAction).toMatch(/atribui/i);
+  });
+
+  it("cobre ciclo H10 aceitar/recusar/satisfação", () => {
+    expect(helpTooltips.detailUi.acceptSolution).toMatch(/aceit|fecha/i);
+    expect(helpTooltips.detailUi.rejectSolution).toMatch(/recus|reabre/i);
+    expect(helpTooltips.detailUi.submitSatisfaction).toMatch(/nota|1 a 5|avalia/i);
   });
 
   it("não reintroduz o bloco filters órfão da FiltersRow antiga", () => {
