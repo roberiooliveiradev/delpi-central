@@ -127,7 +127,7 @@ export const USER_MANUAL_CONTENT = {
       id: "processes",
       title: "Meus processos",
       intro:
-        "Lista os processos com filtros e contagem no Hero. Abre o workspace com caminho, Hero e abas horizontais: visão geral, melhorias, revisões, diagrama, documentação Markdown, tarefas e Sala de interação.",
+        "Lista os processos com filtros e contagem no Hero. Abre o workspace com caminho, Hero e abas: Visão Geral, Mapeamento, Documentação, Melhorias, Resultados, Tarefas, Sala e Histórico.",
       bullets: [
         "No Hero da lista: Processos/Departamentos, busca, status, ordenação, modo de visualização, Atualizar e Novo processo. Abaixo do Hero ficam só os resultados.",
         "Abra um processo para trabalhar no workspace. O caminho, o Hero e as abas horizontais organizam o processo, melhorias e revisões.",

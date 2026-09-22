@@ -274,7 +274,7 @@ export function ProcessDocumentationSection({
             <EmptyState
               classNames={EMPTY}
               title="Sem documentação"
-              defaultMessage="Nenhuma documentação cadastrada para este processo."
+              defaultMessage="Nenhum documento de processo registrado."
             >
               <button type="button" className="ds-btn ds-btn--primary" onClick={startCreate}>
                 Novo documento

@@ -17,7 +17,7 @@ const baseProcesso: Processo = {
 };
 
 describe("computeProcessoSetupCompletion", () => {
-  it("usa checklist de 10 itens no detalhe", () => {
+  it("usa checklist factual de 11 itens no detalhe", () => {
     const result = computeProcessoSetupCompletion({
       processo: baseProcesso,
       instanciaCount: 0,
@@ -25,9 +25,9 @@ describe("computeProcessoSetupCompletion", () => {
       decompositionNodeCount: 0,
       revisoes: [],
     });
-    expect(result.total).toBe(10);
+    expect(result.total).toBe(11);
     expect(result.done).toBe(1);
-    expect(result.percent).toBe(10);
+    expect(result.percent).toBe(9);
   });
 });
 
@@ -69,6 +69,6 @@ describe("computeProcessoListCompletion", () => {
       },
     });
     expect(result.done).toBe(7);
-    expect(result.percent).toBe(70);
+    expect(result.percent).toBe(64);
   });
 });

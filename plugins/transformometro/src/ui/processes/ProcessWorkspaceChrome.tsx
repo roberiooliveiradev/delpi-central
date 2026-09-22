@@ -47,7 +47,6 @@ type Props = {
   processo: Processo | null;
   instancias: ProcessoInstancia[];
   revisoes: Revisao[];
-  arquivosCount?: number;
   filiaisAtivasCount?: number;
   processoId: string;
   instanciaId?: string;
@@ -72,7 +71,6 @@ function processHighlights(
   processo: Processo,
   instancias: ProcessoInstancia[],
   revisoes: Revisao[],
-  arquivosCount: number,
 ): PageHeroHighlight[] {
   const completion = computeProcessoListCompletion(processo);
   return [
@@ -84,7 +82,6 @@ function processHighlights(
     },
     { id: "melhorias", label: "Melhorias", value: String(instancias.length) },
     { id: "revisoes", label: "Revisões", value: String(revisoes.length) },
-    { id: "arquivos", label: "Arquivos", value: String(arquivosCount) },
   ];
 }
 
@@ -173,7 +170,6 @@ export function ProcessWorkspaceChrome({
   processo,
   instancias,
   revisoes,
-  arquivosCount = 0,
   filiaisAtivasCount = 0,
   processoId,
   instanciaId,
@@ -294,7 +290,7 @@ export function ProcessWorkspaceChrome({
 
   const highlights =
     view === "processo" && processo
-      ? processHighlights(processo, instancias, revisoes, arquivosCount)
+      ? processHighlights(processo, instancias, revisoes)
       : view === "instancia" && activeInstancia
         ? instanceHighlights(activeInstancia, instanciaRevisoesCount, filiaisAtivasCount)
         : view === "revisao" && activeRevisao

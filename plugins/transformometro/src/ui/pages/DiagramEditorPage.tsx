@@ -14,7 +14,7 @@ import { useCollaborativeSectionEdit } from "../../hooks/useCollaborativeSection
 import { useUnsavedChangesGuard } from "../../components/ui/UnsavedChangesGuard";
 import {
   buildInstanciaSectionHref,
-  buildProcessoSectionHref,
+  buildProcessoSecondaryHref,
   buildRevisaoSectionHref,
 } from "../processes/processWorkspaceNav";
 
@@ -70,7 +70,7 @@ function backHref(input: {
   if (input.kind === "instancia" && input.instanciaId) {
     return buildInstanciaSectionHref(input.processoId, input.instanciaId, "diagrama");
   }
-  return buildProcessoSectionHref(input.processoId, "diagrama");
+  return buildProcessoSecondaryHref(input.processoId, "fluxo");
 }
 
 export function DiagramEditorPage({

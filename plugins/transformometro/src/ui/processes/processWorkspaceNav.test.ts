@@ -6,6 +6,7 @@ import {
   defaultRevisaoSection,
   parseInstanciaSectionFromHash,
   parseProcessDocumentIdFromHash,
+  parseProcessoSecondaryFocusFromHash,
   parseProcessoSectionFromHash,
   parseRevisaoSectionFromHash,
   resolveActiveWorkspaceNodeId,
@@ -41,13 +42,43 @@ const revisaoBaseline = {
 } as const;
 
 describe("processo workspace sections", () => {
-  it("expõe Sala, Tarefas e Documentação sem inventar Atas", () => {
+  it("expõe exatamente 8 seções primárias sem Atas/Evidências", () => {
     const ids = PROCESSO_WORKSPACE_SECTIONS.map((section) => section.id);
-    expect(ids).toContain("sala");
-    expect(ids).toContain("tarefas");
-    expect(ids).toContain("documentacao");
+    expect(ids).toEqual([
+      "visao-geral",
+      "mapeamento",
+      "documentacao",
+      "melhorias",
+      "resultados",
+      "tarefas",
+      "sala",
+      "historico",
+    ]);
     expect(ids).not.toContain("atas");
-    expect(ids).not.toContain("meeting-minutes");
+    expect(ids).not.toContain("evidencias");
+    expect(ids).not.toContain("dados");
+    expect(ids).not.toContain("diagrama");
+    expect(ids).not.toContain("arquivos");
+    expect(ids).not.toContain("priorizacao");
+    expect(ids).not.toContain("timeline");
+  });
+
+  it("mapeia hashes legados para primary + secondary", () => {
+    expect(parseProcessoSectionFromHash("#dados")).toBe("visao-geral");
+    expect(parseProcessoSectionFromHash("#diagrama")).toBe("mapeamento");
+    expect(parseProcessoSectionFromHash("#arquivos")).toBe("documentacao");
+    expect(parseProcessoSectionFromHash("#priorizacao")).toBe("melhorias");
+    expect(parseProcessoSectionFromHash("#timeline")).toBe("historico");
+    expect(parseProcessoSectionFromHash("#tarefas")).toBe("tarefas");
+    expect(parseProcessoSectionFromHash("#sala")).toBe("sala");
+    expect(parseProcessoSectionFromHash("#resultados")).toBe("resultados");
+
+    expect(parseProcessoSecondaryFocusFromHash("#diagrama")).toBe("fluxo");
+    expect(parseProcessoSecondaryFocusFromHash("#mapeamento")).toBe("estrutura");
+    expect(parseProcessoSecondaryFocusFromHash("#arquivos")).toBe("arquivos");
+    expect(parseProcessoSecondaryFocusFromHash("#documentacao")).toBe("documentos");
+    expect(parseProcessoSecondaryFocusFromHash("#priorizacao")).toBe("priorizacao");
+    expect(parseProcessoSecondaryFocusFromHash("#dados")).toBeNull();
   });
 
   it("interpreta hash de documentação com documento selecionado", () => {

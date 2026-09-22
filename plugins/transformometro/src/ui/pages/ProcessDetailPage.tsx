@@ -37,7 +37,6 @@ import {
   duplicateProcesso,
   fetchOptions,
   fetchProcesso,
-  fetchProcessoComparativo,
   fetchProcessoInstancias,
   fetchProcessTimeline,
   fetchRevisoes,
@@ -45,13 +44,9 @@ import {
   updateInstancia,
   type OptionsData,
   type Processo,
-  type ProcessoComparativoItem,
   type ProcessoInstancia,
   type Revisao,
 } from "../../data/api/transformometroApi";
-import { fetchProcessoDiagrama } from "../../data/api/transformometroDiagramApi";
-import { fetchProcessoDecomposicao } from "../../data/api/transformometroDecompositionApi";
-import { fetchProcessoArquivos } from "../../data/api/transformometroProcessoArquivoApi";
 import type { ProcessoAuditLogEntry } from "../../utils/processoTimeline";
 import { computeProcessoSetupCompletion } from "../../utils/processoCompletion";
 import { requestWorkspaceTreeRefresh } from "../../utils/navigation";
@@ -67,6 +62,7 @@ import { ProcessFilesSection } from "../process/ProcessFilesSection";
 import { ProcessDocumentationSection } from "../processes/ProcessDocumentationSection";
 import { ProcessInteractionRoomSection } from "../processes/ProcessInteractionRoomSection";
 import { ProcessRelatedTasksSection } from "../processes/ProcessRelatedTasksSection";
+import { ProcessResultsSection } from "../processes/ProcessResultsSection";
 import {
   masterPayloadFromProcessoForm,
   processFormFromEntity,
@@ -75,13 +71,16 @@ import {
 import { processScopeFromEntity } from "../processes/processScope";
 import {
   ProcessWorkspaceShell,
+  useProcessoWorkspaceSecondaryFocus,
   useProcessoWorkspaceSection,
 } from "../processes/ProcessWorkspaceShell";
 import {
+  buildProcessoSecondaryHref,
   buildProcessoSectionHref,
 } from "../processes/processWorkspaceNav";
 import type { ProcessoWorkspaceSectionId } from "../processes/processWorkspaceNav";
 import { ProcessWorkspaceSectionPanel } from "../processes/ProcessWorkspaceSectionPanel";
+import { TmUnderlineNav } from "../../components/tmChromeUi";
 import { DS_GHOST_BTN, dsGhostBtn } from "../../components/ghostChrome";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
@@ -110,10 +109,6 @@ export function ProcessDetailPage({
   const [instancias, setInstancias] = useState<ProcessoInstancia[]>([]);
   const [instanciasComRevisao, setInstanciasComRevisao] = useState<string[]>([]);
   const [revisoes, setRevisoes] = useState<Revisao[]>([]);
-  const [diagramNodeCount, setDiagramNodeCount] = useState(0);
-  const [decompositionNodeCount, setDecompositionNodeCount] = useState(0);
-  const [arquivosCount, setArquivosCount] = useState(0);
-  const [comparativoItems, setComparativoItems] = useState<ProcessoComparativoItem[]>([]);
   const [options, setOptions] = useState<OptionsData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -126,41 +121,41 @@ export function ProcessDetailPage({
   );
   const [savingProcesso, setSavingProcesso] = useState(false);
   const [timelineEntries, setTimelineEntries] = useState<ProcessoAuditLogEntry[]>([]);
-  const [timelineLoading, setTimelineLoading] = useState(true);
+  const [timelineLoading, setTimelineLoading] = useState(false);
+  const [timelineLoaded, setTimelineLoaded] = useState(false);
+  const [timelineError, setTimelineError] = useState<string | null>(null);
 
   const loadTimeline = useCallback(async () => {
     setTimelineLoading(true);
+    setTimelineError(null);
     try {
       const data = await fetchProcessTimeline(processoId, getAccessToken, { page_size: 500 });
       setTimelineEntries(data.items);
-    } catch {
+      setTimelineLoaded(true);
+    } catch (reason) {
       setTimelineEntries([]);
+      setTimelineError(
+        reason instanceof Error ? reason.message : "Não foi possível carregar o histórico.",
+      );
     } finally {
       setTimelineLoading(false);
     }
   }, [getAccessToken, processoId]);
 
+  /** ENTRY: process + chrome/context mínimo — sem reads pesados de seção. */
   const load = useCallback(async () => {
     setRefreshing(true);
     try {
-      const [proc, revs, opts, inst, diagram, comparativo, decomposicao, arquivos] = await Promise.all([
+      const [proc, revs, opts, inst] = await Promise.all([
         fetchProcesso(processoId, getAccessToken),
         fetchRevisoes(processoId, getAccessToken),
         fetchOptions(getAccessToken),
         fetchProcessoInstancias(processoId, getAccessToken),
-        fetchProcessoDiagrama(processoId, getAccessToken).catch(() => null),
-        fetchProcessoComparativo(processoId, getAccessToken).catch(() => ({ items: [] })),
-        fetchProcessoDecomposicao(processoId, getAccessToken).catch(() => null),
-        fetchProcessoArquivos(processoId, getAccessToken).catch(() => []),
       ]);
       setProcesso(proc);
       setOptions(opts);
       setInstancias(inst.items);
       setRevisoes(revs.items);
-      setDiagramNodeCount(diagram?.conteudo?.nodes?.length ?? 0);
-      setDecompositionNodeCount(decomposicao?.conteudo?.nodes?.length ?? 0);
-      setArquivosCount(arquivos.length);
-      setComparativoItems(comparativo.items ?? []);
       setInstanciasComRevisao(
         Array.from(
           new Set(
@@ -175,8 +170,7 @@ export function ProcessDetailPage({
       setLoading(false);
       setRefreshing(false);
     }
-    void loadTimeline();
-  }, [getAccessToken, processoId, loadTimeline]);
+  }, [getAccessToken, processoId]);
 
   const sectionEdit = useCollaborativeSectionEdit({
     entityType: "processo",
@@ -190,8 +184,9 @@ export function ProcessDetailPage({
 
   useEffect(() => {
     if (!sectionEdit.resyncVersion) return;
+    if (!timelineLoaded) return;
     void loadTimeline();
-  }, [sectionEdit.resyncVersion, loadTimeline]);
+  }, [sectionEdit.resyncVersion, loadTimeline, timelineLoaded]);
 
   useEffect(() => {
     void load();
@@ -214,7 +209,7 @@ export function ProcessDetailPage({
     if (typeof window === "undefined") return;
     if (window.location.hash !== "#nova-instancia") return;
     setOpenInstanciaForm(true);
-    window.history.replaceState(null, "", window.location.pathname);
+    window.history.replaceState(null, "", `${window.location.pathname}#melhorias`);
   }, [processoId]);
 
   useEffect(() => {
@@ -349,6 +344,7 @@ export function ProcessDetailPage({
   }
 
   const activeSection = useProcessoWorkspaceSection();
+  const secondaryFocus = useProcessoWorkspaceSecondaryFocus();
   const [mountedSections, setMountedSections] = useState<Set<ProcessoWorkspaceSectionId>>(
     () => new Set([activeSection])
   );
@@ -368,20 +364,46 @@ export function ProcessDetailPage({
     return next;
   }, [activeSection, mountedSections]);
 
+  /** Histórico: carrega só quando a seção fica ativa (ou já visitada com erro para retry). */
+  useEffect(() => {
+    if (activeSection !== "historico") return;
+    if (timelineLoaded && !timelineError) return;
+    void loadTimeline();
+  }, [activeSection, loadTimeline, timelineError, timelineLoaded]);
+
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    if (!secondaryFocus) return;
+    const target = document.querySelector(`[data-subsection="${secondaryFocus}"]`);
+    if (!(target instanceof HTMLElement)) return;
+    target.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [secondaryFocus, activeSection]);
+
   const setupCompletion = useMemo(() => {
     if (!processo) {
       return { percent: 0, done: 0, total: 0, items: [] };
     }
+    const stats = processo.setup_stats;
     return computeProcessoSetupCompletion({
       processo,
-      instanciaCount: instancias.length,
-      diagramNodeCount,
-      decompositionNodeCount,
+      instanciaCount: instancias.length || stats?.instancia_count || 0,
+      diagramNodeCount: stats?.diagram_node_count ?? 0,
+      decompositionNodeCount: stats?.decomposition_node_count ?? 0,
       revisoes,
-      comparativoItems,
-      hasMedicao: processo.setup_stats?.has_medicao,
+      hasBaseline: stats?.has_baseline,
+      hasMelhoria: stats?.has_melhoria,
+      hasMedicao: stats?.has_medicao,
     });
-  }, [comparativoItems, decompositionNodeCount, diagramNodeCount, instancias.length, processo, revisoes]);
+  }, [instancias.length, processo, revisoes]);
+
+  const mapeamentoFocus =
+    secondaryFocus === "fluxo" || secondaryFocus === "estrutura" ? secondaryFocus : "estrutura";
+  const documentacaoFocus =
+    secondaryFocus === "arquivos" || secondaryFocus === "documentos"
+      ? secondaryFocus
+      : "documentos";
+  const melhoriasFocus =
+    secondaryFocus === "priorizacao" || secondaryFocus === "lista" ? secondaryFocus : "lista";
 
   const processFetchProgress = useTrackedSingleFetchProgress(loading && !processo);
   const processLoadingProgress = useLoadingProgress(loading && !processo, processFetchProgress);
@@ -433,72 +455,106 @@ export function ProcessDetailPage({
     <>
         {visibleSections.has("visao-geral") ? (
           <ProcessWorkspaceSectionPanel active={activeSection === "visao-geral"} sectionId="visao-geral">
-          <section className="ds-card tm-processo-workspace-panel">
-            <h2 className="ds-section-title">Visão geral</h2>
+          <section className="ds-card tm-processo-workspace-panel" data-subsection="dados">
+            <h2 className="ds-section-title">Visão Geral</h2>
             <p className="ds-hint">
-              Resumo do cadastro do processo-mestre. Use as abas acima para abrir cada tópico.
-              Melhorias e revisões ficam na aba Melhorias; medições, investimentos e recursos ficam
-              em cada revisão.
+              Identidade e dados essenciais do processo-mestre. Completude é factual
+              ({setupCompletion.done} de {setupCompletion.total} itens disponíveis) — não é score de maturidade.
             </p>
-            <ProcessFormProgress completion={setupCompletion} title="Preenchimento do cadastro" />
+            <ProcessFormProgress
+              completion={setupCompletion}
+              title={`${setupCompletion.done} de ${setupCompletion.total} itens disponíveis`}
+            />
             <div className="tm-processo-workspace-overview">
-              <ProcessReadView processo={processo} activeFilialCount={options.filiais.length} />
+              <EditableSectionCard
+                title="Dados do processo"
+                hint={TM_HELP_TOOLTIPS.processos.nome}
+                description="Informações mestre do processo. Melhorias e revisões ficam nos níveis abaixo."
+                isEditing={sectionEdit.isEditing("processo")}
+                onEdit={() => void handleStartEditProcesso()}
+                onCancel={cancelProcessoEdit}
+                onSave={() => void handleSaveProcesso()}
+                saving={savingProcesso}
+                dirty={
+                  processForm != null &&
+                  processFormBaseline != null &&
+                  !valuesEqual(processForm, processFormBaseline)
+                }
+                readContent={<ProcessReadView processo={processo} activeFilialCount={options.filiais.length} />}
+                editContent={
+                  processForm ? (
+                    <form
+                      onSubmit={(event) => {
+                        event.preventDefault();
+                        void handleSaveProcesso();
+                      }}
+                    >
+                      <ProcessFormFields
+                        form={processForm}
+                        options={options}
+                        showInstanciaFields={false}
+                        onChange={setProcessoForm}
+                      />
+                      <div className="tm-inst-form tm-inst-form--spaced">
+                        <h3 className="ds-subsection-title">Unidades e departamentos do processo</h3>
+                        <p className="ds-hint">
+                          Escopo operacional do processo-mestre. Ao criar melhorias, você pode replicar esta
+                          amarração ou definir outra.
+                        </p>
+                        <ProcessScopeFields
+                          value={processForm.escopo}
+                          options={options}
+                          onChange={(escopo) => setProcessoForm({ ...processForm, escopo })}
+                          activeFilialCount={options.filiais.length}
+                        />
+                      </div>
+                    </form>
+                  ) : null
+                }
+              />
               <dl className="ds-dl-grid tm-processo-workspace-overview__stats">
                 <div>
-                  <dt>Arquivos</dt>
-                  <dd>{arquivosCount}</dd>
+                  <dt>Melhorias</dt>
+                  <dd>{instancias.length}</dd>
                 </div>
                 <div>
-                  <dt>Diagrama</dt>
-                  <dd>{diagramNodeCount > 0 ? `${diagramNodeCount} nós` : "Sem nós"}</dd>
+                  <dt>Revisões</dt>
+                  <dd>{revisoes.length}</dd>
                 </div>
                 <div>
                   <dt>Medição</dt>
                   <dd>{processo.setup_stats?.has_medicao ? "Presente em revisão" : "Ainda não"}</dd>
                 </div>
+                <div>
+                  <dt>Diagrama</dt>
+                  <dd>
+                    {(processo.setup_stats?.diagram_node_count ?? 0) > 0
+                      ? `${processo.setup_stats?.diagram_node_count} nós`
+                      : "Sem nós"}
+                  </dd>
+                </div>
               </dl>
               <nav className="tm-processo-workspace-overview__links" aria-label="Atalhos do processo">
-                <button
-                  type="button"
-                  className="ds-link"
-                  onClick={() => onNavigate(buildProcessoSectionHref(processoId, "melhorias"))}
-                >
-                  Abrir melhorias
+                <button type="button" className="ds-link" onClick={() => onNavigate(buildProcessoSectionHref(processoId, "mapeamento"))}>
+                  Mapeamento
                 </button>
-                <button
-                  type="button"
-                  className="ds-link"
-                  onClick={() => onNavigate(buildProcessoSectionHref(processoId, "diagrama"))}
-                >
-                  Abrir diagrama
+                <button type="button" className="ds-link" onClick={() => onNavigate(buildProcessoSectionHref(processoId, "documentacao"))}>
+                  Documentação
                 </button>
-                <button
-                  type="button"
-                  className="ds-link"
-                  onClick={() => onNavigate(buildProcessoSectionHref(processoId, "tarefas"))}
-                >
+                <button type="button" className="ds-link" onClick={() => onNavigate(buildProcessoSectionHref(processoId, "melhorias"))}>
+                  Melhorias
+                </button>
+                <button type="button" className="ds-link" onClick={() => onNavigate(buildProcessoSectionHref(processoId, "resultados"))}>
+                  Resultados
+                </button>
+                <button type="button" className="ds-link" onClick={() => onNavigate(buildProcessoSectionHref(processoId, "tarefas"))}>
                   Tarefas relacionadas
                 </button>
-                <button
-                  type="button"
-                  className="ds-link"
-                  onClick={() => onNavigate(buildProcessoSectionHref(processoId, "sala"))}
-                >
-                  Sala de interação
+                <button type="button" className="ds-link" onClick={() => onNavigate(buildProcessoSectionHref(processoId, "sala"))}>
+                  Sala
                 </button>
-                <button
-                  type="button"
-                  className="ds-link"
-                  onClick={() => onNavigate(buildProcessoSectionHref(processoId, "timeline"))}
-                >
-                  Linha do tempo
-                </button>
-                <button
-                  type="button"
-                  className="ds-link"
-                  onClick={() => onNavigate(buildProcessoSectionHref(processoId, "documentacao"))}
-                >
-                  Documentação
+                <button type="button" className="ds-link" onClick={() => onNavigate(buildProcessoSectionHref(processoId, "historico"))}>
+                  Histórico
                 </button>
               </nav>
             </div>
@@ -506,152 +562,128 @@ export function ProcessDetailPage({
           </ProcessWorkspaceSectionPanel>
         ) : null}
 
-        {visibleSections.has("dados") ? (
-          <ProcessWorkspaceSectionPanel active={activeSection === "dados"} sectionId="dados">
-          <EditableSectionCard
-            title="Dados do processo"
-            hint={TM_HELP_TOOLTIPS.processos.nome}
-            description="Informações mestre do processo. Melhorias e revisões ficam nos níveis abaixo."
-            isEditing={sectionEdit.isEditing("processo")}
-            onEdit={() => void handleStartEditProcesso()}
-            onCancel={cancelProcessoEdit}
-            onSave={() => void handleSaveProcesso()}
-            saving={savingProcesso}
-            dirty={
-              processForm != null &&
-              processFormBaseline != null &&
-              !valuesEqual(processForm, processFormBaseline)
-            }
-            readContent={<ProcessReadView processo={processo} activeFilialCount={options.filiais.length} />}
-            editContent={
-              processForm ? (
-                <form
-                  onSubmit={(event) => {
-                    event.preventDefault();
-                    void handleSaveProcesso();
-                  }}
-                >
-                  <ProcessFormFields
-                    form={processForm}
-                    options={options}
-                    showInstanciaFields={false}
-                    onChange={setProcessoForm}
-                  />
-                  <div className="tm-inst-form tm-inst-form--spaced">
-                    <h3 className="ds-subsection-title">Unidades e departamentos do processo</h3>
-                    <p className="ds-hint">
-                      Escopo operacional do processo-mestre. Ao criar melhorias, você pode replicar esta
-                      amarração ou definir outra.
-                    </p>
-                    <ProcessScopeFields
-                      value={processForm.escopo}
-                      options={options}
-                      onChange={(escopo) => setProcessoForm({ ...processForm, escopo })}
-                      activeFilialCount={options.filiais.length}
-                    />
-                  </div>
-                </form>
-              ) : null
-            }
-          />
-          </ProcessWorkspaceSectionPanel>
-        ) : null}
-
         {visibleSections.has("mapeamento") ? (
           <ProcessWorkspaceSectionPanel active={activeSection === "mapeamento"} sectionId="mapeamento">
-          <div className="tm-processo-composed-card tm-processo-composed-card--first">
-            <h3 className="ds-subsection-title">Macro composto (visão vigente)</h3>
-            <p className="ds-hint">
-              Base do processo + deltas das revisões vigentes na data escolhida. Conflitos de
-              interseção aparecem em destaque.
-            </p>
-            <ProcessoDecompositionComposedSection
-              embeddedInCard
-              processoId={processoId}
-              processoNome={processo.nome_processo}
-              getAccessToken={getAccessToken}
-              onError={setError}
-              resyncVersion={panelResyncVersion}
-            />
-          </div>
-          <EditableSectionCard
-            title="Mapeamento base do processo"
-            description="Árvore WBS cadastrada (fonte estrutural). Edite aqui a base; as revisões vigentes aparecem acima na visão composta."
-            hint={TM_HELP_TOOLTIPS.decomposition.mapeamento}
-            isEditing={sectionEdit.isEditing("decomposicao")}
-            onEdit={() => void sectionEdit.startEdit("decomposicao")}
-            onCancel={() => sectionEdit.cancelEdit("decomposicao")}
-            readContent={
-              <ProcessoDecompositionSection
-                embeddedInCard
-                readOnly
-                processoId={processoId}
-                processoNome={processo.nome_processo}
-                getAccessToken={getAccessToken}
-                onError={setError}
-                resyncVersion={panelResyncVersion}
-                onEntityChanged={() => void loadTimeline()}
+            <div className="tm-processo-workspace-panel">
+              <h2 className="ds-section-title">Mapeamento</h2>
+              <TmUnderlineNav
+                mode="navigation"
+                layout="wrap"
+                density="compact"
+                aria-label="Subseções de mapeamento"
+                activeId={mapeamentoFocus}
+                items={[
+                  {
+                    id: "estrutura",
+                    label: "Estrutura",
+                    onSelect: () => onNavigate(buildProcessoSecondaryHref(processoId, "estrutura")),
+                  },
+                  {
+                    id: "fluxo",
+                    label: "Fluxo",
+                    onSelect: () => onNavigate(buildProcessoSecondaryHref(processoId, "fluxo")),
+                  },
+                ]}
               />
-            }
-            editContent={
-              <ProcessoDecompositionSection
-                embeddedInCard
-                processoId={processoId}
-                processoNome={processo.nome_processo}
-                getAccessToken={getAccessToken}
-                onError={setError}
-                resyncVersion={panelResyncVersion}
-                onEntityChanged={() => void loadTimeline()}
-              />
-            }
-          />
-          </ProcessWorkspaceSectionPanel>
-        ) : null}
-
-        {visibleSections.has("diagrama") ? (
-          <ProcessWorkspaceSectionPanel active={activeSection === "diagrama"} sectionId="diagrama">
-          <div className="tm-processo-composed-card tm-processo-composed-card--first">
-            <h3 className="ds-subsection-title">Diagrama composto (visão vigente)</h3>
-            <p className="ds-hint">
-              Macro do fluxo + deltas das revisões vigentes na data escolhida. Conflitos de
-              interseção aparecem em destaque.
-            </p>
-            <ProcessoDiagramComposedSection
-              embeddedInCard
-              processoId={processoId}
-              getAccessToken={getAccessToken}
-              onError={setError}
-              resyncVersion={panelResyncVersion}
-            />
-          </div>
-          <EditableSectionCard
-            title="Diagrama macro base"
-            description="Mapa canônico cadastrado. Edite em página dedicada; as revisões vigentes aparecem acima na visão composta."
-            hint={TM_HELP_TOOLTIPS.processos.diagramaMacro}
-            isEditing={false}
-            editable={
-              !(
-                sectionEdit.presence?.editors.some(
-                  (item) => item.lock_active && item.section_key === "diagrama_macro",
-                ) ?? false
-              )
-            }
-            editLabel="Editar diagrama"
-            onEdit={() => onNavigate(buildProcessoDiagramaEditPath(processoId))}
-            onCancel={() => undefined}
-            readContent={
-              <ProcessoDiagramSection
-                embeddedInCard
-                readOnly
-                processoId={processoId}
-                getAccessToken={getAccessToken}
-                onError={setError}
-                resyncVersion={panelResyncVersion}
-                onEntityChanged={() => void loadTimeline()}
-              />
-            }
-            editContent={null}
-          />
+              <div data-subsection="estrutura" hidden={mapeamentoFocus !== "estrutura"}>
+                <div className="tm-processo-composed-card tm-processo-composed-card--first">
+                  <h3 className="ds-subsection-title">Macro composto (visão vigente)</h3>
+                  <p className="ds-hint">
+                    Base do processo + deltas das revisões vigentes na data escolhida. Conflitos de
+                    interseção aparecem em destaque.
+                  </p>
+                  <ProcessoDecompositionComposedSection
+                    embeddedInCard
+                    processoId={processoId}
+                    processoNome={processo.nome_processo}
+                    getAccessToken={getAccessToken}
+                    onError={setError}
+                    resyncVersion={panelResyncVersion}
+                  />
+                </div>
+                <EditableSectionCard
+                  title="Mapeamento base do processo"
+                  description="Árvore WBS cadastrada (fonte estrutural). Edite aqui a base; as revisões vigentes aparecem acima na visão composta."
+                  hint={TM_HELP_TOOLTIPS.decomposition.mapeamento}
+                  isEditing={sectionEdit.isEditing("decomposicao")}
+                  onEdit={() => void sectionEdit.startEdit("decomposicao")}
+                  onCancel={() => sectionEdit.cancelEdit("decomposicao")}
+                  readContent={
+                    <ProcessoDecompositionSection
+                      embeddedInCard
+                      readOnly
+                      processoId={processoId}
+                      processoNome={processo.nome_processo}
+                      getAccessToken={getAccessToken}
+                      onError={setError}
+                      resyncVersion={panelResyncVersion}
+                      onEntityChanged={() => {
+                        if (timelineLoaded) void loadTimeline();
+                      }}
+                    />
+                  }
+                  editContent={
+                    <ProcessoDecompositionSection
+                      embeddedInCard
+                      processoId={processoId}
+                      processoNome={processo.nome_processo}
+                      getAccessToken={getAccessToken}
+                      onError={setError}
+                      resyncVersion={panelResyncVersion}
+                      onEntityChanged={() => {
+                        if (timelineLoaded) void loadTimeline();
+                      }}
+                    />
+                  }
+                />
+              </div>
+              <div data-subsection="fluxo" hidden={mapeamentoFocus !== "fluxo"}>
+                <div className="tm-processo-composed-card tm-processo-composed-card--first">
+                  <h3 className="ds-subsection-title">Diagrama composto (visão vigente)</h3>
+                  <p className="ds-hint">
+                    Macro do fluxo + deltas das revisões vigentes na data escolhida. Conflitos de
+                    interseção aparecem em destaque.
+                  </p>
+                  <ProcessoDiagramComposedSection
+                    embeddedInCard
+                    processoId={processoId}
+                    getAccessToken={getAccessToken}
+                    onError={setError}
+                    resyncVersion={panelResyncVersion}
+                  />
+                </div>
+                <EditableSectionCard
+                  title="Diagrama macro base"
+                  description="Mapa canônico cadastrado. Edite em página dedicada; as revisões vigentes aparecem acima na visão composta."
+                  hint={TM_HELP_TOOLTIPS.processos.diagramaMacro}
+                  isEditing={false}
+                  editable={
+                    !(
+                      sectionEdit.presence?.editors.some(
+                        (item) => item.lock_active && item.section_key === "diagrama_macro",
+                      ) ?? false
+                    )
+                  }
+                  editLabel="Editar diagrama"
+                  onEdit={() => onNavigate(buildProcessoDiagramaEditPath(processoId))}
+                  onCancel={() => undefined}
+                  readContent={
+                    <ProcessoDiagramSection
+                      embeddedInCard
+                      readOnly
+                      processoId={processoId}
+                      getAccessToken={getAccessToken}
+                      onError={setError}
+                      resyncVersion={panelResyncVersion}
+                      onEntityChanged={() => {
+                        if (timelineLoaded) void loadTimeline();
+                      }}
+                    />
+                  }
+                  editContent={null}
+                />
+              </div>
+            </div>
           </ProcessWorkspaceSectionPanel>
         ) : null}
 
@@ -660,100 +692,149 @@ export function ProcessDetailPage({
             active={activeSection === "documentacao"}
             sectionId="documentacao"
           >
-            <ProcessDocumentationSection
-              processoId={processoId}
-              getAccessToken={getAccessToken}
-              onNavigate={onNavigate}
-            />
-          </ProcessWorkspaceSectionPanel>
-        ) : null}
-
-        {visibleSections.has("arquivos") ? (
-          <ProcessWorkspaceSectionPanel active={activeSection === "arquivos"} sectionId="arquivos">
-          <EditableSectionCard
-            title={`Arquivos do processo${arquivosCount ? ` (${arquivosCount})` : ""}`}
-            description="Documentos de referência do processo-mestre — POP, instruções, planilhas e links."
-            hint={TM_HELP_TOOLTIPS.processos.arquivos}
-            isEditing={sectionEdit.isEditing("arquivos")}
-            onEdit={() => void sectionEdit.startEdit("arquivos")}
-            onCancel={() => sectionEdit.cancelEdit("arquivos")}
-            readContent={
-              <ProcessFilesSection
-                embeddedInCard
-                readOnly
-                processoId={processoId}
-                getAccessToken={getAccessToken}
-                onError={setError}
-                resyncVersion={panelResyncVersion}
+            <div className="tm-processo-workspace-panel">
+              <h2 className="ds-section-title">Documentação</h2>
+              <TmUnderlineNav
+                mode="navigation"
+                layout="wrap"
+                density="compact"
+                aria-label="Subseções de documentação"
+                activeId={documentacaoFocus}
+                items={[
+                  {
+                    id: "documentos",
+                    label: "Documentos",
+                    onSelect: () => onNavigate(buildProcessoSecondaryHref(processoId, "documentos")),
+                  },
+                  {
+                    id: "arquivos",
+                    label: "Arquivos",
+                    onSelect: () => onNavigate(buildProcessoSecondaryHref(processoId, "arquivos")),
+                  },
+                ]}
               />
-            }
-            editContent={
-              <ProcessFilesSection
-                embeddedInCard
-                processoId={processoId}
-                getAccessToken={getAccessToken}
-                onError={setError}
-                resyncVersion={panelResyncVersion}
-                onChanged={() => void load()}
-              />
-            }
-          />
+              <div data-subsection="documentos" hidden={documentacaoFocus !== "documentos"}>
+                <ProcessDocumentationSection
+                  processoId={processoId}
+                  getAccessToken={getAccessToken}
+                  onNavigate={onNavigate}
+                />
+              </div>
+              <div data-subsection="arquivos" hidden={documentacaoFocus !== "arquivos"}>
+                <EditableSectionCard
+                  title="Arquivos do processo"
+                  description="Documentos de referência do processo-mestre — POP, instruções, planilhas e links."
+                  hint={TM_HELP_TOOLTIPS.processos.arquivos}
+                  isEditing={sectionEdit.isEditing("arquivos")}
+                  onEdit={() => void sectionEdit.startEdit("arquivos")}
+                  onCancel={() => sectionEdit.cancelEdit("arquivos")}
+                  readContent={
+                    <ProcessFilesSection
+                      embeddedInCard
+                      readOnly
+                      processoId={processoId}
+                      getAccessToken={getAccessToken}
+                      onError={setError}
+                      resyncVersion={panelResyncVersion}
+                    />
+                  }
+                  editContent={
+                    <ProcessFilesSection
+                      embeddedInCard
+                      processoId={processoId}
+                      getAccessToken={getAccessToken}
+                      onError={setError}
+                      resyncVersion={panelResyncVersion}
+                      onChanged={() => void load()}
+                    />
+                  }
+                />
+              </div>
+            </div>
           </ProcessWorkspaceSectionPanel>
         ) : null}
 
         {visibleSections.has("melhorias") ? (
           <ProcessWorkspaceSectionPanel active={activeSection === "melhorias"} sectionId="melhorias">
-          <ProcessInstancesPanel
-            instancias={instancias}
-            selectedInstanciaId={null}
-            options={options}
-            processScope={processScopeFromEntity(processo)}
-            busy={refreshing}
-            initialShowForm={openInstanciaForm}
-            instanciasComRevisao={instanciasComRevisao}
-            navigateOnSelect
-            onSelect={(instanciaId) => onNavigate(buildInstanciaPath(processoId, instanciaId))}
-            onCreate={async (payload) => {
-              await createProcessoInstancia(processoId, payload, getAccessToken);
-              setOpenInstanciaForm(false);
-              await load();
-              requestWorkspaceTreeRefresh();
-            }}
-            onUpdate={async (instanciaId, payload) => {
-              await updateInstancia(instanciaId, payload, getAccessToken);
-              await load();
-              requestWorkspaceTreeRefresh();
-            }}
-            onDelete={async (instanciaId) => {
-              await deleteInstancia(instanciaId, getAccessToken);
-              await load();
-              requestWorkspaceTreeRefresh();
-            }}
-            onDuplicate={async ({ origemInstanciaId, ...payload }) => {
-              await duplicateInstancia(origemInstanciaId, payload, getAccessToken);
-              await load();
-              requestWorkspaceTreeRefresh();
-            }}
-          />
+            <div className="tm-processo-workspace-panel">
+              <h2 className="ds-section-title">Melhorias</h2>
+              <TmUnderlineNav
+                mode="navigation"
+                layout="wrap"
+                density="compact"
+                aria-label="Subseções de melhorias"
+                activeId={melhoriasFocus}
+                items={[
+                  {
+                    id: "lista",
+                    label: "Instâncias",
+                    onSelect: () => onNavigate(buildProcessoSecondaryHref(processoId, "lista")),
+                  },
+                  {
+                    id: "priorizacao",
+                    label: "Priorização",
+                    onSelect: () => onNavigate(buildProcessoSecondaryHref(processoId, "priorizacao")),
+                  },
+                ]}
+              />
+              <div data-subsection="lista" hidden={melhoriasFocus !== "lista"}>
+                <ProcessInstancesPanel
+                  instancias={instancias}
+                  selectedInstanciaId={null}
+                  options={options}
+                  processScope={processScopeFromEntity(processo)}
+                  busy={refreshing}
+                  initialShowForm={openInstanciaForm}
+                  instanciasComRevisao={instanciasComRevisao}
+                  navigateOnSelect
+                  onSelect={(instanciaId) => onNavigate(buildInstanciaPath(processoId, instanciaId))}
+                  onCreate={async (payload) => {
+                    await createProcessoInstancia(processoId, payload, getAccessToken);
+                    setOpenInstanciaForm(false);
+                    await load();
+                    requestWorkspaceTreeRefresh();
+                  }}
+                  onUpdate={async (instanciaId, payload) => {
+                    await updateInstancia(instanciaId, payload, getAccessToken);
+                    await load();
+                    requestWorkspaceTreeRefresh();
+                  }}
+                  onDelete={async (instanciaId) => {
+                    await deleteInstancia(instanciaId, getAccessToken);
+                    await load();
+                    requestWorkspaceTreeRefresh();
+                  }}
+                  onDuplicate={async ({ origemInstanciaId, ...payload }) => {
+                    await duplicateInstancia(origemInstanciaId, payload, getAccessToken);
+                    await load();
+                    requestWorkspaceTreeRefresh();
+                  }}
+                />
+              </div>
+              <div data-subsection="priorizacao" hidden={melhoriasFocus !== "priorizacao"}>
+                <ProcessImpactEffortMatrixSection
+                  processoId={processoId}
+                  processoLabel={processo.nome_processo}
+                  getAccessToken={getAccessToken}
+                  onError={setError}
+                  onNavigate={onNavigate}
+                  resyncVersion={panelResyncVersion}
+                />
+              </div>
+            </div>
           </ProcessWorkspaceSectionPanel>
         ) : null}
 
-        {visibleSections.has("priorizacao") ? (
-          <ProcessWorkspaceSectionPanel active={activeSection === "priorizacao"} sectionId="priorizacao">
-            <ProcessImpactEffortMatrixSection
+        {visibleSections.has("resultados") ? (
+          <ProcessWorkspaceSectionPanel active={activeSection === "resultados"} sectionId="resultados">
+            <ProcessResultsSection
               processoId={processoId}
-              processoLabel={processo.nome_processo}
+              instancias={instancias}
+              revisoes={revisoes}
               getAccessToken={getAccessToken}
-              onError={setError}
               onNavigate={onNavigate}
-              resyncVersion={panelResyncVersion}
+              active={activeSection === "resultados"}
             />
-          </ProcessWorkspaceSectionPanel>
-        ) : null}
-
-        {visibleSections.has("timeline") ? (
-          <ProcessWorkspaceSectionPanel active={activeSection === "timeline"} sectionId="timeline">
-          <ProcessTimeline entries={timelineEntries} loading={timelineLoading} />
           </ProcessWorkspaceSectionPanel>
         ) : null}
 
@@ -776,6 +857,20 @@ export function ProcessDetailPage({
               onNavigate={onNavigate}
               active={activeSection === "sala"}
             />
+          </ProcessWorkspaceSectionPanel>
+        ) : null}
+
+        {visibleSections.has("historico") ? (
+          <ProcessWorkspaceSectionPanel active={activeSection === "historico"} sectionId="historico">
+            {timelineError ? (
+              <InlineErrorState
+                title="Falha ao carregar histórico"
+                message={timelineError}
+                onAction={() => void loadTimeline()}
+              />
+            ) : (
+              <ProcessTimeline entries={timelineEntries} loading={timelineLoading} />
+            )}
           </ProcessWorkspaceSectionPanel>
         ) : null}
     </>

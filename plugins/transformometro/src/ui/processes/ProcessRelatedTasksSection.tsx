@@ -87,7 +87,7 @@ export function ProcessRelatedTasksSection({
         <EmptyState
           classNames={EMPTY}
           title="Sem tarefas relacionadas"
-          defaultMessage="Ainda não há tarefas originadas de mensagens da sala deste processo."
+          defaultMessage="Nenhuma tarefa relacionada a este processo."
         />
       ) : null}
 

@@ -6,9 +6,11 @@ import {
   defaultInstanciaSection,
   defaultRevisaoSection,
   parseInstanciaSectionFromHash,
+  parseProcessoSecondaryFocusFromHash,
   parseProcessoSectionFromHash,
   parseRevisaoSectionFromHash,
   type InstanciaWorkspaceSectionId,
+  type ProcessoWorkspaceSecondaryFocus,
   type ProcessoWorkspaceSectionId,
   type RevisaoWorkspaceSectionId,
 } from "./processWorkspaceNav";
@@ -63,6 +65,18 @@ export function useProcessoWorkspaceSection(): ProcessoWorkspaceSectionId {
     subscribeWorkspaceSection,
     readWorkspaceSectionSnapshot,
     () => "visao-geral",
+  );
+}
+
+function readWorkspaceSecondarySnapshot(): ProcessoWorkspaceSecondaryFocus {
+  return parseProcessoSecondaryFocusFromHash(window.location.hash);
+}
+
+export function useProcessoWorkspaceSecondaryFocus(): ProcessoWorkspaceSecondaryFocus {
+  return useSyncExternalStore(
+    subscribeWorkspaceSection,
+    readWorkspaceSecondarySnapshot,
+    () => null,
   );
 }
 

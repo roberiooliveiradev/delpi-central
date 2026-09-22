@@ -735,7 +735,7 @@ export function ProcessInstancesPanel({
             items={instancias}
             activeFilialCount={activeFilialCount}
             selectedInstanciaId={selectedInstanciaId}
-            emptyMessage="Nenhuma melhoria cadastrada."
+            emptyMessage="Nenhuma melhoria operacional registrada."
             detailColumns={columns}
             onOpen={(row) => onSelect(row.instancia_id)}
             headerActions={

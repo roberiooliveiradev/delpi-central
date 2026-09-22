@@ -4,8 +4,29 @@ import { resolveMatrixTreeBadge, type ProcessoWorkspaceMatrixBadge } from "../..
 import { revisaoDisplayLabel } from "../../utils/revisaoLabels";
 import { buildInstanciaPath, buildProcessoPath } from "../../utils/routeParser";
 
+/** Primary process workspace IA — presentation-only; not a domain model. */
 export type ProcessoWorkspaceSectionId =
   | "visao-geral"
+  | "mapeamento"
+  | "documentacao"
+  | "melhorias"
+  | "resultados"
+  | "tarefas"
+  | "sala"
+  | "historico";
+
+/** Secondary focus inside a grouped primary section (hash/routing only). */
+export type ProcessoWorkspaceSecondaryFocus =
+  | "estrutura"
+  | "fluxo"
+  | "documentos"
+  | "arquivos"
+  | "lista"
+  | "priorizacao"
+  | null;
+
+/** Legacy hash tokens preserved for deep-link backward compatibility. */
+export type ProcessoWorkspaceLegacyHash =
   | "dados"
   | "mapeamento"
   | "diagrama"
@@ -15,7 +36,10 @@ export type ProcessoWorkspaceSectionId =
   | "priorizacao"
   | "tarefas"
   | "sala"
-  | "timeline";
+  | "timeline"
+  | "visao-geral"
+  | "resultados"
+  | "historico";
 
 export type RevisaoWorkspaceSectionId =
   | "matriz"
@@ -57,18 +81,55 @@ export const PROCESSO_WORKSPACE_SECTIONS: Array<{
   id: ProcessoWorkspaceSectionId;
   label: string;
 }> = [
-  { id: "visao-geral", label: "Visão geral" },
-  { id: "dados", label: "Dados do processo" },
+  { id: "visao-geral", label: "Visão Geral" },
   { id: "mapeamento", label: "Mapeamento" },
-  { id: "diagrama", label: "Diagrama macro" },
   { id: "documentacao", label: "Documentação" },
-  { id: "arquivos", label: "Arquivos" },
   { id: "melhorias", label: "Melhorias" },
-  { id: "priorizacao", label: "Priorização (matriz)" },
-  { id: "tarefas", label: "Tarefas relacionadas" },
-  { id: "sala", label: "Sala de interação" },
-  { id: "timeline", label: "Linha do tempo" },
+  { id: "resultados", label: "Resultados" },
+  { id: "tarefas", label: "Tarefas" },
+  { id: "sala", label: "Sala" },
+  { id: "historico", label: "Histórico" },
 ];
+
+/** Maps any accepted hash token → primary section. */
+export const PROCESSO_HASH_TO_PRIMARY: Record<string, ProcessoWorkspaceSectionId> = {
+  "visao-geral": "visao-geral",
+  dados: "visao-geral",
+  mapeamento: "mapeamento",
+  diagrama: "mapeamento",
+  documentacao: "documentacao",
+  arquivos: "documentacao",
+  melhorias: "melhorias",
+  priorizacao: "melhorias",
+  resultados: "resultados",
+  tarefas: "tarefas",
+  sala: "sala",
+  timeline: "historico",
+  historico: "historico",
+};
+
+/** Secondary focus derived from legacy/grouped hashes. */
+export const PROCESSO_HASH_TO_SECONDARY: Record<string, ProcessoWorkspaceSecondaryFocus> = {
+  mapeamento: "estrutura",
+  diagrama: "fluxo",
+  documentacao: "documentos",
+  arquivos: "arquivos",
+  melhorias: "lista",
+  priorizacao: "priorizacao",
+};
+
+/** Canonical hash written when selecting a secondary focus (preserves deep links). */
+export const PROCESSO_SECONDARY_HASH: Record<
+  Exclude<ProcessoWorkspaceSecondaryFocus, null>,
+  string
+> = {
+  estrutura: "mapeamento",
+  fluxo: "diagrama",
+  documentos: "documentacao",
+  arquivos: "arquivos",
+  lista: "melhorias",
+  priorizacao: "priorizacao",
+};
 
 export const REVISAO_WORKSPACE_SECTIONS: Array<{
   id: RevisaoWorkspaceSectionId;
@@ -212,11 +273,24 @@ function buildRevisaoSectionNodes(input: {
 const DOCUMENT_ID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+function rawProcessoHashToken(hash: string): string {
+  const raw = (hash.startsWith("#") ? hash.slice(1) : hash).trim().toLowerCase();
+  if (!raw) return "";
+  return raw.split("/")[0] || "";
+}
+
 export function parseProcessoSectionFromHash(hash: string): ProcessoWorkspaceSectionId {
   const raw = (hash.startsWith("#") ? hash.slice(1) : hash).trim().toLowerCase();
-  if (!raw || raw === "nova-instancia") return raw === "nova-instancia" ? "melhorias" : "visao-geral";
-  const sectionPart = raw.split("/")[0] || "";
-  return isProcessoWorkspaceSectionId(sectionPart) ? sectionPart : "visao-geral";
+  if (!raw) return "visao-geral";
+  if (raw === "nova-instancia") return "melhorias";
+  const sectionPart = rawProcessoHashToken(hash);
+  return PROCESSO_HASH_TO_PRIMARY[sectionPart] ?? "visao-geral";
+}
+
+export function parseProcessoSecondaryFocusFromHash(hash: string): ProcessoWorkspaceSecondaryFocus {
+  const sectionPart = rawProcessoHashToken(hash);
+  if (!sectionPart) return null;
+  return PROCESSO_HASH_TO_SECONDARY[sectionPart] ?? null;
 }
 
 export function parseProcessDocumentIdFromHash(hash: string): string | null {
@@ -229,8 +303,14 @@ export function parseProcessDocumentIdFromHash(hash: string): string | null {
 
 export function buildProcessoSectionHref(processoId: string, section: ProcessoWorkspaceSectionId): string {
   if (section === "visao-geral") return buildProcessoPath(processoId);
-  if (section === "melhorias") return `${buildProcessoPath(processoId)}#melhorias`;
   return `${buildProcessoPath(processoId)}#${section}`;
+}
+
+export function buildProcessoSecondaryHref(
+  processoId: string,
+  focus: Exclude<ProcessoWorkspaceSecondaryFocus, null>,
+): string {
+  return `${buildProcessoPath(processoId)}#${PROCESSO_SECONDARY_HASH[focus]}`;
 }
 
 export function buildProcessDocumentHref(processoId: string, documentId: string): string {

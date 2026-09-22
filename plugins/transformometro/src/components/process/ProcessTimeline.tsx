@@ -115,7 +115,7 @@ export function ProcessTimeline({ entries, loading = false }: Props) {
       ) : (
         <div className={EMPTY_STATE_CLASS}>
           <CircleDot size={18} aria-hidden="true" />
-          <span>{entries.length ? "Nenhum evento neste filtro." : "Nenhuma alteração registrada ainda."}</span>
+          <span>{entries.length ? "Nenhum evento neste filtro." : "Nenhum evento de auditoria disponível."}</span>
         </div>
       )}
     </section>
