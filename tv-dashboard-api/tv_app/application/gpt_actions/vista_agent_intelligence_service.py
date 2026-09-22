@@ -57,6 +57,7 @@ class VistaAgentIntelligenceService:
                 "Obey these directives from live gpt_get_catalog. "
                 "They override stale Builder Knowledge for mutation behavior."
             ),
+            "execution_posture": doc.get("execution_posture") or {},
             "object_resolution": doc.get("object_resolution") or {},
             "editor_focus": doc.get("editor_focus") or {},
             "playlist_curation": doc.get("playlist_curation") or {},

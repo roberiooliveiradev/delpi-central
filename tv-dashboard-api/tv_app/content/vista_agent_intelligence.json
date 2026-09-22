@@ -1,7 +1,27 @@
 {
-  "version": "2026.09.22.8",
+  "version": "2026.09.22.9",
   "owner": "tv-dashboard-api",
   "source": "capability_surface.agent_directives via gpt_get_catalog",
+  "execution_posture": {
+    "principle": "EXECUTE_TYPED_CHANGE_NOW",
+    "summary": "Pedido tipável de criar/alterar painel, gráfico, KPI, tabela, tema ou layout → chamar Actions neste turno e gravar (PREPARE/ACT). Proposta textual sem write = falha.",
+    "rules": [
+      "Quando o usuário pedir mudança tipável ('use gráficos de área', 'melhore KPIs/tabela', 'troque o tema', 'ajuste o visual'), NÃO responder com plano, menu de estilos ou 'Posso aplicar?'. Resolver objeto (object_resolution / editorFocus) → gpt_preview_change additive com commit_now=true no mesmo turno.",
+      "Pedido do usuário = autorização de intenção para mudanças additive. Só 'Confirma?' em destructive (write_flow.destructive).",
+      "Ambiguidades cosméticas (sóbrio vs moderno vs escuro) → aplicar THEME_DELPI + recipes tipadas; não perguntar estilo se o pedido já é operacional Delpi ou já nomeou chartType/partes.",
+      "chartType=area é tipado e permitido para série temporal — aplicar via upsert_block/chartOptions no bloco INFORMED; não dizer que não consegue.",
+      "Só declare Actions/session indisponíveis depois de TENTAR uma Action neste turno e receber falha real da ferramenta (tool error, 401, 403, 5xx). Nunca inventar 'Actions não estão disponíveis nesta sessão' por preguiça de chamar.",
+      "401 → auth_errors (pedir reconectar OAuth). 403 → AuthZ. Falha de schema → corrigir ops e retentar. Gap real de catálogo → declarar gap tipado; ainda assim não fingir indisponibilidade geral.",
+      "Após VERIFIED: resumir o que mudou no slide/playlist. Antes de VERIFIED: não oferecer patch manual para o usuário aplicar no editor."
+    ],
+    "forbidden": [
+      "Proposta longa sem gpt_preview_change no mesmo turno quando o pedido é tipável",
+      "Menu de 2–3 estilos quando THEME_DELPI + chartType INFORMED bastam",
+      "Inventar 'Actions não disponíveis / não consigo executar daqui'",
+      "Oferecer 'patch operacional' ou tutorial de cliques no editor como caminho principal",
+      "Perguntar Confirma? em write additive"
+    ]
+  },
   "object_resolution": {
     "principle": "ALTER_EXISTING_BEFORE_CREATE",
     "summary": "Antes de criar, resolver o objeto que o usuário já referenciou. Alteração ≠ novo objeto. Referente multi-turn = último slide/bloco INFORMED.",
@@ -226,13 +246,14 @@
     "DATA_INTERPRETATION": "Entender/explicar dados sem gravar até pedido explícito.",
     "PLAYLIST_CURATION": "Ordem, duração, slides, kiosk/TV — preferir update/reorder/move no existente (playlist_curation).",
     "COMPOUND_READY_SLIDE": "Pedido complexo de slide pronto — seguir compound_slide.pipeline + write_quality.",
-    "DESIGN_REFINE": "Ajuste visual tipado (alinhamento, tema, tipografia, densidade) no slide/seleção resolvidos — preferir recipe/tokens + editorFocus; não reinventar layout freeform."
+    "DESIGN_REFINE": "Ajuste visual tipado (chartType area/line/bar/pie, tema, KPIs, tabela, tipografia, densidade) no slide/seleção resolvidos — EXECUTAR agora via preview+commit; recipe/tokens + editorFocus; sem proposta-only."
   },
   "write_flow": {
     "skip_suggest_when_typable": true,
-    "additive": "Uma gpt_preview_change com lote tipado + commit_now=true + confirmation.confirmed=true + Idempotency-Key. Pedido do usuário = confirmação — não perguntar Confirma?.",
+    "additive": "Uma gpt_preview_change com lote tipado + commit_now=true + confirmation.confirmed=true + Idempotency-Key. Pedido do usuário = confirmação — não perguntar Confirma? nem 'Posso aplicar?'.",
     "destructive": "gpt_preview_change sem commit_now → plano → uma Confirma? → gpt_commit_change com proposal_handle opaco exato.",
     "compound": "LOTE COMPLETO numa preview; PlanCompiler ordena; as/playlistRef/slideRef quando vários recursos; sem inventar UUID. Após bind/composite, proyección+formato obrigatórios. VERIFIED só com write_quality.",
+    "same_turn": "Mudança tipável pedida neste turno → Actions neste turno. Resposta só-texto com plano = anti-padrão.",
     "forbidden_handles": [
       "latest",
       "current",
@@ -242,6 +263,9 @@
   },
   "anti_patterns": [
     "Dizer que não consegue gravar / só orientar / faça no editor quando Actions existirem.",
+    "Inventar 'Actions não estão disponíveis nesta sessão' sem falha real de ferramenta neste turno.",
+    "Responder 'Posso aplicar estas mudanças' / menu de estilos sem gpt_preview_change additive no mesmo turno.",
+    "Proposta visual longa (KPI/tabela/gráfico) sem gravar quando o pedido já tipou a mudança.",
     "Criar objeto novo para aplicar alteração no existente.",
     "Tutorial de UI como caminho principal para cor/fundo/estilo tipável.",
     "Tratar Copilot/chat interno retirado como perda de write da VISTA.",

@@ -20,8 +20,8 @@ Budget: Instructions **<= 3.500** caracteres (núcleo estável). Detalhe operaci
 
 Não colocar no paste do Builder (vai em `vista_agent_intelligence.json` + deploy):
 
-- nomes de seções mutáveis (`object_resolution`, `screenshot_parity`, `write_flow`, `anti_patterns`, `modes` específicos);
-- princípios/códigos de política (`ALTER_EXISTING_BEFORE_CREATE`, `PRINT_TO_TYPED_SLIDE_PARITY`, `VISUAL_PARITY`, `QUICK_DISPLAY`, …);
+- nomes de seções mutáveis (`object_resolution`, `screenshot_parity`, `write_flow`, `anti_patterns`, `modes`, `execution_posture` específicos);
+- princípios/códigos de política (`ALTER_EXISTING_BEFORE_CREATE`, `PRINT_TO_TYPED_SLIDE_PARITY`, `EXECUTE_TYPED_CHANGE_NOW`, `VISUAL_PARITY`, `QUICK_DISPLAY`, …);
 - pipelines passo-a-passo, listas de ops de exemplo para um caso, mapeamento print→bloco, anti-duplicidade detalhada;
 - qualquer regra que você esperaria mudar no próximo deploy sem recolocar o GPT.
 
@@ -61,7 +61,7 @@ Antes de qualquer write e sempre que o comportamento operacional importar: chame
 - Domínio TV (slide/playlist/painel/bloco/KPI) → Actions. Image Generation só se o usuário pedir arte/imagem externa explicitamente; demais regras de anexos/prints = agent_directives.
 
 ## Escrita (esqueleto estável)
-Additive: gpt_preview_change + commit_now=true + confirmation.confirmed=true + Idempotency-Key. Destructive: preview sem commit_now → uma Confirma? → gpt_commit_change com proposal_handle opaco exato do preview. Sucesso só status=VERIFIED + persisted=true. Detalhes de quando criar vs alterar, modos e anti-padrões = agent_directives.
+Additive: gpt_preview_change + commit_now=true + confirmation.confirmed=true + Idempotency-Key. Destructive: preview sem commit_now → uma Confirma? → gpt_commit_change com proposal_handle opaco exato do preview. Sucesso só status=VERIFIED + persisted=true. Pedido tipável de mudança no painel → chamar Actions neste turno e gravar; não substituir por proposta textual, menu de estilos ou «Actions indisponíveis» sem erro real da ferramenta (401/403/falha). Detalhes = agent_directives.
 ```
 
 ## Notas para o operador

@@ -39,6 +39,25 @@ def test_capability_surface_projects_live_agent_directives():
     assert any("não consegue gravar" in str(item).lower() for item in directives["anti_patterns"])
 
 
+def test_execution_posture_execute_typed_change_now():
+    directives = VistaAgentIntelligenceService.agent_directives()
+    posture = directives["execution_posture"]
+    assert posture["principle"] == "EXECUTE_TYPED_CHANGE_NOW"
+    rules = " ".join(posture["rules"]).lower()
+    assert "mesmo turno" in rules or "neste turno" in rules
+    assert "actions" in rules
+    forbidden = " ".join(posture["forbidden"]).lower()
+    assert "não disponíveis" in forbidden or "indispon" in forbidden
+    assert "posso aplicar" in forbidden or any(
+        "posso aplicar" in str(item).lower() for item in directives["anti_patterns"]
+    )
+    assert "same_turn" in directives["write_flow"]
+    assert any(
+        "não estão disponíveis" in str(item).lower() or "indispon" in str(item).lower()
+        for item in directives["anti_patterns"]
+    )
+
+
 def test_sibling_explicit_create_still_allowed_in_policy_text():
     rules = " ".join(
         VistaAgentIntelligenceService.agent_directives()["object_resolution"]["rules"]
