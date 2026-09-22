@@ -735,6 +735,41 @@ declare module "@delpi/plugin-ui/index" {
     labels: FileDropzoneLabels;
   }): ComponentType<DashboardFileDropzoneProps>;
 
+  export const CONVERSATION_FILE_DROP_MAX_BYTES: number;
+
+  export type ConversationFileDropLayerClassNames = {
+    root: string;
+    overlay: string;
+  };
+
+  export type ConversationFileDropLayerProps = {
+    children: ReactNode;
+    classNames: ConversationFileDropLayerClassNames;
+    overlayLabel: string;
+    onFiles: (files: File[]) => void;
+    disabled?: boolean;
+    maxBytes?: number;
+    accept?: string;
+    className?: string;
+  };
+
+  export type DashboardConversationFileDropLayerProps = Omit<
+    ConversationFileDropLayerProps,
+    "classNames"
+  >;
+
+  export function conversationFileDropLayerBemClasses(
+    prefix: string,
+  ): ConversationFileDropLayerClassNames;
+
+  export function ConversationFileDropLayer(
+    props: ConversationFileDropLayerProps,
+  ): ReactElement;
+
+  export function createDashboardConversationFileDropLayer(
+    prefix: string,
+  ): ComponentType<DashboardConversationFileDropLayerProps>;
+
   export type AttachmentPreviewStripMode = "preview" | "manage";
   export type AttachmentPreviewStripItem = {
     id: string;

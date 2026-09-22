@@ -3,13 +3,13 @@ import {
   useImperativeHandle,
   useRef,
   type ComponentProps,
-  type DragEvent,
   type ReactNode,
 } from "react";
 import {
   ActionButton,
   attachmentPreviewStripBemClasses,
   createDashboardAttachmentPreviewStrip,
+  createDashboardConversationFileDropLayer,
   createDashboardDataCardsGrid,
   createDashboardDataRecordCard,
   createDashboardEmptyState,
@@ -58,6 +58,12 @@ export {
 
 const PREFIX = "helpdesk";
 const selectClasses = selectFieldPacClasses(PREFIX);
+
+/** Overlay de arrastar-para-anexar — paridade InteractionRoom (plugin-ui). */
+export const HelpdeskConversationFileDrop =
+  createDashboardConversationFileDropLayer(PREFIX);
+
+export const HELPDESK_COMPOSE_DROP_OVERLAY = "Solte o arquivo para anexar";
 
 export const HelpdeskPageHeader = createDashboardPageHeader({
   layout: "titleRow",
@@ -282,31 +288,8 @@ export const HelpdeskRichTextField = forwardRef<
     }
   };
 
-  const onDrop = (event: DragEvent<HTMLDivElement>) => {
-    if (!onUploadFiles || disabled) return;
-    const files = Array.from(event.dataTransfer?.files || []).filter((file) =>
-      (file.type || "").startsWith("image/") || /\.(png|jpe?g|gif|webp|bmp)$/i.test(file.name || ""),
-    );
-    if (files.length === 0) return;
-    event.preventDefault();
-    event.stopPropagation();
-    void ingestViaEditor(files);
-  };
-
-  return (
-    <div
-      className={[
-        "helpdesk-field",
-        "helpdesk-rich-text-field",
-        fill ? "helpdesk-rich-text-field--fill" : null,
-      ]
-        .filter(Boolean)
-        .join(" ")}
-      onDrop={onDrop}
-      onDragOver={(event) => {
-        if (onUploadFiles && !disabled) event.preventDefault();
-      }}
-    >
+  const fieldBody = (
+    <>
       <FieldLabel className="helpdesk-field__label" label={label} hint={hint} icon={icon} />
       <RichTextEditor
         ref={editorRef}
@@ -345,6 +328,33 @@ export const HelpdeskRichTextField = forwardRef<
           />
         </div>
       ) : null}
+    </>
+  );
+
+  return (
+    <div
+      className={[
+        "helpdesk-field",
+        "helpdesk-rich-text-field",
+        fill ? "helpdesk-rich-text-field--fill" : null,
+      ]
+        .filter(Boolean)
+        .join(" ")}
+    >
+      {onUploadFiles ? (
+        <HelpdeskConversationFileDrop
+          overlayLabel={HELPDESK_COMPOSE_DROP_OVERLAY}
+          accept={accept}
+          disabled={Boolean(disabled)}
+          onFiles={(files) => {
+            void ingestViaEditor(files);
+          }}
+        >
+          {fieldBody}
+        </HelpdeskConversationFileDrop>
+      ) : (
+        fieldBody
+      )}
     </div>
   );
 });

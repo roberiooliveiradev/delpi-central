@@ -29,11 +29,11 @@ describe("helpTooltips budget", () => {
     expect(oversized).toEqual([]);
   });
 
-  it("cobre anexar/colar na abertura e na resposta", () => {
-    expect(helpTooltips.createUi.attach).toMatch(/anex/i);
-    expect(helpTooltips.createUi.description).toMatch(/cole|clipe|anex/i);
-    expect(helpTooltips.detailUi.attach).toMatch(/anex/i);
-    expect(helpTooltips.detailUi.reply).toMatch(/cole|clipe|anex/i);
+  it("cobre anexar/colar/arrastar na abertura e na resposta", () => {
+    expect(helpTooltips.createUi.attach).toMatch(/anex|arrastar/i);
+    expect(helpTooltips.createUi.description).toMatch(/cole|clipe|anex|arrastar/i);
+    expect(helpTooltips.detailUi.attach).toMatch(/anex|arrastar/i);
+    expect(helpTooltips.detailUi.reply).toMatch(/cole|clipe|anex|arrastar/i);
     expect(helpTooltips.detailUi.attachments).toMatch(/arquivo/i);
   });
 

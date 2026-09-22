@@ -99,4 +99,18 @@ describe("Helpdesk list UX structural", () => {
     expect(ui).toContain('ariaLabel="Ajuda: Anexar arquivo"');
     expect(ui).toMatch(/Paperclip[\s\S]*Anexar/);
   });
+
+  it("compose usa ConversationFileDropLayer do kit (sem onDrop ad hoc)", () => {
+    const ui = read("../ui/helpdeskUi.tsx");
+    expect(ui).toContain("createDashboardConversationFileDropLayer");
+    expect(ui).toContain("HelpdeskConversationFileDrop");
+    expect(ui).toContain("HELPDESK_COMPOSE_DROP_OVERLAY");
+    expect(ui).toContain("Solte o arquivo para anexar");
+    expect(ui).toContain("overlayLabel={HELPDESK_COMPOSE_DROP_OVERLAY}");
+    expect(ui).toMatch(/accept=\{accept\}/);
+    // Ad-hoc image-only drop removed — kit layer owns DnD.
+    expect(ui).not.toMatch(/onDrop=\{onDrop\}/);
+    expect(ui).not.toMatch(/onDragOver=\{/);
+    expect(ui).not.toMatch(/dataTransfer\?\.files/);
+  });
 });

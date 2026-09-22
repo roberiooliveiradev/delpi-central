@@ -12,8 +12,8 @@ export const helpTooltips = {
     back: "Volta à lista com o mesmo recorte, sem gravar este formulário.",
     title: "Assunto curto do chamado. Obrigatório.",
     description:
-      "Descreva o problema (formatação, clipe, colar). Clique na imagem e arraste o canto para redimensionar.",
-    attach: "Anexa arquivo ou imagem. Na abertura, o envio sobe depois de criar o chamado.",
+      "Descreva o problema (formatação, clipe, colar ou arrastar). Clique na imagem e arraste o canto para redimensionar.",
+    attach: "Anexa por clipe ou arrastar. Na abertura, o envio sobe depois de criar o chamado.",
     category: "Categoria visível para você no helpdesk. Obrigatória.",
     urgency: "Urgência do chamado. Obrigatória.",
     observers: "Opcional. IDs de usuário do helpdesk, separados por vírgula (só observador).",
@@ -22,8 +22,9 @@ export const helpTooltips = {
 
   detailUi: {
     back: "Volta à lista com o mesmo recorte (filtros e página).",
-    reply: "Acompanhamento com formatação, clipe ou colar. Clique na imagem e arraste o canto para redimensionar.",
-    attach: "Anexa arquivo ou imagem agora neste chamado; imagem entra no texto da resposta.",
+    reply:
+      "Acompanhamento com formatação, clipe, colar ou arrastar. Clique na imagem e arraste o canto para redimensionar.",
+    attach: "Anexa por clipe ou arrastar; imagem entra no texto da resposta.",
     send: "Grava o acompanhamento público. Em chamado fechado o botão some.",
     openInGlpi: "Abre este chamado no helpdesk (GLPI) para aprovar, reabrir ou responder pesquisa.",
     attachments: "Arquivos ligados ao chamado. Clique para prévia ou baixar.",
