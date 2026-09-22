@@ -79,6 +79,17 @@ class ProcessDocumentRepository(PluginBaseRepository, ProcessDocumentRepositoryP
         )
         return _doc(row)
 
+    def get_by_document_id(self, document_id: str) -> ProcessDocument | None:
+        row = self.fetch_one(
+            f"""
+            {_SELECT}
+            WHERE d.document_id = %s::uuid
+              AND d.deleted_at IS NULL
+            """,
+            (document_id,),
+        )
+        return _doc(row)
+
     def create(
         self,
         *,
@@ -203,6 +214,12 @@ class InMemoryProcessDocumentRepository(ProcessDocumentRepositoryPort):
     def get(self, *, processo_id: str, document_id: str) -> ProcessDocument | None:
         doc = self.documents.get(document_id)
         if doc is None or doc.processo_id != processo_id or doc.deleted_at is not None:
+            return None
+        return doc
+
+    def get_by_document_id(self, document_id: str) -> ProcessDocument | None:
+        doc = self.documents.get(document_id)
+        if doc is None or doc.deleted_at is not None:
             return None
         return doc
 

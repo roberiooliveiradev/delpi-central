@@ -12,6 +12,8 @@ class ProcessDocumentRepositoryPort(Protocol):
 
     def get(self, *, processo_id: str, document_id: str) -> ProcessDocument | None: ...
 
+    def get_by_document_id(self, document_id: str) -> ProcessDocument | None: ...
+
     def create(
         self,
         *,

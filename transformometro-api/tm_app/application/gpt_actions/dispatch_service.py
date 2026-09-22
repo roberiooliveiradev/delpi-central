@@ -26,6 +26,8 @@ from tm_app.application.services.instance_duplicate_service import (
     InstanciaNotFoundError,
 )
 from tm_app.application.services.meeting_minutes_service import MeetingMinutesService
+from tm_app.application.security.authorization_policy import AuthorizationDenied
+from tm_app.application.use_cases.manage_process_documents import ProcessDocumentUseCases
 from tm_app.application.services.process_duplicate_service import (
     ProcessoDuplicateService,
     ProcessoNotFoundError,
@@ -91,6 +93,9 @@ from tm_app.infrastructure.persistence.repositories.process_decomposition_reposi
 )
 from tm_app.infrastructure.persistence.repositories.process_diagram_repository import (
     ProcessoDiagramRepository,
+)
+from tm_app.infrastructure.persistence.repositories.process_document_repository import (
+    ProcessDocumentRepository,
 )
 from tm_app.infrastructure.persistence.repositories.process_instance_repository import (
     ProcessoInstanciaRepository,
@@ -187,6 +192,7 @@ class GptActionsDispatchService:
         self._snapshot = DashboardSnapshotReadService()
         self._recalc_hook = DashboardRecalcHookService()
         self._minutes = MeetingMinutesService()
+        self._process_docs = ProcessDocumentUseCases(ProcessDocumentRepository())
         self._diagram_writes = DiagramWriteService()
         self._decomp_writes = DecompositionWriteService()
         from tm_app.application.gpt_actions.parity_capabilities_service import (
@@ -271,6 +277,23 @@ class GptActionsDispatchService:
             except Exception:
                 pass
         raise GptActionsError(message, status)
+
+    def _map_process_document_error(self, exc: Exception) -> None:
+        """Re-raise ProcessDocumentUseCases errors as GptActionsError (never swallow)."""
+        if isinstance(exc, AuthorizationDenied):
+            raise GptActionsError(str(exc), getattr(exc, "status_code", 403) or 403) from exc
+        if isinstance(exc, PermissionError):
+            raise GptActionsError(str(exc), 403) from exc
+        if isinstance(exc, LookupError):
+            raise GptActionsError(str(exc), 404) from exc
+        if isinstance(exc, ValueError):
+            raise GptActionsError(str(exc), 400) from exc
+        if isinstance(exc, RuntimeError) and str(exc) == "OUTCOME_VERIFICATION_FAILED":
+            raise GptActionsError(
+                "A gravação não confirmou o estado esperado.",
+                409,
+            ) from exc
+        raise exc
 
     def _require_capability(self, entity: GptEntity, capability: str) -> None:
         if not entity_supports(entity, capability):
@@ -549,6 +572,27 @@ class GptActionsDispatchService:
             except PermissionError as exc:
                 raise GptActionsError(str(exc), 403) from exc
 
+        if entity == GptEntity.PROCESS_DOCUMENT:
+            if not parent_id:
+                raise GptActionsError(
+                    "parent_id (processo_id) is required to list process documents.",
+                    400,
+                )
+            try:
+                items = self._process_docs.list_documents(request.state.user, parent_id)
+            except Exception as exc:
+                self._map_process_document_error(exc)
+                raise
+            summaries = [item.to_summary_dict() for item in items]
+            if q:
+                needle = str(q).strip().lower()
+                summaries = [
+                    row
+                    for row in summaries
+                    if needle in str(row.get("title") or "").lower()
+                ]
+            return {"total": len(summaries), "items": summaries}
+
         raise GptActionsError(f"Search not implemented for {entity.value}.", 400)
 
     def get_record(self, request: Request, entity_value: str, record_id: str) -> dict[str, Any]:
@@ -629,6 +673,15 @@ class GptActionsDispatchService:
                 raise GptActionsError(str(exc), 403) from exc
             except LookupError as exc:
                 raise GptActionsError(str(exc), 404) from exc
+
+        if entity == GptEntity.PROCESS_DOCUMENT:
+            try:
+                return self._process_docs.get_document_by_id(
+                    request.state.user, rid
+                ).to_dict()
+            except Exception as exc:
+                self._map_process_document_error(exc)
+                raise
 
         if entity == GptEntity.DECOMPOSITION_TREE:
             self._raise_http_err(check_processo_view_access(request, rid))
@@ -815,6 +868,39 @@ class GptActionsDispatchService:
             except ValueError as exc:
                 raise GptActionsError(str(exc), 400) from exc
             return row, "Ata criada.", 201
+
+        if entity == GptEntity.PROCESS_DOCUMENT:
+            processo_id = str(data.get("processo_id") or "").strip()
+            if not processo_id:
+                raise GptActionsError("data.processo_id is required.", 400)
+            title = data.get("title")
+            if title is None or str(title).strip() == "":
+                raise GptActionsError("data.title is required.", 400)
+            content_md = data.get("content_md")
+            if content_md is None:
+                content_md = ""
+            try:
+                created = self._process_docs.create_document(
+                    request.state.user,
+                    processo_id,
+                    title=str(title),
+                    content_md=str(content_md),
+                )
+            except Exception as exc:
+                self._map_process_document_error(exc)
+                raise
+            payload = created.to_dict()
+            self._audit(
+                request,
+                "process_document",
+                created.id,
+                "create",
+                {
+                    "processo_id": created.processo_id,
+                    "title": created.title,
+                },
+            )
+            return payload, "Documento de processo criado.", 201
 
         if entity in {
             GptEntity.DECOMPOSITION_TREE,
@@ -1044,6 +1130,38 @@ class GptActionsDispatchService:
                 raise GptActionsError(str(exc), 400) from exc
             return row, "Ata atualizada."
 
+        if entity == GptEntity.PROCESS_DOCUMENT:
+            title = data.get("title") if "title" in data else None
+            content_md = data.get("content_md") if "content_md" in data else None
+            if title is None and content_md is None:
+                raise GptActionsError(
+                    "Informe data.title e/ou data.content_md para atualizar.",
+                    400,
+                )
+            try:
+                existing = self._process_docs.get_document_by_id(request.state.user, rid)
+                updated = self._process_docs.update_document(
+                    request.state.user,
+                    existing.processo_id,
+                    rid,
+                    title=None if title is None else str(title),
+                    content_md=None if content_md is None else str(content_md),
+                )
+            except Exception as exc:
+                self._map_process_document_error(exc)
+                raise
+            self._audit(
+                request,
+                "process_document",
+                updated.id,
+                "update",
+                {
+                    "processo_id": updated.processo_id,
+                    "title": updated.title,
+                },
+            )
+            return updated.to_dict(), "Documento de processo atualizado."
+
         if entity == GptEntity.IMPACT_EFFORT_MATRIX:
             body = RevisaoMatrizImpactoBody.model_validate(data)
             user_id, user_email, user_name = actor_from_request(request)
@@ -1176,6 +1294,26 @@ class GptActionsDispatchService:
             except LookupError as exc:
                 raise GptActionsError(str(exc), 404) from exc
             return row, "Ata removida."
+
+        if entity == GptEntity.PROCESS_DOCUMENT:
+            try:
+                existing = self._process_docs.get_document_by_id(request.state.user, rid)
+                deleted = self._process_docs.delete_document(
+                    request.state.user,
+                    existing.processo_id,
+                    rid,
+                )
+            except Exception as exc:
+                self._map_process_document_error(exc)
+                raise
+            self._audit(
+                request,
+                "process_document",
+                deleted.id,
+                "delete",
+                {"processo_id": deleted.processo_id},
+            )
+            return deleted.to_summary_dict(), "Documento de processo removido."
 
         raise GptActionsError(f"Delete not implemented for {entity.value}.", 400)
 

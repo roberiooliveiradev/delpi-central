@@ -210,7 +210,17 @@ def openapi_record_data_properties() -> dict[str, Any]:
         },
         "title": {
             "type": "string",
-            "description": "Title for entity=meeting_minute (required on create).",
+            "description": (
+                "Title for entity=meeting_minute or entity=process_document "
+                "(required on create)."
+            ),
+        },
+        "content_md": {
+            "type": "string",
+            "description": (
+                "Markdown body for entity=process_document. "
+                "Optional on create (defaults to empty); omit on update to keep current."
+            ),
         },
         "meeting_type": {
             "type": "string",

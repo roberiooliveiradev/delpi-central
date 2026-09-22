@@ -32,7 +32,8 @@ Isso é inadequado: ata é registro de **reunião**, que pode tratar vários ass
 - API: `/transformometro/processos/{id}/documents` (+ alias EN `/processes/.../documents`).
 - Workspace: seção `#documentacao` (+ `#documentacao/{documentId}`).
 - Editor: textarea Markdown + preview seguro (`MessageBodyReadonly` / sanitizer do plugin-ui).
-- Fora de escopo V1: versionamento, tags, attachments, approval, Mermaid, GPT Actions, MCP, TÉO.
+- Fora de escopo V1: versionamento, tags, attachments, approval, Mermaid.
+- **Surface TÉO (2026-09-22):** exposição via entidade governada `process_document` no catálogo GPT/MCP CRUD — ver [`../integrations/teo-capability-matrix.md`](../integrations/teo-capability-matrix.md) e ADR [`adr-teo-specialist-capability-surfaces.md`](./adr-teo-specialist-capability-surfaces.md). Sem novas operations Action dedicadas.
 
 ## Consequências
 

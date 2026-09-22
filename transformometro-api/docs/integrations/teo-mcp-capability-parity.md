@@ -1,5 +1,8 @@
 # TÉO MCP — Capability parity matrix (write-governance remediation)
 
+> **Canonical multi-surface matrix (Actions + MCP + DÉLIA + budget):**  
+> [`teo-capability-matrix.md`](./teo-capability-matrix.md)
+
 Gate:
 
 ```text
@@ -10,6 +13,7 @@ MCP_TOOLS = 33
 MISSING = 0
 UNMAPPED GPT = 0
 REGRESSED = 0
+ENTITY_CATALOG includes process_document (no new Action routes)
 ```
 
 ```text
@@ -21,6 +25,7 @@ REGRESSED = 0
 One GPT capability may map to READ + PREPARE + ACT semantic tools.
 `gpt_get_methodology_guide` and `get_methodology_guide` share `query_methodology_guide`.
 `21 ≠ 33` is not a regression.
+Governed entity `process_document` is covered by existing `gpt_*_record` / `*_record` MCP tools.
 
 Composition:
 

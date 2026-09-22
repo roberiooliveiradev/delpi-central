@@ -45,6 +45,14 @@ class ProcessDocumentUseCases:
             raise LookupError("Documento não encontrado.")
         return doc
 
+    def get_document_by_id(self, user: Any, document_id: str) -> ProcessDocument:
+        """Resolve by document PK (UUID unique). Used by GPT/MCP record adapters."""
+        self._policy.require_access(user)
+        doc = self._repo.get_by_document_id(normalize_document_id(document_id))
+        if doc is None:
+            raise LookupError("Documento não encontrado.")
+        return doc
+
     def create_document(
         self,
         user: Any,

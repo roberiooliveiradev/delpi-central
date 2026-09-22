@@ -4,7 +4,8 @@
 > **Target Plugin/Agent:** MCP FULL CRUD — ver [`../integrations/openai-plugin-mcp.md`](../integrations/openai-plugin-mcp.md) (client `mcp-transformometro`).  
 > **Padrão transversal:** [padrao-custom-gpt-actions-oauth.md](../../../docs/11-padroes-de-desenvolvimento/padrao-custom-gpt-actions-oauth.md)  
 > Este arquivo é a **instância** Transformômetro (paths, client, operations). Para Action Plans e outros produtos, seguir o padrão geral e espelhar esta estrutura.  
-> **Persona user-facing:** [TÉO — Especialista em Transformação Digital](./specialist-instructions.md) (produto = Transformômetro; TÉO ≠ novo serviço/bounded context).
+> **Persona user-facing:** [TÉO — Especialista em Transformação Digital](./specialist-instructions.md) (produto = Transformômetro; TÉO ≠ novo serviço/bounded context).  
+> **Capability matrix (canônica):** [`../integrations/teo-capability-matrix.md`](../integrations/teo-capability-matrix.md) — paridade Actions/MCP/DÉLIA + Action Surface Budget.
 
 Superfície compacta para o **ChatGPT Custom GPT** (TÉO) analisar, cadastrar e editar o Transformômetro sem expor as ~150 rotas internas (limite ~30 operations por schema da OpenAI).
 

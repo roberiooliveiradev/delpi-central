@@ -82,6 +82,7 @@ _WORKFLOW_ENUM = [w.value for w in GptMeetingMinuteWorkflow]
 _ENTITY_DESCRIPTION = (
     "Entity slug (see enum). Cadastro: process, instance, revision, measurement, "
     "investment. Catalog: branch, department, shared_resource. Atas: meeting_minute. "
+    "Process knowledge (Markdown): process_document. "
     "Documents: decomposition_tree, process_diagram, impact_effort_matrix and related overlays."
 )
 

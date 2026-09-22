@@ -18,6 +18,7 @@ class GptEntity(str, Enum):
     RESOURCE_COST = "resource_cost"
     RESOURCE_LINK = "resource_link"
     MEETING_MINUTE = "meeting_minute"
+    PROCESS_DOCUMENT = "process_document"
     DECOMPOSITION_TREE = "decomposition_tree"
     INSTANCE_DECOMPOSITION_SCOPE = "instance_decomposition_scope"
     REVISION_DECOMPOSITION_OVERLAY = "revision_decomposition_overlay"
@@ -64,6 +65,9 @@ ENTITY_CAPABILITIES: dict[GptEntity, FrozenSet[str]] = {
     GptEntity.MEETING_MINUTE: frozenset(
         {"search", "get", "create", "update", "delete"}
     ),
+    GptEntity.PROCESS_DOCUMENT: frozenset(
+        {"search", "get", "create", "update", "delete"}
+    ),
     GptEntity.DECOMPOSITION_TREE: frozenset({"get", "create", "update"}),
     GptEntity.INSTANCE_DECOMPOSITION_SCOPE: frozenset({"get", "create", "update"}),
     GptEntity.REVISION_DECOMPOSITION_OVERLAY: frozenset({"get", "create", "update"}),
@@ -85,6 +89,10 @@ ENTITY_DESCRIPTIONS: dict[GptEntity, str] = {
     GptEntity.RESOURCE_COST: "Cost validity period for a shared resource.",
     GptEntity.RESOURCE_LINK: "Link between a revision and a shared resource.",
     GptEntity.MEETING_MINUTE: "Transforma+ meeting minute (ata).",
+    GptEntity.PROCESS_DOCUMENT: (
+        "Process textual documentation (Markdown). Not meeting minute, "
+        "not structured process state, not flowchart."
+    ),
     GptEntity.DECOMPOSITION_TREE: "Process WBS/decomposition tree (id = processo_id).",
     GptEntity.INSTANCE_DECOMPOSITION_SCOPE: "Instance WBS scope (id = instancia_id).",
     GptEntity.REVISION_DECOMPOSITION_OVERLAY: "Revision WBS overlay (id = revisao_id).",

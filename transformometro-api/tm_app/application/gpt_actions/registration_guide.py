@@ -101,7 +101,13 @@ def build_registration_guide() -> dict[str, Any]:
             ),
             "meeting_minute": (
                 "Transforma+ meeting minute / ata (entity=meeting_minute). "
-                "Handwritten signature remains UI-only."
+                "Handwritten signature remains UI-only. "
+                "Not process_document."
+            ),
+            "process_document": (
+                "Process textual documentation in Markdown (entity=process_document). "
+                "Knowledge about the process — not structured state, not flowchart, "
+                "not meeting minute / ata."
             ),
         },
         "write_contract_rules": {
@@ -120,9 +126,9 @@ def build_registration_guide() -> dict[str, Any]:
             "anti_pattern": (
                 "shared_resource with nome_recurso/tipo_custo/recorrencia inside data.conteudo "
                 "is invalid; those fields belong directly under data. "
-                "Also invalid: inventing entity names like 'mapeamento'/'diagrama'/'ata'/'filial'/'setor' — "
+                "Also invalid: inventing entity names like 'mapeamento'/'diagrama'/'ata'/'filial'/'setor'/'documentacao' — "
                 "use decomposition_tree / revision_decomposition_overlay / process_diagram / "
-                "meeting_minute / branch / department."
+                "meeting_minute / process_document / branch / department."
             ),
             "before_write": [
                 "Call gpt_get_catalog and read entity_schemas for the exact entity.",
@@ -491,6 +497,22 @@ def build_registration_guide() -> dict[str, Any]:
                     "Binary evidence upload/download remains UI-only (BLOCKED_BY_PLATFORM); "
                     "link/metadata evidence uses gpt_list_evidence / gpt_manage_evidence.",
                     "Alias: ata → meeting_minute.",
+                    "Not process_document (Markdown process knowledge).",
+                ],
+            },
+            "process_document": {
+                "required": ["processo_id", "title"],
+                "optional": ["content_md"],
+                "enums": {},
+                "defaults": {"content_md": ""},
+                "notes": [
+                    "Process textual documentation (Markdown). Search: parent_id=processo_id.",
+                    "Create: data.processo_id + data.title (+ optional data.content_md).",
+                    "Get/update/delete: id=document_id (UUID PK).",
+                    "Update may send title and/or content_md only.",
+                    "AuthZ: transformometro.access (same as domain HTTP).",
+                    "≠ meeting_minute / ata; ≠ flowchart_v1; ≠ structured AS-IS/TO-BE state.",
+                    "Do not dump all documents into process context — consult on demand.",
                 ],
             },
             "decomposition_tree": {

@@ -499,6 +499,7 @@ def test_registration_guide_exposes_entity_schemas():
         "branch",
         "department",
         "meeting_minute",
+        "process_document",
         "decomposition_tree",
         "instance_decomposition_scope",
         "revision_decomposition_overlay",

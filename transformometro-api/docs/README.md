@@ -24,6 +24,7 @@
 | Fórmulas oficiais | [domain/regras-de-calculo.md](./domain/regras-de-calculo.md) |
 | Custom GPT (**TÉO**) Actions bridge | [gpt-actions/custom-gpt-actions.md](./gpt-actions/custom-gpt-actions.md) · [gpt-actions/specialist-instructions.md](./gpt-actions/specialist-instructions.md) |
 | Plugin/MCP (**TÉO**) FULL CRUD | [integrations/openai-plugin-mcp.md](./integrations/openai-plugin-mcp.md) · [integrations/keycloak-mcp-client-runbook.md](./integrations/keycloak-mcp-client-runbook.md) |
+| **TÉO Capability Matrix (canônica)** | [integrations/teo-capability-matrix.md](./integrations/teo-capability-matrix.md) |
 | Chat Minha DELPI (read-only) | [chat/agent-openapi.md](./chat/agent-openapi.md) |
 | Atas + Kimi | [meeting-minutes/kimi.md](./meeting-minutes/kimi.md) |
 | Contratos S2S / api-delpi | [architecture/integration-contracts.md](./architecture/integration-contracts.md) |
