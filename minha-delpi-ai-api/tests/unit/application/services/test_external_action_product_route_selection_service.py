@@ -86,9 +86,8 @@ def test_select_operational_registry_directives_via_route_selection():
         allowed_action_ids=["directives-action", "analyser-action"],
     )
 
-    assert selected is not None
-    assert selected["arguments"]["actionId"] == "directives-action"
-    assert selected["arguments"]["parameters"]["identifier"] == "90260882"
+    # F1 — registry match tombstoned; selection is OpenAPI-first elsewhere.
+    assert selected is None
 
 
 def test_select_structure_route_with_estrutra_typography():

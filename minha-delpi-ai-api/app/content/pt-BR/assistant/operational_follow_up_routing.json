@@ -6,19 +6,17 @@
     "deleteDeferredToWaveH": false,
     "messageSegmentTermsDeletedAt": "E9.S12.A",
     "playbookCatalogMarkersRole": "removed",
-    "playbookCatalogMarkersDeletedAt": "E9.S12.B"
+    "playbookCatalogMarkersDeletedAt": "E9.S12.B",
+    "routeSegmentDeletedAt": "F1",
+    "preferredRouteIdDeletedAt": "F1"
   },
   "followUpTypes": {
     "shipping": {
-      "routeSegment": "shipping-status",
-      "preferredRouteId": "productShippingStatus",
       "inheritsPlaybookDate": true,
       "grantsProductScope": true,
       "grantsSpecificProductScope": true
     },
     "structure_exclusivity": {
-      "routeSegment": "structure/exclusivity",
-      "preferredRouteId": "productStructureExclusivity",
       "inheritsPlaybookDate": false,
       "grantsProductScope": true,
       "grantsSpecificProductScope": true

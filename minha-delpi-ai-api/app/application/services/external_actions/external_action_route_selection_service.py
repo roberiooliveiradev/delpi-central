@@ -435,18 +435,20 @@ class ExternalActionRouteSelectionService:
         product_code: str | None = None,
         route_segment: str | None = None,
     ) -> dict | None:
-        return self._operational_route.select(
+        """F1 — tombstone: registry match is not user-facing selection authority."""
+        del (
             message,
             normalized,
             allowed_action_ids,
-            candidates_loader=candidates_loader,
-            build_date_branch_parameters=build_date_branch_parameters,
-            merge_date_parameters=merge_date_parameters,
-            previous_messages=previous_messages,
-            path_lookup_loader=path_lookup_loader,
-            product_code=product_code,
-            route_segment=route_segment,
+            candidates_loader,
+            build_date_branch_parameters,
+            merge_date_parameters,
+            previous_messages,
+            path_lookup_loader,
+            product_code,
+            route_segment,
         )
+        return None
 
     def select_intent_bound_route(
         self,

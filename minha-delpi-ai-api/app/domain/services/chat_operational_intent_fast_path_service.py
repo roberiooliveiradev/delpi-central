@@ -1,13 +1,10 @@
-"""Fast-path operacional: código de produto + intent com intentBinding no registry."""
+"""Fast-path operacional: código de produto + intent canônico (sem registry)."""
 
 from __future__ import annotations
 
 from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntent,
     ChatProductQueryIntentService,
-)
-from app.domain.services.operational_route_registry_service import (
-    OperationalRouteRegistryService,
 )
 
 _INTENT_BOUND_INTENTS = frozenset(
@@ -22,19 +19,12 @@ _INTENT_BOUND_INTENTS = frozenset(
     }
 )
 
-_REGISTRY_INTENT_BINDINGS = frozenset(
-    {
-        str(route.get("intentBinding") or "").strip().lower()
-        for route in OperationalRouteRegistryService.intent_bound_routes()
-        if str(route.get("intentBinding") or "").strip()
-    }
-)
-
 
 class ChatOperationalIntentFastPathService:
     @classmethod
     def registry_intent_bindings(cls) -> frozenset[str]:
-        return _REGISTRY_INTENT_BINDINGS
+        """F1 — registry intentBinding is not eligibility authority; API kept empty."""
+        return frozenset()
 
     @classmethod
     def is_intent_bound_eligible(cls, intent: str | None) -> bool:
@@ -43,7 +33,7 @@ class ChatOperationalIntentFastPathService:
         if not normalized or normalized == ChatProductQueryIntent.FULL:
             return False
 
-        return normalized in _INTENT_BOUND_INTENTS and normalized in _REGISTRY_INTENT_BINDINGS
+        return normalized in _INTENT_BOUND_INTENTS
 
     @classmethod
     def resolve_operational_fast_path(

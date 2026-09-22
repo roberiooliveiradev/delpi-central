@@ -18,18 +18,18 @@ def test_docie_registry_lint_passes() -> None:
 
 
 def test_playbook_none_of_rules_present() -> None:
+    """F1 — customPredicate noneOf retired from registry match."""
     from app.domain.services.operational_route_registry_service import (
         OperationalRouteRegistryService,
     )
 
     generic = OperationalRouteRegistryService.route_by_id("productInvoicesGeneric")
-    match_spec = generic.get("match") or {}
+    match_spec = (generic or {}).get("match") or {}
     none_of = match_spec.get("noneOf") or []
     predicates = {
         str(node.get("customPredicate") or "")
         for node in none_of
-        if isinstance(node, dict)
+        if isinstance(node, dict) and str(node.get("customPredicate") or "").strip()
     }
 
-    assert "inboundInvoiceRoute" in predicates
-    assert "outboundInvoiceRoute" in predicates
+    assert predicates == set()

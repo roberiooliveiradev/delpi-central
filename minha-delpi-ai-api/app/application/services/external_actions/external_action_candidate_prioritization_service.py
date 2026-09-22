@@ -23,33 +23,9 @@ class ExternalActionCandidatePrioritizationService:
         *,
         supplies_otd: bool = False,
     ) -> list[dict]:
-        ordered = list(candidates)
-        if not ordered:
-            return ordered
-
-        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
-        flags = {"supplies_otd": bool(supplies_otd)}
-        rules = ExternalActionResponseContentService.object_list(
-            "actionSelection",
-            "siblingDisambiguation",
-        )
-
-        for rule in rules:
-            required_flag = str(rule.get("requiresFlag") or "").strip()
-            if required_flag and not flags.get(required_flag):
-                continue
-
-            mode = str(rule.get("mode") or "").strip()
-            if mode == "domainPathChains":
-                ordered = cls._apply_domain_path_chains(normalized, ordered, rule)
-            elif mode == "filterPreferredSort":
-                ordered = cls._apply_filter_preferred_sort(normalized, ordered, rule)
-            elif mode == "preferMatch":
-                ordered = cls._apply_prefer_match(normalized, ordered, rule)
-            elif mode == "preferBranches":
-                ordered = cls._apply_prefer_branches(normalized, ordered, rule)
-
-        return ordered
+        """F1 — path/OID sibling selectors removed; return catalog order unchanged."""
+        del message, supplies_otd
+        return list(candidates)
 
     @classmethod
     def _terms_from_key(cls, key: str) -> list[str]:

@@ -9,9 +9,6 @@ from typing import Any
 from app.domain.services.chat_operational_refinement.chat_operational_refinement_content_service import (
     ChatOperationalRefinementContentService,
 )
-from app.domain.services.operational_route_registry_service import (
-    OperationalRouteRegistryService,
-)
 
 
 class _LazyPattern:
@@ -56,4 +53,5 @@ class ChatOperationalRefinementVocabulary:
     @classmethod
     @lru_cache(maxsize=1)
     def paginated_path_fragments(cls) -> tuple[str, ...]:
-        return OperationalRouteRegistryService.paginated_path_fragments()
+        """F1 — registry path fragments removed; empty for residual search."""
+        return ()

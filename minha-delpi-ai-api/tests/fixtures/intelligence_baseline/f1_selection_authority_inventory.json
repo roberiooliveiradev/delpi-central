@@ -1,0 +1,196 @@
+{
+  "schemaVersion": 1,
+  "step": "E0.S1",
+  "program": "chat-openapi-first-refactor",
+  "epic": "F1",
+  "evaluatedAt": "2026-09-22",
+  "note": "Pre-F1-cutover freeze. Statuses reflect HEAD before E1–E5 authority removal. Post-F1 residual gate (E5.S1) requires AUTHORITY items to become RETIRED.",
+  "coldPathPreserved": [
+    "app/infrastructure/external_actions/openapi_action_importer.py",
+    "app/application/services/retrieve_action_candidates_service.py",
+    "app/application/services/plan_external_actions_service.py",
+    "app/application/services/openapi_first_selection_bridge_service.py",
+    "app/application/services/validate_action_arguments_service.py",
+    "app/application/services/schema_driven_argument_binder_service.py"
+  ],
+  "residuals": [
+    {
+      "id": "operational_route_registry_file",
+      "status": "AUTHORITY_PARTIAL",
+      "surfaces": [
+        "app/content/pt-BR/assistant/operational_route_registry.json"
+      ],
+      "coreConsumers": [
+        "app/domain/services/operational_route_registry_service.py",
+        "app/domain/services/operational_route_matcher_service.py"
+      ],
+      "justification": "File still carries customPredicate/intentBinding/paginatedPathFragments; actionId selection already OpenAPI-first.",
+      "f1Target": "RETIRED_SELECTION_FIELDS"
+    },
+    {
+      "id": "OperationalRoute_selection_stack",
+      "status": "SHADOW",
+      "surfaces": [
+        "app/application/services/external_actions/external_action_operational_route_selection_service.py",
+        "app/application/services/external_actions/operational_route_selection/operational_route_domain_selection_service.py",
+        "app/application/services/external_actions/operational_route_selection/operational_route_action_resolver_service.py",
+        "app/application/services/external_actions/operational_route_selection/operational_route_auto_tier_c_selection_service.py",
+        "app/application/services/external_actions/operational_route_selection/operational_route_vocabulary_matcher_service.py"
+      ],
+      "coreConsumers": [
+        "app/application/services/external_actions/external_action_route_selection_service.py",
+        "app/application/services/external_actions/external_action_selection_service.py"
+      ],
+      "justification": "Hot path cutover uses OpenAPI; legacy _select_product_action still runs as observer.",
+      "f1Target": "DEAD_OR_UNWIRED"
+    },
+    {
+      "id": "customPredicate_registry_match",
+      "status": "AUTHORITY",
+      "surfaces": [
+        "app/content/pt-BR/assistant/operational_route_registry.json"
+      ],
+      "coreConsumers": [
+        "app/domain/services/operational_route_matcher_service.py",
+        "app/application/services/external_actions/operational_route_selection/operational_route_vocabulary_matcher_service.py"
+      ],
+      "justification": "Registry match.customPredicate still evaluates typed predicates for route matching.",
+      "f1Target": "RETIRED"
+    },
+    {
+      "id": "pathContains_selection_prioritization",
+      "status": "AUTHORITY",
+      "surfaces": [
+        "app/content/pt-BR/assistant/external_action_responses.json",
+        "app/content/pt-BR/assistant/operational_group_by_refinement.json"
+      ],
+      "coreConsumers": [
+        "app/application/services/external_actions/external_action_candidate_prioritization_service.py",
+        "app/domain/services/chat_operational_group_by_refinement_service.py"
+      ],
+      "justification": "pathContains used in candidate prioritization and group-by fallback.",
+      "f1Target": "RETIRED"
+    },
+    {
+      "id": "operationIdContains_selection",
+      "status": "AUTHORITY",
+      "surfaces": [
+        "app/content/pt-BR/assistant/external_action_responses.json",
+        "app/content/pt-BR/assistant/operational_group_by_refinement.json"
+      ],
+      "coreConsumers": [
+        "app/application/services/external_actions/external_action_candidate_prioritization_service.py",
+        "app/domain/services/chat_operational_group_by_refinement_service.py"
+      ],
+      "justification": "operationIdContains selectors in selection/disambiguation content.",
+      "f1Target": "RETIRED"
+    },
+    {
+      "id": "operationIdContains_column_labels",
+      "status": "F2",
+      "surfaces": [
+        "app/content/pt-BR/assistant/column_labels.json"
+      ],
+      "coreConsumers": [
+        "app/domain/services/external_actions/external_action_column_label_service.py"
+      ],
+      "justification": "Presentation labels — out of F1 scope.",
+      "f1Target": "OUT_OF_SCOPE_F2"
+    },
+    {
+      "id": "follow_up_routeSegment_preferredRouteId",
+      "status": "AUTHORITY",
+      "surfaces": [
+        "app/content/pt-BR/assistant/operational_follow_up_routing.json"
+      ],
+      "coreConsumers": [
+        "app/domain/services/chat_operational_follow_up_routing_service.py",
+        "app/domain/services/chat_route_context_service.py"
+      ],
+      "justification": "follow_up_type still maps to routeSegment/preferredRouteId as continuity SoT.",
+      "f1Target": "RETIRED"
+    },
+    {
+      "id": "intentBinding_fast_path",
+      "status": "AUTHORITY",
+      "surfaces": [
+        "app/content/pt-BR/assistant/operational_route_registry.json"
+      ],
+      "coreConsumers": [
+        "app/domain/services/chat_operational_intent_fast_path_service.py"
+      ],
+      "justification": "Fast-path eligibility intersects registry intentBinding list.",
+      "f1Target": "RETIRED"
+    },
+    {
+      "id": "paginatedPathFragments",
+      "status": "AUTHORITY",
+      "surfaces": [
+        "app/content/pt-BR/assistant/operational_route_registry.json"
+      ],
+      "coreConsumers": [
+        "app/domain/services/chat_operational_refinement/chat_operational_refinement_pagination_service.py",
+        "app/domain/services/operational_route_registry_service.py"
+      ],
+      "justification": "Pagination uses HTTP path fragments from registry vocabulary.",
+      "f1Target": "RETIRED"
+    },
+    {
+      "id": "select_operational_registry",
+      "status": "DEAD",
+      "surfaces": [],
+      "coreConsumers": [
+        "app/application/services/external_actions/external_action_route_selection_service.py"
+      ],
+      "justification": "No app callers outside facade/tests; not on send/stream.",
+      "f1Target": "UNWIRE_OR_DELETE"
+    },
+    {
+      "id": "ExternalActionSelectionPreflightService",
+      "status": "DEAD",
+      "surfaces": [],
+      "coreConsumers": [
+        "app/application/services/external_actions/external_action_selection_preflight_service.py"
+      ],
+      "justification": "No production imports in app/ beyond self.",
+      "f1Target": "LEAVE_OR_DELETE"
+    },
+    {
+      "id": "operational_route_suggest_admin",
+      "status": "COLD_ADMIN",
+      "surfaces": [],
+      "coreConsumers": [
+        "app/application/services/external_actions/operational_route_suggestion_service.py",
+        "app/application/use_cases/suggest_operational_routes_use_case.py"
+      ],
+      "justification": "S2S/admin suggest — not user-facing selection authority.",
+      "f1Target": "KEEP_COLD"
+    },
+    {
+      "id": "registrySelectionShadow_cutover",
+      "status": "SHADOW",
+      "surfaces": [
+        "app/content/pt-BR/assistant/openapi_tool_routing.json"
+      ],
+      "coreConsumers": [
+        "app/application/services/external_actions/external_action_selection_service.py",
+        "app/domain/services/registry_selection_shadow_observability_service.py"
+      ],
+      "justification": "cutoverEnabled=true; OpenAPI is actionId authority; legacy still observed.",
+      "f1Target": "REMOVE_HOT_LEGACY_OBSERVER"
+    },
+    {
+      "id": "openapi_first_bridge_primary",
+      "status": "CANONICAL",
+      "surfaces": [
+        "app/content/pt-BR/assistant/openapi_tool_routing.json"
+      ],
+      "coreConsumers": [
+        "app/application/services/openapi_first_selection_bridge_service.py",
+        "app/application/services/chat_external_action_orchestration_service.py"
+      ],
+      "justification": "Primary selection path for send/stream — preserve.",
+      "f1Target": "PRESERVE"
+    }
+  ]
+}

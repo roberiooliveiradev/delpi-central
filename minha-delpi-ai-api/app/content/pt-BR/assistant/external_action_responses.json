@@ -101,110 +101,7 @@
       "examplesLabel": "examples",
       "sensitivityLabel": "sensitivity"
     },
-    "siblingDisambiguation": [
-      {
-        "id": "suppliesOtdDomain",
-        "requiresFlag": "supplies_otd",
-        "mode": "domainPathChains",
-        "chains": [
-          {
-            "anyOfTermKeys": [
-              "suppliesOtdSuppliesDomainTerms"
-            ],
-            "operationIdContains": "supplies"
-          },
-          {
-            "anyOfTermKeys": [
-              "candidatePathPrioritization.productionTerms"
-            ],
-            "operationIdContains": "production"
-          },
-          {
-            "anyOfTermKeys": [
-              "candidatePathPrioritization.commercialTerms"
-            ],
-            "operationIdContains": "commercial"
-          }
-        ]
-      },
-      {
-        "id": "productionPcpOrders",
-        "mode": "filterPreferredSort",
-        "anyOfTermKeys": [
-          "productionPcpOrdersTriggerTerms"
-        ],
-        "preferredOperationIdsKey": "productionPcpOrdersPreferredOperationIds"
-      },
-      {
-        "id": "productionOtdDetail",
-        "mode": "preferMatch",
-        "allOfAnyTermKeys": [
-          "productionOtdDetailTerms",
-          "productionOtdDetailProductionContextTerms"
-        ],
-        "operationIdContainsFromKey": "productionOtdDetailOperationId",
-        "pathMatch": "contains"
-      },
-      {
-        "id": "productionOeeAppointment",
-        "mode": "preferMatch",
-        "anyOfTermKeys": [
-          "productionOeeAppointmentTerms"
-        ],
-        "alsoAnyOfTermKeys": [
-          "productionOeeContextTerms",
-          "productionOeeAppointmentShortcutTerms"
-        ],
-        "operationIdContainsFromKey": "productionOeeAppointmentOperationId",
-        "pathMatch": "contains"
-      },
-      {
-        "id": "qualityKaizenDetail",
-        "mode": "preferMatch",
-        "allOfAnyTermKeys": [
-          "qualityKaizenDetailTerms",
-          "qualityKaizenContextTerms"
-        ],
-        "operationIdContainsFromKey": "qualityKaizenDetailOperationId",
-        "pathMatch": "contains"
-      },
-      {
-        "id": "productionEficienciaFabril",
-        "mode": "preferBranches",
-        "gateAnyOfTermKeys": [
-          "productionEficienciaFabrilTerms",
-          "productionEficienciaFabrilAppointmentsTerms"
-        ],
-        "branches": [
-          {
-            "anyOfTermKeys": [
-              "productionEficienciaFabrilAppointmentsTerms"
-            ],
-            "pathEqualsFromKey": "productionEficienciaFabrilAppointmentsPath",
-            "operationIdContainsFromKey": "productionEficienciaFabrilAppointmentsOperationId",
-            "pathMatch": "equals"
-          },
-          {
-            "pathEqualsFromKey": "productionEficienciaFabrilDashboardPath",
-            "operationIdContainsFromKey": "productionEficienciaFabrilDashboardOperationId",
-            "pathMatch": "equals"
-          }
-        ]
-      },
-      {
-        "id": "productionOeeDetail",
-        "mode": "preferMatch",
-        "blockAnyOfTermKeys": [
-          "productionOeeFabrilBlockTerms"
-        ],
-        "allOfAnyTermKeys": [
-          "productionOeeDetailTerms",
-          "productionOeeContextTerms"
-        ],
-        "operationIdContainsFromKey": "productionOeeDetailOperationId",
-        "pathMatch": "contains"
-      }
-    ],
+    "siblingDisambiguation": [],
     "scoreGap": {
       "maxAbsoluteGap": 0.05,
       "clarificationToolName": "clarify_route_selection",
@@ -1178,6 +1075,9 @@
         "produto",
         "produtos"
       ]
+    },
+    "cleanupMeta": {
+      "siblingDisambiguationPathOidRemovedAt": "F1"
     }
   },
   "actionSelectionCopy": {

@@ -30,11 +30,6 @@
     {
       "id": "productionConsumptionTopItems",
       "actionIdDefault": "production-consumption-top-items",
-      "pathExcludeContains": [
-        "by-work-center",
-        "top-items-validated",
-        "by-item/"
-      ],
       "parameterName": "group_by",
       "defaultDimension": "general",
       "dimensions": [
@@ -105,8 +100,10 @@
             "detalhe por filial"
           ]
         }
-      ],
-      "operationIdContains": "production_consumption_top_items"
+      ]
     }
-  ]
+  ],
+  "cleanupMeta": {
+    "pathOidSelectorsRemovedAt": "F1"
+  }
 }

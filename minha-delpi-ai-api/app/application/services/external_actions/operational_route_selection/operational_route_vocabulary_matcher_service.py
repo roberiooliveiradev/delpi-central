@@ -41,6 +41,12 @@ class OperationalRouteVocabularyMatcherService:
         if not isinstance(match_spec, dict):
             return None
 
+        # F1 — registry match.customPredicate is not selection authority.
+        if str(match_spec.get("customPredicate") or "").strip() or str(
+            match_spec.get("anyCustomPredicateFrom") or ""
+        ).strip():
+            return None
+
         if not OperationalRouteMatcherService.matches(
             match_spec,
             message=message,

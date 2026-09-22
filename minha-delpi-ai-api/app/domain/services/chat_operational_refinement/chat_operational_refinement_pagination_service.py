@@ -171,19 +171,19 @@ class ChatOperationalRefinementPaginationService:
                     continue
 
                 path = str(tool_meta.get("path") or "")
-                lowered_path = path.lower()
                 coverage = tool_meta.get("dataCoverageNotice")
-
-                if not refinement_service()._has_paginated_coverage(coverage) and not refinement_service()._is_paginated_path(
-                    lowered_path
-                ):
-                    continue
-
                 arguments = tool_call.get("arguments") or {}
                 parameters = arguments.get("parameters") or {}
 
                 if not isinstance(parameters, dict):
                     parameters = {}
+
+                has_page_params = any(
+                    key in parameters
+                    for key in ("page", "pageSize", "page_size", "limit", "offset")
+                )
+                if not refinement_service()._has_paginated_coverage(coverage) and not has_page_params:
+                    continue
 
                 action_id = str(
                     tool_meta.get("actionId")
@@ -300,13 +300,6 @@ class ChatOperationalRefinementPaginationService:
                     continue
 
                 path = str(tool_meta.get("path") or "")
-
-                if not any(
-                    fragment in path.lower()
-                    for fragment in VOCAB.paginated_path_fragments()
-                ):
-                    continue
-
                 arguments = tool_call.get("arguments") or {}
                 parameters = arguments.get("parameters") or {}
 
@@ -318,6 +311,15 @@ class ChatOperationalRefinementPaginationService:
                     parameters,
                     coverage if isinstance(coverage, dict) else None,
                 )
+                # F1 — pagination eligibility via params/coverage, not path fragments.
+                has_page_params = any(
+                    key in parameters
+                    for key in ("page", "pageSize", "page_size", "limit", "offset")
+                )
+                if not has_page_params and not refinement_service()._has_paginated_coverage(
+                    coverage if isinstance(coverage, dict) else None
+                ):
+                    continue
 
                 return {
                     "action_id": str(
@@ -331,12 +333,8 @@ class ChatOperationalRefinementPaginationService:
                     "page_size": page_size,
                 }
 
-        context = str(conversation_context or "").lower()
-
-        for fragment in VOCAB.paginated_path_fragments():
-            if fragment in context:
-                return {"path": fragment}
-
+        # F1 — conversation_context path fragments are not pagination authority.
+        del conversation_context
         return None
 
     @classmethod
@@ -371,9 +369,9 @@ class ChatOperationalRefinementPaginationService:
 
     @classmethod
     def _is_paginated_path(cls, path: str) -> bool:
-        lowered = str(path or "").lower()
-
-        return any(fragment in lowered for fragment in VOCAB.paginated_path_fragments())
+        """F1 — path fragments are not pagination authority."""
+        del path
+        return False
 
     @classmethod
     def _resolve_page_size_from_parameters(cls, parameters: dict) -> int | None:

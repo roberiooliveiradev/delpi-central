@@ -105,19 +105,7 @@
     "reasonKey": "sqlRefinement"
   },
   "refinementVocabulary": {
-    "paginatedPathFragments": [
-      "/parents",
-      "/structure",
-      "/search",
-      "/stock",
-      "/purchases",
-      "/inspection",
-      "/guide",
-      "/dashboard",
-      "/items",
-      "/columns",
-      "/system/tables"
-    ]
+    "paginatedPathFragments": []
   },
   "sqlReadiness": {
     "description": "Templates SQL deprecados rota a rota — SQL só quando REST não está pronto no agente",
@@ -198,7 +186,6 @@
       "domain": "product",
       "priority": 165,
       "match": {
-        "customPredicate": "directives",
         "requiresProductIdentifier": true
       },
       "route": {
@@ -213,9 +200,7 @@
       "id": "exclusiveRawMaterialCatalog",
       "domain": "product",
       "priority": 160,
-      "match": {
-        "customPredicate": "exclusiveRawMaterialCatalog"
-      },
+      "match": {},
       "route": {
         "operationIds": [],
         "method": "GET"
@@ -228,9 +213,7 @@
       "id": "productRawMaterialPriceIntelligence",
       "domain": "product",
       "priority": 150,
-      "match": {
-        "customPredicate": "rawMaterialPriceIntelligence"
-      },
+      "match": {},
       "route": {
         "operationIds": [],
         "method": "GET"
@@ -243,9 +226,7 @@
       "id": "productCostImpactSimulation",
       "domain": "product",
       "priority": 150,
-      "match": {
-        "customPredicate": "costImpactSimulation"
-      },
+      "match": {},
       "route": {
         "operationIds": [],
         "method": "GET"
@@ -258,9 +239,7 @@
       "id": "productProductionStatus",
       "domain": "product",
       "priority": 145,
-      "match": {
-        "customPredicate": "productionStatus"
-      },
+      "match": {},
       "route": {
         "operationIds": [],
         "method": "GET"
@@ -273,9 +252,7 @@
       "id": "productShippingStatus",
       "domain": "product",
       "priority": 145,
-      "match": {
-        "customPredicate": "shippingStatus"
-      },
+      "match": {},
       "route": {
         "operationIds": [],
         "method": "GET"
@@ -288,9 +265,7 @@
       "id": "productStructureExclusivity",
       "domain": "product",
       "priority": 145,
-      "match": {
-        "customPredicate": "structureExclusivity"
-      },
+      "match": {},
       "route": {
         "operationIds": [],
         "method": "GET"
@@ -303,14 +278,7 @@
       "id": "productFactoryStatus",
       "domain": "product",
       "priority": 140,
-      "match": {
-        "customPredicate": "factoryStatus",
-        "noneOf": [
-          {
-            "customPredicate": "productionStatus"
-          }
-        ]
-      },
+      "match": {},
       "route": {
         "operationIds": [],
         "method": "GET"
@@ -324,7 +292,6 @@
       "domain": "product",
       "priority": 122,
       "match": {
-        "customPredicate": "guideRoute",
         "requiresProductIdentifier": true
       },
       "route": {
@@ -340,7 +307,6 @@
       "domain": "product",
       "priority": 125,
       "match": {
-        "customPredicate": "supplierPartNumberLookup",
         "acceptedIdentifierRoles": [
           "supplier_part_number"
         ]
@@ -359,7 +325,6 @@
       "domain": "product",
       "priority": 121,
       "match": {
-        "customPredicate": "suppliersRoute",
         "requiresProductIdentifier": true,
         "acceptedIdentifierRoles": [
           "delpi_product_code"
@@ -378,22 +343,7 @@
       "domain": "product",
       "priority": 120,
       "match": {
-        "customPredicate": "purchasesRoute",
-        "requiresProductIdentifier": true,
-        "noneOf": [
-          {
-            "customPredicate": "lastPurchase"
-          },
-          {
-            "customPredicate": "purchasePriceHistory"
-          },
-          {
-            "customPredicate": "purchaseBudgetHistory"
-          },
-          {
-            "customPredicate": "rawMaterialPriceIntelligence"
-          }
-        ]
+        "requiresProductIdentifier": true
       },
       "route": {
         "operationIds": [],
@@ -408,7 +358,6 @@
       "domain": "product",
       "priority": 119,
       "match": {
-        "customPredicate": "salePricingRoute",
         "requiresProductIdentifier": true
       },
       "route": {
@@ -424,7 +373,6 @@
       "domain": "product",
       "priority": 123,
       "match": {
-        "customPredicate": "openOrdersRoute",
         "requiresProductIdentifier": true
       },
       "route": {
@@ -440,7 +388,6 @@
       "domain": "product",
       "priority": 118,
       "match": {
-        "customPredicate": "billingRoute",
         "requiresProductIdentifier": true
       },
       "route": {
@@ -456,22 +403,7 @@
       "domain": "product",
       "priority": 117,
       "match": {
-        "customPredicate": "genericPricingRoute",
-        "requiresProductIdentifier": true,
-        "noneOf": [
-          {
-            "customPredicate": "salePricingRoute"
-          },
-          {
-            "customPredicate": "purchasePriceHistory"
-          },
-          {
-            "customPredicate": "purchaseBudgetHistory"
-          },
-          {
-            "customPredicate": "lastPurchase"
-          }
-        ]
+        "requiresProductIdentifier": true
       },
       "route": {
         "operationIds": [],
@@ -486,7 +418,6 @@
       "domain": "product",
       "priority": 116,
       "match": {
-        "customPredicate": "inspectionRoute",
         "requiresProductIdentifier": true
       },
       "route": {
@@ -502,7 +433,6 @@
       "domain": "product",
       "priority": 115,
       "match": {
-        "customPredicate": "customersRoute",
         "requiresProductIdentifier": true
       },
       "route": {
@@ -518,7 +448,6 @@
       "domain": "product",
       "priority": 114,
       "match": {
-        "customPredicate": "internalMovementsRoute",
         "requiresProductIdentifier": true
       },
       "route": {
@@ -533,14 +462,7 @@
       "id": "productLastPurchase",
       "domain": "product",
       "priority": 151,
-      "match": {
-        "customPredicate": "lastPurchase",
-        "noneOf": [
-          {
-            "customPredicate": "directives"
-          }
-        ]
-      },
+      "match": {},
       "route": {
         "operationIds": [],
         "method": "GET"
@@ -553,9 +475,7 @@
       "id": "productPurchasePriceHistory",
       "domain": "product",
       "priority": 122,
-      "match": {
-        "customPredicate": "purchasePriceHistory"
-      },
+      "match": {},
       "route": {
         "operationIds": [],
         "method": "GET"
@@ -568,9 +488,7 @@
       "id": "productPurchaseBudgetHistory",
       "domain": "product",
       "priority": 122,
-      "match": {
-        "customPredicate": "purchaseBudgetHistory"
-      },
+      "match": {},
       "route": {
         "operationIds": [],
         "method": "GET"
@@ -595,9 +513,7 @@
       "id": "productStructureExcel",
       "domain": "product",
       "priority": 148,
-      "match": {
-        "customPredicate": "structureExcel"
-      },
+      "match": {},
       "route": {
         "operationIds": [],
         "method": "GET"
@@ -652,7 +568,6 @@
         "invoices-inbound"
       ],
       "match": {
-        "customPredicate": "inboundInvoiceRoute",
         "requiresProductIdentifier": true
       },
       "route": {
@@ -673,7 +588,6 @@
         "invoices-outbound"
       ],
       "match": {
-        "customPredicate": "outboundInvoiceRoute",
         "requiresProductIdentifier": true
       },
       "route": {
@@ -690,16 +604,7 @@
       "priority": 111,
       "onMultipleMatches": "clarify",
       "match": {
-        "customPredicate": "genericInvoiceRoute",
-        "requiresProductIdentifier": true,
-        "noneOf": [
-          {
-            "customPredicate": "inboundInvoiceRoute"
-          },
-          {
-            "customPredicate": "outboundInvoiceRoute"
-          }
-        ]
+        "requiresProductIdentifier": true
       },
       "route": {
         "operationIds": [],
@@ -714,7 +619,6 @@
       "domain": "product",
       "priority": 118,
       "match": {
-        "customPredicate": "priceAnalysisRoute",
         "requiresProductIdentifier": true
       },
       "route": {
@@ -1018,9 +922,7 @@
       "id": "suppliesOtd",
       "domain": "domainSupplies",
       "priority": 131,
-      "match": {
-        "customPredicate": "suppliesOtdRoute"
-      },
+      "match": {},
       "route": {
         "operationIds": [],
         "method": "GET"
@@ -1188,9 +1090,7 @@
       "id": "productionOtdDetail",
       "domain": "domainProductionKpi",
       "priority": 128,
-      "match": {
-        "customPredicate": "productionOtdDetailRoute"
-      },
+      "match": {},
       "route": {
         "operationIds": [],
         "method": "GET"
@@ -1203,9 +1103,7 @@
       "id": "productionOeeDetail",
       "domain": "domainProductionKpi",
       "priority": 127,
-      "match": {
-        "customPredicate": "productionOeeDetailRoute"
-      },
+      "match": {},
       "route": {
         "operationIds": [],
         "method": "GET"
@@ -1218,9 +1116,7 @@
       "id": "productionOeeAppointment",
       "domain": "domainProductionKpi",
       "priority": 129,
-      "match": {
-        "customPredicate": "productionOeeAppointmentRoute"
-      },
+      "match": {},
       "route": {
         "operationIds": [],
         "method": "GET"
@@ -1233,9 +1129,7 @@
       "id": "productionEficienciaFabril",
       "domain": "domainProductionKpi",
       "priority": 125,
-      "match": {
-        "customPredicate": "productionEficienciaFabrilRoute"
-      },
+      "match": {},
       "route": {
         "operationIds": [],
         "method": "GET"
@@ -1248,9 +1142,7 @@
       "id": "commercialSaleOrders",
       "domain": "domainCommercial",
       "priority": 130,
-      "match": {
-        "customPredicate": "saleOrdersList"
-      },
+      "match": {},
       "route": {
         "operationIds": [],
         "method": "GET"
@@ -1263,9 +1155,7 @@
       "id": "commercialRolSeries",
       "domain": "domainCommercial",
       "priority": 135,
-      "match": {
-        "customPredicate": "commercialRol"
-      },
+      "match": {},
       "route": {
         "operationIds": [],
         "method": "GET"
@@ -1280,9 +1170,6 @@
       "priority": 125,
       "match": {
         "allOf": [
-          {
-            "customPredicate": "transformaQuestion"
-          },
           {
             "termsFrom": "external_action_responses.actionSelection.transformaSummary.terms"
           }
@@ -1300,9 +1187,7 @@
       "id": "engineeringTransformaProcesses",
       "domain": "domainEngineering",
       "priority": 120,
-      "match": {
-        "customPredicate": "transformaQuestion"
-      },
+      "match": {},
       "route": {
         "operationIds": [],
         "method": "GET"
@@ -1315,16 +1200,7 @@
       "id": "engineeringLmpDetailBySale",
       "domain": "domainLmp",
       "priority": 145,
-      "match": {
-        "allOf": [
-          {
-            "customPredicate": "lmpQuestion"
-          },
-          {
-            "customPredicate": "lmpHasSaleNumber"
-          }
-        ]
-      },
+      "match": {},
       "route": {
         "operationIds": [],
         "method": "GET"
@@ -1339,9 +1215,6 @@
       "priority": 135,
       "match": {
         "allOf": [
-          {
-            "customPredicate": "lmpQuestion"
-          },
           {
             "termsFrom": "external_action_responses.actionSelection.lmpRanking.dashboardSummaryTerms"
           }
@@ -1362,9 +1235,6 @@
       "match": {
         "allOf": [
           {
-            "customPredicate": "lmpQuestion"
-          },
-          {
             "termsFrom": "external_action_responses.actionSelection.lmpRanking.dashboardItemsTerms"
           }
         ]
@@ -1383,9 +1253,6 @@
       "priority": 133,
       "match": {
         "allOf": [
-          {
-            "customPredicate": "lmpQuestion"
-          },
           {
             "termsFrom": "external_action_responses.actionSelection.lmpRanking.chartTerms"
           }
@@ -1406,9 +1273,6 @@
       "match": {
         "allOf": [
           {
-            "customPredicate": "lmpQuestion"
-          },
-          {
             "termsFrom": "external_action_responses.actionSelection.lmpRanking.dashboardTerms"
           }
         ]
@@ -1425,9 +1289,7 @@
       "id": "engineeringLmpList",
       "domain": "domainLmp",
       "priority": 128,
-      "match": {
-        "customPredicate": "lmpCatchAll"
-      },
+      "match": {},
       "route": {
         "operationIds": [],
         "method": "GET"
@@ -1440,9 +1302,7 @@
       "id": "productSearchByGroup",
       "domain": "domainProductSearch",
       "priority": 142,
-      "match": {
-        "customPredicate": "productSearchWithGroupCode"
-      },
+      "match": {},
       "route": {
         "operationIds": [],
         "method": "GET"
@@ -1457,15 +1317,7 @@
       "domain": "domainProductSearch",
       "priority": 141,
       "match": {
-        "allOf": [
-          {
-            "customPredicate": "productSearchQuestion"
-          }
-        ],
         "noneOf": [
-          {
-            "customPredicate": "productSearchWithGroupCode"
-          },
           {
             "hasProductOperationalRouteSegment": true
           }
@@ -1484,19 +1336,7 @@
       "id": "systemTableSchema",
       "domain": "domainSystem",
       "priority": 150,
-      "match": {
-        "allOf": [
-          {
-            "customPredicate": "systemMetadataQuestion"
-          },
-          {
-            "customPredicate": "systemHasTableName"
-          },
-          {
-            "customPredicate": "systemWantsSchema"
-          }
-        ]
-      },
+      "match": {},
       "route": {
         "operationIds": [],
         "method": "GET"
@@ -1509,19 +1349,7 @@
       "id": "systemTableIndexes",
       "domain": "domainSystem",
       "priority": 148,
-      "match": {
-        "allOf": [
-          {
-            "customPredicate": "systemMetadataQuestion"
-          },
-          {
-            "customPredicate": "systemHasTableName"
-          },
-          {
-            "customPredicate": "systemWantsIndexes"
-          }
-        ]
-      },
+      "match": {},
       "route": {
         "operationIds": [],
         "method": "GET"
@@ -1534,19 +1362,7 @@
       "id": "systemTableRelations",
       "domain": "domainSystem",
       "priority": 145,
-      "match": {
-        "allOf": [
-          {
-            "customPredicate": "systemMetadataQuestion"
-          },
-          {
-            "customPredicate": "systemHasTableName"
-          },
-          {
-            "customPredicate": "systemWantsRelations"
-          }
-        ]
-      },
+      "match": {},
       "route": {
         "operationIds": [],
         "method": "GET"
@@ -1559,19 +1375,7 @@
       "id": "systemTableColumns",
       "domain": "domainSystem",
       "priority": 140,
-      "match": {
-        "allOf": [
-          {
-            "customPredicate": "systemMetadataQuestion"
-          },
-          {
-            "customPredicate": "systemHasTableName"
-          },
-          {
-            "customPredicate": "systemWantsColumns"
-          }
-        ]
-      },
+      "match": {},
       "route": {
         "operationIds": [],
         "method": "GET"
@@ -1584,24 +1388,7 @@
       "id": "systemColumnsSearch",
       "domain": "domainSystem",
       "priority": 135,
-      "match": {
-        "allOf": [
-          {
-            "customPredicate": "systemMetadataQuestion"
-          },
-          {
-            "customPredicate": "systemWantsColumns"
-          },
-          {
-            "customPredicate": "systemColumnsSearchAllowed"
-          }
-        ],
-        "noneOf": [
-          {
-            "customPredicate": "systemHasTableName"
-          }
-        ]
-      },
+      "match": {},
       "route": {
         "operationIds": [],
         "method": "GET"
@@ -1614,16 +1401,7 @@
       "id": "systemTablesSearch",
       "domain": "domainSystem",
       "priority": 130,
-      "match": {
-        "allOf": [
-          {
-            "customPredicate": "systemMetadataQuestion"
-          },
-          {
-            "customPredicate": "systemWantsTableSearch"
-          }
-        ]
-      },
+      "match": {},
       "route": {
         "operationIds": [],
         "method": "GET"
@@ -1636,16 +1414,7 @@
       "id": "systemTableDetail",
       "domain": "domainSystem",
       "priority": 125,
-      "match": {
-        "allOf": [
-          {
-            "customPredicate": "systemMetadataQuestion"
-          },
-          {
-            "customPredicate": "systemHasTableName"
-          }
-        ]
-      },
+      "match": {},
       "route": {
         "operationIds": [],
         "method": "GET"
@@ -1673,6 +1442,9 @@
     "operationIdsAuthorityRemovedAt": "E11.S5",
     "operationIdsObserverCount": 0,
     "operationIdsEmptiedAt": "J-R8",
-    "previousObserverCount": 84
+    "previousObserverCount": 84,
+    "customPredicateAuthorityRemovedAt": "F1",
+    "paginatedPathFragmentsDeletedAt": "F1",
+    "intentBindingSelectionAuthorityRemovedAt": "F1"
   }
 }

@@ -39,8 +39,8 @@ def test_operational_route_selects_system_table_search():
         candidates_loader=lambda *args, **kwargs: repository.list_actions(),
     )
 
-    assert selected is not None
-    assert selected["arguments"]["actionId"] == "tables-search"
+    # F1 — OperationalRoute customPredicate match retired; use OpenAPI selection service.
+    assert selected is None
 
 
 def test_operational_route_selects_transforma_processes():
@@ -71,8 +71,8 @@ def test_operational_route_selects_transforma_processes():
         build_date_branch_parameters=lambda action, message, **kwargs: {"branch": "01"},
     )
 
-    assert selected is not None
-    assert selected["arguments"]["actionId"] == "transforma-processes"
+    # F1 — OperationalRoute customPredicate match retired.
+    assert selected is None
 
 
 def test_looks_like_sale_orders_excludes_lmp():

@@ -86,9 +86,8 @@ def test_action_selection_heuristic_terms_exist():
         "actionSelection",
         "siblingDisambiguation",
     )
-    assert len(siblings) >= 5
-    assert all(str(item.get("id") or "").strip() for item in siblings)
-    assert all(str(item.get("mode") or "").strip() for item in siblings)
+    # F1 — path/OID siblingDisambiguation removed (OpenAPI retrieval/planner authority).
+    assert siblings == []
 
 
 def test_operational_route_registry_reason_keys_exist() -> None:

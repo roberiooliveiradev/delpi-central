@@ -56,15 +56,15 @@ class ChatOperationalFollowUpRoutingService:
         )
     @classmethod
     def route_segment(cls, follow_up_type: str | None) -> str | None:
-        segment = str(cls.type_config(follow_up_type).get("routeSegment") or "").strip()
-
-        return segment or None
+        """F1 — routeSegment is not selection SoT; grants remain on follow_up_type."""
+        del follow_up_type
+        return None
 
     @classmethod
     def preferred_route_id(cls, follow_up_type: str | None) -> str | None:
-        route_id = str(cls.type_config(follow_up_type).get("preferredRouteId") or "").strip()
-
-        return route_id or None
+        """F1 — preferredRouteId removed; OpenAPI planner selects the action."""
+        del follow_up_type
+        return None
 
     @classmethod
     def inherits_playbook_date(cls, follow_up_type: str | None) -> bool:
@@ -118,13 +118,9 @@ class ChatOperationalFollowUpRoutingService:
 
     @classmethod
     def segment_from_follow_up_type(cls, message: str | None) -> str | None:
-        """Authority: follow_up_type → routeSegment (sem varrer terms)."""
-        from app.domain.services.chat_follow_up_intent_service import (
-            ChatFollowUpIntentService,
-        )
-
-        follow_up_type = ChatFollowUpIntentService.follow_up_type(message)
-        return cls.route_segment(follow_up_type)
+        """F1 — no path-tail authority from follow_up_type."""
+        del message
+        return None
 
     @classmethod
     def segment_from_message(cls, message: str | None) -> str | None:
@@ -181,16 +177,16 @@ class ChatOperationalFollowUpRoutingService:
 
         date_config = _routing_content().get("dateInheritance") or {}
 
+        # F1 — inherit by follow_up_type list, not routeSegment path-tail.
         if isinstance(date_config, dict) and ChatFollowUpIntentService.is_operational_follow_up(
             message
         ):
-            segment = cls.segment_from_message(message)
-
-            if segment and segment in {
-                str(item)
-                for item in (date_config.get("routeSegments") or [])
+            allowed_types = {
+                str(item).strip()
+                for item in (date_config.get("followUpTypes") or [])
                 if str(item).strip()
-            }:
+            }
+            if follow_up_type and follow_up_type in allowed_types:
                 return True
 
         if not ChatProductQueryIntentService.references_previous_product(message or ""):
@@ -269,7 +265,12 @@ class ChatOperationalFollowUpRoutingService:
 
         follow_type = ChatFollowUpIntentService.follow_up_type(message)
 
-        if follow_type and cls.preferred_route_id(follow_type):
+        # F1 — block by follow_up_type grants (not preferredRouteId/routeSegment).
+        if follow_type and (
+            cls.grants_product_scope(follow_type)
+            or cls.grants_specific_product_scope(follow_type)
+            or cls.inherits_playbook_date(follow_type)
+        ):
             return True
 
         has_product_context = bool(

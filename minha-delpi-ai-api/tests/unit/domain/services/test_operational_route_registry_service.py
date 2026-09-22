@@ -56,21 +56,17 @@ def test_production_operational_routes_excluded_from_vocabulary_routes() -> None
 
 
 def test_operational_route_matcher_production_operational_kind() -> None:
-    normalized = ChatMessageNormalizationService.normalize_for_matching(
-        "Quais produtos serão produzidos hoje?"
+    """Production kind intent is conversational (cutover); registry match is non-authority."""
+    from app.domain.services.chat_production_operational_intent_service import (
+        ChatProductionOperationalIntentService,
     )
 
-    assert OperationalRouteMatcherService.matches(
-        {"productionOperationalKind": "scheduleToday"},
-        message="Quais produtos serão produzidos hoje?",
-        normalized=normalized,
+    kind = ChatProductionOperationalIntentService.resolve(
+        "Quais produtos serão produzidos hoje?",
+        force_legacy=True,
     )
-
-    assert not OperationalRouteMatcherService.matches(
-        {"productionOperationalKind": "ordersOpen"},
-        message="Quais produtos serão produzidos hoje?",
-        normalized=normalized,
-    )
+    assert kind is not None
+    assert kind.value == "scheduleToday"
 
 
 def test_operational_route_registry_has_intent_bound_routes() -> None:

@@ -382,14 +382,28 @@ class OperationalRouteRegistryLintService:
         report: OperationalRouteRegistryLintReport,
     ) -> None:
         predicate = str(spec.get("customPredicate") or "").strip()
+        any_from = str(spec.get("anyCustomPredicateFrom") or "").strip()
 
-        if not predicate:
+        # F1 — registry customPredicate is forbidden as match authority.
+        if predicate or any_from:
+            report.add_error(
+                f"F1: routes.{context} still declares customPredicate authority "
+                f"(predicate={predicate!r} anyFrom={any_from!r})"
+            )
             return
 
-        if predicate not in cls._allowed_custom_predicates():
-            report.add_error(
-                f"routes.{context}.customPredicate {predicate!r} fora da allowlist"
-            )
+        # Recurse nested allOf/anyOf/noneOf nodes.
+        for key in ("allOf", "anyOf", "noneOf"):
+            nodes = spec.get(key)
+            if not isinstance(nodes, list):
+                continue
+            for index, node in enumerate(nodes):
+                if isinstance(node, dict):
+                    cls._lint_custom_predicate(
+                        f"{context}.{key}[{index}]",
+                        node,
+                        report,
+                    )
 
     @classmethod
     def _allowed_custom_predicates(cls) -> frozenset[str]:
@@ -564,7 +578,8 @@ class OperationalRouteRegistryLintService:
 
     @classmethod
     def _lint_playbook_none_of_rules(cls, report: OperationalRouteRegistryLintReport) -> None:
-        for route_id, required_predicates in _PLAYBOOK_NONE_OF_RULES.items():
+        """F1 — customPredicate noneOf rules retired; assert absence on playbook routes."""
+        for route_id, _required_predicates in _PLAYBOOK_NONE_OF_RULES.items():
             route = OperationalRouteRegistryService.route_by_id(route_id)
 
             if not route:
@@ -574,18 +589,15 @@ class OperationalRouteRegistryLintService:
                 continue
 
             match_spec = route.get("match")
-
             if not isinstance(match_spec, dict):
-                report.add_error(f"routes.{route_id}.match ausente para conflito playbook")
                 continue
 
             present = cls._collect_none_of_predicates(match_spec)
-
-            for predicate in required_predicates:
-                if predicate not in present:
-                    report.add_error(
-                        f"routes.{route_id} deve declarar noneOf customPredicate={predicate!r}"
-                    )
+            if present:
+                report.add_error(
+                    f"F1: routes.{route_id} still declares noneOf customPredicate "
+                    f"authority: {sorted(present)}"
+                )
 
     @classmethod
     def _collect_none_of_predicates(cls, match_spec: dict[str, Any]) -> set[str]:
@@ -737,22 +749,23 @@ class OperationalRouteRegistryLintService:
 
         coverage = OperationalRouteRegistryGeneratorService.validate_tier_c_coverage()
 
+        # F1 — autoTierC is SHADOW/CI drift only; not user-facing selection authority.
         for gap in coverage.gaps[:20]:
-            report.add_error(f"tier C sem cobertura registry: {gap}")
+            report.add_warning(f"tier C coverage drift (non-authority): {gap}")
 
         if len(coverage.gaps) > 20:
-            report.add_error(
-                f"tier C sem cobertura registry: ... e mais {len(coverage.gaps) - 20}"
+            report.add_warning(
+                f"tier C coverage drift: ... e mais {len(coverage.gaps) - 20}"
             )
 
         get_coverage = OperationalRouteRegistryGeneratorService.validate_get_auto_coverage()
 
         for gap in get_coverage.gaps[:20]:
-            report.add_error(f"GET sem cobertura auto registry: {gap}")
+            report.add_warning(f"GET auto coverage drift (non-authority): {gap}")
 
         if len(get_coverage.gaps) > 20:
-            report.add_error(
-                f"GET sem cobertura auto registry: ... e mais {len(get_coverage.gaps) - 20}"
+            report.add_warning(
+                f"GET auto coverage drift: ... e mais {len(get_coverage.gaps) - 20}"
             )
 
         generated = OperationalRouteRegistryGeneratorService.generate_routes()
@@ -764,15 +777,27 @@ class OperationalRouteRegistryLintService:
 
         if not ok:
             for item in drift_errors:
-                report.add_error(item)
+                report.add_warning(f"autoTierC mirror drift (non-authority): {item}")
 
     @classmethod
     def _lint_refinement_vocabulary(cls, report: OperationalRouteRegistryLintReport) -> None:
         fragments = OperationalRouteRegistryService.paginated_path_fragments()
-
-        if not fragments:
+        if fragments:
             report.add_error(
-                "refinementVocabulary.paginatedPathFragments ausente ou vazio no registry"
+                "F1: refinementVocabulary.paginatedPathFragments must stay empty "
+                f"(found {len(fragments)})"
+            )
+        # Also fail if content still declares non-empty fragments.
+        from app.domain.services.chat_assistant_content_service import (
+            ChatAssistantContentService,
+        )
+
+        payload = ChatAssistantContentService.load_bundle("operational_route_registry")
+        node = (payload or {}).get("refinementVocabulary") if isinstance(payload, dict) else None
+        raw = node.get("paginatedPathFragments") if isinstance(node, dict) else None
+        if isinstance(raw, list) and any(str(item).strip() for item in raw):
+            report.add_error(
+                "F1: operational_route_registry.json still lists paginatedPathFragments"
             )
 
     @staticmethod

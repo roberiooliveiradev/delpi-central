@@ -10,10 +10,8 @@ def test_shipping_follow_up_grants_product_scope_and_inherits_date():
         is True
     )
     assert ChatOperationalFollowUpRoutingService.inherits_playbook_date("shipping") is True
-    assert (
-        ChatOperationalFollowUpRoutingService.preferred_route_id("shipping")
-        == "productShippingStatus"
-    )
+    # F1 — preferredRouteId retired
+    assert ChatOperationalFollowUpRoutingService.preferred_route_id("shipping") is None
 
 
 def test_structure_exclusivity_grants_scope_without_date_inheritance():
@@ -28,10 +26,8 @@ def test_structure_exclusivity_grants_scope_without_date_inheritance():
 
 
 def test_segment_from_message_expedition_follow_up():
-    assert (
-        ChatOperationalFollowUpRoutingService.segment_from_message("e a expedição?")
-        == "shipping-status"
-    )
+    # F1 — routeSegment SoT removed; segment APIs return None
+    assert ChatOperationalFollowUpRoutingService.segment_from_message("e a expedição?") is None
 
 
 def test_looks_like_playbook_date_follow_up_for_shipping_without_hoje():

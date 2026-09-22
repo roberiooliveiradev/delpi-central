@@ -177,18 +177,12 @@ class OperationalRouteRegistryService:
 
     @classmethod
     def vocabulary_routes(cls) -> list[dict[str, Any]]:
+        # F1 — customPredicate no longer gates vocabulary inclusion.
         filtered = [
             route
             for route in cls.manual_routes()
             if isinstance(route, dict)
             and str(route.get("domain") or "").strip() != "productionOperational"
-            and (
-                not route.get("intentBinding")
-                or (
-                    isinstance(route.get("match"), dict)
-                    and str(route["match"].get("customPredicate") or "").strip()
-                )
-            )
         ]
 
         return sorted(filtered, key=cls._vocabulary_route_sort_key)
@@ -416,18 +410,5 @@ class OperationalRouteRegistryService:
 
     @classmethod
     def paginated_path_fragments(cls) -> tuple[str, ...]:
-        node = _registry_content().get("refinementVocabulary")
-
-        if not isinstance(node, dict):
-            return ()
-
-        raw = node.get("paginatedPathFragments")
-
-        if not isinstance(raw, list):
-            return ()
-
-        return tuple(
-            str(fragment).strip()
-            for fragment in raw
-            if str(fragment).strip()
-        )
+        """F1 — path fragments retired; pagination uses params/coverage."""
+        return ()

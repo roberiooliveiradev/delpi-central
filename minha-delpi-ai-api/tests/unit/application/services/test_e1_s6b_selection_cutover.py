@@ -105,27 +105,10 @@ def test_cutover_registry_prefers_retrieval_over_wrong_markers(monkeypatch):
     service = ExternalActionSelectionService(_Repo(catalog))
     ids = [row["actionId"] for row in catalog]
 
-    monkeypatch.setattr(
-        "app.domain.services.operational_route_registry_service."
-        "OperationalRouteRegistryService.route_by_id",
-        lambda _route_id: {
-            "id": "product.stock",
-            "route": {"pathMarkers": ["/stock"], "operationIdMarkers": ["stock"]},
-        },
-    )
-
     def _openapi(message, *, allowed_action_ids, **kwargs):
-        # Mimic OpenAPI-first: among allowed, pick lexical winner.
-        if set(allowed_action_ids) == set(ids):
-            return {
-                "actionId": "acme.shipments.tracking",
-                "arguments": {"actionId": "acme.shipments.tracking", "parameters": {}},
-                "metadata": {},
-            }
-        # Marker-narrowed legacy would still pick stock.
         return {
-            "actionId": "acme.products.stock",
-            "arguments": {"actionId": "acme.products.stock", "parameters": {}},
+            "actionId": "acme.shipments.tracking",
+            "arguments": {"actionId": "acme.shipments.tracking", "parameters": {}},
             "metadata": {},
         }
 
@@ -141,8 +124,9 @@ def test_cutover_registry_prefers_retrieval_over_wrong_markers(monkeypatch):
     shadow = (selected.get("metadata") or {}).get("registrySelectionShadow")
     assert shadow["cutover"] is True
     assert shadow["authorityActionId"] == "acme.shipments.tracking"
-    assert shadow["legacyActionId"] == "acme.products.stock"
-    assert shadow["agree"] is True  # authority ∈ candidate top-K
+    assert shadow["legacyActionId"] == ""
+    assert shadow["legacyRemovedAt"] == "F1"
+    assert shadow["agree"] is True
 
 
 def test_cutover_product_intent_prefers_retrieval(monkeypatch):
@@ -161,13 +145,11 @@ def test_cutover_product_intent_prefers_retrieval(monkeypatch):
             "metadata": {},
         },
     )
-    monkeypatch.setattr(
-        service,
-        "_select_product_action",
-        lambda *args, **kwargs: {
-            "arguments": {"actionId": "acme.products.stock", "parameters": {}},
-        },
-    )
+
+    def _legacy_must_not_run(*args, **kwargs):
+        raise AssertionError("F1: legacy _select_product_action must not run on cutover")
+
+    monkeypatch.setattr(service, "_select_product_action", _legacy_must_not_run)
 
     selected = service.select_action_for_product(
         "onde está a remessa 45871",
@@ -180,7 +162,8 @@ def test_cutover_product_intent_prefers_retrieval(monkeypatch):
     shadow = (selected.get("metadata") or {}).get("productSelectionShadow")
     assert shadow["cutover"] is True
     assert shadow["authorityActionId"] == "acme.shipments.tracking"
-    assert shadow["legacyActionId"] == "acme.products.stock"
+    assert shadow["legacyActionId"] == ""
+    assert shadow["legacyRemovedAt"] == "F1"
 
 
 def test_cutover_unknown_provider_without_markers(monkeypatch):
@@ -190,14 +173,6 @@ def test_cutover_unknown_provider_without_markers(monkeypatch):
     service = ExternalActionSelectionService(_Repo(catalog))
     ids = [row["actionId"] for row in catalog]
 
-    monkeypatch.setattr(
-        "app.domain.services.operational_route_registry_service."
-        "OperationalRouteRegistryService.route_by_id",
-        lambda _route_id: {
-            "id": "vendorx.widgets",
-            "route": {"pathMarkers": ["/does-not-match"], "operationIdMarkers": []},
-        },
-    )
     monkeypatch.setattr(
         service,
         "_select_via_openapi_first",
@@ -237,14 +212,6 @@ def test_cutover_metamorphic_rename_preserves_authority(monkeypatch):
     service = ExternalActionSelectionService(_Repo(renamed))
     ids = [row["actionId"] for row in renamed]
 
-    monkeypatch.setattr(
-        "app.domain.services.operational_route_registry_service."
-        "OperationalRouteRegistryService.route_by_id",
-        lambda _route_id: {
-            "id": "product.stock",
-            "route": {"pathMarkers": ["/stock"], "operationIdMarkers": ["stock"]},
-        },
-    )
     monkeypatch.setattr(
         service,
         "_select_via_openapi_first",
@@ -293,15 +260,6 @@ def test_cutover_corpus_agree_rate_gate(monkeypatch):
         for prefix in prefixes:
             corpus.append((f"{prefix}{base}".strip(), action_id))
     assert len(corpus) >= 20
-
-    monkeypatch.setattr(
-        "app.domain.services.operational_route_registry_service."
-        "OperationalRouteRegistryService.route_by_id",
-        lambda _route_id: {
-            "id": "generic",
-            "route": {"pathMarkers": ["/"], "operationIdMarkers": []},
-        },
-    )
 
     samples = []
     divergences = []
