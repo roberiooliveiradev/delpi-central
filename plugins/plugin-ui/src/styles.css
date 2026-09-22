@@ -141,17 +141,27 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 20px;
-  padding: 0;
+  width: auto;
+  min-height: 1.25rem;
+  padding: 0.05rem 0.35rem;
   border: none;
-  border-radius: 999px;
+  border-radius: 6px;
   background: transparent;
   color: var(--delpi-ui-muted, color-mix(in srgb, var(--text, #111) 55%, transparent));
   cursor: help;
-  opacity: 0.72;
+  opacity: 0.78;
   flex-shrink: 0;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+  text-transform: lowercase;
   transition: color 0.15s ease, background 0.15s ease, opacity 0.15s ease;
+}
+
+.delpi-ui-help-tooltip__trigger-label {
+  display: inline-block;
 }
 
 .delpi-ui-help-tooltip__trigger:hover,

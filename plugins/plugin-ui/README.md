@@ -81,7 +81,7 @@ Demos: `src/catalog/demos/`. Tabela estilo LMPS: entradas **DataTable** / **Data
 
 | Export | Função |
 |--------|--------|
-| `HelpTooltip` | Balão ? ou `wrap` em qualquer elemento |
+| `HelpTooltip` | Balão com gatilho `help` ou `wrap` em qualquer elemento |
 | `FieldLabel` | Label de formulário + ajuda |
 | `SectionHintLabel` | Rótulo de seção (ribbon) + ajuda |
 | `TabHintCell` | Aba + ? sem botão aninhado |

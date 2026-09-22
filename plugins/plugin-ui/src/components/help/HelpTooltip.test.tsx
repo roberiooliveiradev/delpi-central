@@ -33,6 +33,13 @@ function CompositeColorTrigger({ label }: { label: string }) {
 }
 
 describe("HelpTooltip", () => {
+  it("usa o texto help no gatilho em vez do ícone ?", () => {
+    render(<HelpTooltip content="Explicação" ariaLabel="Ajuda: campo" />);
+    const trigger = screen.getByRole("button", { name: "Ajuda: campo" });
+    expect(trigger.textContent).toBe("help");
+    expect(trigger.querySelector("svg")).toBeNull();
+  });
+
   it("mostra balão no hover do gatilho quando o menu está fechado", () => {
     const { container } = render(<ExpandableHint />);
     fireEvent.mouseEnter(container.querySelector(".delpi-ui-help-tooltip")!);

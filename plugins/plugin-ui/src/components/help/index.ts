@@ -1,4 +1,9 @@
-export { HelpTooltip, type HelpTooltipPlacement, type HelpTooltipProps } from "./HelpTooltip";
+export {
+  HelpTooltip,
+  HELP_TOOLTIP_TRIGGER_LABEL,
+  type HelpTooltipPlacement,
+  type HelpTooltipProps,
+} from "./HelpTooltip";
 export { FieldLabel, type FieldLabelProps } from "./FieldLabel";
 export { SectionHintLabel, type SectionHintLabelProps } from "./SectionHintLabel";
 export {

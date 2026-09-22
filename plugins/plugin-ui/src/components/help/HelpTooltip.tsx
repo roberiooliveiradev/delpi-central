@@ -1,4 +1,3 @@
-import { HelpCircle } from "lucide-react";
 import {
   Children,
   cloneElement,
@@ -19,6 +18,9 @@ import * as ReactDOM from "react-dom";
 import { DELPI_UI_OVERLAY_Z_INDEX } from "../../overlayLayers";
 import { tryResolveCreatePortal } from "../../utils/resolveCreatePortal";
 export type HelpTooltipPlacement = "top" | "bottom";
+
+/** Visible trigger copy for the icon-free help control (not `wrap` mode). */
+export const HELP_TOOLTIP_TRIGGER_LABEL = "help";
 
 export type HelpTooltipProps = {
   content: string;
@@ -372,7 +374,9 @@ export function HelpTooltip({
           onMouseDown={(event) => event.stopPropagation()}
           {...interactionHandlers}
         >
-          <HelpCircle size={14} aria-hidden="true" />
+          <span className="delpi-ui-help-tooltip__trigger-label" aria-hidden="true">
+            {HELP_TOOLTIP_TRIGGER_LABEL}
+          </span>
         </button>
       )}
       {visible && !isSuppressed()
