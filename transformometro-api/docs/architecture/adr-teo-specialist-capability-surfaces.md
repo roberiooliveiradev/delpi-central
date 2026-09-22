@@ -12,9 +12,11 @@
 4. **New domain capability ≠ new GPT Action route.** Prefer `EXISTING_CATALOG_ENTITY` / existing operations. Action Surface Gate is mandatory; budget documented in [`../integrations/teo-capability-matrix.md`](../integrations/teo-capability-matrix.md).
 5. Canonical matrix source: **`teo-capability-matrix.md`** (this ADR does not duplicate the full table).
 6. Forbidden: generic Action/MCP proxies; local TÉO RBAC; service-account user impersonation on specialist surfaces; independent TÉO LLM/orchestrator/conversation store.
+7. **GPT Actions V2 (2026-09-22):** Builder-visible writes use shared `GovernedWriteOrchestrator` — `gpt_prepare_record_change` / specialized PREPARE → opaque `proposal_handle` → `gpt_commit_proposal`. `commit_proposal` is **not** a generic proxy (executes only server-side prepared proposals). Lifecycle: `GOVERNED_PREPARE_COMMIT_V2`. Importable ops: **18** (was 21).
 
 ## Consequences
 
-- Process Documentation is exposed as governed entity `process_document` (0 new Action operations).
+- Process Documentation is exposed as governed entity `process_document` via prepare/commit (no dedicated Action CRUD routes).
 - Tasks and Interaction Room remain **DOMAIN_ONLY_BY_DESIGN** until a real TÉO use case + gate pass.
 - DÉLIA↔TÉO integration stays **PLANNED** until a real adapter with user delegation exists.
+- Legacy CRUD Action routes remain as HTTP PREPARE shims (`include_in_schema=False`) until consumers are cleared.
