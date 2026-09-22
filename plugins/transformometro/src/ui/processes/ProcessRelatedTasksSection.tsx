@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
+import { CalendarCheck, RefreshCw } from "lucide-react";
 import { EmptyState, emptyStateCardBemClasses } from "@delpi/plugin-ui/index";
 
+import { SoftActionButton } from "../../components/SoftActionButton";
 import { LoadingActivityCard } from "../../components/LoadingActivityCard";
 import { InlineErrorState } from "../../components/ErrorStateBox";
-import { DS_GHOST_BTN } from "../../components/ghostChrome";
 import {
   listProcessoRelatedTasks,
   type TransformometroTask,
@@ -108,21 +109,19 @@ export function ProcessRelatedTasksSection({
       ) : null}
 
       <div className="tm-processo-workspace-overview__actions">
-        <button
-          type="button"
-          className={DS_GHOST_BTN}
+        <SoftActionButton
+          icon={RefreshCw}
           disabled={loading}
           onClick={() => void load()}
         >
           {loading ? "Atualizando…" : "Atualizar"}
-        </button>
-        <button
-          type="button"
-          className={DS_GHOST_BTN}
+        </SoftActionButton>
+        <SoftActionButton
+          icon={CalendarCheck}
           onClick={() => onNavigate(TRANSFORMOMETRO_ROUTES.myTasks)}
         >
           Abrir Minhas tarefas
-        </button>
+        </SoftActionButton>
       </div>
     </section>
   );

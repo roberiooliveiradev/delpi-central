@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
-import { MessagesSquare } from "lucide-react";
+import { CalendarCheck, MessagesSquare } from "lucide-react";
+import { EmptyState, emptyStateCardBemClasses } from "@delpi/plugin-ui/index";
 
+import { SoftActionButton } from "../../components/SoftActionButton";
 import { InlineErrorState } from "../../components/ErrorStateBox";
-import { DS_GHOST_BTN } from "../../components/ghostChrome";
 import { openInteractionRoom } from "../../data/api/transformometroInteractionApi";
 import { buildInteractionRoomPath } from "../../constants/routes";
 import { buildProcessoSectionHref } from "./processWorkspaceNav";
@@ -57,23 +58,20 @@ export function ProcessInteractionRoomSection({
         />
       ) : null}
       <div className="tm-processo-workspace-overview__actions">
-        <button
-          type="button"
-          className={DS_GHOST_BTN}
+        <SoftActionButton
+          icon={MessagesSquare}
           disabled={opening}
           aria-busy={opening || undefined}
           onClick={() => void openRoom()}
         >
-          <MessagesSquare size={16} aria-hidden="true" />
           {opening ? "Abrindo sala…" : "Abrir Sala de interação"}
-        </button>
-        <button
-          type="button"
-          className="ds-link"
+        </SoftActionButton>
+        <SoftActionButton
+          icon={CalendarCheck}
           onClick={() => onNavigate(buildProcessoSectionHref(processoId, "tarefas"))}
         >
           Ver tarefas relacionadas
-        </button>
+        </SoftActionButton>
       </div>
     </section>
   );

@@ -1,10 +1,19 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { EmptyState, emptyStateCardBemClasses } from "@delpi/plugin-ui/index";
-import { RefreshCw } from "lucide-react";
+import {
+  Boxes,
+  Gauge,
+  GitBranch,
+  GitCompare,
+  RefreshCw,
+  Wallet,
+  Workflow,
+} from "lucide-react";
 
 import { DataTable } from "../../components/DataTable";
 import { InlineErrorState } from "../../components/ErrorStateBox";
 import { LoadingActivityCard } from "../../components/LoadingActivityCard";
+import { SoftActionButton } from "../../components/SoftActionButton";
 import { DS_GHOST_BTN } from "../../components/ghostChrome";
 import { TmStatusBadge } from "../../components/tmChromeUi";
 import { cenarioLabel } from "../../content/cenarioLabels";
@@ -264,10 +273,14 @@ export function ProcessResultsSection({
         }
       : undefined;
 
-  const tertiaryOpenLink = (label: string, onClick: () => void) => (
-    <button type="button" className="ds-link tm-processo-results-tertiary" onClick={onClick}>
+  const tertiaryOpenLink = (
+    label: string,
+    onClick: () => void,
+    icon: typeof Gauge,
+  ) => (
+    <SoftActionButton compact icon={icon} onClick={onClick}>
       {label}
-    </button>
+    </SoftActionButton>
   );
 
   const scenarioPicker: ReactNode =
@@ -501,8 +514,10 @@ export function ProcessResultsSection({
                     title="Indicadores operacionais"
                     help={H.indicadores}
                     helper="Compare referência e cenário. Δ é CALCULADO — AS-IS e TO-BE vêm das revisões."
-                    action={tertiaryOpenLink("Ver medição", () =>
-                      openRevisionSection(comparison.selectedRevisionId!, "medicao"),
+                    action={tertiaryOpenLink(
+                      "Ver medição",
+                      () => openRevisionSection(comparison.selectedRevisionId!, "medicao"),
+                      Gauge,
                     )}
                   >
                     {comparison.mode === "pair" ? (
@@ -586,8 +601,10 @@ export function ProcessResultsSection({
                     title="Investimentos"
                     help={H.investimentos}
                     helper="Valores necessários para viabilizar o cenário proposto. Sem fabricar investimento da referência."
-                    action={tertiaryOpenLink("Ver investimentos", () =>
-                      openRevisionSection(comparison.selectedRevisionId!, "investimentos"),
+                    action={tertiaryOpenLink(
+                      "Ver investimentos",
+                      () => openRevisionSection(comparison.selectedRevisionId!, "investimentos"),
+                      Wallet,
                     )}
                   >
                     {toBeBundle.investimentos.length === 0 ? (
@@ -617,8 +634,10 @@ export function ProcessResultsSection({
                     title="Recursos e custos"
                     help={H.recursos}
                     helper="Recursos associados ao cenário selecionado. Custos unitários do catálogo continuam em Configurações → Recursos compartilhados."
-                    action={tertiaryOpenLink("Ver recursos", () =>
-                      openRevisionSection(comparison.selectedRevisionId!, "recursos"),
+                    action={tertiaryOpenLink(
+                      "Ver recursos",
+                      () => openRevisionSection(comparison.selectedRevisionId!, "recursos"),
+                      Boxes,
                     )}
                   >
                     {toBeBundle.vinculos.length === 0 ? (
@@ -650,13 +669,12 @@ export function ProcessResultsSection({
                     helper="Consulte onde a estrutura e o fluxo do processo foram alterados neste cenário."
                   >
                     {!showHeavyStructure ? (
-                      <button
-                        type="button"
-                        className={DS_GHOST_BTN}
+                      <SoftActionButton
+                        icon={GitCompare}
                         onClick={() => setShowHeavyStructure(true)}
                       >
                         Ver mapeamento e fluxo
-                      </button>
+                      </SoftActionButton>
                     ) : (
                       <div className="tm-processo-results-structure">
                         <p className="tm-processo-results-block__helper">
@@ -667,9 +685,9 @@ export function ProcessResultsSection({
                           {comparison.asIs && comparison.mode === "pair" ? (
                             <>
                               <li>
-                                <button
-                                  type="button"
-                                  className="ds-link"
+                                <SoftActionButton
+                                  compact
+                                  icon={GitBranch}
                                   onClick={() =>
                                     openRevisionSection(
                                       comparison.asIs!.revisao_id,
@@ -678,25 +696,25 @@ export function ProcessResultsSection({
                                   }
                                 >
                                   Ver estrutura (referência)
-                                </button>
+                                </SoftActionButton>
                               </li>
                               <li>
-                                <button
-                                  type="button"
-                                  className="ds-link"
+                                <SoftActionButton
+                                  compact
+                                  icon={Workflow}
                                   onClick={() =>
                                     openRevisionSection(comparison.asIs!.revisao_id, "diagrama")
                                   }
                                 >
                                   Ver fluxo (referência)
-                                </button>
+                                </SoftActionButton>
                               </li>
                             </>
                           ) : null}
                           <li>
-                            <button
-                              type="button"
-                              className="ds-link"
+                            <SoftActionButton
+                              compact
+                              icon={GitBranch}
                               onClick={() =>
                                 openRevisionSection(
                                   comparison.selectedRevisionId!,
@@ -705,18 +723,18 @@ export function ProcessResultsSection({
                               }
                             >
                               Ver estrutura do cenário
-                            </button>
+                            </SoftActionButton>
                           </li>
                           <li>
-                            <button
-                              type="button"
-                              className="ds-link"
+                            <SoftActionButton
+                              compact
+                              icon={Workflow}
                               onClick={() =>
                                 openRevisionSection(comparison.selectedRevisionId!, "diagrama")
                               }
                             >
                               Ver fluxo do cenário
-                            </button>
+                            </SoftActionButton>
                           </li>
                         </ul>
                       </div>
@@ -766,17 +784,16 @@ export function ProcessResultsSection({
 
       {comparison.instanceId ? (
         <div className="tm-processo-results__utility">
-          <button
-            type="button"
-            className="tm-processo-results-refresh"
+          <SoftActionButton
+            compact
+            icon={RefreshCw}
             disabled={loading}
             title={H.atualizar}
             aria-label={H.atualizar}
             onClick={() => void loadComparison()}
           >
-            <RefreshCw size={14} aria-hidden />
-            <span>{loading ? "Atualizando…" : "Atualizar comparação"}</span>
-          </button>
+            {loading ? "Atualizando…" : "Atualizar comparação"}
+          </SoftActionButton>
         </div>
       ) : null}
     </section>

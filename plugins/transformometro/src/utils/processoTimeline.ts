@@ -195,7 +195,7 @@ export function buildProcessTimeline(entries: ProcessoAuditLogEntry[]): ProcessT
         occurredAt: entry.created_at,
       };
     })
-    .sort((left, right) => Date.parse(left.occurredAt) - Date.parse(right.occurredAt));
+    .sort((left, right) => Date.parse(right.occurredAt) - Date.parse(left.occurredAt));
 }
 
 export function filterProcessTimelineEntries(

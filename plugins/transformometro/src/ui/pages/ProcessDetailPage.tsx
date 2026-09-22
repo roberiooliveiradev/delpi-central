@@ -1,7 +1,19 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Copy, Trash2 } from "lucide-react";
+import {
+  ArrowLeft,
+  BarChart3,
+  CalendarCheck,
+  Copy,
+  FileText,
+  GitBranch,
+  History,
+  Layers,
+  MessagesSquare,
+  Trash2,
+} from "lucide-react";
 
 import type { AppProps } from "../../App";
+import { SoftActionButton } from "../../components/SoftActionButton";
 import { ProcessFormProgress } from "../../components/process/ProcessFormProgress";
 import { ProcessTimeline } from "../../components/process/ProcessTimeline";
 import { LoadingActivityCard } from "../../components/LoadingActivityCard";
@@ -535,27 +547,48 @@ export function ProcessDetailPage({
                 </div>
               </dl>
               <nav className="tm-processo-workspace-overview__links" aria-label="Atalhos do processo">
-                <button type="button" className="ds-link" onClick={() => onNavigate(buildProcessoSectionHref(processoId, "mapeamento"))}>
+                <SoftActionButton
+                  icon={GitBranch}
+                  onClick={() => onNavigate(buildProcessoSectionHref(processoId, "mapeamento"))}
+                >
                   Mapeamento
-                </button>
-                <button type="button" className="ds-link" onClick={() => onNavigate(buildProcessoSectionHref(processoId, "documentacao"))}>
+                </SoftActionButton>
+                <SoftActionButton
+                  icon={FileText}
+                  onClick={() => onNavigate(buildProcessoSectionHref(processoId, "documentacao"))}
+                >
                   Documentação
-                </button>
-                <button type="button" className="ds-link" onClick={() => onNavigate(buildProcessoSectionHref(processoId, "melhorias"))}>
+                </SoftActionButton>
+                <SoftActionButton
+                  icon={Layers}
+                  onClick={() => onNavigate(buildProcessoSectionHref(processoId, "melhorias"))}
+                >
                   Melhorias
-                </button>
-                <button type="button" className="ds-link" onClick={() => onNavigate(buildProcessoSectionHref(processoId, "resultados"))}>
+                </SoftActionButton>
+                <SoftActionButton
+                  icon={BarChart3}
+                  onClick={() => onNavigate(buildProcessoSectionHref(processoId, "resultados"))}
+                >
                   Resultados
-                </button>
-                <button type="button" className="ds-link" onClick={() => onNavigate(buildProcessoSectionHref(processoId, "tarefas"))}>
+                </SoftActionButton>
+                <SoftActionButton
+                  icon={CalendarCheck}
+                  onClick={() => onNavigate(buildProcessoSectionHref(processoId, "tarefas"))}
+                >
                   Tarefas relacionadas
-                </button>
-                <button type="button" className="ds-link" onClick={() => onNavigate(buildProcessoSectionHref(processoId, "sala"))}>
+                </SoftActionButton>
+                <SoftActionButton
+                  icon={MessagesSquare}
+                  onClick={() => onNavigate(buildProcessoSectionHref(processoId, "sala"))}
+                >
                   Sala
-                </button>
-                <button type="button" className="ds-link" onClick={() => onNavigate(buildProcessoSectionHref(processoId, "historico"))}>
+                </SoftActionButton>
+                <SoftActionButton
+                  icon={History}
+                  onClick={() => onNavigate(buildProcessoSectionHref(processoId, "historico"))}
+                >
                   Histórico
-                </button>
+                </SoftActionButton>
               </nav>
             </div>
           </section>

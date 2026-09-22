@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
+import { ArrowLeftRight, ExternalLink } from "lucide-react";
 
-import { DS_GHOST_BTN } from "../../components/ghostChrome";
+import { SoftActionButton } from "../../components/SoftActionButton";
 import { TmStatusBadge } from "../../components/tmChromeUi";
 import { cenarioLabel } from "../../content/cenarioLabels";
 import type { ProcessoInstancia, Revisao } from "../../data/api/transformometroApi";
@@ -84,18 +85,14 @@ export function ResultsContextHeader({
 
       <div className="tm-processo-results-context__actions">
         {canChangeInstance ? (
-          <button type="button" className={DS_GHOST_BTN} onClick={onChangeInstance}>
+          <SoftActionButton icon={ArrowLeftRight} onClick={onChangeInstance}>
             Trocar melhoria
-          </button>
+          </SoftActionButton>
         ) : null}
         {toBe && onOpenRevision ? (
-          <button
-            type="button"
-            className="ds-link tm-processo-results-context__link"
-            onClick={onOpenRevision}
-          >
+          <SoftActionButton icon={ExternalLink} onClick={onOpenRevision}>
             Abrir revisão
-          </button>
+          </SoftActionButton>
         ) : null}
       </div>
     </header>

@@ -99,6 +99,7 @@ describe("ProcessResultsSection — Redesign & Compare V1 UX polish", () => {
     expect(contextHeader).toMatch(/scenarioPicker/);
     expect(contextHeader).toMatch(/Trocar melhoria/);
     expect(source).toMatch(/scenarioPicker=\{scenarioPicker\}/);
+    expect(source).toMatch(/SoftActionButton/);
     expect(source).toMatch(/Ver medição/);
     expect(source).toMatch(/Ver investimentos/);
     expect(source).toMatch(/Ver recursos/);
@@ -111,6 +112,9 @@ describe("ProcessResultsSection — Redesign & Compare V1 UX polish", () => {
     expect(help).toMatch(/resultados:/);
     expect(source).not.toMatch(/revisao_referencia_id/);
     expect(source).not.toMatch(/contrato de comparação/);
+    expect(source).toMatch(/Atualizar comparação/);
+    expect(contextHeader).toMatch(/SoftActionButton/);
+    expect(contextHeader).toMatch(/Abrir revisão/);
 
     const indicadoresIdx = source.indexOf('id="medicoes"');
     const beneficiosIdx = source.indexOf('id="beneficios"');
