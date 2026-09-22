@@ -8,6 +8,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from app.domain.evidence.model import EvidenceRef
+
 
 @dataclass(frozen=True, slots=True)
 class ExpertisePack:
@@ -23,7 +25,7 @@ class ExpertisePack:
     description: str = ""
     applicability: tuple[str, ...] = ()
     limitations: tuple[str, ...] = ()
-    evidence_refs: tuple[str, ...] = ()
+    evidence_refs: tuple[EvidenceRef, ...] = ()
     knowledge_refs: tuple[str, ...] = ()
     playbook_refs: tuple[str, ...] = ()
     status: str = "DRAFT"

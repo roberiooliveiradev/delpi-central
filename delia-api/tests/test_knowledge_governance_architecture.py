@@ -103,6 +103,22 @@ def test_knowledge_reuses_evidence_source_refs():
     assert "class KnowledgeSourceRef" not in source
 
 
+def test_expertise_reuses_evidence_ref_typing():
+    source = (APP_ROOT / "domain" / "expertise" / "model.py").read_text()
+    assert "from app.domain.evidence.model import EvidenceRef" in source
+    assert "evidence_refs: tuple[EvidenceRef, ...]" in source
+    assert "evidence_refs: tuple[str, ...]" not in source
+
+
+def test_retrieval_request_has_no_scope_or_include_flags():
+    source = (APP_ROOT / "domain" / "knowledge" / "model.py").read_text()
+    assert "knowledge_scope:" not in source
+    assert "include_unpublished_candidates" not in source
+    assert "include_personal_memory" not in source
+    assert "include_session_evidence" not in source
+    assert "include_revoked_or_deprecated" not in source
+
+
 def test_no_application_knowledge_manager_or_retrieval_port():
     app_knowledge = APP_ROOT / "application" / "knowledge"
     assert not app_knowledge.exists()

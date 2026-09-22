@@ -43,12 +43,26 @@ def test_expertise_grants_no_rbac_or_act():
         owner_ref="delia-knowledge",
         semantic_purpose="quality analysis",
         applicability=("domain:quality",),
+        evidence_refs=(EvidenceRef(evidence_id="ev-exp-1"),),
     )
     expertise_grants_no_permission(expertise)
     assert expertise.grants_authorization() is False
     assert expertise.grants_rbac() is False
     assert expertise.grants_act() is False
     assert expertise.authorizes_domain_access() is False
+    assert isinstance(expertise.evidence_refs[0], EvidenceRef)
+
+
+def test_expertise_evidence_refs_are_evidence_ref_typed():
+    expertise = ExpertisePack(
+        expertise_id="exp-typed",
+        version="1.0.0",
+        owner_ref="delia-knowledge",
+        semantic_purpose="typed evidence linkage",
+        evidence_refs=(EvidenceRef(evidence_id="ev-typed"),),
+    )
+    assert expertise.evidence_refs == (EvidenceRef(evidence_id="ev-typed"),)
+    assert not isinstance(expertise.evidence_refs[0], str)
 
 
 def test_playbook_is_guidance_only_and_does_not_execute():
@@ -194,32 +208,49 @@ def test_retrieval_contracts_preserve_identity_and_do_not_imply_truth_or_permiss
         content_ref="content://ok-2",
         status=KnowledgeLifecycleStatus.REVOKED,
     )
+    deprecated = OrganizationalKnowledge(
+        knowledge_id="ok-3",
+        version="1.0.0",
+        owner_ref="owner-a",
+        content_ref="content://ok-3",
+        status=KnowledgeLifecycleStatus.DEPRECATED,
+    )
     request = KnowledgeRetrievalRequest(
         purpose="find quality SOP",
         owner_filters=("owner-a",),
         max_results=5,
     )
-    result = filter_organizational_retrieval_eligibility((published, revoked), request)
+    result = filter_organizational_retrieval_eligibility(
+        (published, revoked, deprecated),
+        request,
+    )
     assert len(result.hits) == 1
     hit = result.hits[0]
     assert hit.knowledge_id == "ok-1"
     assert hit.version == "1.0.0"
     assert hit.status is KnowledgeLifecycleStatus.PUBLISHED
+    assert hit.origin_class is KnowledgeOriginClass.PUBLISHED_ORGANIZATIONAL_KNOWLEDGE
     assert hit.is_fact() is False
     assert hit.is_evidence() is False
     assert hit.grants_authorization() is False
     assert hit.rank_implies_authority() is False
     assert hit.score_implies_truth() is False
     assert result.grants_authorization() is False
+    assert "PUBLISHED_ORGANIZATIONAL_KNOWLEDGE_ONLY" in result.limitations[0]
 
 
-def test_retrieval_rejects_silent_personal_or_candidate_inclusion():
-    request = KnowledgeRetrievalRequest(
-        purpose="bad",
-        include_personal_memory=True,
-    )
-    with pytest.raises(KnowledgeGovernanceError, match="personal/session"):
-        filter_organizational_retrieval_eligibility((), request)
+def test_retrieval_request_has_no_scope_or_include_override_flags():
+    request = KnowledgeRetrievalRequest(purpose="normal retrieval")
+    assert not hasattr(request, "knowledge_scope")
+    assert not hasattr(request, "include_unpublished_candidates")
+    assert not hasattr(request, "include_personal_memory")
+    assert not hasattr(request, "include_session_evidence")
+    assert not hasattr(request, "include_revoked_or_deprecated")
+    with pytest.raises(TypeError):
+        KnowledgeRetrievalRequest(  # type: ignore[call-arg]
+            purpose="bad",
+            include_personal_memory=True,
+        )
 
 
 def test_structured_understanding_and_execution_do_not_auto_publish():

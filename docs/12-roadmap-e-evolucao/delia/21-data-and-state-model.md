@@ -1939,12 +1939,12 @@ The bounded OpenAPI adapter remains Infrastructure-only. It projects source owne
 
 Operation character is not inferred from HTTP method. C3-T5 found no canonical real DELPI OpenAPI extension or other real-source semantic classification contract to bind now; therefore the foundation uses explicit governed declarations in TEST_FIXTURE evidence, and unknown/ambiguous operations are not projectable. No persistence or catalog database is introduced.
 
-## C3-T6 — Expertise / Knowledge governance + retrieval contracts (candidate)
+## C3-T6 / C3-T6R1 — Expertise / Knowledge governance + retrieval contracts
 
 ```text
-STATUS = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+STATUS = CANDIDATE_FOR_ARCHITECTURE_REVIEW (C3-T6R1)
 OWNER = DÉLIA (delia-api domain/expertise + domain/knowledge)
-ExpertisePack = versioned intelligence asset (!= RBAC / ACT / agent)
+ExpertisePack.evidence_refs = tuple[EvidenceRef, ...]
 DomainPlaybook = versioned guidance (!= workflow / AutomationExecution / ACT)
 KnowledgeCandidate != OrganizationalKnowledge (published)
 KnowledgeOriginClass = TRANSIENT_RESEARCH | SESSION_EVIDENCE | PERSONAL_KNOWLEDGE_CANDIDATE | ORGANIZATIONAL_KNOWLEDGE_CANDIDATE | PUBLISHED_ORGANIZATIONAL_KNOWLEDGE
@@ -1952,11 +1952,16 @@ KnowledgeLifecycleStatus = CANDIDATE | REVIEWED | EVALUATED | PUBLISHED | DEPREC
 publication_evaluation_completed = knowledge-governance eval (≠ model EvalResult)
 REUSES = EvidenceRef, SourceRef
 KnowledgeRetrievalRequest/Hit/Result = provider-neutral contracts
+KNOWLEDGE_SCOPE = REMOVED
+RETRIEVAL_INCLUDE_FLAGS = REMOVED
+NORMAL_RETRIEVAL_SCOPE = PUBLISHED_ORGANIZATIONAL_KNOWLEDGE_ONLY
+REVOKED_DEPRECATED_RETRIEVAL_SEMANTICS = EXCLUDED_FROM_NORMAL_RETRIEVAL
 KnowledgeRetrievalPort = DEFERRED
 filter_organizational_retrieval_eligibility = deterministic in-memory eligibility only
 retrieval hit != FACT / Evidence / permission
 Personal/session/transient != auto Organizational Knowledge
 PHYSICAL_KNOWLEDGE_STORE = NONE / TO_INVENTORY
+NEW_RUNTIME_ABSTRACTIONS = NONE
 PERSISTENCE = NONE
 MIGRATION = NONE
 RAG = NONE
@@ -1966,4 +1971,4 @@ PLANNER = NONE
 ACT = NONE
 ```
 
-C3-T6 does not persist knowledge assets, does not index vectors, does not implement Personal Memory runtime, Marketplace, planner, conversation, PREPARE or ACT.
+C3-T6R1 does not persist knowledge assets, does not index vectors, does not implement Personal Memory runtime, Marketplace, planner, conversation, PREPARE or ACT.

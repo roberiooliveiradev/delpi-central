@@ -1893,14 +1893,30 @@ GitHub `Architecture Enforcement` run `35717733644` on the implementation SHA: *
 
 `FULL_DELIA_API_SUITE = TEST_NOT_RUN` because the available execution environment could not clone GitHub and the repository workflow does not execute the full `delia-api` pytest suite. Do not promote this evidence to repository-wide PASS.
 
-## C3-T6 — Expertise / Knowledge Governance + Retrieval Contracts (CANDIDATE)
+## C3-T6 — Expertise / Knowledge Governance + Retrieval Contracts (historical candidate)
+
+NOTE_SUPERSEDED_BY: C3-T6R1
+
+```text
+STATUS = HISTORICAL_CANDIDATE
+IMPLEMENTATION_HEAD = 537cf476646964f0866484c009043c261cf8f725
+```
+
+## C3-T6R1 — Knowledge Contract Rework (CANDIDATE)
 
 ```text
 STATUS = CANDIDATE_FOR_ARCHITECTURE_REVIEW
-BASE_HEAD = 86729dc5ba1aa21463271989feb3e4cc215ea218
+BASE_HEAD = dc2bb3bff120540f2a0fcf6cde28341861802268
+PRIOR_C3_T6_HEAD = 537cf476646964f0866484c009043c261cf8f725
+EXPERTISE_EVIDENCE_REF_TYPING = EvidenceRef
+KNOWLEDGE_SCOPE = REMOVED
+RETRIEVAL_INCLUDE_FLAGS = REMOVED
+REVOKED_DEPRECATED_RETRIEVAL_SEMANTICS = EXCLUDED_FROM_NORMAL_RETRIEVAL
+NORMAL_RETRIEVAL_SCOPE = PUBLISHED_ORGANIZATIONAL_KNOWLEDGE_ONLY
+NEW_RUNTIME_ABSTRACTIONS = NONE
 C3_T7_AUTHORIZED = NO
 PRODUCTION_READINESS = NOT_PROVEN
-NEXT = ARCHITECTURE_REVIEW_C3_T6
+NEXT = ARCHITECTURE_REVIEW_C3_T6R1
 ```
 
 Evidence (executed locally in `delia-api`):
@@ -1908,28 +1924,27 @@ Evidence (executed locally in `delia-api`):
 ```text
 COMMAND = .venv/bin/python -m pytest tests/test_knowledge_governance_foundation.py tests/test_knowledge_governance_architecture.py -v --tb=no
 RESULT = PASS
-TEST_COUNT = 15
+TEST_COUNT = 18
 FAILURES = 0
 SKIPS = 0
 
 COMMAND = .venv/bin/python -m pytest tests/test_evidence_epistemic_conformance.py tests/test_model_invocation_foundation.py tests/test_model_invocation_architecture.py tests/test_structured_understanding_foundation.py tests/test_structured_understanding_architecture.py tests/test_capability_catalog_foundation.py tests/test_capability_catalog_architecture.py tests/test_knowledge_governance_foundation.py tests/test_knowledge_governance_architecture.py -v --tb=no
 RESULT = PASS
-TEST_COUNT = 126
+TEST_COUNT = 129
 FAILURES = 0
 SKIPS = 0
 
 COMMAND = .venv/bin/python -m pytest -v --tb=no
 RESULT = PASS
-TEST_COUNT = 161
+TEST_COUNT = 164
 FAILURES = 0
 SKIPS = 0
 ```
 
-Coverage notes:
-- Expertise/Playbook grant no RBAC/ACT; CapabilityProjection refs do not authorize ACT;
+Coverage notes (C3-T6R1):
+- Expertise `evidence_refs` typed as `EvidenceRef`;
+- retrieval request has no `knowledge_scope` / `include_*` flags;
+- normal retrieval returns PUBLISHED only; REVOKED/DEPRECATED excluded;
+- Expertise/Playbook grant no RBAC/ACT;
 - KnowledgeCandidate cannot be PUBLISHED; publication eligibility fail-closed;
-- untrusted content cannot mutate governance or self-publish;
-- personal/session/transient cannot auto-promote to Organizational Knowledge;
-- retrieval hit/rank/score ≠ FACT / Evidence / permission;
-- no KnowledgeRepository/Registry/VectorStore/RAG/RetrievalPort/planner/ACT;
-- EvidenceRef/SourceRef reused (no second primitives).
+- no KnowledgeRepository/Registry/VectorStore/RAG/RetrievalPort/planner/ACT.

@@ -157,19 +157,17 @@ class KnowledgeRetrievalRequest:
 
     Retrieval Contract != Retrieval Runtime / Vector Search / Embedding / RAG.
     No current Application consumer requires a KnowledgeRetrievalPort — contracts only.
+
+    Normal retrieval scope is fixed:
+    PUBLISHED_ORGANIZATIONAL_KNOWLEDGE_ONLY.
+    REVOKED/DEPRECATED are excluded from normal retrieval.
+    No origin-class selector field and no include-override flags on the request.
     """
 
     purpose: str
-    knowledge_scope: KnowledgeOriginClass = (
-        KnowledgeOriginClass.PUBLISHED_ORGANIZATIONAL_KNOWLEDGE
-    )
     owner_filters: tuple[str, ...] = ()
     version_constraint: str | None = None
     max_results: int = 10
-    include_unpublished_candidates: bool = False
-    include_personal_memory: bool = False
-    include_session_evidence: bool = False
-    include_revoked_or_deprecated: bool = False
 
     def __post_init__(self) -> None:
         if not self.purpose.strip():

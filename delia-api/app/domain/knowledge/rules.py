@@ -135,32 +135,17 @@ def filter_organizational_retrieval_eligibility(
 
     Not a RetrievalPort, vector store, or RAG runtime.
     retrieval eligibility != current-user authorization.
-    """
-    if request.include_personal_memory or request.include_session_evidence:
-        raise KnowledgeGovernanceError(
-            "organizational retrieval must not silently include personal/session memory"
-        )
-    if request.include_unpublished_candidates:
-        raise KnowledgeGovernanceError(
-            "organizational retrieval must not silently include unpublished candidates"
-        )
 
+    NORMAL_RETRIEVAL_SCOPE = PUBLISHED_ORGANIZATIONAL_KNOWLEDGE_ONLY.
+    REVOKED/DEPRECATED are EXCLUDED_FROM_NORMAL_RETRIEVAL.
+    """
     hits: list[KnowledgeRetrievalHit] = []
     for asset in assets:
+        if asset.status is not KnowledgeLifecycleStatus.PUBLISHED:
+            continue
         if request.owner_filters and asset.owner_ref not in request.owner_filters:
             continue
         if request.version_constraint and asset.version != request.version_constraint:
-            continue
-        if asset.status is KnowledgeLifecycleStatus.PUBLISHED:
-            eligible = True
-        elif request.include_revoked_or_deprecated and asset.status in (
-            KnowledgeLifecycleStatus.DEPRECATED,
-            KnowledgeLifecycleStatus.REVOKED,
-        ):
-            eligible = True
-        else:
-            eligible = False
-        if not eligible:
             continue
         hits.append(
             KnowledgeRetrievalHit(
@@ -181,6 +166,8 @@ def filter_organizational_retrieval_eligibility(
         request_purpose=request.purpose,
         hits=tuple(hits),
         limitations=(
+            "normal retrieval scope = PUBLISHED_ORGANIZATIONAL_KNOWLEDGE_ONLY",
+            "REVOKED/DEPRECATED excluded from normal retrieval",
             "retrieval eligibility != current-user authorization",
             "retrieval hit != FACT",
             "retrieval hit != Evidence automatically",
