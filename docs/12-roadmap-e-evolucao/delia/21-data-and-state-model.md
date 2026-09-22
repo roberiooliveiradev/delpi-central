@@ -266,30 +266,41 @@ BLOCKER_2_TYPED_RESULT_DUPLICATION = RESOLVED
 BLOCKER_3_SOURCE_REF_AUTHORITY = RESOLVED
 C3_T3_AUTHORIZED = YES
 C3_T3_EXECUTED = NO
-C3_T3 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+C3_T3 = APPROVED
 C3_T3_IMPLEMENTATION = delia-api/app/domain/model_invocation/ + application/model_invocation/ (no store; no real provider)
-C3_T4_AUTHORIZED = NO
+C3_T4_AUTHORIZED = YES
+REVIEW_C3_T3 = ARCHITECTURE_REVIEW_C3_T3R1
+VERDICT_C3_T3 = ACCEPT_WITH_RESIDUAL
+FABRICATED_EVAL_PASS = RESOLVED
 ```
 
-C3-T1 congela o **uso semântico** de Evidence/Source/epistemic para a inteligência futura. Não cria Evidence store, repository, schema, LLM, RAG, planner ou conversation runtime. C3-T2R1 domain model/tests foram aceitos por `ARCHITECTURE_REVIEW_C3_T2R1` (`ACCEPT_WITH_RESIDUAL`; `C3_T2=APPROVED`). C3-T3 adds a provider-neutral invocation/lineage/eval foundation (`CANDIDATE_FOR_ARCHITECTURE_REVIEW`); store/RAG/planner/conversation/real provider remain out of scope.
+C3-T1 congela o **uso semântico** de Evidence/Source/epistemic para a inteligência futura. Não cria Evidence store, repository, schema, LLM, RAG, planner ou conversation runtime. C3-T2R1 domain model/tests foram aceitos por `ARCHITECTURE_REVIEW_C3_T2R1` (`ACCEPT_WITH_RESIDUAL`; `C3_T2=APPROVED`). C3-T3 foundation aceita por `ARCHITECTURE_REVIEW_C3_T3R1` (`ACCEPT_WITH_RESIDUAL`; `C3_T3=APPROVED`); store/RAG/planner/conversation/real provider remain out of scope.
 
 ### 4C. C3-T3 — Model invocation / eval lineage
 
 ```text
-STATUS = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+STATUS = APPROVED
+REVIEW = ARCHITECTURE_REVIEW_C3_T3R1
+VERDICT = ACCEPT_WITH_RESIDUAL
 OWNER = DÉLIA (delia-api domain/application)
 REUSES = ModelRef (C0.S3; no ModelIdentity duplicate)
 PORT = ModelInvocationPort
-LINEAGE = ModelInvocationLineage (invocation id + ModelRef + EvidenceRef[] + SourceRef[] + instruction/config identity)
-EVAL_IDENTITY = optional bind in ModelInvocationLineage (EvalBindRequest → target_sha metadata only)
-EVAL_RESULT = contract-only type; actual evaluator NOT_IMPLEMENTED; InvokeModel does not instantiate EvalResult or PASS
-EvalIdentity != EvalResult != evaluation evidence
-target_sha = declared evaluation target identity; not proof eval executed
+LINEAGE = ModelInvocationLineage (invocation id + ModelRef + EvidenceRef[] + SourceRef[] + instruction/config identity + optional EvalIdentity)
+EVAL_BINDING = EvalBindRequest → EvalIdentity only
+EVAL_IDENTITY = evaluation-target identity / binding (≠ execution; ≠ evidence; ≠ outcome; ≠ PASS; ≠ authority; ≠ permission)
+target_sha = identity of the software/code target an evaluation identity refers to
+target_sha != proof evaluation ran / != evidence / != PASS
+EVAL_RESULT = separate C3-local contract (ACCEPT_WITH_RESIDUAL)
+EVAL_RESULT_OWNERSHIP = EXPLICIT_EVALUATION_OPERATION_OR_PROCESS
+ModelInvocationResult != EvalResult (no eval_result field; no fabricated PASS)
+FABRICATED_EVAL_PASS = RESOLVED
 DEFAULT_MODEL_OUTPUT_CLASS = HYPOTHESIS
 MODEL_OUTPUT != FACT automatically
 LINEAGE != AUTHORIZATION
 RECOMMENDATION != ACT
 REAL_PROVIDER = BLOCKED_BY_EXTERNAL_CONFIGURATION
+REAL_MODEL_EVAL = TEST_NOT_RUN / BLOCKED
+EXPOSURE_GATE = ACCEPTABLE_TEMPORARY_FAIL_CLOSED (TEST_ONLY)
 PERSISTENCE = NONE
 ```
 

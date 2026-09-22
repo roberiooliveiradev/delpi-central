@@ -458,27 +458,30 @@ C3_T2 = APPROVED
 C3_T2_AUTHORIZED = YES
 C3_T2_IMPL = delia-api/app/domain/evidence/ (C3-T2R1; IMPLEMENTATION_HEAD=d444e75f7)
 C3_T3_AUTHORIZED = YES
-C3_T3 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+C3_T3 = APPROVED
 C3_T3_IMPL = delia-api/app/domain/model_invocation/ + application/model_invocation/ + TEST_ONLY adapter
 REAL_PROVIDER_ADAPTER = NONE
-C3_T4_AUTHORIZED = NO
-NEXT = ARCHITECTURE_REVIEW_C3_T3R1
-REVIEW = ARCHITECTURE_REVIEW_C3_T2R1
+C3_T4_AUTHORIZED = YES
+NEXT = C3-T4 — STRUCTURED_UNDERSTANDING_VERTICAL_SLICE
+REVIEW = ARCHITECTURE_REVIEW_C3_T3R1
 VERDICT = ACCEPT_WITH_RESIDUAL
 BLOCKER_1_TOTAL_EPISTEMIC_ORDERING = RESOLVED
 BLOCKER_2_TYPED_RESULT_DUPLICATION = RESOLVED
 BLOCKER_3_SOURCE_REF_AUTHORITY = RESOLVED
+FABRICATED_EVAL_PASS = RESOLVED
 TYPED_RESULT_KIND = sole canonical discriminator
 SOURCE_REF = identity/origin only
 EPISTEMIC_CLASS_GLOBAL_ORDERING = NONE
 ```
 
-Evidence coordination is owned by DÉLIA; original source/domain/provider remains authority for the underlying fact. EvidenceRef ≠ permission; SourceRef ≠ access grant / ≠ source authority itself; Prediction ≠ FACT; Recommendation ≠ authorization; OBSERVATION ≠ FACT; FACT_STATUS ≠ ACCESS_PERMISSION. C3-T2 APPROVED (`ARCHITECTURE_REVIEW_C3_T2R1` `ACCEPT_WITH_RESIDUAL`). C3-T3 candidate adds provider-neutral `ModelInvocationPort` + lineage/eval identity; Evidence store / RAG / planner / conversation remain NOT_IMPLEMENTED; real provider adapter = NONE; C3_EXECUTED=NO.
+Evidence coordination is owned by DÉLIA; original source/domain/provider remains authority for the underlying fact. EvidenceRef ≠ permission; SourceRef ≠ access grant / ≠ source authority itself; Prediction ≠ FACT; Recommendation ≠ authorization; OBSERVATION ≠ FACT; FACT_STATUS ≠ ACCESS_PERMISSION. C3-T2 APPROVED (`ARCHITECTURE_REVIEW_C3_T2R1` `ACCEPT_WITH_RESIDUAL`). C3-T3 APPROVED (`ARCHITECTURE_REVIEW_C3_T3R1` `ACCEPT_WITH_RESIDUAL`); provider-neutral `ModelInvocationPort` + lineage/EvalIdentity; ModelInvocationResult ≠ EvalResult; Evidence store / RAG / planner / conversation remain NOT_IMPLEMENTED; real provider adapter = NONE; C3_EXECUTED=NO.
 
-#### C3-T3 Model invocation / eval lineage (candidate)
+#### C3-T3 Model invocation / eval lineage (APPROVED)
 
 ```text
-STATUS = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+STATUS = APPROVED
+REVIEW = ARCHITECTURE_REVIEW_C3_T3R1
+VERDICT = ACCEPT_WITH_RESIDUAL
 OWNER = delia-api application ModelInvocationPort + domain model_invocation
 REUSES = ModelRef, EvidenceRef, SourceRef, EpistemicClass
 PORT = ModelInvocationPort (49 candidate ModelInferencePort realized once; no parallel port)
@@ -487,9 +490,14 @@ TEST_ADAPTER = DeterministicTestAdapter (TEST_ONLY; not production)
 REAL_PROVIDER_ADAPTER = NONE
 REAL_MODEL_CALL = BLOCKED_BY_EXTERNAL_CONFIGURATION
 MODEL_OUTPUT_AUTO_FACT = NO
+EvalBindRequest → EvalIdentity only (lineage); ModelInvocationResult != EvalResult
+target_sha = evaluation-target software/code identity (not proof eval ran)
+EvalResult = contract-only; ownership = EXPLICIT_EVALUATION_OPERATION_OR_PROCESS
+FABRICATED_EVAL_PASS = RESOLVED
 LINEAGE != AUTHORIZATION
 PERSISTENCE = NONE
-C3_T4_AUTHORIZED = NO
+C3_T4_AUTHORIZED = YES
+C3_T4_EXECUTED = NO
 ```
 
 ## 3A. Architecture / persistence / privacy / safety — C0.S4 freeze accepted

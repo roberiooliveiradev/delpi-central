@@ -45,8 +45,8 @@ OUT_OF_SCOPE_WITH_DECISION
 | ID | Requisito | Owner | Gate | Status |
 |---|---|---|---|---|
 | CP-051 | Correlação/observabilidade transversal | DÉLIA API/Portal/Observability | contracts/traces | PLANNED |
-| CP-055 | Prompt/tool/context injection safety | DÉLIA Policy | security semantics | PLANNED — C3-T3 invocation boundary rejects untrusted mutation of authority/policy metadata; full Policy/runtime injection platform NOT_IMPLEMENTED |
-| CP-056 | Secret redaction | todos os owners | redaction contract | PLANNED — C3-T3 rejects secret/token fields in invocation input/output and omits them from safe observability; platform-wide redaction runtime NOT_IMPLEMENTED |
+| CP-055 | Prompt/tool/context injection safety | DÉLIA Policy | security semantics | PLANNED / CONTRIBUTION ONLY — C3-T3 invocation boundary rejects untrusted mutation of authority/policy metadata; full Policy/runtime injection platform NOT_IMPLEMENTED; not CP PASS |
+| CP-056 | Secret redaction | todos os owners | redaction contract | PLANNED / CONTRIBUTION ONLY — C3-T3 rejects secret/token fields in invocation input/output and omits them from safe observability; platform-wide redaction runtime NOT_IMPLEMENTED; not CP PASS |
 | CP-057 | Idempotency semantics de writes | Domain API + DÉLIA orchestration | C0 contract; runtime C5 | PLANNED |
 | CP-072 | Expertise Pack versionado | DÉLIA API | primitive/schema | PLANNED |
 | CP-075 | Domain Playbook versionado | DÉLIA API/domain owners | primitive/schema | PLANNED |
@@ -234,7 +234,7 @@ OUT_OF_SCOPE_WITH_DECISION
 | CP-282 | Sandbox executa análise read-only reproduzível com SourceRefs/runtime/code hash/parameters e não permite DDL/DML por connector analítico read-only | DÉLIA Analysis | reproducible analysis gate | LOCKED |
 | CP-289 | Predictive reads mostram model/version/horizon/freshness/calibration/limitations e degradam explicitamente em stale/OOD/unavailable | DÉLIA Predictive | predictive read eval | LOCKED |
 | CP-297 | Edge read-only/offline cache preserva source revision/syncedAt/freshness e sinaliza ou bloqueia conteúdo stale conforme criticidade | DÉLIA Edge/Frontline | offline freshness gate | LOCKED |
-| CP-304 | Uso de modelo material gera lineage suficiente para ligar prediction/result ao model/version/eval/deployment ref sem expor segredo | DÉLIA Model Governance/Evidence | model lineage gate | LOCKED — C3-T3 candidate adds invocation lineage/eval identity bound to ModelRef without secrets; no production model use; not CP PASS |
+| CP-304 | Uso de modelo material gera lineage suficiente para ligar prediction/result ao model/version/eval/deployment ref sem expor segredo | DÉLIA Model Governance/Evidence | model lineage gate | LOCKED / LINEAGE FOUNDATION ACCEPTED — C3-T3R1 APPROVED adds invocation lineage/EvalIdentity bound to ModelRef without secrets; no production model use; not CP PASS |
 
 ## 7. C5 — Governed ACT + Durable Work + Prepared Intelligence
 
@@ -890,45 +890,61 @@ RUNTIME_DIFF = NONE (C3-T2R2 persistence task; reviewed implementation already a
 NEXT = C3-T3 — Minimal Model Invocation + Eval/Lineage Foundation
 ```
 
-## 24. C3-T3 model invocation / eval lineage — candidate
+## 24. C3-T3 model invocation / eval lineage — APPROVED
 
-Evidence anchors: `21` §4C; `17` C3-T3 block; `20` Gate C3-T3; ledger §6.67.
+Evidence anchors: `21` §4C; `17` C3-T3 block; `20` Gate C3-T3; ledger §6.67–§6.69.
 
 ```text
-C3_T3 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+REVIEW = ARCHITECTURE_REVIEW_C3_T3R1
+IMPLEMENTATION_HEAD = 2ba28950e7bec3b6fd1a323718df049ed0576b08
+REVIEW_REANCHOR_HEAD = e990d30415fc1477f6149bbd9c446fa609a61e8b
+PRIOR_C3_T3_CANDIDATE_HEAD = 0ebfff2306aed508213a08fe28db25eba087ad5f
+C3_T3R1_BIND_HEAD = c19aa1484802933a059420d3f1dbd46ac198514f
+VERDICT = ACCEPT_WITH_RESIDUAL
+C3_T3 = APPROVED
 C3_STARTED = YES
 C3_EXECUTED = NO
 C3_T1 = APPROVED
 C3_T2 = APPROVED
-C3_T4_AUTHORIZED = NO
+C3_T3_EXECUTED = NO
+C3_T4_AUTHORIZED = YES
+C3_T4_EXECUTED = NO
 MODEL_INVOCATION_FOUNDATION = IMPLEMENTED
 EVAL_LINEAGE_FOUNDATION = IMPLEMENTED
+FABRICATED_EVAL_PASS = RESOLVED
+EvalBindRequest → EvalIdentity only; ModelInvocationResult != EvalResult
+target_sha canonical; evaluated_sha superseded
+EVAL_RESULT_OWNERSHIP = EXPLICIT_EVALUATION_OPERATION_OR_PROCESS
 REAL_PROVIDER_ADAPTER = NONE
 REAL_MODEL_CALL = BLOCKED_BY_EXTERNAL_CONFIGURATION
+REAL_MODEL_EVAL = TEST_NOT_RUN / BLOCKED
 MODEL_OUTPUT_AUTO_FACT = NO
 PERSISTENCE = NONE
 MIGRATION = NONE
 RUNTIME_CP_PROMOTED_TO_PASS = NO
 NEW_CP_CREATED = NO
-CP-055 = PLANNED (invocation-boundary contribution only)
-CP-056 = PLANNED (invocation-boundary contribution only)
+CP-055 = PLANNED / CONTRIBUTION ONLY
+CP-056 = PLANNED / CONTRIBUTION ONLY
 CP-093 = PLANNED / PARTIAL (unchanged)
 CP-094 = PLANNED / PARTIAL (unchanged)
-CP-304 = LOCKED (lineage foundation candidate; not PASS)
+CP-304 = LOCKED / LINEAGE FOUNDATION ACCEPTED (not PASS)
 CP-303 = LOCKED (no Model Registry)
 PRODUCTION_READINESS = NOT_PROVEN
-NEXT = ARCHITECTURE_REVIEW_C3_T3R1
+NEXT = C3-T4 — STRUCTURED_UNDERSTANDING_VERTICAL_SLICE
+```
 
-## 25. C3-T3R1 eval identity / result boundary — candidate
+## 25. C3-T3R1 eval identity / result boundary — APPROVED (persisted)
 
 Prior review: `ARCHITECTURE_REVIEW_C3_T3` `VERDICT=REWORK` on `CANDIDATE_HEAD=0ebfff2306aed508213a08fe28db25eba087ad5f`.
+Accepted rework review: `ARCHITECTURE_REVIEW_C3_T3R1` on `IMPLEMENTATION_HEAD=2ba28950e7bec3b6fd1a323718df049ed0576b08`.
 
 ```text
-C3_T3 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
-C3_T4_AUTHORIZED = NO
+C3_T3 = APPROVED
+C3_T4_AUTHORIZED = YES
+C3_T4_EXECUTED = NO
 REAL_MODEL_EVAL = TEST_NOT_RUN / BLOCKED
 EvalIdentity bound in lineage only; EvalResult contract-only; InvokeModel does not manufacture PASS
+FABRICATED_EVAL_PASS = RESOLVED
 PRODUCTION_READINESS = NOT_PROVEN
-NEXT = ARCHITECTURE_REVIEW_C3_T3R1
-```
+NEXT = C3-T4 — STRUCTURED_UNDERSTANDING_VERTICAL_SLICE
 ```

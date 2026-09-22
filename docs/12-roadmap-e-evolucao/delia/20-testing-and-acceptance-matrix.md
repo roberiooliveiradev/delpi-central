@@ -1121,7 +1121,7 @@ C3_T2 = APPROVED
 C3_EXECUTED = NO
 C3_T3_AUTHORIZED = YES
 C3_T3_EXECUTED = NO
-C3_T3 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+C3_T3 = APPROVED
 TEST_MODULE = tests/test_evidence_epistemic_conformance.py
 NO_TOTAL_EPISTEMIC_ORDERING = YES
 _EPISTEMIC_STRENGTH = REJECTED / REMOVED
@@ -1160,18 +1160,34 @@ Required deterministic cases (C3-T2R1) — implemented and Architecture-Review a
 ### C3-T3 — Minimal model invocation + eval/lineage foundation
 
 ```text
-STATUS = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+STATUS = APPROVED
+REVIEW = ARCHITECTURE_REVIEW_C3_T3R1
+VERDICT = ACCEPT_WITH_RESIDUAL
+IMPLEMENTATION_SHA = 2ba28950e7bec3b6fd1a323718df049ed0576b08
 OWNER = delia-api/app/domain/model_invocation/ + application/model_invocation/
 PORT = ModelInvocationPort
 USE_CASE = InvokeModel
 TEST_ADAPTER = DeterministicTestAdapter (TEST_ONLY)
 REAL_PROVIDER_ADAPTER = NONE
 REAL_MODEL_CALL = BLOCKED_BY_EXTERNAL_CONFIGURATION
-FOUNDATION_CONFORMANCE = PASS (deterministic)
+FOUNDATION_CONFORMANCE = PASS (deterministic; referenced evidence)
 REAL_MODEL_EVAL = TEST_NOT_RUN / BLOCKED
+CURRENT_PERSISTENCE_TASK_RUNTIME_TEST = TEST_NOT_RUN
+TARGETED_FOUNDATION = PASS 37/37
+  COMMAND = cd delia-api && python -m pytest tests/test_model_invocation_foundation.py tests/test_model_invocation_architecture.py -q
+  EVALUATED_SHA = 2ba28950e7bec3b6fd1a323718df049ed0576b08
+FULL_DELIA_API_SUITE = PASS 98/98
+  COMMAND = cd delia-api && python -m pytest -q
+  EVALUATED_SHA = 2ba28950e7bec3b6fd1a323718df049ed0576b08
+NOTE: suite PASS = foundation conformance + delia-api regression only;
+  ≠ real-model quality; ≠ production readiness; ≠ C3 complete
 MODEL_OUTPUT_AUTO_FACT = NO
 CoT_PERSISTENCE = NO
 SECRET_EXPOSURE = NO
+EvalBindRequest → EvalIdentity only; ModelInvocationResult != EvalResult
+FABRICATED_EVAL_PASS = RESOLVED
+EVAL_RESULT_OWNERSHIP = EXPLICIT_EVALUATION_OPERATION_OR_PROCESS
+EXPOSURE_GATE = ACCEPTABLE_TEMPORARY_FAIL_CLOSED
 PERSISTENCE = NONE
 MIGRATION = NONE
 RAG = NONE
@@ -1181,12 +1197,14 @@ TOOL_EXECUTION = NONE
 ACT = NONE
 C3_STARTED = YES
 C3_EXECUTED = NO
-C3_T4_AUTHORIZED = NO
+C3_T4_AUTHORIZED = YES
+C3_T4_EXECUTED = NO
 TEST_MODULES = tests/test_model_invocation_foundation.py + tests/test_model_invocation_architecture.py
 PRODUCTION_READINESS = NOT_PROVEN
+NEXT = C3-T4 — STRUCTURED_UNDERSTANDING_VERTICAL_SLICE
 ```
 
-Required deterministic cases (C3-T3) — implemented; Architecture Review pending:
+Required deterministic cases (C3-T3) — implemented; Architecture Review accepted (`ARCHITECTURE_REVIEW_C3_T3R1` `ACCEPT_WITH_RESIDUAL`):
 
 - positive invocation through deterministic TEST_ONLY adapter;
 - structured output validation;
