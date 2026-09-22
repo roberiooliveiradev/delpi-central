@@ -122,10 +122,13 @@ describe("applyAttachmentImageSources (compose)", () => {
   it("irmão: sem resolve, attachment:pending vira placeholder (não URL quebrada)", () => {
     expect(isNonDisplayAttachmentSrc("attachment:pending:abc")).toBe(true);
     const html =
-      '<p><img src="attachment:pending:abc" data-attachment-pending="abc" alt="x" /></p>';
+      '<p><img src="attachment:pending:abc" data-attachment-pending="abc" alt="x" width="800" height="600" /></p>';
     const next = applyAttachmentImageSources(html);
     expect(next).toContain(ATTACHMENT_SRC_PLACEHOLDER);
+    expect(next).toContain('data-attachment-placeholder="1"');
     expect(next).not.toContain("attachment:pending");
+    expect(next).not.toContain('width="800"');
+    expect(next).not.toContain('height="600"');
   });
 
   it("negativo: blob real não é tocado quando resolve falta", () => {
@@ -138,7 +141,7 @@ describe("applyAttachmentImageSources (compose)", () => {
   it("patch live: blob após placeholder limpa width para refit", () => {
     const root = document.createElement("div");
     root.innerHTML =
-      `<p><img src="${ATTACHMENT_SRC_PLACEHOLDER}" data-attachment-pending="p1" width="48" height="48" /></p>`;
+      `<p><img src="${ATTACHMENT_SRC_PLACEHOLDER}" data-attachment-pending="p1" data-attachment-placeholder="1" width="48" height="48" /></p>`;
     const img = root.querySelector("img")!;
     img.style.width = "48px";
     const changed = patchLiveAttachmentImageSources(root, (id) =>
@@ -147,6 +150,19 @@ describe("applyAttachmentImageSources (compose)", () => {
     expect(changed).toBe(true);
     expect(img.getAttribute("src")).toBe("blob:real");
     expect(img.getAttribute("width")).toBeNull();
+    expect(img.getAttribute("data-attachment-placeholder")).toBeNull();
     expect(img.style.width).toBe("");
+  });
+
+  it("negativo: placeholder com width grande não vira caixa branca", () => {
+    const root = document.createElement("div");
+    root.innerHTML =
+      '<p><img src="attachment:pending:p2" data-attachment-pending="p2" width="900" height="700" /></p>';
+    const img = root.querySelector("img")!;
+    patchLiveAttachmentImageSources(root, () => null);
+    expect(img.getAttribute("src")).toBe(ATTACHMENT_SRC_PLACEHOLDER);
+    expect(img.getAttribute("data-attachment-placeholder")).toBe("1");
+    expect(img.getAttribute("width")).toBeNull();
+    expect(img.getAttribute("height")).toBeNull();
   });
 });

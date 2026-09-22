@@ -524,11 +524,11 @@
   }
 }
 
-/* Inline paste/attach in RichTextEditor — block so typing continues on the next line. */
+/* Inline paste/attach — shrink-wrap to the img so the × sits on the image, not the editor edge. */
 .delpi-ui-rich-text__inline-image {
   position: relative;
   display: block;
-  vertical-align: baseline;
+  width: fit-content;
   max-width: 100%;
   max-height: none;
   margin: 0.5rem 0;
@@ -546,13 +546,13 @@
 }
 
 /*
- * Insert uses dual class (mention + rich-text). MentionComposer thumbs stay 8rem / 14rem;
- * inside the rich-text editor those limits must not clip compose or enlarge.
- * Specificity beats `.delpi-ui-mention-composer__inline-image` alone.
+ * Dual class (mention + rich-text): MentionComposer thumbs stay 8rem / 14rem;
+ * compose must shrink-wrap and never clip enlarge.
  */
 .delpi-ui-rich-text__editor span.delpi-ui-mention-composer__inline-image,
 .delpi-ui-rich-text__editor span.delpi-ui-rich-text__inline-image {
   display: block;
+  width: fit-content;
   max-width: 100%;
   max-height: none;
   overflow: visible;
@@ -575,13 +575,28 @@
   max-width: none;
 }
 
+/* Transparent placeholder must not reserve a huge blank box. */
+.delpi-ui-rich-text__editor span.delpi-ui-rich-text__inline-image img[data-attachment-placeholder="1"],
+.delpi-ui-rich-text__editor span.delpi-ui-mention-composer__inline-image img[data-attachment-placeholder="1"] {
+  width: 2.5rem !important;
+  height: 2.5rem !important;
+  max-width: 2.5rem !important;
+  opacity: 0.35;
+  background: color-mix(in srgb, var(--delpi-ui-text, #0f172a) 8%, transparent);
+}
+
 .delpi-ui-rich-text__inline-image-remove {
   position: absolute;
   top: 0.2rem;
   right: 0.2rem;
   z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 1.25rem;
   height: 1.25rem;
+  margin: 0;
+  padding: 0;
   border: 0;
   border-radius: 999px;
   cursor: pointer;

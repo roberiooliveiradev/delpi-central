@@ -324,9 +324,28 @@ export function isNonDisplayAttachmentSrc(src: string | null | undefined): boole
 export const ATTACHMENT_SRC_PLACEHOLDER =
   "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==";
 
+export const ATTACHMENT_PLACEHOLDER_ATTR = "data-attachment-placeholder";
+
 function isAttachmentPlaceholderSrc(src: string | null | undefined): boolean {
   const value = String(src || "").trim();
   return value.startsWith("data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP");
+}
+
+/** Drop size attrs so a transparent placeholder cannot paint a huge blank box. */
+export function applyAttachmentImagePlaceholder(img: Element): void {
+  img.setAttribute("src", ATTACHMENT_SRC_PLACEHOLDER);
+  img.setAttribute(ATTACHMENT_PLACEHOLDER_ATTR, "1");
+  img.removeAttribute("width");
+  img.removeAttribute("height");
+  if (img instanceof HTMLImageElement) {
+    img.style.removeProperty("width");
+    img.style.removeProperty("height");
+    img.style.removeProperty("max-width");
+  }
+}
+
+function clearAttachmentImagePlaceholderMark(img: Element): void {
+  img.removeAttribute(ATTACHMENT_PLACEHOLDER_ATTR);
 }
 
 /** Resolve `src` for `<img data-attachment-id|data-attachment-pending>` (bubble + composer). */
@@ -361,11 +380,13 @@ export function applyAttachmentImageSources(
       if (resolved) {
         img.setAttribute("src", resolved);
         img.setAttribute("loading", "lazy");
+        clearAttachmentImagePlaceholderMark(img);
         continue;
       }
       // Never leave attachment:pending / BFF URL as live src (breaks compose + F5 flash).
+      // Strip size so the transparent GIF does not become a blank white rectangle.
       if (isNonDisplayAttachmentSrc(img.getAttribute("src"))) {
-        img.setAttribute("src", ATTACHMENT_SRC_PLACEHOLDER);
+        applyAttachmentImagePlaceholder(img);
       }
     }
     return root.innerHTML;
@@ -397,11 +418,16 @@ export function patchLiveAttachmentImageSources(
     const src = resolve(id);
     const current = img.getAttribute("src");
     if (src) {
-      if (current === src) continue;
+      if (current === src && img.getAttribute(ATTACHMENT_PLACEHOLDER_ATTR) !== "1") {
+        continue;
+      }
       const fromPlaceholder =
-        isAttachmentPlaceholderSrc(current) || isNonDisplayAttachmentSrc(current);
+        isAttachmentPlaceholderSrc(current) ||
+        isNonDisplayAttachmentSrc(current) ||
+        img.getAttribute(ATTACHMENT_PLACEHOLDER_ATTR) === "1";
       img.setAttribute("src", src);
       img.setAttribute("loading", "lazy");
+      clearAttachmentImagePlaceholderMark(img);
       if (fromPlaceholder) {
         img.removeAttribute("width");
         img.removeAttribute("height");
@@ -413,7 +439,7 @@ export function patchLiveAttachmentImageSources(
       continue;
     }
     if (isNonDisplayAttachmentSrc(current)) {
-      img.setAttribute("src", ATTACHMENT_SRC_PLACEHOLDER);
+      applyAttachmentImagePlaceholder(img);
       changed = true;
     }
   }
