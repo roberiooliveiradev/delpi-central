@@ -87,9 +87,11 @@ Lista vazia com sessão válida é `200`, `items: []` e `has_more: false`. Não 
 
 A lista (`GET /tickets`) também publica `sla_ttr` / `sla_tto` e `requester_display_name` aditivos quando o GLPI os envia. `requester_display_name` segue a mesma regra do detalhe: primeiro `team` com papel `requester`; se faltar, `user_recipient`. Nome é só rótulo.
 
-`GET /tickets/{id}/attachments/{document_id}` devolve o arquivo com o token da pessoa. O `document_id` precisa estar em `attachments` daquele chamado; caso contrário a resposta é 404, sem o corpo. O arquivo não é gravado na Minha DELPI: o BFF só repassa o download do GLPI.
+`GET /tickets/{id}/attachments/{document_id}` devolve o arquivo com o token da pessoa (Bearer). O `document_id` precisa estar em `attachments` daquele chamado; caso contrário a resposta é 404, sem o corpo. O arquivo não é gravado na Minha DELPI: o BFF só repassa o download do GLPI. Por isso o compositor **não** usa essa URL como `src` de `<img>` sem resolver blob autenticado.
 
-Enviar um arquivo novo continua fora desta entrega. A API nova do GLPI 11.0.5 não aceita o binário do documento; o envio legado permanece desligado.
+`POST /tickets/{id}/attachments` (multipart, H12) grava um Documento no GLPI via API legada (`apirest.php/Document` + App-Token + User-Token técnico), liga ao Ticket e devolve `{ document_id, filename, mime }`. Cabeçalho `Idempotency-Key` obrigatório. Feature flag `GLPI_LEGACY_UPLOAD_ENABLED`; sem flag/token → `503` / feature disabled. Não reabre a API legada para outras operações.
+
+Imagens no HTML de follow-up/descrição: `src` só no path `/apps/helpdesk-api/tickets/{id}/attachments/{document_id}`; `width`/`height` numéricos (≤4096) passam na allowlist. CSS `width`/`height` em `style` **não** entram na allowlist de estilo — o resize do editor persiste pelos atributos HTML.
 
 ## 4. Escrita
 

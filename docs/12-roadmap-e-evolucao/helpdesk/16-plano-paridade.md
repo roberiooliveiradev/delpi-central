@@ -15,7 +15,7 @@ O colaborador passa a ver e gravar no Meus Chamados de TI o que o GLPI já entre
 | Peça | Valor |
 |---|---|
 | Objetivo | roadmap completo para implementar a paridade documentada |
-| Restrições | sem editar `06`; sem API legada; sem HD-011; sem três colunas |
+| Restrições | sem editar `06`; API legada só H12 Document (histórico do plano: “sem”); sem HD-011; sem três colunas |
 | Dependência | H6 fecha gates antes de H8-imagem, H10, H11 |
 | Entregável | este plano + `05` + HD-019…026 |
 | Aceite | cada `E*.S*` com teste e, se user-facing, ajuda |
@@ -33,7 +33,7 @@ O colaborador passa a ver e gravar no Meus Chamados de TI o que o GLPI já entre
 | RQ-07 | Página: datas, can_followup, observador | **ATENDIDO** E9.S1 — `can_followup` só false no status 6 |
 | RQ-08 | Aprovar/reabrir/satisfação se HLAPI | **ATENDIDO** E10.S1 = **CONSOLE** — Satisfaction sem path; approve/reject sem `add_close` na HLAPI; reopen PATCH 403 |
 | RQ-09 | TTR, vínculo, Form, observer write se H6 | **ATENDIDO** E11.S1 — TTR + observer; Form/vínculo FORA |
-| RQ-10 | Upload | **ATENDIDO** E12.S1 = BLOQUEADO (A-08; sem multipart) |
+| RQ-10 | Upload | **ATENDIDO** por H12 live (exceção Document); E12.S1 park **superseded** — ver ledger |
 | RQ-11 | Ajuda no mesmo entregável | HERDADO_POR_SOLUCAO_TRANSVERSAL cada S user-facing |
 | RQ-12 | Bancada / Change / entidade / API legada | FORA_DO_ESCOPO_COM_JUSTIFICATIVA |
 | RQ-13 | H3 no ledger | **ATENDIDO** E6.S0 — ids 1120 / 593 |
@@ -78,7 +78,7 @@ Owner do corpo e do status: helpdesk-api. Owner da bolha/editor: plugin-ui. MFE 
 | D-05 | Sem filtro por `team` |
 | D-06 | `open` inclui 10 até existir `approval` |
 | D-07 | H6 morto remove etapa filha; não inventa UI |
-| D-08 | H12 não liga API legada neste plano |
+| D-08 | H12 (histórico do plano): park sem API legada; **superseded** pela exceção Document live |
 | D-09 | Console permanece `helpdesk.console` |
 
 ## Matriz de fluxos
@@ -203,7 +203,7 @@ Owner do corpo e do status: helpdesk-api. Owner da bolha/editor: plugin-ui. MFE 
 - **Objetivo:** abrir e responder usam o mesmo `RichTextEditor`; POST HTML sanitizado de novo no BFF.
 - **RQ:** RQ-05 · HD-022
 - **Fazer:** `HelpdeskRichTextField` (kit); teto M-29 = 50 000; menção só se E6 tiver catálogo por **id**.
-- **Não fazer:** `MentionComposer`; colar imagem; editor diferente na abertura.
+- **Não fazer:** `MentionComposer` / menção `@` (M-23). Colar/upload de imagem = H12 (já PROVEN; não reabrir neste E8).
 - **Deps:** E8.S1.
 - **Teste:** positive negrito volta no GLPI e no F5; irmão texto puro ainda grava; negativo script no POST some.
 - **Pronto:** ajuda create/detail descreve formatação, sem path.
@@ -271,15 +271,15 @@ Owner do corpo e do status: helpdesk-api. Owner da bolha/editor: plugin-ui. MFE 
 
 ## E12 — Upload (H12)
 
-### E12.S1 — Park
+> **Superseded (21/09/2026):** este park E12.S1 foi **substituído** pela exceção de produto H12 (Document-only via API legada). Estado vigente: **PROVEN** live — ledger `H12.upload.*`, HD-026, [`05-roadmap.md`](./05-roadmap.md) §H12. O texto abaixo permanece como histórico do plano de paridade; **não** usar como instrução vigente.
 
-- **Objetivo:** A-08 documentado; zero rota multipart.
+### E12.S1 — Park (histórico)
+
+- **Objetivo (histórico):** A-08 documentado; zero rota multipart.
 - **RQ:** RQ-10 · HD-026
-- **Fazer:** nada de código. Se no futuro a HLAPI ganhar upload, **novo** plano — não este S.
-- **Não fazer:** ligar API legada.
-- **Pronto:** HD-026 = BLOQUEADO no 07.
-- **Commit:** nenhum, salvo drift documental.
-- **Estado:** **ATENDIDO** — park confirmado; sem multipart; A-08 / HD-026 BLOQUEADO.
+- **Fazer (histórico):** nada de código no plano de paridade.
+- **Estado histórico:** ATENDIDO como park.
+- **Estado vigente:** H12 **PROVEN** (exceção Document + LEGACY_*); ver ledger.
 
 ---
 
@@ -314,7 +314,7 @@ Owner do corpo e do status: helpdesk-api. Owner da bolha/editor: plugin-ui. MFE 
 - H8 visível: formatação do GLPI na bolha; escrita rica; imagem só se H6.
 - H9: Responder some quando o GLPI recusa.
 - H10/H11: ou na tela com operation, ou CONSOLE com evidência — sem limbo.
-- H12: continua bloqueado.
+- H12: **PROVEN** live (exceção Document); ver ledger — não reabrir park E12.S1.
 - RQ-12 intacto (sem bancada).
 - Ajuda atualizada em cada S user-facing.
 
@@ -329,7 +329,8 @@ Owner do corpo e do status: helpdesk-api. Owner da bolha/editor: plugin-ui. MFE 
 | 5 | Fechado sem Responder | `can_followup` só false em status 6 | **PASS** |
 | 6 | 403/409 inalterados | suite API sem regressão (37 passed) | **PASS** |
 | 7 | Sem `/front/document.send.php` no HTML publicado | assert no mapping | **PASS** |
-| 8 | «Tudo» = H6…H11 possíveis; não Super-Admin | RQ-12 FORA; H10/H12 CONSOLE/BLOQUEADO; H13 AND+prefs | **PASS** |
+| 8 | «Tudo» = H6…H11 possíveis; não Super-Admin | RQ-12 FORA; H10 CONSOLE; H12 **PROVEN** live; H13 AND+prefs | **PASS** |
+| 9 | H12 upload/colar/resize em produção | ledger `H12.upload.live` + docs 1177/1178 no #1122; commits `3e34b1226` / `0afc3154a` / `298bb2404` | **PASS** |
 
 Suíte local no verify: `helpdesk-api` 37 passed · `plugins/helpdesk` 44 passed · MFE `/apps/helpdesk/` 200 · API health 200.
 

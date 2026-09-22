@@ -13,7 +13,7 @@ A lista e a sessão OAuth foram usadas em produção em 21/09/2026. A abertura e
 |---|---|---|---|
 | Colaborador abre chamado | Sai para o GLPI ou cai no iframe | Abre na Minha DELPI, chamado no GLPI em nome dela | sim |
 | Técnico opera a fila | Console GLPI | Console GLPI | não |
-| API legada | desligada | desligada | não |
+| API legada (caminho geral) | desligada | desligada (H12 Document-only é exceção posterior; ver ledger) | não neste plano |
 | Pessoa sem `helpdesk.access` | não entra no módulo | 403 no BFF e no portal | não |
 | Pessoa com acesso no portal e sem direito no GLPI | — | 403 `glpi_forbidden`, sem chamado criado | sim, passa a ser explícito |
 | Segundo clique no mesmo envio | — | um chamado só | sim |

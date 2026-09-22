@@ -5,6 +5,6 @@
 | Item | Estado | Motivo |
 |---|---|---|
 | M-07 chip na bolha | **IMPLEMENTADO** | `enrichGlpiUserMentionSpans` no plugin-ui; BFF já allowlistava attrs |
-| M-23 `@` no compositor | **BLOQUEADO** | sem path HLAPI de mencionáveis por **id**; proibido casar por nome; sem `MentionComposer` (A-08) |
+| M-23 `@` no compositor | **BLOQUEADO** | sem path HLAPI de mencionáveis por **id**; proibido casar por nome; sem `MentionComposer` |
 
 Não abrir UI de `@` até gate PROVEN + plano novo.

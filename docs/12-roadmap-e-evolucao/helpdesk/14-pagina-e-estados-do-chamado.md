@@ -24,7 +24,7 @@ Dois fluxos distintos:
 | Página | o que a pessoa precisa ver além da bolha? |
 | Estado | quais status o GLPI tem e como a Minha DELPI os mostra e recorta? |
 
-Isto **estende** HD-009, HD-013, HD-015 e HD-016. Aprovar solução / reabrir / pesquisa = H5 ([`05-roadmap.md`](./05-roadmap.md)), não este inventário como autorização. Forms, TTR, vínculos e abas que não cabem aqui: [`15-capacidades-glpi.md`](./15-capacidades-glpi.md).
+Isto **estende** HD-009, HD-013, HD-015 e HD-016. Aprovar solução / reabrir / pesquisa = H10 write (CONSOLE até HLAPI; ponte UX «Abrir no helpdesk» já PROVEN) — [`05-roadmap.md`](./05-roadmap.md). Forms, TTR, vínculos e abas: [`15-capacidades-glpi.md`](./15-capacidades-glpi.md).
 
 ## 2. Fontes e grau de evidência
 
@@ -54,7 +54,7 @@ Três colunas + barra inferior. Interface **central**, não a simplificada.
 | Esquerda | Chamado, Estatísticas, Aprovações, Base de conhecimento, Itens, Custos, Projetos, Problemas, Mudanças, Contratos, Histórico, PDF | CONSOLE_GLPI |
 | Centro | abertura («Criado em … por …»), descrição | conversa — [`10`](./10-conversa-do-chamado.md) + [`12`](./12-conteudo-da-mensagem.md) |
 | Direita | Atores (requerente, observador, atribuído), Itens, Níveis de serviço, objetos relacionados | ler técnico/solicitante SIM; editar e o resto CONSOLE |
-| Responder ▾ | tarefa, solução, documento, aprovação | comentário público SIM; o restante CONSOLE / H5 / A-08 |
+| Responder ▾ | tarefa, solução, documento, aprovação | comentário público + documento H12 SIM; tarefa/solução/aprovação CONSOLE |
 | Rodapé | excluir, salvar | CONSOLE — o MFE não edita o chamado |
 
 Na foto 1101 o atribuído está vazio e o status é Novo (ponto verde). Isso é estado válido: chamado recém-aberto, sem técnico.
@@ -155,7 +155,7 @@ Na Minha DELPI a abertura só pede urgência ([`WIREFRAMES`](./WIREFRAMES.md) §
 
 ```text
 IMPLEMENTADO   ALVO_LEITURA   ALVO_RECORTE   ALVO_ESCRITA
-HIPOTESE_A_VALIDAR   BLOQUEADO   CONSOLE_GLPI   H5   FORA
+HIPOTESE_A_VALIDAR   BLOQUEADO   CONSOLE_GLPI   H10   FORA
 ```
 
 ### 5.1 Página
@@ -173,7 +173,7 @@ HIPOTESE_A_VALIDAR   BLOQUEADO   CONSOLE_GLPI   H5   FORA
 | P-09 | Pesquisa de satisfação | **CONSOLE** E10 | sem path |
 | P-10 | Excluir chamado Novo | CONSOLE_GLPI | a doc permite ao solicitante; esta tela não apaga |
 | P-11 | Editar atores, SLA, itens, categoria, urgência depois de aberto | CONSOLE_GLPI | sem PATCH de Ticket |
-| P-12 | Abas, PDF, 2/15, Salvar, lixeira, tarefa, documento novo | CONSOLE_GLPI / A-08 | — |
+| P-12 | Abas, PDF, 2/15, Salvar, lixeira, tarefa | CONSOLE_GLPI | documento novo = H12 no MFE |
 | P-13 | Tipo / prioridade / impacto / entidade | FORA | igual ao 13 D-05 |
 | P-14 | Um cartão + uma conversa; sem três colunas | invariante | kit |
 
@@ -233,7 +233,7 @@ GLPI Ticket.status {id, name}
 | Filtrar | [`13`](./13-listagem-de-chamados.md) | S-05, S-06 |
 | Conversar | detalhe | [`10`](./10-conversa-do-chamado.md) / [`12`](./12-conteudo-da-mensagem.md) |
 | Fechado sem resposta | detalhe | P-06 |
-| Aprovar / pesquisar | detalhe | H5 |
+| Aprovar / pesquisar | detalhe | H10 (CONSOLE + ponte UX) |
 | Console | host GLPI | abas da foto 1101 |
 | Ajuda | `helpTooltips.detail` | estados em português do GLPI, sem id técnico |
 
@@ -247,7 +247,7 @@ GLPI Ticket.status {id, name}
 | Irmão — Fechado | Responder visível; POST 403 | sem campo se `can_followup=false` |
 | Negativo — mudar para Pendente na Minha DELPI | não existe | continua sem |
 | Negativo — copiar abas da foto | não | continua sem |
-| Invariante | privado, tarefa, solução, upload, entidade | 10 / 12 / A-08 / HD-011 |
+| Invariante | privado, tarefa, solução write, entidade | 10 / 12 / HD-011; upload = H12 |
 | Identidade | id / e-mail | status por **id**, não por nome |
 
 ## 10. Decisões travadas × não prontas
@@ -260,7 +260,7 @@ GLPI Ticket.status {id, name}
 | D-02 | Sete status fixos; `status_id` é a chave | doc lifecycle |
 | D-03 | Rótulo = `name` do GLPI; sem tabela PT no BFF | uma fonte |
 | D-04 | Sem PATCH de Ticket / status / atores | contrato atual |
-| D-05 | Aprovar, reabrir, satisfação = H5 | 05 |
+| D-05 | Aprovar, reabrir, satisfação = H10 (write CONSOLE; leitura/ponte PROVEN) | 05 |
 | D-06 | Excluir Novo = console | P-10 |
 | D-07 | Tipo/prioridade/impacto fora | lifecycle + formulário só urgência |
 | D-08 | `open` não perde o 10 até existir `approval` | compat |
@@ -295,7 +295,7 @@ No mesmo entregável de código, sem path de API:
 
 | Tooltip | Alvo |
 |---|---|
-| `helpTooltips.detail` | o selo é o estado no helpdesk (novo, em atendimento, pendente, solucionado, fechado, aguardando aprovação). Responder some quando o chamado não aceita mais mensagem. Aprovar solução, se existir, entra só com H5 |
+| `helpTooltips.detail` | o selo é o estado no helpdesk (novo, em atendimento, pendente, solucionado, fechado, aguardando aprovação). Responder some quando o chamado não aceita mais mensagem. Aprovar/reabrir/satisfação: console GLPI + ponte H10 (não H5 genérico) |
 
 ## 13. O que este arquivo não faz
 

@@ -35,7 +35,7 @@ O recorte não mudou: colaborador achar, abrir e acompanhar o **próprio** chama
 | Kit de anexo «o helpdesk não importa» | importa em `helpdeskUi.tsx` | [`11`](./11-lacunas-da-experiencia.md) §3.2 |
 | `mine` pelo nome | id GLPI ou e-mail | [`11`](./11-lacunas-da-experiencia.md) C-01 |
 | L-01…L-11 ainda por medir | paginação e filtros **publicados**; H2 da lista velha está morto | [`11`](./11-lacunas-da-experiencia.md) §6 |
-| H5 = «listar e baixar anexo» | baixar **já publicado**; H5 só envio novo + satisfação + bancada | [`05`](./05-roadmap.md) |
+| H5 = «listar e baixar anexo» | baixar **já publicado**; envio = **H12 PROVEN**; satisfação/bancada = H10/CONSOLE | [`05`](./05-roadmap.md) |
 | Data de solução = só bancada | coluna útil ao solicitante; alvo no 13 | [`11`](./11-lacunas-da-experiencia.md) §7 |
 | Pasta não prova que a API existe | MFE e BFF estão publicados; o ledger prova runtime | [`INDEX.md`](./INDEX.md) |
 
@@ -46,8 +46,8 @@ Doc: [Opening a ticket](https://help.glpi-project.org/documentation/modules/assi
 | ID | Capacidade GLPI | Destino |
 |---|---|---|
 | X-01 | Formulário autenticado (título, descrição, categoria, urgência) | IMPLEMENTADO |
-| X-02 | Descrição rica / HTML / colar imagem | **IMPLEMENTADO** leitura+escrita ([`12`](./12-conteudo-da-mensagem.md)); colar imagem BLOQUEADO (A-08) |
-| X-03 | Um ou mais documentos na abertura | BLOQUEADO A-08 / N-01 |
+| X-02 | Descrição rica / HTML / colar imagem | **IMPLEMENTADO** leitura+escrita + H12 colar/upload ([`12`](./12-conteudo-da-mensagem.md)) |
+| X-03 | Um ou mais documentos na abertura | **IMPLEMENTADO** H12 (pending → upload após create) |
 | X-04 | Título vazio → GLPI usa os 70 primeiros caracteres da descrição | FORA — a Minha DELPI exige título |
 | X-05 | Abrir em nome de outro (delegação / grupo) | FORA HD-011 |
 | X-06 | Chamado anônimo (`helpdesk.html`) | FORA — exige JWT + OAuth |
@@ -58,7 +58,7 @@ Doc: [Opening a ticket](https://help.glpi-project.org/documentation/modules/assi
 | X-11 | «Informar-me por e-mail» + escolher endereço | CONSOLE_GLPI — notificação é do GLPI; e-mail vem do usuário |
 | X-12 | Itens de inventário associados na abertura | CONSOLE_GLPI / inventário |
 | X-13 | Observadores na abertura | **PROVEN** — `POST …/TeamMember` observer (H-X2). Não é HD-011 |
-| X-14 | Pedido de validação já na abertura | CONSOLE_GLPI / H5 |
+| X-14 | Pedido de validação já na abertura | CONSOLE_GLPI / H10 |
 | X-15 | Origem (Direct, E-Mail, Helpdesk, Phone…) | CONSOLE_GLPI — o POST não envia; o GLPI grava a origem da API |
 | X-16 | Localização / telefone do solicitante | CONSOLE_GLPI — cadastro de usuário |
 | X-17 | Tipo Incidente / Requisição | FORA na abertura (só urgência); o GLPI usa o padrão do perfil/template |
@@ -74,7 +74,7 @@ Doc: [Manage tickets](https://help.glpi-project.org/documentation/modules/assist
 | X-21 | Os sete status | **IMPLEMENTADO** `status_id` + grupos pending/approval ([`14`](./14-pagina-e-estados-do-chamado.md)) |
 | X-22 | Urgência do solicitante | IMPLEMENTADO |
 | X-23 | Impacto (técnico) e prioridade (matriz) | CONSOLE_GLPI / FORA na UI do colaborador |
-| X-24 | Aprovação do chamado («Not subject to approval» / etapas) | CONSOLE_GLPI / H5 |
+| X-24 | Aprovação do chamado («Not subject to approval» / etapas) | CONSOLE_GLPI / H10 |
 | X-25 | Atores: requerente, observador, atribuído (pessoa/grupo/fornecedor) | atribuído/requerente/observador **IMPLEMENTADOS** como rótulo; editar CONSOLE |
 | X-26 | Notificação por ator (sim/não, e-mail) | CONSOLE_GLPI |
 | X-27 | Itens de inventário | CONSOLE_GLPI |
@@ -90,7 +90,7 @@ Doc: [Manage tickets](https://help.glpi-project.org/documentation/modules/assist
 | X-40 | Acompanhamento público | IMPLEMENTADO; HTML no 12 |
 | X-41 | Acompanhamento privado | CONSOLE_GLPI — o BFF já omite |
 | X-42 | Origem / modelo / promover a chamado | CONSOLE_GLPI |
-| X-43 | Documento no follow-up | baixar IMPLEMENTADO; enviar BLOQUEADO; vínculo por bolha A-07 |
+| X-43 | Documento no follow-up | baixar + enviar **IMPLEMENTADOS** (H12); vínculo por bolha A-07 FORA |
 | X-44 | Motivo de pendência + lembretes | CONSOLE_GLPI — status Pendente no 14 |
 | X-45 | Tarefa (e tarefa planejada → status 3) | CONSOLE_GLPI |
 | X-46 | Solução + aprovação do solicitante | **CONSOLE** E10 — [`evidence/e10-cycle-console.md`](./evidence/e10-cycle-console.md) |
@@ -108,7 +108,7 @@ Foto 1101 + doc Manage tickets.
 |---|---|---|
 | X-60 | Processamento (conversa) | IMPLEMENTADO no MFE (sem a moldura) |
 | X-61 | Estatísticas (tempo, espera, SLA) | CONSOLE_GLPI |
-| X-62 | Aprovações | CONSOLE_GLPI / H5 |
+| X-62 | Aprovações | CONSOLE_GLPI / H10 |
 | X-63 | Base de conhecimento (ligar artigo) | CONSOLE_GLPI |
 | X-64 | Itens | CONSOLE_GLPI |
 | X-65 | Análise de impacto (diagrama) | CONSOLE_GLPI |
@@ -148,7 +148,8 @@ Estes não abrem etapa sozinhos. Só deixam de ser lacuna invisível.
 | X-29 | Vínculo (duplicata / filho) | o solicitante vê que o 1101 é duplicata do 1090 | **FORA** (H-X4); criar vínculo CONSOLE |
 | X-46 | Aprovar solução | já era H5; permanece | **leitura** solução IMPLEMENTADA; aprovar/recusar **CONSOLE** (E10) |
 | G-05 | Requerente na lista | mesmo rótulo do detalhe | **IMPLEMENTADO** `requester_display_name` |
-| H12 / M-23 | upload / `@` escrita | HLAPI | BLOQUEADO |
+| H12 | Upload de anexo (Document-only) | solicitante cola/anexa na Minha DELPI | **PROVEN** live — [`05`](./05-roadmap.md) H12 |
+| M-23 | Menção `@` na escrita | compositor | **BLOQUEADO** — sem catálogo HLAPI |
 
 Não promover X-09 a tela de catálogo sem endpoint. Não copiar Formcreator/plugin.
 

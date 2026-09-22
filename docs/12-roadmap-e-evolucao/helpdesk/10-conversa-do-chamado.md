@@ -97,7 +97,7 @@ O kit já tem `MessageThread` em `plugins/plugin-ui/src/components/collaboration
 
 `RoomConversationShell` é o chrome das salas de outro produto. O helpdesk não importa esse shell nem a regra de sala.
 
-O compositor de resposta e o de abertura usam o mesmo `HelpdeskRichTextField` (`RichTextEditor` do kit). `MentionComposer` fica nas salas; colar imagem e upload novo continuam fora (M-23 / A-08).
+O compositor de resposta e o de abertura usam o mesmo `HelpdeskRichTextField` (`RichTextEditor` do kit). Colar / arrastar / clipe (H12) e redimensionar imagem (canto SE) estão publicados. `MentionComposer` das salas continua fora — M-23 `@` BLOQUEADO sem catálogo HLAPI.
 
 ## 6. Contrato
 
@@ -115,7 +115,7 @@ O compositor de resposta e o de abertura usam o mesmo `HelpdeskRichTextField` (`
 
 Texto plano derivado continua no campo `description` / `content` (busca, aria, fallback). A bolha renderiza o HTML sanitizado — não tags cruas do GLPI.
 
-Enviar arquivo novo, tarefa, **escrever** solução, aprovação, atores editáveis e entidade continuam fora. Ler a solução publicada já entra na conversa. O envio de arquivo esbarra na HLAPI, que não recebe o binário; a API legada permanece desligada.
+Enviar **tarefa**, **escrever** solução, aprovação, atores editáveis e entidade continuam fora. Ler a solução publicada já entra na conversa. Enviar arquivo/imagem (H12) está publicado. A HLAPI continua sem multipart; o upload usa só a exceção Document na API legada.
 
 ## 7. O que não copiar
 
@@ -142,4 +142,4 @@ A prova automatizada cobre a abertura, o acompanhamento de outra pessoa, o solic
 | Arquivo | o botão baixar continua só para documento daquele chamado |
 | Tema | claro e escuro usam o token do kit; recarregar a página mantém a mesma conversa |
 
-A ajuda in-app (`helpTooltips.detail`) muda no mesmo entregável, descrevendo responder e baixar, sem path de API.
+A ajuda in-app (`helpTooltips`) descreve responder, anexar/colar e redimensionar; textos curtos, sem path de API.

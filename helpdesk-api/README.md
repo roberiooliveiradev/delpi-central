@@ -19,5 +19,13 @@ Defina no ambiente do Compose. Não versione segredo.
 | `PUBLIC_BASE_URL` | origem do portal após o callback |
 | `PLUGINS_DB_*` | Postgres dos plugins |
 | `JWT_SECRET` e `KEYCLOAK_*` | mesmo contrato das outras APIs de módulo |
+| `GLPI_LEGACY_UPLOAD_ENABLED` | H12 — `true` liga upload Document via API legada (default `false`) |
+| `GLPI_LEGACY_APP_TOKEN` | App-Token do cliente apirest (cifrado no GLPI; valor plaintext no env do BFF) |
+| `GLPI_LEGACY_USER_TOKEN` | User-Token do usuário técnico de upload (`minha-delpi-upload`, perfil Technician) |
+| `GLPI_LEGACY_MAX_UPLOAD_BYTES` | teto do multipart (default `20971520`) |
 
 Gere a chave de cifra com `python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"` no host, e coloque o valor só no `.env` da infra.
+
+## H12 — upload (Document)
+
+HLAPI não recebe binário. Com a flag ligada, `POST /tickets/{id}/attachments` usa `apirest.php/Document` + App-Token + User-Token técnico. Provisionamento: `scripts/enable_glpi_legacy_api.sh`. Não reabre a API legada para outras operações. Detalhe e prova: `docs/12-roadmap-e-evolucao/helpdesk/05-roadmap.md` §H12 e ledger `H12.upload.*`.

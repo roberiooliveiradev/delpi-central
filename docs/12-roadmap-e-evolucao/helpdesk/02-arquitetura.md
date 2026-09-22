@@ -24,7 +24,7 @@ GLPI de produção, lido no container `inventario-ti-glpi-1`:
 | Versão | 11.0.5 |
 | API nova | `enable_hlapi = 1` |
 | Versão da API | 2.2.0 |
-| API legada | `enable_api = 0` |
+| API legada | `enable_api = 1` **só** para exceção H12 Document (App-Token); demais clients HLAPI |
 | Cliente OAuth | `minha-delpi-helpdesk`, ativo |
 | Concessão | `authorization_code` |
 | Escopo | `api` |
@@ -32,7 +32,7 @@ GLPI de produção, lido no container `inventario-ti-glpi-1`:
 | SSO | plugin `samlsso` (Keycloak) |
 | Chaves OAuth do GLPI | `oauth.pem` / `oauth.pub` já existem no container |
 
-Não há cliente OAuth além desse. A API legada permanece desligada.
+Não há cliente OAuth além desse. A API legada **não** é o caminho geral do módulo: permanece fora da leitura/escrita de chamado (HLAPI). A exceção H12 (Document upload) liga `enable_api` com App-Token + User-Token técnico — ver ledger `H12.upload.live`.
 
 ## 2. Estado alvo
 
@@ -90,14 +90,14 @@ Acompanhamento no GLPI: `POST /Assistance/Ticket/{id}/Timeline/Followup`.
 |---|---|
 | Iframe com o host certo | Não entrega a tela nativa pedida |
 | Browser chama a HLAPI | Expõe cliente OAuth e foge do BFF da plataforma |
-| API legada + App-Token + conta técnica | API legada está desligada; o chamado não ficaria em nome do usuário |
+| API legada + App-Token + conta técnica **como caminho geral** | Proibido — HLAPI em nome do usuário; H12 Document-only é a única exceção gated |
 | Token do Keycloak aceito pelo GLPI | O GLPI 11.0.5 emite o token dele; o Keycloak entra pela sessão SAML já configurada |
 | Chamado gravado na Minha DELPI | Segunda fonte de verdade |
 
 ## 6. Invariantes
 
 - GLPI em `helpdesk.centraldelpi.com.br` continua no ar para quem opera a fila.
-- `enable_api` permanece 0 **até** a exceção H12 (Document only) ser ativada com App-Token e `GLPI_LEGACY_UPLOAD_ENABLED`.
+- `enable_api` só para a exceção H12 (Document upload) com App-Token + User-Token técnico e `GLPI_LEGACY_UPLOAD_ENABLED`; não vira caminho geral.
 - O cliente OAuth não ganha concessão `password` nem `client_credentials`.
 - O escopo do cliente permanece `api`.
 - A redirect URI do cliente permanece exatamente a URL da tabela acima.

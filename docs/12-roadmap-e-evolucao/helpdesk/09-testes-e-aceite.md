@@ -38,6 +38,19 @@ Prova da grade (data absoluta, resolução, busca no conteúdo) está em [`13-li
 
 Prova da página e dos sete status está em [`14-pagina-e-estados-do-chamado.md`](./14-pagina-e-estados-do-chamado.md) §11.
 
+## 2.1 H12 — upload / colar / resize (já PROVEN live)
+
+| Caso | Entrada | Esperado |
+|---|---|---|
+| Positive | multipart + `Idempotency-Key` + flag on | 201 `{ document_id, filename, mime }`; Document+Ticket no GLPI |
+| Irmão | colar print (Snipping Tool / data: / clipboard.read) no compositor | upload + `img` no path autenticado do BFF |
+| Irmão | redimensionar imagem no editor | `width`/`height` HTML persistem após sanitizer |
+| Negativo | flag off / token ausente | 503 `glpi_feature_disabled` |
+| Negativo | CSS `width` no `style` | removido pelo sanitizer; atributos HTML ok |
+| Preview | `<img src="/apps/helpdesk-api/.../attachments/N">` no editor | `blob:` via fetch Bearer; no envio, `normalizeInlineAttachmentSrcs` |
+
+Evidência: ledger `H12.upload.*` / `H12.paste.snipping` / `H12.resize` / `H12.preview.blob`.
+
 A matriz do restante do GLPI Assistência está em [`15-capacidades-glpi.md`](./15-capacidades-glpi.md) e não tem prova de produto até uma linha deixar de ser CONSOLE/HIPOTESE.
 
 ## 3. Homologação E5.S2

@@ -37,7 +37,7 @@ O samlsso grava o `redirect` em `glpi_plugin_samlsso_loginstates.redirect`. A co
 | IP do cliente | vazio até o BFF chamar o GLPI por um endereço estável e conhecido |
 | Segredo | variável da helpdesk-api, nunca no MFE, no Git ou em log |
 
-Não habilitar `password` nem `client_credentials`. Não ligar a API legada.
+Não habilitar `password` nem `client_credentials`. Não usar a API legada como caminho geral do módulo. Exceção H12: `enable_api` + App-Token + User-Token técnico **somente** para `Document` upload, gated por `GLPI_LEGACY_UPLOAD_ENABLED` (ver ledger `H12.upload.live`).
 
 O refresh token vem junto com o authorization code no GLPI 11.0.5. Não há checkbox separado. Access token: 1 hora.
 

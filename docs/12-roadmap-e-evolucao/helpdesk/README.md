@@ -1,6 +1,6 @@
 # Meus Chamados de TI
 
-> **Status:** primeira entrega + paridade do solicitante **publicadas** (E1–E13 + E14 menção leitura). Ledger e verify-final em 21/09/2026.
+> **Status:** primeira entrega + paridade do solicitante **publicadas** (E1–E13 + E14 menção leitura + **H12 upload live**). Ledger 21/09/2026.
 > **Fundação GLPI:** `PROVEN` em produção (21/09/2026)
 > **Produto:** Meus Chamados de TI — abertura e acompanhamento de chamados dentro da Minha DELPI, com o GLPI como dono do chamado
 > **Requisitos:** `HD-001…HD-027` em [`07-requisitos.md`](./07-requisitos.md)
@@ -18,19 +18,21 @@ Meus Chamados de TI não é um segundo sistema de chamados e não é um conserto
 ```text
 Hoje, publicado                              Ainda aberto / parque
 -------------------------------------------  --------------------------------
-MFE /apps/helpdesk + HTML + builder AND      H10 ciclo (CONSOLE)
-helpdesk-api OAuth + contrato ADDITIVE       H12 upload (BLOQUEADO)
-GLPI dono do chamado                         M-23 @ escrita (BLOQUEADO)
-E14 chips de menção na bolha                 bancada / Change / HD-011 (FORA)
+MFE /apps/helpdesk + HTML + builder AND      H10 ciclo write (CONSOLE)
+helpdesk-api OAuth + contrato ADDITIVE       M-23 @ escrita (BLOQUEADO)
+H12 upload (colar/clipe/arrastar) live       bancada / Change / HD-011 (FORA)
+GLPI dono do chamado
+E14 chips de menção na bolha
 ```
 
 ```text
 MFE helpdesk
   → helpdesk-api
       → GLPI HLAPI 2.2, em nome do usuário
+      → (H12) apirest Document + App-Token + User-Token técnico, só upload
 ```
 
-O navegador não chama o GLPI. A api-delpi não entra neste fluxo. O GLPI continua a fonte dos chamados, categorias, filas, acompanhamentos e perfis.
+O navegador não chama o GLPI. A api-delpi não entra neste fluxo. O GLPI continua a fonte dos chamados, categorias, filas, acompanhamentos e perfis. A API legada fica **desligada para o resto**; a exceção H12 é só `Document` gated por `GLPI_LEGACY_UPLOAD_ENABLED`.
 
 ## 2. North Star
 
@@ -66,7 +68,7 @@ permissão do portal  !=  direito de abrir chamado
 escopo OAuth api     !=  recorte só de chamado
 token do BFF         !=  token no browser
 iframe               !=  produto alvo
-API legada           !=  API deste módulo
+API legada           !=  caminho geral do módulo (exceção H12 Document-only)
 ```
 
 O portão da Minha DELPI é `helpdesk.access`. O que a pessoa pode criar ou ver é o perfil GLPI aplicado ao token dela. Se o GLPI responder 403, a tela mostra acesso negado. O MFE não reimplementa essa regra.
@@ -101,7 +103,7 @@ O id não muda. O plugin iframe já é `helpdesk`, e o cliente OAuth de produç�
 | Qual é o contrato? | [`03-contrato.md`](./03-contrato.md) |
 | Como a identidade funciona? | [`04-seguranca.md`](./04-seguranca.md) |
 | Em que ondas o produto cresce? | [`05-roadmap.md`](./05-roadmap.md) |
-| Qual é a próxima etapa executável? | Paridade fechada. Próximo código só com decisão nova (M-23 `@`, H12 upload, H10 ciclo se HLAPI). Ledger: [`evidence/execution-ledger.md`](./evidence/execution-ledger.md) |
+| Qual é a próxima etapa executável? | H12 **PROVEN** live. Próximo código só com decisão nova (M-23 `@`, H10 ciclo write se HLAPI). Ledger: [`evidence/execution-ledger.md`](./evidence/execution-ledger.md) |
 | Qual é a onda? | [`05-roadmap.md`](./05-roadmap.md) |
 | Qual requisito isso cobre? | [`07-requisitos.md`](./07-requisitos.md) |
 | Quando uma etapa está pronta? | [`08-definition-of-done.md`](./08-definition-of-done.md) |
@@ -111,6 +113,6 @@ O id não muda. O plugin iframe já é `helpdesk`, e o cliente OAuth de produç�
 
 Mapa curto: [`INDEX.md`](./INDEX.md).
 
-## 6. Fora da primeira entrega
+## 6. Fora da primeira entrega / ainda parque
 
-Upload de arquivo novo, pesquisa de satisfação, fila do técnico, mudança, problema, inventário, API legada e banco de chamado na Minha DELPI. Baixar anexo já publicado. Matriz completa em [`15-capacidades-glpi.md`](./15-capacidades-glpi.md).
+Pesquisa de satisfação, fila do técnico, mudança, problema, inventário, banco de chamado na Minha DELPI, e **qualquer uso da API legada além do Document H12**. Baixar e **enviar** anexo estão publicados (H12). Matriz completa em [`15-capacidades-glpi.md`](./15-capacidades-glpi.md).

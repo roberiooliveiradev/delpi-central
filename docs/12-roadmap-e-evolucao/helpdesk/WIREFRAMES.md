@@ -5,7 +5,7 @@
 > **API:** `/apps/helpdesk-api` (o navegador não chama o GLPI nem a api-delpi)
 > **UI kit:** `@delpi/plugin-ui` via Module Federation · factories em [`plugins/helpdesk/src/ui/helpdeskUi.tsx`](../../../plugins/helpdesk/src/ui/helpdeskUi.tsx)
 > **Regras:** `plugins-reusable-components.mdc`, `plugins-visual-design-system.mdc`
-> **Estado:** lista com filtros/builder, conversa HTML, compositor rico e prévia de anexo **publicados**. H5/H10/H12 abaixo são especificação ou park, não autorização nova.
+> **Estado:** lista com filtros/builder, conversa HTML, compositor rico, prévia de anexo, **upload/colar/redimensionar (H12)** e helps curtos **publicados**. H10 write e M-23 `@` permanecem park.
 > **Lacunas restantes:** [`11-lacunas-da-experiencia.md`](./11-lacunas-da-experiencia.md).
 > **Corpo da mensagem:** [`12-conteudo-da-mensagem.md`](./12-conteudo-da-mensagem.md) (vigente; M-23 park).
 > **Listagem:** [`13-listagem-de-chamados.md`](./13-listagem-de-chamados.md) (vigente).
@@ -96,7 +96,7 @@ O bloco escuro é `:root[data-theme="dark"] .dashboard-helpdesk`. Superfície, t
 | `ActionButton` | — | Autorizar no helpdesk |
 | `IconButton` | `HelpdeskIconButton` | Abrir, limpar filtros, paginar, voltar, enviar |
 
-Texto de ajuda: `plugins/helpdesk/src/content/helpTooltips.ts`. O hint fica na prop `hint` do card ou do campo (e `attachHint` no clipe). Textos curtos — uma frase por superfície. Não colocar path de API no texto.
+Texto de ajuda: `plugins/helpdesk/src/content/helpTooltips.ts`. O hint fica na prop `hint` do card ou do campo (e `attachHint` no clipe). Textos curtos — uma frase por superfície. Não colocar path de API no texto. Imagem no compositor: clipe/colar/arrastar; clique + canto SE para redimensionar (`RichTextEditor`).
 
 Tom do badge, em `statusBadgeVariant` (**por `status_id`**):
 
@@ -236,15 +236,16 @@ A abertura existe mesmo sem acompanhamento. Tarefa, Validation, aprovação e ac
 
 Sem header e sem formulário.
 
-## 5. H5 — especificado, não implementar
+## 5. Residuais — H10 write / bancada (não reabrir H12)
 
-Estas telas só entram depois de decisão nova. Quando entrarem, usam o kit abaixo. Não desenhar estrela, dropzone ou fila no CSS do MFE.
+H12 (colar/clipe/arrastar/redimensionar) **já está publicado**. As telas abaixo só entram com decisão/HLAPI nova. Quando entrarem, usam o kit. Não desenhar estrela ou fila no CSS do MFE.
 
 | Capacidade | Onde | Componentes |
 |---|---|---|
-| Anexo | detalhe, na bolha de abertura | arquivos do chamado, com `ActionButton` «Baixar». Não é o arquivo de um acompanhamento. O envio de arquivo novo continua fora até a API do GLPI receber o binário. Sem dropzone próprio no CSS do MFE |
-| Satisfação | detalhe, só se o status estiver solucionado | `HelpdeskSelect` ou botões `ActionButton` com os valores que o GLPI devolver. Sem componente de estrela no MFE |
-| Bancada do técnico | rota de menu `/apps/helpdesk/console`, fora do MFE | abre `helpdesk.centraldelpi.com.br` em nova aba, com `samlIdpId=1`, só para `helpdesk.console` |
-| Entidade | não há campo | continua a entidade padrão do usuário |
+| Anexo (envio) | compositor abrir + responder | **PROVEN** H12 — clipe/colar/arrastar; preview `blob:`; resize canto SE; `POST …/attachments` |
+| Anexo (lista/baixar) | detalhe | arquivos do chamado + prévia; `ActionButton` «Baixar» |
+| Satisfação | detalhe, se solucionado | `HelpdeskSelect` / `ActionButton` com valores do GLPI — H10 write (CONSOLE até HLAPI) |
+| Bancada do técnico | rota `/apps/helpdesk/console`, fora do MFE | abre host GLPI com `samlIdpId=1`, só `helpdesk.console` |
+| Entidade | não há campo | entidade padrão do usuário (HD-011) |
 
-Se o kit não tiver o primitivo na hora de H5, o primitivo nasce em `plugins/plugin-ui` e só depois o MFE ganha a factory. O wireframe desta seção é atualizado no mesmo passo.
+Se o kit não tiver o primitivo na hora do write H10, nasce em `plugins/plugin-ui` e só depois o MFE. Atualizar este wireframe no mesmo passo.

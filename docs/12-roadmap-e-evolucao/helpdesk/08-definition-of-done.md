@@ -10,7 +10,7 @@ Uma etapa só fecha quando o aceite dela no plano de execução e os itens abaix
 ```text
 [ ] GLPI continua dono do chamado
 [ ] api-delpi não é chamada por este módulo
-[ ] enable_api do GLPI permanece desligado
+[ ] enable_api só na exceção H12 Document-only (App-Token + User-Token técnico); não vira caminho geral
 [ ] cliente OAuth permanece authorization_code + escopo api
 [ ] segredo e tokens fora do MFE, do Git e do log
 [ ] helpdesk.access é o portão do portal; o perfil GLPI é o direito do chamado
@@ -61,9 +61,21 @@ Uma etapa só fecha quando o aceite dela no plano de execução e os itens abaix
 ## E5
 
 ```text
-[ ] positive, irmão e negativo descritos em 09 passaram
-[ ] homologação com usuário real registrada no ledger
-[ ] console do técnico em helpdesk.centraldelpi.com.br inalterado
+[x] positive, irmão e negativo descritos em 09 passaram (H3 live)
+[x] homologação com usuário real registrada no ledger
+[x] console do técnico em helpdesk.centraldelpi.com.br inalterado
 ```
 
-A lista em produção, em 21/09/2026, fecha a leitura e a tela. A abertura e o acompanhamento ao vivo ainda precisam entrar no ledger para H3 deixar de ser `NOT_STARTED`.
+## H12 (satélite)
+
+```text
+[x] POST /tickets/{id}/attachments via apirest Document
+[x] colar / clipe / arrastar no compositor (abrir + responder)
+[x] preview blob: + normalize no envio
+[x] resize width/height HTML (sanitizer)
+[x] enable_api + GLPI_LEGACY_* + tech user Technician em produção
+[x] helps curtos (create/reply/attach)
+```
+
+H3 e H12 estão `PROVEN` no ledger (21/09/2026). Residuais de produto: M-23 `@`, H10 write (ver [`evidence/e10-cycle-console.md`](./evidence/e10-cycle-console.md)).
+

@@ -24,3 +24,5 @@ Data: 21/09/2026. Sem senha / corpo pessoal.
 - Em solucionado / fechado / aguardando aprovação: aviso com CTA **Abrir no helpdesk** → `ticket.form.php?id=` via SSO (`samlIdpId=1`), sem exigir `helpdesk.console` e sem inventar approve na HLAPI.
 
 Quando a HLAPI documentar a operação do solicitante (follow-up especial ou Validation de solução), abrir **novo** plano — não reaproveitar E10.S1 como receita inventada.
+
+**Fora deste arquivo:** upload/colar/resize = H12 **PROVEN** (não confundir com o ciclo write H10).

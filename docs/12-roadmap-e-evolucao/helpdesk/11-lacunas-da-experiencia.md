@@ -1,6 +1,6 @@
 # 11 — Lacunas da experiência
 
-> **Status:** inventário histórico. L-01…L-12, C-08 e G-05 **IMPLEMENTADOS**. Residuais: A-08/H12 upload, M-23 `@`, H10 ciclo. Paridade: [`12`](./12-conteudo-da-mensagem.md)–[`15`](./15-capacidades-glpi.md). Não altera [`06-plano-execucao.md`](./06-plano-execucao.md).
+> **Status:** inventário histórico. L-01…L-12, C-08 e G-05 **IMPLEMENTADOS**. A-08/H12 upload **PROVEN** (exceção Document-only). Residuais: M-23 `@`, H10 ciclo write. Paridade: [`12`](./12-conteudo-da-mensagem.md)–[`15`](./15-capacidades-glpi.md). Não altera [`06-plano-execucao.md`](./06-plano-execucao.md).
 > **Tela publicada:** [`WIREFRAMES.md`](./WIREFRAMES.md).
 > **Conversa:** [`10-conversa-do-chamado.md`](./10-conversa-do-chamado.md).
 > **Contrato vigente:** [`03-contrato.md`](./03-contrato.md).
@@ -84,7 +84,7 @@ Pedido explícito das fotos: a imagem como prévia e um modal com download.
 | A-05 | Blob só na memória da página | a regra de upload persistente já proíbe gravar o arquivo na Minha DELPI | HERDADO | `URL.createObjectURL` + revoke |
 | A-06 | Documento de outro chamado | 404 sem bytes — não pode mudar | invariante | serviço atual |
 | A-07 | Imagem de um acompanhamento específico | P0 6288 inexistente; Followup sem lista de docs (12-H4 FORA); Document fica na abertura | FORA — não inventar vínculo por bolha |
-| A-08 | Enviar arquivo novo | HLAPI 11.0.5 só aceita JSON; API legada desligada | BLOQUEADO | decisão explícita para ligar a API antiga |
+| A-08 | Enviar arquivo novo | HLAPI JSON-only; exceção H12 apirest Document | **IMPLEMENTADO** | `POST …/attachments` + LEGACY_* live; ledger `H12.upload.live` |
 
 Kit: `HelpdeskAttachmentPreviewStrip` e `FilePreviewModal` **já ligados**. A prévia usa o GET de download, `Accept: application/octet-stream`, limite 20 MB. Sem CSS de thumb no MFE.
 
@@ -107,23 +107,23 @@ A conversa em bolhas já foi publicada. As fotos mostram o corte que ainda falta
 
 | ID | Lacuna | Estado |
 |---|---|---|
-| N-01 | Anexar arquivo na abertura | BLOQUEADO — mesmo motivo de A-08 |
+| N-01 | Anexar arquivo na abertura | **IMPLEMENTADO** — pending no create + upload após `POST /tickets` (H12) |
 | N-02 | Escolher entidade ou abrir em nome de outro | fora — HD-011 |
 | N-03 | Modelo de chamado / origem / pendência | CONSOLE_GLPI — matriz em [`15-capacidades-glpi.md`](./15-capacidades-glpi.md) X-10 / X-15 |
 | N-04 | Formulários / catálogo de serviços GLPI 11 | HIPOTESE — X-09 no 15 |
 
 ### 3.5 Depois do fechamento e bancada
 
-Já estavam em H5. Continuam fora desta onda de filtros/prévia, salvo decisão nova.
+Já estavam no fatia H5→H10/bancada. Continuam fora desta onda, salvo decisão nova / HLAPI.
 
 | ID | Lacuna | Estado |
 |---|---|---|
-| H-01 | Aprovar ou recusar solução | CONSOLE_GLPI / H5 |
-| H-02 | Pesquisa de satisfação | H5 |
+| H-01 | Aprovar ou recusar solução | CONSOLE_GLPI / H10 write |
+| H-02 | Pesquisa de satisfação | H10 write |
 | H-03 | Fila, atribuição, tarefa, validação | CONSOLE_GLPI |
 | H-04 | Mudança e problema | outro itemtype |
 | H-05 | Itens, custos, base de conhecimento, histórico, estatísticas | CONSOLE_GLPI |
-| H-06 | Seletor de entidade | H5 |
+| H-06 | Seletor de entidade | HD-011 / FORA |
 
 ## 4. Contrato da lista
 
@@ -175,7 +175,7 @@ H3  Super-Admin no MFE não justifica filtrar 128 128 no browser — invariante 
 | Foto de perfil | iniciais |
 | Imagem embutida como HTML do GLPI | blob autenticado no modal do kit; sem HTML cru |
 | Abas, atores editáveis, excluir, salvar | console |
-| Envio de arquivo no menu Responder | BLOQUEADO |
+| Envio de arquivo no menu Responder | **IMPLEMENTADO** H12 |
 
 ## 8. Prova, quando houver implementação
 
@@ -194,4 +194,4 @@ Ainda não é etapa. Quando for planejada, a prova mínima é:
 
 ## 9. Fora deste inventário como autorização
 
-Este arquivo não abre E*.S*, não marca H5 como `PROVEN` e não liga a API legada. [`10-conversa-do-chamado.md`](./10-conversa-do-chamado.md) descreve a conversa já publicada. A paridade da listagem passou para [`13-listagem-de-chamados.md`](./13-listagem-de-chamados.md). O corpo da mensagem está em [`12-conteudo-da-mensagem.md`](./12-conteudo-da-mensagem.md). A página e os estados estão em [`14-pagina-e-estados-do-chamado.md`](./14-pagina-e-estados-do-chamado.md). O restante do módulo Assistência (Forms, SLA, vínculos, abas) está em [`15-capacidades-glpi.md`](./15-capacidades-glpi.md).
+Inventário histórico: L/C/G fechados; A-08/H12 **PROVEN** (Document-only). Não reabre API legada além de H12. Residuais: M-23, H10 write. Conversa: [`10`](./10-conversa-do-chamado.md). Listagem: [`13`](./13-listagem-de-chamados.md). Mensagem: [`12`](./12-conteudo-da-mensagem.md). Página: [`14`](./14-pagina-e-estados-do-chamado.md). Capacidades: [`15`](./15-capacidades-glpi.md).

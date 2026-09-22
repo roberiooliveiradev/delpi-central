@@ -27,7 +27,7 @@ Há dois fluxos distintos. Um não implica o outro:
 | Leitura | o que já está no GLPI precisa aparecer na bolha? |
 | Escrita | o que a pessoa pode gravar ao abrir ou responder? |
 
-Isto **estende** HD-009 (detalhe), HD-010 (abrir), HD-013 (acompanhamento) e HD-016 (ajuda). Não é HD-019. H5 (anexo novo, satisfação, bancada) não abre por este inventário.
+Isto **estende** HD-009 (detalhe), HD-010 (abrir), HD-013 (acompanhamento) e HD-016 (ajuda). Não é HD-019. Upload de anexo novo = H12 (PROVEN, Document-only); satisfação/bancada = H10/CONSOLE — não abrem por este inventário.
 
 ## 2. Fontes e grau de evidência
 
@@ -39,7 +39,7 @@ Isto **estende** HD-009 (detalhe), HD-010 (abrir), HD-013 (acompanhamento) e HD-
 | Changelog HLAPI 11 (`html` + `x-supports-mentions`) | CONFIRMADO_EM_DOCUMENTACAO_CANONICA | schema marca conteúdo rico e menção |
 | Schema HLAPI 2.2 no GLPI 11.0.5 (`Ticket.content`, `Followup.content`) | CONFIRMADO_NO_CODIGO | `format=HTML`, `x-supports-mentions=true` |
 | Código / CSS GLPI (`[data-user-mention="true"]`, `document.send.php?docid=`) | CONFIRMADO_NO_CODIGO (upstream) | markup de menção e de imagem embutida |
-| Colar imagem no TinyMCE → `image_paste*.png` + Documento | CONFIRMADO_EM_DOCUMENTACAO_CANONICA (issues 11.0.6/11.0.7) | escrita de imagem **é upload**; A-08 |
+| Colar imagem no TinyMCE → `image_paste*.png` + Documento | CONFIRMADO_EM_DOCUMENTACAO_CANONICA (issues 11.0.6/11.0.7) | no MFE: H12 cola → Document |
 | `GET /session`, `team[].id`, `Followup.user.id` | CONFIRMADO_NO_CODIGO | identidade; fora do corpo |
 | `mapping.py` `sanitize_message_html` + `description_html` / `content_html` | CONFIRMADO_NO_CODIGO | BFF allowlist + rewrite de `document.send.php`; texto plano derivado em `description` / `content` |
 | Testes `test_mapping_publishes_sanitized_html_*` / create sanitize | CONFIRMADO_EM_TESTE | HTML sanitizado publicado; script fora |
@@ -136,8 +136,8 @@ A doc de Documents: o arquivo pode vir do disco, de URL ou de upload FTP interno
 Na Minha DELPI:
 
 - baixar o que já está no chamado: publicado (`GET /tickets/{id}/attachments/{document_id}`);
-- enviar arquivo novo: BLOQUEADO (HLAPI JSON-only, API legada desligada) — A-08 / HD-017 fora;
-- imagem no HTML da mensagem: leitura possível se a URL for reescrita para o download autenticado do BFF; escrita de imagem nova no compositor = mesmo bloqueio de A-08.
+- enviar arquivo novo: **PROVEN** H12 — `POST /tickets/{id}/attachments` via apirest Document (App-Token + User-Token técnico); HLAPI continua sem multipart;
+- imagem no HTML da mensagem: leitura com rewrite BFF; escrita = upload H12 + `src` no path autenticado (preview no editor via blob).
 
 ## 4. O que a HLAPI 2.2 confirma
 
@@ -180,7 +180,7 @@ GLPI HTML
 | Kit `MessageThread` | `html` (helpdesk), `markdown`, `plain` |
 | Kit strip | defesa no cliente após o BFF |
 | Kit `RichTextEditor` | toolbar WYSIWYG (ênfase, cor, H2, lista, alinhamento, fonte, tabela, link, HR, fonte HTML/MD); **sem** botão de imagem |
-| Kit `MentionComposer` | salas; `@` + cola imagem; **proibido** no helpdesk (M-23 / A-08) |
+| Kit `MentionComposer` | salas; `@` + cola imagem; **proibido** no helpdesk para `@` (M-23); cola/upload H12 usa `HelpdeskRichTextField` |
 | Ajuda | `helpTooltips.create` / `.detail` descrevem formatação, imagem no corpo e menção leitura |
 
 **Causa histórica do achatamento (corrigida):** o tradutor usava `display_text` no corpo. Hoje o corpo passa pelo sanitizer canônico do BFF.
@@ -290,12 +290,13 @@ FORA                  → não entra neste produto
 | M-21 | POST `content` em HTML sanitizado, não texto achatado | IMPLEMENTADO | BFF `prepare_outbound_message_html` |
 | M-22 | Título, tabela, código, cor, alinhamento no compositor | IMPLEMENTADO | toolbar do `RichTextEditor` |
 | M-23 | Menção no compositor (`@`) | **BLOQUEADO** — sem path HLAPI de mencionáveis por id | só com id; sem `MentionComposer` das salas |
-| M-24 | Inserir imagem ou arquivo novo no envio | BLOQUEADO | A-08; JSON-only |
-| M-25 | Colar imagem da área de transferência | BLOQUEADO | vira upload |
+| M-24 | Inserir imagem ou arquivo novo no envio | **IMPLEMENTADO** H12 | `uploadTicketAttachment` + Document |
+| M-25 | Colar imagem da área de transferência | **IMPLEMENTADO** H12 | `clipboardImages` (Snipping Tool / data: / clipboard.read) |
 | M-26 | Editar mensagem já gravada | CONSOLE_GLPI | a doc do GLPI tem Edit; o BFF não publica PATCH |
 | M-27 | Modelo, origem, pendência no envio | CONSOLE_GLPI | follow-up doc |
 | M-28 | Abrir e responder compartilham o mesmo compositor | IMPLEMENTADO | `HelpdeskRichTextField` |
 | M-29 | Teto de tamanho do HTML no BFF | IMPLEMENTADO | `MAX_MESSAGE_HTML_CHARS = 50_000` |
+| M-36 | Redimensionar imagem no compositor | **IMPLEMENTADO** | plugin-ui `richTextImageResize` (width/height HTML) |
 
 ### 8.3 Componente (kit)
 
@@ -400,7 +401,7 @@ Campos de rótulo (`title`, nomes) continuam em `display_text`. Conteúdo de men
 | Irmão — follow-up de e-mail | texto achatado | HTML sanitizado; `cid:` some |
 | Negativo — HTML com script | sumia tudo | **ATENDIDO** — allowlist; sem execução |
 | Negativo — `src` para host do GLPI | — | **ATENDIDO** — não sobrevive no HTML publicado |
-| Invariante | privado, tarefa, solução, entidade, upload novo | não mudam |
+| Invariante | privado, tarefa, solução write, entidade | não mudam; upload = H12 |
 | Identidade | id / e-mail | não volta a usar nome |
 | Contrato antigo | `description` texto | continua texto; HTML no campo novo |
 
@@ -413,13 +414,13 @@ Campos de rótulo (`title`, nomes) continuam em `display_text`. Conteúdo de men
 | D-01 | Evolução ADDITIVE (`description_html` / `content_html`); campos atuais ficam texto | contrato vigente + consumidores `plain` |
 | D-02 | Sanitizer allowlist no BFF; kit é defesa | strip do kit é denylist |
 | D-03 | Sem TinyMCE; HTML só via kit `bodyMode=html` (não renderer no MFE) | kit + boundaries |
-| D-04 | Sem `MentionComposer` no helpdesk | cola imagem = A-08; menção por label |
+| D-04 | Sem `MentionComposer` no helpdesk | menção `@` = M-23; cola/upload = H12 no RichTextEditor |
 | D-05 | Browser não chama o host do GLPI | A-06 + 04-segurança |
 | D-06 | Identidade continua id ou e-mail | C-05 |
 | D-07 | Um compositor para abrir e responder | SRP |
 | D-08 | Lista/`q` não muda neste trabalho | L-01 |
 | D-09 | Sem PATCH, privado, tarefa, solução, modelo | 10 + follow-up doc |
-| D-10 | Sem API legada / multipart | A-08 |
+| D-10 | API legada só Document (H12) | HLAPI dona do chamado; sem multipart HLAPI |
 
 ### Não prontas (não viram receita E*.S*)
 
@@ -449,7 +450,7 @@ M-08 (rewrite de `document.send.php`) **IMPLEMENTADO** (E8.S1 + E8.S2 + E8.S4). 
 | ID | Veredito | Evidência |
 |---|---|---|
 | M-07 leitura | **IMPLEMENTADO** | BFF preserva `data-user-mention`/`data-user-id` (dígitos); kit `enrichGlpiUserMentionSpans` + `MessageThread` `bodyMode=html` aplica chip; identidade = id, rótulo = texto do span |
-| M-23 escrita `@` | **BLOQUEADO** | sem operação HLAPI de usuários mencionáveis confirmada neste inventário; não inventar catálogo por nome; sem `MentionComposer` (A-08) |
+| M-23 escrita `@` | **BLOQUEADO** | sem operação HLAPI de usuários mencionáveis confirmada neste inventário; não inventar catálogo por nome; sem `MentionComposer` |
 
 Desbloqueio de M-23 exige novo gate PROVEN (path + schema) e plano próprio — não reabre E8/E14.
 
@@ -476,22 +477,23 @@ Testes de unidade do mapping **atual** (`strips_html`) **não** podem ser invert
 
 Quando houver implementação, no **mesmo** entregável, sem path de API:
 
-| Tooltip | Hoje | Alvo |
-|---|---|---|
-| `helpTooltips.create` | título e descrição à esquerda | descrever que a descrição aceita formatação (negrito, lista, link); sem imagem nova |
-| `helpTooltips.detail` | foto só nas minhas; prévia de anexo; sem arquivo novo | + formatação na conversa; imagem no texto quando o helpdesk já tiver o arquivo; sem colar imagem |
+| Tooltip | Vigente |
+|---|---|
+| `helpTooltips.create` / `createUi.*` | formatação, clipe/colar, resize; textos curtos |
+| `helpTooltips.detail` / `detailUi.*` | conversa, reply, attach, attachments, openInGlpi |
+| `attachHint` | clipe na abertura e na resposta |
 
 ## 18. O que este arquivo não faz
 
 - não abre E*.S* nem marca H5 `PROVEN`;
 - não cria HD-019;
-- não liga a API legada;
+- não liga a API legada **além** da exceção H12 Document já PROVEN;
 - não autoriza PATCH de follow-up, tarefa, solução ou privado;
 - não autoriza renderer HTML no MFE fora do kit;
 - não trata nome como identidade;
 - não muda busca da lista;
 - não autoriza investigação live que grave senha ou corpo em log.
 
-Quando o pedido for **nova** capacidade de corpo (ex.: M-23 `@`, A-07 vínculo por bolha, upload), revalidar HLAPI + ownership antes de abrir plano. M-01…M-22, M-28…M-35 e E14 já estão no código; não reabrir como inventário «a implementar».
+Quando o pedido for **nova** capacidade de corpo (ex.: M-23 `@`, A-07 vínculo por bolha), revalidar HLAPI + ownership antes de abrir plano. M-01…M-22, M-24…M-25, M-28…M-36 e E14/H12 já estão no código; não reabrir como inventário «a implementar».
 
 Capacidades de Assistência que não são corpo da mensagem (Forms, SLA, vínculos): [`15-capacidades-glpi.md`](./15-capacidades-glpi.md).
