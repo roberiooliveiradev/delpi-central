@@ -188,3 +188,12 @@ def test_capability_surface_in_catalog_payload_shape():
     assert any(e["id"] == "process_document" for e in surface["entities"])
     assert surface["proposal_model"]["commit_operation"] == "gpt_commit_proposal"
     assert "tm_task" in surface["not_exposed_by_design"]
+
+
+def test_search_rejects_disallowed_filter(tm_client):
+    response = tm_client.get(
+        "/transformometro/gpt-actions/v1/records/branch",
+        params={"q": "nope"},
+    )
+    assert response.status_code == 400
+    assert response.json()["success"] is False

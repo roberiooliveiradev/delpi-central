@@ -320,7 +320,34 @@ def gpt_search_records(
     unit_code: str | None = None,
 ):
     try:
-        parse_entity(entity)
+        parsed = parse_entity(entity)
+        from tm_app.application.gpt_actions.capability_descriptors import (
+            ENTITY_FILTERABLE_FIELDS,
+        )
+
+        filters = {
+            "parent_id": parent_id,
+            "instance_id": instance_id,
+            "filial_id": filial_id,
+            "setor_id": setor_id,
+            "status": status,
+            "familia_processo": familia_processo,
+            "q": q,
+            "unit_code": unit_code,
+        }
+        allowed = ENTITY_FILTERABLE_FIELDS.get(parsed.value, frozenset())
+        provided = {
+            key
+            for key, value in filters.items()
+            if value is not None and str(value).strip() != ""
+        }
+        bad = sorted(provided - allowed)
+        if bad:
+            raise GptActionsError(
+                f"Disallowed filters for entity '{parsed.value}': {', '.join(bad)}.",
+                400,
+                data={"error_code": "INVALID_FIELD", "fields": bad},
+            )
         data = _dispatch.search_records(
             request,
             entity,
