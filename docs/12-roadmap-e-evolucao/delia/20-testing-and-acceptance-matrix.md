@@ -1121,6 +1121,7 @@ C3_T2 = APPROVED
 C3_EXECUTED = NO
 C3_T3_AUTHORIZED = YES
 C3_T3_EXECUTED = NO
+C3_T3 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
 TEST_MODULE = tests/test_evidence_epistemic_conformance.py
 NO_TOTAL_EPISTEMIC_ORDERING = YES
 _EPISTEMIC_STRENGTH = REJECTED / REMOVED
@@ -1155,6 +1156,54 @@ Required deterministic cases (C3-T2R1) — implemented and Architecture-Review a
 - SourceRef does not grant provider/source access;
 - secret/token fields cannot become Evidence or model context;
 - no CoT persistence.
+
+### C3-T3 — Minimal model invocation + eval/lineage foundation
+
+```text
+STATUS = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+OWNER = delia-api/app/domain/model_invocation/ + application/model_invocation/
+PORT = ModelInvocationPort
+USE_CASE = InvokeModel
+TEST_ADAPTER = DeterministicTestAdapter (TEST_ONLY)
+REAL_PROVIDER_ADAPTER = NONE
+REAL_MODEL_CALL = BLOCKED_BY_EXTERNAL_CONFIGURATION
+FOUNDATION_CONFORMANCE = PASS (deterministic)
+REAL_MODEL_EVAL = TEST_NOT_RUN / BLOCKED
+MODEL_OUTPUT_AUTO_FACT = NO
+CoT_PERSISTENCE = NO
+SECRET_EXPOSURE = NO
+PERSISTENCE = NONE
+MIGRATION = NONE
+RAG = NONE
+PLANNER = NONE
+CONVERSATION_RUNTIME = NONE
+TOOL_EXECUTION = NONE
+ACT = NONE
+C3_STARTED = YES
+C3_EXECUTED = NO
+C3_T4_AUTHORIZED = NO
+TEST_MODULES = tests/test_model_invocation_foundation.py + tests/test_model_invocation_architecture.py
+PRODUCTION_READINESS = NOT_PROVEN
+```
+
+Required deterministic cases (C3-T3) — implemented; Architecture Review pending:
+
+- positive invocation through deterministic TEST_ONLY adapter;
+- structured output validation;
+- model output does not auto-become FACT;
+- ModelRef preserved;
+- input EvidenceRefs / SourceRefs preserved in lineage;
+- lineage does not grant authorization;
+- Recommendation remains non-authorizing;
+- external content cannot alter authority/policy metadata;
+- secret-bearing invocation input rejected;
+- CoT fields rejected/excluded;
+- provider error maps to bounded Application error (no SDK leak);
+- timeout maps to bounded error;
+- eval result binds to evaluated SHA/ModelRef/config identity;
+- test adapter classified as TEST_ONLY;
+- Domain/Application contain no provider SDK dependency;
+- real-provider exposure denied while gate is unproven.
 
 ### Planner/OpenAPI/Expertise
 

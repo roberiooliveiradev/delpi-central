@@ -266,9 +266,31 @@ BLOCKER_2_TYPED_RESULT_DUPLICATION = RESOLVED
 BLOCKER_3_SOURCE_REF_AUTHORITY = RESOLVED
 C3_T3_AUTHORIZED = YES
 C3_T3_EXECUTED = NO
+C3_T3 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+C3_T3_IMPLEMENTATION = delia-api/app/domain/model_invocation/ + application/model_invocation/ (no store; no real provider)
+C3_T4_AUTHORIZED = NO
 ```
 
-C3-T1 congela o **uso semântico** de Evidence/Source/epistemic para a inteligência futura. Não cria Evidence store, repository, schema, LLM, RAG, planner ou conversation runtime. C3-T2R1 domain model/tests foram aceitos por `ARCHITECTURE_REVIEW_C3_T2R1` (`ACCEPT_WITH_RESIDUAL`; `C3_T2=APPROVED`); store/model/RAG/planner/conversation continuam fora de escopo.
+C3-T1 congela o **uso semântico** de Evidence/Source/epistemic para a inteligência futura. Não cria Evidence store, repository, schema, LLM, RAG, planner ou conversation runtime. C3-T2R1 domain model/tests foram aceitos por `ARCHITECTURE_REVIEW_C3_T2R1` (`ACCEPT_WITH_RESIDUAL`; `C3_T2=APPROVED`). C3-T3 adds a provider-neutral invocation/lineage/eval foundation (`CANDIDATE_FOR_ARCHITECTURE_REVIEW`); store/RAG/planner/conversation/real provider remain out of scope.
+
+### 4C. C3-T3 — Model invocation / eval lineage
+
+```text
+STATUS = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+OWNER = DÉLIA (delia-api domain/application)
+REUSES = ModelRef (C0.S3; no ModelIdentity duplicate)
+PORT = ModelInvocationPort
+LINEAGE = ModelInvocationLineage (invocation id + ModelRef + EvidenceRef[] + SourceRef[] + instruction/config identity)
+EVAL = EvalIdentity / EvalResult (C3-local; not EvalPlatform)
+DEFAULT_MODEL_OUTPUT_CLASS = HYPOTHESIS
+MODEL_OUTPUT != FACT automatically
+LINEAGE != AUTHORIZATION
+RECOMMENDATION != ACT
+REAL_PROVIDER = BLOCKED_BY_EXTERNAL_CONFIGURATION
+PERSISTENCE = NONE
+```
+
+C3-T3 does not persist invocations, does not call a real provider, and does not materialize EvidenceItem from model output.
 
 ### 4B.1 Ownership
 

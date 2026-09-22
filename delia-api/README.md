@@ -7,8 +7,9 @@ Standalone Flask API da DÉLIA. Este diretório é a pasta canônica `delia-api/
 - C1-T1 / C1-T1R1: skeleton + `/health` + logging + smoke de processo
 - C1-T2 / C1-T2R1: JWT fail-closed (shared `delpi_auth.jwt_validator`) + Core `GET /me` effective access (sem probe técnico de produção)
 - C3-T2: Evidence epistemic domain model + deterministic conformance (`app/domain/evidence/`)
+- C3-T3: provider-neutral `ModelInvocationPort` + `InvokeModel` + lineage/eval identity + TEST_ONLY adapter (`app/domain/model_invocation/`, `app/application/model_invocation/`). Real provider adapter = NONE.
 
-Não inclui: MFE, Gateway, Compose, migrations de negócio, RBAC local da DÉLIA, Domain AuthZ, Evidence store, LLM/RAG/planner/conversation.
+Não inclui: MFE, Gateway, Compose, migrations de negócio, RBAC local da DÉLIA, Domain AuthZ, Evidence store, RAG/planner/conversation, real LLM call.
 
 ## Run local
 

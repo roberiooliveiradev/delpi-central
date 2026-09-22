@@ -3,7 +3,7 @@
 **Status:** planejamento executável canônico  
 **Autoridade de ordem:** **este documento é a única fonte de verdade para a sequência de implementação**  
 **Produto:** **DÉLIA**, aplicação standalone nova  
-**Próxima etapa:** `C3-T3 — Minimal Model Invocation + Eval/Lineage Foundation` (`C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO`; `C3-T1=APPROVED`; `C3-T2=APPROVED` via `ARCHITECTURE_REVIEW_C3_T2R1` `ACCEPT_WITH_RESIDUAL`; `C3_T3_AUTHORIZED=YES`; do not start C3-T3 here; do not claim C3 complete)
+**Próxima etapa:** `ARCHITECTURE_REVIEW_C3_T3` (`C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO`; `C3-T1=APPROVED`; `C3-T2=APPROVED`; `C3-T3=CANDIDATE_FOR_ARCHITECTURE_REVIEW`; `C3_T4_AUTHORIZED=NO`; do not start C3-T4; do not claim C3 complete)
 **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Baseline:** [`51-platform-integration-baseline.md`](./51-platform-integration-baseline.md)  
 **Bootstrap:** [`52-standalone-repository-and-bootstrap-plan.md`](./52-standalone-repository-and-bootstrap-plan.md)  
@@ -401,7 +401,7 @@ BROWSER_STATE_RESIDENCY_POLICY = APPROVED (C2-T1D1)
 BROWSER_RETAINED_STATE_CURRENTLY_REQUIRED = NO
 CENTRALIZED_BROWSER_STATE_BOUNDARY = REQUIRED_ON_FIRST_RETAINED_STATE
 SHARED_DEVICE_ISOLATION_INVARIANT = FROZEN_ACCEPTED
-NEXT = C3-T3 — Minimal Model Invocation + Eval/Lineage Foundation
+NEXT = ARCHITECTURE_REVIEW_C3_T3
 ```
 
 C3 initial bounded DAG (Coordination-approved dependency order; not the numbered foundation inventory):
@@ -410,8 +410,8 @@ C3 initial bounded DAG (Coordination-approved dependency order; not the numbered
 C3-T1 Evidence / epistemic semantics + source linkage = APPROVED (21 §4B; ARCHITECTURE_REVIEW_C3_T1 ACCEPT_WITH_RESIDUAL)
 → C3-T2 Evidence epistemic domain model + conformance = REWORK (ARCHITECTURE_REVIEW_C3_T2; historical)
 → C3-T2R1 rework = APPROVED (ARCHITECTURE_REVIEW_C3_T2R1 ACCEPT_WITH_RESIDUAL; IMPLEMENTATION_HEAD=d444e75f7)
-→ C3-T3 Minimal Model Invocation + Eval/Lineage Foundation (AUTHORIZED; do not start here)
-→ C3-T4 Structured Understanding Vertical Slice
+→ C3-T3 Minimal Model Invocation + Eval/Lineage Foundation = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+→ C3-T4 Structured Understanding Vertical Slice (NOT AUTHORIZED)
 (partial parallel after Evidence baseline) C3-T5 OpenAPI Action Catalog + Capability Projection
 → C3-T6 Expertise / Knowledge Governance + Retrieval Contracts
 → C3-T7 FAST|OPERATIONAL|REASONING + Structured Planner Foundation
@@ -425,8 +425,10 @@ SOURCE_LINKAGE_SEMANTICS = FROZEN_ACCEPTED
 C3_STARTED = YES
 C3_EXECUTED = NO
 C3_T2 = APPROVED
+C3_T3 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
 C3_T3_AUTHORIZED = YES
 C3_T3_EXECUTED = NO
+C3_T4_AUTHORIZED = NO
 ```
 
 ## C0.S2 — Authorities / bounded contexts
@@ -685,8 +687,10 @@ C3_T2_AUTHORIZED = YES
 C3_T3_AUTHORIZED = YES
 C3_T3_EXECUTED = NO
 PRODUCTION_READINESS = NOT_PROVEN
-NEXT = C3-T3 — Minimal Model Invocation + Eval/Lineage Foundation
-C2-FINAL accepted with residual; C3-T1 Architecture Review accepted (`ACCEPT_WITH_RESIDUAL`); C3-T2 APPROVED via `ARCHITECTURE_REVIEW_C3_T2R1` (`ACCEPT_WITH_RESIDUAL`; IMPLEMENTATION_HEAD=`d444e75f7`)
+NEXT = ARCHITECTURE_REVIEW_C3_T3
+C3_T3 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+C3_T4_AUTHORIZED = NO
+C2-FINAL accepted with residual; C3-T1 Architecture Review accepted (`ACCEPT_WITH_RESIDUAL`); C3-T2 APPROVED via `ARCHITECTURE_REVIEW_C3_T2R1` (`ACCEPT_WITH_RESIDUAL`; IMPLEMENTATION_HEAD=`d444e75f7`); C3-T3 candidate (provider-neutral invocation + eval lineage; REAL_PROVIDER_ADAPTER=NONE)
 Workspace binding remains unscheduled
 ```
 

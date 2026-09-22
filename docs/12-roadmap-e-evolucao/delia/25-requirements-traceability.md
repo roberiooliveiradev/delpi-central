@@ -45,8 +45,8 @@ OUT_OF_SCOPE_WITH_DECISION
 | ID | Requisito | Owner | Gate | Status |
 |---|---|---|---|---|
 | CP-051 | Correlação/observabilidade transversal | DÉLIA API/Portal/Observability | contracts/traces | PLANNED |
-| CP-055 | Prompt/tool/context injection safety | DÉLIA Policy | security semantics | PLANNED |
-| CP-056 | Secret redaction | todos os owners | redaction contract | PLANNED |
+| CP-055 | Prompt/tool/context injection safety | DÉLIA Policy | security semantics | PLANNED — C3-T3 invocation boundary rejects untrusted mutation of authority/policy metadata; full Policy/runtime injection platform NOT_IMPLEMENTED |
+| CP-056 | Secret redaction | todos os owners | redaction contract | PLANNED — C3-T3 rejects secret/token fields in invocation input/output and omits them from safe observability; platform-wide redaction runtime NOT_IMPLEMENTED |
 | CP-057 | Idempotency semantics de writes | Domain API + DÉLIA orchestration | C0 contract; runtime C5 | PLANNED |
 | CP-072 | Expertise Pack versionado | DÉLIA API | primitive/schema | PLANNED |
 | CP-075 | Domain Playbook versionado | DÉLIA API/domain owners | primitive/schema | PLANNED |
@@ -234,7 +234,7 @@ OUT_OF_SCOPE_WITH_DECISION
 | CP-282 | Sandbox executa análise read-only reproduzível com SourceRefs/runtime/code hash/parameters e não permite DDL/DML por connector analítico read-only | DÉLIA Analysis | reproducible analysis gate | LOCKED |
 | CP-289 | Predictive reads mostram model/version/horizon/freshness/calibration/limitations e degradam explicitamente em stale/OOD/unavailable | DÉLIA Predictive | predictive read eval | LOCKED |
 | CP-297 | Edge read-only/offline cache preserva source revision/syncedAt/freshness e sinaliza ou bloqueia conteúdo stale conforme criticidade | DÉLIA Edge/Frontline | offline freshness gate | LOCKED |
-| CP-304 | Uso de modelo material gera lineage suficiente para ligar prediction/result ao model/version/eval/deployment ref sem expor segredo | DÉLIA Model Governance/Evidence | model lineage gate | LOCKED |
+| CP-304 | Uso de modelo material gera lineage suficiente para ligar prediction/result ao model/version/eval/deployment ref sem expor segredo | DÉLIA Model Governance/Evidence | model lineage gate | LOCKED — C3-T3 candidate adds invocation lineage/eval identity bound to ModelRef without secrets; no production model use; not CP PASS |
 
 ## 7. C5 — Governed ACT + Durable Work + Prepared Intelligence
 
@@ -888,4 +888,34 @@ C3_T3_EXECUTED = NO
 PRODUCTION_READINESS = NOT_PROVEN
 RUNTIME_DIFF = NONE (C3-T2R2 persistence task; reviewed implementation already at d444e75f7)
 NEXT = C3-T3 — Minimal Model Invocation + Eval/Lineage Foundation
+```
+
+## 24. C3-T3 model invocation / eval lineage — candidate
+
+Evidence anchors: `21` §4C; `17` C3-T3 block; `20` Gate C3-T3; ledger §6.67.
+
+```text
+C3_T3 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+C3_STARTED = YES
+C3_EXECUTED = NO
+C3_T1 = APPROVED
+C3_T2 = APPROVED
+C3_T4_AUTHORIZED = NO
+MODEL_INVOCATION_FOUNDATION = IMPLEMENTED
+EVAL_LINEAGE_FOUNDATION = IMPLEMENTED
+REAL_PROVIDER_ADAPTER = NONE
+REAL_MODEL_CALL = BLOCKED_BY_EXTERNAL_CONFIGURATION
+MODEL_OUTPUT_AUTO_FACT = NO
+PERSISTENCE = NONE
+MIGRATION = NONE
+RUNTIME_CP_PROMOTED_TO_PASS = NO
+NEW_CP_CREATED = NO
+CP-055 = PLANNED (invocation-boundary contribution only)
+CP-056 = PLANNED (invocation-boundary contribution only)
+CP-093 = PLANNED / PARTIAL (unchanged)
+CP-094 = PLANNED / PARTIAL (unchanged)
+CP-304 = LOCKED (lineage foundation candidate; not PASS)
+CP-303 = LOCKED (no Model Registry)
+PRODUCTION_READINESS = NOT_PROVEN
+NEXT = ARCHITECTURE_REVIEW_C3_T3
 ```
