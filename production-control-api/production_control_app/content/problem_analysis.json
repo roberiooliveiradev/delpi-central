@@ -41,6 +41,34 @@
       "issuedFromDays": 730,
       "excludedRootPrefixes": [],
       "excludedComponentCodes": []
+    },
+    {
+      "id": "uncovered-demand-lines",
+      "title": "Demanda sem cobertura",
+      "description": "Linhas da carteira com saldo aberto sem estoque nem OP suficiente, ou com OP só depois da entrega.",
+      "actionHint": "Programe OP ou ajuste a data prevista antes da entrega prometida ao cliente.",
+      "icon": "package-search",
+      "order": 3,
+      "pageSize": 50,
+      "severity": {
+        "uncovered": "critical",
+        "late_op": "attention",
+        "clear": "ok"
+      }
+    },
+    {
+      "id": "shared-structure-intermediates",
+      "title": "Intermediários compartilhados",
+      "description": "Intermediários da estrutura vigente usados por mais de um PA com apontamento produtivo nos últimos 12 meses.",
+      "actionHint": "Revise engenharia e programação: alteração no intermediário impacta todos os PAs listados.",
+      "icon": "git-branch",
+      "order": 4,
+      "pageSize": 50,
+      "movementLookbackDays": 365,
+      "severity": {
+        "shared": "attention",
+        "clear": "ok"
+      }
     }
   ]
 }

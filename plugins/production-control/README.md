@@ -63,6 +63,10 @@ O terceiro card (`?issue=pa-shortage&q=90263114`) é uma **consulta**: o PCP inf
 
 **Quantidades incorretas (`?detector=order-set-quantity-mismatches`):** para intermediários que **já têm** OP no conjunto, compara `C2_QUANT` da filha com a necessidade da estrutura (`C2_QUANT` da mãe × `G1_QUANT` acumulada). *Abaixo* / *Acima* = quantidade diferente (igualdade estrita). Falta de OP continua só no detector de conjuntos incompletos. A linha mostra esperado × atual por intermediário.
 
+**Demanda sem cobertura (`?detector=uncovered-demand-lines`):** mesma regra da aba Demanda (`DemandCoverageService`). *Sem cobertura* = saldo aberto sem estoque nem OP suficiente; *OP após entrega* = há OP, mas só termina depois da data prometida (badge «Em risco»). A linha mostra pedido/item, produto, cliente, entrega, saldo, quantidade descoberta e a situação.
+
+**Intermediários compartilhados (`?detector=shared-structure-intermediates`):** PI/PA da estrutura vigente usados por **≥ 2 PAs** com apontamento produtivo nos últimos 12 meses (`GET /production/shared-structure-intermediates`). A linha mostra o intermediário, tipo, quantidade de PAs e a lista de acabados.
+
 **Fila de atraso da home:** clicar numa OP atrasada abre a **Carga máquina** com `?locate=` na OP — de lá dá para priorizar, transferir ou tirar o conjunto da programação. A gestão à vista continua consumindo `GET /overview`.
 
 **Em produção agora:** a coluna *Situação* mostra `production_status` vindo da API (apontamento `HZA010`). Operação rodando ganha linha verde, ponto pulsante, nome do operador e horário de início. Operação *Já apontada* exibe o último operador, tacha a linha e suaviza o contraste. A aba do centro de trabalho recebe o ponto só quando há OP em produção; o resumo do período mostra quantas estão na máquina. A UI é render-only — quem decide o status é a api-delpi, o MFE só mapeia `production_status` → rótulo e variante (`utils/machineLoadStatus.ts`).

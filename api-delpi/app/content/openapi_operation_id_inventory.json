@@ -2832,6 +2832,13 @@
       "stable": true
     },
     {
+      "operationId": "get_production_shared_structure_intermediates",
+      "method": "GET",
+      "path": "/production/shared-structure-intermediates",
+      "tag": "Produção — Estrutura compartilhada",
+      "stable": true
+    },
+    {
       "operationId": "get_production_cost_pct",
       "method": "GET",
       "path": "/production/production_cost_pct",

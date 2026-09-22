@@ -8,6 +8,10 @@ export const helpTooltips = {
     "Compara a estrutura do produto raiz (vigente na emissão da OP mãe) com as OPs criadas no mesmo conjunto. Falta = intermediário da estrutura sem OP. Sobra = OP de produto fora da estrutura. Matéria-prima não entra.",
   quantityMismatches:
     "Compara a quantidade de cada intermediário com OP no conjunto à necessidade da estrutura para a quantidade da OP mãe. Abaixo = OP filha menor que o esperado. Acima = OP filha maior. Só entram códigos que já existem no conjunto; falta de OP fica no detector de conjuntos incompletos.",
+  uncoveredDemand:
+    "Mesma regra da aba Demanda: saldo aberto sem estoque nem OP suficiente (sem cobertura), ou OP prevista só depois da entrega ao cliente. Atrasadas com buraco também aparecem aqui.",
+  sharedStructureIntermediates:
+    "Intermediários PI/PA da estrutura vigente hoje que aparecem em mais de um PA com apontamento produtivo nos últimos 12 meses. Alteração de engenharia nesse código impacta todos os acabados listados.",
   machineLoad:
     "Fila de operações alocadas (SH8) congelada por filial e período. A fila de todos os CTs é carregada de uma vez, então trocar de aba é imediato. O status «em produção» vem da HZA e se atualiza sozinho a cada 30 s, sem recarregar a fila. «Já apontada» (linha tachada / Limpar fila) só vale quando o saldo da própria operação acabou — apontamento parcial continua na fila. O saldo do cabeçalho da OP só muda na última operação do roteiro. Use Atualizar para regenerar a programação a partir do TOTVS. O rastreio localiza o conjunto (C2_NUM) ou o produto (PA) em todos os CTs.",
   machineLoadLocate:

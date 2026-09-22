@@ -342,6 +342,52 @@ export const copy = {
       componentLevel: (level: number) => `nível ${level}`,
       openOrders: (open: number, total: number) => `${open} de ${total} em aberto`,
     },
+    uncoveredDemand: {
+      empty: "Nenhuma linha descoberta neste recorte.",
+      emptyHint:
+        "Toda linha em aberto tem estoque ou OP cobrindo o saldo até a data de entrega.",
+      emptyFilter: (query: string) =>
+        `Nenhum produto ou cliente correspondente a «${query}».`,
+      rootFilterLabel: "Produto ou cliente",
+      rootFilterPlaceholder: "Código do PA ou nome do cliente…",
+      rootFilterAria: "Filtrar demanda pelo produto ou cliente",
+      rootFilterClear: "Limpar filtro",
+      checked: (n: number) => `${n} linha${n === 1 ? "" : "s"} conferida${n === 1 ? "" : "s"}`,
+      breakdown: (uncovered: number, lateOp: number) =>
+        `${uncovered} sem cobertura · ${lateOp} OP após entrega`,
+      columns: {
+        order: "Pedido",
+        product: "Produto",
+        customer: "Cliente",
+        due: "Entrega",
+        open: "Saldo",
+        uncovered: "Descoberto",
+      },
+      uncoveredLabel: "Sem cobertura:",
+      lateOpLabel: "OP após entrega:",
+      qtyUncovered: (qty: string) => `${qty} sem OP/estoque`,
+      coverageDate: (date: string) => `OP até ${date}`,
+    },
+    sharedStructure: {
+      empty: "Nenhum intermediário compartilhado neste recorte.",
+      emptyHint:
+        "Nenhum PI/PA da estrutura vigente aparece em mais de um PA com apontamento nos últimos 12 meses.",
+      emptyFilter: (query: string) =>
+        `Nenhum intermediário ou PA correspondente a «${query}».`,
+      rootFilterLabel: "Intermediário ou PA",
+      rootFilterPlaceholder: "Código do PI/PA ou do acabado…",
+      rootFilterAria: "Filtrar pelo intermediário ou PA compartilhado",
+      rootFilterClear: "Limpar filtro",
+      checked: (n: number) => `${n} PA${n === 1 ? "" : "s"} ativo${n === 1 ? "" : "s"} conferido${n === 1 ? "" : "s"}`,
+      breakdown: (shared: number, maxPas: number) =>
+        `${shared} compartilhado${shared === 1 ? "" : "s"} · até ${maxPas} PAs`,
+      columns: {
+        intermediate: "Intermediário",
+        type: "Tipo",
+        pas: "PAs",
+        products: "Acabados que usam",
+      },
+    },
   },
   demand: {
     title: "Demanda",

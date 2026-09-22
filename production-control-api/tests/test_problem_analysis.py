@@ -16,6 +16,21 @@ from production_control_app.application.services.detectors.order_set_quantity_mi
     DETECTOR_ID as QTY_DETECTOR_ID,
     OrderSetQuantityMismatchesDetector,
 )
+from production_control_app.application.services.detectors.uncovered_demand_detector import (
+    DETECTOR_ID as DEMAND_DETECTOR_ID,
+    UncoveredDemandDetector,
+)
+from production_control_app.application.services.detectors.shared_structure_intermediates_detector import (
+    DETECTOR_ID as SHARED_DETECTOR_ID,
+    SharedStructureIntermediatesDetector,
+)
+from production_control_app.application.services.demand_service import (
+    DemandService,
+    _DemandSnapshotCache,
+)
+from production_control_app.domain.services.demand_coverage_service import (
+    DemandCoverageService,
+)
 from production_control_app.application.services.problem_analysis_service import (
     ProblemAnalysisService,
 )
@@ -80,6 +95,8 @@ class FakeSetsGateway:
         *,
         quantity_items: list[dict[str, Any]] | None = None,
         quantity_summary: dict[str, Any] | None = None,
+        shared_items: list[dict[str, Any]] | None = None,
+        shared_summary: dict[str, Any] | None = None,
         error: Exception | None = None,
     ) -> None:
         self.items = items or []
@@ -96,8 +113,16 @@ class FakeSetsGateway:
             "under_set_count": len(self.quantity_items),
             "over_set_count": 0,
         }
+        self.shared_items = shared_items or []
+        self.shared_summary = shared_summary or {
+            "checked_pa_count": 10,
+            "shared_intermediate_count": len(self.shared_items),
+            "max_shared_pa_count": 2 if self.shared_items else 0,
+        }
         self.error = error
         self.calls: list[dict[str, Any]] = []
+        self.sales_orders: list[dict[str, Any]] = []
+        self.production_orders: list[dict[str, Any]] = []
 
     def fetch_production_order_sets_incomplete(
         self,
@@ -163,6 +188,52 @@ class FakeSetsGateway:
             },
         }
 
+    def fetch_open_sales_orders(self) -> dict[str, Any]:
+        self.calls.append({"kind": "sales_orders"})
+        if self.error is not None:
+            raise self.error
+        return {"data": {"items": self.sales_orders, "summary": {}}}
+
+    def fetch_open_production_orders(self) -> dict[str, Any]:
+        self.calls.append({"kind": "production_orders"})
+        if self.error is not None:
+            raise self.error
+        return {"data": {"items": self.production_orders, "resumo": []}}
+
+    def fetch_production_shared_structure_intermediates(
+        self,
+        *,
+        branch: str,
+        movement_from: str,
+        lookback_days: int,
+        page: int,
+        page_size: int,
+    ) -> dict[str, Any]:
+        self.calls.append(
+            {
+                "kind": "shared_structure",
+                "branch": branch,
+                "movement_from": movement_from,
+                "lookback_days": lookback_days,
+                "page": page,
+                "page_size": page_size,
+            }
+        )
+        if self.error is not None:
+            raise self.error
+        return {
+            "success": True,
+            "data": {
+                "items": self.shared_items,
+                "summary": self.shared_summary,
+                "pagination": {
+                    "page": page,
+                    "page_size": page_size,
+                    "total": self.shared_summary["shared_intermediate_count"],
+                },
+            },
+        }
+
 
 def _qty_row(**overrides: Any) -> dict[str, Any]:
     row = {
@@ -193,6 +264,21 @@ def _qty_row(**overrides: Any) -> dict[str, Any]:
             }
         ],
         "over_components": [],
+    }
+    row.update(overrides)
+    return row
+
+
+def _shared_row(**overrides: Any) -> dict[str, Any]:
+    row = {
+        "intermediate_code": "50320064",
+        "intermediate_description": "PI COMPARTILHADO",
+        "intermediate_type": "PI",
+        "shared_pa_count": 2,
+        "finished_products": [
+            {"product_code": "90262910", "description": "PA A", "bom_level": 1},
+            {"product_code": "90262911", "description": "PA B", "bom_level": 2},
+        ],
     }
     row.update(overrides)
     return row
@@ -238,6 +324,8 @@ def test_catalog_declares_incomplete_order_sets_detector() -> None:
     ids = [entry["id"] for entry in detector_catalog()]
     assert DETECTOR_ID in ids
     assert QTY_DETECTOR_ID in ids
+    assert DEMAND_DETECTOR_ID in ids
+    assert SHARED_DETECTOR_ID in ids
     entry = detector_entry(DETECTOR_ID)
     assert entry is not None
     assert entry["title"]
@@ -245,6 +333,12 @@ def test_catalog_declares_incomplete_order_sets_detector() -> None:
     qty_entry = detector_entry(QTY_DETECTOR_ID)
     assert qty_entry is not None
     assert qty_entry["title"] == "Quantidades incorretas"
+    demand_entry = detector_entry(DEMAND_DETECTOR_ID)
+    assert demand_entry is not None
+    assert demand_entry["title"] == "Demanda sem cobertura"
+    shared_entry = detector_entry(SHARED_DETECTOR_ID)
+    assert shared_entry is not None
+    assert shared_entry["title"] == "Intermediários compartilhados"
 
 
 def test_cards_come_from_catalog_and_detector_summary() -> None:
@@ -473,6 +567,152 @@ def test_routes_expose_quantity_mismatch_detector(monkeypatch: pytest.MonkeyPatc
     payload = items.json()["data"]
     assert payload["items"][0]["set_key"] == "24719201"
     assert payload["items"][0]["root_quantity"] == 2.0
+
+
+def test_uncovered_demand_detector_flags_hole_and_late_op() -> None:
+    gateway = FakeSetsGateway()
+    gateway.sales_orders = [
+        {
+            "nome_cliente": "CLIENTE A",
+            "tipo_entidade": "CLIENTE",
+            "tipo_pedido": "N",
+            "pedido_cliente": "PO-1",
+            "filial": "01",
+            "pedido": "045123",
+            "linha": "01",
+            "produto": "90262910",
+            "codigo_cliente": "C001",
+            "codigo_cadastro": "000123",
+            "loja_cadastro": "01",
+            "quantidade": 100.0,
+            "entregue": 40.0,
+            "saldo": 60.0,
+            "data_despacho": "2026-08-20",
+            "data_entrega": "2026-08-25",
+            "no_estoque": 0.0,
+        },
+        {
+            "nome_cliente": "CLIENTE B",
+            "tipo_entidade": "CLIENTE",
+            "tipo_pedido": "N",
+            "pedido_cliente": "PO-2",
+            "filial": "01",
+            "pedido": "045124",
+            "linha": "01",
+            "produto": "90262911",
+            "codigo_cliente": "C002",
+            "codigo_cadastro": "000124",
+            "loja_cadastro": "01",
+            "quantidade": 10.0,
+            "entregue": 0.0,
+            "saldo": 10.0,
+            "data_despacho": "2026-08-20",
+            "data_entrega": "2026-08-22",
+            "no_estoque": 0.0,
+        },
+    ]
+    gateway.production_orders = [
+        {
+            "filial": "01",
+            "numero_op": "10840401001",
+            "produto": "90262911",
+            "saldo_op": 10.0,
+            "data_fim_prevista_op": "2026-08-30",
+        }
+    ]
+    demand = DemandService(
+        gateway,
+        today=date(2026, 8, 21),
+        coverage=DemandCoverageService(today=date(2026, 8, 21)),
+        cache=_DemandSnapshotCache(0),
+    )
+    detector = UncoveredDemandDetector(
+        gateway,
+        settings=detector_entry(DEMAND_DETECTOR_ID) or {},
+        today=date(2026, 8, 21),
+        demand_service=demand,
+    )
+    page = detector.collect(branch="01", page=1, page_size=50)
+    assert page.total == 2
+    kinds = {item["issue_kind"] for item in page.items}
+    assert kinds == {"uncovered", "late_op"}
+    uncovered = next(item for item in page.items if item["issue_kind"] == "uncovered")
+    assert uncovered["severity"] == "critical"
+    assert uncovered["uncovered_quantity"] == 60.0
+    late_op = next(item for item in page.items if item["issue_kind"] == "late_op")
+    assert late_op["severity"] == "attention"
+    summary = detector.summarize(branch="01")
+    assert summary.severity == "critical"
+    assert summary.metrics["uncovered_line_count"] == 1
+    assert summary.metrics["late_op_line_count"] == 1
+
+
+def test_routes_expose_uncovered_demand_detector(monkeypatch: pytest.MonkeyPatch) -> None:
+    gateway = FakeSetsGateway()
+    gateway.sales_orders = [
+        {
+            "nome_cliente": "CLIENTE A",
+            "tipo_entidade": "CLIENTE",
+            "tipo_pedido": "N",
+            "pedido_cliente": "PO-1",
+            "filial": "01",
+            "pedido": "045123",
+            "linha": "01",
+            "produto": "90262910",
+            "codigo_cliente": "C001",
+            "codigo_cadastro": "000123",
+            "loja_cadastro": "01",
+            "quantidade": 100.0,
+            "entregue": 40.0,
+            "saldo": 60.0,
+            "data_despacho": "2026-08-20",
+            "data_entrega": "2026-08-25",
+            "no_estoque": 0.0,
+        }
+    ]
+    client = _client(gateway, monkeypatch)
+    cards = client.get("/problem-analysis", params={"branch": "01"})
+    ids = [item["id"] for item in cards.json()["data"]["detectors"]]
+    assert DEMAND_DETECTOR_ID in ids
+
+    items = client.get(f"/problem-analysis/{DEMAND_DETECTOR_ID}", params={"branch": "01"})
+    assert items.status_code == 200
+    payload = items.json()["data"]
+    assert payload["items"][0]["product_code"] == "90262910"
+    assert payload["items"][0]["issue_kind"] == "uncovered"
+
+
+def test_shared_structure_detector_maps_items() -> None:
+    gateway = FakeSetsGateway(shared_items=[_shared_row()])
+    settings = detector_entry(SHARED_DETECTOR_ID) or {}
+    detector = SharedStructureIntermediatesDetector(
+        gateway,
+        settings=settings,
+        today=date(2026, 9, 21),
+    )
+    page = detector.collect(branch="01", page=1, page_size=50)
+    assert page.total == 1
+    item = page.items[0]
+    assert item["intermediate_code"] == "50320064"
+    assert item["severity"] == "attention"
+    assert len(item["finished_products"]) == 2
+    summary = detector.summarize(branch="01")
+    assert summary.metrics["checked_pa_count"] == 10
+    assert gateway.calls[0]["movement_from"] == "2025-09-21"
+
+
+def test_routes_expose_shared_structure_detector(monkeypatch: pytest.MonkeyPatch) -> None:
+    gateway = FakeSetsGateway(shared_items=[_shared_row()])
+    client = _client(gateway, monkeypatch)
+    cards = client.get("/problem-analysis", params={"branch": "01"})
+    ids = [item["id"] for item in cards.json()["data"]["detectors"]]
+    assert SHARED_DETECTOR_ID in ids
+
+    items = client.get(f"/problem-analysis/{SHARED_DETECTOR_ID}", params={"branch": "01"})
+    assert items.status_code == 200
+    payload = items.json()["data"]
+    assert payload["items"][0]["intermediate_code"] == "50320064"
+    assert payload["items"][0]["shared_pa_count"] == 2
 
 
 def test_branch_gate_rejects_other_filial() -> None:

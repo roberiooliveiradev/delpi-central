@@ -43,7 +43,7 @@ Home: `/apps/production-control?branch=01`. Demanda: `/apps/production-control/d
 | `home` | ativo | Gestão à vista (OTD do mês, OPs atrasadas, fila) |
 | `demand` | ativo | Carteira a entregar: saldo por cliente/produto/data com cobertura por estoque e OP |
 | `machine-load` | ativo | Sequenciamento SH8 congelado por filial (janela por entrega do PA) + status HZA vivo + refresh sob confirmação |
-| `problem-analysis` | ativo | Grade de detectores de exceção (primeiro: conjuntos incompletos) |
+| `problem-analysis` | ativo | Grade de detectores de exceção (conjuntos, quantidades, demanda, intermediários compartilhados) |
 | `materials` | ativo | Excesso e falta de SC1 de MP vs ESTSEG + consulta de ruptura de MP no conjunto do PA |
 | `delivery-map` | ativo | OPs PA com saldo, agrupadas por entrega prevista; MP-OK/CT manuais; snapshot congelado |
 | `capacity` | em breve | Capacidade e ocupação percentual por CT |

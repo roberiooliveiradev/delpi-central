@@ -104,6 +104,17 @@ class ProductionOrdersGateway(Protocol):
     ) -> dict[str, Any]:
         ...
 
+    def fetch_production_shared_structure_intermediates(
+        self,
+        *,
+        branch: str,
+        movement_from: str,
+        lookback_days: int,
+        page: int,
+        page_size: int,
+    ) -> dict[str, Any]:
+        ...
+
     def fetch_production_appointments_series(
         self,
         *,

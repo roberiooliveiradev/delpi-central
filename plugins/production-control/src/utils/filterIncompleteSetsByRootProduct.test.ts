@@ -75,4 +75,24 @@ describe("filterIncompleteSetsByRootProduct", () => {
   it("filtra a lista", () => {
     expect(filterIncompleteSetsByRootProduct(rows, "90").map((row) => row.id)).toEqual(["2"]);
   });
+
+  it("casa PA listado em finished_products", () => {
+    const shared = {
+      id: "shared:50320064",
+      kind: "shared-structure-intermediates",
+      severity: "attention" as const,
+      intermediate_code: "50320064",
+      intermediate_description: "PI A",
+      intermediate_type: "PI",
+      shared_pa_count: 2,
+      finished_products: [
+        { product_code: "90262910", description: "PA X", bom_level: 1 },
+        { product_code: "90262911", description: null, bom_level: 2 },
+      ],
+      root_code: "50320064",
+      root_description: "PI A",
+    };
+    expect(matchesRootProductQuery(shared, "90262911")).toBe(true);
+    expect(filterIncompleteSetsByRootProduct([shared], "62910")).toHaveLength(1);
+  });
 });

@@ -376,6 +376,9 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "get_production_order_sets_quantity_mismatches": RouteContract(
         "production_order_sets_quantity_mismatches", "paged_list"
     ),
+    "get_production_shared_structure_intermediates": RouteContract(
+        "production_shared_structure_intermediates", "paged_list"
+    ),
     "get_production_oee": RouteContract("production_oee_detail", "paged_list"),
     "get_production_oee_appointment_by_id": RouteContract(
         "production_oee_appointment",
