@@ -114,6 +114,9 @@ function messageFor(error: unknown): { code: string; text: string } {
   if (error instanceof HelpdeskApiError) {
     return { code: error.code, text: MESSAGES[error.code] || "Não foi possível concluir a operação." };
   }
+  if (error instanceof Error && error.message.startsWith("Não foi possível")) {
+    return { code: "user_message", text: error.message };
+  }
   return { code: "request_failed", text: "Não foi possível concluir a operação." };
 }
 

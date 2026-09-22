@@ -37,6 +37,11 @@ import {
 import { Paperclip } from "lucide-react";
 
 import { appendInlineImageHtml } from "../presentation/inlineUpload";
+import {
+  clipboardLooksLikeImagePaste,
+  collectPasteImageFiles,
+  readClipboardImageFiles,
+} from "../presentation/clipboardImages";
 
 export { usePersistedViewLayout };
 
@@ -147,19 +152,6 @@ export type HelpdeskRichTextFieldProps = {
   accept?: string;
 };
 
-function clipboardImageFiles(data: DataTransfer | null | undefined): File[] {
-  if (!data) return [];
-  const fromFiles = Array.from(data.files || []).filter((file) => file.type.startsWith("image/"));
-  if (fromFiles.length > 0) return fromFiles;
-  const fromItems: File[] = [];
-  for (const item of Array.from(data.items || [])) {
-    if (item.kind !== "file" || !item.type.startsWith("image/")) continue;
-    const file = item.getAsFile();
-    if (file) fromItems.push(file);
-  }
-  return fromItems;
-}
-
 /** Same RichTextEditor for open + reply (M-28). H12 adds paste/attach without MentionComposer. */
 export function HelpdeskRichTextField({
   label,
@@ -177,13 +169,15 @@ export function HelpdeskRichTextField({
 }: HelpdeskRichTextFieldProps) {
   const fileRef = useRef<HTMLInputElement>(null);
   const uploadingRef = useRef(false);
+  const valueRef = useRef(value);
+  valueRef.current = value;
 
   const ingestFiles = async (files: File[]) => {
     if (!onUploadFiles || disabled || uploadingRef.current || files.length === 0) return;
     uploadingRef.current = true;
     try {
       const results = await onUploadFiles(files);
-      let next = value;
+      let next = valueRef.current;
       for (const item of results) {
         if (item.kind === "uploaded") {
           next = appendInlineImageHtml(next, {
@@ -199,7 +193,7 @@ export function HelpdeskRichTextField({
           });
         }
       }
-      if (next !== value) onChange(next);
+      if (next !== valueRef.current) onChange(next);
     } catch (error) {
       onUploadError?.(error);
     } finally {
@@ -209,16 +203,36 @@ export function HelpdeskRichTextField({
 
   const onPasteCapture = (event: ClipboardEvent<HTMLDivElement>) => {
     if (!onUploadFiles || disabled) return;
-    const files = clipboardImageFiles(event.clipboardData);
-    if (files.length === 0) return;
+    const syncFiles = collectPasteImageFiles(event.clipboardData);
+    if (syncFiles.length > 0) {
+      event.preventDefault();
+      event.stopPropagation();
+      void ingestFiles(syncFiles);
+      return;
+    }
+    if (!clipboardLooksLikeImagePaste(event.clipboardData)) return;
+    // Win Snipping Tool / Edge: image hinted but File not in DataTransfer — read async.
     event.preventDefault();
     event.stopPropagation();
-    void ingestFiles(files);
+    void (async () => {
+      const asyncFiles = await readClipboardImageFiles();
+      if (asyncFiles.length > 0) {
+        await ingestFiles(asyncFiles);
+        return;
+      }
+      onUploadError?.(
+        new Error(
+          "Não foi possível ler a imagem da área de transferência. Use o clipe ou arraste o arquivo.",
+        ),
+      );
+    })();
   };
 
   const onDrop = (event: DragEvent<HTMLDivElement>) => {
     if (!onUploadFiles || disabled) return;
-    const files = Array.from(event.dataTransfer?.files || []);
+    const files = Array.from(event.dataTransfer?.files || []).filter((file) =>
+      (file.type || "").startsWith("image/") || /\.(png|jpe?g|gif|webp|bmp)$/i.test(file.name || ""),
+    );
     if (files.length === 0) return;
     event.preventDefault();
     event.stopPropagation();
