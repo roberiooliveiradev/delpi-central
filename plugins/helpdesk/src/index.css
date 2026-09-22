@@ -548,6 +548,44 @@
   padding: 0.35rem 0.6rem;
 }
 
+.dashboard-helpdesk .helpdesk-assignee-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.dashboard-helpdesk .helpdesk-assignee-picker__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  max-width: 100%;
+}
+
+.dashboard-helpdesk .helpdesk-assignee-picker__chip-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.2;
+}
+
+.dashboard-helpdesk .helpdesk-assignee-picker__chip-text strong {
+  font-weight: 600;
+}
+
+.dashboard-helpdesk .helpdesk-assignee-picker__chip-text span {
+  font-size: 0.75rem;
+  color: var(--helpdesk-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dashboard-helpdesk .helpdesk-assignee-picker__empty {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--helpdesk-text-muted);
+}
+
 @media (max-width: 640px) {
   .dashboard-helpdesk .helpdesk-lifecycle-cue__cta {
     width: 100%;

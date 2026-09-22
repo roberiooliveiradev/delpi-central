@@ -38,8 +38,8 @@ describe("helpTooltips budget", () => {
   });
 
   it("cobre atribuição de técnico na abertura e no detalhe", () => {
-    expect(helpTooltips.createUi.assignee).toMatch(/técnico|perfil/i);
-    expect(helpTooltips.detailUi.assignee).toMatch(/técnico|atribu/i);
+    expect(helpTooltips.createUi.assignee).toMatch(/Minha DELPI|e-mail|email/i);
+    expect(helpTooltips.detailUi.assignee).toMatch(/Minha DELPI|e-mail|email|atribu/i);
     expect(helpTooltips.detailUi.assigneeAction).toMatch(/atribui/i);
   });
 

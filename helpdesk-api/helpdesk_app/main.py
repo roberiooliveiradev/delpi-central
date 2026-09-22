@@ -12,6 +12,7 @@ from helpdesk_app.application.oauth_service import OAuthService
 from helpdesk_app.application.ticket_service import TicketService
 from helpdesk_app.config import settings
 from helpdesk_app.domain.errors import HelpdeskError
+from helpdesk_app.infrastructure.core_directory_service import CoreDirectoryService
 from helpdesk_app.infrastructure.crypto import TokenCipher
 from helpdesk_app.infrastructure.glpi.http_client import HttpxGlpiClient
 from helpdesk_app.infrastructure.persistence.postgres import (
@@ -62,7 +63,8 @@ def build_runtime():
     states = PostgresStateStore(cipher)
     sessions = PostgresSessionStore(cipher)
     oauth = OAuthService(glpi, states, sessions)
-    tickets = TicketService(glpi, oauth, PostgresIdempotencyStore())
+    directory = CoreDirectoryService()
+    tickets = TicketService(glpi, oauth, PostgresIdempotencyStore(), directory=directory)
     return oauth, tickets
 
 

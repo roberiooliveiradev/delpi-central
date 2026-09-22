@@ -725,8 +725,10 @@ def test_team_member_observer_body_is_hd011_safe():
     from helpdesk_app.infrastructure.glpi.mapping import (
         normalize_assignee_id,
         normalize_observer_ids,
+        parse_catalog_users,
         team_member_assigned_body,
         team_member_observer_body,
+        build_user_email_filter,
         build_user_search_filter,
     )
 
@@ -745,7 +747,22 @@ def test_team_member_observer_body_is_hd011_safe():
     name_filter = build_user_search_filter("micha")
     assert "username=like=*micha*" in name_filter
     assert "username=like=*Micha*" in name_filter
+    assert "email=like=*micha*" in name_filter
     assert name_filter.startswith("is_active==true;")
+    assert build_user_search_filter("ana@delpi.com.br") == "is_active==true;email==ana@delpi.com.br"
+    assert build_user_email_filter("Ana@Delpi.com.br") == "is_active==true;email==ana@delpi.com.br"
+    noise = parse_catalog_users(
+        [
+            {"id": 2, "username": "glpi", "firstname": "", "realname": ""},
+            {"id": 3, "username": "post-only"},
+            {"id": 7, "username": "minha-delpi-upload"},
+            {"id": 15, "username": "ana", "firstname": "Ana", "realname": "Silva", "email": "ana@delpi.com.br"},
+            {"id": 99, "username": "x", "firstname": 0, "realname": 0, "display_name": 0},
+        ]
+    )
+    assert [(u.id, u.display_name, u.email) for u in noise] == [
+        (15, "Ana Silva", "ana@delpi.com.br")
+    ]
     with pytest.raises(GlpiValidation):
         team_member_observer_body(0)
     with pytest.raises(GlpiValidation):

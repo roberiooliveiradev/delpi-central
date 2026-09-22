@@ -107,19 +107,24 @@ describe("Helpdesk list UX structural", () => {
 
   it("atribuição: picker no create/detail gated por can_assign + API users/assignee", () => {
     const page = read("HelpdeskPage.tsx");
+    const picker = read("../components/HelpdeskAssigneePicker.tsx");
     expect(page).toContain("getSessionCapabilities");
-    expect(page).toContain("listUsers");
+    expect(page).toContain("HelpdeskAssigneePicker");
     expect(page).toContain("setTicketAssignee");
     expect(page).toContain("canAssign");
     expect(page).toContain("ticket.can_assign");
     expect(page).toContain("helpdesk-assign-panel");
     expect(page).toContain("helpTooltips.createUi.assignee");
     expect(page).toContain("helpTooltips.detailUi.assignee");
-    expect(page).toContain('assignee_id: canAssign && assigneeId ? Number(assigneeId) : undefined');
+    expect(page).toContain("assignee_id: canAssign && assignee?.id ? Number(assignee.id) : undefined");
+    expect(picker).toContain("listUsers");
+    expect(picker).toContain("UserDirectoryPicker");
+    expect(picker).toContain("createInitialsAvatar");
     const api = read("../api/helpdeskApi.ts");
     expect(api).toContain("/users");
     expect(api).toContain("/session/capabilities");
     expect(api).toContain("/assignee");
+    expect(api).toContain("email?: string");
   });
 
   it("compose usa ConversationFileDropLayer do kit (sem onDrop ad hoc)", () => {

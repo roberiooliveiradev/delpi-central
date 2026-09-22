@@ -292,7 +292,8 @@ export const HelpdeskRichTextField = forwardRef<
                 id: String(user.id),
                 kind: "user",
                 label: user.display_name || String(user.id),
-                avatarName: user.display_name || String(user.id),
+                subtitle: (user.email || "").trim() || undefined,
+                avatarName: user.display_name || user.email || String(user.id),
               })),
             );
           })

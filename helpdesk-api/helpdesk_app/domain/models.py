@@ -30,6 +30,7 @@ class Category:
 class CatalogUser:
     id: int
     display_name: str
+    email: str = ""
 
 
 @dataclass(frozen=True)

@@ -5,7 +5,7 @@ import {
   HintAction,
   TableColumnVisibilityMenu,
 } from "@delpi/plugin-ui/index";
-import { AlignLeft, ArrowUpDown, ChevronLeft, ExternalLink, FilterX, FolderTree, Gauge, ListFilter, Plus, RefreshCw, Send, TicketPlus, Type, UserRound, Users } from "lucide-react";
+import { AlignLeft, ArrowUpDown, ChevronLeft, ExternalLink, FilterX, FolderTree, Gauge, ListFilter, Plus, RefreshCw, Send, TicketPlus, Type, Users } from "lucide-react";
 
 import {
   HelpdeskApiError,
@@ -20,13 +20,11 @@ import {
   listCategories,
   listTickets,
   listUrgencies,
-  listUsers,
   rejectTicketSolution,
   rejectTicketValidation,
   setTicketAssignee,
   submitTicketSatisfaction,
   uploadTicketAttachment,
-  type CatalogUser,
   type TicketAttachment,
   type TicketDetail,
   type TicketSummary,
@@ -102,6 +100,10 @@ import { TicketListFilterBuilder } from "./TicketListFilterBuilder";
 import { TicketListSortBuilder } from "./TicketListSortBuilder";
 import { TicketListTable } from "./TicketListTable";
 import { TicketListToolbar } from "./TicketListToolbar";
+import {
+  HelpdeskAssigneePicker,
+  type HelpdeskAssigneeValue,
+} from "../components/HelpdeskAssigneePicker";
 import {
   HELPDESK_TICKET_LIST_VIEW_LAYOUT_KEY,
   HelpdeskEmptyState,
@@ -543,9 +545,12 @@ function CreateTicketPage() {
     persistHelpdeskAttachmentHtml(savedDraft?.description ?? ""),
   );
   const [observerIdsInput, setObserverIdsInput] = useState(savedDraft?.observerIdsInput ?? "");
-  const [assigneeId, setAssigneeId] = useState(savedDraft?.assigneeId ?? "");
+  const [assignee, setAssignee] = useState<HelpdeskAssigneeValue | null>(() =>
+    savedDraft?.assigneeId
+      ? { id: savedDraft.assigneeId, name: `Usuário ${savedDraft.assigneeId}`, email: "" }
+      : null,
+  );
   const [canAssign, setCanAssign] = useState(false);
-  const [catalogUsers, setCatalogUsers] = useState<CatalogUser[]>([]);
   const [categoryId, setCategoryId] = useState(savedDraft?.categoryId ?? "");
   const [urgencyId, setUrgencyId] = useState(savedDraft?.urgencyId ?? "");
   const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
@@ -599,16 +604,12 @@ function CreateTicketPage() {
       listCategories(controller.signal),
       listUrgencies(controller.signal),
       getSessionCapabilities(controller.signal),
-      listUsers({ limit: 50 }, controller.signal),
     ])
-      .then(([categoryResult, urgencyResult, capsResult, usersResult]) => {
+      .then(([categoryResult, urgencyResult, capsResult]) => {
         if (controller.signal.aborted) return;
         const draft = readCreateDraft();
         if (capsResult.status === "fulfilled") {
           setCanAssign(Boolean(capsResult.value.can_assign));
-        }
-        if (usersResult.status === "fulfilled") {
-          setCatalogUsers(usersResult.value.items);
         }
         if (urgencyResult.status === "fulfilled") {
           const items = urgencyResult.value.items;
@@ -646,11 +647,11 @@ function CreateTicketPage() {
       title,
       description: persistHelpdeskAttachmentHtml(description),
       observerIdsInput,
-      assigneeId,
+      assigneeId: assignee?.id ?? "",
       categoryId,
       urgencyId,
     });
-  }, [title, description, observerIdsInput, assigneeId, categoryId, urgencyId]);
+  }, [title, description, observerIdsInput, assignee, categoryId, urgencyId]);
 
   const resolveCreatePendingSrc = useCallback(
     (attachmentId: string) => {
@@ -726,7 +727,7 @@ function CreateTicketPage() {
                 category_id: Number(categoryId),
                 urgency_id: Number(urgencyId),
                 observer_ids: parseObserverIdsInput(observerIdsInput),
-                assignee_id: canAssign && assigneeId ? Number(assigneeId) : undefined,
+                assignee_id: canAssign && assignee?.id ? Number(assignee.id) : undefined,
               },
               idempotencyKey,
             )
@@ -814,19 +815,12 @@ function CreateTicketPage() {
                 icon={<Gauge size={14} aria-hidden />}
               />
               {canAssign ? (
-                <HelpdeskSelect
+                <HelpdeskAssigneePicker
                   label="Técnico atribuído"
                   hint={helpTooltips.createUi.assignee}
-                  value={assigneeId}
-                  onChange={setAssigneeId}
-                  searchable
-                  allowEmpty
+                  value={assignee}
+                  onChange={setAssignee}
                   emptyLabel="Sem técnico"
-                  options={catalogUsers.map((item) => ({
-                    value: String(item.id),
-                    label: item.display_name,
-                  }))}
-                  icon={<UserRound size={14} aria-hidden />}
                 />
               ) : null}
               <HelpdeskTextField
@@ -879,8 +873,7 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
   const [inlinePreview, setInlinePreview] = useState<TicketAttachment | null>(null);
   /** False until IDB draft files are read — editor must not paint placeholder before seed (H4). */
   const [draftFilesReady, setDraftFilesReady] = useState(false);
-  const [assigneePick, setAssigneePick] = useState("");
-  const [catalogUsers, setCatalogUsers] = useState<CatalogUser[]>([]);
+  const [assigneePick, setAssigneePick] = useState<HelpdeskAssigneeValue | null>(null);
   const [assignSaving, setAssignSaving] = useState(false);
   const [assignKey, setAssignKey] = useState(newIdempotencyKey);
   const [cycleNote, setCycleNote] = useState("");
@@ -957,14 +950,15 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
     void getTicket(ticketId)
       .then((next) => {
         setTicket(next);
-        setAssigneePick(next.assigned_user_id ? String(next.assigned_user_id) : "");
-        if (next.can_assign) {
-          void listUsers({ limit: 50 })
-            .then((result) => setCatalogUsers(result.items))
-            .catch(() => setCatalogUsers([]));
-        } else {
-          setCatalogUsers([]);
-        }
+        setAssigneePick(
+          next.assigned_user_id
+            ? {
+                id: String(next.assigned_user_id),
+                name: (next.assigned_display_name || "").trim() || `Usuário ${next.assigned_user_id}`,
+                email: "",
+              }
+            : null,
+        );
       })
       .catch((error) => setErrorText(messageFor(error).text))
       .finally(() => setLoading(false));
@@ -975,8 +969,8 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
   }, [ticketId]);
 
   function assignTechnician() {
-    if (!ticket?.can_assign || !assigneePick || assignSaving) return;
-    const userId = Number(assigneePick);
+    if (!ticket?.can_assign || !assigneePick?.id || assignSaving) return;
+    const userId = Number(assigneePick.id);
     if (!Number.isFinite(userId) || userId <= 0) return;
     setAssignSaving(true);
     setErrorText(null);
@@ -991,6 +985,11 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
               }
             : current,
         );
+        setAssigneePick({
+          id: String(result.user_id),
+          name: result.assigned_display_name || assigneePick.name,
+          email: assigneePick.email,
+        });
         setAssignKey(newIdempotencyKey());
       })
       .catch((error) => setErrorText(messageFor(error).text))
@@ -1046,17 +1045,11 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
             />
             {ticket.can_assign ? (
               <div className="helpdesk-assign-panel" aria-label="Atribuir técnico">
-                <HelpdeskSelect
+                <HelpdeskAssigneePicker
                   label={ticket.assigned_user_id ? "Reatribuir técnico" : "Atribuir técnico"}
                   hint={helpTooltips.detailUi.assignee}
                   value={assigneePick}
                   onChange={setAssigneePick}
-                  searchable
-                  options={catalogUsers.map((item) => ({
-                    value: String(item.id),
-                    label: item.display_name,
-                  }))}
-                  icon={<UserRound size={14} aria-hidden />}
                 />
                 <HintAction
                   hint={helpTooltips.detailUi.assigneeAction}
@@ -1067,8 +1060,8 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                     type="button"
                     disabled={
                       assignSaving ||
-                      !assigneePick ||
-                      Number(assigneePick) === Number(ticket.assigned_user_id || 0)
+                      !assigneePick?.id ||
+                      Number(assigneePick.id) === Number(ticket.assigned_user_id || 0)
                     }
                     onClick={assignTechnician}
                   >

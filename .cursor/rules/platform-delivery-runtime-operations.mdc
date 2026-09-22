@@ -68,6 +68,18 @@ Não corrigir rota apenas em um nginx/compose deixando o outro ambiente divergen
 
 ## Deploy seguro
 
+### Local-first (obrigatório)
+
+**Nunca alterar produção diretamente** (SSH edit, rsync/scp da working tree, `docker cp`, patch no container, rebuild a partir de cópia não pushed).
+
+Fluxo canônico:
+
+```text
+alterar localmente → commit → push → deploy a partir do Git (pull + up/build)
+```
+
+Detalhe e anti-padrões: `local-first-deploy.mdc`.
+
 Antes de produção, avaliar:
 
 ```text
@@ -130,7 +142,8 @@ Operação de produção deve evitar:
 - delete amplo sem confirmação/plano;
 - comandos irreversíveis sem backup/rollback;
 - `docker exec` como configuração permanente;
-- alteração manual não codificada que será perdida no próximo deploy.
+- alteração manual não codificada que será perdida no próximo deploy;
+- qualquer mutação de código/config versionada no servidor fora do fluxo local → push → pull (`local-first-deploy.mdc`).
 
 ## Runbook e troubleshooting
 
@@ -159,6 +172,7 @@ Conforme mudança:
 
 ## Regras filhas/complementares
 
+- `local-first-deploy.mdc`
 - `infra-sequential-container-startup.mdc`
 - `plugins-frontend-build.mdc`
 - `migrations-immutable-checksum.mdc`

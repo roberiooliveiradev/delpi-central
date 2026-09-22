@@ -263,7 +263,55 @@ def test_list_users_returns_id_and_display_name():
     link(client)
     listed = client.get("/users?q=Ana", headers=auth_headers())
     assert listed.status_code == 200
-    assert listed.json()["items"] == [{"id": 15, "display_name": "Ana Silva"}]
+    assert listed.json()["items"] == [
+        {"id": 15, "display_name": "Ana Silva", "email": "ana.silva@delpi.com.br"}
+    ]
+
+
+def test_list_users_filters_system_and_noise_labels():
+    client, glpi = build_client()
+    link(client)
+    listed = client.get("/users", headers=auth_headers())
+    assert listed.status_code == 200
+    names = {item["display_name"] for item in listed.json()["items"]}
+    assert "Ana Silva" in names
+    assert "Bruno Costa" in names
+    assert "glpi" not in names
+    assert "0" not in names
+
+
+def test_list_users_enriches_from_minha_delpi_directory():
+    class FakeDirectory:
+        def configured(self):
+            return True
+
+        def search_users(self, *, q="", limit=20, browse=False):
+            assert browse is False
+            assert "ana" in (q or "").lower()
+            return [
+                {
+                    "id": "delpi-ana",
+                    "name": "Ana Silva Delpi",
+                    "email": "ana.silva@delpi.com.br",
+                },
+                {
+                    "id": "delpi-ghost",
+                    "name": "Sem GLPI",
+                    "email": "ghost@delpi.com.br",
+                },
+            ]
+
+    client, glpi = build_client(directory=FakeDirectory())
+    link(client)
+    listed = client.get("/users?q=ana", headers=auth_headers())
+    assert listed.status_code == 200
+    assert listed.json()["items"] == [
+        {
+            "id": 15,
+            "display_name": "Ana Silva Delpi",
+            "email": "ana.silva@delpi.com.br",
+        }
+    ]
 
 
 def test_create_and_followup_sanitize_html_and_keep_plain_text():

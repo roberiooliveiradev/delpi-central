@@ -1,0 +1,62 @@
+---
+description: Deploy — nunca alterar produção via SSH/rsync/docker exec; mudar localmente, commit/push e só então deploy por git/pull
+alwaysApply: false
+---
+
+# Deploy local-first — proibição de mutação direta em produção
+
+Owner transversal: `platform-delivery-runtime-operations.mdc`.
+
+## Princípio
+
+**Nunca alterar produção diretamente.** Toda mudança de código, config versionada, imagem ou artefato sobe assim:
+
+```text
+alterar localmente
+→ commit
+→ push
+→ deploy a partir do Git (pull + build/up canônico)
+```
+
+Produção consome o que está no repositório remoto. O servidor **não** é workspace de edição.
+
+## Proibido (agente e orientação)
+
+- editar arquivos no host/container de produção (`ssh` + `vim`/`sed`/`nano`);
+- `rsync`/`scp` de working tree local suja para sobrescrever prod;
+- `docker cp` / patch dentro do container como “hotfix”;
+- rebuild/up em prod a partir de cópia não commitada ou não pushed;
+- aplicar migration, seed ou script ad hoc em prod sem o mesmo artefato versionado no Git;
+- tratar `docker exec` / shell remoto como meio de “já deixar funcionando”.
+
+Pedido do tipo “deploy via SSH agora com o que está local” **não** autoriza mutação direta: commit + push primeiro; só então pull/deploy no servidor.
+
+## Permitido
+
+- desenvolvimento e validação **local** (WSL/dev compose);
+- `git commit` / `git push` quando o usuário pedir;
+- **orientar** (ou executar, se o usuário autorizar explicitamente após o push) o deploy canônico no servidor a partir do Git, ex.:
+
+```bash
+git pull
+./infra/scripts/up-prod-sequential.sh --pull --build
+# ou escopo menor: --fase / --build <serviço>
+```
+
+- leitura remota **somente** para diagnóstico (logs, `docker ps`, health) **sem** gravar arquivos nem rebuildar a partir de cópia suja;
+- hotfix legítimo = branch/commit local → push → mesmo pipeline de deploy.
+
+## Relação com outras regras
+
+- ordem de containers: `infra-sequential-container-startup.mdc` (como subir; **não** autoriza editar prod);
+- migrations: `plugins-migrations-no-reset-prod.mdc` + `platform-data-persistence.mdc`;
+- alteração dentro do container = desvio de clean architecture (sinal 15).
+
+## Checklist antes de qualquer ação em prod
+
+- [ ] Diff existe e está commitado localmente?
+- [ ] Push chegou ao remoto que a produção usa?
+- [ ] Deploy usa pull/build a partir desse Git — não rsync da working tree?
+- [ ] Nenhuma edição/arquivo criado só no servidor?
+
+Se qualquer item for “não”, **parar**. Não “adiantar” produção fora do Git.

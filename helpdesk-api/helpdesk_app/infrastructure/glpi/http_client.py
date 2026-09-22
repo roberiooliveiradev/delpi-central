@@ -29,6 +29,9 @@ from helpdesk_app.infrastructure.glpi.mapping import (
     URGENCIES,
     apply_viewer_identity,
     apply_validation_viewer,
+    attachment_filename,
+    build_user_email_filter,
+    build_user_search_filter,
     create_ticket_body,
     display_text,
     parse_categories,
@@ -40,10 +43,8 @@ from helpdesk_app.infrastructure.glpi.mapping import (
     parse_ticket_validations,
     parse_token_set,
     parse_viewer_identity,
-    team_member_observer_body,
     team_member_assigned_body,
-    build_user_search_filter,
-    attachment_filename,
+    team_member_observer_body,
 )
 
 logger = logging.getLogger("helpdesk.glpi")
@@ -333,6 +334,40 @@ class HttpxGlpiClient:
             },
         )
         return parse_catalog_users(payload)
+
+    def find_user_by_email(self, access_token: str, email: str) -> CatalogUser | None:
+        normalized = str(email or "").strip().lower()
+        if "@" not in normalized:
+            return None
+        try:
+            payload = self._json(
+                "GET",
+                "/api.php/v2.2/Administration/User",
+                token=access_token,
+                params={
+                    "start": 0,
+                    "limit": 5,
+                    "filter": build_user_email_filter(normalized),
+                    "sort": "id:asc",
+                },
+            )
+            found = parse_catalog_users(payload)
+            for user in found:
+                if (user.email or "").lower() == normalized:
+                    return user
+            if found:
+                return CatalogUser(
+                    id=found[0].id,
+                    display_name=found[0].display_name,
+                    email=normalized,
+                )
+        except (GlpiValidation, GlpiNotFound, GlpiForbidden, GlpiUnavailable, GlpiUnauthorized):
+            pass
+        local = normalized.split("@", 1)[0]
+        for user in self.list_users(access_token, q=local, limit=50):
+            if (user.email or "").lower() == normalized:
+                return user
+        return None
 
     def can_assign_tickets(self, access_token: str) -> bool:
         """Backend-first capability: catalog-by-id must be readable (E0 G-A4)."""

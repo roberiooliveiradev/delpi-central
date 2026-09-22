@@ -71,9 +71,10 @@ class FakeGlpi:
         self.assignees = []
         self.removed_assignees = []
         self.users = [
-            SimpleNamespace(id=2, display_name="glpi"),
-            SimpleNamespace(id=15, display_name="Ana Silva"),
-            SimpleNamespace(id=22, display_name="Bruno Costa"),
+            SimpleNamespace(id=2, display_name="glpi", email=""),
+            SimpleNamespace(id=15, display_name="Ana Silva", email="ana.silva@delpi.com.br"),
+            SimpleNamespace(id=22, display_name="Bruno Costa", email="bruno.costa@delpi.com.br"),
+            SimpleNamespace(id=99, display_name="0", email=""),
         ]
         self.can_assign = True
         self.uploads = []
@@ -165,9 +166,22 @@ class FakeGlpi:
             rows = [
                 u
                 for u in rows
-                if term in str(u.id) or term in u.display_name.lower()
+                if term in str(u.id)
+                or term in u.display_name.lower()
+                or term in str(getattr(u, "email", "") or "").lower()
             ]
         return rows[: max(1, min(int(limit or 20), 50))]
+
+    def find_user_by_email(self, access_token: str, email: str):
+        self.calls += 1
+        assert access_token
+        if not self.can_assign:
+            raise GlpiForbidden("negado")
+        needle = (email or "").strip().lower()
+        for user in self.users:
+            if str(getattr(user, "email", "") or "").lower() == needle:
+                return user
+        return None
 
     def can_assign_tickets(self, access_token: str) -> bool:
         self.calls += 1
@@ -305,7 +319,10 @@ class FakeGlpi:
         self.validation_decisions.append((ticket_id, validation_id, accept, comment))
 
 
-def build_client(glpi: FakeGlpi | None = None) -> tuple[TestClient, FakeGlpi]:
+def build_client(
+    glpi: FakeGlpi | None = None,
+    directory=None,
+) -> tuple[TestClient, FakeGlpi]:
     glpi = glpi or FakeGlpi()
     app = FastAPI()
 
@@ -321,7 +338,7 @@ def build_client(glpi: FakeGlpi | None = None) -> tuple[TestClient, FakeGlpi]:
     sessions = MemorySessionStore()
     oauth = OAuthService(glpi, states, sessions, now)
     app.state.oauth = oauth
-    app.state.tickets = TicketService(glpi, oauth, MemoryIdempotencyStore())
+    app.state.tickets = TicketService(glpi, oauth, MemoryIdempotencyStore(), directory=directory)
     app.state.public_base_url = "https://centraldelpi.com.br"
 
     @app.middleware("http")

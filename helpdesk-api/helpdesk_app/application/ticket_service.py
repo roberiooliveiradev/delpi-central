@@ -16,8 +16,9 @@ from helpdesk_app.domain.errors import (
     LinkRequired,
     MissingIdempotencyKey,
 )
-from helpdesk_app.domain.models import StoredResponse, TicketDetail, TicketListPage, TicketListQuery
+from helpdesk_app.domain.models import CatalogUser, StoredResponse, TicketDetail, TicketListPage, TicketListQuery
 from helpdesk_app.infrastructure.glpi.mapping import (
+    filter_assignable_catalog_users,
     normalize_assignee_id,
     normalize_observer_ids,
     solicitante_cycle_flags,
@@ -25,16 +26,56 @@ from helpdesk_app.infrastructure.glpi.mapping import (
 
 
 class TicketService:
-    def __init__(self, glpi: GlpiGateway, oauth: OAuthService, idempotency: IdempotencyStore):
+    def __init__(
+        self,
+        glpi: GlpiGateway,
+        oauth: OAuthService,
+        idempotency: IdempotencyStore,
+        directory=None,
+    ):
         self._glpi = glpi
         self._oauth = oauth
         self._idempotency = idempotency
+        self._directory = directory
 
     def categories(self, subject: str):
         return self._glpi.list_categories(self._token(subject))
 
-    def users(self, subject: str, *, q: str = "", limit: int = 20):
-        return self._glpi.list_users(self._token(subject), q=q, limit=limit)
+    def users(self, subject: str, *, q: str = "", limit: int = 20) -> list[CatalogUser]:
+        token = self._token(subject)
+        safe_limit = max(1, min(int(limit or 20), 50))
+        directory = self._directory
+        if directory is not None and getattr(directory, "configured", lambda: False)():
+            term = (q or "").strip()
+            delpi_users = directory.search_users(
+                q=term,
+                limit=safe_limit,
+                browse=not term,
+            )
+            linked: list[CatalogUser] = []
+            for person in delpi_users:
+                email = str(person.get("email") or "").strip().lower()
+                name = str(person.get("name") or "").strip()
+                if "@" not in email:
+                    continue
+                finder = getattr(self._glpi, "find_user_by_email", None)
+                glpi_user = finder(token, email) if callable(finder) else None
+                if glpi_user is None:
+                    continue
+                linked.append(
+                    CatalogUser(
+                        id=int(glpi_user.id),
+                        display_name=name or glpi_user.display_name,
+                        email=email,
+                    )
+                )
+                if len(linked) >= safe_limit:
+                    break
+            if linked or term:
+                return linked
+        return filter_assignable_catalog_users(
+            self._glpi.list_users(token, q=q, limit=safe_limit)
+        )
 
     def capabilities(self, subject: str) -> dict:
         token = self._token(subject)

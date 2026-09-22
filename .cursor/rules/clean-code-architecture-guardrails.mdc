@@ -58,7 +58,7 @@ Sinalizar **⚠ Desvio de clean architecture** quando a solução proposta exigi
 12. teste alterado para aceitar o bug em vez de corrigir a causa;
 13. fix em múltiplos apps sem owner/contrato claro;
 14. feature user-facing sem estados de erro/loading/forbidden relevantes;
-15. deploy dependente de passo manual escondido ou alteração dentro do container.
+15. deploy dependente de passo manual escondido, alteração dentro do container, ou mutação direta de produção (SSH/rsync/`docker cp`) fora de local → push → pull (`local-first-deploy.mdc`).
 
 Formato:
 

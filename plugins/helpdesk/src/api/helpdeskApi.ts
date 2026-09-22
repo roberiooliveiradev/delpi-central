@@ -126,6 +126,7 @@ export type TicketDetail = TicketSummary & {
 export type CatalogUser = {
   id: number;
   display_name: string;
+  email?: string;
 };
 
 export type TicketAttachment = {

@@ -134,7 +134,7 @@ Repetir a mesma chave depois de sucesso devolve o mesmo `id`, sem segundo chamad
 
 Resposta `200`: `{ "user_id": 15, "assigned_display_name": "Ana Silva" }`. Se já houver atribuído diferente, o BFF remove o anterior (`DELETE …/TeamMember` com o mesmo body type/role/id) e cria o novo.
 
-`GET /users?q=&limit=20` — catálogo por **id** (HLAPI `Administration/User`, filtro RSQL). Resposta: `{ "items": [{ "id": 15, "display_name": "Ana Silva" }] }`. Sem lista só por nome.
+`GET /users?q=&limit=20` — catálogo para atribuição e menções. Quando o Core Directory S2S está configurado, a busca usa usuários da **Minha DELPI** (`app=helpdesk`) e resolve o **id GLPI** pelo e-mail; resposta: `{ "items": [{ "id": 15, "display_name": "Ana Silva", "email": "ana.silva@delpi.com.br" }] }`. Contas de sistema do GLPI (`glpi`, `post-only`, `tech`, `normal`, `minha-delpi-upload`) e rótulos inválidos (`0`) são omitidos. Sem Directory configurado, cai no fallback filtrado da HLAPI `Administration/User`.
 
 `GET /session/capabilities` — `{ "can_assign": true|false }` derivado do direito real de listar usuários no GLPI (nunca flag só no MFE). O detalhe do chamado também inclui `can_assign`, `assigned_user_id` e `assigned_display_name`.
 

@@ -863,6 +863,41 @@ declare module "@delpi/plugin-ui/index" {
 
   export function entityDirectoryLabel(entity: EntityDirectoryOption): string;
 
+  export type DirectoryUserOption = {
+    id: string;
+    name: string;
+    email: string;
+  };
+
+  export type UserDirectoryPickerProps = {
+    value: DirectoryUserOption[];
+    onChange: (users: DirectoryUserOption[]) => void;
+    searchUsers: (
+      query: string,
+      limit?: number,
+      signal?: AbortSignal,
+    ) => Promise<DirectoryUserOption[]>;
+    disabled?: boolean;
+    showSelectedList?: boolean;
+    showEmail?: boolean;
+    maxSelected?: number;
+    renderOptionLeading?: (user: DirectoryUserOption) => ReactNode;
+    renderSelectedChip?: (args: {
+      user: DirectoryUserOption;
+      label: string;
+      disabled: boolean;
+      onRemove: () => void;
+    }) => ReactNode;
+    labels?: {
+      title?: string;
+      hint?: string;
+      placeholder?: string;
+    };
+    className?: string;
+  };
+
+  export function UserDirectoryPicker(props: UserDirectoryPickerProps): ReactElement;
+
   export type InitialsAvatarSize = "sm" | "md" | "lg";
 
   export type DashboardInitialsAvatarProps = {

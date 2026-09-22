@@ -242,6 +242,7 @@ Todos os auditores possuem testes próprios. `Cursor Rules Governance` valida o 
 Owner: `platform-delivery-runtime-operations.mdc`
 
 - `infra-sequential-container-startup.mdc`
+- `local-first-deploy.mdc`
 - `plugins-frontend-build.mdc`
 
 **Gap identificado:** health/readiness/rollback possuem documentação e scripts, mas ainda faltam contratos comuns suficientemente determinísticos para gates transversais seguros.

@@ -83,7 +83,16 @@ def list_users(request: Request, q: str = "", limit: int = 20):
         rows = _tickets(request).users(actor.subject, q=q, limit=limit)
     except HelpdeskError as exc:
         return _error(exc, request)
-    return {"items": [{"id": row.id, "display_name": row.display_name} for row in rows]}
+    return {
+        "items": [
+            {
+                "id": row.id,
+                "display_name": row.display_name,
+                "email": getattr(row, "email", "") or "",
+            }
+            for row in rows
+        ]
+    }
 
 
 @router.get("/session/capabilities")

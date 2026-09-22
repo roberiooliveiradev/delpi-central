@@ -257,6 +257,18 @@ def normalize_assignee_id(raw) -> int | None:
     return user_id
 
 
+# Contas padrão / serviço do GLPI — não são técnicos atribuíveis na Minha DELPI.
+_SYSTEM_USERNAMES = frozenset(
+    {
+        "glpi",
+        "post-only",
+        "tech",
+        "normal",
+        "minha-delpi-upload",
+    }
+)
+
+
 def build_user_search_filter(q: str = "") -> str:
     """RSQL for Administration/User — always keyed by id in the response (G-A4).
 
@@ -269,6 +281,8 @@ def build_user_search_filter(q: str = "") -> str:
         return base
     if term.isdigit():
         return f"{base};id=={int(term)}"
+    if "@" in term:
+        return f"{base};email=={term.lower()}"
     variants: list[str] = []
     for candidate in (term, term.lower(), term.upper(), term.capitalize(), term.title()):
         if candidate and candidate not in variants:
@@ -280,15 +294,43 @@ def build_user_search_filter(q: str = "") -> str:
                 f"username=like=*{variant}*",
                 f"realname=like=*{variant}*",
                 f"firstname=like=*{variant}*",
+                f"email=like=*{variant}*",
             ]
         )
     return f"{base};({','.join(parts)})"
+
+
+def build_user_email_filter(email: str) -> str:
+    normalized = _email(email)
+    if not normalized:
+        raise GlpiValidation("email inválido.")
+    return f"is_active==true;email=={normalized}"
+
+
+def is_usable_catalog_label(name: str) -> bool:
+    cleaned = display_text(name)
+    if not cleaned:
+        return False
+    lowered = cleaned.casefold()
+    if lowered in _SYSTEM_USERNAMES:
+        return False
+    if "plugin" in lowered and "glpi" in lowered:
+        return False
+    if cleaned in {"0", "0 0"} or cleaned.isdigit():
+        return False
+    return True
+
+
+def is_system_username(username: str) -> bool:
+    return display_text(username).casefold() in _SYSTEM_USERNAMES
 
 
 def parse_catalog_users(payload: dict | list) -> list[CatalogUser]:
     users: list[CatalogUser] = []
     for row in _results(payload):
         if not isinstance(row, dict):
+            continue
+        if _is_deleted(row):
             continue
         raw_id = row.get("id")
         try:
@@ -297,9 +339,39 @@ def parse_catalog_users(payload: dict | list) -> list[CatalogUser]:
             continue
         if user_id <= 0:
             continue
-        name = _person_name(row) or display_text(row.get("username")) or str(user_id)
-        users.append(CatalogUser(id=user_id, display_name=name))
+        username = display_text(row.get("username") or row.get("name"))
+        if is_system_username(username):
+            continue
+        emails = _emails(row)
+        email = emails[0] if emails else ""
+        name = _person_name(row) or username
+        if not is_usable_catalog_label(name):
+            if email and is_usable_catalog_label(username):
+                name = username
+            else:
+                continue
+        if not is_usable_catalog_label(name):
+            continue
+        users.append(CatalogUser(id=user_id, display_name=name, email=email))
     return users
+
+
+def filter_assignable_catalog_users(users: list[CatalogUser] | tuple[CatalogUser, ...]) -> list[CatalogUser]:
+    """Post-filter for in-memory / FakeGlpi catalogs (no username field)."""
+    out: list[CatalogUser] = []
+    for user in users:
+        label = display_text(getattr(user, "display_name", ""))
+        if not is_usable_catalog_label(label):
+            continue
+        email = _email(getattr(user, "email", "") or "")
+        out.append(
+            CatalogUser(
+                id=int(user.id),
+                display_name=label,
+                email=email,
+            )
+        )
+    return out
 
 
 def normalize_observer_ids(raw) -> tuple[int, ...]:

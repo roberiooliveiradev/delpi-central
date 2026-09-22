@@ -20,11 +20,19 @@ Doc operacional: `infra/README-ambiente.md` § **Inicialização segura de conta
 
 Ambos definem `COMPOSE_PARALLEL_LIMIT=1`, sobem **um serviço por vez**, aguardam Postgres quando necessário e respeitam a ordem **core → chat (prod) → remote (`plugin-ui`) → mfe → api**.
 
+## Pré-condição de produção (obrigatório)
+
+Antes de qualquer `up-prod-sequential` / rebuild em **produção**:
+
+1. mudanças já estão no Git remoto (commit + push locais);
+2. o servidor faz **pull** desse remoto — não recebe `rsync`/`scp` da working tree;
+3. ver `local-first-deploy.mdc` — o agente **não** edita nem sincroniza arquivos em prod.
+
 ## Quando recomendar (obrigatório)
 
 Orientar o script sequencial quando o usuário:
 
-- pede **deploy**, **subir stack**, **rebuild** ou **atualizar produção**;
+- pede **deploy**, **subir stack**, **rebuild** ou **atualizar produção** (**após** push);
 - relata **OOM**, **WSL travando**, **build Docker falhando** ou máquina com **~8 GB RAM**;
 - alterou **MFE**, **`plugin-ui`** ou **Module Federation** e precisa rebuild em prod/dev;
 - quer rebuild de **vários plugins** ou da stack **completa**.
@@ -59,6 +67,7 @@ Executar **a partir da raiz do repo** (`./infra/scripts/...`). O script prod usa
 
 ## O que NÃO recomendar
 
+- Mutar produção fora do Git (`rsync`/`scp` local→prod, edit SSH, `docker cp`) — `local-first-deploy.mdc`.
 - `docker compose up --build` **sem** `--profile` explícito ou **misturando** `docker-compose.yml` + `docker-compose.dev.yml` (sobe ~40 containers).
 - Rebuild paralelo de 20+ MFEs (`npm run build` / `vite build`) sem `COMPOSE_PARALLEL_LIMIT=1`.
 - `docker compose ... --env-file infra/.env` **de dentro de** `infra/` (vira `infra/infra/.env`) — usar `./infra/scripts/up-prod-sequential.sh` ou `-f docker-compose.yml --env-file .env` **com cwd em `infra/`**.
@@ -70,8 +79,9 @@ Para **só** portal + APIs sem rebuild massivo: `./infra/scripts/up-minimal-dev.
 
 ## Checklist ao orientar deploy
 
-1. Ambiente correto? → script dev **ou** prod.
-2. `.env` existe? → `.env.dev.example` / `.env.prod.example`.
-3. Rebuild? → `--build`; prod com código novo → `--pull --build`.
-4. MF / MFE? → fase `remote` antes de `mfe`.
-5. RAM limitada prod? → `--cpu`; LanguageTool/SearXNG → `--heavy` separado.
+1. Prod? Código já commitado + pushed? → senão **parar** (`local-first-deploy.mdc`).
+2. Ambiente correto? → script dev **ou** prod.
+3. `.env` existe? → `.env.dev.example` / `.env.prod.example`.
+4. Rebuild? → `--build`; prod com código novo → `git pull` + `--pull --build`.
+5. MF / MFE? → fase `remote` antes de `mfe`.
+6. RAM limitada prod? → `--cpu`; LanguageTool/SearXNG → `--heavy` separado.

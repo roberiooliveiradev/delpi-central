@@ -121,7 +121,7 @@ Estas regras são os **donos transversais** da engenharia da Minha DELPI. Elas n
 | **4. Dados e persistência** | `platform-data-persistence.mdc` | `migrations-immutable-checksum.mdc`, `plugins-migrations-no-reset-prod.mdc`, `persistent-upload-storage.mdc`, `sql-query-development.mdc` |
 | **5. Frontend, MFE e experiência** | `platform-frontend-mfe-experience.mdc` | `plugins-reusable-components.mdc`, `plugins-visual-design-system.mdc`, `plugin-mfe-page-excellence.mdc`, `plugins-overlay-positioning.mdc`, `mf-federation-patch-safety.mdc` |
 | **6. Qualidade, testes e evidência** | `platform-quality-testing.mdc` | `plan-construction.mdc`, `plan-execution.mdc`, `delia-execution-protocol.mdc`, `test-and-commit.mdc`, `root-cause-generalized-fix.mdc`, `architecture-ci-enforcement.mdc` |
-| **7. Delivery, runtime e operações** | `platform-delivery-runtime-operations.mdc` | `infra-sequential-container-startup.mdc`, builds, gateway, deploy/migrations conforme escopo |
+| **7. Delivery, runtime e operações** | `platform-delivery-runtime-operations.mdc` | `local-first-deploy.mdc`, `infra-sequential-container-startup.mdc`, builds, gateway, deploy/migrations conforme escopo |
 | **8. Confiabilidade e observabilidade** | `platform-reliability-observability.mdc` | `observability-standards.mdc`, `http-integration-resilience.mdc`, budgets/limites conforme domínio |
 
 ## Como selecionar responsabilidades
@@ -136,7 +136,7 @@ Uma tarefa pode exigir mais de uma responsabilidade, mas carregar somente as mat
 | schema, repository, transaction, migration, SQL, upload persistente | **4 Dados** |
 | React, Portal, MFE, CSS, componente, acessibilidade, responsividade | **5 Frontend** |
 | bug, regressão, teste, CI, evidência, Definition of Done | **6 Qualidade** |
-| Docker, Compose, gateway, env, health, deploy, rollback | **7 Delivery/Runtime** |
+| Docker, Compose, gateway, env, health, deploy, rollback, SSH/prod | **7 Delivery/Runtime** (+ `local-first-deploy.mdc`) |
 | logs, métricas, tracing, SLO, timeout, retry, circuit, capacidade | **8 Confiabilidade** |
 
 ### Regra de composição
@@ -272,6 +272,7 @@ A pressão arquitetural é monotônica: não introduzir nova dívida para preser
 - pedidos compostos não podem perder requisitos por compressão;
 - clean code/architecture: `clean-code-architecture-guardrails.mdc`;
 - identifiers técnicos em inglês: `english-code-identifiers.mdc`;
+- produção nunca é editada diretamente: local → commit → push → deploy por Git (`local-first-deploy.mdc`);
 - segurança nunca é relaxada para conveniência;
 - regra específica de app nunca pode contrariar responsabilidade transversal canônica.
 

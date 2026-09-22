@@ -62,6 +62,7 @@
     ],
     "platform-delivery-runtime-operations.mdc": [
       "infra-sequential-container-startup.mdc",
+      "local-first-deploy.mdc",
       "plugins-frontend-build.mdc"
     ],
     "platform-reliability-observability.mdc": [
