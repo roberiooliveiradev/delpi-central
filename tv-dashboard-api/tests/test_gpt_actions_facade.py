@@ -17,7 +17,11 @@ from tv_app.application.gpt_actions.openapi_builder import (
     build_gpt_actions_openapi,
     count_operations,
 )
-from tv_app.application.gpt_actions.plan_digest import compute_plan_digest
+from tv_app.application.gpt_actions.proposal import create_proposal
+from tv_app.application.gpt_actions.proposal_store import (
+    get_proposal_store,
+    reset_proposal_store_for_tests,
+)
 from tv_app.application.services.data.tv_copilot_content_service import TvCopilotContentService
 from tv_app.application.services.data.tv_copilot_patch_service import TvCopilotPatchService
 from tv_app.application.services.tv_presentation_write_service import (
@@ -29,6 +33,41 @@ from tv_app.infrastructure.persistence.repositories.idempotency_repository impor
 )
 from tv_app.main import app
 from tv_app.middleware.auth_middleware import PUBLIC_EXACT, _is_public
+
+
+def _mint_proposal_handle(
+    *,
+    actor_id: str = "actor-1",
+    target: dict | None = None,
+    ops: list,
+    catalog_version: str | None = None,
+    base_revision: int | None = None,
+    confirmation_policy: str = "direct",
+) -> str:
+    """Store a server-side proposal and return opaque handle for commit tests."""
+    catalog = catalog_version or TvCopilotContentService.catalog_version()
+    proposal = create_proposal(
+        actor_id=actor_id,
+        target=target if isinstance(target, dict) else {},
+        ops=list(ops or []),
+        operation_names=[
+            str(item.get("op"))
+            for item in (ops or [])
+            if isinstance(item, dict) and item.get("op")
+        ],
+        catalog_version=catalog,
+        base_revision=base_revision,
+        risk="additive",
+        confirmation_policy=confirmation_policy,
+    )
+    return get_proposal_store().put(proposal)
+
+
+@pytest.fixture(autouse=True)
+def _clear_proposal_store():
+    reset_proposal_store_for_tests()
+    yield
+    reset_proposal_store_for_tests()
 
 
 async def _bypass_auth_middleware(request, call_next):
@@ -140,14 +179,9 @@ def test_preview_returns_typed_ops_not_string_applied_ops():
     assert all(isinstance(item, dict) for item in public["ops"])
     assert public["operationNames"] == ["add_blank_slide"]
     assert "httpCommands" not in public
-    expected_digest = compute_plan_digest(
-        actor_id="actor-1",
-        target={"playlistId": playlist_id, "slideId": slide_id},
-        ops=ops,
-        catalog_version=catalog,
-        base_revision=7,
-    )
-    assert public["planDigest"] == expected_digest
+    assert public.get("proposal_handle")
+    assert "planDigest" not in public
+    assert public["persisted"] is False
     policy = TvCopilotContentService.aggregate_ops_policy(ops)
     assert public["risk"] == policy["risk"]
     assert public["confirmationPolicy"] == policy["confirmationPolicy"]
@@ -234,9 +268,8 @@ def test_anonymous_gpt_actions_401_uses_error_envelope():
     commit = client.post(
         "/gpt-actions/v1/changes/commit",
         json={
-            "ops": [{"op": "update_slide", "title": "nope"}],
-            "catalogVersion": "x",
-            "planDigest": "y",
+            "proposal_handle": "invalid.handle",
+            "confirmation": {"confirmed": True},
         },
         headers={"Idempotency-Key": "anon-commit"},
     )
@@ -253,7 +286,9 @@ def test_anonymous_gpt_actions_401_uses_error_envelope():
     playlists = client.get("/playlists")
     assert playlists.status_code == 401
     assert playlists.json() == {"detail": "Unauthorized"}
-    repo = MagicMock()
+
+
+def test_commit_add_slide_verified_via_opaque_proposal():
     writes = _writes_mock()
     writes.assert_expected_revision.return_value = 3
     writes.get_revision.return_value = 4
@@ -263,18 +298,19 @@ def test_anonymous_gpt_actions_401_uses_error_envelope():
     writes.list_slides.return_value = [{"id": str(slide_id), "title": "T", "nativeConfig": {}}]
     writes.list_sections.return_value = []
     writes.get_playlist.return_value = {"id": str(playlist_id)}
-    idem = InMemoryIdempotencyRepository()
     patch_svc = MagicMock()
     patch_svc.preview.return_value = {"confirmationPolicy": "direct", "nativeConfig": None}
     access = MagicMock()
     access.resolve.return_value = SimpleNamespace(can_edit=True)
     service = TvGptCommitService(
-        writes=writes, idempotency=idem, patch=patch_svc, access=access
+        writes=writes,
+        idempotency=InMemoryIdempotencyRepository(),
+        patch=patch_svc,
+        access=access,
     )
     ops = [{"op": "add_blank_slide", "title": "T"}]
     catalog = TvCopilotContentService.catalog_version()
-    digest = compute_plan_digest(
-        actor_id="actor-1",
+    handle = _mint_proposal_handle(
         target={"playlistId": str(playlist_id)},
         ops=ops,
         catalog_version=catalog,
@@ -283,11 +319,8 @@ def test_anonymous_gpt_actions_401_uses_error_envelope():
     result = service.commit(
         user=_superadmin(),
         actor_id="actor-1",
-        target={"playlistId": str(playlist_id)},
-        ops=ops,
-        catalog_version=catalog,
-        expected_revision=3,
-        plan_digest=digest,
+        proposal_handle=handle,
+        confirmation={"confirmed": True},
         idempotency_key="feed-1",
     )
     assert result["status"] == "VERIFIED"
@@ -300,15 +333,17 @@ def test_expected_revision_required_for_existing_playlist():
         idempotency=InMemoryIdempotencyRepository(),
         access=MagicMock(resolve=MagicMock(return_value=SimpleNamespace(can_edit=True))),
     )
+    handle = _mint_proposal_handle(
+        target={"playlistId": str(uuid4())},
+        ops=[{"op": "add_blank_slide", "title": "A"}],
+        base_revision=None,
+    )
     with pytest.raises(GptActionsError) as caught:
         service.commit(
             user=_superadmin(),
             actor_id="actor-1",
-            target={"playlistId": str(uuid4())},
-            ops=[{"op": "add_blank_slide", "title": "A"}],
-            catalog_version=TvCopilotContentService.catalog_version(),
-            expected_revision=None,
-            plan_digest="x",
+            proposal_handle=handle,
+            confirmation={"confirmed": True},
             idempotency_key="rev-missing",
         )
     assert caught.value.code == "INVALID_CHANGE"
@@ -329,27 +364,23 @@ def test_create_playlist_may_omit_expected_revision():
     patch_svc.preview.return_value = {"confirmationPolicy": "direct"}
     ops = [{"op": "create_playlist", "name": "Nova"}]
     catalog = TvCopilotContentService.catalog_version()
-    digest = compute_plan_digest(
-        actor_id="actor-1",
-        target={},
-        ops=ops,
-        catalog_version=catalog,
-        base_revision=None,
-    )
     service = TvGptCommitService(
         writes=writes,
         idempotency=InMemoryIdempotencyRepository(),
         patch=patch_svc,
         access=MagicMock(),
     )
-    result = service.commit(
-        user=_superadmin(),
-        actor_id="actor-1",
+    handle = _mint_proposal_handle(
         target={},
         ops=ops,
         catalog_version=catalog,
-        expected_revision=None,
-        plan_digest=digest,
+        base_revision=None,
+    )
+    result = service.commit(
+        user=_superadmin(),
+        actor_id="actor-1",
+        proposal_handle=handle,
+        confirmation={"confirmed": True},
         idempotency_key="create-ok",
     )
     assert result["status"] == "VERIFIED"
@@ -362,15 +393,14 @@ def test_idempotency_in_progress_does_not_execute_second_write():
     playlist_id = str(uuid4())
     ops = [{"op": "add_blank_slide", "title": "A"}]
     catalog = TvCopilotContentService.catalog_version()
-    digest = "x"
+    handle = _mint_proposal_handle(
+        target={"playlistId": playlist_id},
+        ops=ops,
+        catalog_version=catalog,
+        base_revision=1,
+    )
     fingerprint = compute_request_fingerprint(
-        {
-            "target": {"playlistId": playlist_id},
-            "ops": ops,
-            "catalogVersion": catalog,
-            "expectedRevision": 1,
-            "planDigest": digest,
-        }
+        {"proposal_handle": handle, "confirmation": True}
     )
     idem = InMemoryIdempotencyRepository()
     first = idem.acquire(
@@ -397,11 +427,8 @@ def test_idempotency_in_progress_does_not_execute_second_write():
         service.commit(
             user=_superadmin(),
             actor_id="actor-1",
-            target={"playlistId": playlist_id},
-            ops=ops,
-            catalog_version=catalog,
-            expected_revision=1,
-            plan_digest=digest,
+            proposal_handle=handle,
+            confirmation={"confirmed": True},
             idempotency_key="k-ip",
         )
     assert caught.value.code == "IDEMPOTENCY_IN_PROGRESS"
@@ -432,15 +459,13 @@ def test_idempotency_replay_and_conflict():
     catalog = TvCopilotContentService.catalog_version()
     ops_a = [{"op": "add_blank_slide", "title": "A"}]
     ops_b = [{"op": "add_blank_slide", "title": "B"}]
-    digest_a = compute_plan_digest(
-        actor_id="actor-1",
+    handle_a = _mint_proposal_handle(
         target={"playlistId": str(playlist_id)},
         ops=ops_a,
         catalog_version=catalog,
         base_revision=1,
     )
-    digest_b = compute_plan_digest(
-        actor_id="actor-1",
+    handle_b = _mint_proposal_handle(
         target={"playlistId": str(playlist_id)},
         ops=ops_b,
         catalog_version=catalog,
@@ -449,21 +474,15 @@ def test_idempotency_replay_and_conflict():
     first = service.commit(
         user=_superadmin(),
         actor_id="actor-1",
-        target={"playlistId": str(playlist_id)},
-        ops=ops_a,
-        catalog_version=catalog,
-        expected_revision=1,
-        plan_digest=digest_a,
+        proposal_handle=handle_a,
+        confirmation={"confirmed": True},
         idempotency_key="same",
     )
     second = service.commit(
         user=_superadmin(),
         actor_id="actor-1",
-        target={"playlistId": str(playlist_id)},
-        ops=ops_a,
-        catalog_version=catalog,
-        expected_revision=1,
-        plan_digest=digest_a,
+        proposal_handle=handle_a,
+        confirmation={"confirmed": True},
         idempotency_key="same",
     )
     assert first == second
@@ -472,11 +491,8 @@ def test_idempotency_replay_and_conflict():
         service.commit(
             user=_superadmin(),
             actor_id="actor-1",
-            target={"playlistId": str(playlist_id)},
-            ops=ops_b,
-            catalog_version=catalog,
-            expected_revision=1,
-            plan_digest=digest_b,
+            proposal_handle=handle_b,
+            confirmation={"confirmed": True},
             idempotency_key="same",
         )
     assert caught.value.code == "IDEMPOTENCY_CONFLICT"
@@ -505,8 +521,7 @@ def test_partial_commit_replay_does_not_reexecute():
         {"op": "add_blank_slide", "title": "X"},
     ]
     catalog = TvCopilotContentService.catalog_version()
-    digest = compute_plan_digest(
-        actor_id="actor-1",
+    handle = _mint_proposal_handle(
         target={},
         ops=ops,
         catalog_version=catalog,
@@ -516,11 +531,8 @@ def test_partial_commit_replay_does_not_reexecute():
         service.commit(
             user=_superadmin(),
             actor_id="actor-1",
-            target={},
-            ops=ops,
-            catalog_version=catalog,
-            expected_revision=None,
-            plan_digest=digest,
+            proposal_handle=handle,
+            confirmation={"confirmed": True},
             idempotency_key="partial-1",
         )
     assert first.value.code == "PARTIAL_COMMIT"
@@ -529,11 +541,8 @@ def test_partial_commit_replay_does_not_reexecute():
         service.commit(
             user=_superadmin(),
             actor_id="actor-1",
-            target={},
-            ops=ops,
-            catalog_version=catalog,
-            expected_revision=None,
-            plan_digest=digest,
+            proposal_handle=handle,
+            confirmation={"confirmed": True},
             idempotency_key="partial-1",
         )
     assert second.value.code == "PARTIAL_COMMIT"
@@ -599,8 +608,7 @@ def test_postcondition_update_move_reorder_section_native():
         {"op": "upsert_block", "block": {"id": "b1"}},
     ]
     catalog = TvCopilotContentService.catalog_version()
-    digest = compute_plan_digest(
-        actor_id="actor-1",
+    handle = _mint_proposal_handle(
         target={"playlistId": str(playlist_id), "slideId": str(slide_id)},
         ops=ops,
         catalog_version=catalog,
@@ -609,11 +617,8 @@ def test_postcondition_update_move_reorder_section_native():
     result = service.commit(
         user=_superadmin(),
         actor_id="actor-1",
-        target={"playlistId": str(playlist_id), "slideId": str(slide_id)},
-        ops=ops,
-        catalog_version=catalog,
-        expected_revision=1,
-        plan_digest=digest,
+        proposal_handle=handle,
+        confirmation={"confirmed": True},
         idempotency_key="post-1",
     )
     assert result["status"] == "VERIFIED"
@@ -643,8 +648,7 @@ def test_postcondition_negative_update_mismatch_not_verified():
     )
     ops = [{"op": "update_slide", "title": "Expected"}]
     catalog = TvCopilotContentService.catalog_version()
-    digest = compute_plan_digest(
-        actor_id="actor-1",
+    handle = _mint_proposal_handle(
         target={"playlistId": str(playlist_id), "slideId": str(slide_id)},
         ops=ops,
         catalog_version=catalog,
@@ -654,11 +658,8 @@ def test_postcondition_negative_update_mismatch_not_verified():
         service.commit(
             user=_superadmin(),
             actor_id="actor-1",
-            target={"playlistId": str(playlist_id), "slideId": str(slide_id)},
-            ops=ops,
-            catalog_version=catalog,
-            expected_revision=1,
-            plan_digest=digest,
+            proposal_handle=handle,
+            confirmation={"confirmed": True},
             idempotency_key="post-neg",
         )
     assert caught.value.code == "OUTCOME_NOT_VERIFIED"
@@ -673,7 +674,7 @@ def test_gpt_pydantic_422_uses_error_envelope():
         "tv_app.interface.http.routes.gpt_actions_routes.resolve_user",
         return_value=_superadmin(),
     ):
-        response = client.post("/gpt-actions/v1/changes/commit", json={"ops": []})
+        response = client.post("/gpt-actions/v1/changes/commit", json={"confirmation": True})
     assert response.status_code == 422
     body = response.json()
     assert body.get("ok") is False
@@ -720,8 +721,7 @@ def test_invalid_playlist_uuid_completes_idempotency_and_replays():
     catalog = TvCopilotContentService.catalog_version()
     target = {"playlistId": "not-a-uuid"}
     ops = [{"op": "add_blank_slide", "title": "A"}]
-    digest = compute_plan_digest(
-        actor_id="actor-1",
+    handle = _mint_proposal_handle(
         target=target,
         ops=ops,
         catalog_version=catalog,
@@ -731,11 +731,8 @@ def test_invalid_playlist_uuid_completes_idempotency_and_replays():
         service.commit(
             user=_superadmin(),
             actor_id="actor-1",
-            target=target,
-            ops=ops,
-            catalog_version=catalog,
-            expected_revision=1,
-            plan_digest=digest,
+            proposal_handle=handle,
+            confirmation={"confirmed": True},
             idempotency_key="bad-uuid-key",
         )
     assert first.value.code == "INVALID_CHANGE"
@@ -748,22 +745,17 @@ def test_invalid_playlist_uuid_completes_idempotency_and_replays():
         service.commit(
             user=_superadmin(),
             actor_id="actor-1",
-            target=target,
-            ops=ops,
-            catalog_version=catalog,
-            expected_revision=1,
-            plan_digest=digest,
+            proposal_handle=handle,
+            confirmation={"confirmed": True},
             idempotency_key="bad-uuid-key",
         )
     assert replay.value.code == "INVALID_CHANGE"
     assert replay.value.status_code == 422
     assert replay.value.code != "IDEMPOTENCY_IN_PROGRESS"
 
-    ops_other = [{"op": "add_blank_slide", "title": "B"}]
-    digest_other = compute_plan_digest(
-        actor_id="actor-1",
+    handle_other = _mint_proposal_handle(
         target=target,
-        ops=ops_other,
+        ops=[{"op": "add_blank_slide", "title": "B"}],
         catalog_version=catalog,
         base_revision=1,
     )
@@ -771,11 +763,8 @@ def test_invalid_playlist_uuid_completes_idempotency_and_replays():
         service.commit(
             user=_superadmin(),
             actor_id="actor-1",
-            target=target,
-            ops=ops_other,
-            catalog_version=catalog,
-            expected_revision=1,
-            plan_digest=digest_other,
+            proposal_handle=handle_other,
+            confirmation={"confirmed": True},
             idempotency_key="bad-uuid-key",
         )
     assert conflict.value.code == "IDEMPOTENCY_CONFLICT"
@@ -796,11 +785,8 @@ def test_viewer_forbidden_on_commit_http():
         response = client.post(
             "/gpt-actions/v1/changes/commit",
             json={
-                "target": {"playlistId": str(uuid4())},
-                "ops": [{"op": "add_blank_slide", "title": "A"}],
-                "catalogVersion": TvCopilotContentService.catalog_version(),
-                "expectedRevision": 1,
-                "planDigest": "deadbeef",
+                "proposal_handle": "opaque.handle",
+                "confirmation": {"confirmed": True},
             },
             headers={"Idempotency-Key": "k1"},
         )
@@ -823,7 +809,10 @@ def test_catalog_and_openapi_http_smoke():
     ):
         response = client.get("/gpt-actions/v1/catalog")
     assert response.status_code == 200
-    assert response.json()["data"]["catalogVersion"] == TvCopilotContentService.catalog_version()
+    data = response.json()["data"]
+    assert data["catalogVersion"] == TvCopilotContentService.catalog_version()
+    assert "capability_surface" in data
+    assert data["capability_surface"]["lifecycle"] == "GOVERNED_PREPARE_COMMIT_V2"
 
 
 def _assert_object_schemas_have_properties(node: object, path: str = "") -> None:
@@ -883,10 +872,10 @@ def test_openapi_prepare_act_bodies_have_typed_examples_and_ops_oneof():
     ]
     assert preview_ex["ops"][0]["op"] == "create_playlist"
     assert preview_ex["ops"][0]["name"] == "Testando a VISTA"
-    assert commit_ex["ops"] == preview_ex["ops"]
-    assert "expectedRevision" not in commit_ex
-    assert "planDigest" in commit_ex
-    assert commit_ex["catalogVersion"] == TvCopilotContentService.catalog_version()
+    assert "proposal_handle" in commit_ex
+    assert commit_ex["confirmation"] == {"confirmed": True}
+    assert "ops" not in commit_ex
+    assert "planDigest" not in commit_ex
 
     suggest_ex = found["gpt_suggest_change"]["requestBody"]["content"]["application/json"][
         "example"
@@ -966,9 +955,10 @@ def test_create_playlist_preview_then_commit_verified_family():
 
     assert preview["ops"] == ops
     assert "httpCommands" not in preview
-    assert preview["planDigest"]
+    assert preview["proposal_handle"]
+    assert preview.get("persisted") is False
     assert preview.get("confirmationPolicy") == "direct"
-    digest = preview["planDigest"]
+    handle = preview["proposal_handle"]
 
     patch_svc = MagicMock()
     patch_svc.preview.return_value = {"confirmationPolicy": "direct"}
@@ -981,11 +971,8 @@ def test_create_playlist_preview_then_commit_verified_family():
     result = service.commit(
         user=_superadmin(),
         actor_id="actor-1",
-        target={},
-        ops=ops,
-        catalog_version=catalog,
-        expected_revision=None,
-        plan_digest=digest,
+        proposal_handle=handle,
+        confirmation={"confirmed": True},
         idempotency_key="vista-create-playlist-1",
     )
     assert result["status"] == "VERIFIED"
@@ -1184,3 +1171,163 @@ def test_dispatch_maps_nested_contract_error_to_invalid_change():
             )
     assert exc.value.code == "INVALID_CHANGE"
     assert exc.value.status_code == 422
+
+
+def test_commit_requires_confirmation():
+    handle = _mint_proposal_handle(
+        ops=[{"op": "create_playlist", "name": "X"}],
+        base_revision=None,
+    )
+    service = TvGptCommitService(
+        writes=_writes_mock(),
+        idempotency=InMemoryIdempotencyRepository(),
+        access=MagicMock(),
+    )
+    with pytest.raises(GptActionsError) as caught:
+        service.commit(
+            user=_superadmin(),
+            actor_id="actor-1",
+            proposal_handle=handle,
+            confirmation={"confirmed": False},
+            idempotency_key="no-confirm",
+        )
+    assert caught.value.code == "CONFIRMATION_REQUIRED"
+
+
+def test_commit_wrong_actor_denied():
+    handle = _mint_proposal_handle(
+        actor_id="actor-1",
+        ops=[{"op": "create_playlist", "name": "X"}],
+        base_revision=None,
+    )
+    service = TvGptCommitService(
+        writes=_writes_mock(),
+        idempotency=InMemoryIdempotencyRepository(),
+        access=MagicMock(),
+    )
+    with pytest.raises(GptActionsError) as caught:
+        service.commit(
+            user=_superadmin(),
+            actor_id="actor-2",
+            proposal_handle=handle,
+            confirmation={"confirmed": True},
+            idempotency_key="wrong-actor",
+        )
+    assert caught.value.code == "AUTHZ_DENIED"
+    assert caught.value.status_code == 403
+
+
+def test_commit_expired_proposal():
+    import time
+
+    from tv_app.application.gpt_actions.proposal import create_proposal
+    from tv_app.application.gpt_actions.proposal_store import get_proposal_store
+
+    proposal = create_proposal(
+        actor_id="actor-1",
+        target={},
+        ops=[{"op": "create_playlist", "name": "X"}],
+        operation_names=["create_playlist"],
+        catalog_version=TvCopilotContentService.catalog_version(),
+        base_revision=None,
+        risk="additive",
+        confirmation_policy="direct",
+        ttl_seconds=60,
+    )
+    proposal.expires_at = time.time() - 10
+    handle = get_proposal_store().put(proposal)
+    service = TvGptCommitService(
+        writes=_writes_mock(),
+        idempotency=InMemoryIdempotencyRepository(),
+        access=MagicMock(),
+    )
+    with pytest.raises(GptActionsError) as caught:
+        service.commit(
+            user=_superadmin(),
+            actor_id="actor-1",
+            proposal_handle=handle,
+            confirmation={"confirmed": True},
+            idempotency_key="expired",
+        )
+    assert caught.value.code == "PROPOSAL_EXPIRED"
+
+
+def test_commit_rejects_client_ops_without_handle_on_http():
+    client = TestClient(app)
+    with (
+        patch(
+            "tv_app.interface.http.routes.gpt_actions_routes.resolve_user",
+            return_value=_superadmin(),
+        ),
+        patch(
+            "tv_app.middleware.auth_middleware._base_jwt_middleware",
+            side_effect=_bypass_auth_middleware,
+        ),
+    ):
+        response = client.post(
+            "/gpt-actions/v1/changes/commit",
+            json={
+                "ops": [{"op": "create_playlist", "name": "hack"}],
+                "catalogVersion": "x",
+                "planDigest": "y",
+            },
+            headers={"Idempotency-Key": "legacy-ops"},
+        )
+    assert response.status_code == 422
+    assert response.json()["error"]["code"] == "INVALID_CHANGE"
+
+
+def test_structural_no_generic_proxy_in_gpt_actions():
+    from pathlib import Path
+    import re
+
+    root = Path(__file__).resolve().parents[1] / "tv_app" / "application" / "gpt_actions"
+    banned = re.compile(
+        r"\b(call_any_route|execute_endpoint|invoke_tool|run_sql|"
+        r"query_table|generic_action|where_raw)\b",
+        re.I,
+    )
+    for path in root.glob("*.py"):
+        text = path.read_text(encoding="utf-8")
+        assert not banned.search(text), path.name
+
+
+def test_action_surface_budget_at_most_30():
+    doc = build_gpt_actions_openapi()
+    assert count_operations(doc) <= 30
+    assert count_operations(doc) == 8
+
+
+def test_proposal_changed_on_revision_conflict():
+    from tv_app.application.services.tv_presentation_write_service import (
+        RevisionConflictError,
+    )
+
+    writes = _writes_mock()
+    playlist_id = uuid4()
+    writes.assert_expected_revision.side_effect = RevisionConflictError(
+        expected_revision=1,
+        current_revision=9,
+    )
+    access = MagicMock()
+    access.resolve.return_value = SimpleNamespace(can_edit=True)
+    service = TvGptCommitService(
+        writes=writes,
+        idempotency=InMemoryIdempotencyRepository(),
+        patch=MagicMock(preview=MagicMock(return_value={})),
+        access=access,
+    )
+    handle = _mint_proposal_handle(
+        target={"playlistId": str(playlist_id)},
+        ops=[{"op": "add_blank_slide", "title": "A"}],
+        base_revision=1,
+    )
+    with pytest.raises(GptActionsError) as caught:
+        service.commit(
+            user=_superadmin(),
+            actor_id="actor-1",
+            proposal_handle=handle,
+            confirmation={"confirmed": True},
+            idempotency_key="stale-rev",
+        )
+    assert caught.value.code == "PROPOSAL_CHANGED"

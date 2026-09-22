@@ -10,10 +10,14 @@ from typing import Any
 from uuid import UUID
 
 from tv_app.application.gpt_actions.errors import GptActionsError
-from tv_app.application.gpt_actions.plan_digest import (
-    compute_plan_digest,
-    compute_request_fingerprint,
-    digests_match,
+from tv_app.application.gpt_actions.plan_digest import compute_request_fingerprint
+from tv_app.application.gpt_actions.proposal import (
+    CAPABILITY_PRESENTATION_CHANGE,
+    fingerprint,
+)
+from tv_app.application.gpt_actions.proposal_store import (
+    get_proposal_store,
+    load_valid_proposal,
 )
 from tv_app.application.ports import IdempotencyRepositoryPort
 from tv_app.application.services.data.tv_copilot_content_service import TvCopilotContentService
@@ -100,16 +104,21 @@ class TvGptCommitService:
         self._patch = patch or TvCopilotPatchService()
         self._access = access or PlaylistAccessService()
 
+    @staticmethod
+    def _normalize_confirmation(confirmation: dict[str, Any] | bool | None) -> bool:
+        if confirmation is True:
+            return True
+        if isinstance(confirmation, dict):
+            return bool(confirmation.get("confirmed") is True or confirmation.get("confirmation") is True)
+        return False
+
     def commit(
         self,
         *,
         user: Any,
         actor_id: str,
-        target: dict[str, Any] | None,
-        ops: list[Any],
-        catalog_version: str,
-        expected_revision: int | None,
-        plan_digest: str,
+        proposal_handle: str,
+        confirmation: dict[str, Any] | bool | None,
         idempotency_key: str,
         authorization: str | None = None,
     ) -> dict[str, Any]:
@@ -120,12 +129,18 @@ class TvGptCommitService:
                 code="INVALID_CHANGE",
                 status_code=422,
             )
+        if not self._normalize_confirmation(confirmation):
+            raise GptActionsError(
+                "confirmation.confirmed=true é obrigatório para COMMIT. "
+                "Confirmação conversacional não substitui AuthZ.",
+                code="CONFIRMATION_REQUIRED",
+                status_code=400,
+            )
+
+        handle = str(proposal_handle or "").strip()
         fingerprint_payload = {
-            "target": target if isinstance(target, dict) else {},
-            "ops": ops if isinstance(ops, list) else [],
-            "catalogVersion": str(catalog_version or "").strip(),
-            "expectedRevision": expected_revision,
-            "planDigest": str(plan_digest or "").strip(),
+            "proposal_handle": handle,
+            "confirmation": True,
         }
         request_fingerprint = compute_request_fingerprint(fingerprint_payload)
 
@@ -150,20 +165,38 @@ class TvGptCommitService:
         if acquired.status == "REPLAY":
             return self._replay_snapshot(acquired.response_snapshot or {})
 
+        proposal = load_valid_proposal(
+            proposal_handle=handle,
+            actor_id=actor_id,
+            expected_capability=CAPABILITY_PRESENTATION_CHANGE,
+        )
+        exact = proposal.exact_change if isinstance(proposal.exact_change, dict) else {}
+        target = exact.get("target") if isinstance(exact.get("target"), dict) else {}
+        ops = exact.get("ops") if isinstance(exact.get("ops"), list) else []
+        catalog_version = str(
+            exact.get("catalogVersion") or proposal.catalog_version or ""
+        ).strip()
+        expected_revision = proposal.base_revision
+        if expected_revision is None and exact.get("baseRevision") is not None:
+            expected_revision = int(exact["baseRevision"])
+
         # ACQUIRED — reservation held before any write.
         try:
-            return self._execute_acquired(
+            outcome = self._execute_acquired(
                 user=user,
                 actor_id=actor_id,
                 target=target,
                 ops=ops,
                 catalog_version=catalog_version,
                 expected_revision=expected_revision,
-                plan_digest=plan_digest,
+                state_fingerprint=proposal.current_state_fingerprint,
+                proposal_id=proposal.proposal_id,
                 key=key,
                 request_fingerprint=request_fingerprint,
                 authorization=authorization,
             )
+            get_proposal_store().consume(proposal.proposal_id)
+            return outcome
         except _DeterministicPreWriteError as exc:
             err = {
                 "status": exc.code,
@@ -238,7 +271,8 @@ class TvGptCommitService:
         ops: list[Any],
         catalog_version: str,
         expected_revision: int | None,
-        plan_digest: str,
+        state_fingerprint: str,
+        proposal_id: str,
         key: str,
         request_fingerprint: str,
         authorization: str | None,
@@ -314,15 +348,53 @@ class TvGptCommitService:
                     snapshot=err,
                 )
                 raise GptActionsError(err["message"], code="RESOURCE_NOT_FOUND", status_code=404)
+
+            current_fp = fingerprint(
+                {
+                    "playlistId": playlist_id_raw,
+                    "baseRevision": int(expected_revision),
+                    "catalogVersion": str(catalog_version or "").strip(),
+                }
+            )
+            if current_fp != state_fingerprint:
+                err = {
+                    "status": "PROPOSAL_CHANGED",
+                    "_raise": True,
+                    "_code": "PROPOSAL_CHANGED",
+                    "_statusCode": 409,
+                    "message": "Proposta não corresponde ao estado preparado. Refaça o preview.",
+                    "expectedFingerprint": state_fingerprint,
+                    "actualFingerprint": current_fp,
+                    "proposalId": proposal_id,
+                }
+                self._complete(
+                    key=key,
+                    actor_id=actor_id,
+                    request_fingerprint=request_fingerprint,
+                    snapshot=err,
+                )
+                raise GptActionsError(
+                    err["message"],
+                    code="PROPOSAL_CHANGED",
+                    status_code=409,
+                    details={
+                        "expectedFingerprint": state_fingerprint,
+                        "actualFingerprint": current_fp,
+                    },
+                )
+
             try:
                 self._writes.assert_expected_revision(playlist_uuid, int(expected_revision))
             except RevisionConflictError as exc:
                 err = {
-                    "status": "REVISION_CONFLICT",
+                    "status": "PROPOSAL_CHANGED",
                     "_raise": True,
-                    "_code": "REVISION_CONFLICT",
+                    "_code": "PROPOSAL_CHANGED",
                     "_statusCode": 409,
-                    "message": exc.message,
+                    "message": (
+                        "Estado da playlist mudou desde o PREPARE. Refaça o preview. "
+                        f"({exc.message})"
+                    ),
                     **exc.details,
                 }
                 self._complete(
@@ -332,9 +404,9 @@ class TvGptCommitService:
                     snapshot=err,
                 )
                 raise GptActionsError(
-                    exc.message,
-                    code=exc.code,
-                    status_code=exc.status_code,
+                    err["message"],
+                    code="PROPOSAL_CHANGED",
+                    status_code=409,
                     details=exc.details,
                 ) from exc
             revision_before = int(expected_revision)
@@ -356,29 +428,6 @@ class TvGptCommitService:
         else:
             playlist_uuid = None
             revision_before = None
-
-        expected_digest = compute_plan_digest(
-            actor_id=actor_id,
-            target=target if isinstance(target, dict) else {},
-            ops=ops if isinstance(ops, list) else [],
-            catalog_version=str(catalog_version or "").strip(),
-            base_revision=expected_revision,
-        )
-        if not digests_match(expected_digest, str(plan_digest or "")):
-            err = {
-                "status": "PLAN_MISMATCH",
-                "_raise": True,
-                "_code": "PLAN_MISMATCH",
-                "_statusCode": 409,
-                "message": "planDigest não corresponde ao plano autenticado.",
-            }
-            self._complete(
-                key=key,
-                actor_id=actor_id,
-                request_fingerprint=request_fingerprint,
-                snapshot=err,
-            )
-            raise GptActionsError(err["message"], code="PLAN_MISMATCH", status_code=409)
 
         envelope = {
             "target": target if isinstance(target, dict) else {},

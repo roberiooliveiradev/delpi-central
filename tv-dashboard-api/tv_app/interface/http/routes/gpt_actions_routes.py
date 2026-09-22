@@ -51,11 +51,8 @@ class PreviewChangeBody(BaseModel):
 
 
 class CommitChangeBody(BaseModel):
-    target: dict[str, Any] | None = None
-    ops: list[dict[str, Any]] = Field(default_factory=list)
-    catalogVersion: str
-    expectedRevision: int | None = None
-    planDigest: str
+    proposal_handle: str = Field(min_length=1)
+    confirmation: dict[str, Any] | bool
 
 
 class DataPreviewBody(BaseModel):
@@ -240,11 +237,8 @@ def commit_change(
     try:
         data = _dispatch.commit_change(
             user=resolve_user(request),
-            target=body.target,
-            ops=body.ops,
-            catalog_version=body.catalogVersion,
-            expected_revision=body.expectedRevision,
-            plan_digest=body.planDigest,
+            proposal_handle=body.proposal_handle,
+            confirmation=body.confirmation,
             idempotency_key=idempotency_key or "",
             authorization=request.headers.get("Authorization"),
         )

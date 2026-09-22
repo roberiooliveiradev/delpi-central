@@ -5,9 +5,11 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID
 
+from tv_app.application.gpt_actions.capability_surface import build_capability_surface
 from tv_app.application.gpt_actions.commit_service import TvGptCommitService
 from tv_app.application.gpt_actions.errors import GptActionsError
-from tv_app.application.gpt_actions.plan_digest import compute_plan_digest
+from tv_app.application.gpt_actions.proposal import create_proposal
+from tv_app.application.gpt_actions.proposal_store import get_proposal_store
 from tv_app.application.ports import PresentationRepositoryPort
 from tv_app.application.services.data.tv_copilot_command_planner_service import (
     TvCopilotCommandPlannerService,
@@ -76,7 +78,9 @@ class GptActionsDispatchService:
 
     def get_catalog(self, *, user: Any) -> dict[str, Any]:
         assert_permission(user, TV_WRITE)
-        return TvCopilotContentService.capability_catalog_document()
+        doc = TvCopilotContentService.capability_catalog_document()
+        doc["capability_surface"] = build_capability_surface()
+        return doc
 
     def list_playlists(
         self,
@@ -264,16 +268,22 @@ class GptActionsDispatchService:
             str(name) for name in applied_names if isinstance(name, str) and name.strip()
         ]
         base_revision = result.get("baseRevision")
-        # Digest binds the same typed ops returned for commit.
-        plan_digest = compute_plan_digest(
+        base_revision_int = int(base_revision) if base_revision is not None else None
+        # Policy authority is the Copilot catalog — not patch-service echo.
+        policy = TvCopilotContentService.aggregate_ops_policy(typed_ops)
+        proposal = create_proposal(
             actor_id=actor,
             target=envelope["target"],
             ops=typed_ops,
+            operation_names=operation_names,
             catalog_version=envelope["catalogVersion"],
-            base_revision=int(base_revision) if base_revision is not None else None,
+            base_revision=base_revision_int,
+            risk=policy["risk"],
+            confirmation_policy=str(policy["confirmationPolicy"] or "direct"),
+            side_effect_hints=list(policy["sideEffectHints"] or []),
+            meta={"diff": result.get("diff"), "fingerprint": result.get("fingerprint")},
         )
-        # Policy authority is the Copilot catalog — not patch-service echo.
-        policy = TvCopilotContentService.aggregate_ops_policy(typed_ops)
+        proposal_handle = get_proposal_store().put(proposal)
         return {
             "target": envelope["target"],
             "ops": typed_ops,
@@ -285,7 +295,9 @@ class GptActionsDispatchService:
             "sideEffectHints": policy["sideEffectHints"],
             "diff": result.get("diff"),
             "fingerprint": result.get("fingerprint"),
-            "planDigest": plan_digest,
+            "proposal_handle": proposal_handle,
+            "proposal": proposal.to_public_dict(),
+            "confirmation_requirement": proposal.confirmation_requirement,
             "canCommit": True,
             "persisted": False,
             "message": result.get("message"),
@@ -295,11 +307,8 @@ class GptActionsDispatchService:
         self,
         *,
         user: Any,
-        target: dict[str, Any] | None,
-        ops: list[Any],
-        catalog_version: str,
-        expected_revision: int | None,
-        plan_digest: str,
+        proposal_handle: str,
+        confirmation: dict[str, Any] | bool | None,
         idempotency_key: str,
         authorization: str | None,
     ) -> dict[str, Any]:
@@ -308,11 +317,8 @@ class GptActionsDispatchService:
         return self._commit.commit(
             user=user,
             actor_id=actor,
-            target=target,
-            ops=_typed_ops(ops),
-            catalog_version=catalog_version,
-            expected_revision=expected_revision,
-            plan_digest=plan_digest,
+            proposal_handle=proposal_handle,
+            confirmation=confirmation,
             idempotency_key=idempotency_key,
             authorization=authorization,
         )

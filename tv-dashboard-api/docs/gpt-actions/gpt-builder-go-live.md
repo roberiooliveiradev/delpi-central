@@ -38,7 +38,7 @@ Quais rotas de dados posso usar no meu painel?
 | Item | Valor |
 |------|--------|
 | OpenAPI público | `https://minhadelpi.com.br/apps/tv-dashboard-api/gpt-actions/v1/openapi.json` |
-| Esperado | OpenAPI **3.1.x**, `servers.url` absoluto HTTPS, **8** operationIds |
+| Esperado | OpenAPI **3.1.x**, `servers.url` absoluto HTTPS, **8** operationIds, lifecycle **GOVERNED_PREPARE_COMMIT_V2** |
 | Anônimo protegido | `GET …/catalog` → **401** |
 
 OperationIds importados (somente estes):
@@ -150,11 +150,11 @@ AuthN = Keycloak; AuthZ plataforma = Core; AuthZ recurso = TV. Conta OpenAI **n�
 |--------|--------|
 | RBAC | sem permissão → 403; `tv-dashboard.read` → reads; `tv-dashboard.write` → PREPARE/ACT conforme contrato |
 | READ | catalog, playlists, context, data-routes |
-| PREPARE | data-preview / suggest / preview → `persisted=false`, revision estável, `planDigest` + `catalogVersion` |
-| ACT | playlist de teste; preferir `update_slide` reversível; `Idempotency-Key` + `expectedRevision` + `catalogVersion` + `planDigest` → `VERIFIED` + cleanup |
+| PREPARE | data-preview / suggest / preview → `persisted=false`, revision estável, `proposal_handle` + `catalogVersion` |
+| ACT | playlist de teste; preferir `update_slide` reversível; `Idempotency-Key` + `proposal_handle` + `confirmation.confirmed=true` → `VERIFIED` + cleanup |
 | Idempotency | mesmo key+payload → replay; key+payload diferente → 409 `IDEMPOTENCY_CONFLICT` |
-| OCC | revision stale → 409 `REVISION_CONFLICT` |
-| Destructive | **PREVIEW only** neste bridge; não executar ACT destrutivo |
+| OCC / proposal | revision stale → 409 `PROPOSAL_CHANGED`; expired → `PROPOSAL_EXPIRED` |
+| Destructive | confirmação explícita obrigatória; backend exige `confirmation.confirmed=true` |
 
 ## 4. Fora de escopo deste bridge
 

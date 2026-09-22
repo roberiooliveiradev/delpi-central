@@ -199,7 +199,7 @@ gpt_get_catalog
 → gpt_suggest_change and/or gpt_preview_change
 → show confirmationPolicy / risk
 → explicit user confirmation
-→ gpt_commit_change with Idempotency-Key + expectedRevision + catalogVersion + planDigest
+→ gpt_commit_change with Idempotency-Key + proposal_handle + confirmation.confirmed=true
 → verify VERIFIED + authoritative context
 ```
 
@@ -239,7 +239,8 @@ Do not invent free-form charts outside Copilot typed operations. If the catalog 
 | 404 | Missing resource — do not invent IDs |
 | 409 `REVISION_CONFLICT` | Re-read context; rebuild preview |
 | 409 `CATALOG_VERSION_STALE` | Re-fetch catalog |
-| 409 `PLAN_MISMATCH` | Re-preview; do not reuse stale `planDigest` |
+| 409 `PROPOSAL_CHANGED` / `PROPOSAL_EXPIRED` | Re-preview; do not reuse stale `proposal_handle` |
+| 400 `CONFIRMATION_REQUIRED` | Obtain explicit user confirmation; set `confirmation.confirmed=true` |
 | 409 idempotency | Explain replay vs conflict; do not double-write |
 | `OUTCOME_NOT_VERIFIED` / PARTIAL | Not full success; re-read; do not claim saved |
 
@@ -368,7 +369,7 @@ One confirmation may cover a complete compound plan **only when** (TARGET, excep
 
 - the complete plan was previewed;
 - ops did not change after preview;
-- `planDigest` still matches (**PROVEN** binding);
+- opaque `proposal_handle` still matches (**PROVEN** server-side binding);
 - revision / `catalogVersion` still match (**PROVEN**);
 - policy allows the actions;
 - no newly introduced destructive action;

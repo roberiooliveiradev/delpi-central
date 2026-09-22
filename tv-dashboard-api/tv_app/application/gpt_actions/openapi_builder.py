@@ -227,9 +227,10 @@ def _error_envelope_schema() -> dict[str, Any]:
                     "code": {
                         "type": "string",
                         "description": (
-                            "Machine code e.g. INVALID_CHANGE, FORBIDDEN, NOT_FOUND, "
-                            "REVISION_CONFLICT, IDEMPOTENCY_CONFLICT, PLAN_MISMATCH, "
-                            "CATALOG_VERSION_STALE, UPSTREAM_ERROR."
+                            "Machine code e.g. INVALID_CHANGE, AUTHZ_DENIED, NOT_FOUND, "
+                            "PROPOSAL_CHANGED, PROPOSAL_EXPIRED, PROPOSAL_NOT_FOUND, "
+                            "CONFIRMATION_REQUIRED, IDEMPOTENCY_CONFLICT, "
+                            "CATALOG_VERSION_STALE, OUTCOME_NOT_VERIFIED, UPSTREAM_FAILURE."
                         ),
                     },
                     "message": {
@@ -373,23 +374,41 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
 
     commit_schema = {
         "type": "object",
-        "required": ["ops", "catalogVersion", "planDigest"],
+        "required": ["proposal_handle", "confirmation"],
         "properties": {
-            "target": {"$ref": "#/components/schemas/GptChangeTarget"},
-            "ops": typed_ops,
-            "catalogVersion": {"type": "string"},
-            "expectedRevision": {
-                "type": "integer",
+            "proposal_handle": {
+                "type": "string",
+                "minLength": 1,
                 "description": (
-                    "Required OCC revision for an existing playlist. "
-                    "Omit only for create_playlist without playlistId."
+                    "Opaque handle from gpt_preview_change. Server-side authority; "
+                    "do not invent or alter. COMMIT does not accept ops/target."
                 ),
             },
-            "planDigest": {
-                "type": "string",
-                "description": "Digest returned by gpt_preview_change for the same ops.",
+            "confirmation": {
+                "oneOf": [
+                    {
+                        "type": "boolean",
+                        "description": "Pass true after explicit user confirmation.",
+                    },
+                    {
+                        "type": "object",
+                        "required": ["confirmed"],
+                        "properties": {
+                            "confirmed": {
+                                "type": "boolean",
+                                "description": "Must be true to commit.",
+                            }
+                        },
+                        "additionalProperties": False,
+                    },
+                ],
+                "description": (
+                    "Explicit user confirmation. Conversational OK is not AuthZ; "
+                    "backend revalidates permission and proposal binding."
+                ),
             },
         },
+        "additionalProperties": False,
     }
 
     paths: dict[str, Any] = {
@@ -398,8 +417,10 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "operationId": "gpt_get_catalog",
                 "summary": "TV Copilot capability catalog",
                 "description": (
-                    "Returns catalogVersion, operations, capabilities and limits from the "
-                    "canonical TvCopilotPatchV1 authority. Call before planning changes."
+                    "Returns catalogVersion, operations, capabilities, capability_surface "
+                    "and limits from the canonical TvCopilotPatchV1 authority. "
+                    "Call before planning writes. Catalog informs; backend authorizes. "
+                    "Requires tv-dashboard.write."
                 ),
                 "tags": [tag],
                 "security": [{"BearerAuth": []}],
@@ -532,9 +553,11 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "operationId": "gpt_preview_change",
                 "summary": "Preview typed change without persisting",
                 "description": (
-                    "Dry-run TvCopilotPatchV1. Returns planDigest, risk, confirmationPolicy, "
-                    "diff. Does not persist. Does not expose httpCommands. "
-                    "For create_playlist, target may be empty and expectedRevision is N/A."
+                    "PREPARE dry-run TvCopilotPatchV1. NO WRITE. Returns opaque "
+                    "proposal_handle, typed ops, risk, confirmationPolicy, diff. "
+                    "Does not expose httpCommands. When confirmationPolicy=confirm, "
+                    "show the plan and obtain explicit user OK before gpt_commit_change. "
+                    "Do not use for data-only preview (use gpt_preview_data_block)."
                 ),
                 "tags": [tag],
                 "security": [{"BearerAuth": []}],
@@ -554,10 +577,11 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "operationId": "gpt_commit_change",
                 "summary": "Commit a previously previewed change",
                 "description": (
-                    "ACT via shared write boundary. Requires Idempotency-Key, planDigest, "
-                    "catalogVersion. expectedRevision is required when target.playlistId "
-                    "refers to an existing playlist; omit only for create_playlist without "
-                    "pre-existing playlist. Authoritative read-back required."
+                    "COMMIT previously prepared proposal. WRITE. Input is only "
+                    "proposal_handle + confirmation (+ Idempotency-Key). Does not accept "
+                    "ops, target, route, SQL, or tool_name. Revalidates AuthZ, expiry, "
+                    "and playlist revision; authoritative read-back required. "
+                    "confirmation.confirmed must be true. Not a generic executor."
                 ),
                 "tags": [tag],
                 "security": [{"BearerAuth": []}],
@@ -577,13 +601,8 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "requestBody": _json_body(
                     commit_schema,
                     example={
-                        "target": {},
-                        "ops": create_ops,
-                        "catalogVersion": catalog_version,
-                        "planDigest": (
-                            "0123456789abcdef0123456789abcdef"
-                            "0123456789abcdef0123456789abcdef"
-                        ),
+                        "proposal_handle": "dnBfYWJjMTIz.dGVzdGhtYWMtc2lnbmF0dXJl",
+                        "confirmation": {"confirmed": True},
                     },
                 ),
                 "responses": {"200": _ok_response("Verified commit"), **_error_responses()},
@@ -597,8 +616,9 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
             "title": "TV Dashboard Custom GPT Actions",
             "version": "1.0.0",
             "description": (
-                "Compact OAuth façade over tv-dashboard-api. Owner of catalog and writes "
-                "remains TV. Eight Actions; openapi.json is import-only and not listed here."
+                "Compact OAuth façade over tv-dashboard-api (VISTA). Owner of catalog "
+                "and writes remains TV. Eight Actions under GOVERNED_PREPARE_COMMIT_V2; "
+                "openapi.json is import-only and not listed here."
             ),
         },
         "servers": [{"url": server_url}],
