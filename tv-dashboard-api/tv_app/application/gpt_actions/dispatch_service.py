@@ -216,6 +216,7 @@ class GptActionsDispatchService:
         operation_id = str(body.get("operationId") or "").strip()
         block_in = body.get("block") if isinstance(body.get("block"), dict) else None
         native_in = body.get("nativeConfig") if isinstance(body.get("nativeConfig"), dict) else None
+        route: dict[str, Any] | None = None
 
         if operation_id:
             route = self._catalog.get_route(operation_id)
@@ -284,11 +285,84 @@ class GptActionsDispatchService:
                 status_code=502,
                 retryable=True,
             ) from exc
+
+        join_hints = self._join_hints_for_preview(block, body=body, route=route)
+        format_hints = self._format_hints_for_route(route)
         return {
             "block": block,
             "persisted": False,
             "operationId": operation_id or None,
+            "joinHints": join_hints,
+            "formatHints": format_hints,
         }
+
+    @staticmethod
+    def _columns_from_preview_block(block: dict[str, Any]) -> list[str]:
+        resolved = block.get("resolved") if isinstance(block.get("resolved"), dict) else {}
+        for key in ("columns", "schemaColumns", "fields"):
+            raw = resolved.get(key) if resolved else None
+            if isinstance(raw, list) and raw:
+                return [str(item) for item in raw if str(item).strip()]
+        rows = resolved.get("rows") if resolved else None
+        if isinstance(rows, list) and rows and isinstance(rows[0], dict):
+            return [str(k) for k in rows[0].keys()]
+        return []
+
+    def _join_hints_for_preview(
+        self,
+        block: dict[str, Any],
+        *,
+        body: dict[str, Any],
+        route: dict[str, Any] | None,
+    ) -> dict[str, Any]:
+        from tv_app.application.services.data.join_plan_service import JoinPlanService
+
+        left_cols = self._columns_from_preview_block(block)
+        sibling = body.get("siblingColumns")
+        right_cols = (
+            [str(c) for c in sibling if str(c).strip()]
+            if isinstance(sibling, list)
+            else None
+        )
+        proposal = None
+        if left_cols and right_cols:
+            proposal = JoinPlanService.propose(
+                left_columns=left_cols, right_columns=right_cols
+            )
+        candidates = JoinPlanService.candidate_keys_from_columns(left_cols)
+        payload: dict[str, Any] = {
+            "candidateKeys": candidates,
+            "preferredKeyVocabulary": list(JoinPlanService.preferred_keys()),
+        }
+        if proposal is not None and proposal.is_usable:
+            payload["proposal"] = proposal.to_dict()
+        if route:
+            payload["operationId"] = route.get("operationId")
+        return payload
+
+    @staticmethod
+    def _format_hints_for_route(route: dict[str, Any] | None) -> list[dict[str, Any]]:
+        from tv_app.application.services.data.display_format_hints_service import (
+            DisplayFormatHintsService,
+        )
+
+        if not isinstance(route, dict):
+            return []
+        field_types = route.get("valueFieldTypes")
+        if not isinstance(field_types, dict):
+            return []
+        out: list[dict[str, Any]] = []
+        for field_key, field_type in field_types.items():
+            hint = DisplayFormatHintsService.resolve(
+                field_key=str(field_key),
+                field_type=str(field_type or ""),
+            )
+            if hint is None:
+                continue
+            row = hint.to_dict()
+            row["field"] = str(field_key)
+            out.append(row)
+        return out
 
     def suggest_change(
         self,

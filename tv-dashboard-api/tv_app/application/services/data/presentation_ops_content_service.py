@@ -217,6 +217,13 @@ class PresentationOpsContentService:
         return [item for item in raw if isinstance(item, dict)]
 
     @classmethod
+    def display_format_hints(cls) -> list[dict[str, Any]]:
+        raw = _load().get("displayFormatHints")
+        if not isinstance(raw, list):
+            return []
+        return [item for item in raw if isinstance(item, dict)]
+
+    @classmethod
     def capabilities(cls) -> list[dict[str, Any]]:
         raw = _load().get("capabilities")
         if not isinstance(raw, list):

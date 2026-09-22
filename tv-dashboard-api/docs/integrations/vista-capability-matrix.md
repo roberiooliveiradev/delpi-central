@@ -107,6 +107,31 @@ Documented project guardrail: prefer **≤ ~30 importable operations**.
 
 **Transform SoT (CURRENT):** `dataTransform = { steps: [...] }` only. VISTA writes via `set_data_transform` (typed step allowlist). Free M / DAX / SQL → `mForbidden`. Product M workbench is **off** (`mQuery.enabled`/`writeV2Enabled`/`advancedEditorEnabled`=false); legacy v2 scripts may still execute in dual-read for saved playlists. Heuristics: `agent_directives.data_transform`.
 
+## Slide Intelligence (CURRENT)
+
+Owner-local services (not new GPT Actions):
+
+| Concern | Module | Status |
+|---|---|---|
+| Join keys for merge | `JoinPlanService` + `propose_join` | **PROVEN** deterministic intersection |
+| Display format hints | `DisplayFormatHintsService` + `displayFormatHints` | **PROVEN** NL / field / valueFieldTypes |
+| Layout/theme recipes | `PresentationRecipeService` + `presentation_recipes.json` | **PROVEN** TV_KPI_* / THEME_* |
+| Compound ready slide | `agent_directives.compound_slide` | **PROVEN** pipeline directive |
+| Media | `assetId` only | **PROVEN** limit; upload **NONE** |
+| Color ramps TV | `presentation_recipes.colorRamps` + `colorVocabulary` | **PROVEN** |
+| Preview join/format hints | `gpt_preview_data_block.joinHints` / `formatHints` | **PROVEN** (no new Action) |
+
+DTOs (internal): `JoinPlanProposal`, `FormatHint`, `PresentationRecipeId` in `domain/presentation_intelligence`.
+
+Typed vs heuristic:
+
+| Decision | Typed | Heuristic (directives/suggest) |
+|---|---|---|
+| merge step shape | `set_data_transform` schema | which keys → JoinPlanService |
+| valueFormat/displayFormat | upsert_block schema + validation | NL markers / field types |
+| background/style/frame | patch/upsert schemas | recipe markers |
+| image bytes | — | forbidden without assetId |
+
 **Not applicable:** generic `search_records` / `prepare_record_change` (VISTA is not multi-entity CRUD).
 
 ## Action inventory

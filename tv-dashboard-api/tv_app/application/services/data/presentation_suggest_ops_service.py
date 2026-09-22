@@ -99,6 +99,20 @@ class PresentationSuggestOpsService:
                     ),
                 }
 
+        # Recipes tipadas (tema/layout TV) — owner PresentationRecipeService.
+        recipe_ops = cls._ops_from_presentation_recipe(message)
+        if recipe_ops:
+            return {
+                "catalogVersion": catalog_version,
+                "ops": recipe_ops,
+                "matchedCapabilityKeys": ["presentation_recipe"],
+                "clarificationKey": None,
+                "candidates": [],
+                "reason": PresentationOpsContentService.message(
+                    "suggestOk", count=len(recipe_ops)
+                ),
+            }
+
         scored: list[tuple[float, dict[str, Any]]] = []
         for cap in PresentationOpsContentService.capabilities():
             score = cls._score_capability(
@@ -456,9 +470,39 @@ class PresentationSuggestOpsService:
                 reverse=True,
             ):
                 if marker in normalized:
+                    # Merge hints need live sourceId/keys from JoinPlan — skip placeholders.
+                    serialized = json.dumps(step, ensure_ascii=False)
+                    if "{{" in serialized:
+                        break
                     steps.append(copy.deepcopy(step))
                     break
         return steps
+
+    @classmethod
+    def _extract_format_hint(cls, message: str) -> dict[str, Any] | None:
+        from tv_app.application.services.data.display_format_hints_service import (
+            DisplayFormatHintsService,
+        )
+
+        hint = DisplayFormatHintsService.from_nl(message)
+        return hint.to_dict() if hint else None
+
+    @classmethod
+    def _ops_from_presentation_recipe(cls, message: str) -> list[dict[str, Any]]:
+        from tv_app.application.services.data.presentation_recipe_service import (
+            PresentationRecipeService,
+        )
+
+        resolved = PresentationRecipeService.resolve_from_nl(message)
+        if resolved is None:
+            return []
+        ops = PresentationRecipeService.ops_for_recipe(resolved.recipe_id)
+        ready: list[dict[str, Any]] = []
+        for op in ops:
+            if cls._incomplete_op_field(op):
+                continue
+            ready.append(op)
+        return ready
 
     @classmethod
     def _extract_field_labels(cls, message: str, quoted: str) -> dict[str, str]:
@@ -844,6 +888,7 @@ class PresentationSuggestOpsService:
         params = cls._extract_params(normalized)
         transform_steps = cls._extract_transform_steps(normalized)
         field_labels = cls._extract_field_labels(message, quoted)
+        format_hint = cls._extract_format_hint(message)
         return {
             "quoted": quoted,
             "textContent": text_content,
@@ -863,6 +908,9 @@ class PresentationSuggestOpsService:
             ),
             "fieldLabelsJson": (
                 json.dumps(field_labels, ensure_ascii=False) if field_labels else ""
+            ),
+            "formatHintJson": (
+                json.dumps(format_hint, ensure_ascii=False) if format_hint else ""
             ),
             "branchParam": str(params.get("branch", "")) if "branch" in params else "",
             "newDataSourceId": cls._new_id("ds"),
@@ -911,6 +959,74 @@ class PresentationSuggestOpsService:
                     steps = None
                 if isinstance(steps, list):
                     op["steps"] = steps
+        elif name == "upsert_block":
+            format_raw = str(placeholders.get("formatHintJson") or "").strip()
+            if format_raw:
+                try:
+                    format_hint = json.loads(format_raw)
+                except json.JSONDecodeError:
+                    format_hint = None
+                if isinstance(format_hint, dict) and format_hint:
+                    from tv_app.application.services.data.display_format_hints_service import (
+                        DisplayFormatHintsService,
+                    )
+
+                    hint = DisplayFormatHintsService._from_payload(
+                        format_hint, source="suggest"
+                    )
+                    block = op.get("block") if isinstance(op.get("block"), dict) else None
+                    if hint and block is not None:
+                        block_type = str(block.get("type") or "")
+                        if block_type in {"kpi_view", "data_kpi"}:
+                            opts = (
+                                dict(block["kpiOptions"])
+                                if isinstance(block.get("kpiOptions"), dict)
+                                else {}
+                            )
+                            opts.update(hint.kpi_options_patch())
+                            block["kpiOptions"] = opts
+                            proj = (
+                                dict(block["kpiProjection"])
+                                if isinstance(block.get("kpiProjection"), dict)
+                                else {}
+                            )
+                            metrics = list(proj.get("metrics") or [])
+                            if metrics and isinstance(metrics[0], dict):
+                                metrics[0] = {
+                                    **metrics[0],
+                                    "format": hint.value_format,
+                                    "displayFormat": hint.display_format_spec(),
+                                }
+                                proj["metrics"] = metrics
+                            elif not metrics:
+                                proj["metrics"] = [
+                                    {
+                                        "format": hint.value_format,
+                                        "displayFormat": hint.display_format_spec(),
+                                    }
+                                ]
+                            block["kpiProjection"] = proj
+                        elif block_type in {"chart_view", "data_chart"}:
+                            opts = (
+                                dict(block["chartOptions"])
+                                if isinstance(block.get("chartOptions"), dict)
+                                else {}
+                            )
+                            opts["valueFormat"] = hint.value_format
+                            block["chartOptions"] = opts
+                            if not isinstance(block.get("chartProjection"), dict):
+                                block["chartProjection"] = {}
+                        elif block_type in {"table_view", "data_table"}:
+                            if not isinstance(block.get("tableProjection"), dict):
+                                block["tableProjection"] = {"columns": []}
+                            opts = (
+                                dict(block["tableOptions"])
+                                if isinstance(block.get("tableOptions"), dict)
+                                else {}
+                            )
+                            opts["valueFormat"] = hint.value_format
+                            block["tableOptions"] = opts
+                        op["block"] = block
         return op
 
     @classmethod
@@ -1004,9 +1120,16 @@ class PresentationSuggestOpsService:
                 background = patch.get("background")
                 if not isinstance(background, dict):
                     return "patch_native_config.background"
-                if not str(background.get("value") or "").strip():
+                bg_type = str(background.get("type") or "").strip()
+                if not bg_type:
                     return "patch_native_config.background"
-                if not str(background.get("type") or "").strip():
+                if bg_type == "gradient":
+                    if not (
+                        str(background.get("from") or "").strip()
+                        and str(background.get("to") or "").strip()
+                    ):
+                        return "patch_native_config.background"
+                elif not str(background.get("value") or "").strip():
                     return "patch_native_config.background"
             return None
         if name == "upsert_data_source":

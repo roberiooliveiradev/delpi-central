@@ -1,5 +1,5 @@
 {
-  "version": "2026.09.22.5",
+  "version": "2026.09.22.6",
   "owner": "tv-dashboard-api",
   "source": "capability_surface.agent_directives via gpt_get_catalog",
   "object_resolution": {
@@ -90,13 +90,67 @@
     "rules": [
       "SoT: dataTransform = { steps: [...] }. Ops tipadas do catálogo (keepRows, merge, select, rename, …).",
       "Unir fontes: step op=merge com sourceId da outra data_source do slide — nunca script M NestedJoin.",
+      "Chaves de join: preferir interseção de colunas (branch/filial/codigo/id/periodo/op). Se confidence baixa, UMA pergunta ou use campo INFORMED — não inventar.",
       "Nunca emitir language/script/version:2 nem smuggle via upsert_block.dataTransform.",
       "Editor M / workbench / compile-mutate não fazem parte do caminho VISTA."
     ],
     "forbidden": [
       "Script M livre / Power Query M / DAX / SQL",
       "dataTransform.version=2 ou dataTransform.script",
-      "Orientar o usuário a 'abrir o editor M'"
+      "Orientar o usuário a 'abrir o editor M'",
+      "Inventar leftKey/rightKey sem schema/preview comum"
+    ]
+  },
+  "compound_slide": {
+    "principle": "READY_COMPOUND_SLIDE",
+    "summary": "Pedido complexo → um lote compound: rotas + merge tipado + visuals com projeção/formato + recipe de layout.",
+    "pipeline": [
+      "1) gpt_get_catalog → obedecer agent_directives (compound_slide, data_transform, presentation_recipes, display_format).",
+      "2) gpt_search_data_routes (PRESENT_ALL_SEARCH_HITS) → escolher família KPI/série/tabela.",
+      "3) gpt_preview_data_block para schemas/amostras quando for unir ou formatar.",
+      "4) upsert_data_source (N fontes) + set_data_transform merge com leftKey/rightKey confiáveis.",
+      "5) add_*_from_route OU upsert_block visual + bind_visual — depois SEMPRE upsert_block com kpiProjection/chartProjection/tableProjection NÃO vazios + formato.",
+      "6) Aplicar presentation_recipes (TV_KPI_HERO / TV_KPI_PLUS_CHART / TV_TABLE_FOCUS / THEME_*) via patch_native_config + frames/styles.",
+      "7) Uma gpt_preview_change compound + commit_now=true (additive)."
+    ],
+    "forbidden": [
+      "Parar em bind_visual com projection {}",
+      "Composite sem formato quando o pedido pede %/R$/inteiro",
+      "Fatiar o pedido em vários chats sem necessidade"
+    ]
+  },
+  "display_format": {
+    "principle": "TYPED_DISPLAY_FORMAT",
+    "summary": "Formatar via kpiOptions/chartOptions/tableProjection valueFormat|displayFormat (number|currency|percent|raw). Inferir de valueFieldTypes / nome do campo / NL.",
+    "rules": [
+      "Percentual/% → valueFormat=percent.",
+      "R$/reais/moeda → currency BRL.",
+      "Inteiro → number com decimalPlaces=0.",
+      "Texto puro → raw/text.",
+      "Nunca inventar category fora do allowlist."
+    ]
+  },
+  "presentation_recipes": {
+    "principle": "TYPED_PRESENTATION_RECIPES",
+    "summary": "Layouts/temas TV tipados (TV_KPI_HERO, TV_KPI_PLUS_CHART, TV_TABLE_FOCUS, THEME_DELPI/MIDNIGHT/LIGHT). Emitir ops do catálogo de recipes — não inventar CSS.",
+    "rules": [
+      "Pedido 'mais profissional/limpo/TV' → THEME_MIDNIGHT ou THEME_DELPI.",
+      "Hierarquia: título → KPI → chart/tabela; contraste kiosk.",
+      "fontFamily preferir Inter, system-ui, sans-serif.",
+      "Imagem só com assetId já existente; sem upload via Actions."
+    ],
+    "forbidden": [
+      "customFonts upload",
+      "Inventar assetId",
+      "Tratar print como fonte de upload de mídia"
+    ]
+  },
+  "media_limits": {
+    "principle": "ASSET_ID_ONLY",
+    "summary": "Blocos image/video e fundo image exigem assetId já existente na playlist. Sem Action de upload neste HEAD.",
+    "rules": [
+      "Sem assetId INFORMED → declare gap; use cor/gradiente ou peça ao usuário escolher mídia no editor.",
+      "Print/screenshot = VISUAL_PARITY tipada, não Image Generation nem upload implícito."
     ]
   },
   "modes": {
@@ -104,13 +158,14 @@
     "GUIDED_DASHBOARD": "Projetar/reorganizar painel ou playlist — criar só o que faltar após inventário READ.",
     "VISUAL_PARITY": "Print/anexo de referência → reproduzir slide com paridade via ops tipadas (screenshot_parity).",
     "DATA_INTERPRETATION": "Entender/explicar dados sem gravar até pedido explícito.",
-    "PLAYLIST_CURATION": "Ordem, duração, slides, kiosk/TV — preferir update/reorder/move no existente."
+    "PLAYLIST_CURATION": "Ordem, duração, slides, kiosk/TV — preferir update/reorder/move no existente.",
+    "COMPOUND_READY_SLIDE": "Pedido complexo de slide pronto — seguir compound_slide.pipeline."
   },
   "write_flow": {
     "skip_suggest_when_typable": true,
     "additive": "Uma gpt_preview_change com lote tipado + commit_now=true + confirmation.confirmed=true + Idempotency-Key. Pedido do usuário = confirmação — não perguntar Confirma?.",
     "destructive": "gpt_preview_change sem commit_now → plano → uma Confirma? → gpt_commit_change com proposal_handle opaco exato.",
-    "compound": "LOTE COMPLETO numa preview; PlanCompiler ordena; as/playlistRef/slideRef quando vários recursos; sem inventar UUID.",
+    "compound": "LOTE COMPLETO numa preview; PlanCompiler ordena; as/playlistRef/slideRef quando vários recursos; sem inventar UUID. Após bind/composite, proyección+formato obrigatórios.",
     "forbidden_handles": ["latest", "current", "null", "new"]
   },
   "anti_patterns": [
@@ -124,7 +179,9 @@
     "Dump enciclopédico de rotas de um domínio no chat GPT (sem search / sem intent).",
     "Omitir hits do search (ex.: não mostrar séries quando a Action retornou get_*_series).",
     "Trial-and-error de params fora do paramSchema / inventar block+nativeConfig para preview.",
-    "Emitir script M / dataTransform.version=2 / orientar editor M (transform = só steps tipados)."
+    "Emitir script M / dataTransform.version=2 / orientar editor M (transform = só steps tipados).",
+    "bind_visual / add_*_from_route sem upsert_block de projeção+formato quando o slide deve ficar pronto.",
+    "Inventar join keys sem colunas em comum / sem confirmação."
   ],
   "auth_errors": {
     "401": "AuthN — pedir reconexão OAuth DELPI / permitir Action.",

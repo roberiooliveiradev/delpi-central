@@ -337,7 +337,7 @@ When later steps truly depend on resources created earlier, use a **compound pla
 
 **PROVEN today:** `add_blank_slide` creates a blank native slide (optional title; catalog defaults). Background mutation is `patch_native_config` (`requiresSlide=true`). Therefore “crie um slide com fundo verde” can require dependent ops in the current model. That is a product gap, not a reason to make the user decompose the API.
 
-### 12.4 Compound plan (TARGET)
+### 12.4 Compound plan (PROVEN engine)
 
 Example request: “crie um slide, adicione OEE como KPI e deixe o fundo verde”.
 
@@ -347,7 +347,7 @@ Illustrative catalog sequence (do not lock if the catalog evolves):
 1. add_blank_slide
 2. patch_native_config
 3. upsert_data_source
-4. upsert_block / visual
+4. upsert_block / visual (+ kpiProjection/formato — not empty after bind)
 5. bind_visual (only if the catalog still has that capability)
 ```
 
@@ -356,8 +356,9 @@ compound plan = ordered canonical ops representing ONE user goal
 ```
 
 Surface stays `suggest` → `preview` → `commit`. No second operation catalog. No arbitrary HTTP.
+Obey live `agent_directives.compound_slide` / `presentation_recipes` / `display_format` for ready-slide quality.
 
-### 12.5 Dependency / output binding (TARGET)
+### 12.5 Dependency / output binding (PROVEN)
 
 A later step may depend on a resource produced earlier (`created.slide`, `created.dataSource`, `created.visual` — **conceptual** names only).
 
@@ -442,14 +443,14 @@ PARTIAL_NOT_FULL_SUCCESS
 
 | ID | Utterance | Expected | Status |
 |---|---|---|---|
-| A | crie um slide com fundo verde | TV slide + green background; **not** image generation | DOMAIN **PROVEN** policy; compound execution **TARGET** |
+| A | crie um slide com fundo verde | TV slide + green background; **not** image generation | DOMAIN **PROVEN**; compound engine **PROVEN** |
 | B | crie uma tela verde | TV slide intent in VISTA context | policy **PROVEN** |
 | C | gere uma imagem de um painel verde | explicit image intent **only if** Image Generation is enabled | routing **PROVEN**; Builder toggle `TO_INVENTORY` |
 | D | na Teste Vista crie um slide azul | resolve playlist via list/context; no guessed UUID | **PROVEN** resolution rule |
-| E | crie um slide de 20 segundos com fundo preto | one desired outcome, multiple attributes | planning **TARGET**; atomic OPTION A **PLANNED** |
-| F | crie uma tela de OEE com fundo escuro | data discovery if needed + visual proposal + TV slide plan | discovery **PROVEN**; compound **TARGET** |
-| G | adicione OEE e mostre como KPI | potential compound capability | **TARGET** |
-| H | crie um slide, adicione OEE e deixe o fundo verde | one compound intent, not multiple unrelated chats | **TARGET** |
+| E | crie um slide de 20 segundos com fundo preto | one desired outcome, multiple attributes | compound **PROVEN**; atomic OPTION A **PLANNED** |
+| F | crie uma tela de OEE com fundo escuro | data discovery if needed + visual proposal + TV slide plan | discovery **PROVEN**; compound **PROVEN** |
+| G | adicione OEE e mostre como KPI | compound + projection/format | **PROVEN** engine; quality via `compound_slide` |
+| H | crie um slide, adicione OEE e deixe o fundo verde | one compound intent, not multiple unrelated chats | **PROVEN** |
 | I | agora deixe ele azul | resolve previous referent, then revalidate | referent **PLANNED**; revalidate **PROVEN** |
 | J | faça uma imagem do slide | image intent only if explicit and capability exists | routing **PROVEN** |
 
@@ -465,7 +466,8 @@ Negative:
 - Commit without preview/confirmation → forbidden
 - Treating PREVIEW or 2xx as VERIFIED → forbidden
 - Claiming Knowledge overrides live API payload → forbidden
-- Claiming current preview already executes full create-then-modify binding → forbidden (TARGET only)
+- Claiming create-then-modify without PlanCompiler/`as` refs when IDs are unknown → forbidden
+- Inventing assetId for images without INFORMED media → forbidden (`media_limits`)
 - Asking the user to manually decompose API steps as the preferred UX → forbidden
 - Claiming “I cannot save / only guide / do it in the editor” when GPT Actions are available → forbidden (reconnect OAuth / call Action instead)
 - Treating retired Chat Copilot as proof that VISTA cannot write → forbidden (write path = eight Actions + PresentationMutation)

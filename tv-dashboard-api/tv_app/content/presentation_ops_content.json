@@ -9,6 +9,7 @@
     "azul": "#2563eb",
     "azul escuro": "#1e3a8a",
     "azul claro": "#93c5fd",
+    "azul delpi": "#089bdb",
     "vermelho": "#dc2626",
     "verde": "#16a34a",
     "amarelo": "#eab308",
@@ -19,7 +20,19 @@
     "branco": "#ffffff",
     "cinza": "#64748b",
     "cinza claro": "#e2e8f0",
-    "cinza escuro": "#334155"
+    "cinza escuro": "#334155",
+    "meia-noite": "#0f172a",
+    "midnight": "#0f172a",
+    "slate": "#1e293b",
+    "âmbar": "#f59e0b",
+    "ambar": "#f59e0b",
+    "navy delpi": "#0d2840",
+    "azul navy": "#0d2840",
+    "factory": "#111827",
+    "aço": "#334155",
+    "aco": "#334155",
+    "kiosk claro": "#f8fafc",
+    "contraste tv": "#020617"
   },
   "nlRouteHints": {
     "oee": "get_overall_equipment_effectiveness_pct",
@@ -122,6 +135,120 @@
         "count": 10,
         "from": "bottom"
       }
+    },
+    {
+      "markers": [
+        "unir fontes",
+        "combinar fontes",
+        "juntar fontes",
+        "cruzar fontes",
+        "fazer merge",
+        "left join",
+        "mesclar consultas",
+        "combinar consultas"
+      ],
+      "step": {
+        "op": "merge",
+        "sourceId": "{{siblingSourceId}}",
+        "leftKey": "{{joinLeftKey}}",
+        "rightKey": "{{joinRightKey}}",
+        "join": "left"
+      }
+    },
+    {
+      "markers": [
+        "renomear coluna",
+        "renomeie o campo",
+        "rename column",
+        "alterar rótulo"
+      ],
+      "step": {
+        "op": "rename",
+        "from": "{{renameFrom}}",
+        "to": "{{renameTo}}"
+      }
+    },
+    {
+      "markers": [
+        "selecionar colunas",
+        "manter colunas",
+        "apenas colunas",
+        "select columns"
+      ],
+      "step": {
+        "op": "select",
+        "columns": "{{selectColumns}}"
+      }
+    },
+    {
+      "markers": [
+        "mudar tipo",
+        "converter para número",
+        "change type",
+        "como decimal"
+      ],
+      "step": {
+        "op": "changeType",
+        "column": "{{typeColumn}}",
+        "to": "number"
+      }
+    }
+  ],
+  "displayFormatHints": [
+    {
+      "markers": [
+        "em r$",
+        "em reais",
+        "moeda",
+        "currency",
+        "formato moeda",
+        "como dinheiro"
+      ],
+      "hint": {
+        "category": "currency",
+        "valueFormat": "currency",
+        "currency": "BRL",
+        "decimalPlaces": 2
+      }
+    },
+    {
+      "markers": [
+        "percentual",
+        "por cento",
+        "em %",
+        "como %",
+        "formato percentual",
+        "percent"
+      ],
+      "hint": {
+        "category": "percent",
+        "valueFormat": "percent",
+        "decimalPlaces": 1
+      }
+    },
+    {
+      "markers": [
+        "número inteiro",
+        "numero inteiro",
+        "sem casas",
+        "inteiro"
+      ],
+      "hint": {
+        "category": "number",
+        "valueFormat": "number",
+        "decimalPlaces": 0
+      }
+    },
+    {
+      "markers": [
+        "texto puro",
+        "como texto",
+        "formato texto"
+      ],
+      "hint": {
+        "category": "text",
+        "valueFormat": "raw"
+      }
     }
   ],
   "mutationActionTerms": [
@@ -219,6 +346,7 @@
     "addSlideOk": "Slide adicionado a partir do preset «{presetKey}».",
     "fingerprintSkipped": "Fingerprint de resolução omitido (sem blocos data_source ou falha na resolução).",
     "mForbidden": "Script M livre não é aceito. Use etapas tipadas (set_data_transform.steps). O editor M está desativado no produto.",
+    "displayFormatInvalid": "Formato de exibição inválido em «{field}». Use number|currency|percent|auto|raw (e category allowlisted).",
     "suggestEmptyMessage": "Mensagem vazia — nenhuma op sugerida.",
     "suggestNoMatch": "Não identifiquei uma operação do catálogo do Copiloto para esse pedido. Exemplos: «adicione um texto», «crie um slide», «adicione um KPI de OEE», «adicione um modelo de dados de OEE».",
     "suggestOk": "Sugestão gerada a partir do catálogo ({count} op(s)).",
@@ -1230,6 +1358,65 @@
                     "type": "string"
                   }
                 }
+              },
+              "chartType": {
+                "type": "string",
+                "description": "For chart_view: line|bar|area|pie|…"
+              },
+              "tablePreset": {
+                "type": "string",
+                "description": "For table_view: banded|minimal|grid|…"
+              },
+              "kpiProjection": {
+                "type": "object",
+                "additionalProperties": true,
+                "description": "KPI field binding. Prefer metrics[].format|displayFormat (number|percent|currency|raw). Never leave empty after bind_visual."
+              },
+              "kpiOptions": {
+                "type": "object",
+                "additionalProperties": true,
+                "description": "KPI card options: valueFormat / displayValueFormat (auto|number|currency|percent|compact|raw).",
+                "properties": {
+                  "valueFormat": {
+                    "type": "string",
+                    "enum": ["auto", "number", "currency", "percent", "compact", "raw"]
+                  },
+                  "decimalPlaces": { "type": "number" }
+                }
+              },
+              "chartOptions": {
+                "type": "object",
+                "additionalProperties": true,
+                "description": "Chart options including valueFormat.",
+                "properties": {
+                  "valueFormat": {
+                    "type": "string",
+                    "enum": ["auto", "number", "currency", "percent", "compact", "raw"]
+                  }
+                }
+              },
+              "chartProjection": {
+                "type": "object",
+                "additionalProperties": true,
+                "description": "Chart axes/series binding — do not leave empty after bind_visual."
+              },
+              "tableProjection": {
+                "type": "object",
+                "additionalProperties": true,
+                "description": "Table columns; columns[].valueFormat = auto|number|currency|percent."
+              },
+              "tableOptions": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "fieldLabels": {
+                "type": "object",
+                "additionalProperties": { "type": "string" }
+              },
+              "dataTransform": {
+                "type": "object",
+                "additionalProperties": true,
+                "description": "Prefer set_data_transform; if present must be {steps} only."
               }
             }
           }

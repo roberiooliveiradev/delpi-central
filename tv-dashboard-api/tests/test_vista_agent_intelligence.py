@@ -100,3 +100,5 @@ def test_data_transform_typed_steps_only():
     forbidden = " ".join(transform["forbidden"])
     assert "script" in forbidden.lower() or "M" in forbidden
     assert any("script M" in str(item) or "steps tipados" in str(item) for item in directives["anti_patterns"])
+    assert directives["compound_slide"]["principle"] == "READY_COMPOUND_SLIDE"
+    assert directives["media_limits"]["principle"] == "ASSET_ID_ONLY"

@@ -124,13 +124,16 @@ Composites rota → visual + bind:
 | Fonte / modelo de dados | sim | `create_data_source`, `update_data_source` |
 | Fonte + KPI/chart/table (composite) | sim | `add_*_from_route` |
 | Transform tipado (subset) | sim | `set_data_transform` + `transformStepHints` — SoT = `{ steps }` |
-| Bind visual (+ projections no MFE) | sim | `bind_visual`; sync via `useSyncViewDataLinks` |
+| Bind visual (+ projections no MFE) | sim | `bind_visual`; sync via `useSyncViewDataLinks`; ready-slide exige projection+formato |
+| Formato número/moeda/% | sim | `kpiOptions`/`chartOptions`/`*Projection` + `displayFormatHints` |
+| Layout/tema TV (recipes) | sim | `presentation_recipes` via agent_directives (sem Action nova) |
 | Fundo / dataFilters / speakerNotes | sim | `patch_native_config` (whitelist) |
 | Mídia via `assetId` | sim | `upsert_block` com `assetId` (sem `url` solto / M) |
 | Zoom / snap / régua / Exibir | **Fora** | Preferência de sessão UI |
 | Undo / redo local | **Fora** | Histórico de editor, não modelo remoto |
 | Export PPTX | **Fora** | Canal aparte |
 | QR / editores / admin playlist | **Fora** | Governança |
+| Upload de mídia via GPT / Image Generation como slide | **Fora** | `media_limits` ASSET_ID_ONLY |
 | Script M / DAX / SQL / workbench M | **Fora** | Intencional (`mForbidden`); produto M desativado |
 
 ## Custom GPT Actions (consumer externo)

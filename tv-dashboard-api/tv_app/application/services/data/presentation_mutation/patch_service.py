@@ -895,6 +895,18 @@ class PresentationPatchService:
                 cleaned.pop("dataTransform", None)
             else:
                 cleaned["dataTransform"] = sanitized
+        from tv_app.application.services.data.display_format_hints_service import (
+            DisplayFormatHintsService,
+        )
+
+        format_errors = DisplayFormatHintsService.validate_projection_formats(cleaned)
+        if format_errors:
+            raise PresentationPatchError(
+                PresentationOpsContentService.message(
+                    "displayFormatInvalid",
+                    field=", ".join(format_errors[:4]),
+                )
+            )
         block_id = str(cleaned.get("id") or "").strip() or _new_block_id()
         cleaned["id"] = block_id
         blocks = _blocks_of(cfg)

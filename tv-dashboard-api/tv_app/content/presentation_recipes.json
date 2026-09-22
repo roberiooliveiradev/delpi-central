@@ -1,0 +1,210 @@
+{
+  "version": "2026.09.22.1",
+  "fontFamilyAllowlist": [
+    "Inter, system-ui, sans-serif",
+    "system-ui, sans-serif",
+    "Georgia, serif"
+  ],
+  "colorRamps": {
+    "delpi_navy": ["#05070a", "#0d2840", "#089bdb"],
+    "midnight": ["#0f172a", "#1e293b", "#38bdf8"],
+    "factory": ["#111827", "#334155", "#f59e0b"],
+    "light_kiosk": ["#f8fafc", "#e2e8f0", "#0f172a"],
+    "contrast_tv": ["#020617", "#ffffff", "#22c55e"]
+  },
+  "recipes": {
+    "TV_KPI_HERO": {
+      "label": "KPI hero TV",
+      "themeKey": "delpi",
+      "description": "Fundo escuro DELPI + título + um KPI grande.",
+      "markers": [
+        "kpi hero",
+        "kpi grande",
+        "indicador em destaque",
+        "painel kpi",
+        "slide kpi"
+      ],
+      "ops": [
+        {
+          "op": "patch_native_config",
+          "patch": {
+            "background": {
+              "type": "gradient",
+              "from": "#05070a",
+              "to": "#0d2840",
+              "angle": 180
+            }
+          }
+        },
+        {
+          "op": "upsert_block",
+          "block": {
+            "type": "heading",
+            "frame": { "x": 4, "y": 6, "w": 92, "h": 12 },
+            "style": {
+              "fontSize": 40,
+              "fontWeight": "bold",
+              "color": "#ffffff",
+              "fontFamily": "Inter, system-ui, sans-serif",
+              "textAlign": "left"
+            }
+          }
+        },
+        {
+          "op": "upsert_block",
+          "block": {
+            "type": "kpi_view",
+            "frame": { "x": 8, "y": 24, "w": 84, "h": 52 },
+            "style": {
+              "color": "#ffffff",
+              "fontFamily": "Inter, system-ui, sans-serif"
+            }
+          }
+        }
+      ]
+    },
+    "TV_KPI_PLUS_CHART": {
+      "label": "KPI + gráfico TV",
+      "themeKey": "midnight",
+      "description": "KPI à esquerda e chart à direita em fundo meia-noite.",
+      "markers": [
+        "kpi e gráfico",
+        "kpi e grafico",
+        "indicador com série",
+        "kpi plus chart",
+        "painel com gráfico"
+      ],
+      "ops": [
+        {
+          "op": "patch_native_config",
+          "patch": {
+            "background": { "type": "color", "value": "#0f172a" }
+          }
+        },
+        {
+          "op": "upsert_block",
+          "block": {
+            "type": "heading",
+            "frame": { "x": 4, "y": 4, "w": 92, "h": 10 },
+            "style": {
+              "fontSize": 32,
+              "fontWeight": "bold",
+              "color": "#f8fafc",
+              "fontFamily": "Inter, system-ui, sans-serif"
+            }
+          }
+        },
+        {
+          "op": "upsert_block",
+          "block": {
+            "type": "kpi_view",
+            "frame": { "x": 4, "y": 18, "w": 30, "h": 70 },
+            "style": { "color": "#f8fafc", "fontFamily": "Inter, system-ui, sans-serif" }
+          }
+        },
+        {
+          "op": "upsert_block",
+          "block": {
+            "type": "chart_view",
+            "chartType": "line",
+            "frame": { "x": 38, "y": 18, "w": 58, "h": 70 },
+            "style": { "color": "#f8fafc", "fontFamily": "Inter, system-ui, sans-serif" }
+          }
+        }
+      ]
+    },
+    "TV_TABLE_FOCUS": {
+      "label": "Tabela foco TV",
+      "themeKey": "factory",
+      "description": "Tabela dominante com título curto.",
+      "markers": [
+        "tabela em destaque",
+        "foco tabela",
+        "slide tabela",
+        "table focus"
+      ],
+      "ops": [
+        {
+          "op": "patch_native_config",
+          "patch": {
+            "background": {
+              "type": "gradient",
+              "from": "#1e293b",
+              "to": "#334155",
+              "angle": 135
+            }
+          }
+        },
+        {
+          "op": "upsert_block",
+          "block": {
+            "type": "heading",
+            "frame": { "x": 4, "y": 4, "w": 92, "h": 10 },
+            "style": {
+              "fontSize": 28,
+              "fontWeight": "bold",
+              "color": "#f1f5f9",
+              "fontFamily": "Inter, system-ui, sans-serif"
+            }
+          }
+        },
+        {
+          "op": "upsert_block",
+          "block": {
+            "type": "table_view",
+            "tablePreset": "banded",
+            "frame": { "x": 4, "y": 16, "w": 92, "h": 76 },
+            "style": { "color": "#f1f5f9", "fontFamily": "Inter, system-ui, sans-serif" }
+          }
+        }
+      ]
+    },
+    "THEME_DELPI": {
+      "label": "Tema DELPI",
+      "themeKey": "delpi",
+      "description": "Só fundo/tema DELPI (sem blocos).",
+      "markers": ["tema delpi", "fundo delpi", "visual delpi", "theme delpi"],
+      "ops": [
+        {
+          "op": "patch_native_config",
+          "patch": {
+            "background": {
+              "type": "gradient",
+              "from": "#05070a",
+              "to": "#0d2840",
+              "angle": 180
+            }
+          }
+        }
+      ]
+    },
+    "THEME_MIDNIGHT": {
+      "label": "Tema meia-noite",
+      "themeKey": "midnight",
+      "description": "Fundo #0f172a.",
+      "markers": ["tema meia-noite", "tema midnight", "fundo escuro profissional", "mais profissional"],
+      "ops": [
+        {
+          "op": "patch_native_config",
+          "patch": {
+            "background": { "type": "color", "value": "#0f172a" }
+          }
+        }
+      ]
+    },
+    "THEME_LIGHT": {
+      "label": "Tema claro",
+      "themeKey": "light",
+      "description": "Fundo claro TV.",
+      "markers": ["tema claro", "fundo claro", "theme light", "visual limpo"],
+      "ops": [
+        {
+          "op": "patch_native_config",
+          "patch": {
+            "background": { "type": "color", "value": "#f8fafc" }
+          }
+        }
+      ]
+    }
+  }
+}

@@ -39,7 +39,18 @@ class VistaAgentIntelligenceService:
     @classmethod
     def agent_directives(cls) -> dict[str, Any]:
         """Compact directives for the external specialist to obey at runtime."""
+        from tv_app.application.services.data.presentation_recipe_service import (
+            PresentationRecipeService,
+        )
+
         doc = cls.document()
+        recipes = doc.get("presentation_recipes") or {}
+        if isinstance(recipes, dict) and not recipes.get("catalog"):
+            # Live catalog of recipe ids/markers from content JSON.
+            recipes = {
+                **recipes,
+                "catalog": PresentationRecipeService.catalog_projection(),
+            }
         return {
             "version": cls.version(),
             "authority": (
@@ -50,6 +61,10 @@ class VistaAgentIntelligenceService:
             "screenshot_parity": doc.get("screenshot_parity") or {},
             "data_discovery": doc.get("data_discovery") or {},
             "data_transform": doc.get("data_transform") or {},
+            "compound_slide": doc.get("compound_slide") or {},
+            "display_format": doc.get("display_format") or {},
+            "presentation_recipes": recipes,
+            "media_limits": doc.get("media_limits") or {},
             "modes": doc.get("modes") or {},
             "write_flow": doc.get("write_flow") or {},
             "anti_patterns": list(doc.get("anti_patterns") or []),

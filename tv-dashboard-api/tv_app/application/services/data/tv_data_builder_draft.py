@@ -133,9 +133,13 @@ def propose_join(
     *,
     left_local_id: str | None = None,
     right_local_id: str | None = None,
-    left_key: str = "op",
+    left_key: str | None = None,
     right_key: str | None = None,
+    left_columns: list[str] | None = None,
+    right_columns: list[str] | None = None,
 ) -> tuple[dict[str, Any], dict[str, Any] | None]:
+    from tv_app.application.services.data.join_plan_service import JoinPlanService
+
     sources = list(draft.get("sources") or [])
     if len(sources) < 2:
         return draft, None
@@ -155,7 +159,38 @@ def propose_join(
     if not right_source:
         return draft, None
 
-    rk = right_key or left_key
+    left_source = find_source(draft, local_id=primary)
+    resolved_left = str(left_key or "").strip() or None
+    resolved_right = str(right_key or "").strip() or None
+    if not resolved_left or not resolved_right:
+        left_cols = left_columns
+        right_cols = right_columns
+        if left_cols is None and isinstance(left_source, dict):
+            cols = left_source.get("columns") or left_source.get("schemaColumns")
+            left_cols = [str(c) for c in cols] if isinstance(cols, list) else None
+        if right_cols is None and isinstance(right_source, dict):
+            cols = right_source.get("columns") or right_source.get("schemaColumns")
+            right_cols = [str(c) for c in cols] if isinstance(cols, list) else None
+        proposal = JoinPlanService.propose(
+            left_columns=left_cols,
+            right_columns=right_cols,
+            preferred_left_key=resolved_left,
+            preferred_right_key=resolved_right,
+        )
+        if proposal is None or not proposal.is_usable:
+            # Compat: se o caller passou uma chave explícita parcial, use-a;
+            # senão não inventar "op".
+            if resolved_left and resolved_right:
+                pass
+            elif resolved_left:
+                resolved_right = resolved_left
+            else:
+                return draft, None
+        else:
+            resolved_left = proposal.left_key
+            resolved_right = proposal.right_key
+    assert resolved_left and resolved_right
+
     transform = dict(draft.get("transform") or {})
     steps = [
         step
@@ -165,8 +200,8 @@ def propose_join(
     merge_step = {
         "op": "merge",
         "sourceId": right,
-        "leftKey": left_key,
-        "rightKey": rk,
+        "leftKey": resolved_left,
+        "rightKey": resolved_right,
         "join": "left",
     }
     steps.append(merge_step)

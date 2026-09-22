@@ -383,10 +383,12 @@ class TvDataBuilderService:
             cols = action.get("columns") if isinstance(action.get("columns"), list) else []
             return self._tool_set_columns(draft, [str(c) for c in cols], preview)
         if kind == "propose_join":
+            left_key = str(action.get("leftKey") or "").strip() or None
+            right_raw = str(action.get("rightKey") or "").strip() or None
             return self._tool_propose_join(
                 draft,
-                left_key=str(action.get("leftKey") or "op"),
-                right_key=str(action.get("rightKey") or "") or None,
+                left_key=left_key,
+                right_key=right_raw,
                 preview=preview,
             )
         if kind == "mark_ready":
@@ -526,7 +528,7 @@ class TvDataBuilderService:
         self,
         draft: dict[str, Any],
         *,
-        left_key: str,
+        left_key: str | None,
         right_key: str | None,
         preview: Any,
     ) -> tuple[dict[str, Any], list[dict[str, Any]], Any]:
@@ -544,7 +546,7 @@ class TvDataBuilderService:
             "joinProposed",
             left=str((left or {}).get("label") or "fonte A"),
             right=str((right or {}).get("label") or "fonte B"),
-            joinKey=left_key,
+            joinKey=str(step.get("leftKey") or left_key or ""),
         )
         return draft, [_msg("assistant", text, tool="propose_join")], preview
 
