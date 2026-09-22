@@ -40,13 +40,17 @@ describe("Process experience parity wiring", () => {
 });
 
 describe("Hero consolidation density", () => {
-  it("chrome integra presence slot e highlights de instância/revisão", () => {
+  it("chrome mantém hero do processo em todos os escopos e nav de seção legível", () => {
     const chrome = readFileSync(join(root, "ui/processes/ProcessWorkspaceChrome.tsx"), "utf8");
     expect(chrome).toMatch(/heroExtras/);
     expect(chrome).toMatch(/instanceHighlights/);
     expect(chrome).toMatch(/revisionHighlights/);
     expect(chrome).toMatch(/revisionActions/);
     expect(chrome).toMatch(/Excluir revisão/);
+    expect(chrome).toMatch(/aria-label="Processo"/);
+    expect(chrome).toMatch(/tm-processo-workspace-chrome__nested-hero/);
+    expect(chrome).toMatch(/tm-processo-workspace-chrome__section-nav/);
+    expect(chrome).not.toMatch(/TmUnderlineNav\s*\n(?:[^\n]*\n){0,6}[^\n]*density="compact"/);
   });
 
   it("revisão deixa de renderizar identity card quando chrome owns identity", () => {

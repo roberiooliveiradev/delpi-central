@@ -613,6 +613,28 @@
   flex-direction: column;
   gap: 0.75rem;
   min-width: 0;
+}
+/* Primeira faixa (path + hero do processo) permanece visível ao rolar em todos os escopos. */
+.dashboard-transformometro .tm-processo-workspace__chrome{
+  position: sticky;
+  top: 0;
+  z-index: 12;
+  padding-bottom: 0.35rem;
+  background: color-mix(in srgb, var(--ds-page-bg, var(--bg, #0b1c2c)) 92%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+/* Segunda topbar (seções): tipografia legível — não usar density compact. */
+.dashboard-transformometro .tm-processo-workspace-chrome__section-nav.delpi-ui-underline-nav .delpi-ui-underline-nav__item,
+.dashboard-transformometro .tm-processo-workspace-chrome__section-nav.ds-underline-nav .ds-underline-nav__item{
+  min-height: 2.5rem;
+  padding: 0.65rem 0.9rem;
+  font-size: var(--ds-font-md, 14px);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}.dashboard-transformometro .tm-processo-workspace-chrome__nested-hero{
+  /* Contexto de melhoria/revisão abaixo do hero do processo — visualmente secundário. */
+  opacity: 0.98;
 }.dashboard-transformometro .tm-processo-workspace-chrome__actions{
   display: flex;
   flex-wrap: wrap;
