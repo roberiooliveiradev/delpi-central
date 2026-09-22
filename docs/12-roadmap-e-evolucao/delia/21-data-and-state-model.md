@@ -275,22 +275,29 @@ C3_T5_AUTHORIZED = YES
 C3_T5_EXECUTED = NO
 C3_T5 = APPROVED
 C3_T6_AUTHORIZED = YES
-C3_T6 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
-C3_T7_AUTHORIZED = NO
+C3_T6 = APPROVED
+C3_T7_AUTHORIZED = YES
+C3_T7_EXECUTED = NO
 REVIEW = ARCHITECTURE_REVIEW_C3_T3R1
 VERDICT_C3_T3 = ACCEPT_WITH_RESIDUAL
 REVIEW_C3_T4 = ARCHITECTURE_REVIEW_C3_T4R1
 VERDICT_C3_T4 = ACCEPT_WITH_RESIDUAL
 REVIEW_C3_T5 = ARCHITECTURE_REVIEW_C3_T5
 VERDICT_C3_T5 = ACCEPT_WITH_RESIDUAL
+REVIEW_C3_T6 = ARCHITECTURE_REVIEW_C3_T6R1
+VERDICT_C3_T6 = ACCEPT_WITH_RESIDUAL
 FABRICATED_EVAL_PASS = RESOLVED
 REAL_DELPI_OPENAPI_COVERAGE = NOT_PROVEN
 EXPERTISE_FOUNDATION = IMPLEMENTED (delia-api/app/domain/expertise/)
 KNOWLEDGE_GOVERNANCE_FOUNDATION = IMPLEMENTED (delia-api/app/domain/knowledge/)
+EXPERTISE_EVIDENCE_REF_TYPING = PASS / EvidenceRef
+KNOWLEDGE_SCOPE = REMOVED
+RETRIEVAL_INCLUDE_FLAGS = REMOVED
+NORMAL_RETRIEVAL_SCOPE = PUBLISHED_ORGANIZATIONAL_KNOWLEDGE_ONLY
 RETRIEVAL_PORT = DEFERRED
 ```
 
-C3-T1 congela o **uso semântico** de Evidence/Source/epistemic para a inteligência futura. Não cria Evidence store, repository, schema, LLM, RAG, planner ou conversation runtime. C3-T2R1 domain model/tests foram aceitos por `ARCHITECTURE_REVIEW_C3_T2R1` (`ACCEPT_WITH_RESIDUAL`; `C3_T2=APPROVED`). C3-T3 foundation aceita por `ARCHITECTURE_REVIEW_C3_T3R1` (`ACCEPT_WITH_RESIDUAL`; `C3_T3=APPROVED`). C3-T4 Structured Understanding aceito por `ARCHITECTURE_REVIEW_C3_T4R1` (`ACCEPT_WITH_RESIDUAL`; `C3_T4=APPROVED`; `BOUNDED_SOURCE_OBSERVATION_EXTRACTION`); C3-T5 OpenAPI/CapabilityProjection aceito por `ARCHITECTURE_REVIEW_C3_T5` (`ACCEPT_WITH_RESIDUAL`; `C3_T5=APPROVED`; `REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN`); C3-T6 candidate Expertise/Knowledge governance + retrieval contracts (no physical store / RAG / RetrievalPort); store/RAG/planner/conversation/real provider remain out of scope.
+C3-T1 congela o **uso semântico** de Evidence/Source/epistemic para a inteligência futura. Não cria Evidence store, repository, schema, LLM, RAG, planner ou conversation runtime. C3-T2R1 domain model/tests foram aceitos por `ARCHITECTURE_REVIEW_C3_T2R1` (`ACCEPT_WITH_RESIDUAL`; `C3_T2=APPROVED`). C3-T3 foundation aceita por `ARCHITECTURE_REVIEW_C3_T3R1` (`ACCEPT_WITH_RESIDUAL`; `C3_T3=APPROVED`). C3-T4 Structured Understanding aceito por `ARCHITECTURE_REVIEW_C3_T4R1` (`ACCEPT_WITH_RESIDUAL`; `C3_T4=APPROVED`; `BOUNDED_SOURCE_OBSERVATION_EXTRACTION`); C3-T5 OpenAPI/CapabilityProjection aceito por `ARCHITECTURE_REVIEW_C3_T5` (`ACCEPT_WITH_RESIDUAL`; `C3_T5=APPROVED`; `REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN`); C3-T6 Expertise/Knowledge governance + retrieval contracts aceito por `ARCHITECTURE_REVIEW_C3_T6R1` (`ACCEPT_WITH_RESIDUAL`; `C3_T6=APPROVED`; published-only retrieval; no physical store / RAG / RetrievalPort); store/RAG/planner/conversation/real provider remain out of scope; C3_T7_AUTHORIZED=YES.
 
 ### 4C. C3-T3 — Model invocation / eval lineage
 
@@ -365,9 +372,10 @@ C3_T5_AUTHORIZED = YES
 C3_T5_EXECUTED = NO
 C3_T5 = APPROVED
 C3_T6_AUTHORIZED = YES
-C3_T6 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
-C3_T7_AUTHORIZED = NO
-NOTE_SUPERSEDED_CANDIDATE: historical candidate/rework markers live in ledger §6.70–§6.71
+C3_T6 = APPROVED
+C3_T7_AUTHORIZED = YES
+C3_T7_EXECUTED = NO
+NOTE_SUPERSEDED_CANDIDATE: historical candidate/rework markers live in ledger §6.70–§6.71 / §6.74–§6.75
 ```
 
 ### 4B.1 Ownership
@@ -1939,19 +1947,24 @@ The bounded OpenAPI adapter remains Infrastructure-only. It projects source owne
 
 Operation character is not inferred from HTTP method. C3-T5 found no canonical real DELPI OpenAPI extension or other real-source semantic classification contract to bind now; therefore the foundation uses explicit governed declarations in TEST_FIXTURE evidence, and unknown/ambiguous operations are not projectable. No persistence or catalog database is introduced.
 
-## C3-T6 / C3-T6R1 — Expertise / Knowledge governance + retrieval contracts
+## C3-T6 / C3-T6R1 — Expertise / Knowledge governance + retrieval contracts (APPROVED)
 
 ```text
-STATUS = CANDIDATE_FOR_ARCHITECTURE_REVIEW (C3-T6R1)
+STATUS = APPROVED
+REVIEW = ARCHITECTURE_REVIEW_C3_T6R1
+REVIEWED_IMPLEMENTATION_HEAD = 1a49e501fb8e2d900081572de83d2226cc09fb68
+REVIEW_REANCHOR_HEAD = 446d93564a2219430c8afac3b283881f41c4d9ae
+VERDICT = ACCEPT_WITH_RESIDUAL
 OWNER = DÉLIA (delia-api domain/expertise + domain/knowledge)
 ExpertisePack.evidence_refs = tuple[EvidenceRef, ...]
+ExpertisePack.status / DomainPlaybook.status = descriptive non-authoritative metadata only
 DomainPlaybook = versioned guidance (!= workflow / AutomationExecution / ACT)
 KnowledgeCandidate != OrganizationalKnowledge (published)
 KnowledgeOriginClass = TRANSIENT_RESEARCH | SESSION_EVIDENCE | PERSONAL_KNOWLEDGE_CANDIDATE | ORGANIZATIONAL_KNOWLEDGE_CANDIDATE | PUBLISHED_ORGANIZATIONAL_KNOWLEDGE
 KnowledgeLifecycleStatus = CANDIDATE | REVIEWED | EVALUATED | PUBLISHED | DEPRECATED | REVOKED
-publication_evaluation_completed = knowledge-governance eval (≠ model EvalResult)
+publication_evaluation_completed = knowledge-governance lifecycle assertion (≠ model EvalResult)
 REUSES = EvidenceRef, SourceRef
-KnowledgeRetrievalRequest/Hit/Result = provider-neutral contracts
+KnowledgeRetrievalRequest fields = purpose | owner_filters | version_constraint | max_results
 KNOWLEDGE_SCOPE = REMOVED
 RETRIEVAL_INCLUDE_FLAGS = REMOVED
 NORMAL_RETRIEVAL_SCOPE = PUBLISHED_ORGANIZATIONAL_KNOWLEDGE_ONLY
@@ -1960,7 +1973,7 @@ KnowledgeRetrievalPort = DEFERRED
 filter_organizational_retrieval_eligibility = deterministic in-memory eligibility only
 retrieval hit != FACT / Evidence / permission
 Personal/session/transient != auto Organizational Knowledge
-PHYSICAL_KNOWLEDGE_STORE = NONE / TO_INVENTORY
+PHYSICAL_KNOWLEDGE_STORE = TO_INVENTORY / DEFERRED
 NEW_RUNTIME_ABSTRACTIONS = NONE
 PERSISTENCE = NONE
 MIGRATION = NONE
@@ -1969,6 +1982,8 @@ VECTOR_STORE = NONE
 REGISTRY = NONE
 PLANNER = NONE
 ACT = NONE
+C3_T7_AUTHORIZED = YES
+C3_T7_EXECUTED = NO
 ```
 
-C3-T6R1 does not persist knowledge assets, does not index vectors, does not implement Personal Memory runtime, Marketplace, planner, conversation, PREPARE or ACT.
+C3-T6 does not persist knowledge assets, does not index vectors, does not implement Personal Memory runtime, Marketplace, planner, conversation, PREPARE or ACT. Accepted with residual via `ARCHITECTURE_REVIEW_C3_T6R1`.

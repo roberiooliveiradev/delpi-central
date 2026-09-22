@@ -1201,7 +1201,7 @@ C3_T4_AUTHORIZED = YES
 C3_T4_EXECUTED = NO
 TEST_MODULES = tests/test_model_invocation_foundation.py + tests/test_model_invocation_architecture.py
 PRODUCTION_READINESS = NOT_PROVEN
-NEXT = ARCHITECTURE_REVIEW_C3_T6
+NEXT = C3-T7 — FAST | OPERATIONAL | REASONING + STRUCTURED_PLANNER_FOUNDATION
 ```
 
 Required deterministic cases (C3-T3) — implemented; Architecture Review accepted (`ARCHITECTURE_REVIEW_C3_T3R1` `ACCEPT_WITH_RESIDUAL`):
@@ -1274,11 +1274,12 @@ C3_T5 = APPROVED
 C3_T5_AUTHORIZED = YES
 C3_T5_EXECUTED = NO
 C3_T6_AUTHORIZED = YES
-C3_T6 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
-C3_T7_AUTHORIZED = NO
+C3_T6 = APPROVED
+C3_T7_AUTHORIZED = YES
+C3_T7_EXECUTED = NO
 TEST_MODULES = tests/test_structured_understanding_foundation.py + tests/test_structured_understanding_architecture.py
 PRODUCTION_READINESS = NOT_PROVEN
-NEXT = ARCHITECTURE_REVIEW_C3_T6
+NEXT = C3-T7 — FAST | OPERATIONAL | REASONING + STRUCTURED_PLANNER_FOUNDATION
 ```
 
 Required deterministic cases (C3-T4R1) — implemented; Architecture Review accepted (`ARCHITECTURE_REVIEW_C3_T4R1` `ACCEPT_WITH_RESIDUAL`):
@@ -1870,9 +1871,10 @@ ARCHITECTURE_ENFORCEMENT = FAIL / OUTSIDE_TASK_BASELINE
 CURSOR_RULES_GOVERNANCE = pre-existing red
 PRODUCTION_READINESS = NOT_PROVEN
 C3_T6_AUTHORIZED = YES
-C3_T6 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
-C3_T7_AUTHORIZED = NO
-NEXT = ARCHITECTURE_REVIEW_C3_T6
+C3_T6 = APPROVED
+C3_T7_AUTHORIZED = YES
+C3_T7_EXECUTED = NO
+NEXT = C3-T7 — FAST | OPERATIONAL | REASONING + STRUCTURED_PLANNER_FOUNDATION
 ```
 
 Implementation SHA: `84c249bee0182ebf514142a24cb8bbea4090ca26`.
@@ -1902,46 +1904,47 @@ STATUS = HISTORICAL_CANDIDATE
 IMPLEMENTATION_HEAD = 537cf476646964f0866484c009043c261cf8f725
 ```
 
-## C3-T6R1 — Knowledge Contract Rework (CANDIDATE)
+## C3-T6R1 — Knowledge Contract Rework (APPROVED)
 
 ```text
-STATUS = CANDIDATE_FOR_ARCHITECTURE_REVIEW
-BASE_HEAD = dc2bb3bff120540f2a0fcf6cde28341861802268
+STATUS = APPROVED
+REVIEW = ARCHITECTURE_REVIEW_C3_T6R1
+REVIEWED_IMPLEMENTATION_HEAD = 1a49e501fb8e2d900081572de83d2226cc09fb68
+REVIEW_REANCHOR_HEAD = 446d93564a2219430c8afac3b283881f41c4d9ae
+VERDICT = ACCEPT_WITH_RESIDUAL
 PRIOR_C3_T6_HEAD = 537cf476646964f0866484c009043c261cf8f725
-EXPERTISE_EVIDENCE_REF_TYPING = EvidenceRef
+EXPERTISE_EVIDENCE_REF_TYPING = PASS / EvidenceRef
 KNOWLEDGE_SCOPE = REMOVED
 RETRIEVAL_INCLUDE_FLAGS = REMOVED
 REVOKED_DEPRECATED_RETRIEVAL_SEMANTICS = EXCLUDED_FROM_NORMAL_RETRIEVAL
 NORMAL_RETRIEVAL_SCOPE = PUBLISHED_ORGANIZATIONAL_KNOWLEDGE_ONLY
 NEW_RUNTIME_ABSTRACTIONS = NONE
-C3_T7_AUTHORIZED = NO
+RETRIEVAL_PORT = DEFERRED
+PHYSICAL_KNOWLEDGE_STORAGE = TO_INVENTORY / DEFERRED
+REAL_RETRIEVAL_RUNTIME = NONE
+VECTOR_STORE = NONE
+EMBEDDING_RUNTIME = NONE
+RAG = NONE
+C3_T6 = APPROVED
+C3_T7_AUTHORIZED = YES
+C3_T7_EXECUTED = NO
 PRODUCTION_READINESS = NOT_PROVEN
-NEXT = ARCHITECTURE_REVIEW_C3_T6R1
+CURRENT_TASK_RUNTIME_TEST = TEST_NOT_RUN
+NEXT = C3-T7 — FAST | OPERATIONAL | REASONING + STRUCTURED_PLANNER_FOUNDATION
 ```
 
-Evidence (executed locally in `delia-api`):
+Referenced accepted evidence (not re-executed by Architecture Review persistence):
 
 ```text
-COMMAND = .venv/bin/python -m pytest tests/test_knowledge_governance_foundation.py tests/test_knowledge_governance_architecture.py -v --tb=no
-RESULT = PASS
-TEST_COUNT = 18
-FAILURES = 0
-SKIPS = 0
-
-COMMAND = .venv/bin/python -m pytest tests/test_evidence_epistemic_conformance.py tests/test_model_invocation_foundation.py tests/test_model_invocation_architecture.py tests/test_structured_understanding_foundation.py tests/test_structured_understanding_architecture.py tests/test_capability_catalog_foundation.py tests/test_capability_catalog_architecture.py tests/test_knowledge_governance_foundation.py tests/test_knowledge_governance_architecture.py -v --tb=no
-RESULT = PASS
-TEST_COUNT = 129
-FAILURES = 0
-SKIPS = 0
-
-COMMAND = .venv/bin/python -m pytest -v --tb=no
-RESULT = PASS
-TEST_COUNT = 164
-FAILURES = 0
-SKIPS = 0
+TARGETED_C3_T6 = PASS 18/18
+C3_REGRESSION_T1_T6 = PASS 129/129
+FULL_DELIA_API = PASS 164/164
+EVALUATED_SHA = 1a49e501fb8e2d900081572de83d2226cc09fb68
 ```
 
-Coverage notes (C3-T6R1):
+These prove bounded deterministic foundation/conformance on the evaluated SHA/config. They do NOT prove physical Knowledge runtime, RAG readiness, vector retrieval quality, real retrieval relevance, or production readiness.
+
+Coverage notes (accepted):
 - Expertise `evidence_refs` typed as `EvidenceRef`;
 - retrieval request has no `knowledge_scope` / `include_*` flags;
 - normal retrieval returns PUBLISHED only; REVOKED/DEPRECATED excluded;
