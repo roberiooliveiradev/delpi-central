@@ -126,3 +126,76 @@ class ProductionOrderSetMapper:
             "missing_set_count": _as_int(row.get("missing_set_count")),
             "extra_set_count": _as_int(row.get("extra_set_count")),
         }
+
+    @classmethod
+    def _as_qty(cls, value: Any) -> float:
+        if value is None or value == "":
+            return 0.0
+        return float(value)
+
+    @classmethod
+    def _new_quantity_item(cls, row: dict[str, Any]) -> dict[str, Any]:
+        branch, set_number, set_item = cls._set_key(row)
+        return {
+            "branch": branch,
+            "set_number": set_number,
+            "set_item": set_item,
+            "set_key": f"{set_number}{set_item}",
+            "root_code": _clean(row.get("root_code")),
+            "root_description": _clean(row.get("root_description")),
+            "root_type": _clean(row.get("root_type")),
+            "root_order": _clean(row.get("root_order_key")),
+            "root_quantity": cls._as_qty(row.get("root_quantity")),
+            "due_date": _iso_date(row.get("due_date")),
+            "issued_at": _iso_date(row.get("reference_date")),
+            "order_count": _as_int(row.get("order_count")),
+            "open_order_count": _as_int(row.get("open_order_count")),
+            "under_count": _as_int(row.get("under_count")),
+            "over_count": _as_int(row.get("over_count")),
+            "under_components": [],
+            "over_components": [],
+        }
+
+    @classmethod
+    def _quantity_component(cls, row: dict[str, Any]) -> dict[str, Any]:
+        return {
+            "product_code": _clean(row.get("component_code")),
+            "description": _clean(row.get("component_description")),
+            "product_type": _clean(row.get("component_type")),
+            "bom_level": _as_int(row.get("bom_level")),
+            "production_order": _clean(row.get("component_order_key")),
+            "expected_quantity": cls._as_qty(row.get("expected_quantity")),
+            "actual_quantity": cls._as_qty(row.get("actual_quantity")),
+            "delta_quantity": cls._as_qty(row.get("delta_quantity")),
+        }
+
+    @classmethod
+    def map_quantity_mismatch_sets(cls, rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        items: dict[tuple[str, str, str], dict[str, Any]] = {}
+        for row in rows:
+            key = cls._set_key(row)
+            item = items.get(key)
+            if item is None:
+                item = cls._new_quantity_item(row)
+                items[key] = item
+
+            code = _clean(row.get("component_code"))
+            if not code:
+                continue
+            component = cls._quantity_component(row)
+            if _as_bool(row.get("is_under")):
+                item["under_components"].append(component)
+            elif _as_bool(row.get("is_over")):
+                item["over_components"].append(component)
+
+        return list(items.values())
+
+    @classmethod
+    def map_quantity_mismatch_summary(cls, row: dict[str, Any] | None) -> dict[str, Any]:
+        row = row or {}
+        return {
+            "checked_set_count": _as_int(row.get("checked_set_count")),
+            "mismatch_set_count": _as_int(row.get("mismatch_set_count")),
+            "under_set_count": _as_int(row.get("under_set_count")),
+            "over_set_count": _as_int(row.get("over_set_count")),
+        }

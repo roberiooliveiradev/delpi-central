@@ -313,6 +313,35 @@ export const copy = {
       componentLevel: (level: number) => `nível ${level}`,
       openOrders: (open: number, total: number) => `${open} de ${total} em aberto`,
     },
+    quantityMismatches: {
+      empty: "Nenhuma divergência de quantidade neste recorte.",
+      emptyHint:
+        "Todo intermediário com OP no conjunto tem a quantidade exigida pela estrutura para a OP mãe.",
+      emptyFilter: (query: string) =>
+        `Nenhum produto raiz correspondente a «${query}».`,
+      rootFilterLabel: "Produto raiz",
+      rootFilterPlaceholder: "Código ou descrição do PA…",
+      rootFilterAria: "Filtrar conjuntos pelo produto raiz",
+      rootFilterClear: "Limpar filtro",
+      checked: (n: number) => `${n} conjunto${n === 1 ? "" : "s"} conferido${n === 1 ? "" : "s"}`,
+      breakdown: (under: number, over: number) =>
+        `${under} abaixo · ${over} acima`,
+      columns: {
+        set: "Conjunto",
+        root: "Produto raiz",
+        due: "Entrega",
+        orders: "OPs",
+        under: "Abaixo",
+        over: "Acima",
+      },
+      underLabel: "Abaixo:",
+      overLabel: "Acima:",
+      qtyDetail: (expected: string, actual: string) =>
+        `esperado ${expected} · atual ${actual}`,
+      componentOrder: (order: string) => `OP ${order}`,
+      componentLevel: (level: number) => `nível ${level}`,
+      openOrders: (open: number, total: number) => `${open} de ${total} em aberto`,
+    },
   },
   demand: {
     title: "Demanda",

@@ -12,15 +12,18 @@ from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from app.infrastructure.persistence.totvs.production.production_order_sets_sql import (
     build_incomplete_sets_query,
     build_incomplete_sets_summary_query,
+    build_quantity_mismatch_sets_query,
+    build_quantity_mismatch_sets_summary_query,
 )
 
 # A recursão da estrutura sobre todos os PAs abertos da filial custa ~1 s; o PCP
 # abre a análise em ciclos curtos, então o cache é o que segura o banco.
 _CACHE_NS = "production-order-sets-incomplete-v2"
+_QTY_CACHE_NS = "production-order-sets-quantity-mismatches-v1"
 
 
-def _cache_key(scope: str, params: tuple) -> str:
-    return "|".join([_CACHE_NS, scope, *(str(item) for item in params)])
+def _cache_key(namespace: str, scope: str, params: tuple) -> str:
+    return "|".join([namespace, scope, *(str(item) for item in params)])
 
 
 class ProductionOrderSetsRepository(BaseRepository, ProductionOrderSetsRepositoryPort):
@@ -35,7 +38,7 @@ class ProductionOrderSetsRepository(BaseRepository, ProductionOrderSetsRepositor
         query, params = build_incomplete_sets_summary_query(
             branch=branch, issued_from=issued_from
         )
-        key = _cache_key("summary", params)
+        key = _cache_key(_CACHE_NS, "summary", params)
         cached = build_query_cache().get(key)
         if isinstance(cached, dict):
             return cached
@@ -60,7 +63,51 @@ class ProductionOrderSetsRepository(BaseRepository, ProductionOrderSetsRepositor
             branch=branch,
             issued_from=issued_from,
         )
-        key = _cache_key("items", params)
+        key = _cache_key(_CACHE_NS, "items", params)
+        cached = build_query_cache().get(key)
+        if isinstance(cached, list):
+            return cached
+
+        with self:
+            rows = self.execute_batch_query(query, params) or []
+        build_query_cache().set(key, rows)
+        return rows
+
+    def get_quantity_mismatch_sets_summary(
+        self,
+        *,
+        branch: str | None,
+        issued_from: str | None = None,
+    ) -> dict[str, Any]:
+        query, params = build_quantity_mismatch_sets_summary_query(
+            branch=branch, issued_from=issued_from
+        )
+        key = _cache_key(_QTY_CACHE_NS, "summary", params)
+        cached = build_query_cache().get(key)
+        if isinstance(cached, dict):
+            return cached
+
+        with self:
+            rows = self.execute_batch_query(query, params) or []
+        summary = rows[0] if rows else {}
+        build_query_cache().set(key, summary)
+        return summary
+
+    def get_quantity_mismatch_sets(
+        self,
+        *,
+        offset: int,
+        page_size: int,
+        branch: str | None,
+        issued_from: str | None = None,
+    ) -> list[dict[str, Any]]:
+        query, params = build_quantity_mismatch_sets_query(
+            offset=offset,
+            page_size=page_size,
+            branch=branch,
+            issued_from=issued_from,
+        )
+        key = _cache_key(_QTY_CACHE_NS, "items", params)
         cached = build_query_cache().get(key)
         if isinstance(cached, list):
             return cached

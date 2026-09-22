@@ -17,19 +17,19 @@ import type {
   OrderSetComponent,
   PpcBranch,
   ProblemDetector,
+  ProblemDetectorItem,
+  QuantityMismatchComponent,
+  QuantityMismatchOrderSetItem,
 } from "../types";
 import { filterIncompleteSetsByRootProduct } from "../utils/filterIncompleteSetsByRootProduct";
 import { formatIsoDate } from "../utils/formatIsoDate";
+import { formatOpQuantity } from "../utils/formatOpQuantity";
 import { buildPpcHref, navigatePpc } from "../utils/routeParser";
+
+const QUANTITY_DETECTOR_ID = "order-set-quantity-mismatches";
 
 const tableClassNames = dataTableBemClasses("ppc");
 const navCardClassNames = navigationCardBemClasses("ppc");
-const tableLabels = {
-  emptyMessage: copy.problemAnalysis.incompleteSets.empty,
-  loadingMessage: copy.table.loading,
-  sortByAriaLabel: copy.table.sort,
-  headerHelpAriaLabel: copy.table.help,
-};
 
 const LoadingCard = createDashboardLoadingActivityCard({
   prefix: "ppc",
@@ -51,16 +51,29 @@ function metricNumber(metrics: Record<string, number | string | null>, key: stri
   return typeof value === "number" ? value : Number(value ?? 0) || 0;
 }
 
+function isQuantityDetector(detectorId: string | null): boolean {
+  return detectorId === QUANTITY_DETECTOR_ID;
+}
+
 function detectorMeta(detector: ProblemDetector): string {
+  if (isQuantityDetector(detector.id)) {
+    const sets = copy.problemAnalysis.quantityMismatches;
+    return [
+      sets.breakdown(
+        metricNumber(detector.metrics, "under_set_count"),
+        metricNumber(detector.metrics, "over_set_count"),
+      ),
+      sets.checked(metricNumber(detector.metrics, "checked_set_count")),
+    ].join(" · ");
+  }
   const sets = copy.problemAnalysis.incompleteSets;
-  const parts = [
+  return [
     sets.breakdown(
       metricNumber(detector.metrics, "missing_set_count"),
       metricNumber(detector.metrics, "extra_set_count"),
     ),
     sets.checked(metricNumber(detector.metrics, "checked_set_count")),
-  ];
-  return parts.join(" · ");
+  ].join(" · ");
 }
 
 function componentLine(component: OrderSetComponent): string {
@@ -74,6 +87,31 @@ function componentLine(component: OrderSetComponent): string {
     ? `${component.product_code} — ${component.description}`
     : component.product_code;
   return detail ? `${name} (${detail})` : name;
+}
+
+function quantityComponentLine(component: QuantityMismatchComponent): string {
+  const sets = copy.problemAnalysis.quantityMismatches;
+  const name = component.description
+    ? `${component.product_code} — ${component.description}`
+    : component.product_code;
+  const qty = sets.qtyDetail(
+    formatOpQuantity(component.expected_quantity),
+    formatOpQuantity(component.actual_quantity),
+  );
+  const order = component.production_order
+    ? sets.componentOrder(component.production_order)
+    : component.bom_level
+      ? sets.componentLevel(component.bom_level)
+      : null;
+  return order ? `${name} (${qty} · ${order})` : `${name} (${qty})`;
+}
+
+function isIncompleteItem(item: ProblemDetectorItem): item is IncompleteOrderSetItem {
+  return "missing_components" in item;
+}
+
+function isQuantityItem(item: ProblemDetectorItem): item is QuantityMismatchOrderSetItem {
+  return "under_components" in item;
 }
 
 type ProblemAnalysisPageProps = {
@@ -90,8 +128,17 @@ export function ProblemAnalysisPage({ branch, detectorId }: ProblemAnalysisPageP
   const rootFilterId = useId();
 
   const cards = detectors?.detectors ?? [];
-  const sets = copy.problemAnalysis.incompleteSets;
-  const allRows = (items?.items ?? []) as IncompleteOrderSetItem[];
+  const quantityMode = isQuantityDetector(activeId);
+  const sets = quantityMode
+    ? copy.problemAnalysis.quantityMismatches
+    : copy.problemAnalysis.incompleteSets;
+  const titleHint = quantityMode
+    ? helpTooltips.quantityMismatches
+    : activeId === "incomplete-order-sets"
+      ? helpTooltips.incompleteOrderSets
+      : helpTooltips.problemAnalysis;
+
+  const allRows = (items?.items ?? []) as ProblemDetectorItem[];
   const rows = useMemo(
     () => filterIncompleteSetsByRootProduct(allRows, rootQuery),
     [allRows, rootQuery],
@@ -111,7 +158,7 @@ export function ProblemAnalysisPage({ branch, detectorId }: ProblemAnalysisPageP
       <PpcWorkspaceHeader
         title={copy.problemAnalysis.title}
         subtitle={copy.problemAnalysis.subtitle}
-        titleHint={helpTooltips.problemAnalysis}
+        titleHint={titleHint}
         branch={branch}
         subpluginId="problem-analysis"
         detectorId={activeId}
@@ -209,76 +256,156 @@ export function ProblemAnalysisPage({ branch, detectorId }: ProblemAnalysisPageP
               </div>
             </form>
 
-            <DataTable<IncompleteOrderSetItem>
-              columns={[
-                {
-                  key: "set",
-                  header: sets.columns.set,
-                  render: (row) => (
-                    <span className="ppc-detector-items__set">
-                      <strong>{row.set_key ?? "—"}</strong>
-                      <span>{sets.openOrders(row.open_order_count, row.order_count)}</span>
-                    </span>
-                  ),
-                },
-                {
-                  key: "root",
-                  header: sets.columns.root,
-                  render: (row) => (
-                    <span className="ppc-detector-items__root">
-                      <strong>{row.root_code ?? "—"}</strong>
-                      {row.root_description ? <span>{row.root_description}</span> : null}
-                      {row.missing_components.length > 0 ? (
+            {quantityMode ? (
+              <DataTable<QuantityMismatchOrderSetItem>
+                columns={[
+                  {
+                    key: "set",
+                    header: sets.columns.set,
+                    render: (row) => (
+                      <span className="ppc-detector-items__set">
+                        <strong>{row.set_key ?? "—"}</strong>
+                        <span>{sets.openOrders(row.open_order_count, row.order_count)}</span>
+                      </span>
+                    ),
+                  },
+                  {
+                    key: "root",
+                    header: sets.columns.root,
+                    render: (row) => (
+                      <span className="ppc-detector-items__root">
+                        <strong>{row.root_code ?? "—"}</strong>
+                        {row.root_description ? <span>{row.root_description}</span> : null}
                         <span className="ppc-detector-items__diff">
-                          {sets.missingLabel}{" "}
-                          {row.missing_components.map(componentLine).join(" · ")}
+                          OP mãe: {formatOpQuantity(row.root_quantity)}
                         </span>
-                      ) : null}
-                      {row.extra_components.length > 0 ? (
-                        <span className="ppc-detector-items__diff">
-                          {sets.extraLabel} {row.extra_components.map(componentLine).join(" · ")}
-                        </span>
-                      ) : null}
-                    </span>
-                  ),
-                },
-                {
-                  key: "due",
-                  header: sets.columns.due,
-                  render: (row) => formatIsoDate(row.due_date) || "—",
-                },
-                {
-                  key: "orders",
-                  header: sets.columns.orders,
-                  align: "right",
-                  render: (row) => row.order_count,
-                },
-                {
-                  key: "missing",
-                  header: sets.columns.missing,
-                  align: "right",
-                  render: (row) => row.missing_count,
-                },
-                {
-                  key: "extra",
-                  header: sets.columns.extra,
-                  align: "right",
-                  render: (row) => row.extra_count,
-                },
-              ]}
-              rows={rows}
-              rowKey={(row) => row.id}
-              classNames={tableClassNames}
-              labels={{
-                ...tableLabels,
-                loadingMessage: copy.problemAnalysis.itemsLoading,
-                emptyMessage: rootFilterActive
-                  ? sets.emptyFilter(rootQuery.trim())
-                  : sets.empty,
-              }}
-              loading={itemsLoading}
-              layout="embedded"
-            />
+                        {row.under_components.length > 0 ? (
+                          <span className="ppc-detector-items__diff">
+                            {copy.problemAnalysis.quantityMismatches.underLabel}{" "}
+                            {row.under_components.map(quantityComponentLine).join(" · ")}
+                          </span>
+                        ) : null}
+                        {row.over_components.length > 0 ? (
+                          <span className="ppc-detector-items__diff">
+                            {copy.problemAnalysis.quantityMismatches.overLabel}{" "}
+                            {row.over_components.map(quantityComponentLine).join(" · ")}
+                          </span>
+                        ) : null}
+                      </span>
+                    ),
+                  },
+                  {
+                    key: "due",
+                    header: sets.columns.due,
+                    render: (row) => formatIsoDate(row.due_date) || "—",
+                  },
+                  {
+                    key: "orders",
+                    header: sets.columns.orders,
+                    align: "right",
+                    render: (row) => row.order_count,
+                  },
+                  {
+                    key: "under",
+                    header: copy.problemAnalysis.quantityMismatches.columns.under,
+                    align: "right",
+                    render: (row) => row.under_count,
+                  },
+                  {
+                    key: "over",
+                    header: copy.problemAnalysis.quantityMismatches.columns.over,
+                    align: "right",
+                    render: (row) => row.over_count,
+                  },
+                ]}
+                rows={rows.filter(isQuantityItem)}
+                rowKey={(row) => row.id}
+                classNames={tableClassNames}
+                labels={{
+                  emptyMessage: rootFilterActive
+                    ? sets.emptyFilter(rootQuery.trim())
+                    : sets.empty,
+                  loadingMessage: copy.problemAnalysis.itemsLoading,
+                  sortByAriaLabel: copy.table.sort,
+                  headerHelpAriaLabel: copy.table.help,
+                }}
+                loading={itemsLoading}
+                layout="embedded"
+              />
+            ) : (
+              <DataTable<IncompleteOrderSetItem>
+                columns={[
+                  {
+                    key: "set",
+                    header: sets.columns.set,
+                    render: (row) => (
+                      <span className="ppc-detector-items__set">
+                        <strong>{row.set_key ?? "—"}</strong>
+                        <span>{sets.openOrders(row.open_order_count, row.order_count)}</span>
+                      </span>
+                    ),
+                  },
+                  {
+                    key: "root",
+                    header: sets.columns.root,
+                    render: (row) => (
+                      <span className="ppc-detector-items__root">
+                        <strong>{row.root_code ?? "—"}</strong>
+                        {row.root_description ? <span>{row.root_description}</span> : null}
+                        {row.missing_components.length > 0 ? (
+                          <span className="ppc-detector-items__diff">
+                            {copy.problemAnalysis.incompleteSets.missingLabel}{" "}
+                            {row.missing_components.map(componentLine).join(" · ")}
+                          </span>
+                        ) : null}
+                        {row.extra_components.length > 0 ? (
+                          <span className="ppc-detector-items__diff">
+                            {copy.problemAnalysis.incompleteSets.extraLabel}{" "}
+                            {row.extra_components.map(componentLine).join(" · ")}
+                          </span>
+                        ) : null}
+                      </span>
+                    ),
+                  },
+                  {
+                    key: "due",
+                    header: sets.columns.due,
+                    render: (row) => formatIsoDate(row.due_date) || "—",
+                  },
+                  {
+                    key: "orders",
+                    header: sets.columns.orders,
+                    align: "right",
+                    render: (row) => row.order_count,
+                  },
+                  {
+                    key: "missing",
+                    header: copy.problemAnalysis.incompleteSets.columns.missing,
+                    align: "right",
+                    render: (row) => row.missing_count,
+                  },
+                  {
+                    key: "extra",
+                    header: copy.problemAnalysis.incompleteSets.columns.extra,
+                    align: "right",
+                    render: (row) => row.extra_count,
+                  },
+                ]}
+                rows={rows.filter(isIncompleteItem)}
+                rowKey={(row) => row.id}
+                classNames={tableClassNames}
+                labels={{
+                  emptyMessage: rootFilterActive
+                    ? sets.emptyFilter(rootQuery.trim())
+                    : sets.empty,
+                  loadingMessage: copy.problemAnalysis.itemsLoading,
+                  sortByAriaLabel: copy.table.sort,
+                  headerHelpAriaLabel: copy.table.help,
+                }}
+                loading={itemsLoading}
+                layout="embedded"
+              />
+            )}
             {!itemsLoading && rows.length === 0 ? (
               <p className="ppc-detector-items__empty">
                 {rootFilterActive

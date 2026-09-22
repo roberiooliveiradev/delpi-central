@@ -26,3 +26,23 @@ class ProductionOrderSetsRepositoryPort(ABC):
         issued_from: str | None = None,
     ) -> list[dict[str, Any]]:
         ...
+
+    @abstractmethod
+    def get_quantity_mismatch_sets_summary(
+        self,
+        *,
+        branch: str | None,
+        issued_from: str | None = None,
+    ) -> dict[str, Any]:
+        ...
+
+    @abstractmethod
+    def get_quantity_mismatch_sets(
+        self,
+        *,
+        offset: int,
+        page_size: int,
+        branch: str | None,
+        issued_from: str | None = None,
+    ) -> list[dict[str, Any]]:
+        ...

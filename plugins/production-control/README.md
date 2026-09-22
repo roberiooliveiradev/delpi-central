@@ -11,6 +11,7 @@ Portal → production-control (remoteEntry.js)
       → /apps/production-control-api/*
       → api-delpi /production/otd, /production/otd/series, /production/pcp-orders/*,
                   /production/machine-load/*, /production/production-order-sets/incomplete,
+                  /production/production-order-sets/quantity-mismatches,
                   /pedidos-venda-abertos/totvs-open-orders, /pedidos-venda-abertos/ops-abertas,
                   /supplies/purchase-requests/open-coverage,
                   /products/{code}/raw-material-set-shortages
@@ -58,7 +59,9 @@ O terceiro card (`?issue=pa-shortage&q=90263114`) é uma **consulta**: o PCP inf
 
 **Análise de problemas:** grade de cards, um por **detector** de exceção (`GET /problem-analysis`), e abaixo a tabela dos registros do detector aberto (`GET /problem-analysis/{detectorId}`). O deep link é `?detector=`; sem ele, abre o primeiro card do catálogo. Título, descrição, ícone e severidade vêm do BFF — o MFE é render-only e não decide o que é crítico.
 
-**Conjuntos incompletos (primeiro detector):** compara a estrutura do produto raiz (SG1, vigente na **emissão da OP mãe**) com as OPs criadas no mesmo conjunto (`C2_NUM` + `C2_ITEM`). *Falta* = intermediário da estrutura sem OP; *Sobra* = OP de produto fora da estrutura. Matéria-prima não entra, e conjunto criado certo com OPs já encerradas não aparece. A linha mostra conjunto, produto raiz com os códigos que faltam ou sobram, entrega, número de OPs e os dois contadores.
+**Conjuntos incompletos (`?detector=incomplete-order-sets`):** compara a estrutura do produto raiz (SG1, vigente na **emissão da OP mãe**) com as OPs criadas no mesmo conjunto (`C2_NUM` + `C2_ITEM`). *Falta* = intermediário da estrutura sem OP; *Sobra* = OP de produto fora da estrutura. Matéria-prima não entra, e conjunto criado certo com OPs já encerradas não aparece. A linha mostra conjunto, produto raiz com os códigos que faltam ou sobram, entrega, número de OPs e os dois contadores.
+
+**Quantidades incorretas (`?detector=order-set-quantity-mismatches`):** para intermediários que **já têm** OP no conjunto, compara `C2_QUANT` da filha com a necessidade da estrutura (`C2_QUANT` da mãe × `G1_QUANT` acumulada). *Abaixo* / *Acima* = quantidade diferente (igualdade estrita). Falta de OP continua só no detector de conjuntos incompletos. A linha mostra esperado × atual por intermediário.
 
 **Fila de atraso da home:** clicar numa OP atrasada abre a **Carga máquina** com `?locate=` na OP — de lá dá para priorizar, transferir ou tirar o conjunto da programação. A gestão à vista continua consumindo `GET /overview`.
 

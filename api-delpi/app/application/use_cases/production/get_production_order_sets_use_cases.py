@@ -28,3 +28,20 @@ class GetProductionOrderSetsIncompleteUseCase:
         return ProductionOrderSetsResponseAssembler.to_incomplete_sets(
             rows, summary_row=summary_row, request=request
         )
+
+
+class GetProductionOrderSetsQuantityMismatchesUseCase:
+    def __init__(self, repository: ProductionOrderSetsRepositoryPort) -> None:
+        self._repository = repository
+
+    def execute(self, request: IncompleteOrderSetsRequest) -> dict:
+        filters = request.filter_kwargs()
+        summary_row = self._repository.get_quantity_mismatch_sets_summary(**filters)
+        rows = self._repository.get_quantity_mismatch_sets(
+            **filters,
+            offset=request.offset,
+            page_size=request.page_size,
+        )
+        return ProductionOrderSetsResponseAssembler.to_quantity_mismatch_sets(
+            rows, summary_row=summary_row, request=request
+        )

@@ -92,6 +92,10 @@ _ENTITY_LABELS: dict[str, str] = {
     "production_order_sets_incomplete": (
         "conjuntos de OP cujas ordens filhas não batem com a estrutura do produto raiz"
     ),
+    "production_order_sets_quantity_mismatches": (
+        "conjuntos de OP cujas quantidades de intermediários divergem da estrutura "
+        "para a quantidade da OP mãe"
+    ),
     "production_unproductive_hours_series": (
         "série diária de horas improdutivas (paradas) apontadas pelo PCP"
     ),

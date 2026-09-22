@@ -24,6 +24,23 @@
       "issuedFromDays": 730,
       "excludedRootPrefixes": [],
       "excludedComponentCodes": []
+    },
+    {
+      "id": "order-set-quantity-mismatches",
+      "title": "Quantidades incorretas",
+      "description": "Conjuntos de OP cujas quantidades de intermediários não batem com a estrutura para a quantidade da OP mãe.",
+      "actionHint": "Ajuste a quantidade da OP filha no Protheus para igualar a necessidade da estrutura.",
+      "icon": "layers",
+      "order": 2,
+      "pageSize": 50,
+      "severity": {
+        "under": "critical",
+        "over": "attention",
+        "clear": "ok"
+      },
+      "issuedFromDays": 730,
+      "excludedRootPrefixes": [],
+      "excludedComponentCodes": []
     }
   ]
 }
