@@ -3950,3 +3950,67 @@
     position: static;
   }
 }
+
+
+/* Process list — presentation controls in Hero */
+.dashboard-transformometro .tm-processo-list-presentation{
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.75rem 1.25rem;
+  min-width: 0;
+}
+.dashboard-transformometro .tm-processo-list-presentation__sort{
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.65rem 1rem;
+  min-width: 0;
+}
+.dashboard-transformometro .tm-processo-list-presentation__sort-direction{
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.dashboard-transformometro .tm-processo-list-presentation__sort-direction-btn{
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 2.25rem;
+  padding: 0.35rem 0.65rem;
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-radius-sm, 0.5rem);
+  background: var(--ds-surface);
+  color: var(--ds-text);
+  font: inherit;
+  cursor: pointer;
+}
+.dashboard-transformometro .tm-processo-list-presentation__view-modes{
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-left: auto;
+}
+.dashboard-transformometro .tm-processo-list-presentation__view-btn{
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-height: 2.25rem;
+  padding: 0.3rem 0.55rem;
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-radius-sm, 0.5rem);
+  background: var(--ds-surface);
+  color: var(--ds-text-muted);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.dashboard-transformometro .tm-processo-list-presentation__view-btn--active{
+  border-color: var(--ds-accent);
+  color: var(--ds-text);
+  background: color-mix(in srgb, var(--ds-accent) 12%, var(--ds-surface));
+}
+.dashboard-transformometro .tm-processo-hero-presence{
+  min-width: 0;
+}

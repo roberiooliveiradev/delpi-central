@@ -87,6 +87,8 @@ type Props = Pick<AppProps, "getAccessToken"> & {
   embedded?: boolean;
   embeddedActive?: boolean;
   activeSection?: InstanciaWorkspaceSectionId;
+  onHeroExtrasChange?: (node: import("react").ReactNode) => void;
+  onFiliaisAtivasCount?: (count: number) => void;
 };
 
 export function InstanceDetailPage({
@@ -98,6 +100,8 @@ export function InstanceDetailPage({
   embedded = false,
   embeddedActive = true,
   activeSection: activeSectionProp,
+  onHeroExtrasChange,
+  onFiliaisAtivasCount,
 }: Props) {
   const confirm = useConfirm();
   const [processo, setProcesso] = useState<Processo | null>(null);
@@ -497,7 +501,7 @@ export function InstanceDetailPage({
           isEditing={sectionEdit.isEditing("instancia")}
           onEdit={() => void sectionEdit.startEdit("instancia")}
           onCancel={() => sectionEdit.cancelEdit("instancia")}
-          readContent={<InstanceReadView instancia={instancia} options={options} />}
+          readContent={<InstanceReadView instancia={instancia} options={options} omitHeroSummary={embedded} />}
           editContent={
             <ProcessInstancesPanel
               hideTable
@@ -777,6 +781,32 @@ export function InstanceDetailPage({
     </div>
   );
 
+  useEffect(() => {
+    if (!embedded || !onHeroExtrasChange) return;
+    onHeroExtrasChange(
+      <CollaborativePresenceBanner
+        layout="items"
+        presence={sectionEdit.presence}
+        lockError={sectionEdit.lockError}
+        realtimeNotice={sectionEdit.realtimeNotice}
+        onDismissRealtimeNotice={sectionEdit.clearRealtimeNotice}
+      />,
+    );
+    return () => onHeroExtrasChange(null);
+  }, [
+    embedded,
+    onHeroExtrasChange,
+    sectionEdit.presence,
+    sectionEdit.lockError,
+    sectionEdit.realtimeNotice,
+    sectionEdit.clearRealtimeNotice,
+  ]);
+
+  useEffect(() => {
+    if (!options) return;
+    onFiliaisAtivasCount?.(options.filiais.length);
+  }, [onFiliaisAtivasCount, options]);
+
   const pageBody = (
     <>
       {!embedded ? (
@@ -832,12 +862,14 @@ export function InstanceDetailPage({
         onDismissError={() => setError(null)}
       />
 
-      <CollaborativePresenceBanner
-        presence={sectionEdit.presence}
-        lockError={sectionEdit.lockError}
-        realtimeNotice={sectionEdit.realtimeNotice}
-        onDismissRealtimeNotice={sectionEdit.clearRealtimeNotice}
-      />
+      {!embedded || !onHeroExtrasChange ? (
+        <CollaborativePresenceBanner
+          presence={sectionEdit.presence}
+          lockError={sectionEdit.lockError}
+          realtimeNotice={sectionEdit.realtimeNotice}
+          onDismissRealtimeNotice={sectionEdit.clearRealtimeNotice}
+        />
+      ) : null}
 
       {instancia.todas_filiais_ativas && options.filiais.length > 1 ? (
         <p className="tm-instancia-multi-banner">

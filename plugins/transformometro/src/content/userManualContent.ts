@@ -129,7 +129,7 @@ export const USER_MANUAL_CONTENT = {
       intro:
         "Lista os processos com filtros e contagem no Hero. Abre o workspace com caminho, Hero e abas horizontais: visão geral, melhorias, revisões, diagrama, documentação Markdown, tarefas e Sala de interação.",
       bullets: [
-        "No Hero da lista: Processos/Departamentos, busca, status, Atualizar e Novo processo. Ordenação e modos de visualização ficam na barra da listagem.",
+        "No Hero da lista: Processos/Departamentos, busca, status, ordenação, modo de visualização, Atualizar e Novo processo. Abaixo do Hero ficam só os resultados.",
         "Abra um processo para trabalhar no workspace. O caminho, o Hero e as abas horizontais organizam o processo, melhorias e revisões.",
         "Processo-mestre não pertence a uma única unidade: unidade e departamento aparecem na melhoria.",
         "Medições, investimentos e recursos compartilhados ficam em cada revisão — não invente pontuação no resumo.",

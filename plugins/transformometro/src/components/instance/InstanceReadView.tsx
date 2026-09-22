@@ -14,29 +14,37 @@ const I = TM_HELP_TOOLTIPS.instancias;
 type Props = {
   instancia: ProcessoInstancia;
   options: OptionsData;
+  /** When Hero already shows status/fase/unidade, keep detail fields only. */
+  omitHeroSummary?: boolean;
 };
 
-export function InstanceReadView({ instancia, options }: Props) {
-  const unidade = formatInstanciaUnidadeDisplay(instancia, options.filiais.length);
+export function InstanceReadView({ instancia, options, omitHeroSummary = false }: Props) {
+  const unidade = omitHeroSummary
+    ? null
+    : formatInstanciaUnidadeDisplay(instancia, options.filiais.length);
 
   return (
     <div className="tm-instancia-read">
       <ImprovementPhasePipeline currentFase={instancia.fase_melhoria} hint={I.fase} />
       <dl className="ds-dl-grid">
-        <div>
-          <dt><FieldLabel className="tm-field__label" label="Unidade" hint={I.colunaUnidade} /></dt>
-          <dd>{unidade}</dd>
-        </div>
-        <div>
-          <dt><FieldLabel className="tm-field__label" label="Status" hint={I.status} /></dt>
-          <dd>{renderTableStatus(instancia.status_instancia ?? "ativo")}</dd>
-        </div>
-        <div>
-          <dt><FieldLabel className="tm-field__label" label="Fase" hint={I.fase} /></dt>
-          <dd>
-            <ImprovementPhaseBadge fase={instancia.fase_melhoria} />
-          </dd>
-        </div>
+        {!omitHeroSummary ? (
+          <>
+            <div>
+              <dt><FieldLabel className="tm-field__label" label="Unidade" hint={I.colunaUnidade} /></dt>
+              <dd>{unidade}</dd>
+            </div>
+            <div>
+              <dt><FieldLabel className="tm-field__label" label="Status" hint={I.status} /></dt>
+              <dd>{renderTableStatus(instancia.status_instancia ?? "ativo")}</dd>
+            </div>
+            <div>
+              <dt><FieldLabel className="tm-field__label" label="Fase" hint={I.fase} /></dt>
+              <dd>
+                <ImprovementPhaseBadge fase={instancia.fase_melhoria} />
+              </dd>
+            </div>
+          </>
+        ) : null}
         <div>
           <dt><FieldLabel className="tm-field__label" label="Departamentos" hint={I.setores} /></dt>
           <dd>{formatInstanciaSetoresDisplay(instancia)}</dd>

@@ -32,12 +32,24 @@ const P = TM_HELP_TOOLTIPS.processos;
 import { ProcessFormFields } from "../processes/ProcessFormFields";
 import { ProcessScopeFields } from "../processes/ProcessScopeFields";
 import { ProcessFolderBrowser } from "../processes/ProcessFolderBrowser";
+import { ProcessListPresentationControls } from "../processes/ProcessListPresentationControls";
 import {
   PROCESSO_LIST_BROWSE_MODES,
   readProcessoListBrowseMode,
   writeProcessoListBrowseMode,
   type ProcessoListBrowseMode,
 } from "../processes/processListBrowseMode";
+import {
+  readProcessoListSort,
+  writeProcessoListSort,
+  type ProcessoListSort,
+  type ProcessoListSortField,
+} from "../processes/processListSort";
+import {
+  readProcessoListViewMode,
+  writeProcessoListViewMode,
+  type ProcessoListViewMode,
+} from "../processes/processListViewMode";
 import {
   defaultProcessoEscopoForCreate,
   hasProcessoEscopo,
@@ -78,10 +90,22 @@ export function ProcessesPage({
   const [browseMode, setBrowseMode] = useState<ProcessoListBrowseMode>(() =>
     readProcessoListBrowseMode(),
   );
+  const [listSort, setListSort] = useState<ProcessoListSort>(() => readProcessoListSort());
+  const [listViewMode, setListViewMode] = useState<ProcessoListViewMode>(() =>
+    readProcessoListViewMode(),
+  );
 
   useEffect(() => {
     writeProcessoListBrowseMode(browseMode);
   }, [browseMode]);
+
+  useEffect(() => {
+    writeProcessoListSort(listSort);
+  }, [listSort]);
+
+  useEffect(() => {
+    writeProcessoListViewMode(listViewMode);
+  }, [listViewMode]);
 
   const listParams = useMemo(
     () => buildProcessListQuery(searchQ, statusFilter),
@@ -256,6 +280,27 @@ export function ProcessesPage({
               options={mapSelectOptions(options?.status_processo ?? [])}
             />
           </section>
+          <ProcessListPresentationControls
+            sort={listSort}
+            onSortFieldChange={(field: ProcessoListSortField) =>
+              setListSort((current) => ({
+                key: field,
+                direction:
+                  field === "atualizado" && current.key !== "atualizado"
+                    ? "desc"
+                    : current.direction,
+              }))
+            }
+            onToggleSortDirection={() =>
+              setListSort((current) => ({
+                ...current,
+                direction: current.direction === "asc" ? "desc" : "asc",
+              }))
+            }
+            departmentRoot={false}
+            viewMode={listViewMode}
+            onViewModeChange={setListViewMode}
+          />
         </div>
       </PageHeader>
 
@@ -319,6 +364,11 @@ export function ProcessesPage({
         onBrowseModeChange={setBrowseMode}
         hideBrowseToggle
         hideRecordCount
+        hideListToolbar
+        sort={listSort}
+        onSortChange={setListSort}
+        viewMode={listViewMode}
+        onViewModeChange={setListViewMode}
         emptyMessage={
           httpStatus != null
             ? processListPlaceholder(httpStatus, error)

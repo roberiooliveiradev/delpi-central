@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import type { AppProps } from "../../App";
 import { valuesEqual } from "@delpi/plugin-ui/index";
 import { EditableSectionCard } from "../../components/ui/EditableSectionCard";
@@ -12,6 +12,7 @@ import {
 import { useCollaborativeSectionEdit } from "../../hooks/useCollaborativeSectionEdit";
 import { useTransformometroCatalogWatch } from "../../hooks/useTransformometroCatalogWatch";
 import { CollaborativePresenceBanner } from "../../components/collaboration/CollaborativePresenceBanner";
+import type { WorkspaceRevisionChromeActions } from "../processes/ProcessWorkspaceChrome";
 import {
   activateRevisao,
   deleteRevisao,
@@ -100,6 +101,9 @@ type Props = Pick<AppProps, "getAccessToken"> & {
   onRevisaoUpdated: () => void;
   onRevisaoDeleted?: () => void;
   onNavigate?: (path: string) => void;
+  onHeroExtrasChange?: (node: ReactNode) => void;
+  onRevisionChromeActions?: (actions: WorkspaceRevisionChromeActions | null) => void;
+  chromeOwnsIdentity?: boolean;
 };
 
 export function RevisionRegistrationPanel({
@@ -114,6 +118,9 @@ export function RevisionRegistrationPanel({
   onRevisaoUpdated,
   onRevisaoDeleted,
   onNavigate,
+  onHeroExtrasChange,
+  onRevisionChromeActions,
+  chromeOwnsIdentity = false,
 }: Props) {
   const confirm = useConfirm();
   const medicaoSnapshot = useRef<Medicao>(emptyMedicao(revisao.revisao_id));
@@ -421,6 +428,42 @@ export function RevisionRegistrationPanel({
   const cadastroFetchProgress = useTrackedSingleFetchProgress(loading);
   const cadastroLoadingProgress = useLoadingProgress(loading, cadastroFetchProgress);
 
+  useEffect(() => {
+    if (!chromeOwnsIdentity || !onHeroExtrasChange) return;
+    onHeroExtrasChange(
+      <CollaborativePresenceBanner
+        layout="items"
+        presence={sectionEdit.presence}
+        lockError={sectionEdit.lockError}
+        realtimeNotice={sectionEdit.realtimeNotice}
+        onDismissRealtimeNotice={sectionEdit.clearRealtimeNotice}
+      />,
+    );
+    return () => onHeroExtrasChange(null);
+  }, [
+    chromeOwnsIdentity,
+    onHeroExtrasChange,
+    sectionEdit.presence,
+    sectionEdit.lockError,
+    sectionEdit.realtimeNotice,
+    sectionEdit.clearRealtimeNotice,
+  ]);
+
+  useEffect(() => {
+    if (!chromeOwnsIdentity || !onRevisionChromeActions) return;
+    onRevisionChromeActions({
+      canActivate: !revisao.revisao_ativa,
+      busy: false,
+      onActivate: () => {
+        void handleActivate();
+      },
+      onDelete: () => {
+        void handleDeleteRevisao();
+      },
+    });
+    return () => onRevisionChromeActions(null);
+  }, [chromeOwnsIdentity, onRevisionChromeActions, revisao.revisao_ativa]);
+
   if (loading) {
     return (
       <LoadingActivityCard
@@ -439,14 +482,17 @@ export function RevisionRegistrationPanel({
         onError={onError}
         onActivate={handleActivate}
         onDelete={handleDeleteRevisao}
+        chromeOwnsIdentity={chromeOwnsIdentity}
       />
 
-      <CollaborativePresenceBanner
-        presence={sectionEdit.presence}
-        lockError={sectionEdit.lockError}
-        realtimeNotice={sectionEdit.realtimeNotice}
-        onDismissRealtimeNotice={sectionEdit.clearRealtimeNotice}
-      />
+      {!chromeOwnsIdentity || !onHeroExtrasChange ? (
+        <CollaborativePresenceBanner
+          presence={sectionEdit.presence}
+          lockError={sectionEdit.lockError}
+          realtimeNotice={sectionEdit.realtimeNotice}
+          onDismissRealtimeNotice={sectionEdit.clearRealtimeNotice}
+        />
+      ) : null}
 
       {rateioDiag ? (
         <div

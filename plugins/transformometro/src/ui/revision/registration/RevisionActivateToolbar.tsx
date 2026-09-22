@@ -8,10 +8,19 @@ type Props = {
   onError: (message: string | null) => void;
   onActivate?: () => void | Promise<void>;
   onDelete?: () => void | Promise<void>;
+  /** Identity/actions owned by ProcessWorkspaceChrome PageHero. */
+  chromeOwnsIdentity?: boolean;
 };
 
-export function RevisionActivateToolbar({ revisao, onError, onActivate, onDelete }: Props) {
+export function RevisionActivateToolbar({
+  revisao,
+  onError,
+  onActivate,
+  onDelete,
+  chromeOwnsIdentity = false,
+}: Props) {
   const [busy, setBusy] = useState(false);
+  if (chromeOwnsIdentity) return null;
 
   async function handleActivate() {
     if (!onActivate) return;

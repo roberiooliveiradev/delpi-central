@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 import type { AppProps } from "../../App";
 import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
@@ -24,7 +24,10 @@ import { useTransformometroCatalogWatch } from "../../hooks/useTransformometroCa
 import { InstanceDetailPage } from "../pages/InstanceDetailPage";
 import { ProcessDetailPage } from "../pages/ProcessDetailPage";
 import { RevisionDetailPage } from "../pages/RevisionDetailPage";
-import { ProcessWorkspaceChrome } from "../processes/ProcessWorkspaceChrome";
+import {
+  ProcessWorkspaceChrome,
+  type WorkspaceRevisionChromeActions,
+} from "../processes/ProcessWorkspaceChrome";
 import { ProcessWorkspacePanel } from "../processes/ProcessWorkspacePanel";
 import {
   ProcessWorkspaceShell,
@@ -76,6 +79,10 @@ export function ProcessWorkspacePage({
   const [instancias, setInstancias] = useState<ProcessoInstancia[]>([]);
   const [revisoes, setRevisoes] = useState<Revisao[]>([]);
   const [arquivosCount, setArquivosCount] = useState(0);
+  const [filiaisAtivasCount, setFiliaisAtivasCount] = useState(0);
+  const [heroExtras, setHeroExtras] = useState<ReactNode>(null);
+  const [revisionActions, setRevisionActions] =
+    useState<WorkspaceRevisionChromeActions | null>(null);
   const [treePartialError, setTreePartialError] = useState<string | null>(null);
   const missingRevisaoRefreshKey = useRef<string | null>(null);
 
@@ -120,6 +127,11 @@ export function ProcessWorkspacePage({
       next.add(activePanelKey);
       return next;
     });
+  }, [activePanelKey]);
+
+  useEffect(() => {
+    setHeroExtras(null);
+    setRevisionActions(null);
   }, [activePanelKey]);
 
   useEffect(() => {
@@ -234,6 +246,7 @@ export function ProcessWorkspacePage({
           pathname={pathname ?? `${TRANSFORMOMETRO_ROUTES.processos}/${processoId}`}
           onNavigate={onNavigate}
           onBack={onBack}
+          onHeroExtrasChange={setHeroExtras}
         />
       );
     }
@@ -251,6 +264,8 @@ export function ProcessWorkspacePage({
             pathname ?? `${TRANSFORMOMETRO_ROUTES.processos}/${processoId}/instancias/${instanciaId}`
           }
           onNavigate={onNavigate}
+          onHeroExtrasChange={setHeroExtras}
+          onFiliaisAtivasCount={setFiliaisAtivasCount}
         />
       );
     }
@@ -271,6 +286,8 @@ export function ProcessWorkspacePage({
             `${TRANSFORMOMETRO_ROUTES.processos}/${processoId}/instancias/${instanciaId}/revisoes/${revisaoId}`
           }
           onNavigate={onNavigate}
+          onHeroExtrasChange={setHeroExtras}
+          onRevisionChromeActions={setRevisionActions}
         />
       );
     }
@@ -285,6 +302,9 @@ export function ProcessWorkspacePage({
       instancias={instancias}
       revisoes={revisoes}
       arquivosCount={arquivosCount}
+      filiaisAtivasCount={filiaisAtivasCount}
+      heroExtras={heroExtras}
+      revisionActions={revisionActions}
       processoId={processoId}
       instanciaId={route.instanciaId}
       revisaoId={route.revisaoId}

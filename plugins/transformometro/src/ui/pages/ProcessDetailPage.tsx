@@ -91,6 +91,7 @@ type Props = Pick<AppProps, "getAccessToken"> & {
   onBack: () => void;
   embedded?: boolean;
   embeddedActive?: boolean;
+  onHeroExtrasChange?: (node: import("react").ReactNode) => void;
 };
 
 export function ProcessDetailPage({
@@ -101,6 +102,7 @@ export function ProcessDetailPage({
   onBack,
   embedded = false,
   embeddedActive = true,
+  onHeroExtrasChange,
 }: Props) {
   const confirm = useConfirm();
   const [openInstanciaForm, setOpenInstanciaForm] = useState(false);
@@ -757,6 +759,27 @@ export function ProcessDetailPage({
     </>
   );
 
+  useEffect(() => {
+    if (!embedded || !onHeroExtrasChange) return;
+    onHeroExtrasChange(
+      <CollaborativePresenceBanner
+        layout="items"
+        presence={sectionEdit.presence}
+        lockError={sectionEdit.lockError}
+        realtimeNotice={sectionEdit.realtimeNotice}
+        onDismissRealtimeNotice={sectionEdit.clearRealtimeNotice}
+      />,
+    );
+    return () => onHeroExtrasChange(null);
+  }, [
+    embedded,
+    onHeroExtrasChange,
+    sectionEdit.presence,
+    sectionEdit.lockError,
+    sectionEdit.realtimeNotice,
+    sectionEdit.clearRealtimeNotice,
+  ]);
+
   const pageBody = (
     <>
       {embedded ? null : (
@@ -808,12 +831,14 @@ export function ProcessDetailPage({
         onDismissError={() => setError(null)}
       />
 
-      <CollaborativePresenceBanner
-        presence={sectionEdit.presence}
-        lockError={sectionEdit.lockError}
-        realtimeNotice={sectionEdit.realtimeNotice}
-        onDismissRealtimeNotice={sectionEdit.clearRealtimeNotice}
-      />
+      {!embedded || !onHeroExtrasChange ? (
+        <CollaborativePresenceBanner
+          presence={sectionEdit.presence}
+          lockError={sectionEdit.lockError}
+          realtimeNotice={sectionEdit.realtimeNotice}
+          onDismissRealtimeNotice={sectionEdit.clearRealtimeNotice}
+        />
+      ) : null}
 
       {embedded ? sectionPanels : <ProcessWorkspaceShell>{sectionPanels}</ProcessWorkspaceShell>}
     </>

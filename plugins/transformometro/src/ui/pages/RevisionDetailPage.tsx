@@ -41,6 +41,10 @@ type Props = Pick<AppProps, "getAccessToken"> & {
   embedded?: boolean;
   embeddedActive?: boolean;
   activeSection?: RevisaoWorkspaceSectionId;
+  onHeroExtrasChange?: (node: import("react").ReactNode) => void;
+  onRevisionChromeActions?: (
+    actions: import("../processes/ProcessWorkspaceChrome").WorkspaceRevisionChromeActions | null,
+  ) => void;
 };
 
 export function RevisionDetailPage({
@@ -54,6 +58,8 @@ export function RevisionDetailPage({
   embedded = false,
   embeddedActive = true,
   activeSection: activeSectionProp,
+  onHeroExtrasChange,
+  onRevisionChromeActions,
 }: Props) {
   const [processo, setProcesso] = useState<Processo | null>(null);
   const [revisao, setRevisao] = useState<Revisao | null>(null);
@@ -192,6 +198,9 @@ export function RevisionDetailPage({
         onNavigate(buildInstanciaPath(processoId, resolvedInstanciaId));
       }}
       onNavigate={onNavigate}
+      onHeroExtrasChange={onHeroExtrasChange}
+      onRevisionChromeActions={onRevisionChromeActions}
+      chromeOwnsIdentity={embedded}
     />
   );
 

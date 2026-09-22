@@ -1,7 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
-  ArrowDownAZ,
-  ArrowUpAZ,
   ChevronLeft,
   Grid2X2,
   LayoutGrid,
@@ -57,6 +55,7 @@ import {
   type ProcessoListFieldVisibility,
   type ProcessoListViewMode,
 } from "./processListViewMode";
+import { ProcessListPresentationControls } from "./ProcessListPresentationControls";
 
 const SECTION_CN = dataTableSectionBemClasses("ds");
 
@@ -80,20 +79,16 @@ type Props = {
   hideBrowseToggle?: boolean;
   /** Quando true, oculta a contagem da toolbar (ex.: highlight do Hero é o owner). */
   hideRecordCount?: boolean;
+  /** Controlled sort (Hero owns the control). */
+  sort?: ProcessoListSort;
+  onSortChange?: (sort: ProcessoListSort) => void;
+  /** Controlled view mode (Hero owns the control). */
+  viewMode?: ProcessoListViewMode;
+  onViewModeChange?: (mode: ProcessoListViewMode) => void;
+  /** When true, sort/view toolbar is rendered by the page Hero. */
+  hideListToolbar?: boolean;
 };
 
-function viewModeIcon(mode: ProcessoListViewMode) {
-  switch (mode) {
-    case "icons-lg":
-      return LayoutGrid;
-    case "icons-md":
-      return Grid2X2;
-    case "list":
-      return LayoutList;
-    default:
-      return Rows3;
-  }
-}
 
 function folderMeta(processo: Processo): string {
   const stats = processo.setup_stats;
@@ -200,6 +195,11 @@ export function ProcessFolderBrowser({
   onBrowseModeChange,
   hideBrowseToggle = false,
   hideRecordCount = false,
+  sort: sortProp,
+  onSortChange,
+  viewMode: viewModeProp,
+  onViewModeChange,
+  hideListToolbar = false,
 }: Props) {
   const P = TM_HELP_TOOLTIPS.processos;
   const [browseModeState, setBrowseModeState] = useState<ProcessoListBrowseMode>(() =>
@@ -211,20 +211,34 @@ export function ProcessFolderBrowser({
     if (browseModeProp === undefined) setBrowseModeState(mode);
   };
   const [selectedDepartamentoKey, setSelectedDepartamentoKey] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<ProcessoListViewMode>(() => readProcessoListViewMode());
-  const [sort, setSort] = useState<ProcessoListSort>(() => readProcessoListSort());
+  const [viewModeState, setViewModeState] = useState<ProcessoListViewMode>(() => readProcessoListViewMode());
+  const [sortState, setSortState] = useState<ProcessoListSort>(() => readProcessoListSort());
+  const viewMode = viewModeProp ?? viewModeState;
+  const sort = sortProp ?? sortState;
+
+  function setViewMode(mode: ProcessoListViewMode) {
+    onViewModeChange?.(mode);
+    if (viewModeProp === undefined) setViewModeState(mode);
+  }
+
+  function setSort(next: ProcessoListSort | ((current: ProcessoListSort) => ProcessoListSort)) {
+    const current = sortProp ?? sortState;
+    const resolved = typeof next === "function" ? next(current) : next;
+    onSortChange?.(resolved);
+    if (sortProp === undefined) setSortState(resolved);
+  }
 
   useEffect(() => {
     if (browseModeProp === undefined) writeProcessoListBrowseMode(browseModeState);
   }, [browseModeProp, browseModeState]);
 
   useEffect(() => {
-    writeProcessoListViewMode(viewMode);
-  }, [viewMode]);
+    if (viewModeProp === undefined) writeProcessoListViewMode(viewModeState);
+  }, [viewModeProp, viewModeState]);
 
   useEffect(() => {
-    writeProcessoListSort(sort);
-  }, [sort]);
+    if (sortProp === undefined) writeProcessoListSort(sortState);
+  }, [sortProp, sortState]);
 
   useEffect(() => {
     if (browseMode !== "departamento") {
@@ -322,24 +336,9 @@ export function ProcessFolderBrowser({
     });
   }
 
-  function handleSortFieldChange(field: string) {
-    const key = field as ProcessoListSortField;
-    if (!PROCESSO_LIST_SORT_OPTIONS.some((option) => option.value === key)) return;
-    setSort((current) => ({
-      key,
-      direction: key === "atualizado" && current.key !== "atualizado" ? "desc" : current.direction,
-    }));
-  }
 
-  function toggleSortDirection() {
-    setSort((current) => ({
-      ...current,
-      direction: current.direction === "asc" ? "desc" : "asc",
-    }));
-  }
 
   const currentMode = PROCESSO_LIST_VIEW_MODES.find((mode) => mode.id === viewMode)!;
-  const sortDirectionLabel = sort.direction === "asc" ? "Menor → maior" : "Maior → menor";
   const showSectionHeading = Boolean(title || hint);
 
   const countLabel = showingDepartamentoRoot
@@ -420,74 +419,37 @@ export function ProcessFolderBrowser({
 
       {filters ? <div className="tm-processo-browser__filters">{filters}</div> : null}
 
-      <div
-        className={`${SECTION_CN.toolbar} tm-processo-browser__toolbar`}
-        aria-label="Configuração da listagem"
-      >
-        <div className="tm-processo-browser__sort" aria-label="Ordenação da lista">
-          {!showingDepartamentoRoot ? (
-            <SelectField
-              id="tm-proc-sort-field"
-              label="Ordenar por"
-              hint={P.ordenacaoCampo}
-              value={sort.key}
-              onChange={handleSortFieldChange}
-              options={PROCESSO_LIST_SORT_OPTIONS}
-              className="tm-processo-browser__sort-field"
-            />
-          ) : (
-            <span className="tm-processo-browser__sort-field-static">
-              <FieldLabel className="tm-field__label" label="Ordenar por" hint={P.ordenacaoCampo} />
-              <span className="ds-hint">Nome do departamento</span>
-            </span>
-          )}
-          <div className="tm-processo-browser__sort-direction">
-            <FieldLabel
-              className="tm-field__label tm-processo-browser__sort-direction-label"
-              label="Ordem"
-              hint={P.ordenacaoDirecao}
-            />
-            <button
-              type="button"
-              className="tm-processo-browser__sort-direction-btn"
-              aria-label={`Ordem: ${sortDirectionLabel}. Clique para alternar.`}
-              title={sortDirectionLabel}
-              onClick={toggleSortDirection}
-            >
-              {sort.direction === "asc" ? (
-                <ArrowDownAZ size={16} aria-hidden="true" />
-              ) : (
-                <ArrowUpAZ size={16} aria-hidden="true" />
-              )}
-              <span>{sort.direction === "asc" ? "Menor" : "Maior"}</span>
-            </button>
-          </div>
-        </div>
-        <div className={`${SECTION_CN.toolbarExtra} tm-processo-browser__toolbar-extra`}>
-          <div className="tm-processo-browser__view-modes" role="group" aria-label="Modo de visualização">
-            {PROCESSO_LIST_VIEW_MODES.map((mode) => {
-              const Icon = viewModeIcon(mode.id);
-              const active = viewMode === mode.id;
-              return (
-                <button
-                  key={mode.id}
-                  type="button"
-                  className={`tm-processo-browser__view-btn${active ? " tm-processo-browser__view-btn--active" : ""}`}
-                  aria-pressed={active}
-                  title={mode.label}
-                  onClick={() => setViewMode(mode.id)}
-                >
-                  <Icon size={16} aria-hidden="true" />
-                  <span>{mode.shortLabel}</span>
-                </button>
-              );
-            })}
-          </div>
+      {!hideListToolbar ? (
+        <div
+          className={`${SECTION_CN.toolbar} tm-processo-browser__toolbar`}
+          aria-label="Configuração da listagem"
+        >
+          <ProcessListPresentationControls
+            sort={sort}
+            onSortFieldChange={(field) =>
+              setSort((current) => ({
+                key: field,
+                direction:
+                  field === "atualizado" && current.key !== "atualizado"
+                    ? "desc"
+                    : current.direction,
+              }))
+            }
+            onToggleSortDirection={() =>
+              setSort((current) => ({
+                ...current,
+                direction: current.direction === "asc" ? "desc" : "asc",
+              }))
+            }
+            departmentRoot={showingDepartamentoRoot}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+          />
           {hideRecordCount ? null : (
             <span className={`${SECTION_CN.meta} tm-processo-browser__count`}>{countLabel}</span>
           )}
         </div>
-      </div>
+      ) : null}
 
       {loading ? (
         <p className="ds-hint">Carregando processos…</p>
