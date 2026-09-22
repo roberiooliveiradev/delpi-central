@@ -79,7 +79,8 @@ HelpdeskSectionCard  «Conversa»
     content_html  — só leitura; sem Aprovar/Recusar
 
   HelpdeskRichTextField  «Responder»  (oculto se can_followup=false)
-  [ Enviar ]
+  HelpdeskFormActions align=end
+    ActionButton primary  [ Send ] Enviar
 ```
 
 Claro e escuro continuam nos tokens `--delpi-ui-*` já mapeados em `.dashboard-helpdesk`. O verde da bolha do GLPI não entra como cor fixa. A bolha de quem escreveu e a bolha de outra pessoa se distinguem pelo tom do kit (`mine` / a outra), não pela paleta do GLPI.

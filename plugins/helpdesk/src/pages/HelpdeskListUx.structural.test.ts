@@ -62,4 +62,14 @@ describe("Helpdesk list UX structural", () => {
       /\.helpdesk-list-pagination[\s\S]*?pagination__action-help[\s\S]*?display:\s*none/,
     );
   });
+
+  it("Enviar da resposta usa ActionButton primary como a abertura (não IconButton)", () => {
+    const page = read("HelpdeskPage.tsx");
+    expect(page).toMatch(/align="end"[\s\S]*?Ajuda: Enviar resposta[\s\S]*?variant="primary"/);
+    expect(page).toContain('aria-label={saving ? "Enviando" : "Enviar resposta"}');
+    expect(page).toContain("{saving ? \"Enviando…\" : \"Enviar\"}");
+    const replyBlock = page.slice(page.indexOf("label=\"Responder\""));
+    expect(replyBlock).toContain("ActionButton");
+    expect(replyBlock).not.toContain("HelpdeskIconButton");
+  });
 });

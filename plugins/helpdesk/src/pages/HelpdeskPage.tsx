@@ -870,15 +870,18 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                 onChange={setContent}
                 minHeight={120}
               />
-              <HelpdeskFormActions>
-                <HelpdeskIconButton
-                  tone="primary"
-                  type="submit"
-                  aria-label={saving ? "Enviando" : "Enviar"}
-                  disabled={saving || !hasVisibleRichText(content)}
-                >
-                  <Send size={16} aria-hidden />
-                </HelpdeskIconButton>
+              <HelpdeskFormActions align="end">
+                <HintAction hint={helpTooltips.detailUi.send} ariaLabel="Ajuda: Enviar resposta">
+                  <ActionButton
+                    variant="primary"
+                    type="submit"
+                    aria-label={saving ? "Enviando" : "Enviar resposta"}
+                    disabled={saving || !hasVisibleRichText(content)}
+                  >
+                    <Send size={18} aria-hidden />
+                    {saving ? "Enviando…" : "Enviar"}
+                  </ActionButton>
+                </HintAction>
               </HelpdeskFormActions>
             </form>
             ) : null}
