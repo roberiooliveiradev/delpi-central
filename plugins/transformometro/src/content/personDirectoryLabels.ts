@@ -9,13 +9,9 @@ export const PERSON_DIRECTORY_LABELS = {
   nameFallback: "Usuário",
   identityTitle: "Identidade",
   identitySubtitle: "Dados do diretório Minha DELPI (somente leitura neste Portal).",
-  identityHostNote:
-    "Foto, cargo e contatos são gerenciados no Meu Perfil da Minha DELPI.",
   shortcutsTitle: "Atalhos",
   shortcutsSubtitle: "Áreas do Portal Transforma+.",
   shortcutsAriaLabel: "Atalhos do Portal Transforma+",
-  badgeSelf: "Você",
-  editIdentity: "Editar no Meu Perfil",
   shortcutHome: "Início",
   shortcutTasks: "Minhas tarefas",
   shortcutRooms: "Sala de interação",

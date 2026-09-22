@@ -197,15 +197,14 @@ declare module "@delpi/plugin-ui/index" {
     previewTitle?: string;
     previewAriaLabel?: string;
     portalScopeClassName?: string;
-    showEmptyFields?: boolean;
     extraFields?: ReadonlyArray<{
       id: string;
       label: ReactNode;
       value: ReactNode;
       icon?: ReactNode;
     }>;
+    /** @deprecated Preferir helper canônico do kit; override só para nota adicional. */
     note?: ReactNode;
-    actions?: ReactNode;
   };
 
   export function createDashboardPortalUserProfilePage(config: {
@@ -215,6 +214,7 @@ declare module "@delpi/plugin-ui/index" {
       hero?: unknown;
       section?: unknown;
       avatar?: unknown;
+      selfBadge?: unknown;
     };
     labels?: Partial<{
       pageAriaLabel: string;
@@ -230,12 +230,16 @@ declare module "@delpi/plugin-ui/index" {
       mobileLabel: string;
       whatsappLabel: string;
       emptyValue: string;
+      selfBadgeLabel: string;
+      editSelfLabel: string;
+      identityHostNote: string;
       section: {
         titleHelpAriaLabel: (title: string) => string;
         expandAriaLabel?: (title: string) => string;
         collapseAriaLabel?: (title: string) => string;
       };
     }>;
+    portalScopeClassName?: string;
   }): ComponentType<{
     className?: string;
     pagePath?: {
@@ -254,13 +258,15 @@ declare module "@delpi/plugin-ui/index" {
       description?: ReactNode;
       badge?: ReactNode;
       actions?: ReactNode;
-      density?: "comfortable" | "compact";
     };
     identity?: PortalUserProfileIdentity | null;
     identityHint?: string;
     shortcuts?: ReadonlyArray<PortalUserProfileShortcut>;
     shortcutsHint?: string;
     sections?: ReactNode;
+    isSelf?: boolean | null;
+    contextBadges?: ReactNode;
+    onEditSelf?: () => void;
     loading?: boolean;
     loadingNode?: ReactNode;
     status?: ReactNode;

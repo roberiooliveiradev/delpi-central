@@ -18,7 +18,6 @@
     "shortcutsAriaLabel": "Atalhos do Portal Comercial",
     "identityTitle": "Identidade",
     "identitySubtitle": "Dados do diretório Minha DELPI (somente leitura neste Portal).",
-    "identityHostNote": "Foto, cargo e contatos são gerenciados no Meu Perfil da Minha DELPI.",
     "portfoliosTitle": "Carteiras",
     "portfoliosSubtitle": "Participação nas carteiras comerciais (papel, clientes e membros).",
     "groupsTitle": "Grupos",
@@ -36,9 +35,7 @@
     "portfolioMembers": "Membros",
     "portfolioOpen": "Abrir carteira",
     "enlargePhoto": "Ampliar foto de {name}",
-    "editIdentity": "Editar no Meu Perfil",
     "appBadge": "Portal Comercial",
-    "badgeSelf": "Você",
     "noPermissions": "Nenhuma permissão commercial.* nesta sessão.",
     "superadmin": "Superadmin",
     "shortcutTasks": "Minhas tarefas",
@@ -54,8 +51,6 @@
     "emailLabel": "E-mail",
     "phoneLabel": "Telefone",
     "mobileLabel": "Celular",
-    "whatsappLabel": "WhatsApp",
-    "phoneEmpty": "Não informado",
-    "portfoliosCount": "{count} carteira(s)"
+    "whatsappLabel": "WhatsApp"
   }
 }

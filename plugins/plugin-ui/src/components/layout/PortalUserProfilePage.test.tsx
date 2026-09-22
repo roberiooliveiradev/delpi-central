@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
+  PORTAL_USER_PROFILE_LABELS_PT,
   PortalUserProfilePage,
   createDashboardPortalUserProfilePage,
   portalUserProfilePageBemClasses,
@@ -32,10 +33,23 @@ describe("PortalUserProfilePage", () => {
     expect(code).not.toMatch(/localStorage|sessionStorage|axios/);
     expect(code).not.toMatch(/commercial|transformometro|supplies/i);
     expect(code).not.toMatch(/\/apps\//);
-    expect(code).not.toMatch(/isSelf|permission|capabilit/i);
+    expect(code).not.toMatch(/permission|capabilit|jwt/i);
+    expect(code).not.toMatch(/keycloak/i);
   });
 
-  it("renderiza identidade somente leitura com contatos e nota", () => {
+  it("força density comfortable no Hero", () => {
+    expect(code).toMatch(/density="comfortable"/);
+    const { container } = render(
+      <PortalUserProfilePage
+        classNames={CLASS_NAMES}
+        hero={{ title: "Ana Souza" }}
+      />,
+    );
+    expect(container.querySelector('[data-density="comfortable"]')).toBeTruthy();
+    expect(container.querySelector('[data-density="compact"]')).toBeNull();
+  });
+
+  it("renderiza identidade somente leitura com contatos e helper canônico", () => {
     render(
       <PortalUserProfilePage
         classNames={CLASS_NAMES}
@@ -47,37 +61,87 @@ describe("PortalUserProfilePage", () => {
           jobTitle: "Compradora",
           phone: "+551130000000",
           whatsapp: "+5511999990000",
-          note: "Editar identidade no Meu Perfil.",
-          actions: <button type="button">Editar identidade</button>,
         }}
       />,
     );
 
-    /** Região nomeada — `aria-label` em div genérica seria ignorada pelo leitor. */
     expect(screen.getByRole("region", { name: "Perfil do usuário" })).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Identidade" })).toBeTruthy();
     expect(screen.getByText("ana@delpi.com.br")).toBeTruthy();
     expect(screen.getByText("Compradora")).toBeTruthy();
     expect(screen.getByText("+551130000000")).toBeTruthy();
     expect(screen.getByText("+5511999990000")).toBeTruthy();
-    expect(screen.getByText("Editar identidade no Meu Perfil.")).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Editar identidade" })).toBeTruthy();
-    /** Sem valor de celular e sem `showEmptyFields` → linha omitida. */
+    expect(screen.getByText(PORTAL_USER_PROFILE_LABELS_PT.identityHostNote)).toBeTruthy();
+    expect(screen.queryByText("(/profile)")).toBeNull();
+    /** Chave ausente → linha omitida. */
     expect(screen.queryByText("Celular")).toBeNull();
-    /** Identidade não tem campos editáveis no kit. */
     expect(screen.queryAllByRole("textbox")).toHaveLength(0);
   });
 
-  it("mostra «Não informado» nos contatos vazios quando o host pede showEmptyFields", () => {
+  it("mostra «Não informado» quando a chave de contato existe e o valor é vazio", () => {
     render(
       <PortalUserProfilePage
         classNames={CLASS_NAMES}
-        identity={{ name: "Ana Souza", showEmptyFields: true }}
+        identity={{
+          name: "Ana Souza",
+          jobTitle: null,
+          phone: "",
+          mobile: undefined,
+          whatsapp: null,
+        }}
       />,
     );
 
+    expect(screen.getByText("Cargo")).toBeTruthy();
+    expect(screen.getByText("Telefone")).toBeTruthy();
     expect(screen.getByText("Celular")).toBeTruthy();
-    expect(screen.getAllByText("Não informado").length).toBeGreaterThan(1);
+    expect(screen.getByText("WhatsApp")).toBeTruthy();
+    expect(screen.getAllByText("Não informado").length).toBeGreaterThanOrEqual(4);
+  });
+
+  it("injeta badge Você e CTA Editar no Meu Perfil só quando isSelf", () => {
+    const onEditSelf = vi.fn();
+    const { rerender } = render(
+      <PortalUserProfilePage
+        classNames={CLASS_NAMES}
+        isSelf
+        onEditSelf={onEditSelf}
+        hero={{ title: "Ana Souza" }}
+        contextBadges={<span>Filiais: 01</span>}
+      />,
+    );
+
+    expect(screen.getByText("Você")).toBeTruthy();
+    expect(screen.getByText("Filiais: 01")).toBeTruthy();
+    const edit = screen.getByRole("button", { name: "Editar no Meu Perfil" });
+    fireEvent.click(edit);
+    expect(onEditSelf).toHaveBeenCalledTimes(1);
+
+    rerender(
+      <PortalUserProfilePage
+        classNames={CLASS_NAMES}
+        isSelf={false}
+        onEditSelf={onEditSelf}
+        hero={{ title: "Outro" }}
+        contextBadges={<span>Filiais: 01</span>}
+      />,
+    );
+    expect(screen.queryByText("Você")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Editar no Meu Perfil" })).toBeNull();
+    expect(screen.getByText("Filiais: 01")).toBeTruthy();
+  });
+
+  it("não inventa badge Diretório / Leitura admin", () => {
+    expect(code).not.toMatch(/Diretório|Leitura admin/);
+    render(
+      <PortalUserProfilePage
+        classNames={CLASS_NAMES}
+        isSelf={false}
+        hero={{ title: "Outro" }}
+      />,
+    );
+    expect(screen.queryByText("Diretório")).toBeNull();
+    expect(screen.queryByText("Leitura admin")).toBeNull();
   });
 
   it("dispara onSelect do atalho clicado", () => {
@@ -157,7 +221,6 @@ describe("PortalUserProfilePage", () => {
     expect(container.querySelector(".sp-portal-user-profile")).toBeTruthy();
     expect(container.querySelector(".delpi-ui-portal-user-profile")).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Atalhos do Portal" })).toBeTruthy();
-    /** Rótulos não sobrescritos herdam o bundle PT do kit. */
     expect(screen.getByRole("heading", { name: "Identidade" })).toBeTruthy();
   });
 });

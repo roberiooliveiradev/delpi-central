@@ -11,7 +11,6 @@ import {
   LayoutDashboard,
   Mail,
   MessageCircle,
-  Pencil,
   Phone,
   Shield,
   UsersRound,
@@ -92,7 +91,6 @@ const CommercialPortalUserProfilePage = createDashboardPortalUserProfilePage({
     phoneLabel: USER_ACCESS_COPY.phoneLabel,
     mobileLabel: USER_ACCESS_COPY.mobileLabel,
     whatsappLabel: USER_ACCESS_COPY.whatsappLabel,
-    emptyValue: USER_ACCESS_COPY.phoneEmpty,
   },
 });
 
@@ -127,7 +125,6 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
     return me === userId.trim();
   }, [currentUserId, scopeLoading, userId]);
 
-  const canEdit = isSelf === true;
   const isOther = isSelf === false;
 
   const reload = useCallback(
@@ -372,6 +369,20 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
   return (
     <CommercialPortalUserProfilePage
       className="cm-user-profile"
+      isSelf={isSelf}
+      onEditSelf={
+        isSelf === true
+          ? () => navigateHostPath(HOST_SELF_PROFILE_PATH)
+          : undefined
+      }
+      contextBadges={
+        ready && profile ? (
+          <CommercialStatusBadge
+            label={formatPortfoliosCount(profile.portfolios.length)}
+            variant="info"
+          />
+        ) : undefined
+      }
       pagePath={{
         back: {
           label: back.label,
@@ -398,31 +409,6 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
               eyebrow: USER_ACCESS_COPY.appBadge,
               title: displayName,
               description: heroDescription,
-              density: "comfortable",
-              badge: (
-                <>
-                  {isSelf === true ? (
-                    <CommercialStatusBadge
-                      label={USER_ACCESS_COPY.badgeSelf}
-                      variant="success"
-                    />
-                  ) : null}
-                  <CommercialStatusBadge
-                    label={formatPortfoliosCount(profile.portfolios.length)}
-                    variant="info"
-                  />
-                </>
-              ),
-              actions: canEdit ? (
-                <CommercialActionButton
-                  variant="primary"
-                  onClick={() => navigateHostPath(HOST_SELF_PROFILE_PATH)}
-                  aria-label={CM_HELP.users.editMode}
-                >
-                  <Pencil size={16} aria-hidden />
-                  {USER_ACCESS_COPY.editIdentity}
-                </CommercialActionButton>
-              ) : undefined,
             }
           : undefined
       }
@@ -436,14 +422,12 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
               phone: profile.phone_e164,
               mobile: profile.mobile_e164,
               whatsapp: profile.whatsapp_e164,
-              showEmptyFields: true,
               photoUrl: photoObjectUrl,
               colorKey: profile.user_id,
               previewTitle: displayName,
               previewAriaLabel: photoObjectUrl
                 ? USER_ACCESS_COPY.enlargePhoto.replace("{name}", displayName)
                 : undefined,
-              note: USER_ACCESS_COPY.identityHostNote,
             }
           : null
       }

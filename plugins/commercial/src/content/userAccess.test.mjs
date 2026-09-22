@@ -34,7 +34,9 @@ describe("userAccess helpers", () => {
   });
 
   it("formata contagem de carteiras", () => {
-    assert.match(formatPortfoliosCount(3), /3/);
+    assert.equal(formatPortfoliosCount(0), "0 carteiras");
+    assert.equal(formatPortfoliosCount(1), "1 carteira");
+    assert.equal(formatPortfoliosCount(3), "3 carteiras");
   });
 
   it("não inventa Membro nem zero quando o contrato omite campos", () => {

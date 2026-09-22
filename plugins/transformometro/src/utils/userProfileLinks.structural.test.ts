@@ -40,7 +40,7 @@ describe("Transforma+ user profile routes", () => {
     expect(links).not.toMatch(/navigateHostPath/);
   });
 
-  it("PersonDirectoryPage tem atalhos e Editar → /profile para o próprio", () => {
+  it("PersonDirectoryPage tem atalhos e Editar → /profile via kit (onEditSelf)", () => {
     const page = readFileSync(
       join(dir, "../ui/pages/PersonDirectoryPage.tsx"),
       "utf8",
@@ -49,14 +49,18 @@ describe("Transforma+ user profile routes", () => {
       join(dir, "../content/personDirectoryLabels.ts"),
       "utf8",
     );
-    expect(labels).toMatch(/Editar no Meu Perfil/);
     expect(labels).toMatch(/Minhas tarefas/);
     expect(labels).not.toMatch(/badgeDirectory|Diretório/);
     expect(page).toMatch(/HOST_SELF_PROFILE_PATH/);
     expect(page).toMatch(/navigateHostPath/);
-    expect(page).toMatch(/isSelf === true/);
+    expect(page).toMatch(/isSelf=\{isSelf\}/);
+    expect(page).toMatch(/onEditSelf=/);
     expect(page).toMatch(/LoadingActivityCard/);
-    expect(page).toMatch(/identityHostNote/);
+    expect(page).not.toMatch(/identityHostNote/);
+    expect(page).not.toMatch(/badgeSelf/);
+    expect(page).not.toMatch(/editIdentity/);
+    expect(page).not.toMatch(/density:\s*"comfortable"/);
+    expect(page).not.toMatch(/Editar perfil|Diretório/);
   });
 
   it("navegação de usuário no portal ≠ Meu Perfil host", () => {

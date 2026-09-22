@@ -24,6 +24,7 @@ export type PageHeroClassNames = {
   content: string;
   eyebrow: string;
   headline: string;
+  headlineMain: string;
   title: string;
   description: string;
   badge: string;
@@ -64,6 +65,7 @@ export function pageHeroBemClasses(prefix: string): PageHeroClassNames {
     content: pair(`${base}__content`, `${ui}__content`),
     eyebrow: pair(`${base}__eyebrow`, `${ui}__eyebrow`),
     headline: pair(`${base}__headline`, `${ui}__headline`),
+    headlineMain: pair(`${base}__headline-main`, `${ui}__headline-main`),
     title: pair(`${base}__title`, `${ui}__title`),
     description: pair(`${base}__description`, `${ui}__description`),
     badge: pair(`${base}__badge`, `${ui}__badge`),
@@ -112,8 +114,10 @@ export function PageHero({
       <div className={classNames.content}>
         {eyebrow ? <p className={classNames.eyebrow}>{eyebrow}</p> : null}
         <div className={classNames.headline}>
-          <h1 className={classNames.title}>{title}</h1>
-          {badge ? <div className={classNames.badge}>{badge}</div> : null}
+          <div className={classNames.headlineMain}>
+            <h1 className={classNames.title}>{title}</h1>
+            {badge ? <div className={classNames.badge}>{badge}</div> : null}
+          </div>
           {actions ? <div className={classNames.actions}>{actions}</div> : null}
         </div>
         {description ? <p className={classNames.description}>{description}</p> : null}

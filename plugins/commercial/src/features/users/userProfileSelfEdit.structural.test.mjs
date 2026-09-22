@@ -7,18 +7,22 @@ import { fileURLToPath } from "node:url";
 const src = join(dirname(fileURLToPath(import.meta.url)), "../..");
 
 describe("user profile self-only + expand photo", () => {
-  it("canEdit=isSelf e editar identidade abre o /profile do host", () => {
+  it("isSelf + onEditSelf abrem o /profile do host — chrome self é do kit", () => {
     const page = readFileSync(
       join(src, "features/users/UserProfilePage.tsx"),
       "utf8",
     );
-    const copy = readFileSync(join(src, "content/userAccess.json"), "utf8");
-    assert.match(page, /const canEdit = isSelf/);
-    assert.doesNotMatch(page, /canEdit = isSelf \|\|/);
+    assert.match(page, /isSelf=\{isSelf\}/);
+    assert.match(page, /onEditSelf=/);
     assert.match(page, /HOST_SELF_PROFILE_PATH/);
     assert.match(page, /navigateHostPath/);
-    assert.match(copy, /"editIdentity"/);
-    assert.match(copy, /"identityHostNote"/);
+    assert.doesNotMatch(page, /canEdit = isSelf/);
+    assert.doesNotMatch(page, /badgeSelf/);
+    assert.doesNotMatch(page, /editIdentity/);
+    assert.doesNotMatch(page, /identityHostNote/);
+    assert.doesNotMatch(page, /showEmptyFields/);
+    assert.doesNotMatch(page, /density:\s*"comfortable"/);
+    assert.doesNotMatch(page, /Editar identidade|Editar perfil/);
   });
 
   it("identidade é leitura — sem patch/upload/form de contato no Portal", () => {
@@ -48,17 +52,17 @@ describe("user profile self-only + expand photo", () => {
     );
   });
 
-  it("hero usa eyebrow Portal Comercial, Você no self e cargo no supporting", () => {
+  it("hero usa eyebrow Portal Comercial e cargo no supporting — badge Você é do kit", () => {
     const page = readFileSync(
       join(src, "features/users/UserProfilePage.tsx"),
       "utf8",
     );
     const copy = readFileSync(join(src, "content/userAccess.json"), "utf8");
     assert.match(copy, /"appBadge": "Portal Comercial"/);
-    assert.match(copy, /"badgeSelf": "Você"/);
-    assert.match(copy, /"editIdentity": "Editar no Meu Perfil"/);
     assert.match(page, /eyebrow: USER_ACCESS_COPY\.appBadge/);
-    assert.match(page, /USER_ACCESS_COPY\.badgeSelf/);
+    assert.match(page, /contextBadges=/);
+    assert.match(page, /formatPortfoliosCount/);
+    assert.doesNotMatch(page, /USER_ACCESS_COPY\.badgeSelf/);
     assert.doesNotMatch(page, /label=\{USER_ACCESS_COPY\.appBadge\}/);
     assert.doesNotMatch(page, /aboutTitle|aboutBody/);
     assert.match(page, /directoryUserLabelOrFallback\(\{ name: profile\.name \}\)/);
@@ -66,17 +70,14 @@ describe("user profile self-only + expand photo", () => {
     assert.doesNotMatch(page, /heroDescription = \[profile\.email/);
   });
 
-  it("CTA Editar só no Hero — sem duplicar na Identidade", () => {
+  it("CTA Editar só via onEditSelf do kit — sem actions/note manuais no Hero/Identity", () => {
     const page = readFileSync(
       join(src, "features/users/UserProfilePage.tsx"),
       "utf8",
     );
-    assert.match(page, /actions: canEdit \?/);
-    assert.match(page, /note: USER_ACCESS_COPY\.identityHostNote,/);
-    assert.doesNotMatch(
-      page,
-      /note: USER_ACCESS_COPY\.identityHostNote,\s*\n\s*actions:/,
-    );
+    assert.match(page, /onEditSelf=/);
+    assert.doesNotMatch(page, /actions:\s*canEdit/);
+    assert.doesNotMatch(page, /note:\s*USER_ACCESS_COPY\.identityHostNote/);
   });
 
   it("identidade exibe contatos E.164 e mantém atalhos de contato/tarefa", () => {
@@ -106,7 +107,6 @@ describe("user profile self-only + expand photo", () => {
       "utf8",
     );
     assert.match(page, /createDashboardPortalUserProfilePage/);
-    /** Layout de identidade/atalhos é do kit — sem CSS paralelo no MFE. */
     assert.doesNotMatch(
       page,
       /cm-user-profile__(grid|identity|identity-fields|meta-row|shortcuts|avatar|job|file-input)/,

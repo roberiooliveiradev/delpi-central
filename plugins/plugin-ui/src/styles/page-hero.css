@@ -61,6 +61,15 @@
   flex-wrap: wrap;
 }
 
+.delpi-ui-page-hero__headline-main {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 12px;
+  min-width: 0;
+}
+
 .delpi-ui-page-hero__title {
   margin: 0;
   font-size: clamp(1.75rem, 3.2vw, 2.5rem);
@@ -78,7 +87,7 @@
 }
 
 .delpi-ui-page-hero__badge {
-  flex: 0 0 auto;
+  flex: 0 1 auto;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -92,7 +101,6 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
-  margin-left: auto;
 }
 
 .delpi-ui-page-hero__highlights {

@@ -44,7 +44,8 @@ export function listGrantedCapabilities(
 }
 
 export function formatPortfoliosCount(count: number): string {
-  return USER_ACCESS_COPY.portfoliosCount.replace("{count}", String(count));
+  if (count === 1) return "1 carteira";
+  return `${count} carteiras`;
 }
 
 /** Role label for profile portfolio cards — missing role is not «Membro». */

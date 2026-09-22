@@ -84,14 +84,6 @@
   color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.7)));
 }
 
-.delpi-ui-portal-user-profile__identity-actions {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 12px;
-}
-
 .delpi-ui-portal-user-profile__shortcuts {
   display: flex;
   align-items: center;

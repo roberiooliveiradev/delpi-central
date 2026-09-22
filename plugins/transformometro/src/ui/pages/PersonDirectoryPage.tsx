@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  ActionButton,
   HOST_SELF_PROFILE_PATH,
   createDashboardPortalUserProfilePage,
   navigateHostPath,
@@ -9,7 +8,6 @@ import {
   CheckSquare,
   Home,
   MessagesSquare,
-  Pencil,
   Workflow,
 } from "lucide-react";
 
@@ -17,7 +15,6 @@ import { InlineErrorState } from "../../components/ErrorStateBox";
 import { LoadingActivityCard } from "../../components/LoadingActivityCard";
 import { PortalTopBar } from "../../components/TransformometroNav";
 import { TransformometroShell } from "../../components/TransformometroShell";
-import { TmStatusBadge } from "../../components/tmChromeUi";
 import { PERSON_DIRECTORY_LABELS as L } from "../../content/personDirectoryLabels";
 import { lookupDirectoryUsers } from "../../data/api/directoryUsersApi";
 import { downloadPersonProfilePhoto } from "../../data/api/transformometroInteractionApi";
@@ -176,6 +173,12 @@ export function PersonDirectoryPage({
         onNavigate={onNavigate}
       />
       <TmPortalUserProfilePage
+        isSelf={isSelf}
+        onEditSelf={
+          isSelf === true
+            ? () => navigateHostPath(HOST_SELF_PROFILE_PATH)
+            : undefined
+        }
         pagePath={{
           back: {
             label: L.back,
@@ -196,22 +199,6 @@ export function PersonDirectoryPage({
                 eyebrow: L.eyebrow,
                 title: name,
                 description: supporting,
-                density: "comfortable",
-                badge:
-                  isSelf === true ? (
-                    <TmStatusBadge label={L.badgeSelf} variant="success" />
-                  ) : undefined,
-                actions:
-                  isSelf === true ? (
-                    <ActionButton
-                      variant="primary"
-                      type="button"
-                      onClick={() => navigateHostPath(HOST_SELF_PROFILE_PATH)}
-                    >
-                      <Pencil size={16} aria-hidden />
-                      {L.editIdentity}
-                    </ActionButton>
-                  ) : undefined,
               }
             : undefined
         }
@@ -222,7 +209,6 @@ export function PersonDirectoryPage({
                 email,
                 photoUrl,
                 colorKey: userId,
-                note: L.identityHostNote,
               }
             : null
         }

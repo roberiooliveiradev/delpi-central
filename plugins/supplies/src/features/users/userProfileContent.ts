@@ -10,7 +10,6 @@ export const USER_PROFILE_CONTENT = {
   shortcutsTitle: "Atalhos",
   shortcutsSubtitle: "Caminhos liberados no Portal Suprimentos.",
   shortcutsAriaLabel: "Atalhos do Portal Suprimentos",
-  editIdentity: "Editar no Meu Perfil",
   preferencesTitle: "Preferências",
   preferencesSubtitle: "Valem só neste Portal — distinta do perfil global Minha DELPI.",
   accessTitle: "Acesso",
@@ -22,7 +21,6 @@ export const USER_PROFILE_CONTENT = {
   phoneLabel: "Telefone",
   mobileLabel: "Celular",
   whatsappLabel: "WhatsApp",
-  emptyValue: "Não informado",
   defaultBranchLabel: "Filial padrão",
   defaultBranchEmpty: "Nenhuma (usar a primeira liberada)",
   tableDensityLabel: "Densidade de tabelas",
@@ -33,12 +31,9 @@ export const USER_PROFILE_CONTENT = {
   saveOk: "Preferências atualizadas.",
   saveError: "Não foi possível salvar as preferências.",
   unitsLabel: "Filiais",
-  hostProfileNote:
-    "Foto, cargo e contatos são gerenciados no Meu Perfil da Minha DELPI.",
   helpAriaLabel: "Ajuda: perfil do Portal Suprimentos",
   shortcutHome: "Início",
   shortcutOverview: "Visão geral",
   shortcutSc: "Solicitações",
   shortcutHelp: "Ajuda",
-  badgeSelf: "Você",
 } as const;

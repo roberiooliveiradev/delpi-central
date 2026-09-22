@@ -1,10 +1,11 @@
 /**
  * Página canônica de perfil de usuário de um portal.
- * OWNS: hierarquia visual (path → hero → identidade|atalhos → seções) e rótulos genéricos.
- * DOES NOT OWN: HTTP, AuthZ, `isSelf`, rotas do portal, preferências ou copy de produto.
+ * OWNS: Hero (density comfortable), badge «Você», CTA «Editar no Meu Perfil»,
+ * identidade (empty/helper), grid Identidade|Atalhos, responsive e a11y.
+ * DOES NOT OWN: HTTP, AuthZ, cálculo de `isSelf`, rotas do portal, preferências
+ * ou badges/seções/atalhos de domínio.
  *
- * Identidade é somente leitura: editar foto/cargo/contatos é `/profile` da Minha DELPI,
- * acionado pelo host via `hero.actions` ou `identity.actions`.
+ * `isSelf` e `onEditSelf` são estado já decidido pelo host — o kit só apresenta.
  */
 
 import type { ReactNode } from "react";
@@ -12,12 +13,18 @@ import {
   BriefcaseBusiness,
   Mail,
   MessageCircle,
+  Pencil,
   Phone,
   Smartphone,
   User,
 } from "lucide-react";
 
 import { ActionButton } from "../actions/ActionButton";
+import {
+  StatusBadge,
+  statusBadgeBemClasses,
+  type StatusBadgeClassNames,
+} from "../feedback/StatusBadge";
 import {
   InitialsAvatar,
   initialsAvatarBemClasses,
@@ -27,7 +34,6 @@ import {
   PageHero,
   pageHeroBemClasses,
   type PageHeroClassNames,
-  type PageHeroDensity,
 } from "./PageHero";
 import {
   PagePath,
@@ -54,6 +60,10 @@ export type PortalUserProfileIdentityField = {
 export type PortalUserProfileIdentity = {
   name: string;
   email?: string | null;
+  /**
+   * Contatos: chave ausente → omite a linha; chave presente com vazio/null →
+   * «Não informado». O host só passa chaves que o contrato dele conhece.
+   */
   jobTitle?: string | null;
   phone?: string | null;
   mobile?: string | null;
@@ -65,14 +75,13 @@ export type PortalUserProfileIdentity = {
   previewTitle?: string;
   previewAriaLabel?: string;
   portalScopeClassName?: string;
-  /** Mostra `—` nos contatos sem valor em vez de omitir a linha. */
-  showEmptyFields?: boolean;
   /** Linhas adicionais do portal (ex.: unidades). */
   extraFields?: PortalUserProfileIdentityField[];
-  /** Nota de apresentação (ex.: onde editar a identidade). */
+  /**
+   * @deprecated Preferir `labels.identityHostNote` canônico. Override só se o
+   * portal precisar de nota adicional (não para CTA de edição).
+   */
   note?: ReactNode;
-  /** Ações do card de identidade (ex.: abrir `/profile`). */
-  actions?: ReactNode;
 };
 
 export type PortalUserProfileShortcut = {
@@ -88,9 +97,13 @@ export type PortalUserProfileHero = {
   eyebrow?: ReactNode;
   title: ReactNode;
   description?: ReactNode;
+  /**
+   * Badges extras além do self badge / `contextBadges`. Preferir `contextBadges`
+   * na página; mantido para compatibilidade de composição.
+   */
   badge?: ReactNode;
+  /** Ações extras além do CTA self (o kit injeta «Editar no Meu Perfil»). */
   actions?: ReactNode;
-  density?: PageHeroDensity;
 };
 
 export type PortalUserProfilePagePath = {
@@ -109,7 +122,6 @@ export type PortalUserProfilePageClassNames = {
   fieldLabel: string;
   fieldValue: string;
   note: string;
-  identityActions: string;
   shortcuts: string;
   sections: string;
   status: string;
@@ -119,6 +131,7 @@ export type PortalUserProfilePageClassNames = {
   hero: PageHeroClassNames;
   section: SectionCardClassNames;
   avatar: InitialsAvatarClassNames;
+  selfBadge: StatusBadgeClassNames;
 };
 
 export type PortalUserProfilePageLabels = {
@@ -135,6 +148,9 @@ export type PortalUserProfilePageLabels = {
   mobileLabel: string;
   whatsappLabel: string;
   emptyValue: string;
+  selfBadgeLabel: string;
+  editSelfLabel: string;
+  identityHostNote: string;
   section: SectionCardLabels;
 };
 
@@ -152,6 +168,15 @@ export type PortalUserProfilePageProps = {
   shortcutsHint?: string;
   /** Seções de domínio do portal (preferências, acessos, carteiras, grupos). */
   sections?: ReactNode;
+  /**
+   * Já decidido pelo host (comparação de IDs). `null`/`undefined` = ainda
+   * desconhecido — o kit omite chrome self.
+   */
+  isSelf?: boolean | null;
+  /** Badges de domínio (carteiras, filiais). O kit prepende «Você» quando self. */
+  contextBadges?: ReactNode;
+  /** Abre Meu Perfil Minha DELPI. Só renderiza CTA quando `isSelf === true`. */
+  onEditSelf?: () => void;
   /** Substitui o corpo enquanto o host carrega. `pagePath` permanece navegável. */
   loading?: boolean;
   loadingNode?: ReactNode;
@@ -177,6 +202,10 @@ export const PORTAL_USER_PROFILE_LABELS_PT: PortalUserProfilePageLabels = {
   mobileLabel: "Celular",
   whatsappLabel: "WhatsApp",
   emptyValue: "Não informado",
+  selfBadgeLabel: "Você",
+  editSelfLabel: "Editar no Meu Perfil",
+  identityHostNote:
+    "Foto, cargo e contatos são gerenciados no Meu Perfil da Minha DELPI.",
   section: {
     titleHelpAriaLabel: (title: string) => `Ajuda: ${title}`,
   },
@@ -185,7 +214,10 @@ export const PORTAL_USER_PROFILE_LABELS_PT: PortalUserProfilePageLabels = {
 export function portalUserProfilePageBemClasses(
   prefix: string,
   overrides?: Partial<
-    Pick<PortalUserProfilePageClassNames, "pagePath" | "hero" | "section" | "avatar">
+    Pick<
+      PortalUserProfilePageClassNames,
+      "pagePath" | "hero" | "section" | "avatar" | "selfBadge"
+    >
   >,
 ): PortalUserProfilePageClassNames {
   const pair = (local: string, canonical: string) => delpiUiClass(local, canonical);
@@ -201,7 +233,6 @@ export function portalUserProfilePageBemClasses(
     fieldLabel: pair(`${base}__field-label`, `${ui}__field-label`),
     fieldValue: pair(`${base}__field-value`, `${ui}__field-value`),
     note: pair(`${base}__note`, `${ui}__note`),
-    identityActions: pair(`${base}__identity-actions`, `${ui}__identity-actions`),
     shortcuts: pair(`${base}__shortcuts`, `${ui}__shortcuts`),
     sections: pair(`${base}__sections`, `${ui}__sections`),
     status: pair(`${base}__status`, `${ui}__status`),
@@ -211,12 +242,20 @@ export function portalUserProfilePageBemClasses(
     hero: overrides?.hero ?? pageHeroBemClasses(prefix),
     section: overrides?.section ?? sectionCardPacBemClasses(prefix),
     avatar: overrides?.avatar ?? initialsAvatarBemClasses(prefix),
+    selfBadge: overrides?.selfBadge ?? statusBadgeBemClasses(prefix),
   };
 }
 
 function trimOrNull(value: string | null | undefined): string | null {
   const text = (value ?? "").trim();
   return text || null;
+}
+
+function hasOwn(
+  identity: PortalUserProfileIdentity,
+  key: keyof PortalUserProfileIdentity,
+): boolean {
+  return Object.prototype.hasOwnProperty.call(identity, key);
 }
 
 type ResolvedField = {
@@ -231,7 +270,6 @@ function resolveIdentityFields(
   labels: PortalUserProfilePageLabels,
 ): ResolvedField[] {
   const iconSize = 15;
-  const showEmpty = identity.showEmptyFields === true;
   const fields: ResolvedField[] = [
     {
       id: "name",
@@ -239,47 +277,55 @@ function resolveIdentityFields(
       value: trimOrNull(identity.name) ?? labels.emptyValue,
       icon: <User size={iconSize} strokeWidth={1.75} aria-hidden="true" />,
     },
-    {
+  ];
+
+  if (hasOwn(identity, "email")) {
+    fields.push({
       id: "email",
       label: labels.emailLabel,
       value: trimOrNull(identity.email) ?? labels.emptyValue,
       icon: <Mail size={iconSize} strokeWidth={1.75} aria-hidden="true" />,
-    },
-  ];
+    });
+  }
 
-  const contacts: Array<{ id: string; label: ReactNode; raw: string | null; icon: ReactNode }> = [
+  const contacts: Array<{
+    key: "jobTitle" | "phone" | "mobile" | "whatsapp";
+    id: string;
+    label: ReactNode;
+    icon: ReactNode;
+  }> = [
     {
+      key: "jobTitle",
       id: "jobTitle",
       label: labels.jobTitleLabel,
-      raw: trimOrNull(identity.jobTitle),
       icon: <BriefcaseBusiness size={iconSize} strokeWidth={1.75} aria-hidden="true" />,
     },
     {
+      key: "phone",
       id: "phone",
       label: labels.phoneLabel,
-      raw: trimOrNull(identity.phone),
       icon: <Phone size={iconSize} strokeWidth={1.75} aria-hidden="true" />,
     },
     {
+      key: "mobile",
       id: "mobile",
       label: labels.mobileLabel,
-      raw: trimOrNull(identity.mobile),
       icon: <Smartphone size={iconSize} strokeWidth={1.75} aria-hidden="true" />,
     },
     {
+      key: "whatsapp",
       id: "whatsapp",
       label: labels.whatsappLabel,
-      raw: trimOrNull(identity.whatsapp),
       icon: <MessageCircle size={iconSize} strokeWidth={1.75} aria-hidden="true" />,
     },
   ];
 
   for (const contact of contacts) {
-    if (!contact.raw && !showEmpty) continue;
+    if (!hasOwn(identity, contact.key)) continue;
     fields.push({
       id: contact.id,
       label: contact.label,
-      value: contact.raw ?? labels.emptyValue,
+      value: trimOrNull(identity[contact.key] as string | null | undefined) ?? labels.emptyValue,
       icon: contact.icon,
     });
   }
@@ -302,6 +348,9 @@ export function PortalUserProfilePage({
   shortcuts,
   shortcutsHint,
   sections,
+  isSelf = null,
+  contextBadges,
+  onEditSelf,
   loading = false,
   loadingNode,
   status,
@@ -312,6 +361,37 @@ export function PortalUserProfilePage({
   const hasShortcuts = Boolean(shortcuts?.length);
   const hasBody =
     !loading && Boolean(hero || identity || hasShortcuts || sections);
+
+  const selfChrome = isSelf === true;
+  const heroBadges =
+    selfChrome || contextBadges || hero?.badge ? (
+      <>
+        {selfChrome ? (
+          <StatusBadge
+            classNames={classNames.selfBadge}
+            label={labels.selfBadgeLabel}
+            variant="success"
+          />
+        ) : null}
+        {contextBadges}
+        {hero?.badge}
+      </>
+    ) : undefined;
+
+  const heroActions =
+    (selfChrome && onEditSelf) || hero?.actions ? (
+      <>
+        {selfChrome && onEditSelf ? (
+          <ActionButton variant="primary" type="button" onClick={onEditSelf}>
+            <Pencil size={16} aria-hidden="true" />
+            {labels.editSelfLabel}
+          </ActionButton>
+        ) : null}
+        {hero?.actions}
+      </>
+    ) : undefined;
+
+  const identityNote = identity?.note ?? labels.identityHostNote;
 
   return (
     <section className={rootClass} aria-label={labels.pageAriaLabel}>
@@ -351,9 +431,9 @@ export function PortalUserProfilePage({
               eyebrow={hero.eyebrow}
               title={hero.title}
               description={hero.description}
-              badge={hero.badge}
-              actions={hero.actions}
-              density={hero.density}
+              badge={heroBadges}
+              actions={heroActions}
+              density="comfortable"
             />
           ) : null}
 
@@ -393,10 +473,7 @@ export function PortalUserProfilePage({
                       ))}
                     </dl>
                   </div>
-                  {identity.note ? <p className={classNames.note}>{identity.note}</p> : null}
-                  {identity.actions ? (
-                    <div className={classNames.identityActions}>{identity.actions}</div>
-                  ) : null}
+                  {identityNote ? <p className={classNames.note}>{identityNote}</p> : null}
                 </SectionCard>
               ) : null}
 
@@ -441,7 +518,10 @@ export type DashboardPortalUserProfilePageProps = Omit<
 export function createDashboardPortalUserProfilePage(config: {
   prefix: string;
   classNames?: Partial<
-    Pick<PortalUserProfilePageClassNames, "pagePath" | "hero" | "section" | "avatar">
+    Pick<
+      PortalUserProfilePageClassNames,
+      "pagePath" | "hero" | "section" | "avatar" | "selfBadge"
+    >
   >;
   /** Sobrescreve rótulos genéricos (o restante herda o bundle PT do kit). */
   labels?: Partial<PortalUserProfilePageLabels>;

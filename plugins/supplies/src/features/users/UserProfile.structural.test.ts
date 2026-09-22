@@ -29,22 +29,27 @@ describe("UserProfile", () => {
     expect(api).not.toMatch(/purchase-requests-api/);
   });
 
-  it("compõe o perfil com o kit PortalUserProfilePage", () => {
+  it("compõe o perfil com o kit — chrome self não é local", () => {
     const page = readFileSync(join(dir, "UserProfilePage.tsx"), "utf8");
-    const content = readFileSync(join(dir, "userProfileContent.ts"), "utf8");
     expect(page).toMatch(/createDashboardPortalUserProfilePage/);
-    /** Layout de identidade/atalhos é do kit — sem CSS paralelo no MFE. */
+    expect(page).toMatch(/isSelf=\{isSelf\}/);
+    expect(page).toMatch(/onEditSelf=/);
+    expect(page).toMatch(/contextBadges=/);
+    expect(page).toMatch(/HOST_SELF_PROFILE_PATH/);
     expect(page).not.toMatch(
       /sp-user-profile__(grid|identity|shortcuts|error)\b/,
     );
-    /** Identidade é leitura; editar abre o Meu Perfil da Minha DELPI. */
-    expect(page).toMatch(/HOST_SELF_PROFILE_PATH/);
-    expect(page).toMatch(/density: "comfortable"/);
-    expect(page).toMatch(/badgeSelf/);
+    expect(page).not.toMatch(/density:\s*"comfortable"/);
+    expect(page).not.toMatch(/badgeSelf/);
+    expect(page).not.toMatch(/editIdentity/);
+    expect(page).not.toMatch(/hostProfileNote/);
+    expect(page).not.toMatch(/showEmptyFields/);
+    expect(page).not.toMatch(/\(\/profile\)/);
+    expect(page).not.toMatch(/emptyValue:\s*["']—["']/);
     expect(page).not.toMatch(/badgeAdminView|Leitura admin/);
     expect(page).not.toMatch(/preferencesOther/);
-    expect(content).toMatch(/Editar no Meu Perfil/);
-    expect(content).toMatch(/gerenciados no Meu Perfil/);
+    expect(page).toMatch(/unitsLabel/);
+    expect(page).toMatch(/preferencesTitle/);
   });
 
   it("acesso self ok · outro sem admin negado · admin ok", () => {

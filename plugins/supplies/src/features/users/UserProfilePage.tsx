@@ -3,7 +3,6 @@ import {
   BookOpen,
   Home,
   LayoutDashboard,
-  Pencil,
   ShoppingCart,
 } from "lucide-react";
 import {
@@ -58,7 +57,6 @@ const SuppliesPortalUserProfilePage = createDashboardPortalUserProfilePage({
     phoneLabel: C.phoneLabel,
     mobileLabel: C.mobileLabel,
     whatsappLabel: C.whatsappLabel,
-    emptyValue: C.emptyValue,
   },
 });
 
@@ -201,6 +199,20 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
   return (
     <SuppliesPortalUserProfilePage
       className="sp-user-profile"
+      isSelf={isSelf}
+      onEditSelf={
+        isSelf === true
+          ? () => navigateHostPath(HOST_SELF_PROFILE_PATH)
+          : undefined
+      }
+      contextBadges={
+        ready && units.length > 0 ? (
+          <SuppliesStatusBadge
+            label={`${C.unitsLabel}: ${units.join(", ")}`}
+            variant="info"
+          />
+        ) : undefined
+      }
       pagePath={{
         back: {
           label: back.label,
@@ -234,30 +246,6 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
                 <SuppliesTitleWithHelp title={profile.name} hint={SP_HELP.userProfile} />
               ),
               description: (profile.email || "").trim() || undefined,
-              density: "comfortable",
-              badge: (
-                <>
-                  {profile.isSelf ? (
-                    <SuppliesStatusBadge label={C.badgeSelf} variant="success" />
-                  ) : null}
-                  {units.length > 0 ? (
-                    <SuppliesStatusBadge
-                      label={`${C.unitsLabel}: ${units.join(", ")}`}
-                      variant="info"
-                    />
-                  ) : null}
-                </>
-              ),
-              actions:
-                isSelf === true ? (
-                  <SuppliesActionButton
-                    variant="primary"
-                    onClick={() => navigateHostPath(HOST_SELF_PROFILE_PATH)}
-                  >
-                    <Pencil size={16} aria-hidden="true" />
-                    {C.editIdentity}
-                  </SuppliesActionButton>
-                ) : undefined,
             }
           : undefined
       }
@@ -269,12 +257,14 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
               email: profile.email,
               photoUrl: isSelf === true ? photoUrl : null,
               colorKey: userId,
-              jobTitle: isSelf === true ? personProfile?.job_title : null,
-              phone: isSelf === true ? personProfile?.phone_e164 : null,
-              mobile: isSelf === true ? personProfile?.mobile_e164 : null,
-              whatsapp: isSelf === true ? personProfile?.whatsapp_e164 : null,
-              showEmptyFields: isSelf === true,
-              note: C.hostProfileNote,
+              ...(isSelf === true
+                ? {
+                    jobTitle: personProfile?.job_title ?? null,
+                    phone: personProfile?.phone_e164 ?? null,
+                    mobile: personProfile?.mobile_e164 ?? null,
+                    whatsapp: personProfile?.whatsapp_e164 ?? null,
+                  }
+                : {}),
             }
           : null
       }
