@@ -234,9 +234,9 @@
   align-items: center;
 }
 
-.dashboard-helpdesk .helpdesk-section-card__body,
-.dashboard-helpdesk .delpi-ui-section-card__body {
-  gap: var(--helpdesk-section-gap);
+.dashboard-helpdesk .helpdesk-list-toolbar__chip[data-kind="sort"],
+.dashboard-helpdesk .helpdesk-list-toolbar__chip[data-kind="filter"] {
+  cursor: help;
 }
 
 @media (max-width: 768px) {
