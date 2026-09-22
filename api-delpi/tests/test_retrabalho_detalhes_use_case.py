@@ -27,7 +27,8 @@ def test_detalhes_envelope_has_pagination_is_complete_and_en_aliases() -> None:
             "tempo_horas": 1.5,
             "valor_parada": 10.0,
             "fonte_custo": "SB2",
-            "motivo": "Retrabalho",
+            "motivo": "RT",
+            "motivo_descricao": "RETRABALHO",
             "observacao": "ok",
             "recno": 42,
         }
@@ -48,6 +49,9 @@ def test_detalhes_envelope_has_pagination_is_complete_and_en_aliases() -> None:
     assert item["branch"] == "01"
     assert item["reference_date"] == item["dataReferencia"]
     assert item["cost_center"] == item["centroCusto"] == "CC1"
+    assert item["stop_reason"] == item["motivo"] == "RT"
+    assert item["stop_reason_description"] == item["motivoDescricao"] == "RETRABALHO"
+    assert item["observation"] == item["observacao"] == "ok"
     assert result["pagination"]["is_complete"] is True
     assert result["pageSize"] == result["page_size"] == 25
     assert result["totalPages"] == result["total_pages"]

@@ -47,8 +47,9 @@ Definidas em `api-delpi/app/domain/quality/retrabalho/retrabalho_view_scope.py`.
 | `TEMPO_HORAS` | `tempoHoras` |
 | `VALOR_PARADA_RS` | `valorParada` |
 | `FONTE_CUSTO` | `fonteCusto` |
-| `MOTIVO` | `motivo` |
-| `OBSERVACAO` | `observacao` |
+| `MOTIVO` | `motivo` / `stop_reason` |
+| `DESCRICAO_MOTIVO` | `motivoDescricao` / `stop_reason_description` |
+| `OBSERVACAO` | `observacao` / `observation` (origem `H6_OBSERVA`, máx. 30 caracteres no Protheus) |
 | `RECNO` | `recno` |
 
 ---

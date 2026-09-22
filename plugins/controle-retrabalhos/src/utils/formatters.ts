@@ -85,7 +85,18 @@ export function formatShortLabel(value: string | null | undefined, maxLength = 1
   return `${text.slice(0, maxLength - 1)}…`;
 }
 
-export function joinMotivoObservacao(motivo: string, observacao: string): string {
-  const parts = [motivo.trim(), observacao.trim()].filter(Boolean);
-  return parts.length ? parts.join(" — ") : "—";
+/** Motivo canônico: código + descrição TOTVS (ex.: «RT — RETRABALHO»). */
+export function formatMotivoLabel(
+  motivo: string | null | undefined,
+  motivoDescricao?: string | null,
+): string {
+  const code = (motivo ?? "").trim();
+  const description = (motivoDescricao ?? "").trim();
+  if (code && description) return `${code} — ${description}`;
+  return code || description || "—";
+}
+
+export function formatObservacao(observacao: string | null | undefined): string {
+  const text = (observacao ?? "").trim();
+  return text || "—";
 }

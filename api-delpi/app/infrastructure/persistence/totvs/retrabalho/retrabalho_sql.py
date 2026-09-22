@@ -448,6 +448,7 @@ def build_detalhes_data_query(
             CAST(VALOR_PARADA_RS AS DECIMAL(18, 2)) AS valor_parada,
             LTRIM(RTRIM(FONTE_CUSTO)) AS fonte_custo,
             LTRIM(RTRIM(MOTIVO)) AS motivo,
+            LTRIM(RTRIM(DESCRICAO_MOTIVO)) AS motivo_descricao,
             LTRIM(RTRIM(OBSERVACAO)) AS observacao,
             RECNO
         {_from_clause()}

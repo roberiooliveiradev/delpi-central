@@ -80,6 +80,9 @@ export type RetrabalhoDetalheItem = {
   valorParada: number;
   fonteCusto: string;
   motivo: string;
+  /** Descrição canônica do motivo TOTVS (`DESCRICAO_MOTIVO`), ex.: RETRABALHO. */
+  motivoDescricao?: string | null;
+  stop_reason_description?: string | null;
   observacao: string;
   recno: number;
 };

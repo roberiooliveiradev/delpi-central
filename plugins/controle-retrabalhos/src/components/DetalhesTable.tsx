@@ -15,8 +15,10 @@ import {
   formatCurrencyBrl,
   formatDatePtBr,
   formatHours,
-  joinMotivoObservacao,
+  formatMotivoLabel,
+  formatObservacao,
 } from "../utils/formatters";
+
 import { ExportExcelButton } from "./ExportExcelButton";
 import { LoadingActivityCard } from "./LoadingActivityCard";
 import { Pagination } from "./Pagination";
@@ -93,8 +95,22 @@ export function DetalhesTable({
       },
       {
         key: "motivo",
-        header: "Motivo / obs.",
-        render: (item) => joinMotivoObservacao(item.motivo, item.observacao),
+        header: "Motivo",
+        headerHint:
+          "Código e descrição do motivo de parada no TOTVS (ex.: RT — RETRABALHO).",
+        render: (item) =>
+          formatMotivoLabel(
+            item.motivo,
+            item.motivoDescricao ?? item.stop_reason_description,
+          ),
+      },
+      {
+        key: "observacao",
+        header: "Observação",
+        headerHint:
+          "Texto livre do apontamento (campo H6_OBSERVA no Protheus, até 30 caracteres).",
+        className: TABLE.colWide,
+        render: (item) => formatObservacao(item.observacao),
       },
     ],
     [],
@@ -160,6 +176,7 @@ export function DetalhesTable({
           classNames={TABLE}
           labels={TABLE_LABELS}
           layout="section"
+          wrapText
         />
       )}
 

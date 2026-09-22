@@ -3,7 +3,8 @@ import {
   formatCurrencyBrl,
   formatDatePtBr,
   formatHours,
-  joinMotivoObservacao,
+  formatMotivoLabel,
+  formatObservacao,
 } from "./formatters";
 import { exportMatrixToXlsx, type MatrixExportTable } from "@delpi/plugin-ui/index";
 
@@ -13,7 +14,8 @@ export const RETRABALHO_DETALHES_HEADERS = [
   "Operador",
   "Horas",
   "Custo",
-  "Motivo / obs.",
+  "Motivo",
+  "Observação",
 ] as const;
 
 function detalheToRow(item: RetrabalhoDetalheItem): (string | number)[] {
@@ -23,7 +25,8 @@ function detalheToRow(item: RetrabalhoDetalheItem): (string | number)[] {
     item.nomeOperador || "",
     formatHours(item.tempoHoras),
     formatCurrencyBrl(item.valorParada),
-    joinMotivoObservacao(item.motivo, item.observacao),
+    formatMotivoLabel(item.motivo, item.motivoDescricao ?? item.stop_reason_description),
+    (item.observacao ?? "").trim(),
   ];
 }
 

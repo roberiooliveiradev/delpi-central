@@ -26,6 +26,12 @@ def _map_detalhe_item(row: dict[str, Any]) -> dict[str, Any]:
     stop_cost = round_cost(row.get("valor_parada"))
     cost_source = row.get("fonte_custo") or ""
     stop_reason = row.get("motivo") or ""
+    stop_reason_description = (
+        row.get("motivo_descricao")
+        or row.get("DESCRICAO_MOTIVO")
+        or row.get("descricao_motivo")
+        or ""
+    )
     observation = row.get("observacao") or ""
     recno = int(row.get("RECNO") or row.get("recno") or 0)
     return {
@@ -43,6 +49,7 @@ def _map_detalhe_item(row: dict[str, Any]) -> dict[str, Any]:
         "stop_cost": stop_cost,
         "cost_source": cost_source,
         "stop_reason": stop_reason,
+        "stop_reason_description": stop_reason_description,
         "observation": observation,
         "recno": recno,
         # camelCase PT (legado MFE)
@@ -58,6 +65,7 @@ def _map_detalhe_item(row: dict[str, Any]) -> dict[str, Any]:
         "valorParada": stop_cost,
         "fonteCusto": cost_source,
         "motivo": stop_reason,
+        "motivoDescricao": stop_reason_description,
         "observacao": observation,
     }
 

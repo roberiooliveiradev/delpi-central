@@ -96,6 +96,8 @@ Parâmetros: período e filtros opcionais iguais a `/retrabalhos/resumo`. `branc
 
 **`data`:** `items[]`, `page`, `pageSize`, `total`, `totalPages`.
 
+Cada item inclui `motivo` / `stop_reason` (código), `motivoDescricao` / `stop_reason_description` (`DESCRICAO_MOTIVO`) e `observacao` / `observation` (`H6_OBSERVA`, até 30 caracteres no Protheus).
+
 ---
 
 ## Performance

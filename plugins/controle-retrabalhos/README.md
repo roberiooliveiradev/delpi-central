@@ -32,7 +32,7 @@ Gateway → /apps/api-delpi/retrabalhos/*
 - Filtro de período (padrão últimos 12 meses) com atalhos 6m / 12m / mês atual
 - KPIs: apontamentos, horas, custo, custo médio/hora, horas sem custo
 - Gráficos: evolução mensal (custo e horas), ranking top 10 recursos e colaboradores
-- Tabela de detalhes paginada + exportação Excel (todas as páginas)
+- Tabela de detalhes paginada (Motivo = código + `DESCRICAO_MOTIVO`; Observação = `H6_OBSERVA`, até 30 caracteres no Protheus) + exportação Excel
 
 ---
 
