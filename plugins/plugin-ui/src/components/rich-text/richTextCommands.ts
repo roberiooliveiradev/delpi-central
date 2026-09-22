@@ -142,9 +142,10 @@ export function runRichTextCommand(
   execRichTextCommand(command, value);
 }
 
+/** Font family via canonical inline CSS pipeline (not execCommand fontName). */
 export function applyRichTextFontFamily(editor: HTMLElement | null, fontFamily: string) {
-  focusEditor(editor);
-  execRichTextCommand("fontName", fontFamily);
+  if (!fontFamily.trim()) return;
+  applyRichTextInlineCss(editor, { fontFamily: fontFamily.trim() });
 }
 
 function placeCaretInNode(selection: Selection, node: Node, offset: number) {
@@ -193,20 +194,45 @@ function findClosestRichTextBlock(
   return null;
 }
 
-/**
- * Grava font-size inline em todos os elementos do subtree.
- * Necessário para vencer estilos de filhos (HTML do Word) e regras CSS (ex.: h2).
- */
-function stampRichTextFontSize(root: Node, sizeCss: string) {
-  if (root instanceof HTMLElement) {
-    root.style.fontSize = sizeCss;
-    if (root.tagName === "FONT") root.removeAttribute("size");
-  }
-  if (!(root instanceof Element) && !(root instanceof DocumentFragment)) return;
-  root.querySelectorAll("*").forEach((el) => {
-    if (!(el instanceof HTMLElement)) return;
-    el.style.fontSize = sizeCss;
+/** CSS inline canônico para intents `class: inline` (fonte, tamanho, cor). */
+export type RichTextInlineCssPatch = {
+  fontSize?: string;
+  fontFamily?: string;
+  color?: string;
+  backgroundColor?: string;
+};
+
+export type ApplyRichTextInlineCssOptions = {
+  /**
+   * When the selection covers the whole block, also stamp the block element
+   * (needed to beat editor CSS such as `h2 { font-size }`). Default true.
+   */
+  stampBlockOnFullCover?: boolean;
+};
+
+function applyInlineCssPatch(el: HTMLElement, patch: RichTextInlineCssPatch) {
+  if (patch.fontSize != null) {
+    el.style.fontSize = patch.fontSize;
     if (el.tagName === "FONT") el.removeAttribute("size");
+  }
+  if (patch.fontFamily != null) {
+    el.style.fontFamily = patch.fontFamily;
+    if (el.tagName === "FONT") el.removeAttribute("face");
+  }
+  if (patch.color != null) {
+    el.style.color = patch.color;
+    if (el.tagName === "FONT") el.removeAttribute("color");
+  }
+  if (patch.backgroundColor != null) {
+    el.style.backgroundColor = patch.backgroundColor;
+  }
+}
+
+function stampRichTextInlineCss(root: Node, patch: RichTextInlineCssPatch) {
+  if (root instanceof HTMLElement) applyInlineCssPatch(root, patch);
+  if (!(root instanceof Element) && !(root instanceof DocumentFragment)) return;
+  root.querySelectorAll("*").forEach((node) => {
+    if (node instanceof HTMLElement) applyInlineCssPatch(node, patch);
   });
 }
 
@@ -228,33 +254,40 @@ function rangeCoversBlockContents(range: Range, block: HTMLElement): boolean {
   }
 }
 
-/** Alinha font-size dos ancestrais *inline* (HTML colado com spans aninhados).
- * Nunca grava font-size em bloco (`p`/`h2`/…) — isso faria a herança CSS
- * ampliar texto fora da seleção (intent inline).
+/**
+ * Propagate CSS only through *inline* ancestors (Word nested spans).
+ * Never write on block elements — inheritance would enlarge unselected siblings.
  */
-function propagateRichTextFontSizeToAncestors(
+function propagateRichTextInlineCssToAncestors(
   from: Node | null,
   editor: HTMLElement,
-  sizeCss: string,
+  patch: RichTextInlineCssPatch,
 ) {
   let el: HTMLElement | null =
     from instanceof HTMLElement ? from : from?.parentElement ?? null;
   while (el && el !== editor) {
     if (isRichTextBlockHtmlElement(el)) break;
-    el.style.fontSize = sizeCss;
-    if (el.tagName === "FONT") el.removeAttribute("size");
+    applyInlineCssPatch(el, patch);
     el = el.parentElement;
   }
 }
 
 /**
- * Aplica tamanho em px via style inline na seleção.
- * Não usa `execCommand("fontSize")` (escala legada 1–7).
- * Caret colapsado → pending span (próximo digitar); seleção → wrap no Range.
- * Seleção do bloco inteiro → também stamp no bloco (vence CSS de h2 etc.).
+ * Single Range pipeline for inline CSS intents (S-F1):
+ * caret → pending span; partial → wrap Range; full block → optional block stamp.
+ * Callers: fontSize / fontName / foreColor / hiliteColor via `applyFormat`.
  */
-export function applyRichTextFontSize(editor: HTMLElement | null, fontSizePx: number) {
+export function applyRichTextInlineCss(
+  editor: HTMLElement | null,
+  patch: RichTextInlineCssPatch,
+  options?: ApplyRichTextInlineCssOptions,
+) {
   if (!editor) return;
+  const keys = Object.keys(patch).filter(
+    (key) => patch[key as keyof RichTextInlineCssPatch] != null,
+  );
+  if (keys.length === 0) return;
+
   focusEditor(editor);
   const selection = window.getSelection();
   if (!selection) return;
@@ -272,12 +305,11 @@ export function applyRichTextFontSize(editor: HTMLElement | null, fontSizePx: nu
     selection.addRange(range);
   }
 
-  const sizeCss = `${Math.round(fontSizePx)}px`;
+  const stampBlockOnFullCover = options?.stampBlockOnFullCover !== false;
 
   if (range.collapsed) {
-    // S-F1: caret = pending format for next typing — never stamp the whole block.
     const span = document.createElement("span");
-    span.style.fontSize = sizeCss;
+    applyInlineCssPatch(span, patch);
     const marker = document.createTextNode("\u200B");
     span.appendChild(marker);
     range.insertNode(span);
@@ -290,10 +322,9 @@ export function applyRichTextFontSize(editor: HTMLElement | null, fontSizePx: nu
     containingBlock != null && rangeCoversBlockContents(range, containingBlock);
 
   const fragment = range.extractContents();
-  stampRichTextFontSize(fragment, sizeCss);
+  stampRichTextInlineCss(fragment, patch);
 
   if (fragmentHasBlockChild(fragment)) {
-    // Evita <span><p>…</p></span> (HTML inválido); o stamp já venceu CSS/filhos.
     const first = fragment.firstChild;
     const last = fragment.lastChild;
     range.insertNode(fragment);
@@ -303,25 +334,43 @@ export function applyRichTextFontSize(editor: HTMLElement | null, fontSizePx: nu
       next.setStartBefore(first);
       next.setEndAfter(last);
       selection.addRange(next);
-      propagateRichTextFontSizeToAncestors(first, editor, sizeCss);
+      propagateRichTextInlineCssToAncestors(first, editor, patch);
     }
     return;
   }
 
   const span = document.createElement("span");
-  span.style.fontSize = sizeCss;
+  applyInlineCssPatch(span, patch);
   span.appendChild(fragment);
   range.insertNode(span);
-  if (coversWholeBlock && containingBlock) {
-    // Full-block selection (ex.: título): stamp no bloco para vencer CSS do editor.
-    stampRichTextFontSize(containingBlock, sizeCss);
+  if (stampBlockOnFullCover && coversWholeBlock && containingBlock) {
+    stampRichTextInlineCss(containingBlock, patch);
   } else {
-    propagateRichTextFontSizeToAncestors(span, editor, sizeCss);
+    propagateRichTextInlineCssToAncestors(span, editor, patch);
   }
   selection.removeAllRanges();
   const next = document.createRange();
   next.selectNodeContents(span);
   selection.addRange(next);
+}
+
+/**
+ * Font size in px via canonical inline CSS pipeline.
+ * Does not use execCommand("fontSize") (legacy 1–7 scale).
+ */
+export function applyRichTextFontSize(editor: HTMLElement | null, fontSizePx: number) {
+  applyRichTextInlineCss(editor, { fontSize: `${Math.round(fontSizePx)}px` });
+}
+
+/** Foreground / highlight via the same inline CSS pipeline. */
+export function applyRichTextForeColor(editor: HTMLElement | null, color: string) {
+  if (!color.trim()) return;
+  applyRichTextInlineCss(editor, { color: color.trim() });
+}
+
+export function applyRichTextHiliteColor(editor: HTMLElement | null, color: string) {
+  if (!color.trim()) return;
+  applyRichTextInlineCss(editor, { backgroundColor: color.trim() });
 }
 
 /** Tamanho computado (px) no ponto da seleção / editor. */

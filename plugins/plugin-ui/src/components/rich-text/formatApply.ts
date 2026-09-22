@@ -8,6 +8,8 @@ import {
   applyRichTextAlign,
   applyRichTextFontFamily,
   applyRichTextFontSize,
+  applyRichTextForeColor,
+  applyRichTextHiliteColor,
   insertRichTextHorizontalRule,
   restoreRichTextSelection,
   runRichTextCommand,
@@ -98,8 +100,10 @@ function applyInline(editor: HTMLElement, intent: Extract<FormatIntent, { class:
       runRichTextCommand(editor, intent.op);
       return;
     case "foreColor":
+      applyRichTextForeColor(editor, intent.value);
+      return;
     case "hiliteColor":
-      runRichTextCommand(editor, intent.op, intent.value);
+      applyRichTextHiliteColor(editor, intent.value);
       return;
     case "fontName":
       applyRichTextFontFamily(editor, intent.value);

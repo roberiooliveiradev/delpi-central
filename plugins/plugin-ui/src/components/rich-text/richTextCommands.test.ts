@@ -3,7 +3,9 @@ import { describe, expect, it } from "vitest";
 
 import {
   applyRichTextAlign,
+  applyRichTextFontFamily,
   applyRichTextFontSize,
+  applyRichTextForeColor,
   findRichTextAlignBlock,
   insertRichTextHorizontalRule,
   isRichTextRangeInEditor,
@@ -125,7 +127,55 @@ describe("applyRichTextFontSize", () => {
 
     document.body.removeChild(editor);
   });
+});
 
+describe("applyRichTextInlineCss siblings", () => {
+  function selectPartial(editor: HTMLElement, start: number, end: number) {
+    const text = editor.querySelector("p")!.firstChild as Text;
+    const range = document.createRange();
+    range.setStart(text, start);
+    range.setEnd(text, end);
+    const selection = window.getSelection()!;
+    selection.removeAllRanges();
+    selection.addRange(range);
+  }
+
+  it("fontFamily parcial não stamp no <p>", () => {
+    const editor = document.createElement("div");
+    editor.contentEditable = "true";
+    editor.innerHTML = "<p>adfisdf</p>";
+    document.body.appendChild(editor);
+    selectPartial(editor, 5, 7);
+
+    applyRichTextFontFamily(editor, "Georgia, serif");
+
+    const span = editor.querySelector("span") as HTMLElement;
+    expect(span?.textContent).toBe("df");
+    expect(span?.style.fontFamily).toContain("Georgia");
+    expect((editor.querySelector("p") as HTMLElement).style.fontFamily).toBe("");
+
+    document.body.removeChild(editor);
+  });
+
+  it("foreColor parcial não stamp color no <p>", () => {
+    const editor = document.createElement("div");
+    editor.contentEditable = "true";
+    editor.innerHTML = "<p>adfisdf</p>";
+    document.body.appendChild(editor);
+    selectPartial(editor, 5, 7);
+
+    applyRichTextForeColor(editor, "#cc0000");
+
+    const span = editor.querySelector("span") as HTMLElement;
+    expect(span?.textContent).toBe("df");
+    expect(span?.style.color).toBe("rgb(204, 0, 0)");
+    expect((editor.querySelector("p") as HTMLElement).style.color).toBe("");
+
+    document.body.removeChild(editor);
+  });
+});
+
+describe("applyRichTextFontSize full block", () => {
   it("aplica font-size inline em heading (vence CSS do editor)", () => {
     const editor = document.createElement("div");
     editor.className = "delpi-ui-rich-text__editor";

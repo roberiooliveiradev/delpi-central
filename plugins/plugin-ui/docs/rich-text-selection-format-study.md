@@ -1,6 +1,6 @@
 # Estudo — formatação e mídia nos compositores ricos
 
-> **Status:** **implementado** (S-0 / S-F / S-P) — `formatApply.ts`, caret pending em `applyRichTextFontSize`, insert no caret (`richTextInlineImage` + `RichTextEditorHandle`), host helpdesk só materializa File.
+> **Status:** **implementado** — `applyFormat` + `applyRichTextInlineCss` (fontSize/fontName/cores: caret pending, parcial só no Range, bloco só em cobertura total).
 > **Owner:** `@delpi/plugin-ui` (kit). Consumidores: helpdesk (`RichTextEditor`) e salas (`MentionComposer`).
 > **Restrição:** este documento descreve o comportamento em termos Delpi (seleção, bloco, objeto inline, Range). Não cita produtos de editores externos.
 

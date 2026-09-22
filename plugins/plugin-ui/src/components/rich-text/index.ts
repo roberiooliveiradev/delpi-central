@@ -15,3 +15,8 @@ export {
   type FormatIntentClass,
   type FormatTarget,
 } from "./formatApply";
+export {
+  applyRichTextInlineCss,
+  type ApplyRichTextInlineCssOptions,
+  type RichTextInlineCssPatch,
+} from "./richTextCommands";

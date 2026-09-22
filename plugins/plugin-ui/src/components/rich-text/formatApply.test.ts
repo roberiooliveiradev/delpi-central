@@ -46,6 +46,40 @@ describe("applyFormat", () => {
     document.body.removeChild(editor);
   });
 
+  it("sibling: seleção parcial + fontName só no trecho", () => {
+    const editor = document.createElement("div");
+    editor.contentEditable = "true";
+    editor.innerHTML = "<p>abcdef</p>";
+    document.body.appendChild(editor);
+    selectText(editor, 1, 4);
+
+    applyFormat(editor, formatIntent.fontName("Georgia, serif"));
+
+    const span = editor.querySelector("span");
+    expect(span?.style.fontFamily).toContain("Georgia");
+    expect(span?.textContent).toBe("bcd");
+    expect((editor.querySelector("p") as HTMLElement).style.fontFamily).toBe("");
+
+    document.body.removeChild(editor);
+  });
+
+  it("sibling: seleção parcial + foreColor só no trecho", () => {
+    const editor = document.createElement("div");
+    editor.contentEditable = "true";
+    editor.innerHTML = "<p>abcdef</p>";
+    document.body.appendChild(editor);
+    selectText(editor, 1, 4);
+
+    applyFormat(editor, formatIntent.foreColor("#00aa00"));
+
+    const span = editor.querySelector("span");
+    expect(span?.style.color).toBe("rgb(0, 170, 0)");
+    expect(span?.textContent).toBe("bcd");
+    expect((editor.querySelector("p") as HTMLElement).style.color).toBe("");
+
+    document.body.removeChild(editor);
+  });
+
   it("sibling: seleção parcial + align afeta o bloco", () => {
     const editor = document.createElement("div");
     editor.contentEditable = "true";
