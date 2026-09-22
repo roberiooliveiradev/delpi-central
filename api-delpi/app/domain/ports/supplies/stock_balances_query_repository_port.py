@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, Sequence
 
 
 class StockBalancesQueryRepositoryPort(ABC):
@@ -11,7 +11,7 @@ class StockBalancesQueryRepositoryPort(ABC):
     def fetch_summary(
         self,
         *,
-        branch: str | None,
+        branches: Sequence[str],
         warehouse: str | None,
         only_positive: bool,
     ) -> dict[str, Any]:
@@ -21,7 +21,7 @@ class StockBalancesQueryRepositoryPort(ABC):
     def count_items(
         self,
         *,
-        branch: str | None,
+        branches: Sequence[str],
         warehouse: str | None,
         only_positive: bool,
     ) -> int:
@@ -31,7 +31,7 @@ class StockBalancesQueryRepositoryPort(ABC):
     def fetch_items(
         self,
         *,
-        branch: str | None,
+        branches: Sequence[str],
         warehouse: str | None,
         only_positive: bool,
         sort: str,

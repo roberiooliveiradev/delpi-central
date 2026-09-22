@@ -15,12 +15,12 @@ class GetSuppliesStockBalancesItemsUseCase:
 
     def execute(self, request: StockBalancesItemsRequest) -> dict:
         total = self._repository.count_items(
-            branch=request.branch,
+            branches=request.branches,
             warehouse=request.warehouse,
             only_positive=request.only_positive,
         )
         items = self._repository.fetch_items(
-            branch=request.branch,
+            branches=request.branches,
             warehouse=request.warehouse,
             only_positive=request.only_positive,
             sort=request.sort,

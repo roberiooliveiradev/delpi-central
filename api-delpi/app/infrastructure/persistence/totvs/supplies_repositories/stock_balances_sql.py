@@ -6,7 +6,7 @@ Doc: docs/api/supplies-stock-balances.md · padroes-totvs/armazem-custo.md
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Sequence
 
 # Expressão canônica de valor de linha (mesmo local).
 STOCK_VALUE_EXPR = (
@@ -32,19 +32,23 @@ def resolve_order_by(sort: str | None) -> str:
 
 def build_where_clause(
     *,
-    branch: str | None,
+    branches: Sequence[str] | None,
     warehouse: str | None,
     only_positive: bool,
 ) -> tuple[str, list[Any]]:
-    from app.domain.totvs.protheus_branches import optional_concrete_branch
+    from app.domain.totvs.protheus_branches import normalize_optional_branch_codes
 
     clauses = ["SB2.D_E_L_E_T_ = ''"]
     params: list[Any] = []
 
-    concrete_branch = optional_concrete_branch(branch)
-    if concrete_branch:
+    codes = normalize_optional_branch_codes(branches)
+    if len(codes) == 1:
         clauses.append("LTRIM(RTRIM(SB2.B2_FILIAL)) = ?")
-        params.append(concrete_branch)
+        params.append(codes[0])
+    elif len(codes) > 1:
+        placeholders = ", ".join("?" * len(codes))
+        clauses.append(f"LTRIM(RTRIM(SB2.B2_FILIAL)) IN ({placeholders})")
+        params.extend(codes)
 
     if warehouse:
         clauses.append("LTRIM(RTRIM(SB2.B2_LOCAL)) = ?")
@@ -98,6 +102,7 @@ def format_items_sql(where_clause: str, *, order_by: str) -> str:
 SELECT
     LTRIM(RTRIM(SB2.B2_COD)) AS product_code,
     ISNULL(MAX(LTRIM(RTRIM(SB1.B1_DESC))), '') AS description,
+    MAX(NULLIF(LTRIM(RTRIM(SB1.B1_UM)), '')) AS unit_of_measure,
     LTRIM(RTRIM(SB2.B2_FILIAL)) AS branch,
     LTRIM(RTRIM(SB2.B2_LOCAL)) AS warehouse,
     CAST(SB2.B2_QATU AS DECIMAL(18, 6)) AS quantity,

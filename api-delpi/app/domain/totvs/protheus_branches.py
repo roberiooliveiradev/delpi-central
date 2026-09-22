@@ -35,6 +35,45 @@ def optional_concrete_branch(raw: str | None) -> str | None:
     return normalize_branch_code(raw)
 
 
+def normalize_optional_branch_codes(
+    raw: list[str] | tuple[str, ...] | str | None,
+) -> tuple[str, ...]:
+    """Optional multi-branch wire → concrete codes (deterministic order).
+
+    Semantics:
+    - omit / empty / ``all`` (and PT aliases) alone → ``()`` (legacy consolidated)
+    - ``01`` and/or ``02`` (repeatable) → deduped tuple ordered by
+      ``PROTHEUS_BRANCH_CODES``
+    - ``all`` mixed with a concrete code → ``ValueError`` (fail-closed)
+    - any other code → ``ValueError``
+    """
+    if raw is None:
+        items: list[str] = []
+    elif isinstance(raw, str):
+        items = [raw]
+    else:
+        items = list(raw)
+
+    has_all = False
+    seen: set[str] = set()
+    for item in items:
+        text = str(item or "").strip()
+        if not text:
+            continue
+        if is_all_branches(text):
+            has_all = True
+            continue
+        seen.add(normalize_branch_code(text))
+
+    if has_all and seen:
+        raise ValueError(
+            "branch ambígua: não misture all com filial concreta (01/02)."
+        )
+    if has_all or not seen:
+        return ()
+    return tuple(code for code in PROTHEUS_BRANCH_CODES if code in seen)
+
+
 def normalize_branch_scope(raw: str | None) -> str:
     """Retorna ``all`` | ``01`` | ``02``. Vazio/None/aliases PT → all."""
     normalized = str(raw or "").strip()

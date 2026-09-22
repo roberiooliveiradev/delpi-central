@@ -68,10 +68,10 @@ def test_stock_balances_sql_all_has_no_filial_predicate() -> None:
     )
 
     where_all, params_all = sql.build_where_clause(
-        branch="all", warehouse=None, only_positive=False
+        branches=["all"], warehouse=None, only_positive=False
     )
     where_omit, params_omit = sql.build_where_clause(
-        branch=None, warehouse=None, only_positive=False
+        branches=None, warehouse=None, only_positive=False
     )
     assert where_all == where_omit
     assert params_all == params_omit == []

@@ -19,41 +19,59 @@ Padrão TOTVS: [padroes-totvs/armazem-custo.md](./padroes-totvs/armazem-custo.md
 | `GET` | `/supplies/stock-balances/summary` | `get_supplies_stock_balances_summary` | `playbook_report` |
 | `GET` | `/supplies/stock-balances/items` | `get_supplies_stock_balances_items` | `paged_list` |
 
-Permissão: `api-delpi.access` ou `dashboard-supplies.view` (`KPI_SUPPLIES_ACCESS`).
+Permissão: `api-delpi.access` ou `dashboard-supplies.view` (`KPI_SUPPLIES_ACCESS`), ou S2S `supplies-api`.
 
 ## Tabelas e colunas
 
 | Tabela | Colunas |
 |--------|---------|
 | `SB2010` | `B2_FILIAL`, `B2_COD`, `B2_LOCAL`, `B2_QATU`, `B2_CM1`, `B2_VATU1`, `D_E_L_E_T_` |
-| `SB1010` | `B1_COD`, `B1_DESC`, `D_E_L_E_T_` |
+| `SB1010` | `B1_COD`, `B1_DESC`, `B1_UM`, `D_E_L_E_T_` |
 
 ## Valoração
 
 ```text
 stock_value      = B2_QATU × B2_CM1     -- CM1 do mesmo B2_LOCAL
-product_count    = COUNT(DISTINCT B2_COD) WHERE B2_QATU > 0
-total_quantity   = SUM(B2_QATU)
+product_count    = COUNT(DISTINCT B2_COD)
+total_quantity   = SUM(B2_QATU)         -- preservado por compatibilidade
 total_stock_value = SUM(B2_QATU × B2_CM1)
 ```
 
 Opcional na resposta (conferência): `total_stock_value_vatu1 = SUM(B2_VATU1)`.
 
+Residual conhecido (`VALUATION_RESIDUAL`): valoração canônica permanece `QATU × CM1` (não `B2_VATU1`).
+
 ## Filtros
 
 | Param | Default | Comportamento |
 |-------|---------|----------------|
-| `branch` | vazio | Consolidado (todas as filiais) |
+| `branch` | omitido | Consolidado (sem predicado `B2_FILIAL`) — legacy |
+| `branch=all` | — | Idem consolidado (legacy) |
+| `branch=01` / `branch=02` | — | Filial concreta |
+| `branch=01&branch=02` | — | Multi-filial explícita no **mesmo** dataset (`IN (?, ?)`); ordem normalizada para `01,02`; duplicatas removidas |
+| `branch=all&branch=01` | — | **Rejeitado** (ambíguo) — HTTP 400 |
 | `warehouse` | vazio | Todos os armazéns; alias `location` (aceito, fora do OpenAPI/TV) |
-| `only_positive` | `true` | `B2_QATU > 0` |
+| `only_positive` | `true` | `B2_QATU > 0` (default legado — não alterar sem migração de consumers) |
+| `only_positive=false` | — | Inclui saldo zero e negativo (sem predicado `B2_QATU > 0`) |
 | `page` / `page_size` | `1` / `50` | Paginação; `page_size` máx. **500** |
 | `sort` | `stock_value_desc` | Ordenação da listagem |
+
+Códigos de filial aceitos: somente `01` e `02`. Qualquer outro valor concreto é rejeitado.
+
+Multi-filial **não** é `summary(01) + summary(02)`: `product_count` / `warehouse_count` usam `COUNT(DISTINCT …)` no conjunto filtrado.
 
 ## Respostas
 
 **summary:** `summary` + `by_warehouse[]` (`warehouse`, `warehouse_label`, `branch`, `product_count`, `total_quantity`, `total_stock_value`).
 
-**items:** `items[]` (`product_code`, `description`, `branch`, `warehouse`, `quantity`, `unit_cost`, `stock_value`) + `pagination`.
+`by_warehouse` preserva o grão `branch + warehouse` (não colapsa o mesmo `B2_LOCAL` de filiais distintas).
+
+**items:** `items[]` (`product_code`, `description`, `unit_of_measure`, `branch`, `warehouse`, `warehouse_label`, `quantity`, `unit_cost`, `stock_value`) + `pagination`.
+
+| Campo | Fonte |
+|-------|--------|
+| `unit_of_measure` | `SB1.B1_UM` (aditivo). Ausência de SB1 / UM vazia → `null` (não inventar UM). |
+| `warehouse_label` | catálogo `WAREHOUSE_LABELS_PT`; desconhecido → `null` (registro permanece). |
 
 ## SQL
 

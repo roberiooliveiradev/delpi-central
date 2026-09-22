@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import html
 from datetime import datetime
-from typing import Any, Mapping, Protocol
+from typing import Any, Mapping, Protocol, Sequence
 from zoneinfo import ZoneInfo
 
 from app.domain.services.reports.report_email_brand_layout_service import (
@@ -44,7 +44,7 @@ class _StockBalancesItemsPort(Protocol):
     def count_items(
         self,
         *,
-        branch: str | None,
+        branches: Sequence[str],
         warehouse: str | None,
         only_positive: bool,
     ) -> int: ...
@@ -52,7 +52,7 @@ class _StockBalancesItemsPort(Protocol):
     def fetch_items(
         self,
         *,
-        branch: str | None,
+        branches: Sequence[str],
         warehouse: str | None,
         only_positive: bool,
         sort: str,
@@ -178,7 +178,7 @@ class StockBalancesPaProvider:
 
     def _fetch_all(self, *, branch: str) -> list[dict[str, Any]]:
         total = self._repository.count_items(
-            branch=branch,
+            branches=(branch,),
             warehouse=WAREHOUSE,
             only_positive=ONLY_POSITIVE,
         )
@@ -189,7 +189,7 @@ class StockBalancesPaProvider:
             if total and offset >= total:
                 break
             batch = self._repository.fetch_items(
-                branch=branch,
+                branches=(branch,),
                 warehouse=WAREHOUSE,
                 only_positive=ONLY_POSITIVE,
                 sort="product_code_asc",

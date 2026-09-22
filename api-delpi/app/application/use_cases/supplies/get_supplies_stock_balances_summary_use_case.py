@@ -14,7 +14,7 @@ class GetSuppliesStockBalancesSummaryUseCase:
 
     def execute(self, request: StockBalancesQueryRequest) -> dict:
         return self._repository.fetch_summary(
-            branch=request.branch,
+            branches=request.branches,
             warehouse=request.warehouse,
             only_positive=request.only_positive,
         )

@@ -24,7 +24,7 @@ from app.composition.supplies_composer import (
 from app.core.exceptions import DatabaseConnectionError
 from app.core.responses import error_response
 from app.interface.http.openapi_agent_metadata_builder import OpenApiAgentMetadataBuilder
-from app.interface.http.query_param_enums import BRANCH_QUERY_OPTIONAL
+from app.interface.http.query_param_enums import BRANCH_SCOPE_CODES_QUERY_OPTIONAL
 from app.interface.http.route_response_helpers import api_delpi_success
 from app.utils.logger import log_error
 
@@ -47,6 +47,7 @@ _SUMMARY_FIELDS = {
 _ITEM_FIELDS = {
     "product_code": {"label": "Produto", "type": "string"},
     "description": {"label": "Descrição", "type": "string"},
+    "unit_of_measure": {"label": "Unidade de medida", "type": "string"},
     "branch": {"label": "Filial", "type": "string"},
     "warehouse": {"label": "Armazém", "type": "string"},
     "quantity": {"label": "Quantidade", "type": "number"},
@@ -82,7 +83,7 @@ def _resolve_warehouse(
 )
 @require_any_permission_or_supplies_bff(KPI_SUPPLIES_ACCESS)
 def get_supplies_stock_balances_summary(
-    branch: str | None = BRANCH_QUERY_OPTIONAL(),
+    branch: list[str] | None = BRANCH_SCOPE_CODES_QUERY_OPTIONAL(),
     warehouse: str | None = Query(
         default=None,
         description="Warehouse code (B2_LOCAL). Empty = all warehouses.",
@@ -102,7 +103,7 @@ def get_supplies_stock_balances_summary(
 ):
     try:
         request = StockBalancesQueryRequest(
-            branch=branch,
+            branches=branch,
             warehouse=_resolve_warehouse(warehouse, location),
             only_positive=only_positive,
         )
@@ -140,7 +141,7 @@ def get_supplies_stock_balances_summary(
 )
 @require_any_permission_or_supplies_bff(KPI_SUPPLIES_ACCESS)
 def get_supplies_stock_balances_items(
-    branch: str | None = BRANCH_QUERY_OPTIONAL(),
+    branch: list[str] | None = BRANCH_SCOPE_CODES_QUERY_OPTIONAL(),
     warehouse: str | None = Query(
         default=None,
         description="Warehouse code (B2_LOCAL). Empty = all warehouses.",
@@ -168,7 +169,7 @@ def get_supplies_stock_balances_items(
 ):
     try:
         request = StockBalancesItemsRequest(
-            branch=branch,
+            branches=branch,
             warehouse=_resolve_warehouse(warehouse, location),
             only_positive=only_positive,
             page=page,

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Sequence
 
 from app.domain.ports.supplies.stock_balances_query_repository_port import (
     StockBalancesQueryRepositoryPort,
@@ -26,16 +26,32 @@ def _i(value: Any) -> int:
         return 0
 
 
+def _nullable_trimmed(value: Any) -> str | None:
+    if value is None:
+        return None
+    text = str(value).strip()
+    return text or None
+
+
+def _summary_branch_label(branches: Sequence[str]) -> str:
+    codes = [str(code).strip() for code in branches if str(code).strip()]
+    if not codes:
+        return "consolidated"
+    if len(codes) == 1:
+        return codes[0]
+    return ",".join(codes)
+
+
 class StockBalancesQueryRepository(BaseRepository, StockBalancesQueryRepositoryPort):
     def fetch_summary(
         self,
         *,
-        branch: str | None,
+        branches: Sequence[str],
         warehouse: str | None,
         only_positive: bool,
     ) -> dict[str, Any]:
         where_clause, params = sql.build_where_clause(
-            branch=branch,
+            branches=branches,
             warehouse=warehouse,
             only_positive=only_positive,
         )
@@ -70,7 +86,7 @@ class StockBalancesQueryRepository(BaseRepository, StockBalancesQueryRepositoryP
 
         return {
             "summary": {
-                "branch": branch or "consolidated",
+                "branch": _summary_branch_label(branches),
                 "warehouse": warehouse or "all",
                 "product_count": _i(summary_row.get("product_count")),
                 "total_quantity": _f(summary_row.get("total_quantity")),
@@ -87,12 +103,12 @@ class StockBalancesQueryRepository(BaseRepository, StockBalancesQueryRepositoryP
     def count_items(
         self,
         *,
-        branch: str | None,
+        branches: Sequence[str],
         warehouse: str | None,
         only_positive: bool,
     ) -> int:
         where_clause, params = sql.build_where_clause(
-            branch=branch,
+            branches=branches,
             warehouse=warehouse,
             only_positive=only_positive,
         )
@@ -104,7 +120,7 @@ class StockBalancesQueryRepository(BaseRepository, StockBalancesQueryRepositoryP
     def fetch_items(
         self,
         *,
-        branch: str | None,
+        branches: Sequence[str],
         warehouse: str | None,
         only_positive: bool,
         sort: str,
@@ -112,7 +128,7 @@ class StockBalancesQueryRepository(BaseRepository, StockBalancesQueryRepositoryP
         page_size: int,
     ) -> list[dict[str, Any]]:
         where_clause, params = sql.build_where_clause(
-            branch=branch,
+            branches=branches,
             warehouse=warehouse,
             only_positive=only_positive,
         )
@@ -127,6 +143,7 @@ class StockBalancesQueryRepository(BaseRepository, StockBalancesQueryRepositoryP
             {
                 "product_code": str(row.get("product_code") or "").strip(),
                 "description": str(row.get("description") or "").strip(),
+                "unit_of_measure": _nullable_trimmed(row.get("unit_of_measure")),
                 "branch": str(row.get("branch") or "").strip(),
                 "warehouse": str(row.get("warehouse") or "").strip(),
                 "warehouse_label": WAREHOUSE_LABELS_PT.get(

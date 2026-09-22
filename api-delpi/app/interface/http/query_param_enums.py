@@ -341,6 +341,25 @@ def BRANCH_CODES_QUERY():
         ),
         min_length=1,
     )
+
+
+def BRANCH_SCOPE_CODES_QUERY_OPTIONAL():
+    """Optional multi-branch with legacy consolidated scope.
+
+    Wire:
+    - omit / empty / ``all`` → consolidated (no filial predicate)
+    - ``?branch=01`` / ``?branch=02`` / ``?branch=01&branch=02``
+    - ``all`` mixed with a concrete code is rejected by the domain normalizer
+    """
+    return Query(
+        default=None,
+        description=(
+            "Branch scope. Omit or pass all for consolidated (legacy). "
+            "Pass one or more concrete codes (01 or 02) via repeated query "
+            "param: ?branch=01&branch=02. Mixing all with a concrete code "
+            "is rejected."
+        ),
+    )
 def BRANCH_PATH():
     """Path param — filial concreta 01|02 (chave composta)."""
     return Path(

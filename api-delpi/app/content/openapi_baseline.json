@@ -99208,13 +99208,8 @@
           "name": "branch",
           "in": "query",
           "required": false,
-          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed.",
-          "enum": [
-            "all",
-            "01",
-            "02"
-          ],
-          "type": "string"
+          "description": "Branch scope. Omit or pass all for consolidated (legacy). Pass one or more concrete codes (01 or 02) via repeated query param: ?branch=01&branch=02. Mixing all with a concrete code is rejected.",
+          "type": "array"
         }
       ],
       "xDelpi": {
@@ -99615,13 +99610,8 @@
           "name": "branch",
           "in": "query",
           "required": false,
-          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed.",
-          "enum": [
-            "all",
-            "01",
-            "02"
-          ],
-          "type": "string"
+          "description": "Branch scope. Omit or pass all for consolidated (legacy). Pass one or more concrete codes (01 or 02) via repeated query param: ?branch=01&branch=02. Mixing all with a concrete code is rejected.",
+          "type": "array"
         }
       ],
       "xDelpi": {

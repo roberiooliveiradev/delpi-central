@@ -2,19 +2,19 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
-from app.domain.totvs.protheus_branches import optional_concrete_branch
+from app.domain.totvs.protheus_branches import normalize_optional_branch_codes
 
 
 @dataclass
 class StockBalancesQueryRequest:
-    branch: str | None = None
+    branches: tuple[str, ...] | list[str] | str | None = field(default_factory=tuple)
     warehouse: str | None = None
     only_positive: bool = True
 
     def __post_init__(self) -> None:
-        self.branch = optional_concrete_branch(self.branch)
+        self.branches = normalize_optional_branch_codes(self.branches)
         if self.warehouse is not None:
             self.warehouse = str(self.warehouse).strip() or None
 
