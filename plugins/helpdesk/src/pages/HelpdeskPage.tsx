@@ -71,13 +71,14 @@ import { TicketListTable } from "./TicketListTable";
 import { TicketListToolbar } from "./TicketListToolbar";
 import {
   HELPDESK_TICKET_LIST_VIEW_LAYOUT_KEY,
-  HelpdeskCompactPagination,
+  HELPDESK_PAGE_SIZE_OPTIONS,
   HelpdeskEmptyState,
   HelpdeskFormActions,
   HelpdeskIconButton,
   HelpdeskLoadingState,
   HelpdeskMessageThread,
   HelpdeskPageHeader,
+  HelpdeskPagination,
   HelpdeskRecordCard,
   HelpdeskRichTextField,
   HelpdeskSectionCard,
@@ -85,6 +86,7 @@ import {
   HelpdeskSelect,
   HelpdeskStateBanner,
   HelpdeskStatusBadge,
+  HelpdeskTablePageSizeSelect,
   HelpdeskTextField,
   usePersistedViewLayout,
 } from "../ui/helpdeskUi";
@@ -482,18 +484,21 @@ function TicketListPage() {
           )
         ) : null}
         {view === "list" || (view === "empty" && filters.page > 1) ? (
-          <HelpdeskCompactPagination
-            page={filters.page}
-            pageSize={filters.page_size}
-            total={paginationBounds.total}
-            totalPages={paginationBounds.totalPages}
-            disabled={loading}
-            pageSizeOptions={[10, 20, 50]}
-            onPageChange={(page) => commitFilters({ ...filters, page })}
-            onPageSizeChange={(page_size) =>
-              commitFilters({ ...filters, page_size: page_size || 20, page: 1 })
-            }
-          />
+          <div className="helpdesk-list-pagination">
+            <HelpdeskTablePageSizeSelect
+              pageSize={filters.page_size}
+              pageSizeOptions={[...HELPDESK_PAGE_SIZE_OPTIONS]}
+              onPageSizeChange={(page_size) =>
+                commitFilters({ ...filters, page_size: page_size || 20, page: 1 })
+              }
+            />
+            <HelpdeskPagination
+              page={filters.page}
+              pageSize={filters.page_size}
+              total={paginationBounds.total}
+              onPageChange={(page) => commitFilters({ ...filters, page })}
+            />
+          </div>
         ) : null}
       </HelpdeskSectionCard>
     </HelpdeskPageStack>

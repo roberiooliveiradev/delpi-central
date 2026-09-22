@@ -590,6 +590,60 @@ declare module "@delpi/plugin-ui/index" {
     withHints?: boolean;
   }): ComponentType<DashboardCompactPaginationProps>;
 
+  export type PageJumpValidationReason =
+    | "empty"
+    | "invalid"
+    | "below_min"
+    | "above_max";
+
+  export const TABLE_PAGE_SIZE_OPTIONS: readonly number[];
+
+  export type PaginationInjectedProps = {
+    page: number;
+    pageSize: number;
+    total: number;
+    onPageChange: (page: number) => void;
+    disabled?: boolean;
+  };
+
+  export type TablePageSizeSelectInjectedProps = {
+    pageSize: number;
+    onPageSizeChange: (pageSize: number) => void;
+    pageSizeOptions?: readonly number[];
+    disabled?: boolean;
+  };
+
+  export function createDashboardPaginationKit(config: {
+    prefix: string;
+    labels: {
+      navigationAriaLabel: string;
+      pagesAriaLabel: string;
+      previous: string;
+      next: string;
+      info: (args: {
+        rangeStart: number;
+        rangeEnd: number;
+        total: number;
+        page: number;
+        totalPages: number;
+      }) => string;
+      jumpLabel: string;
+      jumpInputAriaLabel: string;
+      jumpError: (reason: PageJumpValidationReason, totalPages: number) => string;
+    };
+    tablePageSizeLabels: { label: string; selectAriaLabel: string };
+    hints?: {
+      pageSize?: string;
+      previous?: string;
+      next?: string;
+      info?: string;
+      jump?: string;
+    };
+  }): {
+    Pagination: ComponentType<PaginationInjectedProps>;
+    TablePageSizeSelect: ComponentType<TablePageSizeSelectInjectedProps>;
+  };
+
   export type DashboardDataCardsGridProps = {
     children?: ReactNode;
     empty?: ReactNode;

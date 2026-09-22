@@ -1,6 +1,6 @@
 export const helpTooltips = {
   list:
-    "Aqui ficam os chamados de TI no seu nome. Alterne Tabela ou Cards — a preferência fica neste navegador. Aberto, atualizado, resolvido e fechado mostram dia e hora. O recorte e a ordenação aparecem em chips; o construtor de filtros (ícone de funil) é o único lugar para busca, status, urgência, categoria e datas. Use Colunas na tabela para mostrar ou esconder campos. Clique no cabeçalho para ordenar ou abra a ordenação em níveis (até três). O número e o título são o endereço do chamado: Ctrl, Shift, Alt ou o clique do meio abrem em outra aba. O mais (+) abre chamado; na paginação, setas anterior/próxima e Por página (10, 20 ou 50); o X limpa o recorte. Chamado de outra pessoa e da lixeira não aparecem.",
+    "Aqui ficam os chamados de TI no seu nome. Alterne Tabela ou Cards — a preferência fica neste navegador. Aberto, atualizado, resolvido e fechado mostram dia e hora. O recorte e a ordenação aparecem em chips; o construtor de filtros (ícone de funil) é o único lugar para busca, status, urgência, categoria e datas. Use Colunas na tabela para mostrar ou esconder campos. Clique no cabeçalho para ordenar ou abra a ordenação em níveis (até três). O número e o título são o endereço do chamado: Ctrl, Shift, Alt ou o clique do meio abrem em outra aba. O mais (+) abre chamado; na paginação use as setas, os números, Ir para e Por página (10, 20 ou 50); o X limpa o recorte. Chamado de outra pessoa e da lixeira não aparecem.",
   filters:
     "Busca e filtros ficam só no construtor personalizável (ícone de funil). A busca acha no título ou no texto da abertura. O selo de estado usa o número do status (novo, em atendimento, pendente, aguardando aprovação, solucionado, fechado), não o texto. Pendentes e aguardando aprovação têm recorte próprio; Abertos continua incluindo os que esperam aprovação. Aberto de/até filtra pela data de abertura; atualizado de/até, pela última mudança. O construtor monta várias regras com E (AND) e grava o recorte na URL — o F5 mantém o mesmo critério. Grupos com OU, exportação, seleção em massa e mapa ficam no console do helpdesk. A ordenação também: o clique na coluna não reordena só esta página. Recorte vazio significa que nenhum chamado bate com o filtro, não que você não tenha chamados.",
   link:
@@ -50,6 +50,18 @@ export const helpTooltips = {
     prevPage: "Volta para a página anterior do recorte.",
     nextPage: "Avança para a próxima página quando o helpdesk indica que há mais.",
     pageNumber: "Página atual da lista. O helpdesk não informa o total de páginas.",
+  },
+
+  /** Paginação completa do kit (mesmo padrão do dashboard-commercial). */
+  pagination: {
+    info: "Faixa exibida e página atual. O helpdesk não devolve o total exato — a última página conhecida avança enquanto houver mais itens.",
+    pageSize: "Quantos chamados pedir por página (10, 20 ou 50). Ao mudar, a lista volta à página 1.",
+    jump: "Digite o número da página e pressione Enter ou saia do campo.",
+    jumpEmpty: "Informe um número de página.",
+    jumpInvalid: "Use apenas números inteiros.",
+    jumpBelowMin: "A página mínima é 1.",
+    previous: "Volta uma página mantendo o recorte e o tamanho da lista.",
+    next: "Avança uma página quando o helpdesk indica que há mais chamados.",
   },
 
   filterBuilder: {

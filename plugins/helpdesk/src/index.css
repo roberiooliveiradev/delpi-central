@@ -246,20 +246,27 @@
   cursor: help;
 }
 
-.dashboard-helpdesk .helpdesk-pagination.delpi-ui-pagination--compact {
-  gap: 8px;
-  padding: 0;
-  margin-block-start: 0;
+.dashboard-helpdesk .helpdesk-list-pagination {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.35rem;
+  margin-block-start: 0.35rem;
 }
 
-.dashboard-helpdesk .helpdesk-pagination__actions .delpi-ui-ghost-btn,
-.dashboard-helpdesk .helpdesk-pagination__actions .helpdesk-btn {
+.dashboard-helpdesk .helpdesk-list-pagination .delpi-ui-table-page-size {
+  align-self: flex-start;
+}
+
+.dashboard-helpdesk .helpdesk-list-pagination .delpi-ui-pagination {
+  margin-top: 0;
+  padding-top: 0.5rem;
+}
+
+.dashboard-helpdesk .helpdesk-list-pagination .delpi-ui-pagination__controls .delpi-ui-ghost-btn:has(> svg:only-child) {
   width: var(--delpi-ui-control-height, 32px);
   min-width: var(--delpi-ui-control-height, 32px);
   padding-inline: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
 }
 
 @media (max-width: 768px) {

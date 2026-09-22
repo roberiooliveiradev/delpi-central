@@ -10,13 +10,15 @@ function read(relativePath: string): string {
 }
 
 describe("Helpdesk list UX structural", () => {
-  it("lista não monta FiltersRow; usa builder, SegmentToggle e CompactPagination", () => {
+  it("lista não monta FiltersRow; usa builder, SegmentToggle e Pagination do kit", () => {
     const page = read("HelpdeskPage.tsx");
     expect(page).not.toContain("HelpdeskFiltersRow");
     expect(page).toContain("TicketListFilterBuilder");
     expect(page).toContain("HelpdeskSegmentToggle");
     expect(page).toContain("TicketListCards");
-    expect(page).toContain("HelpdeskCompactPagination");
+    expect(page).toContain("HelpdeskPagination");
+    expect(page).toContain("HelpdeskTablePageSizeSelect");
+    expect(page).not.toContain("HelpdeskCompactPagination");
     expect(page).toContain("HELPDESK_TICKET_LIST_VIEW_LAYOUT_KEY");
     expect(page).toContain("usePersistedViewLayout");
   });
@@ -44,13 +46,17 @@ describe("Helpdesk list UX structural", () => {
     expect(css).toMatch(/\.helpdesk-filter-builder__rules[\s\S]*?overflow-y:\s*auto/);
   });
 
-  it("paginação compacta usa ChevronLeft/Right com aria-label", () => {
+  it("paginação usa createDashboardPaginationKit com hints como dashboard-commercial", () => {
+    const pagination = read("../components/Pagination.tsx");
+    expect(pagination).toContain("createDashboardPaginationKit");
+    expect(pagination).toContain("hints:");
+    expect(pagination).toContain('previous: "Anterior"');
+    expect(pagination).toContain("HelpdeskPagination");
+    expect(pagination).toContain("HelpdeskTablePageSizeSelect");
     const ui = read("../ui/helpdeskUi.tsx");
-    expect(ui).toContain("ChevronLeft");
-    expect(ui).toContain("ChevronRight");
-    expect(ui).toContain('previousAriaLabel: "Página anterior"');
-    expect(ui).toContain('nextAriaLabel: "Próxima página"');
+    expect(ui).toContain('from "../components/Pagination"');
+    expect(ui).not.toContain("createCompactPagination");
     const css = read("../index.css");
-    expect(css).toContain(".helpdesk-pagination__actions");
+    expect(css).toContain(".helpdesk-list-pagination");
   });
 });

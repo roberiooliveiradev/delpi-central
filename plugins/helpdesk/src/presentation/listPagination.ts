@@ -1,4 +1,4 @@
-/** Bounds for kit CompactPagination when the BFF only exposes has_more (no total). */
+/** Bounds for kit Pagination when the BFF only exposes has_more (no total). */
 export function helpdeskListPaginationBounds(input: {
   page: number;
   pageSize: number;

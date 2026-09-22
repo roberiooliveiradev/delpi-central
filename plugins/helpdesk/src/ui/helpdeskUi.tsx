@@ -1,8 +1,6 @@
 import { type ComponentProps, type ReactNode } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
   attachmentPreviewStripBemClasses,
-  createCompactPagination,
   createDashboardAttachmentPreviewStrip,
   createDashboardDataCardsGrid,
   createDashboardDataRecordCard,
@@ -37,6 +35,12 @@ import {
 } from "@delpi/plugin-ui/index";
 
 export { usePersistedViewLayout };
+
+export {
+  HelpdeskPagination,
+  HelpdeskTablePageSizeSelect,
+  HELPDESK_PAGE_SIZE_OPTIONS,
+} from "../components/Pagination";
 
 const PREFIX = "helpdesk";
 const selectClasses = selectFieldPacClasses(PREFIX);
@@ -166,20 +170,6 @@ export const HelpdeskFilterSelect = helpdeskFilters.FilterSelectField;
 
 export const HelpdeskSegmentToggle = createDashboardSegmentToggle(PREFIX);
 export const HelpdeskDataCardsGrid = createDashboardDataCardsGrid({ prefix: PREFIX });
-
-export const HelpdeskCompactPagination = createCompactPagination({
-  prefix: PREFIX,
-  layout: "grouped",
-  labels: {
-    info: ({ page }) => `Página ${page}`,
-    pageSizeLabel: "Por página",
-    previous: <ChevronLeft size={16} aria-hidden />,
-    next: <ChevronRight size={16} aria-hidden />,
-    previousAriaLabel: "Página anterior",
-    nextAriaLabel: "Próxima página",
-    navigationAriaLabel: "Paginação da lista de chamados",
-  },
-});
 
 export const HELPDESK_TICKET_LIST_VIEW_LAYOUT_KEY = "helpdesk:ticket-list:view-layout:v1";
 
