@@ -10,8 +10,8 @@ from app.application.services.chat_tool_context_selection_service import (
 from app.application.services.chat_tv_dashboard_platform_tool_selection_service import (
     ChatTvDashboardPlatformToolSelectionService,
 )
-from app.domain.services.chat_tv_dashboard_copilot_intent_service import (
-    ChatTvDashboardCopilotIntentService,
+from app.domain.services.chat_tv_dashboard_handoff_service import (
+    ChatTvDashboardHandoffService,
 )
 
 
@@ -87,7 +87,7 @@ def test_tv_surface_answers_vista_handoff_when_path_fails():
     )
     assert (
         outcome.early_result["directAnswer"]
-        == ChatTvDashboardCopilotIntentService.redirect_to_vista_message()
+        == ChatTvDashboardHandoffService.redirect_to_vista_message()
     )
     assert outcome.early_result["toolCalls"] == []
 
@@ -96,4 +96,4 @@ def test_non_tv_surface_does_not_answer_with_vista_handoff():
     outcome = _select(_FakeHost(None))
 
     direct = (outcome.early_result or {}).get("directAnswer")
-    assert direct != ChatTvDashboardCopilotIntentService.redirect_to_vista_message()
+    assert direct != ChatTvDashboardHandoffService.redirect_to_vista_message()

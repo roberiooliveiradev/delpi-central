@@ -136,7 +136,7 @@ Elemento → Conexão     → chart_view/table_view.dataSourceId → data_source
 | Peça | Onde |
 |---|---|
 | Catálogo de rotas | `GET /data/routes` — **232** operações GET sincronizadas com OpenAPI (`scripts/generate_tv_data_routes_from_openapi.py`) |
-| Painel **Dados** | `DataRoutesSidePanel` + `DataRouteCatalogPanel` (`@delpi/plugin-ui`) |
+| Painel **Dados** / Fontes | Modal «Fontes de dados» (`DataBuilderChatPanel` + catálogo) |
 | Enrichment | `ComunicadoDataEnrichmentService` — resolve `data_source`; vincula `chart_view` / `table_view` |
 | Gráfico configurável | `ConfigurableSeriesChart` + `chartParts` / `chartOptions` (título, legenda, eixos, grade, tabela, marcadores) |
 | KPI composto | `DelpiKpiCard` + `kpiParts` (card/title/value/hint/icon) — subseleção no palco |

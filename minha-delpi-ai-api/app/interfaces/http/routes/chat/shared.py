@@ -321,11 +321,11 @@ def _parse_host_context(payload: dict) -> dict | None:
     if not isinstance(raw, dict):
         return None
 
-    from app.domain.services.chat_tv_dashboard_copilot_intent_service import (
-        ChatTvDashboardCopilotIntentService,
+    from app.domain.services.chat_tv_dashboard_handoff_service import (
+        ChatTvDashboardHandoffService,
     )
 
-    return ChatTvDashboardCopilotIntentService.normalize_host_context(raw)
+    return ChatTvDashboardHandoffService.normalize_host_context(raw)
 
 
 def _parse_typing_correction(payload: dict) -> dict | None:

@@ -41,13 +41,10 @@ Patches tipados no modelo de slide/playlist via VISTA / PresentationMutation. **
 
 ## Discovery (contrato)
 
-| Método | Path | Permissão | Notas |
-|--------|------|-----------|-------|
-| `GET` | `/data/copilot/capabilities` | `TV_WRITE` | `{ catalogVersion, operations, capabilities[] }` — contrato executável |
-| `POST` | `/data/copilot/suggest-ops` | `TV_WRITE` | NL + hostContext → plano discriminado + `ops[]` |
-| `POST` | `/data/copilot/preview-patch` | `TV_WRITE` | Dry-run + diff + `httpCommands` + `baseRevision`; **não** persiste |
-| `POST` | `/data/copilot/apply-patch` | `TV_WRITE` | **Depreciado como writer:** mesmo plano do preview (`persisted: false`, `executionMode: crud_http`). Persistência = CRUD `/playlists/**` |
-| `GET` | `/data/copilot/telemetry` | `TV_MANAGE` | Contadores |
+| Método | Path | Status | Notas |
+|--------|------|--------|-------|
+| `*` | `/data/copilot/*` | **410 Gone** | Legado; use VISTA `/gpt-actions/v1` |
+| `GET` | `/gpt-actions/v1/catalog` | canônico | Capabilities + `agent_directives` |
 | `POST` | `/data/builder/sessions/{id}/to-presentation-ops` | `TV_WRITE` | Materialize → mesmas ops do catálogo |
 
 ### `operations`: contrato executável
@@ -62,7 +59,7 @@ patch service consomem a mesma spec; capability nova não pode repetir esses cam
 - mutações de canvas requerem playlist + slide; sem contexto, o planner devolve
   `status=clarification` e zero ops.
 
-O `suggest-ops` retorna `status: ready | clarification | unsupported | error`,
+O planner de ops (PresentationMutation / VISTA `gpt_suggest_change`) retorna `status: ready | clarification | unsupported | error`,
 `confirmationPolicy`, `risk`, requisitos agregados e os hints. Uma composição
 herda a política mais restritiva entre suas ops.
 
@@ -83,7 +80,7 @@ Cada item (declarativo em `presentation_ops_content.json`):
 
 Schema, target, risco e efeitos pertencem a `operations`, não às capabilities.
 
-### Placeholders do suggest-ops
+### Placeholders do planner de ops
 
 | Placeholder | Origem |
 |-------------|--------|
@@ -122,7 +119,7 @@ Composites rota → visual + bind:
 | Reordenar slides | sim | `reorder_slides` |
 | Excluir slide | sim | `delete_slide` |
 | Seções CRUD / mover slide | sim | `upsert_section`, `delete_section`, `move_slide_to_section` |
-| Texto / título / forma / ícone / grade / KPI / chart / table / input | sim | `upsert_block` (+ templates / suggest-ops) |
+| Texto / título / forma / ícone / grade / KPI / chart / table / input | sim | `upsert_block` (+ templates / planner VISTA) |
 | Remover bloco | sim | `delete_block` |
 | Fonte / modelo de dados | sim | `create_data_source`, `update_data_source` |
 | Fonte + KPI/chart/table (composite) | sim | `add_*_from_route` |
@@ -153,31 +150,26 @@ Façade OAuth em `/gpt-actions/v1` (ver `docs/gpt-actions/custom-gpt-actions.md`
 
 ## Chat base (consumer)
 
-- Skill/tool `tv-dashboard-copilot` / `tv_dashboard_copilot`: **removidos**.
-- Pedido TV no Chat interno → handoff (`tv_dashboard_handoff`) com direct answer
-  orientando o especialista **VISTA** (`/gpt-actions/v1`). Sem tool de mutação.
+- Skill/tool Chat TV Copilot: **removidos**.
+- Pedido TV no Chat interno → handoff (`tv_dashboard_handoff` / `ChatTvDashboardHandoffService`)
+  com direct answer orientando o especialista **VISTA** (`/gpt-actions/v1`). Sem tool de mutação.
 - Mutação tipada: só VISTA Actions + PresentationMutation (ou editor MFE).
-- Env legado `TV_DASHBOARD_API_BASE_URL` permanece para CRUD allowlist se algum
-  caminho residual ainda existir; caminhos `/data/copilot/*` respondem 410.
+- `/data/copilot/*` → **410 Gone**.
 
 ## Embed (A1)
 
-- Remote MF: `minha-delpi-chat` → `./EmbeddedChat` (uso geral; dock Copilot TV retirado).
-- Host pode enviar `hostContext` TV (`surface`, `playlistId`, `slideId`); o Chat
-  responde com handoff VISTA — não aplica patch no editor via tool.
+- Remote MF: `minha-delpi-chat` → `./EmbeddedChat` (hostContext ambient; dock Copilot TV retirado).
+- Pedidos de mutação no embed → handoff VISTA (não aplica patch via tool).
 - Draft local do editor: modal «Fontes de dados» (catálogo + builder actions).
 
-## Persistência canônica (CRUD HTTP)
+## Persistência canônica
 
 ```text
-Chat → AI → preview-patch (dry-run + httpCommands)
-         → execute_crud_command (JWT + If-Match) → /playlists/**
-         → notify_presentation_changed → editor WS
+VISTA gpt_preview_change → proposal_handle → gpt_commit_change
+  → TvPresentationWriteService → CRUD /playlists/** → presentation_updated (WS)
 ```
 
-- BFF (`PresentationPatchService`): redutor + `PresentationHttpCommandPlannerService` — **nunca** `update_slide` no apply.
-- OCC: header `If-Match` / corpo `currentRevision` em 409; resposta `X-Playlist-Revision`.
-- Ops de canvas (`upsert_block`, `delete_block`, …) coalescem em **um** `PATCH` `nativeConfig`.
+Editor MFE e Actions GPT compartilham o mesmo write boundary.
 
 ## Escopo negativo
 
@@ -186,17 +178,15 @@ Chat → AI → preview-patch (dry-run + httpCommands)
 - Sem M / DAX / SQL livre
 - Slide ≠ `renderPlan` do chat
 - Sem cópia do catálogo na `minha-delpi-ai-api`
+- Sem skill/tool de mutação TV no Chat interno
 
 ## Relação com Data Builder
 
-**Cutover (AP5):** o caminho canônico de mutação tipada é o **mesmo catálogo** do Copilot.
-
 | Caminho | Status | Uso |
 |---------|--------|-----|
-| `POST /data/copilot/suggest-ops` | **canônico** | NL + `hostContext` → `ops[]` (BFF determinístico) |
-| `POST /data/builder/sessions/{id}/to-presentation-ops` | **canônico** | Rascunho materializado → mesmas ops do catálogo |
-| `POST /data/builder/sessions/{id}/turn` (NL) | **deprecated** | Não é o caminho de mutação tipada; não evoluir novos encodings aqui |
-
-Materialize → `to-presentation-ops` usa o **mesmo** catálogo. Turn NL legado do Builder: **deprecated** — preferir Copilot + `suggest-ops` / skill.
+| VISTA `/gpt-actions/v1` (preview/commit) | **canônico** | Mutação tipada NL/ops |
+| `POST /data/builder/sessions/{id}/to-presentation-ops` | **canônico** | Rascunho materializado → ops do catálogo |
+| `POST /data/builder/sessions/{id}/turn` com `message` | **retired** (`422 NL_TURN_RETIRED`) | Sem S2S Chat AI |
+| `POST /data/copilot/*` | **410 Gone** | Legado |
 
 Ver também: [data-builder-chat.md](./data-builder-chat.md), regra `.cursor/rules/tv-dashboard-presentation-parity.mdc`.

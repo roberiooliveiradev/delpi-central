@@ -14,8 +14,8 @@ from app.domain.services.chat_host_surface_context_service import (
     ChatHostSurfaceContextService,
 )
 from app.domain.services.chat_product_query_intent_service import ChatProductQueryIntent
-from app.domain.services.chat_tv_dashboard_copilot_intent_service import (
-    ChatTvDashboardCopilotIntentService,
+from app.domain.services.chat_tv_dashboard_handoff_service import (
+    ChatTvDashboardHandoffService,
 )
 from app.infrastructure.config.settings import Settings
 
@@ -158,7 +158,7 @@ class ChatToolContextSelectionService:
                             "toolCalls": [],
                             "nativeToolCalling": native_meta,
                             "directAnswer": (
-                                ChatTvDashboardCopilotIntentService.redirect_to_vista_message()
+                                ChatTvDashboardHandoffService.redirect_to_vista_message()
                             ),
                             "skipRag": True,
                             "currentMessage": raw_message,

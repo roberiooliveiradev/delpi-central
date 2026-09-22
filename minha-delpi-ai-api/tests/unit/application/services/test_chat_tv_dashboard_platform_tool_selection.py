@@ -5,8 +5,8 @@ from __future__ import annotations
 from app.application.services.chat_tv_dashboard_platform_tool_selection_service import (
     ChatTvDashboardPlatformToolSelectionService,
 )
-from app.domain.services.chat_tv_dashboard_copilot_intent_service import (
-    ChatTvDashboardCopilotIntentService,
+from app.domain.services.chat_tv_dashboard_handoff_service import (
+    ChatTvDashboardHandoffService,
 )
 
 _TV_WORKSPACE = {
@@ -22,7 +22,7 @@ def test_tv_phrase_returns_vista_handoff_without_tool():
     )
     assert result.tool_call is None
     assert result.platform_direct_answer is True
-    assert result.direct_answer == ChatTvDashboardCopilotIntentService.redirect_to_vista_message()
+    assert result.direct_answer == ChatTvDashboardHandoffService.redirect_to_vista_message()
     assert "VISTA" in (result.direct_answer or "")
 
 
@@ -36,42 +36,8 @@ def test_non_tv_message_returns_empty():
     assert result.platform_direct_answer is False
 
 
-def test_should_enable_skill_always_false():
-    assert (
-        ChatTvDashboardCopilotIntentService.should_enable_skill(
-            "crie um slide",
-            host_context={"surface": "tv-dashboard"},
-            already_enabled=True,
-        )
-        is False
-    )
-
-
-def test_build_apply_from_history_always_none():
-    previous = [
-        {
-            "role": "assistant",
-            "toolCalls": [
-                {
-                    "name": "tv_dashboard_copilot",
-                    "arguments": {
-                        "mode": "preview",
-                        "ops": [{"op": "addSlide"}],
-                        "confirmationPolicy": "confirm",
-                    },
-                    "metadata": {"ok": True},
-                }
-            ],
-        }
-    ]
-    assert (
-        ChatTvDashboardCopilotIntentService.build_apply_tool_call_from_history(previous)
-        is None
-    )
-
-
-def test_enrich_workspace_clears_skill_flag():
-    workspace = ChatTvDashboardCopilotIntentService.enrich_workspace_skills(
+def test_enrich_workspace_clears_legacy_skill_flag():
+    workspace = ChatTvDashboardHandoffService.enrich_workspace(
         {"skills": {"tvDashboardCopilot": True}},
         message="crie um slide",
         host_context={"surface": "tv-dashboard", "playlistId": "p1"},

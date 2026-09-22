@@ -91,11 +91,6 @@ class ChatIntentRouterSupportService:
 
     @staticmethod
     def executed_platform_tool(tool_calls: list | None) -> str | None:
-        """Retorna a tool dona de uma mutação na superfície do host."""
-        for call in tool_calls or []:
-            if not isinstance(call, dict):
-                continue
-            name = str(call.get("name") or call.get("tool") or "").strip().lower()
-            if name.endswith("_copilot"):
-                return name
+        """Retorna tool de superfície host (legado; TV Copilot removido)."""
+        del tool_calls
         return None

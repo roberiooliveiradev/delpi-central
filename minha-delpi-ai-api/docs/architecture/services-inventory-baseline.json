@@ -6568,8 +6568,8 @@
         "largeFile": false
       },
       {
-        "module": "app.domain.services.chat_tv_dashboard_copilot_intent_service",
-        "file": "app/domain/services/chat_tv_dashboard_copilot_intent_service.py",
+        "module": "app.domain.services.chat_tv_dashboard_handoff_service",
+        "file": "app/domain/services/chat_tv_dashboard_handoff_service.py",
         "lines": 564,
         "category": "intent",
         "refs": {

@@ -1393,7 +1393,7 @@ Exemplo no `native_config` (v4):
 
 | Peça | Descrição |
 |---|---|
-| **DataRoutesSidePanel** | Painel lateral aba **Dados** — catálogo + parâmetros da fonte |
+| **Fontes de dados** | Modal catálogo + draft builder (`DataBuilderChatPanel`) |
 | **DataRouteCatalogPanel** (`@delpi/plugin-ui`) | Busca, categorias, badge GET + path |
 | **ChartTypeCatalogPanel** / **TableInsertCatalogPanel** | Inserir `chart_view` / `table_view` |
 | **VisualDataViewInspector** | Conexão `dataSourceId`; onboarding + **Abrir fontes de dados** |

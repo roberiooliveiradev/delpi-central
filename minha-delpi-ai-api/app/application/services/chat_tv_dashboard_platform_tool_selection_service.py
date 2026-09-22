@@ -8,8 +8,8 @@ from typing import Any
 from app.domain.services.chat_host_surface_context_service import (
     ChatHostSurfaceContextService,
 )
-from app.domain.services.chat_tv_dashboard_copilot_intent_service import (
-    ChatTvDashboardCopilotIntentService,
+from app.domain.services.chat_tv_dashboard_handoff_service import (
+    ChatTvDashboardHandoffService,
 )
 
 
@@ -47,7 +47,7 @@ class ChatTvDashboardPlatformToolSelectionService:
         host = workspace.get("tvDashboardHostContext") or workspace.get("hostContext")
         host_dict = host if isinstance(host, dict) else None
 
-        wants_tv = ChatTvDashboardCopilotIntentService.matches(message) or (
+        wants_tv = ChatTvDashboardHandoffService.matches(message) or (
             ChatHostSurfaceContextService.is_tv_mutation_turn(
                 message,
                 host_dict,
@@ -58,6 +58,6 @@ class ChatTvDashboardPlatformToolSelectionService:
             return TvPlatformToolSelectionResult()
 
         return TvPlatformToolSelectionResult(
-            direct_answer=ChatTvDashboardCopilotIntentService.redirect_to_vista_message(),
+            direct_answer=ChatTvDashboardHandoffService.redirect_to_vista_message(),
             platform_direct_answer=True,
         )

@@ -42,7 +42,7 @@ def make_execute_tool_use_case() -> ExecuteToolUseCase:
         "search_knowledge_base": SearchKnowledgeBaseTool(search_knowledge_use_case),
         "web_search": WebSearchTool(),
         "execute_external_action": ExecuteExternalActionTool(execute_external_action_use_case),
-        # tv_dashboard_copilot removed — VISTA gpt-actions owns TV mutations
+        # TV mutation tools removed — VISTA gpt-actions owns TV writes
     }
 
     return ExecuteToolUseCase(

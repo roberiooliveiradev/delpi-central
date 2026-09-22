@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from typing import Any
 
 from app.domain.ports.internal_tool_port import InternalToolPort
 
@@ -58,7 +57,6 @@ class ChatNativeToolSchemaService:
         *,
         allowed_tool_names: list[str] | None,
         tools_registry: dict[str, InternalToolPort],
-        tv_capability_catalog: dict[str, Any] | None = None,
     ) -> list[dict]:
         allowed = {
             str(name).strip()

@@ -139,7 +139,7 @@ Execução SQL no chat comum **não** é permitida via external actions.
 ### Handoff TV Dashboard → VISTA
 
 - **Skill/tool `tv-dashboard-copilot` / `tv_dashboard_copilot`:** removidos do Chat interno.
-- **Comportamento:** frases/markers/surface TV (`tv_dashboard_handoff.json`) geram **direct answer** orientando o especialista **VISTA** (Custom GPT Actions `/gpt-actions/v1` + PresentationMutation). Nunca emite tool call de mutação.
+- **Comportamento:** frases/markers/surface TV (`tv_dashboard_handoff.json` + `ChatTvDashboardHandoffService`) geram **direct answer** orientando o especialista **VISTA** (Custom GPT Actions `/gpt-actions/v1` + PresentationMutation). Nunca emite tool call de mutação.
 - **BFF `/data/copilot/*`:** 410 Gone (legado).
 - **Editor TV:** modal «Fontes de dados» (catálogo + draft actions); mutação tipada no VISTA.
 

@@ -73,11 +73,9 @@ class ChatNativeToolCallingService:
         if not self.is_enabled(agent_context=agent_context) or not provider_supports:
             return {"selections": [], "meta": meta}
 
-        tv_catalog = None
         schemas = self.schema_service.build_openai_tools(
             allowed_tool_names=shortlist,
             tools_registry=tools_registry,
-            tv_capability_catalog=None,
         )
 
         meta["schemaCount"] = len(schemas)

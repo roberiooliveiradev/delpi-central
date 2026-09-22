@@ -1,4 +1,4 @@
-"""Planner canônico do Copiloto TV — capability → ops tipadas + política de execução."""
+"""Planner canônico do PresentationMutation — capability → ops tipadas + política de execução."""
 
 from __future__ import annotations
 

@@ -38,7 +38,7 @@ Power Query M: a [Fase 7](../docs/12-roadmap-e-evolucao/tv-dashboard/FASE-7-STAT
 | **Dados (blocos api-delpi)** | `/data` — catálogo, preview, validação |
 | Dados (legado) | `/data-routes` — alias enriquecido do catálogo |
 
-Assistente conversacional de dados: [`docs/data-builder-chat.md`](./docs/data-builder-chat.md). Catálogo de ops / PresentationMutation: [`docs/presentation-ops-catalog.md`](./docs/presentation-ops-catalog.md). Descoberta NL (legado/catálogo): [`docs/data-route-nl-suggest.md`](./docs/data-route-nl-suggest.md).
+Assistente de fontes (catálogo + draft actions): [`docs/data-builder-chat.md`](./docs/data-builder-chat.md). Catálogo de ops / PresentationMutation: [`docs/presentation-ops-catalog.md`](./docs/presentation-ops-catalog.md). Descoberta NL: [`docs/data-route-nl-suggest.md`](./docs/data-route-nl-suggest.md).
 
 ### API `/data` (admin — JWT + RBAC)
 
@@ -49,14 +49,12 @@ Assistente conversacional de dados: [`docs/data-builder-chat.md`](./docs/data-bu
 | `GET` | `/data/openapi/candidates` | `TV_MANAGE` | Rotas GET da api-delpi (curadoria / diff vs allowlist) |
 | `POST` | `/data/openapi/sync` | `TV_MANAGE` | Reimporta OpenAPI live → regenera `tv_data_routes.json` |
 | `POST` | `/data/preview-block` | `TV_READ` | Preview de bloco isolado (merge filtros + RBAC) |
-| `POST` | `/data/builder/sessions` | `TV_WRITE` | Inicia sessão do assistente conversacional de dados |
-| `POST` | `/data/builder/sessions/{id}/turn` | `TV_WRITE` | Mensagem NL / action → rascunho |
+| `POST` | `/data/builder/sessions` | `TV_WRITE` | Inicia sessão do builder de fontes (catálogo/actions) |
+| `POST` | `/data/builder/sessions/{id}/turn` | `TV_WRITE` | Action tipada → rascunho (`message` NL → 422 `NL_TURN_RETIRED`) |
 | `POST` | `/data/builder/sessions/{id}/preview` | `TV_WRITE` | Prévia tabular do rascunho |
 | `POST` | `/data/builder/sessions/{id}/materialize` | `TV_WRITE` | Payload de `data_source`(+transform) para o slide |
 | `POST` | `/data/builder/sessions/{id}/to-presentation-ops` | `TV_WRITE` | Fachada: rascunho → ops PresentationMutation |
-| `POST` | `/data/copilot/preview-patch` | `TV_WRITE` | Dry-run de patch tipado (+ fingerprint opcional) |
-| `POST` | `/data/copilot/apply-patch` | `TV_WRITE` | Aplica patch + notify (cache/WS); confirmação no chat |
-| `GET` | `/data/copilot/telemetry` | `TV_MANAGE` | Contadores preview/apply |
+| `*` | `/data/copilot/*` | — | **410 Gone** — use VISTA `/gpt-actions/v1` |
 | `POST` | `/data/validate-config` | `TV_READ` | Valida `native_config` antes do save |
 | `POST` | `/data/m/compile` | `TV_READ` | Compila `m-delpi-v1` para `TransformPlan`, sem executar ou buscar dados |
 | `POST` | `/data/m/explain` | `TV_READ` | Plano simplificado, diagnostics e métricas de compile; exige `explainPlanEnabled` |

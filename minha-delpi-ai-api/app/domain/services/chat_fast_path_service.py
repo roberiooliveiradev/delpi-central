@@ -69,11 +69,11 @@ class ChatFastPathService:
         from app.domain.services.chat_host_surface_context_service import (
             ChatHostSurfaceContextService,
         )
-        from app.domain.services.chat_tv_dashboard_copilot_intent_service import (
-            ChatTvDashboardCopilotIntentService,
+        from app.domain.services.chat_tv_dashboard_handoff_service import (
+            ChatTvDashboardHandoffService,
         )
 
-        if ChatTvDashboardCopilotIntentService.matches(text):
+        if ChatTvDashboardHandoffService.matches(text):
             return False
 
         if ChatHostSurfaceContextService.is_tv_mutation_turn(

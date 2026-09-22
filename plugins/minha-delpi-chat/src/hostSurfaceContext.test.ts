@@ -1,9 +1,6 @@
-import { describe, expect, it, beforeEach, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
-import {
-  buildTvDashboardHostContext,
-  notifyHostOfTvCopilotToolCalls,
-} from "./hostSurfaceContext";
+import { buildTvDashboardHostContext } from "./hostSurfaceContext";
 
 describe("buildTvDashboardHostContext", () => {
   it("envia playlist, slide e seleção com resumo de foco", () => {
@@ -74,31 +71,5 @@ describe("buildTvDashboardHostContext", () => {
       },
     ]);
     expect(ctx.hasLocalDraft).toBe(true);
-  });
-});
-
-describe("notifyHostOfTvCopilotToolCalls", () => {
-  it("é no-op — tool TV Copilot removida (handoff VISTA)", () => {
-    const onPreviewPatch = vi.fn();
-    const onApplyPatchResult = vi.fn();
-    (globalThis as { window: { __DELPI_TV_COPILOT_HOST__: unknown } }).window = {
-      __DELPI_TV_COPILOT_HOST__: { onPreviewPatch, onApplyPatchResult },
-    };
-
-    notifyHostOfTvCopilotToolCalls([
-      {
-        name: "tv_dashboard_copilot",
-        arguments: { mode: "preview", ops: [{ op: "upsert_block" }] },
-        metadata: { ok: true },
-      },
-      {
-        name: "tv_dashboard_copilot",
-        arguments: { mode: "apply" },
-        metadata: { ok: true },
-      },
-    ]);
-
-    expect(onPreviewPatch).not.toHaveBeenCalled();
-    expect(onApplyPatchResult).not.toHaveBeenCalled();
   });
 });

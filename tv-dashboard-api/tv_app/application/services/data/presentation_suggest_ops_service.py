@@ -1,4 +1,4 @@
-"""NL → ops tipadas do copiloto TV (determinístico, catálogo-driven; sem LLM no BFF)."""
+"""NL → ops tipadas do PresentationMutation (determinístico, catálogo-driven; sem LLM no BFF)."""
 
 from __future__ import annotations
 

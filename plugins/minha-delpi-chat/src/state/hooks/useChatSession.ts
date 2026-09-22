@@ -56,7 +56,6 @@ import {
   shouldPatchStreamStatusForSources,
   shouldPatchStreamStatusForToolCalls,
 } from "../chatStreamStatusGuards";
-import { notifyHostOfTvCopilotToolCalls } from "../../hostSurfaceContext";
 import type { ChatHostContext } from "../../hostSurfaceContext";
 import { useChatMessagePlayback, type ChatPlaybackPayload } from "./useChatMessagePlayback";
 import { useChatStreaming } from "./useChatStreaming";
@@ -1269,7 +1268,6 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
           }
 
           markStreamProgress();
-          notifyHostOfTvCopilotToolCalls(toolCalls);
           const hasRichPresentation = shouldShowRichPresentation("", toolCalls);
           if (shouldPatchStreamStatusForToolCalls(toolCalls)) {
             const status = hasRichPresentation
@@ -1426,7 +1424,6 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
 
           const finalAnswer = response.answer ?? "";
           const finalToolCalls = response.toolCalls ?? [];
-          notifyHostOfTvCopilotToolCalls(finalToolCalls);
           const turnHandoff: AssistantTurnHandoff = {
             messageId: response.messageId,
             sessionId,

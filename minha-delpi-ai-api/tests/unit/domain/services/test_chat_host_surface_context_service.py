@@ -1,4 +1,4 @@
-"""Host surface TV — detecção e handoff (sem tool tv_dashboard_copilot)."""
+"""Host surface TV — detecção e handoff (sem tool de mutação)."""
 
 from __future__ import annotations
 
@@ -8,18 +8,18 @@ from app.application.services.chat_tv_dashboard_platform_tool_selection_service 
 from app.domain.services.chat_host_surface_context_service import (
     ChatHostSurfaceContextService,
 )
-from app.domain.services.chat_tv_dashboard_copilot_intent_service import (
-    ChatTvDashboardCopilotIntentService,
+from app.domain.services.chat_tv_dashboard_handoff_service import (
+    ChatTvDashboardHandoffService,
 )
 
 
 def test_matches_explicit_tv_phrases():
-    assert ChatTvDashboardCopilotIntentService.matches("crie um slide") is True
-    assert ChatTvDashboardCopilotIntentService.matches_explicit_phrase("monte um slide") is True
+    assert ChatTvDashboardHandoffService.matches("crie um slide") is True
+    assert ChatTvDashboardHandoffService.matches_explicit_phrase("monte um slide") is True
 
 
 def test_normalize_host_context():
-    normalized = ChatTvDashboardCopilotIntentService.normalize_host_context(
+    normalized = ChatTvDashboardHandoffService.normalize_host_context(
         {"surface": "tv-dashboard", "playlistId": "pl-1", "slideId": "sl-1"}
     )
     assert normalized["surface"] == "tv-dashboard"
@@ -64,22 +64,7 @@ def test_build_platform_tool_call_always_none():
                 "skills": {},
                 "hostContext": {"surface": "tv-dashboard"},
             },
-            previous_messages=[
-                {
-                    "role": "assistant",
-                    "toolCalls": [
-                        {
-                            "name": "tv_dashboard_copilot",
-                            "arguments": {
-                                "mode": "preview",
-                                "ops": [{"op": "addSlide"}],
-                                "confirmationPolicy": "confirm",
-                            },
-                            "metadata": {"ok": True},
-                        }
-                    ],
-                }
-            ],
+            previous_messages=[],
         )
         is None
     )

@@ -1,18 +1,16 @@
 """Contexto implícito de host embutido (ambient surface).
 
-Padrão de mercado (VS Code Copilot / Agent Host, Notion AI, Figma):
-o host declara surface + bindings; o modelo recebe isso em todo turno
+O host declara surface + bindings; o modelo recebe isso em todo turno
 sem o usuário repetir «estou no TV Dashboard».
 
-Módulo canônico — não duplicar surface/skill/hostContext em use cases ou MFE.
+Módulo canônico — não duplicar surface/hostContext em use cases ou MFE.
 """
 
 from __future__ import annotations
 
-from app.domain.services.chat_tv_dashboard_copilot_intent_service import (
-    TV_DASHBOARD_COPILOT_SKILL_FLAG,
+from app.domain.services.chat_tv_dashboard_handoff_service import (
     TV_DASHBOARD_SURFACE,
-    ChatTvDashboardCopilotIntentService,
+    ChatTvDashboardHandoffService,
 )
 
 # Categorias de redação explícita que permanecem text_task mesmo no surface TV.
@@ -43,31 +41,23 @@ _LINGUISTIC_TEXT_CATEGORIES = frozenset(
 
 
 class ChatHostSurfaceContextService:
-    """Contrato ambient: hostContext → skills, prompt, exclusão de text_task."""
+    """Contrato ambient: hostContext → prompt, exclusão de text_task, handoff TV."""
 
     SURFACE_TV_DASHBOARD = TV_DASHBOARD_SURFACE
 
     @classmethod
-    def normalize(cls, host_context: dict | None) -> dict | None:
-        return ChatTvDashboardCopilotIntentService.normalize_host_context(host_context)
-
-    @classmethod
-    def surface_of(cls, host_context: dict | None) -> str | None:
-        normalized = cls.normalize(host_context)
-        if not normalized:
-            return None
-        surface = str(normalized.get("surface") or "").strip()
-        return surface or None
-
-    @classmethod
-    def is_tv_dashboard(cls, host_context: dict | None) -> bool:
-        return ChatTvDashboardCopilotIntentService.is_tv_surface(host_context)
+    def normalize_host_context(cls, host_context: dict | None) -> dict | None:
+        return ChatTvDashboardHandoffService.normalize_host_context(host_context)
 
     @classmethod
     def host_from_workspace(cls, workspace_context: dict | None) -> dict | None:
         workspace = workspace_context if isinstance(workspace_context, dict) else {}
         host = workspace.get("tvDashboardHostContext") or workspace.get("hostContext")
         return host if isinstance(host, dict) else None
+
+    @classmethod
+    def is_tv_dashboard(cls, host_context: dict | None) -> bool:
+        return ChatTvDashboardHandoffService.is_tv_surface(host_context)
 
     @classmethod
     def enrich_workspace(
@@ -77,8 +67,8 @@ class ChatHostSurfaceContextService:
         message: str | None,
         host_context: dict | None = None,
     ) -> dict:
-        """Ativa capabilities do surface e grava hostContext no workspace do turno."""
-        return ChatTvDashboardCopilotIntentService.enrich_workspace_skills(
+        """Grava hostContext no workspace do turno (handoff-only)."""
+        return ChatTvDashboardHandoffService.enrich_workspace(
             workspace_context,
             message=message,
             host_context=host_context,
@@ -91,19 +81,11 @@ class ChatHostSurfaceContextService:
         *,
         message: str | None = None,
     ) -> bool:
-        """Tools internas de surface no chat comum (sem agente OpenAPI).
-
-        Pedidos TV no chat comum ativam handoff VISTA (direct answer), não tool.
-        """
+        """Pedidos TV no chat comum ativam handoff VISTA (direct answer), não tool."""
         workspace = workspace_context if isinstance(workspace_context, dict) else {}
-        skills = workspace.get("skills") if isinstance(workspace.get("skills"), dict) else {}
-        if skills.get(TV_DASHBOARD_COPILOT_SKILL_FLAG):
-            return True
-
         if cls.is_tv_dashboard(cls.host_from_workspace(workspace)):
             return True
-
-        return bool(message and ChatTvDashboardCopilotIntentService.matches(message))
+        return bool(message and ChatTvDashboardHandoffService.matches(message))
 
     @classmethod
     def build_prompt_addon(
@@ -112,18 +94,12 @@ class ChatHostSurfaceContextService:
         *,
         catalog: dict | None = None,
     ) -> str:
+        del catalog
         workspace = workspace_context if isinstance(workspace_context, dict) else {}
         host = cls.host_from_workspace(workspace)
-        catalog_doc = catalog
-        if catalog_doc is None and isinstance(workspace.get("tvDashboardCatalog"), dict):
-            catalog_doc = workspace.get("tvDashboardCatalog")
-        if not host and not (workspace.get("skills") or {}).get(TV_DASHBOARD_COPILOT_SKILL_FLAG):
-            if not catalog_doc:
-                return ""
-        return ChatTvDashboardCopilotIntentService.build_host_prompt_section(
-            host,
-            catalog=catalog_doc,
-        )
+        if not host:
+            return ""
+        return ChatTvDashboardHandoffService.build_host_prompt_section(host)
 
     @classmethod
     def suppresses_pure_text_task(
@@ -133,12 +109,8 @@ class ChatHostSurfaceContextService:
         host_context: dict | None = None,
         category: str | None = None,
     ) -> bool:
-        """No surface TV, imperativos de criação vão para tools — não para o especialista textual.
-
-        O usuário já está no editor; «crie um slide» não é redação. E-mail/correção
-        explícitos continuam text_task.
-        """
-        if ChatTvDashboardCopilotIntentService.matches(message):
+        """No surface TV, imperativos de criação vão para handoff — não especialista textual."""
+        if ChatTvDashboardHandoffService.matches(message):
             return True
 
         if not cls.is_tv_dashboard(host_context):
@@ -147,17 +119,13 @@ class ChatHostSurfaceContextService:
         if category and category in _LINGUISTIC_TEXT_CATEGORIES:
             return False
 
-        # Ambient: no TV, «crie/monte/gere/adicione…» sem documento linguístico → copiloto.
         if category == "write":
             return True
 
-        if ChatTvDashboardCopilotIntentService.is_tv_mutation_turn(
-            message,
-            host_context,
-        ):
+        if ChatTvDashboardHandoffService.is_tv_mutation_turn(message, host_context):
             return True
 
-        return ChatTvDashboardCopilotIntentService.matches(message)
+        return ChatTvDashboardHandoffService.matches(message)
 
     @classmethod
     def is_tv_mutation_turn(
@@ -171,7 +139,7 @@ class ChatHostSurfaceContextService:
         host = host_context
         if host is None and workspace_context is not None:
             host = cls.host_from_workspace(workspace_context)
-        return ChatTvDashboardCopilotIntentService.is_tv_mutation_turn(
+        return ChatTvDashboardHandoffService.is_tv_mutation_turn(
             message,
             host,
             has_suggested_ops=has_suggested_ops,
@@ -195,6 +163,6 @@ class ChatHostSurfaceContextService:
         workspace_context: dict | None = None,
         previous_messages: list | None = None,
     ) -> dict | None:
-        """Tool TV Copilot removida — nunca mintar platform tool call."""
+        """Tool TV removida — nunca mintar platform tool call."""
         del message, workspace_context, previous_messages
         return None

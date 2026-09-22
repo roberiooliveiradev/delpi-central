@@ -1,8 +1,8 @@
 # Chat embarcado (`EmbeddedChat`)
 
 Superfície exposta por Module Federation (`./EmbeddedChat`) e consumida por hosts que
-embutem o chat dentro da própria tela — hoje o painel **Copiloto IA** do TV Dashboard
-(`plugins/tv-dashboard/src/components/TvCopilotSidePanel.tsx`).
+embutem o chat dentro da própria tela. O dock **Copiloto TV** foi retirado; o embed
+permanece disponível como remote (hostContext ambient + handoff VISTA no Chat).
 
 ## Princípio
 

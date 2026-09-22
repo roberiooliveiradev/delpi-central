@@ -7,8 +7,6 @@ import { parseChatRoute } from "./navigation/chatRoutes";
 import {
   buildTvDashboardHostContext,
   type ChatHostContext,
-  type TvCopilotPreviewPatchPayload,
-  type TvCopilotSideEffectHint,
 } from "./hostSurfaceContext";
 import { buildEmbeddedSessionScopeKey } from "./embeddedSessionPersistence";
 
@@ -16,22 +14,16 @@ export type TvWorkspaceContext = {
   playlistId?: string | null;
   slideId?: string | null;
   selectedBlockIds?: string[];
-  /** Tipos dos blocos selecionados (resumo do foco). */
   selectedBlockTypes?: string[];
-  /** Primeiro bloco em foco. */
   focusBlockId?: string | null;
   focusBlockType?: string | null;
-  /** operationId da fonte em foco / primeira fonte do slide. */
   operationId?: string | null;
-  /** Id do bloco data_source em foco. */
   dataSourceId?: string | null;
   selectedDataSourceId?: string | null;
   selectedVisualId?: string | null;
   dataSources?: Array<{ id: string; operationId: string; label: string }>;
   hasLocalDraft?: boolean;
-  /** Preset do slide, quando o host souber. */
   presetKey?: string | null;
-  /** Resumo do native_config sem resolved — só metadados. */
   nativeConfigSummary?: {
     blockCount?: number;
     dataSourceOperationIds?: string[];
@@ -39,17 +31,8 @@ export type TvWorkspaceContext = {
 };
 
 export type EmbeddedChatHostCallbacks = {
-  /** Persiste drafts do host antes de o chat planejar/executar uma mutação. */
+  /** Persiste drafts do host antes de ações sensíveis no chat embutido. */
   flushBeforeMutation?: () => Promise<void>;
-  /** Preview do patch aplicado ao draft local do editor (sem persistir). */
-  onPreviewPatch?: (payload: TvCopilotPreviewPatchPayload) => void;
-  onApplyPatchResult?: (payload: {
-    ok: boolean;
-    persisted?: boolean;
-    target?: { playlistId?: string | null; slideId?: string | null };
-    sideEffectHints?: TvCopilotSideEffectHint[] | null;
-    sideEffects?: Record<string, unknown> | null;
-  }) => void;
 };
 
 export type EmbeddedChatProps = {
@@ -60,16 +43,12 @@ export type EmbeddedChatProps = {
   hostCallbacks?: EmbeddedChatHostCallbacks;
   className?: string;
   style?: CSSProperties;
-  /** Pathname interno do chat (default home). */
   pathname?: string;
 };
 
 /**
- * Remote parcial MF para hosts (TV Dashboard): chat sem shell admin completo.
- * Inteligência continua na minha-delpi-ai-api; host só injeta contexto e callbacks.
- *
- * Contexto ambient: surface + playlist/slide + seleção vão em todo send/stream via hostContext —
- * o usuário não precisa lembrar o chat de que está no TV Dashboard.
+ * Remote parcial MF para hosts: chat sem shell admin completo.
+ * Mutação TV fica no especialista VISTA; o embed só injeta hostContext ambient.
  */
 export function EmbeddedChat({
   getAccessToken,
@@ -96,21 +75,6 @@ export function EmbeddedChat({
     setChatNavigationHostMode("embedded");
     return () => setChatNavigationHostMode("portal");
   }, []);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const win = window as unknown as {
-      __DELPI_TV_COPILOT_HOST__?: EmbeddedChatHostCallbacks;
-    };
-    if (hostCallbacks) {
-      win.__DELPI_TV_COPILOT_HOST__ = hostCallbacks;
-    }
-    return () => {
-      if (win.__DELPI_TV_COPILOT_HOST__ === hostCallbacks) {
-        delete win.__DELPI_TV_COPILOT_HOST__;
-      }
-    };
-  }, [hostCallbacks]);
 
   const hostContext = useMemo<ChatHostContext>(
     () =>

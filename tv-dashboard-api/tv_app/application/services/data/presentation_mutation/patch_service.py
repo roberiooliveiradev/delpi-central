@@ -100,7 +100,7 @@ def _find_block(blocks: list[dict[str, Any]], block_id: str) -> dict[str, Any] |
 
 
 def _with_block_defaults(block: dict[str, Any]) -> dict[str, Any]:
-    """Bloco novo do copiloto ganha frame/style do catálogo.
+    """Bloco novo da PresentationMutation ganha frame/style do catálogo.
 
     O editor e o viewer leem ``block.frame.w``: sem geometria o bloco existe no
     native_config mas não aparece no slide — o usuário lê isso como «não criou».
@@ -933,11 +933,11 @@ class PresentationPatchService:
             UUID(playlist_id),
             payload,
             actor_user_id=actor_user_id,
-            reason="copilot_blank_slide",
+            reason="presentation_blank_slide",
         )
         notify_presentation_changed(
             playlist_id=playlist_id,
-            reason="copilot_blank_slide",
+            reason="presentation_blank_slide",
         )
         return slide
 
@@ -969,13 +969,13 @@ class PresentationPatchService:
                 UUID(slide_id),
                 payload,
                 actor_user_id=actor_user_id,
-                reason="copilot_update_slide",
+                reason="presentation_update_slide",
             )
         except (SlideNotFoundError, ValueError) as exc:
             raise PresentationPatchError(PresentationOpsContentService.message("slideNotFound")) from exc
         notify_presentation_changed(
             playlist_id=playlist_id,
-            reason="copilot_update_slide",
+            reason="presentation_update_slide",
         )
         return slide
 
@@ -1012,11 +1012,11 @@ class PresentationPatchService:
             UUID(playlist_id),
             normalized,
             actor_user_id=actor_user_id,
-            reason="copilot_reorder_slides",
+            reason="presentation_reorder_slides",
         )
         notify_presentation_changed(
             playlist_id=playlist_id,
-            reason="copilot_reorder_slides",
+            reason="presentation_reorder_slides",
         )
         return {"items": normalized, "slides": slides}
 
@@ -1037,13 +1037,13 @@ class PresentationPatchService:
                 UUID(playlist_id),
                 UUID(slide_id),
                 actor_user_id=actor_user_id,
-                reason="copilot_delete_slide",
+                reason="presentation_delete_slide",
             )
         except (SlideNotFoundError, ValueError) as exc:
             raise PresentationPatchError(PresentationOpsContentService.message("slideNotFound")) from exc
         notify_presentation_changed(
             playlist_id=playlist_id,
-            reason="copilot_delete_slide",
+            reason="presentation_delete_slide",
         )
         return {"id": slide_id, "deleted": True}
 
@@ -1075,14 +1075,14 @@ class PresentationPatchService:
                     UUID(section_id),
                     {"name": name},
                     actor_user_id=actor_user_id,
-                    reason="copilot_upsert_section",
+                    reason="presentation_upsert_section",
                 )
             else:
                 section = self._repo.add_section(
                     UUID(playlist_id),
                     {"name": name},
                     actor_user_id=actor_user_id,
-                    reason="copilot_upsert_section",
+                    reason="presentation_upsert_section",
                 )
         except (SectionNotFoundError, ValueError) as exc:
             raise PresentationPatchError(
@@ -1090,7 +1090,7 @@ class PresentationPatchService:
             ) from exc
         notify_presentation_changed(
             playlist_id=playlist_id,
-            reason="copilot_upsert_section",
+            reason="presentation_upsert_section",
         )
         return section
 
@@ -1114,7 +1114,7 @@ class PresentationPatchService:
                 UUID(playlist_id),
                 UUID(section_id),
                 actor_user_id=actor_user_id,
-                reason="copilot_delete_section",
+                reason="presentation_delete_section",
             )
         except SectionNotFoundError as exc:
             raise PresentationPatchError(
@@ -1130,7 +1130,7 @@ class PresentationPatchService:
             ) from exc
         notify_presentation_changed(
             playlist_id=playlist_id,
-            reason="copilot_delete_section",
+            reason="presentation_delete_section",
         )
         return {"id": section_id, "deleted": True}
 
@@ -1160,13 +1160,13 @@ class PresentationPatchService:
                 UUID(slide_id),
                 payload,
                 actor_user_id=actor_user_id,
-                reason="copilot_move_slide_section",
+                reason="presentation_move_slide_section",
             )
         except (SlideNotFoundError, ValueError) as exc:
             raise PresentationPatchError(PresentationOpsContentService.message("slideNotFound")) from exc
         notify_presentation_changed(
             playlist_id=playlist_id,
-            reason="copilot_move_slide_section",
+            reason="presentation_move_slide_section",
         )
         return slide
 
@@ -1214,11 +1214,11 @@ class PresentationPatchService:
             UUID(playlist_id),
             payload,
             actor_user_id=actor_user_id,
-            reason="copilot_slide_from_preset",
+            reason="presentation_slide_from_preset",
         )
         notify_presentation_changed(
             playlist_id=playlist_id,
-            reason="copilot_slide_from_preset",
+            reason="presentation_slide_from_preset",
         )
         return slide
 
@@ -1249,7 +1249,7 @@ class PresentationPatchService:
         )
         notify_presentation_changed(
             playlist_id=str(playlist.get("id") or ""),
-            reason="copilot_playlist_created",
+            reason="presentation_playlist_created",
         )
         seed_presets = op.get("seedPresetKeys")
         seeded: list[dict[str, Any]] = []
@@ -1264,7 +1264,7 @@ class PresentationPatchService:
                         UUID(str(playlist["id"])),
                         payload,
                         actor_user_id=actor_user_id,
-                        reason="copilot_playlist_seed",
+                        reason="presentation_playlist_seed",
                     )
                     seeded.append({"id": slide.get("id"), "presetKey": key_s})
                 except SlidePresetNotFoundError:
@@ -1272,7 +1272,7 @@ class PresentationPatchService:
             if seeded:
                 notify_presentation_changed(
                     playlist_id=str(playlist["id"]),
-                    reason="copilot_playlist_seed",
+                    reason="presentation_playlist_seed",
                 )
         playlist["seededSlides"] = seeded
         return playlist

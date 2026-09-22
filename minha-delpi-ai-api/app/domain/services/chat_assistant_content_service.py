@@ -15,11 +15,11 @@ def invalidate_assistant_content_cache(bundle: str | None = None) -> None:
         ChatAssistantContentService._port.invalidate_cache(bundle)
 
         try:
-            from app.domain.services.chat_tv_dashboard_copilot_intent_service import (
-                ChatTvDashboardCopilotIntentService,
+            from app.domain.services.chat_tv_dashboard_handoff_service import (
+                ChatTvDashboardHandoffService,
             )
 
-            ChatTvDashboardCopilotIntentService._normalized_phrases.cache_clear()
+            ChatTvDashboardHandoffService._normalized_phrases.cache_clear()
         except Exception:
             pass
 

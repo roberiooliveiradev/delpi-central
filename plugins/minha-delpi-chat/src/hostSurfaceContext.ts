@@ -131,31 +131,3 @@ function normalizeStringList(value: unknown): string[] {
   }
   return out;
 }
-
-export type TvCopilotSideEffectHint =
-  | "replaceNativeConfig"
-  | "refreshFilmstrip"
-  | "removeBlockIds"
-  | string;
-
-export type TvCopilotPreviewPatchPayload = {
-  nativeConfig?: Record<string, unknown> | null;
-  diff?: Record<string, unknown> | null;
-  ops?: unknown[];
-  sideEffects?: Record<string, unknown> | null;
-  sideEffectHints?: TvCopilotSideEffectHint[] | null;
-};
-
-/**
- * Legado: tool `tv_dashboard_copilot` removida — handoff VISTA no Chat.
- * Mantido como no-op para não quebrar callers do embed.
- */
-export function notifyHostOfTvCopilotToolCalls(
-  toolCalls: Array<{
-    name?: string;
-    arguments?: Record<string, unknown> | null;
-    metadata?: Record<string, unknown> | null;
-  }>,
-): void {
-  void toolCalls;
-}

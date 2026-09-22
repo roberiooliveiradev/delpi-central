@@ -13,8 +13,8 @@ export const PRESENTATION_SYNC_FOCUS_SLIDE_REASONS = Object.freeze(
     "slide_created",
     "slide_imported",
     "slide_duplicated",
-    "copilot_blank_slide",
-    "copilot_slide_from_preset",
+    "presentation_blank_slide",
+    "presentation_slide_from_preset",
   ]),
 );
 

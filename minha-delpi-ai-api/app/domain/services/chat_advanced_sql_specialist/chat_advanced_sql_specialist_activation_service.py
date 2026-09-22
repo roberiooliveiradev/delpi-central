@@ -103,8 +103,8 @@ class ChatAdvancedSqlSpecialistActivationService:
         from app.domain.services.chat_host_surface_context_service import (
             ChatHostSurfaceContextService,
         )
-        from app.domain.services.chat_tv_dashboard_copilot_intent_service import (
-            ChatTvDashboardCopilotIntentService,
+        from app.domain.services.chat_tv_dashboard_handoff_service import (
+            ChatTvDashboardHandoffService,
         )
 
         workspace = workspace_context if isinstance(workspace_context, dict) else {}
@@ -119,7 +119,7 @@ class ChatAdvancedSqlSpecialistActivationService:
             return True
         # Fora do surface TV: só frases explícitas (slide/playlist). Markers fracos
         # (ex.: monte + tabela) são SQL authoring comum e não devem sequestrar.
-        if ChatTvDashboardCopilotIntentService.matches_explicit_phrase(message):
+        if ChatTvDashboardHandoffService.matches_explicit_phrase(message):
             return True
         return False
 

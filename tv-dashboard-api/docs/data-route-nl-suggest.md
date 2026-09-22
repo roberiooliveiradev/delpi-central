@@ -7,17 +7,17 @@ Permitir que o usuário descreva o dado em linguagem natural (modal **Fontes de 
 ## Fluxo
 
 ```text
-MFE (DataRoutesSidePanel) ──┐
-                            ├→ TvDataRouteSuggestService
-GPT gpt_search_data_routes ─┘         ↓
-                            TvDataRouteDiscoveryService
-                                      ↓
-                            tv_data_routes.json (allowlist)
+MFE (Fontes de dados / POST /data/routes/suggest) ──┐
+                                                   ├→ TvDataRouteSuggestService
+GPT gpt_search_data_routes ────────────────────────┘         ↓
+                                                   TvDataRouteDiscoveryService
+                                                             ↓
+                                                   tv_data_routes.json (allowlist)
 ```
 
 - Ranking lexical/category/path/label/`whenToUse` **owner-local** em `tv-dashboard-api`.
-- Chat AI **não** é autoridade do suggest TV (`suggest_operational_routes` removido deste path).
-- `suggest_operational_params` do AI client permanece só para builder de params (fora do discovery).
+- Chat AI **não** é autoridade do suggest TV.
+- Client S2S `suggest_operational_params` / `MinhaDelpiAiClient` **removidos** (builder é action-only).
 
 ## Contratos
 
@@ -27,7 +27,8 @@ GPT gpt_search_data_routes ─┘         ↓
 | GPT Action | `GET …/gpt-actions/data-routes?query=` | OAuth user + `TV_READ` |
 | MFE catálogo completo | `GET /data/routes` | JWT — **não** é superfície GPT |
 
-Body suggest: `{ "query": string, "limit"?: 1–20, "category"?: string }`  
+Body suggest: `{ "query": string, "limit"?: 1–20, "category"?: string }`
+
 Resposta: `{ suggestions: [rota + reason + score], query, total, searchMissDoesNotProveAbsence }`
 
 GPT search: `query` **obrigatória** (422 se vazia); `limit` default 8 max 20; DTO compacto com `paramSchema`; envelope `searchMissDoesNotProveAbsence`.
