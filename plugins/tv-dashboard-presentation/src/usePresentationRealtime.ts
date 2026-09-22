@@ -269,6 +269,11 @@ export function buildAdminPresentationWsUrl(playlistId: string, accessToken: str
   return `${base}?access_token=${encodeURIComponent(accessToken)}`;
 }
 
+export function buildPlaylistLibraryWsUrl(accessToken: string): string {
+  const base = buildPresentationWsUrl(`/apps/tv-dashboard-api/playlists/library-ws`);
+  return `${base}?access_token=${encodeURIComponent(accessToken)}`;
+}
+
 
 /** Rota do plugin Painéis TV no portal (presença só vale enquanto estiver aqui). */
 export function isTvDashboardPortalPath(pathname: string): boolean {
@@ -382,7 +387,7 @@ export function usePresentationRealtime({
         try {
           const payload = parsePresentationRealtimeEvent(JSON.parse(String(event.data)));
           if (!payload) return;
-          if (payload.type === "presentation_updated") {
+          if (payload.type === "presentation_updated" || payload.type === "playlist_library_updated") {
             schedulePresentationUpdated(payload);
           }
           if (payload.type === "slide_draft") {

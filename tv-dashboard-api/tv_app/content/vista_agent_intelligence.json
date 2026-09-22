@@ -1,5 +1,5 @@
 {
-  "version": "2026.09.22.7",
+  "version": "2026.09.22.8",
   "owner": "tv-dashboard-api",
   "source": "capability_surface.agent_directives via gpt_get_catalog",
   "object_resolution": {
@@ -7,6 +7,7 @@
     "summary": "Antes de criar, resolver o objeto que o usuário já referenciou. Alteração ≠ novo objeto. Referente multi-turn = último slide/bloco INFORMED.",
     "rules": [
       "Pedido de alteração (trocar, mudar, ajustar, atualizar, renomear, fundo/cor/estilo, duração, ordem) → preferir ops de mutação no objeto já identificado; NÃO create_playlist / add_blank_slide / novo upsert_block sem id existente.",
+      "EDITOR_FOCUS: se gpt_list_playlists/gpt_get_playlist_context retornar editorFocus fresco (stale=false) → playlistId/slideId/selectedIds = INFORMED para dêixis ('este', 'o selecionado', 'nessa tela'). Preferir ao inventário quando presente. Foco ausente/stale → PLAYLIST_CLARIFICATION / pergunta; nunca inventar UUID de foco expirado.",
       "Resolver target a partir de: (1) IDs INFORMADOS na conversa ou Actions anteriores; (2) gpt_list_playlists / gpt_get_playlist_context; (3) nome/título coincidente no contexto vivo. Nunca inventar UUID.",
       "Pronomes e dêixis ('este slide', 'essa playlist', 'o fundo', 'o bloco', 'ele', 'esse', 'o gráfico', 'o kpi', 'a tabela') → vincular ao último recurso OBSERVED/INFORMED do mesmo tipo. Se ambíguo: UMA pergunta ou listar candidatos das Actions READ — não criar outro.",
       "PLAYLIST_CLARIFICATION: gpt_list_playlists quando playlistId unknown. Se 0 playlists → create_playlist só com pedido explícito. Se exatamente 1 → usar. Se >1 e o usuário NÃO nomeou playlist → UMA pergunta com nomes (não escolher silenciosamente). Se nomeou/INFORMED → resolver e seguir.",
@@ -148,13 +149,13 @@
     "principle": "READY_COMPOUND_SLIDE",
     "summary": "Pedido complexo → um lote compound: playlist clarificada + rotas + params vivos + merge tipado + visuals com projeção/formato + recipe Delpi (KPI/chart/table/texto/forma).",
     "pipeline": [
-      "1) gpt_get_catalog → obedecer agent_directives (compound_slide, write_quality, presentation_recipes, display_format, playlist_curation).",
+      "7) presentation_recipes Delpi (TV_KPI_HERO / TV_KPI_ROW_2/3 / TV_KPI_GRID_4 / TV_KPI_PLUS_CHART / TV_KPI_SERIES_TABLE / TV_HERO_PLUS_TABLE / TV_TABLE_FOCUS / THEME_DELPI) + chrome tipado + designTokens.",
       "2) PLAYLIST_CLARIFICATION (list; perguntar se >1 sem nome).",
       "3) gpt_search_data_routes (PRESENT_ALL_SEARCH_HITS) → escolher família KPI/série/tabela.",
       "4) gpt_preview_data_block com params (dateRangePreset=this_month padrão se date_range fechada) — deve retornar dado OK.",
       "5) upsert_data_source (N fontes, params completos + branch herdado) + set_data_transform merge via joinHints quando 2+ fontes.",
       "6) add_*_from_route OU upsert_block visual + bind_visual — SEMPRE projection NÃO vazia + formato (auto ou upsert).",
-      "7) presentation_recipes Delpi (TV_KPI_HERO / TV_KPI_PLUS_CHART / TV_KPI_SERIES_TABLE / TV_TABLE_FOCUS / THEME_DELPI) + chrome tipado em todos os blocos.",
+      "7) presentation_recipes Delpi (TV_KPI_HERO / TV_KPI_ROW_2/3 / TV_KPI_GRID_4 / TV_KPI_PLUS_CHART / TV_KPI_SERIES_TABLE / TV_HERO_PLUS_TABLE / TV_TABLE_FOCUS / THEME_DELPI) + chrome tipado + designTokens.",
       "8) Uma gpt_preview_change compound + commit_now=true; só aceitar VERIFIED sem erro de filtro/projection."
     ],
     "forbidden": [
@@ -186,7 +187,9 @@
       "Multi-indicador (KPI+série+tabela) → TV_KPI_SERIES_TABLE.",
       "Hierarquia: título → KPI → chart/tabela; contraste kiosk; frames proporcionais por tipo.",
       "fontFamily preferir Inter, system-ui, sans-serif.",
-      "Imagem só com assetId já existente neste HEAD."
+      "Imagem só com assetId já existente neste HEAD.",
+      "Multi-KPI sem recipe → TV_KPI_ROW_2/3 ou TV_KPI_GRID_4 conforme contagem.",
+      "designTokens do catalog são obrigatórios para densidade/tipografia/gutter."
     ],
     "forbidden": [
       "customFonts upload",
@@ -221,14 +224,20 @@
     "VISUAL_PARITY": "Print/anexo de referência → reproduzir slide com paridade via ops tipadas (screenshot_parity).",
     "DATA_INTERPRETATION": "Entender/explicar dados sem gravar até pedido explícito.",
     "PLAYLIST_CURATION": "Ordem, duração, slides, kiosk/TV — preferir update/reorder/move no existente (playlist_curation).",
-    "COMPOUND_READY_SLIDE": "Pedido complexo de slide pronto — seguir compound_slide.pipeline + write_quality."
+    "COMPOUND_READY_SLIDE": "Pedido complexo de slide pronto — seguir compound_slide.pipeline + write_quality.",
+    "DESIGN_REFINE": "Ajuste visual tipado (alinhamento, tema, tipografia, densidade) no slide/seleção resolvidos — preferir recipe/tokens + editorFocus; não reinventar layout freeform."
   },
   "write_flow": {
     "skip_suggest_when_typable": true,
     "additive": "Uma gpt_preview_change com lote tipado + commit_now=true + confirmation.confirmed=true + Idempotency-Key. Pedido do usuário = confirmação — não perguntar Confirma?.",
     "destructive": "gpt_preview_change sem commit_now → plano → uma Confirma? → gpt_commit_change com proposal_handle opaco exato.",
     "compound": "LOTE COMPLETO numa preview; PlanCompiler ordena; as/playlistRef/slideRef quando vários recursos; sem inventar UUID. Após bind/composite, proyección+formato obrigatórios. VERIFIED só com write_quality.",
-    "forbidden_handles": ["latest", "current", "null", "new"]
+    "forbidden_handles": [
+      "latest",
+      "current",
+      "null",
+      "new"
+    ]
   },
   "anti_patterns": [
     "Dizer que não consegue gravar / só orientar / faça no editor quando Actions existirem.",
@@ -248,10 +257,40 @@
     "Persistir fonte date_range com params {} / entregar slide com 'Informe o período'.",
     "Declarar VERIFIED/sucesso com resolved.error ou projection vazia no visual de dados.",
     "Emitir steps transform com {{placeholders}} não resolvidos.",
-    "Inventar filial/branch sem playlistDefaults ou INFORMED."
+    "Inventar filial/branch sem playlistDefaults ou INFORMED.",
+    "Ignorar editorFocus fresco e criar outra playlist/slide para 'este'.",
+    "Empilhar vários KPIs no mesmo frame default sem recipe ROW/GRID.",
+    "Declarar VERIFIED com slide_layout_quality (overlap/overflow/densidade)."
   ],
   "auth_errors": {
     "401": "AuthN — pedir reconexão OAuth DELPI / permitir Action.",
     "403": "AuthZ — usuário sem permissão; não inventar bypass."
+  },
+  "editor_focus": {
+    "principle": "PREFER_LIVE_EDITOR_FOCUS",
+    "summary": "Snapshot efêmero do editor (playlist/slide/seleção) via READ Actions. Não é Postgres nem Intent Frame.",
+    "rules": [
+      "Ler editorFocus em gpt_list_playlists (qual playlist) e gpt_get_playlist_context (slide/seleção).",
+      "Só o usuário autenticado vê o próprio foco; TTL ~90s.",
+      "Mutações em 'este bloco' → upsert_block/patch com blockId de selectedIds quando length>=1.",
+      "Sem foco → fluxo object_resolution clássico."
+    ]
+  },
+  "slide_design": {
+    "principle": "TYPED_LAYOUT_BEFORE_FREEFORM",
+    "summary": "Layout TV: recipes/tokens Delpi antes de inventar frames. Gate slide_layout_quality no VERIFY.",
+    "rules": [
+      "Pedido operacional → THEME_DELPI + recipe (TV_KPI_HERO / ROW_2/3 / GRID_4 / SERIES_TABLE / HERO_PLUS_TABLE / TITLE_STRIP).",
+      "Dois/três/quatro KPIs → TV_KPI_ROW_* / TV_KPI_GRID_4 — não empilhar no mesmo frame.",
+      "Obedecer designTokens do catalog (safeMargin, gutter, typeScale, maxPrimarySignalsPerSlide=4).",
+      "Após write: se OUTCOME_NOT_VERIFIED reason=slide_layout_quality → corrigir overlap/overflow/densidade/contraste.",
+      "fontFamily só do allowlist; contraste kiosk (texto claro em fundo Delpi)."
+    ],
+    "forbidden": [
+      "Frame widescreen único cobrindo o slide de dados",
+      "Mais de 4 KPIs primários no mesmo slide",
+      "Tipografia/cores aleatórias fora dos tokens/recipes",
+      "Ignorar editorFocus fresco para alterar 'este' bloco"
+    ]
   }
 }

@@ -14,6 +14,7 @@ import {
   updatePlaylist,
   type Playlist,
 } from "../api/tvDashboardApi";
+import { getAccessToken } from "../api/httpClient";
 import { DeckImportModal } from "../components/DeckImportModal";
 import { PlaylistHomeContextMenu } from "../components/PlaylistHomeContextMenu";
 import { PlaylistHomeThumb } from "../components/PlaylistHomeThumb";
@@ -21,6 +22,7 @@ import { PlaylistRenameDialog } from "../components/PlaylistRenameDialog";
 import { TvDashboardScreenLoading } from "../components/TvDashboardScreenLoading";
 import { TvPreviewDetailCard } from "../components/TvPreviewDetailCard";
 import { useConfirm } from "../context/ConfirmDialogProvider";
+import { usePlaylistLibrarySync } from "../hooks/usePlaylistLibrarySync";
 import { TvLibraryPageLayout } from "../layout/TvLibraryPageLayout";
 import { TvFilterBarShell, TvNavigationCard, TvPageHeader } from "../layout/tvUi";
 import { tvDashboardNotice } from "../utils/tvDashboardNotice";
@@ -96,21 +98,35 @@ export function PlaylistsPage({
   const [renameTarget, setRenameTarget] = useState<Playlist | null>(null);
   const [renameBusy, setRenameBusy] = useState(false);
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const load = useCallback(async (opts?: { soft?: boolean }) => {
+    const soft = Boolean(opts?.soft);
+    if (!soft) {
+      setLoading(true);
+    }
     setError(null);
     try {
       setItems(await listPlaylists());
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao carregar programações.");
     } finally {
-      setLoading(false);
+      if (!soft) {
+        setLoading(false);
+      }
     }
   }, []);
 
   useEffect(() => {
     void load();
   }, [load]);
+
+  const accessToken = getAccessToken();
+  usePlaylistLibrarySync({
+    accessToken,
+    enabled: Boolean(accessToken),
+    onLibraryUpdated: () => {
+      void load({ soft: true });
+    },
+  });
 
   const patchItem = useCallback((updated: Playlist) => {
     setItems((prev) => prev.map((item) => (item.id === updated.id ? { ...item, ...updated } : item)));

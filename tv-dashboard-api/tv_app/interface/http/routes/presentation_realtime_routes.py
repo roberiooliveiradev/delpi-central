@@ -6,10 +6,14 @@ from fastapi import APIRouter, WebSocket, WebSocketException, status
 
 from delpi_auth.jwt_validator import validate_token
 from tv_app.application.services.playlist_access_service import PlaylistAccessService
-from tv_app.application.services.presentation_realtime_hub import presentation_realtime_hub
+from tv_app.application.services.presentation_realtime_hub import (
+    presentation_realtime_hub,
+    user_library_room_id,
+)
 from tv_app.application.services.presentation_realtime_models import (
     PresentationRealtimeSession,
 )
+from tv_app.core.security import TV_READ, assert_permission
 from tv_app.infrastructure.persistence.repositories.playlist_repository import PlaylistRepository
 
 router = APIRouter(tags=["Presentation Realtime"])
@@ -29,6 +33,15 @@ def _display_name(user: object) -> str:
     parts = [_claim(user, "given_name"), _claim(user, "family_name")]
     joined = " ".join(part for part in parts if part)
     return joined or _claim(user, "preferred_username") or "Editor"
+
+
+def _resolve_token(websocket: WebSocket, access_token: str | None) -> str | None:
+    auth_header = websocket.headers.get("authorization") or websocket.headers.get("Authorization")
+    if auth_header and auth_header.lower().startswith("bearer "):
+        return auth_header.split(" ", 1)[1].strip()
+    if access_token and access_token.strip():
+        return access_token.strip()
+    return None
 
 
 def _resolve_public_playlist(token: str) -> dict | None:
@@ -56,18 +69,44 @@ async def public_presentation_ws(websocket: WebSocket, token: str):
     )
 
 
+@router.websocket("/playlists/library-ws")
+async def playlist_library_ws(
+    websocket: WebSocket,
+    access_token: str | None = None,
+):
+    """User-scoped library home socket (PlaylistsPage). Room: user-library:{userId}."""
+    token = _resolve_token(websocket, access_token)
+    if not token:
+        raise WebSocketException(code=status.WS_1008_POLICY_VIOLATION)
+    try:
+        user = validate_token(token)
+        assert_permission(user, TV_READ)
+    except Exception as exc:  # noqa: BLE001
+        raise WebSocketException(code=status.WS_1008_POLICY_VIOLATION) from exc
+    user_id = _access.actor_id(user)
+    room = user_library_room_id(user_id or "")
+    if not user_id or not room:
+        raise WebSocketException(code=status.WS_1008_POLICY_VIOLATION)
+    await presentation_realtime_hub.connect(
+        websocket,
+        playlist_id=room,
+        session=PresentationRealtimeSession(
+            user_id=user_id,
+            display_name=_display_name(user),
+            role="viewer",
+            can_edit=False,
+            allow_presence=False,
+        ),
+    )
+
+
 @router.websocket("/playlists/{playlist_id}/presentation-ws")
 async def admin_presentation_ws(
     websocket: WebSocket,
     playlist_id: UUID,
     access_token: str | None = None,
 ):
-    auth_header = websocket.headers.get("authorization") or websocket.headers.get("Authorization")
-    token: str | None = None
-    if auth_header and auth_header.lower().startswith("bearer "):
-        token = auth_header.split(" ", 1)[1].strip()
-    elif access_token and access_token.strip():
-        token = access_token.strip()
+    token = _resolve_token(websocket, access_token)
     if not token:
         raise WebSocketException(code=status.WS_1008_POLICY_VIOLATION)
     try:

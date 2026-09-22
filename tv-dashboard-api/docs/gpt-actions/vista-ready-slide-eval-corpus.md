@@ -13,5 +13,9 @@ Corpus estável para regressão de inteligência (sem Action nova). Critério PA
 | C7 | painel do dia / reordene | `playlist_curation` READ + update/reorder; sem playlist inventada |
 | C8 | join duas fontes com branch comum | `joinHints` / `JoinPlanService` → merge tipado |
 | C9 | rota `exposesSiGoal` | directives `si_goals` — meta vs realizado sem inventar números |
+| C10 | dois KPIs no mesmo slide | recipe `TV_KPI_ROW_2`; frames sem overlap |
+| C11 | quatro indicadores em grade | `TV_KPI_GRID_4`; ≤ `maxPrimarySignalsPerSlide` |
+| C12 | negative: overlap / contraste baixo | `OUTCOME_NOT_VERIFIED` `slide_layout_quality` |
+| C13 | mude o bloco selecionado (editor aberto) | `editorFocus.selectedIds` INFORMED; não criar slide novo |
 
-Smoke automatizado parcial: `tests/test_ready_slide_ux.py`.
+Smoke automatizado parcial: `tests/test_ready_slide_ux.py`, `tests/test_slide_layout_quality.py`, `tests/test_editor_focus_store.py`.

@@ -8,7 +8,11 @@ from fastapi.responses import Response
 from pydantic import BaseModel, Field
 
 from tv_app.application.services.playlist_access_service import PlaylistAccessService
-from tv_app.application.services.presentation_change_notifier import notify_presentation_changed
+from tv_app.application.services.presentation_change_notifier import (
+    notify_playlist_library_changed,
+    notify_presentation_changed,
+    resolve_library_recipient_user_ids,
+)
 from tv_app.application.services.presentation_transition_catalog import TRANSITION_STYLE_PATTERN
 from tv_app.application.services.presentation_payload_service import PresentationPayloadService
 from tv_app.application.services.presentation_status_service import build_presentation_status
@@ -92,6 +96,34 @@ def _with_public_url(playlist: dict[str, Any]) -> dict[str, Any]:
     return playlist
 
 
+def _notify_library(
+    playlist: dict[str, Any] | None,
+    *,
+    reason: str,
+    playlist_id: UUID | str | None = None,
+    extra_user_ids: list[str] | None = None,
+) -> None:
+    pid = str(playlist_id or (playlist or {}).get("id") or "").strip()
+    shares: list[dict[str, Any]] = []
+    if pid:
+        try:
+            shares = _repo.list_shares(UUID(pid))
+        except (ValueError, TypeError):
+            shares = []
+    recipients = resolve_library_recipient_user_ids(
+        playlist,
+        extra_user_ids=extra_user_ids,
+        shares=shares,
+    )
+    if not recipients:
+        return
+    notify_playlist_library_changed(
+        user_ids=recipients,
+        reason=reason,
+        playlist_id=pid or None,
+    )
+
+
 @router.get("")
 def list_playlists(request: Request, limit: int = 50, offset: int = 0):
     user = resolve_user(request)
@@ -135,7 +167,9 @@ def create_playlist(request: Request, body: CreatePlaylistBody):
         actor_user_id=created_by,
     )
     playlist["accessRole"] = "owner"
-    return ok(_with_public_url(playlist), message="Programação criada.", status_code=201)
+    _with_public_url(playlist)
+    _notify_library(playlist, reason="created", extra_user_ids=[created_by])
+    return ok(playlist, message="Programação criada.", status_code=201)
 
 
 @router.post("/edit-invites/accept")
@@ -160,6 +194,12 @@ def accept_edit_invite(request: Request, body: RedeemEditInviteBody):
         playlist_name=str((playlist or {}).get("name") or ""),
         role=str(result.get("role") or "editor"),
         actor_user_id=None,
+    )
+    _notify_library(
+        playlist,
+        reason="shared",
+        playlist_id=pl_id_raw,
+        extra_user_ids=[actor],
     )
     return ok(result, message="Acesso concedido.")
 
@@ -203,6 +243,7 @@ def import_deck_apply(request: Request, body: ApplyDeckImportBody):
     except PlaylistNotFoundError:
         return fail(message("playlistNotFound"), 404)
     _with_public_url(playlist)
+    _notify_library(playlist, reason="imported", extra_user_ids=[created_by])
     return ok(
         playlist,
         message=message("deckPackageImported", "Programação importada."),
@@ -285,6 +326,8 @@ def update_playlist(request: Request, playlist_id: UUID, body: UpdatePlaylistBod
         reason="playlist_updated",
         revision=playlist.get("updatedAt"),
     )
+    lib_reason = "renamed" if body.name is not None else "updated"
+    _notify_library(playlist, reason=lib_reason, playlist_id=playlist_id)
     return ok(playlist, message="Programação atualizada.")
 
 
@@ -293,6 +336,9 @@ def delete_playlist(request: Request, playlist_id: UUID):
     guarded = require_playlist_access(request, playlist_id, need="manage")
     if is_access_error(guarded):
         return guarded
+    _, access = guarded
+    snapshot = access.playlist or _repo.get_by_id(playlist_id)
+    shares_before = _repo.list_shares(playlist_id)
     try:
         _repo.delete(playlist_id)
     except PlaylistNotFoundError:
@@ -300,6 +346,15 @@ def delete_playlist(request: Request, playlist_id: UUID):
     notify_presentation_changed(
         playlist_id=str(playlist_id),
         reason="playlist_deleted",
+    )
+    recipients = resolve_library_recipient_user_ids(
+        snapshot,
+        shares=shares_before,
+    )
+    notify_playlist_library_changed(
+        user_ids=recipients,
+        reason="deleted",
+        playlist_id=str(playlist_id),
     )
     return ok(message="Programação excluída.")
 
@@ -327,6 +382,7 @@ def deactivate_playlist(request: Request, playlist_id: UUID):
         reason="playlist_deactivated",
         revision=playlist.get("updatedAt"),
     )
+    _notify_library(playlist, reason="deactivated", playlist_id=playlist_id)
     return ok(playlist, message="Link desativado.")
 
 
@@ -353,6 +409,7 @@ def activate_playlist(request: Request, playlist_id: UUID):
         reason="playlist_activated",
         revision=playlist.get("updatedAt"),
     )
+    _notify_library(playlist, reason="activated", playlist_id=playlist_id)
     return ok(playlist, message="Link reativado.")
 
 
@@ -455,6 +512,7 @@ def duplicate_playlist(request: Request, playlist_id: UUID):
     playlist["slides"] = _repo.list_slides(UUID(playlist["id"]))
     playlist["sections"] = _repo.list_sections(UUID(playlist["id"]))
     playlist["accessRole"] = "owner"
+    _notify_library(playlist, reason="duplicated", extra_user_ids=[created_by])
     return ok(playlist, message="Programação duplicada.", status_code=201)
 
 
@@ -540,6 +598,12 @@ def upsert_share(request: Request, playlist_id: UUID, body: SharePlaylistBody):
         playlist_name=str(playlist.get("name") or ""),
         role=body.role,
         actor_user_id=actor,
+    )
+    _notify_library(
+        playlist,
+        reason="shared",
+        playlist_id=playlist_id,
+        extra_user_ids=[target] + ([actor] if actor else []),
     )
     return ok(share, message="Compartilhamento atualizado.")
 

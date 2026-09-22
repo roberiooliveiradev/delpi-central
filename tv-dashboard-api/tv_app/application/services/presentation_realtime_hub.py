@@ -9,6 +9,7 @@ from typing import Any
 from fastapi import WebSocket
 from starlette.websockets import WebSocketDisconnect
 
+from tv_app.application.services.editor_focus_store import editor_focus_store
 from tv_app.application.services.presentation_realtime_models import (
     PresentationRealtimeSession,
 )
@@ -18,6 +19,14 @@ logger = logging.getLogger(__name__)
 # Sem ping/leave por este intervalo → peer some de «Também editando».
 # Cliente envia presence_ping a cada ~30s; 3 misses cobrem aba morta / half-open.
 PRESENCE_STALE_TTL_SECONDS = 90.0
+
+# Room key prefix for PlaylistsPage / library home (not a playlist UUID).
+USER_LIBRARY_ROOM_PREFIX = "user-library:"
+
+
+def user_library_room_id(user_id: str) -> str:
+    uid = str(user_id or "").strip()
+    return f"{USER_LIBRARY_ROOM_PREFIX}{uid}" if uid else ""
 
 
 class PresentationRealtimeHub:
@@ -202,6 +211,15 @@ class PresentationRealtimeHub:
                 block_id = self._clean_text(raw_id)
                 if block_id and block_id not in selected_ids:
                     selected_ids.append(block_id)
+            session = self._sessions.get(websocket)
+            if session and session.user_id and session.can_edit:
+                editor_focus_store.record(
+                    user_id=session.user_id,
+                    playlist_id=playlist_id,
+                    slide_id=slide_id,
+                    selected_ids=selected_ids,
+                    client_id=client_id,
+                )
             await self.broadcast_now(
                 playlist_id,
                 {
@@ -388,6 +406,7 @@ class PresentationRealtimeHub:
 
     async def _remove_connection(self, websocket: WebSocket, *, playlist_id: str) -> bool:
         async with self._lock:
+            session = self._sessions.get(websocket)
             room = self._rooms.get(playlist_id)
             if room:
                 room.discard(websocket)
@@ -398,7 +417,13 @@ class PresentationRealtimeHub:
             if room_meta is not None and not room_meta:
                 del self._client_meta[playlist_id]
             self._sessions.pop(websocket, None)
-            return presence_changed
+        if (
+            session
+            and session.user_id
+            and not str(playlist_id).startswith(USER_LIBRARY_ROOM_PREFIX)
+        ):
+            editor_focus_store.clear_playlist_for_user(session.user_id, playlist_id)
+        return presence_changed
 
     async def broadcast_now(self, playlist_id: str, payload: dict[str, Any]) -> None:
         async with self._lock:

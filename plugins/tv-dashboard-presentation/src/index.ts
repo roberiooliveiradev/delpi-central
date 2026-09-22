@@ -46,6 +46,7 @@ export {
 } from "./presentationMediaPrefetch";
 export {
   buildAdminPresentationWsUrl,
+  buildPlaylistLibraryWsUrl,
   isTvDashboardPortalPath,
   buildPresentationWsUrl,
   buildPublicPresentationWsUrl,

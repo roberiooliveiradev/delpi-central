@@ -113,11 +113,23 @@ class TvPresentationWriteService:
         description: str | None,
         actor_user_id: str,
     ) -> dict[str, Any]:
-        return self._repo.create(
+        from tv_app.application.services.presentation_change_notifier import (
+            notify_playlist_library_changed,
+        )
+
+        playlist = self._repo.create(
             name=name,
             description=description,
             created_by=actor_user_id,
         )
+        pid = str(playlist.get("id") or "").strip()
+        if actor_user_id and pid:
+            notify_playlist_library_changed(
+                user_ids=[actor_user_id],
+                reason="created",
+                playlist_id=pid,
+            )
+        return playlist
 
     def add_slide(
         self,

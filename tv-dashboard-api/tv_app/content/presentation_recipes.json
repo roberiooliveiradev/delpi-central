@@ -1,18 +1,760 @@
 {
-  "version": "2026.09.22.2",
+  "version": "2026.09.22.3",
   "fontFamilyAllowlist": [
     "Inter, system-ui, sans-serif",
     "system-ui, sans-serif",
     "Georgia, serif"
   ],
   "colorRamps": {
-    "delpi_navy": ["#05070a", "#0d2840", "#089bdb"],
-    "midnight": ["#0f172a", "#1e293b", "#38bdf8"],
-    "factory": ["#111827", "#334155", "#f59e0b"],
-    "light_kiosk": ["#f8fafc", "#e2e8f0", "#0f172a"],
-    "contrast_tv": ["#020617", "#ffffff", "#22c55e"]
+    "delpi_navy": [
+      "#05070a",
+      "#0d2840",
+      "#089bdb"
+    ],
+    "midnight": [
+      "#0f172a",
+      "#1e293b",
+      "#38bdf8"
+    ],
+    "factory": [
+      "#111827",
+      "#334155",
+      "#f59e0b"
+    ],
+    "light_kiosk": [
+      "#f8fafc",
+      "#e2e8f0",
+      "#0f172a"
+    ],
+    "contrast_tv": [
+      "#020617",
+      "#ffffff",
+      "#22c55e"
+    ]
   },
   "recipes": {
+    "TV_KPI_ROW_2": {
+      "label": "Dois KPIs em linha Delpi",
+      "themeKey": "delpi",
+      "description": "Título + dois KPI cards lado a lado.",
+      "markers": [
+        "dois kpis",
+        "dois indicadores",
+        "kpi row 2",
+        "2 kpis",
+        "par de kpis"
+      ],
+      "ops": [
+        {
+          "op": "patch_native_config",
+          "patch": {
+            "background": {
+              "type": "gradient",
+              "from": "#05070a",
+              "to": "#0d2840",
+              "angle": 180
+            }
+          }
+        },
+        {
+          "op": "upsert_block",
+          "block": {
+            "type": "heading",
+            "frame": {
+              "x": 3,
+              "y": 3,
+              "w": 94,
+              "h": 8
+            },
+            "style": {
+              "fontSize": 32,
+              "fontWeight": "bold",
+              "color": "#ffffff",
+              "fontFamily": "Inter, system-ui, sans-serif"
+            }
+          }
+        },
+        {
+          "op": "upsert_block",
+          "block": {
+            "type": "kpi_view",
+            "frame": {
+              "x": 3,
+              "y": 16,
+              "w": 46,
+              "h": 70
+            },
+            "style": {
+              "color": "#ffffff",
+              "fontFamily": "Inter, system-ui, sans-serif",
+              "backgroundColor": "#0d2840",
+              "zIndex": 2
+            },
+            "kpiParts": {
+              "card": {
+                "style": {
+                  "fill": "#0d2840",
+                  "backgroundColor": "#0d2840",
+                  "borderRadius": 16
+                }
+              },
+              "title": {
+                "style": {
+                  "fontSize": 22,
+                  "color": "#e2e8f0",
+                  "fontWeight": "600"
+                }
+              },
+              "value": {
+                "style": {
+                  "fontSize": 56,
+                  "color": "#ffffff",
+                  "fontWeight": "bold"
+                }
+              },
+              "icon": {
+                "style": {
+                  "iconSize": 36,
+                  "color": "#089bdb"
+                }
+              }
+            }
+          }
+        },
+        {
+          "op": "upsert_block",
+          "block": {
+            "type": "kpi_view",
+            "frame": {
+              "x": 51,
+              "y": 16,
+              "w": 46,
+              "h": 70
+            },
+            "style": {
+              "color": "#ffffff",
+              "fontFamily": "Inter, system-ui, sans-serif",
+              "backgroundColor": "#0d2840",
+              "zIndex": 2
+            },
+            "kpiParts": {
+              "card": {
+                "style": {
+                  "fill": "#0d2840",
+                  "backgroundColor": "#0d2840",
+                  "borderRadius": 16
+                }
+              },
+              "title": {
+                "style": {
+                  "fontSize": 22,
+                  "color": "#e2e8f0",
+                  "fontWeight": "600"
+                }
+              },
+              "value": {
+                "style": {
+                  "fontSize": 56,
+                  "color": "#ffffff",
+                  "fontWeight": "bold"
+                }
+              },
+              "icon": {
+                "style": {
+                  "iconSize": 36,
+                  "color": "#089bdb"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "TV_KPI_ROW_3": {
+      "label": "Três KPIs em linha Delpi",
+      "themeKey": "delpi",
+      "description": "Título + três KPI cards.",
+      "markers": [
+        "três kpis",
+        "tres kpis",
+        "3 kpis",
+        "kpi row 3",
+        "três indicadores"
+      ],
+      "ops": [
+        {
+          "op": "patch_native_config",
+          "patch": {
+            "background": {
+              "type": "gradient",
+              "from": "#05070a",
+              "to": "#0d2840",
+              "angle": 180
+            }
+          }
+        },
+        {
+          "op": "upsert_block",
+          "block": {
+            "type": "heading",
+            "frame": {
+              "x": 3,
+              "y": 3,
+              "w": 94,
+              "h": 8
+            },
+            "style": {
+              "fontSize": 32,
+              "fontWeight": "bold",
+              "color": "#ffffff",
+              "fontFamily": "Inter, system-ui, sans-serif"
+            }
+          }
+        },
+        {
+          "op": "upsert_block",
+          "block": {
+            "type": "kpi_view",
+            "frame": {
+              "x": 3,
+              "y": 16,
+              "w": 30,
+              "h": 70
+            },
+            "style": {
+              "color": "#ffffff",
+              "fontFamily": "Inter, system-ui, sans-serif",
+              "backgroundColor": "#0d2840",
+              "zIndex": 2
+            },
+            "kpiParts": {
+              "card": {
+                "style": {
+                  "fill": "#0d2840",
+                  "backgroundColor": "#0d2840",
+                  "borderRadius": 16
+                }
+              },
+              "title": {
+                "style": {
+                  "fontSize": 22,
+                  "color": "#e2e8f0",
+                  "fontWeight": "600"
+                }
+              },
+              "value": {
+                "style": {
+                  "fontSize": 48,
+                  "color": "#ffffff",
+                  "fontWeight": "bold"
+                }
+              },
+              "icon": {
+                "style": {
+                  "iconSize": 36,
+                  "color": "#089bdb"
+                }
+              }
+            }
+          }
+        },
+        {
+          "op": "upsert_block",
+          "block": {
+            "type": "kpi_view",
+            "frame": {
+              "x": 35,
+              "y": 16,
+              "w": 30,
+              "h": 70
+            },
+            "style": {
+              "color": "#ffffff",
+              "fontFamily": "Inter, system-ui, sans-serif",
+              "backgroundColor": "#0d2840",
+              "zIndex": 2
+            },
+            "kpiParts": {
+              "card": {
+                "style": {
+                  "fill": "#0d2840",
+                  "backgroundColor": "#0d2840",
+                  "borderRadius": 16
+                }
+              },
+              "title": {
+                "style": {
+                  "fontSize": 22,
+                  "color": "#e2e8f0",
+                  "fontWeight": "600"
+                }
+              },
+              "value": {
+                "style": {
+                  "fontSize": 48,
+                  "color": "#ffffff",
+                  "fontWeight": "bold"
+                }
+              },
+              "icon": {
+                "style": {
+                  "iconSize": 36,
+                  "color": "#089bdb"
+                }
+              }
+            }
+          }
+        },
+        {
+          "op": "upsert_block",
+          "block": {
+            "type": "kpi_view",
+            "frame": {
+              "x": 67,
+              "y": 16,
+              "w": 30,
+              "h": 70
+            },
+            "style": {
+              "color": "#ffffff",
+              "fontFamily": "Inter, system-ui, sans-serif",
+              "backgroundColor": "#0d2840",
+              "zIndex": 2
+            },
+            "kpiParts": {
+              "card": {
+                "style": {
+                  "fill": "#0d2840",
+                  "backgroundColor": "#0d2840",
+                  "borderRadius": 16
+                }
+              },
+              "title": {
+                "style": {
+                  "fontSize": 22,
+                  "color": "#e2e8f0",
+                  "fontWeight": "600"
+                }
+              },
+              "value": {
+                "style": {
+                  "fontSize": 48,
+                  "color": "#ffffff",
+                  "fontWeight": "bold"
+                }
+              },
+              "icon": {
+                "style": {
+                  "iconSize": 36,
+                  "color": "#089bdb"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "TV_KPI_GRID_4": {
+      "label": "Grade de quatro KPIs Delpi",
+      "themeKey": "delpi",
+      "description": "Título + grade 2x2 de KPIs.",
+      "markers": [
+        "quatro kpis",
+        "4 kpis",
+        "grade de quatro",
+        "kpi grid",
+        "grid de kpis"
+      ],
+      "ops": [
+        {
+          "op": "patch_native_config",
+          "patch": {
+            "background": {
+              "type": "gradient",
+              "from": "#05070a",
+              "to": "#0d2840",
+              "angle": 180
+            }
+          }
+        },
+        {
+          "op": "upsert_block",
+          "block": {
+            "type": "heading",
+            "frame": {
+              "x": 3,
+              "y": 3,
+              "w": 94,
+              "h": 7
+            },
+            "style": {
+              "fontSize": 32,
+              "fontWeight": "bold",
+              "color": "#ffffff",
+              "fontFamily": "Inter, system-ui, sans-serif"
+            }
+          }
+        },
+        {
+          "op": "upsert_block",
+          "block": {
+            "type": "kpi_view",
+            "frame": {
+              "x": 3,
+              "y": 13,
+              "w": 46,
+              "h": 40
+            },
+            "style": {
+              "color": "#ffffff",
+              "fontFamily": "Inter, system-ui, sans-serif",
+              "backgroundColor": "#0d2840",
+              "zIndex": 2
+            },
+            "kpiParts": {
+              "card": {
+                "style": {
+                  "fill": "#0d2840",
+                  "backgroundColor": "#0d2840",
+                  "borderRadius": 16
+                }
+              },
+              "title": {
+                "style": {
+                  "fontSize": 22,
+                  "color": "#e2e8f0",
+                  "fontWeight": "600"
+                }
+              },
+              "value": {
+                "style": {
+                  "fontSize": 44,
+                  "color": "#ffffff",
+                  "fontWeight": "bold"
+                }
+              },
+              "icon": {
+                "style": {
+                  "iconSize": 36,
+                  "color": "#089bdb"
+                }
+              }
+            }
+          }
+        },
+        {
+          "op": "upsert_block",
+          "block": {
+            "type": "kpi_view",
+            "frame": {
+              "x": 51,
+              "y": 13,
+              "w": 46,
+              "h": 40
+            },
+            "style": {
+              "color": "#ffffff",
+              "fontFamily": "Inter, system-ui, sans-serif",
+              "backgroundColor": "#0d2840",
+              "zIndex": 2
+            },
+            "kpiParts": {
+              "card": {
+                "style": {
+                  "fill": "#0d2840",
+                  "backgroundColor": "#0d2840",
+                  "borderRadius": 16
+                }
+              },
+              "title": {
+                "style": {
+                  "fontSize": 22,
+                  "color": "#e2e8f0",
+                  "fontWeight": "600"
+                }
+              },
+              "value": {
+                "style": {
+                  "fontSize": 44,
+                  "color": "#ffffff",
+                  "fontWeight": "bold"
+                }
+              },
+              "icon": {
+                "style": {
+                  "iconSize": 36,
+                  "color": "#089bdb"
+                }
+              }
+            }
+          }
+        },
+        {
+          "op": "upsert_block",
+          "block": {
+            "type": "kpi_view",
+            "frame": {
+              "x": 3,
+              "y": 56,
+              "w": 46,
+              "h": 40
+            },
+            "style": {
+              "color": "#ffffff",
+              "fontFamily": "Inter, system-ui, sans-serif",
+              "backgroundColor": "#0d2840",
+              "zIndex": 2
+            },
+            "kpiParts": {
+              "card": {
+                "style": {
+                  "fill": "#0d2840",
+                  "backgroundColor": "#0d2840",
+                  "borderRadius": 16
+                }
+              },
+              "title": {
+                "style": {
+                  "fontSize": 22,
+                  "color": "#e2e8f0",
+                  "fontWeight": "600"
+                }
+              },
+              "value": {
+                "style": {
+                  "fontSize": 44,
+                  "color": "#ffffff",
+                  "fontWeight": "bold"
+                }
+              },
+              "icon": {
+                "style": {
+                  "iconSize": 36,
+                  "color": "#089bdb"
+                }
+              }
+            }
+          }
+        },
+        {
+          "op": "upsert_block",
+          "block": {
+            "type": "kpi_view",
+            "frame": {
+              "x": 51,
+              "y": 56,
+              "w": 46,
+              "h": 40
+            },
+            "style": {
+              "color": "#ffffff",
+              "fontFamily": "Inter, system-ui, sans-serif",
+              "backgroundColor": "#0d2840",
+              "zIndex": 2
+            },
+            "kpiParts": {
+              "card": {
+                "style": {
+                  "fill": "#0d2840",
+                  "backgroundColor": "#0d2840",
+                  "borderRadius": 16
+                }
+              },
+              "title": {
+                "style": {
+                  "fontSize": 22,
+                  "color": "#e2e8f0",
+                  "fontWeight": "600"
+                }
+              },
+              "value": {
+                "style": {
+                  "fontSize": 44,
+                  "color": "#ffffff",
+                  "fontWeight": "bold"
+                }
+              },
+              "icon": {
+                "style": {
+                  "iconSize": 36,
+                  "color": "#089bdb"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "TV_HERO_PLUS_TABLE": {
+      "label": "KPI hero + tabela Delpi",
+      "themeKey": "delpi",
+      "description": "KPI em destaque à esquerda + tabela à direita.",
+      "markers": [
+        "kpi e tabela",
+        "hero e tabela",
+        "kpi plus table",
+        "indicador e tabela"
+      ],
+      "ops": [
+        {
+          "op": "patch_native_config",
+          "patch": {
+            "background": {
+              "type": "gradient",
+              "from": "#05070a",
+              "to": "#0d2840",
+              "angle": 180
+            }
+          }
+        },
+        {
+          "op": "upsert_block",
+          "block": {
+            "type": "heading",
+            "frame": {
+              "x": 3,
+              "y": 3,
+              "w": 94,
+              "h": 8
+            },
+            "style": {
+              "fontSize": 32,
+              "fontWeight": "bold",
+              "color": "#ffffff",
+              "fontFamily": "Inter, system-ui, sans-serif"
+            }
+          }
+        },
+        {
+          "op": "upsert_block",
+          "block": {
+            "type": "kpi_view",
+            "frame": {
+              "x": 3,
+              "y": 14,
+              "w": 28,
+              "h": 80
+            },
+            "style": {
+              "color": "#ffffff",
+              "fontFamily": "Inter, system-ui, sans-serif",
+              "backgroundColor": "#0d2840",
+              "zIndex": 2
+            },
+            "kpiParts": {
+              "card": {
+                "style": {
+                  "fill": "#0d2840",
+                  "backgroundColor": "#0d2840",
+                  "borderRadius": 16
+                }
+              },
+              "title": {
+                "style": {
+                  "fontSize": 22,
+                  "color": "#e2e8f0",
+                  "fontWeight": "600"
+                }
+              },
+              "value": {
+                "style": {
+                  "fontSize": 64,
+                  "color": "#ffffff",
+                  "fontWeight": "bold"
+                }
+              },
+              "icon": {
+                "style": {
+                  "iconSize": 36,
+                  "color": "#089bdb"
+                }
+              }
+            }
+          }
+        },
+        {
+          "op": "upsert_block",
+          "block": {
+            "type": "table_view",
+            "frame": {
+              "x": 34,
+              "y": 14,
+              "w": 63,
+              "h": 80
+            },
+            "style": {
+              "fontFamily": "Inter, system-ui, sans-serif",
+              "color": "#ffffff",
+              "zIndex": 2,
+              "backgroundColor": "#0a1628",
+              "fontSize": 18
+            }
+          }
+        }
+      ]
+    },
+    "TV_TITLE_STRIP": {
+      "label": "Faixa de título + conteúdo",
+      "themeKey": "delpi",
+      "description": "Heading em faixa superior + área de conteúdo.",
+      "markers": [
+        "faixa de título",
+        "title strip",
+        "barra de título",
+        "cabeçalho faixa"
+      ],
+      "ops": [
+        {
+          "op": "patch_native_config",
+          "patch": {
+            "background": {
+              "type": "gradient",
+              "from": "#05070a",
+              "to": "#0d2840",
+              "angle": 180
+            }
+          }
+        },
+        {
+          "op": "upsert_block",
+          "block": {
+            "type": "heading",
+            "frame": {
+              "x": 0,
+              "y": 0,
+              "w": 100,
+              "h": 14
+            },
+            "style": {
+              "fontSize": 36,
+              "fontWeight": "bold",
+              "color": "#ffffff",
+              "fontFamily": "Inter, system-ui, sans-serif",
+              "backgroundColor": "#0d2840",
+              "textAlign": "left",
+              "verticalAlign": "middle"
+            }
+          }
+        },
+        {
+          "op": "upsert_block",
+          "block": {
+            "type": "text",
+            "frame": {
+              "x": 4,
+              "y": 20,
+              "w": 92,
+              "h": 72
+            },
+            "style": {
+              "fontSize": 22,
+              "color": "#e2e8f0",
+              "fontFamily": "Inter, system-ui, sans-serif"
+            }
+          }
+        }
+      ]
+    },
     "TV_KPI_HERO": {
       "label": "KPI hero TV Delpi",
       "themeKey": "delpi",
@@ -40,7 +782,12 @@
           "op": "upsert_block",
           "block": {
             "type": "heading",
-            "frame": { "x": 6, "y": 6, "w": 88, "h": 12 },
+            "frame": {
+              "x": 6,
+              "y": 6,
+              "w": 88,
+              "h": 12
+            },
             "style": {
               "fontSize": 40,
               "fontWeight": "bold",
@@ -54,7 +801,12 @@
           "op": "upsert_block",
           "block": {
             "type": "kpi_view",
-            "frame": { "x": 18, "y": 22, "w": 36, "h": 42 },
+            "frame": {
+              "x": 18,
+              "y": 22,
+              "w": 36,
+              "h": 42
+            },
             "style": {
               "color": "#ffffff",
               "fontFamily": "Inter, system-ui, sans-serif",
@@ -70,13 +822,24 @@
                 }
               },
               "title": {
-                "style": { "fontSize": 28, "color": "#e2e8f0", "fontWeight": "600" }
+                "style": {
+                  "fontSize": 28,
+                  "color": "#e2e8f0",
+                  "fontWeight": "600"
+                }
               },
               "value": {
-                "style": { "fontSize": 80, "color": "#ffffff", "fontWeight": "bold" }
+                "style": {
+                  "fontSize": 80,
+                  "color": "#ffffff",
+                  "fontWeight": "bold"
+                }
               },
               "icon": {
-                "style": { "iconSize": 48, "color": "#089bdb" }
+                "style": {
+                  "iconSize": 48,
+                  "color": "#089bdb"
+                }
               }
             }
           }
@@ -110,7 +873,12 @@
           "op": "upsert_block",
           "block": {
             "type": "heading",
-            "frame": { "x": 4, "y": 4, "w": 92, "h": 10 },
+            "frame": {
+              "x": 4,
+              "y": 4,
+              "w": 92,
+              "h": 10
+            },
             "style": {
               "fontSize": 32,
               "fontWeight": "bold",
@@ -123,16 +891,36 @@
           "op": "upsert_block",
           "block": {
             "type": "kpi_view",
-            "frame": { "x": 4, "y": 18, "w": 28, "h": 56 },
+            "frame": {
+              "x": 4,
+              "y": 18,
+              "w": 28,
+              "h": 56
+            },
             "style": {
               "color": "#ffffff",
               "backgroundColor": "#0d2840",
               "fontFamily": "Inter, system-ui, sans-serif"
             },
             "kpiParts": {
-              "card": { "style": { "fill": "#0d2840", "backgroundColor": "#0d2840" } },
-              "value": { "style": { "fontSize": 64, "color": "#ffffff" } },
-              "title": { "style": { "fontSize": 22, "color": "#e2e8f0" } }
+              "card": {
+                "style": {
+                  "fill": "#0d2840",
+                  "backgroundColor": "#0d2840"
+                }
+              },
+              "value": {
+                "style": {
+                  "fontSize": 64,
+                  "color": "#ffffff"
+                }
+              },
+              "title": {
+                "style": {
+                  "fontSize": 22,
+                  "color": "#e2e8f0"
+                }
+              }
             }
           }
         },
@@ -141,13 +929,20 @@
           "block": {
             "type": "chart_view",
             "chartType": "line",
-            "frame": { "x": 36, "y": 18, "w": 60, "h": 56 },
+            "frame": {
+              "x": 36,
+              "y": 18,
+              "w": 60,
+              "h": 56
+            },
             "style": {
               "color": "#f8fafc",
               "backgroundColor": "#0a1628",
               "fontFamily": "Inter, system-ui, sans-serif"
             },
-            "chartOptions": { "valueFormat": "number" }
+            "chartOptions": {
+              "valueFormat": "number"
+            }
           }
         }
       ]
@@ -180,7 +975,12 @@
           "op": "upsert_block",
           "block": {
             "type": "heading",
-            "frame": { "x": 3, "y": 3, "w": 94, "h": 8 },
+            "frame": {
+              "x": 3,
+              "y": 3,
+              "w": 94,
+              "h": 8
+            },
             "style": {
               "fontSize": 28,
               "fontWeight": "bold",
@@ -193,16 +993,36 @@
           "op": "upsert_block",
           "block": {
             "type": "kpi_view",
-            "frame": { "x": 3, "y": 14, "w": 22, "h": 36 },
+            "frame": {
+              "x": 3,
+              "y": 14,
+              "w": 22,
+              "h": 36
+            },
             "style": {
               "color": "#ffffff",
               "backgroundColor": "#0d2840",
               "fontFamily": "Inter, system-ui, sans-serif"
             },
             "kpiParts": {
-              "card": { "style": { "fill": "#0d2840", "backgroundColor": "#0d2840" } },
-              "value": { "style": { "fontSize": 56, "color": "#ffffff" } },
-              "title": { "style": { "fontSize": 18, "color": "#e2e8f0" } }
+              "card": {
+                "style": {
+                  "fill": "#0d2840",
+                  "backgroundColor": "#0d2840"
+                }
+              },
+              "value": {
+                "style": {
+                  "fontSize": 56,
+                  "color": "#ffffff"
+                }
+              },
+              "title": {
+                "style": {
+                  "fontSize": 18,
+                  "color": "#e2e8f0"
+                }
+              }
             }
           }
         },
@@ -211,7 +1031,12 @@
           "block": {
             "type": "chart_view",
             "chartType": "line",
-            "frame": { "x": 28, "y": 14, "w": 69, "h": 36 },
+            "frame": {
+              "x": 28,
+              "y": 14,
+              "w": 69,
+              "h": 36
+            },
             "style": {
               "color": "#f8fafc",
               "backgroundColor": "#0a1628",
@@ -224,7 +1049,12 @@
           "block": {
             "type": "table_view",
             "tablePreset": "banded",
-            "frame": { "x": 3, "y": 54, "w": 94, "h": 42 },
+            "frame": {
+              "x": 3,
+              "y": 54,
+              "w": 94,
+              "h": 42
+            },
             "style": {
               "color": "#f1f5f9",
               "backgroundColor": "#0a1628",
@@ -260,7 +1090,12 @@
           "op": "upsert_block",
           "block": {
             "type": "heading",
-            "frame": { "x": 4, "y": 4, "w": 92, "h": 10 },
+            "frame": {
+              "x": 4,
+              "y": 4,
+              "w": 92,
+              "h": 10
+            },
             "style": {
               "fontSize": 28,
               "fontWeight": "bold",
@@ -274,7 +1109,12 @@
           "block": {
             "type": "table_view",
             "tablePreset": "banded",
-            "frame": { "x": 4, "y": 16, "w": 92, "h": 76 },
+            "frame": {
+              "x": 4,
+              "y": 16,
+              "w": 92,
+              "h": 76
+            },
             "style": {
               "color": "#f1f5f9",
               "backgroundColor": "#0a1628",
@@ -288,7 +1128,12 @@
       "label": "Tema DELPI",
       "themeKey": "delpi",
       "description": "Só fundo/tema DELPI (sem blocos).",
-      "markers": ["tema delpi", "fundo delpi", "visual delpi", "theme delpi"],
+      "markers": [
+        "tema delpi",
+        "fundo delpi",
+        "visual delpi",
+        "theme delpi"
+      ],
       "ops": [
         {
           "op": "patch_native_config",
@@ -307,12 +1152,20 @@
       "label": "Tema meia-noite",
       "themeKey": "midnight",
       "description": "Fundo #0f172a.",
-      "markers": ["tema meia-noite", "tema midnight", "fundo escuro profissional", "mais profissional"],
+      "markers": [
+        "tema meia-noite",
+        "tema midnight",
+        "fundo escuro profissional",
+        "mais profissional"
+      ],
       "ops": [
         {
           "op": "patch_native_config",
           "patch": {
-            "background": { "type": "color", "value": "#0f172a" }
+            "background": {
+              "type": "color",
+              "value": "#0f172a"
+            }
           }
         }
       ]
@@ -321,15 +1174,59 @@
       "label": "Tema claro",
       "themeKey": "light",
       "description": "Fundo claro TV.",
-      "markers": ["tema claro", "fundo claro", "theme light", "visual limpo"],
+      "markers": [
+        "tema claro",
+        "fundo claro",
+        "theme light",
+        "visual limpo"
+      ],
       "ops": [
         {
           "op": "patch_native_config",
           "patch": {
-            "background": { "type": "color", "value": "#f8fafc" }
+            "background": {
+              "type": "color",
+              "value": "#f8fafc"
+            }
           }
         }
       ]
     }
+  },
+  "designTokens": {
+    "canvas": {
+      "w": 100,
+      "h": 100
+    },
+    "safeMargin": 3,
+    "gutter": 2,
+    "maxPrimarySignalsPerSlide": 4,
+    "typeScale": {
+      "display": 48,
+      "title": 32,
+      "body": 22,
+      "caption": 16
+    },
+    "kpiValueScale": {
+      "hero": 80,
+      "row": 56,
+      "grid": 44
+    },
+    "minContrastPairs": [
+      {
+        "fg": "#ffffff",
+        "bg": "#05070a"
+      },
+      {
+        "fg": "#ffffff",
+        "bg": "#0d2840"
+      },
+      {
+        "fg": "#0f172a",
+        "bg": "#f8fafc"
+      }
+    ],
+    "overlapAreaThresholdPct": 8,
+    "widescreenCoverageThresholdPct": 90
   }
 }

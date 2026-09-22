@@ -378,6 +378,7 @@ class PresentationPatchService:
         applied: list[str] = []
         side_effects: dict[str, Any] = {}
         removed_block_ids: list[str] = []
+        informed_frame_ids: set[str] = set()
         playlist_mutated = False
 
         ctx = ExecutionContext.from_target(target)
@@ -614,7 +615,9 @@ class PresentationPatchService:
             elif op_name == "set_data_transform":
                 self._op_set_data_transform(native_config, raw_op)
             elif op_name == "upsert_block":
-                self._op_upsert_block(native_config, raw_op)
+                block_id, frame_informed = self._op_upsert_block(native_config, raw_op)
+                if frame_informed and block_id:
+                    informed_frame_ids.add(block_id)
             elif op_name == "delete_block":
                 removed = self._op_delete_block(native_config, raw_op)
                 if removed:
@@ -629,6 +632,16 @@ class PresentationPatchService:
                 )
             ctx.native_config = native_config
             applied.append(op_name)
+
+        if native_config is not None:
+            from tv_app.application.services.data.slide_auto_layout_service import (
+                SlideAutoLayoutService,
+            )
+
+            SlideAutoLayoutService.apply_kpi_row_if_needed(
+                native_config,
+                informed_block_ids=informed_frame_ids,
+            )
 
         hints = _collect_side_effect_hints(applied)
         if removed_block_ids:
@@ -876,12 +889,13 @@ class PresentationPatchService:
         block["dataTransform"] = transform
         block.pop("resolved", None)
 
-    def _op_upsert_block(self, cfg: dict[str, Any], op: dict[str, Any]) -> None:
+    def _op_upsert_block(self, cfg: dict[str, Any], op: dict[str, Any]) -> tuple[str, bool]:
         block = op.get("block")
         if not isinstance(block, dict):
             raise PresentationPatchError(
                 PresentationOpsContentService.message("blockNotFound", blockId="?")
             )
+        frame_informed = isinstance(block.get("frame"), dict) and bool(block.get("frame"))
         # Anti-padrão: nunca aceitar resolved / url solta / M script.
         # assetId é permitido (mídia via asset da TV).
         cleaned = dict(block)
@@ -928,6 +942,7 @@ class PresentationPatchService:
         else:
             blocks.append(_with_block_defaults(cleaned))
         cfg["blocks"] = blocks
+        return block_id, frame_informed
 
     def _op_delete_block(self, cfg: dict[str, Any], op: dict[str, Any]) -> str | None:
         block_id = str(op.get("blockId") or "").strip()
@@ -1340,6 +1355,16 @@ class PresentationPatchService:
             playlist_id=str(playlist.get("id") or ""),
             reason="presentation_playlist_created",
         )
+        from tv_app.application.services.presentation_change_notifier import (
+            notify_playlist_library_changed,
+        )
+
+        if actor_user_id and playlist.get("id"):
+            notify_playlist_library_changed(
+                user_ids=[actor_user_id],
+                reason="created",
+                playlist_id=str(playlist["id"]),
+            )
         seed_presets = op.get("seedPresetKeys")
         seeded: list[dict[str, Any]] = []
         if isinstance(seed_presets, list) and playlist.get("id"):

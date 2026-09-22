@@ -89,6 +89,8 @@ class GptActionsDispatchService:
         limit: int = 50,
         offset: int = 0,
     ) -> dict[str, Any]:
+        from tv_app.application.services.editor_focus_store import editor_focus_store
+
         assert_permission(user, TV_READ)
         actor = self._actor(user)
         items = self._repo.list_playlists(
@@ -106,9 +108,15 @@ class GptActionsDispatchService:
                 item["accessRole"] = share or "viewer"
             else:
                 item["accessRole"] = "viewer"
-        return {"items": items, "limit": limit, "offset": offset}
+        out: dict[str, Any] = {"items": items, "limit": limit, "offset": offset}
+        focus = editor_focus_store.get_for_user(actor) if actor else None
+        if focus:
+            out["editorFocus"] = focus
+        return out
 
     def get_playlist_context(self, *, user: Any, playlist_id: str) -> dict[str, Any]:
+        from tv_app.application.services.editor_focus_store import editor_focus_store
+
         assert_permission(user, TV_READ)
         pid = UUID(str(playlist_id))
         access = self._access.resolve(pid, user)
@@ -121,7 +129,8 @@ class GptActionsDispatchService:
         playlist = access.playlist or self._writes.get_playlist(pid)
         slides = self._writes.list_slides(pid)
         sections = self._writes.list_sections(pid)
-        return {
+        actor = self._actor(user)
+        out: dict[str, Any] = {
             "playlist": playlist,
             "slides": slides,
             "sections": sections,
@@ -129,7 +138,16 @@ class GptActionsDispatchService:
             "currentRevision": self._writes.get_revision(pid),
             "localDraftCoordination": "unavailable_external",
         }
-
+        if actor:
+            focus = editor_focus_store.get_for_user_playlist(actor, str(pid))
+            if focus:
+                out["editorFocus"] = {
+                    "slideId": focus.get("slideId"),
+                    "selectedIds": focus.get("selectedIds") or [],
+                    "updatedAt": focus.get("updatedAt"),
+                    "stale": bool(focus.get("stale")),
+                }
+        return out
     def search_data_routes(
         self,
         *,

@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import {
+  buildPlaylistLibraryWsUrl,
   buildPublicPresentationWsUrl,
   isTvDashboardPortalPath,
   parsePresentationRealtimeEvent,
@@ -13,6 +14,16 @@ describe("usePresentationRealtime urls", () => {
     } as Window & typeof globalThis);
     expect(buildPublicPresentationWsUrl("abc 123")).toBe(
       "wss://portal.exemplo.com/apps/tv-dashboard-api/public/present/abc%20123/ws",
+    );
+    vi.unstubAllGlobals();
+  });
+
+  it("monta URL da library home", () => {
+    vi.stubGlobal("window", {
+      location: { protocol: "https:", host: "portal.exemplo.com" },
+    } as Window & typeof globalThis);
+    expect(buildPlaylistLibraryWsUrl("tok")).toBe(
+      "wss://portal.exemplo.com/apps/tv-dashboard-api/playlists/library-ws?access_token=tok",
     );
     vi.unstubAllGlobals();
   });

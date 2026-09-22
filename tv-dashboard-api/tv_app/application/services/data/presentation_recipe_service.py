@@ -104,6 +104,9 @@ class PresentationRecipeService:
             "colorRamps": doc.get("colorRamps")
             if isinstance(doc.get("colorRamps"), dict)
             else {},
+            "designTokens": doc.get("designTokens")
+            if isinstance(doc.get("designTokens"), dict)
+            else {},
             "recipes": {},
         }
         for recipe_id, row in recipes.items():

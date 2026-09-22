@@ -698,6 +698,15 @@ export function PlaylistEditorPage({
     [editorPresence?.clientId, wsSendRef],
   );
 
+  const sendSelectionUpdateRef = useRef(sendSelectionUpdate);
+  sendSelectionUpdateRef.current = sendSelectionUpdate;
+
+  // Keep editorFocus snapshot warm for VISTA even when selection is empty (slide-only).
+  useEffect(() => {
+    if (!editorActive || !selectedSlideId) return;
+    sendSelectionUpdateRef.current(selectedSlideId, []);
+  }, [editorActive, selectedSlideId]);
+
   const load = useCallback(async () => {
     const cached = readPlaylistShell(playlistId);
     // Soft-load: com shell em sessão, não blanka a página no F5 enquanto a API responde.

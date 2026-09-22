@@ -1146,6 +1146,23 @@ class TvGptCommitService:
                         }
                     )
                     return False, details
+                from tv_app.application.services.data.slide_layout_quality_service import (
+                    SlideLayoutQualityService,
+                )
+
+                layout_issues = SlideLayoutQualityService.collect_native_layout_issues(
+                    want if isinstance(want, dict) else persisted,
+                )
+                if layout_issues:
+                    details["checks"].append(
+                        {
+                            "op": op,
+                            "ok": False,
+                            "reason": "slide_layout_quality",
+                            "issues": layout_issues[:8],
+                        }
+                    )
+                    return False, details
 
             else:
                 details["checks"].append(

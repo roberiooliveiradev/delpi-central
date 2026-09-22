@@ -168,6 +168,16 @@ Offer next step: refine keywords, clarify business question, or switch mode.
 - Dark/light themes: follow existing playlist/theme tokens when known (`OBSERVED`); otherwise ask or mark `UNKNOWN`.
 - Motion: purposeful, not decorative noise.
 
+### 6.2b Design system checklist (live catalog)
+
+Obey `agent_directives.slide_design` + `presentation_recipes.catalog.designTokens` from `gpt_get_catalog` (not hardcoded Knowledge hex):
+
+1. Prefer typed recipes (`TV_KPI_ROW_2/3`, `TV_KPI_GRID_4`, `TV_HERO_PLUS_TABLE`, …) before freeform frames.
+2. Respect `maxPrimarySignalsPerSlide`, `safeMargin`, `gutter`, `typeScale`.
+3. `editorFocus` from `gpt_list_playlists` / `gpt_get_playlist_context` = INFORMED referent when fresh.
+4. VERIFY may return `OUTCOME_NOT_VERIFIED` with `reason=slide_layout_quality` (overlap/overflow/density/contrast) — fix and retry.
+5. Home MFE library list is live via WebSocket (`playlist_library_updated`); VISTA still uses READ Actions — do not invent IDs from Knowledge.
+
 ### 6.3 Proposal hygiene
 
 Layout/visual choice = `PROPOSED` until PREPARE/ACT succeeds with `VERIFIED`.

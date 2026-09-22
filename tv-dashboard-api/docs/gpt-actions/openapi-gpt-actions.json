@@ -112,7 +112,7 @@
       "get": {
         "operationId": "gpt_list_playlists",
         "summary": "List owned and shared playlists",
-        "description": "Lists playlists visible to the authenticated actor (owner/share). Does not return a global admin dump.",
+        "description": "Lists playlists visible to the authenticated actor (owner/share). Does not return a global admin dump. When the actor has a live editor session, may include editorFocus (playlistId/slideId/selectedIds, ephemeral TTL).",
         "tags": [
           "TV Dashboard GPT"
         ],
@@ -229,7 +229,7 @@
       "get": {
         "operationId": "gpt_get_playlist_context",
         "summary": "Authorized playlist context",
-        "description": "Returns persisted playlist, slides, sections, accessRole, currentRevision. localDraftCoordination is unavailable_external for Custom GPT.",
+        "description": "Returns persisted playlist, slides, sections, accessRole, currentRevision. localDraftCoordination is unavailable_external for Custom GPT. When the actor is editing this playlist live, may include editorFocus (slideId/selectedIds/updatedAt/stale).",
         "tags": [
           "TV Dashboard GPT"
         ],

@@ -509,7 +509,9 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "summary": "List owned and shared playlists",
                 "description": (
                     "Lists playlists visible to the authenticated actor (owner/share). "
-                    "Does not return a global admin dump."
+                    "Does not return a global admin dump. "
+                    "When the actor has a live editor session, may include editorFocus "
+                    "(playlistId/slideId/selectedIds, ephemeral TTL)."
                 ),
                 "tags": [tag],
                 "security": [{"BearerAuth": []}],
@@ -536,7 +538,9 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "summary": "Authorized playlist context",
                 "description": (
                     "Returns persisted playlist, slides, sections, accessRole, currentRevision. "
-                    "localDraftCoordination is unavailable_external for Custom GPT."
+                    "localDraftCoordination is unavailable_external for Custom GPT. "
+                    "When the actor is editing this playlist live, may include editorFocus "
+                    "(slideId/selectedIds/updatedAt/stale)."
                 ),
                 "tags": [tag],
                 "security": [{"BearerAuth": []}],
