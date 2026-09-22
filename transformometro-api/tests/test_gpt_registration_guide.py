@@ -64,7 +64,7 @@ def test_registration_guide_contains_canonical_package_shape():
     assert "READ CONTRACT" in hints["operational_sequence"][0]
     assert "VALIDATE PACKAGE" in hints["operational_sequence"][3]
     assert hints["validate_operationId"] == "gpt_validate_improvement_package"
-    assert hints["commit_operationId"] == "gpt_commit_improvement_package"
+    assert hints["commit_operationId"] == "gpt_commit_proposal"
     assert hints["dry_run_semantics"]["ready_false_is_not_tool_failure"] is True
 
 
@@ -139,9 +139,11 @@ def test_teo_contract_drift_openapi_guide_instructions():
 
     doc = build_gpt_actions_openapi()
     assert count_operations(doc) == len(GPT_ACTIONS_OPERATION_IDS)
-    assert count_operations(doc) == len(GPT_ACTIONS_OPERATION_IDS) == 21
+    assert count_operations(doc) == len(GPT_ACTIONS_OPERATION_IDS) == 18
     assert "gpt_validate_improvement_package" in GPT_ACTIONS_OPERATION_IDS
-    assert "gpt_commit_improvement_package" in GPT_ACTIONS_OPERATION_IDS
+    assert "gpt_commit_proposal" in GPT_ACTIONS_OPERATION_IDS
+    assert "gpt_prepare_record_change" in GPT_ACTIONS_OPERATION_IDS
+    assert "gpt_commit_improvement_package" not in GPT_ACTIONS_OPERATION_IDS
     assert "gpt_list_evidence" in GPT_ACTIONS_OPERATION_IDS
     assert "gpt_manage_evidence" in GPT_ACTIONS_OPERATION_IDS
     assert "gpt_get_process_timeline" in GPT_ACTIONS_OPERATION_IDS
@@ -151,17 +153,18 @@ def test_teo_contract_drift_openapi_guide_instructions():
     validate = doc["paths"]["/transformometro/gpt-actions/v1/improvement-packages/validate"][
         "post"
     ]
-    commit = doc["paths"]["/transformometro/gpt-actions/v1/improvement-packages"]["post"]
+    commit = doc["paths"]["/transformometro/gpt-actions/v1/proposals/commit"]["post"]
     assert validate["x-openai-isConsequential"] is False
     assert commit["x-openai-isConsequential"] is True
 
     hints = build_registration_guide()["package_hints"]
     assert hints["validate_operationId"] == validate["operationId"]
-    assert hints["commit_operationId"] == commit["operationId"]
+    assert hints["commit_operationId"] == "gpt_commit_proposal"
 
     text = Path("docs/gpt-actions/specialist-instructions.md").read_text(encoding="utf-8")
     assert "gpt_validate_improvement_package" in text
-    assert "gpt_commit_improvement_package" in text
+    assert "gpt_commit_proposal" in text
+    assert "gpt_prepare_record_change" in text
     assert "VALIDATE != WRITE" in text
     assert "AUTHORITATIVE READ-BACK" in text
     assert "UNKNOWN" in text

@@ -2,8 +2,8 @@
 
 Technical ids are not branding. Do not rename for «TÉO».
 
-Write surface uses PREPARE → proposal_handle → ACT (governed writes).
-GPT Actions HTTP façade remains LEGACY_TRANSITIONAL_BRIDGE without proposal handles.
+Write surface uses PREPARE → opaque proposal_handle → ACT (governed writes).
+GPT Actions V2 shares the same GovernedWriteOrchestrator via prepare/commit.
 """
 
 from __future__ import annotations
@@ -17,8 +17,8 @@ MCP_GATEWAY_ROOT = "/apps/transformometro-api"
 
 MCP_AUTH_MODEL = "TRANSPORT_REQUIRES_OAUTH"
 
-# GPT Actions bridge remains available; MCP is the Plugin/Agent target.
-GPT_ACTIONS_LIFECYCLE = "LEGACY_TRANSITIONAL_BRIDGE"
+# GPT Actions Builder surface is prepare/commit governed (legacy CRUD shims remain off-OpenAPI).
+GPT_ACTIONS_LIFECYCLE = "GOVERNED_PREPARE_COMMIT_V2"
 
 TEO_MCP_SURFACE = "FULL_CRUD_GOVERNED"
 
@@ -34,33 +34,37 @@ GPT_TO_MCP_TOOLS: dict[str, tuple[str, ...]] = {
     "gpt_analyze": ("analyze",),
     "gpt_search_records": ("search_records",),
     "gpt_get_record": ("get_record",),
-    "gpt_create_record": ("prepare_create_record", "act_create_record"),
-    "gpt_update_record": ("prepare_update_record", "act_update_record"),
-    "gpt_delete_record": ("prepare_delete_record", "act_delete_record"),
-    "gpt_duplicate_record": ("prepare_duplicate_record", "act_duplicate_record"),
-    "gpt_activate_revision": ("prepare_activate_revision", "act_activate_revision"),
-    "gpt_recalculate_dashboard": (
-        "prepare_recalculate_dashboard",
+    "gpt_prepare_record_change": (
+        "prepare_create_record",
+        "prepare_update_record",
+        "prepare_delete_record",
+        "prepare_duplicate_record",
+    ),
+    "gpt_commit_proposal": (
+        "act_create_record",
+        "act_update_record",
+        "act_delete_record",
+        "act_duplicate_record",
+        "act_activate_revision",
         "act_recalculate_dashboard",
-    ),
-    "gpt_meeting_minute_workflow": (
-        "prepare_meeting_minute_workflow",
         "act_meeting_minute_workflow",
-    ),
-    "gpt_validate_improvement_package": ("prepare_improvement_package",),
-    "gpt_commit_improvement_package": ("act_commit_improvement_package",),
-    "gpt_list_evidence": ("list_evidence",),
-    "gpt_manage_evidence": ("prepare_manage_evidence", "act_manage_evidence"),
-    "gpt_get_process_timeline": ("get_process_timeline",),
-    "gpt_adjust_shared_resource_cost": (
-        "prepare_adjust_shared_resource_cost",
+        "act_commit_improvement_package",
+        "act_manage_evidence",
         "act_adjust_shared_resource_cost",
+        "act_meeting_minute_manage",
     ),
+    "gpt_activate_revision": ("prepare_activate_revision",),
+    "gpt_recalculate_dashboard": ("prepare_recalculate_dashboard",),
+    "gpt_meeting_minute_workflow": ("prepare_meeting_minute_workflow",),
+    "gpt_validate_improvement_package": ("prepare_improvement_package",),
+    "gpt_list_evidence": ("list_evidence",),
+    "gpt_manage_evidence": ("prepare_manage_evidence",),
+    "gpt_get_process_timeline": ("get_process_timeline",),
+    "gpt_adjust_shared_resource_cost": ("prepare_adjust_shared_resource_cost",),
     "gpt_meeting_minute_manage": (
         "meeting_minute_read",
         "generate_from_transcript",
         "prepare_meeting_minute_manage",
-        "act_meeting_minute_manage",
     ),
 }
 

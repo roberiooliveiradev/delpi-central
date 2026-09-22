@@ -1003,315 +1003,6 @@
             }
           }
         }
-      },
-      "post": {
-        "operationId": "gpt_create_record",
-        "summary": "Create a Transformômetro record",
-        "description": "Body MUST be {data:{...}}. process: nome_processo+status_processo. instance: processo_id+setor_ids+(filial_id|todas_filiais_ativas). resource_cost: recurso_compartilhado_id+valor_mensal+data_inicio_vigencia.",
-        "tags": [
-          "Transformômetro GPT"
-        ],
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "entity",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "enum": [
-                "branch",
-                "department",
-                "process",
-                "instance",
-                "revision",
-                "measurement",
-                "investment",
-                "shared_resource",
-                "resource_cost",
-                "resource_link",
-                "meeting_minute",
-                "process_document",
-                "decomposition_tree",
-                "instance_decomposition_scope",
-                "revision_decomposition_overlay",
-                "process_diagram",
-                "instance_diagram_scope",
-                "revision_diagram_overlay",
-                "impact_effort_matrix"
-              ]
-            },
-            "description": "Entity slug (see enum). Cadastro: process, instance, revision, measurement, investment. Catalog: branch, department, shared_resource. Atas: meeting_minute. Process knowledge (Markdown): process_document. Documents: decomposition_tree, process_diagram, impact_effort_matrix and related overlays."
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/GptRecordBody"
-              },
-              "example": {
-                "data": {
-                  "nome_processo": "Processo teste GPT",
-                  "status_processo": "ativo",
-                  "descricao_processo": "Criado via Custom GPT Action"
-                }
-              },
-              "examples": {
-                "process_create": {
-                  "summary": "entity=process create",
-                  "value": {
-                    "data": {
-                      "nome_processo": "Processo teste GPT",
-                      "status_processo": "ativo",
-                      "descricao_processo": "Criado via Custom GPT Action"
-                    }
-                  }
-                },
-                "instance_create": {
-                  "summary": "entity=instance create (one filial)",
-                  "value": {
-                    "data": {
-                      "processo_id": "<processo_uuid>",
-                      "filial_id": "01",
-                      "setor_ids": [
-                        "<setor_id_or_codigo>"
-                      ],
-                      "resumo_melhoria": "Melhoria teste GPT",
-                      "fase_melhoria": "planejado",
-                      "prioridade": "media",
-                      "status_instancia": "ativo"
-                    }
-                  }
-                },
-                "instance_create_all_units": {
-                  "summary": "entity=instance create (todas_filiais_ativas)",
-                  "value": {
-                    "data": {
-                      "processo_id": "<processo_uuid>",
-                      "todas_filiais_ativas": true,
-                      "setor_ids": [
-                        "<setor_id_or_codigo>"
-                      ],
-                      "resumo_melhoria": "Melhoria corporativa (todas as filiais)",
-                      "fase_melhoria": "planejado",
-                      "prioridade": "media",
-                      "status_instancia": "ativo"
-                    }
-                  }
-                },
-                "revision_create": {
-                  "summary": "entity=revision create",
-                  "value": {
-                    "data": {
-                      "processo_id": "<processo_uuid>",
-                      "instancia_id": "<instancia_uuid>",
-                      "versao_revisao": "2.1.0",
-                      "cenario_tipo": "melhoria",
-                      "data_inicio_vigencia": "2026-09-14",
-                      "revisao_referencia_id": "<baseline_revisao_uuid>",
-                      "beneficio_calculo_categoria": "automatico",
-                      "descricao_revisao": "Cenário teste GPT"
-                    }
-                  }
-                },
-                "revision_clear_end_date": {
-                  "summary": "entity=revision update — clear data_fim_vigencia",
-                  "value": {
-                    "data": {
-                      "data_fim_vigencia": null,
-                      "confirm_vigencia_change": true
-                    }
-                  }
-                },
-                "measurement_upsert": {
-                  "summary": "entity=measurement upsert",
-                  "value": {
-                    "data": {
-                      "revisao_id": "<revisao_uuid>",
-                      "volume_mensal": 100,
-                      "tempo_medio_execucao_min": 30,
-                      "percentual_retrabalho": 0,
-                      "percentual_erro": 0,
-                      "custo_hora_mao_obra": 34.38,
-                      "base_referencia_mes": "2026-09"
-                    }
-                  }
-                },
-                "investment_create": {
-                  "summary": "entity=investment create",
-                  "value": {
-                    "data": {
-                      "revisao_id": "<revisao_uuid>",
-                      "tipo_investimento": "unico",
-                      "descricao_item": "Licença teste GPT",
-                      "quantidade": 1,
-                      "valor_unitario": 1000,
-                      "recorrencia": "unico"
-                    }
-                  }
-                },
-                "shared_resource_create": {
-                  "summary": "entity=shared_resource create",
-                  "value": {
-                    "data": {
-                      "nome_recurso": "Embaixador exemplo",
-                      "tipo_custo": "mao_obra",
-                      "recorrencia": "mensal",
-                      "criterio_rateio": "igualitario",
-                      "escopo_recurso": "empresa",
-                      "status_recurso": "ativo",
-                      "valor_total_recorrente": 0
-                    }
-                  }
-                },
-                "resource_cost_create": {
-                  "summary": "entity=resource_cost create",
-                  "value": {
-                    "data": {
-                      "recurso_compartilhado_id": "<recurso_compartilhado_uuid>",
-                      "valor_mensal": 6051.61,
-                      "data_inicio_vigencia": "2026-07-06",
-                      "data_fim_vigencia": null,
-                      "observacoes": "Vigência de custo mensal"
-                    }
-                  }
-                },
-                "resource_cost_update": {
-                  "summary": "entity=resource_cost update (partial valor_mensal)",
-                  "value": {
-                    "data": {
-                      "valor_mensal": 6051.61
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Created or upserted record",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
-                }
-              }
-            }
-          },
-          "201": {
-            "description": "Created record",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Validation or domain error. Body is ApiEnvelope with success=false; read message + data.errors (do not show only HTTP 400).",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
-                },
-                "example": {
-                  "success": false,
-                  "message": "Campos obrigatórios ausentes: nome_recurso, tipo_custo, recorrencia",
-                  "data": {
-                    "error_count": 3,
-                    "errors": [
-                      {
-                        "field": "nome_recurso",
-                        "reason": "Field required"
-                      },
-                      {
-                        "field": "tipo_custo",
-                        "reason": "Field required"
-                      },
-                      {
-                        "field": "recorrencia",
-                        "reason": "Field required"
-                      }
-                    ]
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing/invalid Bearer. ApiEnvelope message explains AuthN; read message (not only HTTP 401).",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
-                },
-                "example": {
-                  "success": false,
-                  "message": "Unauthorized",
-                  "data": {
-                    "error_kind": "authn"
-                  }
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Authenticated but lacking permission. Read message + data.error_kind.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
-                },
-                "example": {
-                  "success": false,
-                  "message": "Acesso negado.",
-                  "data": {
-                    "error_kind": "authz"
-                  }
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Record not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Request body/query schema invalid. Read message + data.errors.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "Persistence/infrastructure failure. Read message + data.error_kind=persistence.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
-                }
-              }
-            }
-          }
-        },
-        "x-openai-isConsequential": true
       }
     },
     "/transformometro/gpt-actions/v1/records/{entity}/{id}": {
@@ -1474,652 +1165,13 @@
             }
           }
         }
-      },
-      "put": {
-        "operationId": "gpt_update_record",
-        "summary": "Update a Transformômetro record",
-        "description": "Body MUST be {data:{...}}. Partial updates merge omitted fields for resource_cost, shared_resource and investment.",
-        "tags": [
-          "Transformômetro GPT"
-        ],
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "entity",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "enum": [
-                "branch",
-                "department",
-                "process",
-                "instance",
-                "revision",
-                "measurement",
-                "investment",
-                "shared_resource",
-                "resource_cost",
-                "resource_link",
-                "meeting_minute",
-                "process_document",
-                "decomposition_tree",
-                "instance_decomposition_scope",
-                "revision_decomposition_overlay",
-                "process_diagram",
-                "instance_diagram_scope",
-                "revision_diagram_overlay",
-                "impact_effort_matrix"
-              ]
-            },
-            "description": "Entity slug (see enum). Cadastro: process, instance, revision, measurement, investment. Catalog: branch, department, shared_resource. Atas: meeting_minute. Process knowledge (Markdown): process_document. Documents: decomposition_tree, process_diagram, impact_effort_matrix and related overlays."
-          },
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/GptRecordBody"
-              },
-              "example": {
-                "data": {
-                  "nome_processo": "Processo teste GPT (atualizado)",
-                  "status_processo": "ativo"
-                }
-              },
-              "examples": {
-                "process_create": {
-                  "summary": "entity=process create",
-                  "value": {
-                    "data": {
-                      "nome_processo": "Processo teste GPT",
-                      "status_processo": "ativo",
-                      "descricao_processo": "Criado via Custom GPT Action"
-                    }
-                  }
-                },
-                "instance_create": {
-                  "summary": "entity=instance create (one filial)",
-                  "value": {
-                    "data": {
-                      "processo_id": "<processo_uuid>",
-                      "filial_id": "01",
-                      "setor_ids": [
-                        "<setor_id_or_codigo>"
-                      ],
-                      "resumo_melhoria": "Melhoria teste GPT",
-                      "fase_melhoria": "planejado",
-                      "prioridade": "media",
-                      "status_instancia": "ativo"
-                    }
-                  }
-                },
-                "instance_create_all_units": {
-                  "summary": "entity=instance create (todas_filiais_ativas)",
-                  "value": {
-                    "data": {
-                      "processo_id": "<processo_uuid>",
-                      "todas_filiais_ativas": true,
-                      "setor_ids": [
-                        "<setor_id_or_codigo>"
-                      ],
-                      "resumo_melhoria": "Melhoria corporativa (todas as filiais)",
-                      "fase_melhoria": "planejado",
-                      "prioridade": "media",
-                      "status_instancia": "ativo"
-                    }
-                  }
-                },
-                "revision_create": {
-                  "summary": "entity=revision create",
-                  "value": {
-                    "data": {
-                      "processo_id": "<processo_uuid>",
-                      "instancia_id": "<instancia_uuid>",
-                      "versao_revisao": "2.1.0",
-                      "cenario_tipo": "melhoria",
-                      "data_inicio_vigencia": "2026-09-14",
-                      "revisao_referencia_id": "<baseline_revisao_uuid>",
-                      "beneficio_calculo_categoria": "automatico",
-                      "descricao_revisao": "Cenário teste GPT"
-                    }
-                  }
-                },
-                "revision_clear_end_date": {
-                  "summary": "entity=revision update — clear data_fim_vigencia",
-                  "value": {
-                    "data": {
-                      "data_fim_vigencia": null,
-                      "confirm_vigencia_change": true
-                    }
-                  }
-                },
-                "measurement_upsert": {
-                  "summary": "entity=measurement upsert",
-                  "value": {
-                    "data": {
-                      "revisao_id": "<revisao_uuid>",
-                      "volume_mensal": 100,
-                      "tempo_medio_execucao_min": 30,
-                      "percentual_retrabalho": 0,
-                      "percentual_erro": 0,
-                      "custo_hora_mao_obra": 34.38,
-                      "base_referencia_mes": "2026-09"
-                    }
-                  }
-                },
-                "investment_create": {
-                  "summary": "entity=investment create",
-                  "value": {
-                    "data": {
-                      "revisao_id": "<revisao_uuid>",
-                      "tipo_investimento": "unico",
-                      "descricao_item": "Licença teste GPT",
-                      "quantidade": 1,
-                      "valor_unitario": 1000,
-                      "recorrencia": "unico"
-                    }
-                  }
-                },
-                "shared_resource_create": {
-                  "summary": "entity=shared_resource create",
-                  "value": {
-                    "data": {
-                      "nome_recurso": "Embaixador exemplo",
-                      "tipo_custo": "mao_obra",
-                      "recorrencia": "mensal",
-                      "criterio_rateio": "igualitario",
-                      "escopo_recurso": "empresa",
-                      "status_recurso": "ativo",
-                      "valor_total_recorrente": 0
-                    }
-                  }
-                },
-                "resource_cost_create": {
-                  "summary": "entity=resource_cost create",
-                  "value": {
-                    "data": {
-                      "recurso_compartilhado_id": "<recurso_compartilhado_uuid>",
-                      "valor_mensal": 6051.61,
-                      "data_inicio_vigencia": "2026-07-06",
-                      "data_fim_vigencia": null,
-                      "observacoes": "Vigência de custo mensal"
-                    }
-                  }
-                },
-                "resource_cost_update": {
-                  "summary": "entity=resource_cost update (partial valor_mensal)",
-                  "value": {
-                    "data": {
-                      "valor_mensal": 6051.61
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Updated record",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Validation or domain error. Body is ApiEnvelope with success=false; read message + data.errors (do not show only HTTP 400).",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
-                },
-                "example": {
-                  "success": false,
-                  "message": "Campos obrigatórios ausentes: nome_recurso, tipo_custo, recorrencia",
-                  "data": {
-                    "error_count": 3,
-                    "errors": [
-                      {
-                        "field": "nome_recurso",
-                        "reason": "Field required"
-                      },
-                      {
-                        "field": "tipo_custo",
-                        "reason": "Field required"
-                      },
-                      {
-                        "field": "recorrencia",
-                        "reason": "Field required"
-                      }
-                    ]
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing/invalid Bearer. ApiEnvelope message explains AuthN; read message (not only HTTP 401).",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
-                },
-                "example": {
-                  "success": false,
-                  "message": "Unauthorized",
-                  "data": {
-                    "error_kind": "authn"
-                  }
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Authenticated but lacking permission. Read message + data.error_kind.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
-                },
-                "example": {
-                  "success": false,
-                  "message": "Acesso negado.",
-                  "data": {
-                    "error_kind": "authz"
-                  }
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Record not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Request body/query schema invalid. Read message + data.errors.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "Persistence/infrastructure failure. Read message + data.error_kind=persistence.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
-                }
-              }
-            }
-          }
-        },
-        "x-openai-isConsequential": true
-      },
-      "delete": {
-        "operationId": "gpt_delete_record",
-        "summary": "Soft-delete a Transformômetro record",
-        "description": "Destructive soft-delete. Path: entity + id. No JSON body. Requires the same manage permissions as the UI.",
-        "tags": [
-          "Transformômetro GPT"
-        ],
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "entity",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "enum": [
-                "branch",
-                "department",
-                "process",
-                "instance",
-                "revision",
-                "measurement",
-                "investment",
-                "shared_resource",
-                "resource_cost",
-                "resource_link",
-                "meeting_minute",
-                "process_document",
-                "decomposition_tree",
-                "instance_decomposition_scope",
-                "revision_decomposition_overlay",
-                "process_diagram",
-                "instance_diagram_scope",
-                "revision_diagram_overlay",
-                "impact_effort_matrix"
-              ]
-            },
-            "description": "Entity slug (see enum). Cadastro: process, instance, revision, measurement, investment. Catalog: branch, department, shared_resource. Atas: meeting_minute. Process knowledge (Markdown): process_document. Documents: decomposition_tree, process_diagram, impact_effort_matrix and related overlays."
-          },
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Deleted",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Validation or domain error. Body is ApiEnvelope with success=false; read message + data.errors (do not show only HTTP 400).",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
-                },
-                "example": {
-                  "success": false,
-                  "message": "Campos obrigatórios ausentes: nome_recurso, tipo_custo, recorrencia",
-                  "data": {
-                    "error_count": 3,
-                    "errors": [
-                      {
-                        "field": "nome_recurso",
-                        "reason": "Field required"
-                      },
-                      {
-                        "field": "tipo_custo",
-                        "reason": "Field required"
-                      },
-                      {
-                        "field": "recorrencia",
-                        "reason": "Field required"
-                      }
-                    ]
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing/invalid Bearer. ApiEnvelope message explains AuthN; read message (not only HTTP 401).",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
-                },
-                "example": {
-                  "success": false,
-                  "message": "Unauthorized",
-                  "data": {
-                    "error_kind": "authn"
-                  }
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Authenticated but lacking permission. Read message + data.error_kind.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
-                },
-                "example": {
-                  "success": false,
-                  "message": "Acesso negado.",
-                  "data": {
-                    "error_kind": "authz"
-                  }
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Record not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Request body/query schema invalid. Read message + data.errors.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "Persistence/infrastructure failure. Read message + data.error_kind=persistence.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
-                }
-              }
-            }
-          }
-        },
-        "x-openai-isConsequential": true
-      }
-    },
-    "/transformometro/gpt-actions/v1/records/{entity}/{id}/duplicate": {
-      "post": {
-        "operationId": "gpt_duplicate_record",
-        "summary": "Duplicate process, instance, or revision",
-        "description": "Entities: process|instance|revision. Optional body {data:{...}} for rename fields (e.g. nome_processo).",
-        "tags": [
-          "Transformômetro GPT"
-        ],
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "entity",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "enum": [
-                "process",
-                "instance",
-                "revision"
-              ]
-            }
-          },
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": false,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/GptRecordBody"
-              },
-              "example": {
-                "data": {
-                  "nome_processo": "Processo teste GPT (cópia)",
-                  "status_processo": "ativo"
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Duplicated record",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
-                }
-              }
-            }
-          },
-          "201": {
-            "description": "Duplicated record",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Validation or domain error. Body is ApiEnvelope with success=false; read message + data.errors (do not show only HTTP 400).",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
-                },
-                "example": {
-                  "success": false,
-                  "message": "Campos obrigatórios ausentes: nome_recurso, tipo_custo, recorrencia",
-                  "data": {
-                    "error_count": 3,
-                    "errors": [
-                      {
-                        "field": "nome_recurso",
-                        "reason": "Field required"
-                      },
-                      {
-                        "field": "tipo_custo",
-                        "reason": "Field required"
-                      },
-                      {
-                        "field": "recorrencia",
-                        "reason": "Field required"
-                      }
-                    ]
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing/invalid Bearer. ApiEnvelope message explains AuthN; read message (not only HTTP 401).",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
-                },
-                "example": {
-                  "success": false,
-                  "message": "Unauthorized",
-                  "data": {
-                    "error_kind": "authn"
-                  }
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Authenticated but lacking permission. Read message + data.error_kind.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
-                },
-                "example": {
-                  "success": false,
-                  "message": "Acesso negado.",
-                  "data": {
-                    "error_kind": "authz"
-                  }
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Record not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Request body/query schema invalid. Read message + data.errors.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "Persistence/infrastructure failure. Read message + data.error_kind=persistence.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
-                }
-              }
-            }
-          }
-        },
-        "x-openai-isConsequential": true
       }
     },
     "/transformometro/gpt-actions/v1/revisions/{id}/activate": {
       "post": {
         "operationId": "gpt_activate_revision",
         "summary": "Activate a revision as the operational current version",
-        "description": "Path id = revisao_id UUID. No required body. Consequential write.",
+        "description": "Path id = revisao_id UUID. No required body. Consequential write. PREPARE only — commit via gpt_commit_proposal.",
         "tags": [
           "Transformômetro GPT"
         ],
@@ -2246,14 +1298,14 @@
             }
           }
         },
-        "x-openai-isConsequential": true
+        "x-openai-isConsequential": false
       }
     },
     "/transformometro/gpt-actions/v1/dashboard/recalculate": {
       "post": {
         "operationId": "gpt_recalculate_dashboard",
         "summary": "Recalculate materialised dashboard cache",
-        "description": "Optional filters in JSON body: revisao_id, processo_id, competencia_inicio, competencia_fim.",
+        "description": "Optional filters in JSON body: revisao_id, processo_id, competencia_inicio, competencia_fim. PREPARE only — commit via gpt_commit_proposal.",
         "tags": [
           "Transformômetro GPT"
         ],
@@ -2383,14 +1435,14 @@
             }
           }
         },
-        "x-openai-isConsequential": true
+        "x-openai-isConsequential": false
       }
     },
     "/transformometro/gpt-actions/v1/meeting-minutes/{id}/workflow": {
       "post": {
         "operationId": "gpt_meeting_minute_workflow",
         "summary": "Send, finalize, or cancel a meeting minute",
-        "description": "Body requires action enum. Handwritten signature stays in UI/magic link.",
+        "description": "Body requires action enum. Handwritten signature stays in UI/magic link. PREPARE only — commit via gpt_commit_proposal.",
         "tags": [
           "Transformômetro GPT"
         ],
@@ -2551,14 +1603,14 @@
             }
           }
         },
-        "x-openai-isConsequential": true
+        "x-openai-isConsequential": false
       }
     },
     "/transformometro/gpt-actions/v1/improvement-packages/validate": {
       "post": {
         "operationId": "gpt_validate_improvement_package",
         "summary": "Validate a guided improvement package (no write)",
-        "description": "Validates a nested improvement package. Never writes, activates or recalculates. Returns ready/missing/checklist.",
+        "description": "Validates a nested improvement package. Never writes, activates or recalculates. Returns ready/missing/checklist. PREPARE only — commit via gpt_commit_proposal.",
         "tags": [
           "Transformômetro GPT"
         ],
@@ -2715,170 +1767,6 @@
         "x-openai-isConsequential": false
       }
     },
-    "/transformometro/gpt-actions/v1/improvement-packages": {
-      "post": {
-        "operationId": "gpt_commit_improvement_package",
-        "summary": "Commit a guided improvement package",
-        "description": "Commits an already-reviewed improvement package. This operation may persist data. Prefer gpt_validate_improvement_package first.",
-        "tags": [
-          "Transformômetro GPT"
-        ],
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/GptImprovementPackageBody"
-              },
-              "example": {
-                "dry_run": false,
-                "activate_scenario": false,
-                "recalculate": false,
-                "process": {
-                  "processo_id": "<uuid>"
-                },
-                "instance": {
-                  "instancia_id": "<uuid>"
-                },
-                "scenario": {
-                  "revision": {
-                    "revisao_referencia_id": "<uuid>",
-                    "versao_revisao": "2.1.0",
-                    "cenario_tipo": "melhoria",
-                    "data_inicio_vigencia": "YYYY-MM-DD",
-                    "data_implantacao": "YYYY-MM-DD",
-                    "descricao_revisao": "...",
-                    "motivo_revisao": "...",
-                    "beneficio_calculo_categoria": "automatico"
-                  },
-                  "measurement": {
-                    "volume_mensal": 0,
-                    "tempo_medio_execucao_min": 0,
-                    "percentual_retrabalho": 0,
-                    "percentual_erro": 0,
-                    "base_referencia_mes": "YYYY-MM"
-                  },
-                  "investments": []
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Dry-run checklist or commit result",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Validation or domain error. Body is ApiEnvelope with success=false; read message + data.errors (do not show only HTTP 400).",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
-                },
-                "example": {
-                  "success": false,
-                  "message": "Campos obrigatórios ausentes: nome_recurso, tipo_custo, recorrencia",
-                  "data": {
-                    "error_count": 3,
-                    "errors": [
-                      {
-                        "field": "nome_recurso",
-                        "reason": "Field required"
-                      },
-                      {
-                        "field": "tipo_custo",
-                        "reason": "Field required"
-                      },
-                      {
-                        "field": "recorrencia",
-                        "reason": "Field required"
-                      }
-                    ]
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing/invalid Bearer. ApiEnvelope message explains AuthN; read message (not only HTTP 401).",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
-                },
-                "example": {
-                  "success": false,
-                  "message": "Unauthorized",
-                  "data": {
-                    "error_kind": "authn"
-                  }
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Authenticated but lacking permission. Read message + data.error_kind.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
-                },
-                "example": {
-                  "success": false,
-                  "message": "Acesso negado.",
-                  "data": {
-                    "error_kind": "authz"
-                  }
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Record not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Request body/query schema invalid. Read message + data.errors.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "Persistence/infrastructure failure. Read message + data.error_kind=persistence.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
-                }
-              }
-            }
-          }
-        },
-        "x-openai-isConsequential": true
-      }
-    },
     "/transformometro/gpt-actions/v1/evidence": {
       "get": {
         "operationId": "gpt_list_evidence",
@@ -3029,7 +1917,7 @@
       "post": {
         "operationId": "gpt_manage_evidence",
         "summary": "Manage external-link evidence metadata",
-        "description": "create_link|update_description|delete. Binary upload blocked. Delete requires confirm_delete=true.",
+        "description": "create_link|update_description|delete. Binary upload blocked. Delete requires confirm_delete=true. PREPARE only — commit via gpt_commit_proposal.",
         "tags": [
           "Transformômetro GPT"
         ],
@@ -3165,7 +2053,7 @@
             }
           }
         },
-        "x-openai-isConsequential": true
+        "x-openai-isConsequential": false
       }
     },
     "/transformometro/gpt-actions/v1/processes/{processo_id}/timeline": {
@@ -3323,7 +2211,7 @@
       "post": {
         "operationId": "gpt_adjust_shared_resource_cost",
         "summary": "Register shared-resource cost adjustment",
-        "description": "Canonical registrar_reajuste. Not generic resource_cost update.",
+        "description": "Canonical registrar_reajuste. Not generic resource_cost update. PREPARE only — commit via gpt_commit_proposal.",
         "tags": [
           "Transformômetro GPT"
         ],
@@ -3449,14 +2337,14 @@
             }
           }
         },
-        "x-openai-isConsequential": true
+        "x-openai-isConsequential": false
       }
     },
     "/transformometro/gpt-actions/v1/meeting-minutes/manage": {
       "post": {
         "operationId": "gpt_meeting_minute_manage",
         "summary": "Meeting-minute extras (not send/finalize/cancel)",
-        "description": "pending_signatures|audit|versions|resend|create_version|set_participants|set_signers|generate_from_transcript. No PDF/PNG/public sign.",
+        "description": "READ actions return immediately. WRITE actions return a PREPARE proposal; commit via gpt_commit_proposal.",
         "tags": [
           "Transformômetro GPT"
         ],
@@ -3478,6 +2366,285 @@
         "responses": {
           "200": {
             "description": "Meeting minute manage result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation or domain error. Body is ApiEnvelope with success=false; read message + data.errors (do not show only HTTP 400).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "message": "Campos obrigatórios ausentes: nome_recurso, tipo_custo, recorrencia",
+                  "data": {
+                    "error_count": 3,
+                    "errors": [
+                      {
+                        "field": "nome_recurso",
+                        "reason": "Field required"
+                      },
+                      {
+                        "field": "tipo_custo",
+                        "reason": "Field required"
+                      },
+                      {
+                        "field": "recorrencia",
+                        "reason": "Field required"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid Bearer. ApiEnvelope message explains AuthN; read message (not only HTTP 401).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "message": "Unauthorized",
+                  "data": {
+                    "error_kind": "authn"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking permission. Read message + data.error_kind.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "message": "Acesso negado.",
+                  "data": {
+                    "error_kind": "authz"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Record not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request body/query schema invalid. Read message + data.errors.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Persistence/infrastructure failure. Read message + data.error_kind=persistence.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "x-openai-isConsequential": true
+      }
+    },
+    "/transformometro/gpt-actions/v1/records/prepare-change": {
+      "post": {
+        "operationId": "gpt_prepare_record_change",
+        "summary": "PREPARE entity create/update/delete/duplicate (no write)",
+        "description": "READ CURRENT STATE → validate → return opaque proposal_handle. No DB write. Then show proposal and call gpt_commit_proposal.",
+        "tags": [
+          "Transformômetro GPT"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GptPrepareRecordChangeBody"
+              },
+              "example": {
+                "entity": "process_document",
+                "operation": "create",
+                "changes": {
+                  "processo_id": "00000000-0000-0000-0000-000000000001",
+                  "title": "AS-IS notes",
+                  "content_md": "# Draft"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "proposal_ready envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation or domain error. Body is ApiEnvelope with success=false; read message + data.errors (do not show only HTTP 400).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "message": "Campos obrigatórios ausentes: nome_recurso, tipo_custo, recorrencia",
+                  "data": {
+                    "error_count": 3,
+                    "errors": [
+                      {
+                        "field": "nome_recurso",
+                        "reason": "Field required"
+                      },
+                      {
+                        "field": "tipo_custo",
+                        "reason": "Field required"
+                      },
+                      {
+                        "field": "recorrencia",
+                        "reason": "Field required"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid Bearer. ApiEnvelope message explains AuthN; read message (not only HTTP 401).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "message": "Unauthorized",
+                  "data": {
+                    "error_kind": "authn"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking permission. Read message + data.error_kind.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "message": "Acesso negado.",
+                  "data": {
+                    "error_kind": "authz"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Record not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request body/query schema invalid. Read message + data.errors.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Persistence/infrastructure failure. Read message + data.error_kind=persistence.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "x-openai-isConsequential": false
+      }
+    },
+    "/transformometro/gpt-actions/v1/proposals/commit": {
+      "post": {
+        "operationId": "gpt_commit_proposal",
+        "summary": "COMMIT opaque proposal_handle after confirmation",
+        "description": "NOT a generic proxy: executes only a server-side PREPARE proposal. Revalidates AuthZ + state fingerprint; authoritative read-back.",
+        "tags": [
+          "Transformômetro GPT"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GptCommitProposalBody"
+              },
+              "example": {
+                "proposal_handle": "…",
+                "confirmation": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "verified commit outcome",
             "content": {
               "application/json": {
                 "schema": {
@@ -4773,6 +3940,494 @@
               }
             },
             "additionalProperties": false
+          }
+        }
+      },
+      "GptPrepareRecordChangeBody": {
+        "type": "object",
+        "required": [
+          "entity",
+          "operation"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "entity": {
+            "type": "string",
+            "enum": [
+              "branch",
+              "department",
+              "process",
+              "instance",
+              "revision",
+              "measurement",
+              "investment",
+              "shared_resource",
+              "resource_cost",
+              "resource_link",
+              "meeting_minute",
+              "process_document",
+              "decomposition_tree",
+              "instance_decomposition_scope",
+              "revision_decomposition_overlay",
+              "process_diagram",
+              "instance_diagram_scope",
+              "revision_diagram_overlay",
+              "impact_effort_matrix"
+            ],
+            "description": "Entity slug (see enum). Cadastro: process, instance, revision, measurement, investment. Catalog: branch, department, shared_resource. Atas: meeting_minute. Process knowledge (Markdown): process_document. Documents: decomposition_tree, process_diagram, impact_effort_matrix and related overlays."
+          },
+          "operation": {
+            "type": "string",
+            "enum": [
+              "create",
+              "update",
+              "delete",
+              "duplicate"
+            ],
+            "description": "Entity must allow the operation (see catalog.capability_surface)."
+          },
+          "record_id": {
+            "type": "string",
+            "description": "Required for update/delete/duplicate."
+          },
+          "changes": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Canonical entity fields only (same as former data{}). Server-owned fields rejected.",
+            "properties": {
+              "nome_processo": {
+                "type": "string",
+                "description": "Required when entity=process (create)."
+              },
+              "status_processo": {
+                "type": "string",
+                "description": "Required when entity=process. Typical: ativo."
+              },
+              "codigo_processo": {
+                "type": "string",
+                "description": "Business process code. Optional on create (auto-generated if omitted). Mutable on update; omit/null keeps current (never clears). Distinct from immutable processo_id."
+              },
+              "descricao_processo": {
+                "type": "string",
+                "description": "On process update: omit keeps current; null clears."
+              },
+              "gestor_responsavel": {
+                "type": "string",
+                "description": "On process update: omit keeps current; null clears."
+              },
+              "objetivo_processo": {
+                "type": "string",
+                "description": "On process update: omit keeps current; null clears."
+              },
+              "familia_processo": {
+                "type": "string"
+              },
+              "agrupador_ferramenta": {
+                "type": "string"
+              },
+              "filial_ids": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Process scope units (when not todas_filiais_ativas)."
+              },
+              "processo_id": {
+                "type": "string",
+                "description": "Parent/process id when creating instance/revision."
+              },
+              "instancia_id": {
+                "type": "string"
+              },
+              "revisao_id": {
+                "type": "string"
+              },
+              "recurso_compartilhado_id": {
+                "type": "string",
+                "description": "Required when entity=resource_cost (create) or entity=resource_link. Alias: recurso_id."
+              },
+              "recurso_id": {
+                "type": "string",
+                "description": "Alias of recurso_compartilhado_id for resource_cost create."
+              },
+              "filial_id": {
+                "type": "string",
+                "description": "Required for entity=instance unless todas_filiais_ativas=true (omit filial_id then)."
+              },
+              "todas_filiais_ativas": {
+                "type": "boolean",
+                "description": "When true, instance applies to all active units; do not send filial_id.",
+                "default": false
+              },
+              "setor_ids": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Required for entity=instance (at least one)."
+              },
+              "setor_id": {
+                "type": "string",
+                "description": "Legacy single-department shortcut."
+              },
+              "status_instancia": {
+                "type": "string"
+              },
+              "rotulo_instancia": {
+                "type": "string"
+              },
+              "responsavel_local": {
+                "type": "string"
+              },
+              "data_alvo_go_live": {
+                "type": "string"
+              },
+              "resumo_melhoria": {
+                "type": "string"
+              },
+              "fase_melhoria": {
+                "type": "string"
+              },
+              "prioridade": {
+                "type": "string"
+              },
+              "versao_revisao": {
+                "type": "string"
+              },
+              "cenario_tipo": {
+                "type": "string"
+              },
+              "data_inicio_vigencia": {
+                "type": "string",
+                "format": "date",
+                "description": "Revision or resource_cost start date (YYYY-MM-DD). Required on resource_cost create; optional on update (merges)."
+              },
+              "data_fim_vigencia": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date",
+                "description": "Omit = open/unset on create; null = clear on update; date = set. Never invent today."
+              },
+              "revisao_referencia_id": {
+                "type": "string"
+              },
+              "beneficio_calculo_categoria": {
+                "type": "string"
+              },
+              "descricao_revisao": {
+                "type": "string"
+              },
+              "motivo_revisao": {
+                "type": "string"
+              },
+              "data_implantacao": {
+                "type": "string",
+                "format": "date"
+              },
+              "revisao_ativa": {
+                "type": "boolean"
+              },
+              "confirm_vigencia_change": {
+                "type": "boolean",
+                "description": "Required true when changing revision vigência and measurement exists."
+              },
+              "observacoes": {
+                "type": "string"
+              },
+              "volume_mensal": {
+                "type": "number"
+              },
+              "tempo_medio_execucao_min": {
+                "type": "number"
+              },
+              "tempo_retrabalho_min": {
+                "type": "number"
+              },
+              "percentual_retrabalho": {
+                "type": "number"
+              },
+              "percentual_erro": {
+                "type": "number"
+              },
+              "quantidade_erros_mes": {
+                "type": "number"
+              },
+              "custo_hora_mao_obra": {
+                "type": "number"
+              },
+              "custo_unitario_erro": {
+                "type": "number"
+              },
+              "custo_unitario_retrabalho": {
+                "type": "number"
+              },
+              "custo_outros_desperdicios": {
+                "type": "number"
+              },
+              "base_referencia_mes": {
+                "type": "string"
+              },
+              "tipo_investimento": {
+                "type": "string"
+              },
+              "descricao_item": {
+                "type": "string"
+              },
+              "quantidade": {
+                "type": "number"
+              },
+              "valor_unitario": {
+                "type": "number"
+              },
+              "recorrencia": {
+                "type": "string",
+                "description": "Investment or shared_resource recurrence (e.g. unico, mensal)."
+              },
+              "categoria_investimento": {
+                "type": "string"
+              },
+              "data_investimento": {
+                "type": "string",
+                "format": "date"
+              },
+              "meses_vigencia": {
+                "type": "integer"
+              },
+              "centro_custo": {
+                "type": "string"
+              },
+              "nome_recurso": {
+                "type": "string"
+              },
+              "tipo_custo": {
+                "type": "string"
+              },
+              "valor_total_recorrente": {
+                "type": "number",
+                "description": "Legacy catalog total; prefer entity=resource_cost for vigências."
+              },
+              "criterio_rateio": {
+                "type": "string"
+              },
+              "escopo_recurso": {
+                "type": "string"
+              },
+              "base_competencia": {
+                "type": "string"
+              },
+              "status_recurso": {
+                "type": "string"
+              },
+              "categoria_recurso": {
+                "type": "string"
+              },
+              "fornecedor": {
+                "type": "string"
+              },
+              "codigo_recurso": {
+                "type": "string"
+              },
+              "valor_mensal": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Monthly cost for entity=resource_cost. Required on create; on update may be sent alone (other fields merge from current row)."
+              },
+              "vigente_desde": {
+                "type": "string",
+                "format": "date",
+                "description": "Used by UI reajuste flows; prefer data_inicio_vigencia in GPT writes."
+              },
+              "ativo": {
+                "type": "boolean"
+              },
+              "data_inicio_uso": {
+                "type": "string",
+                "format": "date"
+              },
+              "data_fim_uso": {
+                "type": "string",
+                "format": "date"
+              },
+              "peso_rateio": {
+                "type": "number"
+              },
+              "codigo_filial": {
+                "type": "string"
+              },
+              "nome_filial": {
+                "type": "string"
+              },
+              "status_filial": {
+                "type": "string"
+              },
+              "codigo_setor": {
+                "type": "string"
+              },
+              "nome_setor": {
+                "type": "string"
+              },
+              "status_setor": {
+                "type": "string"
+              },
+              "filiais": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Unit codes for entity=department."
+              },
+              "unit_code": {
+                "type": "string",
+                "description": "Filial code for entity=meeting_minute (01|02; zero-padded to 2 digits)."
+              },
+              "title": {
+                "type": "string",
+                "description": "Title for entity=meeting_minute or entity=process_document (required on create)."
+              },
+              "content_md": {
+                "type": "string",
+                "description": "Markdown body for entity=process_document. Optional on create (defaults to empty); omit on update to keep current."
+              },
+              "meeting_type": {
+                "type": "string",
+                "enum": [
+                  "ordinary",
+                  "extraordinary",
+                  "workshop",
+                  "follow_up",
+                  "kickoff",
+                  "other"
+                ],
+                "description": "Meeting type for entity=meeting_minute (default ordinary). Must match catalog enum."
+              },
+              "meeting_date": {
+                "type": "string",
+                "format": "date",
+                "description": "Required on meeting_minute create. Format YYYY-MM-DD only (not DD/MM/AAAA)."
+              },
+              "start_time": {
+                "type": "string",
+                "description": "Optional HH:MM or HH:MM:SS (not 14h30)."
+              },
+              "end_time": {
+                "type": "string",
+                "description": "Optional HH:MM or HH:MM:SS (not 14h30)."
+              },
+              "location": {
+                "type": "string"
+              },
+              "responsible_user_id": {
+                "type": "string",
+                "description": "Optional UUID. Omit or null to leave empty — never send \"\"."
+              },
+              "responsible_name": {
+                "type": "string"
+              },
+              "chair_name": {
+                "type": "string"
+              },
+              "secretary_name": {
+                "type": "string"
+              },
+              "agenda_html": {
+                "type": "string"
+              },
+              "body_html": {
+                "type": "string"
+              },
+              "decisions_html": {
+                "type": "string"
+              },
+              "pending_html": {
+                "type": "string"
+              },
+              "observations_html": {
+                "type": "string"
+              },
+              "participants": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {},
+                  "x-delpi-gpt-opaque-object": true,
+                  "description": "Meeting-minute participant row. Entity-specific bag; signature capture remains UI-only."
+                },
+                "description": "Participants for entity=meeting_minute."
+              },
+              "signers": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {},
+                  "x-delpi-gpt-opaque-object": true,
+                  "description": "Meeting-minute signer row. Signature capture remains UI-only."
+                },
+                "description": "Signers for entity=meeting_minute (signature capture remains UI-only)."
+              },
+              "conteudo": {
+                "type": "object",
+                "additionalProperties": true,
+                "properties": {},
+                "x-delpi-gpt-opaque-object": true,
+                "description": "Document payload (diagram flowchart or decomposition tree/overlay)."
+              },
+              "node_ids": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Scope node ids for instance diagram/decomposition scope."
+              },
+              "inherit_all": {
+                "type": "boolean"
+              },
+              "include_boundary_edges": {
+                "type": "boolean"
+              },
+              "include_descendants": {
+                "type": "boolean"
+              },
+              "modo": {
+                "type": "string",
+                "description": "Impact×effort matrix mode (entity=impact_effort_matrix)."
+              },
+              "inputs_manuais": {
+                "type": "object",
+                "additionalProperties": true,
+                "properties": {},
+                "x-delpi-gpt-opaque-object": true,
+                "description": "Impact×effort matrix manual inputs. Cell keys vary by matrix mode."
+              },
+              "overrides": {
+                "type": "object",
+                "additionalProperties": true,
+                "properties": {},
+                "x-delpi-gpt-opaque-object": true,
+                "description": "Impact×effort matrix overrides. Cell keys vary by matrix mode."
+              }
+            }
+          }
+        }
+      },
+      "GptCommitProposalBody": {
+        "type": "object",
+        "required": [
+          "proposal_handle",
+          "confirmation"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "proposal_handle": {
+            "type": "string",
+            "description": "Opaque server handle from PREPARE. Do not invent."
+          },
+          "confirmation": {
+            "type": "boolean",
+            "description": "Must be true after showing proposal to the user. Not AuthZ; backend revalidates."
           }
         }
       }

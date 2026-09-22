@@ -59,11 +59,12 @@ def test_process_document_entity_in_catalog():
 
 def test_action_budget_unchanged_after_process_document_entity():
     doc = build_gpt_actions_openapi()
-    assert count_operations(doc) == len(GPT_ACTIONS_OPERATION_IDS) == 21
+    assert count_operations(doc) == len(GPT_ACTIONS_OPERATION_IDS) == 18
     assert count_operations(doc) <= 30
     blob = str(doc)
     assert "process_document" in blob
     assert "gpt_list_process_documents" not in blob
+    assert "gpt_prepare_record_change" in blob
     assert "gpt_call_any_route" not in blob
     assert "gpt_http_proxy" not in blob
     assert "gpt_run_sql" not in blob

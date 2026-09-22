@@ -41,7 +41,7 @@ def build_registration_guide() -> dict[str, Any]:
         "package_change_invalidates_confirmation": True,
         "success_requires": ["authoritative_commit_result", "read_back", "verify"],
         "notes": [
-            "If gpt_commit_improvement_package is unavailable/disabled or returns no authoritative result, treat persistence as UNKNOWN.",
+            "If gpt_commit_proposal is unavailable/disabled or returns no authoritative result, treat persistence as UNKNOWN.",
             "Do not claim saved/cadastrado/gravado.",
             "Before retry of an identical package, read current state when possible to avoid duplicates.",
             "If any package field changes, previous confirmation is invalid.",
@@ -198,7 +198,7 @@ def build_registration_guide() -> dict[str, Any]:
                 "actions": [
                     "Create non-baseline revision with revisao_referencia_id = baseline (or prior active).",
                     "Upsert measurement + investments.",
-                    "Prefer gpt_validate_improvement_package then gpt_commit_improvement_package.",
+                    "Prefer gpt_validate_improvement_package (PREPARE) then gpt_commit_proposal.",
                     "Activate only the scenario revision when the user confirms.",
                 ],
             },

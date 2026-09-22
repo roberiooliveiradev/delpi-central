@@ -60,7 +60,7 @@ def test_contract_freeze_full_crud() -> None:
     assert TEO_MCP_SURFACE == "FULL_CRUD_GOVERNED"
     assert MCP_PREDEFINED_CLIENT_ID == "mcp-transformometro"
     assert CANONICAL_MCP_RESOURCE_URL.endswith("/apps/transformometro-api/mcp")
-    assert GPT_ACTIONS_LIFECYCLE == "LEGACY_TRANSITIONAL_BRIDGE"
+    assert GPT_ACTIONS_LIFECYCLE == "GOVERNED_PREPARE_COMMIT_V2"
     assert MCP_RESOURCE_BINDING_SCOPE == "mcp:tools"
     assert KEYCLOAK_INTERNAL_AUDIENCE_CLIENT_SCOPE == "audience-delpi"
     assert MCP_OAUTH_SCOPES == ("openid", "profile", "email", "mcp:tools")

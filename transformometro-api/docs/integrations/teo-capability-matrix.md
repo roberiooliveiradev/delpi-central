@@ -16,7 +16,7 @@ Do not duplicate the full matrix in Instructions, Knowledge, or DÉLIA docs — 
 | **TÉO** | Specialist/capability de transformação digital e processos |
 | **Transformômetro** | Domain authority (processos, revisões, docs, atas, …) |
 | **MCP** | Adapter de capabilities (Plugin/Agent target) |
-| **GPT Actions** | Adapter compacto LEGACY_TRANSITIONAL_BRIDGE |
+| **GPT Actions** | Adapter compacto **GOVERNED_PREPARE_COMMIT_V2** (Builder-importable) |
 
 ```text
 Canonical domain capability
@@ -34,20 +34,22 @@ Canonical domain capability
 - `TÉO capability ≤ authenticated user capability` on every surface.
 - No independent TÉO conversational runtime / `/transformometro/teo/query`.
 - No generic proxy (`call_any_route`, SQL, arbitrary HTTP).
+- Entity writes: `gpt_prepare_record_change` → opaque `proposal_handle` → `gpt_commit_proposal`.
+- Specialized workflows: Action = PREPARE; commit via the same `gpt_commit_proposal` (not a generic proxy).
 
 ## GPT ACTION SURFACE BUDGET
 
 Documented project guardrail (not an external vendor claim): prefer **≤ ~30 importable operations** (`custom-gpt-actions-integration.mdc` + `test_openapi_has_at_most_30_operations`).
 
-| Metric | Before (this change) | After |
+| Metric | Before V2 | After V2 |
 |---|---|---|
-| Paths | 18 | 18 |
-| Importable operations | 21 | 21 |
-| Entities in governed CRUD | 18 | **19** (`process_document` added) |
-| Added operations | — | **0** |
-| Removed / merged | — | **0** |
-| Extended | catalog entity enum + schemas + dispatch wiring | yes |
-| Remaining margin vs ≤30 | 9 | **9** |
+| Paths (Builder-visible) | 18 | **18** |
+| Importable operations | 21 | **18** |
+| Entities in catalog | 19 (`process_document`) | 19 |
+| Added | `gpt_prepare_record_change`, `gpt_commit_proposal` | +2 |
+| Removed from Builder | create/update/delete/duplicate/commit_improvement_package | −5 |
+| Legacy HTTP shims (off-OpenAPI) | create/update/delete/duplicate/commit_package → PREPARE-only | yes |
+| Remaining margin vs ≤30 | 9 | **12** |
 
 Meta route `gpt_get_openapi_schema` is **not** importable.
 

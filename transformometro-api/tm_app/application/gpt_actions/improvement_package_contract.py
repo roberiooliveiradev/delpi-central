@@ -218,9 +218,10 @@ def _baseline_plus_scenario_example() -> dict[str, Any]:
 def build_package_hints() -> dict[str, Any]:
     """Structured package contract exposed via gpt_get_catalog."""
     return {
-        "operationId": "gpt_commit_improvement_package",
+        "operationId": "gpt_validate_improvement_package",
         "validate_operationId": "gpt_validate_improvement_package",
-        "commit_operationId": "gpt_commit_improvement_package",
+        "commit_operationId": "gpt_commit_proposal",
+        "prepare_then_commit": True,
         "dry_run_first": False,
         "process_context_operationId": "gpt_get_process_context",
         "compatibility": (

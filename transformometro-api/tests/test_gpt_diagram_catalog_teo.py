@@ -169,8 +169,8 @@ def test_registration_guide_does_not_duplicate_node_type_literals():
 
 def test_action_count_unchanged_no_new_diagram_action():
     doc = build_gpt_actions_openapi()
-    assert count_operations(doc) == len(GPT_ACTIONS_OPERATION_IDS) == 21
-    assert len(GPT_ACTIONS_OPERATION_IDS) == 21
+    assert count_operations(doc) == len(GPT_ACTIONS_OPERATION_IDS) == 18
+    assert len(GPT_ACTIONS_OPERATION_IDS) == 18
     assert "gpt_get_diagram_catalog" not in GPT_ACTIONS_OPERATION_IDS
     assert "gpt_get_catalog" in GPT_ACTIONS_OPERATION_IDS
 

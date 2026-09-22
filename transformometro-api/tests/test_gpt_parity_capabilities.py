@@ -555,7 +555,10 @@ def test_no_generic_proxy_or_binary_payload_in_parity_openapi():
     assert "multipart" not in blob
     assert "base64" not in blob
     manage = doc["paths"]["/transformometro/gpt-actions/v1/evidence/manage"]["post"]
-    assert manage["x-openai-isConsequential"] is True
+    # V2: manage is PREPARE-only; commit is consequential on gpt_commit_proposal.
+    assert manage.get("x-openai-isConsequential") is False
+    commit = doc["paths"]["/transformometro/gpt-actions/v1/proposals/commit"]["post"]
+    assert commit["x-openai-isConsequential"] is True
 
 
 def test_http_routes_wired(tm_client):

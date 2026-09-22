@@ -97,7 +97,7 @@ def test_application_user_context_has_no_infrastructure_or_framework_imports():
 def test_openapi_includes_gpt_get_my_context():
     doc = build_gpt_actions_openapi()
     assert "gpt_get_my_context" in GPT_ACTIONS_OPERATION_IDS
-    assert count_operations(doc) == len(GPT_ACTIONS_OPERATION_IDS) == 21
+    assert count_operations(doc) == len(GPT_ACTIONS_OPERATION_IDS) == 18
     op = doc["paths"]["/transformometro/gpt-actions/v1/me"]["get"]
     assert op["operationId"] == "gpt_get_my_context"
     assert op["x-openai-isConsequential"] is False
@@ -232,20 +232,17 @@ def test_no_service_account_token_used():
 
 
 def test_existing_operation_ids_preserved_and_methodology_added():
-    previous = {
+    current_core = {
         "gpt_get_catalog",
         "gpt_analyze",
         "gpt_search_records",
         "gpt_get_record",
-        "gpt_create_record",
-        "gpt_update_record",
-        "gpt_delete_record",
-        "gpt_duplicate_record",
+        "gpt_prepare_record_change",
+        "gpt_commit_proposal",
         "gpt_activate_revision",
         "gpt_recalculate_dashboard",
         "gpt_meeting_minute_workflow",
         "gpt_validate_improvement_package",
-        "gpt_commit_improvement_package",
         "gpt_get_process_context",
         "gpt_list_evidence",
         "gpt_manage_evidence",
@@ -253,7 +250,7 @@ def test_existing_operation_ids_preserved_and_methodology_added():
         "gpt_adjust_shared_resource_cost",
         "gpt_meeting_minute_manage",
         "gpt_get_my_context",
+        "gpt_get_methodology_guide",
     }
-    assert previous <= set(GPT_ACTIONS_OPERATION_IDS)
-    assert "gpt_get_methodology_guide" in GPT_ACTIONS_OPERATION_IDS
-    assert len(GPT_ACTIONS_OPERATION_IDS) == 21
+    assert current_core == set(GPT_ACTIONS_OPERATION_IDS)
+    assert len(GPT_ACTIONS_OPERATION_IDS) == 18

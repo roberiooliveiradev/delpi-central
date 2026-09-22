@@ -53,21 +53,27 @@ GPT_ACTIONS_OPERATION_IDS: tuple[str, ...] = (
     "gpt_analyze",
     "gpt_search_records",
     "gpt_get_record",
-    "gpt_create_record",
-    "gpt_update_record",
-    "gpt_delete_record",
-    "gpt_duplicate_record",
+    "gpt_prepare_record_change",
+    "gpt_commit_proposal",
     "gpt_activate_revision",
     "gpt_recalculate_dashboard",
     "gpt_meeting_minute_workflow",
     "gpt_validate_improvement_package",
-    "gpt_commit_improvement_package",
     "gpt_get_process_context",
     "gpt_list_evidence",
     "gpt_manage_evidence",
     "gpt_get_process_timeline",
     "gpt_adjust_shared_resource_cost",
     "gpt_meeting_minute_manage",
+)
+
+# Legacy HTTP still mounted (prepare-only shim) — not Builder-importable.
+GPT_ACTIONS_LEGACY_OPERATION_IDS: tuple[str, ...] = (
+    "gpt_create_record",
+    "gpt_update_record",
+    "gpt_delete_record",
+    "gpt_duplicate_record",
+    "gpt_commit_improvement_package",
 )
 
 # HTTP público para import no GPT Builder — não entra no schema importado.
@@ -1602,6 +1608,169 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
             for key in ("process", "instance", "baseline", "scenario")
         },
     }
+
+    # --- V2 surface: governed prepare/commit + strip legacy CRUD from import ---
+    doc["components"]["schemas"]["GptPrepareRecordChangeBody"] = {
+        "type": "object",
+        "required": ["entity", "operation"],
+        "additionalProperties": False,
+        "properties": {
+            "entity": {
+                "type": "string",
+                "enum": _ENTITY_ENUM,
+                "description": _ENTITY_DESCRIPTION,
+            },
+            "operation": {
+                "type": "string",
+                "enum": ["create", "update", "delete", "duplicate"],
+                "description": "Entity must allow the operation (see catalog.capability_surface).",
+            },
+            "record_id": {
+                "type": "string",
+                "description": "Required for update/delete/duplicate.",
+            },
+            "changes": {
+                "type": "object",
+                "additionalProperties": True,
+                "description": (
+                    "Canonical entity fields only (same as former data{}). "
+                    "Server-owned fields rejected."
+                ),
+                "properties": openapi_record_data_properties(),
+            },
+        },
+    }
+    doc["components"]["schemas"]["GptCommitProposalBody"] = {
+        "type": "object",
+        "required": ["proposal_handle", "confirmation"],
+        "additionalProperties": False,
+        "properties": {
+            "proposal_handle": {
+                "type": "string",
+                "description": "Opaque server handle from PREPARE. Do not invent.",
+            },
+            "confirmation": {
+                "type": "boolean",
+                "description": (
+                    "Must be true after showing proposal to the user. "
+                    "Not AuthZ; backend revalidates."
+                ),
+            },
+        },
+    }
+
+    paths = doc["paths"]
+    # Remove legacy write methods from Builder-visible OpenAPI.
+    legacy_ids = set(GPT_ACTIONS_LEGACY_OPERATION_IDS)
+    for path_key, methods in list(paths.items()):
+        if not isinstance(methods, dict):
+            continue
+        for method in list(methods.keys()):
+            op = methods.get(method)
+            if not isinstance(op, dict):
+                continue
+            if op.get("operationId") in legacy_ids:
+                del methods[method]
+        if not methods:
+            del paths[path_key]
+
+    paths[f"{GPT_ACTIONS_BASE_PATH}/records/prepare-change"] = {
+        "post": {
+            "operationId": "gpt_prepare_record_change",
+            "summary": "PREPARE entity create/update/delete/duplicate (no write)",
+            "description": (
+                "READ CURRENT STATE → validate → return opaque proposal_handle. "
+                "No DB write. Then show proposal and call gpt_commit_proposal."
+            ),
+            "tags": ["Transformômetro GPT"],
+            "security": [{"BearerAuth": []}],
+            "requestBody": {
+                "required": True,
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "$ref": "#/components/schemas/GptPrepareRecordChangeBody"
+                        },
+                        "example": {
+                            "entity": "process_document",
+                            "operation": "create",
+                            "changes": {
+                                "processo_id": "00000000-0000-0000-0000-000000000001",
+                                "title": "AS-IS notes",
+                                "content_md": "# Draft",
+                            },
+                        },
+                    }
+                },
+            },
+            "responses": {
+                "200": _ok_response("proposal_ready envelope"),
+                **_error_responses(),
+            },
+            "x-openai-isConsequential": False,
+        }
+    }
+    paths[f"{GPT_ACTIONS_BASE_PATH}/proposals/commit"] = {
+        "post": {
+            "operationId": "gpt_commit_proposal",
+            "summary": "COMMIT opaque proposal_handle after confirmation",
+            "description": (
+                "NOT a generic proxy: executes only a server-side PREPARE proposal. "
+                "Revalidates AuthZ + state fingerprint; authoritative read-back."
+            ),
+            "tags": ["Transformômetro GPT"],
+            "security": [{"BearerAuth": []}],
+            "requestBody": {
+                "required": True,
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "$ref": "#/components/schemas/GptCommitProposalBody"
+                        },
+                        "example": {
+                            "proposal_handle": "…",
+                            "confirmation": True,
+                        },
+                    }
+                },
+            },
+            "responses": {
+                "200": _ok_response("verified commit outcome"),
+                **_error_responses(),
+            },
+            "x-openai-isConsequential": True,
+        }
+    }
+
+    # Tighten specialized write descriptions: PREPARE-only.
+    for methods in paths.values():
+        if not isinstance(methods, dict):
+            continue
+        for op in methods.values():
+            if not isinstance(op, dict):
+                continue
+            oid = op.get("operationId")
+            if oid in {
+                "gpt_activate_revision",
+                "gpt_recalculate_dashboard",
+                "gpt_meeting_minute_workflow",
+                "gpt_manage_evidence",
+                "gpt_adjust_shared_resource_cost",
+                "gpt_validate_improvement_package",
+            }:
+                desc = str(op.get("description") or "")
+                if "gpt_commit_proposal" not in desc:
+                    op["description"] = (
+                        (desc + " ").strip()
+                        + " PREPARE only — commit via gpt_commit_proposal."
+                    )[:300]
+                op["x-openai-isConsequential"] = False
+            if oid == "gpt_meeting_minute_manage":
+                op["description"] = (
+                    "READ actions return immediately. WRITE actions return a PREPARE "
+                    "proposal; commit via gpt_commit_proposal."
+                )[:300]
+
     return doc
 
 

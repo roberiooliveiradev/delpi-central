@@ -12,8 +12,14 @@ from tm_app.application.gpt_actions.dispatch_service import (
     GptActionsError,
 )
 from tm_app.application.gpt_actions.entities import parse_entity
+from tm_app.application.gpt_actions.governed_actions_facade import GovernedActionsFacade
 from tm_app.application.gpt_actions.improvement_package_service import (
     GuidedImprovementPackageService,
+)
+from tm_app.application.governed_writes.errors import GovernedWriteError
+from tm_app.application.governed_writes.orchestrator import (
+    MEETING_MANAGE_NON_ACT,
+    GovernedWriteOrchestrator,
 )
 from tm_app.application.gpt_actions.process_context_service import ProcessContextService
 from tm_app.application.gpt_actions.user_context_service import (
@@ -39,9 +45,22 @@ router = APIRouter(
 logger = logging.getLogger(__name__)
 _dispatch = GptActionsDispatchService()
 _packages = GuidedImprovementPackageService(_dispatch)
+_orchestrator = GovernedWriteOrchestrator(_dispatch, _packages)
+_governed = GovernedActionsFacade(_orchestrator, _dispatch)
 _process_context = ProcessContextService()
 _user_context = UserContextService(
     person_profile_reader=CorePersonProfileGateway()
+)
+
+# LEGACY_TRANSITIONAL: still mounted for migration, excluded from Builder OpenAPI.
+LEGACY_DIRECT_WRITE_OPERATION_IDS = frozenset(
+    {
+        "gpt_create_record",
+        "gpt_update_record",
+        "gpt_delete_record",
+        "gpt_duplicate_record",
+        "gpt_commit_improvement_package",
+    }
 )
 
 
@@ -118,12 +137,33 @@ class GptValidateImprovementPackageBody(BaseModel):
 
 
 def _handle(exc: Exception):
+    if isinstance(exc, GovernedWriteError):
+        payload = dict(exc.data or {})
+        payload.setdefault("error_code", exc.code)
+        return fail(exc.message, exc.status_code, data=payload)
+    if isinstance(exc, GptActionsError):
+        return fail(exc.message, exc.status_code, data=exc.data)
     status, message, data = public_error_parts(exc)
     if status >= 500 and data.get("error_kind") == "internal":
         logger.exception("gpt_actions_unhandled")
     elif isinstance(exc, KeyError):
         logger.exception("gpt_actions_key_error")
     return fail(message, status, data)
+
+
+class GptPrepareRecordChangeBody(BaseModel):
+    entity: str
+    operation: str = Field(
+        ...,
+        description="create | update | delete | duplicate (entity must allow it).",
+    )
+    record_id: str | None = None
+    changes: dict = Field(default_factory=dict)
+
+
+class GptCommitProposalBody(BaseModel):
+    proposal_handle: str
+    confirmation: bool = False
 
 
 @router.get(
@@ -303,15 +343,63 @@ def gpt_get_record(entity: str, id: str, request: Request):
 
 
 @router.post(
+    "/records/prepare-change",
+    operation_id="gpt_prepare_record_change",
+    summary="PREPARE governed entity create/update/delete/duplicate (no write)",
+)
+def gpt_prepare_record_change(body: GptPrepareRecordChangeBody, request: Request):
+    try:
+        data = _governed.prepare_record_change(
+            request,
+            entity=body.entity,
+            operation=body.operation,
+            record_id=body.record_id,
+            changes=body.changes,
+        )
+        return ok(data, "Proposal ready — show to user, then gpt_commit_proposal.")
+    except Exception as exc:
+        return _handle(exc)
+
+
+@router.post(
+    "/proposals/commit",
+    operation_id="gpt_commit_proposal",
+    summary="COMMIT opaque proposal_handle after explicit confirmation",
+)
+def gpt_commit_proposal(body: GptCommitProposalBody, request: Request):
+    try:
+        data = _governed.commit_proposal(
+            request,
+            proposal_handle=body.proposal_handle,
+            confirmation=body.confirmation,
+        )
+        return ok(data, "Proposal committed and verified.")
+    except Exception as exc:
+        return _handle(exc)
+
+
+# --- LEGACY_TRANSITIONAL direct writes (excluded from Builder OpenAPI) --------
+
+
+@router.post(
     "/records/{entity}",
     operation_id="gpt_create_record",
-    summary="Create a Transformômetro record",
+    summary="[LEGACY] Direct create — use prepare_record_change",
+    include_in_schema=False,
 )
 def gpt_create_record(entity: str, body: GptRecordBody, request: Request):
     try:
-        result = _dispatch.create_record(request, entity, body.model_dump())
-        data, message, status = result
-        return ok(data, message, status)
+        data = _governed.prepare_record_change(
+            request,
+            entity=entity,
+            operation="create",
+            changes=body.data,
+        )
+        return ok(
+            data,
+            "LEGACY: returned PREPARE proposal. Confirm then gpt_commit_proposal. "
+            "Direct create removed from Builder surface.",
+        )
     except Exception as exc:
         return _handle(exc)
 
@@ -319,12 +407,22 @@ def gpt_create_record(entity: str, body: GptRecordBody, request: Request):
 @router.put(
     "/records/{entity}/{id}",
     operation_id="gpt_update_record",
-    summary="Update a Transformômetro record",
+    summary="[LEGACY] Direct update — use prepare_record_change",
+    include_in_schema=False,
 )
 def gpt_update_record(entity: str, id: str, body: GptRecordBody, request: Request):
     try:
-        data, message = _dispatch.update_record(request, entity, id, body.model_dump())
-        return ok(data, message)
+        data = _governed.prepare_record_change(
+            request,
+            entity=entity,
+            operation="update",
+            record_id=id,
+            changes=body.data,
+        )
+        return ok(
+            data,
+            "LEGACY: returned PREPARE proposal. Confirm then gpt_commit_proposal.",
+        )
     except Exception as exc:
         return _handle(exc)
 
@@ -332,12 +430,22 @@ def gpt_update_record(entity: str, id: str, body: GptRecordBody, request: Reques
 @router.delete(
     "/records/{entity}/{id}",
     operation_id="gpt_delete_record",
-    summary="Soft-delete a Transformômetro record",
+    summary="[LEGACY] Direct delete — use prepare_record_change",
+    include_in_schema=False,
 )
 def gpt_delete_record(entity: str, id: str, request: Request):
     try:
-        data, message = _dispatch.delete_record(request, entity, id)
-        return ok(data, message)
+        data = _governed.prepare_record_change(
+            request,
+            entity=entity,
+            operation="delete",
+            record_id=id,
+            changes={},
+        )
+        return ok(
+            data,
+            "LEGACY: returned PREPARE proposal. Confirm then gpt_commit_proposal.",
+        )
     except Exception as exc:
         return _handle(exc)
 
@@ -345,7 +453,8 @@ def gpt_delete_record(entity: str, id: str, request: Request):
 @router.post(
     "/records/{entity}/{id}/duplicate",
     operation_id="gpt_duplicate_record",
-    summary="Duplicate process, instance, or revision",
+    summary="[LEGACY] Direct duplicate — use prepare_record_change",
+    include_in_schema=False,
 )
 def gpt_duplicate_record(
     entity: str,
@@ -354,13 +463,17 @@ def gpt_duplicate_record(
     body: GptRecordBody | None = None,
 ):
     try:
-        data, message, status = _dispatch.duplicate_record(
+        data = _governed.prepare_record_change(
             request,
-            entity,
-            id,
-            body.model_dump() if body else None,
+            entity=entity,
+            operation="duplicate",
+            record_id=id,
+            changes=(body.data if body else {}),
         )
-        return ok(data, message, status)
+        return ok(
+            data,
+            "LEGACY: returned PREPARE proposal. Confirm then gpt_commit_proposal.",
+        )
     except Exception as exc:
         return _handle(exc)
 
@@ -368,14 +481,17 @@ def gpt_duplicate_record(
 @router.post(
     "/revisions/{id}/activate",
     operation_id="gpt_activate_revision",
-    summary="Activate a revision as the operational current version",
+    summary="PREPARE revision activation (commit via gpt_commit_proposal)",
 )
 def gpt_activate_revision(id: str, request: Request):
     try:
-        return ok(
-            _dispatch.activate_revision(request, id),
-            "Revisão ativada.",
+        data = _governed.prepare_capability(
+            request,
+            capability="activate_revision",
+            args={"id": id},
+            operation_label="prepare_activate_revision",
         )
+        return ok(data, "Activation proposal ready — then gpt_commit_proposal.")
     except Exception as exc:
         return _handle(exc)
 
@@ -383,7 +499,7 @@ def gpt_activate_revision(id: str, request: Request):
 @router.post(
     "/dashboard/recalculate",
     operation_id="gpt_recalculate_dashboard",
-    summary="Recalculate materialised dashboard cache",
+    summary="PREPARE dashboard recalculation (commit via gpt_commit_proposal)",
 )
 def gpt_recalculate_dashboard(
     request: Request,
@@ -391,20 +507,13 @@ def gpt_recalculate_dashboard(
 ):
     try:
         payload = body.model_dump() if body else {}
-        result = _dispatch.recalculate_dashboard(
+        data = _governed.prepare_capability(
             request,
-            revisao_id=payload.get("revisao_id"),
-            processo_id=payload.get("processo_id"),
-            competencia_inicio=payload.get("competencia_inicio"),
-            competencia_fim=payload.get("competencia_fim"),
+            capability="recalculate_dashboard",
+            args=payload,
+            operation_label="prepare_recalculate_dashboard",
         )
-        mode = result.get("mode")
-        message = (
-            "Cache do dashboard atualizado (incremental)."
-            if mode == "incremental"
-            else "Cache do dashboard atualizado (completo)."
-        )
-        return ok(result, message)
+        return ok(data, "Recalculate proposal ready — then gpt_commit_proposal.")
     except Exception as exc:
         return _handle(exc)
 
@@ -412,7 +521,7 @@ def gpt_recalculate_dashboard(
 @router.post(
     "/meeting-minutes/{id}/workflow",
     operation_id="gpt_meeting_minute_workflow",
-    summary="Send, finalize, or cancel a meeting minute",
+    summary="PREPARE meeting-minute workflow (commit via gpt_commit_proposal)",
 )
 def gpt_meeting_minute_workflow(
     id: str,
@@ -420,15 +529,13 @@ def gpt_meeting_minute_workflow(
     request: Request,
 ):
     try:
-        return ok(
-            _dispatch.meeting_minute_workflow(
-                request,
-                id,
-                action=body.action,
-                reason=body.reason,
-            ),
-            "Workflow de ata executado.",
+        data = _governed.prepare_capability(
+            request,
+            capability="meeting_minute_workflow",
+            args={"id": id, "action": body.action, "reason": body.reason},
+            operation_label="prepare_meeting_minute_workflow",
         )
+        return ok(data, "Workflow proposal ready — then gpt_commit_proposal.")
     except Exception as exc:
         return _handle(exc)
 
@@ -436,17 +543,23 @@ def gpt_meeting_minute_workflow(
 @router.post(
     "/improvement-packages/validate",
     operation_id="gpt_validate_improvement_package",
-    summary="Validate a guided improvement package without writing",
+    summary="PREPARE improvement package (proposal_handle when ready)",
 )
 def gpt_validate_improvement_package(
     body: GptValidateImprovementPackageBody, request: Request
 ):
     try:
-        data = _packages.validate(request, body.model_dump())
+        data = _governed.prepare_capability(
+            request,
+            capability="commit_improvement_package",
+            args=body.model_dump(),
+            operation_label="prepare_improvement_package",
+        )
+        ready = bool((data.get("proposal") or {}).get("ready", True))
         message = (
-            "Pacote pronto para commit."
-            if data.get("ready")
-            else "Pacote incompleto — veja missing."
+            "Package proposal ready — confirm then gpt_commit_proposal."
+            if ready
+            else "Package incomplete — see validation_result; ACT not allowed."
         )
         return ok(data, message)
     except Exception as exc:
@@ -456,41 +569,31 @@ def gpt_validate_improvement_package(
 @router.post(
     "/improvement-packages",
     operation_id="gpt_commit_improvement_package",
-    summary="Commit a guided improvement package",
+    summary="[LEGACY] Prefer gpt_commit_proposal with package proposal_handle",
+    include_in_schema=False,
 )
 def gpt_commit_improvement_package(body: GptImprovementPackageBody, request: Request):
+    """LEGACY: if proposal_handle present in body, commit; else prepare only."""
     try:
-        data = _packages.commit(request, body.model_dump())
-        if body.dry_run:
-            message = (
-                "Pacote pronto para commit."
-                if data.get("ready")
-                else "Pacote incompleto — veja missing."
+        raw = body.model_dump()
+        handle = str(raw.pop("proposal_handle", "") or "").strip()
+        if handle:
+            data = _governed.commit_proposal(
+                request,
+                proposal_handle=handle,
+                confirmation=bool(raw.get("confirmation", True)),
             )
-        else:
-            message = "Pacote de melhoria gravado."
-        return ok(data, message)
-    except GptActionsError as exc:
-        # Custom GPT often disables consequential Actions after opaque 404s.
-        # Keep "not found" semantics in the body, but answer with 400.
-        if exc.status_code == 404:
-            logger.warning(
-                "gpt_commit_improvement_package_not_found_as_400 message=%s",
-                exc.message,
-            )
-            data = dict(exc.data or {})
-            data.setdefault("not_found", True)
-            return fail(exc.message, 400, data)
-        return _handle(exc)
-    except LookupError as exc:
-        # KeyError is a LookupError subclass — do not remap programming bugs as not_found.
-        if isinstance(exc, KeyError):
-            return _handle(exc)
-        logger.warning(
-            "gpt_commit_improvement_package_lookup_as_400 message=%s",
-            exc,
+            return ok(data, "LEGACY package commit via proposal_handle.")
+        data = _governed.prepare_capability(
+            request,
+            capability="commit_improvement_package",
+            args=raw,
+            operation_label="prepare_improvement_package",
         )
-        return fail(str(exc), 400, {"not_found": True})
+        return ok(
+            data,
+            "LEGACY: returned PREPARE proposal. Confirm then gpt_commit_proposal.",
+        )
     except Exception as exc:
         return _handle(exc)
 
@@ -519,22 +622,17 @@ def gpt_list_evidence(
 @router.post(
     "/evidence/manage",
     operation_id="gpt_manage_evidence",
-    summary="Create external-link evidence, update description, or delete",
+    summary="PREPARE evidence link/description/delete (commit via gpt_commit_proposal)",
 )
 def gpt_manage_evidence(request: Request, body: GptEvidenceManageBody):
     try:
-        data = _dispatch.manage_evidence(
+        data = _governed.prepare_capability(
             request,
-            scope=body.scope,
-            operation=body.operation,
-            parent_id=body.parent_id,
-            evidence_id=body.evidence_id,
-            url_externa=body.url_externa,
-            descricao=body.descricao,
-            confirm_delete=body.confirm_delete,
+            capability="manage_evidence",
+            args=body.model_dump(),
+            operation_label="prepare_manage_evidence",
         )
-        status = 201 if body.operation == "create_link" else 200
-        return ok(data, "Evidência atualizada.", status)
+        return ok(data, "Evidence proposal ready — then gpt_commit_proposal.")
     except Exception as exc:
         return _handle(exc)
 
@@ -564,23 +662,19 @@ def gpt_get_process_timeline(
 @router.post(
     "/shared-resources/adjust-cost",
     operation_id="gpt_adjust_shared_resource_cost",
-    summary="Register shared-resource cost adjustment",
+    summary="PREPARE shared-resource cost adjustment (commit via gpt_commit_proposal)",
 )
 def gpt_adjust_shared_resource_cost(
     request: Request, body: GptAdjustSharedResourceCostBody
 ):
     try:
-        return ok(
-            _dispatch.adjust_shared_resource_cost(
-                request,
-                recurso_compartilhado_id=body.recurso_compartilhado_id,
-                valor_mensal=body.valor_mensal,
-                vigente_desde=body.vigente_desde,
-                observacoes=body.observacoes,
-            ),
-            "Reajuste de custo registrado.",
-            201,
+        data = _governed.prepare_capability(
+            request,
+            capability="adjust_shared_resource_cost",
+            args=body.model_dump(),
+            operation_label="prepare_adjust_shared_resource_cost",
         )
+        return ok(data, "Cost adjustment proposal ready — then gpt_commit_proposal.")
     except Exception as exc:
         return _handle(exc)
 
@@ -588,19 +682,31 @@ def gpt_adjust_shared_resource_cost(
 @router.post(
     "/meeting-minutes/manage",
     operation_id="gpt_meeting_minute_manage",
-    summary="Meeting-minute extras without duplicating workflow send/finalize/cancel",
+    summary="Meeting-minute extras: READ immediate; WRITE returns PREPARE proposal",
 )
 def gpt_meeting_minute_manage(request: Request, body: GptMeetingMinuteManageBody):
     try:
-        return ok(
-            _dispatch.manage_meeting_minute(
-                request,
-                action=body.action,
-                minute_id=body.minute_id,
-                payload=body.data,
-            ),
-            "Operação de ata executada.",
+        action = str(body.action or "").strip()
+        if action in MEETING_MANAGE_NON_ACT:
+            return ok(
+                _dispatch.manage_meeting_minute(
+                    request,
+                    action=body.action,
+                    minute_id=body.minute_id,
+                    payload=body.data,
+                ),
+                "Meeting-minute read/analysis.",
+            )
+        data = _governed.prepare_capability(
+            request,
+            capability="meeting_minute_manage",
+            args={
+                "action": body.action,
+                "minute_id": body.minute_id,
+                "data": body.data,
+            },
+            operation_label="prepare_meeting_minute_manage",
         )
+        return ok(data, "Meeting-minute write proposal ready — then gpt_commit_proposal.")
     except Exception as exc:
         return _handle(exc)
-
