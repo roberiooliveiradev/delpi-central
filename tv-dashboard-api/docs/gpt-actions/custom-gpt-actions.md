@@ -2,7 +2,7 @@
 
 Owner: ``tv-dashboard-api``. Custom GPT is an external consumer, not a second
 catalog or writer. Canonical capability contract remains ``TvPresentationPatchV1``
-(``tv_copilot_content.json`` + Copilot services).
+(``presentation_ops_content.json`` + PresentationOps services).
 
 ## Surface
 
@@ -94,7 +94,7 @@ This package documents the chain only; it does not apply migrations to remote en
 
 ## Confirmation / postcondition
 
-- Confirmation policy derives from the Copilot catalog (``confirm`` for deletes).
+- Confirmation policy derives from the PresentationOps catalog (``confirm`` for deletes).
 - Commit always requires ``confirmation.confirmed=true`` (or boolean ``true``).
   Conversational OK is not AuthZ.
 - Successful ACT returns ``status=VERIFIED``, ``persisted=true``, ``verified=true``
@@ -105,7 +105,7 @@ This package documents the chain only; it does not apply migrations to remote en
 
 - Local editor draft is unknown: ``localDraftCoordination=unavailable_external``.
 - No binary media upload; keep ``assetId`` model.
-- Free M / DAX / SQL generation is forbidden; typed Copilot transforms only.
+- Free M / DAX / SQL generation is forbidden; typed PresentationOps transforms only.
 - Legacy ``POST /data/copilot/*`` returns **410 Gone** (use VISTA gpt-actions).
 - No generic entity CRUD Actions (``search_records`` / ``prepare_record_change``) — not VISTA's domain shape.
 
@@ -119,8 +119,8 @@ Writes ``docs/gpt-actions/openapi-gpt-actions.json`` from the canonical builder.
 
 ## Nested operation schemas
 
-Complex Copilot op shapes (``patch``, ``items``, ``steps``, ``block``, ``params``,
-``fieldLabels``) are owned by ``tv_copilot_content.json`` ``operations.*.inputSchema``.
+Complex PresentationOps shapes (``patch``, ``items``, ``steps``, ``block``, ``params``,
+``fieldLabels``) are owned by ``presentation_ops_content.json`` ``operations.*.inputSchema``.
 The GPT OpenAPI ``ops.items.oneOf`` is a projection of that catalog — not a second
 authority (used on **preview/suggest**, not on commit).
 
@@ -139,7 +139,7 @@ It does not become a second catalog, writer, or RBAC matrix.
 | Layer | Owns |
 |---|---|
 | VISTA (Instructions + Knowledge) | Intent routing, desired-outcome reasoning, conversation UX |
-| ``tv_copilot_content.json`` / TvCopilot | Supported operations and input schemas |
+| ``presentation_ops_content.json`` / PresentationOps | Supported operations and input schemas |
 | GPT façade (8 Actions) | Transport: catalog, reads, suggest, preview, commit |
 | ``TvPresentationWriteService`` | Material persistence path (same as UI) |
 | Core + ``PlaylistAccessService`` | Platform RBAC + resource AuthZ |

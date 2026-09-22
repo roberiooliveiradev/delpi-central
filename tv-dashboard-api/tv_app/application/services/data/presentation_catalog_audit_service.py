@@ -4,12 +4,12 @@ from __future__ import annotations
 
 from typing import Any
 
-from tv_app.application.services.data.tv_copilot_content_service import (
-    TvCopilotContentService,
+from tv_app.application.services.data.presentation_ops_content_service import (
+    PresentationOpsContentService,
 )
 
 
-class TvCopilotCatalogAuditService:
+class PresentationCatalogAuditService:
     CONTRACT_FIELDS = frozenset(
         {
             "requiresPlaylist",
@@ -26,10 +26,10 @@ class TvCopilotCatalogAuditService:
     @classmethod
     def errors(cls) -> list[str]:
         errors: list[str] = []
-        operations = TvCopilotContentService.operations()
+        operations = PresentationOpsContentService.operations()
         referenced: set[str] = set()
 
-        for capability in TvCopilotContentService.capabilities():
+        for capability in PresentationOpsContentService.capabilities():
             key = str(capability.get("key") or capability.get("op") or "?")
             duplicated = cls.CONTRACT_FIELDS.intersection(capability)
             if duplicated:

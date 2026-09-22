@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from tv_app.application.services.data.tv_copilot_http_command_planner_service import (
-    TvCopilotHttpCommandPlannerService,
+from tv_app.application.services.data.presentation_http_command_planner_service import (
+    PresentationHttpCommandPlannerService,
 )
 
 PLAYLIST_ID = "00000000-0000-0000-0000-000000000001"
@@ -13,7 +13,7 @@ SLIDE_ID = "11111111-1111-1111-1111-111111111111"
 
 
 def test_coalesces_native_config_ops_into_single_patch():
-    cmds = TvCopilotHttpCommandPlannerService.build(
+    cmds = PresentationHttpCommandPlannerService.build(
         ops=[
             {
                 "op": "upsert_block",
@@ -40,7 +40,7 @@ def test_coalesces_native_config_ops_into_single_patch():
 
 
 def test_blank_slide_then_native_config_uses_slide_placeholder():
-    cmds = TvCopilotHttpCommandPlannerService.build(
+    cmds = PresentationHttpCommandPlannerService.build(
         ops=[
             {"op": "add_blank_slide", "title": "Novo"},
             {
@@ -59,7 +59,7 @@ def test_blank_slide_then_native_config_uses_slide_placeholder():
 
 
 def test_create_playlist_skips_if_match():
-    cmds = TvCopilotHttpCommandPlannerService.build(
+    cmds = PresentationHttpCommandPlannerService.build(
         ops=[{"op": "create_playlist", "name": "Turno"}],
         target={},
         native_config=None,
@@ -76,14 +76,14 @@ def test_rejects_path_outside_playlists():
     with pytest.raises(ValueError, match="fora do CRUD"):
         # Força via build interno: path é validado em _cmd.
         from tv_app.application.services.data import (
-            tv_copilot_http_command_planner_service as mod,
+            presentation_http_command_planner_service as mod,
         )
 
         mod._cmd(method="POST", path="/admin/secret", op="x")
 
 
 def test_delete_slide_and_reorder():
-    cmds = TvCopilotHttpCommandPlannerService.build(
+    cmds = PresentationHttpCommandPlannerService.build(
         ops=[
             {
                 "op": "reorder_slides",

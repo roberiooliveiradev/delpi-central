@@ -1,10 +1,10 @@
 """Integridade do contrato executável do catálogo do Copiloto TV."""
 
-from tv_app.application.services.data.tv_copilot_content_service import (
-    TvCopilotContentService,
+from tv_app.application.services.data.presentation_ops_content_service import (
+    PresentationOpsContentService,
 )
-from tv_app.application.services.data.tv_copilot_catalog_audit_service import (
-    TvCopilotCatalogAuditService,
+from tv_app.application.services.data.presentation_catalog_audit_service import (
+    PresentationCatalogAuditService,
 )
 
 
@@ -24,11 +24,11 @@ def _template_ops(capability: dict) -> set[str]:
 
 
 def test_all_capability_ops_have_complete_operation_specs():
-    TvCopilotCatalogAuditService.assert_valid()
-    operations = TvCopilotContentService.operations()
+    PresentationCatalogAuditService.assert_valid()
+    operations = PresentationOpsContentService.operations()
     referenced = {
         op
-        for capability in TvCopilotContentService.capabilities()
+        for capability in PresentationOpsContentService.capabilities()
         for op in _template_ops(capability)
     }
 
@@ -45,7 +45,7 @@ def test_all_capability_ops_have_complete_operation_specs():
 
 
 def test_only_destructive_operations_require_confirmation():
-    operations = TvCopilotContentService.operations()
+    operations = PresentationOpsContentService.operations()
 
     confirmed = {
         name

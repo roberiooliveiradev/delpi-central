@@ -321,7 +321,7 @@ def data_builder_to_presentation_ops(request: Request, session_id: str):
         assert_permission(user, TV_WRITE)
     except PermissionError as exc:
         return fail(str(exc), 403)
-    from tv_app.application.services.data.tv_copilot_builder_facade import (
+    from tv_app.application.services.data.presentation_builder_facade import (
         materialize_session_to_presentation_ops,
     )
 
@@ -532,20 +532,20 @@ def validate_data_config(request: Request, body: ValidateDataConfigBody):
     return ok(result)
 
 
-class CopilotPatchBody(BaseModel):
-    """Legacy body for retired /data/copilot routes."""
+class RetiredCopilotPatchBody(BaseModel):
+    """Body schema kept only so retired /data/copilot routes still parse requests."""
 
     target: dict[str, Any] = Field(default_factory=dict)
     ops: list[dict[str, Any]] = Field(default_factory=list)
     includeFingerprint: bool = True
 
 
-class SuggestOpsBody(BaseModel):
+class RetiredSuggestOpsBody(BaseModel):
     message: str = ""
     hostContext: dict[str, Any] = Field(default_factory=dict)
 
 
-def _copilot_gone():
+def _retired_copilot_surface_gone():
     """HTTP surface /data/copilot/* retired — use VISTA gpt-actions + PresentationMutation."""
     return fail(
         "Endpoint /data/copilot retirado. Use VISTA em /gpt-actions/v1 "
@@ -560,53 +560,31 @@ def _copilot_gone():
     )
 
 
-def _copilot_actor(user: Any) -> str | None:
-    from tv_app.application.services.playlist_access_service import PlaylistAccessService
-
-    return PlaylistAccessService.actor_id(user)
-
-
-def _copilot_unexpected_failure(kind: str, ops: list[dict[str, Any]] | None):
-    """Legacy helper retained for import stability; routes now return 410."""
-    from tv_app.application.services.data.tv_copilot_content_service import (
-        TvCopilotContentService,
-    )
-
-    op_names = [
-        str(op.get("op") or "?") for op in (ops or []) if isinstance(op, dict)
-    ] or ["?"]
-    logger.exception("copilot_patch_unexpected_error kind=%s ops=%s", kind, op_names)
-    return fail(
-        TvCopilotContentService.message("patchUnexpectedError", ops=", ".join(op_names)),
-        500,
-    )
-
-
 @router.get("/copilot/capabilities")
-def copilot_capabilities(request: Request):
+def retired_copilot_capabilities(request: Request):
     """Gone — capability catalog lives under VISTA ``gpt_get_catalog``."""
-    return _copilot_gone()
+    return _retired_copilot_surface_gone()
 
 
 @router.post("/copilot/suggest-ops")
-def copilot_suggest_ops(request: Request, body: SuggestOpsBody):
+def retired_copilot_suggest_ops(request: Request, body: RetiredSuggestOpsBody):
     """Gone — use ``gpt_suggest_change`` on /gpt-actions/v1."""
-    return _copilot_gone()
+    return _retired_copilot_surface_gone()
 
 
 @router.post("/copilot/preview-patch")
-def copilot_preview_patch(request: Request, body: CopilotPatchBody):
+def retired_copilot_preview_patch(request: Request, body: RetiredCopilotPatchBody):
     """Gone — use ``gpt_preview_change`` on /gpt-actions/v1."""
-    return _copilot_gone()
+    return _retired_copilot_surface_gone()
 
 
 @router.post("/copilot/apply-patch")
-def copilot_apply_patch(request: Request, body: CopilotPatchBody):
+def retired_copilot_apply_patch(request: Request, body: RetiredCopilotPatchBody):
     """Gone — use ``gpt_commit_change`` / commit_now on /gpt-actions/v1."""
-    return _copilot_gone()
+    return _retired_copilot_surface_gone()
 
 
 @router.get("/copilot/telemetry")
-def copilot_telemetry(request: Request):
+def retired_copilot_telemetry(request: Request):
     """Gone — Copilot HTTP surface retired."""
-    return _copilot_gone()
+    return _retired_copilot_surface_gone()

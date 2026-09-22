@@ -1,19 +1,17 @@
-# Copiloto TV Dashboard — RETIRADO (histórico)
+# Catálogo de ops tipadas — PresentationMutation
 
-> **Status:** superfície HTTP `/data/copilot/*` e skill Chat `tv-dashboard-copilot` foram **desligadas**.
-> Mutation canônica: **PresentationMutation** (`tv_app/application/services/data/presentation_mutation/`).
-> Consumidor IA: **VISTA** `/gpt-actions/v1` (preview/commit) + `TvPresentationWriteService`.
-> Endpoints `/data/copilot/*` respondem **410 Gone**.
-
-Documento abaixo mantido como histórico de contrato tipado (ops).
+> **Status:** catálogo canônico em `presentation_ops_content.json` + serviços `presentation_*`.
+> Mutation: **PresentationMutation** (`presentation_mutation/`) → `TvPresentationWriteService`.
+> Consumidor IA: **VISTA** `/gpt-actions/v1` (preview/commit).
+> Superfície HTTP legada `/data/copilot/*` → **410 Gone** (stubs de compatibilidade).
 
 ---
 
 ## Objetivo
 
-Patches tipados no modelo de slide/playlist via chat base (`tv_dashboard_copilot`) ou endpoints BFF. **Não** gera Power Query M. Present permanece viewer puro (`SlideDataResolutionService`).
+Patches tipados no modelo de slide/playlist via VISTA / PresentationMutation. **Não** gera Power Query M. Present permanece viewer puro (`SlideDataResolutionService`).
 
-**Ownership:** o catálogo de capabilities vive **somente** em `tv-dashboard-api`. Feature nova de TV = mudança neste pacote (+ UI MFE se houver). A `minha-delpi-ai-api` consome `GET /data/copilot/capabilities` — sem lista de ops embutida.
+**Ownership:** o catálogo de capabilities vive **somente** em `tv-dashboard-api` (`PresentationOpsContentService`). Feature nova de TV = mudança neste pacote (+ UI MFE se houver). VISTA projeta o catálogo via `gpt_get_catalog` — sem lista de ops embutida no Chat.
 
 ## Envelope
 
@@ -70,7 +68,7 @@ herda a política mais restritiva entre suas ops.
 
 ### Shape de `capabilities[]`
 
-Cada item (declarativo em `tv_copilot_content.json`):
+Cada item (declarativo em `presentation_ops_content.json`):
 
 | Campo | Papel |
 |-------|--------|
@@ -142,7 +140,7 @@ Composites rota → visual + bind:
 
 Façade OAuth em `/gpt-actions/v1` (ver `docs/gpt-actions/custom-gpt-actions.md`).
 
-- **Não** é owner do catálogo — continua `tv_copilot_content.json` / Copilot services.
+- **Não** é owner do catálogo — continua `presentation_ops_content.json` / PresentationOps services.
 - PREPARE = suggest/preview; preview mints opaque ``proposal_handle``.
   Additive (``confirmationPolicy=direct``): ``commit_now=true`` + confirmation
   on the same preview → PREPARE+COMMIT (1 ChatGPT Allow). Destructive:
@@ -182,7 +180,7 @@ Chat → AI → preview-patch (dry-run + httpCommands)
          → notify_presentation_changed → editor WS
 ```
 
-- BFF (`PresentationPatchService`): redutor + `TvCopilotHttpCommandPlannerService` — **nunca** `update_slide` no apply.
+- BFF (`PresentationPatchService`): redutor + `PresentationHttpCommandPlannerService` — **nunca** `update_slide` no apply.
 - OCC: header `If-Match` / corpo `currentRevision` em 409; resposta `X-Playlist-Revision`.
 - Ops de canvas (`upsert_block`, `delete_block`, …) coalescem em **um** `PATCH` `nativeConfig`.
 

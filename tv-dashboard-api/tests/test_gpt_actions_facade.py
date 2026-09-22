@@ -22,7 +22,7 @@ from tv_app.application.gpt_actions.proposal_store import (
     get_proposal_store,
     reset_proposal_store_for_tests,
 )
-from tv_app.application.services.data.tv_copilot_content_service import TvCopilotContentService
+from tv_app.application.services.data.presentation_ops_content_service import PresentationOpsContentService
 from tv_app.application.services.data.presentation_mutation import (
     PresentationPatchError,
     PresentationPatchService,
@@ -48,7 +48,7 @@ def _mint_proposal_handle(
     confirmation_policy: str = "direct",
 ) -> str:
     """Store a server-side proposal and return opaque handle for commit tests."""
-    catalog = catalog_version or TvCopilotContentService.catalog_version()
+    catalog = catalog_version or PresentationOpsContentService.catalog_version()
     proposal = create_proposal(
         actor_id=actor_id,
         target=target if isinstance(target, dict) else {},
@@ -143,7 +143,7 @@ def test_preview_returns_typed_ops_not_string_applied_ops():
     playlist_id = str(uuid4())
     slide_id = str(uuid4())
     ops = [{"op": "add_blank_slide", "title": "Hello GPT"}]
-    catalog = TvCopilotContentService.catalog_version()
+    catalog = PresentationOpsContentService.catalog_version()
 
     with (
         patch.object(
@@ -185,14 +185,14 @@ def test_preview_returns_typed_ops_not_string_applied_ops():
     assert public.get("proposal_handle")
     assert "planDigest" not in public
     assert public["persisted"] is False
-    policy = TvCopilotContentService.aggregate_ops_policy(ops)
+    policy = PresentationOpsContentService.aggregate_ops_policy(ops)
     assert public["risk"] == policy["risk"]
     assert public["confirmationPolicy"] == policy["confirmationPolicy"]
     assert public["sideEffectHints"] == policy["sideEffectHints"]
 
 
 def test_preview_policy_from_catalog_authority_not_patch_echo():
-    """Blocker B — policy comes from TvCopilotContentService, not patch metadata."""
+    """Blocker B — policy comes from PresentationOpsContentService, not patch metadata."""
     repo = MagicMock()
     writes = _writes_mock()
     dispatch = GptActionsDispatchService(
@@ -204,7 +204,7 @@ def test_preview_policy_from_catalog_authority_not_patch_echo():
     )
     playlist_id = str(uuid4())
     slide_id = str(uuid4())
-    catalog = TvCopilotContentService.catalog_version()
+    catalog = PresentationOpsContentService.catalog_version()
 
     cases = [
         ([{"op": "update_slide", "title": "X"}], "mutation", "direct", "refreshFilmstrip"),
@@ -217,7 +217,7 @@ def test_preview_policy_from_catalog_authority_not_patch_echo():
         ),
     ]
     for ops, risk, confirm, hint in cases:
-        expected = TvCopilotContentService.aggregate_ops_policy(ops)
+        expected = PresentationOpsContentService.aggregate_ops_policy(ops)
         assert expected["risk"] == risk
         assert expected["confirmationPolicy"] == confirm
         with (
@@ -312,7 +312,7 @@ def test_commit_add_slide_verified_via_opaque_proposal():
         access=access,
     )
     ops = [{"op": "add_blank_slide", "title": "T"}]
-    catalog = TvCopilotContentService.catalog_version()
+    catalog = PresentationOpsContentService.catalog_version()
     handle = _mint_proposal_handle(
         target={"playlistId": str(playlist_id)},
         ops=ops,
@@ -366,7 +366,7 @@ def test_create_playlist_may_omit_expected_revision():
     patch_svc = MagicMock()
     patch_svc.preview.return_value = {"confirmationPolicy": "direct"}
     ops = [{"op": "create_playlist", "name": "Nova"}]
-    catalog = TvCopilotContentService.catalog_version()
+    catalog = PresentationOpsContentService.catalog_version()
     service = TvGptCommitService(
         writes=writes,
         idempotency=InMemoryIdempotencyRepository(),
@@ -395,7 +395,7 @@ def test_idempotency_in_progress_does_not_execute_second_write():
 
     playlist_id = str(uuid4())
     ops = [{"op": "add_blank_slide", "title": "A"}]
-    catalog = TvCopilotContentService.catalog_version()
+    catalog = PresentationOpsContentService.catalog_version()
     handle = _mint_proposal_handle(
         target={"playlistId": playlist_id},
         ops=ops,
@@ -459,7 +459,7 @@ def test_idempotency_replay_and_conflict():
         patch=patch_svc,
         access=access,
     )
-    catalog = TvCopilotContentService.catalog_version()
+    catalog = PresentationOpsContentService.catalog_version()
     ops_a = [{"op": "add_blank_slide", "title": "A"}]
     ops_b = [{"op": "add_blank_slide", "title": "B"}]
     handle_a = _mint_proposal_handle(
@@ -523,7 +523,7 @@ def test_partial_commit_replay_does_not_reexecute():
         {"op": "create_playlist", "name": "P"},
         {"op": "add_blank_slide", "title": "X"},
     ]
-    catalog = TvCopilotContentService.catalog_version()
+    catalog = PresentationOpsContentService.catalog_version()
     handle = _mint_proposal_handle(
         target={},
         ops=ops,
@@ -610,7 +610,7 @@ def test_postcondition_update_move_reorder_section_native():
         },
         {"op": "upsert_block", "block": {"id": "b1"}},
     ]
-    catalog = TvCopilotContentService.catalog_version()
+    catalog = PresentationOpsContentService.catalog_version()
     handle = _mint_proposal_handle(
         target={"playlistId": str(playlist_id), "slideId": str(slide_id)},
         ops=ops,
@@ -650,7 +650,7 @@ def test_postcondition_negative_update_mismatch_not_verified():
         access=access,
     )
     ops = [{"op": "update_slide", "title": "Expected"}]
-    catalog = TvCopilotContentService.catalog_version()
+    catalog = PresentationOpsContentService.catalog_version()
     handle = _mint_proposal_handle(
         target={"playlistId": str(playlist_id), "slideId": str(slide_id)},
         ops=ops,
@@ -721,7 +721,7 @@ def test_invalid_playlist_uuid_completes_idempotency_and_replays():
         patch=MagicMock(),
         access=MagicMock(),
     )
-    catalog = TvCopilotContentService.catalog_version()
+    catalog = PresentationOpsContentService.catalog_version()
     target = {"playlistId": "not-a-uuid"}
     ops = [{"op": "add_blank_slide", "title": "A"}]
     handle = _mint_proposal_handle(
@@ -813,7 +813,7 @@ def test_catalog_and_openapi_http_smoke():
         response = client.get("/gpt-actions/v1/catalog")
     assert response.status_code == 200
     data = response.json()["data"]
-    assert data["catalogVersion"] == TvCopilotContentService.catalog_version()
+    assert data["catalogVersion"] == PresentationOpsContentService.catalog_version()
     assert "capability_surface" in data
     assert data["capability_surface"]["lifecycle"] == "GOVERNED_PREPARE_COMMIT_V2"
 
@@ -918,7 +918,7 @@ def test_create_playlist_preview_then_commit_verified_family():
         "name": "Testando a VISTA",
     }
     ops = [{"op": "create_playlist", "name": "Testando a VISTA"}]
-    catalog = TvCopilotContentService.catalog_version()
+    catalog = PresentationOpsContentService.catalog_version()
     repo = MagicMock()
     idem = InMemoryIdempotencyRepository()
     commit = TvGptCommitService(writes=writes, idempotency=idem)
@@ -1010,7 +1010,7 @@ def test_malformed_tool_payloads_return_gpt_error_envelope():
             json={
                 "target": {},
                 "ops": [{"name": "Testando a VISTA"}],
-                "catalogVersion": TvCopilotContentService.catalog_version(),
+                "catalogVersion": PresentationOpsContentService.catalog_version(),
             },
         )
         assert bad_ops.status_code < 500
@@ -1021,7 +1021,7 @@ def test_malformed_tool_payloads_return_gpt_error_envelope():
             "/gpt-actions/v1/changes/preview",
             json={
                 "ops": ["create_playlist"],
-                "catalogVersion": TvCopilotContentService.catalog_version(),
+                "catalogVersion": PresentationOpsContentService.catalog_version(),
             },
         )
         assert string_ops.status_code < 500
@@ -1049,7 +1049,7 @@ def _branch(name: str) -> dict:
 
 
 def test_canonical_complex_ops_are_fully_typed_and_projected():
-    canonical = TvCopilotContentService.operations()
+    canonical = PresentationOpsContentService.operations()
     for name in (
         "patch_native_config",
         "reorder_slides",
@@ -1169,7 +1169,7 @@ def test_dispatch_maps_nested_contract_error_to_invalid_change():
                         "fieldLabels": {"value": 10},
                     }
                 ],
-                catalog_version=TvCopilotContentService.catalog_version(),
+                catalog_version=PresentationOpsContentService.catalog_version(),
                 authorization=None,
             )
     assert exc.value.code == "INVALID_CHANGE"
@@ -1231,7 +1231,7 @@ def test_commit_expired_proposal():
         target={},
         ops=[{"op": "create_playlist", "name": "X"}],
         operation_names=["create_playlist"],
-        catalog_version=TvCopilotContentService.catalog_version(),
+        catalog_version=PresentationOpsContentService.catalog_version(),
         base_revision=None,
         risk="additive",
         confirmation_policy="direct",
@@ -1388,7 +1388,7 @@ def test_preview_commit_now_direct_policy_verified_single_shot():
         "name": "Slide Teste",
     }
     ops = [{"op": "create_playlist", "name": "Slide Teste"}]
-    catalog = TvCopilotContentService.catalog_version()
+    catalog = PresentationOpsContentService.catalog_version()
     idem = InMemoryIdempotencyRepository()
     commit = TvGptCommitService(writes=writes, idempotency=idem)
     dispatch = GptActionsDispatchService(repo=MagicMock(), writes=writes, commit=commit)
@@ -1433,7 +1433,7 @@ def test_preview_commit_now_confirm_policy_does_not_write():
     writes = _writes_mock()
     playlist_id = uuid4()
     ops = [{"op": "delete_slide", "slideId": str(uuid4())}]
-    catalog = TvCopilotContentService.catalog_version()
+    catalog = PresentationOpsContentService.catalog_version()
     commit = TvGptCommitService(
         writes=writes, idempotency=InMemoryIdempotencyRepository()
     )
@@ -1479,7 +1479,7 @@ def test_preview_commit_now_confirm_policy_does_not_write():
 def test_preview_commit_now_without_confirmation_requires_confirm():
     writes = _writes_mock()
     ops = [{"op": "create_playlist", "name": "Needs Confirm"}]
-    catalog = TvCopilotContentService.catalog_version()
+    catalog = PresentationOpsContentService.catalog_version()
     commit = TvGptCommitService(
         writes=writes, idempotency=InMemoryIdempotencyRepository()
     )
@@ -1546,7 +1546,7 @@ def test_http_preview_accepts_idempotency_key_in_body_for_commit_now():
             json={
                 "target": {},
                 "ops": [{"op": "create_playlist", "name": "Body Key"}],
-                "catalogVersion": TvCopilotContentService.catalog_version(),
+                "catalogVersion": PresentationOpsContentService.catalog_version(),
                 "commit_now": True,
                 "confirmation": {"confirmed": True},
                 "idempotency_key": "body-idem-key-1",
@@ -1624,7 +1624,7 @@ def test_vista_preview_partial_style_preserves_color_via_presentation_mutation(m
                     },
                 }
             ],
-            catalog_version=TvCopilotContentService.catalog_version(),
+            catalog_version=PresentationOpsContentService.catalog_version(),
             authorization=None,
         )
 

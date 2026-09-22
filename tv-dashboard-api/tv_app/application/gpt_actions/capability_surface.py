@@ -1,7 +1,7 @@
 """Capability surface descriptors for VISTA GPT catalog projection.
 
 Catalog informs; backend authorizes. Descriptors are not AuthZ authority.
-Typed presentation ops remain owned by ``tv_copilot_content.json``
+Typed presentation ops remain owned by ``presentation_ops_content.json``
 (PresentationMutation / TvPresentationPatchV1).
 """
 
@@ -10,12 +10,12 @@ from __future__ import annotations
 from typing import Any
 
 from tv_app.application.gpt_actions import GPT_ACTIONS_OPERATION_IDS
-from tv_app.application.services.data.tv_copilot_content_service import TvCopilotContentService
+from tv_app.application.services.data.presentation_ops_content_service import PresentationOpsContentService
 
 
 def build_capability_surface() -> dict[str, Any]:
     """Project Action-facing capability taxonomy without a second domain catalog."""
-    ops = TvCopilotContentService.operations()
+    ops = PresentationOpsContentService.operations()
     destructive = sorted(
         name
         for name, spec in ops.items()
@@ -73,7 +73,7 @@ def build_capability_surface() -> dict[str, Any]:
                     "gpt_preview_change",
                     "gpt_commit_change",
                 ],
-                "typed_ops_authority": "tv_copilot_content.json",
+                "typed_ops_authority": "presentation_ops_content.json",
                 "mutation_engine": "presentation_mutation.PresentationPatchService",
                 "typed_ops_count": len(ops),
                 "destructive_typed_ops": destructive,

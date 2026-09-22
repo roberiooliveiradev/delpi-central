@@ -6,16 +6,16 @@ from typing import Any
 
 import pytest
 
-from tv_app.application.services.data.tv_copilot_content_service import (
-    TvCopilotContentService,
-    clear_tv_copilot_content_cache,
+from tv_app.application.services.data.presentation_ops_content_service import (
+    PresentationOpsContentService,
+    clear_presentation_ops_content_cache,
 )
 from tv_app.application.services.data.presentation_mutation import (
     PresentationPatchError,
     PresentationPatchService,
 )
-from tv_app.application.services.data.tv_copilot_telemetry import (
-    reset_copilot_telemetry,
+from tv_app.application.services.data.presentation_mutation_telemetry import (
+    reset_presentation_mutation_telemetry,
 )
 
 
@@ -204,11 +204,11 @@ class _FakeResolution:
 
 @pytest.fixture(autouse=True)
 def _reset_telemetry_and_content_cache():
-    reset_copilot_telemetry()
-    clear_tv_copilot_content_cache()
+    reset_presentation_mutation_telemetry()
+    clear_presentation_ops_content_cache()
     yield
-    reset_copilot_telemetry()
-    clear_tv_copilot_content_cache()
+    reset_presentation_mutation_telemetry()
+    clear_presentation_ops_content_cache()
 
 
 def _service(repo=None, monkeypatch=None):
@@ -244,11 +244,11 @@ def _service(repo=None, monkeypatch=None):
 
 
 def test_capability_catalog_document_has_version_and_capabilities():
-    doc = TvCopilotContentService.capability_catalog_document()
+    doc = PresentationOpsContentService.capability_catalog_document()
     assert doc["catalogVersion"]
     assert isinstance(doc["capabilities"], list) and len(doc["capabilities"]) >= 10
     assert "delete_block" in doc["allowedOps"]
-    assert "add_blank_slide" in TvCopilotContentService.allowed_ops()
+    assert "add_blank_slide" in PresentationOpsContentService.allowed_ops()
 
 
 def test_patch_target_validation_uses_operation_contract(monkeypatch):

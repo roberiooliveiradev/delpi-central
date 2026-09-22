@@ -138,12 +138,12 @@ Execução SQL no chat comum **não** é permitida via external actions.
 
 ### Skill `tv-dashboard-copilot`
 
-- **Comportamento:** patches tipados no TV Dashboard (`TvCopilotPatchV1`) via tool `tv_dashboard_copilot` → BFF `/data/copilot/preview-patch` | `apply-patch`.
+- **Comportamento (retirado):** skill/tool Chat `tv_dashboard_copilot` e BFF `/data/copilot/*` desligados (410). Mutation canônica: VISTA `/gpt-actions/v1` + PresentationMutation.
 - **Escritas:** `mode=apply` exige confirmação (`ChatWriteConfirmationService`); `preview` é dry-run.
 - **Não faz:** Power Query M, `resolved` no `native_config`, `renderPlan` como modelo de slide.
 - **Host:** remote MF `./EmbeddedChat` no editor TV (aba Copiloto) ou chat portal com skill ativa.
 - **Env:** `TV_DASHBOARD_API_BASE_URL` (default `http://delpi-tv-dashboard-api:8000`).
-- **Doc:** `tv-dashboard-api/docs/tv-copilot.md`.
+- **Doc:** `tv-dashboard-api/docs/presentation-ops-catalog.md`.
 
 ### Skill `company-knowledge`
 

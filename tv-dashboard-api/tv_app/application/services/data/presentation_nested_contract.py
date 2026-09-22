@@ -1,6 +1,6 @@
-"""Validate Copilot op payloads against canonical operation inputSchema.
+"""Validate presentation op payloads against canonical operation inputSchema.
 
-The published JSON Schema in ``tv_copilot_content.json`` is the single
+The published JSON Schema in ``presentation_ops_content.json`` is the single
 authority. This module implements a focused subset (type/required/enum/const/
 items/oneOf/additionalProperties) so runtime 4xx matches the GPT projection.
 """
@@ -9,8 +9,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from tv_app.application.services.data.tv_copilot_content_service import (
-    TvCopilotContentService,
+from tv_app.application.services.data.presentation_ops_content_service import (
+    PresentationOpsContentService,
 )
 
 class NestedContractError(ValueError):
@@ -18,7 +18,7 @@ class NestedContractError(ValueError):
 
 
 def validate_operation_payload(op_name: str, raw_op: dict[str, Any]) -> None:
-    spec = TvCopilotContentService.operation_spec(op_name)
+    spec = PresentationOpsContentService.operation_spec(op_name)
     schema = spec.get("inputSchema") if isinstance(spec, dict) else None
     if not isinstance(schema, dict):
         return
@@ -61,7 +61,7 @@ def _validate(instance: Any, schema: dict[str, Any], *, path: str, op_name: str)
                     step_op = str(instance.get("op") or "").strip()
                 if step_op:
                     raise NestedContractError(
-                        TvCopilotContentService.message(
+                        PresentationOpsContentService.message(
                             "transformStepUnknown",
                             stepOp=step_op,
                         )
@@ -143,7 +143,7 @@ def _matches_type(instance: Any, types: list[str]) -> bool:
 
 def _fail(op_name: str, reason: str) -> None:
     raise NestedContractError(
-        TvCopilotContentService.message(
+        PresentationOpsContentService.message(
             "nestedSchemaInvalid",
             op=op_name,
             reason=reason,
@@ -152,7 +152,7 @@ def _fail(op_name: str, reason: str) -> None:
 
 
 def patch_native_keys() -> frozenset[str]:
-    spec = TvCopilotContentService.operation_spec("patch_native_config") or {}
+    spec = PresentationOpsContentService.operation_spec("patch_native_config") or {}
     schema = spec.get("inputSchema") if isinstance(spec, dict) else {}
     patch = ((schema or {}).get("properties") or {}).get("patch")
     props = (patch or {}).get("properties") if isinstance(patch, dict) else {}

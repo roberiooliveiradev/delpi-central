@@ -69,7 +69,7 @@ NATIVE_TOOL_PARAMETERS: dict[str, dict] = {
             "ops": {
                 "type": "array",
                 "description": (
-                    "Ops TvCopilotPatchV1 do catálogo do BFF TV "
+                    "Ops PresentationMutation do catálogo do BFF TV "
                     "(GET /data/copilot/capabilities). Não invente op fora do catálogo."
                 ),
                 "items": {"type": "object", "additionalProperties": True},
@@ -164,7 +164,7 @@ class ChatNativeToolSchemaService:
         ops_prop = (parameters.get("properties") or {}).get("ops")
         if isinstance(ops_prop, dict) and op_names:
             ops_prop["description"] = (
-                "Ops TvCopilotPatchV1 permitidas neste catálogo: "
+                "Ops PresentationMutation permitidas neste catálogo: "
                 + ", ".join(op_names)
                 + "."
             )

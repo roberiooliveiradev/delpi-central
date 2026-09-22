@@ -13,8 +13,8 @@ from tv_app.application.gpt_actions import (
     GPT_ACTIONS_OPERATION_IDS,
     GPT_ACTIONS_PUBLIC_FALLBACK_ORIGIN,
 )
-from tv_app.application.services.data.tv_copilot_content_service import (
-    TvCopilotContentService,
+from tv_app.application.services.data.presentation_ops_content_service import (
+    PresentationOpsContentService,
 )
 
 
@@ -100,9 +100,9 @@ def normalize_json_schema_for_gpt_builder(node: Any) -> Any:
 
 
 def _project_operation_input_schemas() -> list[dict[str, Any]]:
-    """Canonical TvCopilot operations → OpenAPI oneOf branches (no parallel catalog)."""
+    """Canonical PresentationOps operations → OpenAPI oneOf branches (no parallel catalog)."""
     branches: list[dict[str, Any]] = []
-    for op_name, spec in sorted(TvCopilotContentService.operations().items()):
+    for op_name, spec in sorted(PresentationOpsContentService.operations().items()):
         if not isinstance(spec, dict):
             continue
         raw = spec.get("inputSchema")
@@ -169,7 +169,7 @@ def _typed_ops_schema() -> dict[str, Any]:
         "type": "array",
         "description": (
             "Typed presentation ops from the canonical TV catalog (objects with op — "
-            "never bare strings). Shape projected from TvCopilotContentService."
+            "never bare strings). Shape projected from PresentationOpsContentService."
         ),
         "minItems": 1,
         "items": {
@@ -229,7 +229,7 @@ def _host_context_schema() -> dict[str, Any]:
 
 
 def _catalog_version_placeholder() -> str:
-    return TvCopilotContentService.catalog_version()
+    return PresentationOpsContentService.catalog_version()
 
 
 def _create_playlist_ops_example() -> list[dict[str, Any]]:

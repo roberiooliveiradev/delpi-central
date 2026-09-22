@@ -5,8 +5,8 @@ from __future__ import annotations
 import logging
 from typing import Any, Callable
 
-from tv_app.application.services.data.tv_copilot_content_service import (
-    TvCopilotContentService,
+from tv_app.application.services.data.presentation_ops_content_service import (
+    PresentationOpsContentService,
 )
 
 logger = logging.getLogger(__name__)
@@ -30,8 +30,8 @@ class TvCatalogSelectionEvidenceService:
     ) -> list[dict[str, Any]]:
         if not candidates:
             return []
-        max_n = TvCopilotContentService.setting_int("routeEvidenceMaxCandidates", 3)
-        max_rows = TvCopilotContentService.setting_int("routeEvidenceMaxRows", 5)
+        max_n = PresentationOpsContentService.setting_int("routeEvidenceMaxCandidates", 3)
+        max_rows = PresentationOpsContentService.setting_int("routeEvidenceMaxRows", 5)
         out: list[dict[str, Any]] = []
         for index, row in enumerate(candidates):
             if not isinstance(row, dict):

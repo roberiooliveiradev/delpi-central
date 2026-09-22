@@ -43,7 +43,7 @@ Canonical domain capability (PresentationMutation / TvPresentationPatchV1)
 
 | Concern | Canonical source |
 |---|---|
-| Domain rules / typed ops | `tv_copilot_content.json` + `presentation_mutation/` |
+| Domain rules / typed ops | `presentation_ops_content.json` + `presentation_mutation/` |
 | Mutation engine | `PresentationPatchService` |
 | Write boundary | `TvPresentationWriteService` |
 | Resource AuthZ | `PlaylistAccessService` + Core RBAC |

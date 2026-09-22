@@ -1,4 +1,4 @@
-"""Testes TvCopilotSuggestOpsService — NL → ops tipadas (sem LLM)."""
+"""Testes PresentationSuggestOpsService — NL → ops tipadas (sem LLM)."""
 
 from __future__ import annotations
 
@@ -6,29 +6,29 @@ from unittest.mock import patch
 
 import pytest
 
-from tv_app.application.services.data.tv_copilot_content_service import (
-    clear_tv_copilot_content_cache,
+from tv_app.application.services.data.presentation_ops_content_service import (
+    clear_presentation_ops_content_cache,
 )
-from tv_app.application.services.data.tv_copilot_suggest_ops_service import (
-    TvCopilotSuggestOpsService,
+from tv_app.application.services.data.presentation_suggest_ops_service import (
+    PresentationSuggestOpsService,
 )
 
 
 @pytest.fixture(autouse=True)
 def _skip_ai_route_rank_in_unit_tests():
     """Unitários usam ranking local; S2S AI é coberto em testes dedicados."""
-    clear_tv_copilot_content_cache()
+    clear_presentation_ops_content_cache()
     with patch.object(
-        TvCopilotSuggestOpsService,
+        PresentationSuggestOpsService,
         "_rank_via_ai_suggest",
         return_value=[],
     ):
         yield
-    clear_tv_copilot_content_cache()
+    clear_presentation_ops_content_cache()
 
 
 def test_suggest_adicione_texto_sem_aspas_cria_bloco_vazio():
-    result = TvCopilotSuggestOpsService.suggest(
+    result = PresentationSuggestOpsService.suggest(
         message="adicione um texto no slide",
         host_context={"slideId": "slide-1", "playlistId": "pl-1"},
     )
@@ -42,7 +42,7 @@ def test_suggest_adicione_texto_sem_aspas_cria_bloco_vazio():
 
 
 def test_suggest_escreva_texto_upsert_block_with_quoted_content():
-    result = TvCopilotSuggestOpsService.suggest(
+    result = PresentationSuggestOpsService.suggest(
         message='escreva um texto no slide atual "ola sou uma ia"',
         host_context={"slideId": "slide-1", "playlistId": "pl-1"},
     )
@@ -55,7 +55,7 @@ def test_suggest_escreva_texto_upsert_block_with_quoted_content():
 
 
 def test_suggest_crie_um_slide_add_blank_or_preset():
-    result = TvCopilotSuggestOpsService.suggest(
+    result = PresentationSuggestOpsService.suggest(
         message="crie um slide",
         host_context={"playlistId": "pl-1"},
     )
@@ -68,7 +68,7 @@ def test_suggest_crie_um_slide_add_blank_or_preset():
 
 
 def test_suggest_apague_bloco_with_selection():
-    result = TvCopilotSuggestOpsService.suggest(
+    result = PresentationSuggestOpsService.suggest(
         message="apague o bloco",
         host_context={
             "selectedBlockIds": ["blk-42"],
@@ -83,7 +83,7 @@ def test_suggest_apague_bloco_with_selection():
 
 
 def test_suggest_apague_bloco_sem_selecao_clarifica():
-    result = TvCopilotSuggestOpsService.suggest(
+    result = PresentationSuggestOpsService.suggest(
         message="apague o bloco",
         host_context={"slideId": "s1", "playlistId": "pl-1"},
     )
@@ -95,7 +95,7 @@ def test_suggest_apague_bloco_sem_selecao_clarifica():
 
 def test_suggest_apague_caixa_de_texto_selecionada_delete_block():
     """Regressão: «apague a caixa de texto» não pode virar upsert_block vazio."""
-    result = TvCopilotSuggestOpsService.suggest(
+    result = PresentationSuggestOpsService.suggest(
         message="apague a caixa de texto selecionada",
         host_context={
             "selectedBlockIds": ["txt_de88186807"],
@@ -111,7 +111,7 @@ def test_suggest_apague_caixa_de_texto_selecionada_delete_block():
 
 
 def test_suggest_exclua_kpi_usa_focus_block_id():
-    result = TvCopilotSuggestOpsService.suggest(
+    result = PresentationSuggestOpsService.suggest(
         message="exclua o kpi selecionado",
         host_context={
             "focusBlockId": "kpi-1",
@@ -123,7 +123,7 @@ def test_suggest_exclua_kpi_usa_focus_block_id():
 
 
 def test_suggest_apague_caixa_sem_selecao_clarifica_nao_cria_texto():
-    result = TvCopilotSuggestOpsService.suggest(
+    result = PresentationSuggestOpsService.suggest(
         message="apague a caixa de texto",
         host_context={"slideId": "s1", "playlistId": "pl-1"},
     )
@@ -134,14 +134,14 @@ def test_suggest_apague_caixa_sem_selecao_clarifica_nao_cria_texto():
 
 
 def test_suggest_empty_message_returns_no_ops():
-    result = TvCopilotSuggestOpsService.suggest(message="   ", host_context={})
+    result = PresentationSuggestOpsService.suggest(message="   ", host_context={})
     assert result["ops"] == []
     assert result["matchedCapabilityKeys"] == []
     assert result["reason"]
 
 
 def test_suggest_fundo_azul_patch_native_config_canonical_background():
-    result = TvCopilotSuggestOpsService.suggest(
+    result = PresentationSuggestOpsService.suggest(
         message="mude a cor do fundo do slide para azul",
         host_context={"slideId": "slide-1", "playlistId": "pl-1"},
     )
@@ -154,7 +154,7 @@ def test_suggest_fundo_azul_patch_native_config_canonical_background():
 
 
 def test_suggest_fundo_sem_cor_nao_emite_background_vazio():
-    result = TvCopilotSuggestOpsService.suggest(
+    result = PresentationSuggestOpsService.suggest(
         message="mude a cor do fundo do slide",
         host_context={"slideId": "slide-1", "playlistId": "pl-1"},
     )
@@ -171,10 +171,10 @@ def test_suggest_kpi_sem_rota_clarifica_operation_id():
     empty_catalog.get_route.return_value = None
     empty_catalog.list_routes.return_value = []
     with patch(
-        "tv_app.application.services.data.tv_copilot_suggest_ops_service.TvDataRouteCatalogService",
+        "tv_app.application.services.data.presentation_suggest_ops_service.TvDataRouteCatalogService",
         return_value=empty_catalog,
     ):
-        result = TvCopilotSuggestOpsService.suggest(
+        result = PresentationSuggestOpsService.suggest(
             message="adicione um KPI",
             host_context={"slideId": "slide-1", "playlistId": "pl-1"},
         )
@@ -184,7 +184,7 @@ def test_suggest_kpi_sem_rota_clarifica_operation_id():
 
 
 def test_suggest_reordenar_sem_items_clarifica():
-    result = TvCopilotSuggestOpsService.suggest(
+    result = PresentationSuggestOpsService.suggest(
         message="reordene os slides",
         host_context={"playlistId": "pl-1", "slideId": "s1"},
     )
@@ -194,7 +194,7 @@ def test_suggest_reordenar_sem_items_clarifica():
 
 
 def test_suggest_add_chart_view():
-    result = TvCopilotSuggestOpsService.suggest(
+    result = PresentationSuggestOpsService.suggest(
         message="adicione um gráfico",
         host_context={"slideId": "slide-1", "playlistId": "pl-1"},
     )
@@ -205,7 +205,7 @@ def test_suggest_add_chart_view():
 
 
 def test_suggest_kpi_oee_composite_fonte_view_bind():
-    result = TvCopilotSuggestOpsService.suggest(
+    result = PresentationSuggestOpsService.suggest(
         message="adicione um KPI de OEE",
         host_context={"slideId": "slide-1", "playlistId": "pl-1"},
     )
@@ -229,7 +229,7 @@ def test_suggest_kpi_oee_composite_fonte_view_bind():
 
 
 def test_suggest_sql_trap_returns_no_ops():
-    result = TvCopilotSuggestOpsService.suggest(
+    result = PresentationSuggestOpsService.suggest(
         message="me mostre o SELECT * FROM SB1",
         host_context={"slideId": "slide-1", "playlistId": "pl-1"},
     )
@@ -237,7 +237,7 @@ def test_suggest_sql_trap_returns_no_ops():
 
 
 def test_suggest_operation_id_from_host_context():
-    result = TvCopilotSuggestOpsService.suggest(
+    result = PresentationSuggestOpsService.suggest(
         message="adicione um KPI",
         host_context={
             "slideId": "slide-1",
@@ -250,7 +250,7 @@ def test_suggest_operation_id_from_host_context():
 
 
 def test_suggest_create_modelo_de_dados_oee():
-    result = TvCopilotSuggestOpsService.suggest(
+    result = PresentationSuggestOpsService.suggest(
         message="adicione um modelo de dados de OEE",
         host_context={"slideId": "slide-1", "playlistId": "pl-1"},
     )
@@ -263,7 +263,7 @@ def test_suggest_create_modelo_de_dados_oee():
 
 
 def test_suggest_modelo_oee_sem_slide_clarifica_antes_do_patch():
-    result = TvCopilotSuggestOpsService.suggest(
+    result = PresentationSuggestOpsService.suggest(
         message="adicione o modelo de dados oee",
         host_context={"playlistId": "pl-1"},
     )
@@ -276,7 +276,7 @@ def test_suggest_modelo_oee_sem_slide_clarifica_antes_do_patch():
 
 
 def test_suggest_criar_slide_sem_slide_aberto_executa_direto():
-    result = TvCopilotSuggestOpsService.suggest(
+    result = PresentationSuggestOpsService.suggest(
         message="crie um slide",
         host_context={"playlistId": "pl-1"},
     )
@@ -289,7 +289,7 @@ def test_suggest_criar_slide_sem_slide_aberto_executa_direto():
 
 
 def test_suggest_excluir_bloco_exige_confirmacao():
-    result = TvCopilotSuggestOpsService.suggest(
+    result = PresentationSuggestOpsService.suggest(
         message="apague o bloco",
         host_context={
             "playlistId": "pl-1",
@@ -305,7 +305,7 @@ def test_suggest_excluir_bloco_exige_confirmacao():
 
 
 def test_suggest_mutacao_com_draft_local_nao_emite_ops():
-    result = TvCopilotSuggestOpsService.suggest(
+    result = PresentationSuggestOpsService.suggest(
         message="adicione o modelo de dados oee",
         host_context={
             "playlistId": "pl-1",
@@ -321,7 +321,7 @@ def test_suggest_mutacao_com_draft_local_nao_emite_ops():
 
 
 def test_suggest_chart_from_route_oee_composite():
-    result = TvCopilotSuggestOpsService.suggest(
+    result = PresentationSuggestOpsService.suggest(
         message="adicione um gráfico de OEE",
         host_context={"slideId": "slide-1", "playlistId": "pl-1"},
     )
@@ -335,7 +335,7 @@ def test_suggest_chart_from_route_oee_composite():
 
 
 def test_suggest_update_filial_on_selected_source():
-    result = TvCopilotSuggestOpsService.suggest(
+    result = PresentationSuggestOpsService.suggest(
         message="mude a filial para 02",
         host_context={
             "slideId": "slide-1",
@@ -360,7 +360,7 @@ def test_suggest_update_filial_on_selected_source():
 
 
 def test_suggest_bind_visual_with_selection_and_source_list():
-    result = TvCopilotSuggestOpsService.suggest(
+    result = PresentationSuggestOpsService.suggest(
         message="ligue à fonte de OEE",
         host_context={
             "slideId": "slide-1",
@@ -383,7 +383,7 @@ def test_suggest_bind_visual_with_selection_and_source_list():
 
 
 def test_suggest_transform_top_10():
-    result = TvCopilotSuggestOpsService.suggest(
+    result = PresentationSuggestOpsService.suggest(
         message="manter top 10 na fonte",
         host_context={
             "slideId": "slide-1",
@@ -409,7 +409,7 @@ def test_suggest_transform_top_10():
 
 
 def test_suggest_field_labels_rename():
-    result = TvCopilotSuggestOpsService.suggest(
+    result = PresentationSuggestOpsService.suggest(
         message='renomeie o campo "value" para "OEE"',
         host_context={
             "slideId": "slide-1",
@@ -434,7 +434,7 @@ def test_suggest_field_labels_rename():
 
 def test_suggest_modelo_de_dados_generico_selection_pending():
     """Pedido genérico de modelo sem vencedor claro → candidatos, sem inventar rota."""
-    result = TvCopilotSuggestOpsService.suggest(
+    result = PresentationSuggestOpsService.suggest(
         message="adicione o modelo de dados",
         host_context={"slideId": "slide-1", "playlistId": "pl-1"},
     )
@@ -447,7 +447,7 @@ def test_suggest_modelo_de_dados_generico_selection_pending():
 
 
 def test_suggest_resume_explicit_operation_ids_creates_sources():
-    result = TvCopilotSuggestOpsService.suggest(
+    result = PresentationSuggestOpsService.suggest(
         message=(
             "adicione no slide as fontes: get_overall_equipment_effectiveness_pct, "
             "get_product_detail"

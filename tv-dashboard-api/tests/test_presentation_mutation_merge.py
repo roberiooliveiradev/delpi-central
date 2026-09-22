@@ -15,17 +15,17 @@ from tv_app.application.services.data.presentation_mutation.merge import (
 from tv_app.application.services.data.presentation_mutation.patch_service import (
     PresentationPatchService,
 )
-from tv_app.application.services.data.tv_copilot_content_service import (
-    TvCopilotContentService,
-    clear_tv_copilot_content_cache,
+from tv_app.application.services.data.presentation_ops_content_service import (
+    PresentationOpsContentService,
+    clear_presentation_ops_content_cache,
 )
 
 
 @pytest.fixture(autouse=True)
 def _clear_catalog():
-    clear_tv_copilot_content_cache()
+    clear_presentation_ops_content_cache()
     yield
-    clear_tv_copilot_content_cache()
+    clear_presentation_ops_content_cache()
 
 
 def test_deep_merge_preserves_siblings_and_clears_null():
@@ -144,7 +144,7 @@ def test_preview_upsert_block_partial_style_keeps_color(monkeypatch):
                     },
                 }
             ],
-            "catalogVersion": TvCopilotContentService.catalog_version(),
+            "catalogVersion": PresentationOpsContentService.catalog_version(),
         },
         user=SimpleNamespace(is_superadmin=True, permissions=[], id="u1"),
     )

@@ -8,11 +8,11 @@ import re
 import uuid
 from typing import Any
 
-from tv_app.application.services.data.tv_copilot_command_recognition_service import (
-    TvCopilotCommandRecognitionService,
+from tv_app.application.services.data.presentation_command_recognition_service import (
+    PresentationCommandRecognitionService,
 )
-from tv_app.application.services.data.tv_copilot_content_service import (
-    TvCopilotContentService,
+from tv_app.application.services.data.presentation_ops_content_service import (
+    PresentationOpsContentService,
 )
 from tv_app.application.services.tv_data_route_catalog_service import (
     TvDataRouteCatalogService,
@@ -31,19 +31,19 @@ _KPI_INTENT_MARKERS = frozenset(
 )
 
 
-class TvCopilotSuggestOpsService:
+class PresentationSuggestOpsService:
     @classmethod
     def suggest(cls, *, message: str, host_context: dict | None) -> dict[str, Any]:
         """Fachada pública: sempre devolve um plano validado pelo contrato."""
-        from tv_app.application.services.data.tv_copilot_command_planner_service import (
-            TvCopilotCommandPlannerService,
+        from tv_app.application.services.data.presentation_command_planner_service import (
+            PresentationCommandPlannerService,
         )
 
-        plan = TvCopilotCommandPlannerService.plan(
+        plan = PresentationCommandPlannerService.plan(
             message=message,
             host_context=host_context,
         )
-        return TvCopilotCommandPlannerService.to_suggest_payload(plan)
+        return PresentationCommandPlannerService.to_suggest_payload(plan)
 
     @classmethod
     def materialize(
@@ -55,14 +55,14 @@ class TvCopilotSuggestOpsService:
         user: Any | None = None,
     ) -> dict[str, Any]:
         """Materializa capability → ops; o planner valida target e política."""
-        catalog_version = TvCopilotContentService.catalog_version()
+        catalog_version = PresentationOpsContentService.catalog_version()
         normalized = cls._normalize(message)
         if not normalized:
             return {
                 "catalogVersion": catalog_version,
                 "ops": [],
                 "matchedCapabilityKeys": [],
-                "reason": TvCopilotContentService.message("suggestEmptyMessage"),
+                "reason": PresentationOpsContentService.message("suggestEmptyMessage"),
             }
 
         host = host_context if isinstance(host_context, dict) else {}
@@ -80,7 +80,7 @@ class TvCopilotSuggestOpsService:
             prefer_kpi=prefer_kpi,
             ranked_routes=ranked_routes,
         )
-        max_ops = TvCopilotContentService.setting_int("maxSuggestOps", 5)
+        max_ops = PresentationOpsContentService.setting_int("maxSuggestOps", 5)
         destructive_intent = cls._has_destructive_intent(normalized)
 
         # Resume estruturado: «adicione no slide as fontes: op1, op2»
@@ -94,13 +94,13 @@ class TvCopilotSuggestOpsService:
                     "matchedCapabilityKeys": ["create_data_source"],
                     "clarificationKey": None,
                     "candidates": [],
-                    "reason": TvCopilotContentService.message(
+                    "reason": PresentationOpsContentService.message(
                         "suggestOk", count=len(ops)
                     ),
                 }
 
         scored: list[tuple[float, dict[str, Any]]] = []
-        for cap in TvCopilotContentService.capabilities():
+        for cap in PresentationOpsContentService.capabilities():
             score = cls._score_capability(
                 cap, normalized, destructive_intent=destructive_intent
             )
@@ -141,7 +141,7 @@ class TvCopilotSuggestOpsService:
                 )
             except Exception:  # noqa: BLE001
                 pass
-            reason = TvCopilotContentService.message(
+            reason = PresentationOpsContentService.message(
                 "suggestNeedRouteSelection",
                 count=len(candidates),
             )
@@ -189,7 +189,7 @@ class TvCopilotSuggestOpsService:
             if bool(cap.get("isComposite")) and not placeholders.get("operationId"):
                 note_clarification(
                     cap_clarify
-                    or TvCopilotContentService.placeholder_clarifications().get(
+                    or PresentationOpsContentService.placeholder_clarifications().get(
                         "operationId"
                     )
                 )
@@ -203,7 +203,7 @@ class TvCopilotSuggestOpsService:
                 filled = cls._enrich_filled_op(filled, placeholders)
                 incomplete_field = cls._incomplete_op_field(filled)
                 if incomplete_field:
-                    mapped = TvCopilotContentService.op_field_clarifications().get(
+                    mapped = PresentationOpsContentService.op_field_clarifications().get(
                         incomplete_field
                     )
                     note_clarification(mapped or cap_clarify)
@@ -220,11 +220,11 @@ class TvCopilotSuggestOpsService:
 
         if not ops:
             if clarification_keys:
-                reason = TvCopilotContentService.message(clarification_keys[0])
+                reason = PresentationOpsContentService.message(clarification_keys[0])
             elif matched_keys:
-                reason = TvCopilotContentService.message("suggestIncompleteGeneric")
+                reason = PresentationOpsContentService.message("suggestIncompleteGeneric")
             else:
-                reason = TvCopilotContentService.message("suggestNoMatch")
+                reason = PresentationOpsContentService.message("suggestNoMatch")
             return {
                 "catalogVersion": catalog_version,
                 "ops": [],
@@ -240,14 +240,14 @@ class TvCopilotSuggestOpsService:
             "matchedCapabilityKeys": matched_keys,
             "clarificationKey": None,
             "candidates": [],
-            "reason": TvCopilotContentService.message(
+            "reason": PresentationOpsContentService.message(
                 "suggestOk", count=len(ops)
             ),
         }
 
     @classmethod
     def _clarification_for_placeholders(cls, missing: list[str]) -> str | None:
-        mapping = TvCopilotContentService.placeholder_clarifications()
+        mapping = PresentationOpsContentService.placeholder_clarifications()
         for name in missing:
             key = mapping.get(str(name).strip())
             if key:
@@ -324,7 +324,7 @@ class TvCopilotSuggestOpsService:
             if normalized_hex:
                 return normalized_hex
 
-        vocab = TvCopilotContentService.color_vocabulary()
+        vocab = PresentationOpsContentService.color_vocabulary()
         for name, value in sorted(vocab.items(), key=lambda item: -len(item[0])):
             if name and name in normalized:
                 hex_value = (
@@ -411,7 +411,7 @@ class TvCopilotSuggestOpsService:
     @classmethod
     def _extract_params(cls, normalized: str) -> dict[str, Any]:
         params: dict[str, Any] = {}
-        hints = TvCopilotContentService.param_hints()
+        hints = PresentationOpsContentService.param_hints()
         for _name, spec in hints.items():
             if not isinstance(spec, dict):
                 continue
@@ -445,7 +445,7 @@ class TvCopilotSuggestOpsService:
     @classmethod
     def _extract_transform_steps(cls, normalized: str) -> list[dict[str, Any]]:
         steps: list[dict[str, Any]] = []
-        for hint in TvCopilotContentService.transform_step_hints():
+        for hint in PresentationOpsContentService.transform_step_hints():
             markers = hint.get("markers")
             step = hint.get("step")
             if not isinstance(markers, list) or not isinstance(step, dict):
@@ -587,9 +587,9 @@ class TvCopilotSuggestOpsService:
         message: str,
     ) -> list[dict[str, Any]]:
         """Rankeia rotas allowlisted; gap alto → 1 vencedor; gap baixo → top-N."""
-        limit = TvCopilotContentService.setting_int("routeCandidateLimit", 5)
-        min_score = TvCopilotContentService.setting_float("routeCandidateMinScore", 4.0)
-        gap_threshold = TvCopilotContentService.setting_float(
+        limit = PresentationOpsContentService.setting_int("routeCandidateLimit", 5)
+        min_score = PresentationOpsContentService.setting_float("routeCandidateMinScore", 4.0)
+        gap_threshold = PresentationOpsContentService.setting_float(
             "routeCandidateScoreGap", 2.5
         )
 
@@ -603,7 +603,7 @@ class TvCopilotSuggestOpsService:
             )
 
         scored: list[dict[str, Any]] = []
-        hints = TvCopilotContentService.nl_route_hints()
+        hints = PresentationOpsContentService.nl_route_hints()
         hint_boost_ids: set[str] = set()
         for alias, operation_id in sorted(hints.items(), key=lambda item: -len(item[0])):
             if alias and alias in normalized:
@@ -721,7 +721,7 @@ class TvCopilotSuggestOpsService:
     ) -> list[dict[str, Any]]:
         if not ranked:
             return []
-        cap = limit or TvCopilotContentService.setting_int("routeCandidateLimit", 5)
+        cap = limit or PresentationOpsContentService.setting_int("routeCandidateLimit", 5)
         filtered = [
             row
             for row in ranked
@@ -821,13 +821,13 @@ class TvCopilotSuggestOpsService:
         ranked_routes: list[dict[str, Any]] | None = None,
     ) -> dict[str, str]:
         quoted = cls._extract_quoted(message)
-        default_title = TvCopilotContentService.setting_str(
+        default_title = PresentationOpsContentService.setting_str(
             "defaultSlideTitle", "Slide personalizado"
         )
-        default_playlist = TvCopilotContentService.setting_str(
+        default_playlist = PresentationOpsContentService.setting_str(
             "defaultPlaylistName", "Nova programação"
         )
-        default_section = TvCopilotContentService.setting_str(
+        default_section = PresentationOpsContentService.setting_str(
             "defaultSectionName", "Nova seção"
         )
         operation_id, route_label = cls._resolve_operation_id(
@@ -838,7 +838,7 @@ class TvCopilotSuggestOpsService:
             message=message,
         )
         background_color = cls._extract_background_color(message, normalized)
-        default_text = TvCopilotContentService.setting_str(
+        default_text = PresentationOpsContentService.setting_str(
             "defaultTextBlockContent", ""
         )
         text_content = quoted if quoted else default_text
@@ -926,13 +926,13 @@ class TvCopilotSuggestOpsService:
         if isinstance(raw_terms, list) and raw_terms:
             terms = [str(item).strip().lower() for item in raw_terms if str(item).strip()]
         else:
-            terms = TvCopilotContentService.action_terms_for_set(
+            terms = PresentationOpsContentService.action_terms_for_set(
                 str(cap.get("actionTermSet") or "any")
             )
         if cls._is_destructive_capability(cap):
             return terms
         # Verbo de remoção não reforça capability construtiva («apague» ≠ criar texto).
-        destructive = set(TvCopilotContentService.destructive_action_terms())
+        destructive = set(PresentationOpsContentService.destructive_action_terms())
         return [term for term in terms if term not in destructive]
 
     @classmethod
@@ -945,14 +945,14 @@ class TvCopilotSuggestOpsService:
 
     @classmethod
     def _has_destructive_intent(cls, normalized: str) -> bool:
-        for term in TvCopilotContentService.destructive_action_terms():
+        for term in PresentationOpsContentService.destructive_action_terms():
             if cls._marker_hit(term, normalized):
                 return True
         return False
 
     @classmethod
     def _marker_hit(cls, needle: str, haystack: str) -> bool:
-        return TvCopilotCommandRecognitionService.marker_hit(needle, haystack)
+        return PresentationCommandRecognitionService.marker_hit(needle, haystack)
 
     @classmethod
     def _score_capability(

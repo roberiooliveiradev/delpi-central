@@ -9,8 +9,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from tv_app.application.services.data.tv_copilot_content_service import (
-    TvCopilotContentService,
+from tv_app.application.services.data.presentation_ops_content_service import (
+    PresentationOpsContentService,
 )
 
 # Ops que mutam o documento nativeConfig do slide — um único PATCH coalescido.
@@ -53,7 +53,7 @@ def _cmd(
     return out
 
 
-class TvCopilotHttpCommandPlannerService:
+class PresentationHttpCommandPlannerService:
     """Gera lista ordenada de comandos CRUD a partir do resultado do redutor."""
 
     @classmethod
@@ -85,7 +85,7 @@ class TvCopilotHttpCommandPlannerService:
                 continue
 
             if op_name == "create_playlist":
-                name = str(raw.get("name") or "").strip() or TvCopilotContentService.setting_str(
+                name = str(raw.get("name") or "").strip() or PresentationOpsContentService.setting_str(
                     "defaultPlaylistName", "Nova programação"
                 )
                 body: dict[str, Any] = {"name": name}
@@ -123,11 +123,11 @@ class TvCopilotHttpCommandPlannerService:
 
             if not current_playlist:
                 raise ValueError(
-                    TvCopilotContentService.message("missingPlaylist")
+                    PresentationOpsContentService.message("missingPlaylist")
                 )
 
             if op_name == "add_blank_slide":
-                title = str(raw.get("title") or "").strip() or TvCopilotContentService.setting_str(
+                title = str(raw.get("title") or "").strip() or PresentationOpsContentService.setting_str(
                     "defaultSlideTitle", "Slide personalizado"
                 )
                 body = {
@@ -177,7 +177,7 @@ class TvCopilotHttpCommandPlannerService:
 
             if op_name == "update_slide":
                 if not current_slide:
-                    raise ValueError(TvCopilotContentService.message("missingSlide"))
+                    raise ValueError(PresentationOpsContentService.message("missingSlide"))
                 body = {}
                 if "title" in raw and raw["title"] is not None:
                     body["title"] = str(raw["title"]).strip()
@@ -211,7 +211,7 @@ class TvCopilotHttpCommandPlannerService:
 
             if op_name == "delete_slide":
                 if not current_slide:
-                    raise ValueError(TvCopilotContentService.message("missingSlide"))
+                    raise ValueError(PresentationOpsContentService.message("missingSlide"))
                 commands.append(
                     _cmd(
                         method="DELETE",
@@ -241,7 +241,7 @@ class TvCopilotHttpCommandPlannerService:
                 else:
                     body = {
                         "name": name
-                        or TvCopilotContentService.setting_str(
+                        or PresentationOpsContentService.setting_str(
                             "defaultSectionName", "Nova seção"
                         )
                     }
@@ -271,7 +271,7 @@ class TvCopilotHttpCommandPlannerService:
 
             if op_name == "move_slide_to_section":
                 if not current_slide:
-                    raise ValueError(TvCopilotContentService.message("missingSlide"))
+                    raise ValueError(PresentationOpsContentService.message("missingSlide"))
                 section_id = raw.get("sectionId")
                 body = {
                     "sectionId": (
@@ -301,14 +301,14 @@ class TvCopilotHttpCommandPlannerService:
                 continue
 
             raise ValueError(
-                TvCopilotContentService.message("unknownOp", op=op_name or "?")
+                PresentationOpsContentService.message("unknownOp", op=op_name or "?")
             )
 
         if pending_native:
             if not current_playlist or not current_slide:
-                raise ValueError(TvCopilotContentService.message("missingTarget"))
+                raise ValueError(PresentationOpsContentService.message("missingTarget"))
             if not isinstance(native_config, dict):
-                raise ValueError(TvCopilotContentService.message("missingTarget"))
+                raise ValueError(PresentationOpsContentService.message("missingTarget"))
             commands.append(
                 _cmd(
                     method="PATCH",

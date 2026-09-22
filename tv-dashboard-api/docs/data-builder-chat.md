@@ -102,8 +102,8 @@ Auth: `API_DELPI_INTERNAL_SERVICE_TOKEN` nos dois serviços (mesmo valor). Ver t
 
 ## Conteúdo
 
-- TV: `tv_app/content/data_builder_content.json`, `tv_copilot_content.json`
-- MFE: `plugins/tv-dashboard/src/content/dataBuilderChatContent.ts`, `tvCopilotContent.ts`
+- TV: `tv_app/content/data_builder_content.json`, `presentation_ops_content.json`
+- MFE: `plugins/tv-dashboard/src/content/dataBuilderChatContent.ts`
 - Chat: skill `tv-dashboard-copilot` + `assistant`/`skills` catalog
 
 ## Anti-padrões
@@ -122,4 +122,4 @@ Auth: `API_DELPI_INTERNAL_SERVICE_TOKEN` nos dois serviços (mesmo valor). Ver t
 |------|----------------|
 | Pesquisa | Catálogo local (sem IA) |
 | Assistente IA (rascunho) | Turn NL no builder + S2S |
-| Copiloto IA | EmbeddedChat / skill + TvCopilotPatch |
+| Mutation IA | VISTA gpt-actions + PresentationMutation |

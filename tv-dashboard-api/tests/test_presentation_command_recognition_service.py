@@ -2,19 +2,19 @@
 
 from __future__ import annotations
 
-from tv_app.application.services.data.tv_copilot_command_planner_service import (
-    TvCopilotCommandPlannerService,
+from tv_app.application.services.data.presentation_command_planner_service import (
+    PresentationCommandPlannerService,
 )
-from tv_app.application.services.data.tv_copilot_command_recognition_service import (
-    TvCopilotCommandRecognitionService as Recognition,
+from tv_app.application.services.data.presentation_command_recognition_service import (
+    PresentationCommandRecognitionService as Recognition,
 )
-from tv_app.application.services.data.tv_copilot_content_service import (
-    clear_tv_copilot_content_cache,
+from tv_app.application.services.data.presentation_ops_content_service import (
+    clear_presentation_ops_content_cache,
 )
 
 
 def setup_function() -> None:
-    clear_tv_copilot_content_cache()
+    clear_presentation_ops_content_cache()
 
 
 def test_marker_hit_exato_e_sem_acento():
@@ -46,7 +46,7 @@ def test_is_editor_command_separa_comando_de_pergunta():
 
 
 def test_planner_com_typo_produz_plano_pronto():
-    plan = TvCopilotCommandPlannerService.plan(
+    plan = PresentationCommandPlannerService.plan(
         message="crie um sldie",
         host_context={"playlistId": "pl-1"},
     )
@@ -56,7 +56,7 @@ def test_planner_com_typo_produz_plano_pronto():
 
 
 def test_planner_marca_pergunta_como_not_command():
-    plan = TvCopilotCommandPlannerService.plan(
+    plan = PresentationCommandPlannerService.plan(
         message="quem é você",
         host_context={"playlistId": "pl-1"},
     )
@@ -66,7 +66,7 @@ def test_planner_marca_pergunta_como_not_command():
 
 
 def test_planner_marca_comando_sem_capability_como_unsupported():
-    plan = TvCopilotCommandPlannerService.plan(
+    plan = PresentationCommandPlannerService.plan(
         message="exporte o slide para powerpoint",
         host_context={"playlistId": "pl-1"},
     )

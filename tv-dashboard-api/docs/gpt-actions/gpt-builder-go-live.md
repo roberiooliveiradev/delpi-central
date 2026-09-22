@@ -140,7 +140,7 @@ as Instructions **devem** manter a precedência TV-domínio > imagem
 
 Após qualquer mudança de schema canônico / OpenAPI: **reimportar** esta URL,
 salvar o GPT e abrir conversa **nova**. Nested ops (`patch`, `items`, `steps`,
-`block`, `params`, `fieldLabels`) vêm do catálogo TvCopilot — não de um catálogo
+`block`, `params`, `fieldLabels`) vêm do catálogo PresentationOps — não de um catálogo
 paralelo no Builder.
 
 ## 3. Smoke (usuários DELPI legítimos)

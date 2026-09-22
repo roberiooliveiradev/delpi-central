@@ -1,4 +1,4 @@
-"""Conteúdo PT do copiloto TV (patches tipados)."""
+"""Catálogo canônico de ops tipadas da PresentationMutation (PT + schemas)."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from typing import Any
 
 from pathlib import Path
 
-CONTENT_PATH = Path(__file__).resolve().parents[3] / "content" / "tv_copilot_content.json"
+CONTENT_PATH = Path(__file__).resolve().parents[3] / "content" / "presentation_ops_content.json"
 
 _RISK_RANK = {"additive": 1, "mutation": 2, "destructive": 3}
 
@@ -18,12 +18,12 @@ def _load() -> dict[str, Any]:
     return json.loads(CONTENT_PATH.read_text(encoding="utf-8"))
 
 
-def clear_tv_copilot_content_cache() -> None:
+def clear_presentation_ops_content_cache() -> None:
     """Invalida o cache do JSON (testes / hot-reload)."""
     _load.cache_clear()
 
 
-class TvCopilotContentService:
+class PresentationOpsContentService:
     @classmethod
     def message(cls, key: str, default: str = "", **format_kwargs: Any) -> str:
         messages = _load().get("messages") or {}

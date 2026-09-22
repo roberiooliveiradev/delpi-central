@@ -25,12 +25,12 @@ class TvDashboardCapabilityCatalogAdapter(TvDashboardCapabilityCatalogPort):
         try:
             payload = self._gateway.get_capabilities(access_token)
         except Exception:
-            logger.warning("tv_copilot_capabilities_fetch_failed", exc_info=True)
+            logger.warning("tv_presentation_capabilities_fetch_failed", exc_info=True)
             return None
 
         if not payload.get("_ok"):
             logger.warning(
-                "tv_copilot_capabilities_http_error status=%s",
+                "tv_presentation_capabilities_http_error status=%s",
                 payload.get("_httpStatus"),
             )
             return None
@@ -41,7 +41,7 @@ class TvDashboardCapabilityCatalogAdapter(TvDashboardCapabilityCatalogPort):
 
         version = str(document.get("catalogVersion") or "").strip()
         if not version:
-            logger.warning("tv_copilot_capabilities_missing_catalog_version")
+            logger.warning("tv_presentation_capabilities_missing_catalog_version")
             return None
 
         if self._cached_version == version and isinstance(self._cached_catalog, dict):
@@ -49,7 +49,7 @@ class TvDashboardCapabilityCatalogAdapter(TvDashboardCapabilityCatalogPort):
 
         if self._cached_version and self._cached_version != version:
             logger.info(
-                "tv_copilot_catalog_version_skew previous=%s next=%s",
+                "tv_presentation_catalog_version_skew previous=%s next=%s",
                 self._cached_version,
                 version,
             )
@@ -73,12 +73,12 @@ class TvDashboardCapabilityCatalogAdapter(TvDashboardCapabilityCatalogPort):
                 access_token=access_token,
             )
         except Exception:
-            logger.warning("tv_copilot_suggest_ops_failed", exc_info=True)
+            logger.warning("tv_presentation_suggest_ops_failed", exc_info=True)
             return None
 
         if not payload.get("_ok"):
             logger.warning(
-                "tv_copilot_suggest_ops_http_error status=%s",
+                "tv_presentation_suggest_ops_http_error status=%s",
                 payload.get("_httpStatus"),
             )
             return None

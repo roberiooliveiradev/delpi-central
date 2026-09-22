@@ -476,14 +476,14 @@
                 "properties": {
                   "block": {
                     "type": "object",
-                    "description": "Editor-native block blob for dry-run resolution. Variability is unbounded across block types; runtime validates downstream. Not a second Copilot operation catalog.",
+                    "description": "Editor-native block blob for dry-run resolution. Variability is unbounded across block types; runtime validates downstream. Not a second PresentationOps catalog.",
                     "x-delpi-gpt-opaque-object": true,
                     "additionalProperties": true,
                     "properties": {}
                   },
                   "nativeConfig": {
                     "type": "object",
-                    "description": "Editor-native slide config for dry-run resolution. Full canvas DTO; not a Copilot op payload.",
+                    "description": "Editor-native slide config for dry-run resolution. Full canvas DTO; not a PresentationOps payload.",
                     "x-delpi-gpt-opaque-object": true,
                     "additionalProperties": true,
                     "properties": {}
@@ -774,7 +774,7 @@
                   },
                   "ops": {
                     "type": "array",
-                    "description": "Typed presentation ops from the canonical TV catalog (objects with op — never bare strings). Shape projected from TvCopilotContentService.",
+                    "description": "Typed presentation ops from the canonical TV catalog (objects with op — never bare strings). Shape projected from PresentationOpsContentService.",
                     "minItems": 1,
                     "items": {
                       "oneOf": [

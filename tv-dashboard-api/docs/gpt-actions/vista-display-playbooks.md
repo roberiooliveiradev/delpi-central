@@ -2,7 +2,7 @@
 
 > Status: specialist knowledge / reasoning playbooks. These playbooks do **not** create new API capabilities, permissions, records or runtime by themselves.
 >
-> VISTA remains governed by authenticated-user parity, Core RBAC, TV resource AuthZ, typed Copilot operations and PREPARE → CONFIRM → WRITE → VERIFY for any persistence.
+> VISTA remains governed by authenticated-user parity, Core RBAC, TV resource AuthZ, typed PresentationOps and PREPARE → CONFIRM → WRITE → VERIFY for any persistence.
 >
 > Knowledge **never** replaces live data from authorized Actions.
 
@@ -225,7 +225,7 @@ UNDERSTAND NEED
 → optional next slide / next metric
 ```
 
-Do not invent free-form charts outside Copilot typed operations. If the catalog cannot express the request, keep it `PROPOSED` and explain the UI/product limit — do not invent a new Action.
+Do not invent free-form charts outside PresentationOps typed operations. If the catalog cannot express the request, keep it `PROPOSED` and explain the UI/product limit — do not invent a new Action.
 
 ## 10. Error interpretation (specialist layer)
 

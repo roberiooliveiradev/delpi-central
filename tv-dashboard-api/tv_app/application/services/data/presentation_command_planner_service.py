@@ -4,18 +4,18 @@ from __future__ import annotations
 
 from typing import Any
 
-from tv_app.application.services.data.tv_copilot_command_recognition_service import (
-    TvCopilotCommandRecognitionService,
+from tv_app.application.services.data.presentation_command_recognition_service import (
+    PresentationCommandRecognitionService,
 )
-from tv_app.application.services.data.tv_copilot_content_service import (
-    TvCopilotContentService,
+from tv_app.application.services.data.presentation_ops_content_service import (
+    PresentationOpsContentService,
 )
-from tv_app.application.services.data.tv_copilot_suggest_ops_service import (
-    TvCopilotSuggestOpsService,
+from tv_app.application.services.data.presentation_suggest_ops_service import (
+    PresentationSuggestOpsService,
 )
 
 
-class TvCopilotCommandPlannerService:
+class PresentationCommandPlannerService:
     """Produz um plano discriminado a partir de NL + hostContext.
 
     Status:
@@ -36,7 +36,7 @@ class TvCopilotCommandPlannerService:
         authorization: str | None = None,
         user: Any | None = None,
     ) -> dict[str, Any]:
-        suggestion = TvCopilotSuggestOpsService.materialize(
+        suggestion = PresentationSuggestOpsService.materialize(
             message=message,
             host_context=host_context,
             authorization=authorization,
@@ -88,7 +88,7 @@ class TvCopilotCommandPlannerService:
                     clarification_key=clarification_key,
                     candidates=candidates,
                 )
-            if TvCopilotCommandRecognitionService.is_editor_command(message):
+            if PresentationCommandRecognitionService.is_editor_command(message):
                 return cls._result(
                     status="unsupported",
                     catalog_version=catalog_version,
@@ -106,14 +106,14 @@ class TvCopilotCommandPlannerService:
                 reason="",
             )
 
-        policy = TvCopilotContentService.aggregate_ops_policy(ops)
+        policy = PresentationOpsContentService.aggregate_ops_policy(ops)
 
         if policy["requiresPlaylist"] and not playlist_id:
             return cls._result(
                 status="clarification",
                 catalog_version=catalog_version,
                 matched=matched,
-                reason=TvCopilotContentService.message("suggestNeedPlaylist"),
+                reason=PresentationOpsContentService.message("suggestNeedPlaylist"),
                 clarification_key="suggestNeedPlaylist",
                 policy=policy,
             )
@@ -123,7 +123,7 @@ class TvCopilotCommandPlannerService:
                 status="clarification",
                 catalog_version=catalog_version,
                 matched=matched,
-                reason=TvCopilotContentService.message("suggestNeedSlideOrCreate"),
+                reason=PresentationOpsContentService.message("suggestNeedSlideOrCreate"),
                 clarification_key="suggestNeedSlideOrCreate",
                 policy=policy,
             )
@@ -133,18 +133,18 @@ class TvCopilotCommandPlannerService:
                 status="clarification",
                 catalog_version=catalog_version,
                 matched=matched,
-                reason=TvCopilotContentService.message("suggestLocalDraftConflict"),
+                reason=PresentationOpsContentService.message("suggestLocalDraftConflict"),
                 clarification_key="suggestLocalDraftConflict",
                 policy=policy,
             )
 
         confirmation = str(policy.get("confirmationPolicy") or "direct")
         if confirmation == "confirm":
-            reason = TvCopilotContentService.message(
+            reason = PresentationOpsContentService.message(
                 "planReadyConfirm", count=len(ops)
             )
         else:
-            reason = TvCopilotContentService.message(
+            reason = PresentationOpsContentService.message(
                 "planReadyDirect", count=len(ops)
             )
 

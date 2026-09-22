@@ -1,4 +1,4 @@
-"""Telemetria mínima do copiloto TV (Onda C) — contadores em memória."""
+"""Telemetria mínima da PresentationMutation — contadores em memória."""
 
 from __future__ import annotations
 
@@ -7,8 +7,8 @@ import time
 from collections import deque
 from typing import Any
 
-from tv_app.application.services.data.tv_copilot_content_service import (
-    TvCopilotContentService,
+from tv_app.application.services.data.presentation_ops_content_service import (
+    PresentationOpsContentService,
 )
 
 _lock = threading.Lock()
@@ -22,7 +22,7 @@ _counts: dict[str, int] = {
 }
 
 
-def record_copilot_event(
+def record_presentation_mutation_event(
     *,
     kind: str,
     ok: bool,
@@ -30,7 +30,7 @@ def record_copilot_event(
     rejected_op: str | None = None,
     elapsed_ms: float | None = None,
 ) -> None:
-    window = TvCopilotContentService.setting_int("telemetryWindow", 500)
+    window = PresentationOpsContentService.setting_int("telemetryWindow", 500)
     with _lock:
         if _events.maxlen != window:
             # deque maxlen é imutável — só recria se config mudou em teste
@@ -52,7 +52,7 @@ def record_copilot_event(
         )
 
 
-def copilot_telemetry_snapshot() -> dict[str, Any]:
+def presentation_mutation_telemetry_snapshot() -> dict[str, Any]:
     with _lock:
         return {
             "counts": dict(_counts),
@@ -60,7 +60,7 @@ def copilot_telemetry_snapshot() -> dict[str, Any]:
         }
 
 
-def reset_copilot_telemetry() -> None:
+def reset_presentation_mutation_telemetry() -> None:
     with _lock:
         for key in _counts:
             _counts[key] = 0

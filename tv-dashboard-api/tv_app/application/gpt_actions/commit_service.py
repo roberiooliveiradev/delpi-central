@@ -20,7 +20,7 @@ from tv_app.application.gpt_actions.proposal_store import (
     load_valid_proposal,
 )
 from tv_app.application.ports import IdempotencyRepositoryPort
-from tv_app.application.services.data.tv_copilot_content_service import TvCopilotContentService
+from tv_app.application.services.data.presentation_ops_content_service import PresentationOpsContentService
 from tv_app.application.services.data.presentation_mutation import (
     ExecutionContext,
     PresentationPatchError,
@@ -278,7 +278,7 @@ class TvGptCommitService:
         request_fingerprint: str,
         authorization: str | None,
     ) -> dict[str, Any]:
-        current_catalog = TvCopilotContentService.catalog_version()
+        current_catalog = PresentationOpsContentService.catalog_version()
         if str(catalog_version or "").strip() != current_catalog:
             # No write yet — still complete with error so replay is stable.
             err = {
@@ -492,7 +492,7 @@ class TvGptCommitService:
                     continue
 
                 if op_name == "create_playlist":
-                    name = str(raw.get("name") or "").strip() or TvCopilotContentService.setting_str(
+                    name = str(raw.get("name") or "").strip() or PresentationOpsContentService.setting_str(
                         "defaultPlaylistName", "Nova programação"
                     )
                     description = raw.get("description")
@@ -547,13 +547,13 @@ class TvGptCommitService:
 
                 if current_playlist is None:
                     raise GptActionsError(
-                        TvCopilotContentService.message("missingPlaylist"),
+                        PresentationOpsContentService.message("missingPlaylist"),
                         code="INVALID_CHANGE",
                         status_code=422,
                     )
 
                 if op_name == "add_blank_slide":
-                    title = str(raw.get("title") or "").strip() or TvCopilotContentService.setting_str(
+                    title = str(raw.get("title") or "").strip() or PresentationOpsContentService.setting_str(
                         "defaultSlideTitle", "Slide personalizado"
                     )
                     payload: dict[str, Any] = {
@@ -618,7 +618,7 @@ class TvGptCommitService:
                 if op_name == "update_slide":
                     if current_slide is None:
                         raise GptActionsError(
-                            TvCopilotContentService.message("missingSlide"),
+                            PresentationOpsContentService.message("missingSlide"),
                             code="INVALID_CHANGE",
                             status_code=422,
                         )
@@ -663,7 +663,7 @@ class TvGptCommitService:
                 if op_name == "delete_slide":
                     if current_slide is None:
                         raise GptActionsError(
-                            TvCopilotContentService.message("missingSlide"),
+                            PresentationOpsContentService.message("missingSlide"),
                             code="INVALID_CHANGE",
                             status_code=422,
                         )
@@ -698,7 +698,7 @@ class TvGptCommitService:
                     else:
                         body = {
                             "name": name
-                            or TvCopilotContentService.setting_str(
+                            or PresentationOpsContentService.setting_str(
                                 "defaultSectionName", "Nova seção"
                             )
                         }
@@ -737,7 +737,7 @@ class TvGptCommitService:
                 if op_name == "move_slide_to_section":
                     if current_slide is None:
                         raise GptActionsError(
-                            TvCopilotContentService.message("missingSlide"),
+                            PresentationOpsContentService.message("missingSlide"),
                             code="INVALID_CHANGE",
                             status_code=422,
                         )
@@ -776,7 +776,7 @@ class TvGptCommitService:
                     continue
 
                 raise GptActionsError(
-                    TvCopilotContentService.message("unknownOp", op=op_name or "?"),
+                    PresentationOpsContentService.message("unknownOp", op=op_name or "?"),
                     code="UNSUPPORTED_CAPABILITY",
                     status_code=400,
                 )
@@ -784,14 +784,14 @@ class TvGptCommitService:
             if pending_native:
                 if current_playlist is None or current_slide is None:
                     raise GptActionsError(
-                        TvCopilotContentService.message("missingTarget"),
+                        PresentationOpsContentService.message("missingTarget"),
                         code="INVALID_CHANGE",
                         status_code=422,
                     )
                 native_config = preview.get("nativeConfig")
                 if not isinstance(native_config, dict):
                     raise GptActionsError(
-                        TvCopilotContentService.message("missingTarget"),
+                        PresentationOpsContentService.message("missingTarget"),
                         code="INVALID_CHANGE",
                         status_code=422,
                     )

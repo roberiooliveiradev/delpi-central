@@ -12,14 +12,14 @@ import re
 import unicodedata
 from difflib import SequenceMatcher
 
-from tv_app.application.services.data.tv_copilot_content_service import (
-    TvCopilotContentService,
+from tv_app.application.services.data.presentation_ops_content_service import (
+    PresentationOpsContentService,
 )
 
 _TOKEN_SPLIT_RE = re.compile(r"[^a-z0-9]+")
 
 
-class TvCopilotCommandRecognitionService:
+class PresentationCommandRecognitionService:
     @classmethod
     def normalize(cls, message: str | None) -> str:
         return " ".join(str(message or "").strip().lower().split())
@@ -35,11 +35,11 @@ class TvCopilotCommandRecognitionService:
 
     @classmethod
     def _threshold(cls) -> float:
-        return TvCopilotContentService.recognition_float("fuzzyThreshold", 0.8)
+        return PresentationOpsContentService.recognition_float("fuzzyThreshold", 0.8)
 
     @classmethod
     def _min_fuzzy_length(cls) -> int:
-        return TvCopilotContentService.recognition_int("minFuzzyTokenLength", 4)
+        return PresentationOpsContentService.recognition_int("minFuzzyTokenLength", 4)
 
     @classmethod
     def _token_matches(cls, needle: str, candidate: str) -> bool:
@@ -89,18 +89,18 @@ class TvCopilotCommandRecognitionService:
         if not text:
             return False
 
-        nouns = TvCopilotContentService.editor_nouns()
+        nouns = PresentationOpsContentService.editor_nouns()
         if not any(cls.marker_hit(noun, text) for noun in nouns):
             return False
 
-        for term_set in TvCopilotContentService.recognition_action_term_sets():
-            for term in TvCopilotContentService.action_terms_for_set(term_set):
+        for term_set in PresentationOpsContentService.recognition_action_term_sets():
+            for term in PresentationOpsContentService.action_terms_for_set(term_set):
                 if cls.marker_hit(term, text):
                     return True
 
         # Verbos de editor que o catálogo ainda não cobre: reconhecer como
         # comando permite responder «não sei fazer isso» em vez de improvisar.
-        for term in TvCopilotContentService.recognition_extra_action_terms():
+        for term in PresentationOpsContentService.recognition_extra_action_terms():
             if cls.marker_hit(term, text):
                 return True
         return False

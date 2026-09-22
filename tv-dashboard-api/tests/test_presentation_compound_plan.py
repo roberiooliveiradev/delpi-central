@@ -11,9 +11,9 @@ import pytest
 from tv_app.application.gpt_actions.commit_service import TvGptCommitService
 from tv_app.application.gpt_actions.dispatch_service import GptActionsDispatchService
 from tv_app.application.gpt_actions.proposal_store import reset_proposal_store_for_tests
-from tv_app.application.services.data.tv_copilot_content_service import (
-    TvCopilotContentService,
-    clear_tv_copilot_content_cache,
+from tv_app.application.services.data.presentation_ops_content_service import (
+    PresentationOpsContentService,
+    clear_presentation_ops_content_cache,
 )
 from tv_app.application.services.data.presentation_mutation import (
     PlanCompileError,
@@ -26,11 +26,11 @@ from tv_app.infrastructure.persistence.repositories.idempotency_repository impor
 
 @pytest.fixture(autouse=True)
 def _reset():
-    clear_tv_copilot_content_cache()
+    clear_presentation_ops_content_cache()
     reset_proposal_store_for_tests()
     yield
     reset_proposal_store_for_tests()
-    clear_tv_copilot_content_cache()
+    clear_presentation_ops_content_cache()
 
 
 def _superadmin():
@@ -49,7 +49,7 @@ def _compound_ops():
 
 
 def test_all_ops_declare_produces_and_consumes():
-    for name, spec in TvCopilotContentService.operations().items():
+    for name, spec in PresentationOpsContentService.operations().items():
         assert isinstance(spec.get("produces"), list), name
         assert isinstance(spec.get("consumes"), list), name
 
@@ -63,7 +63,7 @@ def test_plan_resource_requirements_satisfiable_after_create_chain():
             "block": {"id": "b1", "type": "text", "content": "x"},
         },
     ]
-    req = TvCopilotContentService.plan_resource_requirements(ordered, {})
+    req = PresentationOpsContentService.plan_resource_requirements(ordered, {})
     assert req["satisfiable"] is True
     assert req["requiresPlaylist"] is False
     assert req["requiresSlide"] is False
@@ -120,7 +120,7 @@ def test_preview_compound_mints_synthetic_ids_and_native_text():
         {
             "target": {},
             "ops": _compound_ops(),
-            "catalogVersion": TvCopilotContentService.catalog_version(),
+            "catalogVersion": PresentationOpsContentService.catalog_version(),
         },
         user=_superadmin(),
     )
@@ -182,7 +182,7 @@ def test_dispatch_commit_now_compound_verified():
         user=_superadmin(),
         target={},
         ops=_compound_ops(),
-        catalog_version=TvCopilotContentService.catalog_version(),
+        catalog_version=PresentationOpsContentService.catalog_version(),
         authorization=None,
         commit_now=True,
         confirmation={"confirmed": True},

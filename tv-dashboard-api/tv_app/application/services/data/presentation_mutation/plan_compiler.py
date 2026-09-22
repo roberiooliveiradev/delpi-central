@@ -9,8 +9,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from tv_app.application.services.data.tv_copilot_content_service import (
-    TvCopilotContentService,
+from tv_app.application.services.data.presentation_ops_content_service import (
+    PresentationOpsContentService,
 )
 
 RESOURCE_PLAYLIST = "playlist"
@@ -85,16 +85,16 @@ def compile_presentation_plan(
                 "Op sem campo op.",
                 code="INVALID_CHANGE",
             )
-        if name not in TvCopilotContentService.allowed_ops():
+        if name not in PresentationOpsContentService.allowed_ops():
             raise PlanCompileError(
-                TvCopilotContentService.message("unknownOp", op=name or "?"),
+                PresentationOpsContentService.message("unknownOp", op=name or "?"),
                 code="UNSUPPORTED_CAPABILITY",
             )
         typed.append(dict(raw))
 
     if not typed:
         raise PlanCompileError(
-            TvCopilotContentService.message("noOps"),
+            PresentationOpsContentService.message("noOps"),
             code="INVALID_CHANGE",
         )
 
@@ -103,7 +103,7 @@ def compile_presentation_plan(
         alias = _alias(item)
         if not alias:
             continue
-        produces = TvCopilotContentService.operation_produces(_op_name(item))
+        produces = PresentationOpsContentService.operation_produces(_op_name(item))
         if not produces:
             raise PlanCompileError(
                 f"Op {_op_name(item)!r} não produz recurso; não use as={alias!r}.",
@@ -131,7 +131,7 @@ def compile_presentation_plan(
         alias = _alias(item)
         if alias:
             alias_index[alias] = idx
-        for resource in TvCopilotContentService.operation_produces(name):
+        for resource in PresentationOpsContentService.operation_produces(name):
             last_producer_idx[resource] = idx
 
     # Rebuild last_producer in declaration order for implicit deps during edge build:
@@ -146,7 +146,7 @@ def compile_presentation_plan(
         "dataSource": [],
     }
     for idx, item in enumerate(typed):
-        for resource in TvCopilotContentService.operation_produces(_op_name(item)):
+        for resource in PresentationOpsContentService.operation_produces(_op_name(item)):
             declaration_producers.setdefault(resource, []).append(idx)
 
     target_obj = target if isinstance(target, dict) else {}
@@ -165,7 +165,7 @@ def compile_presentation_plan(
 
     for idx, item in enumerate(typed):
         name = _op_name(item)
-        for resource in TvCopilotContentService.operation_consumes(name):
+        for resource in PresentationOpsContentService.operation_consumes(name):
             ref = _ref_for(item, resource)
             producer_idx: int | None = None
             if ref:
@@ -228,7 +228,7 @@ def compile_presentation_plan(
         )
 
     ordered_ops = [typed[i] for i in ordered_idx]
-    requirements = TvCopilotContentService.plan_resource_requirements(
+    requirements = PresentationOpsContentService.plan_resource_requirements(
         ordered_ops, target_obj
     )
     if not requirements["satisfiable"]:

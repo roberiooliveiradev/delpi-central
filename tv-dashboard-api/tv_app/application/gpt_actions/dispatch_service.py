@@ -11,10 +11,10 @@ from tv_app.application.gpt_actions.errors import GptActionsError
 from tv_app.application.gpt_actions.proposal import create_proposal
 from tv_app.application.gpt_actions.proposal_store import get_proposal_store
 from tv_app.application.ports import PresentationRepositoryPort
-from tv_app.application.services.data.tv_copilot_command_planner_service import (
-    TvCopilotCommandPlannerService,
+from tv_app.application.services.data.presentation_command_planner_service import (
+    PresentationCommandPlannerService,
 )
-from tv_app.application.services.data.tv_copilot_content_service import TvCopilotContentService
+from tv_app.application.services.data.presentation_ops_content_service import PresentationOpsContentService
 from tv_app.application.services.data.presentation_mutation import (
     PresentationPatchError,
     PresentationPatchService,
@@ -78,7 +78,7 @@ class GptActionsDispatchService:
 
     def get_catalog(self, *, user: Any) -> dict[str, Any]:
         assert_permission(user, TV_WRITE)
-        doc = TvCopilotContentService.capability_catalog_document()
+        doc = PresentationOpsContentService.capability_catalog_document()
         doc["capability_surface"] = build_capability_surface()
         return doc
 
@@ -216,13 +216,13 @@ class GptActionsDispatchService:
         authorization: str | None,
     ) -> dict[str, Any]:
         assert_permission(user, TV_WRITE)
-        plan = TvCopilotCommandPlannerService.plan(
+        plan = PresentationCommandPlannerService.plan(
             message=message,
             host_context=host_context if isinstance(host_context, dict) else {},
             user=user,
             authorization=authorization,
         )
-        return TvCopilotCommandPlannerService.to_suggest_payload(plan)
+        return PresentationCommandPlannerService.to_suggest_payload(plan)
 
     def preview_change(
         self,
@@ -252,7 +252,7 @@ class GptActionsDispatchService:
             "target": target if isinstance(target, dict) else {},
             "ops": typed_ops,
             "catalogVersion": str(
-                catalog_version or TvCopilotContentService.catalog_version()
+                catalog_version or PresentationOpsContentService.catalog_version()
             ).strip(),
         }
         try:
@@ -281,7 +281,7 @@ class GptActionsDispatchService:
         base_revision = result.get("baseRevision")
         base_revision_int = int(base_revision) if base_revision is not None else None
         # Policy authority is the Copilot catalog — not patch-service echo.
-        policy = TvCopilotContentService.aggregate_ops_policy(stored_ops)
+        policy = PresentationOpsContentService.aggregate_ops_policy(stored_ops)
         confirmation_policy = str(policy["confirmationPolicy"] or "direct").strip().lower()
         proposal = create_proposal(
             actor_id=actor,
