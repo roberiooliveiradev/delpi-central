@@ -17,3 +17,13 @@ def test_purchase_order_routes_import_without_eager_openpyxl() -> None:
     )
 
     assert callable(list_portal_purchase_orders)
+
+
+def test_inventory_routes_import() -> None:
+    from app.interfaces.http.routes.inventory_routes import (
+        get_portal_inventory_stock_balances_summary,
+        list_portal_inventory_stock_balances,
+    )
+
+    assert callable(get_portal_inventory_stock_balances_summary)
+    assert callable(list_portal_inventory_stock_balances)

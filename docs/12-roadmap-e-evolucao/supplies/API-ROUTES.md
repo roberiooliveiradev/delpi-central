@@ -79,7 +79,8 @@ As rotas abaixo são **alvos de composição** e só entram em implementação q
 | Detalhe pedido | GET | `/purchase-orders/{branch}/{number}` | `supplies.access` + filtro de dados `01`/`02` + resource (universo aberto SC7) | api-delpi `GET /supplies/purchase-orders/{branch}/{order_number}` | **IMPLEMENTADO** |
 | Entregas | GET | `/deliveries/late` | `supplies.access` + filtro de dados `01`/`02` | api-delpi `GET /supplies/purchase-order-otd/panel`; BFF+MFE em prod; [P0 freeze](./evidence/e9-wf07-p0-contract-freeze.md); [gate](./evidence/e9-wf07-federated-runtime-gate.md) | **GATE PASS** — recovery redeploy BFF 2026-09-21 |
 | Estoque | GET | `/inventory/stock-value` | política a fechar na página | api-delpi stock-value | PLANEJADO |
-| Estoque | GET | `/inventory/stock-balances` | `supplies.access` + filtro de dados `01`/`02` | api-delpi stock-balances | PLANEJADO |
+| Estoque | GET | `/inventory/stock-balances/summary` | `supplies.access` + filtro de dados `01`/`02` | api-delpi `GET /supplies/stock-balances/summary` (`only_positive=false`; Todas=`branch=01&branch=02`) | **IMPLEMENTADO** (E10.S2 BFF; MFE pendente) |
+| Estoque | GET | `/inventory/stock-balances/items` | `supplies.access` + filtro de dados `01`/`02` | api-delpi `GET /supplies/stock-balances/items` (`only_positive=false`; UM/`null`/`QATU` passthrough) | **IMPLEMENTADO** (E10.S2 BFF; MFE pendente) |
 | Giro | GET | `/inventory/turnover` | analytics + unit | api-delpi inventory-turnover | PLANEJADO |
 | ESTSEG | GET | `/safety-stock/summary` | `supplies.access` + filtro de dados `01`/`02` | api-delpi safety-stock | PLANEJADO |
 | ESTSEG | GET | `/safety-stock/items` | `supplies.access` + filtro de dados `01`/`02` | api-delpi safety-stock | PLANEJADO |

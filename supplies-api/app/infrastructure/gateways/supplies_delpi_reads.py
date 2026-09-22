@@ -216,3 +216,76 @@ class SuppliesDelpiReads:
             )
         )
         return data if isinstance(data, dict) else {}
+
+    def _stock_balances_params(
+        self,
+        *,
+        branches: list[str],
+        warehouse: str | None,
+        only_positive: bool,
+        extra: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        codes = [str(code).strip() for code in branches if str(code).strip()]
+        if not codes:
+            raise ValueError("at least one concrete branch is required")
+        params: dict[str, Any] = {
+            "branch": codes,
+            "only_positive": "true" if only_positive else "false",
+        }
+        if warehouse:
+            params["warehouse"] = warehouse
+        if extra:
+            params.update(extra)
+        return params
+
+    def get_stock_balances_summary(
+        self,
+        *,
+        access_token: str,
+        branches: list[str],
+        warehouse: str | None = None,
+        only_positive: bool = False,
+    ) -> dict[str, Any]:
+        """Stock balances summary. Always send concrete branch list (never omit/all)."""
+        data = unwrap_delpi_envelope(
+            self.gateway.get(
+                "/supplies/stock-balances/summary",
+                access_token=access_token,
+                params=self._stock_balances_params(
+                    branches=branches,
+                    warehouse=warehouse,
+                    only_positive=only_positive,
+                ),
+            )
+        )
+        return data if isinstance(data, dict) else {}
+
+    def get_stock_balances_items(
+        self,
+        *,
+        access_token: str,
+        branches: list[str],
+        warehouse: str | None = None,
+        only_positive: bool = False,
+        page: int = 1,
+        page_size: int = 50,
+        sort: str = "stock_value_desc",
+    ) -> dict[str, Any]:
+        """Paged stock balance items. Always send concrete branch list."""
+        data = unwrap_delpi_envelope(
+            self.gateway.get(
+                "/supplies/stock-balances/items",
+                access_token=access_token,
+                params=self._stock_balances_params(
+                    branches=branches,
+                    warehouse=warehouse,
+                    only_positive=only_positive,
+                    extra={
+                        "page": page,
+                        "page_size": page_size,
+                        "sort": sort,
+                    },
+                ),
+            )
+        )
+        return data if isinstance(data, dict) else {}
