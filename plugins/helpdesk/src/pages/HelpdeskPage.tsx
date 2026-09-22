@@ -841,8 +841,8 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
     extraDocumentIds: ticket?.attachments.map((item) => item.document_id),
   });
 
-  const persistReplyPendingFiles = useCallback(() => {
-    void writeHelpdeskDraftPendingFiles(
+  const persistReplyPendingFiles = useCallback((): Promise<void> => {
+    return writeHelpdeskDraftPendingFiles(
       replyDraftPendingScope(ticketId),
       pendingFilesMapToDraftRows(pendingFilesRef.current),
     );
@@ -1105,7 +1105,8 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                             uploaded.document_id,
                           );
                         }
-                        persistReplyPendingFiles();
+                        // Await serialized IDB write so rekey wins over the paste write (H1).
+                        await persistReplyPendingFiles();
                         if (Object.keys(mapping).length > 0) {
                           setContent((current) =>
                             attachmentPreview.persistHtml(

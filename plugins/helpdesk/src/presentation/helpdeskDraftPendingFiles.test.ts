@@ -1,15 +1,28 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, beforeEach } from "vitest";
 
+import { resolveAttachmentDisplaySrc } from "./useAuthenticatedAttachmentSrcs";
 import {
   HELPDESK_CREATE_DRAFT_SCOPE,
+  draftPendingFilesCoverHtml,
+  enqueueHelpdeskDraftScopeTask,
+  listDraftAttachmentSeedKeys,
   pendingFilesMapToDraftRows,
   rekeyDraftFileToDocument,
   replyDraftPendingScope,
+  resetHelpdeskDraftWriteChainsForTests,
   type HelpdeskDraftPendingFile,
   type HelpdeskDraftStoredFile,
 } from "./helpdeskDraftPendingFiles";
 
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 describe("helpdeskDraftPendingFiles", () => {
+  beforeEach(() => {
+    resetHelpdeskDraftWriteChainsForTests();
+  });
+
   it("positive: scope create e reply são estáveis", () => {
     expect(HELPDESK_CREATE_DRAFT_SCOPE).toBe("create");
     expect(replyDraftPendingScope("1122")).toBe("reply:1122");
@@ -56,5 +69,163 @@ describe("helpdeskDraftPendingFiles", () => {
     expect(stored.id).toBe("x1");
     expect(stored.name).toBe("shot.png");
     expect(stored.type).toBe("image/png");
+  });
+});
+
+describe("E0 H1 — race de writes IDB (classe do bug F5)", () => {
+  beforeEach(() => {
+    resetHelpdeskDraftWriteChainsForTests();
+  });
+
+  it("CONFIRMADA: sem fila, snapshot pending (lento) sobrescreve rekey documentId", async () => {
+    // Modelo do bug: void write A (uuid) e write B (1201) sem serialização.
+    const finalIds: string[][] = [];
+    const writeA = (async () => {
+      await delay(40);
+      finalIds.push(["pend-uuid"]);
+    })();
+    const writeB = (async () => {
+      await delay(5);
+      finalIds.push(["1201"]);
+    })();
+    await Promise.all([writeA, writeB]);
+    // Último a terminar vence — IDB ficaria só com uuid; HTML já tem data-attachment-id=1201.
+    expect(finalIds.at(-1)).toEqual(["pend-uuid"]);
+  });
+
+  it("positive: com enqueueHelpdeskDraftScopeTask, rekey prevalece", async () => {
+    const chains = new Map<string, Promise<unknown>>();
+    let stored: string[] = [];
+    const writeA = enqueueHelpdeskDraftScopeTask(
+      "reply:1122",
+      async () => {
+        await delay(40);
+        stored = ["pend-uuid"];
+      },
+      chains,
+    );
+    const writeB = enqueueHelpdeskDraftScopeTask(
+      "reply:1122",
+      async () => {
+        stored = ["1201"];
+      },
+      chains,
+    );
+    await Promise.all([writeA, writeB]);
+    expect(stored).toEqual(["1201"]);
+  });
+
+  it("P0 F5: paste→rekey→fila deixa IDB alinhado ao HTML documentId", async () => {
+    const chains = new Map<string, Promise<unknown>>();
+    let storedIds: string[] = [];
+    const map = new Map<string, File>([
+      ["pend-a", new File([new Uint8Array([1])], "shot.png", { type: "image/png" })],
+    ]);
+    // Snapshot at enqueue (same as pendingFilesMapToDraftRows at persist call).
+    const pasteSnapshot = pendingFilesMapToDraftRows(map);
+    const pasteWrite = enqueueHelpdeskDraftScopeTask(
+      "reply:1122",
+      async () => {
+        await delay(40);
+        storedIds = pasteSnapshot.map((row) => row.id);
+      },
+      chains,
+    );
+    rekeyDraftFileToDocument(map, "pend-a", 1201);
+    const rekeySnapshot = pendingFilesMapToDraftRows(map);
+    const rekeyWrite = enqueueHelpdeskDraftScopeTask(
+      "reply:1122",
+      async () => {
+        storedIds = rekeySnapshot.map((row) => row.id);
+      },
+      chains,
+    );
+    await Promise.all([pasteWrite, rekeyWrite]);
+    const html =
+      '<p><img data-attachment-id="1201" src="/apps/helpdesk-api/tickets/1122/attachments/1201" /></p>';
+    expect(pasteSnapshot.map((row) => row.id)).toEqual(["pend-a"]);
+    expect(storedIds).toEqual(["1201"]);
+    expect(
+      draftPendingFilesCoverHtml(html, rekeySnapshot),
+    ).toBe(true);
+  });
+
+  it("irmão: scopes distintos não se bloqueiam", async () => {
+    const chains = new Map<string, Promise<unknown>>();
+    const order: string[] = [];
+    const a = enqueueHelpdeskDraftScopeTask(
+      "reply:1",
+      async () => {
+        await delay(30);
+        order.push("a");
+      },
+      chains,
+    );
+    const b = enqueueHelpdeskDraftScopeTask(
+      "reply:2",
+      async () => {
+        order.push("b");
+      },
+      chains,
+    );
+    await Promise.all([a, b]);
+    expect(order[0]).toBe("b");
+    expect(order).toContain("a");
+  });
+});
+
+describe("E0 H3 — IDB key ≠ HTML key ⇒ resolve null (consequência de H1)", () => {
+  it("CONFIRMADA: HTML documentId + IDB só uuid ⇒ seed não cobre; resolve(1201)=null", () => {
+    const html =
+      '<p><img src="/apps/helpdesk-api/tickets/1122/attachments/1201" data-attachment-id="1201" alt="x" /></p>';
+    const idbRows: HelpdeskDraftPendingFile[] = [
+      {
+        id: "pend-uuid",
+        file: new File([new Uint8Array([1])], "x.png", { type: "image/png" }),
+      },
+    ];
+    expect(listDraftAttachmentSeedKeys(html)).toEqual(["1201"]);
+    expect(draftPendingFilesCoverHtml(html, idbRows)).toBe(false);
+    expect(resolveAttachmentDisplaySrc("1201", { "pend-uuid": "blob:stale" }, {})).toBeNull();
+  });
+
+  it("positive: IDB sob document id cobre HTML pós-rekey", () => {
+    const html =
+      '<p><img src="/apps/helpdesk-api/tickets/1122/attachments/1201" data-attachment-id="1201" alt="x" /></p>';
+    const idbRows: HelpdeskDraftPendingFile[] = [
+      {
+        id: "1201",
+        file: new File([new Uint8Array([1])], "x.png", { type: "image/png" }),
+      },
+    ];
+    expect(draftPendingFilesCoverHtml(html, idbRows)).toBe(true);
+    expect(
+      resolveAttachmentDisplaySrc("1201", { "1201": "blob:ok" }, {}),
+    ).toBe("blob:ok");
+  });
+
+  it("irmão: pending HTML + IDB uuid cobre F5 antes do upload", () => {
+    const html =
+      '<p><img src="attachment:pending:abc" data-attachment-pending="abc" alt="x" /></p>';
+    const idbRows: HelpdeskDraftPendingFile[] = [
+      { id: "abc", file: new File([new Uint8Array([1])], "x.png", { type: "image/png" }) },
+    ];
+    expect(draftPendingFilesCoverHtml(html, idbRows)).toBe(true);
+  });
+
+  it("negativo: texto sem img não exige IDB", () => {
+    expect(draftPendingFilesCoverHtml("<p>olá</p>", [])).toBe(true);
+  });
+});
+
+describe("E0 H5 — GET falha mas IDB seed basta", () => {
+  it("CONFIRMADA como fallback: com seed local, resolve não depende do GET", () => {
+    expect(
+      resolveAttachmentDisplaySrc("1201", { "1201": "blob:from-idb" }, {}),
+    ).toBe("blob:from-idb");
+  });
+
+  it("negativo: sem seed e sem alias, resolve null (GET precisaria popular srcs)", () => {
+    expect(resolveAttachmentDisplaySrc("1201", {}, {})).toBeNull();
   });
 });
