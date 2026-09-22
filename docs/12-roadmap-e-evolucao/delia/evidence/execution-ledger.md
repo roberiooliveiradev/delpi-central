@@ -9,7 +9,7 @@
 **Internet/External Connectors:** [`../55-internet-research-and-external-connectors.md`](../55-internet-research-and-external-connectors.md)  
 **Microsoft Teams:** [`../56-microsoft-teams-connector-and-meeting-integration.md`](../56-microsoft-teams-connector-and-meeting-integration.md)  
 **Autonomous Operations/Execution Hub:** [`../57-event-driven-autonomous-operations-and-automation-execution-hub.md`](../57-event-driven-autonomous-operations-and-automation-execution-hub.md)  
-**Next:** `ARCHITECTURE_REVIEW_C3_T3` (`C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO`; `C3-T1=APPROVED`; `C3-T2=APPROVED`; `C3-T3=CANDIDATE_FOR_ARCHITECTURE_REVIEW`; `C3_T4_AUTHORIZED=NO`). Não iniciar C3-T4; não autoaprovar C3-T3.
+**Next:** `ARCHITECTURE_REVIEW_C3_T3R1` (`C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO`; `C3-T1=APPROVED`; `C3-T2=APPROVED`; `C3-T3=CANDIDATE_FOR_ARCHITECTURE_REVIEW`; `C3_T4_AUTHORIZED=NO`). Não iniciar C3-T4; não autoaprovar C3-T3.
 
 ## 1. Ledger rule
 
@@ -26,7 +26,7 @@ Estado factual de inventory usa `PROVEN | TO_INVENTORY`; planejamento usa `PLANN
 | C0 Platform + Architecture + Privacy/Security/Data/Automation/AI Foundations | **NOT_STARTED** | **C1 bootstrap continues (T2 review → next C1 step)** | C0.S0..=C0.S7=APPROVED; FOUNDATION_FREEZE=APPROVED; C1_AUTHORIZED=YES; C1_STARTED=YES |
 | C1 Standalone Bootstrap | ACCEPTED_WITH_RESIDUAL | — | C1-FINAL §6.45 |
 | C2 Portal + Operational Context + Commands | ACCEPTED_WITH_RESIDUAL | — | C2-FINAL §6.61; `C2_EXECUTED=YES` |
-| C3 Intelligence + Capability Foundations | AUTHORIZED / STARTED | ARCHITECTURE_REVIEW_C3_T3 | C3-T1 APPROVED §6.63; C3-T2 APPROVED §6.66; C3-T3 candidate §6.67; `C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO`; `C3_T4_AUTHORIZED=NO` |
+| C3 Intelligence + Capability Foundations | AUTHORIZED / STARTED | ARCHITECTURE_REVIEW_C3_T3R1 | C3-T1 APPROVED §6.63; C3-T2 APPROVED §6.66; C3-T3R1 candidate §6.68; `C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO`; `C3_T4_AUTHORIZED=NO` |
 | C4 Governed Reads + Graph/Semantics/Analysis/Predictive Discovery | LOCKED | — | C3 foundations |
 | C5 Governed Writes + Executors + Durable/Recurring Work + Artifacts/Prescriptive Prepare | LOCKED | — | C4 reads/evidence |
 | C6 Product Work + Process Intelligence + Control Tower + Meeting/Frontline + Ecosystem | LOCKED | — | C5 governed-write/durable foundation |
@@ -3237,6 +3237,73 @@ RUNTIME_CP_PROMOTED_TO_PASS: NO
 NEW_CP_CREATED: NO
 BLOCKERS: NONE
 NEXT: ARCHITECTURE_REVIEW_C3_T3
+```
+
+## 6.68 C3-T3R1 — EVAL_IDENTITY_RESULT_EVIDENCE_BOUNDARY_REWORK
+
+```text
+DATE: 2026-09-21
+STEP: C3-T3R1
+NAME: EVAL_IDENTITY_RESULT_EVIDENCE_BOUNDARY_REWORK
+MODE: BOUNDED REWORK — EVAL IDENTITY / RESULT / EVIDENCE BOUNDARY
+BASE_HEAD: 4ea3ae19d900ff143e3f5d9a4210feb268c13d94
+PRIOR_REVIEW: ARCHITECTURE_REVIEW_C3_T3
+PRIOR_CANDIDATE_HEAD: 0ebfff2306aed508213a08fe28db25eba087ad5f
+REVIEW_REANCHOR_HEAD: 73872768df11ba97059083c07d4936d559b5b01d
+POST_REANCHOR_CLASSIFICATION: OUTSIDE_TASK (plugin-ui, transformometro, helpdesk); delia path unchanged until this rework
+WORKING_TREE_PRESERVED: helpdesk + generated OpenAPI catalog dirty (excluded from commit)
+EXECUTION_DRIFT: NONE
+
+PRIOR_VERDICT: REWORK (eval bind fabricated EvalResult PASS)
+REWORK_BLOCKER: InvokeModel treated EvalBindRequest as eval execution evidence
+CORRECTION:
+  EvalBindRequest → optional EvalIdentity in ModelInvocationLineage only
+  ModelInvocationResult.eval_result → REMOVED
+  evaluated_sha → target_sha (target identity metadata; not proof eval ran)
+  EvalResult remains contract-only; no evaluator in C3-T3R1
+  REAL_MODEL_EVAL = TEST_NOT_RUN / BLOCKED
+
+C3_T3: CANDIDATE_FOR_ARCHITECTURE_REVIEW
+C3_T3_SELF_APPROVED: NO
+C3_T4_AUTHORIZED: NO
+C3_STARTED: YES
+C3_EXECUTED: NO
+PRODUCTION_READINESS: NOT_PROVEN
+
+TARGETED_FOUNDATION: PASS 37/37
+  COMMAND: cd delia-api && python -m pytest tests/test_model_invocation_foundation.py tests/test_model_invocation_architecture.py -q
+FULL_DELIA_API_SUITE: PASS 98/98
+  COMMAND: cd delia-api && python -m pytest -q
+EVALUATED_SHA: <implementation commit>
+NOTE: PASS = foundation conformance + delia-api regression only; ≠ real model eval; ≠ production readiness
+
+CP-055: PLANNED (unchanged)
+CP-056: PLANNED (unchanged)
+CP-093: PLANNED / PARTIAL (unchanged)
+CP-094: PLANNED / PARTIAL (unchanged)
+CP-303: LOCKED (unchanged)
+CP-304: LOCKED (unchanged)
+NEW_CP_CREATED: NO
+RUNTIME_CP_PROMOTED_TO_PASS: NO
+
+PERSISTENCE: NONE
+MIGRATION: NONE
+OWN_MIGRATION_CHAIN: NOT_TRIGGERED_BY_C3_T3R1
+REAL_PROVIDER_GATE: BLOCKED
+REAL_MODEL_CALL: BLOCKED_BY_EXTERNAL_CONFIGURATION
+RAG: NONE
+PLANNER: NONE
+CONVERSATION_RUNTIME: NONE
+TOOL_EXECUTION: NONE
+ACT: NONE
+NEW_RUNTIME_ABSTRACTIONS: NONE
+SPECULATIVE_RUNTIME_ABSTRACTIONS: NONE
+
+HISTORICAL_PRESERVED:
+  §6.67 C3-T3 initial candidate (fabricated eval_result semantics superseded for current state)
+  ARCHITECTURE_REVIEW_C3_T3 = REWORK (prior candidate 0ebfff230)
+
+NEXT: ARCHITECTURE_REVIEW_C3_T3R1
 ```
 
 ## 7. Canonical phase mapping

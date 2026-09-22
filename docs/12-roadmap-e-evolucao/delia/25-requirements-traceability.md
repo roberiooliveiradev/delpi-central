@@ -917,5 +917,18 @@ CP-094 = PLANNED / PARTIAL (unchanged)
 CP-304 = LOCKED (lineage foundation candidate; not PASS)
 CP-303 = LOCKED (no Model Registry)
 PRODUCTION_READINESS = NOT_PROVEN
-NEXT = ARCHITECTURE_REVIEW_C3_T3
+NEXT = ARCHITECTURE_REVIEW_C3_T3R1
+
+## 25. C3-T3R1 eval identity / result boundary — candidate
+
+Prior review: `ARCHITECTURE_REVIEW_C3_T3` `VERDICT=REWORK` on `CANDIDATE_HEAD=0ebfff2306aed508213a08fe28db25eba087ad5f`.
+
+```text
+C3_T3 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+C3_T4_AUTHORIZED = NO
+REAL_MODEL_EVAL = TEST_NOT_RUN / BLOCKED
+EvalIdentity bound in lineage only; EvalResult contract-only; InvokeModel does not manufacture PASS
+PRODUCTION_READINESS = NOT_PROVEN
+NEXT = ARCHITECTURE_REVIEW_C3_T3R1
+```
 ```

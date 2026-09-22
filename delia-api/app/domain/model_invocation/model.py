@@ -106,10 +106,10 @@ class UsageMetadata:
 
 @dataclass(frozen=True, slots=True)
 class EvalIdentity:
-    """Binds an eval result to the exact evaluated target. C3-local, not a shared Ref."""
+    """Identifies what evaluation target an eval would refer to. Not evidence or outcome."""
 
     eval_id: str
-    evaluated_sha: str
+    target_sha: str
     model_ref: ModelRef
     configuration_id: str
     instruction_version: str | None = None
@@ -119,8 +119,8 @@ class EvalIdentity:
     def __post_init__(self) -> None:
         if not self.eval_id.strip():
             raise ValueError("EvalIdentity.eval_id is required")
-        if not self.evaluated_sha.strip():
-            raise ValueError("EvalIdentity.evaluated_sha is required")
+        if not self.target_sha.strip():
+            raise ValueError("EvalIdentity.target_sha is required")
         if not self.configuration_id.strip():
             raise ValueError("EvalIdentity.configuration_id is required")
 

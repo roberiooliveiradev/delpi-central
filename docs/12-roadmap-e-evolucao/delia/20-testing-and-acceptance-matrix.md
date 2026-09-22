@@ -1200,7 +1200,10 @@ Required deterministic cases (C3-T3) — implemented; Architecture Review pendin
 - CoT fields rejected/excluded;
 - provider error maps to bounded Application error (no SDK leak);
 - timeout maps to bounded error;
-- eval result binds to evaluated SHA/ModelRef/config identity;
+- eval identity binds to target_sha/ModelRef/config when EvalBindRequest present;
+- normal invocation does not create EvalResult or EvalOutcome.PASS;
+- caller target_sha metadata does not imply eval execution or PASS;
+- EvalResult contract constructible independently with TEST_NOT_RUN (no evaluator);
 - test adapter classified as TEST_ONLY;
 - Domain/Application contain no provider SDK dependency;
 - real-provider exposure denied while gate is unproven.

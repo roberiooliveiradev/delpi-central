@@ -106,3 +106,19 @@ def test_test_adapter_is_explicitly_test_only():
     source = inspect.getsource(DeterministicTestAdapter)
     assert "openai" not in source.lower()
     assert "anthropic" not in source.lower()
+
+
+def test_invoke_model_does_not_fabricate_eval_pass():
+    invoke_path = APP_ROOT / "application" / "model_invocation" / "invoke_model.py"
+    tree = ast.parse(invoke_path.read_text())
+    source = invoke_path.read_text()
+    assert "_bind_eval(" not in source
+    assert "EvalOutcome.PASS" not in source
+    assert "EvalResult(" not in source
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef) and node.name == "InvokeModel":
+            for item in node.body:
+                if isinstance(item, ast.FunctionDef) and item.name == "execute":
+                    execute_src = ast.get_source_segment(source, item) or ""
+                    assert "EvalResult(" not in execute_src
+                    assert "EvalOutcome.PASS" not in execute_src

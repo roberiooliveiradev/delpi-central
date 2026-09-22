@@ -281,7 +281,10 @@ OWNER = DÉLIA (delia-api domain/application)
 REUSES = ModelRef (C0.S3; no ModelIdentity duplicate)
 PORT = ModelInvocationPort
 LINEAGE = ModelInvocationLineage (invocation id + ModelRef + EvidenceRef[] + SourceRef[] + instruction/config identity)
-EVAL = EvalIdentity / EvalResult (C3-local; not EvalPlatform)
+EVAL_IDENTITY = optional bind in ModelInvocationLineage (EvalBindRequest → target_sha metadata only)
+EVAL_RESULT = contract-only type; actual evaluator NOT_IMPLEMENTED; InvokeModel does not instantiate EvalResult or PASS
+EvalIdentity != EvalResult != evaluation evidence
+target_sha = declared evaluation target identity; not proof eval executed
 DEFAULT_MODEL_OUTPUT_CLASS = HYPOTHESIS
 MODEL_OUTPUT != FACT automatically
 LINEAGE != AUTHORIZATION

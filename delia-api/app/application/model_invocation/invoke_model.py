@@ -1,7 +1,7 @@
 """InvokeModel — bounded C3-T3 application use case.
 
 Validates request, enforces TEST_ONLY exposure, calls ModelInvocationPort,
-validates structured output, builds lineage/eval metadata.
+validates structured output, builds lineage and optional eval target identity.
 Not a conversation, planner, RAG, or ACT runtime.
 """
 
@@ -26,8 +26,6 @@ from app.domain.evidence.model import ModelRef
 from app.domain.model_invocation.model import (
     ConfigurationLineage,
     EvalIdentity,
-    EvalOutcome,
-    EvalResult,
     ModelInvocationLineage,
     ProviderExposureClass,
 )
@@ -83,7 +81,7 @@ class InvokeModel:
             generation_config=request.generation_config,
             timeout_seconds=request.timeout_seconds,
         )
-        eval_result = self._bind_eval(request, configuration_lineage)
+        eval_identity = self._bind_eval_identity(request, configuration_lineage)
         lineage = ModelInvocationLineage(
             invocation_id=request.invocation_id,
             model_ref=request.model_ref,
@@ -92,7 +90,7 @@ class InvokeModel:
             instruction_lineage=request.instruction_lineage,
             configuration_lineage=configuration_lineage,
             generated_at=payload.generated_at,
-            eval_identity=eval_result.identity if eval_result else None,
+            eval_identity=eval_identity,
         )
         return ModelInvocationResult(
             invocation_id=request.invocation_id,
@@ -104,7 +102,6 @@ class InvokeModel:
             epistemic_class=epistemic_class,
             usage=payload.usage,
             duration_ms=payload.duration_ms,
-            eval_result=eval_result,
         )
 
     def _validate_request(self, request: ModelInvocationRequest) -> None:
@@ -165,27 +162,22 @@ class InvokeModel:
                 f"missing required fields: {', '.join(missing)}",
             )
 
-    def _bind_eval(
+    def _bind_eval_identity(
         self,
         request: ModelInvocationRequest,
         configuration_lineage: ConfigurationLineage,
-    ) -> EvalResult | None:
+    ) -> EvalIdentity | None:
         bind = request.eval_bind
         if bind is None:
             return None
-        identity = EvalIdentity(
+        return EvalIdentity(
             eval_id=bind.eval_id,
-            evaluated_sha=bind.evaluated_sha,
+            target_sha=bind.target_sha,
             model_ref=request.model_ref,
             configuration_id=configuration_identity(configuration_lineage),
             instruction_version=request.instruction_lineage.version,
             fixture_id=bind.fixture_id,
             dataset_id=bind.dataset_id,
-        )
-        return EvalResult(
-            identity=identity,
-            outcome=EvalOutcome.PASS,
-            observation="deterministic test-adapter foundation conformance only",
         )
 
 
@@ -245,15 +237,14 @@ def model_result_authorizes_act(_result: ModelInvocationResult) -> bool:
 
 
 def eval_binds_to(
-    result: EvalResult,
+    identity: EvalIdentity,
     *,
     model_ref: ModelRef,
-    evaluated_sha: str,
+    target_sha: str,
     configuration_id: str,
 ) -> bool:
-    identity = result.identity
     return (
         identity.model_ref == model_ref
-        and identity.evaluated_sha == evaluated_sha
+        and identity.target_sha == target_sha
         and identity.configuration_id == configuration_id
     )

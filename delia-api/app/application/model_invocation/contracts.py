@@ -16,7 +16,6 @@ from app.domain.evidence.model import (
     SourceRef,
 )
 from app.domain.model_invocation.model import (
-    EvalResult,
     GenerationConfig,
     InstructionLineage,
     InvocationFinishStatus,
@@ -28,10 +27,14 @@ from app.domain.model_invocation.model import (
 
 @dataclass(frozen=True, slots=True)
 class EvalBindRequest:
-    """Optional eval identity inputs supplied by the caller. Model/config come from the invocation."""
+    """Declare evaluation target identity for lineage binding only.
+
+    Does not execute an evaluator, produce EvalResult, or imply PASS.
+    Model/config come from the invocation.
+    """
 
     eval_id: str
-    evaluated_sha: str
+    target_sha: str
     fixture_id: str | None = None
     dataset_id: str | None = None
 
@@ -78,7 +81,6 @@ class ModelInvocationResult:
     epistemic_class: EpistemicClass
     usage: UsageMetadata | None = None
     duration_ms: int | None = None
-    eval_result: EvalResult | None = None
 
     def is_fact(self) -> bool:
         return False

@@ -36,7 +36,9 @@ from app.domain.evidence.model import (
     SourceRef,
 )
 from app.domain.model_invocation.model import (
+    EvalIdentity,
     EvalOutcome,
+    EvalResult,
     InstructionLineage,
     ModelInvocationId,
     ProviderExposureClass,
@@ -74,7 +76,7 @@ def _request(**overrides) -> ModelInvocationRequest:
         source_refs=(SourceRef(source_id="src-1", source_system="fixture"),),
         eval_bind=EvalBindRequest(
             eval_id="c3t3.foundation.positive",
-            evaluated_sha="evaluated-sha-fixture",
+            target_sha="target-sha-fixture",
             fixture_id="fixture-positive",
         ),
     )
@@ -232,32 +234,84 @@ def test_raw_adapter_exception_does_not_leak():
     assert "sdk boom" not in str(exc.value)
 
 
-def test_eval_result_binds_to_evaluated_identity_and_model():
+def test_eval_identity_bound_when_eval_bind_requested():
     result = _invoke()
-    assert result.eval_result is not None
-    assert result.eval_result.outcome is EvalOutcome.PASS
-    assert result.eval_result.identity.evaluated_sha == "evaluated-sha-fixture"
-    assert result.eval_result.identity.model_ref == _model()
+    identity = result.lineage.eval_identity
+    assert identity is not None
+    assert identity.eval_id == "c3t3.foundation.positive"
+    assert identity.target_sha == "target-sha-fixture"
+    assert identity.model_ref == _model()
+    assert identity.instruction_version == "1"
+    assert identity.fixture_id == "fixture-positive"
+    config_id = configuration_identity(result.lineage.configuration_lineage)
+    assert identity.configuration_id == config_id
+
+
+def test_eval_identity_absent_without_eval_bind():
+    result = _invoke(request=_request(eval_bind=None))
+    assert result.lineage.eval_identity is None
+
+
+def test_normal_invocation_does_not_create_eval_result():
+    result = _invoke()
+    assert not hasattr(result, "eval_result")
+    from dataclasses import fields
+
+    field_names = {f.name for f in fields(result)}
+    assert "eval_result" not in field_names
+
+
+def test_target_sha_metadata_does_not_imply_pass_or_eval_result():
+    result = _invoke()
+    identity = result.lineage.eval_identity
+    assert identity is not None
+    assert identity.target_sha == "target-sha-fixture"
+    assert identity.target_sha != "production-proof"
+
+
+def test_eval_result_contract_independent_of_invoke_model():
+    identity = EvalIdentity(
+        eval_id="contract-only",
+        target_sha="declared-target-only",
+        model_ref=_model(),
+        configuration_id="cfg-contract",
+        instruction_version="1",
+    )
+    contract = EvalResult(identity=identity, outcome=EvalOutcome.TEST_NOT_RUN)
+    assert contract.outcome is EvalOutcome.TEST_NOT_RUN
+    assert contract.identity.target_sha == "declared-target-only"
+
+
+def test_eval_binds_to_compares_identity_only():
+    result = _invoke()
+    identity = result.lineage.eval_identity
+    assert identity is not None
     config_id = configuration_identity(result.lineage.configuration_lineage)
     assert eval_binds_to(
-        result.eval_result,
+        identity,
         model_ref=_model(),
-        evaluated_sha="evaluated-sha-fixture",
+        target_sha="target-sha-fixture",
         configuration_id=config_id,
     )
     other = _model(model_id="other-model")
     assert eval_binds_to(
-        result.eval_result,
+        identity,
         model_ref=other,
-        evaluated_sha="evaluated-sha-fixture",
+        target_sha="target-sha-fixture",
         configuration_id=config_id,
     ) is False
-
-
-def test_eval_is_foundation_conformance_not_production_proof():
-    result = _invoke()
-    assert "deterministic test-adapter" in (result.eval_result.observation or "")
-    assert result.eval_result.identity.evaluated_sha != "production"
+    assert eval_binds_to(
+        identity,
+        model_ref=_model(),
+        target_sha="different-target-sha",
+        configuration_id=config_id,
+    ) is False
+    assert eval_binds_to(
+        identity,
+        model_ref=_model(),
+        target_sha="target-sha-fixture",
+        configuration_id="other-config",
+    ) is False
 
 
 def test_test_adapter_classified_as_test_only():
@@ -293,7 +347,9 @@ def test_safe_observability_excludes_secrets_cot_and_evidence_text():
         model_ref=result.model_ref,
         duration_ms=result.duration_ms,
         status=result.finish_status.value,
-        eval_id=result.eval_result.identity.eval_id if result.eval_result else None,
+        eval_id=(
+            result.lineage.eval_identity.eval_id if result.lineage.eval_identity else None
+        ),
         input_units=result.usage.input_units if result.usage else None,
         output_units=result.usage.output_units if result.usage else None,
     )
