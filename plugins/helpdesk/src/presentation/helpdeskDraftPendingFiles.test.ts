@@ -1,15 +1,19 @@
 import { describe, expect, it, beforeEach } from "vitest";
+import "fake-indexeddb/auto";
 
 import { resolveAttachmentDisplaySrc } from "./useAuthenticatedAttachmentSrcs";
 import {
   HELPDESK_CREATE_DRAFT_SCOPE,
+  canRewritePendingDraftHtml,
   draftPendingFilesCoverHtml,
   enqueueHelpdeskDraftScopeTask,
   listDraftAttachmentSeedKeys,
   pendingFilesMapToDraftRows,
+  readHelpdeskDraftPendingFiles,
   rekeyDraftFileToDocument,
   replyDraftPendingScope,
   resetHelpdeskDraftWriteChainsForTests,
+  writeHelpdeskDraftPendingFiles,
   type HelpdeskDraftPendingFile,
   type HelpdeskDraftStoredFile,
 } from "./helpdeskDraftPendingFiles";
@@ -39,13 +43,16 @@ describe("helpdeskDraftPendingFiles", () => {
     expect(rows.every((row) => row.file instanceof File)).toBe(true);
   });
 
-  it("positive: após upload, File fica sob document id (F5)", () => {
+  it("positive: após upload, File fica sob document id e pending (dual cover F5)", () => {
     const file = new File([new Uint8Array([1])], "shot.png", { type: "image/png" });
     const map = new Map<string, File>([["pend-a", file]]);
     rekeyDraftFileToDocument(map, "pend-a", 1201);
-    expect(map.has("pend-a")).toBe(false);
+    expect(map.get("pend-a")).toBe(file);
     expect(map.get("1201")).toBe(file);
-    expect(pendingFilesMapToDraftRows(map).map((row) => row.id)).toEqual(["1201"]);
+    expect(pendingFilesMapToDraftRows(map).map((row) => row.id).sort()).toEqual([
+      "1201",
+      "pend-a",
+    ]);
   });
 
   it("negativo: rekey sem pending não inventa File", () => {
@@ -144,7 +151,7 @@ describe("E0 H1 — race de writes IDB (classe do bug F5)", () => {
     const html =
       '<p><img data-attachment-id="1201" src="/apps/helpdesk-api/tickets/1122/attachments/1201" /></p>';
     expect(pasteSnapshot.map((row) => row.id)).toEqual(["pend-a"]);
-    expect(storedIds).toEqual(["1201"]);
+    expect(storedIds.sort()).toEqual(["1201", "pend-a"]);
     expect(
       draftPendingFilesCoverHtml(html, rekeySnapshot),
     ).toBe(true);
@@ -227,5 +234,80 @@ describe("E0 H5 — GET falha mas IDB seed basta", () => {
 
   it("negativo: sem seed e sem alias, resolve null (GET precisaria popular srcs)", () => {
     expect(resolveAttachmentDisplaySrc("1201", {}, {})).toBeNull();
+  });
+});
+
+describe("F5 local — IDB round-trip real (fake-indexeddb)", () => {
+  beforeEach(() => {
+    resetHelpdeskDraftWriteChainsForTests();
+  });
+
+  it("P0: paste→rekey→F5 read cobre HTML documentId e resolve≠null", async () => {
+    const scope = replyDraftPendingScope("1122");
+    const file = new File([new Uint8Array([7, 7, 7])], "shot.png", { type: "image/png" });
+    const map = new Map<string, File>([["pend-a", file]]);
+
+    await writeHelpdeskDraftPendingFiles(scope, pendingFilesMapToDraftRows(map));
+    rekeyDraftFileToDocument(map, "pend-a", 1201);
+    await writeHelpdeskDraftPendingFiles(scope, pendingFilesMapToDraftRows(map));
+
+    // Simulate F5: new page read
+    const rows = await readHelpdeskDraftPendingFiles(scope);
+    const html =
+      '<p><img data-attachment-id="1201" src="/apps/helpdesk-api/tickets/1122/attachments/1201" alt="shot" /></p>';
+    expect(draftPendingFilesCoverHtml(html, rows)).toBe(true);
+
+    const srcs: Record<string, string> = {};
+    for (const row of rows) {
+      srcs[row.id] = `blob:seed-${row.id}`;
+    }
+    expect(resolveAttachmentDisplaySrc("1201", srcs, {})).toBe("blob:seed-1201");
+  });
+
+  it("irmão: F5 antes do upload — pending key sobrevive no IDB", async () => {
+    const scope = replyDraftPendingScope("1122");
+    const file = new File([new Uint8Array([1])], "a.png", { type: "image/png" });
+    await writeHelpdeskDraftPendingFiles(scope, [{ id: "pend-a", file }]);
+    const rows = await readHelpdeskDraftPendingFiles(scope);
+    const html =
+      '<p><img src="attachment:pending:pend-a" data-attachment-pending="pend-a" alt="a" /></p>';
+    expect(draftPendingFilesCoverHtml(html, rows)).toBe(true);
+    expect(resolveAttachmentDisplaySrc("pend-a", { "pend-a": "blob:x" }, {})).toBe("blob:x");
+  });
+
+  it("H3 gate: sem cover no IDB, não reescrever HTML para documentId", () => {
+    const rewritten =
+      '<p><img data-attachment-id="1201" src="/apps/helpdesk-api/tickets/1122/attachments/1201" /></p>';
+    const idbOnlyUuid: HelpdeskDraftPendingFile[] = [
+      {
+        id: "pend-a",
+        file: new File([new Uint8Array([1])], "x.png", { type: "image/png" }),
+      },
+    ];
+    expect(canRewritePendingDraftHtml(rewritten, idbOnlyUuid)).toBe(false);
+    expect(canRewritePendingDraftHtml(rewritten, [
+      { id: "1201", file: idbOnlyUuid[0].file },
+      { id: "pend-a", file: idbOnlyUuid[0].file },
+    ])).toBe(true);
+  });
+
+  it("negativo: clear esvazia scope (send followup)", async () => {
+    const scope = replyDraftPendingScope("1122");
+    await writeHelpdeskDraftPendingFiles(scope, [
+      { id: "1", file: new File([new Uint8Array([1])], "a.png", { type: "image/png" }) },
+    ]);
+    await writeHelpdeskDraftPendingFiles(scope, []);
+    expect(await readHelpdeskDraftPendingFiles(scope)).toEqual([]);
+  });
+});
+
+describe("E0 H4 — seed depois do paint sem rebind (classe do bug reply)", () => {
+  it("CONFIRMADA: resolve null no 1º paint; seed posterior precisa nova identidade de resolve", () => {
+    // Modelo create: pendingHydrated força re-bind. Reply só seedFile→srcs sem
+    // esperar IDB antes do editor (ticket-gated) deixava 1º apply com resolve null.
+    const srcsBefore: Record<string, string> = {};
+    expect(resolveAttachmentDisplaySrc("1201", srcsBefore, {})).toBeNull();
+    const srcsAfter = { ...srcsBefore, "1201": "blob:late-seed" };
+    expect(resolveAttachmentDisplaySrc("1201", srcsAfter, {})).toBe("blob:late-seed");
   });
 });

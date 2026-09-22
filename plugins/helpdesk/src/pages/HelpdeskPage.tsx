@@ -64,6 +64,7 @@ import {
 } from "../presentation/ticketDraftStorage";
 import {
   HELPDESK_CREATE_DRAFT_SCOPE,
+  canRewritePendingDraftHtml,
   clearHelpdeskDraftPendingFiles,
   pendingFilesMapToDraftRows,
   readHelpdeskDraftPendingFiles,
@@ -824,6 +825,10 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
   const [saving, setSaving] = useState(false);
   const [idempotencyKey, setIdempotencyKey] = useState(newIdempotencyKey);
   const [inlinePreview, setInlinePreview] = useState<TicketAttachment | null>(null);
+  /** False until IDB draft files are read — editor must not paint placeholder before seed (H4). */
+  const [draftFilesReady, setDraftFilesReady] = useState(false);
+  /** Bumps resolve identity after IDB seed (create parity). */
+  const [pendingHydrated, setPendingHydrated] = useState(0);
   const myPhotoUrl = useMyPersonProfilePhoto();
   const pendingFilesRef = useRef<Map<string, File>>(new Map());
 
@@ -850,18 +855,35 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
 
   useEffect(() => {
     let cancelled = false;
+    setDraftFilesReady(false);
     void readHelpdeskDraftPendingFiles(replyDraftPendingScope(ticketId)).then((rows) => {
-      if (cancelled || rows.length === 0) return;
+      if (cancelled) return;
       for (const row of rows) {
         pendingFilesRef.current.set(row.id, row.file);
         // Keys are pending uuid and/or document id after upload rekey.
         attachmentPreview.seedFile(row.id, row.file);
       }
+      if (rows.length > 0) setPendingHydrated((n) => n + 1);
+      setDraftFilesReady(true);
     });
     return () => {
       cancelled = true;
     };
   }, [ticketId, attachmentPreview.seedFile]);
+
+  // Create parity: File map is source of truth after F5; srcs may be pruned/raced.
+  const resolveReplyAttachmentImageSrc = useCallback(
+    (attachmentId: string) => {
+      const fromHook = attachmentPreview.resolveAttachmentImageSrc(attachmentId);
+      if (fromHook) return fromHook;
+      const file = pendingFilesRef.current.get(String(attachmentId || "").trim());
+      if (!file) return null;
+      return attachmentPreview.seedFile(attachmentId, file);
+    },
+    // pendingHydrated forces RichTextEditor to re-apply after IDB restore
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [attachmentPreview.resolveAttachmentImageSrc, attachmentPreview.seedFile, pendingHydrated],
+  );
 
   useEffect(() => {
     writeReplyDraft(ticketId, attachmentPreview.persistHtml(content));
@@ -960,7 +982,7 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
             <HelpdeskMessageThread
               listAriaLabel="Conversa do chamado"
               emptyLabel="Nenhuma mensagem"
-              resolveAttachmentImageSrc={attachmentPreview.resolveAttachmentImageSrc}
+              resolveAttachmentImageSrc={resolveReplyAttachmentImageSrc}
               onAttachmentImageClick={(attachmentId) => {
                 const documentId = Number(attachmentId);
                 if (!Number.isFinite(documentId)) return;
@@ -1026,7 +1048,7 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                 ) : null
               }
             />
-            {ticket.can_followup !== false ? (
+            {ticket.can_followup !== false && draftFilesReady ? (
             <form
               onSubmit={(event) => {
                 event.preventDefault();
@@ -1053,7 +1075,7 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                 value={content}
                 onChange={(next) => setContent(attachmentPreview.persistHtml(next))}
                 minHeight={120}
-                resolveAttachmentImageSrc={attachmentPreview.resolveAttachmentImageSrc}
+                resolveAttachmentImageSrc={resolveReplyAttachmentImageSrc}
                 persistAttachmentImageSrc={attachmentPreview.persistAttachmentImageSrc}
                 onUploadFiles={async (files) => {
                   // InteractionRoom parity: pending local first, upload rewrite after.
@@ -1078,7 +1100,7 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                     });
                     pendingUploads.push({ pendingId, file });
                   }
-                  persistReplyPendingFiles();
+                  void persistReplyPendingFiles();
                   if (pendingUploads.length > 0) {
                     void (async () => {
                       const mapping: Record<string, { documentId: number; ticketId: string }> = {};
@@ -1098,7 +1120,7 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                             documentId: uploaded.document_id,
                             ticketId,
                           };
-                          // Keep File under document id for F5 re-seed (BFF src alone is not enough).
+                          // Keep File under document id + pending for F5 dual cover.
                           rekeyDraftFileToDocument(
                             pendingFilesRef.current,
                             item.pendingId,
@@ -1108,11 +1130,18 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                         // Await serialized IDB write so rekey wins over the paste write (H1).
                         await persistReplyPendingFiles();
                         if (Object.keys(mapping).length > 0) {
-                          setContent((current) =>
-                            attachmentPreview.persistHtml(
+                          const scope = replyDraftPendingScope(ticketId);
+                          const rows = await readHelpdeskDraftPendingFiles(scope);
+                          setContent((current) => {
+                            const rewritten = attachmentPreview.persistHtml(
                               rewritePendingInlineImages(current, mapping),
-                            ),
-                          );
+                            );
+                            // H3 gate: never leave HTML on documentId if IDB cannot seed it.
+                            if (!canRewritePendingDraftHtml(rewritten, rows)) {
+                              return current;
+                            }
+                            return rewritten;
+                          });
                         }
                         // Do not load() here: compose-time image upload must keep the
                         // local blob seed. Reloading the ticket while the Document is

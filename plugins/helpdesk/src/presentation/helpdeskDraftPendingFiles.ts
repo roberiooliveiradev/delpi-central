@@ -101,8 +101,11 @@ export function replyDraftPendingScope(ticketId: string): string {
 }
 
 /**
- * After upload rewrite, keep File bytes under the document id so F5 can
- * re-seed the blob without waiting on GET /attachments (Bearer).
+ * After upload, keep File bytes under the document id so F5 can re-seed
+ * without waiting on GET /attachments (Bearer).
+ *
+ * Also keeps the pending uuid key (dual cover): if HTML rewrite races or
+ * fails, F5 still resolves `data-attachment-pending` from the same File.
  */
 export function rekeyDraftFileToDocument(
   map: Map<string, File>,
@@ -113,8 +116,20 @@ export function rekeyDraftFileToDocument(
   const docKey = String(documentId);
   if (!pendingKey || !docKey) return;
   const file = map.get(pendingKey);
-  map.delete(pendingKey);
-  if (file) map.set(docKey, file);
+  if (!file) return;
+  map.set(docKey, file);
+  map.set(pendingKey, file);
+}
+
+/**
+ * F5 preview path: only rewrite pending→document in HTML when IDB rows
+ * already cover the post-rewrite keys (otherwise resolve stays null).
+ */
+export function canRewritePendingDraftHtml(
+  rewrittenHtml: string,
+  rows: readonly HelpdeskDraftPendingFile[],
+): boolean {
+  return draftPendingFilesCoverHtml(rewrittenHtml, rows);
 }
 
 /** Snapshot Map → IDB rows (inline pending images only). */
