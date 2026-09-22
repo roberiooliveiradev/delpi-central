@@ -3485,7 +3485,7 @@ FULL_DELIA_API_SUITE: PASS 121/121
     cd delia-api && python -m pytest tests/test_structured_understanding_foundation.py tests/test_structured_understanding_architecture.py -q
     cd delia-api && python -m pytest tests/test_structured_understanding_foundation.py tests/test_structured_understanding_architecture.py tests/test_model_invocation_foundation.py tests/test_model_invocation_architecture.py tests/test_evidence_epistemic_conformance.py -q
     cd delia-api && python -m pytest -q
-EVALUATED_SHA: 660d6cd25e5b8bde28b8fcaaa8e74520e612e265
+EVALUATED_SHA: 3a96ff1b9cdfb2376b31494ae72bf42be289b90a
 NOTE: PASS = deterministic conformance only; ≠ real-model quality/grounding/generalization
 
 CP-055: PLANNED / CONTRIBUTION ONLY (unchanged)
