@@ -1,11 +1,11 @@
 # Portal Suprimentos — documentação mestra
 
-> **Status (2026-09-22):** implementação incremental em andamento · **E1–E9 concluídas** · **E10 / WF-15 IN PROGRESS** (S1–S3) · **WF-06/WF-07 GATE-FEATURE PASS**
-> **Readiness:** **GATE-E1 + GATE-ARCH + GATE-AUTHZ + GATE-RBAC PASS (local)** · E9 fechada · E10 em execução
+> **Status (2026-09-22):** implementação incremental em andamento · **E1–E9 concluídas** · **E10 / WF-15 IN PROGRESS** (S1–S4 Help+BFF local PASS; GATE INCONCLUSIVE) · **WF-06/WF-07 GATE-FEATURE PASS**
+> **Readiness:** **GATE-E1 + GATE-ARCH + GATE-AUTHZ + GATE-RBAC PASS (local)** · E9 fechada · E10 aguarda deploy federado
 > **Modo de entrega:** **uma página por vez até DoD** — a próxima página só pode ser promovida a foco após fechamento da atual
-> **Página em foco:** **E10 / WF-15 Controle de Estoques** — api-delpi + BFF + MFE implementados; Help + smoke final = E10.S4
+> **Página em foco:** **E10 / WF-15 Controle de Estoques** — código HEAD completo; **GATE-FEATURE E10 = INCONCLUSIVE** (MFE federado sem InventoryPage)
 > **Últimas páginas fechadas:** **Início (WF-01)**, **Visão geral (WF-02/WF-02R)**, **OTD analytics (WF-OTD-A)**, **Solicitações de compras (WF-04)**, **Pedidos de compra (WF-05)**, **Detalhe do pedido (WF-06)** e **Entregas / atrasos (WF-07)**
-> **Próxima receita:** E10.S4 — Help sync + smoke autenticado/federado + GATE-FEATURE E10 (não iniciar automaticamente)
+> **Próxima receita:** deploy federado `plugins/supplies` (+ verificar `supplies-api`) → re-smoke → redecidir GATE E10 — **não iniciar E11**
 > **Id técnico:** `supplies` · **basePath:** `/apps/supplies` · **API:** `supplies-api` · gateway `/apps/supplies-api/` · **CSS root:** `.dashboard-supplies-portal`
 
 O Portal Suprimentos é o hub operacional, analítico e gerencial do domínio de Suprimentos na Minha DELPI. Ele substitui progressivamente experiências fragmentadas por jornadas coesas, preservando bounded contexts, RBAC central, paridade mensurável e rollback.
@@ -37,7 +37,7 @@ A documentação desta pasta deve obedecer à hierarquia vigente das regras `.cu
 | **E7 — Pedidos lista + GATE-FEATURE WF-05** | **concluída 2026-09-11** — api-delpi SC7 aberto, BFF operations+unit, MFE kit-first |
 | **E8 — Detalhe do Pedido + GATE-FEATURE WF-06** | **concluída 2026-09-16** — ficha `/purchase-orders/:branch/:number`; smoke federado **PASS** em 2026-09-21 |
 | **E9 — Entregas / atrasos + P0 freeze** | **FECHADA** — **GATE-FEATURE WF-07 PASS** após redeploy BFF; FAIL inicial preservado na [evidência](./evidence/e9-wf07-federated-runtime-gate.md); [freeze](./evidence/e9-wf07-p0-contract-freeze.md) |
-| **E10 — Controle de Estoques (WF-15)** | **IN PROGRESS** — S1/S2 PASS; **S3 MFE PASS**; Help/smoke/GATE = S4 |
+| **E10 — Controle de Estoques (WF-15)** | **IN PROGRESS** — S1–S3 PASS; S4 Help+tests+BFF local PASS; **GATE INCONCLUSIVE** ([evidência](./evidence/e10-wf15-s4-final-acceptance.md)) |
 | RBAC alvo | revisado; menor catálogo suficiente (ADR-007) |
 | Authz Core-first | **GATE-AUTHZ PASS** — fail-closed na fronteira; permissions efetivas do Core, não claims JWT |
 | BIs externos | dump **local** 0/6 documentado; dump Core **produção** obrigatório antes do cutover |
@@ -59,6 +59,7 @@ A documentação desta pasta deve obedecer à hierarquia vigente das regras `.cu
 | **GATE-FEATURE WF-05** | **PASS** — smoke federado `INCONCLUSIVE` (não inferido) |
 | **GATE-FEATURE WF-06** | **PASS** — smoke federado em `https://minhadelpi.com.br` em 2026-09-21; residual: 403 de unidade não executado ([evidência](./evidence/e8-wf06-federated-runtime-gate.md)) |
 | **GATE-FEATURE WF-07** | **PASS** — recovery 2026-09-21: redeploy `supplies-api` em `srv-api` + re-smoke 200 ([evidência](./evidence/e9-wf07-federated-runtime-gate.md)) |
+| **GATE-FEATURE E10** | **INCONCLUSIVE** — Help/tests/BFF local PASS; federated MFE sem InventoryPage; `DEPLOY_REQUIRED=YES` ([evidência](./evidence/e10-wf15-s4-final-acceptance.md)) |
 | **GATE-C2** | futuro; não autorizado enquanto prerequisites não forem provados |
 | **GATE-PARITY** | futuro; evidência quantitativa obrigatória |
 | **GATE-CUTOVER** | futuro; nenhum legado/BI pode permanecer `LEGADO_A_VALIDAR` |
@@ -227,7 +228,7 @@ Invariantes:
 
 ## 7. Próximo passo operacional
 
-**Único próximo passo autorizado pelo roadmap:** **E10.S4** — Help sync + smoke autenticado BFF/federado + evidência + GATE-FEATURE E10. E10 permanece **IN PROGRESS** até S4. Não iniciar E11. Residual preservado: `S2_AUTHENTICATED_BFF_SMOKE = INCONCLUSIVE`.
+**Único próximo passo autorizado pelo roadmap:** deploy federado do MFE `plugins/supplies` (e verificação do BFF inventory em prod) → re-smoke federado → redecidir **GATE-FEATURE E10**. Não iniciar E11. Evidência S4: [e10-wf15-s4-final-acceptance.md](./evidence/e10-wf15-s4-final-acceptance.md). Residual: `FILTER_EMPTY_WAREHOUSE` filtro dedicado = ACCEPTABLE; SSO headless prod flaky nesta sessão.
 
 Revalidação 2026-09-21 (`4f3ed59483`): GATE-FEATURE WF-06 permanece **PASS**. Autorização do Product Owner e freeze P0 de E9 estão persistidos. P-03 continua bloqueando apenas paridade/depreciação do BI, não a construção da página nativa.
 

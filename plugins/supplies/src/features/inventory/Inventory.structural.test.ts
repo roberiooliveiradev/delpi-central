@@ -68,6 +68,7 @@ describe("Inventory feature (E10.S3)", () => {
     expect(page).toContain("SuppliesLoadingCard");
     expect(page).toContain("SuppliesStateBanner");
     expect(page).toContain("InventoryListTable");
+    expect(page).toContain("SP_HELP.inventory");
     expect(page).toContain("heroProducts");
     expect(page).toContain("product_count");
     expect(page).toContain("warehouse_count");
@@ -77,12 +78,17 @@ describe("Inventory feature (E10.S3)", () => {
     expect(page).not.toMatch(/onSelectRow/);
     expect(page).not.toMatch(/\/products/);
 
+    const filters = readFileSync(join(dir, "InventoryFilters.tsx"), "utf8");
+    expect(filters).toContain("SP_HELP.inventoryBranch");
+    expect(filters).toContain("SP_HELP.inventoryWarehouse");
+
     const table = readFileSync(join(dir, "InventoryListTable.tsx"), "utf8");
     expect(table).toContain("SuppliesDataTable");
     expect(table).toContain("SuppliesCompactPagination");
     expect(table).toContain("formatWarehouseDisplay");
     expect(table).toContain("formatUnitOfMeasure");
     expect(table).toContain("nextServerSort");
+    expect(table).toContain("SP_HELP.inventoryPhysicalBalance");
     expect(table).not.toMatch(/onRowClick/);
   });
 

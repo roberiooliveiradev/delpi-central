@@ -12,8 +12,10 @@ import {
   SuppliesPageHero,
   SuppliesPagePath,
   SuppliesSectionCard,
+  SuppliesSectionHintLabel,
   SuppliesStateBanner,
 } from "../../app/suppliesUi";
+import { SP_HELP } from "../../content/helpTooltips";
 import {
   getInventoryStockBalancesSummary,
   listInventoryStockBalances,
@@ -278,14 +280,19 @@ export function InventoryPage({ basePath }: InventoryPageProps) {
 
       <SuppliesPageHero
         eyebrow={C.eyebrow}
-        title={C.title}
+        title={
+          <SuppliesSectionHintLabel label={C.title} hint={SP_HELP.inventory} />
+        }
         description={C.description}
         aria-label={C.filtersAriaLabel}
         highlights={highlights}
         actions={
           <div className="sp-list-hero-actions sp-inventory__toolbar-actions">
             {lastUpdatedAt && !loading ? (
-              <span className="sp-list-freshness sp-inventory__freshness">
+              <span
+                className="sp-list-freshness sp-inventory__freshness"
+                title={SP_HELP.inventoryRefresh}
+              >
                 {C.updatedAtLabel(formatUpdatedAt(lastUpdatedAt))}
               </span>
             ) : null}
@@ -294,6 +301,7 @@ export function InventoryPage({ basePath }: InventoryPageProps) {
               variant="ghost"
               onClick={reload}
               disabled={loading || !units.length}
+              title={SP_HELP.inventoryRefresh}
             >
               <RefreshCw size={16} aria-hidden="true" />
               <span>{C.refreshAction}</span>

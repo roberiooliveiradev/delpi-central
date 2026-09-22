@@ -10,8 +10,10 @@ import {
   SuppliesFilterBarShell,
   SuppliesMultiSelectField,
   SuppliesSelectField,
+  SuppliesSectionHintLabel,
   spFiltersKit,
 } from "../../app/suppliesUi";
+import { SP_HELP } from "../../content/helpTooltips";
 import { INVENTORY_CONTENT as C } from "./content";
 import { hasActiveInventoryFilters } from "./hasActiveFilters";
 import type { InventoryQuery } from "./types";
@@ -49,7 +51,12 @@ export function InventoryFilters({
             <div className="sp-filter-bar__header">
               <div className="sp-filter-bar__title">
                 <Filter size={18} aria-hidden="true" />
-                <h2>{C.filtersTitle}</h2>
+                <h2>
+                  <SuppliesSectionHintLabel
+                    label={C.filtersTitle}
+                    hint={SP_HELP.inventoryFilters}
+                  />
+                </h2>
               </div>
               {hasActiveFilters ? (
                 <div className="sp-filter-bar__header-actions">
@@ -70,6 +77,7 @@ export function InventoryFilters({
         <SuppliesMultiSelectField
           className="sp-inventory__unit-filter"
           label={SUPPLIES_UNIT_FILTER_LABEL}
+          hint={SP_HELP.inventoryBranch}
           selectedValues={query.branches}
           onChange={(values) =>
             onPatch({
@@ -83,6 +91,7 @@ export function InventoryFilters({
         />
         <SuppliesSelectField
           label={C.warehouseLabel}
+          hint={SP_HELP.inventoryWarehouse}
           value={query.warehouse}
           options={warehouseSelectOptions}
           allowEmpty

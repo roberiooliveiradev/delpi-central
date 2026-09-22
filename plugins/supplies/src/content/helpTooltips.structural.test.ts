@@ -69,6 +69,12 @@ describe("helpTooltips", () => {
     expect(SP_HELP.deliveriesPeriod).toMatch(/digitação\/entrada/);
     expect(SP_HELP.deliveriesPeriod).not.toMatch(/atrasos do dia/);
     expect(SP_HELP.deliveries).not.toMatch(/atrasos do dia/);
+    expect(SP_HELP.inventory.length).toBeGreaterThan(20);
+    expect(SP_HELP.inventory).toMatch(/posição física/i);
+    expect(SP_HELP.inventory).toMatch(/não é.*saldo disponível|nem saldo disponível/i);
+    expect(SP_HELP.inventoryPhysicalBalance).toMatch(/não é saldo disponível/i);
+    expect(SP_HELP.inventoryBranch).toMatch(/Santa Catarina.*Espírito Santo/i);
+    expect(SP_HELP.inventoryWarehouse).toMatch(/servidor/i);
     expect(SP_HELP.otdAnalyticsPage).not.toMatch(/atrasos do dia/);
     expect(SP_HELP.forbiddenUnit.length).toBeGreaterThan(20);
     expect(SP_HELP.userProfile.length).toBeGreaterThan(20);

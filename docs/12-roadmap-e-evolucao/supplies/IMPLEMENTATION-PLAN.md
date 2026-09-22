@@ -3,8 +3,8 @@
 > **Status (revalidado 2026-09-21, `4f3ed59483`):** plano executável revisado segundo `evidence-driven-execution.mdc`, `plan-construction.mdc` e `plan-execution.mdc`.
 > **Entregue:** E1–E8 (incluindo E8 / WF-06 detalhe do pedido). GATE-FEATURE WF-06 = **PASS** ([evidência](./evidence/e8-wf06-federated-runtime-gate.md)).
 > **Entregue adicional:** E9 / WF-07 — **GATE-FEATURE WF-07 = PASS** após recovery redeploy ([evidência](./evidence/e9-wf07-federated-runtime-gate.md)).
-> **Em foco:** **E10 / WF-15 Controle de Estoques** — **IN PROGRESS** · E10.S1 PASS · E10.S2 PASS · **E10.S3 PASS (MFE)** · E10.S4 BLOCKED até brief.
-> **Próxima receita:** E10.S4 (Help + smoke autenticado/federado + GATE-FEATURE) — não iniciar automaticamente.
+> **Em foco:** **E10 / WF-15 Controle de Estoques** — **IN PROGRESS** · S1–S3 PASS · **E10.S4 INCONCLUSIVE** (Help+BFF local PASS; federated deploy pending).
+> **Próxima receita:** deploy federado MFE supplies → re-smoke → GATE E10 — **não iniciar E11**.
 > **Modo:** uma página user-facing por vez; etapas futuras abaixo são fila/grafo, não autorização automática.
 
 Referências: [README](./README.md), ADR-001..ADR-007, [WIREFRAMES](./WIREFRAMES.md), [API-ROUTES](./API-ROUTES.md), [DECISOES_FUNCIONAIS_PENDENTES](./DECISOES_FUNCIONAIS_PENDENTES.md), [HOMOLOGACAO-PARIDADE](./HOMOLOGACAO-PARIDADE.md).
@@ -265,15 +265,15 @@ Contrato producer estendido (`only_positive=false` default path). SHA `abf47ec1c
 
 ### E10.S2 — BFF supplies-api — PASS
 
-`GET /inventory/stock-balances/summary` + `GET /inventory/stock-balances/items`. SHA `379ac45937`. Residual: `S2_AUTHENTICATED_BFF_SMOKE = INCONCLUSIVE`.
+`GET /inventory/stock-balances/summary` + `GET /inventory/stock-balances/items`. SHA `379ac45937`. Residual `S2_AUTHENTICATED_BFF_SMOKE` **resolvido em S4 (local PASS)**.
 
 ### E10.S3 — MFE `/apps/supplies/inventory` — PASS
 
 Placeholder removido; página **Controle de Estoques** kit-first; BFF-only; Hero Produtos/Armazéns/Valor; filtros Unidade+Armazém; tabela preserva zero/negativo/UM null/armazém sem label/código vazio; sort allowlist; paginação server-side; URL/F5. Help final = S4.
 
-### E10.S4 — Help + smoke + GATE — BLOCKED
+### E10.S4 — Help + smoke + GATE — INCONCLUSIVE
 
-Não iniciar automaticamente. Owner do Help sync, smoke autenticado BFF e GATE-FEATURE E10.
+Help sync PASS; suites PASS; BFF autenticado local PASS (Todas/01/02/03→422; negativo/zero/UM null/warehouse vazio amostrados). Federated Minha DELPI **sem** InventoryPage no bundle → `GATE-FEATURE E10 = INCONCLUSIVE`, `DEPLOY_REQUIRED=YES`. Evidência: [e10-wf15-s4-final-acceptance.md](./evidence/e10-wf15-s4-final-acceptance.md).
 
 ## E11 — WF-16 Estoque de Segurança
 

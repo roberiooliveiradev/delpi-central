@@ -181,6 +181,22 @@ export const SP_HELP = {
     "Recarrega a lista e o resumo com os mesmos filtros. O horário é da última consulta bem-sucedida nesta tela.",
   deliveriesTableMeta:
     "Colunas visíveis e total de linhas do recorte filtrado (não só a página atual). Pedido aparece como texto — não abre ficha nesta página.",
+  inventory:
+    "Posição física atual do estoque no Protheus, por produto, unidade e armazém. Inclui saldos positivos, zerados e negativos. Não é estoque de segurança (ESTSEG) nem saldo disponível.",
+  inventoryBranch:
+    "Unidade do recorte (Santa Catarina e/ou Espírito Santo). «Todas» = exatamente essas duas unidades liberadas no Portal — não todas as filiais do ERP. Códigos técnicos ficam só na URL e na API.",
+  inventoryWarehouse:
+    "Armazém do recorte. «Todos» preserva todos os códigos retornados, inclusive sem descrição. A lista de opções vem do servidor; o Portal não usa lista fixa de armazéns.",
+  inventoryPhysicalBalance:
+    "Saldo físico é a quantidade atual registrada no estoque. Não é saldo disponível — a tela não desconta reservas, empenhos nem outras regras.",
+  inventoryStockValue:
+    "Valor operacional da posição (saldo físico × custo médio unitário do contrato). O Hero mostra o valor consolidado do recorte; a coluna Valor do saldo é por linha.",
+  inventoryFilters:
+    "Filtros aplicam automaticamente. A URL guarda unidade, armazém, página e ordenação (F5 restaura). Limpar volta a Todas as unidades e Todos os armazéns.",
+  inventoryRefresh:
+    "Recarrega o resumo e a lista com os mesmos filtros. O horário é da última consulta bem-sucedida nesta tela.",
+  inventoryTableMeta:
+    "Colunas visíveis e total de posições do recorte filtrado (não só a página atual). Produto não abre ficha nesta página.",
   userProfile:
     "Preferências do Portal Suprimentos (filial padrão e densidade) e atalhos por capability. O avatar na TopBar abre o perfil deste Portal; identidade global (foto, cargo, contatos) edita-se no Meu Perfil Minha DELPI (/profile) pelo menu do nome.",
   userProfilePrefs:

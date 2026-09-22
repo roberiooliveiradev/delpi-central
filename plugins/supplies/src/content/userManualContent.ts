@@ -124,6 +124,11 @@ export const USER_MANUAL_CONTENT = {
           how: "Déficit e cobertura — não é o saldo físico",
         },
         {
+          want: "Consultar o estoque físico",
+          where: "Estoque",
+          how: "Filtre Unidade e Armazém; consulte saldo físico, UM, custo e valor da posição. A URL preserva o recorte (F5). Inclui saldos positivos, zerados e negativos",
+        },
+        {
           want: "Consultar item / produto",
           where: "Produtos",
           how: "Busca e ficha 360 quando liberada",
@@ -164,8 +169,9 @@ export const USER_MANUAL_CONTENT = {
         "OTD — velocímetros de pontualidade e evolução; abra pelo Início, catálogo Análises ou CTA da Visão geral.",
         "Pedidos de compra — itens com saldo pendente de recebimento no recorte; hero com linhas/valor/atrasadas; Atenção Todos(N)/Atrasados(N) do resumo do servidor; filtros automáticos, Atualizar; Unidade como Santa Catarina / Espírito Santo; clique no PC para a ficha. Distinto do OTD de pontualidade e de Entregas / Atrasos.",
         "Entregas / Atrasos — recebimentos de matéria-prima (MP) já digitados, classificados em Em atraso ou No prazo. Período = data de digitação/entrada. Sem clique no pedido (histórico ≠ PC aberto).",
+        "Estoque — posição física atual por produto, unidade e armazém, incluindo saldos positivos, zerados e negativos. Não calcula saldo disponível e não é ESTSEG.",
         "Solicitações de compras — acompanhamento global no período; o hero conta SCs e a faixa Atenção filtra a situação sem ser uma permissão. Clique na SC para a ficha; exportação Excel faz parte do uso normal.",
-        "Operações — pedidos, entregas, fornecedores, produtos, estoque e ESTSEG.",
+        "Operações — pedidos, entregas, fornecedores, produtos, estoque físico e ESTSEG.",
         "Indicadores / Negociações — recorte analítico quando liberado.",
         "Administração — mappings e configurações.",
         "Perfil — avatar na TopBar abre o perfil deste Portal; Meu perfil Minha DELPI e Preferências ficam no menu do nome.",
@@ -179,6 +185,10 @@ export const USER_MANUAL_CONTENT = {
         {
           q: "Qual a diferença entre estoque e estoque de segurança?",
           a: "Estoque é o saldo físico/posições. Estoque de segurança (ESTSEG) é a cobertura mínima planejada e o déficit — abra Estoque de segurança, não Estoque.",
+        },
+        {
+          q: "Saldo físico é o mesmo que saldo disponível?",
+          a: "Não. Estoque mostra a posição física atual registrada no ERP. A página não calcula disponibilidade descontando reservas, empenhos ou outras regras.",
         },
         {
           q: "OTD é a mesma coisa que Entregas / Atrasos?",

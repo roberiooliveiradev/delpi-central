@@ -26,12 +26,16 @@ describe("userManual content", () => {
     expect(want?.links?.some((row) => /filial padrão|densidade/i.test(row.want))).toBe(true);
     expect(want?.links?.some((row) => /OTD|velocímetro/i.test(row.want))).toBe(true);
     expect(want?.links?.some((row) => /entregas atrasadas/i.test(row.want))).toBe(true);
+    expect(want?.links?.some((row) => /estoque físico/i.test(row.want))).toBe(true);
     expect(want?.links?.some((row) => /detalhe de um pedido/i.test(row.want))).toBe(true);
 
     const faq = USER_MANUAL_CONTENT.sections.find((section) => section.id === "faq");
     const questions = (faq?.faqs ?? []).map((item) => item.q).join(" ");
     const answers = (faq?.faqs ?? []).map((item) => item.a).join(" ");
     expect(questions).toMatch(/estoque/i);
+    expect(questions).toMatch(/Saldo físico.*disponível|disponível.*Saldo físico/i);
+    expect(answers).toMatch(/não calcula disponibilidade/i);
+    expect(answers).not.toMatch(/negativo.*erro|erro.*negativo/i);
     expect(questions).toMatch(/OTD/i);
     expect(questions).toMatch(/Entregas \/ Atrasos/);
     expect(questions).toMatch(/Visão geral.*OTD|OTD.*Visão geral/i);
@@ -50,6 +54,7 @@ describe("userManual content", () => {
     for (const required of [
       "OTD",
       "ESTSEG",
+      "Saldo físico",
       "SC",
       "PC",
       "CPV",
@@ -60,6 +65,11 @@ describe("userManual content", () => {
     ]) {
       expect(terms).toContain(required);
     }
+    expect(
+      GLOSSARY_CONTENT.find((entry) => entry.term === "Saldo físico")?.meaning,
+    ).toMatch(/não significa saldo disponível/i);
+    expect(MANUAL_TOOL_TARGETS.some((target) => target.label === "Estoque")).toBe(true);
+    expect(MANUAL_TOOL_TARGETS.some((target) => target.viewId === "inventory")).toBe(true);
     expect(MANUAL_TOOL_TARGETS.some((target) => target.label === "Visão geral")).toBe(true);
     expect(MANUAL_TOOL_TARGETS.some((target) => target.viewId === "analytics_otd")).toBe(true);
     expect(MANUAL_TOOL_TARGETS.some((target) => target.viewId === "purchase_requests")).toBe(

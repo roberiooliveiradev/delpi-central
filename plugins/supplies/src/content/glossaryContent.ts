@@ -24,6 +24,11 @@ export const GLOSSARY_CONTENT: readonly GlossaryEntry[] = [
       "Estoque de segurança — cobertura mínima planejada e déficit. Não é o saldo físico de estoque.",
   },
   {
+    term: "Saldo físico",
+    meaning:
+      "Quantidade atual registrada no estoque do ERP para a combinação produto, unidade e armazém. Não significa saldo disponível.",
+  },
+  {
     term: "SC",
     meaning: "Solicitação de compras — pedido interno de compra no escopo de centro de custo e filial.",
   },

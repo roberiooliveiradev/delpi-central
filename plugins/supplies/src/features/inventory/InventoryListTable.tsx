@@ -3,6 +3,7 @@ import { useMemo, type CSSProperties } from "react";
 import { formatSuppliesUnitName } from "../../app/suppliesUnits";
 import {
   DEFAULT_TABLE_COLUMN_VISIBILITY_LABELS,
+  HelpTooltip,
   SuppliesCompactPagination,
   SuppliesDataListToolbar,
   SuppliesDataTable,
@@ -13,6 +14,7 @@ import {
   useTableFontSize,
   type DataTableColumn,
 } from "../../app/suppliesUi";
+import { SP_HELP } from "../../content/helpTooltips";
 import { INVENTORY_CONTENT as C } from "./content";
 import {
   INVENTORY_COLUMN_STORAGE_KEY,
@@ -98,11 +100,19 @@ export function InventoryListTable({
               case "warehouse":
                 return formatWarehouseDisplay(row.warehouse, row.warehouse_label);
               case "quantity":
-                return formatQuantity(row.quantity);
+                return (
+                  <span title={SP_HELP.inventoryPhysicalBalance}>
+                    {formatQuantity(row.quantity)}
+                  </span>
+                );
               case "unit_cost":
                 return formatMoneyBr(row.unit_cost);
               case "stock_value":
-                return formatMoneyBr(row.stock_value);
+                return (
+                  <span title={SP_HELP.inventoryStockValue}>
+                    {formatMoneyBr(row.stock_value)}
+                  </span>
+                );
               default:
                 return "—";
             }
@@ -125,9 +135,16 @@ export function InventoryListTable({
     <>
       <SuppliesDataListToolbar
         hint={
-          <span className="delpi-ui-section-hint-label">
-            {C.tableMeta(visibleColumnCount, total)}
-          </span>
+          <HelpTooltip
+            content={SP_HELP.inventoryTableMeta}
+            ariaLabel="Ajuda: metadados da tabela"
+            wrap
+            placement="bottom"
+          >
+            <span className="delpi-ui-section-hint-label">
+              {C.tableMeta(visibleColumnCount, total)}
+            </span>
+          </HelpTooltip>
         }
         actions={
           <>
