@@ -144,9 +144,9 @@ export function AuditNcEvidenceSection({
           label="Foto do antes"
           hint={
             before
-              ? "Situação observada na auditoria (pode ter vindo da avaliação)."
+              ? "Toque na foto para ampliar. Situação observada na auditoria."
               : showEvaluationBefore
-                ? "Foto registrada na avaliação — use como referência ao preencher o plano."
+                ? "Toque na foto para ampliar. Referência da avaliação — use ao preencher o plano."
                 : "Situação observada na auditoria."
           }
           type="before"
@@ -161,7 +161,11 @@ export function AuditNcEvidenceSection({
         />
         <EvidenceSlot
           label="Foto do depois"
-          hint="Opcional — situação após a ação corretiva."
+          hint={
+            after
+              ? "Toque na foto para ampliar. Situação após a ação corretiva."
+              : "Opcional — situação após a ação corretiva."
+          }
           type="after"
           ncId={ncId}
           attachment={after}

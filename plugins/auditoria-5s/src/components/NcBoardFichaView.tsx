@@ -117,6 +117,11 @@ export function NcBoardFichaView({ item, treatmentItem, attachmentsByNcId, actio
       {item.is_registered ? (
         <section className="a5s-nc-ficha__section">
           <h3>Evidências</h3>
+          {attachments?.before ||
+          attachments?.after ||
+          treatmentItem?.evaluationAttachment ? (
+            <p className="a5s-nc-ficha__hint">Toque na foto para ampliar em tela cheia.</p>
+          ) : null}
           <div className="a5s-nc-ficha__evidence-grid">
             <article className="a5s-nc-ficha__evidence">
               <strong>Antes</strong>

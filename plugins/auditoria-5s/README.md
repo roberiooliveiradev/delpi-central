@@ -132,6 +132,8 @@ Na lista de auditorias, menu **Mais ações** (⋯) por linha:
 
 Na tela de tratamento, a **foto tirada na avaliação** aparece imediatamente no card «Foto do antes» (badge «Da avaliação»), sem precisar preencher o plano de ação. Ao salvar o plano, a API copia a foto para a evidência oficial da NC (`seed_nc_before_from_response_attachment`).
 
+Nas evidências da ficha de NC e no tratamento, **toque na miniatura** abre a mesma visualização ampliada (lightbox) usada na foto do critério durante a auditoria (Esc ou clique fora para fechar).
+
 ### Notificação ao designar responsável
 
 Ao criar ou atualizar o plano de NC com um responsável selecionado no directory (`responsible_user_id` + `responsible_name`), a api-delpi emite notificação no sino do portal (`POST /integrations/notifications`) para esse usuário — categoria `auditoria_5s` / `sourceApp: auditoria-5s`.
