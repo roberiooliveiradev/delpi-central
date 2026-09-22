@@ -1,6 +1,6 @@
 # Catálogo OpenAPI — api-delpi (gerado automaticamente)
 
-**Provider:** `api-delpi` · **Rotas:** 713 · **Gerado em:** 2026-09-21 16:29 UTC
+**Provider:** `api-delpi` · **Rotas:** 714 · **Gerado em:** 2026-09-22 00:07 UTC
 
 > Não edite manualmente. Regenerado por `scripts/sync_api_delpi_openapi.py`.
 
@@ -52,7 +52,7 @@
 |--------|------|-------------|---------|
 | `GET` | `/customers/search` | `search_customers` | Search Customers Route |
 
-## Comercial (26)
+## Comercial (27)
 
 | Método | Path | operationId | Summary |
 |--------|------|-------------|---------|
@@ -70,6 +70,7 @@
 | `GET` | `/commercial/proposals/{proposal_number}/history/events` | `get_commercial_proposal_history_events` | Commercial proposal stage history |
 | `GET` | `/commercial/rol/by-branch` | `get_commercial_rol_by_branch` | Commercial ROL breakdown by branch (01 vs 02) |
 | `GET` | `/commercial/rol/by-customer` | `get_commercial_rol_by_customer` | Commercial ROL ranking by customer |
+| `GET` | `/commercial/rol/by-customer-center` | `get_commercial_rol_by_customer_center` | Commercial ROL by customer center |
 | `GET` | `/commercial/rol/by-product` | `get_commercial_rol_by_product` | Commercial ROL by product or product group |
 | `GET` | `/commercial/rol/series` | `get_commercial_rol_series` | Commercial rol series |
 | `GET` | `/commercial/rol/summary` | `get_commercial_rol_summary` | Commercial ROL summary (realized and goal) |
