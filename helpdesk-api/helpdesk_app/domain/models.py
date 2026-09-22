@@ -31,6 +31,9 @@ class CatalogUser:
     id: int
     display_name: str
     email: str = ""
+    """Minha DELPI directory user_id (Keycloak UUID) when linked."""
+    directory_user_id: str = ""
+    has_photo: bool = False
 
 
 @dataclass(frozen=True)

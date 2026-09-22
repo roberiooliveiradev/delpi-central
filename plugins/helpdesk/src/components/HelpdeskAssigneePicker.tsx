@@ -1,5 +1,5 @@
 import { X } from "lucide-react";
-import { useCallback } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   UserDirectoryPicker,
   createInitialsAvatar,
@@ -7,6 +7,7 @@ import {
 } from "@delpi/plugin-ui/index";
 
 import { listUsers } from "../api/helpdeskApi";
+import { useDirectoryUserPhotoUrls } from "../presentation/useDirectoryUserPhotoUrls";
 
 const HelpdeskAvatar = createInitialsAvatar("helpdesk");
 
@@ -23,6 +24,7 @@ type Props = {
 
 /**
  * Técnico atribuído — busca nome/e-mail (Minha DELPI + GLPI via BFF) e grava o id GLPI.
+ * Avatar usa foto Minha DELPI quando `has_photo` + `directory_user_id`.
  */
 export function HelpdeskAssigneePicker({
   label,
@@ -32,19 +34,47 @@ export function HelpdeskAssigneePicker({
   disabled = false,
   emptyLabel = "Sem técnico",
 }: Props) {
+  const [searching, setSearching] = useState(false);
+  const [resultOptions, setResultOptions] = useState<DirectoryUserOption[]>([]);
+
+  const photoEntries = useMemo(() => {
+    const rows = [...resultOptions];
+    if (value) rows.push(value);
+    return rows.map((user) => ({
+      directoryUserId: user.directoryUserId,
+      hasPhoto: user.hasPhoto,
+    }));
+  }, [resultOptions, value]);
+
+  const { photoFor } = useDirectoryUserPhotoUrls(photoEntries);
+
   const searchUsers = useCallback(
     async (query: string, limit = 10, signal?: AbortSignal): Promise<DirectoryUserOption[]> => {
       const result = await listUsers({ q: query, limit }, signal);
-      return (result.items || []).map((user) => ({
+      const mapped = (result.items || []).map((user) => ({
         id: String(user.id),
         name: (user.display_name || "").trim() || user.email || String(user.id),
         email: (user.email || "").trim(),
+        directoryUserId: (user.directory_user_id || "").trim() || undefined,
+        hasPhoto: Boolean(user.has_photo),
       }));
+      setResultOptions(mapped);
+      return mapped;
     },
     [],
   );
 
   const selected = value ? [value] : [];
+
+  const renderAvatar = (user: DirectoryUserOption) => (
+    <HelpdeskAvatar
+      name={user.name}
+      colorKey={user.directoryUserId || user.id}
+      size="sm"
+      src={photoFor(user.directoryUserId)}
+      previewable={false}
+    />
+  );
 
   return (
     <div className="helpdesk-assignee-picker">
@@ -56,12 +86,11 @@ export function HelpdeskAssigneePicker({
         showEmail
         disabled={disabled}
         showSelectedList
-        renderOptionLeading={(user) => (
-          <HelpdeskAvatar name={user.name} colorKey={user.id} size="sm" previewable={false} />
-        )}
+        onSearchingChange={setSearching}
+        renderOptionLeading={renderAvatar}
         renderSelectedChip={({ user, disabled: chipDisabled, onRemove }) => (
           <span className="delpi-ui-tag-chip helpdesk-assignee-picker__chip">
-            <HelpdeskAvatar name={user.name} colorKey={user.id} size="sm" previewable={false} />
+            {renderAvatar(user)}
             <span className="helpdesk-assignee-picker__chip-text">
               <strong>{user.name}</strong>
               {user.email ? <span>{user.email}</span> : null}
@@ -81,10 +110,13 @@ export function HelpdeskAssigneePicker({
           title: label,
           hint,
           placeholder: "Buscar por nome ou e-mail…",
+          searching: "Buscando…",
           empty: "Nenhum usuário encontrado.",
         }}
       />
-      {!value ? <p className="helpdesk-assignee-picker__empty">{emptyLabel}</p> : null}
+      {!value && !searching ? (
+        <p className="helpdesk-assignee-picker__empty">{emptyLabel}</p>
+      ) : null}
     </div>
   );
 }

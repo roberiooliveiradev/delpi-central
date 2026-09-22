@@ -89,6 +89,8 @@ def list_users(request: Request, q: str = "", limit: int = 20):
                 "id": row.id,
                 "display_name": row.display_name,
                 "email": getattr(row, "email", "") or "",
+                "directory_user_id": getattr(row, "directory_user_id", "") or "",
+                "has_photo": bool(getattr(row, "has_photo", False)),
             }
             for row in rows
         ]

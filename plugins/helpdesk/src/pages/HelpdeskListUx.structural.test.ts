@@ -123,13 +123,25 @@ describe("Helpdesk list UX structural", () => {
     expect(picker).toContain("listUsers");
     expect(picker).toContain("UserDirectoryPicker");
     expect(picker).toContain("createInitialsAvatar");
+    expect(picker).toContain("useDirectoryUserPhotoUrls");
+    expect(picker).toContain("directoryUserId");
+    expect(picker).toContain("hasPhoto");
+    expect(picker).toContain("onSearchingChange");
     expect(picker).not.toContain("FieldLabel");
     expect(picker).toContain("Buscar por nome ou e-mail");
     const api = read("../api/helpdeskApi.ts");
     expect(api).toContain("/users");
+    expect(api).toContain("directory_user_id");
+    expect(api).toContain("downloadDirectoryUserPhoto");
+    expect(api).toContain("/person-profiles/");
     expect(api).toContain("/session/capabilities");
     expect(api).toContain("/assignee");
     expect(api).toContain("email?: string");
+    const ui = read("../ui/helpdeskUi.tsx");
+    expect(ui).toContain("createDashboardScreenLoading");
+    expect(ui).toContain("HelpdeskScreenLoading");
+    expect(page).toContain("HelpdeskScreenLoading");
+    expect(page).toContain("Carregando chamado");
   });
 
   it("compose usa ConversationFileDropLayer do kit (sem onDrop ad hoc)", () => {

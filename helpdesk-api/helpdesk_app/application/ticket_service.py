@@ -40,11 +40,13 @@ class TicketService:
         oauth: OAuthService,
         idempotency: IdempotencyStore,
         directory=None,
+        person_profiles=None,
     ):
         self._glpi = glpi
         self._oauth = oauth
         self._idempotency = idempotency
         self._directory = directory
+        self._person_profiles = person_profiles
 
     def categories(self, subject: str):
         return self._glpi.list_categories(self._token(subject))
@@ -55,17 +57,37 @@ class TicketService:
         term = (q or "").strip()
         by_id: dict[int, CatalogUser] = {}
 
-        def put(user: CatalogUser, *, prefer_name: str = "", prefer_email: str = "") -> None:
+        def put(
+            user: CatalogUser,
+            *,
+            prefer_name: str = "",
+            prefer_email: str = "",
+            prefer_directory_user_id: str = "",
+        ) -> None:
             name = (prefer_name or user.display_name or "").strip() or user.display_name
             email = (prefer_email or user.email or "").strip().lower()
+            directory_user_id = (
+                prefer_directory_user_id
+                or getattr(user, "directory_user_id", "")
+                or ""
+            ).strip()
+            has_photo = bool(getattr(user, "has_photo", False))
             previous = by_id.get(int(user.id))
             if previous is None:
-                by_id[int(user.id)] = CatalogUser(id=int(user.id), display_name=name, email=email)
+                by_id[int(user.id)] = CatalogUser(
+                    id=int(user.id),
+                    display_name=name,
+                    email=email,
+                    directory_user_id=directory_user_id,
+                    has_photo=has_photo,
+                )
                 return
             by_id[int(user.id)] = CatalogUser(
                 id=int(user.id),
                 display_name=name or previous.display_name,
                 email=email or previous.email,
+                directory_user_id=directory_user_id or previous.directory_user_id,
+                has_photo=has_photo or previous.has_photo,
             )
 
         # 1) Sempre busca no GLPI (nome/username) — fonte do id atribuível.
@@ -102,9 +124,15 @@ class TicketService:
             for person in delpi_hits:
                 email = str(person.get("email") or "").strip().lower()
                 name = str(person.get("name") or "").strip()
+                directory_user_id = str(person.get("id") or "").strip()
                 glpi_user = finder(token, email) if callable(finder) and "@" in email else None
                 if glpi_user is not None:
-                    put(glpi_user, prefer_name=name, prefer_email=email)
+                    put(
+                        glpi_user,
+                        prefer_name=name,
+                        prefer_email=email,
+                        prefer_directory_user_id=directory_user_id,
+                    )
                     continue
                 needle = _fold_name(name)
                 if not needle:
@@ -120,7 +148,12 @@ class TicketService:
                     None,
                 )
                 if matched is not None:
-                    put(matched, prefer_name=name or matched.display_name, prefer_email=email)
+                    put(
+                        matched,
+                        prefer_name=name or matched.display_name,
+                        prefer_email=email,
+                        prefer_directory_user_id=directory_user_id,
+                    )
                     continue
                 for token_q in [part for part in name.replace("-", " ").split() if len(part) >= 3][:2]:
                     try:
@@ -133,12 +166,43 @@ class TicketService:
                         put(row)
                         folded = _fold_name(row.display_name)
                         if needle == folded or needle in folded or folded in needle:
-                            put(row, prefer_name=name or row.display_name, prefer_email=email)
+                            put(
+                                row,
+                                prefer_name=name or row.display_name,
+                                prefer_email=email,
+                                prefer_directory_user_id=directory_user_id,
+                            )
                         elif email and (row.email or "").lower() == email:
-                            put(row, prefer_name=name or row.display_name, prefer_email=email)
+                            put(
+                                row,
+                                prefer_name=name or row.display_name,
+                                prefer_email=email,
+                                prefer_directory_user_id=directory_user_id,
+                            )
 
-        return list(by_id.values())[:safe_limit]
-
+        rows = list(by_id.values())[:safe_limit]
+        profiles = self._person_profiles
+        if profiles is not None and getattr(profiles, "configured", lambda: False)():
+            directory_ids = [
+                row.directory_user_id for row in rows if (row.directory_user_id or "").strip()
+            ]
+            flags = profiles.lookup_has_photo(directory_ids) if directory_ids else {}
+            if flags:
+                enriched: list[CatalogUser] = []
+                for row in rows:
+                    uid = (row.directory_user_id or "").strip()
+                    has_photo = bool(flags.get(uid)) if uid else False
+                    enriched.append(
+                        CatalogUser(
+                            id=row.id,
+                            display_name=row.display_name,
+                            email=row.email,
+                            directory_user_id=uid,
+                            has_photo=has_photo,
+                        )
+                    )
+                return enriched
+        return rows
     def capabilities(self, subject: str) -> dict:
         token = self._token(subject)
         return {"can_assign": bool(self._glpi.can_assign_tickets(token))}

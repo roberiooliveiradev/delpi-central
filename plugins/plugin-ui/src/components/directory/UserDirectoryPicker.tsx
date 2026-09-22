@@ -11,6 +11,9 @@ export type DirectoryUserOption = {
   id: string;
   name: string;
   email: string;
+  /** Minha DELPI user_id — para foto de person-profile quando houver. */
+  directoryUserId?: string;
+  hasPhoto?: boolean;
 };
 
 export type UserDirectoryPickerProps = {
@@ -51,7 +54,10 @@ export type UserDirectoryPickerProps = {
     title?: string;
     hint?: string;
     placeholder?: string;
+    searching?: string;
+    empty?: string;
   };
+  onSearchingChange?: (searching: boolean) => void;
   className?: string;
 };
 
@@ -91,6 +97,7 @@ export function UserDirectoryPicker({
   renderOptionLeading,
   renderSelectedChip,
   labels,
+  onSearchingChange,
   className,
 }: UserDirectoryPickerProps) {
   const sourceByIdRef = useRef(new Map<string, DirectoryUserOption>());
@@ -145,10 +152,12 @@ export function UserDirectoryPicker({
         placeholder:
           labels?.placeholder ||
           (showEmail ? "Buscar por nome ou e-mail" : "Buscar por nome"),
-        empty: "Nenhum usuário encontrado.",
+        searching: labels?.searching || "Buscando…",
+        empty: labels?.empty || "Nenhum usuário encontrado.",
         emptySelected: "Nenhum resultado disponível — já selecionados ou membros.",
         selectedAriaLabel: "Usuários selecionados",
       }}
+      onSearchingChange={onSearchingChange}
       className={className}
     />
   );

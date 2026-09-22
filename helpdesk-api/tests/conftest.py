@@ -322,6 +322,7 @@ class FakeGlpi:
 def build_client(
     glpi: FakeGlpi | None = None,
     directory=None,
+    person_profiles=None,
 ) -> tuple[TestClient, FakeGlpi]:
     glpi = glpi or FakeGlpi()
     app = FastAPI()
@@ -338,7 +339,13 @@ def build_client(
     sessions = MemorySessionStore()
     oauth = OAuthService(glpi, states, sessions, now)
     app.state.oauth = oauth
-    app.state.tickets = TicketService(glpi, oauth, MemoryIdempotencyStore(), directory=directory)
+    app.state.tickets = TicketService(
+        glpi,
+        oauth,
+        MemoryIdempotencyStore(),
+        directory=directory,
+        person_profiles=person_profiles,
+    )
     app.state.public_base_url = "https://centraldelpi.com.br"
 
     @app.middleware("http")
@@ -356,6 +363,9 @@ def build_client(
 
     app.include_router(auth_router)
     app.include_router(ticket_router)
+    from helpdesk_app.interface.http.person_profile_routes import router as person_profile_router
+
+    app.include_router(person_profile_router)
     return TestClient(app), glpi
 
 

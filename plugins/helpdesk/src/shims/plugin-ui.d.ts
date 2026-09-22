@@ -853,9 +853,10 @@ declare module "@delpi/plugin-ui/index" {
       placeholder?: string;
       searching?: string;
       empty?: string;
-      emptySelected?: string;
-      selectedAriaLabel?: string;
+    emptySelected?: string;
+    selectedAriaLabel?: string;
     };
+    onSearchingChange?: (searching: boolean) => void;
     className?: string;
   };
 
@@ -867,6 +868,8 @@ declare module "@delpi/plugin-ui/index" {
     id: string;
     name: string;
     email: string;
+    directoryUserId?: string;
+    hasPhoto?: boolean;
   };
 
   export type UserDirectoryPickerProps = {
@@ -892,7 +895,10 @@ declare module "@delpi/plugin-ui/index" {
       title?: string;
       hint?: string;
       placeholder?: string;
+      searching?: string;
+      empty?: string;
     };
+    onSearchingChange?: (searching: boolean) => void;
     className?: string;
   };
 

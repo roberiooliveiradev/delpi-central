@@ -111,7 +111,7 @@ import {
   HelpdeskIconButton,
   HelpdeskAttachButton,
   HelpdeskListPaginationFooter,
-  HelpdeskLoadingState,
+  HelpdeskScreenLoading,
   HelpdeskMessageThread,
   HelpdeskPageHeader,
   HelpdeskRecordCard,
@@ -470,7 +470,7 @@ function TicketListPage() {
             }}
           />
         ) : null}
-        {view === "loading" ? <HelpdeskLoadingState /> : null}
+        {view === "loading" ? <HelpdeskScreenLoading label="Carregando chamados…" /> : null}
         {view === "forbidden" || view === "unavailable" || view === "error" ? (
           <HelpdeskStateBanner variant="error">{errorText}</HelpdeskStateBanner>
         ) : null}
@@ -710,7 +710,7 @@ function CreateTicketPage() {
         icon={<TicketPlus size={18} aria-hidden />}
       />
       <HelpdeskSectionCard title="Abrir chamado" hint={helpTooltips.create} fill>
-        {loading ? <HelpdeskLoadingState message="Carregando categorias…" /> : null}
+        {loading ? <HelpdeskScreenLoading label="Carregando categorias…" /> : null}
         {errorText ? <HelpdeskStateBanner variant="error">{errorText}</HelpdeskStateBanner> : null}
         <form
           className="helpdesk-create-form"
@@ -1008,7 +1008,7 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
         refreshing={loading}
       />
       <HelpdeskSectionCard title="Conversa" hint={helpTooltips.detail} fill>
-        {loading ? <HelpdeskLoadingState message="Carregando chamado…" /> : null}
+        {loading ? <HelpdeskScreenLoading label="Carregando chamado…" /> : null}
         {errorText ? <HelpdeskStateBanner variant="error">{errorText}</HelpdeskStateBanner> : null}
         {ticket ? (
           <>

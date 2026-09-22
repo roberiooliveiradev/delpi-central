@@ -264,7 +264,13 @@ def test_list_users_returns_id_and_display_name():
     listed = client.get("/users?q=Ana", headers=auth_headers())
     assert listed.status_code == 200
     assert listed.json()["items"] == [
-        {"id": 15, "display_name": "Ana Silva", "email": "ana.silva@delpi.com.br"}
+        {
+            "id": 15,
+            "display_name": "Ana Silva",
+            "email": "ana.silva@delpi.com.br",
+            "directory_user_id": "",
+            "has_photo": False,
+        }
     ]
 
 
@@ -310,6 +316,7 @@ def test_list_users_enriches_from_minha_delpi_directory():
         item["id"] == 15
         and item["display_name"] == "Ana Silva Delpi"
         and item["email"] == "ana.silva@delpi.com.br"
+        and item.get("directory_user_id") == "delpi-ana"
         for item in items
     )
 

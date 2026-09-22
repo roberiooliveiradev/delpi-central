@@ -222,6 +222,40 @@ describe("EntityDirectoryPicker", () => {
     });
   });
 
+  it("mostra LoadingActivityBadge animado enquanto busca", async () => {
+    let resolveSearch: (value: typeof entities) => void = () => {};
+    searchEntities.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveSearch = resolve;
+        }),
+    );
+
+    render(
+      <EntityDirectoryPicker
+        value={[]}
+        onChange={() => {}}
+        searchEntities={searchEntities}
+        labels={{ placeholder: "Buscar", searching: "Buscando usuários…" }}
+      />,
+    );
+
+    fireEvent.change(screen.getByPlaceholderText("Buscar"), {
+      target: { value: "ac" },
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText("Buscando usuários…")).toBeTruthy();
+    });
+    expect(document.querySelector(".delpi-ui-loading-activity-badge")).toBeTruthy();
+    expect(document.querySelector(".delpi-ui-loading-activity-badge__bar")).toBeTruthy();
+
+    resolveSearch([]);
+    await waitFor(() => {
+      expect(screen.queryByText("Buscando usuários…")).toBeNull();
+    });
+  });
+
   it("expõe ajuda no título via HelpTooltip sem parágrafo de hint", () => {
     render(
       <EntityDirectoryPicker

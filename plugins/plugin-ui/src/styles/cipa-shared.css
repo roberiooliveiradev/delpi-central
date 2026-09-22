@@ -485,6 +485,21 @@
   color: var(--delpi-ui-muted, #64748b);
 }
 
+.delpi-ui-user-directory-picker__searching {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+}
+
+.delpi-ui-user-directory-picker__searching .delpi-ui-loading-activity-badge {
+  width: 100%;
+  justify-content: flex-start;
+  border-radius: 12px;
+  min-height: 40px;
+  padding: 10px 14px 14px;
+  box-shadow: none;
+}
+
 .delpi-ui-user-directory-picker__input {
   min-height: 42px;
   border-radius: 10px;

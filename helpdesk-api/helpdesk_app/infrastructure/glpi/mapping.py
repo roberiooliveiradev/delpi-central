@@ -389,6 +389,8 @@ def filter_assignable_catalog_users(users: list[CatalogUser] | tuple[CatalogUser
                 id=int(user.id),
                 display_name=label,
                 email=email,
+                directory_user_id=str(getattr(user, "directory_user_id", "") or ""),
+                has_photo=bool(getattr(user, "has_photo", False)),
             )
         )
     return out

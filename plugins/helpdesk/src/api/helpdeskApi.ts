@@ -127,6 +127,8 @@ export type CatalogUser = {
   id: number;
   display_name: string;
   email?: string;
+  directory_user_id?: string;
+  has_photo?: boolean;
 };
 
 export type TicketAttachment = {
@@ -173,6 +175,21 @@ export function listUsers(query: { q?: string; limit?: number } = {}, signal?: A
   if (query.limit) params.set("limit", String(query.limit));
   const suffix = params.toString() ? `?${params}` : "";
   return request<{ items: CatalogUser[] }>(`/users${suffix}`, { signal });
+}
+
+/** Foto person-profile Minha DELPI (directory_user_id). Soft-fail no consumidor. */
+export async function downloadDirectoryUserPhoto(
+  directoryUserId: string,
+  signal?: AbortSignal,
+): Promise<Blob> {
+  const uid = directoryUserId.trim();
+  if (!uid) throw new HelpdeskApiError("validation_error", 422);
+  const response = await fetch(
+    `${BASE}/person-profiles/${encodeURIComponent(uid)}/photo`,
+    { signal, headers: headers({ Accept: "application/octet-stream" }) },
+  );
+  if (!response.ok) throw await readError(response);
+  return response.blob();
 }
 
 export function getSessionCapabilities(signal?: AbortSignal) {

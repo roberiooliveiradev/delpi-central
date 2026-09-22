@@ -586,6 +586,13 @@
   color: var(--helpdesk-text-muted);
 }
 
+/* Layout do splash de página (ScreenLoading do kit) */
+.dashboard-helpdesk .helpdesk-screen-loading {
+  position: relative;
+  width: 100%;
+  min-height: 240px;
+}
+
 @media (max-width: 640px) {
   .dashboard-helpdesk .helpdesk-lifecycle-cue__cta {
     width: 100%;

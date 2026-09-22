@@ -2,6 +2,7 @@ import { X } from "lucide-react";
 import type { ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 
+import { LoadingActivityBadge } from "../feedback/LoadingActivityBadge";
 import { HelpTooltip } from "../help/HelpTooltip";
 
 export type EntityDirectoryOption = {
@@ -49,6 +50,8 @@ export type EntityDirectoryPickerProps = {
     emptySelected?: string;
     selectedAriaLabel?: string;
   };
+  /** Notifica o consumidor quando a busca debounced está em voo (ex.: esconder «Sem X»). */
+  onSearchingChange?: (searching: boolean) => void;
   className?: string;
 };
 
@@ -77,6 +80,7 @@ export function EntityDirectoryPicker({
   renderOptionLeading,
   renderSelectedChip,
   labels,
+  onSearchingChange,
   className,
 }: EntityDirectoryPickerProps) {
   const [query, setQuery] = useState("");
@@ -85,6 +89,12 @@ export function EntityDirectoryPicker({
   /** Evita re-abortar a busca quando o pai passa `searchEntities` inline a cada render. */
   const searchEntitiesRef = useRef(searchEntities);
   searchEntitiesRef.current = searchEntities;
+  const onSearchingChangeRef = useRef(onSearchingChange);
+  onSearchingChangeRef.current = onSearchingChange;
+
+  useEffect(() => {
+    onSearchingChangeRef.current?.(searching);
+  }, [searching]);
 
   useEffect(() => {
     const normalized = query.trim();
@@ -148,9 +158,13 @@ export function EntityDirectoryPicker({
         onChange={(e) => setQuery(e.target.value)}
       />
       {searching ? (
-        <p className="delpi-ui-user-directory-picker__status">
-          {labels?.searching || "Buscando…"}
-        </p>
+        <div className="delpi-ui-user-directory-picker__searching">
+          <LoadingActivityBadge
+            label={labels?.searching || "Buscando…"}
+            tone="info"
+            showBar
+          />
+        </div>
       ) : null}
       {!searching && query.trim().length >= 2 && visibleResults.length === 0 ? (
         <p className="delpi-ui-user-directory-picker__status">

@@ -24,6 +24,7 @@ import {
   createDashboardSectionCard,
   createDashboardSegmentToggle,
   createDashboardSelectField,
+  createDashboardScreenLoading,
   createDashboardStateBanner,
   createDashboardStatusBadge,
   createDashboardTextAreaField,
@@ -38,6 +39,7 @@ import {
   loadingStateCardBemClasses,
   pageHeaderTitleRowBemClasses,
   RichTextEditor,
+  screenLoadingBemClasses,
   type MentionMenuHit,
   type RichTextEditorHandle,
   type RichTextInlineImageInsert,
@@ -104,6 +106,15 @@ export const HelpdeskEmptyState = createDashboardEmptyState({
 export const HelpdeskLoadingState = createDashboardLoadingState({
   classNames: loadingStateCardBemClasses(PREFIX),
   defaultMessage: "Carregando chamados…",
+});
+
+/** Splash de página — ScreenLoading do plugin-ui (badge + pulse). */
+export const HelpdeskScreenLoading = createDashboardScreenLoading({
+  classNames: screenLoadingBemClasses(PREFIX),
+  defaultLabel: "Carregando",
+  variant: "embedded",
+  tone: "brand",
+  logoSrc: "/logoMinhaDelpi.svg",
 });
 
 const HelpdeskMessageThreadView = createDashboardMessageThread(PREFIX);

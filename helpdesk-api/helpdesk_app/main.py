@@ -13,6 +13,7 @@ from helpdesk_app.application.ticket_service import TicketService
 from helpdesk_app.config import settings
 from helpdesk_app.domain.errors import HelpdeskError
 from helpdesk_app.infrastructure.core_directory_service import CoreDirectoryService
+from helpdesk_app.infrastructure.core_person_profile_service import CorePersonProfileService
 from helpdesk_app.infrastructure.crypto import TokenCipher
 from helpdesk_app.infrastructure.glpi.http_client import HttpxGlpiClient
 from helpdesk_app.infrastructure.persistence.postgres import (
@@ -21,6 +22,7 @@ from helpdesk_app.infrastructure.persistence.postgres import (
     PostgresStateStore,
 )
 from helpdesk_app.interface.http.auth_routes import router as auth_router
+from helpdesk_app.interface.http.person_profile_routes import router as person_profile_router
 from helpdesk_app.interface.http.ticket_routes import router as ticket_router
 from helpdesk_app.middleware.auth_middleware import jwt_middleware
 from helpdesk_app.startup.run_migrations_on_startup import run_migrations_on_startup
@@ -64,7 +66,14 @@ def build_runtime():
     sessions = PostgresSessionStore(cipher)
     oauth = OAuthService(glpi, states, sessions)
     directory = CoreDirectoryService()
-    tickets = TicketService(glpi, oauth, PostgresIdempotencyStore(), directory=directory)
+    person_profiles = CorePersonProfileService()
+    tickets = TicketService(
+        glpi,
+        oauth,
+        PostgresIdempotencyStore(),
+        directory=directory,
+        person_profiles=person_profiles,
+    )
     return oauth, tickets
 
 
@@ -119,3 +128,4 @@ def health():
 
 app.include_router(auth_router)
 app.include_router(ticket_router)
+app.include_router(person_profile_router)
