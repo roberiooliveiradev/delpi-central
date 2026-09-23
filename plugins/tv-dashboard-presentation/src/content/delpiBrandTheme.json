@@ -1,0 +1,97 @@
+{
+  "version": "2026.09.23",
+  "owner": "tv-dashboard-presentation",
+  "summary": "Padrão de marca Delpi (claro/escuro) + colocação da logo institucional. Fonte canônica do MFE/TV; recipes API devem espelhar as mesmas cores.",
+  "luminanceThreshold": 0.45,
+  "modes": {
+    "dark": {
+      "key": "dark",
+      "label": "Delpi escuro",
+      "logoVariant": "onDark",
+      "background": {
+        "type": "gradient",
+        "from": "#05070a",
+        "to": "#0d2840",
+        "angle": 180
+      },
+      "colors": {
+        "bgFrom": "#05070a",
+        "bgTo": "#0d2840",
+        "bgSolid": "#05070a",
+        "navy": "#003866",
+        "card": "#ffffff",
+        "accent": "#089bdb",
+        "accentSoft": "#47bfff",
+        "accentMuted": "#7dd3fc",
+        "accentWash": "#e8f4fc",
+        "accentBorderSoft": "#89c2e8",
+        "onBg": "#ffffff",
+        "onBgMuted": "#e2e8f0",
+        "onCard": "#0f172a",
+        "onCardMuted": "#475569",
+        "shapeStroke": "#e2e8f0",
+        "ink": "#0f172a",
+        "surface": "#f8fafc",
+        "surfaceMuted": "#e2e8f0",
+        "borderMuted": "#94a3b8"
+      },
+      "seriesPalette": ["#089bdb", "#47bfff", "#003866", "#7dd3fc"]
+    },
+    "light": {
+      "key": "light",
+      "label": "Delpi claro",
+      "logoVariant": "onLight",
+      "background": {
+        "type": "color",
+        "value": "#f8fafc"
+      },
+      "colors": {
+        "bgFrom": "#f8fafc",
+        "bgTo": "#e2e8f0",
+        "bgSolid": "#f8fafc",
+        "navy": "#003866",
+        "card": "#ffffff",
+        "accent": "#089bdb",
+        "accentSoft": "#47bfff",
+        "accentMuted": "#7dd3fc",
+        "accentWash": "#e8f4fc",
+        "accentBorderSoft": "#89c2e8",
+        "onBg": "#0f172a",
+        "onBgMuted": "#475569",
+        "onCard": "#0f172a",
+        "onCardMuted": "#475569",
+        "shapeStroke": "#334155",
+        "ink": "#0f172a",
+        "surface": "#ffffff",
+        "surfaceMuted": "#e2e8f0",
+        "borderMuted": "#94a3b8"
+      },
+      "seriesPalette": ["#089bdb", "#003866", "#47bfff", "#0d2840"]
+    }
+  },
+  "logo": {
+    "safeMarginPct": 3,
+    "widthPct": 11,
+    "heightPct": 7,
+    "opacity": 0.92,
+    "corner": "bottom-right",
+    "backgroundPosition": "bottom right",
+    "zIndex": 0,
+    "parseFallback": {
+      "dark": "#0f172a",
+      "light": "#ffffff"
+    }
+  },
+  "slideThemeBindings": [
+    {
+      "key": "delpi",
+      "label": "DELPI",
+      "mode": "dark"
+    },
+    {
+      "key": "light",
+      "label": "Claro",
+      "mode": "light"
+    }
+  ]
+}

@@ -1,9 +1,6 @@
 /**
  * Logo institucional Delpi no palco — variante clara/escura conforme o fundo.
- * Custom master.logo (URL/asset) vence; sem custom → brand default em todo slide livre.
- *
- * Posição brand: canto inferior direito (safeMargin), fora da zona típica de
- * título/KPI/gráfico — evita cobrir dados. Conteúdo do slide (zIndex>0) fica acima.
+ * Configuração (cores, frame, opacidade, limiar) vem de ``delpiBrandTheme.json``.
  */
 
 import { relativeLuminance, tryParseCssColorToHex } from "@delpi/plugin-ui/index";
@@ -14,25 +11,22 @@ import {
   resolveComunicadoBackgroundUnderlay,
 } from "./comunicadoBackgroundStyle";
 import type { ComunicadoBackground } from "./comunicadoTypes";
+import {
+  getDelpiBrandLuminanceThreshold,
+  getDelpiBrandLogoConfig,
+  getDelpiBrandMode,
+  resolveDelpiBrandLogoFrame,
+  type DelpiBrandLogoVariant,
+  type DelpiBrandModeKey,
+} from "./delpiBrandTheme";
 
-/** Margem mínima do canto (alinha a designTokens.safeMargin das recipes). */
-export const DELPI_BRAND_LOGO_SAFE_MARGIN = 3;
+export type { DelpiBrandLogoVariant };
 
-/**
- * Frame % do palco — inferior direito, compacto (aspect ~1.6).
- * x/y derivados: 100 − w − margin / 100 − h − margin.
- */
-export const DELPI_BRAND_LOGO_FRAME = {
-  x: 100 - 11 - DELPI_BRAND_LOGO_SAFE_MARGIN,
-  y: 100 - 7 - DELPI_BRAND_LOGO_SAFE_MARGIN,
-  w: 11,
-  h: 7,
-} as const;
+const logoCfg = getDelpiBrandLogoConfig();
 
-/** Opacidade brand: presente sem competir com KPI/chart. */
-export const DELPI_BRAND_LOGO_OPACITY = 0.92;
-
-export type DelpiBrandLogoVariant = "onDark" | "onLight";
+export const DELPI_BRAND_LOGO_SAFE_MARGIN = logoCfg.safeMarginPct;
+export const DELPI_BRAND_LOGO_OPACITY = logoCfg.opacity;
+export const DELPI_BRAND_LOGO_FRAME = resolveDelpiBrandLogoFrame(logoCfg);
 
 export type StageMasterLogo = {
   url: string;
@@ -47,6 +41,14 @@ function luminanceOfCssColor(value: string | undefined, fallbackHex: string): nu
   return relativeLuminance(hex.startsWith("#") ? hex : `#${hex}`);
 }
 
+function darkParseFallback(): string {
+  return getDelpiBrandLogoConfig().parseFallback.dark;
+}
+
+function lightParseFallback(): string {
+  return getDelpiBrandLogoConfig().parseFallback.light;
+}
+
 /**
  * True quando o fundo efetivo é escuro (logo clara / onDark).
  * Gradiente: média das pontas; imagem: underlay; cor: valor.
@@ -54,26 +56,34 @@ function luminanceOfCssColor(value: string | undefined, fallbackHex: string): nu
 export function isComunicadoBackgroundDark(
   background: ComunicadoBackground | undefined,
 ): boolean {
+  const threshold = getDelpiBrandLuminanceThreshold();
   const underlay = resolveComunicadoBackgroundUnderlay(background);
+  const darkFb = darkParseFallback();
   if (underlay.type === "gradient") {
-    const from = luminanceOfCssColor(underlay.from, "#0f172a");
-    const to = luminanceOfCssColor(underlay.to, "#0f172a");
+    const from = luminanceOfCssColor(underlay.from, darkFb);
+    const to = luminanceOfCssColor(underlay.to, darkFb);
     if (underlay.stops && underlay.stops.length >= 2) {
       const sum = underlay.stops.reduce(
-        (acc, stop) => acc + luminanceOfCssColor(stop.color, "#0f172a"),
+        (acc, stop) => acc + luminanceOfCssColor(stop.color, darkFb),
         0,
       );
-      return sum / underlay.stops.length < 0.45;
+      return sum / underlay.stops.length < threshold;
     }
-    return (from + to) / 2 < 0.45;
+    return (from + to) / 2 < threshold;
   }
-  return luminanceOfCssColor(underlay.value, "#ffffff") < 0.45;
+  return luminanceOfCssColor(underlay.value, lightParseFallback()) < threshold;
+}
+
+export function resolveDelpiBrandModeKey(
+  background: ComunicadoBackground | undefined,
+): DelpiBrandModeKey {
+  return isComunicadoBackgroundDark(background) ? "dark" : "light";
 }
 
 export function resolveDelpiBrandLogoVariant(
   background: ComunicadoBackground | undefined,
 ): DelpiBrandLogoVariant {
-  return isComunicadoBackgroundDark(background) ? "onDark" : "onLight";
+  return getDelpiBrandMode(resolveDelpiBrandModeKey(background)).logoVariant;
 }
 
 export function delpiBrandLogoUrl(variant: DelpiBrandLogoVariant): string {
@@ -88,12 +98,13 @@ type CustomLogo = {
 
 /**
  * Logo a pintar no palco: custom master se houver URL; senão brand Delpi
- * (onDark em fundo escuro, onLight em fundo claro) no canto inferior direito.
+ * no canto definido em ``delpiBrandTheme.json``.
  */
 export function resolveStageMasterLogo(args: {
   background: ComunicadoBackground | undefined;
   customLogo?: CustomLogo;
 }): StageMasterLogo {
+  const frameDefault = resolveDelpiBrandLogoFrame();
   const customUrl =
     typeof args.customLogo?.url === "string" ? args.customLogo.url.trim() : "";
   if (customUrl) {
@@ -101,10 +112,10 @@ export function resolveStageMasterLogo(args: {
     return {
       url: customUrl,
       frame: {
-        x: frame?.x ?? DELPI_BRAND_LOGO_FRAME.x,
-        y: frame?.y ?? DELPI_BRAND_LOGO_FRAME.y,
-        w: frame?.w ?? DELPI_BRAND_LOGO_FRAME.w,
-        h: frame?.h ?? DELPI_BRAND_LOGO_FRAME.h,
+        x: frame?.x ?? frameDefault.x,
+        y: frame?.y ?? frameDefault.y,
+        w: frame?.w ?? frameDefault.w,
+        h: frame?.h ?? frameDefault.h,
       },
       opacity:
         typeof args.customLogo?.opacity === "number"
@@ -116,8 +127,8 @@ export function resolveStageMasterLogo(args: {
   const variant = resolveDelpiBrandLogoVariant(args.background);
   return {
     url: delpiBrandLogoUrl(variant),
-    frame: { ...DELPI_BRAND_LOGO_FRAME },
-    opacity: DELPI_BRAND_LOGO_OPACITY,
+    frame: { ...frameDefault },
+    opacity: getDelpiBrandLogoConfig().opacity,
     source: "brand",
     variant,
   };

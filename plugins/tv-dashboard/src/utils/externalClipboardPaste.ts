@@ -2,6 +2,7 @@ import {
   createBlock,
   createCanvasTableBlock,
   inferCanvasTableCellFromText,
+  getDelpiBrandColors,
   type ComunicadoBlock,
 } from "@delpi/tv-dashboard-presentation";
 
@@ -12,6 +13,11 @@ import {
  */
 export const DELPI_TV_BLOCKS_CLIPBOARD_MARKER = "__DELPI_TV_BLOCKS_V1__";
 export const DELPI_TV_BLOCKS_CLIPBOARD_PREFIX = `${DELPI_TV_BLOCKS_CLIPBOARD_MARKER}\n`;
+
+const brandLight = getDelpiBrandColors("light");
+const PASTE_SHAPE_FALLBACK_FILL = brandLight.accentWash;
+const PASTE_SHAPE_FALLBACK_STROKE = brandLight.accentBorderSoft;
+const PASTE_SHAPE_TEXT_COLOR = brandLight.ink;
 
 export type ExternalPastePlan =
   | { kind: "internal-blocks"; blocks: ComunicadoBlock[]; sourceSlideId?: string | null }
@@ -144,9 +150,9 @@ export function blocksFromExternalHtml(html: string): ComunicadoBlock[] {
       shape.frame = offsetFrame(index, { x: 6, y: 10, w: 28, h: 20 });
       shape.style = {
         ...shape.style,
-        fill: bg ?? "#e8f4fc",
-        stroke: border ?? "#89c2e8",
-        color: "#0f172a",
+        fill: bg ?? PASTE_SHAPE_FALLBACK_FILL,
+        stroke: border ?? PASTE_SHAPE_FALLBACK_STROKE,
+        color: PASTE_SHAPE_TEXT_COLOR,
         fontSize: text.length > 80 ? 12 : 14,
       };
       blocks.push(shape);

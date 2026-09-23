@@ -6,6 +6,7 @@ import {
   resolveDelpiBrandLogoVariant,
   resolveStageMasterLogo,
 } from "./delpiBrandLogo";
+import { getDelpiBrandMode } from "./delpiBrandTheme";
 
 describe("delpiBrandLogo", () => {
   it("fundo escuro → onDark; claro → onLight", () => {
@@ -16,11 +17,12 @@ describe("delpiBrandLogo", () => {
   });
 
   it("gradiente Delpi escuro → onDark", () => {
+    const dark = getDelpiBrandMode("dark");
     expect(
       isComunicadoBackgroundDark({
         type: "gradient",
-        from: "#003866",
-        to: "#0d2840",
+        from: dark.colors.bgFrom,
+        to: dark.colors.bgTo,
         angle: 180,
       }),
     ).toBe(true);

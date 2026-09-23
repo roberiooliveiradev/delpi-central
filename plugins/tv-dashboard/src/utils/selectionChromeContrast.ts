@@ -9,6 +9,7 @@ import {
   rgbToHex,
 } from "@delpi/plugin-ui/index";
 import type { ComunicadoBackground } from "@delpi/tv-dashboard-presentation";
+import { getDelpiBrandAccent, getDelpiBrandColors } from "@delpi/tv-dashboard-presentation";
 
 export type SelectionChromeColors = {
   handleFill: string;
@@ -22,9 +23,9 @@ export type SelectionChromeColors = {
   parentHint: string;
 };
 
-const ACCENT_DEFAULT = "#089bdb";
-const LIGHT = "#ffffff";
-const DARK = "#0f172a";
+const ACCENT_DEFAULT = getDelpiBrandAccent();
+const LIGHT = getDelpiBrandColors("light").surface;
+const DARK = getDelpiBrandColors("dark").ink;
 const PARENT_HINT = "#94a3b8";
 /** Contraste mínimo WCAG aproximado para chrome de UI (não texto). */
 const MIN_CONTRAST = 3;

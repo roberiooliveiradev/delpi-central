@@ -25,6 +25,7 @@ import {
   geometryBoundingFrame,
 } from "./comunicadoShapeGeometry";
 import { simplifyPolyline, smoothCurveThroughPoints } from "./comunicadoFreeformPath";
+import { getDelpiBrandAccent } from "./delpiBrandTheme";
 
 export type LineDrawToolKind = ComunicadoLineToolId;
 
@@ -164,7 +165,7 @@ export function createDrawnLineBlock(params: {
     frame: geometryBoundingFrame({ primitive: "line", points: routePoints }),
     style: {
       zIndex: params.zIndex ?? 2,
-      stroke: "#089bdb",
+      stroke: getDelpiBrandAccent(),
       strokeWidth: 3,
       fill: "transparent",
     },
@@ -215,7 +216,7 @@ export function createFreeformPathBlock(params: {
     frame: geometryBoundingFrame({ primitive: "line", points }),
     style: {
       zIndex: params.zIndex ?? 2,
-      stroke: "#089bdb",
+      stroke: getDelpiBrandAccent(),
       strokeWidth: 3,
       fill: "transparent",
     },

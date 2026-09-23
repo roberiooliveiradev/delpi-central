@@ -3,6 +3,7 @@ import { hasRichComunicado, type ComunicadoScreenDataLike } from "./comunicadoHe
 import { formatNumber, formatPct } from "./nativeFormat";
 import { RichComunicadoStage } from "./RichComunicadoStage";
 import type { ComunicadoBackground } from "./comunicadoTypes";
+import { getDelpiBrandAccent } from "./delpiBrandTheme";
 import "./native-screens.css";
 
 export type KpiScreenData = {
@@ -50,10 +51,17 @@ function normalizeSeriesPoints(
   return points;
 }
 
+const NATIVE_ACCENT = getDelpiBrandAccent();
+
 const NATIVE_SERIES_CHART_PARTS = {
   chartArea: { style: { fill: "transparent", stroke: "transparent", borderRadius: 0 } },
-  plotArea: { style: { fill: "transparent", stroke: "color-mix(in srgb, #089bdb 28%, transparent)" } },
-  "series:0": { style: { stroke: "#089bdb", strokeWidth: 2.5 } },
+  plotArea: {
+    style: {
+      fill: "transparent",
+      stroke: `color-mix(in srgb, ${NATIVE_ACCENT} 28%, transparent)`,
+    },
+  },
+  "series:0": { style: { stroke: NATIVE_ACCENT, strokeWidth: 2.5 } },
   title: { visible: false },
   legend: { visible: false },
   dataTable: { visible: false },

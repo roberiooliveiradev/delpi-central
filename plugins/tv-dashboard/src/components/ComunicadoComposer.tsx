@@ -25,6 +25,7 @@ import {
   RichComunicadoMasterLogo,
   staticLabelFromTextBoundBlock,
   useComunicadoGoogleFonts,
+  getDelpiBrandAccent,
   type ComunicadoBlock,
 } from "@delpi/tv-dashboard-presentation";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
@@ -1627,7 +1628,7 @@ export function ComunicadoComposerCanvas() {
               <polyline
                 points={drawPreview.points.map((point) => `${point.x},${point.y}`).join(" ")}
                 fill="none"
-                stroke="#089bdb"
+                stroke={getDelpiBrandAccent()}
                 strokeWidth={0.35}
                 strokeLinecap="round"
                 strokeLinejoin="round"

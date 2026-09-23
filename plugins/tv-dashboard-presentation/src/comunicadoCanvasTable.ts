@@ -18,6 +18,7 @@ import type {
 } from "./comunicadoTypes";
 import { normalizeContentRuns, shouldPersistContentRuns } from "./comunicadoContentRuns";
 import { normalizeTextDataRef } from "./textViewProjection";
+import { getDelpiBrandAccent, getDelpiBrandColors } from "./delpiBrandTheme";
 
 export const CANVAS_TABLE_MIN_ROWS = 1;
 export const CANVAS_TABLE_MAX_ROWS = 20;
@@ -442,15 +443,17 @@ export function resolveCanvasTableHostStyle(
   const opts = mergeCanvasTableOptions(block.canvasTableOptions);
   const fontSize = resolveCanvasTableFontSize(block);
   const style = block.style ?? {};
+  const brand = getDelpiBrandColors("light");
+  const accent = getDelpiBrandAccent();
   const headerBg =
     opts.headerStyle === "accent"
-      ? "#089bdb"
+      ? accent
       : opts.headerStyle === "none"
         ? "transparent"
-        : "#e2e8f0";
-  const headerColor = opts.headerStyle === "accent" ? "#ffffff" : style.color ?? "#0f172a";
+        : brand.surfaceMuted;
+  const headerColor = opts.headerStyle === "accent" ? brand.card : style.color ?? brand.ink;
   const border =
-    opts.borderStyle === "none" ? "transparent" : style.borderColor ?? "#94a3b8";
+    opts.borderStyle === "none" ? "transparent" : style.borderColor ?? brand.borderMuted;
   return {
     color: style.color,
     fontSize: `${fontSize}px`,

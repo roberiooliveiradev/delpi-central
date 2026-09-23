@@ -43,6 +43,11 @@ def test_brand_and_part_chrome_tokens():
     brand = tokens["brand"]
     assert brand["card"] == "#ffffff"
     assert brand["accent"] == "#089bdb"
+    assert brand["modes"]["dark"]["accent"] == "#089bdb"
+    assert brand["modes"]["light"]["onBg"] == "#0f172a"
+    assert brand["modes"]["dark"]["navy"] == "#003866"
+    assert brand["modes"]["light"]["accentWash"] == "#e8f4fc"
+    assert brand["modes"]["dark"]["borderMuted"] == "#94a3b8"
     assert "partChrome" in tokens
     assert tokens["partChrome"]["kpi"]["valueMinFontSize"]["row"] >= 40
     assert "chartTypeHints" in tokens

@@ -1,4 +1,9 @@
 import type { ComunicadoBackground, ComunicadoConfig } from "@delpi/tv-dashboard-presentation";
+import {
+  getDelpiBrandMode,
+  getDelpiBrandTheme,
+  type DelpiBrandModeKey,
+} from "@delpi/tv-dashboard-presentation";
 
 export type ComunicadoSlideTheme = {
   key: string;
@@ -7,17 +12,33 @@ export type ComunicadoSlideTheme = {
   textColor: string;
   accent: string;
   shapeStroke: string;
+  /** Modo de marca Delpi quando aplicável. */
+  brandMode?: DelpiBrandModeKey;
 };
 
-export const COMUNICADO_SLIDE_THEMES: ComunicadoSlideTheme[] = [
-  {
-    key: "delpi",
-    label: "DELPI",
-    background: { type: "gradient", from: "#05070a", to: "#0d2840", angle: 180 },
-    textColor: "#ffffff",
-    accent: "#089bdb",
-    shapeStroke: "#e2e8f0",
-  },
+function themeFromBrandBinding(binding: {
+  key: string;
+  label: string;
+  mode: DelpiBrandModeKey;
+}): ComunicadoSlideTheme {
+  const mode = getDelpiBrandMode(binding.mode);
+  return {
+    key: binding.key,
+    label: binding.label,
+    background: mode.background as ComunicadoBackground,
+    textColor: mode.colors.onBg,
+    accent: mode.colors.accent,
+    shapeStroke: mode.colors.shapeStroke,
+    brandMode: binding.mode,
+  };
+}
+
+const brandThemes: ComunicadoSlideTheme[] = getDelpiBrandTheme().slideThemeBindings.map(
+  themeFromBrandBinding,
+);
+
+/** Temas não-Delpi (galeria). Delpi claro/escuro vêm do JSON canônico. */
+const EXTRA_SLIDE_THEMES: ComunicadoSlideTheme[] = [
   {
     key: "midnight",
     label: "Meia-noite",
@@ -50,14 +71,11 @@ export const COMUNICADO_SLIDE_THEMES: ComunicadoSlideTheme[] = [
     accent: "#f87171",
     shapeStroke: "#fecaca",
   },
-  {
-    key: "light",
-    label: "Claro",
-    background: { type: "color", value: "#f8fafc" },
-    textColor: "#0f172a",
-    accent: "#089bdb",
-    shapeStroke: "#334155",
-  },
+];
+
+export const COMUNICADO_SLIDE_THEMES: ComunicadoSlideTheme[] = [
+  ...brandThemes,
+  ...EXTRA_SLIDE_THEMES,
 ];
 
 export function applyComunicadoSlideTheme(

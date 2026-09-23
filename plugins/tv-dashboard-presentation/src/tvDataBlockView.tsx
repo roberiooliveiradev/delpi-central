@@ -12,6 +12,7 @@ import {
   TvDataKpiWidget,
   TvDataLineChartWidget,
 } from "./tvDataChartWidgets";
+import { getDelpiBrandAccent, getDelpiBrandColors } from "./delpiBrandTheme";
 
 type Props = {
   block: ComunicadoDataBlock;
@@ -20,14 +21,15 @@ type Props = {
 };
 
 /** Default Delpi banded — templates claros / data_table sem receita explícita. */
+const brandLight = getDelpiBrandColors("light");
 const DEFAULT_DATA_TABLE_BANDED = {
   showBorders: true,
   zebraStripe: true,
-  headerBg: "#089bdb",
-  headerTextColor: "#ffffff",
-  cellBg: "#ffffff",
-  cellTextColor: "#0f172a",
-  borderColor: "#e2e8f0",
+  headerBg: getDelpiBrandAccent(),
+  headerTextColor: brandLight.card,
+  cellBg: brandLight.card,
+  cellTextColor: brandLight.ink,
+  borderColor: brandLight.surfaceMuted,
 } as const;
 
 export function TvDataBlockView({ block, interactive = false, loading = false }: Props) {

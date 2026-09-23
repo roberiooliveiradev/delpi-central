@@ -7,6 +7,7 @@ import type {
 } from "@delpi/tv-dashboard-presentation";
 import {
   clearTablePartThemePaint,
+  getDelpiBrandColors,
   mergeComunicadoTableOptions,
   mergeTablePartsWithOptions,
 } from "@delpi/tv-dashboard-presentation";
@@ -20,19 +21,22 @@ export type TableStyleRecipe = {
   options: Partial<ComunicadoTableOptions>;
 };
 
+const brandDark = getDelpiBrandColors("dark");
+const brandLight = getDelpiBrandColors("light");
+
 const DELPI_THEME = {
-  blue: "#089bdb",
-  navy: "#003866",
+  blue: brandDark.accent,
+  navy: brandDark.navy,
   teal: "#0f766e",
   orange: "#f2a100",
   purple: "#7e14ff",
   green: "#2e7d32",
   slate: "#44546a",
-  ink: "#0f172a",
+  ink: brandDark.ink,
 } as const;
 
 const INK = DELPI_THEME.ink;
-const ON_DARK = "#f8fafc";
+const ON_DARK = brandLight.surface;
 
 /** Fundo transparente (minimal) — contraste como sobre branco. */
 function contrastBg(background: string | undefined, fallback: string): string {

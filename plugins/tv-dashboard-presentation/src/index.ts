@@ -115,10 +115,26 @@ export {
   delpiBrandLogoUrl,
   isComunicadoBackgroundDark,
   resolveDelpiBrandLogoVariant,
+  resolveDelpiBrandModeKey,
   resolveStageMasterLogo,
   type DelpiBrandLogoVariant,
   type StageMasterLogo,
 } from "./delpiBrandLogo";
+export {
+  delpiBrandTokensForRecipes,
+  getDelpiBrandAccent,
+  getDelpiBrandColors,
+  getDelpiBrandLuminanceThreshold,
+  getDelpiBrandLogoConfig,
+  getDelpiBrandMode,
+  getDelpiBrandTheme,
+  resolveDelpiBrandLogoFrame,
+  type DelpiBrandColors,
+  type DelpiBrandLogoConfig,
+  type DelpiBrandMode,
+  type DelpiBrandModeKey,
+  type DelpiBrandThemeDocument,
+} from "./delpiBrandTheme";
 export type { DesignViewportFitMode, DesignViewportBleedSize } from "./DesignViewportStage";
 export {
   resolvePresentationFitMode,

@@ -2,6 +2,11 @@ import {
   DECK_THEME_DARK,
   DECK_THEME_LIGHT,
 } from "@delpi/plugin-ui/index";
+import {
+  getDelpiBrandAccent,
+  getDelpiBrandColors,
+  getDelpiBrandMode,
+} from "@delpi/tv-dashboard-presentation";
 import type { ComunicadoChartOptions } from "@delpi/tv-dashboard-presentation";
 
 /** Paleta de série (swatches) — Alterar Cores. */
@@ -24,12 +29,15 @@ export type ChartStyleRecipe = {
   patch: Partial<ComunicadoChartOptions>;
 };
 
+const delpiDark = getDelpiBrandMode("dark");
+const delpiLight = getDelpiBrandColors("light");
+
 export const CHART_COLOR_PALETTES: ChartColorPalette[] = [
   {
     id: "delpi-blue",
     label: "Azul Delpi",
-    seriesColor: "#089bdb",
-    colors: ["#089bdb", "#47bfff", "#003866", "#7dd3fc"],
+    seriesColor: delpiDark.colors.accent,
+    colors: [...delpiDark.seriesPalette],
     kind: "categorical",
   },
   {
@@ -49,8 +57,13 @@ export const CHART_COLOR_PALETTES: ChartColorPalette[] = [
   {
     id: "navy",
     label: "Marinho",
-    seriesColor: "#003866",
-    colors: ["#003866", "#1e40af", "#089bdb", "#93c5fd"],
+    seriesColor: delpiDark.colors.navy,
+    colors: [
+      delpiDark.colors.navy,
+      "#1e40af",
+      delpiDark.colors.accent,
+      delpiLight.accentMuted,
+    ],
     kind: "categorical",
   },
   {
@@ -85,7 +98,7 @@ export const CHART_COLOR_PALETTES: ChartColorPalette[] = [
     id: "rag-good-first",
     label: "Melhor → pior",
     seriesColor: "#15803d",
-    colors: ["#15803d", "#089bdb", "#eab308", "#f97316", "#be123c"],
+    colors: ["#15803d", getDelpiBrandAccent(), "#eab308", "#f97316", "#be123c"],
     kind: "semantic",
     hint: "1ª categoria/fatia boa; última ruim (ordem do índice).",
   },
@@ -93,7 +106,7 @@ export const CHART_COLOR_PALETTES: ChartColorPalette[] = [
     id: "rag-bad-first",
     label: "Pior → melhor",
     seriesColor: "#be123c",
-    colors: ["#be123c", "#f97316", "#eab308", "#089bdb", "#15803d"],
+    colors: ["#be123c", "#f97316", "#eab308", getDelpiBrandAccent(), "#15803d"],
     kind: "semantic",
     hint: "1ª categoria/fatia ruim; última boa (útil em rankings do pior).",
   },
