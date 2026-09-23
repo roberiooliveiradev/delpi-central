@@ -30,11 +30,25 @@ def test_get_for_user_playlist_filters():
     assert store.get_for_user_playlist("u1", "p2") is None
 
 
-def test_ttl_expires():
+def test_ttl_expires_after_grace():
+    import time
+
     store = EditorFocusStore(ttl_seconds=30)
     store.record(user_id="u1", playlist_id="p1", slide_id="s1")
     with store._lock:
-        store._by_user["u1"]["_mono"] = 0.0  # force stale
+        store._by_user["u1"]["_mono"] = time.monotonic() - 35
+    focus = store.get_for_user("u1")
+    assert focus is not None
+    assert focus.get("stale") is True
+
+
+def test_ttl_deleted_after_double_grace():
+    store = EditorFocusStore(ttl_seconds=30)
+    store.record(user_id="u1", playlist_id="p1", slide_id="s1")
+    with store._lock:
+        import time
+
+        store._by_user["u1"]["_mono"] = time.monotonic() - 1000
     assert store.get_for_user("u1") is None
 
 

@@ -150,9 +150,46 @@ def test_auto_layout_respects_informed():
     )
 
 
+def test_hierarchy_inverted_kpi_title_ge_value():
+    cfg = {
+        "blocks": [
+            {
+                "id": "k1",
+                "type": "kpi_view",
+                "frame": {"x": 10, "y": 10, "w": 30, "h": 30},
+                "kpiParts": {
+                    "title": {"style": {"fontSize": 48}},
+                    "value": {"style": {"fontSize": 40}},
+                },
+            }
+        ]
+    }
+    issues = SlideLayoutQualityService.collect_native_layout_issues(cfg)
+    assert any(i.startswith("hierarchy_inverted:") for i in issues)
+
+
+def test_post_create_layout_chart_table_from_recipe():
+    cfg = {
+        "blocks": [
+            {
+                "id": "c1",
+                "type": "chart_view",
+                "frame": {"x": 18, "y": 22, "w": 36, "h": 42},
+            },
+            {
+                "id": "t1",
+                "type": "table_view",
+                "frame": {"x": 18, "y": 22, "w": 36, "h": 42},
+            },
+        ]
+    }
+    assert SlideAutoLayoutService.apply_post_create_layout(cfg) is True
+    assert cfg["blocks"][0]["frame"] != cfg["blocks"][1]["frame"]
+
+
 def test_directives_designer_and_focus():
     d = VistaAgentIntelligenceService.agent_directives()
-    assert d["version"] == "2026.09.22.8"
+    assert d["version"] == VistaAgentIntelligenceService.version()
     assert d["editor_focus"]["principle"] == "PREFER_LIVE_EDITOR_FOCUS"
     assert d["slide_design"]["principle"] == "TYPED_LAYOUT_BEFORE_FREEFORM"
     assert "DESIGN_REFINE" in d["modes"]

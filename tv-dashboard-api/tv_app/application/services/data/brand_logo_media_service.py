@@ -52,6 +52,10 @@ class BrandLogoMediaService:
                 found["onLight"] = asset
         return found
 
+    def list_playlist_assets(self, playlist_id: str | UUID) -> list[dict[str, Any]]:
+        """Full playlist media library rows for VISTA mediaInventory.assets."""
+        return self._repo.list_for_playlist(UUID(str(playlist_id)))
+
     def ensure_playlist_assets(
         self,
         playlist_id: str | UUID,

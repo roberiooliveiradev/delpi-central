@@ -825,6 +825,58 @@
                             "title": {
                               "type": "string"
                             },
+                            "durationSec": {
+                              "type": "number"
+                            },
+                            "background": {
+                              "type": "object",
+                              "description": "Slide background. Canonical color: {type:color, value:#hex}.",
+                              "properties": {
+                                "type": {
+                                  "type": "string",
+                                  "enum": [
+                                    "color",
+                                    "gradient",
+                                    "image"
+                                  ]
+                                },
+                                "value": {
+                                  "type": "string"
+                                },
+                                "from": {
+                                  "type": "string"
+                                },
+                                "to": {
+                                  "type": "string"
+                                },
+                                "angle": {
+                                  "type": "number"
+                                },
+                                "assetId": {
+                                  "type": "string"
+                                },
+                                "stops": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "required": [
+                                      "color"
+                                    ],
+                                    "properties": {
+                                      "color": {
+                                        "type": "string"
+                                      },
+                                      "position": {
+                                        "type": "number"
+                                      },
+                                      "opacity": {
+                                        "type": "number"
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            },
                             "as": {
                               "type": "string",
                               "description": "Local alias for the resource this op produces (compound plans)."
@@ -871,6 +923,41 @@
                             }
                           },
                           "title": "add_slide_from_preset"
+                        },
+                        {
+                          "type": "object",
+                          "required": [
+                            "op"
+                          ],
+                          "properties": {
+                            "op": {
+                              "const": "apply_published_slide_template",
+                              "type": "string"
+                            },
+                            "templateId": {
+                              "type": "string"
+                            },
+                            "templateKey": {
+                              "type": "string",
+                              "description": "Stable key e.g. system-estoque-top5 or system-oee-overview."
+                            },
+                            "slug": {
+                              "type": "string"
+                            },
+                            "playlistRef": {
+                              "type": "string",
+                              "description": "Alias or authoritative playlist UUID. Omit to use current playlist slot."
+                            },
+                            "slideRef": {
+                              "type": "string",
+                              "description": "Alias or authoritative slide UUID. Omit to use current slide slot."
+                            }
+                          },
+                          "example": {
+                            "op": "apply_published_slide_template",
+                            "templateKey": "system-oee-overview"
+                          },
+                          "title": "apply_published_slide_template"
                         },
                         {
                           "type": "object",
@@ -1009,6 +1096,39 @@
                         {
                           "type": "object",
                           "required": [
+                            "op"
+                          ],
+                          "example": {
+                            "op": "ensure_brand_logo_on_slide"
+                          },
+                          "properties": {
+                            "op": {
+                              "const": "ensure_brand_logo_on_slide",
+                              "type": "string"
+                            },
+                            "variant": {
+                              "type": "string",
+                              "enum": [
+                                "onDark",
+                                "onLight",
+                                "auto"
+                              ],
+                              "description": "Logo variant. auto = derive from brandThemeKey / background."
+                            },
+                            "playlistRef": {
+                              "type": "string",
+                              "description": "Alias or authoritative playlist UUID. Omit to use current playlist slot."
+                            },
+                            "slideRef": {
+                              "type": "string",
+                              "description": "Alias or authoritative slide UUID. Omit to use current slide slot."
+                            }
+                          },
+                          "title": "ensure_brand_logo_on_slide"
+                        },
+                        {
+                          "type": "object",
+                          "required": [
                             "op",
                             "sectionId"
                           ],
@@ -1058,7 +1178,7 @@
                               "type": "object",
                               "minProperties": 1,
                               "additionalProperties": false,
-                              "description": "Whitelist only: background, dataFilters, speakerNotes, groupTransforms. Illegal keys are rejected.",
+                              "description": "Whitelist only: background, dataFilters, speakerNotes, groupTransforms, brandThemeKey. Illegal keys are rejected.",
                               "properties": {
                                 "background": {
                                   "type": "object",
@@ -1131,6 +1251,10 @@
                                 },
                                 "speakerNotes": {
                                   "type": "string"
+                                },
+                                "brandThemeKey": {
+                                  "type": "string",
+                                  "description": "Delpi color theme key that enables institutional logo overlay (delpi-dark | delpi-light). Empty string clears."
                                 },
                                 "groupTransforms": {
                                   "type": "object",
@@ -1223,6 +1347,41 @@
                             }
                           },
                           "title": "patch_playlist_data_defaults"
+                        },
+                        {
+                          "type": "object",
+                          "required": [
+                            "op",
+                            "scope"
+                          ],
+                          "properties": {
+                            "op": {
+                              "const": "re_layer_playlist_filters",
+                              "type": "string"
+                            },
+                            "scope": {
+                              "type": "string",
+                              "enum": [
+                                "playlist",
+                                "slide"
+                              ]
+                            },
+                            "keys": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "playlistRef": {
+                              "type": "string",
+                              "description": "Alias or authoritative playlist UUID. Omit to use current playlist slot."
+                            },
+                            "slideRef": {
+                              "type": "string",
+                              "description": "Alias or authoritative slide UUID. Omit to use current slide slot."
+                            }
+                          },
+                          "title": "re_layer_playlist_filters"
                         },
                         {
                           "type": "object",
@@ -2257,7 +2416,7 @@
                     "name": "Testando a VISTA"
                   }
                 ],
-                "catalogVersion": "2026.09.22.ready3",
+                "catalogVersion": "2026.09.23.vista-ready",
                 "commit_now": true,
                 "confirmation": {
                   "confirmed": true

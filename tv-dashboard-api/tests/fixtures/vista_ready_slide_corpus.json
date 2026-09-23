@@ -1,0 +1,121 @@
+{
+  "version": "2026.09.23",
+  "notes": "Structural gate markers aligned to vista-ready-slide-eval-corpus.md C15–C31. FAIL = pytest red.",
+  "cases": {
+    "C15": {
+      "nl": "filtros período/filial no slide",
+      "markers": ["TV_FILTER_STRIP", "filterDigest", "dataFilters"],
+      "topic": "filter_layering_slide"
+    },
+    "C16": {
+      "nl": "defaults da programação",
+      "markers": ["patch_playlist_data_defaults", "filterDigest"],
+      "topic": "filter_layering_playlist"
+    },
+    "C17": {
+      "nl": "comparação categórica",
+      "markers": ["TV_KPI_PLUS_CHART_BAR", "chartTypeHints"],
+      "topic": "chartType_bar"
+    },
+    "C18": {
+      "nl": "ajuste KPI sem slide novo",
+      "markers": ["layoutDigest", "LAYOUT_PERCEPTION"],
+      "topic": "layout_perception"
+    },
+    "C19": {
+      "nl": "melhore hierarquia com prévia",
+      "markers": ["includePreview", "previewAssetPaste", "PRIMARY_DRIVES_DEPENDENTS"],
+      "topic": "design_refine_preview"
+    },
+    "C20": {
+      "nl": "negative: inventar frames",
+      "markers": ["layoutDigest", "anti_patterns"],
+      "topic": "layout_negative"
+    },
+    "C21": {
+      "nl": "filial/período padrão da programação",
+      "markers": ["patch_playlist_data_defaults", "filter_layering"],
+      "topic": "filter_programming"
+    },
+    "C22": {
+      "nl": "período só deste slide",
+      "markers": ["TV_FILTER_STRIP", "dataFilters"],
+      "topic": "filter_slide_scope"
+    },
+    "C23": {
+      "nl": "TOP N só numa tabela",
+      "markers": ["top_limit", "filter_layering"],
+      "topic": "filter_source_only"
+    },
+    "C24": {
+      "nl": "negative: params vazios / datas absolutas",
+      "markers": ["write_quality", "filter_layering"],
+      "topic": "filter_dates_negative"
+    },
+    "C25": {
+      "nl": "melhore/revise esta programação",
+      "markers": ["continuous_review", "filterDigest"],
+      "topic": "continuous_review"
+    },
+    "C26": {
+      "nl": "corrija filtros duplicados nas fontes",
+      "markers": ["re_layer_playlist_filters", "TV_RELAYER_FILTERS", "filterDigest"],
+      "topic": "filter_relayer"
+    },
+    "C27": {
+      "nl": "breakdown por filial / bar",
+      "markers": ["TV_KPI_PLUS_CHART_BAR", "visual_selection"],
+      "topic": "chartType_bar"
+    },
+    "C28": {
+      "nl": "composição status pie",
+      "markers": ["TV_KPI_PLUS_CHART_PIE", "visual_selection"],
+      "topic": "chartType_pie"
+    },
+    "C29": {
+      "nl": "ranking TOP N table",
+      "markers": ["TV_TABLE_FOCUS", "visual_selection"],
+      "topic": "chartType_table"
+    },
+    "C30": {
+      "nl": "negative: pie em série diária",
+      "markers": ["chartTypeHints", "forbidden"],
+      "topic": "chartType_negative"
+    },
+    "C31": {
+      "nl": "melhore o visual KPI+área",
+      "markers": ["DESIGN_REFINE", "visual_selection", "THEME_DELPI"],
+      "topic": "design_refine_variety"
+    },
+    "G_LOGO_THEME": {
+      "nl": "logo + tema claro/escuro",
+      "markers": ["brandLogo", "THEME_DELPI", "THEME_DELPI_LIGHT", "mediaInventory"],
+      "topic": "logo_theme"
+    },
+    "G_AUTO_LAYOUT": {
+      "nl": "auto-layout pós-criação",
+      "markers": ["apply_post_create_layout", "hierarchy_inverted", "PRIMARY_DRIVES_DEPENDENTS"],
+      "topic": "auto_layout_verify"
+    },
+    "G_BLANK_SLIDE": {
+      "nl": "slide com fundo e duração",
+      "markers": ["add_blank_slide", "durationSec", "background"],
+      "topic": "blank_slide_atomic"
+    },
+    "G_TEMPLATE": {
+      "nl": "aplicar template TOP5/OEE",
+      "markers": ["apply_published_slide_template", "system-estoque-top5", "system-oee-overview"],
+      "topic": "published_templates"
+    },
+    "G_EDITOR_FOCUS": {
+      "nl": "este bloco/slide multi-turn",
+      "markers": ["editorFocus", "stale", "heartbeat"],
+      "topic": "editor_focus"
+    },
+    "G_MEDIA_INVENTORY": {
+      "nl": "inventário completo de mídia",
+      "markers": ["mediaInventory", "assets", "uploadCapability"],
+      "topic": "media_inventory"
+    }
+  }
+}

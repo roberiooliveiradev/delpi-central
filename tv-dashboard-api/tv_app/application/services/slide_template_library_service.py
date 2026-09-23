@@ -89,6 +89,13 @@ class SlideTemplateLibraryService:
             raise SlideTemplateNotFoundError(str(template_id))
         return item
 
+    def get_by_key(self, key: str) -> dict[str, Any] | None:
+        """Lookup by stable template key (system seeds / VISTA templateKey)."""
+        raw = str(key or "").strip()
+        if not raw:
+            return None
+        return self._repo.get_by_key(raw)
+
     def create(
         self,
         *,

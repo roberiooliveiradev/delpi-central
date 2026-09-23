@@ -120,16 +120,21 @@ Owner-local services (not new GPT Actions):
 | Layout/theme recipes | `PresentationRecipeService` + `presentation_recipes.json` (incl. `TV_KPI_SERIES_TABLE`) | **PROVEN** |
 | Compound ready slide | `agent_directives.compound_slide` + `write_quality` | **PROVEN** |
 | Layout digest (geometry) | `LayoutDigestService` → `gpt_get_playlist_context.layoutDigest` | **PROVEN** |
-| Slide schematic preview | `SlidePreviewRenderService` + signed URL via `includePreview` | **PROVEN** (Action Surface Gate: **no** 9th Action) |
+| Filter digest (layering) | `FilterDigestService` → `filterDigest` + op `re_layer_playlist_filters` / recipe `TV_RELAYER_FILTERS` | **PROVEN** |
+| Slide schematic preview | `SlidePreviewRenderService` + signed URL via `includePreview` (+ INFORMED `assetId` paste) | **PROVEN** (Action Surface Gate: **no** 9th Action) |
+| Auto-layout / hierarchy VERIFY | `SlideAutoLayoutService.apply_post_create_layout` + `hierarchy_inverted` in layout quality | **PROVEN** |
+| `add_blank_slide` atomic props | `durationSec` + `background` on create | **PROVEN** |
+| Published templates via VISTA | `apply_published_slide_template` + seed `system-estoque-top5` / `system-oee-overview` | **PROVEN** |
+| Editor focus reliability | TTL + grace `stale` + MFE heartbeat 30s | **PROVEN** |
 | Layout perception directives | `agent_directives.layout_perception` | **PROVEN** |
-| Filter layering / slide craft | `agent_directives.filter_layering` + `slide_craft` | **PROVEN** directives |
+| Filter layering / slide craft | `agent_directives.filter_layering` + `slide_craft` | **PROVEN** directives + digest/op |
 | Visual selection (shape→visual) | `agent_directives.visual_selection` + `chartTypeHints` | **PROVEN** directives |
 | Continuous review of existing | `agent_directives.continuous_review` | **PROVEN** directives |
 | Playlist clarification / curation | `object_resolution` + `playlist_curation` | **PROVEN** directives |
 | Branch / SI goals | `branch_scope` + `si_goals` | **PROVEN** directives |
-| Media | `assetId` only; brand logos via `ensure_brand_logo_on_slide` | **PROVEN** brand seed; generic upload **TARGET** |
+| Media | `assetId` only; `mediaInventory.assets[]` + brand logos via `ensure_brand_logo_on_slide` | **PROVEN** inventory/seed; generic upload **TARGET** |
 | MCP / DÉLIA TV | `mcp_delia` | **TARGET** (same PresentationMutation) |
-| Eval corpus | `docs/gpt-actions/vista-ready-slide-eval-corpus.md` | **PROVEN** checklist |
+| Eval corpus | `docs/gpt-actions/vista-ready-slide-eval-corpus.md` + `tests/fixtures/vista_ready_slide_corpus.json` | **PROVEN** gate (`test_vista_ready_slide_corpus_gate.py`) |
 
 DTOs (internal): `JoinPlanProposal`, `FormatHint`, `PresentationRecipeId` in `domain/presentation_intelligence`.
 
@@ -152,7 +157,7 @@ Typed vs heuristic:
 |---|---|---|
 | gpt_get_catalog | READ | discovery |
 | gpt_list_playlists | READ | playlist entity |
-| gpt_get_playlist_context | READ | playlist entity + `layoutDigest`; optional `includePreview` → `slidePreview` |
+| gpt_get_playlist_context | READ | playlist entity + `layoutDigest` + `filterDigest` + `mediaInventory`; optional `includePreview` → `slidePreview` |
 | gpt_search_data_routes | ANALYSIS | data discovery |
 | gpt_preview_data_block | ANALYSIS | data preview |
 | gpt_suggest_change | WORKFLOW PREPARE | NL → typed ops |

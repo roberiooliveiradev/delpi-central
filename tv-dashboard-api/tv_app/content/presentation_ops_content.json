@@ -1,5 +1,5 @@
 {
-  "catalogVersion": "2026.09.22.ready3",
+  "catalogVersion": "2026.09.23.vista-ready",
   "sideEffectHintCatalog": [
     "refreshFilmstrip",
     "replaceNativeConfig",
@@ -1908,6 +1908,58 @@
           },
           "title": {
             "type": "string"
+          },
+          "durationSec": {
+            "type": "number"
+          },
+          "background": {
+            "type": "object",
+            "description": "Slide background. Canonical color: {type:color, value:#hex}.",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "color",
+                  "gradient",
+                  "image"
+                ]
+              },
+              "value": {
+                "type": "string"
+              },
+              "from": {
+                "type": "string"
+              },
+              "to": {
+                "type": "string"
+              },
+              "angle": {
+                "type": "number"
+              },
+              "assetId": {
+                "type": "string"
+              },
+              "stops": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "color"
+                  ],
+                  "properties": {
+                    "color": {
+                      "type": "string"
+                    },
+                    "position": {
+                      "type": "number"
+                    },
+                    "opacity": {
+                      "type": "number"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       },
@@ -2239,6 +2291,85 @@
       "consumes": [
         "playlist"
       ]
+    },
+    "re_layer_playlist_filters": {
+      "requiresPlaylist": true,
+      "requiresSlide": true,
+      "risk": "mutation",
+      "confirmationPolicy": "direct",
+      "sideEffectHints": [
+        "replaceNativeConfig",
+        "refreshFilmstrip"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "op",
+          "scope"
+        ],
+        "properties": {
+          "op": {
+            "const": "re_layer_playlist_filters"
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "playlist",
+              "slide"
+            ]
+          },
+          "keys": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "produces": [],
+      "consumes": [
+        "playlist",
+        "slide"
+      ]
+    },
+    "apply_published_slide_template": {
+      "requiresPlaylist": true,
+      "requiresSlide": true,
+      "risk": "mutation",
+      "confirmationPolicy": "direct",
+      "sideEffectHints": [
+        "replaceNativeConfig"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "op"
+        ],
+        "properties": {
+          "op": {
+            "const": "apply_published_slide_template"
+          },
+          "templateId": {
+            "type": "string"
+          },
+          "templateKey": {
+            "type": "string",
+            "description": "Stable key e.g. system-estoque-top5 or system-oee-overview."
+          },
+          "slug": {
+            "type": "string"
+          }
+        },
+        "example": {
+          "op": "apply_published_slide_template",
+          "templateKey": "system-oee-overview"
+        }
+      },
+      "produces": [],
+      "consumes": [
+        "playlist",
+        "slide"
+      ]
     }
   },
   "capabilities": [
@@ -2273,9 +2404,7 @@
         {
           "op": "upsert_data_source",
           "operationId": "{{operationId}}",
-          "params": {
-            "dateRangePreset": "this_month"
-          },
+          "params": {},
           "blockId": "{{newDataSourceId}}",
           "displayMode": "kpi",
           "label": "{{routeLabel}}"
@@ -2364,9 +2493,7 @@
         {
           "op": "upsert_data_source",
           "operationId": "{{operationId}}",
-          "params": {
-            "dateRangePreset": "this_month"
-          },
+          "params": {},
           "blockId": "{{newDataSourceId}}",
           "displayMode": "chart",
           "label": "{{routeLabel}}"
@@ -2426,9 +2553,7 @@
         {
           "op": "upsert_data_source",
           "operationId": "{{operationId}}",
-          "params": {
-            "dateRangePreset": "this_month"
-          },
+          "params": {},
           "blockId": "{{newDataSourceId}}",
           "displayMode": "table",
           "label": "{{routeLabel}}"
@@ -3047,6 +3172,40 @@
       "payloadTemplate": {
         "op": "patch_playlist_data_defaults",
         "dataDefaults": {}
+      }
+    },
+    {
+      "key": "re_layer_playlist_filters",
+      "op": "re_layer_playlist_filters",
+      "whenToUse": "Promover filtros duplicados das fontes para dataDefaults (programação) ou dataFilters (slide).",
+      "contentMarkers": [
+        "reorganizar filtros",
+        "relayer filtros",
+        "filtros duplicados",
+        "camada errada",
+        "filter digest"
+      ],
+      "excludeMarkers": [],
+      "actionTermSet": "mutation",
+      "payloadTemplate": {
+        "op": "re_layer_playlist_filters",
+        "scope": "slide"
+      }
+    },
+    {
+      "key": "apply_published_slide_template",
+      "op": "apply_published_slide_template",
+      "whenToUse": "Substituir nativeConfig do slide por template publicado da biblioteca.",
+      "contentMarkers": [
+        "template publicado",
+        "aplicar template",
+        "modelo de slide"
+      ],
+      "excludeMarkers": [],
+      "actionTermSet": "mutation",
+      "payloadTemplate": {
+        "op": "apply_published_slide_template",
+        "templateKey": "{{templateKey}}"
       }
     }
   ]

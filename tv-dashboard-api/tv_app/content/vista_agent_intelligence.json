@@ -25,51 +25,91 @@
     "decision_table": [
       {
         "when": "1 número de saúde / snapshot",
-        "prefer": ["kpi_view", "gauge se há meta tipada"]
+        "prefer": [
+          "kpi_view",
+          "gauge se há meta tipada"
+        ]
       },
       {
         "when": "tendência temporal / série",
-        "prefer": ["area (default TV)", "line se pedido explícito", "combo se multi-série com unidades distintas"]
+        "prefer": [
+          "area (default TV)",
+          "line se pedido explícito",
+          "combo se multi-série com unidades distintas"
+        ]
       },
       {
         "when": "comparar categorias (filial, produto, status)",
-        "prefer": ["bar", "horizontal_bar", "stacked_bar", "TV_KPI_PLUS_CHART_BAR"]
+        "prefer": [
+          "bar",
+          "horizontal_bar",
+          "stacked_bar",
+          "TV_KPI_PLUS_CHART_BAR"
+        ]
       },
       {
         "when": "composição / fatias (poucas categorias)",
-        "prefer": ["pie", "doughnut", "TV_KPI_PLUS_CHART_PIE"]
+        "prefer": [
+          "pie",
+          "doughnut",
+          "TV_KPI_PLUS_CHART_PIE"
+        ]
       },
       {
         "when": "ranking / TOP N / muitas linhas",
-        "prefer": ["table_view banded", "TV_TABLE_FOCUS", "TV_HERO_PLUS_TABLE", "horizontal_bar ordenada"]
+        "prefer": [
+          "table_view banded",
+          "TV_TABLE_FOCUS",
+          "TV_HERO_PLUS_TABLE",
+          "horizontal_bar ordenada"
+        ]
       },
       {
         "when": "funil / etapas / queda sequencial",
-        "prefer": ["funnel", "waterfall"]
+        "prefer": [
+          "funnel",
+          "waterfall"
+        ]
       },
       {
         "when": "distribuição de valores",
-        "prefer": ["histogram"]
+        "prefer": [
+          "histogram"
+        ]
       },
       {
         "when": "correlação 2 eixos / tamanho",
-        "prefer": ["scatter", "bubble"]
+        "prefer": [
+          "scatter",
+          "bubble"
+        ]
       },
       {
         "when": "perfil multi-eixo / radar",
-        "prefer": ["radar"]
+        "prefer": [
+          "radar"
+        ]
       },
       {
         "when": "meta vs realizado com dial",
-        "prefer": ["gauge", "kpi_view + si_goals"]
+        "prefer": [
+          "gauge",
+          "kpi_view + si_goals"
+        ]
       },
       {
         "when": "insight / callout / prosa com dado",
-        "prefer": ["composed_visuals text/shape + textProjection"]
+        "prefer": [
+          "composed_visuals text/shape + textProjection"
+        ]
       },
       {
         "when": "interatividade kiosk / filtros na tela",
-        "prefer": ["TV_FILTER_STRIP", "input", "dataFilters"]
+        "prefer": [
+          "TV_FILTER_STRIP",
+          "input",
+          "dataFilters"
+        ]
       }
     ],
     "rules": [
@@ -246,6 +286,7 @@
     ],
     "rules": [
       "Default mental: 'o que já existe e como melhorar?' — não 'vou montar outro painel'.",
+      "2b) Ler filterDigest + layoutDigest no gpt_get_playlist_context para diagnosticar filtros/layout antes de mutar.",
       "Melhorar filtros = re-layer (programação/tela/fonte) + datas relativas; remover duplicatas nas fontes.",
       "Melhorar visual = DESIGN_REFINE / layout_perception + visual_selection no slide INFORMED; continuous_review + slide_craft.",
       "Slide monótono (só KPI+área) com pedido de melhorar → diversificar chartType/família conforme forma do dado (visual_selection), não só tipografia.",
@@ -272,7 +313,8 @@
       "PLAYLIST_CLARIFICATION: gpt_list_playlists quando playlistId unknown. Se 0 playlists → create_playlist só com pedido explícito. Se exatamente 1 → usar. Se >1 e o usuário NÃO nomeou playlist → UMA pergunta com nomes (não escolher silenciosamente). Se nomeou/INFORMED → resolver e seguir.",
       "create_* / add_* somente quando o usuário pedir criação explícita OU a leitura autorizada provar que o objeto não existe.",
       "Duplicar playlist/slide/bloco 'parecido' para aplicar um ajuste = falha. Corrija o existente (patch_native_config, update_slide, upsert_block com blockId existente, set_data_transform, dataDefaults/dataFilters, etc.).",
-      "Fundo/cor/estilo/filtros de tela já conhecida → patch no target.playlistId + target.slideId do contexto — nunca add_blank_slide só para recolorir ou refiltrar."
+      "Fundo/cor/estilo/filtros de tela já conhecida → patch no target.playlistId + target.slideId do contexto — nunca add_blank_slide só para recolorir ou refiltrar.",
+      "Multi-turn: IDs de slide/bloco INFORMADOS na conversa vencem editorFocus expirado (stale=true)."
     ],
     "required_reads_before_mutate": [
       "gpt_list_playlists when playlistId unknown",
@@ -317,7 +359,11 @@
           "Período padrão do painel (dateRangePreset ou periodDays relativo)",
           "Escopo que TODOS os slides da programação compartilham"
         ],
-        "examples": ["branch", "dateRangePreset=this_month", "periodDays"]
+        "examples": [
+          "branch",
+          "dateRangePreset=this_month",
+          "periodDays"
+        ]
       },
       "tela": {
         "where": "patch_native_config.dataFilters e/ou upsert_block type=input",
@@ -326,7 +372,11 @@
           "Filtro compartilhado por vários KPIs/charts/tables do mesmo slide",
           "Controle que o gestor quer ver/ajustar no palco (input + recipe TV_FILTER_STRIP)"
         ],
-        "examples": ["dataFilters.branch", "dataFilters.dateRangePreset", "input período/filial"]
+        "examples": [
+          "dataFilters.branch",
+          "dataFilters.dateRangePreset",
+          "input período/filial"
+        ]
       },
       "fonte": {
         "where": "upsert_data_source.params / dataBinding.params",
@@ -334,12 +384,18 @@
           "Exceção pontual de UMA fonte (TOP N, granularidade, código de produto só desta tabela)",
           "Params que outras fontes do slide NÃO devem herdar"
         ],
-        "examples": ["top_limit", "granularity", "productCode"],
+        "examples": [
+          "top_limit",
+          "granularity",
+          "productCode"
+        ],
         "avoid": "Repetir branch/período em toda fonte quando dataDefaults/dataFilters já cobrem"
       },
       "kiosk": {
         "where": "upsert_block type=input (targetScope slide|sources)",
-        "put": ["Override de sessão na TV/prévia — não substitui defaults persistidos"],
+        "put": [
+          "Override de sessão na TV/prévia — não substitui defaults persistidos"
+        ],
         "note": "Input de período remove dateRangePreset das camadas inferiores no merge do fetch"
       }
     },
@@ -370,7 +426,8 @@
       "Pedido 'só nesta tabela/KPI' → params naquela fonte.",
       "Datas: preferir preset/periodDays; hardcode absoluto só se o usuário INFORMAR intervalo fixo.",
       "paramSchema da rota manda — nunca inventar chave de filtro.",
-      "branch_scope + filter_layering: filial inventada = anti-padrão."
+      "branch_scope + filter_layering: filial inventada = anti-padrão.",
+      "Ler filterDigest em gpt_get_playlist_context antes de espalhar params; usar re_layer_playlist_filters quando duplicates/wrongLayerHints apontarem camada errada."
     ],
     "forbidden": [
       "Copiar os mesmos branch+datas em 4 data_sources quando dataFilters/dataDefaults bastam",
@@ -625,11 +682,16 @@
       "Se present=false → ensure_brand_logo_on_slide (variant=auto) no mesmo lote compound; a op semeia PNG empacotado na biblioteca e cria bloco image role=brandLogo.",
       "Tema Delpi: THEME_DELPI / THEME_DELPI_LIGHT setam brandThemeKey — logo overlay; skip ensure_brand_logo_on_slide.",
       "Print/screenshot = VISUAL_PARITY tipada, não Image Generation nem upload implícito.",
-      "Prévia: includePreview=true para confirmar espacialmente; previewUrl é esquemático + logo real quando presente — não inventar assetId."
+      "Prévia: includePreview=true para confirmar espacialmente; previewUrl é esquemático + logo real quando presente — não inventar assetId.",
+      "assets[] em mediaInventory lista mídia da biblioteca da programação (assetId obrigatório)."
     ],
     "status": "PROVEN",
     "uploadCapability": "TARGET",
-    "brandLogoCapability": "PROVEN"
+    "brandLogoCapability": "PROVEN",
+    "previewAssetPaste": {
+      "maxBytes": 2000000,
+      "maxEdgePx": 512
+    }
   },
   "brand_logo": {
     "principle": "ENSURE_OR_THEME_SKIP",
@@ -731,20 +793,39 @@
   "editor_focus": {
     "principle": "PREFER_LIVE_EDITOR_FOCUS",
     "summary": "Snapshot efêmero do editor (playlist/slide/seleção) via READ Actions. Não é Postgres nem Intent Frame.",
+    "heartbeat": true,
     "rules": [
       "Ler editorFocus em gpt_list_playlists (qual playlist) e gpt_get_playlist_context (slide/seleção).",
       "Só o usuário autenticado vê o próprio foco; TTL ~90s.",
       "Mutações em 'este bloco' → upsert_block/patch com blockId de selectedIds quando length>=1.",
-      "Sem foco → fluxo object_resolution clássico."
+      "Sem foco → fluxo object_resolution clássico.",
+      "Heartbeat do editor (~30s) mantém editorFocus fresco enquanto a PlaylistEditorPage estiver ativa.",
+      "Foco stale=true ainda pode ser INFORMED por até 2×TTL; preferir IDs da conversa quando focus expirou."
+    ]
+  },
+  "published_templates": {
+    "principle": "APPLY_PUBLISHED_SLIDE_TEMPLATE",
+    "summary": "Templates system published (seed .mdd) aplicáveis via op tipada — sem Action nova.",
+    "systemKeys": [
+      "system-estoque-top5",
+      "system-oee-overview"
+    ],
+    "op": "apply_published_slide_template",
+    "rules": [
+      "Usar templateKey INFORMADO (system-estoque-top5 / system-oee-overview) ou templateId de published.",
+      "Não inventar nativeConfig quando o template published cobre o pedido."
     ]
   },
   "slide_design": {
     "principle": "TYPED_LAYOUT_BEFORE_FREEFORM",
     "summary": "Layout TV: recipes/tokens Delpi + visual_impact + visual_selection antes de inventar frames. Gate slide_layout_quality no VERIFY.",
+    "apply_post_create_layout": true,
+    "hierarchy_inverted": "VERIFY flags primary/dependent typography inversion after PRIMARY_DRIVES_DEPENDENTS",
     "rules": [
       "Pedido operacional → THEME_DELPI + recipe alinhada à forma (TV_KPI_HERO / ROW_2/3 / GRID_4 / SERIES_TABLE / HERO_PLUS_TABLE / TABLE_FOCUS / TITLE_STRIP / PLUS_CHART* / FILTER_STRIP / TV_COMPOSED_DATA_CARD) — ver visual_impact + visual_selection + composed_visuals.",
       "Tema Delpi: fundo gradient designTokens.brand.bgFrom→bgTo; cards brancos (brand.card); accent brand.accent; texto no card brand.onCard; títulos sobre o fundo brand.onBg.",
       "Dois/três/quatro KPIs → TV_KPI_ROW_* / TV_KPI_GRID_4 — não empilhar no mesmo frame.",
+      "Commit aplica apply_post_create_layout (KPI row/grid + chart/table/input heurísticos) e partChrome; VERIFY inclui hierarchy_inverted.",
       "Obedecer designTokens (safeMargin, gutter, typeScale, kpiValueScale, partChrome, visualImpactHints, chartTypeHints, maxPrimarySignalsPerSlide=4).",
       "Partes KPI/chart/table/input/texto: preferir recipe + partChrome; o commit rebalanceia hierarquia (PRIMARY_DRIVES_DEPENDENTS) em todas as famílias.",
       "KPI hierarchy: ao mudar valor (fontSize), SEMPRE ajustar no mesmo upsert title.fontSize + icon.iconSize (+ unit) — ratios partChrome. O commit também corrige se faltar.",
@@ -754,7 +835,7 @@
       "Filtros compartilhados → filter_layering: patch_playlist_data_defaults / dataDefaults (programação) / dataFilters+input (tela) / params só na fonte; datas relativas.",
       "chartType tipado via visual_selection + chartTypeHints: temporal→area (default)/line/combo; categorias→bar/horizontal_bar/stacked_bar; composição→pie/doughnut; ranking→table/horizontal_bar; funil→funnel/waterfall; distribuição→histogram; correlação→scatter/bubble; meta dial→gauge; não pie em série diária densa.",
       "Tabela operacional → tablePreset=banded por default (visual_impact).",
-      "Após write: se OUTCOME_NOT_VERIFIED reason=slide_layout_quality → corrigir overlap/overflow/densidade/contraste/part_font_below_min.",
+      "Após write: se OUTCOME_NOT_VERIFIED reason=slide_layout_quality → corrigir overlap/overflow/densidade/contraste/part_font_below_min/hierarchy_inverted.",
       "fontFamily só do allowlist."
     ],
     "forbidden": [

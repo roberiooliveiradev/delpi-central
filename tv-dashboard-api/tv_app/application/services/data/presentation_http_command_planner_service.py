@@ -22,6 +22,8 @@ _NATIVE_CONFIG_OPS = frozenset(
         "delete_block",
         "bind_visual",
         "patch_native_config",
+        "ensure_brand_logo_on_slide",
+        "apply_published_slide_template",
     }
 )
 
@@ -80,7 +82,7 @@ class PresentationHttpCommandPlannerService:
             if not op_name:
                 continue
 
-            if op_name in _NATIVE_CONFIG_OPS:
+            if op_name in _NATIVE_CONFIG_OPS or op_name == "re_layer_playlist_filters":
                 pending_native = True
                 continue
 
@@ -146,17 +148,25 @@ class PresentationHttpCommandPlannerService:
                 title = str(raw.get("title") or "").strip() or PresentationOpsContentService.setting_str(
                     "defaultSlideTitle", "Slide personalizado"
                 )
+                native_cfg: dict[str, Any] = {
+                    "version": 5,
+                    "headline": "",
+                    "subtitle": "",
+                    "blocks": [],
+                }
+                if isinstance(raw.get("background"), dict):
+                    native_cfg["background"] = dict(raw["background"])
+                duration_sec = raw.get("durationSec")
+                try:
+                    duration = int(duration_sec) if duration_sec is not None else 30
+                except (TypeError, ValueError):
+                    duration = 30
                 body = {
                     "slideType": "native",
                     "title": title,
                     "nativeScreenKey": "custom_message",
-                    "nativeConfig": {
-                        "version": 5,
-                        "headline": "",
-                        "subtitle": "",
-                        "blocks": [],
-                    },
-                    "durationSec": 30,
+                    "nativeConfig": native_cfg,
+                    "durationSec": duration,
                 }
                 section_id = str(raw.get("sectionId") or "").strip()
                 if section_id:

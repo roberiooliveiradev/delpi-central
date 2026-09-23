@@ -8,7 +8,11 @@ from tv_app.application.services.data.tv_data_param_validation_service import (
     assert_closed_date_range_has_period,
     closed_date_range_missing_filter_labels,
 )
-from tv_app.application.services.tv_date_range_preset_service import DATE_RANGE_PRESET_KEY
+from tv_app.application.services.comunicado_data_params_service import merge_data_params
+from tv_app.application.services.tv_date_range_preset_service import (
+    DATE_RANGE_PRESET_KEY,
+    PERIOD_DAYS_KEY,
+)
 
 _DATA_VISUAL_TYPES = frozenset(
     {
@@ -46,14 +50,21 @@ class ReadySlideQualityService:
         """Injeta dateRangePreset/branch tipados quando ausentes (sem inventar filial)."""
         out = dict(params or {})
         defaults = playlist_defaults if isinstance(playlist_defaults, dict) else {}
+        defaults_has_period = bool(
+            defaults.get(DATE_RANGE_PRESET_KEY) or defaults.get(PERIOD_DAYS_KEY)
+        )
         if cls.is_closed_date_range_route(route):
             labels = closed_date_range_missing_filter_labels(route)
             if labels:
-                # Ainda falta período → preset canônico.
+                # Ainda falta período → preset canônico (unless playlist already defines it).
                 try:
                     assert_closed_date_range_has_period(route, out)
                 except ValueError:
-                    if not out.get(DATE_RANGE_PRESET_KEY) and not out.get("periodDays"):
+                    if (
+                        not out.get(DATE_RANGE_PRESET_KEY)
+                        and not out.get(PERIOD_DAYS_KEY)
+                        and not defaults_has_period
+                    ):
                         out[DATE_RANGE_PRESET_KEY] = cls.DEFAULT_DATE_RANGE_PRESET
         if "branch" not in out and defaults.get("branch") not in (None, ""):
             out["branch"] = defaults.get("branch")
@@ -109,11 +120,17 @@ class ReadySlideQualityService:
         native_config: Mapping[str, Any] | None,
         *,
         catalog: Any | None = None,
+        playlist_defaults: Mapping[str, Any] | None = None,
+        slide_filters: Mapping[str, Any] | None = None,
     ) -> list[str]:
         """Lista códigos de problema em nativeConfig (vazio = OK)."""
         issues: list[str] = []
         if not isinstance(native_config, dict):
             return issues
+        filters = slide_filters
+        if filters is None and isinstance(native_config.get("dataFilters"), dict):
+            filters = native_config.get("dataFilters")
+        defaults = playlist_defaults if isinstance(playlist_defaults, dict) else {}
         blocks = native_config.get("blocks")
         if not isinstance(blocks, list):
             return issues
@@ -129,8 +146,13 @@ class ReadySlideQualityService:
                 if op_id:
                     route = catalog.get_route(op_id) if hasattr(catalog, "get_route") else None
                     params = binding.get("params") if isinstance(binding.get("params"), dict) else {}
+                    merged = merge_data_params(
+                        playlist_defaults=defaults,
+                        slide_filters=filters if isinstance(filters, dict) else None,
+                        block_params=params,
+                    )
                     try:
-                        cls.assert_data_source_params_ready(route, params)
+                        cls.assert_data_source_params_ready(route, merged)
                     except ValueError:
                         issues.append(f"params.incomplete:{op_id}")
             if str(block.get("type") or "") in _DATA_VISUAL_TYPES:

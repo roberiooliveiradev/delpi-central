@@ -406,11 +406,9 @@ Final authority remains canonical TV operations + backend AuthZ. Do not invent o
 
 Prefer an **atomic** semantic capability when the outcome is naturally one domain operation.
 
-**TARGET / OPTION A:** `add_blank_slide` may later accept justified initial presentation properties (background, duration) **if** the canonical TV contract supports them. Abstraction Gate before implementing.
+**PROVEN:** `add_blank_slide` accepts optional `title`, `durationSec`, and `background` (same shape as `patch_native_config.background`). “Crie um slide com fundo verde e 45s” → **one** op. Further style still uses `patch_native_config` when mutating an existing slide.
 
 When later steps truly depend on resources created earlier, use a **compound plan** (OPTION B) — ordered catalog ops for **one** user goal. No generic workflow engine.
-
-**PROVEN today:** `add_blank_slide` creates a blank native slide (optional title; catalog defaults). Background mutation is `patch_native_config` (`requiresSlide=true`). Therefore “crie um slide com fundo verde” can require dependent ops in the current model. That is a product gap, not a reason to make the user decompose the API.
 
 ### 12.4 Compound plan (PROVEN engine)
 
@@ -419,11 +417,10 @@ Example request: “crie um slide, adicione OEE como KPI e deixe o fundo verde�
 Illustrative catalog sequence (do not lock if the catalog evolves):
 
 ```text
-1. add_blank_slide
-2. patch_native_config
-3. upsert_data_source
-4. upsert_block / visual (+ kpiProjection/formato — not empty after bind)
-5. bind_visual (only if the catalog still has that capability)
+1. add_blank_slide (title + background + durationSec when tipável)
+2. upsert_data_source + upsert_block / visual (+ kpiProjection/formato)
+   OR apply_published_slide_template (templateKey=system-oee-overview) when a published template fits
+3. re_layer_playlist_filters when filterDigest shows duplicated branch/period on sources
 ```
 
 ```text

@@ -41,6 +41,7 @@ _NATIVE_CONFIG_OPS = frozenset(
         "delete_block",
         "bind_visual",
         "patch_native_config",
+        "apply_published_slide_template",
     }
 )
 
@@ -479,6 +480,9 @@ class TvGptCommitService:
         pending_native = False
         chain_revision: int | None = expected_revision
         expected_native_for_verify: dict[str, Any] | None = None
+        preview_side_effects = (
+            preview.get("sideEffects") if isinstance(preview.get("sideEffects"), dict) else {}
+        )
 
         try:
             for raw in ops or []:
@@ -487,7 +491,7 @@ class TvGptCommitService:
                 op_name = str(raw.get("op") or "").strip()
                 if not op_name:
                     continue
-                if op_name in _NATIVE_CONFIG_OPS:
+                if op_name in _NATIVE_CONFIG_OPS or op_name == "re_layer_playlist_filters":
                     pending_native = True
                     continue
 
@@ -586,17 +590,25 @@ class TvGptCommitService:
                     title = str(raw.get("title") or "").strip() or PresentationOpsContentService.setting_str(
                         "defaultSlideTitle", "Slide personalizado"
                     )
+                    native_cfg: dict[str, Any] = {
+                        "version": 5,
+                        "headline": "",
+                        "subtitle": "",
+                        "blocks": [],
+                    }
+                    if isinstance(raw.get("background"), dict):
+                        native_cfg["background"] = dict(raw["background"])
+                    duration_sec = raw.get("durationSec")
+                    try:
+                        duration = int(duration_sec) if duration_sec is not None else 30
+                    except (TypeError, ValueError):
+                        duration = 30
                     payload: dict[str, Any] = {
                         "slideType": "native",
                         "title": title,
                         "nativeScreenKey": "custom_message",
-                        "nativeConfig": {
-                            "version": 5,
-                            "headline": "",
-                            "subtitle": "",
-                            "blocks": [],
-                        },
-                        "durationSec": 30,
+                        "nativeConfig": native_cfg,
+                        "durationSec": duration,
                     }
                     section_id = str(raw.get("sectionId") or "").strip()
                     if section_id:
@@ -818,6 +830,33 @@ class TvGptCommitService:
                         code="INVALID_CHANGE",
                         status_code=422,
                     )
+                playlist_preview = preview_side_effects.get("playlist")
+                if isinstance(playlist_preview, dict) and isinstance(
+                    playlist_preview.get("dataDefaults"), dict
+                ):
+                    if any(
+                        isinstance(op, dict)
+                        and str(op.get("op") or "") == "re_layer_playlist_filters"
+                        and str(op.get("scope") or "slide").strip().lower() == "playlist"
+                        for op in (ops or [])
+                    ):
+                        playlist = self._writes.patch_playlist_data_defaults(
+                            current_playlist,
+                            data_defaults=dict(playlist_preview["dataDefaults"]),
+                            actor_user_id=actor_id,
+                            expected_revision=chain_revision,
+                            replace=True,
+                        )
+                        chain_revision = self._writes.get_revision(current_playlist)
+                        applied.append(
+                            {
+                                "op": "patch_playlist_data_defaults",
+                                "playlistId": str(current_playlist),
+                                "expected": {
+                                    "dataDefaults": playlist.get("dataDefaults") or {},
+                                },
+                            }
+                        )
                 native_config = preview.get("nativeConfig")
                 if not isinstance(native_config, dict):
                     raise GptActionsError(
@@ -1162,9 +1201,18 @@ class TvGptCommitService:
                 )
 
                 catalog = TvDataRouteCatalogService()
+                verify_cfg = want if isinstance(want, dict) else persisted
                 quality_issues = ReadySlideQualityService.collect_native_quality_issues(
-                    want if isinstance(want, dict) else persisted,
+                    verify_cfg,
                     catalog=catalog,
+                    playlist_defaults=(
+                        playlist.get("dataDefaults") if isinstance(playlist, dict) else None
+                    ),
+                    slide_filters=(
+                        verify_cfg.get("dataFilters")
+                        if isinstance(verify_cfg, dict)
+                        else None
+                    ),
                 )
                 if quality_issues:
                     details["checks"].append(

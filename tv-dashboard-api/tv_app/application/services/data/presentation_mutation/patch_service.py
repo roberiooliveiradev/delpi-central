@@ -228,6 +228,7 @@ _NATIVE_OP_NAMES = frozenset(
         "bind_visual",
         "patch_native_config",
         "ensure_brand_logo_on_slide",
+        "apply_published_slide_template",
     }
 )
 
@@ -463,8 +464,25 @@ class PresentationPatchService:
                     actor_user_id=actor_user_id,
                 )
                 side_effects["playlist"] = patched_playlist
+                if isinstance(patched_playlist.get("dataDefaults"), dict):
+                    playlist_defaults = dict(patched_playlist["dataDefaults"])
                 applied.append(op_name)
                 playlist_mutated = playlist_mutated or bool(persist)
+                continue
+
+            if op_name == "re_layer_playlist_filters":
+                if not playlist_id or not slide_id or native_config is None:
+                    raise PresentationPatchError(
+                        PresentationOpsContentService.message("missingTarget")
+                    )
+                playlist_defaults = self._op_re_layer_playlist_filters(
+                    native_config,
+                    raw_op,
+                    playlist_id=playlist_id,
+                    playlist_defaults=playlist_defaults,
+                    side_effects=side_effects,
+                )
+                applied.append(op_name)
                 continue
 
             if op_name == "add_slide_from_preset":
@@ -628,7 +646,9 @@ class PresentationPatchService:
                     raise PresentationPatchError(PresentationOpsContentService.message("missingTarget"))
 
             if op_name == "upsert_data_source":
-                self._op_upsert_data_source(native_config, raw_op)
+                self._op_upsert_data_source(
+                    native_config, raw_op, playlist_defaults=playlist_defaults
+                )
             elif op_name == "set_data_transform":
                 self._op_set_data_transform(native_config, raw_op)
             elif op_name == "upsert_block":
@@ -653,6 +673,8 @@ class PresentationPatchService:
                     actor_user_id=actor_user_id,
                     persist=persist,
                 )
+            elif op_name == "apply_published_slide_template":
+                self._op_apply_published_slide_template(native_config, raw_op)
             else:
                 raise PresentationPatchError(
                     PresentationOpsContentService.message("unknownOp", op=op_name or "?")
@@ -668,7 +690,7 @@ class PresentationPatchService:
                 SlidePartChromeService,
             )
 
-            SlideAutoLayoutService.apply_kpi_row_if_needed(
+            SlideAutoLayoutService.apply_post_create_layout(
                 native_config,
                 informed_block_ids=informed_frame_ids,
             )
@@ -728,6 +750,23 @@ class PresentationPatchService:
             if isinstance(playlist_preview, dict) and isinstance(
                 playlist_preview.get("dataDefaults"), dict
             ):
+                has_patch = any(
+                    isinstance(plan_op, dict)
+                    and _op_name_of(plan_op) == "patch_playlist_data_defaults"
+                    for plan_op in plan_ops
+                )
+                if not has_patch and any(
+                    isinstance(plan_op, dict)
+                    and _op_name_of(plan_op) == "re_layer_playlist_filters"
+                    for plan_op in plan_ops
+                ):
+                    plan_ops = [
+                        {
+                            "op": "patch_playlist_data_defaults",
+                            "dataDefaults": copy.deepcopy(playlist_preview["dataDefaults"]),
+                        },
+                        *plan_ops,
+                    ]
                 for plan_op in plan_ops:
                     if (
                         isinstance(plan_op, dict)
@@ -813,7 +852,13 @@ class PresentationPatchService:
         except Exception:  # noqa: BLE001 — fingerprint é best-effort no preview
             return None
 
-    def _op_upsert_data_source(self, cfg: dict[str, Any], op: dict[str, Any]) -> None:
+    def _op_upsert_data_source(
+        self,
+        cfg: dict[str, Any],
+        op: dict[str, Any],
+        *,
+        playlist_defaults: dict[str, Any] | None = None,
+    ) -> None:
         operation_id = str(op.get("operationId") or "").strip()
         if not operation_id:
             raise PresentationPatchError(
@@ -832,7 +877,9 @@ class PresentationPatchService:
             ReadySlideQualityService,
         )
 
-        params = ReadySlideQualityService.enrich_data_source_params(route, params)
+        params = ReadySlideQualityService.enrich_data_source_params(
+            route, params, playlist_defaults=playlist_defaults
+        )
         try:
             ReadySlideQualityService.assert_data_source_params_ready(route, params)
         except ValueError as exc:
@@ -1129,12 +1176,25 @@ class PresentationPatchService:
         actor_user_id: str | None,
     ) -> dict[str, Any]:
         title = str(op.get("title") or "").strip() or "Slide personalizado"
+        native_config_payload: dict[str, Any] = {
+            "version": 5,
+            "headline": "",
+            "subtitle": "",
+            "blocks": [],
+        }
+        if isinstance(op.get("background"), dict):
+            native_config_payload["background"] = copy.deepcopy(op["background"])
+        duration_sec = op.get("durationSec")
+        try:
+            duration = int(duration_sec) if duration_sec is not None else 30
+        except (TypeError, ValueError):
+            duration = 30
         payload = {
             "slideType": "native",
             "title": title,
             "nativeScreenKey": "custom_message",
-            "nativeConfig": {"version": 5, "headline": "", "subtitle": "", "blocks": []},
-            "durationSec": 30,
+            "nativeConfig": native_config_payload,
+            "durationSec": duration,
         }
         if not persist:
             return {
@@ -1501,6 +1561,73 @@ class PresentationPatchService:
                 )
         playlist["seededSlides"] = seeded
         return playlist
+
+    def _op_re_layer_playlist_filters(
+        self,
+        native_config: dict[str, Any],
+        op: dict[str, Any],
+        *,
+        playlist_id: str,
+        playlist_defaults: dict[str, Any] | None,
+        side_effects: dict[str, Any],
+    ) -> dict[str, Any] | None:
+        from tv_app.application.services.data.filter_relayer_service import apply_relayer
+
+        scope = str(op.get("scope") or "slide").strip().lower()
+        if scope not in {"playlist", "slide"}:
+            raise PresentationPatchError("re_layer_playlist_filters.scope must be playlist or slide.")
+        keys_raw = op.get("keys")
+        keys = [str(k) for k in keys_raw] if isinstance(keys_raw, list) else None
+        _, next_defaults, promoted = apply_relayer(
+            native_config,
+            scope=scope,
+            keys=keys,
+            playlist_defaults=playlist_defaults,
+        )
+        if not promoted:
+            return next_defaults
+        if scope == "playlist" and isinstance(next_defaults, dict):
+            side_effects["playlist"] = {
+                "id": playlist_id,
+                "preview": True,
+                "dataDefaults": dict(next_defaults),
+            }
+        return next_defaults
+
+    def _op_apply_published_slide_template(
+        self,
+        native_config: dict[str, Any],
+        op: dict[str, Any],
+    ) -> None:
+        from uuid import UUID
+
+        from tv_app.application.services.slide_template_library_service import (
+            SlideTemplateLibraryService,
+            SlideTemplateNotFoundError,
+        )
+
+        template_id = str(op.get("templateId") or "").strip()
+        template_key = str(op.get("templateKey") or op.get("slug") or "").strip()
+        item: dict[str, Any] | None = None
+        library = SlideTemplateLibraryService()
+        if template_id:
+            try:
+                item = library.get(UUID(template_id))
+            except (ValueError, SlideTemplateNotFoundError) as exc:
+                raise PresentationPatchError("Template não encontrado.") from exc
+        elif template_key:
+            item = library.get_by_key(template_key)
+        if not item or str(item.get("status") or "") != "published":
+            raise PresentationPatchError("Template publicado não encontrado.")
+        tpl_native = item.get("nativeConfig")
+        if not isinstance(tpl_native, dict):
+            raise PresentationPatchError("Template sem nativeConfig.")
+        merged = copy.deepcopy(tpl_native)
+        merged.pop("resolved", None)
+        native_config.clear()
+        native_config.update(merged)
+        if "version" not in native_config:
+            native_config["version"] = 5
 
     def _op_patch_playlist_data_defaults(
         self,

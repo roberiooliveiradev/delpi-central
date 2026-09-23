@@ -205,6 +205,60 @@ def _paste_brand_logo(
     img.paste(logo, (paste_x, paste_y), logo)
 
 
+def _paste_playlist_image(
+    img: Image.Image,
+    block: Mapping[str, Any],
+    *,
+    playlist_id: str | None,
+    width: int,
+    height: int,
+    max_bytes: int = 2_000_000,
+    max_edge_px: int = 512,
+) -> None:
+    if str(block.get("role") or "") == "brandLogo":
+        return
+    asset_id = str(block.get("assetId") or "").strip()
+    if not asset_id or not playlist_id:
+        return
+    from uuid import UUID
+
+    from tv_app.application.services.media_storage_service import MediaStorageService
+    from tv_app.infrastructure.persistence.repositories.media_repository import MediaRepository
+
+    try:
+        asset = MediaRepository().get(UUID(asset_id))
+    except (ValueError, TypeError):
+        return
+    if not asset or str(asset.get("playlistId") or "") != str(playlist_id):
+        return
+    stored = str(asset.get("storedName") or "")
+    if not stored:
+        return
+    storage = MediaStorageService()
+    raw = storage.read(stored)
+    if not raw or len(raw) > max_bytes:
+        return
+    try:
+        media = Image.open(BytesIO(raw)).convert("RGBA")
+    except OSError:
+        return
+    media.thumbnail((max_edge_px, max_edge_px), Image.Resampling.LANCZOS)
+    fr = block.get("frame")
+    if not isinstance(fr, dict):
+        return
+    box = _frame_px(fr, width=width, height=height)
+    if not box:
+        return
+    left, top_y, right, bottom_y = box
+    target_w = max(1, right - left)
+    target_h = max(1, bottom_y - top_y)
+    media = media.copy()
+    media.thumbnail((target_w, target_h), Image.Resampling.LANCZOS)
+    paste_x = left + max(0, (target_w - media.width) // 2)
+    paste_y = top_y + max(0, (target_h - media.height) // 2)
+    img.paste(media, (paste_x, paste_y), media)
+
+
 class SlidePreviewRenderService:
     """Raster schematic + disk cache keyed by slideId+revision."""
 
@@ -232,6 +286,9 @@ class SlidePreviewRenderService:
         width: int = DEFAULT_WIDTH,
         height: int = DEFAULT_HEIGHT,
         title: str | None = None,
+        playlist_id: str | None = None,
+        preview_asset_max_bytes: int = 2_000_000,
+        preview_asset_max_edge_px: int = 512,
     ) -> bytes:
         cfg = native_config if isinstance(native_config, dict) else {}
         img = Image.new("RGB", (width, height), color=(0, 56, 102))
@@ -317,6 +374,16 @@ class SlidePreviewRenderService:
                     fill=text_fill,
                     font=small_font,
                 )
+            if btype == "image":
+                _paste_playlist_image(
+                    img,
+                    block,
+                    playlist_id=playlist_id,
+                    width=width,
+                    height=height,
+                    max_bytes=preview_asset_max_bytes,
+                    max_edge_px=preview_asset_max_edge_px,
+                )
 
         if title:
             banner = _font(max(12, height // 36))
@@ -338,6 +405,7 @@ class SlidePreviewRenderService:
         title: str | None = None,
         width: int = DEFAULT_WIDTH,
         height: int = DEFAULT_HEIGHT,
+        playlist_id: str | None = None,
     ) -> bytes:
         key = self._cache_key(slide_id, revision)
         path = self._cache_path(key)
@@ -346,7 +414,11 @@ class SlidePreviewRenderService:
                 self._meta[key] = time.time()
                 return path.read_bytes()
             png = self.render_png(
-                native_config, width=width, height=height, title=title
+                native_config,
+                width=width,
+                height=height,
+                title=title,
+                playlist_id=playlist_id,
             )
             path.write_bytes(png)
             self._meta[key] = time.time()
@@ -385,6 +457,7 @@ class SlidePreviewRenderService:
             title=title,
             width=width,
             height=height,
+            playlist_id=playlist_id,
         )
         token, exp = mint_slide_preview_token(
             playlist_id=playlist_id,

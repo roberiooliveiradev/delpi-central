@@ -1073,6 +1073,7 @@ def test_canonical_complex_ops_are_fully_typed_and_projected():
         "dataFilters",
         "speakerNotes",
         "groupTransforms",
+        "brandThemeKey",
     }
     assert patch.get("additionalProperties") is False
 

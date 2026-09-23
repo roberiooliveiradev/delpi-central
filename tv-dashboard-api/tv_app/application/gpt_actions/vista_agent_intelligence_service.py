@@ -81,6 +81,7 @@ class VistaAgentIntelligenceService:
             "presentation_recipes": recipes,
             "media_limits": doc.get("media_limits") or {},
             "brand_logo": doc.get("brand_logo") or {},
+            "published_templates": doc.get("published_templates") or {},
             "mcp_delia": doc.get("mcp_delia") or {},
             "modes": doc.get("modes") or {},
             "write_flow": doc.get("write_flow") or {},

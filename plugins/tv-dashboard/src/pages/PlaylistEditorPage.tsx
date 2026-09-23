@@ -215,11 +215,13 @@ export function PlaylistEditorPage({
   const [remoteConfigRevision, setRemoteConfigRevision] = useState(0);
   const playlistRef = useRef<Playlist | null>(null);
   const selectedSlideIdRef = useRef<string | null>(null);
+  const selectedSlideIdsRef = useRef<string[]>([]);
   const liveComunicadoConfigRef = useRef<Record<string, unknown> | null>(null);
   const flushPendingComunicadoSaveRef = useRef<(() => Promise<void>) | null>(null);
 
   playlistRef.current = playlist;
   selectedSlideIdRef.current = selectedSlideId;
+  selectedSlideIdsRef.current = selectedSlideIds;
 
   useEffect(() => {
     if (playlist) writePlaylistShell(playlist);
@@ -705,6 +707,17 @@ export function PlaylistEditorPage({
   useEffect(() => {
     if (!editorActive || !selectedSlideId) return;
     sendSelectionUpdateRef.current(selectedSlideId, []);
+  }, [editorActive, selectedSlideId]);
+
+  useEffect(() => {
+    if (!editorActive || !selectedSlideId) return;
+    const intervalId = window.setInterval(() => {
+      const slideId = selectedSlideIdRef.current;
+      if (!slideId) return;
+      const blockIds = selectedSlideIdsRef.current.filter((id) => id !== slideId);
+      sendSelectionUpdateRef.current(slideId, blockIds);
+    }, 30_000);
+    return () => window.clearInterval(intervalId);
   }, [editorActive, selectedSlideId]);
 
   const load = useCallback(async () => {

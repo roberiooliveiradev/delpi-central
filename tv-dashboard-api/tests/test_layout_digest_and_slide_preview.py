@@ -192,6 +192,10 @@ def test_get_playlist_context_includes_layout_digest():
     assert len(out["layoutDigest"]) == 1
     assert out["layoutDigest"][0]["slideId"] == slide_id
     assert out["layoutDigest"][0]["blockCount"] == 2
+    assert "filterDigest" in out
+    assert out["filterDigest"]["slides"][0]["slideId"] == slide_id
+    assert "mediaInventory" in out
+    assert "assets" in out["mediaInventory"]
     assert out["currentRevision"] == 11
 
 
@@ -267,3 +271,57 @@ def test_spatial_adjust_from_digest_without_print_smoke():
     directives = VistaAgentIntelligenceService.agent_directives()["layout_perception"]
     assert "digest" in directives["summary"].lower()
     assert any("print" in str(f).lower() for f in directives["forbidden"])
+
+
+def test_preview_pastes_playlist_image_when_asset_available(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    from io import BytesIO
+
+    from PIL import Image
+
+    from tv_app.application.services.data import slide_preview_render_service as mod
+
+    monkeypatch.setattr(
+        mod,
+        "_default_service",
+        SlidePreviewRenderService(cache_dir=tmp_path),
+    )
+    playlist_id = str(uuid4())
+    asset_id = str(uuid4())
+    png_bytes = BytesIO()
+    Image.new("RGBA", (32, 32), (255, 0, 0, 255)).save(png_bytes, format="PNG")
+
+    class _Storage:
+        def read(self, _stored: str) -> bytes:
+            return png_bytes.getvalue()
+
+    class _Repo:
+        def get(self, _aid):
+            return {
+                "id": asset_id,
+                "playlistId": playlist_id,
+                "storedName": "abc.png",
+            }
+
+    monkeypatch.setattr(
+        "tv_app.infrastructure.persistence.repositories.media_repository.MediaRepository",
+        _Repo,
+    )
+    monkeypatch.setattr(
+        "tv_app.application.services.media_storage_service.MediaStorageService",
+        lambda: _Storage(),
+    )
+
+    native = {
+        "version": 5,
+        "blocks": [
+            {
+                "id": "img1",
+                "type": "image",
+                "assetId": asset_id,
+                "frame": {"x": 10, "y": 10, "w": 30, "h": 30},
+            }
+        ],
+    }
+    service = SlidePreviewRenderService(cache_dir=tmp_path)
+    out = service.render_png(native, playlist_id=playlist_id, width=320, height=180)
+    assert out[:8] == b"\x89PNG\r\n\x1a\n"

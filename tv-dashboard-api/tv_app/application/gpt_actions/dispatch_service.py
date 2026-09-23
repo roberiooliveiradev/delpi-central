@@ -152,6 +152,17 @@ class GptActionsDispatchService:
         revision = self._writes.get_revision(pid)
         actor = self._actor(user)
         layout_digest = LayoutDigestService.digest_slides(slides)
+        from tv_app.application.services.data.filter_digest_service import (
+            FilterDigestService,
+        )
+
+        programming_defaults = (
+            (playlist.get("dataDefaults") or {}) if isinstance(playlist, dict) else {}
+        )
+        filter_digest = FilterDigestService.digest_playlist(
+            programming_defaults=programming_defaults,
+            slides=slides,
+        )
         out: dict[str, Any] = {
             "playlist": playlist,
             "slides": slides,
@@ -159,6 +170,7 @@ class GptActionsDispatchService:
             "accessRole": access.level,
             "currentRevision": revision,
             "layoutDigest": layout_digest,
+            "filterDigest": filter_digest,
             "localDraftCoordination": "unavailable_external",
         }
         try:
@@ -166,7 +178,9 @@ class GptActionsDispatchService:
                 BrandLogoMediaService,
             )
 
-            brand = BrandLogoMediaService().list_brand_assets(pid)
+            media_svc = BrandLogoMediaService()
+            brand = media_svc.list_brand_assets(pid)
+            playlist_assets = media_svc.list_playlist_assets(pid)
             out["mediaInventory"] = {
                 "brandLogos": {
                     variant: {
@@ -176,13 +190,24 @@ class GptActionsDispatchService:
                     }
                     for variant, asset in brand.items()
                 },
+                "assets": [
+                    {
+                        "assetId": item.get("id"),
+                        "originalName": item.get("originalName"),
+                        "mimeType": item.get("mimeType"),
+                        "mediaKind": item.get("mediaKind"),
+                    }
+                    for item in playlist_assets
+                    if isinstance(item, dict) and item.get("id")
+                ],
                 "note": (
-                    "Brand logos are ASSET_ID_ONLY. Call ensure_brand_logo_on_slide to "
+                    "Brand logos are ASSET_ID_ONLY. assets[] lists playlist library media "
+                    "(use assetId on image/video blocks). Call ensure_brand_logo_on_slide to "
                     "seed missing packaged Delpi logos into this playlist library."
                 ),
             }
         except Exception:
-            out["mediaInventory"] = {"brandLogos": {}, "note": "unavailable"}
+            out["mediaInventory"] = {"brandLogos": {}, "assets": [], "note": "unavailable"}
         if actor:
             focus = editor_focus_store.get_for_user_playlist(actor, str(pid))
             if focus:

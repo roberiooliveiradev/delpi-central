@@ -202,6 +202,7 @@ class SlideLayoutQualityService:
                     )
 
         issues.extend(_collect_part_font_issues(blocks, tokens))
+        issues.extend(_collect_hierarchy_issues(blocks))
 
         # Dedup preserve order
         seen: set[str] = set()
@@ -275,6 +276,34 @@ def _collect_part_font_issues(
             if label_fs is not None and label_fs < label_min:
                 issues.append(f"part_font_below_min:{bid}:input_label:{label_fs}<{label_min}")
 
+    return issues
+
+
+def _collect_hierarchy_issues(blocks: list[Any]) -> list[str]:
+    issues: list[str] = []
+    for block in blocks:
+        if not isinstance(block, dict):
+            continue
+        btype = str(block.get("type") or "")
+        bid = str(block.get("id") or btype)
+        if btype in _KPI_TYPES:
+            parts = block.get("kpiParts") if isinstance(block.get("kpiParts"), dict) else {}
+            if not parts:
+                parts = block.get("parts") if isinstance(block.get("parts"), dict) else {}
+            title_fs = _part_font_size(parts, "title")
+            value_fs = _part_font_size(parts, "value")
+            if title_fs is not None and value_fs is not None and title_fs >= value_fs:
+                issues.append(f"hierarchy_inverted:{bid}:kpi_title>={value_fs}")
+        elif btype in {"chart_view", "data_chart"}:
+            opts = block.get("chartOptions") if isinstance(block.get("chartOptions"), dict) else {}
+            title_fs = opts.get("titleFontSize")
+            legend_fs = opts.get("legendFontSize")
+            if (
+                isinstance(title_fs, (int, float))
+                and isinstance(legend_fs, (int, float))
+                and float(title_fs) <= float(legend_fs)
+            ):
+                issues.append(f"hierarchy_inverted:{bid}:chart_title<={legend_fs}")
     return issues
 
 

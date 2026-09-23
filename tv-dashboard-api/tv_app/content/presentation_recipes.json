@@ -1675,6 +1675,22 @@
           }
         }
       ]
+    },
+    "TV_RELAYER_FILTERS": {
+      "label": "Relayer filtros compartilhados",
+      "description": "Promove branch/período repetidos nas fontes para dataFilters ou dataDefaults.",
+      "markers": [
+        "relayer filtros",
+        "filtros duplicados",
+        "camada errada",
+        "filter digest"
+      ],
+      "ops": [
+        {
+          "op": "re_layer_playlist_filters",
+          "scope": "slide"
+        }
+      ]
     }
   },
   "designTokens": {

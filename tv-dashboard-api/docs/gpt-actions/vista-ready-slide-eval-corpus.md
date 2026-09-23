@@ -37,3 +37,9 @@ Corpus estável para regressão de inteligência (sem Action nova). Critério PA
 | C31 | melhore o visual (slide só KPI+área) | `DESIGN_REFINE` + `visual_selection`: diversificar chartType/família se a forma do dado permitir; não só tipografia |
 
 Smoke automatizado parcial: `tests/test_ready_slide_ux.py`, `tests/test_slide_layout_quality.py`, `tests/test_slide_part_chrome.py`, `tests/test_editor_focus_store.py`, `tests/test_layout_digest_and_slide_preview.py`, `tests/test_vista_agent_intelligence.py`.
+
+**Gate vivo (FAIL = regressão):** `tests/fixtures/vista_ready_slide_corpus.json` + `tests/test_vista_ready_slide_corpus_gate.py` (C15–C31 + gates G_* para logo/tema, auto-layout, blank slide, templates, editorFocus, mediaInventory). Comando:
+
+```bash
+cd tv-dashboard-api && PYTHONPATH=. .venv/bin/python -m pytest tests/test_vista_ready_slide_corpus_gate.py tests/test_filter_digest_and_relayer.py -q
+```

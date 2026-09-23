@@ -82,11 +82,13 @@ class EditorFocusStore:
             row = self._by_user.get(uid)
             if not row:
                 return None
-            stale = self._is_stale_locked(row)
-            if stale:
-                del self._by_user[uid]
-                return None
-            return self._public_view(row, stale=False)
+            age = time.monotonic() - float(row.get("_mono") or 0)
+            if age <= self._ttl:
+                return self._public_view(row, stale=False)
+            if age <= self._ttl * 2:
+                return self._public_view(row, stale=True)
+            del self._by_user[uid]
+            return None
 
     def get_for_user_playlist(
         self, user_id: str, playlist_id: str
