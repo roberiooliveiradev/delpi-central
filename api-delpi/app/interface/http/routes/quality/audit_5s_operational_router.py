@@ -625,6 +625,10 @@ def list_audits(
 def create_audit(body: CreateAuditBody = Body(...)):
     try:
         user_id = _current_user_id()
+        # Lista enviada pelo formulário é a fonte de verdade: quem cria a
+        # auditoria pode ser só o responsável administrativo e não entra
+        # automaticamente como auditor. Visualizar ≠ ser auditor oficial
+        # (mesmo critério de ensure_auditor / join HTTP).
         auditors = [
             {
                 "user_id": item.user_id,
@@ -632,8 +636,11 @@ def create_audit(body: CreateAuditBody = Body(...)):
             }
             for item in body.auditors
         ]
-        if not any(a["user_id"] == user_id for a in auditors):
-            auditors.append({"user_id": user_id, "display_name": _current_user_name()})
+        if not auditors:
+            return error_response(
+                "Informe ao menos um auditor.",
+                status_code=400,
+            )
 
         repo = build_audit_5s_repository()
         data = repo.create_audit(
