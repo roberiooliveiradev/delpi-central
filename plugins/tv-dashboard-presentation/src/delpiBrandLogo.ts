@@ -1,6 +1,7 @@
 /**
- * Logo institucional Delpi no palco — variante clara/escura conforme o fundo.
- * Configuração (cores, frame, opacidade, limiar) vem de ``delpiBrandTheme.json``.
+ * Logo institucional Delpi no palco — só quando o slide usa tema Delpi
+ * (`brandThemeKey`) ou há logo custom do master.
+ * Variante clara/escura vem do modo do tema (não de qualquer fundo).
  */
 
 import { relativeLuminance, tryParseCssColorToHex } from "@delpi/plugin-ui/index";
@@ -15,7 +16,9 @@ import {
   getDelpiBrandLuminanceThreshold,
   getDelpiBrandLogoConfig,
   getDelpiBrandMode,
+  isDelpiBrandSlideThemeKey,
   resolveDelpiBrandLogoFrame,
+  resolveDelpiBrandModeFromThemeKey,
   type DelpiBrandLogoVariant,
   type DelpiBrandModeKey,
 } from "./delpiBrandTheme";
@@ -97,13 +100,19 @@ type CustomLogo = {
 } | null;
 
 /**
- * Logo a pintar no palco: custom master se houver URL; senão brand Delpi
- * no canto definido em ``delpiBrandTheme.json``.
+ * Logo a pintar no palco.
+ * - custom master com URL → sempre;
+ * - tema Delpi (`brandThemeKey`) → logo institucional do modo;
+ * - demais slides → sem logo automática.
  */
 export function resolveStageMasterLogo(args: {
   background: ComunicadoBackground | undefined;
   customLogo?: CustomLogo;
-}): StageMasterLogo {
+  /** Chave do tema de cor Delpi (`delpi-dark` | `delpi-light`). */
+  brandThemeKey?: string | null;
+  /** Alias: modo direto quando não há key. */
+  brandTheme?: DelpiBrandModeKey | null;
+}): StageMasterLogo | null {
   const frameDefault = resolveDelpiBrandLogoFrame();
   const customUrl =
     typeof args.customLogo?.url === "string" ? args.customLogo.url.trim() : "";
@@ -124,7 +133,16 @@ export function resolveStageMasterLogo(args: {
       source: "custom",
     };
   }
-  const variant = resolveDelpiBrandLogoVariant(args.background);
+
+  const modeFromKey = resolveDelpiBrandModeFromThemeKey(args.brandThemeKey);
+  const mode: DelpiBrandModeKey | null =
+    modeFromKey ??
+    (args.brandTheme === "dark" || args.brandTheme === "light" ? args.brandTheme : null);
+
+  if (!mode) return null;
+  if (args.brandThemeKey && !isDelpiBrandSlideThemeKey(args.brandThemeKey)) return null;
+
+  const variant = getDelpiBrandMode(mode).logoVariant;
   return {
     url: delpiBrandLogoUrl(variant),
     frame: { ...frameDefault },

@@ -738,6 +738,7 @@ export function ComunicadoEditorProvider({
   const masterLogo = resolveStageMasterLogo({
     background: background as ComunicadoBackground,
     customLogo: customMasterLogo,
+    brandThemeKey: config.brandThemeKey,
   });
 
   const ctxValue: ComunicadoEditorContextValue = {

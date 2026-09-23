@@ -23,10 +23,14 @@ describe("delpiBrandTheme JSON", () => {
     expect(getDelpiBrandMode("light").logoVariant).toBe("onLight");
   });
 
-  it("slideThemeBindings apontam para modes canônicos", () => {
-    const keys = getDelpiBrandTheme().slideThemeBindings.map((b) => b.key);
-    expect(keys).toContain("delpi");
-    expect(keys).toContain("light");
+  it("slideThemeBindings Delpi claro/escuro com logo", () => {
+    const bindings = getDelpiBrandTheme().slideThemeBindings;
+    const keys = bindings.map((b) => b.key);
+    expect(keys).toContain("delpi-dark");
+    expect(keys).toContain("delpi-light");
+    expect(bindings.every((b) => b.showLogo !== false)).toBe(true);
+    expect(bindings.find((b) => b.key === "delpi-dark")?.label).toMatch(/escuro/i);
+    expect(bindings.find((b) => b.key === "delpi-light")?.label).toMatch(/claro/i);
   });
 
   it("frame da logo vem do JSON (canto inferior direito)", () => {

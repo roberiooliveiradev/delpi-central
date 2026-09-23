@@ -43,6 +43,7 @@ export type RichComunicadoStageProps = {
     customFonts?: unknown;
     dataFilters?: unknown;
     speakerNotes?: string;
+    brandThemeKey?: string;
     version?: number;
   };
   fontScale?: number;
@@ -88,6 +89,7 @@ export function RichComunicadoStage({
         customFonts: data.customFonts,
         dataFilters: data.dataFilters,
         speakerNotes: data.speakerNotes,
+        brandThemeKey: data.brandThemeKey,
       } as Record<string, unknown>),
     [data],
   );
@@ -108,6 +110,7 @@ export function RichComunicadoStage({
   const logo = resolveStageMasterLogo({
     background,
     customLogo: master?.logo,
+    brandThemeKey: normalized.brandThemeKey ?? (data.brandThemeKey as string | undefined),
   });
 
   return (
@@ -117,12 +120,14 @@ export function RichComunicadoStage({
       style={bgStyle}
       backgroundLayer={<RichComunicadoBackground url={imageUrl} />}
     >
-      <RichComunicadoMasterLogo
-        url={logo.url}
-        frame={logo.frame}
-        opacity={logo.opacity}
-        className={ensureComunicadoDualClass(masterLogoClassName)}
-      />
+      {logo ? (
+        <RichComunicadoMasterLogo
+          url={logo.url}
+          frame={logo.frame}
+          opacity={logo.opacity}
+          className={ensureComunicadoDualClass(masterLogoClassName)}
+        />
+      ) : null}
       {blocks.map((block) =>
         renderBlock ? (
           <div key={block.id}>{renderBlock(block)}</div>

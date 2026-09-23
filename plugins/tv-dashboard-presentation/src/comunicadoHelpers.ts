@@ -836,6 +836,10 @@ export function parseComunicadoConfig(raw: Record<string, unknown> | undefined |
       dataFilters: normalizeDataFilters(cfg.dataFilters),
       customFonts: normalizeCustomFonts(cfg.customFonts),
       speakerNotes: typeof cfg.speakerNotes === "string" ? cfg.speakerNotes : undefined,
+      brandThemeKey:
+        typeof cfg.brandThemeKey === "string" && cfg.brandThemeKey.trim()
+          ? cfg.brandThemeKey.trim()
+          : undefined,
     };
   }
 
@@ -852,6 +856,10 @@ export function parseComunicadoConfig(raw: Record<string, unknown> | undefined |
       ...(subtitle ? [createBlock("text", subtitle)] : []),
     ],
     speakerNotes: typeof cfg.speakerNotes === "string" ? cfg.speakerNotes : undefined,
+    brandThemeKey:
+      typeof cfg.brandThemeKey === "string" && cfg.brandThemeKey.trim()
+        ? cfg.brandThemeKey.trim()
+        : undefined,
   };
 }
 
@@ -929,6 +937,7 @@ export function serializeComunicadoConfig(config: ComunicadoConfig): Record<stri
     }));
   }
   if (config.speakerNotes) payload.speakerNotes = config.speakerNotes;
+  if (config.brandThemeKey) payload.brandThemeKey = config.brandThemeKey;
   return payload;
 }
 
@@ -1938,6 +1947,7 @@ export type ComunicadoScreenDataLike = {
   headline?: string;
   subtitle?: string;
   customFonts?: ComunicadoCustomFontRef[];
+  brandThemeKey?: string;
 };
 
 /** Tamanho só > 0; posição livre (pode ultrapassar o slide). */

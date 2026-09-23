@@ -60,7 +60,13 @@ export type DelpiBrandThemeDocument = {
   luminanceThreshold: number;
   modes: Record<DelpiBrandModeKey, DelpiBrandMode>;
   logo: DelpiBrandLogoConfig;
-  slideThemeBindings: Array<{ key: string; label: string; mode: DelpiBrandModeKey }>;
+  slideThemeBindings: Array<{
+    key: string;
+    label: string;
+    mode: DelpiBrandModeKey;
+    /** Quando true, aplicar o tema liga a logo institucional no slide. */
+    showLogo?: boolean;
+  }>;
 };
 
 const theme = rawTheme as DelpiBrandThemeDocument;
@@ -130,4 +136,20 @@ export function delpiBrandTokensForRecipes(mode: DelpiBrandModeKey = "dark"): {
     onCardMuted: c.onCardMuted,
     onBg: c.onBg,
   };
+}
+
+/** True se o binding de tema de cor deve exibir logo institucional. */
+export function isDelpiBrandSlideThemeKey(themeKey: string | null | undefined): boolean {
+  if (!themeKey) return false;
+  return theme.slideThemeBindings.some(
+    (binding) => binding.key === themeKey && binding.showLogo !== false,
+  );
+}
+
+export function resolveDelpiBrandModeFromThemeKey(
+  themeKey: string | null | undefined,
+): DelpiBrandModeKey | null {
+  if (!themeKey) return null;
+  const binding = theme.slideThemeBindings.find((item) => item.key === themeKey);
+  return binding?.mode ?? null;
 }

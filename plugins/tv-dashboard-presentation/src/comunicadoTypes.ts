@@ -717,6 +717,11 @@ export type ComunicadoConfig = {
   dataFilters?: ComunicadoDataFilters;
   /** Notas do apresentador (não exibidas no kiosk TV). */
   speakerNotes?: string;
+  /**
+   * Tema de marca Delpi ativo (`delpi-dark` | `delpi-light`).
+   * Quando presente, o palco exibe a logo institucional; outros temas de cor limpam o campo.
+   */
+  brandThemeKey?: string;
   /** Fontes custom da playlist referenciadas neste slide. */
   customFonts?: ComunicadoCustomFontRef[];
 };

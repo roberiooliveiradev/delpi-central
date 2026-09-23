@@ -14,12 +14,15 @@ export type ComunicadoSlideTheme = {
   shapeStroke: string;
   /** Modo de marca Delpi quando aplicável. */
   brandMode?: DelpiBrandModeKey;
+  /** Liga logo institucional ao aplicar este tema. */
+  showLogo?: boolean;
 };
 
 function themeFromBrandBinding(binding: {
   key: string;
   label: string;
   mode: DelpiBrandModeKey;
+  showLogo?: boolean;
 }): ComunicadoSlideTheme {
   const mode = getDelpiBrandMode(binding.mode);
   return {
@@ -30,6 +33,7 @@ function themeFromBrandBinding(binding: {
     accent: mode.colors.accent,
     shapeStroke: mode.colors.shapeStroke,
     brandMode: binding.mode,
+    showLogo: binding.showLogo !== false,
   };
 }
 
@@ -102,5 +106,15 @@ export function applyComunicadoSlideTheme(
     }
     return block;
   });
-  return { ...config, background: theme.background, blocks };
+  const next: ComunicadoConfig = {
+    ...config,
+    background: theme.background,
+    blocks,
+  };
+  if (theme.showLogo && theme.brandMode) {
+    next.brandThemeKey = theme.key;
+  } else {
+    delete next.brandThemeKey;
+  }
+  return next;
 }

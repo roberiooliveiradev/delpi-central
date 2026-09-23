@@ -117,7 +117,11 @@ export function ComunicadoSlideTemplatesPanel({ compact = false }: Props) {
         ) : null}
       </DeckPropertySection>
 
-      <DeckPropertySection title="Temas de cor" hint="Aplica paleta ao fundo e aos blocos de texto/forma." compact={compact}>
+      <DeckPropertySection
+        title="Temas de cor"
+        hint="Delpi claro/escuro aplicam a logo institucional; os demais só mudam a paleta."
+        compact={compact}
+      >
         <div className="td-theme-grid">
           {COMUNICADO_SLIDE_THEMES.map((theme) => (
             <button

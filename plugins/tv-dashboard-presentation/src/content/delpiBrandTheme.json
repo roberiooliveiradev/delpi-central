@@ -84,14 +84,16 @@
   },
   "slideThemeBindings": [
     {
-      "key": "delpi",
-      "label": "DELPI",
-      "mode": "dark"
+      "key": "delpi-dark",
+      "label": "Delpi escuro",
+      "mode": "dark",
+      "showLogo": true
     },
     {
-      "key": "light",
-      "label": "Claro",
-      "mode": "light"
+      "key": "delpi-light",
+      "label": "Delpi claro",
+      "mode": "light",
+      "showLogo": true
     }
   ]
 }
