@@ -403,11 +403,12 @@ export type ComunicadoEditorContextValue = {
   publicToken: string | null;
   /** dataDefaults live da programação — preview/refresh canônicos. */
   playlistDefaults: Record<string, unknown> | null;
-  /** Master slide da programação (fundo/logo herdados no palco — 4E.3). */
+  /** Master slide / logo Delpi brand no palco (custom master.logo vence brand). */
   masterLogo: {
     url?: string;
     frame?: { x?: number; y?: number; w?: number; h?: number };
     opacity?: number;
+    source?: "custom" | "brand";
   } | null;
   mediaLibraryOpen: boolean;
   mediaLibraryTarget: MediaLibraryTarget;

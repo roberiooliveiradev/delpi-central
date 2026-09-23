@@ -108,6 +108,15 @@ export {
 export { RichComunicadoStage } from "./RichComunicadoStage";
 export { RichComunicadoBackground } from "./RichComunicadoBackground";
 export { RichComunicadoMasterLogo } from "./RichComunicadoMasterLogo";
+export {
+  DELPI_BRAND_LOGO_FRAME,
+  delpiBrandLogoUrl,
+  isComunicadoBackgroundDark,
+  resolveDelpiBrandLogoVariant,
+  resolveStageMasterLogo,
+  type DelpiBrandLogoVariant,
+  type StageMasterLogo,
+} from "./delpiBrandLogo";
 export type { DesignViewportFitMode, DesignViewportBleedSize } from "./DesignViewportStage";
 export {
   resolvePresentationFitMode,

@@ -31,6 +31,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, typ
 
 import { useAuthenticatedBlobUrl } from "../hooks/useAuthenticatedBlobUrl";
 import { useAuthenticatedComunicadoCustomFonts } from "../hooks/useAuthenticatedComunicadoCustomFonts";
+import { isAdminProtectedMediaUrl } from "../api/browserSafeMediaUrl";
 import { useStageLineDraw } from "../hooks/useStageLineDraw";
 import { isEditableKeyboardTarget, useEditorShortcut } from "../keyboard";
 import { resolveBlockWrapStackZIndex } from "../utils/resolveBlockWrapStackZIndex";
@@ -147,12 +148,15 @@ function useCanvasBackgroundPaint(): {
 
 function MasterLogoOverlay() {
   const { masterLogo } = useComunicadoEditor();
-  const { src: logoBlobUrl } = useAuthenticatedBlobUrl(masterLogo?.url);
-  // Nunca cair no URL da API: CSS `background-image` não envia Bearer → 401.
-  if (!logoBlobUrl) return null;
+  const apiUrl =
+    masterLogo?.url && isAdminProtectedMediaUrl(masterLogo.url) ? masterLogo.url : undefined;
+  const { src: logoBlobUrl } = useAuthenticatedBlobUrl(apiUrl);
+  // Brand / public / asset estático: URL direta. Admin media: blob com Bearer.
+  const url = apiUrl ? logoBlobUrl : masterLogo?.url;
+  if (!url) return null;
   return (
     <RichComunicadoMasterLogo
-      url={logoBlobUrl}
+      url={url}
       frame={masterLogo?.frame}
       opacity={masterLogo?.opacity ?? 1}
       className={ensureComunicadoDualClass(

@@ -13,6 +13,7 @@ import {
 import { ComunicadoBlockView } from "./comunicadoBlockView";
 import { useComunicadoCustomFonts } from "./comunicadoCustomFonts";
 import { useComunicadoGoogleFonts } from "./comunicadoGoogleFonts";
+import { resolveStageMasterLogo } from "./delpiBrandLogo";
 import {
   parseComunicadoConfig,
   sortBlocksByZIndex,
@@ -61,7 +62,7 @@ export type RichComunicadoStageProps = {
 const DEFAULT_BEM = comunicadoStageBemClasses("tdp");
 
 /**
- * Palco canônico do slide personalizado (fundo + logo master + blocos).
+ * Palco canônico do slide personalizado (fundo + logo master/brand + blocos).
  * Moldura visual: `ComunicadoStageFrame` (@delpi/plugin-ui).
  * Editor e TV/prévia consomem este componente — sem segunda árvore de markup.
  */
@@ -104,7 +105,10 @@ export function RichComunicadoStage({
   const bgStyle: CSSProperties = comunicadoBackgroundRootStyle(background);
 
   const blocks = filterBlocksVisibleOnStage(sortBlocksByZIndex(normalized.blocks ?? []));
-  const logo = master?.logo;
+  const logo = resolveStageMasterLogo({
+    background,
+    customLogo: master?.logo,
+  });
 
   return (
     <ComunicadoStageFrame
@@ -114,9 +118,9 @@ export function RichComunicadoStage({
       backgroundLayer={<RichComunicadoBackground url={imageUrl} />}
     >
       <RichComunicadoMasterLogo
-        url={logo?.url}
-        frame={logo?.frame}
-        opacity={logo?.opacity ?? 1}
+        url={logo.url}
+        frame={logo.frame}
+        opacity={logo.opacity}
         className={ensureComunicadoDualClass(masterLogoClassName)}
       />
       {blocks.map((block) =>

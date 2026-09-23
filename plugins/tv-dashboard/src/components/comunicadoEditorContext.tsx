@@ -19,8 +19,10 @@ import {
   isEfficiencyPinBlock,
   isFetchableDataBlockType,
   parseComunicadoConfig,
+  resolveStageMasterLogo,
   serializeComunicadoConfig,
   sortBlocksByZIndex,
+  type ComunicadoBackground,
   type ComunicadoConfig,
   type ComunicadoBlock,
   type ComunicadoDataDisplayMode,
@@ -725,7 +727,7 @@ export function ComunicadoEditorProvider({
   const background = config.background
     ?? (resolvedMaster?.background as ComunicadoConfig["background"] | undefined)
     ?? { type: "color", value: "#ffffff" };
-  const masterLogo =
+  const customMasterLogo =
     resolvedMaster && typeof resolvedMaster.logo === "object" && resolvedMaster.logo
       ? (resolvedMaster.logo as {
           url?: string;
@@ -733,6 +735,10 @@ export function ComunicadoEditorProvider({
           opacity?: number;
         })
       : null;
+  const masterLogo = resolveStageMasterLogo({
+    background: background as ComunicadoBackground,
+    customLogo: customMasterLogo,
+  });
 
   const ctxValue: ComunicadoEditorContextValue = {
     config,

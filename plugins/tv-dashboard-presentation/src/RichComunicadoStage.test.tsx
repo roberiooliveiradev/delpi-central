@@ -59,13 +59,33 @@ describe("RichComunicadoStage (canônico editor ≡ TV)", () => {
     expect(root?.style.backgroundImage).toBe("");
   });
 
-  it("RichComunicadoMasterLogo usa url() com aspas (query string segura)", () => {
+  it("sem master → logo brand Delpi (fundo claro = onLight)", () => {
     const { container } = render(
-      <RichComunicadoMasterLogo url="/apps/tv-dashboard-api/public/present/t/media/a?x=1" />,
+      <RichComunicadoStage
+        data={{
+          version: 5,
+          background: { type: "color", value: "#ffffff" },
+          blocks: [],
+        }}
+      />,
     );
-    const node = container.firstElementChild as HTMLElement;
-    expect(node.style.backgroundImage).toContain(
-      'url("/apps/tv-dashboard-api/public/present/t/media/a?x=1")',
+    const logo = container.querySelector(".tdp-comunicado__master-logo") as HTMLElement | null;
+    expect(logo).toBeTruthy();
+    expect(logo?.style.backgroundImage).toMatch(/logoDelpiOnLight|assets\//);
+  });
+
+  it("fundo escuro sem custom → logo brand onDark", () => {
+    const { container } = render(
+      <RichComunicadoStage
+        data={{
+          version: 5,
+          background: { type: "color", value: "#0f172a" },
+          blocks: [],
+        }}
+      />,
     );
+    const logo = container.querySelector(".tdp-comunicado__master-logo") as HTMLElement | null;
+    expect(logo).toBeTruthy();
+    expect(logo?.style.backgroundImage).toMatch(/logoDelpiOnDark|assets\//);
   });
 });

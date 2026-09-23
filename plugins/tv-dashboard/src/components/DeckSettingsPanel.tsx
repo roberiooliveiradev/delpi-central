@@ -714,13 +714,13 @@ export function DeckSettingsPanel({
         <DeckRibbonGroup
           groupId="playlist-master"
           label="Master"
-          hint="Fundo e logo compartilhados quando o slide não define o próprio fundo (4E.3)."
+          hint={R.masterSlide}
         >
           <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
             <DeckRibbonTilePopover
               icon={Layers}
               label="Master"
-              hint="Fundo e logo compartilhados nas telas livres."
+              hint={R.masterSlide}
               panelLabel="Master slide"
               panelClassName="td-deck-ribbon-tile-popover--master"
             >
