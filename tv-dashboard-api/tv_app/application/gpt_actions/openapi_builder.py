@@ -494,10 +494,12 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "operationId": "gpt_get_catalog",
                 "summary": "TV presentation mutation capability catalog",
                 "description": (
-                    "Returns catalogVersion, operations, capabilities, capability_surface "
-                    "(incl. agent_directives: object_resolution/data_discovery/data_transform/modes) from "
-                    "PresentationMutation. Call before writes; obey agent_directives. "
-                    "Catalog informs; backend authorizes. Requires tv-dashboard.write."
+                    "Returns catalogVersion, compact operations index (risk/requires/"
+                    "requiredFields — not full JSON Schemas), capabilities, "
+                    "capability_surface.agent_directives. Full op schemas live in this "
+                    "Action OpenAPI requestBody oneOf. Call before writes; obey "
+                    "agent_directives. Catalog informs; backend authorizes. "
+                    "Requires tv-dashboard.write."
                 ),
                 "tags": [tag],
                 "security": [{"BearerAuth": []}],

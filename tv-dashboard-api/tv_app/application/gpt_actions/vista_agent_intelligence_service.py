@@ -26,21 +26,29 @@ def clear_vista_agent_intelligence_cache() -> None:
     _load.cache_clear()
 
 
-_LIST_CAP_KEYS = frozenset({"examples", "examplePrompts"})
+_LIST_CAP_KEYS = frozenset({"examples", "examplePrompts", "anti_patterns", "forbidden", "when"})
 _MAX_LIST_ITEMS = 10
+_MAX_ANTI_PATTERNS = 36
+# Keys that are prose duplicates of principle+rules — drop to save Actions budget.
+_DROP_DIRECTIVE_KEYS = frozenset({"summary", "example", "examples", "examplePrompts"})
 
 
 def _compact_for_actions(node: Any, *, key: str | None = None) -> Any:
-    """Drop example blobs; keep directive contracts intact for Actions budget."""
+    """Drop example/summary blobs; keep directive contracts for Actions budget."""
     if isinstance(node, dict):
         out: dict[str, Any] = {}
         for child_key, value in node.items():
-            if child_key in {"examples", "example"}:
+            if child_key in _DROP_DIRECTIVE_KEYS:
                 continue
             out[str(child_key)] = _compact_for_actions(value, key=str(child_key))
         return out
     if isinstance(node, list):
-        trimmed = node[:_MAX_LIST_ITEMS] if key in _LIST_CAP_KEYS else node
+        if key == "anti_patterns":
+            trimmed = node[:_MAX_ANTI_PATTERNS]
+        elif key in _LIST_CAP_KEYS:
+            trimmed = node[:_MAX_LIST_ITEMS]
+        else:
+            trimmed = node
         return [_compact_for_actions(item, key=key) for item in trimmed]
     return node
 

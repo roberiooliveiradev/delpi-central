@@ -36,7 +36,9 @@ from tv_app.application.services.data.presentation_recipe_service import (
 from tv_app.main import app
 
 # Catch slow drift before the hard ceiling fails in production.
-_MIN_ASCII_ENVELOPE_HEADROOM = 2 * 1024
+# Keep ≥8 KiB after ascii envelope so the next additive directive/recipe does not
+# land on ResponseTooLargeError (production has less headroom than unit tests).
+_MIN_ASCII_ENVELOPE_HEADROOM = 8 * 1024
 
 
 def _clear_caches() -> None:
@@ -50,6 +52,10 @@ def _catalog_document() -> dict:
     doc = PresentationOpsContentService.capability_catalog_document()
     doc["capability_surface"] = build_capability_surface()
     return doc
+
+
+def _response_size_by_top_level_key(doc: dict) -> dict[str, int]:
+    return {str(key): utf8_size(value) for key, value in doc.items()}
 
 
 async def _bypass_auth_middleware(request, call_next):
@@ -66,7 +72,8 @@ def test_catalog_budget_unicode_ascii_and_envelope():
     for label, size in sizes.items():
         assert size <= GPT_ACTIONS_RESPONSE_MAX_BYTES, (
             f"gpt_get_catalog {label} is {size} bytes "
-            f"(limit {GPT_ACTIONS_RESPONSE_MAX_BYTES})"
+            f"(limit {GPT_ACTIONS_RESPONSE_MAX_BYTES}); "
+            f"by_key={_response_size_by_top_level_key(doc)}"
         )
     assert sizes["ascii"] >= sizes["unicode"]
     assert sizes["envelopeAscii"] >= sizes["ascii"]
@@ -79,20 +86,34 @@ def test_catalog_budget_keeps_ascii_envelope_headroom():
     headroom = GPT_ACTIONS_RESPONSE_MAX_BYTES - sizes["envelopeAscii"]
     assert headroom >= _MIN_ASCII_ENVELOPE_HEADROOM, (
         f"ascii envelope headroom is only {headroom} bytes "
-        f"(need ≥ {_MIN_ASCII_ENVELOPE_HEADROOM}); compact further before shipping."
+        f"(need ≥ {_MIN_ASCII_ENVELOPE_HEADROOM}); compact further before shipping. "
+        f"by_key={_response_size_by_top_level_key(doc)}"
     )
 
 
+def test_catalog_operations_are_index_without_input_schema():
+    """Positive: compact index. Negative: no duplicated JSON Schema trees."""
+    doc = _catalog_document()
+    ops = doc.get("operations") or {}
+    assert isinstance(ops, dict) and ops
+    assert doc.get("operationSchemas") == "openapi_requestBody_oneOf"
+    sample = ops.get("upsert_block") or next(iter(ops.values()))
+    assert isinstance(sample, dict)
+    assert "inputSchema" not in sample
+    assert sample.get("risk")
+    assert "requiresSlide" in sample
+
+
 def test_actions_recipe_projection_omits_blueprint_frames():
-    """Positive compact: Actions sees slots; negative: frames stay on full recipes."""
+    """Positive compact: Actions sees recipe roles; negative: frames stay on full recipes."""
     _clear_caches()
     actions = PresentationRecipeService.catalog_projection_for_actions()
     full = PresentationRecipeService.catalog_projection()
     assert "TV_KPI_ROW_2" in actions["recipes"]
-    blueprint = actions["recipes"]["TV_KPI_ROW_2"]["blueprint"]
-    assert blueprint["slots"]
-    assert all("frame" not in slot for slot in blueprint["slots"])
-    assert all(slot.get("id") and slot.get("role") for slot in blueprint["slots"])
+    entry = actions["recipes"]["TV_KPI_ROW_2"]
+    assert "blueprint" not in entry
+    assert "primaryKpi" in (entry.get("roles") or [])
+    assert "frame" not in entry
 
     full_bp = full["recipes"]["TV_KPI_ROW_2"]["blueprint"]
     assert any(

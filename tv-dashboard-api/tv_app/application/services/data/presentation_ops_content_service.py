@@ -416,14 +416,16 @@ class PresentationOpsContentService:
     def capability_catalog_document(cls) -> dict[str, Any]:
         """Catalog projected on ``gpt_get_catalog`` (GPT Actions response budget).
 
-        Strips ``example`` blobs and bulky capability templates/markers that the
-        server already owns for suggest/patch — specialist needs op contracts +
-        whenToUse, not full payloadTemplates.
+        Operations are a **compact index** (risk / requires / hints) — full JSON
+        Schemas live in the Custom GPT Action ``requestBody`` oneOf and in the
+        server-side ``presentation_ops_content.json`` validator. Duplicating
+        schemas here was the main ResponseTooLargeError driver.
         """
         return {
             "catalogVersion": cls.catalog_version(),
             "capabilities": cls._capabilities_for_actions(),
             "operations": cls._operations_for_actions(),
+            "operationSchemas": "openapi_requestBody_oneOf",
             "allowedOps": sorted(cls.allowed_ops()),
             "sideEffectHintCatalog": cls.side_effect_hint_catalog(),
         }
@@ -442,17 +444,34 @@ class PresentationOpsContentService:
 
     @classmethod
     def _operations_for_actions(cls) -> dict[str, Any]:
+        """Index-only projection — no inputSchema trees (OpenAPI owns those)."""
         out: dict[str, Any] = {}
         for name, spec in cls.operations().items():
             if not isinstance(spec, dict):
                 continue
-            row = dict(spec)
-            schema = row.get("inputSchema")
-            if isinstance(schema, dict):
-                row["inputSchema"] = cls._strip_schema_examples(schema)
-            # Keep produces/consumes/risk; drop bulky whenToUse duplicates if present.
-            if isinstance(row.get("whenToUse"), list) and len(row["whenToUse"]) > 4:
-                row["whenToUse"] = row["whenToUse"][:4]
+            schema = spec.get("inputSchema") if isinstance(spec.get("inputSchema"), dict) else {}
+            required = schema.get("required") if isinstance(schema.get("required"), list) else []
+            row: dict[str, Any] = {
+                "risk": spec.get("risk"),
+                "confirmationPolicy": spec.get("confirmationPolicy"),
+                "requiresPlaylist": bool(spec.get("requiresPlaylist")),
+                "requiresSlide": bool(spec.get("requiresSlide")),
+                "produces": list(spec.get("produces") or [])
+                if isinstance(spec.get("produces"), list)
+                else [],
+                "consumes": list(spec.get("consumes") or [])
+                if isinstance(spec.get("consumes"), list)
+                else [],
+                "sideEffectHints": list(spec.get("sideEffectHints") or [])
+                if isinstance(spec.get("sideEffectHints"), list)
+                else [],
+            }
+            req = [str(item).strip() for item in required if str(item).strip() and str(item) != "op"]
+            if req:
+                row["requiredFields"] = req
+            when = spec.get("whenToUse")
+            if isinstance(when, list) and when:
+                row["whenToUse"] = [str(item).strip() for item in when[:3] if str(item).strip()]
             out[str(name)] = row
         return out
 

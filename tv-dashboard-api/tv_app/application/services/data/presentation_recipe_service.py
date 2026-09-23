@@ -223,16 +223,23 @@ class PresentationRecipeService:
             entry: dict[str, Any] = {
                 "label": row.get("label"),
                 "themeKey": row.get("themeKey"),
-                "markers": markers[:6],
+                "markers": markers[:4],
             }
-            slim_bp = _slim_blueprint_for_actions(row.get("blueprint"))
-            if slim_bp is not None:
-                entry["blueprint"] = slim_bp
+            # Slot roles only (no preferredUseCases / safeMargin — tokens cover gates).
+            bp = row.get("blueprint") if isinstance(row.get("blueprint"), dict) else None
+            if isinstance(bp, dict):
+                roles = []
+                for slot in bp.get("slots") or []:
+                    if not isinstance(slot, dict):
+                        continue
+                    role = str(slot.get("role") or "").strip()
+                    if role and role not in roles:
+                        roles.append(role)
+                if roles:
+                    entry["roles"] = roles
             recipes_out[str(recipe_id)] = entry
         return {
             "principle": full.get("principle"),
-            "summary": full.get("summary"),
-            "fontFamilyAllowlist": full.get("fontFamilyAllowlist") or [],
             "designTokens": slim_tokens,
             "recipes": recipes_out,
         }
