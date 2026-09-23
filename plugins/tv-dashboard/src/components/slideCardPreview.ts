@@ -420,6 +420,7 @@ function buildComunicadoPreviewData(
     blocks,
     ...(cfg.dataFilters ? { dataFilters: cfg.dataFilters } : {}),
     ...(cfg.speakerNotes ? { speakerNotes: cfg.speakerNotes } : {}),
+    ...(cfg.brandThemeKey ? { brandThemeKey: cfg.brandThemeKey } : {}),
     ...(cfg.customFonts
       ? {
           customFonts: cfg.customFonts.map((font) => ({

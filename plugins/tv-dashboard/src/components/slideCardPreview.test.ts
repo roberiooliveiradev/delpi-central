@@ -4,6 +4,7 @@ import type { Slide } from "../api/tvDashboardApi";
 import {
   buildFilmstripSlidesWithThumbnailCache,
   buildSlideThumbnailNative,
+  enrichComunicadoConfigForEditor,
   ensureComunicadoEditorMediaUrls,
   externalSlideHost,
   resolveEditorMediaUrl,
@@ -523,5 +524,31 @@ describe("slideCardPreview", () => {
     });
     const data = native?.data as { background?: { type?: string; value?: string } };
     expect(data.background).toEqual({ type: "color", value: "#ffffff" });
+  });
+
+  it("enrich preserva brandThemeKey Delpi (logo não some no sync)", () => {
+    const enriched = enrichComunicadoConfigForEditor(
+      {
+        version: 2,
+        background: {
+          type: "gradient",
+          from: "#05070a",
+          to: "#0d2840",
+          angle: 180,
+        },
+        blocks: [],
+        brandThemeKey: "delpi-dark",
+      },
+      "playlist-1",
+    );
+    expect(enriched.brandThemeKey).toBe("delpi-dark");
+  });
+
+  it("enrich sem brandThemeKey não inventa chave", () => {
+    const enriched = enrichComunicadoConfigForEditor(
+      { version: 2, background: { type: "color", value: "#ffffff" }, blocks: [] },
+      "playlist-1",
+    );
+    expect(enriched.brandThemeKey).toBeUndefined();
   });
 });

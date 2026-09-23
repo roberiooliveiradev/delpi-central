@@ -227,6 +227,7 @@ _NATIVE_OP_NAMES = frozenset(
         "delete_block",
         "bind_visual",
         "patch_native_config",
+        "ensure_brand_logo_on_slide",
     }
 )
 
@@ -642,6 +643,16 @@ class PresentationPatchService:
                 self._op_bind_visual(native_config, raw_op)
             elif op_name == "patch_native_config":
                 self._op_patch_native_config(native_config, raw_op)
+            elif op_name == "ensure_brand_logo_on_slide":
+                if not playlist_id:
+                    raise PresentationPatchError(PresentationOpsContentService.message("missingPlaylist"))
+                self._op_ensure_brand_logo_on_slide(
+                    native_config,
+                    raw_op,
+                    playlist_id=playlist_id,
+                    actor_user_id=actor_user_id,
+                    persist=persist,
+                )
             else:
                 raise PresentationPatchError(
                     PresentationOpsContentService.message("unknownOp", op=op_name or "?")
@@ -1045,6 +1056,69 @@ class PresentationPatchService:
         for key in _PATCH_NATIVE_KEYS:
             if key in patch:
                 merge_native_config_key(cfg, str(key), patch[key])
+
+    def _op_ensure_brand_logo_on_slide(
+        self,
+        cfg: dict[str, Any],
+        op: dict[str, Any],
+        *,
+        playlist_id: str,
+        actor_user_id: str | None,
+        persist: bool,
+    ) -> None:
+        from tv_app.application.services.data.brand_logo_media_service import (
+            BRAND_LOGO_FRAME,
+            BRAND_LOGO_ROLE,
+            BrandLogoMediaService,
+        )
+
+        service = BrandLogoMediaService()
+        if service.theme_provides_logo(cfg):
+            return
+        if service.find_brand_logo_block(cfg):
+            return
+
+        variant_raw = str(op.get("variant") or "auto").strip() or "auto"
+        variant = (
+            service.resolve_variant_for_native(cfg)
+            if variant_raw == "auto"
+            else variant_raw
+        )
+        if variant not in ("onDark", "onLight"):
+            variant = service.resolve_variant_for_native(cfg)
+
+        # Preview without DB: skip binary seed; still mark intent via placeholder skip.
+        if not persist:
+            assets = service.list_brand_assets(playlist_id)
+            asset = assets.get(variant)
+            if not asset:
+                # Synthetic preview id — commit path will seed real assetId.
+                asset = {"id": f"preview-brand-{variant}"}
+        else:
+            assets = service.ensure_playlist_assets(
+                playlist_id,
+                created_by=actor_user_id,
+            )
+            asset = assets.get(variant)
+        if not asset or not asset.get("id"):
+            raise PresentationPatchError(
+                "Logo Delpi indisponível na biblioteca da programação."
+            )
+
+        block_id = f"brand-logo-{variant}"
+        blocks = cfg.get("blocks") if isinstance(cfg.get("blocks"), list) else []
+        logo_block = {
+            "id": block_id,
+            "type": "image",
+            "role": BRAND_LOGO_ROLE,
+            "brandLogoVariant": variant,
+            "assetId": str(asset["id"]),
+            "frame": dict(BRAND_LOGO_FRAME),
+            "style": {"zIndex": 1, "opacity": 0.92},
+        }
+        next_blocks = [b for b in blocks if isinstance(b, dict) and str(b.get("id")) != block_id]
+        next_blocks.append(logo_block)
+        cfg["blocks"] = next_blocks
 
     def _op_add_blank_slide(
         self,

@@ -59,22 +59,40 @@ describe("RichComunicadoStage (canônico editor ≡ TV)", () => {
     expect(root?.style.backgroundImage).toBe("");
   });
 
-  it("sem master → logo brand Delpi (fundo claro = onLight)", () => {
+  it("com brandThemeKey Delpi claro → logo brand onLight", () => {
     const { container } = render(
       <RichComunicadoStage
         data={{
           version: 5,
           background: { type: "color", value: "#ffffff" },
+          brandThemeKey: "delpi-light",
           blocks: [],
         }}
       />,
     );
-    const logo = container.querySelector(".tdp-comunicado__master-logo") as HTMLElement | null;
+    const logo = container.querySelector(".tdp-comunicado__master-logo") as HTMLImageElement | null;
     expect(logo).toBeTruthy();
-    expect(logo?.style.backgroundImage).toMatch(/logoDelpiOnLight|assets\//);
+    expect(logo?.tagName).toBe("IMG");
+    expect(logo?.getAttribute("src") || "").toMatch(/logoDelpiOnLight|assets\//);
   });
 
-  it("fundo escuro sem custom → logo brand onDark", () => {
+  it("fundo escuro com brandThemeKey Delpi → logo brand onDark", () => {
+    const { container } = render(
+      <RichComunicadoStage
+        data={{
+          version: 5,
+          background: { type: "color", value: "#0f172a" },
+          brandThemeKey: "delpi-dark",
+          blocks: [],
+        }}
+      />,
+    );
+    const logo = container.querySelector(".tdp-comunicado__master-logo") as HTMLImageElement | null;
+    expect(logo).toBeTruthy();
+    expect(logo?.getAttribute("src") || "").toMatch(/logoDelpiOnDark|assets\//);
+  });
+
+  it("negativo: sem brandThemeKey → sem logo automática", () => {
     const { container } = render(
       <RichComunicadoStage
         data={{
@@ -84,8 +102,6 @@ describe("RichComunicadoStage (canônico editor ≡ TV)", () => {
         }}
       />,
     );
-    const logo = container.querySelector(".tdp-comunicado__master-logo") as HTMLElement | null;
-    expect(logo).toBeTruthy();
-    expect(logo?.style.backgroundImage).toMatch(/logoDelpiOnDark|assets\//);
+    expect(container.querySelector(".tdp-comunicado__master-logo")).toBeNull();
   });
 });

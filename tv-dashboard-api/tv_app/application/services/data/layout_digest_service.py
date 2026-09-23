@@ -49,6 +49,29 @@ def _z_index(block: Mapping[str, Any]) -> int | None:
         return None
 
 
+def _brand_logo_presence(cfg: Mapping[str, Any]) -> dict[str, Any]:
+    """Structural brand-logo signal for VISTA (theme overlay or image block)."""
+    key = str(cfg.get("brandThemeKey") or "").strip()
+    if key in ("delpi-dark", "delpi-light", "delpi", "light"):
+        return {"present": True, "source": "theme", "brandThemeKey": key}
+    blocks = cfg.get("blocks") if isinstance(cfg.get("blocks"), list) else []
+    for block in blocks:
+        if not isinstance(block, dict):
+            continue
+        if str(block.get("type") or "") != "image":
+            continue
+        if str(block.get("role") or "") == "brandLogo" or str(
+            block.get("brandLogoVariant") or ""
+        ) in ("onDark", "onLight"):
+            return {
+                "present": True,
+                "source": "block",
+                "blockId": str(block.get("id") or ""),
+                "assetId": str(block.get("assetId") or "") or None,
+            }
+    return {"present": False, "source": "none"}
+
+
 def _block_signals(block: Mapping[str, Any]) -> dict[str, Any]:
     btype = str(block.get("type") or "")
     signals: dict[str, Any] = {}
@@ -193,6 +216,7 @@ class LayoutDigestService:
             "blockCount": len(spatial),
             "blocks": projected,
             "layoutHints": _layout_hints(spatial, frames),
+            "brandLogo": _brand_logo_presence(cfg),
         }
 
     @classmethod

@@ -149,6 +149,62 @@ def _label_for_block(block: Mapping[str, Any]) -> str:
     return f"{btype} {bid}".strip()
 
 
+def _paste_brand_logo(
+    img: Image.Image,
+    cfg: Mapping[str, Any],
+    *,
+    width: int,
+    height: int,
+) -> None:
+    """Paste packaged Delpi logo when theme overlay or brandLogo image block is present."""
+    from tv_app.application.services.data.brand_logo_media_service import (
+        BRAND_LOGO_FRAME,
+        BrandLogoMediaService,
+        brand_logo_packaged_dir,
+    )
+
+    presence = BrandLogoMediaService().brand_logo_presence(dict(cfg))
+    if not presence.get("present"):
+        return
+    variant = "onDark"
+    frame = dict(BRAND_LOGO_FRAME)
+    if presence.get("source") == "theme":
+        key = str(presence.get("brandThemeKey") or "")
+        variant = "onLight" if key in ("delpi-light", "light") else "onDark"
+    else:
+        blocks = cfg.get("blocks") if isinstance(cfg.get("blocks"), list) else []
+        for block in blocks:
+            if not isinstance(block, dict):
+                continue
+            if str(block.get("role") or "") != "brandLogo" and str(
+                block.get("brandLogoVariant") or ""
+            ) not in ("onDark", "onLight"):
+                continue
+            variant = str(block.get("brandLogoVariant") or variant)
+            if isinstance(block.get("frame"), dict):
+                frame = dict(block["frame"])
+            break
+    filename = "logoDelpiOnLight.png" if variant == "onLight" else "logoDelpiOnDark.png"
+    path = brand_logo_packaged_dir() / filename
+    if not path.is_file():
+        return
+    try:
+        logo = Image.open(path).convert("RGBA")
+    except OSError:
+        return
+    box = _frame_px(frame, width=width, height=height)
+    if not box:
+        return
+    left, top, right, bottom = box
+    target_w = max(1, right - left)
+    target_h = max(1, bottom - top)
+    logo = logo.copy()
+    logo.thumbnail((target_w, target_h), Image.Resampling.LANCZOS)
+    paste_x = left + max(0, (target_w - logo.width) // 2)
+    paste_y = top + max(0, (target_h - logo.height))
+    img.paste(logo, (paste_x, paste_y), logo)
+
+
 class SlidePreviewRenderService:
     """Raster schematic + disk cache keyed by slideId+revision."""
 
@@ -266,6 +322,8 @@ class SlidePreviewRenderService:
             banner = _font(max(12, height // 36))
             draw.rectangle([0, 0, width, 28], fill=(15, 23, 42, 180))
             draw.text((8, 6), str(title)[:80], fill=(248, 250, 252), font=banner)
+
+        _paste_brand_logo(img, cfg, width=width, height=height)
 
         buf = BytesIO()
         img.convert("RGB").save(buf, format="PNG", optimize=True)

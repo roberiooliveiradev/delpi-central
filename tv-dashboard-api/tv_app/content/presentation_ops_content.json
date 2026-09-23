@@ -339,7 +339,7 @@
     "presetRequired": "add_slide_from_preset exige presetKey.",
     "playlistNameRequired": "create_playlist exige name.",
     "patchRequired": "patch_native_config exige um objeto patch.",
-    "patchKeysInvalid": "patch_native_config só aceita: background, dataFilters, speakerNotes, groupTransforms.",
+    "patchKeysInvalid": "patch_native_config só aceita: background, dataFilters, speakerNotes, groupTransforms, brandThemeKey.",
     "reorderItemsRequired": "reorder_slides exige items com id e sortOrder.",
     "sectionNameRequired": "upsert_section exige name.",
     "sectionIdRequired": "delete_section exige sectionId.",
@@ -1685,6 +1685,43 @@
         "slide"
       ]
     },
+    "ensure_brand_logo_on_slide": {
+      "requiresPlaylist": true,
+      "requiresSlide": true,
+      "risk": "mutation",
+      "confirmationPolicy": "direct",
+      "sideEffectHints": [
+        "replaceNativeConfig"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "op"
+        ],
+        "example": {
+          "op": "ensure_brand_logo_on_slide"
+        },
+        "properties": {
+          "op": {
+            "const": "ensure_brand_logo_on_slide"
+          },
+          "variant": {
+            "type": "string",
+            "enum": [
+              "onDark",
+              "onLight",
+              "auto"
+            ],
+            "description": "Logo variant. auto = derive from brandThemeKey / background."
+          }
+        }
+      },
+      "produces": [],
+      "consumes": [
+        "playlist",
+        "slide"
+      ]
+    },
     "patch_native_config": {
       "requiresPlaylist": true,
       "requiresSlide": true,
@@ -1716,7 +1753,7 @@
             "type": "object",
             "minProperties": 1,
             "additionalProperties": false,
-            "description": "Whitelist only: background, dataFilters, speakerNotes, groupTransforms. Illegal keys are rejected.",
+            "description": "Whitelist only: background, dataFilters, speakerNotes, groupTransforms, brandThemeKey. Illegal keys are rejected.",
             "properties": {
               "background": {
                 "type": "object",
@@ -1789,6 +1826,10 @@
               },
               "speakerNotes": {
                 "type": "string"
+              },
+              "brandThemeKey": {
+                "type": "string",
+                "description": "Delpi color theme key that enables institutional logo overlay (delpi-dark | delpi-light). Empty string clears."
               },
               "groupTransforms": {
                 "type": "object",
@@ -2734,7 +2775,7 @@
     {
       "key": "patch_native_config",
       "op": "patch_native_config",
-      "whenToUse": "Alterar fundo, dataFilters, speakerNotes ou groupTransforms do slide (whitelist).",
+      "whenToUse": "Alterar fundo, dataFilters, speakerNotes, groupTransforms ou brandThemeKey do slide (whitelist).",
       "contentMarkers": [
         "fundo",
         "background",
@@ -2758,6 +2799,24 @@
             "value": "{{backgroundColor}}"
           }
         }
+      }
+    },
+    {
+      "key": "ensure_brand_logo_on_slide",
+      "op": "ensure_brand_logo_on_slide",
+      "whenToUse": "Garantir logo Delpi no slide como bloco image (assetId na biblioteca). Pula se brandThemeKey Delpi ou logo já presente.",
+      "contentMarkers": [
+        "logo delpi",
+        "marca delpi",
+        "brand logo",
+        "logo institucional"
+      ],
+      "excludeMarkers": [],
+      "actionTermSet": "mutation",
+      "requiresFilledPlaceholders": [],
+      "payloadTemplate": {
+        "op": "ensure_brand_logo_on_slide",
+        "variant": "auto"
       }
     },
     {

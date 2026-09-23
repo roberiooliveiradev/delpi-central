@@ -66,6 +66,8 @@ def test_e6_media_and_mcp_target():
     d = VistaAgentIntelligenceService.agent_directives()
     assert d["media_limits"]["principle"] == "ASSET_ID_ONLY"
     assert d["media_limits"].get("uploadCapability") == "TARGET"
+    assert d["media_limits"].get("brandLogoCapability") == "PROVEN"
+    assert d["brand_logo"]["principle"] == "ENSURE_OR_THEME_SKIP"
     assert d["mcp_delia"]["status"] == "TARGET"
     parity = d["screenshot_parity"]
     assert "densas" in " ".join(parity["pipeline"]).lower() or "camadas" in " ".join(

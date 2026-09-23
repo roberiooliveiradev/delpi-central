@@ -1144,14 +1144,16 @@
       ]
     },
     "THEME_DELPI": {
-      "label": "Tema DELPI",
-      "themeKey": "delpi",
-      "description": "Só fundo/tema DELPI (sem blocos).",
+      "label": "Tema Delpi escuro",
+      "themeKey": "delpi-dark",
+      "description": "Fundo Delpi escuro + brandThemeKey (logo institucional overlay).",
       "markers": [
         "tema delpi",
+        "tema delpi escuro",
         "fundo delpi",
         "visual delpi",
-        "theme delpi"
+        "theme delpi",
+        "delpi escuro"
       ],
       "ops": [
         {
@@ -1162,7 +1164,31 @@
               "from": "#05070a",
               "to": "#0d2840",
               "angle": 180
-            }
+            },
+            "brandThemeKey": "delpi-dark"
+          }
+        }
+      ]
+    },
+    "THEME_DELPI_LIGHT": {
+      "label": "Tema Delpi claro",
+      "themeKey": "delpi-light",
+      "description": "Fundo Delpi claro + brandThemeKey (logo institucional overlay).",
+      "markers": [
+        "tema delpi claro",
+        "fundo delpi claro",
+        "delpi claro",
+        "theme delpi light"
+      ],
+      "ops": [
+        {
+          "op": "patch_native_config",
+          "patch": {
+            "background": {
+              "type": "color",
+              "value": "#f8fafc"
+            },
+            "brandThemeKey": "delpi-light"
           }
         }
       ]

@@ -158,4 +158,6 @@ def patch_native_keys() -> frozenset[str]:
     props = (patch or {}).get("properties") if isinstance(patch, dict) else {}
     if isinstance(props, dict) and props:
         return frozenset(str(key) for key in props)
-    return frozenset({"background", "dataFilters", "speakerNotes", "groupTransforms"})
+    return frozenset(
+        {"background", "dataFilters", "speakerNotes", "groupTransforms", "brandThemeKey"}
+    )

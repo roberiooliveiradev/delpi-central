@@ -569,7 +569,8 @@
       "4) gpt_preview_data_block com params (dateRangePreset=this_month padrão se date_range fechada) — deve retornar dado OK.",
       "5) upsert_data_source (N fontes, params completos + branch herdado) + set_data_transform merge via joinHints quando 2+ fontes.",
       "6) add_*_from_route OU upsert_block visual + bind_visual — SEMPRE projection NÃO vazia + formato (auto ou upsert); chartType/bloco via visual_selection.",
-      "7) presentation_recipes Delpi alinhadas à forma (TV_KPI_HERO / ROW/GRID / PLUS_CHART[_BAR|_PIE] / FILTER_STRIP / SERIES_TABLE / HERO_PLUS_TABLE / TABLE_FOCUS / COMPOSED_DATA_CARD / THEME_DELPI) + chrome tipado + designTokens.",
+      "7) presentation_recipes Delpi alinhadas à forma (TV_KPI_HERO / ROW/GRID / PLUS_CHART[_BAR|_PIE] / FILTER_STRIP / SERIES_TABLE / HERO_PLUS_TABLE / TABLE_FOCUS / COMPOSED_DATA_CARD / THEME_DELPI | THEME_DELPI_LIGHT) + chrome tipado + designTokens.",
+      "7b) brand_logo: se layoutDigest.brandLogo.present=false e não usou THEME_DELPI* → ensure_brand_logo_on_slide.",
       "8) Uma gpt_preview_change compound + commit_now=true; só aceitar VERIFIED sem erro de filtro/projection."
     ],
     "forbidden": [
@@ -617,14 +618,33 @@
   },
   "media_limits": {
     "principle": "ASSET_ID_ONLY",
-    "summary": "Blocos image/video e fundo image exigem assetId já existente. Upload governado = TARGET (Abstraction/Action Surface Gate antes de Action nova).",
+    "summary": "Blocos image/video e fundo image exigem assetId. Logo Delpi institucional: ensure_brand_logo_on_slide (seed pacote → biblioteca) ou brandThemeKey Delpi (overlay). Upload multipart genérico = TARGET.",
     "rules": [
-      "Sem assetId INFORMED → declare gap; use cor/gradiente Delpi ou peça mídia no editor.",
+      "Sem assetId INFORMED → declare gap; use cor/gradiente Delpi ou ensure_brand_logo_on_slide / peça mídia no editor.",
+      "Logo Delpi: ler layoutDigest.brandLogo + mediaInventory.brandLogos no gpt_get_playlist_context. Se present=true (theme|block) → NÃO duplicar.",
+      "Se present=false → ensure_brand_logo_on_slide (variant=auto) no mesmo lote compound; a op semeia PNG empacotado na biblioteca e cria bloco image role=brandLogo.",
+      "Tema Delpi: THEME_DELPI / THEME_DELPI_LIGHT setam brandThemeKey — logo overlay; skip ensure_brand_logo_on_slide.",
       "Print/screenshot = VISUAL_PARITY tipada, não Image Generation nem upload implícito.",
-      "Quando existir capability tipada de upload, atualizar este bloco; até lá ASSET_ID_ONLY."
+      "Prévia: includePreview=true para confirmar espacialmente; previewUrl é esquemático + logo real quando presente — não inventar assetId."
     ],
-    "status": "PROVEN_LIMIT",
-    "uploadCapability": "TARGET"
+    "status": "PROVEN",
+    "uploadCapability": "TARGET",
+    "brandLogoCapability": "PROVEN"
+  },
+  "brand_logo": {
+    "principle": "ENSURE_OR_THEME_SKIP",
+    "summary": "Logo Delpi no slide: tema Delpi (overlay) OU bloco image importado da biblioteca. Nunca inventar assetId.",
+    "pipeline": [
+      "1) gpt_get_playlist_context → layoutDigest[].brandLogo + mediaInventory.brandLogos.",
+      "2) Se brandLogo.present (theme|block) → skip.",
+      "3) Senão → ensure_brand_logo_on_slide (variant=auto) no compound.",
+      "4) includePreview opcional para validar canto inferior direito sem cobrir KPIs."
+    ],
+    "forbidden": [
+      "Duplicar logo quando brandThemeKey Delpi já ativo",
+      "Inventar assetId de logo",
+      "Upload multipart via Action nova"
+    ]
   },
   "mcp_delia": {
     "principle": "SAME_PRESENTATION_MUTATION",

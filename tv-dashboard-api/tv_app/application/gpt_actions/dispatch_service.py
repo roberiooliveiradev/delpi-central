@@ -161,6 +161,28 @@ class GptActionsDispatchService:
             "layoutDigest": layout_digest,
             "localDraftCoordination": "unavailable_external",
         }
+        try:
+            from tv_app.application.services.data.brand_logo_media_service import (
+                BrandLogoMediaService,
+            )
+
+            brand = BrandLogoMediaService().list_brand_assets(pid)
+            out["mediaInventory"] = {
+                "brandLogos": {
+                    variant: {
+                        "assetId": asset.get("id"),
+                        "originalName": asset.get("originalName"),
+                        "mimeType": asset.get("mimeType"),
+                    }
+                    for variant, asset in brand.items()
+                },
+                "note": (
+                    "Brand logos are ASSET_ID_ONLY. Call ensure_brand_logo_on_slide to "
+                    "seed missing packaged Delpi logos into this playlist library."
+                ),
+            }
+        except Exception:
+            out["mediaInventory"] = {"brandLogos": {}, "note": "unavailable"}
         if actor:
             focus = editor_focus_store.get_for_user_playlist(actor, str(pid))
             if focus:

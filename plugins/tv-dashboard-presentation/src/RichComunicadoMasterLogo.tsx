@@ -13,7 +13,8 @@ export type RichComunicadoMasterLogoProps = {
 
 /**
  * Logo master canônico — editor e apresentação usam o mesmo layout %.
- * Posição/opacidade/zIndex: ``delpiBrandTheme.json``. zIndex baixo = sob os blocos de dados.
+ * Posição/opacidade: ``delpiBrandTheme.json``.
+ * zIndex mínimo 1 no paint (acima do grid z=0); ainda abaixo dos blocos de dados (≥2).
  */
 export function RichComunicadoMasterLogo({
   url,
@@ -23,6 +24,7 @@ export function RichComunicadoMasterLogo({
 }: RichComunicadoMasterLogoProps) {
   if (!url) return null;
   const logo = getDelpiBrandLogoConfig();
+  const paintZ = Math.max(1, logo.zIndex ?? 0);
   const style: CSSProperties = {
     position: "absolute",
     left: `${frame?.x ?? DELPI_BRAND_LOGO_FRAME.x}%`,
@@ -30,12 +32,19 @@ export function RichComunicadoMasterLogo({
     width: `${frame?.w ?? DELPI_BRAND_LOGO_FRAME.w}%`,
     height: `${frame?.h ?? DELPI_BRAND_LOGO_FRAME.h}%`,
     opacity,
-    zIndex: logo.zIndex,
+    zIndex: paintZ,
     pointerEvents: "none",
-    backgroundImage: `url(${JSON.stringify(url)})`,
-    backgroundSize: "contain",
-    backgroundRepeat: "no-repeat",
-    backgroundPosition: logo.backgroundPosition,
+    objectFit: "contain",
+    objectPosition: logo.backgroundPosition,
   };
-  return <div className={className} aria-hidden style={style} />;
+  return (
+    <img
+      className={className}
+      src={url}
+      alt=""
+      draggable={false}
+      aria-hidden
+      style={style}
+    />
+  );
 }

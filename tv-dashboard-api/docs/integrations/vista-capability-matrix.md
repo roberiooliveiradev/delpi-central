@@ -127,7 +127,7 @@ Owner-local services (not new GPT Actions):
 | Continuous review of existing | `agent_directives.continuous_review` | **PROVEN** directives |
 | Playlist clarification / curation | `object_resolution` + `playlist_curation` | **PROVEN** directives |
 | Branch / SI goals | `branch_scope` + `si_goals` | **PROVEN** directives |
-| Media | `assetId` only | **PROVEN** limit; upload **TARGET** (`media_limits.uploadCapability`) |
+| Media | `assetId` only; brand logos via `ensure_brand_logo_on_slide` | **PROVEN** brand seed; generic upload **TARGET** |
 | MCP / DÉLIA TV | `mcp_delia` | **TARGET** (same PresentationMutation) |
 | Eval corpus | `docs/gpt-actions/vista-ready-slide-eval-corpus.md` | **PROVEN** checklist |
 
