@@ -998,6 +998,46 @@ export type LineFeederRequirementsPayload = {
   didactic: { title?: string; body?: string; notes?: string[] };
 };
 
+export type LineFeederProductWorkCenter = {
+  work_center: string;
+  work_center_name: string;
+  required_qty: number;
+  to_deliver_qty: number | null;
+  status: LineFeederStatus;
+};
+
+export type LineFeederProductTransfer = {
+  issued_at: string;
+  document: string;
+  from_warehouse: string;
+  to_warehouse: string;
+  quantity: number | null;
+  user_name: string;
+};
+
+export type LineFeederProductDetail = {
+  branch: string;
+  cutoff: { at: string; date: string; time: string };
+  product: {
+    code: string;
+    description: string;
+    unit: string;
+    pickup_location: string;
+  };
+  work_centers: LineFeederProductWorkCenter[];
+  stock: {
+    available: boolean;
+    warehouse: string;
+    quantity: number | null;
+    message?: string;
+  };
+  transfers: {
+    available: boolean;
+    items: LineFeederProductTransfer[];
+    message?: string;
+  };
+};
+
 export type LineFeederPickItem = {
   id: string;
   product_code: string;

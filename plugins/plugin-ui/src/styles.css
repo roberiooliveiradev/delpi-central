@@ -164,6 +164,22 @@
   display: inline-block;
 }
 
+.delpi-ui-help-tooltip__trigger--icon {
+  width: 1.25rem;
+  min-width: 1.25rem;
+  min-height: 1.25rem;
+  padding: 0;
+  border-radius: 999px;
+  font-size: 0;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.delpi-ui-help-tooltip__trigger--icon svg {
+  display: block;
+  flex-shrink: 0;
+}
+
 .delpi-ui-help-tooltip__trigger:hover,
 .delpi-ui-help-tooltip__trigger:focus-visible {
   opacity: 1;

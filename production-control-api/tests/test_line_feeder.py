@@ -105,15 +105,20 @@ class FakeGateway:
         balances_fail: bool = False,
         locations: dict[str, str] | None = None,
         locations_fail: bool = False,
+        movements: list[dict[str, Any]] | None = None,
+        movements_fail: bool = False,
     ) -> None:
         self.commitments = commitments or []
         self.balances = balances or {}
         self.balances_fail = balances_fail
         self.locations = locations or {}
         self.locations_fail = locations_fail
+        self.movements = movements or []
+        self.movements_fail = movements_fail
         self.batch_calls: list[dict[str, Any]] = []
         self.balance_calls: list[dict[str, Any]] = []
         self.location_calls: list[dict[str, Any]] = []
+        self.movement_calls: list[dict[str, Any]] = []
 
     def fetch_operation_materials_batch(
         self,
@@ -178,6 +183,37 @@ class FakeGateway:
             {"product_code": code, "quantity": qty, "warehouse": warehouse}
             for code, qty in (self.balances.get(warehouse) or {}).items()
             if not wanted or code in wanted
+        ]
+        return {"success": True, "data": {"items": rows}}
+
+    def fetch_product_internal_movements(
+        self,
+        *,
+        product_code: str,
+        branch: str,
+        kind: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        page: int = 1,
+        page_size: int = 20,
+    ) -> dict[str, Any]:
+        if self.movements_fail:
+            raise DelpiGatewayError("api-delpi indisponível.")
+        self.movement_calls.append(
+            {
+                "product_code": product_code,
+                "branch": branch,
+                "kind": kind,
+                "start_date": start_date,
+                "end_date": end_date,
+                "page": page,
+                "page_size": page_size,
+            }
+        )
+        rows = [
+            row
+            for row in self.movements
+            if not product_code or row.get("product_code") == product_code
         ]
         return {"success": True, "data": {"items": rows}}
 
@@ -313,6 +349,8 @@ def _service(
     balances_fail: bool = False,
     locations: dict[str, str] | None = None,
     locations_fail: bool = False,
+    movements: list[dict[str, Any]] | None = None,
+    movements_fail: bool = False,
     payload: dict[str, Any] | None = None,
     pick_plans: FakePickPlans | None = None,
 ) -> tuple[LineFeederService, FakeGateway, FakePickPlans]:
@@ -323,6 +361,8 @@ def _service(
         balances_fail=balances_fail,
         locations=locations,
         locations_fail=locations_fail,
+        movements=movements,
+        movements_fail=movements_fail,
     )
     plans = pick_plans or FakePickPlans()
     # Cache próprio por teste: um teste não pode herdar o cálculo de outro.
@@ -1139,3 +1179,202 @@ def test_route_invalid_plan_id_returns_422() -> None:
         "/line-feeder/pick-plans/not-a-uuid", params={"branch": "01"}
     )
     assert response.status_code == 422
+
+
+# --------------------------------------------------------------------------- #
+# Detalhe do produto no corte
+# --------------------------------------------------------------------------- #
+
+
+def _movement(
+    *,
+    cf: str,
+    document: str,
+    location: str,
+    qty: float,
+    product: str = "50320064",
+    issued: str = "2026-09-20",
+    user: str = "JOAO",
+) -> dict[str, Any]:
+    return {
+        "cf": cf,
+        "document": document,
+        "location": location,
+        "quantity": qty,
+        "issue_date": issued,
+        "product_code": product,
+        "user_name": user,
+    }
+
+
+def _detail(service: LineFeederService, code: str = "50320064", **kwargs: Any) -> dict[str, Any]:
+    params = {
+        "branch": "01",
+        "cutoff_date": "2026-09-22",
+        "cutoff_time": "14:00",
+        **kwargs,
+    }
+    return service.get_product_detail(_user(*FULL_PERMS), product_code=code, **params)
+
+
+def test_product_detail_aggregates_work_centers_in_cutoff() -> None:
+    service, gateway, _ = _service(
+        operations=[
+            _operation(work_center="CT-01", order="10840401001", scheduled_time="08:00"),
+            _operation(work_center="CT-02", order="10840402001", scheduled_time="13:30"),
+        ],
+        commitments=[
+            _commitment("10840401001", "50320064", 10.0),
+            _commitment("10840402001", "50320064", 4.0),
+        ],
+        balances={"99": {"50320064": 10.0}, "01": {"50320064": 250.0}},
+        locations={"50320064": "A-01"},
+        movements=[
+            _movement(cf="DE0", document="000123", location="01", qty=12.0),
+            _movement(cf="RE0", document="000123", location="99", qty=12.0),
+        ],
+    )
+    data = _detail(service)
+
+    assert data["product"] == {
+        "code": "50320064",
+        "description": "MATERIAL 50320064",
+        "unit": "PC",
+        "pickup_location": "A-01",
+    }
+    assert [row["work_center"] for row in data["work_centers"]] == ["CT-01", "CT-02"]
+    assert data["work_centers"][0]["to_deliver_qty"] == 0.0
+    assert data["work_centers"][1]["to_deliver_qty"] == 4.0
+    assert data["stock"] == {"available": True, "warehouse": "01", "quantity": 250.0}
+    assert data["transfers"]["available"] is True
+    assert data["transfers"]["items"] == [
+        {
+            "issued_at": "2026-09-20",
+            "document": "000123",
+            "from_warehouse": "01",
+            "to_warehouse": "99",
+            "quantity": 12.0,
+            "user_name": "JOAO",
+        }
+    ]
+    assert gateway.movement_calls[0]["kind"] == "warehouse_transfer"
+    assert gateway.movement_calls[0]["page_size"] == 20
+    # Saldo do modal é uma leitura própria do 01, não a fatia FIFO da grade.
+    assert gateway.balance_calls[-1] == {
+        "branch": "01",
+        "warehouse": "01",
+        "only_positive": False,
+        "page": 1,
+        "product_codes": ["50320064"],
+    }
+
+
+def test_product_detail_keeps_covered_work_center() -> None:
+    """CT com a entregar 0 continua na lista se pediu o material no corte."""
+    service, _, _ = _service(
+        operations=[_operation(work_center="CT-01", order="10840401001")],
+        commitments=[_commitment("10840401001", "50320064", 5.0)],
+        balances={"99": {"50320064": 5.0}, "01": {"50320064": 80.0}},
+    )
+    data = _detail(service)
+    assert data["work_centers"][0]["to_deliver_qty"] == 0.0
+    assert data["work_centers"][0]["status"] == "covered"
+
+
+def test_product_outside_cutoff_returns_not_found() -> None:
+    service, _, _ = _service(
+        operations=[_operation(work_center="CT-01", order="10840401001")],
+        commitments=[_commitment("10840401001", "50320064", 5.0)],
+        balances={"99": {}, "01": {"50320064": 10.0}},
+    )
+    with pytest.raises(LookupError):
+        _detail(service, code="99999999")
+
+
+def test_product_detail_does_not_expose_intermediate() -> None:
+    service, _, _ = _service(
+        operations=[_operation(work_center="CT-01", order="10840401001")],
+        commitments=[_commitment("10840401001", "50215375", 8.0, product_type="PI")],
+        balances={"99": {}, "01": {"50215375": 8.0}},
+    )
+    with pytest.raises(LookupError):
+        _detail(service, code="50215375")
+
+
+def test_product_detail_pairs_de0_re0_and_keeps_orphan() -> None:
+    service, _, _ = _service(
+        operations=[_operation(work_center="CT-01", order="10840401001")],
+        commitments=[_commitment("10840401001", "50320064", 5.0)],
+        balances={"99": {}, "01": {"50320064": 10.0}},
+        movements=[
+            _movement(cf="DE0", document="000200", location="01", qty=3.0, issued="2026-09-21"),
+            _movement(cf="RE0", document="000200", location="99", qty=3.0, issued="2026-09-21"),
+            _movement(cf="DE0", document="000201", location="01", qty=1.0, issued="2026-09-18"),
+            _movement(cf="PR0", document="000999", location="01", qty=50.0, issued="2026-09-21"),
+        ],
+    )
+    items = _detail(service)["transfers"]["items"]
+    assert [row["document"] for row in items] == ["000200", "000201"]
+    assert items[0]["from_warehouse"] == "01"
+    assert items[0]["to_warehouse"] == "99"
+    assert items[1]["from_warehouse"] == "01"
+    assert items[1]["to_warehouse"] == ""
+
+
+def test_product_detail_stock_failure_does_not_drop_modal() -> None:
+    service, _, _ = _service(
+        operations=[_operation(work_center="CT-01", order="10840401001")],
+        commitments=[_commitment("10840401001", "50320064", 5.0)],
+        balances_fail=True,
+    )
+    data = _detail(service)
+    assert data["product"]["code"] == "50320064"
+    assert data["work_centers"][0]["work_center"] == "CT-01"
+    assert data["stock"]["available"] is False
+    assert data["stock"]["quantity"] is None
+    assert data["stock"]["message"]
+
+
+def test_product_detail_transfer_failure_still_returns_identity() -> None:
+    service, _, _ = _service(
+        operations=[_operation(work_center="CT-01", order="10840401001")],
+        commitments=[_commitment("10840401001", "50320064", 5.0)],
+        balances={"99": {}, "01": {"50320064": 10.0}},
+        movements_fail=True,
+    )
+    data = _detail(service)
+    assert data["product"]["code"] == "50320064"
+    assert data["stock"]["available"] is True
+    assert data["transfers"]["available"] is False
+    assert data["transfers"]["items"] == []
+
+
+def test_route_returns_product_detail_envelope() -> None:
+    service, _, _ = _service(
+        operations=[_operation(work_center="CT-01", order="10840401001")],
+        commitments=[_commitment("10840401001", "50320064", 5.0)],
+        balances={"99": {}, "01": {"50320064": 10.0}},
+    )
+    response = _client(service).get(
+        "/line-feeder/products/50320064",
+        params={"branch": "01", "cutoffDate": "2026-09-22", "cutoffTime": "14:00"},
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["success"] is True
+    assert body["data"]["product"]["code"] == "50320064"
+    assert body["data"]["stock"]["warehouse"] == "01"
+
+
+def test_route_unknown_product_returns_404() -> None:
+    service, _, _ = _service(
+        operations=[_operation(work_center="CT-01", order="10840401001")],
+        commitments=[_commitment("10840401001", "50320064", 5.0)],
+        balances={"99": {}, "01": {"50320064": 10.0}},
+    )
+    response = _client(service).get(
+        "/line-feeder/products/99999999",
+        params={"branch": "01", "cutoffDate": "2026-09-22"},
+    )
+    assert response.status_code == 404
+    assert response.json()["success"] is False

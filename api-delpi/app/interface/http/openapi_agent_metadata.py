@@ -95,7 +95,8 @@ PRODUCT_GUIDE = agent_route(
 PRODUCT_INTERNAL_MOVEMENTS = agent_route(
     summary="Movimentações internas do produto",
     description=(
-        "Movimentações internas de estoque/produção do item com filtros de período, filial, armazém, TM e OP. "
+        "Movimentações internas de estoque/produção do item com filtros de período, filial, armazém, TM, OP e kind. "
+        "kind=warehouse_transfer restringe a transferências entre armazéns. "
         "Use para movimentação interna, transferências ou histórico operacional do código. "
         "Não use quando o usuário pediu «estoque», «saldo» ou «disponível» — prefira /stock."
     ),

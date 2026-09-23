@@ -108,7 +108,10 @@ export function PpcWorkspaceHeader({
               {badge ? <span className="ppc-header__badge">{badge}</span> : null}
               <h1 className="ppc-header__title">
                 {title}
-                <HelpTooltip content={titleHint ?? helpTooltips.problemAnalysis} />
+                <HelpTooltip
+                  content={titleHint ?? helpTooltips.problemAnalysis}
+                  trigger="icon"
+                />
               </h1>
             </div>
             {subtitle ? <p className="ppc-header__subtitle">{subtitle}</p> : null}
@@ -133,7 +136,7 @@ export function PpcWorkspaceHeader({
         <div className="ppc-header__actions">
           <div className="ppc-branch" role="group" aria-label={copy.branch.label}>
             <span className="ppc-branch__label">{copy.branch.label}</span>
-            <HelpTooltip content={helpTooltips.branch} />
+            <HelpTooltip content={helpTooltips.branch} trigger="icon" />
             {(["01", "02"] as const).map((code) => (
               <button
                 key={code}

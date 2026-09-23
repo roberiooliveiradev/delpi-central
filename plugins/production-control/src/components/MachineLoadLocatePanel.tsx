@@ -42,7 +42,7 @@ export function MachineLoadLocatePanel({
       >
         <label className="ppc-locate__label" htmlFor={fieldId}>
           {copy.machineLoad.locate.label}
-          <HelpTooltip content={helpTooltips.machineLoadLocate} />
+          <HelpTooltip content={helpTooltips.machineLoadLocate} trigger="icon" />
         </label>
         <div className="ppc-locate__field">
           <Search size={16} strokeWidth={1.75} aria-hidden className="ppc-locate__icon" />
