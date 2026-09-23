@@ -1299,7 +1299,11 @@ def internal_movements(
     branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     location: Optional[str] = Query(None),
     tm: Optional[str] = Query(None),
-    op: Optional[str] = Query(None)
+    op: Optional[str] = Query(None),
+    kind: Optional[str] = Query(
+        None,
+        description="warehouse_transfer = só movimentação entre armazéns",
+    ),
 ):
 
     start_date, end_date = resolve_period_dates(
@@ -1319,7 +1323,8 @@ def internal_movements(
             branch=branch,
             location=location,
             tm=tm,
-            op=op
+            op=op,
+            kind=kind,
         )
 
         use_case = build_list_product_internal_movements_use_case()

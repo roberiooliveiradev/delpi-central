@@ -320,13 +320,14 @@ Roteiro de produção. A árvore de códigos para roteiro (`SG2010`) usa apenas 
 
 ## GET /products/{code}/internal-movements
 
-Movimentações internas de estoque.
+Movimentações internas de estoque (`SD3010`). Sem `kind`, o universo é o SD3 ativo do produto.
 
 | Query | Descrição |
 |---|---|
 | `date_start`, `date_end` | Período. |
 | `branch`, `location` | Filial e armazém. |
-| `tm`, `op` | Transformação / ordem de produção. |
+| `tm`, `op` | Tipo de movimento / ordem de produção. |
+| `kind` | `warehouse_transfer` — só transferência entre armazéns (`D3_CF` DE0 sai / RE0 entra). Estorno fica de fora. |
 
 ---
 

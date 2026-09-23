@@ -20,7 +20,8 @@ class ListProductInternalMovementsUseCase:
             branch=dto.branch,
             location=dto.location,
             tm=dto.tm,
-            op=dto.op
+            op=dto.op,
+            kind=dto.kind,
         )
 
         return page.to_dict()

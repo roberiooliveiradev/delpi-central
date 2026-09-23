@@ -8,7 +8,12 @@ from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
 
 from app.application.models.page import Page
 from app.domain.entities.product.internal_movement import InternalMovement
-from app.domain.ports.product.product_internal_movements_repository_port import ProductInternalMovementsRepositoryPort
+from app.domain.ports.product.product_internal_movements_repository_port import (
+    ProductInternalMovementsRepositoryPort,
+)
+from app.infrastructure.persistence.totvs.product_repositories.product_internal_movements_sql import (
+    bind_internal_movement_filters,
+)
 
 
 class ProductInternalMovementsRepository(
@@ -27,21 +32,23 @@ class ProductInternalMovementsRepository(
         location: Optional[str],
         tm: Optional[str],
         op: Optional[str],
+        kind: Optional[str] = None,
     ) -> Page[InternalMovement]:
 
         paging = paginate(page, page_size)
 
         qb = QueryBuilder()
-
-        qb.raw("SD3.D_E_L_E_T_ = ''")
-        qb.eq("SD3.D3_COD", code)
-
-        qb.date_range("SD3.D3_EMISSAO", date_start, date_end)
-
-        qb.eq("SD3.D3_FILIAL", branch)
-        qb.eq("SD3.D3_LOCAL", location)
-        qb.eq("SD3.D3_TM", tm)
-        qb.eq("SD3.D3_OP", op)
+        bind_internal_movement_filters(
+            qb,
+            code=code,
+            date_start=date_start,
+            date_end=date_end,
+            branch=branch,
+            location=location,
+            tm=tm,
+            op=op,
+            kind=kind,
+        )
 
         where_clause, params = qb.build()
 

@@ -19,6 +19,7 @@ class ProductInternalMovementsRepositoryPort(ABC):
         branch: Optional[str],
         location: Optional[str],
         tm: Optional[str],
-        op: Optional[str]
+        op: Optional[str],
+        kind: Optional[str] = None,
     ) -> Page[InternalMovement]:
         pass
