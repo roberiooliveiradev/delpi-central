@@ -119,7 +119,7 @@
     },
     "G_DESIGN_AUDIT": {
       "nl": "melhore este slide",
-      "markers": ["designAudit", "semanticDigest", "visualRecommendation", "componentSpecs"],
+      "markers": ["designAudit", "semanticDigest", "visualRecommendation", "componentSpecs", "storyDigest", "candidatePreview", "visualVerification"],
       "topic": "design_intelligence"
     }
   }

@@ -14,6 +14,7 @@ from tv_app.application.ports import PresentationRepositoryPort
 from tv_app.application.services.data.design_intelligence_service import (
     DesignIntelligenceService,
 )
+from tv_app.application.services.data.story_digest_service import StoryDigestService
 from tv_app.application.services.data.presentation_command_planner_service import (
     PresentationCommandPlannerService,
 )
@@ -221,6 +222,7 @@ class GptActionsDispatchService:
             "designAudit": DesignIntelligenceService.design_audit(
                 detail_slide.get("nativeConfig") if isinstance(detail_slide, dict) else None
             ),
+            "storyDigest": StoryDigestService.digest(slides),
             "localDraftCoordination": "unavailable_external",
             "note": (
                 "slides[] is a compact index (no nativeConfig). "
@@ -344,6 +346,24 @@ class GptActionsDispatchService:
                 code="RESOURCE_NOT_FOUND",
                 status_code=404,
             )
+        cache_key = str(claims.get("cacheKey") or "").strip()
+        if cache_key:
+            png = get_slide_preview_render_service().read_if_cached(
+                slide_id=str(slide["id"]),
+                revision=cache_key,
+            )
+            if not png:
+                raise GptActionsError(
+                    "Prévia do candidato expirou. Refaça gpt_preview_change.",
+                    code="PREVIEW_REVISION_STALE",
+                    status_code=409,
+                )
+            return png, {
+                "playlistId": claims["playlistId"],
+                "slideId": claims["slideId"],
+                "revision": cache_key,
+                "candidate": True,
+            }
         current_rev = str(self._writes.get_revision(pid) or "")
         token_rev = str(claims.get("revision") or "")
         if token_rev and current_rev and token_rev != current_rev:
@@ -528,6 +548,10 @@ class GptActionsDispatchService:
             rows,
             columns=self._columns_from_preview_block(block),
         )
+        dominant = None
+        if playlist_id:
+            story = StoryDigestService.digest(self._writes.list_slides(pid))
+            dominant = StoryDigestService.dominant_family(story)
         return {
             "block": block,
             "persisted": False,
@@ -535,7 +559,10 @@ class GptActionsDispatchService:
             "joinHints": join_hints,
             "formatHints": format_hints,
             "semanticDigest": digest,
-            "visualRecommendation": DesignIntelligenceService.visual_recommendation(digest),
+            "visualRecommendation": DesignIntelligenceService.visual_recommendation(
+                digest,
+                dominant_visual_family=dominant,
+            ),
         }
 
     @staticmethod
@@ -633,6 +660,56 @@ class GptActionsDispatchService:
             authorization=authorization,
         )
         return PresentationCommandPlannerService.to_suggest_payload(plan)
+
+    def _candidate_preview(
+        self,
+        *,
+        playlist_id: str,
+        slide_id: str,
+        native_config: dict[str, Any] | None,
+        revision: Any,
+    ) -> dict[str, Any] | None:
+        if not playlist_id or not slide_id or not isinstance(native_config, dict):
+            return None
+        before_cfg: dict[str, Any] | None = None
+        try:
+            slides = self._writes.list_slides(UUID(playlist_id))
+        except Exception:
+            slides = []
+        for slide in slides:
+            if isinstance(slide, dict) and str(slide.get("id") or "") == slide_id:
+                raw = slide.get("nativeConfig")
+                before_cfg = raw if isinstance(raw, dict) else None
+                break
+        before = DesignIntelligenceService.design_audit(before_cfg)
+        after = DesignIntelligenceService.design_audit(native_config)
+        before_ids = {str(item.get("id")) for item in before.get("issues") or []}
+        after_issues = [item for item in after.get("issues") or [] if isinstance(item, dict)]
+        after_ids = {str(item.get("id")) for item in after_issues}
+        from tv_app.application.services.data.slide_preview_render_service import (
+            get_slide_preview_render_service,
+        )
+
+        rendered = get_slide_preview_render_service().build_candidate_preview(
+            playlist_id=playlist_id,
+            slide_id=slide_id,
+            revision=revision,
+            native_config=native_config,
+        )
+        return {
+            "previewUrl": rendered.get("previewUrl"),
+            "designAudit": after,
+            "fixedIssues": [
+                item
+                for item in before.get("issues") or []
+                if isinstance(item, dict) and str(item.get("id")) not in after_ids
+            ],
+            "introducedIssues": [
+                item for item in after_issues if str(item.get("id")) not in before_ids
+            ],
+            "remainingIssues": after_issues,
+            "persisted": False,
+        }
 
     def preview_change(
         self,
@@ -742,6 +819,16 @@ class GptActionsDispatchService:
             "compileDigest": result.get("compileDigest"),
             "orderedOps": stored_ops,
         }
+        candidate = self._candidate_preview(
+            playlist_id=playlist_id,
+            slide_id=str((envelope["target"] or {}).get("slideId") or ""),
+            native_config=result.get("nativeConfig")
+            if isinstance(result.get("nativeConfig"), dict)
+            else None,
+            revision=base_revision,
+        )
+        if candidate is not None:
+            preview_payload["candidatePreview"] = candidate
 
         if not commit_now:
             return preview_payload

@@ -95,6 +95,12 @@ If ambiguous, ask once whether they want to interpret data, choose a visualizati
 | Signal | When to use | Epistemology |
 |---|---|---|
 | `layoutDigest` | Always on context READ — prefer before inventing frames | INFORMED geometry (%, zIndex, signals) — **not** pixels |
+| `designAudit` | Context READ of the focused slide | INFORMED layout issues (`message`, `blockIds`, `recommendation`, `recommendedRecipe`). No score |
+| `semanticDigest` | Data preview READ | INFORMED field roles from the route payload |
+| `visualRecommendation` | After `semanticDigest` | PROPOSED chart family. Rejected types (pie on a time series) are not autofix |
+| `storyDigest` | Context READ index | Compact purpose / visual family / primary metric per slide |
+| `candidatePreview` | `gpt_preview_change` | Schematic PNG + audit diff. PREPARE, not persisted |
+| `visualVerification` | `gpt_commit_change` | `persisted` + `rendered` + `layoutGatePassed`. VERIFIED needs all three |
 | `slidePreview` (`includePreview=true`) | Hierarchy / crowding / visual polish when digest is insufficient | INFORMED schematic pixels from TV owner; signed URL; not Image Generation |
 | User-attached print | Parity / “igual a esta imagem” | `screenshot_parity` — INFORMED visual from user |
 

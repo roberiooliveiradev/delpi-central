@@ -37,6 +37,16 @@ def _frame(block: Mapping[str, Any]) -> dict[str, float] | None:
         return None
 
 
+def _invades_safe_area(frame: Mapping[str, float], margin: float) -> bool:
+    right_limit = 100.0 - margin
+    return (
+        frame["x"] < margin - 0.5
+        or frame["y"] < margin - 0.5
+        or frame["x"] + frame["w"] > right_limit + 0.5
+        or frame["y"] + frame["h"] > right_limit + 0.5
+    )
+
+
 def _overlap_area(a: Mapping[str, float], b: Mapping[str, float]) -> float:
     ax2, ay2 = a["x"] + a["w"], a["y"] + a["h"]
     bx2, by2 = b["x"] + b["w"], b["y"] + b["h"]
@@ -118,6 +128,7 @@ class SlideLayoutQualityService:
         max_signals = int(tokens.get("maxPrimarySignalsPerSlide") or 4)
         overlap_threshold = float(tokens.get("overlapAreaThresholdPct") or 8)
         widescreen = float(tokens.get("widescreenCoverageThresholdPct") or 90)
+        safe_margin = float(tokens.get("safeMargin") or 0)
         issues: list[str] = []
 
         frames: list[tuple[dict[str, Any], dict[str, float]]] = []
@@ -143,6 +154,8 @@ class SlideLayoutQualityService:
                 issues.append(f"block_frame_overflow:{block.get('id') or btype}")
             if btype not in _DECORATIVE_TYPES:
                 frames.append((block, fr))
+                if safe_margin > 0 and _invades_safe_area(fr, safe_margin):
+                    issues.append(f"safe_area_violation:{block.get('id') or btype}")
 
         if kpi_count > max_signals:
             issues.append(f"kpi_density_exceeded:{kpi_count}>{max_signals}")

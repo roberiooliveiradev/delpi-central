@@ -5,7 +5,7 @@
   "design_intelligence": {
     "principle": "CATALOG_AUTHORITY",
     "summary": "componentSpecs, semanticDigest, visualRecommendation and designAudit are structured catalog/READ fields. Directives point at them; they do not replace the catalog.",
-    "fields": ["componentSpecs", "semanticDigest", "visualRecommendation", "designAudit"]
+    "fields": ["componentSpecs", "semanticDigest", "visualRecommendation", "designAudit", "storyDigest", "candidatePreview", "visualVerification"]
   },
   "visual_selection": {
     "principle": "SHAPE_FOLLOWS_DATA",

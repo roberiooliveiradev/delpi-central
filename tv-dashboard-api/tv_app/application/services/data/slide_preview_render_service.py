@@ -7,6 +7,7 @@ reasoning, not pixel-perfect React SSR. Cache key: (slideId, revision).
 from __future__ import annotations
 
 import hashlib
+import tempfile
 import threading
 import time
 from io import BytesIO
@@ -268,7 +269,11 @@ class SlidePreviewRenderService:
             or "/tmp/tv-dashboard-media"
         )
         self._cache_dir = Path(base) / "slide-previews"
-        self._cache_dir.mkdir(parents=True, exist_ok=True)
+        try:
+            self._cache_dir.mkdir(parents=True, exist_ok=True)
+        except OSError:
+            self._cache_dir = Path(tempfile.gettempdir()) / "tv-dashboard-slide-previews"
+            self._cache_dir.mkdir(parents=True, exist_ok=True)
         self._lock = threading.RLock()
         self._meta: dict[str, float] = {}
 
@@ -396,6 +401,47 @@ class SlidePreviewRenderService:
         img.convert("RGB").save(buf, format="PNG", optimize=True)
         return buf.getvalue()
 
+    def read_if_cached(self, *, slide_id: str, revision: str | int | None) -> bytes | None:
+        key = self._cache_key(slide_id, revision)
+        path = self._cache_path(key)
+        if not path.is_file():
+            return None
+        return path.read_bytes()
+
+    def build_candidate_preview(
+        self,
+        *,
+        playlist_id: str,
+        slide_id: str,
+        revision: str | int | None,
+        native_config: Mapping[str, Any],
+        title: str | None = None,
+    ) -> dict[str, Any]:
+        """Cache a schematic of the unpersisted candidate without replacing the live slide PNG."""
+        import json
+
+        raw = json.dumps(native_config, sort_keys=True, default=str, ensure_ascii=False)
+        digest = hashlib.sha256(raw.encode("utf-8")).hexdigest()[:16]
+        cache_revision = f"candidate:{digest}"
+        self.get_or_render(
+            slide_id=slide_id,
+            revision=cache_revision,
+            native_config=native_config,
+            title=title,
+            playlist_id=playlist_id,
+        )
+        payload = self.build_preview_payload(
+            playlist_id=playlist_id,
+            slide_id=slide_id,
+            revision=cache_revision,
+            native_config=native_config,
+            title=title,
+            cache_key=cache_revision,
+        )
+        payload["revision"] = revision
+        payload["candidate"] = True
+        return payload
+
     def get_or_render(
         self,
         *,
@@ -448,6 +494,7 @@ class SlidePreviewRenderService:
         ttl_sec: int = DEFAULT_TTL_SEC,
         width: int = DEFAULT_WIDTH,
         height: int = DEFAULT_HEIGHT,
+        cache_key: str | None = None,
     ) -> dict[str, Any]:
         """Ensure PNG cached and return contract fields (no image bytes)."""
         self.get_or_render(
@@ -464,6 +511,7 @@ class SlidePreviewRenderService:
             slide_id=slide_id,
             revision=revision,
             ttl_sec=ttl_sec,
+            cache_key=cache_key,
         )
         base = (public_base_url or settings.PUBLIC_BASE_URL or "http://localhost").rstrip("/")
         root = (root_path or settings.TV_DASHBOARD_API_ROOT_PATH or "/apps/tv-dashboard-api").rstrip(

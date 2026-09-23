@@ -103,6 +103,31 @@ class PresentationSuggestOpsService:
                 ),
             }
 
+        from tv_app.application.services.data.safe_auto_fix_service import (
+            SafeAutoFixService,
+        )
+
+        if (
+            SafeAutoFixService.is_layout_review(message)
+            and not SafeAutoFixService.asks_new_content(normalized)
+        ):
+            native = host.get("nativeConfig") if isinstance(host.get("nativeConfig"), dict) else None
+            fix_ops = SafeAutoFixService.ops_for(native)
+            if fix_ops:
+                return {
+                    "catalogVersion": catalog_version,
+                    "ops": fix_ops,
+                    "matchedCapabilityKeys": ["safe_auto_fix"],
+                    "clarificationKey": None,
+                    "candidates": [],
+                    "warnings": [
+                        "safe auto-fix changes geometry or chrome only; metric and narrative stay"
+                    ],
+                    "reason": PresentationOpsContentService.message(
+                        "suggestOk", count=len(fix_ops)
+                    ),
+                }
+
         # Resume estruturado: «adicione no slide as fontes: op1, op2»
         explicit_ids = cls._extract_explicit_operation_ids(message)
         if explicit_ids:

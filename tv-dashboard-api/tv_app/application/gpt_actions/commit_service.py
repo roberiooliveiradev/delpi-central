@@ -482,6 +482,18 @@ class TvGptCommitService:
         pending_native = False
         chain_revision: int | None = expected_revision
         expected_native_for_verify: dict[str, Any] | None = None
+        before_native_for_verify: dict[str, Any] | None = None
+        if current_playlist is not None and current_slide is not None:
+            prior = next(
+                (
+                    slide
+                    for slide in self._writes.list_slides(current_playlist)
+                    if str(slide.get("id") or "") == str(current_slide)
+                ),
+                None,
+            )
+            if isinstance(prior, dict) and isinstance(prior.get("nativeConfig"), dict):
+                before_native_for_verify = prior["nativeConfig"]
         preview_side_effects = (
             preview.get("sideEffects") if isinstance(preview.get("sideEffects"), dict) else {}
         )
@@ -995,7 +1007,20 @@ class TvGptCommitService:
             applied=applied,
             expected_native=expected_native_for_verify,
         )
-        if not verified:
+        from tv_app.application.services.data.visual_verification_service import (
+            VisualVerificationService,
+        )
+
+        visual_verification = VisualVerificationService.build(
+            persisted=True,
+            before_native=before_native_for_verify,
+            after_native=expected_native_for_verify
+            if isinstance(expected_native_for_verify, dict)
+            else None,
+        )
+        if not verified or not VisualVerificationService.is_verified(visual_verification):
+            verify_details = dict(verify_details)
+            verify_details["visualVerification"] = visual_verification
             result = {
                 "status": "OUTCOME_NOT_VERIFIED",
                 "persisted": True,
@@ -1029,6 +1054,7 @@ class TvGptCommitService:
             "revisionBefore": revision_before,
             "revisionAfter": revision_after,
             "outcome": outcome,
+            "visualVerification": visual_verification,
         }
         self._complete(
             key=key,

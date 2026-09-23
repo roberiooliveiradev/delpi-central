@@ -94,7 +94,7 @@ class DesignIntelligenceService:
         }
 
     @classmethod
-    def visual_recommendation(cls, digest: Mapping[str, Any]) -> dict[str, Any]:
+    def _recommend(cls, digest: Mapping[str, Any]) -> dict[str, Any]:
         temporal = digest.get("temporal") if isinstance(digest.get("temporal"), dict) else {}
         ranking = digest.get("rankingCandidates") if isinstance(digest.get("rankingCandidates"), list) else []
         goals = digest.get("goalCandidates") if isinstance(digest.get("goalCandidates"), list) else []
@@ -151,35 +151,151 @@ class DesignIntelligenceService:
     @classmethod
     def design_audit(cls, native_config: Mapping[str, Any] | None) -> dict[str, Any]:
         raw_issues = SlideLayoutQualityService.collect_native_layout_issues(native_config)
-        issues: list[dict[str, Any]] = []
-        for code in raw_issues:
-            severity = "warning"
-            category = "layout"
-            safe = False
-            if code.startswith("kpi_density") or "primary" in code:
-                category = "density"
-                safe = False
-            elif "overlap" in code:
-                category = "layout"
-                safe = True
-            elif "contrast" in code or "font" in code:
-                category = "typography"
-                safe = True
-            issues.append(
-                {
-                    "id": code,
-                    "severity": severity,
-                    "category": category,
-                    "message": code,
-                    "safeAutoFix": safe,
-                    "evidence": {"code": code},
-                }
-            )
+        issues = [_enrich_issue(code) for code in raw_issues]
         return {
             "issues": issues,
             "signals": {"issueCount": len(issues)},
             "layout": {"issueCodes": raw_issues},
         }
+
+    @classmethod
+    def visual_recommendation(
+        cls,
+        digest: Mapping[str, Any],
+        *,
+        dominant_visual_family: str | None = None,
+    ) -> dict[str, Any]:
+        rec = cls._recommend(digest)
+        family = str(dominant_visual_family or "").strip()
+        if not family:
+            return rec
+        rejected = {
+            str(item.get("type") or "")
+            for item in rec.get("rejected") or []
+            if isinstance(item, dict)
+        }
+        alternatives = [
+            item
+            for item in rec.get("alternatives") or []
+            if isinstance(item, dict)
+            and str(item.get("type") or "") not in rejected
+            and str(item.get("type") or "") != family
+        ]
+        reasons = list(rec.get("reasons") or [])
+        recommended = str(rec.get("recommendedType") or "")
+        if recommended == family and alternatives:
+            recommended = str(alternatives[0].get("type") or recommended)
+            reasons.append("dominant visual family is repetitive")
+        elif recommended == family:
+            reasons.append("no compatible alternative for the repetitive family")
+        return {
+            **rec,
+            "recommendedType": recommended,
+            "reasons": reasons,
+            "alternatives": alternatives,
+        }
+
+
+_ISSUE_PROFILES: dict[str, dict[str, Any]] = {
+    "kpi_density_exceeded": {
+        "category": "density",
+        "message": "Há indicadores demais para um único slide.",
+        "recommendation": "Distribua os KPIs em outra tela ou use a grade de quatro.",
+        "recommendedRecipe": "TV_KPI_GRID_4",
+        "safeAutoFix": False,
+    },
+    "block_overlap": {
+        "category": "layout",
+        "message": "Blocos se sobrepõem acima do limite do layout.",
+        "recommendation": "Reposicione os blocos nos slots da recipe.",
+        "safeAutoFix": True,
+    },
+    "block_frame_overflow": {
+        "category": "layout",
+        "message": "O frame do bloco sai da área do slide.",
+        "recommendation": "Traga o frame para dentro da safe area.",
+        "safeAutoFix": True,
+    },
+    "block_frame_non_positive": {
+        "category": "layout",
+        "message": "O frame do bloco tem largura ou altura inválida.",
+        "recommendation": "Defina um frame positivo dentro da safe area.",
+        "safeAutoFix": True,
+    },
+    "safe_area_violation": {
+        "category": "layout",
+        "message": "O frame invade a margem segura do slide.",
+        "recommendation": "Afaste o bloco da borda usando safeMargin.",
+        "safeAutoFix": True,
+    },
+    "widescreen_single_data_visual": {
+        "category": "layout",
+        "message": "Um único visual de dado ocupa a tela inteira.",
+        "recommendation": "Adicione hierarquia (título ou KPI) se o pedido pedir composição.",
+        "safeAutoFix": False,
+    },
+    "low_contrast": {
+        "category": "typography",
+        "message": "O contraste do texto está abaixo do mínimo da TV.",
+        "recommendation": "Use a cor de texto dos design tokens.",
+        "safeAutoFix": True,
+    },
+    "part_font_below_min": {
+        "category": "typography",
+        "message": "A tipografia da parte está abaixo do mínimo do token.",
+        "recommendation": "Eleve fontSize até o mínimo de partChrome.",
+        "safeAutoFix": True,
+    },
+    "hierarchy_inverted": {
+        "category": "typography",
+        "message": "A hierarquia tipográfica da parte está invertida.",
+        "recommendation": "O valor numérico precisa ficar maior que o título.",
+        "safeAutoFix": True,
+    },
+}
+
+
+def _enrich_issue(code: str) -> dict[str, Any]:
+    prefix = code.split(":", 1)[0]
+    profile = _ISSUE_PROFILES.get(prefix) or {
+        "category": "layout",
+        "message": code,
+        "recommendation": "Revise o layout no módulo de qualidade do slide.",
+        "safeAutoFix": False,
+    }
+    issue: dict[str, Any] = {
+        "id": code,
+        "severity": "warning",
+        "category": profile["category"],
+        "message": profile["message"],
+        "blockIds": _block_ids_from_code(code),
+        "recommendation": profile["recommendation"],
+        "safeAutoFix": bool(profile["safeAutoFix"]),
+        "evidence": {"code": code},
+    }
+    recipe = profile.get("recommendedRecipe")
+    if recipe:
+        issue["recommendedRecipe"] = recipe
+    return issue
+
+
+def _block_ids_from_code(code: str) -> list[str]:
+    parts = code.split(":")
+    if len(parts) < 2:
+        return []
+    prefix = parts[0]
+    if prefix == "block_overlap":
+        return [item for item in parts[1].split("~") if item]
+    if prefix in {
+        "block_frame_overflow",
+        "block_frame_non_positive",
+        "safe_area_violation",
+        "low_contrast",
+        "part_font_below_min",
+        "hierarchy_inverted",
+    }:
+        return [parts[1]] if parts[1] else []
+    return []
 
 
 def _role_for(name: str, sample: Any) -> str:

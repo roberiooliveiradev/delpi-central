@@ -27,10 +27,19 @@ _REF_FIELDS = {
 class PlanCompileError(ValueError):
     """Plan cannot be ordered or dependencies are unsatisfiable."""
 
-    def __init__(self, message: str, *, code: str) -> None:
+    def __init__(
+        self,
+        message: str,
+        *,
+        code: str,
+        op_index: int | None = None,
+        operation: str | None = None,
+    ) -> None:
         super().__init__(message)
         self.code = code
         self.message = message
+        self.op_index = op_index
+        self.operation = operation
 
 
 @dataclass
@@ -73,22 +82,26 @@ def compile_presentation_plan(
 ) -> CompiledPlan:
     """Validate, build dependency graph, topo-sort, check satisfiability."""
     typed: list[dict[str, Any]] = []
-    for raw in ops or []:
+    for op_index, raw in enumerate(ops or []):
         if not isinstance(raw, dict):
             raise PlanCompileError(
                 "Cada op deve ser um objeto tipado com campo op.",
                 code="INVALID_CHANGE",
+                op_index=op_index,
             )
         name = _op_name(raw)
         if not name:
             raise PlanCompileError(
                 "Op sem campo op.",
                 code="INVALID_CHANGE",
+                op_index=op_index,
             )
         if name not in PresentationOpsContentService.allowed_ops():
             raise PlanCompileError(
                 PresentationOpsContentService.message("unknownOp", op=name or "?"),
                 code="UNSUPPORTED_CAPABILITY",
+                op_index=op_index,
+                operation=name,
             )
         typed.append(dict(raw))
 

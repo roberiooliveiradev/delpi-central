@@ -863,3 +863,31 @@ def test_nested_contract_positive_sibling_negative(monkeypatch):
             },
             user={},
         )
+
+
+def test_patch_error_reports_op_index(monkeypatch):
+    svc = _service(_FakeRepo(), monkeypatch)
+    with pytest.raises(PresentationPatchError) as first:
+        svc.preview(
+            {
+                "target": {"playlistId": PLAYLIST_ID, "slideId": SLIDE_ID},
+                "ops": [{"op": "not_a_real_op"}],
+            },
+            user={"sub": "u1"},
+            authorization="Bearer x",
+        )
+    assert first.value.details["opIndex"] == 0
+    assert first.value.details["operation"] == "not_a_real_op"
+    with pytest.raises(PresentationPatchError) as second:
+        svc.preview(
+            {
+                "target": {"playlistId": PLAYLIST_ID, "slideId": SLIDE_ID},
+                "ops": [
+                    {"op": "update_slide", "isActive": False},
+                    {"op": "not_a_real_op"},
+                ],
+            },
+            user={"sub": "u1"},
+            authorization="Bearer x",
+        )
+    assert second.value.details["opIndex"] == 1

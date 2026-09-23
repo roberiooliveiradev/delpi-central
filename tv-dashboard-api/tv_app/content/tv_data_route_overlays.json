@@ -317,6 +317,27 @@
         }
       }
     },
+    "get_sales_conversion_rate_series": {
+      "valueFields": [
+        "conversion_filial_01",
+        "conversion_filial_02",
+        "qtd_proposals_01",
+        "qtd_proposals_02",
+        "qtd_won_01",
+        "qtd_won_02"
+      ],
+      "valueFieldTypes": {
+        "conversion_filial_01": "number",
+        "conversion_filial_02": "number",
+        "qtd_proposals_01": "number",
+        "qtd_proposals_02": "number",
+        "qtd_won_01": "number",
+        "qtd_won_02": "number"
+      },
+      "label": "Comercial — série da taxa de fechamento",
+      "description": "Série temporal da taxa de conversão por filial, com quantidades de propostas e vendas.",
+      "whenToUse": "Gráfico comercial da taxa de conversão ao longo do tempo. Manter as métricas conversion_filial_* e qtd_* como séries; não colapsar para um único ponto."
+    },
     "get_supplies_stock_value": {
       "tableFields": "top_products",
       "allowedDisplayModes": [

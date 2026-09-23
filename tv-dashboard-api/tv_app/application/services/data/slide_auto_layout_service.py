@@ -18,6 +18,34 @@ _RECIPE_BY_COUNT = {
     3: "TV_KPI_ROW_3",
     4: "TV_KPI_GRID_4",
 }
+_KPI_SLOT_ROLES = frozenset({"primaryKpi", "secondaryKpi", "kpi"})
+
+
+def _blueprint_kpi_frames(recipe_id: str) -> list[dict[str, float]]:
+    row = (PresentationRecipeService.document().get("recipes") or {}).get(recipe_id)
+    if not isinstance(row, dict):
+        return []
+    blueprint = row.get("blueprint")
+    if not isinstance(blueprint, dict):
+        return []
+    frames: list[dict[str, float]] = []
+    for slot in blueprint.get("slots") or []:
+        if not isinstance(slot, dict):
+            continue
+        if str(slot.get("role") or "") not in _KPI_SLOT_ROLES:
+            continue
+        fr = slot.get("frame")
+        if not isinstance(fr, dict):
+            continue
+        frames.append(
+            {
+                "x": float(fr.get("x", 0)),
+                "y": float(fr.get("y", 0)),
+                "w": float(fr.get("w", 0)),
+                "h": float(fr.get("h", 0)),
+            }
+        )
+    return frames
 
 
 def _frame_tuple(frame: dict[str, Any] | None) -> tuple[float, float, float, float] | None:
@@ -39,6 +67,9 @@ class SlideAutoLayoutService:
 
     @classmethod
     def recipe_kpi_frames(cls, recipe_id: str) -> list[dict[str, float]]:
+        slotted = _blueprint_kpi_frames(recipe_id)
+        if slotted:
+            return slotted
         frames: list[dict[str, float]] = []
         for op in PresentationRecipeService.ops_for_recipe(recipe_id):
             if str(op.get("op") or "") != "upsert_block":

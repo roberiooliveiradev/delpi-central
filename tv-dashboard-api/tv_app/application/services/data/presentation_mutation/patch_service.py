@@ -6,6 +6,7 @@ Dry-run builds in-memory state; persistence goes through
 
 from __future__ import annotations
 
+import contextvars
 import copy
 import time
 import uuid
@@ -75,6 +76,12 @@ _VISUAL_PROJECTION_DEFAULTS = {
 }
 
 
+_CURRENT_PATCH_OP: contextvars.ContextVar[dict[str, Any] | None] = contextvars.ContextVar(
+    "vista_current_patch_op",
+    default=None,
+)
+
+
 class PresentationPatchError(ValueError):
     """Erro de validação do envelope / ops (PresentationMutation)."""
 
@@ -87,7 +94,15 @@ class PresentationPatchError(ValueError):
     ) -> None:
         super().__init__(message)
         self.code = code
-        self.details = details or {}
+        merged = dict(details or {})
+        current = _CURRENT_PATCH_OP.get()
+        if isinstance(current, dict):
+            if "opIndex" not in merged and current.get("opIndex") is not None:
+                merged["opIndex"] = current["opIndex"]
+            operation = current.get("operation")
+            if "operation" not in merged and operation and operation != "?":
+                merged["operation"] = operation
+        self.details = merged
 
 
 def _new_block_id() -> str:
@@ -383,7 +398,12 @@ class PresentationPatchService:
         try:
             compiled = compile_presentation_plan(ops=ops, target=target)
         except PlanCompileError as exc:
-            raise PresentationPatchError(str(exc), code=exc.code) from exc
+            details: dict[str, Any] = {}
+            if getattr(exc, "op_index", None) is not None:
+                details["opIndex"] = exc.op_index
+            if getattr(exc, "operation", None):
+                details["operation"] = exc.operation
+            raise PresentationPatchError(str(exc), code=exc.code, details=details or None) from exc
         ops = compiled.ordered_ops
 
         allowed = PresentationOpsContentService.allowed_ops()
@@ -429,10 +449,12 @@ class PresentationPatchService:
         elif needs_native and not creates_slide:
             raise PresentationPatchError(PresentationOpsContentService.message("missingTarget"))
 
-        for raw_op in ops:
+        for op_index, raw_op in enumerate(ops):
+            _CURRENT_PATCH_OP.set({"opIndex": op_index})
             if not isinstance(raw_op, dict):
                 raise PresentationPatchError(PresentationOpsContentService.message("unknownOp", op="?"))
             op_name = str(raw_op.get("op") or "").strip()
+            _CURRENT_PATCH_OP.set({"opIndex": op_index, "operation": op_name or "?"})
             if op_name not in allowed:
                 record_presentation_mutation_event(kind="preview", ok=False, rejected_op=op_name)
                 raise PresentationPatchError(

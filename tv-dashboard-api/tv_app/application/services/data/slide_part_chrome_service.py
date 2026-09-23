@@ -11,7 +11,7 @@ Defaults fill still skips INFORMED block ids; hierarchy rebalance always runs.
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import Any
+from typing import Any, Mapping
 
 from tv_app.application.services.data.presentation_recipe_service import (
     PresentationRecipeService,
@@ -711,6 +711,49 @@ def _apply_input(block: dict[str, Any], chrome: dict[str, Any]) -> bool:
     return changed
 
 
+_EMPHASIS_SCALE = {"low": 0.85, "medium": 1.0, "high": 1.15}
+_DENSITY_PADDING = {"compact": 8, "regular": None, "comfortable": 20}
+
+
+def _apply_semantic_role(block: dict[str, Any], tokens: Mapping[str, Any] | dict[str, Any]) -> bool:
+    """Resolve role/variant/surface/emphasis/density onto token chrome. Ignores free CSS."""
+    role = str(block.get("role") or "").strip()
+    profiles = tokens.get("roles") if isinstance(tokens.get("roles"), dict) else {}
+    profile = profiles.get(role) if isinstance(profiles, dict) else None
+    if not isinstance(profile, dict):
+        return False
+    style = block.get("style") if isinstance(block.get("style"), dict) else {}
+    block["style"] = style
+    changed = False
+    font_size = profile.get("fontSize")
+    variant = str(block.get("variant") or "").strip()
+    if variant == "hero":
+        scale = tokens.get("typeScale") if isinstance(tokens.get("typeScale"), dict) else {}
+        hero = scale.get("kpiHero")
+        if isinstance(hero, (int, float)):
+            font_size = hero
+    emphasis = str(block.get("emphasis") or "medium").strip() or "medium"
+    if isinstance(font_size, (int, float)) and "fontSize" not in style:
+        scaled = float(font_size) * _EMPHASIS_SCALE.get(emphasis, 1.0)
+        style["fontSize"] = int(round(scaled))
+        changed = True
+    surface = str(block.get("surface") or "card").strip() or "card"
+    if "backgroundColor" not in style and profile.get("fill"):
+        style["backgroundColor"] = "#0f172a" if surface == "inverse" else profile["fill"]
+        changed = True
+    if "borderRadius" not in style and profile.get("radius") is not None:
+        style["borderRadius"] = profile["radius"]
+        changed = True
+    density = str(block.get("density") or "regular").strip() or "regular"
+    padding = _DENSITY_PADDING.get(density, None)
+    if padding is None:
+        padding = profile.get("padding")
+    if "padding" not in style and padding is not None:
+        style["padding"] = padding
+        changed = True
+    return changed
+
+
 class SlidePartChromeService:
     """Owner of missing part chrome / typography hierarchy on TV slides."""
 
@@ -730,7 +773,13 @@ class SlidePartChromeService:
         if not chrome:
             return False
         changed_any = False
+        tokens = _tokens()
         for block in blocks:
+            if not isinstance(block, dict):
+                continue
+            bid = str(block.get("id") or "")
+            if not (bid and bid in informed):
+                changed_any = _apply_semantic_role(block, tokens) or changed_any
             if not isinstance(block, dict):
                 continue
             bid = str(block.get("id") or "")

@@ -34,6 +34,7 @@ def mint_slide_preview_token(
     slide_id: str,
     revision: int | str | None,
     ttl_sec: int = DEFAULT_TTL_SEC,
+    cache_key: str | None = None,
 ) -> tuple[str, int]:
     """Return (token, expires_at_unix)."""
     exp = int(time.time()) + max(30, int(ttl_sec))
@@ -43,6 +44,8 @@ def mint_slide_preview_token(
         "r": str(revision if revision is not None else ""),
         "e": exp,
     }
+    if cache_key:
+        payload["k"] = str(cache_key)
     body = _b64(json.dumps(payload, separators=(",", ":"), sort_keys=True).encode("utf-8"))
     mac = _b64(hmac.new(_signing_key(), body.encode("ascii"), hashlib.sha256).digest())
     return f"{body}.{mac}", exp
@@ -69,9 +72,13 @@ def parse_slide_preview_token(token: str) -> dict[str, Any]:
     slide_id = str(payload.get("s") or "").strip()
     if not playlist_id or not slide_id:
         raise ValueError("invalid_preview_token")
-    return {
+    parsed = {
         "playlistId": playlist_id,
         "slideId": slide_id,
         "revision": str(payload.get("r") or ""),
         "expiresAt": exp,
     }
+    cache_key = str(payload.get("k") or "").strip()
+    if cache_key:
+        parsed["cacheKey"] = cache_key
+    return parsed

@@ -1562,7 +1562,7 @@
               "chartOptions": {
                 "type": "object",
                 "additionalProperties": true,
-                "description": "Chart options including valueFormat.",
+                "description": "ChartStyleOptions: legend, grid, labels, axes, stackMode, sort, topN, density and valueFormat. No free CSS.",
                 "properties": {
                   "valueFormat": {
                     "type": "string",
@@ -1574,7 +1574,15 @@
                       "compact",
                       "raw"
                     ]
-                  }
+                  },
+                  "legend": {"type": "string", "enum": ["show", "hide"]},
+                  "grid": {"type": "string", "enum": ["show", "hide"]},
+                  "labels": {"type": "string", "enum": ["show", "hide"]},
+                  "axes": {"type": "string", "enum": ["show", "hide"]},
+                  "stackMode": {"type": "string", "enum": ["none", "stacked", "percent"]},
+                  "sort": {"type": "string", "enum": ["none", "asc", "desc"]},
+                  "topN": {"type": "integer", "minimum": 1},
+                  "density": {"type": "string", "enum": ["compact", "regular", "comfortable"]}
                 }
               },
               "chartProjection": {
