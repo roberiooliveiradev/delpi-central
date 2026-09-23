@@ -57,7 +57,7 @@ export function LineFeederPickPlanPanel({
         <h2 className="ppc-pick__title">
           <ClipboardList size={18} strokeWidth={1.75} aria-hidden />
           {texts.title}
-          <HelpTooltip content={helpTooltips.lineFeederPickPlan} />
+          <HelpTooltip content={helpTooltips.lineFeederPickPlan} trigger="icon" />
         </h2>
         <p className="ppc-pick__hint">{texts.hint}</p>
       </header>

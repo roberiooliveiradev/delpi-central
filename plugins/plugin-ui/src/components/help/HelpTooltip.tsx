@@ -14,13 +14,16 @@ import {
   type ReactNode,
 } from "react";
 import * as ReactDOM from "react-dom";
+import { HelpCircle } from "lucide-react";
 
 import { DELPI_UI_OVERLAY_Z_INDEX } from "../../overlayLayers";
 import { tryResolveCreatePortal } from "../../utils/resolveCreatePortal";
 export type HelpTooltipPlacement = "top" | "bottom";
 
-/** Visible trigger copy for the icon-free help control (not `wrap` mode). */
+/** Default visible trigger: text label (icon-free). Use `trigger="icon"` for HelpCircle. */
 export const HELP_TOOLTIP_TRIGGER_LABEL = "help";
+
+export type HelpTooltipTrigger = "label" | "icon";
 
 export type HelpTooltipProps = {
   content: string;
@@ -28,6 +31,11 @@ export type HelpTooltipProps = {
   className?: string;
   wrap?: boolean;
   placement?: HelpTooltipPlacement;
+  /**
+   * `label` (default) — texto «help» (kit atual).
+   * `icon` — HelpCircle (comportamento anterior; opte-in por app).
+   */
+  trigger?: HelpTooltipTrigger;
   /**
    * Força ocultar o balão (ex.: menu aberto controlado pelo host).
    * Com `wrap`, também omite automaticamente se houver descendente
@@ -192,6 +200,7 @@ export function HelpTooltip({
   className,
   wrap = false,
   placement = "top",
+  trigger = "label",
   suppressed = false,
   children,
 }: HelpTooltipProps) {
@@ -202,6 +211,7 @@ export function HelpTooltip({
   const [visible, setVisible] = useState(false);
   const [bubblePosition, setBubblePosition] = useState<BubblePosition | null>(null);
   const [positioned, setPositioned] = useState(false);
+  const useIconTrigger = !wrap && trigger === "icon";
 
   const rootClass = [
     "delpi-ui-help-tooltip",
@@ -367,16 +377,25 @@ export function HelpTooltip({
         <button
           ref={triggerRef}
           type="button"
-          className="delpi-ui-help-tooltip__trigger"
+          className={[
+            "delpi-ui-help-tooltip__trigger",
+            useIconTrigger ? "delpi-ui-help-tooltip__trigger--icon" : "",
+          ]
+            .filter(Boolean)
+            .join(" ")}
           aria-label={ariaLabel}
           aria-describedby={tooltipId}
           onClick={(event) => event.stopPropagation()}
           onMouseDown={(event) => event.stopPropagation()}
           {...interactionHandlers}
         >
-          <span className="delpi-ui-help-tooltip__trigger-label" aria-hidden="true">
-            {HELP_TOOLTIP_TRIGGER_LABEL}
-          </span>
+          {useIconTrigger ? (
+            <HelpCircle size={14} aria-hidden="true" />
+          ) : (
+            <span className="delpi-ui-help-tooltip__trigger-label" aria-hidden="true">
+              {HELP_TOOLTIP_TRIGGER_LABEL}
+            </span>
+          )}
         </button>
       )}
       {visible && !isSuppressed()

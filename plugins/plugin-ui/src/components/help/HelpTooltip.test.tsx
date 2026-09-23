@@ -33,11 +33,22 @@ function CompositeColorTrigger({ label }: { label: string }) {
 }
 
 describe("HelpTooltip", () => {
-  it("usa o texto help no gatilho em vez do ícone ?", () => {
+  it("usa o texto help no gatilho por padrão", () => {
     render(<HelpTooltip content="Explicação" ariaLabel="Ajuda: campo" />);
     const trigger = screen.getByRole("button", { name: "Ajuda: campo" });
     expect(trigger.textContent).toBe("help");
     expect(trigger.querySelector("svg")).toBeNull();
+    expect(trigger.classList.contains("delpi-ui-help-tooltip__trigger--icon")).toBe(false);
+  });
+
+  it("usa HelpCircle quando trigger=icon", () => {
+    render(
+      <HelpTooltip content="Explicação" ariaLabel="Ajuda: campo" trigger="icon" />,
+    );
+    const trigger = screen.getByRole("button", { name: "Ajuda: campo" });
+    expect(trigger.querySelector("svg")).not.toBeNull();
+    expect(trigger.classList.contains("delpi-ui-help-tooltip__trigger--icon")).toBe(true);
+    expect(trigger.textContent).not.toBe("help");
   });
 
   it("mostra balão no hover do gatilho quando o menu está fechado", () => {

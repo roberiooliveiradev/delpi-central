@@ -3,6 +3,7 @@ export {
   HELP_TOOLTIP_TRIGGER_LABEL,
   type HelpTooltipPlacement,
   type HelpTooltipProps,
+  type HelpTooltipTrigger,
 } from "./HelpTooltip";
 export { FieldLabel, type FieldLabelProps } from "./FieldLabel";
 export { SectionHintLabel, type SectionHintLabelProps } from "./SectionHintLabel";
