@@ -218,3 +218,19 @@ def test_filter_layering_and_slide_craft():
         or "hardcod" in str(item).lower()
         for item in directives["anti_patterns"]
     )
+
+
+def test_continuous_review_always_review_existing():
+    directives = VistaAgentIntelligenceService.agent_directives()
+    review = directives["continuous_review"]
+    assert review["principle"] == "ALWAYS_REVIEW_EXISTING"
+    pipeline = " ".join(review["pipeline"]).lower()
+    assert "layoutDigest".lower() in pipeline.replace(" ", "") or "layoutdigest" in pipeline.replace(" ", "")
+    assert "existente" in " ".join(review["rules"]).lower() or "existing" in " ".join(review["rules"]).lower()
+    assert "CONTINUOUS_REVIEW" in directives["modes"]
+    posture = " ".join(directives["execution_posture"]["rules"]).lower()
+    assert "continuous_review" in posture
+    assert any(
+        "existente" in str(item).lower() and ("novo" in str(item).lower() or "montar" in str(item).lower())
+        for item in directives["anti_patterns"]
+    )

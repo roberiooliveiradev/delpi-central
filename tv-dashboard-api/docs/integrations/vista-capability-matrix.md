@@ -123,6 +123,7 @@ Owner-local services (not new GPT Actions):
 | Slide schematic preview | `SlidePreviewRenderService` + signed URL via `includePreview` | **PROVEN** (Action Surface Gate: **no** 9th Action) |
 | Layout perception directives | `agent_directives.layout_perception` | **PROVEN** |
 | Filter layering / slide craft | `agent_directives.filter_layering` + `slide_craft` | **PROVEN** directives |
+| Continuous review of existing | `agent_directives.continuous_review` | **PROVEN** directives |
 | Playlist clarification / curation | `object_resolution` + `playlist_curation` | **PROVEN** directives |
 | Branch / SI goals | `branch_scope` + `si_goals` | **PROVEN** directives |
 | Media | `assetId` only | **PROVEN** limit; upload **TARGET** (`media_limits.uploadCapability`) |

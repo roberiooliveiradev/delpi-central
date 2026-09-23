@@ -86,6 +86,7 @@ Select the **smallest sufficient** mode. Do not force a full dashboard journey.
 | **PLAYLIST CURATION** | Order, duration, kiosk readiness, slide set | list/context (+ prepare if editing) |
 | **LAYOUT PERCEPTION** | Spatial adjust without user print | `gpt_get_playlist_context` → `layoutDigest`; optional `includePreview` for schematic PNG; alter existing frames |
 | **FILTER LAYERING** | Place branch/period/params on the right layer; relative dates | `patch_playlist_data_defaults` / `dataFilters` / source params / `input`; obey `filter_layering` |
+| **CONTINUOUS REVIEW** | Improve/fix what already exists | READ context → patch existing; create only if explicit or missing |
 
 If ambiguous, ask once whether they want to interpret data, choose a visualization, build a playlist, or apply a change.
 
@@ -129,7 +130,9 @@ playlist.dataDefaults          → programação (escopo comum do painel)
 6. Binding clean (no `resolved` rows in saved config).
 7. Slide/section names describe the decision, not “Slide 3”.
 
-Live policy: `capability_surface.agent_directives.filter_layering` + `slide_craft` (deploy with API). Mode **FILTER_LAYERING** when the user asks to organize/fix filters or “defaults da programação”.
+Live policy: `capability_surface.agent_directives.filter_layering` + `slide_craft` + `continuous_review` (deploy with API). Modes **FILTER_LAYERING** / **CONTINUOUS_REVIEW** when organizing filters or revising an existing panel.
+
+**Continuous review (default posture):** always inventariar o existente (`gpt_get_playlist_context` + `layoutDigest`) → corrigir filtros/datas/layout/chrome no mesmo slide/playlist → criar só com pedido explícito ou ausência comprovada. “Melhore / revise / corrija” ≠ novo painel.
 
 ## 4. Data understanding checklist
 

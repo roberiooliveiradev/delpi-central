@@ -58,6 +58,7 @@ class VistaAgentIntelligenceService:
                 "They override stale Builder Knowledge for mutation behavior."
             ),
             "execution_posture": doc.get("execution_posture") or {},
+            "continuous_review": doc.get("continuous_review") or {},
             "visual_impact": doc.get("visual_impact") or {},
             "composed_visuals": doc.get("composed_visuals") or {},
             "shape_chrome": doc.get("shape_chrome") or {},
