@@ -547,6 +547,7 @@ Negative:
 - Claiming create-then-modify without PlanCompiler/`as` refs when IDs are unknown → forbidden
 - Inventing assetId for images without INFORMED media → forbidden (`media_limits`)
 - Asking the user to manually decompose API steps as the preferred UX → forbidden
-- Claiming “I cannot save / only guide / do it in the editor” when GPT Actions are available → forbidden (reconnect OAuth / call Action instead)
+- Claiming “I cannot save / only guide / do it in the editor / connector disabled” when GPT Actions were not even attempted this turn → forbidden (call Action first; on real 401 reconnect OAuth)
+- Treating ChatGPT Actions runtime silence as proof that the DELPI API is offline → forbidden
 - Treating retired Chat Copilot as proof that VISTA cannot write → forbidden (write path = eight Actions + PresentationMutation)
 - Creating a new playlist/slide/block to apply an alteration on an already identified object → forbidden (see live `capability_surface.agent_directives.object_resolution`; prefer ALTER_EXISTING_BEFORE_CREATE)

@@ -28,7 +28,8 @@ def clear_vista_agent_intelligence_cache() -> None:
 
 _LIST_CAP_KEYS = frozenset({"examples", "examplePrompts", "anti_patterns", "forbidden", "when"})
 _MAX_LIST_ITEMS = 10
-_MAX_ANTI_PATTERNS = 36
+# Keep connector + filter/layout anti-patterns; catalog budget still owns the ceiling.
+_MAX_ANTI_PATTERNS = 48
 # Keys that are prose duplicates of principle+rules — drop to save Actions budget.
 _DROP_DIRECTIVE_KEYS = frozenset({"summary", "example", "examples", "examplePrompts"})
 
@@ -86,6 +87,7 @@ class VistaAgentIntelligenceService:
                 "They override stale Builder Knowledge for mutation behavior."
             ),
             "execution_posture": doc.get("execution_posture") or {},
+            "actions_runtime": doc.get("actions_runtime") or {},
             "continuous_review": doc.get("continuous_review") or {},
             "visual_impact": doc.get("visual_impact") or {},
             "visual_selection": doc.get("visual_selection") or {},

@@ -46,16 +46,38 @@ def test_execution_posture_execute_typed_change_now():
     rules = " ".join(posture["rules"]).lower()
     assert "mesmo turno" in rules or "neste turno" in rules
     assert "actions" in rules
+    assert "conector" in rules or "actions_runtime" in rules
     forbidden = " ".join(posture["forbidden"]).lower()
-    assert "não disponíveis" in forbidden or "indispon" in forbidden
+    assert "não disponíveis" in forbidden or "indispon" in forbidden or "conector" in forbidden
     assert "posso aplicar" in forbidden or any(
         "posso aplicar" in str(item).lower() for item in directives["anti_patterns"]
     )
     assert "same_turn" in directives["write_flow"]
     assert any(
-        "não estão disponíveis" in str(item).lower() or "indispon" in str(item).lower()
+        "não estão disponíveis" in str(item).lower()
+        or "indispon" in str(item).lower()
+        or "conector" in str(item).lower()
         for item in directives["anti_patterns"]
     )
+
+
+def test_actions_runtime_try_before_claiming_unavailable():
+    directives = VistaAgentIntelligenceService.agent_directives()
+    runtime = directives["actions_runtime"]
+    assert runtime["principle"] == "TRY_ACTION_BEFORE_CLAIMING_UNAVAILABLE"
+    rules = " ".join(runtime["rules"]).lower()
+    assert "gpt_get_catalog" in rules
+    assert "conector" in rules
+    assert "tentar" in rules or "tente" in rules
+    forbidden = " ".join(runtime["forbidden"]).lower()
+    assert "conector" in forbidden
+    assert "sem ter tentado" in forbidden or "sem tentativa" in " ".join(runtime["rules"]).lower()
+    auth = directives["auth_errors"]
+    assert "never_without_attempt" in auth
+    assert "tool_unavailable_after_attempt" in auth
+    # Priority: connector anti-patterns must survive the anti_patterns compact cap.
+    joined = " ".join(str(item).lower() for item in directives["anti_patterns"][:8])
+    assert "conector" in joined
 
 
 def test_visual_impact_tv_impact_first():

@@ -1,7 +1,26 @@
 {
-  "version": "2026.09.23.4",
+  "version": "2026.09.23.5",
   "owner": "tv-dashboard-api",
   "source": "capability_surface.agent_directives via gpt_get_catalog",
+  "actions_runtime": {
+    "principle": "TRY_ACTION_BEFORE_CLAIMING_UNAVAILABLE",
+    "summary": "Disponibilidade de Actions = resultado da ferramenta neste turno, não opinião. Conector ChatGPT ≠ API DELPI offline.",
+    "rules": [
+      "Antes de dizer que não consegue gravar / conector desabilitado / Actions indisponíveis: TENTAR neste turno pelo menos gpt_get_catalog (e a Action de escrita tipada se o pedido for mutação).",
+      "Só declare indisponibilidade depois de falha REAL da ferramenta neste turno (tool error explícito, timeout do runtime, 401/403/5xx). Sem tentativa = proibido alegar.",
+      "Frases proibidas sem falha real: 'conector desabilitado', 'conector de Actions desabilitado', 'Actions não disponíveis nesta sessão', 'não consigo gravar daqui', 'só posso orientar / faça no editor'.",
+      "Pedido 'implemente' / 'aplique' / 'grave' / mudança tipável → chamar Actions neste turno (PREPARE/ACT). Resposta só-texto com plano = falha.",
+      "401 → pedir reconectar OAuth DELPI / permitir Action (auth_errors). Não inventar 'API fora do ar'.",
+      "403 → AuthZ do usuário. 5xx/tool error → reportar o erro real e retentar uma vez se tipado. Gap de catálogo → gap tipado — nunca fingir indisponibilidade geral.",
+      "Se o runtime ChatGPT bloquear a Action de verdade: diga isso em uma frase + peça novo chat / reconectar OAuth / permitir Action — sem inventar workaround de 'só orientar o editor' como caminho principal."
+    ],
+    "forbidden": [
+      "Inventar 'conector desabilitado / Actions desconectadas' sem ter tentado Action neste turno",
+      "Tratar silêncio do modelo como prova de que a API DELPI está offline",
+      "Substituir write tipado por tutorial do editor quando Actions existem",
+      "Dizer 'o caminho está definido' / 'quando o conector voltar' em vez de tentar a Action agora"
+    ]
+  },
   "design_intelligence": {
     "principle": "CATALOG_AUTHORITY",
     "summary": "componentSpecs, semanticDigest, visualRecommendation and designAudit are structured catalog/READ fields. Directives point at them; they do not replace the catalog.",
@@ -256,19 +275,21 @@
     "summary": "Pedido tipável de criar/alterar painel, gráfico, KPI, tabela, tema ou layout → chamar Actions neste turno e gravar (PREPARE/ACT). Default = revisar o existente (continuous_review). Proposta textual sem write = falha.",
     "rules": [
       "Postura default: continuous_review — READ o que já existe, ajustar filtros/layout/qualidade no objeto resolvido; criar só com pedido explícito ou ausência comprovada.",
-      "Quando o usuário pedir mudança tipável ('use gráficos de área', 'melhore KPIs/tabela', 'troque o tema', 'ajuste o visual', 'revise filtros', 'corrija'), NÃO responder com plano, menu de estilos ou 'Posso aplicar?'. Resolver objeto (object_resolution / editorFocus) → gpt_get_playlist_context → gpt_preview_change additive com commit_now=true no mesmo turno.",
+      "Quando o usuário pedir mudança tipável ('implemente', 'aplique', 'grave', 'use gráficos de área', 'melhore KPIs/tabela', 'troque o tema', 'ajuste o visual', 'revise filtros', 'corrija'), NÃO responder com plano, menu de estilos, 'Posso aplicar?' nem 'conector desabilitado'. Resolver objeto (object_resolution / editorFocus) → gpt_get_playlist_context → gpt_preview_change additive com commit_now=true no mesmo turno.",
       "Pedido do usuário = autorização de intenção para mudanças additive. Só 'Confirma?' em destructive (write_flow.destructive).",
       "Ambiguidades cosméticas (sóbrio vs moderno vs escuro) → aplicar THEME_DELPI + recipes tipadas no slide INFORMED; não perguntar estilo se o pedido já é operacional Delpi ou já nomeou chartType/partes.",
       "chartType=area é tipado e permitido para série temporal — aplicar via upsert_block/chartOptions no bloco INFORMED; não dizer que não consegue.",
-      "Só declare Actions/session indisponíveis depois de TENTAR uma Action neste turno e receber falha real da ferramenta (tool error, 401, 403, 5xx). Nunca inventar 'Actions não estão disponíveis nesta sessão' por preguiça de chamar.",
+      "Obedeça actions_runtime: tente Action antes de alegar indisponibilidade; conector ChatGPT ≠ API offline.",
       "401 → auth_errors (pedir reconectar OAuth). 403 → AuthZ. Falha de schema → corrigir ops e retentar. Gap real de catálogo → declarar gap tipado; ainda assim não fingir indisponibilidade geral.",
       "Após VERIFIED: resumir o que corrigiu/melhorou no existente. Antes de VERIFIED: não oferecer patch manual para o usuário aplicar no editor."
     ],
     "forbidden": [
+      "Inventar 'conector desabilitado / Actions desconectadas / não consigo gravar' sem falha real de ferramenta neste turno",
       "Proposta longa sem gpt_preview_change no mesmo turno quando o pedido é tipável",
       "Menu de 2–3 estilos quando THEME_DELPI + chartType INFORMED bastam",
       "Inventar 'Actions não disponíveis / não consigo executar daqui'",
       "Oferecer 'patch operacional' ou tutorial de cliques no editor como caminho principal",
+      "Dizer 'o caminho está definido' em vez de chamar Action agora",
       "Perguntar Confirma? em write additive",
       "Criar slide/playlist novo quando o pedido era revisar/melhorar/corrigir o existente"
     ]
@@ -744,7 +765,7 @@
     "additive": "Uma gpt_preview_change com lote tipado + commit_now=true + confirmation.confirmed=true + Idempotency-Key. Pedido do usuário = confirmação — não perguntar Confirma? nem 'Posso aplicar?'.",
     "destructive": "gpt_preview_change sem commit_now → plano → uma Confirma? → gpt_commit_change com proposal_handle opaco exato.",
     "compound": "LOTE COMPLETO numa preview; PlanCompiler ordena; as/playlistRef/slideRef (UUID INFORMED) quando vários slides/recursos no mesmo lote. O servidor carrega nativeConfig por slideRef, devolve nativeConfigsBySlide e grava um PATCH por slide — NÃO inventar 'lote grande demais' nem fatiar em vários chats. Sem inventar UUID. Após bind/composite, proyección+formato obrigatórios. VERIFIED só com write_quality.",
-    "same_turn": "Mudança tipável pedida neste turno → Actions neste turno. Resposta só-texto com plano = anti-padrão.",
+    "same_turn": "Mudança tipável pedida neste turno → tentar Actions neste turno (gpt_get_catalog + preview/commit). Resposta só-texto com plano ou 'conector desabilitado' sem falha real = anti-padrão.",
     "forbidden_handles": [
       "latest",
       "current",
@@ -753,9 +774,11 @@
     ]
   },
   "anti_patterns": [
-    "Inventar 'lote grande demais para o compilador' / fatiar multi-slide em vários chats quando um compound com slideRef por UUID INFORMED cabe no maxOpsPerPatch.",
-    "Dizer que não consegue gravar / só orientar / faça no editor quando Actions existirem.",
+    "Inventar 'conector desabilitado / conector de Actions desabilitado / Actions desconectadas' sem ter tentado Action neste turno.",
+    "Dizer que não consegue gravar / só orientar / faça no editor / 'o caminho está definido' quando Actions existem.",
     "Inventar 'Actions não estão disponíveis nesta sessão' sem falha real de ferramenta neste turno.",
+    "Tratar runtime ChatGPT sem tentativa de Action como prova de que a API DELPI está offline.",
+    "Inventar 'lote grande demais para o compilador' / fatiar multi-slide em vários chats quando um compound com slideRef por UUID INFORMED cabe no maxOpsPerPatch.",
     "Responder 'Posso aplicar estas mudanças' / menu de estilos sem gpt_preview_change additive no mesmo turno.",
     "Proposta visual longa (KPI/tabela/gráfico) sem gravar quando o pedido já tipou a mudança.",
     "Criar objeto novo para aplicar alteração no existente.",
@@ -796,8 +819,10 @@
     "Hardcodar startDate/endDate absolutos como default permanente do painel."
   ],
   "auth_errors": {
-    "401": "AuthN — pedir reconexão OAuth DELPI / permitir Action.",
-    "403": "AuthZ — usuário sem permissão; não inventar bypass."
+    "401": "AuthN — pedir reconexão OAuth DELPI / permitir Action. Não inventar 'API offline' nem 'conector desabilitado' genérico.",
+    "403": "AuthZ — usuário sem permissão; não inventar bypass.",
+    "tool_unavailable_after_attempt": "Só após falha real do runtime ChatGPT neste turno: uma frase pedindo novo chat / reconectar OAuth / permitir Action — sem tutorial do editor como caminho principal.",
+    "never_without_attempt": "Sem tentativa de Action neste turno → proibido alegar indisponibilidade."
   },
   "editor_focus": {
     "principle": "PREFER_LIVE_EDITOR_FOCUS",
