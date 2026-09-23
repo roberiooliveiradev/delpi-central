@@ -83,6 +83,26 @@ class PresentationSuggestOpsService:
         max_ops = PresentationOpsContentService.setting_int("maxSuggestOps", 5)
         destructive_intent = cls._has_destructive_intent(normalized)
 
+        from tv_app.application.services.data.compound_goal_planner import (
+            plan_compound_goals,
+        )
+
+        compound = plan_compound_goals(message)
+        if compound:
+            return {
+                "catalogVersion": catalog_version,
+                "ops": compound["ops"],
+                "matchedCapabilityKeys": compound["matchedCapabilityKeys"],
+                "clarificationKey": None,
+                "candidates": [],
+                "interpretedGoals": compound["interpretedGoals"],
+                "ignoredGoals": compound["ignoredGoals"],
+                "warnings": compound["warnings"],
+                "reason": PresentationOpsContentService.message(
+                    "suggestOk", count=len(compound["ops"])
+                ),
+            }
+
         # Resume estruturado: «adicione no slide as fontes: op1, op2»
         explicit_ids = cls._extract_explicit_operation_ids(message)
         if explicit_ids:

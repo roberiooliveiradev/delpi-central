@@ -2736,7 +2736,7 @@
               },
               "details": {
                 "type": "object",
-                "description": "Optional owner-local diagnostic bag. Shape varies by error code; never includes tokens, SQL, or stack traces. Intentionally opaque (response-side only).",
+                "description": "Optional diagnostics: operation, opIndex, validationPath, received, expected, internalReason, suggestedCorrection. Never includes tokens, SQL, or stack traces. Intentionally opaque (response-side only).",
                 "x-delpi-gpt-opaque-object": true,
                 "additionalProperties": true,
                 "properties": {}

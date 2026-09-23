@@ -11,6 +11,9 @@ from tv_app.application.gpt_actions.errors import GptActionsError
 from tv_app.application.gpt_actions.proposal import create_proposal
 from tv_app.application.gpt_actions.proposal_store import get_proposal_store
 from tv_app.application.ports import PresentationRepositoryPort
+from tv_app.application.services.data.design_intelligence_service import (
+    DesignIntelligenceService,
+)
 from tv_app.application.services.data.presentation_command_planner_service import (
     PresentationCommandPlannerService,
 )
@@ -215,6 +218,9 @@ class GptActionsDispatchService:
             "currentRevision": revision,
             "layoutDigest": layout_digest,
             "filterDigest": filter_digest,
+            "designAudit": DesignIntelligenceService.design_audit(
+                detail_slide.get("nativeConfig") if isinstance(detail_slide, dict) else None
+            ),
             "localDraftCoordination": "unavailable_external",
             "note": (
                 "slides[] is a compact index (no nativeConfig). "
@@ -517,12 +523,19 @@ class GptActionsDispatchService:
 
         join_hints = self._join_hints_for_preview(block, body=body, route=route)
         format_hints = self._format_hints_for_route(route)
+        rows = self._rows_from_preview_block(block)
+        digest = DesignIntelligenceService.semantic_digest(
+            rows,
+            columns=self._columns_from_preview_block(block),
+        )
         return {
             "block": block,
             "persisted": False,
             "operationId": operation_id or None,
             "joinHints": join_hints,
             "formatHints": format_hints,
+            "semanticDigest": digest,
+            "visualRecommendation": DesignIntelligenceService.visual_recommendation(digest),
         }
 
     @staticmethod
@@ -535,6 +548,17 @@ class GptActionsDispatchService:
         rows = resolved.get("rows") if resolved else None
         if isinstance(rows, list) and rows and isinstance(rows[0], dict):
             return [str(k) for k in rows[0].keys()]
+        return []
+
+    @staticmethod
+    def _rows_from_preview_block(block: dict[str, Any]) -> list[dict[str, Any]]:
+        resolved = block.get("resolved") if isinstance(block.get("resolved"), dict) else {}
+        rows = resolved.get("rows") if isinstance(resolved, dict) else None
+        if isinstance(rows, list):
+            return [row for row in rows if isinstance(row, dict)]
+        chart = resolved.get("chart") if isinstance(resolved, dict) else None
+        if isinstance(chart, dict) and isinstance(chart.get("points"), list):
+            return [row for row in chart["points"] if isinstance(row, dict)]
         return []
 
     def _join_hints_for_preview(
@@ -650,7 +674,12 @@ class GptActionsDispatchService:
             )
         except PresentationPatchError as exc:
             code = str(getattr(exc, "code", None) or "INVALID_CHANGE").strip() or "INVALID_CHANGE"
-            raise GptActionsError(str(exc), code=code, status_code=422) from exc
+            raise GptActionsError(
+                str(exc),
+                code=code,
+                status_code=422,
+                details=getattr(exc, "details", None) or None,
+            ) from exc
 
         # Prefer compiler-ordered ops for the proposal (source of truth for ACT).
         ordered_ops = result.get("orderedOps")

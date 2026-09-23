@@ -157,6 +157,75 @@ def extract_series_points(
     return points
 
 
+_WIDE_LABEL_KEYS = frozenset(
+    {
+        "label",
+        "bucket",
+        "periodo",
+        "competencia",
+        "date",
+        "name",
+        "granularity",
+    }
+)
+_WIDE_METRIC_PREFIXES = (
+    "conversion_",
+    "oee_",
+    "otd_",
+    "ppm_",
+    "qtd_",
+)
+
+
+def wide_metric_fields(row: dict[str, Any]) -> list[str]:
+    """Numeric metric columns that must not collapse into a single points[].value."""
+    fields: list[str] = []
+    for key, value in row.items():
+        if not isinstance(key, str) or key in _WIDE_LABEL_KEYS:
+            continue
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            continue
+        if key.startswith(_WIDE_METRIC_PREFIXES) or key.endswith("_pct"):
+            fields.append(key)
+    return fields
+
+
+def chart_series_from_rows(rows: list[Any]) -> dict[str, Any] | None:
+    """Project a wide table into chart.series. None when fewer than 2 metrics."""
+    typed = [row for row in rows if isinstance(row, dict)]
+    if not typed:
+        return None
+    fields = wide_metric_fields(typed[0])
+    if len(fields) < 2:
+        return None
+    series: list[dict[str, Any]] = []
+    for field in fields:
+        points: list[dict[str, Any]] = []
+        values: list[Any] = []
+        for row in typed:
+            label = _first_non_null(
+                row,
+                ("label", "bucket", "periodo", "competencia", "date", "name"),
+            )
+            value = row.get(field)
+            values.append(value)
+            points.append({"label": label, "value": value})
+        series.append({"field": field, "values": values, "points": points})
+    return {"series": series}
+
+
+def rows_from_operational_payload(data: Any) -> list[dict[str, Any]]:
+    unwrapped = unwrap_operational_data(data)
+    if isinstance(unwrapped, list):
+        return [row for row in unwrapped if isinstance(row, dict)]
+    if isinstance(unwrapped, dict):
+        for key in ("points", "series", "rows", "items"):
+            raw = unwrapped.get(key)
+            if isinstance(raw, list) and raw and isinstance(raw[0], dict):
+                return [row for row in raw if isinstance(row, dict)]
+    return []
+
+
 def envelope_meta(envelope: dict[str, Any] | Any) -> dict[str, Any]:
     if not isinstance(envelope, dict):
         return {}

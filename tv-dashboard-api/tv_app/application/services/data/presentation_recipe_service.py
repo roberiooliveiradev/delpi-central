@@ -117,6 +117,7 @@ class PresentationRecipeService:
                 "themeKey": row.get("themeKey"),
                 "markers": row.get("markers") or [],
                 "description": row.get("description"),
+                "blueprint": row.get("blueprint") if isinstance(row.get("blueprint"), dict) else None,
             }
         return out
 
@@ -142,8 +143,12 @@ class PresentationRecipeService:
                     for k, v in row.items()
                     if "Min" in str(k) or k in {"valueMinFontSize", "titleMinFontSize"}
                 }
-        slim_tokens: dict[str, Any] = {
+            slim_tokens: dict[str, Any] = {
             "maxPrimarySignalsPerSlide": tokens.get("maxPrimarySignalsPerSlide"),
+            "safeMargin": tokens.get("safeMargin"),
+            "typeScale": tokens.get("typeScale"),
+            "typography": tokens.get("typography"),
+            "spacing": tokens.get("spacing"),
             "brand": tokens.get("brand") if isinstance(tokens.get("brand"), dict) else {},
             "partChrome": slim_part,
             "chartTypeHints": tokens.get("chartTypeHints")
@@ -164,6 +169,7 @@ class PresentationRecipeService:
                 "label": row.get("label"),
                 "themeKey": row.get("themeKey"),
                 "markers": markers[:8],
+                "blueprint": row.get("blueprint") if isinstance(row.get("blueprint"), dict) else None,
             }
         return {
             "principle": full.get("principle"),

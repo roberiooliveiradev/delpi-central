@@ -116,6 +116,11 @@
       "nl": "inventário completo de mídia",
       "markers": ["mediaInventory", "assets", "uploadCapability"],
       "topic": "media_inventory"
+    },
+    "G_DESIGN_AUDIT": {
+      "nl": "melhore este slide",
+      "markers": ["designAudit", "semanticDigest", "visualRecommendation", "componentSpecs"],
+      "topic": "design_intelligence"
     }
   }
 }

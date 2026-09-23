@@ -148,7 +148,7 @@ class PresentationCommandPlannerService:
                 "planReadyDirect", count=len(ops)
             )
 
-        return cls._result(
+        result = cls._result(
             status="ready",
             catalog_version=catalog_version,
             matched=matched,
@@ -156,6 +156,10 @@ class PresentationCommandPlannerService:
             ops=ops,
             policy=policy,
         )
+        result["interpretedGoals"] = suggestion.get("interpretedGoals") or []
+        result["ignoredGoals"] = suggestion.get("ignoredGoals") or []
+        result["warnings"] = suggestion.get("warnings") or []
+        return result
 
     @classmethod
     def to_suggest_payload(cls, plan: dict[str, Any]) -> dict[str, Any]:
@@ -177,6 +181,9 @@ class PresentationCommandPlannerService:
             "requiresPlaylist": bool(plan.get("requiresPlaylist")),
             "requiresSlide": bool(plan.get("requiresSlide")),
             "candidates": list(candidates),
+            "interpretedGoals": plan.get("interpretedGoals") or [],
+            "ignoredGoals": plan.get("ignoredGoals") or [],
+            "warnings": plan.get("warnings") or [],
         }
 
     @classmethod

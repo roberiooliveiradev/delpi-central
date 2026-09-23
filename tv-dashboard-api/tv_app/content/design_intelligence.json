@@ -1,0 +1,95 @@
+{
+  "version": "2026.09.23",
+  "componentSpecs": {
+    "heading": {
+      "componentType": "heading",
+      "purpose": ["title", "sectionTitle"],
+      "recommendedFor": ["slide title"],
+      "avoidFor": ["metric value"],
+      "textRoles": ["display", "title", "sectionTitle"]
+    },
+    "text": {
+      "componentType": "text",
+      "purpose": ["caption", "body"],
+      "recommendedFor": ["supporting copy"],
+      "avoidFor": ["primary metric"],
+      "textRoles": ["body", "caption", "label"]
+    },
+    "shape": {
+      "componentType": "shape",
+      "purpose": ["surface"],
+      "recommendedFor": ["card", "callout", "accentStrip"],
+      "avoidFor": ["data series"],
+      "shapeRoles": ["card", "callout", "accentStrip", "badge", "ghostFrame", "sectionBackground"]
+    },
+    "icon": {
+      "componentType": "icon",
+      "purpose": ["affordance"],
+      "recommendedFor": ["kpi accent"],
+      "avoidFor": ["replacing a metric"]
+    },
+    "image": {
+      "componentType": "image",
+      "purpose": ["media", "brand"],
+      "recommendedFor": ["photo", "logo"],
+      "avoidFor": ["kpi value"]
+    },
+    "kpi_view": {
+      "componentType": "kpi_view",
+      "purpose": ["single metric"],
+      "recommendedFor": ["revenue", "quantity", "rate", "primary indicator"],
+      "avoidFor": ["time series", "many categories"],
+      "kpiRoles": ["hero", "primary", "secondary", "compact"],
+      "requiredDataRoles": ["metric"]
+    },
+    "data_kpi": {
+      "componentType": "data_kpi",
+      "purpose": ["single metric"],
+      "recommendedFor": ["revenue", "quantity", "rate"],
+      "avoidFor": ["time series"],
+      "requiredDataRoles": ["metric"]
+    },
+    "chart_view": {
+      "componentType": "chart_view",
+      "purpose": ["comparison", "trend", "composition"],
+      "variants": {
+        "line": {"purpose": ["temporal trend"], "requiredDataRoles": ["temporal", "metric"], "avoidFor": ["unordered categories"]},
+        "area": {"purpose": ["temporal trend"], "requiredDataRoles": ["temporal", "metric"], "avoidFor": ["unordered categories"]},
+        "bar": {"purpose": ["category comparison"], "recommendedFor": ["branch", "seller", "product"]},
+        "horizontal_bar": {"purpose": ["ranking"], "recommendedFor": ["long labels", "cardinality>4"]},
+        "doughnut": {"purpose": ["composition"], "avoidFor": ["time series", "ranking", "negative values"], "maxCategories": 5},
+        "pie": {"purpose": ["composition"], "avoidFor": ["time series", "ranking", "negative values"], "maxCategories": 5},
+        "gauge": {"purpose": ["progress vs goal"], "requiredDataRoles": ["metric", "goal"], "avoidFor": ["ranking", "time series"]},
+        "waterfall": {"purpose": ["bridge from start to end"], "recommendedFor": ["positive and negative components"]}
+      }
+    },
+    "data_chart": {
+      "componentType": "data_chart",
+      "purpose": ["comparison", "trend"],
+      "avoidFor": ["exact operational listing"]
+    },
+    "table_view": {
+      "componentType": "table_view",
+      "purpose": ["exact values", "detailed ranking"],
+      "recommendedFor": ["many categories", "operational rows"],
+      "avoidFor": ["single hero metric"]
+    },
+    "data_table": {
+      "componentType": "data_table",
+      "purpose": ["exact values"],
+      "recommendedFor": ["many categories"]
+    },
+    "canvas_table": {
+      "componentType": "canvas_table",
+      "purpose": ["dense operational grid"],
+      "recommendedFor": ["many columns"],
+      "avoidFor": ["hero kpi"]
+    },
+    "input": {
+      "componentType": "input",
+      "purpose": ["filter control"],
+      "recommendedFor": ["branch", "period"],
+      "avoidFor": ["primary visualization"]
+    }
+  }
+}

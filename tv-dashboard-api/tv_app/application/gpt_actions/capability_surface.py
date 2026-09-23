@@ -17,6 +17,9 @@ from tv_app.application.gpt_actions import GPT_ACTIONS_OPERATION_IDS
 from tv_app.application.gpt_actions.vista_agent_intelligence_service import (
     VistaAgentIntelligenceService,
 )
+from tv_app.application.services.data.design_intelligence_service import (
+    DesignIntelligenceService,
+)
 from tv_app.application.services.data.presentation_ops_content_service import PresentationOpsContentService
 
 
@@ -33,6 +36,7 @@ def build_capability_surface() -> dict[str, Any]:
         "lifecycle": "GOVERNED_PREPARE_COMMIT_V2",
         "mutation_owner": "PresentationMutation",
         "agent_directives": VistaAgentIntelligenceService.agent_directives(),
+        "designIntelligence": DesignIntelligenceService.catalog_projection(),
         "action_surface_budget": {
             "importable_operations": len(GPT_ACTIONS_OPERATION_IDS),
             "platform_prefer_max": 30,

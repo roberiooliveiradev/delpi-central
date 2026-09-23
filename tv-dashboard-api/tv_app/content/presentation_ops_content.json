@@ -3009,6 +3009,9 @@
         "renomear o slide",
         "duração",
         "pausar",
+        "desativar",
+        "desative",
+        "pausar slide",
         "ativar slide"
       ],
       "excludeMarkers": [],
@@ -3047,13 +3050,12 @@
       "op": "delete_slide",
       "whenToUse": "Excluir o slide indicado em target.slideId.",
       "contentMarkers": [
-        "slide",
-        "tela",
         "apagar slide",
         "apague o slide",
         "excluir slide",
         "excluir tela",
-        "remover slide"
+        "remover slide",
+        "delete slide"
       ],
       "excludeMarkers": [
         "bloco",
@@ -3159,7 +3161,9 @@
         "filtro de programação",
         "dataDefaults",
         "padrão da programação",
-        "filial padrão da programação"
+        "filial padrão da programação",
+        "centralizar periodDays",
+        "centralizar período"
       ],
       "excludeMarkers": [
         "filtro do slide",
@@ -3183,7 +3187,9 @@
         "relayer filtros",
         "filtros duplicados",
         "camada errada",
-        "filter digest"
+        "filter digest",
+        "centralizar periodDays",
+        "duplicidade de filtro"
       ],
       "excludeMarkers": [],
       "actionTermSet": "mutation",

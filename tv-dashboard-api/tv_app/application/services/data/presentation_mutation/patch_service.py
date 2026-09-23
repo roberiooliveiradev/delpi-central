@@ -78,9 +78,16 @@ _VISUAL_PROJECTION_DEFAULTS = {
 class PresentationPatchError(ValueError):
     """Erro de validação do envelope / ops (PresentationMutation)."""
 
-    def __init__(self, message: str, *, code: str | None = None) -> None:
+    def __init__(
+        self,
+        message: str,
+        *,
+        code: str | None = None,
+        details: dict[str, Any] | None = None,
+    ) -> None:
         super().__init__(message)
         self.code = code
+        self.details = details or {}
 
 
 def _new_block_id() -> str:
@@ -475,8 +482,25 @@ class PresentationPatchService:
 
             if op_name == "re_layer_playlist_filters":
                 if not playlist_id or not slide_id or native_config is None:
+                    details: dict[str, Any] = {
+                        "operation": op_name,
+                        "received": {
+                            "playlistId": playlist_id,
+                            "slideId": slide_id,
+                        },
+                    }
+                    if playlist_id and slide_id and native_config is None:
+                        details["validationPath"] = "nativeConfig"
+                        details["internalReason"] = "native_config_not_loaded"
+                        details["expected"] = "preloaded slide nativeConfig"
+                    else:
+                        details["validationPath"] = (
+                            "target.slideId" if playlist_id and not slide_id else "target.playlistId"
+                        )
+                        details["internalReason"] = "target_ids_missing"
                     raise PresentationPatchError(
-                        PresentationOpsContentService.message("missingTarget")
+                        PresentationOpsContentService.message("missingTarget"),
+                        details=details,
                     )
                 playlist_defaults = self._op_re_layer_playlist_filters(
                     native_config,

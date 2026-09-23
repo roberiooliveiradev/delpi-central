@@ -1595,6 +1595,19 @@ class ComunicadoDataEnrichmentService:
             return resolved
 
         if mode in {"line_chart", "bar_chart"}:
+            from tv_app.application.services.series_points_extractor import (
+                chart_series_from_rows,
+                rows_from_operational_payload,
+            )
+
+            wide_rows = rows_from_operational_payload(data)
+            wide_chart = chart_series_from_rows(wide_rows)
+            if wide_chart is not None:
+                chart_type = "bar" if mode == "bar_chart" else "line"
+                return {
+                    "chart": {**wide_chart, "chartType": chart_type},
+                    "kpiMetrics": metrics,
+                }
             points = _extract_series(data, route_info.get("seriesField"), branch=branch_str)
             if not points:
                 # Lista de negócio vazia (seriesField / tableFields) ≠ série de métricas do envelope.

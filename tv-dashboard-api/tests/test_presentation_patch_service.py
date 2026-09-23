@@ -361,6 +361,30 @@ def test_preview_re_layer_with_valid_target_does_not_raise_missing_target(monkey
         )
 
 
+def test_preview_compound_relayer_defaults_and_pause(monkeypatch):
+    repo = _FakeRepo()
+    svc = _service(repo, monkeypatch)
+    result = svc.preview(
+        {
+            "target": {"playlistId": PLAYLIST_ID, "slideId": SLIDE_ID},
+            "ops": [
+                {
+                    "op": "patch_playlist_data_defaults",
+                    "dataDefaults": {"periodDays": 7},
+                    "replace": False,
+                },
+                {"op": "re_layer_playlist_filters", "scope": "playlist", "keys": ["periodDays"]},
+                {"op": "update_slide", "isActive": False},
+            ],
+        },
+        user={"sub": "u1"},
+        authorization="Bearer x",
+    )
+    assert result["ok"] is True
+    assert "re_layer_playlist_filters" in result["appliedOps"]
+    assert "update_slide" in result["appliedOps"]
+
+
 def test_apply_plans_crud_http_without_persisting(monkeypatch):
     """Apply do BFF só planeja — persistência = rotas /playlists/** na AI."""
     repo = _FakeRepo()

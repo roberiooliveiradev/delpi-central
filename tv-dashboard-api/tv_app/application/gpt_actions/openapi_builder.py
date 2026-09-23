@@ -275,8 +275,9 @@ def _error_envelope_schema() -> dict[str, Any]:
                     "retryable": {"type": "boolean"},
                     "details": _opaque_object_schema(
                         description=(
-                            "Optional owner-local diagnostic bag. Shape varies by error "
-                            "code; never includes tokens, SQL, or stack traces. "
+                            "Optional diagnostics: operation, opIndex, validationPath, "
+                            "received, expected, internalReason, suggestedCorrection. "
+                            "Never includes tokens, SQL, or stack traces. "
                             "Intentionally opaque (response-side only)."
                         )
                     ),

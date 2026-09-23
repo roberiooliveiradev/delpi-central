@@ -2,6 +2,11 @@
   "version": "2026.09.23.4",
   "owner": "tv-dashboard-api",
   "source": "capability_surface.agent_directives via gpt_get_catalog",
+  "design_intelligence": {
+    "principle": "CATALOG_AUTHORITY",
+    "summary": "componentSpecs, semanticDigest, visualRecommendation and designAudit are structured catalog/READ fields. Directives point at them; they do not replace the catalog.",
+    "fields": ["componentSpecs", "semanticDigest", "visualRecommendation", "designAudit"]
+  },
   "visual_selection": {
     "principle": "SHAPE_FOLLOWS_DATA",
     "summary": "Escolher bloco e chartType pela forma do dado / pergunta de negócio — não repetir KPI+área por hábito. Catálogo tipado = kpi_view, chart_view (15 chartTypes), table_view, input/filtro, composed_visuals.",
@@ -119,7 +124,7 @@
       "Painel multi-indicador: misturar ≥2 famílias de visual quando o pedido cobrir formas distintas (ex.: hero + barras categóricas + tabela) — não 4× KPI+área.",
       "'melhore o visual' / DESIGN_REFINE em slide só KPI+área → diversificar (trocar chartType alinhado ao dado OU acrescentar table/filtro/composto) se a forma do dado permitir; não só aumentar fonte.",
       "Obedecer chartTypeHints.forbidden (nunca pie/doughnut em série diária densa).",
-      "Recipes TV_KPI_PLUS_CHART / _BAR / _PIE / TV_TABLE_FOCUS / TV_HERO_PLUS_TABLE / TV_FILTER_STRIP / TV_COMPOSED_DATA_CARD são atalhos — escolher a recipe pela forma, não a primeira da lista.",
+      "Ler designIntelligence.componentSpecs no catálogo antes de escolher KPI/chart/table. Não duplicar essas regras só em texto.",
       "Usar chartType tipado do catálogo (catalog_chart_types); não inventar tipo fora do enum."
     ],
     "forbidden": [
