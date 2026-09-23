@@ -4668,8 +4668,8 @@ body.td-composer--marqueeing *{
  * Organizar: uma linha (nowrap) — evita corte dos chevrons em faixa compacta.
  */
 .dashboard-tv-dashboard .td-deck-ribbon__organize-grid{
-  --td-organize-col-min: 2.65rem;
-  --td-organize-gap-x: 2px;
+  --td-organize-col-min: 2.5rem;
+  --td-organize-gap-x: 1px;
   display: flex;
   flex-direction: row;
   flex-wrap: nowrap;
@@ -4692,7 +4692,7 @@ body.td-composer--marqueeing *{
   flex-direction: column;
   align-items: stretch;
   min-width: var(--td-organize-col-min);
-  max-width: 4.25rem;
+  max-width: 3.75rem;
   min-height: 0;
   box-sizing: border-box;
 }
@@ -7577,6 +7577,13 @@ body.td-composer--marqueeing *{
   overflow: visible;
   position: relative;
   z-index: 30;
+  min-width: 0;
+  max-width: 100%;
+}
+/* Band: clipa X para o RibbonGroupsRow medir o slot e colapsar grupos (não crescer a faixa). */
+.dashboard-tv-dashboard .td-deck-chrome__ribbon:has(.td-deck-ribbon--band){
+  overflow-x: hidden;
+  overflow-y: visible;
 }
 @keyframes td-deck-ribbon-panel-enter{
   from {

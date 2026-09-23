@@ -19,6 +19,7 @@ export {
   measureElementWidth,
   measureElementContentWidth,
   measureRibbonAvailableWidth,
+  findRibbonWidthConstraint,
   type RibbonGroupsRowClassNames,
   type RibbonGroupsRowProps,
 } from "./RibbonGroupsRow";

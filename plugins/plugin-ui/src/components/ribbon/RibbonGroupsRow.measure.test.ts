@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  findRibbonWidthConstraint,
   measureElementContentWidth,
   measureRibbonAvailableWidth,
 } from "./RibbonGroupsRow";
@@ -34,5 +35,37 @@ describe("measureRibbonAvailableWidth", () => {
       parentElement: parent,
     } as unknown as HTMLElement;
     expect(measureRibbonAvailableWidth(row)).toBe(480);
+  });
+
+  it("usa o scrollport ancestral quando o row cresceu com o conteúdo", () => {
+    const original = globalThis.getComputedStyle;
+    globalThis.getComputedStyle = ((el: Element) => {
+      const overflowX =
+        (el as HTMLElement & { __ox?: string }).__ox ?? "visible";
+      return { overflowX, maxWidth: "none" } as CSSStyleDeclaration;
+    }) as typeof getComputedStyle;
+
+    try {
+      const scrollport = {
+        clientWidth: 640,
+        parentElement: null,
+        __ox: "auto",
+      } as unknown as HTMLElement & { __ox: string };
+      const parent = {
+        clientWidth: 1400,
+        parentElement: scrollport,
+        __ox: "visible",
+      } as unknown as HTMLElement & { __ox: string };
+      const row = {
+        clientWidth: 1400,
+        scrollWidth: 1400,
+        parentElement: parent,
+      } as unknown as HTMLElement;
+
+      expect(findRibbonWidthConstraint(row)).toBe(scrollport);
+      expect(measureRibbonAvailableWidth(row)).toBe(640);
+    } finally {
+      globalThis.getComputedStyle = original;
+    }
   });
 });

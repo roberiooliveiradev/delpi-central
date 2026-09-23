@@ -313,7 +313,7 @@ export function FormatRibbonOrganizeGroup({ embed = false }: Props) {
         />
         <DeckRibbonMenuTile
           icon={Scaling}
-          label={H.sameSize}
+          label="Igualar"
           hint={H.sameSizeHint}
           onPrimaryClick={canSameSize ? () => sameSizeSelected("both") : undefined}
           items={sameSizeItems}

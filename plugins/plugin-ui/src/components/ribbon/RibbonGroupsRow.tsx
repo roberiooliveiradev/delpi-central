@@ -88,6 +88,10 @@ export function RibbonGroupsRow({
     const observer = new ResizeObserver(update);
     observer.observe(node);
     if (node.parentElement) observer.observe(node.parentElement);
+    const constraint = findRibbonWidthConstraint(node);
+    if (constraint && constraint !== node && constraint !== node.parentElement) {
+      observer.observe(constraint);
+    }
     return () => observer.disconnect();
   }, []);
 
@@ -173,6 +177,40 @@ export function measureElementContentWidth(node: HTMLElement | null): number {
 }
 
 /**
+ * Ancestral que define o slot visível da faixa (overflow clip/scroll ou max-width).
+ * Preferir o clientWidth desse nó — o row pode ter crescido com min-content e
+ * reportar clientWidth ≈ scrollWidth, impedindo o colapso responsivo.
+ */
+export function findRibbonWidthConstraint(row: HTMLElement | null): HTMLElement | null {
+  if (!row) return null;
+  let el: HTMLElement | null = row.parentElement;
+  for (let depth = 0; el && depth < 12; depth += 1, el = el.parentElement) {
+    let overflowX = "";
+    let maxWidth = "";
+    try {
+      if (typeof getComputedStyle !== "undefined") {
+        const style = getComputedStyle(el);
+        overflowX = style.overflowX;
+        maxWidth = style.maxWidth;
+      }
+    } catch {
+      overflowX = "";
+      maxWidth = "";
+    }
+    if (
+      overflowX === "hidden" ||
+      overflowX === "auto" ||
+      overflowX === "scroll" ||
+      overflowX === "clip" ||
+      (maxWidth !== "" && maxWidth !== "none")
+    ) {
+      return el;
+    }
+  }
+  return row.parentElement;
+}
+
+/**
  * Largura útil da faixa: o host pai costuma estar limitado ao viewport;
  * o próprio row com overflow-x:auto pode reportar clientWidth ≈ scrollWidth
  * quando o ancestral cresce com o conteúdo — aí o colapso nunca dispara.
@@ -180,6 +218,18 @@ export function measureElementContentWidth(node: HTMLElement | null): number {
 export function measureRibbonAvailableWidth(row: HTMLElement | null): number {
   if (!row) return 0;
   const rowClient = row.clientWidth;
+  const constraint = findRibbonWidthConstraint(row);
+  const constraintClient = constraint?.clientWidth ?? 0;
+  if (constraintClient > 0) {
+    if (rowClient > 0 && row.scrollWidth > rowClient + 1) {
+      return Math.min(rowClient, constraintClient);
+    }
+    // Slot visível menor que o row “inchado” pelo conteúdo → colapsar pela constraint.
+    if (rowClient <= 0 || constraintClient < rowClient) {
+      return constraintClient;
+    }
+    return Math.min(rowClient, constraintClient);
+  }
   const parent = row.parentElement;
   const parentClient = parent?.clientWidth ?? 0;
   if (parentClient > 0 && row.scrollWidth > rowClient + 1) {

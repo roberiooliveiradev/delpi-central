@@ -1036,6 +1036,10 @@ export function partsToKpiOptions(parts?: KpiPartsMap | null): Partial<KpiCardFl
   return patch;
 }
 
+/**
+ * Options são canônicas para tema (card.fill ← backgroundColor, value.color ← valueColor).
+ * Tipografia/cantos/etc. em parts continuam vencendo; só fill/cor de tema não ficam stale.
+ */
 export function mergeKpiPartsWithOptions(
   parts: KpiPartsMap | null | undefined,
   options?: KpiCardFlatOptions | null,
@@ -1043,10 +1047,25 @@ export function mergeKpiPartsWithOptions(
   const fromOptions = kpiOptionsToParts(options);
   const merged: KpiPartsMap = { ...fromOptions };
   for (const [key, state] of Object.entries(parts ?? {})) {
+    const optionStyle = fromOptions[key]?.style;
+    const stateStyle = state.style;
+    const style =
+      optionStyle || stateStyle
+        ? {
+            ...optionStyle,
+            ...stateStyle,
+            ...(key === "card" && options?.backgroundColor != null
+              ? { fill: fromOptions.card?.style?.fill ?? options.backgroundColor }
+              : {}),
+            ...(key === "value" && options?.valueColor != null
+              ? { color: fromOptions.value?.style?.color ?? options.valueColor }
+              : {}),
+          }
+        : undefined;
     merged[key] = {
       ...fromOptions[key],
       ...state,
-      style: { ...fromOptions[key]?.style, ...state.style },
+      style,
       frame: state.frame ?? fromOptions[key]?.frame,
     };
   }

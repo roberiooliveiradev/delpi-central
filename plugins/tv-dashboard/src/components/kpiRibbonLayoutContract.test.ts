@@ -40,4 +40,13 @@ describe("kpi ribbon layout contract", () => {
     expect(appearanceBlock).not.toContain("KPI_TONE_OPTIONS");
     expect(appearanceBlock).not.toContain("Positivo");
   });
+
+  it("Organizar usa rótulo curto Igualar (evita ellipsis Mesmo tam…)", () => {
+    const organize = readFileSync(
+      join(here, "formatRibbon/FormatRibbonOrganizeGroup.tsx"),
+      "utf8",
+    );
+    expect(organize).toContain('label="Igualar"');
+    expect(organize).toContain("menuAriaLabel={H.sameSize}");
+  });
 });

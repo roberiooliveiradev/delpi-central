@@ -94,6 +94,12 @@ describe("ribbon density contract", () => {
     );
   });
 
+  it("chrome band clipa X para colapso responsivo da faixa", () => {
+    expect(css).toMatch(
+      /\.td-deck-chrome__ribbon:has\(\.td-deck-ribbon--band\)\s*\{[^}]*overflow-x:\s*hidden/s,
+    );
+  });
+
   it("tiles compactos usam ícone Lucide 18 e faixa de uma linha", () => {
     expect(tileSource).toMatch(/Icon size=\{18\}/);
     expect(css).toMatch(

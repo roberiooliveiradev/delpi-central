@@ -90,13 +90,45 @@ describe("kpiCardParts adapters", () => {
     expect(merged.icon?.visible).toBe(false);
   });
 
-  it("sincroniza fill do card com backgroundColor (incl. cor custom)", () => {
+  it("sincroniza fill do card com backgroundColor das options (tema vence parts stale)", () => {
     const parts = mergeKpiPartsWithOptions(
-      { card: { style: { fill: "#089bdb" } } },
+      { card: { style: { fill: "#089bdb", borderRadius: 24 } } },
       { backgroundColor: "#ffffff" },
     );
+    expect(parts.card?.style?.fill).toBe("#ffffff");
+    expect(parts.card?.style?.borderRadius).toBe(24);
+    expect(partsToKpiOptions(parts).backgroundColor).toBe("#ffffff");
+  });
+
+  it("tema Escuro + valueColor sobrescrevem fill/cor stale e preservam tipografia", () => {
+    const merged = mergeKpiPartsWithOptions(
+      {
+        card: { style: { fill: "#ffffff", borderRadius: 16 } },
+        value: { style: { color: "#111111", fontSize: 34 } },
+      },
+      { backgroundColor: "#0f172a", valueColor: "#f8fafc" },
+    );
+    expect(merged.card?.style?.fill).toBe("#0f172a");
+    expect(merged.card?.style?.borderRadius).toBe(16);
+    expect(merged.value?.style?.color).toBe("#f8fafc");
+    expect(merged.value?.style?.fontSize).toBe(34);
+  });
+
+  it("valueColor auto remove cor custom stale (libera tom semântico)", () => {
+    const merged = mergeKpiPartsWithOptions(
+      { value: { style: { color: "#111111", fontWeight: 700 } } },
+      { valueColor: "auto" },
+    );
+    expect(merged.value?.style?.color).toBe("auto");
+    expect(merged.value?.style?.fontWeight).toBe(700);
+  });
+
+  it("paint alinhado (options = parts) preserva fill custom", () => {
+    const parts = mergeKpiPartsWithOptions(
+      { card: { style: { fill: "#089bdb" } } },
+      { backgroundColor: "#089bdb" },
+    );
     expect(parts.card?.style?.fill).toBe("#089bdb");
-    expect(partsToKpiOptions(parts).backgroundColor).toBe("#089bdb");
   });
 });
 

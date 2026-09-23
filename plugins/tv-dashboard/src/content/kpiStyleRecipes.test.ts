@@ -1,4 +1,4 @@
-import { DECK_KPI_DEFAULTS } from "@delpi/plugin-ui/index";
+import { DECK_KPI_DEFAULTS, mergeKpiPartsWithOptions } from "@delpi/plugin-ui/index";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -50,5 +50,28 @@ describe("kpiStyleRecipes", () => {
     expect(next.backgroundColor).toBe("#0f172a");
     expect(next.tone).toBe("default");
     expect(isKpiAppearanceRecipeActive(escuro, next)).toBe(true);
+  });
+
+  it("recipe Escuro alinha parts stale via mergeKpiPartsWithOptions", () => {
+    const escuro = KPI_APPEARANCE_RECIPES.find((r) => r.id === "escuro")!;
+    const nextOptions = applyKpiAppearanceRecipe(escuro, {
+      backgroundColor: DECK_KPI_DEFAULTS.backgroundColor,
+      valueColor: "auto",
+    });
+    const merged = mergeKpiPartsWithOptions(
+      {
+        card: { style: { fill: DECK_KPI_DEFAULTS.backgroundColor } },
+        value: { style: { color: "#111111" } },
+      },
+      nextOptions,
+    );
+    expect(merged.card?.style?.fill).toBe("#0f172a");
+    expect(merged.value?.style?.color).toBe("#f8fafc");
+    expect(
+      isKpiAppearanceRecipeActive(escuro, {
+        ...nextOptions,
+        backgroundColor: merged.card?.style?.fill,
+      }),
+    ).toBe(true);
   });
 });
