@@ -1,5 +1,5 @@
 {
-  "version": "2026.09.23.1",
+  "version": "2026.09.23.2",
   "owner": "tv-dashboard-api",
   "source": "capability_surface.agent_directives via gpt_get_catalog",
   "shape_chrome": {
@@ -167,11 +167,123 @@
   },
   "branch_scope": {
     "principle": "INHERIT_THEN_ASK",
-    "summary": "Filial/escopo: herdar playlistDefaults.branch; UMA pergunta se várias filiais sem INFORMED.",
+    "summary": "Filial/escopo: herdar playlist dataDefaults.branch (filter_layering); UMA pergunta se várias filiais sem INFORMED.",
     "rules": [
-      "upsert_data_source.params.branch ← playlistDefaults.branch quando existir e NL não informar filial.",
+      "Filial padrão da programação → patch_playlist_data_defaults / herança; NÃO repetir branch em cada data_source sem motivo.",
+      "upsert_data_source.params.branch ← dataDefaults/playlistDefaults.branch quando existir e NL não informar filial.",
       "Se o usuário tiver várias filiais no contexto e não INFORMED → UMA pergunta.",
-      "Nunca inventar código de filial."
+      "Nunca inventar código de filial; AuthZ de branch é backend."
+    ]
+  },
+  "filter_layering": {
+    "principle": "LAYERED_FILTERS_MOST_SPECIFIC_WINS",
+    "summary": "Variáveis principais na programação; compartilhadas do slide na tela; exceções na fonte; datas relativas (nunca hardcode eterno). Merge: dataDefaults → dataFilters → params da fonte → input kiosk.",
+    "merge_order": [
+      "playlist.dataDefaults (programação)",
+      "slide.dataFilters (tela)",
+      "data_source / block binding params (fonte)",
+      "input targetScope=slide|sources (kiosk — sessão, não persiste)"
+    ],
+    "placement": {
+      "programacao": {
+        "where": "patch_playlist_data_defaults → playlist.dataDefaults",
+        "put": [
+          "Filial padrão da fábrica/painel",
+          "Período padrão do painel (dateRangePreset ou periodDays relativo)",
+          "Escopo que TODOS os slides da programação compartilham"
+        ],
+        "examples": ["branch", "dateRangePreset=this_month", "periodDays"]
+      },
+      "tela": {
+        "where": "patch_native_config.dataFilters e/ou upsert_block type=input",
+        "put": [
+          "Período/filial deste slide quando difere da programação",
+          "Filtro compartilhado por vários KPIs/charts/tables do mesmo slide",
+          "Controle que o gestor quer ver/ajustar no palco (input + recipe TV_FILTER_STRIP)"
+        ],
+        "examples": ["dataFilters.branch", "dataFilters.dateRangePreset", "input período/filial"]
+      },
+      "fonte": {
+        "where": "upsert_data_source.params / dataBinding.params",
+        "put": [
+          "Exceção pontual de UMA fonte (TOP N, granularidade, código de produto só desta tabela)",
+          "Params que outras fontes do slide NÃO devem herdar"
+        ],
+        "examples": ["top_limit", "granularity", "productCode"],
+        "avoid": "Repetir branch/período em toda fonte quando dataDefaults/dataFilters já cobrem"
+      },
+      "kiosk": {
+        "where": "upsert_block type=input (targetScope slide|sources)",
+        "put": ["Override de sessão na TV/prévia — não substitui defaults persistidos"],
+        "note": "Input de período remove dateRangePreset das camadas inferiores no merge do fetch"
+      }
+    },
+    "dates": {
+      "prefer": [
+        "dateRangePreset relativo (this_month, last_7_days, previous_month, …) quando a rota for date_range",
+        "periodDays relativo quando o paramSchema for assim",
+        "Input de período no slide se o operador precisa mudar na TV"
+      ],
+      "forbidden": [
+        "startDate/endDate absolutos 'para sempre' sem pedido INFORMED de intervalo fixo",
+        "params {} em rota date_range fechada (write_quality)",
+        "Copiar datas de um print/Power BI de um dia como permanente"
+      ],
+      "default_when_unspecified": "dateRangePreset=this_month (ou periodDays INFORMED) antes do commit"
+    },
+    "decision_table": [
+      "Escopo do painel inteiro → programação",
+      "Escopo deste slide / vários blocos → tela (+ input se interativo)",
+      "Só um visual/fonte → params da fonte",
+      "Mudança na hora na TV → input kiosk"
+    ],
+    "rules": [
+      "Ao criar/ajustar painel: colocar branch/período principais em dataDefaults OU dataFilters — não espalhar cópias idênticas em cada upsert_data_source.",
+      "Antes de upsert_data_source com branch/período: ler dataDefaults do context e dataFilters do slide; herdar; só sobrescrever com motivo explícito.",
+      "Pedido 'filtro da programação / default da playlist' → patch_playlist_data_defaults.",
+      "Pedido 'filtro deste slide / vale para todos os indicadores' → patch_native_config.dataFilters; recipe TV_FILTER_STRIP se precisar de controles no palco.",
+      "Pedido 'só nesta tabela/KPI' → params naquela fonte.",
+      "Datas: preferir preset/periodDays; hardcode absoluto só se o usuário INFORMAR intervalo fixo.",
+      "paramSchema da rota manda — nunca inventar chave de filtro.",
+      "branch_scope + filter_layering: filial inventada = anti-padrão."
+    ],
+    "forbidden": [
+      "Copiar os mesmos branch+datas em 4 data_sources quando dataFilters/dataDefaults bastam",
+      "Hardcodar calendário absoluto como default permanente",
+      "Persistir fonte date_range com params {}",
+      "Colocar TOP N / productCode na programação quando é exceção de um bloco",
+      "Usar input kiosk como único lugar do período padrão (deve haver default persistido)"
+    ]
+  },
+  "slide_craft": {
+    "principle": "ONE_DECISION_TV_SLIDE",
+    "summary": "Boas práticas de craft de slide TV: uma pergunta de negócio, filtros em camadas, dados tipados, Delpi+impacto, binding limpo, nomes claros.",
+    "rules": [
+      "Uma decisão/pergunta de negócio por slide; ≤ maxPrimarySignalsPerSlide (designTokens, tipicamente 4) sinais primários.",
+      "Obedecer filter_layering para filial/período/params (programação → tela → fonte → kiosk).",
+      "operationId só de gpt_search_data_routes; params só do paramSchema; gpt_preview_data_block antes do commit (write_quality).",
+      "Transform: só set_data_transform tipado quando a rota não entrega o shape — sem M/SQL/script.",
+      "Visual: THEME_DELPI + visual_impact + partChrome + shape_chrome; recipes ROW/GRID/SERIES_TABLE; layoutDigest antes de inventar frames.",
+      "native_config sem resolved/linhas SQL; dado no enrichment runtime.",
+      "Nomear slide/seção pela decisão ('OTD comercial — mês'), não 'Slide 3'.",
+      "Playlist = história: ordem, duração, capa, dataDefaults únicos; playlist_curation para reorder.",
+      "Contraste/densidade/overlap: gate slide_layout_quality; corrigir se OUTCOME_NOT_VERIFIED.",
+      "si_goals: meta vs realizado só com campos do contrato da rota.",
+      "Alter existing (object_resolution) antes de create_slide/create_playlist sem necessidade."
+    ],
+    "checklist_before_verified": [
+      "Filtros nas camadas certas (não duplicados)?",
+      "Datas relativas ou INFORMED explícito?",
+      "Preview de dados OK sem 'Informe o período'?",
+      "Projection + formato nos visuals de dados?",
+      "Tema/hierarquia Delpi e layout sem overlap?",
+      "Nomes de slide/seção compreensíveis no filmstrip?"
+    ],
+    "forbidden": [
+      "Slide enciclopédia (muitos KPIs sem recipe/hierarquia)",
+      "Filtros e datas espalhados sem layering",
+      "VERIFIED com resolved.error ou projection vazia",
+      "Inventar filial/rota/campo de filtro"
     ]
   },
   "si_goals": {
@@ -400,7 +512,8 @@
     "PLAYLIST_CURATION": "Ordem, duração, slides, kiosk/TV — preferir update/reorder/move no existente (playlist_curation).",
     "COMPOUND_READY_SLIDE": "Pedido complexo de slide pronto — seguir compound_slide.pipeline + write_quality.",
     "DESIGN_REFINE": "Ajuste visual tipado de impacto (THEME_DELPI, chartType area/bar, KPI hero, tablePreset=banded, tipografia/partChrome, compostos shape/text com textProjection, shape_chrome radius/shadow/stroke) no slide/seleção resolvidos — EXECUTAR agora via preview+commit; obedeça visual_impact + composed_visuals + shape_chrome; sem proposta-only.",
-    "COMPOSE_CUSTOM": "Montar componente próprio com blocos tipados (shape+heading+text/icon + dados via textProjection/groupId + shape_chrome) — não inventar widget fora do catálogo."
+    "COMPOSE_CUSTOM": "Montar componente próprio com blocos tipados (shape+heading+text/icon + dados via textProjection/groupId + shape_chrome) — não inventar widget fora do catálogo.",
+    "FILTER_LAYERING": "Colocar filtros na camada certa (programação/tela/fonte/kiosk) e datas relativas — obedeça filter_layering + slide_craft."
   },
   "write_flow": {
     "skip_suggest_when_typable": true,
@@ -448,7 +561,9 @@
     "Aumentar só kpiParts.value.fontSize sem reescalar title/icon/unit (título/ícone miúdos no card).",
     "Aumentar tipografia primary de chart/table/input/composto sem reescalar dependentes (PRIMARY_DRIVES_DEPENDENTS).",
     "Inventar frames sem ler layoutDigest quando gpt_get_playlist_context já o trouxe.",
-    "Exigir print do usuário para ajuste espacial quando digest/prévia bastam."
+    "Exigir print do usuário para ajuste espacial quando digest/prévia bastam.",
+    "Espalhar os mesmos branch+datas em toda data_source quando dataDefaults/dataFilters bastam.",
+    "Hardcodar startDate/endDate absolutos como default permanente do painel."
   ],
   "auth_errors": {
     "401": "AuthN — pedir reconexão OAuth DELPI / permitir Action.",
@@ -477,7 +592,7 @@
       "Chart hierarchy: titleFontSize → legendFontSize + axisFontSize (+ chartParts). Table: body ↔ header. Input: control ↔ label/icon.",
       "Compostos groupId: o maior valor tipográfico do grupo puxa heading/text/shape irmãos (composed.* ratios).",
       "Compostos: shape/heading/text(+icon) com dataSourceId+textProjection e groupId — fields só do preview (composed_visuals); chrome fill+radius+shadow via shape_chrome.",
-      "Filtros compartilhados → patch_native_config.dataFilters; interativos → upsert_block type=input; defaults da programação → patch_playlist_data_defaults.",
+      "Filtros compartilhados → filter_layering: dataDefaults (programação) / dataFilters+input (tela) / params só na fonte; datas relativas.",
       "chartType tipado: série temporal preferir area (impacto TV); line só se pedido explícito; categorias bar/stacked_bar; composição pie/doughnut (poucas fatias); não pie em série diária densa.",
       "Tabela operacional → tablePreset=banded por default (visual_impact).",
       "Após write: se OUTCOME_NOT_VERIFIED reason=slide_layout_quality → corrigir overlap/overflow/densidade/contraste/part_font_below_min.",

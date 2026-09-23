@@ -65,6 +65,8 @@ class VistaAgentIntelligenceService:
             "editor_focus": doc.get("editor_focus") or {},
             "playlist_curation": doc.get("playlist_curation") or {},
             "branch_scope": doc.get("branch_scope") or {},
+            "filter_layering": doc.get("filter_layering") or {},
+            "slide_craft": doc.get("slide_craft") or {},
             "si_goals": doc.get("si_goals") or {},
             "write_quality": doc.get("write_quality") or {},
             "slide_design": doc.get("slide_design") or {},

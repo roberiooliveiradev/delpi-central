@@ -187,11 +187,34 @@ def test_data_transform_typed_steps_only():
     directives = VistaAgentIntelligenceService.agent_directives()
     transform = directives["data_transform"]
     assert transform["principle"] == "TYPED_STEPS_ONLY"
-    rules = " ".join(transform["rules"])
-    assert "steps" in rules.lower()
-    assert "merge" in rules.lower()
+    rules = " ".join(transform["rules"]).lower()
+    assert "set_data_transform" in rules or "steps" in rules
+    assert "mforbidden" in rules.replace(" ", "") or "m/" in rules or "script" in rules
+    rules_raw = " ".join(transform["rules"])
+    assert "steps" in rules_raw.lower()
+    assert "merge" in rules_raw.lower()
     forbidden = " ".join(transform["forbidden"])
     assert "script" in forbidden.lower() or "M" in forbidden
     assert any("script M" in str(item) or "steps tipados" in str(item) for item in directives["anti_patterns"])
     assert directives["compound_slide"]["principle"] == "READY_COMPOUND_SLIDE"
     assert directives["media_limits"]["principle"] == "ASSET_ID_ONLY"
+
+
+def test_filter_layering_and_slide_craft():
+    directives = VistaAgentIntelligenceService.agent_directives()
+    fl = directives["filter_layering"]
+    assert fl["principle"] == "LAYERED_FILTERS_MOST_SPECIFIC_WINS"
+    merge = " ".join(fl["merge_order"]).lower()
+    assert "datadefaults" in merge.replace(" ", "").replace("_", "")
+    assert "datafilters" in merge.replace(" ", "").replace("_", "")
+    dates = " ".join(fl["dates"]["prefer"] + fl["dates"]["forbidden"]).lower()
+    assert "daterangepreset" in dates.replace(" ", "").replace("_", "")
+    assert "hardcod" in dates or "absoluto" in dates
+    craft = directives["slide_craft"]
+    assert craft["principle"] == "ONE_DECISION_TV_SLIDE"
+    assert "FILTER_LAYERING" in directives["modes"]
+    assert any(
+        "datadefaults" in str(item).lower().replace(" ", "").replace("_", "")
+        or "hardcod" in str(item).lower()
+        for item in directives["anti_patterns"]
+    )

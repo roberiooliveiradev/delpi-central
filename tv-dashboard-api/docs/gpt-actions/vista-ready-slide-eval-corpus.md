@@ -24,5 +24,9 @@ Corpus estável para regressão de inteligência (sem Action nova). Critério PA
 | C18 | ajuste o KPI sem criar slide novo (sem print) | `layoutDigest` INFORMED → upsert_block no blockId existente; mode `LAYOUT_PERCEPTION`; sem create_slide |
 | C19 | melhore hierarquia visual (com prévia) | `includePreview=true` → raciocinar sobre `slidePreview.previewUrl` + digest; DESIGN_REFINE tipado; PREPARE/ACT inalterados |
 | C20 | negative: inventar frames ignorando digest | anti_pattern; deve ler `layoutDigest` do context antes de frames novos |
+| C21 | filial/período padrão da programação | `patch_playlist_data_defaults`; não copiar branch em toda `data_source` |
+| C22 | período só deste slide | `dataFilters` / `TV_FILTER_STRIP`; herança das fontes |
+| C23 | TOP N só numa tabela | params na fonte; negative: não colocar `top_limit` em `dataDefaults` |
+| C24 | negative: date_range com params `{}` ou datas absolutas eternas | `write_quality` + `filter_layering.dates` |
 
-Smoke automatizado parcial: `tests/test_ready_slide_ux.py`, `tests/test_slide_layout_quality.py`, `tests/test_slide_part_chrome.py`, `tests/test_editor_focus_store.py`, `tests/test_layout_digest_and_slide_preview.py`.
+Smoke automatizado parcial: `tests/test_ready_slide_ux.py`, `tests/test_slide_layout_quality.py`, `tests/test_slide_part_chrome.py`, `tests/test_editor_focus_store.py`, `tests/test_layout_digest_and_slide_preview.py`, `tests/test_vista_agent_intelligence.py`.

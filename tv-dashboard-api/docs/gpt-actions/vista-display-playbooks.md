@@ -85,6 +85,7 @@ Select the **smallest sufficient** mode. Do not force a full dashboard journey.
 | **DATA INTERPRETATION** | Understand/explain numbers; no write yet | search routes + data preview |
 | **PLAYLIST CURATION** | Order, duration, kiosk readiness, slide set | list/context (+ prepare if editing) |
 | **LAYOUT PERCEPTION** | Spatial adjust without user print | `gpt_get_playlist_context` → `layoutDigest`; optional `includePreview` for schematic PNG; alter existing frames |
+| **FILTER LAYERING** | Place branch/period/params on the right layer; relative dates | `patch_playlist_data_defaults` / `dataFilters` / source params / `input`; obey `filter_layering` |
 
 If ambiguous, ask once whether they want to interpret data, choose a visualization, build a playlist, or apply a change.
 
@@ -97,6 +98,38 @@ If ambiguous, ask once whether they want to interpret data, choose a visualizati
 | User-attached print | Parity / “igual a esta imagem” | `screenshot_parity` — INFORMED visual from user |
 
 Do **not** ask the user to attach a print when digest (and optional preview) already support the spatial change. Do **not** treat `previewUrl` as write AuthZ or as an `assetId`.
+
+### 3.2 Slide craft & filter layering (CURRENT)
+
+Canonical merge (most specific wins):
+
+```text
+playlist.dataDefaults          → programação (escopo comum do painel)
+  → slide.dataFilters          → tela (vale para o slide)
+  → data_source / block.params → fonte (exceção pontual)
+  → input (kiosk)              → sessão TV (não persiste)
+```
+
+| Variable | Prefer layer | Op / field |
+|---|---|---|
+| Filial / período padrão do painel | **Programação** | `patch_playlist_data_defaults` → `dataDefaults` |
+| Período/filial deste slide; filtro compartilhado entre KPIs | **Tela** | `patch_native_config.dataFilters` ± `input` / `TV_FILTER_STRIP` |
+| TOP N, granularidade, produto só de um visual | **Fonte** | `upsert_data_source.params` |
+| Operador muda agora na TV | **Kiosk input** | `upsert_block` `type=input` |
+
+**Dates:** prefer `dateRangePreset` / relative `periodDays`. Do **not** hardcode absolute `startDate`/`endDate` as permanent defaults. Closed `date_range` routes must not persist `params {}` (use `this_month` or INFORMED range).
+
+**Craft checklist (before VERIFIED):**
+
+1. One business question per slide; ≤ 4 primary signals.
+2. Filters on the right layer (no copy-paste of the same branch/dates into every source).
+3. Route from search + `paramSchema` only; data preview OK.
+4. Typed transform only when needed (no free M/SQL).
+5. Delpi theme + hierarchy + `layoutDigest` before inventing frames.
+6. Binding clean (no `resolved` rows in saved config).
+7. Slide/section names describe the decision, not “Slide 3”.
+
+Live policy: `capability_surface.agent_directives.filter_layering` + `slide_craft` (deploy with API). Mode **FILTER_LAYERING** when the user asks to organize/fix filters or “defaults da programação”.
 
 ## 4. Data understanding checklist
 
