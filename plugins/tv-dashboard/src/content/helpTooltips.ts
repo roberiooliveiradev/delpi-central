@@ -14,7 +14,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     playlistChrome:
       "Controles da programação: pré-visualizar, atalhos, colaboradores e link da TV.",
     masterSlide:
-      "Fundo e logo compartilhados nas telas livres. Sem logo custom, a marca Delpi aparece em todas as telas (clara em fundo escuro, escura em fundo claro).",
+      "Fundo e logo compartilhados nas telas livres. Sem logo custom, a marca Delpi aparece no canto inferior direito (clara em fundo escuro, escura em fundo claro), sem cobrir título/KPI/gráfico.",
     playlistFilters:
       "Filtros padrão da programação (filial, período, etc.): valem para todas as telas e fontes que aceitam o parâmetro, sem repetir a mesma chave.",
     playbackMode:

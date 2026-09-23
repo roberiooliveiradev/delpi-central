@@ -1,6 +1,9 @@
 /**
  * Logo institucional Delpi no palco — variante clara/escura conforme o fundo.
  * Custom master.logo (URL/asset) vence; sem custom → brand default em todo slide livre.
+ *
+ * Posição brand: canto inferior direito (safeMargin), fora da zona típica de
+ * título/KPI/gráfico — evita cobrir dados. Conteúdo do slide (zIndex>0) fica acima.
  */
 
 import { relativeLuminance, tryParseCssColorToHex } from "@delpi/plugin-ui/index";
@@ -12,7 +15,22 @@ import {
 } from "./comunicadoBackgroundStyle";
 import type { ComunicadoBackground } from "./comunicadoTypes";
 
-export const DELPI_BRAND_LOGO_FRAME = { x: 2, y: 2, w: 14, h: 9 } as const;
+/** Margem mínima do canto (alinha a designTokens.safeMargin das recipes). */
+export const DELPI_BRAND_LOGO_SAFE_MARGIN = 3;
+
+/**
+ * Frame % do palco — inferior direito, compacto (aspect ~1.6).
+ * x/y derivados: 100 − w − margin / 100 − h − margin.
+ */
+export const DELPI_BRAND_LOGO_FRAME = {
+  x: 100 - 11 - DELPI_BRAND_LOGO_SAFE_MARGIN,
+  y: 100 - 7 - DELPI_BRAND_LOGO_SAFE_MARGIN,
+  w: 11,
+  h: 7,
+} as const;
+
+/** Opacidade brand: presente sem competir com KPI/chart. */
+export const DELPI_BRAND_LOGO_OPACITY = 0.92;
 
 export type DelpiBrandLogoVariant = "onDark" | "onLight";
 
@@ -70,7 +88,7 @@ type CustomLogo = {
 
 /**
  * Logo a pintar no palco: custom master se houver URL; senão brand Delpi
- * (onDark em fundo escuro, onLight em fundo claro).
+ * (onDark em fundo escuro, onLight em fundo claro) no canto inferior direito.
  */
 export function resolveStageMasterLogo(args: {
   background: ComunicadoBackground | undefined;
@@ -99,7 +117,7 @@ export function resolveStageMasterLogo(args: {
   return {
     url: delpiBrandLogoUrl(variant),
     frame: { ...DELPI_BRAND_LOGO_FRAME },
-    opacity: 1,
+    opacity: DELPI_BRAND_LOGO_OPACITY,
     source: "brand",
     variant,
   };

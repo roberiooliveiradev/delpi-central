@@ -110,6 +110,8 @@ export { RichComunicadoBackground } from "./RichComunicadoBackground";
 export { RichComunicadoMasterLogo } from "./RichComunicadoMasterLogo";
 export {
   DELPI_BRAND_LOGO_FRAME,
+  DELPI_BRAND_LOGO_OPACITY,
+  DELPI_BRAND_LOGO_SAFE_MARGIN,
   delpiBrandLogoUrl,
   isComunicadoBackgroundDark,
   resolveDelpiBrandLogoVariant,

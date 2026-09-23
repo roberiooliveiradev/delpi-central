@@ -1,5 +1,7 @@
 import type { CSSProperties } from "react";
 
+import { DELPI_BRAND_LOGO_FRAME } from "./delpiBrandLogo";
+
 export type RichComunicadoMasterLogoProps = {
   url?: string | null;
   frame?: { x?: number; y?: number; w?: number; h?: number } | null;
@@ -10,6 +12,7 @@ export type RichComunicadoMasterLogoProps = {
 
 /**
  * Logo master canônico — editor e apresentação usam o mesmo layout %.
+ * Brand default: canto inferior direito (não cobre título/KPI). zIndex 0 = sob os blocos.
  * Anti-padrão: segundo overlay só no composer ou só no RichComunicadoScreen.
  */
 export function RichComunicadoMasterLogo({
@@ -21,10 +24,10 @@ export function RichComunicadoMasterLogo({
   if (!url) return null;
   const style: CSSProperties = {
     position: "absolute",
-    left: `${frame?.x ?? 2}%`,
-    top: `${frame?.y ?? 2}%`,
-    width: `${frame?.w ?? 12}%`,
-    height: `${frame?.h ?? 10}%`,
+    left: `${frame?.x ?? DELPI_BRAND_LOGO_FRAME.x}%`,
+    top: `${frame?.y ?? DELPI_BRAND_LOGO_FRAME.y}%`,
+    width: `${frame?.w ?? DELPI_BRAND_LOGO_FRAME.w}%`,
+    height: `${frame?.h ?? DELPI_BRAND_LOGO_FRAME.h}%`,
     opacity,
     zIndex: 0,
     pointerEvents: "none",
@@ -32,7 +35,7 @@ export function RichComunicadoMasterLogo({
     backgroundImage: `url(${JSON.stringify(url)})`,
     backgroundSize: "contain",
     backgroundRepeat: "no-repeat",
-    backgroundPosition: "center",
+    backgroundPosition: "bottom right",
   };
   return <div className={className} aria-hidden style={style} />;
 }

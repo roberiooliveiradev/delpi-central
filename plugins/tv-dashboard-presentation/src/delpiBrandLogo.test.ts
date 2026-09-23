@@ -26,13 +26,17 @@ describe("delpiBrandLogo", () => {
     ).toBe(true);
   });
 
-  it("sem custom → brand com frame padrão", () => {
+  it("sem custom → brand no canto inferior direito com margem segura", () => {
     const logo = resolveStageMasterLogo({
       background: { type: "color", value: "#ffffff" },
     });
     expect(logo.source).toBe("brand");
     expect(logo.variant).toBe("onLight");
     expect(logo.frame).toEqual({ ...DELPI_BRAND_LOGO_FRAME });
+    expect(logo.frame.x + logo.frame.w).toBeLessThanOrEqual(97);
+    expect(logo.frame.y + logo.frame.h).toBeLessThanOrEqual(97);
+    expect(logo.frame.y).toBeGreaterThan(50);
+    expect(logo.opacity).toBeLessThan(1);
     expect(logo.url).toBeTruthy();
   });
 
