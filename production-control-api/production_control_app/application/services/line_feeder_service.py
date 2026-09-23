@@ -20,7 +20,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from contextvars import copy_context
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any, Callable, Sequence
 from uuid import UUID
 
@@ -54,6 +54,10 @@ from production_control_app.domain.services.line_feeder_requirements import (
 from production_control_app.domain.services.line_feeder_schedule_cutoff import (
     filter_by_cutoff,
     parse_cutoff,
+)
+from production_control_app.domain.services.line_feeder_warehouse_transfers import (
+    MOVEMENT_KIND_WAREHOUSE_TRANSFER,
+    pair_warehouse_transfers,
 )
 from production_control_app.domain.services.machine_load_snapshot_payload import (
     decode_snapshot_payload,
@@ -204,6 +208,139 @@ class LineFeederService:
         if computed.truncated_orders:
             payload["truncated_orders"] = True
         return payload
+
+    def get_product_detail(
+        self,
+        user: object | None,
+        *,
+        product_code: str,
+        branch: str,
+        cutoff_date: str | None,
+        cutoff_time: str | None,
+    ) -> dict[str, Any]:
+        """Detalhe da MP no corte: identidade, saldo real 01, bancadas e transferências."""
+        code = self._authorize(user, branch=branch)
+        wanted = _text(product_code)
+        if not wanted:
+            raise ValueError("Informe o código do produto.")
+        cutoff = self._parse_cutoff(cutoff_date, cutoff_time)
+        computed = self._load_requirements(branch=code, cutoff=cutoff, refresh=False)
+        matched = [item for item in computed.items if item.product_code == wanted]
+        if not matched:
+            raise LookupError(
+                setting_message(
+                    "productNotInCutoff",
+                    "Este produto não faz parte do corte atual.",
+                )
+            )
+
+        names = {
+            _text(center.get("work_center")): _text(center.get("work_center_name"))
+            or _text(center.get("work_center"))
+            for center in computed.work_centers
+        }
+        work_centers = [
+            {
+                "work_center": item.work_center,
+                "work_center_name": names.get(item.work_center, item.work_center),
+                "required_qty": item.required_qty,
+                "to_deliver_qty": item.to_deliver_qty,
+                "status": item.status,
+            }
+            for item in sorted(matched, key=lambda row: row.work_center)
+        ]
+        first = matched[0]
+        warehouse = setting_str("sourceWarehouse", "01")
+        return {
+            "branch": code,
+            "cutoff": self._cutoff_payload(cutoff),
+            "product": {
+                "code": first.product_code,
+                "description": first.description,
+                "unit": first.unit,
+                "pickup_location": computed.pickup_locations.get(first.product_code, ""),
+            },
+            "work_centers": work_centers,
+            "stock": self._product_stock(branch=code, product_code=wanted, warehouse=warehouse),
+            "transfers": self._product_transfers(
+                branch=code, product_code=wanted, cutoff=cutoff
+            ),
+        }
+
+    def _product_stock(
+        self,
+        *,
+        branch: str,
+        product_code: str,
+        warehouse: str,
+    ) -> dict[str, Any]:
+        """Saldo real do armazém 01 — não a fatia FIFO da grade."""
+        try:
+            payload = self._gateway.fetch_stock_balances_items(
+                branch=branch,
+                warehouse=warehouse,
+                only_positive=False,
+                page=1,
+                page_size=max(setting_int("balancesPageSize", 500), 1),
+                product_codes=[product_code],
+            )
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("line_feeder_product_stock_unavailable: %s", exc)
+            return {
+                "available": False,
+                "warehouse": warehouse,
+                "quantity": None,
+                "message": setting_message(
+                    "productDetailStockUnavailable",
+                    "Não foi possível ler o saldo do almoxarifado agora.",
+                ),
+            }
+        quantity = 0.0
+        for row in _items(payload):
+            if _text(row.get("product_code")) != product_code:
+                continue
+            quantity += _number(row.get("quantity"))
+        return {
+            "available": True,
+            "warehouse": warehouse,
+            "quantity": round(quantity, 6),
+        }
+
+    def _product_transfers(
+        self,
+        *,
+        branch: str,
+        product_code: str,
+        cutoff: datetime,
+    ) -> dict[str, Any]:
+        lookback = max(setting_int("productDetailLookbackDays", 30), 1)
+        page_size = max(setting_int("productDetailTransferPageSize", 20), 1)
+        end_date = cutoff.date().isoformat()
+        start_date = (cutoff.date() - timedelta(days=lookback)).isoformat()
+        try:
+            payload = self._gateway.fetch_product_internal_movements(
+                product_code=product_code,
+                branch=branch,
+                kind=MOVEMENT_KIND_WAREHOUSE_TRANSFER,
+                start_date=start_date,
+                end_date=end_date,
+                page=1,
+                page_size=page_size,
+            )
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("line_feeder_product_transfers_unavailable: %s", exc)
+            return {
+                "available": False,
+                "items": [],
+                "message": setting_message(
+                    "productDetailTransfersUnavailable",
+                    "Não foi possível ler as transferências recentes.",
+                ),
+            }
+        return {
+            "available": True,
+            "items": pair_warehouse_transfers(_items(payload), limit=page_size),
+        }
 
     def _load_requirements(
         self,

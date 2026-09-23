@@ -748,6 +748,32 @@ class DelpiProductionGateway:
             params=params,
         )
 
+    def fetch_product_internal_movements(
+        self,
+        *,
+        product_code: str,
+        branch: str,
+        kind: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        page: int = 1,
+        page_size: int = 20,
+    ) -> dict[str, Any]:
+        """Movimentações internas SD3 do produto — recorte via ``kind`` na api-delpi."""
+        code = str(product_code or "").strip()
+        return self._request(
+            "GET",
+            f"/products/{quote(code, safe='')}/internal-movements",
+            params={
+                "branch": branch,
+                "kind": kind,
+                "start_date": start_date,
+                "end_date": end_date,
+                "page": page,
+                "page_size": page_size,
+            },
+        )
+
     def get_personal_stock_balances_subscription(
         self,
         *,

@@ -206,6 +206,19 @@ class ProductionOrdersGateway(Protocol):
     ) -> dict[str, Any]:
         ...
 
+    def fetch_product_internal_movements(
+        self,
+        *,
+        product_code: str,
+        branch: str,
+        kind: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        page: int = 1,
+        page_size: int = 20,
+    ) -> dict[str, Any]:
+        ...
+
     def get_personal_stock_balances_subscription(
         self,
         *,

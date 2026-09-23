@@ -98,6 +98,37 @@ def get_line_feeder_requirements(
     return ok(data)
 
 
+@router.get("/line-feeder/products/{code}")
+def get_line_feeder_product_detail(
+    request: Request,
+    code: str = Path(..., min_length=1, description="Código do produto"),
+    branch: str = Query(..., description="Filial TOTVS (01 ou 02)"),
+    cutoff_date: str = Query(
+        ...,
+        alias="cutoffDate",
+        description="Data do corte (YYYY-MM-DD)",
+    ),
+    cutoff_time: str | None = Query(
+        default=None,
+        alias="cutoffTime",
+        description="Hora do corte (HH:MM); vazio considera o dia inteiro",
+    ),
+):
+    """Identidade, saldo do almoxarifado, bancadas do corte e transferências recentes."""
+    user = resolve_user(request)
+    try:
+        data = build_line_feeder_service().get_product_detail(
+            user,
+            product_code=code,
+            branch=branch,
+            cutoff_date=cutoff_date,
+            cutoff_time=cutoff_time,
+        )
+    except Exception as exc:
+        return _handle_line_feeder_errors(exc)
+    return ok(data)
+
+
 @router.post("/line-feeder/pick-plans")
 def create_line_feeder_pick_plan(
     request: Request,

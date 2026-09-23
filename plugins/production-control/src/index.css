@@ -2967,6 +2967,165 @@
   }
 }
 
+.dashboard-production-control .ppc-feeder-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.dashboard-production-control .ppc-feeder-detail__header {
+  padding-bottom: 12px;
+  border-bottom: 1px solid color-mix(in srgb, var(--ppc-border) 85%, transparent);
+}
+
+.dashboard-production-control .ppc-feeder-detail__title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.dashboard-production-control .ppc-feeder-detail__code {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: var(--ppc-title);
+}
+
+.dashboard-production-control .ppc-feeder-detail__name {
+  margin: 6px 0 0;
+  color: var(--ppc-text);
+  font-size: var(--ppc-font-sm);
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.dashboard-production-control .ppc-feeder-detail__split {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.dashboard-production-control .ppc-feeder-detail__panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.dashboard-production-control .ppc-feeder-detail__panel-title {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ppc-text-muted);
+}
+
+.dashboard-production-control .ppc-feeder-detail__facts {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 8px 18px;
+  margin: 0;
+  align-items: start;
+}
+
+.dashboard-production-control .ppc-feeder-detail__facts dt {
+  color: var(--ppc-text-muted);
+  font-size: var(--ppc-font-sm);
+}
+
+.dashboard-production-control .ppc-feeder-detail__facts dd {
+  margin: 0;
+  font-weight: 600;
+  color: var(--ppc-title);
+  word-break: break-word;
+}
+
+.dashboard-production-control .ppc-feeder-detail__needs {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dashboard-production-control .ppc-feeder-detail__need {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px 12px;
+  align-items: baseline;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--ppc-border) 90%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--ppc-surface) 92%, var(--ppc-title));
+}
+
+.dashboard-production-control .ppc-feeder-detail__need--ok {
+  border-color: color-mix(in srgb, #2f9e44 28%, var(--ppc-border));
+}
+
+.dashboard-production-control .ppc-feeder-detail__need--collect {
+  border-color: color-mix(in srgb, var(--ppc-critical) 45%, var(--ppc-border));
+  background: color-mix(in srgb, var(--ppc-critical) 10%, var(--ppc-surface));
+}
+
+.dashboard-production-control .ppc-feeder-detail__need-label {
+  color: var(--ppc-text-muted);
+  font-size: var(--ppc-font-sm);
+}
+
+.dashboard-production-control .ppc-feeder-detail__need-value {
+  font-size: 1.05rem;
+  color: var(--ppc-title);
+}
+
+.dashboard-production-control .ppc-feeder-detail__need--collect .ppc-feeder-detail__need-label,
+.dashboard-production-control .ppc-feeder-detail__need--collect .ppc-feeder-detail__need-value {
+  color: var(--ppc-critical);
+}
+
+.dashboard-production-control .ppc-feeder-detail__need-hint {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--ppc-text-muted);
+  font-size: var(--ppc-font-xs);
+  line-height: 1.4;
+}
+
+.dashboard-production-control .ppc-feeder-detail__alert {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--ppc-critical) 40%, var(--ppc-border));
+  background: color-mix(in srgb, var(--ppc-critical) 10%, var(--ppc-surface));
+  color: var(--ppc-critical);
+  font-size: var(--ppc-font-sm);
+  line-height: 1.4;
+}
+
+.dashboard-production-control .ppc-feeder-detail__hint,
+.dashboard-production-control .ppc-feeder-detail__empty {
+  margin: 0;
+  color: var(--ppc-text-muted);
+  font-size: var(--ppc-font-sm);
+}
+
+.dashboard-production-control .ppc-feeder-detail__transfers-head,
+.dashboard-production-control .ppc-feeder-detail__transfers-row {
+  grid-template-columns: minmax(4.5rem, 1fr) minmax(4.5rem, 1fr) minmax(6rem, 1fr) minmax(4.5rem, 0.8fr);
+}
+
+@media (max-width: 720px) {
+  .dashboard-production-control .ppc-feeder-detail__split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 .dashboard-production-control .ppc-state {
   padding: 24px 16px;
   color: var(--ppc-text-muted);

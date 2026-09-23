@@ -9,6 +9,8 @@
   "balancesPageSize": 500,
   "maxBalancePages": 20,
   "maxPickItems": 500,
+  "productDetailLookbackDays": 30,
+  "productDetailTransferPageSize": 20,
   "didactic": {
     "title": "Como o cockpit calcula",
     "body": "A necessidade vem das ordens empenhadas na programação até o horário escolhido. O que já está no ponto de uso é descontado, e o restante é o que precisa ser entregue na bancada.",
@@ -52,6 +54,9 @@
     "planEmpty": "Não há material a entregar neste horário — nada para coletar.",
     "invalidItemStatus": "Situação inválida para o item da coleta.",
     "itemNotFound": "Item não encontrado nesta lista de coleta.",
-    "balancesUnavailable": "Não foi possível ler o estoque agora. A necessidade está calculada, mas sem comparar com o saldo."
+    "balancesUnavailable": "Não foi possível ler o estoque agora. A necessidade está calculada, mas sem comparar com o saldo.",
+    "productNotInCutoff": "Este produto não faz parte do corte atual.",
+    "productDetailStockUnavailable": "Não foi possível ler o saldo do almoxarifado agora.",
+    "productDetailTransfersUnavailable": "Não foi possível ler as transferências recentes."
   }
 }

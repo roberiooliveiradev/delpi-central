@@ -16,6 +16,7 @@ import type {
   LineFeederPickPlan,
   LineFeederPickPlanListPayload,
   LineFeederPickPlanPayload,
+  LineFeederProductDetail,
   LineFeederRequirementsPayload,
   MaterialsPayload,
   OverviewPayload,
@@ -688,6 +689,28 @@ export async function fetchLineFeederRequirements(params: {
     data: LineFeederRequirementsPayload;
   }>(ppcApiUrl(`/line-feeder/requirements?${search.toString()}`), { signal: params.signal });
   return unwrapEnvelope(envelope, "Não foi possível carregar a necessidade das bancadas.");
+}
+
+export async function fetchLineFeederProductDetail(params: {
+  branch: string;
+  productCode: string;
+  cutoffDate: string;
+  cutoffTime?: string | null;
+  signal?: AbortSignal;
+}): Promise<LineFeederProductDetail> {
+  const search = new URLSearchParams({ branch: params.branch, cutoffDate: params.cutoffDate });
+  if (params.cutoffTime) search.set("cutoffTime", params.cutoffTime);
+  const envelope = await httpGet<{
+    success: boolean;
+    message?: string;
+    data: LineFeederProductDetail;
+  }>(
+    ppcApiUrl(
+      `/line-feeder/products/${encodeURIComponent(params.productCode)}?${search.toString()}`,
+    ),
+    { signal: params.signal },
+  );
+  return unwrapEnvelope(envelope, "Não foi possível carregar o detalhe do produto.");
 }
 
 export async function createLineFeederPickPlan(params: {

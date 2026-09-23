@@ -7,15 +7,17 @@ import { AlertTriangle, ClipboardList, PackageCheck, Truck } from "lucide-react"
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { DataTableSection } from "../components/dataTableUi";
-import { LineFeederPickPlanPanel } from "../components/LineFeederPickPlanPanel";
-import { PpcWorkspaceHeader } from "../components/PpcWorkspaceHeader";
 import {
   closeLineFeederPickPlan,
   createLineFeederPickPlan,
   fetchLineFeederPickPlan,
   fetchLineFeederPickPlans,
+  fetchLineFeederProductDetail,
   patchLineFeederPickItem,
 } from "../api/ppcApi";
+import { LineFeederPickPlanPanel } from "../components/LineFeederPickPlanPanel";
+import { LineFeederProductDetailModal } from "../components/LineFeederProductDetailModal";
+import { PpcWorkspaceHeader } from "../components/PpcWorkspaceHeader";
 import { copy } from "../content/copy";
 import { helpTooltips } from "../content/helpTooltips";
 import { defaultLineFeederFilters, useLineFeeder } from "../hooks/useLineFeeder";
@@ -23,6 +25,7 @@ import type {
   LineFeederItemStatus,
   LineFeederPickItem,
   LineFeederPickPlan,
+  LineFeederProductDetail,
   LineFeederRequirement,
   LineFeederStatusMeta,
   PpcBranch,
@@ -87,6 +90,10 @@ export function LineFeederPage({
   const [closing, setClosing] = useState(false);
   const [busyItemId, setBusyItemId] = useState<string | null>(null);
   const [planError, setPlanError] = useState<string | null>(null);
+  const [selectedProductCode, setSelectedProductCode] = useState<string | null>(null);
+  const [productDetail, setProductDetail] = useState<LineFeederProductDetail | null>(null);
+  const [productDetailLoading, setProductDetailLoading] = useState(false);
+  const [productDetailError, setProductDetailError] = useState<string | null>(null);
 
   // A URL é a fonte de verdade do recorte: F5 e link compartilhado abrem igual.
   useEffect(() => {
@@ -144,6 +151,36 @@ export function LineFeederPage({
       });
     return () => controller.abort();
   }, [branch, selectedPlanId, texts.pickPlan.loadError]);
+
+  useEffect(() => {
+    if (!selectedProductCode || !filters.cutoffDate) {
+      setProductDetail(null);
+      setProductDetailError(null);
+      setProductDetailLoading(false);
+      return;
+    }
+    const controller = new AbortController();
+    setProductDetailLoading(true);
+    setProductDetailError(null);
+    fetchLineFeederProductDetail({
+      branch,
+      productCode: selectedProductCode,
+      cutoffDate: filters.cutoffDate,
+      cutoffTime: filters.cutoffTime,
+      signal: controller.signal,
+    })
+      .then((payload) => {
+        setProductDetail(payload);
+        setProductDetailLoading(false);
+      })
+      .catch((err: unknown) => {
+        if (controller.signal.aborted) return;
+        setProductDetail(null);
+        setProductDetailError(err instanceof Error ? err.message : texts.detail.loadError);
+        setProductDetailLoading(false);
+      });
+    return () => controller.abort();
+  }, [branch, filters.cutoffDate, filters.cutoffTime, selectedProductCode, texts.detail.loadError]);
 
   const handleCreatePlan = async () => {
     setCreating(true);
@@ -433,6 +470,7 @@ export function LineFeederPage({
             emptyMessage={texts.empty}
             searchPlaceholder={texts.searchPlaceholder}
             columnPreferencesKey="production-control:line-feeder:columns:v3"
+            onRowClick={(row) => setSelectedProductCode(row.product_code)}
           />
 
           <LineFeederPickPlanPanel
@@ -449,6 +487,19 @@ export function LineFeederPage({
           />
         </div>
       ) : null}
+
+      <LineFeederProductDetailModal
+        open={Boolean(selectedProductCode)}
+        loading={productDetailLoading}
+        error={productDetailError}
+        detail={productDetail}
+        statuses={data?.statuses ?? {}}
+        onClose={() => {
+          setSelectedProductCode(null);
+          setProductDetail(null);
+          setProductDetailError(null);
+        }}
+      />
     </div>
   );
 }
