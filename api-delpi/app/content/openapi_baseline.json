@@ -3,7 +3,7 @@
   "api_title": "API DELPI",
   "api_version": "1.0.0",
   "openapi_version": "3.0.3",
-  "operation_count": 715,
+  "operation_count": 720,
   "operations": [
     {
       "method": "POST",
@@ -1171,6 +1171,214 @@
         "presentationStrategy": "as_delivered"
       },
       "description": "New clients rol pct."
+    },
+    {
+      "method": "GET",
+      "path": "/commercial/profile-by-branch",
+      "operationId": "get_commercial_profile_by_branch",
+      "summary": "Commercial profile by branch (OTD, conversion, new business, ROL attainment)",
+      "tags": [
+        "Comercial"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "start_date",
+          "in": "query",
+          "required": false,
+          "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "end_date",
+          "in": "query",
+          "required": false,
+          "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "customer_segment",
+          "in": "query",
+          "required": false,
+          "description": "Customer segment: weg or new_business.",
+          "enum": [
+            "weg",
+            "new_business"
+          ],
+          "type": "string"
+        },
+        {
+          "name": "customer_codes",
+          "in": "query",
+          "required": false,
+          "description": "Comma-separated TOTVS customer codes to include (portfolio filter).",
+          "type": "string"
+        },
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed.",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "commercial_profile_by_branch",
+        "shape": "paged_list",
+        "category": "commercial",
+        "locale": {
+          "en": {
+            "summary": "Commercial profile by branch (OTD, conversion, new business, ROL attainment)",
+            "description": "Long-form commercial profile per branch with OTD, conversion rate, new-business share of ROL and ROL goal attainment on a common percent scale. Omit branch to return all commercial branches (01 and 02).",
+            "whenToUse": "Use to compare the multidimensional commercial profile of branches, especially for radar, scorecard or side-by-side performance.",
+            "label": "Commercial profile by branch"
+          },
+          "pt-BR": {
+            "summary": "Perfil comercial por filial (OTD, conversão, novos negócios, atingimento ROL)",
+            "description": "Perfil comercial por filial com OTD, conversão, participação de novos negócios no ROL e atingimento da meta de ROL, em escala percentual comum.",
+            "whenToUse": "Use para comparar o perfil multidimensional das filiais comerciais, especialmente em radar, scorecard ou comparação de desempenho entre filiais.",
+            "label": "Perfil comercial por filial"
+          }
+        },
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "customer_codes": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated TOTVS customer codes to include (portfolio filter).",
+                "label": "Customer codes"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de códigos TOTVS de clientes a incluir (filtro de carteira).",
+                "label": "Códigos de clientes"
+              }
+            }
+          },
+          "customer_segment": {
+            "locale": {
+              "en": {
+                "description": "Filter: weg or new_business. Empty = all segments.",
+                "label": "Segment"
+              },
+              "pt-BR": {
+                "description": "Filtra clientes: weg (WEG) ou new_business (novos negócios). Vazio = todos os segmentos.",
+                "label": "Segmento"
+              }
+            },
+            "enumLabels": {
+              "new_business": {
+                "en": {
+                  "label": "New business"
+                },
+                "pt-BR": {
+                  "label": "Novos negócios"
+                }
+              },
+              "weg": {
+                "en": {
+                  "label": "WEG"
+                },
+                "pt-BR": {
+                  "label": "WEG"
+                }
+              }
+            }
+          },
+          "end_date": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Fim do período (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "start_date": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Início do período (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          }
+        },
+        "tv": {
+          "whenToUse": "Use para comparar o perfil multidimensional das filiais comerciais, especialmente em radar, scorecard ou comparação de desempenho entre filiais.",
+          "description": "Perfil comercial por filial com OTD, conversão, participação de novos negócios no ROL e atingimento da meta de ROL, em escala percentual comum.",
+          "label": "Perfil comercial por filial"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Long-form commercial profile per branch with OTD, conversion rate, new-business share of ROL and ROL goal attainment on a common percent scale. Omit branch to return all commercial branches (01 and 02)."
     },
     {
       "method": "GET",
@@ -3152,11 +3360,11 @@
           "product_codes": {
             "locale": {
               "en": {
-                "description": "Comma-separated product codes (SB1.B1_COD / D2_COD).",
+                "description": "Comma-separated or repeated product codes (SB1.B1_COD, SB2.B2_COD or D2_COD depending on the route).",
                 "label": "Product codes"
               },
               "pt-BR": {
-                "description": "Lista CSV de códigos de produto (SB1.B1_COD / D2_COD).",
+                "description": "Lista CSV ou repetida de códigos de produto (SB1.B1_COD, SB2.B2_COD ou D2_COD conforme a rota).",
                 "label": "Códigos de produtos"
               }
             }
@@ -3669,11 +3877,11 @@
           "product_codes": {
             "locale": {
               "en": {
-                "description": "Comma-separated product codes (SB1.B1_COD / D2_COD).",
+                "description": "Comma-separated or repeated product codes (SB1.B1_COD, SB2.B2_COD or D2_COD depending on the route).",
                 "label": "Product codes"
               },
               "pt-BR": {
-                "description": "Lista CSV de códigos de produto (SB1.B1_COD / D2_COD).",
+                "description": "Lista CSV ou repetida de códigos de produto (SB1.B1_COD, SB2.B2_COD ou D2_COD conforme a rota).",
                 "label": "Códigos de produtos"
               }
             }
@@ -4163,11 +4371,11 @@
           "product_codes": {
             "locale": {
               "en": {
-                "description": "Comma-separated product codes (SB1.B1_COD / D2_COD).",
+                "description": "Comma-separated or repeated product codes (SB1.B1_COD, SB2.B2_COD or D2_COD depending on the route).",
                 "label": "Product codes"
               },
               "pt-BR": {
-                "description": "Lista CSV de códigos de produto (SB1.B1_COD / D2_COD).",
+                "description": "Lista CSV ou repetida de códigos de produto (SB1.B1_COD, SB2.B2_COD ou D2_COD conforme a rota).",
                 "label": "Códigos de produtos"
               }
             }
@@ -56532,6 +56740,39 @@
       "description": "Production orders open."
     },
     {
+      "method": "POST",
+      "path": "/production/orders/operation-materials/batch",
+      "operationId": "list_production_order_operation_materials_batch",
+      "summary": "Operation materials from SD4 in batch",
+      "tags": [
+        "Produção operacional"
+      ],
+      "deprecated": false,
+      "xDelpi": {
+        "entity": "production_order_operation_materials_batch",
+        "shape": "list",
+        "category": "production",
+        "locale": {
+          "en": {
+            "summary": "Operation materials from SD4 in batch",
+            "description": "Active SD4 commitments for a list of production orders, aggregated by order, operation and component. No SG1 fallback.",
+            "label": "Operation materials (batch)"
+          },
+          "pt-BR": {
+            "summary": "Materiais SD4 de várias OPs",
+            "description": "Empenhos ativos SD4 de uma lista de OPs, agregados por OP, operação e componente. Sem fallback SG1.",
+            "label": "Materiais das operações em lote (SD4)"
+          }
+        },
+        "tv": {
+          "description": "Empenhos ativos SD4 de uma lista de OPs, agregados por OP, operação e componente. Sem fallback SG1.",
+          "label": "Materiais das operações em lote (SD4)"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Active SD4 commitments for a list of production orders, aggregated by order, operation and component. No SG1 fallback."
+    },
+    {
       "method": "GET",
       "path": "/production/orders/{production_order}/operations/{operation}/materials",
       "operationId": "list_production_order_operation_materials",
@@ -57879,6 +58120,14 @@
           "type": "boolean"
         },
         {
+          "name": "unbounded_delivery",
+          "in": "query",
+          "required": false,
+          "description": "When true, skip the default 12-month DT_ENTREGA window and the 24-month cap. Optional delivery_start/delivery_end still apply.",
+          "type": "boolean",
+          "default": false
+        },
+        {
           "name": "branch",
           "in": "query",
           "required": false,
@@ -58351,6 +58600,18 @@
                 "label": "Somente atrasadas"
               }
             }
+          },
+          "unbounded_delivery": {
+            "locale": {
+              "en": {
+                "description": "When true, skip the default 12-month delivery window and the 24-month cap. Optional delivery dates still apply.",
+                "label": "Unbounded delivery window"
+              },
+              "pt-BR": {
+                "description": "Quando verdadeiro, ignora a janela padrão de 12 meses e o teto de 24 meses. Datas de entrega informadas continuam valendo.",
+                "label": "Janela de entrega sem recorte padrão"
+              }
+            }
           }
         },
         "tv": {
@@ -58469,6 +58730,14 @@
           "required": false,
           "description": "When true, only delayed orders (FL_ATRASADA=Sim).",
           "type": "boolean"
+        },
+        {
+          "name": "unbounded_delivery",
+          "in": "query",
+          "required": false,
+          "description": "When true, skip the default 12-month DT_ENTREGA window and the 24-month cap. Optional delivery_start/delivery_end still apply.",
+          "type": "boolean",
+          "default": false
         },
         {
           "name": "branch",
@@ -58831,6 +59100,18 @@
                 "label": "Somente atrasadas"
               }
             }
+          },
+          "unbounded_delivery": {
+            "locale": {
+              "en": {
+                "description": "When true, skip the default 12-month delivery window and the 24-month cap. Optional delivery dates still apply.",
+                "label": "Unbounded delivery window"
+              },
+              "pt-BR": {
+                "description": "Quando verdadeiro, ignora a janela padrão de 12 meses e o teto de 24 meses. Datas de entrega informadas continuam valendo.",
+                "label": "Janela de entrega sem recorte padrão"
+              }
+            }
           }
         },
         "tv": {
@@ -58925,6 +59206,14 @@
           "required": false,
           "description": "When true, only delayed orders (FL_ATRASADA=Sim).",
           "type": "boolean"
+        },
+        {
+          "name": "unbounded_delivery",
+          "in": "query",
+          "required": false,
+          "description": "When true, skip the default 12-month DT_ENTREGA window and the 24-month cap. Optional delivery_start/delivery_end still apply.",
+          "type": "boolean",
+          "default": false
         },
         {
           "name": "branch",
@@ -59133,6 +59422,18 @@
               "pt-BR": {
                 "description": "Quando verdadeiro, retorna apenas OPs atrasadas.",
                 "label": "Somente atrasadas"
+              }
+            }
+          },
+          "unbounded_delivery": {
+            "locale": {
+              "en": {
+                "description": "When true, skip the default 12-month delivery window and the 24-month cap. Optional delivery dates still apply.",
+                "label": "Unbounded delivery window"
+              },
+              "pt-BR": {
+                "description": "Quando verdadeiro, ignora a janela padrão de 12 meses e o teto de 24 meses. Datas de entrega informadas continuam valendo.",
+                "label": "Janela de entrega sem recorte padrão"
               }
             }
           }
@@ -59925,6 +60226,147 @@
         "presentationStrategy": "as_delivered"
       },
       "description": "Production schedule today."
+    },
+    {
+      "method": "GET",
+      "path": "/production/shared-structure-intermediates",
+      "operationId": "get_production_shared_structure_intermediates",
+      "summary": "Lista paginada — Intermediários pi/pa usados na estrutura vigente de mais de um pa com apontamento produtivo recente",
+      "tags": [
+        "Produção — Estrutura compartilhada"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "movement_from",
+          "in": "query",
+          "required": false,
+          "description": "Start of movement window (YYYY-MM-DD). Default: today minus lookback_days.",
+          "type": "string"
+        },
+        {
+          "name": "lookback_days",
+          "in": "query",
+          "required": false,
+          "description": "Movement lookback when movement_from is omitted.",
+          "type": "integer",
+          "default": 365
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "description": "Page number (1-based).",
+          "type": "integer",
+          "default": 1
+        },
+        {
+          "name": "page_size",
+          "in": "query",
+          "required": false,
+          "description": "Page size.",
+          "type": "integer",
+          "default": 50
+        },
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed.",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "production_shared_structure_intermediates",
+        "shape": "paged_list",
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "page": {
+            "locale": {
+              "en": {
+                "description": "Page number in paginated listing.",
+                "label": "Page"
+              },
+              "pt-BR": {
+                "description": "Número da página na listagem paginada.",
+                "label": "Página"
+              }
+            }
+          },
+          "page_size": {
+            "locale": {
+              "en": {
+                "description": "Rows per page.",
+                "label": "Page size"
+              },
+              "pt-BR": {
+                "description": "Quantidade de linhas por página.",
+                "label": "Tamanho da página"
+              }
+            }
+          }
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Retorna intermediários PI/PA usados na estrutura vigente de mais de um PA com apontamento produtivo recente via API DELPI. Lista paginada de registros. Domínio: Produção. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável. Suporta paginação (page, page_size)."
     },
     {
       "method": "GET",
@@ -63093,6 +63535,39 @@
       "description": "Exclusive raw materials catalog."
     },
     {
+      "method": "POST",
+      "path": "/products/physical-locations",
+      "operationId": "list_product_physical_locations",
+      "summary": "Physical pickup locations in batch",
+      "tags": [
+        "products"
+      ],
+      "deprecated": false,
+      "xDelpi": {
+        "entity": "product_physical_locations",
+        "shape": "list",
+        "category": "products",
+        "locale": {
+          "en": {
+            "summary": "Physical pickup locations in batch",
+            "description": "SBZ010.BZ_MPLOCAL for a list of product codes in one branch. Products without SBZ are omitted — the consumer treats absence as empty location.",
+            "label": "Product physical locations (batch)"
+          },
+          "pt-BR": {
+            "summary": "Local físico (BZ_MPLOCAL) de vários produtos",
+            "description": "SBZ010.BZ_MPLOCAL para uma lista de códigos na filial. Produto sem SBZ não aparece — o consumidor trata ausência como local vazio.",
+            "label": "Locais físicos dos produtos em lote"
+          }
+        },
+        "tv": {
+          "description": "SBZ010.BZ_MPLOCAL para uma lista de códigos na filial. Produto sem SBZ não aparece — o consumidor trata ausência como local vazio.",
+          "label": "Locais físicos dos produtos em lote"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "SBZ010.BZ_MPLOCAL for a list of product codes in one branch. Products without SBZ are omitted — the consumer treats absence as empty location."
+    },
+    {
       "method": "GET",
       "path": "/products/search",
       "operationId": "search_products",
@@ -65066,6 +65541,13 @@
           "in": "query",
           "required": false,
           "description": "Production order query parameter.",
+          "type": "string"
+        },
+        {
+          "name": "kind",
+          "in": "query",
+          "required": false,
+          "description": "warehouse_transfer = só movimentação entre armazéns",
           "type": "string"
         },
         {
@@ -73844,6 +74326,45 @@
         "presentationStrategy": "as_delivered"
       },
       "description": "Create audit 5S area."
+    },
+    {
+      "method": "DELETE",
+      "path": "/quality/audit-5s/areas/{area_id}",
+      "operationId": "delete_audit_5s_area",
+      "summary": "Delete Area",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "area_id",
+          "in": "path",
+          "required": true,
+          "description": "Area identifier (e.g. 5S audit).",
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "audit_5s_area",
+        "shape": "scalar",
+        "params": {
+          "area_id": {
+            "locale": {
+              "en": {
+                "description": "Area identifier (e.g. 5S audit).",
+                "label": "Area"
+              },
+              "pt-BR": {
+                "description": "Identificador da área (ex.: auditoria 5S).",
+                "label": "Área"
+              }
+            }
+          }
+        },
+        "presentationStrategy": "as_delivered"
+      }
     },
     {
       "method": "PATCH",
@@ -99158,6 +99679,13 @@
       "deprecated": false,
       "parameters": [
         {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope. Omit or pass all for consolidated (legacy). Pass one or more concrete codes (01 or 02) via repeated query param: ?branch=01&branch=02. Mixing all with a concrete code is rejected.",
+          "type": "array"
+        },
+        {
           "name": "warehouse",
           "in": "query",
           "required": false,
@@ -99171,6 +99699,13 @@
           "description": "When true, only rows with B2_QATU > 0.",
           "type": "boolean",
           "default": true
+        },
+        {
+          "name": "product_codes",
+          "in": "query",
+          "required": false,
+          "description": "Product code filter (B2_COD). Repeatable or comma separated. Empty = all products.",
+          "type": "array"
         },
         {
           "name": "page",
@@ -99203,13 +99738,6 @@
             "product_code_asc",
             "product_code_desc"
           ]
-        },
-        {
-          "name": "branch",
-          "in": "query",
-          "required": false,
-          "description": "Branch scope. Omit or pass all for consolidated (legacy). Pass one or more concrete codes (01 or 02) via repeated query param: ?branch=01&branch=02. Mixing all with a concrete code is rejected.",
-          "type": "array"
         }
       ],
       "xDelpi": {
@@ -99318,6 +99846,18 @@
               "pt-BR": {
                 "description": "Quantidade de linhas por página.",
                 "label": "Tamanho da página"
+              }
+            }
+          },
+          "product_codes": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated or repeated product codes (SB1.B1_COD, SB2.B2_COD or D2_COD depending on the route).",
+                "label": "Product codes"
+              },
+              "pt-BR": {
+                "description": "Lista CSV ou repetida de códigos de produto (SB1.B1_COD, SB2.B2_COD ou D2_COD conforme a rota).",
+                "label": "Códigos de produtos"
               }
             }
           },
@@ -99592,6 +100132,13 @@
       "deprecated": false,
       "parameters": [
         {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope. Omit or pass all for consolidated (legacy). Pass one or more concrete codes (01 or 02) via repeated query param: ?branch=01&branch=02. Mixing all with a concrete code is rejected.",
+          "type": "array"
+        },
+        {
           "name": "warehouse",
           "in": "query",
           "required": false,
@@ -99605,13 +100152,6 @@
           "description": "When true, only rows with B2_QATU > 0.",
           "type": "boolean",
           "default": true
-        },
-        {
-          "name": "branch",
-          "in": "query",
-          "required": false,
-          "description": "Branch scope. Omit or pass all for consolidated (legacy). Pass one or more concrete codes (01 or 02) via repeated query param: ?branch=01&branch=02. Mixing all with a concrete code is rejected.",
-          "type": "array"
         }
       ],
       "xDelpi": {

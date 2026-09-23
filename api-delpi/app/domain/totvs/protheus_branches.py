@@ -7,6 +7,12 @@ BRANCH_SCOPE_ALL = "all"
 PROTHEUS_BRANCH_CODES: tuple[str, ...] = ("01", "02")
 BRANCH_SCOPE_VALUES: tuple[str, ...] = (BRANCH_SCOPE_ALL, *PROTHEUS_BRANCH_CODES)
 
+# Short site labels (UF) — canonical 01→SC / 02→ES (see padroes-totvs/filiais.md).
+PROTHEUS_BRANCH_SHORT_LABELS: dict[str, str] = {
+    "01": "SC",
+    "02": "ES",
+}
+
 # Alias histórico (PT no wire) — normaliza para ``all``.
 BRANCH_SCOPE_TODAS = BRANCH_SCOPE_ALL
 _BRANCH_SCOPE_ALIASES: dict[str, str] = {
@@ -95,6 +101,15 @@ def normalize_branch_code(raw: str | None) -> str:
     if normalized not in PROTHEUS_BRANCH_CODES:
         raise ValueError("branch inválida. Use 01 ou 02.")
     return normalized
+
+
+def branch_short_label(raw: str | None) -> str:
+    """UF curta da filial (SC/ES). Código desconhecido → string vazia após normalize falhar.
+
+    Preferir sobre hardcode ``\"SC\"``/``\"ES\"`` em use cases e responses.
+    """
+    code = normalize_branch_code(raw)
+    return PROTHEUS_BRANCH_SHORT_LABELS[code]
 
 
 def branch_filter_sql(column: str, scope: str) -> tuple[str, list]:

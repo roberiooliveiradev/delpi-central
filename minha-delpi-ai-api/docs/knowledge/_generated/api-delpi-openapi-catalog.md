@@ -1,6 +1,6 @@
 # Catálogo OpenAPI — api-delpi (gerado automaticamente)
 
-**Provider:** `api-delpi` · **Rotas:** 717 · **Gerado em:** 2026-09-22 13:47 UTC
+**Provider:** `api-delpi` · **Rotas:** 720 · **Gerado em:** 2026-09-23 19:21 UTC
 
 > Não edite manualmente. Regenerado por `scripts/sync_api_delpi_openapi.py`.
 
@@ -52,7 +52,7 @@
 |--------|------|-------------|---------|
 | `GET` | `/customers/search` | `search_customers` | Search Customers Route |
 
-## Comercial (27)
+## Comercial (28)
 
 | Método | Path | operationId | Summary |
 |--------|------|-------------|---------|
@@ -64,6 +64,7 @@
 | `GET` | `/commercial/new-business-rol-target-pct` | `get_new_business_rol_target_pct` | Commercial new business ROL target (realized and goal) |
 | `GET` | `/commercial/new-clients-average` | `get_new_clients_average` | New clients average |
 | `GET` | `/commercial/new-clients-rol-pct` | `get_new_clients_rol_pct` | Indicator — percentage rol de clientes novos |
+| `GET` | `/commercial/profile-by-branch` | `get_commercial_profile_by_branch` | Commercial profile by branch (OTD, conversion, new business, ROL attainment) |
 | `GET` | `/commercial/proposals` | `list_commercial_proposals` | Commercial proposals |
 | `GET` | `/commercial/proposals/collaborator-summary` | `summarize_commercial_proposals_by_collaborator` | Commercial proposal counts by collaborator |
 | `GET` | `/commercial/proposals/{proposal_number}` | `get_commercial_proposal` | Commercial proposal detail (sales order) |
@@ -568,7 +569,7 @@
 | `GET` | `/production/overall_equipment_effectiveness_pct` | `get_overall_equipment_effectiveness_pct` | Overall equipment effectiveness % |
 | `GET` | `/production/production_cost_pct` | `get_production_cost_pct` | Production cost pct |
 
-## Produção operacional (17)
+## Produção operacional (18)
 
 | Método | Path | operationId | Summary |
 |--------|------|-------------|---------|
@@ -584,6 +585,7 @@
 | `GET` | `/production/orders/finished` | `get_production_orders_finished` | Production orders finished |
 | `GET` | `/production/orders/finished-without-consumption` | `get_production_orders_finished_without_consumption` | Production orders finished without consumption |
 | `GET` | `/production/orders/open` | `get_production_orders_open` | Production orders open |
+| `POST` | `/production/orders/operation-materials/batch` | `list_production_order_operation_materials_batch` | Operation materials from SD4 in batch |
 | `GET` | `/production/orders/{production_order}/operations/{operation}/materials` | `list_production_order_operation_materials` | Operation materials from SD4 |
 | `GET` | `/production/planned-vs-real-time` | `get_production_planned_vs_real_time` | Production planned vs real time |
 | `GET` | `/production/schedule/today` | `get_production_schedule_today` | product programados para produzir na data |
@@ -929,7 +931,7 @@
 |--------|------|-------------|---------|
 | `POST` | `/data/sql` | `execute_readonly_sql` | Execute readonly sql |
 
-## products (36)
+## products (37)
 
 | Método | Path | operationId | Summary |
 |--------|------|-------------|---------|
@@ -937,6 +939,7 @@
 | `GET` | `/products/directives/{identifier}` | `get_product_directives` | Product directives |
 | `GET` | `/products/drawings` | `list_product_drawings` | Product drawings |
 | `GET` | `/products/exclusive-raw-materials/catalog` | `list_exclusive_raw_materials_catalog` | Exclusive raw materials catalog |
+| `POST` | `/products/physical-locations` | `list_product_physical_locations` | Physical pickup locations in batch |
 | `GET` | `/products/search` | `search_products` | Search products |
 | `GET` | `/products/{code}` | `get_product_detail` | Product cadastro / master data |
 | `GET` | `/products/{code}/analyser` | `get_product_analyser` | Full product analyser / integrated view |

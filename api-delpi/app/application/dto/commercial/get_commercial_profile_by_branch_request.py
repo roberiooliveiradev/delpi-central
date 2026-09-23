@@ -1,0 +1,15 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Optional
+
+
+@dataclass
+class GetCommercialProfileByBranchRequest:
+    """Intersection of filters shared by the four commercial KPI sources."""
+
+    branch: Optional[str] = None
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None
+    customer_segment: Optional[str] = None
+    customer_codes: Optional[list[str]] = None

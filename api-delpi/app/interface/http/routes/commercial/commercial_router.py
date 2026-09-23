@@ -60,6 +60,9 @@ from app.application.dto.commercial.get_rol_by_customer_center_request import (
 from app.application.dto.commercial.get_rol_by_branch_request import (
     GetRolByBranchRequest,
 )
+from app.application.dto.commercial.get_commercial_profile_by_branch_request import (
+    GetCommercialProfileByBranchRequest,
+)
 from app.application.dto.commercial.new_business_rol_pct_request import NewBusinessRolPctRequest
 from app.application.dto.commercial.sales_order_otd_request import SalesOrderOtdRequest
 from app.application.dto.commercial.get_sales_order_otd_panel_request import (
@@ -97,6 +100,7 @@ from app.composition.commercial_composer import (
     build_get_commercial_rol_by_product_use_case,
     build_get_commercial_rol_by_customer_center_use_case,
     build_get_commercial_rol_by_branch_use_case,
+    build_get_commercial_profile_by_branch_use_case,
     build_get_sales_order_otd_use_case,
     build_get_sales_order_otd_panel_use_case,
     build_get_sales_order_otd_series_use_case,
@@ -124,6 +128,7 @@ from app.interface.http.routes.engineering.lmp_route_helpers import (
 )
 from app.interface.http.kpi_field_labels import (
     COMMERCIAL_CONVERSION_FIELD_LABELS,
+    COMMERCIAL_PROFILE_BY_BRANCH_FIELD_LABELS,
     COMMERCIAL_ROL_FIELD_LABELS,
     COMMERCIAL_SALES_ORDER_OTD_FIELD_LABELS,
     COMMERCIAL_SALES_ORDER_OTD_ANALYSIS_FIELD_LABELS,
@@ -743,6 +748,49 @@ def get_commercial_rol_by_branch(
         log_error(f"Error while fetching ROL by branch: {exc}")
         return error_response(
             "Internal error while fetching ROL by branch.",
+            status_code=500,
+        )
+
+
+@router.get(
+    "/profile-by-branch",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "get_commercial_profile_by_branch",
+        path="/commercial/profile-by-branch",
+    ),
+)
+@require_any_permission(KPI_COMMERCIAL_ACCESS)
+def get_commercial_profile_by_branch(
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
+    customer_segment: Optional[str] = CUSTOMER_SEGMENT_QUERY(),
+    customer_codes: Optional[str] = Query(
+        None, description="CSV de códigos TOTVS de clientes (filtro de carteira)."
+    ),
+):
+    try:
+        request = GetCommercialProfileByBranchRequest(
+            branch=branch,
+            start_date=start_date,
+            end_date=end_date,
+            customer_segment=parse_customer_segment(customer_segment),
+            customer_codes=parse_customer_codes(customer_codes),
+        )
+        result = build_get_commercial_profile_by_branch_use_case().execute(request)
+        return api_delpi_success(
+            result,
+            operation_id="get_commercial_profile_by_branch",
+            message="Commercial profile by branch fetched successfully.",
+            fields=kpi_fields(COMMERCIAL_PROFILE_BY_BRANCH_FIELD_LABELS),
+        )
+    except ValueError as exc:
+        log_error(f"Validation error while fetching commercial profile by branch: {exc}")
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Error while fetching commercial profile by branch: {exc}")
+        return error_response(
+            "Internal error while fetching commercial profile by branch.",
             status_code=500,
         )
 

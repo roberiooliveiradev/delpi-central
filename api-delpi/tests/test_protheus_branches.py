@@ -9,6 +9,7 @@ from app.domain.totvs.protheus_branches import (
     BRANCH_SCOPE_VALUES,
     append_branch_filter,
     branch_filter_sql,
+    branch_short_label,
     is_all_branches,
     normalize_branch_code,
     normalize_branch_scope,
@@ -109,3 +110,12 @@ def test_optional_concrete_branch(raw: str | None, expected: str | None) -> None
 def test_optional_concrete_branch_rejects_invalid(raw: str) -> None:
     with pytest.raises(ValueError, match="branch inválida"):
         optional_concrete_branch(raw)
+
+
+def test_branch_short_label_sc_es() -> None:
+    assert branch_short_label("01") == "SC"
+    assert branch_short_label("02") == "ES"
+    with pytest.raises(ValueError):
+        branch_short_label("all")
+    with pytest.raises(ValueError):
+        branch_short_label("03")

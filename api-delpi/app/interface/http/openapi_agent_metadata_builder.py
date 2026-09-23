@@ -32,6 +32,9 @@ _ENTITY_LABELS: dict[str, str] = {
     "commercial_rol_by_product": "ROL comercial por produto ou família",
     "commercial_rol_by_customer_center": "ROL comercial por centro do cliente",
     "commercial_rol_by_branch": "ROL comercial por filial",
+    "commercial_profile_by_branch": (
+        "perfil comercial por filial (OTD, conversão, novos negócios, atingimento ROL)"
+    ),
     "production_order_detail": "detalhe de ordem de produção por OP",
     "open_sales_order": "pedidos de venda em aberto",
     "open_production_order": "OPs abertas (pedidos de venda)",

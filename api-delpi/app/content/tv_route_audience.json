@@ -9070,6 +9070,23 @@
         }
       },
       "category": "commercial"
+    },
+    "get_commercial_profile_by_branch": {
+      "locale": {
+        "en": {
+          "summary": "Commercial profile by branch (OTD, conversion, new business, ROL attainment)",
+          "description": "Long-form commercial profile per branch with OTD, conversion rate, new-business share of ROL and ROL goal attainment on a common percent scale. Omit branch to return all commercial branches (01 and 02).",
+          "label": "Commercial profile by branch",
+          "whenToUse": "Use to compare the multidimensional commercial profile of branches, especially for radar, scorecard or side-by-side performance."
+        },
+        "pt-BR": {
+          "label": "Perfil comercial por filial",
+          "summary": "Perfil comercial por filial (OTD, conversão, novos negócios, atingimento ROL)",
+          "description": "Perfil comercial por filial com OTD, conversão, participação de novos negócios no ROL e atingimento da meta de ROL, em escala percentual comum.",
+          "whenToUse": "Use para comparar o perfil multidimensional das filiais comerciais, especialmente em radar, scorecard ou comparação de desempenho entre filiais."
+        }
+      },
+      "category": "commercial"
     }
   }
 }

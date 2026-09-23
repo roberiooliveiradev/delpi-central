@@ -16,6 +16,7 @@ Cada bloco do slide TV usa **uma** rota, sem `group_by`:
 | ROL por produto / família | `get_commercial_rol_by_product` | `/commercial/rol/by-product` |
 | ROL por centro do cliente | `get_commercial_rol_by_customer_center` | `/commercial/rol/by-customer-center` |
 | ROL por filial | `get_commercial_rol_by_branch` | `/commercial/rol/by-branch` |
+| Perfil comercial por filial (radar/tabela) | `get_commercial_profile_by_branch` | `/commercial/profile-by-branch` |
 | KPI OTD + meta SI | `get_sales_order_otd_summary` | `/commercial/sales-order-otd/summary` |
 | KPI OTD | `get_sales_order_otd` | `/commercial/sales-order-otd` |
 | Série OTD | `get_sales_order_otd_series` | `/commercial/sales-order-otd/series` |
@@ -43,6 +44,7 @@ Cada bloco do slide TV usa **uma** rota, sem `group_by`:
 | ROL cliente | `items[]`: `customer_*` (inclui `customer_center` quando o grupo tem um único centro), `rol`, `share_pct`, `rank` |
 | ROL centro do cliente | `items[]` flat: `customer_code`, `customer_store`, `customer_center` (null = sem cadastro), `customer_center_name` (`SEM CENTRO` quando não classificado), `center_active`, `rol` / `gross_revenue` / `qty`; `group_by=center_product` preenche `product_*`. `summary.unclassified_rol` / `unclassified_qty` somam o recorte sem centro. Classificação pelo cadastro **atual** SA7/ZC0 (sem snapshot na NF). |
 | ROL filial | `items[]`: `branch`, `rol`, `gross_revenue`, `returns`, `discounts` |
+| Perfil comercial por filial | `items[]` long-form: `branch`, `branch_label`, `metric` (`otd` \| `conversion` \| `new_business` \| `rol_attainment`), `metric_label`, `value_pct` (convenção % das rotas-fonte; `null` se indisponível). Omite `branch` → 01 e 02. Reutiliza `get_sales_order_otd_summary` / `get_sales_conversion_rate` / `get_new_business_rol_pct` / `get_commercial_rol_summary` (inclui SI para `rol_target_pct`). |
 | OTD summary | `sales_order_otd_pct` + tríade meta SI + contagens |
 | OTD KPI | `sales_order_otd_pct` |
 | OTD série | `points[]`: `periodo`, `total_qty`, `fulfilled_qty`, `otd_pct`, `fulfillment_pct`, `total_lines`, `otd_filial_01`, `otd_filial_02`, `unit`, `mixed_units` |
@@ -74,5 +76,6 @@ Slides legados com as compostas são remapeados no hydrate da tv-dashboard-api (
 - `app/application/use_cases/commercial/get_commercial_rol_by_customer_use_case.py`
 - `app/application/use_cases/commercial/get_commercial_rol_by_customer_center_use_case.py`
 - `app/application/use_cases/commercial/get_commercial_rol_by_branch_use_case.py`
+- `app/application/use_cases/commercial/get_commercial_profile_by_branch_use_case.py`
 - `app/application/use_cases/commercial/get_sales_order_otd_*_use_case.py`
 - `tv-dashboard-api/.../tv_commercial_composite_binding_migration_service.py`

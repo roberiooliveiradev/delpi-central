@@ -256,6 +256,14 @@ COMMERCIAL_SALES_ORDER_OTD_ANALYSIS_FIELD_LABELS: dict[str, str] = {
     "mixed_units": "UMs mistas",
 }
 
+COMMERCIAL_PROFILE_BY_BRANCH_FIELD_LABELS: dict[str, str] = {
+    "branch": "Filial",
+    "branch_label": "Unidade",
+    "metric": "Métrica",
+    "metric_label": "Indicador",
+    "value_pct": "Valor (%)",
+}
+
 COMMERCIAL_ROL_FIELD_LABELS: dict[str, str] = {
     "rol": "ROL realizado",
     "gross_revenue": "Receita bruta",

@@ -1150,6 +1150,27 @@
       "description": "ROL das filiais 01 e 02 em lista tabular.",
       "whenToUse": "Use em tabela comparativa por filial."
     },
+    "get_commercial_profile_by_branch": {
+      "tableFields": "items",
+      "allowedDisplayModes": [
+        "table",
+        "bar_chart",
+        "auto"
+      ],
+      "valueFields": [
+        "value_pct"
+      ],
+      "valueFieldLabels": {
+        "branch": "Filial",
+        "branch_label": "Unidade",
+        "metric": "Métrica",
+        "metric_label": "Indicador",
+        "value_pct": "Valor (%)"
+      },
+      "label": "Perfil comercial por filial",
+      "description": "Perfil comercial por filial com OTD, conversão, participação de novos negócios no ROL e atingimento da meta de ROL, em escala percentual comum.",
+      "whenToUse": "Use para comparar o perfil multidimensional das filiais comerciais, especialmente em radar, scorecard ou comparação de desempenho entre filiais."
+    },
     "get_commercial_rol_summary": {
       "exposesSiGoal": true,
       "allowedDisplayModes": [

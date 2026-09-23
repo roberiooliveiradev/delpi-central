@@ -19,6 +19,28 @@ def test_catalog_lists_allowlist_routes():
     assert "get_dashboard_department_idd" in ids
     assert "get_dashboard_department_idd_dashboard_department_idd_get" not in ids
     assert "get_commercial_rol_by_customer_center" in ids
+    assert "get_commercial_profile_by_branch" in ids
+
+
+def test_catalog_commercial_profile_by_branch_is_table_route():
+    catalog = TvDataRouteCatalogService()
+    route = catalog.get_route("get_commercial_profile_by_branch")
+    assert route is not None
+    assert route["path"] == "/commercial/profile-by-branch"
+    assert route.get("category") == "commercial"
+    assert route.get("tableFields") == "items"
+    assert route.get("allowedDisplayModes") == ["table", "bar_chart", "auto"]
+    schema = route.get("paramSchema") or {}
+    assert schema.get("branch", {}).get("optional") is True
+    assert "start_date" in schema
+    assert "end_date" in schema
+    fields = route.get("valueFields") or []
+    assert "value_pct" in fields
+    labels = route.get("valueFieldLabels") or {}
+    assert labels.get("metric_label") == "Indicador"
+    assert labels.get("value_pct") == "Valor (%)"
+    when_to_use = route.get("whenToUse") or ""
+    assert "radar" in when_to_use.lower() or "perfil" in when_to_use.lower()
 
 
 def test_catalog_commercial_rol_by_customer_center_is_table_route():

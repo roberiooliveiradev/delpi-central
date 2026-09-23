@@ -61,6 +61,25 @@ def test_search_otd_comercial_returns_compact_dto_with_param_schema():
     assert "openapi" not in series
 
 
+def test_search_perfil_comercial_finds_profile_by_branch():
+    dispatch = _dispatch()
+    result = dispatch.search_data_routes(
+        user=_user(), query="perfil comercial por filial radar", limit=12
+    )
+    ids = {item.get("operationId") for item in result["items"]}
+    assert "get_commercial_profile_by_branch" in ids
+    hit = next(
+        item
+        for item in result["items"]
+        if item.get("operationId") == "get_commercial_profile_by_branch"
+    )
+    assert hit.get("category") == "commercial"
+    assert hit.get("path") == "/commercial/profile-by-branch"
+    schema = hit.get("paramSchema") or {}
+    assert "branch" in schema
+    assert schema["branch"].get("optional") is not False
+
+
 def test_search_does_not_dump_full_catalog_without_intent():
     dispatch = _dispatch()
     with pytest.raises(GptActionsError) as exc:
