@@ -24,6 +24,7 @@ _NATIVE_CONFIG_OPS = frozenset(
         "patch_native_config",
         "ensure_brand_logo_on_slide",
         "apply_published_slide_template",
+        "re_layer_playlist_filters",
     }
 )
 
@@ -82,7 +83,7 @@ class PresentationHttpCommandPlannerService:
             if not op_name:
                 continue
 
-            if op_name in _NATIVE_CONFIG_OPS or op_name == "re_layer_playlist_filters":
+            if op_name in _NATIVE_CONFIG_OPS:
                 pending_native = True
                 continue
 

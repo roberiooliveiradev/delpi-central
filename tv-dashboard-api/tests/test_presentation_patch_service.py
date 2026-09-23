@@ -311,6 +311,56 @@ def test_preview_upsert_data_source_and_bind_without_persist(monkeypatch):
     assert repo.updated == []
 
 
+def test_preview_re_layer_with_valid_target_does_not_raise_missing_target(monkeypatch):
+    """Regression: re_layer must preload nativeConfig; else INVALID_CHANGE/missingTarget
+    even when playlistId+slideId are present (GR Comercial continuous review)."""
+    repo = _FakeRepo()
+    repo.slides[SLIDE_ID]["nativeConfig"] = {
+        "version": 5,
+        "blocks": [
+            {
+                "id": "src-a",
+                "type": "data_source",
+                "dataBinding": {
+                    "operationId": "op.demo",
+                    "params": {"periodDays": 7, "branch": "01"},
+                },
+            },
+            {
+                "id": "src-b",
+                "type": "data_source",
+                "dataBinding": {
+                    "operationId": "op.demo",
+                    "params": {"periodDays": 7, "branch": "01"},
+                },
+            },
+        ],
+    }
+    svc = _service(repo, monkeypatch)
+    result = svc.preview(
+        {
+            "target": {"playlistId": PLAYLIST_ID, "slideId": SLIDE_ID},
+            "ops": [
+                {"op": "re_layer_playlist_filters", "scope": "playlist", "keys": ["periodDays"]},
+            ],
+        },
+        user={"sub": "u1"},
+        authorization="Bearer x",
+    )
+    assert result["ok"] is True
+    assert "re_layer_playlist_filters" in result["appliedOps"]
+    assert result["persisted"] is False
+
+    with pytest.raises(PresentationPatchError, match="playlistId"):
+        svc.preview(
+            {
+                "target": {},
+                "ops": [{"op": "re_layer_playlist_filters", "scope": "playlist"}],
+            },
+            user={"sub": "u1"},
+        )
+
+
 def test_apply_plans_crud_http_without_persisting(monkeypatch):
     """Apply do BFF só planeja — persistência = rotas /playlists/** na AI."""
     repo = _FakeRepo()

@@ -229,6 +229,9 @@ _NATIVE_OP_NAMES = frozenset(
         "patch_native_config",
         "ensure_brand_logo_on_slide",
         "apply_published_slide_template",
+        # Mutates slide nativeConfig / dataFilters; must preload like other native ops.
+        # Without this, preview raises misleading missingTarget even with valid target IDs.
+        "re_layer_playlist_filters",
     }
 )
 
