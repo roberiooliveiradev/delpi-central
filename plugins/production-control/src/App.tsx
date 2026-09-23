@@ -9,6 +9,7 @@ import { usePpcRouterPath } from "./hooks/usePpcRouterPath";
 import { useSubplugins } from "./hooks/useSubplugins";
 import { DeliveryMapPage } from "./pages/DeliveryMapPage";
 import { DemandPage } from "./pages/DemandPage";
+import { LineFeederPage } from "./pages/LineFeederPage";
 import { MachineLoadPage } from "./pages/MachineLoadPage";
 import { MaterialsPage } from "./pages/MaterialsPage";
 import { OverviewPage } from "./pages/OverviewPage";
@@ -30,6 +31,7 @@ const WORKSPACES = new Set([
   "problem-analysis",
   "machine-load",
   "materials",
+  "line-feeder",
   "delivery-map",
   "reports",
   "product-models",
@@ -81,6 +83,17 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
         status={route.materialsStatus}
         requestNumber={route.requestNumber}
         requestItem={route.requestItem}
+      />
+    );
+  } else if (route.subpluginId === "line-feeder") {
+    workspace = (
+      <LineFeederPage
+        branch={route.branch}
+        cutoffDate={route.cutoffDate}
+        cutoffTime={route.cutoffTime}
+        workCenter={route.workCenter}
+        status={route.lineFeederStatus}
+        planId={route.planId}
       />
     );
   } else if (route.subpluginId === "machine-load") {

@@ -1,6 +1,6 @@
 # production-control-api
 
-BFF do **Portal PCP**. Dono do catálogo de subplugins, da **gestão à vista**, da **carga máquina**, da composição de **análise de problemas** e das **solicitações em excesso** (Materiais). SQL TOTVS permanece na api-delpi.
+BFF do **Portal PCP**. Dono do catálogo de subplugins, da **gestão à vista**, da **carga máquina**, da composição de **análise de problemas**, das **solicitações em excesso** (Materiais) e do **alimentador de linha**. SQL TOTVS permanece na api-delpi.
 
 **Recado para quem implementa:** o destino do módulo é o **Portal de Produção**, com o PCP como primeira área. Este BFF **não** vira umbrella de OEE, apontamento ou retrabalho — irmãos entram por `routes[].target`, não fundindo API. Detalhe: [docs/12-roadmap-e-evolucao/production-control/README.md](../docs/12-roadmap-e-evolucao/production-control/README.md) § Recado.
 
@@ -22,6 +22,12 @@ BFF do **Portal PCP**. Dono do catálogo de subplugins, da **gestão à vista**,
 | POST | `/machine-load/withdraw?branch=01\|02&orderNumber=&workCenter=` | JWT + `machine-load.view` + filial |
 | POST | `/machine-load/restore?branch=01\|02&orderNumber=&workCenter=` | JWT + `machine-load.view` + filial |
 | POST | `/machine-load/transfer?branch=01\|02&productionOrder=&operationCode=&targetWorkCenter=&workCenter=` | JWT + `machine-load.view` + filial |
+| GET | `/line-feeder/requirements?branch=01\|02&cutoffDate=&cutoffTime=&workCenter=&status=&refresh=` | JWT + `line-feeder.view` + filial |
+| POST | `/line-feeder/pick-plans` | JWT + `line-feeder.view` + filial (body: branch, cutoffDate, cutoffTime, workCenter) |
+| GET | `/line-feeder/pick-plans?branch=01\|02&status=&limit=` | JWT + `line-feeder.view` + filial |
+| GET | `/line-feeder/pick-plans/{planId}?branch=01\|02` | JWT + `line-feeder.view` + filial |
+| PATCH | `/line-feeder/pick-plans/{planId}/items/{itemId}` | JWT + `line-feeder.view` + filial (body: branch, status) |
+| POST | `/line-feeder/pick-plans/{planId}/close` | JWT + `line-feeder.view` + filial (body: branch) |
 | GET | `/problem-analysis?branch=01\|02` | JWT + análise + filial |
 | GET | `/problem-analysis/{detectorId}?branch=01\|02&page=&pageSize=` | JWT + análise + filial |
 | GET | `/reports?branch=01\|02` | JWT + `reports.view` + filial |
@@ -160,6 +166,40 @@ Os cards (`issues[]`) trazem título, descrição e `product_count` de `content/
 ### Mapa de entrega
 
 `GET /delivery-map` lê o snapshot congelado em `production_control.delivery_map_snapshots` (seed automático na 1ª visita). A fonte TOTVS é `GET /production/pcp-orders/items` paginado (`mother_only`, `open_only`, produto PA prefixo `8`/`9`, saldo > 0). O BFF agrupa por data prevista: primeiro bloco **Hoje + atrasadas**, demais por dia. Observações vêm de `observation` (view / `C2_OBS`). **MP-OK** e **Feedback** (`work_center` no payload) são overrides manuais no `payload_json`, preservados no `POST /delivery-map/refresh`. `PATCH /delivery-map/overrides` atualiza marcações sem alterar `refreshed_at`. `GET /delivery-map/progress?branch=&orders=` devolve progresso **vivo por pacote** (`C2_NUM`+`C2_ITEM`, 8 dígitos): busca SH8 por prefixo da OP **incluindo intermediários (SEQUEN 002+) e OPs encerradas** (`include_closed`), em paralelo (`progressFetchMaxWorkers`) — sem enrich HZA extra por padrão (status já vem no GET). O MFE limita a consulta às **3 primeiras tabelas**. Permissão: `production-control.delivery-map.view` + filial. Textos em `content/delivery_map.json`.
+
+## Alimentador de linha — necessidade por bancada e lista de coleta
+
+`GET /line-feeder/requirements?cutoffDate=&cutoffTime=` responde o que precisa estar nas bancadas até um horário da fábrica. O serviço só **orquestra** donos que já existem: a fila congelada e «está na programação» vêm do snapshot da carga máquina (`MachineLoadSnapshotRepositoryPort` + `machine_load_withdrawal`), o empenho vem da api-delpi (`POST /production/orders/operation-materials/batch`) e o saldo por armazém vem de `GET /supplies/stock-balances/items` com `product_codes` (duas chamadas: ponto de uso e origem). Sem snapshot na filial responde **404** — a rota **nunca** faz seed nem puxa TOTVS por conta própria.
+
+Elegibilidade e cálculo vivem em domain services puros:
+
+| Módulo | Responsabilidade |
+|---|---|
+| `domain/services/line_feeder_schedule_cutoff.py` | corte por `scheduled_date` + `scheduled_start_time`; sem hora vale o dia inteiro, e operação sem horário entra pela data em vez de desaparecer (mesmo princípio de `machine_load_delivery_window.py`) |
+| `domain/services/line_feeder_requirements.py` | agregação por bancada + produto, rateio do saldo e situação do item |
+| `domain/services/machine_load_snapshot_payload.py` | decode único do `payload_json` do snapshot, consumido também pelo `MachineLoadService` |
+
+Por bancada e **matéria-prima** (`product_type` MP no empenho; PI/PA ficam de fora), considerando só as operações visíveis dentro do corte:
+
+- `required_qty` = soma de `open_qty` (`D4_QUANT`) dos empenhos das operações elegíveis — operação já apontada não é filtrada aqui porque o Protheus já baixou o empenho;
+- `point_of_use_qty` = saldo no armazém de ponto de uso (`99`), negativo tratado como zero;
+- `to_deliver_qty` = `max(required_qty − point_of_use_qty, 0)`;
+- `source_available_qty` = saldo no armazém de origem (`01`);
+- situação: `covered` (nada a entregar), `to_pick` (cabe no saldo da origem), `at_risk` (não cabe) e `unknown` quando o saldo não pôde ser lido.
+
+O saldo é **por produto, não por bancada**: duas bancadas que disputam o mesmo material não podem contar o mesmo saldo como já disponível. O rateio é **FIFO pelo horário programado** da operação (mais cedo consome primeiro), e por isso o cálculo é sempre global no corte — `workCenter` e `status` são recorte de apresentação aplicado **depois** do rateio, com cache por `branch + cutoff` (`cacheTtlSeconds`). Armazéns, TTLs, tamanho do lote, teto de itens da lista e mensagens ficam em `content/line_feeder.json`.
+
+O teto de `maxProductionOrdersPerBatch` (300) é **contrato por requisição da api-delpi**, não limite do corte: um corte normal da filial 01 tem ~550 OPs distintas, então o BFF **fatia** a lista em `commitmentBatchSize` (100) e mescla os empenhos — as fatias são disjuntas por OP, então o índice de (OP, operação) só recebe chaves novas. O guardrail passa a ser `maxCommitmentBatches` (30 lotes) e só aí `stock.truncated_orders` aparece, com aviso na tela. Sem o fatiamento a filial 01 mostraria 46 materiais no lugar de 166 — pouco mais de um quarto do que as bancadas precisam.
+
+O empenho custa ~45 ms por OP e é linear, então 548 OPs em série passavam de 28 s. As fatias e os dois armazéns vão em **paralelo** com pool limitado (`fetchMaxWorkers`, 6), no mesmo padrão do progresso do mapa de entrega: medido na filial 01, 28 s → 11 s nos empenhos e ~15 s na leitura completa. Mais workers não ajudam (o gargalo passa a ser o ERP), e o cache de `cacheTtlSeconds` (120 s, como Demanda e Materiais) deixa trocar de bancada e de situação em tempo de tela — o recorte não repete a leitura.
+
+Degradação por bloco, no mesmo espírito do cockpit público: o **empenho não degrada** (sem ele não há necessidade, então a falha propaga como `502`), mas o **saldo degrada** — a necessidade responde com `stock.available: false`, mensagem e itens em `unknown`, nunca como `covered`. `POST /line-feeder/pick-plans`, ao contrário, **recusa** gerar lista quando o saldo está indisponível: lista de coleta sem saldo medido mandaria buscar material que já está na bancada.
+
+A lista de coleta congela o que falta entregar (migrations `V006` + `V007`: `line_feeder_pick_plans` + `line_feeder_pick_items`, com `UNIQUE (plan_id, product_code)`). Cada item é **um produto** — quantidades somadas entre bancadas, ordenado por `product_code`, com `pickup_location` fotografado de `SBZ010.BZ_MPLOCAL` na filial. Situação do item vai e volta (`pending` ↔ `picked` ↔ `delivered`) por `PATCH …/items/{itemId}`; lista fechada (`POST …/close`) recusa alteração de item. Falha ao ler os locais **não** impede gerar a lista (locais vazios). Id malformado é `422` (validação de UUID no serviço), não erro de banco.
+
+**Nada é escrito no Protheus** — sem requisição, empenho ou transferência de armazém. A lista é controle operacional da plataforma.
+
+Autorização: `production-control.line-feeder.view` + filial em **todas** as rotas, inclusive as de escrita da lista. O papel operacional é um só (quem enxerga o que falta na bancada é quem separa e entrega) — decisão registrada aqui para não ser lida como permissão de escrita esquecida.
 
 ## Análise de problemas — detectores
 

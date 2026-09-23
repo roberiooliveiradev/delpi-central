@@ -11,6 +11,12 @@ import type {
   MachineLoadTransferPayload,
   MachineLoadWithdrawPayload,
   FinishedProductShortagePayload,
+  LineFeederItemStatus,
+  LineFeederPickItem,
+  LineFeederPickPlan,
+  LineFeederPickPlanListPayload,
+  LineFeederPickPlanPayload,
+  LineFeederRequirementsPayload,
   MaterialsPayload,
   OverviewPayload,
   ProblemDetectorItemsPayload,
@@ -275,7 +281,9 @@ export async function refreshDeliveryMap(params: {
     success: boolean;
     message?: string;
     data: DeliveryMapPayload;
-  }>(ppcApiUrl(`/delivery-map/refresh?${search.toString()}`), { signal: params.signal });
+  }>(ppcApiUrl(`/delivery-map/refresh?${search.toString()}`), undefined, {
+    signal: params.signal,
+  });
   return unwrapEnvelope(envelope, "Não foi possível atualizar o mapa de entrega.");
 }
 
@@ -378,7 +386,9 @@ export async function refreshMachineLoad(params: {
     success: boolean;
     message?: string;
     data: MachineLoadPayload;
-  }>(ppcApiUrl(`/machine-load/refresh?${search.toString()}`), { signal: params.signal });
+  }>(ppcApiUrl(`/machine-load/refresh?${search.toString()}`), undefined, {
+    signal: params.signal,
+  });
   return unwrapEnvelope(envelope, "Não foi possível atualizar a carga máquina.");
 }
 
@@ -420,7 +430,9 @@ export async function prioritizeMachineLoadConjunto(params: {
     success: boolean;
     message?: string;
     data: MachineLoadPrioritizePayload;
-  }>(ppcApiUrl(`/machine-load/prioritize?${search.toString()}`), { signal: params.signal });
+  }>(ppcApiUrl(`/machine-load/prioritize?${search.toString()}`), undefined, {
+    signal: params.signal,
+  });
   return unwrapEnvelope(envelope, "Não foi possível priorizar o conjunto.");
 }
 
@@ -436,7 +448,9 @@ export async function optimizeMachineLoadDeliverySequence(params: {
     success: boolean;
     message?: string;
     data: MachineLoadOptimizePayload;
-  }>(ppcApiUrl(`/machine-load/optimize-delivery?${search.toString()}`), { signal: params.signal });
+  }>(ppcApiUrl(`/machine-load/optimize-delivery?${search.toString()}`), undefined, {
+    signal: params.signal,
+  });
   return unwrapEnvelope(envelope, "Não foi possível otimizar a fila pela entrega do PA.");
 }
 
@@ -479,7 +493,9 @@ async function postMachineLoadWithdrawal(
     success: boolean;
     message?: string;
     data: MachineLoadWithdrawPayload;
-  }>(ppcApiUrl(`/machine-load/${action}?${search.toString()}`), { signal: params.signal });
+  }>(ppcApiUrl(`/machine-load/${action}?${search.toString()}`), undefined, {
+    signal: params.signal,
+  });
   return unwrapEnvelope(envelope, errorMessage);
 }
 
@@ -503,7 +519,9 @@ export async function transferMachineLoadOperation(params: {
     success: boolean;
     message?: string;
     data: MachineLoadTransferPayload;
-  }>(ppcApiUrl(`/machine-load/transfer?${search.toString()}`), { signal: params.signal });
+  }>(ppcApiUrl(`/machine-load/transfer?${search.toString()}`), undefined, {
+    signal: params.signal,
+  });
   return unwrapEnvelope(envelope, "Não foi possível transferir a operação de centro de trabalho.");
 }
 
@@ -527,7 +545,7 @@ export async function transferMachineLoadConjunto(params: {
     success: boolean;
     message?: string;
     data: MachineLoadTransferPayload;
-  }>(ppcApiUrl(`/machine-load/transfer-set?${search.toString()}`), {
+  }>(ppcApiUrl(`/machine-load/transfer-set?${search.toString()}`), undefined, {
     signal: params.signal,
   });
   return unwrapEnvelope(
@@ -648,4 +666,122 @@ export async function deleteProduct3DModel(params: {
     signal: params.signal,
   });
   return unwrapEnvelope(envelope, "Não foi possível excluir o modelo 3D.");
+}
+
+export async function fetchLineFeederRequirements(params: {
+  branch: string;
+  cutoffDate: string;
+  cutoffTime?: string | null;
+  workCenter?: string | null;
+  status?: string | null;
+  refresh?: boolean;
+  signal?: AbortSignal;
+}): Promise<LineFeederRequirementsPayload> {
+  const search = new URLSearchParams({ branch: params.branch, cutoffDate: params.cutoffDate });
+  if (params.cutoffTime) search.set("cutoffTime", params.cutoffTime);
+  if (params.workCenter) search.set("workCenter", params.workCenter);
+  if (params.status) search.set("status", params.status);
+  if (params.refresh) search.set("refresh", "true");
+  const envelope = await httpGet<{
+    success: boolean;
+    message?: string;
+    data: LineFeederRequirementsPayload;
+  }>(ppcApiUrl(`/line-feeder/requirements?${search.toString()}`), { signal: params.signal });
+  return unwrapEnvelope(envelope, "Não foi possível carregar a necessidade das bancadas.");
+}
+
+export async function createLineFeederPickPlan(params: {
+  branch: string;
+  cutoffDate: string;
+  cutoffTime?: string | null;
+  workCenter?: string | null;
+  signal?: AbortSignal;
+}): Promise<LineFeederPickPlanPayload> {
+  const envelope = await httpPost<{
+    success: boolean;
+    message?: string;
+    data: LineFeederPickPlanPayload;
+  }>(
+    ppcApiUrl("/line-feeder/pick-plans"),
+    {
+      branch: params.branch,
+      cutoffDate: params.cutoffDate,
+      cutoffTime: params.cutoffTime || null,
+      workCenter: params.workCenter || null,
+    },
+    { signal: params.signal },
+  );
+  return unwrapEnvelope(envelope, "Não foi possível gerar a lista de coleta.");
+}
+
+export async function fetchLineFeederPickPlans(params: {
+  branch: string;
+  status?: string | null;
+  limit?: number;
+  signal?: AbortSignal;
+}): Promise<LineFeederPickPlanListPayload> {
+  const search = new URLSearchParams({ branch: params.branch });
+  if (params.status) search.set("status", params.status);
+  if (params.limit) search.set("limit", String(params.limit));
+  const envelope = await httpGet<{
+    success: boolean;
+    message?: string;
+    data: LineFeederPickPlanListPayload;
+  }>(ppcApiUrl(`/line-feeder/pick-plans?${search.toString()}`), { signal: params.signal });
+  return unwrapEnvelope(envelope, "Não foi possível carregar as listas de coleta.");
+}
+
+export async function fetchLineFeederPickPlan(params: {
+  branch: string;
+  planId: string;
+  signal?: AbortSignal;
+}): Promise<LineFeederPickPlanPayload> {
+  const search = new URLSearchParams({ branch: params.branch });
+  const envelope = await httpGet<{
+    success: boolean;
+    message?: string;
+    data: LineFeederPickPlanPayload;
+  }>(
+    ppcApiUrl(`/line-feeder/pick-plans/${encodeURIComponent(params.planId)}?${search.toString()}`),
+    { signal: params.signal },
+  );
+  return unwrapEnvelope(envelope, "Não foi possível carregar a lista de coleta.");
+}
+
+export async function patchLineFeederPickItem(params: {
+  branch: string;
+  planId: string;
+  itemId: string;
+  status: LineFeederItemStatus;
+  signal?: AbortSignal;
+}): Promise<{ branch: string; plan_id: string; item: LineFeederPickItem }> {
+  const envelope = await httpPatch<{
+    success: boolean;
+    message?: string;
+    data: { branch: string; plan_id: string; item: LineFeederPickItem };
+  }>(
+    ppcApiUrl(
+      `/line-feeder/pick-plans/${encodeURIComponent(params.planId)}/items/${encodeURIComponent(params.itemId)}`,
+    ),
+    { branch: params.branch, status: params.status },
+    { signal: params.signal },
+  );
+  return unwrapEnvelope(envelope, "Não foi possível atualizar o item da coleta.");
+}
+
+export async function closeLineFeederPickPlan(params: {
+  branch: string;
+  planId: string;
+  signal?: AbortSignal;
+}): Promise<{ branch: string; plan: LineFeederPickPlan }> {
+  const envelope = await httpPost<{
+    success: boolean;
+    message?: string;
+    data: { branch: string; plan: LineFeederPickPlan };
+  }>(
+    ppcApiUrl(`/line-feeder/pick-plans/${encodeURIComponent(params.planId)}/close`),
+    { branch: params.branch },
+    { signal: params.signal },
+  );
+  return unwrapEnvelope(envelope, "Não foi possível fechar a lista de coleta.");
 }

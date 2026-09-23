@@ -1,0 +1,57 @@
+{
+  "pointOfUseWarehouse": "99",
+  "sourceWarehouse": "01",
+  "cacheTtlSeconds": 120,
+  "maxProductionOrdersPerBatch": 300,
+  "commitmentBatchSize": 100,
+  "maxCommitmentBatches": 30,
+  "fetchMaxWorkers": 6,
+  "balancesPageSize": 500,
+  "maxBalancePages": 20,
+  "maxPickItems": 500,
+  "didactic": {
+    "title": "Como o cockpit calcula",
+    "body": "A necessidade vem das ordens empenhadas na programação até o horário escolhido. O que já está no ponto de uso é descontado, e o restante é o que precisa ser entregue na bancada.",
+    "notes": [
+      "Quando duas bancadas pedem o mesmo material, o estoque é dividido por ordem de horário: quem começa antes é atendido primeiro.",
+      "Operação sem horário programado continua aparecendo, no fim da fila, para não ficar esquecida."
+    ]
+  },
+  "statuses": {
+    "covered": {
+      "label": "Na bancada",
+      "description": "A quantidade necessária já está no ponto de uso.",
+      "severity": "success"
+    },
+    "to_pick": {
+      "label": "Coletar",
+      "description": "Falta na bancada, mas há saldo no almoxarifado.",
+      "severity": "attention"
+    },
+    "at_risk": {
+      "label": "Em risco",
+      "description": "O saldo do almoxarifado não cobre o que falta.",
+      "severity": "critical"
+    },
+    "unknown": {
+      "label": "Sem saldo",
+      "description": "Não foi possível ler o estoque agora; a necessidade continua válida.",
+      "severity": "neutral"
+    }
+  },
+  "itemStatuses": {
+    "pending": { "label": "A coletar", "severity": "attention" },
+    "picked": { "label": "Separado", "severity": "info" },
+    "delivered": { "label": "Entregue", "severity": "success" }
+  },
+  "messages": {
+    "cutoffRequired": "Escolha a data e a hora do corte para calcular a necessidade.",
+    "emptyRequirements": "Nenhum material pendente para este horário.",
+    "planNotFound": "Lista de coleta não encontrada nesta filial.",
+    "planClosed": "Esta lista de coleta já foi fechada.",
+    "planEmpty": "Não há material a entregar neste horário — nada para coletar.",
+    "invalidItemStatus": "Situação inválida para o item da coleta.",
+    "itemNotFound": "Item não encontrado nesta lista de coleta.",
+    "balancesUnavailable": "Não foi possível ler o estoque agora. A necessidade está calculada, mas sem comparar com o saldo."
+  }
+}

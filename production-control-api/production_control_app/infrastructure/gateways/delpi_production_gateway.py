@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Sequence
 from urllib.parse import quote
 
 import httpx
@@ -456,6 +456,44 @@ class DelpiProductionGateway:
             params={"branch": branch},
         )
 
+    def fetch_operation_materials_batch(
+        self,
+        *,
+        branch: str,
+        production_orders: Sequence[str],
+    ) -> dict[str, Any]:
+        """Empenhos SD4 de várias OPs em uma chamada — sem SG1, sem regra de tela.
+
+        O recorte de operação e de bancada é deste BFF: a api-delpi devolve todos
+        os empenhos das OPs pedidas.
+        """
+        orders = [str(order or "").strip() for order in production_orders or ()]
+        return self._request(
+            "POST",
+            "/production/orders/operation-materials/batch",
+            json_body={
+                "branch": branch,
+                "production_orders": [order for order in orders if order],
+            },
+        )
+
+    def fetch_product_physical_locations(
+        self,
+        *,
+        branch: str,
+        product_codes: Sequence[str],
+    ) -> dict[str, Any]:
+        """Locais físicos (BZ_MPLOCAL) em lote — TOTVS puro, sem inventar ausência."""
+        codes = [str(code or "").strip() for code in product_codes or ()]
+        return self._request(
+            "POST",
+            "/products/physical-locations",
+            json_body={
+                "branch": branch,
+                "product_codes": [code for code in codes if code],
+            },
+        )
+
     def fetch_process_inspections_for_operation(
         self,
         *,
@@ -689,19 +727,25 @@ class DelpiProductionGateway:
         page: int = 1,
         page_size: int = 500,
         sort: str = "product_code_asc",
+        product_codes: Sequence[str] | None = None,
     ) -> dict[str, Any]:
         """Saldos SB2 por armazém — TOTVS puro (sem filtro de prefixo do PCP)."""
+        params: dict[str, Any] = {
+            "branch": branch,
+            "warehouse": warehouse,
+            "only_positive": only_positive,
+            "page": page,
+            "page_size": page_size,
+            "sort": sort,
+        }
+        codes = [str(code or "").strip() for code in product_codes or ()]
+        codes = [code for code in codes if code]
+        if codes:
+            params["product_codes"] = codes
         return self._request(
             "GET",
             "/supplies/stock-balances/items",
-            params={
-                "branch": branch,
-                "warehouse": warehouse,
-                "only_positive": only_positive,
-                "page": page,
-                "page_size": page_size,
-                "sort": sort,
-            },
+            params=params,
         )
 
     def get_personal_stock_balances_subscription(

@@ -24,6 +24,7 @@ class StockBalancesQueryRepositoryPort(ABC):
         branches: Sequence[str],
         warehouse: str | None,
         only_positive: bool,
+        product_codes: Sequence[str] | None = None,
     ) -> int:
         ...
 
@@ -37,5 +38,6 @@ class StockBalancesQueryRepositoryPort(ABC):
         sort: str,
         offset: int,
         page_size: int,
+        product_codes: Sequence[str] | None = None,
     ) -> list[dict[str, Any]]:
         ...

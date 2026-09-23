@@ -58,6 +58,7 @@ Rotas REST que encapsulam SQL validado de produção, consumo, perdas, OPs e ran
 | GET | `/production/orders/open` | `get_production_orders_open` | OPs em aberto na data |
 | GET | `/production/orders/by-op/{production_order}` | `get_production_order_by_op` | Detalhe da OP (SC2) |
 | GET | `/production/orders/{production_order}/operations/{operation}/materials` | `list_production_order_operation_materials` | Materiais SD4 da OP+operação (sem SG1) |
+| POST | `/production/orders/operation-materials/batch` | `list_production_order_operation_materials_batch` | Materiais SD4 de várias OPs de uma vez (sem SG1) |
 | GET | `/production/orders/finished` | `get_production_orders_finished` | OPs finalizadas na data |
 | GET | `/production/orders/finished-without-consumption` | `get_production_orders_finished_without_consumption` | OPs finalizadas sem baixa de MP |
 | GET | `/production/work-centers/order-summary` | `get_production_work_center_order_summary` | Contagem de OPs por CT |
@@ -70,6 +71,17 @@ Rotas REST que encapsulam SQL validado de produção, consumo, perdas, OPs e ran
 **Carga máquina (`SH8010`):** `/production/machine-load/{work-centers,operations}` — fila de operações já alocadas por centro de trabalho, com ferramenta (`H8_FERRAM`) e entrega do PA. Ver [production-machine-load.md](./production-machine-load.md). Não confundir com `/production/work-centers/order-summary` (só contagem de OPs por CT).
 
 **Conjuntos de OP incompletos (`SC2010` × `SG1010`):** `/production/production-order-sets/incomplete` — conjuntos cujas OPs filhas não cobrem a estrutura do produto raiz. Ver [production-order-sets-incomplete.md](./production-order-sets-incomplete.md).
+
+### Empenhos SD4 em lote
+
+`POST /production/orders/operation-materials/batch` responde a "quais materiais estas OPs consomem" em uma consulta, para quem já tem uma janela de OPs (fila de carga máquina, por exemplo) e não pode fazer uma chamada por operação.
+
+- Body: `{ "branch": "01", "production_orders": ["123456001", "123456002"] }`
+- Cada item traz `production_order` + `operation`, então quem chama filtra o par que interessa; a rota **não** filtra `D4_OPERAC`.
+- Teto de **300 OPs** por requisição (`MAX_BATCH_PRODUCTION_ORDERS`). Acima disso a resposta é `400` — a rota não trunca, porque devolver menos empenhos do que a janela pede faria o consumidor subestimar a necessidade de material.
+- Lista vazia responde `200` com `items: []` e nenhuma consulta ao banco.
+- Mesma definição de empenho da consulta unitária: o SQL das duas rotas vem de `production_order_operation_materials_sql.py`.
+- Cada item inclui `product_type` (`SB1.B1_TIPO`) junto com descrição e UM — o consumidor (ex.: alimentador de linha) filtra MP sem segunda consulta.
 
 ---
 

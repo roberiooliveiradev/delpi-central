@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Protocol
+from typing import Any, Protocol, Sequence
 
 
 class ProductionOrdersGateway(Protocol):
@@ -119,6 +119,22 @@ class ProductionOrdersGateway(Protocol):
     ) -> dict[str, Any]:
         ...
 
+    def fetch_operation_materials_batch(
+        self,
+        *,
+        branch: str,
+        production_orders: Sequence[str],
+    ) -> dict[str, Any]:
+        ...
+
+    def fetch_product_physical_locations(
+        self,
+        *,
+        branch: str,
+        product_codes: Sequence[str],
+    ) -> dict[str, Any]:
+        ...
+
     def fetch_production_order_sets_incomplete(
         self,
         *,
@@ -186,6 +202,7 @@ class ProductionOrdersGateway(Protocol):
         page: int = 1,
         page_size: int = 500,
         sort: str = "product_code_asc",
+        product_codes: Sequence[str] | None = None,
     ) -> dict[str, Any]:
         ...
 

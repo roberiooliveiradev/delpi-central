@@ -89,6 +89,12 @@ _ENTITY_LABELS: dict[str, str] = {
     "production_machine_load_appointment_status": (
         "status de apontamento HZA das operações da carga máquina"
     ),
+    "production_order_operation_materials_batch": (
+        "empenhos SD4 por operação de várias ordens de produção em uma consulta"
+    ),
+    "product_physical_locations": (
+        "local físico de retirada (BZ_MPLOCAL) de vários produtos na filial"
+    ),
     "production_order_sets_incomplete": (
         "conjuntos de OP cujas ordens filhas não batem com a estrutura do produto raiz"
     ),

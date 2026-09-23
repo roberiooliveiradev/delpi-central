@@ -91,13 +91,18 @@ export async function httpGetBlob(url: string, options: RequestOptions = {}): Pr
   return response.blob();
 }
 
-export async function httpPost<T>(url: string, options: RequestOptions = {}): Promise<T> {
+export async function httpPost<T>(
+  url: string,
+  body?: unknown,
+  options: RequestOptions = {},
+): Promise<T> {
   const response = await fetch(url, {
     method: "POST",
     headers: {
       ...authHeaders(),
       "Content-Type": "application/json",
     },
+    body: body === undefined ? undefined : JSON.stringify(body),
     signal: options.signal,
   });
   if (!response.ok) {

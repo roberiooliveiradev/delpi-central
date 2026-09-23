@@ -158,6 +158,13 @@ def get_supplies_stock_balances_items(
         default=True,
         description="When true, only rows with B2_QATU > 0.",
     ),
+    product_codes: list[str] | None = Query(
+        default=None,
+        description=(
+            "Product code filter (B2_COD). Repeatable or comma separated. "
+            "Empty = all products."
+        ),
+    ),
     page: int = Query(default=1, ge=1),
     page_size: int = PAGE_SIZE_QUERY("page_50_500", description="Rows per page (max 500)."),
     sort: str = Query(
@@ -175,6 +182,7 @@ def get_supplies_stock_balances_items(
             page=page,
             page_size=page_size,
             sort=sort,
+            product_codes=product_codes,
         )
         use_case = build_get_supplies_stock_balances_items_use_case()
         result = use_case.execute(request)

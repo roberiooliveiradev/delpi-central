@@ -3846,3 +3846,267 @@
     width: 100%;
   }
 }
+
+/* Alimentador de linha — corte, necessidade por bancada e lista de coleta. */
+.dashboard-production-control .ppc-feeder__filters {
+  gap: 12px 18px;
+}
+
+.dashboard-production-control .ppc-feeder__cutoff {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px 14px;
+  margin: 0;
+  padding: 8px 12px;
+  border: 1px solid var(--ppc-border);
+  border-radius: var(--ppc-radius);
+  background: color-mix(in srgb, var(--ppc-accent) 6%, transparent);
+}
+
+.dashboard-production-control .ppc-feeder__cutoff-hint {
+  flex: 1 1 100%;
+  margin: 0;
+  color: var(--ppc-text-muted);
+  font-size: var(--ppc-font-xs);
+}
+
+.dashboard-production-control .ppc-feeder__filters input[type="date"],
+.dashboard-production-control .ppc-feeder__filters input[type="time"],
+.dashboard-production-control .ppc-feeder__filters select {
+  min-height: 38px;
+  min-width: 9rem;
+  padding: 0 10px;
+  border: 1px solid var(--ppc-border);
+  border-radius: var(--ppc-radius);
+  background: var(--ppc-surface);
+  color: var(--ppc-text);
+  font: inherit;
+  font-size: var(--ppc-font-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.dashboard-production-control .ppc-feeder__create {
+  margin-left: auto;
+}
+
+.dashboard-production-control .ppc-feeder__product {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.dashboard-production-control .ppc-feeder__product-code {
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+.dashboard-production-control .ppc-feeder__product-name {
+  color: var(--ppc-text-muted);
+  font-size: var(--ppc-font-xs);
+}
+
+.dashboard-production-control .ppc-pick {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--ppc-border);
+  border-radius: 16px;
+  background: var(--ppc-surface);
+}
+
+.dashboard-production-control .ppc-pick__head {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dashboard-production-control .ppc-pick__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: var(--ppc-title);
+  font-size: var(--ppc-font-md);
+  font-weight: 700;
+}
+
+.dashboard-production-control .ppc-pick__hint {
+  margin: 0;
+  color: var(--ppc-text-muted);
+  font-size: var(--ppc-font-sm);
+}
+
+.dashboard-production-control .ppc-pick__plans {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dashboard-production-control .ppc-pick__plan {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid var(--ppc-border);
+  border-radius: var(--ppc-radius);
+  background: transparent;
+  color: var(--ppc-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dashboard-production-control .ppc-pick__plan:hover,
+.dashboard-production-control .ppc-pick__plan:focus-visible {
+  border-color: var(--ppc-accent);
+}
+
+.dashboard-production-control .ppc-pick__plan[data-active="true"] {
+  border-color: var(--ppc-accent);
+  background: color-mix(in srgb, var(--ppc-accent) 10%, transparent);
+}
+
+.dashboard-production-control .ppc-pick__plan-cutoff {
+  font-size: var(--ppc-font-sm);
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+.dashboard-production-control .ppc-pick__plan-meta {
+  color: var(--ppc-text-muted);
+  font-size: var(--ppc-font-xs);
+}
+
+.dashboard-production-control .ppc-pick__body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dashboard-production-control .ppc-pick__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.dashboard-production-control .ppc-pick__progress {
+  font-size: var(--ppc-font-sm);
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+.dashboard-production-control .ppc-pick__closed {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ppc-text-muted);
+  font-size: var(--ppc-font-sm);
+}
+
+.dashboard-production-control .ppc-pick__items {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dashboard-production-control .ppc-pick__item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--ppc-border);
+  border-radius: var(--ppc-radius);
+  border-left-width: 3px;
+  border-left-color: var(--ppc-attention);
+}
+
+.dashboard-production-control .ppc-pick__item[data-status="picked"] {
+  border-left-color: var(--ppc-accent);
+}
+
+.dashboard-production-control .ppc-pick__item[data-status="delivered"] {
+  border-left-color: var(--ppc-ok);
+  background: color-mix(in srgb, var(--ppc-ok) 7%, transparent);
+}
+
+.dashboard-production-control .ppc-pick__item-identity {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.dashboard-production-control .ppc-pick__item-product {
+  font-size: var(--ppc-font-md);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.dashboard-production-control .ppc-pick__item-description,
+.dashboard-production-control .ppc-pick__item-meta {
+  color: var(--ppc-text-muted);
+  font-size: var(--ppc-font-xs);
+}
+
+.dashboard-production-control .ppc-pick__item-qty {
+  font-size: var(--ppc-font-md);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Alvo de toque do chão de fábrica: o operador marca com luva. */
+.dashboard-production-control .ppc-pick__item-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  min-width: 7.5rem;
+  padding: 0 12px;
+  border: 1px solid var(--ppc-border);
+  border-radius: 12px;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+}
+
+.dashboard-production-control .ppc-pick__item-action:hover:not(:disabled),
+.dashboard-production-control .ppc-pick__item-action:focus-visible {
+  border-color: var(--ppc-accent);
+}
+
+.dashboard-production-control .ppc-pick__item-action:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .dashboard-production-control .ppc-feeder__create,
+  .dashboard-production-control .ppc-feeder__filters .ppc-field,
+  .dashboard-production-control .ppc-feeder__filters select {
+    width: 100%;
+  }
+
+  .dashboard-production-control .ppc-feeder__create {
+    margin-left: 0;
+  }
+
+  .dashboard-production-control .ppc-pick__item {
+    flex-wrap: wrap;
+  }
+
+  .dashboard-production-control .ppc-pick__item-action {
+    width: 100%;
+  }
+}

@@ -1,6 +1,8 @@
 from typing import Optional
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Body, Query
+from pydantic import BaseModel, Field
+
 from app.interface.http.pagination_query import (
     LIMIT_QUERY,
     PAGE_SIZE_QUERY,
@@ -22,6 +24,9 @@ from app.application.dto.production.get_production_order_by_op_request import (
 )
 from app.application.dto.production.list_machine_program_top_intermediates_request import (
     ListMachineProgramTopIntermediatesRequest,
+)
+from app.application.dto.production.list_production_order_operation_materials_batch_request import (
+    ListProductionOrderOperationMaterialsBatchRequest,
 )
 from app.application.dto.production.list_production_order_operation_materials_request import (
     ListProductionOrderOperationMaterialsRequest,
@@ -47,6 +52,7 @@ from app.composition.production_operational_composer import (
     build_get_production_work_center_average_planned_time_use_case,
     build_get_production_work_center_order_summary_use_case,
     build_list_production_machine_program_top_intermediates_use_case,
+    build_list_production_order_operation_materials_batch_use_case,
     build_list_production_order_operation_materials_use_case,
 )
 from app.core.responses import error_response, not_found_response
@@ -79,10 +85,33 @@ from app.interface.http.period_query_params import (
     START_DATE_QUERY,
     resolve_period_dates,
 )
+from app.interface.http.openapi_agent_metadata_builder import (
+    OpenApiAgentMetadataBuilder,
+)
 from app.interface.http.route_response_helpers import api_delpi_success
 from app.utils.logger import log_error
 
 router = APIRouter(prefix="/production", tags=["Produção operacional"])
+
+_OPERATION_MATERIALS_BATCH_FIELDS = {
+    "production_order": {"label": "OP", "type": "string"},
+    "operation": {"label": "Operação", "type": "string"},
+    "product_code": {"label": "Componente", "type": "string"},
+    "description": {"label": "Descrição", "type": "string"},
+    "unit": {"label": "Unidade", "type": "string"},
+    "original_qty": {"label": "Quantidade empenhada", "type": "number"},
+    "open_qty": {"label": "Saldo do empenho", "type": "number"},
+    "consumed_qty": {"label": "Consumido", "type": "number"},
+    "commitment_count": {"label": "Empenhos", "type": "integer"},
+}
+
+
+class OperationMaterialsBatchRequest(BaseModel):
+    branch: str = Field(..., pattern=r"^(01|02)$")
+    production_orders: list[str] = Field(
+        default_factory=list,
+        description="Production order keys (C2_OP / D4_OP).",
+    )
 
 
 @router.get("/orders/by-op/{production_order}", **PRODUCTION_ORDER_BY_OP)
@@ -156,6 +185,41 @@ def list_production_order_operation_materials(
         log_error(f"Erro em orders/operations/materials: {exc}")
         return error_response(
             "Erro interno ao buscar materiais da operação.",
+            status_code=500,
+        )
+
+
+@router.post(
+    "/orders/operation-materials/batch",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "list_production_order_operation_materials_batch",
+        path="/production/orders/operation-materials/batch",
+    ),
+)
+@require_permission(API_DELPI_ACCESS)
+def list_production_order_operation_materials_batch(
+    body: OperationMaterialsBatchRequest = Body(...),
+):
+    try:
+        result = build_list_production_order_operation_materials_batch_use_case().execute(
+            ListProductionOrderOperationMaterialsBatchRequest(
+                production_orders=body.production_orders,
+                branch=body.branch,
+            )
+        )
+        return api_delpi_success(
+            result,
+            operation_id="list_production_order_operation_materials_batch",
+            message="Materiais das operações carregados com sucesso.",
+            fields=_OPERATION_MATERIALS_BATCH_FIELDS,
+        )
+    except ValueError as exc:
+        log_error(f"Erro de validação em orders/operation-materials/batch: {exc}")
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Erro em orders/operation-materials/batch: {exc}")
+        return error_response(
+            "Erro interno ao buscar materiais das operações.",
             status_code=500,
         )
 

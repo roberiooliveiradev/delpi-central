@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from typing import Protocol
 
 
@@ -77,5 +78,12 @@ class ProductionOrdersRepositoryPort(Protocol):
         *,
         production_order: str,
         operation: str,
+        branch: str,
+    ) -> list[dict]: ...
+
+    def fetch_operation_materials_batch(
+        self,
+        *,
+        production_orders: Sequence[str],
         branch: str,
     ) -> list[dict]: ...
