@@ -20,10 +20,20 @@ describe("speedometer-gauge.css theme tokens", () => {
     );
   });
 
-  it("hover não usa wash só de border escuro (legível em claro)", () => {
-    expect(css).toMatch(/--delpi-ui-accent[\s\S]*?10%/);
+  it("não aplica wash de hover/focus que muda a cor do card (paridade com séries)", () => {
     expect(css).not.toMatch(
-      /speedometer-gauge:not\(\[data-interactive="true"\]\):hover[\s\S]*?#334155\)\s*28%/,
+      /\.delpi-ui-speedometer-gauge:not\(\[data-interactive="true"\]\):hover/,
+    );
+    expect(css).not.toMatch(
+      /speedometer-gauge:not\(\[data-interactive="true"\]\):hover[\s\S]*?background:\s*color-mix/,
+    );
+    expect(css).toMatch(/\.delpi-ui-speedometer-gauge:focus-visible/);
+    expect(css).toMatch(/outline:\s*2px solid/);
+  });
+
+  it("fill do arco não usa glow permanente (evita parecer hover)", () => {
+    expect(css).toMatch(
+      /\.delpi-ui-speedometer-gauge__fill\s*\{[^}]*filter:\s*none/s,
     );
   });
 });

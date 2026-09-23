@@ -440,6 +440,40 @@
   stroke-width: 2;
 }
 
+/* Velocímetro — clipa título/plot na moldura (legenda fica dentro do gauge; sem overflow de série). */
+.delpi-ui-series-chart-shell:has(.delpi-ui-series-chart[data-chart-type="gauge"]) {
+  overflow: hidden;
+}
+
+.delpi-ui-series-chart[data-chart-type="gauge"] {
+  overflow: hidden;
+  gap: 0.35rem;
+}
+
+.delpi-ui-series-chart[data-chart-type="gauge"] .delpi-ui-series-chart__title {
+  flex: 0 0 auto;
+  max-height: 22%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0 0.15rem;
+  box-sizing: border-box;
+}
+
+.delpi-ui-series-chart[data-chart-type="gauge"] .delpi-ui-series-chart__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+}
+
+.delpi-ui-series-chart[data-chart-type="gauge"] .delpi-ui-series-chart__plot-host {
+  min-height: max(48px, 42%);
+  overflow: hidden;
+  border-radius: inherit;
+}
+
 /* Velocímetro — seleção SVG com os mesmos tokens da série (sem outline inline). */
 .delpi-ui-series-chart [data-chart-part^="gauge"][aria-selected="true"],
 .delpi-ui-series-chart [data-chart-part="gaugeTrack"][aria-selected="true"],

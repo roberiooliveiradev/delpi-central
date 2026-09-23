@@ -102,7 +102,8 @@ function GaugeChartViewInner({ model, options, chartParts, interaction }: Props)
     borderRadius: chartArea.borderRadius,
     boxShadow: "none",
     boxSizing: "border-box",
-    overflow: "visible",
+    /* Clipa título/plot na moldura — gauge não precisa overflow de legenda externa. */
+    overflow: "hidden",
     backgroundClip: "padding-box",
     display: "flex",
     flexDirection: "column",
@@ -123,6 +124,7 @@ function GaugeChartViewInner({ model, options, chartParts, interaction }: Props)
     background: plotArea.fill,
     border: `${Math.max(0, plotArea.strokeWidth)}px solid ${plotArea.stroke}`,
     borderRadius: plotArea.borderRadius,
+    overflow: "hidden",
     ...(plotArea.opacity != null ? { opacity: plotArea.opacity } : {}),
   };
 
@@ -204,6 +206,7 @@ function GaugeChartViewInner({ model, options, chartParts, interaction }: Props)
         max={model.max}
         min={model.min}
         accentColor={model.accentColor}
+        surfaceColor={plotArea.fill}
         fillHost
         showZonesLegend={
           options.showLegend !== false &&
@@ -231,19 +234,21 @@ function GaugeChartViewInner({ model, options, chartParts, interaction }: Props)
           interaction={interactive ? interaction : null}
           chartParts={chartParts}
         />
-        <div
-          className={cn.plotHost}
-          style={plotHostStyle}
-          {...chartPartDomProps(plotAreaRef, interaction?.selectedPart)}
-          onPointerDown={onPlotPointerDown}
-          onDoubleClick={onPlotDoubleClick}
-        >
-          {plotBody}
-          <ChartPlotAreaChrome
-            layout={GAUGE_FULL_BLEED_PLOT_LAYOUT as import("@delpi/plugin-ui/index").SeriesChartLayout}
-            interaction={interactive ? interaction : null}
-            chartParts={chartParts}
-          />
+        <div className={cn.body}>
+          <div
+            className={cn.plotHost}
+            style={plotHostStyle}
+            {...chartPartDomProps(plotAreaRef, interaction?.selectedPart)}
+            onPointerDown={onPlotPointerDown}
+            onDoubleClick={onPlotDoubleClick}
+          >
+            {plotBody}
+            <ChartPlotAreaChrome
+              layout={GAUGE_FULL_BLEED_PLOT_LAYOUT as import("@delpi/plugin-ui/index").SeriesChartLayout}
+              interaction={interactive ? interaction : null}
+              chartParts={chartParts}
+            />
+          </div>
         </div>
         <ChartPartResizeHandles
           visible={showChartAreaResize}

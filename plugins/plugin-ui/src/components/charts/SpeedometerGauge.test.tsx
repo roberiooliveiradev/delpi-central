@@ -265,4 +265,24 @@ describe("SpeedometerGauge", () => {
     expect(svg?.getAttribute("height")).toBe("100%");
     expect(container.querySelector('[data-fill-host="true"]')).toBeTruthy();
   });
+
+  it("surfaceColor define caption com contraste automático", () => {
+    const { container } = render(
+      <SpeedometerGauge
+        value={99.8}
+        label="Atingimento da meta"
+        surfaceColor="#e8f4fc"
+      />,
+    );
+    const root = container.querySelector(".delpi-ui-speedometer-gauge") as HTMLElement;
+    expect(root.style.getPropertyValue("--delpi-ui-speedometer-caption")).toBe("#000000");
+  });
+
+  it("surfaceColor escura usa caption clara", () => {
+    const { container } = render(
+      <SpeedometerGauge value={50} label="Meta" surfaceColor="#0f172a" />,
+    );
+    const root = container.querySelector(".delpi-ui-speedometer-gauge") as HTMLElement;
+    expect(root.style.getPropertyValue("--delpi-ui-speedometer-caption")).toBe("#ffffff");
+  });
 });

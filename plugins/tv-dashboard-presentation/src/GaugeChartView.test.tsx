@@ -129,6 +129,28 @@ describe("GaugeChartView chartArea / plotArea", () => {
     expect(plot.style.background).toContain("rgb(1, 2, 3)");
   });
 
+  it("clipa overflow do card e usa body como as séries", () => {
+    const { container } = render(
+      <GaugeChartView
+        model={{ ...model, showTitle: true, title: "ROL e meta", label: "Atingimento da meta" }}
+        options={{}}
+        chartParts={{
+          plotArea: { style: { fill: "#e8f4fc" } },
+        }}
+      />,
+    );
+    const shell = container.querySelector(".delpi-ui-series-chart-shell") as HTMLElement;
+    const host = container.querySelector(".tdp-gauge-chart") as HTMLElement;
+    const body = container.querySelector(".delpi-ui-series-chart__body");
+    const gauge = container.querySelector(".delpi-ui-speedometer-gauge") as HTMLElement;
+    expect(body).toBeTruthy();
+    expect(host.style.overflow).toBe("hidden");
+    expect(gauge.getAttribute("data-fill-host")).toBe("true");
+    expect(gauge.style.getPropertyValue("--delpi-ui-speedometer-caption")).toBe("#000000");
+    // Shell clipa via CSS :has(gauge); host inline overflow hidden.
+    expect(shell).toBeTruthy();
+  });
+
   it("mostra handles de resize do plotArea via ChartPlotAreaChrome", () => {
     const onPartResizePointerDown = vi.fn();
     const { container } = render(

@@ -1,6 +1,7 @@
 import { useId, useMemo, useState, type CSSProperties } from "react";
 
 import { delpiUiClass, withBemModifier } from "../../utils/delpiUiClass";
+import { resolveAutomaticTextColor } from "../shape/colorUtils";
 import { ChartPartResizeHandles } from "./seriesChart/ChartPartResizeHandles";
 import { useSeriesChartClasses } from "./seriesChartClasses";
 import {
@@ -101,6 +102,11 @@ export type SpeedometerGaugeProps = {
    * a cor do tom automático nesses elementos; as faixas R/O/G permanecem semânticas.
    */
   accentColor?: string;
+  /**
+   * Cor de fundo local (plotArea) para contraste de rótulos/caption.
+   * Evita texto branco herdado do tema escuro sobre plot claro.
+   */
+  surfaceColor?: string;
   /** Hit-test / seleção no editor TV (opcional). */
   interaction?: SeriesChartInteraction | null;
   chartParts?: ChartPartsMap | null;
@@ -264,6 +270,7 @@ export function SpeedometerGauge({
   classNames: classNamesOverride,
   prefix = "ds",
   accentColor,
+  surfaceColor,
   interaction,
   chartParts,
   "aria-label": ariaLabel,
@@ -277,6 +284,22 @@ export function SpeedometerGauge({
   const interactive = Boolean(
     interaction?.onPartPointerDown || interaction?.onPartDoubleClick,
   );
+  const captionColor = surfaceColor?.trim()
+    ? resolveAutomaticTextColor(surfaceColor)
+    : undefined;
+  const captionMuted =
+    captionColor === "#ffffff"
+      ? "color-mix(in srgb, #ffffff 72%, transparent)"
+      : captionColor === "#000000"
+        ? "color-mix(in srgb, #0f172a 62%, transparent)"
+        : undefined;
+  const surfaceCaptionStyle: CSSProperties | undefined = captionColor
+    ? ({
+        ["--delpi-ui-speedometer-caption" as string]: captionColor,
+        ["--delpi-ui-speedometer-caption-muted" as string]:
+          captionMuted ?? captionColor,
+      } as CSSProperties)
+    : undefined;
   const htmlPartSelectedClass = `${seriesCn.root}__part--selected`;
   const htmlPartFramedClass = `${seriesCn.root}__part--framed`;
   const htmlPartResizableClass = `${seriesCn.root}__part--resizable`;
@@ -422,8 +445,9 @@ export function SpeedometerGauge({
       data-fill-host={fillHost ? "true" : undefined}
       tabIndex={0}
       style={
-        fillHost || needsRelativeHost
+        fillHost || needsRelativeHost || surfaceCaptionStyle
           ? {
+              ...surfaceCaptionStyle,
               ...(fillHost
                 ? {
                     flex: 1,
@@ -449,8 +473,8 @@ export function SpeedometerGauge({
       >
         <defs>
           <linearGradient id={`${uid}-fill`} x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor={fillStroke} stopOpacity={0.35} />
-            <stop offset="100%" stopColor={fillStroke} stopOpacity={0.75} />
+            <stop offset="0%" stopColor={fillStroke} stopOpacity={0.18} />
+            <stop offset="100%" stopColor={fillStroke} stopOpacity={0.42} />
           </linearGradient>
         </defs>
         {zones.map((zone, zoneIndex) => {
