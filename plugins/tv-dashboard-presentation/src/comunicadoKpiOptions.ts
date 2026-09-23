@@ -3,7 +3,11 @@ import {
   type DelpiKpiCardTone,
   type DelpiKpiColorRule,
   type DisplayFormatSpec,
+  type KpiContextMode,
+  type KpiLayoutVariant,
 } from "@delpi/plugin-ui/index";
+
+export type { KpiContextMode, KpiLayoutVariant };
 
 /** Opções declarativas do bloco `kpi_view` (espelha chartOptions). */
 export type ComunicadoKpiOptions = {
@@ -35,6 +39,14 @@ export type ComunicadoKpiOptions = {
   showProgress?: boolean;
   showSparkline?: boolean;
   comparisonLabel?: string;
+  /**
+   * Auto-contexto a partir dos dados resolvidos.
+   * Omitido ≡ `"off"` — slides legacy não ganham sparkline/progress só por deploy.
+   * Blocos novos (`createKpiViewBlock`) usam `"auto"`.
+   */
+  contextMode?: KpiContextMode;
+  /** Layout semântico: hero | row | scorecard. */
+  variant?: KpiLayoutVariant;
 };
 
 /** Herda o tema claro do gráfico (catálogo DECK_*).

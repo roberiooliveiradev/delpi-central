@@ -42,11 +42,40 @@
         "key": "TV_KPI_ROW_2",
         "safeMargin": 3,
         "maxPrimarySignals": 2,
-        "preferredUseCases": ["comparison"],
+        "preferredUseCases": [
+          "comparison"
+        ],
         "slots": [
-          {"id": "title", "role": "title", "frame": {"x": 3, "y": 3, "w": 94, "h": 8}},
-          {"id": "primaryMetric", "role": "primaryKpi", "frame": {"x": 3, "y": 16, "w": 46, "h": 70}},
-          {"id": "secondaryMetric", "role": "secondaryKpi", "frame": {"x": 51, "y": 16, "w": 46, "h": 70}}
+          {
+            "id": "title",
+            "role": "title",
+            "frame": {
+              "x": 3,
+              "y": 3,
+              "w": 94,
+              "h": 8
+            }
+          },
+          {
+            "id": "primaryMetric",
+            "role": "primaryKpi",
+            "frame": {
+              "x": 3,
+              "y": 16,
+              "w": 46,
+              "h": 70
+            }
+          },
+          {
+            "id": "secondaryMetric",
+            "role": "secondaryKpi",
+            "frame": {
+              "x": 51,
+              "y": 16,
+              "w": 46,
+              "h": 70
+            }
+          }
         ]
       },
       "markers": [
@@ -130,6 +159,13 @@
                   "color": "#089bdb"
                 }
               }
+            },
+            "role": "primaryKpi",
+            "variant": "row",
+            "kpiOptions": {
+              "contextMode": "auto",
+              "variant": "row",
+              "showIcon": false
             }
           }
         },
@@ -177,6 +213,13 @@
                   "color": "#089bdb"
                 }
               }
+            },
+            "role": "secondaryKpi",
+            "variant": "row",
+            "kpiOptions": {
+              "contextMode": "auto",
+              "variant": "row",
+              "showIcon": false
             }
           }
         }
@@ -190,12 +233,50 @@
         "key": "TV_KPI_ROW_3",
         "safeMargin": 3,
         "maxPrimarySignals": 3,
-        "preferredUseCases": ["comparison"],
+        "preferredUseCases": [
+          "comparison"
+        ],
         "slots": [
-          {"id": "title", "role": "title", "frame": {"x": 3, "y": 3, "w": 94, "h": 8}},
-          {"id": "primaryMetric", "role": "primaryKpi", "frame": {"x": 3, "y": 16, "w": 30, "h": 70}},
-          {"id": "secondaryMetric", "role": "secondaryKpi", "frame": {"x": 35, "y": 16, "w": 30, "h": 70}},
-          {"id": "tertiaryMetric", "role": "secondaryKpi", "frame": {"x": 67, "y": 16, "w": 30, "h": 70}}
+          {
+            "id": "title",
+            "role": "title",
+            "frame": {
+              "x": 3,
+              "y": 3,
+              "w": 94,
+              "h": 8
+            }
+          },
+          {
+            "id": "primaryMetric",
+            "role": "primaryKpi",
+            "frame": {
+              "x": 3,
+              "y": 16,
+              "w": 30,
+              "h": 70
+            }
+          },
+          {
+            "id": "secondaryMetric",
+            "role": "secondaryKpi",
+            "frame": {
+              "x": 35,
+              "y": 16,
+              "w": 30,
+              "h": 70
+            }
+          },
+          {
+            "id": "tertiaryMetric",
+            "role": "secondaryKpi",
+            "frame": {
+              "x": 67,
+              "y": 16,
+              "w": 30,
+              "h": 70
+            }
+          }
         ]
       },
       "markers": [
@@ -279,6 +360,13 @@
                   "color": "#089bdb"
                 }
               }
+            },
+            "role": "primaryKpi",
+            "variant": "row",
+            "kpiOptions": {
+              "contextMode": "auto",
+              "variant": "row",
+              "showIcon": false
             }
           }
         },
@@ -326,6 +414,13 @@
                   "color": "#089bdb"
                 }
               }
+            },
+            "role": "secondaryKpi",
+            "variant": "row",
+            "kpiOptions": {
+              "contextMode": "auto",
+              "variant": "row",
+              "showIcon": false
             }
           }
         },
@@ -373,6 +468,13 @@
                   "color": "#089bdb"
                 }
               }
+            },
+            "role": "secondaryKpi",
+            "variant": "row",
+            "kpiOptions": {
+              "contextMode": "auto",
+              "variant": "row",
+              "showIcon": false
             }
           }
         }
@@ -386,13 +488,60 @@
         "key": "TV_KPI_GRID_4",
         "safeMargin": 3,
         "maxPrimarySignals": 4,
-        "preferredUseCases": ["overview"],
+        "preferredUseCases": [
+          "overview"
+        ],
         "slots": [
-          {"id": "title", "role": "title", "frame": {"x": 3, "y": 3, "w": 94, "h": 7}},
-          {"id": "primaryMetric", "role": "primaryKpi", "frame": {"x": 3, "y": 13, "w": 46, "h": 40}},
-          {"id": "secondaryMetric", "role": "secondaryKpi", "frame": {"x": 51, "y": 13, "w": 46, "h": 40}},
-          {"id": "tertiaryMetric", "role": "secondaryKpi", "frame": {"x": 3, "y": 56, "w": 46, "h": 40}},
-          {"id": "quaternaryMetric", "role": "secondaryKpi", "frame": {"x": 51, "y": 56, "w": 46, "h": 40}}
+          {
+            "id": "title",
+            "role": "title",
+            "frame": {
+              "x": 3,
+              "y": 3,
+              "w": 94,
+              "h": 7
+            }
+          },
+          {
+            "id": "primaryMetric",
+            "role": "primaryKpi",
+            "frame": {
+              "x": 3,
+              "y": 13,
+              "w": 46,
+              "h": 40
+            }
+          },
+          {
+            "id": "secondaryMetric",
+            "role": "secondaryKpi",
+            "frame": {
+              "x": 51,
+              "y": 13,
+              "w": 46,
+              "h": 40
+            }
+          },
+          {
+            "id": "tertiaryMetric",
+            "role": "secondaryKpi",
+            "frame": {
+              "x": 3,
+              "y": 56,
+              "w": 46,
+              "h": 40
+            }
+          },
+          {
+            "id": "quaternaryMetric",
+            "role": "secondaryKpi",
+            "frame": {
+              "x": 51,
+              "y": 56,
+              "w": 46,
+              "h": 40
+            }
+          }
         ]
       },
       "markers": [
@@ -476,6 +625,13 @@
                   "color": "#089bdb"
                 }
               }
+            },
+            "role": "primaryKpi",
+            "variant": "row",
+            "kpiOptions": {
+              "contextMode": "auto",
+              "variant": "row",
+              "showIcon": false
             }
           }
         },
@@ -523,6 +679,13 @@
                   "color": "#089bdb"
                 }
               }
+            },
+            "role": "secondaryKpi",
+            "variant": "row",
+            "kpiOptions": {
+              "contextMode": "auto",
+              "variant": "row",
+              "showIcon": false
             }
           }
         },
@@ -570,6 +733,13 @@
                   "color": "#089bdb"
                 }
               }
+            },
+            "role": "secondaryKpi",
+            "variant": "row",
+            "kpiOptions": {
+              "contextMode": "auto",
+              "variant": "row",
+              "showIcon": false
             }
           }
         },
@@ -617,6 +787,13 @@
                   "color": "#089bdb"
                 }
               }
+            },
+            "role": "secondaryKpi",
+            "variant": "row",
+            "kpiOptions": {
+              "contextMode": "auto",
+              "variant": "row",
+              "showIcon": false
             }
           }
         }
@@ -800,10 +977,30 @@
         "key": "TV_KPI_HERO",
         "safeMargin": 4,
         "maxPrimarySignals": 1,
-        "preferredUseCases": ["overview"],
+        "preferredUseCases": [
+          "overview"
+        ],
         "slots": [
-          {"id": "title", "role": "title", "frame": {"x": 6, "y": 6, "w": 88, "h": 12}},
-          {"id": "primaryMetric", "role": "primaryKpi", "frame": {"x": 18, "y": 22, "w": 36, "h": 42}}
+          {
+            "id": "title",
+            "role": "title",
+            "frame": {
+              "x": 6,
+              "y": 6,
+              "w": 88,
+              "h": 12
+            }
+          },
+          {
+            "id": "primaryMetric",
+            "role": "primaryKpi",
+            "frame": {
+              "x": 18,
+              "y": 22,
+              "w": 36,
+              "h": 42
+            }
+          }
         ]
       },
       "markers": [
@@ -888,6 +1085,13 @@
                   "color": "#089bdb"
                 }
               }
+            },
+            "role": "primaryKpi",
+            "variant": "hero",
+            "kpiOptions": {
+              "contextMode": "auto",
+              "variant": "hero",
+              "showIcon": false
             }
           }
         }
@@ -901,11 +1105,40 @@
         "key": "TV_KPI_PLUS_CHART",
         "safeMargin": 4,
         "maxPrimarySignals": 2,
-        "preferredUseCases": ["trend"],
+        "preferredUseCases": [
+          "trend"
+        ],
         "slots": [
-          {"id": "title", "role": "title", "frame": {"x": 4, "y": 4, "w": 92, "h": 10}},
-          {"id": "primaryMetric", "role": "primaryKpi", "frame": {"x": 4, "y": 18, "w": 28, "h": 56}},
-          {"id": "mainVisualization", "role": "chart", "frame": {"x": 36, "y": 18, "w": 60, "h": 56}}
+          {
+            "id": "title",
+            "role": "title",
+            "frame": {
+              "x": 4,
+              "y": 4,
+              "w": 92,
+              "h": 10
+            }
+          },
+          {
+            "id": "primaryMetric",
+            "role": "primaryKpi",
+            "frame": {
+              "x": 4,
+              "y": 18,
+              "w": 28,
+              "h": 56
+            }
+          },
+          {
+            "id": "mainVisualization",
+            "role": "chart",
+            "frame": {
+              "x": 36,
+              "y": 18,
+              "w": 60,
+              "h": 56
+            }
+          }
         ]
       },
       "markers": [
@@ -1022,12 +1255,51 @@
         "key": "TV_KPI_SERIES_TABLE",
         "safeMargin": 3,
         "maxPrimarySignals": 3,
-        "preferredUseCases": ["trend", "detail"],
+        "preferredUseCases": [
+          "trend",
+          "detail"
+        ],
         "slots": [
-          {"id": "title", "role": "title", "frame": {"x": 3, "y": 3, "w": 94, "h": 8}},
-          {"id": "primaryMetric", "role": "primaryKpi", "frame": {"x": 3, "y": 14, "w": 22, "h": 36}},
-          {"id": "mainVisualization", "role": "chart", "frame": {"x": 28, "y": 14, "w": 69, "h": 36}},
-          {"id": "ranking", "role": "table", "frame": {"x": 3, "y": 54, "w": 94, "h": 42}}
+          {
+            "id": "title",
+            "role": "title",
+            "frame": {
+              "x": 3,
+              "y": 3,
+              "w": 94,
+              "h": 8
+            }
+          },
+          {
+            "id": "primaryMetric",
+            "role": "primaryKpi",
+            "frame": {
+              "x": 3,
+              "y": 14,
+              "w": 22,
+              "h": 36
+            }
+          },
+          {
+            "id": "mainVisualization",
+            "role": "chart",
+            "frame": {
+              "x": 28,
+              "y": 14,
+              "w": 69,
+              "h": 36
+            }
+          },
+          {
+            "id": "ranking",
+            "role": "table",
+            "frame": {
+              "x": 3,
+              "y": 54,
+              "w": 94,
+              "h": 42
+            }
+          }
         ]
       },
       "markers": [
@@ -1314,11 +1586,41 @@
         "key": "TV_KPI_PLUS_CHART_BAR",
         "safeMargin": 4,
         "maxPrimarySignals": 2,
-        "preferredUseCases": ["comparison", "category"],
+        "preferredUseCases": [
+          "comparison",
+          "category"
+        ],
         "slots": [
-          {"id": "title", "role": "title", "frame": {"x": 4, "y": 4, "w": 92, "h": 10}},
-          {"id": "primaryMetric", "role": "primaryKpi", "frame": {"x": 4, "y": 18, "w": 28, "h": 56}},
-          {"id": "mainVisualization", "role": "chart", "frame": {"x": 34, "y": 18, "w": 62, "h": 56}}
+          {
+            "id": "title",
+            "role": "title",
+            "frame": {
+              "x": 4,
+              "y": 4,
+              "w": 92,
+              "h": 10
+            }
+          },
+          {
+            "id": "primaryMetric",
+            "role": "primaryKpi",
+            "frame": {
+              "x": 4,
+              "y": 18,
+              "w": 28,
+              "h": 56
+            }
+          },
+          {
+            "id": "mainVisualization",
+            "role": "chart",
+            "frame": {
+              "x": 34,
+              "y": 18,
+              "w": 62,
+              "h": 56
+            }
+          }
         ]
       },
       "markers": [
@@ -1436,11 +1738,40 @@
         "key": "TV_KPI_PLUS_CHART_PIE",
         "safeMargin": 4,
         "maxPrimarySignals": 2,
-        "preferredUseCases": ["composition"],
+        "preferredUseCases": [
+          "composition"
+        ],
         "slots": [
-          {"id": "title", "role": "title", "frame": {"x": 4, "y": 4, "w": 92, "h": 10}},
-          {"id": "primaryMetric", "role": "primaryKpi", "frame": {"x": 4, "y": 18, "w": 28, "h": 56}},
-          {"id": "mainVisualization", "role": "chart", "frame": {"x": 36, "y": 18, "w": 60, "h": 56}}
+          {
+            "id": "title",
+            "role": "title",
+            "frame": {
+              "x": 4,
+              "y": 4,
+              "w": 92,
+              "h": 10
+            }
+          },
+          {
+            "id": "primaryMetric",
+            "role": "primaryKpi",
+            "frame": {
+              "x": 4,
+              "y": 18,
+              "w": 28,
+              "h": 56
+            }
+          },
+          {
+            "id": "mainVisualization",
+            "role": "chart",
+            "frame": {
+              "x": 36,
+              "y": 18,
+              "w": 60,
+              "h": 56
+            }
+          }
         ]
       },
       "markers": [
@@ -1791,11 +2122,36 @@
     },
     "safeMargin": 3,
     "roles": {
-      "title": {"fontSize": 32, "fill": "#ffffff", "radius": 0, "padding": 0},
-      "primaryKpi": {"fontSize": 56, "fill": "#ffffff", "radius": 16, "padding": 16},
-      "secondaryKpi": {"fontSize": 40, "fill": "#ffffff", "radius": 12, "padding": 12},
-      "chart": {"fontSize": 18, "fill": "#ffffff", "radius": 12, "padding": 12},
-      "table": {"fontSize": 16, "fill": "#ffffff", "radius": 8, "padding": 8}
+      "title": {
+        "fontSize": 32,
+        "fill": "#ffffff",
+        "radius": 0,
+        "padding": 0
+      },
+      "primaryKpi": {
+        "fontSize": 56,
+        "fill": "#ffffff",
+        "radius": 16,
+        "padding": 16
+      },
+      "secondaryKpi": {
+        "fontSize": 40,
+        "fill": "#ffffff",
+        "radius": 12,
+        "padding": 12
+      },
+      "chart": {
+        "fontSize": 18,
+        "fill": "#ffffff",
+        "radius": 12,
+        "padding": 12
+      },
+      "table": {
+        "fontSize": 16,
+        "fill": "#ffffff",
+        "radius": 8,
+        "padding": 8
+      }
     },
     "gutter": 2,
     "maxPrimarySignalsPerSlide": 4,
@@ -1810,14 +2166,62 @@
       "kpiSecondary": 40
     },
     "typography": {
-      "display": {"fontSize": 48, "fontWeight": "bold", "lineHeight": 1.1, "recommendedMaxLines": 2, "minTvSize": 40},
-      "title": {"fontSize": 32, "fontWeight": "bold", "lineHeight": 1.15, "recommendedMaxLines": 2, "minTvSize": 28},
-      "sectionTitle": {"fontSize": 26, "fontWeight": "600", "lineHeight": 1.2, "recommendedMaxLines": 1, "minTvSize": 22},
-      "body": {"fontSize": 22, "fontWeight": "regular", "lineHeight": 1.3, "recommendedMaxLines": 3, "minTvSize": 18},
-      "caption": {"fontSize": 16, "fontWeight": "regular", "lineHeight": 1.3, "recommendedMaxLines": 2, "minTvSize": 14},
-      "kpiHero": {"fontSize": 80, "fontWeight": "bold", "lineHeight": 1.0, "recommendedMaxLines": 1, "minTvSize": 64},
-      "kpiPrimary": {"fontSize": 56, "fontWeight": "bold", "lineHeight": 1.0, "recommendedMaxLines": 1, "minTvSize": 48},
-      "kpiSecondary": {"fontSize": 40, "fontWeight": "600", "lineHeight": 1.05, "recommendedMaxLines": 1, "minTvSize": 32}
+      "display": {
+        "fontSize": 48,
+        "fontWeight": "bold",
+        "lineHeight": 1.1,
+        "recommendedMaxLines": 2,
+        "minTvSize": 40
+      },
+      "title": {
+        "fontSize": 32,
+        "fontWeight": "bold",
+        "lineHeight": 1.15,
+        "recommendedMaxLines": 2,
+        "minTvSize": 28
+      },
+      "sectionTitle": {
+        "fontSize": 26,
+        "fontWeight": "600",
+        "lineHeight": 1.2,
+        "recommendedMaxLines": 1,
+        "minTvSize": 22
+      },
+      "body": {
+        "fontSize": 22,
+        "fontWeight": "regular",
+        "lineHeight": 1.3,
+        "recommendedMaxLines": 3,
+        "minTvSize": 18
+      },
+      "caption": {
+        "fontSize": 16,
+        "fontWeight": "regular",
+        "lineHeight": 1.3,
+        "recommendedMaxLines": 2,
+        "minTvSize": 14
+      },
+      "kpiHero": {
+        "fontSize": 80,
+        "fontWeight": "bold",
+        "lineHeight": 1.0,
+        "recommendedMaxLines": 1,
+        "minTvSize": 64
+      },
+      "kpiPrimary": {
+        "fontSize": 56,
+        "fontWeight": "bold",
+        "lineHeight": 1.0,
+        "recommendedMaxLines": 1,
+        "minTvSize": 48
+      },
+      "kpiSecondary": {
+        "fontSize": 40,
+        "fontWeight": "600",
+        "lineHeight": 1.05,
+        "recommendedMaxLines": 1,
+        "minTvSize": 32
+      }
     },
     "spacing": {
       "space.1": 1,

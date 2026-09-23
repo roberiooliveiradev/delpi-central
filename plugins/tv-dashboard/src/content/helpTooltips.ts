@@ -447,9 +447,10 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     connectFlowRibbon: "Sem fonte — escolha no seletor do painel ou abra o catálogo.",
     connectOnStage:
       "Com um gráfico, tabela, KPI ou texto/forma selecionado sem fonte, clique em um bloco de fonte (ícone de banco) no palco para conectar automaticamente.",
-    kpiCard: "Título, subtítulo, unidade, ícone e tom de cor do card KPI (padrão visual Delpi).",
+    kpiCard:
+      "Título, subtítulo, unidade, ícone e tom do card KPI. ContextMode: Auto liga Δ/sparkline/progresso pelos dados; Manual usa o que você ligou no inspetor; Off (legado sem o campo) não inventa chrome.",
     kpiElements:
-      "Ligue ou desligue partes do card. O detalhe abre ao selecionar a parte no palco.",
+      "Ligue ou desligue partes do card. Presets BAN/Scorecard gravam Manual. Blocos novos em Auto ligam sparkline ou progresso conforme série/meta — sem ops manuais.",
     kpiColorRules:
       "Regras por limiar: a primeira condição verdadeira aplica o tom (positivo/negativo/atenção) ao valor.",
     chartOptions: "Título, legenda, eixos, rótulos de dados e formato dos valores exibidos no gráfico.",

@@ -469,19 +469,30 @@ export function createCanvasTableBlock(rows = 3, cols = 3): ComunicadoCanvasTabl
   };
 }
 
-export function createKpiViewBlock(options?: Partial<ComunicadoKpiOptions>): ComunicadoBlock {
+export function createKpiViewBlock(
+  options?: Partial<ComunicadoKpiOptions>,
+  frameHint?: { h?: number; w?: number } | null,
+): ComunicadoBlock {
+  const frame = { ...DECK_KPI_DEFAULTS.frame, ...(frameHint ?? {}) };
+  const variant =
+    options?.variant ??
+    (Number(frame.h) < 28 ? "row" : "hero");
   const kpiOptions = mergeComunicadoKpiOptions({
     ...DEFAULT_COMUNICADO_KPI_OPTIONS,
-    iconName: options?.iconName ?? DEFAULT_COMUNICADO_KPI_OPTIONS.iconName,
-    showIcon: options?.showIcon ?? true,
     ...options,
+    contextMode: options?.contextMode ?? "auto",
+    showIcon: options?.showIcon ?? false,
+    iconName: options?.iconName,
+    variant: options?.variant ?? variant,
   });
   return {
     id: newBlockId(),
     type: "kpi_view",
+    role: variant === "hero" ? "primaryKpi" : "secondaryKpi",
+    variant,
     kpiOptions,
     kpiParts: kpiOptionsToParts(kpiOptions),
-    frame: { ...DECK_KPI_DEFAULTS.frame },
+    frame,
     style: { zIndex: 2, borderRadius: 0, color: DECK_COLOR_TEXT_STRONG },
   };
 }

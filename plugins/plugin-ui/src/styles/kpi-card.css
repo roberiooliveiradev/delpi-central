@@ -525,6 +525,56 @@
   color: var(--delpi-kpi-icon-fg, var(--delpi-ui-accent, #089bdb));
 }
 
+/* Variantes semânticas — densificam o card (menos whitespace morto). */
+.delpi-kpi-card--variant-hero {
+  justify-content: flex-start;
+  padding: 10px 12px;
+}
+
+.delpi-kpi-card--variant-hero .delpi-kpi-card__body {
+  justify-content: flex-start;
+  gap: 4px;
+}
+
+.delpi-kpi-card--variant-hero .delpi-kpi-card__value {
+  flex: 1 1 auto;
+  min-height: 42%;
+  align-items: flex-end;
+}
+
+.delpi-kpi-card--variant-hero.delpi-kpi-card--has-context .delpi-kpi-card__value {
+  min-height: 36%;
+}
+
+.delpi-kpi-card--variant-row {
+  padding: 8px 10px;
+}
+
+.delpi-kpi-card--variant-row .delpi-kpi-card__body {
+  justify-content: center;
+  gap: 2px;
+}
+
+.delpi-kpi-card--variant-row .delpi-kpi-card__value {
+  flex: 0 1 auto;
+  max-height: 52%;
+}
+
+.delpi-kpi-card--variant-scorecard {
+  justify-content: flex-start;
+  padding: 10px 12px;
+}
+
+.delpi-kpi-card--variant-scorecard .delpi-kpi-card__body {
+  justify-content: flex-start;
+  gap: 4px;
+}
+
+.delpi-kpi-card--variant-scorecard .delpi-kpi-card__value {
+  flex: 1 1 auto;
+  min-height: 34%;
+}
+
 .delpi-ui-fit-text {
   max-width: 100%;
 }

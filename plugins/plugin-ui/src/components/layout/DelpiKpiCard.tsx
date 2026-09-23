@@ -55,7 +55,9 @@ export type { MetricKpiCardTone as DelpiKpiCardTone };
 export type {
   KpiCardFlatOptions,
   KpiCardInteraction,
+  KpiContextMode,
   KpiFramePartKind,
+  KpiLayoutVariant,
   KpiPartFrame,
   KpiPartRef,
   KpiPartResizeHandle,
@@ -279,6 +281,8 @@ export type DelpiKpiCardProps = {
   progressPct?: number | null;
   /** Pontos da sparkline (ordem temporal). */
   sparklinePoints?: number[] | null;
+  /** Layout semântico — sobrescreve `kpiOptions.variant` quando informado. */
+  variant?: import("./kpiCardParts").KpiLayoutVariant | null;
 };
 
 /**
@@ -377,6 +381,7 @@ export function DelpiKpiCard({
   comparisonTone = "neutral",
   progressPct = null,
   sparklinePoints = null,
+  variant: variantProp = null,
 }: DelpiKpiCardProps) {
   const titleHostRef = useRef<HTMLParagraphElement>(null);
   const valueHostRef = useRef<HTMLElement>(null);
@@ -624,12 +629,24 @@ export function DelpiKpiCard({
       : {}),
   };
 
+  const layoutVariant =
+    variantProp ??
+    (kpiOptions?.variant === "hero" ||
+    kpiOptions?.variant === "row" ||
+    kpiOptions?.variant === "scorecard"
+      ? kpiOptions.variant
+      : undefined);
+
   const articleClass = [
     DELPI_KPI_CLASS_NAMES.articleTone(tone),
     className,
     fill ? "delpi-kpi-card--fill" : "",
+    layoutVariant ? `delpi-kpi-card--variant-${layoutVariant}` : "",
     cardPtr.selected ? "delpi-kpi-card--part-selected" : "",
     !showTitle && !showHint ? "delpi-kpi-card--value-dominant" : "",
+    showComparison || showSparkline || showProgress
+      ? "delpi-kpi-card--has-context"
+      : "",
   ]
     .filter(Boolean)
     .join(" ");

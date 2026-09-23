@@ -14,10 +14,10 @@ function kpiWithResolved(block: ReturnType<typeof createKpiViewBlock>): Comunica
 }
 
 describe("KpiViewBlockView icon visibility", () => {
-  it("renderiza ícone Gauge por padrão no padrão visual do KPI", () => {
+  it("não renderiza ícone Gauge por padrão em blocos novos (auto, showIcon false)", () => {
     const block = kpiWithResolved(createKpiViewBlock({ title: "Consumo" }));
     const { container } = render(<KpiViewBlockView block={block} />);
-    expect(container.querySelector(".delpi-kpi-icon")).toBeTruthy();
+    expect(container.querySelector(".delpi-kpi-icon")).toBeNull();
     expect(screen.getByText("10")).toBeTruthy();
   });
 
@@ -72,7 +72,7 @@ describe("KpiViewBlockView icon visibility", () => {
     expect(screen.getByText("Total de LMPs")).toBeTruthy();
     expect(screen.getByText("Lead time médio")).toBeTruthy();
     expect(screen.getByText("42")).toBeTruthy();
-    expect(screen.getByText("3.2")).toBeTruthy();
+    expect(screen.getByText("3,2")).toBeTruthy();
   });
 
   it("cai na tabela anexada quando não há valor numérico", () => {

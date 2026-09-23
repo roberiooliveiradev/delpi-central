@@ -158,6 +158,15 @@ export function applyKpiElementVisibility(
     ...(options ?? {}),
     ...partsToKpiOptions(nextParts),
   };
+  if (
+    elementId === "kpiComparison" ||
+    elementId === "kpiProgress" ||
+    elementId === "kpiSparkline" ||
+    elementId === "kpiIcon"
+  ) {
+    /* Autoridade do usuário no inspetor — sai do auto. */
+    nextOptions.contextMode = "manual";
+  }
   if (elementId === "kpiIcon") nextOptions.showIcon = enabled;
   if (elementId === "kpiTitle") nextOptions.showTitle = enabled;
   if (elementId === "kpiHint" && !enabled) nextOptions.subtitle = undefined;
@@ -274,6 +283,8 @@ export function applyKpiLayoutPreset(
   }
 
   if (preset === "ban") {
+    baseOptions.contextMode = "manual";
+    baseOptions.variant = "hero";
     baseOptions.showComparison = true;
     if (baseOptions.comparisonMode == null || baseOptions.comparisonMode === "none") {
       baseOptions.comparisonMode = "previous";
@@ -285,6 +296,8 @@ export function applyKpiLayoutPreset(
     nextParts = upsertKpiPartState(nextParts, { kind: "progress" }, { visible: false });
   }
   if (preset === "scorecard") {
+    baseOptions.contextMode = "manual";
+    baseOptions.variant = "scorecard";
     baseOptions.showComparison = true;
     if (baseOptions.comparisonMode == null || baseOptions.comparisonMode === "none") {
       baseOptions.comparisonMode = "target";
@@ -294,6 +307,10 @@ export function applyKpiLayoutPreset(
     nextParts = upsertKpiPartState(nextParts, { kind: "comparison" }, { visible: true });
     nextParts = upsertKpiPartState(nextParts, { kind: "progress" }, { visible: true });
     nextParts = upsertKpiPartState(nextParts, { kind: "sparkline" }, { visible: false });
+  }
+  if (preset === "compact") {
+    baseOptions.contextMode = "manual";
+    baseOptions.variant = "row";
   }
 
   nextParts = mergeKpiPartsWithOptions(nextParts, baseOptions);

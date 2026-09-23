@@ -7,6 +7,7 @@ import {
   type DelpiKpiCardTone,
   type DelpiKpiComparisonTone,
   type DisplayFormatSpec,
+  type KpiLayoutVariant,
 } from "@delpi/plugin-ui/index";
 
 import type { ComunicadoKpiOptions } from "./comunicadoKpiOptions";
@@ -14,6 +15,10 @@ import { mergeComunicadoKpiOptions } from "./comunicadoKpiOptions";
 import type { ComunicadoDataResolved } from "./comunicadoTypes";
 import { isAutoBakedFieldLabel } from "./fieldLabelRegistry";
 import { formatNumber } from "./nativeFormat";
+import {
+  resolveKpiOptionsWithAutoContext,
+  sparklinePointsFromResolved,
+} from "./resolveKpiAutoContext";
 import type { KpiMetricProjection } from "./viewProjection";
 
 export type KpiViewPresentation = {
@@ -29,6 +34,8 @@ export type KpiViewPresentation = {
   comparisonTone?: DelpiKpiComparisonTone;
   progressPct?: number | null;
   sparklinePoints?: number[];
+  /** Variante efetiva para o kit (hero|row|scorecard). */
+  variant?: KpiLayoutVariant;
 };
 
 export type KpiMetricPresentationOverrides = Pick<
@@ -43,13 +50,6 @@ export type KpiMetricPresentationOverrides = Pick<
   | "comparisonMode"
   | "higherIsBetter"
 >;
-
-function sparklinePointsFromResolved(resolved: ComunicadoDataResolved | undefined): number[] {
-  const series = resolved?.chart?.series?.[0]?.points ?? resolved?.chart?.points ?? [];
-  return series
-    .map((point) => parseKpiNumericValue(point?.value))
-    .filter((n): n is number => n != null && Number.isFinite(n));
-}
 
 function formatSignedPct(pct: number): string {
   const abs = Math.abs(pct);
@@ -120,7 +120,8 @@ export function resolveKpiViewPresentation(
   kpiOptions?: ComunicadoKpiOptions | null,
   metricOverrides?: KpiMetricPresentationOverrides | null,
 ): KpiViewPresentation {
-  const options = mergeComunicadoKpiOptions(kpiOptions);
+  const merged = mergeComunicadoKpiOptions(kpiOptions);
+  const options = resolveKpiOptionsWithAutoContext(merged, resolved, metricOverrides);
   const rawValue = resolved?.kpi?.value;
   const numeric = parseKpiNumericValue(rawValue);
   const colorRules = metricOverrides?.colorRules ?? options.colorRules;
@@ -177,6 +178,7 @@ export function resolveKpiViewPresentation(
     comparisonTone: comparison.comparisonTone,
     progressPct: comparison.progressPct,
     sparklinePoints: options.showSparkline ? sparklinePoints : undefined,
+    variant: options.variant,
   };
 }
 

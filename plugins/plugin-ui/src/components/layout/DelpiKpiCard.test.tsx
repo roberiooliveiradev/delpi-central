@@ -308,7 +308,8 @@ describe("DelpiKpiCard chrome", () => {
       />,
     );
     expect(container.querySelector(".delpi-kpi-card__comparison")?.textContent).toContain("+3,2%");
-    expect(container.querySelector(".delpi-kpi-sparkline__svg")).toBeTruthy();
+    expect(container.querySelector(".delpi-kpi-sparkline")).toBeTruthy();
+    expect(container.querySelector(".delpi-ui-series-sparkline__chart")).toBeTruthy();
   });
 
   it("não reexibe ícone oculto só porque o ReactNode icon foi passado", () => {
@@ -323,5 +324,24 @@ describe("DelpiKpiCard chrome", () => {
     );
     expect(container.querySelector(".delpi-kpi-icon")).toBeNull();
     expect(container.querySelector("[data-testid='kpi-icon']")).toBeNull();
+  });
+
+  it("aplica classe de variante hero/row/scorecard", () => {
+    const { container, rerender } = render(
+      <DelpiKpiCard label="ROL" value="1,2M" variant="hero" comparisonText="▲ +2%" />,
+    );
+    expect(container.querySelector(".delpi-kpi-card--variant-hero")).toBeTruthy();
+    rerender(<DelpiKpiCard label="OTD" value="98%" variant="row" />);
+    expect(container.querySelector(".delpi-kpi-card--variant-row")).toBeTruthy();
+    rerender(
+      <DelpiKpiCard
+        label="Meta"
+        value="80"
+        variant="scorecard"
+        progressPct={80}
+        kpiOptions={{ showProgress: true, variant: "scorecard" }}
+      />,
+    );
+    expect(container.querySelector(".delpi-kpi-card--variant-scorecard")).toBeTruthy();
   });
 });

@@ -918,11 +918,19 @@ export {
   DEFAULT_COMUNICADO_KPI_OPTIONS,
   mergeComunicadoKpiOptions,
   type ComunicadoKpiOptions,
+  type KpiContextMode,
+  type KpiLayoutVariant,
 } from "./comunicadoKpiOptions";
 export {
   resolveKpiViewPresentation,
   type KpiViewPresentation,
 } from "./resolveKpiPresentation";
+export {
+  effectiveKpiContextMode,
+  resolveKpiOptionsWithAutoContext,
+  suggestKpiVariantFromFrame,
+  sparklinePointsFromResolved,
+} from "./resolveKpiAutoContext";
 export {
   KPI_ELEMENT_CATALOG,
   KPI_LAYOUT_PRESET_FRAMES,

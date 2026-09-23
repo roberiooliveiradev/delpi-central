@@ -164,6 +164,15 @@ const KPI_PART_KIND_CAPABILITIES: Record<KpiPartRef["kind"], KpiPartCapabilities
   metricCard: { movable: false, editable: true, deletable: false, resizable: false },
 };
 
+/**
+ * Como o resolver liga comparison/sparkline/progress a partir dos dados.
+ * Ausente / omitido ≡ `"off"` (slides legacy não mudam só porque o default novo mudou).
+ */
+export type KpiContextMode = "auto" | "off" | "manual";
+
+/** Layout semântico do card — kit pinta; presentation/recipes escolhem. */
+export type KpiLayoutVariant = "hero" | "row" | "scorecard";
+
 /** Options flat do card (legado / inspetor) — espelho de SeriesChartOptions. */
 export type KpiCardFlatOptions = {
   title?: string;
@@ -188,6 +197,13 @@ export type KpiCardFlatOptions = {
   showProgress?: boolean;
   showSparkline?: boolean;
   comparisonLabel?: string;
+  /**
+   * Auto-contexto a partir de `resolved` (série/meta).
+   * Omitido = `"off"` (compatibilidade com slides já gravados).
+   */
+  contextMode?: KpiContextMode;
+  /** Variante de layout: hero (valor dominante), row (compacto), scorecard (meta). */
+  variant?: KpiLayoutVariant;
 };
 
 /** Frame padrão do ícone (canto superior direito — caixa quadrada compacta). */

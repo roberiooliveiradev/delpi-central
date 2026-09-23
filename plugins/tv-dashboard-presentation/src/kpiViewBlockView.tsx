@@ -141,6 +141,7 @@ export function KpiViewBlockView({
         comparisonTone={presentation.comparisonTone}
         progressPct={presentation.progressPct}
         sparklinePoints={presentation.sparklinePoints}
+        variant={presentation.variant ?? block.kpiOptions?.variant ?? null}
         fill
       />
     );

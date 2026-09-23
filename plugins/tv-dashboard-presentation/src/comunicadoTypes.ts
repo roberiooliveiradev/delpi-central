@@ -269,6 +269,16 @@ export type ComunicadoBlockBase = {
   hidden?: boolean;
   /** Animações do bloco (4E.2) — entrada na TV. */
   animations?: ComunicadoBlockAnimation[];
+  /**
+   * Papel semântico no blueprint / partChrome (ex.: primaryKpi, secondaryKpi, title).
+   * Additive — blocks legacy omitirem.
+   */
+  role?: string;
+  /**
+   * Variante semântica de chrome/layout (ex.: hero | row | scorecard no KPI).
+   * Para `kpi_view`, preferir também `kpiOptions.variant` (fonte de layout do card).
+   */
+  variant?: string;
 };
 
 export type ComunicadoTextBlock = ComunicadoBlockBase &
