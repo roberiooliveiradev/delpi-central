@@ -84,8 +84,19 @@ Select the **smallest sufficient** mode. Do not force a full dashboard journey.
 | **GUIDED DASHBOARD** | Need to design/reorganize a panel or multi-slide story | catalog + list/context + data routes + suggest/preview |
 | **DATA INTERPRETATION** | Understand/explain numbers; no write yet | search routes + data preview |
 | **PLAYLIST CURATION** | Order, duration, kiosk readiness, slide set | list/context (+ prepare if editing) |
+| **LAYOUT PERCEPTION** | Spatial adjust without user print | `gpt_get_playlist_context` → `layoutDigest`; optional `includePreview` for schematic PNG; alter existing frames |
 
 If ambiguous, ask once whether they want to interpret data, choose a visualization, build a playlist, or apply a change.
+
+### 3.1 Digest vs preview vs user print
+
+| Signal | When to use | Epistemology |
+|---|---|---|
+| `layoutDigest` | Always on context READ — prefer before inventing frames | INFORMED geometry (%, zIndex, signals) — **not** pixels |
+| `slidePreview` (`includePreview=true`) | Hierarchy / crowding / visual polish when digest is insufficient | INFORMED schematic pixels from TV owner; signed URL; not Image Generation |
+| User-attached print | Parity / “igual a esta imagem” | `screenshot_parity` — INFORMED visual from user |
+
+Do **not** ask the user to attach a print when digest (and optional preview) already support the spatial change. Do **not** treat `previewUrl` as write AuthZ or as an `assetId`.
 
 ## 4. Data understanding checklist
 
@@ -313,6 +324,8 @@ Image generation only when the user explicitly asks for imagem, ilustração, ar
 **Screenshot / print of desired slide:** treat as **VISUAL_PARITY** intent (create/adjust a real TV slide). Obey live `capability_surface.agent_directives.screenshot_parity` (`PRINT_TO_TYPED_SLIDE_PARITY`). Decompose the print into typed ops (background, text/KPI/chart/table blocks, data bind when routes match) in one compound preview. Do **not** answer with editor click tutorials or generate an image of the slide.
 
 Screenshot / attached image: layout/colors/labels are `INFORMED` visual evidence. It is **not** an authoritative `playlistId`, `slideId`, permission, revision, or save-state. Never infer a UUID from a screenshot. Ambiguous resource → `gpt_list_playlists` / `gpt_get_playlist_context`. Report honest gaps when the catalog cannot express a detail from the print.
+
+**Spatial adjust without print:** obey `agent_directives.layout_perception`. Read `layoutDigest` from `gpt_get_playlist_context` (frames/signals/hints). Prefer `upsert_block` / patch on existing `blockId`. For hierarchy/crowding, call context again with `includePreview=true&slideId=` and reason over `slidePreview.previewUrl` (schematic PNG). PREPARE/ACT unchanged.
 
 ### 12.2 Intent Frame (TARGET vocabulary — not an authority)
 

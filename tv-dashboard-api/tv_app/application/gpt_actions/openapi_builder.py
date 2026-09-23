@@ -537,10 +537,9 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "operationId": "gpt_get_playlist_context",
                 "summary": "Authorized playlist context",
                 "description": (
-                    "Returns persisted playlist, slides, sections, accessRole, currentRevision. "
-                    "localDraftCoordination is unavailable_external for Custom GPT. "
-                    "When the actor is editing this playlist live, may include editorFocus "
-                    "(slideId/selectedIds/updatedAt/stale)."
+                    "Playlist, slides, sections, accessRole, currentRevision, layoutDigest "
+                    "(compact geometry). Optional editorFocus. "
+                    "includePreview=true&slideId= adds slidePreview signed PNG URL (no 9th Action)."
                 ),
                 "tags": [tag],
                 "security": [{"BearerAuth": []}],
@@ -551,7 +550,27 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                         "required": True,
                         "schema": {"type": "string", "format": "uuid"},
                         "description": "Playlist UUID.",
-                    }
+                    },
+                    {
+                        "name": "includePreview",
+                        "in": "query",
+                        "required": False,
+                        "schema": {"type": "boolean", "default": False},
+                        "description": (
+                            "When true, include slidePreview with signed previewUrl "
+                            "(schematic PNG). Prefer over a dedicated preview Action."
+                        ),
+                    },
+                    {
+                        "name": "slideId",
+                        "in": "query",
+                        "required": False,
+                        "schema": {"type": "string", "format": "uuid"},
+                        "description": (
+                            "Slide for includePreview. Defaults to editorFocus.slideId "
+                            "or the first slide."
+                        ),
+                    },
                 ],
                 "responses": {"200": _ok_response("Playlist context"), **_error_responses()},
             }

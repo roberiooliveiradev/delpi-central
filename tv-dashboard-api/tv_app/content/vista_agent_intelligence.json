@@ -1,5 +1,5 @@
 {
-  "version": "2026.09.22.14",
+  "version": "2026.09.23.1",
   "owner": "tv-dashboard-api",
   "source": "capability_surface.agent_directives via gpt_get_catalog",
   "shape_chrome": {
@@ -239,6 +239,43 @@
       ]
     }
   },
+  "layout_perception": {
+    "principle": "DIGEST_BEFORE_INVENT_FRAMES",
+    "summary": "Usar layoutDigest (e slidePreview quando pedido) para perceber geometria antes de inventar frames. Preferir adjust no existente.",
+    "when": [
+      "Ajuste espacial (maior/menor/mover/alinhar/espaçar/hierarquia visual) sem print anexado.",
+      "Pedido de 'melhore o layout' / 'KPI pequeno demais' / 'tá apertado' / 'sobrepõe'.",
+      "Antes de create slide quando já existe conteúdo no contexto READ."
+    ],
+    "epistemology": [
+      "layoutDigest.blocks[].frame / zIndex / signals = INFORMED geometria (não pixels).",
+      "slidePreview.previewUrl pixels = INFORMED visual esquemático do owner TV (não Image Generation).",
+      "UUIDs / permissões / revision = só Actions READ; prévia ≠ autorização de write.",
+      "PREPARE/ACT e confirmationPolicy inalterados — prévia não pula VERIFY."
+    ],
+    "pipeline": [
+      "1) gpt_get_playlist_context → ler layoutDigest do slide alvo (editorFocus ou resolvido).",
+      "2) Se overlap/densidade/hints pedirem visão: includePreview=true&slideId= e raciocinar sobre previewUrl.",
+      "3) Preferir upsert_block/patch no blockId existente (ALTER_EXISTING) com frames derivados do digest — não criar slide novo.",
+      "4) Respeitar layoutHints.maxPrimarySignals / coarseOverlaps; corrigir overlap antes de densificar.",
+      "5) Sem digest e sem print: UMA pergunta OU recipe tipada — não inventar geometria aleatória.",
+      "6) Print do usuário continua válido (screenshot_parity); digest/prévia oficial não substituem upload de mídia."
+    ],
+    "rules": [
+      "layoutDigest = fonte INFORMED de frames %; usar antes de inventar x/y/w/h.",
+      "Ajuste espacial sem print → digest (+ prévia opcional); não exigir que o usuário anexe print.",
+      "slidePreview é esquemático owner-local (cache por revision); 409 PREVIEW_REVISION_STALE → novo context com includePreview.",
+      "Não tratar previewUrl como Image Generation nem como assetId de mídia do slide.",
+      "Não embutir bytes de imagem no catálogo; só URL signed de curta duração."
+    ],
+    "forbidden": [
+      "Inventar frames sem ler layoutDigest quando o context já o trouxe",
+      "Criar slide novo só para 'reescalar' um KPI/bloco existente",
+      "Pedir print ao usuário quando digest/prévia bastam para o ajuste",
+      "Usar prévia como prova de AuthZ de write ou para pular PREPARE/ACT",
+      "Dump de nativeConfig.resolved / data rows no raciocínio espacial (usar digest)"
+    ]
+  },
   "data_discovery": {
     "principle": "OWNER_LOCAL_ROUTE_DISCOVERY",
     "summary": "Buscar rotas só via gpt_search_data_routes. Apresentar TODOS os hits do search (família KPI/série/breakdown). Miss ≠ ausência. Params só do paramSchema.",
@@ -358,6 +395,7 @@
     "QUICK_DISPLAY": "Ajuste pontual de slide/bloco já conhecido — resolver objeto, mutar, não criar.",
     "GUIDED_DASHBOARD": "Projetar/reorganizar painel ou playlist — criar só o que faltar após inventário READ.",
     "VISUAL_PARITY": "Print/anexo de referência → reproduzir slide com paridade via ops tipadas (screenshot_parity).",
+    "LAYOUT_PERCEPTION": "Ajuste espacial via layoutDigest (+ slidePreview opcional) — INFORMED geometria antes de inventar frames; preferir alter existing (layout_perception).",
     "DATA_INTERPRETATION": "Entender/explicar dados sem gravar até pedido explícito.",
     "PLAYLIST_CURATION": "Ordem, duração, slides, kiosk/TV — preferir update/reorder/move no existente (playlist_curation).",
     "COMPOUND_READY_SLIDE": "Pedido complexo de slide pronto — seguir compound_slide.pipeline + write_quality.",
@@ -408,7 +446,9 @@
     "Usar apenas views padrão quando o pedido pede callout, forma com número ou componente custom.",
     "Shape/card flat sem borderRadius+boxShadow tipados quando shape_chrome exige acabamento.",
     "Aumentar só kpiParts.value.fontSize sem reescalar title/icon/unit (título/ícone miúdos no card).",
-    "Aumentar tipografia primary de chart/table/input/composto sem reescalar dependentes (PRIMARY_DRIVES_DEPENDENTS)."
+    "Aumentar tipografia primary de chart/table/input/composto sem reescalar dependentes (PRIMARY_DRIVES_DEPENDENTS).",
+    "Inventar frames sem ler layoutDigest quando gpt_get_playlist_context já o trouxe.",
+    "Exigir print do usuário para ajuste espacial quando digest/prévia bastam."
   ],
   "auth_errors": {
     "401": "AuthN — pedir reconexão OAuth DELPI / permitir Action.",

@@ -69,6 +69,7 @@ class VistaAgentIntelligenceService:
             "write_quality": doc.get("write_quality") or {},
             "slide_design": doc.get("slide_design") or {},
             "screenshot_parity": doc.get("screenshot_parity") or {},
+            "layout_perception": doc.get("layout_perception") or {},
             "data_discovery": doc.get("data_discovery") or {},
             "data_transform": doc.get("data_transform") or {},
             "compound_slide": doc.get("compound_slide") or {},

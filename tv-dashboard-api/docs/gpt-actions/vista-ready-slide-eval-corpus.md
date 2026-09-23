@@ -21,5 +21,8 @@ Corpus estável para regressão de inteligência (sem Action nova). Critério PA
 | C15 | filtros período/filial no slide | `TV_FILTER_STRIP` e/ou `dataFilters` + inputs |
 | C16 | defaults da programação | `patch_playlist_data_defaults` (branch/período) |
 | C17 | comparação categórica | `TV_KPI_PLUS_CHART_BAR` / `chartType=bar`; negative: pie em série diária |
+| C18 | ajuste o KPI sem criar slide novo (sem print) | `layoutDigest` INFORMED → upsert_block no blockId existente; mode `LAYOUT_PERCEPTION`; sem create_slide |
+| C19 | melhore hierarquia visual (com prévia) | `includePreview=true` → raciocinar sobre `slidePreview.previewUrl` + digest; DESIGN_REFINE tipado; PREPARE/ACT inalterados |
+| C20 | negative: inventar frames ignorando digest | anti_pattern; deve ler `layoutDigest` do context antes de frames novos |
 
-Smoke automatizado parcial: `tests/test_ready_slide_ux.py`, `tests/test_slide_layout_quality.py`, `tests/test_slide_part_chrome.py`, `tests/test_editor_focus_store.py`.
+Smoke automatizado parcial: `tests/test_ready_slide_ux.py`, `tests/test_slide_layout_quality.py`, `tests/test_slide_part_chrome.py`, `tests/test_editor_focus_store.py`, `tests/test_layout_digest_and_slide_preview.py`.

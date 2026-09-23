@@ -158,14 +158,51 @@ def list_playlists(
 
 
 @router.get("/playlists/{playlist_id}")
-def get_playlist_context(request: Request, playlist_id: str):
+def get_playlist_context(
+    request: Request,
+    playlist_id: str,
+    includePreview: bool = Query(
+        default=False,
+        description="When true, include slidePreview (signed PNG URL) for one slide.",
+    ),
+    slideId: str | None = Query(
+        default=None,
+        description="Slide UUID for includePreview (defaults to editorFocus or first slide).",
+    ),
+):
     cid = _correlation_id(request)
     try:
         data = _dispatch.get_playlist_context(
             user=resolve_user(request),
             playlist_id=playlist_id,
+            include_preview=bool(includePreview),
+            preview_slide_id=slideId,
         )
         return ok(data)
+    except Exception as exc:  # noqa: BLE001
+        return _handle(exc, correlation_id=cid)
+
+
+@router.get("/slide-previews/{token}")
+def get_slide_preview_png(request: Request, token: str):
+    """Serve schematic PNG. Signed token = AuthZ (short TTL); Bearer optional."""
+    from fastapi.responses import Response
+
+    cid = _correlation_id(request)
+    try:
+        user = None
+        auth = (request.headers.get("authorization") or "").strip()
+        if auth.lower().startswith("bearer "):
+            user = resolve_user(request)
+        png, _meta = _dispatch.get_slide_preview_png(user=user, token=token)
+        return Response(
+            content=png,
+            media_type="image/png",
+            headers={
+                "Cache-Control": "private, max-age=60",
+                "X-Correlation-Id": cid,
+            },
+        )
     except Exception as exc:  # noqa: BLE001
         return _handle(exc, correlation_id=cid)
 

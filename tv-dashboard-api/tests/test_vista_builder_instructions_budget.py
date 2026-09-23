@@ -85,9 +85,11 @@ def test_vista_instructions_delegate_mutable_behavior_to_catalog():
     # Section names / heuristics must NOT live in Builder paste.
     assert "object_resolution" not in block
     assert "screenshot_parity" not in block
+    assert "layout_perception" not in block
     assert "QUICK DISPLAY" not in block
     assert "ALTER_EXISTING_BEFORE_CREATE" not in block
     assert "PRINT_TO_TYPED_SLIDE_PARITY" not in block
+    assert "DIGEST_BEFORE_INVENT_FRAMES" not in block
 
 
 def test_builder_instructions_must_not_leak_intelligence_json_keys():

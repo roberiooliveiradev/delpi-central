@@ -99,6 +99,10 @@ class GptActionsDispatchService:
             user_id=actor,
             include_all=False,
         )
+        from tv_app.application.services.data.layout_digest_service import (
+            LayoutDigestService,
+        )
+
         for item in items:
             item["publicUrl"] = self._present.build_public_url(item["publicToken"])
             if actor and item.get("ownerUserId") == actor:
@@ -108,13 +112,29 @@ class GptActionsDispatchService:
                 item["accessRole"] = share or "viewer"
             else:
                 item["accessRole"] = "viewer"
+            cover = item.get("coverSlide")
+            if isinstance(cover, dict):
+                item["coverLayoutDigest"] = LayoutDigestService.digest_slide(cover)
         out: dict[str, Any] = {"items": items, "limit": limit, "offset": offset}
         focus = editor_focus_store.get_for_user(actor) if actor else None
         if focus:
             out["editorFocus"] = focus
         return out
 
-    def get_playlist_context(self, *, user: Any, playlist_id: str) -> dict[str, Any]:
+    def get_playlist_context(
+        self,
+        *,
+        user: Any,
+        playlist_id: str,
+        include_preview: bool = False,
+        preview_slide_id: str | None = None,
+    ) -> dict[str, Any]:
+        from tv_app.application.services.data.layout_digest_service import (
+            LayoutDigestService,
+        )
+        from tv_app.application.services.data.slide_preview_render_service import (
+            get_slide_preview_render_service,
+        )
         from tv_app.application.services.editor_focus_store import editor_focus_store
 
         assert_permission(user, TV_READ)
@@ -129,13 +149,16 @@ class GptActionsDispatchService:
         playlist = access.playlist or self._writes.get_playlist(pid)
         slides = self._writes.list_slides(pid)
         sections = self._writes.list_sections(pid)
+        revision = self._writes.get_revision(pid)
         actor = self._actor(user)
+        layout_digest = LayoutDigestService.digest_slides(slides)
         out: dict[str, Any] = {
             "playlist": playlist,
             "slides": slides,
             "sections": sections,
             "accessRole": access.level,
-            "currentRevision": self._writes.get_revision(pid),
+            "currentRevision": revision,
+            "layoutDigest": layout_digest,
             "localDraftCoordination": "unavailable_external",
         }
         if actor:
@@ -147,7 +170,100 @@ class GptActionsDispatchService:
                     "updatedAt": focus.get("updatedAt"),
                     "stale": bool(focus.get("stale")),
                 }
+        if include_preview:
+            target_id = (preview_slide_id or "").strip()
+            if not target_id and out.get("editorFocus"):
+                target_id = str((out["editorFocus"] or {}).get("slideId") or "").strip()
+            if not target_id and slides:
+                target_id = str(slides[0].get("id") or "").strip()
+            slide = next(
+                (s for s in slides if isinstance(s, dict) and str(s.get("id")) == target_id),
+                None,
+            )
+            if not slide:
+                raise GptActionsError(
+                    "Slide não encontrado para prévia.",
+                    code="RESOURCE_NOT_FOUND",
+                    status_code=404,
+                )
+            out["slidePreview"] = get_slide_preview_render_service().build_preview_payload(
+                playlist_id=str(pid),
+                slide_id=str(slide["id"]),
+                revision=revision,
+                native_config=slide.get("nativeConfig")
+                if isinstance(slide.get("nativeConfig"), dict)
+                else {},
+                title=str(slide.get("title") or "") or None,
+            )
         return out
+
+    def get_slide_preview_png(
+        self,
+        *,
+        user: Any | None,
+        token: str,
+    ) -> tuple[bytes, dict[str, Any]]:
+        """Serve cached schematic PNG. Signed token is AuthZ; Bearer optional + checked."""
+        from tv_app.application.services.data.slide_preview_render_service import (
+            get_slide_preview_render_service,
+        )
+        from tv_app.application.services.data.slide_preview_token import (
+            parse_slide_preview_token,
+        )
+
+        try:
+            claims = parse_slide_preview_token(token)
+        except ValueError as exc:
+            code = "PREVIEW_TOKEN_EXPIRED" if "expired" in str(exc) else "PREVIEW_TOKEN_INVALID"
+            raise GptActionsError(
+                "Prévia expirada ou inválida.",
+                code=code,
+                status_code=404,
+            ) from exc
+
+        pid = UUID(claims["playlistId"])
+        if user is not None:
+            assert_permission(user, TV_READ)
+            access = self._access.resolve(pid, user)
+            if not access.can_read:
+                raise GptActionsError(
+                    "Programação não encontrada.",
+                    code="RESOURCE_NOT_FOUND",
+                    status_code=404,
+                )
+
+        slides = self._writes.list_slides(pid)
+        slide = next(
+            (s for s in slides if isinstance(s, dict) and str(s.get("id")) == claims["slideId"]),
+            None,
+        )
+        if not slide:
+            raise GptActionsError(
+                "Slide não encontrado.",
+                code="RESOURCE_NOT_FOUND",
+                status_code=404,
+            )
+        current_rev = str(self._writes.get_revision(pid) or "")
+        token_rev = str(claims.get("revision") or "")
+        if token_rev and current_rev and token_rev != current_rev:
+            raise GptActionsError(
+                "Prévia desatualizada (revision). Peça gpt_get_playlist_context com includePreview.",
+                code="PREVIEW_REVISION_STALE",
+                status_code=409,
+            )
+        png = get_slide_preview_render_service().get_or_render(
+            slide_id=str(slide["id"]),
+            revision=current_rev or token_rev,
+            native_config=slide.get("nativeConfig")
+            if isinstance(slide.get("nativeConfig"), dict)
+            else {},
+            title=str(slide.get("title") or "") or None,
+        )
+        return png, {
+            "playlistId": claims["playlistId"],
+            "slideId": claims["slideId"],
+            "revision": current_rev or token_rev,
+        }
     def search_data_routes(
         self,
         *,

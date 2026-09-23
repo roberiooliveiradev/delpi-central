@@ -151,13 +151,25 @@ AuthN = Keycloak; AuthZ plataforma = Core; AuthZ recurso = TV. Conta OpenAI **n�
 | Camada | Prova |
 |--------|--------|
 | RBAC | sem permissão → 403; `tv-dashboard.read` → reads; `tv-dashboard.write` → PREPARE/ACT conforme contrato |
-| READ | catalog, playlists, context, data-routes |
+| READ | catalog, playlists, context (+ `layoutDigest`), data-routes; optional `includePreview` → `slidePreview.previewUrl` |
 | PREPARE | data-preview / suggest / preview → `persisted=false` + `proposal_handle` (salvo se só PREPARE) |
 | ACT additive | `gpt_preview_change` com `commit_now=true` + `confirmation` + Idempotency-Key (header ou body) → `VERIFIED` em 1 Action |
 | ACT destructive | preview → confirmação conversacional → `gpt_commit_change` com handle **exato** (nunca `latest`) |
 | Idempotency | mesmo key+payload → replay; key+payload diferente → 409 `IDEMPOTENCY_CONFLICT` |
 | OCC / proposal | revision stale → 409 `PROPOSAL_CHANGED`; expired → `PROPOSAL_EXPIRED`; alias inventado → `PROPOSAL_NOT_FOUND` |
 | Destructive | confirmação explícita obrigatória; `commit_now` ignorado quando `confirmationPolicy=confirm` |
+| Layout digest | “aumente o KPI” sem print → model usa `layoutDigest` e altera block existente (C18) |
+| Vision preview | `includePreview=true` → model referencia `previewUrl` (PASS/FAIL documentado abaixo); fallback digest + user attach |
+
+### 3.1 Builder smoke — `previewUrl` vision
+
+| Resultado | Critério |
+|---|---|
+| **PASS** | Após context com `includePreview`, o modelo descreve hierarquia/posição coerente com o esquemático e propõe adjust tipado |
+| **FAIL** | Modelo ignora URL, pede print desnecessário, ou trata prévia como Image Generation / assetId |
+| **INCONCLUSIVE** | Builder não busca URL externa / política de imaging bloqueia — usar só digest |
+
+Reimport OpenAPI após esta mudança (query params em `gpt_get_playlist_context`). Surface continua em **8** Actions (sem 9ª Action de preview).
 
 ## 4. Fora de escopo deste bridge
 

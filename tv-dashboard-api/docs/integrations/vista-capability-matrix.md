@@ -119,6 +119,9 @@ Owner-local services (not new GPT Actions):
 | Ready-slide quality gate | `ReadySlideQualityService` (params / projection / resolved.error) | **PROVEN** |
 | Layout/theme recipes | `PresentationRecipeService` + `presentation_recipes.json` (incl. `TV_KPI_SERIES_TABLE`) | **PROVEN** |
 | Compound ready slide | `agent_directives.compound_slide` + `write_quality` | **PROVEN** |
+| Layout digest (geometry) | `LayoutDigestService` → `gpt_get_playlist_context.layoutDigest` | **PROVEN** |
+| Slide schematic preview | `SlidePreviewRenderService` + signed URL via `includePreview` | **PROVEN** (Action Surface Gate: **no** 9th Action) |
+| Layout perception directives | `agent_directives.layout_perception` | **PROVEN** |
 | Playlist clarification / curation | `object_resolution` + `playlist_curation` | **PROVEN** directives |
 | Branch / SI goals | `branch_scope` + `si_goals` | **PROVEN** directives |
 | Media | `assetId` only | **PROVEN** limit; upload **TARGET** (`media_limits.uploadCapability`) |
@@ -138,13 +141,15 @@ Typed vs heuristic:
 
 **Not applicable:** generic `search_records` / `prepare_record_change` (VISTA is not multi-entity CRUD).
 
+**Image / preview note:** catalog still forbids dumping image **bytes** without `assetId`. Official slide schematic is exposed as **signed HTTPS URL** (`slidePreview.previewUrl`) via READ context — not catalog bytes and not a 9th Action.
+
 ## Action inventory
 
 | operationId | Type | Capability |
 |---|---|---|
 | gpt_get_catalog | READ | discovery |
 | gpt_list_playlists | READ | playlist entity |
-| gpt_get_playlist_context | READ | playlist entity |
+| gpt_get_playlist_context | READ | playlist entity + `layoutDigest`; optional `includePreview` → `slidePreview` |
 | gpt_search_data_routes | ANALYSIS | data discovery |
 | gpt_preview_data_block | ANALYSIS | data preview |
 | gpt_suggest_change | WORKFLOW PREPARE | NL → typed ops |
@@ -157,6 +162,16 @@ Typed vs heuristic:
 4. Equivalent operation exists? 5. Fits catalog typed op?  
 6. Fits preview/commit workflow? 7. Creates generic proxy?  
 8. Increases surface unnecessarily?
+
+### Gate decision — slide preview (2026-09-23)
+
+| Option | Decision |
+|---|---|
+| 9ª Action `gpt_get_slide_preview` | **Rejected** — equivalent READ already via `gpt_get_playlist_context?includePreview=true&slideId=` |
+| Asset GET `/gpt-actions/v1/slide-previews/{token}` | **HTTP only** (signed TTL); **not** Builder-importable; keeps surface at **8** ops |
+| Vision consumption of `previewUrl` | Validate in GPT Builder smoke (`gpt-builder-go-live.md`); fallback = `layoutDigest` + user attach |
+
+Importable operations remain **8**. Margin vs ≤30 unchanged.
 
 ## MCP / DÉLIA
 
