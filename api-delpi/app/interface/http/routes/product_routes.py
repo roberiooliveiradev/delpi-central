@@ -1,5 +1,5 @@
 # app/interface/http/routes/product_routes.py
-from fastapi import APIRouter, Query, Request
+from fastapi import APIRouter, Body, Query, Request
 from app.interface.http.pagination_query import (
     HISTORY_LIMIT_QUERY,
     LIMIT_QUERY,
@@ -9,6 +9,7 @@ from app.interface.http.pagination_query import (
 from fastapi.responses import StreamingResponse, JSONResponse
 
 from typing import Optional
+from pydantic import BaseModel, Field
 from delpi_auth.authorization import require_any_permission, require_permission
 
 from app.application.security.api_delpi_permissions import (
@@ -45,6 +46,9 @@ from app.application.dto.product.list_product_inspection_request import ListProd
 from app.application.dto.product.list_product_guide_request import ListProductGuideRequest
 from app.application.dto.product.list_product_internal_movements_request import ListProductInternalMovementsRequest
 from app.application.dto.product.list_product_stock_request import ListProductStockRequest
+from app.application.dto.product.list_product_physical_locations_request import (
+    ListProductPhysicalLocationsRequest,
+)
 from app.application.dto.product.list_product_inbound_invoice_items_request import ListProductInboundInvoiceItemsRequest
 from app.application.dto.product.list_product_outbound_invoice_items_request import ListProductOutboundInvoiceItemsRequest
 from app.application.dto.product.list_product_purchases_request import ListProductPurchasesRequest
@@ -104,6 +108,7 @@ from app.interface.http.openapi_agent_metadata import (
     PRODUCT_SUPPLIERS,
     PRODUCT_BY_SUPPLIER_PART_NUMBER,
 )
+from app.interface.http.openapi_agent_metadata_builder import OpenApiAgentMetadataBuilder
 from app.interface.http.routes.product_response_helpers import (
     STOCK_FIELD_LABELS,
     product_success,
@@ -145,6 +150,7 @@ from app.composition.product_composer import (
     build_list_product_guide_use_case,
     build_list_product_internal_movements_use_case,
     build_list_product_stock_use_case,
+    build_list_product_physical_locations_use_case,
     build_list_product_inbound_invoice_items_use_case,
     build_list_product_outbound_invoice_items_use_case,
     build_list_product_purchases,
@@ -215,6 +221,55 @@ def search_products_route(
     except Exception as e:
         log_error(f"Erro ao buscar produtos: {e}")
         return error_response(str(e))
+
+
+class PhysicalLocationsBatchRequest(BaseModel):
+    branch: str = Field(..., min_length=2, max_length=2)
+    product_codes: list[str] = Field(default_factory=list)
+
+
+_PHYSICAL_LOCATIONS_FIELDS = {
+    "product_code": {"label": "Produto", "type": "string"},
+    "physical_location": {"label": "Local físico", "type": "string"},
+}
+
+
+@router.post(
+    "/physical-locations",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "list_product_physical_locations",
+        path="/products/physical-locations",
+    ),
+)
+@require_permission(API_DELPI_ACCESS)
+def list_product_physical_locations(
+    body: PhysicalLocationsBatchRequest = Body(...),
+):
+    """Locais físicos (BZ_MPLOCAL) de vários produtos na filial — lote para o PCP."""
+    try:
+        result = build_list_product_physical_locations_use_case().execute(
+            ListProductPhysicalLocationsRequest(
+                product_codes=body.product_codes,
+                branch=body.branch,
+            )
+        )
+        return product_success(
+            result,
+            operation_id="list_product_physical_locations",
+            entity="product_physical_locations",
+            shape="list",
+            fields=_PHYSICAL_LOCATIONS_FIELDS,
+            message="Locais físicos dos produtos carregados com sucesso.",
+        )
+    except ValueError as e:
+        log_error(f"Erro de validação em products/physical-locations: {e}")
+        return error_response(str(e), status_code=400)
+    except Exception as e:
+        log_error(f"Erro em products/physical-locations: {e}")
+        return error_response(
+            "Erro interno ao buscar locais físicos dos produtos.",
+            status_code=500,
+        )
 
 
 @router.get(

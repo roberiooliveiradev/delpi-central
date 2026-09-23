@@ -18,6 +18,7 @@ class GetSuppliesStockBalancesItemsUseCase:
             branches=request.branches,
             warehouse=request.warehouse,
             only_positive=request.only_positive,
+            product_codes=request.product_codes,
         )
         items = self._repository.fetch_items(
             branches=request.branches,
@@ -26,6 +27,7 @@ class GetSuppliesStockBalancesItemsUseCase:
             sort=request.sort,
             offset=request.offset,
             page_size=request.page_size,
+            product_codes=request.product_codes,
         )
         return build_paged_list_envelope(
             page=request.page,

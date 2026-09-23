@@ -3,6 +3,9 @@ from __future__ import annotations
 from app.application.dto.production.list_production_order_operation_materials_request import (
     ListProductionOrderOperationMaterialsRequest,
 )
+from app.application.use_cases.production.operation_materials_item import (
+    normalize_operation_material_item,
+)
 from app.domain.ports.production.production_orders_repository_port import (
     ProductionOrdersRepositoryPort,
 )
@@ -27,7 +30,7 @@ class ListProductionOrderOperationMaterialsUseCase:
             operation=operation,
             branch=request.branch,
         )
-        items = [_normalize_item(row) for row in rows]
+        items = [normalize_operation_material_item(row) for row in rows]
         return {
             "branch": request.branch,
             "production_order": production_order,
@@ -38,26 +41,3 @@ class ListProductionOrderOperationMaterialsUseCase:
                 "commitment_count": sum(item["commitment_count"] for item in items),
             },
         }
-
-
-def _normalize_item(row: dict) -> dict:
-    return {
-        "product_code": _text(row.get("product_code")),
-        "description": _text(row.get("description")),
-        "unit": _text(row.get("unit")),
-        "original_qty": _float(row.get("original_qty")),
-        "open_qty": _float(row.get("open_qty")),
-        "consumed_qty": _float(row.get("consumed_qty")),
-        "commitment_count": int(row.get("commitment_count") or 0),
-    }
-
-
-def _text(value: object) -> str:
-    return str(value or "").strip()
-
-
-def _float(value: object) -> float:
-    try:
-        return float(value or 0)
-    except (TypeError, ValueError):
-        return 0.0

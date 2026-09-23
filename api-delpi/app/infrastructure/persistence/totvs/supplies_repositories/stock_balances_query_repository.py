@@ -106,11 +106,13 @@ class StockBalancesQueryRepository(BaseRepository, StockBalancesQueryRepositoryP
         branches: Sequence[str],
         warehouse: str | None,
         only_positive: bool,
+        product_codes: Sequence[str] | None = None,
     ) -> int:
         where_clause, params = sql.build_where_clause(
             branches=branches,
             warehouse=warehouse,
             only_positive=only_positive,
+            product_codes=product_codes,
         )
         query = sql.format_count_items_sql(where_clause)
         with self as repo:
@@ -126,11 +128,13 @@ class StockBalancesQueryRepository(BaseRepository, StockBalancesQueryRepositoryP
         sort: str,
         offset: int,
         page_size: int,
+        product_codes: Sequence[str] | None = None,
     ) -> list[dict[str, Any]]:
         where_clause, params = sql.build_where_clause(
             branches=branches,
             warehouse=warehouse,
             only_positive=only_positive,
+            product_codes=product_codes,
         )
         order_by = sql.resolve_order_by(sort)
         query = sql.format_items_sql(where_clause, order_by=order_by)

@@ -2730,11 +2730,11 @@
       "locale": {
         "en": {
           "label": "Product codes",
-          "description": "Comma-separated product codes (SB1.B1_COD / D2_COD)."
+          "description": "Comma-separated or repeated product codes (SB1.B1_COD, SB2.B2_COD or D2_COD depending on the route)."
         },
         "pt-BR": {
           "label": "Códigos de produtos",
-          "description": "Lista CSV de códigos de produto (SB1.B1_COD / D2_COD)."
+          "description": "Lista CSV ou repetida de códigos de produto (SB1.B1_COD, SB2.B2_COD ou D2_COD conforme a rota)."
         }
       }
     },

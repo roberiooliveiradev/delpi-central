@@ -5,7 +5,7 @@
   "description": "Plataforma de planejamento e controle da produção: gestão à vista, carga máquina e análise de problemas.",
   "category": "producao",
   "icon": "factory",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "type": "microfrontend",
   "basePath": "/apps/production-control",
   "entry": "/apps/production-control/assets/remoteEntry.js",
@@ -38,6 +38,12 @@
       "code": "production-control.materials.view",
       "name": "Materiais",
       "description": "Ver solicitações de compra em excesso que podem ser eliminadas.",
+      "module": "production-control"
+    },
+    {
+      "code": "production-control.line-feeder.view",
+      "name": "Alimentador de linha",
+      "description": "Ver o material que precisa chegar nas bancadas até um horário e conduzir a lista de coleta.",
       "module": "production-control"
     },
     {
@@ -122,11 +128,19 @@
       "showInMenu": false
     },
     {
+      "path": "/apps/production-control/line-feeder",
+      "label": "Alimentador de linha",
+      "permission": "production-control.line-feeder.view",
+      "icon": "truck",
+      "order": 40,
+      "showInMenu": false
+    },
+    {
       "path": "/apps/production-control/delivery-map",
       "label": "Mapa de entrega",
       "permission": "production-control.delivery-map.view",
       "icon": "calendar-clock",
-      "order": 40,
+      "order": 41,
       "showInMenu": false
     },
     {
@@ -134,7 +148,7 @@
       "label": "Relatórios",
       "permission": "production-control.reports.view",
       "icon": "file-spreadsheet",
-      "order": 41,
+      "order": 42,
       "showInMenu": false
     },
     {
@@ -142,7 +156,7 @@
       "label": "Modelos 3D",
       "permission": "production-control.product-3d-models.manage",
       "icon": "box",
-      "order": 42,
+      "order": 43,
       "showInMenu": false
     }
   ],

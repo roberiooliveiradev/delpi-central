@@ -24,7 +24,7 @@ Até lá: não renomear o launcher só para “prometer” um portal que ainda n
 |--------|--------|
 | UI | `plugins/production-control` |
 | BFF / regra PCP | `production-control-api` |
-| SQL TOTVS | `api-delpi` (`/production/otd*`, `/production/pcp-orders/*`, `/production/machine-load/*`, `/pedidos-venda-abertos/totvs-open-orders`, `/pedidos-venda-abertos/ops-abertas`, `/supplies/purchase-requests/open-coverage`, `/products/{code}/raw-material-set-shortages`) |
+| SQL TOTVS | `api-delpi` (`/production/otd*`, `/production/pcp-orders/*`, `/production/machine-load/*`, `/production/orders/operation-materials*`, `/pedidos-venda-abertos/totvs-open-orders`, `/pedidos-venda-abertos/ops-abertas`, `/supplies/purchase-requests/open-coverage`, `/supplies/stock-balances/items`, `/products/{code}/raw-material-set-shortages`) |
 
 MFE não chama api-delpi. Subplugins são views internas do mesmo remote (não manifests aninhados).
 
@@ -34,7 +34,7 @@ Shell híbrido Linear (rail compacta) + MES (cards de exceção, semáforo). Hom
 
 ## Wireframe v1
 
-Home: `/apps/production-control?branch=01`. Demanda: `/apps/production-control/demand?branch=01&status=at_risk`. Carga máquina: `/apps/production-control/machine-load?branch=01&ct={centro}`. Análise: `/apps/production-control/problem-analysis?branch=01&detector=incomplete-order-sets`. Materiais: `/apps/production-control/materials?branch=01&issue=excess` (consulta de ruptura: `?issue=pa-shortage&q=90263114`). Mapa de entrega: `/apps/production-control/delivery-map?branch=01`.
+Home: `/apps/production-control?branch=01`. Demanda: `/apps/production-control/demand?branch=01&status=at_risk`. Carga máquina: `/apps/production-control/machine-load?branch=01&ct={centro}`. Análise: `/apps/production-control/problem-analysis?branch=01&detector=incomplete-order-sets`. Materiais: `/apps/production-control/materials?branch=01&issue=excess` (consulta de ruptura: `?issue=pa-shortage&q=90263114`). Alimentador de linha: `/apps/production-control/line-feeder?branch=01&cutoffDate=2026-01-15&cutoffTime=14:00`. Mapa de entrega: `/apps/production-control/delivery-map?branch=01`.
 
 ## Subplugins
 
@@ -45,6 +45,7 @@ Home: `/apps/production-control?branch=01`. Demanda: `/apps/production-control/d
 | `machine-load` | ativo | Sequenciamento SH8 congelado por filial (janela por entrega do PA) + status HZA vivo + refresh sob confirmação |
 | `problem-analysis` | ativo | Grade de detectores de exceção (conjuntos, quantidades, demanda, intermediários compartilhados) |
 | `materials` | ativo | Excesso e falta de SC1 de MP vs ESTSEG + consulta de ruptura de MP no conjunto do PA |
+| `line-feeder` | ativo | Material que precisa estar nas bancadas até um corte (data + hora) sobre a fila congelada, com rateio FIFO do saldo e lista de coleta persistida |
 | `delivery-map` | ativo | OPs PA com saldo, agrupadas por entrega prevista; MP-OK/CT manuais; snapshot congelado |
 | `capacity` | em breve | Capacidade e ocupação percentual por CT |
 

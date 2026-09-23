@@ -53,12 +53,15 @@ Residual conhecido (`VALUATION_RESIDUAL`): valoração canônica permanece `QATU
 | `warehouse` | vazio | Todos os armazéns; alias `location` (aceito, fora do OpenAPI/TV) |
 | `only_positive` | `true` | `B2_QATU > 0` (default legado — não alterar sem migração de consumers) |
 | `only_positive=false` | — | Inclui saldo zero e negativo (sem predicado `B2_QATU > 0`) |
+| `product_codes` | omitido | Só em `/items`. Repetível ou CSV; `B2_COD IN (...)`. Omitido = todos os produtos; informado sem código válido = nenhum produto (`1 = 0`), nunca "todos" |
 | `page` / `page_size` | `1` / `50` | Paginação; `page_size` máx. **500** |
 | `sort` | `stock_value_desc` | Ordenação da listagem |
 
 Códigos de filial aceitos: somente `01` e `02`. Qualquer outro valor concreto é rejeitado.
 
 Multi-filial **não** é `summary(01) + summary(02)`: `product_count` / `warehouse_count` usam `COUNT(DISTINCT …)` no conjunto filtrado.
+
+Quem precisa do saldo de uma lista fechada de materiais (cockpits de necessidade, por exemplo) combina `product_codes` com `warehouse` e `only_positive=false`, para distinguir saldo zero de saldo negativo em vez de receber a linha ausente.
 
 ## Respostas
 

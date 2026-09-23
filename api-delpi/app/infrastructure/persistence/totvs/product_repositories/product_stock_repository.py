@@ -1,9 +1,12 @@
 # app/infrastructure/persistence/totvs/product_repositories/product_stock_repository.py
 
-from typing import Optional
+from typing import Optional, Sequence
 
 from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from app.infrastructure.persistence.totvs.pagination import paginate
+from app.infrastructure.persistence.totvs.product_repositories.product_physical_locations_sql import (
+    physical_locations_sql,
+)
 from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
 
 from app.application.models.page import Page
@@ -100,3 +103,18 @@ class ProductStockRepository(
             page=page,
             page_size=page_size
         )
+
+    def fetch_physical_locations(
+        self,
+        *,
+        branch: str,
+        product_codes: Sequence[str],
+    ) -> list[dict]:
+        codes = tuple(product_codes or ())
+        if not codes:
+            return []
+
+        sql = physical_locations_sql(product_count=len(codes))
+        params = (branch, *codes)
+        with self as repo:
+            return repo.execute_query(sql, params)

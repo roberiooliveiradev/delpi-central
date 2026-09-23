@@ -17,6 +17,10 @@ export type PpcRoute = {
   requestNumber: string | null;
   requestItem: string | null;
   reportId: string | null;
+  cutoffDate: string | null;
+  cutoffTime: string | null;
+  lineFeederStatus: string | null;
+  planId: string | null;
   branch: PpcBranch;
   pathname: string;
 };
@@ -26,8 +30,11 @@ const DEMAND_STATUSES = new Set(["late", "at_risk", "covered_by_order", "covered
 const MATERIALS_ISSUES = new Set(["excess", "shortage", "pa-shortage"]);
 const MATERIALS_SET_STATUSES = new Set(["shortage", "no_commitment", "ok", "all"]);
 const REPORT_IDS = new Set(["stock-balances", "production-orders"]);
+/** Situações do material na bancada — espelham o contrato do BFF. */
+const LINE_FEEDER_STATUSES = new Set(["covered", "to_pick", "at_risk", "unknown"]);
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+const CLOCK_TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 function isBranch(value: string | null): value is PpcBranch {
   return value === "01" || value === "02";
@@ -49,6 +56,11 @@ function isoDateOrNull(value: string | null): string | null {
   return ISO_DATE.test(text) ? text : null;
 }
 
+function clockTimeOrNull(value: string | null): string | null {
+  const text = value?.trim() ?? "";
+  return CLOCK_TIME.test(text) ? text : null;
+}
+
 function parseSearch(search: string): {
   detectorId: string | null;
   workCenter: string | null;
@@ -64,6 +76,10 @@ function parseSearch(search: string): {
   requestNumber: string | null;
   requestItem: string | null;
   reportId: string | null;
+  cutoffDate: string | null;
+  cutoffTime: string | null;
+  lineFeederStatus: string | null;
+  planId: string | null;
   branch: PpcBranch | null;
 } {
   const params = new URLSearchParams(search.startsWith("?") ? search.slice(1) : search);
@@ -90,6 +106,10 @@ function parseSearch(search: string): {
     requestNumber: params.get("request")?.trim() || null,
     requestItem: params.get("item")?.trim() || null,
     reportId: REPORT_IDS.has(reportRaw) ? reportRaw : null,
+    cutoffDate: isoDateOrNull(params.get("cutoffDate")),
+    cutoffTime: clockTimeOrNull(params.get("cutoffTime")),
+    lineFeederStatus: LINE_FEEDER_STATUSES.has(statusRaw) ? statusRaw : null,
+    planId: params.get("plan")?.trim() || null,
     branch: isBranch(branchRaw) ? branchRaw : null,
   };
 }
@@ -118,6 +138,10 @@ export function parsePpcPath(pathname: string, search = "", storedBranch: PpcBra
     requestNumber: query.requestNumber,
     requestItem: query.requestItem,
     reportId: query.reportId,
+    cutoffDate: query.cutoffDate,
+    cutoffTime: query.cutoffTime,
+    lineFeederStatus: query.lineFeederStatus,
+    planId: query.planId,
     branch: query.branch ?? storedBranch,
     pathname: path || PPC_BASE_PATH,
   };
@@ -151,6 +175,10 @@ export function buildPpcHref(input: {
   requestNumber?: string | null;
   requestItem?: string | null;
   reportId?: string | null;
+  cutoffDate?: string | null;
+  cutoffTime?: string | null;
+  lineFeederStatus?: string | null;
+  planId?: string | null;
 }): string {
   const path =
     input.subpluginId === DEFAULT_SUBPLUGIN
@@ -174,6 +202,10 @@ export function buildPpcHref(input: {
   if (input.requestNumber) params.set("request", input.requestNumber);
   if (input.requestItem) params.set("item", input.requestItem);
   if (input.reportId) params.set("report", input.reportId);
+  if (input.cutoffDate) params.set("cutoffDate", input.cutoffDate);
+  if (input.cutoffTime) params.set("cutoffTime", input.cutoffTime);
+  if (input.lineFeederStatus) params.set("status", input.lineFeederStatus);
+  if (input.planId) params.set("plan", input.planId);
   return `${path}?${params.toString()}`;
 }
 

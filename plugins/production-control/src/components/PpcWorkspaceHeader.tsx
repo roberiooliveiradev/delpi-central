@@ -34,6 +34,10 @@ type PpcWorkspaceHeaderProps = {
   startDate?: string | null;
   endDate?: string | null;
   reportId?: string | null;
+  cutoffDate?: string | null;
+  cutoffTime?: string | null;
+  lineFeederStatus?: string | null;
+  planId?: string | null;
   onRefresh?: () => void;
   refreshBusy?: boolean;
   onPeriodChange?: (next: { startDate: string; endDate: string } | null) => void;
@@ -60,6 +64,10 @@ export function PpcWorkspaceHeader({
   startDate,
   endDate,
   reportId,
+  cutoffDate,
+  cutoffTime,
+  lineFeederStatus,
+  planId,
   onRefresh,
   refreshBusy,
   onPeriodChange,
@@ -79,6 +87,10 @@ export function PpcWorkspaceHeader({
         startDate,
         endDate,
         reportId,
+        cutoffDate,
+        cutoffTime,
+        lineFeederStatus,
+        planId,
       }),
     );
   };

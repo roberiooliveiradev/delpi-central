@@ -95,6 +95,9 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
         "product_directives", "composite_analysis"
     ),
     "get_product_stock": RouteContract("product_stock", "paged_list"),
+    "list_product_physical_locations": RouteContract(
+        "product_physical_locations", "list"
+    ),
     "get_product_analyser": RouteContract("product_analyser", "composite_analysis"),
     "get_product_drawing": RouteContract("product_drawing", "scalar"),
     "get_product_drawing_pdf": RouteContract("product_drawing", "document_export"),
@@ -413,6 +416,9 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     ),
     "list_production_order_operation_materials": RouteContract(
         "production_order_operation_materials", "playbook_report"
+    ),
+    "list_production_order_operation_materials_batch": RouteContract(
+        "production_order_operation_materials_batch", "list"
     ),
     "get_production_orders_finished": RouteContract(
         "production_orders_finished", "playbook_report"

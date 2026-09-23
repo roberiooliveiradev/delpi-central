@@ -27,6 +27,7 @@ from production_control_app.application.services.demand_service import DemandSer
 from production_control_app.application.services.finished_product_shortage_service import (
     FinishedProductShortageService,
 )
+from production_control_app.application.services.line_feeder_service import LineFeederService
 from production_control_app.application.services.materials_service import MaterialsService
 from production_control_app.application.services.machine_load_service import MachineLoadService
 from production_control_app.application.services.overview_service import OverviewService
@@ -66,6 +67,9 @@ from production_control_app.domain.ports.problem_detector import ProblemDetector
 from production_control_app.domain.ports.delivery_map_snapshot_repository import (
     DeliveryMapSnapshotRepositoryPort,
 )
+from production_control_app.domain.ports.line_feeder_pick_plan_repository import (
+    LineFeederPickPlanRepositoryPort,
+)
 from production_control_app.domain.ports.machine_load_snapshot_repository import (
     MachineLoadSnapshotRepositoryPort,
 )
@@ -76,6 +80,9 @@ from production_control_app.infrastructure.gateways.api_delpi_drawing_library_cl
 from production_control_app.infrastructure.gateways.delpi_production_gateway import DelpiProductionGateway
 from production_control_app.infrastructure.persistence.postgres_delivery_map_snapshot_repository import (
     PostgresDeliveryMapSnapshotRepository,
+)
+from production_control_app.infrastructure.persistence.postgres_line_feeder_pick_plan_repository import (
+    PostgresLineFeederPickPlanRepository,
 )
 from production_control_app.infrastructure.persistence.postgres_machine_load_snapshot_repository import (
     PostgresMachineLoadSnapshotRepository,
@@ -220,6 +227,24 @@ def build_machine_load_service(
         snapshots=snapshots or build_machine_load_snapshot_repository(),
         branch_access=build_branch_access_service(),
         change_notifier=notify_machine_load_changed,
+    )
+
+
+def build_line_feeder_pick_plan_repository() -> LineFeederPickPlanRepositoryPort:
+    return PostgresLineFeederPickPlanRepository()
+
+
+def build_line_feeder_service(
+    gateway: DelpiProductionGateway | None = None,
+    *,
+    snapshots: MachineLoadSnapshotRepositoryPort | None = None,
+    pick_plans: LineFeederPickPlanRepositoryPort | None = None,
+) -> LineFeederService:
+    return LineFeederService(
+        gateway or DelpiProductionGateway(),
+        snapshots=snapshots or build_machine_load_snapshot_repository(),
+        pick_plans=pick_plans or build_line_feeder_pick_plan_repository(),
+        branch_access=build_branch_access_service(),
     )
 
 

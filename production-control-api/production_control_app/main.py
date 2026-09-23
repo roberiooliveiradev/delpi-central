@@ -19,6 +19,9 @@ from production_control_app.interface.http.routes.delivery_map_routes import (
     router as delivery_map_router,
 )
 from production_control_app.interface.http.routes.demand_routes import router as demand_router
+from production_control_app.interface.http.routes.line_feeder_routes import (
+    router as line_feeder_router,
+)
 from production_control_app.interface.http.routes.materials_routes import router as materials_router
 from production_control_app.interface.http.routes.machine_load_routes import (
     router as machine_load_router,
@@ -124,6 +127,7 @@ app.include_router(public_delivery_map_router)
 app.include_router(problem_analysis_router)
 app.include_router(demand_router)
 app.include_router(materials_router)
+app.include_router(line_feeder_router)
 app.include_router(delivery_map_router)
 app.include_router(reports_router)
 app.include_router(product_3d_model_router)

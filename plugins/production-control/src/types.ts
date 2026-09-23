@@ -927,3 +927,117 @@ export type Product3DModelListPayload = {
   items: Product3DModel[];
   total: number;
 };
+
+export type LineFeederStatus = "covered" | "to_pick" | "at_risk" | "unknown";
+export type LineFeederItemStatus = "pending" | "picked" | "delivered";
+
+export type LineFeederStatusMeta = {
+  label: string;
+  description?: string;
+  severity?: string;
+};
+
+export type LineFeederRequirement = {
+  work_center: string;
+  product_code: string;
+  description: string;
+  unit: string;
+  required_qty: number;
+  point_of_use_qty: number | null;
+  to_deliver_qty: number | null;
+  source_available_qty: number | null;
+  status: LineFeederStatus;
+  first_scheduled_at: string | null;
+  first_production_order: string;
+  first_operation_code: string;
+  production_orders: string[];
+  operation_count: number;
+  pickup_location?: string;
+};
+
+export type LineFeederSummary = {
+  material_count: number;
+  work_center_count: number;
+  covered_count: number;
+  to_pick_count: number;
+  at_risk_count: number;
+  unknown_count: number;
+  to_deliver_qty: number;
+  operation_count?: number;
+  production_order_count?: number;
+};
+
+export type LineFeederGroup = {
+  work_center: string;
+  summary: LineFeederSummary;
+  items: LineFeederRequirement[];
+};
+
+export type LineFeederWorkCenter = {
+  work_center: string;
+  work_center_name: string;
+};
+
+export type LineFeederRequirementsPayload = {
+  branch: string;
+  cutoff: { at: string; date: string; time: string };
+  filters: { work_center: string; status: string };
+  work_centers: LineFeederWorkCenter[];
+  summary: LineFeederSummary;
+  groups: LineFeederGroup[];
+  items: LineFeederRequirement[];
+  stock: {
+    available: boolean;
+    point_of_use_warehouse: string;
+    source_warehouse: string;
+    message?: string;
+    truncated_orders?: boolean;
+  };
+  statuses: Record<string, LineFeederStatusMeta>;
+  item_statuses: Record<string, LineFeederStatusMeta>;
+  didactic: { title?: string; body?: string; notes?: string[] };
+};
+
+export type LineFeederPickItem = {
+  id: string;
+  product_code: string;
+  description: string;
+  unit: string;
+  pickup_location: string;
+  required_qty: number;
+  point_of_use_qty: number;
+  to_deliver_qty: number;
+  status: LineFeederItemStatus;
+  updated_at: string | null;
+  updated_by: string | null;
+};
+
+export type LineFeederPickPlan = {
+  id: string;
+  branch: string;
+  cutoff_at: string | null;
+  work_center: string | null;
+  status: "open" | "closed";
+  created_at: string | null;
+  created_by: string | null;
+  updated_at: string | null;
+  updated_by: string | null;
+  item_count: number;
+  pending_count: number;
+  picked_count: number;
+  delivered_count: number;
+  to_deliver_qty: number;
+};
+
+export type LineFeederPickPlanPayload = {
+  plan: LineFeederPickPlan;
+  items: LineFeederPickItem[];
+  item_statuses: Record<string, LineFeederStatusMeta>;
+};
+
+export type LineFeederPickPlanListPayload = {
+  branch: string;
+  filters: { status: string };
+  items: LineFeederPickPlan[];
+  item_statuses: Record<string, LineFeederStatusMeta>;
+};

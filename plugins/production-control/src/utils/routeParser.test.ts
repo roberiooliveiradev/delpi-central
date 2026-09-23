@@ -246,3 +246,56 @@ describe("buildPpcHref", () => {
     expect(route.branch).toBe("02");
   });
 });
+
+describe("line feeder deep link", () => {
+  it("lê corte, bancada, situação e lista da URL", () => {
+    const route = parsePpcPath(
+      "/apps/production-control/line-feeder",
+      "?branch=02&cutoffDate=2026-09-22&cutoffTime=14:30&ct=CT-02&status=at_risk&plan=abc",
+      "01",
+    );
+    expect(route.subpluginId).toBe("line-feeder");
+    expect(route.branch).toBe("02");
+    expect(route.cutoffDate).toBe("2026-09-22");
+    expect(route.cutoffTime).toBe("14:30");
+    expect(route.workCenter).toBe("CT-02");
+    expect(route.lineFeederStatus).toBe("at_risk");
+    expect(route.planId).toBe("abc");
+  });
+
+  it("descarta data, hora e situação inválidas", () => {
+    const route = parsePpcPath(
+      "/apps/production-control/line-feeder",
+      "?branch=01&cutoffDate=22/09/2026&cutoffTime=99:99&status=banana",
+      "01",
+    );
+    expect(route.cutoffDate).toBeNull();
+    expect(route.cutoffTime).toBeNull();
+    expect(route.lineFeederStatus).toBeNull();
+  });
+
+  it("não confunde a situação do material com a da demanda", () => {
+    const route = parsePpcPath(
+      "/apps/production-control/line-feeder",
+      "?branch=01&status=late",
+      "01",
+    );
+    expect(route.lineFeederStatus).toBeNull();
+    expect(route.demandStatus).toBe("late");
+  });
+
+  it("monta o href do alimentador preservando o corte", () => {
+    const href = buildPpcHref({
+      subpluginId: "line-feeder",
+      branch: "01",
+      cutoffDate: "2026-09-22",
+      cutoffTime: "14:00",
+      workCenter: "CT-01",
+      lineFeederStatus: "to_pick",
+      planId: "plan-1",
+    });
+    expect(href).toBe(
+      "/apps/production-control/line-feeder?branch=01&ct=CT-01&cutoffDate=2026-09-22&cutoffTime=14%3A00&status=to_pick&plan=plan-1",
+    );
+  });
+});

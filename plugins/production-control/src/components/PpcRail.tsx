@@ -8,6 +8,7 @@ import {
   LayoutGrid,
   Package,
   TriangleAlert,
+  Truck,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -25,6 +26,7 @@ const ICONS: Record<string, LucideIcon> = {
   gauge: Gauge,
   package: Package,
   box: Box,
+  truck: Truck,
 };
 
 type PpcRailProps = {

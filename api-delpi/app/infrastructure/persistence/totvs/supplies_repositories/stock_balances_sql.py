@@ -35,6 +35,7 @@ def build_where_clause(
     branches: Sequence[str] | None,
     warehouse: str | None,
     only_positive: bool,
+    product_codes: Sequence[str] | None = None,
 ) -> tuple[str, list[Any]]:
     from app.domain.totvs.protheus_branches import normalize_optional_branch_codes
 
@@ -53,6 +54,16 @@ def build_where_clause(
     if warehouse:
         clauses.append("LTRIM(RTRIM(SB2.B2_LOCAL)) = ?")
         params.append(warehouse.strip())
+
+    if product_codes is not None:
+        items = tuple(product_codes)
+        if not items:
+            # Lista informada sem código válido não pode virar "todos os produtos".
+            clauses.append("1 = 0")
+        else:
+            placeholders = ", ".join("?" * len(items))
+            clauses.append(f"LTRIM(RTRIM(SB2.B2_COD)) IN ({placeholders})")
+            params.extend(items)
 
     if only_positive:
         clauses.append("SB2.B2_QATU > 0")

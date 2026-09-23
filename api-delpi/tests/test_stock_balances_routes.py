@@ -14,6 +14,10 @@ from app.application.dto.supplies.stock_balances_request import (
 )
 from app.application.services.response_meta_builder import DATA_VERSION
 from app.domain.totvs.protheus_branches import normalize_optional_branch_codes
+from app.domain.totvs.protheus_product_codes import (
+    MAX_PRODUCT_CODE_LENGTH,
+    normalize_product_codes,
+)
 from app.infrastructure.persistence.totvs.supplies_repositories import (
     stock_balances_sql as sql,
 )
@@ -521,3 +525,160 @@ def test_items_rejects_page_size_over_500(stock_balances_client: TestClient) -> 
         params={"page_size": 501},
     )
     assert response.status_code == 422
+
+
+def test_normalize_product_codes_none_csv_repeated_and_dedupe() -> None:
+    # None = sem filtro; lista vazia informada = filtro que não casa nada.
+    assert normalize_product_codes(None) is None
+    assert normalize_product_codes([]) == ()
+    assert normalize_product_codes("  ") == ()
+    assert normalize_product_codes("10070821") == ("10070821",)
+    assert normalize_product_codes(" 10070821 , 10070822 ") == (
+        "10070821",
+        "10070822",
+    )
+    assert normalize_product_codes(["10070821", "10070821"]) == ("10070821",)
+    assert normalize_product_codes(["10070821,10070822", "10070823"]) == (
+        "10070821",
+        "10070822",
+        "10070823",
+    )
+    assert normalize_product_codes(["x" * (MAX_PRODUCT_CODE_LENGTH + 1)]) == ()
+
+
+def test_sql_product_codes_filter_adds_in_predicate_on_b2_cod() -> None:
+    where, params = sql.build_where_clause(
+        branches=["01"],
+        warehouse="99",
+        only_positive=False,
+        product_codes=("10070821", "10070822"),
+    )
+    assert "LTRIM(RTRIM(SB2.B2_COD)) IN (?, ?)" in where
+    assert params == ["01", "99", "10070821", "10070822"]
+    assert "B2_QATU > 0" not in where
+    items = sql.format_items_sql(where, order_by=sql.resolve_order_by(None))
+    assert "B2_COD" in items
+
+
+def test_sql_without_product_codes_keeps_previous_where() -> None:
+    legacy, legacy_params = sql.build_where_clause(
+        branches=["01"],
+        warehouse="99",
+        only_positive=True,
+    )
+    explicit_none, none_params = sql.build_where_clause(
+        branches=["01"],
+        warehouse="99",
+        only_positive=True,
+        product_codes=None,
+    )
+    assert legacy == explicit_none
+    assert legacy_params == none_params
+    assert "B2_COD" not in legacy
+
+
+def test_sql_empty_product_codes_matches_nothing() -> None:
+    where, params = sql.build_where_clause(
+        branches=["01"],
+        warehouse="99",
+        only_positive=False,
+        product_codes=(),
+    )
+    assert "1 = 0" in where
+    assert "B2_COD" not in where
+    assert params == ["01", "99"]
+
+
+@patch(
+    "app.interface.http.routes.supplies.stock_balances_router"
+    ".build_get_supplies_stock_balances_items_use_case"
+)
+def test_items_product_codes_repeatable_reaches_request(
+    mock_builder, stock_balances_client: TestClient
+) -> None:
+    use_case = MagicMock()
+    use_case.execute.return_value = {
+        "items": [],
+        "page": 1,
+        "page_size": 50,
+        "total": 0,
+        "total_pages": 0,
+        "sort": "stock_value_desc",
+        "pagination": {
+            "page": 1,
+            "page_size": 50,
+            "total": 0,
+            "total_pages": 0,
+            "is_complete": True,
+        },
+    }
+    mock_builder.return_value = use_case
+
+    response = stock_balances_client.get(
+        "/supplies/stock-balances/items",
+        params=[
+            ("branch", "01"),
+            ("warehouse", "99"),
+            ("only_positive", "false"),
+            ("product_codes", "10070821"),
+            ("product_codes", "10070822"),
+        ],
+    )
+    assert response.status_code == 200
+    req = use_case.execute.call_args.args[0]
+    assert req.product_codes == ("10070821", "10070822")
+    assert req.warehouse == "99"
+    assert req.only_positive is False
+
+
+@patch(
+    "app.interface.http.routes.supplies.stock_balances_router"
+    ".build_get_supplies_stock_balances_items_use_case"
+)
+def test_items_without_product_codes_stays_unfiltered(
+    mock_builder, stock_balances_client: TestClient
+) -> None:
+    use_case = MagicMock()
+    use_case.execute.return_value = {
+        "items": [],
+        "page": 1,
+        "page_size": 50,
+        "total": 0,
+        "total_pages": 0,
+        "sort": "stock_value_desc",
+        "pagination": {
+            "page": 1,
+            "page_size": 50,
+            "total": 0,
+            "total_pages": 0,
+            "is_complete": True,
+        },
+    }
+    mock_builder.return_value = use_case
+
+    response = stock_balances_client.get(
+        "/supplies/stock-balances/items",
+        params={"branch": "01"},
+    )
+    assert response.status_code == 200
+    assert use_case.execute.call_args.args[0].product_codes is None
+
+
+def test_items_use_case_forwards_product_codes_to_both_queries() -> None:
+    from app.application.use_cases.supplies.get_supplies_stock_balances_items_use_case import (
+        GetSuppliesStockBalancesItemsUseCase,
+    )
+
+    repository = MagicMock()
+    repository.count_items.return_value = 0
+    repository.fetch_items.return_value = []
+    GetSuppliesStockBalancesItemsUseCase(repository).execute(
+        StockBalancesItemsRequest(
+            branches=["01"],
+            warehouse="99",
+            only_positive=False,
+            product_codes=["10070821"],
+        )
+    )
+    assert repository.count_items.call_args.kwargs["product_codes"] == ("10070821",)
+    assert repository.fetch_items.call_args.kwargs["product_codes"] == ("10070821",)

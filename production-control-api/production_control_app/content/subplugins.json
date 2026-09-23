@@ -46,6 +46,15 @@
       "permission": "production-control.materials.view"
     },
     {
+      "id": "line-feeder",
+      "label": "Alimentador de linha",
+      "description": "O que precisa estar em cada bancada até um horário, e o que falta buscar no almoxarifado.",
+      "icon": "truck",
+      "route": "/line-feeder",
+      "status": "active",
+      "permission": "production-control.line-feeder.view"
+    },
+    {
       "id": "delivery-map",
       "label": "Mapa de entrega",
       "description": "OPs de PA com saldo a entregar, agrupadas pela data prevista de entrega.",

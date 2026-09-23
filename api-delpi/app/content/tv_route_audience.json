@@ -2979,6 +2979,21 @@
       },
       "category": "products"
     },
+    "list_product_physical_locations": {
+      "locale": {
+        "en": {
+          "summary": "Physical pickup locations in batch",
+          "description": "SBZ010.BZ_MPLOCAL for a list of product codes in one branch. Products without SBZ are omitted — the consumer treats absence as empty location.",
+          "label": "Product physical locations (batch)"
+        },
+        "pt-BR": {
+          "label": "Locais físicos dos produtos em lote",
+          "summary": "Local físico (BZ_MPLOCAL) de vários produtos",
+          "description": "SBZ010.BZ_MPLOCAL para uma lista de códigos na filial. Produto sem SBZ não aparece — o consumidor trata ausência como local vazio."
+        }
+      },
+      "category": "products"
+    },
     "get_product_structure": {
       "locale": {
         "en": {
@@ -3375,6 +3390,21 @@
           "label": "Materiais da operação (SD4)",
           "summary": "Materiais SD4 da OP+operação",
           "description": "Empenhos ativos SD4 filtrados por D4_OP e D4_OPERAC, agregados por componente. Sem fallback SG1."
+        }
+      },
+      "category": "production"
+    },
+    "list_production_order_operation_materials_batch": {
+      "locale": {
+        "en": {
+          "summary": "Operation materials from SD4 in batch",
+          "description": "Active SD4 commitments for a list of production orders, aggregated by order, operation and component. No SG1 fallback.",
+          "label": "Operation materials (batch)"
+        },
+        "pt-BR": {
+          "label": "Materiais das operações em lote (SD4)",
+          "summary": "Materiais SD4 de várias OPs",
+          "description": "Empenhos ativos SD4 de uma lista de OPs, agregados por OP, operação e componente. Sem fallback SG1."
         }
       },
       "category": "production"

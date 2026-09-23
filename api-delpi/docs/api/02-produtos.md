@@ -341,6 +341,21 @@ Posição de estoque.
 | `location` | — | Alias legado de `warehouse` (aceito). |
 | `legacy` | `false` | `false`: cada item inclui `location` espelhando `warehouse`. |
 
+Cada item pode trazer `physical_location` (`SBZ010.BZ_MPLOCAL`) quando houver indicador do produto na filial.
+
+---
+
+## POST /products/physical-locations
+
+Locais físicos de **vários** produtos na filial (`SBZ010.BZ_MPLOCAL`), em uma consulta.
+
+| Body | Obrigatório | Descrição |
+|---|---|---|
+| `branch` | sim | Filial TOTVS (`01` ou `02`). |
+| `product_codes` | sim (pode ser `[]`) | Lista de códigos; teto 2000; deduplica e trim. |
+
+Resposta: `items[]` com `product_code` e `physical_location`. Produto **sem** registro SBZ na filial **não** entra na lista — o consumidor trata ausência como local vazio, sem inventar endereço. Não substitui `GET /products/{code}/stock` (saldo); use esta rota quando só o local de retirada importa em lote.
+
 ---
 
 ## GET /products/{code}/inbound-invoice-items

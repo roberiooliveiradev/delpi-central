@@ -25,6 +25,9 @@ from app.application.use_cases.production.get_production_orders_finished_use_cas
 from app.application.use_cases.production.get_production_order_by_op_use_case import (
     GetProductionOrderByOpUseCase,
 )
+from app.application.use_cases.production.list_production_order_operation_materials_batch_use_case import (
+    ListProductionOrderOperationMaterialsBatchUseCase,
+)
 from app.application.use_cases.production.list_production_order_operation_materials_use_case import (
     ListProductionOrderOperationMaterialsUseCase,
 )
@@ -160,6 +163,14 @@ def build_list_production_order_operation_materials_use_case() -> (
     ListProductionOrderOperationMaterialsUseCase
 ):
     return ListProductionOrderOperationMaterialsUseCase(ProductionOrdersRepository())
+
+
+def build_list_production_order_operation_materials_batch_use_case() -> (
+    ListProductionOrderOperationMaterialsBatchUseCase
+):
+    return ListProductionOrderOperationMaterialsBatchUseCase(
+        ProductionOrdersRepository()
+    )
 
 
 def build_search_production_orders_by_op_use_case() -> SearchProductionOrdersByOpUseCase:

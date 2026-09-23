@@ -19,6 +19,10 @@ export const helpTooltips = {
   branch: "Filial TOTVS usada na consulta (Santa Catarina ou Espírito Santo).",
   materials:
     "Três recortes de matéria-prima: excesso de SC1 (documento inteiro já coberto depois do ESTSEG), solicitações insuficientes (cobertura + SC1 não chega no estoque de segurança) e consulta de ruptura no conjunto do PA (extrato saldo + pedidos − empenhos). Não elimina no TOTVS.",
+  lineFeeder:
+    "Matéria-prima que precisa estar nas bancadas até o horário escolhido. Intermediários e acabados da estrutura não entram — o alimentador cuida do que vem do almoxarifado. A necessidade vem das ordens da programação com início até esse horário; do que é preciso, desconta-se o que já está no ponto de uso, e o restante é o que falta entregar. Quando duas bancadas pedem o mesmo material, o estoque é dividido por horário: quem começa antes é atendido primeiro. «Em risco» é o que não cabe no saldo do almoxarifado. O local de retirada vem do cadastro do produto na filial. A lista de coleta agrupa por produto (soma entre bancadas) e ordena pelo código; cada item vai de a coletar para separado e entregue, e nada disso escreve no TOTVS.",
+  lineFeederPickPlan:
+    "Roteiro de coleta por produto a partir do horário de corte. Cada linha é um produto, com a quantidade somada e o local de retirada; marcar entregue vale para aquele produto no plano. A necessidade da tela continua acompanhando a programação. Fechar a lista encerra o registro e impede novas mudanças de situação.",
   deliveryMap:
     "OPs mãe de PA com saldo em aberto, agrupadas pela data prevista de entrega. O primeiro bloco reúne hoje e atrasadas. Observações vêm do TOTVS (C2_OBS). MP-OK e Feedback são marcações manuais do PCP. A barra de progresso carrega só nas 3 primeiras tabelas (hoje+atrasadas primeiro); demais datas ficam sem barra. Linha riscada só quando o conjunto atinge 100%. A lista congela até clicar em Atualizar.",
   reports:

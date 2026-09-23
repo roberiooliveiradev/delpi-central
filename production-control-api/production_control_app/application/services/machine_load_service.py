@@ -22,6 +22,12 @@ from production_control_app.domain.services.machine_load_delivery_window import 
     filter_by_delivery_window,
     missing_due_date_count,
 )
+from production_control_app.domain.services.machine_load_snapshot_payload import (
+    decode_snapshot_payload,
+    dict_items,
+    payload_operations,
+    payload_work_centers,
+)
 from production_control_app.domain.services.machine_load_priority import (
     prioritize_conjunto as prioritize_conjunto_in_queue,
 )
@@ -165,17 +171,6 @@ def _parse_iso_date(value: str | None) -> date | None:
         return date.fromisoformat(text)
     except ValueError:
         return None
-
-
-def _dict_items(payload: dict[str, Any] | list[Any] | None) -> list[dict[str, Any]]:
-    if isinstance(payload, list):
-        return [item for item in payload if isinstance(item, dict)]
-    if not isinstance(payload, dict):
-        return []
-    items = payload.get("items")
-    if not isinstance(items, list):
-        return []
-    return [item for item in items if isinstance(item, dict)]
 
 
 def _user_label(user: object | None) -> str | None:
@@ -322,7 +317,7 @@ class MachineLoadService:
         self._assert_can_view(user, branch)
         _row, payload = self._load_snapshot_payload(branch=branch)
         operations = visible_operations(
-            self._payload_operations(payload), withdrawn_order_numbers(payload)
+            payload_operations(payload), withdrawn_order_numbers(payload)
         )
         status_by_key = self._live_status_map(branch=branch, operations=operations)
         enriched = self._apply_status_map(operations, status_by_key)
@@ -393,10 +388,8 @@ class MachineLoadService:
             raise SnapshotNotFound(
                 "A fila desta filial ainda não foi publicada pelo PCP."
             )
-        payload = self._decode_payload(row)
-        operations = _dict_items(payload.get("operations"))
-        if not operations and isinstance(payload.get("operations"), list):
-            operations = _dict_items(payload["operations"])
+        payload = decode_snapshot_payload(row)
+        operations = payload_operations(payload)
         operations = visible_operations(operations, withdrawn_order_numbers(payload))
         wanted_key = wanted.upper()
         for item in operations:
@@ -468,9 +461,9 @@ class MachineLoadService:
             raise SnapshotNotFound(
                 "A fila desta filial ainda não foi publicada pelo PCP."
             )
-        payload = self._decode_payload(row)
+        payload = decode_snapshot_payload(row)
         operations = visible_operations(
-            self._payload_operations(payload), withdrawn_order_numbers(payload)
+            payload_operations(payload), withdrawn_order_numbers(payload)
         )
         if enrich:
             operations = self._enrich_live_status(branch=code, operations=operations)
@@ -494,9 +487,9 @@ class MachineLoadService:
             raise SnapshotNotFound(
                 "A fila desta filial ainda não foi publicada pelo PCP."
             )
-        payload = self._decode_payload(row)
+        payload = decode_snapshot_payload(row)
         operations = visible_operations(
-            self._payload_operations(payload), withdrawn_order_numbers(payload)
+            payload_operations(payload), withdrawn_order_numbers(payload)
         )
         wanted_key = wanted.upper()
         for item in operations:
@@ -522,9 +515,9 @@ class MachineLoadService:
             raise SnapshotNotFound(
                 "A fila desta filial ainda não foi publicada pelo PCP."
             )
-        payload = self._decode_payload(row)
+        payload = decode_snapshot_payload(row)
         operations = visible_operations(
-            self._payload_operations(payload), withdrawn_order_numbers(payload)
+            payload_operations(payload), withdrawn_order_numbers(payload)
         )
         center_operations = [
             item
@@ -579,9 +572,7 @@ class MachineLoadService:
             raise ValueError("workCenter é obrigatório para reordenar a sequência.")
 
         row, payload = self._load_snapshot_payload(branch=branch)
-        operations = _dict_items(payload.get("operations"))
-        if not operations and isinstance(payload.get("operations"), list):
-            operations = _dict_items(payload["operations"])
+        operations = payload_operations(payload)
 
         reordered = self._apply_center_order(
             operations,
@@ -630,9 +621,7 @@ class MachineLoadService:
             )
 
         row, payload = self._load_snapshot_payload(branch=branch)
-        stored_operations = _dict_items(payload.get("operations"))
-        if not stored_operations and isinstance(payload.get("operations"), list):
-            stored_operations = _dict_items(payload["operations"])
+        stored_operations = payload_operations(payload)
 
         # Conjunto fora da programação não participa da fila — nem para priorizar.
         withdrawn_keys = withdrawn_order_numbers(payload)
@@ -723,7 +712,7 @@ class MachineLoadService:
         )
 
         row, payload = self._load_snapshot_payload(branch=branch)
-        stored_operations = self._payload_operations(payload)
+        stored_operations = payload_operations(payload)
 
         # Conjunto fora da programação não participa da fila — nem para otimizar.
         withdrawn_keys = withdrawn_order_numbers(payload)
@@ -805,7 +794,7 @@ class MachineLoadService:
         conjunto_key = self._require_conjunto_key(order_number, messages)
         row, payload = self._load_snapshot_payload(branch=branch)
 
-        operations = self._payload_operations(payload)
+        operations = payload_operations(payload)
         entries = withdrawn_entries(payload)
         if any(item.get("order_number") == conjunto_key for item in entries):
             raise ValueError(
@@ -914,10 +903,10 @@ class MachineLoadService:
             raise ValueError(self._format_transfer_message(messages, "targetRequired"))
 
         row, payload = self._load_snapshot_payload(branch=branch)
-        operations = self._payload_operations(payload)
+        operations = payload_operations(payload)
         centers = {
             str(item.get("work_center") or "").strip(): str(item.get("work_center_name") or "").strip()
-            for item in _dict_items(payload.get("work_centers"))
+            for item in dict_items(payload.get("work_centers"))
             if str(item.get("work_center") or "").strip()
         }
         if target not in centers:
@@ -1028,7 +1017,7 @@ class MachineLoadService:
             )
 
         row, payload = self._load_snapshot_payload(branch=branch)
-        operations = self._payload_operations(payload)
+        operations = payload_operations(payload)
         withdrawn_keys = withdrawn_order_numbers(payload)
         if conjunto_key in withdrawn_keys:
             raise ValueError(
@@ -1039,7 +1028,7 @@ class MachineLoadService:
 
         centers = {
             str(item.get("work_center") or "").strip(): str(item.get("work_center_name") or "").strip()
-            for item in _dict_items(payload.get("work_centers"))
+            for item in dict_items(payload.get("work_centers"))
             if str(item.get("work_center") or "").strip()
         }
         if target not in centers:
@@ -1215,14 +1204,7 @@ class MachineLoadService:
             raise SnapshotNotFound(
                 "Não há carga máquina congelada nesta filial. Atualize a partir do TOTVS."
             )
-        return row, self._decode_payload(row)
-
-    @staticmethod
-    def _payload_operations(payload: dict[str, Any]) -> list[dict[str, Any]]:
-        operations = _dict_items(payload.get("operations"))
-        if not operations and isinstance(payload.get("operations"), list):
-            operations = _dict_items(payload["operations"])
-        return operations
+        return row, decode_snapshot_payload(row)
 
     @staticmethod
     def _merge_visible_order(
@@ -1271,7 +1253,7 @@ class MachineLoadService:
             )
 
         row, payload = self._load_snapshot_payload(branch=branch)
-        operations = self._payload_operations(payload)
+        operations = payload_operations(payload)
         operations = self._enrich_live_status(branch=branch, operations=operations)
         # Rastreio ainda encontra conjunto retirado — marcado como fora da programação.
         withdrawn_keys = withdrawn_order_numbers(payload)
@@ -1524,17 +1506,6 @@ class MachineLoadService:
         return public_payload
 
     @staticmethod
-    def _decode_payload(row: dict[str, Any]) -> dict[str, Any]:
-        raw_payload = row.get("payload_json")
-        if isinstance(raw_payload, str):
-            payload = json.loads(raw_payload)
-        elif isinstance(raw_payload, dict):
-            payload = raw_payload
-        else:
-            payload = {}
-        return dict(payload)
-
-    @staticmethod
     def _apply_center_order(
         operations: list[dict[str, Any]],
         *,
@@ -1605,7 +1576,7 @@ class MachineLoadService:
         frozen = self._fetch_frozen_payload(branch=branch, start=start, end=end)
         if previous is not None:
             # Diferente da ordem manual, retirada e transferência sobrevivem ao «Atualizar».
-            previous_payload = self._decode_payload(previous)
+            previous_payload = decode_snapshot_payload(previous)
             entries = withdrawn_entries(previous_payload)
             if entries:
                 frozen[WITHDRAWN_CONJUNTOS_KEY] = entries
@@ -1615,18 +1586,18 @@ class MachineLoadService:
             if transfers:
                 frozen[TRANSFERRED_OPERATIONS_KEY] = transfers
                 frozen["operations"] = apply_transfers(
-                    _dict_items(frozen.get("operations")),
+                    dict_items(frozen.get("operations")),
                     transfers,
                     work_center_names={
                         str(item.get("work_center") or "").strip(): str(
                             item.get("work_center_name") or ""
                         ).strip()
-                        for item in _dict_items(frozen.get("work_centers"))
+                        for item in dict_items(frozen.get("work_centers"))
                     },
                 )
         # Início aberto vira a entrega mais antiga que realmente veio — é o que a
         # tela mostra no campo «De» e o que descreve a janela puxada.
-        oldest_due, _newest = delivery_bounds(_dict_items(frozen.get("operations")))
+        oldest_due, _newest = delivery_bounds(dict_items(frozen.get("operations")))
         effective_start = start or _parse_iso_date(oldest_due) or end
         # Fila nova do TOTVS: status HZA em cache não vale mais.
         clear_live_status_cache(branch)
@@ -1666,7 +1637,7 @@ class MachineLoadService:
                 "Não foi possível carregar os centros de trabalho."
             ) from exc
 
-        work_centers = _dict_items(centers_payload)
+        work_centers = dict_items(centers_payload)
         operations = self._fetch_all_operations(
             branch=branch,
             delivery_start=start_s,
@@ -1721,7 +1692,7 @@ class MachineLoadService:
                     "Não foi possível carregar a fila do centro de trabalho."
                 ) from exc
 
-            batch = _dict_items(payload)
+            batch = dict_items(payload)
             collected.extend(batch)
             pagination = payload.get("pagination")
             if isinstance(pagination, dict):
@@ -1750,20 +1721,9 @@ class MachineLoadService:
         view_end: date | None = None,
         allow_remote_status: bool = True,
     ) -> dict[str, Any]:
-        raw_payload = row.get("payload_json")
-        if isinstance(raw_payload, str):
-            payload = json.loads(raw_payload)
-        elif isinstance(raw_payload, dict):
-            payload = raw_payload
-        else:
-            payload = {}
-
-        work_centers = _dict_items(payload.get("work_centers"))
-        if not work_centers and isinstance(payload.get("work_centers"), list):
-            work_centers = _dict_items(payload["work_centers"])
-        operations = _dict_items(payload.get("operations"))
-        if not operations and isinstance(payload.get("operations"), list):
-            operations = _dict_items(payload["operations"])
+        payload = decode_snapshot_payload(row)
+        work_centers = payload_work_centers(payload)
+        operations = payload_operations(payload)
 
         operations = self._enrich_live_status(
             branch=branch,
@@ -1910,7 +1870,7 @@ class MachineLoadService:
             return {}
 
         status_by_key = {
-            _operation_key(item): item for item in _dict_items(status_payload)
+            _operation_key(item): item for item in dict_items(status_payload)
         }
         put_live_status_cache(branch, status_by_key)
         return status_by_key

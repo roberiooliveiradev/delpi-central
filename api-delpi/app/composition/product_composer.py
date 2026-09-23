@@ -130,6 +130,14 @@ def build_list_product_stock_use_case():
     cache = build_query_cache()
     return ListProductStockUseCase(repository=repo, cache=cache)
 
+
+def build_list_product_physical_locations_use_case():
+    from app.application.use_cases.product.list_product_physical_locations_use_case import (
+        ListProductPhysicalLocationsUseCase,
+    )
+
+    return ListProductPhysicalLocationsUseCase(repository=ProductStockRepository())
+
 def build_list_product_inbound_invoice_items_use_case():
     repository = ProductInvoiceItemsRepository()
     return ListProductInboundInvoiceItemsUseCase(repository)
