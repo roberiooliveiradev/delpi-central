@@ -26,6 +26,25 @@ def clear_vista_agent_intelligence_cache() -> None:
     _load.cache_clear()
 
 
+_LIST_CAP_KEYS = frozenset({"examples", "examplePrompts"})
+_MAX_LIST_ITEMS = 10
+
+
+def _compact_for_actions(node: Any, *, key: str | None = None) -> Any:
+    """Drop example blobs; keep directive contracts intact for Actions budget."""
+    if isinstance(node, dict):
+        out: dict[str, Any] = {}
+        for child_key, value in node.items():
+            if child_key in {"examples", "example"}:
+                continue
+            out[str(child_key)] = _compact_for_actions(value, key=str(child_key))
+        return out
+    if isinstance(node, list):
+        trimmed = node[:_MAX_LIST_ITEMS] if key in _LIST_CAP_KEYS else node
+        return [_compact_for_actions(item, key=key) for item in trimmed]
+    return node
+
+
 class VistaAgentIntelligenceService:
     @classmethod
     def document(cls) -> dict[str, Any]:
@@ -52,7 +71,7 @@ class VistaAgentIntelligenceService:
                 **recipes,
                 "catalog": PresentationRecipeService.catalog_projection_for_actions(),
             }
-        return {
+        raw = {
             "version": cls.version(),
             "authority": (
                 "Obey these directives from live gpt_get_catalog. "
@@ -89,3 +108,4 @@ class VistaAgentIntelligenceService:
             "anti_patterns": list(doc.get("anti_patterns") or []),
             "auth_errors": doc.get("auth_errors") or {},
         }
+        return _compact_for_actions(raw)

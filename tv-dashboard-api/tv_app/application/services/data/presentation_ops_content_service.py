@@ -450,6 +450,9 @@ class PresentationOpsContentService:
             schema = row.get("inputSchema")
             if isinstance(schema, dict):
                 row["inputSchema"] = cls._strip_schema_examples(schema)
+            # Keep produces/consumes/risk; drop bulky whenToUse duplicates if present.
+            if isinstance(row.get("whenToUse"), list) and len(row["whenToUse"]) > 4:
+                row["whenToUse"] = row["whenToUse"][:4]
             out[str(name)] = row
         return out
 

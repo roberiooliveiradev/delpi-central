@@ -23,6 +23,45 @@ def clear_presentation_recipes_cache() -> None:
     _load.cache_clear()
 
 
+def _slim_blueprint_for_actions(blueprint: Any) -> dict[str, Any] | None:
+    """Keep slot identity without frame geometry (server owns exact %)."""
+    if not isinstance(blueprint, dict):
+        return None
+    slots_out: list[dict[str, Any]] = []
+    for slot in blueprint.get("slots") or []:
+        if not isinstance(slot, dict):
+            continue
+        slots_out.append(
+            {
+                "id": slot.get("id"),
+                "role": slot.get("role"),
+            }
+        )
+    return {
+        "key": blueprint.get("key"),
+        "safeMargin": blueprint.get("safeMargin"),
+        "maxPrimarySignals": blueprint.get("maxPrimarySignals"),
+        "preferredUseCases": blueprint.get("preferredUseCases") or [],
+        "slots": slots_out,
+    }
+
+
+def _slim_visual_impact_hints(raw: Any) -> dict[str, Any]:
+    if not isinstance(raw, dict):
+        return {}
+    prefer = raw.get("preferRecipes") if isinstance(raw.get("preferRecipes"), list) else []
+    out = {
+        "temporalChartDefault": raw.get("temporalChartDefault"),
+        "tablePresetDefault": raw.get("tablePresetDefault"),
+        "shapeFollowsData": raw.get("shapeFollowsData"),
+        "preferRecipes": prefer[:10],
+    }
+    for key in ("composeWith", "textDataBinding", "defaultChartType"):
+        if key in raw:
+            out[key] = raw[key]
+    return out
+
+
 class PresentationRecipeService:
     """Projeta recipes → ops tipadas (background + frames/styles)."""
 
@@ -143,20 +182,37 @@ class PresentationRecipeService:
                     for k, v in row.items()
                     if "Min" in str(k) or k in {"valueMinFontSize", "titleMinFontSize"}
                 }
-            slim_tokens: dict[str, Any] = {
+        typography_in = tokens.get("typography") if isinstance(tokens.get("typography"), dict) else {}
+        typography_out: dict[str, Any] = {}
+        for name, row in typography_in.items():
+            if not isinstance(row, dict):
+                continue
+            slim_row = {
+                key: row[key]
+                for key in ("fontSize", "minTvSize", "fontWeight")
+                if key in row
+            }
+            if slim_row:
+                typography_out[str(name)] = slim_row
+        brand_in = tokens.get("brand") if isinstance(tokens.get("brand"), dict) else {}
+        brand_out = {
+            key: brand_in[key]
+            for key in ("bgFrom", "bgTo", "card", "accent", "onCard", "onBg")
+            if key in brand_in
+        }
+        slim_tokens: dict[str, Any] = {
             "maxPrimarySignalsPerSlide": tokens.get("maxPrimarySignalsPerSlide"),
             "safeMargin": tokens.get("safeMargin"),
             "typeScale": tokens.get("typeScale"),
-            "typography": tokens.get("typography"),
+            "typography": typography_out,
             "spacing": tokens.get("spacing"),
-            "brand": tokens.get("brand") if isinstance(tokens.get("brand"), dict) else {},
+            "brand": brand_out,
+            "roles": tokens.get("roles") if isinstance(tokens.get("roles"), dict) else {},
             "partChrome": slim_part,
             "chartTypeHints": tokens.get("chartTypeHints")
             if isinstance(tokens.get("chartTypeHints"), dict)
             else {},
-            "visualImpactHints": tokens.get("visualImpactHints")
-            if isinstance(tokens.get("visualImpactHints"), dict)
-            else {},
+            "visualImpactHints": _slim_visual_impact_hints(tokens.get("visualImpactHints")),
         }
         recipes_out: dict[str, Any] = {}
         raw_recipes = full.get("recipes") if isinstance(full.get("recipes"), dict) else {}
@@ -164,20 +220,19 @@ class PresentationRecipeService:
             if not isinstance(row, dict):
                 continue
             markers = row.get("markers") if isinstance(row.get("markers"), list) else []
-            # Cap markers to keep catalog under Actions response budget.
-            recipes_out[str(recipe_id)] = {
+            entry: dict[str, Any] = {
                 "label": row.get("label"),
                 "themeKey": row.get("themeKey"),
-                "markers": markers[:8],
-                "blueprint": row.get("blueprint") if isinstance(row.get("blueprint"), dict) else None,
+                "markers": markers[:6],
             }
+            slim_bp = _slim_blueprint_for_actions(row.get("blueprint"))
+            if slim_bp is not None:
+                entry["blueprint"] = slim_bp
+            recipes_out[str(recipe_id)] = entry
         return {
             "principle": full.get("principle"),
             "summary": full.get("summary"),
             "fontFamilyAllowlist": full.get("fontFamilyAllowlist") or [],
-            "colorRamps": full.get("colorRamps")
-            if isinstance(full.get("colorRamps"), dict)
-            else {},
             "designTokens": slim_tokens,
             "recipes": recipes_out,
         }

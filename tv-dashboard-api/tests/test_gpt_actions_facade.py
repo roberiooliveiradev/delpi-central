@@ -799,6 +799,7 @@ def test_viewer_forbidden_on_commit_http():
 
 
 # GPT Actions tool-response budget (ResponseTooLargeError when exceeded).
+# OpenAI may escape non-ASCII (\uXXXX); gate both encodings.
 GPT_ACTIONS_CATALOG_MAX_BYTES = 100 * 1024
 
 
@@ -822,10 +823,23 @@ def test_gpt_get_catalog_fits_actions_response_budget():
 
     doc = PresentationOpsContentService.capability_catalog_document()
     doc["capability_surface"] = build_capability_surface()
-    raw = json.dumps(doc, ensure_ascii=False).encode("utf-8")
-    assert len(raw) <= GPT_ACTIONS_CATALOG_MAX_BYTES, (
-        f"gpt_get_catalog body is {len(raw)} bytes "
+    raw_unicode = json.dumps(doc, ensure_ascii=False).encode("utf-8")
+    raw_ascii = json.dumps(doc, ensure_ascii=True).encode("utf-8")
+    wrapped_ascii = json.dumps(
+        {"success": True, "data": doc},
+        ensure_ascii=True,
+    ).encode("utf-8")
+    assert len(raw_unicode) <= GPT_ACTIONS_CATALOG_MAX_BYTES, (
+        f"gpt_get_catalog unicode body is {len(raw_unicode)} bytes "
         f"(limit {GPT_ACTIONS_CATALOG_MAX_BYTES}); compact projection drifted."
+    )
+    assert len(raw_ascii) <= GPT_ACTIONS_CATALOG_MAX_BYTES, (
+        f"gpt_get_catalog ascii-escaped body is {len(raw_ascii)} bytes "
+        f"(limit {GPT_ACTIONS_CATALOG_MAX_BYTES}); Custom GPT ResponseTooLargeError risk."
+    )
+    assert len(wrapped_ascii) <= GPT_ACTIONS_CATALOG_MAX_BYTES, (
+        f"gpt_get_catalog ascii envelope is {len(wrapped_ascii)} bytes "
+        f"(limit {GPT_ACTIONS_CATALOG_MAX_BYTES}); Custom GPT ResponseTooLargeError risk."
     )
     # Still projects live directives the specialist must obey.
     assert doc["capability_surface"]["agent_directives"]["object_resolution"][

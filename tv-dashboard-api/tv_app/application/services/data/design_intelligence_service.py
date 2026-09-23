@@ -30,10 +30,37 @@ class DesignIntelligenceService:
     @classmethod
     def catalog_projection(cls) -> dict[str, Any]:
         doc = _document()
+        specs_in = doc.get("componentSpecs") if isinstance(doc.get("componentSpecs"), dict) else {}
+        specs_out: dict[str, Any] = {}
+        for name, spec in specs_in.items():
+            if not isinstance(spec, dict):
+                continue
+            row: dict[str, Any] = {
+                "componentType": spec.get("componentType") or name,
+                "purpose": spec.get("purpose") or [],
+                "avoidFor": spec.get("avoidFor") or [],
+            }
+            if isinstance(spec.get("variants"), dict):
+                row["variants"] = {
+                    variant: {
+                        "purpose": (meta.get("purpose") if isinstance(meta, dict) else None) or [],
+                        "avoidFor": (meta.get("avoidFor") if isinstance(meta, dict) else None) or [],
+                    }
+                    for variant, meta in spec["variants"].items()
+                }
+            specs_out[str(name)] = row
         return {
             "version": doc.get("version"),
-            "componentSpecs": doc.get("componentSpecs") or {},
+            "componentSpecs": specs_out,
             "authority": "design_intelligence.json",
+            "fields": [
+                "semanticDigest",
+                "visualRecommendation",
+                "designAudit",
+                "storyDigest",
+                "candidatePreview",
+                "visualVerification",
+            ],
         }
 
     @classmethod
