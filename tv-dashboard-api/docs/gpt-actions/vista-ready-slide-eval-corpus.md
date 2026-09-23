@@ -30,5 +30,10 @@ Corpus estável para regressão de inteligência (sem Action nova). Critério PA
 | C24 | negative: date_range com params `{}` ou datas absolutas eternas | `write_quality` + `filter_layering.dates` |
 | C25 | melhore/revise esta programação | `continuous_review`: READ + patch no existente; negative: create_playlist sem pedido explícito |
 | C26 | corrija os filtros duplicados nas fontes | re-layer para dataDefaults/dataFilters; sem slide novo |
+| C27 | breakdown por filial / comparação | `visual_selection` → `bar`/`horizontal_bar` / `TV_KPI_PLUS_CHART_BAR`; **não** area |
+| C28 | composição de status (poucas fatias) | `pie`/`doughnut` / `TV_KPI_PLUS_CHART_PIE` |
+| C29 | ranking / TOP N muitas linhas | `table_view` banded / `TV_TABLE_FOCUS` / `TV_HERO_PLUS_TABLE` |
+| C30 | negative: pie em série diária densa | anti_pattern `chartTypeHints.forbidden.dense_daily_series` |
+| C31 | melhore o visual (slide só KPI+área) | `DESIGN_REFINE` + `visual_selection`: diversificar chartType/família se a forma do dado permitir; não só tipografia |
 
 Smoke automatizado parcial: `tests/test_ready_slide_ux.py`, `tests/test_slide_layout_quality.py`, `tests/test_slide_part_chrome.py`, `tests/test_editor_focus_store.py`, `tests/test_layout_digest_and_slide_preview.py`, `tests/test_vista_agent_intelligence.py`.

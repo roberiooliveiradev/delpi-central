@@ -64,16 +64,50 @@ def test_visual_impact_tv_impact_first():
     assert impact["principle"] == "TV_IMPACT_FIRST"
     rules = " ".join(impact["rules"]).lower()
     assert "theme_delpi" in rules
+    assert "visual_selection" in rules
     assert "area" in rules
     assert "banded" in rules
     stack = " ".join(impact["default_stack"]).lower()
-    assert "hero" in stack
+    assert "hero" in stack or "sinal hero" in stack
+    assert "visual_selection" in stack or "charttypehints" in stack.replace(" ", "")
     assert any("impact" in str(item).lower() or "banded" in str(item).lower() for item in directives["anti_patterns"])
     tokens = directives["presentation_recipes"]["catalog"]["designTokens"]
     hints = tokens["visualImpactHints"]
     assert hints["temporalChartDefault"] == "area"
     assert hints["tablePresetDefault"] == "banded"
+    assert hints.get("shapeFollowsData") is True
     assert tokens["chartTypeHints"]["temporal"][0] == "area"
+    assert "horizontal_bar" in tokens["chartTypeHints"]["categorical"]
+    assert "TV_TABLE_FOCUS" in hints["preferRecipes"]
+    assert "TV_FILTER_STRIP" in hints["preferRecipes"]
+
+
+def test_visual_selection_shape_follows_data():
+    directives = VistaAgentIntelligenceService.agent_directives()
+    vs = directives["visual_selection"]
+    assert vs["principle"] == "SHAPE_FOLLOWS_DATA"
+    types = vs["catalog_chart_types"]
+    for required in ("area", "bar", "horizontal_bar", "pie", "funnel", "gauge", "combo"):
+        assert required in types
+    table = " ".join(
+        f"{row.get('when', '')} {' '.join(row.get('prefer') or [])}"
+        for row in vs.get("decision_table") or []
+    ).lower()
+    assert "categór" in table or "categor" in table
+    assert "bar" in table
+    assert "ranking" in table or "table" in table
+    rules = " ".join(vs["rules"]).lower()
+    assert "kpi" in rules and ("área" in rules or "area" in rules)
+    forbidden = " ".join(vs["forbidden"]).lower()
+    assert "kpi" in forbidden and ("área" in forbidden or "area" in forbidden)
+    assert "VISUAL_SELECTION" in directives["modes"]
+    assert any(
+        "visual_selection" in str(item).lower() or "kpi+área" in str(item).lower() or "kpi+area" in str(item).lower()
+        for item in directives["anti_patterns"]
+    )
+    craft = directives["slide_craft"]
+    checklist = " ".join(craft.get("checklist_before_verified") or []).lower()
+    assert "forma-do-dado" in checklist or "kpi+área" in checklist or "kpi+area" in checklist
 
 
 def test_composed_visuals_compose_typed_blocks():

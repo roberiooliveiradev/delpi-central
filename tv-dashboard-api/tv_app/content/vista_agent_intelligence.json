@@ -1,7 +1,95 @@
 {
-  "version": "2026.09.23.3",
+  "version": "2026.09.23.4",
   "owner": "tv-dashboard-api",
   "source": "capability_surface.agent_directives via gpt_get_catalog",
+  "visual_selection": {
+    "principle": "SHAPE_FOLLOWS_DATA",
+    "summary": "Escolher bloco e chartType pela forma do dado / pergunta de negócio — não repetir KPI+área por hábito. Catálogo tipado = kpi_view, chart_view (15 chartTypes), table_view, input/filtro, composed_visuals.",
+    "catalog_chart_types": [
+      "line",
+      "bar",
+      "horizontal_bar",
+      "area",
+      "stacked_bar",
+      "pie",
+      "doughnut",
+      "scatter",
+      "bubble",
+      "radar",
+      "combo",
+      "waterfall",
+      "funnel",
+      "histogram",
+      "gauge"
+    ],
+    "decision_table": [
+      {
+        "when": "1 número de saúde / snapshot",
+        "prefer": ["kpi_view", "gauge se há meta tipada"]
+      },
+      {
+        "when": "tendência temporal / série",
+        "prefer": ["area (default TV)", "line se pedido explícito", "combo se multi-série com unidades distintas"]
+      },
+      {
+        "when": "comparar categorias (filial, produto, status)",
+        "prefer": ["bar", "horizontal_bar", "stacked_bar", "TV_KPI_PLUS_CHART_BAR"]
+      },
+      {
+        "when": "composição / fatias (poucas categorias)",
+        "prefer": ["pie", "doughnut", "TV_KPI_PLUS_CHART_PIE"]
+      },
+      {
+        "when": "ranking / TOP N / muitas linhas",
+        "prefer": ["table_view banded", "TV_TABLE_FOCUS", "TV_HERO_PLUS_TABLE", "horizontal_bar ordenada"]
+      },
+      {
+        "when": "funil / etapas / queda sequencial",
+        "prefer": ["funnel", "waterfall"]
+      },
+      {
+        "when": "distribuição de valores",
+        "prefer": ["histogram"]
+      },
+      {
+        "when": "correlação 2 eixos / tamanho",
+        "prefer": ["scatter", "bubble"]
+      },
+      {
+        "when": "perfil multi-eixo / radar",
+        "prefer": ["radar"]
+      },
+      {
+        "when": "meta vs realizado com dial",
+        "prefer": ["gauge", "kpi_view + si_goals"]
+      },
+      {
+        "when": "insight / callout / prosa com dado",
+        "prefer": ["composed_visuals text/shape + textProjection"]
+      },
+      {
+        "when": "interatividade kiosk / filtros na tela",
+        "prefer": ["TV_FILTER_STRIP", "input", "dataFilters"]
+      }
+    ],
+    "rules": [
+      "Antes de recipe/upsert: classificar a família da rota (KPI/snapshot, série temporal, by-branch/breakdown, panel/table) via gpt_search_data_routes → escolher visual pela decision_table + designTokens.chartTypeHints.",
+      "KPI+área NÃO é o único stack de impacto. Impacto Delpi = THEME + tipografia/partChrome + visual certo para o dado.",
+      "Série temporal → area (temporalChartDefault); categorias → bar/horizontal_bar/stacked_bar; composição → pie/doughnut; ranking → table ou horizontal_bar; funil/etapas → funnel/waterfall.",
+      "Painel multi-indicador: misturar ≥2 famílias de visual quando o pedido cobrir formas distintas (ex.: hero + barras categóricas + tabela) — não 4× KPI+área.",
+      "'melhore o visual' / DESIGN_REFINE em slide só KPI+área → diversificar (trocar chartType alinhado ao dado OU acrescentar table/filtro/composto) se a forma do dado permitir; não só aumentar fonte.",
+      "Obedecer chartTypeHints.forbidden (nunca pie/doughnut em série diária densa).",
+      "Recipes TV_KPI_PLUS_CHART / _BAR / _PIE / TV_TABLE_FOCUS / TV_HERO_PLUS_TABLE / TV_FILTER_STRIP / TV_COMPOSED_DATA_CARD são atalhos — escolher a recipe pela forma, não a primeira da lista.",
+      "Usar chartType tipado do catálogo (catalog_chart_types); não inventar tipo fora do enum."
+    ],
+    "forbidden": [
+      "Default automático KPI+área em todo slide operacional sem classificar a forma do dado",
+      "TV_KPI_PLUS_CHART (área/linha) quando a rota/pedido é breakdown categórico",
+      "pie/doughnut em série temporal densa (dias/semanas longas)",
+      "Ignorar table_view / filtro / composed_visuals quando ranking, lista ou insight pedem isso",
+      "Inventar chartType fora de catalog_chart_types"
+    ]
+  },
   "shape_chrome": {
     "principle": "SHAPE_CHROME_COMBO",
     "summary": "Toda forma de impacto combina fill/stroke + borderRadius + boxShadow tipados (designTokens.shapeChrome). Não deixar shape flat sem acabamento quando for card/callout/faixa.",
@@ -84,32 +172,34 @@
   },
   "visual_impact": {
     "principle": "TV_IMPACT_FIRST",
-    "summary": "Todo slide operacional novo ou refine visual deve parecer TV Delpi de impacto: fundo escuro tipado, cards brancos, KPI hero grande, gráfico com presença (area/bar), tabela banded — não canvas genérico ralo.",
+    "summary": "Todo slide operacional novo ou refine visual deve parecer TV Delpi de impacto: fundo tipado, cards brancos, tipografia hero, visual certo para o dado (visual_selection), tabela banded — não canvas genérico ralo nem sempre KPI+área.",
     "default_stack": [
       "THEME_DELPI (gradient brand.bgFrom→bgTo)",
       "TV_TITLE_STRIP ou heading bold onBg (typeScale.title/display)",
-      "1 KPI hero (kpiValueScale.hero / partChrome.kpi) OU ROW/GRID tipado",
-      "chartType=area (série) ou bar (categorias) em card branco",
+      "1 sinal hero tipado (kpi_view OU gauge OU composed callout) conforme visual_selection",
+      "chartType / table / filtro escolhidos por visual_selection + chartTypeHints (area só default de série temporal)",
       "tablePreset=banded quando houver tabela",
       "accent brand.accent em ícones/destaques; valueFormat currency/percent tipado",
       "composição tipada: shape/text/heading com textProjection + groupId (composed_visuals) além dos views padrão"
     ],
     "rules": [
-      "Criar/refinar dashboard operacional → aplicar THEME_DELPI + recipe de impacto no mesmo lote (TV_KPI_HERO, TV_KPI_PLUS_CHART / _BAR/_PIE, TV_KPI_SERIES_TABLE, TV_HERO_PLUS_TABLE, TV_COMPOSED_DATA_CARD). Não entregar só blocos soltos sem tema.",
-      "Série temporal / 'melhore o gráfico' / tendência → preferir chartType=area (preenchimento com presença) em vez de line fina; line só se o usuário pedir explicitamente linha.",
-      "Comparação categórica → bar ou stacked_bar; composição → pie/doughnut com poucas fatias.",
+      "Criar/refinar dashboard operacional → THEME_DELPI + recipe alinhada à forma do dado (TV_KPI_HERO, TV_KPI_PLUS_CHART / _BAR/_PIE, TV_KPI_SERIES_TABLE, TV_HERO_PLUS_TABLE, TV_TABLE_FOCUS, TV_FILTER_STRIP, TV_COMPOSED_DATA_CARD). Não entregar só blocos soltos sem tema.",
+      "Série temporal / tendência → chartType=area (temporalChartDefault) em vez de line fina; line só se pedido explícito; multi-série com unidades distintas → combo.",
+      "Comparação categórica → bar, horizontal_bar ou stacked_bar (TV_KPI_PLUS_CHART_BAR); composição → pie/doughnut (poucas fatias); ranking → table banded ou horizontal_bar.",
+      "Obedecer visual_selection (SHAPE_FOLLOWS_DATA) antes de fixar recipe/chartType — impacto ≠ repetir KPI+área.",
       "KPI: valor em escala hero/row/grid dos tokens (nunca abaixo de partChrome.kpi.valueMinFontSize); ícone accent; card brand.card; título onCardMuted.",
       "Tabela TV → tablePreset=banded + header/body >= partChrome.table; alinhar moeda; destacar coluna de resultado líquido/principal via fieldLabels/formato — não tabela minimal cinza.",
       "Hierarquia de impacto: 1 sinal hero + no máximo 3 secundários (maxPrimarySignalsPerSlide=4). Melhor 2 slides densos do que 1 overcrowded.",
       "Contraste kiosk: títulos/legenda onBg sobre gradient; valores onCard sobre card branco; nunca texto cinza claro em fundo claro nem valor escuro em card escuro genérico.",
-      "Pedido 'mais impactante / impactante / premium / TV / kiosk / melhore o visual' → DESIGN_REFINE com este bloco: tema Delpi + tipografia/partes nos mínimos de impacto + area/bar + banded + compostos (formas/textos com dado) — executar no mesmo turno.",
+      "Pedido 'mais impactante / impactante / premium / TV / kiosk / melhore o visual' → DESIGN_REFINE: tema Delpi + tipografia/partes nos mínimos + visual_selection (variar chartType/família se o slide for monótono KPI+área) + banded + compostos — executar no mesmo turno.",
       "Não limitar o slide aos views padrão: combinar dados em text/shape (composed_visuals) para callouts, insights e cards custom quando isso elevar o impacto.",
-      "Usar designTokens.visualImpactHints do catalog quando presente; não inventar CSS/cores fora de brand/partChrome."
+      "Usar designTokens.visualImpactHints + chartTypeHints do catalog quando presente; não inventar CSS/cores fora de brand/partChrome."
     ],
     "forbidden": [
       "Slide operacional só com fundo branco/cinza flat sem THEME_DELPI",
       "KPI com fonte miúda / sem card branco Delpi",
       "Gráfico line fino como default de tendência TV",
+      "Sempre KPI+área independente da forma do dado (violar visual_selection)",
       "tablePreset=minimal como default de painel operacional",
       "Empilhar >4 sinais primários ou frame widescreen único 'para parecer cheio'",
       "Inventar gradientes/cores fora de designTokens.brand",
@@ -157,7 +247,8 @@
     "rules": [
       "Default mental: 'o que já existe e como melhorar?' — não 'vou montar outro painel'.",
       "Melhorar filtros = re-layer (programação/tela/fonte) + datas relativas; remover duplicatas nas fontes.",
-      "Melhorar visual = DESIGN_REFINE / layout_perception no slide INFORMED; continuous_review + slide_craft.",
+      "Melhorar visual = DESIGN_REFINE / layout_perception + visual_selection no slide INFORMED; continuous_review + slide_craft.",
+      "Slide monótono (só KPI+área) com pedido de melhorar → diversificar chartType/família conforme forma do dado (visual_selection), não só tipografia.",
       "Corrigir qualidade = fechar OUTCOME_NOT_VERIFIED (período, projection, overlap, part_font) no mesmo objeto.",
       "Pedido vago ('melhore isso', 'revise a programação') → READ completo + lote de correções no existente; UMA pergunta só se alvo ambíguo entre playlists.",
       "Obedecer object_resolution + filter_layering + execution_posture no mesmo turno."
@@ -166,7 +257,8 @@
       "Ignorar context/layoutDigest e propor painel novo 'do zero'",
       "Duplicar slide/KPI para 'corrigir' filtro ou visual",
       "Só listar problemas sem aplicar correção tipada quando Actions estão ok",
-      "Tratar 'revise/melhore/corrija' como create_playlist implícito"
+      "Tratar 'revise/melhore/corrija' como create_playlist implícito",
+      "Responder 'melhore o visual' só reaplicando KPI+área sem visual_selection"
     ]
   },
   "object_resolution": {
@@ -290,13 +382,14 @@
   },
   "slide_craft": {
     "principle": "ONE_DECISION_TV_SLIDE",
-    "summary": "Boas práticas de craft de slide TV: uma pergunta de negócio, filtros em camadas, dados tipados, Delpi+impacto, binding limpo, nomes claros.",
+    "summary": "Boas práticas de craft de slide TV: uma pergunta de negócio, filtros em camadas, dados tipados, Delpi+impacto, visual_selection (forma→visual), binding limpo, nomes claros.",
     "rules": [
       "Uma decisão/pergunta de negócio por slide; ≤ maxPrimarySignalsPerSlide (designTokens, tipicamente 4) sinais primários.",
       "Obedecer filter_layering para filial/período/params (programação → tela → fonte → kiosk).",
       "operationId só de gpt_search_data_routes; params só do paramSchema; gpt_preview_data_block antes do commit (write_quality).",
       "Transform: só set_data_transform tipado quando a rota não entrega o shape — sem M/SQL/script.",
-      "Visual: THEME_DELPI + visual_impact + partChrome + shape_chrome; recipes ROW/GRID/SERIES_TABLE; layoutDigest antes de inventar frames.",
+      "Visual: THEME_DELPI + visual_impact + visual_selection + partChrome + shape_chrome; recipes pela forma do dado (não só PLUS_CHART); layoutDigest antes de inventar frames.",
+      "Classificar forma do dado (KPI/série/breakdown/tabela) → chartType/bloco via visual_selection antes de upsert.",
       "native_config sem resolved/linhas SQL; dado no enrichment runtime.",
       "Nomear slide/seção pela decisão ('OTD comercial — mês'), não 'Slide 3'.",
       "Playlist = história: ordem, duração, capa, dataDefaults únicos; playlist_curation para reorder.",
@@ -311,6 +404,7 @@
       "Datas relativas ou INFORMED explícito?",
       "Preview de dados OK sem 'Informe o período'?",
       "Projection + formato nos visuals de dados?",
+      "Escolhi o par forma-do-dado → visual (não KPI+área por hábito)?",
       "Tema/hierarquia Delpi e layout sem overlap?",
       "Nomes de slide/seção compreensíveis no filmstrip?"
     ],
@@ -319,7 +413,8 @@
       "Filtros e datas espalhados sem layering",
       "VERIFIED com resolved.error ou projection vazia",
       "Inventar filial/rota/campo de filtro",
-      "Recriar painel do zero quando continuous_review bastaria"
+      "Recriar painel do zero quando continuous_review bastaria",
+      "Todo slide com o mesmo stack KPI+área independente da forma do dado"
     ]
   },
   "si_goals": {
@@ -466,15 +561,15 @@
   },
   "compound_slide": {
     "principle": "READY_COMPOUND_SLIDE",
-    "summary": "Pedido complexo → um lote compound: playlist clarificada + rotas + params vivos + merge tipado + visuals com projeção/formato + recipe Delpi (KPI/chart/table/texto/forma).",
+    "summary": "Pedido complexo → um lote compound: playlist clarificada + rotas + params vivos + merge tipado + visuals escolhidos por visual_selection + recipe Delpi.",
     "pipeline": [
-      "7) presentation_recipes Delpi (TV_KPI_HERO / TV_KPI_ROW_2/3 / TV_KPI_GRID_4 / TV_KPI_PLUS_CHART[_BAR|_PIE] / TV_FILTER_STRIP / TV_KPI_SERIES_TABLE / TV_HERO_PLUS_TABLE / TV_TABLE_FOCUS / THEME_DELPI) + chrome tipado + designTokens.",
+      "1) Classificar pedido + visual_selection (forma do dado → kpi/chartType/table/filtro/composto).",
       "2) PLAYLIST_CLARIFICATION (list; perguntar se >1 sem nome).",
-      "3) gpt_search_data_routes (PRESENT_ALL_SEARCH_HITS) → escolher família KPI/série/tabela.",
+      "3) gpt_search_data_routes (PRESENT_ALL_SEARCH_HITS) → escolher família KPI/série/breakdown/tabela.",
       "4) gpt_preview_data_block com params (dateRangePreset=this_month padrão se date_range fechada) — deve retornar dado OK.",
       "5) upsert_data_source (N fontes, params completos + branch herdado) + set_data_transform merge via joinHints quando 2+ fontes.",
-      "6) add_*_from_route OU upsert_block visual + bind_visual — SEMPRE projection NÃO vazia + formato (auto ou upsert).",
-      "7) presentation_recipes Delpi (TV_KPI_HERO / TV_KPI_ROW_2/3 / TV_KPI_GRID_4 / TV_KPI_PLUS_CHART[_BAR|_PIE] / TV_FILTER_STRIP / TV_KPI_SERIES_TABLE / TV_HERO_PLUS_TABLE / TV_TABLE_FOCUS / THEME_DELPI) + chrome tipado + designTokens.",
+      "6) add_*_from_route OU upsert_block visual + bind_visual — SEMPRE projection NÃO vazia + formato (auto ou upsert); chartType/bloco via visual_selection.",
+      "7) presentation_recipes Delpi alinhadas à forma (TV_KPI_HERO / ROW/GRID / PLUS_CHART[_BAR|_PIE] / FILTER_STRIP / SERIES_TABLE / HERO_PLUS_TABLE / TABLE_FOCUS / COMPOSED_DATA_CARD / THEME_DELPI) + chrome tipado + designTokens.",
       "8) Uma gpt_preview_change compound + commit_now=true; só aceitar VERIFIED sem erro de filtro/projection."
     ],
     "forbidden": [
@@ -483,7 +578,8 @@
       "Fatiar o pedido em vários chats sem necessidade",
       "Escolher playlist silenciosamente quando há >1 e o usuário não nomeou",
       "Persistir fonte date_range com params {}",
-      "Declarar sucesso com OUTCOME_NOT_VERIFIED ou resolved.error no editor"
+      "Declarar sucesso com OUTCOME_NOT_VERIFIED ou resolved.error no editor",
+      "Montar compound só com KPI+área quando o search mostrou breakdown/tabela"
     ]
   },
   "display_format": {
@@ -547,10 +643,11 @@
     "DATA_INTERPRETATION": "Entender/explicar dados sem gravar até pedido explícito.",
     "PLAYLIST_CURATION": "Ordem, duração, slides, kiosk/TV — preferir update/reorder/move no existente (playlist_curation).",
     "COMPOUND_READY_SLIDE": "Pedido complexo de slide pronto — seguir compound_slide.pipeline + write_quality.",
-    "DESIGN_REFINE": "Ajuste visual tipado de impacto (THEME_DELPI, chartType area/bar, KPI hero, tablePreset=banded, tipografia/partChrome, compostos shape/text com textProjection, shape_chrome radius/shadow/stroke) no slide/seleção resolvidos — EXECUTAR agora via preview+commit; obedeça visual_impact + composed_visuals + shape_chrome; sem proposta-only.",
+    "DESIGN_REFINE": "Ajuste visual tipado de impacto (THEME_DELPI, tipografia/partChrome, tablePreset=banded, compostos shape/text, shape_chrome) + visual_selection (chartType/família alinhados ao dado — não só area) no slide/seleção resolvidos — EXECUTAR agora via preview+commit; obedeça visual_impact + visual_selection + composed_visuals + shape_chrome; sem proposta-only.",
+    "VISUAL_SELECTION": "Escolher bloco/chartType pela forma do dado (SHAPE_FOLLOWS_DATA) — kpi, area/line/combo, bar/horizontal_bar/stacked_bar, pie/doughnut, table, funnel/waterfall, histogram, scatter/bubble, radar, gauge, filtro, composed — não default KPI+área.",
     "COMPOSE_CUSTOM": "Montar componente próprio com blocos tipados (shape+heading+text/icon + dados via textProjection/groupId + shape_chrome) — não inventar widget fora do catálogo.",
     "FILTER_LAYERING": "Colocar filtros na camada certa (programação/tela/fonte/kiosk) e datas relativas — obedeça filter_layering + slide_craft.",
-    "CONTINUOUS_REVIEW": "Sempre revisar o existente: inventário READ → corrigir filtros/layout/qualidade no objeto resolvido; criar só se explícito ou ausência comprovada (continuous_review)."
+    "CONTINUOUS_REVIEW": "Sempre revisar o existente: inventário READ → corrigir filtros/layout/qualidade/variedade visual no objeto resolvido; criar só se explícito ou ausência comprovada (continuous_review)."
   },
   "write_flow": {
     "skip_suggest_when_typable": true,
@@ -592,8 +689,11 @@
     "Ignorar editorFocus fresco e criar outra playlist/slide para 'este'.",
     "Empilhar vários KPIs no mesmo frame default sem recipe ROW/GRID.",
     "Declarar VERIFIED com slide_layout_quality (overlap/overflow/densidade).",
-    "Entregar painel operacional ralo (fundo claro flat, KPI miúdo, line fina, tabela minimal) quando visual_impact exige Delpi+hero+area/bar+banded.",
+    "Entregar painel operacional ralo (fundo claro flat, KPI miúdo, line fina, tabela minimal) quando visual_impact exige Delpi+hero+visual certo+banded.",
     "Ignorar visual_impact / visualImpactHints em pedido de dashboard ou 'melhore o visual'.",
+    "Sempre KPI+área independente da forma do dado (violar visual_selection / SHAPE_FOLLOWS_DATA).",
+    "TV_KPI_PLUS_CHART em breakdown categórico quando bar/horizontal_bar/table cabem.",
+    "pie/doughnut em série diária densa.",
     "Recusar composição com text/shape/heading + textProjection quando o catálogo tipado já cobre (só orientar o editor).",
     "Usar apenas views padrão quando o pedido pede callout, forma com número ou componente custom.",
     "Shape/card flat sem borderRadius+boxShadow tipados quando shape_chrome exige acabamento.",
@@ -620,19 +720,19 @@
   },
   "slide_design": {
     "principle": "TYPED_LAYOUT_BEFORE_FREEFORM",
-    "summary": "Layout TV: recipes/tokens Delpi + visual_impact antes de inventar frames. Gate slide_layout_quality no VERIFY.",
+    "summary": "Layout TV: recipes/tokens Delpi + visual_impact + visual_selection antes de inventar frames. Gate slide_layout_quality no VERIFY.",
     "rules": [
-      "Pedido operacional → THEME_DELPI + recipe de impacto (TV_KPI_HERO / ROW_2/3 / GRID_4 / SERIES_TABLE / HERO_PLUS_TABLE / TITLE_STRIP / PLUS_CHART* / TV_COMPOSED_DATA_CARD) no mesmo patch — ver visual_impact + composed_visuals.",
+      "Pedido operacional → THEME_DELPI + recipe alinhada à forma (TV_KPI_HERO / ROW_2/3 / GRID_4 / SERIES_TABLE / HERO_PLUS_TABLE / TABLE_FOCUS / TITLE_STRIP / PLUS_CHART* / FILTER_STRIP / TV_COMPOSED_DATA_CARD) — ver visual_impact + visual_selection + composed_visuals.",
       "Tema Delpi: fundo gradient designTokens.brand.bgFrom→bgTo; cards brancos (brand.card); accent brand.accent; texto no card brand.onCard; títulos sobre o fundo brand.onBg.",
       "Dois/três/quatro KPIs → TV_KPI_ROW_* / TV_KPI_GRID_4 — não empilhar no mesmo frame.",
-      "Obedecer designTokens (safeMargin, gutter, typeScale, kpiValueScale, partChrome, visualImpactHints, maxPrimarySignalsPerSlide=4).",
+      "Obedecer designTokens (safeMargin, gutter, typeScale, kpiValueScale, partChrome, visualImpactHints, chartTypeHints, maxPrimarySignalsPerSlide=4).",
       "Partes KPI/chart/table/input/texto: preferir recipe + partChrome; o commit rebalanceia hierarquia (PRIMARY_DRIVES_DEPENDENTS) em todas as famílias.",
       "KPI hierarchy: ao mudar valor (fontSize), SEMPRE ajustar no mesmo upsert title.fontSize + icon.iconSize (+ unit) — ratios partChrome. O commit também corrige se faltar.",
       "Chart hierarchy: titleFontSize → legendFontSize + axisFontSize (+ chartParts). Table: body ↔ header. Input: control ↔ label/icon.",
       "Compostos groupId: o maior valor tipográfico do grupo puxa heading/text/shape irmãos (composed.* ratios).",
       "Compostos: shape/heading/text(+icon) com dataSourceId+textProjection e groupId — fields só do preview (composed_visuals); chrome fill+radius+shadow via shape_chrome.",
-      "Filtros compartilhados → filter_layering: dataDefaults (programação) / dataFilters+input (tela) / params só na fonte; datas relativas.",
-      "chartType tipado: série temporal preferir area (impacto TV); line só se pedido explícito; categorias bar/stacked_bar; composição pie/doughnut (poucas fatias); não pie em série diária densa.",
+      "Filtros compartilhados → filter_layering: patch_playlist_data_defaults / dataDefaults (programação) / dataFilters+input (tela) / params só na fonte; datas relativas.",
+      "chartType tipado via visual_selection + chartTypeHints: temporal→area (default)/line/combo; categorias→bar/horizontal_bar/stacked_bar; composição→pie/doughnut; ranking→table/horizontal_bar; funil→funnel/waterfall; distribuição→histogram; correlação→scatter/bubble; meta dial→gauge; não pie em série diária densa.",
       "Tabela operacional → tablePreset=banded por default (visual_impact).",
       "Após write: se OUTCOME_NOT_VERIFIED reason=slide_layout_quality → corrigir overlap/overflow/densidade/contraste/part_font_below_min.",
       "fontFamily só do allowlist."
@@ -644,6 +744,7 @@
       "KPI/chart/table com card escuro genérico quando o pedido é operacional Delpi (usar brand.card)",
       "Ignorar editorFocus fresco para alterar 'este' bloco",
       "Default visual fraco (line fina / tabela minimal / KPI abaixo do mínimo de impacto)",
+      "Default KPI+área sem classificar forma do dado (visual_selection)",
       "Recusar textProjection em heading/text/shape quando o pedido pede dado em texto/forma",
       "KPI/chart/table/input com primary grande e dependentes no mínimo absoluto (desproporção interna)",
       "Escalar só um campo tipográfico sem hierarquia de partes do mesmo componente"

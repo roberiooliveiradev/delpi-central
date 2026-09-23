@@ -1793,19 +1793,39 @@
     "chartTypeHints": {
       "temporal": [
         "area",
-        "line"
+        "line",
+        "combo"
       ],
       "categorical": [
         "bar",
+        "horizontal_bar",
         "stacked_bar"
       ],
       "composition": [
         "pie",
         "doughnut"
       ],
-      "funnel": [
+      "ranking": [
+        "horizontal_bar",
+        "table_view"
+      ],
+      "distribution": [
+        "histogram"
+      ],
+      "correlation": [
+        "scatter",
+        "bubble"
+      ],
+      "profile": [
+        "radar"
+      ],
+      "process": [
         "funnel",
         "waterfall"
+      ],
+      "goal": [
+        "gauge",
+        "kpi_view"
       ],
       "forbidden": {
         "dense_daily_series": [
@@ -1821,15 +1841,30 @@
         "TV_KPI_HERO",
         "TV_KPI_PLUS_CHART",
         "TV_KPI_PLUS_CHART_BAR",
+        "TV_KPI_PLUS_CHART_PIE",
         "TV_KPI_SERIES_TABLE",
         "TV_HERO_PLUS_TABLE",
+        "TV_TABLE_FOCUS",
+        "TV_FILTER_STRIP",
         "TV_TITLE_STRIP",
         "TV_COMPOSED_DATA_CARD"
       ],
+      "recipeWhen": {
+        "TV_KPI_HERO": "snapshot / 1 métrica de saúde",
+        "TV_KPI_PLUS_CHART": "KPI + série temporal (area default)",
+        "TV_KPI_PLUS_CHART_BAR": "KPI + comparação categórica",
+        "TV_KPI_PLUS_CHART_PIE": "KPI + composição (poucas fatias)",
+        "TV_KPI_SERIES_TABLE": "KPI + série + tabela",
+        "TV_HERO_PLUS_TABLE": "hero + grade/ranking",
+        "TV_TABLE_FOCUS": "ranking / muitas linhas",
+        "TV_FILTER_STRIP": "filtros interativos na tela",
+        "TV_COMPOSED_DATA_CARD": "callout / card custom com textProjection"
+      },
       "temporalChartDefault": "area",
       "tablePresetDefault": "banded",
       "kpiEmphasis": "hero",
       "maxPrimarySignalsPerSlide": 4,
+      "shapeFollowsData": true,
       "composeWith": [
         "shape",
         "heading",
@@ -1866,7 +1901,11 @@
         "texto com dado",
         "sombra",
         "arredondado",
-        "borda"
+        "borda",
+        "varie o gráfico",
+        "outro tipo de gráfico",
+        "use tabela",
+        "use barras"
       ]
     },
     "shapeChrome": {

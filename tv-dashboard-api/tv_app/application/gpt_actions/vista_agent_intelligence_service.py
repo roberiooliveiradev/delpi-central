@@ -60,6 +60,7 @@ class VistaAgentIntelligenceService:
             "execution_posture": doc.get("execution_posture") or {},
             "continuous_review": doc.get("continuous_review") or {},
             "visual_impact": doc.get("visual_impact") or {},
+            "visual_selection": doc.get("visual_selection") or {},
             "composed_visuals": doc.get("composed_visuals") or {},
             "shape_chrome": doc.get("shape_chrome") or {},
             "object_resolution": doc.get("object_resolution") or {},

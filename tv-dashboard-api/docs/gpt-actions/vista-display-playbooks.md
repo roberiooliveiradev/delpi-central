@@ -196,15 +196,23 @@ Offer next step: refine keywords, clarify business question, or switch mode.
 
 ### 6.1 Match form to question
 
+Obey live `agent_directives.visual_selection` (`SHAPE_FOLLOWS_DATA`) + `designTokens.chartTypeHints`. **Do not** default every operational slide to KPI + area.
+
 | Need | Prefer |
 |---|---|
-| Single health number | KPI / big number |
-| Trend over time | **Area** (default TV impact) / line if user asks for line |
-| Compare categories | Bar |
-| Ranking / top-N | Ordered bar / list |
-| Status / traffic light | Status chip + short text |
-| Instruction / alert | Text slide (high contrast) |
-| Mixed story for TV | Sequence of slides, not one overcrowded canvas |
+| Single health number | `kpi_view` / big number (± `gauge` if typed goal) |
+| Trend over time | **Area** (temporal default) / `line` if user asks / `combo` multi-series |
+| Compare categories | `bar` / `horizontal_bar` / `stacked_bar` (`TV_KPI_PLUS_CHART_BAR`) |
+| Composition (few slices) | `pie` / `doughnut` — never on dense daily series |
+| Ranking / top-N / many rows | `table_view` banded / `TV_TABLE_FOCUS` / `TV_HERO_PLUS_TABLE` |
+| Funnel / stages / drop | `funnel` / `waterfall` |
+| Distribution | `histogram` |
+| Correlation | `scatter` / `bubble` |
+| Multi-axis profile | `radar` |
+| Status / traffic light | Status chip + short text / composed callout |
+| Instruction / alert | Text slide (high contrast) / composed_visuals |
+| Kiosk filters | `TV_FILTER_STRIP` + `input` / `dataFilters` |
+| Mixed story for TV | Sequence of slides **or** ≥2 visual families on one slide — not one overcrowded canvas of identical KPI+area |
 
 ### 6.2 TV / kiosk heuristics
 
@@ -214,20 +222,21 @@ Offer next step: refine keywords, clarify business question, or switch mode.
 - Prefer stable refresh semantics; do not promise real-time unless API evidence supports it.
 - Dark/light themes: follow existing playlist/theme tokens when known (`OBSERVED`); otherwise ask or mark `UNKNOWN`.
 - Motion: purposeful, not decorative noise.
+- “Melhore o visual” on a monotone KPI+area slide → diversify chartType/family per `visual_selection`, not only font size.
 
 ### 6.2b Design system checklist (live catalog)
 
-Obey `agent_directives.slide_design` + `agent_directives.visual_impact` + `presentation_recipes.catalog.designTokens` from `gpt_get_catalog` (not hardcoded Knowledge hex):
+Obey `agent_directives.slide_design` + `agent_directives.visual_impact` + `agent_directives.visual_selection` + `presentation_recipes.catalog.designTokens` from `gpt_get_catalog` (not hardcoded Knowledge hex):
 
-1. Prefer typed recipes (`TV_KPI_HERO`, `TV_KPI_ROW_2/3`, `TV_KPI_GRID_4`, `TV_KPI_PLUS_CHART[_BAR|_PIE]`, `TV_FILTER_STRIP`, `TV_HERO_PLUS_TABLE`, `TV_KPI_SERIES_TABLE`, …) before freeform frames.
+1. Prefer typed recipes (`TV_KPI_HERO`, `TV_KPI_ROW_2/3`, `TV_KPI_GRID_4`, `TV_KPI_PLUS_CHART[_BAR|_PIE]`, `TV_FILTER_STRIP`, `TV_HERO_PLUS_TABLE`, `TV_TABLE_FOCUS`, `TV_KPI_SERIES_TABLE`, …) **chosen by data shape** before freeform frames.
 2. Tema Delpi: `designTokens.brand` — fundo `bgFrom→bgTo`, cards `card` (#ffffff), accent `#089bdb`, texto `onCard` / títulos `onBg`.
-3. **Impacto TV (default):** `visual_impact` / `visualImpactHints` — KPI hero nas escalas tipadas; série → `chartType=area`; tabela → `tablePreset=banded`; hierarquia 1 hero + ≤3 secundários.
+3. **Impacto TV:** `visual_impact` / `visualImpactHints` — Delpi + tipografia hero; série temporal → `chartType=area`; categorias → bar*; composição → pie/doughnut; ranking → table; tabela → `tablePreset=banded`; hierarquia 1 hero + ≤3 secundários. Impact ≠ always KPI+area.
 4. **Composição tipada:** `composed_visuals` — combinar `shape`/`heading`/`text`/`icon` com `dataSourceId` + `textProjection` (ou `contentRuns[].dataRef`) e `groupId` para cards/callouts próprios além de `kpi_view`/`chart_view`/`table_view`. Recipe `TV_COMPOSED_DATA_CARD` = esqueleto.
 5. **Chrome de forma:** `shape_chrome` / `designTokens.shapeChrome` — sempre combinar `fill` + `stroke`/`strokeWidth` + `borderRadius` + `boxShadow` (presets `card_surface`, `callout`, `accent_bar`, `pill_badge`, `ghost_frame`). Sem card flat.
 6. **Hierarquia tipográfica (todas as famílias):** `partChrome.hierarchy` = `PRIMARY_DRIVES_DEPENDENTS` — KPI value→title/icon; chart title→legend/axis; table body↔header; input control→label/icon; `groupId` compostos. O commit rebalanceia mesmo em blocos INFORMED.
 7. Respect `maxPrimarySignalsPerSlide`, `safeMargin`, `gutter`, `typeScale`, `kpiValueScale`, `partChrome` (mínimos tipográficos KPI/chart/table/input).
 8. Filtros: slide → `patch_native_config.dataFilters` e/ou recipe `TV_FILTER_STRIP` (inputs); programação → `patch_playlist_data_defaults`.
-9. `chartType` tipado via `designTokens.chartTypeHints` (temporal→**area**/line; categorias→bar; composição→pie; nunca pie em série diária densa).
+9. `chartType` tipado via `designTokens.chartTypeHints` + `visual_selection` (temporal→**area**/line/combo; categorical→bar/horizontal_bar/stacked_bar; composition→pie/doughnut; process→funnel/waterfall; …; nunca pie em série diária densa).
 10. `editorFocus` from `gpt_list_playlists` / `gpt_get_playlist_context` = INFORMED referent when fresh.
 11. VERIFY may return `OUTCOME_NOT_VERIFIED` with `reason=slide_layout_quality` (overlap/overflow/density/contrast/`part_font_below_min`) — fix and retry.
 12. Home MFE library list is live via WebSocket (`playlist_library_updated`); VISTA still uses READ Actions — do not invent IDs from Knowledge.

@@ -20,7 +20,7 @@ Budget: Instructions **<= 3.500** caracteres (núcleo estável). Detalhe operaci
 
 Não colocar no paste do Builder (vai em `vista_agent_intelligence.json` + deploy):
 
-- nomes de seções mutáveis (`object_resolution`, `screenshot_parity`, `layout_perception`, `filter_layering`, `slide_craft`, `continuous_review`, `write_flow`, `anti_patterns`, `modes`, `execution_posture`, `visual_impact`, `composed_visuals`, `shape_chrome` específicos);
+- nomes de seções mutáveis (`object_resolution`, `screenshot_parity`, `layout_perception`, `filter_layering`, `slide_craft`, `continuous_review`, `write_flow`, `anti_patterns`, `modes`, `execution_posture`, `visual_impact`, `visual_selection`, `composed_visuals`, `shape_chrome` específicos);
 - princípios/códigos de política (`ALTER_EXISTING_BEFORE_CREATE`, `ALWAYS_REVIEW_EXISTING`, `PRINT_TO_TYPED_SLIDE_PARITY`, `DIGEST_BEFORE_INVENT_FRAMES`, `LAYERED_FILTERS_MOST_SPECIFIC_WINS`, `ONE_DECISION_TV_SLIDE`, `EXECUTE_TYPED_CHANGE_NOW`, `TV_IMPACT_FIRST`, `COMPOSE_TYPED_BLOCKS`, `SHAPE_CHROME_COMBO`, `VISUAL_PARITY`, `LAYOUT_PERCEPTION`, `FILTER_LAYERING`, `CONTINUOUS_REVIEW`, `QUICK_DISPLAY`, …);
 - pipelines passo-a-passo, listas de ops de exemplo para um caso, mapeamento print→bloco, anti-duplicidade detalhada;
 - qualquer regra que você esperaria mudar no próximo deploy sem recolocar o GPT.
