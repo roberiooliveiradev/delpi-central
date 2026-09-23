@@ -99,3 +99,48 @@ def test_delete_slide_and_reorder():
     assert cmds[0]["path"].endswith("/slides/reorder")
     assert cmds[1]["method"] == "DELETE"
     assert cmds[1]["expectedRevision"] == 9
+
+
+def test_patch_playlist_data_defaults_maps_to_playlist_patch():
+    cmds = PresentationHttpCommandPlannerService.build(
+        ops=[
+            {
+                "op": "patch_playlist_data_defaults",
+                "dataDefaults": {"branch": "02", "periodDays": 7},
+            }
+        ],
+        target={"playlistId": PLAYLIST_ID},
+        native_config=None,
+        base_revision=2,
+    )
+    assert len(cmds) == 1
+    assert cmds[0]["method"] == "PATCH"
+    assert cmds[0]["path"] == f"/playlists/{PLAYLIST_ID}"
+    assert cmds[0]["op"] == "patch_playlist_data_defaults"
+    assert cmds[0]["body"] == {"dataDefaults": {"branch": "02", "periodDays": 7}}
+    assert cmds[0]["expectedRevision"] == 2
+
+
+def test_patch_playlist_data_defaults_requires_playlist():
+    with pytest.raises(ValueError, match="playlistId"):
+        PresentationHttpCommandPlannerService.build(
+            ops=[
+                {
+                    "op": "patch_playlist_data_defaults",
+                    "dataDefaults": {"branch": "01"},
+                }
+            ],
+            target={},
+            native_config=None,
+            base_revision=None,
+        )
+
+
+def test_patch_playlist_data_defaults_requires_object():
+    with pytest.raises(ValueError):
+        PresentationHttpCommandPlannerService.build(
+            ops=[{"op": "patch_playlist_data_defaults", "dataDefaults": "bad"}],
+            target={"playlistId": PLAYLIST_ID},
+            native_config=None,
+            base_revision=None,
+        )

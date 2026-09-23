@@ -126,6 +126,22 @@ class PresentationHttpCommandPlannerService:
                     PresentationOpsContentService.message("missingPlaylist")
                 )
 
+            if op_name == "patch_playlist_data_defaults":
+                raw_defaults = raw.get("dataDefaults")
+                if not isinstance(raw_defaults, dict):
+                    raise ValueError(
+                        PresentationOpsContentService.message("playlistDefaultsRequired")
+                    )
+                commands.append(
+                    _cmd(
+                        method="PATCH",
+                        path=f"/playlists/{current_playlist}",
+                        body={"dataDefaults": raw_defaults},
+                        op=op_name,
+                    )
+                )
+                continue
+
             if op_name == "add_blank_slide":
                 title = str(raw.get("title") or "").strip() or PresentationOpsContentService.setting_str(
                     "defaultSlideTitle", "Slide personalizado"

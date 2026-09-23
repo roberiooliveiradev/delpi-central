@@ -215,7 +215,22 @@ def merge_data_params(
     # Camada inferior pode repor competence depois do pop no preset da camada
     # superior (ex.: fonte com competence + input previous_month).
     _strip_competence_for_relative_preset(out)
+    _reconcile_period_days_vs_relative_preset(out)
     return out
+
+
+def _reconcile_period_days_vs_relative_preset(merged: dict[str, Any]) -> None:
+    """periodDays explícito vence dateRangePreset relativo stale (ex.: this_month + 7).
+
+    Evita fonte com os dois ao mesmo tempo após patch parcial / herança.
+    Presets ``custom`` e ``last_n_days`` convivem com periodDays.
+    """
+    if not _has_value(merged, PERIOD_DAYS_KEY):
+        return
+    preset = _normalize_preset(merged.get(DATE_RANGE_PRESET_KEY))
+    if not preset or preset in {"custom", "last_n_days"}:
+        return
+    merged.pop(DATE_RANGE_PRESET_KEY, None)
 
 
 def param_inherited_from_slide(

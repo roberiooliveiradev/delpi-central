@@ -198,6 +198,41 @@ def test_merge_data_params_input_overrides_block_and_clears_preset():
     assert "dateRangePreset" not in merged
 
 
+def test_merge_data_params_stale_relative_preset_yields_to_period_days():
+    """Mesma camada com this_month + periodDays → periodDays vence (stale preset)."""
+    merged = merge_data_params(
+        playlist_defaults=None,
+        slide_filters=None,
+        block_params={"dateRangePreset": "this_month", "periodDays": 7, "branch": "01"},
+        input_overrides=None,
+    )
+    assert merged["periodDays"] == 7
+    assert merged["branch"] == "01"
+    assert "dateRangePreset" not in merged
+
+
+def test_merge_data_params_last_n_days_keeps_period_days_and_preset():
+    merged = merge_data_params(
+        playlist_defaults=None,
+        slide_filters=None,
+        block_params={"dateRangePreset": "last_n_days", "periodDays": 14},
+        input_overrides=None,
+    )
+    assert merged["dateRangePreset"] == "last_n_days"
+    assert merged["periodDays"] == 14
+
+
+def test_merge_data_params_relative_preset_alone_untouched():
+    merged = merge_data_params(
+        playlist_defaults=None,
+        slide_filters=None,
+        block_params={"dateRangePreset": "this_week", "branch": "02"},
+        input_overrides=None,
+    )
+    assert merged["dateRangePreset"] == "this_week"
+    assert "periodDays" not in merged
+
+
 def test_merge_data_params_input_end_date_clears_preset_and_period_days():
     merged = merge_data_params(
         playlist_defaults=None,

@@ -711,8 +711,22 @@ class PresentationPatchService:
                 "playlistId": None if is_synthetic_id(playlist_id) else playlist_id,
                 "slideId": None if is_synthetic_id(slide_id) else slide_id,
             }
+            # PATCH /playlists/{id} replaces dataDefaults JSON — send merged blob.
+            plan_ops = copy.deepcopy(ops)
+            playlist_preview = side_effects.get("playlist")
+            if isinstance(playlist_preview, dict) and isinstance(
+                playlist_preview.get("dataDefaults"), dict
+            ):
+                for plan_op in plan_ops:
+                    if (
+                        isinstance(plan_op, dict)
+                        and _op_name_of(plan_op) == "patch_playlist_data_defaults"
+                    ):
+                        plan_op["dataDefaults"] = copy.deepcopy(
+                            playlist_preview["dataDefaults"]
+                        )
             result["httpCommands"] = PresentationHttpCommandPlannerService.build(
-                ops=ops,
+                ops=plan_ops,
                 target=plan_target,
                 native_config=result.get("nativeConfig"),
                 base_revision=base_revision,
