@@ -799,13 +799,16 @@ def test_viewer_forbidden_on_commit_http():
 
 
 # GPT Actions tool-response budget (ResponseTooLargeError when exceeded).
-# OpenAI may escape non-ASCII (\uXXXX); gate both encodings.
-GPT_ACTIONS_CATALOG_MAX_BYTES = 100 * 1024
+# Detailed gates live in test_gpt_actions_catalog_budget.py.
 
 
 def test_gpt_get_catalog_fits_actions_response_budget():
-    """Regression: catalog + agent_directives must stay under ~100 KiB."""
+    """Smoke bridge: keep facade suite green; full matrix is catalog_budget module."""
     from tv_app.application.gpt_actions.capability_surface import build_capability_surface
+    from tv_app.application.gpt_actions.response_compact import (
+        GPT_ACTIONS_RESPONSE_MAX_BYTES,
+        actions_response_sizes,
+    )
     from tv_app.application.gpt_actions.vista_agent_intelligence_service import (
         clear_vista_agent_intelligence_cache,
     )
@@ -823,24 +826,12 @@ def test_gpt_get_catalog_fits_actions_response_budget():
 
     doc = PresentationOpsContentService.capability_catalog_document()
     doc["capability_surface"] = build_capability_surface()
-    raw_unicode = json.dumps(doc, ensure_ascii=False).encode("utf-8")
-    raw_ascii = json.dumps(doc, ensure_ascii=True).encode("utf-8")
-    wrapped_ascii = json.dumps(
-        {"success": True, "data": doc},
-        ensure_ascii=True,
-    ).encode("utf-8")
-    assert len(raw_unicode) <= GPT_ACTIONS_CATALOG_MAX_BYTES, (
-        f"gpt_get_catalog unicode body is {len(raw_unicode)} bytes "
-        f"(limit {GPT_ACTIONS_CATALOG_MAX_BYTES}); compact projection drifted."
-    )
-    assert len(raw_ascii) <= GPT_ACTIONS_CATALOG_MAX_BYTES, (
-        f"gpt_get_catalog ascii-escaped body is {len(raw_ascii)} bytes "
-        f"(limit {GPT_ACTIONS_CATALOG_MAX_BYTES}); Custom GPT ResponseTooLargeError risk."
-    )
-    assert len(wrapped_ascii) <= GPT_ACTIONS_CATALOG_MAX_BYTES, (
-        f"gpt_get_catalog ascii envelope is {len(wrapped_ascii)} bytes "
-        f"(limit {GPT_ACTIONS_CATALOG_MAX_BYTES}); Custom GPT ResponseTooLargeError risk."
-    )
+    sizes = actions_response_sizes(doc)
+    for label, size in sizes.items():
+        assert size <= GPT_ACTIONS_RESPONSE_MAX_BYTES, (
+            f"gpt_get_catalog {label} is {size} bytes "
+            f"(limit {GPT_ACTIONS_RESPONSE_MAX_BYTES}); compact projection drifted."
+        )
     # Still projects live directives the specialist must obey.
     assert doc["capability_surface"]["agent_directives"]["object_resolution"][
         "principle"

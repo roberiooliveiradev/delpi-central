@@ -15,6 +15,20 @@ def utf8_size(payload: Any) -> int:
     return len(json.dumps(payload, ensure_ascii=False, default=str).encode("utf-8"))
 
 
+def ascii_utf8_size(payload: Any) -> int:
+    """Byte size with ASCII escapes — closer to Custom GPT Actions serialization."""
+    return len(json.dumps(payload, ensure_ascii=True, default=str).encode("utf-8"))
+
+
+def actions_response_sizes(payload: Any) -> dict[str, int]:
+    """Sizes that must all stay ≤ ``GPT_ACTIONS_RESPONSE_MAX_BYTES``."""
+    return {
+        "unicode": utf8_size(payload),
+        "ascii": ascii_utf8_size(payload),
+        "envelopeAscii": ascii_utf8_size({"success": True, "data": payload}),
+    }
+
+
 def _block_type_summary(native_config: Mapping[str, Any] | None) -> dict[str, Any]:
     cfg = native_config if isinstance(native_config, dict) else {}
     blocks = cfg.get("blocks") if isinstance(cfg.get("blocks"), list) else []
