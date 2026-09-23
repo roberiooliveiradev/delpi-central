@@ -463,87 +463,92 @@ class PostgresAudit5sRepository(PluginBaseRepository):
         )
         senso_id_by_order = {int(row["sort_order"]): row["id"] for row in senso_rows}
 
+        # Lease único: execute(auto_commit=False) sem lease externo devolve a
+        # conexão ao pool, que faz rollback. O RETURNING da publicação ainda
+        # chega na API, então a tela confirma a nova versão, mas critérios,
+        # ponteiro da filial e histórico não persistem.
         try:
-            for item in criteria:
-                senso_order = int(item["senso_order"])
-                senso_id = senso_id_by_order.get(senso_order)
-                if senso_id is None:
-                    raise PluginsRepositoryError(
-                        f"Senso {senso_order} não encontrado no catálogo base."
-                    )
-                self.execute(
-                    """
-                    INSERT INTO quality.audit_5s_criteria (
-                        senso_id, code, description, sort_order, catalog_version
-                    ) VALUES (%s, %s, %s, %s, %s)
-                    """,
-                    (
-                        senso_id,
-                        item["code"],
-                        item["description"],
-                        int(item["sort_order"]),
-                        next_version,
-                    ),
-                    auto_commit=False,
-                )
-
-            if senso_names:
-                for item in senso_names:
+            with self.db():
+                for item in criteria:
+                    senso_order = int(item["senso_order"])
+                    senso_id = senso_id_by_order.get(senso_order)
+                    if senso_id is None:
+                        raise PluginsRepositoryError(
+                            f"Senso {senso_order} não encontrado no catálogo base."
+                        )
                     self.execute(
                         """
-                        INSERT INTO quality.audit_5s_catalog_senso_names (
-                            catalog_version, senso_sort_order, name
-                        ) VALUES (%s, %s, %s)
-                        ON CONFLICT (catalog_version, senso_sort_order) DO UPDATE
-                            SET name = EXCLUDED.name
+                        INSERT INTO quality.audit_5s_criteria (
+                            senso_id, code, description, sort_order, catalog_version
+                        ) VALUES (%s, %s, %s, %s, %s)
                         """,
                         (
+                            senso_id,
+                            item["code"],
+                            item["description"],
+                            int(item["sort_order"]),
                             next_version,
-                            int(item["senso_sort_order"]),
-                            item["name"],
                         ),
                         auto_commit=False,
                     )
 
-            self.execute(
-                """
-                INSERT INTO quality.audit_5s_branch_catalog (branch_code, catalog_version)
-                VALUES (%s, %s)
-                ON CONFLICT (branch_code) DO UPDATE
-                    SET catalog_version = EXCLUDED.catalog_version,
-                        active = TRUE
-                """,
-                (branch_code, next_version),
-                auto_commit=False,
-            )
+                if senso_names:
+                    for item in senso_names:
+                        self.execute(
+                            """
+                            INSERT INTO quality.audit_5s_catalog_senso_names (
+                                catalog_version, senso_sort_order, name
+                            ) VALUES (%s, %s, %s)
+                            ON CONFLICT (catalog_version, senso_sort_order) DO UPDATE
+                                SET name = EXCLUDED.name
+                            """,
+                            (
+                                next_version,
+                                int(item["senso_sort_order"]),
+                                item["name"],
+                            ),
+                            auto_commit=False,
+                        )
 
-            publication = self.execute_returning_one(
-                """
-                INSERT INTO quality.audit_5s_catalog_publications (
-                    branch_code,
-                    catalog_version,
-                    published_by_user_id,
-                    criteria_count,
-                    notes
-                ) VALUES (%s, %s, %s, %s, %s)
-                RETURNING id,
-                          branch_code,
-                          catalog_version,
-                          published_by_user_id,
-                          published_at,
-                          criteria_count,
-                          notes
-                """,
-                (
-                    branch_code,
-                    next_version,
-                    published_by_user_id,
-                    len(criteria),
-                    notes,
-                ),
-                auto_commit=False,
-            )
-            self.commit()
+                self.execute(
+                    """
+                    INSERT INTO quality.audit_5s_branch_catalog (branch_code, catalog_version)
+                    VALUES (%s, %s)
+                    ON CONFLICT (branch_code) DO UPDATE
+                        SET catalog_version = EXCLUDED.catalog_version,
+                            active = TRUE
+                    """,
+                    (branch_code, next_version),
+                    auto_commit=False,
+                )
+
+                publication = self.execute_returning_one(
+                    """
+                    INSERT INTO quality.audit_5s_catalog_publications (
+                        branch_code,
+                        catalog_version,
+                        published_by_user_id,
+                        criteria_count,
+                        notes
+                    ) VALUES (%s, %s, %s, %s, %s)
+                    RETURNING id,
+                              branch_code,
+                              catalog_version,
+                              published_by_user_id,
+                              published_at,
+                              criteria_count,
+                              notes
+                    """,
+                    (
+                        branch_code,
+                        next_version,
+                        published_by_user_id,
+                        len(criteria),
+                        notes,
+                    ),
+                    auto_commit=False,
+                )
+                self.commit()
         except Exception:
             self.rollback()
             raise
