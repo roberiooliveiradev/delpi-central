@@ -17,6 +17,7 @@ type Options = {
   presence?: PresentationPresencePeer;
   enabled?: boolean;
   onSync: (event?: PresentationRealtimeEvent) => void;
+  onConnected?: () => void;
   onSlideDraft?: (event: PresentationSlideDraftEvent) => void;
   onSelectionUpdate?: (event: PresentationSelectionUpdateEvent) => void;
   onPresenceUpdate?: (peers: PresentationPresencePeer[]) => void;
@@ -28,6 +29,7 @@ export function usePlaylistEditorSync({
   presence,
   enabled = true,
   onSync,
+  onConnected,
   onSlideDraft,
   onSelectionUpdate,
   onPresenceUpdate,
@@ -35,6 +37,8 @@ export function usePlaylistEditorSync({
   const wsUrl = accessToken ? buildAdminPresentationWsUrl(playlistId, accessToken) : null;
   const onSyncRef = useRef(onSync);
   onSyncRef.current = onSync;
+  const onConnectedRef = useRef(onConnected);
+  onConnectedRef.current = onConnected;
   const onSlideDraftRef = useRef(onSlideDraft);
   onSlideDraftRef.current = onSlideDraft;
   const onSelectionUpdateRef = useRef(onSelectionUpdate);
@@ -51,6 +55,7 @@ export function usePlaylistEditorSync({
       const wasConnected = connectedRef.current;
       connectedRef.current = connected;
       if (connected && !wasConnected) {
+        onConnectedRef.current?.();
         onSyncRef.current();
       }
     },

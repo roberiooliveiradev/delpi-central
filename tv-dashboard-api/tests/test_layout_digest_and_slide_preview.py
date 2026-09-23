@@ -197,6 +197,10 @@ def test_get_playlist_context_includes_layout_digest():
     assert "mediaInventory" in out
     assert "assets" in out["mediaInventory"]
     assert out["currentRevision"] == 11
+    assert "nativeConfig" not in (out["slides"][0] or {})
+    assert out["focusedSlide"]["id"] == slide_id
+    assert isinstance(out["focusedSlide"]["nativeConfig"], dict)
+    assert out["focusedSlideId"] == slide_id
 
 
 def test_get_playlist_context_include_preview(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):

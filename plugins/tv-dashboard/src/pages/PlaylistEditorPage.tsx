@@ -670,6 +670,10 @@ export function PlaylistEditorPage({
     accessToken,
     presence: editorPresence,
     enabled: editorActive,
+    onConnected: () => {
+      // Re-publish editorFocus after WS reconnect (API recreate wipes in-memory store).
+      flushEditorFocusRef.current?.();
+    },
     onPresenceUpdate: handlePresenceUpdate,
     onSync: (event) => {
       // Sync canônico (WS presentation_updated) — inclui mutações do copiloto via CRUD.
@@ -703,22 +707,35 @@ export function PlaylistEditorPage({
   const sendSelectionUpdateRef = useRef(sendSelectionUpdate);
   sendSelectionUpdateRef.current = sendSelectionUpdate;
 
+  const flushEditorFocus = useCallback(() => {
+    const slideId = selectedSlideIdRef.current;
+    if (!slideId || !editorPresence?.clientId) return;
+    const blockIds = selectedSlideIdsRef.current.filter((id) => id !== slideId);
+    sendSelectionUpdateRef.current(slideId, blockIds);
+  }, [editorPresence?.clientId]);
+
+  const flushEditorFocusRef = useRef(flushEditorFocus);
+  flushEditorFocusRef.current = flushEditorFocus;
+
   // Keep editorFocus snapshot warm for VISTA even when selection is empty (slide-only).
   useEffect(() => {
     if (!editorActive || !selectedSlideId) return;
-    sendSelectionUpdateRef.current(selectedSlideId, []);
-  }, [editorActive, selectedSlideId]);
+    flushEditorFocus();
+  }, [editorActive, selectedSlideId, flushEditorFocus]);
+
+  // Retry when WS presence/clientId arrives after the first paint (common after API recreate).
+  useEffect(() => {
+    if (!editorActive || !selectedSlideId || !editorPresence?.clientId) return;
+    flushEditorFocus();
+  }, [editorActive, selectedSlideId, editorPresence?.clientId, flushEditorFocus]);
 
   useEffect(() => {
     if (!editorActive || !selectedSlideId) return;
     const intervalId = window.setInterval(() => {
-      const slideId = selectedSlideIdRef.current;
-      if (!slideId) return;
-      const blockIds = selectedSlideIdsRef.current.filter((id) => id !== slideId);
-      sendSelectionUpdateRef.current(slideId, blockIds);
+      flushEditorFocus();
     }, 30_000);
     return () => window.clearInterval(intervalId);
-  }, [editorActive, selectedSlideId]);
+  }, [editorActive, selectedSlideId, flushEditorFocus]);
 
   const load = useCallback(async () => {
     const cached = readPlaylistShell(playlistId);

@@ -167,7 +167,7 @@ def get_playlist_context(
     ),
     slideId: str | None = Query(
         default=None,
-        description="Slide UUID for includePreview (defaults to editorFocus or first slide).",
+        description="Slide UUID to expand as focusedSlide (and for includePreview). Defaults to editorFocus.slideId or the first slide.",
     ),
 ):
     cid = _correlation_id(request)

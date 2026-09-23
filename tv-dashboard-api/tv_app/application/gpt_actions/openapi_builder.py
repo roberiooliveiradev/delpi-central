@@ -508,10 +508,9 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "operationId": "gpt_list_playlists",
                 "summary": "List owned and shared playlists",
                 "description": (
-                    "Lists playlists visible to the authenticated actor (owner/share). "
-                    "Does not return a global admin dump. "
-                    "When the actor has a live editor session, may include editorFocus "
-                    "(playlistId/slideId/selectedIds, ephemeral TTL)."
+                    "Compact playlist list for the authenticated actor (id/name/role/revision). "
+                    "No coverSlide/nativeConfig. When the actor has a live editor session, "
+                    "editorFocus is returned first (playlistId/slideId/selectedIds, ephemeral TTL)."
                 ),
                 "tags": [tag],
                 "security": [{"BearerAuth": []}],
@@ -537,8 +536,9 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "operationId": "gpt_get_playlist_context",
                 "summary": "Authorized playlist context",
                 "description": (
-                    "Playlist, slides, sections, accessRole, currentRevision, layoutDigest "
-                    "(compact geometry). Optional editorFocus. "
+                    "Compact playlist context: playlist summary, slides[] index (no nativeConfig), "
+                    "focusedSlide with full nativeConfig (editorFocus / slideId / first), "
+                    "layoutDigest, filterDigest, optional editorFocus. "
                     "includePreview=true&slideId= adds slidePreview signed PNG URL (no 9th Action)."
                 ),
                 "tags": [tag],
@@ -567,8 +567,8 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                         "required": False,
                         "schema": {"type": "string", "format": "uuid"},
                         "description": (
-                            "Slide for includePreview. Defaults to editorFocus.slideId "
-                            "or the first slide."
+                            "Selects focusedSlide (full nativeConfig) and optional includePreview. "
+                            "Defaults to editorFocus.slideId or the first slide."
                         ),
                     },
                 ],

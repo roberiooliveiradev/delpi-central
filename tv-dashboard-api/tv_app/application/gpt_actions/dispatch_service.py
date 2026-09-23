@@ -89,6 +89,9 @@ class GptActionsDispatchService:
         limit: int = 50,
         offset: int = 0,
     ) -> dict[str, Any]:
+        from tv_app.application.gpt_actions.response_compact import (
+            project_playlist_list_item,
+        )
         from tv_app.application.services.editor_focus_store import editor_focus_store
 
         assert_permission(user, TV_READ)
@@ -99,26 +102,24 @@ class GptActionsDispatchService:
             user_id=actor,
             include_all=False,
         )
-        from tv_app.application.services.data.layout_digest_service import (
-            LayoutDigestService,
-        )
-
+        projected: list[dict[str, Any]] = []
         for item in items:
-            item["publicUrl"] = self._present.build_public_url(item["publicToken"])
+            if not isinstance(item, dict):
+                continue
             if actor and item.get("ownerUserId") == actor:
-                item["accessRole"] = "owner"
+                role = "owner"
             elif actor:
                 share = self._repo.get_share_role(UUID(item["id"]), actor)
-                item["accessRole"] = share or "viewer"
+                role = share or "viewer"
             else:
-                item["accessRole"] = "viewer"
-            cover = item.get("coverSlide")
-            if isinstance(cover, dict):
-                item["coverLayoutDigest"] = LayoutDigestService.digest_slide(cover)
-        out: dict[str, Any] = {"items": items, "limit": limit, "offset": offset}
+                role = "viewer"
+            projected.append(project_playlist_list_item(item, access_role=role))
+        # editorFocus first — continuous_review / "esta programação" must not miss it
+        # when the items array is long.
+        out: dict[str, Any] = {"limit": limit, "offset": offset, "items": projected}
         focus = editor_focus_store.get_for_user(actor) if actor else None
         if focus:
-            out["editorFocus"] = focus
+            out = {"editorFocus": focus, **out}
         return out
 
     def get_playlist_context(
@@ -129,6 +130,16 @@ class GptActionsDispatchService:
         include_preview: bool = False,
         preview_slide_id: str | None = None,
     ) -> dict[str, Any]:
+        from tv_app.application.gpt_actions.response_compact import (
+            pick_focus_slide_id,
+            project_media_inventory,
+            project_playlist_summary,
+            project_slide_detail,
+            project_slide_index_row,
+        )
+        from tv_app.application.services.data.filter_digest_service import (
+            FilterDigestService,
+        )
         from tv_app.application.services.data.layout_digest_service import (
             LayoutDigestService,
         )
@@ -152,10 +163,6 @@ class GptActionsDispatchService:
         revision = self._writes.get_revision(pid)
         actor = self._actor(user)
         layout_digest = LayoutDigestService.digest_slides(slides)
-        from tv_app.application.services.data.filter_digest_service import (
-            FilterDigestService,
-        )
-
         programming_defaults = (
             (playlist.get("dataDefaults") or {}) if isinstance(playlist, dict) else {}
         )
@@ -163,16 +170,61 @@ class GptActionsDispatchService:
             programming_defaults=programming_defaults,
             slides=slides,
         )
+
+        editor_focus: dict[str, Any] | None = None
+        if actor:
+            focus = editor_focus_store.get_for_user_playlist(actor, str(pid))
+            if focus:
+                editor_focus = {
+                    "slideId": focus.get("slideId"),
+                    "selectedIds": focus.get("selectedIds") or [],
+                    "updatedAt": focus.get("updatedAt"),
+                    "stale": bool(focus.get("stale")),
+                }
+
+        focus_slide_id = pick_focus_slide_id(
+            [s for s in slides if isinstance(s, dict)],
+            editor_focus=editor_focus,
+            preview_slide_id=preview_slide_id,
+        )
+        slide_index = [
+            project_slide_index_row(s) for s in slides if isinstance(s, dict)
+        ]
+        detail_slide = next(
+            (
+                s
+                for s in slides
+                if isinstance(s, dict) and str(s.get("id") or "") == str(focus_slide_id or "")
+            ),
+            None,
+        )
+        if detail_slide is None and slides:
+            detail_slide = slides[0] if isinstance(slides[0], dict) else None
+
         out: dict[str, Any] = {
-            "playlist": playlist,
-            "slides": slides,
+            "playlist": project_playlist_summary(playlist if isinstance(playlist, dict) else {}),
+            "slides": slide_index,
+            "focusedSlide": project_slide_detail(detail_slide)
+            if isinstance(detail_slide, dict)
+            else None,
+            "focusedSlideId": str(detail_slide.get("id"))
+            if isinstance(detail_slide, dict)
+            else None,
             "sections": sections,
             "accessRole": access.level,
             "currentRevision": revision,
             "layoutDigest": layout_digest,
             "filterDigest": filter_digest,
             "localDraftCoordination": "unavailable_external",
+            "note": (
+                "slides[] is a compact index (no nativeConfig). "
+                "focusedSlide has full nativeConfig for the editorFocus/preview/first slide. "
+                "Pass slideId via includePreview or open another context after resolving the target."
+            ),
         }
+        if editor_focus:
+            out = {"editorFocus": editor_focus, **out}
+
         try:
             from tv_app.application.services.data.brand_logo_media_service import (
                 BrandLogoMediaService,
@@ -180,53 +232,49 @@ class GptActionsDispatchService:
 
             media_svc = BrandLogoMediaService()
             brand = media_svc.list_brand_assets(pid)
-            playlist_assets = media_svc.list_playlist_assets(pid)
-            out["mediaInventory"] = {
-                "brandLogos": {
-                    variant: {
-                        "assetId": asset.get("id"),
-                        "originalName": asset.get("originalName"),
-                        "mimeType": asset.get("mimeType"),
-                    }
-                    for variant, asset in brand.items()
-                },
-                "assets": [
-                    {
-                        "assetId": item.get("id"),
-                        "originalName": item.get("originalName"),
-                        "mimeType": item.get("mimeType"),
-                        "mediaKind": item.get("mediaKind"),
-                    }
-                    for item in playlist_assets
-                    if isinstance(item, dict) and item.get("id")
-                ],
-                "note": (
-                    "Brand logos are ASSET_ID_ONLY. assets[] lists playlist library media "
-                    "(use assetId on image/video blocks). Call ensure_brand_logo_on_slide to "
-                    "seed missing packaged Delpi logos into this playlist library."
-                ),
-            }
-        except Exception:
-            out["mediaInventory"] = {"brandLogos": {}, "assets": [], "note": "unavailable"}
-        if actor:
-            focus = editor_focus_store.get_for_user_playlist(actor, str(pid))
-            if focus:
-                out["editorFocus"] = {
-                    "slideId": focus.get("slideId"),
-                    "selectedIds": focus.get("selectedIds") or [],
-                    "updatedAt": focus.get("updatedAt"),
-                    "stale": bool(focus.get("stale")),
+            brand_proj = {
+                variant: {
+                    "assetId": asset.get("id"),
+                    "originalName": asset.get("originalName"),
+                    "mimeType": asset.get("mimeType"),
                 }
-        if include_preview:
-            target_id = (preview_slide_id or "").strip()
-            if not target_id and out.get("editorFocus"):
-                target_id = str((out["editorFocus"] or {}).get("slideId") or "").strip()
-            if not target_id and slides:
-                target_id = str(slides[0].get("id") or "").strip()
-            slide = next(
-                (s for s in slides if isinstance(s, dict) and str(s.get("id")) == target_id),
-                None,
+                for variant, asset in brand.items()
+            }
+            playlist_assets = [
+                {
+                    "assetId": item.get("id"),
+                    "originalName": item.get("originalName"),
+                    "mimeType": item.get("mimeType"),
+                    "mediaKind": item.get("mediaKind"),
+                }
+                for item in media_svc.list_playlist_assets(pid)
+                if isinstance(item, dict) and item.get("id")
+            ]
+            out["mediaInventory"] = project_media_inventory(
+                brand_logos=brand_proj,
+                assets=playlist_assets,
             )
+        except Exception:
+            out["mediaInventory"] = {
+                "brandLogos": {},
+                "assets": [],
+                "assetsTotal": 0,
+                "assetsTruncated": False,
+                "note": "unavailable",
+            }
+
+        if include_preview:
+            target_id = str(out.get("focusedSlideId") or "").strip()
+            slide = detail_slide
+            if not slide or str(slide.get("id")) != target_id:
+                slide = next(
+                    (
+                        s
+                        for s in slides
+                        if isinstance(s, dict) and str(s.get("id")) == target_id
+                    ),
+                    None,
+                )
             if not slide:
                 raise GptActionsError(
                     "Slide não encontrado para prévia.",
