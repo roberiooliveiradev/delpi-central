@@ -144,3 +144,57 @@ def test_patch_playlist_data_defaults_requires_object():
             native_config=None,
             base_revision=None,
         )
+
+
+SLIDE_B = "33333333-3333-3333-3333-333333333333"
+
+
+def test_multi_slide_native_configs_emit_one_patch_each():
+    cmds = PresentationHttpCommandPlannerService.build(
+        ops=[
+            {
+                "op": "patch_native_config",
+                "slideRef": SLIDE_ID,
+                "patch": {"background": {"type": "color", "value": "#111111"}},
+            },
+            {
+                "op": "upsert_block",
+                "slideRef": SLIDE_B,
+                "block": {"id": "t1", "type": "text", "content": "Hi"},
+            },
+        ],
+        target={"playlistId": PLAYLIST_ID, "slideId": SLIDE_ID},
+        native_config={"version": 5, "blocks": []},
+        native_configs_by_slide={
+            SLIDE_ID: {
+                "version": 5,
+                "background": {"type": "color", "value": "#111111"},
+                "blocks": [],
+            },
+            SLIDE_B: {
+                "version": 5,
+                "blocks": [{"id": "t1", "type": "text", "content": "Hi"}],
+            },
+        },
+        base_revision=4,
+    )
+    native = [c for c in cmds if c["op"] == "native_config_batch"]
+    assert len(native) == 2
+    assert {c["path"] for c in native} == {
+        f"/playlists/{PLAYLIST_ID}/slides/{SLIDE_ID}",
+        f"/playlists/{PLAYLIST_ID}/slides/{SLIDE_B}",
+    }
+    assert all(c.get("expectedRevision") == 4 for c in native)
+
+
+def test_single_slide_without_by_slide_keeps_legacy_coalesce():
+    """Negative sibling: no nativeConfigsBySlide → one PATCH to target slide."""
+    cmds = PresentationHttpCommandPlannerService.build(
+        ops=[{"op": "upsert_block", "block": {"id": "t1", "type": "text"}}],
+        target={"playlistId": PLAYLIST_ID, "slideId": SLIDE_ID},
+        native_config={"version": 5, "blocks": [{"id": "t1", "type": "text"}]},
+        native_configs_by_slide=None,
+        base_revision=1,
+    )
+    assert len(cmds) == 1
+    assert cmds[0]["path"] == f"/playlists/{PLAYLIST_ID}/slides/{SLIDE_ID}"

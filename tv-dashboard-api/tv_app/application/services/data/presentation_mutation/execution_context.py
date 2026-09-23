@@ -29,6 +29,8 @@ class ExecutionContext:
     section_id: str | None = None
     aliases: dict[str, str] = field(default_factory=dict)
     native_config: dict[str, Any] | None = None
+    native_by_slide: dict[str, dict[str, Any]] = field(default_factory=dict)
+    touched_native_slides: set[str] = field(default_factory=set)
     created: dict[str, Any] = field(default_factory=dict)
     _syn_counter: itertools.count = field(
         default_factory=lambda: itertools.count(1), repr=False
@@ -79,12 +81,35 @@ class ExecutionContext:
         op: dict[str, Any] | None = None,
         native_config: dict[str, Any] | None = None,
     ) -> None:
+        if self.slide_id and isinstance(self.native_config, dict):
+            self.native_by_slide[str(self.slide_id)] = self.native_config
         self.slide_id = slide_id
         self.created["slideId"] = slide_id
         if native_config is not None:
             self.native_config = copy.deepcopy(native_config)
+            self.native_by_slide[str(slide_id)] = self.native_config
+            self.mark_native_touched(slide_id)
+        elif str(slide_id) in self.native_by_slide:
+            self.native_config = self.native_by_slide[str(slide_id)]
         if op:
             self.bind_alias(op, slide_id)
+
+    def stash_native(self) -> None:
+        if self.slide_id and isinstance(self.native_config, dict):
+            self.native_by_slide[str(self.slide_id)] = self.native_config
+
+    def activate_native(self, slide_id: str, native_config: dict[str, Any]) -> dict[str, Any]:
+        self.stash_native()
+        self.slide_id = slide_id
+        self.native_config = native_config
+        self.native_by_slide[str(slide_id)] = native_config
+        self.mark_native_touched(slide_id)
+        return native_config
+
+    def mark_native_touched(self, slide_id: str | None) -> None:
+        sid = str(slide_id or "").strip()
+        if sid:
+            self.touched_native_slides.add(sid)
 
     def set_section(self, section_id: str, *, op: dict[str, Any] | None = None) -> None:
         self.section_id = section_id
@@ -100,6 +125,9 @@ class ExecutionContext:
                 "subtitle": "",
                 "blocks": [],
             }
+        if self.slide_id:
+            self.native_by_slide[str(self.slide_id)] = self.native_config
+            self.mark_native_touched(self.slide_id)
         return self.native_config
 
     def alias_map_public(self) -> dict[str, str]:

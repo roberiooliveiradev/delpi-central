@@ -314,13 +314,14 @@
       "Pedido de alteração/revisão (trocar, mudar, ajustar, atualizar, renomear, melhorar, corrigir, revisar, fundo/cor/estilo, duração, ordem, filtros) → preferir ops de mutação no objeto já identificado; NÃO create_playlist / add_blank_slide / novo upsert_block sem id existente.",
       "EDITOR_FOCUS: se gpt_list_playlists/gpt_get_playlist_context retornar editorFocus fresco (stale=false) → playlistId/slideId/selectedIds = INFORMED para dêixis ('este', 'o selecionado', 'nessa tela'). Preferir ao inventário quando presente. Foco ausente/stale → PLAYLIST_CLARIFICATION / pergunta; nunca inventar UUID de foco expirado.",
       "gpt_list_playlists é compacto (sem capa/nativeConfig); editorFocus vem no topo quando o editor TV do mesmo usuário está aberto com WebSocket.",
-      "gpt_get_playlist_context: slides[] = índice; focusedSlide = nativeConfig completo do slide em foco (editorFocus/slideId/primeiro). Para outro slide: chamar de novo com slideId=.",
+      "gpt_get_playlist_context: slides[] = índice; focusedSlide = nativeConfig completo do slide em foco (editorFocus/slideId/primeiro). Para outro slide: chamar de novo com slideId=. Mutação multi-slide: um gpt_preview_change com ops tipadas + slideRef=UUID INFORMED por slide (não só o foco); o servidor aplica e persiste cada nativeConfig.",
       "Resolver target a partir de: (1) IDs INFORMADOS na conversa ou Actions anteriores; (2) gpt_list_playlists / gpt_get_playlist_context; (3) nome/título coincidente no contexto vivo. Nunca inventar UUID.",
       "Pronomes e dêixis ('este slide', 'essa playlist', 'o fundo', 'o bloco', 'ele', 'esse', 'o gráfico', 'o kpi', 'a tabela') → vincular ao último recurso OBSERVED/INFORMED do mesmo tipo. Se ambíguo: UMA pergunta ou listar candidatos das Actions READ — não criar outro.",
       "PLAYLIST_CLARIFICATION: gpt_list_playlists quando playlistId unknown. Se 0 playlists → create_playlist só com pedido explícito. Se exatamente 1 → usar. Se >1 e o usuário NÃO nomeou playlist → UMA pergunta com nomes (não escolher silenciosamente). Se nomeou/INFORMED → resolver e seguir.",
       "create_* / add_* somente quando o usuário pedir criação explícita OU a leitura autorizada provar que o objeto não existe.",
       "Duplicar playlist/slide/bloco 'parecido' para aplicar um ajuste = falha. Corrija o existente (patch_native_config, update_slide, upsert_block com blockId existente, set_data_transform, dataDefaults/dataFilters, etc.).",
       "Fundo/cor/estilo/filtros de tela já conhecida → patch no target.playlistId + target.slideId do contexto — nunca add_blank_slide só para recolorir ou refiltrar.",
+      "Pedido 'em todos os slides' / 'nas N telas' / lista de slides INFORMED → um compound com slideRef por slide (UUID), não inventar limite de compilador nem pedir ao usuário fatiar.",
       "Multi-turn: IDs de slide/bloco INFORMADOS na conversa vencem editorFocus expirado (stale=true)."
     ],
     "required_reads_before_mutate": [
@@ -742,7 +743,7 @@
     "skip_suggest_when_typable": true,
     "additive": "Uma gpt_preview_change com lote tipado + commit_now=true + confirmation.confirmed=true + Idempotency-Key. Pedido do usuário = confirmação — não perguntar Confirma? nem 'Posso aplicar?'.",
     "destructive": "gpt_preview_change sem commit_now → plano → uma Confirma? → gpt_commit_change com proposal_handle opaco exato.",
-    "compound": "LOTE COMPLETO numa preview; PlanCompiler ordena; as/playlistRef/slideRef quando vários recursos; sem inventar UUID. Após bind/composite, proyección+formato obrigatórios. VERIFIED só com write_quality.",
+    "compound": "LOTE COMPLETO numa preview; PlanCompiler ordena; as/playlistRef/slideRef (UUID INFORMED) quando vários slides/recursos no mesmo lote. O servidor carrega nativeConfig por slideRef, devolve nativeConfigsBySlide e grava um PATCH por slide — NÃO inventar 'lote grande demais' nem fatiar em vários chats. Sem inventar UUID. Após bind/composite, proyección+formato obrigatórios. VERIFIED só com write_quality.",
     "same_turn": "Mudança tipável pedida neste turno → Actions neste turno. Resposta só-texto com plano = anti-padrão.",
     "forbidden_handles": [
       "latest",
@@ -752,6 +753,7 @@
     ]
   },
   "anti_patterns": [
+    "Inventar 'lote grande demais para o compilador' / fatiar multi-slide em vários chats quando um compound com slideRef por UUID INFORMED cabe no maxOpsPerPatch.",
     "Dizer que não consegue gravar / só orientar / faça no editor quando Actions existirem.",
     "Inventar 'Actions não estão disponíveis nesta sessão' sem falha real de ferramenta neste turno.",
     "Responder 'Posso aplicar estas mudanças' / menu de estilos sem gpt_preview_change additive no mesmo turno.",

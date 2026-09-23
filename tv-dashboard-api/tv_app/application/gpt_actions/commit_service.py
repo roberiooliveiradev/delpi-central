@@ -563,6 +563,14 @@ class TvGptCommitService:
                     except ValueError:
                         pass
 
+                resolved_slide = ctx.resolve_slide_id(raw)
+                if resolved_slide:
+                    try:
+                        current_slide = UUID(str(resolved_slide))
+                        ctx.slide_id = str(current_slide)
+                    except ValueError:
+                        pass
+
                 if current_playlist is None:
                     raise GptActionsError(
                         PresentationOpsContentService.message("missingPlaylist"),
@@ -838,7 +846,7 @@ class TvGptCommitService:
                 )
 
             if pending_native:
-                if current_playlist is None or current_slide is None:
+                if current_playlist is None:
                     raise GptActionsError(
                         PresentationOpsContentService.message("missingTarget"),
                         code="INVALID_CHANGE",
@@ -871,30 +879,75 @@ class TvGptCommitService:
                                 },
                             }
                         )
-                native_config = preview.get("nativeConfig")
-                if not isinstance(native_config, dict):
+                from tv_app.application.services.data.presentation_mutation import (
+                    is_synthetic_id,
+                )
+
+                written_slide_ids: set[str] = set()
+                by_slide = preview.get("nativeConfigsBySlide")
+                if isinstance(by_slide, dict):
+                    for sid_raw, cfg in by_slide.items():
+                        sid_s = str(sid_raw or "").strip()
+                        if (
+                            not sid_s
+                            or is_synthetic_id(sid_s)
+                            or not isinstance(cfg, dict)
+                        ):
+                            continue
+                        slide_uuid = self._parse_uuid_prewrite(sid_s, field="slideId")
+                        expected_native = _strip_transient_native(cfg)
+                        self._writes.update_slide(
+                            current_playlist,
+                            slide_uuid,
+                            {"nativeConfig": cfg},
+                            actor_user_id=actor_id,
+                            user=user,
+                            expected_revision=chain_revision,
+                        )
+                        chain_revision = self._writes.get_revision(current_playlist)
+                        written_slide_ids.add(sid_s)
+                        expected_native_for_verify = expected_native
+                        applied.append(
+                            {
+                                "op": "native_config_batch",
+                                "slideId": sid_s,
+                                "expected": {"nativeConfig": expected_native},
+                            }
+                        )
+                primary_id = str(current_slide) if current_slide is not None else ""
+                if primary_id and primary_id not in written_slide_ids:
+                    native_config = preview.get("nativeConfig")
+                    if not isinstance(native_config, dict):
+                        if not written_slide_ids:
+                            raise GptActionsError(
+                                PresentationOpsContentService.message("missingTarget"),
+                                code="INVALID_CHANGE",
+                                status_code=422,
+                            )
+                    else:
+                        expected_native_for_verify = _strip_transient_native(native_config)
+                        self._writes.update_slide(
+                            current_playlist,
+                            current_slide,
+                            {"nativeConfig": native_config},
+                            actor_user_id=actor_id,
+                            user=user,
+                            expected_revision=chain_revision,
+                        )
+                        chain_revision = self._writes.get_revision(current_playlist)
+                        applied.append(
+                            {
+                                "op": "native_config_batch",
+                                "slideId": primary_id,
+                                "expected": {"nativeConfig": expected_native_for_verify},
+                            }
+                        )
+                elif not written_slide_ids:
                     raise GptActionsError(
                         PresentationOpsContentService.message("missingTarget"),
                         code="INVALID_CHANGE",
                         status_code=422,
                     )
-                expected_native_for_verify = _strip_transient_native(native_config)
-                self._writes.update_slide(
-                    current_playlist,
-                    current_slide,
-                    {"nativeConfig": native_config},
-                    actor_user_id=actor_id,
-                    user=user,
-                    expected_revision=chain_revision,
-                )
-                chain_revision = self._writes.get_revision(current_playlist)
-                applied.append(
-                    {
-                        "op": "native_config_batch",
-                        "slideId": str(current_slide),
-                        "expected": {"nativeConfig": expected_native_for_verify},
-                    }
-                )
 
         except PresentationWriteError as exc:
             if applied:

@@ -891,3 +891,113 @@ def test_patch_error_reports_op_index(monkeypatch):
             authorization="Bearer x",
         )
     assert second.value.details["opIndex"] == 1
+
+
+SLIDE_B_ID = "33333333-3333-3333-3333-333333333333"
+
+
+def test_multi_existing_slide_native_ops_emit_per_slide_patch(monkeypatch):
+    """Positive: slideRef UUID switches nativeConfig; httpCommands = 1 PATCH per slide."""
+    repo = _FakeRepo()
+    repo.slides[SLIDE_B_ID] = {
+        "id": SLIDE_B_ID,
+        "title": "Slide B",
+        "durationSec": 30,
+        "isActive": True,
+        "sectionId": None,
+        "nativeConfig": {
+            "version": 5,
+            "blocks": [
+                {"id": "kpi-b", "type": "kpi_view", "dataSourceId": None},
+            ],
+        },
+    }
+    svc = _service(repo, monkeypatch)
+    result = svc.preview(
+        {
+            "target": {"playlistId": PLAYLIST_ID, "slideId": SLIDE_ID},
+            "ops": [
+                {
+                    "op": "patch_native_config",
+                    "slideRef": SLIDE_ID,
+                    "patch": {"background": {"type": "color", "value": "#111111"}},
+                },
+                {
+                    "op": "patch_native_config",
+                    "slideRef": SLIDE_B_ID,
+                    "patch": {"background": {"type": "color", "value": "#222222"}},
+                },
+            ],
+        },
+        user={},
+    )
+    by_slide = result.get("nativeConfigsBySlide") or {}
+    assert set(by_slide.keys()) == {SLIDE_ID, SLIDE_B_ID}
+    assert by_slide[SLIDE_ID]["background"]["value"] == "#111111"
+    assert by_slide[SLIDE_B_ID]["background"]["value"] == "#222222"
+    cmds = result["httpCommands"]
+    native_cmds = [c for c in cmds if c.get("op") == "native_config_batch"]
+    assert len(native_cmds) == 2
+    paths = {c["path"] for c in native_cmds}
+    assert paths == {
+        f"/playlists/{PLAYLIST_ID}/slides/{SLIDE_ID}",
+        f"/playlists/{PLAYLIST_ID}/slides/{SLIDE_B_ID}",
+    }
+    bodies = {c["path"]: c["body"]["nativeConfig"]["background"]["value"] for c in native_cmds}
+    assert bodies[f"/playlists/{PLAYLIST_ID}/slides/{SLIDE_ID}"] == "#111111"
+    assert bodies[f"/playlists/{PLAYLIST_ID}/slides/{SLIDE_B_ID}"] == "#222222"
+
+
+def test_multi_slide_sibling_only_second_slide_touched(monkeypatch):
+    """Sibling: ops only on slide B via slideRef — A not in nativeConfigsBySlide."""
+    repo = _FakeRepo()
+    repo.slides[SLIDE_B_ID] = {
+        "id": SLIDE_B_ID,
+        "title": "Slide B",
+        "durationSec": 30,
+        "isActive": True,
+        "sectionId": None,
+        "nativeConfig": {"version": 5, "blocks": []},
+    }
+    svc = _service(repo, monkeypatch)
+    result = svc.preview(
+        {
+            "target": {"playlistId": PLAYLIST_ID, "slideId": SLIDE_ID},
+            "ops": [
+                {
+                    "op": "upsert_block",
+                    "slideRef": SLIDE_B_ID,
+                    "block": {"id": "txt-b", "type": "text", "content": "B only"},
+                }
+            ],
+        },
+        user={},
+    )
+    by_slide = result.get("nativeConfigsBySlide") or {}
+    assert set(by_slide.keys()) == {SLIDE_B_ID}
+    assert any(b.get("id") == "txt-b" for b in by_slide[SLIDE_B_ID].get("blocks") or [])
+    native_cmds = [c for c in result["httpCommands"] if c.get("op") == "native_config_batch"]
+    assert len(native_cmds) == 1
+    assert native_cmds[0]["path"].endswith(f"/slides/{SLIDE_B_ID}")
+
+
+def test_batch_too_large_is_honest_error(monkeypatch):
+    """Negative: exceeding maxOpsPerPatch raises BATCH_TOO_LARGE — not silent noOps."""
+    svc = _service(monkeypatch=monkeypatch)
+    max_ops = PresentationOpsContentService.setting_int("maxOpsPerPatch", 80)
+    ops = [
+        {
+            "op": "upsert_block",
+            "block": {"id": f"t{i}", "type": "text", "content": str(i)},
+        }
+        for i in range(max_ops + 1)
+    ]
+    with pytest.raises(PresentationPatchError) as excinfo:
+        svc.preview(
+            {
+                "target": {"playlistId": PLAYLIST_ID, "slideId": SLIDE_ID},
+                "ops": ops,
+            },
+            user={},
+        )
+    assert excinfo.value.code == "BATCH_TOO_LARGE"

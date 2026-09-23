@@ -9,11 +9,14 @@ from __future__ import annotations
 
 from typing import Any
 
+from tv_app.application.services.data.presentation_mutation.execution_context import (
+    is_synthetic_id,
+)
 from tv_app.application.services.data.presentation_ops_content_service import (
     PresentationOpsContentService,
 )
 
-# Ops que mutam o documento nativeConfig do slide — um único PATCH coalescido.
+# Ops que mutam o documento nativeConfig do slide — um PATCH coalescido por slide.
 _NATIVE_CONFIG_OPS = frozenset(
     {
         "upsert_data_source",
@@ -56,6 +59,18 @@ def _cmd(
     return out
 
 
+def _resolve_op_slide_id(
+    raw: dict[str, Any],
+    *,
+    current_slide: str | None,
+    aliases: dict[str, str],
+) -> str | None:
+    ref = str(raw.get("slideRef") or "").strip()
+    if ref:
+        return str(aliases.get(ref, ref)).strip() or None
+    return current_slide
+
+
 class PresentationHttpCommandPlannerService:
     """Gera lista ordenada de comandos CRUD a partir do resultado do redutor."""
 
@@ -67,14 +82,21 @@ class PresentationHttpCommandPlannerService:
         target: dict[str, Any] | None,
         native_config: dict[str, Any] | None,
         base_revision: int | None,
+        native_configs_by_slide: dict[str, Any] | None = None,
+        alias_map: dict[str, str] | None = None,
     ) -> list[dict[str, Any]]:
         playlist_id = str((target or {}).get("playlistId") or "").strip() or None
         slide_id = str((target or {}).get("slideId") or "").strip() or None
         commands: list[dict[str, Any]] = []
-        pending_native = False
+        pending_native_any = False
         # playlistId pode ser criado no meio do lote; track local para paths seguintes.
         current_playlist = playlist_id
         current_slide = slide_id
+        aliases = {
+            str(k): str(v)
+            for k, v in (alias_map or {}).items()
+            if str(k).strip() and str(v).strip()
+        }
 
         for raw in ops:
             if not isinstance(raw, dict):
@@ -84,7 +106,7 @@ class PresentationHttpCommandPlannerService:
                 continue
 
             if op_name in _NATIVE_CONFIG_OPS:
-                pending_native = True
+                pending_native_any = True
                 continue
 
             if op_name == "create_playlist":
@@ -180,8 +202,10 @@ class PresentationHttpCommandPlannerService:
                         op=op_name,
                     )
                 )
-                if not current_slide:
-                    current_slide = "{slideId}"
+                as_alias = str(raw.get("as") or "").strip()
+                current_slide = "{slideId}"
+                if as_alias:
+                    aliases[as_alias] = "{slideId}"
                 continue
 
             if op_name == "add_slide_from_preset":
@@ -198,12 +222,17 @@ class PresentationHttpCommandPlannerService:
                         op=op_name,
                     )
                 )
-                if not current_slide:
-                    current_slide = "{slideId}"
+                as_alias = str(raw.get("as") or "").strip()
+                current_slide = "{slideId}"
+                if as_alias:
+                    aliases[as_alias] = "{slideId}"
                 continue
 
             if op_name == "update_slide":
-                if not current_slide:
+                sid = _resolve_op_slide_id(
+                    raw, current_slide=current_slide, aliases=aliases
+                )
+                if not sid:
                     raise ValueError(PresentationOpsContentService.message("missingSlide"))
                 body = {}
                 if "title" in raw and raw["title"] is not None:
@@ -217,7 +246,7 @@ class PresentationHttpCommandPlannerService:
                 commands.append(
                     _cmd(
                         method="PATCH",
-                        path=f"/playlists/{current_playlist}/slides/{current_slide}",
+                        path=f"/playlists/{current_playlist}/slides/{sid}",
                         body=body,
                         op=op_name,
                     )
@@ -237,12 +266,15 @@ class PresentationHttpCommandPlannerService:
                 continue
 
             if op_name == "delete_slide":
-                if not current_slide:
+                sid = _resolve_op_slide_id(
+                    raw, current_slide=current_slide, aliases=aliases
+                )
+                if not sid:
                     raise ValueError(PresentationOpsContentService.message("missingSlide"))
                 commands.append(
                     _cmd(
                         method="DELETE",
-                        path=f"/playlists/{current_playlist}/slides/{current_slide}",
+                        path=f"/playlists/{current_playlist}/slides/{sid}",
                         op=op_name,
                     )
                 )
@@ -297,7 +329,10 @@ class PresentationHttpCommandPlannerService:
                 continue
 
             if op_name == "move_slide_to_section":
-                if not current_slide:
+                sid = _resolve_op_slide_id(
+                    raw, current_slide=current_slide, aliases=aliases
+                )
+                if not sid:
                     raise ValueError(PresentationOpsContentService.message("missingSlide"))
                 section_id = raw.get("sectionId")
                 body = {
@@ -308,7 +343,7 @@ class PresentationHttpCommandPlannerService:
                 commands.append(
                     _cmd(
                         method="PATCH",
-                        path=f"/playlists/{current_playlist}/slides/{current_slide}",
+                        path=f"/playlists/{current_playlist}/slides/{sid}",
                         body=body,
                         op=op_name,
                     )
@@ -331,19 +366,45 @@ class PresentationHttpCommandPlannerService:
                 PresentationOpsContentService.message("unknownOp", op=op_name or "?")
             )
 
-        if pending_native:
-            if not current_playlist or not current_slide:
+        if pending_native_any:
+            if not current_playlist:
                 raise ValueError(PresentationOpsContentService.message("missingTarget"))
-            if not isinstance(native_config, dict):
-                raise ValueError(PresentationOpsContentService.message("missingTarget"))
-            commands.append(
-                _cmd(
-                    method="PATCH",
-                    path=f"/playlists/{current_playlist}/slides/{current_slide}",
-                    body={"nativeConfig": native_config},
-                    op="native_config_batch",
+            by_slide: dict[str, dict[str, Any]] = {}
+            if isinstance(native_configs_by_slide, dict):
+                for sid, cfg in native_configs_by_slide.items():
+                    sid_s = str(sid or "").strip()
+                    if (
+                        sid_s
+                        and isinstance(cfg, dict)
+                        and not is_synthetic_id(sid_s)
+                    ):
+                        by_slide[sid_s] = cfg
+            emitted: set[str] = set()
+            for sid, cfg in by_slide.items():
+                commands.append(
+                    _cmd(
+                        method="PATCH",
+                        path=f"/playlists/{current_playlist}/slides/{sid}",
+                        body={"nativeConfig": cfg},
+                        op="native_config_batch",
+                    )
                 )
-            )
+                emitted.add(sid)
+            # New slide (syn filtered from by_slide) or legacy single blob.
+            if not emitted:
+                if not isinstance(native_config, dict):
+                    raise ValueError(PresentationOpsContentService.message("missingTarget"))
+                path_sid = current_slide or "{slideId}"
+                if not path_sid:
+                    raise ValueError(PresentationOpsContentService.message("missingTarget"))
+                commands.append(
+                    _cmd(
+                        method="PATCH",
+                        path=f"/playlists/{current_playlist}/slides/{path_sid}",
+                        body={"nativeConfig": native_config},
+                        op="native_config_batch",
+                    )
+                )
 
         if base_revision is not None:
             for command in commands:

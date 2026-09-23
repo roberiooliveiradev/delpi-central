@@ -794,6 +794,9 @@ class GptActionsDispatchService:
                 if isinstance(result.get("aliasMap"), dict)
                 else [],
                 "nativeConfig": result.get("nativeConfig"),
+                "nativeConfigsBySlide": result.get("nativeConfigsBySlide")
+                if isinstance(result.get("nativeConfigsBySlide"), dict)
+                else None,
             },
         )
         proposal_handle = get_proposal_store().put(proposal)

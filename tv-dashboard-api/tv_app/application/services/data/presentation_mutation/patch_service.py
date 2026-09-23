@@ -390,9 +390,21 @@ class PresentationPatchService:
         if not isinstance(ops, list) or not ops:
             raise PresentationPatchError(PresentationOpsContentService.message("noOps"))
 
-        max_ops = PresentationOpsContentService.setting_int("maxOpsPerPatch", 40)
+        max_ops = PresentationOpsContentService.setting_int("maxOpsPerPatch", 80)
         if len(ops) > max_ops:
-            raise PresentationPatchError(PresentationOpsContentService.message("noOps"))
+            raise PresentationPatchError(
+                PresentationOpsContentService.message(
+                    "tooManyOps",
+                    count=len(ops),
+                    max=max_ops,
+                ),
+                code="BATCH_TOO_LARGE",
+                details={
+                    "opCount": len(ops),
+                    "maxOpsPerPatch": max_ops,
+                    "suggestedCorrection": "split_by_slide_or_reduce_ops",
+                },
+            )
 
         target = envelope.get("target") if isinstance(envelope.get("target"), dict) else {}
         try:
@@ -446,6 +458,7 @@ class PresentationPatchService:
             before_blocks = copy.deepcopy(_blocks_of(native_config))
             playlist_defaults = self._playlist_defaults(playlist_id)
             ctx.native_config = native_config
+            ctx.native_by_slide[str(slide_id)] = native_config
         elif needs_native and not creates_slide:
             raise PresentationPatchError(PresentationOpsContentService.message("missingTarget"))
 
@@ -468,6 +481,16 @@ class PresentationPatchService:
 
             playlist_id = ctx.resolve_playlist_id(raw_op) or ctx.playlist_id
             slide_id = ctx.resolve_slide_id(raw_op) or ctx.slide_id
+
+            if op_name in _NATIVE_OP_NAMES:
+                native_config = self._ensure_native_for_slide(
+                    ctx,
+                    playlist_id=playlist_id,
+                    slide_id=slide_id,
+                )
+                if playlist_defaults is None and playlist_id:
+                    playlist_defaults = self._playlist_defaults(playlist_id)
+                slide_id = ctx.slide_id
 
             if op_name == "create_playlist":
                 created = self._op_create_playlist(
@@ -729,9 +752,13 @@ class PresentationPatchService:
                     PresentationOpsContentService.message("unknownOp", op=op_name or "?")
                 )
             ctx.native_config = native_config
+            active_sid = str(ctx.slide_id or slide_id or "").strip()
+            if active_sid:
+                ctx.native_by_slide[active_sid] = native_config
+                ctx.mark_native_touched(active_sid)
             applied.append(op_name)
 
-        if native_config is not None:
+        if native_config is not None or ctx.touched_native_slides:
             from tv_app.application.services.data.slide_auto_layout_service import (
                 SlideAutoLayoutService,
             )
@@ -739,14 +766,54 @@ class PresentationPatchService:
                 SlidePartChromeService,
             )
 
-            SlideAutoLayoutService.apply_post_create_layout(
-                native_config,
-                informed_block_ids=informed_frame_ids,
+            ctx.stash_native()
+            cleaned_by_slide: dict[str, dict[str, Any]] = {}
+            slide_ids = (
+                set(ctx.touched_native_slides)
+                if ctx.touched_native_slides
+                else set(ctx.native_by_slide.keys())
             )
-            SlidePartChromeService.apply_missing_defaults(
-                native_config,
-                informed_block_ids=informed_frame_ids,
-            )
+            for sid in slide_ids:
+                cfg = ctx.native_by_slide.get(str(sid))
+                if not isinstance(cfg, dict):
+                    continue
+                SlideAutoLayoutService.apply_post_create_layout(
+                    cfg,
+                    informed_block_ids=informed_frame_ids,
+                )
+                SlidePartChromeService.apply_missing_defaults(
+                    cfg,
+                    informed_block_ids=informed_frame_ids,
+                )
+                cleaned = sanitize_and_hydrate_comunicado_config(cfg, catalog=self._catalog)
+                try:
+                    validate_comunicado_native_config(
+                        cleaned, user=user, catalog=self._catalog
+                    )
+                except ValueError as exc:
+                    raise PresentationPatchError(str(exc)) from exc
+                cleaned_by_slide[str(sid)] = cleaned
+                ctx.native_by_slide[str(sid)] = cleaned
+            if cleaned_by_slide:
+                focus_id = str(
+                    (target.get("slideId") if isinstance(target, dict) else None)
+                    or ""
+                ).strip()
+                if focus_id and focus_id in cleaned_by_slide:
+                    native_config = cleaned_by_slide[focus_id]
+                    ctx.slide_id = focus_id
+                elif len(cleaned_by_slide) == 1:
+                    only_id, only_cfg = next(iter(cleaned_by_slide.items()))
+                    native_config = only_cfg
+                    ctx.slide_id = only_id
+                else:
+                    # Multi-slide: nativeConfig stays focus snapshot only if present;
+                    # persistence uses nativeConfigsBySlide.
+                    fallback_id = str(ctx.slide_id or next(iter(cleaned_by_slide)))
+                    native_config = cleaned_by_slide.get(fallback_id) or next(
+                        iter(cleaned_by_slide.values())
+                    )
+                ctx.native_config = native_config
 
         hints = _collect_side_effect_hints(applied)
         if removed_block_ids:
@@ -771,16 +838,17 @@ class PresentationPatchService:
             "compileDigest": compiled.compile_digest,
         }
 
+        if ctx.touched_native_slides:
+            result["nativeConfigsBySlide"] = {
+                sid: cfg
+                for sid, cfg in ctx.native_by_slide.items()
+                if sid in ctx.touched_native_slides
+                and isinstance(cfg, dict)
+                and not is_synthetic_id(sid)
+            }
         if native_config is not None:
-            cleaned = sanitize_and_hydrate_comunicado_config(
-                native_config, catalog=self._catalog
-            )
-            try:
-                validate_comunicado_native_config(cleaned, user=user, catalog=self._catalog)
-            except ValueError as exc:
-                raise PresentationPatchError(str(exc)) from exc
-            after_blocks = _blocks_of(cleaned)
-            result["nativeConfig"] = cleaned
+            after_blocks = _blocks_of(native_config)
+            result["nativeConfig"] = native_config
             result["diff"] = _diff_blocks(before_blocks, after_blocks)
 
         base_revision = self._playlist_revision(playlist_id)
@@ -828,12 +896,46 @@ class PresentationPatchService:
                 ops=plan_ops,
                 target=plan_target,
                 native_config=result.get("nativeConfig"),
+                native_configs_by_slide=result.get("nativeConfigsBySlide"),
+                alias_map=result.get("aliasMap")
+                if isinstance(result.get("aliasMap"), dict)
+                else None,
                 base_revision=base_revision,
             )
         except ValueError as exc:
             raise PresentationPatchError(str(exc)) from exc
 
         return result
+
+    def _ensure_native_for_slide(
+        self,
+        ctx: ExecutionContext,
+        *,
+        playlist_id: str | None,
+        slide_id: str | None,
+    ) -> dict[str, Any]:
+        """Load or switch the active nativeConfig when ops target another existing slide."""
+        if not playlist_id or not slide_id:
+            raise PresentationPatchError(PresentationOpsContentService.message("missingTarget"))
+        sid = str(slide_id)
+        if (
+            str(ctx.slide_id or "") == sid
+            and isinstance(ctx.native_config, dict)
+        ):
+            return ctx.native_config
+        cached = ctx.native_by_slide.get(sid)
+        if isinstance(cached, dict):
+            return ctx.activate_native(sid, cached)
+        if is_synthetic_id(sid) or is_synthetic_id(playlist_id):
+            blank = ctx.ensure_native_config()
+            return ctx.activate_native(sid, blank)
+        slide = self._load_slide(playlist_id, sid)
+        cfg = copy.deepcopy(slide.get("nativeConfig") or {})
+        if not isinstance(cfg, dict):
+            cfg = {}
+        if "version" not in cfg:
+            cfg["version"] = 5
+        return ctx.activate_native(sid, cfg)
 
     def _playlist_revision(self, playlist_id: str | None) -> int | None:
         if not playlist_id or playlist_id.startswith("{") or is_synthetic_id(playlist_id):
