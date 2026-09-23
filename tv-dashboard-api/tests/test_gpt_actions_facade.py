@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 from uuid import uuid4
@@ -795,6 +796,48 @@ def test_viewer_forbidden_on_commit_http():
         )
     assert response.status_code == 403
     assert response.json()["error"]["code"] == "PERMISSION_DENIED"
+
+
+# GPT Actions tool-response budget (ResponseTooLargeError when exceeded).
+GPT_ACTIONS_CATALOG_MAX_BYTES = 100 * 1024
+
+
+def test_gpt_get_catalog_fits_actions_response_budget():
+    """Regression: catalog + agent_directives must stay under ~100 KiB."""
+    from tv_app.application.gpt_actions.capability_surface import build_capability_surface
+    from tv_app.application.gpt_actions.vista_agent_intelligence_service import (
+        clear_vista_agent_intelligence_cache,
+    )
+    from tv_app.application.services.data.presentation_ops_content_service import (
+        PresentationOpsContentService,
+        clear_presentation_ops_content_cache,
+    )
+    from tv_app.application.services.data.presentation_recipe_service import (
+        clear_presentation_recipes_cache,
+    )
+
+    clear_vista_agent_intelligence_cache()
+    clear_presentation_ops_content_cache()
+    clear_presentation_recipes_cache()
+
+    doc = PresentationOpsContentService.capability_catalog_document()
+    doc["capability_surface"] = build_capability_surface()
+    raw = json.dumps(doc, ensure_ascii=False).encode("utf-8")
+    assert len(raw) <= GPT_ACTIONS_CATALOG_MAX_BYTES, (
+        f"gpt_get_catalog body is {len(raw)} bytes "
+        f"(limit {GPT_ACTIONS_CATALOG_MAX_BYTES}); compact projection drifted."
+    )
+    # Still projects live directives the specialist must obey.
+    assert doc["capability_surface"]["agent_directives"]["object_resolution"][
+        "principle"
+    ] == "ALTER_EXISTING_BEFORE_CREATE"
+    recipes = doc["capability_surface"]["agent_directives"]["presentation_recipes"][
+        "catalog"
+    ]["recipes"]
+    assert "TV_KPI_HERO" in recipes
+    assert "re_layer_playlist_filters" in doc["allowedOps"] or "re_layer_playlist_filters" in (
+        doc.get("operations") or {}
+    )
 
 
 def test_catalog_and_openapi_http_smoke():

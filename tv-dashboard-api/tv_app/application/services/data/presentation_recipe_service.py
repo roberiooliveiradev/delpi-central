@@ -90,7 +90,7 @@ class PresentationRecipeService:
 
     @classmethod
     def catalog_projection(cls) -> dict[str, Any]:
-        """Compact projection for agent_directives / capability_surface."""
+        """Full compact projection (editor/tests). Prefer ``catalog_projection_for_actions`` for GPT."""
         doc = cls.document()
         recipes = doc.get("recipes") if isinstance(doc.get("recipes"), dict) else {}
         out: dict[str, Any] = {
@@ -119,3 +119,59 @@ class PresentationRecipeService:
                 "description": row.get("description"),
             }
         return out
+
+    @classmethod
+    def catalog_projection_for_actions(cls) -> dict[str, Any]:
+        """Byte-budget projection for ``gpt_get_catalog`` (GPT Actions ~100 KiB cap).
+
+        Keeps recipe ids/markers + the designTokens the specialist must obey;
+        drops bulky chrome defaults duplicated in ``shape_chrome`` / server VERIFY.
+        """
+        full = cls.catalog_projection()
+        tokens = full.get("designTokens") if isinstance(full.get("designTokens"), dict) else {}
+        part = tokens.get("partChrome") if isinstance(tokens.get("partChrome"), dict) else {}
+        slim_part: dict[str, Any] = {}
+        if isinstance(part.get("hierarchy"), dict):
+            slim_part["hierarchy"] = part["hierarchy"]
+        for family in ("kpi", "chart", "table", "input"):
+            row = part.get(family)
+            if isinstance(row, dict):
+                # Keep only min/size gates — drop verbose default style blobs.
+                slim_part[family] = {
+                    k: v
+                    for k, v in row.items()
+                    if "Min" in str(k) or k in {"valueMinFontSize", "titleMinFontSize"}
+                }
+        slim_tokens: dict[str, Any] = {
+            "maxPrimarySignalsPerSlide": tokens.get("maxPrimarySignalsPerSlide"),
+            "brand": tokens.get("brand") if isinstance(tokens.get("brand"), dict) else {},
+            "partChrome": slim_part,
+            "chartTypeHints": tokens.get("chartTypeHints")
+            if isinstance(tokens.get("chartTypeHints"), dict)
+            else {},
+            "visualImpactHints": tokens.get("visualImpactHints")
+            if isinstance(tokens.get("visualImpactHints"), dict)
+            else {},
+        }
+        recipes_out: dict[str, Any] = {}
+        raw_recipes = full.get("recipes") if isinstance(full.get("recipes"), dict) else {}
+        for recipe_id, row in raw_recipes.items():
+            if not isinstance(row, dict):
+                continue
+            markers = row.get("markers") if isinstance(row.get("markers"), list) else []
+            # Cap markers to keep catalog under Actions response budget.
+            recipes_out[str(recipe_id)] = {
+                "label": row.get("label"),
+                "themeKey": row.get("themeKey"),
+                "markers": markers[:8],
+            }
+        return {
+            "principle": full.get("principle"),
+            "summary": full.get("summary"),
+            "fontFamilyAllowlist": full.get("fontFamilyAllowlist") or [],
+            "colorRamps": full.get("colorRamps")
+            if isinstance(full.get("colorRamps"), dict)
+            else {},
+            "designTokens": slim_tokens,
+            "recipes": recipes_out,
+        }

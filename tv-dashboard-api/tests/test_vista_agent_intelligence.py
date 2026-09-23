@@ -160,7 +160,12 @@ def test_shape_chrome_combo():
     assert "borderRadius" in chrome["style_keys"]
     assert "boxShadow" in chrome["style_keys"]
     assert "card_surface" in chrome["presets"]
-    tokens = directives["presentation_recipes"]["catalog"]["designTokens"]["shapeChrome"]
+    # Full shapeChrome tokens stay in presentation_recipes.json (not GPT catalog — budget).
+    from tv_app.application.services.data.presentation_recipe_service import (
+        PresentationRecipeService,
+    )
+
+    tokens = PresentationRecipeService.catalog_projection()["designTokens"]["shapeChrome"]
     assert tokens["presets"]["card_surface"]["borderRadius"] == 16
     assert "elevated" in tokens["shadows"]
     assert any("flat" in str(item).lower() or "boxshadow" in str(item).lower() for item in directives["anti_patterns"])

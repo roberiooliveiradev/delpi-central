@@ -414,13 +414,61 @@ class PresentationOpsContentService:
 
     @classmethod
     def capability_catalog_document(cls) -> dict[str, Any]:
+        """Catalog projected on ``gpt_get_catalog`` (GPT Actions response budget).
+
+        Strips ``example`` blobs and bulky capability templates/markers that the
+        server already owns for suggest/patch — specialist needs op contracts +
+        whenToUse, not full payloadTemplates.
+        """
         return {
             "catalogVersion": cls.catalog_version(),
-            "capabilities": cls.capabilities(),
-            "operations": cls.operations(),
+            "capabilities": cls._capabilities_for_actions(),
+            "operations": cls._operations_for_actions(),
             "allowedOps": sorted(cls.allowed_ops()),
             "sideEffectHintCatalog": cls.side_effect_hint_catalog(),
         }
+
+    @classmethod
+    def _strip_schema_examples(cls, node: Any) -> Any:
+        if isinstance(node, dict):
+            return {
+                key: cls._strip_schema_examples(value)
+                for key, value in node.items()
+                if key != "example"
+            }
+        if isinstance(node, list):
+            return [cls._strip_schema_examples(item) for item in node]
+        return node
+
+    @classmethod
+    def _operations_for_actions(cls) -> dict[str, Any]:
+        out: dict[str, Any] = {}
+        for name, spec in cls.operations().items():
+            if not isinstance(spec, dict):
+                continue
+            row = dict(spec)
+            schema = row.get("inputSchema")
+            if isinstance(schema, dict):
+                row["inputSchema"] = cls._strip_schema_examples(schema)
+            out[str(name)] = row
+        return out
+
+    @classmethod
+    def _capabilities_for_actions(cls) -> list[dict[str, Any]]:
+        compact: list[dict[str, Any]] = []
+        drop = {
+            "payloadTemplates",
+            "contentMarkers",
+            "excludeMarkers",
+            "actionTermSet",
+            "clarificationMessageKey",
+        }
+        for item in cls.capabilities():
+            if not isinstance(item, dict):
+                continue
+            row = {k: v for k, v in item.items() if k not in drop}
+            compact.append(row)
+        return compact
 
     @classmethod
     def side_effect_hints_for_op(cls, op: str) -> list[str]:

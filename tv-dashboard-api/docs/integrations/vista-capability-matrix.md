@@ -53,7 +53,7 @@ Canonical domain capability (PresentationMutation / TvPresentationPatchV1)
 | Actions surface | `openapi_builder.py` → generated OpenAPI (**8** ops) |
 | Proposal store | in-process → **ACCEPT_WITH_RESIDUAL** |
 | GPT Instructions (stable-only) | `docs/gpt-actions/specialist-instructions.md` — **no** feature heuristics |
-| Live agent directives (deploy) | `vista_agent_intelligence.json` → `capability_surface.agent_directives` |
+| Live agent directives (deploy) | `vista_agent_intelligence.json` → `capability_surface.agent_directives` (**compact** projection; GPT Actions ≤100 KiB) |
 | Data route NL discovery | `TvDataRouteDiscoveryService` + `docs/data-route-nl-suggest.md` |
 | Chat TV intent | `tv_dashboard_handoff` (direct answer → VISTA; no mutation tool) |
 | Instructions leak gate | `tests/test_vista_builder_instructions_budget.py` |

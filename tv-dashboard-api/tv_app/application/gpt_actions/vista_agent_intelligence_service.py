@@ -46,10 +46,11 @@ class VistaAgentIntelligenceService:
         doc = cls.document()
         recipes = doc.get("presentation_recipes") or {}
         if isinstance(recipes, dict) and not recipes.get("catalog"):
-            # Live catalog of recipe ids/markers from content JSON.
+            # Live catalog of recipe ids/markers — Actions-budget projection
+            # (full tokens stay in presentation_recipes.json for server/VERIFY).
             recipes = {
                 **recipes,
-                "catalog": PresentationRecipeService.catalog_projection(),
+                "catalog": PresentationRecipeService.catalog_projection_for_actions(),
             }
         return {
             "version": cls.version(),
