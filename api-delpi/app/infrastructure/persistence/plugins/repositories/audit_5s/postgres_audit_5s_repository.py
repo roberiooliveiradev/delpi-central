@@ -706,6 +706,8 @@ class PostgresAudit5sRepository(PluginBaseRepository):
         created_by_user_id: str,
         auditors: list[dict[str, str]],
     ) -> dict[str, Any]:
+        if not auditors:
+            raise PluginsRepositoryError("Informe ao menos um auditor.")
         self.assert_area_is_auditable(area_id, branch_code=branch_code)
         with self.db():
             sequence_key = f"audit_5s_branch_{branch_code}"

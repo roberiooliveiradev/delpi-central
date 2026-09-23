@@ -66,6 +66,7 @@ def test_create_audit_5s_area_returns_meta(mock_build, _access, _admin, _audit, 
 @patch(f"{_AUDIT}.build_audit_5s_repository")
 def test_create_audit_5s_audit_returns_meta(mock_build, _user) -> None:
     from app.interface.http.routes.quality.audit_5s_operational_router import (
+        AuditorBody,
         CreateAuditBody,
         create_audit,
     )
@@ -78,6 +79,7 @@ def test_create_audit_5s_audit_returns_meta(mock_build, _user) -> None:
             area_id="area-1",
             area_responsible="Responsável",
             shift="TURNO_1",
+            auditors=[AuditorBody(user_id="auditor-1", display_name="Auditor")],
         )
     )
     assert_envelope_meta(body_json(response), operation_id="create_audit_5s_audit")
