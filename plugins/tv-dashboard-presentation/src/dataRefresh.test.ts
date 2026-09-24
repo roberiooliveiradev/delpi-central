@@ -303,6 +303,48 @@ describe("resolvePreviewRefreshSourceIds", () => {
     ).toEqual(["src-a"]);
   });
 
+  it("tableProjection displayFormat mudou → refetch da fonte ligada", () => {
+    const mk = (category: "general" | "date"): ComunicadoConfig => ({
+      blocks: [
+        {
+          id: "src-a",
+          type: "data_source",
+          frame: { x: 0, y: 0, w: 10, h: 10 },
+          dataBinding: { operationId: "op", params: {} },
+        },
+        {
+          id: "table-1",
+          type: "table_view",
+          dataSourceId: "src-a",
+          tableProjection: {
+            columns: [
+              {
+                key: "data_inicial",
+                visible: true,
+                displayFormat:
+                  category === "date"
+                    ? { category: "date", presetId: "date-short" }
+                    : { category: "general", presetId: "general" },
+              },
+            ],
+          },
+          frame: { x: 0, y: 0, w: 20, h: 20 },
+        },
+      ],
+    });
+    const prev = buildDataPreviewFingerprint(mk("general"));
+    const next = buildDataPreviewFingerprint(mk("date"));
+    expect(prev).not.toBe(next);
+    expect(
+      resolvePreviewRefreshSourceIds({
+        previousFingerprint: prev,
+        nextFingerprint: next,
+        allFetchableIds: ["src-a"],
+        inputAffectedSourceIds: [],
+      }),
+    ).toEqual(["src-a"]);
+  });
+
   it("valor do input mudou → fontes afetadas", () => {
     const mk = (value: string): ComunicadoConfig => ({
       blocks: [

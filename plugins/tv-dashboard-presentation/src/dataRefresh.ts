@@ -139,7 +139,8 @@ export function buildDataPreviewFingerprint(
               .map((run) => {
                 const field = run.dataRef?.field?.trim();
                 if (!field) return null;
-                return `${field}:${run.dataRef?.aggregation ?? "first"}`;
+                const fmt = run.dataRef?.displayFormat ?? null;
+                return `${field}:${run.dataRef?.aggregation ?? "first"}:${JSON.stringify(fmt)}`;
               })
               .filter(Boolean)
           : undefined;
@@ -154,7 +155,7 @@ export function buildDataPreviewFingerprint(
             : "dataSourceId" in block
               ? block.dataSourceId
               : undefined,
-        // FE-BE-003: encoding completo — bake server-side exige re-preview.
+        // FE-BE-003: encoding + displayFormat — bake server-side exige re-preview.
         textProjection: textProj
           ? {
               field: textProj.field ?? null,
@@ -180,6 +181,16 @@ export function buildDataPreviewFingerprint(
                 maxCategories: block.chartProjection?.maxCategories ?? null,
               }
             : undefined,
+        chartDisplay:
+          block.type === "chart_view"
+            ? {
+                displayValueFormat: block.chartOptions?.displayValueFormat ?? null,
+                valueFormat: block.chartOptions?.valueFormat ?? null,
+                decimalPlaces: block.chartOptions?.decimalPlaces ?? null,
+                displayCategoryFormat: block.chartOptions?.displayCategoryFormat ?? null,
+                categoryLabelFormat: block.chartOptions?.categoryLabelFormat ?? null,
+              }
+            : undefined,
         kpiProjection:
           block.type === "kpi_view"
             ? {
@@ -187,7 +198,18 @@ export function buildDataPreviewFingerprint(
                   field: m.field,
                   aggregation: m.aggregation ?? null,
                   visible: m.visible !== false,
+                  displayFormat: m.displayFormat ?? null,
+                  format: m.format ?? null,
+                  decimalPlaces: m.decimalPlaces ?? null,
                 })),
+              }
+            : undefined,
+        kpiDisplay:
+          block.type === "kpi_view"
+            ? {
+                displayValueFormat: block.kpiOptions?.displayValueFormat ?? null,
+                valueFormat: block.kpiOptions?.valueFormat ?? null,
+                decimalPlaces: block.kpiOptions?.decimalPlaces ?? null,
               }
             : undefined,
         tableProjection:
@@ -196,18 +218,29 @@ export function buildDataPreviewFingerprint(
                 columns: (block.tableProjection?.columns ?? []).map((c) => ({
                   key: c.key ?? null,
                   visible: c.visible !== false,
+                  displayFormat: c.displayFormat ?? null,
+                  valueFormat: c.valueFormat ?? null,
                 })),
+              }
+            : undefined,
+        tableDisplay:
+          block.type === "table_view"
+            ? {
+                displayValueFormat: block.tableOptions?.displayValueFormat ?? null,
+                valueFormat: block.tableOptions?.valueFormat ?? null,
               }
             : undefined,
         canvasCells:
           block.type === "canvas_table"
             ? block.cells.flatMap((row, rowIndex) =>
                 row
-                  .map((cell, colIndex) =>
-                    cell.dataRef?.field
-                      ? `${rowIndex}:${colIndex}:${cell.dataSourceId?.trim() || block.dataSourceId?.trim() || ""}:${cell.dataRef.field}`
-                      : null,
-                  )
+                  .map((cell, colIndex) => {
+                    if (!cell.dataRef?.field) return null;
+                    const src =
+                      cell.dataSourceId?.trim() || block.dataSourceId?.trim() || "";
+                    const fmt = cell.dataRef.displayFormat ?? cell.displayFormat ?? null;
+                    return `${rowIndex}:${colIndex}:${src}:${cell.dataRef.field}:${JSON.stringify(fmt)}`;
+                  })
                   .filter(Boolean),
               )
             : undefined,
