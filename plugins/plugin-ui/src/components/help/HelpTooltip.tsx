@@ -20,7 +20,7 @@ import { DELPI_UI_OVERLAY_Z_INDEX } from "../../overlayLayers";
 import { tryResolveCreatePortal } from "../../utils/resolveCreatePortal";
 export type HelpTooltipPlacement = "top" | "bottom";
 
-/** Default visible trigger: text label (icon-free). Use `trigger="icon"` for HelpCircle. */
+/** Visible trigger copy when `trigger="label"` (icon-free opt-in). */
 export const HELP_TOOLTIP_TRIGGER_LABEL = "help";
 
 export type HelpTooltipTrigger = "label" | "icon";
@@ -32,8 +32,8 @@ export type HelpTooltipProps = {
   wrap?: boolean;
   placement?: HelpTooltipPlacement;
   /**
-   * `label` (default) — texto «help» (kit atual).
-   * `icon` — HelpCircle (comportamento anterior; opte-in por app).
+   * `icon` (default) — HelpCircle (?).
+   * `label` — texto «help» (opte-in; toolbar densa).
    */
   trigger?: HelpTooltipTrigger;
   /**
@@ -200,7 +200,7 @@ export function HelpTooltip({
   className,
   wrap = false,
   placement = "top",
-  trigger = "label",
+  trigger = "icon",
   suppressed = false,
   children,
 }: HelpTooltipProps) {

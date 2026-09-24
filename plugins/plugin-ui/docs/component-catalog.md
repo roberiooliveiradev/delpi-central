@@ -1171,13 +1171,13 @@ MFEs: definir `--delpi-ui-*` no escopo `.dashboard-*` e **não** reimplementar l
 | Classe | Uso |
 |--------|-----|
 | `delpi-ui-help-tooltip` | Root do tooltip |
-| `delpi-ui-help-tooltip__trigger` | Botão com texto `help` |
-| `delpi-ui-help-tooltip__trigger-label` | Label visível do gatilho |
+| `delpi-ui-help-tooltip__trigger` | Botão ? (default) |
+| `delpi-ui-help-tooltip__trigger-label` | Label visível quando `trigger="label"` |
 | `delpi-ui-help-tooltip__bubble` | Balão (portal) |
 | `delpi-ui-keytip` | Balão KeyTip (atalho) |
 | `delpi-ui-keytip--letter` | Variante letra única (F) |
 | `delpi-ui-keytip-anchor` | Âncora do KeyTip |
-| `delpi-ui-field-label` | Layout label + help |
+| `delpi-ui-field-label` | Layout label + ? |
 | `delpi-ui-tab-cell` | Wrapper aba + ? |
 | `delpi-ui-tab` / `delpi-ui-tab--active` | Aba default (override via props) |
 
