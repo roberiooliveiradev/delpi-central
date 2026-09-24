@@ -10,13 +10,11 @@ export function TicketListSortPopover({
   levels,
   onChange,
   onApply,
-  onBeforeOpen,
   summaryLabel,
 }: {
   levels: TicketListSortLevel[];
   onChange: (next: TicketListSortLevel[]) => void;
   onApply: () => void;
-  onBeforeOpen?: () => void;
   summaryLabel?: string;
 }) {
   const [open, setOpen] = useState(false);
@@ -43,10 +41,7 @@ export function TicketListSortPopover({
         aria-label={summaryLabel ? `Ordenar: ${summaryLabel}` : "Ordenar"}
         aria-expanded={open}
         aria-controls={panelId}
-        onClick={() => {
-          if (!open) onBeforeOpen?.();
-          setOpen((current) => !current);
-        }}
+        onClick={() => setOpen((current) => !current)}
       >
         <ArrowUpDown size={16} aria-hidden />
         {summaryLabel ? summaryLabel.replace(/^Ordenado por\s+/i, "") : "Ordenar"}

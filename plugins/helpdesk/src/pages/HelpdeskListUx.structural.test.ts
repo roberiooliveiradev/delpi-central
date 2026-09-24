@@ -232,10 +232,15 @@ describe("Helpdesk list UX structural", () => {
     expect(filter).toContain("TicketListFilterBuilder");
     expect(filter).toContain("Escape");
     expect(filter).toContain("useClickOutside");
+    expect(filter).not.toContain("onBeforeOpen");
     expect(sort).toContain('role="dialog"');
     expect(sort).toContain("TicketListSortBuilder");
     expect(sort).toContain("useClickOutside");
+    expect(sort).not.toContain("onBeforeOpen");
     expect(assign).toContain("useClickOutside");
+    expect(page).not.toContain("onBeforeOpen");
+    expect(page).toContain("setBuilderGroup(ticketListViewModelFromFilters(filters).filterRoot)");
+    expect(page).toContain("setSortDraft(parseTicketSortLevels(filters.sort))");
     expect(page).not.toContain("HelpdeskHostDrawer");
     expect(filter).not.toContain("Drawer");
     expect(sort).not.toContain("Drawer");

@@ -13,7 +13,6 @@ export function TicketListFilterPopover({
   onChange,
   onClear,
   onApply,
-  onBeforeOpen,
   urgencies,
   categories,
 }: {
@@ -21,7 +20,6 @@ export function TicketListFilterPopover({
   onChange: (next: TicketListFilterGroup) => void;
   onClear: () => void;
   onApply: () => void;
-  onBeforeOpen?: () => void;
   urgencies: CatalogOption[];
   categories: CatalogOption[];
 }) {
@@ -49,10 +47,7 @@ export function TicketListFilterPopover({
         aria-label="Filtros avançados"
         aria-expanded={open}
         aria-controls={panelId}
-        onClick={() => {
-          if (!open) onBeforeOpen?.();
-          setOpen((current) => !current);
-        }}
+        onClick={() => setOpen((current) => !current)}
       >
         <ListFilter size={16} aria-hidden />
         Filtros

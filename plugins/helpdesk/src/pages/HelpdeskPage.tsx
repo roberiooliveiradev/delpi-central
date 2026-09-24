@@ -468,9 +468,6 @@ function TicketListPage() {
                     onChange={setBuilderGroup}
                     urgencies={urgencies}
                     categories={categories}
-                    onBeforeOpen={() =>
-                      setBuilderGroup(ticketListViewModelFromFilters(filters, columnPreferences).filterRoot)
-                    }
                     onClear={() => setBuilderGroup(emptyFilterGroup())}
                     onApply={() => {
                       const next = ticketListFiltersFromFilterGroup(builderGroup, filters);
@@ -483,7 +480,6 @@ function TicketListPage() {
                     levels={sortDraft}
                     onChange={setSortDraft}
                     summaryLabel={listViewModel.primarySortLabel}
-                    onBeforeOpen={() => setSortDraft(parseTicketSortLevels(filters.sort))}
                     onApply={() => {
                       commitFilters({
                         ...filters,
