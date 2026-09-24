@@ -296,9 +296,9 @@ def test_allowlist_v5_multi_ops_rebaseline():
     allow = load_external_read_allowlist()
     ids = load_allowlist_operation_ids(allow)
     assert ids == set(_ELIGIBLE_OPERATION_IDS)
-    assert allow.get("version") == 12
+    assert allow.get("version") == 13
     assert allow.get("coverageDecision", {}).get("decision") == (
-        "CORRECT_STOCK_BALANCES_BRANCH_GRAIN_PROJECTION"
+        "CORRECT_STOCK_BALANCES_SUMMARY_ITEMS_RETRIEVAL"
     )
     assert allow.get("authzPolicy") == "DAVI-READ-AUTHZ-REBASELINE-001"
     entry = next(

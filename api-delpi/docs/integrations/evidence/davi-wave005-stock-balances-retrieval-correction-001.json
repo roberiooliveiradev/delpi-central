@@ -1,0 +1,51 @@
+{
+  "taskId": "DAVI-WAVE005-STOCK-BALANCES-RETRIEVAL-CORRECTION-001",
+  "sourceHead": "PENDING_COMMIT",
+  "allowlistVersionBefore": 12,
+  "allowlistVersionAfter": 13,
+  "eligibleBefore": 53,
+  "eligibleAfter": 53,
+  "problemQuery": "resumo dos saldos de estoque por depósito",
+  "rankingBefore": [
+    {"action_id": "get_supplies_stock_balances_items", "score": 0.93},
+    {"action_id": "get_product_stock", "score": 0.904},
+    {"action_id": "get_supplies_stock_balances_summary", "score": 0.84}
+  ],
+  "rankingAfter": [
+    {"action_id": "get_supplies_stock_balances_summary", "score": 1.0}
+  ],
+  "aliasesBefore": {
+    "get_supplies_stock_balances_summary": [
+      "saldo de estoque por depósito",
+      "saldos por armazém",
+      "stock balances summary",
+      "resumo saldos de estoque"
+    ],
+    "get_supplies_stock_balances_items": [
+      "itens saldo de estoque",
+      "estoque por depósito",
+      "stock balance items",
+      "saldo estoque itens"
+    ]
+  },
+  "aliasesAfter": {
+    "get_supplies_stock_balances_summary": "precise resumo/consolidado/total + depósito phrases; restored saldo de estoque por depósito",
+    "get_supplies_stock_balances_items": "removed estoque por depósito; added itens/lista/produtos phrases",
+    "get_product_stock": "added saldo por filial do produto; estoque do código"
+  },
+  "genericAlgorithmChanged": false,
+  "summaryRetrievalTests": "PASS",
+  "itemsRetrievalTests": "PASS",
+  "productStockRetrievalTests": "PASS",
+  "siblingRegressions": "PASS",
+  "projectionRegression": "PASS (by_warehouse[].branch retained)",
+  "sourceTests": "PASS",
+  "deployStatus": "PENDING_EXTERNAL_ACTION",
+  "productionEligibleActionCount": null,
+  "liveRanking": "TEST_NOT_RUN",
+  "liveExecution": "TEST_NOT_RUN",
+  "authzChanged": false,
+  "agentIntelligenceChanged": false,
+  "gptActionsChanged": false,
+  "executionDrift": false
+}

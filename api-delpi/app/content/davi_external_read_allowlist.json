@@ -1,16 +1,16 @@
 {
-  "version": 12,
+  "version": 13,
   "description": "Governance allowlist for DAVI dynamic READ. DAVI has no independent AuthZ; backend is final authority. Entries define model-safe input/output projection and governed argument constraints only — not business permissions.",
   "authzPolicy": "DAVI-READ-AUTHZ-REBASELINE-001",
   "externalProcessing": "BACKEND_AUTHORIZED_INTERNAL_READ_ALLOWED_UNLESS_EXPLICITLY_PROHIBITED",
   "dataClassification": "MINIMIZATION_REQUIRED_TAXONOMY_OPTIONAL",
   "coverageDecision": {
-    "taskId": "DAVI-WAVE005-STOCK-BALANCES-PROJECTION-CORRECTION-001",
-    "decision": "CORRECT_STOCK_BALANCES_BRANCH_GRAIN_PROJECTION",
-    "reason": "Restore canonical grain branch+warehouse in get_supplies_stock_balances_summary model-safe projection by approving by_warehouse[].branch. Eligible READ remains 53; MCP tools remain 3. No AuthZ/business-logic/SQL change.",
+    "taskId": "DAVI-WAVE005-STOCK-BALANCES-RETRIEVAL-CORRECTION-001",
+    "decision": "CORRECT_STOCK_BALANCES_SUMMARY_ITEMS_RETRIEVAL",
+    "reason": "Disambiguate stock-balance summary vs items vs product-stock retrieval via semanticAliases only. Eligible READ remains 53; MCP tools remain 3. No AuthZ/business-logic/SQL/projection change.",
     "previousDecision": {
-      "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-005-SUPPLIES-READ",
-      "decision": "PROMOTE_SUPPLIES_READ_WAVE_005"
+      "taskId": "DAVI-WAVE005-STOCK-BALANCES-PROJECTION-CORRECTION-001",
+      "decision": "CORRECT_STOCK_BALANCES_BRANCH_GRAIN_PROJECTION"
     }
   },
   "retrievalQuarantineTokens": [
@@ -189,7 +189,10 @@
         "stock",
         "product stock",
         "stock by branch",
-        "available quantity"
+        "available quantity",
+        "saldo por filial do produto",
+        "estoque do código",
+        "estoque do codigo"
       ]
     },
     {
@@ -2295,8 +2298,18 @@
       ],
       "semanticAliases": [
         "saldo de estoque por depósito",
+        "resumo dos saldos de estoque por depósito",
+        "resumo de estoque por depósito",
+        "resumo dos saldos de estoque",
+        "saldos de estoque por depósito",
+        "consolidado de estoque por depósito",
+        "consolidado dos saldos de estoque",
+        "total de estoque por depósito",
+        "totais por depósito",
+        "saldos consolidados por armazém",
         "saldos por armazém",
         "stock balances summary",
+        "warehouse stock summary",
         "resumo saldos de estoque"
       ]
     },
@@ -2328,10 +2341,19 @@
         "total_pages"
       ],
       "semanticAliases": [
-        "itens saldo de estoque",
-        "estoque por depósito",
+        "itens de estoque por depósito",
+        "itens de saldo de estoque",
+        "itens dos saldos de estoque",
+        "produtos em estoque por depósito",
+        "lista de produtos por depósito",
+        "lista de produtos por armazém",
+        "lista de saldos de estoque",
+        "itens dos saldos por armazém",
         "stock balance items",
-        "saldo estoque itens"
+        "itens no depósito",
+        "itens existem no depósito",
+        "quais itens no depósito",
+        "produtos no depósito"
       ]
     },
     {

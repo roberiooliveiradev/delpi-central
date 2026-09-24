@@ -167,7 +167,7 @@ def test_wave2_eligible_count_exactly_thirteen():
     assert len(eligible) == 53
     assert set(_CURRENT_TEN) | set(_WAVE2) <= set(eligible)
     allow = load_external_read_allowlist()
-    assert allow.get("version") == 12
+    assert allow.get("version") == 13
     blocked = {
         item.get("operationId")
         for item in allow.get("explicitlyNotApproved") or []

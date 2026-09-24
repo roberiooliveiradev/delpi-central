@@ -2,7 +2,7 @@
   "source": "openapi_baseline.json",
   "baseline_version": "3",
   "baseline_operation_count": 720,
-  "taskId": "DAVI-WAVE005-STOCK-BALANCES-PROJECTION-CORRECTION-001",
+  "taskId": "DAVI-WAVE005-STOCK-BALANCES-RETRIEVAL-CORRECTION-001",
   "TOTAL_OPERATIONS": 720,
   "TOTAL_GET": 520,
   "TOTAL_WRITE_VERBS": 200,
@@ -21,12 +21,12 @@
     "note": "Delta vs last committed inventory artifact (HEAD)"
   },
   "COVERAGE_DECISION": {
-    "taskId": "DAVI-WAVE005-STOCK-BALANCES-PROJECTION-CORRECTION-001",
-    "decision": "CORRECT_STOCK_BALANCES_BRANCH_GRAIN_PROJECTION",
-    "reason": "Restore canonical grain branch+warehouse in get_supplies_stock_balances_summary model-safe projection by approving by_warehouse[].branch. Eligible READ remains 53; MCP tools remain 3. No AuthZ/business-logic/SQL change.",
+    "taskId": "DAVI-WAVE005-STOCK-BALANCES-RETRIEVAL-CORRECTION-001",
+    "decision": "CORRECT_STOCK_BALANCES_SUMMARY_ITEMS_RETRIEVAL",
+    "reason": "Disambiguate stock-balance summary vs items vs product-stock retrieval via semanticAliases only. Eligible READ remains 53; MCP tools remain 3. No AuthZ/business-logic/SQL/projection change.",
     "previousDecision": {
-      "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-005-SUPPLIES-READ",
-      "decision": "PROMOTE_SUPPLIES_READ_WAVE_005"
+      "taskId": "DAVI-WAVE005-STOCK-BALANCES-PROJECTION-CORRECTION-001",
+      "decision": "CORRECT_STOCK_BALANCES_BRANCH_GRAIN_PROJECTION"
     }
   },
   "HIGH_VALUE_BLOCKED": [

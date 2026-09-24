@@ -154,9 +154,9 @@ def _allowlist_entry(oid: str) -> dict[str, Any]:
 
 def test_wave005_allowlist_version_and_eligible_count():
     allow = load_external_read_allowlist()
-    assert allow.get("version") == 12
+    assert allow.get("version") == 13
     assert allow.get("coverageDecision", {}).get("taskId") == (
-        "DAVI-WAVE005-STOCK-BALANCES-PROJECTION-CORRECTION-001"
+        "DAVI-WAVE005-STOCK-BALANCES-RETRIEVAL-CORRECTION-001"
     )
     eligible = {a.operation_id for a in _actions() if a.executable}
     assert len(eligible) == 53
@@ -223,6 +223,7 @@ def test_wave005_mcp_tools_remain_three():
         ("itens de estoque de segurança", "get_supplies_safety_stock_items"),
         ("análise de consumo estoque de segurança", "get_supplies_safety_stock_consumption_analysis_summary"),
         ("saldo de estoque por depósito", "get_supplies_stock_balances_summary"),
+        ("resumo dos saldos de estoque por depósito", "get_supplies_stock_balances_summary"),
         ("solicitações de compra", "list_supplies_purchase_request_lines"),
         ("materiais em poder de terceiros", "get_supplies_third_party_materials_summary"),
         ("histórico de preço por fornecedor", "get_supplies_safety_stock_supplier_purchase_price_history"),
@@ -238,6 +239,39 @@ def test_wave005_supplies_retrieval_positive(query, expected, monkeypatch):
     discovered = discover_delpi_information(query=query, top_k=5, actor_id="u1")
     assert discovered["eligible_action_count"] == 53, query
     assert discovered["candidate_count"] >= 1, query
+    assert discovered["candidates"][0]["action_id"] == expected, (
+        query,
+        [c["action_id"] for c in discovered["candidates"]],
+    )
+
+
+@pytest.mark.parametrize(
+    ("query", "expected"),
+    [
+        ("resumo dos saldos de estoque por depósito", "get_supplies_stock_balances_summary"),
+        ("resumo de estoque por depósito", "get_supplies_stock_balances_summary"),
+        ("consolidado de estoque por depósito", "get_supplies_stock_balances_summary"),
+        ("totais dos saldos por armazém", "get_supplies_stock_balances_summary"),
+        ("qual o valor total de estoque por depósito", "get_supplies_stock_balances_summary"),
+        ("liste os produtos em estoque por depósito", "get_supplies_stock_balances_items"),
+        ("quais itens existem no depósito 01", "get_supplies_stock_balances_items"),
+        ("itens de saldo de estoque", "get_supplies_stock_balances_items"),
+        ("lista de produtos por armazém", "get_supplies_stock_balances_items"),
+        ("mostrar itens dos saldos de estoque", "get_supplies_stock_balances_items"),
+        ("estoque do produto 10080001", "get_product_stock"),
+        ("saldo disponível do produto 10080001", "get_product_stock"),
+        ("estoque do código 10090043", "get_product_stock"),
+        ("saldo por filial do produto 10080055", "get_product_stock"),
+    ],
+)
+def test_wave005_stock_balance_retrieval_disambiguation(query, expected, monkeypatch):
+    """Summary vs items vs product-stock intents must rank without query hardcodes."""
+    set_actions_for_tests(_actions())
+    monkeypatch.setattr(
+        "app.application.external_capabilities.dynamic_information.discover_service.candidate_token_secret",
+        lambda: "sec",
+    )
+    discovered = discover_delpi_information(query=query, top_k=5, actor_id="u1")
     assert discovered["candidates"][0]["action_id"] == expected, (
         query,
         [c["action_id"] for c in discovered["candidates"]],

@@ -2,7 +2,7 @@
 
 > Evidence artifact. Not runtime authority. Not semantic capability catalog.
 
-- Task: `DAVI-WAVE005-STOCK-BALANCES-PROJECTION-CORRECTION-001`
+- Task: `DAVI-WAVE005-STOCK-BALANCES-RETRIEVAL-CORRECTION-001`
 - Source: `openapi_baseline.json` version `3`
 - TOTAL OPERATIONS: **720**
 - TOTAL GET: **520**
@@ -14,12 +14,12 @@
 
 ```json
 {
-  "taskId": "DAVI-WAVE005-STOCK-BALANCES-PROJECTION-CORRECTION-001",
-  "decision": "CORRECT_STOCK_BALANCES_BRANCH_GRAIN_PROJECTION",
-  "reason": "Restore canonical grain branch+warehouse in get_supplies_stock_balances_summary model-safe projection by approving by_warehouse[].branch. Eligible READ remains 53; MCP tools remain 3. No AuthZ/business-logic/SQL change.",
+  "taskId": "DAVI-WAVE005-STOCK-BALANCES-RETRIEVAL-CORRECTION-001",
+  "decision": "CORRECT_STOCK_BALANCES_SUMMARY_ITEMS_RETRIEVAL",
+  "reason": "Disambiguate stock-balance summary vs items vs product-stock retrieval via semanticAliases only. Eligible READ remains 53; MCP tools remain 3. No AuthZ/business-logic/SQL/projection change.",
   "previousDecision": {
-    "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-005-SUPPLIES-READ",
-    "decision": "PROMOTE_SUPPLIES_READ_WAVE_005"
+    "taskId": "DAVI-WAVE005-STOCK-BALANCES-PROJECTION-CORRECTION-001",
+    "decision": "CORRECT_STOCK_BALANCES_BRANCH_GRAIN_PROJECTION"
   }
 }
 ```
