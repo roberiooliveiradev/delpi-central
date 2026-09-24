@@ -120,12 +120,10 @@ def openapi_record_data_properties() -> dict[str, Any]:
         "description": "Revision or resource_cost start date (YYYY-MM-DD)"
     },
     "data_fim_vigencia": {
-        "type": [
-            "string",
-            "None"
-        ],
+        "type": "string",
         "format": "date",
-        "description": "Omit = open/unset on create; None = clear on update; da"
+        "nullable": True,
+        "description": "Omit = open/unset on create; null = clear on update; date = set",
     },
     "revisao_referencia_id": {
         "type": "string"
@@ -427,3 +425,32 @@ def openapi_record_data_properties() -> dict[str, Any]:
         "description": "Impact×effort matrix overrides"
     }
 }
+
+
+# Contract gate: fields that must stay visible to Custom GPT for write actions.
+REQUIRED_GPT_RECORD_WRITE_FIELDS: frozenset[str] = frozenset(
+    {
+        "valor_mensal",
+        "recurso_compartilhado_id",
+        "nome_recurso",
+        "tipo_custo",
+        "tipo_investimento",
+        "descricao_item",
+        "valor_unitario",
+        "quantidade",
+        "peso_rateio",
+        "ativo",
+        "custo_hora_mao_obra",
+        "percentual_retrabalho",
+        "confirm_vigencia_change",
+        "todas_filiais_ativas",
+        "nome_processo",
+        "conteudo",
+        "meeting_date",
+        "unit_code",
+        "title",
+        "codigo_filial",
+        "setor_id",
+        "filiais",
+    }
+)

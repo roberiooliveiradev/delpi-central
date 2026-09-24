@@ -358,8 +358,9 @@ def openapi_revision_properties() -> dict[str, Any]:
         "motivo_revisao": {"type": "string"},
         "data_implantacao": {"type": "string", "description": "YYYY-MM-DD", "nullable": True},
         "data_fim_vigencia": {
-            "type": ["string", "null"],
+            "type": "string",
             "format": "date",
+            "nullable": True,
             "description": (
                 "YYYY-MM-DD end date, or null for open vigencia. "
                 "Omitted on create = leave NULL (do not invent today). "

@@ -1839,7 +1839,35 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                     "proposal; commit via gpt_commit_proposal."
                 )[:300]
 
+    _normalize_builder_nullable_types(doc)
     return doc
+
+
+def _normalize_builder_nullable_types(node: Any) -> None:
+    """OpenAI GPT Builder rejects OAS 3.1 type unions like ["string","null"].
+
+    Use ``type: string`` + ``nullable: true`` (and never Python ``None`` as a
+    type token) so import validation succeeds.
+    """
+    if isinstance(node, dict):
+        t = node.get("type")
+        if isinstance(t, list):
+            normalized = [("null" if x in (None, "None") else x) for x in t]
+            non_null = [x for x in normalized if x != "null"]
+            if "null" in normalized and len(non_null) == 1:
+                node["type"] = non_null[0]
+                node["nullable"] = True
+            elif "null" in normalized and len(non_null) > 1:
+                # Keep primary scalar; Builder cannot import multi-type unions.
+                node["type"] = non_null[0]
+                node["nullable"] = True
+            else:
+                node["type"] = normalized
+        for value in node.values():
+            _normalize_builder_nullable_types(value)
+    elif isinstance(node, list):
+        for item in node:
+            _normalize_builder_nullable_types(item)
 
 
 def write_gpt_actions_openapi(path: Path, *, server_url: str | None = None) -> dict[str, Any]:

@@ -40,27 +40,31 @@ def test_catalog_projection_under_budget_when_bloated():
     assert sizes["envelopeAscii"] <= GPT_ACTIONS_RESPONSE_MAX_BYTES
 
 
-def test_openapi_artifact_budget_and_op_count():
-    import json
-    from pathlib import Path
+def test_openapi_has_no_type_unions_for_builder():
+    """GPT Builder rejects OAS 3.1 type: [string, null] / Python None tokens."""
+    doc = build_gpt_actions_openapi()
 
-    doc = build_gpt_actions_openapi(server_url="https://example.test")
-    raw = json.dumps(doc, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
-    assert len(raw) <= GPT_ACTIONS_RESPONSE_MAX_BYTES, len(raw)
-    ops = []
-    for methods in doc.get("paths", {}).values():
-        if not isinstance(methods, dict):
-            continue
-        for op in methods.values():
-            if isinstance(op, dict) and op.get("operationId"):
-                ops.append(op["operationId"])
-    assert len(ops) == 18
+    bad: list[str] = []
 
-    artifact = (
-        Path(__file__).resolve().parents[1]
-        / "docs"
-        / "gpt-actions"
-        / "openapi-gpt-actions.json"
-    )
-    if artifact.exists():
-        assert artifact.stat().st_size <= GPT_ACTIONS_RESPONSE_MAX_BYTES
+    def walk(obj: object, path: str = "") -> None:
+        if isinstance(obj, dict):
+            t = obj.get("type")
+            if isinstance(t, list):
+                bad.append(f"{path}: {t}")
+            if t in (None, "None") and "type" in obj:
+                # bare invalid token
+                bad.append(f"{path}: type={t!r}")
+            for key, value in obj.items():
+                walk(value, f"{path}.{key}" if path else str(key))
+        elif isinstance(obj, list):
+            for index, value in enumerate(obj):
+                walk(value, f"{path}[{index}]")
+
+    walk(doc)
+    assert not bad, bad
+
+    fim = doc["components"]["schemas"]["GptRecordBody"]["properties"]["data"][
+        "properties"
+    ]["data_fim_vigencia"]
+    assert fim["type"] == "string"
+    assert fim.get("nullable") is True

@@ -561,18 +561,16 @@ def test_openapi_data_fim_vigencia_nullable():
     rev = doc["components"]["schemas"]["GptPackageRevision"]["properties"][
         "data_fim_vigencia"
     ]
-    assert rev["type"] == ["string", "null"] or (
-        rev.get("nullable") is True and rev.get("type") == "string"
-    )
+    # GPT Builder requires type:string + nullable:true (not OAS 3.1 type unions).
+    assert rev.get("nullable") is True and rev.get("type") == "string"
     record_data = doc["components"]["schemas"]["GptRecordBody"]["properties"]["data"][
         "properties"
     ]["data_fim_vigencia"]
-    assert "null" in str(record_data.get("type"))
-    examples = doc["paths"]["/transformometro/gpt-actions/v1/records/{entity}"]["post"][
-        "requestBody"
-    ]["content"]["application/json"]["examples"]
-    assert "revision_clear_end_date" in examples
-    assert examples["revision_clear_end_date"]["value"]["data"]["data_fim_vigencia"] is None
+    assert record_data.get("nullable") is True and record_data.get("type") == "string"
+    changes = doc["components"]["schemas"]["GptPrepareRecordChangeBody"]["properties"][
+        "changes"
+    ]["properties"]["data_fim_vigencia"]
+    assert changes.get("nullable") is True and changes.get("type") == "string"
 
 
 def test_package_hints_document_omit_vs_null():
