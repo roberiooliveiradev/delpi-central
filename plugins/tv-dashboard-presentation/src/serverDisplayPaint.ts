@@ -14,6 +14,7 @@ export function hasServerDisplayPaint(
   resolved?: ComunicadoDataResolved | null,
 ): boolean {
   if (!resolved) return false;
+  if (resolved.presentationStale === true) return false;
   if (resolved.serverDisplayApplied === true) return true;
   if (typeof resolved.displayText === "string") return true;
   if (Array.isArray(resolved.displayRuns) && resolved.displayRuns.length > 0) return true;

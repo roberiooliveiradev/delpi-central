@@ -4,15 +4,14 @@ import type { ComunicadoChartOptions } from "./comunicadoChartOptions";
 import type { ComunicadoChartInteraction, ComunicadoChartPartsMap } from "./comunicadoChartParts";
 import { pieInnerRadiusForChartType, toSeriesChartKind } from "./comunicadoChartView";
 import type { ComunicadoChartType, ComunicadoDataResolved } from "./comunicadoTypes";
-import { formatNumber } from "./nativeFormat";
 import { resolveEffectiveChartGoal } from "./resolveEffectiveChartGoal";
 
 export function formatCellValue(value: unknown): string {
+  // Paint-only residual: sem display* do servidor → unresolved (não formatDisplayValue).
   if (value === null || value === undefined) return "—";
-  if (typeof value === "number") {
-    return formatNumber(value);
-  }
-  return String(value);
+  if (typeof value === "string") return value.trim() ? value : "—";
+  if (typeof value === "number" && Number.isFinite(value)) return "—";
+  return "—";
 }
 
 type ChartWidgetProps = {
@@ -108,7 +107,13 @@ export function TvDataSeriesChartWidget({
     goalLineValue: paintOptions.goalLineValue,
     projectedGoal: resolved.chart?.projectedGoal,
   });
-  const optionsWithGoal = { ...paintOptions, goalLineValue: effectiveGoal };
+  const optionsWithGoal = {
+    ...paintOptions,
+    goalLineValue: effectiveGoal,
+    ...(Array.isArray(resolved.chart?.yAxisTicks) && resolved.chart.yAxisTicks.length >= 2
+      ? { yAxisTicks: resolved.chart.yAxisTicks }
+      : {}),
+  };
   return (
     <ConfigurableSeriesChart
       chartType={kind}

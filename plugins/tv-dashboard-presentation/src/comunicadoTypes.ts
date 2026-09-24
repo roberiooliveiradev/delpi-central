@@ -641,13 +641,11 @@ export type ComunicadoDataResolved = {
   label?: string;
   /**
    * Enrichment já aplicou *Projection no servidor.
-   * KPI: cliente só filtra métricas visíveis (não re-agrega).
-   * Chart/table: cliente **reaplica** encoding visual a partir de `table.rows` +
-   * projeção do bloco (`chartDataPolicy`) — o bake do servidor não é autoridade do gráfico.
+   * Quando true, MFE `applyViewProjection` é no-op (FE-BE-002 / G4) — paint do bake.
    */
   /**
    * Params de apresentação mesclados no enrichment (playlist → slide → fonte).
-   * Ex.: excludeWeekends + granularity — o cliente aplica no applyViewProjection.
+   * Ex.: excludeWeekends + granularity — bake server aplica no enrichment.
    */
   viewFilterParams?: Record<string, unknown>;
   serverProjectionApplied?: boolean;
@@ -656,6 +654,11 @@ export type ComunicadoDataResolved = {
    * MFE não deve chamar `formatDisplayValue` no path do slide quando presentes.
    */
   serverDisplayApplied?: boolean;
+  /**
+   * Editor preview: spec fingerprint diverged from last successful enrich.
+   * Paint may keep previous geometry; must not treat display* as current (G5/G21).
+   */
+  presentationStale?: boolean;
   /** Texto composto pronto (text/heading/shape) — inclui prefixo/sufixo. */
   displayText?: string;
   /** Runs prontos para paint (contentRuns com dataRef já materializados). */
@@ -707,6 +710,8 @@ export type ComunicadoDataResolved = {
      * Precedência no paint: `goalLineValue` manual > `projectedGoal`.
      */
     projectedGoal?: number | null;
+    /** Ticks semânticos do eixo Y (backend — G24). Geometry no MFE. */
+    yAxisTicks?: Array<{ value: number; displayLabel: string }>;
   };
   table?: {
     rows?: Array<Record<string, unknown>>;

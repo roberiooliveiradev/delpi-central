@@ -215,25 +215,21 @@ describe("applyViewProjection", () => {
     expect(points).toHaveLength(3);
   });
 
-  it("com serverProjectionApplied ainda agrupa pizza (não confia no bake rowwise)", () => {
-    const bakedWrong: ComunicadoDataResolved = {
+  it("com serverProjectionApplied não re-agrega pizza (bake é autoridade — G4)", () => {
+    const baked: ComunicadoDataResolved = {
       serverProjectionApplied: true,
       chart: {
-        chartType: "line",
+        chartType: "doughnut",
         points: [
-          { label: "LMP", value: 1 },
-          { label: "LMP", value: 1 },
+          { label: "LMP", value: 3 },
           { label: "AMOSTRA", value: 1 },
-          { label: "LMP", value: 1 },
         ],
         series: [
           {
-            name: "Dashboard de LMPs",
+            name: "Contagem",
             points: [
-              { label: "LMP", value: 1 },
-              { label: "LMP", value: 1 },
+              { label: "LMP", value: 3 },
               { label: "AMOSTRA", value: 1 },
-              { label: "LMP", value: 1 },
             ],
           },
         ],
@@ -251,56 +247,25 @@ describe("applyViewProjection", () => {
         ],
       },
     };
-    const next = applyViewProjection(bakedWrong, {
+    const next = applyViewProjection(baked, {
       chartType: "doughnut",
       chartProjection: {
         categoryField: "tipo",
         series: [{ field: "tipo", aggregation: "count", label: "Contagem" }],
       },
     });
-    const points = next?.chart?.points ?? [];
-    expect(points).toHaveLength(2);
-    expect(points).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ label: "LMP", value: 3 }),
-        expect.objectContaining({ label: "AMOSTRA", value: 1 }),
-      ]),
-    );
-    expect(next?.chart?.chartType).toBe("doughnut");
+    expect(next).toBe(baked);
+    expect(next?.chart?.points).toEqual([
+      { label: "LMP", value: 3 },
+      { label: "AMOSTRA", value: 1 },
+    ]);
   });
 
-  it("com serverProjectionApplied ainda re-agrega KPI do bloco (não confia no bake)", () => {
-    const bakedWrong: ComunicadoDataResolved = {
-      serverProjectionApplied: true,
-      kpi: { value: 99, label: "bake errado" },
-      kpiMetrics: [{ field: "oee", value: 99, label: "bake errado" }],
-      table: {
-        columns: [
-          { key: "periodo", label: "Período" },
-          { key: "oee", label: "OEE" },
-        ],
-        rows: [
-          { periodo: "a", oee: 60 },
-          { periodo: "b", oee: 80 },
-          { periodo: "c", oee: 100 },
-        ],
-      },
-    };
-    const next = applyViewProjection(bakedWrong, {
-      kpiProjection: {
-        metrics: [{ field: "oee", aggregation: "avg", label: "OEE médio" }],
-      },
-    });
-    expect(next?.kpiMetrics?.[0]?.value).toBe(80);
-    expect(next?.kpi?.label).toBe("OEE médio");
-  });
-
-  it("G19: re-agg KPI limpa serverDisplayApplied mentiroso sem displayValue", () => {
+  it("com serverProjectionApplied não re-agrega KPI (bake é autoridade — G4)", () => {
     const baked: ComunicadoDataResolved = {
       serverProjectionApplied: true,
-      serverDisplayApplied: true,
-      kpi: { value: 99, label: "bake", displayValue: "99,0" },
-      kpiMetrics: [{ field: "oee", value: 99, label: "bake", displayValue: "99,0" }],
+      kpi: { value: 80, label: "OEE" },
+      kpiMetrics: [{ field: "oee", value: 80, label: "OEE" }],
       table: {
         columns: [
           { key: "periodo", label: "Período" },
@@ -314,6 +279,33 @@ describe("applyViewProjection", () => {
       },
     };
     const next = applyViewProjection(baked, {
+      kpiProjection: {
+        metrics: [{ field: "oee", aggregation: "avg", label: "OEE" }],
+      },
+    });
+    expect(next).toBe(baked);
+    expect(next?.kpi?.value).toBe(80);
+  });
+
+  it("G19: re-agg KPI limpa serverDisplayApplied mentiroso sem displayValue", () => {
+    // Pré-enrich (sem serverProjectionApplied): cliente ainda projeta e deve limpar flag mentirosa.
+    const local: ComunicadoDataResolved = {
+      serverDisplayApplied: true,
+      kpi: { value: 99, label: "stale", displayValue: "99,0" },
+      kpiMetrics: [{ field: "oee", value: 99, label: "stale", displayValue: "99,0" }],
+      table: {
+        columns: [
+          { key: "periodo", label: "Período" },
+          { key: "oee", label: "OEE" },
+        ],
+        rows: [
+          { periodo: "a", oee: 60 },
+          { periodo: "b", oee: 80 },
+          { periodo: "c", oee: 100 },
+        ],
+      },
+    };
+    const next = applyViewProjection(local, {
       kpiProjection: {
         metrics: [{ field: "oee", aggregation: "avg", label: "OEE médio" }],
       },
@@ -734,9 +726,9 @@ describe("maxCategories / Outros", () => {
 
 describe("encoding vazio — não troca coluna por cobertura", () => {
   it("bar com projection e rows vazias não pinta buckets_count", () => {
+    // Sem serverProjectionApplied: draft local ainda projeta e limpa summary.
     const next = applyViewProjection(
       {
-        serverProjectionApplied: true,
         kpiMetrics: [
           { field: "buckets_count", label: "Buckets quantidade", value: 5 },
           { field: "customers_count", label: "Customers quantidade", value: 0 },
@@ -760,6 +752,23 @@ describe("encoding vazio — não troca coluna por cobertura", () => {
     );
     expect(next?.chart?.points ?? []).toEqual([]);
     expect(next?.chart?.series ?? []).toEqual([]);
+  });
+
+  it("G4: bake com serverProjectionApplied e chart vazio é autoridade", () => {
+    const baked: ComunicadoDataResolved = {
+      serverProjectionApplied: true,
+      chart: { points: [], chartType: "bar", series: [] },
+      table: { columns: [], rows: [] },
+    };
+    const next = applyViewProjection(baked, {
+      chartType: "bar",
+      chartProjection: {
+        categoryField: "periodo",
+        series: [{ field: "total_qty", label: "Quantidade total", aggregation: "sum" }],
+      },
+    });
+    expect(next).toBe(baked);
+    expect(next?.chart?.points ?? []).toEqual([]);
   });
 
   it("bar com N linhas sem medida não inventa barras com a contagem", () => {

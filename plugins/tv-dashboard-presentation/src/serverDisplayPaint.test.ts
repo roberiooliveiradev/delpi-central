@@ -26,6 +26,16 @@ describe("serverDisplayPaint (paint-only contract)", () => {
     expect(hasServerDisplayPaint({ kpi: { value: 1 } })).toBe(false);
   });
 
+  it("hasServerDisplayPaint rejects presentationStale even with display*", () => {
+    expect(
+      hasServerDisplayPaint({
+        serverDisplayApplied: true,
+        displayText: "stale",
+        presentationStale: true,
+      }),
+    ).toBe(false);
+  });
+
   it("preferServerTextDisplayRuns wins over client reformat inputs", () => {
     const runs = preferServerTextDisplayRuns({
       serverDisplayApplied: true,

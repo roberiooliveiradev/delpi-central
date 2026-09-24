@@ -1,6 +1,5 @@
 import { ConfigurableSeriesChart } from "./ConfigurableSeriesChart";
 import { hasRichComunicado, type ComunicadoScreenDataLike } from "./comunicadoHelpers";
-import { formatNumber, formatPct } from "./nativeFormat";
 import { RichComunicadoStage } from "./RichComunicadoStage";
 import type { ComunicadoBackground } from "./comunicadoTypes";
 import { getDelpiBrandAccent } from "./delpiBrandTheme";
@@ -13,8 +12,26 @@ export type KpiScreenData = {
   branch?: string | null;
   error?: boolean;
   message?: string;
-  seriesPoints?: Array<{ label?: unknown; value?: unknown }>;
+  seriesPoints?: Array<{
+    label?: unknown;
+    value?: unknown;
+    displayLabel?: string;
+    displayValue?: string;
+  }>;
+  /** Enrich/native DisplayFormatService — paint-only (G18). */
+  serverDisplayApplied?: boolean;
+  oeePctDisplay?: string;
+  otdPctDisplay?: string;
+  ppmValueDisplay?: string;
+  targetPctDisplay?: string;
+  stockValueDisplay?: string;
+  igdDisplay?: string;
 };
+
+/** Paint server display string; unresolved when missing (no client format fallback). */
+function preferDisplay(display: unknown, fallbackUnresolved = "—"): string {
+  return typeof display === "string" && display.trim() ? display : fallbackUnresolved;
+}
 
 export type NativeSlidePayload = {
   screenKey: string;
@@ -36,16 +53,23 @@ function ErrorScreen({ message, detail }: { message?: string; detail?: string })
 
 function normalizeSeriesPoints(
   raw: KpiScreenData["seriesPoints"],
-): Array<{ label: string; value: number }> {
+): Array<{ label: string; value: number; displayValue?: string }> {
   if (!Array.isArray(raw)) return [];
-  const points: Array<{ label: string; value: number }> = [];
+  const points: Array<{ label: string; value: number; displayValue?: string }> = [];
   for (const row of raw) {
     if (!row || typeof row !== "object") continue;
     const value = Number(row.value);
     if (!Number.isFinite(value)) continue;
+    const label =
+      typeof row.displayLabel === "string"
+        ? row.displayLabel
+        : row.label != null
+          ? String(row.label)
+          : "";
     points.push({
-      label: row.label != null ? String(row.label) : "",
+      label,
       value,
+      ...(typeof row.displayValue === "string" ? { displayValue: row.displayValue } : {}),
     });
   }
   return points;
@@ -148,9 +172,9 @@ export function ProductionOeeOverviewScreen({
       data={data}
       eyebrow="Produção"
       primaryLabel="OEE"
-      primaryValue={formatPct(data.oeePct as number | string | null | undefined)}
+      primaryValue={preferDisplay(data.oeePctDisplay)}
       secondaryLabel="Meta"
-      secondaryValue={formatPct(data.targetPct as number | string | null | undefined)}
+      secondaryValue={preferDisplay(data.targetPctDisplay)}
       chartTitle="Evolução OEE"
     />
   );
@@ -166,9 +190,9 @@ export function ProductionOtdSummaryScreen({
       data={data}
       eyebrow="Produção"
       primaryLabel="OTD"
-      primaryValue={formatPct(data.otdPct as number | string | null | undefined)}
+      primaryValue={preferDisplay(data.otdPctDisplay)}
       secondaryLabel="Meta"
-      secondaryValue={formatPct(data.targetPct as number | string | null | undefined)}
+      secondaryValue={preferDisplay(data.targetPctDisplay)}
       chartTitle="Evolução OTD"
     />
   );
@@ -184,9 +208,9 @@ export function QualityPpmSummaryScreen({
       data={data}
       eyebrow="Qualidade"
       primaryLabel={`PPM ${data.ppmType ?? ""}`.trim()}
-      primaryValue={formatNumber(data.ppmValue as number | string | null | undefined)}
+      primaryValue={preferDisplay(data.ppmValueDisplay)}
       secondaryLabel="Meta"
-      secondaryValue={formatPct(data.targetPct as number | string | null | undefined)}
+      secondaryValue={preferDisplay(data.targetPctDisplay)}
       chartTitle="Evolução PPM"
     />
   );
@@ -216,7 +240,7 @@ export function SuppliesStockValueScreen({
         <article className="tdp-oee__kpi tdp-oee__kpi--primary">
           <span className="tdp-oee__kpi-label">Valor</span>
           <strong className="tdp-oee__kpi-value tdp-oee__kpi-value--compact">
-            {formatNumber(data.stockValue as number | string | null | undefined)}
+            {preferDisplay(data.stockValueDisplay)}
           </strong>
         </article>
       </div>
@@ -271,7 +295,11 @@ export function SuppliesStockAlertScreen({
               </div>
               <div className="tdp-stock-alert__metrics">
                 <span className="tdp-stock-alert__metric-label">Valor</span>
-                <strong>{formatNumber(item.stockValue as number | string | null | undefined)}</strong>
+                <strong>
+                  {preferDisplay(
+                    (item as { stockValueDisplay?: string }).stockValueDisplay,
+                  )}
+                </strong>
               </div>
             </article>
           ))
@@ -318,7 +346,7 @@ export function StrategicIndicatorsHeroScreen({
         <div className="tdp-si-hero__igd-block">
           <span className="tdp-si-hero__igd-label">IGD</span>
           <strong className="tdp-si-hero__igd-value">
-            {formatNumber(data.igd as number | string | null | undefined)}
+            {preferDisplay(data.igdDisplay)}
           </strong>
           <p className="tdp-si-hero__classification">{data.classification ?? "—"}</p>
         </div>

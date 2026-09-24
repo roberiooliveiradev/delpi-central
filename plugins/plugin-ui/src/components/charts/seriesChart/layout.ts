@@ -58,6 +58,8 @@ export type SeriesChartLayout = {
   /** `horizontal` = categoria no Y, valor no X (barras). */
   orientation: SeriesChartOrientation;
   ticks: number[];
+  /** Labels semânticos do backend por tick value (G24). Ausente = formatChartTick no paint. */
+  tickDisplayLabels?: Map<number, string>;
   axisMin: number;
   axisMax: number;
   axisRange: number;
@@ -105,6 +107,11 @@ export type BuildSeriesChartLayoutInput = {
    * Quando presente, substitui os values de `points` no cálculo de ticks.
    */
   axisValues?: number[];
+  /**
+   * Ticks semânticos do backend (value + displayLabel). Quando presentes, substituem
+   * resolveSeriesChartTicks — o MFE só mapeia value → px.
+   */
+  yAxisTicks?: Array<{ value: number; displayLabel: string }>;
   /** Valores para eixo Y secundário (direita). */
   secondaryAxisValues?: number[];
   showXAxisLabels: boolean;
@@ -647,6 +654,14 @@ function resolveSideMargins(
 }
 
 export function buildSeriesChartLayout(input: BuildSeriesChartLayoutInput): SeriesChartLayout {
+  const serverTicks = Array.isArray(input.yAxisTicks)
+    ? input.yAxisTicks.filter(
+        (tick) =>
+          tick &&
+          Number.isFinite(Number(tick.value)) &&
+          typeof tick.displayLabel === "string",
+      )
+    : [];
   const rawValues =
     input.axisValues && input.axisValues.length > 0
       ? input.axisValues.map((value) => Number(value))
@@ -655,7 +670,14 @@ export function buildSeriesChartLayout(input: BuildSeriesChartLayoutInput): Seri
   const dataMin = values.length > 0 ? Math.min(...values) : 0;
   const dataMax = values.length > 0 ? Math.max(...values) : 1;
   const valueDomain = resolveSeriesChartValueDomain(dataMin, dataMax);
-  const ticks = resolveSeriesChartTicks(valueDomain.min, valueDomain.max);
+  const ticks =
+    serverTicks.length >= 2
+      ? serverTicks.map((tick) => Number(tick.value))
+      : resolveSeriesChartTicks(valueDomain.min, valueDomain.max);
+  const tickDisplayLabels =
+    serverTicks.length >= 2
+      ? new Map(serverTicks.map((tick) => [Number(tick.value), tick.displayLabel]))
+      : undefined;
   const axisMin = Math.min(ticks[0] ?? valueDomain.min, valueDomain.min);
   const axisMax = Math.max(ticks[ticks.length - 1] ?? valueDomain.max, valueDomain.max);
   const axisRange = Math.max(axisMax - axisMin, 1e-6);
@@ -913,6 +935,7 @@ export function buildSeriesChartLayout(input: BuildSeriesChartLayoutInput): Seri
     categoryScale,
     orientation,
     ticks,
+    ...(tickDisplayLabels ? { tickDisplayLabels } : {}),
     axisMin,
     axisMax,
     axisRange,

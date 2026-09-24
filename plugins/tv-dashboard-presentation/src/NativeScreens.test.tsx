@@ -115,9 +115,12 @@ describe("NativeScreens public payload", () => {
             label: "OEE",
             oeePct: 75,
             targetPct: 80,
+            oeePctDisplay: "75,0%",
+            targetPctDisplay: "80,0%",
+            serverDisplayApplied: true,
             seriesPoints: [
-              { label: "01/07", value: 70 },
-              { label: "02/07", value: 75 },
+              { label: "01/07", value: 70, displayLabel: "01/07", displayValue: "70,00" },
+              { label: "02/07", value: 75, displayLabel: "02/07", displayValue: "75,00" },
             ],
           },
         }}
@@ -126,6 +129,8 @@ describe("NativeScreens public payload", () => {
     expect(container.querySelector(".tdp-oee--with-series")).toBeTruthy();
     expect(container.querySelector(".tdp-oee__series-chart")).toBeTruthy();
     expect(container.querySelector(".delpi-ui-series-chart")).toBeTruthy();
+    expect(screen.getByText("75,0%")).toBeTruthy();
+    expect(screen.getByText("80,0%")).toBeTruthy();
   });
 
   it("renders public stage with active slide", () => {

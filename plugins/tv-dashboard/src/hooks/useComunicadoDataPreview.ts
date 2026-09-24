@@ -415,6 +415,26 @@ export function useComunicadoDataPreview({ playlistId, config, playlistDefaults 
   const scheduleAutoRefresh = useCallback(
     (sourceIds: string[], blocks: FetchableBlock[]) => {
       if (sourceIds.length === 0) return;
+      // G5/G21: mark stale immediately — never present prior semantic payload as current.
+      setStaleSourceIds((prev) => [...new Set([...prev, ...sourceIds])]);
+      setResolvedByBlockId((previous) => {
+        let changed = false;
+        const next = { ...previous };
+        for (const id of sourceIds) {
+          const resolved = previous[id];
+          if (!resolved || resolved.presentationStale === true) continue;
+          next[id] = {
+            ...resolved,
+            presentationStale: true,
+            serverDisplayApplied: false,
+            serverProjectionApplied: false,
+          };
+          changed = true;
+        }
+        if (!changed) return previous;
+        // Do not write stale-stripped map to session cache as authoritative.
+        return next;
+      });
       if (autoRefreshTimerRef.current != null) window.clearTimeout(autoRefreshTimerRef.current);
       autoRefreshTimerRef.current = window.setTimeout(() => {
         autoRefreshTimerRef.current = null;

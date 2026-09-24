@@ -170,3 +170,93 @@ def test_apply_chart_projection_pie_uses_category_column_as_is():
     next_resolved = apply_view_projection_to_resolved(resolved, block)
     labels = [p["label"] for p in next_resolved["chart"]["points"]]
     assert labels == ["FM", "FH"]
+
+
+def test_chart_projection_empty_rows_clears_summary_chart():
+    resolved = {
+        "chart": {
+            "points": [
+                {"label": "Buckets quantidade", "value": 5},
+                {"label": "Customers quantidade", "value": 0},
+            ],
+            "chartType": "bar",
+        },
+        "table": {"columns": [], "rows": []},
+    }
+    block = {
+        "type": "chart_view",
+        "chartType": "bar",
+        "chartProjection": {
+            "categoryField": "periodo",
+            "series": [{"field": "total_qty", "label": "Quantidade total", "aggregation": "sum"}],
+        },
+    }
+    next_resolved = apply_view_projection_to_resolved(resolved, block)
+    assert next_resolved["chart"]["points"] == []
+    assert next_resolved["chart"]["series"] == []
+    assert next_resolved["serverProjectionApplied"] is True
+
+
+def test_exclude_weekends_baked_into_chart_points():
+    resolved = {
+        "viewFilterParams": {"excludeWeekends": True, "granularity": "day"},
+        "chart": {
+            "chartType": "line",
+            "points": [
+                {"label": "2024-01-05", "value": 1},  # Friday
+                {"label": "2024-01-06", "value": 2},  # Saturday
+                {"label": "2024-01-07", "value": 3},  # Sunday
+                {"label": "2024-01-08", "value": 4},  # Monday
+            ],
+        },
+        "table": {"columns": [], "rows": []},
+    }
+    block = {"type": "chart_view", "chartType": "line"}
+    next_resolved = apply_view_projection_to_resolved(resolved, block)
+    labels = [p["label"] for p in next_resolved["chart"]["points"]]
+    assert labels == ["2024-01-05", "2024-01-08"]
+    assert next_resolved["serverProjectionApplied"] is True
+
+
+def test_max_categories_collapses_to_outros():
+    rows = [{"cat": f"c{i}", "v": i} for i in range(10)]
+    resolved = {
+        "table": {
+            "columns": [{"key": "cat", "label": "Cat"}, {"key": "v", "label": "V"}],
+            "rows": rows,
+        }
+    }
+    block = {
+        "type": "chart_view",
+        "chartType": "pie",
+        "chartProjection": {
+            "categoryField": "cat",
+            "series": [{"field": "v", "aggregation": "sum", "label": "V"}],
+            "maxCategories": 3,
+        },
+    }
+    next_resolved = apply_view_projection_to_resolved(resolved, block)
+    labels = [p["label"] for p in next_resolved["chart"]["points"]]
+    assert "Outros" in labels
+    assert len(labels) == 3
+
+
+def test_projected_goal_baked():
+    resolved = {
+        "table": {
+            "columns": [{"key": "v", "label": "V"}, {"key": "meta", "label": "Meta"}],
+            "rows": [{"v": 10, "meta": 100}, {"v": 20, "meta": 100}],
+        }
+    }
+    block = {
+        "type": "chart_view",
+        "chartType": "bar",
+        "chartProjection": {
+            "categoryField": "v",
+            "series": [{"field": "v", "aggregation": "sum", "label": "V"}],
+            "goalField": "meta",
+            "goalAggregation": "first",
+        },
+    }
+    next_resolved = apply_view_projection_to_resolved(resolved, block)
+    assert next_resolved["chart"]["projectedGoal"] == 100.0

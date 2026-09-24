@@ -3,6 +3,9 @@ from __future__ import annotations
 from typing import Any
 
 from tv_app.application.services.comunicado_enrichment_service import ComunicadoEnrichmentService
+from tv_app.application.services.data.native_screen_display_service import (
+    apply_native_screen_display,
+)
 from tv_app.application.services.native_screen_cache_service import (
     build_native_data_cache_key,
     get_cached_native_data,
@@ -78,6 +81,7 @@ class NativeScreenDataService:
             playlist_defaults=playlist_defaults,
             filter_overrides=filter_overrides,
         )
+        result = apply_native_screen_display(result, screen_key)
         if screen_key != "custom_message" and not filter_overrides and not result.get("error"):
             cache_key = build_native_data_cache_key(
                 screen_key=screen_key,

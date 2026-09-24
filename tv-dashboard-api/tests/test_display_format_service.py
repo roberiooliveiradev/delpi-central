@@ -225,6 +225,26 @@ def test_apply_to_resolved_chart_labels_when_specs_exist():
     assert points[0]["displayLabel"] == "03/08/2026"
     assert points[0]["displayValue"] == "41,7%"
     assert points[1]["displayLabel"] == "Jan. de 26"
+    assert isinstance(out["chart"].get("yAxisTicks"), list)
+    assert len(out["chart"]["yAxisTicks"]) >= 2
+    assert "displayLabel" in out["chart"]["yAxisTicks"][0]
+
+
+def test_apply_to_resolved_chart_axis_ticks_without_value_spec():
+    resolved = {
+        "chart": {
+            "chartType": "bar",
+            "points": [
+                {"label": "a", "value": 10},
+                {"label": "b", "value": 90},
+            ],
+        }
+    }
+    out = DisplayFormatService.apply_to_resolved(resolved, {"type": "chart_view"})
+    ticks = out["chart"]["yAxisTicks"]
+    assert len(ticks) >= 2
+    assert all("displayLabel" in t and "value" in t for t in ticks)
+    assert out["serverDisplayApplied"] is True
 
 
 def test_sanitize_contradictory_text_binding_clears_data_refs():

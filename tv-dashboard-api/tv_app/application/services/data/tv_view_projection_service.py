@@ -267,7 +267,7 @@ def apply_view_projection_to_resolved(resolved: dict[str, Any], block: dict[str,
     if block_type == "chart_view":
         projection = block.get("chartProjection")
         chart_type = str(block.get("chartType") or "line").strip() or "line"
-        if isinstance(projection, dict) and rows:
+        if isinstance(projection, dict):
             series_cfg = projection.get("series") if isinstance(projection.get("series"), list) else []
             category = str(projection.get("categoryField") or "").strip()
             # Sem série explícita + categoria + pizza/rosca → contagem por grupo.
@@ -279,24 +279,132 @@ def apply_view_projection_to_resolved(resolved: dict[str, Any], block: dict[str,
                         "label": "Contagem",
                     }
                 ]
-            if series_cfg:
+            if rows and series_cfg:
                 series_out = _build_chart_series(
                     rows=rows,
                     category=category,
                     series_cfg=series_cfg,
                     chart_type=chart_type,
+                    max_categories=_resolve_max_categories(projection, chart_type),
                 )
                 if series_out:
-                    next_resolved["chart"] = {
+                    next_chart: dict[str, Any] = {
                         "points": series_out[0]["points"],
                         "chartType": chart_type,
                         "series": series_out,
                     }
+                    projected_goal = _resolve_projected_goal(rows, projection)
+                    if projected_goal is not None:
+                        next_chart["projectedGoal"] = projected_goal
+                    next_resolved["chart"] = next_chart
                     applied = True
+            elif series_cfg or category:
+                # Projection intent with empty rows must not keep source summary chart.
+                next_resolved["chart"] = {
+                    "points": [],
+                    "chartType": chart_type,
+                    "series": [],
+                }
+                applied = True
 
     if applied:
         next_resolved["serverProjectionApplied"] = True
+
+    # Visual weekend filter (presentation-only; never sent as query). Bake here so
+    # MFE does not re-project chart points when serverProjectionApplied.
+    before_chart = next_resolved.get("chart")
+    next_resolved = _apply_exclude_weekends_if_needed(next_resolved)
+    if next_resolved.get("chart") is not before_chart:
+        next_resolved["serverProjectionApplied"] = True
     return next_resolved
+
+
+def _truthy_param(value: Any) -> bool:
+    if value is True or value == 1:
+        return True
+    text = str(value or "").strip().lower()
+    return text in {"true", "1", "yes", "on", "sim"}
+
+
+def _is_daily_granularity(value: Any) -> bool:
+    raw = str(value or "").strip().lower()
+    return raw in {"day", "daily", "dia"}
+
+
+def _parse_category_point_date(label: Any) -> tuple[int, int, int] | None:
+    text = str(label or "").strip()
+    if not text:
+        return None
+    import re
+
+    iso = re.match(r"^(\d{4})-(\d{2})-(\d{2})", text)
+    if iso:
+        return int(iso.group(1)), int(iso.group(2)), int(iso.group(3))
+    br = re.match(r"^(\d{1,2})/(\d{1,2})/(\d{2}|\d{4})$", text)
+    if br:
+        day = int(br.group(1))
+        month = int(br.group(2))
+        year = int(br.group(3))
+        if year < 100:
+            year += 1900 if year >= 70 else 2000
+        return year, month, day
+    return None
+
+
+def _is_weekend_ymd(ymd: tuple[int, int, int]) -> bool:
+    from datetime import date
+
+    try:
+        return date(ymd[0], ymd[1], ymd[2]).weekday() >= 5
+    except ValueError:
+        return False
+
+
+def _filter_points_excluding_weekends(points: list[Any]) -> list[Any]:
+    out: list[Any] = []
+    for point in points:
+        if not isinstance(point, dict):
+            out.append(point)
+            continue
+        ymd = _parse_category_point_date(point.get("label"))
+        if ymd is None or not _is_weekend_ymd(ymd):
+            out.append(point)
+    return out
+
+
+def _apply_exclude_weekends_if_needed(resolved: dict[str, Any]) -> dict[str, Any]:
+    view = resolved.get("viewFilterParams")
+    if not isinstance(view, dict):
+        return resolved
+    if not _truthy_param(view.get("excludeWeekends")):
+        return resolved
+    gran = view.get("granularity")
+    if gran is not None and str(gran).strip() != "" and not _is_daily_granularity(gran):
+        return resolved
+    chart = resolved.get("chart")
+    if not isinstance(chart, dict):
+        return resolved
+    next_chart = dict(chart)
+    series = chart.get("series")
+    if isinstance(series, list) and series:
+        next_series = []
+        for item in series:
+            if not isinstance(item, dict):
+                next_series.append(item)
+                continue
+            points = item.get("points")
+            next_item = dict(item)
+            if isinstance(points, list):
+                next_item["points"] = _filter_points_excluding_weekends(points)
+            next_series.append(next_item)
+        next_chart["series"] = next_series
+        if next_series and isinstance(next_series[0], dict):
+            next_chart["points"] = list(next_series[0].get("points") or [])
+    else:
+        points = chart.get("points")
+        if isinstance(points, list):
+            next_chart["points"] = _filter_points_excluding_weekends(points)
+    return {**resolved, "chart": next_chart}
 
 
 # Tipos alinhados a chartDataPolicy.ts (rowMode: groupByCategory).
@@ -320,6 +428,70 @@ def _series_display_name(item: dict[str, Any], field: str) -> str:
     if proj_label.strip() and not _is_auto_baked_field_label(proj_label, field):
         return proj_label
     return field
+
+
+# Soft caps alinhados a chartDataPolicy.ts (maxCategories).
+_DEFAULT_MAX_CATEGORIES: dict[str, int] = {
+    "pie": 8,
+    "doughnut": 8,
+    "funnel": 12,
+    "bar": 24,
+    "stacked_bar": 24,
+    "horizontal_bar": 24,
+}
+
+
+def _resolve_max_categories(projection: dict[str, Any], chart_type: str) -> int | None:
+    raw = projection.get("maxCategories")
+    if raw is None:
+        return _DEFAULT_MAX_CATEGORIES.get(chart_type)
+    if raw is False or raw == 0 or raw == "0":
+        return None
+    try:
+        n = int(raw)
+    except (TypeError, ValueError):
+        return _DEFAULT_MAX_CATEGORIES.get(chart_type)
+    if n <= 0:
+        return None
+    return max(1, n)
+
+
+def _resolve_projected_goal(rows: list[dict[str, Any]], projection: dict[str, Any]) -> float | None:
+    field = str(projection.get("goalField") or "").strip()
+    if not field or not rows:
+        return None
+    agg = str(projection.get("goalAggregation") or "first")
+    values = _column_values(rows, field)
+    nums = [n for n in (_as_float(v) for v in values) if n is not None]
+    if not nums and values:
+        # first of raw when non-numeric — rare for goals
+        first = _as_float(values[0])
+        return first
+    if not nums:
+        return None
+    return aggregate_values(nums, agg if agg in _AGG_FNS else "first")
+
+
+def _collapse_categories_to_max(
+    groups: dict[str, list[dict[str, Any]]],
+    order: list[str],
+    max_categories: int | None,
+) -> list[str]:
+    if max_categories is None or len(order) <= max_categories:
+        return order
+    ranked = sorted(order, key=lambda key: len(groups.get(key) or []), reverse=True)
+    keep = set(ranked[: max_categories - 1])
+    others: list[dict[str, Any]] = []
+    next_order: list[str] = []
+    for key in order:
+        if key in keep:
+            next_order.append(key)
+            continue
+        others.extend(groups.pop(key, []))
+    if others:
+        groups["Outros"] = others
+        next_order.append("Outros")
+    return next_order
 
 
 def _aggregate_group_rows(
@@ -350,6 +522,7 @@ def _build_chart_series(
     category: str,
     series_cfg: list[Any],
     chart_type: str,
+    max_categories: int | None = None,
 ) -> list[dict[str, Any]]:
     count_fallback = chart_type in _COUNT_DEFAULT_CHART_TYPES
     default_agg = "count" if count_fallback else "first"
@@ -365,6 +538,26 @@ def _build_chart_series(
                 groups[key] = []
                 order.append(key)
             groups[key].append(row)
+
+        order = _collapse_categories_to_max(groups, order, max_categories)
+
+        # Funnel: sort by first series value descending (parity with viewProjection.ts).
+        if chart_type == "funnel" and series_cfg:
+            first = series_cfg[0] if isinstance(series_cfg[0], dict) else None
+            if isinstance(first, dict) and str(first.get("field") or "").strip():
+                field0 = str(first.get("field") or "").strip()
+                agg0 = str(first.get("aggregation") or default_agg)
+
+                def _funnel_key(key: str) -> float:
+                    val = _aggregate_group_rows(
+                        groups.get(key) or [],
+                        field0,
+                        agg0,
+                        count_fallback=count_fallback,
+                    )
+                    return float(val or 0)
+
+                order = sorted(order, key=_funnel_key, reverse=True)
 
         series_out: list[dict[str, Any]] = []
         for item in series_cfg:

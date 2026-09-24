@@ -219,12 +219,14 @@ export function resolveCanvasTableCellDisplay(
     const serverText = preferServerDisplayRunText(resolved, ref.field);
     const displayText =
       serverText ??
-      (anchor != null
-        ? formatTextProjectionValue(anchor, ref.format ?? "number", {
-            decimalPlaces: ref.decimalPlaces,
-            displayFormat: ref.displayFormat ?? normalized.displayFormat,
-          })
-        : normalized.text?.trim() || "—");
+      (resolved?.serverDisplayApplied === true || resolved?.presentationStale === true
+        ? normalized.text?.trim() || "—"
+        : anchor != null
+          ? formatTextProjectionValue(anchor, ref.format ?? "number", {
+              decimalPlaces: ref.decimalPlaces,
+              displayFormat: ref.displayFormat ?? normalized.displayFormat,
+            })
+          : normalized.text?.trim() || "—");
     const tone = resolveTextDataRefValue(
       resolved,
       { ...ref, aggregation: "first" },

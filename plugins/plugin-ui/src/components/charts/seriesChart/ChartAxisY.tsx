@@ -160,7 +160,8 @@ export function ChartAxisY({
                 dominantBaseline={baseline}
                 style={axisTypography}
               >
-                {formatChartTick(tick, valueFormat, decimalPlaces, displayValueFormat)}
+                {layout.tickDisplayLabels?.get(tick) ??
+                  formatChartTick(tick, valueFormat, decimalPlaces, displayValueFormat)}
               </text>
             );
           })
@@ -180,7 +181,8 @@ export function ChartAxisY({
                 dominantBaseline={baseline}
                 style={axisTypography}
               >
-                {formatChartTick(tick, valueFormat, decimalPlaces, displayValueFormat)}
+                {layout.tickDisplayLabels?.get(tick) ??
+                  formatChartTick(tick, valueFormat, decimalPlaces, displayValueFormat)}
               </text>
             );
           })

@@ -138,6 +138,10 @@ export function resolveTextDataRefValue(
     const tone = resolveDelpiKpiTone(numeric, ref.colorRules, "default");
     return { text: serverText, color: tone.valueColor };
   }
+  // FE-BE-002: enrich ran (or stale) — no client format authority on TV path.
+  if (resolved?.serverDisplayApplied === true || resolved?.presentationStale === true) {
+    return { text: fallback };
+  }
   const projected = resolveProjectedField(resolved, ref.field, ref.aggregation ?? "first");
   if (projected.kind === "empty") {
     return { text: fallback };

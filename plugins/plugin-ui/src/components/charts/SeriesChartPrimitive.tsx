@@ -316,6 +316,7 @@ export function SeriesChartPrimitive({
     points: usable,
     axisValues: axisValuesWithGoal,
     secondaryAxisValues,
+    yAxisTicks: config.yAxisTicks,
     showXAxisLabels:
       !centeredPlot && config.showAxes !== false && config.showXAxisLabels !== false,
     showYAxisLabels:

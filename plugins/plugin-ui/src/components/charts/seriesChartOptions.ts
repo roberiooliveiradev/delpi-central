@@ -169,6 +169,12 @@ export type SeriesChartOptions = {
    * Aplica a ticks, data labels e tabela.
    */
   decimalPlaces?: number | null;
+  /**
+   * Ticks semânticos do eixo Y materializados no backend (G24).
+   * Quando presentes, o layout usa `value` para geometria e `displayLabel` para paint —
+   * sem `formatChartTick` no cliente.
+   */
+  yAxisTicks?: Array<{ value: number; displayLabel: string }>;
   /** Rotação dos rótulos de categoria. Default `auto` (−38° quando necessário). */
   categoryLabelRotation?: SeriesChartCategoryLabelRotation;
   /** Como lidar com rótulos de categoria densos. Default `skip`. */

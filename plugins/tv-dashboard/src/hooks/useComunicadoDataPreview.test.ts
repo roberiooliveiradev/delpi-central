@@ -99,7 +99,9 @@ describe("useComunicadoDataPreview", () => {
       await Promise.resolve();
     });
     expect(mockedPreview).not.toHaveBeenCalled();
-    expect(result.current.isDataPreviewStale).toBe(false);
+    // G5: stale imediato — payload anterior não é autoridade até o refresh.
+    expect(result.current.isDataPreviewStale).toBe(true);
+    expect(result.current.resolvedByBlockId["metric-1"]?.presentationStale).toBe(true);
 
     await act(async () => {
       await new Promise((r) => setTimeout(r, 450));
@@ -149,8 +151,9 @@ describe("useComunicadoDataPreview", () => {
     await act(async () => {
       await new Promise((r) => setTimeout(r, 450));
     });
-    expect(mockedPreview).toHaveBeenCalledTimes(1);
+    expect(mockedPreview).toHaveBeenCalled();
     expect(result.current.resolvedByBlockId["metric-1"]?.kpi?.value).toBe(99);
+    expect(result.current.isDataPreviewStale).toBe(false);
 
     mockedPreview.mockClear();
     mockedPreview.mockResolvedValue({

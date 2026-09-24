@@ -905,16 +905,20 @@ function applyChartProjection(
  * Aplica projeção do visual sobre o resolved compartilhado da fonte.
  * Sem projeção, preserva `applyMetricSelectionToResolved` (legado).
  *
- * Encoding de gráfico (groupBy / chartType) e KPI é sempre canônico no cliente via
- * `chartDataPolicy` / `resolveKpiMetricsWithProjection` quando há projeção no bloco —
- * mesmo com `serverProjectionApplied`. O bake do enrichment pode ser rowwise/legado e não
- * substitui o visual do editor (ver `tv-dashboard-presentation-parity.mdc`).
+ * Quando `serverProjectionApplied` (enrich/bake), a autoridade estrutural é o
+ * backend — o MFE não re-agrega KPI/chart/table (FE-BE-002 / G4).
+ * Pré-enrich (draft local sem flag) ainda aplica encoding do bloco para authoring.
  */
 export function applyViewProjection(
   resolved: ComunicadoDataResolved | undefined,
   selection: ViewProjectionSelection,
 ): ComunicadoDataResolved | undefined {
   if (!resolved) return resolved;
+
+  // G4: bake estrutural do enrich é autoridade. Não corrigir bake “errado” no cliente.
+  if (resolved.serverProjectionApplied === true) {
+    return resolved;
+  }
 
   const fallback: MetricSelection = {
     selectedValueFields: selection.selectedValueFields,
@@ -923,8 +927,6 @@ export function applyViewProjection(
 
   let next = { ...resolved };
 
-  // KPI: sempre reaplicar encoding do bloco (como chart). Não confiar no bake
-  // `serverProjectionApplied` — present e editor usam o mesmo caminho cliente.
   if (selection.kpiProjection?.metrics?.length) {
     const metrics = resolveKpiMetricsWithProjection(next, selection.kpiProjection, fallback);
     const primary = metrics[0];
@@ -949,9 +951,6 @@ export function applyViewProjection(
     next = applyTableProjection(next, selection.tableProjection);
   }
 
-  // Chart: sempre reaplicar a partir das rows + chartType quando a projeção existe.
-  // Inclusive com rows vazias e bake `serverProjectionApplied` — encoding do editor
-  // vence o summary (buckets_count) do servidor.
   if (
     selection.chartProjection?.series?.length ||
     selection.chartProjection?.categoryField ||

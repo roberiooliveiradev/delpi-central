@@ -1418,8 +1418,6 @@ class DisplayFormatService:
         has_category_spec = bool(
             options.get("displayCategoryFormat") or options.get("categoryLabelFormat")
         )
-        if not has_value_spec and not has_category_spec:
-            return
 
         value_spec = (
             cls.resolve_spec(
@@ -1441,37 +1439,128 @@ class DisplayFormatService:
             else None
         )
 
-        def _decorate_points(points: Any) -> list[Any]:
-            if not isinstance(points, list):
-                return points
-            out_points: list[Any] = []
-            for point in points:
-                if not isinstance(point, dict):
-                    out_points.append(point)
-                    continue
-                next_point = dict(point)
-                if category_spec is not None:
-                    label = point.get("label")
-                    if label is not None and label != "":
-                        next_point["displayLabel"] = cls.format_value(label, category_spec)
-                if value_spec is not None and "value" in point:
-                    next_point["displayValue"] = cls.format_value(point.get("value"), value_spec)
-                out_points.append(next_point)
-            return out_points
-
         next_chart = dict(chart)
-        if isinstance(chart.get("points"), list):
-            next_chart["points"] = _decorate_points(chart.get("points"))
-        series = chart.get("series")
-        if isinstance(series, list):
-            next_series: list[Any] = []
-            for entry in series:
-                if not isinstance(entry, dict):
-                    next_series.append(entry)
-                    continue
-                next_entry = dict(entry)
-                if isinstance(entry.get("points"), list):
-                    next_entry["points"] = _decorate_points(entry.get("points"))
-                next_series.append(next_entry)
-            next_chart["series"] = next_series
+        if has_value_spec or has_category_spec:
+
+            def _decorate_points(points: Any) -> list[Any]:
+                if not isinstance(points, list):
+                    return points
+                out_points: list[Any] = []
+                for point in points:
+                    if not isinstance(point, dict):
+                        out_points.append(point)
+                        continue
+                    next_point = dict(point)
+                    if category_spec is not None:
+                        label = point.get("label")
+                        if label is not None and label != "":
+                            next_point["displayLabel"] = cls.format_value(label, category_spec)
+                    if value_spec is not None and "value" in point:
+                        next_point["displayValue"] = cls.format_value(
+                            point.get("value"), value_spec
+                        )
+                    out_points.append(next_point)
+                return out_points
+
+            if isinstance(chart.get("points"), list):
+                next_chart["points"] = _decorate_points(chart.get("points"))
+            series = chart.get("series")
+            if isinstance(series, list):
+                next_series: list[Any] = []
+                for entry in series:
+                    if not isinstance(entry, dict):
+                        next_series.append(entry)
+                        continue
+                    next_entry = dict(entry)
+                    if isinstance(entry.get("points"), list):
+                        next_entry["points"] = _decorate_points(entry.get("points"))
+                    next_series.append(next_entry)
+                next_chart["series"] = next_series
+
+        # G24 — semantic axis ticks always (values + display labels). Geometry stays in MFE.
+        cls._apply_chart_axis_ticks(next_chart, value_spec)
         resolved["chart"] = next_chart
+
+    @classmethod
+    def _resolve_chart_tick_values(cls, data_min: float, data_max: float, count: int = 5) -> list[float]:
+        """Port of plugin-ui resolveSeriesChartTicks — semantic domain only."""
+        import math
+
+        min_v = float(data_min)
+        max_v = float(data_max)
+        if not math.isfinite(min_v) or not math.isfinite(max_v):
+            return [0.0, 1.0]
+        if min_v == max_v:
+            pad = max(abs(min_v) * 0.1, 1.0)
+            min_v -= pad
+            max_v += pad
+        span = max_v - min_v
+        raw_step = span / max(count - 1, 1)
+        magnitude = 10 ** math.floor(math.log10(raw_step or 1))
+        step = math.ceil(raw_step / magnitude) * magnitude or 1.0
+        nice_min = math.floor(min_v / step) * step
+        nice_max = math.ceil(max_v / step) * step
+        headroom_ratio = (nice_max - max_v) / step if step > 0 else 0.0
+        if nice_max <= max_v or headroom_ratio < 0.5:
+            nice_max = round(nice_max + step, 6)
+        ticks: list[float] = []
+        value = nice_min
+        while value <= nice_max + step * 0.001:
+            ticks.append(round(value, 6))
+            if len(ticks) >= count + 4:
+                break
+            value += step
+        if len(ticks) < 2:
+            return [min_v, max_v]
+        if ticks[0] > min_v:
+            ticks.insert(0, round(ticks[0] - step, 6))
+        if ticks[-1] < max_v:
+            ticks.append(round(nice_max, 6))
+        return ticks
+
+    @classmethod
+    def _apply_chart_axis_ticks(
+        cls,
+        chart: dict[str, Any],
+        value_spec: dict[str, Any] | None,
+    ) -> None:
+        values: list[float] = []
+        for point in chart.get("points") or []:
+            if isinstance(point, dict):
+                n = cls._as_finite_number(point.get("value"))
+                if n is not None:
+                    values.append(n)
+        for entry in chart.get("series") or []:
+            if not isinstance(entry, dict):
+                continue
+            for point in entry.get("points") or []:
+                if isinstance(point, dict):
+                    n = cls._as_finite_number(point.get("value"))
+                    if n is not None:
+                        values.append(n)
+        if not values:
+            return
+        data_min = min(values)
+        data_max = max(values)
+        # Match plugin-ui resolveSeriesChartValueDomain: pad to 0 when all positive/negative.
+        if data_min >= 0:
+            domain_min, domain_max = 0.0, data_max
+        elif data_max <= 0:
+            domain_min, domain_max = data_min, 0.0
+        else:
+            domain_min, domain_max = data_min, data_max
+        tick_values = cls._resolve_chart_tick_values(domain_min, domain_max)
+        spec = value_spec or {"category": "number", "decimalPlaces": 2}
+        chart["yAxisTicks"] = [
+            {"value": tick, "displayLabel": cls.format_value(tick, spec)} for tick in tick_values
+        ]
+
+    @staticmethod
+    def _as_finite_number(value: Any) -> float | None:
+        try:
+            n = float(value)
+        except (TypeError, ValueError):
+            return None
+        if n != n or n in (float("inf"), float("-inf")):  # NaN / inf
+            return None
+        return n

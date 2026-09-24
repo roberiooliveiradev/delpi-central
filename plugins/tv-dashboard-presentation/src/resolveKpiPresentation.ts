@@ -151,13 +151,15 @@ export function resolveKpiViewPresentation(
   const valueText =
     typeof serverDisplayValue === "string"
       ? serverDisplayValue
-      : formatKpiValue(
-          rawValue,
-          valueFormat,
-          options.unit,
-          decimalPlaces,
-          metricOverrides?.displayFormat ?? options.displayValueFormat,
-        );
+      : resolved?.serverDisplayApplied === true || resolved?.presentationStale === true
+        ? "—"
+        : formatKpiValue(
+            rawValue,
+            valueFormat,
+            options.unit,
+            decimalPlaces,
+            metricOverrides?.displayFormat ?? options.displayValueFormat,
+          );
   const hint = options.subtitle?.trim() || undefined;
   const sparklinePoints = sparklinePointsFromResolved(resolved);
   const comparison = resolveComparisonPresentation({
