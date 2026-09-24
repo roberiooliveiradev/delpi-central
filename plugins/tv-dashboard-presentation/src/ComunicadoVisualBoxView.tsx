@@ -44,9 +44,8 @@ function DefaultTextContent({
       block={block}
       fontScale={fontScale}
       className={className}
-      baseStyle={
-        block.type === "heading" || block.type === "text" ? innerStyle : undefined
-      }
+      /* Shape e texto: mesma tipografia (lineHeight/letterSpacing/effects) — editor ≡ TV. */
+      baseStyle={innerStyle}
     />
   );
 }

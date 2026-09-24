@@ -24,8 +24,20 @@ describe("visual box typography CSS contract", () => {
     expect(typography?.[1] ?? "").not.toMatch(/flex:\s*1\s*;/);
     expect(typography?.[1] ?? "").toMatch(/overflow:\s*visible/);
     expect(css).toMatch(/\.delpi-ui-comunicado__shape-text\s*\{[^}]*pointer-events:\s*none/s);
+    expect(css).toMatch(/\.delpi-ui-comunicado__shape-text\s*\{[^}]*overflow:\s*hidden/s);
+    expect(css).toMatch(/\.delpi-ui-comunicado__shape-text\s*\{[^}]*min-width:\s*0/s);
     expect(css).not.toMatch(
       /\.delpi-ui-comunicado__shape-text\s*\{[^}]*justify-content:\s*center/s,
+    );
+    /* Texto/heading clipam; forma (sem --text) libera overflow só para sombra. */
+    expect(css).toMatch(
+      /\.delpi-ui-comunicado__block\.delpi-ui-comunicado__visual-box--shape:not\(\s*\n?\s*\.delpi-ui-comunicado__visual-box--text/,
+    );
+    expect(css).toMatch(
+      /\.delpi-ui-comunicado__block--heading\.delpi-ui-comunicado__visual-box--text[\s\S]*?overflow:\s*hidden/,
+    );
+    expect(css).toMatch(
+      /\.delpi-ui-comunicado__visual-box-content\s*>\s*span\s*\{[^}]*display:\s*block/s,
     );
   });
 

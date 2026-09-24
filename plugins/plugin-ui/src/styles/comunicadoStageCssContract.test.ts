@@ -32,6 +32,25 @@ describe("comunicado-stage.css contract (plugin-ui)", () => {
     expect(baseBlock?.[1] ?? "").not.toMatch(/padding:\s*0\.4em/);
     expect(css).toMatch(/flex:\s*0\s+0\s+auto/);
     expect(css).toMatch(/\.delpi-ui-comunicado__shape-text\s*\{[^}]*pointer-events:\s*none/s);
+    expect(css).toMatch(/\.delpi-ui-comunicado__shape-text\s*\{[^}]*overflow:\s*hidden/s);
+  });
+
+  it("overflow: shape libera sombra; texto/heading clipam; shell de texto contém spill", () => {
+    expect(css).toMatch(
+      /\.delpi-ui-comunicado__block\.delpi-ui-comunicado__visual-box--shape:not\(\s*\n?\s*\.delpi-ui-comunicado__visual-box--text/,
+    );
+    expect(css).not.toMatch(
+      /^\s*\.delpi-ui-comunicado__block\.delpi-ui-comunicado__visual-box--shape\s*\{[^}]*overflow:\s*visible/m,
+    );
+    expect(css).toMatch(
+      /\.delpi-ui-comunicado__block--text\.delpi-ui-comunicado__visual-box--text[\s\S]*?overflow:\s*hidden/,
+    );
+    expect(css).toMatch(
+      /\.delpi-ui-comunicado__visual-box-content\s*>\s*span\s*\{[^}]*display:\s*block/s,
+    );
+    expect(css).toMatch(
+      /\.delpi-ui-comunicado__visual-box-content\s*>\s*span[\s\S]*?min-width:\s*0/,
+    );
   });
 
   it("formas SVG de área usam non-scaling-stroke (paridade com border CSS do retângulo)", () => {

@@ -197,9 +197,22 @@
   background: transparent;
 }
 
-/* Forma: sombra no fill (com border-radius); overflow no wrapper cortaria a sombra. */
-.delpi-ui-comunicado__block.delpi-ui-comunicado__visual-box--shape {
+/*
+ * Forma (não caixa de texto): sombra no fill; overflow no wrapper cortaria a sombra.
+ * Caixas heading/text também levam `visual-box--shape` (texto = forma sem fundo) —
+ * NÃO liberar overflow nelas, senão tipografia longa invade frames vizinhos
+ * (META/FATURADO/%) e a prévia/TV (CSS zoom) diverge do editor (transform).
+ */
+.delpi-ui-comunicado__block.delpi-ui-comunicado__visual-box--shape:not(
+    .delpi-ui-comunicado__visual-box--text
+  ) {
   overflow: visible;
+}
+
+/* Reforço: tipografia de heading/text permanece clipada no frame (pós-regra da forma). */
+.delpi-ui-comunicado__block--heading.delpi-ui-comunicado__visual-box--text,
+.delpi-ui-comunicado__block--text.delpi-ui-comunicado__visual-box--text {
+  overflow: hidden;
 }
 
 .delpi-ui-comunicado__block--canvas_table,
@@ -467,12 +480,20 @@
   margin: 0;
   line-height: inherit;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   /* flex:1 engolia a altura e anulava verticalAlign (texto colado no topo / corte). */
   flex: 0 0 auto;
   text-align: inherit;
   white-space: pre-wrap;
+  /* Glifos podem sair 1px do box; o clip fica no frame/shell, não no glifo. */
   overflow: visible;
   box-sizing: border-box;
+}
+
+/* Shape usa textTag=span (inline); no flex, min-width:auto impede encolher → spill. */
+.delpi-ui-comunicado__visual-box-content > span {
+  display: block;
 }
 
 .delpi-ui-comunicado__rich-text {
@@ -717,11 +738,16 @@
  * Shell do texto na caixa visual.
  * Padding / justify / align vêm de `resolveVisualBoxContentLayoutStyle` (inline) —
  * não hardcoded aqui, senão a TV diverge do verticalAlign do editor.
+ * Overflow hidden AQUI (não no bloco da forma): contém tipografia sem cortar
+ * drop-shadow do fill SVG irmão.
  */
 .delpi-ui-comunicado__shape-text {
   position: absolute;
   inset: 0;
   pointer-events: none;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .delpi-ui-comunicado__icon-wrap {

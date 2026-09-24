@@ -55,6 +55,30 @@ describe("ComunicadoTextSurface — formatação parcial em forma", () => {
     expect(boldSpan).toBeTruthy();
   });
 
+  it("shape recebe tipografia do style (lineHeight) — paridade com heading/text", () => {
+    const block: ComunicadoShapeBlock = {
+      ...metaPpmShape(),
+      style: {
+        ...metaPpmShape().style,
+        lineHeight: 1.15,
+        letterSpacing: 0.5,
+      },
+    };
+    const { container } = render(<ComunicadoVisualBoxView block={block} />);
+    const textRoot = container.querySelector(
+      ".delpi-ui-comunicado__shape-text, .tdp-comunicado__shape-text",
+    );
+    expect(textRoot).toBeTruthy();
+    const painted = container.querySelector(
+      ".delpi-ui-comunicado__rich-text, .tdp-comunicado__rich-text, span",
+    ) as HTMLElement | null;
+    expect(painted).toBeTruthy();
+    /* baseStyle do TextSurface aplica lineHeight no nó tipográfico. */
+    expect(painted!.style.lineHeight === "1.15" || painted!.style.lineHeight === "1.15em").toBe(
+      true,
+    );
+  });
+
   it("binding sem rich runs: pinta valor projetado, não content estático", () => {
     const block: ComunicadoTextBlock = {
       id: "idd-chip",
