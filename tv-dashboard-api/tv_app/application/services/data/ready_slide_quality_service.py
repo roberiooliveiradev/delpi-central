@@ -71,15 +71,44 @@ class ReadySlideQualityService:
         return out
 
     @classmethod
+    def merged_params_for_readiness(
+        cls,
+        params: Mapping[str, Any] | None,
+        *,
+        playlist_defaults: Mapping[str, Any] | None = None,
+        slide_filters: Mapping[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Mesma herança do enrichment runtime (programação → tela → fonte)."""
+        return merge_data_params(
+            playlist_defaults=(
+                dict(playlist_defaults)
+                if isinstance(playlist_defaults, Mapping)
+                else None
+            ),
+            slide_filters=(
+                dict(slide_filters) if isinstance(slide_filters, Mapping) else None
+            ),
+            block_params=dict(params or {}),
+        )
+
+    @classmethod
     def assert_data_source_params_ready(
         cls,
         route: Mapping[str, Any] | None,
         params: Mapping[str, Any] | None,
+        *,
+        playlist_defaults: Mapping[str, Any] | None = None,
+        slide_filters: Mapping[str, Any] | None = None,
     ) -> None:
-        """Raise ValueError se rota date_range fechada sem período."""
+        """Raise ValueError se rota date_range fechada sem período (após herança)."""
         if not cls.is_closed_date_range_route(route):
             return
-        assert_closed_date_range_has_period(route, dict(params or {}))
+        merged = cls.merged_params_for_readiness(
+            params,
+            playlist_defaults=playlist_defaults,
+            slide_filters=slide_filters,
+        )
+        assert_closed_date_range_has_period(route, merged)
 
     @classmethod
     def projection_is_empty(cls, block: Mapping[str, Any]) -> bool:
@@ -146,13 +175,13 @@ class ReadySlideQualityService:
                 if op_id:
                     route = catalog.get_route(op_id) if hasattr(catalog, "get_route") else None
                     params = binding.get("params") if isinstance(binding.get("params"), dict) else {}
-                    merged = merge_data_params(
-                        playlist_defaults=defaults,
-                        slide_filters=filters if isinstance(filters, dict) else None,
-                        block_params=params,
-                    )
                     try:
-                        cls.assert_data_source_params_ready(route, merged)
+                        cls.assert_data_source_params_ready(
+                            route,
+                            params,
+                            playlist_defaults=defaults,
+                            slide_filters=filters if isinstance(filters, dict) else None,
+                        )
                     except ValueError:
                         issues.append(f"params.incomplete:{op_id}")
             if str(block.get("type") or "") in _DATA_VISUAL_TYPES:

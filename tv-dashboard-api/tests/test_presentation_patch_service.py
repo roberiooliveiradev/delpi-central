@@ -278,6 +278,83 @@ def test_patch_target_validation_uses_operation_contract(monkeypatch):
         )
 
 
+def test_preview_upsert_date_range_inherits_playlist_period(monkeypatch):
+    """Regression: playlist dateRangePreset + params {} must not INVALID_CHANGE."""
+    repo = _FakeRepo()
+    base = repo.get_by_id
+
+    def _playlist(playlist_id):
+        row = base(playlist_id)
+        row["dataDefaults"] = {"branch": "01", "dateRangePreset": "this_month"}
+        return row
+
+    repo.get_by_id = _playlist  # type: ignore[method-assign]
+    if monkeypatch is not None:
+
+        def _sanitize(cfg, catalog=None):
+            cleaned = dict(cfg or {})
+            blocks = cleaned.get("blocks")
+            if isinstance(blocks, list):
+                next_blocks = []
+                for block in blocks:
+                    if not isinstance(block, dict):
+                        continue
+                    item = dict(block)
+                    item.pop("resolved", None)
+                    next_blocks.append(item)
+                cleaned["blocks"] = next_blocks
+            return cleaned
+
+        monkeypatch.setattr(
+            "tv_app.application.services.data.presentation_mutation.patch_service.sanitize_and_hydrate_comunicado_config",
+            _sanitize,
+        )
+        monkeypatch.setattr(
+            "tv_app.application.services.data.presentation_mutation.patch_service.validate_comunicado_native_config",
+            lambda cfg, user=None, catalog=None: None,
+        )
+    svc = PresentationPatchService(
+        catalog=_FakeCatalog(
+            {
+                "op.billing": {
+                    "label": "Billing",
+                    "operationId": "op.billing",
+                    "paramStrategy": "date_range",
+                    "openEndedDateRange": False,
+                    "paramSchema": {
+                        "start_date": {"optional": True, "label": "Data início"},
+                        "end_date": {"optional": True, "label": "Data fim"},
+                        "dateRangePreset": {"optional": True, "label": "Período"},
+                    },
+                }
+            }
+        ),
+        repo=repo,
+        resolution=_FakeResolution(),
+    )
+    result = svc.preview(
+        {
+            "target": {"playlistId": PLAYLIST_ID, "slideId": SLIDE_ID},
+            "ops": [
+                {
+                    "op": "upsert_data_source",
+                    "blockId": "src-billing",
+                    "operationId": "op.billing",
+                    "params": {},
+                    "label": "Carteira",
+                }
+            ],
+        },
+        user={"sub": "u1"},
+        authorization="Bearer x",
+    )
+    assert result["ok"] is True
+    src = next(b for b in result["nativeConfig"]["blocks"] if b["id"] == "src-billing")
+    # Period stays on playlist layer — not duplicated onto the source.
+    binding_params = (src.get("dataBinding") or {}).get("params") or {}
+    assert "dateRangePreset" not in binding_params
+
+
 def test_preview_upsert_data_source_and_bind_without_persist(monkeypatch):
     repo = _FakeRepo()
     svc = _service(repo, monkeypatch)

@@ -1031,8 +1031,16 @@ class PresentationPatchService:
         params = ReadySlideQualityService.enrich_data_source_params(
             route, params, playlist_defaults=playlist_defaults
         )
+        slide_filters = (
+            cfg.get("dataFilters") if isinstance(cfg.get("dataFilters"), dict) else None
+        )
         try:
-            ReadySlideQualityService.assert_data_source_params_ready(route, params)
+            ReadySlideQualityService.assert_data_source_params_ready(
+                route,
+                params,
+                playlist_defaults=playlist_defaults,
+                slide_filters=slide_filters,
+            )
         except ValueError as exc:
             raise PresentationPatchError(str(exc)) from exc
         label = op.get("label") or route.get("label") or operation_id

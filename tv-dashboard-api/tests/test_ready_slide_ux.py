@@ -93,6 +93,48 @@ def test_e2_enrich_date_range_preset():
     ReadySlideQualityService.assert_data_source_params_ready(route, enriched)
 
 
+def test_e2_assert_inherits_period_from_playlist_defaults():
+    """Layering: playlist already has preset → source params {} still ready."""
+    route = {
+        "paramStrategy": "date_range",
+        "openEndedDateRange": False,
+        "paramSchema": {
+            "start_date": {"optional": True, "label": "Data início"},
+            "end_date": {"optional": True, "label": "Data fim"},
+            "dateRangePreset": {"optional": True, "label": "Período"},
+        },
+    }
+    enriched = ReadySlideQualityService.enrich_data_source_params(
+        route,
+        {},
+        playlist_defaults={"dateRangePreset": "this_week", "branch": "01"},
+    )
+    # Do not duplicate period onto the source when playlist owns it.
+    assert "dateRangePreset" not in enriched
+    ReadySlideQualityService.assert_data_source_params_ready(
+        route,
+        enriched,
+        playlist_defaults={"dateRangePreset": "this_week", "branch": "01"},
+    )
+
+
+def test_e2_assert_inherits_period_from_slide_filters():
+    route = {
+        "paramStrategy": "date_range",
+        "openEndedDateRange": False,
+        "paramSchema": {
+            "start_date": {"optional": True},
+            "end_date": {"optional": True},
+            "dateRangePreset": {"optional": True},
+        },
+    }
+    ReadySlideQualityService.assert_data_source_params_ready(
+        route,
+        {},
+        slide_filters={"dateRangePreset": "this_month"},
+    )
+
+
 def test_e2_negative_empty_params_still_fails_without_enrich():
     route = {
         "paramStrategy": "date_range",
@@ -105,6 +147,29 @@ def test_e2_negative_empty_params_still_fails_without_enrich():
     }
     try:
         ReadySlideQualityService.assert_data_source_params_ready(route, {})
+        raised = False
+    except ValueError:
+        raised = True
+    assert raised
+
+
+def test_e2_negative_empty_layers_still_fail():
+    route = {
+        "paramStrategy": "date_range",
+        "openEndedDateRange": False,
+        "paramSchema": {
+            "start_date": {"optional": True},
+            "end_date": {"optional": True},
+            "dateRangePreset": {"optional": True},
+        },
+    }
+    try:
+        ReadySlideQualityService.assert_data_source_params_ready(
+            route,
+            {},
+            playlist_defaults={"branch": "01"},
+            slide_filters={},
+        )
         raised = False
     except ValueError:
         raised = True
