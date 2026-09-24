@@ -1,18 +1,30 @@
 {
   "taskId": "DAVI-WAVE005-STOCK-BALANCES-RETRIEVAL-CORRECTION-001",
-  "sourceHead": "PENDING_COMMIT",
+  "sourceHead": "4bdf7ff088333eeb7af681d9c19ef16d24d4d5d4",
   "allowlistVersionBefore": 12,
   "allowlistVersionAfter": 13,
   "eligibleBefore": 53,
   "eligibleAfter": 53,
   "problemQuery": "resumo dos saldos de estoque por depósito",
   "rankingBefore": [
-    {"action_id": "get_supplies_stock_balances_items", "score": 0.93},
-    {"action_id": "get_product_stock", "score": 0.904},
-    {"action_id": "get_supplies_stock_balances_summary", "score": 0.84}
+    {
+      "action_id": "get_supplies_stock_balances_items",
+      "score": 0.93
+    },
+    {
+      "action_id": "get_product_stock",
+      "score": 0.904
+    },
+    {
+      "action_id": "get_supplies_stock_balances_summary",
+      "score": 0.84
+    }
   ],
   "rankingAfter": [
-    {"action_id": "get_supplies_stock_balances_summary", "score": 1.0}
+    {
+      "action_id": "get_supplies_stock_balances_summary",
+      "score": 1.0
+    }
   ],
   "aliasesBefore": {
     "get_supplies_stock_balances_summary": [
