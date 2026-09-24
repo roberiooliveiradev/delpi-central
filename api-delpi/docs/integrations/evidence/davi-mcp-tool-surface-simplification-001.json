@@ -2,7 +2,7 @@
   "taskId": "DAVI-MCP-TOOL-SURFACE-SIMPLIFICATION-001",
   "baseHead": "a732beb14bbfc134dba1aecfc460a39b8b6837a7",
   "bootstrapHead": "854338bba835463435dd167180de5aafcffa6b3b",
-  "sourceHead": null,
+  "sourceHead": "3e024a24c5f8e8a06c779421a427eaa95ee678bd",
   "mcpToolsBefore": 3,
   "mcpToolsAfter": 2,
   "mcpToolNamesBefore": [

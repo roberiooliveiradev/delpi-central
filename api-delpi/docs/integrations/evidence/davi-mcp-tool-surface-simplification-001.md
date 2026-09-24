@@ -2,6 +2,7 @@
 
 **TASK_ID:** `DAVI-MCP-TOOL-SURFACE-SIMPLIFICATION-001`  
 **STATUS (source):** PASS  
+**SOURCE HEAD:**   
 **STATUS (deploy/live):** filled after push  
 
 ## Decision
