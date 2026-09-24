@@ -23,6 +23,7 @@ def test_davi_branding_constants() -> None:
     assert "DAVI" in DAVI_MCP_INSTRUCTIONS
     assert "search_products" in DAVI_MCP_INSTRUCTIONS
     assert "discover_delpi_information" in DAVI_MCP_INSTRUCTIONS
+    assert "agent_directives" in DAVI_MCP_INSTRUCTIONS
 
 
 def test_technical_ids_unchanged_by_davi_branding() -> None:

@@ -152,6 +152,9 @@ def test_gpt_get_catalog_lists_v1_ops_without_raw_rbac(mock_can, mock_user) -> N
     assert "api-delpi.access" not in payload
     assert "dashboard-engineering.view" not in payload
     assert "dashboard-lmps.view" not in payload
+    directives = body["data"]["capability_surface"]["agent_directives"]
+    assert directives["read_only"] is True
+    assert directives["version"]
 
 
 @patch("delpi_auth.authorization.resolve_user_context")

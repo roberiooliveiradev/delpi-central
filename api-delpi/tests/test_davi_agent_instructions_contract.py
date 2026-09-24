@@ -33,6 +33,8 @@ def test_canonical_agent_instructions_contain_stable_protocol() -> None:
         "somente leitura",
         "backend canônico",
         "candidate_token",
+        "agent_directives",
+        "capability_surface",
     ):
         assert required in block, required
 
@@ -59,6 +61,26 @@ def test_canonical_agent_instructions_omit_dynamic_inventory() -> None:
     assert "nunca obtenha estoque" not in block
     assert "nunca obtenha fornecedor" not in block
     assert "capability disponível nesta versão" not in block
+
+
+def test_canonical_agent_instructions_omit_mutable_intelligence_keys() -> None:
+    """Leak gate: mutable JSON sections must not be pasted into Agent Instructions."""
+    block = _canonical_block().lower()
+    for forbidden in (
+        "try_tool_before_claiming_unavailable",
+        "discover_then_execute",
+        "authoritative_tool_data_only",
+        "quick_lookup",
+        "multi_source_reconcile",
+        "explain_gap",
+        "product_master_search",
+        "stock_and_supply",
+        "structure_bom",
+        "write_request",
+        "persona_bridge",
+        "surface_parity",
+    ):
+        assert forbidden not in block, forbidden
 
 
 def test_doc_marks_historical_preview_and_pending_studio_sync() -> None:

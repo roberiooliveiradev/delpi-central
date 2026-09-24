@@ -21,6 +21,9 @@ from app.application.external_capabilities.dynamic_information.content_loader im
 from app.application.external_capabilities.dynamic_information.retrieval import (
     retrieve_eligible_actions,
 )
+from app.application.external_capabilities.davi_agent_intelligence_service import (
+    DaviAgentIntelligenceService,
+)
 
 
 def discover_delpi_information(
@@ -84,4 +87,5 @@ def discover_delpi_information(
         "candidate_count": len(candidates),
         "eligible_action_count": sum(1 for a in actions if a.executable),
         "candidates": candidates,
+        "capability_surface": DaviAgentIntelligenceService.capability_surface(),
     }

@@ -251,6 +251,8 @@ DAVI_V1_EXTERNAL_CAPABILITY_LAYERING = RESOLVED
 
 `/gpt-actions/v1` and `application/external_capabilities/catalog_service.py` (operationId-based “capabilities”) remain **`LEGACY_TRANSITIONAL`**. That operationId catalog is **not** the DAVI semantic capability authority.
 
+Live operational READ posture (`capability_surface.agent_directives`) is projected from `app/content/davi_agent_intelligence.json` onto **both** `gpt_get_catalog` and MCP `discover_delpi_information` via `DaviAgentIntelligenceService`. Agent Studio / MCP pastes stay stable and must obey those directives; do not expand GPT Actions ops to chase parity.
+
 ## MCP resource — exact canonical value
 
 ```text

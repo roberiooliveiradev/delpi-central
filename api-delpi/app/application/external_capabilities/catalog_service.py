@@ -9,6 +9,9 @@ from app.application.external_capabilities.constants import (
     PRODUCT_SEARCH_MAX_PAGE_SIZE,
     PRODUCT_SEARCH_RESPONSE_FIELDS,
 )
+from app.application.external_capabilities.davi_agent_intelligence_service import (
+    DaviAgentIntelligenceService,
+)
 from app.application.external_capabilities.product_search_auth import (
     user_can_search_products,
 )
@@ -55,11 +58,13 @@ def build_gpt_catalog() -> dict[str, Any]:
         "allowedCapabilities": [
             item["operationId"] for item in capabilities if item.get("available")
         ],
+        "capability_surface": DaviAgentIntelligenceService.capability_surface(),
         "limitations": [
             "V1 exposes product search projection only.",
             "Stock, BOM, production, pricing, finance and sales are out of scope.",
             "New DTO fields remain blocked until explicit organizational approval.",
             "Do not paginate autonomously without bound; max page_size is 50.",
             "Strategic external target is OpenAI Plugin + MCP; this surface is transitional.",
+            "Obey capability_surface.agent_directives for live READ operational posture.",
         ],
     }
