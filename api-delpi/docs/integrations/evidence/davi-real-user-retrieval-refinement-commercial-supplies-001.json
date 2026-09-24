@@ -2,7 +2,7 @@
   "taskId": "DAVI-REAL-USER-RETRIEVAL-REFINEMENT-COMMERCIAL-SUPPLIES-001",
   "bootstrapHead": "398196b0fdb2a746a202625a4d7740c09e915690",
   "baseHead": "eb5f961f01c14c13fe7780cc71b4a3426557aa8a",
-  "sourceHead": null,
+  "sourceHead": "9b3076216aac5df3674f3300e458a68ca5bdb63a",
   "allowlistVersionBefore": 13,
   "allowlistVersionAfter": 14,
   "eligibleBefore": 53,

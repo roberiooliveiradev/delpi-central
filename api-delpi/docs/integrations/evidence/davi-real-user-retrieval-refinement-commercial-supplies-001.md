@@ -2,7 +2,8 @@
 
 **TASK_ID:** `DAVI-REAL-USER-RETRIEVAL-REFINEMENT-COMMERCIAL-SUPPLIES-001`  
 **STATUS (source):** PASS  
-**STATUS (live/deploy):** `PENDING_EXTERNAL_ACTION` / `TEST_NOT_RUN` (filled after push + prod recreate)
+**STATUS (live/deploy):** `PENDING_EXTERNAL_ACTION` / `TEST_NOT_RUN` (filled after push + prod recreate)  
+**SOURCE HEAD:** `9b3076216aac5df3674f3300e458a68ca5bdb63a`
 
 ## Objective
 
