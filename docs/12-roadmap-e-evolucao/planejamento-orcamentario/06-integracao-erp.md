@@ -21,7 +21,6 @@
 |----------------|--------|-----------|-------|
 | Receita Operacional Líquida | Confirmado no código | `financial_repository.py` → `GET /financial/rol`; SD2010/SD1010, SF4, SA1 | Cache `financial_rol_cache`; `D_E_L_E_T_=''` |
 | Faturamento realizado | Confirmado no código | ROL + `management_revenue_monthly` (reports) + séries pedidos | |
-| Faturamento **previsto** (carteira semanal) | Confirmado no código (SQL/entity; rota HTTP pendente) | `C6_ENTREG` × `C6_PRCVEN` — [carteira-semanal-previsto-realizado.md](../../../api-delpi/docs/api/padroes-totvs/carteira-semanal-previsto-realizado.md) | Não é meta; não confundir com ROL |
 | Pedidos em carteira | Confirmado no código | `pedidos_venda_abertos` (SC5, SF2, SD2) | |
 | Clientes | Confirmado no código | `customer_repository` SA1010; propostas | |
 | Grupos econômicos | Não encontrado | — | Sem `A1_GRPVEN` / termo no código |
