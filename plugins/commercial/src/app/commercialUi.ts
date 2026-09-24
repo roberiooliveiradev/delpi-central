@@ -320,8 +320,8 @@ export function CommercialMetricCard({
     className: hero ? "cm-kpi-card--wide" : undefined,
   });
   if (!onClick) return card;
-  // `div` + role="button": MetricKpiCard pode embutir HelpTooltip (também <button>).
-  // Wrapper <button> aninhado quebra HTML e dispara hydration error no React.
+  // `div` + role="button": card clicável sem aninhar <button> (HTML inválido / hydration).
+  // titleHint do MetricKpiCard usa HelpTooltip wrap (sem botão ? no label).
   return createElement(
     "div",
     {

@@ -23,6 +23,7 @@ export type DetailCardLabels = {
 
 export type DetailCardProps = {
   title: string;
+  /** Ajuda no hover do texto do título (HelpTooltip wrap — sem ícone ?). */
   titleHint?: string;
   hint?: string;
   icon?: ReactNode;
@@ -87,14 +88,19 @@ export function DetailCard({
   const titleBlock = (
     <>
       <h2 className={classNames.title}>
-        {title}
         {titleHint && classNames.titleHelp ? (
           <HelpTooltip
             content={titleHint}
             ariaLabel={labels.titleHelpAriaLabel(title)}
+            wrap
+            placement="bottom"
             className={classNames.titleHelp}
-          />
-        ) : null}
+          >
+            <span className="delpi-ui-section-hint-label">{title}</span>
+          </HelpTooltip>
+        ) : (
+          title
+        )}
       </h2>
       {hint ? (
         <p className={classNames.hint ?? classNames.description}>{hint}</p>

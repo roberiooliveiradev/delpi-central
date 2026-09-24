@@ -126,7 +126,7 @@ describe("commercial RBAC gates (sem aliases)", () => {
     assert.match(source, /canAssignTaskToProfile/);
   });
 
-  it("CommercialMetricCard clicável não usa <button> (evita HelpTooltip aninhado)", () => {
+  it("CommercialMetricCard clicável não usa <button> (evita botão HTML aninhado)", () => {
     const source = readFileSync(join(src, "app/commercialUi.ts"), "utf8");
     const fn = source.slice(source.indexOf("export function CommercialMetricCard"));
     const body = fn.slice(0, fn.indexOf("/** KPI acionável"));

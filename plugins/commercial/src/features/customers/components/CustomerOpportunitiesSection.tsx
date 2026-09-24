@@ -1,4 +1,3 @@
-import { HelpTooltip } from "@delpi/plugin-ui/index";
 import { useEffect, useMemo, useState } from "react";
 
 import { getCommercialProposals } from "../../../api/analyticsApi";
@@ -10,6 +9,7 @@ import {
   CommercialLoadingCard,
   CommercialScopeChipBar,
   CommercialSectionCard,
+  CommercialSectionHintLabel,
   CommercialTextField,
 } from "../../../app/commercialUi";
 import { navigatePluginView } from "../../../app/pluginNavigation";
@@ -212,13 +212,10 @@ export function CustomerOpportunitiesSection({
       <CommercialScopeChipBar
         aria-label={copy.statusFilterAriaLabel}
         label={
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-            {copy.statusFilterLabel}
-            <HelpTooltip
-              content={CM_HELP.customerDetail.opportunitiesStatusFilter}
-              ariaLabel="Ajuda: filtro de status"
-            />
-          </span>
+          <CommercialSectionHintLabel
+            label={copy.statusFilterLabel}
+            hint={CM_HELP.customerDetail.opportunitiesStatusFilter}
+          />
         }
         chips={[
           {

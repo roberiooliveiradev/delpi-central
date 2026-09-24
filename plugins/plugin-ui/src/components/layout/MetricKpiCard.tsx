@@ -20,6 +20,7 @@ export type MetricKpiCardClassNames = {
 
 export type MetricKpiCardProps = {
   label?: string;
+  /** Ajuda no hover do texto do label (HelpTooltip wrap — sem ícone ?). */
   titleHint?: string;
   value: string;
   /** Subtítulo ou slot (ex.: tendência) abaixo do valor. */
@@ -77,14 +78,19 @@ export function MetricKpiCard({
         <div className={classNames.body}>
           {showLabel ? (
             <p className={classNames.label}>
-              {label}
               {titleHint && classNames.labelHelp ? (
                 <HelpTooltip
                   content={titleHint}
                   ariaLabel={`Ajuda: ${label}`}
+                  wrap
+                  placement="bottom"
                   className={classNames.labelHelp}
-                />
-              ) : null}
+                >
+                  <span className="delpi-ui-section-hint-label">{label}</span>
+                </HelpTooltip>
+              ) : (
+                label
+              )}
             </p>
           ) : null}
           <strong className={classNames.value}>

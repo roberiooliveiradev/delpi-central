@@ -1,5 +1,4 @@
 import {
-  HelpTooltip,
   OPERATIONAL_UNIT_COLUMN_LABEL,
   IconButton,
   formatOperationalUnitCode,
@@ -15,6 +14,7 @@ import {
   CommercialFilterBarShell,
   CommercialScopeChipBar,
   CommercialSectionCard,
+  CommercialSectionHintLabel,
   CommercialStatusBadge,
   CommercialTextField,
 } from "../../../app/commercialUi";
@@ -286,13 +286,10 @@ export function CustomerOrdersTable({
       <CommercialScopeChipBar
         aria-label={CUSTOMER_ORDERS_CONTENT.situationFilterAriaLabel}
         label={
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-            {CUSTOMER_ORDERS_CONTENT.situationFilterLabel}
-            <HelpTooltip
-              content={CM_HELP.customerDetail.ordersSituationFilter}
-              ariaLabel="Ajuda: filtro de situação"
-            />
-          </span>
+          <CommercialSectionHintLabel
+            label={CUSTOMER_ORDERS_CONTENT.situationFilterLabel}
+            hint={CM_HELP.customerDetail.ordersSituationFilter}
+          />
         }
         chips={[
           {

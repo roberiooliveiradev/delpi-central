@@ -1,5 +1,3 @@
-import { HelpTooltip } from "@delpi/plugin-ui/index";
-
 import {
   CommercialDateField,
   CommercialFilterBarShell,
@@ -76,14 +74,10 @@ export function CustomerBillingFilters({
       defaultOpen
       className="cm-customer-billing-filters"
     >
-      <p
-        className="cm-customer-billing-filters__hint"
-        style={{ display: "flex", alignItems: "center", gap: 6 }}
-      >
-        {CUSTOMER_BILLING_CONTENT.filtersIntro}
-        <HelpTooltip
-          content={CM_HELP.customerDetail.billingFilters}
-          ariaLabel="Ajuda: Filtros de faturamento"
+      <p className="cm-customer-billing-filters__hint">
+        <CommercialSectionHintLabel
+          label={CUSTOMER_BILLING_CONTENT.filtersIntro}
+          hint={CM_HELP.customerDetail.billingFilters}
         />
       </p>
 

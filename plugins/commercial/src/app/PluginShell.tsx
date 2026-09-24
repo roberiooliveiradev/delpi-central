@@ -9,7 +9,7 @@ import {
   MessagesSquare,
   Users,
 } from "lucide-react";
-import { HelpTooltip, formatPortalGreeting } from "@delpi/plugin-ui/index";
+import { formatPortalGreeting } from "@delpi/plugin-ui/index";
 
 import { fetchMeProfile, firstNameFromDisplay } from "../api/meApi";
 import { getMyWorklist } from "../api/worklistApi";
@@ -45,6 +45,7 @@ import {
   CommercialCommandPalette,
   CommercialPageHero,
   CommercialStatusBadge,
+  CommercialTitleWithHelp,
   CommercialTopBar,
   CommercialViewTransition,
 } from "./commercialUi";
@@ -413,10 +414,10 @@ export function PluginShell({
               aria-label={heroCopy.ariaLabel}
               eyebrow={heroCopy.eyebrow}
               title={
-                <>
-                  {heroTitle}
-                  <HelpTooltip content={CM_HELP.home.overview} ariaLabel={heroCopy.helpAriaLabel} />
-                </>
+                <CommercialTitleWithHelp
+                  title={heroTitle}
+                  hint={CM_HELP.home.overview}
+                />
               }
               description={heroCopy.description}
               badge={
