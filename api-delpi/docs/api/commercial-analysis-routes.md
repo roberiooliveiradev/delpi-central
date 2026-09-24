@@ -17,6 +17,10 @@ Cada bloco do slide TV usa **uma** rota, sem `group_by`:
 | ROL por centro do cliente | `get_commercial_rol_by_customer_center` | `/commercial/rol/by-customer-center` |
 | ROL por filial | `get_commercial_rol_by_branch` | `/commercial/rol/by-branch` |
 | Perfil comercial por filial (radar/tabela) | `get_commercial_profile_by_branch` | `/commercial/profile-by-branch` |
+| Carteira previsto × realizado (summary) | `get_billing_portfolio_summary` | `/commercial/billing-portfolio/summary` |
+| Carteira previsto × realizado (série) | `get_billing_portfolio_series` | `/commercial/billing-portfolio/series` |
+| Carteira previsto × realizado (cliente) | `get_billing_portfolio_by_customer` | `/commercial/billing-portfolio/by-customer` |
+| Carteira previsto × realizado (filial) | `get_billing_portfolio_by_branch` | `/commercial/billing-portfolio/by-branch` |
 | KPI OTD + meta SI | `get_sales_order_otd_summary` | `/commercial/sales-order-otd/summary` |
 | KPI OTD | `get_sales_order_otd` | `/commercial/sales-order-otd` |
 | Série OTD | `get_sales_order_otd_series` | `/commercial/sales-order-otd/series` |
@@ -58,10 +62,10 @@ Slides legados com as compostas são remapeados no hydrate da tv-dashboard-api (
 
 ## Fora do escopo (rotas HTTP atuais)
 
-- **Rota HTTP** de carteira semanal previsto × realizado — ainda não exposta.  
-  **Conceito / SQL / homologação:** [padroes-totvs/carteira-semanal-previsto-realizado.md](./padroes-totvs/carteira-semanal-previsto-realizado.md) + [playbook](./padroes-totvs/playbooks/playbook-carteira-semanal-previsto-realizado.md).  
-  Entity/SQL já existem (`WeeklyPortfolioSnapshot`, `CommercialWeeklyPortfolioRepository`); não reativar `include=portfolio` na composta ROL descontinuada.
 - YoY na API.
+- Snapshot `as_of` persistido da carteira; series-by-customer / panel SC6 do billing-portfolio.
+
+**Carteira previsto × realizado (viva):** família `/commercial/billing-portfolio/*` — [commercial-billing-portfolio.md](./commercial-billing-portfolio.md) · regra TOTVS [padroes-totvs/carteira-semanal-previsto-realizado.md](./padroes-totvs/carteira-semanal-previsto-realizado.md). Não reativar `include=portfolio` na composta ROL descontinuada; não alterar `/rol/*`.
 
 ## Consumidores
 

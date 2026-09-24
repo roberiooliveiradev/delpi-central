@@ -186,6 +186,8 @@ def GRANULARITY_QUERY_WEEK():
 
 COMMERCIAL_ANALYSIS_GROUP_BY_VALUES = ("none", "customer", "branch")
 COMMERCIAL_ROL_CENTER_GROUP_BY_VALUES = ("center", "center_product")
+BILLING_PORTFOLIO_NATURE_VALUES = ("order_gross", "rol")
+BILLING_PORTFOLIO_QUANTITY_BASIS_VALUES = ("planned", "open")
 
 
 def COMMERCIAL_ANALYSIS_GROUP_BY_QUERY():
@@ -194,6 +196,30 @@ def COMMERCIAL_ANALYSIS_GROUP_BY_QUERY():
         description="Breakdown mode: none, customer or branch.",
         pattern=_enum_pattern(COMMERCIAL_ANALYSIS_GROUP_BY_VALUES),
         enum=list(COMMERCIAL_ANALYSIS_GROUP_BY_VALUES),
+    )
+
+
+def BILLING_PORTFOLIO_NATURE_QUERY():
+    return Query(
+        "order_gross",
+        description=(
+            "Realized value nature: order_gross (NF gross / D2_TOTAL) or rol "
+            "(net operating revenue)."
+        ),
+        pattern=_enum_pattern(BILLING_PORTFOLIO_NATURE_VALUES),
+        enum=list(BILLING_PORTFOLIO_NATURE_VALUES),
+    )
+
+
+def BILLING_PORTFOLIO_QUANTITY_BASIS_QUERY():
+    return Query(
+        "planned",
+        description=(
+            "Forecast quantity basis: planned (C6_QTDVEN) or open "
+            "(C6_QTDVEN - C6_QTDENT)."
+        ),
+        pattern=_enum_pattern(BILLING_PORTFOLIO_QUANTITY_BASIS_VALUES),
+        enum=list(BILLING_PORTFOLIO_QUANTITY_BASIS_VALUES),
     )
 
 

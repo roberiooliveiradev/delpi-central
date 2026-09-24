@@ -1,6 +1,7 @@
 # Playbook — carteira semanal previsto × realizado
 
-Seção curta: [../carteira-semanal-previsto-realizado.md](../carteira-semanal-previsto-realizado.md).
+Seção curta: [../carteira-semanal-previsto-realizado.md](../carteira-semanal-previsto-realizado.md).  
+Família HTTP: [../../commercial-billing-portfolio.md](../../commercial-billing-portfolio.md).
 
 ## Objetivo
 
@@ -10,7 +11,7 @@ Documentar a implementação de referência e a homologação do conceito **week
 
 | Camada | Responsabilidade |
 |--------|------------------|
-| api-delpi domain/infra TOTVS | Fórmula, SQL, contrato futuro |
+| api-delpi domain/infra TOTVS | Fórmula, SQL, contrato HTTP |
 | commercial-api | No máximo BFF — **não** reimplementar SC6/SD2 |
 | MFE / Excel | Consumo / visualização — **não** autoridade do cálculo |
 
@@ -18,12 +19,32 @@ Documentar a implementação de referência e a homologação do conceito **week
 
 | Artefato | Caminho |
 |----------|---------|
-| Snapshot (shape) | `app/domain/entities/commercial/weekly_portfolio.py` |
+| Entities HTTP + forecast | `app/domain/entities/commercial/weekly_portfolio.py` |
 | Port | `app/domain/ports/commercial/commercial_weekly_portfolio_repository_port.py` |
 | Forecast SQL | `app/infrastructure/persistence/totvs/commercial_repositories/commercial_weekly_portfolio_repository.py` |
+| Use cases | `app/application/use_cases/commercial/get_billing_portfolio_*_use_case.py` |
+| Rotas | `app/interface/http/routes/commercial/commercial_router.py` (`/billing-portfolio/*`) |
 | Segmento WEG/NB | `app/domain/services/commercial_customer_segment_service.py` |
-| Realizado ROL | `app/domain/services/commercial/commercial_rol_return_sql.py` + `FinancialRepository.get_rol` |
+| Realizado ROL / gross | `FinancialRepository.get_rol` (`rol` ou `gross_revenue`) |
 | OTD (irmã `C6_ENTREG`) | `sales_order_otd_sql.py` / [comercial-sales-order-otd.md](../../comercial-sales-order-otd.md) |
+
+## Família HTTP (canônica)
+
+```text
+GET /commercial/billing-portfolio/summary
+GET /commercial/billing-portfolio/series
+GET /commercial/billing-portfolio/by-customer
+GET /commercial/billing-portfolio/by-branch
+```
+
+| Decisão | Valor |
+|---------|-------|
+| `nature` default | `order_gross` (override `rol`) |
+| `quantity_basis` default | `planned` (override `open`) |
+| Semana | `build_period_buckets` (seg→dom) |
+| `as_of` | `live` (snapshot persistido fora do MVP) |
+| Uma família | cobrem comparativo e «só previsão» (D9) |
+| Proibido | composta; `include=portfolio`; alterar `/rol/*` |
 
 ## SQL de referência — previsto por cliente
 
@@ -69,21 +90,21 @@ ORDER BY forecast_value DESC, customer_code ASC
 | `planned` | `C6.C6_QTDVEN` |
 | `open` | `(C6.C6_QTDVEN - ISNULL(C6.C6_QTDENT, 0))` (+ filtro saldo `> 0`) |
 
+Agregados: `sum_delivery_forecast` e `list_delivery_forecast_by_branch` reusam o mesmo `WHERE`.
+
 ## Realizado no mesmo período
 
-Preferir a rota/use case canônico:
+Via `FinancialRepository.get_rol` (mesmos filtros comerciais):
 
-```text
-GET /commercial/rol/by-branch  (ou get_rol / by-customer)
-  start_date / end_date = mesmo period civil
-  customer_segment = new_business | weg
-  branch = 01 | 02 | omitido
-```
+| `nature` | Campo |
+|----------|-------|
+| `order_gross` | `gross_revenue` (bruto NF / D2) |
+| `rol` | `rol` (líquido canônico) |
 
 Âncora: `D2_EMISSAO` (não `C6_ENTREG`).  
-Gross de NF: família billing-series (`F2_VALBRUT` / `D2_TOTAL`) — só se o contrato declarar `nature=gross`.
+Ranking por cliente reusa `CommercialRolByCustomerRepository` e escolhe `gross_revenue` ou `rol` conforme `nature`.
 
-## Composição do snapshot
+## Snapshot Excel (não é HTTP)
 
 ```text
 previous_period.by_branch[]:
@@ -93,18 +114,7 @@ current_period_forecast[]:
   customer_code, customer_name, branch, forecast_value
 ```
 
-Entity: `WeeklyPortfolioSnapshot`.
-
-## Decisões de contrato (antes de expor rota)
-
-| Decisão | Opções | Nota |
-|---------|--------|------|
-| `nature` | `order_gross` \| `rol` | Excel operacional ≈ `order_gross`; KPIs TV ≈ `rol` |
-| `quantity_basis` | `planned` \| `open` | Semana corrente costuma ser `open`; histórico `planned` |
-| `as_of` | live SC6 \| snapshot persistido | Sem snapshot, «previsto passado» é aproximação |
-| Âncora de semana | seg→dom \| dom→sáb | Declarar no `meta`; homologação usou **seg→dom** |
-
-Path sugerido (ainda não implementado): `GET /commercial/weekly-billing-portfolio` — identifiers em inglês.
+Entity: `WeeklyPortfolioSnapshot` — shape de relatório; **não** usar como body das rotas `billing-portfolio`.
 
 ## Homologação (set/2026) — `/system` + `/data/sql`
 
@@ -136,9 +146,10 @@ Conclusão da homologação: **a fórmula bate**; divergência de totais = snaps
 
 1. `GET /system/tables/SC6010/columns/search?q=ENTREG` (e `PRCVEN`, `QTDVEN`).
 2. `POST /data/sql` com o SQL de previsto acima (whitelist: SC5/SC6/SA1).
-3. Comparar realizado com `GET /commercial/rol/by-branch` no mesmo intervalo.
+3. Comparar realizado com `GET /commercial/rol/by-branch` no mesmo intervalo (`nature=rol`) ou `gross_revenue` do `get_rol`.
+4. Validar HTTP: `GET /commercial/billing-portfolio/summary?start_date=2026-08-10&end_date=2026-08-16&branch=02&customer_segment=new_business`.
 
-Permissão: `api-delpi.data` / `api-delpi.system` / `api-delpi.access.full`.
+Permissão: `api-delpi.data` / `api-delpi.system` / `api-delpi.access.full` (SQL) · `KPI_COMMERCIAL_ACCESS` (rotas comerciais).
 
 ## Anti-padrões (regressão)
 
@@ -146,7 +157,8 @@ Permissão: `api-delpi.data` / `api-delpi.system` / `api-delpi.access.full`.
 - Embutir `include=portfolio` de volta na composta ROL descontinuada.
 - Misturar postergação de carteira ([pedido-venda-postergacao.md](../pedido-venda-postergacao.md)) com forecast semanal.
 - Usar `nature=open_order_value` em billing-series (já rejeitado em teste).
+- Path único legado `/commercial/weekly-billing-portfolio` — **não** canônico; usar a família `/billing-portfolio/*`.
 
 ## Próximo passo de produto
 
-Expor use case + rota simples (não composta), registrar em OpenAPI / `route_contract_registry`, apontar esta seção na doc da rota — sem copiar tabelas inteiras.
+Consumidores BFF/MFE/chat e snapshot `as_of` ficam fora do MVP API — ver plano billing-portfolio.

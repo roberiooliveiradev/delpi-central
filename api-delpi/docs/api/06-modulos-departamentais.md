@@ -155,11 +155,15 @@ Documentação completa: [invoice-issuance.md](./invoice-issuance.md) · playboo
 | GET | `/commercial/rol/by-customer` | Ranking de ROL por cliente (Top N + Demais). |
 | GET | `/commercial/rol/by-product` | Ranking de ROL por produto ou família. |
 | GET | `/commercial/rol/by-customer-center` | ROL classificado pelo centro atual do cliente (SA7/ZC0); itens sem cadastro = `SEM CENTRO`. |
+| GET | `/commercial/billing-portfolio/summary` | Carteira previsto × realizado (summary). Ver [commercial-billing-portfolio.md](./commercial-billing-portfolio.md). |
+| GET | `/commercial/billing-portfolio/series` | Série temporal previsto × realizado. |
+| GET | `/commercial/billing-portfolio/by-customer` | Previsto × realizado por cliente. |
+| GET | `/commercial/billing-portfolio/by-branch` | Previsto × realizado por filial. |
 | GET | `/commercial/proposals` | Listagem paginada de propostas (OV). Filtros: `start_date`, `end_date`, `branch`, `status` (`won`/`open`), `customer_segment` (`weg`/`new_business`), `page`, `page_size`, `sort_by`, `sort_dir`, `search`. Ver `plugins/dashboard-commercial/docs/PROPOSTAS-PERIODO.md`. |
 | GET | `/commercial/proposals/{proposal_number}` | Detalhe da proposta (AD1010 + cliente/vendedor + **`list_products[]`** ADJ010). Query: `branch` (obrig.), `revision` opcional. Produtos via `LMPQueryRepository.list_ov_products` (SQL compartilhado com LMP). |
 | GET | `/commercial/proposals/{proposal_number}/history/events` | Histórico AIJ010 da OV — mesmo pipeline que LMP (`get_lmp_history_events`). Query: `branch`, `revision`, `date_start`, `date_end` (período aceito pelo MFE; **não** dispara batch de listagem). |
 
-**Carteira semanal (previsto × realizado):** regra de negócio em [padroes-totvs/carteira-semanal-previsto-realizado.md](./padroes-totvs/carteira-semanal-previsto-realizado.md) — previsto por `C6_ENTREG` (SC6), realizado por `D2_EMISSAO`. Rota HTTP ainda não exposta; não confundir com OTD nem com postergação de pedidos abertos.
+**Carteira previsto × realizado:** família `/commercial/billing-portfolio/*` — [commercial-billing-portfolio.md](./commercial-billing-portfolio.md) · regra [padroes-totvs/carteira-semanal-previsto-realizado.md](./padroes-totvs/carteira-semanal-previsto-realizado.md). Previsto por `C6_ENTREG` (SC6); realizado por `D2_EMISSAO`. Não confundir com OTD nem com postergação de pedidos abertos; `/rol/*` intacta.
 
 **MFE `dashboard-commercial`:** detalhe em `/apps/dashboard-commercial/proposta/{proposal_number}` consome **`GET /commercial/proposals/{proposal_number}`** + **`/history/events`** em paralelo (`useCommercialProposalDetail`). Estrutura BOM por produto: **`GET /products/{code}/structure`** (`useCommercialProductStructures`). Documentação: `plugins/dashboard-commercial/docs/DETALHE-PROPOSTA.md`.
 

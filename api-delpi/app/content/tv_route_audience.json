@@ -1153,6 +1153,66 @@
       },
       "category": "commercial"
     },
+    "get_billing_portfolio_summary": {
+      "locale": {
+        "en": {
+          "summary": "Billing portfolio summary (forecast × realized)",
+          "description": "Order delivery forecast (C6_ENTREG) versus billing realized (D2_EMISSAO) for a period, with variance.",
+          "label": "Billing portfolio summary"
+        },
+        "pt-BR": {
+          "label": "Carteira — resumo previsto × realizado",
+          "summary": "Carteira — resumo previsto × realizado",
+          "description": "Receita prevista (entrega prometida C6_ENTREG) versus realizada (emissão NF D2_EMISSAO) no período, com variação."
+        }
+      },
+      "category": "commercial"
+    },
+    "get_billing_portfolio_series": {
+      "locale": {
+        "en": {
+          "summary": "Billing portfolio series (forecast × realized)",
+          "description": "Time series of delivery forecast versus billing realized by day, week, month or year.",
+          "label": "Billing portfolio series"
+        },
+        "pt-BR": {
+          "label": "Carteira — série previsto × realizado",
+          "summary": "Carteira — série previsto × realizado",
+          "description": "Série temporal de receita prevista versus realizada por dia, semana, mês ou ano."
+        }
+      },
+      "category": "commercial"
+    },
+    "get_billing_portfolio_by_customer": {
+      "locale": {
+        "en": {
+          "summary": "Billing portfolio by customer (forecast × realized)",
+          "description": "Per-customer delivery forecast versus billing realized with variance and pagination.",
+          "label": "Billing portfolio by customer"
+        },
+        "pt-BR": {
+          "label": "Carteira — por cliente (previsto × realizado)",
+          "summary": "Carteira — por cliente (previsto × realizado)",
+          "description": "Previsto versus realizado por cliente, com variação e paginação."
+        }
+      },
+      "category": "commercial"
+    },
+    "get_billing_portfolio_by_branch": {
+      "locale": {
+        "en": {
+          "summary": "Billing portfolio by branch (forecast × realized)",
+          "description": "Per-branch delivery forecast versus billing realized with variance for branches 01 and 02.",
+          "label": "Billing portfolio by branch"
+        },
+        "pt-BR": {
+          "label": "Carteira — por filial (previsto × realizado)",
+          "summary": "Carteira — por filial (previsto × realizado)",
+          "description": "Previsto versus realizado por filial (01/02), com variação."
+        }
+      },
+      "category": "commercial"
+    },
     "get_commercial_rol_by_customer": {
       "locale": {
         "en": {

@@ -84,6 +84,21 @@ from app.infrastructure.persistence.totvs.commercial_repositories.new_business_r
 from app.infrastructure.persistence.totvs.commercial_repositories.sales_order_otd_repository import (
     SalesOrderOtdRepository,
 )
+from app.infrastructure.persistence.totvs.commercial_repositories.commercial_weekly_portfolio_repository import (
+    CommercialWeeklyPortfolioRepository,
+)
+from app.application.use_cases.commercial.get_billing_portfolio_summary_use_case import (
+    GetBillingPortfolioSummaryUseCase,
+)
+from app.application.use_cases.commercial.get_billing_portfolio_series_use_case import (
+    GetBillingPortfolioSeriesUseCase,
+)
+from app.application.use_cases.commercial.get_billing_portfolio_by_customer_use_case import (
+    GetBillingPortfolioByCustomerUseCase,
+)
+from app.application.use_cases.commercial.get_billing_portfolio_by_branch_use_case import (
+    GetBillingPortfolioByBranchUseCase,
+)
 from app.infrastructure.persistence.totvs.lmp_repositories.lmp_query_repository import (
     LMPQueryRepository,
 )
@@ -245,3 +260,33 @@ def build_get_weg_rol_target_use_case() -> GetSegmentRolTargetUseCase:
 
 def build_get_new_business_rol_target_use_case() -> GetSegmentRolTargetUseCase:
     return _build_segment_rol_target_use_case(segment_kind="new_business")
+
+
+def build_get_billing_portfolio_summary_use_case() -> GetBillingPortfolioSummaryUseCase:
+    return GetBillingPortfolioSummaryUseCase(
+        portfolio_repository=CommercialWeeklyPortfolioRepository(),
+        financial_query_repository=FinancialRepository(),
+    )
+
+
+def build_get_billing_portfolio_series_use_case() -> GetBillingPortfolioSeriesUseCase:
+    return GetBillingPortfolioSeriesUseCase(
+        portfolio_repository=CommercialWeeklyPortfolioRepository(),
+        financial_query_repository=FinancialRepository(),
+    )
+
+
+def build_get_billing_portfolio_by_customer_use_case() -> (
+    GetBillingPortfolioByCustomerUseCase
+):
+    return GetBillingPortfolioByCustomerUseCase(
+        portfolio_repository=CommercialWeeklyPortfolioRepository(),
+        rol_by_customer_repository=CommercialRolByCustomerRepository(),
+    )
+
+
+def build_get_billing_portfolio_by_branch_use_case() -> GetBillingPortfolioByBranchUseCase:
+    return GetBillingPortfolioByBranchUseCase(
+        portfolio_repository=CommercialWeeklyPortfolioRepository(),
+        financial_query_repository=FinancialRepository(),
+    )

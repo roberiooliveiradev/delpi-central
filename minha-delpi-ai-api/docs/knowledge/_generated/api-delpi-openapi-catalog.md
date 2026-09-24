@@ -1,6 +1,6 @@
 # Catálogo OpenAPI — api-delpi (gerado automaticamente)
 
-**Provider:** `api-delpi` · **Rotas:** 720 · **Gerado em:** 2026-09-23 19:21 UTC
+**Provider:** `api-delpi` · **Rotas:** 724 · **Gerado em:** 2026-09-24 12:27 UTC
 
 > Não edite manualmente. Regenerado por `scripts/sync_api_delpi_openapi.py`.
 
@@ -52,10 +52,14 @@
 |--------|------|-------------|---------|
 | `GET` | `/customers/search` | `search_customers` | Search Customers Route |
 
-## Comercial (28)
+## Comercial (32)
 
 | Método | Path | operationId | Summary |
 |--------|------|-------------|---------|
+| `GET` | `/commercial/billing-portfolio/by-branch` | `get_billing_portfolio_by_branch` | Billing portfolio by branch (forecast × realized) |
+| `GET` | `/commercial/billing-portfolio/by-customer` | `get_billing_portfolio_by_customer` | Billing portfolio by customer (forecast × realized) |
+| `GET` | `/commercial/billing-portfolio/series` | `get_billing_portfolio_series` | Billing portfolio series (forecast × realized) |
+| `GET` | `/commercial/billing-portfolio/summary` | `get_billing_portfolio_summary` | Billing portfolio summary (forecast × realized) |
 | `GET` | `/commercial/closing-rate` | `get_sales_conversion_rate` | Sales conversion rate |
 | `GET` | `/commercial/closing-rate/series` | `get_sales_conversion_rate_series` | Sales conversion rate series |
 | `GET` | `/commercial/customer-center-assignments` | `list_commercial_customer_center_assignments` | Lista — Commercial customer center assignment |

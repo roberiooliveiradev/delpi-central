@@ -6,6 +6,8 @@ from app.interface.http.pagination_query import (
 
 
 from app.interface.http.query_param_enums import (
+    BILLING_PORTFOLIO_NATURE_QUERY,
+    BILLING_PORTFOLIO_QUANTITY_BASIS_QUERY,
     BRANCH_QUERY_OPTIONAL,
     BRANCH_QUERY_REQUIRED,
     COMMERCIAL_OTD_STATUS_QUERY,
@@ -60,6 +62,12 @@ from app.application.dto.commercial.get_rol_by_customer_center_request import (
 from app.application.dto.commercial.get_rol_by_branch_request import (
     GetRolByBranchRequest,
 )
+from app.application.dto.commercial.billing_portfolio_request import (
+    GetBillingPortfolioByBranchRequest,
+    GetBillingPortfolioByCustomerRequest,
+    GetBillingPortfolioSeriesRequest,
+    GetBillingPortfolioSummaryRequest,
+)
 from app.application.dto.commercial.get_commercial_profile_by_branch_request import (
     GetCommercialProfileByBranchRequest,
 )
@@ -101,6 +109,10 @@ from app.composition.commercial_composer import (
     build_get_commercial_rol_by_customer_center_use_case,
     build_get_commercial_rol_by_branch_use_case,
     build_get_commercial_profile_by_branch_use_case,
+    build_get_billing_portfolio_summary_use_case,
+    build_get_billing_portfolio_series_use_case,
+    build_get_billing_portfolio_by_customer_use_case,
+    build_get_billing_portfolio_by_branch_use_case,
     build_get_sales_order_otd_use_case,
     build_get_sales_order_otd_panel_use_case,
     build_get_sales_order_otd_series_use_case,
@@ -748,6 +760,264 @@ def get_commercial_rol_by_branch(
         log_error(f"Error while fetching ROL by branch: {exc}")
         return error_response(
             "Internal error while fetching ROL by branch.",
+            status_code=500,
+        )
+
+
+@router.get(
+    "/billing-portfolio/summary",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "get_billing_portfolio_summary",
+        path="/commercial/billing-portfolio/summary",
+    ),
+)
+@require_any_permission(KPI_COMMERCIAL_ACCESS)
+def get_billing_portfolio_summary(
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
+    customer_segment: Optional[str] = CUSTOMER_SEGMENT_QUERY(),
+    customer_codes: Optional[str] = Query(
+        None, description="CSV of TOTVS customer codes (portfolio filter)."
+    ),
+    customer_names: Optional[str] = Query(
+        None, description="Comma-separated customer names to include (partial match, LIKE)."
+    ),
+    customer_centers: Optional[str] = Query(
+        None,
+        description="CSV of customer center codes from the product-customer link (SA7.A7_XCENT).",
+    ),
+    exclude_customer_codes: Optional[str] = Query(
+        None, description="Comma-separated TOTVS customer codes to exclude."
+    ),
+    exclude_customer_names: Optional[str] = Query(
+        None, description="Comma-separated customer names to exclude (partial match, NOT LIKE)."
+    ),
+    nature: str = BILLING_PORTFOLIO_NATURE_QUERY(),
+    quantity_basis: str = BILLING_PORTFOLIO_QUANTITY_BASIS_QUERY(),
+):
+    try:
+        request = GetBillingPortfolioSummaryRequest(
+            branch=branch,
+            start_date=start_date,
+            end_date=end_date,
+            customer_segment=parse_customer_segment(customer_segment),
+            customer_codes=parse_customer_codes(customer_codes),
+            customer_names=parse_customer_names(customer_names),
+            customer_centers=parse_customer_centers(customer_centers),
+            exclude_customer_codes=parse_customer_codes(exclude_customer_codes),
+            exclude_customer_names=parse_customer_names(exclude_customer_names),
+            nature=nature,
+            quantity_basis=quantity_basis,
+        )
+        result = build_get_billing_portfolio_summary_use_case().execute(request)
+        return api_delpi_success(
+            result,
+            operation_id="get_billing_portfolio_summary",
+            message="Billing portfolio summary (forecast × realized) fetched successfully.",
+        )
+    except ValueError as exc:
+        log_error(f"Validation error while fetching billing portfolio summary: {exc}")
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Error while fetching billing portfolio summary: {exc}")
+        return error_response(
+            "Internal error while fetching billing portfolio summary.",
+            status_code=500,
+        )
+
+
+@router.get(
+    "/billing-portfolio/series",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "get_billing_portfolio_series",
+        path="/commercial/billing-portfolio/series",
+    ),
+)
+@require_any_permission(KPI_COMMERCIAL_ACCESS)
+def get_billing_portfolio_series(
+    granularity: str = GRANULARITY_QUERY_REQUIRED(),
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
+    customer_segment: Optional[str] = CUSTOMER_SEGMENT_QUERY(),
+    customer_codes: Optional[str] = Query(
+        None, description="CSV of TOTVS customer codes (portfolio filter)."
+    ),
+    customer_names: Optional[str] = Query(
+        None, description="Comma-separated customer names to include (partial match, LIKE)."
+    ),
+    customer_centers: Optional[str] = Query(
+        None,
+        description="CSV of customer center codes from the product-customer link (SA7.A7_XCENT).",
+    ),
+    exclude_customer_codes: Optional[str] = Query(
+        None, description="Comma-separated TOTVS customer codes to exclude."
+    ),
+    exclude_customer_names: Optional[str] = Query(
+        None, description="Comma-separated customer names to exclude (partial match, NOT LIKE)."
+    ),
+    nature: str = BILLING_PORTFOLIO_NATURE_QUERY(),
+    quantity_basis: str = BILLING_PORTFOLIO_QUANTITY_BASIS_QUERY(),
+):
+    try:
+        request = GetBillingPortfolioSeriesRequest(
+            granularity=granularity,
+            branch=branch,
+            start_date=start_date,
+            end_date=end_date,
+            customer_segment=parse_customer_segment(customer_segment),
+            customer_codes=parse_customer_codes(customer_codes),
+            customer_names=parse_customer_names(customer_names),
+            customer_centers=parse_customer_centers(customer_centers),
+            exclude_customer_codes=parse_customer_codes(exclude_customer_codes),
+            exclude_customer_names=parse_customer_names(exclude_customer_names),
+            nature=nature,
+            quantity_basis=quantity_basis,
+        )
+        result = build_get_billing_portfolio_series_use_case().execute(request)
+        return api_delpi_success(
+            result,
+            operation_id="get_billing_portfolio_series",
+            message="Billing portfolio series (forecast × realized) fetched successfully.",
+        )
+    except ValueError as exc:
+        log_error(f"Validation error while fetching billing portfolio series: {exc}")
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Error while fetching billing portfolio series: {exc}")
+        return error_response(
+            "Internal error while fetching billing portfolio series.",
+            status_code=500,
+        )
+
+
+@router.get(
+    "/billing-portfolio/by-customer",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "get_billing_portfolio_by_customer",
+        path="/commercial/billing-portfolio/by-customer",
+    ),
+)
+@require_any_permission(KPI_COMMERCIAL_ACCESS)
+def get_billing_portfolio_by_customer(
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
+    customer_segment: Optional[str] = CUSTOMER_SEGMENT_QUERY(),
+    customer_codes: Optional[str] = Query(
+        None, description="CSV of TOTVS customer codes (portfolio filter)."
+    ),
+    customer_names: Optional[str] = Query(
+        None, description="Comma-separated customer names to include (partial match, LIKE)."
+    ),
+    customer_centers: Optional[str] = Query(
+        None,
+        description="CSV of customer center codes from the product-customer link (SA7.A7_XCENT).",
+    ),
+    exclude_customer_codes: Optional[str] = Query(
+        None, description="Comma-separated TOTVS customer codes to exclude."
+    ),
+    exclude_customer_names: Optional[str] = Query(
+        None, description="Comma-separated customer names to exclude (partial match, NOT LIKE)."
+    ),
+    nature: str = BILLING_PORTFOLIO_NATURE_QUERY(),
+    quantity_basis: str = BILLING_PORTFOLIO_QUANTITY_BASIS_QUERY(),
+    page: int = Query(1, ge=1),
+    page_size: int = PAGE_SIZE_QUERY("page_50_500"),
+):
+    try:
+        request = GetBillingPortfolioByCustomerRequest(
+            branch=branch,
+            start_date=start_date,
+            end_date=end_date,
+            customer_segment=parse_customer_segment(customer_segment),
+            customer_codes=parse_customer_codes(customer_codes),
+            customer_names=parse_customer_names(customer_names),
+            customer_centers=parse_customer_centers(customer_centers),
+            exclude_customer_codes=parse_customer_codes(exclude_customer_codes),
+            exclude_customer_names=parse_customer_names(exclude_customer_names),
+            nature=nature,
+            quantity_basis=quantity_basis,
+            page=page,
+            page_size=page_size,
+        )
+        result = build_get_billing_portfolio_by_customer_use_case().execute(request)
+        return api_delpi_success(
+            result,
+            operation_id="get_billing_portfolio_by_customer",
+            message="Billing portfolio by customer (forecast × realized) fetched successfully.",
+        )
+    except ValueError as exc:
+        log_error(f"Validation error while fetching billing portfolio by customer: {exc}")
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Error while fetching billing portfolio by customer: {exc}")
+        return error_response(
+            "Internal error while fetching billing portfolio by customer.",
+            status_code=500,
+        )
+
+
+@router.get(
+    "/billing-portfolio/by-branch",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "get_billing_portfolio_by_branch",
+        path="/commercial/billing-portfolio/by-branch",
+    ),
+)
+@require_any_permission(KPI_COMMERCIAL_ACCESS)
+def get_billing_portfolio_by_branch(
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
+    customer_segment: Optional[str] = CUSTOMER_SEGMENT_QUERY(),
+    customer_codes: Optional[str] = Query(
+        None, description="CSV of TOTVS customer codes (portfolio filter)."
+    ),
+    customer_names: Optional[str] = Query(
+        None, description="Comma-separated customer names to include (partial match, LIKE)."
+    ),
+    customer_centers: Optional[str] = Query(
+        None,
+        description="CSV of customer center codes from the product-customer link (SA7.A7_XCENT).",
+    ),
+    exclude_customer_codes: Optional[str] = Query(
+        None, description="Comma-separated TOTVS customer codes to exclude."
+    ),
+    exclude_customer_names: Optional[str] = Query(
+        None, description="Comma-separated customer names to exclude (partial match, NOT LIKE)."
+    ),
+    nature: str = BILLING_PORTFOLIO_NATURE_QUERY(),
+    quantity_basis: str = BILLING_PORTFOLIO_QUANTITY_BASIS_QUERY(),
+):
+    try:
+        request = GetBillingPortfolioByBranchRequest(
+            branch=branch,
+            start_date=start_date,
+            end_date=end_date,
+            customer_segment=parse_customer_segment(customer_segment),
+            customer_codes=parse_customer_codes(customer_codes),
+            customer_names=parse_customer_names(customer_names),
+            customer_centers=parse_customer_centers(customer_centers),
+            exclude_customer_codes=parse_customer_codes(exclude_customer_codes),
+            exclude_customer_names=parse_customer_names(exclude_customer_names),
+            nature=nature,
+            quantity_basis=quantity_basis,
+        )
+        result = build_get_billing_portfolio_by_branch_use_case().execute(request)
+        return api_delpi_success(
+            result,
+            operation_id="get_billing_portfolio_by_branch",
+            message="Billing portfolio by branch (forecast × realized) fetched successfully.",
+        )
+    except ValueError as exc:
+        log_error(f"Validation error while fetching billing portfolio by branch: {exc}")
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Error while fetching billing portfolio by branch: {exc}")
+        return error_response(
+            "Internal error while fetching billing portfolio by branch.",
             status_code=500,
         )
 

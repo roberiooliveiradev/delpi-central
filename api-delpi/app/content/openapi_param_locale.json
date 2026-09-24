@@ -567,6 +567,66 @@
         }
       }
     },
+    "nature": {
+      "locale": {
+        "en": {
+          "label": "Nature",
+          "description": "Realized value nature: order_gross (NF gross) or rol (net operating revenue)."
+        },
+        "pt-BR": {
+          "label": "Natureza",
+          "description": "Natureza do realizado: order_gross (bruto de NF) ou rol (receita operacional líquida)."
+        }
+      },
+      "enumLabels": {
+        "order_gross": {
+          "en": {
+            "label": "Order / NF gross"
+          },
+          "pt-BR": {
+            "label": "Bruto de pedido / NF"
+          }
+        },
+        "rol": {
+          "en": {
+            "label": "Net operating revenue (ROL)"
+          },
+          "pt-BR": {
+            "label": "Receita operacional líquida (ROL)"
+          }
+        }
+      }
+    },
+    "quantity_basis": {
+      "locale": {
+        "en": {
+          "label": "Quantity basis",
+          "description": "Forecast quantity: planned (ordered qty) or open (ordered minus delivered)."
+        },
+        "pt-BR": {
+          "label": "Base de quantidade",
+          "description": "Quantidade do previsto: planned (qtd pedida) ou open (pedida menos entregue)."
+        }
+      },
+      "enumLabels": {
+        "planned": {
+          "en": {
+            "label": "Planned (ordered qty)"
+          },
+          "pt-BR": {
+            "label": "Planejado (qtd pedida)"
+          }
+        },
+        "open": {
+          "en": {
+            "label": "Open balance"
+          },
+          "pt-BR": {
+            "label": "Saldo em aberto"
+          }
+        }
+      }
+    },
     "customers": {
       "locale": {
         "en": {

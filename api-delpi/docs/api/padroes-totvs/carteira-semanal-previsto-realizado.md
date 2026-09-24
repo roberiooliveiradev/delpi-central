@@ -2,7 +2,8 @@
 
 Convenção Delpi para **receita prevista** (carteira de pedidos) versus **receita realizada** (faturamento), no estilo do relatório operacional «Carteira Semanal / Novos Negócios».
 
-Nome de domínio: **weekly billing portfolio**.
+Nome de domínio: **weekly billing portfolio**.  
+Família HTTP: **`/commercial/billing-portfolio/*`** — ver [commercial-billing-portfolio.md](../commercial-billing-portfolio.md).
 
 ## Conceito
 
@@ -27,13 +28,35 @@ Não é meta comercial digitada. Não é projeção estatística. Não é progra
 | `forecast` / previsto | Soma das linhas SC6 com `C6_ENTREG` no período |
 | `realized` / realizado | Faturamento no período (`D2_EMISSAO`) |
 | `variance` | `realized − forecast` (mesmos filtros) |
-| `quantity_basis=planned` | `C6_QTDVEN × C6_PRCVEN` |
+| `quantity_basis=planned` | `C6_QTDVEN × C6_PRCVEN` (default HTTP) |
 | `quantity_basis=open` | `(C6_QTDVEN − C6_QTDENT) × C6_PRCVEN` (saldo em aberto) |
-| `nature=order_gross` | Valor bruto de pedido (padrão do Excel operacional) |
+| `nature=order_gross` | Valor bruto de pedido / NF (default HTTP; Excel operacional) |
 | `nature=rol` | Receita operacional líquida canônica — ver `CommercialRolReturnSql` |
 | `customer_segment=new_business` | Clientes ≠ WEG (`000001`) |
 | `customer_segment=weg` | Cliente WEG |
 | Filial `01` / `02` | Matriz (Jaraguá) / Filial (ES) — [filiais.md](./filiais.md) |
+
+## Família HTTP (viva)
+
+```text
+GET /commercial/billing-portfolio/summary
+GET /commercial/billing-portfolio/series
+GET /commercial/billing-portfolio/by-customer
+GET /commercial/billing-portfolio/by-branch
+```
+
+| operationId | Shape |
+|-------------|-------|
+| `get_billing_portfolio_summary` | scalar |
+| `get_billing_portfolio_series` | scalar |
+| `get_billing_portfolio_by_customer` | paged_list |
+| `get_billing_portfolio_by_branch` | paged_list |
+
+Contrato sempre inclui `forecast_value`, `realized_value`, `variance_value`, `nature`, `quantity_basis`, âncoras de data e `as_of=live`.  
+Uma família cobre comparativo e «só previsão» (consumidor ignora `realized_*` se quiser).  
+**Não** há rota composta nem `include=portfolio` em `/rol/*`.
+
+Permissão: `KPI_COMMERCIAL_ACCESS`. Semana via `build_period_buckets` (seg→dom).
 
 ## Fórmula de previsto
 
@@ -50,9 +73,9 @@ forecast(period, branch?, segment?, quantity_basis?) =
 
 ## O que fazer
 
-- Tratar previsto e realizado como **duas métricas** com datas declaradas no contrato/`meta`.
+- Tratar previsto e realizado como **duas métricas** com datas declaradas no contrato/`data`.
 - Reusar `CommercialCustomerSegmentService` para WEG / novos negócios.
-- Reusar ROL canônico (`CommercialRolReturnSql` / `FinancialRepository.get_rol`) para realizado líquido.
+- Reusar ROL canônico (`CommercialRolReturnSql` / `FinancialRepository.get_rol`) para realizado líquido (`nature=rol`); `gross_revenue` do mesmo payload para `nature=order_gross`.
 - Declarar `nature` e `quantity_basis` no contrato antes de comparar números.
 - Owner da regra TOTVS: **api-delpi** (commercial). BFF/MFE só consome.
 
@@ -65,20 +88,25 @@ forecast(period, branch?, segment?, quantity_basis?) =
 - Assumir que «previsto da semana passada» no SC6 live é auditável: sem snapshot `as_of`, o ERP já pode ter entregue/alterado linhas.
 - Inventar tabela FCT / meta digitada sem decisão de produto (FCT Postgres foi dropada).
 - Colocar a regra no commercial-api ou no MFE.
+- Reativar composta ROL / `include=portfolio`.
+- Alterar contratos de `/commercial/rol/*` para embutir forecast.
 
-## Estado no código (set/2026)
+## Estado no código
 
 | Artefato | Estado |
 |----------|--------|
-| Entity `WeeklyPortfolioSnapshot` | Existe — shape do relatório |
-| `CommercialWeeklyPortfolioRepository.list_delivery_week_forecast_by_customer` | SQL de forecast pronto |
-| Use case / rota HTTP | **Ainda não expostos** (bloco `portfolio` fora das compostas ROL) |
-| Realizado ROL / billing-series | Vivo (`/commercial/rol/*`, carteira billing-series) |
+| Entity HTTP (`BillingPortfolio*`) + `WeeklyPortfolioCustomerForecast` | Vivo — `weekly_portfolio.py` |
+| `WeeklyPortfolioSnapshot` | Shape de relatório Excel — **não** body HTTP |
+| `CommercialWeeklyPortfolioRepository` | Forecast agregados + lista por cliente |
+| Família `/commercial/billing-portfolio/*` | **Viva** (summary / series / by-customer / by-branch) |
+| Realizado ROL isolado | Intacta — `/commercial/rol/*` |
 
-Detalhe SQL, homologação e composição: [playbook-carteira-semanal-previsto-realizado.md](./playbooks/playbook-carteira-semanal-previsto-realizado.md).
+Detalhe SQL, homologação e composição: [playbook-carteira-semanal-previsto-realizado.md](./playbooks/playbook-carteira-semanal-previsto-realizado.md).  
+Contrato de rota: [commercial-billing-portfolio.md](../commercial-billing-portfolio.md).
 
 ## Relacionados
 
+- Doc de rota: [commercial-billing-portfolio.md](../commercial-billing-portfolio.md)
 - ROL / rotas comerciais: [commercial-analysis-routes.md](../commercial-analysis-routes.md)
 - OTD (`C6_ENTREG`): [comercial-sales-order-otd.md](../comercial-sales-order-otd.md)
 - Postergação de carteira (outro conceito): [pedido-venda-postergacao.md](./pedido-venda-postergacao.md)

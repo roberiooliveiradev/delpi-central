@@ -285,6 +285,18 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     ),
     "get_commercial_rol_series": RouteContract("commercial_rol_series", "scalar"),
     "get_commercial_rol_summary": RouteContract("commercial_rol_summary", "scalar"),
+    "get_billing_portfolio_summary": RouteContract(
+        "billing_portfolio_summary", "scalar"
+    ),
+    "get_billing_portfolio_series": RouteContract(
+        "billing_portfolio_series", "scalar"
+    ),
+    "get_billing_portfolio_by_customer": RouteContract(
+        "billing_portfolio_by_customer", "paged_list"
+    ),
+    "get_billing_portfolio_by_branch": RouteContract(
+        "billing_portfolio_by_branch", "paged_list"
+    ),
     "get_commercial_rol_by_customer": RouteContract(
         "commercial_rol_by_customer", "paged_list"
     ),
