@@ -9,6 +9,7 @@ import {
 import {
   selectedTableColumnIndexes,
   selectedTableRowIndexes,
+  getTablePartState,
   type TableInteraction,
   type TablePartsMap,
 } from "./configurableTableParts";
@@ -50,9 +51,11 @@ export function ConfigurablePresentationTable({
   const config = mergeConfigurableTableOptions(options, preset);
   const valueFormat = config.valueFormat ?? "auto";
   const title = config.title?.trim();
+  const partTitle = getTablePartState(tableParts, { kind: "title" })?.content?.trim();
+  const effectiveTitle = partTitle || title;
   const showHeader = config.showHeader !== false;
   const showTotalRow = Boolean(config.showTotalRow) && rows.length > 0;
-  const ariaLabel = title || "Tabela de dados";
+  const ariaLabel = effectiveTitle || "Tabela de dados";
   const interactive = Boolean(interaction?.onPartPointerDown || interaction?.onPartDoubleClick);
   const totalRow = showTotalRow ? buildConfigurableTableTotalRow(columns, rows) : null;
   const selectedColumns = selectedTableColumnIndexes(interaction);
@@ -67,7 +70,11 @@ export function ConfigurablePresentationTable({
     .filter(Boolean)
     .join(" ");
 
-  if (rows.length === 0) {
+  const hasChrome =
+    columns.length > 0 || Boolean(effectiveTitle && config.showTitle !== false);
+
+  // Sem dados: ainda mostra título + cabeçalho quando o visual tem schema/chrome.
+  if (rows.length === 0 && !hasChrome) {
     return (
       <TableContainer
         options={config}
@@ -86,7 +93,7 @@ export function ConfigurablePresentationTable({
       tableParts={tableParts}
     >
       <TableTitle
-        title={title}
+        title={effectiveTitle}
         visible={config.showTitle !== false}
         interaction={interaction}
         tableParts={tableParts}
@@ -98,46 +105,60 @@ export function ConfigurablePresentationTable({
         loadingMoreRows={interaction?.loadingMoreRows}
         onLoadMoreRows={interaction?.onLoadMoreRows}
       >
-        <TableHeader visible={showHeader} interaction={interaction} tableParts={tableParts}>
-          {columns.map((column, colIndex) => (
-            <TableHeaderCell
-              key={column.key}
-              columnKey={column.key}
-              colIndex={colIndex}
-              interaction={interaction}
-              tableParts={tableParts}
-            >
-              {column.label}
-            </TableHeaderCell>
-          ))}
-        </TableHeader>
+        {columns.length > 0 ? (
+          <TableHeader visible={showHeader} interaction={interaction} tableParts={tableParts}>
+            {columns.map((column, colIndex) => (
+              <TableHeaderCell
+                key={column.key}
+                columnKey={column.key}
+                colIndex={colIndex}
+                interaction={interaction}
+                tableParts={tableParts}
+              >
+                {column.label}
+              </TableHeaderCell>
+            ))}
+          </TableHeader>
+        ) : null}
         <TableBody>
-          {rows.map((row, rowIndex) => (
-            <TableRow
-              key={`row-${rowIndex}`}
-              rowIndex={rowIndex}
-              selected={selectedRows.has(rowIndex)}
-              interaction={interaction}
-            >
-              {columns.map((column, colIndex) => (
-                <TableCell
-                  key={`${column.key}-${rowIndex}`}
-                  rowIndex={rowIndex}
-                  colIndex={colIndex}
-                  columnSelected={selectedColumns.has(colIndex)}
-                  rowSelected={selectedRows.has(rowIndex)}
-                  interaction={interaction}
-                  tableParts={tableParts}
-                >
-                  {formatConfigurableTableCellValue(
-                    row[column.key],
-                    column.valueFormat ?? valueFormat,
-                    column.displayFormat ?? config.displayValueFormat,
-                  )}
-                </TableCell>
-              ))}
+          {rows.length === 0 ? (
+            <TableRow rowIndex={0} interaction={interaction}>
+              <td
+                className={cn.cell}
+                colSpan={Math.max(columns.length, 1)}
+                data-table-empty="true"
+              >
+                <div className={cn.emptyState}>{emptyMessage}</div>
+              </td>
             </TableRow>
-          ))}
+          ) : (
+            rows.map((row, rowIndex) => (
+              <TableRow
+                key={`row-${rowIndex}`}
+                rowIndex={rowIndex}
+                selected={selectedRows.has(rowIndex)}
+                interaction={interaction}
+              >
+                {columns.map((column, colIndex) => (
+                  <TableCell
+                    key={`${column.key}-${rowIndex}`}
+                    rowIndex={rowIndex}
+                    colIndex={colIndex}
+                    columnSelected={selectedColumns.has(colIndex)}
+                    rowSelected={selectedRows.has(rowIndex)}
+                    interaction={interaction}
+                    tableParts={tableParts}
+                  >
+                    {formatConfigurableTableCellValue(
+                      row[column.key],
+                      column.valueFormat ?? valueFormat,
+                      column.displayFormat ?? config.displayValueFormat,
+                    )}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))
+          )}
           {totalRow ? (
             <TableRow
               key="row-total"

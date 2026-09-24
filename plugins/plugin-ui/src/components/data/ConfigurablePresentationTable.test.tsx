@@ -53,8 +53,35 @@ describe("ConfigurablePresentationTable", () => {
   });
 
   it("mostra estado vazio sem linhas", () => {
-    render(<ConfigurablePresentationTable columns={columns} rows={[]} />);
+    render(<ConfigurablePresentationTable columns={[]} rows={[]} />);
     expect(screen.getByText("Sem linhas")).toBeTruthy();
+  });
+
+  it("sem linhas ainda mostra título e cabeçalho", () => {
+    render(
+      <ConfigurablePresentationTable
+        columns={columns}
+        rows={[]}
+        options={{ showTitle: true, title: "WEG LINHARES" }}
+      />,
+    );
+    expect(screen.getByText("WEG LINHARES")).toBeTruthy();
+    expect(screen.getByText("Produto")).toBeTruthy();
+    expect(screen.getByText("Valor")).toBeTruthy();
+    expect(screen.getByText("Sem linhas")).toBeTruthy();
+    expect(screen.getByRole("table")).toBeTruthy();
+  });
+
+  it("sem linhas usa título de tableParts.title", () => {
+    render(
+      <ConfigurablePresentationTable
+        columns={columns}
+        rows={[]}
+        tableParts={{ title: { visible: true, content: "Filial ES" } }}
+      />,
+    );
+    expect(screen.getByText("Filial ES")).toBeTruthy();
+    expect(screen.getByRole("columnheader", { name: "Produto" })).toBeTruthy();
   });
 
   it("aplica estilo de parte no cabeçalho e na célula", () => {

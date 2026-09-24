@@ -63,7 +63,14 @@ export function TableViewBlockView({
   }
 
   const allRows = resolved.table?.rows ?? [];
-  const allColumns = resolveTableColumns(resolved, allRows);
+  const fromResolved = resolveTableColumns(resolved, allRows);
+  const fromProjection = (block.tableProjection?.columns ?? [])
+    .filter((column) => column.visible !== false && Boolean(column.key?.trim()))
+    .map((column) => ({
+      key: column.key,
+      label: column.label?.trim() || column.key,
+    }));
+  const allColumns = fromResolved.length > 0 ? fromResolved : fromProjection;
   const projectionByKey = new Map(
     (block.tableProjection?.columns ?? []).map((column) => [column.key, column]),
   );
@@ -76,6 +83,7 @@ export function TableViewBlockView({
       ...(widthPct != null ? { widthPct } : {}),
       ...(projected?.displayFormat ? { displayFormat: projected.displayFormat } : {}),
       ...(projected?.valueFormat ? { valueFormat: projected.valueFormat } : {}),
+      ...(projected?.label?.trim() ? { label: projected.label } : {}),
     };
   });
   const tableOptions = resolveTableDisplayOptions(block.tableOptions, block.tablePreset, resolved);

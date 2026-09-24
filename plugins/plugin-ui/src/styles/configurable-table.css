@@ -301,6 +301,17 @@
   font-size: 0.9em;
 }
 
+.delpi-ui-config-table__cell[data-table-empty="true"] {
+  text-align: center;
+  padding: 0.75rem 0.5rem;
+  color: var(--delpi-ui-config-table-muted, #64748b);
+  background: transparent;
+}
+
+.delpi-ui-config-table__cell[data-table-empty="true"] .delpi-ui-config-table__empty-state {
+  min-height: 1.5rem;
+}
+
 /* Onda 4G.8 — subseleção de partes */
 .delpi-ui-config-table--interactive [data-table-part] {
   pointer-events: auto;

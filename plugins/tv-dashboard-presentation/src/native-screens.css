@@ -1417,6 +1417,19 @@
   font-size: 0.9em;
 }
 
+.tdp-configurable-table__cell[data-table-empty="true"] {
+  text-align: center;
+  padding: 0.75rem 0.5rem;
+  color: var(--tdp-data-muted, #9fb0c5);
+  background: transparent;
+}
+
+.tdp-configurable-table__cell[data-table-empty="true"] .tdp-table-empty-state {
+  min-height: 1.5rem;
+  height: auto;
+  width: 100%;
+}
+
 /* Onda 4G.8 — subseleção de partes da tabela */
 .tdp-configurable-table--interactive [data-table-part] {
   pointer-events: auto;
