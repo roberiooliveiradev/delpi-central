@@ -1535,7 +1535,7 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                       hint={helpTooltips.detailUi.reply}
                       value={content}
                       onChange={(next) => setContent(attachmentPreview.persistHtml(next))}
-                      minHeight={72}
+                      minHeight={144}
                       enableMentions
                       resolveAttachmentImageSrc={resolveReplyAttachmentImageSrc}
                       persistAttachmentImageSrc={attachmentPreview.persistAttachmentImageSrc}

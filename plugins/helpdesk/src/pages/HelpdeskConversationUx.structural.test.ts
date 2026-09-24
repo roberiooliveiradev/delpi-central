@@ -41,7 +41,7 @@ describe("HELPDESK-MFE-UX-001-R3 conversation detail", () => {
     const page = read("HelpdeskPage.tsx");
     const detail = page.slice(page.indexOf("function TicketDetailPage"));
     const replyBlock = detail.slice(detail.indexOf('label="Responder"'));
-    expect(replyBlock).toContain("minHeight={72}");
+    expect(replyBlock).toContain("minHeight={144}");
     expect(replyBlock).not.toMatch(/\bfill\b/);
     expect(replyBlock).toContain("enableMentions");
     expect(replyBlock).toContain("HelpdeskAttachButton");
@@ -120,17 +120,64 @@ describe("HELPDESK-MFE-UX-001-R4 conversation density", () => {
     );
     expect(css).toContain(".helpdesk-ticket-summary-rail");
     expect(css).toContain(".helpdesk-reply-form");
-    expect(css).toMatch(/\.helpdesk-reply-form[\s\S]*?min-height:\s*4\.5rem/);
+    expect(css).toMatch(/\.helpdesk-reply-form[\s\S]*?min-height:\s*9rem/);
     expect(css).toContain(".helpdesk-satisfaction__score");
     expect(css).not.toMatch(/helpdesk-detail__conversation[\s\S]{0,200}100vh\s*-/);
   });
 
-  it("keeps mine alignment and compact composer unchanged", () => {
+  it("keeps mine alignment and comfortable composer height", () => {
     const page = read("HelpdeskPage.tsx");
     const detail = page.slice(page.indexOf("function TicketDetailPage"));
     const replyBlock = detail.slice(detail.indexOf('label="Responder"'));
     expect(detail).toContain("mine: message.mine");
-    expect(replyBlock).toContain("minHeight={72}");
+    expect(replyBlock).toContain("minHeight={144}");
     expect(replyBlock).not.toMatch(/\bfill\b/);
+  });
+});
+
+describe("HELPDESK-MFE-UX-001-R5 composer + message media", () => {
+  it("reply composer writing area is materially taller than R4 baseline", () => {
+    const page = read("HelpdeskPage.tsx");
+    const css = read("../index.css");
+    const detail = page.slice(page.indexOf("function TicketDetailPage"));
+    const replyBlock = detail.slice(detail.indexOf('label="Responder"'));
+    expect(replyBlock).toContain("minHeight={144}");
+    expect(replyBlock).not.toContain("minHeight={72}");
+    expect(css).toMatch(/\.helpdesk-reply-form[\s\S]*?min-height:\s*9rem/);
+    expect(css).not.toMatch(/\.helpdesk-reply-form[\s\S]*?min-height:\s*4\.5rem/);
+    expect(replyBlock).toContain("HelpdeskAttachButton");
+    expect(replyBlock).toContain('aria-label={saving ? "Enviando" : "Enviar resposta"}');
+    expect(replyBlock).toContain("enableMentions");
+  });
+
+  it("message rich body contains images and wide content inside the bubble", () => {
+    const css = read("../index.css");
+    expect(css).toMatch(
+      /\.delpi-ui-message-thread__body--rich[\s\S]*?overflow-wrap:\s*anywhere/,
+    );
+    expect(css).toMatch(
+      /\.delpi-ui-message-thread__body--rich img[\s\S]*?max-width:\s*100%/,
+    );
+    expect(css).toMatch(
+      /\.delpi-ui-message-thread__body--rich img[\s\S]*?height:\s*auto/,
+    );
+    expect(css).toMatch(
+      /\.delpi-ui-message-thread__bubble[\s\S]*?overflow:\s*hidden/,
+    );
+    expect(css).toMatch(
+      /\.delpi-ui-message-thread__body--rich table[\s\S]*?overflow-x:\s*auto/,
+    );
+    expect(css).toMatch(
+      /\.delpi-ui-message-thread__body--rich pre[\s\S]*?overflow-x:\s*auto/,
+    );
+  });
+
+  it("does not reopen assignment contract or invent roles", () => {
+    const page = read("HelpdeskPage.tsx");
+    const detail = page.slice(page.indexOf("function TicketDetailPage"));
+    expect(detail).toContain("canAssign={ticket.can_assign === true}");
+    expect(detail).not.toMatch(/isTechnician|participantRole|role\s*===\s*["']support/);
+    expect(detail).toContain("submitTicketSatisfaction");
+    expect(detail).toContain("{ satisfaction: satisfactionScore, comment: satisfactionComment }");
   });
 });
