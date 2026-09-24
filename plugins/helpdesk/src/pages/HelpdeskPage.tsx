@@ -59,6 +59,11 @@ import {
 import type { HelpdeskInlineUploadResult } from "../ui/helpdeskUi";
 import { helpdeskListPaginationBounds } from "../presentation/listPagination";
 import { glpiTicketFormUrl } from "../presentation/glpiPublicLinks";
+import {
+  clearGlpiAutoLinkAttempt,
+  markGlpiAutoLinkAttempted,
+  shouldAutoStartGlpiLink,
+} from "../presentation/glpiAutoLink";
 import { solicitanteLifecycleCue, timelineHasSolution } from "../presentation/solicitanteLifecycle";
 import { navigateHelpdesk, type HelpdeskRoute } from "../routing/helpdeskRoute";
 import { lastHelpdeskListPath, rememberHelpdeskListPath } from "../presentation/listNavigationMemory";
@@ -196,6 +201,7 @@ function TicketListPage() {
   const [errorCode, setErrorCode] = useState<string | null>(null);
   const [errorText, setErrorText] = useState<string | null>(null);
   const [linking, setLinking] = useState(false);
+  const autoLinkStartedRef = useRef(false);
   const [showFilterBuilder, setShowFilterBuilder] = useState(true);
   const [showSortBuilder, setShowSortBuilder] = useState(false);
   const [builderGroup, setBuilderGroup] = useState<TicketListFilterGroup>(() =>
@@ -264,6 +270,7 @@ function TicketListPage() {
       });
       setItems(body.items);
       setHasMore(body.has_more);
+      clearGlpiAutoLinkAttempt();
     } catch (error) {
       const mapped = messageFor(error);
       setItems([]);
@@ -273,6 +280,20 @@ function TicketListPage() {
     } finally {
       setLoading(false);
     }
+  }
+
+  function startGlpiAuthorization() {
+    setLinking(true);
+    markGlpiAutoLinkAttempted();
+    void beginGlpiLink()
+      .then((url) => {
+        window.location.assign(url);
+      })
+      .catch((error) => {
+        clearGlpiAutoLinkAttempt();
+        setErrorText(messageFor(error).text);
+        setLinking(false);
+      });
   }
 
   useEffect(() => {
@@ -305,6 +326,15 @@ function TicketListPage() {
     itemCount: items.length,
     filterActive: isTicketFilterActive(filters),
   });
+
+  useEffect(() => {
+    if (view !== "link") return;
+    if (autoLinkStartedRef.current) return;
+    if (!shouldAutoStartGlpiLink()) return;
+    autoLinkStartedRef.current = true;
+    startGlpiAuthorization();
+  }, [view]);
+
   const filterActive = isTicketFilterActive(filters);
   const listViewModel = ticketListViewModelFromFilters(filters, columnPreferences);
   const paginationBounds = helpdeskListPaginationBounds({
@@ -484,24 +514,17 @@ function TicketListPage() {
         ) : null}
         {view === "link" ? (
           <HelpdeskStateBanner>
-            {helpTooltips.link}
+            {linking ? "Abrindo autorização do helpdesk…" : helpTooltips.link}
             <HelpdeskFormActions>
               <ActionButton
                 variant="primary"
                 disabled={linking}
                 onClick={() => {
-                  setLinking(true);
-                  void beginGlpiLink()
-                    .then((url) => {
-                      window.location.assign(url);
-                    })
-                    .catch((error) => {
-                      setErrorText(messageFor(error).text);
-                      setLinking(false);
-                    });
+                  autoLinkStartedRef.current = true;
+                  startGlpiAuthorization();
                 }}
               >
-                Autorizar no helpdesk
+                {linking ? "Abrindo…" : "Autorizar no helpdesk"}
               </ActionButton>
             </HelpdeskFormActions>
           </HelpdeskStateBanner>

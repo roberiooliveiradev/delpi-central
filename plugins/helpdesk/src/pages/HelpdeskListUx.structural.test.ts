@@ -105,6 +105,18 @@ describe("Helpdesk list UX structural", () => {
     expect(ui).toMatch(/Paperclip[\s\S]*Anexar/);
   });
 
+  it("ao exigir vínculo GLPI, inicia autorização automaticamente (com fallback de botão)", () => {
+    const page = read("HelpdeskPage.tsx");
+    expect(page).toContain("shouldAutoStartGlpiLink");
+    expect(page).toContain("startGlpiAuthorization");
+    expect(page).toContain("markGlpiAutoLinkAttempted");
+    expect(page).toContain("clearGlpiAutoLinkAttempt");
+    expect(page).toContain('view !== "link"');
+    expect(page).toContain("Autorizar no helpdesk");
+    const gate = read("../presentation/glpiAutoLink.ts");
+    expect(gate).toContain("HELPDESK_GLPI_AUTO_LINK_KEY");
+  });
+
   it("atribuição: picker no create/detail gated por can_assign + API users/assignee", () => {
     const page = read("HelpdeskPage.tsx");
     const picker = read("../components/HelpdeskAssigneePicker.tsx");

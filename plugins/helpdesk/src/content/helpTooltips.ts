@@ -2,7 +2,7 @@
 
 export const helpTooltips = {
   list: "Chamados de TI no seu nome. Use tabela ou cards, filtros, ordenação e paginação; o + abre um novo.",
-  link: "Na primeira vez, autorize o helpdesk com o mesmo login da Minha DELPI para ver seus chamados.",
+  link: "Abrindo a autorização do helpdesk com o mesmo login da Minha DELPI. Se não redirecionar, use o botão.",
   create:
     "Título e descrição; à direita categoria, urgência, técnico (se permitido) e observadores. O rascunho sobrevive ao F5.",
   detail:
