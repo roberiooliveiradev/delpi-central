@@ -36,13 +36,19 @@
   "contractClassification": "INTENTIONAL_BREAKING_PROVIDER_SURFACE_CHANGE",
   "businessCapabilityUnchanged": true,
   "sourceTests": "PASS",
-  "deployStatus": "PENDING_EXTERNAL_ACTION",
-  "deployedSha": null,
-  "remoteMcpToolCount": null,
+  "deployStatus": "DEPLOYED",
+  "deployedSha": "e64c0b7dcd95043e11117f0c198b96b51d6c3357",
+  "remoteMcpToolCount": 2,
   "providerRediscovery": "PENDING_MANUAL",
-  "liveProductDiscovery": "TEST_NOT_RUN",
+  "liveProductDiscovery": "PASS",
   "liveProductExecution": "PENDING_END_USER_OAUTH",
   "crossFamilyRegression": "PASS (wave004/005/real-user/drawing/dynamic_read)",
   "preExistingRetrievalResidual": "wave001/002 bare 'produto <code>' TOP-1 tie confirmed on clean main before this task",
-  "executionDrift": false
+  "executionDrift": false,
+  "remoteMcpToolNames": [
+    "discover_delpi_information",
+    "execute_delpi_information"
+  ],
+  "productionEligibleActionCount": 53,
+  "liveCrossFamily": "PASS"
 }

@@ -3,7 +3,10 @@
 **TASK_ID:** `DAVI-MCP-TOOL-SURFACE-SIMPLIFICATION-001`  
 **STATUS (source):** PASS  
 **SOURCE HEAD:**   
-**STATUS (deploy/live):** filled after push  
+**STATUS (deploy):** PASS — `e64c0b7dcd…` healthy; tools/list = 2  
+**STATUS (live retrieval):** PASS in production image  
+**STATUS (live execute / ChatGPT provider):** PENDING_END_USER_OAUTH / PENDING_MANUAL  
+**SOURCE HEAD:** `3e024a24c5f8e8a06c779421a427eaa95ee678bd`  
 
 ## Decision
 
