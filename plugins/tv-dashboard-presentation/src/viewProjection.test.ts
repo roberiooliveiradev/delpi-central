@@ -76,7 +76,7 @@ describe("applyViewProjection", () => {
     expect(Object.keys(next?.table?.rows?.[0] ?? {})).toEqual(["periodo", "oee"]);
   });
 
-  it("anexa coluna nova da fonte que ainda não está na projeção", () => {
+  it("não anexa colunas da fonte fora da projeção explícita", () => {
     const next = applyViewProjection(sampleResolved, {
       tableProjection: {
         columns: [
@@ -85,11 +85,7 @@ describe("applyViewProjection", () => {
         ],
       },
     });
-    expect(next?.table?.columns?.map((col) => col.key)).toEqual([
-      "periodo",
-      "oee",
-      "otd",
-    ]);
+    expect(next?.table?.columns?.map((col) => col.key)).toEqual(["periodo", "oee"]);
   });
 
   it("oculta sáb./dom. nos pontos do gráfico quando excludeWeekends", () => {
@@ -520,6 +516,66 @@ describe("normalizeTableProjection", () => {
     });
     expect(projection?.columns?.[0]?.widthPct).toBe(40);
     expect(projection?.columns?.[1]?.widthPct).toBe(100);
+  });
+
+  it("aceita alias field→key (payload GPT)", () => {
+    const projection = normalizeTableProjection({
+      columns: [
+        { field: "customer_name", label: "Nome" },
+        { field: "forecast_value", label: "Previsto", valueFormat: "currency" },
+      ],
+    });
+    expect(projection?.columns?.map((c) => c.key)).toEqual([
+      "customer_name",
+      "forecast_value",
+    ]);
+    expect(projection?.columns?.[0]?.label).toBe("Nome");
+  });
+});
+
+describe("applyViewProjection table authority", () => {
+  it("não reexpande colunas da fonte quando há projeção explícita", () => {
+    const next = applyViewProjection(
+      {
+        table: {
+          columns: [
+            { key: "customer_code", label: "Customer código" },
+            { key: "customer_name", label: "Customer nome" },
+            { key: "forecast_value", label: "Forecast valor" },
+            { key: "realized_value", label: "Realized valor" },
+            { key: "variance_value", label: "Variance valor" },
+          ],
+          rows: [
+            {
+              customer_code: "1",
+              customer_name: "Acme",
+              forecast_value: 10,
+              realized_value: 8,
+              variance_value: -2,
+            },
+          ],
+        },
+      },
+      {
+        tableProjection: {
+          columns: [
+            { key: "customer_name", label: "Nome", visible: true },
+            { key: "forecast_value", label: "Previsto", visible: true },
+            { key: "realized_value", label: "Realizado", visible: true },
+          ],
+        },
+      },
+    );
+    expect(next?.table?.columns?.map((c) => c.key)).toEqual([
+      "customer_name",
+      "forecast_value",
+      "realized_value",
+    ]);
+    expect(next?.table?.columns?.map((c) => c.label)).toEqual([
+      "Nome",
+      "Previsto",
+      "Realizado",
+    ]);
   });
 });
 

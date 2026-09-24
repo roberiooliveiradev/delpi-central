@@ -246,7 +246,12 @@ export function normalizeTableProjection(raw: unknown): TableViewProjection | un
   const columns = columnsRaw
     .map((item) => {
       if (!item || typeof item !== "object") return null;
-      const key = String((item as TableColumnProjection).key ?? "").trim();
+      // GPT/OpenAPI often send `field`; runtime/MFE key is authoritative.
+      const key = String(
+        (item as TableColumnProjection).key ??
+          (item as { field?: unknown }).field ??
+          "",
+      ).trim();
       if (!key) return null;
       const col: TableColumnProjection = {
         key,
@@ -331,19 +336,13 @@ function applyTableProjection(
 ): ComunicadoDataResolved {
   const rows = resolved.table?.rows ?? [];
   const columns = resolved.table?.columns ?? [];
-  if (!projection?.columns?.length || rows.length === 0) {
+  if (!projection?.columns?.length) {
     return resolved;
   }
 
-  // Alinha ao inspetor (`resolveVisibleKeys`): colunas novas da fonte que ainda
-  // não estão na projeção entram como visíveis (ex.: campo novo na API).
-  const projectedKeys = new Set(projection.columns.map((col) => col.key));
-  const appended: TableColumnProjection[] = columns
-    .filter((col) => !projectedKeys.has(col.key))
-    .map((col) => ({ key: col.key, visible: true }));
-  const effectiveColumns = [...projection.columns, ...appended];
-
-  const visible = effectiveColumns.filter((col) => col.visible !== false);
+  // Explicit visual projection is authoritative: never re-expand to source schema.
+  // Inspector may append available fields for editing; runtime render must not.
+  const visible = projection.columns.filter((col) => col.visible !== false);
   if (visible.length === 0) {
     return {
       ...resolved,

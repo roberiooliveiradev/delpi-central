@@ -10,6 +10,10 @@ from tv_app.application.services.data.display_format_hints_service import (
 from tv_app.application.services.data.ready_slide_quality_service import (
     ReadySlideQualityService,
 )
+from tv_app.application.services.data.table_view_projection_authority import (
+    has_explicit_table_columns,
+    normalize_block_table_projection,
+)
 
 
 class VisualProjectionService:
@@ -112,7 +116,8 @@ class VisualProjectionService:
             return {}
         columns: list[dict[str, Any]] = []
         for field in fields[:8]:
-            col: dict[str, Any] = {"field": field, "label": field}
+            # ``key`` is authoritative for MFE/runtime; ``field`` kept as GPT alias.
+            col: dict[str, Any] = {"key": field, "field": field, "label": field}
             fmt = cls.format_for_field(route, field)
             if fmt and fmt.get("valueFormat"):
                 col["valueFormat"] = fmt["valueFormat"]
@@ -150,6 +155,9 @@ class VisualProjectionService:
         block: dict[str, Any],
         route: Mapping[str, Any] | None,
     ) -> dict[str, Any]:
+        # Explicit visual projection is authoritative — never replace with inference.
+        if has_explicit_table_columns(block):
+            return normalize_block_table_projection(dict(block))
         patch = cls.patch_for_visual(block_type=str(block.get("type") or ""), route=route)
         if not patch:
             return block

@@ -5,7 +5,11 @@ import {
   configurableTableOptionsModifierClasses,
   type ConfigurableTableOptions,
 } from "../configurableTableOptions";
-import { resolveTableFrameStyle, type TablePartsMap } from "../configurableTableParts";
+import {
+  resolveTableBandedRowFills,
+  resolveTableFrameStyle,
+  type TablePartsMap,
+} from "../configurableTableParts";
 import { useConfigurableTableClasses } from "../configurableTableClasses";
 
 export type TableContainerProps = {
@@ -28,10 +32,14 @@ export function TableContainer({
 }: TableContainerProps) {
   const cn = useConfigurableTableClasses();
   const frame = resolveTableFrameStyle(tableParts);
+  const banded = resolveTableBandedRowFills(tableParts);
+  const forceBanded = Boolean(banded.even || banded.odd);
   const classes = [
     cn.root,
     ...configurableTableOptionsModifierClasses(options, cn),
+    forceBanded ? cn.rootBanded : "",
     empty ? cn.rootEmpty : "",
+    frame.visible === false ? `${cn.root}--frameless` : "",
     className,
   ]
     .filter(Boolean)
@@ -44,6 +52,12 @@ export function TableContainer({
     [`--${cn.cssVarPrefix}-frame-border-width`]: `${Math.max(0, frame.strokeWidth)}px`,
     [`--${cn.cssVarPrefix}-frame-radius`]: `${Math.max(0, frame.borderRadius)}px`,
     [`--${cn.cssVarPrefix}-frame-shadow`]: frame.boxShadow,
+    ...(banded.even
+      ? { [`--${cn.cssVarPrefix}-banded-even-bg`]: banded.even }
+      : {}),
+    ...(banded.odd
+      ? { [`--${cn.cssVarPrefix}-banded-odd-bg`]: banded.odd }
+      : {}),
   } as CSSProperties;
 
   if (empty) {

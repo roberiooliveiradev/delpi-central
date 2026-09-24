@@ -234,15 +234,14 @@ def apply_view_projection_to_resolved(resolved: dict[str, Any], block: dict[str,
         if isinstance(columns_cfg, list) and columns_cfg and isinstance(table, dict):
             visible = [c for c in columns_cfg if isinstance(c, dict) and c.get("visible") is not False]
             if visible:
-                keys = [str(c.get("key") or "").strip() for c in visible if str(c.get("key") or "").strip()]
                 old_label_by = {
                     str(c.get("key") or ""): str(c.get("label") or c.get("key") or "")
                     for c in (table.get("columns") if isinstance(table.get("columns"), list) else [])
                     if isinstance(c, dict) and c.get("key")
                 }
-                next_cols = []
+                next_cols: list[dict[str, Any]] = []
                 for col in visible:
-                    key = str(col.get("key") or "").strip()
+                    key = str(col.get("key") or col.get("field") or "").strip()
                     if not key:
                         continue
                     proj_label = str(col.get("label") or "")
@@ -253,7 +252,12 @@ def apply_view_projection_to_resolved(resolved: dict[str, Any], block: dict[str,
                         label = base_label
                     else:
                         label = key
-                    next_cols.append({"key": key, "label": label})
+                    next_col: dict[str, Any] = {"key": key, "label": label}
+                    value_format = str(col.get("valueFormat") or "").strip()
+                    if value_format:
+                        next_col["valueFormat"] = value_format
+                    next_cols.append(next_col)
+                keys = [str(c.get("key") or "").strip() for c in next_cols if c.get("key")]
                 next_rows = []
                 for row in rows:
                     next_rows.append({k: row.get(k) for k in keys if k in row})

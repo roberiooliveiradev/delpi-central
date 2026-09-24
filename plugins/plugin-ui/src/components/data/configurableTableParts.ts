@@ -396,18 +396,52 @@ export function resolveTableFrameStyle(
   strokeWidth: number;
   borderRadius: number;
   boxShadow: string;
+  visible: boolean;
 } {
   const frame = getTablePartState(parts, { kind: "frame" });
+  const visible = frame?.visible !== false;
   /* Seed legado: sem radius/sombra explícitos → chrome Delpi.
    * `borderRadius: 0` é cantos retos válidos (não reaplica default). */
   const style = frame?.style;
+  const rawFill = style?.fill;
+  const isTransparentFill =
+    rawFill != null &&
+    String(rawFill).trim().toLowerCase() in {
+      transparent: true,
+      none: true,
+      "rgba(0,0,0,0)": true,
+      "rgba(0, 0, 0, 0)": true,
+    };
+  if (!visible || isTransparentFill) {
+    return {
+      fill: "transparent",
+      stroke: "transparent",
+      strokeWidth: 0,
+      borderRadius: typeof style?.borderRadius === "number" ? Math.max(0, style.borderRadius) : 0,
+      boxShadow: "none",
+      visible: false,
+    };
+  }
   const hasExplicitRadius = typeof style?.borderRadius === "number";
   const hasExplicitShadow = Boolean(style?.boxShadow?.trim());
   const legacyOfficeChrome = !hasExplicitRadius && !hasExplicitShadow;
+  const explicitStrokeWidth = typeof style?.strokeWidth === "number";
+  const strokeTransparent =
+    style?.stroke != null &&
+    String(style.stroke).trim().toLowerCase() in {
+      transparent: true,
+      none: true,
+    };
   return {
     fill: style?.fill ?? DECK_TABLE_DEFAULTS.frameFill,
-    stroke: style?.stroke ?? DECK_TABLE_DEFAULTS.frameStroke,
-    strokeWidth: style?.strokeWidth ?? DECK_TABLE_DEFAULTS.borderWidth,
+    stroke: strokeTransparent
+      ? "transparent"
+      : (style?.stroke ?? DECK_TABLE_DEFAULTS.frameStroke),
+    strokeWidth: strokeTransparent
+      ? 0
+      : explicitStrokeWidth
+        ? Math.max(0, style!.strokeWidth!)
+        : DECK_TABLE_DEFAULTS.borderWidth,
     borderRadius: hasExplicitRadius
       ? Math.max(0, style!.borderRadius!)
       : DECK_TABLE_DEFAULTS.borderRadius,
@@ -416,6 +450,26 @@ export function resolveTableFrameStyle(
       : legacyOfficeChrome
         ? DECK_TABLE_DEFAULTS.boxShadow
         : (style?.boxShadow ?? DECK_TABLE_DEFAULTS.boxShadow),
+    visible: true,
+  };
+}
+
+/** Banded row fills from tableParts.rowEven / rowOdd (optional). */
+export function resolveTableBandedRowFills(
+  parts?: TablePartsMap | null,
+): { even?: string; odd?: string } {
+  if (!parts || typeof parts !== "object") return {};
+  const evenStyle = parts.rowEven?.style as
+    | (TablePartStyle & { backgroundColor?: string })
+    | undefined;
+  const oddStyle = parts.rowOdd?.style as
+    | (TablePartStyle & { backgroundColor?: string })
+    | undefined;
+  const even = evenStyle?.fill ?? evenStyle?.backgroundColor;
+  const odd = oddStyle?.fill ?? oddStyle?.backgroundColor;
+  return {
+    ...(typeof even === "string" && even.trim() ? { even: even.trim() } : {}),
+    ...(typeof odd === "string" && odd.trim() ? { odd: odd.trim() } : {}),
   };
 }
 

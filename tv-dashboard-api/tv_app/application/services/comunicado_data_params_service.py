@@ -216,7 +216,29 @@ def merge_data_params(
     # superior (ex.: fonte com competence + input previous_month).
     _strip_competence_for_relative_preset(out)
     _reconcile_period_days_vs_relative_preset(out)
+    _prefer_explicit_dates_over_relative_preset(out)
     return out
+
+
+def _prefer_explicit_dates_over_relative_preset(merged: dict[str, Any]) -> None:
+    """Explicit start+end win over inherited relative dateRangePreset (this_month…)."""
+    has_closed = False
+    for start_key, end_key in (
+        ("start_date", "end_date"),
+        ("date_start", "date_end"),
+        ("date_from", "date_to"),
+    ):
+        if _has_value(merged, start_key) and _has_value(merged, end_key):
+            has_closed = True
+            break
+    if not has_closed:
+        return
+    if not _is_relative_date_range_preset(merged.get(DATE_RANGE_PRESET_KEY)):
+        return
+    # Keep dates; drop relative preset so gateway does not expand to month.
+    merged.pop(DATE_RANGE_PRESET_KEY, None)
+    # Competence must not rewrite an explicit weekly/custom window.
+    merged.pop("competence", None)
 
 
 def _reconcile_period_days_vs_relative_preset(merged: dict[str, Any]) -> None:

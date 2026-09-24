@@ -289,6 +289,22 @@ def apply_date_range_preset(
 
     if pair:
         start_key, end_key = pair
+        alias_start, alias_end = read_date_range_values(merged, start_key, end_key)
+        explicit_start = _as_iso(merged.get(start_key)) or _as_iso(alias_start)
+        explicit_end = _as_iso(merged.get(end_key)) or _as_iso(alias_end)
+        preset_token = preset.strip().lower()
+        # Explicit interval wins over relative presets (this_month / this_month_full / …).
+        if (
+            explicit_start
+            and explicit_end
+            and preset_token
+            and preset_token not in {"", "custom"}
+        ):
+            merged[start_key] = str(explicit_start).strip()
+            merged[end_key] = str(explicit_end).strip()
+            merged.pop(DATE_RANGE_PRESET_KEY, None)
+            return merged
+
         computed = compute_preset_range(preset, period_days=period_days, today=today)
         if computed is not None:
             start_d, end_d = computed

@@ -1172,6 +1172,23 @@ class PresentationPatchService:
                 cleaned.pop("dataTransform", None)
             else:
                 cleaned["dataTransform"] = sanitized
+        from tv_app.application.services.data.table_view_projection_authority import (
+            has_explicit_table_columns,
+            normalize_block_table_projection,
+            validate_table_parts,
+        )
+
+        part_errors = validate_table_parts(cleaned.get("tableParts"))
+        if part_errors:
+            raise PresentationPatchError(
+                "tableParts inválido/não suportado: "
+                + ", ".join(part_errors[:6])
+                + ". Use frame|title|header|headerCell|row|cell|rowEven|rowOdd; "
+                "banding via tablePreset=banded / tableParts.rowEven|rowOdd."
+            )
+        if str(cleaned.get("type") or "").strip() in {"table_view", "data_table"}:
+            normalize_block_table_projection(cleaned)
+
         from tv_app.application.services.data.display_format_hints_service import (
             DisplayFormatHintsService,
         )
@@ -1186,17 +1203,20 @@ class PresentationPatchService:
             )
         block_id = str(cleaned.get("id") or "").strip() or _new_block_id()
         cleaned["id"] = block_id
+        projection_informed = has_explicit_table_columns(cleaned)
         blocks = _blocks_of(cfg)
         existing = _find_block(blocks, block_id)
         if existing is not None:
             # Partial patch: deep-merge nested style/frame/… so siblings survive.
             merged = merge_block_patch(existing, cleaned)
+            if str(merged.get("type") or "").strip() in {"table_view", "data_table"}:
+                normalize_block_table_projection(merged)
             existing.clear()
             existing.update(merged)
         else:
             blocks.append(_with_block_defaults(cleaned))
         cfg["blocks"] = blocks
-        return block_id, frame_informed
+        return block_id, frame_informed or projection_informed
 
     def _op_delete_block(self, cfg: dict[str, Any], op: dict[str, Any]) -> str | None:
         block_id = str(op.get("blockId") or "").strip()

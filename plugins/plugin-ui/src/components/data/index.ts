@@ -49,6 +49,7 @@ export {
   selectedTableRowIndexes,
   parseTablePartRef,
   partsToTableOptions,
+  resolveTableBandedRowFills,
   resolveTableFrameStyle,
   resolveTableHeaderCellPaintStyle,
   resolveTableBodyCellPaintStyle,

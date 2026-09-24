@@ -176,13 +176,32 @@
 
 .delpi-ui-config-table--banded
   .delpi-ui-config-table__body
+  .delpi-ui-config-table__row:nth-child(odd):not(.delpi-ui-config-table__row--total)
+  .delpi-ui-config-table__cell {
+  background: var(
+    --delpi-ui-config-table-banded-odd-bg,
+    var(--delpi-ui-config-table-cell-bg, transparent)
+  );
+}
+
+.delpi-ui-config-table--banded
+  .delpi-ui-config-table__body
   .delpi-ui-config-table__row:nth-child(even):not(.delpi-ui-config-table__row--total)
   .delpi-ui-config-table__cell {
-  background: color-mix(
-    in srgb,
-    var(--delpi-ui-config-table-header-bg, #f1f5f9) 28%,
-    var(--delpi-ui-config-table-cell-bg, #ffffff)
+  background: var(
+    --delpi-ui-config-table-banded-even-bg,
+    color-mix(
+      in srgb,
+      var(--delpi-ui-config-table-header-bg, #f1f5f9) 28%,
+      var(--delpi-ui-config-table-cell-bg, #ffffff)
+    )
   );
+}
+
+.delpi-ui-config-table--frameless {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
 }
 
 .delpi-ui-config-table--banded-cols .delpi-ui-config-table__header-cell:nth-child(even),

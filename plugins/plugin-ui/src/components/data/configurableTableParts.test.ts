@@ -7,6 +7,7 @@ import {
   migrateLegacyTableChromeToFrame,
   parseTablePartRef,
   partsToTableOptions,
+  resolveTableBandedRowFills,
   resolveTableFrameStyle,
   resolveTableHeaderCellPaintStyle,
   resolveTablePartPaintStyle,
@@ -89,6 +90,7 @@ describe("configurableTableParts", () => {
       strokeWidth: 4,
       borderRadius: 12,
       boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
+      visible: true,
     });
   });
 
@@ -100,6 +102,30 @@ describe("configurableTableParts", () => {
     /* `borderRadius: 0` é cantos retos válidos — não reaplica default. */
     expect(resolved.borderRadius).toBe(0);
     expect(resolved.boxShadow).toBe(DECK_TABLE_DEFAULTS.boxShadow);
+  });
+
+  it("resolveTableFrameStyle não reintroduz card branco quando frame invisível/transparente", () => {
+    const hidden = upsertTablePartState({}, { kind: "frame" }, { visible: false });
+    expect(resolveTableFrameStyle(hidden)).toMatchObject({
+      fill: "transparent",
+      stroke: "transparent",
+      strokeWidth: 0,
+      boxShadow: "none",
+      visible: false,
+    });
+    const transparent = upsertTablePartState({}, { kind: "frame" }, {
+      style: { fill: "transparent", stroke: "transparent", strokeWidth: 0 },
+    });
+    expect(resolveTableFrameStyle(transparent).fill).toBe("transparent");
+    expect(resolveTableFrameStyle(transparent).visible).toBe(false);
+  });
+
+  it("resolveTableBandedRowFills lê rowEven/rowOdd", () => {
+    const fills = resolveTableBandedRowFills({
+      rowEven: { style: { fill: "#06304D" } },
+      rowOdd: { style: { fill: "#0F527A" } },
+    });
+    expect(fills).toEqual({ even: "#06304D", odd: "#0F527A" });
   });
 
   it("migrateLegacyTableChromeToFrame copia style legado sem sobrescrever frame", () => {

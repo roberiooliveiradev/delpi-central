@@ -1061,25 +1061,33 @@ class TvGptCommitService:
             current_playlist=current_playlist,
             applied=applied,
             expected_native=expected_native_for_verify,
+            ops=ops,
         )
         from tv_app.application.services.data.visual_verification_service import (
             VisualVerificationService,
         )
 
+        after_for_visual = verify_details.get("persistedNative")
+        if not isinstance(after_for_visual, dict):
+            after_for_visual = (
+                expected_native_for_verify
+                if isinstance(expected_native_for_verify, dict)
+                else None
+            )
         visual_verification = VisualVerificationService.build(
             persisted=True,
             before_native=before_native_for_verify,
-            after_native=expected_native_for_verify
-            if isinstance(expected_native_for_verify, dict)
-            else None,
+            after_native=after_for_visual,
         )
         if not verified or not VisualVerificationService.is_verified(visual_verification):
             verify_details = dict(verify_details)
             verify_details["visualVerification"] = visual_verification
+            reason = str(verify_details.get("reason") or "OUTCOME_NOT_VERIFIED")
             result = {
                 "status": "OUTCOME_NOT_VERIFIED",
                 "persisted": True,
                 "verified": False,
+                "reason": reason,
                 "revisionBefore": revision_before,
                 "revisionAfter": revision_after,
                 "outcome": outcome,
@@ -1089,6 +1097,8 @@ class TvGptCommitService:
                 "_statusCode": 409,
                 "message": "Write persistido mas pós-condição não comprovada.",
             }
+            if isinstance(verify_details.get("diff"), list):
+                result["diff"] = verify_details["diff"]
             self._complete(
                 key=key,
                 actor_id=actor_id,
@@ -1125,6 +1135,7 @@ class TvGptCommitService:
         current_playlist: UUID | None,
         applied: list[dict[str, Any]],
         expected_native: dict[str, Any] | None,
+        ops: list[Any] | None = None,
     ) -> tuple[bool, dict[str, Any]]:
         details: dict[str, Any] = {"checks": []}
         if not applied:
@@ -1136,6 +1147,16 @@ class TvGptCommitService:
         slides = {str(s.get("id")): s for s in self._writes.list_slides(current_playlist)}
         sections = {str(s.get("id")): s for s in self._writes.list_sections(current_playlist)}
         playlist = self._writes.get_playlist(current_playlist)
+
+        from tv_app.application.services.data.table_view_projection_authority import (
+            collect_upsert_block_intents,
+            compare_explicit_block_intent,
+            has_explicit_table_columns,
+            normalize_block_table_projection,
+        )
+        import logging
+
+        log = logging.getLogger("tv_dashboard.gpt_commit.verify")
 
         for item in applied:
             op = str(item.get("op") or "")
@@ -1272,10 +1293,98 @@ class TvGptCommitService:
                 if not isinstance(persisted, dict) or not isinstance(want, dict):
                     details["checks"].append({"op": op, "ok": False, "reason": "native_missing"})
                     return False, details
+                details["persistedNative"] = persisted
                 ok = _strip_transient_native(persisted) == _strip_transient_native(want)
                 details["checks"].append({"op": op, "ok": ok, "slideId": sid})
                 if not ok:
+                    details["reason"] = "PERSISTED_CONFIG_DIVERGED"
+                    details["diff"] = [
+                        {
+                            "path": f"slides.{sid}.nativeConfig",
+                            "expected": "pipeline_native",
+                            "actual": "persisted_native",
+                        }
+                    ]
                     return False, details
+
+                # Caller intent (upsert_block frame/projection) vs authoritative read-back.
+                intent_diffs: list[dict[str, Any]] = []
+                blocks_by_id = {
+                    str(b.get("id") or "").strip(): b
+                    for b in (persisted.get("blocks") or [])
+                    if isinstance(b, dict) and str(b.get("id") or "").strip()
+                }
+                for intent in collect_upsert_block_intents(ops):
+                    bid = str(intent.get("id") or "").strip()
+                    if not bid:
+                        continue
+                    actual = blocks_by_id.get(bid)
+                    # Normalize field→key before compare so alias-only payloads pass.
+                    intent_n = normalize_block_table_projection(dict(intent))
+                    actual_n = (
+                        normalize_block_table_projection(dict(actual))
+                        if isinstance(actual, dict)
+                        else None
+                    )
+                    intent_diffs.extend(
+                        compare_explicit_block_intent(
+                            intent_block=intent_n,
+                            actual_block=actual_n,
+                        )
+                    )
+                    projection_source = (
+                        "explicit"
+                        if has_explicit_table_columns(intent_n)
+                        else "inferred"
+                    )
+                    log.info(
+                        "gpt_commit_block_verify",
+                        extra={
+                            "playlistId": str(current_playlist),
+                            "slideId": sid,
+                            "blockId": bid,
+                            "operation": "upsert_block",
+                            "expectedFrame": intent_n.get("frame"),
+                            "persistedFrame": (
+                                actual_n.get("frame") if isinstance(actual_n, dict) else None
+                            ),
+                            "expectedColumnCount": len(
+                                (intent_n.get("tableProjection") or {}).get("columns") or []
+                            )
+                            if isinstance(intent_n.get("tableProjection"), dict)
+                            else 0,
+                            "persistedColumnCount": len(
+                                (actual_n.get("tableProjection") or {}).get("columns") or []
+                            )
+                            if isinstance(actual_n, dict)
+                            and isinstance(actual_n.get("tableProjection"), dict)
+                            else 0,
+                            "projectionSource": projection_source,
+                            "verificationStatus": "pending",
+                        },
+                    )
+                if intent_diffs:
+                    details["checks"].append(
+                        {
+                            "op": op,
+                            "ok": False,
+                            "reason": "PERSISTED_CONFIG_DIVERGED",
+                            "diff": intent_diffs[:20],
+                        }
+                    )
+                    details["reason"] = "PERSISTED_CONFIG_DIVERGED"
+                    details["diff"] = intent_diffs[:20]
+                    log.info(
+                        "gpt_commit_invariant_diff",
+                        extra={
+                            "playlistId": str(current_playlist),
+                            "slideId": sid,
+                            "diffCount": len(intent_diffs),
+                            "verificationStatus": "OUTCOME_NOT_VERIFIED",
+                        },
+                    )
+                    return False, details
+
                 from tv_app.application.services.data.ready_slide_quality_service import (
                     ReadySlideQualityService,
                 )
@@ -1284,7 +1393,8 @@ class TvGptCommitService:
                 )
 
                 catalog = TvDataRouteCatalogService()
-                verify_cfg = want if isinstance(want, dict) else persisted
+                # Quality + layout gates run on the authoritative persisted read-back.
+                verify_cfg = persisted
                 quality_issues = ReadySlideQualityService.collect_native_quality_issues(
                     verify_cfg,
                     catalog=catalog,
@@ -1306,13 +1416,14 @@ class TvGptCommitService:
                             "issues": quality_issues[:8],
                         }
                     )
+                    details["reason"] = "ready_slide_quality"
                     return False, details
                 from tv_app.application.services.data.slide_layout_quality_service import (
                     SlideLayoutQualityService,
                 )
 
                 layout_issues = SlideLayoutQualityService.collect_native_layout_issues(
-                    want if isinstance(want, dict) else persisted,
+                    persisted,
                 )
                 if layout_issues:
                     details["checks"].append(
@@ -1323,7 +1434,27 @@ class TvGptCommitService:
                             "issues": layout_issues[:8],
                         }
                     )
+                    details["reason"] = "slide_layout_quality"
+                    log.info(
+                        "gpt_commit_layout_gate",
+                        extra={
+                            "playlistId": str(current_playlist),
+                            "slideId": sid,
+                            "layoutGateResult": "fail",
+                            "issueCount": len(layout_issues),
+                            "verificationStatus": "OUTCOME_NOT_VERIFIED",
+                        },
+                    )
                     return False, details
+                log.info(
+                    "gpt_commit_layout_gate",
+                    extra={
+                        "playlistId": str(current_playlist),
+                        "slideId": sid,
+                        "layoutGateResult": "ok",
+                        "verificationStatus": "VERIFIED",
+                    },
+                )
 
             else:
                 details["checks"].append(
