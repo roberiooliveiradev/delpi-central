@@ -379,6 +379,16 @@ def _coerce_number(value: Any) -> float | None:
     return None
 
 
+def _is_zero_padded_numeric_code(value: Any) -> bool:
+    """Digit string with leading zeros (filial 01, codes) — not a real number for Geral."""
+    if not isinstance(value, str):
+        return False
+    text = value.strip()
+    if len(text) < 2 or not text.isdigit():
+        return False
+    return text.startswith("0")
+
+
 def _stringify_fallback(value: Any) -> str:
     if value is None or value == "":
         return EMPTY_DISPLAY
@@ -847,6 +857,10 @@ class DisplayFormatService:
         category = str(resolved.get("category") or "general")
         if category == "text":
             return str(value)
+
+        # Geral: preserve zero-padded codes (filial 01/02) — Excel-like coerce would drop zeros.
+        if category == "general" and _is_zero_padded_numeric_code(value):
+            return str(value).strip()
 
         if category == "custom":
             pattern = str(resolved.get("pattern") or "").strip()

@@ -22,6 +22,18 @@ def test_percent_canonical_does_not_multiply_by_100():
     )
 
 
+def test_general_preserves_zero_padded_filial_codes():
+    """Geral must not coerce filial 01/02 → 1/2 (FE-BE display ownership)."""
+    general = {"category": "general", "presetId": "general", "locale": "pt-BR"}
+    assert DisplayFormatService.format_value("01", general) == "01"
+    assert DisplayFormatService.format_value("02", general) == "02"
+    assert DisplayFormatService.format_value("1", general) == "1"
+    assert DisplayFormatService.format_value(1, general) == "1"
+    # Explicit number still coerces.
+    assert DisplayFormatService.format_value("01", {"category": "number"}) == "1"
+    assert DisplayFormatService.format_value("01", {"category": "text"}) == "01"
+
+
 def test_iso_date_only_uses_utc_calendar():
     assert (
         DisplayFormatService.format_value(

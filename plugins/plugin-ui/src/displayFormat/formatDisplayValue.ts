@@ -21,6 +21,15 @@ export function formatDisplayValue(
     return String(value);
   }
 
+  /* Geral: preserve zero-padded codes (filial 01/02) — Number("01") would drop zeros. */
+  if (
+    resolved.category === "general" &&
+    typeof value === "string" &&
+    isZeroPaddedNumericCode(value)
+  ) {
+    return value.trim();
+  }
+
   if (resolved.category === "custom") {
     const pattern = resolved.pattern?.trim();
     if (!pattern) return stringifyFallback(value);
@@ -45,6 +54,12 @@ export function formatDisplayValue(
     return stringifyFallback(value);
   }
   return formatNumberSpec(num, resolved);
+}
+
+function isZeroPaddedNumericCode(value: string): boolean {
+  const text = value.trim();
+  if (text.length < 2 || !/^\d+$/.test(text)) return false;
+  return text.startsWith("0");
 }
 
 export function normalizeSpec(spec: DisplayFormatSpec | null | undefined): DisplayFormatSpec {

@@ -19,6 +19,15 @@ describe("formatDisplayValue", () => {
     expect(formatDisplayValue(41.7, { category: "percent", decimalPlaces: 0 })).toBe("42%");
   });
 
+  it("Geral preserva códigos com zero à esquerda (filial 01/02)", () => {
+    expect(formatDisplayValue("01", { category: "general" })).toBe("01");
+    expect(formatDisplayValue("02", { category: "general" })).toBe("02");
+    expect(formatDisplayValue("1", { category: "general" })).toBe("1");
+    expect(formatDisplayValue(1, { category: "general" })).toBe("1");
+    expect(formatDisplayValue("01", { category: "number" })).toBe("1");
+    expect(formatDisplayValue("01", { category: "text" })).toBe("01");
+  });
+
   it("ISO date-only usa calendário UTC (não vira dia anterior no BR)", () => {
     expect(formatDisplayValue("2026-08-03", specFromPresetId("date-short"))).toBe("03/08/2026");
     const parsed = parseDisplayDate("2026-08-03");
