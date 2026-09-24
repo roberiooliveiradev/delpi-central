@@ -162,3 +162,98 @@ def test_get_playlist_context_index_plus_focused_slide():
     assert "nativeConfig" not in out["slides"][0]
     assert out["focusedSlide"]["nativeConfig"]["blocks"][0].get("resolved") is None
     assert utf8_size(out) < GPT_ACTIONS_RESPONSE_MAX_BYTES
+
+
+def test_get_playlist_context_editor_focus_scope_omits_native_config():
+    writes = MagicMock()
+    playlist_id = str(uuid4())
+    sid = str(uuid4())
+    ds_id = "ds-weg-1"
+    kpi_blocks = [
+        {
+            "id": f"b{i}",
+            "type": "kpi_view",
+            "frame": {"x": 1, "y": 1, "w": 20, "h": 20},
+            "dataSourceId": ds_id,
+            "resolved": {"rows": [{"v": j} for j in range(80)]},
+        }
+        for i in range(12)
+    ]
+    heavy = {
+        "version": 5,
+        "blocks": [
+            {
+                "id": ds_id,
+                "type": "data_source",
+                "dataBinding": {
+                    "operationId": "op.demo",
+                    "params": {"branch": "01", "dateRangePreset": "this_month"},
+                    "label": "WEG SC · setembro 2025",
+                    "displayMode": "auto",
+                },
+                "resolved": {"rows": [{"v": i} for i in range(200)]},
+            },
+            *kpi_blocks,
+        ],
+    }
+    writes.get_playlist.return_value = {
+        "id": playlist_id,
+        "name": "TV",
+        "dataDefaults": {},
+    }
+    writes.list_slides.return_value = [
+        {"id": sid, "title": "A", "sortOrder": 0, "nativeConfig": heavy},
+    ]
+    writes.list_sections.return_value = []
+    writes.get_revision.return_value = 3
+    dispatch = GptActionsDispatchService(
+        repo=MagicMock(), writes=writes, commit=MagicMock()
+    )
+    user = SimpleNamespace(is_superadmin=True, permissions=[], id="u1")
+    store = EditorFocusStore(ttl_seconds=90)
+    store.record(
+        user_id="u1",
+        playlist_id=playlist_id,
+        slide_id=sid,
+        selected_ids=[ds_id],
+    )
+
+    with (
+        patch.object(
+            dispatch._access,
+            "resolve",
+            return_value=SimpleNamespace(
+                can_read=True,
+                can_edit=True,
+                level="owner",
+                playlist={"id": playlist_id, "name": "TV", "dataDefaults": {}},
+            ),
+        ),
+        patch.object(dispatch, "_actor", return_value="u1"),
+        patch(
+            "tv_app.application.services.editor_focus_store.editor_focus_store",
+            store,
+        ),
+        patch(
+            "tv_app.application.gpt_actions.dispatch_service.assert_permission",
+            return_value=None,
+        ),
+    ):
+        out = dispatch.get_playlist_context(
+            user=user,
+            playlist_id=playlist_id,
+            scope="editorFocus",
+            preview_slide_id=sid,
+        )
+
+    assert out["scope"] == "editorFocus"
+    assert out["editorFocus"]["selectedDataSourceId"] == ds_id
+    assert "nativeConfig" not in (out.get("focusedSlide") or {})
+    assert out["dataSource"]["id"] == ds_id
+    assert out["dataSource"]["label"] == "WEG SC · setembro 2025"
+    assert out["dataSource"]["operationId"] == "op.demo"
+    assert out["dataSource"]["params"]["branch"] == "01"
+    assert any(row["id"] == ds_id for row in out["dataSources"])
+    assert "layoutDigest" not in out
+    assert "mediaInventory" not in out
+    assert utf8_size(out) < GPT_ACTIONS_RESPONSE_MAX_BYTES

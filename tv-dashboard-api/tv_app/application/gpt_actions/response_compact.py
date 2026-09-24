@@ -114,6 +114,71 @@ def project_slide_detail(slide: Mapping[str, Any]) -> dict[str, Any]:
     return row
 
 
+def project_data_source_row(block: Mapping[str, Any]) -> dict[str, Any] | None:
+    """Compact data_source digest for mutation planning (no resolved payload)."""
+    if not isinstance(block, dict):
+        return None
+    if str(block.get("type") or "").strip() != "data_source":
+        return None
+    binding = block.get("dataBinding") if isinstance(block.get("dataBinding"), dict) else {}
+    params = binding.get("params") if isinstance(binding.get("params"), dict) else {}
+    transform = block.get("dataTransform") if isinstance(block.get("dataTransform"), dict) else None
+    return {
+        "id": block.get("id"),
+        "label": binding.get("label") or block.get("label") or "",
+        "operationId": binding.get("operationId") or "",
+        "params": dict(params),
+        "displayMode": binding.get("displayMode") or "auto",
+        "hasTransform": bool(
+            isinstance(transform, dict)
+            and (
+                (isinstance(transform.get("steps"), list) and transform.get("steps"))
+                or transform.get("script")
+            )
+        ),
+        "fieldLabels": block.get("fieldLabels")
+        if isinstance(block.get("fieldLabels"), dict)
+        else {},
+    }
+
+
+def project_data_sources_from_slide(slide: Mapping[str, Any] | None) -> list[dict[str, Any]]:
+    if not isinstance(slide, dict):
+        return []
+    native = slide.get("nativeConfig") if isinstance(slide.get("nativeConfig"), dict) else {}
+    blocks = native.get("blocks") if isinstance(native.get("blocks"), list) else []
+    out: list[dict[str, Any]] = []
+    for block in blocks:
+        row = project_data_source_row(block)
+        if row is not None:
+            out.append(row)
+    return out
+
+
+def resolve_selected_data_source_id(
+    *,
+    editor_focus: Mapping[str, Any] | None,
+    data_sources: list[Mapping[str, Any]],
+) -> str | None:
+    """Prefer explicit selectedDataSourceId; else first selectedIds that is a data_source."""
+    if isinstance(editor_focus, dict):
+        explicit = str(editor_focus.get("selectedDataSourceId") or "").strip()
+        if explicit:
+            return explicit
+        source_ids = {
+            str(item.get("id") or "").strip()
+            for item in data_sources
+            if str(item.get("id") or "").strip()
+        }
+        selected = editor_focus.get("selectedIds")
+        if isinstance(selected, list):
+            for item in selected:
+                sid = str(item or "").strip()
+                if sid and sid in source_ids:
+                    return sid
+    return None
+
+
 def project_playlist_summary(playlist: Mapping[str, Any] | None) -> dict[str, Any]:
     if not isinstance(playlist, dict):
         return {}

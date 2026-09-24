@@ -229,7 +229,7 @@
       "get": {
         "operationId": "gpt_get_playlist_context",
         "summary": "Authorized playlist context",
-        "description": "Compact playlist context: playlist summary, slides[] index (no nativeConfig), focusedSlide with full nativeConfig (editorFocus / slideId / first), layoutDigest, filterDigest, optional editorFocus. includePreview=true&slideId= adds slidePreview signed PNG URL (no 9th Action).",
+        "description": "Compact playlist context: playlist summary, slides[] index (no nativeConfig), focusedSlide with full nativeConfig (editorFocus / slideId / first), dataSources[] digest for the focused slide, layoutDigest, filterDigest, optional editorFocus. scope=editorFocus omits nativeConfig/heavy digests (avoids ResponseTooLargeError) and returns dataSources + selected dataSource. includePreview=true&slideId= adds slidePreview signed PNG URL (no 9th Action).",
         "tags": [
           "TV Dashboard GPT"
         ],
@@ -268,6 +268,20 @@
               "format": "uuid"
             },
             "description": "Selects focusedSlide (full nativeConfig) and optional includePreview. Defaults to editorFocus.slideId or the first slide."
+          },
+          {
+            "name": "scope",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "full",
+                "editorFocus"
+              ],
+              "default": "full"
+            },
+            "description": "full: focusedSlide.nativeConfig + digests. editorFocus: omit nativeConfig; return dataSources[] and dataSource (selected) for label/metadata mutations."
           }
         ],
         "responses": {
@@ -2308,8 +2322,7 @@
                         {
                           "type": "object",
                           "required": [
-                            "op",
-                            "operationId"
+                            "op"
                           ],
                           "example": {
                             "op": "upsert_data_source",
@@ -2324,20 +2337,23 @@
                               "value": "OEE"
                             }
                           },
+                          "description": "Create or update a data_source. Label-only rename: blockId + label (operationId optional when unchanged). Creating a source still requires operationId.",
                           "properties": {
                             "op": {
                               "const": "upsert_data_source",
                               "type": "string"
                             },
                             "operationId": {
-                              "type": "string"
+                              "type": "string",
+                              "description": "Required when creating or changing the route. Optional for label-only patch of an existing blockId."
                             },
                             "blockId": {
-                              "type": "string"
+                              "type": "string",
+                              "description": "Existing dataSourceId to patch, or new id when creating."
                             },
                             "params": {
                               "type": "object",
-                              "description": "Route params as a primitive map. Keys depend on the allowlisted operationId; values are validated downstream against the route schema.",
+                              "description": "Route params as a primitive map. Omit for label-only rename.",
                               "additionalProperties": {
                                 "oneOf": [
                                   {
@@ -2356,7 +2372,8 @@
                               }
                             },
                             "label": {
-                              "type": "string"
+                              "type": "string",
+                              "description": "Visible data source name (dataBinding.label). Label-only updates must not change operationId/params/transforms."
                             },
                             "displayMode": {
                               "type": "string",

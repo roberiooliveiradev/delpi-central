@@ -1011,6 +1011,32 @@ class PresentationPatchService:
         playlist_defaults: dict[str, Any] | None = None,
     ) -> None:
         operation_id = str(op.get("operationId") or "").strip()
+        block_id = str(op.get("blockId") or "").strip()
+        blocks = _blocks_of(cfg)
+        existing = _find_block(blocks, block_id) if block_id else None
+
+        # Label-only metadata patch: keep operationId/params/transforms/bindings intact.
+        if self._is_data_source_label_only_patch(op, existing):
+            assert existing is not None
+            prior_binding = (
+                existing.get("dataBinding")
+                if isinstance(existing.get("dataBinding"), dict)
+                else {}
+            )
+            label = str(op.get("label") or "").strip()
+            existing["type"] = "data_source"
+            existing["dataBinding"] = merge_data_binding(
+                prior_binding, {"label": label}
+            )
+            # Do not clear resolved — label is display metadata only.
+            if isinstance(op.get("fieldLabels"), dict):
+                existing["fieldLabels"] = {
+                    str(k): str(v)
+                    for k, v in op["fieldLabels"].items()
+                    if str(k).strip() and str(v).strip()
+                }
+            return
+
         if not operation_id:
             raise PresentationPatchError(
                 PresentationOpsContentService.message("operationNotInCatalog", operationId="")
@@ -1022,7 +1048,9 @@ class PresentationPatchService:
                     "operationNotInCatalog", operationId=operation_id
                 )
             )
-        block_id = str(op.get("blockId") or "").strip() or _new_block_id()
+        if not block_id:
+            block_id = _new_block_id()
+            existing = None
         params = op.get("params") if isinstance(op.get("params"), dict) else {}
         from tv_app.application.services.data.ready_slide_quality_service import (
             ReadySlideQualityService,
@@ -1044,8 +1072,6 @@ class PresentationPatchService:
         except ValueError as exc:
             raise PresentationPatchError(str(exc)) from exc
         label = op.get("label") or route.get("label") or operation_id
-        blocks = _blocks_of(cfg)
-        existing = _find_block(blocks, block_id)
         binding = {
             "operationId": operation_id,
             "params": dict(params),
@@ -1091,6 +1117,35 @@ class PresentationPatchService:
             }
         blocks.append(block)
         cfg["blocks"] = blocks
+
+    @staticmethod
+    def _is_data_source_label_only_patch(
+        op: dict[str, Any], existing: dict[str, Any] | None
+    ) -> bool:
+        """True when op only renames an existing source (no route/params rewrite)."""
+        if existing is None or str(existing.get("type") or "") != "data_source":
+            return False
+        label = str(op.get("label") or "").strip()
+        if not label:
+            return False
+        # Explicit params/transform/displayMode ⇒ full upsert path.
+        if isinstance(op.get("params"), dict) and op["params"]:
+            return False
+        if isinstance(op.get("dataTransform"), dict):
+            return False
+        if op.get("displayMode") not in (None, ""):
+            return False
+        op_id = str(op.get("operationId") or "").strip()
+        if not op_id:
+            return True
+        prior = (
+            existing.get("dataBinding")
+            if isinstance(existing.get("dataBinding"), dict)
+            else {}
+        )
+        prior_op = str(prior.get("operationId") or "").strip()
+        # Same route + label only (optional operationId echo) still label-only.
+        return bool(prior_op) and prior_op == op_id
 
     def _sanitize_vista_data_transform(self, raw: dict[str, Any]) -> dict[str, Any]:
         if (

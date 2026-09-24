@@ -133,13 +133,16 @@ class GptActionsDispatchService:
         playlist_id: str,
         include_preview: bool = False,
         preview_slide_id: str | None = None,
+        scope: str | None = None,
     ) -> dict[str, Any]:
         from tv_app.application.gpt_actions.response_compact import (
             pick_focus_slide_id,
+            project_data_sources_from_slide,
             project_media_inventory,
             project_playlist_summary,
             project_slide_detail,
             project_slide_index_row,
+            resolve_selected_data_source_id,
         )
         from tv_app.application.services.data.filter_digest_service import (
             FilterDigestService,
@@ -166,13 +169,24 @@ class GptActionsDispatchService:
         sections = self._writes.list_sections(pid)
         revision = self._writes.get_revision(pid)
         actor = self._actor(user)
-        layout_digest = LayoutDigestService.digest_slides(slides)
+        scope_key = str(scope or "full").strip().lower()
+        if scope_key not in {"full", "editorfocus", "editor_focus"}:
+            scope_key = "full"
+        focused_scope = scope_key in {"editorfocus", "editor_focus"}
+
+        layout_digest = (
+            None if focused_scope else LayoutDigestService.digest_slides(slides)
+        )
         programming_defaults = (
             (playlist.get("dataDefaults") or {}) if isinstance(playlist, dict) else {}
         )
-        filter_digest = FilterDigestService.digest_playlist(
-            programming_defaults=programming_defaults,
-            slides=slides,
+        filter_digest = (
+            None
+            if focused_scope
+            else FilterDigestService.digest_playlist(
+                programming_defaults=programming_defaults,
+                slides=slides,
+            )
         )
 
         editor_focus: dict[str, Any] | None = None
@@ -205,7 +219,61 @@ class GptActionsDispatchService:
         if detail_slide is None and slides:
             detail_slide = slides[0] if isinstance(slides[0], dict) else None
 
-        out: dict[str, Any] = {
+        data_sources = project_data_sources_from_slide(
+            detail_slide if isinstance(detail_slide, dict) else None
+        )
+        selected_ds = resolve_selected_data_source_id(
+            editor_focus=editor_focus,
+            data_sources=data_sources,
+        )
+        if editor_focus is not None and selected_ds:
+            editor_focus = {**editor_focus, "selectedDataSourceId": selected_ds}
+
+        if focused_scope:
+            focused_meta = None
+            if isinstance(detail_slide, dict):
+                focused_meta = {
+                    "id": detail_slide.get("id"),
+                    "title": detail_slide.get("title"),
+                    "sortOrder": detail_slide.get("sortOrder"),
+                    "durationSec": detail_slide.get("durationSec"),
+                    "isActive": detail_slide.get("isActive"),
+                    "slideType": detail_slide.get("slideType"),
+                    "sectionId": detail_slide.get("sectionId"),
+                }
+            selected_source = next(
+                (row for row in data_sources if str(row.get("id") or "") == selected_ds),
+                None,
+            )
+            out: dict[str, Any] = {
+                "scope": "editorFocus",
+                "playlist": project_playlist_summary(
+                    playlist if isinstance(playlist, dict) else {}
+                ),
+                "slides": slide_index,
+                "focusedSlide": focused_meta,
+                "focusedSlideId": str(detail_slide.get("id"))
+                if isinstance(detail_slide, dict)
+                else None,
+                "dataSources": data_sources,
+                "dataSource": selected_source,
+                "sections": sections,
+                "accessRole": access.level,
+                "currentRevision": revision,
+                "localDraftCoordination": "unavailable_external",
+                "note": (
+                    "scope=editorFocus omits focusedSlide.nativeConfig and heavy digests. "
+                    "dataSources[] lists id/label/operationId/params for the focused slide. "
+                    "dataSource is the selected source when editorFocus.selectedDataSourceId "
+                    "or selectedIds resolve to a data_source. Use scope=full for nativeConfig."
+                ),
+            }
+            if editor_focus:
+                out = {"editorFocus": editor_focus, **out}
+            return out
+
+        out = {
+            "scope": "full",
             "playlist": project_playlist_summary(playlist if isinstance(playlist, dict) else {}),
             "slides": slide_index,
             "focusedSlide": project_slide_detail(detail_slide)
@@ -214,6 +282,7 @@ class GptActionsDispatchService:
             "focusedSlideId": str(detail_slide.get("id"))
             if isinstance(detail_slide, dict)
             else None,
+            "dataSources": data_sources,
             "sections": sections,
             "accessRole": access.level,
             "currentRevision": revision,
@@ -227,6 +296,8 @@ class GptActionsDispatchService:
             "note": (
                 "slides[] is a compact index (no nativeConfig). "
                 "focusedSlide has full nativeConfig for the editorFocus/preview/first slide. "
+                "dataSources[] lists id/label/operationId/params for the focused slide. "
+                "Pass scope=editorFocus to omit nativeConfig when the response is too large. "
                 "Pass slideId via includePreview or open another context after resolving the target."
             ),
         }

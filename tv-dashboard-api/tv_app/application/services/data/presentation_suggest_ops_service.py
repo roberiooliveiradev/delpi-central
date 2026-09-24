@@ -349,6 +349,41 @@ class PresentationSuggestOpsService:
         return ""
 
     @classmethod
+    def _quoted_values(cls, message: str) -> list[str]:
+        values: list[str] = []
+        for match in _QUOTED_RE.finditer(str(message or "")):
+            for group in match.groups():
+                if group is not None and str(group).strip():
+                    values.append(str(group).strip())
+                    break
+        return values
+
+    @classmethod
+    def _extract_source_label(cls, message: str) -> str:
+        """New visible label for rename: last quoted, or text after «para»."""
+        values = cls._quoted_values(message)
+        if len(values) >= 2:
+            return values[-1]
+        if len(values) == 1:
+            # Single quote is the new name when message has «para "X"» or «chame … "X"».
+            lower = str(message or "").lower()
+            if "para" in lower or "chame" in lower or "nome" in lower:
+                return values[0]
+        raw = str(message or "")
+        match = re.search(
+            r"\bpara\s+(.+?)(?:\s*,\s*preserv|\s*\.\s*$|\s*$)",
+            raw,
+            flags=re.IGNORECASE | re.DOTALL,
+        )
+        if match:
+            candidate = str(match.group(1) or "").strip().strip("\"'«»")
+            # Drop trailing clause fragments.
+            candidate = re.split(r"\s*,\s*preserv", candidate, maxsplit=1)[0].strip()
+            if candidate:
+                return candidate
+        return ""
+
+    @classmethod
     def _first_selected_block_id(cls, host: dict[str, Any]) -> str:
         raw = host.get("selectedBlockIds")
         if isinstance(raw, list):
@@ -425,6 +460,7 @@ class PresentationSuggestOpsService:
         host: dict[str, Any],
         normalized: str,
         operation_id: str,
+        message: str = "",
     ) -> str:
         selected = str(
             host.get("selectedDataSourceId") or host.get("dataSourceId") or ""
@@ -435,6 +471,19 @@ class PresentationSuggestOpsService:
         sources = cls._host_data_sources(host)
         if not sources:
             return ""
+
+        # Prefer matching an existing source label cited in the message (rename/deixis).
+        quoted_values = cls._quoted_values(message)
+        for needle in (v.lower() for v in quoted_values if v):
+            for item in sources:
+                if str(item.get("label") or "").strip().lower() == needle:
+                    return str(item.get("id") or "").strip()
+
+        if normalized:
+            for item in sorted(sources, key=lambda row: -len(str(row.get("label") or ""))):
+                label = str(item.get("label") or "").strip().lower()
+                if label and label in normalized:
+                    return str(item.get("id") or "").strip()
 
         if operation_id:
             for item in sources:
@@ -928,6 +977,7 @@ class PresentationSuggestOpsService:
             host=host,
             normalized=normalized,
             operation_id=operation_id,
+            message=message,
         )
         selected_visual_id = cls._resolve_selected_visual_id(host)
         params = cls._extract_params(normalized)
@@ -944,6 +994,7 @@ class PresentationSuggestOpsService:
         format_hint = cls._extract_format_hint(message)
         return {
             "quoted": quoted,
+            "sourceLabel": cls._extract_source_label(message),
             "textContent": text_content,
             "selectedBlockId": cls._first_selected_block_id(host),
             "selectedVisualId": selected_visual_id,
@@ -982,6 +1033,15 @@ class PresentationSuggestOpsService:
     ) -> dict[str, Any]:
         name = str(op.get("op") or "").strip()
         if name == "upsert_data_source":
+            # Label-only rename must not inject default params (would force full upsert).
+            label_only = bool(str(op.get("label") or "").strip()) and not str(
+                op.get("operationId") or ""
+            ).strip()
+            if label_only:
+                op.pop("params", None)
+                op.pop("displayMode", None)
+                op.pop("dataTransform", None)
+                return op
             params_raw = str(placeholders.get("paramsJson") or "").strip()
             if params_raw:
                 try:
@@ -1186,9 +1246,15 @@ class PresentationSuggestOpsService:
                     return "patch_native_config.background"
             return None
         if name == "upsert_data_source":
-            if not str(op.get("operationId") or "").strip():
+            has_label = bool(str(op.get("label") or "").strip())
+            has_op = bool(str(op.get("operationId") or "").strip())
+            has_block = bool(str(op.get("blockId") or "").strip())
+            # Label-only metadata patch on an existing source (no operationId required).
+            if has_label and has_block and not has_op:
+                return None
+            if not has_op:
                 return "upsert_data_source.operationId"
-            if not str(op.get("blockId") or "").strip():
+            if not has_block:
                 return "upsert_data_source.blockId"
             return None
         if name == "set_data_transform":

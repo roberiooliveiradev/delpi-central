@@ -1175,3 +1175,46 @@ def test_batch_too_large_is_honest_error(monkeypatch):
             user={},
         )
     assert excinfo.value.code == "BATCH_TOO_LARGE"
+
+
+def test_preview_label_only_preserves_source_identity(monkeypatch):
+    """Rename data_source label must keep operationId/params/transform/bindings."""
+    clear_presentation_ops_content_cache()
+    repo = _FakeRepo()
+    # Attach transform + bind so we can assert identity.
+    blocks = repo.slides[SLIDE_ID]["nativeConfig"]["blocks"]
+    src = next(b for b in blocks if b["id"] == "src-a")
+    src["dataTransform"] = {"steps": [{"op": "keepRows", "count": 5, "from": "top"}]}
+    src["resolved"] = {"rows": [{"v": 1}]}
+    kpi = next(b for b in blocks if b["id"] == "kpi-1")
+    kpi["dataSourceId"] = "src-a"
+
+    svc = _service(repo, monkeypatch)
+    result = svc.preview(
+        {
+            "target": {"playlistId": PLAYLIST_ID, "slideId": SLIDE_ID},
+            "ops": [
+                {
+                    "op": "upsert_data_source",
+                    "blockId": "src-a",
+                    "label": "WEG SC · setembro ano passado",
+                }
+            ],
+        },
+        user={"sub": "u1"},
+        authorization="Bearer x",
+    )
+    assert result["ok"] is True
+    updated = next(b for b in result["nativeConfig"]["blocks"] if b["id"] == "src-a")
+    binding = updated["dataBinding"]
+    assert binding["label"] == "WEG SC · setembro ano passado"
+    assert binding["operationId"] == "op.demo"
+    assert binding["params"] == {"branch": "01"}
+    assert updated["dataTransform"]["steps"][0]["count"] == 5
+    # Persistence sanitize strips resolved; identity of the source must remain.
+    bound = next(b for b in result["nativeConfig"]["blocks"] if b["id"] == "kpi-1")
+    assert bound["dataSourceId"] == "src-a"
+    # Same id — no recreate.
+    assert [b["id"] for b in result["nativeConfig"]["blocks"] if b["type"] == "data_source"] == [
+        "src-a"
+    ]

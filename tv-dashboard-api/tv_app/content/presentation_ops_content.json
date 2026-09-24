@@ -367,6 +367,7 @@
     "suggestNeedPreset": "Informe o presetKey do catálogo de slides (ex.: production_oee_overview).",
     "suggestNeedSection": "Informe ou selecione a seção alvo.",
     "suggestNeedDataSource": "Selecione a fonte de dados no slide ou informe o dataSourceId.",
+    "suggestNeedDataSourceLabel": "Informe o dataSourceId da fonte e o novo nome entre aspas (ex.: renomeie a fonte \"WEG SC · setembro 2025\" para \"WEG SC · setembro ano passado\").",
     "suggestNeedQuotedTitle": "Informe o novo nome entre aspas (ex.: renomeie o slide \"Manhã\").",
     "suggestNeedReorder": "Para reordenar, descreva a ordem desejada ou use o filmstrip; o Copiloto precisa dos ids dos slides.",
     "suggestNeedTransformSteps": "Descreva um transform tipado suportado (ex.: «manter top 10») — o Copiloto não gera M/SQL livre.",
@@ -398,6 +399,7 @@
     "presetKey": "suggestNeedPreset",
     "sectionId": "suggestNeedSection",
     "dataSourceId": "suggestNeedDataSource",
+    "sourceLabel": "suggestNeedDataSourceLabel",
     "quoted": "suggestNeedQuotedTitle",
     "transformStepsJson": "suggestNeedTransformSteps",
     "branchParam": "suggestNeedBranchParam",
@@ -410,6 +412,7 @@
     "add_slide_from_preset.presetKey": "suggestNeedPreset",
     "upsert_data_source.operationId": "suggestNeedOperationId",
     "upsert_data_source.blockId": "suggestNeedDataSource",
+    "upsert_data_source.label": "suggestNeedDataSourceLabel",
     "bind_visual.visualId": "suggestNeedSelection",
     "bind_visual.dataSourceId": "suggestNeedDataSource",
     "reorder_slides.items": "suggestNeedReorder",
@@ -762,8 +765,7 @@
       "inputSchema": {
         "type": "object",
         "required": [
-          "op",
-          "operationId"
+          "op"
         ],
         "example": {
           "op": "upsert_data_source",
@@ -778,19 +780,22 @@
             "value": "OEE"
           }
         },
+        "description": "Create or update a data_source. Label-only rename: blockId + label (operationId optional when unchanged). Creating a source still requires operationId.",
         "properties": {
           "op": {
             "const": "upsert_data_source"
           },
           "operationId": {
-            "type": "string"
+            "type": "string",
+            "description": "Required when creating or changing the route. Optional for label-only patch of an existing blockId."
           },
           "blockId": {
-            "type": "string"
+            "type": "string",
+            "description": "Existing dataSourceId to patch, or new id when creating."
           },
           "params": {
             "type": "object",
-            "description": "Route params as a primitive map. Keys depend on the allowlisted operationId; values are validated downstream against the route schema.",
+            "description": "Route params as a primitive map. Omit for label-only rename.",
             "additionalProperties": {
               "oneOf": [
                 {
@@ -809,7 +814,8 @@
             }
           },
           "label": {
-            "type": "string"
+            "type": "string",
+            "description": "Visible data source name (dataBinding.label). Label-only updates must not change operationId/params/transforms."
           },
           "displayMode": {
             "type": "string",
@@ -2641,7 +2647,7 @@
     {
       "key": "update_data_source",
       "op": "upsert_data_source",
-      "whenToUse": "Atualizar a fonte/modelo de dados selecionado (rota, params ou rótulos).",
+      "whenToUse": "Atualizar a fonte/modelo de dados selecionado (rota, params ou rótulos de campo).",
       "contentMarkers": [
         "troque a fonte",
         "trocar a fonte",
@@ -2662,7 +2668,12 @@
         "adicione um kpi",
         "adicione um gráfico",
         "adicione uma tabela",
-        "crie um slide"
+        "crie um slide",
+        "renomeie a fonte",
+        "renomear a fonte",
+        "renomeie o modelo",
+        "nome da fonte",
+        "rótulo da fonte"
       ],
       "actionTermSet": "mutation",
       "requiresFilledPlaceholders": [
@@ -2676,6 +2687,53 @@
         "params": {},
         "blockId": "{{dataSourceId}}",
         "label": "{{routeLabel}}"
+      }
+    },
+    {
+      "key": "rename_data_source_label",
+      "op": "upsert_data_source",
+      "whenToUse": "Renomear apenas o label visível de uma fonte existente (preserva operationId, params, transforms e bindings).",
+      "contentMarkers": [
+        "renomeie",
+        "renomear",
+        "renomeie a fonte",
+        "renomear a fonte",
+        "renomeie o modelo",
+        "renomear o modelo",
+        "renomeie a consulta",
+        "renomear a consulta",
+        "nome da fonte",
+        "rótulo da fonte",
+        "altere o nome da fonte",
+        "alterar o nome da fonte",
+        "mude o nome da fonte",
+        "mudar o nome da fonte",
+        "chame a fonte",
+        "chame o modelo"
+      ],
+      "excludeMarkers": [
+        "renomeie o campo",
+        "renomear o campo",
+        "renomeie campo",
+        "renomeie o slide",
+        "renomear o slide",
+        "field label",
+        "troque a fonte",
+        "trocar a fonte",
+        "duração",
+        "pausar slide",
+        "ativar slide"
+      ],
+      "actionTermSet": "mutation",
+      "requiresFilledPlaceholders": [
+        "dataSourceId",
+        "sourceLabel"
+      ],
+      "clarificationMessageKey": "suggestNeedDataSourceLabel",
+      "payloadTemplate": {
+        "op": "upsert_data_source",
+        "blockId": "{{dataSourceId}}",
+        "label": "{{sourceLabel}}"
       }
     },
     {
@@ -3017,8 +3075,6 @@
       "op": "update_slide",
       "whenToUse": "Renomear, alterar duração ou ativar/pausar o slide alvo.",
       "contentMarkers": [
-        "renomear",
-        "renomeie",
         "renomeie o slide",
         "renomear o slide",
         "duração",
@@ -3028,7 +3084,14 @@
         "pausar slide",
         "ativar slide"
       ],
-      "excludeMarkers": [],
+      "excludeMarkers": [
+        "fonte",
+        "modelo",
+        "consulta",
+        "campo",
+        "rótulo da fonte",
+        "nome da fonte"
+      ],
       "actionTermSet": "mutation",
       "requiresFilledPlaceholders": [
         "quoted"

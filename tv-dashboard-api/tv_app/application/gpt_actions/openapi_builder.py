@@ -564,7 +564,10 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "description": (
                     "Compact playlist context: playlist summary, slides[] index (no nativeConfig), "
                     "focusedSlide with full nativeConfig (editorFocus / slideId / first), "
-                    "layoutDigest, filterDigest, optional editorFocus. "
+                    "dataSources[] digest for the focused slide, layoutDigest, filterDigest, "
+                    "optional editorFocus. "
+                    "scope=editorFocus omits nativeConfig/heavy digests (avoids ResponseTooLargeError) "
+                    "and returns dataSources + selected dataSource. "
                     "includePreview=true&slideId= adds slidePreview signed PNG URL (no 9th Action)."
                 ),
                 "tags": [tag],
@@ -595,6 +598,21 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                         "description": (
                             "Selects focusedSlide (full nativeConfig) and optional includePreview. "
                             "Defaults to editorFocus.slideId or the first slide."
+                        ),
+                    },
+                    {
+                        "name": "scope",
+                        "in": "query",
+                        "required": False,
+                        "schema": {
+                            "type": "string",
+                            "enum": ["full", "editorFocus"],
+                            "default": "full",
+                        },
+                        "description": (
+                            "full: focusedSlide.nativeConfig + digests. "
+                            "editorFocus: omit nativeConfig; return dataSources[] and "
+                            "dataSource (selected) for label/metadata mutations."
                         ),
                     },
                 ],

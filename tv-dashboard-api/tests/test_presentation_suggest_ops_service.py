@@ -510,3 +510,34 @@ def test_selection_evidence_from_preview_payload():
     assert "filial" in evidence["columns"]
     assert len(evidence["rows"]) == 2
 
+
+def test_suggest_rename_data_source_label_only():
+    result = PresentationSuggestOpsService.suggest(
+        message=(
+            'Renomeie a fonte "WEG SC · setembro 2025" para '
+            '"WEG SC · setembro ano passado", preservando toda a configuração da fonte.'
+        ),
+        host_context={
+            "slideId": "slide-1",
+            "playlistId": "pl-1",
+            "selectedDataSourceId": "ds-weg-sep-2025",
+            "dataSources": [
+                {
+                    "id": "ds-weg-sep-2025",
+                    "operationId": "get_sales_order_otd_series",
+                    "label": "WEG SC · setembro 2025",
+                }
+            ],
+        },
+    )
+    assert result["status"] == "ready"
+    assert "rename_data_source_label" in result["matchedCapabilityKeys"]
+    ops = [op for op in result["ops"] if op.get("op") == "upsert_data_source"]
+    assert len(ops) == 1
+    source = ops[0]
+    assert source.get("blockId") == "ds-weg-sep-2025"
+    assert source.get("label") == "WEG SC · setembro ano passado"
+    assert "operationId" not in source or not source.get("operationId")
+    assert not source.get("params")
+    assert not source.get("dataTransform")
+

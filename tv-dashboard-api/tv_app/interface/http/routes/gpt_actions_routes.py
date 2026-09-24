@@ -169,6 +169,14 @@ def get_playlist_context(
         default=None,
         description="Slide UUID to expand as focusedSlide (and for includePreview). Defaults to editorFocus.slideId or the first slide.",
     ),
+    scope: str | None = Query(
+        default="full",
+        description=(
+            "full (default): focusedSlide with nativeConfig + digests. "
+            "editorFocus: omit nativeConfig/heavy digests; return dataSources[] and "
+            "selected dataSource for rename/label mutations without ResponseTooLargeError."
+        ),
+    ),
 ):
     cid = _correlation_id(request)
     try:
@@ -177,6 +185,7 @@ def get_playlist_context(
             playlist_id=playlist_id,
             include_preview=bool(includePreview),
             preview_slide_id=slideId,
+            scope=scope,
         )
         return ok(data)
     except Exception as exc:  # noqa: BLE001
