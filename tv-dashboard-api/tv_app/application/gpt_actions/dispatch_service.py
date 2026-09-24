@@ -136,8 +136,10 @@ class GptActionsDispatchService:
         scope: str | None = None,
     ) -> dict[str, Any]:
         from tv_app.application.gpt_actions.response_compact import (
+            exceeds_actions_budget,
             pick_focus_slide_id,
             project_data_sources_from_slide,
+            project_editor_focus_context,
             project_media_inventory,
             project_playlist_summary,
             project_slide_detail,
@@ -230,49 +232,19 @@ class GptActionsDispatchService:
             editor_focus = {**editor_focus, "selectedDataSourceId": selected_ds}
 
         if focused_scope:
-            focused_meta = None
-            if isinstance(detail_slide, dict):
-                focused_meta = {
-                    "id": detail_slide.get("id"),
-                    "title": detail_slide.get("title"),
-                    "sortOrder": detail_slide.get("sortOrder"),
-                    "durationSec": detail_slide.get("durationSec"),
-                    "isActive": detail_slide.get("isActive"),
-                    "slideType": detail_slide.get("slideType"),
-                    "sectionId": detail_slide.get("sectionId"),
-                }
-            selected_source = next(
-                (row for row in data_sources if str(row.get("id") or "") == selected_ds),
-                None,
+            return project_editor_focus_context(
+                playlist=playlist if isinstance(playlist, dict) else {},
+                slides_index=slide_index,
+                detail_slide=detail_slide if isinstance(detail_slide, dict) else None,
+                data_sources=data_sources,
+                selected_data_source_id=selected_ds,
+                sections=sections,
+                access_role=access.level,
+                revision=revision,
+                editor_focus=editor_focus,
             )
-            out: dict[str, Any] = {
-                "scope": "editorFocus",
-                "playlist": project_playlist_summary(
-                    playlist if isinstance(playlist, dict) else {}
-                ),
-                "slides": slide_index,
-                "focusedSlide": focused_meta,
-                "focusedSlideId": str(detail_slide.get("id"))
-                if isinstance(detail_slide, dict)
-                else None,
-                "dataSources": data_sources,
-                "dataSource": selected_source,
-                "sections": sections,
-                "accessRole": access.level,
-                "currentRevision": revision,
-                "localDraftCoordination": "unavailable_external",
-                "note": (
-                    "scope=editorFocus omits focusedSlide.nativeConfig and heavy digests. "
-                    "dataSources[] lists id/label/operationId/params for the focused slide. "
-                    "dataSource is the selected source when editorFocus.selectedDataSourceId "
-                    "or selectedIds resolve to a data_source. Use scope=full for nativeConfig."
-                ),
-            }
-            if editor_focus:
-                out = {"editorFocus": editor_focus, **out}
-            return out
 
-        out = {
+        out: dict[str, Any] = {
             "scope": "full",
             "playlist": project_playlist_summary(playlist if isinstance(playlist, dict) else {}),
             "slides": slide_index,
@@ -297,8 +269,8 @@ class GptActionsDispatchService:
                 "slides[] is a compact index (no nativeConfig). "
                 "focusedSlide has full nativeConfig for the editorFocus/preview/first slide. "
                 "dataSources[] lists id/label/operationId/params for the focused slide. "
-                "Pass scope=editorFocus to omit nativeConfig when the response is too large. "
-                "Pass slideId via includePreview or open another context after resolving the target."
+                "If this response is too large, the API auto-downgrades to scope=editorFocus. "
+                "Pass scope=editorFocus explicitly for label/rename without nativeConfig."
             ),
         }
         if editor_focus:
@@ -342,6 +314,7 @@ class GptActionsDispatchService:
                 "note": "unavailable",
             }
 
+        slide_preview: dict[str, Any] | None = None
         if include_preview:
             target_id = str(out.get("focusedSlideId") or "").strip()
             slide = detail_slide
@@ -360,7 +333,7 @@ class GptActionsDispatchService:
                     code="RESOURCE_NOT_FOUND",
                     status_code=404,
                 )
-            out["slidePreview"] = get_slide_preview_render_service().build_preview_payload(
+            slide_preview = get_slide_preview_render_service().build_preview_payload(
                 playlist_id=str(pid),
                 slide_id=str(slide["id"]),
                 revision=revision,
@@ -368,6 +341,24 @@ class GptActionsDispatchService:
                 if isinstance(slide.get("nativeConfig"), dict)
                 else {},
                 title=str(slide.get("title") or "") or None,
+            )
+            out["slidePreview"] = slide_preview
+
+        # Custom GPT Actions rejects oversized tool responses (ResponseTooLargeError).
+        # Auto-downgrade keeps dataSources[] so rename/label can proceed without nativeConfig.
+        if exceeds_actions_budget(out):
+            return project_editor_focus_context(
+                playlist=playlist if isinstance(playlist, dict) else {},
+                slides_index=slide_index,
+                detail_slide=detail_slide if isinstance(detail_slide, dict) else None,
+                data_sources=data_sources,
+                selected_data_source_id=selected_ds,
+                sections=sections,
+                access_role=access.level,
+                revision=revision,
+                editor_focus=editor_focus,
+                scope_downgraded=True,
+                slide_preview=slide_preview,
             )
         return out
 

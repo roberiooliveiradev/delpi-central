@@ -568,6 +568,8 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                     "optional editorFocus. "
                     "scope=editorFocus omits nativeConfig/heavy digests (avoids ResponseTooLargeError) "
                     "and returns dataSources + selected dataSource. "
+                    "When scope=full would exceed the Actions budget, the API auto-downgrades "
+                    "to editorFocus (scopeDowngraded=true) so dataSource ids remain available. "
                     "includePreview=true&slideId= adds slidePreview signed PNG URL (no 9th Action)."
                 ),
                 "tags": [tag],

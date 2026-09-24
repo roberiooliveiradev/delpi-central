@@ -29,6 +29,87 @@ def actions_response_sizes(payload: Any) -> dict[str, int]:
     }
 
 
+def exceeds_actions_budget(payload: Any) -> bool:
+    """True when any Actions serialization size would hit OpenAI ResponseTooLargeError."""
+    return any(
+        size > GPT_ACTIONS_RESPONSE_MAX_BYTES
+        for size in actions_response_sizes(payload).values()
+    )
+
+
+def project_editor_focus_context(
+    *,
+    playlist: Mapping[str, Any] | None,
+    slides_index: list[dict[str, Any]],
+    detail_slide: Mapping[str, Any] | None,
+    data_sources: list[dict[str, Any]],
+    selected_data_source_id: str | None,
+    sections: Any,
+    access_role: Any,
+    revision: Any,
+    editor_focus: Mapping[str, Any] | None = None,
+    scope_downgraded: bool = False,
+    slide_preview: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Compact playlist context without focusedSlide.nativeConfig (rename-safe READ)."""
+    focused_meta = None
+    if isinstance(detail_slide, dict):
+        focused_meta = {
+            "id": detail_slide.get("id"),
+            "title": detail_slide.get("title"),
+            "sortOrder": detail_slide.get("sortOrder"),
+            "durationSec": detail_slide.get("durationSec"),
+            "isActive": detail_slide.get("isActive"),
+            "slideType": detail_slide.get("slideType"),
+            "sectionId": detail_slide.get("sectionId"),
+        }
+    selected_source = next(
+        (
+            row
+            for row in data_sources
+            if str(row.get("id") or "") == str(selected_data_source_id or "")
+        ),
+        None,
+    )
+    note = (
+        "scope=editorFocus omits focusedSlide.nativeConfig and heavy digests. "
+        "dataSources[] lists id/label/operationId/params for the focused slide. "
+        "dataSource is the selected source when editorFocus.selectedDataSourceId "
+        "or selectedIds resolve to a data_source. Use scope=full for nativeConfig."
+    )
+    if scope_downgraded:
+        note = (
+            "scope auto-downgraded to editorFocus: full nativeConfig exceeded the "
+            "Custom GPT Actions response budget (ResponseTooLargeError). "
+            "dataSources[] / dataSource remain authoritative for label rename. "
+            + note
+        )
+    out: dict[str, Any] = {
+        "scope": "editorFocus",
+        "playlist": project_playlist_summary(playlist if isinstance(playlist, dict) else {}),
+        "slides": slides_index,
+        "focusedSlide": focused_meta,
+        "focusedSlideId": str(detail_slide.get("id"))
+        if isinstance(detail_slide, dict)
+        else None,
+        "dataSources": data_sources,
+        "dataSource": selected_source,
+        "sections": sections,
+        "accessRole": access_role,
+        "currentRevision": revision,
+        "localDraftCoordination": "unavailable_external",
+        "note": note,
+    }
+    if scope_downgraded:
+        out["scopeDowngraded"] = True
+        out["scopeDowngradeReason"] = "response_budget"
+    if isinstance(slide_preview, dict) and slide_preview:
+        out["slidePreview"] = dict(slide_preview)
+    if isinstance(editor_focus, dict) and editor_focus:
+        out = {"editorFocus": dict(editor_focus), **out}
+    return out
+
+
 def _block_type_summary(native_config: Mapping[str, Any] | None) -> dict[str, Any]:
     cfg = native_config if isinstance(native_config, dict) else {}
     blocks = cfg.get("blocks") if isinstance(cfg.get("blocks"), list) else []

@@ -257,3 +257,90 @@ def test_get_playlist_context_editor_focus_scope_omits_native_config():
     assert "layoutDigest" not in out
     assert "mediaInventory" not in out
     assert utf8_size(out) < GPT_ACTIONS_RESPONSE_MAX_BYTES
+
+
+def test_get_playlist_context_auto_downgrades_when_full_exceeds_budget():
+    """Full nativeConfig that would ResponseTooLargeError → editorFocus + dataSources."""
+    writes = MagicMock()
+    playlist_id = str(uuid4())
+    sid = str(uuid4())
+    ds_id = "ds-weg-sep"
+    # strip_resolved drops resolved — inflate persisted fields so full still exceeds budget.
+    heavy_blocks: list[dict] = [
+        {
+            "id": ds_id,
+            "type": "data_source",
+            "dataBinding": {
+                "operationId": "op.demo",
+                "params": {"branch": "01"},
+                "label": "WEG SC · setembro 2025",
+                "displayMode": "auto",
+            },
+        }
+    ]
+    pad = "P" * 2500
+    for i in range(60):
+        heavy_blocks.append(
+            {
+                "id": f"txt-{i}",
+                "type": "text",
+                "frame": {"x": i, "y": i, "w": 40, "h": 20},
+                "content": pad,
+                "style": {"fontFamily": "Arial", "notes": pad},
+            }
+        )
+    heavy = {"version": 5, "blocks": heavy_blocks, "speakerNotes": pad * 20}
+    writes.get_playlist.return_value = {
+        "id": playlist_id,
+        "name": "Comercial - Alinhamento Estratégico",
+        "dataDefaults": {},
+    }
+    writes.list_slides.return_value = [
+        {"id": sid, "title": "WEG", "sortOrder": 0, "nativeConfig": heavy},
+    ]
+    writes.list_sections.return_value = []
+    writes.get_revision.return_value = 1
+    dispatch = GptActionsDispatchService(
+        repo=MagicMock(), writes=writes, commit=MagicMock()
+    )
+    user = SimpleNamespace(is_superadmin=True, permissions=[], id="u1")
+
+    with (
+        patch.object(
+            dispatch._access,
+            "resolve",
+            return_value=SimpleNamespace(
+                can_read=True,
+                can_edit=True,
+                level="owner",
+                playlist={"id": playlist_id, "name": "Comercial", "dataDefaults": {}},
+            ),
+        ),
+        patch.object(dispatch, "_actor", return_value="u1"),
+        patch(
+            "tv_app.application.gpt_actions.dispatch_service.assert_permission",
+            return_value=None,
+        ),
+        patch(
+            "tv_app.application.services.data.brand_logo_media_service.BrandLogoMediaService.list_brand_assets",
+            return_value={},
+        ),
+        patch(
+            "tv_app.application.services.data.brand_logo_media_service.BrandLogoMediaService.list_playlist_assets",
+            return_value=[],
+        ),
+    ):
+        out = dispatch.get_playlist_context(
+            user=user,
+            playlist_id=playlist_id,
+            preview_slide_id=sid,
+            # Default full — server must auto-downgrade.
+            scope="full",
+        )
+
+    assert out["scope"] == "editorFocus"
+    assert out.get("scopeDowngraded") is True
+    assert out.get("scopeDowngradeReason") == "response_budget"
+    assert "nativeConfig" not in (out.get("focusedSlide") or {})
+    assert any(row["id"] == ds_id and "setembro 2025" in row["label"] for row in out["dataSources"])
+    assert utf8_size(out) < GPT_ACTIONS_RESPONSE_MAX_BYTES
