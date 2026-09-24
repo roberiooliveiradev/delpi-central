@@ -1,8 +1,12 @@
 # Playbook — refatoração OpenAPI-first do Chat AI
 
-**Status:** vigente (procedimento de refatoração; **não** substitui regras `.cursor`)  
-**Escopo:** documentação acionável para epics futuros de código em `minha-delpi-ai-api`  
+**Status:** vigente (procedimento de refatoração; **não** substitui regras `.cursor`)
+
+**Escopo:** documentação acionável para epics futuros de código em `minha-delpi-ai-api`
+
 **Não é:** implementação de cutover, unificação Chat=DÉLIA, nem cópia de arquivos de `delia-api` / `gpt-actions`
+
+**Extensão dual-transport (OpenAPI + MCP):** [`chat-actions-and-mcp-consumer-playbook.md`](./chat-actions-and-mcp-consumer-playbook.md)
 
 **Autoridades:**
 
@@ -300,6 +304,7 @@ Programa histórico relacionado (não reabrir como SoT): [`../roadmap/llm-json-d
 
 ## 9. Referências
 
+- [`chat-actions-and-mcp-consumer-playbook.md`](./chat-actions-and-mcp-consumer-playbook.md) — dual OpenAPI + MCP
 - [`chat-intelligence-base.md`](./chat-intelligence-base.md)
 - [`new-api-route-checklist.md`](./new-api-route-checklist.md)
 - [`presentation-intelligence.md`](./presentation-intelligence.md)

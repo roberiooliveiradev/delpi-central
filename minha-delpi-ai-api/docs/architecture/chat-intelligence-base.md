@@ -1,7 +1,7 @@
 # Arquitetura — Inteligência no chat base
 
-**Status:** vigente  
-**Escopo:** `minha-delpi-ai-api`, `plugins/minha-delpi-chat`, agentes, projetos e skills  
+**Status:** vigente
+**Escopo:** `minha-delpi-ai-api`, `plugins/minha-delpi-chat`, agentes, projetos e skills
 **Evals canônicos:** [`../testing/chat-ai-flow-families.md`](../testing/chat-ai-flow-families.md)
 
 ## 1. Princípio
@@ -92,6 +92,9 @@ OpenAPI provider
 → normalized result
 → schema-driven presentation
 ```
+
+Alvo de extensão (Chat como consumidor MCP **além** de OpenAPI, sem virar especialista):
+[`chat-actions-and-mcp-consumer-playbook.md`](./chat-actions-and-mcp-consumer-playbook.md).
 
 ### Fontes de verdade
 

@@ -14,6 +14,7 @@ Este diretório contém somente fontes arquiteturais atuais. Implementação dev
 | 2 | [`openapi-first-universal-tool-routing.md`](./openapi-first-universal-tool-routing.md) | Roteamento universal OpenAPI → Action Catalog → retrieval/planner |
 | 3 | [`new-api-route-checklist.md`](./new-api-route-checklist.md) | Nova API/Action OpenAPI |
 | 3b | [`chat-openapi-first-refactor-playbook.md`](./chat-openapi-first-refactor-playbook.md) | Refatoração OpenAPI-first: anti-padrões, Chat≠DÉLIA, handoff (procedimento; não SoT) |
+| 3c | [`chat-actions-and-mcp-consumer-playbook.md`](./chat-actions-and-mcp-consumer-playbook.md) | Chat consumidor dual: OpenAPI Actions + remote MCP (DAVI/TÉO/VISTA como providers; não SoT) |
 | 4 | [`assistant-content-catalog.md`](./assistant-content-catalog.md) | Conteúdo declarativo do assistente sem duplicar contrato técnico |
 | 5 | [`../testing/chat-ai-flow-families.md`](../testing/chat-ai-flow-families.md) | Protocolo canônico R1–R11 |
 | 6 | [`../flows/README.md`](../flows/README.md) | Fluxos operacionais vigentes |
@@ -55,6 +56,10 @@ OpenAPI provider
 ```
 
 Nova API não exige intent, marker, selector, registry técnico paralelo, parameter strategy ou presenter por endpoint.
+
+## Actions OpenAPI + MCP (TARGET)
+
+Procedimento de refatoração para o Chat consumir também remote MCP (mesmo Action Catalog; transporte `openapi_http` \| `mcp_tool`): [`chat-actions-and-mcp-consumer-playbook.md`](./chat-actions-and-mcp-consumer-playbook.md). Não unifica Chat com DAVI/TÉO/VISTA; especialistas entram como providers.
 
 ## Apresentação
 
