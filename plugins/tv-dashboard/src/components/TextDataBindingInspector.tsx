@@ -84,10 +84,12 @@ export function TextDataBindingInspector({
   projectionRef.current = projection;
 
   // Fonte ligada sem campo: materializa o 1º disponível (catálogo ou resolved).
+  // Não recriar textProjection quando o paint já usa contentRuns.dataRef.
   useEffect(() => {
     if (!selectedBlockId || !sourceId) return;
     if (projectionField) return;
     if (!firstFieldOption) return;
+    if (visualBox?.contentRuns?.some((run) => run.dataRef?.field?.trim())) return;
     const suggested = suggestDefaultTextProjection(resolved, catalogFields);
     const field = suggested?.field?.trim() || firstFieldOption;
     const current = projectionRef.current;

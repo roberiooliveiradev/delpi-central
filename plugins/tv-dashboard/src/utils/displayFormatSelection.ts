@@ -77,6 +77,24 @@ function resolveTextRuns(block: Extract<ComunicadoBlock, { type: "text" | "headi
   return resolveTextBlockDisplayRuns(block);
 }
 
+/** Runs com dataRef no bloco — fonte do paint quando presentes (vencem textProjection). */
+function listBoundDataRefRuns(
+  block: Extract<ComunicadoBlock, { type: "text" | "heading" | "shape" }>,
+): Array<{ runIndex: number; dataRef: ComunicadoTextDataRef }> {
+  const runs =
+    block.type === "shape"
+      ? block.contentRuns?.length
+        ? block.contentRuns
+        : [{ text: block.content ?? "" }]
+      : block.contentRuns ?? [];
+  const out: Array<{ runIndex: number; dataRef: ComunicadoTextDataRef }> = [];
+  runs.forEach((run, runIndex) => {
+    if (!run.dataRef?.field?.trim()) return;
+    out.push({ runIndex, dataRef: run.dataRef });
+  });
+  return out;
+}
+
 function resolveActiveDataRefRun(
   ctx: DisplayFormatSelectionContext,
 ): { runIndex: number; dataRef: ComunicadoTextDataRef } | null {
@@ -90,6 +108,23 @@ function resolveActiveDataRefRun(
   const dataRef = runs[runIndex]?.dataRef;
   if (!dataRef?.field?.trim()) return null;
   return { runIndex, dataRef };
+}
+
+function patchDataRefWithTextFormat(
+  ref: ComunicadoTextDataRef,
+  textPatch: ReturnType<typeof textPatchFromSpec>,
+): ComunicadoTextDataRef {
+  const nextRef: ComunicadoTextDataRef = {
+    ...ref,
+    displayFormat: textPatch.displayFormat,
+    format: textPatch.format,
+  };
+  if (typeof textPatch.decimalPlaces === "number") {
+    nextRef.decimalPlaces = textPatch.decimalPlaces;
+  } else {
+    delete nextRef.decimalPlaces;
+  }
+  return nextRef;
 }
 
 function resolveTableColumnKeys(ctx: DisplayFormatSelectionContext): string[] {
@@ -178,6 +213,22 @@ export function resolveDisplayFormatDescriptor(
       return {
         target: "textDataRef",
         hint: `Campo "${label}"`,
+      };
+    }
+    /*
+     * Paint usa contentRuns.dataRef quando existem (textViewProjection).
+     * Ribbon/apply devem mirar o mesmo owner — senão «Data abreviada» grava em
+     * textProjection e o canvas continua ISO via dataRef.format=raw.
+     */
+    const boundRuns = listBoundDataRefRuns(selected);
+    if (boundRuns.length > 0) {
+      const label =
+        boundRuns.length === 1
+          ? boundRuns[0]!.dataRef.label?.trim() || boundRuns[0]!.dataRef.field
+          : `${boundRuns.length} campos dinâmicos`;
+      return {
+        target: "textDataRef",
+        hint: boundRuns.length === 1 ? `Campo "${label}"` : label,
       };
     }
     if (selected.textProjection?.field?.trim()) {
@@ -271,6 +322,14 @@ export function resolveCurrentDisplayFormatSpec(
         specFromTextProjectionFormat(ref.format, ref.decimalPlaces),
       );
     }
+    const boundRuns = listBoundDataRefRuns(selected);
+    if (boundRuns.length > 0) {
+      const ref = boundRuns[0]!.dataRef;
+      return resolveDisplayFormatSpec(
+        ref.displayFormat,
+        specFromTextProjectionFormat(ref.format, ref.decimalPlaces),
+      );
+    }
     const projection = selected.textProjection;
     if (projection?.field?.trim()) {
       return resolveDisplayFormatSpec(
@@ -301,6 +360,24 @@ export function sampleValueForDisplayFormat(ctx: DisplayFormatSelectionContext):
     if (cell?.value != null) return cell.value;
   }
   if ((target === "textProjection" || target === "textDataRef") && selected && "resolved" in selected) {
+    if (isVisualTextBlock(selected)) {
+      const activeRun = resolveActiveDataRefRun(ctx);
+      const bound = activeRun ? [activeRun] : listBoundDataRefRuns(selected);
+      const field = bound[0]?.dataRef.field?.trim() || selected.textProjection?.field?.trim();
+      if (field) {
+        const runs = resolveTextBlockDisplayRuns(
+          {
+            content: selected.type === "shape" ? selected.content ?? "" : selected.content,
+            contentRuns: selected.contentRuns,
+            textProjection: selected.textProjection,
+            resolved: selected.resolved,
+          },
+          selected.resolved,
+        );
+        const hit = runs.find((run) => run.dataRef?.field?.trim() === field);
+        if (hit?.text) return hit.text;
+      }
+    }
     return selected.resolved?.kpi?.value ?? 30;
   }
   if (target === "tableColumn" && selected?.type === "table_view") {
@@ -410,22 +487,45 @@ export function applyDisplayFormatSpecToBlock(
   if (isVisualTextBlock(selected)) {
     const textPatch = textPatchFromSpec(spec);
     const activeRun = resolveActiveDataRefRun(ctx);
+    const boundRuns = listBoundDataRefRuns(selected);
     if (activeRun) {
-      const runs = resolveTextRuns(selected).map((run, index) => {
+      const sourceRuns =
+        selected.type === "shape"
+          ? selected.contentRuns?.length
+            ? selected.contentRuns
+            : [{ text: selected.content ?? "" }]
+          : selected.contentRuns ?? [];
+      const runs = sourceRuns.map((run, index) => {
         if (index !== activeRun.runIndex || !run.dataRef) return run;
-        const nextRef: ComunicadoTextDataRef = {
-          ...run.dataRef,
-          displayFormat: textPatch.displayFormat,
-          format: textPatch.format,
-        };
-        if (typeof textPatch.decimalPlaces === "number") {
-          nextRef.decimalPlaces = textPatch.decimalPlaces;
-        } else {
-          delete nextRef.decimalPlaces;
-        }
-        return { ...run, dataRef: nextRef } satisfies ComunicadoContentRun;
+        return {
+          ...run,
+          dataRef: patchDataRefWithTextFormat(run.dataRef, textPatch),
+        } satisfies ComunicadoContentRun;
       });
-      return { contentRuns: runs } as Partial<ComunicadoBlock>;
+      return {
+        contentRuns: runs,
+        textProjection: undefined,
+      } as Partial<ComunicadoBlock>;
+    }
+    if (boundRuns.length > 0) {
+      const targetIndexes = new Set(boundRuns.map((item) => item.runIndex));
+      const sourceRuns =
+        selected.type === "shape"
+          ? selected.contentRuns?.length
+            ? selected.contentRuns
+            : [{ text: selected.content ?? "" }]
+          : selected.contentRuns ?? [];
+      const runs = sourceRuns.map((run, index) => {
+        if (!targetIndexes.has(index) || !run.dataRef) return run;
+        return {
+          ...run,
+          dataRef: patchDataRefWithTextFormat(run.dataRef, textPatch),
+        } satisfies ComunicadoContentRun;
+      });
+      return {
+        contentRuns: runs,
+        textProjection: undefined,
+      } as Partial<ComunicadoBlock>;
     }
     if (selected.textProjection?.field?.trim()) {
       const next: ComunicadoTextProjection = {

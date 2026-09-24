@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { resolveTextBlockDisplayRuns } from "@delpi/tv-dashboard-presentation";
 
 import { singleCanvasTableCellSelection } from "./canvasTableCellSelection";
 import {
@@ -270,7 +271,7 @@ describe("displayFormatSelection", () => {
     expect(cells[1][0].displayFormat).toBeUndefined();
   });
 
-  it("texto: textProjection e dois dataRefs distintos; estático sem Número", () => {
+  it("texto: dataRefs vencem textProjection no ribbon/apply (paint ≡ formato)", () => {
     const text = {
       id: "tx1",
       type: "text" as const,
@@ -300,35 +301,43 @@ describe("displayFormatSelection", () => {
           },
         },
       ],
+      resolved: {
+        table: {
+          columns: [
+            { key: "a", label: "A" },
+            { key: "b", label: "B" },
+          ],
+          rows: [{ a: "2025-09-24", b: "2026-09-24" }],
+        },
+      },
     };
 
-    expect(resolveDisplayFormatTarget({ selected: text })).toBe("textProjection");
-    expect(
-      resolveCurrentDisplayFormatSpec({ selected: text }).category,
-    ).toBe("number");
+    /* Sem caret: owner = dataRefs (mesmo path do paint), não textProjection paralelo. */
+    expect(resolveDisplayFormatTarget({ selected: text })).toBe("textDataRef");
+    expect(resolveCurrentDisplayFormatSpec({ selected: text }).category).toBe("currency");
 
     expect(
       resolveDisplayFormatTarget({
-        selected: { ...text, textProjection: undefined },
+        selected: { ...text, textProjection: undefined, resolved: undefined },
         textEditSelection: { blockId: "tx1", start: 0, end: 1 },
       }),
     ).toBe("textDataRef");
     expect(
       resolveCurrentDisplayFormatSpec({
-        selected: { ...text, textProjection: undefined },
+        selected: { ...text, textProjection: undefined, resolved: undefined },
         textEditSelection: { blockId: "tx1", start: 0, end: 1 },
       }).category,
     ).toBe("currency");
     expect(
       resolveCurrentDisplayFormatSpec({
-        selected: { ...text, textProjection: undefined },
+        selected: { ...text, textProjection: undefined, resolved: undefined },
         textEditSelection: { blockId: "tx1", start: 2, end: 3 },
       }).category,
     ).toBe("percent");
 
     const runPatch = applyDisplayFormatSpecToBlock(
       {
-        selected: { ...text, textProjection: undefined },
+        selected: { ...text, textProjection: undefined, resolved: undefined },
         textEditSelection: { blockId: "tx1", start: 0, end: 1 },
       },
       { category: "date", presetId: "date-short", pattern: "dd/mm/yyyy" },
@@ -349,6 +358,36 @@ describe("displayFormatSelection", () => {
         },
       ],
     });
+
+    /* Sem caret + dual state: Data abreviada aplica em TODOS os dataRefs (não só textProjection). */
+    const allPatch = applyDisplayFormatSpecToBlock(
+      { selected: text },
+      { category: "date", presetId: "date-short", pattern: "dd/mm/yyyy" },
+    );
+    expect(allPatch).toMatchObject({
+      textProjection: undefined,
+      contentRuns: [
+        {
+          dataRef: expect.objectContaining({
+            format: "date",
+            displayFormat: expect.objectContaining({ presetId: "date-short" }),
+          }),
+        },
+        { text: " " },
+        {
+          dataRef: expect.objectContaining({
+            format: "date",
+            displayFormat: expect.objectContaining({ presetId: "date-short" }),
+          }),
+        },
+      ],
+    });
+    const painted = resolveTextBlockDisplayRuns({
+      content: text.content,
+      contentRuns: (allPatch as { contentRuns: typeof text.contentRuns }).contentRuns,
+      resolved: text.resolved,
+    });
+    expect(painted.map((run) => run.text).join("")).toBe("24/09/2025 24/09/2026");
 
     expect(
       resolveDisplayFormatTarget({
