@@ -1,35 +1,51 @@
 {
   "source": "openapi_baseline.json",
   "baseline_version": "3",
-  "baseline_operation_count": 703,
-  "taskId": "DAVI-PRODUCT-DRAWING-CAPABILITY-001",
-  "TOTAL_OPERATIONS": 703,
-  "TOTAL_GET": 506,
-  "TOTAL_WRITE_VERBS": 197,
-  "DAVI_ELIGIBLE_READ": 17,
-  "ELIGIBLE_BEFORE": 15,
-  "ELIGIBLE_AFTER": 17,
+  "baseline_operation_count": 720,
+  "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-005-SUPPLIES-READ",
+  "TOTAL_OPERATIONS": 720,
+  "TOTAL_GET": 520,
+  "TOTAL_WRITE_VERBS": 200,
+  "DAVI_ELIGIBLE_READ": 53,
+  "ELIGIBLE_BEFORE": 35,
+  "ELIGIBLE_AFTER": 53,
   "NEWLY_ELIGIBLE": [
-    "get_product_drawing",
-    "list_product_drawings"
+    "get_supplies_cpv",
+    "get_supplies_inventory_turnover",
+    "get_supplies_negotiation_savings_summary",
+    "get_supplies_otd",
+    "get_supplies_purchase_order_otd",
+    "get_supplies_purchase_order_otd_series",
+    "get_supplies_safety_stock_consumption_analysis_items",
+    "get_supplies_safety_stock_consumption_analysis_summary",
+    "get_supplies_safety_stock_item_suppliers",
+    "get_supplies_safety_stock_items",
+    "get_supplies_safety_stock_summary",
+    "get_supplies_safety_stock_supplier_purchase_price_history",
+    "get_supplies_stock_balances_items",
+    "get_supplies_stock_balances_summary",
+    "get_supplies_stock_value",
+    "get_supplies_third_party_materials_shipments",
+    "get_supplies_third_party_materials_summary",
+    "list_supplies_purchase_request_lines"
   ],
   "REMOVED_ELIGIBLE": [],
   "INVENTORY_DELTA": {
     "previous_total_operations": 703,
-    "current_total_operations": 703,
+    "current_total_operations": 720,
     "previous_total_get": 506,
-    "current_total_get": 506,
-    "added_operations": 0,
+    "current_total_get": 520,
+    "added_operations": 17,
     "removed_operations": 0,
-    "note": "Delta vs last committed inventory artifact (HEAD)"
+    "note": "HEAD inventory artifact was STALE at 17 while allowlist v10 already had 35. Wave 005 regenerates inventory to 53 (35 prior + 18 Supplies)."
   },
   "COVERAGE_DECISION": {
-    "taskId": "DAVI-PRODUCT-DRAWING-CAPABILITY-001",
-    "decision": "PROMOTE_PRODUCT_DRAWING_JSON_READ_FOUNDATION",
-    "reason": "Promote list_product_drawings and get_product_drawing as governed JSON READ capabilities (catalog + metadata). Eligible READ 15→17. Catalog requires product code (requireArguments) to avoid unbounded file-server scan via DAVI. get_product_drawing_pdf remains DEFER pending generic document transport (no PDF/base64 via execute_delpi_information). get_product_analyser not promoted for drawing analysis. AuthZ unchanged (API_DELPI_ACCESS). MCP tools remain 3. Agent Instructions unchanged.",
+    "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-005-SUPPLIES-READ",
+    "decision": "PROMOTE_SUPPLIES_READ_WAVE_005",
+    "reason": "Promote 18 Supplies READ operations (KPI, purchase-order OTD, safety stock, consumption analysis, stock balances, third-party summary/shipments, purchase-request lines) behind discover/execute. Eligible READ 35→53. Panel/detail/open-coverage/identity/export deferred or rejected. AuthZ remains backend-final (KPI_SUPPLIES_ACCESS / SAFETY_STOCK_READ / PURCHASE_REQUESTS_READ / THIRD_PARTY_MATERIALS_READ). MCP tools remain 3.",
     "previousDecision": {
-      "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-003A",
-      "decision": "PROMOTE_PRODUCT_ENGINEERING_READ_WAVE_3A"
+      "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-004-COMMERCIAL-READ",
+      "decision": "PROMOTE_COMMERCIAL_ANALYTICS_READ_WAVE_004"
     }
   },
   "HIGH_VALUE_BLOCKED": [
@@ -67,20 +83,120 @@
       "operationId": "get_product_inspection",
       "primaryBlocker": "DEFER",
       "reason": "Drawing analysis inspection cross-check deferred (DRAWING_ANALYSIS_INSPECTION_CROSSCHECK=DEFERRED). Not required for JSON drawing catalog/metadata foundation."
+    },
+    {
+      "operationId": "get_sales_order_otd_panel",
+      "primaryBlocker": "NEEDS_NESTED_LINE_DRILLDOWN_CONTRACT",
+      "reason": "Wave 004 candidate deferred: line-level panel with insights arrays and page_size≤1000 is a drill-down sibling to get_sales_order_otd_line_detail; needs separate nested model-safe contract review before READ broker promotion."
+    },
+    {
+      "operationId": "get_sales_order_otd_line_detail",
+      "primaryBlocker": "OUT_OF_WAVE_004",
+      "reason": "Explicitly out of Wave 004 commercial analytics family — proposal/detail/drill-down surface."
+    },
+    {
+      "operationId": "list_commercial_proposals",
+      "primaryBlocker": "OUT_OF_WAVE_004",
+      "reason": "Proposal workflow family — out of Wave 004 analytics READ scope."
+    },
+    {
+      "operationId": "get_commercial_proposal",
+      "primaryBlocker": "OUT_OF_WAVE_004",
+      "reason": "Proposal detail — out of Wave 004 analytics READ scope."
+    },
+    {
+      "operationId": "get_commercial_proposal_history_events",
+      "primaryBlocker": "OUT_OF_WAVE_004",
+      "reason": "Proposal history — out of Wave 004 analytics READ scope."
+    },
+    {
+      "operationId": "summarize_commercial_proposals_by_collaborator",
+      "primaryBlocker": "OUT_OF_WAVE_004",
+      "reason": "Proposal collaborator summary — out of Wave 004 analytics READ scope."
+    },
+    {
+      "operationId": "get_supplies_purchase_order_otd_panel",
+      "primaryBlocker": "NEEDS_NESTED_LINE_DRILLDOWN_CONTRACT",
+      "reason": "Analogous to commercial OTD panel — line drill-down with large page_size; defer to detailed wave."
+    },
+    {
+      "operationId": "get_supplies_purchase_requests_open_coverage",
+      "primaryBlocker": "UNBOUNDED_LIST_NO_PAGINATION",
+      "reason": "Returns all open SC coverage items/products without page/page_size; needs owner-side bound or pagination."
+    },
+    {
+      "operationId": "get_supplies_purchase_request_lines",
+      "primaryBlocker": "SINGLE_REQUEST_DETAIL",
+      "reason": "Single SC detail by branch/request_number; promote list_supplies_purchase_request_lines first."
+    },
+    {
+      "operationId": "get_supplies_safety_stock_filters",
+      "primaryBlocker": "UI_FILTER_HELPER",
+      "reason": "UI filter options helper, not a primary information capability."
+    },
+    {
+      "operationId": "get_supplies_safety_stock_item_details",
+      "primaryBlocker": "COMPOSITE_ANALYSIS",
+      "reason": "composite_analysis detail needs separate nested contract review."
+    },
+    {
+      "operationId": "get_supplies_safety_stock_consumption_analysis_item_details",
+      "primaryBlocker": "COMPOSITE_ANALYSIS",
+      "reason": "Includes calculation_memory and monthly series — defer nested detail wave."
+    },
+    {
+      "operationId": "get_supplies_third_party_materials_shipment",
+      "primaryBlocker": "SHIPMENT_DETAIL",
+      "reason": "Single shipment detail with returns nested — defer after list shipments proves stable."
+    },
+    {
+      "operationId": "list_supplies_purchase_request_recent_linked_orders",
+      "primaryBlocker": "POLLING_CURSOR_HELPER",
+      "reason": "after_recno polling helper for BFF sync, not primary DAVI Q&A capability."
+    },
+    {
+      "operationId": "list_supplies_purchase_request_recent_linked_receipts",
+      "primaryBlocker": "POLLING_CURSOR_HELPER",
+      "reason": "after_recno polling helper for BFF sync, not primary DAVI Q&A capability."
+    },
+    {
+      "operationId": "list_supplies_purchase_request_requesters_route_supplies_purchase_requests_requesters_get",
+      "primaryBlocker": "PII_LOOKUP_HELPER",
+      "reason": "Requester lookup for UI filters; PII/identity helper without clear standalone information need."
+    },
+    {
+      "operationId": "get_protheus_user_by_email_route_supplies_protheus_users_by_email_get",
+      "primaryBlocker": "PII_IDENTITY_LOOKUP",
+      "reason": "Email→Protheus user identity lookup; not a Supplies information capability for DAVI."
+    },
+    {
+      "operationId": "export_supplies_third_party_materials_returns",
+      "primaryBlocker": "STREAM_BINARY_OUT_OF_SCOPE",
+      "reason": "Binary/document export must not flow through execute_delpi_information JSON (no base64)."
     }
   ],
   "STATUS_COUNTS": {
     "ADMIN_OUT_OF_SCOPE": 76,
-    "DAVI_ELIGIBLE_READ": 17,
-    "DESTRUCTIVE_OUT_OF_SCOPE": 16,
+    "DAVI_ELIGIBLE_READ": 53,
+    "DESTRUCTIVE_OUT_OF_SCOPE": 17,
     "GENERIC_SQL_FORBIDDEN": 2,
-    "NEEDS_MODEL_SAFE_PROJECTION": 365,
-    "NEEDS_NESTED_PROJECTION_SUPPORT": 65,
+    "LEGACY_UNSAFE": 2,
+    "NEEDS_MODEL_SAFE_PROJECTION": 338,
+    "NEEDS_NESTED_PROJECTION_SUPPORT": 66,
     "SEMANTICALLY_REDUNDANT": 1,
-    "STREAM_BINARY_OUT_OF_SCOPE": 31,
-    "WRITE_OUT_OF_SCOPE": 130
+    "STREAM_BINARY_OUT_OF_SCOPE": 33,
+    "WRITE_OUT_OF_SCOPE": 132
   },
   "ELIGIBLE_OPERATION_IDS": [
+    "get_commercial_rol_by_branch",
+    "get_commercial_rol_by_customer",
+    "get_commercial_rol_by_product",
+    "get_commercial_rol_series",
+    "get_commercial_rol_summary",
+    "get_new_business_rol_pct",
+    "get_new_business_rol_target_pct",
+    "get_new_clients_average",
+    "get_new_clients_rol_pct",
     "get_product_customers",
     "get_product_drawing",
     "get_product_factory_status",
@@ -96,7 +212,34 @@
     "get_product_structure",
     "get_product_structure_exclusivity",
     "get_product_suppliers",
+    "get_sales_conversion_rate",
+    "get_sales_conversion_rate_series",
+    "get_sales_order_otd",
+    "get_sales_order_otd_by_branch",
+    "get_sales_order_otd_by_customer",
+    "get_sales_order_otd_series",
+    "get_sales_order_otd_series_by_customer",
+    "get_sales_order_otd_summary",
+    "get_supplies_cpv",
+    "get_supplies_inventory_turnover",
+    "get_supplies_negotiation_savings_summary",
+    "get_supplies_otd",
+    "get_supplies_purchase_order_otd",
+    "get_supplies_purchase_order_otd_series",
+    "get_supplies_safety_stock_consumption_analysis_items",
+    "get_supplies_safety_stock_consumption_analysis_summary",
+    "get_supplies_safety_stock_item_suppliers",
+    "get_supplies_safety_stock_items",
+    "get_supplies_safety_stock_summary",
+    "get_supplies_safety_stock_supplier_purchase_price_history",
+    "get_supplies_stock_balances_items",
+    "get_supplies_stock_balances_summary",
+    "get_supplies_stock_value",
+    "get_supplies_third_party_materials_shipments",
+    "get_supplies_third_party_materials_summary",
+    "get_weg_rol_target_pct",
     "list_product_drawings",
+    "list_supplies_purchase_request_lines",
     "search_products"
   ],
   "MATRIX": [
@@ -861,6 +1004,96 @@
       "executable": false
     },
     {
+      "operationId": "get_commercial_rol_by_branch",
+      "method": "GET",
+      "path": "/commercial/rol/by-branch",
+      "summary": "Commercial ROL breakdown by branch (01 vs 02)",
+      "entity": "commercial_rol_by_branch",
+      "shape": "paged_list",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
+      "operationId": "get_commercial_rol_by_customer",
+      "method": "GET",
+      "path": "/commercial/rol/by-customer",
+      "summary": "Commercial ROL ranking by customer",
+      "entity": "commercial_rol_by_customer",
+      "shape": "paged_list",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
+      "operationId": "get_commercial_rol_by_product",
+      "method": "GET",
+      "path": "/commercial/rol/by-product",
+      "summary": "Commercial ROL by product or product group",
+      "entity": "commercial_rol_by_product",
+      "shape": "paged_list",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
+      "operationId": "get_commercial_rol_series",
+      "method": "GET",
+      "path": "/commercial/rol/series",
+      "summary": "Commercial rol series",
+      "entity": "commercial_rol_series",
+      "shape": "scalar",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
+      "operationId": "get_commercial_rol_summary",
+      "method": "GET",
+      "path": "/commercial/rol/summary",
+      "summary": "Commercial ROL summary (realized and goal)",
+      "entity": "commercial_rol_summary",
+      "shape": "scalar",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
+      "operationId": "get_new_business_rol_pct",
+      "method": "GET",
+      "path": "/commercial/new-business-rol-pct",
+      "summary": "New business rol pct",
+      "entity": "new_business_rol_pct",
+      "shape": "scalar",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
+      "operationId": "get_new_business_rol_target_pct",
+      "method": "GET",
+      "path": "/commercial/new-business-rol-target-pct",
+      "summary": "Commercial new business ROL target (realized and goal)",
+      "entity": "commercial_rol_new_business_target",
+      "shape": "scalar",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
+      "operationId": "get_new_clients_average",
+      "method": "GET",
+      "path": "/commercial/new-clients-average",
+      "summary": "New clients average",
+      "entity": "new_clients_average",
+      "shape": "scalar",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
+      "operationId": "get_new_clients_rol_pct",
+      "method": "GET",
+      "path": "/commercial/new-clients-rol-pct",
+      "summary": "Indicator — percentage rol de clientes novos",
+      "entity": "new_clients_rol_pct",
+      "shape": "scalar",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
       "operationId": "get_product_customers",
       "method": "GET",
       "path": "/products/{code}/customers",
@@ -1011,11 +1244,281 @@
       "executable": true
     },
     {
+      "operationId": "get_sales_conversion_rate",
+      "method": "GET",
+      "path": "/commercial/closing-rate",
+      "summary": "Sales conversion rate",
+      "entity": "sales_conversion_rate",
+      "shape": "scalar",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
+      "operationId": "get_sales_conversion_rate_series",
+      "method": "GET",
+      "path": "/commercial/closing-rate/series",
+      "summary": "Sales conversion rate series",
+      "entity": "sales_conversion_rate_series",
+      "shape": "scalar",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
+      "operationId": "get_sales_order_otd",
+      "method": "GET",
+      "path": "/commercial/sales-order-otd",
+      "summary": "Sales order otd",
+      "entity": "sales_order_otd",
+      "shape": "scalar",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
+      "operationId": "get_sales_order_otd_by_branch",
+      "method": "GET",
+      "path": "/commercial/sales-order-otd/by-branch",
+      "summary": "Sales order OTD by branch",
+      "entity": "sales_order_otd_by_branch",
+      "shape": "paged_list",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
+      "operationId": "get_sales_order_otd_by_customer",
+      "method": "GET",
+      "path": "/commercial/sales-order-otd/by-customer",
+      "summary": "Sales order OTD by customer",
+      "entity": "sales_order_otd_by_customer",
+      "shape": "paged_list",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
+      "operationId": "get_sales_order_otd_series",
+      "method": "GET",
+      "path": "/commercial/sales-order-otd/series",
+      "summary": "Sales order otd series",
+      "entity": "sales_order_otd_series",
+      "shape": "scalar",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
+      "operationId": "get_sales_order_otd_series_by_customer",
+      "method": "GET",
+      "path": "/commercial/sales-order-otd/series-by-customer",
+      "summary": "Sales order OTD series by customer",
+      "entity": "sales_order_otd_series_by_customer",
+      "shape": "paged_list",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
+      "operationId": "get_sales_order_otd_summary",
+      "method": "GET",
+      "path": "/commercial/sales-order-otd/summary",
+      "summary": "Sales order OTD summary (realized and goal)",
+      "entity": "sales_order_otd_summary",
+      "shape": "scalar",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
+      "operationId": "get_supplies_cpv",
+      "method": "GET",
+      "path": "/supplies/cpv",
+      "summary": "Supplies cpv",
+      "entity": "supplies_cpv",
+      "shape": "scalar",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
+      "operationId": "get_supplies_inventory_turnover",
+      "method": "GET",
+      "path": "/supplies/inventory-turnover",
+      "summary": "Supplies inventory turnover",
+      "entity": "supplies_inventory_turnover",
+      "shape": "scalar",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
+      "operationId": "get_supplies_negotiation_savings_summary",
+      "method": "GET",
+      "path": "/supplies/negotiation-savings/summary",
+      "summary": "Supplies negotiation savings summary",
+      "entity": "supplies_negotiation_savings",
+      "shape": "scalar",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
+      "operationId": "get_supplies_otd",
+      "method": "GET",
+      "path": "/supplies/otd",
+      "summary": "Supplies otd",
+      "entity": "supplies_otd",
+      "shape": "scalar",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
+      "operationId": "get_supplies_purchase_order_otd",
+      "method": "GET",
+      "path": "/supplies/purchase-order-otd",
+      "summary": "Purchase order OTD (raw materials)",
+      "entity": "supplies_purchase_order_otd",
+      "shape": "scalar",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
+      "operationId": "get_supplies_purchase_order_otd_series",
+      "method": "GET",
+      "path": "/supplies/purchase-order-otd/series",
+      "summary": "Purchase order OTD series (MP)",
+      "entity": "supplies_purchase_order_otd_series",
+      "shape": "scalar",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
+      "operationId": "get_supplies_safety_stock_consumption_analysis_items",
+      "method": "GET",
+      "path": "/supplies/safety-stock/consumption-analysis/items",
+      "summary": "Lista paginada — Itens da análise de consumo e estoque de segurança sugerido",
+      "entity": "supplies_safety_stock_consumption_analysis_item",
+      "shape": "paged_list",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
+      "operationId": "get_supplies_safety_stock_consumption_analysis_summary",
+      "method": "GET",
+      "path": "/supplies/safety-stock/consumption-analysis/summary",
+      "summary": "Indicador — Resumo da análise de consumo versus estoque de segurança sugerido",
+      "entity": "supplies_safety_stock_consumption_analysis_summary",
+      "shape": "scalar",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
+      "operationId": "get_supplies_safety_stock_item_suppliers",
+      "method": "GET",
+      "path": "/supplies/safety-stock/items/{code}/suppliers",
+      "summary": "Supplies safety stock item suppliers",
+      "entity": "supplies_safety_stock_supplier",
+      "shape": "list",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
+      "operationId": "get_supplies_safety_stock_items",
+      "method": "GET",
+      "path": "/supplies/safety-stock/items",
+      "summary": "Supplies safety stock items",
+      "entity": "supplies_safety_stock_item",
+      "shape": "paged_list",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
+      "operationId": "get_supplies_safety_stock_summary",
+      "method": "GET",
+      "path": "/supplies/safety-stock/summary",
+      "summary": "Supplies safety stock summary",
+      "entity": "supplies_safety_stock_summary",
+      "shape": "scalar",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
+      "operationId": "get_supplies_safety_stock_supplier_purchase_price_history",
+      "method": "GET",
+      "path": "/supplies/safety-stock/items/{code}/suppliers/{supplier_code}/purchase-price-history",
+      "summary": "Supplies safety stock supplier purchase price history",
+      "entity": "supplies_safety_stock_supplier_price_history",
+      "shape": "playbook_report",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
+      "operationId": "get_supplies_stock_balances_items",
+      "method": "GET",
+      "path": "/supplies/stock-balances/items",
+      "summary": "Stock balance items by warehouse",
+      "entity": "supplies_stock_balances_item",
+      "shape": "paged_list",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
+      "operationId": "get_supplies_stock_balances_summary",
+      "method": "GET",
+      "path": "/supplies/stock-balances/summary",
+      "summary": "Stock balances by warehouse",
+      "entity": "supplies_stock_balances_summary",
+      "shape": "playbook_report",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
+      "operationId": "get_supplies_stock_value",
+      "method": "GET",
+      "path": "/supplies/stock-value",
+      "summary": "Stock value",
+      "entity": "supplies_stock_value",
+      "shape": "scalar",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
+      "operationId": "get_supplies_third_party_materials_shipments",
+      "method": "GET",
+      "path": "/supplies/third-party-materials/shipments",
+      "summary": "Third-party material shipments",
+      "entity": "third_party_material_shipment",
+      "shape": "paged_list",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
+      "operationId": "get_supplies_third_party_materials_summary",
+      "method": "GET",
+      "path": "/supplies/third-party-materials/summary",
+      "summary": "Third-party materials summary",
+      "entity": "third_party_material_summary",
+      "shape": "scalar",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
+      "operationId": "get_weg_rol_target_pct",
+      "method": "GET",
+      "path": "/commercial/weg-rol-target-pct",
+      "summary": "Commercial WEG ROL target (realized and goal)",
+      "entity": "commercial_rol_weg_target",
+      "shape": "scalar",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
       "operationId": "list_product_drawings",
       "method": "GET",
       "path": "/products/drawings",
       "summary": "Product drawings",
       "entity": "product_drawing_catalog",
+      "shape": "paged_list",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
+      "operationId": "list_supplies_purchase_request_lines",
+      "method": "GET",
+      "path": "/supplies/purchase-requests/lines",
+      "summary": "Lista paginada — Linhas de solicitações de compra (sc1)",
+      "entity": "supplies_purchase_request_line",
       "shape": "paged_list",
       "davi_status": "DAVI_ELIGIBLE_READ",
       "executable": true
@@ -1036,6 +1539,16 @@
       "path": "/pedidos-venda-abertos/sellers/{seller_id}",
       "summary": "Deactivate seller portfolio",
       "entity": "seller_portfolio",
+      "shape": "scalar",
+      "davi_status": "DESTRUCTIVE_OUT_OF_SCOPE",
+      "executable": false
+    },
+    {
+      "operationId": "delete_audit_5s_area",
+      "method": "DELETE",
+      "path": "/quality/audit-5s/areas/{area_id}",
+      "summary": "Delete Area",
+      "entity": "audit_5s_area",
       "shape": "scalar",
       "davi_status": "DESTRUCTIVE_OUT_OF_SCOPE",
       "executable": false
@@ -1211,6 +1724,26 @@
       "executable": false
     },
     {
+      "operationId": "gpt_get_catalog",
+      "method": "GET",
+      "path": "/gpt-actions/v1/catalog",
+      "summary": "List V1 GPT capabilities and field allowlist (legacy)",
+      "entity": "gpt_actions_catalog",
+      "shape": "composite_analysis",
+      "davi_status": "LEGACY_UNSAFE",
+      "executable": false
+    },
+    {
+      "operationId": "gpt_search_products",
+      "method": "GET",
+      "path": "/gpt-actions/v1/products/search",
+      "summary": "Search products with minimal projection (legacy)",
+      "entity": "gpt_product_search",
+      "shape": "paged_list",
+      "davi_status": "LEGACY_UNSAFE",
+      "executable": false
+    },
+    {
       "operationId": "get_audit_5s_audit",
       "method": "GET",
       "path": "/quality/audit-5s/audits/{audit_id}",
@@ -1251,6 +1784,16 @@
       "executable": false
     },
     {
+      "operationId": "get_commercial_profile_by_branch",
+      "method": "GET",
+      "path": "/commercial/profile-by-branch",
+      "summary": "Commercial profile by branch (OTD, conversion, new business, ROL attainment)",
+      "entity": "commercial_profile_by_branch",
+      "shape": "paged_list",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
       "operationId": "get_commercial_proposal_history_events",
       "method": "GET",
       "path": "/commercial/proposals/{proposal_number}/history/events",
@@ -1261,52 +1804,12 @@
       "executable": false
     },
     {
-      "operationId": "get_commercial_rol_by_branch",
+      "operationId": "get_commercial_rol_by_customer_center",
       "method": "GET",
-      "path": "/commercial/rol/by-branch",
-      "summary": "Commercial ROL breakdown by branch (01 vs 02)",
-      "entity": "commercial_rol_by_branch",
+      "path": "/commercial/rol/by-customer-center",
+      "summary": "Commercial ROL by customer center",
+      "entity": "commercial_rol_by_customer_center",
       "shape": "paged_list",
-      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
-      "executable": false
-    },
-    {
-      "operationId": "get_commercial_rol_by_customer",
-      "method": "GET",
-      "path": "/commercial/rol/by-customer",
-      "summary": "Commercial ROL ranking by customer",
-      "entity": "commercial_rol_by_customer",
-      "shape": "paged_list",
-      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
-      "executable": false
-    },
-    {
-      "operationId": "get_commercial_rol_by_product",
-      "method": "GET",
-      "path": "/commercial/rol/by-product",
-      "summary": "Commercial ROL by product or product group",
-      "entity": "commercial_rol_by_product",
-      "shape": "paged_list",
-      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
-      "executable": false
-    },
-    {
-      "operationId": "get_commercial_rol_series",
-      "method": "GET",
-      "path": "/commercial/rol/series",
-      "summary": "Commercial rol series",
-      "entity": "commercial_rol_series",
-      "shape": "scalar",
-      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
-      "executable": false
-    },
-    {
-      "operationId": "get_commercial_rol_summary",
-      "method": "GET",
-      "path": "/commercial/rol/summary",
-      "summary": "Commercial ROL summary (realized and goal)",
-      "entity": "commercial_rol_summary",
-      "shape": "scalar",
       "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
@@ -1981,46 +2484,6 @@
       "executable": false
     },
     {
-      "operationId": "get_new_business_rol_pct",
-      "method": "GET",
-      "path": "/commercial/new-business-rol-pct",
-      "summary": "New business rol pct",
-      "entity": "new_business_rol_pct",
-      "shape": "scalar",
-      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
-      "executable": false
-    },
-    {
-      "operationId": "get_new_business_rol_target_pct",
-      "method": "GET",
-      "path": "/commercial/new-business-rol-target-pct",
-      "summary": "Commercial new business ROL target (realized and goal)",
-      "entity": "commercial_rol_new_business_target",
-      "shape": "scalar",
-      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
-      "executable": false
-    },
-    {
-      "operationId": "get_new_clients_average",
-      "method": "GET",
-      "path": "/commercial/new-clients-average",
-      "summary": "New clients average",
-      "entity": "new_clients_average",
-      "shape": "scalar",
-      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
-      "executable": false
-    },
-    {
-      "operationId": "get_new_clients_rol_pct",
-      "method": "GET",
-      "path": "/commercial/new-clients-rol-pct",
-      "summary": "Indicator — percentage rol de clientes novos",
-      "entity": "new_clients_rol_pct",
-      "shape": "scalar",
-      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
-      "executable": false
-    },
-    {
       "operationId": "get_nonconformity_series",
       "method": "GET",
       "path": "/quality/nonconformities/series",
@@ -2361,6 +2824,16 @@
       "executable": false
     },
     {
+      "operationId": "get_production_order_sets_quantity_mismatches",
+      "method": "GET",
+      "path": "/production/production-order-sets/quantity-mismatches",
+      "summary": "Production order sets with intermediate quantity mismatches",
+      "entity": "production_order_sets_quantity_mismatches",
+      "shape": "paged_list",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
       "operationId": "get_production_otd_series",
       "method": "GET",
       "path": "/production/otd/series",
@@ -2387,6 +2860,16 @@
       "summary": "Production orders ranking",
       "entity": "production_pcp_orders_ranking",
       "shape": "list",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "get_production_shared_structure_intermediates",
+      "method": "GET",
+      "path": "/production/shared-structure-intermediates",
+      "summary": "Lista paginada — Intermediários pi/pa usados na estrutura vigente de mais de um pa com apontamento produtivo recente",
+      "entity": "production_shared_structure_intermediates",
+      "shape": "paged_list",
       "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
@@ -2741,92 +3224,12 @@
       "executable": false
     },
     {
-      "operationId": "get_sales_conversion_rate",
-      "method": "GET",
-      "path": "/commercial/closing-rate",
-      "summary": "Sales conversion rate",
-      "entity": "sales_conversion_rate",
-      "shape": "scalar",
-      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
-      "executable": false
-    },
-    {
-      "operationId": "get_sales_conversion_rate_series",
-      "method": "GET",
-      "path": "/commercial/closing-rate/series",
-      "summary": "Sales conversion rate series",
-      "entity": "sales_conversion_rate_series",
-      "shape": "scalar",
-      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
-      "executable": false
-    },
-    {
-      "operationId": "get_sales_order_otd",
-      "method": "GET",
-      "path": "/commercial/sales-order-otd",
-      "summary": "Sales order otd",
-      "entity": "sales_order_otd",
-      "shape": "scalar",
-      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
-      "executable": false
-    },
-    {
-      "operationId": "get_sales_order_otd_by_branch",
-      "method": "GET",
-      "path": "/commercial/sales-order-otd/by-branch",
-      "summary": "Sales order OTD by branch",
-      "entity": "sales_order_otd_by_branch",
-      "shape": "paged_list",
-      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
-      "executable": false
-    },
-    {
-      "operationId": "get_sales_order_otd_by_customer",
-      "method": "GET",
-      "path": "/commercial/sales-order-otd/by-customer",
-      "summary": "Sales order OTD by customer",
-      "entity": "sales_order_otd_by_customer",
-      "shape": "paged_list",
-      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
-      "executable": false
-    },
-    {
       "operationId": "get_sales_order_otd_panel",
       "method": "GET",
       "path": "/commercial/sales-order-otd/panel",
       "summary": "Sales order otd panel",
       "entity": "sales_order_otd_panel",
       "shape": "paged_list",
-      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
-      "executable": false
-    },
-    {
-      "operationId": "get_sales_order_otd_series",
-      "method": "GET",
-      "path": "/commercial/sales-order-otd/series",
-      "summary": "Sales order otd series",
-      "entity": "sales_order_otd_series",
-      "shape": "scalar",
-      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
-      "executable": false
-    },
-    {
-      "operationId": "get_sales_order_otd_series_by_customer",
-      "method": "GET",
-      "path": "/commercial/sales-order-otd/series-by-customer",
-      "summary": "Sales order OTD series by customer",
-      "entity": "sales_order_otd_series_by_customer",
-      "shape": "paged_list",
-      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
-      "executable": false
-    },
-    {
-      "operationId": "get_sales_order_otd_summary",
-      "method": "GET",
-      "path": "/commercial/sales-order-otd/summary",
-      "summary": "Sales order OTD summary (realized and goal)",
-      "entity": "sales_order_otd_summary",
-      "shape": "scalar",
       "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
@@ -3561,56 +3964,6 @@
       "executable": false
     },
     {
-      "operationId": "get_supplies_cpv",
-      "method": "GET",
-      "path": "/supplies/cpv",
-      "summary": "Supplies cpv",
-      "entity": "supplies_cpv",
-      "shape": "scalar",
-      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
-      "executable": false
-    },
-    {
-      "operationId": "get_supplies_inventory_turnover",
-      "method": "GET",
-      "path": "/supplies/inventory-turnover",
-      "summary": "Supplies inventory turnover",
-      "entity": "supplies_inventory_turnover",
-      "shape": "scalar",
-      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
-      "executable": false
-    },
-    {
-      "operationId": "get_supplies_negotiation_savings_summary",
-      "method": "GET",
-      "path": "/supplies/negotiation-savings/summary",
-      "summary": "Supplies negotiation savings summary",
-      "entity": "supplies_negotiation_savings",
-      "shape": "scalar",
-      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
-      "executable": false
-    },
-    {
-      "operationId": "get_supplies_otd",
-      "method": "GET",
-      "path": "/supplies/otd",
-      "summary": "Supplies otd",
-      "entity": "supplies_otd",
-      "shape": "scalar",
-      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
-      "executable": false
-    },
-    {
-      "operationId": "get_supplies_purchase_order_otd",
-      "method": "GET",
-      "path": "/supplies/purchase-order-otd",
-      "summary": "Purchase order OTD (raw materials)",
-      "entity": "supplies_purchase_order_otd",
-      "shape": "scalar",
-      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
-      "executable": false
-    },
-    {
       "operationId": "get_supplies_purchase_order_otd_panel",
       "method": "GET",
       "path": "/supplies/purchase-order-otd/panel",
@@ -3621,20 +3974,10 @@
       "executable": false
     },
     {
-      "operationId": "get_supplies_purchase_order_otd_series",
-      "method": "GET",
-      "path": "/supplies/purchase-order-otd/series",
-      "summary": "Purchase order OTD series (MP)",
-      "entity": "supplies_purchase_order_otd_series",
-      "shape": "scalar",
-      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
-      "executable": false
-    },
-    {
       "operationId": "get_supplies_purchase_request_lines",
       "method": "GET",
       "path": "/supplies/purchase-requests/lines/{branch}/{request_number}",
-      "summary": "Lista — Supplies purchase request line",
+      "summary": "Lista — Linhas de solicitações de compra (sc1)",
       "entity": "supplies_purchase_request_line",
       "shape": "list",
       "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
@@ -3651,101 +3994,11 @@
       "executable": false
     },
     {
-      "operationId": "get_supplies_safety_stock_consumption_analysis_items",
-      "method": "GET",
-      "path": "/supplies/safety-stock/consumption-analysis/items",
-      "summary": "Lista paginada — Itens da análise de consumo e estoque de segurança sugerido",
-      "entity": "supplies_safety_stock_consumption_analysis_item",
-      "shape": "paged_list",
-      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
-      "executable": false
-    },
-    {
-      "operationId": "get_supplies_safety_stock_consumption_analysis_summary",
-      "method": "GET",
-      "path": "/supplies/safety-stock/consumption-analysis/summary",
-      "summary": "Indicador — Resumo da análise de consumo versus estoque de segurança sugerido",
-      "entity": "supplies_safety_stock_consumption_analysis_summary",
-      "shape": "scalar",
-      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
-      "executable": false
-    },
-    {
       "operationId": "get_supplies_safety_stock_filters",
       "method": "GET",
       "path": "/supplies/safety-stock/filters",
       "summary": "Supplies safety stock filters",
       "entity": "supplies_safety_stock_filters",
-      "shape": "scalar",
-      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
-      "executable": false
-    },
-    {
-      "operationId": "get_supplies_safety_stock_item_suppliers",
-      "method": "GET",
-      "path": "/supplies/safety-stock/items/{code}/suppliers",
-      "summary": "Supplies safety stock item suppliers",
-      "entity": "supplies_safety_stock_supplier",
-      "shape": "list",
-      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
-      "executable": false
-    },
-    {
-      "operationId": "get_supplies_safety_stock_items",
-      "method": "GET",
-      "path": "/supplies/safety-stock/items",
-      "summary": "Supplies safety stock items",
-      "entity": "supplies_safety_stock_item",
-      "shape": "paged_list",
-      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
-      "executable": false
-    },
-    {
-      "operationId": "get_supplies_safety_stock_summary",
-      "method": "GET",
-      "path": "/supplies/safety-stock/summary",
-      "summary": "Supplies safety stock summary",
-      "entity": "supplies_safety_stock_summary",
-      "shape": "scalar",
-      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
-      "executable": false
-    },
-    {
-      "operationId": "get_supplies_stock_balances_items",
-      "method": "GET",
-      "path": "/supplies/stock-balances/items",
-      "summary": "Stock balance items by warehouse",
-      "entity": "supplies_stock_balances_item",
-      "shape": "paged_list",
-      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
-      "executable": false
-    },
-    {
-      "operationId": "get_supplies_stock_value",
-      "method": "GET",
-      "path": "/supplies/stock-value",
-      "summary": "Stock value",
-      "entity": "supplies_stock_value",
-      "shape": "scalar",
-      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
-      "executable": false
-    },
-    {
-      "operationId": "get_supplies_third_party_materials_shipments",
-      "method": "GET",
-      "path": "/supplies/third-party-materials/shipments",
-      "summary": "Third-party material shipments",
-      "entity": "third_party_material_shipment",
-      "shape": "paged_list",
-      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
-      "executable": false
-    },
-    {
-      "operationId": "get_supplies_third_party_materials_summary",
-      "method": "GET",
-      "path": "/supplies/third-party-materials/summary",
-      "summary": "Third-party materials summary",
-      "entity": "third_party_material_summary",
       "shape": "scalar",
       "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
@@ -3766,16 +4019,6 @@
       "path": "/engineering/transformometro/savings-investment/series",
       "summary": "Economia bruta vs Investimento do TRANSFORMA+ DELPI",
       "entity": "transformometro_savings_investment_series",
-      "shape": "scalar",
-      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
-      "executable": false
-    },
-    {
-      "operationId": "get_weg_rol_target_pct",
-      "method": "GET",
-      "path": "/commercial/weg-rol-target-pct",
-      "summary": "Commercial WEG ROL target (realized and goal)",
-      "entity": "commercial_rol_weg_target",
       "shape": "scalar",
       "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
@@ -3867,6 +4110,26 @@
       "summary": "List Audit 5S Nonconformities Board",
       "entity": "audit_5s_nonconformity",
       "shape": "paged_list",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "list_commercial_customer_center_assignments",
+      "method": "GET",
+      "path": "/commercial/customer-center-assignments",
+      "summary": "Lista — Commercial customer center assignment",
+      "entity": "commercial_customer_center_assignment",
+      "shape": "list",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "list_commercial_customer_centers",
+      "method": "GET",
+      "path": "/commercial/customer-centers",
+      "summary": "Lista — Commercial customer center",
+      "entity": "commercial_customer_center",
+      "shape": "list",
       "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
@@ -4681,11 +4944,11 @@
       "executable": false
     },
     {
-      "operationId": "list_supplies_purchase_request_lines",
+      "operationId": "list_supplies_purchase_orders",
       "method": "GET",
-      "path": "/supplies/purchase-requests/lines",
-      "summary": "Lista paginada — Supplies purchase request line",
-      "entity": "supplies_purchase_request_line",
+      "path": "/supplies/purchase-orders",
+      "summary": "Lista paginada — Linhas de pedidos de compra em aberto (sc7)",
+      "entity": "supplies_purchase_order_line",
       "shape": "paged_list",
       "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
@@ -5361,6 +5624,16 @@
       "executable": false
     },
     {
+      "operationId": "get_supplies_purchase_order",
+      "method": "GET",
+      "path": "/supplies/purchase-orders/{branch}/{order_number}",
+      "summary": "Open purchase order detail",
+      "entity": "supplies_purchase_order",
+      "shape": "product_snapshot",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
       "operationId": "get_supplies_safety_stock_consumption_analysis_item_details",
       "method": "GET",
       "path": "/supplies/safety-stock/consumption-analysis/items/{code}",
@@ -5377,26 +5650,6 @@
       "summary": "Supplies safety stock item details",
       "entity": "supplies_safety_stock_detail",
       "shape": "composite_analysis",
-      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
-      "executable": false
-    },
-    {
-      "operationId": "get_supplies_safety_stock_supplier_purchase_price_history",
-      "method": "GET",
-      "path": "/supplies/safety-stock/items/{code}/suppliers/{supplier_code}/purchase-price-history",
-      "summary": "Supplies safety stock supplier purchase price history",
-      "entity": "supplies_safety_stock_supplier_price_history",
-      "shape": "playbook_report",
-      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
-      "executable": false
-    },
-    {
-      "operationId": "get_supplies_stock_balances_summary",
-      "method": "GET",
-      "path": "/supplies/stock-balances/summary",
-      "summary": "Stock balances by warehouse",
-      "entity": "supplies_stock_balances_summary",
-      "shape": "playbook_report",
       "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
       "executable": false
     },
@@ -5441,6 +5694,16 @@
       "executable": false
     },
     {
+      "operationId": "list_inspecoes_processo_operation_inspections",
+      "method": "GET",
+      "path": "/inspecoes-processo/operations/inspections",
+      "summary": "Process inspections for OP+operation",
+      "entity": "inspecoes_processo_operation_inspections",
+      "shape": "playbook_report",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
       "operationId": "list_lmps_dashboard",
       "method": "GET",
       "path": "/engineering/lmps/dashboard",
@@ -5467,6 +5730,16 @@
       "summary": "Orders sales abertos",
       "entity": "open_sales_order",
       "shape": "composite_analysis",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "list_production_order_operation_materials",
+      "method": "GET",
+      "path": "/production/orders/{production_order}/operations/{operation}/materials",
+      "summary": "Operation materials from SD4",
+      "entity": "production_order_operation_materials",
+      "shape": "playbook_report",
       "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
       "executable": false
     },
@@ -5716,6 +5989,26 @@
       "path": "/quality/action-plans/{plan_id}/export/rnc-8d/pdf",
       "summary": "Quality action plan export",
       "entity": "quality_action_plan_export",
+      "shape": "document_export",
+      "davi_status": "STREAM_BINARY_OUT_OF_SCOPE",
+      "executable": false
+    },
+    {
+      "operationId": "export_supplies_purchase_orders",
+      "method": "GET",
+      "path": "/supplies/purchase-orders/export",
+      "summary": "Exportação — Exportação de linhas de pedidos de compra em aberto (sc7)",
+      "entity": "supplies_purchase_order_line_export",
+      "shape": "document_export",
+      "davi_status": "STREAM_BINARY_OUT_OF_SCOPE",
+      "executable": false
+    },
+    {
+      "operationId": "export_supplies_purchase_request_lines",
+      "method": "GET",
+      "path": "/supplies/purchase-requests/lines/export",
+      "summary": "Exportação — Exportação de linhas de solicitações de compra (sc1)",
+      "entity": "supplies_purchase_request_line_export",
       "shape": "document_export",
       "davi_status": "STREAM_BINARY_OUT_OF_SCOPE",
       "executable": false
@@ -6417,6 +6710,26 @@
       "summary": "Lista paginada — Customer open order metrics",
       "entity": "customer_open_order_metrics",
       "shape": "paged_list",
+      "davi_status": "WRITE_OUT_OF_SCOPE",
+      "executable": false
+    },
+    {
+      "operationId": "list_product_physical_locations",
+      "method": "POST",
+      "path": "/products/physical-locations",
+      "summary": "Physical pickup locations in batch",
+      "entity": "product_physical_locations",
+      "shape": "list",
+      "davi_status": "WRITE_OUT_OF_SCOPE",
+      "executable": false
+    },
+    {
+      "operationId": "list_production_order_operation_materials_batch",
+      "method": "POST",
+      "path": "/production/orders/operation-materials/batch",
+      "summary": "Operation materials from SD4 in batch",
+      "entity": "production_order_operation_materials_batch",
+      "shape": "list",
       "davi_status": "WRITE_OUT_OF_SCOPE",
       "executable": false
     },
@@ -7130,5 +7443,11 @@
       "davi_status": "WRITE_OUT_OF_SCOPE",
       "executable": false
     }
-  ]
+  ],
+  "STALE_INVENTORY_REBASELINE": {
+    "artifactEligibleBeforeRegeneration": 17,
+    "actualAllowlistEligibleBeforeWave005": 35,
+    "allowlistVersionBeforeWave005": 10,
+    "resolution": "Regenerated from OpenAPI baseline + allowlist; stale 17 reconciled to live eligible before Wave 005 promotion."
+  }
 }

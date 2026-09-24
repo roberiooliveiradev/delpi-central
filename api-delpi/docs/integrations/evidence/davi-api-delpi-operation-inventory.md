@@ -2,24 +2,24 @@
 
 > Evidence artifact. Not runtime authority. Not semantic capability catalog.
 
-- Task: `DAVI-PRODUCT-DRAWING-CAPABILITY-001`
+- Task: `DAVI-CAPABILITY-EXPANSION-WAVE-005-SUPPLIES-READ`
 - Source: `openapi_baseline.json` version `3`
-- TOTAL OPERATIONS: **703**
-- TOTAL GET: **506**
-- WRITE VERBS (POST/PUT/PATCH/DELETE): **197**
-- DAVI_ELIGIBLE_READ (before→after): **15 → 17**
-- NEWLY ELIGIBLE: **2**
+- TOTAL OPERATIONS: **720**
+- TOTAL GET: **520**
+- WRITE VERBS (POST/PUT/PATCH/DELETE): **200**
+- DAVI_ELIGIBLE_READ (before→after): **35 → 53** (stale artifact was 17; rebaselined to allowlist v10=35 then Wave 005)
+- NEWLY ELIGIBLE: **18** (Supplies Wave 005)
 
 ## Coverage decision
 
 ```json
 {
-  "taskId": "DAVI-PRODUCT-DRAWING-CAPABILITY-001",
-  "decision": "PROMOTE_PRODUCT_DRAWING_JSON_READ_FOUNDATION",
-  "reason": "Promote list_product_drawings and get_product_drawing as governed JSON READ capabilities (catalog + metadata). Eligible READ 15→17. Catalog requires product code (requireArguments) to avoid unbounded file-server scan via DAVI. get_product_drawing_pdf remains DEFER pending generic document transport (no PDF/base64 via execute_delpi_information). get_product_analyser not promoted for drawing analysis. AuthZ unchanged (API_DELPI_ACCESS). MCP tools remain 3. Agent Instructions unchanged.",
+  "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-005-SUPPLIES-READ",
+  "decision": "PROMOTE_SUPPLIES_READ_WAVE_005",
+  "reason": "Promote 18 Supplies READ operations (KPI, purchase-order OTD, safety stock, consumption analysis, stock balances, third-party summary/shipments, purchase-request lines) behind discover/execute. Eligible READ 35→53. Panel/detail/open-coverage/identity/export deferred or rejected. AuthZ remains backend-final (KPI_SUPPLIES_ACCESS / SAFETY_STOCK_READ / PURCHASE_REQUESTS_READ / THIRD_PARTY_MATERIALS_READ). MCP tools remain 3.",
   "previousDecision": {
-    "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-003A",
-    "decision": "PROMOTE_PRODUCT_ENGINEERING_READ_WAVE_3A"
+    "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-004-COMMERCIAL-READ",
+    "decision": "PROMOTE_COMMERCIAL_ANALYTICS_READ_WAVE_004"
   }
 }
 ```
@@ -29,10 +29,10 @@
 ```json
 {
   "previous_total_operations": 703,
-  "current_total_operations": 703,
+  "current_total_operations": 720,
   "previous_total_get": 506,
-  "current_total_get": 506,
-  "added_operations": 0,
+  "current_total_get": 520,
+  "added_operations": 17,
   "removed_operations": 0,
   "note": "Delta vs last committed inventory artifact (HEAD)"
 }
@@ -43,17 +43,27 @@
 | Status | Count |
 |---|---:|
 | `ADMIN_OUT_OF_SCOPE` | 76 |
-| `DAVI_ELIGIBLE_READ` | 17 |
-| `DESTRUCTIVE_OUT_OF_SCOPE` | 16 |
+| `DAVI_ELIGIBLE_READ` | 53 |
+| `DESTRUCTIVE_OUT_OF_SCOPE` | 17 |
 | `GENERIC_SQL_FORBIDDEN` | 2 |
-| `NEEDS_MODEL_SAFE_PROJECTION` | 365 |
-| `NEEDS_NESTED_PROJECTION_SUPPORT` | 65 |
+| `LEGACY_UNSAFE` | 2 |
+| `NEEDS_MODEL_SAFE_PROJECTION` | 338 |
+| `NEEDS_NESTED_PROJECTION_SUPPORT` | 66 |
 | `SEMANTICALLY_REDUNDANT` | 1 |
-| `STREAM_BINARY_OUT_OF_SCOPE` | 31 |
-| `WRITE_OUT_OF_SCOPE` | 130 |
+| `STREAM_BINARY_OUT_OF_SCOPE` | 33 |
+| `WRITE_OUT_OF_SCOPE` | 132 |
 
 ## Eligible operationIds
 
+- `get_commercial_rol_by_branch`
+- `get_commercial_rol_by_customer`
+- `get_commercial_rol_by_product`
+- `get_commercial_rol_series`
+- `get_commercial_rol_summary`
+- `get_new_business_rol_pct`
+- `get_new_business_rol_target_pct`
+- `get_new_clients_average`
+- `get_new_clients_rol_pct`
 - `get_product_customers`
 - `get_product_drawing`
 - `get_product_factory_status`
@@ -69,7 +79,34 @@
 - `get_product_structure`
 - `get_product_structure_exclusivity`
 - `get_product_suppliers`
+- `get_sales_conversion_rate`
+- `get_sales_conversion_rate_series`
+- `get_sales_order_otd`
+- `get_sales_order_otd_by_branch`
+- `get_sales_order_otd_by_customer`
+- `get_sales_order_otd_series`
+- `get_sales_order_otd_series_by_customer`
+- `get_sales_order_otd_summary`
+- `get_supplies_cpv`
+- `get_supplies_inventory_turnover`
+- `get_supplies_negotiation_savings_summary`
+- `get_supplies_otd`
+- `get_supplies_purchase_order_otd`
+- `get_supplies_purchase_order_otd_series`
+- `get_supplies_safety_stock_consumption_analysis_items`
+- `get_supplies_safety_stock_consumption_analysis_summary`
+- `get_supplies_safety_stock_item_suppliers`
+- `get_supplies_safety_stock_items`
+- `get_supplies_safety_stock_summary`
+- `get_supplies_safety_stock_supplier_purchase_price_history`
+- `get_supplies_stock_balances_items`
+- `get_supplies_stock_balances_summary`
+- `get_supplies_stock_value`
+- `get_supplies_third_party_materials_shipments`
+- `get_supplies_third_party_materials_summary`
+- `get_weg_rol_target_pct`
 - `list_product_drawings`
+- `list_supplies_purchase_request_lines`
 - `search_products`
 
 ## High-value blocked (primary blocker)
@@ -81,3 +118,21 @@
 - `get_product_drawing_pdf` → `NEEDS_GENERIC_DOCUMENT_BOUNDARY` — Binary PDF document transport is not a JSON READ projection. Must not embed pdf_base64 in execute_delpi_information. Requires generic authorized document boundary (ARCHITECTURE_ESCALATION if new MCP tool/resource). AuthZ remains API_DELPI_ACCESS on the HTTP route.
 - `get_product_analyser` → `PRODUCT_ANALYSER_DIRECT_PROMOTION_NOT_REQUIRED` — ProductAnalyserUseCase composes product/structure/guide/inspection JSON — it does not perform visual drawing analysis. Drawing analysis must reuse AI API workflow procedure + governed individual READs + document transport, not promote this composite.
 - `get_product_inspection` → `DEFER` — Drawing analysis inspection cross-check deferred (DRAWING_ANALYSIS_INSPECTION_CROSSCHECK=DEFERRED). Not required for JSON drawing catalog/metadata foundation.
+- `get_sales_order_otd_panel` → `NEEDS_NESTED_LINE_DRILLDOWN_CONTRACT` — Wave 004 candidate deferred: line-level panel with insights arrays and page_size≤1000 is a drill-down sibling to get_sales_order_otd_line_detail; needs separate nested model-safe contract review before READ broker promotion.
+- `get_sales_order_otd_line_detail` → `OUT_OF_WAVE_004` — Explicitly out of Wave 004 commercial analytics family — proposal/detail/drill-down surface.
+- `list_commercial_proposals` → `OUT_OF_WAVE_004` — Proposal workflow family — out of Wave 004 analytics READ scope.
+- `get_commercial_proposal` → `OUT_OF_WAVE_004` — Proposal detail — out of Wave 004 analytics READ scope.
+- `get_commercial_proposal_history_events` → `OUT_OF_WAVE_004` — Proposal history — out of Wave 004 analytics READ scope.
+- `summarize_commercial_proposals_by_collaborator` → `OUT_OF_WAVE_004` — Proposal collaborator summary — out of Wave 004 analytics READ scope.
+- `get_supplies_purchase_order_otd_panel` → `NEEDS_NESTED_LINE_DRILLDOWN_CONTRACT` — Analogous to commercial OTD panel — line drill-down with large page_size; defer to detailed wave.
+- `get_supplies_purchase_requests_open_coverage` → `UNBOUNDED_LIST_NO_PAGINATION` — Returns all open SC coverage items/products without page/page_size; needs owner-side bound or pagination.
+- `get_supplies_purchase_request_lines` → `SINGLE_REQUEST_DETAIL` — Single SC detail by branch/request_number; promote list_supplies_purchase_request_lines first.
+- `get_supplies_safety_stock_filters` → `UI_FILTER_HELPER` — UI filter options helper, not a primary information capability.
+- `get_supplies_safety_stock_item_details` → `COMPOSITE_ANALYSIS` — composite_analysis detail needs separate nested contract review.
+- `get_supplies_safety_stock_consumption_analysis_item_details` → `COMPOSITE_ANALYSIS` — Includes calculation_memory and monthly series — defer nested detail wave.
+- `get_supplies_third_party_materials_shipment` → `SHIPMENT_DETAIL` — Single shipment detail with returns nested — defer after list shipments proves stable.
+- `list_supplies_purchase_request_recent_linked_orders` → `POLLING_CURSOR_HELPER` — after_recno polling helper for BFF sync, not primary DAVI Q&A capability.
+- `list_supplies_purchase_request_recent_linked_receipts` → `POLLING_CURSOR_HELPER` — after_recno polling helper for BFF sync, not primary DAVI Q&A capability.
+- `list_supplies_purchase_request_requesters_route_supplies_purchase_requests_requesters_get` → `PII_LOOKUP_HELPER` — Requester lookup for UI filters; PII/identity helper without clear standalone information need.
+- `get_protheus_user_by_email_route_supplies_protheus_users_by_email_get` → `PII_IDENTITY_LOOKUP` — Email→Protheus user identity lookup; not a Supplies information capability for DAVI.
+- `export_supplies_third_party_materials_returns` → `STREAM_BINARY_OUT_OF_SCOPE` — Binary/document export must not flow through execute_delpi_information JSON (no base64).

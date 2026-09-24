@@ -1,16 +1,16 @@
 {
-  "version": 10,
+  "version": 11,
   "description": "Governance allowlist for DAVI dynamic READ. DAVI has no independent AuthZ; backend is final authority. Entries define model-safe input/output projection and governed argument constraints only — not business permissions.",
   "authzPolicy": "DAVI-READ-AUTHZ-REBASELINE-001",
   "externalProcessing": "BACKEND_AUTHORIZED_INTERNAL_READ_ALLOWED_UNLESS_EXPLICITLY_PROHIBITED",
   "dataClassification": "MINIMIZATION_REQUIRED_TAXONOMY_OPTIONAL",
   "coverageDecision": {
-    "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-004-COMMERCIAL-READ",
-    "decision": "PROMOTE_COMMERCIAL_ANALYTICS_READ_WAVE_004",
-    "reason": "Promote 18 Commercial Analytics GET operations behind discover/execute (ROL, OTD, conversion, new clients/business, WEG target). Eligible READ 17→35. get_sales_order_otd_panel DEFER (line-level drill-down/nested insights sibling to line_detail). Proposal/detail routes remain NEXT_WAVE_CANDIDATE. AuthZ unchanged (KPI_COMMERCIAL_ACCESS backend-final). MCP tools remain 3. Agent intelligence unchanged. Production MCP remains the single DAVI runtime.",
+    "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-005-SUPPLIES-READ",
+    "decision": "PROMOTE_SUPPLIES_READ_WAVE_005",
+    "reason": "Promote 18 Supplies READ operations (KPI, purchase-order OTD, safety stock, consumption analysis, stock balances, third-party summary/shipments, purchase-request lines) behind discover/execute. Eligible READ 35→53. Panel/detail/open-coverage/identity/export deferred or rejected. AuthZ remains backend-final (KPI_SUPPLIES_ACCESS / SAFETY_STOCK_READ / PURCHASE_REQUESTS_READ / THIRD_PARTY_MATERIALS_READ). MCP tools remain 3.",
     "previousDecision": {
-      "taskId": "DAVI-PRODUCT-DRAWING-CAPABILITY-001",
-      "decision": "PROMOTE_PRODUCT_DRAWING_JSON_READ_FOUNDATION"
+      "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-004-COMMERCIAL-READ",
+      "decision": "PROMOTE_COMMERCIAL_ANALYTICS_READ_WAVE_004"
     }
   },
   "retrievalQuarantineTokens": [
@@ -1734,6 +1734,729 @@
           "maxDays": 366
         }
       }
+    },
+    {
+      "operationId": "get_supplies_cpv",
+      "reason": "Supplies CPV summary (cost of products sold vs ROL); KPI_SUPPLIES_ACCESS; drop breakdown arrays",
+      "executionMode": "catalog_action",
+      "approvedInputFields": [
+        "start_date",
+        "end_date",
+        "branch"
+      ],
+      "approvedResponseFields": [
+        "branch",
+        "start_date",
+        "end_date",
+        "summary.cpv_total",
+        "summary.rol",
+        "summary.cpv_percentage",
+        "summary.total_movements",
+        "summary.total_quantity",
+        "summary.average_cost_per_movement",
+        "summary.average_cost_per_unit",
+        "goal_label",
+        "goal_value",
+        "comparable_goal",
+        "target",
+        "goal_period_kind",
+        "goal_periodicity",
+        "goal_scope_branch",
+        "goal_scope_label",
+        "has_goal"
+      ],
+      "semanticAliases": [
+        "CPV",
+        "CPV suprimentos",
+        "custo dos produtos vendidos",
+        "CPV / ROL",
+        "supplies CPV",
+        "custo de produtos vendidos"
+      ],
+      "argumentConstraints": {
+        "dateRange": {
+          "startField": "start_date",
+          "endField": "end_date",
+          "maxDays": 366
+        }
+      }
+    },
+    {
+      "operationId": "get_supplies_inventory_turnover",
+      "reason": "Inventory turnover months/times from canonical supplies UC; KPI_SUPPLIES_ACCESS",
+      "executionMode": "catalog_action",
+      "approvedInputFields": [
+        "location",
+        "start_date",
+        "end_date",
+        "strict_idd_period",
+        "branch"
+      ],
+      "approvedResponseFields": [
+        "branch",
+        "location",
+        "start_date",
+        "end_date",
+        "summary.inventory_turnover_months",
+        "summary.inventory_turnover_times",
+        "summary.total_stock_value",
+        "summary.cpv_total",
+        "summary.cpv_average_monthly",
+        "calculation_context.calculation_mode",
+        "calculation_context.idd_period_valid",
+        "calculation_context.strict_idd_period",
+        "goal_label",
+        "goal_value",
+        "comparable_goal",
+        "target",
+        "goal_period_kind",
+        "goal_periodicity",
+        "goal_scope_branch",
+        "goal_scope_label",
+        "has_goal"
+      ],
+      "semanticAliases": [
+        "giro de estoque",
+        "giro estoque",
+        "inventory turnover",
+        "turnover de estoque",
+        "giro de estoque suprimentos"
+      ],
+      "argumentConstraints": {
+        "dateRange": {
+          "startField": "start_date",
+          "endField": "end_date",
+          "maxDays": 366
+        }
+      }
+    },
+    {
+      "operationId": "get_supplies_negotiation_savings_summary",
+      "reason": "Negotiation savings summary from IDD/canonical repo; KPI_SUPPLIES_ACCESS; drop entry rows dump",
+      "executionMode": "catalog_action",
+      "approvedInputFields": [
+        "start_date",
+        "end_date",
+        "branch"
+      ],
+      "approvedResponseFields": [
+        "start_date",
+        "end_date",
+        "branch",
+        "total_savings",
+        "summary.total_savings",
+        "branches[].branch",
+        "branches[].total_savings",
+        "goal_label",
+        "goal_value",
+        "comparable_goal",
+        "target",
+        "goal_period_kind",
+        "goal_periodicity",
+        "goal_scope_branch",
+        "goal_scope_label",
+        "has_goal"
+      ],
+      "semanticAliases": [
+        "savings",
+        "economia de negociação",
+        "savings de negociação",
+        "economia suprimentos",
+        "negotiation savings"
+      ],
+      "argumentConstraints": {
+        "dateRange": {
+          "startField": "start_date",
+          "endField": "end_date",
+          "maxDays": 366
+        }
+      }
+    },
+    {
+      "operationId": "get_supplies_otd",
+      "reason": "Supplies OTD KPI (distinct from commercial sales-order OTD); KPI_SUPPLIES_ACCESS; summary only",
+      "executionMode": "catalog_action",
+      "approvedInputFields": [
+        "start_date",
+        "end_date",
+        "branch"
+      ],
+      "approvedResponseFields": [
+        "branch",
+        "start_date",
+        "end_date",
+        "summary.total_lines",
+        "summary.on_time_lines",
+        "summary.late_lines",
+        "summary.otd_percentage",
+        "summary.late_percentage",
+        "goal_label",
+        "goal_value",
+        "comparable_goal",
+        "target",
+        "goal_period_kind",
+        "goal_periodicity",
+        "goal_scope_branch",
+        "goal_scope_label",
+        "has_goal"
+      ],
+      "semanticAliases": [
+        "OTD suprimentos",
+        "OTD compras dashboard",
+        "OTD compras SI",
+        "on-time delivery suprimentos",
+        "entrega no prazo suprimentos",
+        "atrasos de fornecimento agregados",
+        "supplies OTD KPI"
+      ],
+      "argumentConstraints": {
+        "dateRange": {
+          "startField": "start_date",
+          "endField": "end_date",
+          "maxDays": 366
+        }
+      }
+    },
+    {
+      "operationId": "get_supplies_purchase_order_otd",
+      "reason": "Purchase-order OTD for raw materials; KPI_SUPPLIES_ACCESS",
+      "executionMode": "catalog_action",
+      "approvedInputFields": [
+        "start_date",
+        "end_date",
+        "branch"
+      ],
+      "approvedResponseFields": [
+        "branch",
+        "start_date",
+        "end_date",
+        "product_type",
+        "total_lines",
+        "on_time_lines",
+        "late_lines",
+        "purchase_order_otd_pct",
+        "goal_label",
+        "goal_value",
+        "comparable_goal",
+        "target",
+        "goal_period_kind",
+        "goal_periodicity",
+        "goal_scope_branch",
+        "goal_scope_label",
+        "has_goal"
+      ],
+      "semanticAliases": [
+        "OTD de compras",
+        "OTD compras",
+        "OTD pedidos de compra",
+        "OTD pedido de compra MP",
+        "OTD fornecedor",
+        "purchase order OTD",
+        "OTD PC",
+        "pontualidade fornecedores"
+      ],
+      "argumentConstraints": {
+        "dateRange": {
+          "startField": "start_date",
+          "endField": "end_date",
+          "maxDays": 366
+        }
+      }
+    },
+    {
+      "operationId": "get_supplies_purchase_order_otd_series",
+      "reason": "Purchase-order OTD time series; KPI_SUPPLIES_ACCESS",
+      "executionMode": "catalog_action",
+      "approvedInputFields": [
+        "granularity",
+        "start_date",
+        "end_date",
+        "branch"
+      ],
+      "approvedResponseFields": [
+        "granularity",
+        "truncated",
+        "branch",
+        "points[].periodo",
+        "points[].sort_key",
+        "points[].start_date",
+        "points[].end_date",
+        "points[].otd_filial_01",
+        "points[].otd_filial_02"
+      ],
+      "semanticAliases": [
+        "série OTD compras",
+        "evolução OTD de compras",
+        "OTD pedidos de compra série",
+        "purchase order OTD series",
+        "evolução OTD PC"
+      ],
+      "argumentConstraints": {
+        "dateRange": {
+          "startField": "start_date",
+          "endField": "end_date",
+          "maxDays": 366
+        },
+        "requireArguments": [
+          "granularity"
+        ]
+      }
+    },
+    {
+      "operationId": "get_supplies_stock_value",
+      "reason": "Stock value summary; KPI_SUPPLIES_ACCESS; summary-only projection (drop top_products/locations)",
+      "executionMode": "catalog_action",
+      "approvedInputFields": [
+        "location",
+        "start_date",
+        "end_date",
+        "summary_only",
+        "stock_method",
+        "branch"
+      ],
+      "approvedResponseFields": [
+        "branch",
+        "location",
+        "summary.total_stock_value",
+        "summary.total_stock_quantity",
+        "summary.total_records",
+        "summary.total_products",
+        "summary.total_locations",
+        "summary.average_unit_value",
+        "goal_label",
+        "goal_value",
+        "comparable_goal",
+        "target",
+        "goal_period_kind",
+        "goal_periodicity",
+        "goal_scope_branch",
+        "goal_scope_label",
+        "has_goal"
+      ],
+      "semanticAliases": [
+        "valor de estoque",
+        "valor do estoque",
+        "stock value",
+        "estoque valorizado",
+        "valor de estoque suprimentos"
+      ],
+      "argumentConstraints": {
+        "dateRange": {
+          "startField": "start_date",
+          "endField": "end_date",
+          "maxDays": 366
+        }
+      }
+    },
+    {
+      "operationId": "get_supplies_safety_stock_summary",
+      "reason": "Safety stock status counts; SAFETY_STOCK_READ_PERMISSIONS",
+      "executionMode": "catalog_action",
+      "approvedInputFields": [
+        "includeBlocked",
+        "productGroup",
+        "unit",
+        "search",
+        "status",
+        "includeWithoutSafetyStock",
+        "branch"
+      ],
+      "approvedResponseFields": [
+        "total_materials",
+        "with_safety_stock",
+        "without_safety_stock",
+        "below_safety_stock",
+        "at_safety_stock",
+        "above_safety_stock",
+        "with_primary_stock",
+        "without_primary_stock",
+        "with_work_in_process_stock",
+        "deficit_by_unit[].unit",
+        "deficit_by_unit[].material_count",
+        "deficit_by_unit[].deficit_quantity"
+      ],
+      "semanticAliases": [
+        "estoque de segurança",
+        "resumo estoque de segurança",
+        "safety stock",
+        "safety stock summary",
+        "estoque segurança suprimentos"
+      ]
+    },
+    {
+      "operationId": "get_supplies_safety_stock_items",
+      "reason": "Paged safety stock items; SAFETY_STOCK_READ_PERMISSIONS; bounded page_size",
+      "executionMode": "catalog_action",
+      "approvedInputFields": [
+        "page",
+        "page_size",
+        "search",
+        "status",
+        "productGroup",
+        "unit",
+        "includeBlocked",
+        "includeWithoutSafetyStock",
+        "branch"
+      ],
+      "approvedResponseFields": [
+        "items[].product_code",
+        "items[].product_description",
+        "items[].unit",
+        "items[].product_group",
+        "items[].branch",
+        "items[].status",
+        "items[].safety_stock",
+        "items[].primary_stock",
+        "items[].work_in_process_stock",
+        "items[].work_in_process_available",
+        "items[].deficit_quantity",
+        "page",
+        "page_size",
+        "total",
+        "total_pages"
+      ],
+      "semanticAliases": [
+        "itens de estoque de segurança",
+        "lista estoque de segurança",
+        "safety stock items",
+        "materiais abaixo do estoque de segurança"
+      ]
+    },
+    {
+      "operationId": "get_supplies_safety_stock_item_suppliers",
+      "reason": "Suppliers linked to safety-stock item; SAFETY_STOCK_READ_PERMISSIONS; code-scoped",
+      "executionMode": "catalog_action",
+      "approvedInputFields": [
+        "code",
+        "branch"
+      ],
+      "approvedResponseFields": [
+        "items[].product_code",
+        "items[].supplier_code",
+        "items[].supplier_store",
+        "items[].trade_name",
+        "items[].has_last_purchase",
+        "items[].last_purchase_date",
+        "items[].last_unit_price",
+        "items[].last_quantity",
+        "total"
+      ],
+      "semanticAliases": [
+        "fornecedores do item de estoque de segurança",
+        "fornecedores estoque de segurança",
+        "safety stock suppliers"
+      ],
+      "argumentConstraints": {
+        "requireArguments": [
+          "code"
+        ]
+      }
+    },
+    {
+      "operationId": "get_supplies_safety_stock_supplier_purchase_price_history",
+      "reason": "Supplier purchase price history for safety-stock item; SAFETY_STOCK_READ_PERMISSIONS; model-safe like product purchase history",
+      "executionMode": "catalog_action",
+      "approvedInputFields": [
+        "code",
+        "supplier_code",
+        "supplierStore",
+        "branch"
+      ],
+      "approvedResponseFields": [
+        "product_code",
+        "branch",
+        "supplier_code",
+        "supplier_store",
+        "start_date",
+        "date_end_exclusive",
+        "total",
+        "items[].purchase_date",
+        "items[].issue_date",
+        "items[].quantity",
+        "items[].unit_price",
+        "items[].total_value",
+        "items[].invoice_number",
+        "summary.total_purchases",
+        "summary.min_unit_price",
+        "summary.max_unit_price",
+        "summary.first_unit_price",
+        "summary.last_unit_price",
+        "summary.variation_percent"
+      ],
+      "semanticAliases": [
+        "histórico de preço por fornecedor",
+        "preço de compra fornecedor estoque de segurança",
+        "supplier purchase price history safety stock"
+      ],
+      "argumentConstraints": {
+        "requireArguments": [
+          "code",
+          "supplier_code"
+        ]
+      }
+    },
+    {
+      "operationId": "get_supplies_safety_stock_consumption_analysis_summary",
+      "reason": "READ of established consumption vs suggested safety-stock analysis snapshot; SAFETY_STOCK_READ_PERMISSIONS",
+      "executionMode": "catalog_action",
+      "approvedInputFields": [
+        "includeBlocked",
+        "productGroup",
+        "unit",
+        "search",
+        "analysisStatus",
+        "branch"
+      ],
+      "approvedResponseFields": [
+        "branch",
+        "period_start",
+        "period_end",
+        "period_calendar_days",
+        "period_business_days",
+        "analyzed_items",
+        "below_suggested",
+        "above_suggested",
+        "adequate",
+        "inconsistent_data",
+        "net_difference_quantity",
+        "status_distribution[].status",
+        "status_distribution[].count"
+      ],
+      "semanticAliases": [
+        "análise de consumo estoque de segurança",
+        "consumo estoque de segurança",
+        "safety stock consumption analysis",
+        "estoque de segurança sugerido resumo"
+      ]
+    },
+    {
+      "operationId": "get_supplies_safety_stock_consumption_analysis_items",
+      "reason": "Paged consumption-analysis items with suggested safety stock; SAFETY_STOCK_READ_PERMISSIONS",
+      "executionMode": "catalog_action",
+      "approvedInputFields": [
+        "page",
+        "page_size",
+        "search",
+        "analysisStatus",
+        "productGroup",
+        "unit",
+        "includeBlocked",
+        "branch"
+      ],
+      "approvedResponseFields": [
+        "items[].product_code",
+        "items[].product_description",
+        "items[].unit",
+        "items[].branch",
+        "items[].safety_stock",
+        "items[].suggested_safety_stock",
+        "items[].analysis_status",
+        "items[].available_stock",
+        "items[].period_consumption",
+        "items[].average_daily_consumption",
+        "items[].lead_time_days",
+        "items[].difference_quantity",
+        "page",
+        "page_size",
+        "total",
+        "total_pages",
+        "period_start",
+        "period_end"
+      ],
+      "semanticAliases": [
+        "itens análise consumo estoque de segurança",
+        "materiais abaixo do estoque sugerido",
+        "safety stock consumption items"
+      ]
+    },
+    {
+      "operationId": "get_supplies_stock_balances_summary",
+      "reason": "Stock balances by warehouse summary; KPI_SUPPLIES_ACCESS",
+      "executionMode": "catalog_action",
+      "approvedInputFields": [
+        "branch",
+        "warehouse",
+        "only_positive"
+      ],
+      "approvedResponseFields": [
+        "summary.branch",
+        "summary.warehouse",
+        "summary.product_count",
+        "summary.total_quantity",
+        "summary.total_stock_value",
+        "summary.warehouse_count",
+        "summary.valuation",
+        "by_warehouse[].warehouse",
+        "by_warehouse[].warehouse_label",
+        "by_warehouse[].product_count",
+        "by_warehouse[].total_quantity",
+        "by_warehouse[].total_stock_value"
+      ],
+      "semanticAliases": [
+        "saldo de estoque por depósito",
+        "saldos por armazém",
+        "stock balances summary",
+        "resumo saldos de estoque"
+      ]
+    },
+    {
+      "operationId": "get_supplies_stock_balances_items",
+      "reason": "Paged stock balance items by warehouse; KPI_SUPPLIES_ACCESS",
+      "executionMode": "catalog_action",
+      "approvedInputFields": [
+        "branch",
+        "warehouse",
+        "only_positive",
+        "product_codes",
+        "page",
+        "page_size",
+        "sort"
+      ],
+      "approvedResponseFields": [
+        "items[].product_code",
+        "items[].description",
+        "items[].unit_of_measure",
+        "items[].branch",
+        "items[].warehouse",
+        "items[].warehouse_label",
+        "items[].quantity",
+        "items[].stock_value",
+        "page",
+        "page_size",
+        "total",
+        "total_pages"
+      ],
+      "semanticAliases": [
+        "itens saldo de estoque",
+        "estoque por depósito",
+        "stock balance items",
+        "saldo estoque itens"
+      ]
+    },
+    {
+      "operationId": "get_supplies_third_party_materials_summary",
+      "reason": "Third-party materials summary; THIRD_PARTY_MATERIALS_READ_PERMISSIONS",
+      "executionMode": "catalog_action",
+      "approvedInputFields": [
+        "branch",
+        "product",
+        "customer_reference",
+        "partner_code",
+        "partner_store",
+        "status",
+        "only_with_balance",
+        "include_test_products",
+        "issued_from",
+        "issued_to"
+      ],
+      "approvedResponseFields": [
+        "total_shipments",
+        "open_shipments",
+        "partial_shipments",
+        "no_return_shipments",
+        "pending_balance"
+      ],
+      "semanticAliases": [
+        "materiais de terceiros",
+        "materiais em poder de terceiros",
+        "third-party materials",
+        "resumo materiais de terceiros"
+      ]
+    },
+    {
+      "operationId": "get_supplies_third_party_materials_shipments",
+      "reason": "Paged third-party shipments; nested model-safe projection without returns[] dump; THIRD_PARTY_MATERIALS_READ_PERMISSIONS",
+      "executionMode": "catalog_action",
+      "approvedInputFields": [
+        "branch",
+        "product",
+        "customer_reference",
+        "partner_code",
+        "partner_store",
+        "status",
+        "only_with_balance",
+        "include_test_products",
+        "issued_from",
+        "issued_to",
+        "page",
+        "page_size"
+      ],
+      "approvedResponseFields": [
+        "items[].shipment_recno",
+        "items[].branch",
+        "items[].status",
+        "items[].pending_balance",
+        "items[].received_quantity",
+        "items[].returned_quantity",
+        "items[].product.code",
+        "items[].product.description",
+        "items[].partner.code",
+        "items[].partner.store",
+        "items[].partner.name",
+        "items[].receipt_invoice.number",
+        "items[].receipt_invoice.issued_on",
+        "page",
+        "page_size",
+        "total",
+        "total_pages",
+        "has_next",
+        "is_complete"
+      ],
+      "semanticAliases": [
+        "remessas materiais de terceiros",
+        "shipments materiais de terceiros",
+        "lista materiais em poder de terceiros"
+      ]
+    },
+    {
+      "operationId": "list_supplies_purchase_request_lines",
+      "reason": "Paged purchase-request lines; PURCHASE_REQUESTS_READ_PERMISSIONS; drop approver/account internals",
+      "executionMode": "catalog_action",
+      "approvedInputFields": [
+        "branch",
+        "date_from",
+        "date_to",
+        "request_number",
+        "product_code",
+        "supplier_code",
+        "order_number",
+        "page",
+        "page_size",
+        "sort_by",
+        "sort_dir"
+      ],
+      "approvedResponseFields": [
+        "items[].branch",
+        "items[].request_number",
+        "items[].request_item",
+        "items[].product_code",
+        "items[].product_description",
+        "items[].unit",
+        "items[].requested_quantity",
+        "items[].ordered_quantity",
+        "items[].request_open_quantity",
+        "items[].request_issue_date",
+        "items[].request_required_date",
+        "items[].requester_code",
+        "items[].requester_name",
+        "items[].approval_status",
+        "items[].suggested_supplier_code",
+        "items[].suggested_supplier_name",
+        "items[].purchase_orders[].order_number",
+        "items[].purchase_orders[].ordered_quantity",
+        "items[].purchase_orders[].received_quantity",
+        "page",
+        "page_size",
+        "total",
+        "total_pages"
+      ],
+      "semanticAliases": [
+        "solicitações de compra",
+        "linhas de solicitação de compra",
+        "purchase requests",
+        "SC abertas",
+        "solicitações de compra abertas"
+      ]
     }
   ],
   "explicitlyNotApproved": [
@@ -1814,11 +2537,83 @@
       "coverageDisposition": "NEXT_WAVE_CANDIDATE",
       "primaryBlocker": "OUT_OF_WAVE_004",
       "reason": "Proposal collaborator summary — out of Wave 004 analytics READ scope."
+    },
+    {
+      "operationId": "get_supplies_purchase_order_otd_panel",
+      "coverageDisposition": "DEFER",
+      "primaryBlocker": "NEEDS_NESTED_LINE_DRILLDOWN_CONTRACT",
+      "reason": "Analogous to commercial OTD panel — line drill-down with large page_size; defer to detailed wave."
+    },
+    {
+      "operationId": "get_supplies_purchase_requests_open_coverage",
+      "coverageDisposition": "DEFER",
+      "primaryBlocker": "UNBOUNDED_LIST_NO_PAGINATION",
+      "reason": "Returns all open SC coverage items/products without page/page_size; needs owner-side bound or pagination."
+    },
+    {
+      "operationId": "get_supplies_purchase_request_lines",
+      "coverageDisposition": "DEFER",
+      "primaryBlocker": "SINGLE_REQUEST_DETAIL",
+      "reason": "Single SC detail by branch/request_number; promote list_supplies_purchase_request_lines first."
+    },
+    {
+      "operationId": "get_supplies_safety_stock_filters",
+      "coverageDisposition": "DEFER",
+      "primaryBlocker": "UI_FILTER_HELPER",
+      "reason": "UI filter options helper, not a primary information capability."
+    },
+    {
+      "operationId": "get_supplies_safety_stock_item_details",
+      "coverageDisposition": "DEFER",
+      "primaryBlocker": "COMPOSITE_ANALYSIS",
+      "reason": "composite_analysis detail needs separate nested contract review."
+    },
+    {
+      "operationId": "get_supplies_safety_stock_consumption_analysis_item_details",
+      "coverageDisposition": "DEFER",
+      "primaryBlocker": "COMPOSITE_ANALYSIS",
+      "reason": "Includes calculation_memory and monthly series — defer nested detail wave."
+    },
+    {
+      "operationId": "get_supplies_third_party_materials_shipment",
+      "coverageDisposition": "DEFER",
+      "primaryBlocker": "SHIPMENT_DETAIL",
+      "reason": "Single shipment detail with returns nested — defer after list shipments proves stable."
+    },
+    {
+      "operationId": "list_supplies_purchase_request_recent_linked_orders",
+      "coverageDisposition": "DEFER",
+      "primaryBlocker": "POLLING_CURSOR_HELPER",
+      "reason": "after_recno polling helper for BFF sync, not primary DAVI Q&A capability."
+    },
+    {
+      "operationId": "list_supplies_purchase_request_recent_linked_receipts",
+      "coverageDisposition": "DEFER",
+      "primaryBlocker": "POLLING_CURSOR_HELPER",
+      "reason": "after_recno polling helper for BFF sync, not primary DAVI Q&A capability."
+    },
+    {
+      "operationId": "list_supplies_purchase_request_requesters_route_supplies_purchase_requests_requesters_get",
+      "coverageDisposition": "DEFER",
+      "primaryBlocker": "PII_LOOKUP_HELPER",
+      "reason": "Requester lookup for UI filters; PII/identity helper without clear standalone information need."
+    },
+    {
+      "operationId": "get_protheus_user_by_email_route_supplies_protheus_users_by_email_get",
+      "coverageDisposition": "DEFER",
+      "primaryBlocker": "PII_IDENTITY_LOOKUP",
+      "reason": "Email→Protheus user identity lookup; not a Supplies information capability for DAVI."
+    },
+    {
+      "operationId": "export_supplies_third_party_materials_returns",
+      "coverageDisposition": "REJECT_FROM_JSON_READ_WAVE",
+      "primaryBlocker": "STREAM_BINARY_OUT_OF_SCOPE",
+      "reason": "Binary/document export must not flow through execute_delpi_information JSON (no base64)."
     }
   ],
   "hardening": {
-    "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-004-COMMERCIAL-READ",
-    "note": "No AuthZ policy change. Eligible READ 17→35 via allowlist v10 commercial analytics. 18 PROMOTE / 1 DEFER (panel) among 19 candidates. Nested pagination completeness normalized generically for pagination{} envelopes. MCP tools remain 3. Agent Instructions/intelligence unchanged. GPT Actions legacy unchanged. Document transport spike remains OFF/historical."
+    "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-005-SUPPLIES-READ",
+    "note": "Eligible READ 35→53 via allowlist v11 Supplies family. 18 PROMOTE / 11 DEFER / 1 REJECT among 30 candidates. MCP tools remain 3. Agent intelligence unchanged. GPT Actions deferred. Operation inventory regenerated from allowlist (stale 17 resolved)."
   },
   "supersededBlockers": {
     "taskId": "DAVI-READ-AUTHZ-REBASELINE-001",

@@ -131,12 +131,12 @@ class _PayloadExecutor:
 
 def test_drawing_eligible_count_includes_seventeen_foundation():
     eligible = {a.operation_id for a in _actions() if a.executable}
-    assert len(eligible) == 35
+    assert len(eligible) == 53
     assert set(_PRIOR_FIFTEEN) | set(_DRAWING) <= eligible
     allow = load_external_read_allowlist()
-    assert allow.get("version") == 10
+    assert allow.get("version") == 11
     assert allow.get("coverageDecision", {}).get("taskId") == (
-        "DAVI-CAPABILITY-EXPANSION-WAVE-004-COMMERCIAL-READ"
+        "DAVI-CAPABILITY-EXPANSION-WAVE-005-SUPPLIES-READ"
     )
     blocked = {
         item.get("operationId")
@@ -184,7 +184,7 @@ def test_drawing_discovery_aliases(query: str, expected: str, monkeypatch):
     )
     set_actions_for_tests(_actions())
     discovered = discover_delpi_information(query=query, actor_id="user-1")
-    assert discovered["eligible_action_count"] == 35, query
+    assert discovered["eligible_action_count"] == 53, query
     ids = [c["action_id"] for c in discovered["candidates"]]
     assert expected in ids
 

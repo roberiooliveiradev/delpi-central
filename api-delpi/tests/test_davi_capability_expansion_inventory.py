@@ -66,6 +66,24 @@ _ELIGIBLE = {
     "get_sales_order_otd_series",
     "get_sales_order_otd_series_by_customer",
     "get_weg_rol_target_pct",
+    "get_supplies_cpv",
+    "get_supplies_inventory_turnover",
+    "get_supplies_negotiation_savings_summary",
+    "get_supplies_otd",
+    "get_supplies_purchase_order_otd",
+    "get_supplies_purchase_order_otd_series",
+    "get_supplies_stock_value",
+    "get_supplies_safety_stock_summary",
+    "get_supplies_safety_stock_items",
+    "get_supplies_safety_stock_item_suppliers",
+    "get_supplies_safety_stock_supplier_purchase_price_history",
+    "get_supplies_safety_stock_consumption_analysis_summary",
+    "get_supplies_safety_stock_consumption_analysis_items",
+    "get_supplies_stock_balances_summary",
+    "get_supplies_stock_balances_items",
+    "get_supplies_third_party_materials_summary",
+    "get_supplies_third_party_materials_shipments",
+    "list_supplies_purchase_request_lines",
 }
 
 
@@ -81,7 +99,7 @@ def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def test_current_eligible_set_is_seventeen() -> None:
+def test_current_eligible_set_matches_allowlist() -> None:
     actions = build_actions()
     eligible = {a.operation_id for a in actions if a.executable}
     baseline = json.loads(
@@ -93,7 +111,7 @@ def test_current_eligible_set_is_seventeen() -> None:
         1 for a in actions if str(a.method).upper() == "GET"
     )
     assert eligible == _ELIGIBLE
-    assert len(eligible) == 35
+    assert len(eligible) == 53
 
 
 def test_mcp_tools_remain_three() -> None:
@@ -141,9 +159,9 @@ def test_inventory_covers_all_gets_and_freezes_wave1(tmp_path: Path) -> None:
         assert cap["projection_mode"] == "nested"
         assert cap["negative_authz_test_required"] == "YES"
 
-    assert doc["wave_1_freeze"]["current_eligible"] == 35
+    assert doc["wave_1_freeze"]["current_eligible"] == 53
     assert doc["wave_1_freeze"]["new_capabilities"] == 3
-    assert doc["wave_1_freeze"]["expected_eligible_after_implementation"] == 38
+    assert doc["wave_1_freeze"]["expected_eligible_after_implementation"] == 56
     assert doc["wave_1_freeze"]["expected_mcp_tools_after_implementation"] == 3
     assert doc["wave_1_freeze"]["agent_instruction_change"] == "NO"
 

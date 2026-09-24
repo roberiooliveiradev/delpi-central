@@ -1,0 +1,177 @@
+{
+  "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-005-SUPPLIES-READ",
+  "family": "SUPPLIES_READ",
+  "bootstrapHead": "12c471e0770d45590ef098a5cbab230ddf68a2ff",
+  "baseHead": "12c471e0770d45590ef098a5cbab230ddf68a2ff",
+  "sourceHead": "PENDING_COMMIT",
+  "inventoryArtifactBeforeState": "STALE_17_WHILE_ALLOWLIST_V10_HAD_35",
+  "inventoryEligibleBeforeRebaseline": 17,
+  "inventoryEligibleAfterRebaseline": 35,
+  "allowlistVersionBefore": 10,
+  "allowlistVersionAfter": 11,
+  "eligibleReadBefore": 35,
+  "eligibleReadAfter": 53,
+  "mcpToolsBefore": 3,
+  "mcpToolsAfter": 3,
+  "agentIntelligence": "2026.09.24.2",
+  "agentInstructionsChanged": false,
+  "agentIntelligenceChanged": false,
+  "gptActionsChanged": false,
+  "documentTransportChanged": false,
+  "candidateCount": 30,
+  "promotedCount": 18,
+  "deferredCount": 11,
+  "rejectedCount": 1,
+  "candidateOperations": [
+    "get_protheus_user_by_email_route_supplies_protheus_users_by_email_get",
+    "get_supplies_cpv",
+    "get_supplies_inventory_turnover",
+    "get_supplies_negotiation_savings_summary",
+    "get_supplies_otd",
+    "get_supplies_purchase_order_otd",
+    "get_supplies_purchase_order_otd_panel",
+    "get_supplies_purchase_order_otd_series",
+    "get_supplies_purchase_request_lines",
+    "get_supplies_purchase_requests_open_coverage",
+    "get_supplies_safety_stock_consumption_analysis_item_details",
+    "get_supplies_safety_stock_consumption_analysis_items",
+    "get_supplies_safety_stock_consumption_analysis_summary",
+    "get_supplies_safety_stock_filters",
+    "get_supplies_safety_stock_item_details",
+    "get_supplies_safety_stock_item_suppliers",
+    "get_supplies_safety_stock_items",
+    "get_supplies_safety_stock_summary",
+    "get_supplies_safety_stock_supplier_purchase_price_history",
+    "get_supplies_stock_balances_items",
+    "get_supplies_stock_balances_summary",
+    "get_supplies_stock_value",
+    "get_supplies_third_party_materials_shipment",
+    "get_supplies_third_party_materials_shipments",
+    "get_supplies_third_party_materials_summary",
+    "list_supplies_purchase_request_lines",
+    "list_supplies_purchase_request_recent_linked_orders",
+    "list_supplies_purchase_request_recent_linked_receipts",
+    "list_supplies_purchase_request_requesters_route_supplies_purchase_requests_requesters_get",
+    "export_supplies_third_party_materials_returns"
+  ],
+  "promotedOperations": [
+    "get_supplies_cpv",
+    "get_supplies_inventory_turnover",
+    "get_supplies_negotiation_savings_summary",
+    "get_supplies_otd",
+    "get_supplies_purchase_order_otd",
+    "get_supplies_purchase_order_otd_series",
+    "get_supplies_stock_value",
+    "get_supplies_safety_stock_summary",
+    "get_supplies_safety_stock_items",
+    "get_supplies_safety_stock_item_suppliers",
+    "get_supplies_safety_stock_supplier_purchase_price_history",
+    "get_supplies_safety_stock_consumption_analysis_summary",
+    "get_supplies_safety_stock_consumption_analysis_items",
+    "get_supplies_stock_balances_summary",
+    "get_supplies_stock_balances_items",
+    "get_supplies_third_party_materials_summary",
+    "get_supplies_third_party_materials_shipments",
+    "list_supplies_purchase_request_lines"
+  ],
+  "deferredOperations": [
+    {
+      "operationId": "get_supplies_purchase_order_otd_panel",
+      "disposition": "DEFER",
+      "reason": "Analogous to commercial OTD panel — line drill-down with large page_size; defer to detailed wave."
+    },
+    {
+      "operationId": "get_supplies_purchase_requests_open_coverage",
+      "disposition": "DEFER",
+      "reason": "Returns all open SC coverage items without page/page_size; needs owner-side pagination/bounds."
+    },
+    {
+      "operationId": "get_supplies_purchase_request_lines",
+      "disposition": "DEFER",
+      "reason": "Single SC detail by branch/request_number; list_supplies_purchase_request_lines covers Q&A with pagination."
+    },
+    {
+      "operationId": "get_supplies_safety_stock_filters",
+      "disposition": "DEFER",
+      "reason": "UI filter options helper, not a primary information capability."
+    },
+    {
+      "operationId": "get_supplies_safety_stock_item_details",
+      "disposition": "DEFER",
+      "reason": "composite_analysis detail needs separate nested contract review."
+    },
+    {
+      "operationId": "get_supplies_safety_stock_consumption_analysis_item_details",
+      "disposition": "DEFER",
+      "reason": "Includes calculation_memory and monthly series — defer nested detail wave."
+    },
+    {
+      "operationId": "get_supplies_third_party_materials_shipment",
+      "disposition": "DEFER",
+      "reason": "Single shipment detail with returns nested — defer after list shipments proves stable."
+    },
+    {
+      "operationId": "list_supplies_purchase_request_recent_linked_orders",
+      "disposition": "DEFER",
+      "reason": "after_recno polling helper for BFF sync, not primary DAVI Q&A capability."
+    },
+    {
+      "operationId": "list_supplies_purchase_request_recent_linked_receipts",
+      "disposition": "DEFER",
+      "reason": "after_recno polling helper for BFF sync, not primary DAVI Q&A capability."
+    },
+    {
+      "operationId": "list_supplies_purchase_request_requesters_route_supplies_purchase_requests_requesters_get",
+      "disposition": "DEFER",
+      "reason": "Requester lookup for UI filters; PII/identity helper without clear standalone information need."
+    },
+    {
+      "operationId": "get_protheus_user_by_email_route_supplies_protheus_users_by_email_get",
+      "disposition": "DEFER",
+      "reason": "Email→Protheus user identity lookup; not a Supplies information capability for DAVI."
+    }
+  ],
+  "rejectedOperations": [
+    {
+      "operationId": "export_supplies_third_party_materials_returns",
+      "disposition": "REJECT_FROM_JSON_READ_WAVE",
+      "reason": "Binary/document export must not flow through execute_delpi_information JSON."
+    }
+  ],
+  "authzByOperation": {
+    "get_supplies_cpv": "KPI_SUPPLIES_ACCESS",
+    "get_supplies_inventory_turnover": "KPI_SUPPLIES_ACCESS",
+    "get_supplies_negotiation_savings_summary": "KPI_SUPPLIES_ACCESS",
+    "get_supplies_otd": "KPI_SUPPLIES_ACCESS",
+    "get_supplies_purchase_order_otd": "KPI_SUPPLIES_ACCESS",
+    "get_supplies_purchase_order_otd_series": "KPI_SUPPLIES_ACCESS",
+    "get_supplies_stock_value": "KPI_SUPPLIES_ACCESS",
+    "get_supplies_stock_balances_summary": "KPI_SUPPLIES_ACCESS",
+    "get_supplies_stock_balances_items": "KPI_SUPPLIES_ACCESS",
+    "get_supplies_safety_stock_summary": "SAFETY_STOCK_READ_PERMISSIONS",
+    "get_supplies_safety_stock_items": "SAFETY_STOCK_READ_PERMISSIONS",
+    "get_supplies_safety_stock_item_suppliers": "SAFETY_STOCK_READ_PERMISSIONS",
+    "get_supplies_safety_stock_supplier_purchase_price_history": "SAFETY_STOCK_READ_PERMISSIONS",
+    "get_supplies_safety_stock_consumption_analysis_summary": "SAFETY_STOCK_READ_PERMISSIONS",
+    "get_supplies_safety_stock_consumption_analysis_items": "SAFETY_STOCK_READ_PERMISSIONS",
+    "list_supplies_purchase_request_lines": "PURCHASE_REQUESTS_READ_PERMISSIONS",
+    "get_supplies_third_party_materials_summary": "THIRD_PARTY_MATERIALS_READ_PERMISSIONS",
+    "get_supplies_third_party_materials_shipments": "THIRD_PARTY_MATERIALS_READ_PERMISSIONS"
+  },
+  "nestedProjectionChanges": "NONE — reused generic nested approvedResponseFields (purchase_orders[], product/partner nests).",
+  "paginationSummary": "List routes use page/page_size/total/total_pages or has_next; open_coverage deferred for lack of pagination.",
+  "dateRangeSummary": "KPI/OTD routes keep owner dateRange maxDays=366 where already present; price history uses canonical 12-month repository window.",
+  "responseBudgetSummary": "Generic dynamic read budgets unchanged; no per-route invented byte caps.",
+  "retrievalTests": "PASS — source matrix in test_davi_capability_wave_005_supplies.py",
+  "siblingRetrievalTests": "PASS — commercial OTD vs purchase OTD; product stock vs stock balances; CPV vs ROL; price history siblings",
+  "sourceTests": "PASS",
+  "deployStatus": "PENDING_EXTERNAL_ACTION",
+  "deployedSha": null,
+  "productionEligibleActionCount": null,
+  "productionLiveTests": "TEST_NOT_RUN",
+  "negativeAuthz": {
+    "sourceNegative": "PASS_VIA_EXISTING_PERMISSION_DECORATORS",
+    "liveSecondUser": "PENDING"
+  },
+  "executionDrift": false
+}
