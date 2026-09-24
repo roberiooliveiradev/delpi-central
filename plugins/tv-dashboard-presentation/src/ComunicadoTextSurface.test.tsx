@@ -132,4 +132,25 @@ describe("ComunicadoTextSurface — formatação parcial em forma", () => {
     const { container } = render(<ComunicadoTextSurface block={block} />);
     expect(container.textContent).toMatch(/Meta:\s*—/);
   });
+
+  it("sem modelo de dados: prefixo estático sem travessão «—»", () => {
+    const block: ComunicadoTextBlock = {
+      id: "txt-orphan",
+      type: "text",
+      frame: { x: 0, y: 0, w: 20, h: 8 },
+      content: "ACUM. 2026",
+      textProjection: {
+        field: "revenue",
+        format: "currency",
+        prefix: "ACUM. 2026 ",
+      },
+      style: { fontSize: 20 },
+    };
+    const display = resolveTextSurfaceDisplay(block);
+    expect(display.content).toBe("ACUM. 2026 ");
+    expect(display.content).not.toContain("—");
+    const { container } = render(<ComunicadoTextSurface block={block} />);
+    expect(container.textContent).toBe("ACUM. 2026 ");
+    expect(container.textContent).not.toContain("—");
+  });
 });

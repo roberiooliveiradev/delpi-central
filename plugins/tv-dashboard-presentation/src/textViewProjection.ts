@@ -42,6 +42,24 @@ export function textBlockHasDataBinding(
   return Boolean(block.contentRuns?.some((run) => run.dataRef?.field?.trim()));
 }
 
+/** Fonte de dados ligada — sem isso, projeção/dataRef órfãos não devem pintar «—». */
+export function textBlockHasLinkedDataSource(block: { dataSourceId?: string }): boolean {
+  return Boolean(block.dataSourceId?.trim());
+}
+
+/**
+ * Fallback do trecho dinâmico: ligado sem valor → «—»; sem modelo → string vazia
+ * (mantém prefixo/rótulo estático, sem travessão fantasma).
+ */
+export function dynamicTextEmptyFallback(
+  block: { dataSourceId?: string },
+  explicitFallback?: string | null,
+): string {
+  if (!textBlockHasLinkedDataSource(block)) return "";
+  const custom = explicitFallback?.trim();
+  return custom || "—";
+}
+
 export function normalizeTextProjection(raw: unknown): ComunicadoTextProjection | undefined {
   if (!raw || typeof raw !== "object") return undefined;
   const item = raw as ComunicadoTextProjection;
@@ -135,9 +153,11 @@ export function resolveTextDataRefValue(
 export function resolveTextDisplayValue(
   resolved: ComunicadoDataResolved | undefined,
   projection: ComunicadoTextProjection | undefined,
+  options?: { linkedDataSource?: boolean },
 ): { text: string; color?: string } {
   if (!projection?.field?.trim()) return { text: "" };
-  const fallback = projection.fallback?.trim() || "—";
+  const linked = options?.linkedDataSource !== false;
+  const fallback = linked ? projection.fallback?.trim() || "—" : "";
   const { text, color } = resolveTextDataRefValue(
     resolved,
     {
@@ -229,16 +249,18 @@ export function suggestDefaultTextProjection(
 
 export function resolveTextBlockDisplayRuns(
   block: Pick<ComunicadoTextBlock, "content" | "contentRuns" | "textProjection"> & {
+    dataSourceId?: string;
     resolved?: ComunicadoDataResolved;
   },
   resolved?: ComunicadoDataResolved,
 ): ComunicadoContentRun[] {
   const data = resolved ?? block.resolved;
+  const emptyFallback = dynamicTextEmptyFallback(block);
   const hasDataRuns = block.contentRuns?.some((run) => run.dataRef?.field?.trim());
   if (hasDataRuns && block.contentRuns) {
     return block.contentRuns.map((run) => {
       if (!run.dataRef?.field?.trim()) return run;
-      const { text, color } = resolveTextDataRefValue(data, run.dataRef, run.text || "—");
+      const { text, color } = resolveTextDataRefValue(data, run.dataRef, emptyFallback);
       const style = color
         ? { ...(run.style ?? {}), color }
         : run.style;
@@ -246,7 +268,9 @@ export function resolveTextBlockDisplayRuns(
     });
   }
   if (block.textProjection?.field?.trim()) {
-    const { text, color } = resolveTextDisplayValue(data, block.textProjection);
+    const { text, color } = resolveTextDisplayValue(data, block.textProjection, {
+      linkedDataSource: textBlockHasLinkedDataSource(block),
+    });
     const baseStyle = color ? { color } : undefined;
     return [{ text, style: baseStyle }];
   }
@@ -276,6 +300,7 @@ export function resolveVisualBoxDisplayText(
           content: block.content ?? "",
           contentRuns: block.contentRuns,
           textProjection: block.textProjection,
+          dataSourceId: block.dataSourceId,
         }
       : block,
     resolved ?? ("resolved" in block ? block.resolved : undefined),

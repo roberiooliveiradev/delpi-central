@@ -140,6 +140,34 @@ describe("textViewProjection", () => {
     expect(textBlockHasDataBinding({ content: "estático" })).toBe(false);
   });
 
+  it("sem dataSourceId: projeção órfã não pinta travessão (só prefixo)", () => {
+    expect(
+      resolveTextDisplayValue(
+        undefined,
+        { field: "revenue", prefix: "ACUM. 2026 ", format: "currency" },
+        { linkedDataSource: false },
+      ).text,
+    ).toBe("ACUM. 2026 ");
+    expect(
+      resolveTextBlockDisplayRuns({
+        content: "",
+        textProjection: { field: "revenue", prefix: "ACUM. 2026 " },
+      })
+        .map((run) => run.text)
+        .join(""),
+    ).toBe("ACUM. 2026 ");
+    expect(
+      resolveTextBlockDisplayRuns({
+        content: "",
+        dataSourceId: "src-1",
+        textProjection: { field: "missing", prefix: "ACUM. 2026 " },
+        resolved: { kpi: { value: null, label: "x" } },
+      })
+        .map((run) => run.text)
+        .join(""),
+    ).toBe("ACUM. 2026 —");
+  });
+
   it("formatTextProjectionValue date usa calendário UTC", () => {
     expect(formatTextProjectionValue("2026-08-03", "date")).toBe("03/08/2026");
   });

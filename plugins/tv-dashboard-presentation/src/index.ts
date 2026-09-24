@@ -1417,6 +1417,8 @@ export {
   suggestDefaultTextProjection,
   syncTextBlocksWithResolved,
   textBlockHasDataBinding,
+  textBlockHasLinkedDataSource,
+  dynamicTextEmptyFallback,
   textProjectionHasField,
   textProjectionPrefixFromStaticLabel,
   viewHasTextProjectionConfigured,
