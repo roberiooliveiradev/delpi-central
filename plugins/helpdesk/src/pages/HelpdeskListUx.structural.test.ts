@@ -157,7 +157,7 @@ describe("Helpdesk list UX structural", () => {
     expect(page).toContain("HelpdeskAssignPopover");
     expect(page).toContain("setTicketAssignee");
     expect(page).toContain("canAssign");
-    expect(page).toContain("ticket.can_assign");
+    expect(page).toContain("canAssign={ticket.can_assign === true}");
     expect(page).toContain("helpTooltips.createUi.assignee");
     expect(page).toContain("assignee_id: canAssign === true && assignee?.id ? Number(assignee.id) : undefined");
     expect(page).toContain("canAssign !== true");
@@ -166,6 +166,8 @@ describe("Helpdesk list UX structural", () => {
     expect(assignPopover).toContain("HelpdeskAssigneePicker");
     expect(assignPopover).toContain("helpdesk-assign-summary");
     expect(assignPopover).toContain("aria-expanded");
+    expect(assignPopover).toContain("canAssign");
+    expect(assignPopover).toMatch(/canAssign \? \(/);
     const detailSlice = page.slice(page.indexOf("HelpdeskAssignPopover"));
     expect(detailSlice).not.toContain('className="helpdesk-assign-panel"');
     expect(picker).toContain("listUsers");

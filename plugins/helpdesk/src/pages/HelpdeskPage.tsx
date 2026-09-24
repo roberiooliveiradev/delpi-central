@@ -1028,6 +1028,7 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
   const [cycleKey, setCycleKey] = useState(newIdempotencyKey);
   const [satisfactionScore, setSatisfactionScore] = useState(5);
   const [satisfactionComment, setSatisfactionComment] = useState("");
+  const [satisfactionCommentOpen, setSatisfactionCommentOpen] = useState(false);
   /** Bumps resolve identity after IDB seed (create parity). */
   const [pendingHydrated, setPendingHydrated] = useState(0);
   const myPhotoUrl = useMyPersonProfilePhoto();
@@ -1152,7 +1153,7 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
         onRefresh={load}
         refreshing={loading}
       />
-      <HelpdeskSectionCard title="Conversa" hint={helpTooltips.detail} fill>
+      <div className="helpdesk-detail">
         {loading ? (
           <HelpdeskLoadingCard
             title="Carregando chamado…"
@@ -1163,40 +1164,44 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
         {errorText ? <HelpdeskStateBanner variant="error">{errorText}</HelpdeskStateBanner> : null}
         {ticket ? (
           <>
-            <div className="helpdesk-ticket-summary">
-            <HelpdeskRecordCard
-              title={detailRecordHeading(ticket.category, ticket.urgency).title}
-              subtitle={detailRecordSubtitle({
-                id: ticket.id,
-                urgency: ticket.urgency,
-                assigned_display_name: ticket.assigned_display_name,
-              })}
-              status={<HelpdeskStatusBadge label={ticket.status} variant={statusBadgeVariant(ticket.status_id)} />}
-              fields={ticketRecordFields({
-                id: ticket.id,
-                category: ticket.category,
-                urgency: ticket.urgency,
-                assigned_display_name: ticket.assigned_display_name,
-                observers_display_name: ticket.observers_display_name,
-                created_at: ticket.created_at,
-                updated_at: ticket.updated_at,
-                solved_at: ticket.solved_at,
-                closed_at: ticket.closed_at,
-                sla_ttr: ticket.sla_ttr,
-                sla_tto: ticket.sla_tto,
-              })
-                .filter((field) =>
-                  ["sla_ttr", "sla_tto", "created_at", "updated_at"].includes(field.id),
-                )
-                .map((field) => ({
-                  id: field.id,
-                  label: field.label,
-                  value: field.value,
-                  present: field.present,
-                }))}
-            />
-            </div>
-            {ticket.can_assign ? (
+            <section className="helpdesk-detail__summary" aria-label="Resumo do chamado">
+              <div className="helpdesk-ticket-summary">
+                <HelpdeskRecordCard
+                  title={detailRecordHeading(ticket.category, ticket.urgency).title}
+                  subtitle={detailRecordSubtitle({
+                    id: ticket.id,
+                    urgency: ticket.urgency,
+                  })}
+                  status={
+                    <HelpdeskStatusBadge
+                      label={ticket.status}
+                      variant={statusBadgeVariant(ticket.status_id)}
+                    />
+                  }
+                  fields={ticketRecordFields({
+                    id: ticket.id,
+                    category: ticket.category,
+                    urgency: ticket.urgency,
+                    assigned_display_name: ticket.assigned_display_name,
+                    observers_display_name: ticket.observers_display_name,
+                    created_at: ticket.created_at,
+                    updated_at: ticket.updated_at,
+                    solved_at: ticket.solved_at,
+                    closed_at: ticket.closed_at,
+                    sla_ttr: ticket.sla_ttr,
+                    sla_tto: ticket.sla_tto,
+                  })
+                    .filter((field) =>
+                      ["sla_tto", "sla_ttr", "created_at", "updated_at"].includes(field.id),
+                    )
+                    .map((field) => ({
+                      id: field.id,
+                      label: field.label,
+                      value: field.value,
+                      present: field.present,
+                    }))}
+                />
+              </div>
               <HelpdeskAssignPopover
                 assignedDisplayName={ticket.assigned_display_name}
                 assignedUserId={ticket.assigned_user_id}
@@ -1204,8 +1209,9 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                 onChange={setAssigneePick}
                 onConfirm={assignTechnician}
                 saving={assignSaving}
+                canAssign={ticket.can_assign === true}
               />
-            ) : null}
+            </section>
             {(() => {
               const cue = solicitanteLifecycleCue({
                 statusId: ticket.status_id,
@@ -1244,6 +1250,7 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                 )
                   .then(() => {
                     setSatisfactionComment("");
+                    setSatisfactionCommentOpen(false);
                     setCycleKey(newIdempotencyKey());
                     load();
                   })
@@ -1266,6 +1273,8 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                   .catch((error) => setErrorText(messageFor(error).text))
                   .finally(() => setCycleSaving(false));
               };
+              const showSatisfactionComment =
+                satisfactionCommentOpen || satisfactionComment.trim().length > 0;
               return (
                 <div className="helpdesk-lifecycle-cue">
                   <HelpdeskStateBanner variant={cue.variant}>
@@ -1384,86 +1393,254 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                       </div>
                     ) : null}
                     {cue.showSatisfactionForm ? (
-                      <div className="helpdesk-lifecycle-actions">
-                        <label className="helpdesk-lifecycle-note">
-                          <span>Nota (1–5)</span>
-                          <select
-                            value={satisfactionScore}
-                            onChange={(event) => setSatisfactionScore(Number(event.target.value))}
-                            disabled={cycleSaving}
-                          >
-                            {[1, 2, 3, 4, 5].map((score) => (
-                              <option key={score} value={score}>
-                                {score}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
-                        <label className="helpdesk-lifecycle-note">
-                          <span>Comentário (opcional)</span>
-                          <input
-                            type="text"
-                            value={satisfactionComment}
-                            onChange={(event) => setSatisfactionComment(event.target.value)}
-                            disabled={cycleSaving}
-                            maxLength={2000}
-                          />
-                        </label>
-                        <HintAction
-                          hint={helpTooltips.detailUi.submitSatisfaction}
-                          ariaLabel="Ajuda: Enviar avaliação"
+                      <div className="helpdesk-satisfaction" role="group" aria-label="Avaliação do atendimento">
+                        <div
+                          className="helpdesk-satisfaction__scores"
+                          role="radiogroup"
+                          aria-label="Nota de 1 a 5"
                         >
-                          <ActionButton
-                            variant="primary"
-                            type="button"
-                            disabled={cycleSaving}
-                            onClick={runSatisfaction}
+                          {[1, 2, 3, 4, 5].map((score) => {
+                            const selected = satisfactionScore === score;
+                            return (
+                              <label
+                                key={score}
+                                className={[
+                                  "helpdesk-satisfaction__score",
+                                  selected ? "helpdesk-satisfaction__score--selected" : null,
+                                ]
+                                  .filter(Boolean)
+                                  .join(" ")}
+                              >
+                                <input
+                                  type="radio"
+                                  name="helpdesk-satisfaction-score"
+                                  value={score}
+                                  checked={selected}
+                                  disabled={cycleSaving}
+                                  onChange={() => setSatisfactionScore(score)}
+                                />
+                                <span aria-hidden="true">{score}</span>
+                                <span className="helpdesk-sr-only">Nota {score}</span>
+                              </label>
+                            );
+                          })}
+                        </div>
+                        <div className="helpdesk-satisfaction__aside">
+                          {showSatisfactionComment ? (
+                            <label className="helpdesk-lifecycle-note helpdesk-satisfaction__comment">
+                              <span>Comentário (opcional)</span>
+                              <input
+                                type="text"
+                                value={satisfactionComment}
+                                onChange={(event) => setSatisfactionComment(event.target.value)}
+                                disabled={cycleSaving}
+                                maxLength={2000}
+                              />
+                            </label>
+                          ) : (
+                            <button
+                              type="button"
+                              className="helpdesk-satisfaction__comment-toggle"
+                              disabled={cycleSaving}
+                              onClick={() => setSatisfactionCommentOpen(true)}
+                            >
+                              Adicionar comentário
+                            </button>
+                          )}
+                          <HintAction
+                            hint={helpTooltips.detailUi.submitSatisfaction}
+                            ariaLabel="Ajuda: Enviar avaliação"
                           >
-                            {cycleSaving ? "Enviando…" : "Enviar avaliação"}
-                          </ActionButton>
-                        </HintAction>
+                            <ActionButton
+                              variant="primary"
+                              type="button"
+                              disabled={cycleSaving}
+                              onClick={runSatisfaction}
+                            >
+                              {cycleSaving ? "Enviando…" : "Enviar avaliação"}
+                            </ActionButton>
+                          </HintAction>
+                        </div>
                       </div>
                     ) : null}
                   </HelpdeskStateBanner>
                 </div>
               );
             })()}
-            <HelpdeskMessageThread
-              listAriaLabel="Conversa do chamado"
-              emptyLabel="Nenhuma mensagem"
-              resolveAttachmentImageSrc={resolveReplyAttachmentImageSrc}
-              onAttachmentImageClick={(attachmentId) => {
-                const documentId = Number(attachmentId);
-                if (!Number.isFinite(documentId)) return;
-                const known = ticket.attachments.find((item) => item.document_id === documentId);
-                setInlinePreview(
-                  known ?? {
-                    document_id: documentId,
-                    filename: "imagem",
-                    mime: "image/*",
-                  },
-                );
-              }}
-              messages={conversationMessages(ticket, new Date()).map((message) => ({
-                id: message.id,
-                kind: message.kind,
-                headingText: message.headingText || undefined,
-                bodyText: message.bodyText,
-                bodyHtml: message.bodyHtml || undefined,
-                createdAtLabel: message.createdAtLabel,
-                authorName: message.authorName || undefined,
-                authorSrc: conversationAuthorSrc(message.mine, myPhotoUrl),
-                mine: message.mine,
-                belowBody:
-                  message.attachmentIds.length > 0 ? (
-                    <TicketAttachmentPreview
-                      ticketId={ticketId}
-                      attachments={ticket.attachments.filter((item) => message.attachmentIds.includes(item.document_id))}
-                      onError={(text) => setErrorText(text)}
+            <div className="helpdesk-detail__conversation">
+              <div className="helpdesk-detail__conversation-inner">
+                <HelpdeskMessageThread
+                  listAriaLabel="Conversa do chamado"
+                  emptyLabel="Ainda não há novas mensagens neste chamado."
+                  resolveAttachmentImageSrc={resolveReplyAttachmentImageSrc}
+                  onAttachmentImageClick={(attachmentId) => {
+                    const documentId = Number(attachmentId);
+                    if (!Number.isFinite(documentId)) return;
+                    const known = ticket.attachments.find((item) => item.document_id === documentId);
+                    setInlinePreview(
+                      known ?? {
+                        document_id: documentId,
+                        filename: "imagem",
+                        mime: "image/*",
+                      },
+                    );
+                  }}
+                  messages={conversationMessages(ticket, new Date()).map((message) => ({
+                    id: message.id,
+                    kind: message.kind,
+                    headingText: message.headingText || undefined,
+                    bodyText: message.bodyText,
+                    bodyHtml: message.bodyHtml || undefined,
+                    createdAtLabel: message.createdAtLabel,
+                    authorName: message.authorName || undefined,
+                    authorSrc: conversationAuthorSrc(message.mine, myPhotoUrl),
+                    mine: message.mine,
+                    belowBody:
+                      message.attachmentIds.length > 0 ? (
+                        <TicketAttachmentPreview
+                          ticketId={ticketId}
+                          attachments={ticket.attachments.filter((item) =>
+                            message.attachmentIds.includes(item.document_id),
+                          )}
+                          onError={(text) => setErrorText(text)}
+                        />
+                      ) : undefined,
+                  }))}
+                />
+                {ticket.can_followup !== false && draftFilesReady ? (
+                  <form
+                    className="helpdesk-reply-form"
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      if (saving || !hasVisibleRichText(content)) return;
+                      setSaving(true);
+                      const payload = attachmentPreview.persistHtml(content.trim());
+                      void createFollowup(ticketId, payload, idempotencyKey)
+                        .then(() => {
+                          setContent("");
+                          clearReplyDraft(ticketId);
+                          pendingFilesRef.current.clear();
+                          void clearHelpdeskDraftPendingFiles(replyDraftPendingScope(ticketId));
+                          setIdempotencyKey(newIdempotencyKey());
+                          load();
+                        })
+                        .catch((error) => setErrorText(messageFor(error).text))
+                        .finally(() => setSaving(false));
+                    }}
+                  >
+                    <HelpdeskRichTextField
+                      ref={replyComposerRef}
+                      label="Responder"
+                      hint={helpTooltips.detailUi.reply}
+                      value={content}
+                      onChange={(next) => setContent(attachmentPreview.persistHtml(next))}
+                      minHeight={72}
+                      enableMentions
+                      resolveAttachmentImageSrc={resolveReplyAttachmentImageSrc}
+                      persistAttachmentImageSrc={attachmentPreview.persistAttachmentImageSrc}
+                      onUploadFiles={async (files) => {
+                        // InteractionRoom parity: pending local first, upload rewrite after.
+                        const results: HelpdeskInlineUploadResult[] = [];
+                        const pendingUploads: { pendingId: string; file: File }[] = [];
+                        for (const file of files) {
+                          const isImage =
+                            file.type.startsWith("image/") ||
+                            /\.(png|jpe?g|gif|webp|bmp)$/i.test(file.name || "");
+                          if (!isImage) {
+                            await uploadTicketAttachment(ticketId, file, newIdempotencyKey());
+                            continue;
+                          }
+                          const pendingId = newIdempotencyKey();
+                          pendingFilesRef.current.set(pendingId, file);
+                          const src = attachmentPreview.seedFile(pendingId, file);
+                          results.push({
+                            kind: "pending",
+                            pendingId,
+                            src,
+                            alt: file.name || "imagem",
+                          });
+                          pendingUploads.push({ pendingId, file });
+                        }
+                        void persistReplyPendingFiles();
+                        if (pendingUploads.length > 0) {
+                          void (async () => {
+                            const mapping: Record<string, { documentId: number; ticketId: string }> = {};
+                            try {
+                              for (const item of pendingUploads) {
+                                const uploaded = await uploadTicketAttachment(
+                                  ticketId,
+                                  item.file,
+                                  newIdempotencyKey(),
+                                );
+                                // Keep focused-editor preview: alias pending→document without revoking blob.
+                                attachmentPreview.transferPendingSeed(
+                                  item.pendingId,
+                                  uploaded.document_id,
+                                );
+                                mapping[item.pendingId] = {
+                                  documentId: uploaded.document_id,
+                                  ticketId,
+                                };
+                                // Keep File under document id + pending for F5 dual cover.
+                                rekeyDraftFileToDocument(
+                                  pendingFilesRef.current,
+                                  item.pendingId,
+                                  uploaded.document_id,
+                                );
+                              }
+                              // Await serialized IDB write so rekey wins over the paste write (H1).
+                              await persistReplyPendingFiles();
+                              if (Object.keys(mapping).length > 0) {
+                                const scope = replyDraftPendingScope(ticketId);
+                                const rows = await readHelpdeskDraftPendingFiles(scope);
+                                setContent((current) => {
+                                  const rewritten = attachmentPreview.persistHtml(
+                                    rewritePendingInlineImages(current, mapping),
+                                  );
+                                  // H3 gate: never leave HTML on documentId if IDB cannot seed it.
+                                  if (!canRewritePendingDraftHtml(rewritten, rows)) {
+                                    return current;
+                                  }
+                                  return rewritten;
+                                });
+                              }
+                              // Do not load() here: compose-time image upload must keep the
+                              // local blob seed. Reloading the ticket while the Document is
+                              // not yet in attachments retriggers GET→404 storms.
+                            } catch (error) {
+                              setErrorText(messageFor(error).text);
+                            }
+                          })();
+                        } else if (files.length > 0) {
+                          load();
+                        }
+                        return results;
+                      }}
+                      onUploadError={(error) => setErrorText(messageFor(error).text)}
                     />
-                  ) : undefined,
-              }))}
-            />
+                    <HelpdeskFormActions align="end" className="helpdesk-reply-form__actions">
+                      <HelpdeskAttachButton
+                        hint={helpTooltips.detailUi.attach}
+                        disabled={saving}
+                        className="helpdesk-compose-attach"
+                        onClick={() => replyComposerRef.current?.openAttachPicker()}
+                      />
+                      <HintAction hint={helpTooltips.detailUi.send} ariaLabel="Ajuda: Enviar resposta">
+                        <ActionButton
+                          variant="primary"
+                          type="submit"
+                          aria-label={saving ? "Enviando" : "Enviar resposta"}
+                          disabled={saving || !hasVisibleRichText(content)}
+                        >
+                          <Send size={18} aria-hidden />
+                          {saving ? "Enviando…" : "Enviar"}
+                        </ActionButton>
+                      </HintAction>
+                    </HelpdeskFormActions>
+                  </form>
+                ) : null}
+              </div>
+            </div>
             <FilePreviewModal
               open={Boolean(inlinePreview)}
               title={inlinePreview?.filename || "Anexo"}
@@ -1497,142 +1674,9 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                 ) : null
               }
             />
-            {ticket.can_followup !== false && draftFilesReady ? (
-            <form
-              className="helpdesk-reply-form"
-              onSubmit={(event) => {
-                event.preventDefault();
-                if (saving || !hasVisibleRichText(content)) return;
-                setSaving(true);
-                const payload = attachmentPreview.persistHtml(content.trim());
-                void createFollowup(ticketId, payload, idempotencyKey)
-                  .then(() => {
-                    setContent("");
-                    clearReplyDraft(ticketId);
-                    pendingFilesRef.current.clear();
-                    void clearHelpdeskDraftPendingFiles(replyDraftPendingScope(ticketId));
-                    setIdempotencyKey(newIdempotencyKey());
-                    load();
-                  })
-                  .catch((error) => setErrorText(messageFor(error).text))
-                  .finally(() => setSaving(false));
-              }}
-            >
-              <HelpdeskRichTextField
-                ref={replyComposerRef}
-                label="Responder"
-                hint={helpTooltips.detailUi.reply}
-                value={content}
-                onChange={(next) => setContent(attachmentPreview.persistHtml(next))}
-                minHeight={96}
-                fill
-                enableMentions
-                resolveAttachmentImageSrc={resolveReplyAttachmentImageSrc}
-                persistAttachmentImageSrc={attachmentPreview.persistAttachmentImageSrc}
-                onUploadFiles={async (files) => {
-                  // InteractionRoom parity: pending local first, upload rewrite after.
-                  const results: HelpdeskInlineUploadResult[] = [];
-                  const pendingUploads: { pendingId: string; file: File }[] = [];
-                  for (const file of files) {
-                    const isImage =
-                      file.type.startsWith("image/") ||
-                      /\.(png|jpe?g|gif|webp|bmp)$/i.test(file.name || "");
-                    if (!isImage) {
-                      await uploadTicketAttachment(ticketId, file, newIdempotencyKey());
-                      continue;
-                    }
-                    const pendingId = newIdempotencyKey();
-                    pendingFilesRef.current.set(pendingId, file);
-                    const src = attachmentPreview.seedFile(pendingId, file);
-                    results.push({
-                      kind: "pending",
-                      pendingId,
-                      src,
-                      alt: file.name || "imagem",
-                    });
-                    pendingUploads.push({ pendingId, file });
-                  }
-                  void persistReplyPendingFiles();
-                  if (pendingUploads.length > 0) {
-                    void (async () => {
-                      const mapping: Record<string, { documentId: number; ticketId: string }> = {};
-                      try {
-                        for (const item of pendingUploads) {
-                          const uploaded = await uploadTicketAttachment(
-                            ticketId,
-                            item.file,
-                            newIdempotencyKey(),
-                          );
-                          // Keep focused-editor preview: alias pending→document without revoking blob.
-                          attachmentPreview.transferPendingSeed(
-                            item.pendingId,
-                            uploaded.document_id,
-                          );
-                          mapping[item.pendingId] = {
-                            documentId: uploaded.document_id,
-                            ticketId,
-                          };
-                          // Keep File under document id + pending for F5 dual cover.
-                          rekeyDraftFileToDocument(
-                            pendingFilesRef.current,
-                            item.pendingId,
-                            uploaded.document_id,
-                          );
-                        }
-                        // Await serialized IDB write so rekey wins over the paste write (H1).
-                        await persistReplyPendingFiles();
-                        if (Object.keys(mapping).length > 0) {
-                          const scope = replyDraftPendingScope(ticketId);
-                          const rows = await readHelpdeskDraftPendingFiles(scope);
-                          setContent((current) => {
-                            const rewritten = attachmentPreview.persistHtml(
-                              rewritePendingInlineImages(current, mapping),
-                            );
-                            // H3 gate: never leave HTML on documentId if IDB cannot seed it.
-                            if (!canRewritePendingDraftHtml(rewritten, rows)) {
-                              return current;
-                            }
-                            return rewritten;
-                          });
-                        }
-                        // Do not load() here: compose-time image upload must keep the
-                        // local blob seed. Reloading the ticket while the Document is
-                        // not yet in attachments retriggers GET→404 storms.
-                      } catch (error) {
-                        setErrorText(messageFor(error).text);
-                      }
-                    })();
-                  } else if (files.length > 0) {
-                    load();
-                  }
-                  return results;
-                }}
-                onUploadError={(error) => setErrorText(messageFor(error).text)}
-              />
-              <HelpdeskFormActions align="end">
-                <HelpdeskAttachButton
-                  hint={helpTooltips.detailUi.attach}
-                  disabled={saving}
-                  className="helpdesk-compose-attach"
-                  onClick={() => replyComposerRef.current?.openAttachPicker()}
-                />
-                <HintAction hint={helpTooltips.detailUi.send} ariaLabel="Ajuda: Enviar resposta">
-                  <ActionButton
-                    variant="primary"
-                    type="submit"
-                    aria-label={saving ? "Enviando" : "Enviar resposta"}
-                    disabled={saving || !hasVisibleRichText(content)}
-                  >
-                    <Send size={18} aria-hidden />
-                    {saving ? "Enviando…" : "Enviar"}
-                  </ActionButton>
-                </HintAction>
-              </HelpdeskFormActions>
-            </form>
-            ) : null}
           </>
         ) : null}
-      </HelpdeskSectionCard>
+      </div>
     </HelpdeskPageStack>
   );
 }

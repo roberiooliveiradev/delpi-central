@@ -14,6 +14,7 @@ export function HelpdeskAssignPopover({
   onChange,
   onConfirm,
   saving,
+  canAssign = true,
 }: {
   assignedDisplayName: string;
   assignedUserId?: number | null;
@@ -21,6 +22,8 @@ export function HelpdeskAssignPopover({
   onChange: (user: HelpdeskAssigneeValue | null) => void;
   onConfirm: () => void;
   saving: boolean;
+  /** Backend AuthZ disclosure only — never invents assign authority. */
+  canAssign?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -41,6 +44,10 @@ export function HelpdeskAssignPopover({
     return () => document.removeEventListener("keydown", handleKey);
   }, [open]);
 
+  useEffect(() => {
+    if (!canAssign && open) setOpen(false);
+  }, [canAssign, open]);
+
   return (
     <div className="helpdesk-assign-summary" aria-label="Técnico atribuído">
       <div className="helpdesk-assign-summary__row">
@@ -48,60 +55,62 @@ export function HelpdeskAssignPopover({
           <span className="helpdesk-assign-summary__label">Técnico</span>
           <span className="helpdesk-assign-summary__value">{label}</span>
         </div>
-        <div className="helpdesk-anchored-popover helpdesk-anchored-popover--wide" ref={wrapperRef}>
-          <button
-            type="button"
-            className="helpdesk-anchored-popover__trigger delpi-ui-table-toolbar-action"
-            aria-label={actionLabel}
-            aria-expanded={open}
-            aria-controls={panelId}
-            onClick={() => setOpen((current) => !current)}
-          >
-            {actionLabel}
-          </button>
-          {open ? (
-            <div
-              id={panelId}
-              className="helpdesk-anchored-popover__panel"
-              role="dialog"
-              aria-label={hasAssignee ? "Reatribuir técnico" : "Atribuir técnico"}
+        {canAssign ? (
+          <div className="helpdesk-anchored-popover helpdesk-anchored-popover--wide" ref={wrapperRef}>
+            <button
+              type="button"
+              className="helpdesk-anchored-popover__trigger delpi-ui-table-toolbar-action"
+              aria-label={actionLabel}
+              aria-expanded={open}
+              aria-controls={panelId}
+              onClick={() => setOpen((current) => !current)}
             >
-              <div className="helpdesk-anchored-popover__header">
-                <strong className="helpdesk-anchored-popover__title">
-                  {hasAssignee ? "Reatribuir técnico" : "Atribuir técnico"}
-                </strong>
-              </div>
-              <div className="helpdesk-anchored-popover__body helpdesk-assign-popover__body">
-                <HelpdeskAssigneePicker
-                  label={hasAssignee ? "Novo técnico" : "Técnico"}
-                  hint={helpTooltips.detailUi.assignee}
-                  value={value}
-                  onChange={onChange}
-                />
-                <HintAction
-                  hint={helpTooltips.detailUi.assigneeAction}
-                  ariaLabel="Ajuda: Confirmar atribuição"
-                >
-                  <ActionButton
-                    variant="primary"
-                    type="button"
-                    disabled={
-                      saving ||
-                      !value?.id ||
-                      Number(value.id) === Number(assignedUserId || 0)
-                    }
-                    onClick={() => {
-                      onConfirm();
-                      setOpen(false);
-                    }}
+              {actionLabel}
+            </button>
+            {open ? (
+              <div
+                id={panelId}
+                className="helpdesk-anchored-popover__panel"
+                role="dialog"
+                aria-label={hasAssignee ? "Reatribuir técnico" : "Atribuir técnico"}
+              >
+                <div className="helpdesk-anchored-popover__header">
+                  <strong className="helpdesk-anchored-popover__title">
+                    {hasAssignee ? "Reatribuir técnico" : "Atribuir técnico"}
+                  </strong>
+                </div>
+                <div className="helpdesk-anchored-popover__body helpdesk-assign-popover__body">
+                  <HelpdeskAssigneePicker
+                    label={hasAssignee ? "Novo técnico" : "Técnico"}
+                    hint={helpTooltips.detailUi.assignee}
+                    value={value}
+                    onChange={onChange}
+                  />
+                  <HintAction
+                    hint={helpTooltips.detailUi.assigneeAction}
+                    ariaLabel="Ajuda: Confirmar atribuição"
                   >
-                    {saving ? "Salvando…" : hasAssignee ? "Reatribuir" : "Atribuir"}
-                  </ActionButton>
-                </HintAction>
+                    <ActionButton
+                      variant="primary"
+                      type="button"
+                      disabled={
+                        saving ||
+                        !value?.id ||
+                        Number(value.id) === Number(assignedUserId || 0)
+                      }
+                      onClick={() => {
+                        onConfirm();
+                        setOpen(false);
+                      }}
+                    >
+                      {saving ? "Salvando…" : hasAssignee ? "Reatribuir" : "Atribuir"}
+                    </ActionButton>
+                  </HintAction>
+                </div>
               </div>
-            </div>
-          ) : null}
-        </div>
+            ) : null}
+          </div>
+        ) : null}
       </div>
     </div>
   );

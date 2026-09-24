@@ -57,7 +57,7 @@ export function solicitanteLifecycleCue(input: {
       return {
         id: "closed_satisfaction",
         variant: "default",
-        message: "Chamado fechado. Avalie o atendimento (1 a 5) e, se quiser, deixe um comentário.",
+        message: "Chamado encerrado. Como foi o atendimento?",
         showSatisfactionForm: true,
       };
     }
