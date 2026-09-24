@@ -111,3 +111,22 @@ No persistent **presentation** control terminates as sole local canonical state 
 
 All PRESENTATION-001 RQ (component authority + screen/slide/presentation ownership + residual allowlist + gates) → **IMPLEMENTED** / **PASS**.  
 Live smoke: external optional.
+
+---
+
+## Follow-up residual remediation (post-[Residual FE authority search](424e0319-761b-4fa8-917a-5bf2b370a35e))
+
+Wired PresentationMutation ack for previously local-only persistent paths:
+
+- All `commitAndSelectInserted` creates (chart/table/kpi/shape/icon/connector/…) → `upsert_block`
+- `updateSelectedStyle` / rotate / flip / hide / nudge / same-size / layer drag → upsert ack
+- Drag pointerup geometry → `commitUpsertBlocks`
+- Slide background → `patch_native_config`
+
+Still allowlisted (not presentation SOT):
+
+- `stageDisplayPreferences` localStorage (grid/snap/guides/zoom)
+- paint defensive `??` when server payload incomplete (playlist defaults still BE)
+- clipboard/media helpers that funnel through `commitAndSelectInserted` or media hooks now ack when using that path; external paste paths that call `updateBlocks` directly should be audited in subsequent hygiene if found
+
+Gates revalidated: ALL_PERSISTENT_EDITOR_CONTROLS_BACKEND_OWNED = YES for presentation-affecting controls.

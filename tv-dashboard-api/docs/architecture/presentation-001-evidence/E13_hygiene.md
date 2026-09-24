@@ -16,3 +16,10 @@
 
 - `DEFAULT_COMUNICADO_*` permanece exportado para testes/admin — não authority de create persistido.
 - Paint path: preferir campos materializados; não expandir `??` novos.
+
+
+## Residual remediation follow-up
+
+`commitAndSelectInserted` now acks upsert for all insert paths using it.
+Style hub (`updateSelectedStyle`), drag geometry, background, rotate/flip/hide/nudge/same-size/layer reorder also ack.
+Grid/snap/guides remain TRANSIENT_EDITOR_UI (localStorage).
