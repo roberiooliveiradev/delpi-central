@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException, Query
+from strategic_indicators_client import StrategicIndicatorsApiError
 
 from delpi_auth.authorization import require_any_permission
 
@@ -288,14 +289,23 @@ def _register_si_indicator_scalar_routes() -> None:
                     ),
                     branch: str | None = BRANCH_QUERY_OPTIONAL(),
                 ):
-                    item = get_dashboard_si_indicator_metric_service().get_metric(
-                        indicator_id=closed_indicator_id,
-                        kind=closed_kind,  # type: ignore[arg-type]
-                        start_date=start_date,
-                        end_date=end_date,
-                        branch=branch,
-                        competence=competence,
-                    )
+                    try:
+                        item = get_dashboard_si_indicator_metric_service().get_metric(
+                            indicator_id=closed_indicator_id,
+                            kind=closed_kind,  # type: ignore[arg-type]
+                            start_date=start_date,
+                            end_date=end_date,
+                            branch=branch,
+                            competence=competence,
+                        )
+                    except StrategicIndicatorsApiError as exc:
+                        raise HTTPException(
+                            status_code=503,
+                            detail=(
+                                "Strategic Indicators temporariamente indisponível "
+                                f"para '{closed_indicator_id}' ({closed_kind})."
+                            ),
+                        ) from exc
                     if item is None:
                         raise HTTPException(
                             status_code=404,

@@ -9,6 +9,9 @@ from app.application.services.strategic_indicators.dashboard_goal_dates import (
     normalize_si_branch,
     normalize_si_period_date,
 )
+from app.application.services.strategic_indicators.si_client_error_policy import (
+    is_si_not_found_error,
+)
 from app.utils.logger import log_error
 
 MetricKind = Literal["realized", "meta"]
@@ -69,16 +72,15 @@ class DashboardSiIndicatorMetricService:
                     branch=normalized_branch,
                 )
         except StrategicIndicatorsApiError as exc:
-            message = str(exc)
-            if "404" in message or "não encontrado" in message.lower():
+            if is_si_not_found_error(exc):
                 self._cache[cache_key] = (now, None)
                 return None
             log_error(
                 f"dashboard_si_indicator_metric_fetch_failed "
-                f"indicator_id={normalized_id} kind={kind} error={message}"
+                f"indicator_id={normalized_id} kind={kind} error={exc}"
             )
-            self._cache[cache_key] = (now, None)
-            return None
+            # Do not cache timeouts/5xx as "missing" — callers must surface upstream.
+            raise
 
         resolved = payload if isinstance(payload, dict) else None
         self._cache[cache_key] = (now, resolved)
