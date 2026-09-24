@@ -21,8 +21,9 @@ def test_davi_branding_constants() -> None:
     assert "DELPI" in DAVI_FULL_NAME
     assert "DAVI" in DAVI_PLUGIN_DESCRIPTION
     assert "DAVI" in DAVI_MCP_INSTRUCTIONS
-    assert "search_products" in DAVI_MCP_INSTRUCTIONS
+    assert "search_products" not in DAVI_MCP_INSTRUCTIONS
     assert "discover_delpi_information" in DAVI_MCP_INSTRUCTIONS
+    assert "execute_delpi_information" in DAVI_MCP_INSTRUCTIONS
     assert "agent_directives" in DAVI_MCP_INSTRUCTIONS
 
 
@@ -34,7 +35,6 @@ def test_technical_ids_unchanged_by_davi_branding() -> None:
     assert "DAVI" in (mcp.instructions or "")
     tools = mcp._tool_manager.list_tools()
     assert [t.name for t in tools] == [
-        "search_products",
         "discover_delpi_information",
         "execute_delpi_information",
     ]

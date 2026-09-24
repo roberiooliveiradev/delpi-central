@@ -27,8 +27,10 @@ PRODUCT_SEARCH_DENIED_QUERY_PARAMS: frozenset[str] = frozenset({"customer_refere
 
 EXTERNAL_INTERNAL_ERROR_MESSAGE = "Internal error while processing the request."
 
-MCP_TOOL_SEARCH_PRODUCTS = "search_products"
-MCP_TOOL_SEARCH_PRODUCTS_TITLE = "Search DELPI products"
+# Canonical Product Master operationId / action_id (capability, not an MCP tool).
+SEARCH_PRODUCTS_OPERATION_ID = "search_products"
+# Backward-compatible alias used by tests/libs that still import the historical name.
+MCP_TOOL_SEARCH_PRODUCTS = SEARCH_PRODUCTS_OPERATION_ID
 MCP_TOOL_DISCOVER_DELPI_INFORMATION = "discover_delpi_information"
 MCP_TOOL_DISCOVER_DELPI_INFORMATION_TITLE = "Discover DELPI information"
 MCP_TOOL_EXECUTE_DELPI_INFORMATION = "execute_delpi_information"

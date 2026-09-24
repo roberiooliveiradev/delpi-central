@@ -11,7 +11,6 @@ from mcp.types import ToolAnnotations
 from pydantic import ValidationError
 
 from app.application.external_capabilities.constants import (
-    EXTERNAL_INTERNAL_ERROR_MESSAGE,
     MCP_TOOL_SEARCH_PRODUCTS,
     PRODUCT_SEARCH_MAX_PAGE_SIZE,
     PRODUCT_SEARCH_RESPONSE_FIELDS,
@@ -32,8 +31,6 @@ from app.interface.mcp.schemas import (
     SearchProductsInput,
 )
 from app.interface.mcp.server import (
-    VALIDATION_ERROR_CODE,
-    VALIDATION_ERROR_MESSAGE,
     create_mcp_server,
 )
 
@@ -115,157 +112,63 @@ def test_product_search_service_does_not_import_composition_root() -> None:
     assert "build_search_products_use_case" not in text
 
 
-def test_mcp_server_exposes_v1_and_dynamic_broker_tools_with_annotations() -> None:
+def test_mcp_server_exposes_only_discover_execute_with_annotations() -> None:
     mcp = create_mcp_server()
     tools = mcp._tool_manager.list_tools()
     assert [t.name for t in tools] == [
-        MCP_TOOL_SEARCH_PRODUCTS,
         "discover_delpi_information",
         "execute_delpi_information",
     ]
-    tool = tools[0]
-    assert tool.title == "Search DELPI products"
-    annotations = tool.annotations
-    assert isinstance(annotations, ToolAnnotations)
-    assert annotations.readOnlyHint is True
-    assert annotations.destructiveHint is False
-    assert annotations.openWorldHint is False
-
-
-@patch("app.interface.mcp.server.search_products")
-def test_mcp_tool_returns_projected_data(mock_search) -> None:
-    mock_search.return_value = {
-        "items": [
-            {
-                "product_code": "10080160",
-                "description": "PARAFUSO",
-                "group_category": "0101",
-            }
-        ],
-        "page": 1,
-        "page_size": 50,
-        "total": 1,
-        "total_pages": 1,
-    }
-    mcp = create_mcp_server()
-    tool = mcp._tool_manager.get_tool(MCP_TOOL_SEARCH_PRODUCTS)
-    result = tool.fn(code="1008", page=1, page_size=50)
-    assert result.isError is False
-    assert result.structuredContent["items"][0]["product_code"] == "10080160"
-    mock_search.assert_called_once()
-
-
-@patch("app.interface.mcp.server.search_products")
-def test_mcp_tool_sanitizes_generic_failure(mock_search) -> None:
-    mock_search.side_effect = RuntimeError("boom sql://internal")
-    mcp = create_mcp_server()
-    tool = mcp._tool_manager.get_tool(MCP_TOOL_SEARCH_PRODUCTS)
-    with pytest.raises(RuntimeError) as exc:
-        tool.fn(page=1, page_size=10)
-    assert str(exc.value) == EXTERNAL_INTERNAL_ERROR_MESSAGE
-    assert "sql://" not in str(exc.value)
+    assert MCP_TOOL_SEARCH_PRODUCTS not in [t.name for t in tools]
+    for tool in tools:
+        annotations = tool.annotations
+        assert isinstance(annotations, ToolAnnotations)
+        assert annotations.readOnlyHint is True
+        assert annotations.destructiveHint is False
+        assert annotations.openWorldHint is False
 
 
 @pytest.mark.asyncio
-async def test_mcp_tools_list_contract_has_input_limits_and_typed_output() -> None:
+async def test_mcp_tools_list_contract_has_discover_execute_schemas() -> None:
     mcp = create_mcp_server()
     tools = await mcp.list_tools()
     assert [t.name for t in tools] == [
-        MCP_TOOL_SEARCH_PRODUCTS,
         "discover_delpi_information",
         "execute_delpi_information",
     ]
-    tool = tools[0]
-    schema = tool.inputSchema
+    discover = tools[0]
+    schema = discover.inputSchema
     assert schema["type"] == "object"
     assert schema.get("additionalProperties") is False
-    assert schema["properties"]["page"]["minimum"] == 1
-    assert schema["properties"]["page"]["default"] == 1
-    assert schema["properties"]["page_size"]["minimum"] == 1
-    assert schema["properties"]["page_size"]["maximum"] == PRODUCT_SEARCH_MAX_PAGE_SIZE
-    assert schema["properties"]["page_size"]["default"] == PRODUCT_SEARCH_MAX_PAGE_SIZE
-    assert set(schema["properties"]) == {
-        "code",
-        "description",
-        "group_code",
-        "page",
-        "page_size",
-    }
-    assert "params" not in schema["properties"]
-    assert "customer_reference" not in json.dumps(schema)
-
-    out = tool.outputSchema
-    assert out is not None
-    assert out["type"] == "object"
-    assert out.get("additionalProperties") is False
-    out_blob = json.dumps(out)
-    assert "customer_reference" not in out_blob
-    for field in PRODUCT_SEARCH_RESPONSE_FIELDS:
-        assert field in out_blob
-    for field in ("page", "page_size", "total", "total_pages", "items"):
-        assert field in out["properties"]
-
-    assert tool.securitySchemes == [
+    assert "query" in schema["properties"]
+    assert discover.securitySchemes == [
         {"type": "oauth2", "scopes": ["openid", "profile", "email", "mcp:tools"]}
     ]
-    assert tool.annotations is not None
-    assert tool.annotations.readOnlyHint is True
+    assert discover.annotations is not None
+    assert discover.annotations.readOnlyHint is True
+
+    execute = tools[1]
+    assert "candidate_token" in execute.inputSchema["properties"]
+    assert execute.securitySchemes == discover.securitySchemes
 
 
 @pytest.mark.asyncio
-@patch("app.interface.mcp.server.search_products")
-async def test_mcp_call_tool_sanitizes_validation_errors(mock_search) -> None:
+async def test_mcp_call_tool_sanitizes_discover_validation_errors() -> None:
     mcp = create_mcp_server()
-    for args in (
-        {"page": 0, "page_size": 50},
-        {"page": 1, "page_size": 0},
-        {"page": 1, "page_size": 51},
-        {"page": 1, "page_size": 50, "customer_reference": "x"},
-        {"page": 1, "page_size": 50, "unknown": "y"},
-    ):
-        result = await mcp.call_tool(MCP_TOOL_SEARCH_PRODUCTS, args)
-        assert result.isError is True
-        text = " ".join(
-            block.text for block in result.content if getattr(block, "text", None)
-        )
-        assert text == VALIDATION_ERROR_MESSAGE
-        assert result.structuredContent == {
-            "code": VALIDATION_ERROR_CODE,
-            "message": VALIDATION_ERROR_MESSAGE,
-        }
-        blob = str(result)
-        assert "pydantic" not in blob.lower()
-        assert "errors.pydantic.dev" not in blob
-        assert "ValidationError" not in blob
-        assert "greater_than_equal" not in blob
-        assert "traceback" not in blob.lower()
-    mock_search.assert_not_called()
-
-
-@pytest.mark.asyncio
-@patch("app.interface.mcp.server.search_products")
-async def test_mcp_call_tool_positive_pagination(mock_search) -> None:
-    mock_search.return_value = {
-        "items": [],
-        "page": 1,
-        "page_size": 50,
-        "total": 0,
-        "total_pages": 0,
-    }
-    mcp = create_mcp_server()
-    result = await mcp.call_tool(
-        MCP_TOOL_SEARCH_PRODUCTS, {"page": 1, "page_size": 50}
-    )
-    assert result.isError is False
-    mock_search.assert_called_once()
-
-
-def test_mcp_tool_fn_returns_safe_validation_error() -> None:
-    mcp = create_mcp_server()
-    tool = mcp._tool_manager.get_tool(MCP_TOOL_SEARCH_PRODUCTS)
-    result = tool.fn(page=0, page_size=50)
+    result = await mcp.call_tool("discover_delpi_information", {"query": ""})
     assert result.isError is True
-    assert result.structuredContent["code"] == VALIDATION_ERROR_CODE
+    text = " ".join(
+        block.text for block in result.content if getattr(block, "text", None)
+    )
+    assert text
+    assert "pydantic" not in str(result).lower()
+
+
+@pytest.mark.asyncio
+async def test_mcp_call_tool_sanitizes_execute_validation_errors() -> None:
+    mcp = create_mcp_server()
+    result = await mcp.call_tool("execute_delpi_information", {"candidate_token": ""})
+    assert result.isError is True
     assert "pydantic" not in str(result).lower()
 
 
@@ -316,6 +219,7 @@ def test_plugin_package_schemas_and_skill() -> None:
     assert skill.startswith("---")
     assert "name: api-delpi" in skill
     assert "DAVI" in skill
-    assert "search_products" in skill
+    assert "discover_delpi_information" in skill
+    assert "execute_delpi_information" in skill
     assert "RBAC" not in skill
     assert "ENGINEERING_LMP" not in skill

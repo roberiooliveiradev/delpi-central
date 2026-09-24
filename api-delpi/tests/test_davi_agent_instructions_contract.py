@@ -29,7 +29,7 @@ def test_canonical_agent_instructions_contain_stable_protocol() -> None:
     for required in (
         "discover_delpi_information",
         "execute_delpi_information",
-        "search_products",
+        "Product Master",
         "somente leitura",
         "backend canônico",
         "candidate_token",

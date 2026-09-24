@@ -150,13 +150,12 @@ def test_drawing_eligible_count_includes_seventeen_foundation():
     assert "get_product_drawing" not in blocked
 
 
-def test_drawing_mcp_tools_remain_three():
+def test_drawing_mcp_tools_remain_two():
     import asyncio
     from app.interface.mcp.server import create_mcp_server
 
     tools = asyncio.run(create_mcp_server().list_tools())
     assert [t.name for t in tools] == [
-        "search_products",
         "discover_delpi_information",
         "execute_delpi_information",
     ]

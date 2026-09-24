@@ -145,13 +145,12 @@ def test_wave1_eligible_set_remains_and_wave2_added():
         assert oid not in blocked
 
 
-def test_wave1_mcp_tools_remain_three():
+def test_wave1_mcp_tools_remain_two():
     import asyncio
     from app.interface.mcp.server import create_mcp_server
 
     tools = asyncio.run(create_mcp_server().list_tools())
     assert [t.name for t in tools] == [
-        "search_products",
         "discover_delpi_information",
         "execute_delpi_information",
     ]

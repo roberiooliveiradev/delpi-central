@@ -18,7 +18,6 @@ from typing import Any
 from app.application.external_capabilities.constants import (
     MCP_TOOL_DISCOVER_DELPI_INFORMATION,
     MCP_TOOL_EXECUTE_DELPI_INFORMATION,
-    MCP_TOOL_SEARCH_PRODUCTS,
 )
 from app.application.external_capabilities.dynamic_information.catalog_builder import (
     TechnicalAction,
@@ -219,7 +218,6 @@ def build_actions(baseline: dict[str, Any] | None = None) -> list[TechnicalActio
 def mcp_tool_names() -> list[str]:
     """Canonical MCP tool surface from constants (not provider discovery)."""
     return [
-        MCP_TOOL_SEARCH_PRODUCTS,
         MCP_TOOL_DISCOVER_DELPI_INFORMATION,
         MCP_TOOL_EXECUTE_DELPI_INFORMATION,
     ]

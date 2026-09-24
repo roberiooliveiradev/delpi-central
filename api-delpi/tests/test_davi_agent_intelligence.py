@@ -235,7 +235,6 @@ async def test_mcp_tools_list_and_call_discover_contract(monkeypatch) -> None:
     from app.application.external_capabilities.constants import (
         MCP_TOOL_DISCOVER_DELPI_INFORMATION,
         MCP_TOOL_EXECUTE_DELPI_INFORMATION,
-        MCP_TOOL_SEARCH_PRODUCTS,
     )
     from app.interface.mcp.schemas import DiscoverDelpiInformationOutput
     from app.interface.mcp.server import create_mcp_server
@@ -257,8 +256,17 @@ async def test_mcp_tools_list_and_call_discover_contract(monkeypatch) -> None:
     assert names == [
         MCP_TOOL_DISCOVER_DELPI_INFORMATION,
         MCP_TOOL_EXECUTE_DELPI_INFORMATION,
-        MCP_TOOL_SEARCH_PRODUCTS,
     ]
+    assert "search_products" not in names
+    directives = DaviAgentIntelligenceService.agent_directives()
+    assert directives["surface_parity"]["mcp_tools"] == 2
+    assert directives["flows"]["product_master_search"]["mcp_tools"] == [
+        "discover_delpi_information",
+        "execute_delpi_information",
+    ]
+    assert "QUICK_LOOKUP" in directives["modes"]
+    assert "discover→execute" in directives["modes"]["QUICK_LOOKUP"]
+    assert all("fast path" not in rule.lower() for rule in directives["discovery"]["rules"])
     discover = next(t for t in tools if t.name == MCP_TOOL_DISCOVER_DELPI_INFORMATION)
     out = discover.outputSchema or {}
     assert out.get("additionalProperties") is False

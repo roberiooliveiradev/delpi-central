@@ -82,11 +82,10 @@ def test_runtime_eligible_after_wave3a_and_drawing() -> None:
     assert "get_product_drawing" in eligible
 
 
-def test_mcp_tools_remain_three() -> None:
+def test_mcp_tools_remain_two() -> None:
     source = (_API_ROOT / "app/interface/mcp/server.py").read_text(encoding="utf-8")
-    assert source.count("@mcp.tool(") == 3
+    assert source.count("@mcp.tool(") == 2
     assert [
-        MCP_TOOL_SEARCH_PRODUCTS,
         MCP_TOOL_DISCOVER_DELPI_INFORMATION,
         MCP_TOOL_EXECUTE_DELPI_INFORMATION,
     ] == MCP_TOOLS

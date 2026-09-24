@@ -34,8 +34,8 @@ DAVI is branding/orchestration identity — **not** an authorization authority.
 | MCP server name | `api-delpi` |
 | Keycloak client | `mcp-api-delpi` |
 | MCP resource | `https://minhadelpi.com.br/apps/api-delpi/mcp` |
-| V1 business tool | `search_products` |
-| Dynamic READ broker | `discover_delpi_information` + `execute_delpi_information` (**CURRENT PROVEN in code/tests**; live provider discovery pending post-deploy) |
+| V1 Product Master capability | `search_products` (operationId; behind discover→execute) |
+| Dynamic READ MCP broker | `discover_delpi_information` + `execute_delpi_information` (**CURRENT PROVEN**; productive MCP surface = **exactly 2 tools**) |
 
 ## Architecture status
 
@@ -69,9 +69,9 @@ ChatGPT / Codex / approved provider surface
   → Keycloak end-user identity
   → MCP Streamable HTTP /apps/api-delpi/mcp
   → interface/mcp adapter
-  → search_products (specialized fast path)
-     and/or discover_delpi_information → execute_delpi_information
-     (governed dynamic READ over allowlisted technical actions)
+  → discover_delpi_information → execute_delpi_information
+     (governed dynamic READ over allowlisted technical actions,
+      including Product Master operationId search_products)
   → canonical backend AuthZ
   → authoritative source
 ```
@@ -81,12 +81,10 @@ Dynamic READ notes:
 ```text
 Technical Action Catalog = derived from OpenAPI/baseline + governance allowlist
 Action Catalog != semantic capability authority
-MCP tools advertised to the Agent = search_products + discover_delpi_information + execute_delpi_information
-DAVI_ELIGIBLE_READ (allowlist v10 / DAVI-CAPABILITY-EXPANSION-WAVE-004-COMMERCIAL-READ) = 35
-  prior 17 product/drawing READs + 18 commercial analytics GETs
-  (ROL / OTD / conversion / new clients / new business / WEG target)
-get_sales_order_otd_panel = DEFER (line drill-down / nested insights)
-commercial proposal/detail routes = NEXT_WAVE_CANDIDATE (out of Wave 004)
+MCP tools advertised to the Agent = discover_delpi_information + execute_delpi_information
+  (exactly 2; DAVI-MCP-TOOL-SURFACE-SIMPLIFICATION-001)
+DAVI_ELIGIBLE_READ (allowlist v14 / real-user retrieval refinement) = 53
+Product Master capability search_products remains allowlisted behind discover→execute
 get_product_drawing_pdf = DEFER (NEEDS_GENERIC_DOCUMENT_BOUNDARY; no PDF/base64 via execute JSON)
 get_product_analyser = NOT_REQUIRED for drawing analysis
 get_product_detail = SEMANTICALLY_REDUNDANT (search_products covers same slice)

@@ -1,4 +1,4 @@
-"""FastMCP server exposing approved API DELPI semantic + dynamic READ tools."""
+"""FastMCP server exposing governed DAVI dynamic READ tools only."""
 
 from __future__ import annotations
 
@@ -16,9 +16,6 @@ from app.application.external_capabilities.constants import (
     MCP_TOOL_DISCOVER_DELPI_INFORMATION_TITLE,
     MCP_TOOL_EXECUTE_DELPI_INFORMATION,
     MCP_TOOL_EXECUTE_DELPI_INFORMATION_TITLE,
-    MCP_TOOL_SEARCH_PRODUCTS,
-    MCP_TOOL_SEARCH_PRODUCTS_TITLE,
-    PRODUCT_SEARCH_DEFAULT_PAGE_SIZE,
 )
 from app.application.external_capabilities.dynamic_information.candidate_token import (
     CandidateTokenError,
@@ -29,37 +26,29 @@ from app.application.external_capabilities.dynamic_information.discover_service 
 from app.application.external_capabilities.dynamic_information.errors import (
     GovernedExecutionError,
 )
-from app.application.external_capabilities.product_search_service import search_products
 from app.composition.davi_dynamic_read_composer import execute_delpi_information_wired
-from app.composition.product_composer import build_search_products_use_case
 from app.interface.mcp.branding import DAVI_MCP_INSTRUCTIONS
 from app.interface.mcp.document_transport_spike import (
     document_transport_spike_enabled,
     register_document_transport_spike,
 )
 from app.interface.mcp.oauth_contract import (
-    SEARCH_PRODUCTS_SECURITY_SCHEMES,
+    DAVI_MCP_SECURITY_SCHEMES,
     mcp_www_authenticate_meta,
 )
 from app.interface.mcp.resource_metadata import public_host_allowed_for_mcp
 from app.interface.mcp.schemas import (
     DiscoverDelpiInformationInput,
     ExecuteDelpiInformationInput,
-    SearchProductsInput,
-    SearchProductsOutput,
     discover_delpi_information_input_json_schema,
     discover_delpi_information_output_json_schema,
     execute_delpi_information_input_json_schema,
     execute_delpi_information_output_json_schema,
-    search_products_input_json_schema,
-    search_products_output_json_schema,
 )
 from app.utils.logger import log_error
 
 __all__ = [
     "ApiDelpiFastMCP",
-    "SearchProductsInput",
-    "SearchProductsOutput",
     "VALIDATION_ERROR_CODE",
     "VALIDATION_ERROR_MESSAGE",
     "create_mcp_server",
@@ -133,10 +122,7 @@ class ApiDelpiFastMCP(FastMCP):
             schemes = meta.get("securitySchemes")
             input_schema = info.parameters
             output_schema = info.output_schema
-            if info.name == MCP_TOOL_SEARCH_PRODUCTS:
-                input_schema = search_products_input_json_schema()
-                output_schema = search_products_output_json_schema()
-            elif info.name == MCP_TOOL_DISCOVER_DELPI_INFORMATION:
+            if info.name == MCP_TOOL_DISCOVER_DELPI_INFORMATION:
                 input_schema = discover_delpi_information_input_json_schema()
                 output_schema = discover_delpi_information_output_json_schema()
             elif info.name == MCP_TOOL_EXECUTE_DELPI_INFORMATION:
@@ -159,9 +145,7 @@ class ApiDelpiFastMCP(FastMCP):
 
     async def call_tool(self, name: str, arguments: dict[str, Any]) -> Any:
         try:
-            if name == MCP_TOOL_SEARCH_PRODUCTS:
-                SearchProductsInput.model_validate(arguments or {})
-            elif name == MCP_TOOL_DISCOVER_DELPI_INFORMATION:
+            if name == MCP_TOOL_DISCOVER_DELPI_INFORMATION:
                 DiscoverDelpiInformationInput.model_validate(arguments or {})
             elif name == MCP_TOOL_EXECUTE_DELPI_INFORMATION:
                 ExecuteDelpiInformationInput.model_validate(arguments or {})
@@ -196,71 +180,12 @@ def create_mcp_server() -> FastMCP:
     )
 
     @mcp.tool(
-        name=MCP_TOOL_SEARCH_PRODUCTS,
-        title=MCP_TOOL_SEARCH_PRODUCTS_TITLE,
-        description=(
-            "Search DELPI Product Master through the canonical search use case "
-            "and return only the approved external projection "
-            "(product_code, description, group_category)."
-        ),
-        annotations=ToolAnnotations(
-            readOnlyHint=True,
-            destructiveHint=False,
-            openWorldHint=False,
-            title=MCP_TOOL_SEARCH_PRODUCTS_TITLE,
-        ),
-        meta={"securitySchemes": SEARCH_PRODUCTS_SECURITY_SCHEMES},
-        structured_output=True,
-    )
-    def search_products_tool(
-        code: str | None = None,
-        description: str | None = None,
-        group_code: str | None = None,
-        page: int = 1,
-        page_size: int = PRODUCT_SEARCH_DEFAULT_PAGE_SIZE,
-    ) -> CallToolResult:
-        try:
-            params = SearchProductsInput(
-                code=code,
-                description=description,
-                group_code=group_code,
-                page=page,
-                page_size=page_size,
-            )
-        except ValidationError as exc:
-            log_error(
-                f"mcp search_products validation rejected error_count={exc.error_count()}"
-            )
-            return validation_error_tool_result()
-
-        try:
-            data = search_products(
-                search_use_case=build_search_products_use_case(),
-                code=params.code,
-                description=params.description,
-                group_code=params.group_code,
-                page=params.page,
-                page_size=params.page_size,
-                enforce_authz=True,
-                tool_name=MCP_TOOL_SEARCH_PRODUCTS,
-            )
-            return CallToolResult(
-                content=[TextContent(type="text", text="Product search completed.")],
-                structuredContent=data,
-                isError=False,
-            )
-        except PermissionError as exc:
-            return _authz_error_result(exc)
-        except Exception as exc:
-            log_error(f"mcp search_products failed: {exc}")
-            raise RuntimeError(EXTERNAL_INTERNAL_ERROR_MESSAGE) from exc
-
-    @mcp.tool(
         name=MCP_TOOL_DISCOVER_DELPI_INFORMATION,
         title=MCP_TOOL_DISCOVER_DELPI_INFORMATION_TITLE,
         description=(
-            "Discover a small set of DAVI-eligible READ information actions "
-            "from the authorized API DELPI technical catalog. "
+            "Find the governed DELPI READ capability that best matches the user's "
+            "natural-language information need. Call this first. Returns opaque "
+            "candidate_token values for execute_delpi_information. "
             "Does not accept URL, path, method, operationId, or SQL."
         ),
         annotations=ToolAnnotations(
@@ -269,7 +194,7 @@ def create_mcp_server() -> FastMCP:
             openWorldHint=False,
             title=MCP_TOOL_DISCOVER_DELPI_INFORMATION_TITLE,
         ),
-        meta={"securitySchemes": SEARCH_PRODUCTS_SECURITY_SCHEMES},
+        meta={"securitySchemes": DAVI_MCP_SECURITY_SCHEMES},
         structured_output=True,
     )
     def discover_delpi_information_tool(
@@ -299,8 +224,8 @@ def create_mcp_server() -> FastMCP:
         name=MCP_TOOL_EXECUTE_DELPI_INFORMATION,
         title=MCP_TOOL_EXECUTE_DELPI_INFORMATION_TITLE,
         description=(
-            "Execute one candidate returned by discover_delpi_information. "
-            "Requires candidate_token. Does not accept URL, path, method, "
+            "Execute one candidate returned by the current discover_delpi_information "
+            "call. Requires that candidate_token. Does not accept URL, path, method, "
             "free operationId, or SQL. Backend AuthZ remains authoritative."
         ),
         annotations=ToolAnnotations(
@@ -309,7 +234,7 @@ def create_mcp_server() -> FastMCP:
             openWorldHint=False,
             title=MCP_TOOL_EXECUTE_DELPI_INFORMATION_TITLE,
         ),
-        meta={"securitySchemes": SEARCH_PRODUCTS_SECURITY_SCHEMES},
+        meta={"securitySchemes": DAVI_MCP_SECURITY_SCHEMES},
         structured_output=True,
     )
     def execute_delpi_information_tool(

@@ -34,7 +34,6 @@ CURRENT_ELIGIBLE = [
     "get_product_shipping_status",
 ]
 MCP_TOOLS = [
-    "search_products",
     "discover_delpi_information",
     "execute_delpi_information",
 ]

@@ -14,7 +14,7 @@ Portable Agent Plugins 1.0 package for ChatGPT / Codex.
 | `mcp.json` | Streamable HTTP MCP server URL |
 | `skills/api-delpi/SKILL.md` | DAVI workflow guidance |
 
-Capability: **Read-only** V1 (`search_products` only).
+Capability: **Read-only** governed READ via `discover_delpi_information` → `execute_delpi_information` (exactly 2 MCP tools). Product Master capability `search_products` remains allowlisted behind that flow.
 
 ## Developer-mode test (manual)
 
@@ -25,7 +25,7 @@ Documentation does not prove runtime.
 3. Keycloak client `mcp-api-delpi` per runbook (copy **exact** ChatGPT return URL into Valid redirect URIs — do not invent/hardcode; JWT `scope` must include `openid profile email mcp:tools` — not `audience-delpi`; resource audience is **dedicated** to this client, not nested in shared `mcp:tools`).
 4. In ChatGPT, connect remote MCP / load this plugin; specialist presents as **DAVI**.
 5. OAuth with a real DELPI user (Authorization Code + PKCE).
-6. Tool scan must list only expected MCP tools (`search_products` + dynamic broker tools when deployed).
+6. Tool scan must list only expected MCP tools (`discover_delpi_information`, `execute_delpi_information`).
 7. Authorized user: allowlisted fields only.
 8. User without `ENGINEERING_LMP_ACCESS`: Forbidden (not OAuth re-link).
 

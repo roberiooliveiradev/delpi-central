@@ -1,5 +1,5 @@
 {
-  "version": "2026.09.24.2",
+  "version": "2026.09.24.3",
   "owner": "api-delpi",
   "source": "capability_surface.agent_directives via gpt_get_catalog / discover_delpi_information",
   "read_only": true,
@@ -20,7 +20,7 @@
     "rules": [
       "Necessidade de informação DELPI → discover_delpi_information com descrição natural.",
       "Execute somente candidate_token retornado pelo discovery atual via execute_delpi_information.",
-      "search_products = fast path só para Product Master simples (código/descrição/grupo).",
+      "Product Master (código/descrição/grupo) também entra via discover→execute — não há MCP tool dedicada.",
       "Search miss / zero candidates != prova de ausência no ERP — reporte o retorno tipado.",
       "Nunca invente URL, path, operationId, SQL ou candidate_token."
     ]
@@ -39,7 +39,7 @@
     ]
   },
   "modes": {
-    "QUICK_LOOKUP": "Consulta pontual (código/descrição) via search_products ou discover→execute.",
+    "QUICK_LOOKUP": "Consulta pontual (código/descrição/KPI) via discover→execute.",
     "MULTI_SOURCE_RECONCILE": "Cruzar famílias READ elegíveis (estoque, estrutura, compras) sem inventar junções.",
     "EXPLAIN_GAP": "Capability ausente ou zero candidates → explicar gap tipado; não improvisar dados."
   },
@@ -53,9 +53,9 @@
     "mutable_here": "postura operacional READ, discovery, anti_patterns, modes, flows"
   },
   "surface_parity": {
-    "mcp_tools": 3,
+    "mcp_tools": 2,
     "gpt_actions_legacy": 2,
-    "note": "Capability parity ≠ transport count. Descriptive for the Agent, not alternate SoT (tool counts owned by MCP server / GPT façade). Same DaviAgentIntelligenceService. GPT Actions = LEGACY_TRANSITIONAL (gpt_get_catalog + gpt_search_products only). Stock/BOM/shipping/etc. execute only via MCP discover→execute; gpt_get_catalog carries live directives, not those operations."
+    "note": "Capability parity ≠ transport count. Product Master capability search_products remains behind discover→execute. Descriptive for the Agent, not alternate SoT (tool counts owned by MCP server / GPT façade). Same DaviAgentIntelligenceService. GPT Actions = LEGACY_TRANSITIONAL (gpt_get_catalog + gpt_search_products only). Stock/BOM/shipping/etc. execute only via MCP discover→execute; gpt_get_catalog carries live directives, not those operations."
   },
   "anti_patterns": [
     "Inventar estoque, preço, BOM, fornecedor ou status sem retorno de tool.",
@@ -79,10 +79,11 @@
   },
   "flows": {
     "product_master_search": {
-      "mcp_tools": ["search_products", "discover_delpi_information", "execute_delpi_information"],
+      "mcp_tools": ["discover_delpi_information", "execute_delpi_information"],
       "gpt_operations": ["gpt_search_products", "gpt_get_catalog"],
-      "pipeline": ["optional_catalog_or_discover_directives", "search_or_discover", "report_fields_returned"],
-      "confirmation_policy": "read_only"
+      "pipeline": ["optional_catalog_or_discover_directives", "discover", "execute_candidate", "report_fields_returned"],
+      "confirmation_policy": "read_only",
+      "note": "MCP: Product Master via discover→execute only. GPT Actions gpt_search_products remains LEGACY_TRANSITIONAL on a separate transport."
     },
     "stock_and_supply": {
       "mcp_tools": ["discover_delpi_information", "execute_delpi_information"],

@@ -183,13 +183,12 @@ def test_wave2_eligible_count_exactly_thirteen():
     assert "get_product_last_purchase" not in blocked
 
 
-def test_wave2_mcp_tools_remain_three():
+def test_wave2_mcp_tools_remain_two():
     import asyncio
     from app.interface.mcp.server import create_mcp_server
 
     tools = asyncio.run(create_mcp_server().list_tools())
     assert [t.name for t in tools] == [
-        "search_products",
         "discover_delpi_information",
         "execute_delpi_information",
     ]

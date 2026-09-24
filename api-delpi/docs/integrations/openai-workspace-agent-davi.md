@@ -40,7 +40,7 @@ DAVI_LOCAL_AUTHZ = NONE
 | Persona | masculina, profissional, cordial e objetiva |
 | Missão | semantic discovery, authorized retrieval, composition e explanation de informações autorizadas da DELPI — usando capabilities realmente conectadas e governadas |
 | Produto técnico consumido (V1) | DAVI / `api-delpi` Plugin/App + remote MCP |
-| MCP tool surface (protocolo estável) | `search_products`, `discover_delpi_information`, `execute_delpi_information` |
+| MCP tool surface (protocolo estável) | `discover_delpi_information`, `execute_delpi_information` (exactly 2; Product Master via discover→execute) |
 | Inventário de capabilities de negócio | **dinâmico** via governed discovery (não enumerado nas Agent Instructions) |
 | Estado | draft/preview no provider; Instructions canônicas no repo = **rebaselined**; **Agent Studio sync = PENDING** |
 | Publicação ampla | **PENDING** |
@@ -99,8 +99,8 @@ Raw OpenAPI ≠ Agent capability catalog
 
 | Camada | Exemplos | Visível ao Agent? |
 |---|---|---|
-| MCP tool surface (protocolo) | `search_products`, `discover_delpi_information`, `execute_delpi_information` | Sim — tools reais do contrato Agent↔App |
-| Business information capabilities | stock, suppliers, customers, purchases, structure, production status, … | Não como tools MCP; só via discovery/execute quando elegíveis |
+| MCP tool surface (protocolo) | `discover_delpi_information`, `execute_delpi_information` | Sim — tools reais do contrato Agent↔App |
+| Business information capabilities | Product Master (`search_products` operationId), stock, suppliers, customers, purchases, structure, commercial/supplies KPIs, … | Não como tools MCP; só via discovery/execute quando elegíveis |
 
 O Agent **não** precisa conhecer operationIds dinâmicos, paths HTTP, hosts, headers, SQL, tabelas ou o catálogo bruto OpenAPI.
 
@@ -114,8 +114,8 @@ Workspace Agent DAVI
   → OAuth Authorization Code + PKCE
   → Keycloak end-user identity
   → remote MCP api-delpi
-  → search_products (fast path) and/or
-     discover_delpi_information → execute_delpi_information
+  → discover_delpi_information → execute_delpi_information
+     (including Product Master capability search_products)
   → canonical backend AuthZ
   → authoritative DELPI source
 ```
@@ -249,7 +249,7 @@ uma consulta à fonte DELPI quando a informação for operacional ou atual.
 Não mantenha um catálogo próprio de capabilities de negócio.
 
 discover_delpi_information → execute_delpi_information com candidate_token atual.
-search_products = fast path só para Product Master simples.
+Product Master e demais READs elegíveis usam o mesmo fluxo (sem MCP tool dedicada).
 
 Nunca invente URL, path, método, operationId, SQL, headers, credenciais ou
 candidate_token.

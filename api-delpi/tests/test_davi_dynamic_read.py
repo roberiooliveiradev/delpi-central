@@ -503,7 +503,6 @@ def test_three_tool_invariant_with_v5_allowlist():
 
     tools = asyncio.run(create_mcp_server().list_tools())
     assert [t.name for t in tools] == [
-        "search_products",
         "discover_delpi_information",
         "execute_delpi_information",
     ]
@@ -1641,14 +1640,16 @@ def test_mcp_output_schemas_present_for_all_three_tools():
         SearchProductsOutput,
         discover_delpi_information_output_json_schema,
         execute_delpi_information_output_json_schema,
-        search_products_output_json_schema,
     )
 
     mcp = create_mcp_server()
     tools = asyncio.run(mcp.list_tools())
-    assert len(tools) == 3
+    assert len(tools) == 2
     by_name = {t.name: t for t in tools}
-    assert by_name["search_products"].outputSchema == search_products_output_json_schema()
+    assert set(by_name) == {
+        "discover_delpi_information",
+        "execute_delpi_information",
+    }
     assert (
         by_name["discover_delpi_information"].outputSchema
         == discover_delpi_information_output_json_schema()
@@ -1656,6 +1657,16 @@ def test_mcp_output_schemas_present_for_all_three_tools():
     assert (
         by_name["execute_delpi_information"].outputSchema
         == execute_delpi_information_output_json_schema()
+    )
+    # Capability projection model remains available (not MCP-registered).
+    SearchProductsOutput.model_validate(
+        {
+            "items": [{"product_code": "1", "description": "d", "group_category": "g"}],
+            "page": 1,
+            "page_size": 50,
+            "total": 1,
+            "total_pages": 1,
+        }
     )
 
     # Runtime envelopes validate against output models.

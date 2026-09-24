@@ -35,12 +35,15 @@ MCP_RESOURCE_BINDING_SCOPE = "mcp:tools"
 # Assigned on Keycloak client mcp-api-delpi (Default). Not a JWT scope claim.
 KEYCLOAK_INTERNAL_AUDIENCE_CLIENT_SCOPE = "audience-delpi"
 
-SEARCH_PRODUCTS_SECURITY_SCHEMES: list[dict[str, Any]] = [
+# OAuth securitySchemes advertised on every productive DAVI MCP tool.
+# Historical alias SEARCH_PRODUCTS_SECURITY_SCHEMES kept for import compatibility.
+DAVI_MCP_SECURITY_SCHEMES: list[dict[str, Any]] = [
     {
         "type": "oauth2",
         "scopes": list(MCP_OAUTH_SCOPES),
     }
 ]
+SEARCH_PRODUCTS_SECURITY_SCHEMES = DAVI_MCP_SECURITY_SCHEMES
 
 # Auth model: entire MCP Streamable HTTP transport requires OAuth before tools/list.
 MCP_AUTH_MODEL = "TRANSPORT_REQUIRES_OAUTH"

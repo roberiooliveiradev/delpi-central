@@ -31,7 +31,6 @@ CURRENT_ELIGIBLE = [
     "get_product_last_purchase",
 ]
 MCP_TOOLS = [
-    "search_products",
     "discover_delpi_information",
     "execute_delpi_information",
 ]

@@ -208,10 +208,17 @@ Existência futura de backend/runtime DAVI próprio permanece **`TO_INVENTORY`**
 Para a superfície Workspace Agent / Plugin / MCP:
 
 ```text
-search_products (specialized Product Master fast path)
+CURRENT PROVEN MCP SURFACE (DAVI-MCP-TOOL-SURFACE-SIMPLIFICATION-001):
 discover_delpi_information + execute_delpi_information
-  (governed dynamic READ over DAVI_ELIGIBLE_READ technical actions)
+
+Product Master capability operationId `search_products` remains
+allowlisted and is reached only via discover → execute
+(no dedicated MCP tool; intentional provider surface contraction).
 ```
+
+Historical note (superseded for MCP tool count): earlier waves documented
+`search_products` as a specialized MCP fast path with exactly 3 tools.
+That MCP registration was removed; eligible READ count and AuthZ are unchanged.
 
 Technical Action Catalog is **derived** from OpenAPI/baseline + `davi_external_read_allowlist.json`. It is **not** the semantic capability authority.
 

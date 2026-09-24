@@ -165,14 +165,13 @@ def test_wave004_deferred_and_out_of_wave_not_executable(oid: str):
     assert action.executable is False
 
 
-def test_wave004_mcp_tools_remain_three():
+def test_wave004_mcp_tools_remain_two():
     import asyncio
 
     from app.interface.mcp.server import create_mcp_server
 
     tools = asyncio.run(create_mcp_server().list_tools())
     assert [t.name for t in tools] == [
-        MCP_TOOL_SEARCH_PRODUCTS,
         MCP_TOOL_DISCOVER_DELPI_INFORMATION,
         MCP_TOOL_EXECUTE_DELPI_INFORMATION,
     ]
@@ -372,7 +371,7 @@ def test_wave004_agent_intelligence_unchanged():
     intel = json.loads(
         (_API_ROOT / "app/content/davi_agent_intelligence.json").read_text(encoding="utf-8")
     )
-    assert intel.get("version") == "2026.09.24.2"
+    assert intel.get("version") == "2026.09.24.3"
     blob = json.dumps(intel)
     for oid in _PROMOTED:
         assert oid not in blob

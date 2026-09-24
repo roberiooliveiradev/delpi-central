@@ -10,7 +10,6 @@ from pathlib import Path
 from app.application.external_capabilities.constants import (
     MCP_TOOL_DISCOVER_DELPI_INFORMATION,
     MCP_TOOL_EXECUTE_DELPI_INFORMATION,
-    MCP_TOOL_SEARCH_PRODUCTS,
 )
 from app.application.external_capabilities.dynamic_information.content_loader import (
     load_external_read_allowlist,
@@ -114,21 +113,21 @@ def test_current_eligible_set_matches_allowlist() -> None:
     assert len(eligible) == 53
 
 
-def test_mcp_tools_remain_three() -> None:
+def test_mcp_tools_remain_two() -> None:
     source = (_API_ROOT / "app/interface/mcp/server.py").read_text(encoding="utf-8")
-    assert source.count("@mcp.tool(") == 3
-    assert "name=MCP_TOOL_SEARCH_PRODUCTS" in source
+    assert source.count("@mcp.tool(") == 2
+    assert "name=MCP_TOOL_SEARCH_PRODUCTS" not in source
     assert "name=MCP_TOOL_DISCOVER_DELPI_INFORMATION" in source
     assert "name=MCP_TOOL_EXECUTE_DELPI_INFORMATION" in source
     assert [
-        MCP_TOOL_SEARCH_PRODUCTS,
         MCP_TOOL_DISCOVER_DELPI_INFORMATION,
         MCP_TOOL_EXECUTE_DELPI_INFORMATION,
     ] == [
-        "search_products",
         "discover_delpi_information",
         "execute_delpi_information",
     ]
+    # Capability operationId remains allowlisted independently of MCP tools.
+    assert "search_products" in load_allowlist_operation_ids(load_external_read_allowlist())
     assert load_allowlist_operation_ids(load_external_read_allowlist()) == _ELIGIBLE
 
 
