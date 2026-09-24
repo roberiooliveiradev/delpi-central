@@ -660,7 +660,7 @@ export type ComunicadoDataResolved = {
    */
   presentationStale?: boolean;
   /**
-   * Preview do editor: resolved já materializado (display*/bake) por bloco ligado
+   * Preview do editor: resolved ja materializado (displayText/bake) por bloco ligado
    * a esta fonte — paint de texto/KPI/chart sem format client (FE-BE-002).
    */
   linkedResolvedByBlockId?: Record<string, ComunicadoDataResolved>;
