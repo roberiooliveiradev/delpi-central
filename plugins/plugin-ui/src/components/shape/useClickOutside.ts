@@ -6,6 +6,11 @@ import { useEffect, useRef, type RefObject } from "react";
  *
  * Não incluir `.delpi-ui-shape-menu__panel`: painéis peer (Preench. × Contorno)
  * também usam essa classe — tratá-los como “aninhados” deixa dois popovers abertos.
+ *
+ * Não incluir `.delpi-ui-help-tooltip`: HintAction/HelpTooltip em modo `wrap`
+ * coloca essa classe no span que envolve o gatilho peer (Filtros × Ordenar ×
+ * Colunas). Tratar o wrap como overlay aninhado impede fechar o popover irmão
+ * e abre vários ao mesmo tempo. O balão tem `pointer-events: none`.
  */
 const NESTED_OVERLAY_SELECTOR = [
   '[aria-modal="true"]',
@@ -13,7 +18,6 @@ const NESTED_OVERLAY_SELECTOR = [
   ".delpi-ui-color-more-popover",
   ".delpi-ui-select__panel",
   ".delpi-ui-shape-dialog",
-  ".delpi-ui-help-tooltip",
   ".delpi-ui-combobox-number__panel",
   /* Nested AnchoredPanelPortal marked non-exclusive (select/combobox inside menu). */
   '[data-delpi-anchored-exclusive="false"]',

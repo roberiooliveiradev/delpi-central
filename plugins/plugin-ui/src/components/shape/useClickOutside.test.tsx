@@ -98,6 +98,26 @@ describe("useClickOutside", () => {
     expect(onOutside).not.toHaveBeenCalled();
   });
 
+  it("fecha ao clicar em peer HintAction (.delpi-ui-help-tooltip--wrap) — não é aninhado", () => {
+    const onOutside = vi.fn();
+    render(
+      <div>
+        <Probe onOutside={onOutside} />
+        <span className="delpi-ui-help-tooltip delpi-ui-help-tooltip--wrap">
+          <button type="button" data-testid="peer-hint">
+            Ordenar
+          </button>
+        </span>
+      </div>,
+    );
+
+    document
+      .querySelector('[data-testid="peer-hint"]')!
+      .dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+
+    expect(onOutside).toHaveBeenCalledTimes(1);
+  });
+
   it("fecha ao clicar em painel peer (.delpi-ui-shape-menu__panel) — não é aninhado", () => {
     const onOutside = vi.fn();
     render(
