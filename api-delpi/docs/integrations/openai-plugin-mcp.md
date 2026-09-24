@@ -82,12 +82,11 @@ Dynamic READ notes:
 Technical Action Catalog = derived from OpenAPI/baseline + governance allowlist
 Action Catalog != semantic capability authority
 MCP tools advertised to the Agent = search_products + discover_delpi_information + execute_delpi_information
-DAVI_ELIGIBLE_READ (allowlist v9 / DAVI-PRODUCT-DRAWING-CAPABILITY-001) = 17
-  search_products, get_product_stock, get_product_suppliers, get_product_customers,
-  get_product_purchases, get_product_structure, get_product_production_status,
-  get_product_factory_status, get_product_structure_exclusivity, get_product_shipping_status,
-  get_product_pricing, get_product_purchase_price_history, get_product_last_purchase,
-  get_product_guide, get_product_parents, list_product_drawings, get_product_drawing
+DAVI_ELIGIBLE_READ (allowlist v10 / DAVI-CAPABILITY-EXPANSION-WAVE-004-COMMERCIAL-READ) = 35
+  prior 17 product/drawing READs + 18 commercial analytics GETs
+  (ROL / OTD / conversion / new clients / new business / WEG target)
+get_sales_order_otd_panel = DEFER (line drill-down / nested insights)
+commercial proposal/detail routes = NEXT_WAVE_CANDIDATE (out of Wave 004)
 get_product_drawing_pdf = DEFER (NEEDS_GENERIC_DOCUMENT_BOUNDARY; no PDF/base64 via execute JSON)
 get_product_analyser = NOT_REQUIRED for drawing analysis
 get_product_detail = SEMANTICALLY_REDUNDANT (search_products covers same slice)
@@ -99,6 +98,7 @@ Stock branch = query filter (NOT DAVI AuthZ)
 OpenAPI whole-document is never sent per turn
 Arbitrary URL/path/method/operationId/SQL = rejected
 Inventory evidence = docs/integrations/evidence/davi-api-delpi-operation-inventory.*
+Current Wave 004 commercial coverage = docs/integrations/evidence/davi-governed-read-coverage-wave-004-commercial.json
 Current drawing JSON coverage = docs/integrations/evidence/davi-governed-read-coverage-product-drawing-001.json
 Current Wave 3A coverage = docs/integrations/evidence/davi-governed-read-coverage-wave-003a.json
 Historical Wave 2 coverage = docs/integrations/evidence/davi-governed-read-coverage-wave-002.json
@@ -122,7 +122,7 @@ is_complete / truncated = dataset completeness for model-visible response
   — see evidence davi-pagination-completeness-hardening-001.*
 ```
 
-> **Allowlist history:** DAVI-DYNAMIC-READ-001 briefly claimed 3 eligible ops (obsolete). DAVI-DYNAMIC-READ-002/005 reduced to 1. DAVI-READ-AUTHZ-REBASELINE-001 promoted allowlist v5 (`DAVI_ELIGIBLE_READ = 7`). DAVI-CAPABILITY-EXPANSION-WAVE-001 promoted allowlist v6 (`DAVI_ELIGIBLE_READ = 10`). DAVI-CAPABILITY-EXPANSION-WAVE-002 promoted allowlist v7 (`DAVI_ELIGIBLE_READ = 13`). DAVI-CAPABILITY-EXPANSION-WAVE-003A promoted allowlist v8 (`DAVI_ELIGIBLE_READ = 15`). **Current source authority is allowlist v9** (`DAVI_ELIGIBLE_READ = 17`) after `DAVI-PRODUCT-DRAWING-CAPABILITY-001` (drawing catalog + metadata JSON). Live deploy of v9 = `TEST_NOT_RUN` until redeploy.
+> **Allowlist history:** DAVI-DYNAMIC-READ-001 briefly claimed 3 eligible ops (obsolete). DAVI-DYNAMIC-READ-002/005 reduced to 1. DAVI-READ-AUTHZ-REBASELINE-001 promoted allowlist v5 (`DAVI_ELIGIBLE_READ = 7`). DAVI-CAPABILITY-EXPANSION-WAVE-001 promoted allowlist v6 (`DAVI_ELIGIBLE_READ = 10`). DAVI-CAPABILITY-EXPANSION-WAVE-002 promoted allowlist v7 (`DAVI_ELIGIBLE_READ = 13`). DAVI-CAPABILITY-EXPANSION-WAVE-003A promoted allowlist v8 (`DAVI_ELIGIBLE_READ = 15`). DAVI-PRODUCT-DRAWING-CAPABILITY-001 promoted allowlist v9 (`DAVI_ELIGIBLE_READ = 17`). **Current source authority is allowlist v10** (`DAVI_ELIGIBLE_READ = 35`) after `DAVI-CAPABILITY-EXPANSION-WAVE-004-COMMERCIAL-READ`. Live deploy of v10 = `TEST_NOT_RUN` until redeploy.
 
 ### Live runtime residuals (DAVI-DYNAMIC-READ-004)
 
@@ -611,7 +611,7 @@ MCP_RATE_POLICY = PENDING_OWNER_DECISION
 WIDER_PUBLICATION = BLOCKED_BY_PENDING_GATES
 ```
 
-**CURRENT (SOURCE PROVEN — `DAVI-LIVE-INTELLIGENCE-CONTRACT-CLOSURE-001`):** allowlist v9 / `DAVI_ELIGIBLE_READ` = 17; MCP tools = 3; GPT Actions legacy = 2 (`LEGACY_TRANSITIONAL`); live `capability_surface.agent_directives` from `davi_agent_intelligence.json` via `DaviAgentIntelligenceService` on both `gpt_get_catalog` and `discover_delpi_information`; discover MCP `outputSchema` includes `capability_surface` (additive contract correction). Provider rediscovery recommended after deploy. Agent Studio sync remains `PENDING_MANUAL_SYNC` unless newer evidence proves otherwise. New LIVE PASS requires fresh authenticated provider evidence — not inferred from this doc.
+**CURRENT (SOURCE PROVEN — `DAVI-CAPABILITY-EXPANSION-WAVE-004-COMMERCIAL-READ`):** allowlist v10 / `DAVI_ELIGIBLE_READ` = 35; MCP tools = 3; GPT Actions legacy = 2 (`LEGACY_TRANSITIONAL`); commercial analytics family promoted behind discover/execute; live production MCP acceptance = `TEST_NOT_RUN` until deploy. Prior live intelligence contract (`DAVI-LIVE-INTELLIGENCE-CONTRACT-CLOSURE-001`) remains valid for `capability_surface.agent_directives`. Agent Studio sync remains `PENDING_MANUAL_SYNC` unless newer evidence proves otherwise. New LIVE PASS requires fresh authenticated provider evidence — not inferred from this doc.
 
 ## Rate limit
 

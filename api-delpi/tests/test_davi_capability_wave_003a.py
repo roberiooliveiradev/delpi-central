@@ -124,11 +124,11 @@ class _PayloadExecutor:
 
 def test_wave3a_eligible_count_includes_wave3a_ops():
     eligible = sorted(a.operation_id for a in _actions() if a.executable)
-    assert len(eligible) == 17
+    assert len(eligible) == 35
     assert set(_CURRENT_THIRTEEN) | set(_WAVE3A) <= set(eligible)
     assert {"list_product_drawings", "get_product_drawing"} <= set(eligible)
     allow = load_external_read_allowlist()
-    assert allow.get("version") == 9
+    assert allow.get("version") == 10
     assert "get_product_raw_material_set_shortages" not in set(eligible)
     blocked = {
         item.get("operationId")
@@ -187,7 +187,7 @@ def test_wave3a_and_current_thirteen_retrieval(query, expected, monkeypatch):
         lambda: "sec",
     )
     discovered = discover_delpi_information(query=query, top_k=5, actor_id="u1")
-    assert discovered["eligible_action_count"] == 17, query
+    assert discovered["eligible_action_count"] == 35, query
     assert discovered["candidate_count"] >= 1, query
     assert discovered["candidates"][0]["action_id"] == expected, (
         query,

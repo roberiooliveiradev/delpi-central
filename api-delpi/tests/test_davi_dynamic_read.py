@@ -124,12 +124,35 @@ _DRAWING_OPERATION_IDS = frozenset(
         "get_product_drawing",
     }
 )
+_WAVE4_COMMERCIAL_OPERATION_IDS = frozenset(
+    {
+        "get_commercial_rol_summary",
+        "get_commercial_rol_series",
+        "get_commercial_rol_by_branch",
+        "get_commercial_rol_by_customer",
+        "get_commercial_rol_by_product",
+        "get_new_business_rol_pct",
+        "get_new_business_rol_target_pct",
+        "get_new_clients_average",
+        "get_new_clients_rol_pct",
+        "get_sales_conversion_rate",
+        "get_sales_conversion_rate_series",
+        "get_sales_order_otd",
+        "get_sales_order_otd_summary",
+        "get_sales_order_otd_by_branch",
+        "get_sales_order_otd_by_customer",
+        "get_sales_order_otd_series",
+        "get_sales_order_otd_series_by_customer",
+        "get_weg_rol_target_pct",
+    }
+)
 _ELIGIBLE_OPERATION_IDS = (
     _ELIGIBLE_V5_OPERATION_IDS
     | _WAVE1_OPERATION_IDS
     | _WAVE2_OPERATION_IDS
     | _WAVE3A_OPERATION_IDS
     | _DRAWING_OPERATION_IDS
+    | _WAVE4_COMMERCIAL_OPERATION_IDS
 )
 
 
@@ -250,9 +273,9 @@ def test_allowlist_v5_multi_ops_rebaseline():
     allow = load_external_read_allowlist()
     ids = load_allowlist_operation_ids(allow)
     assert ids == set(_ELIGIBLE_OPERATION_IDS)
-    assert allow.get("version") == 9
+    assert allow.get("version") == 10
     assert allow.get("coverageDecision", {}).get("decision") == (
-        "PROMOTE_PRODUCT_DRAWING_JSON_READ_FOUNDATION"
+        "PROMOTE_COMMERCIAL_ANALYTICS_READ_WAVE_004"
     )
     assert allow.get("authzPolicy") == "DAVI-READ-AUTHZ-REBASELINE-001"
     entry = next(
@@ -425,7 +448,7 @@ def test_inventory_eligible_count_is_thirteen():
     )
     assert len(actions) == int(baseline.get("operation_count") or 0)
     eligible = [a for a in actions if a.executable]
-    assert len(eligible) == 17
+    assert len(eligible) == 35
     assert set(a.operation_id for a in eligible) == set(_ELIGIBLE_OPERATION_IDS)
 
 
@@ -445,7 +468,7 @@ def test_owned_product_intents_discover_from_full_catalog(monkeypatch):
     )
     for query, expected_oid in expectations:
         discovered = discover_delpi_information(query=query, top_k=10, actor_id="u1")
-        assert discovered["eligible_action_count"] == 17, query
+        assert discovered["eligible_action_count"] == 35, query
         assert discovered["candidate_count"] >= 1, query
         action_ids = {c["action_id"] for c in discovered["candidates"]}
         assert expected_oid in action_ids, query
@@ -1157,7 +1180,7 @@ def test_negative_retrieval_quarantine(query, monkeypatch):
     assert discovered["candidate_count"] == 0, (
         f"query={query!r} unexpectedly returned {discovered['candidates']}"
     )
-    assert discovered["eligible_action_count"] == 17
+    assert discovered["eligible_action_count"] == 35
 
 
 def test_stock_eligible_and_branch_is_filter_not_authz():
@@ -1634,6 +1657,9 @@ def test_mcp_output_schemas_present_for_all_three_tools():
                     "action_id": "search_products",
                 }
             ],
+            "capability_surface": {
+                "agent_directives": {"read_only": True, "version": "test"},
+            },
         }
     )
     ExecuteDelpiInformationOutput.model_validate(
@@ -1950,4 +1976,4 @@ def test_eligible_count_is_thirteen():
     actions = _load_baseline_actions()
     eligible = sorted(a.operation_id for a in actions if a.executable)
     assert eligible == sorted(_ELIGIBLE_OPERATION_IDS)
-    assert len(eligible) == 17
+    assert len(eligible) == 35

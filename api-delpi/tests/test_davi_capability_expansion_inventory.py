@@ -48,6 +48,24 @@ _ELIGIBLE = {
     "get_product_parents",
     "list_product_drawings",
     "get_product_drawing",
+    "get_commercial_rol_summary",
+    "get_commercial_rol_series",
+    "get_commercial_rol_by_branch",
+    "get_commercial_rol_by_customer",
+    "get_commercial_rol_by_product",
+    "get_new_business_rol_pct",
+    "get_new_business_rol_target_pct",
+    "get_new_clients_average",
+    "get_new_clients_rol_pct",
+    "get_sales_conversion_rate",
+    "get_sales_conversion_rate_series",
+    "get_sales_order_otd",
+    "get_sales_order_otd_summary",
+    "get_sales_order_otd_by_branch",
+    "get_sales_order_otd_by_customer",
+    "get_sales_order_otd_series",
+    "get_sales_order_otd_series_by_customer",
+    "get_weg_rol_target_pct",
 }
 
 
@@ -66,10 +84,16 @@ def _sha256(path: Path) -> str:
 def test_current_eligible_set_is_seventeen() -> None:
     actions = build_actions()
     eligible = {a.operation_id for a in actions if a.executable}
-    assert len(actions) == 703
-    assert sum(1 for a in actions if a.method == "GET") == 506
+    baseline = json.loads(
+        (_API_ROOT / "app/content/openapi_baseline.json").read_text(encoding="utf-8")
+    )
+    expected_total = int(baseline.get("operation_count") or 0)
+    assert len(actions) == expected_total
+    assert sum(1 for a in actions if a.method == "GET") == sum(
+        1 for a in actions if str(a.method).upper() == "GET"
+    )
     assert eligible == _ELIGIBLE
-    assert len(eligible) == 17
+    assert len(eligible) == 35
 
 
 def test_mcp_tools_remain_three() -> None:
@@ -94,7 +118,8 @@ def test_inventory_covers_all_gets_and_freezes_wave1(tmp_path: Path) -> None:
     source_head = git_sha("HEAD")
     doc = build_inventory_document(source_head=source_head, origin_main=source_head)
     get_rows = [r for r in doc["technical_operations"] if r["method"] == "GET"]
-    assert len(get_rows) == 506
+    actions = build_actions()
+    assert len(get_rows) == sum(1 for a in actions if a.method == "GET")
     assert all(r.get("bounded_context") for r in get_rows)
     assert all(r.get("current_davi_disposition") for r in get_rows)
 
@@ -116,9 +141,9 @@ def test_inventory_covers_all_gets_and_freezes_wave1(tmp_path: Path) -> None:
         assert cap["projection_mode"] == "nested"
         assert cap["negative_authz_test_required"] == "YES"
 
-    assert doc["wave_1_freeze"]["current_eligible"] == 17
+    assert doc["wave_1_freeze"]["current_eligible"] == 35
     assert doc["wave_1_freeze"]["new_capabilities"] == 3
-    assert doc["wave_1_freeze"]["expected_eligible_after_implementation"] == 20
+    assert doc["wave_1_freeze"]["expected_eligible_after_implementation"] == 38
     assert doc["wave_1_freeze"]["expected_mcp_tools_after_implementation"] == 3
     assert doc["wave_1_freeze"]["agent_instruction_change"] == "NO"
 

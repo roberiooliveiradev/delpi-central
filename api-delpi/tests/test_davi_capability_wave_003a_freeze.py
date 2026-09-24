@@ -71,9 +71,9 @@ def _actions() -> list[TechnicalAction]:
 
 def test_runtime_eligible_after_wave3a_and_drawing() -> None:
     allow = load_external_read_allowlist()
-    assert allow.get("version") == 9
+    assert allow.get("version") == 10
     eligible = {a.operation_id for a in _actions() if a.executable}
-    assert len(eligible) == 17
+    assert len(eligible) == 35
     assert set(CURRENT_ELIGIBLE) <= eligible
     for op in ("get_product_guide", "get_product_parents"):
         assert op in eligible
@@ -100,7 +100,8 @@ def test_allowlist_contains_wave3a_ops_plus_prior_and_drawing() -> None:
     assert "get_product_parents" in ids
     assert "list_product_drawings" in ids
     assert "get_product_drawing" in ids
-    assert len(ids) == 17
+    assert "get_commercial_rol_summary" in ids
+    assert len(ids) == 35
 
 
 def test_wave3a_ops_exist_in_openapi_and_are_get() -> None:
@@ -115,7 +116,7 @@ def test_wave3a_ops_exist_in_openapi_and_are_get() -> None:
 def test_source_validation_passes() -> None:
     result = validate_source()
     assert result["ok"] is True
-    assert result["eligibleCount"] == 17
+    assert result["eligibleCount"] == 35
     assert all(result["openapiPresent"].values())
     assert all(result["authz"].values())
 

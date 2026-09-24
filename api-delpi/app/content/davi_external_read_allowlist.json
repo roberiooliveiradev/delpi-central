@@ -1,16 +1,16 @@
 {
-  "version": 9,
+  "version": 10,
   "description": "Governance allowlist for DAVI dynamic READ. DAVI has no independent AuthZ; backend is final authority. Entries define model-safe input/output projection and governed argument constraints only — not business permissions.",
   "authzPolicy": "DAVI-READ-AUTHZ-REBASELINE-001",
   "externalProcessing": "BACKEND_AUTHORIZED_INTERNAL_READ_ALLOWED_UNLESS_EXPLICITLY_PROHIBITED",
   "dataClassification": "MINIMIZATION_REQUIRED_TAXONOMY_OPTIONAL",
   "coverageDecision": {
-    "taskId": "DAVI-PRODUCT-DRAWING-CAPABILITY-001",
-    "decision": "PROMOTE_PRODUCT_DRAWING_JSON_READ_FOUNDATION",
-    "reason": "Promote list_product_drawings and get_product_drawing as governed JSON READ capabilities (catalog + metadata). Eligible READ 15→17. Catalog requires product code (requireArguments) to avoid unbounded file-server scan via DAVI. get_product_drawing_pdf remains DEFER pending generic document transport (no PDF/base64 via execute_delpi_information). get_product_analyser not promoted for drawing analysis. AuthZ unchanged (API_DELPI_ACCESS). MCP tools remain 3. Agent Instructions unchanged.",
+    "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-004-COMMERCIAL-READ",
+    "decision": "PROMOTE_COMMERCIAL_ANALYTICS_READ_WAVE_004",
+    "reason": "Promote 18 Commercial Analytics GET operations behind discover/execute (ROL, OTD, conversion, new clients/business, WEG target). Eligible READ 17→35. get_sales_order_otd_panel DEFER (line-level drill-down/nested insights sibling to line_detail). Proposal/detail routes remain NEXT_WAVE_CANDIDATE. AuthZ unchanged (KPI_COMMERCIAL_ACCESS backend-final). MCP tools remain 3. Agent intelligence unchanged. Production MCP remains the single DAVI runtime.",
     "previousDecision": {
-      "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-003A",
-      "decision": "PROMOTE_PRODUCT_ENGINEERING_READ_WAVE_3A"
+      "taskId": "DAVI-PRODUCT-DRAWING-CAPABILITY-001",
+      "decision": "PROMOTE_PRODUCT_DRAWING_JSON_READ_FOUNDATION"
     }
   },
   "retrievalQuarantineTokens": [
@@ -899,6 +899,841 @@
         "product drawing metadata",
         "server-resolved drawing"
       ]
+    },
+    {
+      "operationId": "get_commercial_rol_summary",
+      "reason": "Commercial ROL summary (realized + SI goal); KPI_COMMERCIAL_ACCESS; scalar model-safe projection",
+      "executionMode": "catalog_action",
+      "approvedInputFields": [
+        "start_date",
+        "end_date",
+        "branch",
+        "customer_segment",
+        "customer_codes",
+        "customer_names",
+        "customer_centers",
+        "exclude_customer_codes",
+        "exclude_customer_names"
+      ],
+      "approvedResponseFields": [
+        "branch",
+        "start_date",
+        "end_date",
+        "rol",
+        "gross_revenue",
+        "returns",
+        "discounts",
+        "goal_label",
+        "goal_value",
+        "comparable_goal",
+        "target",
+        "rol_target_pct",
+        "goal_period_kind",
+        "goal_periodicity",
+        "goal_scope_branch",
+        "goal_scope_label",
+        "has_goal"
+      ],
+      "semanticAliases": [
+        "ROL comercial",
+        "resumo do ROL",
+        "faturamento comercial",
+        "ROL summary",
+        "receita operacional líquida",
+        "meta de ROL",
+        "ROL realizado"
+      ],
+      "argumentConstraints": {
+        "dateRange": {
+          "startField": "start_date",
+          "endField": "end_date",
+          "maxDays": 366
+        }
+      }
+    },
+    {
+      "operationId": "get_commercial_rol_series",
+      "reason": "Commercial ROL time series; KPI_COMMERCIAL_ACCESS; points[] projection",
+      "executionMode": "catalog_action",
+      "approvedInputFields": [
+        "granularity",
+        "start_date",
+        "end_date",
+        "customer_segment",
+        "customer_codes",
+        "customer_names",
+        "customer_centers",
+        "exclude_customer_codes",
+        "exclude_customer_names"
+      ],
+      "approvedResponseFields": [
+        "granularity",
+        "truncated",
+        "points[].periodo",
+        "points[].sort_key",
+        "points[].start_date",
+        "points[].end_date",
+        "points[].rol_matrix",
+        "points[].rol_branch"
+      ],
+      "semanticAliases": [
+        "série de ROL",
+        "evolução do ROL",
+        "evolução mensal do ROL",
+        "ROL series",
+        "histórico de ROL comercial",
+        "ROL por mês"
+      ],
+      "argumentConstraints": {
+        "dateRange": {
+          "startField": "start_date",
+          "endField": "end_date",
+          "maxDays": 366
+        },
+        "requireArguments": [
+          "granularity"
+        ]
+      }
+    },
+    {
+      "operationId": "get_commercial_rol_by_branch",
+      "reason": "Commercial ROL by branch ranking; KPI_COMMERCIAL_ACCESS; drop non-ranking fields",
+      "executionMode": "catalog_action",
+      "approvedInputFields": [
+        "start_date",
+        "end_date",
+        "customer_segment",
+        "customer_codes",
+        "customer_names",
+        "customer_centers",
+        "exclude_customer_codes",
+        "exclude_customer_names"
+      ],
+      "approvedResponseFields": [
+        "start_date",
+        "end_date",
+        "items[].branch",
+        "items[].rol",
+        "items[].gross_revenue",
+        "items[].returns",
+        "items[].discounts",
+        "summary.items_count",
+        "summary.total_rol"
+      ],
+      "semanticAliases": [
+        "ROL por filial",
+        "ROL por unidade",
+        "faturamento por filial",
+        "ROL branch breakdown"
+      ],
+      "argumentConstraints": {
+        "dateRange": {
+          "startField": "start_date",
+          "endField": "end_date",
+          "maxDays": 366
+        }
+      }
+    },
+    {
+      "operationId": "get_commercial_rol_by_customer",
+      "reason": "Commercial ROL ranking by customer; KPI_COMMERCIAL_ACCESS; drop CNPJ/city/state; bound limit",
+      "executionMode": "catalog_action",
+      "approvedInputFields": [
+        "start_date",
+        "end_date",
+        "branch",
+        "customer_segment",
+        "customer_codes",
+        "customer_names",
+        "customer_centers",
+        "exclude_customer_codes",
+        "exclude_customer_names",
+        "product_codes",
+        "product_groups",
+        "market",
+        "limit",
+        "include_others"
+      ],
+      "approvedResponseFields": [
+        "branch",
+        "start_date",
+        "end_date",
+        "items[].customer_code",
+        "items[].customer_store",
+        "items[].customer_name",
+        "items[].customer_center",
+        "items[].rol",
+        "items[].gross_revenue",
+        "items[].share_pct",
+        "items[].rank",
+        "others.customer_code",
+        "others.customer_name",
+        "others.rol",
+        "others.share_pct",
+        "others.rank",
+        "summary.total_rol",
+        "summary.customers_count",
+        "summary.items_count"
+      ],
+      "semanticAliases": [
+        "ROL por cliente",
+        "ranking de ROL por cliente",
+        "faturamento por cliente",
+        "top clientes ROL",
+        "customer ROL ranking"
+      ],
+      "argumentConstraints": {
+        "dateRange": {
+          "startField": "start_date",
+          "endField": "end_date",
+          "maxDays": 366
+        },
+        "argumentLimits": {
+          "limit": {
+            "minimum": 1,
+            "maximum": 50,
+            "default": 20
+          }
+        }
+      }
+    },
+    {
+      "operationId": "get_commercial_rol_by_product",
+      "reason": "Commercial ROL by product/group; KPI_COMMERCIAL_ACCESS; bound limit ≤50",
+      "executionMode": "catalog_action",
+      "approvedInputFields": [
+        "start_date",
+        "end_date",
+        "branch",
+        "customer_segment",
+        "customer_codes",
+        "customer_names",
+        "customer_centers",
+        "exclude_customer_codes",
+        "exclude_customer_names",
+        "product_codes",
+        "product_groups",
+        "market",
+        "group_by",
+        "limit"
+      ],
+      "approvedResponseFields": [
+        "branch",
+        "start_date",
+        "end_date",
+        "group_by",
+        "market",
+        "items[].product_code",
+        "items[].product_group",
+        "items[].product_name",
+        "items[].rol",
+        "items[].domestic_rol",
+        "items[].export_rol",
+        "items[].gross_revenue",
+        "items[].qty",
+        "items[].unit",
+        "items[].share_pct",
+        "items[].rank",
+        "summary.total_rol",
+        "summary.total_gross_revenue",
+        "summary.total_qty",
+        "summary.items_count"
+      ],
+      "semanticAliases": [
+        "ROL por produto",
+        "ROL por família",
+        "faturamento por produto",
+        "ranking de produtos ROL",
+        "product ROL ranking"
+      ],
+      "argumentConstraints": {
+        "dateRange": {
+          "startField": "start_date",
+          "endField": "end_date",
+          "maxDays": 366
+        },
+        "argumentLimits": {
+          "limit": {
+            "minimum": 1,
+            "maximum": 50,
+            "default": 50
+          }
+        }
+      }
+    },
+    {
+      "operationId": "get_new_business_rol_pct",
+      "reason": "New-business ROL share vs total/WEG; KPI_COMMERCIAL_ACCESS",
+      "executionMode": "catalog_action",
+      "approvedInputFields": [
+        "start_date",
+        "end_date",
+        "branch"
+      ],
+      "approvedResponseFields": [
+        "branch",
+        "start_date",
+        "end_date",
+        "total_rol",
+        "new_business_rol",
+        "weg_rol",
+        "new_business_rol_pct"
+      ],
+      "semanticAliases": [
+        "participação de novos negócios",
+        "ROL de novos negócios",
+        "new business ROL share",
+        "percentual de novos negócios",
+        "novos negócios ROL"
+      ],
+      "argumentConstraints": {
+        "dateRange": {
+          "startField": "start_date",
+          "endField": "end_date",
+          "maxDays": 366
+        }
+      }
+    },
+    {
+      "operationId": "get_new_business_rol_target_pct",
+      "reason": "New-business ROL vs SI target; KPI_COMMERCIAL_ACCESS; segment fixed by backend",
+      "executionMode": "catalog_action",
+      "approvedInputFields": [
+        "start_date",
+        "end_date",
+        "branch"
+      ],
+      "approvedResponseFields": [
+        "branch",
+        "start_date",
+        "end_date",
+        "rol",
+        "goal_label",
+        "goal_value",
+        "comparable_goal",
+        "target",
+        "rol_target_pct",
+        "goal_period_kind",
+        "goal_periodicity",
+        "goal_scope_branch",
+        "goal_scope_label",
+        "has_goal"
+      ],
+      "semanticAliases": [
+        "meta de novos negócios",
+        "meta ROL novos negócios",
+        "new business ROL target",
+        "atingimento novos negócios"
+      ],
+      "argumentConstraints": {
+        "dateRange": {
+          "startField": "start_date",
+          "endField": "end_date",
+          "maxDays": 366
+        }
+      }
+    },
+    {
+      "operationId": "get_new_clients_average",
+      "reason": "Average new clients per month; KPI_COMMERCIAL_ACCESS",
+      "executionMode": "catalog_action",
+      "approvedInputFields": [
+        "start_date",
+        "end_date",
+        "branch"
+      ],
+      "approvedResponseFields": [
+        "branch",
+        "start_date",
+        "end_date",
+        "total_new_clients",
+        "qtd_months",
+        "monthly_average"
+      ],
+      "semanticAliases": [
+        "média de novos clientes",
+        "novos clientes",
+        "average new clients",
+        "quantidade média de clientes novos"
+      ],
+      "argumentConstraints": {
+        "dateRange": {
+          "startField": "start_date",
+          "endField": "end_date",
+          "maxDays": 366
+        }
+      }
+    },
+    {
+      "operationId": "get_new_clients_rol_pct",
+      "reason": "ROL share from new clients; KPI_COMMERCIAL_ACCESS; distinct from new-business segment",
+      "executionMode": "catalog_action",
+      "approvedInputFields": [
+        "start_date",
+        "end_date",
+        "branch"
+      ],
+      "approvedResponseFields": [
+        "branch",
+        "start_date",
+        "end_date",
+        "total_rol",
+        "new_clients_rol",
+        "new_clients_rol_pct"
+      ],
+      "semanticAliases": [
+        "ROL de clientes novos",
+        "participação de clientes novos no ROL",
+        "new clients ROL share",
+        "percentual ROL clientes novos",
+        "faturamento de clientes novos",
+        "share ROL clientes novos",
+        "clientes novos no faturamento"
+      ],
+      "argumentConstraints": {
+        "dateRange": {
+          "startField": "start_date",
+          "endField": "end_date",
+          "maxDays": 366
+        }
+      }
+    },
+    {
+      "operationId": "get_sales_conversion_rate",
+      "reason": "Commercial proposal closing/conversion rate; KPI_COMMERCIAL_ACCESS",
+      "executionMode": "catalog_action",
+      "approvedInputFields": [
+        "start_date",
+        "end_date",
+        "branch"
+      ],
+      "approvedResponseFields": [
+        "branch",
+        "start_date",
+        "end_date",
+        "qtd_proposals",
+        "qtd_won",
+        "sales_conversion_rate_pct",
+        "goal_label",
+        "goal_value",
+        "comparable_goal",
+        "target",
+        "goal_period_kind",
+        "goal_periodicity",
+        "has_goal"
+      ],
+      "semanticAliases": [
+        "taxa de conversão",
+        "conversão comercial",
+        "closing rate",
+        "taxa de fechamento",
+        "conversão de propostas"
+      ],
+      "argumentConstraints": {
+        "dateRange": {
+          "startField": "start_date",
+          "endField": "end_date",
+          "maxDays": 366
+        }
+      }
+    },
+    {
+      "operationId": "get_sales_conversion_rate_series",
+      "reason": "Conversion rate time series; KPI_COMMERCIAL_ACCESS",
+      "executionMode": "catalog_action",
+      "approvedInputFields": [
+        "granularity",
+        "start_date",
+        "end_date"
+      ],
+      "approvedResponseFields": [
+        "granularity",
+        "truncated",
+        "points[].periodo",
+        "points[].sort_key",
+        "points[].start_date",
+        "points[].end_date",
+        "points[].conversion_filial_01",
+        "points[].conversion_filial_02",
+        "points[].qtd_proposals_01",
+        "points[].qtd_proposals_02",
+        "points[].qtd_won_01",
+        "points[].qtd_won_02"
+      ],
+      "semanticAliases": [
+        "evolução da conversão",
+        "série de taxa de conversão",
+        "conversion rate series",
+        "evolução do closing rate"
+      ],
+      "argumentConstraints": {
+        "dateRange": {
+          "startField": "start_date",
+          "endField": "end_date",
+          "maxDays": 366
+        },
+        "requireArguments": [
+          "granularity"
+        ]
+      }
+    },
+    {
+      "operationId": "get_sales_order_otd",
+      "reason": "Sales-order OTD overall indicator; KPI_COMMERCIAL_ACCESS; same UC as summary",
+      "executionMode": "catalog_action",
+      "approvedInputFields": [
+        "start_date",
+        "end_date",
+        "branch",
+        "customer_segment",
+        "customer_codes",
+        "customer_names",
+        "customer_centers",
+        "exclude_customer_codes",
+        "exclude_customer_names",
+        "customer_code_stores"
+      ],
+      "approvedResponseFields": [
+        "branch",
+        "start_date",
+        "end_date",
+        "total_lines",
+        "on_time_lines",
+        "late_lines",
+        "sales_order_otd_pct",
+        "goal_label",
+        "goal_value",
+        "comparable_goal",
+        "target",
+        "goal_period_kind",
+        "goal_periodicity",
+        "has_goal"
+      ],
+      "semanticAliases": [
+        "OTD comercial",
+        "OTD de pedidos de venda",
+        "on-time delivery comercial",
+        "OTD pedidos",
+        "sales order OTD"
+      ],
+      "argumentConstraints": {
+        "dateRange": {
+          "startField": "start_date",
+          "endField": "end_date",
+          "maxDays": 366
+        }
+      }
+    },
+    {
+      "operationId": "get_sales_order_otd_summary",
+      "reason": "Sales-order OTD summary with SI goal; KPI_COMMERCIAL_ACCESS",
+      "executionMode": "catalog_action",
+      "approvedInputFields": [
+        "start_date",
+        "end_date",
+        "branch",
+        "customer_segment",
+        "customer_codes",
+        "customer_names",
+        "customer_centers",
+        "exclude_customer_codes",
+        "exclude_customer_names",
+        "customer_code_stores"
+      ],
+      "approvedResponseFields": [
+        "branch",
+        "start_date",
+        "end_date",
+        "total_lines",
+        "on_time_lines",
+        "late_lines",
+        "sales_order_otd_pct",
+        "goal_label",
+        "goal_value",
+        "comparable_goal",
+        "target",
+        "goal_period_kind",
+        "goal_periodicity",
+        "has_goal"
+      ],
+      "semanticAliases": [
+        "resumo OTD",
+        "OTD summary",
+        "resumo do OTD comercial",
+        "OTD realizado e meta",
+        "meta OTD comercial"
+      ],
+      "argumentConstraints": {
+        "dateRange": {
+          "startField": "start_date",
+          "endField": "end_date",
+          "maxDays": 366
+        }
+      }
+    },
+    {
+      "operationId": "get_sales_order_otd_by_branch",
+      "reason": "OTD ranking by branch; KPI_COMMERCIAL_ACCESS",
+      "executionMode": "catalog_action",
+      "approvedInputFields": [
+        "start_date",
+        "end_date",
+        "customer_segment",
+        "customer_codes",
+        "customer_names",
+        "customer_centers",
+        "exclude_customer_codes",
+        "exclude_customer_names",
+        "customer_code_stores"
+      ],
+      "approvedResponseFields": [
+        "start_date",
+        "end_date",
+        "items[].branch",
+        "items[].total_lines",
+        "items[].total_qty",
+        "items[].fulfilled_qty",
+        "items[].on_time_lines",
+        "items[].late_lines",
+        "items[].fulfillment_pct",
+        "items[].otd_pct",
+        "summary.items_count"
+      ],
+      "semanticAliases": [
+        "OTD por filial",
+        "OTD por unidade",
+        "sales order OTD by branch"
+      ],
+      "argumentConstraints": {
+        "dateRange": {
+          "startField": "start_date",
+          "endField": "end_date",
+          "maxDays": 366
+        }
+      }
+    },
+    {
+      "operationId": "get_sales_order_otd_by_customer",
+      "reason": "OTD ranking by customer; KPI_COMMERCIAL_ACCESS; customer code/name only; nested pagination",
+      "executionMode": "catalog_action",
+      "approvedInputFields": [
+        "start_date",
+        "end_date",
+        "branch",
+        "customer_segment",
+        "customer_codes",
+        "customer_names",
+        "customer_centers",
+        "exclude_customer_codes",
+        "exclude_customer_names",
+        "customer_code_stores",
+        "page",
+        "page_size"
+      ],
+      "approvedResponseFields": [
+        "start_date",
+        "end_date",
+        "branch",
+        "items[].customer_code",
+        "items[].customer_store",
+        "items[].customer_name",
+        "items[].branch",
+        "items[].total_lines",
+        "items[].total_qty",
+        "items[].fulfilled_qty",
+        "items[].on_time_lines",
+        "items[].late_lines",
+        "items[].fulfillment_pct",
+        "items[].otd_pct",
+        "pagination.page",
+        "pagination.page_size",
+        "pagination.total",
+        "pagination.has_more",
+        "summary.items_count",
+        "summary.customers_count"
+      ],
+      "semanticAliases": [
+        "OTD por cliente",
+        "ranking OTD por cliente",
+        "OTD de pedidos por cliente",
+        "sales order OTD by customer",
+        "on-time delivery por cliente",
+        "OTD comercial por cliente",
+        "atraso de pedidos por cliente"
+      ],
+      "argumentConstraints": {
+        "dateRange": {
+          "startField": "start_date",
+          "endField": "end_date",
+          "maxDays": 366
+        }
+      }
+    },
+    {
+      "operationId": "get_sales_order_otd_series",
+      "reason": "OTD time series; KPI_COMMERCIAL_ACCESS",
+      "executionMode": "catalog_action",
+      "approvedInputFields": [
+        "granularity",
+        "start_date",
+        "end_date",
+        "branch",
+        "customer_segment",
+        "customer_codes",
+        "customer_names",
+        "customer_centers",
+        "exclude_customer_codes",
+        "exclude_customer_names",
+        "customer_code_stores"
+      ],
+      "approvedResponseFields": [
+        "granularity",
+        "truncated",
+        "branch",
+        "points[].periodo",
+        "points[].sort_key",
+        "points[].start_date",
+        "points[].end_date",
+        "points[].otd_filial_01",
+        "points[].otd_filial_02",
+        "points[].otd_pct",
+        "points[].total_qty",
+        "points[].fulfilled_qty",
+        "points[].fulfillment_pct",
+        "points[].total_lines",
+        "points[].unit",
+        "points[].mixed_units"
+      ],
+      "semanticAliases": [
+        "série de OTD",
+        "evolução do OTD",
+        "OTD por semana",
+        "OTD semanal",
+        "OTD mensal",
+        "sales order OTD series",
+        "evolução OTD comercial"
+      ],
+      "argumentConstraints": {
+        "dateRange": {
+          "startField": "start_date",
+          "endField": "end_date",
+          "maxDays": 366
+        },
+        "requireArguments": [
+          "granularity"
+        ]
+      }
+    },
+    {
+      "operationId": "get_sales_order_otd_series_by_customer",
+      "reason": "OTD series by customer buckets; KPI_COMMERCIAL_ACCESS; bound page/top_customers",
+      "executionMode": "catalog_action",
+      "approvedInputFields": [
+        "granularity",
+        "start_date",
+        "end_date",
+        "branch",
+        "customer_segment",
+        "customer_codes",
+        "customer_names",
+        "customer_centers",
+        "exclude_customer_codes",
+        "exclude_customer_names",
+        "customer_code_stores",
+        "page",
+        "page_size",
+        "top_customers"
+      ],
+      "approvedResponseFields": [
+        "start_date",
+        "end_date",
+        "branch",
+        "granularity",
+        "truncated",
+        "items[].customer_code",
+        "items[].customer_store",
+        "items[].customer_name",
+        "items[].branch",
+        "items[].periodo",
+        "items[].sort_key",
+        "items[].start_date",
+        "items[].end_date",
+        "items[].total_lines",
+        "items[].total_qty",
+        "items[].fulfilled_qty",
+        "items[].on_time_lines",
+        "items[].late_lines",
+        "items[].fulfillment_pct",
+        "items[].otd_pct",
+        "pagination.page",
+        "pagination.page_size",
+        "pagination.total",
+        "pagination.has_more",
+        "summary.granularity",
+        "summary.truncated",
+        "summary.customers_count",
+        "summary.buckets_count",
+        "summary.items_count"
+      ],
+      "semanticAliases": [
+        "evolução OTD por cliente",
+        "série OTD por cliente",
+        "OTD series by customer"
+      ],
+      "argumentConstraints": {
+        "dateRange": {
+          "startField": "start_date",
+          "endField": "end_date",
+          "maxDays": 366
+        },
+        "argumentLimits": {
+          "top_customers": {
+            "minimum": 1,
+            "maximum": 50,
+            "default": 20
+          }
+        }
+      }
+    },
+    {
+      "operationId": "get_weg_rol_target_pct",
+      "reason": "WEG-segment ROL vs SI target; customer segment fixed by backend repository; KPI_COMMERCIAL_ACCESS",
+      "executionMode": "catalog_action",
+      "approvedInputFields": [
+        "start_date",
+        "end_date",
+        "branch"
+      ],
+      "approvedResponseFields": [
+        "branch",
+        "start_date",
+        "end_date",
+        "rol",
+        "goal_label",
+        "goal_value",
+        "comparable_goal",
+        "target",
+        "rol_target_pct",
+        "goal_period_kind",
+        "goal_periodicity",
+        "goal_scope_branch",
+        "goal_scope_label",
+        "has_goal"
+      ],
+      "semanticAliases": [
+        "meta ROL WEG",
+        "ROL WEG",
+        "WEG ROL target",
+        "atingimento ROL WEG",
+        "participação WEG meta"
+      ],
+      "argumentConstraints": {
+        "dateRange": {
+          "startField": "start_date",
+          "endField": "end_date",
+          "maxDays": 366
+        }
+      }
     }
   ],
   "explicitlyNotApproved": [
@@ -943,11 +1778,47 @@
       "coverageDisposition": "DEFER",
       "primaryBlocker": "DEFER",
       "reason": "Drawing analysis inspection cross-check deferred (DRAWING_ANALYSIS_INSPECTION_CROSSCHECK=DEFERRED). Not required for JSON drawing catalog/metadata foundation."
+    },
+    {
+      "operationId": "get_sales_order_otd_panel",
+      "coverageDisposition": "DEFER",
+      "primaryBlocker": "NEEDS_NESTED_LINE_DRILLDOWN_CONTRACT",
+      "reason": "Wave 004 candidate deferred: line-level panel with insights arrays and page_size≤1000 is a drill-down sibling to get_sales_order_otd_line_detail; needs separate nested model-safe contract review before READ broker promotion."
+    },
+    {
+      "operationId": "get_sales_order_otd_line_detail",
+      "coverageDisposition": "NEXT_WAVE_CANDIDATE",
+      "primaryBlocker": "OUT_OF_WAVE_004",
+      "reason": "Explicitly out of Wave 004 commercial analytics family — proposal/detail/drill-down surface."
+    },
+    {
+      "operationId": "list_commercial_proposals",
+      "coverageDisposition": "NEXT_WAVE_CANDIDATE",
+      "primaryBlocker": "OUT_OF_WAVE_004",
+      "reason": "Proposal workflow family — out of Wave 004 analytics READ scope."
+    },
+    {
+      "operationId": "get_commercial_proposal",
+      "coverageDisposition": "NEXT_WAVE_CANDIDATE",
+      "primaryBlocker": "OUT_OF_WAVE_004",
+      "reason": "Proposal detail — out of Wave 004 analytics READ scope."
+    },
+    {
+      "operationId": "get_commercial_proposal_history_events",
+      "coverageDisposition": "NEXT_WAVE_CANDIDATE",
+      "primaryBlocker": "OUT_OF_WAVE_004",
+      "reason": "Proposal history — out of Wave 004 analytics READ scope."
+    },
+    {
+      "operationId": "summarize_commercial_proposals_by_collaborator",
+      "coverageDisposition": "NEXT_WAVE_CANDIDATE",
+      "primaryBlocker": "OUT_OF_WAVE_004",
+      "reason": "Proposal collaborator summary — out of Wave 004 analytics READ scope."
     }
   ],
   "hardening": {
-    "taskId": "DAVI-PRODUCT-DRAWING-CAPABILITY-001",
-    "note": "No AuthZ policy change. Eligible READ set 15→17 via allowlist metadata (list_product_drawings, get_product_drawing). Catalog requireArguments=[code] blocks unbounded library listing through DAVI. Model-visible projection drops summary.library_dir and drawing_*_path. get_product_drawing_pdf DEFER (document transport). get_product_analyser NOT_REQUIRED for drawing. MCP tools remain 3. Agent Instructions unchanged. Wave 3A guide/parents + Wave 2 economic quarantine tokens preserved."
+    "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-004-COMMERCIAL-READ",
+    "note": "No AuthZ policy change. Eligible READ 17→35 via allowlist v10 commercial analytics. 18 PROMOTE / 1 DEFER (panel) among 19 candidates. Nested pagination completeness normalized generically for pagination{} envelopes. MCP tools remain 3. Agent Instructions/intelligence unchanged. GPT Actions legacy unchanged. Document transport spike remains OFF/historical."
   },
   "supersededBlockers": {
     "taskId": "DAVI-READ-AUTHZ-REBASELINE-001",

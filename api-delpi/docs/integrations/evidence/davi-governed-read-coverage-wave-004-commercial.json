@@ -1,0 +1,182 @@
+{
+  "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-004-COMMERCIAL-READ",
+  "family": "COMMERCIAL_ANALYTICS_READ",
+  "sourceHead": "PENDING_COMMIT",
+  "allowlistVersionBefore": 9,
+  "allowlistVersionAfter": 10,
+  "eligibleReadBefore": 17,
+  "eligibleReadAfter": 35,
+  "mcpToolsBefore": 3,
+  "mcpToolsAfter": 3,
+  "candidateOperations": [
+    "get_commercial_rol_by_branch",
+    "get_commercial_rol_by_customer",
+    "get_commercial_rol_by_product",
+    "get_commercial_rol_series",
+    "get_commercial_rol_summary",
+    "get_new_business_rol_pct",
+    "get_new_business_rol_target_pct",
+    "get_new_clients_average",
+    "get_new_clients_rol_pct",
+    "get_sales_conversion_rate",
+    "get_sales_conversion_rate_series",
+    "get_sales_order_otd",
+    "get_sales_order_otd_by_branch",
+    "get_sales_order_otd_by_customer",
+    "get_sales_order_otd_panel",
+    "get_sales_order_otd_series",
+    "get_sales_order_otd_series_by_customer",
+    "get_sales_order_otd_summary",
+    "get_weg_rol_target_pct"
+  ],
+  "promotedOperations": [
+    "get_commercial_rol_summary",
+    "get_commercial_rol_series",
+    "get_commercial_rol_by_branch",
+    "get_commercial_rol_by_customer",
+    "get_commercial_rol_by_product",
+    "get_new_business_rol_pct",
+    "get_new_business_rol_target_pct",
+    "get_new_clients_average",
+    "get_new_clients_rol_pct",
+    "get_sales_conversion_rate",
+    "get_sales_conversion_rate_series",
+    "get_sales_order_otd",
+    "get_sales_order_otd_summary",
+    "get_sales_order_otd_by_branch",
+    "get_sales_order_otd_by_customer",
+    "get_sales_order_otd_series",
+    "get_sales_order_otd_series_by_customer",
+    "get_weg_rol_target_pct"
+  ],
+  "deferredOperations": [
+    {
+      "operationId": "get_sales_order_otd_panel",
+      "disposition": "DEFER",
+      "reason": "Line-level drill-down with nested insights arrays and page_size≤1000; sibling to get_sales_order_otd_line_detail; needs separate nested model-safe contract review."
+    }
+  ],
+  "rejectedOperations": [],
+  "outOfWaveCandidates": [
+    {
+      "operationId": "get_sales_order_otd_line_detail",
+      "disposition": "NEXT_WAVE_CANDIDATE"
+    },
+    {
+      "operationId": "list_commercial_proposals",
+      "disposition": "NEXT_WAVE_CANDIDATE"
+    },
+    {
+      "operationId": "get_commercial_proposal",
+      "disposition": "NEXT_WAVE_CANDIDATE"
+    },
+    {
+      "operationId": "get_commercial_proposal_history_events",
+      "disposition": "NEXT_WAVE_CANDIDATE"
+    },
+    {
+      "operationId": "summarize_commercial_proposals_by_collaborator",
+      "disposition": "NEXT_WAVE_CANDIDATE"
+    }
+  ],
+  "authzSummary": {
+    "backendPermission": "KPI_COMMERCIAL_ACCESS",
+    "mechanism": "require_any_permission",
+    "daviLocalRbac": "ABSENT",
+    "policy": "DAVI-READ-AUTHZ-REBASELINE-001"
+  },
+  "inputProjectionSummary": {
+    "commonFilters": [
+      "start_date",
+      "end_date",
+      "branch",
+      "customer_segment",
+      "customer_codes",
+      "customer_names",
+      "customer_centers",
+      "exclude_customer_codes",
+      "exclude_customer_names"
+    ],
+    "seriesRequireGranularity": true,
+    "rankingLimitMax": 50,
+    "dateRangeMaxDays": 366,
+    "noInventedParameterNames": true
+  },
+  "outputProjectionSummary": {
+    "mode": "approvedResponseFields_path_syntax",
+    "wildcard": false,
+    "customerMinimization": "drop cnpj/city/state; keep code/name/store/center when ranking",
+    "commercialValueMinimization": "keep rol/gross_revenue/returns/discounts needed for metric interpretation; drop secret/margin extras",
+    "wegMetric": "backend segment fixed via new_business_rol_pct repository rol field + SI goal enrichment; DAVI reports returned facts only"
+  },
+  "paginationSummary": {
+    "nestedPaginationSupport": "generic classify_source_pagination reads pagination{} + has_more",
+    "executeMaxItems": 50,
+    "executeMaxResponseBytes": 65536
+  },
+  "dateRangeSummary": {
+    "constraint": "maxDays=366 when both dates present",
+    "noHardcodedCalendarDefaults": true,
+    "canonicalRouteDefaultsPreserved": true
+  },
+  "responseBudgetSummary": {
+    "execute_max_response_bytes": 65536,
+    "execute_max_items": 50,
+    "completeness": "is_complete/truncated preserved"
+  },
+  "retrievalTests": {
+    "positive": "PASS",
+    "sibling": "PASS",
+    "negativeWrite": "PASS",
+    "genericAliasTokenMatch": "PASS_contiguous_tokens_plus_length_weight"
+  },
+  "sourceTests": {
+    "commands": [
+      ".venv/bin/pytest tests/test_davi_capability_wave_004_commercial.py tests/test_davi_capability_wave_001.py tests/test_davi_capability_wave_002.py tests/test_davi_capability_wave_002_freeze.py tests/test_davi_capability_wave_003a.py tests/test_davi_capability_wave_003a_freeze.py tests/test_davi_product_drawing_capability.py tests/test_davi_dynamic_read.py tests/test_davi_capability_expansion_inventory.py -q"
+    ],
+    "result": "447 passed",
+    "focusedTotal": 447
+  },
+  "deployStatus": "PENDING_EXTERNAL_ACTION",
+  "deployedSha": null,
+  "productionMcpDiscovery": "TEST_NOT_RUN",
+  "productionEligibleActionCount": null,
+  "livePositiveTests": "TEST_NOT_RUN",
+  "liveNegativeAuthz": {
+    "sourceNegative": "PENDING",
+    "liveSecondUser": "PENDING",
+    "reason": "No suitable second production user exercised in this wave; source AuthZ remains KPI_COMMERCIAL_ACCESS on commercial_router"
+  },
+  "agentInstructionsChanged": false,
+  "agentIntelligenceChanged": false,
+  "gptActionsChanged": false,
+  "documentTransportChanged": false,
+  "executionDrift": {
+    "found": false,
+    "note": "Bootstrap origin/main matched expected ancestor bb466cb at task start; 19 OpenAPI commercial candidates revalidated present"
+  },
+  "futureGptActionsHandoff": {
+    "nextTaskId": "DAVI-GPT-ACTIONS-BOOTSTRAP-001",
+    "promotedRoutesHave": {
+      "stableOperationId": true,
+      "boundedInputSchema": true,
+      "modelSafeOutput": true,
+      "oauthCompatibleCanonicalApi": true,
+      "backendAuthz": "KPI_COMMERCIAL_ACCESS"
+    },
+    "doNotImplementInThisWave": [
+      "Keycloak Actions client",
+      "OAuth Actions client",
+      "OpenAPI Action surface expansion",
+      "legacy gpt-actions expansion"
+    ]
+  },
+  "coverageDecision": {
+    "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-004-COMMERCIAL-READ",
+    "decision": "PROMOTE_COMMERCIAL_ANALYTICS_READ_WAVE_004",
+    "previousDecision": {
+      "taskId": "DAVI-PRODUCT-DRAWING-CAPABILITY-001",
+      "decision": "PROMOTE_PRODUCT_DRAWING_JSON_READ_FOUNDATION"
+    }
+  }
+}

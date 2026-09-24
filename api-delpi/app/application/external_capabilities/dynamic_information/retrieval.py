@@ -15,10 +15,9 @@ from app.application.external_capabilities.dynamic_information.read_only_intent_
 )
 from app.application.external_capabilities.dynamic_information.text_normalize import (
     normalize_text,
+    ordered_tokens,
     tokenize,
 )
-
-
 def _quarantine_tokens() -> set[str]:
     payload = load_external_read_allowlist()
     raw = payload.get("retrievalQuarantineTokens") or []
@@ -40,7 +39,6 @@ def _owned_quarantine_tokens_via_aliases(
     query may own the quarantined tokens they contain.
     """
     owned: set[str] = set()
-    norm_query = normalize_text(query)
     for alias in action.semantic_aliases:
         alias_n = normalize_text(alias)
         alias_tokens = tokenize(alias)
@@ -51,7 +49,7 @@ def _owned_quarantine_tokens_via_aliases(
             continue
         if len(alias_tokens) < 2:
             continue
-        if alias_n in norm_query:
+        if _alias_matches_query(alias, query):
             owned |= quarantined_in_alias
     return owned
 
@@ -67,6 +65,25 @@ def _query_has_foreign_quarantine(query: str, action: TechnicalAction) -> bool:
     return bool(foreign - owned)
 
 
+def _alias_matches_query(alias: str, query: str) -> bool:
+    """True when alias appears as a contiguous token sequence in the query.
+
+    Avoids false positives where short aliases like ``cliente`` match inside
+    ``clientes`` via raw substring containment.
+    """
+    alias_tokens = ordered_tokens(alias)
+    query_tokens = ordered_tokens(query)
+    if not alias_tokens or not query_tokens:
+        return False
+    window = len(alias_tokens)
+    if window > len(query_tokens):
+        return False
+    for idx in range(len(query_tokens) - window + 1):
+        if query_tokens[idx : idx + window] == alias_tokens:
+            return True
+    return False
+
+
 def score_action(query: str, action: TechnicalAction) -> float:
     if _query_has_foreign_quarantine(query, action):
         return 0.0
@@ -79,13 +96,19 @@ def score_action(query: str, action: TechnicalAction) -> float:
     if not hay_tokens:
         return 0.0
 
-    # Phrase boost: full normalized aliases / multi-word hints contained in query.
-    norm_query = normalize_text(query)
+    # Phrase boost: full aliases as contiguous token sequences in the query.
+    # Longer precise aliases outrank short ones so "OTD por cliente" beats bare
+    # "cliente" without operationId hardcodes (generic retrieval quality).
+    best_phrase_len = 0
     phrase_hits = 0
     for alias in action.semantic_aliases:
         alias_n = normalize_text(alias)
-        if len(alias_n) >= 4 and alias_n in norm_query:
-            phrase_hits += 1
+        if len(alias_n) < 4:
+            continue
+        if not _alias_matches_query(alias, query):
+            continue
+        phrase_hits += 1
+        best_phrase_len = max(best_phrase_len, len(alias_n))
 
     overlap = q_tokens & hay_tokens
     if not overlap and phrase_hits == 0:
@@ -97,9 +120,13 @@ def score_action(query: str, action: TechnicalAction) -> float:
 
     overlap_score = float(len(overlap)) / float(len(q_tokens)) if overlap else 0.0
     if phrase_hits:
-        # Precise alias containment outranks token-bag overlap so short
-        # distinctive phrases win ties (e.g. "mp exclusiva" vs BOM "mp").
-        return min(1.0, 0.86 + 0.04 * min(phrase_hits, 3))
+        # Base from hit count, then prefer the longest matching alias.
+        return min(
+            1.0,
+            0.86
+            + 0.03 * min(phrase_hits, 3)
+            + 0.002 * min(best_phrase_len, 48),
+        )
     return min(0.84, overlap_score)
 
 

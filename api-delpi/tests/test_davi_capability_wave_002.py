@@ -164,10 +164,10 @@ class _PayloadExecutor:
 
 def test_wave2_eligible_count_exactly_thirteen():
     eligible = sorted(a.operation_id for a in _actions() if a.executable)
-    assert len(eligible) == 17
+    assert len(eligible) == 35
     assert set(_CURRENT_TEN) | set(_WAVE2) <= set(eligible)
     allow = load_external_read_allowlist()
-    assert allow.get("version") == 9
+    assert allow.get("version") == 10
     blocked = {
         item.get("operationId")
         for item in allow.get("explicitlyNotApproved") or []
@@ -224,7 +224,7 @@ def test_wave2_and_current_ten_retrieval(query, expected, monkeypatch):
         lambda: "sec",
     )
     discovered = discover_delpi_information(query=query, top_k=5, actor_id="u1")
-    assert discovered["eligible_action_count"] == 17, query
+    assert discovered["eligible_action_count"] == 35, query
     assert discovered["candidate_count"] >= 1, query
     assert discovered["candidates"][0]["action_id"] == expected, (
         query,

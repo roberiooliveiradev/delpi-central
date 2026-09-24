@@ -245,6 +245,24 @@ def _as_non_negative_int(value: Any) -> int | None:
     return None
 
 
+def _pagination_view(payload: dict[str, Any]) -> dict[str, Any]:
+    """Normalize top-level or nested ``pagination`` scalars for classification.
+
+    Generic contract support for APIs that nest page/page_size/total under
+    ``pagination`` (e.g. commercial OTD rankings). Prefer explicit top-level
+    keys when present. Nested ``has_more: true`` proves partiality.
+    """
+    view = dict(payload)
+    nested = payload.get("pagination")
+    if isinstance(nested, dict):
+        for key in _PAGINATION_KEYS:
+            if key not in view and key in nested:
+                view[key] = nested[key]
+        if "has_more" not in view and "has_more" in nested:
+            view["has_more"] = nested["has_more"]
+    return view
+
+
 def classify_source_pagination(payload: dict[str, Any]) -> str:
     """Classify canonical page/page_size/total/total_pages for dataset completeness.
 
@@ -254,16 +272,22 @@ def classify_source_pagination(payload: dict[str, Any]) -> str:
       partial  — metadata proves the payload is only a subset
       unknown  — pagination keys present but untrustworthy/insufficient
     """
-    present = [key for key in _PAGINATION_KEYS if key in payload]
+    surface = _pagination_view(payload)
+    present = [key for key in _PAGINATION_KEYS if key in surface]
     if not present:
+        if surface.get("has_more") is True:
+            return _PAGINATION_PARTIAL
         return _PAGINATION_ABSENT
+
+    if surface.get("has_more") is True:
+        return _PAGINATION_PARTIAL
 
     parsed: dict[str, int | None] = {}
     for key in _PAGINATION_KEYS:
-        if key not in payload:
+        if key not in surface:
             parsed[key] = None
             continue
-        value = _as_non_negative_int(payload.get(key))
+        value = _as_non_negative_int(surface.get(key))
         if value is None:
             return _PAGINATION_UNKNOWN
         if key in ("page", "page_size") and value < 1:
@@ -277,7 +301,6 @@ def classify_source_pagination(payload: dict[str, Any]) -> str:
 
     items = payload.get("items")
     visible = len(items) if isinstance(items, list) else None
-
     # Internally contradictory combinations cannot prove completeness.
     if page is not None and total_pages is not None:
         if total_pages >= 1 and page > total_pages:

@@ -129,14 +129,14 @@ class _PayloadExecutor:
         return CatalogActionExecutionResult(outcome="ok", payload=self.payload)
 
 
-def test_drawing_eligible_count_exactly_seventeen():
-    eligible = sorted(a.operation_id for a in _actions() if a.executable)
-    assert len(eligible) == 17
-    assert set(eligible) == set(_PRIOR_FIFTEEN) | set(_DRAWING)
+def test_drawing_eligible_count_includes_seventeen_foundation():
+    eligible = {a.operation_id for a in _actions() if a.executable}
+    assert len(eligible) == 35
+    assert set(_PRIOR_FIFTEEN) | set(_DRAWING) <= eligible
     allow = load_external_read_allowlist()
-    assert allow.get("version") == 9
+    assert allow.get("version") == 10
     assert allow.get("coverageDecision", {}).get("taskId") == (
-        "DAVI-PRODUCT-DRAWING-CAPABILITY-001"
+        "DAVI-CAPABILITY-EXPANSION-WAVE-004-COMMERCIAL-READ"
     )
     blocked = {
         item.get("operationId")
@@ -184,7 +184,7 @@ def test_drawing_discovery_aliases(query: str, expected: str, monkeypatch):
     )
     set_actions_for_tests(_actions())
     discovered = discover_delpi_information(query=query, actor_id="user-1")
-    assert discovered["eligible_action_count"] == 17, query
+    assert discovered["eligible_action_count"] == 35, query
     ids = [c["action_id"] for c in discovered["candidates"]]
     assert expected in ids
 

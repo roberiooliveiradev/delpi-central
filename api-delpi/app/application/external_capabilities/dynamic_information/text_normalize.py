@@ -17,4 +17,9 @@ def normalize_text(text: str) -> str:
 
 def tokenize(text: str) -> set[str]:
     """Tokenize after accent-insensitive normalization; drop single-char noise."""
-    return {t for t in _TOKEN_RE.findall(normalize_text(text)) if len(t) > 1}
+    return set(ordered_tokens(text))
+
+
+def ordered_tokens(text: str) -> list[str]:
+    """Ordered tokens after accent-insensitive normalization; drop single-char noise."""
+    return [t for t in _TOKEN_RE.findall(normalize_text(text)) if len(t) > 1]
