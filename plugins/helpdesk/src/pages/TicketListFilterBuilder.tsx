@@ -28,6 +28,7 @@ export function TicketListFilterBuilder({
   onClear,
   urgencies,
   categories,
+  assignees,
 }: {
   group: TicketListFilterGroup;
   onChange: (next: TicketListFilterGroup) => void;
@@ -35,6 +36,7 @@ export function TicketListFilterBuilder({
   onClear: () => void;
   urgencies: CatalogOption[];
   categories: CatalogOption[];
+  assignees: CatalogOption[];
 }) {
   const help = helpTooltips.filterBuilder;
 
@@ -133,6 +135,18 @@ export function TicketListFilterBuilder({
                   options={[
                     { value: "", label: "Todas" },
                     ...categories.map((item) => ({ value: String(item.id), label: item.name })),
+                  ]}
+                />
+              ) : null}
+              {meta.input === "assignee" ? (
+                <HelpdeskFilterSelect
+                  label="Valor"
+                  hint={help.value}
+                  value={rule.value}
+                  onChange={(value) => updateRule(rule.id, { value })}
+                  options={[
+                    { value: "", label: "Todos" },
+                    ...assignees.map((item) => ({ value: String(item.id), label: item.name })),
                   ]}
                 />
               ) : null}

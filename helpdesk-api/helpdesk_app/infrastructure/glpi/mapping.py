@@ -62,6 +62,7 @@ _SORT_FIELDS = {
     "created_at": "date_creation",
     "solved_at": "date_solve",
     "closed_at": "date_close",
+    # `assigned` is not an HLAPI RSQL column — handled via legacy Search exception.
 }
 _MAX_PAGE_SIZE = 50
 _DEFAULT_PAGE_SIZE = 20
@@ -124,10 +125,13 @@ def build_ticket_list_query(
     updated_to: str = "",
     created_from: str = "",
     created_to: str = "",
+    assignee_id: int | None = None,
     sort: str = "updated_at:desc",
     page: int = 1,
     page_size: int = _DEFAULT_PAGE_SIZE,
 ) -> TicketListQuery:
+    if assignee_id is not None and int(assignee_id) < 1:
+        raise GlpiValidation("assignee_id inválido.")
     clauses: list[str] = ["is_deleted==false"]
     term = _search_term(q)
     if term:
@@ -158,14 +162,40 @@ def build_ticket_list_query(
         clauses.append(f"date_creation=le={created_end}T23:59:59")
     safe_page = max(1, page)
     safe_size = min(_MAX_PAGE_SIZE, max(1, page_size))
+    client_sort = (sort or "updated_at:desc").strip() or "updated_at:desc"
+    hlapi_sort = _sort_clause(_hlapi_sort_token(client_sort))
     return TicketListQuery(
         filter=";".join(clauses),
         start=(safe_page - 1) * safe_size,
         limit=safe_size + 1,
-        sort=_sort_clause(sort),
+        sort=hlapi_sort,
         page=safe_page,
         page_size=safe_size,
+        assignee_id=int(assignee_id) if assignee_id is not None else None,
+        client_sort=client_sort,
+        q=term,
+        status=(status or "").strip(),
+        urgency_id=urgency_id,
+        category_id=category_id,
+        updated_from=(updated_from or "").strip(),
+        updated_to=(updated_to or "").strip(),
+        created_from=(created_from or "").strip(),
+        created_to=(created_to or "").strip(),
     )
+
+
+def _hlapi_sort_token(client_sort: str) -> str:
+    """Drop `assigned` levels (HLAPI cannot sort team); keep remaining or default."""
+    levels: list[str] = []
+    for chunk in (client_sort or "").split(","):
+        chunk = chunk.strip()
+        if not chunk:
+            continue
+        field = chunk.split(":", 1)[0].strip()
+        if field == "assigned":
+            continue
+        levels.append(chunk)
+    return ",".join(levels) if levels else "updated_at:desc"
 
 
 def parse_ticket_detail(payload: dict, timeline_payload: dict | list) -> TicketDetail:
@@ -470,6 +500,7 @@ def _summary(row: dict) -> TicketSummary:
         closed_at=_optional_instant(row.get("date_close")),
         sla_ttr=_named(row.get("sla_ttr")),
         sla_tto=_named(row.get("sla_tto")),
+        assigned_user_id=_team_user_id(row, "assigned"),
     )
 
 

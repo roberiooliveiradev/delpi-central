@@ -101,6 +101,7 @@ def test_list_publishes_dates_and_forwards_filter():
     assert body["items"][0]["created_at"] == ""
     assert body["items"][0]["status_id"] == 1
     assert "assigned_display_name" in body["items"][0]
+    assert body["items"][0].get("assigned_user_id") == 15
     assert body["items"][0]["requester_display_name"] == "Robério Teixeira"
     assert body["page"] == 1
     assert body["page_size"] == 10
@@ -125,6 +126,23 @@ def test_list_publishes_dates_and_forwards_filter():
     assert foo.status_code == 422
     bad_date = client.get("/tickets", params={"created_from": "21/01/2026"}, headers=auth_headers())
     assert bad_date.status_code == 422
+
+
+def test_list_filters_by_assignee_id():
+    client, glpi = build_client()
+    link(client)
+    hit = client.get("/tickets", params={"assignee_id": 15}, headers=auth_headers())
+    assert hit.status_code == 200
+    assert [row["id"] for row in hit.json()["items"]] == [7]
+    assert glpi.last_list_query.assignee_id == 15
+    miss = client.get("/tickets", params={"assignee_id": 99}, headers=auth_headers())
+    assert miss.status_code == 200
+    assert miss.json()["items"] == []
+    sorted_assigned = client.get(
+        "/tickets", params={"sort": "assigned:asc"}, headers=auth_headers()
+    )
+    assert sorted_assigned.status_code == 200
+    assert glpi.last_list_query.client_sort == "assigned:asc"
 
 
 def test_create_ticket_and_followup_are_idempotent():

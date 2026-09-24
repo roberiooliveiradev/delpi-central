@@ -392,6 +392,7 @@ describe("ticket list filters", () => {
       status: "in_progress",
       urgency_id: "3",
       category_id: "",
+      assignee_id: "",
       updated_from: "",
       updated_to: "",
       created_from: "2026-01-01",
@@ -432,7 +433,7 @@ describe("ticket list filters", () => {
     expect(nextTicketSort("title:asc", "created_at")).toBe("created_at:desc");
     expect(nextTicketSort("updated_at:desc", "solved_at")).toBe("solved_at:desc");
     expect(nextTicketSort("updated_at:desc", "closed_at")).toBe("closed_at:desc");
-    expect(nextTicketSort("updated_at:desc", "assigned")).toBe("updated_at:desc");
+    expect(nextTicketSort("updated_at:desc", "assigned")).toBe("assigned:asc");
   });
 });
 

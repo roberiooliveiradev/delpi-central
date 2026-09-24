@@ -47,13 +47,14 @@ Base do MFE: `/apps/helpdesk-api`.
 | `status` | `open` (1,10,2,3,4), `in_progress` (2,3), `pending` (4), `approval` (10), `solved` (5), `closed` (6) |
 | `urgency_id` | urgência 1–5 |
 | `category_id` | categoria do token |
+| `assignee_id` | id GLPI do técnico — **exceção Search legado** (`GLPI_LEGACY_*`, mesmo de H12/H10); ids via `search/Ticket`, hidratação/ACL via HLAPI OAuth |
 | `updated_from` / `updated_to` | `YYYY-MM-DD` em `date_mod` |
 | `created_from` / `created_to` | `YYYY-MM-DD` em `date_creation` |
-| `sort` | `updated_at:desc` (padrão), `created_at`, `solved_at`, `closed_at`, `title`, `id`, `status`, `category`, `urgency` + `:asc\|:desc` |
+| `sort` | `updated_at:desc` (padrão), `created_at`, `solved_at`, `closed_at`, `title`, `id`, `status`, `category`, `urgency`, `assigned` + `:asc\|:desc` — `assigned` usa a mesma exceção Search |
 | `page` | página 1-based |
 | `page_size` | padrão 20; a tela envia 10, 20 ou 50 (máximo 50) |
 
-O BFF pede `limit = page_size + 1` à HLAPI e devolve `has_more`. Não inventa total do parque. Status ou sort desconhecidos, ou data inválida: 422 `validation_error`. `q` só conserva letra, número, espaço, hífen e underscore.
+O BFF pede `limit = page_size + 1` à HLAPI (caminho normal) e devolve `has_more`. Sem `assignee_id`/`sort=assigned`, a listagem **não** usa apirest. Status ou sort desconhecidos, ou data inválida: 422 `validation_error`. `q` só conserva letra, número, espaço, hífen e underscore. Sem `GLPI_LEGACY_*` ligado, `assignee_id` / sort `assigned` → 503 `glpi_feature_disabled`.
 
 ```json
 {

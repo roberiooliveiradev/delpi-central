@@ -75,6 +75,7 @@ export type TicketListQuery = {
   status?: string;
   urgency_id?: string;
   category_id?: string;
+  assignee_id?: string;
   updated_from?: string;
   updated_to?: string;
   created_from?: string;
@@ -143,6 +144,7 @@ export function listTickets(query: TicketListQuery = {}, signal?: AbortSignal) {
   if (query.status) params.set("status", query.status);
   if (query.urgency_id) params.set("urgency_id", query.urgency_id);
   if (query.category_id) params.set("category_id", query.category_id);
+  if (query.assignee_id) params.set("assignee_id", query.assignee_id);
   if (query.updated_from) params.set("updated_from", query.updated_from);
   if (query.updated_to) params.set("updated_to", query.updated_to);
   if (query.created_from) params.set("created_from", query.created_from);

@@ -74,6 +74,7 @@ export type TicketListFilterFieldKey =
   | "status"
   | "urgency_id"
   | "category_id"
+  | "assignee_id"
   | "updated_from"
   | "updated_to"
   | "created_from"
@@ -121,7 +122,7 @@ export const TICKET_LIST_COLUMN_CATALOG: readonly TicketListColumnDefinition[] =
   { key: "status", header: "Status", fixed: false, sortable: true, solicitante: true, defaultVisible: true },
   { key: "category", header: "Categoria", fixed: false, sortable: true, solicitante: true, defaultVisible: true },
   { key: "urgency", header: "Urgência", fixed: false, sortable: true, solicitante: true, defaultVisible: false },
-  { key: "assigned", header: "Técnico", fixed: false, sortable: false, solicitante: true, defaultVisible: true },
+  { key: "assigned", header: "Técnico", fixed: false, sortable: true, solicitante: true, defaultVisible: true },
   { key: "created_at", header: "Aberto", fixed: false, sortable: true, solicitante: true, defaultVisible: false },
   { key: "updated_at", header: "Atualizado", fixed: false, sortable: true, solicitante: true, defaultVisible: true },
   { key: "solved_at", header: "Resolvido", fixed: false, sortable: true, solicitante: true, defaultVisible: false },
@@ -139,6 +140,7 @@ const SORT_LABELS: Record<string, string> = {
   status: "Status",
   category: "Categoria",
   urgency: "Urgência",
+  assigned: "Técnico",
   created_at: "Aberto",
   updated_at: "Última atualização",
   solved_at: "Resolvido",
@@ -197,6 +199,7 @@ export function ticketListViewModelFromFilters(
   push("status", filters.status);
   push("urgency_id", filters.urgency_id);
   push("category_id", filters.category_id);
+  push("assignee_id", filters.assignee_id);
   push("updated_from", filters.updated_from, "gte");
   push("updated_to", filters.updated_to, "lte");
   push("created_from", filters.created_from, "gte");
@@ -211,6 +214,7 @@ export function ticketListViewModelFromFilters(
   if (filters.q.trim()) activeFilterLabels.push("Busca");
   if (filters.urgency_id.trim()) activeFilterLabels.push("Urgência");
   if (filters.category_id.trim()) activeFilterLabels.push("Categoria");
+  if (filters.assignee_id.trim()) activeFilterLabels.push("Técnico");
   if (filters.updated_from.trim() || filters.updated_to.trim()) activeFilterLabels.push("Atualizado");
   if (filters.created_from.trim() || filters.created_to.trim()) activeFilterLabels.push("Aberto");
 
@@ -273,6 +277,7 @@ const FILTER_FIELD_LABELS: Record<TicketListFilterFieldKey, string> = {
   status: "Status",
   urgency_id: "Urgência",
   category_id: "Categoria",
+  assignee_id: "Técnico",
   updated_from: "Atualizado de",
   updated_to: "Atualizado até",
   created_from: "Aberto de",
@@ -285,13 +290,14 @@ const FILTER_FIELD_LABELS: Record<TicketListFilterFieldKey, string> = {
 export const TICKET_LIST_BUILDER_FIELDS: readonly {
   key: TicketListFilterFieldKey;
   label: string;
-  input: "text" | "status" | "urgency" | "category" | "date";
+  input: "text" | "status" | "urgency" | "category" | "assignee" | "date";
   operator: ListFilterOperator;
 }[] = [
   { key: "q", label: FILTER_FIELD_LABELS.q, input: "text", operator: "contains" },
   { key: "status", label: FILTER_FIELD_LABELS.status, input: "status", operator: "eq" },
   { key: "urgency_id", label: FILTER_FIELD_LABELS.urgency_id, input: "urgency", operator: "eq" },
   { key: "category_id", label: FILTER_FIELD_LABELS.category_id, input: "category", operator: "eq" },
+  { key: "assignee_id", label: FILTER_FIELD_LABELS.assignee_id, input: "assignee", operator: "eq" },
   { key: "updated_from", label: FILTER_FIELD_LABELS.updated_from, input: "date", operator: "gte" },
   { key: "updated_to", label: FILTER_FIELD_LABELS.updated_to, input: "date", operator: "lte" },
   { key: "created_from", label: FILTER_FIELD_LABELS.created_from, input: "date", operator: "gte" },
@@ -343,6 +349,7 @@ export function ticketListFiltersFromFilterGroup(
     status: "",
     urgency_id: "",
     category_id: "",
+    assignee_id: "",
     updated_from: "",
     updated_to: "",
     created_from: "",
@@ -364,6 +371,9 @@ export function ticketListFiltersFromFilterGroup(
         break;
       case "category_id":
         next.category_id = value;
+        break;
+      case "assignee_id":
+        next.assignee_id = value;
         break;
       case "updated_from":
         next.updated_from = value;

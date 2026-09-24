@@ -19,7 +19,7 @@ Defina no ambiente do Compose. Não versione segredo.
 | `PUBLIC_BASE_URL` | origem do portal após o callback |
 | `PLUGINS_DB_*` | Postgres dos plugins |
 | `JWT_SECRET` e `KEYCLOAK_*` | mesmo contrato das outras APIs de módulo |
-| `GLPI_LEGACY_UPLOAD_ENABLED` | H12/H10 — `true` liga sessão limada apirest (Document + ciclo solicitante; default `false`) |
+| `GLPI_LEGACY_UPLOAD_ENABLED` | H12/H10/listagem-ator — `true` liga sessão limada apirest (Document + ciclo + Search Ticket só para `assignee_id`/`sort=assigned`; default `false`) |
 | `GLPI_LEGACY_APP_TOKEN` | App-Token do cliente apirest (cifrado no GLPI; valor plaintext no env do BFF) |
 | `GLPI_LEGACY_USER_TOKEN` | User-Token do usuário técnico (`minha-delpi-upload`, perfil Technician) |
 | `GLPI_ASSIGNEE_PROFILE_IDS` | CSV de `profiles_id` GLPI atribuíveis como técnico (default `6` = Technician). Resolução: HLAPI Profile→User → legado Profile_User → `search/User` field 20 (necessário quando o user_token técnico recebe 403 em Profile_User). |

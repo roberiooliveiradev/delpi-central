@@ -58,6 +58,7 @@ class TicketSummary:
     closed_at: str = ""
     sla_ttr: str = ""
     sla_tto: str = ""
+    assigned_user_id: int | None = None
 
 
 @dataclass(frozen=True)
@@ -68,6 +69,17 @@ class TicketListQuery:
     sort: str = "date_mod:desc"
     page: int = 1
     page_size: int = 20
+    assignee_id: int | None = None
+    """Original sort token from the API (`updated_at:desc`, `assigned:asc`, …)."""
+    client_sort: str = "updated_at:desc"
+    q: str = ""
+    status: str = ""
+    urgency_id: int | None = None
+    category_id: int | None = None
+    updated_from: str = ""
+    updated_to: str = ""
+    created_from: str = ""
+    created_to: str = ""
 
 
 @dataclass(frozen=True)

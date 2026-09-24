@@ -39,6 +39,8 @@ class FakeGlpi:
                 "2026-09-21T12:00:00Z",
                 requester_display_name="Robério Teixeira",
                 status_id=1,
+                assigned_display_name="Ana Silva",
+                assigned_user_id=15,
             )
         ]
         self.detail = TicketDetail(
@@ -114,7 +116,29 @@ class FakeGlpi:
         self.calls += 1
         assert access_token
         self.last_list_query = query
-        return TicketListPage(items=tuple(self.tickets), page=query.page, page_size=query.page_size, has_more=False)
+        items = list(self.tickets)
+        assignee_id = getattr(query, "assignee_id", None)
+        if assignee_id is not None:
+            items = [
+                row
+                for row in items
+                if getattr(row, "assigned_user_id", None) == int(assignee_id)
+            ]
+        client_sort = getattr(query, "client_sort", "") or ""
+        primary = client_sort.split(",")[0].strip() if client_sort else ""
+        if primary.startswith("assigned:"):
+            reverse = not primary.endswith(":asc")
+            items = sorted(
+                items,
+                key=lambda row: (getattr(row, "assigned_display_name", "") or "").lower(),
+                reverse=reverse,
+            )
+        return TicketListPage(
+            items=tuple(items),
+            page=query.page,
+            page_size=query.page_size,
+            has_more=False,
+        )
 
     def get_ticket(self, access_token: str, ticket_id: int, viewer_email: str = ""):
         self.calls += 1

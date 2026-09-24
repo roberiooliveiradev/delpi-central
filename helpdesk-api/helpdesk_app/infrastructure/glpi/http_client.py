@@ -39,6 +39,7 @@ from helpdesk_app.infrastructure.glpi.mapping import (
     parse_profile_user_ids,
     payload_row_count,
     parse_ticket_detail,
+    parse_ticket_list,
     parse_ticket_page,
     parse_ticket_validations,
     parse_token_set,
@@ -184,6 +185,12 @@ class HttpxGlpiClient:
         return list(URGENCIES)
 
     def list_tickets(self, access_token: str, query: TicketListQuery) -> TicketListPage:
+        from helpdesk_app.infrastructure.glpi.legacy_ticket_search import (
+            ticket_list_needs_legacy_actor_search,
+        )
+
+        if ticket_list_needs_legacy_actor_search(query):
+            return self._list_tickets_via_legacy_search(access_token, query)
         params: dict[str, str | int] = {
             "start": query.start,
             "limit": query.limit,
@@ -198,6 +205,74 @@ class HttpxGlpiClient:
             params=params,
         )
         return parse_ticket_page(payload, query)
+
+    def _list_tickets_via_legacy_search(
+        self, access_token: str, query: TicketListQuery
+    ) -> TicketListPage:
+        """Discover ticket ids via classic Search; hydrate+ACL via OAuth HLAPI."""
+        from helpdesk_app.infrastructure.glpi.legacy_ticket_search import (
+            build_legacy_ticket_search_path_from_parts,
+            parse_legacy_ticket_search,
+        )
+
+        self._legacy_require_ready()
+        path = build_legacy_ticket_search_path_from_parts(
+            q=query.q,
+            status=query.status,
+            urgency_id=query.urgency_id,
+            category_id=query.category_id,
+            updated_from=query.updated_from,
+            updated_to=query.updated_to,
+            created_from=query.created_from,
+            created_to=query.created_to,
+            assignee_id=query.assignee_id,
+            sort=query.client_sort,
+            page=query.page,
+            page_size=query.page_size,
+        )
+        session_token = self._legacy_init_session()
+        try:
+            payload = self._legacy_get_json(session_token, path)
+        finally:
+            self._legacy_kill_session(session_token)
+
+        searched = parse_legacy_ticket_search(
+            payload if isinstance(payload, (dict, list)) else {},
+            page=query.page,
+            page_size=query.page_size,
+        )
+        if not searched.ticket_ids:
+            return TicketListPage(
+                items=(),
+                page=query.page,
+                page_size=query.page_size,
+                has_more=False,
+            )
+
+        joined = ",".join(str(item) for item in searched.ticket_ids)
+        hydrate = self._json(
+            "GET",
+            "/api.php/v2.2/Assistance/Ticket",
+            token=access_token,
+            params={
+                "start": 0,
+                "limit": len(searched.ticket_ids),
+                "filter": f"is_deleted==false;id=in=({joined})",
+                "sort": "id:asc",
+            },
+        )
+        by_id = {row.id: row for row in parse_ticket_list(hydrate)}
+        ordered = tuple(
+            by_id[ticket_id]
+            for ticket_id in searched.ticket_ids
+            if ticket_id in by_id
+        )
+        return TicketListPage(
+            items=ordered,
+            page=query.page,
+            page_size=query.page_size,
+            has_more=searched.has_more,
+        )
 
     def get_ticket(self, access_token: str, ticket_id: int, viewer_email: str = "") -> TicketDetail:
         ticket = self._json(

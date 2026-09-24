@@ -213,7 +213,7 @@ FORA                  → não entra neste produto
 | G-03 | `solved_at` a partir de `date_solve` | **IMPLEMENTADO** | BFF aditivo |
 | G-04 | `closed_at` a partir de `date_close` | **IMPLEMENTADO** | BFF aditivo; `sort=closed_at` → `date_close` |
 | G-05 | `requester_display_name` na lista | **IMPLEMENTADO** | mesmo `_requester_name` do detalhe; coluna opcional no catálogo |
-| G-06 | Ordenar por técnico | BLOQUEADO | `team` não é coluna SQL da HLAPI |
+| G-06 | Ordenar por técnico | **IMPLEMENTADO** (exceção Search legado + HLAPI hydrate) | `sort=assigned`; exige `GLPI_LEGACY_*` |
 | G-07 | Ordenar por resolução e fechamento | **IMPLEMENTADO** | `solved_at` → `date_solve`; `closed_at` → `date_close` |
 | G-08 | Coluna entidade / último editor / prioridade / tipo / impacto | CONSOLE_GLPI / FORA | — |
 | G-09 | Badge de status pelos tokens do kit | **IMPLEMENTADO** | por `status_id` |
@@ -228,7 +228,7 @@ FORA                  → não entra neste produto
 | G-23 | Grupo `pending` (status 4) explícito | **IMPLEMENTADO** | [`14`](./14-pagina-e-estados-do-chamado.md) S-05 |
 | G-24 | Urgência, categoria, atualizado de/até | **IMPLEMENTADO** | — |
 | G-25 | Aberto de/até (`created_from` / `created_to`) | **IMPLEMENTADO** | `date_creation` |
-| G-26 | Filtro por técnico | BLOQUEADO | mesmo motivo de G-06 |
+| G-26 | Filtro por técnico | **IMPLEMENTADO** (exceção Search legado + HLAPI hydrate) | `assignee_id`; exige `GLPI_LEGACY_*` |
 | G-27 | Default «Abertos» | FORA neste inventário | default Todos + subtítulo «no seu nome» |
 | G-28 | Caracteres de `q` | invariante | sem injetar RSQL |
 

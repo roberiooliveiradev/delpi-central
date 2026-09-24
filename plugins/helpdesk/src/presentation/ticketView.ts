@@ -111,6 +111,7 @@ export type TicketListFilters = {
   status: string;
   urgency_id: string;
   category_id: string;
+  assignee_id: string;
   updated_from: string;
   updated_to: string;
   created_from: string;
@@ -144,6 +145,7 @@ export const TICKET_LIST_SORTABLE_COLUMNS = [
   "status",
   "category",
   "urgency",
+  "assigned",
   "created_at",
   "updated_at",
   "solved_at",
@@ -178,6 +180,7 @@ export const DEFAULT_TICKET_LIST_FILTERS: TicketListFilters = {
   status: "",
   urgency_id: "",
   category_id: "",
+  assignee_id: "",
   updated_from: "",
   updated_to: "",
   created_from: "",
@@ -196,6 +199,7 @@ export function parseTicketListFilters(search: string): TicketListFilters {
     status: (params.get("status") || "").trim(),
     urgency_id: (params.get("urgency_id") || "").trim(),
     category_id: (params.get("category_id") || "").trim(),
+    assignee_id: (params.get("assignee_id") || "").trim(),
     updated_from: (params.get("updated_from") || "").trim(),
     updated_to: (params.get("updated_to") || "").trim(),
     created_from: (params.get("created_from") || "").trim(),
@@ -212,6 +216,7 @@ export function ticketListSearch(filters: TicketListFilters): string {
   if (filters.status.trim()) params.set("status", filters.status.trim());
   if (filters.urgency_id.trim()) params.set("urgency_id", filters.urgency_id.trim());
   if (filters.category_id.trim()) params.set("category_id", filters.category_id.trim());
+  if (filters.assignee_id.trim()) params.set("assignee_id", filters.assignee_id.trim());
   if (filters.updated_from.trim()) params.set("updated_from", filters.updated_from.trim());
   if (filters.updated_to.trim()) params.set("updated_to", filters.updated_to.trim());
   if (filters.created_from.trim()) params.set("created_from", filters.created_from.trim());
@@ -231,6 +236,7 @@ export function isTicketFilterActive(filters: TicketListFilters): boolean {
       || filters.status.trim()
       || filters.urgency_id.trim()
       || filters.category_id.trim()
+      || filters.assignee_id.trim()
       || filters.updated_from.trim()
       || filters.updated_to.trim()
       || filters.created_from.trim()

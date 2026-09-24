@@ -204,6 +204,7 @@ function TicketListPage() {
   const [hasMore, setHasMore] = useState(false);
   const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
   const [urgencies, setUrgencies] = useState<{ id: number; name: string }[]>([]);
+  const [assignees, setAssignees] = useState<{ id: number; name: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorCode, setErrorCode] = useState<string | null>(null);
   const [errorText, setErrorText] = useState<string | null>(null);
@@ -270,6 +271,7 @@ function TicketListPage() {
       status: "",
       urgency_id: "",
       category_id: "",
+      assignee_id: "",
       updated_from: "",
       updated_to: "",
       created_from: "",
@@ -295,6 +297,7 @@ function TicketListPage() {
         status: next.status || undefined,
         urgency_id: next.urgency_id || undefined,
         category_id: next.category_id || undefined,
+        assignee_id: next.assignee_id || undefined,
         updated_from: next.updated_from || undefined,
         updated_to: next.updated_to || undefined,
         created_from: next.created_from || undefined,
@@ -346,6 +349,25 @@ function TicketListPage() {
         setUrgencies([]);
       });
   }, []);
+
+  useEffect(() => {
+    if (canAssign !== true) {
+      setAssignees([]);
+      return;
+    }
+    const controller = new AbortController();
+    void listUsers({ q: "", limit: 50, purpose: "assignee" }, controller.signal)
+      .then((body) => {
+        setAssignees(
+          (body.items || []).map((user) => ({
+            id: Number(user.id),
+            name: (user.display_name || "").trim() || `Usuário ${user.id}`,
+          })),
+        );
+      })
+      .catch(() => setAssignees([]));
+    return () => controller.abort();
+  }, [canAssign]);
 
   useEffect(() => {
     const onPop = () => {
@@ -468,6 +490,7 @@ function TicketListPage() {
                     onChange={setBuilderGroup}
                     urgencies={urgencies}
                     categories={categories}
+                    assignees={assignees}
                     onClear={() => setBuilderGroup(emptyFilterGroup())}
                     onApply={() => {
                       const next = ticketListFiltersFromFilterGroup(builderGroup, filters);

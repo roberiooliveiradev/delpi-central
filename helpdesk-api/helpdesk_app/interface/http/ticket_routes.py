@@ -117,6 +117,7 @@ def list_tickets(
     updated_to: str = "",
     created_from: str = "",
     created_to: str = "",
+    assignee_id: int | None = None,
     sort: str = "updated_at:desc",
     page: int = 1,
     page_size: int = 20,
@@ -132,6 +133,7 @@ def list_tickets(
             updated_to=updated_to,
             created_from=created_from,
             created_to=created_to,
+            assignee_id=assignee_id,
             sort=sort,
             page=page,
             page_size=page_size,
@@ -155,6 +157,7 @@ def list_tickets(
                 "sla_ttr": row.sla_ttr,
                 "sla_tto": row.sla_tto,
                 "assigned_display_name": row.assigned_display_name,
+                "assigned_user_id": row.assigned_user_id,
                 "requester_display_name": row.requester_display_name,
             }
             for row in listed.items
