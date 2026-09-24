@@ -132,6 +132,7 @@ import {
   commitAlignBlocks,
   commitCreateBlock,
   commitDuplicateBlocks,
+  commitPatchNativeConfig,
   commitReorderBlockZ,
   commitUpsertBlocks,
 } from "../../utils/presentationMutationClient";
@@ -259,10 +260,23 @@ export function useComunicadoEditorBlocks({
     [commitWithHistory, configRef],
   );
 
+  const ackBlocksMutation = useCallback(
+    (blocks: ComunicadoBlock[]) => {
+      if (!playlistId || !slideId || blocks.length === 0) return;
+      void commitUpsertBlocks({
+        playlistId,
+        slideId,
+        blocks: blocks as unknown as Record<string, unknown>[],
+      }).catch(() => undefined);
+    },
+    [playlistId, slideId],
+  );
+
   /**
    * Inserção: commit antes da seleção.
    * `selectBlocksByIds` / `setSelectedId` resolvem contra `configRef` —
    * selecionar antes do commit deixa o id fora do ref e a seleção vazia.
+   * Ack PresentationMutation so BE owns the inserted block defaults/geometry.
    */
   const commitAndSelectInserted = useCallback(
     (
@@ -272,8 +286,9 @@ export function useComunicadoEditorBlocks({
     ) => {
       updateBlocks(nextBlocks, configPatch);
       selectBlocksByIds(selectIds);
+      ackBlocksMutation(nextBlocks.filter((b) => selectIds.includes(b.id)));
     },
-    [selectBlocksByIds, updateBlocks],
+    [ackBlocksMutation, selectBlocksByIds, updateBlocks],
   );
 
   const connectSelected = useCallback(() => {
@@ -747,18 +762,6 @@ export function useComunicadoEditorBlocks({
     setLastUngroupedIds([]);
   }, [configRef, lastUngroupedIds, selectBlocksByIds, updateBlocks]);
 
-  const ackBlocksMutation = useCallback(
-    (blocks: ComunicadoBlock[]) => {
-      if (!playlistId || !slideId || blocks.length === 0) return;
-      void commitUpsertBlocks({
-        playlistId,
-        slideId,
-        blocks: blocks as unknown as Record<string, unknown>[],
-      }).catch(() => undefined);
-    },
-    [playlistId, slideId],
-  );
-
   const updateSelected = useCallback(
     (patch: Partial<ComunicadoBlock>) => {
       if (selectedIds.length === 0) return;
@@ -992,8 +995,9 @@ export function useComunicadoEditorBlocks({
         });
       });
       updateBlocks(nextBlocks);
+      ackBlocksMutation(nextBlocks.filter((b) => idSet.has(b.id)));
     },
-    [configRef, selected, selectedBlocks, selectedInputPart, updateBlocks],
+    [ackBlocksMutation, configRef, selected, selectedBlocks, selectedInputPart, updateBlocks],
   );
 
   /** Tipografia da ribbon Formatar — bloco text/heading/shape ou tipografia de complexo/parte. */
@@ -1330,8 +1334,10 @@ export function useComunicadoEditorBlocks({
     (movedIds: string[], targetId: string, edge?: "before" | "after") => {
       const next = reorderLayerIds(configRef.current.blocks ?? [], movedIds, targetId, edge);
       updateBlocks(next);
+      const idSet = new Set(movedIds);
+      ackBlocksMutation(next.filter((b) => idSet.has(b.id)));
     },
-    [configRef, updateBlocks],
+    [ackBlocksMutation, configRef, updateBlocks],
   );
 
   const nudgeSelected = useCallback(
@@ -1369,8 +1375,18 @@ export function useComunicadoEditorBlocks({
         };
       });
       updateBlocks(reconcileConnectorsAfterDrag(moved, idSet));
+      ackBlocksMutation(moved.filter((b) => idSet.has(b.id)));
     },
-    [configRef, selected, selectedBlocks, selectedChartPart, selectedIds, updateBlock, updateBlocks],
+    [
+      ackBlocksMutation,
+      configRef,
+      selected,
+      selectedBlocks,
+      selectedChartPart,
+      selectedIds,
+      updateBlock,
+      updateBlocks,
+    ],
   );
 
   const applySlideTemplate = useCallback(
@@ -1421,9 +1437,11 @@ export function useComunicadoEditorBlocks({
 
   const applySlideTheme = useCallback(
     (theme: ComunicadoSlideTheme) => {
-      commitWithHistory(applyComunicadoSlideTheme(configRef.current, theme));
+      const next = applyComunicadoSlideTheme(configRef.current, theme);
+      commitWithHistory(next);
+      ackBlocksMutation(next.blocks ?? []);
     },
-    [commitWithHistory, configRef],
+    [ackBlocksMutation, commitWithHistory, configRef],
   );
 
   const alignSelected = useCallback(
@@ -1459,8 +1477,10 @@ export function useComunicadoEditorBlocks({
       if (ids.length === 0) return;
       const resized = resizeComunicadoBlocksSameSize(configRef.current.blocks ?? [], ids, axis);
       updateBlocks(reconcileConnectorsAfterDrag(resized, new Set(ids)));
+      const idSet = new Set(ids);
+      ackBlocksMutation(resized.filter((b) => idSet.has(b.id)));
     },
-    [configRef, getActionSelectedIds, updateBlocks],
+    [ackBlocksMutation, configRef, getActionSelectedIds, updateBlocks],
   );
 
   const rotateSelected = useCallback(
@@ -1471,13 +1491,13 @@ export function useComunicadoEditorBlocks({
       const current = configRef.current.blocks ?? [];
 
       if (ids.length === 1) {
-        updateBlocks(
-          current.map((block) =>
-            idSet.has(block.id)
-              ? ({ ...block, style: rotateBlockStyle(block.style, deltaDeg) } as ComunicadoBlock)
-              : block,
-          ),
+        const next = current.map((block) =>
+          idSet.has(block.id)
+            ? ({ ...block, style: rotateBlockStyle(block.style, deltaDeg) } as ComunicadoBlock)
+            : block,
         );
+        updateBlocks(next);
+        ackBlocksMutation(next.filter((b) => idSet.has(b.id)));
         return;
       }
 
@@ -1504,16 +1524,17 @@ export function useComunicadoEditorBlocks({
         slideAspect: getSlideAspectRatioRef.current(),
         groupRotation,
       });
+      const next = current.map((block) => {
+        const update = updates.get(block.id);
+        if (!update) return block;
+        return {
+          ...block,
+          frame: update.frame,
+          style: { ...block.style, rotation: update.rotation },
+        } as ComunicadoBlock;
+      });
       updateBlocks(
-        current.map((block) => {
-          const update = updates.get(block.id);
-          if (!update) return block;
-          return {
-            ...block,
-            frame: update.frame,
-            style: { ...block.style, rotation: update.rotation },
-          } as ComunicadoBlock;
-        }),
+        next,
         groupId
           ? {
               groupTransforms: {
@@ -1525,47 +1546,48 @@ export function useComunicadoEditorBlocks({
             }
           : undefined,
       );
+      ackBlocksMutation(next.filter((b) => idSet.has(b.id)));
     },
-    [configRef, getActionSelectedIds, updateBlocks],
+    [ackBlocksMutation, configRef, getActionSelectedIds, updateBlocks],
   );
 
   const flipSelectedHorizontal = useCallback(() => {
     const ids = getActionSelectedIds();
     if (ids.length === 0) return;
     const idSet = new Set(ids);
-    updateBlocks(
-      (configRef.current.blocks ?? []).map((block) =>
-        idSet.has(block.id)
-          ? ({ ...block, style: flipHorizontalStyle(block.style) } as ComunicadoBlock)
-          : block,
-      ),
+    const next = (configRef.current.blocks ?? []).map((block) =>
+      idSet.has(block.id)
+        ? ({ ...block, style: flipHorizontalStyle(block.style) } as ComunicadoBlock)
+        : block,
     );
-  }, [configRef, getActionSelectedIds, updateBlocks]);
+    updateBlocks(next);
+    ackBlocksMutation(next.filter((b) => idSet.has(b.id)));
+  }, [ackBlocksMutation, configRef, getActionSelectedIds, updateBlocks]);
 
   const flipSelectedVertical = useCallback(() => {
     const ids = getActionSelectedIds();
     if (ids.length === 0) return;
     const idSet = new Set(ids);
-    updateBlocks(
-      (configRef.current.blocks ?? []).map((block) =>
-        idSet.has(block.id)
-          ? ({ ...block, style: flipVerticalStyle(block.style) } as ComunicadoBlock)
-          : block,
-      ),
+    const next = (configRef.current.blocks ?? []).map((block) =>
+      idSet.has(block.id)
+        ? ({ ...block, style: flipVerticalStyle(block.style) } as ComunicadoBlock)
+        : block,
     );
-  }, [configRef, getActionSelectedIds, updateBlocks]);
+    updateBlocks(next);
+    ackBlocksMutation(next.filter((b) => idSet.has(b.id)));
+  }, [ackBlocksMutation, configRef, getActionSelectedIds, updateBlocks]);
 
   const setBlocksHidden = useCallback(
     (blockIds: string[], hidden: boolean) => {
       if (blockIds.length === 0) return;
       const idSet = new Set(blockIds);
-      updateBlocks(
-        (configRef.current.blocks ?? []).map((block) =>
-          idSet.has(block.id) ? ({ ...block, hidden } as ComunicadoBlock) : block,
-        ),
+      const next = (configRef.current.blocks ?? []).map((block) =>
+        idSet.has(block.id) ? ({ ...block, hidden } as ComunicadoBlock) : block,
       );
+      updateBlocks(next);
+      ackBlocksMutation(next.filter((b) => idSet.has(b.id)));
     },
-    [configRef, updateBlocks],
+    [ackBlocksMutation, configRef, updateBlocks],
   );
 
   const toggleBlockHidden = useCallback(
@@ -1604,8 +1626,18 @@ export function useComunicadoEditorBlocks({
   const setBackground = useCallback(
     (background: ComunicadoBackground) => {
       commitWithHistory({ ...configRef.current, background });
+      if (!playlistId || !slideId) return;
+      void commitPatchNativeConfig({
+        playlistId,
+        slideId,
+        patch: { background },
+      })
+        .then((canonical) => {
+          if (canonical) commitWithHistory(canonical);
+        })
+        .catch(() => undefined);
     },
-    [commitWithHistory, configRef],
+    [commitWithHistory, configRef, playlistId, slideId],
   );
 
   const setBackgroundFill = useCallback(

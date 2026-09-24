@@ -502,6 +502,8 @@ export function ComunicadoEditorProvider({
     connectionSitesPreview,
     activeGroupGesture,
   } = useComunicadoEditorDrag({
+    playlistId,
+    slideId,
     configRef,
     selectedIds: selection.selectedIds,
     selectedId: selection.selectedId,

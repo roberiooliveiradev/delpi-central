@@ -115,6 +115,18 @@ export async function commitDuplicateBlocks(args: {
   });
 }
 
+export async function commitPatchNativeConfig(args: {
+  playlistId: string;
+  slideId: string;
+  patch: Record<string, unknown>;
+}): Promise<ComunicadoConfig | null> {
+  return commitPresentationOps({
+    playlistId: args.playlistId,
+    slideId: args.slideId,
+    ops: [{ op: "patch_native_config", patch: args.patch }],
+  });
+}
+
 export async function commitUpsertBlocks(args: {
   playlistId: string;
   slideId: string;

@@ -43,11 +43,14 @@ import { resolveMultiDragBlockIds } from "../../utils/stageGroupedSelection";
 import { resolveStageTapWithoutDragAction } from "../../utils/stageInteractionPolicy";
 import { stageGridSnapPercents } from "../../utils/stageGridSize";
 import { snapshotConfig } from "./useComunicadoEditorHistory";
+import { commitUpsertBlocks } from "../../utils/presentationMutationClient";
 
 /** Janela para distinguir 2º toque (limpa) de clique duplo (isola / edita). */
 export const TAP_DESELECT_DELAY_MS = 320;
 
 type Options = {
+  playlistId?: string;
+  slideId?: string;
   configRef: MutableRefObject<ComunicadoConfig>;
   selectedIds: string[];
   selectedId: string | null;
@@ -127,6 +130,8 @@ function applyWorldUpdatesToBlocks(input: {
  * Multi/grupo N>1: único pipeline `stageGroupGesture` (live ≡ release).
  */
 export function useComunicadoEditorDrag({
+  playlistId,
+  slideId,
   configRef,
   selectedIds,
   selectedId,
@@ -640,12 +645,22 @@ export function useComunicadoEditorDrag({
 
       recordGestureHistory();
       applyConfig(nextConfig);
+      if (playlistId && slideId) {
+        const changed = nextBlocks.filter((block) => idsToFinalize.includes(block.id));
+        void commitUpsertBlocks({
+          playlistId,
+          slideId,
+          blocks: changed as unknown as Record<string, unknown>[],
+        }).catch(() => undefined);
+      }
     },
     [
       applyConfig,
       configRef,
       deckHistory,
+      playlistId,
       pushPast,
+      slideId,
       snapToGridRef,
       snapToObjectsRef,
       stageGridSizePercentRef,
