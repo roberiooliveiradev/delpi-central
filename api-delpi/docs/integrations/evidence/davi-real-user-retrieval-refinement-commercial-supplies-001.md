@@ -2,7 +2,9 @@
 
 **TASK_ID:** `DAVI-REAL-USER-RETRIEVAL-REFINEMENT-COMMERCIAL-SUPPLIES-001`  
 **STATUS (source):** PASS  
-**STATUS (live/deploy):** `PENDING_EXTERNAL_ACTION` / `TEST_NOT_RUN` (filled after push + prod recreate)  
+**STATUS (deploy):** PASS — `srv-api` recreate `api-delpi` @ `6158027d0577a3dff26e5fa1a4fec7798d117b1f` (healthy; allowlist v14 / 53 ops)  
+**STATUS (live retrieval):** PASS — S1–S6 + C1–C9 TOP-1 in production image (`discover` path; `eligible_action_count=53`; MCP tools=3)  
+**STATUS (live execute):** `PENDING_END_USER_OAUTH` — MCP/HTTP still require end-user JWT (unauthenticated route → 401); password grant not available for `delpi-central`  
 **SOURCE HEAD:** `9b3076216aac5df3674f3300e458a68ca5bdb63a`
 
 ## Objective
