@@ -47,16 +47,20 @@ def test_execution_posture_execute_typed_change_now():
     assert "mesmo turno" in rules or "neste turno" in rules
     assert "actions" in rules
     assert "conector" in rules or "actions_runtime" in rules
+    assert "vão" in rules or "espacial" in rules or "redimensione" in rules
     forbidden = " ".join(posture["forbidden"]).lower()
     assert "não disponíveis" in forbidden or "indispon" in forbidden or "conector" in forbidden
+    assert "escrita" in forbidden or "frames" in forbidden
     assert "posso aplicar" in forbidden or any(
         "posso aplicar" in str(item).lower() for item in directives["anti_patterns"]
     )
     assert "same_turn" in directives["write_flow"]
+    assert "refuse_only_when" in directives["write_flow"]
     assert any(
         "não estão disponíveis" in str(item).lower()
         or "indispon" in str(item).lower()
         or "conector" in str(item).lower()
+        or "escrita" in str(item).lower()
         for item in directives["anti_patterns"]
     )
 
@@ -69,15 +73,23 @@ def test_actions_runtime_try_before_claiming_unavailable():
     assert "gpt_get_catalog" in rules
     assert "conector" in rules
     assert "tentar" in rules or "tente" in rules
+    assert "escrita do painel" in rules or "escrita não habilitada" in rules
+    assert "default: executar" in rules or "nunca negar" in rules
     forbidden = " ".join(runtime["forbidden"]).lower()
     assert "conector" in forbidden
+    assert "escrita do painel" in forbidden or "escrita não habilitada" in forbidden
     assert "sem ter tentado" in forbidden or "sem tentativa" in " ".join(runtime["rules"]).lower()
     auth = directives["auth_errors"]
     assert "never_without_attempt" in auth
     assert "tool_unavailable_after_attempt" in auth
-    # Priority: connector anti-patterns must survive the anti_patterns compact cap.
+    assert "refuse_write_only_when" in auth
+    assert "403" in auth["refuse_write_only_when"]
+    write_flow = directives["write_flow"]
+    assert "refuse_only_when" in write_flow
+    # Priority: connector + false write-disabled anti-patterns must survive the compact cap.
     joined = " ".join(str(item).lower() for item in directives["anti_patterns"][:8])
     assert "conector" in joined
+    assert "escrita" in joined
 
 
 def test_visual_impact_tv_impact_first():

@@ -61,7 +61,7 @@ Antes de qualquer write e sempre que o comportamento operacional importar: chame
 - Domínio TV (slide/playlist/painel/bloco/KPI) → Actions. Image Generation só se o usuário pedir arte/imagem externa explicitamente; demais regras de anexos/prints = agent_directives.
 
 ## Escrita (esqueleto estável)
-Additive: gpt_preview_change + commit_now=true + confirmation.confirmed=true + Idempotency-Key. Destructive: preview sem commit_now → uma Confirma? → gpt_commit_change com proposal_handle opaco exato do preview. Sucesso só status=VERIFIED + persisted=true. Pedido tipável de mudança no painel → chamar Actions neste turno e gravar; não substituir por proposta textual, menu de estilos, «conector desabilitado» ou «Actions indisponíveis» sem erro real da ferramenta neste turno (401/403/falha). Detalhes = agent_directives.
+Additive: gpt_preview_change + commit_now=true + confirmation.confirmed=true + Idempotency-Key. Destructive: preview sem commit_now → uma Confirma? → gpt_commit_change com proposal_handle opaco exato do preview. Sucesso só status=VERIFIED + persisted=true. Pedido tipável (layout/vão/cards/tema/dados) → Actions neste turno e gravar; não substituir por proposta textual, frames manuais, «conector desabilitado», «escrita do painel não habilitada» ou «Actions indisponíveis» sem erro real neste turno (401/403/falha). Detalhes = agent_directives.
 ```
 
 ## Notas para o operador
