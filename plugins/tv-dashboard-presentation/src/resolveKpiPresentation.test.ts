@@ -67,4 +67,20 @@ describe("resolveKpiViewPresentation", () => {
     );
     expect(presentation.valueText).toBe("1,24");
   });
+
+  it("prefere kpi.displayValue do enrich sem reformatar", () => {
+    const presentation = resolveKpiViewPresentation(
+      { kpi: { value: 41.7, label: "OEE", displayValue: "SERVER-41,7%" } },
+      { valueFormat: "number", decimalPlaces: 0 },
+    );
+    expect(presentation.valueText).toBe("SERVER-41,7%");
+  });
+
+  it("sem displayValue o KPI ainda formata no cliente", () => {
+    const presentation = resolveKpiViewPresentation(
+      { kpi: { value: 41.7, label: "OEE" } },
+      { valueFormat: "percent", decimalPlaces: 1 },
+    );
+    expect(presentation.valueText).toBe("41,7%");
+  });
 });

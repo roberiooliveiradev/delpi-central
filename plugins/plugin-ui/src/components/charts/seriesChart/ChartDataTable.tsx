@@ -59,12 +59,14 @@ export function ChartDataTable({
               <tr key={`dt-${index}`}>
                 <td>{period}</td>
                 <td>
-                  {formatSeriesChartValue(
-                    Number(point.value),
-                    valueFormat ?? "auto",
-                    decimalPlaces,
-                    displayValueFormat,
-                  )}
+                  {typeof point.displayValue === "string"
+                    ? point.displayValue
+                    : formatSeriesChartValue(
+                        Number(point.value),
+                        valueFormat ?? "auto",
+                        decimalPlaces,
+                        displayValueFormat,
+                      )}
                 </td>
               </tr>
             );

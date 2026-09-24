@@ -219,6 +219,17 @@ def test_negative_duplicate_for_color_change_is_forbidden():
     assert "nunca add_blank_slide" in rules.lower() or "add_blank_slide" in rules
 
 
+def test_display_format_directives_point_verify_at_enrich_display():
+    directives = VistaAgentIntelligenceService.agent_directives()
+    fmt = directives["display_format"]
+    assert fmt["principle"] == "TYPED_DISPLAY_FORMAT"
+    blob = " ".join(str(x) for x in [fmt.get("summary"), *(fmt.get("rules") or [])]).lower()
+    assert "display*" in blob or "displaytext" in blob.replace(" ", "")
+    assert "enrich" in blob
+    assert "verify" in blob
+    assert "date-short" in blob or "dd/mm" in blob
+
+
 def test_screenshot_parity_maps_print_to_typed_slide():
     directives = VistaAgentIntelligenceService.agent_directives()
     parity = directives["screenshot_parity"]

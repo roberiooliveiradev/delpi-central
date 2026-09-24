@@ -26,6 +26,10 @@ import {
   suggestDefaultAggregationForField,
   suggestPreferredProjectionField,
 } from "./fieldValueProjection";
+import {
+  preferServerDisplayRunText,
+  preferServerTextDisplayRuns,
+} from "./serverDisplayPaint";
 import { discoverResolvedFieldOptions } from "./viewProjection";
 
 export type TextDataBoundBlock = ComunicadoTextBlock | ComunicadoShapeBlock;
@@ -121,6 +125,19 @@ export function resolveTextDataRefValue(
   ref: ComunicadoTextDataRef,
   fallback = "—",
 ): { text: string; color?: string } {
+  const serverText = preferServerDisplayRunText(resolved, ref.field);
+  if (serverText != null) {
+    const projected = resolveProjectedField(resolved, ref.field, ref.aggregation ?? "first");
+    const rawForTone =
+      projected.kind === "list"
+        ? projected.values[0]
+        : projected.kind === "scalar"
+          ? projected.scalar
+          : undefined;
+    const numeric = parseKpiNumericValue(rawForTone);
+    const tone = resolveDelpiKpiTone(numeric, ref.colorRules, "default");
+    return { text: serverText, color: tone.valueColor };
+  }
   const projected = resolveProjectedField(resolved, ref.field, ref.aggregation ?? "first");
   if (projected.kind === "empty") {
     return { text: fallback };
@@ -156,6 +173,23 @@ export function resolveTextDisplayValue(
   options?: { linkedDataSource?: boolean },
 ): { text: string; color?: string } {
   if (!projection?.field?.trim()) return { text: "" };
+  // Enrich já compôs prefixo + valor + sufixo em displayText — paint-only.
+  if (typeof resolved?.displayText === "string") {
+    const projected = resolveProjectedField(
+      resolved,
+      projection.field,
+      projection.aggregation ?? "first",
+    );
+    const rawForTone =
+      projected.kind === "list"
+        ? projected.values[0]
+        : projected.kind === "scalar"
+          ? projected.scalar
+          : undefined;
+    const numeric = parseKpiNumericValue(rawForTone);
+    const tone = resolveDelpiKpiTone(numeric, projection.colorRules, "default");
+    return { text: resolved.displayText, color: tone.valueColor };
+  }
   const linked = options?.linkedDataSource !== false;
   const fallback = linked ? projection.fallback?.trim() || "—" : "";
   const { text, color } = resolveTextDataRefValue(
@@ -255,6 +289,8 @@ export function resolveTextBlockDisplayRuns(
   resolved?: ComunicadoDataResolved,
 ): ComunicadoContentRun[] {
   const data = resolved ?? block.resolved;
+  const serverRuns = preferServerTextDisplayRuns(data);
+  if (serverRuns) return serverRuns;
   const emptyFallback = dynamicTextEmptyFallback(block);
   const hasDataRuns = block.contentRuns?.some((run) => run.dataRef?.field?.trim());
   if (hasDataRuns && block.contentRuns) {

@@ -314,6 +314,7 @@ function resolveKpiMetricsWithProjection(
           : metric.aggregation && metric.aggregation !== "first" && base?.value != null
             ? aggregateValues([base.value], metric.aggregation)
             : base?.value;
+      const nextValue = value ?? base?.value;
       return {
         field: metric.field,
         label: resolveFieldDisplayLabel({
@@ -321,7 +322,13 @@ function resolveKpiMetricsWithProjection(
           projectionLabel: metric.label,
           resolvedLabel: base?.label,
         }),
-        value: value ?? base?.value,
+        value: nextValue,
+        // Keep enrich displayValue only when we did not re-aggregate from rows.
+        ...(fromRows == null &&
+        typeof base?.displayValue === "string" &&
+        nextValue === base.value
+          ? { displayValue: base.displayValue }
+          : {}),
       };
     });
   }
@@ -362,19 +369,29 @@ function applyTableProjection(
     }),
   }));
   const keys = new Set(nextColumns.map((col) => col.key));
-  const nextRows = rows
-    .map((row) => {
+  const sourceDisplayRows = resolved.table?.displayRows;
+  const paired = rows
+    .map((row, index) => {
       const next: Record<string, unknown> = {};
+      const nextDisplay: Record<string, string> = {};
       for (const key of keys) {
         if (key in row) next[key] = row[key];
+        const painted = sourceDisplayRows?.[index]?.[key];
+        if (typeof painted === "string") nextDisplay[key] = painted;
       }
-      return next;
+      return { next, nextDisplay };
     })
-    .filter((row) => rowHasDisplayableCell(row, keys));
+    .filter(({ next }) => rowHasDisplayableCell(next, keys));
 
   return {
     ...resolved,
-    table: { rows: nextRows, columns: nextColumns },
+    table: {
+      rows: paired.map((item) => item.next),
+      columns: nextColumns,
+      ...(sourceDisplayRows?.length
+        ? { displayRows: paired.map((item) => item.nextDisplay) }
+        : {}),
+    },
   };
 }
 
@@ -915,7 +932,13 @@ export function applyViewProjection(
       ...next,
       kpiMetrics: metrics,
       kpi: primary
-        ? { value: primary.value, label: primary.label }
+        ? {
+            value: primary.value,
+            label: primary.label,
+            ...(typeof primary.displayValue === "string"
+              ? { displayValue: primary.displayValue }
+              : {}),
+          }
         : next.kpi,
     };
   } else if (fallback.selectedValueFields?.length || fallback.valueField) {

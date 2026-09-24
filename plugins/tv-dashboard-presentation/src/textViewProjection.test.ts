@@ -291,4 +291,63 @@ describe("textViewProjection", () => {
       expect.arrayContaining(["forecast_value", "filter.start_date"]),
     );
   });
+
+  it("prefere displayText do enrich mesmo quando formatDisplayValue divergiria", () => {
+    const withServer: ComunicadoDataResolved = {
+      ...resolved,
+      serverDisplayApplied: true,
+      displayText: "SERVER-PAINT-99%",
+      kpi: { value: 42.5, label: "OEE" },
+    };
+    expect(
+      resolveTextDisplayValue(withServer, {
+        field: "oee",
+        format: "number",
+        prefix: "Meta: ",
+      }).text,
+    ).toBe("SERVER-PAINT-99%");
+    expect(
+      resolveTextBlockDisplayRuns({
+        content: "",
+        textProjection: { field: "oee", format: "percent" },
+        resolved: withServer,
+      })[0]?.text,
+    ).toBe("SERVER-PAINT-99%");
+  });
+
+  it("prefere displayRuns do enrich sem reformatar dataRef", () => {
+    const withServer: ComunicadoDataResolved = {
+      ...resolved,
+      serverDisplayApplied: true,
+      displayRuns: [
+        { text: "ACUMULADO " },
+        { text: "01/01/2099", dataRef: { field: "filter.start_date", format: "raw" } },
+      ],
+      displayText: "ACUMULADO 01/01/2099",
+      contextValues: { "filter.start_date": "2026-01-01" },
+    };
+    const painted = resolveTextBlockDisplayRuns(
+      {
+        content: "",
+        contentRuns: [
+          { text: "ACUMULADO " },
+          { text: "?", dataRef: { field: "filter.start_date", format: "date" } },
+        ],
+      },
+      withServer,
+    );
+    expect(painted.map((run) => run.text).join("")).toBe("ACUMULADO 01/01/2099");
+  });
+
+  it("sem display* o paint legado ainda formata no cliente", () => {
+    expect(
+      resolveTextDisplayValue(resolved, { field: "oee", format: "percent" }).text,
+    ).toMatch(/42[,.]5%/);
+    const runs = resolveTextBlockDisplayRuns({
+      content: "",
+      contentRuns: [{ text: "?", dataRef: { field: "oee", format: "number" } }],
+      resolved,
+    });
+    expect(runs[0]?.text).toContain("42");
+  });
 });

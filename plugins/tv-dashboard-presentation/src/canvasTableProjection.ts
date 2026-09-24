@@ -24,6 +24,7 @@ import {
   suggestPreferredProjectionField,
   type ViewAggregation,
 } from "./fieldValueProjection";
+import { preferServerDisplayRunText } from "./serverDisplayPaint";
 import {
   formatTextProjectionValue,
   normalizeTextDataRef,
@@ -215,13 +216,15 @@ export function resolveCanvasTableCellDisplay(
       .filter((n): n is number => n != null)
       .slice(0, CANVAS_TABLE_SPARKLINE_MAX_POINTS);
     const anchor = series[series.length - 1] ?? null;
+    const serverText = preferServerDisplayRunText(resolved, ref.field);
     const displayText =
-      anchor != null
+      serverText ??
+      (anchor != null
         ? formatTextProjectionValue(anchor, ref.format ?? "number", {
             decimalPlaces: ref.decimalPlaces,
             displayFormat: ref.displayFormat ?? normalized.displayFormat,
           })
-        : normalized.text?.trim() || "—";
+        : normalized.text?.trim() || "—");
     const tone = resolveTextDataRefValue(
       resolved,
       { ...ref, aggregation: "first" },

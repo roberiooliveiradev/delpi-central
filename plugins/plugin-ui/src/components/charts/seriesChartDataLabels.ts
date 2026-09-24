@@ -146,6 +146,8 @@ export function formatSeriesChartDataLabelText(args: {
   valueFormat: SeriesChartValueFormat;
   decimalPlaces?: number | null;
   displayValueFormat?: import("../../displayFormat/types").DisplayFormatSpec | null;
+  /** Ready-to-paint value from enrich — skips client format when present. */
+  displayValue?: string | null;
 }): string {
   const { config, value, total, valueFormat } = args;
   const parts: string[] = [];
@@ -159,7 +161,9 @@ export function formatSeriesChartDataLabelText(args: {
   }
   if (config.showValue) {
     parts.push(
-      formatSeriesChartValue(value, valueFormat, args.decimalPlaces, args.displayValueFormat),
+      typeof args.displayValue === "string"
+        ? args.displayValue
+        : formatSeriesChartValue(value, valueFormat, args.decimalPlaces, args.displayValueFormat),
     );
   }
   if (config.showPercentage) {

@@ -212,6 +212,8 @@ export type SeriesChartPoint = {
   size?: number | null;
   /** Índice estável na série de origem (legenda/cores por categoria). */
   sourceIndex?: number;
+  /** Valor já formatado no enrich — paint-only (data labels / tabela do chart). */
+  displayValue?: string;
 };
 
 /** Série nomeada para gráficos multi-série (overlay). */

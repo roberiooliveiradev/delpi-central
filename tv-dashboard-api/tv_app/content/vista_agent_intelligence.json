@@ -677,13 +677,17 @@
   },
   "display_format": {
     "principle": "TYPED_DISPLAY_FORMAT",
-    "summary": "Formatar via kpiOptions/chartOptions/tableProjection valueFormat|displayFormat. Inferir de valueFieldTypes / nome do campo / NL / projeção automática.",
+    "summary": "Persistir spec (kpiOptions/chartOptions/tableProjection/textProjection displayFormat|valueFormat). A formatação efetiva é do enrich (DisplayFormatService → display*); VERIFY no resolved.display*. Inferir spec de valueFieldTypes / nome do campo / NL / projeção automática. Allowlist = DisplayFormatHintsService.",
     "rules": [
-      "Percentual/% → valueFormat=percent.",
+      "Percentual/% → valueFormat=percent / category percent.",
       "R$/reais/moeda → currency BRL.",
       "Inteiro → number com decimalPlaces=0.",
+      "Data abreviada → category date preset date-short (dd/mm/yyyy no enrich).",
       "Texto puro → raw/text.",
-      "Nunca inventar category fora do allowlist."
+      "Nunca inventar category fora do allowlist.",
+      "Não deixar textProjection.field contradizendo contentRuns.dataRef no mesmo bloco (binding single-owner); upsert sanitiza limpando dataRefs quando textProjection single-field é gravado.",
+      "Sucesso de formato = display* no enrich / preview (resolved.displayText|displayRuns|kpi.displayValue|…), não ISO cru no canvas.",
+      "VERIFY/outcome: ler DisplayFormatService.display_signals_for_verify(resolved) ou os display* do enrich — nunca reformatar no cliente GPT."
     ]
   },
   "presentation_recipes": {

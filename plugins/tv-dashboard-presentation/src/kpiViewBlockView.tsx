@@ -245,7 +245,13 @@ export function KpiViewBlockView({
                 renderCard(
                   {
                     ...resolved,
-                    kpi: { value: metric.value, label: metric.label },
+                    kpi: {
+                      value: metric.value,
+                      label: metric.label,
+                      ...(typeof metric.displayValue === "string"
+                        ? { displayValue: metric.displayValue }
+                        : {}),
+                    },
                     label: metric.label,
                   },
                   metric.field,

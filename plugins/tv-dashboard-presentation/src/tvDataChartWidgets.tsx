@@ -33,6 +33,32 @@ export function TvDataSeriesChartWidget({
   emptyMessage = "Sem dados",
 }: ChartWidgetProps) {
   const kind = toSeriesChartKind(chartType) ?? "line";
+  const mapPoint = (point: {
+    label?: unknown;
+    value?: unknown;
+    size?: unknown;
+    displayLabel?: string;
+    displayValue?: string;
+  }) => {
+    const hasDisplayLabel = typeof point.displayLabel === "string";
+    return {
+      label: hasDisplayLabel
+        ? point.displayLabel
+        : point.label != null
+          ? String(point.label)
+          : undefined,
+      value: point.value == null ? null : Number(point.value),
+      size:
+        point.size == null || point.size === ""
+          ? null
+          : Number.isFinite(Number(point.size))
+            ? Number(point.size)
+            : null,
+      ...(typeof point.displayValue === "string"
+        ? { displayValue: point.displayValue }
+        : {}),
+    };
+  };
   const seriesList = (resolved.chart?.series ?? [])
     .filter((series) =>
       Array.isArray(series.points) &&
@@ -45,30 +71,12 @@ export function TvDataSeriesChartWidget({
       name: series.name,
       color: series.color,
       plotOn: series.plotOn,
-      points: series.points.map((point) => ({
-        label: point.label != null ? String(point.label) : undefined,
-        value: point.value == null ? null : Number(point.value),
-        size:
-          point.size == null || point.size === ""
-            ? null
-            : Number.isFinite(Number(point.size))
-              ? Number(point.size)
-              : null,
-      })),
+      points: series.points.map(mapPoint),
     }));
   const points =
     seriesList.length > 0
       ? seriesList[0]!.points
-      : (resolved.chart?.points ?? []).map((point) => ({
-          label: point.label != null ? String(point.label) : undefined,
-          value: point.value == null ? null : Number(point.value),
-          size:
-            point.size == null || point.size === ""
-              ? null
-              : Number.isFinite(Number(point.size))
-                ? Number(point.size)
-                : null,
-        }));
+      : (resolved.chart?.points ?? []).map(mapPoint);
   const hasPlotData =
     points.some((point) => point.value != null && Number.isFinite(Number(point.value))) ||
     Boolean(
@@ -78,6 +86,9 @@ export function TvDataSeriesChartWidget({
         ),
       ),
     );
+  const hasServerCategoryDisplay = (resolved.chart?.points ?? [])
+    .concat((resolved.chart?.series ?? []).flatMap((s) => s.points ?? []))
+    .some((point) => typeof point.displayLabel === "string");
   // Bubble: size é canal no ponto — nunca overlay de 2ª série na legenda.
   const multiSeriesList =
     chartType === "bubble" ? undefined : seriesList.length > 1 ? seriesList : undefined;
@@ -86,11 +97,18 @@ export function TvDataSeriesChartWidget({
     chartOptions,
     hasPlotData ? resolved : { label: resolved.label },
   );
+  const paintOptions = hasServerCategoryDisplay
+    ? {
+        ...displayOptions,
+        categoryLabelFormat: "raw" as const,
+        displayCategoryFormat: undefined,
+      }
+    : displayOptions;
   const effectiveGoal = resolveEffectiveChartGoal({
-    goalLineValue: displayOptions.goalLineValue,
+    goalLineValue: paintOptions.goalLineValue,
     projectedGoal: resolved.chart?.projectedGoal,
   });
-  const optionsWithGoal = { ...displayOptions, goalLineValue: effectiveGoal };
+  const optionsWithGoal = { ...paintOptions, goalLineValue: effectiveGoal };
   return (
     <ConfigurableSeriesChart
       chartType={kind}
@@ -117,7 +135,10 @@ export function TvDataBarChartWidget(props: ChartWidgetProps) {
 
 export function TvDataKpiWidget({ resolved }: { resolved: ComunicadoDataResolved }) {
   const label = resolved.kpi?.label ?? resolved.label ?? "Dados";
-  const value = formatCellValue(resolved.kpi?.value);
+  const value =
+    typeof resolved.kpi?.displayValue === "string"
+      ? resolved.kpi.displayValue
+      : formatCellValue(resolved.kpi?.value);
   return (
     <div className="tdp-data-kpi">
       <span className="tdp-data-kpi__label">{label}</span>

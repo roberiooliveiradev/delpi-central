@@ -616,6 +616,18 @@ export type ComunicadoDataKpiMetric = {
   field: string;
   value?: unknown;
   label: string;
+  /** String pronta do enrich (`DisplayFormatService`) — paint-only no MFE. */
+  displayValue?: string;
+};
+
+export type ComunicadoChartPoint = {
+  label?: unknown;
+  value?: unknown;
+  size?: unknown;
+  /** Rótulo de categoria já formatado no enrich. */
+  displayLabel?: string;
+  /** Valor já formatado no enrich (data labels). */
+  displayValue?: string;
 };
 
 export type ComunicadoDataResolved = {
@@ -639,6 +651,15 @@ export type ComunicadoDataResolved = {
    */
   viewFilterParams?: Record<string, unknown>;
   serverProjectionApplied?: boolean;
+  /**
+   * Enrich aplicou `DisplayFormatService` — strings em `display*` são autoridade de paint.
+   * MFE não deve chamar `formatDisplayValue` no path do slide quando presentes.
+   */
+  serverDisplayApplied?: boolean;
+  /** Texto composto pronto (text/heading/shape) — inclui prefixo/sufixo. */
+  displayText?: string;
+  /** Runs prontos para paint (contentRuns com dataRef já materializados). */
+  displayRuns?: ComunicadoContentRun[];
   /** Enrichment aplicou dataTransform.steps antes da View. */
   serverTransformApplied?: boolean;
   /** Status server-side do reader v1/v2; o browser nunca executa script M. */
@@ -667,11 +688,11 @@ export type ComunicadoDataResolved = {
     truncated: boolean;
     isSample: boolean;
   };
-  kpi?: { value?: unknown; label?: string };
+  kpi?: { value?: unknown; label?: string; displayValue?: string };
   /** Métricas escalares disponíveis (multi-campo). */
   kpiMetrics?: ComunicadoDataKpiMetric[];
   chart?: {
-    points?: Array<{ label?: unknown; value?: unknown; size?: unknown }>;
+    points?: ComunicadoChartPoint[];
     chartType?: "line" | "bar";
     /** Multi-série (Fase 4); `points` permanece a 1ª série / fallback. */
     series?: Array<{
@@ -679,7 +700,7 @@ export type ComunicadoDataResolved = {
       field?: string;
       color?: string;
       plotOn?: "primary" | "secondary";
-      points: Array<{ label?: unknown; value?: unknown; size?: unknown }>;
+      points: ComunicadoChartPoint[];
     }>;
     /**
      * Meta escalar resolvida de `chartProjection.goalField` (não persiste em chartOptions).
@@ -690,6 +711,8 @@ export type ComunicadoDataResolved = {
   table?: {
     rows?: Array<Record<string, unknown>>;
     columns?: ComunicadoDataTableColumn[];
+    /** Células já formatadas (mesmo shape de `rows`, valores string). */
+    displayRows?: Array<Record<string, string>>;
   };
   /**
    * Schema de campos projetáveis (declarados + descobertos).

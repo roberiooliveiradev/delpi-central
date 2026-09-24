@@ -2016,6 +2016,8 @@ def test_enrich_links_text_block_to_data_source_resolved():
     assert source.get("resolved", {}).get("kpi", {}).get("value") is not None
     assert text.get("resolved", {}).get("kpi", {}).get("value") is not None
     assert text.get("serverTextProjectionApplied") is True
+    assert text.get("resolved", {}).get("serverDisplayApplied") is True
+    assert text.get("resolved", {}).get("displayText") == "111,1"
 
 
 def test_enrich_blocks_links_resolved_to_canvas_table():

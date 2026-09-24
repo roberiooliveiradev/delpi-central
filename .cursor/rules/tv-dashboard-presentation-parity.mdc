@@ -10,7 +10,7 @@ alwaysApply: false
 
 **Um slide personalizado = um componente de palco.** Editor e TV/prévia não reimplementam fundo/logo/blocos.
 
-**Apresentação = viewer puro** — só chrome (controles, timer, fullscreen) + render. Não decide agregação, filtro, encoding nem default de visual. Dados passam pelo **mesmo** pipeline canônico do editor (`SlideDataResolutionService` → `enrich_blocks` + `applyViewProjection` no cliente).
+**Apresentação = viewer puro** — só chrome (controles, timer, fullscreen) + render. Não decide agregação, filtro, encoding nem default de visual. Dados passam pelo **mesmo** pipeline canônico do editor (`SlideDataResolutionService` → `enrich_blocks`).
 
 | Camada | Módulo canônico |
 |--------|-----------------|
@@ -19,7 +19,9 @@ alwaysApply: false
 | Interação (seleção, handles) | `ComunicadoEditorBlockView` (só editor) |
 | Prévia admin / TV pública | `NativeSlideView` → `RichComunicadoStage` |
 | Resolução de dados | `SlideDataResolutionService.resolve_blocks` (preview-block **e** present) |
-| Projeção KPI/chart/texto | Cliente: `applyViewProjection` / `textViewProjection` — **não** bake `serverProjectionApplied` |
+| Formatação de exibição (`display*`) | Backend: `DisplayFormatService` no enrich (`serverDisplayApplied`) — MFE **pinta** strings prontas |
+| Binding textual | Owner único = paint (`contentRuns.dataRef` **ou** `textProjection`); painel Campo consolida — ver `textBindingOwner.ts` + ADR display format |
+| Projeção estrutural KPI/chart | Cliente: `applyViewProjection` / `chartDataPolicy` até bake estrutural completo (follow-up); **não** reformatar `display*` |
 | Ordem na TV (filmstrip) | `presentationSlideOrder.ts` ≡ `is_slide_visible_in_presentation` |
 | Dados ao abrir prévia | `preparePreviewNavigation` (flush) + `overlayLiveCustomMessageSlidesOnPreviewPayload` |
 | Fit / escala | Prévia de **validação** e TV: `surface=kiosk` (`zoom`). Filmstrip/thumbnail: `surface=preview` (`transform`) |
@@ -32,7 +34,8 @@ alwaysApply: false
 2. Abrir prévia **sem** `flush` do autosave / sem limpar `previewPayloadCache`.
 3. Confiar só no `preview-payload` do servidor durante edição (stale) — filmstrip e prévia devem overlay do shell local.
 4. Duplicar `PresentationPreview` vs public-hub com lógica de slide diferente (unificar no pacote presentation).
-5. **Gráfico/KPI editor ≠ TV/prévia** — confiar em bake do enrichment (`serverProjectionApplied`) e **pular** `applyViewProjection` / `chartDataPolicy` no cliente. O bake do servidor **não** é o visual do editor.
+5. **Gráfico/KPI editor ≠ TV/prévia (encoding estrutural)** — pular `applyViewProjection` / `chartDataPolicy` no cliente enquanto o bake estrutural for incompleto. O bake **estrutural** sozinho ainda não é o visual do editor. **Exceção (2026-09):** strings `display*` com `serverDisplayApplied` **são** autoridade de formatação — não reformatar no MFE.
+5b. **Dual format / dual binding textual** — chamar `formatDisplayValue` no path de slide quando `display*`/`serverDisplayApplied` já existem; gravar `textProjection` no painel Campo enquanto `contentRuns.dataRef` continua no paint (caso ROL→datas). Owner único: `textBindingOwner` + ADR `adr-tv-display-format-ownership.md`.
 6. Segundo renderer de gráfico (SVG/markup) só na prévia ou só no `/present/` — TV e editor passam por `ChartViewBlockView` → `TvDataSeriesChartWidget` com o **mesmo** `chartOptions` / `chartParts` do bloco.
 7. **Label da fonte só no texto** — carregar `listDataRoutes` / `labelCatalog` só para `text`/`shape` e deixar `chart_view`/`kpi_view`/`table_view` com `operationId` na aba Elemento. Usar `useTvDataRouteLabelCatalog` + `isDataBoundEditorBlockType` + `resolveDataSourceLabel` para **qualquer** bloco que usa dados.
 8. **Scrollbar da tabela só no portal** — depender do `* { scrollbar-width: thin }` global do portal (public-hub não tem). Estilizar `.delpi-ui-config-table__frame` / `.tdp-table-frame` no kit/native-screens. Wrap `table_view` no editor: `touch-action: pan-x pan-y` (não herdar `none` do bloco).
@@ -50,9 +53,10 @@ Incidente ago/2026 (IDD/present): dual pipeline preview-block vs enrich público
 ## O que fazer
 
 - Mudança visual do comunicado → `RichComunicadoStage` (ou `ComunicadoBlockView`).
-- Gráfico **e KPI**: encoding em `viewProjection` + `chartDataPolicy` / `kpiProjection`; opções no bloco — nunca pontos/métricas “congelados” do enrichment como fonte de verdade.
+- Gráfico **e KPI**: encoding estrutural em `viewProjection` + `chartDataPolicy` / `kpiProjection` até follow-up de bake; **formatação** = `display*` do enrich (`DisplayFormatService`). Binding de texto = owner único (`textBindingOwner`).
 - Label da fonte no editor: `useTvDataRouteLabelCatalog` + `resolveDataSourceLabel` / `DataSourceLinkSection` (Elemento e Dados).
 - Scroll da tabela: thin no `__frame` / `.tdp-table-frame` (kit + native-screens); teste `tableScrollParityContract.test.ts`.
 - Antes de prévia → `preparePreviewNavigation(playlistId)`.
 - Save/`presentation_updated` → `reset_comunicado_data_block_cache` (via `notify_presentation_changed`).
-- Teste: `RichComunicadoStage.test.tsx`, `overlayLivePreviewPayload.test.ts`, `viewProjection.test.ts` (KPI/chart + `serverProjectionApplied`), `test_slide_data_resolution_parity.py`, `presentationSlideOrder.test.ts`.
+- Teste: `RichComunicadoStage.test.tsx`, `overlayLivePreviewPayload.test.ts`, `viewProjection.test.ts`, `textBindingOwner.test.ts`, `test_display_format_service.py`, `test_slide_data_resolution_parity.py`, `presentationSlideOrder.test.ts`.
+- ADR: `tv-dashboard-api/docs/architecture/adr-tv-display-format-ownership.md`.

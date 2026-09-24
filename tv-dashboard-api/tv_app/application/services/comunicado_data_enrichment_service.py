@@ -33,6 +33,7 @@ from tv_app.application.services.data.tv_data_transform_service import (
     coerce_payload_to_table,
     normalize_data_transform,
 )
+from tv_app.application.services.data.display_format_service import DisplayFormatService
 from tv_app.application.services.data.tv_view_projection_service import (
     apply_field_labels_to_resolved,
     apply_view_projection_to_resolved,
@@ -1519,12 +1520,19 @@ class ComunicadoDataEnrichmentService:
             merged = dict(block)
             base_resolved = source_resolved[source_id]
             if block_type in DATA_VIEW_BLOCK_TYPES:
-                merged["resolved"] = apply_view_projection_to_resolved(
+                projected = apply_view_projection_to_resolved(
                     base_resolved,
-                    block,
+                    merged,
+                )
+                merged["resolved"] = DisplayFormatService.apply_to_resolved(
+                    projected,
+                    merged,
                 )
             else:
-                merged["resolved"] = dict(base_resolved)
+                merged["resolved"] = DisplayFormatService.apply_to_resolved(
+                    dict(base_resolved),
+                    merged,
+                )
                 merged["serverTextProjectionApplied"] = True
             linked.append(merged)
         return linked

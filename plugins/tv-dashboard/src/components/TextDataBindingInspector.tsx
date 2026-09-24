@@ -3,9 +3,12 @@ import {
   TEXT_FIELD_AGGREGATION_OPTIONS,
   buildTextDataLinkPatch,
   catalogFieldsFromRouteLabels,
+  consolidateTextBindingToProjection,
   discoverResolvedFieldOptions,
   isComunicadoVisualBoxBlock,
   isEfficiencyPinBlock,
+  readEffectiveTextProjection,
+  resolveTextBindingOwner,
   staticLabelFromTextBoundBlock,
   suggestDefaultTextProjection,
   textProjectionPrefixFromStaticLabel,
@@ -76,7 +79,9 @@ export function TextDataBindingInspector({
     [catalogFields, linkedSource, resolved],
   );
 
-  const projection = visualBox?.textProjection ?? { field: "" };
+  /** Owner do paint — não textProjection paralelo quando há dataRefs. */
+  const projection = visualBox ? readEffectiveTextProjection(visualBox) : { field: "" };
+  const bindingOwner = visualBox ? resolveTextBindingOwner(visualBox) : "none";
   const projectionField = projection.field?.trim() ?? "";
   const firstFieldOption = fieldOptions[0]?.field ?? "";
   const selectedBlockId = visualBox?.id ?? "";
@@ -89,7 +94,7 @@ export function TextDataBindingInspector({
     if (!selectedBlockId || !sourceId) return;
     if (projectionField) return;
     if (!firstFieldOption) return;
-    if (visualBox?.contentRuns?.some((run) => run.dataRef?.field?.trim())) return;
+    if (bindingOwner === "contentRuns") return;
     const suggested = suggestDefaultTextProjection(resolved, catalogFields);
     const field = suggested?.field?.trim() || firstFieldOption;
     const current = projectionRef.current;
@@ -109,6 +114,7 @@ export function TextDataBindingInspector({
       },
     });
   }, [
+    bindingOwner,
     catalogFields,
     firstFieldOption,
     projectionField,
@@ -122,15 +128,12 @@ export function TextDataBindingInspector({
   if (!visualBox) return null;
 
   function patchProjection(patch: Partial<ComunicadoTextProjection>) {
-    const next: ComunicadoTextProjection = {
-      field: projection.field,
-      ...projection,
-      ...patch,
-    };
-    if ("decimalPlaces" in patch && patch.decimalPlaces == null) {
-      delete next.decimalPlaces;
-    }
-    updateSelected({ textProjection: next.field.trim() ? next : undefined } as Partial<typeof visualBox>);
+    const consolidated = consolidateTextBindingToProjection(visualBox, patch);
+    updateSelected({
+      textProjection: consolidated.textProjection,
+      contentRuns: consolidated.contentRuns,
+      ...(consolidated.content !== undefined ? { content: consolidated.content } : {}),
+    } as Partial<typeof visualBox>);
   }
 
   function linkSource(nextSourceId: string) {
@@ -145,13 +148,26 @@ export function TextDataBindingInspector({
     const source = blocks.find((block) => block.id === nextSourceId);
     const sourceResolved =
       source && "resolved" in source && source.resolved ? source.resolved : resolved;
+    const effective = readEffectiveTextProjection(visualBox);
     const patch = buildTextDataLinkPatch({
       dataSourceId: nextSourceId,
       resolved: sourceResolved,
-      existing: visualBox.textProjection,
+      existing: effective.field?.trim() ? effective : visualBox.textProjection,
       catalogFields,
       staticContent: staticLabelFromTextBoundBlock(visualBox),
     });
+    /* Ligar fonte via painel single-field: consolida owner (sem dual-bind). */
+    if (resolveTextBindingOwner(visualBox) === "contentRuns") {
+      const consolidated = consolidateTextBindingToProjection(visualBox, {
+        ...(patch.textProjection ?? effective),
+      });
+      updateSelected({
+        ...patch,
+        textProjection: consolidated.textProjection ?? patch.textProjection,
+        contentRuns: consolidated.contentRuns,
+      } as Partial<typeof visualBox>);
+      return;
+    }
     updateSelected(patch as Partial<typeof visualBox>);
   }
 

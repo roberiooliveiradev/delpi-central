@@ -25,6 +25,7 @@ import {
   mergeComunicadoKpiOptions,
   mergeComunicadoTableOptions,
   resolveEditableTableProjectionColumns,
+  resolveProjectedField,
   resolveTextBlockDisplayRuns,
   selectedTableProjectionColumnKeys,
   type ComunicadoBlock,
@@ -102,10 +103,26 @@ function resolveActiveDataRefRun(
   if (!selected || !isVisualTextBlock(selected)) return null;
   const selection = ctx.textEditSelection;
   if (!selection || selection.blockId !== selected.id) return null;
-  const runs = resolveTextRuns(selected);
-  const runIndex = findDataRefRunIndexInRange(runs, selection.start, selection.end);
+  const sourceRuns =
+    selected.type === "shape"
+      ? selected.contentRuns?.length
+        ? selected.contentRuns
+        : [{ text: selected.content ?? "" }]
+      : selected.contentRuns ?? [];
+  /*
+   * Prefer painted runs (editor caret is on display text). If paint collapsed
+   * placeholders (no resolved yet), fall back to authoring contentRuns lengths.
+   */
+  const painted = resolveTextRuns(selected);
+  let runIndex = findDataRefRunIndexInRange(painted, selection.start, selection.end);
+  if (runIndex == null) {
+    runIndex = findDataRefRunIndexInRange(sourceRuns, selection.start, selection.end);
+  }
   if (runIndex == null) return null;
-  const dataRef = runs[runIndex]?.dataRef;
+  const dataRef =
+    painted[runIndex]?.dataRef?.field?.trim()
+      ? painted[runIndex]!.dataRef
+      : sourceRuns[runIndex]?.dataRef;
   if (!dataRef?.field?.trim()) return null;
   return { runIndex, dataRef };
 }
@@ -364,18 +381,20 @@ export function sampleValueForDisplayFormat(ctx: DisplayFormatSelectionContext):
       const activeRun = resolveActiveDataRefRun(ctx);
       const bound = activeRun ? [activeRun] : listBoundDataRefRuns(selected);
       const field = bound[0]?.dataRef.field?.trim() || selected.textProjection?.field?.trim();
+      const aggregation =
+        bound[0]?.dataRef.aggregation ?? selected.textProjection?.aggregation ?? "first";
       if (field) {
-        const runs = resolveTextBlockDisplayRuns(
-          {
-            content: selected.type === "shape" ? selected.content ?? "" : selected.content,
-            contentRuns: selected.contentRuns,
-            textProjection: selected.textProjection,
-            resolved: selected.resolved,
-          },
-          selected.resolved,
-        );
-        const hit = runs.find((run) => run.dataRef?.field?.trim() === field);
-        if (hit?.text) return hit.text;
+        /*
+         * Ribbon sample stays on raw projected value (local UX preview).
+         * Paint path uses enrich display* — do not feed painted strings back into format preview.
+         */
+        const projected = resolveProjectedField(selected.resolved, field, aggregation);
+        if (projected.kind === "list" && projected.values[0] != null) {
+          return projected.values[0];
+        }
+        if (projected.kind === "scalar" && projected.scalar != null && projected.scalar !== "") {
+          return projected.scalar;
+        }
       }
     }
     return selected.resolved?.kpi?.value ?? 30;
@@ -395,6 +414,10 @@ export function applyDisplayFormatSpecToBlock(
   ctx: DisplayFormatSelectionContext,
   spec: DisplayFormatSpec,
 ): Partial<ComunicadoBlock> | null {
+  /*
+   * Persist format spec on the paint owner only. Correctness of slide paint comes from
+   * re-enrich (`display*`); do not locally reformat resolved for canvas/TV here.
+   */
   const selected = ctx.selected;
   let target = resolveDisplayFormatTarget(ctx);
   if (!selected || !target) return null;

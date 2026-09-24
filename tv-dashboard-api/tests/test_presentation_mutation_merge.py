@@ -152,3 +152,63 @@ def test_preview_upsert_block_partial_style_keeps_color(monkeypatch):
     assert block["style"]["color"] == "red"
     assert block["style"]["fontSize"] == 48
     assert block["style"]["fontWeight"] == "bold"
+
+
+def test_preview_upsert_text_projection_sanitizes_dual_bind(monkeypatch):
+    """Campo-equivalent textProjection write clears contradictory contentRuns.dataRef."""
+    from uuid import uuid4
+
+    playlist_id = str(uuid4())
+    slide_id = str(uuid4())
+
+    class _Repo:
+        def get_by_id(self, pid):
+            return {"id": str(pid), "revision": 1, "dataDefaults": {}}
+
+        def get_slide(self, sid, playlist_id=None):
+            return {
+                "id": str(sid),
+                "nativeConfig": {
+                    "version": 5,
+                    "blocks": [
+                        {
+                            "id": "txt-dual",
+                            "type": "text",
+                            "content": "",
+                            "textProjection": {"field": "Meta"},
+                            "contentRuns": [
+                                {"text": "ACUMULADO "},
+                                {"dataRef": {"field": "filter.start_date"}},
+                                {"text": " - "},
+                                {"dataRef": {"field": "filter.end_date"}},
+                            ],
+                        }
+                    ],
+                },
+            }
+
+    svc = PresentationPatchService(repo=_Repo())
+    result = svc.preview(
+        {
+            "target": {"playlistId": playlist_id, "slideId": slide_id},
+            "ops": [
+                {
+                    "op": "upsert_block",
+                    "block": {
+                        "id": "txt-dual",
+                        "type": "text",
+                        "textProjection": {"field": "Rol", "format": "number"},
+                    },
+                }
+            ],
+            "catalogVersion": PresentationOpsContentService.catalog_version(),
+        },
+        user=SimpleNamespace(is_superadmin=True, permissions=[], id="u1"),
+    )
+    block = next(b for b in result["nativeConfig"]["blocks"] if b["id"] == "txt-dual")
+    assert block["textProjection"]["field"] == "Rol"
+    assert block["contentRuns"] == [{"text": "ACUMULADO "}, {"text": " - "}]
+    assert not any(
+        isinstance(run, dict) and isinstance(run.get("dataRef"), dict)
+        for run in block.get("contentRuns") or []
+    )

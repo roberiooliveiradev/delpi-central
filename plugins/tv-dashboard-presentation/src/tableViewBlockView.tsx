@@ -108,6 +108,17 @@ export function TableViewBlockView({
   }
 
   const allRows = resolved.table?.rows ?? [];
+  const displayRows = resolved.table?.displayRows;
+  const useServerDisplayRows =
+    Array.isArray(displayRows) &&
+    displayRows.length > 0 &&
+    displayRows.length === allRows.length;
+  const paintRows = useServerDisplayRows
+    ? allRows.map((row, index) => {
+        const painted = displayRows![index] ?? {};
+        return { ...row, ...painted };
+      })
+    : allRows;
   const fromResolved = resolveTableColumns(resolved, allRows);
   const fromProjection = projectionColumns(block);
   const allColumns = fromResolved.length > 0 ? fromResolved : fromProjection;
@@ -118,6 +129,16 @@ export function TableViewBlockView({
     const projected = projectionByKey.get(column.key);
     const widthPct =
       projected?.widthPct != null && projected.widthPct > 0 ? projected.widthPct : undefined;
+    if (useServerDisplayRows) {
+      // displayRows already formatted — neutralize client format so paint is paint-only.
+      return {
+        ...column,
+        ...(widthPct != null ? { widthPct } : {}),
+        ...(projected?.label?.trim() ? { label: projected.label } : {}),
+        valueFormat: "auto" as const,
+        displayFormat: undefined,
+      };
+    }
     return {
       ...column,
       ...(widthPct != null ? { widthPct } : {}),
@@ -126,7 +147,13 @@ export function TableViewBlockView({
       ...(projected?.label?.trim() ? { label: projected.label } : {}),
     };
   });
-  const tableOptions = resolveTableDisplayOptions(block.tableOptions, block.tablePreset, resolved);
+  const tableOptions = useServerDisplayRows
+    ? {
+        ...resolveTableDisplayOptions(block.tableOptions, block.tablePreset, resolved),
+        displayValueFormat: undefined,
+        valueFormat: "auto" as const,
+      }
+    : resolveTableDisplayOptions(block.tableOptions, block.tablePreset, resolved);
 
   return (
     <div
@@ -136,7 +163,7 @@ export function TableViewBlockView({
       <div className="tdp-data-table-wrap">
         <ConfigurableTable
           columns={columns}
-          rows={allRows}
+          rows={paintRows}
           options={tableOptions}
           preset={block.tablePreset}
           tableParts={block.tableParts}

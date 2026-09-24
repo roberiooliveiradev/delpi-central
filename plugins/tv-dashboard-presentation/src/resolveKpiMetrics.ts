@@ -59,7 +59,13 @@ export function applyMetricSelectionToResolved(
     ...resolved,
     kpiMetrics: metrics,
     kpi: primary
-      ? { value: primary.value, label: primary.label }
+      ? {
+          value: primary.value,
+          label: primary.label,
+          ...(typeof primary.displayValue === "string"
+            ? { displayValue: primary.displayValue }
+            : {}),
+        }
       : resolved.kpi,
   };
 

@@ -240,6 +240,11 @@ class PresentationRecipeService:
             recipes_out[str(recipe_id)] = entry
         return {
             "principle": full.get("principle"),
+            # Small allowlists — keep for VISTA VERIFY / agent_directives (not bulky chrome).
+            "fontFamilyAllowlist": full.get("fontFamilyAllowlist") or [],
+            "colorRamps": full.get("colorRamps")
+            if isinstance(full.get("colorRamps"), dict)
+            else {},
             "designTokens": slim_tokens,
             "recipes": recipes_out,
         }

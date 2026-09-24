@@ -1426,6 +1426,22 @@ export {
   type TextDataBoundBlock,
 } from "./textViewProjection";
 export {
+  hasServerDisplayPaint,
+  preferServerDisplayRunText,
+  preferServerTextDisplayRuns,
+} from "./serverDisplayPaint";
+export {
+  consolidateTextBindingToProjection,
+  hasContradictoryTextBinding,
+  listBoundDataRefs,
+  readEffectiveTextProjection,
+  resolveTextBindingOwner,
+  staticPrefixFromContentRuns,
+  type ConsolidateTextBindingResult,
+  type TextBindingOwnerKind,
+  type TextBoundBlockSlice,
+} from "./textBindingOwner";
+export {
   applyCanvasTableCellDataSourceId,
   applyCanvasTableDataRef,
   buildCanvasTableDataLinkPatch,

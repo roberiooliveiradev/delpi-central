@@ -147,13 +147,17 @@ export function resolveKpiViewPresentation(
     resolved?.label ||
     "Indicador";
 
-  const valueText = formatKpiValue(
-    rawValue,
-    valueFormat,
-    options.unit,
-    decimalPlaces,
-    metricOverrides?.displayFormat ?? options.displayValueFormat,
-  );
+  const serverDisplayValue = resolved?.kpi?.displayValue;
+  const valueText =
+    typeof serverDisplayValue === "string"
+      ? serverDisplayValue
+      : formatKpiValue(
+          rawValue,
+          valueFormat,
+          options.unit,
+          decimalPlaces,
+          metricOverrides?.displayFormat ?? options.displayValueFormat,
+        );
   const hint = options.subtitle?.trim() || undefined;
   const sparklinePoints = sparklinePointsFromResolved(resolved);
   const comparison = resolveComparisonPresentation({

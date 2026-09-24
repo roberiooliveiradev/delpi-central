@@ -1240,15 +1240,25 @@ class PresentationPatchService:
         projection_informed = has_explicit_table_columns(cleaned)
         blocks = _blocks_of(cfg)
         existing = _find_block(blocks, block_id)
+        from tv_app.application.services.data.display_format_service import (
+            DisplayFormatService,
+        )
+
         if existing is not None:
             # Partial patch: deep-merge nested style/frame/… so siblings survive.
             merged = merge_block_patch(existing, cleaned)
             if str(merged.get("type") or "").strip() in {"table_view", "data_table"}:
                 normalize_block_table_projection(merged)
+            # Campo / textProjection write must not leave dual-bind (G15).
+            merged = DisplayFormatService.sanitize_contradictory_text_binding(merged)
             existing.clear()
             existing.update(merged)
         else:
-            blocks.append(_with_block_defaults(cleaned))
+            blocks.append(
+                DisplayFormatService.sanitize_contradictory_text_binding(
+                    _with_block_defaults(cleaned)
+                )
+            )
         cfg["blocks"] = blocks
         return block_id, frame_informed or projection_informed
 

@@ -167,6 +167,7 @@ export function ChartValueLabels({
       valueFormat,
       decimalPlaces: config.decimalPlaces,
       displayValueFormat: config.displayValueFormat,
+      displayValue: point.displayValue,
     });
 
   const categoryFill = (index: number) =>
