@@ -1,16 +1,16 @@
 {
-  "version": 13,
+  "version": 14,
   "description": "Governance allowlist for DAVI dynamic READ. DAVI has no independent AuthZ; backend is final authority. Entries define model-safe input/output projection and governed argument constraints only — not business permissions.",
   "authzPolicy": "DAVI-READ-AUTHZ-REBASELINE-001",
   "externalProcessing": "BACKEND_AUTHORIZED_INTERNAL_READ_ALLOWED_UNLESS_EXPLICITLY_PROHIBITED",
   "dataClassification": "MINIMIZATION_REQUIRED_TAXONOMY_OPTIONAL",
   "coverageDecision": {
-    "taskId": "DAVI-WAVE005-STOCK-BALANCES-RETRIEVAL-CORRECTION-001",
-    "decision": "CORRECT_STOCK_BALANCES_SUMMARY_ITEMS_RETRIEVAL",
-    "reason": "Disambiguate stock-balance summary vs items vs product-stock retrieval via semanticAliases only. Eligible READ remains 53; MCP tools remain 3. No AuthZ/business-logic/SQL/projection change.",
+    "taskId": "DAVI-REAL-USER-RETRIEVAL-REFINEMENT-COMMERCIAL-SUPPLIES-001",
+    "decision": "REFINE_REAL_USER_RETRIEVAL_COMMERCIAL_SUPPLIES",
+    "reason": "Refine Commercial+Supplies real-user retrieval via durable semanticAliases plus generic filler-tolerant phrase matching and single-token phrase cap. Eligible READ remains 53; MCP tools remain 3. No AuthZ/business-logic change.",
     "previousDecision": {
-      "taskId": "DAVI-WAVE005-STOCK-BALANCES-PROJECTION-CORRECTION-001",
-      "decision": "CORRECT_STOCK_BALANCES_BRANCH_GRAIN_PROJECTION"
+      "taskId": "DAVI-WAVE005-STOCK-BALANCES-RETRIEVAL-CORRECTION-001",
+      "decision": "CORRECT_STOCK_BALANCES_SUMMARY_ITEMS_RETRIEVAL"
     }
   },
   "retrievalQuarantineTokens": [
@@ -944,7 +944,14 @@
         "ROL summary",
         "receita operacional líquida",
         "meta de ROL",
-        "ROL realizado"
+        "ROL realizado",
+        "quanto faturamos",
+        "qual foi o faturamento",
+        "faturamento realizado",
+        "faturamento versus meta",
+        "faturamento e meta",
+        "quanto vendemos líquido",
+        "ROL realizado e meta"
       ],
       "argumentConstraints": {
         "dateRange": {
@@ -985,7 +992,14 @@
         "evolução mensal do ROL",
         "ROL series",
         "histórico de ROL comercial",
-        "ROL por mês"
+        "ROL por mês",
+        "evolução do faturamento",
+        "faturamento evoluiu",
+        "faturamento semana a semana",
+        "faturamento por semana",
+        "faturamento mês a mês",
+        "histórico de faturamento",
+        "como o faturamento evoluiu"
       ],
       "argumentConstraints": {
         "dateRange": {
@@ -1083,7 +1097,13 @@
         "ranking de ROL por cliente",
         "faturamento por cliente",
         "top clientes ROL",
-        "customer ROL ranking"
+        "customer ROL ranking",
+        "clientes mais faturaram",
+        "clientes que mais faturaram",
+        "maiores clientes por faturamento",
+        "ranking de clientes por faturamento",
+        "ranking de clientes por receita",
+        "ranking de clientes pelo faturamento"
       ],
       "argumentConstraints": {
         "dateRange": {
@@ -1147,7 +1167,11 @@
         "ROL por família",
         "faturamento por produto",
         "ranking de produtos ROL",
-        "product ROL ranking"
+        "product ROL ranking",
+        "produtos mais faturaram",
+        "produtos que mais faturaram",
+        "produtos geraram mais faturamento",
+        "ranking de produtos por faturamento"
       ],
       "argumentConstraints": {
         "dateRange": {
@@ -1257,7 +1281,13 @@
         "média de novos clientes",
         "novos clientes",
         "average new clients",
-        "quantidade média de clientes novos"
+        "quantidade média de clientes novos",
+        "clientes novos em média",
+        "clientes novos tivemos em média",
+        "média mensal de clientes novos",
+        "média de clientes novos",
+        "quantos clientes novos em média",
+        "média de novos clientes no período"
       ],
       "argumentConstraints": {
         "dateRange": {
@@ -1291,7 +1321,11 @@
         "percentual ROL clientes novos",
         "faturamento de clientes novos",
         "share ROL clientes novos",
-        "clientes novos no faturamento"
+        "clientes novos no faturamento",
+        "faturamento veio de clientes novos",
+        "participação dos clientes novos no faturamento",
+        "percentual do faturamento de clientes novos",
+        "quanto do faturamento de clientes novos"
       ],
       "argumentConstraints": {
         "dateRange": {
@@ -1367,7 +1401,16 @@
         "evolução da conversão",
         "série de taxa de conversão",
         "conversion rate series",
-        "evolução do closing rate"
+        "evolução do closing rate",
+        "taxa de conversão evoluiu",
+        "evolução da taxa de conversão",
+        "conversão mês a mês",
+        "histórico da conversão",
+        "conversão comercial mês a mês",
+        "taxa de conversão por mês",
+        "série temporal da conversão",
+        "série temporal da conversão comercial",
+        "conversão comercial série temporal"
       ],
       "argumentConstraints": {
         "dateRange": {
@@ -1614,7 +1657,12 @@
         "OTD semanal",
         "OTD mensal",
         "sales order OTD series",
-        "evolução OTD comercial"
+        "evolução OTD comercial",
+        "evolução semanal do OTD comercial",
+        "OTD comercial por semana",
+        "histórico do OTD comercial",
+        "OTD comercial evoluiu",
+        "evolução do OTD comercial"
       ],
       "argumentConstraints": {
         "dateRange": {
@@ -1728,7 +1776,13 @@
         "ROL WEG",
         "WEG ROL target",
         "atingimento ROL WEG",
-        "participação WEG meta"
+        "participação WEG meta",
+        "ROL da WEG contra a meta",
+        "ROL WEG contra a meta",
+        "faturamento WEG versus meta",
+        "atingimento da meta WEG",
+        "meta de faturamento da WEG",
+        "atingimento da meta de faturamento da WEG"
       ],
       "argumentConstraints": {
         "dateRange": {
@@ -1865,7 +1919,12 @@
         "economia de negociação",
         "savings de negociação",
         "economia suprimentos",
-        "negotiation savings"
+        "negotiation savings",
+        "economia nas negociações",
+        "economizamos nas negociações",
+        "economia obtida nas negociações",
+        "economia nas compras",
+        "savings das negociações"
       ],
       "argumentConstraints": {
         "dateRange": {
@@ -1956,7 +2015,12 @@
         "OTD fornecedor",
         "purchase order OTD",
         "OTD PC",
-        "pontualidade fornecedores"
+        "pontualidade fornecedores",
+        "OTD dos pedidos de compra",
+        "OTD das compras",
+        "pontualidade das compras",
+        "entregas de fornecedores no prazo",
+        "OTD nossos pedidos de compra"
       ],
       "argumentConstraints": {
         "dateRange": {
@@ -1992,7 +2056,12 @@
         "evolução OTD de compras",
         "OTD pedidos de compra série",
         "purchase order OTD series",
-        "evolução OTD PC"
+        "evolução OTD PC",
+        "evolução semanal do OTD de compras",
+        "evolução do OTD dos fornecedores",
+        "OTD de compras por semana",
+        "histórico OTD compras",
+        "OTD compras ao longo do tempo"
       ],
       "argumentConstraints": {
         "dateRange": {
@@ -2041,7 +2110,12 @@
         "valor do estoque",
         "stock value",
         "estoque valorizado",
-        "valor de estoque suprimentos"
+        "valor de estoque suprimentos",
+        "valor total do estoque",
+        "quanto vale o estoque",
+        "valor financeiro do estoque",
+        "estoque valor total",
+        "valor agregado do estoque"
       ],
       "argumentConstraints": {
         "dateRange": {
@@ -2083,7 +2157,10 @@
         "resumo estoque de segurança",
         "safety stock",
         "safety stock summary",
-        "estoque segurança suprimentos"
+        "estoque segurança suprimentos",
+        "quantos materiais abaixo do estoque de segurança",
+        "quantos materiais estão abaixo do estoque de segurança",
+        "situação do estoque de segurança"
       ]
     },
     {
@@ -2122,7 +2199,11 @@
         "itens de estoque de segurança",
         "lista estoque de segurança",
         "safety stock items",
-        "materiais abaixo do estoque de segurança"
+        "materiais abaixo do estoque de segurança",
+        "quais materiais abaixo do estoque de segurança",
+        "liste materiais abaixo do estoque de segurança",
+        "materiais abaixo estoque segurança",
+        "itens abaixo do estoque de segurança"
       ]
     },
     {
@@ -2353,7 +2434,13 @@
         "itens no depósito",
         "itens existem no depósito",
         "quais itens no depósito",
-        "produtos no depósito"
+        "produtos no depósito",
+        "produtos estão no depósito",
+        "quais produtos no depósito",
+        "produtos do depósito",
+        "itens do almoxarifado",
+        "materiais no depósito",
+        "produtos em estoque no depósito"
       ]
     },
     {

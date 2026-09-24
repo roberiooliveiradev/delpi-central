@@ -182,7 +182,7 @@ def validate_source() -> dict[str, Any]:
     )
     shortages_gate = "raw_material_set_shortage_branch_error" in routes
     ok = (
-        allow.get("version") == 13
+        allow.get("version") == 14
         and len(eligible_ids) == 53
         and set(CURRENT_ELIGIBLE) <= set(eligible_ids)
         and all(op in ops for op in WAVE3A_OPS)

@@ -18,6 +18,77 @@ from app.application.external_capabilities.dynamic_information.text_normalize im
     ordered_tokens,
     tokenize,
 )
+
+# Portuguese function/filler words that often appear between durable semantic
+# tokens in natural questions without changing phrase identity.
+# Intentionally excludes content markers such as ``por`` (OTD por cliente) and
+# ``mais`` (clientes mais faturaram).
+_PHRASE_FILLERS = frozenset(
+    {
+        "a",
+        "ao",
+        "aos",
+        "as",
+        "com",
+        "como",
+        "da",
+        "das",
+        "de",
+        "do",
+        "dos",
+        "e",
+        "em",
+        "essa",
+        "esse",
+        "esta",
+        "este",
+        "estes",
+        "estas",
+        "esta",
+        "estao",
+        "foi",
+        "foram",
+        "ja",
+        "lhe",
+        "liste",
+        "longo",
+        "me",
+        "mostre",
+        "na",
+        "nas",
+        "neste",
+        "nesta",
+        "no",
+        "nos",
+        "nossa",
+        "nossas",
+        "nosso",
+        "nossos",
+        "o",
+        "os",
+        "ou",
+        "para",
+        "pela",
+        "pelas",
+        "pelo",
+        "pelos",
+        "que",
+        "quero",
+        "se",
+        "sem",
+        "sua",
+        "suas",
+        "um",
+        "uma",
+        "umas",
+        "uns",
+        "ver",
+        "veio",
+        "vieram",
+    }
+)
+
+
 def _quarantine_tokens() -> set[str]:
     payload = load_external_read_allowlist()
     raw = payload.get("retrievalQuarantineTokens") or []
@@ -25,6 +96,25 @@ def _quarantine_tokens() -> set[str]:
     for item in raw:
         tokens |= tokenize(str(item))
     return tokens
+
+
+def _tokens_compatible(left: str, right: str) -> bool:
+    """Conservative PT singular/plural and shared-stem compatibility."""
+    if left == right:
+        return True
+    if len(left) > 3 and len(right) > 3:
+        left_stem = left[:-1] if left.endswith("s") and not left.endswith("ss") else left
+        right_stem = (
+            right[:-1] if right.endswith("s") and not right.endswith("ss") else right
+        )
+        if left_stem == right_stem:
+            return True
+    # Verb/noun derivation pairs (faturamos/faturamento, evoluiu/evolucao).
+    if len(left) >= 5 and len(right) >= 5 and left[:5] == right[:5]:
+        suffixes = ("mos", "ram", "iu", "ou", "cao", "sao", "mento", "veis")
+        if any(left.endswith(suf) or right.endswith(suf) for suf in suffixes):
+            return True
+    return False
 
 
 def _owned_quarantine_tokens_via_aliases(
@@ -65,23 +155,45 @@ def _query_has_foreign_quarantine(query: str, action: TechnicalAction) -> bool:
     return bool(foreign - owned)
 
 
-def _alias_matches_query(alias: str, query: str) -> bool:
-    """True when alias appears as a contiguous token sequence in the query.
+def _exact_window_match(needle: list[str], haystack: list[str]) -> bool:
+    window = len(needle)
+    if window == 0 or window > len(haystack):
+        return False
+    for idx in range(len(haystack) - window + 1):
+        chunk = haystack[idx : idx + window]
+        if all(_tokens_compatible(a, b) for a, b in zip(needle, chunk, strict=True)):
+            return True
+    return False
 
-    Avoids false positives where short aliases like ``cliente`` match inside
-    ``clientes`` via raw substring containment.
+
+def _filler_tolerant_match(alias_tokens: list[str], query_tokens: list[str]) -> bool:
+    """Match alias content tokens in order, allowing PT fillers between them.
+
+    Alias and query are reduced to non-filler tokens so articles/prepositions
+    inside aliases (``de``, ``dos``) do not block natural paraphrases.
+    Does not skip arbitrary content tokens.
+    """
+    alias_content = [t for t in alias_tokens if t not in _PHRASE_FILLERS]
+    query_content = [t for t in query_tokens if t not in _PHRASE_FILLERS]
+    if len(alias_content) < 2 or not query_content:
+        return False
+    return _exact_window_match(alias_content, query_content)
+
+def _alias_matches_query(alias: str, query: str) -> bool:
+    """True when alias appears as an ordered semantic phrase in the query.
+
+    Prefers contiguous token windows, then allows Portuguese fillers/stopwords
+    between durable alias tokens. Avoids raw substring false positives.
     """
     alias_tokens = ordered_tokens(alias)
     query_tokens = ordered_tokens(query)
     if not alias_tokens or not query_tokens:
         return False
-    window = len(alias_tokens)
-    if window > len(query_tokens):
+    if _exact_window_match(alias_tokens, query_tokens):
+        return True
+    if len(alias_tokens) < 2:
         return False
-    for idx in range(len(query_tokens) - window + 1):
-        if query_tokens[idx : idx + window] == alias_tokens:
-            return True
-    return False
+    return _filler_tolerant_match(alias_tokens, query_tokens)
 
 
 def score_action(query: str, action: TechnicalAction) -> float:
@@ -96,22 +208,29 @@ def score_action(query: str, action: TechnicalAction) -> float:
     if not hay_tokens:
         return 0.0
 
-    # Phrase boost: full aliases as contiguous token sequences in the query.
+    # Phrase boost: full aliases as ordered semantic phrases in the query.
     # Longer precise aliases outrank short ones so "OTD por cliente" beats bare
     # "cliente" without operationId hardcodes (generic retrieval quality).
-    best_phrase_len = 0
-    phrase_hits = 0
+    best_multiword_len = 0
+    multiword_hits = 0
+    best_single_len = 0
+    single_hits = 0
     for alias in action.semantic_aliases:
         alias_n = normalize_text(alias)
         if len(alias_n) < 4:
             continue
         if not _alias_matches_query(alias, query):
             continue
-        phrase_hits += 1
-        best_phrase_len = max(best_phrase_len, len(alias_n))
+        alias_tok_count = len(ordered_tokens(alias))
+        if alias_tok_count <= 1:
+            single_hits += 1
+            best_single_len = max(best_single_len, len(alias_n))
+        else:
+            multiword_hits += 1
+            best_multiword_len = max(best_multiword_len, len(alias_n))
 
     overlap = q_tokens & hay_tokens
-    if not overlap and phrase_hits == 0:
+    if not overlap and multiword_hits == 0 and single_hits == 0:
         text = normalize_text(action.searchable_text)
         partial = sum(1 for t in q_tokens if t in text)
         if partial == 0:
@@ -119,15 +238,36 @@ def score_action(query: str, action: TechnicalAction) -> float:
         return min(0.84, float(partial) / float(len(q_tokens)) * 0.5)
 
     overlap_score = float(len(overlap)) / float(len(q_tokens)) if overlap else 0.0
-    if phrase_hits:
-        # Base from hit count, then prefer the longest matching alias.
+    if multiword_hits:
+        # Prefer the longest matching multiword alias. Hit-count is only a light
+        # tie-breaker so several short overlaps cannot beat one precise phrase.
         return min(
             1.0,
             0.86
-            + 0.03 * min(phrase_hits, 3)
-            + 0.002 * min(best_phrase_len, 48),
+            + 0.0025 * min(best_multiword_len, 72)
+            + 0.005 * min(multiword_hits, 2),
+        )
+    if single_hits:
+        # Cap one-token alias boosts so generic tokens like "estoque"/"produtos"
+        # do not outrank multiword analytic intents on natural questions.
+        return min(
+            0.78,
+            0.70 + 0.002 * min(best_single_len, 24),
         )
     return min(0.84, overlap_score)
+
+
+def _best_multiword_alias_len(query: str, action: TechnicalAction) -> int:
+    best = 0
+    for alias in action.semantic_aliases:
+        alias_n = normalize_text(alias)
+        if len(ordered_tokens(alias)) <= 1:
+            continue
+        if len(alias_n) < 4:
+            continue
+        if _alias_matches_query(alias, query):
+            best = max(best, len(alias_n))
+    return best
 
 
 def retrieve_eligible_actions(
@@ -145,5 +285,11 @@ def retrieve_eligible_actions(
     eligible = [a for a in actions if a.executable]
     scored = [(a, score_action(query, a)) for a in eligible]
     scored = [(a, s) for a, s in scored if s > 0]
-    scored.sort(key=lambda pair: (-pair[1], pair[0].operation_id))
+    scored.sort(
+        key=lambda pair: (
+            -pair[1],
+            -_best_multiword_alias_len(query, pair[0]),
+            pair[0].operation_id,
+        )
+    )
     return scored[: max(0, top_k)]

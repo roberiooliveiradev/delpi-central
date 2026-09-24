@@ -71,7 +71,7 @@ def _actions() -> list[TechnicalAction]:
 
 def test_runtime_eligible_after_wave3a_and_drawing() -> None:
     allow = load_external_read_allowlist()
-    assert allow.get("version") == 13
+    assert allow.get("version") == 14
     eligible = {a.operation_id for a in _actions() if a.executable}
     assert len(eligible) == 53
     assert set(CURRENT_ELIGIBLE) <= eligible

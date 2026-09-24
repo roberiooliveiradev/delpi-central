@@ -154,9 +154,9 @@ def _allowlist_entry(oid: str) -> dict[str, Any]:
 
 def test_wave005_allowlist_version_and_eligible_count():
     allow = load_external_read_allowlist()
-    assert allow.get("version") == 13
+    assert allow.get("version") == 14
     assert allow.get("coverageDecision", {}).get("taskId") == (
-        "DAVI-WAVE005-STOCK-BALANCES-RETRIEVAL-CORRECTION-001"
+        "DAVI-REAL-USER-RETRIEVAL-REFINEMENT-COMMERCIAL-SUPPLIES-001"
     )
     eligible = {a.operation_id for a in _actions() if a.executable}
     assert len(eligible) == 53

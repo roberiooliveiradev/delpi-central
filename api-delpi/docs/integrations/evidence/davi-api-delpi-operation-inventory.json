@@ -2,7 +2,7 @@
   "source": "openapi_baseline.json",
   "baseline_version": "3",
   "baseline_operation_count": 720,
-  "taskId": "DAVI-WAVE005-STOCK-BALANCES-RETRIEVAL-CORRECTION-001",
+  "taskId": "DAVI-REAL-USER-RETRIEVAL-REFINEMENT-COMMERCIAL-SUPPLIES-001",
   "TOTAL_OPERATIONS": 720,
   "TOTAL_GET": 520,
   "TOTAL_WRITE_VERBS": 200,
@@ -21,12 +21,12 @@
     "note": "Delta vs last committed inventory artifact (HEAD)"
   },
   "COVERAGE_DECISION": {
-    "taskId": "DAVI-WAVE005-STOCK-BALANCES-RETRIEVAL-CORRECTION-001",
-    "decision": "CORRECT_STOCK_BALANCES_SUMMARY_ITEMS_RETRIEVAL",
-    "reason": "Disambiguate stock-balance summary vs items vs product-stock retrieval via semanticAliases only. Eligible READ remains 53; MCP tools remain 3. No AuthZ/business-logic/SQL/projection change.",
+    "taskId": "DAVI-REAL-USER-RETRIEVAL-REFINEMENT-COMMERCIAL-SUPPLIES-001",
+    "decision": "REFINE_REAL_USER_RETRIEVAL_COMMERCIAL_SUPPLIES",
+    "reason": "Refine Commercial+Supplies real-user retrieval via durable semanticAliases plus generic filler-tolerant phrase matching and single-token phrase cap. Eligible READ remains 53; MCP tools remain 3. No AuthZ/business-logic change.",
     "previousDecision": {
-      "taskId": "DAVI-WAVE005-STOCK-BALANCES-PROJECTION-CORRECTION-001",
-      "decision": "CORRECT_STOCK_BALANCES_BRANCH_GRAIN_PROJECTION"
+      "taskId": "DAVI-WAVE005-STOCK-BALANCES-RETRIEVAL-CORRECTION-001",
+      "decision": "CORRECT_STOCK_BALANCES_SUMMARY_ITEMS_RETRIEVAL"
     }
   },
   "HIGH_VALUE_BLOCKED": [

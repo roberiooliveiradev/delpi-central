@@ -1,0 +1,91 @@
+{
+  "taskId": "DAVI-REAL-USER-RETRIEVAL-REFINEMENT-COMMERCIAL-SUPPLIES-001",
+  "bootstrapHead": "398196b0fdb2a746a202625a4d7740c09e915690",
+  "baseHead": "eb5f961f01c14c13fe7780cc71b4a3426557aa8a",
+  "sourceHead": null,
+  "allowlistVersionBefore": 13,
+  "allowlistVersionAfter": 14,
+  "eligibleBefore": 53,
+  "eligibleAfter": 53,
+  "mcpToolsBefore": 3,
+  "mcpToolsAfter": 3,
+  "rootCauseCategories": [
+    "MISSING_NATURAL_ALIASES",
+    "OVERLY_GENERIC_ALIASES",
+    "STOPWORD_VARIATION",
+    "SINGULAR_PLURAL",
+    "WORD_ORDER",
+    "NATURAL_VERB_VARIATION",
+    "SUMMARY_LIST_SERIES_INTENT",
+    "GENERIC_PRODUCT_COLLISIONS",
+    "SHORT_PHRASE_BOOST_OVERWEIGHT"
+  ],
+  "genericRetrievalChanged": true,
+  "genericRetrievalChangeReason": "Systemic PT filler-tolerant phrase matching, single-token phrase cap, length-primary multiword scoring, suffix-gated stem; benefits Commercial and Supplies without route/operationId hardcodes. Metadata-only was insufficient for stopword/series/generic-product collisions across both families.",
+  "aliasesChanged": true,
+  "suppliesFailuresBefore": {
+    "S1": {"query": "Como está o OTD dos pedidos de compra este mês?", "observed": "get_product_purchases", "expected": "get_supplies_purchase_order_otd"},
+    "S2": {"query": "Quero ver a evolução semanal do OTD de compras neste mês", "observed": "get_supplies_purchase_order_otd", "expected": "get_supplies_purchase_order_otd_series"},
+    "S3": {"query": "Qual é o valor total do estoque?", "observed": "get_product_stock", "expected": "get_supplies_stock_value"},
+    "S4": {"query": "Quanto economizamos nas negociações de compras?", "observed": "get_product_purchases", "expected": "get_supplies_negotiation_savings_summary"},
+    "S5": {"query": "Quais materiais estão abaixo do estoque de segurança?", "observed": "get_supplies_safety_stock_summary", "expected": "get_supplies_safety_stock_items"},
+    "S6": {"query": "Quais produtos estão no depósito 01?", "observed": "search_products", "expected": "get_supplies_stock_balances_items"}
+  },
+  "suppliesResultsAfter": {
+    "S1": {"top": "get_supplies_purchase_order_otd", "score": 0.94, "status": "PASS"},
+    "S2": {"top": "get_supplies_purchase_order_otd_series", "score": 0.95, "status": "PASS"},
+    "S3": {"top": "get_supplies_stock_value", "score": 0.92, "status": "PASS"},
+    "S4": {"top": "get_supplies_negotiation_savings_summary", "score": 0.94, "status": "PASS"},
+    "S5": {"top": "get_supplies_safety_stock_items", "score": 0.985, "status": "PASS"},
+    "S6": {"top": "get_supplies_stock_balances_items", "score": 0.935, "status": "PASS"}
+  },
+  "commercialFailuresBefore": {
+    "C1": {"observed": "get_commercial_rol_series|get_commercial_rol_summary tie", "expected": "get_commercial_rol_summary"},
+    "C2": {"observed": "get_commercial_rol_by_branch|customer|product", "expected": "get_commercial_rol_series"},
+    "C3": {"observed": "get_product_customers", "expected": "get_commercial_rol_by_customer"},
+    "C4": {"observed": "search_products", "expected": "get_commercial_rol_by_product"},
+    "C5": {"observed": "get_sales_order_otd", "expected": "get_sales_order_otd_series"},
+    "C6": {"observed": "get_sales_conversion_rate", "expected": "get_sales_conversion_rate_series"},
+    "C7": {"observed": "get_product_customers", "expected": "get_new_clients_average"},
+    "C8": {"observed": "get_product_customers", "expected": "get_new_clients_rol_pct"},
+    "C9": {"observed": "get_commercial_rol_summary first (tie)", "expected": "get_weg_rol_target_pct"}
+  },
+  "commercialResultsAfter": {
+    "C1": {"top": "get_commercial_rol_summary", "score": 0.905, "status": "PASS"},
+    "C2": {"top": "get_commercial_rol_series", "score": 0.935, "status": "PASS"},
+    "C3": {"top": "get_commercial_rol_by_customer", "score": 0.9375, "status": "PASS"},
+    "C4": {"top": "get_commercial_rol_by_product", "score": 0.9375, "status": "PASS"},
+    "C5": {"top": "get_sales_order_otd_series", "score": 0.9475, "status": "PASS"},
+    "C6": {"top": "get_sales_conversion_rate_series", "score": 0.9275, "status": "PASS"},
+    "C7": {"top": "get_new_clients_average", "score": 0.9425, "status": "PASS"},
+    "C8": {"top": "get_new_clients_rol_pct", "score": 0.9675, "status": "PASS"},
+    "C9": {"top": "get_weg_rol_target_pct", "score": 0.93, "status": "PASS"}
+  },
+  "crossFamilyResults": "PASS (source matrix)",
+  "holdoutTests": {
+    "total": 6,
+    "pass": 6,
+    "fail": 0,
+    "verbatimAliasMemorization": false
+  },
+  "existingRegressionTests": {
+    "wave004Commercial": "PASS",
+    "wave005Supplies": "PASS",
+    "stockBalancesRetrievalCorrection": "PASS",
+    "inventorySync": "PASS",
+    "writeGuard": "PASS"
+  },
+  "authzChanged": false,
+  "businessLogicChanged": false,
+  "sqlChanged": false,
+  "sourceTests": "PASS (245 selected)",
+  "deployStatus": "PENDING_EXTERNAL_ACTION",
+  "productionEligibleActionCount": null,
+  "liveSuppliesResults": "TEST_NOT_RUN",
+  "liveCommercialResults": "TEST_NOT_RUN",
+  "liveExecutions": "TEST_NOT_RUN",
+  "agentIntelligenceChanged": false,
+  "gptActionsChanged": false,
+  "executionDrift": false,
+  "coverageDecision": "REFINE_REAL_USER_RETRIEVAL_COMMERCIAL_SUPPLIES"
+}
