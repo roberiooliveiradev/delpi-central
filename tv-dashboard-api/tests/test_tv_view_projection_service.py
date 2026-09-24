@@ -366,6 +366,39 @@ def test_chart_projection_category_as_measure_falls_back_to_selected_metrics():
     assert next_resolved["serverProjectionApplied"] is True
 
 
+def test_radar_projection_collapses_selected_metrics_to_one_series():
+    """Radar paint needs ≥3 points on one polygon — not N series × 1 point."""
+    resolved = {
+        "kpiMetrics": [
+            {"field": "rol", "label": "ROL", "value": 4364622.79},
+            {"field": "comparable_goal", "label": "Meta do período", "value": 5000000.0},
+            {"field": "rol_target_pct", "label": "Atingimento", "value": 53.9},
+            {"field": "goal_value", "label": "Meta cadastrada", "value": 0.0},
+        ],
+        "table": {"columns": [], "rows": []},
+    }
+    block = {
+        "type": "chart_view",
+        "chartType": "radar",
+        "chartProjection": {
+            "categoryField": "rol",
+            "series": [
+                {"field": "comparable_goal", "aggregation": "avg", "label": "Meta do período"},
+                {"field": "rol_target_pct", "aggregation": "avg", "label": "Atingimento"},
+                {"field": "goal_value", "aggregation": "avg", "label": "Meta cadastrada"},
+            ],
+        },
+    }
+    next_resolved = apply_view_projection_to_resolved(resolved, block)
+    assert len(next_resolved["chart"]["series"]) == 1
+    points = next_resolved["chart"]["points"]
+    assert len(points) >= 3
+    labels = [p["label"] for p in points]
+    assert "ROL" in labels or "rol" in labels
+    assert "Meta do período" in labels
+    assert next_resolved["chart"]["chartType"] == "radar"
+
+
 def test_table_projection_synthesizes_wide_row_from_kpi_metrics():
     """Scalar source without table rows → one wide row for selected measure columns."""
     resolved = {

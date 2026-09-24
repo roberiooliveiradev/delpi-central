@@ -385,14 +385,52 @@ def _chart_series_from_selected_metrics(
         )
     if not series_out:
         return []
-    # Multi-measure without category → bar-like points (selected metrics only).
-    if len(series_out) > 1 and chart_type in {"line", "area"}:
-        chart_type_out = "bar"
-    else:
-        chart_type_out = chart_type
-    # Caller sets chartType; keep series list as encoding.
-    _ = chart_type_out
-    return series_out
+    return _normalize_series_shape_for_chart_type(series_out, chart_type)
+
+
+# Chart types whose paint needs many axes/slices on ONE series (not N series × 1 point).
+# Radar (plugin-ui) exige ≥3 pontos no mesmo polígono; pizza/funil usam points[0].
+_PROFILE_SINGLE_SERIES_CHART_TYPES = frozenset(
+    {"radar", "pie", "doughnut", "funnel", "waterfall"}
+)
+
+
+def _normalize_series_shape_for_chart_type(
+    series_out: list[dict[str, Any]],
+    chart_type: str,
+) -> list[dict[str, Any]]:
+    """
+    Scalar multi-measure bake: bar/line keep N series; radar/pie/funnel collapse to
+    one series with one point per measure so the shared paint path can draw.
+    """
+    if not series_out:
+        return series_out
+    if chart_type in {"line", "area"} and len(series_out) > 1:
+        # Caller may remap chartType to bar; keep multi-series for comparison.
+        return series_out
+    if chart_type not in _PROFILE_SINGLE_SERIES_CHART_TYPES:
+        return series_out
+    # Already has a series with enough points (categorical frame) — keep.
+    if any(len(s.get("points") or []) >= 3 for s in series_out if isinstance(s, dict)):
+        return series_out
+    merged_points: list[dict[str, Any]] = []
+    for series in series_out:
+        if not isinstance(series, dict):
+            continue
+        for point in series.get("points") or []:
+            if isinstance(point, dict):
+                merged_points.append(dict(point))
+    if len(merged_points) < 2:
+        return series_out
+    primary = series_out[0] if isinstance(series_out[0], dict) else {}
+    return [
+        {
+            "name": str(primary.get("name") or "Perfil"),
+            "field": primary.get("field"),
+            "color": primary.get("color"),
+            "points": merged_points,
+        }
+    ]
 
 
 def _resolve_chart_rows_for_projection(
@@ -565,11 +603,32 @@ def apply_view_projection_to_resolved(resolved: dict[str, Any], block: dict[str,
                 series_cfg=series_cfg if isinstance(series_cfg, list) else [],
             ):
                 # categoryField apontou para medida (resumo escalar) — selected-only.
+                # Radar/pizza: incluir a medida da «categoria» como eixo/fatia do perfil.
+                effective_series: list[Any] = (
+                    list(series_cfg) if isinstance(series_cfg, list) else []
+                )
+                if category and chart_type in _PROFILE_SINGLE_SERIES_CHART_TYPES:
+                    series_fields = {
+                        str(item.get("field") or "").strip()
+                        for item in effective_series
+                        if isinstance(item, dict)
+                    }
+                    if category not in series_fields:
+                        effective_series = [
+                            {
+                                "field": category,
+                                "aggregation": "first",
+                                "label": category,
+                            },
+                            *effective_series,
+                        ]
                 series_out = _chart_series_from_selected_metrics(
-                    resolved, series_cfg, chart_type
+                    resolved, effective_series, chart_type
                 )
                 used_selected_metrics = bool(series_out)
             if series_out:
+                # Categorical build can also yield N×1 for scalar misuse — normalize once.
+                series_out = _normalize_series_shape_for_chart_type(series_out, chart_type)
                 effective_type = chart_type
                 if len(series_out) > 1 and chart_type in {"line", "area"} and (
                     not category or used_selected_metrics
