@@ -187,6 +187,80 @@ class GptActionsOpenApiAuditTest(unittest.TestCase):
         findings = mod.validate_document("x.json", document)
         self.assertEqual([item.rule for item in findings], ["GPT_ACTION_BODY_WITHOUT_EXAMPLE"])
 
+    def test_nullable_type_union_fails(self):
+        document = {
+            "openapi": "3.1.1",
+            "components": {
+                "schemas": {
+                    "Envelope": {
+                        "type": "object",
+                        "properties": {
+                            "error": {"type": ["object", "null"]},
+                        },
+                    }
+                }
+            },
+            "paths": {
+                "/gpt-actions/v1/catalog": operation(
+                    operation_id="gpt_get_catalog", method="get"
+                )
+            },
+        }
+        findings = mod.validate_document("x.json", document)
+        self.assertEqual(
+            [item.rule for item in findings], ["GPT_ACTION_NULLABLE_TYPE_UNION"]
+        )
+
+    def test_multi_scalar_type_union_fails(self):
+        document = {
+            "openapi": "3.1.1",
+            "paths": {
+                "/gpt-actions/v1/preview": operation(
+                    operation_id="gpt_preview_change",
+                    request_body={
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "periodDays": {"type": ["integer", "string"]},
+                                    },
+                                },
+                                "example": {"periodDays": 7},
+                            }
+                        }
+                    },
+                )
+            },
+        }
+        findings = mod.validate_document("x.json", document)
+        self.assertEqual([item.rule for item in findings], ["GPT_ACTION_TYPE_UNION"])
+
+    def test_scalar_nullable_passes(self):
+        document = {
+            "openapi": "3.1.1",
+            "components": {
+                "schemas": {
+                    "Envelope": {
+                        "type": "object",
+                        "properties": {
+                            "error": {
+                                "type": "object",
+                                "nullable": True,
+                                "additionalProperties": True,
+                            },
+                        },
+                    }
+                }
+            },
+            "paths": {
+                "/gpt-actions/v1/catalog": operation(
+                    operation_id="gpt_get_catalog", method="get"
+                )
+            },
+        }
+        self.assertEqual(mod.validate_document("x.json", document), [])
+
     def test_untyped_semantic_array_fails(self):
         document = {
             "openapi": "3.1.1",

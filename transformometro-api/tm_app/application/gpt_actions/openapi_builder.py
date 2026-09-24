@@ -1026,7 +1026,14 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                         "application/json": {
                             "schema": {
                                 "$ref": "#/components/schemas/GptEvidenceManageBody"
-                            }
+                            },
+                            "example": {
+                                "scope": "process",
+                                "operation": "create_link",
+                                "parent_id": "<processo_uuid>",
+                                "url_externa": "https://example.com/evidence",
+                                "descricao": "Link de evidência",
+                            },
                         }
                     },
                 },
@@ -1087,7 +1094,13 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                         "application/json": {
                             "schema": {
                                 "$ref": "#/components/schemas/GptAdjustSharedResourceCostBody"
-                            }
+                            },
+                            "example": {
+                                "recurso_compartilhado_id": "<recurso_uuid>",
+                                "valor_mensal": 1500.0,
+                                "vigente_desde": "2026-10-01",
+                                "observacoes": "Reajuste anual",
+                            },
                         }
                     },
                 },
@@ -1115,7 +1128,11 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                         "application/json": {
                             "schema": {
                                 "$ref": "#/components/schemas/GptMeetingMinuteManageBody"
-                            }
+                            },
+                            "example": {
+                                "action": "pending_signatures",
+                            },
+
                         }
                     },
                 },

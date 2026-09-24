@@ -63,7 +63,12 @@ def build_gpt_actions_openapi(
             "success": {"type": "boolean"},
             "message": {"type": "string"},
             "data": {"type": "object"},
-            "error": {"type": ["object", "null"]},
+            "error": {
+                "type": "object",
+                "nullable": True,
+                "description": "Error payload when success=false; null on success.",
+                "additionalProperties": True,
+            },
             "meta": {"type": "object"},
         },
     }

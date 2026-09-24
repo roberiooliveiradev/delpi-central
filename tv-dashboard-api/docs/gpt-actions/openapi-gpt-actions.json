@@ -15,7 +15,7 @@
       "get": {
         "operationId": "gpt_get_catalog",
         "summary": "TV presentation mutation capability catalog",
-        "description": "Returns catalogVersion, compact operations index (risk/requires/requiredFields — not full JSON Schemas), capabilities, capability_surface.agent_directives. Full op schemas live in this Action OpenAPI requestBody oneOf. Call before writes; obey agent_directives. Catalog informs; backend authorizes. Requires tv-dashboard.write.",
+        "description": "Returns catalogVersion, compact ops index (risk/requires/requiredFields — not full JSON Schemas), capabilities, and capability_surface.agent_directives. Full op schemas are in this OpenAPI requestBody oneOf. Call before writes; obey agent_directives. Backend authorizes. Requires tv-dashboard.write.",
         "tags": [
           "TV Dashboard GPT"
         ],
@@ -1138,10 +1138,9 @@
                               "type": "string"
                             },
                             "sectionId": {
-                              "type": [
-                                "string",
-                                "null"
-                              ]
+                              "type": "string",
+                              "nullable": true,
+                              "description": "Target section UUID; null clears the slide section assignment."
                             },
                             "playlistRef": {
                               "type": "string",
@@ -1316,10 +1315,8 @@
                                   "type": "string"
                                 },
                                 "periodDays": {
-                                  "type": [
-                                    "integer",
-                                    "string"
-                                  ]
+                                  "type": "integer",
+                                  "description": "Relative period length in days (playlist dataDefaults)."
                                 },
                                 "competence": {
                                   "type": "string"
@@ -2274,6 +2271,7 @@
                                 "tableOptions": {
                                   "type": "object",
                                   "additionalProperties": true,
+                                  "description": "Table presentation knobs (fonts, header, density). Free-form editor blob; prefer set_table_options when available.",
                                   "x-delpi-gpt-opaque-object": true,
                                   "properties": {}
                                 },

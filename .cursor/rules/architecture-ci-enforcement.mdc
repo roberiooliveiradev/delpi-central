@@ -176,9 +176,12 @@ GPT_ACTION_BODY_WITHOUT_EXAMPLE
 GPT_ACTION_FAKE_EMPTY_BODY
 GPT_ACTION_OPERATION_ID_MISSING
 GPT_ACTION_OPERATION_ID_DUPLICATE
+GPT_ACTION_NULLABLE_TYPE_UNION
+GPT_ACTION_TYPE_UNION
+GPT_ACTION_OPAQUE_OBJECT_NOT_EXPLICIT
 ```
 
-O recorte é request-construction (root/campos semânticos/`ops`), não envelope de resposta nem bags nested com `additionalProperties: true`. Regra: `custom-gpt-actions-integration.mdc`.
+O recorte é request-construction (root/campos semânticos/`ops`), não envelope de resposta nem bags nested com `additionalProperties: true`. Nullable/type-union: varrido no documento inteiro — `type` escalar + `nullable: true` (nunca `type: [scalar, null|None]` nem unions multi-escalar). Ver `custom-gpt-actions-integration.mdc`.
 
 ## O que ainda NÃO deve virar heurística frágil
 

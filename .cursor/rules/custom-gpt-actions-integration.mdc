@@ -1,6 +1,7 @@
 ---
 description: Especialistas externos / Custom GPT Actions — façade semântica owner-local, OpenAPI compacto, OAuth Keycloak user parity, PREPARE/ACT, writes governados, Knowledge e go-live
 alwaysApply: false
+governanceSizeJustification: "Superfície bridge GPT Actions exige checklist único de contrato Builder-safe (nullable, examples, PREPARE/ACT, OAuth, Knowledge, go-live); fatiar geraria drift entre TÉO/VISTA/especialistas."
 ---
 
 # Especialistas externos / Custom GPT Actions
@@ -161,6 +162,25 @@ generic/underspecified OpenAPI
 
 Schema model-constructible é atributo obrigatório de contrato desta superfície.
 
+### Nullable / optional clearable fields (GPT Builder)
+
+O importador do Custom GPT **não** aceita unions OAS 3.1 para campos anuláveis.
+
+| Proibido | Obrigatório |
+|---|---|
+| `"type": ["string","null"]` / `["string","None"]` | `"type": "string"` + `"nullable": true` |
+| dump Python com token `None` como tipo | normalizar na geração/sync do artifact |
+| `anyOf`/`oneOf` só para null+scalar | `format` quando aplicável (ex.: `date`) |
+
+Sintomas típicos no Builder (cascata de `type` inválido, não “$ref quebrado”):
+
+```text
+Field required ($ref) em components.schemas.*.properties.*
+Input should be 'null'|'string'|... (str-enum[DataType])
+```
+
+Todo produtor do OpenAPI importável deve gerar nullable Builder-safe e ter teste que falha se existir `type: list` com `null`/`None` no artifact.
+
 ### Object shape
 
 `type: object` **não** é placeholder sem tipo.
@@ -214,6 +234,7 @@ Todo produtor GPT Actions deve ter teste recursivo de compatibilidade no OpenAPI
 
 - todo `type: object` inline/componente tem `properties`, salvo exceção intencional testada;
 - item de array semântico tem shape explícito;
+- nenhum campo usa `type: [scalar, null|None]` — nullable = `type` escalar + `nullable: true`;
 - todo JSON `requestBody` tem schema;
 - bodies PREPARE/ACT têm examples tipados quando exigidos;
 - actions sem body não têm `requestBody`;
@@ -474,7 +495,7 @@ Owners: `platform-reliability-observability.mdc`, `observability-standards.mdc`.
 
 Conforme aplicável (`platform-quality-testing.mdc`):
 
-- **Contrato:** OpenAPI válido; contagem esperada; `operationId`s estáveis; server absoluto; schema fora de `paths`; security explícita; objects/arrays constructíveis; examples PREPARE/ACT; sem fake body.
+- **Contrato:** OpenAPI válido; contagem esperada; `operationId`s estáveis; server absoluto; schema fora de `paths`; security explícita; objects/arrays constructíveis; **nullable Builder-safe** (`type` escalar + `nullable: true`, sem unions `null`/`None`); examples PREPARE/ACT; sem fake body.
 - **Anônimo:** schema 200; action de negócio 401.
 - **RBAC:** sem permissão 403; read-only vs write; segregação de recurso.
 - **Funcional:** positive + sibling + negative.

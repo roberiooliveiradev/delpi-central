@@ -1602,6 +1602,7 @@
               "tableOptions": {
                 "type": "object",
                 "additionalProperties": true,
+                "description": "Table presentation knobs (fonts, header, density). Free-form editor blob; prefer set_table_options when available.",
                 "x-delpi-gpt-opaque-object": true,
                 "properties": {}
               },
@@ -2177,10 +2178,9 @@
             "const": "move_slide_to_section"
           },
           "sectionId": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": "string",
+            "nullable": true,
+            "description": "Target section UUID; null clears the slide section assignment."
           }
         }
       },
@@ -2270,10 +2270,8 @@
                 "type": "string"
               },
               "periodDays": {
-                "type": [
-                  "integer",
-                  "string"
-                ]
+                "type": "integer",
+                "description": "Relative period length in days (playlist dataDefaults)."
               },
               "competence": {
                 "type": "string"

@@ -300,8 +300,56 @@ def _walk_request_schema(
         )
 
 
+def find_illegal_type_unions(
+    rel_path: str, node: Any, *, json_path: str = "$"
+) -> list[Violation]:
+    """GPT Builder rejects OAS 3.1 type unions (nullable or multi-scalar).
+
+    Require scalar ``type`` + ``nullable: true`` when null is allowed.
+    """
+    findings: list[Violation] = []
+    if isinstance(node, dict):
+        t = node.get("type")
+        if isinstance(t, list):
+            normalized = ["null" if x in (None, "None") else x for x in t]
+            if "null" in normalized or None in t or "None" in t:
+                findings.append(
+                    Violation(
+                        "GPT_ACTION_NULLABLE_TYPE_UNION",
+                        rel_path,
+                        0,
+                        (
+                            f"{json_path}: type={t!r} inválido para GPT Builder; "
+                            "use type escalar + nullable: true"
+                        ),
+                    )
+                )
+            elif len(normalized) > 1:
+                findings.append(
+                    Violation(
+                        "GPT_ACTION_TYPE_UNION",
+                        rel_path,
+                        0,
+                        f"{json_path}: type union {t!r} não é constructível no Builder",
+                    )
+                )
+        for key, value in node.items():
+            findings.extend(
+                find_illegal_type_unions(rel_path, value, json_path=f"{json_path}.{key}")
+            )
+    elif isinstance(node, list):
+        for index, value in enumerate(node):
+            findings.extend(
+                find_illegal_type_unions(
+                    rel_path, value, json_path=f"{json_path}[{index}]"
+                )
+            )
+    return findings
+
+
 def validate_document(rel_path: str, document: dict[str, Any]) -> list[Violation]:
     findings: list[Violation] = []
+    findings.extend(find_illegal_type_unions(rel_path, document))
     seen_ids: dict[str, str] = {}
 
     for path, method, operation in iter_operations(document):

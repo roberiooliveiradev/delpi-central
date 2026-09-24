@@ -91,6 +91,30 @@ def _project_schema_node(node: Any) -> Any:
         else:
             out["type"] = "string"
 
+    # GPT Builder: scalar + nullable:true (never type unions with null).
+    t = out.get("type")
+    if isinstance(t, list):
+        normalized = [("null" if x in (None, "None") else x) for x in t]
+        non_null = [x for x in normalized if x != "null"]
+        if "null" in normalized and len(non_null) == 1:
+            out["type"] = non_null[0]
+            out["nullable"] = True
+        elif "null" in normalized and non_null:
+            out["type"] = non_null[0]
+            out["nullable"] = True
+        elif len(normalized) == 1:
+            out["type"] = normalized[0]
+        # Multi-scalar unions (e.g. integer|string) stay as-is so catalog owners
+        # must fix the canonical content; CI audit will fail the artifact.
+
+    if out.get(GPT_OPAQUE_OBJECT_EXTENSION) is True and not str(
+        out.get("description") or ""
+    ).strip():
+        out["description"] = (
+            "Intentionally opaque object for GPT Builder import "
+            f"({GPT_OPAQUE_OBJECT_EXTENSION})."
+        )
+
     return out
 
 
@@ -494,12 +518,11 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "operationId": "gpt_get_catalog",
                 "summary": "TV presentation mutation capability catalog",
                 "description": (
-                    "Returns catalogVersion, compact operations index (risk/requires/"
-                    "requiredFields — not full JSON Schemas), capabilities, "
-                    "capability_surface.agent_directives. Full op schemas live in this "
-                    "Action OpenAPI requestBody oneOf. Call before writes; obey "
-                    "agent_directives. Catalog informs; backend authorizes. "
-                    "Requires tv-dashboard.write."
+                    "Returns catalogVersion, compact ops index (risk/requires/"
+                    "requiredFields — not full JSON Schemas), capabilities, and "
+                    "capability_surface.agent_directives. Full op schemas are in "
+                    "this OpenAPI requestBody oneOf. Call before writes; obey "
+                    "agent_directives. Backend authorizes. Requires tv-dashboard.write."
                 ),
                 "tags": [tag],
                 "security": [{"BearerAuth": []}],
