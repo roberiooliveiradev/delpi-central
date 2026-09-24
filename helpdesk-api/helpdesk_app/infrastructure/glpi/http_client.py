@@ -383,29 +383,53 @@ class HttpxGlpiClient:
         except Exception:
             logger.exception("glpi_hlapi_profile_users_failed profile_id=%s", profile_id)
 
-        # 2) Legacy apirest Profile → Profile_User (same session used for H12).
+        # 2) Legacy apirest — Technician token often lacks Profile_User nested read (403).
+        # Prefer search/User (profiles_id field 20), proven on GLPI 11 prod.
         if not self._legacy_ready():
             return set()
         session_token = self._legacy_init_session()
         try:
-            rows = self._legacy_get_json(
-                session_token,
-                f"/apirest.php/Profile/{int(profile_id)}/Profile_User?range=0-999",
-            )
-            found = parse_profile_user_ids(rows if isinstance(rows, (list, dict)) else [])
-            if found:
-                return found
-            # search/Profile_User: field 3 = profiles_id, forcedisplay 2 = users_id
-            search = self._legacy_get_json(
+            try:
+                rows = self._legacy_get_json(
+                    session_token,
+                    f"/apirest.php/Profile/{int(profile_id)}/Profile_User?range=0-999",
+                )
+                found = parse_profile_user_ids(rows if isinstance(rows, (list, dict)) else [])
+                if found:
+                    return found
+            except (GlpiForbidden, GlpiNotFound, GlpiValidation, GlpiUnavailable, GlpiUnauthorized):
+                pass
+
+            try:
+                # search/Profile_User: field 3 = profiles_id, forcedisplay 2 = users_id
+                search = self._legacy_get_json(
+                    session_token,
+                    (
+                        "/apirest.php/search/Profile_User?"
+                        f"criteria[0][field]=3&criteria[0][searchtype]=equals"
+                        f"&criteria[0][value]={int(profile_id)}"
+                        "&forcedisplay[0]=2&range=0-999"
+                    ),
+                )
+                found = parse_profile_user_ids(search if isinstance(search, (list, dict)) else [])
+                if found:
+                    return found
+            except (GlpiForbidden, GlpiNotFound, GlpiValidation, GlpiUnavailable, GlpiUnauthorized):
+                pass
+
+            # search/User: field 20 = profiles_id (name shown; equals by id works)
+            search_users = self._legacy_get_json(
                 session_token,
                 (
-                    "/apirest.php/search/Profile_User?"
-                    f"criteria[0][field]=3&criteria[0][searchtype]=equals"
+                    "/apirest.php/search/User?"
+                    f"criteria[0][field]=20&criteria[0][searchtype]=equals"
                     f"&criteria[0][value]={int(profile_id)}"
                     "&forcedisplay[0]=2&range=0-999"
                 ),
             )
-            return parse_profile_user_ids(search if isinstance(search, (list, dict)) else [])
+            return parse_profile_user_ids(
+                search_users if isinstance(search_users, (list, dict)) else []
+            )
         finally:
             self._legacy_kill_session(session_token)
 

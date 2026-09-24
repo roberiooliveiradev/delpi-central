@@ -1030,3 +1030,69 @@ def test_legacy_cycle_accept_reject_satisfaction():
     assert any("ITILFollowup" in item for item in calls)
     assert any("TicketSatisfaction" in item for item in calls)
 
+
+def test_list_technician_user_ids_falls_back_to_search_user_when_profile_user_forbidden():
+    """Prod GLPI: HLAPI Profile/User 404 + Profile_User 403; search/User field 20 works."""
+    from helpdesk_app.infrastructure.glpi.mapping import parse_profile_user_ids
+
+    assert parse_profile_user_ids(
+        {
+            "totalcount": 3,
+            "data": [
+                {"1": "tech", "2": 4, "20": "Technician"},
+                {"1": "Michael", "2": 8, "20": "Technician"},
+                {"1": "minha-delpi-upload", "2": 75, "20": "Technician"},
+            ],
+        }
+    ) == {4, 8, 75}
+
+    paths: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        path = request.url.path
+        query = str(request.url)
+        paths.append(f"{request.method} {path}")
+        if "/Administration/Profile/6/User" in path:
+            return httpx.Response(404, json={"error": "missing"})
+        if path.endswith("/apirest.php/initSession"):
+            return httpx.Response(200, json={"session_token": "sess-tech"})
+        if path.endswith("/apirest.php/killSession"):
+            return httpx.Response(200, json={})
+        if "/Profile/6/Profile_User" in path:
+            return httpx.Response(
+                403,
+                json=["ERROR_RIGHT_MISSING", "Você não tem permissão para executar essa ação."],
+            )
+        if "/search/Profile_User" in path:
+            return httpx.Response(200, json={"totalcount": 0, "count": 0, "data": []})
+        if "/search/User" in path:
+            assert "criteria[0][field]=20" in query or "criteria%5B0%5D%5Bfield%5D=20" in query
+            assert "value]=6" in query or "value%5D=6" in query
+            return httpx.Response(
+                200,
+                json={
+                    "totalcount": 3,
+                    "count": 3,
+                    "data": [
+                        {"1": "tech", "2": 4, "20": "Technician"},
+                        {"1": "Michael", "2": 8, "20": "Technician"},
+                        {"1": "minha-delpi-upload", "2": 75, "20": "Technician"},
+                    ],
+                },
+            )
+        return httpx.Response(404, json={"error": "missing"})
+
+    client = HttpxGlpiClient(
+        base_url="https://glpi.example",
+        client_id="id",
+        client_secret="super-secret",
+        redirect_uri="https://centraldelpi.com.br/apps/helpdesk-api/auth/glpi/callback",
+        assignee_profile_ids=(6,),
+        legacy_upload_enabled=True,
+        legacy_app_token="app-token-x",
+        legacy_user_token="user-token-x",
+        transport=httpx.MockTransport(handler),
+    )
+    assert client.list_technician_user_ids("oauth") == {4, 8, 75}
+    assert any("search/User" in item for item in paths)
+
