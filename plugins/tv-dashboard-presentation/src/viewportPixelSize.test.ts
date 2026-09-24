@@ -17,6 +17,13 @@ describe("resolveViewportPixelSize", () => {
     });
   });
 
+  it("prefere dims materializados do backend mesmo em perfil nomeado", () => {
+    expect(resolveViewportPixelSize("1080p", { width: 1280, height: 720 })).toEqual({
+      width: 1280,
+      height: 720,
+    });
+  });
+
   it("cai em 1080p para perfil ausente ou inválido", () => {
     expect(resolveViewportPixelSize(undefined)).toEqual({ width: 1920, height: 1080 });
     expect(resolveViewportPixelSize("nope")).toEqual({ width: 1920, height: 1080 });

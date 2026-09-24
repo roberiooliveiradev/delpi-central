@@ -58,19 +58,23 @@ export function isCustomViewportProfile(profile?: string | null): boolean {
 }
 
 /**
- * Resolve px de design. Custom exige width/height válidos; senão cai em 1080p.
+ * Resolve px de design.
+ *
+ * Preferência (PRESENTATION-001): width/height materializados pelo backend
+ * (playlist/present payload) — autoridade de tela. Fallback local só para
+ * drafts/offline antes do ack da API.
  */
 export function resolveViewportPixelSize(
   profile?: string | null,
   dims?: ResolveViewportPixelSizeOptions | null,
 ): ViewportPixelSize {
+  const width = Number(dims?.width);
+  const height = Number(dims?.height);
+  if (Number.isFinite(width) && Number.isFinite(height) && width > 0 && height > 0) {
+    return { width: clampDesignPx(width), height: clampDesignPx(height) };
+  }
   const key = (profile ?? "1080p").trim() || "1080p";
   if (key === VIEWPORT_CUSTOM_PROFILE) {
-    const width = Number(dims?.width);
-    const height = Number(dims?.height);
-    if (Number.isFinite(width) && Number.isFinite(height) && width > 0 && height > 0) {
-      return { width: clampDesignPx(width), height: clampDesignPx(height) };
-    }
     return VIEWPORT_PIXEL_SIZES["1080p"];
   }
   return VIEWPORT_PIXEL_SIZES[key] ?? VIEWPORT_PIXEL_SIZES["1080p"];

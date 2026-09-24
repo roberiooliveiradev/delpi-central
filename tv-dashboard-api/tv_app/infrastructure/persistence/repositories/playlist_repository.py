@@ -36,17 +36,20 @@ def _utcnow() -> datetime:
 
 
 def _row_to_playlist(row: dict[str, Any]) -> dict[str, Any]:
+    from tv_app.application.services.viewport_profile_service import (
+        viewport_fields_from_playlist_row,
+    )
+
     owner = row.get("owner_user_id") or row.get("created_by")
-    width = row.get("viewport_width")
-    height = row.get("viewport_height")
+    viewport = viewport_fields_from_playlist_row(row)
     return {
         "id": str(row["id"]),
         "publicToken": row["public_token"],
         "name": row["name"],
         "description": row["description"],
-        "viewportProfile": row["viewport_profile"],
-        "viewportWidth": int(width) if width is not None else None,
-        "viewportHeight": int(height) if height is not None else None,
+        "viewportProfile": viewport["viewportProfile"],
+        "viewportWidth": viewport["viewportWidth"],
+        "viewportHeight": viewport["viewportHeight"],
         "transitionStyle": row["transition_style"],
         "defaultDurationSec": row["default_duration_sec"],
         "playbackMode": row.get("playback_mode") or "presentation",

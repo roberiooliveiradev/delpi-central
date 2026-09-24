@@ -19,6 +19,9 @@ from tv_app.application.services.tv_dashboard_content_service import (
     heartbeat_interval_sec,
     presentation_setting_int,
 )
+from tv_app.application.services.viewport_profile_service import (
+    resolve_effective_viewport_px,
+)
 from tv_app.config import settings
 from tv_app.infrastructure.persistence.repositories.playlist_repository import (
     PlaylistNotFoundError,
@@ -227,14 +230,20 @@ class PresentationPayloadService:
                         native["data"] = {**data, "master": effective_master}
             rendered_slides.append(item)
 
+        vp_profile, vp_w, vp_h = resolve_effective_viewport_px(
+            viewport_profile=playlist.get("viewportProfile") or "1080p",
+            viewport_width=playlist.get("viewportWidth"),
+            viewport_height=playlist.get("viewportHeight"),
+        )
+
         return {
             "playlist": {
                 "id": playlist["id"],
                 "name": playlist["name"],
                 "description": playlist.get("description"),
-                "viewportProfile": playlist.get("viewportProfile") or "1080p",
-                "viewportWidth": playlist.get("viewportWidth"),
-                "viewportHeight": playlist.get("viewportHeight"),
+                "viewportProfile": vp_profile,
+                "viewportWidth": vp_w,
+                "viewportHeight": vp_h,
                 "transitionStyle": playlist_transition,
                 "globalRefreshSec": playlist.get("globalRefreshSec") or 300,
                 "defaultDurationSec": default_duration,
