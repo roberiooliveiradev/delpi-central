@@ -162,7 +162,7 @@ def test_authorization_url_rejects_non_numeric_idp():
         client.authorization_url(state="abc", code_challenge="challenge")
 
 
-def test_mapping_keeps_followups_and_hides_tasks():
+def test_mapping_keeps_followups_and_tasks():
     detail = parse_ticket_detail(
         {
             "id": 4,
@@ -189,7 +189,7 @@ def test_mapping_keeps_followups_and_hides_tasks():
     assert detail.urgency == "Baixa"
     assert detail.timeline[0].content == "Cabo ok"
     assert detail.attachments == ()
-    assert [entry.kind for entry in detail.timeline] == ["followup"]
+    assert [entry.kind for entry in detail.timeline] == ["followup", "task"]
     categories = parse_categories({"results": [{"id": 2, "completename": "TI > Rede"}]})
     assert categories[0].name == "TI > Rede"
 
@@ -231,10 +231,12 @@ def test_mapping_keeps_solution_and_hides_validation():
             ]
         },
     )
-    assert [entry.kind for entry in detail.timeline] == ["followup", "solution"]
+    # Validation stays on validations[] surface; Task is now part of workspace timeline.
+    assert [entry.kind for entry in detail.timeline] == ["followup", "solution", "task"]
     assert detail.timeline[1].content == "Cliente reiniciado; VPN ok."
     assert "<p>" not in detail.timeline[1].content
     assert "Cliente reiniciado" in detail.timeline[1].content_html
+    assert detail.timeline[2].content == "tarefa interna"
 
 
 def test_parse_categories_keeps_helpdesk_visible_and_drops_internal():
@@ -436,7 +438,7 @@ def test_mapping_leaves_unrepairable_marker_unchanged():
     assert detail.description == "Sem tag"
 
 
-def test_mapping_keeps_followup_and_document_and_hides_task():
+def test_mapping_keeps_followup_document_and_task():
     from helpdesk_app.domain.models import Attachment
     from helpdesk_app.infrastructure.glpi.mapping import attachment_filename
 
@@ -460,7 +462,7 @@ def test_mapping_keeps_followup_and_document_and_hides_task():
             {"type": "Document", "item": {"documents_id": 4, "name": "foto.jpg", "mime": "image/jpeg"}},
         ],
     )
-    assert [entry.content for entry in detail.timeline] == ["Cabo ok"]
+    assert [entry.content for entry in detail.timeline] == ["Cabo ok", "interno"]
     assert detail.attachments == (
         Attachment(2, "logo.png", "image/png"),
         Attachment(4, "foto.jpg", "image/jpeg"),
@@ -533,7 +535,7 @@ def test_mapping_publishes_requester_and_hides_private_followup():
     assert detail.assigned_display_name == "Técnico"
     assert detail.created_at == "2026-09-21T10:00:00Z"
     assert detail.description == "Texto da abertura"
-    assert [entry.content for entry in detail.timeline] == ["Público"]
+    assert [entry.content for entry in detail.timeline] == ["Público", "interno"]
 
 
 def test_list_query_uses_rsql_and_rejects_injection():

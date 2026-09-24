@@ -69,6 +69,9 @@ class FakeGlpi:
         self.downloaded = []
         self.created = []
         self.followups = []
+        self.solutions: list[tuple[int, str]] = []
+        self.tasks: list[tuple[int, str]] = []
+        self.created_validations: list[tuple[int, int, str]] = []
         self.observers = []
         self.assignees = []
         self.removed_assignees = []
@@ -228,6 +231,85 @@ class FakeGlpi:
             raise GlpiNotFound("ausente")
         self.followups.append((ticket_id, content))
         return 8
+
+    def add_ticket_solution(self, access_token: str, ticket_id: int, content: str):
+        from dataclasses import replace
+
+        self.calls += 1
+        assert access_token
+        if ticket_id == 99:
+            raise GlpiNotFound("ausente")
+        solution_id = 50 + len(self.solutions)
+        self.solutions.append((ticket_id, content))
+        if self.detail.id == ticket_id:
+            entry = TimelineEntry(
+                solution_id,
+                "solution",
+                content,
+                "2026-09-24T12:00:00Z",
+                "Ana",
+            )
+            self.detail = replace(
+                self.detail,
+                status_id=5,
+                status="Solucionado",
+                timeline=self.detail.timeline + (entry,),
+            )
+        return solution_id
+
+    def add_ticket_task(self, access_token: str, ticket_id: int, content: str):
+        from dataclasses import replace
+
+        self.calls += 1
+        assert access_token
+        if ticket_id == 99:
+            raise GlpiNotFound("ausente")
+        task_id = 60 + len(self.tasks)
+        self.tasks.append((ticket_id, content))
+        if self.detail.id == ticket_id:
+            entry = TimelineEntry(
+                task_id,
+                "task",
+                content,
+                "2026-09-24T12:05:00Z",
+                "Ana",
+            )
+            self.detail = replace(
+                self.detail,
+                timeline=self.detail.timeline + (entry,),
+            )
+        return task_id
+
+    def create_ticket_validation(
+        self,
+        access_token: str,
+        ticket_id: int,
+        *,
+        approver_user_id: int,
+        comment: str = "",
+    ):
+        from dataclasses import replace
+        from helpdesk_app.domain.models import TicketValidation
+
+        self.calls += 1
+        assert access_token
+        if ticket_id == 99:
+            raise GlpiNotFound("ausente")
+        validation_id = 70 + len(self.created_validations)
+        self.created_validations.append((ticket_id, int(approver_user_id), comment))
+        if self.detail.id == ticket_id:
+            item = TicketValidation(
+                id=validation_id,
+                status=2,
+                submission_comment=str(comment or ""),
+                requested_approver_id=int(approver_user_id),
+                mine_to_decide=False,
+            )
+            self.detail = replace(
+                self.detail,
+                validations=self.detail.validations + (item,),
+            )
+        return validation_id
 
     def download_attachment(self, access_token: str, document_id: int):
         self.calls += 1

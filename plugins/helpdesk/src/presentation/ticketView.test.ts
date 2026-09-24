@@ -256,7 +256,7 @@ describe("conversationMessages", () => {
     expect(messages[0]?.attachmentIds).toEqual([2]);
   });
 
-  it("não marca ninguém como meu quando o solicitante vem vazio e ignora tarefa", () => {
+  it("mostra tarefa da timeline com título Tarefa", () => {
     const messages = conversationMessages(
       {
         title: "Rede",
@@ -276,13 +276,12 @@ describe("conversationMessages", () => {
       },
       now,
     );
-    expect(messages).toHaveLength(1);
+    expect(messages).toHaveLength(2);
     expect(messages[0]?.mine).toBe(false);
     expect(messages[0]?.createdAtLabel).toBe("");
-    expect(messages.some((message) => message.kind === "followup" && message.bodyText === "interno")).toBe(
-      false,
-    );
-    expect(messages.map((message) => message.kind)).not.toContain("task");
+    expect(messages[1]?.kind).toBe("task");
+    expect(messages[1]?.headingText).toBe("Tarefa");
+    expect(messages[1]?.bodyText).toBe("interno");
   });
 
   it("mostra a solução da timeline com título Solução e ignora validation", () => {

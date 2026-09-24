@@ -172,7 +172,8 @@ describe("Helpdesk list UX structural", () => {
     expect(assignPopover).toMatch(/canAssign \? \(/);
     expect(context).not.toContain('className="helpdesk-assign-panel"');
     expect(picker).toContain("listUsers");
-    expect(picker).toContain('purpose: "assignee"');
+    expect(picker).toContain("purpose");
+    expect(picker).toContain('"assignee"');
     expect(picker).toContain("UserDirectoryPicker");
     expect(picker).toContain("createInitialsAvatar");
     expect(picker).toContain("useDirectoryUserPhotoUrls");

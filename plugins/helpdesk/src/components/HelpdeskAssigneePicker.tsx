@@ -20,11 +20,14 @@ type Props = {
   onChange: (user: HelpdeskAssigneeValue | null) => void;
   disabled?: boolean;
   emptyLabel?: string;
+  /** BFF listUsers purpose — assignee (technicians) or mention (broader catalog). */
+  purpose?: "assignee" | "mention";
+  placeholder?: string;
 };
 
 /**
- * Técnico atribuído — busca só técnicos GLPI (BFF purpose=assignee) e grava o id GLPI.
- * Avatar usa foto Minha DELPI quando `has_photo` + `directory_user_id`.
+ * User picker backed by Helpdesk BFF `/users`.
+ * Default purpose=assignee (técnicos atribuíveis). Use purpose=mention for approver search.
  */
 export function HelpdeskAssigneePicker({
   label,
@@ -33,6 +36,8 @@ export function HelpdeskAssigneePicker({
   onChange,
   disabled = false,
   emptyLabel = "Sem técnico",
+  purpose = "assignee",
+  placeholder = "Buscar por nome ou e-mail…",
 }: Props) {
   const [searching, setSearching] = useState(false);
   const [resultOptions, setResultOptions] = useState<DirectoryUserOption[]>([]);
@@ -50,7 +55,7 @@ export function HelpdeskAssigneePicker({
 
   const searchUsers = useCallback(
     async (query: string, limit = 10, signal?: AbortSignal): Promise<DirectoryUserOption[]> => {
-      const result = await listUsers({ q: query, limit, purpose: "assignee" }, signal);
+      const result = await listUsers({ q: query, limit, purpose }, signal);
       const mapped = (result.items || []).map((user) => ({
         id: String(user.id),
         name: (user.display_name || "").trim() || user.email || String(user.id),
@@ -61,7 +66,7 @@ export function HelpdeskAssigneePicker({
       setResultOptions(mapped);
       return mapped;
     },
-    [],
+    [purpose],
   );
 
   const selected = value ? [value] : [];
@@ -109,7 +114,7 @@ export function HelpdeskAssigneePicker({
         labels={{
           title: label,
           hint,
-          placeholder: "Buscar por nome ou e-mail…",
+          placeholder,
           searching: "Buscando…",
           empty: "Nenhum usuário encontrado.",
         }}

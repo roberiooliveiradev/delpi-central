@@ -111,6 +111,9 @@ export type TicketDetail = TicketSummary & {
   requester_mine: boolean;
   can_followup?: boolean;
   can_assign?: boolean;
+  can_create_solution?: boolean;
+  can_create_task?: boolean;
+  can_request_approval?: boolean;
   can_accept_solution?: boolean;
   can_reject_solution?: boolean;
   can_submit_satisfaction?: boolean;
@@ -243,6 +246,49 @@ export function createFollowup(ticketId: string, content: string, idempotencyKey
     },
     body: JSON.stringify({ content }),
   });
+}
+
+export function createTicketSolution(ticketId: string, content: string, idempotencyKey: string) {
+  return request<{ id: number; status_id: number | null }>(`/tickets/${ticketId}/solutions`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Idempotency-Key": idempotencyKey,
+    },
+    body: JSON.stringify({ content }),
+  });
+}
+
+export function createTicketTask(ticketId: string, content: string, idempotencyKey: string) {
+  return request<{ id: number }>(`/tickets/${ticketId}/tasks`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Idempotency-Key": idempotencyKey,
+    },
+    body: JSON.stringify({ content }),
+  });
+}
+
+export function requestTicketApproval(
+  ticketId: string,
+  body: { approver_user_id: number; content?: string },
+  idempotencyKey: string,
+) {
+  return request<{ id: number; status: number; requested_approver_id: number | null }>(
+    `/tickets/${ticketId}/validations`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Idempotency-Key": idempotencyKey,
+      },
+      body: JSON.stringify({
+        approver_user_id: body.approver_user_id,
+        content: body.content ?? "",
+      }),
+    },
+  );
 }
 
 export function acceptTicketSolution(ticketId: string, content: string, idempotencyKey: string) {

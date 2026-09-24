@@ -52,6 +52,19 @@ class GlpiGateway(Protocol):
 
     def add_followup(self, access_token: str, ticket_id: int, content: str) -> int: ...
 
+    def add_ticket_solution(self, access_token: str, ticket_id: int, content: str) -> int: ...
+
+    def add_ticket_task(self, access_token: str, ticket_id: int, content: str) -> int: ...
+
+    def create_ticket_validation(
+        self,
+        access_token: str,
+        ticket_id: int,
+        *,
+        approver_user_id: int,
+        comment: str = "",
+    ) -> int: ...
+
     def download_attachment(self, access_token: str, document_id: int) -> tuple[bytes, str]: ...
 
     def ticket_owns_document(self, access_token: str, ticket_id: int, document_id: int) -> bool: ...

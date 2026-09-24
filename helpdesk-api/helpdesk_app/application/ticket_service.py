@@ -25,6 +25,9 @@ from helpdesk_app.infrastructure.glpi.mapping import (
     normalize_observer_ids,
     search_term_variants,
     solicitante_cycle_flags,
+    ticket_allows_technician_ops,
+    timeline_has_entry,
+    timeline_has_solution,
 )
 
 logger = logging.getLogger("helpdesk.tickets")
@@ -249,6 +252,7 @@ class TicketService:
         token = self._token(subject)
         detail = self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
         detail = replace(detail, can_assign=bool(self._glpi.can_assign_tickets(token)))
+        detail = self._with_technician_ops_flags(token, detail, viewer_email=viewer_email)
         return self._with_cycle_flags(token, detail)
 
     def attachment(self, subject: str, ticket_id: int, document_id: int) -> tuple[bytes, str, str]:
@@ -419,6 +423,129 @@ class TicketService:
         self._idempotency.save(subject, operation, key, stored)
         return stored
 
+    def create_solution(
+        self,
+        subject: str,
+        ticket_id: int,
+        *,
+        content: str,
+        viewer_email: str = "",
+        idempotency_key: str | None,
+    ) -> StoredResponse:
+        key = _require_key(idempotency_key)
+        operation = f"create_solution:{ticket_id}"
+        existing = self._idempotency.get(subject, operation, key)
+        if existing is not None:
+            return existing
+        token = self._token(subject)
+        detail = self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
+        self._require_technician_ops(token, detail, viewer_email=viewer_email, action="solução")
+        content_html = _prepare_message_html(content, "content", ticket_id=ticket_id)
+        solution_id = self._glpi.add_ticket_solution(token, ticket_id, content_html)
+        refreshed = self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
+        if not (
+            timeline_has_entry(refreshed.timeline, kind="solution", entry_id=solution_id)
+            or timeline_has_solution(refreshed.timeline)
+        ):
+            raise GlpiValidation("A solução não foi confirmada no chamado.")
+        stored = StoredResponse(
+            status_code=201,
+            body={"id": solution_id, "status_id": refreshed.status_id},
+        )
+        self._idempotency.save(subject, operation, key, stored)
+        logger.info(
+            "helpdesk_create_solution ticket_id=%s solution_id=%s status_id=%s",
+            ticket_id,
+            solution_id,
+            refreshed.status_id,
+        )
+        return stored
+
+    def create_task(
+        self,
+        subject: str,
+        ticket_id: int,
+        *,
+        content: str,
+        viewer_email: str = "",
+        idempotency_key: str | None,
+    ) -> StoredResponse:
+        key = _require_key(idempotency_key)
+        operation = f"create_task:{ticket_id}"
+        existing = self._idempotency.get(subject, operation, key)
+        if existing is not None:
+            return existing
+        token = self._token(subject)
+        detail = self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
+        self._require_technician_ops(token, detail, viewer_email=viewer_email, action="tarefa")
+        content_html = _prepare_message_html(content, "content", ticket_id=ticket_id)
+        task_id = self._glpi.add_ticket_task(token, ticket_id, content_html)
+        refreshed = self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
+        if not timeline_has_entry(refreshed.timeline, kind="task", entry_id=task_id):
+            raise GlpiValidation("A tarefa não foi confirmada no chamado.")
+        stored = StoredResponse(status_code=201, body={"id": task_id})
+        self._idempotency.save(subject, operation, key, stored)
+        logger.info("helpdesk_create_task ticket_id=%s task_id=%s", ticket_id, task_id)
+        return stored
+
+    def request_approval(
+        self,
+        subject: str,
+        ticket_id: int,
+        *,
+        approver_user_id: int,
+        content: str = "",
+        viewer_email: str = "",
+        idempotency_key: str | None,
+    ) -> StoredResponse:
+        key = _require_key(idempotency_key)
+        operation = f"request_approval:{ticket_id}"
+        existing = self._idempotency.get(subject, operation, key)
+        if existing is not None:
+            return existing
+        token = self._token(subject)
+        detail = self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
+        self._require_technician_ops(token, detail, viewer_email=viewer_email, action="aprovação")
+        try:
+            approver_id = int(approver_user_id)
+        except (TypeError, ValueError) as exc:
+            raise GlpiValidation("approver_user_id inválido.") from exc
+        if approver_id <= 0:
+            raise GlpiValidation("approver_user_id inválido.")
+        # Approver must exist in the user catalog readable by this session.
+        catalog = self._glpi.list_users(token, q=str(approver_id), limit=20)
+        if not any(int(getattr(user, "id", 0) or 0) == approver_id for user in catalog):
+            raise GlpiValidation("Aprovador inválido ou inacessível.")
+        comment = (content or "").strip()
+        if comment:
+            comment = _prepare_message_html(comment, "content", ticket_id=ticket_id)
+        validation_id = self._glpi.create_ticket_validation(
+            token,
+            ticket_id,
+            approver_user_id=approver_id,
+            comment=comment,
+        )
+        refreshed = self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
+        match = next((item for item in refreshed.validations if item.id == validation_id), None)
+        if match is None:
+            raise GlpiValidation("A solicitação de aprovação não foi confirmada.")
+        stored = StoredResponse(
+            status_code=201,
+            body={
+                "id": validation_id,
+                "status": match.status,
+                "requested_approver_id": match.requested_approver_id,
+            },
+        )
+        self._idempotency.save(subject, operation, key, stored)
+        logger.info(
+            "helpdesk_request_approval ticket_id=%s validation_id=%s approver=%s",
+            ticket_id,
+            validation_id,
+            approver_id,
+        )
+        return stored
+
     def accept_solution(
         self,
         subject: str,
@@ -575,6 +702,59 @@ class TicketService:
         )
         self._idempotency.save(subject, operation, key, stored)
         return stored
+
+    def _viewer_is_technician(self, token: str, viewer_email: str) -> bool:
+        """True when viewer email resolves to a GLPI technician-profile user."""
+        email = (viewer_email or "").strip().lower()
+        if "@" not in email:
+            return False
+        try:
+            tech_ids = set(self._glpi.list_technician_user_ids(token))
+        except Exception:
+            logger.info("helpdesk_technician_catalog_unavailable")
+            return False
+        if not tech_ids:
+            return False
+        try:
+            user = self._glpi.find_user_by_email(token, email)
+        except Exception:
+            return False
+        if user is None:
+            return False
+        try:
+            return int(user.id) in tech_ids
+        except (TypeError, ValueError):
+            return False
+
+    def _require_technician_ops(
+        self,
+        token: str,
+        detail: TicketDetail,
+        *,
+        viewer_email: str,
+        action: str,
+    ) -> None:
+        if not ticket_allows_technician_ops(detail.status_id):
+            raise GlpiValidation(f"Não é possível adicionar {action} em chamado fechado.")
+        if not self._viewer_is_technician(token, viewer_email):
+            raise GlpiForbidden(f"Sem permissão para adicionar {action}.")
+
+    def _with_technician_ops_flags(
+        self,
+        token: str,
+        detail: TicketDetail,
+        *,
+        viewer_email: str,
+    ) -> TicketDetail:
+        allowed = ticket_allows_technician_ops(detail.status_id) and self._viewer_is_technician(
+            token, viewer_email
+        )
+        return replace(
+            detail,
+            can_create_solution=allowed,
+            can_create_task=allowed,
+            can_request_approval=allowed,
+        )
 
     def _with_cycle_flags(self, token: str, detail: TicketDetail) -> TicketDetail:
         legacy_on = True

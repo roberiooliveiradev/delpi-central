@@ -15,6 +15,8 @@ import {
   beginGlpiLink,
   createFollowup,
   createTicket,
+  createTicketSolution,
+  createTicketTask,
   fetchTicketAttachmentBlob,
   getSessionCapabilities,
   getTicket,
@@ -24,6 +26,7 @@ import {
   listUsers,
   rejectTicketSolution,
   rejectTicketValidation,
+  requestTicketApproval,
   setTicketAssignee,
   submitTicketSatisfaction,
   uploadTicketAttachment,
@@ -1039,6 +1042,10 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
   const [activeAction, setActiveAction] = useState<TicketWorkspaceActionId | null>("reply");
   const [documentFiles, setDocumentFiles] = useState<File[]>([]);
   const documentInputRef = useRef<HTMLInputElement>(null);
+  const [solutionContent, setSolutionContent] = useState("");
+  const [taskContent, setTaskContent] = useState("");
+  const [approvalContent, setApprovalContent] = useState("");
+  const [approverPick, setApproverPick] = useState<HelpdeskAssigneeValue | null>(null);
   /** Bumps resolve identity after IDB seed (create parity). */
   const [pendingHydrated, setPendingHydrated] = useState(0);
   const myPhotoUrl = useMyPersonProfilePhoto();
@@ -1136,6 +1143,9 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
   }, [
     ticket?.id,
     ticket?.can_followup,
+    ticket?.can_create_solution,
+    ticket?.can_create_task,
+    ticket?.can_request_approval,
     ticket?.can_accept_solution,
     ticket?.can_reject_solution,
   ]);
@@ -1187,15 +1197,32 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
 
   function selectWorkspaceAction(next: TicketWorkspaceActionId) {
     if (next === activeAction) return;
+    const dirty =
+      (activeAction === "reply" && hasVisibleRichText(content)) ||
+      (activeAction === "create_solution" && hasVisibleRichText(solutionContent)) ||
+      (activeAction === "create_task" && hasVisibleRichText(taskContent)) ||
+      (activeAction === "request_approval" &&
+        (hasVisibleRichText(approvalContent) || Boolean(approverPick))) ||
+      (activeAction === "attach_file" && documentFiles.length > 0);
     if (
-      activeAction === "reply" &&
-      hasVisibleRichText(content) &&
+      dirty &&
       typeof window !== "undefined" &&
-      !window.confirm("Há uma resposta em edição. Descartar o rascunho e trocar de ação?")
+      !window.confirm("Há conteúdo em edição. Descartar o rascunho e trocar de ação?")
     ) {
       return;
     }
     setActiveAction(next);
+  }
+
+  function cancelActiveActionForm() {
+    if (activeAction === "create_solution") setSolutionContent("");
+    if (activeAction === "create_task") setTaskContent("");
+    if (activeAction === "request_approval") {
+      setApprovalContent("");
+      setApproverPick(null);
+    }
+    if (activeAction === "attach_file") setDocumentFiles([]);
+    setActiveAction(defaultTicketWorkspaceAction(workspaceActions));
   }
 
   const workspaceActions = ticket ? ticketWorkspaceActions(ticket) : [];
@@ -1740,7 +1767,173 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                               </HelpdeskFormActions>
                             </div>
                           ) : null}
-                          {activeAction === "add_document" ? (
+                          {activeAction === "create_solution" ? (
+                            <form
+                              className="helpdesk-reply-form"
+                              onSubmit={(event) => {
+                                event.preventDefault();
+                                if (saving || !hasVisibleRichText(solutionContent)) return;
+                                setSaving(true);
+                                setErrorText(null);
+                                void createTicketSolution(
+                                  ticketId,
+                                  solutionContent.trim(),
+                                  idempotencyKey,
+                                )
+                                  .then(() => {
+                                    setSolutionContent("");
+                                    setIdempotencyKey(newIdempotencyKey());
+                                    setActiveAction("reply");
+                                    load();
+                                  })
+                                  .catch((error) => setErrorText(messageFor(error).text))
+                                  .finally(() => setSaving(false));
+                              }}
+                            >
+                              <HelpdeskRichTextField
+                                label="Solução"
+                                value={solutionContent}
+                                onChange={setSolutionContent}
+                                minHeight={144}
+                                enableMentions
+                              />
+                              <HelpdeskFormActions align="end">
+                                <ActionButton
+                                  type="button"
+                                  variant="ghost"
+                                  disabled={saving}
+                                  onClick={cancelActiveActionForm}
+                                >
+                                  Cancelar
+                                </ActionButton>
+                                <ActionButton
+                                  variant="primary"
+                                  type="submit"
+                                  disabled={saving || !hasVisibleRichText(solutionContent)}
+                                >
+                                  {saving ? "Salvando…" : "Adicionar solução"}
+                                </ActionButton>
+                              </HelpdeskFormActions>
+                            </form>
+                          ) : null}
+                          {activeAction === "create_task" ? (
+                            <form
+                              className="helpdesk-reply-form"
+                              onSubmit={(event) => {
+                                event.preventDefault();
+                                if (saving || !hasVisibleRichText(taskContent)) return;
+                                setSaving(true);
+                                setErrorText(null);
+                                void createTicketTask(ticketId, taskContent.trim(), idempotencyKey)
+                                  .then(() => {
+                                    setTaskContent("");
+                                    setIdempotencyKey(newIdempotencyKey());
+                                    setActiveAction("reply");
+                                    load();
+                                  })
+                                  .catch((error) => setErrorText(messageFor(error).text))
+                                  .finally(() => setSaving(false));
+                              }}
+                            >
+                              <HelpdeskRichTextField
+                                label="Tarefa"
+                                value={taskContent}
+                                onChange={setTaskContent}
+                                minHeight={144}
+                                enableMentions
+                              />
+                              <HelpdeskFormActions align="end">
+                                <ActionButton
+                                  type="button"
+                                  variant="ghost"
+                                  disabled={saving}
+                                  onClick={cancelActiveActionForm}
+                                >
+                                  Cancelar
+                                </ActionButton>
+                                <ActionButton
+                                  variant="primary"
+                                  type="submit"
+                                  disabled={saving || !hasVisibleRichText(taskContent)}
+                                >
+                                  {saving ? "Criando…" : "Criar tarefa"}
+                                </ActionButton>
+                              </HelpdeskFormActions>
+                            </form>
+                          ) : null}
+                          {activeAction === "request_approval" ? (
+                            <form
+                              className="helpdesk-reply-form"
+                              onSubmit={(event) => {
+                                event.preventDefault();
+                                const approverId = Number(approverPick?.id || 0);
+                                if (saving || !Number.isFinite(approverId) || approverId <= 0) return;
+                                setSaving(true);
+                                setErrorText(null);
+                                void requestTicketApproval(
+                                  ticketId,
+                                  {
+                                    approver_user_id: approverId,
+                                    content: approvalContent.trim(),
+                                  },
+                                  idempotencyKey,
+                                )
+                                  .then(() => {
+                                    setApprovalContent("");
+                                    setApproverPick(null);
+                                    setIdempotencyKey(newIdempotencyKey());
+                                    setActiveAction("reply");
+                                    load();
+                                  })
+                                  .catch((error) => setErrorText(messageFor(error).text))
+                                  .finally(() => setSaving(false));
+                              }}
+                            >
+                              <div className="helpdesk-ticket-workspace__approval-approver">
+                                <span className="helpdesk-ticket-workspace__field-label">
+                                  Aprovador
+                                </span>
+                                <HelpdeskAssigneePicker
+                                  label="Aprovador"
+                                  value={approverPick}
+                                  onChange={setApproverPick}
+                                  disabled={saving}
+                                  purpose="mention"
+                                  placeholder="Buscar aprovador…"
+                                  emptyLabel="Nenhum aprovador selecionado"
+                                />
+                              </div>
+                              <HelpdeskRichTextField
+                                label="Mensagem"
+                                value={approvalContent}
+                                onChange={setApprovalContent}
+                                minHeight={120}
+                                enableMentions
+                              />
+                              <HelpdeskFormActions align="end">
+                                <ActionButton
+                                  type="button"
+                                  variant="ghost"
+                                  disabled={saving}
+                                  onClick={cancelActiveActionForm}
+                                >
+                                  Cancelar
+                                </ActionButton>
+                                <ActionButton
+                                  variant="primary"
+                                  type="submit"
+                                  disabled={
+                                    saving ||
+                                    !approverPick?.id ||
+                                    !Number.isFinite(Number(approverPick.id))
+                                  }
+                                >
+                                  {saving ? "Enviando…" : "Pedir aprovação"}
+                                </ActionButton>
+                              </HelpdeskFormActions>
+                            </form>
+                          ) : null}
+                          {activeAction === "attach_file" ? (
                             <div className="helpdesk-ticket-workspace__document">
                               <input
                                 ref={documentInputRef}
@@ -1765,6 +1958,14 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                                 </ul>
                               ) : null}
                               <HelpdeskFormActions align="end">
+                                <ActionButton
+                                  type="button"
+                                  variant="ghost"
+                                  disabled={saving}
+                                  onClick={cancelActiveActionForm}
+                                >
+                                  Cancelar
+                                </ActionButton>
                                 <ActionButton
                                   type="button"
                                   variant="ghost"
@@ -1800,7 +2001,7 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                                     })();
                                   }}
                                 >
-                                  {saving ? "Enviando…" : "Adicionar documento"}
+                                  {saving ? "Enviando…" : "Anexar arquivo"}
                                 </ActionButton>
                               </HelpdeskFormActions>
                             </div>

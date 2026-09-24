@@ -759,3 +759,87 @@ def test_validation_accept_reject_for_designated_approver():
     )
     assert foreign.status_code == 403
 
+
+
+def test_create_solution_task_approval_for_technician_only():
+    from dataclasses import replace
+
+    client, glpi = build_client()
+    link(client)
+    tech = {**auth_headers(), "x-email": "ana.silva@delpi.com.br"}
+    non_tech = {**auth_headers(), "x-email": "rh_ues@delpi.com.br"}
+
+    detail = client.get("/tickets/7", headers=tech)
+    assert detail.status_code == 200
+    body = detail.json()
+    assert body["can_create_solution"] is True
+    assert body["can_create_task"] is True
+    assert body["can_request_approval"] is True
+
+    denied_detail = client.get("/tickets/7", headers=non_tech)
+    assert denied_detail.json()["can_create_solution"] is False
+    assert denied_detail.json()["can_create_task"] is False
+    assert denied_detail.json()["can_request_approval"] is False
+
+    forbidden = client.post(
+        "/tickets/7/solutions",
+        json={"content": "<p>solucao</p>"},
+        headers={**non_tech, "Idempotency-Key": "sol-deny"},
+    )
+    assert forbidden.status_code == 403
+
+    created = client.post(
+        "/tickets/7/solutions",
+        json={"content": "<p>solucao tecnica</p>"},
+        headers={**tech, "Idempotency-Key": "sol-ok"},
+    )
+    assert created.status_code == 201
+    assert created.json()["id"] >= 50
+    assert glpi.solutions[-1][0] == 7
+    assert any(entry["kind"] == "solution" for entry in client.get("/tickets/7", headers=tech).json()["timeline"])
+
+    task = client.post(
+        "/tickets/7/tasks",
+        json={"content": "<p>tarefa</p>"},
+        headers={**tech, "Idempotency-Key": "task-ok"},
+    )
+    assert task.status_code == 201
+    assert any(entry["kind"] == "task" for entry in client.get("/tickets/7", headers=tech).json()["timeline"])
+
+    approval = client.post(
+        "/tickets/7/validations",
+        json={"approver_user_id": 22, "content": "<p>preciso aprovar</p>"},
+        headers={**tech, "Idempotency-Key": "apr-ok"},
+    )
+    assert approval.status_code == 201
+    assert approval.json()["requested_approver_id"] == 22
+    assert glpi.created_validations[-1][:2] == (7, 22)
+
+    bad_approver = client.post(
+        "/tickets/7/validations",
+        json={"approver_user_id": 404},
+        headers={**tech, "Idempotency-Key": "apr-bad"},
+    )
+    assert bad_approver.status_code == 422
+
+    glpi.detail = replace(glpi.detail, status_id=6, status="Fechado", can_followup=False)
+    closed = client.post(
+        "/tickets/7/solutions",
+        json={"content": "<p>depois de fechado</p>"},
+        headers={**tech, "Idempotency-Key": "sol-closed"},
+    )
+    assert closed.status_code == 422
+
+
+def test_create_solution_requires_idempotency_and_auth():
+    client, _glpi = build_client()
+    # Middleware test harness rejects empty subject as forbidden (not 401).
+    assert client.post("/tickets/7/solutions", json={"content": "x"}).status_code == 403
+    link(client)
+    tech = {**auth_headers(), "x-email": "ana.silva@delpi.com.br"}
+    missing = client.post(
+        "/tickets/7/solutions",
+        json={"content": "<p>sem chave</p>"},
+        headers=tech,
+    )
+    assert missing.status_code == 400

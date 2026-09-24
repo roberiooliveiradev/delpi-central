@@ -311,7 +311,7 @@ export type ConversationSource = {
 
 export type ConversationMessage = {
   id: string;
-  kind: "opening" | "followup" | "solution";
+  kind: "opening" | "followup" | "solution" | "task";
   headingText: string;
   bodyText: string;
   bodyHtml: string;
@@ -445,14 +445,18 @@ export function conversationMessages(ticket: ConversationSource, now: Date): Con
     attachmentIds: ticket.attachments.map((file) => file.document_id),
   };
   const replies = ticket.timeline
-    .filter((entry) => entry.kind === "followup" || entry.kind === "solution")
+    .filter(
+      (entry) =>
+        entry.kind === "followup" || entry.kind === "solution" || entry.kind === "task",
+    )
     .map((entry): ConversationMessage => {
       const bodyHtml = stampHelpdeskAttachmentIds(entry.content_html || "");
-      const isSolution = entry.kind === "solution";
+      const kind =
+        entry.kind === "solution" ? "solution" : entry.kind === "task" ? "task" : "followup";
       return {
         id: String(entry.id),
-        kind: isSolution ? "solution" : "followup",
-        headingText: isSolution ? "Solução" : "",
+        kind,
+        headingText: kind === "solution" ? "Solução" : kind === "task" ? "Tarefa" : "",
         bodyText: entry.content,
         bodyHtml,
         createdAtLabel: relativeTimeLabel(entry.created_at, now),

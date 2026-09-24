@@ -30,6 +30,25 @@ class FollowupBody(BaseModel):
     content: str = Field(min_length=1)
 
 
+class SolutionCreateBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    content: str = Field(min_length=1)
+
+
+class TaskCreateBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    content: str = Field(min_length=1)
+
+
+class ApprovalRequestBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    approver_user_id: int = Field(gt=0)
+    content: str = ""
+
+
 class SolutionDecisionBody(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -194,6 +213,9 @@ def get_ticket(request: Request, ticket_id: int):
         "assigned_display_name": ticket.assigned_display_name,
         "assigned_user_id": ticket.assigned_user_id,
         "can_assign": ticket.can_assign,
+        "can_create_solution": ticket.can_create_solution,
+        "can_create_task": ticket.can_create_task,
+        "can_request_approval": ticket.can_request_approval,
         "can_accept_solution": ticket.can_accept_solution,
         "can_reject_solution": ticket.can_reject_solution,
         "can_submit_satisfaction": ticket.can_submit_satisfaction,
@@ -337,6 +359,70 @@ def create_followup(
             actor.subject,
             ticket_id,
             content=body.content,
+            idempotency_key=idempotency_key,
+        )
+    except HelpdeskError as exc:
+        return _error(exc, request)
+    return JSONResponse(status_code=stored.status_code, content=stored.body)
+
+
+@router.post("/tickets/{ticket_id}/solutions")
+def create_ticket_solution(
+    request: Request,
+    ticket_id: int,
+    body: SolutionCreateBody,
+    idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
+):
+    actor = require_actor(request)
+    try:
+        stored = _tickets(request).create_solution(
+            actor.subject,
+            ticket_id,
+            content=body.content,
+            viewer_email=actor.email,
+            idempotency_key=idempotency_key,
+        )
+    except HelpdeskError as exc:
+        return _error(exc, request)
+    return JSONResponse(status_code=stored.status_code, content=stored.body)
+
+
+@router.post("/tickets/{ticket_id}/tasks")
+def create_ticket_task(
+    request: Request,
+    ticket_id: int,
+    body: TaskCreateBody,
+    idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
+):
+    actor = require_actor(request)
+    try:
+        stored = _tickets(request).create_task(
+            actor.subject,
+            ticket_id,
+            content=body.content,
+            viewer_email=actor.email,
+            idempotency_key=idempotency_key,
+        )
+    except HelpdeskError as exc:
+        return _error(exc, request)
+    return JSONResponse(status_code=stored.status_code, content=stored.body)
+
+
+@router.post("/tickets/{ticket_id}/validations")
+def request_ticket_approval(
+    request: Request,
+    ticket_id: int,
+    body: ApprovalRequestBody,
+    idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
+):
+    actor = require_actor(request)
+    try:
+        stored = _tickets(request).request_approval(
+            actor.subject,
+            ticket_id,
+            approver_user_id=body.approver_user_id,
+            content=body.content,
+            viewer_email=actor.email,
             idempotency_key=idempotency_key,
         )
     except HelpdeskError as exc:

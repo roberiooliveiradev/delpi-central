@@ -142,6 +142,10 @@ class TicketDetail:
     description_html: str = ""
     can_followup: bool = True
     can_assign: bool = False
+    # Technician operational writes (HLAPI Timeline Solution/Task/Validation POST).
+    can_create_solution: bool = False
+    can_create_task: bool = False
+    can_request_approval: bool = False
     # H10 Branch B — solicitante cycle via legacy apirest (accept/reject/satisfaction).
     can_accept_solution: bool = False
     can_reject_solution: bool = False

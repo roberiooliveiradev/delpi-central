@@ -548,11 +548,17 @@ def _timeline_entry(
 
 
 def _timeline_kind(raw: str) -> str | None:
-    """Map HLAPI Timeline types the requester may read. Task/Validation stay console."""
+    """Map HLAPI Timeline types exposed in Helpdesk conversation.
+
+    Validation stays on ``validations[]`` (not inline timeline). Task is included so
+    technician workspace can verify create-task postconditions.
+    """
     if raw in {"Followup", "ITILFollowup"}:
         return "followup"
     if raw in {"Solution", "ITILSolution"}:
         return "solution"
+    if raw in {"Task", "TicketTask", "ITILTask"}:
+        return "task"
     return None
 
 
@@ -644,6 +650,11 @@ def parse_ticket_validations(payload: dict | list) -> tuple[TicketValidation, ..
         approver = body.get("requested_approver_id")
         if isinstance(approver, dict):
             approver = approver.get("id")
+        if approver in (None, ""):
+            target = body.get("items_id_target")
+            if isinstance(target, dict):
+                target = target.get("id")
+            approver = target
         try:
             approver_id = int(approver) if approver not in (None, "") else None
         except (TypeError, ValueError):
@@ -800,8 +811,20 @@ def ticket_allows_followup(status_id: int | None) -> bool:
     return status_id != 6
 
 
+def ticket_allows_technician_ops(status_id: int | None) -> bool:
+    """Technician Solution/Task/Validation creates: blocked only when ticket is closed."""
+    return status_id != 6
+
+
 def timeline_has_solution(timeline: tuple) -> bool:
     return any(getattr(entry, "kind", None) == "solution" for entry in (timeline or ()))
+
+
+def timeline_has_entry(timeline: tuple, *, kind: str, entry_id: int) -> bool:
+    return any(
+        getattr(entry, "kind", None) == kind and int(getattr(entry, "id", 0) or 0) == int(entry_id)
+        for entry in (timeline or ())
+    )
 
 
 def solicitante_cycle_flags(

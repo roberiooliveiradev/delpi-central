@@ -562,6 +562,59 @@ class HttpxGlpiClient:
         )
         return parse_created_id(payload)
 
+    def add_ticket_solution(self, access_token: str, ticket_id: int, content: str) -> int:
+        """Create ITILSolution via HLAPI Timeline/Solution (content required)."""
+        ticket_id = int(ticket_id)
+        if ticket_id <= 0:
+            raise GlpiValidation("ticket_id inválido.")
+        payload = self._json(
+            "POST",
+            f"/api.php/v2.2/Assistance/Ticket/{ticket_id}/Timeline/Solution",
+            token=access_token,
+            json_body={"content": content},
+        )
+        return parse_created_id(payload)
+
+    def add_ticket_task(self, access_token: str, ticket_id: int, content: str) -> int:
+        """Create TicketTask via HLAPI Timeline/Task (content required)."""
+        ticket_id = int(ticket_id)
+        if ticket_id <= 0:
+            raise GlpiValidation("ticket_id inválido.")
+        payload = self._json(
+            "POST",
+            f"/api.php/v2.2/Assistance/Ticket/{ticket_id}/Timeline/Task",
+            token=access_token,
+            json_body={"content": content},
+        )
+        return parse_created_id(payload)
+
+    def create_ticket_validation(
+        self,
+        access_token: str,
+        ticket_id: int,
+        *,
+        approver_user_id: int,
+        comment: str = "",
+    ) -> int:
+        """Request TicketValidation via HLAPI Timeline/Validation POST."""
+        ticket_id = int(ticket_id)
+        approver_user_id = int(approver_user_id)
+        if ticket_id <= 0:
+            raise GlpiValidation("ticket_id inválido.")
+        if approver_user_id <= 0:
+            raise GlpiValidation("approver_user_id inválido.")
+        payload = self._json(
+            "POST",
+            f"/api.php/v2.2/Assistance/Ticket/{ticket_id}/Timeline/Validation",
+            token=access_token,
+            json_body={
+                "itemtype_target": "User",
+                "items_id_target": approver_user_id,
+                "comment_submission": str(comment or ""),
+            },
+        )
+        return parse_created_id(payload)
+
     def upload_ticket_document(
         self,
         access_token: str,

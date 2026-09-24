@@ -35,7 +35,7 @@ describe("HELPDESK-MFE-UX-001-R3 conversation detail", () => {
     expect(detail).not.toMatch(/isTechnician|isRequester|participantRole/);
     expect(view).toContain("mine: ticket.requester_mine === true");
     expect(view).toContain("mine: entry.mine === true");
-    expect(view).toContain('kind === "followup" || entry.kind === "solution"');
+    expect(view).toContain('entry.kind === "followup" || entry.kind === "solution" || entry.kind === "task"');
   });
 
   it("composer starts compact without fill and keeps attach/send + rich text", () => {
@@ -195,18 +195,29 @@ describe("HELPDESK-MFE-UX-002 ticket workspace", () => {
     expect(detail).toContain("TicketContextPanel");
     expect(detail).toContain("ticketWorkspaceActions");
     expect(detail).toContain('activeAction === "reply"');
-    expect(detail).toContain('activeAction === "add_document"');
-    expect(detail).not.toMatch(/create_solution|add_solution|Criar uma tarefa|Pedir aprovação/);
+    expect(detail).toContain('activeAction === "attach_file"');
+    expect(detail).toContain('activeAction === "create_solution"');
+    expect(detail).toContain('activeAction === "create_task"');
+    expect(detail).toContain('activeAction === "request_approval"');
+    expect(detail).toContain("createTicketSolution");
+    expect(detail).toContain("createTicketTask");
+    expect(detail).toContain("requestTicketApproval");
     expect(css).toContain(".helpdesk-ticket-workspace__body");
     expect(css).toContain("grid-template-columns");
   });
 
-  it("does not invent GLPI-only actions without BFF contract", () => {
+  it("wires proven operational actions from BFF capabilities", () => {
     const actions = read("../presentation/ticketWorkspaceActions.ts");
     expect(actions).toContain('"reply"');
-    expect(actions).toContain('"add_document"');
+    expect(actions).toContain('"attach_file"');
+    expect(actions).toContain('"create_solution"');
+    expect(actions).toContain('"create_task"');
+    expect(actions).toContain('"request_approval"');
     expect(actions).toContain('"accept_solution"');
     expect(actions).toContain('"reject_solution"');
-    expect(actions).not.toMatch(/create_task|request_approval|add_solution[^_]/);
+    expect(actions).toContain("can_create_solution");
+    expect(actions).toContain("can_create_task");
+    expect(actions).toContain("can_request_approval");
+    expect(actions).not.toContain('"add_document"');
   });
 });
