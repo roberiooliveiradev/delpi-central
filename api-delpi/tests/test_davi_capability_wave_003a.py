@@ -128,7 +128,7 @@ def test_wave3a_eligible_count_includes_wave3a_ops():
     assert set(_CURRENT_THIRTEEN) | set(_WAVE3A) <= set(eligible)
     assert {"list_product_drawings", "get_product_drawing"} <= set(eligible)
     allow = load_external_read_allowlist()
-    assert allow.get("version") == 11
+    assert allow.get("version") == 12
     assert "get_product_raw_material_set_shortages" not in set(eligible)
     blocked = {
         item.get("operationId")

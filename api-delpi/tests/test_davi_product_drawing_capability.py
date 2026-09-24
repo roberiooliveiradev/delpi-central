@@ -134,9 +134,9 @@ def test_drawing_eligible_count_includes_seventeen_foundation():
     assert len(eligible) == 53
     assert set(_PRIOR_FIFTEEN) | set(_DRAWING) <= eligible
     allow = load_external_read_allowlist()
-    assert allow.get("version") == 11
+    assert allow.get("version") == 12
     assert allow.get("coverageDecision", {}).get("taskId") == (
-        "DAVI-CAPABILITY-EXPANSION-WAVE-005-SUPPLIES-READ"
+        "DAVI-WAVE005-STOCK-BALANCES-PROJECTION-CORRECTION-001"
     )
     blocked = {
         item.get("operationId")

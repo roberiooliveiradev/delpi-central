@@ -1,16 +1,16 @@
 {
-  "version": 11,
+  "version": 12,
   "description": "Governance allowlist for DAVI dynamic READ. DAVI has no independent AuthZ; backend is final authority. Entries define model-safe input/output projection and governed argument constraints only — not business permissions.",
   "authzPolicy": "DAVI-READ-AUTHZ-REBASELINE-001",
   "externalProcessing": "BACKEND_AUTHORIZED_INTERNAL_READ_ALLOWED_UNLESS_EXPLICITLY_PROHIBITED",
   "dataClassification": "MINIMIZATION_REQUIRED_TAXONOMY_OPTIONAL",
   "coverageDecision": {
-    "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-005-SUPPLIES-READ",
-    "decision": "PROMOTE_SUPPLIES_READ_WAVE_005",
-    "reason": "Promote 18 Supplies READ operations (KPI, purchase-order OTD, safety stock, consumption analysis, stock balances, third-party summary/shipments, purchase-request lines) behind discover/execute. Eligible READ 35→53. Panel/detail/open-coverage/identity/export deferred or rejected. AuthZ remains backend-final (KPI_SUPPLIES_ACCESS / SAFETY_STOCK_READ / PURCHASE_REQUESTS_READ / THIRD_PARTY_MATERIALS_READ). MCP tools remain 3.",
+    "taskId": "DAVI-WAVE005-STOCK-BALANCES-PROJECTION-CORRECTION-001",
+    "decision": "CORRECT_STOCK_BALANCES_BRANCH_GRAIN_PROJECTION",
+    "reason": "Restore canonical grain branch+warehouse in get_supplies_stock_balances_summary model-safe projection by approving by_warehouse[].branch. Eligible READ remains 53; MCP tools remain 3. No AuthZ/business-logic/SQL change.",
     "previousDecision": {
-      "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-004-COMMERCIAL-READ",
-      "decision": "PROMOTE_COMMERCIAL_ANALYTICS_READ_WAVE_004"
+      "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-005-SUPPLIES-READ",
+      "decision": "PROMOTE_SUPPLIES_READ_WAVE_005"
     }
   },
   "retrievalQuarantineTokens": [
@@ -2286,6 +2286,7 @@
         "summary.total_stock_value",
         "summary.warehouse_count",
         "summary.valuation",
+        "by_warehouse[].branch",
         "by_warehouse[].warehouse",
         "by_warehouse[].warehouse_label",
         "by_warehouse[].product_count",

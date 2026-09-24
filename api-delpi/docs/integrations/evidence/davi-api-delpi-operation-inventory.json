@@ -2,50 +2,31 @@
   "source": "openapi_baseline.json",
   "baseline_version": "3",
   "baseline_operation_count": 720,
-  "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-005-SUPPLIES-READ",
+  "taskId": "DAVI-WAVE005-STOCK-BALANCES-PROJECTION-CORRECTION-001",
   "TOTAL_OPERATIONS": 720,
   "TOTAL_GET": 520,
   "TOTAL_WRITE_VERBS": 200,
   "DAVI_ELIGIBLE_READ": 53,
-  "ELIGIBLE_BEFORE": 35,
+  "ELIGIBLE_BEFORE": 53,
   "ELIGIBLE_AFTER": 53,
-  "NEWLY_ELIGIBLE": [
-    "get_supplies_cpv",
-    "get_supplies_inventory_turnover",
-    "get_supplies_negotiation_savings_summary",
-    "get_supplies_otd",
-    "get_supplies_purchase_order_otd",
-    "get_supplies_purchase_order_otd_series",
-    "get_supplies_safety_stock_consumption_analysis_items",
-    "get_supplies_safety_stock_consumption_analysis_summary",
-    "get_supplies_safety_stock_item_suppliers",
-    "get_supplies_safety_stock_items",
-    "get_supplies_safety_stock_summary",
-    "get_supplies_safety_stock_supplier_purchase_price_history",
-    "get_supplies_stock_balances_items",
-    "get_supplies_stock_balances_summary",
-    "get_supplies_stock_value",
-    "get_supplies_third_party_materials_shipments",
-    "get_supplies_third_party_materials_summary",
-    "list_supplies_purchase_request_lines"
-  ],
+  "NEWLY_ELIGIBLE": [],
   "REMOVED_ELIGIBLE": [],
   "INVENTORY_DELTA": {
-    "previous_total_operations": 703,
+    "previous_total_operations": 720,
     "current_total_operations": 720,
-    "previous_total_get": 506,
+    "previous_total_get": 520,
     "current_total_get": 520,
-    "added_operations": 17,
+    "added_operations": 0,
     "removed_operations": 0,
-    "note": "HEAD inventory artifact was STALE at 17 while allowlist v10 already had 35. Wave 005 regenerates inventory to 53 (35 prior + 18 Supplies)."
+    "note": "Delta vs last committed inventory artifact (HEAD)"
   },
   "COVERAGE_DECISION": {
-    "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-005-SUPPLIES-READ",
-    "decision": "PROMOTE_SUPPLIES_READ_WAVE_005",
-    "reason": "Promote 18 Supplies READ operations (KPI, purchase-order OTD, safety stock, consumption analysis, stock balances, third-party summary/shipments, purchase-request lines) behind discover/execute. Eligible READ 35→53. Panel/detail/open-coverage/identity/export deferred or rejected. AuthZ remains backend-final (KPI_SUPPLIES_ACCESS / SAFETY_STOCK_READ / PURCHASE_REQUESTS_READ / THIRD_PARTY_MATERIALS_READ). MCP tools remain 3.",
+    "taskId": "DAVI-WAVE005-STOCK-BALANCES-PROJECTION-CORRECTION-001",
+    "decision": "CORRECT_STOCK_BALANCES_BRANCH_GRAIN_PROJECTION",
+    "reason": "Restore canonical grain branch+warehouse in get_supplies_stock_balances_summary model-safe projection by approving by_warehouse[].branch. Eligible READ remains 53; MCP tools remain 3. No AuthZ/business-logic/SQL change.",
     "previousDecision": {
-      "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-004-COMMERCIAL-READ",
-      "decision": "PROMOTE_COMMERCIAL_ANALYTICS_READ_WAVE_004"
+      "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-005-SUPPLIES-READ",
+      "decision": "PROMOTE_SUPPLIES_READ_WAVE_005"
     }
   },
   "HIGH_VALUE_BLOCKED": [
@@ -7443,11 +7424,5 @@
       "davi_status": "WRITE_OUT_OF_SCOPE",
       "executable": false
     }
-  ],
-  "STALE_INVENTORY_REBASELINE": {
-    "artifactEligibleBeforeRegeneration": 17,
-    "actualAllowlistEligibleBeforeWave005": 35,
-    "allowlistVersionBeforeWave005": 10,
-    "resolution": "Regenerated from OpenAPI baseline + allowlist; stale 17 reconciled to live eligible before Wave 005 promotion."
-  }
+  ]
 }

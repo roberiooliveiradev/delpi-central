@@ -154,9 +154,9 @@ def _allowlist_entry(oid: str) -> dict[str, Any]:
 
 def test_wave005_allowlist_version_and_eligible_count():
     allow = load_external_read_allowlist()
-    assert allow.get("version") == 11
+    assert allow.get("version") == 12
     assert allow.get("coverageDecision", {}).get("taskId") == (
-        "DAVI-CAPABILITY-EXPANSION-WAVE-005-SUPPLIES-READ"
+        "DAVI-WAVE005-STOCK-BALANCES-PROJECTION-CORRECTION-001"
     )
     eligible = {a.operation_id for a in _actions() if a.executable}
     assert len(eligible) == 53
@@ -435,6 +435,121 @@ def test_wave005_stock_balances_pagination_partial():
         "total_pages": 3,
     }
     assert classify_source_pagination(payload) == "partial"
+
+
+def test_stock_balances_summary_preserves_branch_warehouse_grain():
+    """EXECUTION_DRIFT fix: warehouse alone is NOT row identity across branches."""
+    raw = {
+        "summary": {
+            "branch": "consolidated",
+            "warehouse": "all",
+            "product_count": 10,
+            "total_quantity": 100.0,
+            "total_stock_value": 1000.0,
+            "warehouse_count": 2,
+            "valuation": "qatu_times_cm1_same_local",
+        },
+        "by_warehouse": [
+            {
+                "branch": "01",
+                "warehouse": "01",
+                "warehouse_label": "Produção",
+                "product_count": 4,
+                "total_quantity": 40.0,
+                "total_stock_value": 400.0,
+                "total_stock_value_vatu1": 400.0,
+                "internal_note": "drop-me",
+            },
+            {
+                "branch": "02",
+                "warehouse": "01",
+                "warehouse_label": "Produção",
+                "product_count": 6,
+                "total_quantity": 60.0,
+                "total_stock_value": 600.0,
+                "total_stock_value_vatu1": 600.0,
+            },
+        ],
+    }
+    fields = tuple(
+        _allowlist_entry("get_supplies_stock_balances_summary")["approvedResponseFields"]
+    )
+    assert "by_warehouse[].branch" in fields
+    projected = apply_approved_field_projection(raw, approved_fields=fields)
+    rows = projected["by_warehouse"]
+    grains = {(row["branch"], row["warehouse"]) for row in rows}
+    assert grains == {("01", "01"), ("02", "01")}
+    assert projected["summary"]["branch"] == "consolidated"
+    for row in rows:
+        assert "branch" in row
+        assert "warehouse" in row
+        assert "warehouse_label" in row
+        assert "product_count" in row
+        assert "total_quantity" in row
+        assert "total_stock_value" in row
+        assert "total_stock_value_vatu1" not in row
+        assert "internal_note" not in row
+
+
+def test_stock_balances_summary_single_branch_still_exposes_branch():
+    raw = {
+        "summary": {
+            "branch": "01",
+            "warehouse": "all",
+            "product_count": 2,
+            "total_quantity": 5.0,
+            "total_stock_value": 50.0,
+            "warehouse_count": 1,
+            "valuation": "qatu_times_cm1_same_local",
+        },
+        "by_warehouse": [
+            {
+                "branch": "01",
+                "warehouse": "50",
+                "warehouse_label": "WIP / processo",
+                "product_count": 2,
+                "total_quantity": 5.0,
+                "total_stock_value": 50.0,
+            }
+        ],
+    }
+    fields = tuple(
+        _allowlist_entry("get_supplies_stock_balances_summary")["approvedResponseFields"]
+    )
+    projected = apply_approved_field_projection(raw, approved_fields=fields)
+    assert projected["by_warehouse"][0]["branch"] == "01"
+    assert projected["by_warehouse"][0]["warehouse"] == "50"
+
+
+def test_stock_balances_items_already_preserves_branch():
+    fields = tuple(
+        _allowlist_entry("get_supplies_stock_balances_items")["approvedResponseFields"]
+    )
+    assert "items[].branch" in fields
+    assert "items[].warehouse" in fields
+    raw = {
+        "items": [
+            {
+                "product_code": "P1",
+                "description": "Item",
+                "unit_of_measure": "UN",
+                "branch": "01",
+                "warehouse": "01",
+                "warehouse_label": "Produção",
+                "quantity": 1.0,
+                "stock_value": 10.0,
+                "unit_cost": 10.0,
+            }
+        ],
+        "page": 1,
+        "page_size": 50,
+        "total": 1,
+        "total_pages": 1,
+    }
+    projected = apply_approved_field_projection(raw, approved_fields=fields)
+    assert projected["items"][0]["branch"] == "01"
+    assert projected["items"][0]["warehouse"] == "01"
+    assert "unit_cost" not in projected["items"][0]
 
 
 def test_wave005_drawing_pdf_still_not_executable():

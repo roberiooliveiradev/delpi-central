@@ -2,24 +2,24 @@
 
 > Evidence artifact. Not runtime authority. Not semantic capability catalog.
 
-- Task: `DAVI-CAPABILITY-EXPANSION-WAVE-005-SUPPLIES-READ`
+- Task: `DAVI-WAVE005-STOCK-BALANCES-PROJECTION-CORRECTION-001`
 - Source: `openapi_baseline.json` version `3`
 - TOTAL OPERATIONS: **720**
 - TOTAL GET: **520**
 - WRITE VERBS (POST/PUT/PATCH/DELETE): **200**
-- DAVI_ELIGIBLE_READ (before→after): **35 → 53** (stale artifact was 17; rebaselined to allowlist v10=35 then Wave 005)
-- NEWLY ELIGIBLE: **18** (Supplies Wave 005)
+- DAVI_ELIGIBLE_READ (before→after): **53 → 53**
+- NEWLY ELIGIBLE: **0**
 
 ## Coverage decision
 
 ```json
 {
-  "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-005-SUPPLIES-READ",
-  "decision": "PROMOTE_SUPPLIES_READ_WAVE_005",
-  "reason": "Promote 18 Supplies READ operations (KPI, purchase-order OTD, safety stock, consumption analysis, stock balances, third-party summary/shipments, purchase-request lines) behind discover/execute. Eligible READ 35→53. Panel/detail/open-coverage/identity/export deferred or rejected. AuthZ remains backend-final (KPI_SUPPLIES_ACCESS / SAFETY_STOCK_READ / PURCHASE_REQUESTS_READ / THIRD_PARTY_MATERIALS_READ). MCP tools remain 3.",
+  "taskId": "DAVI-WAVE005-STOCK-BALANCES-PROJECTION-CORRECTION-001",
+  "decision": "CORRECT_STOCK_BALANCES_BRANCH_GRAIN_PROJECTION",
+  "reason": "Restore canonical grain branch+warehouse in get_supplies_stock_balances_summary model-safe projection by approving by_warehouse[].branch. Eligible READ remains 53; MCP tools remain 3. No AuthZ/business-logic/SQL change.",
   "previousDecision": {
-    "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-004-COMMERCIAL-READ",
-    "decision": "PROMOTE_COMMERCIAL_ANALYTICS_READ_WAVE_004"
+    "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-005-SUPPLIES-READ",
+    "decision": "PROMOTE_SUPPLIES_READ_WAVE_005"
   }
 }
 ```
@@ -28,11 +28,11 @@
 
 ```json
 {
-  "previous_total_operations": 703,
+  "previous_total_operations": 720,
   "current_total_operations": 720,
-  "previous_total_get": 506,
+  "previous_total_get": 520,
   "current_total_get": 520,
-  "added_operations": 17,
+  "added_operations": 0,
   "removed_operations": 0,
   "note": "Delta vs last committed inventory artifact (HEAD)"
 }
