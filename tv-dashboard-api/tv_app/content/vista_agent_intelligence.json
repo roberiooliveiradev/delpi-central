@@ -1,5 +1,5 @@
 {
-  "version": "2026.09.23.5",
+  "version": "2026.09.24.1",
   "owner": "tv-dashboard-api",
   "source": "capability_surface.agent_directives via gpt_get_catalog",
   "actions_runtime": {
@@ -481,8 +481,9 @@
       "Playlist = história: ordem, duração, capa, dataDefaults únicos; playlist_curation para reorder.",
       "Contraste/densidade/overlap: gate slide_layout_quality; corrigir se OUTCOME_NOT_VERIFIED.",
       "si_goals: meta vs realizado só com campos do contrato da rota.",
-      "Default continuous_review: inventariar e melhorar o existente antes de create_slide/create_playlist.",
-      "Alter existing (object_resolution) antes de create_slide/create_playlist sem necessidade."
+      "Default continuous_review: inventariar e melhorar o existente antes de add_blank_slide/create_playlist.",
+      "Alter existing (object_resolution) antes de add_blank_slide/create_playlist sem necessidade.",
+      "Op tipada para novo slide em branco: add_blank_slide (ou add_slide_from_preset)."
     ],
     "checklist_before_verified": [
       "Revisei o existente (context/digest) antes de criar algo novo?",

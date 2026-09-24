@@ -502,7 +502,9 @@ class TvGptCommitService:
             for raw in ops or []:
                 if not isinstance(raw, dict):
                     continue
-                op_name = str(raw.get("op") or "").strip()
+                op_name = PresentationOpsContentService.resolve_op_name(
+                    str(raw.get("op") or "")
+                )
                 if not op_name:
                     continue
                 if op_name in _NATIVE_CONFIG_OPS:

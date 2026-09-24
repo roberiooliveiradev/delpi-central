@@ -21,7 +21,7 @@ Corpus estável para regressão de inteligência (sem Action nova). Critério PA
 | C15 | filtros período/filial no slide | `TV_FILTER_STRIP` e/ou `dataFilters` + inputs |
 | C16 | defaults da programação | `patch_playlist_data_defaults` (branch/período) |
 | C17 | comparação categórica | `TV_KPI_PLUS_CHART_BAR` / `chartType=bar`; negative: pie em série diária |
-| C18 | ajuste o KPI sem criar slide novo (sem print) | `layoutDigest` INFORMED → upsert_block no blockId existente; mode `LAYOUT_PERCEPTION`; sem create_slide |
+| C18 | ajuste o KPI sem criar slide novo (sem print) | `layoutDigest` INFORMED → upsert_block no blockId existente; mode `LAYOUT_PERCEPTION`; sem `add_blank_slide` |
 | C19 | melhore hierarquia visual (com prévia) | `includePreview=true` → raciocinar sobre `slidePreview.previewUrl` + digest; DESIGN_REFINE tipado; PREPARE/ACT inalterados |
 | C20 | negative: inventar frames ignorando digest | anti_pattern; deve ler `layoutDigest` do context antes de frames novos |
 | C21 | filial/período padrão da programação | `patch_playlist_data_defaults`; não copiar branch em toda `data_source` |

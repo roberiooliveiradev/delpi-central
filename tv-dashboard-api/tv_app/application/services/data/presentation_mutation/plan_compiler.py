@@ -96,14 +96,17 @@ def compile_presentation_plan(
                 code="INVALID_CHANGE",
                 op_index=op_index,
             )
-        if name not in PresentationOpsContentService.allowed_ops():
+        canonical = PresentationOpsContentService.resolve_op_name(name)
+        if canonical not in PresentationOpsContentService.allowed_ops():
             raise PlanCompileError(
                 PresentationOpsContentService.message("unknownOp", op=name or "?"),
                 code="UNSUPPORTED_CAPABILITY",
                 op_index=op_index,
                 operation=name,
             )
-        typed.append(dict(raw))
+        item = dict(raw)
+        item["op"] = canonical
+        typed.append(item)
 
     if not typed:
         raise PlanCompileError(

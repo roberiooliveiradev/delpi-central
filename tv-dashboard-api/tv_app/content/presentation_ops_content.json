@@ -1,5 +1,13 @@
 {
-  "catalogVersion": "2026.09.23.vista-ready",
+  "catalogVersion": "2026.09.24.vista-ready",
+  "opAliases": {
+    "create_slide": {
+      "canonical": "add_blank_slide",
+      "deprecated": true,
+      "removeAfter": "agents stop emitting create_slide (GPT synonym drift)",
+      "reason": "Compatibility only — catalog op is add_blank_slide; do not advertise create_slide as official."
+    }
+  },
   "sideEffectHintCatalog": [
     "refreshFilmstrip",
     "replaceNativeConfig",

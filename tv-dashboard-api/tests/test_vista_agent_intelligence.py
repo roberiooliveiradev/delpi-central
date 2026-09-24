@@ -273,6 +273,9 @@ def test_filter_layering_and_slide_craft():
     assert "hardcod" in dates or "absoluto" in dates
     craft = directives["slide_craft"]
     assert craft["principle"] == "ONE_DECISION_TV_SLIDE"
+    craft_rules = " ".join(craft["rules"])
+    assert "add_blank_slide" in craft_rules
+    assert "create_slide" not in craft_rules
     assert "FILTER_LAYERING" in directives["modes"]
     assert any(
         "datadefaults" in str(item).lower().replace(" ", "").replace("_", "")

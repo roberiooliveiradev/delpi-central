@@ -264,7 +264,7 @@ class PresentationOpsContentService:
         for raw in ops:
             if not isinstance(raw, dict):
                 continue
-            name = str(raw.get("op") or "").strip()
+            name = cls.resolve_op_name(str(raw.get("op") or ""))
             if not name:
                 continue
             op_names.append(name)
@@ -384,6 +384,35 @@ class PresentationOpsContentService:
                 continue
             return item
         return fallback
+
+    @classmethod
+    def op_aliases(cls) -> dict[str, str]:
+        """Legacy/synonym op names → canonical catalog op (temporary compatibility)."""
+        raw = _load().get("opAliases")
+        if not isinstance(raw, dict):
+            return {}
+        out: dict[str, str] = {}
+        for alias, target in raw.items():
+            key = str(alias or "").strip()
+            if not key:
+                continue
+            if isinstance(target, str):
+                canonical = target.strip()
+            elif isinstance(target, dict):
+                canonical = str(target.get("canonical") or "").strip()
+            else:
+                continue
+            if canonical:
+                out[key] = canonical
+        return out
+
+    @classmethod
+    def resolve_op_name(cls, name: str | None) -> str:
+        """Map deprecated synonyms to the catalog op; unknown names stay as-is."""
+        token = str(name or "").strip()
+        if not token:
+            return ""
+        return cls.op_aliases().get(token, token)
 
     @classmethod
     def allowed_ops(cls) -> frozenset[str]:
