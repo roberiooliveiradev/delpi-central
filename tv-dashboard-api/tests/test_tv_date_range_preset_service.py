@@ -125,6 +125,26 @@ def test_previous_calendar_periods_cross_year_boundaries():
     )
 
 
+def test_same_period_previous_year_mirrors_this_year_ytd():
+    """YoY / SPLY: 01/01/(Y-1) … mesmo dia/mês em Y-1 (≠ ano civil completo)."""
+    today = date(2026, 9, 24)
+    expected = (date(2025, 1, 1), date(2025, 9, 24))
+    assert compute_preset_range("same_period_previous_year", today=today) == expected
+    assert compute_preset_range("previous_year_same_range", today=today) == expected
+    assert compute_preset_range("previous_year_ytd", today=today) == expected
+    # Distinto de «Ano passado» (calendário completo).
+    assert compute_preset_range("previous_year", today=today) == (
+        date(2025, 1, 1),
+        date(2025, 12, 31),
+    )
+    # 29/02 em ano não-bissexto anterior → 28/02.
+    leap = date(2024, 2, 29)
+    assert compute_preset_range("same_period_previous_year", today=leap) == (
+        date(2023, 1, 1),
+        date(2023, 2, 28),
+    )
+
+
 def test_apply_preset_writes_schema_keys_and_strips_internal():
     today = date(2026, 7, 13)
     out = apply_date_range_preset(

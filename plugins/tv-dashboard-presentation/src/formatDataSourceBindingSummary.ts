@@ -19,6 +19,7 @@ export const DATA_SOURCE_DATE_RANGE_PRESET_LABELS: Record<string, string> = {
   previous_month: "Mês passado",
   previous_quarter: "Trimestre passado",
   previous_year: "Ano passado",
+  same_period_previous_year: "Mesmo período ano passado",
   last_7_days: "Últimos 7 dias",
   last_30_days: "Últimos 30 dias",
   last_90_days: "Últimos 90 dias",

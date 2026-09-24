@@ -112,6 +112,13 @@ def previous_business_day(day: date) -> date:
     return candidate
 
 
+def shift_years(day: date, years: int) -> date:
+    """Mesmo mês/dia N anos antes/depois; 29/02 em ano não-bissexto → 28/02."""
+    target_year = day.year + years
+    last_day = calendar.monthrange(target_year, day.month)[1]
+    return date(target_year, day.month, min(day.day, last_day))
+
+
 def compute_preset_range(
     preset: str,
     *,
@@ -201,6 +208,17 @@ def compute_preset_range(
     if normalized == "previous_year":
         previous_year = day.year - 1
         return date(previous_year, 1, 1), date(previous_year, 12, 31)
+
+    # Espelho de «Este ano (até hoje)» no ano civil anterior (YoY / SPLY).
+    # Ex.: hoje=24/09/2026 → 01/01/2025 … 24/09/2025. Distinto de previous_year (01/01–31/12).
+    if normalized in {
+        "same_period_previous_year",
+        "previous_year_same_range",
+        "previous_year_ytd",
+        "same_period_last_year",
+    }:
+        end = shift_years(day, -1)
+        return date(end.year, 1, 1), end
 
     if normalized == "last_7_days":
         return day - timedelta(days=6), day

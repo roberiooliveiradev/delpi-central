@@ -39,12 +39,19 @@ describe("dateRangePresets", () => {
     expect(values).toContain("previous_day");
     expect(values).toContain("previous_month");
     expect(values).toContain("previous_year");
+    expect(values).toContain("same_period_previous_year");
     expect(values).toContain("last_90_days");
     expect(values).toContain("last_n_days");
     expect(values).toContain("custom");
     expect(DATE_RANGE_PRESET_OPTIONS.find((item) => item.value === "previous_day")?.label).toBe(
       "Dia anterior",
     );
+    expect(
+      DATE_RANGE_PRESET_OPTIONS.find((item) => item.value === "same_period_previous_year")?.label,
+    ).toBe("Mesmo período ano passado");
+    // Logo após «Ano passado».
+    const prevYearIdx = values.indexOf("previous_year");
+    expect(values[prevYearIdx + 1]).toBe("same_period_previous_year");
     expect(
       DATE_RANGE_PRESET_OPTIONS.find((item) => item.value === "this_month_until_yesterday")?.label,
     ).toBe("Este mês (até ontem)");

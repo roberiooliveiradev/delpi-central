@@ -435,7 +435,7 @@
     },
     "dates": {
       "prefer": [
-        "dateRangePreset relativo (this_month, last_7_days, previous_month, …) quando a rota for date_range",
+        "dateRangePreset relativo (this_month, same_period_previous_year, last_7_days, previous_month, …) quando a rota for date_range",
         "periodDays relativo quando o paramSchema for assim",
         "Input de período no slide se o operador precisa mudar na TV"
       ],

@@ -19,6 +19,7 @@ export type DateRangePresetId =
   | "previous_month"
   | "previous_quarter"
   | "previous_year"
+  | "same_period_previous_year"
   | "last_7_days"
   | "last_30_days"
   | "last_90_days"
@@ -41,6 +42,7 @@ export const DATE_RANGE_PRESET_OPTIONS: Array<{ value: DateRangePresetId; label:
   { value: "previous_month", label: "Mês passado" },
   { value: "previous_quarter", label: "Trimestre passado" },
   { value: "previous_year", label: "Ano passado" },
+  { value: "same_period_previous_year", label: "Mesmo período ano passado" },
   { value: "last_7_days", label: "Últimos 7 dias" },
   { value: "last_30_days", label: "Últimos 30 dias" },
   { value: "last_90_days", label: "Últimos 90 dias" },
