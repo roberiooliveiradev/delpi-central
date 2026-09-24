@@ -37,6 +37,128 @@ def exceeds_actions_budget(payload: Any) -> bool:
     )
 
 
+_DROP_KEYS = frozenset(
+    {
+        "nativeConfig",
+        "nativeConfigsBySlide",
+        "persistedNative",
+        "httpCommands",
+        "resolved",
+        "resolvedBySourceId",
+        "resolvedByBlockId",
+    }
+)
+
+
+def strip_heavy_mutation_blobs(value: Any, *, depth: int = 0) -> Any:
+    """Remove nativeConfig/resolved blobs from GPT Actions public payloads/errors."""
+    if depth > 12:
+        return None
+    if isinstance(value, dict):
+        out: dict[str, Any] = {}
+        for key, item in value.items():
+            if str(key) in _DROP_KEYS:
+                continue
+            out[str(key)] = strip_heavy_mutation_blobs(item, depth=depth + 1)
+        return out
+    if isinstance(value, list):
+        # Cap pathological lists in error details.
+        capped = value[:80] if depth > 2 and len(value) > 80 else value
+        return [strip_heavy_mutation_blobs(item, depth=depth + 1) for item in capped]
+    return value
+
+
+def project_mutation_actions_payload(payload: Mapping[str, Any] | None) -> dict[str, Any]:
+    """Public PREPARE/COMMIT projection that stays under Actions response budget."""
+    raw = dict(payload) if isinstance(payload, dict) else {}
+    out = strip_heavy_mutation_blobs(raw)
+    if not isinstance(out, dict):
+        out = {}
+
+    # Prefer compact visual verification (issues only; no native).
+    visual = out.get("visualVerification")
+    if isinstance(visual, dict):
+        out["visualVerification"] = {
+            "persisted": bool(visual.get("persisted")),
+            "rendered": bool(visual.get("rendered")),
+            "layoutGatePassed": bool(visual.get("layoutGatePassed")),
+            "issuesFixedCount": len(visual.get("issuesFixed") or []),
+            "issuesIntroducedCount": len(visual.get("issuesIntroduced") or []),
+            "remainingIssuesCount": len(visual.get("remainingIssues") or []),
+            "remainingIssues": (visual.get("remainingIssues") or [])[:12],
+        }
+
+    candidate = out.get("candidatePreview")
+    if isinstance(candidate, dict):
+        out["candidatePreview"] = {
+            "previewUrl": candidate.get("previewUrl"),
+            "persisted": bool(candidate.get("persisted")),
+            "remainingIssuesCount": len(candidate.get("remainingIssues") or []),
+            "remainingIssues": (candidate.get("remainingIssues") or [])[:12],
+        }
+
+    # Drop nested verification that may still carry large checks.
+    verification = out.get("verification")
+    if isinstance(verification, dict):
+        out["verification"] = {
+            "reason": verification.get("reason"),
+            "checks": [
+                {
+                    "op": item.get("op"),
+                    "ok": item.get("ok"),
+                    "reason": item.get("reason"),
+                    "slideId": item.get("slideId"),
+                }
+                for item in (verification.get("checks") or [])
+                if isinstance(item, dict)
+            ][:40],
+            "diff": (verification.get("diff") or [])[:20]
+            if isinstance(verification.get("diff"), list)
+            else None,
+        }
+
+    if exceeds_actions_budget(out):
+        out.pop("candidatePreview", None)
+        out.pop("fingerprint", None)
+        out.pop("compileDigest", None)
+        out.pop("aliasMap", None)
+        out["responseCompacted"] = True
+        out["note"] = (
+            (str(out.get("note") or "") + " ").strip()
+            + "Response compacted for Custom GPT Actions budget; "
+            "proposal_handle/ops/persisted remain authoritative."
+        ).strip()
+
+    if exceeds_actions_budget(out):
+        # Last resort: keep only commit/prepare essentials.
+        essentials = {
+            "target": out.get("target"),
+            "ops": out.get("ops"),
+            "operationNames": out.get("operationNames"),
+            "proposal_handle": out.get("proposal_handle"),
+            "catalogVersion": out.get("catalogVersion"),
+            "baseRevision": out.get("baseRevision"),
+            "risk": out.get("risk"),
+            "confirmationPolicy": out.get("confirmationPolicy"),
+            "confirmation_requirement": out.get("confirmation_requirement"),
+            "canCommit": out.get("canCommit"),
+            "persisted": out.get("persisted"),
+            "verified": out.get("verified"),
+            "status": out.get("status"),
+            "revisionBefore": out.get("revisionBefore"),
+            "revisionAfter": out.get("revisionAfter"),
+            "commit_now_applied": out.get("commit_now_applied"),
+            "message": out.get("message"),
+            "diff": out.get("diff"),
+            "outcome": out.get("outcome"),
+            "responseCompacted": True,
+            "note": "Minimal PREPARE/COMMIT projection (Actions response budget).",
+        }
+        return {k: v for k, v in essentials.items() if v is not None}
+
+    return out
+
+
 def project_editor_focus_context(
     *,
     playlist: Mapping[str, Any] | None,

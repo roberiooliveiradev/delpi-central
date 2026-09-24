@@ -77,12 +77,22 @@ def _correlation_id(request: Request) -> str:
 
 def _handle(exc: Exception, *, correlation_id: str):
     if isinstance(exc, GptActionsError):
+        from tv_app.application.gpt_actions.response_compact import (
+            project_mutation_actions_payload,
+            strip_heavy_mutation_blobs,
+        )
+
+        details = exc.details
+        if isinstance(details, dict):
+            details = project_mutation_actions_payload(details)
+        elif details is not None:
+            details = strip_heavy_mutation_blobs(details)
         return gpt_fail(
             code=exc.code,
             message=exc.message,
             status_code=exc.status_code,
             retryable=exc.retryable,
-            details=exc.details,
+            details=details if isinstance(details, dict) else None,
             correlation_id=correlation_id,
         )
     if isinstance(exc, PermissionError):

@@ -241,15 +241,19 @@ class TvGptCommitService:
             ) from exc
 
     def _replay_snapshot(self, snapshot: dict[str, Any]) -> dict[str, Any]:
+        from tv_app.application.gpt_actions.response_compact import (
+            project_mutation_actions_payload,
+        )
+
         status = str(snapshot.get("status") or "")
         if status in _ERROR_OUTCOME_STATUSES or snapshot.get("_raise"):
             raise GptActionsError(
                 str(snapshot.get("message") or snapshot.get("_message") or status),
                 code=str(snapshot.get("_code") or status),
                 status_code=int(snapshot.get("_statusCode") or 409),
-                details=snapshot,
+                details=project_mutation_actions_payload(snapshot),
             )
-        return snapshot
+        return project_mutation_actions_payload(snapshot)
 
     def _complete(
         self,
@@ -1099,6 +1103,12 @@ class TvGptCommitService:
             }
             if isinstance(verify_details.get("diff"), list):
                 result["diff"] = verify_details["diff"]
+            # Never put full nativeConfig into GPT Actions error envelopes.
+            from tv_app.application.gpt_actions.response_compact import (
+                project_mutation_actions_payload,
+            )
+
+            public_details = project_mutation_actions_payload(result)
             self._complete(
                 key=key,
                 actor_id=actor_id,
@@ -1109,7 +1119,7 @@ class TvGptCommitService:
                 result["message"],
                 code="OUTCOME_NOT_VERIFIED",
                 status_code=409,
-                details=result,
+                details=public_details,
             )
 
         result = {
@@ -1294,6 +1304,12 @@ class TvGptCommitService:
                     details["checks"].append({"op": op, "ok": False, "reason": "native_missing"})
                     return False, details
                 details["persistedNative"] = persisted
+                details["persistedNativeSummary"] = {
+                    "blockCount": len(persisted.get("blocks") or [])
+                    if isinstance(persisted.get("blocks"), list)
+                    else 0,
+                    "slideId": sid,
+                }
                 ok = _strip_transient_native(persisted) == _strip_transient_native(want)
                 details["checks"].append({"op": op, "ok": ok, "slideId": sid})
                 if not ok:

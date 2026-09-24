@@ -895,8 +895,12 @@ class GptActionsDispatchService:
         if candidate is not None:
             preview_payload["candidatePreview"] = candidate
 
+        from tv_app.application.gpt_actions.response_compact import (
+            project_mutation_actions_payload,
+        )
+
         if not commit_now:
-            return preview_payload
+            return project_mutation_actions_payload(preview_payload)
 
         if confirmation_policy == "confirm":
             preview_payload["message"] = (
@@ -905,7 +909,7 @@ class GptActionsDispatchService:
                 "proposal_handle exato deste preview."
             )
             preview_payload["commit_now_applied"] = False
-            return preview_payload
+            return project_mutation_actions_payload(preview_payload)
 
         if not TvGptCommitService._normalize_confirmation(confirmation):
             raise GptActionsError(
@@ -932,13 +936,15 @@ class GptActionsDispatchService:
             idempotency_key=key,
             authorization=authorization,
         )
-        return {
-            **preview_payload,
-            **outcome,
-            "proposal_handle": proposal_handle,
-            "commit_now_applied": True,
-            "persisted": bool(outcome.get("persisted", True)),
-        }
+        return project_mutation_actions_payload(
+            {
+                **preview_payload,
+                **outcome,
+                "proposal_handle": proposal_handle,
+                "commit_now_applied": True,
+                "persisted": bool(outcome.get("persisted", True)),
+            }
+        )
 
     def commit_change(
         self,
@@ -951,11 +957,17 @@ class GptActionsDispatchService:
     ) -> dict[str, Any]:
         assert_permission(user, TV_WRITE)
         actor = self._actor(user)
-        return self._commit.commit(
-            user=user,
-            actor_id=actor,
-            proposal_handle=proposal_handle,
-            confirmation=confirmation,
-            idempotency_key=idempotency_key,
-            authorization=authorization,
+        from tv_app.application.gpt_actions.response_compact import (
+            project_mutation_actions_payload,
+        )
+
+        return project_mutation_actions_payload(
+            self._commit.commit(
+                user=user,
+                actor_id=actor,
+                proposal_handle=proposal_handle,
+                confirmation=confirmation,
+                idempotency_key=idempotency_key,
+                authorization=authorization,
+            )
         )

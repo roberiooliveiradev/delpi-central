@@ -229,7 +229,7 @@
       "get": {
         "operationId": "gpt_get_playlist_context",
         "summary": "Authorized playlist context",
-        "description": "Compact playlist context: playlist summary, slides[] index (no nativeConfig), focusedSlide with full nativeConfig (editorFocus / slideId / first), dataSources[] digest for the focused slide, layoutDigest, filterDigest, optional editorFocus. scope=editorFocus omits nativeConfig/heavy digests (avoids ResponseTooLargeError) and returns dataSources + selected dataSource. When scope=full would exceed the Actions budget, the API auto-downgrades to editorFocus (scopeDowngraded=true) so dataSource ids remain available. includePreview=true&slideId= adds slidePreview signed PNG URL (no 9th Action).",
+        "description": "Playlist summary + slides index + focusedSlide. dataSources[] = id/label/operationId/params. scope=editorFocus omits nativeConfig. full auto-downgrades to editorFocus if over Actions budget (scopeDowngraded). includePreview adds slidePreview PNG URL.",
         "tags": [
           "TV Dashboard GPT"
         ],

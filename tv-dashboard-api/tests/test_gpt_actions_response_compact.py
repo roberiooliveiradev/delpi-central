@@ -344,3 +344,44 @@ def test_get_playlist_context_auto_downgrades_when_full_exceeds_budget():
     assert "nativeConfig" not in (out.get("focusedSlide") or {})
     assert any(row["id"] == ds_id and "setembro 2025" in row["label"] for row in out["dataSources"])
     assert utf8_size(out) < GPT_ACTIONS_RESPONSE_MAX_BYTES
+
+
+def test_project_mutation_actions_payload_strips_native_and_fits_budget():
+    from tv_app.application.gpt_actions.response_compact import (
+        project_mutation_actions_payload,
+    )
+
+    pad = "Z" * 5000
+    heavy = {
+        "proposal_handle": "abc.def",
+        "ops": [{"op": "upsert_data_source", "blockId": "ds-1", "label": "novo"}],
+        "persisted": True,
+        "verified": True,
+        "status": "VERIFIED",
+        "nativeConfig": {"blocks": [{"id": f"b{i}", "content": pad} for i in range(40)]},
+        "verification": {
+            "persistedNative": {"blocks": [{"content": pad} for _ in range(40)]},
+            "checks": [{"op": "native_config_batch", "ok": True}],
+        },
+        "candidatePreview": {
+            "previewUrl": "https://example/p.png",
+            "designAudit": {"issues": [{"id": "x"}] * 50},
+            "remainingIssues": [{"id": f"i{i}"} for i in range(30)],
+            "persisted": False,
+        },
+        "visualVerification": {
+            "persisted": True,
+            "rendered": True,
+            "layoutGatePassed": True,
+            "remainingIssues": [{"id": f"r{i}"} for i in range(20)],
+            "issuesFixed": [],
+            "issuesIntroduced": [],
+        },
+    }
+    out = project_mutation_actions_payload(heavy)
+    assert "nativeConfig" not in out
+    assert "persistedNative" not in str(out)
+    assert out["proposal_handle"] == "abc.def"
+    assert out["ops"][0]["label"] == "novo"
+    assert out["persisted"] is True
+    assert utf8_size(out) < GPT_ACTIONS_RESPONSE_MAX_BYTES
