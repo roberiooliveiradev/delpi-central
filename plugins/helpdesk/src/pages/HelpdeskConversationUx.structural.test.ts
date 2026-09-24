@@ -58,10 +58,12 @@ describe("HELPDESK-MFE-UX-001-R3 conversation detail", () => {
     const detail = page.slice(page.indexOf("function TicketDetailPage"));
     expect(detail).toContain("HelpdeskAssignPopover");
     expect(detail).toContain("canAssign={ticket.can_assign === true}");
+    expect(detail).toContain('variant="inline"');
     expect(detail).toContain("setTicketAssignee");
     expect(assign).toContain("canAssign");
     expect(assign).toMatch(/canAssign \? \(/);
     expect(assign).toContain("HelpdeskAssigneePicker");
+    expect(assign).toContain('variant === "inline"');
   });
 
   it("closed satisfaction uses radiogroup 1–5 and same submit contract", () => {
@@ -88,15 +90,47 @@ describe("HELPDESK-MFE-UX-001-R3 conversation detail", () => {
     expect(detail).not.toMatch(/status_id\s*===\s*6[\s\S]{0,80}can_followup/);
     expect(detail).not.toMatch(/statusId\s*===\s*6[\s\S]{0,80}reply/);
   });
+});
 
-  it("CSS owns conversation max-width, compact composer and satisfaction density", () => {
+describe("HELPDESK-MFE-UX-001-R4 conversation density", () => {
+  it("uses compact summary rail with all metadata fields", () => {
+    const page = read("HelpdeskPage.tsx");
+    const detail = page.slice(page.indexOf("function TicketDetailPage"));
+    expect(detail).toContain("helpdesk-ticket-summary-rail");
+    expect(detail).toContain("helpdesk-ticket-summary-rail__lead");
+    expect(detail).toContain("ticketRecordFields");
+    expect(detail).toContain('"sla_tto"');
+    expect(detail).toContain('"sla_ttr"');
+    expect(detail).toContain('"created_at"');
+    expect(detail).toContain('"updated_at"');
+    expect(detail).toContain("HelpdeskStatusBadge");
+    expect(detail).not.toContain("HelpdeskRecordCard");
+    expect(detail).not.toContain("detailRecordHeading");
+  });
+
+  it("removes thread max-width 72rem while keeping bubble bounds", () => {
     const css = read("../index.css");
-    expect(css).toContain(".helpdesk-detail");
     expect(css).toContain(".helpdesk-detail__conversation-inner");
-    expect(css).toContain("max-width: min(72rem, 100%)");
+    expect(css).toContain("max-width: none");
+    expect(css).not.toMatch(
+      /\.helpdesk-detail__conversation-inner \{[^}]*max-width:\s*min\(72rem/,
+    );
+    expect(css).toMatch(
+      /\.helpdesk-detail__conversation-inner \.delpi-ui-message-thread__row \{[^}]*max-width:\s*min\(65%,\s*48rem\)/,
+    );
+    expect(css).toContain(".helpdesk-ticket-summary-rail");
     expect(css).toContain(".helpdesk-reply-form");
     expect(css).toMatch(/\.helpdesk-reply-form[\s\S]*?min-height:\s*4\.5rem/);
     expect(css).toContain(".helpdesk-satisfaction__score");
     expect(css).not.toMatch(/helpdesk-detail__conversation[\s\S]{0,200}100vh\s*-/);
+  });
+
+  it("keeps mine alignment and compact composer unchanged", () => {
+    const page = read("HelpdeskPage.tsx");
+    const detail = page.slice(page.indexOf("function TicketDetailPage"));
+    const replyBlock = detail.slice(detail.indexOf('label="Responder"'));
+    expect(detail).toContain("mine: message.mine");
+    expect(replyBlock).toContain("minHeight={72}");
+    expect(replyBlock).not.toMatch(/\bfill\b/);
   });
 });

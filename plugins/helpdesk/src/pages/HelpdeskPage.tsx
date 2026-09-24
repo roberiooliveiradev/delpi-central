@@ -35,8 +35,6 @@ import { helpTooltips } from "../content/helpTooltips";
 import {
   conversationAuthorSrc,
   conversationMessages,
-  detailRecordHeading,
-  detailRecordSubtitle,
   hasVisibleRichText,
   isTicketFilterActive,
   newIdempotencyKey,
@@ -127,7 +125,6 @@ import {
   HelpdeskMessageThread,
   HelpdeskPageHeader,
   HelpdeskPageHero,
-  HelpdeskRecordCard,
   HelpdeskRichTextField,
   HelpdeskScopeChipBar,
   HelpdeskSectionCard,
@@ -1165,20 +1162,32 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
         {ticket ? (
           <>
             <section className="helpdesk-detail__summary" aria-label="Resumo do chamado">
-              <div className="helpdesk-ticket-summary">
-                <HelpdeskRecordCard
-                  title={detailRecordHeading(ticket.category, ticket.urgency).title}
-                  subtitle={detailRecordSubtitle({
-                    id: ticket.id,
-                    urgency: ticket.urgency,
-                  })}
-                  status={
-                    <HelpdeskStatusBadge
-                      label={ticket.status}
-                      variant={statusBadgeVariant(ticket.status_id)}
-                    />
-                  }
-                  fields={ticketRecordFields({
+              <div className="helpdesk-ticket-summary-rail">
+                <div className="helpdesk-ticket-summary-rail__items">
+                  <span className="helpdesk-ticket-summary-rail__lead">
+                    {[
+                      ticket.id > 0 ? `#${ticket.id}` : "",
+                      ticket.category.trim(),
+                      ticket.urgency.trim(),
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </span>
+                  <HelpdeskStatusBadge
+                    label={ticket.status}
+                    variant={statusBadgeVariant(ticket.status_id)}
+                  />
+                  <HelpdeskAssignPopover
+                    variant="inline"
+                    assignedDisplayName={ticket.assigned_display_name}
+                    assignedUserId={ticket.assigned_user_id}
+                    value={assigneePick}
+                    onChange={setAssigneePick}
+                    onConfirm={assignTechnician}
+                    saving={assignSaving}
+                    canAssign={ticket.can_assign === true}
+                  />
+                  {ticketRecordFields({
                     id: ticket.id,
                     category: ticket.category,
                     urgency: ticket.urgency,
@@ -1194,23 +1203,15 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                     .filter((field) =>
                       ["sla_tto", "sla_ttr", "created_at", "updated_at"].includes(field.id),
                     )
-                    .map((field) => ({
-                      id: field.id,
-                      label: field.label,
-                      value: field.value,
-                      present: field.present,
-                    }))}
-                />
+                    .filter((field) => field.present)
+                    .map((field) => (
+                      <span key={field.id} className="helpdesk-ticket-summary-rail__item">
+                        <span className="helpdesk-ticket-summary-rail__label">{field.label}</span>
+                        <span className="helpdesk-ticket-summary-rail__value">{field.value}</span>
+                      </span>
+                    ))}
+                </div>
               </div>
-              <HelpdeskAssignPopover
-                assignedDisplayName={ticket.assigned_display_name}
-                assignedUserId={ticket.assigned_user_id}
-                value={assigneePick}
-                onChange={setAssigneePick}
-                onConfirm={assignTechnician}
-                saving={assignSaving}
-                canAssign={ticket.can_assign === true}
-              />
             </section>
             {(() => {
               const cue = solicitanteLifecycleCue({
