@@ -458,6 +458,117 @@ def _resolve_chart_rows_for_projection(
     return rows
 
 
+def _resolve_field_scalar(
+    resolved: dict[str, Any],
+    rows: list[dict[str, Any]],
+    field: str,
+    aggregation: str = "first",
+) -> float | None:
+    """Resolve one measure from columnar rows or kpiMetrics (scalar sources)."""
+    key = (field or "").strip()
+    if not key:
+        return None
+    agg = aggregation if aggregation in _AGG_FNS else "first"
+    usable_rows = rows if not _is_metric_summary_rows(rows) else []
+    if usable_rows and any(isinstance(row, dict) and key in row for row in usable_rows):
+        return aggregate_values(_column_values(usable_rows, key), agg)
+    metrics = {
+        str(m.get("field") or "").strip(): m
+        for m in (resolved.get("kpiMetrics") or [])
+        if isinstance(m, dict) and str(m.get("field") or "").strip()
+    }
+    metric = metrics.get(key)
+    if not metric:
+        return None
+    return aggregate_values([metric.get("value")], agg)
+
+
+def _field_display_label(
+    resolved: dict[str, Any],
+    field: str,
+    projection_label: str = "",
+) -> str:
+    key = (field or "").strip()
+    proj = (projection_label or "").strip()
+    if proj and not _is_auto_baked_field_label(proj, key):
+        return proj
+    for metric in resolved.get("kpiMetrics") or []:
+        if not isinstance(metric, dict):
+            continue
+        if str(metric.get("field") or "").strip() != key:
+            continue
+        base = str(metric.get("label") or "").strip()
+        if base:
+            return base
+    labels = resolved.get("fieldLabelsEffective")
+    if isinstance(labels, dict):
+        found = _lookup_field_label(_normalize_field_labels(labels), key)
+        if found:
+            return found
+    return key
+
+
+def _apply_gauge_projection(
+    resolved: dict[str, Any],
+    block: dict[str, Any],
+    rows: list[dict[str, Any]],
+) -> tuple[dict[str, Any], bool]:
+    """
+    Velocímetro: valor = series[0]; meta = goalField (kpiMetrics ou coluna).
+    Paridade com viewProjection.ts applyChartProjection(gauge) — FE-BE-002 bake.
+    """
+    projection = block.get("chartProjection")
+    if not isinstance(projection, dict):
+        return resolved, False
+    series_cfg = projection.get("series") if isinstance(projection.get("series"), list) else []
+    if not series_cfg:
+        return resolved, False
+    first = series_cfg[0] if isinstance(series_cfg[0], dict) else None
+    if not isinstance(first, dict):
+        return resolved, False
+    field = str(first.get("field") or "").strip()
+    if not field:
+        return resolved, False
+    agg = str(first.get("aggregation") or "first")
+    value = _resolve_field_scalar(resolved, rows, field, agg)
+    label = _field_display_label(resolved, field, str(first.get("label") or ""))
+    goal_field = str(projection.get("goalField") or "").strip()
+    goal = None
+    if goal_field:
+        goal = _resolve_field_scalar(
+            resolved,
+            rows,
+            goal_field,
+            str(projection.get("goalAggregation") or "first"),
+        )
+    next_resolved = dict(resolved)
+    next_resolved["kpi"] = {"value": value, "label": label}
+    if value is None:
+        next_chart: dict[str, Any] = {
+            "chartType": "gauge",
+            "points": [],
+            "series": [],
+        }
+    else:
+        point = {"label": label, "value": value}
+        next_chart = {
+            "chartType": "gauge",
+            "points": [point],
+            "series": [
+                {
+                    "name": label or field,
+                    "field": field,
+                    "color": first.get("color"),
+                    "points": [point],
+                }
+            ],
+        }
+    if goal is not None:
+        next_chart["projectedGoal"] = goal
+    next_resolved["chart"] = next_chart
+    return next_resolved, True
+
+
 def apply_view_projection_to_resolved(resolved: dict[str, Any], block: dict[str, Any]) -> dict[str, Any]:
     """
     Aplica kpiProjection / chartProjection / tableProjection do bloco visual.
@@ -562,7 +673,27 @@ def apply_view_projection_to_resolved(resolved: dict[str, Any], block: dict[str,
     if block_type == "chart_view":
         projection = block.get("chartProjection")
         chart_type = str(block.get("chartType") or "line").strip() or "line"
-        if isinstance(projection, dict):
+        if chart_type == "gauge":
+            next_resolved, gauge_applied = _apply_gauge_projection(
+                next_resolved, block, rows
+            )
+            if gauge_applied:
+                applied = True
+            elif isinstance(projection, dict) and (
+                projection.get("series") or projection.get("goalField") or projection.get("categoryField")
+            ):
+                # Encoding presente sem medida resolvível — limpa dump da fonte.
+                next_resolved["chart"] = {
+                    "chartType": "gauge",
+                    "points": [],
+                    "series": [],
+                }
+                next_resolved["kpi"] = {
+                    "value": None,
+                    "label": str((resolved.get("kpi") or {}).get("label") or "Valor"),
+                }
+                applied = True
+        elif isinstance(projection, dict):
             series_cfg = projection.get("series") if isinstance(projection.get("series"), list) else []
             category = str(projection.get("categoryField") or "").strip()
             # Sem série explícita + categoria + pizza/rosca → contagem por grupo.
@@ -639,7 +770,9 @@ def apply_view_projection_to_resolved(resolved: dict[str, Any], block: dict[str,
                     "chartType": effective_type,
                     "series": series_out,
                 }
-                projected_goal = _resolve_projected_goal(chart_rows or rows, projection)
+                projected_goal = _resolve_projected_goal(
+                    chart_rows or rows, projection, resolved=resolved
+                )
                 if projected_goal is not None:
                     next_chart["projectedGoal"] = projected_goal
                 next_resolved["chart"] = next_chart
@@ -802,20 +935,29 @@ def _resolve_max_categories(projection: dict[str, Any], chart_type: str) -> int 
     return max(1, n)
 
 
-def _resolve_projected_goal(rows: list[dict[str, Any]], projection: dict[str, Any]) -> float | None:
+def _resolve_projected_goal(
+    rows: list[dict[str, Any]],
+    projection: dict[str, Any],
+    *,
+    resolved: dict[str, Any] | None = None,
+) -> float | None:
     field = str(projection.get("goalField") or "").strip()
-    if not field or not rows:
+    if not field:
         return None
     agg = str(projection.get("goalAggregation") or "first")
-    values = _column_values(rows, field)
-    nums = [n for n in (_as_float(v) for v in values) if n is not None]
-    if not nums and values:
-        # first of raw when non-numeric — rare for goals
-        first = _as_float(values[0])
-        return first
-    if not nums:
-        return None
-    return aggregate_values(nums, agg if agg in _AGG_FNS else "first")
+    usable = rows if rows and not _is_metric_summary_rows(rows) else []
+    if usable:
+        values = _column_values(usable, field)
+        nums = [n for n in (_as_float(v) for v in values) if n is not None]
+        if nums:
+            return aggregate_values(nums, agg if agg in _AGG_FNS else "first")
+        if values:
+            first = _as_float(values[0])
+            if first is not None:
+                return first
+    if resolved is not None:
+        return _resolve_field_scalar(resolved, rows, field, agg)
+    return None
 
 
 def _collapse_categories_to_max(

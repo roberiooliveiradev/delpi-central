@@ -1866,15 +1866,13 @@ class DisplayFormatService:
         goal: float | None,
     ) -> dict[str, Any]:
         """G27 — paint-ready gauge scalars + display strings."""
-        value = cls._as_finite_number(
-            (resolved.get("kpi") or {}).get("value") if isinstance(resolved.get("kpi"), dict) else None
-        )
-        if value is None:
-            for point in reversed(chart.get("points") or []):
-                if isinstance(point, dict):
-                    value = cls._as_finite_number(point.get("value"))
-                    if value is not None:
-                        break
+        # Prefer projected series/points (selected measure) over primary source kpi.
+        value = None
+        for point in reversed(chart.get("points") or []):
+            if isinstance(point, dict):
+                value = cls._as_finite_number(point.get("value"))
+                if value is not None:
+                    break
         if value is None:
             for entry in chart.get("series") or []:
                 if not isinstance(entry, dict):
@@ -1886,6 +1884,12 @@ class DisplayFormatService:
                             break
                 if value is not None:
                     break
+        if value is None:
+            value = cls._as_finite_number(
+                (resolved.get("kpi") or {}).get("value")
+                if isinstance(resolved.get("kpi"), dict)
+                else None
+            )
         label = (
             str(
                 (resolved.get("kpi") or {}).get("label")
@@ -1902,31 +1906,72 @@ class DisplayFormatService:
         accent = str(options.get("seriesColor") or "").strip() or None
         import math
 
-        max_from_goal = 100.0
-        if goal is not None and goal > 0:
-            max_from_goal = max(100.0, float(math.ceil(goal)))
-        max_from_value = max_from_goal
-        if value is not None and value > max_from_goal:
-            max_from_value = float(math.ceil(value))
         value_spec = cls.resolve_spec(
             display_format=options.get("displayValueFormat"),
             legacy_format=str(options.get("valueFormat") or "") or None,
             decimal_places=options.get("decimalPlaces"),
             kind="chart",
         )
+        # Infer percent / currency for gauge unit (never force % on absolute ROL).
+        series_field = ""
+        series = chart.get("series")
+        if isinstance(series, list) and series and isinstance(series[0], dict):
+            series_field = str(series[0].get("field") or "").strip().lower()
+        label_l = label.lower()
+        looks_percent = (
+            value_spec.get("category") == "percent"
+            or series_field.endswith("_pct")
+            or series_field.endswith("_percent")
+            or "atingimento" in label_l
+            or label_l.endswith("(%)")
+            or label_l.endswith("%")
+        )
+        money_fields = {
+            "rol",
+            "gross_revenue",
+            "returns",
+            "discounts",
+            "comparable_goal",
+            "goal_value",
+            "reference_goal",
+            "target",
+            "value",
+        }
+        looks_currency = value_spec.get("category") == "currency" or series_field in money_fields
+        if looks_percent and value_spec.get("category") != "percent":
+            value_spec = {
+                **value_spec,
+                "category": "percent",
+                "presetId": value_spec.get("presetId") or "percent",
+            }
+        max_from_goal = 100.0 if looks_percent or not looks_currency else 0.0
+        if goal is not None and goal > 0:
+            max_from_goal = max(max_from_goal, float(math.ceil(goal)))
+        if max_from_goal <= 0:
+            max_from_goal = 100.0
+        max_from_value = max_from_goal
+        if value is not None and value > max_from_goal:
+            max_from_value = float(math.ceil(value))
+        value_display = (
+            cls.format_value(value, value_spec) if value is not None else EMPTY_DISPLAY
+        )
+        if looks_percent:
+            unit = "" if isinstance(value_display, str) and value_display.endswith("%") else "%"
+        elif looks_currency:
+            unit = ""
+        else:
+            unit = "%"
         return {
             "value": value,
             "goal": goal,
             "min": 0.0,
             "max": max_from_value if max_from_value > 0 else 100.0,
             "label": label,
-            "unit": "%",
+            "unit": unit,
             "accentColor": accent,
             "showTitle": options.get("showTitle") is not False,
             "title": title,
-            "valueDisplay": cls.format_value(value, value_spec)
-            if value is not None
-            else EMPTY_DISPLAY,
+            "valueDisplay": value_display,
             "goalDisplay": cls.format_value(goal, value_spec)
             if goal is not None
             else None,

@@ -399,6 +399,66 @@ def test_radar_projection_collapses_selected_metrics_to_one_series():
     assert next_resolved["chart"]["chartType"] == "radar"
 
 
+def test_gauge_projection_uses_selected_metric_not_primary_kpi():
+    """Velocímetro must bake series[0] (atingimento), never primary ROL."""
+    resolved = {
+        "kpi": {"value": 3931168.39, "label": "ROL"},
+        "kpiMetrics": [
+            {"field": "rol", "label": "ROL", "value": 3931168.39},
+            {"field": "comparable_goal", "label": "Meta do período", "value": 4774000.0},
+            {"field": "rol_target_pct", "label": "Atingimento da meta ROL (%)", "value": 99.2},
+        ],
+        "table": {"columns": [], "rows": []},
+    }
+    block = {
+        "type": "chart_view",
+        "chartType": "gauge",
+        "chartProjection": {
+            "series": [
+                {
+                    "field": "rol_target_pct",
+                    "aggregation": "first",
+                    "label": "Atingimento da meta ROL (%)",
+                }
+            ],
+            "goalField": "comparable_goal",
+            "goalAggregation": "first",
+        },
+    }
+    next_resolved = apply_view_projection_to_resolved(resolved, block)
+    assert next_resolved["kpi"]["value"] == 99.2
+    assert next_resolved["chart"]["points"][0]["value"] == 99.2
+    assert next_resolved["chart"]["projectedGoal"] == 4774000.0
+    assert next_resolved["serverProjectionApplied"] is True
+
+
+def test_gauge_model_prefers_projected_percent_over_primary_rol():
+    from tv_app.application.services.data.display_format_service import DisplayFormatService
+
+    resolved = {
+        "kpi": {"value": 99.2, "label": "Atingimento da meta ROL (%)"},
+        "chart": {
+            "chartType": "gauge",
+            "projectedGoal": 100.0,
+            "points": [{"label": "Atingimento da meta ROL (%)", "value": 99.2}],
+            "series": [
+                {
+                    "field": "rol_target_pct",
+                    "name": "Atingimento da meta ROL (%)",
+                    "points": [{"label": "Atingimento da meta ROL (%)", "value": 99.2}],
+                }
+            ],
+        },
+    }
+    block = {"type": "chart_view", "chartType": "gauge", "chartOptions": {}}
+    out = DisplayFormatService.apply_to_resolved(resolved, block)
+    model = out["chart"]["gaugeModel"]
+    assert model["value"] == 99.2
+    assert "%" in str(model["valueDisplay"])
+    assert model["unit"] in {"", "%"}
+    assert not str(model["valueDisplay"]).endswith("%%")
+
+
 def test_table_projection_synthesizes_wide_row_from_kpi_metrics():
     """Scalar source without table rows → one wide row for selected measure columns."""
     resolved = {

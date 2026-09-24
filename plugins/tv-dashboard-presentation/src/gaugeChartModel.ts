@@ -17,6 +17,9 @@ export type GaugeChartModel = {
   accentColor?: string;
   showTitle: boolean;
   title: string;
+  /** Server-baked display string (preferred over formatValue+unit). */
+  valueDisplay?: string;
+  goalDisplay?: string | null;
 };
 
 function asFinite(value: unknown): number | null {

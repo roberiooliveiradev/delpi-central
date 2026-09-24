@@ -119,6 +119,12 @@ export function ChartViewBlockView({
             accentColor: serverModel.accentColor,
             showTitle: serverModel.showTitle !== false,
             title: serverModel.title ?? serverModel.label ?? "Valor",
+            ...(typeof serverModel.valueDisplay === "string"
+              ? { valueDisplay: serverModel.valueDisplay }
+              : {}),
+            ...(serverModel.goalDisplay != null
+              ? { goalDisplay: serverModel.goalDisplay }
+              : {}),
           }
         : {
             value: null,

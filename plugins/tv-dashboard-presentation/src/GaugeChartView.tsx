@@ -202,7 +202,28 @@ function GaugeChartViewInner({ model, options, chartParts, interaction }: Props)
         value={model.value}
         goal={model.goal}
         label={model.label}
-        unit={model.unit}
+        unit={model.valueDisplay ? "" : model.unit}
+        formatValue={
+          model.valueDisplay || model.goalDisplay
+            ? (n) => {
+                if (
+                  model.valueDisplay &&
+                  model.value != null &&
+                  Number(n) === Number(model.value)
+                ) {
+                  return model.valueDisplay;
+                }
+                if (
+                  model.goalDisplay &&
+                  model.goal != null &&
+                  Number(n) === Number(model.goal)
+                ) {
+                  return model.goalDisplay;
+                }
+                return String(n);
+              }
+            : undefined
+        }
         max={model.max}
         min={model.min}
         accentColor={model.accentColor}
