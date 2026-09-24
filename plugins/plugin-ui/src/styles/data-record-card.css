@@ -71,9 +71,14 @@ a.delpi-ui-data-record-card:focus-visible {
   align-items: flex-start;
   justify-content: space-between;
   gap: 0.75rem;
+  min-width: 0;
 }
 
-.delpi-ui-data-record-card__title,
+.delpi-ui-data-record-card__header > div:first-child {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
 .delpi-ui-data-record-card__subtitle {
   display: block;
 }
@@ -83,6 +88,11 @@ a.delpi-ui-data-record-card:focus-visible {
   font-size: 0.9375rem;
   font-weight: 700;
   line-height: 1.3;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
 }
 
 .delpi-ui-data-record-card__subtitle,
@@ -103,9 +113,11 @@ a.delpi-ui-data-record-card:focus-visible {
 
 .delpi-ui-data-record-card__fields {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+  /* min(100%, …) evita 2 colunas esmagadas em card estreito (labels sobrepostos). */
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
   gap: 0.55rem 1rem;
   margin: 0;
+  min-width: 0;
 }
 
 .delpi-ui-data-record-card__field {
@@ -128,6 +140,11 @@ a.delpi-ui-data-record-card:focus-visible {
 .delpi-ui-data-record-card__field-value {
   color: var(--delpi-ui-text, var(--text, #111111));
   font-weight: 650;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
 }
 
 .delpi-ui-data-record-card__context {

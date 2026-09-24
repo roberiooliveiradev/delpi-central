@@ -349,11 +349,26 @@
 }
 
 .dashboard-helpdesk .helpdesk-record-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
-  gap: var(--helpdesk-section-gap);
+  /* Kit define o grid; aqui só a superfície de scroll da listagem. */
   min-height: 0;
+  min-width: 0;
   overflow: auto;
+  align-content: start;
+}
+
+.dashboard-helpdesk .helpdesk-record-list .delpi-ui-data-record-card,
+.dashboard-helpdesk .helpdesk-record-list .helpdesk-data-record-card {
+  min-width: 0;
+  height: auto;
+  max-width: 100%;
+  overflow: hidden;
+  align-self: start;
+}
+
+.dashboard-helpdesk .helpdesk-record-list .delpi-ui-data-record-card__fields,
+.dashboard-helpdesk .helpdesk-record-list .helpdesk-data-record-card__fields {
+  grid-template-columns: 1fr;
+  gap: 0.45rem;
 }
 
 .dashboard-helpdesk .helpdesk-create-form {

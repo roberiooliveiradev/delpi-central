@@ -52,11 +52,14 @@ describe("Helpdesk list UX structural", () => {
 
   it("cards usam DataCardsGrid + RecordCard com href interno e meta responsiva", () => {
     const cards = read("TicketListCards.tsx");
+    const css = read("../index.css");
     expect(cards).toContain("HelpdeskDataCardsGrid");
     expect(cards).toContain("HelpdeskRecordCard");
     expect(cards).toContain("ticketDetailPath");
     expect(cards).toContain("relativeTimeLabel");
     expect(cards).toContain("showRequester");
+    expect(css).toContain("helpdesk-record-list .delpi-ui-data-record-card__fields");
+    expect(css).toMatch(/helpdesk-record-list[\s\S]*grid-template-columns:\s*1fr/);
   });
 
   it("CSS escuro scoped no host do MFE", () => {
