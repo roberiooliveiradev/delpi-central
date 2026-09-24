@@ -1,6 +1,6 @@
 {
   "taskId": "DAVI-WAVE005-STOCK-BALANCES-PROJECTION-CORRECTION-001",
-  "sourceHead": "PENDING_COMMIT",
+  "sourceHead": "ade87ee3126fc57694080147749a22eb1f9f15e0",
   "operationId": "get_supplies_stock_balances_summary",
   "path": "GET /supplies/stock-balances/summary",
   "classification": "DAVI_WAVE005_STOCK_BALANCES_GRAIN_PROJECTION",
