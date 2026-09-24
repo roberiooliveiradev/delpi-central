@@ -432,6 +432,59 @@
   border-radius: 10px;
 }
 
+.dashboard-helpdesk .helpdesk-list-hero-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.dashboard-helpdesk .helpdesk-list-shell {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--helpdesk-section-gap);
+  min-height: 0;
+  min-width: 0;
+  overflow: auto;
+  overflow-x: hidden;
+}
+
+.dashboard-helpdesk .helpdesk-list-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  min-width: 0;
+}
+
+.dashboard-helpdesk .helpdesk-list-search-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.dashboard-helpdesk .helpdesk-list-search-bar .helpdesk-filter-box {
+  flex: 1 1 12rem;
+  min-width: 0;
+}
+
+@media (max-width: 768px) {
+  .dashboard-helpdesk .helpdesk-list-hero-actions {
+    width: 100%;
+  }
+
+  .dashboard-helpdesk .helpdesk-list-hero-actions > * {
+    flex: 1 1 auto;
+  }
+
+  .dashboard-helpdesk .helpdesk-open-ticket {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+}
+
 .dashboard-helpdesk .helpdesk-rich-text-field {
   display: flex;
   flex: 1 1 auto;

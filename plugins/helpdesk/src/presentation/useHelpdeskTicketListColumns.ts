@@ -7,7 +7,8 @@ import {
   type TicketListColumnPreference,
 } from "../presentation/ticketListViewModel";
 
-const STORAGE_KEY = "helpdesk:ticket-list:columns:v1";
+/** v2 — defaults requester enxutos; urgência/requerente via picker ou density assignable. */
+const STORAGE_KEY = "helpdesk:ticket-list:columns:v2";
 
 const COLUMN_ITEMS = TICKET_LIST_COLUMN_CATALOG.filter((column) => column.solicitante).map(
   (column) => ({
@@ -16,14 +17,24 @@ const COLUMN_ITEMS = TICKET_LIST_COLUMN_CATALOG.filter((column) => column.solici
   }),
 );
 
-const DEFAULT_VISIBILITY = Object.fromEntries(
-  TICKET_LIST_COLUMN_CATALOG.filter((column) => column.solicitante).map((column) => [
-    column.key,
-    column.defaultVisible || column.fixed,
-  ]),
-);
+function defaultVisibility(canAssign: boolean): Record<string, boolean> {
+  return Object.fromEntries(
+    TICKET_LIST_COLUMN_CATALOG.filter((column) => column.solicitante).map((column) => {
+      let visible = column.defaultVisible || column.fixed;
+      if (canAssign && (column.key === "urgency" || column.key === "requester")) {
+        visible = true;
+      }
+      return [column.key, visible];
+    }),
+  );
+}
 
-export function useHelpdeskTicketListColumns() {
+/**
+ * Column prefs for Meus Chamados.
+ * Pass a stable `canAssign` (resolve capabilities before mount) so defaults densify correctly.
+ */
+export function useHelpdeskTicketListColumns(options?: { canAssign?: boolean }) {
+  const canAssign = options?.canAssign === true;
   const {
     visibility,
     order,
@@ -34,7 +45,7 @@ export function useHelpdeskTicketListColumns() {
   } = useTableColumnVisibility({
     storageKey: STORAGE_KEY,
     columns: COLUMN_ITEMS,
-    defaultVisibility: DEFAULT_VISIBILITY,
+    defaultVisibility: defaultVisibility(canAssign),
     emptyFallbackKeys: ["id", "title"],
     keepAtLeastOne: true,
   });

@@ -3,7 +3,7 @@ import type { MouseEvent } from "react";
 import type { TicketSummary } from "../api/helpdeskApi";
 import {
   absoluteDateTimeLabel,
-  detailRecordSubtitle,
+  relativeTimeLabel,
   statusBadgeVariant,
 } from "../presentation/ticketView";
 import {
@@ -19,30 +19,35 @@ import {
 export function TicketListCards({
   items,
   onOpen,
+  showRequester = false,
 }: {
   items: TicketSummary[];
   onOpen: (ticketId: number) => void;
+  /** Progressive disclosure when session can_assign. */
+  showRequester?: boolean;
 }) {
+  const now = new Date();
   return (
     <HelpdeskDataCardsGrid
       className="helpdesk-record-list"
-      ariaLabel="Chamados em cards"
+      ariaLabel="Chamados em lista"
       empty={items.length === 0 ? "Nenhum chamado neste recorte." : undefined}
     >
       {items.map((row) => {
         const href = ticketDetailPath(row.id);
-        const created = absoluteDateTimeLabel(row.created_at);
-        const updated = absoluteDateTimeLabel(row.updated_at);
+        const urgency = row.urgency.trim();
+        const updatedAbs = absoluteDateTimeLabel(row.updated_at);
+        const updatedRel = relativeTimeLabel(row.updated_at, now) || updatedAbs;
+        const requester = (row.requester_display_name ?? "").trim();
+        const technician = row.assigned_display_name.trim();
         return (
           <HelpdeskRecordCard
             key={row.id}
             title={row.title.trim() || `Chamado #${row.id}`}
-            subtitle={detailRecordSubtitle({
-              id: row.id,
-              urgency: row.urgency,
-              assigned_display_name: row.assigned_display_name,
-            })}
-            status={<HelpdeskStatusBadge label={row.status} variant={statusBadgeVariant(row.status_id)} />}
+            subtitle={`#${row.id}${urgency ? ` · ${urgency}` : ""}`}
+            status={
+              <HelpdeskStatusBadge label={row.status} variant={statusBadgeVariant(row.status_id)} />
+            }
             href={href}
             ariaLabel={`Abrir chamado ${row.id}`}
             onNavigate={(event: MouseEvent<HTMLAnchorElement>) => {
@@ -58,16 +63,26 @@ export function TicketListCards({
                 present: Boolean(row.category.trim()),
               },
               {
-                id: "created_at",
-                label: "Aberto",
-                value: created,
-                present: Boolean(created),
+                id: "requester",
+                label: "Solicitante",
+                value: requester,
+                present: showRequester && Boolean(requester),
+              },
+              {
+                id: "assigned",
+                label: "Técnico",
+                value: technician || "—",
+                present: true,
               },
               {
                 id: "updated_at",
                 label: "Atualizado",
-                value: updated,
-                present: Boolean(updated),
+                value: (
+                  <time dateTime={row.updated_at} title={updatedAbs || undefined}>
+                    {updatedRel}
+                  </time>
+                ),
+                present: Boolean(updatedRel),
               },
             ]}
           />

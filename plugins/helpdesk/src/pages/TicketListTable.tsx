@@ -1,6 +1,6 @@
 import type { MouseEvent, ReactNode } from "react";
 
-import { absoluteDateTimeLabel, statusBadgeVariant } from "../presentation/ticketView";
+import { absoluteDateTimeLabel, relativeTimeLabel, statusBadgeVariant } from "../presentation/ticketView";
 import {
   resolveVisibleColumns,
   type TicketListColumnDefinition,
@@ -111,6 +111,17 @@ function TicketDetailLink({ ticketId, children }: { ticketId: number; children: 
   );
 }
 
+function DateCell({ value }: { value: string }) {
+  const absolute = absoluteDateTimeLabel(value);
+  const relative = relativeTimeLabel(value, new Date()) || absolute;
+  if (!relative) return "";
+  return (
+    <time dateTime={value} title={absolute || undefined} aria-label={absolute || relative}>
+      {relative}
+    </time>
+  );
+}
+
 function renderColumn(key: TicketListColumnDefinition["key"], row: TicketSummary) {
   switch (key) {
     case "id":
@@ -128,13 +139,13 @@ function renderColumn(key: TicketListColumnDefinition["key"], row: TicketSummary
     case "requester":
       return (row.requester_display_name ?? "").trim();
     case "created_at":
-      return absoluteDateTimeLabel(row.created_at);
+      return <DateCell value={row.created_at} />;
     case "updated_at":
-      return absoluteDateTimeLabel(row.updated_at);
+      return <DateCell value={row.updated_at} />;
     case "solved_at":
-      return absoluteDateTimeLabel(row.solved_at ?? "");
+      return <DateCell value={row.solved_at ?? ""} />;
     case "closed_at":
-      return absoluteDateTimeLabel(row.closed_at ?? "");
+      return <DateCell value={row.closed_at ?? ""} />;
     case "entity":
     case "last_editor":
       return "";

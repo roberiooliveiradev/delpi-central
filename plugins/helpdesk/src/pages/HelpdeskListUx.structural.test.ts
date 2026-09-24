@@ -10,17 +10,28 @@ function read(relativePath: string): string {
 }
 
 describe("Helpdesk list UX structural", () => {
-  it("lista não monta FiltersRow; usa builder, SegmentToggle e Pagination do kit", () => {
+  it("lista usa PageHero, busca, chips, drawer avançado e Pagination do kit", () => {
     const page = read("HelpdeskPage.tsx");
+    const ui = read("../ui/helpdeskUi.tsx");
     expect(page).not.toContain("HelpdeskFiltersRow");
+    expect(page).toContain("HelpdeskPageHero");
+    expect(page).toContain("HelpdeskScopeChipBar");
+    expect(page).toContain("HelpdeskFilterBarShell");
+    expect(page).toContain("HelpdeskHostDrawer");
     expect(page).toContain("TicketListFilterBuilder");
     expect(page).toContain("HelpdeskSegmentToggle");
     expect(page).toContain("TicketListCards");
     expect(page).toContain("HelpdeskListPaginationFooter");
+    expect(page).toContain("shouldForceTicketCards");
+    expect(page).toContain("TICKET_STATUS_FILTERS");
     expect(page).not.toContain("HelpdeskCompactPagination");
     expect(page).not.toContain("HelpdeskTablePageSizeSelect");
     expect(page).toContain("HELPDESK_TICKET_LIST_VIEW_LAYOUT_KEY");
     expect(page).toContain("usePersistedViewLayout");
+    expect(ui).toContain("createDashboardPageHero");
+    expect(ui).toContain("createHostContainedDrawerShell");
+    expect(ui).toContain("createDashboardScopeChipBar");
+    expect(ui).toContain("createFilterBarShell");
   });
 
   it("CTA Abrir chamado na listagem usa ActionButton com texto (não só ícone +)", () => {
@@ -36,14 +47,16 @@ describe("Helpdesk list UX structural", () => {
     expect(openBlock).not.toContain("HelpdeskIconButton");
     const css = read("../index.css");
     expect(css).toContain(".helpdesk-open-ticket");
+    expect(css).toContain(".helpdesk-list-shell");
   });
 
-  it("cards usam DataCardsGrid + RecordCard com href interno", () => {
+  it("cards usam DataCardsGrid + RecordCard com href interno e meta responsiva", () => {
     const cards = read("TicketListCards.tsx");
     expect(cards).toContain("HelpdeskDataCardsGrid");
     expect(cards).toContain("HelpdeskRecordCard");
     expect(cards).toContain("ticketDetailPath");
-    expect(cards).toContain("detailRecordSubtitle");
+    expect(cards).toContain("relativeTimeLabel");
+    expect(cards).toContain("showRequester");
   });
 
   it("CSS escuro scoped no host do MFE", () => {

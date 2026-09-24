@@ -7,6 +7,7 @@ declare module "@delpi/plugin-ui/index" {
   import type {
     ComponentType,
     ForwardRefExoticComponent,
+    FormEvent,
     HTMLAttributes,
     MouseEvent,
     InputHTMLAttributes,
@@ -241,6 +242,111 @@ declare module "@delpi/plugin-ui/index" {
   }): ComponentType<DashboardLoadingStateProps>;
 
   export function loadingStateCardBemClasses(prefix: string): Record<string, string>;
+
+  export type DashboardLoadingActivityCardProps = {
+    title?: string;
+    description?: string;
+    variant?: "panel" | "inline" | "badge";
+    className?: string;
+  };
+
+  export function createDashboardLoadingActivityCard(config: {
+    prefix: string;
+    labels?: {
+      progressRemaining?: (remainingPercent: number) => string;
+      progressAriaDeterminate?: (remainingPercent: number) => string;
+      progressAriaIndeterminate?: string;
+    };
+  }): ComponentType<DashboardLoadingActivityCardProps>;
+
+  export type PageHeroDensity = "comfortable" | "compact";
+
+  export type DashboardPageHeroProps = {
+    eyebrow?: ReactNode;
+    title: ReactNode;
+    description?: ReactNode;
+    badge?: ReactNode;
+    actions?: ReactNode;
+    highlights?: readonly {
+      id: string;
+      label: ReactNode;
+      value: ReactNode;
+      description?: ReactNode;
+      tone?: "neutral" | "warning" | "danger";
+      loading?: boolean;
+    }[];
+    children?: ReactNode;
+    density?: PageHeroDensity;
+    className?: string;
+    "aria-label"?: string;
+  };
+
+  export function createDashboardPageHero(config: {
+    prefix: string;
+  }): ComponentType<DashboardPageHeroProps>;
+
+  export type ScopeChip = {
+    id: string;
+    label: ReactNode;
+    active?: boolean;
+    onSelect?: () => void;
+  };
+
+  export type DashboardScopeChipBarProps = {
+    chips: ScopeChip[];
+    label?: ReactNode;
+    className?: string;
+    "aria-label"?: string;
+  };
+
+  export function createDashboardScopeChipBar(config: {
+    prefix: string;
+  }): ComponentType<DashboardScopeChipBarProps>;
+
+  export type DashboardFilterBarShellProps = {
+    children: ReactNode;
+    leading?: ReactNode;
+    onSubmit?: (event: FormEvent<HTMLFormElement>) => void;
+    embedded?: boolean;
+    layout?: "inline" | "grid";
+    className?: string;
+    ariaLabel?: string;
+  };
+
+  export function createFilterBarShell(config: {
+    prefix: string;
+    withGrid?: boolean;
+    block?: string;
+    forceRootOnly?: boolean;
+  }): ComponentType<DashboardFilterBarShellProps>;
+
+  export type DashboardDrawerShellProps = {
+    open: boolean;
+    title: string;
+    description?: string;
+    footer?: ReactNode;
+    onClose: () => void;
+    children: ReactNode;
+    closeAriaLabel?: string;
+    backdropAriaLabel?: string;
+    closeOnBackdropClick?: boolean;
+  };
+
+  export function createHostContainedDrawerShell(config: {
+    prefix: string;
+    portalScopeClassName: string;
+    closeAriaLabel?: string;
+    backdropAriaLabel?: string;
+    closeOnBackdropClick?: boolean;
+  }): ComponentType<DashboardDrawerShellProps>;
+
+  export type SectionHintLabelProps = {
+    label: ReactNode;
+    hint?: string;
+    className?: string;
+  };
+
+  export function SectionHintLabel(props: SectionHintLabelProps): ReactElement;
 
   export type TimelineItemModel = {
     id: string;

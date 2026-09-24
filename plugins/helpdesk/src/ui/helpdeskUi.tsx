@@ -5,6 +5,7 @@ import {
   useImperativeHandle,
   useRef,
   useState,
+  createElement,
   type ComponentProps,
   type ReactNode,
 } from "react";
@@ -22,6 +23,8 @@ import {
   createDashboardLoadingState,
   createDashboardMessageThread,
   createDashboardPageHeader,
+  createDashboardPageHero,
+  createDashboardScopeChipBar,
   createDashboardSectionCard,
   createDashboardSegmentToggle,
   createDashboardSelectField,
@@ -29,6 +32,8 @@ import {
   createDashboardStatusBadge,
   createDashboardTextAreaField,
   createDashboardTextField,
+  createFilterBarShell,
+  createHostContainedDrawerShell,
   DataTable,
   dataTableBemClasses,
   FieldLabel,
@@ -62,6 +67,7 @@ export {
   HELPDESK_PAGE_SIZE_OPTIONS,
 } from "../components/Pagination";
 
+const HELPDESK_PORTAL_SCOPE = "dashboard-helpdesk";
 const PREFIX = "helpdesk";
 const selectClasses = selectFieldPacClasses(PREFIX);
 const MENTION_SEARCH_DEBOUNCE_MS = 250;
@@ -82,6 +88,27 @@ export const HelpdeskPageHeader = createDashboardPageHeader({
     buttonClass: "delpi-ui-action-btn delpi-ui-action-btn--primary",
   }),
   labels: { refresh: "Atualizar", refreshing: "Atualizando…" },
+});
+
+const HelpdeskPageHeroBase = createDashboardPageHero({ prefix: PREFIX });
+
+/** Default compact — paridade Portal Comercial nas listas. */
+export function HelpdeskPageHero(props: ComponentProps<typeof HelpdeskPageHeroBase>) {
+  return createElement(HelpdeskPageHeroBase, { density: "compact", ...props });
+}
+
+export const HelpdeskScopeChipBar = createDashboardScopeChipBar({ prefix: PREFIX });
+
+export const HelpdeskFilterBarShell = createFilterBarShell({
+  prefix: PREFIX,
+  withGrid: false,
+});
+
+export const HelpdeskHostDrawer = createHostContainedDrawerShell({
+  prefix: PREFIX,
+  portalScopeClassName: HELPDESK_PORTAL_SCOPE,
+  closeAriaLabel: "Fechar",
+  backdropAriaLabel: "Fechar painel",
 });
 
 export const HelpdeskSectionCard = createDashboardSectionCard({

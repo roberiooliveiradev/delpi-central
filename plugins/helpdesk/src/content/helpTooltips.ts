@@ -1,7 +1,7 @@
 /** Ajuda in-app do Meus Chamados — textos curtos (1 frase) para tooltip. */
 
 export const helpTooltips = {
-  list: "Chamados de TI no seu nome. Use tabela ou cards, filtros, ordenação e paginação; Abrir chamado inicia um novo.",
+  list: "Chamados de TI no seu nome. Busque, filtre por status e abra um novo com Abrir chamado.",
   link: "Abrindo a autorização do helpdesk com o mesmo login da Minha DELPI. Se não redirecionar, use o botão.",
   create:
     "Título e descrição; à direita categoria, urgência, técnico (se permitido) e observadores. O rascunho sobrevive ao F5.",
@@ -42,14 +42,17 @@ export const helpTooltips = {
     refreshPage: "Atualiza a lista com o mesmo recorte da URL.",
     openTicket: "Abre o formulário de um chamado novo no seu nome.",
     clearFilters: "Remove o recorte; mantém ordenação e tamanho da página.",
-    viewLayout: "Alterna tabela e cards. A escolha fica neste navegador.",
+    viewLayout: "Alterna tabela e cards no desktop. Em telas estreitas a lista usa cards automaticamente.",
     pageSize: "Quantos chamados por página: 10, 20 ou 50.",
     sortChip: "Ordenação ativa (até três níveis).",
     filterChip: "Critério do recorte gravado na URL (sobrevive ao F5).",
-    filterBuilderToggle: "Abre o construtor de filtros com regras E (AND).",
+    filterBuilderToggle: "Abre filtros avançados com regras combinadas por E.",
     sortBuilderToggle: "Abre a ordenação em até três níveis.",
     columns: "Mostra ou esconde colunas da tabela. Preferência neste navegador.",
     refreshList: "Atualiza a grade sem limpar filtros.",
+    search: "Busca no número, título ou conteúdo do chamado.",
+    statusChips: "Atalho de status. Sem contadores — o helpdesk não expõe totais por estado.",
+    advancedFilters: "Filtros avançados e datas. O recorte fica na URL ao aplicar.",
   },
 
   pagination: {
@@ -60,7 +63,7 @@ export const helpTooltips = {
   },
 
   filterBuilder: {
-    panel: "Monte regras com E (AND). Ao aplicar, o recorte vai para a URL.",
+    panel: "Combine critérios com E. Ao aplicar, o recorte fica na URL e sobrevive ao F5.",
     field: "Campo do filtro aceito nesta lista.",
     operator: "Operação: contém, é, de ou até — conforme o campo.",
     value: "Valor da regra. Vazio não entra ao aplicar.",
