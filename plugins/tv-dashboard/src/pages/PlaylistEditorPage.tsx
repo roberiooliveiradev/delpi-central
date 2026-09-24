@@ -105,6 +105,7 @@ import {
   writeSelectedSlideId,
 } from "../utils/deckSelectedSlidePreferences";
 import { resolvePresentationSyncFocusSlideId } from "../utils/presentationSyncFocusSlide";
+import { normalizeEditorFocusBlockIds } from "../utils/editorFocusSelection";
 import {
   ensureFilmstripSlideInSelection,
   resolveFilmstripSlideSelection,
@@ -690,15 +691,24 @@ export function PlaylistEditorPage({
     onSelectionUpdate: handleRemoteSelection,
   });
 
+  /**
+   * Última seleção de blocos do canvas (ComunicadoEditorProvider.onSelectionChange).
+   * Heartbeat/reconnect devem reenviar ISTO — nunca `selectedSlideIds` do filmstrip
+   * (IDs de slide ≠ blockId; filtrar o slideId atual deixa selectedIds=[] e a VISTA
+   * perde «o bloco selecionado»).
+   */
+  const canvasSelectedIdsRef = useRef<string[]>([]);
+
   const sendSelectionUpdate = useCallback(
     (slideId: string, selectedIds: string[]) => {
+      canvasSelectedIdsRef.current = normalizeEditorFocusBlockIds(selectedIds);
       const clientId = editorPresence?.clientId;
       if (!clientId) return;
       wsSendRef.current?.({
         type: "selection_update",
         slideId,
         clientId,
-        selectedIds,
+        selectedIds: canvasSelectedIdsRef.current,
       });
     },
     [editorPresence?.clientId, wsSendRef],
@@ -710,12 +720,16 @@ export function PlaylistEditorPage({
   const flushEditorFocus = useCallback(() => {
     const slideId = selectedSlideIdRef.current;
     if (!slideId || !editorPresence?.clientId) return;
-    const blockIds = selectedSlideIdsRef.current.filter((id) => id !== slideId);
-    sendSelectionUpdateRef.current(slideId, blockIds);
+    sendSelectionUpdateRef.current(slideId, canvasSelectedIdsRef.current);
   }, [editorPresence?.clientId]);
 
   const flushEditorFocusRef = useRef(flushEditorFocus);
   flushEditorFocusRef.current = flushEditorFocus;
+
+  // Troca de slide: limpa seleção de bloco até o provider publicar a nova.
+  useEffect(() => {
+    canvasSelectedIdsRef.current = [];
+  }, [selectedSlideId]);
 
   // Keep editorFocus snapshot warm for VISTA even when selection is empty (slide-only).
   useEffect(() => {
