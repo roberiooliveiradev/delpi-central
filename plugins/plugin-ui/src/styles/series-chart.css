@@ -256,6 +256,13 @@
   font-size: 0.9em;
 }
 
+.delpi-ui-series-chart__plot-host > .delpi-ui-series-chart--empty[data-chart-empty="true"] {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 3rem;
+  align-self: stretch;
+}
+
 .delpi-ui-series-chart__data-table {
   position: relative;
   z-index: 1;

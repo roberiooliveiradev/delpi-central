@@ -426,6 +426,19 @@ describe("ConfigurableSeriesChart", () => {
     expect(container.querySelector(".delpi-ui-series-chart__series-line")).toBeTruthy();
     expect(screen.queryByText("Quantidade")).toBeNull();
   });
+
+  it("sem pontos ainda mostra título e mensagem vazia", () => {
+    render(
+      <ConfigurableSeriesChart
+        chartType="bar"
+        points={[]}
+        options={{ title: "OTD — Filial ES", showTitle: true }}
+        emptyMessage="Sem dados"
+      />,
+    );
+    expect(screen.getByText("OTD — Filial ES")).toBeTruthy();
+    expect(screen.getByText("Sem dados")).toBeTruthy();
+  });
 });
 
 describe("formatSeriesChartValue", () => {

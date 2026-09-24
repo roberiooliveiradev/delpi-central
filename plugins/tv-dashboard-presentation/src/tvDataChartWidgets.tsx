@@ -21,6 +21,7 @@ type ChartWidgetProps = {
   chartParts?: ComunicadoChartPartsMap | null;
   interaction?: ComunicadoChartInteraction | null;
   chartType?: ComunicadoChartType;
+  emptyMessage?: string;
 };
 
 export function TvDataSeriesChartWidget({
@@ -29,6 +30,7 @@ export function TvDataSeriesChartWidget({
   chartParts,
   interaction,
   chartType = "line",
+  emptyMessage = "Sem dados",
 }: ChartWidgetProps) {
   const kind = toSeriesChartKind(chartType) ?? "line";
   const seriesList = (resolved.chart?.series ?? [])
@@ -67,10 +69,23 @@ export function TvDataSeriesChartWidget({
                 ? Number(point.size)
                 : null,
         }));
+  const hasPlotData =
+    points.some((point) => point.value != null && Number.isFinite(Number(point.value))) ||
+    Boolean(
+      seriesList.some((series) =>
+        series.points.some(
+          (point) => point.value != null && Number.isFinite(Number(point.value)),
+        ),
+      ),
+    );
   // Bubble: size é canal no ponto — nunca overlay de 2ª série na legenda.
   const multiSeriesList =
     chartType === "bubble" ? undefined : seriesList.length > 1 ? seriesList : undefined;
-  const displayOptions = resolveChartDisplayOptions(chartOptions, resolved);
+  // Sem série plotável: não herdar kpi.label (ex.: buckets_count) como título do gráfico.
+  const displayOptions = resolveChartDisplayOptions(
+    chartOptions,
+    hasPlotData ? resolved : { label: resolved.label },
+  );
   const effectiveGoal = resolveEffectiveChartGoal({
     goalLineValue: displayOptions.goalLineValue,
     projectedGoal: resolved.chart?.projectedGoal,
@@ -84,6 +99,7 @@ export function TvDataSeriesChartWidget({
       options={optionsWithGoal}
       chartParts={chartParts}
       interaction={interaction}
+      emptyMessage={emptyMessage}
       pieInnerRadiusRatio={pieInnerRadiusForChartType(chartType)}
     />
   );

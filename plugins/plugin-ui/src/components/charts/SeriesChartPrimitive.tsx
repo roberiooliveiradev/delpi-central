@@ -218,22 +218,72 @@ export function SeriesChartPrimitive({
 
   if (usable.length === 0) {
     const emptyArea = resolveChartAreaStyle(config, chartParts);
+    const title = config.title?.trim();
+    const partTitle = getChartPartState(chartParts, { kind: "title" })?.content?.trim();
+    const effectiveTitle = partTitle || title;
+    const hasChrome =
+      Boolean(effectiveTitle && config.showTitle !== false) ||
+      Boolean(getChartPartState(chartParts, { kind: "title" })?.contentRuns?.length);
+
+    // Sem chrome: card vazio simples. Com título (ou parts): mantém moldura + título.
+    if (!hasChrome) {
+      return (
+        <div
+          className="delpi-ui-series-chart-shell"
+          style={{
+            ["--delpi-ui-series-chart-radius" as string]: `${emptyArea.borderRadius}px`,
+            ["--delpi-ui-series-chart-shadow" as string]: emptyArea.boxShadow || "none",
+            boxShadow: emptyArea.boxShadow,
+            borderRadius: emptyArea.borderRadius,
+          }}
+        >
+          <ChartContainer
+            className={className}
+            empty
+            emptyMessage={emptyMessage}
+            style={seriesChartThemeStyle(config)}
+          />
+        </div>
+      );
+    }
+
+    const shellStyle: CSSProperties = {
+      ["--delpi-ui-series-chart-radius" as string]: `${emptyArea.borderRadius}px`,
+      ["--delpi-ui-series-chart-shadow" as string]: emptyArea.boxShadow || "none",
+      boxShadow: emptyArea.boxShadow,
+      borderRadius: emptyArea.borderRadius,
+    };
+    const themeStyle: CSSProperties = {
+      ...seriesChartThemeStyle({ ...config, backgroundColor: emptyArea.fill }),
+      background: emptyArea.fill,
+      border: `${Math.max(0, emptyArea.strokeWidth)}px solid ${emptyArea.stroke}`,
+      borderRadius: emptyArea.borderRadius,
+      boxShadow: "none",
+      boxSizing: "border-box",
+      overflow: "visible",
+      backgroundClip: "padding-box",
+      width: "100%",
+      height: "100%",
+      ...(emptyArea.opacity != null ? { opacity: emptyArea.opacity } : {}),
+    };
+
     return (
-      <div
-        className="delpi-ui-series-chart-shell"
-        style={{
-          ["--delpi-ui-series-chart-radius" as string]: `${emptyArea.borderRadius}px`,
-          ["--delpi-ui-series-chart-shadow" as string]: emptyArea.boxShadow || "none",
-          boxShadow: emptyArea.boxShadow,
-          borderRadius: emptyArea.borderRadius,
-        }}
-      >
-        <ChartContainer
-          className={className}
-          empty
-          emptyMessage={emptyMessage}
-          style={seriesChartThemeStyle(config)}
-        />
+      <div className="delpi-ui-series-chart-shell" style={shellStyle}>
+        <ChartContainer className={className} style={themeStyle}>
+          <ChartTitle
+            title={effectiveTitle}
+            visible={config.showTitle !== false}
+            interaction={interaction}
+            chartParts={chartParts}
+          />
+          <div className={cn.body}>
+            <div className={cn.plotHost}>
+              <div className={cn.rootEmpty} data-chart-empty="true">
+                {emptyMessage}
+              </div>
+            </div>
+          </div>
+        </ChartContainer>
       </div>
     );
   }

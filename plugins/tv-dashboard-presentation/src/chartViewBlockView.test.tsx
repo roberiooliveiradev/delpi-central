@@ -1,8 +1,12 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it } from "vitest";
 
 import { ChartViewBlockView } from "./chartViewBlockView";
 import type { ComunicadoChartViewBlock } from "./comunicadoTypes";
+
+afterEach(() => {
+  cleanup();
+});
 
 function chartBlock(
   chartType: ComunicadoChartViewBlock["chartType"],
@@ -68,5 +72,27 @@ describe("ChartViewBlockView", () => {
     render(<ChartViewBlockView block={block} />);
     expect(screen.getByText("Sem dados")).toBeTruthy();
     expect(screen.queryByText("Buckets quantidade")).toBeNull();
+  });
+
+  it("sem pontos ainda mostra título do gráfico", () => {
+    const block: ComunicadoChartViewBlock = {
+      id: "c-empty-title",
+      type: "chart_view",
+      frame: { x: 0, y: 0, w: 40, h: 30 },
+      style: {},
+      chartType: "bar",
+      dataSourceId: "src-1",
+      chartOptions: { title: "OTD — Filial ES", showTitle: true },
+      resolved: {
+        label: "OTD — Filial ES",
+        chart: { points: [], chartType: "bar" },
+        table: { columns: [], rows: [] },
+      },
+    };
+    const { container } = render(<ChartViewBlockView block={block} />);
+    expect(screen.getByText("OTD — Filial ES")).toBeTruthy();
+    expect(screen.getAllByText("Sem dados").length).toBeGreaterThan(0);
+    expect(container.querySelector(".delpi-ui-series-chart")).toBeTruthy();
+    expect(container.querySelector("[data-chart-empty='true']")).toBeTruthy();
   });
 });
