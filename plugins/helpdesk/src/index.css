@@ -422,6 +422,16 @@
   gap: 0.5rem;
 }
 
+.dashboard-helpdesk .helpdesk-open-ticket {
+  min-height: var(--delpi-ui-control-height, 32px);
+  padding-inline: 0.85rem;
+  gap: 0.4rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  white-space: nowrap;
+  border-radius: 10px;
+}
+
 .dashboard-helpdesk .helpdesk-rich-text-field {
   display: flex;
   flex: 1 1 auto;

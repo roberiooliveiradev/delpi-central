@@ -374,13 +374,16 @@ function TicketListPage() {
         fill
         actions={
           <HintAction hint={helpTooltips.listUi.openTicket} ariaLabel="Ajuda: Abrir chamado">
-            <HelpdeskIconButton
-              tone="primary"
+            <ActionButton
+              variant="primary"
+              type="button"
+              className="helpdesk-open-ticket"
               aria-label="Abrir chamado"
               onClick={() => navigateHelpdesk("/apps/helpdesk/tickets/new")}
             >
               <Plus size={16} aria-hidden />
-            </HelpdeskIconButton>
+              Abrir chamado
+            </ActionButton>
           </HintAction>
         }
       >

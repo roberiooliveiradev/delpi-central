@@ -23,6 +23,21 @@ describe("Helpdesk list UX structural", () => {
     expect(page).toContain("usePersistedViewLayout");
   });
 
+  it("CTA Abrir chamado na listagem usa ActionButton com texto (não só ícone +)", () => {
+    const page = read("HelpdeskPage.tsx");
+    const marker = 'ariaLabel="Ajuda: Abrir chamado"';
+    const start = page.indexOf(marker);
+    expect(start).toBeGreaterThan(-1);
+    const openBlock = page.slice(start, start + 450);
+    expect(openBlock).toContain('className="helpdesk-open-ticket"');
+    expect(openBlock).toContain('variant="primary"');
+    expect(openBlock).toContain("Abrir chamado");
+    expect(openBlock).toContain("<Plus");
+    expect(openBlock).not.toContain("HelpdeskIconButton");
+    const css = read("../index.css");
+    expect(css).toContain(".helpdesk-open-ticket");
+  });
+
   it("cards usam DataCardsGrid + RecordCard com href interno", () => {
     const cards = read("TicketListCards.tsx");
     expect(cards).toContain("HelpdeskDataCardsGrid");
