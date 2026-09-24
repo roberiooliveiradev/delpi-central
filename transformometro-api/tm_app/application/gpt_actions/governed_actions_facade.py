@@ -6,11 +6,22 @@ from typing import Any
 
 from fastapi import Request
 
+from tm_app.application.governed_writes.confirmation_policy import (
+    allows_commit_now_for_capability,
+    allows_commit_now_for_entity_operation,
+)
 from tm_app.application.governed_writes.errors import (
     VALIDATION,
     GovernedWriteError,
 )
-from tm_app.application.governed_writes.orchestrator import GovernedWriteOrchestrator
+from tm_app.application.governed_writes.idempotency_store import (
+    get_cached,
+    put_cached,
+)
+from tm_app.application.governed_writes.orchestrator import (
+    GovernedWriteOrchestrator,
+    _actor,
+)
 from tm_app.application.gpt_actions.capability_descriptors import (
     OPERATION_TO_CAPABILITY,
     RECORD_OPERATIONS,
@@ -37,6 +48,10 @@ class GovernedActionsFacade:
             self._dispatch, self._packages
         )
 
+    @property
+    def orchestrator(self) -> GovernedWriteOrchestrator:
+        return self._orchestrator
+
     def prepare_record_change(
         self,
         request: Request,
@@ -45,6 +60,9 @@ class GovernedActionsFacade:
         operation: str,
         record_id: str | None = None,
         changes: dict[str, Any] | None = None,
+        commit_now: bool = False,
+        confirmation: bool = False,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         op = str(operation or "").strip().lower()
         if op not in RECORD_OPERATIONS:
@@ -82,9 +100,19 @@ class GovernedActionsFacade:
         public = self._orchestrator.prepare(
             request, capability=capability, args=args
         )
-        return self._proposal_envelope(
+        envelope = self._proposal_envelope(
             operation=f"prepare_record_change:{op}",
             public=public,
+        )
+        return self._maybe_commit_now(
+            request,
+            envelope=envelope,
+            capability=capability,
+            public=public,
+            commit_now=commit_now,
+            confirmation=confirmation,
+            idempotency_key=idempotency_key,
+            policy_allows=allows_commit_now_for_entity_operation(op),
         )
 
     def prepare_capability(
@@ -94,6 +122,9 @@ class GovernedActionsFacade:
         capability: str,
         args: dict[str, Any],
         operation_label: str,
+        commit_now: bool = False,
+        confirmation: bool = False,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         public = self._orchestrator.prepare(
             request, capability=capability, args=args
@@ -111,11 +142,20 @@ class GovernedActionsFacade:
                 "activate_scenario": False,
                 "recalculate": False,
                 "note": (
-                    "Write flags are ignored on PREPARE; "
-                    "commit uses the bound proposal only."
+                    "Write flags are ignored on PREPARE-only; "
+                    "commit_now=true may ACT when policy allows and ready=true."
                 ),
             }
-        return envelope
+        return self._maybe_commit_now(
+            request,
+            envelope=envelope,
+            capability=capability,
+            public=public,
+            commit_now=commit_now,
+            confirmation=confirmation,
+            idempotency_key=idempotency_key,
+            policy_allows=allows_commit_now_for_capability(capability),
+        )
 
     def commit_proposal(
         self,
@@ -132,11 +172,9 @@ class GovernedActionsFacade:
                 status_code=400,
                 data={"error_code": "CONFIRMATION_REQUIRED"},
             )
-        # Derive capability from stored proposal (opaque handle is authority).
         from tm_app.application.governed_writes.proposal_store import (
             load_valid_proposal,
         )
-        from tm_app.application.governed_writes.orchestrator import _actor
 
         actor_id, _email = _actor(request)
         proposal = load_valid_proposal(
@@ -157,13 +195,89 @@ class GovernedActionsFacade:
             "data": result.get("data"),
             "read_back": result.get("data"),
             "postcondition": {"verified": bool(result.get("verified"))},
+            "persisted": True,
             "warnings": [],
         }
+
+    def _maybe_commit_now(
+        self,
+        request: Request,
+        *,
+        envelope: dict[str, Any],
+        capability: str,
+        public: dict[str, Any],
+        commit_now: bool,
+        confirmation: bool,
+        idempotency_key: str | None,
+        policy_allows: bool,
+    ) -> dict[str, Any]:
+        envelope = dict(envelope)
+        envelope["persisted"] = False
+        envelope["commit_now_applied"] = False
+        if not commit_now:
+            return envelope
+
+        if not policy_allows:
+            envelope["message"] = (
+                "commit_now ignored: this capability requires explicit "
+                "user confirmation and a separate commit_proposal."
+            )
+            return envelope
+
+        if not public.get("act_allowed", True) or not public.get("ready", True):
+            envelope["message"] = (
+                "commit_now ignored: proposal is not ready for ACT "
+                "(see validation_result)."
+            )
+            return envelope
+
+        if not confirmation:
+            raise GovernedWriteError(
+                "commit_now=true requires confirmation=true "
+                "(policy additive). Nothing was persisted.",
+                code=VALIDATION,
+                status_code=400,
+                data={"error_code": "CONFIRMATION_REQUIRED"},
+            )
+
+        key = str(idempotency_key or "").strip()
+        if not key:
+            raise GovernedWriteError(
+                "commit_now=true requires Idempotency-Key header or "
+                "idempotency_key in the body.",
+                code=VALIDATION,
+                status_code=422,
+                data={"error_code": "IDEMPOTENCY_KEY_REQUIRED"},
+            )
+
+        actor_id, _email = _actor(request)
+        cached = get_cached(actor_id, key)
+        if cached is not None:
+            return cached
+
+        handle = str(public.get("proposal_handle") or "").strip()
+        result = self._orchestrator.act(
+            request,
+            capability=capability,
+            proposal_handle=handle,
+        )
+        outcome = {
+            **envelope,
+            "status": "ok",
+            "persisted": True,
+            "commit_now_applied": True,
+            "capability": result.get("capability"),
+            "proposal_id": result.get("proposal_id"),
+            "data": result.get("data"),
+            "read_back": result.get("data"),
+            "postcondition": {"verified": bool(result.get("verified"))},
+        }
+        put_cached(actor_id, key, outcome)
+        return outcome
 
     def _reject_server_owned_fields(self, entity: str, data: dict[str, Any]) -> None:
         owned = SERVER_OWNED_FIELDS.get(entity) or frozenset()
         if not owned:
-            # Default block of common identity/audit fields
             owned = frozenset(
                 {
                     "created_by_user_id",

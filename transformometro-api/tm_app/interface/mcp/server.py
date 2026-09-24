@@ -290,12 +290,18 @@ def create_mcp_server() -> FastMCP:
         operation: str,
         record_id: str | None = None,
         changes: dict | None = None,
+        commit_now: bool = False,
+        confirmation: bool = False,
+        idempotency_key: str | None = None,
     ) -> CallToolResult:
         return bridge.tool_prepare_record_change(
             entity=entity,
             operation=operation,
             record_id=record_id,
             changes=changes,
+            commit_now=commit_now,
+            confirmation=confirmation,
+            idempotency_key=idempotency_key,
         )
 
     @mcp.tool(
@@ -377,6 +383,9 @@ def create_mcp_server() -> FastMCP:
         scenario: dict | None = None,
         activate_scenario: bool = False,
         recalculate: bool = False,
+        commit_now: bool = False,
+        confirmation: bool = False,
+        idempotency_key: str | None = None,
     ) -> CallToolResult:
         return bridge.tool_prepare_improvement_package(
             process=process,
@@ -385,6 +394,9 @@ def create_mcp_server() -> FastMCP:
             scenario=scenario,
             activate_scenario=activate_scenario,
             recalculate=recalculate,
+            commit_now=commit_now,
+            confirmation=confirmation,
+            idempotency_key=idempotency_key,
         )
 
     @mcp.tool(
@@ -435,12 +447,18 @@ def create_mcp_server() -> FastMCP:
         valor_mensal: float,
         vigente_desde: str,
         observacoes: str | None = None,
+        commit_now: bool = False,
+        confirmation: bool = False,
+        idempotency_key: str | None = None,
     ) -> CallToolResult:
         return bridge.tool_prepare_adjust_shared_resource_cost(
             recurso_compartilhado_id=recurso_compartilhado_id,
             valor_mensal=valor_mensal,
             vigente_desde=vigente_desde,
             observacoes=observacoes,
+            commit_now=commit_now,
+            confirmation=confirmation,
+            idempotency_key=idempotency_key,
         )
 
     @mcp.tool(

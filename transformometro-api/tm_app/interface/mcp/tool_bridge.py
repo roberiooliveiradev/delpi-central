@@ -200,11 +200,29 @@ def handle_tool_error(exc: Exception) -> CallToolResult:
     )
 
 
-def _prepare(capability: str, args: dict[str, Any]) -> CallToolResult:
+def _prepare(
+    capability: str,
+    args: dict[str, Any],
+    *,
+    commit_now: bool = False,
+    confirmation: bool = False,
+    idempotency_key: str | None = None,
+) -> CallToolResult:
     try:
         request = build_mcp_request()
-        data = _orchestrator.prepare(request, capability=capability, args=args)
-        if not data.get("act_allowed", True):
+        data = _governed.prepare_capability(
+            request,
+            capability=capability,
+            args=args,
+            operation_label=f"prepare_{capability}",
+            commit_now=bool(commit_now),
+            confirmation=bool(confirmation),
+            idempotency_key=idempotency_key,
+        )
+        if data.get("persisted"):
+            return _ok_result(data, "Change persisted and verified (commit_now).")
+        prop = data.get("proposal") if isinstance(data.get("proposal"), dict) else {}
+        if prop and not prop.get("act_allowed", True):
             return _ok_result(
                 data,
                 "Proposal prepared but not ready for commit (see validation_result).",
@@ -365,8 +383,13 @@ def tool_search_records(
 
 def tool_get_record(entity: str, id: str) -> CallToolResult:
     try:
+        from tm_app.application.gpt_actions.response_compact import project_get_record
+
         request = build_mcp_request()
-        return _ok_result(_dispatch.get_record(request, entity, id), "Registro.")
+        return _ok_result(
+            project_get_record(_dispatch.get_record(request, entity, id)),
+            "Registro.",
+        )
     except Exception as exc:
         return handle_tool_error(exc)
 
@@ -455,8 +478,14 @@ def tool_prepare_record_change(
     operation: str,
     record_id: str | None = None,
     changes: dict | None = None,
+    commit_now: bool = False,
+    confirmation: bool = False,
+    idempotency_key: str | None = None,
 ) -> CallToolResult:
-    """Generic ENTITY prepare (create|update|delete|duplicate) → proposal_handle."""
+    """Generic ENTITY prepare (create|update|delete|duplicate) → proposal_handle.
+
+    Additive ops may set commit_now=true for atomic PREPARE+ACT.
+    """
     try:
         request = build_mcp_request()
         data = _governed.prepare_record_change(
@@ -465,7 +494,12 @@ def tool_prepare_record_change(
             operation=operation,
             record_id=record_id,
             changes=changes or {},
+            commit_now=bool(commit_now),
+            confirmation=bool(confirmation),
+            idempotency_key=idempotency_key,
         )
+        if data.get("persisted"):
+            return _ok_result(data, "Change persisted and verified (commit_now).")
         prop = data.get("proposal") if isinstance(data.get("proposal"), dict) else {}
         if prop and not prop.get("act_allowed", True):
             return _ok_result(
@@ -570,6 +604,9 @@ def tool_prepare_improvement_package(
     scenario: dict | None = None,
     activate_scenario: bool = False,
     recalculate: bool = False,
+    commit_now: bool = False,
+    confirmation: bool = False,
+    idempotency_key: str | None = None,
 ) -> CallToolResult:
     return _prepare(
         "commit_improvement_package",
@@ -581,6 +618,9 @@ def tool_prepare_improvement_package(
             "activate_scenario": activate_scenario,
             "recalculate": recalculate,
         },
+        commit_now=commit_now,
+        confirmation=confirmation,
+        idempotency_key=idempotency_key,
     )
 
 
@@ -612,6 +652,9 @@ def tool_prepare_adjust_shared_resource_cost(
     valor_mensal: float,
     vigente_desde: str,
     observacoes: str | None = None,
+    commit_now: bool = False,
+    confirmation: bool = False,
+    idempotency_key: str | None = None,
 ) -> CallToolResult:
     return _prepare(
         "adjust_shared_resource_cost",
@@ -621,6 +664,9 @@ def tool_prepare_adjust_shared_resource_cost(
             "vigente_desde": vigente_desde,
             "observacoes": observacoes,
         },
+        commit_now=commit_now,
+        confirmation=confirmation,
+        idempotency_key=idempotency_key,
     )
 
 

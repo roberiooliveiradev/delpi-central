@@ -56,12 +56,16 @@ Canonical domain capability
 
 ```text
 UNDERSTAND → READ CURRENT STATE → PREPARE EXACT CHANGE → VALIDATE
-→ SHOW USER → EXPLICIT CONFIRMATION → COMMIT → AUTHORITATIVE READ-BACK
+→ (additive) commit_now=true + confirmation + Idempotency-Key → ACT + READ-BACK
+→ (destructive) SHOW USER → EXPLICIT CONFIRMATION → COMMIT → AUTHORITATIVE READ-BACK
 → VERIFY → REPORT OUTCOME
 ```
 
-- COMMIT = ACT stage (`gpt_commit_proposal` / MCP `commit_proposal`).
+- Additive create/update/duplicate/package-ready/cost-adjust tipável: **não** pedir Confirma? no chat — `commit_now` no mesmo turno.
+- Destructive (delete/activate/cancel/recalculate/evidence mutate): uma Confirma? → `gpt_commit_proposal` / `commit_proposal`.
+- COMMIT = ACT stage (`gpt_commit_proposal` / MCP `commit_proposal`) ou ACT embutido via `commit_now`.
 - Explicit confirmation ≠ AuthZ (backend revalidates on commit).
+- Live mutation intelligence: `capability_surface.agent_directives` from `teo_agent_intelligence.json`.
 - Technical 2xx ≠ business outcome (need verified read-back).
 - Proposal store: in-process, single-replica → **ACCEPT_WITH_RESIDUAL**.
 

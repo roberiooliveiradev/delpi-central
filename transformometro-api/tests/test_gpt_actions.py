@@ -897,7 +897,16 @@ def test_openapi_validate_vs_commit_consequential_flags():
     v_props = doc["components"]["schemas"]["GptValidateImprovementPackageBody"][
         "properties"
     ]
-    assert set(v_props) == {"process", "instance", "baseline", "scenario"}
+    assert set(v_props) >= {"process", "instance", "baseline", "scenario"}
+    assert set(v_props) <= {
+        "process",
+        "instance",
+        "baseline",
+        "scenario",
+        "commit_now",
+        "confirmation",
+        "idempotency_key",
+    }
     assert "dry_run" not in v_props
     assert "activate_scenario" not in v_props
     assert "recalculate" not in v_props
@@ -2009,21 +2018,46 @@ def test_openapi_setor_id_documents_uuid_or_code_and_stable_surface():
 def test_specialist_instructions_discovery_and_mermaid_contract():
     from pathlib import Path
 
+    from tm_app.application.gpt_actions.teo_agent_intelligence_service import (
+        TeoAgentIntelligenceService,
+        clear_teo_agent_intelligence_cache,
+    )
+
+    clear_teo_agent_intelligence_cache()
     text = Path("docs/gpt-actions/specialist-instructions.md").read_text(encoding="utf-8")
-    assert "compact phrase" in text
-    assert "pesquisáveis e autorizados" in text
-    assert "peça escolha" in text or "silent selection" in text
-    assert "setor_id" in text and "comercial" in text
-    assert "mermaid" in text.lower()
-    assert "draft" in text.lower()
-    assert "não existe" in text.lower()
-    assert "svg" in text.lower()
-    assert "progressive" in text.lower() or "STEP1" in text or "STEP2" in text
-    assert "canonical_package_shape" in text or "scenario.revision" in text
-    assert "ready=false" in text
-    assert "não invente shape" in text.lower() or "Não invente shape" in text
-    assert "gpt_validate_improvement_package" in text
-    assert "VALIDATE != WRITE" in text
+    # Stable paste: points at live directives; mutable discovery lives in JSON.
+    assert "agent_directives" in text
+    assert "meeting_minute" in text
+    assert "commit_now" in text
+    assert "gpt_prepare_record_change" in text
+    assert "gpt_commit_proposal" in text
+    directives = TeoAgentIntelligenceService.agent_directives()
+    discovery = str(directives.get("discovery") or {}).lower()
+    assert "progressive" in discovery or "search miss" in discovery
+    assert "meeting_minute" in discovery
+    flows = directives.get("flows") or {}
+    assert "process_registration" in flows
+    assert "meeting_minutes" in flows
+    write_flow = str(directives.get("write_flow") or {}).lower()
+    assert "commit_now" in write_flow
+
+
+def test_specialist_instructions_never_equate_ready_or_attempt_with_saved():
+    from pathlib import Path
+
+    text = Path("docs/gpt-actions/specialist-instructions.md").read_text(encoding="utf-8")
+    assert "ready=true != saved" in text or "ready=true != saved/gravado" in text
+    assert "confirmation != AuthZ" in text or "Confirmação != AuthZ" in text
+    # Must not teach dangerous equivalences.
+    forbidden_snippets = [
+        "ready=true = saved",
+        "ready=true means saved",
+        "confirmation = authorization",
+        "commit attempted = persisted",
+    ]
+    lowered = text.lower()
+    for snippet in forbidden_snippets:
+        assert snippet not in lowered
 
 
 def test_openapi_all_write_actions_have_typed_examples():
@@ -2102,23 +2136,4 @@ def test_openapi_validate_non_consequential_commit_consequential():
     assert validate["x-openai-isConsequential"] is False
     assert commit["x-openai-isConsequential"] is True
     assert commit.get("x-openai-isConsequential") is not False
-
-
-def test_specialist_instructions_never_equate_ready_or_attempt_with_saved():
-    from pathlib import Path
-
-    text = Path("docs/gpt-actions/specialist-instructions.md").read_text(encoding="utf-8")
-    assert "ready=true != saved" in text
-    assert "COMMIT_ATTEMPTED" in text
-    assert "não afirme salvo" in text.lower() or "não afirme salvo/cadastrado" in text.lower()
-    # Must not teach dangerous equivalences.
-    forbidden_snippets = [
-        "ready=true = saved",
-        "ready=true means saved",
-        "confirmation = authorization",
-        "commit attempted = persisted",
-    ]
-    lowered = text.lower()
-    for snippet in forbidden_snippets:
-        assert snippet not in lowered
 

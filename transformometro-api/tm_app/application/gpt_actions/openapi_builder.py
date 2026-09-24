@@ -1600,12 +1600,28 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
     doc["components"]["schemas"]["GptValidateImprovementPackageBody"] = {
         "type": "object",
         "description": (
-            "Nested package only: process, instance, baseline?, scenario?. "
-            "No dry_run/activate_scenario/recalculate. Never persists."
+            "Nested package: process, instance, baseline?, scenario?. "
+            "Optional commit_now when ready. Never persists without commit_now."
         ),
         "properties": {
-            key: commit_props[key]
-            for key in ("process", "instance", "baseline", "scenario")
+            **{
+                key: commit_props[key]
+                for key in ("process", "instance", "baseline", "scenario")
+            },
+            "commit_now": {
+                "type": "boolean",
+                "default": False,
+                "description": "Atomic PREPARE+ACT when package ready (policy allow).",
+            },
+            "confirmation": {
+                "type": "boolean",
+                "default": False,
+                "description": "Required true with commit_now.",
+            },
+            "idempotency_key": {
+                "type": "string",
+                "description": "Required with commit_now if header omitted.",
+            },
         },
     }
 
@@ -1637,6 +1653,27 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                     "Server-owned fields rejected."
                 ),
                 "properties": openapi_record_data_properties(),
+            },
+            "commit_now": {
+                "type": "boolean",
+                "default": False,
+                "description": (
+                    "When true and policy allows (create/update/duplicate), "
+                    "PREPARE+ACT atomically. Requires confirmation=true and "
+                    "Idempotency-Key. Ignored for delete."
+                ),
+            },
+            "confirmation": {
+                "type": "boolean",
+                "default": False,
+                "description": "Required true when commit_now=true (not AuthZ).",
+            },
+            "idempotency_key": {
+                "type": "string",
+                "description": (
+                    "Fallback when Idempotency-Key header is missing. "
+                    "Required for commit_now."
+                ),
             },
         },
     }
@@ -1677,13 +1714,24 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
     paths[f"{GPT_ACTIONS_BASE_PATH}/records/prepare-change"] = {
         "post": {
             "operationId": "gpt_prepare_record_change",
-            "summary": "PREPARE entity create/update/delete/duplicate (no write)",
+            "summary": "PREPARE entity change; optional commit_now for additive",
             "description": (
-                "READ CURRENT STATE → validate → return opaque proposal_handle. "
-                "No DB write. Then show proposal and call gpt_commit_proposal."
+                "PREPARE exact change → opaque proposal_handle. "
+                "Additive create/update/duplicate may set commit_now=true "
+                "+ confirmation + Idempotency-Key for atomic PREPARE+ACT. "
+                "Delete ignores commit_now (confirm via gpt_commit_proposal)."
             ),
             "tags": ["Transformômetro GPT"],
             "security": [{"BearerAuth": []}],
+            "parameters": [
+                {
+                    "name": "Idempotency-Key",
+                    "in": "header",
+                    "required": False,
+                    "schema": {"type": "string"},
+                    "description": "Required when commit_now=true (or body idempotency_key).",
+                }
+            ],
             "requestBody": {
                 "required": True,
                 "content": {
@@ -1691,20 +1739,40 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                         "schema": {
                             "$ref": "#/components/schemas/GptPrepareRecordChangeBody"
                         },
-                        "example": {
-                            "entity": "process_document",
-                            "operation": "create",
-                            "changes": {
-                                "processo_id": "00000000-0000-0000-0000-000000000001",
-                                "title": "AS-IS notes",
-                                "content_md": "# Draft",
+                        "examples": {
+                            "prepare_only": {
+                                "summary": "PREPARE only",
+                                "value": {
+                                    "entity": "process_document",
+                                    "operation": "create",
+                                    "changes": {
+                                        "processo_id": "00000000-0000-0000-0000-000000000001",
+                                        "title": "AS-IS notes",
+                                        "content_md": "# Draft",
+                                    },
+                                },
+                            },
+                            "commit_now_additive": {
+                                "summary": "Additive PREPARE+ACT",
+                                "value": {
+                                    "entity": "process_document",
+                                    "operation": "create",
+                                    "changes": {
+                                        "processo_id": "00000000-0000-0000-0000-000000000001",
+                                        "title": "AS-IS notes",
+                                        "content_md": "# Draft",
+                                    },
+                                    "commit_now": True,
+                                    "confirmation": True,
+                                    "idempotency_key": "teo-doc-create-1",
+                                },
                             },
                         },
                     }
                 },
             },
             "responses": {
-                "200": _ok_response("proposal_ready envelope"),
+                "200": _ok_response("proposal_ready or persisted commit_now outcome"),
                 **_error_responses(),
             },
             "x-openai-isConsequential": False,
@@ -1777,7 +1845,11 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
 def write_gpt_actions_openapi(path: Path, *, server_url: str | None = None) -> dict[str, Any]:
     doc = build_gpt_actions_openapi(server_url=server_url)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(doc, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    # Compact JSON (no indent) — required for ≤100 KiB Builder import budget.
+    path.write_text(
+        json.dumps(doc, ensure_ascii=False, separators=(",", ":")) + "\n",
+        encoding="utf-8",
+    )
     return doc
 
 

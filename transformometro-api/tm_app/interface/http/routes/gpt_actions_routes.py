@@ -95,6 +95,9 @@ class GptAdjustSharedResourceCostBody(BaseModel):
     valor_mensal: float
     vigente_desde: str
     observacoes: str | None = None
+    commit_now: bool = False
+    confirmation: bool = False
+    idempotency_key: str | None = None
 
 
 class GptMeetingMinuteManageBody(BaseModel):
@@ -122,10 +125,9 @@ class GptImprovementPackageBody(BaseModel):
 
 
 class GptValidateImprovementPackageBody(BaseModel):
-    """No-write package body. Write flags are not part of this contract.
+    """No-write package body by default; optional commit_now when ready.
 
     Extra keys (dry_run/activate_scenario/recalculate) are ignored.
-    The route calls GuidedImprovementPackageService.validate only.
     """
 
     model_config = {"extra": "ignore"}
@@ -134,6 +136,9 @@ class GptValidateImprovementPackageBody(BaseModel):
     instance: dict = Field(default_factory=dict)
     baseline: dict | None = None
     scenario: dict | None = None
+    commit_now: bool = False
+    confirmation: bool = False
+    idempotency_key: str | None = None
 
 
 def _handle(exc: Exception):
@@ -167,11 +172,21 @@ class GptPrepareRecordChangeBody(BaseModel):
     )
     record_id: str | None = None
     changes: dict = Field(default_factory=dict)
+    commit_now: bool = False
+    confirmation: bool = False
+    idempotency_key: str | None = None
 
 
 class GptCommitProposalBody(BaseModel):
     proposal_handle: str
     confirmation: bool = False
+
+
+def _idempotency_key_from_request(request: Request, body_key: str | None) -> str | None:
+    header = str(request.headers.get("Idempotency-Key") or "").strip()
+    if header:
+        return header
+    return str(body_key or "").strip() or None
 
 
 @router.get(
@@ -372,7 +387,12 @@ def gpt_search_records(
 )
 def gpt_get_record(entity: str, id: str, request: Request):
     try:
-        return ok(_dispatch.get_record(request, entity, id), "Registro.")
+        from tm_app.application.gpt_actions.response_compact import project_get_record
+
+        return ok(
+            project_get_record(_dispatch.get_record(request, entity, id)),
+            "Registro.",
+        )
     except Exception as exc:
         return _handle(exc)
 
@@ -390,7 +410,14 @@ def gpt_prepare_record_change(body: GptPrepareRecordChangeBody, request: Request
             operation=body.operation,
             record_id=body.record_id,
             changes=body.changes,
+            commit_now=bool(body.commit_now),
+            confirmation=bool(body.confirmation),
+            idempotency_key=_idempotency_key_from_request(
+                request, body.idempotency_key
+            ),
         )
+        if data.get("persisted"):
+            return ok(data, "Change persisted and verified (commit_now).")
         return ok(data, "Proposal ready — show to user, then gpt_commit_proposal.")
     except Exception as exc:
         return _handle(exc)
@@ -584,12 +611,25 @@ def gpt_validate_improvement_package(
     body: GptValidateImprovementPackageBody, request: Request
 ):
     try:
+        args = {
+            "process": body.process,
+            "instance": body.instance,
+            "baseline": body.baseline,
+            "scenario": body.scenario,
+        }
         data = _governed.prepare_capability(
             request,
             capability="commit_improvement_package",
-            args=body.model_dump(),
+            args=args,
             operation_label="prepare_improvement_package",
+            commit_now=bool(body.commit_now),
+            confirmation=bool(body.confirmation),
+            idempotency_key=_idempotency_key_from_request(
+                request, body.idempotency_key
+            ),
         )
+        if data.get("persisted"):
+            return ok(data, "Package persisted and verified (commit_now).")
         ready = bool((data.get("proposal") or {}).get("ready", True))
         message = (
             "Package proposal ready — confirm then gpt_commit_proposal."
@@ -703,12 +743,22 @@ def gpt_adjust_shared_resource_cost(
     request: Request, body: GptAdjustSharedResourceCostBody
 ):
     try:
+        args = body.model_dump(
+            exclude={"commit_now", "confirmation", "idempotency_key"}
+        )
         data = _governed.prepare_capability(
             request,
             capability="adjust_shared_resource_cost",
-            args=body.model_dump(),
+            args=args,
             operation_label="prepare_adjust_shared_resource_cost",
+            commit_now=bool(body.commit_now),
+            confirmation=bool(body.confirmation),
+            idempotency_key=_idempotency_key_from_request(
+                request, body.idempotency_key
+            ),
         )
+        if data.get("persisted"):
+            return ok(data, "Cost adjustment persisted (commit_now).")
         return ok(data, "Cost adjustment proposal ready — then gpt_commit_proposal.")
     except Exception as exc:
         return _handle(exc)

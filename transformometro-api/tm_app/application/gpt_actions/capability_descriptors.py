@@ -7,10 +7,17 @@ from __future__ import annotations
 
 from typing import Any
 
+from tm_app.application.governed_writes.confirmation_policy import (
+    confirmation_policy_label_for_entity_operation,
+    confirmation_policy_label_for_workflow,
+)
 from tm_app.application.gpt_actions.entities import (
     ENTITY_CAPABILITIES,
     ENTITY_DESCRIPTIONS,
     GptEntity,
+)
+from tm_app.application.gpt_actions.teo_agent_intelligence_service import (
+    TeoAgentIntelligenceService,
 )
 
 
@@ -93,12 +100,20 @@ def build_capability_surface_catalog() -> dict[str, Any]:
                 "server_owned_fields": sorted(
                     SERVER_OWNED_FIELDS.get(entity.value, frozenset())
                 ),
-                "prepare_act_policy": "prepare_record_change → commit_proposal"
-                if write_ops
-                else "read_only",
-                "confirmation_policy": "explicit_user_confirmation_before_commit"
-                if write_ops
-                else None,
+                "prepare_act_policy": (
+                    "prepare_record_change → commit_proposal "
+                    "(additive may use commit_now=true)"
+                    if write_ops
+                    else "read_only"
+                ),
+                "confirmation_policy": (
+                    {
+                        op: confirmation_policy_label_for_entity_operation(op)
+                        for op in write_ops
+                    }
+                    if write_ops
+                    else None
+                ),
                 "permission_metadata": {
                     "note": "Catalog is not AuthZ. Backend enforces transformometro.access/manage and domain rules.",
                     "typical_gate": "transformometro.access",
@@ -116,6 +131,7 @@ def build_capability_surface_catalog() -> dict[str, Any]:
             "prepare_operation": "gpt_activate_revision",
             "commit_via": "gpt_commit_proposal",
             "confirmation_requirement": True,
+            "confirmation_policy": confirmation_policy_label_for_workflow("activate_revision"),
             "read_back_policy": "authoritative",
         },
         {
@@ -127,6 +143,9 @@ def build_capability_surface_catalog() -> dict[str, Any]:
             "prepare_operation": "gpt_validate_improvement_package",
             "commit_via": "gpt_commit_proposal",
             "confirmation_requirement": True,
+            "confirmation_policy": confirmation_policy_label_for_workflow(
+                "improvement_package"
+            ),
             "read_back_policy": "authoritative",
         },
         {
@@ -138,6 +157,9 @@ def build_capability_surface_catalog() -> dict[str, Any]:
             "prepare_operation": "gpt_meeting_minute_workflow",
             "commit_via": "gpt_commit_proposal",
             "confirmation_requirement": True,
+            "confirmation_policy": confirmation_policy_label_for_workflow(
+                "meeting_minute_workflow"
+            ),
             "read_back_policy": "authoritative",
         },
         {
@@ -149,6 +171,9 @@ def build_capability_surface_catalog() -> dict[str, Any]:
             "prepare_operation": "gpt_manage_evidence",
             "commit_via": "gpt_commit_proposal",
             "confirmation_requirement": True,
+            "confirmation_policy": confirmation_policy_label_for_workflow(
+                "manage_evidence"
+            ),
             "read_back_policy": "authoritative",
         },
         {
@@ -160,6 +185,9 @@ def build_capability_surface_catalog() -> dict[str, Any]:
             "prepare_operation": "gpt_adjust_shared_resource_cost",
             "commit_via": "gpt_commit_proposal",
             "confirmation_requirement": True,
+            "confirmation_policy": confirmation_policy_label_for_workflow(
+                "adjust_shared_resource_cost"
+            ),
             "read_back_policy": "authoritative",
         },
         {
@@ -171,6 +199,9 @@ def build_capability_surface_catalog() -> dict[str, Any]:
             "prepare_operation": "gpt_recalculate_dashboard",
             "commit_via": "gpt_commit_proposal",
             "confirmation_requirement": True,
+            "confirmation_policy": confirmation_policy_label_for_workflow(
+                "recalculate_dashboard"
+            ),
             "read_back_policy": "authoritative",
         },
         {
@@ -182,6 +213,9 @@ def build_capability_surface_catalog() -> dict[str, Any]:
             "prepare_operation": "gpt_meeting_minute_manage",
             "commit_via": "gpt_commit_proposal",
             "confirmation_requirement": True,
+            "confirmation_policy": confirmation_policy_label_for_workflow(
+                "meeting_minute_manage"
+            ),
             "read_back_policy": "authoritative_when_write",
         },
     ]
@@ -219,14 +253,21 @@ def build_capability_surface_catalog() -> dict[str, Any]:
             "prepare_then_commit": True,
             "opaque_proposal_handle": True,
             "commit_operation": "gpt_commit_proposal",
+            "commit_now_parameter": True,
             "ttl_seconds_default": 900,
             "store": "in_process",
             "store_residual": "ACCEPTED_WITH_RESIDUAL for multi-replica",
             "note": (
                 "commit_proposal is NOT a generic proxy: it only executes "
-                "server-side proposals produced by governed PREPARE."
+                "server-side proposals produced by governed PREPARE. "
+                "Additive prepare may set commit_now=true for atomic PREPARE+ACT."
             ),
         },
+        "rules": {
+            "agent_directives_are_live": True,
+            "builder_instructions_are_stable_only": True,
+        },
+        "agent_directives": TeoAgentIntelligenceService.agent_directives(),
         "not_exposed_by_design": ["tm_task", "interaction_room", "process_workspace"],
         "entities": entities,
         "workflows": workflows,

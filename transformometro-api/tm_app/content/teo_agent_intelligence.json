@@ -1,0 +1,339 @@
+{
+  "version": "2026.09.24.1",
+  "owner": "transformometro-api",
+  "source": "capability_surface.agent_directives via gpt_get_catalog / get_catalog",
+  "actions_runtime": {
+    "principle": "TRY_ACTION_BEFORE_CLAIMING_UNAVAILABLE",
+    "rules": [
+      "Antes de dizer que não consegue gravar / Actions indisponíveis: TENTAR neste turno gpt_get_catalog (ou get_catalog) e a Action/tool tipada de escrita se o pedido for mutação.",
+      "Só declare indisponibilidade depois de falha REAL da ferramenta neste turno (tool error, timeout, 401/403/5xx).",
+      "401 → pedir reconectar OAuth. 403 → AuthZ do usuário. Gap de catálogo → gap tipado — nunca fingir indisponibilidade geral."
+    ],
+    "forbidden": [
+      "Inventar 'conector desabilitado' sem ter tentado Action/tool neste turno",
+      "Substituir write tipado por tutorial da UI quando Actions/MCP existem"
+    ]
+  },
+  "execution_posture": {
+    "principle": "EXECUTE_TYPED_CHANGE_NOW",
+    "rules": [
+      "Pedido tipável (grave/salve/cadastre/aplique) → encadear READ→PREPARE(+commit_now se additive) no mesmo turno.",
+      "Não perguntar 'Posso aplicar?' / 'Confirma?' em write additive com commit_now permitido.",
+      "Destructive (delete/activate/cancel/recalculate/evidence mutate) → uma Confirma? explícita → commit_proposal."
+    ],
+    "forbidden": [
+      "Menu de opções em vez de chamar a Action/tool tipada",
+      "Confirma? em create/update/duplicate/package ready com commit_now"
+    ]
+  },
+  "write_flow": {
+    "additive": "prepare_* com commit_now=true + confirmation=true + Idempotency-Key → PREPARE+ACT atômico. Pedido do usuário = autorização de intenção — não perguntar Confirma?.",
+    "destructive": "prepare_* sem commit_now → mostrar proposal → uma Confirma? → commit_proposal(proposal_handle, confirmation=true).",
+    "same_turn": "Mudança tipável pedida neste turno → tentar catalog + prepare/commit neste turno.",
+    "compat_prepare_only": "Sem commit_now → só proposal (persisted=false); commit separado via gpt_commit_proposal / commit_proposal."
+  },
+  "modes": {
+    "QUICK_REGISTRATION": "Cadastrar melhoria já definida (package nested).",
+    "GUIDED_TRANSFORM": "Diagnosticar/melhorar com metodologia.",
+    "METHOD_PLAYBOOK": "Método específico via Knowledge / get_methodology_guide."
+  },
+  "epistemology": {
+    "INFERRED_NE_FACT": true,
+    "PROPOSED_NE_SAVED": true,
+    "labels_pt": {
+      "INFORMED": "Informado/Observado",
+      "INFERRED": "Hipótese",
+      "PROPOSED": "Proposto",
+      "UNKNOWN": "Ainda não sabemos"
+    }
+  },
+  "discovery": {
+    "principle": "PROGRESSIVE_SEARCH",
+    "rules": [
+      "Search miss != proof of absence.",
+      "Atas: search via gpt_search_records / search_records com entity=meeting_minute — NUNCA inventar gpt_meeting_minute_manage para busca.",
+      "Processos: progressive keywords → union → list candidates; sem silent selection."
+    ]
+  },
+  "language": {
+    "user_facing": "pt-BR claro",
+    "technical_ids": "EN estáveis nas Actions/tools"
+  },
+  "surface_parity": {
+    "gpt_actions": 18,
+    "mcp_tools": 20,
+    "note": "Capability parity ≠ transport count. Same GovernedWriteOrchestrator."
+  },
+  "anti_patterns": [
+    "Inventar operationId / tool name (ex.: gpt_meeting_minute_manage para search).",
+    "Perguntar Confirma? em write additive com commit_now permitido.",
+    "Alegar Actions/MCP indisponíveis sem tentar neste turno.",
+    "Usar manage_evidence / meeting manage para busca de atas.",
+    "Inventar proposal_handle (latest/current/null).",
+    "Tratar confirmation conversacional como AuthZ.",
+    "Duplicar regra de confirmação no paste em vez de obedecer agent_directives."
+  ],
+  "auth_errors": {
+    "never_without_attempt": "Não alegue indisponibilidade sem tentativa neste turno.",
+    "tool_unavailable_after_attempt": "Após falha real: reportar erro + pedir reconectar OAuth se 401."
+  },
+  "not_exposed": {
+    "tasks": "NOT_EXPOSED",
+    "interaction_room": "NOT_EXPOSED",
+    "binary_upload": "UI-only / BLOCKED_BY_PLATFORM",
+    "generic_proxy": "FORBIDDEN",
+    "signature_pdf": "NOT via GPT/MCP search path"
+  },
+  "flows": {
+    "process_registration": {
+      "gpt_operations": [
+        "gpt_get_catalog",
+        "gpt_validate_improvement_package",
+        "gpt_commit_proposal",
+        "gpt_prepare_record_change"
+      ],
+      "mcp_tools": [
+        "get_catalog",
+        "prepare_improvement_package",
+        "commit_proposal",
+        "prepare_record_change"
+      ],
+      "pipeline": [
+        "catalog",
+        "validate_package",
+        "commit_now_or_confirm",
+        "read_back"
+      ],
+      "confirmation_policy": "commit_now_allowed_additive"
+    },
+    "guided_transform": {
+      "gpt_operations": [
+        "gpt_get_process_context",
+        "gpt_get_methodology_guide",
+        "gpt_analyze",
+        "gpt_prepare_record_change"
+      ],
+      "mcp_tools": [
+        "get_process_context",
+        "get_methodology_guide",
+        "analyze",
+        "prepare_record_change"
+      ],
+      "pipeline": [
+        "understand",
+        "resolve_process",
+        "context",
+        "method",
+        "prepare"
+      ],
+      "confirmation_policy": "mixed"
+    },
+    "entity_crud": {
+      "gpt_operations": [
+        "gpt_prepare_record_change",
+        "gpt_commit_proposal",
+        "gpt_search_records",
+        "gpt_get_record"
+      ],
+      "mcp_tools": [
+        "prepare_record_change",
+        "commit_proposal",
+        "search_records",
+        "get_record"
+      ],
+      "pipeline": [
+        "catalog_schema",
+        "prepare",
+        "commit_now_if_additive",
+        "verify"
+      ],
+      "confirmation_policy": "create_update_duplicate_commit_now_delete_confirm"
+    },
+    "meeting_minutes": {
+      "gpt_operations": [
+        "gpt_search_records",
+        "gpt_get_record",
+        "gpt_prepare_record_change",
+        "gpt_meeting_minute_workflow",
+        "gpt_meeting_minute_manage",
+        "gpt_commit_proposal"
+      ],
+      "mcp_tools": [
+        "commit_proposal",
+        "generate_from_transcript",
+        "get_record",
+        "meeting_minute_read",
+        "prepare_meeting_minute_manage",
+        "prepare_meeting_minute_workflow",
+        "prepare_record_change",
+        "search_records"
+      ],
+      "pipeline": [
+        "search_entity_meeting_minute",
+        "get",
+        "crud_or_workflow",
+        "confirm_if_destructive"
+      ],
+      "confirmation_policy": "crud_additive_commit_now_workflow_confirm",
+      "search_canonical": {
+        "gpt": "gpt_search_records",
+        "mcp": "search_records",
+        "entity": "meeting_minute"
+      },
+      "forbidden_search": [
+        "gpt_meeting_minute_manage as search"
+      ]
+    },
+    "diagram_wbs": {
+      "gpt_operations": [
+        "gpt_get_catalog",
+        "gpt_prepare_record_change",
+        "gpt_commit_proposal",
+        "gpt_get_record"
+      ],
+      "mcp_tools": [
+        "get_catalog",
+        "prepare_record_change",
+        "commit_proposal",
+        "get_record"
+      ],
+      "pipeline": [
+        "diagram_catalog",
+        "prepare_conteudo",
+        "commit_now_additive"
+      ],
+      "confirmation_policy": "commit_now_allowed_additive"
+    },
+    "process_document": {
+      "gpt_operations": [
+        "gpt_search_records",
+        "gpt_get_record",
+        "gpt_prepare_record_change",
+        "gpt_commit_proposal"
+      ],
+      "mcp_tools": [
+        "search_records",
+        "get_record",
+        "prepare_record_change",
+        "commit_proposal"
+      ],
+      "pipeline": [
+        "search",
+        "prepare_content_md",
+        "commit_now_additive"
+      ],
+      "confirmation_policy": "commit_now_allowed_additive"
+    },
+    "evidence": {
+      "gpt_operations": [
+        "gpt_list_evidence",
+        "gpt_manage_evidence",
+        "gpt_commit_proposal"
+      ],
+      "mcp_tools": [
+        "list_evidence",
+        "prepare_manage_evidence",
+        "commit_proposal"
+      ],
+      "pipeline": [
+        "list",
+        "prepare_metadata",
+        "confirm",
+        "commit"
+      ],
+      "confirmation_policy": "explicit_user_confirmation_before_commit",
+      "binary": "UI-only"
+    },
+    "dashboard": {
+      "gpt_operations": [
+        "gpt_activate_revision",
+        "gpt_analyze",
+        "gpt_commit_proposal",
+        "gpt_get_process_timeline",
+        "gpt_recalculate_dashboard"
+      ],
+      "mcp_tools": [
+        "analyze",
+        "commit_proposal",
+        "get_process_timeline",
+        "prepare_activate_revision",
+        "prepare_recalculate_dashboard"
+      ],
+      "pipeline": [
+        "analyze_read",
+        "recalculate_confirm"
+      ],
+      "confirmation_policy": "recalculate_confirm"
+    },
+    "shared_resource": {
+      "gpt_operations": [
+        "gpt_prepare_record_change",
+        "gpt_adjust_shared_resource_cost",
+        "gpt_commit_proposal",
+        "gpt_search_records"
+      ],
+      "mcp_tools": [
+        "prepare_record_change",
+        "prepare_adjust_shared_resource_cost",
+        "commit_proposal",
+        "search_records"
+      ],
+      "pipeline": [
+        "crud_or_cost",
+        "commit_now_if_additive"
+      ],
+      "confirmation_policy": "mixed_cost_allows_commit_now"
+    },
+    "catalog_admin": {
+      "gpt_operations": [
+        "gpt_prepare_record_change",
+        "gpt_search_records",
+        "gpt_commit_proposal"
+      ],
+      "mcp_tools": [
+        "prepare_record_change",
+        "search_records",
+        "commit_proposal"
+      ],
+      "pipeline": [
+        "branch_department_crud"
+      ],
+      "confirmation_policy": "commit_now_allowed_additive"
+    },
+    "methodology": {
+      "gpt_operations": [
+        "gpt_get_methodology_guide"
+      ],
+      "mcp_tools": [
+        "get_methodology_guide"
+      ],
+      "pipeline": [
+        "read_guide"
+      ],
+      "confirmation_policy": "read_only",
+      "knowledge": "teo-method-playbooks.md"
+    },
+    "context_reads": {
+      "gpt_operations": [
+        "gpt_get_my_context",
+        "gpt_get_catalog",
+        "gpt_get_process_context",
+        "gpt_get_process_timeline",
+        "gpt_list_evidence"
+      ],
+      "mcp_tools": [
+        "get_my_context",
+        "get_catalog",
+        "get_process_context",
+        "get_process_timeline",
+        "list_evidence",
+        "meeting_minute_read",
+        "generate_from_transcript"
+      ],
+      "pipeline": [
+        "read_context"
+      ],
+      "confirmation_policy": "read_only"
+    }
+  }
+}

@@ -341,7 +341,9 @@ class GptActionsDispatchService:
         except Exception:
             payload.setdefault("familias_processo", [])
             payload.setdefault("agrupadores_ferramenta", [])
-        return payload
+        from tm_app.application.gpt_actions.response_compact import project_catalog
+
+        return project_catalog(payload)
 
     def get_methodology_guide(
         self,
@@ -458,6 +460,36 @@ class GptActionsDispatchService:
     # --- records CRUD ----------------------------------------------------
 
     def search_records(
+        self,
+        request: Request,
+        entity_value: str,
+        *,
+        parent_id: str | None = None,
+        instance_id: str | None = None,
+        filial_id: str | None = None,
+        setor_id: str | None = None,
+        status: str | None = None,
+        familia_processo: str | None = None,
+        q: str | None = None,
+        unit_code: str | None = None,
+    ) -> dict[str, Any]:
+        from tm_app.application.gpt_actions.response_compact import project_search_records
+
+        raw = self._search_records_uncached(
+            request,
+            entity_value,
+            parent_id=parent_id,
+            instance_id=instance_id,
+            filial_id=filial_id,
+            setor_id=setor_id,
+            status=status,
+            familia_processo=familia_processo,
+            q=q,
+            unit_code=unit_code,
+        )
+        return project_search_records(raw)
+
+    def _search_records_uncached(
         self,
         request: Request,
         entity_value: str,

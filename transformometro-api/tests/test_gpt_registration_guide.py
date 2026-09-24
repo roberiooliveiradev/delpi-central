@@ -164,10 +164,11 @@ def test_teo_contract_drift_openapi_guide_instructions():
     assert hints["commit_operationId"] == "gpt_commit_proposal"
 
     text = Path("docs/gpt-actions/specialist-instructions.md").read_text(encoding="utf-8")
-    assert "gpt_validate_improvement_package" in text
-    assert "gpt_commit_proposal" in text
     assert "gpt_prepare_record_change" in text
-    assert "VALIDATE != WRITE" in text
+    assert "gpt_commit_proposal" in text
+    assert "agent_directives" in text
+    assert "commit_now" in text
     assert "AUTHORITATIVE READ-BACK" in text
-    assert "UNKNOWN" in text
-    assert "COMMIT_ATTEMPTED" in text
+    # Package validate lives in OpenAPI + registration_guide; paste stays budget-stable.
+    assert hints["validate_operationId"] == "gpt_validate_improvement_package"
+
