@@ -1504,12 +1504,16 @@ class ComunicadoDataEnrichmentService:
                     linked.append(block)
                     continue
                 merged = dict(block)
-                merged["resolvedBySourceId"] = by_source
+                formatted_by_source = DisplayFormatService.apply_canvas_table_source_map(
+                    merged,
+                    by_source,
+                )
+                merged["resolvedBySourceId"] = formatted_by_source
                 primary = str(block.get("dataSourceId") or "").strip()
-                if primary and primary in by_source:
-                    merged["resolved"] = dict(by_source[primary])
+                if primary and primary in formatted_by_source:
+                    merged["resolved"] = dict(formatted_by_source[primary])
                 else:
-                    merged["resolved"] = dict(next(iter(by_source.values())))
+                    merged["resolved"] = dict(next(iter(formatted_by_source.values())))
                 merged["serverCanvasTableProjectionApplied"] = True
                 linked.append(merged)
                 continue

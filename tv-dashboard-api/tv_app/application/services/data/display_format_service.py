@@ -1019,9 +1019,86 @@ class DisplayFormatService:
             cls._apply_table_display(out, block)
         elif block_type == "chart_view":
             cls._apply_chart_display(out, block)
+        elif block_type == "canvas_table":
+            cls._apply_canvas_table_display(out, block)
 
         out["serverDisplayApplied"] = True
         return out
+
+    @classmethod
+    def apply_canvas_table_source_map(
+        cls,
+        block: dict[str, Any],
+        by_source: dict[str, dict[str, Any]],
+    ) -> dict[str, dict[str, Any]]:
+        """Materialize displayRuns per linked source for canvas_table cells (G16)."""
+        if not isinstance(by_source, dict) or not by_source:
+            return by_source
+        refs_by_source = cls._canvas_table_data_refs_by_source(block)
+        out: dict[str, dict[str, Any]] = {}
+        for sid, resolved in by_source.items():
+            refs = refs_by_source.get(sid) or refs_by_source.get("") or []
+            if not refs:
+                # Still mark applied so paint knows enrich ran (fallback client OK).
+                next_resolved = dict(resolved) if isinstance(resolved, dict) else {}
+                next_resolved["serverDisplayApplied"] = True
+                out[sid] = next_resolved
+                continue
+            synthetic = {
+                "type": "text",
+                "dataSourceId": sid,
+                "contentRuns": [{"text": "", "dataRef": dict(ref)} for ref in refs],
+            }
+            out[sid] = cls.apply_to_resolved(dict(resolved), synthetic)
+        return out
+
+    @classmethod
+    def _canvas_table_data_refs_by_source(
+        cls, block: dict[str, Any]
+    ) -> dict[str, list[dict[str, Any]]]:
+        primary = str(block.get("dataSourceId") or "").strip()
+        by_source: dict[str, list[dict[str, Any]]] = {}
+        seen: dict[str, set[str]] = {}
+        cells = block.get("cells")
+        if not isinstance(cells, list):
+            return by_source
+        for row in cells:
+            if not isinstance(row, list):
+                continue
+            for cell in row:
+                if not isinstance(cell, dict):
+                    continue
+                data_ref = cell.get("dataRef")
+                if not isinstance(data_ref, dict):
+                    continue
+                field = str(data_ref.get("field") or "").strip()
+                if not field:
+                    continue
+                sid = str(cell.get("dataSourceId") or "").strip() or primary
+                if not sid:
+                    continue
+                key = field
+                bucket = seen.setdefault(sid, set())
+                if key in bucket:
+                    continue
+                bucket.add(key)
+                by_source.setdefault(sid, []).append(dict(data_ref))
+        return by_source
+
+    @classmethod
+    def _apply_canvas_table_display(cls, resolved: dict[str, Any], block: dict[str, Any]) -> None:
+        """Primary resolved: format fields used by cells pointing at block.dataSourceId."""
+        primary = str(block.get("dataSourceId") or "").strip()
+        refs_by_source = cls._canvas_table_data_refs_by_source(block)
+        refs = refs_by_source.get(primary) or []
+        if not refs:
+            return
+        synthetic = {
+            "type": "text",
+            "dataSourceId": primary,
+            "contentRuns": [{"text": "", "dataRef": dict(ref)} for ref in refs],
+        }
+        cls._apply_text_display(resolved, synthetic)
 
     @classmethod
     def sanitize_contradictory_text_binding(

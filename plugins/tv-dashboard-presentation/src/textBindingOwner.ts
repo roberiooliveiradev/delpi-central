@@ -151,3 +151,12 @@ export function hasContradictoryTextBinding(block: TextBoundBlockSlice): boolean
     block.textProjection?.field?.trim() && listBoundDataRefs(block).length > 0,
   );
 }
+
+/**
+ * Persistência MFE: paint owner vence. Com dataRefs, remove textProjection fantasma
+ * (UI≡paint no reload). Não altera multi-run intencional sem projection paralela.
+ */
+export function sanitizeTextBindingForPersist<T extends TextBoundBlockSlice>(block: T): T {
+  if (!hasContradictoryTextBinding(block)) return block;
+  return { ...block, textProjection: undefined };
+}

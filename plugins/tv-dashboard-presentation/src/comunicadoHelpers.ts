@@ -186,6 +186,7 @@ import {
   isComunicadoVisualBoxBlock,
   resolveVisualBoxProfile,
 } from "./comunicadoVisualBox";
+import { sanitizeTextBindingForPersist } from "./textBindingOwner";
 import type {
   ComunicadoBackground,
   ComunicadoBackgroundUnderlay,
@@ -969,10 +970,13 @@ function serializeBlock(block: ComunicadoBlock): Record<string, unknown> {
   const serializedAnimations = serializeBlockAnimations(block.animations);
   if (serializedAnimations) base.animations = serializedAnimations;
   if (block.type === "heading" || block.type === "text") {
-    const textFields = serializeTextBlockFields(block);
+    const sanitized = sanitizeTextBindingForPersist(block);
+    const textFields = serializeTextBlockFields(sanitized);
     Object.assign(base, textFields);
-    if (block.dataSourceId?.trim()) base.dataSourceId = block.dataSourceId.trim();
-    if (block.textProjection?.field?.trim()) base.textProjection = { ...block.textProjection };
+    if (sanitized.dataSourceId?.trim()) base.dataSourceId = sanitized.dataSourceId.trim();
+    if (sanitized.textProjection?.field?.trim()) {
+      base.textProjection = { ...sanitized.textProjection };
+    }
     if (block.href) base.href = block.href;
     if (block.linkTarget) base.linkTarget = block.linkTarget;
   } else if (block.type === "image" || block.type === "video") {
@@ -981,12 +985,15 @@ function serializeBlock(block: ComunicadoBlock): Record<string, unknown> {
     if (block.linkTarget) base.linkTarget = block.linkTarget;
     if (block.type === "image" && block.imageCrop) base.imageCrop = block.imageCrop;
   } else if (block.type === "shape") {
+    const sanitized = sanitizeTextBindingForPersist(block);
     base.shape = block.shape;
-    if (block.content) base.content = block.content;
-    const serializedRuns = serializeContentRuns(block.contentRuns);
+    if (sanitized.content) base.content = sanitized.content;
+    const serializedRuns = serializeContentRuns(sanitized.contentRuns);
     if (serializedRuns) base.contentRuns = serializedRuns;
-    if (block.dataSourceId?.trim()) base.dataSourceId = block.dataSourceId.trim();
-    if (block.textProjection?.field?.trim()) base.textProjection = { ...block.textProjection };
+    if (sanitized.dataSourceId?.trim()) base.dataSourceId = sanitized.dataSourceId.trim();
+    if (sanitized.textProjection?.field?.trim()) {
+      base.textProjection = { ...sanitized.textProjection };
+    }
     if (block.efficiencyPin) base.efficiencyPin = { ...block.efficiencyPin, ...(block.efficiencyPin.bands ? { bands: { ...block.efficiencyPin.bands } } : {}) };
     if (block.href) base.href = block.href;
     if (block.linkTarget) base.linkTarget = block.linkTarget;

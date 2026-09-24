@@ -274,3 +274,32 @@ def test_apply_to_resolved_date_short_is_dd_mm_yyyy_not_iso():
     signals = DisplayFormatService.display_signals_for_verify(out)
     assert signals["serverDisplayApplied"] is True
     assert signals["displayText"] == "03/08/2026"
+
+
+def test_apply_canvas_table_source_map_materializes_display_runs():
+    """G16: células com dataRef recebem displayRuns no resolved da fonte."""
+    by_source = {
+        "src-1": {
+            "kpi": {"value": 41.7},
+            "kpiMetrics": [{"field": "oee", "value": 41.7}],
+            "fields": [{"name": "oee", "projectable": True}],
+        }
+    }
+    block = {
+        "type": "canvas_table",
+        "dataSourceId": "src-1",
+        "cells": [
+            [
+                {
+                    "dataRef": {
+                        "field": "oee",
+                        "displayFormat": {"category": "percent", "decimalPlaces": 1},
+                    }
+                }
+            ]
+        ],
+    }
+    out = DisplayFormatService.apply_canvas_table_source_map(block, by_source)
+    assert out["src-1"]["serverDisplayApplied"] is True
+    assert out["src-1"]["displayRuns"]
+    assert out["src-1"]["displayRuns"][0]["text"] == "41,7%"

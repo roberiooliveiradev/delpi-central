@@ -3,8 +3,10 @@ import { describe, expect, it } from "vitest";
 import {
   consolidateTextBindingToProjection,
   hasContradictoryTextBinding,
+  listBoundDataRefs,
   readEffectiveTextProjection,
   resolveTextBindingOwner,
+  sanitizeTextBindingForPersist,
 } from "./textBindingOwner";
 import { resolveTextBlockDisplayRuns } from "./textViewProjection";
 import type { ComunicadoDataResolved } from "./comunicadoTypes";
@@ -105,5 +107,12 @@ describe("textBindingOwner", () => {
     const text = painted.map((r) => r.text).join("");
     expect(text).toMatch(/01\/01\/2025/);
     expect(text).toMatch(/24\/09\/2025/);
+  });
+
+  it("G20: sanitizeTextBindingForPersist remove textProjection fantasma (paint vence)", () => {
+    const next = sanitizeTextBindingForPersist(dualBindBlock);
+    expect(next.textProjection).toBeUndefined();
+    expect(listBoundDataRefs(next).length).toBe(2);
+    expect(hasContradictoryTextBinding(next)).toBe(false);
   });
 });

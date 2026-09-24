@@ -295,6 +295,34 @@ describe("applyViewProjection", () => {
     expect(next?.kpi?.label).toBe("OEE médio");
   });
 
+  it("G19: re-agg KPI limpa serverDisplayApplied mentiroso sem displayValue", () => {
+    const baked: ComunicadoDataResolved = {
+      serverProjectionApplied: true,
+      serverDisplayApplied: true,
+      kpi: { value: 99, label: "bake", displayValue: "99,0" },
+      kpiMetrics: [{ field: "oee", value: 99, label: "bake", displayValue: "99,0" }],
+      table: {
+        columns: [
+          { key: "periodo", label: "Período" },
+          { key: "oee", label: "OEE" },
+        ],
+        rows: [
+          { periodo: "a", oee: 60 },
+          { periodo: "b", oee: 80 },
+          { periodo: "c", oee: 100 },
+        ],
+      },
+    };
+    const next = applyViewProjection(baked, {
+      kpiProjection: {
+        metrics: [{ field: "oee", aggregation: "avg", label: "OEE médio" }],
+      },
+    });
+    expect(next?.kpiMetrics?.[0]?.value).toBe(80);
+    expect(next?.kpiMetrics?.[0]?.displayValue).toBeUndefined();
+    expect(next?.serverDisplayApplied).toBe(false);
+  });
+
   it("barra agrupa soma por categoria", () => {
     const next = applyViewProjection(
       {

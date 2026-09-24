@@ -20,3 +20,4 @@
 - Corpus of format cases must stay mirrored TS ↔ Python.
 - Mutation/patch must not leave contradictory `textProjection.field` + `contentRuns.dataRef` on the same block after Campo-panel edits (`DisplayFormatService.sanitize_contradictory_text_binding` on upsert — clears dataRefs when single-field `textProjection` is set).
 - **VISTA VERIFY / outcome:** after enrich/preview, read `resolved.displayText` / `displayRuns` / `kpi.displayValue` / `table.displayRows` / chart `displayLabel|displayValue` (or `DisplayFormatService.display_signals_for_verify`). Do not treat raw ISO / unformatted numbers as format success.
+- **Rebaseline TV-DASHBOARD-FE-BE-001 (2026-09-24):** (1) client `applyViewProjection` that drops `display*` must clear `serverDisplayApplied`; (2) MFE `serializeComunicadoConfig` drops ghost `textProjection` when dataRefs paint; (3) canvas_table enrich materializes `displayRuns` per source. Structural bake-only paint remains FOLLOW_UP.

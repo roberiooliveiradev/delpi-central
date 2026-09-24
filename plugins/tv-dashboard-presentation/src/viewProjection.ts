@@ -969,7 +969,44 @@ export function applyViewProjection(
     next = { ...next, chart: applyExcludeWeekendsToChart(next.chart) };
   }
 
-  return next;
+  return reconcileServerDisplayAfterClientProjection(next);
+}
+
+/**
+ * Invariant (G19): client re-agg may drop enrich `display*` while leaving
+ * `serverDisplayApplied: true`. Clear the lying flag so paint uses honest fallback.
+ */
+export function reconcileServerDisplayAfterClientProjection(
+  resolved: ComunicadoDataResolved,
+): ComunicadoDataResolved {
+  if (resolved.serverDisplayApplied !== true) return resolved;
+
+  const kpiMissing =
+    resolved.kpi != null &&
+    resolved.kpi.value != null &&
+    resolved.kpi.value !== "" &&
+    typeof resolved.kpi.displayValue !== "string";
+
+  const metricsMissing = (resolved.kpiMetrics ?? []).some(
+    (metric) =>
+      metric.value != null &&
+      metric.value !== "" &&
+      typeof metric.displayValue !== "string",
+  );
+
+  const points = resolved.chart?.points ?? [];
+  const chartMissing =
+    points.length > 0 &&
+    points.some(
+      (point) =>
+        point.value != null &&
+        Number.isFinite(point.value) &&
+        typeof point.displayValue !== "string" &&
+        typeof point.displayLabel !== "string",
+    );
+
+  if (!kpiMissing && !metricsMissing && !chartMissing) return resolved;
+  return { ...resolved, serverDisplayApplied: false };
 }
 
 /** Descobre campos disponíveis no resolved (contrato declarado + runtime + catálogo). */
