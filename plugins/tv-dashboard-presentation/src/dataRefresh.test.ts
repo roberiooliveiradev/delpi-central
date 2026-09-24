@@ -218,7 +218,7 @@ describe("resolvePreviewRefreshSourceIds", () => {
     ).toEqual(["src-a"]);
   });
 
-  it("só viewLinks mudou → nenhum refetch", () => {
+  it("só viewLinks mudou → refetch das fontes ligadas (FE-BE-003 bake)", () => {
     const base: ComunicadoConfig = {
       blocks: [
         {
@@ -265,7 +265,42 @@ describe("resolvePreviewRefreshSourceIds", () => {
         allFetchableIds: ["src-a", "src-b"],
         inputAffectedSourceIds: ["src-a"],
       }),
-    ).toEqual([]);
+    ).toEqual(["src-b"]);
+  });
+
+  it("chartProjection encoding mudou → refetch da fonte ligada", () => {
+    const mk = (field: string): ComunicadoConfig => ({
+      blocks: [
+        {
+          id: "src-a",
+          type: "data_source",
+          frame: { x: 0, y: 0, w: 10, h: 10 },
+          dataBinding: { operationId: "op", params: {} },
+        },
+        {
+          id: "chart-1",
+          type: "chart_view",
+          chartType: "pie",
+          dataSourceId: "src-a",
+          chartProjection: {
+            categoryField: "nivel",
+            series: [{ field, aggregation: "avg", label: field }],
+          },
+          frame: { x: 0, y: 0, w: 20, h: 20 },
+        },
+      ],
+    });
+    const prev = buildDataPreviewFingerprint(mk("total_lmps"));
+    const next = buildDataPreviewFingerprint(mk("avg_lead_time"));
+    expect(prev).not.toBe(next);
+    expect(
+      resolvePreviewRefreshSourceIds({
+        previousFingerprint: prev,
+        nextFingerprint: next,
+        allFetchableIds: ["src-a"],
+        inputAffectedSourceIds: [],
+      }),
+    ).toEqual(["src-a"]);
   });
 
   it("valor do input mudou → fontes afetadas", () => {

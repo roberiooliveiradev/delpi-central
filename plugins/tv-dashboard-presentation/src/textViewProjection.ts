@@ -148,6 +148,10 @@ export function resolveTextDisplayValue(
   options?: { linkedDataSource?: boolean },
 ): { text: string; color?: string } {
   if (!projection?.field?.trim()) return { text: "" };
+  if (resolved?.presentationStale === true) {
+    const linked = options?.linkedDataSource !== false;
+    return { text: linked ? projection.fallback?.trim() || "—" : "" };
+  }
   // Enrich já compôs prefixo + valor + sufixo em displayText — paint-only.
   if (typeof resolved?.displayText === "string") {
     const projected = resolveProjectedField(
@@ -219,19 +223,31 @@ export function patchTextProjectionFromEditedDisplay(
   resolved?: ComunicadoDataResolved,
 ): ComunicadoTextProjection {
   const fallback = projection.fallback?.trim() || "—";
-  const core = resolveTextDataRefValue(
-    resolved,
-    {
-      field: projection.field,
-      aggregation: projection.aggregation,
-      format: projection.format,
-      displayFormat: projection.displayFormat,
-      decimalPlaces: projection.decimalPlaces,
-      colorRules: projection.colorRules,
-    },
-    fallback,
-  );
-  const { prefix, suffix } = splitEditedDisplayAroundCoreValue(editedDisplay, core.text);
+  // Prefer server-materialized core (FE-BE-002); strip known affixes from displayText.
+  let coreText = preferServerDisplayRunText(resolved, projection.field);
+  if (coreText == null && typeof resolved?.displayText === "string") {
+    let baked = resolved.displayText;
+    const prefix = projection.prefix ?? "";
+    const suffix = projection.suffix ?? "";
+    if (prefix && baked.startsWith(prefix)) baked = baked.slice(prefix.length);
+    if (suffix && baked.endsWith(suffix)) baked = baked.slice(0, baked.length - suffix.length);
+    coreText = baked;
+  }
+  if (coreText == null || coreText.length === 0) {
+    coreText = resolveTextDataRefValue(
+      resolved,
+      {
+        field: projection.field,
+        aggregation: projection.aggregation,
+        format: projection.format,
+        displayFormat: projection.displayFormat,
+        decimalPlaces: projection.decimalPlaces,
+        colorRules: projection.colorRules,
+      },
+      fallback,
+    ).text;
+  }
+  const { prefix, suffix } = splitEditedDisplayAroundCoreValue(editedDisplay, coreText);
   const next: ComunicadoTextProjection = { ...projection };
   if (prefix) next.prefix = prefix;
   else delete next.prefix;

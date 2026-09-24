@@ -3,6 +3,38 @@ import { describe, expect, it } from "vitest";
 import { preferEditorViewResolved } from "./preferEditorViewResolved";
 
 describe("preferEditorViewResolved", () => {
+  it("chart: bake com serverProjectionApplied vazio NÃO cai no dump da fonte", () => {
+    const out = preferEditorViewResolved({
+      blockType: "chart_view",
+      linked: {
+        serverProjectionApplied: true,
+        serverDisplayApplied: true,
+        chart: { points: [], series: [] },
+      },
+      source: {
+        chart: {
+          points: [
+            { label: "Meta cadastrada", value: 10 },
+            { label: "Total itens", value: 5 },
+          ],
+        },
+      },
+    });
+    expect(out?.chart?.points).toEqual([]);
+    expect(out?.serverProjectionApplied).toBe(true);
+  });
+
+  it("chart: sem projeção ainda pode usar fonte (legado)", () => {
+    const out = preferEditorViewResolved({
+      blockType: "chart_view",
+      linked: {
+        chart: { points: [] },
+      },
+      source: { chart: { points: [{ label: "dia", value: 10 }] } },
+    });
+    expect(out?.chart?.points?.[0]?.value).toBe(10);
+  });
+
   it("chart: usa linked quando tem pontos", () => {
     const out = preferEditorViewResolved({
       blockType: "chart_view",
@@ -13,19 +45,6 @@ describe("preferEditorViewResolved", () => {
       source: { chart: { points: [{ label: "b", value: 99 }] } },
     });
     expect(out?.chart?.points?.[0]?.value).toBe(1);
-  });
-
-  it("chart: cai na fonte quando bake ligado veio vazio", () => {
-    const out = preferEditorViewResolved({
-      blockType: "chart_view",
-      linked: {
-        serverProjectionApplied: true,
-        serverDisplayApplied: true,
-        chart: { points: [] },
-      },
-      source: { chart: { points: [{ label: "dia", value: 10 }] } },
-    });
-    expect(out?.chart?.points?.[0]?.value).toBe(10);
   });
 
   it("text: prefere displayText do linked", () => {

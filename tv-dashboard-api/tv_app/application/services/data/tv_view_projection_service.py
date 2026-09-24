@@ -174,6 +174,196 @@ def apply_field_labels_to_resolved(
     return next_resolved if changed else resolved
 
 
+_METRIC_DUMP_ROW_KEYS = frozenset({"metric", "field", "value", "label", "indicador"})
+_PAYLOAD_LIST_KEYS = (
+    "leadByLevel",
+    "levelData",
+    "statusData",
+    "ranking",
+    "serie",
+    "series",
+    "points",
+    "items",
+    "rows",
+    "records",
+    "results",
+    "history",
+    "flow",
+    "branches",
+)
+
+
+def _is_metric_summary_rows(rows: list[dict[str, Any]]) -> bool:
+    """Table dump of kpiMetrics (metric/field/value) — not a categorical chart frame."""
+    if not rows:
+        return False
+    sample = rows[: min(12, len(rows))]
+    keys: set[str] = set()
+    for row in sample:
+        keys.update(str(k) for k in row.keys())
+    if not keys:
+        return False
+    if keys <= _METRIC_DUMP_ROW_KEYS and "field" in keys and "value" in keys:
+        return True
+    if keys == {"campo", "valor"}:
+        return True
+    return False
+
+
+def _rows_cover_projection_fields(
+    rows: list[dict[str, Any]],
+    *,
+    category: str,
+    series_fields: list[str],
+) -> bool:
+    if not rows or _is_metric_summary_rows(rows):
+        return False
+    keys: set[str] = set()
+    for row in rows[: min(20, len(rows))]:
+        keys.update(str(k) for k in row.keys())
+    needed = [f for f in [category, *series_fields] if f]
+    if not needed:
+        return True
+    return any(field in keys for field in needed)
+
+
+def _list_rows_from_payload_node(node: Any) -> list[dict[str, Any]]:
+    if isinstance(node, list):
+        return [row for row in node if isinstance(row, dict)]
+    if isinstance(node, dict):
+        for nested_key in ("items", "rows"):
+            nested = node.get(nested_key)
+            if isinstance(nested, list):
+                return [row for row in nested if isinstance(row, dict)]
+    return []
+
+
+def _alternate_rows_from_resolved_data(
+    resolved: dict[str, Any],
+    *,
+    category: str,
+    series_fields: list[str],
+) -> list[dict[str, Any]]:
+    """Find business list rows (e.g. leadByLevel) matching chart encoding fields."""
+    data = resolved.get("data")
+    if data is None:
+        return []
+    from tv_app.application.services.series_points_extractor import unwrap_operational_data
+
+    payload = unwrap_operational_data(data)
+    candidates: list[list[dict[str, Any]]] = []
+    if isinstance(payload, list):
+        candidates.append([row for row in payload if isinstance(row, dict)])
+    elif isinstance(payload, dict):
+        for key in _PAYLOAD_LIST_KEYS:
+            rows = _list_rows_from_payload_node(payload.get(key))
+            if rows:
+                candidates.append(rows)
+        # Nested summary envelopes occasionally wrap lists one level deeper.
+        for value in payload.values():
+            if isinstance(value, dict):
+                for key in _PAYLOAD_LIST_KEYS:
+                    rows = _list_rows_from_payload_node(value.get(key))
+                    if rows:
+                        candidates.append(rows)
+
+    needed = [f for f in [category, *series_fields] if f]
+    best: list[dict[str, Any]] = []
+    best_score = -1
+    for rows in candidates:
+        if not rows:
+            continue
+        keys = set()
+        for row in rows[: min(20, len(rows))]:
+            keys.update(str(k) for k in row.keys())
+        score = sum(1 for field in needed if field in keys) if needed else 1
+        if score > best_score:
+            best_score = score
+            best = rows
+    if needed and best_score <= 0:
+        return []
+    return best
+
+
+def _chart_series_from_selected_metrics(
+    resolved: dict[str, Any],
+    series_cfg: list[Any],
+    chart_type: str,
+) -> list[dict[str, Any]]:
+    """Selected-only slices from kpiMetrics when no categorical frame exists."""
+    metrics = {
+        str(m.get("field") or ""): m
+        for m in (resolved.get("kpiMetrics") or [])
+        if isinstance(m, dict) and m.get("field")
+    }
+    series_out: list[dict[str, Any]] = []
+    for item in series_cfg:
+        if not isinstance(item, dict):
+            continue
+        field = str(item.get("field") or "").strip()
+        if not field:
+            continue
+        metric = metrics.get(field)
+        if not metric:
+            continue
+        value = aggregate_values([metric.get("value")], str(item.get("aggregation") or "first"))
+        if value is None and metric.get("value") not in (None, ""):
+            # Non-numeric scalar still paints as single point when finite-coercion fails later.
+            raw = metric.get("value")
+            try:
+                value = float(raw)  # type: ignore[arg-type]
+            except (TypeError, ValueError):
+                continue
+        if value is None:
+            continue
+        name = _series_display_name(item, field)
+        # Prefer authored series label; fall back to metric business label for the point.
+        point_label = name or str(metric.get("label") or field)
+        series_out.append(
+            {
+                "name": name,
+                "field": field,
+                "color": item.get("color"),
+                "points": [{"label": point_label, "value": value}],
+            }
+        )
+    if not series_out:
+        return []
+    # Multi-measure without category → bar-like points (selected metrics only).
+    if len(series_out) > 1 and chart_type in {"line", "area"}:
+        chart_type_out = "bar"
+    else:
+        chart_type_out = chart_type
+    # Caller sets chartType; keep series list as encoding.
+    _ = chart_type_out
+    return series_out
+
+
+def _resolve_chart_rows_for_projection(
+    resolved: dict[str, Any],
+    rows: list[dict[str, Any]],
+    *,
+    category: str,
+    series_cfg: list[Any],
+) -> list[dict[str, Any]]:
+    series_fields = [
+        str(item.get("field") or "").strip()
+        for item in series_cfg
+        if isinstance(item, dict) and str(item.get("field") or "").strip()
+    ]
+    if _rows_cover_projection_fields(rows, category=category, series_fields=series_fields):
+        return rows
+    alt = _alternate_rows_from_resolved_data(
+        resolved, category=category, series_fields=series_fields
+    )
+    if _rows_cover_projection_fields(alt, category=category, series_fields=series_fields):
+        return alt
+    # Metric dump / unrelated frame must not drive category encoding.
+    if _is_metric_summary_rows(rows):
+        return []
+    return rows
+
+
 def apply_view_projection_to_resolved(resolved: dict[str, Any], block: dict[str, Any]) -> dict[str, Any]:
     """
     Aplica kpiProjection / chartProjection / tableProjection do bloco visual.
@@ -208,10 +398,11 @@ def apply_view_projection_to_resolved(resolved: dict[str, Any], block: dict[str,
                 agg = str(item.get("aggregation") or "first")
                 base = existing.get(field) or {}
                 value: Any = base.get("value")
-                if rows and agg != "first":
-                    value = aggregate_values(_column_values(rows, field), agg)
-                elif rows and value is None:
-                    value = aggregate_values(_column_values(rows, field), "first")
+                usable_rows = rows if not _is_metric_summary_rows(rows) else []
+                if usable_rows and agg != "first":
+                    value = aggregate_values(_column_values(usable_rows, field), agg)
+                elif usable_rows and value is None:
+                    value = aggregate_values(_column_values(usable_rows, field), "first")
                 proj_label = str(item.get("label") or "")
                 base_label = str(base.get("label") or "")
                 if proj_label.strip() and not _is_auto_baked_field_label(proj_label, field):
@@ -279,27 +470,42 @@ def apply_view_projection_to_resolved(resolved: dict[str, Any], block: dict[str,
                         "label": "Contagem",
                     }
                 ]
-            if rows and series_cfg:
+            chart_rows = _resolve_chart_rows_for_projection(
+                resolved,
+                rows,
+                category=category,
+                series_cfg=series_cfg if isinstance(series_cfg, list) else [],
+            )
+            series_out: list[dict[str, Any]] = []
+            if chart_rows and series_cfg:
                 series_out = _build_chart_series(
-                    rows=rows,
+                    rows=chart_rows,
                     category=category,
                     series_cfg=series_cfg,
                     chart_type=chart_type,
                     max_categories=_resolve_max_categories(projection, chart_type),
                 )
-                if series_out:
-                    next_chart: dict[str, Any] = {
-                        "points": series_out[0]["points"],
-                        "chartType": chart_type,
-                        "series": series_out,
-                    }
-                    projected_goal = _resolve_projected_goal(rows, projection)
-                    if projected_goal is not None:
-                        next_chart["projectedGoal"] = projected_goal
-                    next_resolved["chart"] = next_chart
-                    applied = True
+            elif series_cfg and not category:
+                # Encoding escolhe medidas sem dimensão → selected metrics only.
+                series_out = _chart_series_from_selected_metrics(
+                    resolved, series_cfg, chart_type
+                )
+            if series_out:
+                effective_type = chart_type
+                if len(series_out) > 1 and chart_type in {"line", "area"} and not category:
+                    effective_type = "bar"
+                next_chart: dict[str, Any] = {
+                    "points": series_out[0]["points"],
+                    "chartType": effective_type,
+                    "series": series_out,
+                }
+                projected_goal = _resolve_projected_goal(chart_rows or rows, projection)
+                if projected_goal is not None:
+                    next_chart["projectedGoal"] = projected_goal
+                next_resolved["chart"] = next_chart
+                applied = True
             elif series_cfg or category:
-                # Projection intent with empty rows must not keep source summary chart.
+                # Projection intent must never keep source kpiMetrics dump as chart.
                 next_resolved["chart"] = {
                     "points": [],
                     "chartType": chart_type,

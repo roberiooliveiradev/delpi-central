@@ -895,13 +895,14 @@ class DisplayFormatService:
             else None
         )
         dump = cls._is_campo_valor_dump(columns)
+        metric_dump = cls._is_metric_field_value_dump(columns)
         time_series = cls._is_time_series_table(columns)
 
         from_kpi = cls._kpi_scalar_for_field(resolved, trimmed)
-        if not time_series and not dump and from_kpi is not None and from_kpi != "":
+        if not time_series and not dump and not metric_dump and from_kpi is not None and from_kpi != "":
             return [from_kpi]
 
-        if rows and not dump:
+        if rows and not dump and not metric_dump:
             from_rows = [row.get(trimmed) for row in rows if row.get(trimmed) not in (None, "")]
             if from_rows:
                 return from_rows
@@ -914,6 +915,16 @@ class DisplayFormatService:
                 if str(row.get("campo") or "").strip() == trimmed:
                     valor = row.get("valor")
                     if valor is not None and valor != "":
+                        return [valor]
+
+        if metric_dump:
+            for row in rows:
+                if str(row.get("field") or "").strip() == trimmed:
+                    valor = row.get("value")
+                    # Preserve legitimate zero.
+                    if valor is not None and valor != "":
+                        return [valor]
+                    if valor == 0 or valor == 0.0:
                         return [valor]
 
         if rows and trimmed in rows[0]:
@@ -965,6 +976,24 @@ class DisplayFormatService:
             if isinstance(c, dict)
         }
         return len(keys) == 2 and "campo" in keys and "valor" in keys
+
+    @staticmethod
+    def _is_metric_field_value_dump(columns: Any) -> bool:
+        """kpiMetrics flattened as table rows (metric/field/value) — not wide data."""
+        if not isinstance(columns, list) or not columns:
+            return False
+        keys = {
+            str(c.get("key") or "").strip()
+            for c in columns
+            if isinstance(c, dict) and str(c.get("key") or "").strip()
+        }
+        return "field" in keys and "value" in keys and keys <= {
+            "metric",
+            "field",
+            "value",
+            "label",
+            "indicador",
+        }
 
     @staticmethod
     def _is_time_series_table(columns: Any) -> bool:

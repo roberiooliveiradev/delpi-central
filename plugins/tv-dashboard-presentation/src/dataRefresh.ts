@@ -128,34 +128,91 @@ export function buildDataPreviewFingerprint(
       }
       return true;
     })
-    .map((block) => ({
-      id: block.id,
-      dataSourceId:
-        block.type === "chart_view" ||
-        block.type === "table_view" ||
-        block.type === "kpi_view" ||
-        block.type === "canvas_table"
-          ? block.dataSourceId
-          : "dataSourceId" in block
-            ? block.dataSourceId
-            : undefined,
-      textProjection:
+    .map((block) => {
+      const textProj =
         block.type === "heading" || block.type === "text" || block.type === "shape"
-          ? block.textProjection?.field
+          ? block.textProjection
+          : undefined;
+      const contentRunRefs =
+        block.type === "heading" || block.type === "text" || block.type === "shape"
+          ? (block.contentRuns ?? [])
+              .map((run) => {
+                const field = run.dataRef?.field?.trim();
+                if (!field) return null;
+                return `${field}:${run.dataRef?.aggregation ?? "first"}`;
+              })
+              .filter(Boolean)
+          : undefined;
+      return {
+        id: block.id,
+        dataSourceId:
+          block.type === "chart_view" ||
+          block.type === "table_view" ||
+          block.type === "kpi_view" ||
+          block.type === "canvas_table"
+            ? block.dataSourceId
+            : "dataSourceId" in block
+              ? block.dataSourceId
+              : undefined,
+        // FE-BE-003: encoding completo — bake server-side exige re-preview.
+        textProjection: textProj
+          ? {
+              field: textProj.field ?? null,
+              aggregation: textProj.aggregation ?? null,
+              format: textProj.format ?? null,
+              displayFormat: textProj.displayFormat ?? null,
+              decimalPlaces: textProj.decimalPlaces ?? null,
+              prefix: textProj.prefix ?? null,
+              suffix: textProj.suffix ?? null,
+            }
           : undefined,
-      canvasCells:
-        block.type === "canvas_table"
-          ? block.cells.flatMap((row, rowIndex) =>
-              row
-                .map((cell, colIndex) =>
-                  cell.dataRef?.field
-                    ? `${rowIndex}:${colIndex}:${cell.dataSourceId?.trim() || block.dataSourceId?.trim() || ""}:${cell.dataRef.field}`
-                    : null,
-                )
-                .filter(Boolean),
-            )
-          : undefined,
-    }));
+        contentRunRefs: contentRunRefs?.length ? contentRunRefs : undefined,
+        chartProjection:
+          block.type === "chart_view"
+            ? {
+                categoryField: block.chartProjection?.categoryField ?? null,
+                series: (block.chartProjection?.series ?? []).map((s) => ({
+                  field: s.field,
+                  aggregation: s.aggregation ?? null,
+                  label: s.label ?? null,
+                })),
+                goalField: block.chartProjection?.goalField ?? null,
+                maxCategories: block.chartProjection?.maxCategories ?? null,
+              }
+            : undefined,
+        kpiProjection:
+          block.type === "kpi_view"
+            ? {
+                metrics: (block.kpiProjection?.metrics ?? []).map((m) => ({
+                  field: m.field,
+                  aggregation: m.aggregation ?? null,
+                  visible: m.visible !== false,
+                })),
+              }
+            : undefined,
+        tableProjection:
+          block.type === "table_view"
+            ? {
+                columns: (block.tableProjection?.columns ?? []).map((c) => ({
+                  key: c.key ?? null,
+                  visible: c.visible !== false,
+                })),
+              }
+            : undefined,
+        canvasCells:
+          block.type === "canvas_table"
+            ? block.cells.flatMap((row, rowIndex) =>
+                row
+                  .map((cell, colIndex) =>
+                    cell.dataRef?.field
+                      ? `${rowIndex}:${colIndex}:${cell.dataSourceId?.trim() || block.dataSourceId?.trim() || ""}:${cell.dataRef.field}`
+                      : null,
+                  )
+                  .filter(Boolean),
+              )
+            : undefined,
+      };
+    });
   const inputBlocks = (config.blocks ?? [])
     .filter((block) => block.type === "input")
     .map((block) =>
@@ -196,9 +253,21 @@ function parsePreviewFingerprint(fingerprint: string): PreviewFingerprintPayload
   }
 }
 
+function dataSourceIdsFromViewLinks(viewLinks: unknown): string[] {
+  if (!Array.isArray(viewLinks)) return [];
+  const ids = new Set<string>();
+  for (const entry of viewLinks) {
+    if (!entry || typeof entry !== "object") continue;
+    const sid = String((entry as { dataSourceId?: unknown }).dataSourceId ?? "").trim();
+    if (sid) ids.add(sid);
+  }
+  return [...ids];
+}
+
 /**
  * Quais fontes recarregar quando o fingerprint de dados muda.
- * Só vínculo visual (viewLinks) → nenhum refetch (visuais leem resolved da fonte).
+ * FE-BE-003: mudança de viewLinks (encoding/binding visual) exige re-preview das
+ * fontes ligadas — bake displayText/chartProjection e server-owned (nao paint client).
  * Binding/transform de fonte → só ids alterados; filtros → fontes afetadas ou todas.
  */
 export function resolvePreviewRefreshSourceIds(params: {
@@ -231,7 +300,11 @@ export function resolvePreviewRefreshSourceIds(params: {
     !dataFiltersChanged &&
     !playlistDefaultsChanged
   ) {
-    return viewLinksChanged ? [] : allFetchableIds;
+    if (!viewLinksChanged) return allFetchableIds;
+    const linked = dataSourceIdsFromViewLinks(next.viewLinks).filter((id) =>
+      allFetchableIds.includes(id),
+    );
+    return linked.length > 0 ? linked : allFetchableIds;
   }
 
   if (blocksChanged) {

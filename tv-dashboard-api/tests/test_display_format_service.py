@@ -143,6 +143,41 @@ def test_apply_to_resolved_text_projection_and_flag():
     assert out["displayRuns"] == [{"text": "41,7%"}]
 
 
+def test_apply_to_resolved_text_from_metric_field_value_dump():
+    """FE-BE-003: metric/field/value table must still resolve textProjection.field."""
+    resolved = {
+        "kpi": {"value": 12, "label": "Ganhos"},
+        "kpiMetrics": [
+            {"field": "gains", "label": "Ganhos", "value": 12},
+            {"field": "goal_value", "label": "Meta", "value": 10},
+        ],
+        "table": {
+            "columns": [
+                {"key": "metric", "label": "Indicador"},
+                {"key": "field", "label": "Campo"},
+                {"key": "value", "label": "Valor"},
+            ],
+            "rows": [
+                {"metric": "Ganhos", "field": "gains", "value": 12},
+                {"metric": "Meta", "field": "goal_value", "value": 10},
+            ],
+        },
+    }
+    block = {
+        "type": "text",
+        "dataSourceId": "src-1",
+        "textProjection": {
+            "field": "gains",
+            "prefix": "Ganhos ",
+            "suffix": " este mês",
+            "displayFormat": {"category": "number", "decimalPlaces": 0},
+        },
+    }
+    out = DisplayFormatService.apply_to_resolved(resolved, block)
+    assert out["displayText"] == "Ganhos 12 este mês"
+    assert out["serverDisplayApplied"] is True
+
+
 def test_apply_to_resolved_content_runs_win_over_projection():
     resolved = {
         "contextValues": {

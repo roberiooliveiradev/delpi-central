@@ -23,25 +23,30 @@ const resolved: ComunicadoDataResolved = {
 };
 
 describe("textViewProjection", () => {
-  it("resolveTextDisplayValue aplica prefixo, formato e suffixo", () => {
+  it("resolveTextDisplayValue pinta displayText do enrich com affixes já compostos", () => {
+    const withServer: ComunicadoDataResolved = {
+      ...resolved,
+      serverDisplayApplied: true,
+      displayText: "Meta: 42,5% hoje",
+    };
     expect(
-      resolveTextDisplayValue(resolved, {
+      resolveTextDisplayValue(withServer, {
         field: "oee",
         format: "percent",
         prefix: "Meta: ",
         suffix: " hoje",
       }).text,
-    ).toMatch(/Meta: 42[,.]5% hoje/);
+    ).toBe("Meta: 42,5% hoje");
   });
 
   it("patchTextProjectionFromEditedDisplay atualiza prefixo/sufixo sem perder o campo", () => {
     const projection = { field: "oee", format: "number" as const, prefix: "Meta R$ " };
-    const core = resolveTextDisplayValue(resolved, { field: "oee", format: "number" }).text;
-    const next = patchTextProjectionFromEditedDisplay(
-      projection,
-      `Alvo ${core} un`,
-      resolved,
-    );
+    const baked: ComunicadoDataResolved = {
+      ...resolved,
+      serverDisplayApplied: true,
+      displayText: "42,5",
+    };
+    const next = patchTextProjectionFromEditedDisplay(projection, "Alvo 42,5 un", baked);
     expect(next.field).toBe("oee");
     expect(next.prefix).toBe("Alvo ");
     expect(next.suffix).toBe(" un");
@@ -58,17 +63,20 @@ describe("textViewProjection", () => {
     });
   });
 
-  it("resolveTextBlockDisplayRuns usa resolved do bloco quando o 2º arg omite", () => {
+  it("resolveTextBlockDisplayRuns usa displayText do enrich quando o 2º arg omite", () => {
     const runs = resolveTextBlockDisplayRuns({
       content: "",
       textProjection: { field: "oee", format: "number", prefix: "Meta: " },
-      resolved,
+      resolved: {
+        ...resolved,
+        serverDisplayApplied: true,
+        displayText: "Meta: 42,5",
+      },
     });
-    expect(runs[0]?.text).toMatch(/^Meta: /);
-    expect(runs[0]?.text).toContain("42");
+    expect(runs[0]?.text).toBe("Meta: 42,5");
   });
 
-  it("resolveTextBlockDisplayRuns com dataRef dinâmico", () => {
+  it("resolveTextBlockDisplayRuns com displayRuns do enrich", () => {
     const runs = resolveTextBlockDisplayRuns(
       {
         content: "",
@@ -77,10 +85,17 @@ describe("textViewProjection", () => {
           { text: "?", dataRef: { field: "oee", format: "number" } },
         ],
       },
-      resolved,
+      {
+        ...resolved,
+        serverDisplayApplied: true,
+        displayRuns: [
+          { text: "OEE: ", style: { fontWeight: "bold" } },
+          { text: "42,5", dataRef: { field: "oee", format: "number" } },
+        ],
+      },
     );
     expect(runs[0]?.text).toBe("OEE: ");
-    expect(runs[1]?.text).toContain("42");
+    expect(runs[1]?.text).toBe("42,5");
   });
 
   it("buildTextDataLinkPatch sugere campo default", () => {
@@ -100,9 +115,15 @@ describe("textViewProjection", () => {
       staticContent: "Realizado",
     });
     expect(patch.textProjection?.prefix).toBe("Realizado ");
-    const display = resolveTextDisplayValue(resolved, patch.textProjection);
-    expect(display.text.startsWith("Realizado ")).toBe(true);
-    expect(display.text).toMatch(/42/);
+    const display = resolveTextDisplayValue(
+      {
+        ...resolved,
+        serverDisplayApplied: true,
+        displayText: "Realizado 42,5",
+      },
+      patch.textProjection,
+    );
+    expect(display.text).toBe("Realizado 42,5");
   });
 
   it("buildTextDataLinkPatch não duplica espaço quando o rótulo já termina com :", () => {
@@ -194,10 +215,12 @@ describe("textViewProjection", () => {
     ).toMatch(/R\$\s*12,35/);
   });
 
-  it("campo value do KPI não é sombreado por tabela campo/valor (SI escalar)", () => {
+  it("campo value do KPI: paint usa displayText do enrich (não format client)", () => {
     const siResolved: ComunicadoDataResolved = {
       kpi: { value: 1100, label: "value" },
       kpiMetrics: [{ field: "value", value: 1100, label: "value" }],
+      serverDisplayApplied: true,
+      displayText: "1.100",
       table: {
         columns: [
           { key: "campo", label: "Campo" },
@@ -216,13 +239,15 @@ describe("textViewProjection", () => {
         format: "number",
         fallback: "—",
       }).text,
-    ).toMatch(/1[.‎]?100|1\.100|1100/);
+    ).toBe("1.100");
   });
 
-  it("série OEE: média agrega todas as linhas; lista mostra cada valor", () => {
-    const series: ComunicadoDataResolved = {
+  it("série OEE: paint usa displayText materializado (avg/list)", () => {
+    const seriesAvg: ComunicadoDataResolved = {
       kpi: { value: 90, label: "value" },
       kpiMetrics: [{ field: "value", value: 90, label: "value" }],
+      serverDisplayApplied: true,
+      displayText: "80",
       table: {
         columns: [
           { key: "periodo", label: "Período" },
@@ -236,24 +261,43 @@ describe("textViewProjection", () => {
       },
     };
     expect(
-      resolveTextDisplayValue(series, { field: "value", aggregation: "avg", format: "number" }).text,
-    ).toMatch(/80/);
+      resolveTextDisplayValue(seriesAvg, { field: "value", aggregation: "avg", format: "number" })
+        .text,
+    ).toBe("80");
+    const seriesList: ComunicadoDataResolved = {
+      ...seriesAvg,
+      displayText: "70\n80\n90",
+    };
     expect(
-      resolveTextDisplayValue(series, { field: "value", aggregation: "list", format: "number" }).text,
+      resolveTextDisplayValue(seriesList, {
+        field: "value",
+        aggregation: "list",
+        format: "number",
+      }).text,
     ).toBe("70\n80\n90");
     expect(
-      resolveTextDisplayValue(series, {
-        field: "periodo",
-        aggregation: "avg",
-        format: "number",
-        fallback: "—",
-      }).text,
+      resolveTextDisplayValue(
+        { ...seriesAvg, displayText: undefined, serverDisplayApplied: true },
+        {
+          field: "periodo",
+          aggregation: "avg",
+          format: "number",
+          fallback: "—",
+        },
+      ).text,
     ).toBe("—");
   });
 
-  it("resolveTextBlockDisplayRuns formata filter.start_date / filter.end_date do contexto", () => {
+  it("resolveTextBlockDisplayRuns pinta filter dates via displayRuns do enrich", () => {
     const withContext: ComunicadoDataResolved = {
       ...resolved,
+      serverDisplayApplied: true,
+      displayRuns: [
+        { text: "Novos Negócios · semana " },
+        { text: "21/09/2026", dataRef: { field: "filter.start_date", format: "date" } },
+        { text: " – " },
+        { text: "27/09/2026", dataRef: { field: "filter.end_date", format: "date" } },
+      ],
       contextFields: [
         { name: "filter.start_date", type: "date", projectable: true, origin: "effective_filter" },
         { name: "filter.end_date", type: "date", projectable: true, origin: "effective_filter" },
@@ -339,15 +383,29 @@ describe("textViewProjection", () => {
     expect(painted.map((run) => run.text).join("")).toBe("ACUMULADO 01/01/2099");
   });
 
-  it("sem display* o paint legado ainda formata no cliente", () => {
+  it("sem displayText o paint nao formata no cliente (FE-BE-002)", () => {
     expect(
       resolveTextDisplayValue(resolved, { field: "oee", format: "percent" }).text,
-    ).toMatch(/42[,.]5%/);
+    ).toBe("—");
     const runs = resolveTextBlockDisplayRuns({
       content: "",
+      dataSourceId: "src-1",
       contentRuns: [{ text: "?", dataRef: { field: "oee", format: "number" } }],
       resolved,
     });
-    expect(runs[0]?.text).toContain("42");
+    expect(runs[0]?.text).toBe("—");
+  });
+
+  it("presentationStale impede paint de displayText antigo", () => {
+    expect(
+      resolveTextDisplayValue(
+        {
+          ...resolved,
+          presentationStale: true,
+          displayText: "STALE-99",
+        },
+        { field: "oee", fallback: "—" },
+      ).text,
+    ).toBe("—");
   });
 });

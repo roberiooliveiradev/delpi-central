@@ -197,6 +197,106 @@ def test_chart_projection_empty_rows_clears_summary_chart():
     assert next_resolved["serverProjectionApplied"] is True
 
 
+def test_chart_projection_rejects_metric_dump_and_uses_lead_by_level():
+    """FE-BE-003: category=nivel + avg_lead_time must not paint kpiMetrics Meta/Total*."""
+    resolved = {
+        "chart": {
+            "points": [
+                {"label": "Meta cadastrada", "value": 10},
+                {"label": "Meta mês (referência)", "value": 8},
+                {"label": "Total itens", "value": 100},
+                {"label": "Total lmps", "value": 40},
+                {"label": "Média lead time", "value": 3.2},
+            ],
+            "chartType": "bar",
+        },
+        "kpiMetrics": [
+            {"field": "goal_value", "label": "Meta cadastrada", "value": 10},
+            {"field": "reference_goal", "label": "Meta mês (referência)", "value": 8},
+            {"field": "total_items", "label": "Total itens", "value": 100},
+            {"field": "total_lmps", "label": "Total lmps", "value": 40},
+            {"field": "avg_lead_time", "label": "Média lead time", "value": 3.2},
+        ],
+        "table": {
+            "columns": [
+                {"key": "metric", "label": "Indicador"},
+                {"key": "field", "label": "Campo"},
+                {"key": "value", "label": "Valor"},
+            ],
+            "rows": [
+                {"metric": "Meta cadastrada", "field": "goal_value", "value": 10},
+                {"metric": "Total itens", "field": "total_items", "value": 100},
+                {"metric": "Média lead time", "field": "avg_lead_time", "value": 3.2},
+            ],
+        },
+        "data": {
+            "leadByLevel": [
+                {"nivel": "Nível 1", "avg_lead_time": 2.5},
+                {"nivel": "Nível 2", "avg_lead_time": 4.1},
+            ]
+        },
+    }
+    block = {
+        "type": "chart_view",
+        "chartType": "pie",
+        "chartProjection": {
+            "categoryField": "nivel",
+            "series": [{"field": "avg_lead_time", "aggregation": "avg", "label": "Média lead time"}],
+        },
+    }
+    next_resolved = apply_view_projection_to_resolved(resolved, block)
+    labels = [p["label"] for p in next_resolved["chart"]["points"]]
+    assert labels == ["Nível 1", "Nível 2"]
+    assert {p["label"] for p in next_resolved["chart"]["points"]} == {"Nível 1", "Nível 2"}
+    assert "Meta cadastrada" not in labels
+    assert "Total itens" not in labels
+    assert next_resolved["chart"]["series"][0]["field"] == "avg_lead_time"
+    assert next_resolved["serverProjectionApplied"] is True
+
+
+def test_chart_projection_selected_metrics_only_without_category():
+    resolved = {
+        "chart": {
+            "points": [
+                {"label": "Meta cadastrada", "value": 10},
+                {"label": "Total itens", "value": 100},
+                {"label": "Média lead time", "value": 3.2},
+            ],
+            "chartType": "bar",
+        },
+        "kpiMetrics": [
+            {"field": "goal_value", "label": "Meta cadastrada", "value": 10},
+            {"field": "total_items", "label": "Total itens", "value": 100},
+            {"field": "avg_lead_time", "label": "Média lead time", "value": 3.2},
+        ],
+        "table": {
+            "columns": [
+                {"key": "metric", "label": "Indicador"},
+                {"key": "field", "label": "Campo"},
+                {"key": "value", "label": "Valor"},
+            ],
+            "rows": [
+                {"metric": "Meta cadastrada", "field": "goal_value", "value": 10},
+                {"metric": "Total itens", "field": "total_items", "value": 100},
+            ],
+        },
+    }
+    block = {
+        "type": "chart_view",
+        "chartType": "bar",
+        "chartProjection": {
+            "series": [{"field": "avg_lead_time", "label": "Média lead time"}],
+        },
+    }
+    next_resolved = apply_view_projection_to_resolved(resolved, block)
+    assert len(next_resolved["chart"]["points"]) == 1
+    assert next_resolved["chart"]["points"][0]["value"] == 3.2
+    assert next_resolved["chart"]["series"][0]["field"] == "avg_lead_time"
+    labels = [p["label"] for p in next_resolved["chart"]["points"]]
+    assert "Meta cadastrada" not in labels
+    assert "Total itens" not in labels
+
+
 def test_exclude_weekends_baked_into_chart_points():
     resolved = {
         "viewFilterParams": {"excludeWeekends": True, "granularity": "day"},

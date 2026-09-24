@@ -37,8 +37,9 @@ function hasKpiDisplay(resolved?: ComunicadoDataResolved | null): boolean {
 
 /**
  * Escolhe linked enrich vs resolved da fonte para paint no editor.
- * Preferir displayText/displayRuns/bake quando houver sinal pintavel; se o bake
- * esvaziar o grafico mas a fonte ainda tem serie, cair na fonte (resiliencia).
+ * Preferir displayText/displayRuns/bake quando houver sinal pintavel.
+ * FE-BE-003: nunca reintroduzir chart/kpi da fonte quando o bake da view
+ * aplicou projeção (selected-only) — vazio intencional ≠ dump de kpiMetrics.
  */
 export function preferEditorViewResolved(args: {
   blockType: string;
@@ -52,22 +53,30 @@ export function preferEditorViewResolved(args: {
   if (!source) return linked;
 
   if (args.blockType === "chart_view") {
+    // Bake com encoding aplicado: autoridade única (mesmo se points vazio).
+    if (linked.serverProjectionApplied === true) return linked;
     const linkedPts = countFiniteChartPoints(linked);
     const sourcePts = countFiniteChartPoints(source);
     if (linked.chart?.gaugeModel) return linked;
     if (linkedPts > 0) return linked;
+    // Sem projeção server-side: só então cair na fonte (legado sem chartProjection).
     if (sourcePts > 0) return source;
     return linked;
   }
 
   if (args.blockType === "kpi_view") {
     if (hasKpiDisplay(linked)) return linked;
+    if (linked.serverDisplayApplied === true || linked.serverProjectionApplied === true) {
+      return linked;
+    }
     if (hasKpiDisplay(source)) return source;
-    // Bake sem display* ainda pode ter value — mas paint exige display; prefer linked.
     return linked;
   }
 
   if (args.blockType === "table_view") {
+    if (linked.serverProjectionApplied === true || linked.serverDisplayApplied === true) {
+      return linked;
+    }
     const linkedRows = linked.table?.displayRows?.length ?? linked.table?.rows?.length ?? 0;
     const sourceRows = source.table?.displayRows?.length ?? source.table?.rows?.length ?? 0;
     if (linkedRows > 0) return linked;
@@ -77,6 +86,9 @@ export function preferEditorViewResolved(args: {
 
   // text / heading / shape
   if (hasTextDisplay(linked)) return linked;
+  if (linked.serverDisplayApplied === true) {
+    return linked;
+  }
   if (hasTextDisplay(source)) return source;
   return linked;
 }
