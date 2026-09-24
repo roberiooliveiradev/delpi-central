@@ -53,6 +53,7 @@ import { useInputFilterDataRefresh } from "../hooks/useInputFilterDataRefresh";
 import { useComunicadoEditorKeyboard } from "../hooks/useComunicadoEditorKeyboard";
 import { useSyncViewDataLinks } from "../hooks/useSyncViewDataLinks";
 import { resolveCanvasTableMergeCommand } from "../utils/canvasTableMergeCommands";
+import { preferEditorViewResolved } from "../utils/preferEditorViewResolved";
 import { resolveStageHasPartSelection } from "../utils/stageInteractionPolicy";
 import { resolveViewportPixelSize } from "../utils/viewportPixelSize";
 import { MediaLibraryModal } from "./MediaLibraryModal";
@@ -325,7 +326,11 @@ export function ComunicadoEditorProvider({
         const linked =
           sourcePreview?.linkedResolvedByBlockId?.[block.id] ??
           resolvedByBlockId[block.id];
-        const preview = linked ?? sourcePreview;
+        const preview = preferEditorViewResolved({
+          blockType: block.type,
+          linked,
+          source: sourcePreview,
+        });
         if (preview) {
           const labeled =
             applyFieldLabelsToResolved(
@@ -341,7 +346,11 @@ export function ComunicadoEditorProvider({
         const linked =
           sourcePreview?.linkedResolvedByBlockId?.[block.id] ??
           resolvedByBlockId[block.id];
-        const preview = linked ?? sourcePreview;
+        const preview = preferEditorViewResolved({
+          blockType: block.type,
+          linked,
+          source: sourcePreview,
+        });
         if (preview) {
           const labeled =
             applyFieldLabelsToResolved(preview, fieldLabelsBySourceId.get(sourceId)) ??

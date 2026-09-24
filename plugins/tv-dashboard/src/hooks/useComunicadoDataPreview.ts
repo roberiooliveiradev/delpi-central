@@ -183,12 +183,23 @@ export function useComunicadoDataPreview({ playlistId, config, playlistDefaults 
       setResolvedByBlockId((previous) => {
         const next = { ...previous };
         let changed = false;
+        const absorb = (blockId: string, resolved: ComunicadoDataResolved) => {
+          if (JSON.stringify(next[blockId]) === JSON.stringify(resolved)) return;
+          next[blockId] = resolved;
+          changed = true;
+        };
         for (const [blockId, resolved] of pairs) {
           if (!resolved || typeof resolved !== "object") continue;
           const value = resolved as ComunicadoDataResolved;
-          if (JSON.stringify(previous[blockId]) === JSON.stringify(value)) continue;
-          next[blockId] = value;
-          changed = true;
+          absorb(blockId, value);
+          // Flatten linked enrich stamps so views can resolve by their own id.
+          const linked = value.linkedResolvedByBlockId;
+          if (linked && typeof linked === "object") {
+            for (const [viewId, viewResolved] of Object.entries(linked)) {
+              if (!viewResolved || typeof viewResolved !== "object") continue;
+              absorb(viewId, viewResolved as ComunicadoDataResolved);
+            }
+          }
         }
         if (!changed) return previous;
         writeDataPreviewCache(playlistIdRef.current, fingerprintRef.current, next);

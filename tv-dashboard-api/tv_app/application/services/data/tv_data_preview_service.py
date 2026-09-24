@@ -67,16 +67,23 @@ class TvDataPreviewService:
         if not force_refresh and user is not None:
             cached = get_cached_preview(cache_key)
             if cached is not None:
-                resolved = cached.get("resolved")
-                if isinstance(resolved, dict) and isinstance(resolved.get("query"), dict):
-                    resolved["query"]["previewCache"] = "hit"
-                SafeTelemetry(
-                    "m.preview.cache",
-                    0,
-                    "hit",
-                    artifact_hash=cache_key,
-                ).emit()
-                return cached
+                cached_resolved = (
+                    cached.get("resolved") if isinstance(cached, dict) else None
+                )
+                # Contract FE-BE-002: editor needs linkedResolvedByBlockId. Old cache = miss.
+                if isinstance(cached_resolved, dict) and (
+                    "linkedResolvedByBlockId" in cached_resolved
+                    or not self._native_config_has_linked_views(native_config, target_id=str(block.get("id") or ""))
+                ):
+                    if isinstance(cached_resolved.get("query"), dict):
+                        cached_resolved["query"]["previewCache"] = "hit"
+                    SafeTelemetry(
+                        "m.preview.cache",
+                        0,
+                        "hit",
+                        artifact_hash=cache_key,
+                    ).emit()
+                    return cached
         # Inclui outras fontes do slide para merge (siblingTables) no enrichment.
         target_id = str(block.get("id") or "")
         to_enrich = self._blocks_for_preview(block, native_config)
@@ -146,8 +153,7 @@ class TvDataPreviewService:
                 by_source = item.get("resolvedBySourceId")
                 if isinstance(by_source, dict) and target in by_source:
                     linked[item_id] = resolved
-        if not linked:
-            return selected
+        # Always stamp the map (possibly empty) so cache contract is detectable.
         next_selected = dict(selected)
         next_resolved = (
             dict(selected["resolved"])
@@ -157,6 +163,47 @@ class TvDataPreviewService:
         next_resolved["linkedResolvedByBlockId"] = linked
         next_selected["resolved"] = next_resolved
         return next_selected
+
+    @staticmethod
+    def _native_config_has_linked_views(
+        native_config: dict[str, Any] | None,
+        *,
+        target_id: str,
+    ) -> bool:
+        """True when the slide has views/text/canvas that bind to this source."""
+        from tv_app.application.services.tv_data_route_catalog_service import (
+            CANVAS_TABLE_DATA_BOUND_BLOCK_TYPES,
+            DATA_VIEW_BLOCK_TYPES,
+            TEXT_DATA_BOUND_BLOCK_TYPES,
+        )
+
+        target = str(target_id or "").strip()
+        if not target or not isinstance(native_config, dict):
+            return False
+        cfg_blocks = native_config.get("blocks")
+        if not isinstance(cfg_blocks, list):
+            return False
+        view_types = DATA_VIEW_BLOCK_TYPES | TEXT_DATA_BOUND_BLOCK_TYPES | CANVAS_TABLE_DATA_BOUND_BLOCK_TYPES
+        for item in cfg_blocks:
+            if not isinstance(item, dict):
+                continue
+            if str(item.get("type") or "") not in view_types:
+                continue
+            if str(item.get("dataSourceId") or "").strip() == target:
+                return True
+            if str(item.get("type") or "") == "canvas_table":
+                cells = item.get("cells")
+                if isinstance(cells, list):
+                    for row in cells:
+                        if not isinstance(row, list):
+                            continue
+                        for cell in row:
+                            if (
+                                isinstance(cell, dict)
+                                and str(cell.get("dataSourceId") or "").strip() == target
+                            ):
+                                return True
+        return False
 
     @staticmethod
     def _blocks_for_preview(block: dict[str, Any], native_config: dict[str, Any]) -> list[dict[str, Any]]:

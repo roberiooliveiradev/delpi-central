@@ -168,6 +168,8 @@ def preview_cache_key(
                 "block": block.get("revision") or block.get("updatedAt"),
             },
             "previewOptions": preview_options or {},
+            # Bust caches that predate linkedResolvedByBlockId (editor paint contract).
+            "editorLinkedResolvedContract": "v1",
         }
     )
     return key, principal
