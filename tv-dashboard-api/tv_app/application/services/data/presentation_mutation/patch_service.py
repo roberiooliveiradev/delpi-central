@@ -1201,6 +1201,40 @@ class PresentationPatchService:
                     field=", ".join(format_errors[:4]),
                 )
             )
+
+        from tv_app.application.services.data.projection_fields_contract import (
+            validate_block_projection_fields,
+        )
+
+        projection_route: dict[str, Any] | None = None
+        source_id = str(cleaned.get("dataSourceId") or "").strip()
+        if source_id:
+            source_block = _find_block(_blocks_of(cfg), source_id)
+            binding = (
+                source_block.get("dataBinding")
+                if isinstance(source_block, dict) and isinstance(source_block.get("dataBinding"), dict)
+                else None
+            )
+            operation_id = str((binding or {}).get("operationId") or "").strip()
+            if operation_id and self._catalog is not None:
+                projection_route = self._catalog.get_route(operation_id)
+        # Fonte embutida (data_* com binding próprio).
+        if projection_route is None and isinstance(cleaned.get("dataBinding"), dict):
+            operation_id = str(cleaned["dataBinding"].get("operationId") or "").strip()
+            if operation_id and self._catalog is not None:
+                projection_route = self._catalog.get_route(operation_id)
+
+        field_error = validate_block_projection_fields(cleaned, route=projection_route)
+        if field_error:
+            raise PresentationPatchError(
+                str(field_error.get("message") or "Campo de projeção inválido"),
+                code=str(field_error.get("code") or "INVALID_PROJECTION_FIELD"),
+                details={
+                    "invalidFields": field_error.get("invalidFields") or [],
+                    "allowedFields": field_error.get("allowedFields") or [],
+                },
+            )
+
         block_id = str(cleaned.get("id") or "").strip() or _new_block_id()
         cleaned["id"] = block_id
         projection_informed = has_explicit_table_columns(cleaned)

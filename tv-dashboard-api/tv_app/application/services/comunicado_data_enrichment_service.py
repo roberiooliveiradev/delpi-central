@@ -1967,9 +1967,20 @@ class ComunicadoDataEnrichmentService:
             **catalog_field_labels,
             **(block_field_labels if isinstance(block_field_labels, dict) else {}),
         }
-        result["resolved"] = apply_field_labels_to_resolved(
+        from tv_app.application.services.data.projection_fields_contract import (
+            attach_projection_metadata,
+            discover_names_from_resolved,
+        )
+
+        resolved_with_labels = apply_field_labels_to_resolved(
             resolved,
             merged_field_labels or None,
+        )
+        result["resolved"] = attach_projection_metadata(
+            resolved_with_labels,
+            route=route_info if isinstance(route_info, dict) else route,
+            effective_params=merged_params if isinstance(merged_params, dict) else None,
+            discovered_names=discover_names_from_resolved(resolved_with_labels),
         )
         return result
 

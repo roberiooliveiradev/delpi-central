@@ -45,8 +45,13 @@ export function TextDataBindingInspector({
   const compactNative = isRibbon ? "delpi-ui-native-control--compact" : undefined;
 
   const catalogFields = useMemo(
-    () => catalogFieldsFromRouteLabels(route?.valueFields, route?.valueFieldLabels),
-    [route?.valueFieldLabels, route?.valueFields],
+    () =>
+      catalogFieldsFromRouteLabels(
+        route?.valueFields,
+        route?.valueFieldLabels,
+        route?.projectableFields,
+      ),
+    [route?.projectableFields, route?.valueFieldLabels, route?.valueFields],
   );
 
   const visualBox = selected && isComunicadoVisualBoxBlock(selected) ? selected : null;

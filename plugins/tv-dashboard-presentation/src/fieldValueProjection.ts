@@ -51,6 +51,12 @@ export type ProjectionResolvedLike = {
     columns?: Array<{ key?: string; label?: string }> | null;
     rows?: Array<Record<string, unknown>> | null;
   } | null;
+  /** Campos declarados do catálogo / discovery (preview metadata). */
+  fields?: Array<{ name?: string; label?: string; projectable?: boolean }> | null;
+  projectableFields?: Array<{ name?: string; label?: string; projectable?: boolean }> | null;
+  contextFields?: Array<{ name?: string; label?: string; projectable?: boolean }> | null;
+  /** Valores do filtro efetivo (filter.start_date, …). */
+  contextValues?: Record<string, unknown> | null;
 };
 
 export function columnValuesFromRows(
@@ -154,6 +160,7 @@ export function isTimeSeriesTable(
  * KPI departamental vence a coluna score das linhas — senão «Média»/«Lista»
  * vira média das notas dos indicadores (falso IDD).
  * Dump campo/valor de SI — KPI/lookup por nome do campo manda.
+ * Campos `filter.*` vêm do contexto efetivo do slide (não do payload da rota).
  */
 export function extractProjectionFieldValues(
   resolved: ProjectionResolvedLike | undefined,
@@ -161,6 +168,13 @@ export function extractProjectionFieldValues(
 ): unknown[] {
   if (!resolved || !field.trim()) return [];
   const trimmed = field.trim();
+
+  if (trimmed.startsWith("filter.")) {
+    const fromContext = resolved.contextValues?.[trimmed];
+    if (fromContext != null && fromContext !== "") return [fromContext];
+    return [];
+  }
+
   const rows = resolved.table?.rows ?? [];
   const columns = resolved.table?.columns;
   const dump = isCampoValorDumpTable(columns);

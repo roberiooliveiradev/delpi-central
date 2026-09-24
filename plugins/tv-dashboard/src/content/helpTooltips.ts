@@ -412,7 +412,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     canvasTableDataBinding:
       "Cada célula pode ter fonte e campo próprios (ex.: Realizado numa fonte, Meta em outra). Com a célula selecionada, «Fonte desta célula» não altera as demais. Sem override, herda a fonte padrão da Grade.",
     textDataBinding:
-      "Projeta um campo da fonte no bloco. Prefixo/sufixo e formato aplicam-se ao valor dinâmico; alterar filtros atualiza o preview.",
+      "Projeta um campo da fonte ou do filtro efetivo do slide (ex.: filter.start_date / filter.end_date) no bloco. Prefixo/sufixo e formato (incl. data) aplicam-se ao valor dinâmico; alterar filtros atualiza o preview. Campo inválido é rejeitado na gravação — não é convertido silenciosamente.",
     textDataColorRules:
       "Regras por limiar aplicam cor ao valor dinâmico (mesma semântica dos cards KPI).",
     insertFieldAtCursor:

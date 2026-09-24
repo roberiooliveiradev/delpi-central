@@ -558,6 +558,103 @@ def test_delete_block_and_hints(monkeypatch):
     assert "replaceNativeConfig" in result["sideEffectHints"]
 
 
+def test_upsert_block_rejects_invalid_projection_field(monkeypatch):
+    svc = PresentationPatchService(
+        catalog=_FakeCatalog(
+            {
+                "op.demo": {
+                    "label": "Demo",
+                    "operationId": "op.demo",
+                    "valueFields": ["forecast_value", "value"],
+                }
+            }
+        ),
+        repo=_FakeRepo(),
+        resolution=_FakeResolution(),
+    )
+    if monkeypatch is not None:
+
+        def _sanitize(cfg, catalog=None):
+            cleaned = dict(cfg or {})
+            blocks = cleaned.get("blocks")
+            if isinstance(blocks, list):
+                next_blocks = []
+                for block in blocks:
+                    if not isinstance(block, dict):
+                        continue
+                    item = dict(block)
+                    item.pop("resolved", None)
+                    next_blocks.append(item)
+                cleaned["blocks"] = next_blocks
+            return cleaned
+
+        monkeypatch.setattr(
+            "tv_app.application.services.data.presentation_mutation.patch_service.sanitize_and_hydrate_comunicado_config",
+            _sanitize,
+        )
+        monkeypatch.setattr(
+            "tv_app.application.services.data.presentation_mutation.patch_service.validate_comunicado_native_config",
+            lambda cfg, user=None, catalog=None: None,
+        )
+
+    with pytest.raises(PresentationPatchError) as exc_info:
+        svc.preview(
+            {
+                "target": {"playlistId": PLAYLIST_ID, "slideId": SLIDE_ID},
+                "ops": [
+                    {
+                        "op": "upsert_block",
+                        "block": {
+                            "id": "txt-1",
+                            "type": "text",
+                            "dataSourceId": "src-a",
+                            "textProjection": {"field": "nao_existe", "format": "raw"},
+                        },
+                    }
+                ],
+            },
+            user={},
+        )
+    assert exc_info.value.code == "INVALID_PROJECTION_FIELD"
+    assert "nao_existe" in (exc_info.value.details or {}).get("invalidFields", [])
+
+
+def test_upsert_block_keeps_filter_context_projection_field(monkeypatch):
+    svc = _service(monkeypatch=monkeypatch)
+    # Amplia catálogo da fonte com valueFields para exercitar allowlist + context.
+    svc._catalog = _FakeCatalog(
+        {
+            "op.demo": {
+                "label": "Demo",
+                "operationId": "op.demo",
+                "valueFields": ["value"],
+            }
+        }
+    )
+    result = svc.preview(
+        {
+            "target": {"playlistId": PLAYLIST_ID, "slideId": SLIDE_ID},
+            "ops": [
+                {
+                    "op": "upsert_block",
+                    "block": {
+                        "id": "txt-week",
+                        "type": "text",
+                        "dataSourceId": "src-a",
+                        "contentRuns": [
+                            {"text": "semana "},
+                            {"dataRef": {"field": "filter.start_date", "format": "date"}},
+                        ],
+                    },
+                }
+            ],
+        },
+        user={},
+    )
+    block = next(b for b in result["nativeConfig"]["blocks"] if b["id"] == "txt-week")
+    assert block["contentRuns"][1]["dataRef"]["field"] == "filter.start_date"
+
+
 def test_upsert_block_keeps_asset_id(monkeypatch):
     svc = _service(monkeypatch=monkeypatch)
     result = svc.preview(

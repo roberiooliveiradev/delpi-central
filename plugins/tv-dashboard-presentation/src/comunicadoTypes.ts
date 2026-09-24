@@ -691,6 +691,41 @@ export type ComunicadoDataResolved = {
     rows?: Array<Record<string, unknown>>;
     columns?: ComunicadoDataTableColumn[];
   };
+  /**
+   * Schema de campos projetáveis (declarados + descobertos).
+   * Preferir sobre inferência só pela 1ª linha — dataset vazio não apaga o contrato.
+   */
+  fields?: Array<{
+    name: string;
+    type?: string;
+    nullable?: boolean;
+    projectable?: boolean;
+    semanticType?: string;
+    origin?: string;
+    label?: string;
+  }>;
+  /** Alias de `fields` (contrato aditivo). */
+  projectableFields?: Array<{
+    name: string;
+    type?: string;
+    nullable?: boolean;
+    projectable?: boolean;
+    semanticType?: string;
+    origin?: string;
+    label?: string;
+  }>;
+  /** Campos virtuais do filtro efetivo (`filter.start_date`, …). */
+  contextFields?: Array<{
+    name: string;
+    type?: string;
+    nullable?: boolean;
+    projectable?: boolean;
+    semanticType?: string;
+    origin?: string;
+    label?: string;
+  }>;
+  /** Valores ISO / labels do filtro efetivo pós-merge. */
+  contextValues?: Record<string, unknown>;
 };
 
 export type ComunicadoBlock =

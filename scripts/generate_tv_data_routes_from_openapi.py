@@ -14,9 +14,13 @@ Campos do OpenAPI (sempre regenerados / mergeados):
   labels de params (x-delpi.params.*.locale.pt-BR)
 
 Overlays TV (preservados / arquivo overlays):
-  valueFields, seriesField, tableFields, tvConstraints, fixedQueryParams,
+  valueFields, projectableFields, seriesField, tableFields, tvConstraints, fixedQueryParams,
   defaultParams, label, description, whenToUse, category, allowedDisplayModes,
   paramStrategy (se explícito), openEndedDateRange, ajustes pontuais de paramSchema
+
+projectableFields: schema estruturado de saída (name/type/semanticType/projectable).
+Quando o OpenAPI/baseline expõe responseProperties, o gerador as materializa;
+overlays enriquecem semanticType/labels. valueFields permanece alias de transição.
 """
 
 from __future__ import annotations
@@ -39,6 +43,7 @@ OVERLAY_KEYS = frozenset(
         "valueFields",
         "valueFieldLabels",
         "valueFieldTypes",
+        "projectableFields",
         "seriesField",
         "defaultParams",
         "tvConstraints",
@@ -471,6 +476,100 @@ def infer_value_fields(operation_id: str) -> list[str]:
     return [field, "value"]
 
 
+def _openapi_type_to_projectable(schema: dict[str, Any] | None) -> tuple[str, str | None]:
+    if not isinstance(schema, dict):
+        return "string", None
+    raw_type = str(schema.get("type") or "").strip().lower()
+    fmt = str(schema.get("format") or "").strip().lower()
+    if fmt in {"date", "date-time"} or raw_type == "date":
+        return "date", "date"
+    if raw_type in {"number", "integer"}:
+        return "number", "number"
+    if raw_type == "boolean":
+        return "boolean", None
+    if raw_type in {"array", "object"}:
+        return raw_type, None
+    return "string", "text"
+
+
+def normalize_projectable_fields_on_route(route: dict[str, Any]) -> dict[str, Any]:
+    """Materializa projectableFields a partir de responseProperties + valueFields overlay."""
+    merged = dict(route)
+    existing = merged.get("projectableFields") if isinstance(merged.get("projectableFields"), list) else []
+    by_name: dict[str, dict[str, Any]] = {}
+    for item in existing:
+        if isinstance(item, dict) and str(item.get("name") or "").strip():
+            by_name[str(item["name"]).strip()] = dict(item)
+
+    response_props = merged.pop("_responseProperties", None)
+    if isinstance(response_props, dict):
+        for name, schema in response_props.items():
+            key = str(name or "").strip()
+            if not key or key in by_name:
+                continue
+            type_, semantic = _openapi_type_to_projectable(schema if isinstance(schema, dict) else None)
+            entry: dict[str, Any] = {
+                "name": key,
+                "type": type_,
+                "nullable": True,
+                "projectable": True,
+                "origin": "result",
+            }
+            if semantic:
+                entry["semanticType"] = semantic
+            by_name[key] = entry
+
+    types = merged.get("valueFieldTypes") if isinstance(merged.get("valueFieldTypes"), dict) else {}
+    labels = merged.get("valueFieldLabels") if isinstance(merged.get("valueFieldLabels"), dict) else {}
+    for raw in merged.get("valueFields") or []:
+        key = str(raw or "").strip()
+        if not key:
+            continue
+        type_hint = str(types.get(key) or "").strip().lower()
+        semantic = type_hint or None
+        type_name = "number" if semantic in {"currency", "percent", "number"} else (
+            "date" if semantic == "date" else "string"
+        )
+        if key in by_name:
+            current = by_name[key]
+            if semantic and not current.get("semanticType"):
+                current["semanticType"] = semantic
+                current["type"] = type_name
+            label = labels.get(key)
+            if label and not current.get("label"):
+                current["label"] = str(label).strip()
+            continue
+        entry = {
+            "name": key,
+            "type": type_name,
+            "nullable": True,
+            "projectable": True,
+            "origin": "result",
+        }
+        if semantic:
+            entry["semanticType"] = semantic
+        label = labels.get(key)
+        if label:
+            entry["label"] = str(label).strip()
+        by_name[key] = entry
+
+    fields = list(by_name.values())
+    if fields:
+        merged["projectableFields"] = fields
+        # Alias de transição: valueFields = nomes projetáveis (preserva extras já listados).
+        names = [item["name"] for item in fields]
+        existing_vf = [str(x).strip() for x in (merged.get("valueFields") or []) if str(x).strip()]
+        ordered: list[str] = []
+        seen: set[str] = set()
+        for name in names + existing_vf:
+            if name in seen:
+                continue
+            seen.add(name)
+            ordered.append(name)
+        merged["valueFields"] = ordered
+    return merged
+
+
 def merge_param_schema(
     openapi_schema: dict[str, Any],
     *overlays: dict[str, Any] | None,
@@ -538,6 +637,9 @@ def build_base_route(operation: dict[str, Any]) -> dict[str, Any]:
     value_fields = infer_value_fields(operation_id)
     if value_fields:
         route["valueFields"] = value_fields
+    response_props = operation.get("responseProperties")
+    if isinstance(response_props, dict) and response_props:
+        route["_responseProperties"] = response_props
     return route
 
 
@@ -840,12 +942,73 @@ def _extract_x_delpi(operation: dict[str, Any]) -> dict[str, Any] | None:
     return out or None
 
 
+def _extract_response_properties(
+    operation: dict[str, Any],
+    *,
+    components: dict[str, Any] | None = None,
+) -> dict[str, Any] | None:
+    """Extrai properties do schema 200 application/json quando existirem."""
+    responses = operation.get("responses")
+    if not isinstance(responses, dict):
+        return None
+    response = responses.get("200") or responses.get("201")
+    if not isinstance(response, dict):
+        return None
+    content = response.get("content")
+    if not isinstance(content, dict):
+        return None
+    media = content.get("application/json") or next(iter(content.values()), None)
+    if not isinstance(media, dict):
+        return None
+    schema = media.get("schema")
+    resolved = _resolve_schema_ref(schema, components=components) if isinstance(schema, dict) else None
+    if not isinstance(resolved, dict):
+        return None
+    # Envelope api-delpi: { data: { properties } } ou properties diretas.
+    data_schema = resolved.get("properties", {}).get("data") if isinstance(resolved.get("properties"), dict) else None
+    if isinstance(data_schema, dict):
+        data_resolved = _resolve_schema_ref(data_schema, components=components)
+        if isinstance(data_resolved, dict) and isinstance(data_resolved.get("properties"), dict):
+            return {
+                str(k): (v if isinstance(v, dict) else {"type": "string"})
+                for k, v in data_resolved["properties"].items()
+                if str(k).strip()
+            }
+    props = resolved.get("properties")
+    if isinstance(props, dict) and props:
+        return {
+            str(k): (v if isinstance(v, dict) else {"type": "string"})
+            for k, v in props.items()
+            if str(k).strip()
+        }
+    return None
+
+
+def _resolve_schema_ref(
+    schema: dict[str, Any] | None,
+    *,
+    components: dict[str, Any] | None = None,
+    _depth: int = 0,
+) -> dict[str, Any] | None:
+    if not isinstance(schema, dict) or _depth > 6:
+        return schema if isinstance(schema, dict) else None
+    ref = schema.get("$ref")
+    if isinstance(ref, str) and ref.startswith("#/components/schemas/") and isinstance(components, dict):
+        name = ref.rsplit("/", 1)[-1]
+        schemas = components.get("schemas") if isinstance(components.get("schemas"), dict) else {}
+        target = schemas.get(name)
+        if isinstance(target, dict):
+            return _resolve_schema_ref(target, components=components, _depth=_depth + 1)
+    return schema
+
+
 def build_baseline_payload_from_openapi(spec: dict[str, Any]) -> dict[str, Any]:
     """Converte OpenAPI completo → baseline v3 (sem depender de app.domain api-delpi).
 
     O OpenAPI live da api-delpi já traz `x-delpi` (locale/params) via injector.
     """
     operations: list[dict[str, Any]] = []
+    components = spec.get("components") if isinstance(spec.get("components"), dict) else {}
     for path, methods in (spec.get("paths") or {}).items():
         if not isinstance(methods, dict):
             continue
@@ -873,6 +1036,9 @@ def build_baseline_payload_from_openapi(spec: dict[str, Any]) -> dict[str, Any]:
             description = str(operation.get("description") or "").strip()
             if description:
                 row["description"] = description
+            response_props = _extract_response_properties(operation, components=components)
+            if response_props:
+                row["responseProperties"] = response_props
             operations.append(row)
     operations.sort(key=lambda row: (str(row.get("path") or ""), str(row.get("method") or "")))
     info = spec.get("info") or {}
@@ -1013,6 +1179,7 @@ def seed_overlays_from_catalog(
         # Só persiste overlays com conteúdo TV-relevante (não só label/description genéricos).
         tv_keys = {
             "valueFields",
+            "projectableFields",
             "seriesField",
             "tableFields",
             "tvConstraints",
@@ -1061,7 +1228,9 @@ def generate_routes(
             resolve_overlay(operation_id, overlays=overlays, prefixes=prefixes),
         )
         normalized = normalize_route_param_schema(with_overlay)
-        generated.append(strip_fixed_params_from_schema(normalized))
+        generated.append(
+            normalize_projectable_fields_on_route(strip_fixed_params_from_schema(normalized))
+        )
     return generated
 
 

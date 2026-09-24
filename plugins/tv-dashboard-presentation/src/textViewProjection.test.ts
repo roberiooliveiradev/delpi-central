@@ -11,6 +11,7 @@ import {
   suggestDefaultTextProjection,
   textBlockHasDataBinding,
 } from "./textViewProjection";
+import { discoverResolvedFieldOptions } from "./viewProjection";
 
 const resolved: ComunicadoDataResolved = {
   kpi: { value: 42.5, label: "OEE" },
@@ -220,5 +221,46 @@ describe("textViewProjection", () => {
         fallback: "—",
       }).text,
     ).toBe("—");
+  });
+
+  it("resolveTextBlockDisplayRuns formata filter.start_date / filter.end_date do contexto", () => {
+    const withContext: ComunicadoDataResolved = {
+      ...resolved,
+      contextFields: [
+        { name: "filter.start_date", type: "date", projectable: true, origin: "effective_filter" },
+        { name: "filter.end_date", type: "date", projectable: true, origin: "effective_filter" },
+      ],
+      contextValues: {
+        "filter.start_date": "2026-09-21",
+        "filter.end_date": "2026-09-27",
+        "filter.date_range_label": "21/09/2026 – 27/09/2026",
+      },
+    };
+    const runs = resolveTextBlockDisplayRuns({
+      content: "",
+      contentRuns: [
+        { text: "Novos Negócios · semana " },
+        { dataRef: { field: "filter.start_date", format: "date" } },
+        { text: " – " },
+        { dataRef: { field: "filter.end_date", format: "date" } },
+      ],
+      resolved: withContext,
+    });
+    expect(runs.map((run) => run.text).join("")).toBe(
+      "Novos Negócios · semana 21/09/2026 – 27/09/2026",
+    );
+  });
+
+  it("discoverResolvedFieldOptions inclui fields e contextFields declarados sem amostra", () => {
+    const options = discoverResolvedFieldOptions({
+      fields: [{ name: "forecast_value", projectable: true, label: "Previsto" }],
+      contextFields: [
+        { name: "filter.start_date", projectable: true, label: "Início do filtro" },
+      ],
+      contextValues: { "filter.start_date": "2026-09-21" },
+    });
+    expect(options.map((item) => item.field)).toEqual(
+      expect.arrayContaining(["forecast_value", "filter.start_date"]),
+    );
   });
 });

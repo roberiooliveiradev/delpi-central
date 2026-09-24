@@ -772,6 +772,16 @@ export type TvDataRouteCatalogItem = {
   suggestedDisplayModes?: string[];
   valueFields?: string[];
   valueFieldLabels?: Record<string, string>;
+  /** Schema estruturado de saída (name/type/semanticType) — preferir sobre valueFields. */
+  projectableFields?: Array<{
+    name: string;
+    type?: string;
+    nullable?: boolean;
+    projectable?: boolean;
+    semanticType?: string;
+    origin?: string;
+    label?: string;
+  }>;
   /** Tipos curados (overlay) — sugerem eixo X vs Y. */
   valueFieldTypes?: Record<string, TvDataRouteFieldType>;
   defaultParams?: Record<string, unknown>;

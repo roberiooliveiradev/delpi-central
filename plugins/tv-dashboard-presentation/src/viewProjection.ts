@@ -949,7 +949,7 @@ export function applyViewProjection(
   return next;
 }
 
-/** Descobre campos disponíveis no resolved (runtime + catálogo). */
+/** Descobre campos disponíveis no resolved (contrato declarado + runtime + catálogo). */
 export function discoverResolvedFieldOptions(
   resolved: ComunicadoDataResolved | undefined,
   catalogFields?: Array<{ field: string; label: string }>,
@@ -967,7 +967,25 @@ export function discoverResolvedFieldOptions(
 
   const isCuratedLabel = (field: string, label: string) => !isWeakFieldLabel(field, label);
 
-  // Runtime primeiro (kpiMetrics / colunas já rotulados pela API).
+  const putDeclared = (
+    items:
+      | Array<{ name?: string; label?: string; projectable?: boolean }>
+      | null
+      | undefined,
+  ) => {
+    for (const item of items ?? []) {
+      const name = String(item.name || "").trim();
+      if (!name) continue;
+      if (item.projectable === false) continue;
+      put(name, item.label || name, true);
+    }
+  };
+
+  // Contrato declarado primeiro (sobrevive a dataset vazio / nulos).
+  putDeclared(resolved?.fields ?? resolved?.projectableFields);
+  putDeclared(resolved?.contextFields);
+
+  // Runtime (kpiMetrics / colunas já rotulados pela API).
   if (resolved?.kpi != null && (resolved.kpi.value != null || resolved.kpi.label)) {
     if (![...out.keys()].some((key) => key.toLowerCase() === "value")) {
       const label =

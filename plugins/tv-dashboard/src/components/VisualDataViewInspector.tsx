@@ -49,7 +49,11 @@ function viewValueFieldOptions(
   route: TvDataRouteCatalogItem | null | undefined,
   source: ComunicadoBlock | null,
 ): ValueFieldOption[] {
-  const catalog = catalogFieldsFromRouteLabels(route?.valueFields, route?.valueFieldLabels);
+  const catalog = catalogFieldsFromRouteLabels(
+    route?.valueFields,
+    route?.valueFieldLabels,
+    route?.projectableFields,
+  );
   const resolved =
     source && "resolved" in source && source.resolved ? source.resolved : undefined;
   const sourceFieldLabels =

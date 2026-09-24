@@ -326,6 +326,7 @@ class DelpiOperationalGateway:
                 "valueFields": route.get("valueFields") or [],
                 "valueFieldLabels": route.get("valueFieldLabels") or {},
                 "valueFieldTypes": route.get("valueFieldTypes") or {},
+                "projectableFields": route.get("projectableFields") or [],
                 "seriesField": route.get("seriesField"),
                 "tableFields": route.get("tableFields"),
                 "tvConstraints": route.get("tvConstraints") or {},

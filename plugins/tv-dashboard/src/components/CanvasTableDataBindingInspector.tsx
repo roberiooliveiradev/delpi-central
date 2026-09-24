@@ -94,8 +94,13 @@ export function CanvasTableDataBindingInspector({
       : table?.resolved);
 
   const catalogFields = useMemo(
-    () => catalogFieldsFromRouteLabels(route?.valueFields, route?.valueFieldLabels),
-    [route?.valueFieldLabels, route?.valueFields],
+    () =>
+      catalogFieldsFromRouteLabels(
+        route?.valueFields,
+        route?.valueFieldLabels,
+        route?.projectableFields,
+      ),
+    [route?.projectableFields, route?.valueFieldLabels, route?.valueFields],
   );
 
   const fieldOptions = useMemo(

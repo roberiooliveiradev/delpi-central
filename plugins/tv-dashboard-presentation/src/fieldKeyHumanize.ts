@@ -226,15 +226,29 @@ export function humanizeFieldKey(field: string): string {
 }
 
 /**
- * Catálogo de campos a partir de valueFields + valueFieldLabels (todas as chaves rotuladas).
+ * Catálogo de campos a partir de projectableFields / valueFields + valueFieldLabels.
  * Garante que labels de colunas descobertas (ex.: monthly_breakdown) cheguem ao picker.
  */
 export function catalogFieldsFromRouteLabels(
   valueFields?: readonly string[] | null,
   valueFieldLabels?: Record<string, string> | null,
+  projectableFields?: ReadonlyArray<{
+    name?: string;
+    label?: string;
+    projectable?: boolean;
+  }> | null,
 ): Array<{ field: string; label: string }> {
   const labels = valueFieldLabels ?? {};
   const fields = new Set<string>();
+  const projectableLabels = new Map<string, string>();
+
+  for (const item of projectableFields ?? []) {
+    const key = String(item.name || "").trim();
+    if (!key || item.projectable === false) continue;
+    fields.add(key);
+    const curated = String(item.label || "").trim();
+    if (curated) projectableLabels.set(key, curated);
+  }
   for (const field of valueFields ?? []) {
     const key = String(field).trim();
     if (key) fields.add(key);
@@ -244,7 +258,8 @@ export function catalogFieldsFromRouteLabels(
     if (key) fields.add(key);
   }
   return [...fields].map((field) => {
-    const curated = labels[field]?.trim();
+    const curated =
+      labels[field]?.trim() || projectableLabels.get(field)?.trim() || "";
     return {
       field,
       label:

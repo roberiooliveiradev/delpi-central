@@ -40,6 +40,7 @@ _RUNTIME_OVERLAY_KEYS = frozenset(
         "valueFields",
         "valueFieldLabels",
         "valueFieldTypes",
+        "projectableFields",
         "seriesField",
         "tableFields",
         "tableFieldsByParam",
@@ -184,7 +185,11 @@ def _merge_runtime_overlay(route: dict[str, Any]) -> dict[str, Any]:
     merged = _apply_si_goal_picker_fields(merged, overlay=overlay)
     # Flag só de overlay — não precisa ir ao cliente.
     merged.pop("exposesSiGoal", None)
-    return merged
+    from tv_app.application.services.data.projection_fields_contract import (
+        normalize_route_projectable_fields,
+    )
+
+    return normalize_route_projectable_fields(merged)
 
 
 class TvDataRouteCatalogService:
