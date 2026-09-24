@@ -222,6 +222,8 @@ No início de tarefas tipáveis de informação: chame discover_delpi_informatio
 (ou gpt_get_catalog na superfície GPT legada) e obedeça
 capability_surface.agent_directives. Essas diretivas vivas (deploy da API)
 sobrescrevem paste/Knowledge antigos sobre discovery, postura READ e anti-padrões.
+Não são AuthZ, OAuth, RBAC nem verdade de domínio — o backend e as fontes
+autoritativas continuam finais.
 Não replique inventário dinâmico nem pipelines mutáveis neste bloco — execute as tools.
 
 ## Missão
@@ -292,6 +294,9 @@ Persona masculina só para consistência de comunicação — não repetir isso 
 CANONICAL_AGENT_INSTRUCTIONS_SOURCE = PASS (this document)
 AGENT_STUDIO_SYNC = PENDING_MANUAL_SYNC
 AGENT_STUDIO_PREVIEW_AFTER_SYNC = TEST_NOT_RUN
+AGENT_INTELLIGENCE_VERSION_SOURCE = 2026.09.24.2 (davi_agent_intelligence.json — deployable; not Agent Studio paste)
+DISCOVER_OUTPUT_SCHEMA = includes capability_surface (DAVI-LIVE-INTELLIGENCE-CONTRACT-CLOSURE-001)
+PROVIDER_REDISCOVERY = RECOMMENDED_AFTER_DEPLOY
 ```
 
 ### Manual provider sync checklist

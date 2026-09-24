@@ -109,6 +109,19 @@ class DiscoverDelpiInformationCandidate(BaseModel):
     action_id: str
 
 
+class CapabilitySurfaceOutput(BaseModel):
+    """Stable MCP envelope for live ``agent_directives`` projection.
+
+    Nested ``agent_directives`` remains a controlled dynamic mapping owned by
+    ``davi_agent_intelligence.json`` / ``DaviAgentIntelligenceService`` — do not
+    duplicate every mutable field as Pydantic properties here.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    agent_directives: dict[str, Any]
+
+
 class DiscoverDelpiInformationOutput(BaseModel):
     """Runtime envelope for discover_delpi_information structuredContent."""
 
@@ -119,6 +132,7 @@ class DiscoverDelpiInformationOutput(BaseModel):
     candidate_count: int
     eligible_action_count: int
     candidates: list[DiscoverDelpiInformationCandidate]
+    capability_surface: CapabilitySurfaceOutput
 
 
 class ExecuteDelpiInformationInput(BaseModel):

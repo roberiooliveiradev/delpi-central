@@ -588,16 +588,19 @@ BUSINESS AUTHZ NEGATIVE
 PRODUCTION / WIDER PUBLICATION
 ```
 
-Current operator/provider evidence (2026-09-16):
+Current operator/provider evidence (2026-09-16) — **HISTORICAL snapshot** (do not treat as current source authority):
 
 ```text
 DEPLOY_SMOKE = PASS
 CHATGPT_OAUTH_CONNECTION = PASS
 MCP_TOOL_DISCOVERY = PASS
 TOOL_INVENTORY = search_products + discover_delpi_information + execute_delpi_information
-DAVI_ELIGIBLE_READ (last live deploy) = 1 — SOURCE HEAD after DAVI-PRODUCT-DRAWING-CAPABILITY-001 = 17 (LIVE = TEST_NOT_RUN; Wave 3A source 15 / Wave 2 source 13 / Wave 1 source 10 remain historical)
+DAVI_ELIGIBLE_READ (last live deploy observed then) = 1
+SOURCE HEAD after DAVI-PRODUCT-DRAWING-CAPABILITY-001 = 17 (allowlist v9)
+LIVE after drawing wave = TEST_NOT_RUN at that date
+Wave 3A source 15 / Wave 2 source 13 / Wave 1 source 10 = HISTORICAL
 INPUT_SCHEMA_LIVE = PASS
-OUTPUT_SCHEMA_RUNTIME = PASS
+OUTPUT_SCHEMA_RUNTIME = PASS (pre-agent_directives envelope)
 AUTHENTICATED_SEARCH_PRODUCTS = PASS
 LIVE_FIELD_ALLOWLIST = PASS
 DAVI_AGENT_PRIVATE_PREVIEW = PASS
@@ -607,6 +610,8 @@ SECOND_USER_IDENTITY_PROOF = PENDING
 MCP_RATE_POLICY = PENDING_OWNER_DECISION
 WIDER_PUBLICATION = BLOCKED_BY_PENDING_GATES
 ```
+
+**CURRENT (SOURCE PROVEN — `DAVI-LIVE-INTELLIGENCE-CONTRACT-CLOSURE-001`):** allowlist v9 / `DAVI_ELIGIBLE_READ` = 17; MCP tools = 3; GPT Actions legacy = 2 (`LEGACY_TRANSITIONAL`); live `capability_surface.agent_directives` from `davi_agent_intelligence.json` via `DaviAgentIntelligenceService` on both `gpt_get_catalog` and `discover_delpi_information`; discover MCP `outputSchema` includes `capability_surface` (additive contract correction). Provider rediscovery recommended after deploy. Agent Studio sync remains `PENDING_MANUAL_SYNC` unless newer evidence proves otherwise. New LIVE PASS requires fresh authenticated provider evidence — not inferred from this doc.
 
 ## Rate limit
 

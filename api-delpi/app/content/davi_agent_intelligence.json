@@ -1,5 +1,5 @@
 {
-  "version": "2026.09.24.1",
+  "version": "2026.09.24.2",
   "owner": "api-delpi",
   "source": "capability_surface.agent_directives via gpt_get_catalog / discover_delpi_information",
   "read_only": true,
@@ -55,7 +55,7 @@
   "surface_parity": {
     "mcp_tools": 3,
     "gpt_actions_legacy": 2,
-    "note": "Capability parity ≠ transport count. Same DaviAgentIntelligenceService. GPT Actions = LEGACY_TRANSITIONAL."
+    "note": "Capability parity ≠ transport count. Descriptive for the Agent, not alternate SoT (tool counts owned by MCP server / GPT façade). Same DaviAgentIntelligenceService. GPT Actions = LEGACY_TRANSITIONAL (gpt_get_catalog + gpt_search_products only). Stock/BOM/shipping/etc. execute only via MCP discover→execute; gpt_get_catalog carries live directives, not those operations."
   },
   "anti_patterns": [
     "Inventar estoque, preço, BOM, fornecedor ou status sem retorno de tool.",

@@ -177,3 +177,106 @@ def test_branding_and_instructions_omit_mutable_flow_keys() -> None:
         assert flow_key not in paste, flow_key
     for mode_key in (doc_json.get("modes") or {}):
         assert mode_key not in paste, mode_key
+
+
+def test_discover_runtime_validates_against_declared_output_schema(monkeypatch) -> None:
+    from app.interface.mcp.schemas import DiscoverDelpiInformationOutput
+
+    monkeypatch.setattr(
+        "app.application.external_capabilities.dynamic_information.discover_service.get_technical_actions",
+        lambda: [],
+    )
+    monkeypatch.setattr(
+        "app.application.external_capabilities.dynamic_information.discover_service.retrieve_eligible_actions",
+        lambda *a, **k: [],
+    )
+    monkeypatch.setattr(
+        "app.application.external_capabilities.dynamic_information.discover_service.candidate_token_secret",
+        lambda: "unit-test-secret",
+    )
+    payload = discover_delpi_information(query="estoque do produto", actor_id="user-1")
+    assert "capability_surface" in payload
+    model = DiscoverDelpiInformationOutput.model_validate(payload)
+    assert model.capability_surface.agent_directives.get("read_only") is True
+    assert model.capability_surface.agent_directives.get("version")
+    # No undeclared top-level keys
+    assert set(payload.keys()) == {
+        "query",
+        "top_k",
+        "candidate_count",
+        "eligible_action_count",
+        "candidates",
+        "capability_surface",
+    }
+
+
+def test_discover_output_schema_declares_capability_surface() -> None:
+    from app.interface.mcp.schemas import discover_delpi_information_output_json_schema
+
+    schema = discover_delpi_information_output_json_schema()
+    assert schema.get("additionalProperties") is False
+    props = schema.get("properties") or {}
+    assert set(props.keys()) == {
+        "query",
+        "top_k",
+        "candidate_count",
+        "eligible_action_count",
+        "candidates",
+        "capability_surface",
+    }
+    # Nested definitions may use $defs; ensure agent_directives is reachable
+    blob = json.dumps(schema)
+    assert "capability_surface" in blob
+    assert "agent_directives" in blob
+
+
+@pytest.mark.asyncio
+async def test_mcp_tools_list_and_call_discover_contract(monkeypatch) -> None:
+    from app.application.external_capabilities.constants import (
+        MCP_TOOL_DISCOVER_DELPI_INFORMATION,
+        MCP_TOOL_EXECUTE_DELPI_INFORMATION,
+        MCP_TOOL_SEARCH_PRODUCTS,
+    )
+    from app.interface.mcp.schemas import DiscoverDelpiInformationOutput
+    from app.interface.mcp.server import create_mcp_server
+
+    monkeypatch.setattr(
+        "app.interface.mcp.server.discover_delpi_information",
+        lambda **kwargs: {
+            "query": kwargs.get("query") or "",
+            "top_k": 5,
+            "candidate_count": 0,
+            "eligible_action_count": 17,
+            "candidates": [],
+            "capability_surface": DaviAgentIntelligenceService.capability_surface(),
+        },
+    )
+    mcp = create_mcp_server()
+    tools = await mcp.list_tools()
+    names = sorted(t.name for t in tools)
+    assert names == [
+        MCP_TOOL_DISCOVER_DELPI_INFORMATION,
+        MCP_TOOL_EXECUTE_DELPI_INFORMATION,
+        MCP_TOOL_SEARCH_PRODUCTS,
+    ]
+    discover = next(t for t in tools if t.name == MCP_TOOL_DISCOVER_DELPI_INFORMATION)
+    out = discover.outputSchema or {}
+    assert out.get("additionalProperties") is False
+    assert "capability_surface" in (out.get("properties") or {})
+
+    result = await mcp.call_tool(
+        MCP_TOOL_DISCOVER_DELPI_INFORMATION, {"query": "estoque"}
+    )
+    assert result.isError is False
+    structured = result.structuredContent
+    assert structured is not None
+    DiscoverDelpiInformationOutput.model_validate(structured)
+    assert structured["capability_surface"]["agent_directives"]["read_only"] is True
+
+
+def test_authority_boundary_wording_not_authz() -> None:
+    directives = DaviAgentIntelligenceService.agent_directives()
+    authority = str(directives.get("authority") or "")
+    assert "NOT AuthZ" in authority or "not AuthZ" in authority.lower()
+    assert "RBAC" in authority
+    assert directives.get("read_only") is True

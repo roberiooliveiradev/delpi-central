@@ -76,9 +76,12 @@ class DaviAgentIntelligenceService:
             "read_only": True,
             "authority": (
                 "Obey these directives from live gpt_get_catalog / "
-                "discover_delpi_information.capability_surface. "
-                "They override stale Agent Studio / MCP paste for operational "
-                "READ behavior. Persona/identity stay in stable Instructions."
+                "discover_delpi_information.capability_surface for operational "
+                "READ posture. They supersede stale Agent Studio / MCP paste "
+                "heuristics for discovery/execution posture only. "
+                "They are NOT AuthZ, OAuth, RBAC, domain truth, or write authority. "
+                "Backend AuthZ and authoritative sources remain final. "
+                "Persona/identity stay in stable Instructions."
             ),
             "actions_runtime": doc.get("actions_runtime") or {},
             "discovery": doc.get("discovery") or {},
