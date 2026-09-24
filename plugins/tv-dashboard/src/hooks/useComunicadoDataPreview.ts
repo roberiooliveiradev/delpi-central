@@ -423,11 +423,26 @@ export function useComunicadoDataPreview({ playlistId, config, playlistDefaults 
         for (const id of sourceIds) {
           const resolved = previous[id];
           if (!resolved || resolved.presentationStale === true) continue;
+          const linked = resolved.linkedResolvedByBlockId;
+          let nextLinked = linked;
+          if (linked && typeof linked === "object") {
+            nextLinked = {};
+            for (const [blockId, entry] of Object.entries(linked)) {
+              if (!entry || typeof entry !== "object") continue;
+              nextLinked[blockId] = {
+                ...entry,
+                presentationStale: true,
+                serverDisplayApplied: false,
+                serverProjectionApplied: false,
+              };
+            }
+          }
           next[id] = {
             ...resolved,
             presentationStale: true,
             serverDisplayApplied: false,
             serverProjectionApplied: false,
+            ...(nextLinked ? { linkedResolvedByBlockId: nextLinked } : {}),
           };
           changed = true;
         }

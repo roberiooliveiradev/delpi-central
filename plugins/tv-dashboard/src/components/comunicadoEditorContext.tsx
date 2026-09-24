@@ -320,19 +320,28 @@ export function ComunicadoEditorProvider({
         typeof block.dataSourceId === "string" &&
         block.dataSourceId
       ) {
-        const preview = resolvedByBlockId[block.dataSourceId];
+        const sourceId = block.dataSourceId;
+        const sourcePreview = resolvedByBlockId[sourceId];
+        const linked =
+          sourcePreview?.linkedResolvedByBlockId?.[block.id] ??
+          resolvedByBlockId[block.id];
+        const preview = linked ?? sourcePreview;
         if (preview) {
           const labeled =
             applyFieldLabelsToResolved(
               preview,
-              fieldLabelsBySourceId.get(block.dataSourceId),
+              fieldLabelsBySourceId.get(sourceId),
             ) ?? preview;
           return { ...block, resolved: labeled };
         }
       }
       if (isComunicadoVisualBoxBlock(block) && block.dataSourceId?.trim()) {
         const sourceId = block.dataSourceId.trim();
-        const preview = resolvedByBlockId[sourceId];
+        const sourcePreview = resolvedByBlockId[sourceId];
+        const linked =
+          sourcePreview?.linkedResolvedByBlockId?.[block.id] ??
+          resolvedByBlockId[block.id];
+        const preview = linked ?? sourcePreview;
         if (preview) {
           const labeled =
             applyFieldLabelsToResolved(preview, fieldLabelsBySourceId.get(sourceId)) ??
@@ -353,7 +362,15 @@ export function ComunicadoEditorProvider({
         }
         if (Object.keys(resolvedBySourceId).length === 0) return block;
         const primary = block.dataSourceId?.trim() ?? "";
+        // Prefer canvas enrich stamp from any linked source map.
+        const linkedCanvas =
+          (primary &&
+            resolvedByBlockId[primary]?.linkedResolvedByBlockId?.[block.id]) ||
+          Object.values(resolvedByBlockId)
+            .map((r) => r?.linkedResolvedByBlockId?.[block.id])
+            .find(Boolean);
         const resolved =
+          linkedCanvas ||
           (primary && resolvedBySourceId[primary]) ||
           Object.values(resolvedBySourceId)[0];
         return {

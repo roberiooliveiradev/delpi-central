@@ -659,6 +659,11 @@ export type ComunicadoDataResolved = {
    * Paint may keep previous geometry; must not treat display* as current (G5/G21).
    */
   presentationStale?: boolean;
+  /**
+   * Preview do editor: resolved já materializado (display*/bake) por bloco ligado
+   * a esta fonte — paint de texto/KPI/chart sem format client (FE-BE-002).
+   */
+  linkedResolvedByBlockId?: Record<string, ComunicadoDataResolved>;
   /** Texto composto pronto (text/heading/shape) — inclui prefixo/sufixo. */
   displayText?: string;
   /** Runs prontos para paint (contentRuns com dataRef já materializados). */

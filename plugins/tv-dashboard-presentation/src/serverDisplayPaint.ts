@@ -32,6 +32,7 @@ export function preferServerTextDisplayRuns(
   resolved?: ComunicadoDataResolved | null,
 ): ComunicadoContentRun[] | null {
   if (!resolved) return null;
+  if (resolved.presentationStale === true) return null;
   if (Array.isArray(resolved.displayRuns) && resolved.displayRuns.length > 0) {
     return resolved.displayRuns.map((run) => ({
       ...run,
@@ -49,6 +50,7 @@ export function preferServerDisplayRunText(
   resolved: ComunicadoDataResolved | undefined,
   field: string,
 ): string | undefined {
+  if (resolved?.presentationStale === true) return undefined;
   const key = field.trim();
   if (!key || !resolved?.displayRuns?.length) return undefined;
   const hit = resolved.displayRuns.find(

@@ -103,6 +103,9 @@ class TvDataPreviewService:
                 selected = enriched[0]
         else:
             selected = enriched[0]
+        # Editor paints views/text from source preview — attach per-block enrich
+        # (display*/projection bake) so paint is not raw source.resolved (FE-BE-002).
+        selected = self._attach_linked_resolved_for_editor(selected, enriched, target_id)
         resolved = selected.get("resolved") if isinstance(selected, dict) else None
         if isinstance(resolved, dict) and isinstance(resolved.get("query"), dict):
             resolved["query"]["previewCache"] = (
@@ -113,9 +116,57 @@ class TvDataPreviewService:
         return selected
 
     @staticmethod
+    def _attach_linked_resolved_for_editor(
+        selected: dict[str, Any],
+        enriched: list[dict[str, Any]],
+        target_id: str,
+    ) -> dict[str, Any]:
+        """Stamp linkedResolvedByBlockId on the previewed source for editor paint."""
+        if not isinstance(selected, dict):
+            return selected
+        target = str(target_id or selected.get("id") or "").strip()
+        if not target:
+            return selected
+        linked: dict[str, Any] = {}
+        for item in enriched:
+            if not isinstance(item, dict):
+                continue
+            item_id = str(item.get("id") or "").strip()
+            if not item_id or item_id == target:
+                continue
+            resolved = item.get("resolved")
+            if not isinstance(resolved, dict):
+                continue
+            # Direct link to this source.
+            if str(item.get("dataSourceId") or "").strip() == target:
+                linked[item_id] = resolved
+                continue
+            # Canvas table may bind cells to this source.
+            if str(item.get("type") or "") == "canvas_table":
+                by_source = item.get("resolvedBySourceId")
+                if isinstance(by_source, dict) and target in by_source:
+                    linked[item_id] = resolved
+        if not linked:
+            return selected
+        next_selected = dict(selected)
+        next_resolved = (
+            dict(selected["resolved"])
+            if isinstance(selected.get("resolved"), dict)
+            else {}
+        )
+        next_resolved["linkedResolvedByBlockId"] = linked
+        next_selected["resolved"] = next_resolved
+        return next_selected
+
+    @staticmethod
     def _blocks_for_preview(block: dict[str, Any], native_config: dict[str, Any]) -> list[dict[str, Any]]:
-        """Bloco alvo + data_sources do slide (necessário para merge entre consultas)."""
-        from tv_app.application.services.tv_data_route_catalog_service import DATA_BLOCK_TYPES
+        """Alvo + fontes do slide + views/texto/canvas ligados (enrich display* no preview)."""
+        from tv_app.application.services.tv_data_route_catalog_service import (
+            CANVAS_TABLE_DATA_BOUND_BLOCK_TYPES,
+            DATA_BLOCK_TYPES,
+            DATA_VIEW_BLOCK_TYPES,
+            TEXT_DATA_BOUND_BLOCK_TYPES,
+        )
 
         target_id = str(block.get("id") or "")
         out: list[dict[str, Any]] = [block]
@@ -123,15 +174,24 @@ class TvDataPreviewService:
         cfg_blocks = native_config.get("blocks") if isinstance(native_config, dict) else None
         if not isinstance(cfg_blocks, list):
             return out
+
+        linkable = (
+            DATA_BLOCK_TYPES
+            | DATA_VIEW_BLOCK_TYPES
+            | TEXT_DATA_BOUND_BLOCK_TYPES
+            | CANVAS_TABLE_DATA_BOUND_BLOCK_TYPES
+        )
+
         for item in cfg_blocks:
             if not isinstance(item, dict):
                 continue
-            if str(item.get("type") or "") not in DATA_BLOCK_TYPES:
+            item_type = str(item.get("type") or "")
+            if item_type not in linkable:
                 continue
             item_id = str(item.get("id") or "")
             if not item_id or item_id in seen:
                 continue
+            # Sibling sources + all views/text/canvas so enrich can bake display*.
             seen.add(item_id)
-            # Preferir o payload do request quando for o alvo; demais vêm do cfg.
             out.append(dict(item))
         return out
