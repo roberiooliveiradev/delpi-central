@@ -128,8 +128,17 @@ import {
   type SelectionPropertyApplyOptions,
 } from "../../utils/selectionPropertyApply";
 import { clampFontSize } from "@delpi/tv-dashboard-presentation";
+import {
+  commitAlignBlocks,
+  commitCreateBlock,
+  commitDuplicateBlocks,
+  commitReorderBlockZ,
+  commitUpsertBlocks,
+} from "../../utils/presentationMutationClient";
 
 type Options = {
+  playlistId?: string;
+  slideId?: string;
   canvasRef?: RefObject<HTMLElement | null>;
   canvasWrapRef?: RefObject<HTMLElement | null>;
   configRef: MutableRefObject<ComunicadoConfig>;
@@ -187,6 +196,8 @@ type Options = {
  * Mutações de blocos (add/update/remove/group/layer/nudge/align/theme) via histórico.
  */
 export function useComunicadoEditorBlocks({
+  playlistId,
+  slideId,
   configRef,
   commitWithHistory,
   selectedIds,
@@ -278,15 +289,59 @@ export function useComunicadoEditorBlocks({
 
   const addBlock = useCallback(
     (type: ComunicadoBlock["type"]) => {
-      let block = createBlock(
+      const content =
+        type === "heading" ? "Novo título" : type === "text" ? "Texto" : "";
+      const applyLocal = () => {
+        let block = createBlock(type, content);
+        block.style = { ...block.style, zIndex: nextZIndex(configRef.current.blocks ?? []) };
+        block = placeInserted(block);
+        commitAndSelectInserted([...(configRef.current.blocks ?? []), block], [block.id]);
+        return block;
+      };
+
+      if (!playlistId || !slideId) {
+        applyLocal();
+        return;
+      }
+
+      const blockId = newBlockId();
+      void commitCreateBlock({
+        playlistId,
+        slideId,
         type,
-        type === "heading" ? "Novo título" : type === "text" ? "Texto" : "",
-      );
-      block.style = { ...block.style, zIndex: nextZIndex(configRef.current.blocks ?? []) };
-      block = placeInserted(block);
-      commitAndSelectInserted([...(configRef.current.blocks ?? []), block], [block.id]);
+        blockId,
+        content: content || undefined,
+      })
+        .then((canonical) => {
+          if (!canonical) {
+            applyLocal();
+            return;
+          }
+          const created = (canonical.blocks ?? []).find((b) => b.id === blockId);
+          if (!created) {
+            applyLocal();
+            return;
+          }
+          let placed = placeInserted({
+            ...created,
+            style: {
+              ...created.style,
+              zIndex: nextZIndex(configRef.current.blocks ?? []),
+            },
+          } as ComunicadoBlock);
+          // Persist viewport placement as geometry authority ack.
+          void commitUpsertBlocks({
+            playlistId,
+            slideId,
+            blocks: [placed as unknown as Record<string, unknown>],
+          }).catch(() => undefined);
+          commitAndSelectInserted([...(configRef.current.blocks ?? []), placed], [placed.id]);
+        })
+        .catch(() => {
+          applyLocal();
+        });
     },
-    [commitAndSelectInserted, configRef, placeInserted],
+    [commitAndSelectInserted, configRef, placeInserted, playlistId, slideId],
   );
 
   const addDataBlock = useCallback(
@@ -692,6 +747,18 @@ export function useComunicadoEditorBlocks({
     setLastUngroupedIds([]);
   }, [configRef, lastUngroupedIds, selectBlocksByIds, updateBlocks]);
 
+  const ackBlocksMutation = useCallback(
+    (blocks: ComunicadoBlock[]) => {
+      if (!playlistId || !slideId || blocks.length === 0) return;
+      void commitUpsertBlocks({
+        playlistId,
+        slideId,
+        blocks: blocks as unknown as Record<string, unknown>[],
+      }).catch(() => undefined);
+    },
+    [playlistId, slideId],
+  );
+
   const updateSelected = useCallback(
     (patch: Partial<ComunicadoBlock>) => {
       if (selectedIds.length === 0) return;
@@ -700,8 +767,9 @@ export function useComunicadoEditorBlocks({
         idSet.has(block.id) ? ({ ...block, ...patch } as ComunicadoBlock) : block,
       );
       updateBlocks(nextBlocks);
+      ackBlocksMutation(nextBlocks.filter((b) => idSet.has(b.id)));
     },
-    [configRef, selectedIds, updateBlocks],
+    [ackBlocksMutation, configRef, selectedIds, updateBlocks],
   );
 
   const updateBlock = useCallback(
@@ -710,8 +778,10 @@ export function useComunicadoEditorBlocks({
         block.id === blockId ? ({ ...block, ...patch } as ComunicadoBlock) : block,
       );
       updateBlocks(nextBlocks);
+      const patched = nextBlocks.find((b) => b.id === blockId);
+      if (patched) ackBlocksMutation([patched]);
     },
-    [configRef, updateBlocks],
+    [ackBlocksMutation, configRef, updateBlocks],
   );
 
   const commitChartPartContent = useCallback(
@@ -963,16 +1033,44 @@ export function useComunicadoEditorBlocks({
   );
 
   const duplicateSelected = useCallback(async () => {
-    const ids = new Set(getActionSelectedIds());
+    const ids = getActionSelectedIds();
+    const idSet = new Set(ids);
     const sources =
-      ids.size > 0
-        ? (configRef.current.blocks ?? []).filter((block) => ids.has(block.id))
+      idSet.size > 0
+        ? (configRef.current.blocks ?? []).filter((block) => idSet.has(block.id))
         : selectedBlocks.length > 0
           ? selectedBlocks
           : selected
             ? [selected]
             : [];
     if (sources.length === 0) return;
+
+    const sourceIds = sources.map((s) => s.id);
+
+    // Prefer backend identity mint when no data-source clone policy is needed.
+    const needsDataPolicy = sources.some(
+      (s) => isDataSourceBlockType(s.type) || ("dataSourceId" in s && Boolean(s.dataSourceId)),
+    );
+    if (playlistId && slideId && !needsDataPolicy) {
+      try {
+        const canonical = await commitDuplicateBlocks({
+          playlistId,
+          slideId,
+          blockIds: sourceIds,
+        });
+        if (canonical) {
+          const before = new Set((configRef.current.blocks ?? []).map((b) => b.id));
+          commitWithHistory(canonical);
+          const pastedIds = (canonical.blocks ?? [])
+            .map((b) => b.id)
+            .filter((id) => !before.has(id));
+          if (pastedIds.length > 0) selectBlocksByIds(pastedIds);
+          return;
+        }
+      } catch {
+        /* fall through to local duplicate */
+      }
+    }
 
     const existing = configRef.current.blocks ?? [];
     const enriched = enrichClipboardWithLinkedDataSources(sources, existing);
@@ -999,16 +1097,26 @@ export function useComunicadoEditorBlocks({
       enriched,
       plan.policy,
     );
-    // Commit antes da seleção: selectBlocksByIds resolve contra configRef.
     updateBlocks(blocks);
     selectBlocksByIds(pastedIds);
+    if (playlistId && slideId) {
+      const pasted = blocks.filter((b) => pastedIds.includes(b.id));
+      void commitUpsertBlocks({
+        playlistId,
+        slideId,
+        blocks: pasted as unknown as Record<string, unknown>[],
+      }).catch(() => undefined);
+    }
   }, [
     chooseDataSourceDuplicatePolicy,
+    commitWithHistory,
     configRef,
     getActionSelectedIds,
+    playlistId,
     selectBlocksByIds,
     selected,
     selectedBlocks,
+    slideId,
     updateBlocks,
   ]);
 
@@ -1174,29 +1282,48 @@ export function useComunicadoEditorBlocks({
   );
 
   const applyLayerOrder = useCallback(
-    (transform: (blocks: ComunicadoBlock[], selectedIds: string[]) => ComunicadoBlock[]) => {
+    (
+      transform: (blocks: ComunicadoBlock[], selectedIds: string[]) => ComunicadoBlock[],
+      command: "bring-to-front" | "send-to-back" | "bring-forward" | "send-backward",
+    ) => {
       const ids = getActionSelectedIds();
       if (ids.length === 0) return;
-      const nextBlocks = transform(configRef.current.blocks ?? [], ids);
-      updateBlocks(nextBlocks);
+      const applyLocal = () => {
+        updateBlocks(transform(configRef.current.blocks ?? [], ids));
+      };
+      if (!playlistId || !slideId) {
+        applyLocal();
+        return;
+      }
+      void commitReorderBlockZ({ playlistId, slideId, blockIds: ids, command })
+        .then((canonical) => {
+          if (!canonical) {
+            applyLocal();
+            return;
+          }
+          commitWithHistory(canonical);
+        })
+        .catch(() => {
+          applyLocal();
+        });
     },
-    [configRef, getActionSelectedIds, updateBlocks],
+    [commitWithHistory, configRef, getActionSelectedIds, playlistId, slideId, updateBlocks],
   );
 
   const bringToFrontSelected = useCallback(() => {
-    applyLayerOrder(bringToFront);
+    applyLayerOrder(bringToFront, "bring-to-front");
   }, [applyLayerOrder]);
 
   const sendToBackSelected = useCallback(() => {
-    applyLayerOrder(sendToBack);
+    applyLayerOrder(sendToBack, "send-to-back");
   }, [applyLayerOrder]);
 
   const bringForwardSelected = useCallback(() => {
-    applyLayerOrder(bringForward);
+    applyLayerOrder(bringForward, "bring-forward");
   }, [applyLayerOrder]);
 
   const sendBackwardSelected = useCallback(() => {
-    applyLayerOrder(sendBackward);
+    applyLayerOrder(sendBackward, "send-backward");
   }, [applyLayerOrder]);
 
   const reorderBlockLayer = useCallback(
@@ -1303,10 +1430,27 @@ export function useComunicadoEditorBlocks({
     (command: LayoutAlignCommand) => {
       const ids = getActionSelectedIds();
       if (ids.length === 0) return;
-      const aligned = alignComunicadoBlocks(configRef.current.blocks ?? [], ids, command);
-      updateBlocks(reconcileConnectorsAfterDrag(aligned, new Set(ids)));
+      const applyLocal = () => {
+        const aligned = alignComunicadoBlocks(configRef.current.blocks ?? [], ids, command);
+        updateBlocks(reconcileConnectorsAfterDrag(aligned, new Set(ids)));
+      };
+      if (!playlistId || !slideId) {
+        applyLocal();
+        return;
+      }
+      void commitAlignBlocks({ playlistId, slideId, blockIds: ids, command })
+        .then((canonical) => {
+          if (!canonical) {
+            applyLocal();
+            return;
+          }
+          commitWithHistory(canonical);
+        })
+        .catch(() => {
+          applyLocal();
+        });
     },
-    [configRef, getActionSelectedIds, updateBlocks],
+    [commitWithHistory, configRef, getActionSelectedIds, playlistId, slideId, updateBlocks],
   );
 
   const sameSizeSelected = useCallback(

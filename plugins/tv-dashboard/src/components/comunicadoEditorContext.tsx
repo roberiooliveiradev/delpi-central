@@ -591,6 +591,8 @@ export function ComunicadoEditorProvider({
   const chooseDataSourceDuplicatePolicy = useOptionalDataSourceDuplicateChoice();
 
   const blockActions = useComunicadoEditorBlocks({
+    playlistId,
+    slideId,
     configRef,
     commitWithHistory,
     selectedIds: selection.selectedIds,

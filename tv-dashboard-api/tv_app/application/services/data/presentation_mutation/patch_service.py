@@ -32,6 +32,7 @@ from tv_app.application.services.data.presentation_mutation.execution_context im
     mint_synthetic_id,
 )
 from tv_app.application.services.data.presentation_mutation.merge import (
+    deep_merge_dicts,
     merge_block_patch,
     merge_data_binding,
     merge_native_config_key,
@@ -124,21 +125,46 @@ def _find_block(blocks: list[dict[str, Any]], block_id: str) -> dict[str, Any] |
     return None
 
 
-def _with_block_defaults(block: dict[str, Any]) -> dict[str, Any]:
-    """Bloco novo da PresentationMutation ganha frame/style do catálogo.
+# Nested keys materialized from blockDefaults on create (PRESENTATION-001).
+_BLOCK_DEFAULT_NESTED_KEYS = frozenset(
+    {
+        "style",
+        "frame",
+        "kpiParts",
+        "chartParts",
+        "tableParts",
+        "kpiOptions",
+        "chartOptions",
+        "tableOptions",
+        "input",
+        "inputParts",
+        "imageCrop",
+        "efficiencyPin",
+    }
+)
 
-    O editor e o viewer leem ``block.frame.w``: sem geometria o bloco existe no
-    native_config mas não aparece no slide — o usuário lê isso como «não criou».
+
+def _with_block_defaults(block: dict[str, Any]) -> dict[str, Any]:
+    """Bloco novo recebe geometria/estilo/options canônicos do catálogo.
+
+    Sem frame o bloco existe no native_config mas não aparece no slide.
+    Options/parts (kpi/chart/table/input) também materializam no create para
+    que o MFE pinte sem ``DEFAULT_*`` locais (TV-DASHBOARD-PRESENTATION-001).
     """
     defaults = PresentationOpsContentService.block_defaults(str(block.get("type") or ""))
     out = dict(block)
-    frame = defaults.get("frame")
-    if not isinstance(out.get("frame"), dict) and isinstance(frame, dict):
-        out["frame"] = dict(frame)
-    style = defaults.get("style")
-    if isinstance(style, dict):
-        current = out.get("style") if isinstance(out.get("style"), dict) else {}
-        out["style"] = {**style, **current}
+    for key, value in defaults.items():
+        if key == "frame":
+            if not isinstance(out.get("frame"), dict) and isinstance(value, dict):
+                out["frame"] = dict(value)
+            continue
+        if key in _BLOCK_DEFAULT_NESTED_KEYS and isinstance(value, dict):
+            current = out.get(key) if isinstance(out.get(key), dict) else {}
+            # Defaults under authored keys (author wins).
+            out[key] = {**value, **current} if key == "style" else deep_merge_dicts(value, current)
+            continue
+        if key not in out:
+            out[key] = copy.deepcopy(value)
     return out
 
 
@@ -304,6 +330,11 @@ _NATIVE_OP_NAMES = frozenset(
         # Mutates slide nativeConfig / dataFilters; must preload like other native ops.
         # Without this, preview raises misleading missingTarget even with valid target IDs.
         "re_layer_playlist_filters",
+        # PRESENTATION-001 — geometry / identity ops on nativeConfig.
+        "create_block",
+        "align_blocks",
+        "reorder_block_z",
+        "duplicate_blocks",
     }
 )
 
@@ -777,6 +808,16 @@ class PresentationPatchService:
                 block_id, frame_informed = self._op_upsert_block(native_config, raw_op)
                 if frame_informed and block_id:
                     informed_frame_ids.add(block_id)
+            elif op_name == "create_block":
+                block_id, frame_informed = self._op_create_block(native_config, raw_op)
+                if frame_informed and block_id:
+                    informed_frame_ids.add(block_id)
+            elif op_name == "align_blocks":
+                self._op_align_blocks(native_config, raw_op)
+            elif op_name == "reorder_block_z":
+                self._op_reorder_block_z(native_config, raw_op)
+            elif op_name == "duplicate_blocks":
+                self._op_duplicate_blocks(native_config, raw_op)
             elif op_name == "delete_block":
                 removed = self._op_delete_block(native_config, raw_op)
                 if removed:
@@ -1395,6 +1436,104 @@ class PresentationPatchService:
         )
         cfg["blocks"] = blocks
         return block_id, frame_informed or projection_informed
+
+    def _op_create_block(self, cfg: dict[str, Any], op: dict[str, Any]) -> tuple[str, bool]:
+        """Typed create — type (+ optional chartType/shape/icon) → canonical block."""
+        btype = str(op.get("type") or "").strip()
+        if not btype:
+            raise PresentationPatchError(
+                PresentationOpsContentService.message("createBlockTypeRequired")
+            )
+        block: dict[str, Any] = {"type": btype}
+        informed_id = str(op.get("blockId") or "").strip()
+        if informed_id:
+            block["id"] = informed_id
+        for key in (
+            "chartType",
+            "shape",
+            "iconName",
+            "content",
+            "tablePreset",
+            "frame",
+            "style",
+            "dataBinding",
+            "kpiOptions",
+            "chartOptions",
+            "tableOptions",
+            "input",
+        ):
+            if key in op and op[key] is not None:
+                block[key] = op[key]
+        # Shape/icon convenience: map content → iconName when type=icon.
+        if btype == "icon" and "iconName" not in block and isinstance(op.get("content"), str):
+            block["iconName"] = op["content"]
+        if btype == "shape" and "shape" not in block:
+            block["shape"] = "rectangle"
+        return self._op_upsert_block(
+            cfg,
+            {"op": "upsert_block", "block": block, "createIfMissing": True},
+        )
+
+    def _op_align_blocks(self, cfg: dict[str, Any], op: dict[str, Any]) -> None:
+        from tv_app.application.services.data.block_layout_service import align_blocks
+
+        raw_ids = op.get("blockIds")
+        if not isinstance(raw_ids, list) or not raw_ids:
+            raise PresentationPatchError(
+                PresentationOpsContentService.message("layoutNeedBlockIds")
+            )
+        command = str(op.get("command") or "").strip()
+        try:
+            align_blocks(_blocks_of(cfg), [str(i) for i in raw_ids], command)
+        except ValueError as exc:
+            raise PresentationPatchError(
+                PresentationOpsContentService.message(
+                    "layoutCommandInvalid", command=command or "?"
+                )
+            ) from exc
+
+    def _op_reorder_block_z(self, cfg: dict[str, Any], op: dict[str, Any]) -> None:
+        from tv_app.application.services.data.block_layout_service import reorder_block_z
+
+        raw_ids = op.get("blockIds")
+        if not isinstance(raw_ids, list) or not raw_ids:
+            raise PresentationPatchError(
+                PresentationOpsContentService.message("layoutNeedBlockIds")
+            )
+        command = str(op.get("command") or "").strip()
+        try:
+            reorder_block_z(_blocks_of(cfg), [str(i) for i in raw_ids], command)
+        except ValueError as exc:
+            raise PresentationPatchError(
+                PresentationOpsContentService.message(
+                    "layoutCommandInvalid", command=command or "?"
+                )
+            ) from exc
+
+    def _op_duplicate_blocks(self, cfg: dict[str, Any], op: dict[str, Any]) -> None:
+        from tv_app.application.services.data.block_layout_service import duplicate_blocks
+
+        raw_ids = op.get("blockIds")
+        if not isinstance(raw_ids, list) or not raw_ids:
+            raise PresentationPatchError(
+                PresentationOpsContentService.message("layoutNeedBlockIds")
+            )
+        try:
+            ox = float(op.get("offsetX", 2) if op.get("offsetX") is not None else 2)
+            oy = float(op.get("offsetY", 2) if op.get("offsetY") is not None else 2)
+        except (TypeError, ValueError):
+            ox, oy = 2.0, 2.0
+        blocks = _blocks_of(cfg)
+        clones = duplicate_blocks(
+            blocks,
+            [str(i) for i in raw_ids],
+            offset_x=ox,
+            offset_y=oy,
+            new_id_fn=_new_block_id,
+        )
+        for clone in clones:
+            blocks.append(_with_block_defaults(clone))
+        cfg["blocks"] = blocks
 
     def _op_delete_block(self, cfg: dict[str, Any], op: dict[str, Any]) -> str | None:
         block_id = str(op.get("blockId") or "").strip()

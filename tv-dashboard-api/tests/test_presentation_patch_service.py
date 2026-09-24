@@ -688,11 +688,9 @@ def test_upsert_block_block_id_root_updates_existing(monkeypatch):
 
 
 def test_upsert_block_unknown_id_without_create_flag_does_not_spawn_ghost(monkeypatch):
-    svc = _service(monkeypatch=monkeypatch)
-    before = len(svc.preview(
-        {"target": {"playlistId": PLAYLIST_ID, "slideId": SLIDE_ID}, "ops": []},
-        user={},
-    )["nativeConfig"]["blocks"])
+    repo = _FakeRepo()
+    svc = _service(monkeypatch=monkeypatch, repo=repo)
+    before = len(repo.get_slide(SLIDE_ID)["nativeConfig"]["blocks"])
     with pytest.raises(PresentationPatchError, match="não encontrado"):
         svc.preview(
             {
@@ -710,11 +708,8 @@ def test_upsert_block_unknown_id_without_create_flag_does_not_spawn_ghost(monkey
             },
             user={},
         )
-    after = svc.preview(
-        {"target": {"playlistId": PLAYLIST_ID, "slideId": SLIDE_ID}, "ops": []},
-        user={},
-    )["nativeConfig"]["blocks"]
-    assert len(after) == before
+    after = len(repo.get_slide(SLIDE_ID)["nativeConfig"]["blocks"])
+    assert after == before
 
 
 def test_upsert_block_root_block_id_missing_rejects_create(monkeypatch):

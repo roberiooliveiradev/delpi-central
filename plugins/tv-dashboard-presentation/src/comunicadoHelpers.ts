@@ -726,6 +726,11 @@ export function defaultStyle(type: ComunicadoBlock["type"], shape?: ComunicadoSh
   return {};
 }
 
+/**
+ * Transient local factory — persisted creates must ack via PresentationMutation
+ * (`create_block` / upsert) so backend `blockDefaults` are the authority
+ * (TV-DASHBOARD-PRESENTATION-001). Prefer `commitCreateBlock` in the editor.
+ */
 export function createBlock(
   type: ComunicadoBlock["type"],
   content = "",

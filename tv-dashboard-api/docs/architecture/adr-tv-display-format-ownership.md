@@ -27,6 +27,7 @@
    - **G29** — FE filter merge = AUTHORING_SPEC fingerprint only; paint uses enrich `effectiveParams`.
    - **G30–G33** — table paint prefers `displayRows`; dead stale helper deprecated; `hasServerDisplayPaint` PAINT-only; legacy `data_*` modes not used on paint path.
    - Principle: `MFE = AUTHOR + INTERACT + LAYOUT + GEOMETRY + PAINT` / `BACKEND = RESOLVE + PROJECT + AGGREGATE + FORMAT + MATERIALIZE`.
+  - **Superseded for persisted LAYOUT/GEOMETRY/style/defaults (2026-09-24):** see `adr-tv-full-presentation-authority.md` (TV-DASHBOARD-PRESENTATION-001). Paint-only `display*` / `serverProjectionApplied` remains.
 
 ## Consequences
 

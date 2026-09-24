@@ -1237,6 +1237,35 @@ export async function updateSlide(
   );
 }
 
+export type PresentationMutationOp = {
+  op: string;
+  [key: string]: unknown;
+};
+
+export type PresentationMutationResult = {
+  slide?: Slide;
+  nativeConfig?: Record<string, unknown>;
+  appliedOps?: string[];
+  fingerprint?: unknown;
+  sideEffectHints?: string[];
+  persisted?: boolean;
+  executionMode?: string;
+};
+
+/** Commit typed PresentationMutation ops (backend presentation authority). */
+export async function applyPresentationMutations(
+  playlistId: string,
+  slideId: string,
+  ops: PresentationMutationOp[],
+): Promise<PresentationMutationResult> {
+  return unwrap(
+    httpPost<ApiEnvelope<PresentationMutationResult>>(
+      `${API_BASE}/playlists/${playlistId}/slides/${slideId}/presentation-mutations`,
+      { ops },
+    ),
+  );
+}
+
 export async function listPlaylistSections(playlistId: string) {
   const data = await unwrap(
     httpGet<ApiEnvelope<{ items: PlaylistSection[] }>>(

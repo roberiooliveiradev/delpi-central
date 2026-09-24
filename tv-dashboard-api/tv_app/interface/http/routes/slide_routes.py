@@ -121,6 +121,12 @@ class PreviewDataBlockBody(BaseModel):
     nativeConfig: dict
 
 
+class PresentationMutationBody(BaseModel):
+    """Editor ack path — TvPresentationPatchV1 ops committed server-side."""
+
+    ops: list[dict[str, Any]] = Field(min_length=1, max_length=80)
+
+
 def _actor_id(user: Any) -> str | None:
     return _access.actor_id(user)
 
@@ -278,6 +284,68 @@ def preview_data_block(
         user=user,
     )
     return ok({"block": enriched[0] if enriched else target})
+
+
+@router.post("/{slide_id}/presentation-mutations")
+def apply_presentation_mutations(
+    request: Request,
+    playlist_id: UUID,
+    slide_id: UUID,
+    body: PresentationMutationBody,
+):
+    """Commit typed PresentationMutation ops and persist canonical nativeConfig.
+
+    TV-DASHBOARD-PRESENTATION-001: editor geometry/style/create flush through
+    this path so the backend is the sole persistent authority.
+    """
+    from tv_app.application.services.data.presentation_mutation.patch_service import (
+        PresentationPatchError,
+    )
+    from tv_app.application.services.data.presentation_mutation_commit_service import (
+        PresentationMutationCommitService,
+    )
+
+    guarded = require_playlist_access(request, playlist_id, need="edit")
+    if is_access_error(guarded):
+        return guarded
+    user, _ = guarded
+    actor = _actor_id(user)
+    if not actor:
+        return fail("Usuário não identificado.", 401)
+    auth = request.headers.get("Authorization")
+    try:
+        result = PresentationMutationCommitService(writes=_writes).commit(
+            playlist_id=playlist_id,
+            slide_id=slide_id,
+            ops=body.ops,
+            user=user,
+            actor_user_id=actor,
+            authorization=auth,
+            expected_revision=parse_if_match_revision(request),
+        )
+    except PresentationPatchError as exc:
+        return fail(str(exc), 422, data=getattr(exc, "details", None) or None)
+    except PresentationWriteError as exc:
+        return _map_write_error(exc)
+    slide = result.get("slide")
+    notify_presentation_changed(
+        playlist_id=str(playlist_id),
+        reason="presentation_mutation",
+        slide_id=str(slide_id),
+    )
+    return _ok_with_revision(
+        {
+            "slide": slide,
+            "nativeConfig": result.get("nativeConfig"),
+            "appliedOps": result.get("appliedOps") or [],
+            "fingerprint": result.get("fingerprint"),
+            "sideEffectHints": result.get("sideEffectHints") or [],
+            "persisted": True,
+            "executionMode": result.get("executionMode"),
+        },
+        playlist_id=playlist_id,
+        message=str(result.get("message") or "Mutação aplicada."),
+    )
 
 
 @router.delete("/{slide_id}")

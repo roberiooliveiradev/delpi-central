@@ -1,5 +1,5 @@
 {
-  "catalogVersion": "2026.09.24.vista-ready",
+  "catalogVersion": "2026.09.24.presentation-authority",
   "opAliases": {
     "create_slide": {
       "canonical": "add_blank_slide",
@@ -391,7 +391,10 @@
     "paramsInvalid": "params deve ser um objeto com valores primitivos (string/number/boolean).",
     "patchNestedInvalid": "patch_native_config.patch.{field} tem tipo inválido.",
     "readySlideQualityFailed": "Slide não ficou pronto para TV: {issues}. Corrija params/projeção antes de considerar VERIFIED.",
-    "playlistDefaultsRequired": "patch_playlist_data_defaults exige um objeto dataDefaults."
+    "playlistDefaultsRequired": "patch_playlist_data_defaults exige um objeto dataDefaults.",
+    "layoutNeedBlockIds": "align_blocks / reorder_block_z / duplicate_blocks exigem blockIds.",
+    "createBlockTypeRequired": "create_block exige type.",
+    "layoutCommandInvalid": "Comando de layout inválido: {command}."
   },
   "placeholderClarifications": {
     "backgroundColor": "suggestNeedColor",
@@ -544,7 +547,7 @@
         "h": 18
       },
       "style": {
-        "fontSize": 48,
+        "fontSize": 56,
         "color": "#ffffff",
         "fontFamily": "Inter, system-ui, sans-serif",
         "textAlign": "center",
@@ -694,42 +697,62 @@
             "color": "#089bdb"
           }
         }
+      },
+      "kpiOptions": {
+        "showIcon": true,
+        "iconName": "Gauge",
+        "layout": "auto",
+        "backgroundColor": "#0d2840"
       }
     },
     "data_chart": {
       "frame": {
         "x": 10,
-        "y": 22,
-        "w": 78,
-        "h": 52
+        "y": 28,
+        "w": 80,
+        "h": 45
       },
       "style": {
         "fontFamily": "Inter, system-ui, sans-serif",
         "color": "#ffffff",
         "zIndex": 2,
         "backgroundColor": "#0a1628"
+      },
+      "chartOptions": {
+        "showLegend": true,
+        "legendPosition": "bottom",
+        "showGrid": true,
+        "categoryLabelFormat": "day"
       }
     },
     "chart_view": {
       "frame": {
         "x": 10,
-        "y": 22,
-        "w": 78,
-        "h": 52
+        "y": 28,
+        "w": 80,
+        "h": 45
       },
       "style": {
         "fontFamily": "Inter, system-ui, sans-serif",
         "color": "#ffffff",
         "zIndex": 2,
-        "backgroundColor": "#0a1628"
+        "backgroundColor": "#0a1628",
+        "borderRadius": 0,
+        "boxShadow": "0 1px 2px rgba(15, 23, 42, 0.06), 0 12px 28px rgba(15, 23, 42, 0.10)"
+      },
+      "chartOptions": {
+        "showLegend": true,
+        "legendPosition": "bottom",
+        "showGrid": true,
+        "categoryLabelFormat": "day"
       }
     },
     "data_table": {
       "frame": {
         "x": 5,
-        "y": 18,
+        "y": 55,
         "w": 90,
-        "h": 70
+        "h": 35
       },
       "style": {
         "fontFamily": "Inter, system-ui, sans-serif",
@@ -742,16 +765,85 @@
     "table_view": {
       "frame": {
         "x": 5,
-        "y": 18,
+        "y": 55,
         "w": 90,
-        "h": 70
+        "h": 35
       },
       "style": {
         "fontFamily": "Inter, system-ui, sans-serif",
         "color": "#ffffff",
         "zIndex": 2,
         "backgroundColor": "#0a1628",
-        "fontSize": 18
+        "fontSize": 18,
+        "borderRadius": 0,
+        "boxShadow": "0 1px 2px rgba(15, 23, 42, 0.06), 0 12px 28px rgba(15, 23, 42, 0.10)"
+      }
+    },
+    "icon": {
+      "frame": {
+        "x": 42,
+        "y": 40,
+        "w": 8,
+        "h": 8
+      },
+      "style": {
+        "zIndex": 2,
+        "color": "#ffffff",
+        "iconSize": 48
+      }
+    },
+    "canvas_table": {
+      "frame": {
+        "x": 20,
+        "y": 30,
+        "w": 60,
+        "h": 30
+      },
+      "style": {
+        "zIndex": 2,
+        "color": "#ffffff",
+        "fontFamily": "Inter, system-ui, sans-serif",
+        "fontSize": 18,
+        "backgroundColor": "#0a1628"
+      }
+    },
+    "input": {
+      "frame": {
+        "x": 10,
+        "y": 40,
+        "w": 28,
+        "h": 12
+      },
+      "style": {
+        "zIndex": 2,
+        "fontFamily": "Inter, system-ui, sans-serif",
+        "fontSize": 18,
+        "textAlign": "left",
+        "borderRadius": 8,
+        "boxShadow": "0 1px 2px rgba(15, 23, 42, 0.06)",
+        "borderWidth": 1,
+        "color": "#0f172a",
+        "backgroundColor": "#ffffff"
+      },
+      "input": {
+        "paramKey": "",
+        "targetScope": "slide",
+        "defaultValue": null
+      }
+    },
+    "data_metric": {
+      "frame": {
+        "x": 5,
+        "y": 28,
+        "w": 28,
+        "h": 22
+      },
+      "style": {
+        "zIndex": 2,
+        "fontFamily": "Inter, system-ui, sans-serif",
+        "color": "#ffffff",
+        "backgroundColor": "#0d2840",
+        "fontSize": 28
       }
     }
   },
@@ -1599,14 +1691,62 @@
                       "raw"
                     ]
                   },
-                  "legend": {"type": "string", "enum": ["show", "hide"]},
-                  "grid": {"type": "string", "enum": ["show", "hide"]},
-                  "labels": {"type": "string", "enum": ["show", "hide"]},
-                  "axes": {"type": "string", "enum": ["show", "hide"]},
-                  "stackMode": {"type": "string", "enum": ["none", "stacked", "percent"]},
-                  "sort": {"type": "string", "enum": ["none", "asc", "desc"]},
-                  "topN": {"type": "integer", "minimum": 1},
-                  "density": {"type": "string", "enum": ["compact", "regular", "comfortable"]}
+                  "legend": {
+                    "type": "string",
+                    "enum": [
+                      "show",
+                      "hide"
+                    ]
+                  },
+                  "grid": {
+                    "type": "string",
+                    "enum": [
+                      "show",
+                      "hide"
+                    ]
+                  },
+                  "labels": {
+                    "type": "string",
+                    "enum": [
+                      "show",
+                      "hide"
+                    ]
+                  },
+                  "axes": {
+                    "type": "string",
+                    "enum": [
+                      "show",
+                      "hide"
+                    ]
+                  },
+                  "stackMode": {
+                    "type": "string",
+                    "enum": [
+                      "none",
+                      "stacked",
+                      "percent"
+                    ]
+                  },
+                  "sort": {
+                    "type": "string",
+                    "enum": [
+                      "none",
+                      "asc",
+                      "desc"
+                    ]
+                  },
+                  "topN": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "density": {
+                    "type": "string",
+                    "enum": [
+                      "compact",
+                      "regular",
+                      "comfortable"
+                    ]
+                  }
                 }
               },
               "chartProjection": {
@@ -2396,6 +2536,223 @@
         }
       },
       "produces": [],
+      "consumes": [
+        "playlist",
+        "slide"
+      ]
+    },
+    "create_block": {
+      "requiresPlaylist": true,
+      "requiresSlide": true,
+      "risk": "mutation",
+      "confirmationPolicy": "direct",
+      "sideEffectHints": [
+        "replaceNativeConfig"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "op",
+          "type"
+        ],
+        "example": {
+          "op": "create_block",
+          "type": "chart_view",
+          "chartType": "line"
+        },
+        "properties": {
+          "op": {
+            "const": "create_block"
+          },
+          "type": {
+            "type": "string",
+            "description": "ComunicadoBlock.type discriminator."
+          },
+          "blockId": {
+            "type": "string",
+            "description": "Optional informed id."
+          },
+          "chartType": {
+            "type": "string"
+          },
+          "shape": {
+            "type": "string"
+          },
+          "iconName": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "frame": {
+            "type": "object"
+          },
+          "style": {
+            "type": "object"
+          }
+        }
+      },
+      "produces": [
+        "block"
+      ],
+      "consumes": [
+        "playlist",
+        "slide"
+      ]
+    },
+    "align_blocks": {
+      "requiresPlaylist": true,
+      "requiresSlide": true,
+      "risk": "mutation",
+      "confirmationPolicy": "direct",
+      "sideEffectHints": [
+        "replaceNativeConfig"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "op",
+          "blockIds",
+          "command"
+        ],
+        "example": {
+          "op": "align_blocks",
+          "blockIds": [
+            "blk_a",
+            "blk_b"
+          ],
+          "command": "align-left"
+        },
+        "properties": {
+          "op": {
+            "const": "align_blocks"
+          },
+          "blockIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1
+          },
+          "command": {
+            "type": "string",
+            "enum": [
+              "align-left",
+              "align-center-h",
+              "align-right",
+              "align-top",
+              "align-center-v",
+              "align-bottom",
+              "distribute-h",
+              "distribute-v",
+              "align-slide-left",
+              "align-slide-center-h",
+              "align-slide-right",
+              "align-slide-top",
+              "align-slide-center-v",
+              "align-slide-bottom"
+            ]
+          }
+        }
+      },
+      "produces": [],
+      "consumes": [
+        "playlist",
+        "slide"
+      ]
+    },
+    "reorder_block_z": {
+      "requiresPlaylist": true,
+      "requiresSlide": true,
+      "risk": "mutation",
+      "confirmationPolicy": "direct",
+      "sideEffectHints": [
+        "replaceNativeConfig"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "op",
+          "blockIds",
+          "command"
+        ],
+        "example": {
+          "op": "reorder_block_z",
+          "blockIds": [
+            "blk_a"
+          ],
+          "command": "bring-to-front"
+        },
+        "properties": {
+          "op": {
+            "const": "reorder_block_z"
+          },
+          "blockIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1
+          },
+          "command": {
+            "type": "string",
+            "enum": [
+              "bring-to-front",
+              "send-to-back",
+              "bring-forward",
+              "send-backward"
+            ]
+          }
+        }
+      },
+      "produces": [],
+      "consumes": [
+        "playlist",
+        "slide"
+      ]
+    },
+    "duplicate_blocks": {
+      "requiresPlaylist": true,
+      "requiresSlide": true,
+      "risk": "mutation",
+      "confirmationPolicy": "direct",
+      "sideEffectHints": [
+        "replaceNativeConfig"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "op",
+          "blockIds"
+        ],
+        "example": {
+          "op": "duplicate_blocks",
+          "blockIds": [
+            "blk_a"
+          ]
+        },
+        "properties": {
+          "op": {
+            "const": "duplicate_blocks"
+          },
+          "blockIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1
+          },
+          "offsetX": {
+            "type": "number"
+          },
+          "offsetY": {
+            "type": "number"
+          }
+        }
+      },
+      "produces": [
+        "block"
+      ],
       "consumes": [
         "playlist",
         "slide"
