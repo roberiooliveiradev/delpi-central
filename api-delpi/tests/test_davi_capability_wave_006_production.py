@@ -407,6 +407,7 @@ def test_wave006_rejects_unapproved_arguments(oid: str, forbidden: str):
 def test_wave006_date_bounds_366():
     action = _action("get_overall_equipment_effectiveness_pct")
     start = date(2025, 1, 1)
+    # Legacy singular dateRange uses exclusive delta: (end-start).days <= maxDays
     ok_end = start + timedelta(days=366)
     bad_end = start + timedelta(days=367)
     validate_arguments(
@@ -420,52 +421,82 @@ def test_wave006_date_bounds_366():
         )
 
 
-def test_wave006_machine_load_scheduled_and_delivery_windows_90():
-    action = _action("get_production_machine_load_operations")
+def test_wave006_legacy_date_range_delta_unchanged_for_singular():
+    """Singular dateRange must keep delta semantics (not inclusive calendar count)."""
+    action = _action("get_on_time_delivery_pct")
     start = date(2026, 1, 1)
-    ok = start + timedelta(days=89)
-    bad = start + timedelta(days=90)
-    # 90 days inclusive span = (end-start).days == 89? Brief says <= 90 days.
-    # Validator uses (end - start).days > max_days → max span days delta is 90.
-    # So start + 90 days is allowed (delta=90), start+91 fails.
-    ok_end = start + timedelta(days=90)
-    bad_end = start + timedelta(days=91)
+    # Inclusive 367 calendar days would be start..(start+366); delta mode still allows
+    # delta==366 which is 367 inclusive days — proving singular mode is unchanged.
     validate_arguments(
         action,
         {
-            "scheduled_start": start.isoformat(),
-            "scheduled_end": ok_end.isoformat(),
+            "start_date": start.isoformat(),
+            "end_date": (start + timedelta(days=366)).isoformat(),
         },
     )
-    with pytest.raises(ArgumentValidationError, match="scheduled_"):
+
+
+def test_wave006_machine_load_inclusive_90_calendar_days():
+    action = _action("get_production_machine_load_operations")
+    # Canonical MachineLoadWindow: (end - start).days + 1 <= 90
+    # 2026-01-01 .. 2026-03-31 = 90 inclusive calendar days → PASS
+    # 2026-01-01 .. 2026-04-01 = 91 inclusive calendar days → FAIL
+    validate_arguments(
+        action,
+        {
+            "scheduled_start": "2026-01-01",
+            "scheduled_end": "2026-03-31",
+        },
+    )
+    with pytest.raises(ArgumentValidationError, match="inclusive"):
         validate_arguments(
             action,
             {
-                "scheduled_start": start.isoformat(),
-                "scheduled_end": bad_end.isoformat(),
+                "scheduled_start": "2026-01-01",
+                "scheduled_end": "2026-04-01",
             },
         )
     validate_arguments(
         action,
         {
-            "delivery_start": start.isoformat(),
-            "delivery_end": ok_end.isoformat(),
+            "delivery_start": "2026-01-01",
+            "delivery_end": "2026-03-31",
         },
     )
-    with pytest.raises(ArgumentValidationError, match="delivery_"):
+    with pytest.raises(ArgumentValidationError, match="inclusive"):
         validate_arguments(
             action,
             {
-                "delivery_start": start.isoformat(),
-                "delivery_end": bad_end.isoformat(),
+                "delivery_start": "2026-01-01",
+                "delivery_end": "2026-04-01",
             },
         )
     # Neither window → canonical default preserved (no DAVI injection / no error)
     cleaned = validate_arguments(action, {"branch": "01"})
     assert "scheduled_start" not in cleaned
     assert "delivery_start" not in cleaned
-    _ = ok  # silence lint
-    _ = bad
+
+
+def test_wave006_machine_load_partial_delivery_range_documents_existing_fill(monkeypatch):
+    """Open delivery bounds are not newly invented here.
+
+    When only one delivery_* field is sent, the generic validator still applies
+    its existing fill rules (other side ← today / same-day). This documents
+    current DAVI behavior vs canonical MachineLoadWindow open-boundary filter;
+    we do not invent a new open-range maxDays rule in this corrective pass.
+    """
+    from app.application.external_capabilities.dynamic_information import (
+        argument_validator as av,
+    )
+
+    monkeypatch.setattr(av, "_constraint_today", lambda: date(2026, 3, 1))
+    action = _action("get_production_machine_load_operations")
+    # delivery_end only → start filled as today (2026-03-01); inclusive span OK
+    cleaned = validate_arguments(action, {"delivery_end": "2026-03-31"})
+    assert cleaned["delivery_end"] == "2026-03-31"
+    # delivery_start only → end filled as start (zero-length) under existing rules
+    cleaned_start = validate_arguments(action, {"delivery_start": "2026-01-01"})
+    assert cleaned_start["delivery_start"] == "2026-01-01"
 
 
 def test_wave006_machine_load_page_size_bound():
@@ -752,28 +783,78 @@ def test_wave006_retrieval_collisions(query: str, forbidden_prefix: str, monkeyp
     assert not top.startswith(forbidden_prefix), (query, top)
 
 
-def test_wave006_bare_otd_not_hardwired_to_production(monkeypatch):
-    discovered = _discover("OTD", monkeypatch)
-    # Bare OTD must not be hardwired to Production. Legitimate multi-family ties
-    # (commercial/supplies/production) are acceptable ambiguity — do not force.
-    if discovered["candidate_count"] == 0:
-        return
-    ids = [c["action_id"] for c in discovered["candidates"]]
+@pytest.mark.parametrize(
+    ("query", "expected"),
+    [
+        ("OTD comercial", "get_sales_order_otd"),
+        ("OTD de pedidos de venda", "get_sales_order_otd"),
+        ("OTD de compras", "get_supplies_purchase_order_otd"),
+        ("OTD pedidos de compra", "get_supplies_purchase_order_otd"),
+        ("OTD suprimentos", "get_supplies_otd"),
+    ],
+)
+def test_wave006_qualified_otd_cross_family_regression(query: str, expected: str, monkeypatch):
+    discovered = _discover(query, monkeypatch)
+    assert discovered["candidate_count"] >= 1, query
+    top = discovered["candidates"][0]["action_id"]
+    assert top == expected, (query, top, [c["action_id"] for c in discovered["candidates"][:5]])
     production = {
         "get_on_time_delivery_pct",
         "get_production_otd",
         "get_production_otd_series",
     }
-    top = ids[0]
-    if top in production:
-        assert any(
-            i.startswith("get_sales_order_otd")
-            or i.startswith("get_supplies_otd")
-            or i.startswith("get_supplies_purchase_order_otd")
-            for i in ids
-        ), ids
+    assert top not in production
 
 
+def test_wave006_bare_otd_not_deterministic_production(monkeypatch):
+    """Bare OTD must not resolve deterministically to Production.
+
+    Governed via quarantine token ``otd`` owned only by matching multiword
+    aliases (OTD de produção / OTD comercial / OTD de compras / …).
+    """
+    discovered = _discover("OTD", monkeypatch)
+    production = {
+        "get_on_time_delivery_pct",
+        "get_production_otd",
+        "get_production_otd_series",
+    }
+    ids = [c["action_id"] for c in discovered.get("candidates") or []]
+    assert discovered["candidate_count"] == 0, (
+        "bare OTD must not deterministically resolve; expected zero candidates",
+        ids,
+    )
+    assert all(aid not in production for aid in ids)
+
+
+def test_wave006_bruto_quarantine_no_false_disable_of_prior_reads(monkeypatch):
+    """bruto/brutos quarantine must not wipe governed prior-53 family intents."""
+    probes = [
+        ("buscar produto 10080001", "search_products"),
+        ("estoque do produto 10080001", "get_product_stock"),
+        ("ROL comercial", "get_commercial_rol_summary"),
+        ("OTD comercial", "get_sales_order_otd"),
+        ("OTD de compras", "get_supplies_purchase_order_otd"),
+        ("resumo dos apontamentos", "get_production_appointments_summary"),
+    ]
+    for query, expected in probes:
+        discovered = _discover(query, monkeypatch)
+        assert discovered["candidate_count"] >= 1, query
+        assert discovered["candidates"][0]["action_id"] == expected, query
+
+    # Raw appointment intent remains blocked from summary.
+    raw = _discover("listar apontamentos brutos", monkeypatch)
+    if raw["candidate_count"] == 0:
+        return
+    assert raw["candidates"][0]["action_id"] != "get_production_appointments_summary"
+
+
+def test_wave006_coverage_decision_wording_mentions_machine_load_ops():
+    allow = load_external_read_allowlist()
+    reason = str(allow.get("coverageDecision", {}).get("reason") or "")
+    assert "machine-load" in reason.lower() or "machine load" in reason.lower()
+    assert "operator" in reason.lower() or "person" in reason.lower()
+    # Must not claim all OP line detail is excluded while machine-load exposes OP fields.
+    assert "exclude appointment/OP/operator line detail" not in reason
 
 def test_wave006_execute_projection_end_to_end(monkeypatch):
     set_actions_for_tests(_actions())

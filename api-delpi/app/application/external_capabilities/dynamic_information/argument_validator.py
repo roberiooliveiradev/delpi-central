@@ -250,7 +250,18 @@ def _validate_one_date_range_spec(
 
     if end < start:
         raise ArgumentValidationError(f"{end_field}: must not be before {start_field}")
-    if (end - start).days > max_days:
+    span_days = (end - start).days
+    day_count_mode = str(spec.get("dayCountMode") or "").strip().lower()
+    if day_count_mode == "inclusive":
+        # Inclusive calendar-day count: start..end with N days means (end-start).days + 1.
+        # Aligns with backends that enforce (end - start).days + 1 <= maxDays.
+        inclusive_days = span_days + 1
+        if inclusive_days > max_days:
+            raise ArgumentValidationError(
+                f"Date interval between {start_field} and {end_field} exceeds "
+                f"{max_days} inclusive days"
+            )
+    elif span_days > max_days:
         raise ArgumentValidationError(
             f"Date interval between {start_field} and {end_field} exceeds {max_days} days"
         )

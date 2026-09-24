@@ -7,7 +7,7 @@
   "coverageDecision": {
     "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-006-PRODUCTION-READ",
     "decision": "PROMOTE_PRODUCTION_OPERATIONAL_INTELLIGENCE_READ",
-    "reason": "Promote 10 Production Operational Intelligence READs (OEE, Production OTD, Machine Load, Appointments summary, Produced totals). Eligible READ 53→63. Model-safe projections exclude appointment/OP/operator line detail. MCP tools remain 2. Agent intelligence unchanged. GPT Actions deferred.",
+    "reason": "Promote 10 Production Operational Intelligence READs (OEE, Production OTD, Machine Load, Appointments summary, Produced totals). Eligible READ 53→63. Model-safe projections exclude OEE raw appointments, Production OTD raw OP lists, operator/person fields, and produced per-product detail; machine-load bounded operational queue (including production_order/operation fields) remains intentionally exposed. Ambiguous bare OTD is quarantine-governed so only qualified multiword aliases own Production/Commercial/Supplies OTD. MCP tools remain 2. Agent intelligence unchanged. GPT Actions deferred.",
     "previousDecision": {
       "taskId": "DAVI-REAL-USER-RETRIEVAL-REFINEMENT-COMMERCIAL-SUPPLIES-001",
       "decision": "REFINE_REAL_USER_RETRIEVAL_COMMERCIAL_SUPPLIES"
@@ -31,7 +31,8 @@
     "sql",
     "admin",
     "brutos",
-    "bruto"
+    "bruto",
+    "otd"
   ],
   "retrievalReadOnlyGuard": {
     "description": "Semantic READ-only discovery guard for explicit mutation requests. retrieval semantic guard only — NOT AuthZ, NOT business permission, NOT capability grant.",
@@ -2801,12 +2802,14 @@
           {
             "startField": "scheduled_start",
             "endField": "scheduled_end",
-            "maxDays": 90
+            "maxDays": 90,
+            "dayCountMode": "inclusive"
           },
           {
             "startField": "delivery_start",
             "endField": "delivery_end",
-            "maxDays": 90
+            "maxDays": 90,
+            "dayCountMode": "inclusive"
           }
         ]
       }
@@ -2860,12 +2863,14 @@
           {
             "startField": "scheduled_start",
             "endField": "scheduled_end",
-            "maxDays": 90
+            "maxDays": 90,
+            "dayCountMode": "inclusive"
           },
           {
             "startField": "delivery_start",
             "endField": "delivery_end",
-            "maxDays": 90
+            "maxDays": 90,
+            "dayCountMode": "inclusive"
           }
         ],
         "argumentLimits": {
