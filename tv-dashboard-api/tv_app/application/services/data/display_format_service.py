@@ -1013,8 +1013,11 @@ class DisplayFormatService:
 
         if block_type in {"text", "heading", "shape"}:
             cls._apply_text_display(out, block)
+            if block_type == "shape" and isinstance(block.get("efficiencyPin"), dict):
+                cls._apply_efficiency_pin_presentation(out, block)
         elif block_type == "kpi_view":
             cls._apply_kpi_display(out, block)
+            cls._apply_kpi_presentation(out, block)
         elif block_type == "table_view":
             cls._apply_table_display(out, block)
         elif block_type == "chart_view":
@@ -1049,7 +1052,9 @@ class DisplayFormatService:
                 "dataSourceId": sid,
                 "contentRuns": [{"text": "", "dataRef": dict(ref)} for ref in refs],
             }
-            out[sid] = cls.apply_to_resolved(dict(resolved), synthetic)
+            next_resolved = cls.apply_to_resolved(dict(resolved), synthetic)
+            cls._apply_canvas_display_series(next_resolved, refs)
+            out[sid] = next_resolved
         return out
 
     @classmethod
@@ -1099,6 +1104,7 @@ class DisplayFormatService:
             "contentRuns": [{"text": "", "dataRef": dict(ref)} for ref in refs],
         }
         cls._apply_text_display(resolved, synthetic)
+        cls._apply_canvas_display_series(resolved, refs)
 
     @classmethod
     def sanitize_contradictory_text_binding(
@@ -1186,6 +1192,18 @@ class DisplayFormatService:
             paints = [row for row in paints if row]
             if paints:
                 out["chartDisplayPoints"] = paints
+            if isinstance(chart.get("yAxisTicks"), list) and chart["yAxisTicks"]:
+                out["yAxisTicks"] = chart["yAxisTicks"]
+            if chart.get("effectiveGoal") is not None:
+                out["effectiveGoal"] = chart.get("effectiveGoal")
+            if isinstance(chart.get("gaugeModel"), dict):
+                out["gaugeModel"] = chart["gaugeModel"]
+        if isinstance(resolved.get("kpiPresentation"), dict):
+            out["kpiPresentation"] = resolved["kpiPresentation"]
+        if isinstance(resolved.get("efficiencyPinPresentation"), dict):
+            out["efficiencyPinPresentation"] = resolved["efficiencyPinPresentation"]
+        if isinstance(resolved.get("displaySeries"), dict):
+            out["displaySeries"] = resolved["displaySeries"]
         return out
 
     @classmethod
@@ -1336,6 +1354,302 @@ class DisplayFormatService:
             resolved["kpiMetrics"] = next_metrics
 
     @classmethod
+    def _sparkline_points_from_resolved(cls, resolved: dict[str, Any]) -> list[float]:
+        chart = resolved.get("chart") if isinstance(resolved.get("chart"), dict) else {}
+        series = chart.get("series") if isinstance(chart.get("series"), list) else []
+        points: list[Any] = []
+        if series and isinstance(series[0], dict) and isinstance(series[0].get("points"), list):
+            points = series[0]["points"]
+        elif isinstance(chart.get("points"), list):
+            points = chart["points"]
+        out: list[float] = []
+        for point in points:
+            if not isinstance(point, dict):
+                continue
+            n = cls._as_finite_number(point.get("value"))
+            if n is not None:
+                out.append(n)
+        return out
+
+    @classmethod
+    def _effective_kpi_context_options(
+        cls,
+        options: dict[str, Any],
+        resolved: dict[str, Any],
+        metric_override: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Port of resolveKpiOptionsWithAutoContext — server owns auto flags."""
+        mode = str(options.get("contextMode") or "off")
+        if mode != "auto":
+            return dict(options)
+        points = cls._sparkline_points_from_resolved(resolved)
+        has_series = len(points) >= 2
+        target = metric_override.get("target", options.get("target"))
+        has_target = cls._as_finite_number(target) is not None
+        next_opts = dict(options)
+        variant = next_opts.get("variant") or "hero"
+        next_opts["variant"] = variant
+        icon_name = str(next_opts.get("iconName") or "").strip()
+        if icon_name and next_opts.get("showIcon") is not False:
+            next_opts["showIcon"] = True
+        else:
+            next_opts["showIcon"] = False
+            next_opts["iconName"] = None
+        prefer_scorecard = variant == "scorecard" or (has_target and not has_series)
+        if prefer_scorecard and has_target:
+            next_opts["showProgress"] = True
+            next_opts["showSparkline"] = False
+            next_opts["showComparison"] = True
+            if next_opts.get("comparisonMode") in (None, "none"):
+                next_opts["comparisonMode"] = "target"
+            return next_opts
+        if has_series:
+            next_opts["showSparkline"] = True
+            next_opts["showProgress"] = False
+            next_opts["showComparison"] = True
+            if next_opts.get("comparisonMode") in (None, "none"):
+                next_opts["comparisonMode"] = "previous"
+            return next_opts
+        if has_target:
+            next_opts["showProgress"] = True
+            next_opts["showSparkline"] = False
+            next_opts["showComparison"] = True
+            if next_opts.get("comparisonMode") in (None, "none"):
+                next_opts["comparisonMode"] = "target"
+            return next_opts
+        next_opts["showSparkline"] = False
+        next_opts["showProgress"] = False
+        next_opts["showComparison"] = False
+        next_opts["comparisonMode"] = "none"
+        return next_opts
+
+    @classmethod
+    def _format_signed_pct(cls, pct: float) -> str:
+        abs_pct = abs(pct)
+        text = cls.format_value(
+            abs_pct,
+            {
+                "category": "percent",
+                "presetId": "percent",
+                "decimalPlaces": 1 if abs_pct >= 10 else 2,
+            },
+        )
+        if pct > 0:
+            return f"+{text}"
+        if pct < 0:
+            return f"−{text}"
+        return text
+
+    @classmethod
+    def _apply_kpi_presentation(cls, resolved: dict[str, Any], block: dict[str, Any]) -> None:
+        """G11/G28 — materialize kpiPresentation for paint-only MFE."""
+        options_raw = (
+            block.get("kpiOptions") if isinstance(block.get("kpiOptions"), dict) else {}
+        )
+        projection = (
+            block.get("kpiProjection") if isinstance(block.get("kpiProjection"), dict) else {}
+        )
+        metrics_cfg = (
+            projection.get("metrics") if isinstance(projection.get("metrics"), list) else []
+        )
+        primary_override: dict[str, Any] = {}
+        if metrics_cfg and isinstance(metrics_cfg[0], dict):
+            primary_override = metrics_cfg[0]
+        options = cls._effective_kpi_context_options(options_raw, resolved, primary_override)
+        sparkline = cls._sparkline_points_from_resolved(resolved)
+        kpi = resolved.get("kpi") if isinstance(resolved.get("kpi"), dict) else {}
+        numeric = cls._as_finite_number(kpi.get("value"))
+        value_display = (
+            kpi.get("displayValue")
+            if isinstance(kpi.get("displayValue"), str)
+            else EMPTY_DISPLAY
+        )
+
+        mode = (
+            primary_override.get("comparisonMode")
+            or options.get("comparisonMode")
+            or "none"
+        )
+        target = primary_override.get("target", options.get("target"))
+        target_n = cls._as_finite_number(target)
+        higher_is_better = primary_override.get(
+            "higherIsBetter", options.get("higherIsBetter", True)
+        )
+        show_comparison = options.get("showComparison") is True
+        show_progress = options.get("showProgress") is True
+
+        baseline: float | None = None
+        vs_label = "vs período"
+        if mode == "target" and target_n is not None:
+            baseline = target_n
+            vs_label = "vs meta"
+        elif mode == "previous" and len(sparkline) >= 2:
+            baseline = sparkline[-2]
+            vs_label = "vs período"
+
+        comparison_display: str | None = None
+        comparison_tone: str | None = None
+        if show_comparison and numeric is not None and baseline is not None and baseline != 0:
+            delta_pct = ((numeric - baseline) / abs(baseline)) * 100
+            favorable = delta_pct >= 0 if higher_is_better else delta_pct <= 0
+            arrow = "▲" if delta_pct > 0 else "▼" if delta_pct < 0 else "●"
+            label = str(options.get("comparisonLabel") or "").strip()
+            comparison_display = label or f"{arrow} {cls._format_signed_pct(delta_pct)} {vs_label}"
+            comparison_tone = (
+                "neutral" if abs(delta_pct) < 0.05 else ("positive" if favorable else "negative")
+            )
+        elif show_comparison and str(options.get("comparisonLabel") or "").strip():
+            comparison_display = str(options.get("comparisonLabel")).strip()
+            comparison_tone = "neutral"
+
+        progress_pct: float | None = None
+        if show_progress and numeric is not None and target_n is not None and target_n != 0:
+            progress_pct = (numeric / target_n) * 100
+
+        presentation: dict[str, Any] = {
+            "valueDisplay": value_display,
+            "comparisonDisplay": comparison_display,
+            "comparisonTone": comparison_tone,
+            "progressPct": progress_pct,
+            "sparklinePoints": sparkline if options.get("showSparkline") else None,
+            "showComparison": show_comparison,
+            "showProgress": show_progress,
+            "showSparkline": options.get("showSparkline") is True,
+        }
+        resolved["kpiPresentation"] = presentation
+
+    @classmethod
+    def _apply_canvas_display_series(
+        cls,
+        resolved: dict[str, Any],
+        refs: list[dict[str, Any]],
+    ) -> None:
+        """G10 — displaySeries[field] for canvas spark/list cells."""
+        series_map: dict[str, list[float]] = {}
+        for ref in refs:
+            if not isinstance(ref, dict):
+                continue
+            field = str(ref.get("field") or "").strip()
+            if not field:
+                continue
+            agg = str(ref.get("aggregation") or "").strip().lower()
+            # Spark cells request list aggregation or are sparkline kind.
+            if agg not in {"list", "sparkline", ""} and agg != "list":
+                # Still materialize list projection for any field used as spark.
+                pass
+            projected = cls.resolve_projected_field(resolved, field, "list")
+            if projected.get("kind") != "list":
+                continue
+            points: list[float] = []
+            for v in projected.get("values") or []:
+                n = cls._as_finite_number(v)
+                if n is not None:
+                    points.append(n)
+            if len(points) >= 2:
+                series_map[field] = points[:64]
+        if series_map:
+            existing = (
+                resolved.get("displaySeries")
+                if isinstance(resolved.get("displaySeries"), dict)
+                else {}
+            )
+            resolved["displaySeries"] = {**existing, **series_map}
+
+    @classmethod
+    def _apply_efficiency_pin_presentation(
+        cls, resolved: dict[str, Any], block: dict[str, Any]
+    ) -> None:
+        """G25 — bands + formatted % for EfficiencyPin paint."""
+        binding = block.get("efficiencyPin")
+        if not isinstance(binding, dict):
+            return
+        work_center = str(binding.get("workCenter") or "").strip()
+        match_field = (
+            str(binding.get("matchField") or "work_center").strip() or "work_center"
+        )
+        value_field = (
+            str(binding.get("valueField") or "efficiency_pct").strip() or "efficiency_pct"
+        )
+        bands_raw = binding.get("bands") if isinstance(binding.get("bands"), dict) else {}
+        good_min = cls._as_finite_number(bands_raw.get("goodMinPct"))
+        warn_min = cls._as_finite_number(bands_raw.get("warnMinPct"))
+        valid_max = cls._as_finite_number(bands_raw.get("validMaxPct"))
+        if good_min is None:
+            good_min = 95.0
+        if warn_min is None:
+            warn_min = 50.0
+        if valid_max is None:
+            valid_max = 199.0
+
+        rows: list[dict[str, Any]] = []
+        table = resolved.get("table")
+        if isinstance(table, dict) and isinstance(table.get("rows"), list):
+            rows = [r for r in table["rows"] if isinstance(r, dict)]
+        if not rows:
+            preview = resolved.get("preview")
+            if isinstance(preview, dict) and isinstance(preview.get("rows"), list):
+                rows = [r for r in preview["rows"] if isinstance(r, dict)]
+        if not rows and isinstance(resolved.get("data"), list):
+            rows = [r for r in resolved["data"] if isinstance(r, dict)]
+
+        row: dict[str, Any] | None = None
+        target = work_center.casefold()
+        if target:
+            for candidate in rows:
+                raw = candidate.get(match_field)
+                value = str(raw).strip() if raw is not None else ""
+                if value.casefold() == target:
+                    row = candidate
+                    break
+
+        efficiency_pct = cls._as_finite_number(row.get(value_field) if row else None)
+        appointment = cls._as_finite_number(row.get("appointment_count") if row else None)
+
+        if not work_center:
+            status = "unknown"
+        elif work_center and not row and resolved:
+            status = "unknown"
+        elif efficiency_pct is None:
+            status = "unknown"
+        elif efficiency_pct < 0 or efficiency_pct > valid_max:
+            status = "verify"
+        elif efficiency_pct >= good_min:
+            status = "good"
+        elif efficiency_pct >= warn_min:
+            status = "warn"
+        else:
+            status = "bad"
+
+        colors = {
+            "good": "#22c55e",
+            "warn": "#eab308",
+            "bad": "#ef4444",
+            "verify": "#f97316",
+            "unknown": "#94a3b8",
+        }
+        label = work_center or str(block.get("content") or "").strip() or "CT"
+        pct_spec = {"category": "percent", "decimalPlaces": 1}
+        display_pct = (
+            cls.format_value(efficiency_pct, pct_spec)
+            if efficiency_pct is not None
+            else EMPTY_DISPLAY
+        )
+        resolved["efficiencyPinPresentation"] = {
+            "status": status,
+            "color": colors.get(status, colors["unknown"]),
+            "efficiencyPct": efficiency_pct,
+            "efficiencyPctDisplay": display_pct,
+            "workCenter": work_center,
+            "appointmentCount": appointment,
+            "label": label,
+            "bands": {
+                "goodMinPct": good_min,
+                "warnMinPct": warn_min,
+                "validMaxPct": valid_max,
+            },
+        }
+
+    @classmethod
     def _apply_table_display(cls, resolved: dict[str, Any], block: dict[str, Any]) -> None:
         table = resolved.get("table")
         if not isinstance(table, dict):
@@ -1477,9 +1791,103 @@ class DisplayFormatService:
                     next_series.append(next_entry)
                 next_chart["series"] = next_series
 
-        # G24 — semantic axis ticks always (values + display labels). Geometry stays in MFE.
-        cls._apply_chart_axis_ticks(next_chart, value_spec)
+        # G24/G26/G34 — ticks + effectiveGoal; domain includes meta.
+        effective_goal = cls._resolve_effective_chart_goal(options, next_chart)
+        next_chart["effectiveGoal"] = effective_goal
+        cls._apply_chart_axis_ticks(next_chart, value_spec, goal=effective_goal)
+        chart_type = str(block.get("chartType") or next_chart.get("chartType") or "").lower()
+        if chart_type == "gauge":
+            next_chart["gaugeModel"] = cls._build_gauge_model(
+                resolved, next_chart, options, effective_goal
+            )
         resolved["chart"] = next_chart
+
+    @classmethod
+    def _resolve_effective_chart_goal(
+        cls,
+        options: dict[str, Any],
+        chart: dict[str, Any],
+    ) -> float | None:
+        """G26 — manual goalLineValue > projectedGoal."""
+        manual = cls._as_finite_number(options.get("goalLineValue"))
+        if manual is not None:
+            return manual
+        return cls._as_finite_number(chart.get("projectedGoal"))
+
+    @classmethod
+    def _build_gauge_model(
+        cls,
+        resolved: dict[str, Any],
+        chart: dict[str, Any],
+        options: dict[str, Any],
+        goal: float | None,
+    ) -> dict[str, Any]:
+        """G27 — paint-ready gauge scalars + display strings."""
+        value = cls._as_finite_number(
+            (resolved.get("kpi") or {}).get("value") if isinstance(resolved.get("kpi"), dict) else None
+        )
+        if value is None:
+            for point in reversed(chart.get("points") or []):
+                if isinstance(point, dict):
+                    value = cls._as_finite_number(point.get("value"))
+                    if value is not None:
+                        break
+        if value is None:
+            for entry in chart.get("series") or []:
+                if not isinstance(entry, dict):
+                    continue
+                for point in reversed(entry.get("points") or []):
+                    if isinstance(point, dict):
+                        value = cls._as_finite_number(point.get("value"))
+                        if value is not None:
+                            break
+                if value is not None:
+                    break
+        label = (
+            str(
+                (resolved.get("kpi") or {}).get("label")
+                if isinstance(resolved.get("kpi"), dict)
+                else ""
+            ).strip()
+            or str(resolved.get("label") or "").strip()
+            or str(options.get("seriesName") or options.get("title") or "").strip()
+            or "Valor"
+        )
+        title = (
+            str(options.get("title") or resolved.get("label") or label).strip() or label
+        )
+        accent = str(options.get("seriesColor") or "").strip() or None
+        import math
+
+        max_from_goal = 100.0
+        if goal is not None and goal > 0:
+            max_from_goal = max(100.0, float(math.ceil(goal)))
+        max_from_value = max_from_goal
+        if value is not None and value > max_from_goal:
+            max_from_value = float(math.ceil(value))
+        value_spec = cls.resolve_spec(
+            display_format=options.get("displayValueFormat"),
+            legacy_format=str(options.get("valueFormat") or "") or None,
+            decimal_places=options.get("decimalPlaces"),
+            kind="chart",
+        )
+        return {
+            "value": value,
+            "goal": goal,
+            "min": 0.0,
+            "max": max_from_value if max_from_value > 0 else 100.0,
+            "label": label,
+            "unit": "%",
+            "accentColor": accent,
+            "showTitle": options.get("showTitle") is not False,
+            "title": title,
+            "valueDisplay": cls.format_value(value, value_spec)
+            if value is not None
+            else EMPTY_DISPLAY,
+            "goalDisplay": cls.format_value(goal, value_spec)
+            if goal is not None
+            else None,
+        }
 
     @classmethod
     def _resolve_chart_tick_values(cls, data_min: float, data_max: float, count: int = 5) -> list[float]:
@@ -1523,6 +1931,8 @@ class DisplayFormatService:
         cls,
         chart: dict[str, Any],
         value_spec: dict[str, Any] | None,
+        *,
+        goal: float | None = None,
     ) -> None:
         values: list[float] = []
         for point in chart.get("points") or []:
@@ -1538,6 +1948,8 @@ class DisplayFormatService:
                     n = cls._as_finite_number(point.get("value"))
                     if n is not None:
                         values.append(n)
+        if goal is not None:
+            values.append(goal)
         if not values:
             return
         data_min = min(values)

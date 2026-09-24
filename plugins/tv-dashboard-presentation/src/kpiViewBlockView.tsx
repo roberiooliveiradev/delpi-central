@@ -14,7 +14,6 @@ import {
   withDataBlockLoadingClass,
 } from "./dataBlockRefreshChrome";
 import { resolveDataBlockErrorText } from "./resolveDataBlockErrorText";
-import { applyViewProjection } from "./viewProjection";
 import { resolveKpiViewPresentation } from "./resolveKpiPresentation";
 import { applyTableViewDisplayLimits } from "./tableViewLimits";
 import { resolveTableColumns } from "./tvDataPresentation";
@@ -75,9 +74,8 @@ export function KpiViewBlockView({
   loading = false,
   interaction = null,
 }: Props) {
-  const resolved = applyViewProjection(block.resolved, {
-    kpiProjection: block.kpiProjection,
-  });
+  // FE-BE-002: paint uses enrich bake only — no client re-projection (E4).
+  const resolved = block.resolved;
   const kpiInteraction = interactive ? interaction : null;
 
   const errorText = resolveDataBlockErrorText(resolved);

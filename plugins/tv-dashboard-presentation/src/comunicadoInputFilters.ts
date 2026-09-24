@@ -107,6 +107,11 @@ function blockZIndex(block: ComunicadoBlock): number {
  * Contribuições dos blocos `input` (e overrides de runtime) para merge canônico.
  * Ordem: zIndex ascendente → último (maior z) vence na mesma chave/escopo.
  */
+/**
+ * Contribuições de blocos `input` para fingerprint de authoring (G29).
+ * Defaults/filtros efetivos de paint vêm de `resolved.effectiveParams` no enrich —
+ * não usar este merge como autoridade de apresentação.
+ */
 export function collectInputFilterContributions(
   blocks: ComunicadoBlock[] | undefined | null,
   runtimeOverrides?: InputFilterContributions | null,
@@ -234,6 +239,10 @@ export function listFetchableSourceIds(blocks: ComunicadoBlock[] | undefined | n
 }
 
 /** Merge shallow de filtros (direita ganha). Filial vazia limpa aliases. */
+/**
+ * Merge shallow de camadas de filtro — AUTHORING_SPEC / fingerprint only (G29).
+ * Paint/runtime uses backend `effectiveParams`; do not treat this as presentation SoT.
+ */
 export function mergeFilterLayers(
   ...layers: Array<ComunicadoDataFilters | undefined | null>
 ): ComunicadoDataFilters {

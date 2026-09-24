@@ -59,11 +59,14 @@ describe("ChartViewBlockView", () => {
         series: [{ field: "total_qty", label: "Quantidade total", aggregation: "sum" }],
       },
       resolved: {
+        // Enrich bake: empty encoding clears chart points; KPI envelope must not paint as series.
         serverProjectionApplied: true,
-        kpi: { value: 5, label: "Buckets quantidade" },
+        serverDisplayApplied: true,
+        kpi: { value: 5, label: "Buckets quantidade", displayValue: "5" },
         kpiMetrics: [{ field: "buckets_count", label: "Buckets quantidade", value: 5 }],
         chart: {
-          points: [{ label: "Buckets quantidade", value: 5 }],
+          points: [],
+          series: [],
           chartType: "bar",
         },
         table: { columns: [], rows: [] },

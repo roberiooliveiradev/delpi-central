@@ -161,7 +161,9 @@ export function ChartAxisY({
                 style={axisTypography}
               >
                 {layout.tickDisplayLabels?.get(tick) ??
-                  formatChartTick(tick, valueFormat, decimalPlaces, displayValueFormat)}
+                  (layout.tickDisplayLabels
+                    ? "—"
+                    : formatChartTick(tick, valueFormat, decimalPlaces, displayValueFormat))}
               </text>
             );
           })
@@ -182,7 +184,9 @@ export function ChartAxisY({
                 style={axisTypography}
               >
                 {layout.tickDisplayLabels?.get(tick) ??
-                  formatChartTick(tick, valueFormat, decimalPlaces, displayValueFormat)}
+                  (layout.tickDisplayLabels
+                    ? "—"
+                    : formatChartTick(tick, valueFormat, decimalPlaces, displayValueFormat))}
               </text>
             );
           })

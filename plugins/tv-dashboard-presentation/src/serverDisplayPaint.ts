@@ -10,6 +10,10 @@ import type {
  * Gate E5: `serverDisplayPaint.test.ts` + `textViewProjection.test.ts`
  * (serverDisplayApplied) documentam o contrato paint-only.
  */
+/**
+ * PAINT-only gate (G32): true when enrich stamped display* / serverDisplayApplied
+ * and presentation is not stale. Does not perform formatting or projection.
+ */
 export function hasServerDisplayPaint(
   resolved?: ComunicadoDataResolved | null,
 ): boolean {

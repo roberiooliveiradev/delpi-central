@@ -4,7 +4,6 @@ import type { CSSProperties } from "react";
 import { sanitizeDataSourceStyle } from "./comunicadoHelpers";
 import { formatDataSourceBindingSummary } from "./formatDataSourceBindingSummary";
 import type { ComunicadoDataFilters, ComunicadoDataSourceBlock } from "./comunicadoTypes";
-import { formatNumber } from "./nativeFormat";
 import { resolveDataBlockErrorText } from "./resolveDataBlockErrorText";
 
 type Props = {
@@ -49,13 +48,15 @@ export function DataSourceBlockView({
     labelForValue: labelForParamValue,
   });
   const paintStyle = resolveDataSourcePaintStyle(block);
-  const kpiRaw = block.resolved?.kpi?.value;
   const kpiDisplay =
-    kpiRaw != null && kpiRaw !== ""
-      ? typeof kpiRaw === "number"
-        ? formatNumber(kpiRaw)
-        : String(kpiRaw)
-      : null;
+    typeof block.resolved?.kpi?.displayValue === "string"
+      ? block.resolved.kpi.displayValue
+      : block.resolved?.serverDisplayApplied === true ||
+          block.resolved?.presentationStale === true
+        ? block.resolved?.kpi?.value != null && block.resolved.kpi.value !== ""
+          ? "—"
+          : null
+        : null;
 
   const errorText = resolveDataBlockErrorText(block.resolved);
   if (errorText) {

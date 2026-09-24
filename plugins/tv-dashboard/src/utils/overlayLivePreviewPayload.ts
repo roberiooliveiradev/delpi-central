@@ -4,6 +4,34 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return value != null && typeof value === "object" && !Array.isArray(value);
 }
 
+/**
+ * G8 — filmstrip/overlay: never paint live semantics as current when stale.
+ * Prefer coherent enrich resolved; mark presentationStale when live layout diverges.
+ */
+export function pickOverlayResolved(
+  liveBlock: Record<string, unknown>,
+  serverBlock: Record<string, unknown>,
+): unknown {
+  const live = isRecord(liveBlock.resolved) ? liveBlock.resolved : null;
+  const server = isRecord(serverBlock.resolved) ? serverBlock.resolved : null;
+  if (!live && !server) return undefined;
+  if (!live) return server;
+  if (live.presentationStale === true) {
+    if (server && server.presentationStale !== true) {
+      return { ...server, presentationStale: true };
+    }
+    return live;
+  }
+  if (
+    live.serverDisplayApplied !== true &&
+    server?.serverDisplayApplied === true &&
+    server.presentationStale !== true
+  ) {
+    return server;
+  }
+  return live ?? server;
+}
+
 /** URL de mídia do link público — carregável sem JWT no browser. */
 export function isPublicPresentMediaUrl(url: string): boolean {
   return /\/public\/present\/[^/]+\/media\//i.test(url.trim());
@@ -63,8 +91,8 @@ function mergeLiveBlocksOntoServerData(
             : { ...server, ...block };
         return {
           ...base,
-          // Live manda layout/binding; resolved do servidor se o live ainda não tem.
-          resolved: block.resolved ?? server.resolved,
+          // G8: layout from live; resolved only when coherent with enrich (not stale).
+          resolved: pickOverlayResolved(block, server),
         };
       })
     : serverBlocks;

@@ -277,6 +277,10 @@ export function planDataPreviewRefresh(params: {
 }
 
 /** @deprecated Use resolvePreviewRefreshSourceIds */
+/**
+ * @deprecated G31 — dead for production paint; fingerprint + presentationStale cover preview.
+ * Kept for unit tests / migration reference only.
+ */
 export function resolveStaleSourceIdsForPreviewChange(
   params: Parameters<typeof resolvePreviewRefreshSourceIds>[0],
 ): string[] {

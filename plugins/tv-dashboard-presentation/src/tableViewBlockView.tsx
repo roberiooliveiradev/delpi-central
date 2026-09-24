@@ -8,7 +8,6 @@ import {
   withDataBlockLoadingClass,
 } from "./dataBlockRefreshChrome";
 import { resolveDataBlockErrorText } from "./resolveDataBlockErrorText";
-import { applyViewProjection } from "./viewProjection";
 import { resolveTableColumns } from "./tvDataPresentation";
 
 type Props = {
@@ -47,9 +46,8 @@ export function TableViewBlockView({
   loading = false,
   interaction = null,
 }: Props) {
-  const resolved = applyViewProjection(block.resolved, {
-    tableProjection: block.tableProjection,
-  });
+  // FE-BE-002: paint uses enrich bake only — no client re-projection (E4).
+  const resolved = block.resolved;
   const label = tablePresetLabel(block.tablePreset);
   const tableInteraction = interactive ? interaction : null;
 
@@ -113,12 +111,23 @@ export function TableViewBlockView({
     Array.isArray(displayRows) &&
     displayRows.length > 0 &&
     displayRows.length === allRows.length;
+  const paintOnly =
+    resolved.serverDisplayApplied === true || resolved.presentationStale === true;
   const paintRows = useServerDisplayRows
     ? allRows.map((row, index) => {
         const painted = displayRows![index] ?? {};
         return { ...row, ...painted };
       })
-    : allRows;
+    : paintOnly
+      ? allRows.map((row) => {
+          const next: Record<string, unknown> = { ...row };
+          for (const key of Object.keys(row)) {
+            const v = row[key];
+            next[key] = typeof v === "string" ? v : "—";
+          }
+          return next;
+        })
+      : allRows;
   const fromResolved = resolveTableColumns(resolved, allRows);
   const fromProjection = projectionColumns(block);
   const allColumns = fromResolved.length > 0 ? fromResolved : fromProjection;
@@ -129,7 +138,7 @@ export function TableViewBlockView({
     const projected = projectionByKey.get(column.key);
     const widthPct =
       projected?.widthPct != null && projected.widthPct > 0 ? projected.widthPct : undefined;
-    if (useServerDisplayRows) {
+    if (useServerDisplayRows || paintOnly) {
       // displayRows already formatted — neutralize client format so paint is paint-only.
       return {
         ...column,
@@ -147,13 +156,14 @@ export function TableViewBlockView({
       ...(projected?.label?.trim() ? { label: projected.label } : {}),
     };
   });
-  const tableOptions = useServerDisplayRows
-    ? {
-        ...resolveTableDisplayOptions(block.tableOptions, block.tablePreset, resolved),
-        displayValueFormat: undefined,
-        valueFormat: "auto" as const,
-      }
-    : resolveTableDisplayOptions(block.tableOptions, block.tablePreset, resolved);
+  const tableOptions =
+    useServerDisplayRows || paintOnly
+      ? {
+          ...resolveTableDisplayOptions(block.tableOptions, block.tablePreset, resolved),
+          displayValueFormat: undefined,
+          valueFormat: "auto" as const,
+        }
+      : resolveTableDisplayOptions(block.tableOptions, block.tablePreset, resolved);
 
   return (
     <div

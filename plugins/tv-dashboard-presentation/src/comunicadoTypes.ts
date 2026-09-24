@@ -694,6 +694,35 @@ export type ComunicadoDataResolved = {
   kpi?: { value?: unknown; label?: string; displayValue?: string };
   /** Métricas escalares disponíveis (multi-campo). */
   kpiMetrics?: ComunicadoDataKpiMetric[];
+  /** G11/G28 — comparação/spark/progress materializados no enrich. */
+  kpiPresentation?: {
+    valueDisplay?: string;
+    comparisonDisplay?: string | null;
+    comparisonTone?: "positive" | "negative" | "neutral";
+    progressPct?: number | null;
+    sparklinePoints?: number[] | null;
+    showComparison?: boolean;
+    showProgress?: boolean;
+    showSparkline?: boolean;
+  };
+  /** G25 — pin CT com % formatada no enrich. */
+  efficiencyPinPresentation?: {
+    status?: string;
+    color?: string;
+    efficiencyPct?: number | null;
+    efficiencyPctDisplay?: string;
+    workCenter?: string;
+    appointmentCount?: number | null;
+    label?: string;
+    bands?: { goodMinPct?: number; warnMinPct?: number; validMaxPct?: number };
+  };
+  /** G10 — séries numéricas por campo (canvas spark/list). */
+  displaySeries?: Record<string, number[]>;
+  /** G6/G23 — params após defaults + dateRangePreset. */
+  effectiveParams?: Record<string, unknown>;
+  requestedParams?: Record<string, unknown>;
+  resolvedRouteLabel?: string;
+  fieldLabelsEffective?: Record<string, string>;
   chart?: {
     points?: ComunicadoChartPoint[];
     chartType?: "line" | "bar";
@@ -710,6 +739,22 @@ export type ComunicadoDataResolved = {
      * Precedência no paint: `goalLineValue` manual > `projectedGoal`.
      */
     projectedGoal?: number | null;
+    /** Meta efetiva pós-enrich (G26) — paint não re-resolve. */
+    effectiveGoal?: number | null;
+    /** Modelo velocímetro materializado no enrich (G27). */
+    gaugeModel?: {
+      value?: number | null;
+      goal?: number | null;
+      min?: number;
+      max?: number;
+      label?: string;
+      unit?: string;
+      accentColor?: string;
+      showTitle?: boolean;
+      title?: string;
+      valueDisplay?: string;
+      goalDisplay?: string | null;
+    };
     /** Ticks semânticos do eixo Y (backend — G24). Geometry no MFE. */
     yAxisTicks?: Array<{ value: number; displayLabel: string }>;
   };

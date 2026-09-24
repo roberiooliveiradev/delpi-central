@@ -202,8 +202,17 @@ export function resolveCanvasTableCellDisplay(
   const wantsSeries =
     normalized.kind === "sparkline" || ref.aggregation === "list";
   if (wantsSeries) {
-    const projected = resolveProjectedField(resolved, ref.field, "list");
-    if (projected.kind === "empty") {
+    const series =
+      (resolved?.displaySeries?.[ref.field] as number[] | undefined) ??
+      (() => {
+        const projected = resolveProjectedField(resolved, ref.field, "list");
+        if (projected.kind === "empty") return null;
+        return projected.values
+          .map((v) => parseProjectionNumber(v))
+          .filter((n): n is number => n != null)
+          .slice(0, CANVAS_TABLE_SPARKLINE_MAX_POINTS);
+      })();
+    if (!series || series.length === 0) {
       return {
         text: normalized.text?.trim() || "—",
         series: normalized.series,
@@ -211,22 +220,11 @@ export function resolveCanvasTableCellDisplay(
         fromData: true,
       };
     }
-    const series = projected.values
-      .map((v) => parseProjectionNumber(v))
-      .filter((n): n is number => n != null)
-      .slice(0, CANVAS_TABLE_SPARKLINE_MAX_POINTS);
     const anchor = series[series.length - 1] ?? null;
     const serverText = preferServerDisplayRunText(resolved, ref.field);
     const displayText =
       serverText ??
-      (resolved?.serverDisplayApplied === true || resolved?.presentationStale === true
-        ? normalized.text?.trim() || "—"
-        : anchor != null
-          ? formatTextProjectionValue(anchor, ref.format ?? "number", {
-              decimalPlaces: ref.decimalPlaces,
-              displayFormat: ref.displayFormat ?? normalized.displayFormat,
-            })
-          : normalized.text?.trim() || "—");
+      (normalized.text?.trim() || "—");
     const tone = resolveTextDataRefValue(
       resolved,
       { ...ref, aggregation: "first" },

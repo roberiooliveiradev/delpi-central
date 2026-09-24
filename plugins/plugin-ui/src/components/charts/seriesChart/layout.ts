@@ -58,7 +58,7 @@ export type SeriesChartLayout = {
   /** `horizontal` = categoria no Y, valor no X (barras). */
   orientation: SeriesChartOrientation;
   ticks: number[];
-  /** Labels semânticos do backend por tick value (G24). Ausente = formatChartTick no paint. */
+  /** Labels semânticos do backend por tick value (G24). Present = never formatChartTick. */
   tickDisplayLabels?: Map<number, string>;
   axisMin: number;
   axisMax: number;
@@ -775,12 +775,15 @@ export function buildSeriesChartLayout(input: BuildSeriesChartLayoutInput): Seri
   const valueTickLabels =
     orientation === "vertical" && showYAxisLabels
       ? ticks.map((tick) =>
-          formatChartTick(
-            tick,
-            input.valueFormat ?? "auto",
-            input.decimalPlaces,
-            input.displayValueFormat,
-          ),
+          tickDisplayLabels?.get(tick) ??
+          (tickDisplayLabels
+            ? "—"
+            : formatChartTick(
+                tick,
+                input.valueFormat ?? "auto",
+                input.decimalPlaces,
+                input.displayValueFormat,
+              )),
         )
       : [];
   const valueAxisLeftPad =

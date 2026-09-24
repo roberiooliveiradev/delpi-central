@@ -15,6 +15,9 @@ from tv_app.application.services.data.tv_data_param_defaults_service import (
     apply_catalog_param_defaults,
     schema_param_default,
 )
+from tv_app.application.services.tv_date_range_preset_service import (
+    apply_date_range_preset,
+)
 from tv_app.application.services.data.tv_data_param_validation_service import (
     assert_merged_route_params,
 )
@@ -741,6 +744,27 @@ def _effective_route_params(
     return apply_catalog_param_defaults(
         merged_params if isinstance(merged_params, dict) else {},
         route_info if isinstance(route_info, dict) else {},
+    )
+
+
+def _effective_params_for_presentation(
+    merged_params: dict[str, Any] | None,
+    route_info: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """Merge + catalog defaults + dateRangePreset expand — same order as operational gateway.
+
+    Used for contextValues / effectiveParams on resolved (G6/G23). Fetch already expands
+    via gateway; metadata must not use raw merged_params alone.
+    """
+    route = route_info if isinstance(route_info, dict) else {}
+    with_defaults = _effective_route_params(merged_params, route)
+    schema = route.get("paramSchema") if isinstance(route.get("paramSchema"), dict) else {}
+    strategy = str(route.get("paramStrategy") or "direct")
+    return apply_date_range_preset(
+        with_defaults,
+        schema_keys=schema,
+        date_range_keys=route.get("dateRangeKeys"),
+        strategy=strategy,
     )
 
 
@@ -1528,16 +1552,38 @@ class ComunicadoDataEnrichmentService:
                     base_resolved,
                     merged,
                 )
-                merged["resolved"] = DisplayFormatService.apply_to_resolved(
+                next_resolved = DisplayFormatService.apply_to_resolved(
                     projected,
                     merged,
                 )
             else:
-                merged["resolved"] = DisplayFormatService.apply_to_resolved(
+                next_resolved = DisplayFormatService.apply_to_resolved(
                     dict(base_resolved),
                     merged,
                 )
                 merged["serverTextProjectionApplied"] = True
+            # G12: views inherit authoritative route/field labels from source enrich.
+            for key in (
+                "resolvedRouteLabel",
+                "fieldLabelsEffective",
+                "effectiveParams",
+                "requestedParams",
+                "contextValues",
+                "contextFields",
+                "fields",
+                "projectableFields",
+            ):
+                if key in base_resolved and key not in next_resolved:
+                    next_resolved[key] = base_resolved[key]
+            # Prefer live catalog label stamped on data_source block.
+            source_block_label = None
+            for src in blocks:
+                if str(src.get("id") or "") == source_id:
+                    source_block_label = src.get("resolvedRouteLabel")
+                    break
+            if isinstance(source_block_label, str) and source_block_label.strip():
+                next_resolved["resolvedRouteLabel"] = source_block_label.strip()
+            merged["resolved"] = next_resolved
             linked.append(merged)
         return linked
 
@@ -1988,12 +2034,29 @@ class ComunicadoDataEnrichmentService:
             resolved,
             merged_field_labels or None,
         )
-        result["resolved"] = attach_projection_metadata(
+        presentation_params = _effective_params_for_presentation(
+            merged_params if isinstance(merged_params, dict) else {},
+            route_info if isinstance(route_info, dict) else route if isinstance(route, dict) else {},
+        )
+        annotated = attach_projection_metadata(
             resolved_with_labels,
             route=route_info if isinstance(route_info, dict) else route,
-            effective_params=merged_params if isinstance(merged_params, dict) else None,
+            effective_params=presentation_params,
             discovered_names=discover_names_from_resolved(resolved_with_labels),
         )
+        # G6/G23: paint/VISTA can show requested vs effective without FE merge.
+        annotated["effectiveParams"] = dict(presentation_params)
+        annotated["requestedParams"] = (
+            dict(merged_params) if isinstance(merged_params, dict) else {}
+        )
+        if merged_field_labels:
+            annotated["fieldLabelsEffective"] = {
+                str(k): str(v) for k, v in merged_field_labels.items() if str(k).strip()
+            }
+        route_label = result.get("resolvedRouteLabel")
+        if isinstance(route_label, str) and route_label.strip():
+            annotated["resolvedRouteLabel"] = route_label.strip()
+        result["resolved"] = annotated
         return result
 
     def _fetch_cached(

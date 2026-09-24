@@ -187,6 +187,18 @@ export function formatDataSourceBindingSummary(
   const label = resolveDataSourceLabel(block);
   const operationId = String(block.dataBinding.operationId ?? "").trim();
   const filterLines = formatDataSourceFilterLines(block.dataBinding, options);
+  // G6/G23 — show effective window when enrich stamped it (requested may omit dates).
+  const effective = block.resolved?.effectiveParams;
+  if (effective && typeof effective === "object") {
+    const start = effective.start_date ?? effective.startDate;
+    const end = effective.end_date ?? effective.endDate;
+    if (start != null || end != null) {
+      const line = `Efetivo: ${start != null ? String(start) : "…"} → ${end != null ? String(end) : "…"}`;
+      if (!filterLines.some((l) => l.includes("Efetivo:"))) {
+        filterLines.unshift(line);
+      }
+    }
+  }
   const titleParts = [label];
   if (operationId && operationId !== label) titleParts.push(operationId);
   if (filterLines.length) titleParts.push(filterLines.join(" · "));

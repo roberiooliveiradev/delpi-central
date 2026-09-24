@@ -114,6 +114,9 @@ export function resolveDataSourceLabel(
   block: ComunicadoDataSourceBlock,
   catalog?: DataSourceLabelCatalog | null,
 ): string {
+  // Enrich stamp wins (G12) — authoring catalog is fallback only.
+  const fromResolved = String(block.resolved?.resolvedRouteLabel ?? "").trim();
+  if (fromResolved) return fromResolved;
   const operationId = String(block.dataBinding.operationId ?? "").trim();
   const stored = String(block.dataBinding.label ?? "").trim();
   const route = catalogRouteFor(catalog, operationId);

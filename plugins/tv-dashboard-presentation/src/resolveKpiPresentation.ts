@@ -1,12 +1,8 @@
 import {
-  formatDisplayValue,
   parseKpiNumericValue,
   resolveDelpiKpiTone,
-  resolveDisplayFormatSpec,
-  specFromKpiValueFormat,
   type DelpiKpiCardTone,
   type DelpiKpiComparisonTone,
-  type DisplayFormatSpec,
   type KpiLayoutVariant,
 } from "@delpi/plugin-ui/index";
 
@@ -14,7 +10,6 @@ import type { ComunicadoKpiOptions } from "./comunicadoKpiOptions";
 import { mergeComunicadoKpiOptions } from "./comunicadoKpiOptions";
 import type { ComunicadoDataResolved } from "./comunicadoTypes";
 import { isAutoBakedFieldLabel } from "./fieldLabelRegistry";
-import { formatNumber } from "./nativeFormat";
 import {
   resolveKpiOptionsWithAutoContext,
   sparklinePointsFromResolved,
@@ -51,84 +46,22 @@ export type KpiMetricPresentationOverrides = Pick<
   | "higherIsBetter"
 >;
 
-function formatSignedPct(pct: number): string {
-  const abs = Math.abs(pct);
-  const text = formatDisplayValue(abs, {
-    category: "percent",
-    presetId: "percent",
-    decimalPlaces: abs >= 10 ? 1 : 2,
-  });
-  if (pct > 0) return `+${text}`;
-  if (pct < 0) return `−${text}`;
-  return text;
-}
-
-function resolveComparisonPresentation(params: {
-  numeric: number | null;
-  options: ComunicadoKpiOptions;
-  metricOverrides?: KpiMetricPresentationOverrides | null;
-  sparklinePoints: number[];
-}): {
-  comparisonText?: string;
-  comparisonTone?: DelpiKpiComparisonTone;
-  progressPct?: number | null;
-} {
-  const mode =
-    params.metricOverrides?.comparisonMode ?? params.options.comparisonMode ?? "none";
-  const target = params.metricOverrides?.target ?? params.options.target;
-  const higherIsBetter =
-    params.metricOverrides?.higherIsBetter ?? params.options.higherIsBetter ?? true;
-  const showComparison = params.options.showComparison === true;
-  const showProgress = params.options.showProgress === true;
-
-  let baseline: number | null = null;
-  let vsLabel = "vs período";
-  if (mode === "target" && target != null && Number.isFinite(target)) {
-    baseline = target;
-    vsLabel = "vs meta";
-  } else if (mode === "previous" && params.sparklinePoints.length >= 2) {
-    baseline = params.sparklinePoints[params.sparklinePoints.length - 2] ?? null;
-    vsLabel = "vs período";
-  }
-
-  let comparisonText: string | undefined;
-  let comparisonTone: DelpiKpiComparisonTone | undefined;
-  if (showComparison && params.numeric != null && baseline != null && baseline !== 0) {
-    const deltaPct = ((params.numeric - baseline) / Math.abs(baseline)) * 100;
-    const favorable = higherIsBetter ? deltaPct >= 0 : deltaPct <= 0;
-    const arrow = deltaPct > 0 ? "▲" : deltaPct < 0 ? "▼" : "●";
-    comparisonText =
-      params.options.comparisonLabel?.trim() ||
-      `${arrow} ${formatSignedPct(deltaPct)} ${vsLabel}`;
-    comparisonTone =
-      Math.abs(deltaPct) < 0.05 ? "neutral" : favorable ? "positive" : "negative";
-  } else if (showComparison && params.options.comparisonLabel?.trim()) {
-    comparisonText = params.options.comparisonLabel.trim();
-    comparisonTone = "neutral";
-  }
-
-  let progressPct: number | null = null;
-  if (showProgress && params.numeric != null && target != null && Number.isFinite(target) && target !== 0) {
-    progressPct = (params.numeric / target) * 100;
-  }
-
-  return { comparisonText, comparisonTone, progressPct };
-}
-
+/**
+ * Paint KPI — values/comparison/spark from enrich `kpiPresentation` / `displayValue` only.
+ * No client format fallback (FE-BE-002 semantic zero).
+ */
 export function resolveKpiViewPresentation(
   resolved: ComunicadoDataResolved | undefined,
   kpiOptions?: ComunicadoKpiOptions | null,
   metricOverrides?: KpiMetricPresentationOverrides | null,
 ): KpiViewPresentation {
+  const serverPres = resolved?.kpiPresentation;
   const merged = mergeComunicadoKpiOptions(kpiOptions);
   const options = resolveKpiOptionsWithAutoContext(merged, resolved, metricOverrides);
   const rawValue = resolved?.kpi?.value;
   const numeric = parseKpiNumericValue(rawValue);
   const colorRules = metricOverrides?.colorRules ?? options.colorRules;
   const toneResult = resolveDelpiKpiTone(numeric, colorRules, options.tone ?? "default");
-  const valueFormat = metricOverrides?.format ?? options.valueFormat;
-  const decimalPlaces =
-    metricOverrides?.decimalPlaces ?? options.decimalPlaces;
 
   const fieldKey =
     metricOverrides?.field?.trim() ||
@@ -149,25 +82,28 @@ export function resolveKpiViewPresentation(
 
   const serverDisplayValue = resolved?.kpi?.displayValue;
   const valueText =
-    typeof serverDisplayValue === "string"
-      ? serverDisplayValue
-      : resolved?.serverDisplayApplied === true || resolved?.presentationStale === true
-        ? "—"
-        : formatKpiValue(
-            rawValue,
-            valueFormat,
-            options.unit,
-            decimalPlaces,
-            metricOverrides?.displayFormat ?? options.displayValueFormat,
-          );
+    typeof serverPres?.valueDisplay === "string"
+      ? serverPres.valueDisplay
+      : typeof serverDisplayValue === "string"
+        ? serverDisplayValue
+        : "—";
   const hint = options.subtitle?.trim() || undefined;
-  const sparklinePoints = sparklinePointsFromResolved(resolved);
-  const comparison = resolveComparisonPresentation({
-    numeric,
-    options,
-    metricOverrides,
-    sparklinePoints,
-  });
+  const sparklinePoints =
+    Array.isArray(serverPres?.sparklinePoints)
+      ? serverPres.sparklinePoints
+      : sparklinePointsFromResolved(resolved);
+  const comparison =
+    serverPres != null
+      ? {
+          comparisonText: serverPres.comparisonDisplay ?? undefined,
+          comparisonTone: serverPres.comparisonTone ?? undefined,
+          progressPct: serverPres.progressPct ?? null,
+        }
+      : {
+          comparisonText: undefined,
+          comparisonTone: undefined,
+          progressPct: null,
+        };
 
   return {
     label,
@@ -183,52 +119,12 @@ export function resolveKpiViewPresentation(
     comparisonText: comparison.comparisonText,
     comparisonTone: comparison.comparisonTone,
     progressPct: comparison.progressPct,
-    sparklinePoints: options.showSparkline ? sparklinePoints : undefined,
+    sparklinePoints:
+      serverPres?.showSparkline === false
+        ? undefined
+        : serverPres?.showSparkline || options.showSparkline
+          ? sparklinePoints
+          : undefined,
     variant: options.variant,
   };
-}
-
-function formatKpiValue(
-  value: unknown,
-  format: ComunicadoKpiOptions["valueFormat"],
-  unit?: string,
-  decimalPlaces?: number | null,
-  spec?: DisplayFormatSpec | null,
-): string {
-  if (value == null || value === "") return "—";
-
-  const numeric = parseKpiNumericValue(value);
-  const resolved = resolveDisplayFormatSpec(spec, specFromKpiValueFormat(format, decimalPlaces));
-
-  /**
-   * `raw` explícito: se o valor numérico tem excesso de casas (float de API),
-   * formata como número — senão o FitText do card fica travado em fonte miúda.
-   */
-  if (resolved.category === "text" && (format === "raw" || format == null)) {
-    const base = String(value);
-    if (numeric != null && /^-?\d+\.\d{4,}$/.test(base.trim())) {
-      const text = formatNumber(numeric, decimalPlaces);
-      return unit ? `${text} ${unit}` : text;
-    }
-    return unit && !base.includes(unit) ? `${base}${unit}` : base;
-  }
-
-  if (numeric == null) {
-    const base = String(value);
-    return unit && !base.includes(unit) ? `${base}${unit}` : base;
-  }
-
-  const text = formatDisplayValue(numeric, resolved);
-  if (
-    unit &&
-    resolved.category !== "percent" &&
-    resolved.category !== "currency" &&
-    !text.includes(unit)
-  ) {
-    return `${text} ${unit}`;
-  }
-  if (unit && resolved.category === "percent" && unit !== "%" && !text.includes(unit)) {
-    return `${text} ${unit}`;
-  }
-  return text;
 }

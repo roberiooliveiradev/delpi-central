@@ -126,49 +126,20 @@ export function resolveTextDataRefValue(
   fallback = "—",
 ): { text: string; color?: string } {
   const serverText = preferServerDisplayRunText(resolved, ref.field);
-  if (serverText != null) {
-    const projected = resolveProjectedField(resolved, ref.field, ref.aggregation ?? "first");
-    const rawForTone =
-      projected.kind === "list"
-        ? projected.values[0]
-        : projected.kind === "scalar"
-          ? projected.scalar
-          : undefined;
-    const numeric = parseKpiNumericValue(rawForTone);
-    const tone = resolveDelpiKpiTone(numeric, ref.colorRules, "default");
-    return { text: serverText, color: tone.valueColor };
-  }
-  // FE-BE-002: enrich ran (or stale) — no client format authority on TV path.
-  if (resolved?.serverDisplayApplied === true || resolved?.presentationStale === true) {
+  if (serverText == null) {
+    // FE-BE-002: enrich owns display* — no client format on TV paint path.
     return { text: fallback };
   }
   const projected = resolveProjectedField(resolved, ref.field, ref.aggregation ?? "first");
-  if (projected.kind === "empty") {
-    return { text: fallback };
-  }
-  if (projected.kind === "list") {
-    const parts = projected.values.map((value) =>
-      formatTextProjectionValue(value, ref.format, {
-        decimalPlaces: ref.decimalPlaces,
-        displayFormat: ref.displayFormat,
-      }),
-    );
-    const text = parts.join(FIELD_LIST_JOIN);
-    const numeric = parseKpiNumericValue(projected.values[0]);
-    const tone = resolveDelpiKpiTone(numeric, ref.colorRules, "default");
-    return { text, color: tone.valueColor };
-  }
-  const raw = projected.scalar;
-  if (raw == null || raw === "") {
-    return { text: fallback };
-  }
-  const text = formatTextProjectionValue(raw, ref.format, {
-    decimalPlaces: ref.decimalPlaces,
-    displayFormat: ref.displayFormat,
-  });
-  const numeric = parseKpiNumericValue(raw);
+  const rawForTone =
+    projected.kind === "list"
+      ? projected.values[0]
+      : projected.kind === "scalar"
+        ? projected.scalar
+        : undefined;
+  const numeric = parseKpiNumericValue(rawForTone);
   const tone = resolveDelpiKpiTone(numeric, ref.colorRules, "default");
-  return { text, color: tone.valueColor };
+  return { text: serverText, color: tone.valueColor };
 }
 
 export function resolveTextDisplayValue(

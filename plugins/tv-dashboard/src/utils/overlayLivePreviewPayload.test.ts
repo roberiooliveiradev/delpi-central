@@ -8,6 +8,69 @@ import {
 } from "./overlayLivePreviewPayload";
 
 describe("overlayLiveCustomMessageSlidesOnPreviewPayload", () => {
+  it("G8: live presentationStale does not keep live semantics over coherent server", () => {
+    const live: Playlist = {
+      id: "pl-1",
+      name: "T",
+      slides: [
+        {
+          id: "s-1",
+          title: "Custom",
+          slideType: "native",
+          nativeScreenKey: "custom_message",
+          nativeConfig: {
+            blocks: [
+              {
+                id: "b1",
+                type: "kpi_view",
+                content: "layout-live",
+                resolved: {
+                  presentationStale: true,
+                  kpi: { value: 1, displayValue: "STALE" },
+                },
+              },
+            ],
+          },
+        } as never,
+      ],
+    } as Playlist;
+
+    const payload = {
+      playlist: { id: "pl-1" },
+      slides: [
+        {
+          id: "s-1",
+          title: "Old",
+          slideType: "native",
+          native: {
+            screenKey: "custom_message",
+            config: {},
+            data: {
+              blocks: [
+                {
+                  id: "b1",
+                  type: "kpi_view",
+                  resolved: {
+                    serverDisplayApplied: true,
+                    kpi: { value: 42, displayValue: "42" },
+                  },
+                },
+              ],
+            },
+          },
+        },
+      ],
+    } as unknown as PresentationPayload;
+
+    const merged = overlayLiveCustomMessageSlidesOnPreviewPayload(payload, live);
+    const blocks = (merged.slides[0].native?.data as { blocks: Array<Record<string, unknown>> })
+      .blocks;
+    expect((blocks[0].resolved as { presentationStale?: boolean }).presentationStale).toBe(true);
+    expect((blocks[0].resolved as { kpi?: { displayValue?: string } }).kpi?.displayValue).toBe(
+      "42",
+    );
+  });
+
   it("aplica blocks do shell local sobre o payload do servidor", () => {
     const live: Playlist = {
       id: "pl-1",

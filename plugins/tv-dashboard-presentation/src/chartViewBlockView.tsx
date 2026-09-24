@@ -5,19 +5,14 @@ import {
 } from "./comunicadoChartView";
 import type { ComunicadoChartInteraction } from "./comunicadoChartParts";
 import { resolveChartDisplayOptions } from "./comunicadoChartOptions";
-import type { ComunicadoChartViewBlock, ComunicadoDataResolved } from "./comunicadoTypes";
+import type { ComunicadoChartViewBlock } from "./comunicadoTypes";
 import {
   DataBlockRefreshBadge,
   withDataBlockLoadingClass,
 } from "./dataBlockRefreshChrome";
 import { GaugeChartView } from "./GaugeChartView";
-import { resolveGaugeChartModel } from "./gaugeChartModel";
+import type { GaugeChartModel } from "./gaugeChartModel";
 import { resolveDataBlockErrorText } from "./resolveDataBlockErrorText";
-import {
-  mergeChartViewFilterParams,
-  shouldApplyExcludeWeekends,
-} from "./chartWeekendFilter";
-import { applyViewProjection } from "./viewProjection";
 import { TvDataSeriesChartWidget } from "./tvDataChartWidgets";
 
 type Props = {
@@ -73,15 +68,9 @@ export function ChartViewBlockView({
   interaction = null,
   filterParams = null,
 }: Props) {
-  const viewFilters = mergeChartViewFilterParams([
-    block.resolved?.viewFilterParams,
-    filterParams,
-  ]);
-  const resolved = applyViewProjection(block.resolved, {
-    chartProjection: block.chartProjection,
-    chartType: block.chartType,
-    excludeWeekends: shouldApplyExcludeWeekends(viewFilters),
-  });
+  // FE-BE-002: paint uses enrich bake only — no client re-projection (G4/E4).
+  void filterParams;
+  const resolved = block.resolved;
   const label = resolved?.label ?? chartTypeLabel(block.chartType);
   const chartInteraction = interactive ? interaction : null;
   const bound = Boolean(block.dataSourceId?.trim());
@@ -117,11 +106,30 @@ export function ChartViewBlockView({
 
   if (block.chartType === "gauge") {
     const displayOptions = resolveChartDisplayOptions(block.chartOptions, resolved);
-    const model = resolveGaugeChartModel({
-      block,
-      resolved,
-      options: displayOptions,
-    });
+    const serverModel = resolved.chart?.gaugeModel;
+    const model: GaugeChartModel =
+      serverModel && typeof serverModel === "object"
+        ? {
+            value: serverModel.value ?? null,
+            goal: serverModel.goal ?? null,
+            min: serverModel.min ?? 0,
+            max: serverModel.max ?? 100,
+            label: serverModel.label ?? "Valor",
+            unit: serverModel.unit ?? "%",
+            accentColor: serverModel.accentColor,
+            showTitle: serverModel.showTitle !== false,
+            title: serverModel.title ?? serverModel.label ?? "Valor",
+          }
+        : {
+            value: null,
+            goal: null,
+            min: 0,
+            max: 100,
+            label: "Valor",
+            unit: "%",
+            showTitle: displayOptions.showTitle !== false,
+            title: displayOptions.title?.trim() || "Valor",
+          };
     // Vazio: GaugeChartView já mantém título + «Sem dados» na área do plot.
     return (
       <div

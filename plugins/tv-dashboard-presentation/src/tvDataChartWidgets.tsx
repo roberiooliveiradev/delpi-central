@@ -4,7 +4,6 @@ import type { ComunicadoChartOptions } from "./comunicadoChartOptions";
 import type { ComunicadoChartInteraction, ComunicadoChartPartsMap } from "./comunicadoChartParts";
 import { pieInnerRadiusForChartType, toSeriesChartKind } from "./comunicadoChartView";
 import type { ComunicadoChartType, ComunicadoDataResolved } from "./comunicadoTypes";
-import { resolveEffectiveChartGoal } from "./resolveEffectiveChartGoal";
 
 export function formatCellValue(value: unknown): string {
   // Paint-only residual: sem display* do servidor → unresolved (não formatDisplayValue).
@@ -103,10 +102,12 @@ export function TvDataSeriesChartWidget({
         displayCategoryFormat: undefined,
       }
     : displayOptions;
-  const effectiveGoal = resolveEffectiveChartGoal({
-    goalLineValue: paintOptions.goalLineValue,
-    projectedGoal: resolved.chart?.projectedGoal,
-  });
+  const effectiveGoal =
+    resolved.chart?.effectiveGoal != null && Number.isFinite(Number(resolved.chart.effectiveGoal))
+      ? Number(resolved.chart.effectiveGoal)
+      : paintOptions.goalLineValue != null && Number.isFinite(Number(paintOptions.goalLineValue))
+        ? Number(paintOptions.goalLineValue)
+        : null;
   const optionsWithGoal = {
     ...paintOptions,
     goalLineValue: effectiveGoal,

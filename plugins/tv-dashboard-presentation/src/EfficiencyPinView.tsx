@@ -27,11 +27,14 @@ function EfficiencyPinLabelCard({
   state,
   fontScale = 1,
   fill = false,
+  pctDisplay,
 }: {
   state: EfficiencyPinResolvedState;
   fontScale?: number;
   /** Preenche o frame (bloco info separado). */
   fill?: boolean;
+  /** Backend-owned formatted % (G25). */
+  pctDisplay?: string;
 }) {
   const labelFont = Math.max(12, Math.round((fill ? 16 : 13) * fontScale));
   const pctFont = Math.max(11, Math.round((fill ? 14 : 12) * fontScale));
@@ -54,6 +57,9 @@ function EfficiencyPinLabelCard({
       ? { width: "100%", height: "100%", maxWidth: "100%", whiteSpace: "normal" }
       : { maxWidth: "100%" }),
   };
+  const pctText =
+    pctDisplay ??
+    (state.efficiencyPct != null ? formatEfficiencyPct(state.efficiencyPct) : "—");
   return (
     <div
       className={ensureComunicadoDualClass("tdp-comunicado__efficiency-pin__label")}
@@ -66,7 +72,7 @@ function EfficiencyPinLabelCard({
         className={ensureComunicadoDualClass("tdp-comunicado__efficiency-pin__pct")}
         style={{ fontSize: pctFont, fontWeight: 600, opacity: 0.95 }}
       >
-        {state.efficiencyPct != null ? formatEfficiencyPct(state.efficiencyPct) : "—"}
+        {pctText}
       </span>
     </div>
   );
@@ -116,12 +122,30 @@ function EfficiencyPinRadar({ color }: { color: string }) {
 }
 
 export function EfficiencyPinView({ block, resolved, fontScale = 1 }: Props) {
-  const state = resolveEfficiencyPinState(block, resolved);
+  const server = resolved?.efficiencyPinPresentation ?? block.resolved?.efficiencyPinPresentation;
+  const state: EfficiencyPinResolvedState = server
+    ? {
+        status: (server.status as EfficiencyPinResolvedState["status"]) || "unknown",
+        color: server.color || "#94a3b8",
+        efficiencyPct: server.efficiencyPct ?? null,
+        workCenter: server.workCenter || "",
+        appointmentCount: server.appointmentCount ?? null,
+        label: server.label || "CT",
+      }
+    : resolveEfficiencyPinState(block, resolved);
   const role = resolveEfficiencyPinRole(block.efficiencyPin);
   const infoMode = resolveEfficiencyPinInfoMode(block.efficiencyPin);
+  const pctText =
+    typeof server?.efficiencyPctDisplay === "string"
+      ? server.efficiencyPctDisplay
+      : state.efficiencyPct != null
+        ? formatEfficiencyPct(state.efficiencyPct)
+        : "—";
   const titleParts = [
     state.workCenter || "CT",
-    state.efficiencyPct != null ? formatEfficiencyPct(state.efficiencyPct) : "sem dados",
+    state.efficiencyPct != null || server?.efficiencyPctDisplay
+      ? pctText
+      : "sem dados",
   ];
 
   if (role === "info") {
@@ -140,7 +164,7 @@ export function EfficiencyPinView({ block, resolved, fontScale = 1 }: Props) {
         role="img"
         aria-label={titleParts.join(", ")}
       >
-        <EfficiencyPinLabelCard state={state} fontScale={fontScale} fill />
+        <EfficiencyPinLabelCard state={state} fontScale={fontScale} fill pctDisplay={pctText} />
       </div>
     );
   }
@@ -181,7 +205,7 @@ export function EfficiencyPinView({ block, resolved, fontScale = 1 }: Props) {
         <EfficiencyPinRadar color={state.color} />
       </div>
       {showAttachedLabel ? (
-        <EfficiencyPinLabelCard state={state} fontScale={fontScale} />
+        <EfficiencyPinLabelCard state={state} fontScale={fontScale} pctDisplay={pctText} />
       ) : null}
     </div>
   );
