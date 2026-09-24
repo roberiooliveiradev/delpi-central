@@ -243,6 +243,10 @@ export function KpiViewBlockView({
                 renderCard(
                   {
                     ...resolved,
+                    // Primary kpiPresentation must not leak onto sibling metrics.
+                    ...(metric.field !== metrics[0]?.field
+                      ? { kpiPresentation: undefined }
+                      : {}),
                     kpi: {
                       value: metric.value,
                       label: metric.label,

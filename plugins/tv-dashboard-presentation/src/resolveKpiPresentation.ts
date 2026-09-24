@@ -81,11 +81,12 @@ export function resolveKpiViewPresentation(
     "Indicador";
 
   const serverDisplayValue = resolved?.kpi?.displayValue;
+  // Prefer per-metric kpi.displayValue (multi-card bake) over primary kpiPresentation.
   const valueText =
-    typeof serverPres?.valueDisplay === "string"
-      ? serverPres.valueDisplay
-      : typeof serverDisplayValue === "string"
-        ? serverDisplayValue
+    typeof serverDisplayValue === "string"
+      ? serverDisplayValue
+      : typeof serverPres?.valueDisplay === "string"
+        ? serverPres.valueDisplay
         : "—";
   const hint = options.subtitle?.trim() || undefined;
   const sparklinePoints =

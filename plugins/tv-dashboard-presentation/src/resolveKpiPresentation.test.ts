@@ -57,6 +57,17 @@ describe("resolveKpiViewPresentation", () => {
     expect(presentation.valueText).toBe("SERVER-41,7%");
   });
 
+  it("multi-métrica: kpi.displayValue vence kpiPresentation do primary", () => {
+    const presentation = resolveKpiViewPresentation({
+      kpi: { value: 87.3, label: "Atingimento", displayValue: "87,3%" },
+      kpiPresentation: {
+        valueDisplay: "4.364.622,79",
+        showComparison: false,
+      },
+    });
+    expect(presentation.valueText).toBe("87,3%");
+  });
+
   it("sem display* pinta unresolved (sem format client)", () => {
     const presentation = resolveKpiViewPresentation(
       { kpi: { value: 41.7, label: "OEE" } },

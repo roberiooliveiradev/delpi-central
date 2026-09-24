@@ -33,6 +33,46 @@ def test_apply_kpi_projection_aggregates_table_column():
     assert next_resolved["kpi"]["label"] == "OEE médio"
 
 
+def test_apply_kpi_projection_multi_metrics_resolve_distinct_fields():
+    """Multi-KPI must not reuse the primary scalar for every metric field."""
+    resolved = {
+        "kpi": {"value": 4364622.79, "label": "ROL"},
+        "kpiMetrics": [
+            {"field": "rol", "label": "ROL", "value": 4364622.79},
+            {"field": "goal", "label": "Meta", "value": 4364622.79},  # stale shared
+            {"field": "attainment", "label": "Atingimento", "value": 4364622.79},
+        ],
+        "table": {
+            "columns": [
+                {"key": "rol", "label": "ROL"},
+                {"key": "goal", "label": "Meta"},
+                {"key": "attainment", "label": "Atingimento"},
+            ],
+            "rows": [{"rol": 4364622.79, "goal": 5000000.0, "attainment": 87.3}],
+        },
+    }
+    block = {
+        "type": "kpi_view",
+        "kpiProjection": {
+            "metrics": [
+                {"field": "rol", "aggregation": "first", "label": "ROL", "visible": True},
+                {"field": "goal", "aggregation": "first", "label": "Meta", "visible": True},
+                {
+                    "field": "attainment",
+                    "aggregation": "first",
+                    "label": "Atingimento",
+                    "visible": True,
+                },
+            ]
+        },
+    }
+    next_resolved = apply_view_projection_to_resolved(resolved, block)
+    by_field = {m["field"]: m["value"] for m in next_resolved["kpiMetrics"]}
+    assert by_field["rol"] == 4364622.79
+    assert by_field["goal"] == 5000000.0
+    assert by_field["attainment"] == 87.3
+
+
 def test_apply_chart_projection_builds_multi_series():
     resolved = {
         "table": {

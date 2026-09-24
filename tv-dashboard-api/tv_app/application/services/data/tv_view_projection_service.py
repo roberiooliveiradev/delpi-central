@@ -399,7 +399,11 @@ def apply_view_projection_to_resolved(resolved: dict[str, Any], block: dict[str,
                 base = existing.get(field) or {}
                 value: Any = base.get("value")
                 usable_rows = rows if not _is_metric_summary_rows(rows) else []
-                if usable_rows and agg != "first":
+                # Always resolve from the metric's own column when present — never
+                # keep a stale shared primary value across fields (multi-KPI).
+                if usable_rows and any(
+                    isinstance(row, dict) and field in row for row in usable_rows
+                ):
                     value = aggregate_values(_column_values(usable_rows, field), agg)
                 elif usable_rows and value is None:
                     value = aggregate_values(_column_values(usable_rows, field), "first")
