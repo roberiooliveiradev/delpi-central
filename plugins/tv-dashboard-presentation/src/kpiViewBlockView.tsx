@@ -8,7 +8,7 @@ import {
   type ComunicadoKpiInteraction,
 } from "./comunicadoKpiParts";
 import { resolveTableDisplayOptions } from "./comunicadoTableOptions";
-import type { ComunicadoKpiViewBlock } from "./comunicadoTypes";
+import type { ComunicadoDataResolved, ComunicadoKpiViewBlock } from "./comunicadoTypes";
 import {
   DataBlockRefreshBadge,
   withDataBlockLoadingClass,
@@ -26,27 +26,46 @@ type Props = {
   interaction?: ComunicadoKpiInteraction | null;
 };
 
-function KpiTypePlaceholder({
-  loading,
-  interactive,
-  bound,
+/**
+ * Card Delpi com título/parts + valor «—» / vazio.
+ * Substitui o placeholder tipado «KPI / Sem dados» quando há chrome configurado
+ * ou fonte ligada (paridade com chart/table empty-with-title).
+ */
+function EmptyKpiCard({
+  block,
+  resolved,
+  interaction = null,
 }: {
-  loading?: boolean;
-  interactive?: boolean;
-  bound?: boolean;
+  block: ComunicadoKpiViewBlock;
+  resolved?: ComunicadoDataResolved;
+  interaction?: ComunicadoKpiInteraction | null;
 }) {
-  const hint = loading
-    ? "Carregando dados…"
-    : bound
-      ? "Sem dados"
-      : interactive
-        ? "Conecte uma fonte de dados"
-        : "Sem dados";
+  const mergedParts = mergeKpiPartsWithOptions(block.kpiParts, block.kpiOptions);
+  const presentation = resolveKpiViewPresentation(resolved, block.kpiOptions);
+  const iconAllowed = isKpiPartVisible(mergedParts, { kind: "icon" }, presentation.showIcon);
+  const Icon =
+    iconAllowed && presentation.iconName
+      ? resolveComunicadoLucideIcon(presentation.iconName)
+      : null;
   return (
-    <div className="tdp-data-chart tdp-data-chart--typed">
-      <span className="tdp-data-chart__type">KPI</span>
-      <span className="tdp-data-chart__hint">{hint}</span>
-    </div>
+    <DelpiKpiCard
+      label={presentation.label}
+      value={presentation.valueText || "—"}
+      hint={presentation.hint}
+      tone={presentation.tone}
+      valueColor={presentation.valueColor}
+      backgroundColor={presentation.backgroundColor}
+      icon={Icon ? <Icon aria-hidden strokeWidth={2} /> : undefined}
+      kpiOptions={block.kpiOptions}
+      kpiParts={block.kpiParts}
+      interaction={interaction}
+      comparisonText={presentation.comparisonText}
+      comparisonTone={presentation.comparisonTone}
+      progressPct={presentation.progressPct}
+      sparklinePoints={presentation.sparklinePoints}
+      variant={presentation.variant ?? block.kpiOptions?.variant ?? null}
+      fill
+    />
   );
 }
 
@@ -59,7 +78,7 @@ export function KpiViewBlockView({
   const resolved = applyViewProjection(block.resolved, {
     kpiProjection: block.kpiProjection,
   });
-  const bound = Boolean(block.dataSourceId?.trim());
+  const kpiInteraction = interactive ? interaction : null;
 
   const errorText = resolveDataBlockErrorText(resolved);
   if (errorText) {
@@ -78,8 +97,14 @@ export function KpiViewBlockView({
 
   if (!resolved) {
     return (
-      <div className={`tdp-data-block tdp-data-block--placeholder${loading ? " tdp-data-block--loading" : ""}`}>
-        <KpiTypePlaceholder loading={loading} interactive={interactive} bound={bound} />
+      <div
+        className={withDataBlockLoadingClass(
+          "tdp-data-block tdp-data-block--kpi tdp-kpi-view",
+          loading,
+        )}
+      >
+        <DataBlockRefreshBadge loading={loading} />
+        <EmptyKpiCard block={block} interaction={kpiInteraction} />
       </div>
     );
   }
@@ -103,15 +128,20 @@ export function KpiViewBlockView({
       );
     }
     return (
-      <div className={`tdp-data-block tdp-data-block--placeholder${loading ? " tdp-data-block--loading" : ""}`}>
-        <KpiTypePlaceholder loading={loading} interactive={interactive} bound />
+      <div
+        className={withDataBlockLoadingClass(
+          "tdp-data-block tdp-data-block--kpi tdp-kpi-view",
+          loading,
+        )}
+      >
+        <DataBlockRefreshBadge loading={loading} />
+        <EmptyKpiCard block={block} resolved={resolved} interaction={kpiInteraction} />
       </div>
     );
   }
 
   // Parts são a fonte de verdade (paridade editor ↔ prévia ↔ apresentação).
   const mergedParts = mergeKpiPartsWithOptions(block.kpiParts, block.kpiOptions);
-  const kpiInteraction = interactive ? interaction : null;
   const metricProjectionByField = new Map(
     (block.kpiProjection?.metrics ?? []).map((metric) => [metric.field, metric]),
   );

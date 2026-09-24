@@ -9,7 +9,7 @@ import {
   resolveVisualBoxProfile,
   type ComunicadoVisualBoxBlock,
 } from "./comunicadoVisualBox";
-import { resolveVisualBoxDisplayText } from "./textViewProjection";
+import { resolveVisualBoxDisplayText, textBlockHasDataBinding } from "./textViewProjection";
 
 export type TextSurfaceDisplay = {
   content: string;
@@ -22,9 +22,19 @@ export function resolveTextSurfaceDisplay(
 ): TextSurfaceDisplay {
   const resolved = "resolved" in block ? block.resolved : undefined;
   const display = resolveVisualBoxDisplayText(block, resolved);
+  const content = display.content ?? "";
+  const contentRuns = display.contentRuns;
+  // Binding ativo: nunca some o bloco — template/prefix ficam e o trecho dinâmico vira «—».
+  if (
+    textBlockHasDataBinding(block) &&
+    !content.trim() &&
+    !(contentRuns && contentRuns.length > 0)
+  ) {
+    return { content: "—", contentRuns: [{ text: "—" }] };
+  }
   return {
-    content: display.content ?? "",
-    contentRuns: display.contentRuns,
+    content,
+    contentRuns,
   };
 }
 

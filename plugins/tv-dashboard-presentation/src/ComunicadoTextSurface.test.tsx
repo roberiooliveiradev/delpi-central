@@ -93,4 +93,19 @@ describe("ComunicadoTextSurface — formatação parcial em forma", () => {
     expect(container.textContent).not.toContain("0,74");
     expect(container.textContent).not.toContain("0,84");
   });
+
+  it("binding sem valor ainda mostra «—» (bloco não some)", () => {
+    const block: ComunicadoTextBlock = {
+      id: "txt-empty",
+      type: "text",
+      frame: { x: 0, y: 0, w: 20, h: 8 },
+      content: "",
+      dataSourceId: "src-1",
+      textProjection: { field: "missing_field", format: "raw", prefix: "Meta: " },
+      resolved: { kpi: { value: null, label: "X" } },
+      style: { fontSize: 20 },
+    };
+    const { container } = render(<ComunicadoTextSurface block={block} />);
+    expect(container.textContent).toMatch(/Meta:\s*—/);
+  });
 });

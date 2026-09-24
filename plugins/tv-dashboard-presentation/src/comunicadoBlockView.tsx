@@ -186,7 +186,7 @@ export function ComunicadoBlockView({
     );
   }
 
-  if (block.type === "image" && (block.url || interactive)) {
+  if (block.type === "image") {
     const fit = block.style?.objectFit ?? "contain";
     const media = block.url ? (
       <img
@@ -204,7 +204,7 @@ export function ComunicadoBlockView({
     );
   }
 
-  if (block.type === "video" && (block.url || interactive)) {
+  if (block.type === "video") {
     const media = block.url ? (
       interactive ? (
         <video

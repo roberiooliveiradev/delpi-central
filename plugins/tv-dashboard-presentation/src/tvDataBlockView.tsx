@@ -48,6 +48,34 @@ export function TvDataBlockView({ block, interactive = false, loading = false }:
   }
 
   if (!resolved) {
+    if (displayMode === "table") {
+      const preset: ComunicadoTablePreset = block.tablePreset ?? "banded";
+      const tableOptions = resolveTableDisplayOptions(
+        {
+          ...(block.tableOptions ?? { ...DEFAULT_DATA_TABLE_BANDED }),
+          title: block.tableOptions?.title?.trim() || label,
+          showTitle: true,
+        },
+        preset,
+        undefined,
+      );
+      return (
+        <div
+          className={`tdp-data-block tdp-data-block--table${loading ? " tdp-data-block--loading" : ""}`}
+        >
+          <div className="tdp-data-table-wrap">
+            <ConfigurableTable
+              columns={[]}
+              rows={[]}
+              options={tableOptions}
+              preset={preset}
+              tableParts={block.tableParts}
+              emptyMessage={loading ? "Carregando dados…" : "Sem linhas"}
+            />
+          </div>
+        </div>
+      );
+    }
     return (
       <div className={`tdp-data-block tdp-data-block--placeholder${loading ? " tdp-data-block--loading" : ""}`}>
         <span className="tdp-data-block__title">{label}</span>

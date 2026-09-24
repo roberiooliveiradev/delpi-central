@@ -18,6 +18,29 @@ type Props = {
   interaction?: ComunicadoTableInteraction | null;
 };
 
+function projectionColumns(block: ComunicadoTableViewBlock) {
+  return (block.tableProjection?.columns ?? [])
+    .filter((column) => column.visible !== false && Boolean(column.key?.trim()))
+    .map((column) => ({
+      key: column.key,
+      label: column.label?.trim() || column.key,
+      ...(column.widthPct != null && column.widthPct > 0 ? { widthPct: column.widthPct } : {}),
+      ...(column.displayFormat ? { displayFormat: column.displayFormat } : {}),
+      ...(column.valueFormat ? { valueFormat: column.valueFormat } : {}),
+    }));
+}
+
+function hasTableChrome(
+  block: ComunicadoTableViewBlock,
+  columns: Array<{ key: string }>,
+  optionsTitle?: string | null,
+): boolean {
+  if (columns.length > 0) return true;
+  if (optionsTitle?.trim()) return true;
+  const partTitle = block.tableParts?.title?.content?.trim();
+  return Boolean(partTitle);
+}
+
 export function TableViewBlockView({
   block,
   interactive = false,
@@ -46,6 +69,28 @@ export function TableViewBlockView({
   }
 
   if (!resolved) {
+    const columns = projectionColumns(block);
+    const tableOptions = resolveTableDisplayOptions(block.tableOptions, block.tablePreset, undefined);
+    if (hasTableChrome(block, columns, tableOptions.title)) {
+      return (
+        <div
+          className={withDataBlockLoadingClass("tdp-data-block tdp-data-block--table", loading)}
+        >
+          <DataBlockRefreshBadge loading={loading} />
+          <div className="tdp-data-table-wrap">
+            <ConfigurableTable
+              columns={columns}
+              rows={[]}
+              options={tableOptions}
+              preset={block.tablePreset}
+              tableParts={block.tableParts}
+              interaction={tableInteraction}
+              emptyMessage={loading ? "Carregando dados…" : "Sem linhas"}
+            />
+          </div>
+        </div>
+      );
+    }
     return (
       <div className={`tdp-data-block tdp-data-block--placeholder${loading ? " tdp-data-block--loading" : ""}`}>
         <span className="tdp-data-block__title">{label}</span>
@@ -64,12 +109,7 @@ export function TableViewBlockView({
 
   const allRows = resolved.table?.rows ?? [];
   const fromResolved = resolveTableColumns(resolved, allRows);
-  const fromProjection = (block.tableProjection?.columns ?? [])
-    .filter((column) => column.visible !== false && Boolean(column.key?.trim()))
-    .map((column) => ({
-      key: column.key,
-      label: column.label?.trim() || column.key,
-    }));
+  const fromProjection = projectionColumns(block);
   const allColumns = fromResolved.length > 0 ? fromResolved : fromProjection;
   const projectionByKey = new Map(
     (block.tableProjection?.columns ?? []).map((column) => [column.key, column]),

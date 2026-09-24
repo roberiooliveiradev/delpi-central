@@ -75,6 +75,30 @@ describe("KpiViewBlockView icon visibility", () => {
     expect(screen.getByText("3,2")).toBeTruthy();
   });
 
+  it("sem valor renderiza card Delpi com título e traço (não placeholder KPI)", () => {
+    const base = createKpiViewBlock({ title: "OEE" });
+    if (base.type !== "kpi_view") throw new Error("expected kpi_view");
+    const block: ComunicadoKpiViewBlock = {
+      ...base,
+      dataSourceId: "src-1",
+      resolved: { kpi: { value: null, label: "OEE" }, label: "OEE" },
+    };
+    const { container } = render(<KpiViewBlockView block={block} />);
+    expect(container.querySelector(".tdp-data-chart--typed")).toBeNull();
+    expect(container.querySelector(".tdp-kpi-view")).toBeTruthy();
+    expect(screen.getByText("OEE")).toBeTruthy();
+    expect(screen.getAllByText("—").length).toBeGreaterThan(0);
+  });
+
+  it("sem resolved ainda mostra card Delpi com título configurado", () => {
+    const block = createKpiViewBlock({ title: "Carteira" });
+    if (block.type !== "kpi_view") throw new Error("expected kpi_view");
+    const { container } = render(<KpiViewBlockView block={block} />);
+    expect(container.querySelector(".tdp-data-chart--typed")).toBeNull();
+    expect(screen.getByText("Carteira")).toBeTruthy();
+    expect(screen.getAllByText("—").length).toBeGreaterThan(0);
+  });
+
   it("cai na tabela anexada quando não há valor numérico", () => {
     const base = createKpiViewBlock({ title: "Travamento" });
     if (base.type !== "kpi_view") throw new Error("expected kpi_view");
