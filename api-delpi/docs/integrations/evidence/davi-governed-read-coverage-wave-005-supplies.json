@@ -3,7 +3,7 @@
   "family": "SUPPLIES_READ",
   "bootstrapHead": "12c471e0770d45590ef098a5cbab230ddf68a2ff",
   "baseHead": "12c471e0770d45590ef098a5cbab230ddf68a2ff",
-  "sourceHead": "PENDING_COMMIT",
+  "sourceHead": "c3b8fe49edec46d12e2d10a635322d98774a0451",
   "inventoryArtifactBeforeState": "STALE_17_WHILE_ALLOWLIST_V10_HAD_35",
   "inventoryEligibleBeforeRebaseline": 17,
   "inventoryEligibleAfterRebaseline": 35,
