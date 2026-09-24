@@ -1,5 +1,5 @@
 import { Check, Plus, Trash2 } from "lucide-react";
-import { HintAction } from "@delpi/plugin-ui/index";
+import { ActionButton, HintAction } from "@delpi/plugin-ui/index";
 
 import { helpTooltips } from "../content/helpTooltips";
 import {
@@ -49,7 +49,6 @@ export function TicketListSortBuilder({
 
   return (
     <div className="helpdesk-sort-builder" aria-label="Ordenação da lista">
-      <p className="helpdesk-sort-builder__hint">{help.panel}</p>
       <ul className="helpdesk-sort-builder__levels">
         {levels.map((level, index) => (
           <li key={`${level.field}-${index}`} className="helpdesk-sort-builder__level">
@@ -97,7 +96,9 @@ export function TicketListSortBuilder({
       <div className="helpdesk-sort-builder__actions">
         {levels.length < 3 ? (
           <HintAction hint={help.addLevel} ariaLabel="Ajuda: Outra ordenação">
-            <HelpdeskIconButton
+            <ActionButton
+              variant="ghost"
+              type="button"
               aria-label="Outra ordenação"
               onClick={() =>
                 onChange([
@@ -111,12 +112,14 @@ export function TicketListSortBuilder({
               }
             >
               <Plus size={16} aria-hidden />
-            </HelpdeskIconButton>
+              Outro nível
+            </ActionButton>
           </HintAction>
         ) : null}
         <HintAction hint={help.apply} ariaLabel="Ajuda: Aplicar ordenação">
-          <HelpdeskIconButton
-            tone="primary"
+          <ActionButton
+            variant="primary"
+            type="button"
             aria-label="Aplicar ordenação"
             onClick={() => {
               onChange(levels);
@@ -124,7 +127,8 @@ export function TicketListSortBuilder({
             }}
           >
             <Check size={16} aria-hidden />
-          </HelpdeskIconButton>
+            Aplicar
+          </ActionButton>
         </HintAction>
       </div>
     </div>

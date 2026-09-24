@@ -1,5 +1,5 @@
-import { Check, Eraser, Plus, Trash2 } from "lucide-react";
-import { HintAction } from "@delpi/plugin-ui/index";
+import { Eraser, Plus, Trash2 } from "lucide-react";
+import { ActionButton, HintAction } from "@delpi/plugin-ui/index";
 
 import { helpTooltips } from "../content/helpTooltips";
 import {
@@ -67,7 +67,6 @@ export function TicketListFilterBuilder({
 
   return (
     <div className="helpdesk-filter-builder" aria-label="Construtor de filtros">
-      <p className="helpdesk-filter-builder__hint">{help.panel}</p>
       <ul className="helpdesk-filter-builder__rules">
         {group.rules.map((rule) => {
           const meta =
@@ -158,20 +157,22 @@ export function TicketListFilterBuilder({
         })}
       </ul>
       <div className="helpdesk-filter-builder__actions">
-        <HintAction hint={help.addRule} ariaLabel="Ajuda: Adicionar regra">
-          <HelpdeskIconButton aria-label="Adicionar regra" onClick={addRule}>
+        <HintAction hint={help.addRule} ariaLabel="Ajuda: Adicionar critério">
+          <ActionButton variant="ghost" type="button" aria-label="Adicionar critério" onClick={addRule}>
             <Plus size={16} aria-hidden />
-          </HelpdeskIconButton>
+            Adicionar critério
+          </ActionButton>
         </HintAction>
-        <HintAction hint={help.clear} ariaLabel="Ajuda: Limpar regras">
-          <HelpdeskIconButton aria-label="Limpar regras" onClick={onClear}>
+        <HintAction hint={help.clear} ariaLabel="Ajuda: Limpar">
+          <ActionButton variant="ghost" type="button" aria-label="Limpar" onClick={onClear}>
             <Eraser size={16} aria-hidden />
-          </HelpdeskIconButton>
+            Limpar
+          </ActionButton>
         </HintAction>
         <HintAction hint={help.apply} ariaLabel="Ajuda: Aplicar filtros">
-          <HelpdeskIconButton tone="primary" aria-label="Aplicar filtros" onClick={onApply}>
-            <Check size={16} aria-hidden />
-          </HelpdeskIconButton>
+          <ActionButton variant="primary" type="button" aria-label="Aplicar filtros" onClick={onApply}>
+            Aplicar filtros
+          </ActionButton>
         </HintAction>
       </div>
     </div>

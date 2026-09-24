@@ -46,13 +46,13 @@ export const helpTooltips = {
     pageSize: "Quantos chamados por página: 10, 20 ou 50.",
     sortChip: "Ordenação ativa (até três níveis).",
     filterChip: "Critério do recorte gravado na URL (sobrevive ao F5).",
-    filterBuilderToggle: "Abre filtros avançados com regras combinadas por E.",
-    sortBuilderToggle: "Abre a ordenação em até três níveis.",
+    filterBuilderToggle: "Abre filtros avançados em um painel junto ao botão.",
+    sortBuilderToggle: "Abre a ordenação em um painel junto ao botão.",
     columns: "Mostra ou esconde colunas da tabela. Preferência neste navegador.",
     refreshList: "Atualiza a grade sem limpar filtros.",
     search: "Busca no número, título ou conteúdo do chamado.",
     statusChips: "Atalho de status. Sem contadores — o helpdesk não expõe totais por estado.",
-    advancedFilters: "Filtros avançados e datas. O recorte fica na URL ao aplicar.",
+    advancedFilters: "Refine os chamados com critérios adicionais.",
   },
 
   pagination: {
@@ -63,14 +63,14 @@ export const helpTooltips = {
   },
 
   filterBuilder: {
-    panel: "Combine critérios com E. Ao aplicar, o recorte fica na URL e sobrevive ao F5.",
+    panel: "Refine os chamados com um ou mais critérios.",
     field: "Campo do filtro aceito nesta lista.",
     operator: "Operação: contém, é, de ou até — conforme o campo.",
     value: "Valor da regra. Vazio não entra ao aplicar.",
     removeRule: "Remove esta regra. A lista só muda depois de Aplicar.",
-    addRule: "Inclui outra regra E.",
+    addRule: "Inclui outro critério.",
     clear: "Apaga as regras do painel sem mudar a URL até aplicar.",
-    apply: "Grava as regras na URL e recarrega a lista.",
+    apply: "Aplica os critérios e atualiza a lista.",
   },
 
   sortBuilder: {

@@ -6,7 +6,7 @@ import {
   SectionHintLabel,
   TableColumnVisibilityMenu,
 } from "@delpi/plugin-ui/index";
-import { AlignLeft, ArrowUpDown, ChevronLeft, ExternalLink, FilterX, FolderTree, Gauge, ListFilter, Plus, RefreshCw, Send, TicketPlus, Type, Users } from "lucide-react";
+import { AlignLeft, ChevronLeft, ExternalLink, FilterX, FolderTree, Gauge, Plus, RefreshCw, Send, TicketPlus, Type, Users } from "lucide-react";
 
 import {
   HelpdeskApiError,
@@ -105,9 +105,10 @@ import {
 } from "../presentation/ticketListViewModel";
 import { useHelpdeskTicketListColumns } from "../presentation/useHelpdeskTicketListColumns";
 import { TicketAttachmentPreview } from "./TicketAttachmentPreview";
+import { HelpdeskAssignPopover } from "./HelpdeskAssignPopover";
 import { TicketListCards } from "./TicketListCards";
-import { TicketListFilterBuilder } from "./TicketListFilterBuilder";
-import { TicketListSortBuilder } from "./TicketListSortBuilder";
+import { TicketListFilterPopover } from "./TicketListFilterPopover";
+import { TicketListSortPopover } from "./TicketListSortPopover";
 import { TicketListTable } from "./TicketListTable";
 import { TicketListToolbar } from "./TicketListToolbar";
 import {
@@ -117,10 +118,8 @@ import {
 import {
   HELPDESK_TICKET_LIST_VIEW_LAYOUT_KEY,
   HelpdeskEmptyState,
-  HelpdeskFilterBarShell,
   HelpdeskFilterInput,
   HelpdeskFormActions,
-  HelpdeskHostDrawer,
   HelpdeskIconButton,
   HelpdeskAttachButton,
   HelpdeskListPaginationFooter,
@@ -211,8 +210,6 @@ function TicketListPage() {
   const [linking, setLinking] = useState(false);
   const autoLinkStartedRef = useRef(false);
   const [searchDraft, setSearchDraft] = useState(() => currentListFilters().q);
-  const [advancedOpen, setAdvancedOpen] = useState(false);
-  const [sortOpen, setSortOpen] = useState(false);
   const [canAssign, setCanAssign] = useState<boolean | null>(null);
   const [viewportWidth, setViewportWidth] = useState(() =>
     typeof window === "undefined" ? 1280 : window.innerWidth,
@@ -437,10 +434,9 @@ function TicketListPage() {
       <div className="helpdesk-list-shell">
         {listChrome ? (
           <div className="helpdesk-list-controls">
-            <HelpdeskFilterBarShell
-              embedded
-              ariaLabel="Busca e filtros dos chamados"
-              className="helpdesk-list-search-bar"
+            <form
+              className="helpdesk-list-primary-bar"
+              aria-label="Busca e ações da lista"
               onSubmit={(event: FormEvent<HTMLFormElement>) => {
                 event.preventDefault();
                 applySearch();
@@ -455,89 +451,49 @@ function TicketListPage() {
                   onChange={(value) => setSearchDraft(value)}
                 />
               </HintAction>
-              <ActionButton variant="ghost" type="submit" aria-label="Buscar chamados">
-                Buscar
-              </ActionButton>
-            </HelpdeskFilterBarShell>
-
-            <HintAction hint={helpTooltips.listUi.statusChips} ariaLabel="Ajuda: Status">
-              <HelpdeskScopeChipBar aria-label="Filtro rápido de status" chips={statusChips} />
-            </HintAction>
-
-            <TicketListToolbar
-              viewModel={listViewModel}
-              onRefresh={() => {
-                void load(filters);
-              }}
-              leading={
-                forceCards ? null : (
-                  <HintAction hint={helpTooltips.listUi.viewLayout} ariaLabel="Ajuda: Tabela ou Cards">
-                    <HelpdeskSegmentToggle
-                      ariaLabel="Modo de visualização"
-                      idPrefix="helpdesk-ticket-list-layout"
-                      size="sm"
-                      value={showCards ? "cards" : "table"}
-                      onChange={(value) => {
-                        if (value === "table" || value === "cards") setLayout(value);
-                      }}
-                      options={[
-                        { value: "table", label: "Tabela" },
-                        { value: "cards", label: "Cards" },
-                      ]}
-                    />
-                  </HintAction>
-                )
-              }
-              clearFiltersSlot={
-                filterActive ? (
+              <div className="helpdesk-list-primary-bar__actions">
+                {filterActive ? (
                   <HintAction hint={helpTooltips.listUi.clearFilters} ariaLabel="Ajuda: Limpar filtros">
                     <HelpdeskIconButton aria-label="Limpar filtros" onClick={clearListFilters}>
                       <FilterX size={16} aria-hidden />
                     </HelpdeskIconButton>
                   </HintAction>
-                ) : null
-              }
-              filterBuilderToggle={
+                ) : null}
                 <HintAction
                   hint={helpTooltips.listUi.filterBuilderToggle}
                   ariaLabel="Ajuda: Filtros avançados"
                 >
-                  <ActionButton
-                    variant="ghost"
-                    type="button"
-                    aria-label="Filtros avançados"
-                    aria-expanded={advancedOpen}
-                    onClick={() => {
-                      setBuilderGroup(ticketListViewModelFromFilters(filters, columnPreferences).filterRoot);
-                      setAdvancedOpen(true);
-                      setSortOpen(false);
+                  <TicketListFilterPopover
+                    group={builderGroup}
+                    onChange={setBuilderGroup}
+                    urgencies={urgencies}
+                    categories={categories}
+                    onBeforeOpen={() =>
+                      setBuilderGroup(ticketListViewModelFromFilters(filters, columnPreferences).filterRoot)
+                    }
+                    onClear={() => setBuilderGroup(emptyFilterGroup())}
+                    onApply={() => {
+                      const next = ticketListFiltersFromFilterGroup(builderGroup, filters);
+                      commitFilters(next);
                     }}
-                  >
-                    <ListFilter size={16} aria-hidden />
-                    Filtros
-                  </ActionButton>
+                  />
                 </HintAction>
-              }
-              sortBuilderSlot={
                 <HintAction hint={helpTooltips.listUi.sortBuilderToggle} ariaLabel="Ajuda: Ordenação">
-                  <ActionButton
-                    variant="ghost"
-                    type="button"
-                    aria-label="Ordenar"
-                    aria-expanded={sortOpen}
-                    onClick={() => {
-                      setSortDraft(parseTicketSortLevels(filters.sort));
-                      setSortOpen(true);
-                      setAdvancedOpen(false);
+                  <TicketListSortPopover
+                    levels={sortDraft}
+                    onChange={setSortDraft}
+                    summaryLabel={listViewModel.primarySortLabel}
+                    onBeforeOpen={() => setSortDraft(parseTicketSortLevels(filters.sort))}
+                    onApply={() => {
+                      commitFilters({
+                        ...filters,
+                        sort: formatTicketSortLevels(sortDraft),
+                        page: 1,
+                      });
                     }}
-                  >
-                    <ArrowUpDown size={16} aria-hidden />
-                    Ordenar
-                  </ActionButton>
+                  />
                 </HintAction>
-              }
-              columnPreferencesSlot={
-                showCards ? null : (
+                {showCards ? null : (
                   <HintAction hint={helpTooltips.listUi.columns} ariaLabel="Ajuda: Colunas">
                     <TableColumnVisibilityMenu
                       columns={menuColumns}
@@ -554,49 +510,44 @@ function TicketListPage() {
                       }}
                     />
                   </HintAction>
-                )
-              }
-            />
+                )}
+                <HintAction hint={helpTooltips.listUi.refreshList} ariaLabel="Ajuda: Atualizar lista">
+                  <HelpdeskIconButton aria-label="Atualizar lista" onClick={() => void load(filters)}>
+                    <RefreshCw size={16} aria-hidden />
+                  </HelpdeskIconButton>
+                </HintAction>
+              </div>
+            </form>
+
+            <div className="helpdesk-list-secondary-bar">
+              <HintAction hint={helpTooltips.listUi.statusChips} ariaLabel="Ajuda: Status">
+                <HelpdeskScopeChipBar aria-label="Filtro rápido de status" chips={statusChips} />
+              </HintAction>
+              <TicketListToolbar
+                viewModel={listViewModel}
+                leading={
+                  forceCards ? null : (
+                    <HintAction hint={helpTooltips.listUi.viewLayout} ariaLabel="Ajuda: Tabela ou Cards">
+                      <HelpdeskSegmentToggle
+                        ariaLabel="Modo de visualização"
+                        idPrefix="helpdesk-ticket-list-layout"
+                        size="sm"
+                        value={showCards ? "cards" : "table"}
+                        onChange={(value) => {
+                          if (value === "table" || value === "cards") setLayout(value);
+                        }}
+                        options={[
+                          { value: "table", label: "Tabela" },
+                          { value: "cards", label: "Cards" },
+                        ]}
+                      />
+                    </HintAction>
+                  )
+                }
+              />
+            </div>
           </div>
         ) : null}
-
-        <HelpdeskHostDrawer
-          open={advancedOpen}
-          title="Filtros avançados"
-          description={helpTooltips.listUi.advancedFilters}
-          onClose={() => setAdvancedOpen(false)}
-          closeOnBackdropClick
-        >
-          <TicketListFilterBuilder
-            group={builderGroup}
-            onChange={setBuilderGroup}
-            urgencies={urgencies}
-            categories={categories}
-            onClear={() => setBuilderGroup(emptyFilterGroup())}
-            onApply={() => {
-              const next = ticketListFiltersFromFilterGroup(builderGroup, filters);
-              commitFilters(next);
-              setAdvancedOpen(false);
-            }}
-          />
-        </HelpdeskHostDrawer>
-
-        <HelpdeskHostDrawer
-          open={sortOpen}
-          title="Ordenação"
-          description={helpTooltips.sortBuilder.panel}
-          onClose={() => setSortOpen(false)}
-          closeOnBackdropClick
-        >
-          <TicketListSortBuilder
-            levels={sortDraft}
-            onChange={setSortDraft}
-            onApply={() => {
-              commitFilters({ ...filters, sort: formatTicketSortLevels(sortDraft), page: 1 });
-              setSortOpen(false);
-            }}
-          />
-        </HelpdeskHostDrawer>
 
         {view === "loading" ? (
           <HelpdeskLoadingCard
@@ -962,7 +913,7 @@ function CreateTicketPage() {
                 hint={helpTooltips.createUi.description}
                 value={description}
                 onChange={(next) => setDescription(persistHelpdeskAttachmentHtml(next))}
-                minHeight={180}
+                minHeight={120}
                 fill
                 enableMentions
                 icon={<AlignLeft size={14} aria-hidden />}
@@ -1193,6 +1144,7 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
         {errorText ? <HelpdeskStateBanner variant="error">{errorText}</HelpdeskStateBanner> : null}
         {ticket ? (
           <>
+            <div className="helpdesk-ticket-summary">
             <HelpdeskRecordCard
               title={detailRecordHeading(ticket.category, ticket.urgency).title}
               subtitle={detailRecordSubtitle({
@@ -1215,9 +1167,7 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                 sla_tto: ticket.sla_tto,
               })
                 .filter((field) =>
-                  ["observers", "sla_ttr", "sla_tto", "created_at", "updated_at", "solved_at", "closed_at"].includes(
-                    field.id,
-                  ),
+                  ["sla_ttr", "sla_tto", "created_at", "updated_at"].includes(field.id),
                 )
                 .map((field) => ({
                   id: field.id,
@@ -1226,36 +1176,16 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                   present: field.present,
                 }))}
             />
+            </div>
             {ticket.can_assign ? (
-              <div className="helpdesk-assign-panel" aria-label="Atribuir técnico">
-                <HelpdeskAssigneePicker
-                  label={ticket.assigned_user_id ? "Reatribuir técnico" : "Atribuir técnico"}
-                  hint={helpTooltips.detailUi.assignee}
-                  value={assigneePick}
-                  onChange={setAssigneePick}
-                />
-                <HintAction
-                  hint={helpTooltips.detailUi.assigneeAction}
-                  ariaLabel="Ajuda: Confirmar atribuição"
-                >
-                  <ActionButton
-                    variant="default"
-                    type="button"
-                    disabled={
-                      assignSaving ||
-                      !assigneePick?.id ||
-                      Number(assigneePick.id) === Number(ticket.assigned_user_id || 0)
-                    }
-                    onClick={assignTechnician}
-                  >
-                    {assignSaving
-                      ? "Salvando…"
-                      : ticket.assigned_user_id
-                        ? "Reatribuir"
-                        : "Atribuir"}
-                  </ActionButton>
-                </HintAction>
-              </div>
+              <HelpdeskAssignPopover
+                assignedDisplayName={ticket.assigned_display_name}
+                assignedUserId={ticket.assigned_user_id}
+                value={assigneePick}
+                onChange={setAssigneePick}
+                onConfirm={assignTechnician}
+                saving={assignSaving}
+              />
             ) : null}
             {(() => {
               const cue = solicitanteLifecycleCue({
@@ -1575,7 +1505,7 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                 hint={helpTooltips.detailUi.reply}
                 value={content}
                 onChange={(next) => setContent(attachmentPreview.persistHtml(next))}
-                minHeight={120}
+                minHeight={96}
                 fill
                 enableMentions
                 resolveAttachmentImageSrc={resolveReplyAttachmentImageSrc}

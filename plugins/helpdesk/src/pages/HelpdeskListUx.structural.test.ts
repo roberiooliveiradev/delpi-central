@@ -10,28 +10,27 @@ function read(relativePath: string): string {
 }
 
 describe("Helpdesk list UX structural", () => {
-  it("lista usa PageHero, busca, chips, drawer avançado e Pagination do kit", () => {
+  it("lista usa PageHero, busca compacta, chips e popovers (sem drawer)", () => {
     const page = read("HelpdeskPage.tsx");
     const ui = read("../ui/helpdeskUi.tsx");
     expect(page).not.toContain("HelpdeskFiltersRow");
     expect(page).toContain("HelpdeskPageHero");
     expect(page).toContain("HelpdeskScopeChipBar");
-    expect(page).toContain("HelpdeskFilterBarShell");
-    expect(page).toContain("HelpdeskHostDrawer");
-    expect(page).toContain("TicketListFilterBuilder");
-    expect(page).toContain("HelpdeskSegmentToggle");
+    expect(page).toContain("helpdesk-list-primary-bar");
+    expect(page).toContain("TicketListFilterPopover");
+    expect(page).toContain("TicketListSortPopover");
     expect(page).toContain("TicketListCards");
     expect(page).toContain("HelpdeskListPaginationFooter");
     expect(page).toContain("shouldForceTicketCards");
     expect(page).toContain("TICKET_STATUS_FILTERS");
+    expect(page).not.toContain("HelpdeskHostDrawer");
+    expect(page).not.toContain("HelpdeskFilterBarShell");
     expect(page).not.toContain("HelpdeskCompactPagination");
     expect(page).not.toContain("HelpdeskTablePageSizeSelect");
     expect(page).toContain("HELPDESK_TICKET_LIST_VIEW_LAYOUT_KEY");
     expect(page).toContain("usePersistedViewLayout");
     expect(ui).toContain("createDashboardPageHero");
-    expect(ui).toContain("createHostContainedDrawerShell");
     expect(ui).toContain("createDashboardScopeChipBar");
-    expect(ui).toContain("createFilterBarShell");
   });
 
   it("CTA Abrir chamado na listagem usa ActionButton com texto (não só ícone +)", () => {
@@ -48,6 +47,7 @@ describe("Helpdesk list UX structural", () => {
     const css = read("../index.css");
     expect(css).toContain(".helpdesk-open-ticket");
     expect(css).toContain(".helpdesk-list-shell");
+    expect(css).toContain(".helpdesk-anchored-popover");
   });
 
   it("cards usam DataCardsGrid + RecordCard com href interno e meta responsiva", () => {
@@ -145,25 +145,26 @@ describe("Helpdesk list UX structural", () => {
     expect(gate).toContain("HELPDESK_GLPI_AUTO_LINK_KEY");
   });
 
-  it("atribuição: picker no create/detail gated por can_assign + API users/assignee", () => {
+  it("atribuição: create usa picker; detalhe colapsa em popover gated por can_assign", () => {
     const page = read("HelpdeskPage.tsx");
     const picker = read("../components/HelpdeskAssigneePicker.tsx");
+    const assignPopover = read("HelpdeskAssignPopover.tsx");
     expect(page).toContain("getSessionCapabilities");
     expect(page).toContain("HelpdeskAssigneePicker");
+    expect(page).toContain("HelpdeskAssignPopover");
     expect(page).toContain("setTicketAssignee");
     expect(page).toContain("canAssign");
     expect(page).toContain("ticket.can_assign");
-    expect(page).toContain("helpdesk-assign-panel");
     expect(page).toContain("helpTooltips.createUi.assignee");
-    expect(page).toContain("helpTooltips.detailUi.assignee");
     expect(page).toContain("assignee_id: canAssign === true && assignee?.id ? Number(assignee.id) : undefined");
     expect(page).toContain("canAssign !== true");
-    expect(page).toContain("HelpdeskAssigneePicker");
     expect(page).toContain("assigneeFromCreateDraft");
-    expect(page).toContain("assigneeName:");
-    expect(page).toContain("assigneeEmail:");
-    expect(page).toContain("assigneeDirectoryUserId:");
     expect(page).not.toMatch(/canAssign \? \([\s\S]*HelpdeskAssigneePicker[\s\S]*HelpdeskSelect/);
+    expect(assignPopover).toContain("HelpdeskAssigneePicker");
+    expect(assignPopover).toContain("helpdesk-assign-summary");
+    expect(assignPopover).toContain("aria-expanded");
+    const detailSlice = page.slice(page.indexOf("HelpdeskAssignPopover"));
+    expect(detailSlice).not.toContain('className="helpdesk-assign-panel"');
     expect(picker).toContain("listUsers");
     expect(picker).toContain('purpose: "assignee"');
     expect(picker).toContain("UserDirectoryPicker");
@@ -198,7 +199,6 @@ describe("Helpdesk list UX structural", () => {
     expect(ui).toContain("Solte o arquivo para anexar");
     expect(ui).toContain("overlayLabel={HELPDESK_COMPOSE_DROP_OVERLAY}");
     expect(ui).toMatch(/accept=\{accept\}/);
-    // Ad-hoc image-only drop removed — kit layer owns DnD.
     expect(ui).not.toMatch(/onDrop=\{onDrop\}/);
     expect(ui).not.toMatch(/onDragOver=\{/);
     expect(ui).not.toMatch(/dataTransfer\?\.files/);
@@ -220,5 +220,20 @@ describe("Helpdesk list UX structural", () => {
     expect(ui).toContain("mentionHits");
     expect(ui).not.toContain("MentionComposer");
     expect(page).not.toContain("MentionComposer");
+  });
+
+  it("filtros e ordenação usam popover contextual (não HostContainedDrawer)", () => {
+    const filter = read("TicketListFilterPopover.tsx");
+    const sort = read("TicketListSortPopover.tsx");
+    const page = read("HelpdeskPage.tsx");
+    expect(filter).toContain('role="dialog"');
+    expect(filter).toContain("aria-expanded");
+    expect(filter).toContain("TicketListFilterBuilder");
+    expect(filter).toContain("Escape");
+    expect(sort).toContain('role="dialog"');
+    expect(sort).toContain("TicketListSortBuilder");
+    expect(page).not.toContain("HelpdeskHostDrawer");
+    expect(filter).not.toContain("Drawer");
+    expect(sort).not.toContain("Drawer");
   });
 });
