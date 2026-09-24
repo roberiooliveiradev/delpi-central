@@ -285,6 +285,62 @@ def _alternate_rows_from_resolved_data(
     return best
 
 
+def _kpi_metric_fields(resolved: dict[str, Any]) -> set[str]:
+    return {
+        str(m.get("field") or "").strip()
+        for m in (resolved.get("kpiMetrics") or [])
+        if isinstance(m, dict) and str(m.get("field") or "").strip()
+    }
+
+
+def _wide_row_from_kpi_metrics(
+    resolved: dict[str, Any], keys: list[str]
+) -> list[dict[str, Any]]:
+    """One wide row from kpiMetrics when table has no matching columnar frame."""
+    metrics = {
+        str(m.get("field") or "").strip(): m
+        for m in (resolved.get("kpiMetrics") or [])
+        if isinstance(m, dict) and str(m.get("field") or "").strip()
+    }
+    if not metrics or not keys:
+        return []
+    row: dict[str, Any] = {}
+    for key in keys:
+        metric = metrics.get(key)
+        if metric is None:
+            continue
+        if "value" in metric:
+            row[key] = metric.get("value")
+    return [row] if row else []
+
+
+def _should_paint_selected_metrics_fallback(
+    resolved: dict[str, Any],
+    *,
+    rows: list[dict[str, Any]],
+    category: str,
+    series_cfg: list[Any],
+) -> bool:
+    """
+    Scalar / metric-dump sources often set categoryField to a measure (e.g. rol).
+    Paint selected series from kpiMetrics — never invent bars for an empty business list
+    whose category is a real dimension (periodo, etc.).
+    """
+    series_fields = [
+        str(item.get("field") or "").strip()
+        for item in series_cfg
+        if isinstance(item, dict) and str(item.get("field") or "").strip()
+    ]
+    metric_fields = _kpi_metric_fields(resolved)
+    if not series_fields or not any(field in metric_fields for field in series_fields):
+        return False
+    if _is_metric_summary_rows(rows):
+        return True
+    if category and category in metric_fields:
+        return True
+    return False
+
+
 def _chart_series_from_selected_metrics(
     resolved: dict[str, Any],
     series_cfg: list[Any],
@@ -453,9 +509,15 @@ def apply_view_projection_to_resolved(resolved: dict[str, Any], block: dict[str,
                         next_col["valueFormat"] = value_format
                     next_cols.append(next_col)
                 keys = [str(c.get("key") or "").strip() for c in next_cols if c.get("key")]
-                next_rows = []
+                next_rows: list[dict[str, Any]] = []
                 for row in rows:
-                    next_rows.append({k: row.get(k) for k in keys if k in row})
+                    projected = {k: row.get(k) for k in keys if k in row}
+                    if projected:
+                        next_rows.append(projected)
+                # Scalar KPI sources suppress field/value dump — synthesize one wide row
+                # from kpiMetrics so table_view with measure columns is not Sem linhas.
+                if not next_rows and keys:
+                    next_rows = _wide_row_from_kpi_metrics(resolved, keys)
                 next_resolved["table"] = {"rows": next_rows, "columns": next_cols}
                 applied = True
 
@@ -481,6 +543,7 @@ def apply_view_projection_to_resolved(resolved: dict[str, Any], block: dict[str,
                 series_cfg=series_cfg if isinstance(series_cfg, list) else [],
             )
             series_out: list[dict[str, Any]] = []
+            used_selected_metrics = False
             if chart_rows and series_cfg:
                 series_out = _build_chart_series(
                     rows=chart_rows,
@@ -489,14 +552,28 @@ def apply_view_projection_to_resolved(resolved: dict[str, Any], block: dict[str,
                     chart_type=chart_type,
                     max_categories=_resolve_max_categories(projection, chart_type),
                 )
-            elif series_cfg and not category:
+            if not series_out and series_cfg and not category:
                 # Encoding escolhe medidas sem dimensão → selected metrics only.
                 series_out = _chart_series_from_selected_metrics(
                     resolved, series_cfg, chart_type
                 )
+                used_selected_metrics = bool(series_out)
+            elif not series_out and series_cfg and _should_paint_selected_metrics_fallback(
+                resolved,
+                rows=rows,
+                category=category,
+                series_cfg=series_cfg if isinstance(series_cfg, list) else [],
+            ):
+                # categoryField apontou para medida (resumo escalar) — selected-only.
+                series_out = _chart_series_from_selected_metrics(
+                    resolved, series_cfg, chart_type
+                )
+                used_selected_metrics = bool(series_out)
             if series_out:
                 effective_type = chart_type
-                if len(series_out) > 1 and chart_type in {"line", "area"} and not category:
+                if len(series_out) > 1 and chart_type in {"line", "area"} and (
+                    not category or used_selected_metrics
+                ):
                     effective_type = "bar"
                 next_chart: dict[str, Any] = {
                     "points": series_out[0]["points"],

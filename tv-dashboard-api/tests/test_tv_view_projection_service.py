@@ -337,6 +337,94 @@ def test_chart_projection_selected_metrics_only_without_category():
     assert "Total itens" not in labels
 
 
+def test_chart_projection_category_as_measure_falls_back_to_selected_metrics():
+    """Scalar ROL summary: categoryField=rol must not leave Sem dados."""
+    resolved = {
+        "kpiMetrics": [
+            {"field": "rol", "label": "ROL", "value": 4364622.79},
+            {"field": "comparable_goal", "label": "Meta do período", "value": 5000000.0},
+            {"field": "rol_target_pct", "label": "Atingimento", "value": 87.3},
+        ],
+        # KPI source suppresses field/value dump — no columnar table.
+        "table": {"columns": [], "rows": []},
+    }
+    block = {
+        "type": "chart_view",
+        "chartType": "bar",
+        "chartProjection": {
+            "categoryField": "rol",
+            "series": [
+                {"field": "comparable_goal", "aggregation": "sum", "label": "Meta do período"},
+                {"field": "rol_target_pct", "aggregation": "sum", "label": "Atingimento"},
+            ],
+        },
+    }
+    next_resolved = apply_view_projection_to_resolved(resolved, block)
+    fields = [s["field"] for s in next_resolved["chart"]["series"]]
+    assert fields == ["comparable_goal", "rol_target_pct"]
+    assert next_resolved["chart"]["series"][0]["points"][0]["value"] == 5000000.0
+    assert next_resolved["serverProjectionApplied"] is True
+
+
+def test_table_projection_synthesizes_wide_row_from_kpi_metrics():
+    """Scalar source without table rows → one wide row for selected measure columns."""
+    resolved = {
+        "kpiMetrics": [
+            {"field": "rol", "label": "ROL", "value": 4364622.79},
+            {"field": "comparable_goal", "label": "Meta do período", "value": 5000000.0},
+            {"field": "discounts", "label": "Descontos", "value": 100.0},
+        ],
+        "table": {"columns": [], "rows": []},
+    }
+    block = {
+        "type": "table_view",
+        "tableProjection": {
+            "columns": [
+                {"key": "rol", "label": "ROL", "visible": True},
+                {"key": "comparable_goal", "label": "Meta do período", "visible": True},
+                {"key": "discounts", "label": "Descontos", "visible": True},
+            ]
+        },
+    }
+    next_resolved = apply_view_projection_to_resolved(resolved, block)
+    assert len(next_resolved["table"]["rows"]) == 1
+    assert next_resolved["table"]["rows"][0]["rol"] == 4364622.79
+    assert next_resolved["table"]["rows"][0]["comparable_goal"] == 5000000.0
+    assert next_resolved["table"]["rows"][0]["discounts"] == 100.0
+    assert next_resolved["serverProjectionApplied"] is True
+
+
+def test_table_projection_metric_dump_with_measure_keys_uses_kpi_metrics():
+    resolved = {
+        "kpiMetrics": [
+            {"field": "rol", "label": "ROL", "value": 10},
+            {"field": "target", "label": "Meta", "value": 20},
+        ],
+        "table": {
+            "columns": [
+                {"key": "metric", "label": "Indicador"},
+                {"key": "field", "label": "Campo"},
+                {"key": "value", "label": "Valor"},
+            ],
+            "rows": [
+                {"metric": "ROL", "field": "rol", "value": 10},
+                {"metric": "Meta", "field": "target", "value": 20},
+            ],
+        },
+    }
+    block = {
+        "type": "table_view",
+        "tableProjection": {
+            "columns": [
+                {"key": "rol", "visible": True},
+                {"key": "target", "visible": True},
+            ]
+        },
+    }
+    next_resolved = apply_view_projection_to_resolved(resolved, block)
+    assert next_resolved["table"]["rows"] == [{"rol": 10, "target": 20}]
+
+
 def test_exclude_weekends_baked_into_chart_points():
     resolved = {
         "viewFilterParams": {"excludeWeekends": True, "granularity": "day"},
