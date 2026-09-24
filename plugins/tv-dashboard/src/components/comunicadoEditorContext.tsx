@@ -275,6 +275,7 @@ export function ComunicadoEditorProvider({
     playlistId,
     config,
     playlistDefaults,
+    globalRefreshSec,
   });
 
   const { scheduleInputFilterRefresh, scheduleInputFilterRefreshById } = useInputFilterDataRefresh({

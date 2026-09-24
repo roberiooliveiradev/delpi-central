@@ -268,6 +268,134 @@ describe("resolvePreviewRefreshSourceIds", () => {
     ).toEqual(["src-b"]);
   });
 
+  it("excluir visual NÃO refetcha as outras fontes ligadas", () => {
+    const withTwoViews: ComunicadoConfig = {
+      blocks: [
+        {
+          id: "src-a",
+          type: "data_source",
+          frame: { x: 0, y: 0, w: 10, h: 10 },
+          dataBinding: { operationId: "op", params: {} },
+        },
+        {
+          id: "src-b",
+          type: "data_source",
+          frame: { x: 0, y: 0, w: 10, h: 10 },
+          dataBinding: { operationId: "op2", params: {} },
+        },
+        {
+          id: "kpi-1",
+          type: "kpi_view",
+          dataSourceId: "src-a",
+          frame: { x: 0, y: 0, w: 20, h: 20 },
+        },
+        {
+          id: "chart-1",
+          type: "chart_view",
+          chartType: "bar",
+          dataSourceId: "src-b",
+          frame: { x: 0, y: 0, w: 20, h: 20 },
+        },
+      ],
+    };
+    const prev = buildDataPreviewFingerprint(withTwoViews);
+    const next = buildDataPreviewFingerprint({
+      ...withTwoViews,
+      blocks: withTwoViews.blocks!.filter((block) => block.id !== "kpi-1"),
+    });
+    expect(prev).not.toBe(next);
+    expect(
+      planDataPreviewRefresh({
+        previousFingerprint: prev,
+        nextFingerprint: next,
+        blocks: withTwoViews.blocks!.filter((block) => block.id !== "kpi-1"),
+      }),
+    ).toEqual([]);
+  });
+
+  it("adicionar visual só refetcha a fonte ligada", () => {
+    const base: ComunicadoConfig = {
+      blocks: [
+        {
+          id: "src-a",
+          type: "data_source",
+          frame: { x: 0, y: 0, w: 10, h: 10 },
+          dataBinding: { operationId: "op", params: {} },
+        },
+        {
+          id: "src-b",
+          type: "data_source",
+          frame: { x: 0, y: 0, w: 10, h: 10 },
+          dataBinding: { operationId: "op2", params: {} },
+        },
+        {
+          id: "chart-1",
+          type: "chart_view",
+          chartType: "bar",
+          dataSourceId: "src-b",
+          frame: { x: 0, y: 0, w: 20, h: 20 },
+        },
+      ],
+    };
+    const prev = buildDataPreviewFingerprint(base);
+    const next = buildDataPreviewFingerprint({
+      ...base,
+      blocks: [
+        ...base.blocks!,
+        {
+          id: "kpi-new",
+          type: "kpi_view",
+          dataSourceId: "src-a",
+          frame: { x: 0, y: 0, w: 20, h: 20 },
+        },
+      ],
+    });
+    expect(
+      planDataPreviewRefresh({
+        previousFingerprint: prev,
+        nextFingerprint: next,
+        blocks: [
+          ...base.blocks!,
+          {
+            id: "kpi-new",
+            type: "kpi_view",
+            dataSourceId: "src-a",
+            frame: { x: 0, y: 0, w: 20, h: 20 },
+          },
+        ],
+      }),
+    ).toEqual(["src-a"]);
+  });
+
+  it("excluir fonte NÃO refetcha as fontes restantes", () => {
+    const withSources: ComunicadoConfig = {
+      blocks: [
+        {
+          id: "src-a",
+          type: "data_source",
+          frame: { x: 0, y: 0, w: 10, h: 10 },
+          dataBinding: { operationId: "op", params: {} },
+        },
+        {
+          id: "src-b",
+          type: "data_source",
+          frame: { x: 0, y: 0, w: 10, h: 10 },
+          dataBinding: { operationId: "op2", params: {} },
+        },
+      ],
+    };
+    const prev = buildDataPreviewFingerprint(withSources);
+    const nextBlocks = [withSources.blocks![1]!];
+    const next = buildDataPreviewFingerprint({ ...withSources, blocks: nextBlocks });
+    expect(
+      planDataPreviewRefresh({
+        previousFingerprint: prev,
+        nextFingerprint: next,
+        blocks: nextBlocks,
+      }),
+    ).toEqual([]);
+  });
+
   it("chartProjection encoding mudou → refetch da fonte ligada", () => {
     const mk = (field: string): ComunicadoConfig => ({
       blocks: [

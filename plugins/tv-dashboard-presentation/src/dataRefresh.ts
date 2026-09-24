@@ -78,7 +78,51 @@ function diffChangedFetchableBlockIds(
       changed.push(block.id);
     }
   }
-  return changed.length > 0 ? changed : allFetchableIds;
+  // Remoções não exigem refetch das fontes restantes.
+  return changed;
+}
+
+function viewLinkBakeKey(entry: unknown): string {
+  if (!entry || typeof entry !== "object") return "";
+  const { id: _id, ...rest } = entry as Record<string, unknown>;
+  return JSON.stringify(rest);
+}
+
+/**
+ * Fontes cujo encoding/binding de view mudou (ou ganhou view nova).
+ * Excluir um visual NÃO dispara refetch — só intervalo / Atualizar / encoding.
+ */
+function changedSourceIdsFromViewLinkDiff(
+  prevLinks: unknown,
+  nextLinks: unknown,
+  allFetchableIds: string[],
+): string[] {
+  const fetchableSet = new Set(allFetchableIds);
+  const prevList = Array.isArray(prevLinks) ? prevLinks : [];
+  const nextList = Array.isArray(nextLinks) ? nextLinks : [];
+  const prevById = new Map<string, unknown>();
+  for (const entry of prevList) {
+    if (!entry || typeof entry !== "object") continue;
+    const id = String((entry as { id?: unknown }).id ?? "").trim();
+    if (id) prevById.set(id, entry);
+  }
+  const affected = new Set<string>();
+  for (const entry of nextList) {
+    if (!entry || typeof entry !== "object") continue;
+    const id = String((entry as { id?: unknown }).id ?? "").trim();
+    const sid = String((entry as { dataSourceId?: unknown }).dataSourceId ?? "").trim();
+    if (!sid || !fetchableSet.has(sid)) continue;
+    const previous = id ? prevById.get(id) : undefined;
+    if (!previous) {
+      // View nova ligada à fonte — um bake para carimbar linkedResolved.
+      affected.add(sid);
+      continue;
+    }
+    if (viewLinkBakeKey(previous) !== viewLinkBakeKey(entry)) {
+      affected.add(sid);
+    }
+  }
+  return [...affected];
 }
 
 /** Chave estável só com filtros e bindings — mudanças de layout não disparam refetch. */
@@ -286,22 +330,11 @@ function parsePreviewFingerprint(fingerprint: string): PreviewFingerprintPayload
   }
 }
 
-function dataSourceIdsFromViewLinks(viewLinks: unknown): string[] {
-  if (!Array.isArray(viewLinks)) return [];
-  const ids = new Set<string>();
-  for (const entry of viewLinks) {
-    if (!entry || typeof entry !== "object") continue;
-    const sid = String((entry as { dataSourceId?: unknown }).dataSourceId ?? "").trim();
-    if (sid) ids.add(sid);
-  }
-  return [...ids];
-}
-
 /**
  * Quais fontes recarregar quando o fingerprint de dados muda.
- * FE-BE-003: mudança de viewLinks (encoding/binding visual) exige re-preview das
- * fontes ligadas — bake displayText/chartProjection e server-owned (nao paint client).
- * Binding/transform de fonte → só ids alterados; filtros → fontes afetadas ou todas.
+ * FE-BE-003: mudança de encoding/binding de view exige re-preview da fonte ligada.
+ * Add/delete puro de visual NÃO refetcha todas as fontes — só a afetada (view nova)
+ * ou nenhuma (exclusão). Filtros → todas; binding → só ids alterados.
  */
 export function resolvePreviewRefreshSourceIds(params: {
   previousFingerprint: string | null;
@@ -327,33 +360,44 @@ export function resolvePreviewRefreshSourceIds(params: {
   const viewLinksChanged =
     JSON.stringify(prev.viewLinks ?? null) !== JSON.stringify(next.viewLinks ?? null);
 
-  if (
-    !blocksChanged &&
-    !inputsChanged &&
-    !dataFiltersChanged &&
-    !playlistDefaultsChanged
-  ) {
-    if (!viewLinksChanged) return allFetchableIds;
-    const linked = dataSourceIdsFromViewLinks(next.viewLinks).filter((id) =>
-      allFetchableIds.includes(id),
-    );
-    return linked.length > 0 ? linked : allFetchableIds;
-  }
-
-  if (blocksChanged) {
-    return diffChangedFetchableBlockIds(prev.blocks, next.blocks, allFetchableIds);
-  }
-
   // Filtros do slide / programação aplicam a todas as fontes fetchable.
   if (dataFiltersChanged || playlistDefaultsChanged) {
     return allFetchableIds;
   }
 
-  if (inputsChanged) {
-    return inputAffectedSourceIds.length > 0 ? inputAffectedSourceIds : allFetchableIds;
+  const ids = new Set<string>();
+
+  if (blocksChanged) {
+    for (const id of diffChangedFetchableBlockIds(
+      prev.blocks,
+      next.blocks,
+      allFetchableIds,
+    )) {
+      ids.add(id);
+    }
   }
 
-  return allFetchableIds;
+  if (viewLinksChanged) {
+    for (const id of changedSourceIdsFromViewLinkDiff(
+      prev.viewLinks,
+      next.viewLinks,
+      allFetchableIds,
+    )) {
+      ids.add(id);
+    }
+  }
+
+  if (inputsChanged) {
+    if (inputAffectedSourceIds.length > 0) {
+      for (const id of inputAffectedSourceIds) {
+        if (allFetchableIds.includes(id)) ids.add(id);
+      }
+    } else {
+      return allFetchableIds;
+    }
+  }
+
+  return [...ids];
 }
 
 /**

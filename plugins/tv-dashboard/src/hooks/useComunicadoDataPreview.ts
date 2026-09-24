@@ -2,11 +2,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   buildDataPreviewFingerprint,
   DATA_PREVIEW_AUTO_REFRESH_DEBOUNCE_MS,
+  DATA_REFRESH_SEC_DEFAULT,
   isFetchableDataBlockType,
   mergeComunicadoDataPages,
   planDataPreviewRefresh,
   resolveComunicadoDataPageState,
   resolveDataBlockErrorText,
+  resolveDataBlockRefreshSec,
   type ComunicadoBlock,
   type ComunicadoConfig,
   type ComunicadoDataBinding,
@@ -38,6 +40,8 @@ type Options = {
   config: ComunicadoConfig;
   /** dataDefaults live da programação — entra no fingerprint e no preview. */
   playlistDefaults?: Record<string, unknown> | null;
+  /** Intervalo padrão da programação (segundos) — refresh periódico no editor. */
+  globalRefreshSec?: number | null;
 };
 
 type FetchableBlock = Extract<ComunicadoBlock, { dataBinding: ComunicadoDataBinding }>;
@@ -93,7 +97,12 @@ export function collectPreviewErrorMessages(
  * Decisão de *quais* fontes: `planDataPreviewRefresh` (presentation).
  * Body HTTP: `requestDataPreviewBlock` (sempre com playlistDefaults live).
  */
-export function useComunicadoDataPreview({ playlistId, config, playlistDefaults = null }: Options) {
+export function useComunicadoDataPreview({
+  playlistId,
+  config,
+  playlistDefaults = null,
+  globalRefreshSec = DATA_REFRESH_SEC_DEFAULT,
+}: Options) {
   const [resolvedByBlockId, setResolvedByBlockId] = useState<Record<string, ComunicadoDataResolved>>(
     () => initialResolvedMap(playlistId, config, playlistDefaults),
   );
@@ -113,6 +122,8 @@ export function useComunicadoDataPreview({ playlistId, config, playlistDefaults 
   configRef.current = config;
   const playlistDefaultsRef = useRef(playlistDefaults);
   playlistDefaultsRef.current = playlistDefaults;
+  const globalRefreshSecRef = useRef(globalRefreshSec);
+  globalRefreshSecRef.current = globalRefreshSec;
 
   const requestIdRef = useRef(0);
   const batchAbortRef = useRef<AbortController | null>(null);
@@ -493,6 +504,12 @@ export function useComunicadoDataPreview({ playlistId, config, playlistDefaults 
           nextFingerprint: dataFingerprint,
           blocks: configRef.current.blocks,
         });
+        // Exclusão de visual / mudança sem impacto em dados: avança fingerprint sem fetch.
+        if (sourceIds.length === 0) {
+          syncedFingerprintRef.current = dataFingerprint;
+          setStaleSourceIds([]);
+          return;
+        }
         scheduleAutoRefresh(sourceIds, blocks);
         return;
       }
@@ -511,6 +528,26 @@ export function useComunicadoDataPreview({ playlistId, config, playlistDefaults 
       void fetchBlocks(blocks, { showLoading: true, force: false });
     }
   }, [playlistId, dataFingerprint, fetchBlocks, readDataBlocks, scheduleAutoRefresh]);
+
+  // Refresh periódico no editor: intervalo da programação (globalRefreshSec).
+  // Add/delete e layout NÃO refetcham; encoding/filtros/Atualizar continuam no fingerprint.
+  useEffect(() => {
+    const blocks = readDataBlocks();
+    if (blocks.length === 0) return;
+    const intervalSec = resolveDataBlockRefreshSec(undefined, globalRefreshSecRef.current);
+    if (!Number.isFinite(intervalSec) || intervalSec <= 0) return;
+    const timer = window.setInterval(() => {
+      const current = readDataBlocks();
+      if (current.length === 0) return;
+      // Não empilhar se já há lote em andamento.
+      if (batchAbortRef.current) return;
+      void fetchBlocks(current, {
+        showLoading: false,
+        force: true,
+      });
+    }, intervalSec * 1000);
+    return () => window.clearInterval(timer);
+  }, [playlistId, fetchBlocks, readDataBlocks, globalRefreshSec]);
 
   const isDataPreviewStale = staleSourceIds.length > 0;
 
