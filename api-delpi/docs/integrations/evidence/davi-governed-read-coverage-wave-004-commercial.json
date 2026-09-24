@@ -1,7 +1,7 @@
 {
   "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-004-COMMERCIAL-READ",
   "family": "COMMERCIAL_ANALYTICS_READ",
-  "sourceHead": "PENDING_COMMIT",
+  "sourceHead": "e01dbd4dbe40577e8deb198f1049fb59412fd457",
   "allowlistVersionBefore": 9,
   "allowlistVersionAfter": 10,
   "eligibleReadBefore": 17,
