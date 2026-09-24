@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState } from "react";
-import { ActionButton, HintAction } from "@delpi/plugin-ui/index";
+import { ActionButton, HintAction, useClickOutside } from "@delpi/plugin-ui/index";
 
 import { helpTooltips } from "../content/helpTooltips";
 import {
@@ -29,21 +29,16 @@ export function HelpdeskAssignPopover({
   const label = (assignedDisplayName || "").trim() || "Sem técnico";
   const actionLabel = hasAssignee ? "Alterar" : "Atribuir";
 
+  // UserDirectoryPicker / selects abrem no body — useClickOutside ignora overlays aninhados.
+  useClickOutside([wrapperRef], open, () => setOpen(false));
+
   useEffect(() => {
     if (!open) return;
-    function handlePointer(event: MouseEvent) {
-      if (wrapperRef.current?.contains(event.target as Node)) return;
-      setOpen(false);
-    }
     function handleKey(event: KeyboardEvent) {
       if (event.key === "Escape") setOpen(false);
     }
-    document.addEventListener("mousedown", handlePointer);
     document.addEventListener("keydown", handleKey);
-    return () => {
-      document.removeEventListener("mousedown", handlePointer);
-      document.removeEventListener("keydown", handleKey);
-    };
+    return () => document.removeEventListener("keydown", handleKey);
   }, [open]);
 
   return (

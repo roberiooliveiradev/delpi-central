@@ -225,13 +225,17 @@ describe("Helpdesk list UX structural", () => {
   it("filtros e ordenação usam popover contextual (não HostContainedDrawer)", () => {
     const filter = read("TicketListFilterPopover.tsx");
     const sort = read("TicketListSortPopover.tsx");
+    const assign = read("HelpdeskAssignPopover.tsx");
     const page = read("HelpdeskPage.tsx");
     expect(filter).toContain('role="dialog"');
     expect(filter).toContain("aria-expanded");
     expect(filter).toContain("TicketListFilterBuilder");
     expect(filter).toContain("Escape");
+    expect(filter).toContain("useClickOutside");
     expect(sort).toContain('role="dialog"');
     expect(sort).toContain("TicketListSortBuilder");
+    expect(sort).toContain("useClickOutside");
+    expect(assign).toContain("useClickOutside");
     expect(page).not.toContain("HelpdeskHostDrawer");
     expect(filter).not.toContain("Drawer");
     expect(sort).not.toContain("Drawer");

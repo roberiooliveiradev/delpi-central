@@ -1281,6 +1281,12 @@ declare module "@delpi/plugin-ui/index" {
 
   export function TableColumnVisibilityMenu(props: TableColumnVisibilityMenuProps): ReactElement;
 
+  export function useClickOutside<T extends HTMLElement>(
+    refs: Array<{ current: T | null }>,
+    active: boolean,
+    onOutside: () => void,
+  ): void;
+
   export function useTableColumnVisibility(options: {
     storageKey: string;
     columns: readonly TableColumnVisibilityItem[];
