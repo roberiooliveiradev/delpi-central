@@ -274,6 +274,23 @@ def test_list_users_returns_id_and_display_name():
     ]
 
 
+def test_list_users_assignee_purpose_filters_non_technicians():
+    client, glpi = build_client()
+    link(client)
+    all_users = client.get("/users?q=a", headers=auth_headers())
+    assert all_users.status_code == 200
+    mention_ids = {item["id"] for item in all_users.json()["items"]}
+    assert 40 in mention_ids  # RH aparece em menções
+
+    assignees = client.get("/users?q=a&purpose=assignee", headers=auth_headers())
+    assert assignees.status_code == 200
+    assignee_ids = {item["id"] for item in assignees.json()["items"]}
+    assert 15 in assignee_ids
+    assert 22 in assignee_ids
+    assert 40 not in assignee_ids
+    assert 2 not in assignee_ids
+
+
 def test_list_users_filters_system_and_noise_labels():
     client, glpi = build_client()
     link(client)
@@ -291,9 +308,10 @@ def test_list_users_enriches_from_minha_delpi_directory():
         def configured(self):
             return True
 
-        def search_users(self, *, q="", limit=20, browse=False):
+        def search_users(self, *, q="", limit=20, browse=False, permission=None):
             assert browse is False
             assert "ana" in (q or "").lower()
+            _ = permission
             return [
                 {
                     "id": "delpi-ana",
@@ -326,7 +344,8 @@ def test_list_users_keeps_glpi_results_when_delpi_email_does_not_map():
         def configured(self):
             return True
 
-        def search_users(self, *, q="", limit=20, browse=False):
+        def search_users(self, *, q="", limit=20, browse=False, permission=None):
+            _ = permission
             return [
                 {
                     "id": "delpi-shared",

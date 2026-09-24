@@ -40,6 +40,7 @@ class CoreDirectoryService:
         q: str = "",
         limit: int = 20,
         browse: bool = False,
+        permission: str | None = None,
     ) -> list[dict[str, str]]:
         """Returns [{id, name, email}] from Minha DELPI directory (unmasked email)."""
         if not self.configured():
@@ -50,6 +51,9 @@ class CoreDirectoryService:
             "limit": str(safe_limit),
             "app": self.app_id,
         }
+        permission_code = (permission or "").strip()
+        if permission_code:
+            params["permission"] = permission_code
         term = (q or "").strip()
         if term:
             params["q"] = term

@@ -673,7 +673,7 @@ function CreateTicketPage() {
     const stubName = !assignee?.name?.trim() || /^Usuário\s+\d+$/i.test(assignee.name.trim());
     if (!stubName) return;
     const controller = new AbortController();
-    void listUsers({ q: id, limit: 5 }, controller.signal)
+    void listUsers({ q: id, limit: 5, purpose: "assignee" }, controller.signal)
       .then((result) => {
         if (controller.signal.aborted) return;
         const match = (result.items || []).find((row) => String(row.id) === id);

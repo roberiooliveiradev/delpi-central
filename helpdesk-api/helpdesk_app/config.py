@@ -77,6 +77,26 @@ class Settings:
         _get_env("GLPI_LEGACY_MAX_UPLOAD_BYTES", default=str(20 * 1024 * 1024))
         or str(20 * 1024 * 1024)
     )
+    # Perfis GLPI atribuíveis como «Técnico» (default Technician = 6). CSV de ids.
+    GLPI_ASSIGNEE_PROFILE_IDS: str = (
+        _get_env("GLPI_ASSIGNEE_PROFILE_IDS", default="6") or "6"
+    )
 
 
 settings = Settings()
+
+
+def parse_assignee_profile_ids(raw: str | None = None) -> tuple[int, ...]:
+    text = (raw if raw is not None else settings.GLPI_ASSIGNEE_PROFILE_IDS) or ""
+    ids: list[int] = []
+    for part in text.split(","):
+        part = part.strip()
+        if not part:
+            continue
+        try:
+            value = int(part)
+        except ValueError:
+            continue
+        if value > 0 and value not in ids:
+            ids.append(value)
+    return tuple(ids) if ids else (6,)

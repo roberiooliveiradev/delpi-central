@@ -75,7 +75,10 @@ class FakeGlpi:
             SimpleNamespace(id=15, display_name="Ana Silva", email="ana.silva@delpi.com.br"),
             SimpleNamespace(id=22, display_name="Bruno Costa", email="bruno.costa@delpi.com.br"),
             SimpleNamespace(id=99, display_name="0", email=""),
+            SimpleNamespace(id=40, display_name="Sônia RH", email="rh_ues@delpi.com.br"),
         ]
+        # Technician profile users (Ana, Bruno). Excludes system/noise and RH.
+        self.technician_ids = {15, 22}
         self.can_assign = True
         self.uploads = []
         self.accepted_solutions: list[tuple[int, str]] = []
@@ -171,6 +174,13 @@ class FakeGlpi:
                 or term in str(getattr(u, "email", "") or "").lower()
             ]
         return rows[: max(1, min(int(limit or 20), 50))]
+
+    def list_technician_user_ids(self, access_token: str):
+        self.calls += 1
+        assert access_token
+        if not self.can_assign:
+            raise GlpiForbidden("negado")
+        return set(getattr(self, "technician_ids", {15, 22}))
 
     def find_user_by_email(self, access_token: str, email: str):
         self.calls += 1

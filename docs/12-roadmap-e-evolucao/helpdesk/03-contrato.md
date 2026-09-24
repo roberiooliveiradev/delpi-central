@@ -134,7 +134,10 @@ Repetir a mesma chave depois de sucesso devolve o mesmo `id`, sem segundo chamad
 
 Resposta `200`: `{ "user_id": 15, "assigned_display_name": "Ana Silva" }`. Se já houver atribuído diferente, o BFF remove o anterior (`DELETE …/TeamMember` com o mesmo body type/role/id) e cria o novo.
 
-`GET /users?q=&limit=20` — catálogo para atribuição e menções. Busca **união** de (1) HLAPI `Administration/User` por nome/username/e-mail e (2) Directory Minha DELPI (`app=helpdesk`), amarrando pelo e-mail ou pelo nome quando o e-mail Delpi não existe no GLPI. Resposta: `{ "items": [{ "id": 15, "display_name": "Ana Silva", "email": "ana.silva@delpi.com.br" }] }`. Contas de sistema do GLPI e rótulos inválidos (`0`) são omitidos.
+`GET /users?q=&limit=20&purpose=mention|assignee` — catálogo de usuários. Busca **união** de (1) HLAPI `Administration/User` por nome/username/e-mail e (2) Directory Minha DELPI (`app=helpdesk`), amarrando pelo e-mail ou pelo nome quando o e-mail Delpi não existe no GLPI. Resposta: `{ "items": [{ "id": 15, "display_name": "Ana Silva", "email": "ana.silva@delpi.com.br" }] }`. Contas de sistema do GLPI e rótulos inválidos (`0`) são omitidos.
+
+- `purpose=mention` (default): catálogo amplo para menções `@`.
+- `purpose=assignee`: só técnicos GLPI (perfis em `GLPI_ASSIGNEE_PROFILE_IDS`, default Technician=`6`); o picker «Técnico atribuído» usa este modo. Atribuição (`assignee_id` / `PUT …/assignee`) também rejeita id fora desse conjunto.
 
 `GET /session/capabilities` — `{ "can_assign": true|false }` derivado do direito real de listar usuários no GLPI (nunca flag só no MFE). O detalhe do chamado também inclui `can_assign`, `assigned_user_id` e `assigned_display_name`.
 

@@ -23,7 +23,7 @@ type Props = {
 };
 
 /**
- * Técnico atribuído — busca nome/e-mail (Minha DELPI + GLPI via BFF) e grava o id GLPI.
+ * Técnico atribuído — busca só técnicos GLPI (BFF purpose=assignee) e grava o id GLPI.
  * Avatar usa foto Minha DELPI quando `has_photo` + `directory_user_id`.
  */
 export function HelpdeskAssigneePicker({
@@ -50,7 +50,7 @@ export function HelpdeskAssigneePicker({
 
   const searchUsers = useCallback(
     async (query: string, limit = 10, signal?: AbortSignal): Promise<DirectoryUserOption[]> => {
-      const result = await listUsers({ q: query, limit }, signal);
+      const result = await listUsers({ q: query, limit, purpose: "assignee" }, signal);
       const mapped = (result.items || []).map((user) => ({
         id: String(user.id),
         name: (user.display_name || "").trim() || user.email || String(user.id),

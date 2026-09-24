@@ -125,6 +125,7 @@ describe("Helpdesk list UX structural", () => {
     expect(page).toContain("assigneeDirectoryUserId:");
     expect(page).not.toMatch(/canAssign \? \([\s\S]*HelpdeskAssigneePicker[\s\S]*HelpdeskSelect/);
     expect(picker).toContain("listUsers");
+    expect(picker).toContain('purpose: "assignee"');
     expect(picker).toContain("UserDirectoryPicker");
     expect(picker).toContain("createInitialsAvatar");
     expect(picker).toContain("useDirectoryUserPhotoUrls");

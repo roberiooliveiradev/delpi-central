@@ -169,10 +169,14 @@ export function listUrgencies(signal?: AbortSignal) {
   return request<{ items: { id: number; name: string }[] }>("/urgencies", { signal });
 }
 
-export function listUsers(query: { q?: string; limit?: number } = {}, signal?: AbortSignal) {
+export function listUsers(
+  query: { q?: string; limit?: number; purpose?: "mention" | "assignee" } = {},
+  signal?: AbortSignal,
+) {
   const params = new URLSearchParams();
   if (query.q) params.set("q", query.q);
   if (query.limit) params.set("limit", String(query.limit));
+  if (query.purpose) params.set("purpose", query.purpose);
   const suffix = params.toString() ? `?${params}` : "";
   return request<{ items: CatalogUser[] }>(`/users${suffix}`, { signal });
 }

@@ -396,6 +396,41 @@ def filter_assignable_catalog_users(users: list[CatalogUser] | tuple[CatalogUser
     return out
 
 
+def parse_profile_user_ids(payload: dict | list) -> set[int]:
+    """Extract users_id from Profile_User / Profile→User relation payloads (HLAPI or apirest)."""
+    ids: set[int] = set()
+    rows: list = []
+    if isinstance(payload, list):
+        rows = payload
+    elif isinstance(payload, dict):
+        if isinstance(payload.get("data"), list):
+            rows = payload["data"]
+        elif isinstance(payload.get("results"), list):
+            rows = payload["results"]
+        elif isinstance(payload.get("items"), list):
+            rows = payload["items"]
+        else:
+            rows = [payload]
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        raw = (
+            row.get("users_id")
+            or row.get("user_id")
+            or row.get("id")
+            or row.get("2")  # search forcedisplay users_id
+        )
+        if isinstance(raw, dict):
+            raw = raw.get("id") or raw.get("users_id")
+        try:
+            user_id = int(raw)
+        except (TypeError, ValueError):
+            continue
+        if user_id > 0:
+            ids.add(user_id)
+    return ids
+
+
 def normalize_observer_ids(raw) -> tuple[int, ...]:
     if raw is None:
         return ()

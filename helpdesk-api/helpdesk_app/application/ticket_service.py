@@ -1,4 +1,5 @@
 from dataclasses import replace
+import logging
 import unicodedata
 
 from helpdesk_app.application.oauth_service import OAuthService
@@ -26,6 +27,8 @@ from helpdesk_app.infrastructure.glpi.mapping import (
     solicitante_cycle_flags,
 )
 
+logger = logging.getLogger("helpdesk.tickets")
+
 
 def _fold_name(value: str) -> str:
     text = " ".join(str(value or "").split()).casefold()
@@ -51,11 +54,24 @@ class TicketService:
     def categories(self, subject: str):
         return self._glpi.list_categories(self._token(subject))
 
-    def users(self, subject: str, *, q: str = "", limit: int = 20) -> list[CatalogUser]:
+    def users(
+        self, subject: str, *, q: str = "", limit: int = 20, purpose: str = "mention"
+    ) -> list[CatalogUser]:
         token = self._token(subject)
         safe_limit = max(1, min(int(limit or 20), 50))
         term = (q or "").strip()
         by_id: dict[int, CatalogUser] = {}
+        purpose_key = (purpose or "mention").strip().lower()
+        assignee_only = purpose_key in {"assignee", "technician", "tech"}
+        technician_ids: set[int] | None = None
+        if assignee_only:
+            try:
+                technician_ids = set(self._glpi.list_technician_user_ids(token))
+            except Exception:
+                logger.exception("helpdesk_technician_ids_failed")
+                technician_ids = set()
+            if not technician_ids:
+                return []
 
         def put(
             user: CatalogUser,
@@ -64,6 +80,8 @@ class TicketService:
             prefer_email: str = "",
             prefer_directory_user_id: str = "",
         ) -> None:
+            if technician_ids is not None and int(user.id) not in technician_ids:
+                return
             name = (prefer_name or user.display_name or "").strip() or user.display_name
             email = (prefer_email or user.email or "").strip().lower()
             directory_user_id = (
@@ -108,11 +126,17 @@ class TicketService:
                 queries.append(term.lower())
                 queries.append(term.split("@", 1)[0])
             queries.extend(list(search_term_variants(term))[:4])
+            dir_kwargs: dict = {}
+            if assignee_only:
+                # Só pessoas com console GLPI no Minha DELPI (técnicos operacionais).
+                dir_kwargs["permission"] = "helpdesk.console"
             for variant in queries:
                 variant = (variant or "").strip()
                 if not variant:
                     continue
-                for person in directory.search_users(q=variant, limit=safe_limit, browse=False):
+                for person in directory.search_users(
+                    q=variant, limit=safe_limit, browse=False, **dir_kwargs
+                ):
                     email = str(person.get("email") or "").strip().lower()
                     key = email or str(person.get("id") or "")
                     if not key or key in seen_keys:
@@ -203,6 +227,17 @@ class TicketService:
                     )
                 return enriched
         return rows
+
+    def _require_technician(self, token: str, user_id: int) -> None:
+        try:
+            tech_ids = set(self._glpi.list_technician_user_ids(token))
+        except Exception:
+            tech_ids = set()
+        if not tech_ids:
+            raise GlpiValidation("Catálogo de técnicos indisponível.")
+        if int(user_id) not in tech_ids:
+            raise GlpiValidation("Usuário não é técnico atribuível no GLPI.")
+
     def capabilities(self, subject: str) -> dict:
         token = self._token(subject)
         return {"can_assign": bool(self._glpi.can_assign_tickets(token))}
@@ -295,6 +330,7 @@ class TicketService:
         for user_id in observers:
             self._glpi.add_ticket_observer(token, ticket_id, user_id)
         if assignee is not None:
+            self._require_technician(token, assignee)
             self._glpi.add_ticket_assignee(token, ticket_id, assignee)
         stored = StoredResponse(status_code=201, body={"id": ticket_id})
         self._idempotency.save(subject, operation, key, stored)
@@ -328,6 +364,7 @@ class TicketService:
             return stored
         if current is not None and current != assignee:
             self._glpi.remove_ticket_assignee(token, ticket_id, current)
+        self._require_technician(token, assignee)
         self._glpi.add_ticket_assignee(token, ticket_id, assignee)
         refreshed = self._glpi.get_ticket(token, ticket_id, viewer_email="")
         stored = StoredResponse(

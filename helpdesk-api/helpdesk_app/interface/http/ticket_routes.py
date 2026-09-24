@@ -77,10 +77,10 @@ def urgencies(request: Request):
 
 
 @router.get("/users")
-def list_users(request: Request, q: str = "", limit: int = 20):
+def list_users(request: Request, q: str = "", limit: int = 20, purpose: str = "mention"):
     actor = require_actor(request)
     try:
-        rows = _tickets(request).users(actor.subject, q=q, limit=limit)
+        rows = _tickets(request).users(actor.subject, q=q, limit=limit, purpose=purpose)
     except HelpdeskError as exc:
         return _error(exc, request)
     return {

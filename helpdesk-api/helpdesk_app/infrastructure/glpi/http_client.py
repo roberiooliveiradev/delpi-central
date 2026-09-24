@@ -36,6 +36,7 @@ from helpdesk_app.infrastructure.glpi.mapping import (
     parse_categories,
     parse_catalog_users,
     parse_created_id,
+    parse_profile_user_ids,
     payload_row_count,
     parse_ticket_detail,
     parse_ticket_page,
@@ -79,6 +80,7 @@ class HttpxGlpiClient:
         legacy_app_token: str = "",
         legacy_user_token: str = "",
         legacy_max_upload_bytes: int = _MAX_ATTACHMENT_BYTES,
+        assignee_profile_ids: tuple[int, ...] | list[int] | None = None,
         transport: httpx.BaseTransport | None = None,
     ):
         self._base = base_url.rstrip("/")
@@ -90,6 +92,15 @@ class HttpxGlpiClient:
         self._legacy_app_token = (legacy_app_token or "").strip()
         self._legacy_user_token = (legacy_user_token or "").strip()
         self._legacy_max_upload_bytes = max(1, int(legacy_max_upload_bytes))
+        if assignee_profile_ids is None:
+            from helpdesk_app.config import parse_assignee_profile_ids
+
+            self._assignee_profile_ids = parse_assignee_profile_ids()
+        else:
+            self._assignee_profile_ids = tuple(
+                int(item) for item in assignee_profile_ids if int(item) > 0
+            ) or (6,)
+        self._technician_ids_cache: set[int] | None = None
         self._http = httpx.Client(
             timeout=httpx.Timeout(read_timeout, connect=connect_timeout),
             transport=transport,
@@ -333,6 +344,70 @@ class HttpxGlpiClient:
             },
         )
         return parse_catalog_users(payload)
+
+    def list_technician_user_ids(self, access_token: str) -> set[int]:
+        """GLPI user ids with an assignee profile (Technician by default).
+
+        Prefer HLAPI Profile→User; fall back to legacy Profile_User when enabled.
+        """
+        _ = access_token
+        if self._technician_ids_cache is not None:
+            return set(self._technician_ids_cache)
+
+        ids: set[int] = set()
+        for profile_id in self._assignee_profile_ids:
+            ids.update(self._list_user_ids_for_profile(access_token, int(profile_id)))
+
+        self._technician_ids_cache = set(ids)
+        logger.info(
+            "glpi_technician_ids_resolved count=%s profiles=%s",
+            len(ids),
+            list(self._assignee_profile_ids),
+        )
+        return set(ids)
+
+    def _list_user_ids_for_profile(self, access_token: str, profile_id: int) -> set[int]:
+        # 1) HLAPI nested relation (when available on this GLPI build).
+        try:
+            payload = self._json(
+                "GET",
+                f"/api.php/v2.2/Administration/Profile/{int(profile_id)}/User",
+                token=access_token,
+                params={"start": 0, "limit": 500, "filter": "is_active==true", "sort": "id:asc"},
+            )
+            found = parse_profile_user_ids(payload)
+            if found:
+                return found
+        except (GlpiValidation, GlpiNotFound, GlpiForbidden, GlpiUnavailable, GlpiUnauthorized):
+            pass
+        except Exception:
+            logger.exception("glpi_hlapi_profile_users_failed profile_id=%s", profile_id)
+
+        # 2) Legacy apirest Profile → Profile_User (same session used for H12).
+        if not self._legacy_ready():
+            return set()
+        session_token = self._legacy_init_session()
+        try:
+            rows = self._legacy_get_json(
+                session_token,
+                f"/apirest.php/Profile/{int(profile_id)}/Profile_User?range=0-999",
+            )
+            found = parse_profile_user_ids(rows if isinstance(rows, (list, dict)) else [])
+            if found:
+                return found
+            # search/Profile_User: field 3 = profiles_id, forcedisplay 2 = users_id
+            search = self._legacy_get_json(
+                session_token,
+                (
+                    "/apirest.php/search/Profile_User?"
+                    f"criteria[0][field]=3&criteria[0][searchtype]=equals"
+                    f"&criteria[0][value]={int(profile_id)}"
+                    "&forcedisplay[0]=2&range=0-999"
+                ),
+            )
+            return parse_profile_user_ids(search if isinstance(search, (list, dict)) else [])
+        finally:
+            self._legacy_kill_session(session_token)
 
     def find_user_by_email(self, access_token: str, email: str) -> CatalogUser | None:
         """Match GLPI user by emails[] in list payload (email is not an RSQL property)."""
