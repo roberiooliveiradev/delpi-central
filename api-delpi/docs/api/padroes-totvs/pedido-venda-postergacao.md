@@ -19,6 +19,7 @@ Deep link: `/open-orders?postponed=1`.
 - Inventar SQL de postergação em SC5/SC6 sem coluna homologada.
 - Tratar programação PCP/OP como «postergado comercial».
 - Somar carteira postergada com ROL.
+- Confundir postergação (`availability` / horizonte de entrega) com **previsto × realizado** da carteira semanal — ver [carteira-semanal-previsto-realizado.md](./carteira-semanal-previsto-realizado.md).
 
 ## Quando enriquecer
 

@@ -110,3 +110,4 @@ README hub → seção curta (armazem-custo, filiais, …)
 | SQL base | `padroes-totvs/principios-sql.md` |
 | Unidades (MI) | `padroes-totvs/unidades-medida.md` + playbook conversão |
 | Cadastro SB1 / terceiro | `padroes-totvs/cadastro-produto.md` |
+| Carteira semanal previsto × realizado | `padroes-totvs/carteira-semanal-previsto-realizado.md` |

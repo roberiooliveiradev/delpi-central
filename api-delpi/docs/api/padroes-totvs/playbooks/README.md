@@ -16,3 +16,4 @@ Playbooks de **domínio Protheus** da biblioteca. Índice completo: [../README.m
 | [playbook-pa-inspecao-expedicao.md](./playbook-pa-inspecao-expedicao.md) | Inspeção / expedição |
 | [playbook-correcao-estoque-supplies-inventario.md](./playbook-correcao-estoque-supplies-inventario.md) | Estoque × inventário |
 | [playbook-crm-totvs-dicionario.md](./playbook-crm-totvs-dicionario.md) | CRM TOTVS — SX3/SX9; volumes em [crm-sigatec.md](../crm-sigatec.md) |
+| [playbook-carteira-semanal-previsto-realizado.md](./playbook-carteira-semanal-previsto-realizado.md) | Carteira semanal previsto × realizado (SC6 / NF) |

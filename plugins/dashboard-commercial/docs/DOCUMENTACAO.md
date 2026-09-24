@@ -23,6 +23,8 @@ Plugin **microfrontend** (Module Federation) para indicadores do departamento **
 | Lista de propostas | `GET /commercial/proposals` | — (detalhe da taxa de fechamento) |
 | % ROL — novos negócios | `GET /commercial/new-business-rol-pct` | `commercial_new_business_rol_pct` |
 
+**Carteira semanal (previsto × realizado):** regra TOTVS em `api-delpi/docs/api/padroes-totvs/carteira-semanal-previsto-realizado.md` (previsto = SC6/`C6_ENTREG`; realizado = NF/`D2_EMISSAO`). Ainda sem rota HTTP no dashboard — não confundir com OTD nem com meta SI.
+
 Gráficos: evolução do ROL (filiais 01 e 02) e funil propostas × ganhas. Exportação **CSV / Excel / PDF / PNG** por seção nos cards de gráfico e tabela.
 
 **Detalhe da proposta:** clique na linha da tabela abre `/proposta/{proposal_number}` — cabeçalho, produtos ADJ010, estrutura BOM e histórico AIJ010. Ver [DETALHE-PROPOSTA.md](./DETALHE-PROPOSTA.md).

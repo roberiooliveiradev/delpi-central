@@ -28,3 +28,7 @@ Loja numérica: normalizar com `zfill(2)` (`1` → `01`) em chaves de cobertura 
 ## Gap «sem cobertura» × cadastro
 
 Universo operacional = pedidos abertos **∩ SA1**. Código só no SC5 (órfão, sem linha em `SA1010`) **não** entra no gap nem na busca de vínculo — regularizar cadastro no Protheus antes de amarrar carteira.
+
+## Segmento comercial (WEG × novos negócios)
+
+Heurística transversal (`CommercialCustomerSegmentService`): WEG = `A1_COD` / cliente da linha = `000001`; **novos negócios** = demais. Usada em ROL %, OTD e na carteira semanal previsto × realizado — ver [carteira-semanal-previsto-realizado.md](./carteira-semanal-previsto-realizado.md).

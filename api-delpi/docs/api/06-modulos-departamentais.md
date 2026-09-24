@@ -159,6 +159,8 @@ Documentação completa: [invoice-issuance.md](./invoice-issuance.md) · playboo
 | GET | `/commercial/proposals/{proposal_number}` | Detalhe da proposta (AD1010 + cliente/vendedor + **`list_products[]`** ADJ010). Query: `branch` (obrig.), `revision` opcional. Produtos via `LMPQueryRepository.list_ov_products` (SQL compartilhado com LMP). |
 | GET | `/commercial/proposals/{proposal_number}/history/events` | Histórico AIJ010 da OV — mesmo pipeline que LMP (`get_lmp_history_events`). Query: `branch`, `revision`, `date_start`, `date_end` (período aceito pelo MFE; **não** dispara batch de listagem). |
 
+**Carteira semanal (previsto × realizado):** regra de negócio em [padroes-totvs/carteira-semanal-previsto-realizado.md](./padroes-totvs/carteira-semanal-previsto-realizado.md) — previsto por `C6_ENTREG` (SC6), realizado por `D2_EMISSAO`. Rota HTTP ainda não exposta; não confundir com OTD nem com postergação de pedidos abertos.
+
 **MFE `dashboard-commercial`:** detalhe em `/apps/dashboard-commercial/proposta/{proposal_number}` consome **`GET /commercial/proposals/{proposal_number}`** + **`/history/events`** em paralelo (`useCommercialProposalDetail`). Estrutura BOM por produto: **`GET /products/{code}/structure`** (`useCommercialProductStructures`). Documentação: `plugins/dashboard-commercial/docs/DETALHE-PROPOSTA.md`.
 
 **Performance (`/commercial/.../history/events`):** ver § Engenharia — histórico (`/history/events`); custo O(eventos da OV), não varredura `AllListingAnchorRaw`.

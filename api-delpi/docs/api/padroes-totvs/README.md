@@ -36,6 +36,7 @@ Regras Cursor: **`totvs-product-patterns.mdc`** (quando **usar** e como **enriqu
 | Pedido de venda — postergação | [pedido-venda-postergacao.md](./pedido-venda-postergacao.md) | Sem campo TOTVS; heurística BFF `availability` (entrega após o mês) |
 | Transportadoras | [transportadora.md](./transportadora.md) | `SA4` / `A4_NREDUZ` na emissão de NF |
 | ROL financeiro (receita líquida) | — | Campo HTTP canônico **`rol`** = vendas − devoluções (`VLR_VENDA − VLR_DEVOLUCAO`); identificador legado `rol_with_ipi` removido (breaking). Expressão reutilizável: `CommercialRolReturnSql` em `app/domain/services/commercial/commercial_rol_return_sql.py` (billing líquido da carteira / série `nature=net`). Bruto de NF = `F2_VALBRUT`; bruto no envelope by-customer = `gross_revenue`. |
+| Carteira semanal previsto × realizado | [carteira-semanal-previsto-realizado.md](./carteira-semanal-previsto-realizado.md) | Forecast SC6 por `C6_ENTREG` vs realizado por `D2_EMISSAO`; novos negócios / Matriz–Filial; **não** confundir com meta nem OTD |
 | ROL — mercado interno/externo | [rol-mercado-cfop.md](./rol-mercado-cfop.md) | CFOP `5`/`6` = interno; `7` = exportação; países via `A1_PAIS` |
 | Paginação HTTP (tiers) | [paginacao.md](./paginacao.md) | `pagination_tiers.json`, factories Query, `PaginationEnvelopeBuilder`; gate `--check-complete` |
 
@@ -59,6 +60,7 @@ Pasta: [`playbooks/`](./playbooks/).
 | [playbook-pa-inspecao-expedicao.md](./playbooks/playbook-pa-inspecao-expedicao.md) | PA inspeção / expedição |
 | [playbook-correcao-estoque-supplies-inventario.md](./playbooks/playbook-correcao-estoque-supplies-inventario.md) | Correção estoque supplies × inventário |
 | [playbook-crm-totvs-dicionario.md](./playbooks/playbook-crm-totvs-dicionario.md) | SX3/SIX/SX9; volumes e funis em [crm-sigatec.md](./crm-sigatec.md) |
+| [playbook-carteira-semanal-previsto-realizado.md](./playbooks/playbook-carteira-semanal-previsto-realizado.md) | Previsto SC6 (`C6_ENTREG`) × realizado NF/ROL; SQL + homologação Excel |
 
 Permanece em `docs/roadmaps/` (fora desta biblioteca): `playbook-api-delpi-console`, `playbook-route-test-coverage-100`, `playbook-contrato-respostas-ia`, `playbook-pac-plan-revisions-jun2026`, `playbook_correcao_lmp_repositorio_settings`.
 
@@ -77,6 +79,8 @@ Permanece em `docs/roadmaps/` (fora desta biblioteca): `playbook-api-delpi-conso
 | `REFUGOS_COST_WAREHOUSE` / `refugos_scope.py` | [armazem-custo.md](./armazem-custo.md) · [cadastro-produto.md](./cadastro-produto.md) |
 | `PRIMARY_WAREHOUSE` (estoque de segurança) | [armazem-custo.md](./armazem-custo.md) (alinhar semanticamente) |
 | `production_meta_por_hora` / `production_tempo_previsto` | [apontamentos-tempo-padrao.md](./apontamentos-tempo-padrao.md) |
+| `WeeklyPortfolioSnapshot` / `CommercialWeeklyPortfolioRepository` | [carteira-semanal-previsto-realizado.md](./carteira-semanal-previsto-realizado.md) |
+| `CommercialRolReturnSql` / `CommercialCustomerSegmentService` | ROL (linha acima) · [carteira-semanal-previsto-realizado.md](./carteira-semanal-previsto-realizado.md) · [rol-mercado-cfop.md](./rol-mercado-cfop.md) |
 
 Padrão: **novo padrão transversal** → preferir constante em `app/domain/totvs/` + seção nesta pasta + link na doc da rota.
 

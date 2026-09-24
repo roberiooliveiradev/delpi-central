@@ -35,6 +35,8 @@ GET /commercial/sales-order-otd/lines/{branch}/{order_number}/{line_item}
 | `page` / `page_size` | Paginação server-side (default page_size 20, máx. 1000). |
 | `sort_by` / `sort_dir` | Ordenação server-side (ver OpenAPI / DTO panel). |
 
+> **Mesma âncora `C6_ENTREG`:** o OTD mede *prazo* das linhas; a **receita prevista** da carteira semanal soma `qtd × C6_PRCVEN` no mesmo campo de data — ver [padroes-totvs/carteira-semanal-previsto-realizado.md](./padroes-totvs/carteira-semanal-previsto-realizado.md). Não confundir OTD (%) com forecast (R$).
+
 ## Fonte TOTVS
 
 | Tabela | Papel |

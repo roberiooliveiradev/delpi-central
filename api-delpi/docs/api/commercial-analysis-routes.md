@@ -56,9 +56,11 @@ Cada bloco do slide TV usa **uma** rota, sem `group_by`:
 
 Slides legados com as compostas são remapeados no hydrate da tv-dashboard-api (`tv_commercial_composite_binding_migration_service`).
 
-## Fora do escopo
+## Fora do escopo (rotas HTTP atuais)
 
-- Bloco `portfolio` / carteira semanal (antes: `include=portfolio` na composta ROL).
+- **Rota HTTP** de carteira semanal previsto × realizado — ainda não exposta.  
+  **Conceito / SQL / homologação:** [padroes-totvs/carteira-semanal-previsto-realizado.md](./padroes-totvs/carteira-semanal-previsto-realizado.md) + [playbook](./padroes-totvs/playbooks/playbook-carteira-semanal-previsto-realizado.md).  
+  Entity/SQL já existem (`WeeklyPortfolioSnapshot`, `CommercialWeeklyPortfolioRepository`); não reativar `include=portfolio` na composta ROL descontinuada.
 - YoY na API.
 
 ## Consumidores
