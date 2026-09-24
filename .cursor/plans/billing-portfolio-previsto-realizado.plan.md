@@ -46,7 +46,7 @@ isProject: false
 
 # Plano — billing portfolio (previsto × realizado)
 
-**Status:** EM EXECUÇÃO — P1–P4 confirmados (defaults) em 2026-09-24 via «execute».  
+**Status:** CONCLUÍDO — E0–E4 PASS (2026-09-24). Verify-final: Wanke forecast `66571.05` na semana 2026-08-10..16 via `by-customer`.  
 **Owner:** api-delpi / commercial (TOTVS)  
 **Regra canônica:** `api-delpi/docs/api/padroes-totvs/carteira-semanal-previsto-realizado.md`
 
