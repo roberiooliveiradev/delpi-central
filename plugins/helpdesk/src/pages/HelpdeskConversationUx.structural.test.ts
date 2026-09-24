@@ -13,14 +13,15 @@ describe("HELPDESK-MFE-UX-001-R3 conversation detail", () => {
   it("separates summary, banners, conversation column and composer", () => {
     const page = read("HelpdeskPage.tsx");
     const detail = page.slice(page.indexOf("function TicketDetailPage"));
-    expect(detail).toContain('className="helpdesk-detail"');
+    expect(detail).toContain("helpdesk-detail");
+    expect(detail).toContain("helpdesk-ticket-workspace");
     expect(detail).toContain('className="helpdesk-detail__summary"');
-    expect(detail).toContain('className="helpdesk-detail__conversation"');
-    expect(detail).toContain('className="helpdesk-detail__conversation-inner"');
+    expect(detail).toContain("helpdesk-detail__conversation");
+    expect(detail).toContain("helpdesk-detail__conversation-inner");
     expect(detail).not.toContain('title="Conversa"');
     expect(detail).toContain("HelpdeskMessageThread");
     expect(detail).toContain("helpdesk-reply-form");
-    expect(detail).toContain("can_followup !== false");
+    expect(detail).toContain("ticketWorkspaceActions");
   });
 
   it("keeps message ordering, mine alignment and authorSrc from contract only", () => {
@@ -55,15 +56,14 @@ describe("HELPDESK-MFE-UX-001-R3 conversation detail", () => {
   it("technician control stays permission-gated; summary always shows técnico", () => {
     const page = read("HelpdeskPage.tsx");
     const assign = read("HelpdeskAssignPopover.tsx");
+    const context = read("TicketContextPanel.tsx");
     const detail = page.slice(page.indexOf("function TicketDetailPage"));
-    expect(detail).toContain("HelpdeskAssignPopover");
-    expect(detail).toContain("canAssign={ticket.can_assign === true}");
-    expect(detail).toContain('variant="inline"');
+    expect(detail).toContain("TicketContextPanel");
+    expect(context).toContain("canAssign={ticket.can_assign === true}");
     expect(detail).toContain("setTicketAssignee");
     expect(assign).toContain("canAssign");
     expect(assign).toMatch(/canAssign \? \(/);
     expect(assign).toContain("HelpdeskAssigneePicker");
-    expect(assign).toContain('variant === "inline"');
   });
 
   it("closed satisfaction uses radiogroup 1–5 and same submit contract", () => {
@@ -85,8 +85,10 @@ describe("HELPDESK-MFE-UX-001-R3 conversation detail", () => {
 
   it("does not invent response capability on closed tickets", () => {
     const page = read("HelpdeskPage.tsx");
+    const actions = read("../presentation/ticketWorkspaceActions.ts");
     const detail = page.slice(page.indexOf("function TicketDetailPage"));
-    expect(detail).toContain("ticket.can_followup !== false");
+    expect(actions).toContain("can_followup !== false");
+    expect(detail).toContain("ticketWorkspaceActions(ticket)");
     expect(detail).not.toMatch(/status_id\s*===\s*6[\s\S]{0,80}can_followup/);
     expect(detail).not.toMatch(/statusId\s*===\s*6[\s\S]{0,80}reply/);
   });
@@ -174,10 +176,37 @@ describe("HELPDESK-MFE-UX-001-R5 composer + message media", () => {
 
   it("does not reopen assignment contract or invent roles", () => {
     const page = read("HelpdeskPage.tsx");
+    const context = read("TicketContextPanel.tsx");
     const detail = page.slice(page.indexOf("function TicketDetailPage"));
-    expect(detail).toContain("canAssign={ticket.can_assign === true}");
+    expect(context).toContain("canAssign={ticket.can_assign === true}");
     expect(detail).not.toMatch(/isTechnician|participantRole|role\s*===\s*["']support/);
     expect(detail).toContain("submitTicketSatisfaction");
     expect(detail).toContain("{ satisfaction: satisfactionScore, comment: satisfactionComment }");
+  });
+});
+
+describe("HELPDESK-MFE-UX-002 ticket workspace", () => {
+  it("exposes workspace shell with capability-aware action menu", () => {
+    const page = read("HelpdeskPage.tsx");
+    const detail = page.slice(page.indexOf("function TicketDetailPage"));
+    const css = read("../index.css");
+    expect(detail).toContain("helpdesk-ticket-workspace");
+    expect(detail).toContain("TicketActionMenu");
+    expect(detail).toContain("TicketContextPanel");
+    expect(detail).toContain("ticketWorkspaceActions");
+    expect(detail).toContain('activeAction === "reply"');
+    expect(detail).toContain('activeAction === "add_document"');
+    expect(detail).not.toMatch(/create_solution|add_solution|Criar uma tarefa|Pedir aprovação/);
+    expect(css).toContain(".helpdesk-ticket-workspace__body");
+    expect(css).toContain("grid-template-columns");
+  });
+
+  it("does not invent GLPI-only actions without BFF contract", () => {
+    const actions = read("../presentation/ticketWorkspaceActions.ts");
+    expect(actions).toContain('"reply"');
+    expect(actions).toContain('"add_document"');
+    expect(actions).toContain('"accept_solution"');
+    expect(actions).toContain('"reject_solution"');
+    expect(actions).not.toMatch(/create_task|request_approval|add_solution[^_]/);
   });
 });

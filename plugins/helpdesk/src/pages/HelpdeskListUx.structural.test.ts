@@ -148,16 +148,18 @@ describe("Helpdesk list UX structural", () => {
     expect(gate).toContain("HELPDESK_GLPI_AUTO_LINK_KEY");
   });
 
-  it("atribuição: create usa picker; detalhe colapsa em popover gated por can_assign", () => {
+  it("atribuição: create usa picker; detalhe coloca assign no painel de contexto", () => {
     const page = read("HelpdeskPage.tsx");
     const picker = read("../components/HelpdeskAssigneePicker.tsx");
     const assignPopover = read("HelpdeskAssignPopover.tsx");
+    const context = read("TicketContextPanel.tsx");
     expect(page).toContain("getSessionCapabilities");
     expect(page).toContain("HelpdeskAssigneePicker");
-    expect(page).toContain("HelpdeskAssignPopover");
+    expect(page).toContain("TicketContextPanel");
     expect(page).toContain("setTicketAssignee");
     expect(page).toContain("canAssign");
-    expect(page).toContain("canAssign={ticket.can_assign === true}");
+    expect(context).toContain("HelpdeskAssignPopover");
+    expect(context).toContain("canAssign={ticket.can_assign === true}");
     expect(page).toContain("helpTooltips.createUi.assignee");
     expect(page).toContain("assignee_id: canAssign === true && assignee?.id ? Number(assignee.id) : undefined");
     expect(page).toContain("canAssign !== true");
@@ -168,8 +170,7 @@ describe("Helpdesk list UX structural", () => {
     expect(assignPopover).toContain("aria-expanded");
     expect(assignPopover).toContain("canAssign");
     expect(assignPopover).toMatch(/canAssign \? \(/);
-    const detailSlice = page.slice(page.indexOf("HelpdeskAssignPopover"));
-    expect(detailSlice).not.toContain('className="helpdesk-assign-panel"');
+    expect(context).not.toContain('className="helpdesk-assign-panel"');
     expect(picker).toContain("listUsers");
     expect(picker).toContain('purpose: "assignee"');
     expect(picker).toContain("UserDirectoryPicker");
