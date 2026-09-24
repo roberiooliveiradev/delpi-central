@@ -142,6 +142,56 @@ def _with_block_defaults(block: dict[str, Any]) -> dict[str, Any]:
     return out
 
 
+# Types that may be created with an informed id even without an authored frame
+# (defaults inject geometry). Textual labels are the common ghost-create path.
+_UPSERT_CREATE_FRIENDLY_TYPES = frozenset(
+    {
+        "image",
+        "video",
+        "icon",
+        "chart_view",
+        "table_view",
+        "kpi_view",
+        "canvas_table",
+        "input",
+        "data_source",
+        "data_kpi",
+        "data_chart",
+        "data_table",
+        "data_metric",
+    }
+)
+
+
+def _upsert_block_has_authored_frame(block: dict[str, Any]) -> bool:
+    frame = block.get("frame")
+    return isinstance(frame, dict) and bool(frame)
+
+
+def _upsert_block_allows_create(
+    cleaned: dict[str, Any],
+    op: dict[str, Any],
+    *,
+    root_block_id: str,
+) -> bool:
+    """Whether missing target may CREATE instead of failing ALTER_EXISTING.
+
+    - createIfMissing:true → always allow
+    - root blockId (VISTA alter contract) → never allow unless createIfMissing
+    - authored frame → allow (positioned new visual)
+    - chart/table/kpi/media types → allow (common recipe creates)
+    - text/heading/shape without frame → refuse (ghost labels)
+    """
+    if op.get("createIfMissing") is True:
+        return True
+    if root_block_id:
+        return False
+    if _upsert_block_has_authored_frame(cleaned):
+        return True
+    btype = str(cleaned.get("type") or "").strip()
+    return btype in _UPSERT_CREATE_FRIENDLY_TYPES
+
+
 def _fingerprint_from_blocks(blocks: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Assinatura estável de campos críticos (sem payloads enormes)."""
     out: list[dict[str, Any]] = []
@@ -1290,16 +1340,27 @@ class PresentationPatchService:
                 },
             )
 
-        block_id = str(cleaned.get("id") or "").strip() or _new_block_id()
-        cleaned["id"] = block_id
+        # Identity: block.id or root blockId (VISTA ALTER_EXISTING alias).
+        root_block_id = str(op.get("blockId") or "").strip()
+        nested_id = str(cleaned.get("id") or "").strip()
+        if root_block_id and nested_id and root_block_id != nested_id:
+            raise PresentationPatchError(
+                PresentationOpsContentService.message(
+                    "upsertBlockIdConflict",
+                    blockId=nested_id,
+                    rootBlockId=root_block_id,
+                )
+            )
+        block_id = nested_id or root_block_id
         projection_informed = has_explicit_table_columns(cleaned)
         blocks = _blocks_of(cfg)
-        existing = _find_block(blocks, block_id)
+        existing = _find_block(blocks, block_id) if block_id else None
         from tv_app.application.services.data.display_format_service import (
             DisplayFormatService,
         )
 
         if existing is not None:
+            cleaned["id"] = str(existing.get("id") or block_id)
             # Partial patch: deep-merge nested style/frame/… so siblings survive.
             merged = merge_block_patch(existing, cleaned)
             if str(merged.get("type") or "").strip() in {"table_view", "data_table"}:
@@ -1308,12 +1369,30 @@ class PresentationPatchService:
             merged = DisplayFormatService.sanitize_contradictory_text_binding(merged)
             existing.clear()
             existing.update(merged)
-        else:
-            blocks.append(
-                DisplayFormatService.sanitize_contradictory_text_binding(
-                    _with_block_defaults(cleaned)
+            cfg["blocks"] = blocks
+            return str(existing.get("id") or block_id), frame_informed or projection_informed
+
+        if not _upsert_block_allows_create(
+            cleaned, op, root_block_id=root_block_id
+        ):
+            if block_id:
+                raise PresentationPatchError(
+                    PresentationOpsContentService.message(
+                        "blockNotFound", blockId=block_id
+                    )
                 )
+            raise PresentationPatchError(
+                PresentationOpsContentService.message("upsertBlockTargetRequired")
             )
+
+        if not block_id:
+            block_id = _new_block_id()
+        cleaned["id"] = block_id
+        blocks.append(
+            DisplayFormatService.sanitize_contradictory_text_binding(
+                _with_block_defaults(cleaned)
+            )
+        )
         cfg["blocks"] = blocks
         return block_id, frame_informed or projection_informed
 

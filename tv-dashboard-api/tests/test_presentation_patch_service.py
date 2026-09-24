@@ -637,6 +637,7 @@ def test_upsert_block_keeps_filter_context_projection_field(monkeypatch):
             "ops": [
                 {
                     "op": "upsert_block",
+                    "createIfMissing": True,
                     "block": {
                         "id": "txt-week",
                         "type": "text",
@@ -653,6 +654,85 @@ def test_upsert_block_keeps_filter_context_projection_field(monkeypatch):
     )
     block = next(b for b in result["nativeConfig"]["blocks"] if b["id"] == "txt-week")
     assert block["contentRuns"][1]["dataRef"]["field"] == "filter.start_date"
+
+
+def test_upsert_block_block_id_root_updates_existing(monkeypatch):
+    repo = _FakeRepo()
+    repo.slides[SLIDE_ID]["nativeConfig"]["blocks"].append(
+        {
+            "id": "lbl-1",
+            "type": "text",
+            "content": "Antes",
+            "frame": {"x": 1, "y": 2, "w": 10, "h": 4},
+        }
+    )
+    svc = _service(repo, monkeypatch)
+    result = svc.preview(
+        {
+            "target": {"playlistId": PLAYLIST_ID, "slideId": SLIDE_ID},
+            "ops": [
+                {
+                    "op": "upsert_block",
+                    "blockId": "lbl-1",
+                    "block": {"type": "text", "content": "Depois"},
+                }
+            ],
+        },
+        user={},
+    )
+    texts = [b for b in result["nativeConfig"]["blocks"] if b.get("type") == "text"]
+    assert len(texts) == 1
+    assert texts[0]["id"] == "lbl-1"
+    assert texts[0]["content"] == "Depois"
+    assert texts[0]["frame"] == {"x": 1, "y": 2, "w": 10, "h": 4}
+
+
+def test_upsert_block_unknown_id_without_create_flag_does_not_spawn_ghost(monkeypatch):
+    svc = _service(monkeypatch=monkeypatch)
+    before = len(svc.preview(
+        {"target": {"playlistId": PLAYLIST_ID, "slideId": SLIDE_ID}, "ops": []},
+        user={},
+    )["nativeConfig"]["blocks"])
+    with pytest.raises(PresentationPatchError, match="não encontrado"):
+        svc.preview(
+            {
+                "target": {"playlistId": PLAYLIST_ID, "slideId": SLIDE_ID},
+                "ops": [
+                    {
+                        "op": "upsert_block",
+                        "block": {
+                            "id": "title-inventado",
+                            "type": "text",
+                            "content": "Label fantasma",
+                        },
+                    }
+                ],
+            },
+            user={},
+        )
+    after = svc.preview(
+        {"target": {"playlistId": PLAYLIST_ID, "slideId": SLIDE_ID}, "ops": []},
+        user={},
+    )["nativeConfig"]["blocks"]
+    assert len(after) == before
+
+
+def test_upsert_block_root_block_id_missing_rejects_create(monkeypatch):
+    svc = _service(monkeypatch=monkeypatch)
+    with pytest.raises(PresentationPatchError, match="não encontrado"):
+        svc.preview(
+            {
+                "target": {"playlistId": PLAYLIST_ID, "slideId": SLIDE_ID},
+                "ops": [
+                    {
+                        "op": "upsert_block",
+                        "blockId": "nao-existe",
+                        "block": {"type": "text", "content": "x"},
+                    }
+                ],
+            },
+            user={},
+        )
 
 
 def test_upsert_block_keeps_asset_id(monkeypatch):
@@ -819,6 +899,7 @@ def test_apply_upsert_block_de_texto_planeja_patch_com_frame_padrao(monkeypatch)
             "ops": [
                 {
                     "op": "upsert_block",
+                    "createIfMissing": True,
                     "block": {"id": "txt-1", "type": "text", "content": "Olá mundo!"},
                 }
             ],
@@ -893,6 +974,7 @@ def test_apply_traduz_erro_de_validacao_em_erro_de_patch(monkeypatch):
                 "ops": [
                     {
                         "op": "upsert_block",
+                        "createIfMissing": True,
                         "block": {"id": "txt-1", "type": "text", "content": "Olá"},
                     }
                 ],
@@ -1141,6 +1223,7 @@ def test_multi_slide_sibling_only_second_slide_touched(monkeypatch):
                 {
                     "op": "upsert_block",
                     "slideRef": SLIDE_B_ID,
+                    "createIfMissing": True,
                     "block": {"id": "txt-b", "type": "text", "content": "B only"},
                 }
             ],
@@ -1162,6 +1245,7 @@ def test_batch_too_large_is_honest_error(monkeypatch):
     ops = [
         {
             "op": "upsert_block",
+            "createIfMissing": True,
             "block": {"id": f"t{i}", "type": "text", "content": str(i)},
         }
         for i in range(max_ops + 1)

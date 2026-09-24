@@ -343,6 +343,8 @@
     "noOps": "Nenhuma operação no patch.",
     "blockNotFound": "Bloco «{blockId}» não encontrado no slide.",
     "blockIdRequired": "delete_block exige blockId.",
+    "upsertBlockTargetRequired": "upsert_block de alteração exige block.id ou blockId de um bloco existente no slide (ALTER_EXISTING). Para criar, informe frame ou createIfMissing:true.",
+    "upsertBlockIdConflict": "upsert_block: block.id («{blockId}») e blockId («{rootBlockId}») divergem.",
     "bindNeedIds": "bind_visual exige visualId e dataSourceId.",
     "presetRequired": "add_slide_from_preset exige presetKey.",
     "playlistNameRequired": "create_playlist exige name.",
@@ -1320,6 +1322,14 @@
         "properties": {
           "op": {
             "const": "upsert_block"
+          },
+          "blockId": {
+            "type": "string",
+            "description": "Alias de identidade do bloco existente (ALTER_EXISTING). Preferir block.id; se informado e o bloco não existir, falha — não cria fantasma."
+          },
+          "createIfMissing": {
+            "type": "boolean",
+            "description": "Quando true, permite criar bloco com id novo/ausente. Padrão seguro: false para text/heading/shape sem frame."
           },
           "block": {
             "type": "object",

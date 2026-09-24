@@ -41,6 +41,7 @@ def _compound_ops():
     return [
         {
             "op": "upsert_block",
+            "createIfMissing": True,
             "block": {"id": "blk_hello", "type": "text", "content": "Olá mundo"},
         },
         {"op": "add_blank_slide", "title": "Slide 1", "as": "s1"},
