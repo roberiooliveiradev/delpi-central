@@ -28,6 +28,19 @@ _PROBE_SHAPE = "TRIANGLE"
 _PROBE_REV = "R03"
 _TEXT_CODE = "TEXT-PROBE-ALPHA"
 
+# Isolated non-production resource required when spike is ON (fail-closed vs production).
+_HOMOLOG_MCP_RESOURCE = "https://homolog.example.test/apps/api-delpi/mcp"
+_HOMOLOG_PUBLIC_BASE = "https://homolog.example.test"
+
+
+def _enable_isolated_spike(monkeypatch: pytest.MonkeyPatch, *, mode: str = SPIKE_MODE_RESOURCE_LINK) -> None:
+    from app.config import settings
+
+    monkeypatch.setenv("MCP_RESOURCE_URL", _HOMOLOG_MCP_RESOURCE)
+    monkeypatch.setenv("PUBLIC_BASE_URL", _HOMOLOG_PUBLIC_BASE)
+    monkeypatch.setattr(settings, "DAVI_DOCUMENT_TRANSPORT_SPIKE_ENABLED", True)
+    monkeypatch.setattr(settings, "DAVI_DOCUMENT_TRANSPORT_SPIKE_MODE", mode)
+
 
 def _metadata_blob(mcp: FastMCP) -> str:
     resources = asyncio.run(mcp.list_resources())
@@ -91,10 +104,7 @@ def test_spike_disabled_by_default_keeps_three_tools_and_no_spike_resources(
 
 
 def test_spike_enabled_registers_resources_and_tool(monkeypatch: pytest.MonkeyPatch) -> None:
-    from app.config import settings
-
-    monkeypatch.setattr(settings, "DAVI_DOCUMENT_TRANSPORT_SPIKE_ENABLED", True)
-    monkeypatch.setattr(settings, "DAVI_DOCUMENT_TRANSPORT_SPIKE_MODE", SPIKE_MODE_RESOURCE_LINK)
+    _enable_isolated_spike(monkeypatch, mode=SPIKE_MODE_RESOURCE_LINK)
 
     mcp = create_mcp_server()
     tools = asyncio.run(mcp.list_tools())
@@ -110,9 +120,7 @@ def test_spike_enabled_registers_resources_and_tool(monkeypatch: pytest.MonkeyPa
 
 
 def test_spike_resource_read_returns_pdf_bytes(monkeypatch: pytest.MonkeyPatch) -> None:
-    from app.config import settings
-
-    monkeypatch.setattr(settings, "DAVI_DOCUMENT_TRANSPORT_SPIKE_ENABLED", True)
+    _enable_isolated_spike(monkeypatch)
     mcp = create_mcp_server()
     contents = asyncio.run(mcp.read_resource(SPIKE_PDF_RESOURCE_URI))
     assert len(contents) == 1
@@ -124,9 +132,7 @@ def test_spike_resource_read_returns_pdf_bytes(monkeypatch: pytest.MonkeyPatch) 
 
 
 def test_metadata_does_not_leak_probe_secrets(monkeypatch: pytest.MonkeyPatch) -> None:
-    from app.config import settings
-
-    monkeypatch.setattr(settings, "DAVI_DOCUMENT_TRANSPORT_SPIKE_ENABLED", True)
+    _enable_isolated_spike(monkeypatch)
     mcp = create_mcp_server()
     blob = _metadata_blob(mcp)
     assert _PROBE_CODE not in blob
@@ -136,10 +142,7 @@ def test_metadata_does_not_leak_probe_secrets(monkeypatch: pytest.MonkeyPatch) -
 
 
 def test_resource_link_tool_result_has_no_secret_text(monkeypatch: pytest.MonkeyPatch) -> None:
-    from app.config import settings
-
-    monkeypatch.setattr(settings, "DAVI_DOCUMENT_TRANSPORT_SPIKE_ENABLED", True)
-    monkeypatch.setattr(settings, "DAVI_DOCUMENT_TRANSPORT_SPIKE_MODE", SPIKE_MODE_RESOURCE_LINK)
+    _enable_isolated_spike(monkeypatch, mode=SPIKE_MODE_RESOURCE_LINK)
     mcp = create_mcp_server()
     result = asyncio.run(mcp.call_tool(SPIKE_TOOL_NAME, {}))
     assert isinstance(result, object)
@@ -156,10 +159,7 @@ def test_resource_link_tool_result_has_no_secret_text(monkeypatch: pytest.Monkey
 
 
 def test_embedded_resource_tool_result_is_pdf_blob(monkeypatch: pytest.MonkeyPatch) -> None:
-    from app.config import settings
-
-    monkeypatch.setattr(settings, "DAVI_DOCUMENT_TRANSPORT_SPIKE_ENABLED", True)
-    monkeypatch.setattr(settings, "DAVI_DOCUMENT_TRANSPORT_SPIKE_MODE", SPIKE_MODE_EMBEDDED)
+    _enable_isolated_spike(monkeypatch, mode=SPIKE_MODE_EMBEDDED)
     mcp = create_mcp_server()
     result = asyncio.run(mcp.call_tool(SPIKE_TOOL_NAME, {}))
     block = result.content[0]
@@ -171,6 +171,30 @@ def test_embedded_resource_tool_result_is_pdf_blob(monkeypatch: pytest.MonkeyPat
     assert _PROBE_CODE.encode("latin-1") in raw
     # structuredContent must not carry the PDF
     assert result.structuredContent in (None, {})
+
+
+def test_spike_refuses_missing_mcp_resource_url(monkeypatch: pytest.MonkeyPatch) -> None:
+    from app.config import settings
+    from app.interface.mcp.document_transport_spike import DocumentTransportSpikeMisconfigError
+
+    monkeypatch.delenv("MCP_RESOURCE_URL", raising=False)
+    monkeypatch.delenv("PUBLIC_BASE_URL", raising=False)
+    monkeypatch.setattr(settings, "DAVI_DOCUMENT_TRANSPORT_SPIKE_ENABLED", True)
+    with pytest.raises(DocumentTransportSpikeMisconfigError) as exc:
+        create_mcp_server()
+    assert "MCP_RESOURCE_URL" in str(exc.value)
+
+
+def test_spike_refuses_production_mcp_resource_url(monkeypatch: pytest.MonkeyPatch) -> None:
+    from app.config import settings
+    from app.interface.mcp.document_transport_spike import DocumentTransportSpikeMisconfigError
+    from app.interface.mcp.oauth_contract import CANONICAL_MCP_RESOURCE_URL
+
+    monkeypatch.setenv("MCP_RESOURCE_URL", CANONICAL_MCP_RESOURCE_URL)
+    monkeypatch.setenv("PUBLIC_BASE_URL", "https://minhadelpi.com.br")
+    monkeypatch.setattr(settings, "DAVI_DOCUMENT_TRANSPORT_SPIKE_ENABLED", True)
+    with pytest.raises(DocumentTransportSpikeMisconfigError):
+        create_mcp_server()
 
 
 def test_register_on_fresh_server_without_production_tools() -> None:

@@ -63,6 +63,49 @@ def document_transport_spike_mode() -> str:
     return SPIKE_MODE_RESOURCE_LINK
 
 
+class DocumentTransportSpikeMisconfigError(RuntimeError):
+    """Spike enabled without an isolated non-production MCP resource binding."""
+
+
+def assert_spike_environment_isolated() -> None:
+    """Fail closed: never bind the experimental spike to the production MCP resource.
+
+    Homolog (or any isolated nonprod) must set ``MCP_RESOURCE_URL`` to the exact
+    non-production MCP resource. Missing or production values refuse registration.
+    """
+    import os
+
+    from app.interface.mcp.oauth_contract import (
+        CANONICAL_MCP_RESOURCE_URL,
+        resolve_required_mcp_resource_audience,
+    )
+
+    explicit = (os.getenv("MCP_RESOURCE_URL") or "").strip()
+    if not explicit:
+        raise DocumentTransportSpikeMisconfigError(
+            "DAVI_DOCUMENT_TRANSPORT_SPIKE_ENABLED requires MCP_RESOURCE_URL "
+            "set to an exact non-production MCP resource "
+            f"(must not be {CANONICAL_MCP_RESOURCE_URL})"
+        )
+    if explicit.rstrip("/") == CANONICAL_MCP_RESOURCE_URL.rstrip("/"):
+        raise DocumentTransportSpikeMisconfigError(
+            "DAVI_DOCUMENT_TRANSPORT_SPIKE_ENABLED refuses production MCP_RESOURCE_URL "
+            f"({CANONICAL_MCP_RESOURCE_URL}); use an isolated homolog resource"
+        )
+    resolved = resolve_required_mcp_resource_audience().rstrip("/")
+    if resolved == CANONICAL_MCP_RESOURCE_URL.rstrip("/"):
+        raise DocumentTransportSpikeMisconfigError(
+            "Document transport spike resolved MCP audience to production; "
+            "set MCP_RESOURCE_URL (and PUBLIC_BASE_URL) to the homolog resource"
+        )
+    public_base = (os.getenv("PUBLIC_BASE_URL") or "").strip().rstrip("/")
+    if public_base == "https://minhadelpi.com.br":
+        raise DocumentTransportSpikeMisconfigError(
+            "DAVI_DOCUMENT_TRANSPORT_SPIKE_ENABLED refuses PUBLIC_BASE_URL="
+            "https://minhadelpi.com.br; use a non-production homolog base URL"
+        )
+
+
 def build_probe_pdf_bytes() -> bytes:
     """Minimal valid-enough PDF with hidden text + triangle path.
 

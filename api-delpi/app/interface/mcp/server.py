@@ -346,6 +346,16 @@ def create_mcp_server() -> FastMCP:
             raise RuntimeError(EXTERNAL_INTERNAL_ERROR_MESSAGE) from exc
 
     if document_transport_spike_enabled():
+        from app.interface.mcp.document_transport_spike import (
+            DocumentTransportSpikeMisconfigError,
+            assert_spike_environment_isolated,
+        )
+
+        try:
+            assert_spike_environment_isolated()
+        except DocumentTransportSpikeMisconfigError as exc:
+            logger.error("DAVI document transport spike refused: %s", exc)
+            raise
         logger.warning(
             "DAVI document transport spike ENABLED — experimental MCP surface active; "
             "not a production document capability"
