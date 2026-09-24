@@ -53,6 +53,10 @@ _NESTED_SHAPES = frozenset(
     }
 )
 
+# playbook_report may be a flat KPI/totals envelope (no period/items tree).
+# Flat-only approved fields remain valid; hierarchy/snapshots still need paths.
+_FLAT_OK_NESTED_SHAPES = frozenset({"playbook_report"})
+
 _DISPOSITION_STATUSES = frozenset(
     {
         STATUS_SEMANTICALLY_REDUNDANT,
@@ -196,9 +200,14 @@ def classify_operation(
                 return STATUS_NEEDS_NESTED_PROJECTION_SUPPORT
             return STATUS_NEEDS_MODEL_SAFE_PROJECTION
         if needs_nested:
-            if not _uses_nested_path_syntax(outputs):
-                return STATUS_NEEDS_NESTED_PROJECTION_SUPPORT
-            return STATUS_DAVI_ELIGIBLE_READ
+            if _uses_nested_path_syntax(outputs):
+                return STATUS_DAVI_ELIGIBLE_READ
+            shape_l = (shape or "").strip().lower()
+            if shape_l in _FLAT_OK_NESTED_SHAPES and all(
+                ("." not in f) and ("[]" not in f) for f in outputs
+            ):
+                return STATUS_DAVI_ELIGIBLE_READ
+            return STATUS_NEEDS_NESTED_PROJECTION_SUPPORT
         return STATUS_DAVI_ELIGIBLE_READ
 
     # Not allowlisted / no governed projection entry.

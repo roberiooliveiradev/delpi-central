@@ -203,6 +203,18 @@ def apply_approved_field_projection(
 
     out: dict[str, Any] = {}
     items = payload.get(list_key)
+    root_field_hits = [
+        f for f in fields if f in payload and f != list_key
+    ]
+    # When the allowlist targets root scalars/KPI fields, do not auto-project an
+    # incidental ``items`` array using the same flat names (fail-closed drop).
+    if root_field_hits and list_key not in fields:
+        for key in fields:
+            if key in payload and key != list_key:
+                out[key] = payload[key]
+        _copy_technical_meta(payload, out)
+        return out
+
     if isinstance(items, list):
         projected_items: list[Any] = []
         truncated = len(items) > max_array_items

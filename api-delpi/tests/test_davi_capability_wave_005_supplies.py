@@ -154,12 +154,9 @@ def _allowlist_entry(oid: str) -> dict[str, Any]:
 
 def test_wave005_allowlist_version_and_eligible_count():
     allow = load_external_read_allowlist()
-    assert allow.get("version") == 14
-    assert allow.get("coverageDecision", {}).get("taskId") == (
-        "DAVI-REAL-USER-RETRIEVAL-REFINEMENT-COMMERCIAL-SUPPLIES-001"
-    )
+    # Wave 005 historical: promoted set remains eligible after later waves
     eligible = {a.operation_id for a in _actions() if a.executable}
-    assert len(eligible) == 53
+    assert len(eligible) >= 53
     assert set(_PRIOR_THIRTY_FIVE) <= eligible
     assert set(_PROMOTED) <= eligible
     for oid in (*_DEFERRED, *_REJECTED):
@@ -236,7 +233,7 @@ def test_wave005_supplies_retrieval_positive(query, expected, monkeypatch):
         lambda: "sec",
     )
     discovered = discover_delpi_information(query=query, top_k=5, actor_id="u1")
-    assert discovered["eligible_action_count"] == 53, query
+    assert discovered["eligible_action_count"] >= 53, query
     assert discovered["candidate_count"] >= 1, query
     assert discovered["candidates"][0]["action_id"] == expected, (
         query,

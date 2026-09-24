@@ -175,13 +175,28 @@ def _parse_constraint_date(name: str, value: Any) -> date:
     raise ArgumentValidationError(f"{name}: must be a date (YYYY-MM-DD)")
 
 
-def _validate_date_range(
+def _iter_date_range_specs(constraints: Mapping[str, Any]) -> list[dict[str, Any]]:
+    """Collect governed date-range specs.
+
+    Supports legacy singular ``dateRange`` and metadata-driven ``dateRanges``
+    (independent windows, e.g. scheduled + delivery). No operationId branching.
+    """
+    specs: list[dict[str, Any]] = []
+    singular = constraints.get("dateRange")
+    if isinstance(singular, dict):
+        specs.append(singular)
+    plural = constraints.get("dateRanges")
+    if isinstance(plural, list):
+        for item in plural:
+            if isinstance(item, dict):
+                specs.append(item)
+    return specs
+
+
+def _validate_one_date_range_spec(
     cleaned: dict[str, Any],
-    constraints: Mapping[str, Any],
+    spec: Mapping[str, Any],
 ) -> None:
-    spec = constraints.get("dateRange")
-    if not isinstance(spec, dict):
-        return
     start_field = str(spec.get("startField") or "").strip()
     end_field = str(spec.get("endField") or "").strip()
     max_days = _as_int(spec.get("maxDays"))
@@ -239,6 +254,14 @@ def _validate_date_range(
         raise ArgumentValidationError(
             f"Date interval between {start_field} and {end_field} exceeds {max_days} days"
         )
+
+
+def _validate_date_range(
+    cleaned: dict[str, Any],
+    constraints: Mapping[str, Any],
+) -> None:
+    for spec in _iter_date_range_specs(constraints):
+        _validate_one_date_range_spec(cleaned, spec)
 
 
 def _apply_governed_defaults(

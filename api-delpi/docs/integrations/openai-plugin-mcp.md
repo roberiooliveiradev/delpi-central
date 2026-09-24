@@ -83,7 +83,7 @@ Technical Action Catalog = derived from OpenAPI/baseline + governance allowlist
 Action Catalog != semantic capability authority
 MCP tools advertised to the Agent = discover_delpi_information + execute_delpi_information
   (exactly 2; DAVI-MCP-TOOL-SURFACE-SIMPLIFICATION-001)
-DAVI_ELIGIBLE_READ (allowlist v14 / real-user retrieval refinement) = 53
+DAVI_ELIGIBLE_READ (allowlist v15 / Wave 006 Production Operational Intelligence) = 63
 Product Master capability search_products remains allowlisted behind discover→execute
 get_product_drawing_pdf = DEFER (NEEDS_GENERIC_DOCUMENT_BOUNDARY; no PDF/base64 via execute JSON)
 get_product_analyser = NOT_REQUIRED for drawing analysis

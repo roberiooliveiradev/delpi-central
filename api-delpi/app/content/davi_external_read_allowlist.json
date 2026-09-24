@@ -1,16 +1,16 @@
 {
-  "version": 14,
+  "version": 15,
   "description": "Governance allowlist for DAVI dynamic READ. DAVI has no independent AuthZ; backend is final authority. Entries define model-safe input/output projection and governed argument constraints only — not business permissions.",
   "authzPolicy": "DAVI-READ-AUTHZ-REBASELINE-001",
   "externalProcessing": "BACKEND_AUTHORIZED_INTERNAL_READ_ALLOWED_UNLESS_EXPLICITLY_PROHIBITED",
   "dataClassification": "MINIMIZATION_REQUIRED_TAXONOMY_OPTIONAL",
   "coverageDecision": {
-    "taskId": "DAVI-REAL-USER-RETRIEVAL-REFINEMENT-COMMERCIAL-SUPPLIES-001",
-    "decision": "REFINE_REAL_USER_RETRIEVAL_COMMERCIAL_SUPPLIES",
-    "reason": "Refine Commercial+Supplies real-user retrieval via durable semanticAliases plus generic filler-tolerant phrase matching and single-token phrase cap. Eligible READ remains 53; MCP tools remain 3. No AuthZ/business-logic change.",
+    "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-006-PRODUCTION-READ",
+    "decision": "PROMOTE_PRODUCTION_OPERATIONAL_INTELLIGENCE_READ",
+    "reason": "Promote 10 Production Operational Intelligence READs (OEE, Production OTD, Machine Load, Appointments summary, Produced totals). Eligible READ 53→63. Model-safe projections exclude appointment/OP/operator line detail. MCP tools remain 2. Agent intelligence unchanged. GPT Actions deferred.",
     "previousDecision": {
-      "taskId": "DAVI-WAVE005-STOCK-BALANCES-RETRIEVAL-CORRECTION-001",
-      "decision": "CORRECT_STOCK_BALANCES_SUMMARY_ITEMS_RETRIEVAL"
+      "taskId": "DAVI-REAL-USER-RETRIEVAL-REFINEMENT-COMMERCIAL-SUPPLIES-001",
+      "decision": "REFINE_REAL_USER_RETRIEVAL_COMMERCIAL_SUPPLIES"
     }
   },
   "retrievalQuarantineTokens": [
@@ -29,7 +29,9 @@
     "resuma",
     "factory",
     "sql",
-    "admin"
+    "admin",
+    "brutos",
+    "bruto"
   ],
   "retrievalReadOnlyGuard": {
     "description": "Semantic READ-only discovery guard for explicit mutation requests. retrieval semantic guard only — NOT AuthZ, NOT business permission, NOT capability grant.",
@@ -2567,6 +2569,401 @@
         "SC abertas",
         "solicitações de compra abertas"
       ]
+    },
+    {
+      "operationId": "get_overall_equipment_effectiveness_pct",
+      "reason": "Wave 006 Production OEE scalar KPI; KPI_PRODUCTION_ACCESS; null stays null",
+      "executionMode": "catalog_action",
+      "approvedInputFields": [
+        "start_date",
+        "end_date",
+        "branch"
+      ],
+      "approvedResponseFields": [
+        "overall_equipment_effectiveness_pct"
+      ],
+      "semanticAliases": [
+        "OEE",
+        "OEE de produção",
+        "eficiência geral dos equipamentos",
+        "OEE do mês",
+        "overall equipment effectiveness"
+      ],
+      "argumentConstraints": {
+        "dateRange": {
+          "startField": "start_date",
+          "endField": "end_date",
+          "maxDays": 366
+        }
+      }
+    },
+    {
+      "operationId": "get_production_oee",
+      "reason": "Wave 006 Production OEE summary only — appointments[] excluded by projection",
+      "executionMode": "catalog_action",
+      "approvedInputFields": [
+        "start_date",
+        "end_date",
+        "branch",
+        "work_center",
+        "product_type"
+      ],
+      "approvedResponseFields": [
+        "branch",
+        "start_date",
+        "end_date",
+        "summary.oee_pct",
+        "summary.total_appointments",
+        "summary.valid_appointments",
+        "summary.outlier_appointments",
+        "summary.outlier_percentage"
+      ],
+      "semanticAliases": [
+        "resumo do OEE",
+        "OEE resumido",
+        "sumário de OEE de produção",
+        "OEE com totais de apontamentos"
+      ],
+      "argumentConstraints": {
+        "dateRange": {
+          "startField": "start_date",
+          "endField": "end_date",
+          "maxDays": 366
+        }
+      }
+    },
+    {
+      "operationId": "get_production_oee_series",
+      "reason": "Wave 006 Production OEE time series; sort_key excluded",
+      "executionMode": "catalog_action",
+      "approvedInputFields": [
+        "granularity",
+        "start_date",
+        "end_date",
+        "branch"
+      ],
+      "approvedResponseFields": [
+        "granularity",
+        "truncated",
+        "branch",
+        "points[].periodo",
+        "points[].start_date",
+        "points[].end_date",
+        "points[].oee_filial_01",
+        "points[].oee_filial_02"
+      ],
+      "semanticAliases": [
+        "evolução do OEE",
+        "série de OEE",
+        "série temporal de OEE de produção",
+        "OEE ao longo do tempo"
+      ],
+      "argumentConstraints": {
+        "dateRange": {
+          "startField": "start_date",
+          "endField": "end_date",
+          "maxDays": 366
+        }
+      }
+    },
+    {
+      "operationId": "get_on_time_delivery_pct",
+      "reason": "Wave 006 Production OTD scalar (OPs/SC2) — distinct from commercial/supplies OTD",
+      "executionMode": "catalog_action",
+      "approvedInputFields": [
+        "start_date",
+        "end_date",
+        "branch"
+      ],
+      "approvedResponseFields": [
+        "on_time_delivery_pct"
+      ],
+      "semanticAliases": [
+        "OTD de produção",
+        "OTD das OPs",
+        "OTD das ordens de produção",
+        "pontualidade da produção",
+        "pontualidade das OPs",
+        "OPs no prazo",
+        "OPs atrasadas"
+      ],
+      "argumentConstraints": {
+        "dateRange": {
+          "startField": "start_date",
+          "endField": "end_date",
+          "maxDays": 366
+        }
+      }
+    },
+    {
+      "operationId": "get_production_otd",
+      "reason": "Wave 006 Production OTD summary only — orders[] excluded by projection",
+      "executionMode": "catalog_action",
+      "approvedInputFields": [
+        "start_date",
+        "end_date",
+        "branch"
+      ],
+      "approvedResponseFields": [
+        "branch",
+        "start_date",
+        "end_date",
+        "summary.total_ops_finished",
+        "summary.on_time_ops",
+        "summary.late_ops",
+        "summary.on_time_delivery_pct",
+        "summary.late_percentage"
+      ],
+      "semanticAliases": [
+        "resumo do OTD de produção",
+        "OTD de produção resumido",
+        "sumário pontualidade das OPs"
+      ],
+      "argumentConstraints": {
+        "dateRange": {
+          "startField": "start_date",
+          "endField": "end_date",
+          "maxDays": 366
+        }
+      }
+    },
+    {
+      "operationId": "get_production_otd_series",
+      "reason": "Wave 006 Production OTD series; commercial/supplies OTD remain distinct via aliases",
+      "executionMode": "catalog_action",
+      "approvedInputFields": [
+        "granularity",
+        "start_date",
+        "end_date",
+        "branch"
+      ],
+      "approvedResponseFields": [
+        "granularity",
+        "truncated",
+        "branch",
+        "points[].periodo",
+        "points[].start_date",
+        "points[].end_date",
+        "points[].otd_filial_01",
+        "points[].otd_filial_02"
+      ],
+      "semanticAliases": [
+        "evolução do OTD de produção",
+        "série de OTD de produção",
+        "série OTD das OPs",
+        "OTD de produção ao longo do tempo"
+      ],
+      "argumentConstraints": {
+        "dateRange": {
+          "startField": "start_date",
+          "endField": "end_date",
+          "maxDays": 366
+        }
+      }
+    },
+    {
+      "operationId": "get_production_machine_load_work_centers",
+      "reason": "Wave 006 machine load CT aggregates (SH8 queue); include_closed not exposed",
+      "executionMode": "catalog_action",
+      "approvedInputFields": [
+        "branch",
+        "scheduled_start",
+        "scheduled_end",
+        "delivery_start",
+        "delivery_end",
+        "work_center",
+        "product_code",
+        "production_order",
+        "tool",
+        "open_only"
+      ],
+      "approvedResponseFields": [
+        "work_center",
+        "work_center_name",
+        "operation_count",
+        "order_count",
+        "in_production_count",
+        "first_scheduled_date",
+        "last_scheduled_date",
+        "first_due_date",
+        "last_due_date",
+        "missing_due_date_count"
+      ],
+      "semanticAliases": [
+        "carga de máquina",
+        "carga por CT",
+        "carga por centro de trabalho",
+        "fila do CT",
+        "centros de trabalho com carga"
+      ],
+      "argumentConstraints": {
+        "dateRanges": [
+          {
+            "startField": "scheduled_start",
+            "endField": "scheduled_end",
+            "maxDays": 90
+          },
+          {
+            "startField": "delivery_start",
+            "endField": "delivery_end",
+            "maxDays": 90
+          }
+        ]
+      }
+    },
+    {
+      "operationId": "get_production_machine_load_operations",
+      "reason": "Wave 006 machine load operations; operator/start fields stripped by projection; page_size<=50",
+      "executionMode": "catalog_action",
+      "approvedInputFields": [
+        "branch",
+        "scheduled_start",
+        "scheduled_end",
+        "delivery_start",
+        "delivery_end",
+        "work_center",
+        "product_code",
+        "production_order",
+        "tool",
+        "open_only",
+        "page",
+        "page_size"
+      ],
+      "approvedResponseFields": [
+        "scheduled_date",
+        "scheduled_start_time",
+        "work_center",
+        "work_center_name",
+        "production_order",
+        "operation_code",
+        "operation_description",
+        "tool",
+        "product_code",
+        "product_description",
+        "planned_qty",
+        "operation_produced_qty",
+        "operation_pending_qty",
+        "unit",
+        "due_date",
+        "production_status",
+        "is_in_production"
+      ],
+      "semanticAliases": [
+        "operações programadas",
+        "operações alocadas",
+        "operações programadas por CT",
+        "fila de operações do CT",
+        "carga de máquina detalhada"
+      ],
+      "argumentConstraints": {
+        "dateRanges": [
+          {
+            "startField": "scheduled_start",
+            "endField": "scheduled_end",
+            "maxDays": 90
+          },
+          {
+            "startField": "delivery_start",
+            "endField": "delivery_end",
+            "maxDays": 90
+          }
+        ],
+        "argumentLimits": {
+          "page": {
+            "minimum": 1,
+            "default": 1
+          },
+          "page_size": {
+            "minimum": 1,
+            "maximum": 50,
+            "default": 50
+          }
+        }
+      }
+    },
+    {
+      "operationId": "get_production_appointments_summary",
+      "reason": "Wave 006 appointments aggregate summary; legacy date_start/date_end not exposed; AuthZ stays PRODUCTION_APPOINTMENTS_*",
+      "executionMode": "catalog_action",
+      "approvedInputFields": [
+        "start_date",
+        "end_date",
+        "branch",
+        "work_center",
+        "op",
+        "product",
+        "mother_op"
+      ],
+      "approvedResponseFields": [
+        "period.start",
+        "period.end_exclusive",
+        "branch",
+        "totals.appointment_count",
+        "totals.qty_produced",
+        "totals.qty_lost",
+        "totals.op_count",
+        "totals.work_center_count",
+        "totals.unit",
+        "totals.qty_produced_scope",
+        "items[].work_center",
+        "items[].work_center_name",
+        "items[].is_final_inspection",
+        "items[].appointment_count",
+        "items[].qty_produced",
+        "items[].qty_lost",
+        "items[].op_count"
+      ],
+      "semanticAliases": [
+        "resumo dos apontamentos",
+        "apontamentos de produção resumidos",
+        "quantidade apontada por CT",
+        "resumo de apontamentos de produção"
+      ],
+      "argumentConstraints": {
+        "dateRange": {
+          "startField": "start_date",
+          "endField": "end_date",
+          "maxDays": 366
+        }
+      }
+    },
+    {
+      "operationId": "get_production_appointments_produced_totals",
+      "reason": "Wave 006 production.output.summary — final inspection + mother OP totals; per-product detail excluded",
+      "executionMode": "catalog_action",
+      "approvedInputFields": [
+        "start_date",
+        "end_date",
+        "branch",
+        "product"
+      ],
+      "approvedResponseFields": [
+        "branch",
+        "start_date",
+        "end_date",
+        "products",
+        "product_types",
+        "qty_produced_un",
+        "qty_lost_un",
+        "appointment_count",
+        "orders_count",
+        "inspection_final",
+        "mother_op"
+      ],
+      "semanticAliases": [
+        "quanto foi produzido",
+        "quantidade produzida",
+        "produção realizada no período",
+        "total produzido",
+        "quantidade produzida no período"
+      ],
+      "argumentConstraints": {
+        "dateRange": {
+          "startField": "start_date",
+          "endField": "end_date",
+          "maxDays": 366
+        }
+      }
     }
   ],
   "explicitlyNotApproved": [

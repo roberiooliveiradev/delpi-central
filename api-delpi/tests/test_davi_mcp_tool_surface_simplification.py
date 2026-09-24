@@ -72,7 +72,7 @@ def test_search_products_remains_allowlisted_and_eligible():
     allow = load_external_read_allowlist()
     ids = {o["operationId"] for o in allow["operations"]}
     assert SEARCH_PRODUCTS_OPERATION_ID in ids
-    assert len(ids) == 53
+    assert len(ids) == 63
     assert any(a.operation_id == SEARCH_PRODUCTS_OPERATION_ID and a.executable for a in _actions())
 
 
@@ -93,7 +93,7 @@ def test_product_master_queries_discover_search_products(query, expect_top1, mon
         lambda: "sec",
     )
     discovered = discover_delpi_information(query=query, top_k=5, actor_id="u1")
-    assert discovered["eligible_action_count"] == 53
+    assert discovered["eligible_action_count"] == 63
     assert discovered["candidates"]
     ids = [c["action_id"] for c in discovered["candidates"]]
     assert SEARCH_PRODUCTS_OPERATION_ID in ids

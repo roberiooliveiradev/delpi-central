@@ -168,6 +168,21 @@ _WAVE5_SUPPLIES_OPERATION_IDS = frozenset(
         "list_supplies_purchase_request_lines",
     }
 )
+
+_WAVE6_PRODUCTION_OPERATION_IDS = frozenset(
+    {
+        "get_overall_equipment_effectiveness_pct",
+        "get_production_oee",
+        "get_production_oee_series",
+        "get_on_time_delivery_pct",
+        "get_production_otd",
+        "get_production_otd_series",
+        "get_production_machine_load_work_centers",
+        "get_production_machine_load_operations",
+        "get_production_appointments_summary",
+        "get_production_appointments_produced_totals",
+    }
+)
 _ELIGIBLE_OPERATION_IDS = (
     _ELIGIBLE_V5_OPERATION_IDS
     | _WAVE1_OPERATION_IDS
@@ -176,6 +191,7 @@ _ELIGIBLE_OPERATION_IDS = (
     | _DRAWING_OPERATION_IDS
     | _WAVE4_COMMERCIAL_OPERATION_IDS
     | _WAVE5_SUPPLIES_OPERATION_IDS
+    | _WAVE6_PRODUCTION_OPERATION_IDS
 )
 
 
@@ -296,9 +312,9 @@ def test_allowlist_v5_multi_ops_rebaseline():
     allow = load_external_read_allowlist()
     ids = load_allowlist_operation_ids(allow)
     assert ids == set(_ELIGIBLE_OPERATION_IDS)
-    assert allow.get("version") == 14
+    assert allow.get("version") == 15
     assert allow.get("coverageDecision", {}).get("decision") == (
-        "REFINE_REAL_USER_RETRIEVAL_COMMERCIAL_SUPPLIES"
+        "PROMOTE_PRODUCTION_OPERATIONAL_INTELLIGENCE_READ"
     )
     assert allow.get("authzPolicy") == "DAVI-READ-AUTHZ-REBASELINE-001"
     entry = next(
@@ -471,7 +487,7 @@ def test_inventory_eligible_count_is_thirteen():
     )
     assert len(actions) == int(baseline.get("operation_count") or 0)
     eligible = [a for a in actions if a.executable]
-    assert len(eligible) == 53
+    assert len(eligible) == 63
     assert set(a.operation_id for a in eligible) == set(_ELIGIBLE_OPERATION_IDS)
 
 
@@ -491,7 +507,7 @@ def test_owned_product_intents_discover_from_full_catalog(monkeypatch):
     )
     for query, expected_oid in expectations:
         discovered = discover_delpi_information(query=query, top_k=10, actor_id="u1")
-        assert discovered["eligible_action_count"] == 53, query
+        assert discovered["eligible_action_count"] == 63, query
         assert discovered["candidate_count"] >= 1, query
         action_ids = {c["action_id"] for c in discovered["candidates"]}
         assert expected_oid in action_ids, query
@@ -1202,7 +1218,7 @@ def test_negative_retrieval_quarantine(query, monkeypatch):
     assert discovered["candidate_count"] == 0, (
         f"query={query!r} unexpectedly returned {discovered['candidates']}"
     )
-    assert discovered["eligible_action_count"] == 53
+    assert discovered["eligible_action_count"] == 63
 
 
 def test_stock_eligible_and_branch_is_filter_not_authz():
@@ -2010,4 +2026,4 @@ def test_eligible_count_is_thirteen():
     actions = _load_baseline_actions()
     eligible = sorted(a.operation_id for a in actions if a.executable)
     assert eligible == sorted(_ELIGIBLE_OPERATION_IDS)
-    assert len(eligible) == 53
+    assert len(eligible) == 63

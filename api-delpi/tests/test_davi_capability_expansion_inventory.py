@@ -83,6 +83,16 @@ _ELIGIBLE = {
     "get_supplies_third_party_materials_summary",
     "get_supplies_third_party_materials_shipments",
     "list_supplies_purchase_request_lines",
+    "get_overall_equipment_effectiveness_pct",
+    "get_production_oee",
+    "get_production_oee_series",
+    "get_on_time_delivery_pct",
+    "get_production_otd",
+    "get_production_otd_series",
+    "get_production_machine_load_work_centers",
+    "get_production_machine_load_operations",
+    "get_production_appointments_summary",
+    "get_production_appointments_produced_totals",
 }
 
 
@@ -110,7 +120,7 @@ def test_current_eligible_set_matches_allowlist() -> None:
         1 for a in actions if str(a.method).upper() == "GET"
     )
     assert eligible == _ELIGIBLE
-    assert len(eligible) == 53
+    assert len(eligible) == 63
 
 
 def test_mcp_tools_remain_two() -> None:
@@ -158,9 +168,9 @@ def test_inventory_covers_all_gets_and_freezes_wave1(tmp_path: Path) -> None:
         assert cap["projection_mode"] == "nested"
         assert cap["negative_authz_test_required"] == "YES"
 
-    assert doc["wave_1_freeze"]["current_eligible"] == 53
+    assert doc["wave_1_freeze"]["current_eligible"] == 63
     assert doc["wave_1_freeze"]["new_capabilities"] == 3
-    assert doc["wave_1_freeze"]["expected_eligible_after_implementation"] == 56
+    assert doc["wave_1_freeze"]["expected_eligible_after_implementation"] == 66
     assert doc["wave_1_freeze"]["expected_mcp_tools_after_implementation"] == 3
     assert doc["wave_1_freeze"]["agent_instruction_change"] == "NO"
 
