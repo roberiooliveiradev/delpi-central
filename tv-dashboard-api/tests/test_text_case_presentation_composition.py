@@ -171,3 +171,114 @@ def test_null_data_does_not_fabricate_value_under_text_case():
     DisplayFormatService._apply_text_display(resolved, block)
     assert resolved["displayText"] == "—"
     assert block["contentRuns"][0]["dataRef"]["field"] == "filter.end_date"
+
+
+def test_screenshot_heading_lower_materializes_without_mutating_content():
+    """TV-DASHBOARD-TEXT-CASE-RUNTIME-001 — REALIZADO 2025 X 2026 → lower."""
+    block = {
+        "type": "heading",
+        "content": "REALIZADO 2025 X 2026",
+        "style": {"textCase": "lower"},
+        "contentRuns": [{"text": "REALIZADO 2025 X 2026"}],
+    }
+    out = DisplayFormatService.apply_to_resolved({}, block)
+    assert out["displayText"] == "realizado 2025 x 2026"
+    assert out["serverDisplayApplied"] is True
+    assert block["content"] == "REALIZADO 2025 X 2026"
+    stamped = DisplayFormatService.stamp_text_presentation_on_block(block)
+    assert stamped["resolved"]["displayText"] == "realizado 2025 x 2026"
+    assert stamped["style"]["textCase"] == "lower"
+
+
+def test_stamp_skips_static_text_without_case():
+    block = {
+        "type": "text",
+        "content": "Hello",
+        "contentRuns": [{"text": "Hello"}],
+    }
+    assert DisplayFormatService.stamp_text_presentation_on_block(block) is block or (
+        DisplayFormatService.stamp_text_presentation_on_block(block).get("resolved") is None
+    )
+    stamped = DisplayFormatService.stamp_text_presentation_on_block(block)
+    assert stamped.get("resolved") is None
+
+
+def test_block_run_inheritance_static_lower():
+    block = {
+        "type": "text",
+        "content": "Aa Bb",
+        "style": {"textCase": "lower"},
+        "contentRuns": [{"text": "Aa "}, {"text": "Bb"}],
+    }
+    out = DisplayFormatService.apply_to_resolved({}, block)
+    assert out["displayText"] == "aa bb"
+    assert [r["text"] for r in out["displayRuns"]] == ["aa ", "bb"]
+
+
+def test_run_override_upper_on_block_lower():
+    block = {
+        "type": "text",
+        "content": "Aa Bb",
+        "style": {"textCase": "lower"},
+        "contentRuns": [
+            {"text": "Aa "},
+            {"text": "Bb", "style": {"textCase": "upper"}},
+        ],
+    }
+    out = DisplayFormatService.apply_to_resolved({}, block)
+    assert out["displayText"] == "aa BB"
+
+
+def test_all_case_modes_unicode_pt_br():
+    samples = {
+        "lower": ("AÇÃO João", "ação joão"),
+        "upper": ("ação João", "AÇÃO JOÃO"),
+        "sentence": ("REALIZADO DE SETEMBRO", "Realizado de setembro"),
+        "title": ("realizado de setembro", "Realizado De Setembro"),
+        "toggle": ("AbC", "aBc"),
+        "none": ("Aa", "Aa"),
+    }
+    for mode, (src, expected) in samples.items():
+        assert apply_presentation_text_case(src, mode if mode != "none" else "none") == expected
+
+
+def test_date_display_format_then_text_case_upper():
+    resolved = {
+        "contextValues": {"filter.end_date": "2026-09-25"},
+        "fields": [{"name": "filter.end_date", "projectable": True}],
+    }
+    ref = {
+        "field": "filter.end_date",
+        "displayFormat": DisplayFormatService.spec_from_preset_id(
+            "date-month-abbrev-year"
+        ),
+    }
+    block = {
+        "type": "text",
+        "dataSourceId": "src-1",
+        "style": {"textCase": "upper"},
+        "contentRuns": [{"text": "", "dataRef": ref}],
+    }
+    base = DisplayFormatService._format_data_ref(resolved, ref)
+    DisplayFormatService._apply_text_display(resolved, block)
+    assert resolved["displayText"] == apply_presentation_text_case(base, "upper")
+    assert "2026" in resolved["displayText"]
+
+
+def test_stamp_native_config_preserves_authoring_content():
+    cfg = {
+        "blocks": [
+            {
+                "id": "h1",
+                "type": "heading",
+                "content": "REALIZADO 2025 X 2026",
+                "style": {"textCase": "lower"},
+                "contentRuns": [{"text": "REALIZADO 2025 X 2026"}],
+            }
+        ]
+    }
+    stamped = DisplayFormatService.stamp_native_config_text_presentation(cfg)
+    block = stamped["blocks"][0]
+    assert block["content"] == "REALIZADO 2025 X 2026"
+    assert block["resolved"]["displayText"] == "realizado 2025 x 2026"
+    assert block["style"]["textCase"] == "lower"

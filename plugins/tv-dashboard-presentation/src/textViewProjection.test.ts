@@ -7,6 +7,7 @@ import {
   patchTextProjectionFromEditedDisplay,
   resolveTextBlockDisplayRuns,
   resolveTextDisplayValue,
+  resolveVisualBoxDisplayText,
   splitEditedDisplayAroundCoreValue,
   suggestDefaultTextProjection,
   textBlockHasDataBinding,
@@ -407,5 +408,37 @@ describe("textViewProjection", () => {
         { field: "oee", fallback: "—" },
       ).text,
     ).toBe("—");
+  });
+});
+
+describe("TEXT-CASE-RUNTIME-001 unbound static paint", () => {
+  it("resolveVisualBoxDisplayText prefere displayRuns sem data binding", () => {
+    const display = resolveVisualBoxDisplayText({
+      id: "h1",
+      type: "heading",
+      content: "REALIZADO 2025 X 2026",
+      contentRuns: [{ text: "REALIZADO 2025 X 2026" }],
+      style: { textCase: "lower" },
+      frame: { x: 0, y: 0, w: 100, h: 40 },
+      resolved: {
+        serverDisplayApplied: true,
+        displayText: "realizado 2025 x 2026",
+        displayRuns: [{ text: "realizado 2025 x 2026" }],
+      },
+    } as never);
+    expect(display.content).toBe("realizado 2025 x 2026");
+  });
+
+  it("resolveTextBlockDisplayRuns pinta display* em heading estático", () => {
+    const runs = resolveTextBlockDisplayRuns({
+      content: "REALIZADO 2025 X 2026",
+      contentRuns: [{ text: "REALIZADO 2025 X 2026" }],
+      resolved: {
+        serverDisplayApplied: true,
+        displayText: "realizado 2025 x 2026",
+        displayRuns: [{ text: "realizado 2025 x 2026" }],
+      },
+    });
+    expect(runs[0]?.text).toBe("realizado 2025 x 2026");
   });
 });

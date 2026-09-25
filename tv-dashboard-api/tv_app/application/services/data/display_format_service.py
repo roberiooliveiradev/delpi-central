@@ -2109,8 +2109,16 @@ class DisplayFormatService:
             resolved["displayRuns"] = [{"text": text}]
             return
 
-        # Static text with presentation textCase — materialize displayRuns.
-        if block_case and isinstance(runs, list) and runs:
+        # Static text: materialize when block or any run carries presentation textCase.
+        needs_static_case = bool(block_case)
+        if not needs_static_case and isinstance(runs, list):
+            for run in runs:
+                if not isinstance(run, dict):
+                    continue
+                if cls._resolve_run_text_case(run, block):
+                    needs_static_case = True
+                    break
+        if needs_static_case and isinstance(runs, list) and runs:
             display_runs = []
             for run in runs:
                 if not isinstance(run, dict):
@@ -2121,11 +2129,75 @@ class DisplayFormatService:
             resolved["displayRuns"] = display_runs
             resolved["displayText"] = "".join(str(r.get("text") or "") for r in display_runs)
             return
-        if block_case:
+        if needs_static_case:
             content = str(block.get("content") or "")
             text = apply_presentation_text_case(content, block_case)
             resolved["displayText"] = text
             resolved["displayRuns"] = [{"text": text}]
+
+    @classmethod
+    def _block_needs_text_presentation_stamp(cls, block: dict[str, Any]) -> bool:
+        """True when display* must be (re)stamped for paint completeness."""
+        if isinstance(block.get("resolved"), dict):
+            return True
+        if str(block.get("dataSourceId") or "").strip():
+            return True
+        projection = block.get("textProjection")
+        if isinstance(projection, dict) and str(projection.get("field") or "").strip():
+            return True
+        block_style = block.get("style") if isinstance(block.get("style"), dict) else {}
+        block_case = str(block_style.get("textCase") or "").strip().lower()
+        if block_case and block_case != "none":
+            return True
+        runs = block.get("contentRuns")
+        if isinstance(runs, list):
+            for run in runs:
+                if not isinstance(run, dict):
+                    continue
+                data_ref = run.get("dataRef")
+                if isinstance(data_ref, dict) and str(data_ref.get("field") or "").strip():
+                    return True
+                run_style = run.get("style") if isinstance(run.get("style"), dict) else {}
+                run_case = str(run_style.get("textCase") or "").strip().lower()
+                if run_case and run_case != "none":
+                    return True
+        return False
+
+    @classmethod
+    def stamp_text_presentation_on_block(cls, block: dict[str, Any]) -> dict[str, Any]:
+        """Ephemeral paint stamp: resolved.display* for text/heading/shape (no persist)."""
+        if not isinstance(block, dict):
+            return block
+        block_type = str(block.get("type") or "")
+        if block_type not in {"text", "heading", "shape"}:
+            return block
+        if not cls._block_needs_text_presentation_stamp(block):
+            return block
+        merged = dict(block)
+        base = (
+            dict(merged["resolved"])
+            if isinstance(merged.get("resolved"), dict)
+            else {}
+        )
+        merged["resolved"] = cls.apply_to_resolved(base, merged)
+        return merged
+
+    @classmethod
+    def stamp_native_config_text_presentation(
+        cls, native_config: dict[str, Any] | None
+    ) -> dict[str, Any]:
+        """Stamp display* onto text-bearing blocks in a nativeConfig copy (ack/enrich)."""
+        if not isinstance(native_config, dict):
+            return {}
+        cfg = dict(native_config)
+        blocks = cfg.get("blocks")
+        if not isinstance(blocks, list):
+            return cfg
+        cfg["blocks"] = [
+            cls.stamp_text_presentation_on_block(b) if isinstance(b, dict) else b
+            for b in blocks
+        ]
+        return cfg
 
     @classmethod
     def _apply_kpi_display(cls, resolved: dict[str, Any], block: dict[str, Any]) -> None:

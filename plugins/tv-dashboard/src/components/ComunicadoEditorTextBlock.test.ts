@@ -41,6 +41,33 @@ describe("externalTextBlockEditorKey", () => {
     expect(externalTextBlockEditorKey(withRuns, 1)).not.toBe(keyBase);
     expect(externalTextBlockEditorKey(withHref, 1)).not.toBe(keyBase);
   });
+
+  it("muda quando textCase ou displayText materializado mudam", () => {
+    const baseBlock = {
+      id: "b1",
+      type: "heading" as const,
+      content: "REALIZADO 2025 X 2026",
+      contentRuns: [{ text: "REALIZADO 2025 X 2026" }],
+      frame: { x: 0, y: 0, w: 100, h: 40 },
+    };
+    const withCase = {
+      ...baseBlock,
+      style: { textCase: "lower" as const },
+    };
+    const withDisplay = {
+      ...withCase,
+      resolved: {
+        serverDisplayApplied: true,
+        displayText: "realizado 2025 x 2026",
+        displayRuns: [{ text: "realizado 2025 x 2026" }],
+      },
+    };
+    const keyBase = externalTextBlockEditorKey(baseBlock as never, 1);
+    expect(externalTextBlockEditorKey(withCase as never, 1)).not.toBe(keyBase);
+    expect(externalTextBlockEditorKey(withDisplay as never, 1)).not.toBe(
+      externalTextBlockEditorKey(withCase as never, 1),
+    );
+  });
 });
 
 describe("text edit commit cleanup contract", () => {

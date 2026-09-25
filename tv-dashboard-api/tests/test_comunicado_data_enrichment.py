@@ -212,6 +212,26 @@ def test_enrich_rejects_disallowed_route():
     assert "error" in enriched[0]["resolved"]
 
 
+def test_enrich_stamps_unbound_heading_text_case():
+    """TEXT-CASE-RUNTIME-001: static heading gets display* without dataSource."""
+    service = ComunicadoDataEnrichmentService(
+        catalog=TvDataRouteCatalogService(), gateway=MagicMock()
+    )
+    blocks = [
+        {
+            "id": "h1",
+            "type": "heading",
+            "content": "REALIZADO 2025 X 2026",
+            "style": {"textCase": "lower"},
+            "contentRuns": [{"text": "REALIZADO 2025 X 2026"}],
+        }
+    ]
+    enriched = service.enrich_blocks(blocks, cfg={})
+    assert enriched[0]["content"] == "REALIZADO 2025 X 2026"
+    assert enriched[0]["resolved"]["displayText"] == "realizado 2025 x 2026"
+    assert enriched[0]["resolved"]["serverDisplayApplied"] is True
+
+
 def test_fetch_cached_reuses_ttl_cache():
     reset_comunicado_data_block_cache()
     gateway = MagicMock()

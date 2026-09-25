@@ -1414,7 +1414,18 @@ class ComunicadoDataEnrichmentService:
             else block
             for block in blocks
         ]
-        return self._link_view_blocks_to_sources(restored)
+        # Always stamp text presentation (static textCase → display*) even without
+        # dataSource — otherwise unbound heading/text paint raw content forever.
+        return self._stamp_text_presentation(self._link_view_blocks_to_sources(restored))
+
+    @staticmethod
+    def _stamp_text_presentation(blocks: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        return [
+            DisplayFormatService.stamp_text_presentation_on_block(block)
+            if isinstance(block, dict)
+            else block
+            for block in blocks
+        ]
 
     @staticmethod
     def _transform_needs_siblings(block: dict[str, Any]) -> bool:

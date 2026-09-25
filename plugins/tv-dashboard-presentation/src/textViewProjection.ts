@@ -309,6 +309,15 @@ export function resolveVisualBoxDisplayText(
   block: ComunicadoTextBlock | ComunicadoShapeBlock,
   resolved?: ComunicadoDataResolved,
 ): Pick<ComunicadoTextBlock, "content" | "contentRuns"> {
+  const data = resolved ?? ("resolved" in block ? block.resolved : undefined);
+  // Server-owned display* wins even for unbound static text/heading (textCase).
+  const serverRuns = preferServerTextDisplayRuns(data);
+  if (serverRuns) {
+    return {
+      content: plainTextFromContentRuns(serverRuns),
+      contentRuns: serverRuns,
+    };
+  }
   if (!textBlockHasDataBinding(block)) {
     if (block.type === "shape") {
       return {
@@ -330,7 +339,7 @@ export function resolveVisualBoxDisplayText(
           dataSourceId: block.dataSourceId,
         }
       : block,
-    resolved ?? ("resolved" in block ? block.resolved : undefined),
+    data,
   );
   return {
     content: plainTextFromContentRuns(runs),

@@ -58,8 +58,14 @@ export function externalTextBlockEditorKey(block: TextBlock, fontScale: number) 
     contentRuns: block.contentRuns,
     href: block.href,
     textProjection: block.textProjection,
+    textCase: block.style?.textCase ?? null,
     resolvedFingerprint: block.resolved
-      ? JSON.stringify(block.resolved.kpi ?? block.resolved.kpiMetrics ?? null)
+      ? JSON.stringify({
+          displayText: block.resolved.displayText ?? null,
+          displayRuns: block.resolved.displayRuns ?? null,
+          serverDisplayApplied: block.resolved.serverDisplayApplied ?? null,
+          kpi: block.resolved.kpi ?? block.resolved.kpiMetrics ?? null,
+        })
       : null,
     fontScale,
   });

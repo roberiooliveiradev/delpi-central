@@ -7,9 +7,11 @@ backend-owned geometry/style/defaults become the single source of truth.
 
 from __future__ import annotations
 
+import copy
 from typing import Any
 from uuid import UUID
 
+from tv_app.application.services.data.display_format_service import DisplayFormatService
 from tv_app.application.services.data.presentation_mutation.patch_service import (
     PresentationPatchError,
     PresentationPatchService,
@@ -87,11 +89,22 @@ class PresentationMutationCommitService:
         except PresentationWriteError:
             raise
 
+        # Persist authoring nativeConfig without ephemeral resolved; stamp display*
+        # on the ack payload so editor/TV paint textCase without waiting for enrich.
+        persisted_native = (
+            slide.get("nativeConfig")
+            if isinstance(slide.get("nativeConfig"), dict)
+            else native_config
+        )
+        ack_native = DisplayFormatService.stamp_native_config_text_presentation(
+            copy.deepcopy(persisted_native)
+            if isinstance(persisted_native, dict)
+            else {}
+        )
+
         return {
             "slide": slide,
-            "nativeConfig": slide.get("nativeConfig")
-            if isinstance(slide.get("nativeConfig"), dict)
-            else native_config,
+            "nativeConfig": ack_native,
             "appliedOps": preview.get("appliedOps") or [],
             "fingerprint": preview.get("fingerprint"),
             "sideEffectHints": preview.get("sideEffectHints") or [],
