@@ -104,6 +104,34 @@ describe("applyComunicadoBlockStylePatch", () => {
     expect(next.contentRuns?.some((run) => run.dataRef?.field === "ppm")).toBe(true);
   });
 
+  it("textCase de container remove override conflitante sem apagar outros estilos do run", () => {
+    const block = {
+      ...createShapeBlock("rectangle"),
+      content: "REALIZADO 2025 X 2026",
+      contentRuns: [
+        {
+          text: "REALIZADO ",
+          style: { textCase: "upper" as const, fontWeight: "bold" as const },
+        },
+        {
+          text: "2025 X 2026",
+          dataRef: { field: "period.label" },
+          style: { textCase: "upper" as const, color: "#0f172a" },
+        },
+      ],
+      style: { zIndex: 2, textCase: "upper" as const },
+    };
+
+    const next = applyComunicadoBlockStylePatch(block, { textCase: "lower" });
+
+    expect(next.style?.textCase).toBe("lower");
+    if (next.type !== "shape") return;
+    expect(next.contentRuns?.every((run) => run.style?.textCase == null)).toBe(true);
+    expect(next.contentRuns?.[0]?.style?.fontWeight).toBe("bold");
+    expect(next.contentRuns?.[1]?.style?.color).toBe("#0f172a");
+    expect(next.contentRuns?.[1]?.dataRef?.field).toBe("period.label");
+  });
+
   it("materializa namedStyle ao patch tipográfico de container", () => {
     const block = {
       ...createShapeBlock("rectangle"),
