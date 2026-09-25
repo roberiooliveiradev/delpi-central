@@ -1075,7 +1075,10 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
   const [taskForm, setTaskForm] = useState(EMPTY_TICKET_TASK_FORM);
   const [approvalContent, setApprovalContent] = useState("");
   const [approvalTemplateId, setApprovalTemplateId] = useState<number | null>(null);
+  const [approvalApproverType, setApprovalApproverType] = useState<"user" | "group">("user");
+  const [approvalGroupId, setApprovalGroupId] = useState<number | null>(null);
   const [approverPick, setApproverPick] = useState<HelpdeskAssigneeValue | null>(null);
+  const [documentTitle, setDocumentTitle] = useState("");
   /** Bumps resolve identity after IDB seed (create parity). */
   const [pendingHydrated, setPendingHydrated] = useState(0);
   const myPhotoUrl = useMyPersonProfilePhoto();
@@ -1232,9 +1235,16 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
     if (activeAction === "create_solution") return hasVisibleRichText(solutionForm.content);
     if (activeAction === "create_task") return hasVisibleRichText(taskForm.content);
     if (activeAction === "request_approval") {
-      return hasVisibleRichText(approvalContent) || Boolean(approverPick);
+      return (
+        hasVisibleRichText(approvalContent) ||
+        Boolean(approverPick) ||
+        approvalGroupId != null ||
+        approvalApproverType !== "user"
+      );
     }
-    if (activeAction === "attach_file") return documentFiles.length > 0;
+    if (activeAction === "attach_file") {
+      return documentFiles.length > 0 || Boolean(documentTitle.trim());
+    }
     if (activeAction === "accept_solution" || activeAction === "reject_solution") {
       return hasVisibleRichText(cycleNote);
     }
@@ -1268,9 +1278,14 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
     if (activeAction === "request_approval") {
       setApprovalContent("");
       setApprovalTemplateId(null);
+      setApprovalApproverType("user");
+      setApprovalGroupId(null);
       setApproverPick(null);
     }
-    if (activeAction === "attach_file") setDocumentFiles([]);
+    if (activeAction === "attach_file") {
+      setDocumentFiles([]);
+      setDocumentTitle("");
+    }
     if (activeAction === "accept_solution" || activeAction === "reject_solution") {
       setCycleNote("");
     }
@@ -2119,14 +2134,18 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                               className="helpdesk-reply-form"
                               onSubmit={(event) => {
                                 event.preventDefault();
-                                const approverId = Number(approverPick?.id || 0);
+                                const approverId =
+                                  approvalApproverType === "group"
+                                    ? Number(approvalGroupId || 0)
+                                    : Number(approverPick?.id || 0);
                                 if (saving || !Number.isFinite(approverId) || approverId <= 0) return;
                                 setSaving(true);
                                 setErrorText(null);
                                 void requestTicketApproval(
                                   ticketId,
                                   {
-                                    approver_user_id: approverId,
+                                    approver_type: approvalApproverType,
+                                    approver_id: approverId,
                                     content: approvalContent.trim(),
                                   },
                                   idempotencyKey,
@@ -2134,6 +2153,8 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                                   .then(() => {
                                     setApprovalContent("");
                                     setApprovalTemplateId(null);
+                                    setApprovalApproverType("user");
+                                    setApprovalGroupId(null);
                                     setApproverPick(null);
                                     setIdempotencyKey(newIdempotencyKey());
                                     closeActionAfterSuccess();
@@ -2146,23 +2167,33 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                               <TicketApprovalActionFields
                                 templateId={approvalTemplateId}
                                 onTemplateIdChange={setApprovalTemplateId}
+                                approverType={approvalApproverType}
+                                onApproverTypeChange={(next) => {
+                                  setApprovalApproverType(next);
+                                  if (next === "user") setApprovalGroupId(null);
+                                  if (next === "group") setApproverPick(null);
+                                }}
+                                groupId={approvalGroupId}
+                                onGroupIdChange={setApprovalGroupId}
                                 onApplyContent={setApprovalContent}
                                 disabled={saving}
                               />
-                              <div className="helpdesk-ticket-workspace__approval-approver">
-                                <span className="helpdesk-ticket-workspace__field-label">
-                                  Aprovador
-                                </span>
-                                <HelpdeskAssigneePicker
-                                  label="Aprovador"
-                                  value={approverPick}
-                                  onChange={setApproverPick}
-                                  disabled={saving}
-                                  purpose="mention"
-                                  placeholder="Buscar aprovador…"
-                                  emptyLabel="Nenhum aprovador selecionado"
-                                />
-                              </div>
+                              {approvalApproverType === "user" ? (
+                                <div className="helpdesk-ticket-workspace__approval-approver">
+                                  <span className="helpdesk-ticket-workspace__field-label">
+                                    Aprovador
+                                  </span>
+                                  <HelpdeskAssigneePicker
+                                    label="Aprovador"
+                                    value={approverPick}
+                                    onChange={setApproverPick}
+                                    disabled={saving}
+                                    purpose="mention"
+                                    placeholder="Buscar aprovador…"
+                                    emptyLabel="Nenhum aprovador selecionado"
+                                  />
+                                </div>
+                              ) : null}
                               <HelpdeskRichTextField
                                 label="Mensagem"
                                 hint={helpTooltips.detailUi.requestApproval}
@@ -2185,8 +2216,10 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                                   type="submit"
                                   disabled={
                                     saving ||
-                                    !approverPick?.id ||
-                                    !Number.isFinite(Number(approverPick.id))
+                                    (approvalApproverType === "user"
+                                      ? !approverPick?.id ||
+                                        !Number.isFinite(Number(approverPick.id))
+                                      : approvalGroupId == null || approvalGroupId <= 0)
                                   }
                                 >
                                   {saving
@@ -2214,9 +2247,20 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                                     event.target.value = "";
                                   }}
                                 />
-                                <p className="helpdesk-ticket-workspace__document-hint">
-                                  Anexa arquivos ao chamado sem enviar uma mensagem.
-                                </p>
+                                <SectionHintLabel
+                                  label="Anexa arquivos ao chamado sem enviar uma mensagem."
+                                  hint={helpTooltips.detailUi.attachFile}
+                                />
+                                <label className="helpdesk-action-fields__field">
+                                  <span>Título (opcional)</span>
+                                  <input
+                                    type="text"
+                                    value={documentTitle}
+                                    disabled={saving}
+                                    placeholder="Nome exibido no documento"
+                                    onChange={(event) => setDocumentTitle(event.target.value)}
+                                  />
+                                </label>
                                 {documentFiles.length > 0 ? (
                                   <ul className="helpdesk-ticket-workspace__document-list">
                                     {documentFiles.map((file) => (
@@ -2251,6 +2295,7 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                                       if (documentFiles.length === 0) return;
                                       setSaving(true);
                                       setErrorText(null);
+                                      const title = documentTitle.trim();
                                       void (async () => {
                                         try {
                                           for (const file of documentFiles) {
@@ -2258,9 +2303,11 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                                               ticketId,
                                               file,
                                               newIdempotencyKey(),
+                                              title ? { title } : undefined,
                                             );
                                           }
                                           setDocumentFiles([]);
+                                          setDocumentTitle("");
                                           closeActionAfterSuccess();
                                           load();
                                         } catch (error) {

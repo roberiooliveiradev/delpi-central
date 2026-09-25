@@ -59,6 +59,8 @@ describe("helpTooltips budget", () => {
     expect(helpTooltips.detailUi.createSolution).toMatch(/solução/i);
     expect(helpTooltips.detailUi.createTask).toMatch(/tarefa/i);
     expect(helpTooltips.detailUi.requestApproval).toMatch(/aprova/i);
+    expect(helpTooltips.detailUi.requestApproval).toMatch(/grupo|usuário/i);
+    expect(helpTooltips.detailUi.attachFile).toMatch(/título|arquivo/i);
   });
 
   it("não reintroduz o bloco filters órfão da FiltersRow antiga", () => {

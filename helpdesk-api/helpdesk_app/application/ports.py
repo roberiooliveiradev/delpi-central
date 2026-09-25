@@ -110,7 +110,9 @@ class GlpiGateway(Protocol):
         access_token: str,
         ticket_id: int,
         *,
-        approver_user_id: int,
+        approver_user_id: int | None = None,
+        approver_type: str = "User",
+        approver_id: int | None = None,
         comment: str = "",
     ) -> int: ...
 
@@ -126,6 +128,7 @@ class GlpiGateway(Protocol):
         filename: str,
         content: bytes,
         mime: str,
+        title: str | None = None,
     ) -> Attachment: ...
 
     def accept_ticket_solution(self, access_token: str, ticket_id: int, content: str = "") -> None: ...

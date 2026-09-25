@@ -841,6 +841,12 @@ def parse_ticket_validations(payload: dict | list) -> tuple[TicketValidation, ..
             approver_id = int(approver) if approver not in (None, "") else None
         except (TypeError, ValueError):
             approver_id = None
+        raw_type = (
+            body.get("requested_approver_type")
+            or body.get("itemtype_target")
+            or "User"
+        )
+        approver_type = "Group" if str(raw_type).lower() == "group" else "User"
         items.append(
             TicketValidation(
                 id=validation_id,
@@ -852,6 +858,7 @@ def parse_ticket_validations(payload: dict | list) -> tuple[TicketValidation, ..
                     body.get("approval_comment") or body.get("comment_validation")
                 ),
                 requested_approver_id=approver_id if approver_id and approver_id > 0 else None,
+                requested_approver_type=approver_type,
             )
         )
     return tuple(items)
@@ -865,8 +872,10 @@ def apply_validation_viewer(
     return tuple(
         replace(
             item,
+            # Group targets: deciding member set is not projected yet — fail closed.
             mine_to_decide=bool(
                 viewer_id
+                and item.requested_approver_type == "User"
                 and item.requested_approver_id == viewer_id
                 and item.status == VALIDATION_WAITING
             ),

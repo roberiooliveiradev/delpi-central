@@ -306,7 +306,8 @@ class TicketService:
         filename: str,
         content: bytes,
         mime: str,
-        idempotency_key: str | None,
+        title: str | None = None,
+        idempotency_key: str | None = None,
     ) -> StoredResponse:
         key = _require_key(idempotency_key)
         operation = f"upload_attachment:{ticket_id}"
@@ -319,6 +320,7 @@ class TicketService:
             filename=filename,
             content=content,
             mime=mime,
+            title=title,
         )
         stored = StoredResponse(
             status_code=201,
@@ -568,10 +570,12 @@ class TicketService:
         subject: str,
         ticket_id: int,
         *,
-        approver_user_id: int,
+        approver_user_id: int | None = None,
+        approver_type: str = "user",
+        approver_id: int | None = None,
         content: str = "",
         viewer_email: str = "",
-        idempotency_key: str | None,
+        idempotency_key: str | None = None,
     ) -> StoredResponse:
         key = _require_key(idempotency_key)
         operation = f"request_approval:{ticket_id}"
@@ -581,23 +585,30 @@ class TicketService:
         token = self._token(subject)
         detail = self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
         self._require_technician_ops(token, detail, viewer_email=viewer_email, action="aprovação")
+        target_type = "Group" if str(approver_type).lower() == "group" else "User"
+        raw_id = approver_id if approver_id is not None else approver_user_id
         try:
-            approver_id = int(approver_user_id)
+            target_id = int(raw_id) if raw_id is not None else 0
         except (TypeError, ValueError) as exc:
-            raise GlpiValidation("approver_user_id inválido.") from exc
-        if approver_id <= 0:
-            raise GlpiValidation("approver_user_id inválido.")
-        # Approver must exist in the user catalog readable by this session.
-        catalog = self._glpi.list_users(token, q=str(approver_id), limit=20)
-        if not any(int(getattr(user, "id", 0) or 0) == approver_id for user in catalog):
-            raise GlpiValidation("Aprovador inválido ou inacessível.")
+            raise GlpiValidation("approver_id inválido.") from exc
+        if target_id <= 0:
+            raise GlpiValidation("approver_id inválido.")
+        if target_type == "User":
+            catalog = self._glpi.list_users(token, q=str(target_id), limit=20)
+            if not any(int(getattr(user, "id", 0) or 0) == target_id for user in catalog):
+                raise GlpiValidation("Aprovador inválido ou inacessível.")
+        else:
+            groups = self._glpi.list_groups(token)
+            if not any(int(getattr(group, "id", 0) or 0) == target_id for group in groups):
+                raise GlpiValidation("Grupo aprovador inválido ou inacessível.")
         comment = (content or "").strip()
         if comment:
             comment = _prepare_message_html(comment, "content", ticket_id=ticket_id)
         validation_id = self._glpi.create_ticket_validation(
             token,
             ticket_id,
-            approver_user_id=approver_id,
+            approver_type=target_type,
+            approver_id=target_id,
             comment=comment,
         )
         refreshed = self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
@@ -610,14 +621,16 @@ class TicketService:
                 "id": validation_id,
                 "status": match.status,
                 "requested_approver_id": match.requested_approver_id,
+                "requested_approver_type": match.requested_approver_type,
             },
         )
         self._idempotency.save(subject, operation, key, stored)
         logger.info(
-            "helpdesk_request_approval ticket_id=%s validation_id=%s approver=%s",
+            "helpdesk_request_approval ticket_id=%s validation_id=%s approver_type=%s approver=%s",
             ticket_id,
             validation_id,
-            approver_id,
+            target_type,
+            target_id,
         )
         return stored
 

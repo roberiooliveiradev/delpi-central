@@ -1,10 +1,10 @@
-from typing import Any
+from typing import Any, Literal
 
 from urllib.parse import quote
 
-from fastapi import APIRouter, File, Header, Request, UploadFile
+from fastapi import APIRouter, File, Form, Header, Request, UploadFile
 from fastapi.responses import JSONResponse, Response
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from helpdesk_app.domain.errors import HelpdeskError, GlpiValidation
 from helpdesk_app.infrastructure.glpi.mapping import URGENCIES, attachment_filename, build_ticket_list_query
@@ -54,8 +54,20 @@ class TaskCreateBody(BaseModel):
 class ApprovalRequestBody(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    approver_user_id: int = Field(gt=0)
+    """Backward-compatible user target; prefer approver_type + approver_id. """
+    approver_user_id: int | None = Field(default=None, gt=0)
+    approver_type: Literal["user", "group"] = "user"
+    approver_id: int | None = Field(default=None, gt=0)
     content: str = ""
+
+    @model_validator(mode="after")
+    def resolve_approver(self):
+        if self.approver_id is None and self.approver_user_id is not None:
+            object.__setattr__(self, "approver_id", self.approver_user_id)
+            object.__setattr__(self, "approver_type", "user")
+        if self.approver_id is None or int(self.approver_id) <= 0:
+            raise ValueError("approver_id ou approver_user_id é obrigatório.")
+        return self
 
 
 class SolutionDecisionBody(BaseModel):
@@ -351,6 +363,7 @@ def get_ticket(request: Request, ticket_id: int):
                 "submission_comment": item.submission_comment,
                 "approval_comment": item.approval_comment,
                 "requested_approver_id": item.requested_approver_id,
+                "requested_approver_type": item.requested_approver_type,
                 "mine_to_decide": item.mine_to_decide,
             }
             for item in ticket.validations
@@ -414,6 +427,7 @@ async def upload_attachment(
     request: Request,
     ticket_id: int,
     file: UploadFile = File(...),
+    title: str | None = Form(default=None),
     idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
 ):
     actor = require_actor(request)
@@ -427,6 +441,7 @@ async def upload_attachment(
             filename=file.filename or "anexo",
             content=raw,
             mime=file.content_type or "application/octet-stream",
+            title=title,
             idempotency_key=idempotency_key,
         )
     except HelpdeskError as exc:
@@ -560,7 +575,8 @@ def request_ticket_approval(
         stored = _tickets(request).request_approval(
             actor.subject,
             ticket_id,
-            approver_user_id=body.approver_user_id,
+            approver_type=body.approver_type,
+            approver_id=int(body.approver_id or 0),
             content=body.content,
             viewer_email=actor.email,
             idempotency_key=idempotency_key,

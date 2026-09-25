@@ -144,6 +144,7 @@ class TicketValidation:
     submission_comment: str = ""
     approval_comment: str = ""
     requested_approver_id: int | None = None
+    requested_approver_type: str = "User"
     mine_to_decide: bool = False
 
 

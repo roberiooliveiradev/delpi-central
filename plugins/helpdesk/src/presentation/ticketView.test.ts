@@ -284,6 +284,59 @@ describe("conversationMessages", () => {
     expect(messages[1]?.bodyText).toBe("interno");
   });
 
+  it("enriquece heading da tarefa com metadados do BFF", () => {
+    const messages = conversationMessages(
+      {
+        title: "Rede",
+        description: "Sem internet",
+        created_at: "",
+        requester_display_name: " ",
+        timeline: [
+          {
+            id: 3,
+            kind: "task",
+            content: "interno",
+            created_at: "2026-09-21T11:00:00Z",
+            author_display_name: "Técnico",
+            state: 1,
+            duration_seconds: 1800,
+            category_name: "Campo",
+            user_tech_display_name: "Ana",
+            group_tech_display_name: "N1",
+          },
+        ],
+        attachments: [],
+      },
+      now,
+    );
+    expect(messages[1]?.headingText).toBe("Tarefa · A fazer · 30 min · Campo · Ana · N1");
+  });
+
+  it("enriquece heading da solução com tipo e status", () => {
+    const messages = conversationMessages(
+      {
+        title: "VPN",
+        description: "Sem acesso",
+        created_at: "2026-09-21T10:00:00Z",
+        requester_display_name: "Ana",
+        timeline: [
+          {
+            id: 11,
+            kind: "solution",
+            content: "ok",
+            created_at: "2026-09-21T12:00:00Z",
+            author_display_name: "Técnico",
+            solution_type_name: "Workaround",
+            solution_status: 2,
+          },
+        ],
+        attachments: [],
+      },
+      now,
+    );
+    expect(messages[1]?.headingText).toBe("Solução · Workaround · Aguardando");
+  });
+
   it("mostra a solução da timeline com título Solução e ignora validation", () => {
     const messages = conversationMessages(
       {

@@ -233,6 +233,20 @@ describe("HELPDESK-MFE-UX-002 ticket workspace", () => {
     expect(detail).toContain("TicketReplyActionFields");
     expect(detail).toContain("TicketSolutionActionFields");
     expect(detail).toContain("TicketApprovalActionFields");
+    expect(detail).toContain("approvalApproverType");
+    expect(detail).toContain('approver_type: approvalApproverType');
+    expect(detail).toContain("documentTitle");
+    expect(detail).toContain("helpTooltips.detailUi.attachFile");
+    const approvalFields = read("TicketApprovalActionFields.tsx");
+    expect(approvalFields).toContain('value: "group"');
+    expect(approvalFields).toContain("listGroups");
+    const api = read("../api/helpdeskApi.ts");
+    expect(api).toContain("approver_type");
+    expect(api).toContain("approver_id");
+    expect(api).toContain("options?: { title?: string }");
+    const view = read("../presentation/ticketView.ts");
+    expect(view).toContain("timelineEntryHeadingText");
+    expect(view).toContain("duration_seconds");
   });
 
   it("wires proven operational actions from BFF capabilities", () => {

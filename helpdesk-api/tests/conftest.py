@@ -71,7 +71,7 @@ class FakeGlpi:
         self.followups = []
         self.solutions: list[tuple[int, str]] = []
         self.tasks: list[tuple[int, str]] = []
-        self.created_validations: list[tuple[int, int, str]] = []
+        self.created_validations: list[tuple[int, str, int, str]] = []
         self.observers = []
         self.assignees = []
         self.removed_assignees = []
@@ -397,7 +397,9 @@ class FakeGlpi:
         access_token: str,
         ticket_id: int,
         *,
-        approver_user_id: int,
+        approver_user_id: int | None = None,
+        approver_type: str = "User",
+        approver_id: int | None = None,
         comment: str = "",
     ):
         from dataclasses import replace
@@ -407,14 +409,17 @@ class FakeGlpi:
         assert access_token
         if ticket_id == 99:
             raise GlpiNotFound("ausente")
+        target_type = "Group" if str(approver_type).lower() == "group" else "User"
+        target_id = int(approver_id if approver_id is not None else approver_user_id or 0)
         validation_id = 70 + len(self.created_validations)
-        self.created_validations.append((ticket_id, int(approver_user_id), comment))
+        self.created_validations.append((ticket_id, target_type, target_id, comment))
         if self.detail.id == ticket_id:
             item = TicketValidation(
                 id=validation_id,
                 status=2,
                 submission_comment=str(comment or ""),
-                requested_approver_id=int(approver_user_id),
+                requested_approver_id=target_id,
+                requested_approver_type=target_type,
                 mine_to_decide=False,
             )
             self.detail = replace(
@@ -444,6 +449,7 @@ class FakeGlpi:
         filename: str,
         content: bytes,
         mime: str,
+        title: str | None = None,
     ):
         from dataclasses import replace
 
@@ -455,7 +461,7 @@ class FakeGlpi:
             raise GlpiValidation("Arquivo vazio.")
         document_id = 100 + len(self.uploads)
         attachment = Attachment(document_id, filename, mime or "application/octet-stream")
-        self.uploads.append((ticket_id, filename, content, mime))
+        self.uploads.append((ticket_id, filename, content, mime, title))
         self.files[document_id] = (content, mime or "application/octet-stream")
         self.document_links[document_id] = ticket_id
         if self.attach_uploads_to_timeline and self.detail.id == ticket_id:

@@ -83,7 +83,7 @@ Live OpenAPI used as **provider field authority**. Classic UI screenshots = lead
 |---|---|---|---|
 | upload file | legacy `Document` + `Document_Item` itemtype Ticket | `POST /attachments` | **PROVEN** ATTACH FILE |
 | HLAPI Timeline/Document | JSON Document schema (name, filename, comment, mime) — no multipart in OpenAPI | unused | **TO_INVENTORY** vs H12 |
-| title (`name`) | Document.name | filename only | **MISSING_BFF** optional |
+| title (`name`) | Document.name | Form `title` → legacy name | **PROVEN** BFF+MFE optional (live postcondition TO_INVENTORY) |
 | category | DocumentCategory dropdown; **not** on Timeline Document schema | absent | **TO_INVENTORY** / likely CONSOLE |
 | link existing | — | absent | **CONSOLE_ONLY** until proven useful |
 | attach vs create document | product split | single attach action | semantic = ATTACH FILE (**PROVEN**); CREATE DOCUMENT entity extras **TO_INVENTORY** |
@@ -94,8 +94,8 @@ Live OpenAPI used as **provider field authority**. Classic UI screenshots = lead
 
 | FIELD | PROVIDER FIELD | CURRENT | STATUS |
 |---|---|---|---|
-| approver user | live write uses `itemtype_target=User`,`items_id_target` (proven e10); OpenAPI also lists `requested_approver_type`/`requested_approver_id` | `approver_user_id` | **PROVEN** user path |
-| approver group | `requested_approver_type=Group` in schema | absent | **MISSING_BFF/MFE** (schema PROVEN; live write **TO_INVENTORY**) |
+| approver user | live write uses `itemtype_target=User`,`items_id_target` (proven e10); OpenAPI also lists `requested_approver_type`/`requested_approver_id` | `approver_user_id` / `approver_type=user`+`approver_id` | **PROVEN** user path |
+| approver group | `requested_approver_type=Group` in schema | `approver_type=group` + `approver_id` (BFF+MFE) | **PROVEN** schema+unit; **live Group write** TO_INVENTORY |
 | submission_comment | `comment_submission` / `submission_comment` | `content` | **PROVEN** |
 | requester | `requester` object (likely server-set) | not editable | **PROVEN** read-only display candidate |
 | template | ValidationTemplate (+ approval_step) | absent | **MISSING_BFF** catalog; create schema **lacks** template_id / step id → prefill comment only until live proves step field |
@@ -167,12 +167,14 @@ Templates are **catalog + prefill**; POSTs do **not** accept `template_id` (abse
 - `POST /followups`: `request_type_id?` — **not** `is_private` until private-read AuthZ
 - `POST /solutions`: `solution_type_id?`
 - `POST /tasks`: `state?`, `duration_seconds?`→`duration`, `category_id?`, `user_tech_id?`, `group_tech_id?`, `planned_begin?`, `planned_end?` — keep force `is_private:0`
-- `POST /validations`: keep `approver_user_id`; additive `approver_type?: "user"|"group"` + `approver_id?` **only after** live Group write PROVEN
+- `POST /validations`: `approver_user_id` (legacy) **or** `approver_type` + `approver_id` (User|Group) — Group path wired + unit-tested; **live Group write** still TO_INVENTORY for PARITY
+- `POST /attachments`: optional Form `title` → Document.name (legacy upload)
 
 ### Timeline projection (additive)
 
 - task entries: `state`, `duration_seconds`, `category_name`, `user_tech_display_name`, `group_tech_display_name`, `planned_begin`, `planned_end`
 - solution entries: `solution_type_name`, `solution_status`
+- MFE `conversationMessages` renders enriched `headingText` via `timelineEntryHeadingText`
 
 ### Explicitly NOT in freeze
 
@@ -192,8 +194,8 @@ Templates are **catalog + prefill**; POSTs do **not** accept `template_id` (abse
 
 | Wave | Escopo | Status |
 |---|---|---|
-| 1 | BFF catalogs + task/solution/followup write enrichment + Task MFE card | DONE (local, uncommitted) |
-| 2 | Reply (template+origem) + Solution (template+tipo) + Approval (template prefill) MFE | DONE (local, uncommitted) |
-| 3 | Approval title/category, approval group/step live, private AuthZ, live homolog | PENDING |
+| 1 | BFF catalogs + task/solution/followup write enrichment + Task MFE card | DONE (committed Waves 1–2) |
+| 2 | Reply (template+origem) + Solution (template+tipo) + Approval (template prefill) MFE | DONE (committed Waves 1–2) |
+| 3 | Document title + approval user|group + timeline meta headings | DONE (local, uncommitted) — Document category / approval step bind / private AuthZ / live homolog **still residual** |
 
-PARITY overall: **NOT PASS** — operational fields still need live postcondition + remaining gaps (private, pending reason, history, KB).
+PARITY overall: **NOT PASS** — Group validation + Document.title need live postcondition; remaining gaps (private, pending reason, history, KB, step-on-create, Document category).

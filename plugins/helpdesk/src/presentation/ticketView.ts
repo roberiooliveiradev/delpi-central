@@ -305,6 +305,15 @@ export type ConversationSource = {
     created_at: string;
     author_display_name: string;
     mine?: boolean;
+    state?: number | null;
+    duration_seconds?: number | null;
+    category_name?: string;
+    user_tech_display_name?: string;
+    group_tech_display_name?: string;
+    planned_begin?: string;
+    planned_end?: string;
+    solution_type_name?: string;
+    solution_status?: number | null;
   }[];
   attachments: { document_id: number }[];
 };
@@ -424,6 +433,60 @@ function openingTimeLabel(createdAt: string, requester: string, now: Date): stri
   return `Criado em ${time}`;
 }
 
+const TASK_STATE_LABELS: Record<number, string> = {
+  0: "Informação",
+  1: "A fazer",
+  2: "Concluída",
+};
+
+const SOLUTION_STATUS_LABELS: Record<number, string> = {
+  1: "Sem status",
+  2: "Aguardando",
+  3: "Aceita",
+  4: "Recusada",
+};
+
+function formatDurationMinutes(seconds: number | null | undefined): string {
+  if (seconds == null || !Number.isFinite(seconds) || seconds < 0) return "";
+  const minutes = Math.round(seconds / 60);
+  if (minutes <= 0 && seconds > 0) return "<1 min";
+  if (minutes === 1) return "1 min";
+  if (minutes > 0) return `${minutes} min`;
+  return "";
+}
+
+function joinHeadingParts(parts: Array<string | null | undefined>): string {
+  return parts.map((part) => String(part || "").trim()).filter(Boolean).join(" · ");
+}
+
+/** Builds task/solution heading from BFF timeline metadata (additive projection). */
+export function timelineEntryHeadingText(entry: ConversationSource["timeline"][number]): string {
+  if (entry.kind === "task") {
+    const stateLabel =
+      entry.state != null && Number.isFinite(entry.state)
+        ? TASK_STATE_LABELS[entry.state] || `Estado ${entry.state}`
+        : "";
+    return (
+      joinHeadingParts([
+        "Tarefa",
+        stateLabel,
+        formatDurationMinutes(entry.duration_seconds),
+        entry.category_name,
+        entry.user_tech_display_name,
+        entry.group_tech_display_name,
+      ]) || "Tarefa"
+    );
+  }
+  if (entry.kind === "solution") {
+    const statusLabel =
+      entry.solution_status != null && Number.isFinite(entry.solution_status)
+        ? SOLUTION_STATUS_LABELS[entry.solution_status] || undefined
+        : undefined;
+    return joinHeadingParts(["Solução", entry.solution_type_name, statusLabel]) || "Solução";
+  }
+  return "";
+}
+
 export function conversationAuthorSrc(mine: boolean, photoUrl: string | null | undefined): string | undefined {
   if (!mine) return undefined;
   const src = (photoUrl ?? "").trim();
@@ -456,7 +519,7 @@ export function conversationMessages(ticket: ConversationSource, now: Date): Con
       return {
         id: String(entry.id),
         kind,
-        headingText: kind === "solution" ? "Solução" : kind === "task" ? "Tarefa" : "",
+        headingText: timelineEntryHeadingText(entry),
         bodyText: entry.content,
         bodyHtml,
         createdAtLabel: relativeTimeLabel(entry.created_at, now),

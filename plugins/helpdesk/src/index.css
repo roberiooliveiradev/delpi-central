@@ -1364,6 +1364,7 @@
 }
 
 .dashboard-helpdesk .helpdesk-action-fields__field input[type="number"],
+.dashboard-helpdesk .helpdesk-action-fields__field input[type="text"],
 .dashboard-helpdesk .helpdesk-action-fields__field input[type="datetime-local"] {
   margin: 0;
   min-height: 2rem;

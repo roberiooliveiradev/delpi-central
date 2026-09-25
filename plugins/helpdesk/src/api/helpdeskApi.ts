@@ -93,6 +93,15 @@ export type TimelineEntry = {
   created_at: string;
   author_display_name: string;
   mine: boolean;
+  state?: number | null;
+  duration_seconds?: number | null;
+  category_name?: string;
+  user_tech_display_name?: string;
+  group_tech_display_name?: string;
+  planned_begin?: string;
+  planned_end?: string;
+  solution_type_name?: string;
+  solution_status?: number | null;
 };
 
 export type TicketValidation = {
@@ -101,6 +110,7 @@ export type TicketValidation = {
   submission_comment?: string;
   approval_comment?: string;
   requested_approver_id?: number | null;
+  requested_approver_type?: string;
   mine_to_decide?: boolean;
 };
 
@@ -363,23 +373,30 @@ export function listApprovalSteps() {
 
 export function requestTicketApproval(
   ticketId: string,
-  body: { approver_user_id: number; content?: string },
+  body: {
+    approver_type: "user" | "group";
+    approver_id: number;
+    content?: string;
+  },
   idempotencyKey: string,
 ) {
-  return request<{ id: number; status: number; requested_approver_id: number | null }>(
-    `/tickets/${ticketId}/validations`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Idempotency-Key": idempotencyKey,
-      },
-      body: JSON.stringify({
-        approver_user_id: body.approver_user_id,
-        content: body.content ?? "",
-      }),
+  return request<{
+    id: number;
+    status: number;
+    requested_approver_id: number | null;
+    requested_approver_type: string;
+  }>(`/tickets/${ticketId}/validations`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Idempotency-Key": idempotencyKey,
     },
-  );
+    body: JSON.stringify({
+      approver_type: body.approver_type,
+      approver_id: body.approver_id,
+      content: body.content ?? "",
+    }),
+  });
 }
 
 export function acceptTicketSolution(ticketId: string, content: string, idempotencyKey: string) {
@@ -482,9 +499,12 @@ export async function uploadTicketAttachment(
   ticketId: string,
   file: File,
   idempotencyKey: string,
+  options?: { title?: string },
 ): Promise<TicketAttachment> {
   const form = new FormData();
   form.append("file", file, file.name || "anexo");
+  const title = (options?.title || "").trim();
+  if (title) form.append("title", title);
   const response = await fetch(`${BASE}/tickets/${ticketId}/attachments`, {
     method: "POST",
     headers: headers({ "Idempotency-Key": idempotencyKey }),

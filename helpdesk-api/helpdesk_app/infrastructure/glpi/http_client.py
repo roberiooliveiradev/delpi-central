@@ -822,23 +822,34 @@ class HttpxGlpiClient:
         access_token: str,
         ticket_id: int,
         *,
-        approver_user_id: int,
+        approver_user_id: int | None = None,
+        approver_type: str = "User",
+        approver_id: int | None = None,
         comment: str = "",
     ) -> int:
-        """Request TicketValidation via HLAPI Timeline/Validation POST."""
+        """Request TicketValidation via HLAPI Timeline/Validation POST.
+
+        Live-proven payload shape uses ``itemtype_target`` + ``items_id_target``
+        (User). Group uses the same shape with ``itemtype_target=Group``.
+        """
         ticket_id = int(ticket_id)
-        approver_user_id = int(approver_user_id)
         if ticket_id <= 0:
             raise GlpiValidation("ticket_id inválido.")
-        if approver_user_id <= 0:
-            raise GlpiValidation("approver_user_id inválido.")
+        target_type = "Group" if str(approver_type).lower() == "group" else "User"
+        target_id = approver_id if approver_id is not None else approver_user_id
+        try:
+            target_id = int(target_id) if target_id is not None else 0
+        except (TypeError, ValueError) as exc:
+            raise GlpiValidation("approver_id inválido.") from exc
+        if target_id <= 0:
+            raise GlpiValidation("approver_id inválido.")
         payload = self._json(
             "POST",
             f"/api.php/v2.2/Assistance/Ticket/{ticket_id}/Timeline/Validation",
             token=access_token,
             json_body={
-                "itemtype_target": "User",
-                "items_id_target": approver_user_id,
+                "itemtype_target": target_type,
+                "items_id_target": target_id,
                 "comment_submission": str(comment or ""),
             },
         )
@@ -852,6 +863,7 @@ class HttpxGlpiClient:
         filename: str,
         content: bytes,
         mime: str,
+        title: str | None = None,
     ) -> Attachment:
         """Upload via legacy apirest Document (HLAPI has no multipart). Product-authorized H12."""
         self._legacy_require_ready()
@@ -860,6 +872,8 @@ class HttpxGlpiClient:
         if len(content) > self._legacy_max_upload_bytes:
             raise GlpiValidation("O anexo excede o limite.")
         safe_name = _safe_upload_filename(filename)
+        display_title = (title or "").strip() or safe_name
+        display_title = display_title[:180]
         ticket_id = int(ticket_id)
         if ticket_id <= 0:
             raise GlpiValidation("ticket_id inválido.")
@@ -874,6 +888,7 @@ class HttpxGlpiClient:
                 content=content,
                 mime=(mime or "application/octet-stream").split(";")[0].strip()
                 or "application/octet-stream",
+                title=display_title,
             )
             # UploadManifest items_id is not always enough for Timeline visibility.
             self._legacy_ensure_document_item(
@@ -1246,10 +1261,12 @@ class HttpxGlpiClient:
         filename: str,
         content: bytes,
         mime: str,
+        title: str | None = None,
     ) -> int:
+        document_name = (title or "").strip() or filename
         manifest = {
             "input": {
-                "name": filename,
+                "name": document_name,
                 "_filename": [filename],
                 "itemtype": "Ticket",
                 "items_id": ticket_id,

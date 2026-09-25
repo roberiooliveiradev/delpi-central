@@ -533,6 +533,19 @@ def test_attachment_download_allows_linked_doc_missing_from_timeline():
     assert alien.status_code == 404
 
 
+def test_attachment_upload_forwards_optional_title():
+    client, glpi = build_client()
+    link(client)
+    uploaded = client.post(
+        "/tickets/7/attachments",
+        files={"file": ("print.png", b"img", "image/png")},
+        data={"title": "Evidência do erro"},
+        headers={**auth_headers(), "Idempotency-Key": "up-title"},
+    )
+    assert uploaded.status_code == 201
+    assert glpi.uploads[-1][4] == "Evidência do erro"
+
+
 def test_followup_keeps_inline_image_when_doc_only_on_document_item():
     client, glpi = build_client()
     link(client)
@@ -570,7 +583,7 @@ def test_attachment_upload_via_legacy_path():
     assert body["document_id"] == 100
     assert body["filename"] == "placa.png"
     assert body["mime"] == "image/png"
-    assert glpi.uploads == [(7, "placa.png", b"png-new", "image/png")]
+    assert glpi.uploads == [(7, "placa.png", b"png-new", "image/png", None)]
     replay = client.post(
         "/tickets/7/attachments",
         files={"file": ("placa.png", b"png-new", "image/png")},
@@ -813,7 +826,18 @@ def test_create_solution_task_approval_for_technician_only():
     )
     assert approval.status_code == 201
     assert approval.json()["requested_approver_id"] == 22
-    assert glpi.created_validations[-1][:2] == (7, 22)
+    assert glpi.created_validations[-1][0] == 7
+    assert glpi.created_validations[-1][1] == "User"
+    assert glpi.created_validations[-1][2] == 22
+
+    group_approval = client.post(
+        "/tickets/7/validations",
+        json={"approver_type": "group", "approver_id": 9, "content": "<p>grupo</p>"},
+        headers={**tech, "Idempotency-Key": "apr-group-ok"},
+    )
+    assert group_approval.status_code == 201
+    assert group_approval.json()["requested_approver_type"] == "Group"
+    assert glpi.created_validations[-1][1:3] == ("Group", 9)
 
     bad_approver = client.post(
         "/tickets/7/validations",

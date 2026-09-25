@@ -32,8 +32,9 @@ export const helpTooltips = {
     createTask:
       "Cria uma tarefa pública no fio do chamado, visível na conversa da Minha DELPI.",
     requestApproval:
-      "Envia pedido de aprovação. Busque o aprovador por nome ou e-mail.",
+      "Pedido de aprovação para usuário ou grupo. Modelos preenchem só a mensagem.",
     attach: "Anexa por clipe ou arrastar; imagem entra no texto da resposta.",
+    attachFile: "Anexa arquivos ao chamado. Título opcional vira o nome no helpdesk.",
     send: "Grava o acompanhamento público. Em chamado fechado o botão some.",
     assignee: "Busque o responsável por nome ou e-mail. Só aparece se o helpdesk permitir atribuir no seu perfil.",
     assigneeAction: "Grava a atribuição ou reatribuição neste chamado.",
