@@ -843,3 +843,28 @@ def test_create_solution_requires_idempotency_and_auth():
         headers=tech,
     )
     assert missing.status_code == 400
+
+
+def test_technician_ops_via_glpi_session_user_id_without_email_match():
+    """OAuth session user_id ∈ technician profiles unlocks can_create_* (email optional)."""
+    client, glpi = build_client()
+    link(client)
+    glpi.session_uid = 15  # Ana — technician profile
+    # JWT email does not match any GLPI catalog email — session path must still work.
+    headers = {**auth_headers(), "x-email": "roberio.portal@example.invalid"}
+    detail = client.get("/tickets/7", headers=headers)
+    assert detail.status_code == 200
+    body = detail.json()
+    assert body["can_assign"] is True
+    assert body["can_create_solution"] is True
+    assert body["can_create_task"] is True
+    assert body["can_request_approval"] is True
+
+
+def test_session_user_id_outside_technician_profiles_stays_denied():
+    client, glpi = build_client()
+    link(client)
+    glpi.session_uid = 40  # Sônia RH — not in technician_ids
+    headers = {**auth_headers(), "x-email": "rh_ues@delpi.com.br"}
+    detail = client.get("/tickets/7", headers=headers)
+    assert detail.json()["can_create_solution"] is False

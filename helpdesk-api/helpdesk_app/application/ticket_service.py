@@ -704,10 +704,12 @@ class TicketService:
         return stored
 
     def _viewer_is_technician(self, token: str, viewer_email: str) -> bool:
-        """True when viewer email resolves to a GLPI technician-profile user."""
-        email = (viewer_email or "").strip().lower()
-        if "@" not in email:
-            return False
+        """True when GLPI session (or email catalog) maps to a technician-profile user.
+
+        Prefer OAuth session ``user_id`` — same identity used for validation mine_to_decide.
+        Keycloak email → catalog is fallback only (emails can diverge from GLPI).
+        Distinct from ``can_assign`` (Administration/User list readability).
+        """
         try:
             tech_ids = set(self._glpi.list_technician_user_ids(token))
         except Exception:
@@ -715,16 +717,39 @@ class TicketService:
             return False
         if not tech_ids:
             return False
+
+        session_uid = None
+        try:
+            session_uid = self._glpi.session_user_id(token)
+        except Exception:
+            session_uid = None
+        try:
+            if session_uid and int(session_uid) in tech_ids:
+                logger.info("helpdesk_technician_ops_gate match=session")
+                return True
+        except (TypeError, ValueError):
+            pass
+
+        email = (viewer_email or "").strip().lower()
+        if "@" not in email:
+            logger.info("helpdesk_technician_ops_gate match=none reason=no_email")
+            return False
         try:
             user = self._glpi.find_user_by_email(token, email)
         except Exception:
             return False
         if user is None:
+            logger.info("helpdesk_technician_ops_gate match=none reason=email_not_in_catalog")
             return False
         try:
-            return int(user.id) in tech_ids
+            matched = int(user.id) in tech_ids
         except (TypeError, ValueError):
             return False
+        if matched:
+            logger.info("helpdesk_technician_ops_gate match=email")
+        else:
+            logger.info("helpdesk_technician_ops_gate match=none reason=not_in_technician_profiles")
+        return matched
 
     def _require_technician_ops(
         self,

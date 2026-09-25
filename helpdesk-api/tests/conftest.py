@@ -85,6 +85,8 @@ class FakeGlpi:
         # Technician profile users (Ana, Bruno). Excludes system/noise and RH.
         self.technician_ids = {15, 22}
         self.can_assign = True
+        # GLPI OAuth session user id (None = unknown / not linked in tests).
+        self.session_uid: int | None = None
         self.uploads = []
         self.accepted_solutions: list[tuple[int, str]] = []
         self.rejected_solutions: list[tuple[int, str]] = []
@@ -219,6 +221,12 @@ class FakeGlpi:
             if str(getattr(user, "email", "") or "").lower() == needle:
                 return user
         return None
+
+    def session_user_id(self, access_token: str):
+        self.calls += 1
+        assert access_token
+        uid = getattr(self, "session_uid", None)
+        return int(uid) if uid else None
 
     def can_assign_tickets(self, access_token: str) -> bool:
         self.calls += 1

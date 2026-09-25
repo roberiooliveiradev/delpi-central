@@ -343,6 +343,12 @@ class HttpxGlpiClient:
             session = {}
         return parse_viewer_identity(session if isinstance(session, dict) else {}, viewer_email)
 
+    def session_user_id(self, access_token: str) -> int | None:
+        """GLPI OAuth session user id — authoritative viewer identity for this link."""
+        identity = self._viewer_identity(access_token, "")
+        user_id = int(identity.user_id or 0)
+        return user_id if user_id > 0 else None
+
     def download_attachment(self, access_token: str, document_id: int) -> tuple[bytes, str]:
         response = self._request(
             "GET",
