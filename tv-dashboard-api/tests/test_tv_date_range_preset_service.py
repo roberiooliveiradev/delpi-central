@@ -125,6 +125,31 @@ def test_previous_calendar_periods_cross_year_boundaries():
     )
 
 
+def test_this_month_previous_year_full_civil_month():
+    """Mês civil completo do mesmo número no ano anterior."""
+    today = date(2026, 9, 25)
+    expected = (date(2025, 9, 1), date(2025, 9, 30))
+    assert compute_preset_range("this_month_previous_year", today=today) == expected
+    assert compute_preset_range("this_month_last_year", today=today) == expected
+    assert compute_preset_range("same_month_previous_year", today=today) == expected
+    # Distinto de «Mês passado» (mês civil imediatamente anterior).
+    assert compute_preset_range("previous_month", today=today) == (
+        date(2026, 8, 1),
+        date(2026, 8, 31),
+    )
+    # Distinto de «Mesmo período ano passado» (YTD no ano anterior).
+    assert compute_preset_range("same_period_previous_year", today=today) == (
+        date(2025, 1, 1),
+        date(2025, 9, 25),
+    )
+    # Fevereiro em ano não-bissexto anterior.
+    feb = date(2025, 2, 10)
+    assert compute_preset_range("this_month_previous_year", today=feb) == (
+        date(2024, 2, 1),
+        date(2024, 2, 29),
+    )
+
+
 def test_same_period_previous_year_mirrors_this_year_ytd():
     """YoY / SPLY: 01/01/(Y-1) … mesmo dia/mês em Y-1 (≠ ano civil completo)."""
     today = date(2026, 9, 24)

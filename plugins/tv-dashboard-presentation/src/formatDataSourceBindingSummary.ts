@@ -17,6 +17,7 @@ export const DATA_SOURCE_DATE_RANGE_PRESET_LABELS: Record<string, string> = {
   previous_day: "Dia anterior",
   previous_week: "Semana passada",
   previous_month: "Mês passado",
+  this_month_previous_year: "Este mês ano passado",
   previous_quarter: "Trimestre passado",
   previous_year: "Ano passado",
   same_period_previous_year: "Mesmo período ano passado",

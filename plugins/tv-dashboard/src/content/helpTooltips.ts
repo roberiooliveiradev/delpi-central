@@ -374,7 +374,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     testRoute:
       "Chama a api-delpi com os parâmetros desta fonte (e filtros do slide) e mostra um preview tipado — igual ao catálogo.",
     dateRangePreset:
-      "Escolha um período relativo (recalculado a cada atualização da TV) ou Personalizado para Data início/fim. «Até hoje» cobre do início do período até a data corrente; «Esta semana / Este mês / Este trimestre / Este ano» cobrem o calendário civil completo (fim pode ser futuro). «Dia anterior» e «Este mês (até ontem)» usam o último dia útil (segunda → sexta). «Ano passado» = 01/01–31/12 do ano civil anterior; «Mesmo período ano passado» = 01/01 até o mesmo dia/mês no ano anterior (espelho de «Este ano até hoje»). Em rotas com intervalo fechado (ex. PPM), o período é obrigatório — sem default automático.",
+      "Escolha um período relativo (recalculado a cada atualização da TV) ou Personalizado para Data início/fim. «Até hoje» cobre do início do período até a data corrente; «Esta semana / Este mês / Este trimestre / Este ano» cobrem o calendário civil completo (fim pode ser futuro). «Dia anterior» e «Este mês (até ontem)» usam o último dia útil (segunda → sexta). «Ano passado» = 01/01–31/12 do ano civil anterior; «Este mês ano passado» = mês civil completo do mesmo número no ano anterior; «Mesmo período ano passado» = 01/01 até o mesmo dia/mês no ano anterior (espelho de «Este ano até hoje»). Em rotas com intervalo fechado (ex. PPM), o período é obrigatório — sem default automático.",
     filterUnsetHere:
       "Não definido aqui",
     /** @deprecated Preferir `filterUnsetHere` — mantido como alias de migração. */

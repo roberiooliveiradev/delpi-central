@@ -17,6 +17,7 @@ export type DateRangePresetId =
   | "previous_day"
   | "previous_week"
   | "previous_month"
+  | "this_month_previous_year"
   | "previous_quarter"
   | "previous_year"
   | "same_period_previous_year"
@@ -40,6 +41,7 @@ export const DATE_RANGE_PRESET_OPTIONS: Array<{ value: DateRangePresetId; label:
   { value: "this_year_full", label: "Este ano" },
   { value: "previous_week", label: "Semana passada" },
   { value: "previous_month", label: "Mês passado" },
+  { value: "this_month_previous_year", label: "Este mês ano passado" },
   { value: "previous_quarter", label: "Trimestre passado" },
   { value: "previous_year", label: "Ano passado" },
   { value: "same_period_previous_year", label: "Mesmo período ano passado" },

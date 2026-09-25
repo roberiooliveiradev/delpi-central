@@ -198,6 +198,17 @@ def compute_preset_range(
         previous_month_end = current_month_start - timedelta(days=1)
         return previous_month_end.replace(day=1), previous_month_end
 
+    # Mês civil completo do mesmo número no ano anterior (≠ mês passado, ≠ SPLY YTD).
+    # Ex.: hoje=25/09/2026 → 01/09/2025 … 30/09/2025.
+    if normalized in {
+        "this_month_previous_year",
+        "this_month_last_year",
+        "same_month_previous_year",
+    }:
+        target_year = day.year - 1
+        last_day = calendar.monthrange(target_year, day.month)[1]
+        return date(target_year, day.month, 1), date(target_year, day.month, last_day)
+
     if normalized == "previous_quarter":
         current_quarter_month = ((day.month - 1) // 3) * 3 + 1
         current_quarter_start = day.replace(month=current_quarter_month, day=1)
