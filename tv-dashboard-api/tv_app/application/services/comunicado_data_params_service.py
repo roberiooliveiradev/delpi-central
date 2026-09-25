@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any, Mapping
 
 from tv_app.application.services.tv_date_range_preset_service import (
+    DATE_RANGE_KEY_PAIRS,
     DATE_RANGE_PRESET_KEY,
     END_KEYS,
     PERIOD_DAYS_KEY,
@@ -245,15 +246,10 @@ def _prefer_explicit_dates_over_relative_preset(merged: dict[str, Any]) -> None:
     Ex.: programação ``this_month`` + bloco só com start/end da semana → janela explícita.
     Não cobre mesma camada preset+datas (já filtrado no loop de merge).
     """
-    has_closed = False
-    for start_key, end_key in (
-        ("start_date", "end_date"),
-        ("date_start", "date_end"),
-        ("date_from", "date_to"),
-    ):
-        if _has_value(merged, start_key) and _has_value(merged, end_key):
-            has_closed = True
-            break
+    has_closed = any(
+        _has_value(merged, start_key) and _has_value(merged, end_key)
+        for start_key, end_key in DATE_RANGE_KEY_PAIRS
+    )
     if not has_closed:
         return
     if not _is_relative_date_range_preset(merged.get(DATE_RANGE_PRESET_KEY)):

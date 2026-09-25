@@ -377,3 +377,64 @@ def test_project_branch_params_filial_onto_branch_schema():
     )
     assert projected.get("branch") == "02"
     assert "filial" not in projected
+
+
+def test_merge_source_this_year_beats_playlist_monthly_default():
+    """RQ-02: preset explícito da fonte não vira this_month_full da playlist."""
+    merged = merge_data_params(
+        playlist_defaults={"dateRangePreset": "this_month_full", "branch": "01"},
+        slide_filters=None,
+        block_params={"dateRangePreset": "this_year"},
+    )
+    assert merged == {"dateRangePreset": "this_year", "branch": "01"}
+
+
+def test_merge_source_custom_dates_beat_playlist_preset():
+    """RQ-03: datas custom explícitas da fonte são intenção — playlist não injeta preset."""
+    merged = merge_data_params(
+        playlist_defaults={"dateRangePreset": "this_month_full", "branch": "01"},
+        slide_filters=None,
+        block_params={"start_date": "2026-01-01", "end_date": "2026-06-30"},
+    )
+    assert merged["start_date"] == "2026-01-01"
+    assert merged["end_date"] == "2026-06-30"
+    assert merged["branch"] == "01"
+    assert "dateRangePreset" not in merged
+
+
+def test_merge_source_alias_dates_beat_playlist_preset():
+    """Aliases legados (dataInicio/dataFim) também contam como intenção custom."""
+    merged = merge_data_params(
+        playlist_defaults={"dateRangePreset": "this_month_full"},
+        slide_filters=None,
+        block_params={"dataInicio": "2026-01-01", "dataFim": "2026-06-30"},
+    )
+    assert merged["dataInicio"] == "2026-01-01"
+    assert merged["dataFim"] == "2026-06-30"
+    assert "dateRangePreset" not in merged
+
+
+def test_merge_playlist_default_fills_missing_source_period():
+    """RQ-04: fonte sem período → default da playlist ainda se aplica."""
+    merged = merge_data_params(
+        playlist_defaults={"dateRangePreset": "this_month_full", "branch": "01"},
+        slide_filters=None,
+        block_params={"branch": "02"},
+    )
+    assert merged == {"dateRangePreset": "this_month_full", "branch": "02"}
+
+
+def test_merge_source_preset_keeps_unrelated_playlist_defaults():
+    """RQ: período atômico não desliga defaults não-relacionados (branch)."""
+    merged = merge_data_params(
+        playlist_defaults={
+            "dateRangePreset": "this_month_full",
+            "branch": "01",
+            "customer_segment": "weg",
+        },
+        slide_filters=None,
+        block_params={"dateRangePreset": "this_year"},
+    )
+    assert merged["dateRangePreset"] == "this_year"
+    assert merged["branch"] == "01"
+    assert merged["customer_segment"] == "weg"

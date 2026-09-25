@@ -37,6 +37,83 @@ INTERNAL_PARAM_KEYS = frozenset({DATE_RANGE_PRESET_KEY, EXCLUDE_WEEKENDS_KEY})
 
 DEFAULT_DATE_RANGE_KEYS = ("start_date", "end_date")
 
+# Presets cujo período é definido pelo próprio periodDays («Últimos N dias»).
+_PERIOD_DAYS_PRESET_KEYS = frozenset({"last_n_days", "last_n", "period_days"})
+
+# Chaves que compõem a intenção de período de uma camada persistida
+# (preset | datas manuais | periodDays | competência SI).
+PERIOD_INTENT_KEYS = frozenset(
+    (*START_KEYS, *END_KEYS, DATE_RANGE_PRESET_KEY, PERIOD_DAYS_KEY, "competence")
+)
+
+
+def params_declare_period_intent(params: Mapping[str, Any] | None) -> bool:
+    """True se a camada declara intenção de período (preset, periodDays ou datas)."""
+    if not isinstance(params, Mapping):
+        return False
+    for key in (DATE_RANGE_PRESET_KEY, PERIOD_DAYS_KEY, *START_KEYS, *END_KEYS):
+        value = params.get(key)
+        if value is not None and value != "":
+            return True
+    return False
+
+
+def normalize_period_params_for_persistence(
+    params: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    """Estado canônico persistido: uma única intenção de período por camada.
+
+    - preset dinâmico válido → remove datas manuais (todos os aliases) e
+      competence; o preset é re-materializado a cada fetch, então datas
+      persistidas ao lado dele são sempre stale;
+    - preset dinâmico + periodDays explícito → periodDays vence (mesmo
+      contrato do merge runtime — `periodDays` é mais específico);
+    - preset ``last_n_days`` convive com periodDays (o N é o próprio param);
+    - custom / ausente / preset desconhecido → datas manuais permanecem
+      (nunca destruir intenção custom por valor inválido).
+    """
+    out = dict(params) if isinstance(params, Mapping) else {}
+    preset = str(out.get(DATE_RANGE_PRESET_KEY) or "").strip().lower().replace("-", "_")
+    if not preset or preset == "custom":
+        return out
+    period_raw = out.get(PERIOD_DAYS_KEY)
+    try:
+        period_days = int(period_raw) if period_raw not in (None, "") else None
+    except (TypeError, ValueError):
+        period_days = None
+    if compute_preset_range(preset, period_days=period_days) is None:
+        return out
+    for key in (*START_KEYS, *END_KEYS):
+        out.pop(key, None)
+    out.pop("competence", None)
+    if preset in _PERIOD_DAYS_PRESET_KEYS:
+        return out
+    if period_days is not None:
+        out.pop(DATE_RANGE_PRESET_KEY, None)
+    else:
+        out.pop(PERIOD_DAYS_KEY, None)
+    return out
+
+
+def merge_period_params_layer(
+    base: Mapping[str, Any] | None,
+    patch: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    """Merge raso ``base ← patch`` tratando período como intenção atômica.
+
+    Para blobs persistidos (``dataBinding.params``, ``dataFilters``,
+    ``playlist.dataDefaults``): se ``patch`` declara intenção de período,
+    todas as chaves de período do ``base`` são removidas antes do merge —
+    um preset dinâmico novo nunca convive com datas custom/periodDays/
+    competence stale do blob anterior. Demais chaves seguem merge raso.
+    """
+    out = dict(base) if isinstance(base, Mapping) else {}
+    patch_dict = dict(patch) if isinstance(patch, Mapping) else {}
+    if params_declare_period_intent(patch_dict):
+        out = {key: value for key, value in out.items() if key not in PERIOD_INTENT_KEYS}
+    out.update(patch_dict)
+    return normalize_period_params_for_persistence(out)
+
 
 def find_date_range_keys(keys: Mapping[str, Any] | list[str] | tuple[str, ...] | None) -> tuple[str, str] | None:
     if keys is None:

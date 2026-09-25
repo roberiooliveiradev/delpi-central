@@ -11,6 +11,7 @@ from tv_app.application.services.comunicado_data_params_service import (
 from tv_app.application.services.tv_date_range_preset_service import (
     DATE_RANGE_PRESET_KEY,
     PERIOD_DAYS_KEY,
+    merge_period_params_layer,
 )
 
 _PROMOTE_KEYS = frozenset(
@@ -85,13 +86,12 @@ def apply_relayer(
 
     defaults = dict(playlist_defaults) if isinstance(playlist_defaults, dict) else {}
     if scope_s == "playlist":
-        defaults = {**defaults, **promoted}
+        defaults = merge_period_params_layer(defaults, promoted)
         playlist_defaults = defaults
     else:
         filters = native_config.get("dataFilters")
         merged = dict(filters) if isinstance(filters, dict) else {}
-        merged.update(promoted)
-        native_config["dataFilters"] = merged
+        native_config["dataFilters"] = merge_period_params_layer(merged, promoted)
 
     blocks = native_config.get("blocks")
     if isinstance(blocks, list):

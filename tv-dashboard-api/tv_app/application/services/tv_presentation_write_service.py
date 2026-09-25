@@ -21,6 +21,10 @@ from tv_app.application.services.comunicado_config_validation_service import (
     sanitize_and_hydrate_comunicado_config,
     validate_comunicado_native_config,
 )
+from tv_app.application.services.tv_date_range_preset_service import (
+    merge_period_params_layer,
+    normalize_period_params_for_persistence,
+)
 from tv_app.application.services.presentation_change_notifier import notify_presentation_changed
 from tv_app.application.services.slide_preset_service import (
     SlidePresetNotFoundError,
@@ -179,9 +183,9 @@ class TvPresentationWriteService:
             existing = {}
         cleaned = _sanitize_playlist_data_defaults(data_defaults)
         if replace:
-            next_defaults = cleaned
+            next_defaults = normalize_period_params_for_persistence(cleaned)
         else:
-            next_defaults = {**existing, **cleaned}
+            next_defaults = merge_period_params_layer(existing, cleaned)
         playlist = self._repo.update_data_defaults(
             playlist_id,
             next_defaults,

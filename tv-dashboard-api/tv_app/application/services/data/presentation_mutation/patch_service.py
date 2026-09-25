@@ -2335,8 +2335,17 @@ class PresentationPatchService:
             )
         replace = bool(op.get("replace"))
         if not persist:
+            from tv_app.application.services.tv_date_range_preset_service import (
+                merge_period_params_layer,
+                normalize_period_params_for_persistence,
+            )
+
             existing = self._playlist_defaults(playlist_id) or {}
-            merged = {**existing, **raw_defaults} if not replace else dict(raw_defaults)
+            merged = (
+                normalize_period_params_for_persistence(raw_defaults)
+                if replace
+                else merge_period_params_layer(existing, raw_defaults)
+            )
             return {
                 "id": playlist_id,
                 "preview": True,

@@ -573,3 +573,105 @@ def test_resolve_route_path_normalizes_branch_path_param():
         == "/commercial/sales-order-otd/lines/all/1/2"
     )
 
+
+def _freeze_business_today(monkeypatch, day: date) -> None:
+    monkeypatch.setattr(
+        "tv_app.application.services.tv_date_range_preset_service.calendar_today",
+        lambda **_kwargs: day,
+    )
+    monkeypatch.setattr(
+        "tv_app.infrastructure.gateways.delpi_operational_gateway.calendar_today",
+        lambda **_kwargs: day,
+    )
+
+
+def _commercial_rol_route():
+    from tv_app.application.services.tv_data_route_catalog_service import (
+        TvDataRouteCatalogService,
+    )
+
+    route = TvDataRouteCatalogService().get_route("get_commercial_rol_summary")
+    assert route is not None
+    assert route["path"] == "/commercial/rol/summary"
+    assert route.get("paramStrategy") == "date_range"
+    return route
+
+
+def test_commercial_rol_this_year_materializes_dates_no_preset_downstream(monkeypatch):
+    """RQ-08/09/10/11: preset vira start/end no wire; dateRangePreset nunca desce."""
+    _freeze_business_today(monkeypatch, date(2026, 9, 25))
+    query = _build_query_params(
+        _commercial_rol_route(),
+        {"dateRangePreset": "this_year", "branch": "01"},
+    )
+    assert query["start_date"] == "2026-01-01"
+    assert query["end_date"] == "2026-09-25"
+    assert query["branch"] == "01"
+    assert "dateRangePreset" not in query
+    assert "periodDays" not in query
+
+
+def test_commercial_rol_same_period_previous_year(monkeypatch):
+    """RQ-12: SPLY = YTD no ano civil anterior (≠ ano completo)."""
+    _freeze_business_today(monkeypatch, date(2026, 9, 25))
+    query = _build_query_params(
+        _commercial_rol_route(),
+        {"dateRangePreset": "same_period_previous_year"},
+    )
+    assert query["start_date"] == "2025-01-01"
+    assert query["end_date"] == "2025-09-25"
+    assert "dateRangePreset" not in query
+
+
+def test_commercial_rol_this_month_full_civil_month(monkeypatch):
+    """RQ-13: mês civil completo — fim = último dia, mesmo sendo futuro."""
+    _freeze_business_today(monkeypatch, date(2026, 9, 25))
+    query = _build_query_params(
+        _commercial_rol_route(),
+        {"dateRangePreset": "this_month_full"},
+    )
+    assert query["start_date"] == "2026-09-01"
+    assert query["end_date"] == "2026-09-30"
+    assert "dateRangePreset" not in query
+
+
+def test_commercial_rol_custom_dates_pass_through_exact(monkeypatch):
+    """RQ-14: datas custom não são recalculadas."""
+    _freeze_business_today(monkeypatch, date(2026, 9, 25))
+    query = _build_query_params(
+        _commercial_rol_route(),
+        {
+            "dateRangePreset": "custom",
+            "start_date": "2026-01-01",
+            "end_date": "2026-06-30",
+        },
+    )
+    assert query["start_date"] == "2026-01-01"
+    assert query["end_date"] == "2026-06-30"
+    assert "dateRangePreset" not in query
+
+
+def test_commercial_rol_preset_overrides_stale_dates(monkeypatch):
+    """RQ-15: blob legado this_year + datas antigas → preset recalcula."""
+    _freeze_business_today(monkeypatch, date(2026, 9, 25))
+    query = _build_query_params(
+        _commercial_rol_route(),
+        {
+            "dateRangePreset": "this_year",
+            "start_date": "2026-09-01",
+            "end_date": "2026-09-30",
+        },
+    )
+    assert query["start_date"] == "2026-01-01"
+    assert query["end_date"] == "2026-09-25"
+
+
+def test_commercial_rol_distinct_presets_distinct_queries(monkeypatch):
+    """RQ-19/§35: anual ≠ mensal ≠ ano-anterior — sem colisão de request/cache."""
+    _freeze_business_today(monkeypatch, date(2026, 9, 25))
+    route = _commercial_rol_route()
+    year = _build_query_params(route, {"dateRangePreset": "this_year"})
+    month = _build_query_params(route, {"dateRangePreset": "this_month_full"})
+    sply = _build_query_params(route, {"dateRangePreset": "same_period_previous_year"})
+    assert len({tuple(sorted(q.items())) for q in (year, month, sply)}) == 3
+

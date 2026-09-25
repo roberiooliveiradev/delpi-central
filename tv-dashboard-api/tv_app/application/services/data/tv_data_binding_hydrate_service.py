@@ -19,6 +19,7 @@ from tv_app.application.services.tv_date_range_preset_service import (
     DATE_RANGE_PRESET_KEY,
     INTERNAL_PARAM_KEYS,
     PERIOD_DAYS_KEY,
+    normalize_period_params_for_persistence,
 )
 
 # Legado → canônico HTTP (schema preferindo start_date/end_date).
@@ -136,6 +137,11 @@ def hydrate_data_binding(
         fixed_keys=fixed_keys,
     )
     diagnostics["strippedParams"] = stripped
+
+    # Período é uma intenção atômica: preset dinâmico remove datas custom stale
+    # (e vice-versa via writers). Sem isso, merge/VISTA persistem
+    # dateRangePreset=this_year + start/end antigos, que depois competem.
+    stripped_params = normalize_period_params_for_persistence(stripped_params)
 
     if isinstance(route, dict):
         stripped_params = apply_catalog_param_defaults(stripped_params, route)
