@@ -86,6 +86,7 @@ function TypographyPaneOrGroup({
   title,
   hint,
   groupId,
+  order,
   defaultOpen = true,
   children,
 }: {
@@ -93,6 +94,8 @@ function TypographyPaneOrGroup({
   title: string;
   hint?: string;
   groupId?: string;
+  /** Collapse priority: lower = keep visible longer (P0 Fonte = 0). */
+  order?: number;
   defaultOpen?: boolean;
   children: ReactNode;
 }) {
@@ -104,7 +107,7 @@ function TypographyPaneOrGroup({
     );
   }
   return (
-    <DeckRibbonGroup groupId={groupId} label={title} hint={hint}>
+    <DeckRibbonGroup groupId={groupId} order={order} label={title} hint={hint}>
       {children}
     </DeckRibbonGroup>
   );
@@ -153,6 +156,7 @@ export function FormatRibbonTypographySections({
     uploadCustomFont,
     uploading,
     transformSelectedTextCase,
+    bumpSelectedFontSize,
   } = useComunicadoEditor();
   const fontUploadInputRef = useRef<HTMLInputElement>(null);
   const fontFamilySelectOptions = useMemo(
@@ -715,7 +719,7 @@ export function FormatRibbonTypographySections({
 
   return (
     <>
-      <TypographyPaneOrGroup embed={embed} groupId="typo-font" title={fontTitle} hint={H.font}>
+      <TypographyPaneOrGroup embed={embed} groupId="typo-font" order={0} title={fontTitle} hint={H.font}>
         <div className="td-deck-ribbon__toolbar td-deck-ribbon__toolbar--text-stack td-deck-ribbon__toolbar--font">
           <div className="td-deck-ribbon__toolbar-row td-deck-ribbon__toolbar-row--inputs">
             <HintAction hint={H.fontFamily} ariaLabel="Ajuda: Família da fonte">
@@ -780,24 +784,32 @@ export function FormatRibbonTypographySections({
                   { fontSizeMode: "absolute" },
                 )
               }
-              onStepDown={() =>
+              onStepDown={() => {
+                if (!partialTextSelectionActive && !multiVisualBox) {
+                  bumpSelectedFontSize(-1);
+                  return;
+                }
                 applyTextFormatStyle(
                   { fontSizeAuto: false },
                   {
                     fontSizeMode: "delta",
                     fontSizeDelta: -COMUNICADO_FONT_SIZE_STEP,
                   },
-                )
-              }
-              onStepUp={() =>
+                );
+              }}
+              onStepUp={() => {
+                if (!partialTextSelectionActive && !multiVisualBox) {
+                  bumpSelectedFontSize(1);
+                  return;
+                }
                 applyTextFormatStyle(
                   { fontSizeAuto: false },
                   {
                     fontSizeMode: "delta",
                     fontSizeDelta: COMUNICADO_FONT_SIZE_STEP,
                   },
-                )
-              }
+                );
+              }}
               stepDownDisabled={currentFontSize <= COMUNICADO_FONT_SIZE_MIN}
               stepDownAriaLabel="Diminuir fonte"
               stepUpAriaLabel="Aumentar fonte"
@@ -1012,6 +1024,7 @@ export function FormatRibbonTypographySections({
       <TypographyPaneOrGroup
         embed={embed}
         groupId="typo-effects"
+        order={2}
         title={embed ? "Efeitos de texto" : "Efeitos"}
         hint={H.textEffects}
         defaultOpen={false}
@@ -1027,6 +1040,7 @@ export function FormatRibbonTypographySections({
         <TypographyPaneOrGroup
           embed={embed}
           groupId="typo-paragraph"
+          order={1}
           title="Parágrafo"
           hint={H.paragraph}
           defaultOpen={false}
@@ -1039,6 +1053,7 @@ export function FormatRibbonTypographySections({
         <TypographyPaneOrGroup
           embed
           groupId="typo-style"
+          order={3}
           title="Estilo"
           hint={H.paragraphSpacing}
           defaultOpen={false}

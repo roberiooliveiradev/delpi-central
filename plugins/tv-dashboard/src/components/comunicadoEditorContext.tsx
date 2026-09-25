@@ -909,6 +909,7 @@ export function ComunicadoEditorProvider({
     updateSelectedStyle: blockActions.updateSelectedStyle,
     updateSelectedTextFormatStyle: blockActions.updateSelectedTextFormatStyle,
     transformSelectedTextCase: blockActions.transformSelectedTextCase,
+    bumpSelectedFontSize: blockActions.bumpSelectedFontSize,
     removeSelected: blockActions.removeSelected,
     duplicateSelected: blockActions.duplicateSelected,
     cutSelected,

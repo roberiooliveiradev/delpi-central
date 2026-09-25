@@ -371,6 +371,8 @@ export type ComunicadoEditorContextValue = {
   transformSelectedTextCase: (
     mode: import("@delpi/tv-dashboard-presentation").ComunicadoTextCaseTransform,
   ) => void;
+  /** Incremento canônico de fonte via BE bump_font_size (deltaSteps ±1). */
+  bumpSelectedFontSize: (deltaSteps: number) => void;
   /** @deprecated Use `applyDynamicContentSpec` via picker `{ }`. */
   insertDataFieldAtCursor: () => void;
   /** Aplica spec do fluxo de conteúdo dinâmico no alvo ativo (texto/forma/Grade). */

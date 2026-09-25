@@ -45,6 +45,11 @@ export type SelectControlProps = {
   className?: string;
   /** Escopo CSS do MFE no portal do painel (ex.: `dashboard-tv-dashboard`). */
   portalScopeClassName?: string;
+  /**
+   * Quando definido (ex.: `data-delpi-preserve-text-edit`), aplica no trigger e
+   * nas opções — evita blur do contentEditable da ribbon tipográfica.
+   */
+  preserveTextEditFocusAttr?: string;
   classNames: SelectControlClassNames;
   labels: SelectControlLabels;
 };
@@ -86,6 +91,7 @@ export function SelectControl({
   ariaLabel,
   className,
   portalScopeClassName,
+  preserveTextEditFocusAttr,
   classNames,
   labels,
 }: SelectControlProps) {
@@ -96,6 +102,9 @@ export function SelectControl({
   const generatedId = useId();
   const fieldId = id ?? generatedId;
   const listId = `${fieldId}-list`;
+  const preserveAttrProps = preserveTextEditFocusAttr
+    ? { [preserveTextEditFocusAttr]: "" }
+    : {};
 
   const resolvedOptions = options ?? [];
 
@@ -137,7 +146,7 @@ export function SelectControl({
   };
 
   return (
-    <div className={rootClass} ref={wrapperRef}>
+    <div className={rootClass} ref={wrapperRef} {...preserveAttrProps}>
       <button
         id={fieldId}
         type="button"
@@ -147,6 +156,10 @@ export function SelectControl({
         aria-controls={listId}
         aria-label={ariaLabel}
         disabled={disabled}
+        {...preserveAttrProps}
+        onMouseDown={(event) => {
+          if (preserveTextEditFocusAttr) event.preventDefault();
+        }}
         onClick={() => {
           setOpen((current) => {
             if (current) setQuery("");
@@ -183,12 +196,16 @@ export function SelectControl({
           />
         ) : null}
 
-        <ul id={listId} className={classNames.list} role="listbox">
+        <ul id={listId} className={classNames.list} role="listbox" {...preserveAttrProps}>
           {allowEmpty ? (
             <li key="__empty">
               <button
                 type="button"
                 className={!value ? classNames.optionActive : classNames.option}
+                {...preserveAttrProps}
+                onMouseDown={(event) => {
+                  if (preserveTextEditFocusAttr) event.preventDefault();
+                }}
                 onClick={() => {
                   onChange("");
                   closePanel();
@@ -211,6 +228,10 @@ export function SelectControl({
                     option.value === value ? classNames.optionActive : classNames.option
                   }
                   style={option.style}
+                  {...preserveAttrProps}
+                  onMouseDown={(event) => {
+                    if (preserveTextEditFocusAttr) event.preventDefault();
+                  }}
                   onClick={() => {
                     onChange(option.value);
                     closePanel();

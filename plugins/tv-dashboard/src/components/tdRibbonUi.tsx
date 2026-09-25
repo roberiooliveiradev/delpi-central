@@ -38,6 +38,7 @@ export function TdRibbonSelect({
       className={mergeClassNames("td-deck-ribbon__select", "delpi-ui-select--compact", className)}
       ariaLabel={ariaLabel}
       portalScopeClassName="dashboard-tv-dashboard delpi-ui-select--compact"
+      preserveTextEditFocusAttr={PRESERVE_TEXT_EDIT_FOCUS_ATTR}
     />
   );
 }

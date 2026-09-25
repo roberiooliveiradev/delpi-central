@@ -36,7 +36,7 @@ describe("ribbon density contract", () => {
     const band = css.match(
       /\.td-deck-ribbon--compact\.td-deck-ribbon--band\s*\{[^}]+\}/s,
     )?.[0];
-    expect(band).toMatch(/--td-ribbon-height:\s*128px/);
+    expect(band).toMatch(/--td-ribbon-height:\s*112px/);
     expect(band).toMatch(/height:\s*var\(--td-ribbon-height\)/);
 
     const fit = css.match(
@@ -44,6 +44,16 @@ describe("ribbon density contract", () => {
     )?.[0];
     expect(fit).toMatch(/height:\s*auto/);
     expect(fit).toMatch(/max-height:\s*min\(240px,\s*38vh\)/);
+  });
+
+  it("tipografia declara order P0/P1/P2 para collapse (Fonte→Parágrafo→Efeitos)", () => {
+    const typography = readFileSync(
+      join(base, "../components/formatRibbon/FormatRibbonTypographySections.tsx"),
+      "utf8",
+    );
+    expect(typography).toMatch(/groupId="typo-font"\s+order=\{0\}/);
+    expect(typography).toMatch(/groupId="typo-paragraph"[\s\S]*?order=\{1\}/);
+    expect(typography).toMatch(/groupId="typo-effects"[\s\S]*?order=\{2\}/);
   });
 
   it("caption da ribbon compacta não encolhe (evita corte do rótulo da seção)", () => {

@@ -43,7 +43,10 @@ import { resolveMultiDragBlockIds } from "../../utils/stageGroupedSelection";
 import { resolveStageTapWithoutDragAction } from "../../utils/stageInteractionPolicy";
 import { stageGridSnapPercents } from "../../utils/stageGridSize";
 import { snapshotConfig } from "./useComunicadoEditorHistory";
-import { commitUpsertBlocks } from "../../utils/presentationMutationClient";
+import {
+  ackUpsertBlocksWithGeneration,
+  createMutationGenerationGate,
+} from "../../utils/mutationAckGeneration";
 
 /** Janela para distinguir 2º toque (limpa) de clique duplo (isola / edita). */
 export const TAP_DESELECT_DELAY_MS = 320;
@@ -146,6 +149,7 @@ export function useComunicadoEditorDrag({
 }: Options) {
   const getSlideAspectRatioRef = useRef(getSlideAspectRatio);
   getSlideAspectRatioRef.current = getSlideAspectRatio;
+  const mutationGateRef = useRef(createMutationGenerationGate());
   const dragSnapshotRef = useRef<ComunicadoConfig | null>(null);
   const groupGestureRef = useRef<StageGroupGesture | null>(null);
   const liveResizeHandleRef = useRef<string | null>(null);
@@ -647,11 +651,15 @@ export function useComunicadoEditorDrag({
       applyConfig(nextConfig);
       if (playlistId && slideId) {
         const changed = nextBlocks.filter((block) => idsToFinalize.includes(block.id));
-        void commitUpsertBlocks({
+        void ackUpsertBlocksWithGeneration({
           playlistId,
           slideId,
           blocks: changed as unknown as Record<string, unknown>[],
-        }).catch(() => undefined);
+          gate: mutationGateRef.current,
+          applyAck: (canonical) => {
+            applyConfig(canonical);
+          },
+        });
       }
     },
     [

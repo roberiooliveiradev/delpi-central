@@ -57,6 +57,7 @@ describe("RIBBON-TEXT-001 matrices", () => {
     expect(patchService).toContain("normalize_block_text_style");
     expect(patchService).toContain('"transform_text_case"');
     expect(patchService).toContain('"bump_font_size"');
+    expect(patchService).toContain("range_start");
   });
 
   it("Opcionais classificados (não implementados nesta entrega)", () => {

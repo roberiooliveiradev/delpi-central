@@ -2794,6 +2794,16 @@
               "title",
               "toggle"
             ]
+          },
+          "start": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Optional plain-text start offset (authoring contentRuns)."
+          },
+          "end": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Optional plain-text end offset (exclusive)."
           }
         }
       },

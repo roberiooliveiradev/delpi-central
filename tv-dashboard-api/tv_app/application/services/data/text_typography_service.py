@@ -69,19 +69,58 @@ def transform_text_case(text: str, mode: str) -> str:
     return lowered
 
 
-def transform_content_runs_case(runs: list[Any], mode: str) -> list[dict[str, Any]]:
-    out: list[dict[str, Any]] = []
+def transform_content_runs_case(
+    runs: list[Any], mode: str, *, start: int | None = None, end: int | None = None
+) -> list[dict[str, Any]]:
+    """Transform case on authoring runs. dataRef runs stay atomic.
+
+    Optional start/end are plain-text offsets over concatenated run texts
+    (dataRef placeholder length = len(text) or 1 for empty).
+    """
+    if start is None or end is None or start >= end:
+        out: list[dict[str, Any]] = []
+        for raw in runs:
+            if not isinstance(raw, dict):
+                continue
+            run = dict(raw)
+            data_ref = run.get("dataRef")
+            if isinstance(data_ref, dict) and str(data_ref.get("field") or "").strip():
+                out.append(run)
+                continue
+            text = run.get("text")
+            if isinstance(text, str):
+                run["text"] = transform_text_case(text, mode)
+            out.append(run)
+        return out
+
+    safe_start = max(0, int(start))
+    safe_end = max(safe_start, int(end))
+    out = []
+    pos = 0
     for raw in runs:
         if not isinstance(raw, dict):
             continue
         run = dict(raw)
         data_ref = run.get("dataRef")
+        text = run.get("text") if isinstance(run.get("text"), str) else ""
         if isinstance(data_ref, dict) and str(data_ref.get("field") or "").strip():
+            length = len(text) if text else 1
+            pos += length
             out.append(run)
             continue
-        text = run.get("text")
-        if isinstance(text, str):
-            run["text"] = transform_text_case(text, mode)
+        length = len(text)
+        run_start = pos
+        run_end = pos + length
+        pos = run_end
+        if run_end <= safe_start or run_start >= safe_end:
+            out.append(run)
+            continue
+        local_start = max(0, safe_start - run_start)
+        local_end = min(length, safe_end - run_start)
+        before = text[:local_start]
+        mid = transform_text_case(text[local_start:local_end], mode)
+        after = text[local_end:]
+        run["text"] = f"{before}{mid}{after}"
         out.append(run)
     return out
 

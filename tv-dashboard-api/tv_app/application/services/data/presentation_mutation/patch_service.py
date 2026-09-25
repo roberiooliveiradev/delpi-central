@@ -1587,14 +1587,37 @@ class PresentationPatchService:
                 PresentationOpsContentService.message("blockNotFound", blockId=block_id)
             )
         runs = block.get("contentRuns")
+        start = op.get("start")
+        end = op.get("end")
+        range_start: int | None = None
+        range_end: int | None = None
+        try:
+            if start is not None and end is not None:
+                range_start = int(start)
+                range_end = int(end)
+        except (TypeError, ValueError):
+            range_start = None
+            range_end = None
         if isinstance(runs, list) and runs:
-            next_runs = transform_content_runs_case(runs, mode)
+            next_runs = transform_content_runs_case(
+                runs, mode, start=range_start, end=range_end
+            )
             block["contentRuns"] = next_runs
             block["content"] = plain_from_runs(next_runs)
         else:
             content = block.get("content")
             if isinstance(content, str):
-                block["content"] = transform_text_case(content, mode)
+                if (
+                    range_start is not None
+                    and range_end is not None
+                    and 0 <= range_start < range_end <= len(content)
+                ):
+                    before = content[:range_start]
+                    mid = transform_text_case(content[range_start:range_end], mode)
+                    after = content[range_end:]
+                    block["content"] = f"{before}{mid}{after}"
+                else:
+                    block["content"] = transform_text_case(content, mode)
         cfg["blocks"] = blocks
 
     def _op_bump_font_size(self, cfg: dict[str, Any], op: dict[str, Any]) -> None:

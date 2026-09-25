@@ -63,7 +63,6 @@ import {
   isComunicadoVisualBoxBlock,
   isLineShapeKind,
   plainTextFromContentRuns,
-  resolveTextBlockDisplayRuns,
   resolveBlockPasteDataPolicy,
   staticLabelFromTextBoundBlock,
   transformContentRunsCase,
@@ -74,6 +73,7 @@ import {
   type ComunicadoChartPartRef,
   type ComunicadoChartType,
   type ComunicadoConfig,
+  type ComunicadoContentRun,
   type ComunicadoDataDisplayMode,
   type ComunicadoDataFilters,
   type ComunicadoDataResolved,
@@ -139,8 +139,12 @@ import {
   commitPatchNativeConfig,
   commitPresentationOps,
   commitReorderBlockZ,
-  commitUpsertBlocks,
 } from "../../utils/presentationMutationClient";
+import {
+  ackUpsertBlocksWithGeneration,
+  commitOpsAndApplyAck,
+  createMutationGenerationGate,
+} from "../../utils/mutationAckGeneration";
 
 type Options = {
   playlistId?: string;
@@ -253,6 +257,7 @@ export function useComunicadoEditorBlocks({
   const [lastUngroupedIds, setLastUngroupedIds] = useState<string[]>([]);
   const getSlideAspectRatioRef = useRef(getSlideAspectRatio ?? (() => 1));
   getSlideAspectRatioRef.current = getSlideAspectRatio ?? (() => 1);
+  const mutationGateRef = useRef(createMutationGenerationGate());
 
   const placeInserted = useCallback(
     <T extends ComunicadoBlock>(block: T): T =>
@@ -274,13 +279,17 @@ export function useComunicadoEditorBlocks({
   const ackBlocksMutation = useCallback(
     (blocks: ComunicadoBlock[]) => {
       if (!playlistId || !slideId || blocks.length === 0) return;
-      void commitUpsertBlocks({
+      void ackUpsertBlocksWithGeneration({
         playlistId,
         slideId,
         blocks: blocks as unknown as Record<string, unknown>[],
-      }).catch(() => undefined);
+        gate: mutationGateRef.current,
+        applyAck: (canonical) => {
+          commitWithHistory(canonical);
+        },
+      });
     },
-    [playlistId, slideId],
+    [commitWithHistory, playlistId, slideId],
   );
 
   /**
@@ -356,18 +365,22 @@ export function useComunicadoEditorBlocks({
             },
           } as ComunicadoBlock);
           // Persist viewport placement as geometry authority ack.
-          void commitUpsertBlocks({
+          void ackUpsertBlocksWithGeneration({
             playlistId,
             slideId,
             blocks: [placed as unknown as Record<string, unknown>],
-          }).catch(() => undefined);
+            gate: mutationGateRef.current,
+            applyAck: (canonical) => {
+              commitWithHistory(canonical);
+            },
+          });
           commitAndSelectInserted([...(configRef.current.blocks ?? []), placed], [placed.id]);
         })
         .catch(() => {
           applyLocal();
         });
     },
-    [commitAndSelectInserted, configRef, placeInserted, playlistId, slideId],
+    [commitAndSelectInserted, commitWithHistory, configRef, placeInserted, playlistId, slideId],
   );
 
   const addDataBlock = useCallback(
@@ -1048,8 +1061,8 @@ export function useComunicadoEditorBlocks({
   );
 
   /**
-   * Mutação de conteúdo (maiúsculas) — BE `transform_text_case` no bloco inteiro;
-   * range parcial aplica transform local + upsert ack.
+   * Mutação de conteúdo (maiúsculas) — BE `transform_text_case` com range opcional.
+   * Authoring runs only (nunca display projection). dataRef permanece atômico.
    */
   const transformSelectedTextCase = useCallback(
     (mode: ComunicadoTextCaseTransform) => {
@@ -1068,55 +1081,51 @@ export function useComunicadoEditorBlocks({
           ? lastPartialTextEditSelection
           : null;
 
-      if (partial && targets.length === 1) {
-        const block = targets[0];
-        const runs = resolveTextBlockDisplayRuns({
-          content: block.content ?? "",
-          contentRuns: block.contentRuns,
-          textProjection: "textProjection" in block ? block.textProjection : undefined,
-          resolved: "resolved" in block ? block.resolved : undefined,
-        });
-        const nextRuns = transformContentRunsCase(runs, mode, {
-          start: partial.start,
-          end: partial.end,
-        });
-        const nextContent = plainTextFromContentRuns(nextRuns);
-        const nextBlocks = (configRef.current.blocks ?? []).map((b) =>
-          b.id === block.id
-            ? ({ ...b, content: nextContent, contentRuns: nextRuns } as ComunicadoBlock)
-            : b,
-        );
-        updateBlocks(nextBlocks);
-        ackBlocksMutation(nextBlocks.filter((b) => b.id === block.id));
-        return;
-      }
+      const authoringRuns = (block: ComunicadoBlock) => {
+        if (!isComunicadoVisualBoxBlock(block)) return [] as ComunicadoContentRun[];
+        if (block.contentRuns?.length) return block.contentRuns;
+        const text = block.content ?? "";
+        return text ? [{ text }] : [];
+      };
 
-      if (playlistId && slideId && !partial) {
-        void commitPresentationOps({
+      if (playlistId && slideId) {
+        const ops =
+          partial && targets.length === 1
+            ? [
+                {
+                  op: "transform_text_case",
+                  blockId: targets[0].id,
+                  mode,
+                  start: partial.start,
+                  end: partial.end,
+                },
+              ]
+            : targets.map((block) => ({
+                op: "transform_text_case",
+                blockId: block.id,
+                mode,
+              }));
+
+        void commitOpsAndApplyAck({
           playlistId,
           slideId,
-          ops: targets.map((block) => ({
-            op: "transform_text_case",
-            blockId: block.id,
-            mode,
-          })),
-        })
-          .then((canonical) => {
-            if (canonical) commitWithHistory(canonical);
-          })
-          .catch(() => {
-            /* local fallback below */
+          ops,
+          gate: mutationGateRef.current,
+          applyAck: (canonical) => {
+            commitWithHistory(canonical);
+          },
+          optimistic: () => {
             const nextBlocks = (configRef.current.blocks ?? []).map((block) => {
               if (!targets.some((t) => t.id === block.id)) return block;
               if (!isComunicadoVisualBoxBlock(block)) return block;
-              const runs = resolveTextBlockDisplayRuns({
-                content: block.content ?? "",
-                contentRuns: block.contentRuns,
-                textProjection:
-                  "textProjection" in block ? block.textProjection : undefined,
-                resolved: "resolved" in block ? block.resolved : undefined,
-              });
-              const nextRuns = transformContentRunsCase(runs, mode);
+              const runs = authoringRuns(block);
+              const nextRuns =
+                partial && block.id === partial.blockId
+                  ? transformContentRunsCase(runs, mode, {
+                      start: partial.start,
+                      end: partial.end,
+                    })
+                  : transformContentRunsCase(runs, mode);
               return {
                 ...block,
                 content: plainTextFromContentRuns(nextRuns),
@@ -1124,21 +1133,25 @@ export function useComunicadoEditorBlocks({
               } as ComunicadoBlock;
             });
             updateBlocks(nextBlocks);
-            ackBlocksMutation(nextBlocks.filter((b) => targets.some((t) => t.id === b.id)));
-          });
+          },
+        }).then((canonical) => {
+          if (canonical) return;
+          // Network null: keep optimistic local already applied via updateBlocks.
+        });
         return;
       }
 
       const nextBlocks = (configRef.current.blocks ?? []).map((block) => {
         if (!targets.some((t) => t.id === block.id)) return block;
         if (!isComunicadoVisualBoxBlock(block)) return block;
-        const runs = resolveTextBlockDisplayRuns({
-          content: block.content ?? "",
-          contentRuns: block.contentRuns,
-          textProjection: "textProjection" in block ? block.textProjection : undefined,
-          resolved: "resolved" in block ? block.resolved : undefined,
-        });
-        const nextRuns = transformContentRunsCase(runs, mode);
+        const runs = authoringRuns(block);
+        const nextRuns =
+          partial && block.id === partial.blockId
+            ? transformContentRunsCase(runs, mode, {
+                start: partial.start,
+                end: partial.end,
+              })
+            : transformContentRunsCase(runs, mode);
         return {
           ...block,
           content: plainTextFromContentRuns(nextRuns),
@@ -1146,10 +1159,8 @@ export function useComunicadoEditorBlocks({
         } as ComunicadoBlock;
       });
       updateBlocks(nextBlocks);
-      ackBlocksMutation(nextBlocks.filter((b) => targets.some((t) => t.id === b.id)));
     },
     [
-      ackBlocksMutation,
       commitWithHistory,
       configRef,
       lastPartialTextEditSelection,
@@ -1158,6 +1169,58 @@ export function useComunicadoEditorBlocks({
       selectedBlocks,
       slideId,
       updateBlocks,
+    ],
+  );
+
+  const bumpSelectedFontSize = useCallback(
+    (deltaSteps: number) => {
+      const targets =
+        selectedBlocks.length > 0
+          ? selectedBlocks.filter((b) => isComunicadoVisualBoxBlock(b))
+          : selected && isComunicadoVisualBoxBlock(selected)
+            ? [selected]
+            : [];
+      if (targets.length === 0) return;
+      if (!playlistId || !slideId) {
+        updateSelectedTextFormatStyle(
+          { fontSizeAuto: false },
+          {
+            fontSizeMode: "delta",
+            fontSizeDelta: deltaSteps * 2,
+          },
+        );
+        return;
+      }
+      void commitOpsAndApplyAck({
+        playlistId,
+        slideId,
+        ops: targets.map((block) => ({
+          op: "bump_font_size",
+          blockId: block.id,
+          deltaSteps,
+        })),
+        gate: mutationGateRef.current,
+        applyAck: (canonical) => {
+          commitWithHistory(canonical);
+        },
+      }).then((canonical) => {
+        if (canonical) return;
+        updateSelectedTextFormatStyle(
+          { fontSizeAuto: false },
+          {
+            fontSizeMode: "delta",
+            fontSizeDelta: deltaSteps * 2,
+          },
+        );
+      });
+    },
+    [
+      commitWithHistory,
+      playlistId,
+      selected,
+      selectedBlocks,
+      slideId,
+      updateSelectedTextFormatStyle,
     ],
   );
 
@@ -1230,11 +1293,15 @@ export function useComunicadoEditorBlocks({
     selectBlocksByIds(pastedIds);
     if (playlistId && slideId) {
       const pasted = blocks.filter((b) => pastedIds.includes(b.id));
-      void commitUpsertBlocks({
+      void ackUpsertBlocksWithGeneration({
         playlistId,
         slideId,
         blocks: pasted as unknown as Record<string, unknown>[],
-      }).catch(() => undefined);
+        gate: mutationGateRef.current,
+        applyAck: (canonical) => {
+          commitWithHistory(canonical);
+        },
+      });
     }
   }, [
     chooseDataSourceDuplicatePolicy,
@@ -1883,6 +1950,7 @@ export function useComunicadoEditorBlocks({
     updateSelectedStyle,
     updateSelectedTextFormatStyle,
     transformSelectedTextCase,
+    bumpSelectedFontSize,
     duplicateSelected,
     replaceSelectedDataRoute,
     removeSelected,

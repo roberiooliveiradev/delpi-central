@@ -30,6 +30,48 @@ def test_transform_content_runs_preserves_data_ref():
     assert next_runs[2]["text"] == " FIM"
 
 
+def test_transform_content_runs_range_static_only():
+    runs = [{"text": "ABC def GHI"}]
+    next_runs = transform_content_runs_case(runs, "upper", start=4, end=7)
+    assert next_runs[0]["text"] == "ABC DEF GHI"
+
+
+def test_patch_ops_transform_case_range_and_reload():
+    from tv_app.application.services.data.presentation_mutation.patch_service import (
+        PresentationPatchService,
+    )
+
+    svc = PresentationPatchService()
+    cfg = {
+        "version": 5,
+        "blocks": [
+            {
+                "id": "blk_t",
+                "type": "text",
+                "content": "Realizado setembro 2025",
+                "contentRuns": [{"text": "Realizado setembro 2025"}],
+                "style": {"fontSize": 28},
+            }
+        ],
+    }
+    svc._op_transform_text_case(
+        cfg,
+        {
+            "op": "transform_text_case",
+            "blockId": "blk_t",
+            "mode": "upper",
+            "start": 10,
+            "end": 18,
+        },
+    )
+    assert cfg["blocks"][0]["content"] == "Realizado SETEMBRO 2025"
+    # whole block
+    svc._op_transform_text_case(
+        cfg, {"op": "transform_text_case", "blockId": "blk_t", "mode": "upper"}
+    )
+    assert cfg["blocks"][0]["content"] == "REALIZADO SETEMBRO 2025"
+
+
 def test_bump_font_size_and_indent():
     assert bump_font_size(28, 1) == 30
     assert bump_font_size(28, -1) == 26
