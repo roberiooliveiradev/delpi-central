@@ -52,6 +52,10 @@ describe("helpTooltips budget", () => {
   it("cobre aprovação TicketValidation", () => {
     expect(helpTooltips.detailUi.acceptValidation).toMatch(/aceit|aprova/i);
     expect(helpTooltips.detailUi.rejectValidation).toMatch(/recus|aprova/i);
+    expect(helpTooltips.detailUi.observersRead).toMatch(/somente leitura|observ/i);
+    expect(helpTooltips.detailUi.slaLevelName).toMatch(/nível|prazo/i);
+    expect(helpTooltips.detailUi.slaLevelName).not.toMatch(/deadline|HLAPI|DTO/i);
+    expect(helpTooltips.detailUi.approvalsSurface).toMatch(/aprova/i);
   });
 
   it("cobre ações operacionais do workspace (solução/tarefa/aprovação)", () => {

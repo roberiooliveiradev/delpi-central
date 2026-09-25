@@ -991,6 +991,10 @@
   overflow: hidden;
 }
 
+.dashboard-helpdesk .helpdesk-ticket-workspace__body--no-aside {
+  grid-template-columns: minmax(9.5rem, 11.5rem) minmax(0, 1fr);
+}
+
 .dashboard-helpdesk .helpdesk-ticket-workspace__nav {
   display: flex;
   flex-direction: column;
@@ -1096,6 +1100,172 @@
   font-size: 0.85rem;
   font-weight: 550;
   overflow-wrap: anywhere;
+}
+
+/* OPS-006A — authoritative Details / Approvals surfaces (full-width when aside hidden) */
+.dashboard-helpdesk .helpdesk-ticket-details,
+.dashboard-helpdesk .helpdesk-ticket-approvals {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  padding: 0.15rem 0.25rem 0.75rem;
+}
+
+.dashboard-helpdesk .helpdesk-ticket-details__section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid var(--helpdesk-border);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--helpdesk-surface) 92%, transparent);
+}
+
+.dashboard-helpdesk .helpdesk-ticket-details__title,
+.dashboard-helpdesk .helpdesk-ticket-approvals__title {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  color: var(--helpdesk-text);
+}
+
+.dashboard-helpdesk .helpdesk-ticket-details__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin: 0;
+}
+
+.dashboard-helpdesk .helpdesk-ticket-details__row {
+  display: grid;
+  grid-template-columns: minmax(8rem, 14rem) minmax(0, 1fr);
+  gap: 0.35rem 0.75rem;
+  align-items: start;
+}
+
+.dashboard-helpdesk .helpdesk-ticket-details__row dt {
+  margin: 0;
+  color: var(--helpdesk-text-muted);
+  font-size: 0.8rem;
+}
+
+.dashboard-helpdesk .helpdesk-ticket-details__row dd {
+  margin: 0;
+  color: var(--helpdesk-text);
+  word-break: break-word;
+}
+
+.dashboard-helpdesk .helpdesk-ticket-details__summary {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--helpdesk-text);
+}
+
+.dashboard-helpdesk .helpdesk-ticket-details__link {
+  align-self: flex-start;
+  margin: 0.15rem 0 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--helpdesk-accent);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.dashboard-helpdesk .helpdesk-ticket-details__link:hover {
+  color: var(--helpdesk-text);
+}
+
+.dashboard-helpdesk .helpdesk-ticket-approvals__header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.45rem;
+  padding: 0.15rem 0.1rem;
+}
+
+.dashboard-helpdesk .helpdesk-ticket-approvals__lead {
+  margin: 0;
+  color: var(--helpdesk-text-muted);
+  font-size: 0.85rem;
+}
+
+.dashboard-helpdesk .helpdesk-ticket-approvals__empty {
+  margin: 0;
+  padding: 0.85rem;
+  border: 1px dashed var(--helpdesk-border);
+  border-radius: 10px;
+  color: var(--helpdesk-text-muted);
+  font-size: 0.9rem;
+}
+
+.dashboard-helpdesk .helpdesk-ticket-approvals__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dashboard-helpdesk .helpdesk-ticket-approvals__item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid var(--helpdesk-border);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--helpdesk-surface) 92%, transparent);
+}
+
+.dashboard-helpdesk .helpdesk-ticket-approvals__item-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem 0.75rem;
+  align-items: baseline;
+}
+
+.dashboard-helpdesk .helpdesk-ticket-approvals__item-id {
+  font-weight: 650;
+  font-size: 0.9rem;
+}
+
+.dashboard-helpdesk .helpdesk-ticket-approvals__item-status {
+  color: var(--helpdesk-text-muted);
+  font-size: 0.85rem;
+}
+
+.dashboard-helpdesk .helpdesk-ticket-approvals__comment,
+.dashboard-helpdesk .helpdesk-ticket-approvals__meta {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--helpdesk-text);
+  word-break: break-word;
+}
+
+.dashboard-helpdesk .helpdesk-ticket-approvals__comment-label {
+  color: var(--helpdesk-text-muted);
+  font-weight: 550;
+}
+
+.dashboard-helpdesk .helpdesk-ticket-approvals__decide {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin-top: 0.25rem;
+}
+
+@media (max-width: 720px) {
+  .dashboard-helpdesk .helpdesk-ticket-details__row {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .dashboard-helpdesk .helpdesk-ticket-workspace__composer {
@@ -1563,6 +1733,10 @@
     grid-template-columns: minmax(8.5rem, 10rem) minmax(0, 1fr);
   }
 
+  .dashboard-helpdesk .helpdesk-ticket-workspace__body--no-aside {
+    grid-template-columns: minmax(8.5rem, 10rem) minmax(0, 1fr);
+  }
+
   .dashboard-helpdesk .helpdesk-ticket-workspace__aside {
     display: none;
   }
@@ -1573,7 +1747,8 @@
     display: block;
   }
 
-  .dashboard-helpdesk .helpdesk-ticket-workspace__body {
+  .dashboard-helpdesk .helpdesk-ticket-workspace__body,
+  .dashboard-helpdesk .helpdesk-ticket-workspace__body--no-aside {
     grid-template-columns: minmax(0, 1fr);
   }
 

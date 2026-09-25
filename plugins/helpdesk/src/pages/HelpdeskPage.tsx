@@ -125,13 +125,14 @@ import {
   ticketSolutionFormToBody,
 } from "./TicketSolutionActionFields";
 import { TicketApprovalActionFields } from "./TicketApprovalActionFields";
+import { TicketApprovalsSurface } from "./TicketApprovalsSurface";
 import { TicketContextPanel } from "./TicketContextPanel";
+import { TicketDetailsSurface } from "./TicketDetailsSurface";
 import { TicketListCards } from "./TicketListCards";
 import { ticketActionPresentation } from "../presentation/ticketActionPresentation";
 import {
   defaultTicketWorkspaceAction,
   ticketWorkspaceActions,
-  ticketWorkspaceActionById,
   ticketWorkspaceSelectorActions,
   TICKET_WORKSPACE_SURFACES,
   type TicketWorkspaceActionId,
@@ -1273,6 +1274,40 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
     setActiveAction(next);
   }
 
+  /** Approvals surface CTA → Conversation + existing Approval Action Card host (OPS-006A). */
+  function openRequestApproval() {
+    setWorkspaceSurface("conversation");
+    selectWorkspaceAction("request_approval");
+    if (typeof window === "undefined") return;
+    window.requestAnimationFrame(() => {
+      const card = document.querySelector<HTMLElement>(
+        '.helpdesk-action-card[data-action-variant="approval"]',
+      );
+      card?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      const closeOrTitle =
+        card?.querySelector<HTMLElement>(".helpdesk-action-card__close") ??
+        card?.querySelector<HTMLElement>(".helpdesk-action-card__title");
+      closeOrTitle?.focus?.();
+    });
+  }
+
+  function runValidationDecision(validationId: number, action: "accept" | "reject") {
+    setCycleSaving(true);
+    setErrorText(null);
+    const runner =
+      action === "accept"
+        ? acceptTicketValidation(ticketId, validationId, cycleNote, cycleKey)
+        : rejectTicketValidation(ticketId, validationId, cycleNote, cycleKey);
+    void runner
+      .then(() => {
+        setCycleNote("");
+        setCycleKey(newIdempotencyKey());
+        load();
+      })
+      .catch((error) => setErrorText(messageFor(error).text))
+      .finally(() => setCycleSaving(false));
+  }
+
   function cancelActiveActionForm() {
     if (!confirmDiscardDraft("Há conteúdo em edição. Descartar e fechar esta ação?")) {
       return;
@@ -1306,7 +1341,6 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
 
   const workspaceActions = ticket ? ticketWorkspaceActions(ticket) : [];
   const selectorActions = ticketWorkspaceSelectorActions(workspaceActions);
-  const activeWorkspaceAction = ticketWorkspaceActionById(workspaceActions, activeAction);
   const visibleMessages = ticket
     ? conversationMessages(ticket, new Date()).filter((message) =>
         conversationMessageVisible(message.kind, timelineVisibility),
@@ -1412,20 +1446,7 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                   .finally(() => setCycleSaving(false));
               };
               const runValidation = (validationId: number, action: "accept" | "reject") => {
-                setCycleSaving(true);
-                setErrorText(null);
-                const runner =
-                  action === "accept"
-                    ? acceptTicketValidation(ticketId, validationId, cycleNote, cycleKey)
-                    : rejectTicketValidation(ticketId, validationId, cycleNote, cycleKey);
-                void runner
-                  .then(() => {
-                    setCycleNote("");
-                    setCycleKey(newIdempotencyKey());
-                    load();
-                  })
-                  .catch((error) => setErrorText(messageFor(error).text))
-                  .finally(() => setCycleSaving(false));
+                runValidationDecision(validationId, action);
               };
               const showSatisfactionComment =
                 satisfactionCommentOpen || satisfactionComment.trim().length > 0;
@@ -1609,7 +1630,9 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                 widthMode="fill"
                 value={workspaceSurface}
                 onChange={(value) => {
-                  if (value === "conversation" || value === "details") setWorkspaceSurface(value);
+                  if (value === "conversation" || value === "details" || value === "approvals") {
+                    setWorkspaceSurface(value);
+                  }
                 }}
                 options={TICKET_WORKSPACE_SURFACES.map((item) => ({
                   value: item.id,
@@ -1617,7 +1640,16 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                 }))}
               />
             </div>
-            <div className="helpdesk-ticket-workspace__body">
+            <div
+              className={[
+                "helpdesk-ticket-workspace__body",
+                workspaceSurface !== "conversation"
+                  ? "helpdesk-ticket-workspace__body--no-aside"
+                  : null,
+              ]
+                .filter(Boolean)
+                .join(" ")}
+            >
               <nav className="helpdesk-ticket-workspace__nav" aria-label="Navegação do chamado">
                 {TICKET_WORKSPACE_SURFACES.map((item) => (
                   <button
@@ -1640,12 +1672,23 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
               </nav>
               <div className="helpdesk-ticket-workspace__main">
                 {workspaceSurface === "details" ? (
-                  <TicketContextPanel
+                  <TicketDetailsSurface
                     ticket={ticket}
                     assigneePick={assigneePick}
                     onAssigneeChange={setAssigneePick}
                     onAssignConfirm={assignTechnician}
                     assignSaving={assignSaving}
+                    onOpenApprovals={() => setWorkspaceSurface("approvals")}
+                  />
+                ) : workspaceSurface === "approvals" ? (
+                  <TicketApprovalsSurface
+                    ticket={ticket}
+                    cycleNote={cycleNote}
+                    onCycleNoteChange={setCycleNote}
+                    cycleSaving={cycleSaving}
+                    onAccept={(validationId) => runValidationDecision(validationId, "accept")}
+                    onReject={(validationId) => runValidationDecision(validationId, "reject")}
+                    onRequestApproval={openRequestApproval}
                   />
                 ) : (
                   <div className="helpdesk-detail__conversation">
@@ -2388,15 +2431,17 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                   </div>
                 )}
               </div>
-              <div className="helpdesk-ticket-workspace__aside">
-                <TicketContextPanel
-                  ticket={ticket}
-                  assigneePick={assigneePick}
-                  onAssigneeChange={setAssigneePick}
-                  onAssignConfirm={assignTechnician}
-                  assignSaving={assignSaving}
-                />
-              </div>
+              {workspaceSurface === "conversation" ? (
+                <div className="helpdesk-ticket-workspace__aside">
+                  <TicketContextPanel
+                    ticket={ticket}
+                    assigneePick={assigneePick}
+                    onAssigneeChange={setAssigneePick}
+                    onAssignConfirm={assignTechnician}
+                    assignSaving={assignSaving}
+                  />
+                </div>
+              ) : null}
             </div>
             <FilePreviewModal
               open={Boolean(inlinePreview)}

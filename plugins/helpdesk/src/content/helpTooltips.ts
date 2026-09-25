@@ -41,6 +41,12 @@ export const helpTooltips = {
     submitSatisfaction: "Envia sua nota de 1 a 5 e o comentário opcional.",
     acceptValidation: "Aceita a etapa de aprovação deste chamado.",
     rejectValidation: "Recusa a etapa de aprovação deste chamado.",
+    observersRead:
+      "Pessoas que acompanham o chamado. Nesta tela a lista é somente leitura.",
+    slaLevelName:
+      "Nome do nível de serviço associado ao chamado. Não é o prazo absoluto de atendimento ou solução.",
+    approvalsSurface:
+      "Solicitações de aprovação deste chamado. Aceite ou recuse quando for sua vez, ou peça uma nova aprovação.",
     attachments: "Arquivos ligados ao chamado. Clique para prévia ou baixar.",
     actionFields: {
       reply: {

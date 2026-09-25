@@ -30,12 +30,13 @@ function actionFromId(id: TicketWorkspaceActionId): TicketWorkspaceAction {
   };
 }
 
-/** Surfaces available in left/context nav — only proven content. */
-export type TicketWorkspaceSurfaceId = "conversation" | "details";
+/** Surfaces available in left/context nav — only proven content (OPS-006A). */
+export type TicketWorkspaceSurfaceId = "conversation" | "details" | "approvals";
 
 export const TICKET_WORKSPACE_SURFACES: { id: TicketWorkspaceSurfaceId; label: string }[] = [
   { id: "conversation", label: "Conversa" },
   { id: "details", label: "Detalhes" },
+  { id: "approvals", label: "Aprovações" },
 ];
 
 /**
