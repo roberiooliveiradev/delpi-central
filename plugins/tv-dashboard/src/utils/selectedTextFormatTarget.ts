@@ -57,6 +57,10 @@ export type TextFormatStyleSnapshot = {
   textStrokeColor?: string;
   textStrokeWidth?: number;
   textReflection?: boolean;
+  baselineShift?: "sub" | "super" | null;
+  indentLevel?: number;
+  paragraphSpacingBefore?: number;
+  paragraphSpacingAfter?: number;
 };
 
 export type ComplexTextFormatSource =

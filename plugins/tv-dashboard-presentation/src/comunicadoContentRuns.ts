@@ -7,6 +7,7 @@ import type {
 } from "./comunicadoTypes";
 import { normalizeTextDataRef } from "./textViewProjection";
 import { applyComunicadoTextEffectsToCss } from "./comunicadoTextEffects";
+import { applyBaselineShiftToCss, indentPaddingPx } from "./textTypographyModel";
 
 const RUN_STYLE_KEYS: Array<keyof ComunicadoContentRunStyle> = [
   "fontSize",
@@ -21,6 +22,8 @@ const RUN_STYLE_KEYS: Array<keyof ComunicadoContentRunStyle> = [
   "textShadow",
   "textStrokeColor",
   "textStrokeWidth",
+  "baselineShift",
+  "indentLevel",
 ];
 
 function hasRunStyle(run: ComunicadoContentRun): boolean {
@@ -76,6 +79,13 @@ function normalizeRunStyle(value: unknown): ComunicadoContentRunStyle | undefine
   }
   if (typeof raw.textStrokeWidth === "number" && Number.isFinite(raw.textStrokeWidth)) {
     style.textStrokeWidth = Math.max(0, raw.textStrokeWidth);
+  }
+  if (raw.baselineShift === "sub" || raw.baselineShift === "super") {
+    style.baselineShift = raw.baselineShift;
+  }
+  if (typeof raw.indentLevel === "number" && Number.isFinite(raw.indentLevel)) {
+    const level = Math.trunc(raw.indentLevel);
+    if (level > 0) style.indentLevel = Math.min(8, level);
   }
   return Object.keys(style).length > 0 ? style : undefined;
 }
@@ -149,6 +159,9 @@ export function contentRunStyleToCss(
   if (style.fontStyle) css.fontStyle = style.fontStyle;
   if (style.textDecoration) css.textDecoration = style.textDecoration;
   if (style.lineHeight != null) css.lineHeight = style.lineHeight;
+  applyBaselineShiftToCss(style, css);
+  const indentPx = indentPaddingPx(style.indentLevel);
+  if (indentPx > 0) css.paddingLeft = `${indentPx}px`;
   applyComunicadoTextEffectsToCss(style, css);
   return css;
 }

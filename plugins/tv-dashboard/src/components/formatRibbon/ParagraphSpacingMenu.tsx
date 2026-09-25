@@ -17,9 +17,13 @@ type Props = {
   namedStyleValue: ComunicadoNamedTextStyle;
   lineHeight: number;
   letterSpacing: number;
+  paragraphSpacingBefore: number;
+  paragraphSpacingAfter: number;
   onNamedStyle: (value: ComunicadoNamedTextStyle) => void;
   onLineHeight: (value: number) => void;
   onLetterSpacing: (value: number) => void;
+  onParagraphSpacingBefore: (value: number) => void;
+  onParagraphSpacingAfter: (value: number) => void;
   /** Estilo nomeado (Título/Normal) — só em texto/título rico. */
   showNamedStyle?: boolean;
   /**
@@ -35,14 +39,20 @@ function ParagraphSpacingPanel({
   namedStyleValue,
   lineHeight,
   letterSpacing,
+  paragraphSpacingBefore,
+  paragraphSpacingAfter,
   onNamedStyle,
   onLineHeight,
   onLetterSpacing,
+  onParagraphSpacingBefore,
+  onParagraphSpacingAfter,
   showNamedStyle = true,
   idPrefix,
 }: PanelProps) {
   const styleId = `${idPrefix}-named-style`;
   const lineId = `${idPrefix}-line-height`;
+  const beforeId = `${idPrefix}-spacing-before`;
+  const afterId = `${idPrefix}-spacing-after`;
   const spaceId = `${idPrefix}-letter-spacing`;
 
   return (
@@ -93,8 +103,46 @@ function ParagraphSpacingPanel({
       </span>
       <span className="td-deck-ribbon__stack-field">
         <FieldLabel
+          htmlFor={beforeId}
+          label="Antes"
+          hint={H.paragraphSpacingBefore}
+          className="td-deck-ribbon__field-label"
+        />
+        <NativeTextControl
+          id={beforeId}
+          type="number"
+          className="td-deck-ribbon__number td-deck-ribbon__number--compact"
+          aria-label="Espaçamento antes do parágrafo (px)"
+          min={0}
+          max={120}
+          step={2}
+          value={paragraphSpacingBefore}
+          onChange={(value) => onParagraphSpacingBefore(Math.max(0, Number(value) || 0))}
+        />
+      </span>
+      <span className="td-deck-ribbon__stack-field">
+        <FieldLabel
+          htmlFor={afterId}
+          label="Depois"
+          hint={H.paragraphSpacingAfter}
+          className="td-deck-ribbon__field-label"
+        />
+        <NativeTextControl
+          id={afterId}
+          type="number"
+          className="td-deck-ribbon__number td-deck-ribbon__number--compact"
+          aria-label="Espaçamento depois do parágrafo (px)"
+          min={0}
+          max={120}
+          step={2}
+          value={paragraphSpacingAfter}
+          onChange={(value) => onParagraphSpacingAfter(Math.max(0, Number(value) || 0))}
+        />
+      </span>
+      <span className="td-deck-ribbon__stack-field">
+        <FieldLabel
           htmlFor={spaceId}
-          label="Espaçamento"
+          label="Entre caracteres"
           hint={H.letterSpacing}
           className="td-deck-ribbon__field-label"
         />
@@ -122,9 +170,13 @@ export function ParagraphSpacingMenu({
   namedStyleValue,
   lineHeight,
   letterSpacing,
+  paragraphSpacingBefore,
+  paragraphSpacingAfter,
   onNamedStyle,
   onLineHeight,
   onLetterSpacing,
+  onParagraphSpacingBefore,
+  onParagraphSpacingAfter,
   showNamedStyle = true,
   variant = "popover",
 }: Props) {
@@ -138,9 +190,13 @@ export function ParagraphSpacingMenu({
     namedStyleValue,
     lineHeight,
     letterSpacing,
+    paragraphSpacingBefore,
+    paragraphSpacingAfter,
     onNamedStyle,
     onLineHeight,
     onLetterSpacing,
+    onParagraphSpacingBefore,
+    onParagraphSpacingAfter,
     showNamedStyle,
     idPrefix: variant === "inline" || flattenNested ? `td-pane-ps-${reactId}` : `td-pop-ps-${reactId}`,
   };

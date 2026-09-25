@@ -17,6 +17,7 @@ import { useComunicadoEditor } from "../comunicadoEditorContext";
 import { SelectedDataSidePanel } from "../SelectedDataSidePanel";
 import { resolveSelectedDataContext } from "../../utils/selectedDataContext";
 import { resolveTableFormatPaneTitle } from "../../utils/resolveTableFormatPaneTitle";
+import { applyFormatElementRibbonTabMeta } from "../../utils/applyFormatElementRibbonTabMeta";
 import {
   isElementFormatPanelTab,
 } from "../../utils/normalizeSelectionRibbonTab";
@@ -85,13 +86,16 @@ export function DeckElementSidePanel({ labels = {}, embedded = true, branchScope
   const showDataTab = dataPanelOpen || hasDataBoundSelection;
   const panelTabs = useMemo(
     () =>
-      resolveSelectionPanelTabs({
-        hasSelection,
-        showDataTab,
-        isTableSelection,
-        isCanvasTableSelection,
-      }),
-    [hasSelection, showDataTab, isTableSelection, isCanvasTableSelection],
+      applyFormatElementRibbonTabMeta(
+        resolveSelectionPanelTabs({
+          hasSelection,
+          showDataTab,
+          isTableSelection,
+          isCanvasTableSelection,
+        }),
+        selected,
+      ),
+    [hasSelection, showDataTab, isTableSelection, isCanvasTableSelection, selected],
   );
 
   useEffect(() => {
@@ -153,13 +157,9 @@ export function DeckElementSidePanel({ labels = {}, embedded = true, branchScope
     if (tab === "tableLayout") return "Tabela Layout";
     if (selected?.type === "table_view") return resolveTableFormatPaneTitle(selectedTablePart);
     if (selected?.type === "chart_view") return "Formatar Gráfico";
-    if (
-      selected?.type === "shape" ||
-      selected?.type === "text" ||
-      selected?.type === "heading"
-    ) {
-      return "Definir Forma";
-    }
+    if (selected?.type === "text" || selected?.type === "heading") return "Formatar Texto";
+    if (selected?.type === "shape") return "Formatar Forma";
+    if (selected?.type === "image") return "Formatar Imagem";
     if (selected?.type === "kpi_view") return "Formatar KPI";
     if (selected?.type === "canvas_table") return "Formatar Grade";
     return "Definir elemento";

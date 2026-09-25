@@ -310,6 +310,7 @@ export type {
   ComunicadoEfficiencyPinInfoMode,
   ComunicadoEfficiencyPinRole,
   ComunicadoTextBlock,
+  ComunicadoTextCaseTransform,
   ComunicadoTextDecoration,
 } from "./comunicadoTypes";
 export type { ComunicadoImageCrop } from "./comunicadoImageCrop";
@@ -807,6 +808,17 @@ export {
   shouldPersistContentRuns,
   syncTextBlockFields,
 } from "./comunicadoContentRuns";
+export {
+  COMUNICADO_INDENT_LEVEL_MAX,
+  COMUNICADO_INDENT_LEVEL_MIN,
+  COMUNICADO_INDENT_PX_PER_LEVEL,
+  applyBaselineShiftToCss,
+  bumpFontSizeValue,
+  clampIndentLevel,
+  indentPaddingPx,
+  transformContentRunsCase,
+  transformTextCase,
+} from "./textTypographyModel";
 export {
   COMUNICADO_TEXT_SHADOW_PRESETS,
   applyComunicadoTextEffectsToCss,

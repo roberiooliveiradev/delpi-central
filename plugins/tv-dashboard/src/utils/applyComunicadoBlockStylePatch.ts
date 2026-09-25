@@ -22,6 +22,10 @@ export const CLEARABLE_STYLE_KEYS = new Set<string>([
   "fillPaint",
   "colorPaint",
   "strokePaint",
+  "baselineShift",
+  "indentLevel",
+  "paragraphSpacingBefore",
+  "paragraphSpacingAfter",
 ]);
 
 function shouldClearStyleValue(key: string, value: unknown): boolean {

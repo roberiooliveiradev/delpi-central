@@ -7,11 +7,15 @@ import {
   AlignVerticalJustifyEnd,
   AlignVerticalJustifyStart,
   Bold,
+  IndentDecrease,
+  IndentIncrease,
   Italic,
   List,
   ListOrdered,
   RemoveFormatting,
   Strikethrough,
+  Subscript,
+  Superscript,
   Underline,
   Upload,
 } from "lucide-react";
@@ -24,6 +28,7 @@ import {
   KPI_PART_FONT_SIZE_DEFAULTS,
   buildTextDecoration,
   clampFontSize,
+  clampIndentLevel,
   clearVisualBoxTextFormatting,
   listComunicadoFontFamilyOptions,
   defaultNamedStyleForBlockType,
@@ -38,6 +43,7 @@ import {
   selectionListTypeState,
   resolveInputContrastBackground,
   type ComunicadoBlock,
+  type ComunicadoTextCaseTransform,
 } from "@delpi/tv-dashboard-presentation";
 import {
   NumberStepperControl,
@@ -146,6 +152,7 @@ export function FormatRibbonTypographySections({
     applySelectedNamedTextStyle,
     uploadCustomFont,
     uploading,
+    transformSelectedTextCase,
   } = useComunicadoEditor();
   const fontUploadInputRef = useRef<HTMLInputElement>(null);
   const fontFamilySelectOptions = useMemo(
@@ -315,6 +322,9 @@ export function FormatRibbonTypographySections({
         runPatch.textDecoration =
           patch.textDecoration as import("@delpi/tv-dashboard-presentation").ComunicadoTextDecoration;
       }
+      if (patch.baselineShift !== undefined) {
+        runPatch.baselineShift = patch.baselineShift;
+      }
       if (Object.keys(runPatch).length > 0 && applyEditingTextRunStylePatch(runPatch)) {
         return;
       }
@@ -334,13 +344,22 @@ export function FormatRibbonTypographySections({
         runPatch.textDecoration =
           patch.textDecoration as import("@delpi/tv-dashboard-presentation").ComunicadoTextDecoration;
       }
+      if (patch.baselineShift !== undefined) {
+        runPatch.baselineShift = patch.baselineShift;
+      }
       if (applyEditingTextRunStylePatch(runPatch)) return;
     }
     updateSelectedTextFormatStyle(patch, applyOptions);
   };
 
   function applyToggleOrContainer(
-    toggleKey: "fontWeight" | "fontStyle" | "underline" | "strikethrough",
+    toggleKey:
+      | "fontWeight"
+      | "fontStyle"
+      | "underline"
+      | "strikethrough"
+      | "subscript"
+      | "superscript",
     containerPatch: Parameters<typeof updateSelectedTextFormatStyle>[0],
   ) {
     if (multiVisualBox || containerTypographyActive) {
@@ -511,8 +530,27 @@ export function FormatRibbonTypographySections({
   const spacingSource = visualBoxBlock;
   const currentLineHeight = spacingSource?.style?.lineHeight ?? 1.15;
   const currentLetterSpacing = spacingSource?.style?.letterSpacing ?? 0;
+  const currentParagraphSpacingBefore = spacingSource?.style?.paragraphSpacingBefore ?? 0;
+  const currentParagraphSpacingAfter = spacingSource?.style?.paragraphSpacingAfter ?? 0;
+  const currentIndentLevel = clampIndentLevel(spacingSource?.style?.indentLevel ?? 0);
+  const blockBaselineShift = formatStyle?.baselineShift ?? spacingSource?.style?.baselineShift;
+  const baselineShiftActive =
+    partialTextSelectionActive && textEditSelectionStyle?.baselineShift
+      ? textEditSelectionStyle.baselineShift
+      : blockBaselineShift === "sub" || blockBaselineShift === "super"
+        ? blockBaselineShift
+        : "none";
   const fontTitle =
     textFormatTarget.mode === "part" ? `Fonte · ${textFormatTarget.partLabel}` : "Fonte";
+
+  const TEXT_CASE_OPTIONS: Array<{ value: ComunicadoTextCaseTransform | ""; label: string }> = [
+    { value: "", label: "Maiúsculas" },
+    { value: "sentence", label: "Tipo frase" },
+    { value: "lower", label: "minúsculas" },
+    { value: "upper", label: "MAIÚSCULAS" },
+    { value: "title", label: "Todas As Palavras" },
+    { value: "toggle", label: "aLTERNAR cASO" },
+  ];
 
   const paragraphAlignBody = (
     <div className="td-deck-ribbon__toolbar td-deck-ribbon__toolbar--paragraph">
@@ -599,6 +637,30 @@ export function FormatRibbonTypographySections({
                 >
                   <ListOrdered size={15} aria-hidden="true" />
                 </TdRibbonIconButton>
+                <TdRibbonIconButton
+                  hint={H.indentDecrease}
+                  ariaLabel="Diminuir recuo"
+                  disabled={currentIndentLevel <= 0}
+                  onClick={() =>
+                    updateSelectedStyle({
+                      indentLevel: clampIndentLevel(currentIndentLevel - 1) || undefined,
+                    })
+                  }
+                >
+                  <IndentDecrease size={15} aria-hidden="true" />
+                </TdRibbonIconButton>
+                <TdRibbonIconButton
+                  hint={H.indentIncrease}
+                  ariaLabel="Aumentar recuo"
+                  disabled={currentIndentLevel >= 8}
+                  onClick={() =>
+                    updateSelectedStyle({
+                      indentLevel: clampIndentLevel(currentIndentLevel + 1),
+                    })
+                  }
+                >
+                  <IndentIncrease size={15} aria-hidden="true" />
+                </TdRibbonIconButton>
               </>
             ) : null}
           </div>
@@ -611,9 +673,17 @@ export function FormatRibbonTypographySections({
               showNamedStyle={showParagraphNamedStyle}
               lineHeight={currentLineHeight}
               letterSpacing={currentLetterSpacing}
+              paragraphSpacingBefore={currentParagraphSpacingBefore}
+              paragraphSpacingAfter={currentParagraphSpacingAfter}
               onNamedStyle={(value) => applySelectedNamedTextStyle(value)}
               onLineHeight={(value) => updateSelectedStyle({ lineHeight: value })}
               onLetterSpacing={(value) => updateSelectedStyle({ letterSpacing: value })}
+              onParagraphSpacingBefore={(value) =>
+                updateSelectedStyle({ paragraphSpacingBefore: value || undefined })
+              }
+              onParagraphSpacingAfter={(value) =>
+                updateSelectedStyle({ paragraphSpacingAfter: value || undefined })
+              }
             />
           </div>
         ) : null}
@@ -629,9 +699,17 @@ export function FormatRibbonTypographySections({
         showNamedStyle={showParagraphNamedStyle}
         lineHeight={currentLineHeight}
         letterSpacing={currentLetterSpacing}
+        paragraphSpacingBefore={currentParagraphSpacingBefore}
+        paragraphSpacingAfter={currentParagraphSpacingAfter}
         onNamedStyle={(value) => applySelectedNamedTextStyle(value)}
         onLineHeight={(value) => updateSelectedStyle({ lineHeight: value })}
         onLetterSpacing={(value) => updateSelectedStyle({ letterSpacing: value })}
+        onParagraphSpacingBefore={(value) =>
+          updateSelectedStyle({ paragraphSpacingBefore: value || undefined })
+        }
+        onParagraphSpacingAfter={(value) =>
+          updateSelectedStyle({ paragraphSpacingAfter: value || undefined })
+        }
       />
     ) : null;
 
@@ -817,6 +895,47 @@ export function FormatRibbonTypographySections({
             >
               <Strikethrough size={15} aria-hidden="true" />
             </TdRibbonIconButton>
+            <TdRibbonIconButton
+              hint={H.subscript}
+              ariaLabel="Subscrito"
+              active={baselineShiftActive === "sub"}
+              onClick={() =>
+                applyToggleOrContainer("subscript", {
+                  baselineShift: baselineShiftActive === "sub" ? null : "sub",
+                })
+              }
+            >
+              <Subscript size={15} aria-hidden="true" />
+            </TdRibbonIconButton>
+            <TdRibbonIconButton
+              hint={H.superscript}
+              ariaLabel="Sobrescrito"
+              active={baselineShiftActive === "super"}
+              onClick={() =>
+                applyToggleOrContainer("superscript", {
+                  baselineShift: baselineShiftActive === "super" ? null : "super",
+                })
+              }
+            >
+              <Superscript size={15} aria-hidden="true" />
+            </TdRibbonIconButton>
+            {showParagraphLists || isTextBlock || isShapeTextTarget ? (
+              <>
+                <span className="td-deck-ribbon__toolbar-sep" aria-hidden="true" />
+                <HintAction hint={H.textCase} ariaLabel="Ajuda: Maiúsculas e minúsculas">
+                  <TdRibbonSelect
+                    aria-label="Alterar maiúsculas"
+                    className="td-deck-ribbon__select--compact"
+                    value=""
+                    onChange={(value) => {
+                      if (!value) return;
+                      transformSelectedTextCase(value as ComunicadoTextCaseTransform);
+                    }}
+                    options={TEXT_CASE_OPTIONS}
+                  />
+                </HintAction>
+              </>
+            ) : null}
             <span className="td-deck-ribbon__toolbar-sep" aria-hidden="true" />
             {showTextHighlight ? (
               <TvRibbonColorPicker

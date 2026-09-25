@@ -30,6 +30,7 @@ import {
   type DeckRibbonTabId,
   resolveDeckRibbonTabs,
 } from "./deck";
+import { applyFormatElementRibbonTabMeta } from "../utils/applyFormatElementRibbonTabMeta";
 
 import type { DeckHomePlaylistChromeProps } from "./deck";
 
@@ -143,15 +144,18 @@ export function DeckEditorChrome({
   );
   const showDataTab = Boolean(editor?.dataPanelOpen) || hasDataBoundSelection;
   const isCanvasTableSelection = editor?.selected?.type === "canvas_table";
-  const tabs = applyCanvasTableRibbonTabMeta(
-    resolveDeckRibbonTabs(isCustomSlide, {
-      hasSelection,
-      isTableSelection,
-      hasDataBoundSelection,
-      showDataTab,
-      hidePlaylistTab: variant === "template",
-    }),
-    Boolean(isCanvasTableSelection),
+  const tabs = applyFormatElementRibbonTabMeta(
+    applyCanvasTableRibbonTabMeta(
+      resolveDeckRibbonTabs(isCustomSlide, {
+        hasSelection,
+        isTableSelection,
+        hasDataBoundSelection,
+        showDataTab,
+        hidePlaylistTab: variant === "template",
+      }),
+      Boolean(isCanvasTableSelection),
+    ),
+    editor?.selected,
   );
   const [activeTab, setActiveTab] = useState<DeckRibbonTabId>(() =>
     isCustomSlide ? "insert" : "playlist",

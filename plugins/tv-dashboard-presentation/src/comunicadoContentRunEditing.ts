@@ -118,7 +118,13 @@ export function findDataRefRunIndexInRange(
   return hit.index;
 }
 
-export type ContentRunStyleToggleKey = "fontWeight" | "fontStyle" | "underline" | "strikethrough";
+export type ContentRunStyleToggleKey =
+  | "fontWeight"
+  | "fontStyle"
+  | "underline"
+  | "strikethrough"
+  | "subscript"
+  | "superscript";
 
 /** Patch de tipografia de caractere (Google Slides TextRun / Canva RichtextRange). */
 export type ContentRunStylePatch = {
@@ -130,6 +136,8 @@ export type ContentRunStylePatch = {
   fontWeight?: "normal" | "bold" | null;
   fontStyle?: "normal" | "italic" | null;
   textDecoration?: ComunicadoTextDecoration | null;
+  /** `null` remove sub/sup. */
+  baselineShift?: "sub" | "super" | null;
 };
 
 export type ContentRunSelectionStyleState = {
@@ -141,6 +149,7 @@ export type ContentRunSelectionStyleState = {
   fontSize: number | "mixed" | null;
   color: string | "mixed" | null;
   textHighlight: string | "mixed" | null;
+  baselineShift: "sub" | "super" | "none" | "mixed";
 };
 
 const TOGGLE_SPECS: Record<
@@ -203,6 +212,24 @@ const TOGGLE_SPECS: Record<
       });
     },
   },
+  subscript: {
+    isActive: (style) => style?.baselineShift === "sub",
+    activate: (style) => pruneRunStyle({ ...style, baselineShift: "sub" }),
+    deactivate: (style) => {
+      const next = { ...style };
+      delete next.baselineShift;
+      return pruneRunStyle(next);
+    },
+  },
+  superscript: {
+    isActive: (style) => style?.baselineShift === "super",
+    activate: (style) => pruneRunStyle({ ...style, baselineShift: "super" }),
+    deactivate: (style) => {
+      const next = { ...style };
+      delete next.baselineShift;
+      return pruneRunStyle(next);
+    },
+  },
 };
 
 function pruneRunStyle(style: ComunicadoContentRunStyle): ComunicadoContentRunStyle | undefined {
@@ -221,6 +248,12 @@ function pruneRunStyle(style: ComunicadoContentRunStyle): ComunicadoContentRunSt
   }
   if (style.namedStyle === "title1" || style.namedStyle === "subtitle" || style.namedStyle === "body") {
     cleaned.namedStyle = style.namedStyle;
+  }
+  if (style.baselineShift === "sub" || style.baselineShift === "super") {
+    cleaned.baselineShift = style.baselineShift;
+  }
+  if (typeof style.indentLevel === "number" && style.indentLevel > 0) {
+    cleaned.indentLevel = Math.min(8, Math.trunc(style.indentLevel));
   }
   return Object.keys(cleaned).length > 0 ? cleaned : undefined;
 }
@@ -383,6 +416,11 @@ export function selectionRunStyleState(
       fontStyle: "normal",
       underline: false,
       strikethrough: false,
+      fontFamily: null,
+      fontSize: null,
+      color: null,
+      textHighlight: null,
+      baselineShift: "none",
     };
   }
 
@@ -410,6 +448,13 @@ export function selectionRunStyleState(
       return value === "transparent" ? "" : value;
     }),
   );
+  const baselineStates = new Set(
+    chars.map((char) =>
+      char.style?.baselineShift === "sub" || char.style?.baselineShift === "super"
+        ? char.style.baselineShift
+        : "none",
+    ),
+  );
 
   const singleOrMixed = <T extends string>(states: Set<T>, emptyAsNull = true): T | "mixed" | null => {
     if (states.size > 1) return "mixed";
@@ -432,6 +477,14 @@ export function selectionRunStyleState(
     })(),
     color: singleOrMixed(colorStates),
     textHighlight: singleOrMixed(highlightStates),
+    baselineShift:
+      baselineStates.size > 1
+        ? "mixed"
+        : baselineStates.has("sub")
+          ? "sub"
+          : baselineStates.has("super")
+            ? "super"
+            : "none",
   };
 }
 
@@ -477,6 +530,10 @@ function applyStylePatchToRunStyle(
     } else {
       next.textDecoration = patch.textDecoration;
     }
+  }
+  if ("baselineShift" in patch) {
+    if (patch.baselineShift == null) delete next.baselineShift;
+    else next.baselineShift = patch.baselineShift;
   }
   return pruneRunStyle(next);
 }

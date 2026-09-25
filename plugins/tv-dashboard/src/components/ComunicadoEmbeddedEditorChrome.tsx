@@ -20,6 +20,7 @@ import {
   resolveEmbeddedComunicadoRibbonTabs,
   type DeckRibbonTabId,
 } from "./deck";
+import { applyFormatElementRibbonTabMeta } from "../utils/applyFormatElementRibbonTabMeta";
 
 type Labels = Record<string, string>;
 
@@ -55,14 +56,17 @@ export function ComunicadoEmbeddedEditorChrome({ labels = {} }: Props) {
   );
   const showDataTab = editor.dataPanelOpen || hasDataBoundSelection;
   const isCanvasTableSelection = editor.selected?.type === "canvas_table";
-  const tabs = applyCanvasTableRibbonTabMeta(
-    resolveEmbeddedComunicadoRibbonTabs({
-      hasSelection,
-      isTableSelection,
-      hasDataBoundSelection,
-      showDataTab,
-    }),
-    isCanvasTableSelection,
+  const tabs = applyFormatElementRibbonTabMeta(
+    applyCanvasTableRibbonTabMeta(
+      resolveEmbeddedComunicadoRibbonTabs({
+        hasSelection,
+        isTableSelection,
+        hasDataBoundSelection,
+        showDataTab,
+      }),
+      isCanvasTableSelection,
+    ),
+    editor.selected,
   );
   const [activeTab, setActiveTab] = useState<RibbonEmbeddedTab>("insert");
 

@@ -38,6 +38,7 @@ vi.mock("./comunicadoEditorContext", () => ({
     updateSelected,
     updateSelectedStyle: vi.fn(),
     updateSelectedTextFormatStyle: vi.fn(),
+    transformSelectedTextCase: vi.fn(),
     selectTablePart,
     openDataPanel,
     setSelectionPanelTab: vi.fn(),

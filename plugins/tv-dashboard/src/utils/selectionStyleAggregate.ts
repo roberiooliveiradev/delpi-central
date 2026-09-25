@@ -42,6 +42,10 @@ export function aggregateVisualBoxTextFormatStyle(
     "textStrokeColor",
     "textStrokeWidth",
     "textReflection",
+    "baselineShift",
+    "indentLevel",
+    "paragraphSpacingBefore",
+    "paragraphSpacingAfter",
   ];
   const out: AggregatedTextFormatStyle = {};
   for (const key of keys) {

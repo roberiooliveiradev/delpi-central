@@ -136,7 +136,20 @@ export type ComunicadoContentRunStyle = {
   textStrokeWidth?: number;
   /** Reflexo tipográfico espelhado. */
   textReflection?: boolean;
+  /** Subscrito / sobrescrito — mutuamente exclusivos. */
+  baselineShift?: "sub" | "super";
+  /** Nível de recuo de parágrafo/linha (0 = nenhum; não usar espaços). */
+  indentLevel?: number;
 };
+
+/** Transformação de maiúsculas/minúsculas (mutação de conteúdo, não CSS). */
+export type ComunicadoTextCaseTransform =
+  | "sentence"
+  | "lower"
+  | "upper"
+  | "title"
+  | "toggle";
+
 
 export type ComunicadoContentRun = {
   text: string;
@@ -196,10 +209,18 @@ export type ComunicadoBlockStyle = {
   verticalAlign?: ComunicadoVerticalAlign;
   lineHeight?: number;
   letterSpacing?: number;
+  /** Espaçamento antes do bloco de texto (px). */
+  paragraphSpacingBefore?: number;
+  /** Espaçamento depois do bloco de texto (px). */
+  paragraphSpacingAfter?: number;
   textHighlight?: string;
   fontWeight?: "normal" | "bold";
   fontStyle?: "normal" | "italic";
   textDecoration?: ComunicadoTextDecoration;
+  /** Subscrito / sobrescrito no bloco inteiro (fallback sem seleção parcial). */
+  baselineShift?: "sub" | "super";
+  /** Recuo de parágrafo do bloco (0–8). */
+  indentLevel?: number;
   objectFit?: "cover" | "contain";
   backgroundColor?: string;
   borderColor?: string;

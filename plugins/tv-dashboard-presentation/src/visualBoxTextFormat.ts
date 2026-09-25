@@ -38,6 +38,10 @@ export type VisualBoxTextFormatSnapshot = {
   textStrokeColor?: string;
   textStrokeWidth?: number;
   textReflection?: boolean;
+  baselineShift?: "sub" | "super";
+  indentLevel?: number;
+  paragraphSpacingBefore?: number;
+  paragraphSpacingAfter?: number;
 };
 
 function resolveBlockRuns(block: ComunicadoVisualBoxBlock): ComunicadoContentRun[] {
@@ -99,6 +103,10 @@ function snapshotFromBlockStyle(
     textStrokeColor: style?.textStrokeColor,
     textStrokeWidth: style?.textStrokeWidth,
     textReflection: style?.textReflection,
+    baselineShift: style?.baselineShift,
+    indentLevel: style?.indentLevel,
+    paragraphSpacingBefore: style?.paragraphSpacingBefore,
+    paragraphSpacingAfter: style?.paragraphSpacingAfter,
   };
 }
 
@@ -148,6 +156,12 @@ export function resolveVisualBoxEffectiveTextFormatSnapshot(
     textStrokeColor: container.textStrokeColor,
     textStrokeWidth: container.textStrokeWidth,
     textReflection: container.textReflection,
+    baselineShift:
+      aggregateOptional(lineTypographies.map((item) => item.baselineShift)) ??
+      container.baselineShift,
+    indentLevel: container.indentLevel,
+    paragraphSpacingBefore: container.paragraphSpacingBefore,
+    paragraphSpacingAfter: container.paragraphSpacingAfter,
   };
 }
 

@@ -335,6 +335,8 @@ _NATIVE_OP_NAMES = frozenset(
         "align_blocks",
         "reorder_block_z",
         "duplicate_blocks",
+        "transform_text_case",
+        "bump_font_size",
     }
 )
 
@@ -818,6 +820,10 @@ class PresentationPatchService:
                 self._op_reorder_block_z(native_config, raw_op)
             elif op_name == "duplicate_blocks":
                 self._op_duplicate_blocks(native_config, raw_op)
+            elif op_name == "transform_text_case":
+                self._op_transform_text_case(native_config, raw_op)
+            elif op_name == "bump_font_size":
+                self._op_bump_font_size(native_config, raw_op)
             elif op_name == "delete_block":
                 removed = self._op_delete_block(native_config, raw_op)
                 if removed:
@@ -1408,6 +1414,28 @@ class PresentationPatchService:
                 normalize_block_table_projection(merged)
             # Campo / textProjection write must not leave dual-bind (G15).
             merged = DisplayFormatService.sanitize_contradictory_text_binding(merged)
+            from tv_app.application.services.data.text_typography_service import (
+                normalize_block_text_style,
+                normalize_run_style,
+            )
+
+            if isinstance(merged.get("style"), dict):
+                merged["style"] = normalize_block_text_style(merged["style"]) or {}
+            runs = merged.get("contentRuns")
+            if isinstance(runs, list):
+                normalized_runs: list[Any] = []
+                for raw in runs:
+                    if not isinstance(raw, dict):
+                        continue
+                    run = dict(raw)
+                    if isinstance(run.get("style"), dict):
+                        ns = normalize_run_style(run["style"])
+                        if ns:
+                            run["style"] = ns
+                        else:
+                            run.pop("style", None)
+                    normalized_runs.append(run)
+                merged["contentRuns"] = normalized_runs
             existing.clear()
             existing.update(merged)
             cfg["blocks"] = blocks
@@ -1533,6 +1561,81 @@ class PresentationPatchService:
         )
         for clone in clones:
             blocks.append(_with_block_defaults(clone))
+        cfg["blocks"] = blocks
+
+    def _op_transform_text_case(self, cfg: dict[str, Any], op: dict[str, Any]) -> None:
+        from tv_app.application.services.data.text_typography_service import (
+            plain_from_runs,
+            transform_content_runs_case,
+            transform_text_case,
+        )
+
+        block_id = str(op.get("blockId") or "").strip()
+        mode = str(op.get("mode") or "").strip().lower()
+        if not block_id:
+            raise PresentationPatchError(
+                PresentationOpsContentService.message("blockIdRequired")
+            )
+        if mode not in {"sentence", "lower", "upper", "title", "toggle"}:
+            raise PresentationPatchError(
+                PresentationOpsContentService.message("unknownOp", op="transform_text_case")
+            )
+        blocks = _blocks_of(cfg)
+        block = _find_block(blocks, block_id)
+        if block is None:
+            raise PresentationPatchError(
+                PresentationOpsContentService.message("blockNotFound", blockId=block_id)
+            )
+        runs = block.get("contentRuns")
+        if isinstance(runs, list) and runs:
+            next_runs = transform_content_runs_case(runs, mode)
+            block["contentRuns"] = next_runs
+            block["content"] = plain_from_runs(next_runs)
+        else:
+            content = block.get("content")
+            if isinstance(content, str):
+                block["content"] = transform_text_case(content, mode)
+        cfg["blocks"] = blocks
+
+    def _op_bump_font_size(self, cfg: dict[str, Any], op: dict[str, Any]) -> None:
+        from tv_app.application.services.data.text_typography_service import bump_font_size
+
+        block_id = str(op.get("blockId") or "").strip()
+        if not block_id:
+            raise PresentationPatchError(
+                PresentationOpsContentService.message("blockIdRequired")
+            )
+        try:
+            delta = int(op.get("deltaSteps"))
+        except (TypeError, ValueError) as exc:
+            raise PresentationPatchError(
+                PresentationOpsContentService.message("unknownOp", op="bump_font_size")
+            ) from exc
+        blocks = _blocks_of(cfg)
+        block = _find_block(blocks, block_id)
+        if block is None:
+            raise PresentationPatchError(
+                PresentationOpsContentService.message("blockNotFound", blockId=block_id)
+            )
+        style = block.get("style") if isinstance(block.get("style"), dict) else {}
+        next_style = dict(style)
+        next_style["fontSize"] = bump_font_size(style.get("fontSize"), delta)
+        block["style"] = next_style
+        # Also bump run fontSizes when present so partial rich text stays coherent.
+        runs = block.get("contentRuns")
+        if isinstance(runs, list):
+            next_runs: list[Any] = []
+            for raw in runs:
+                if not isinstance(raw, dict):
+                    continue
+                run = dict(raw)
+                run_style = run.get("style") if isinstance(run.get("style"), dict) else None
+                if run_style and run_style.get("fontSize") is not None:
+                    rs = dict(run_style)
+                    rs["fontSize"] = bump_font_size(rs.get("fontSize"), delta)
+                    run["style"] = rs
+                next_runs.append(run)
+            block["contentRuns"] = next_runs
         cfg["blocks"] = blocks
 
     def _op_delete_block(self, cfg: dict[str, Any], op: dict[str, Any]) -> str | None:

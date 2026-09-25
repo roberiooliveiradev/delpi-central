@@ -360,8 +360,16 @@ export type ComunicadoEditorContextValue = {
       textStrokeWidth?: number;
       textReflection?: boolean;
       fontSizeAuto?: boolean;
+      baselineShift?: "sub" | "super" | null;
+      indentLevel?: number;
+      paragraphSpacingBefore?: number;
+      paragraphSpacingAfter?: number;
     },
     applyOptions?: import("../utils/selectionPropertyApply").SelectionPropertyApplyOptions,
+  ) => void;
+  /** Mutação de maiúsculas/minúsculas do conteúdo (BE transform_text_case / runs). */
+  transformSelectedTextCase: (
+    mode: import("@delpi/tv-dashboard-presentation").ComunicadoTextCaseTransform,
   ) => void;
   /** @deprecated Use `applyDynamicContentSpec` via picker `{ }`. */
   insertDataFieldAtCursor: () => void;

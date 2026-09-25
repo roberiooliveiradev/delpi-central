@@ -62,8 +62,11 @@ import {
   enrichClipboardWithLinkedDataSources,
   isComunicadoVisualBoxBlock,
   isLineShapeKind,
+  plainTextFromContentRuns,
+  resolveTextBlockDisplayRuns,
   resolveBlockPasteDataPolicy,
   staticLabelFromTextBoundBlock,
+  transformContentRunsCase,
   translateLineEndpoints,
   patchBackgroundUnderlay,
   type ComunicadoBackground,
@@ -83,6 +86,7 @@ import {
   type ComunicadoTablePartRef,
   type ComunicadoTablePreset,
   type ComunicadoTextBlock,
+  type ComunicadoTextCaseTransform,
 } from "@delpi/tv-dashboard-presentation";
 
 import {
@@ -133,6 +137,7 @@ import {
   commitCreateBlock,
   commitDuplicateBlocks,
   commitPatchNativeConfig,
+  commitPresentationOps,
   commitReorderBlockZ,
   commitUpsertBlocks,
 } from "../../utils/presentationMutationClient";
@@ -162,6 +167,11 @@ type Options = {
   } | null;
   editingChartPart: ComunicadoChartPartRef | null;
   editingKpiPart: ComunicadoKpiPartRef | null;
+  lastPartialTextEditSelection?: {
+    blockId: string;
+    start: number;
+    end: number;
+  } | null;
   setSelectedId: (id: string | null) => void;
   selectBlocksByIds: (blockIds: string[]) => void;
   setSelectedChartPart: Dispatch<SetStateAction<ComunicadoChartPartRef | null>>;
@@ -214,6 +224,7 @@ export function useComunicadoEditorBlocks({
   selectedCanvasTableCell = null,
   editingChartPart,
   editingKpiPart,
+  lastPartialTextEditSelection = null,
   setSelectedId,
   selectBlocksByIds,
   setSelectedChartPart,
@@ -1036,6 +1047,120 @@ export function useComunicadoEditorBlocks({
     ],
   );
 
+  /**
+   * Mutação de conteúdo (maiúsculas) — BE `transform_text_case` no bloco inteiro;
+   * range parcial aplica transform local + upsert ack.
+   */
+  const transformSelectedTextCase = useCallback(
+    (mode: ComunicadoTextCaseTransform) => {
+      const targets =
+        selectedBlocks.length > 0
+          ? selectedBlocks.filter((b) => isComunicadoVisualBoxBlock(b))
+          : selected && isComunicadoVisualBoxBlock(selected)
+            ? [selected]
+            : [];
+      if (targets.length === 0) return;
+
+      const partial =
+        lastPartialTextEditSelection &&
+        targets.some((b) => b.id === lastPartialTextEditSelection.blockId) &&
+        lastPartialTextEditSelection.end > lastPartialTextEditSelection.start
+          ? lastPartialTextEditSelection
+          : null;
+
+      if (partial && targets.length === 1) {
+        const block = targets[0];
+        const runs = resolveTextBlockDisplayRuns({
+          content: block.content ?? "",
+          contentRuns: block.contentRuns,
+          textProjection: "textProjection" in block ? block.textProjection : undefined,
+          resolved: "resolved" in block ? block.resolved : undefined,
+        });
+        const nextRuns = transformContentRunsCase(runs, mode, {
+          start: partial.start,
+          end: partial.end,
+        });
+        const nextContent = plainTextFromContentRuns(nextRuns);
+        const nextBlocks = (configRef.current.blocks ?? []).map((b) =>
+          b.id === block.id
+            ? ({ ...b, content: nextContent, contentRuns: nextRuns } as ComunicadoBlock)
+            : b,
+        );
+        updateBlocks(nextBlocks);
+        ackBlocksMutation(nextBlocks.filter((b) => b.id === block.id));
+        return;
+      }
+
+      if (playlistId && slideId && !partial) {
+        void commitPresentationOps({
+          playlistId,
+          slideId,
+          ops: targets.map((block) => ({
+            op: "transform_text_case",
+            blockId: block.id,
+            mode,
+          })),
+        })
+          .then((canonical) => {
+            if (canonical) commitWithHistory(canonical);
+          })
+          .catch(() => {
+            /* local fallback below */
+            const nextBlocks = (configRef.current.blocks ?? []).map((block) => {
+              if (!targets.some((t) => t.id === block.id)) return block;
+              if (!isComunicadoVisualBoxBlock(block)) return block;
+              const runs = resolveTextBlockDisplayRuns({
+                content: block.content ?? "",
+                contentRuns: block.contentRuns,
+                textProjection:
+                  "textProjection" in block ? block.textProjection : undefined,
+                resolved: "resolved" in block ? block.resolved : undefined,
+              });
+              const nextRuns = transformContentRunsCase(runs, mode);
+              return {
+                ...block,
+                content: plainTextFromContentRuns(nextRuns),
+                contentRuns: nextRuns,
+              } as ComunicadoBlock;
+            });
+            updateBlocks(nextBlocks);
+            ackBlocksMutation(nextBlocks.filter((b) => targets.some((t) => t.id === b.id)));
+          });
+        return;
+      }
+
+      const nextBlocks = (configRef.current.blocks ?? []).map((block) => {
+        if (!targets.some((t) => t.id === block.id)) return block;
+        if (!isComunicadoVisualBoxBlock(block)) return block;
+        const runs = resolveTextBlockDisplayRuns({
+          content: block.content ?? "",
+          contentRuns: block.contentRuns,
+          textProjection: "textProjection" in block ? block.textProjection : undefined,
+          resolved: "resolved" in block ? block.resolved : undefined,
+        });
+        const nextRuns = transformContentRunsCase(runs, mode);
+        return {
+          ...block,
+          content: plainTextFromContentRuns(nextRuns),
+          contentRuns: nextRuns,
+        } as ComunicadoBlock;
+      });
+      updateBlocks(nextBlocks);
+      ackBlocksMutation(nextBlocks.filter((b) => targets.some((t) => t.id === b.id)));
+    },
+    [
+      ackBlocksMutation,
+      commitWithHistory,
+      configRef,
+      lastPartialTextEditSelection,
+      playlistId,
+      selected,
+      selectedBlocks,
+      slideId,
+      updateBlocks,
+    ],
+  );
+
   const duplicateSelected = useCallback(async () => {
     const ids = getActionSelectedIds();
     const idSet = new Set(ids);
@@ -1757,6 +1882,7 @@ export function useComunicadoEditorBlocks({
     updateBlockLink,
     updateSelectedStyle,
     updateSelectedTextFormatStyle,
+    transformSelectedTextCase,
     duplicateSelected,
     replaceSelectedDataRoute,
     removeSelected,

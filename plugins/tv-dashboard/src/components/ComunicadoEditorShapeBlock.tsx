@@ -371,6 +371,9 @@ function ComunicadoEditorShapeBlockInner({
                 } else if (key === "u") {
                   event.preventDefault();
                   applyPartialStyleToggle("underline");
+                } else if (key === "=" || key === "+") {
+                  event.preventDefault();
+                  applyPartialStyleToggle(event.shiftKey ? "superscript" : "subscript");
                 }
               }}
             />

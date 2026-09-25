@@ -1780,9 +1780,20 @@ export function comunicadoTextInnerStyle(
 
   if (style.lineHeight != null) css.lineHeight = style.lineHeight;
   if (style.letterSpacing != null) css.letterSpacing = `${style.letterSpacing}px`;
+  if (style.paragraphSpacingBefore != null && style.paragraphSpacingBefore > 0) {
+    css.paddingTop = `${style.paragraphSpacingBefore * fontScale}px`;
+  }
+  if (style.paragraphSpacingAfter != null && style.paragraphSpacingAfter > 0) {
+    css.paddingBottom = `${style.paragraphSpacingAfter * fontScale}px`;
+  }
+  if (style.indentLevel != null && style.indentLevel > 0) {
+    css.paddingLeft = `${Math.min(8, Math.max(0, Math.trunc(style.indentLevel))) * 24 * fontScale}px`;
+  }
   if (style.textHighlight) css.backgroundColor = style.textHighlight;
   if (style.textDecoration) css.textDecoration = style.textDecoration;
   if (style.fontSize) css.fontSize = `${Math.max(8, style.fontSize * fontScale)}px`;
+  if (style.baselineShift === "sub") css.verticalAlign = "sub";
+  if (style.baselineShift === "super") css.verticalAlign = "super";
   if (!applyColorPaintToCss(css, style.colorPaint)) {
     const paintColor = resolvePaintTextColor(style.color, style.backgroundColor ?? style.fill ?? "#ffffff", {
       unsetIsAutomatic: false,
