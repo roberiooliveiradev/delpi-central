@@ -17,6 +17,9 @@ jobs:
           node-version: "24"
           cache: npm
           cache-dependency-path: plugins/tv-dashboard/package-lock.json
+      - name: Install plugin-ui dependencies
+        working-directory: plugins/plugin-ui
+        run: npm ci
       - name: Install tv-dashboard dependencies
         working-directory: plugins/tv-dashboard
         run: npm ci
