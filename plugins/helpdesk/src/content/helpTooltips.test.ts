@@ -60,7 +60,18 @@ describe("helpTooltips budget", () => {
     expect(helpTooltips.detailUi.createTask).toMatch(/tarefa/i);
     expect(helpTooltips.detailUi.requestApproval).toMatch(/aprova/i);
     expect(helpTooltips.detailUi.requestApproval).toMatch(/grupo|usuário/i);
-    expect(helpTooltips.detailUi.attachFile).toMatch(/título|arquivo/i);
+    expect(helpTooltips.detailUi.attachFile).toMatch(/arquivo/i);
+  });
+
+  it("centraliza helps dos action cards em actionFields", () => {
+    const fields = helpTooltips.detailUi.actionFields;
+    expect(fields.reply.model).toMatch(/modelo/i);
+    expect(fields.reply.source).toMatch(/origem/i);
+    expect(fields.solution.type).toMatch(/classifica/i);
+    expect(fields.task.duration).toMatch(/minutos/i);
+    expect(fields.task.assignee).toMatch(/técnico/i);
+    expect(fields.attachment.title).toMatch(/arquivo/i);
+    expect(fields.approval.approverType).toMatch(/usuário|grupo/i);
   });
 
   it("não reintroduz o bloco filters órfão da FiltersRow antiga", () => {

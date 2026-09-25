@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
 import {
   ActionButton,
+  FieldLabel,
   FilePreviewModal,
   HintAction,
   SectionHintLabel,
@@ -194,6 +195,13 @@ function messageFor(error: unknown): { code: string; text: string } {
     return { code: "user_message", text: error.message };
   }
   return { code: "request_failed", text: "Não foi possível concluir a operação." };
+}
+
+function formatAttachmentBytes(size: number): string {
+  if (!Number.isFinite(size) || size < 0) return "";
+  if (size < 1024) return `${size} B`;
+  if (size < 1024 * 1024) return `${(size / 1024).toFixed(size < 10 * 1024 ? 1 : 0)} KB`;
+  return `${(size / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 export function HelpdeskPage({ route }: { route: HelpdeskRoute }) {
@@ -1845,8 +1853,9 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                               />
                               <HelpdeskRichTextField
                                 ref={replyComposerRef}
-                                label="Responder"
-                                hint={helpTooltips.detailUi.reply}
+                                label="Mensagem"
+                                hint={helpTooltips.detailUi.actionFields.reply.message}
+                                required
                                 value={content}
                                 onChange={(next) =>
                                   setContent(attachmentPreview.persistHtml(next))
@@ -2019,8 +2028,9 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                             >
                               <div className="helpdesk-action-form__solution-layout">
                                 <HelpdeskRichTextField
-                                  label="Solução"
-                                  hint={helpTooltips.detailUi.createSolution}
+                                  label="Descrição da solução"
+                                  hint={helpTooltips.detailUi.actionFields.solution.description}
+                                  required
                                   value={solutionForm.content}
                                   onChange={(next) =>
                                     setSolutionForm((current) => ({ ...current, content: next }))
@@ -2089,8 +2099,9 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                             >
                               <div className="helpdesk-action-form__task-layout">
                                 <HelpdeskRichTextField
-                                  label="Tarefa"
-                                  hint={helpTooltips.detailUi.createTask}
+                                  label="Descrição da tarefa"
+                                  hint={helpTooltips.detailUi.actionFields.task.description}
+                                  required
                                   value={taskForm.content}
                                   onChange={(next) => setTaskForm((current) => ({ ...current, content: next }))}
                                   minHeight={144}
@@ -2177,26 +2188,35 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                                 onGroupIdChange={setApprovalGroupId}
                                 onApplyContent={setApprovalContent}
                                 disabled={saving}
+                                groupRequiredHint={
+                                  approvalApproverType === "group" &&
+                                  (approvalGroupId == null || approvalGroupId <= 0)
+                                    ? "Selecione um grupo para continuar."
+                                    : null
+                                }
                               />
                               {approvalApproverType === "user" ? (
                                 <div className="helpdesk-ticket-workspace__approval-approver">
-                                  <span className="helpdesk-ticket-workspace__field-label">
-                                    Aprovador
-                                  </span>
                                   <HelpdeskAssigneePicker
                                     label="Aprovador"
+                                    hint={helpTooltips.detailUi.actionFields.approval.approver}
                                     value={approverPick}
                                     onChange={setApproverPick}
                                     disabled={saving}
                                     purpose="mention"
-                                    placeholder="Buscar aprovador…"
-                                    emptyLabel="Nenhum aprovador selecionado"
+                                    placeholder="Buscar usuário…"
+                                    emptyLabel="Nenhum usuário selecionado"
                                   />
+                                  {!approverPick?.id ? (
+                                    <p className="helpdesk-action-fields__hint" role="status">
+                                      Selecione um usuário para continuar.
+                                    </p>
+                                  ) : null}
                                 </div>
                               ) : null}
                               <HelpdeskRichTextField
-                                label="Mensagem"
-                                hint={helpTooltips.detailUi.requestApproval}
+                                label="Comentário para aprovação (opcional)"
+                                hint={helpTooltips.detailUi.actionFields.approval.message}
                                 value={approvalContent}
                                 onChange={setApprovalContent}
                                 minHeight={120}
@@ -2243,33 +2263,66 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                                   multiple
                                   hidden
                                   onChange={(event) => {
-                                    setDocumentFiles(Array.from(event.target.files || []));
+                                    setDocumentFiles((current) => [
+                                      ...current,
+                                      ...Array.from(event.target.files || []),
+                                    ]);
                                     event.target.value = "";
                                   }}
                                 />
-                                <SectionHintLabel
-                                  label="Anexa arquivos ao chamado sem enviar uma mensagem."
-                                  hint={helpTooltips.detailUi.attachFile}
-                                />
                                 <label className="helpdesk-action-fields__field">
-                                  <span>Título (opcional)</span>
+                                  <FieldLabel
+                                    label="Título (opcional)"
+                                    hint={helpTooltips.detailUi.actionFields.attachment.title}
+                                  />
                                   <input
                                     type="text"
                                     value={documentTitle}
                                     disabled={saving}
-                                    placeholder="Nome exibido no documento"
+                                    placeholder="Deixe vazio para usar o nome do arquivo"
                                     onChange={(event) => setDocumentTitle(event.target.value)}
                                   />
                                 </label>
-                                {documentFiles.length > 0 ? (
-                                  <ul className="helpdesk-ticket-workspace__document-list">
-                                    {documentFiles.map((file) => (
-                                      <li key={`${file.name}-${file.size}-${file.lastModified}`}>
-                                        {file.name}
-                                      </li>
-                                    ))}
-                                  </ul>
-                                ) : null}
+                                <div className="helpdesk-action-fields__field">
+                                  <span className="helpdesk-field__label-row">
+                                    <FieldLabel
+                                      label="Arquivos"
+                                      hint={helpTooltips.detailUi.actionFields.attachment.files}
+                                    />
+                                    <span className="helpdesk-field__required"> *</span>
+                                  </span>
+                                  {documentFiles.length > 0 ? (
+                                    <ul className="helpdesk-ticket-workspace__document-list">
+                                      {documentFiles.map((file, index) => (
+                                        <li key={`${file.name}-${file.size}-${file.lastModified}-${index}`}>
+                                          <span>
+                                            {file.name}
+                                            {file.size > 0
+                                              ? ` (${formatAttachmentBytes(file.size)})`
+                                              : ""}
+                                          </span>
+                                          <button
+                                            type="button"
+                                            className="helpdesk-ticket-workspace__document-remove"
+                                            disabled={saving}
+                                            aria-label={`Remover ${file.name}`}
+                                            onClick={() =>
+                                              setDocumentFiles((current) =>
+                                                current.filter((_, itemIndex) => itemIndex !== index),
+                                              )
+                                            }
+                                          >
+                                            Remover
+                                          </button>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  ) : (
+                                    <p className="helpdesk-action-fields__hint" role="status">
+                                      Nenhum arquivo selecionado. Selecione ao menos um arquivo.
+                                    </p>
+                                  )}
+                                </div>
                                 <HelpdeskFormActions align="end">
                                   <ActionButton
                                     type="button"

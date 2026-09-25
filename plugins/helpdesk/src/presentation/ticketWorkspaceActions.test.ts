@@ -105,6 +105,22 @@ describe("ticketActionPresentation", () => {
     expect(ticketActionPresentation("reply").submitLabel).toBe("Enviar resposta");
     expect(ticketActionPresentation("create_task").submitLabel).toBe("Criar tarefa");
   });
+
+  it("usa subtítulos de ação user-facing sem jargão técnico", () => {
+    expect(ticketActionPresentation("reply").helperText).toBe("Envie uma resposta neste chamado.");
+    expect(ticketActionPresentation("create_solution").helperText).toBe(
+      "Registre a solução deste chamado.",
+    );
+    expect(ticketActionPresentation("create_task").helperText).toBe(
+      "Crie uma tarefa vinculada a este chamado.",
+    );
+    expect(ticketActionPresentation("attach_file").helperText).toMatch(/anexe arquivos/i);
+    expect(ticketActionPresentation("request_approval").helperText).toMatch(/usuário ou grupo/i);
+    for (const id of ["reply", "create_solution", "create_task", "attach_file", "request_approval"] as const) {
+      const text = ticketActionPresentation(id).helperText;
+      expect(text).not.toMatch(/HLAPI|payload|provider|helpdesk\)|público/i);
+    }
+  });
 });
 
 describe("timelineVisibility", () => {

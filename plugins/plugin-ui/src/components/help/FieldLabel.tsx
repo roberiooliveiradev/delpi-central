@@ -11,17 +11,9 @@ export type FieldLabelProps = {
   icon?: ReactNode;
 };
 
-/** Rótulo de formulário com balão de ajuda no hover do próprio texto. */
+/** Rótulo de formulário com ícone de ajuda (HelpTooltip) ao lado do texto. */
 export function FieldLabel({ label, hint, htmlFor, className, icon }: FieldLabelProps) {
   const rootClass = ensureDelpiUiClass(className, "delpi-ui-field-label");
-  const labelText =
-    hint != null && hint !== "" ? (
-      <HelpTooltip content={hint} ariaLabel={`Ajuda: ${label}`} wrap placement="bottom">
-        <span className="delpi-ui-field-label__text">{label}</span>
-      </HelpTooltip>
-    ) : (
-      label
-    );
   const marked = (
     <>
       {icon ? (
@@ -29,7 +21,10 @@ export function FieldLabel({ label, hint, htmlFor, className, icon }: FieldLabel
           {icon}
         </span>
       ) : null}
-      {labelText}
+      <span className="delpi-ui-field-label__text">{label}</span>
+      {hint != null && hint !== "" ? (
+        <HelpTooltip content={hint} ariaLabel={`Ajuda: ${label}`} placement="bottom" />
+      ) : null}
     </>
   );
 

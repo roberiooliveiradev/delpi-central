@@ -216,9 +216,14 @@ describe("HELPDESK-MFE-UX-002 ticket workspace", () => {
     expect(detail).toContain("requestTicketApproval");
     expect(detail).toContain("TicketTimelineFilterPopover");
     expect(detail).toContain("helpTooltips.detailUi.actionMenu");
-    expect(detail).toContain("helpTooltips.detailUi.createSolution");
-    expect(detail).toContain("helpTooltips.detailUi.createTask");
-    expect(detail).toContain("helpTooltips.detailUi.requestApproval");
+    expect(detail).toContain('label="Mensagem"');
+    expect(detail).toContain('label="Descrição da solução"');
+    expect(detail).toContain('label="Descrição da tarefa"');
+    expect(detail).toContain('label="Comentário para aprovação (opcional)"');
+    expect(detail).not.toContain('label="Responder"');
+    expect(detail).not.toContain('label="Solução"');
+    expect(detail).not.toContain('label="Tarefa"');
+    expect(detail).toContain("helpTooltips.detailUi.actionFields");
     expect(css).toContain(".helpdesk-ticket-workspace__body");
     expect(css).toContain("grid-template-columns");
     expect(css).toContain('data-action-variant="task"');
@@ -236,10 +241,30 @@ describe("HELPDESK-MFE-UX-002 ticket workspace", () => {
     expect(detail).toContain("approvalApproverType");
     expect(detail).toContain('approver_type: approvalApproverType');
     expect(detail).toContain("documentTitle");
-    expect(detail).toContain("helpTooltips.detailUi.attachFile");
+    expect(detail).toContain("helpTooltips.detailUi.actionFields.attachment.title");
+    expect(detail).toContain("document-remove");
+    expect(detail).not.toContain('SectionHintLabel\n                                  label="Anexa arquivos');
+    const approvalForm = detail.slice(
+      detail.indexOf('{activeAction === "request_approval" ? ('),
+      detail.indexOf('{activeAction === "attach_file" ? ('),
+    );
+    expect(approvalForm.match(/label="Aprovador"/g)?.length ?? 0).toBe(1);
+    expect(approvalForm).toContain('placeholder="Buscar usuário…"');
+    expect(approvalForm).toContain('emptyLabel="Nenhum usuário selecionado"');
+    expect(approvalForm).not.toContain("helpdesk-ticket-workspace__field-label");
     const approvalFields = read("TicketApprovalActionFields.tsx");
     expect(approvalFields).toContain('value: "group"');
     expect(approvalFields).toContain("listGroups");
+    expect(approvalFields).toContain("Grupo aprovador");
+    expect(approvalFields).toContain("Nenhum grupo selecionado");
+    expect(approvalFields).toContain("templates.length > 0");
+    const taskFields = read("TicketTaskActionFields.tsx");
+    expect(taskFields).toContain("Técnico responsável");
+    expect(taskFields).toContain("Nenhum técnico selecionado");
+    expect(taskFields).toContain("templates.length > 0");
+    const replyFields = read("TicketReplyActionFields.tsx");
+    expect(replyFields).toContain("templates.length > 0");
+    expect(replyFields).toContain("requestTypes.length > 0");
     const api = read("../api/helpdeskApi.ts");
     expect(api).toContain("approver_type");
     expect(api).toContain("approver_id");
@@ -247,6 +272,9 @@ describe("HELPDESK-MFE-UX-002 ticket workspace", () => {
     const view = read("../presentation/ticketView.ts");
     expect(view).toContain("timelineEntryHeadingText");
     expect(view).toContain("duration_seconds");
+    const presentation = read("../presentation/ticketActionPresentation.ts");
+    expect(presentation).toContain("Envie uma resposta neste chamado.");
+    expect(presentation).not.toContain("status depende do helpdesk");
   });
 
   it("wires proven operational actions from BFF capabilities", () => {

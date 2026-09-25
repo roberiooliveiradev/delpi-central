@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { FieldLabel } from "@delpi/plugin-ui/index";
 
 import {
   listGroups,
@@ -9,6 +10,7 @@ import {
   type TemplateCatalogItem,
   type TicketTaskCreateBody,
 } from "../api/helpdeskApi";
+import { helpTooltips } from "../content/helpTooltips";
 import {
   HelpdeskAssigneePicker,
   type HelpdeskAssigneeValue,
@@ -85,6 +87,7 @@ export function TicketTaskActionFields({ value, onChange, disabled }: Props) {
   const [statuses, setStatuses] = useState<CatalogItem[]>([]);
   const [groups, setGroups] = useState<CatalogItem[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -100,9 +103,13 @@ export function TicketTaskActionFields({ value, onChange, disabled }: Props) {
         setCategories(cats);
         setStatuses(sts);
         setGroups(grps);
+        setLoaded(true);
       })
       .catch(() => {
-        if (!cancelled) setLoadError("Não foi possível carregar opções da tarefa.");
+        if (!cancelled) {
+          setLoadError("Não foi possível carregar opções da tarefa.");
+          setLoaded(true);
+        }
       });
     return () => {
       cancelled = true;
@@ -144,46 +151,44 @@ export function TicketTaskActionFields({ value, onChange, disabled }: Props) {
     });
   }
 
-  const templateOptions = [
-    { value: "", label: "Sem modelo" },
-    ...catalogOptions(templates),
-  ];
-  const categoryOptions = [
-    { value: "", label: "Sem categoria" },
-    ...catalogOptions(categories),
-  ];
-  const groupOptions = [
-    { value: "", label: "Sem grupo" },
-    ...catalogOptions(groups),
-  ];
+  const help = helpTooltips.detailUi.actionFields.task;
 
   return (
     <div className="helpdesk-action-fields helpdesk-action-fields--task">
       {loadError ? <p className="helpdesk-action-fields__error">{loadError}</p> : null}
       <div className="helpdesk-action-fields__grid">
-        <HelpdeskSelect
-          label="Modelo"
-          value={value.templateId != null ? String(value.templateId) : ""}
-          onChange={(next) => applyTemplate(next ? Number(next) : null)}
-          options={templateOptions}
-          disabled={disabled}
-        />
-        <HelpdeskSelect
-          label="Categoria"
-          value={value.categoryId != null ? String(value.categoryId) : ""}
-          onChange={(next) => patch({ categoryId: next ? Number(next) : null })}
-          options={categoryOptions}
-          disabled={disabled}
-        />
-        <HelpdeskSelect
-          label="Status"
-          value={value.state != null ? String(value.state) : ""}
-          onChange={(next) => patch({ state: next === "" ? null : Number(next) })}
-          options={catalogOptions(statuses)}
-          disabled={disabled}
-        />
+        {loaded && templates.length > 0 ? (
+          <HelpdeskSelect
+            label="Modelo"
+            hint={help.model}
+            value={value.templateId != null ? String(value.templateId) : ""}
+            onChange={(next) => applyTemplate(next ? Number(next) : null)}
+            options={[{ value: "", label: "Sem modelo" }, ...catalogOptions(templates)]}
+            disabled={disabled}
+          />
+        ) : null}
+        {loaded && categories.length > 0 ? (
+          <HelpdeskSelect
+            label="Categoria"
+            hint={help.category}
+            value={value.categoryId != null ? String(value.categoryId) : ""}
+            onChange={(next) => patch({ categoryId: next ? Number(next) : null })}
+            options={[{ value: "", label: "Sem categoria" }, ...catalogOptions(categories)]}
+            disabled={disabled}
+          />
+        ) : null}
+        {loaded && statuses.length > 0 ? (
+          <HelpdeskSelect
+            label="Status"
+            hint={help.status}
+            value={value.state != null ? String(value.state) : ""}
+            onChange={(next) => patch({ state: next === "" ? null : Number(next) })}
+            options={catalogOptions(statuses)}
+            disabled={disabled}
+          />
+        ) : null}
         <label className="helpdesk-action-fields__field">
-          <span>Duração (minutos)</span>
+          <FieldLabel label="Duração (minutos)" hint={help.duration} />
           <input
             type="number"
             min={0}
@@ -198,20 +203,26 @@ export function TicketTaskActionFields({ value, onChange, disabled }: Props) {
         </label>
         <div className="helpdesk-action-fields__field">
           <HelpdeskAssigneePicker
-            label="Responsável"
+            label="Técnico responsável"
+            hint={help.assignee}
             value={value.assignee}
             onChange={(user) => patch({ assignee: user })}
             disabled={disabled}
             purpose="assignee"
+            placeholder="Buscar técnico…"
+            emptyLabel="Nenhum técnico selecionado"
           />
         </div>
-        <HelpdeskSelect
-          label="Grupo"
-          value={value.groupTechId != null ? String(value.groupTechId) : ""}
-          onChange={(next) => patch({ groupTechId: next ? Number(next) : null })}
-          options={groupOptions}
-          disabled={disabled}
-        />
+        {loaded && groups.length > 0 ? (
+          <HelpdeskSelect
+            label="Grupo"
+            hint={help.group}
+            value={value.groupTechId != null ? String(value.groupTechId) : ""}
+            onChange={(next) => patch({ groupTechId: next ? Number(next) : null })}
+            options={[{ value: "", label: "Sem grupo" }, ...catalogOptions(groups)]}
+            disabled={disabled}
+          />
+        ) : null}
       </div>
       <label className="helpdesk-action-fields__switch">
         <input
@@ -220,12 +231,12 @@ export function TicketTaskActionFields({ value, onChange, disabled }: Props) {
           disabled={disabled}
           onChange={(event) => patch({ planEnabled: event.target.checked })}
         />
-        <span>Planejar esta tarefa</span>
+        <FieldLabel label="Planejar esta tarefa" hint={help.planning} />
       </label>
       {value.planEnabled ? (
         <div className="helpdesk-action-fields__grid helpdesk-action-fields__grid--plan">
           <label className="helpdesk-action-fields__field">
-            <span>Início</span>
+            <FieldLabel label="Início" hint={help.planBegin} />
             <input
               type="datetime-local"
               value={value.plannedBegin}
@@ -234,7 +245,7 @@ export function TicketTaskActionFields({ value, onChange, disabled }: Props) {
             />
           </label>
           <label className="helpdesk-action-fields__field">
-            <span>Fim</span>
+            <FieldLabel label="Fim" hint={help.planEnd} />
             <input
               type="datetime-local"
               value={value.plannedEnd}

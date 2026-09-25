@@ -211,6 +211,8 @@ export type HelpdeskRichTextFieldProps = {
   /** Occupy remaining flex height in create/reply layouts. */
   fill?: boolean;
   disabled?: boolean;
+  /** Visual required marker on the label (BFF content min_length). */
+  required?: boolean;
   /** When false (default), host places Anexar next to Enviar via `openAttachPicker`. */
   showAttachButton?: boolean;
   /** H12 — colar/arrastar imagem ou escolher arquivo. */
@@ -277,6 +279,7 @@ export const HelpdeskRichTextField = forwardRef<
     minHeight = 180,
     fill = false,
     disabled,
+    required = false,
     showAttachButton = false,
     onUploadFiles,
     onUploadError,
@@ -389,7 +392,10 @@ export const HelpdeskRichTextField = forwardRef<
 
   const fieldBody = (
     <>
-      <FieldLabel className="helpdesk-field__label" label={label} hint={hint} icon={icon} />
+      <span className="helpdesk-field__label-row">
+        <FieldLabel className="helpdesk-field__label" label={label} hint={hint} icon={icon} />
+        {required ? <span className="helpdesk-field__required"> *</span> : null}
+      </span>
       <RichTextEditor
         ref={editorRef}
         value={value}

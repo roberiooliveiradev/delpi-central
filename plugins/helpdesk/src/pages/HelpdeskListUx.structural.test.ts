@@ -105,9 +105,11 @@ describe("Helpdesk list UX structural", () => {
   it("Enviar da resposta usa ActionButton primary como a abertura (não IconButton)", () => {
     const page = read("HelpdeskPage.tsx");
     expect(page).toMatch(/align="end"[\s\S]*?Ajuda: Enviar resposta[\s\S]*?variant="primary"/);
-    expect(page).toContain('aria-label={saving ? "Enviando" : "Enviar resposta"}');
-    expect(page).toContain("{saving ? \"Enviando…\" : \"Enviar\"}");
-    const replyBlock = page.slice(page.indexOf("label=\"Responder\""));
+    const replyBlock = page.slice(
+      page.indexOf('{activeAction === "reply" && draftFilesReady'),
+      page.indexOf('{activeAction === "accept_solution"'),
+    );
+    expect(replyBlock).toContain('ticketActionPresentation("reply").submitLabel');
     expect(replyBlock).toContain("ActionButton");
     expect(replyBlock).not.toContain("HelpdeskIconButton");
   });
@@ -131,11 +133,15 @@ describe("Helpdesk list UX structural", () => {
   it("resposta e descrição têm help próprio + Anexar ao lado de Enviar", () => {
     const page = read("HelpdeskPage.tsx");
     expect(page).toContain("hint={helpTooltips.createUi.attach}");
-    expect(page).toContain("hint={helpTooltips.detailUi.reply}");
+    expect(page).toContain("hint={helpTooltips.detailUi.actionFields.reply.message}");
     expect(page).toContain("hint={helpTooltips.detailUi.attach}");
     expect(page).toContain("HelpdeskAttachButton");
     expect(page).toContain("openAttachPicker");
-    const replyBlock = page.slice(page.indexOf('label="Responder"'));
+    const replyBlock = page.slice(
+      page.indexOf('{activeAction === "reply" && draftFilesReady'),
+      page.indexOf('{activeAction === "accept_solution"'),
+    );
+    expect(replyBlock).toContain('label="Mensagem"');
     expect(replyBlock).not.toContain("hint={helpTooltips.detail}");
     expect(replyBlock).toContain("HelpdeskAttachButton");
     const ui = read("../ui/helpdeskUi.tsx");
@@ -226,8 +232,12 @@ describe("Helpdesk list UX structural", () => {
       page.indexOf('label="Categoria"'),
     );
     expect(createBlock).toContain("enableMentions");
-    const replyBlock = page.slice(page.indexOf('label="Responder"'));
+    const replyBlock = page.slice(
+      page.indexOf('{activeAction === "reply" && draftFilesReady'),
+      page.indexOf('{activeAction === "accept_solution"'),
+    );
     expect(replyBlock).toContain("enableMentions");
+    expect(replyBlock).toContain('label="Mensagem"');
     const ui = read("../ui/helpdeskUi.tsx");
     expect(ui).toContain("enableMentions");
     expect(ui).toContain("listUsers");

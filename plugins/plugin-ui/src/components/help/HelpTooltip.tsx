@@ -305,6 +305,20 @@ export function HelpTooltip({
   useEffect(() => {
     if (!visible) return;
 
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.stopPropagation();
+        hideTooltip();
+      }
+    };
+
+    document.addEventListener("keydown", handleKey);
+    return () => document.removeEventListener("keydown", handleKey);
+  }, [visible, hideTooltip]);
+
+  useEffect(() => {
+    if (!visible) return;
+
     const handleReposition = () => {
       setPositioned(false);
       updateBubblePosition();

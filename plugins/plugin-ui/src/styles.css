@@ -319,7 +319,7 @@
 }
 
 .delpi-ui-field-label__text {
-  cursor: help;
+  /* Help lives on the adjacent HelpTooltip icon trigger. */
 }
 
 .delpi-ui-section-hint-label {

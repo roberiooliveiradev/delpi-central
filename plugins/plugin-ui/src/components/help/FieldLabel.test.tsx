@@ -1,7 +1,11 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it } from "vitest";
 
 import { FieldLabel } from "./FieldLabel";
+
+afterEach(() => {
+  cleanup();
+});
 
 describe("FieldLabel", () => {
   it("renderiza label com texto", () => {
@@ -15,11 +19,11 @@ describe("FieldLabel", () => {
     expect(label?.getAttribute("for")).toBe("titulo");
   });
 
-  it("liga hint ao hover do próprio texto do rótulo", () => {
+  it("liga hint a um gatilho de ícone acessível ao lado do rótulo", () => {
     render(<FieldLabel label="Duração" hint="Tempo em segundos." />);
-    const labelText = screen.getByText("Duração");
-    expect(labelText.className).toContain("delpi-ui-field-label__text");
-    expect(labelText.getAttribute("aria-describedby")).toBeTruthy();
+    expect(screen.getByText("Duração").className).toContain("delpi-ui-field-label__text");
+    const help = screen.getByRole("button", { name: "Ajuda: Duração" });
+    expect(help).toBeTruthy();
   });
 
   it("mostra ícone decorativo sem alterar o texto do rótulo", () => {
@@ -28,15 +32,21 @@ describe("FieldLabel", () => {
     expect(screen.getByTestId("field-icon").closest(".delpi-ui-field-label__icon")).toBeTruthy();
   });
 
-  it("irmão: hint continua no texto quando há ícone", () => {
+  it("irmão: hint continua como botão quando há ícone decorativo", () => {
     render(
       <FieldLabel label="Urgência" hint="Prioridade do chamado." icon={<span data-testid="urgency-icon" />} />,
     );
     expect(screen.getByText("Urgência").className).toContain("delpi-ui-field-label__text");
     expect(screen.getByTestId("urgency-icon")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Ajuda: Urgência" })).toBeTruthy();
   });
 
-  it("negativo: sem ícone não cria o marcador", () => {
+  it("negativo: sem hint não cria gatilho de ajuda", () => {
+    render(<FieldLabel label="Título" />);
+    expect(screen.queryByRole("button", { name: /Ajuda:/ })).toBeNull();
+  });
+
+  it("negativo: sem ícone não cria o marcador decorativo", () => {
     const { container } = render(<FieldLabel label="Título" />);
     expect(container.querySelector(".delpi-ui-field-label__icon")).toBeNull();
   });
@@ -46,5 +56,14 @@ describe("FieldLabel", () => {
     const root = screen.getByText("Buscar").closest(".tm-field__label");
     expect(root?.className).toContain("tm-field__label");
     expect(root?.className).toContain("delpi-ui-field-label");
+  });
+
+  it("foco no gatilho de ajuda abre o balão", () => {
+    render(<FieldLabel label="Modelo" hint="Preenche com um modelo." />);
+    const help = screen.getByRole("button", { name: "Ajuda: Modelo" });
+    fireEvent.focus(help);
+    expect(screen.getByRole("tooltip", { hidden: true }).textContent).toContain(
+      "Preenche com um modelo.",
+    );
   });
 });

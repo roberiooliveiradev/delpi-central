@@ -6,6 +6,7 @@ import {
   type CatalogItem,
   type TemplateCatalogItem,
 } from "../api/helpdeskApi";
+import { helpTooltips } from "../content/helpTooltips";
 import { HelpdeskSelect } from "../ui/helpdeskUi";
 
 export type TicketReplyMetaState = {
@@ -35,6 +36,7 @@ export function TicketReplyActionFields({ value, onChange, onApplyContent, disab
   const [templates, setTemplates] = useState<TemplateCatalogItem[]>([]);
   const [requestTypes, setRequestTypes] = useState<CatalogItem[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -43,9 +45,13 @@ export function TicketReplyActionFields({ value, onChange, onApplyContent, disab
         if (cancelled) return;
         setTemplates(tpl);
         setRequestTypes(types);
+        setLoaded(true);
       })
       .catch(() => {
-        if (!cancelled) setLoadError("Não foi possível carregar opções da resposta.");
+        if (!cancelled) {
+          setLoadError("Não foi possível carregar opções da resposta.");
+          setLoaded(true);
+        }
       });
     return () => {
       cancelled = true;
@@ -73,24 +79,32 @@ export function TicketReplyActionFields({ value, onChange, onApplyContent, disab
     if (template.content) onApplyContent?.(template.content);
   }
 
+  const help = helpTooltips.detailUi.actionFields.reply;
+
   return (
     <div className="helpdesk-action-fields helpdesk-action-fields--reply">
       {loadError ? <p className="helpdesk-action-fields__error">{loadError}</p> : null}
       <div className="helpdesk-action-fields__grid">
-        <HelpdeskSelect
-          label="Modelo"
-          value={value.templateId != null ? String(value.templateId) : ""}
-          onChange={(next) => applyTemplate(next ? Number(next) : null)}
-          options={[{ value: "", label: "Sem modelo" }, ...catalogOptions(templates)]}
-          disabled={disabled}
-        />
-        <HelpdeskSelect
-          label="Origem"
-          value={value.requestTypeId != null ? String(value.requestTypeId) : ""}
-          onChange={(next) => patch({ requestTypeId: next ? Number(next) : null })}
-          options={[{ value: "", label: "Padrão do helpdesk" }, ...catalogOptions(requestTypes)]}
-          disabled={disabled}
-        />
+        {loaded && templates.length > 0 ? (
+          <HelpdeskSelect
+            label="Modelo"
+            hint={help.model}
+            value={value.templateId != null ? String(value.templateId) : ""}
+            onChange={(next) => applyTemplate(next ? Number(next) : null)}
+            options={[{ value: "", label: "Sem modelo" }, ...catalogOptions(templates)]}
+            disabled={disabled}
+          />
+        ) : null}
+        {loaded && requestTypes.length > 0 ? (
+          <HelpdeskSelect
+            label="Origem"
+            hint={help.source}
+            value={value.requestTypeId != null ? String(value.requestTypeId) : ""}
+            onChange={(next) => patch({ requestTypeId: next ? Number(next) : null })}
+            options={[{ value: "", label: "Sem origem" }, ...catalogOptions(requestTypes)]}
+            disabled={disabled}
+          />
+        ) : null}
       </div>
     </div>
   );

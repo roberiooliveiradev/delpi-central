@@ -27,15 +27,12 @@ export const helpTooltips = {
       "Tipo de interação: responder, solução, tarefa, anexo ou aprovação — só o que o helpdesk liberar.",
     reply:
       "Formatação, @ para mencionar, clipe, colar ou arrastar. Arraste o canto da imagem para redimensionar.",
-    createSolution:
-      "Registra a solução pública no chamado. O status passa a solucionado quando o helpdesk aceitar.",
-    createTask:
-      "Cria uma tarefa pública no fio do chamado, visível na conversa da Minha DELPI.",
-    requestApproval:
-      "Pedido de aprovação para usuário ou grupo. Modelos preenchem só a mensagem.",
+    createSolution: "Registre a solução deste chamado.",
+    createTask: "Crie uma tarefa vinculada a este chamado.",
+    requestApproval: "Solicite a aprovação deste chamado a um usuário ou grupo.",
     attach: "Anexa por clipe ou arrastar; imagem entra no texto da resposta.",
-    attachFile: "Anexa arquivos ao chamado. Título opcional vira o nome no helpdesk.",
-    send: "Grava o acompanhamento público. Em chamado fechado o botão some.",
+    attachFile: "Anexe arquivos ao chamado sem enviar uma mensagem.",
+    send: "Envia a resposta neste chamado. Em chamado fechado o botão some.",
     assignee: "Busque o responsável por nome ou e-mail. Só aparece se o helpdesk permitir atribuir no seu perfil.",
     assigneeAction: "Grava a atribuição ou reatribuição neste chamado.",
     openInGlpi: "Abre este chamado no helpdesk (GLPI) para fluxos que ainda não estão na Minha DELPI.",
@@ -45,6 +42,44 @@ export const helpTooltips = {
     acceptValidation: "Aceita a etapa de aprovação deste chamado.",
     rejectValidation: "Recusa a etapa de aprovação deste chamado.",
     attachments: "Arquivos ligados ao chamado. Clique para prévia ou baixar.",
+    actionFields: {
+      reply: {
+        model:
+          "Preenche a mensagem com um modelo disponível. Você pode editar antes de enviar.",
+        source: "Classifica a origem deste acompanhamento. Não altera o autor da resposta.",
+        message: "Texto da resposta enviada neste chamado.",
+      },
+      solution: {
+        model:
+          "Preenche a solução com um modelo disponível. Pode definir também o tipo.",
+        type: "Classifica a solução para organização, pesquisa e relatórios.",
+        description: "Descreva a solução proposta para este chamado.",
+      },
+      task: {
+        model: "Preenche os campos da tarefa com um modelo disponível.",
+        category: "Classifica a tarefa para organização, pesquisa e relatórios.",
+        status: "Define o estado inicial da tarefa.",
+        duration: "Tempo estimado para executar a tarefa, em minutos.",
+        assignee: "Técnico responsável pela execução desta tarefa.",
+        group: "Grupo relacionado à tarefa. Pode coexistir com o técnico responsável.",
+        planning: "Permite definir início e fim previstos para a execução.",
+        description: "Descreva o que deve ser feito nesta tarefa.",
+        planBegin: "Data e hora de início previstas.",
+        planEnd: "Data e hora de término previstas.",
+      },
+      attachment: {
+        title:
+          "Nome exibido de cada arquivo. Se vazio, usa o nome original. Com vários arquivos, o mesmo título vale para todos.",
+        files: "Selecione um ou mais arquivos para anexar ao chamado.",
+      },
+      approval: {
+        model: "Preenche o comentário da solicitação com um modelo disponível.",
+        approverType: "Escolha se a aprovação será solicitada a um usuário ou a um grupo.",
+        approver: "Pessoa que deverá analisar e responder à solicitação.",
+        group: "Grupo ao qual a solicitação de aprovação será enviada.",
+        message: "Contexto opcional para ajudar na decisão de aprovação.",
+      },
+    },
   },
 
   listUi: {

@@ -107,6 +107,15 @@ describe("HelpTooltip", () => {
     expect(bubble.style.width).toBe("max-content");
   });
 
+  it("fecha o balão com Escape no gatilho de ícone", () => {
+    render(<HelpTooltip content="Explicação" ariaLabel="Ajuda: campo" />);
+    const trigger = screen.getByRole("button", { name: "Ajuda: campo" });
+    fireEvent.focus(trigger);
+    expect(screen.getByRole("tooltip", { hidden: true })).toBeTruthy();
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(screen.queryByRole("tooltip", { hidden: true })).toBeNull();
+  });
+
   it("não emite warning de key quando wrap tem vários filhos", () => {
     const errors: string[] = [];
     const orig = console.error;
