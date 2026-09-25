@@ -65,6 +65,8 @@ class DataPreviewBody(BaseModel):
     block: dict[str, Any] | None = None
     nativeConfig: dict[str, Any] | None = None
     playlistId: str | None = None
+    slideId: str | None = None
+    blockId: str | None = None
     playlistDefaults: dict[str, Any] | None = None
     forceRefresh: bool = False
     targetStepName: str | None = None

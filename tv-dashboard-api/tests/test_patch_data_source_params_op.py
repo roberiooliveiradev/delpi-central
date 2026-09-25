@@ -110,10 +110,23 @@ def _reset():
     clear_presentation_ops_content_cache()
 
 
+class _FakeResolution:
+    """Double do resolver: gate executável só precisa de `resolved` sem erro."""
+
+    def resolve_blocks(self, blocks, **kwargs):
+        out = []
+        for block in blocks:
+            item = dict(block)
+            item["resolved"] = {}
+            out.append(item)
+        return out
+
+
 def _service(repo: _FakeRepo | None = None) -> PresentationPatchService:
     return PresentationPatchService(
         catalog=_FakeCatalog({"get_commercial_rol_summary": ROL_ROUTE}),
         repo=repo or _FakeRepo(),
+        resolution=_FakeResolution(),
     )
 
 

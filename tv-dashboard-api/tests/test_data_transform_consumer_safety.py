@@ -68,8 +68,24 @@ def _repo_with(blocks: list[dict[str, Any]]):
     return _Repo(), playlist_id, slide_id
 
 
-def _svc(repo) -> PresentationPatchService:
-    return PresentationPatchService(catalog=_FakeCatalog(), repo=repo)
+class _FakeResolution:
+    """Double do resolver: gate executável só precisa de `resolved` sem erro."""
+
+    def resolve_blocks(self, blocks, **kwargs):
+        out = []
+        for block in blocks:
+            item = dict(block)
+            item["resolved"] = {}
+            out.append(item)
+        return out
+
+
+def _svc(repo, resolution=None) -> PresentationPatchService:
+    return PresentationPatchService(
+        catalog=_FakeCatalog(),
+        repo=repo,
+        resolution=resolution or _FakeResolution(),
+    )
 
 
 def _preview(svc, playlist_id, slide_id, ops):

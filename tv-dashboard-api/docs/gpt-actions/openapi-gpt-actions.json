@@ -572,13 +572,22 @@
                   },
                   "nativeConfig": {
                     "type": "object",
-                    "description": "Legacy editor slide config for dry-run. Optional when operationId is provided.",
+                    "description": "Candidate slide config for dry-run. When provided with block, the block is upserted by id inside this context. Optional when operationId is provided.",
                     "x-delpi-gpt-opaque-object": true,
                     "additionalProperties": true,
                     "properties": {}
                   },
                   "playlistId": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Authoritative context: loads the persisted playlist (dataDefaults) and, with slideId, the slide nativeConfig so merge.sourceId siblings materialize in preview."
+                  },
+                  "slideId": {
+                    "type": "string",
+                    "description": "With playlistId: preview inside the persisted slide context. Merge dependencies of the target block resolve from slide blocks."
+                  },
+                  "blockId": {
+                    "type": "string",
+                    "description": "Persisted block to preview inside playlistId+slideId context, or the target block id within nativeConfig."
                   },
                   "playlistDefaults": {
                     "type": "object",

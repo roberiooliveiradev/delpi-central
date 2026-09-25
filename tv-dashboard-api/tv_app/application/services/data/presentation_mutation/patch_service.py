@@ -399,6 +399,15 @@ class PresentationPatchService:
         try:
             # Sempre dry-run: o redutor não persiste; httpCommands são a saída.
             result = self._run(envelope, user=user, persist=False, authorization=authorization)
+            # Gate executável: mudanças que tocam fontes de dados precisam
+            # resolver o closure afetado no candidate state antes de virar
+            # proposal elegível (commit_now incluso).
+            self._assert_candidate_data_execution(
+                result,
+                envelope.get("ops"),
+                user=user,
+                authorization=authorization,
+            )
             if include_fingerprint and result.get("nativeConfig"):
                 result["fingerprint"] = self._resolve_fingerprint(
                     result["nativeConfig"],
@@ -1123,6 +1132,218 @@ class PresentationPatchService:
             return _fingerprint_from_blocks(resolved)
         except Exception:  # noqa: BLE001 — fingerprint é best-effort no preview
             return None
+
+    _DATA_EXECUTION_OPS = frozenset(
+        {
+            "upsert_data_source",
+            "patch_data_source_params",
+            "set_data_transform",
+            # Mudança estrutural no conjunto de fontes: closure exata exigiria o
+            # grafo pré-op — validar todas as fontes do candidate é o seguro.
+            "delete_block",
+            "duplicate_blocks",
+            # Ops sem alvo de bloco que podem alterar params/estado de dados.
+            "patch_native_config",
+            "patch_playlist_data_defaults",
+            "re_layer_playlist_filters",
+            "add_slide_from_preset",
+            "apply_published_slide_template",
+        }
+    )
+
+    def _assert_candidate_data_execution(
+        self,
+        result: dict[str, Any],
+        ops: Any,
+        *,
+        user: Any,
+        authorization: str | None,
+    ) -> None:
+        """Executa o closure de dados afetado no candidate nativeConfig.
+
+        Só roda quando alguma op toca fontes de dados; erros tipados de
+        execução (merge/calc/fetch) impedem o candidate de virar proposal.
+        """
+        op_list = [op for op in ops or [] if isinstance(op, dict)]
+        touching = [
+            op
+            for op in op_list
+            if str(op.get("op") or "").strip() in self._DATA_EXECUTION_OPS
+        ]
+        if not touching:
+            return
+        cfgs: list[dict[str, Any]] = []
+        by_slide = result.get("nativeConfigsBySlide")
+        if isinstance(by_slide, dict):
+            cfgs.extend(c for c in by_slide.values() if isinstance(c, dict))
+        primary = result.get("nativeConfig")
+        if isinstance(primary, dict) and not any(c is primary for c in cfgs):
+            cfgs.append(primary)
+        playlist_defaults = (
+            result.get("playlistDefaults")
+            if isinstance(result.get("playlistDefaults"), dict)
+            else None
+        )
+        for cfg in cfgs:
+            self._validate_candidate_cfg_data(
+                cfg, touching, user=user, authorization=authorization,
+                playlist_defaults=playlist_defaults,
+            )
+
+    def _validate_candidate_cfg_data(
+        self,
+        cfg: dict[str, Any],
+        touching_ops: list[dict[str, Any]],
+        *,
+        user: Any,
+        authorization: str | None,
+        playlist_defaults: dict[str, Any] | None,
+    ) -> None:
+        from tv_app.application.services.data.m_query.m_query_dependency_service import (
+            MQueryDependencyService,
+        )
+
+        cfg_blocks = _blocks_of(cfg)
+        ds_ids = {
+            str(b.get("id") or "").strip()
+            for b in cfg_blocks
+            if isinstance(b, dict) and str(b.get("type") or "") == "data_source"
+        }
+        if not ds_ids:
+            return
+        touched: set[str] = set()
+        validate_all = False
+        for op in touching_ops:
+            name = str(op.get("op") or "").strip()
+            if name in {"delete_block", "duplicate_blocks"}:
+                # Conjunto de fontes mudou estruturalmente: dependents de um id
+                # removido/duplicado não aparecem no grafo pós-op → validar tudo.
+                validate_all = True
+                continue
+            ids = [str(op.get("blockId") or "").strip()]
+            raw_ids = op.get("blockIds")
+            if isinstance(raw_ids, list):
+                ids.extend(str(i).strip() for i in raw_ids)
+            ids = [i for i in ids if i]
+            if not ids:
+                # Op cria fonte sem id informado → não dá para mapear → validar tudo.
+                validate_all = True
+                continue
+            touched.update(ids)
+        if not validate_all and not (touched & ds_ids):
+            return  # ops de dados apontam para outros slides
+        scope = ds_ids if validate_all else touched
+        graph = MQueryDependencyService().resolve(cfg_blocks)
+        deps = {
+            node.source_id: set(node.dependencies) for node in graph.nodes
+        }
+        needed = set(scope)
+        # upstream: dependências das fontes tocadas
+        stack = list(scope)
+        while stack:
+            sid = stack.pop()
+            for dep in deps.get(sid, ()):
+                if dep not in needed:
+                    needed.add(dep)
+                    stack.append(dep)
+        # downstream: fontes que dependem (transitivamente) das tocadas
+        changed = True
+        while changed:
+            changed = False
+            for sid, dep_set in deps.items():
+                if sid not in needed and dep_set & needed:
+                    needed.add(sid)
+                    changed = True
+        blocks = [
+            b
+            for b in cfg_blocks
+            if isinstance(b, dict)
+            and str(b.get("type") or "") == "data_source"
+            and str(b.get("id") or "") in needed
+        ]
+        if not blocks:
+            return
+        try:
+            enriched = self._resolution.resolve_blocks(
+                blocks,
+                cfg=cfg,
+                authorization=authorization,
+                playlist_defaults=playlist_defaults,
+                user=user,
+            )
+        except Exception as exc:  # noqa: BLE001 — propaga como erro de gate
+            raise PresentationPatchError(
+                str(exc) or "Execução de dados do candidate falhou.",
+                code="DATA_EXECUTION_FAILED",
+                details={"stage": "data_execution"},
+            ) from exc
+        failures: list[tuple[dict[str, Any], dict[str, Any] | None, str]] = []
+        for block in enriched:
+            if not isinstance(block, dict):
+                continue
+            resolved = block.get("resolved")
+            block_id = str(block.get("id") or "")
+            if not isinstance(resolved, dict):
+                raise PresentationPatchError(
+                    f'A fonte "{block_id}" não foi resolvida no candidate state.',
+                    code="DATA_EXECUTION_FAILED",
+                    details={
+                        "stage": "data_execution",
+                        "blockId": block_id,
+                    },
+                )
+            transform_error = (
+                resolved.get("transformError")
+                if isinstance(resolved.get("transformError"), dict)
+                else None
+            )
+            error_msg = str(resolved.get("error") or "").strip()
+            if transform_error or error_msg:
+                failures.append((block, transform_error, error_msg))
+        if failures:
+            # Erros de modelo/transform (m.*) nomeiam a dependência quebrada e a
+            # causa raiz na mensagem — priorizar sobre o erro bruto da fonte
+            # upstream (ex.: fetch falhou na dependência).
+            block, transform_error, error_msg = next(
+                (
+                    item
+                    for item in failures
+                    if str((item[1] or {}).get("code") or "").startswith("m.")
+                ),
+                failures[0],
+            )
+            block_id = str(block.get("id") or "")
+            code = str((transform_error or {}).get("code") or "data.fetch_failed")
+            details: dict[str, Any] = {
+                "stage": "data_execution",
+                "blockId": block_id,
+                "errorCode": code,
+            }
+            dep_id = self._merge_dependency_ref(block)
+            if dep_id:
+                details["dependencySourceId"] = dep_id
+            raise PresentationPatchError(
+                str(
+                    (transform_error or {}).get("message")
+                    or error_msg
+                    or "Execução de dados do candidate falhou."
+                ),
+                code=code,
+                details=details,
+            )
+
+    @staticmethod
+    def _merge_dependency_ref(block: dict[str, Any]) -> str | None:
+        transform = block.get("dataTransform")
+        steps = transform.get("steps") if isinstance(transform, dict) else None
+        if not isinstance(steps, list):
+            return None
+        for step in steps:
+            if isinstance(step, dict) and str(step.get("op") or "") == "merge":
+                ref = str(step.get("sourceId") or "").strip()
+                if ref:
+                    return ref
+        return None
 
     def _op_upsert_data_source(
         self,

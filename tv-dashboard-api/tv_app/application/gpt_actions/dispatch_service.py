@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 from typing import Any
 from uuid import UUID
 
@@ -538,6 +539,46 @@ class GptActionsDispatchService:
             else [],
         }
 
+    @staticmethod
+    def _preview_context_config(
+        *,
+        block: dict[str, Any],
+        explicit_native: dict[str, Any] | None,
+        slide_native: dict[str, Any] | None,
+    ) -> dict[str, Any]:
+        """Contexto do preview: candidate (nativeConfig) > slide persistido.
+
+        O bloco alvo é upsert por id dentro do cfg de contexto para que
+        siblings de merge fiquem materializáveis pelo resolver canônico.
+        """
+        base = (
+            explicit_native
+            if isinstance(explicit_native, dict)
+            else slide_native
+            if isinstance(slide_native, dict)
+            else {"version": 1, "blocks": []}
+        )
+        cfg = copy.deepcopy(base)
+        cfg.setdefault("version", 1)
+        items = cfg.get("blocks")
+        if not isinstance(items, list):
+            items = []
+            cfg["blocks"] = items
+        target_id = str(block.get("id") or "")
+        if target_id:
+            for index, candidate in enumerate(items):
+                if (
+                    isinstance(candidate, dict)
+                    and str(candidate.get("id") or "") == target_id
+                ):
+                    items[index] = block
+                    break
+            else:
+                items.append(block)
+        else:
+            items.append(block)
+        return cfg
+
     def preview_data_block(
         self,
         *,
@@ -576,6 +617,32 @@ class GptActionsDispatchService:
         operation_id = str(body.get("operationId") or "").strip()
         block_in = body.get("block") if isinstance(body.get("block"), dict) else None
         native_in = body.get("nativeConfig") if isinstance(body.get("nativeConfig"), dict) else None
+        slide_id = str(body.get("slideId") or "").strip()
+        block_id = str(body.get("blockId") or "").strip()
+        slide_native: dict[str, Any] | None = None
+        if slide_id:
+            if not playlist_id:
+                raise GptActionsError(
+                    "slideId requer playlistId para resolver o contexto autorizado.",
+                    code="INVALID_CHANGE",
+                    status_code=422,
+                )
+            try:
+                slide_row = self._writes.get_slide(UUID(slide_id), playlist_id=pid)
+            except Exception as exc:
+                raise GptActionsError(
+                    "Tela não encontrada.",
+                    code="RESOURCE_NOT_FOUND",
+                    status_code=404,
+                ) from exc
+            raw_native = slide_row.get("nativeConfig")
+            slide_native = raw_native if isinstance(raw_native, dict) else {"version": 1}
+        elif block_id and block_in is None and native_in is None:
+            raise GptActionsError(
+                "blockId requer slideId (persistido) ou nativeConfig (candidate).",
+                code="INVALID_CHANGE",
+                status_code=422,
+            )
         route: dict[str, Any] | None = None
 
         if operation_id:
@@ -611,19 +678,52 @@ class GptActionsDispatchService:
                     ) from exc
                 raise GptActionsError(token, code="INVALID_CHANGE", status_code=422) from exc
             block = build_preview_block_from_route(route, params=params)
-            native_config: dict[str, Any] = {"version": 1, "blocks": [block]}
+            native_config = self._preview_context_config(
+                block=block,
+                explicit_native=native_in,
+                slide_native=slide_native,
+            )
         elif block_in is not None:
             block = block_in
-            native_config = native_in or {"version": 1, "blocks": [block]}
+            native_config = self._preview_context_config(
+                block=block,
+                explicit_native=native_in,
+                slide_native=slide_native,
+            )
+        elif block_id and slide_native is not None:
+            # Persisted contextual preview: bloco já existe no slide autorizado.
+            block = {}
+            native_config = copy.deepcopy(slide_native)
         else:
             raise GptActionsError(
-                "Informe operationId+params ou block+nativeConfig.",
+                "Informe operationId+params, block(+nativeConfig) ou "
+                "playlistId+slideId+blockId.",
                 code="INVALID_CHANGE",
                 status_code=422,
             )
 
         try:
             cfg = self._validation.sanitize(native_config)
+            # Alvo sempre resolvido dentro do cfg sanitizado (persistido ou
+            # candidate) — mesmo objeto que o enrich materializa.
+            target_id = block_id or str(block.get("id") or "")
+            if target_id:
+                target = next(
+                    (
+                        item
+                        for item in (cfg.get("blocks") or [])
+                        if isinstance(item, dict)
+                        and str(item.get("id") or "") == target_id
+                    ),
+                    None,
+                )
+                if target is None:
+                    raise GptActionsError(
+                        "Bloco não encontrado no contexto do slide.",
+                        code="RESOURCE_NOT_FOUND",
+                        status_code=404,
+                    )
+                block = target
             block = self._preview.preview_block(
                 block,
                 native_config=cfg,

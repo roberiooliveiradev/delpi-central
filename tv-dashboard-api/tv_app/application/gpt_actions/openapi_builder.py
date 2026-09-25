@@ -398,11 +398,34 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
             ),
             "nativeConfig": _opaque_object_schema(
                 description=(
-                    "Legacy editor slide config for dry-run. Optional when "
-                    "operationId is provided."
+                    "Candidate slide config for dry-run. When provided with "
+                    "block, the block is upserted by id inside this context. "
+                    "Optional when operationId is provided."
                 )
             ),
-            "playlistId": {"type": "string"},
+            "playlistId": {
+                "type": "string",
+                "description": (
+                    "Authoritative context: loads the persisted playlist "
+                    "(dataDefaults) and, with slideId, the slide nativeConfig so "
+                    "merge.sourceId siblings materialize in preview."
+                ),
+            },
+            "slideId": {
+                "type": "string",
+                "description": (
+                    "With playlistId: preview inside the persisted slide "
+                    "context. Merge dependencies of the target block resolve "
+                    "from slide blocks."
+                ),
+            },
+            "blockId": {
+                "type": "string",
+                "description": (
+                    "Persisted block to preview inside playlistId+slideId "
+                    "context, or the target block id within nativeConfig."
+                ),
+            },
             "playlistDefaults": _opaque_object_schema(
                 description=(
                     "Optional playlist dataDefaults blob inherited during dry-run. "
