@@ -1,0 +1,13 @@
+{
+  // Fonte canônica de regras deste repo: .cursor/rules/*.mdc
+  // Importação explícita — não duplicar regras em .devin/rules/.
+  "read_config_from": {
+    "agents_standard": true,
+    "cursor": true,
+    "windsurf": true,
+    "claude": true,
+    "copilot": true,
+    "opencode": true,
+    "zed": true
+  }
+}
