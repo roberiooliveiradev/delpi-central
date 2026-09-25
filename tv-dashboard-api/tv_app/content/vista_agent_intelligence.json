@@ -657,6 +657,9 @@
       "select/rename/fieldLabels/top-N: resolver colunas de NL/aspas ou clarificar UMA vez — nunca emitir {{placeholders}} quebrados.",
       "Nunca emitir language/script/version:2 nem smuggle via upsert_block.dataTransform.",
       "Editor M / workbench / compile-mutate não fazem parte do caminho VISTA.",
+      "Composição multi-source: quando a métrica NÃO existe em uma única rota, fontes data_source do mesmo slide podem ser combinadas — merge.sourceId resolve dependências automaticamente (inclusive fonte escalar, que vira linha única com seus campos) e addColumn opera sobre os campos merged. Não pedir rota nova na API para cálculo derivável de fontes existentes.",
+      "Colisão de nomes entre fontes: antes do merge dar alias (addColumn/rename) aos campos homônimos (ex.: rol → rol_prev) — merge com colisão é erro tipado (m.merge_field_collision).",
+      "Erros de dependência são tipados: m.merge_source_unavailable (fonte inexistente), m.merge_source_failed (fetch/transform da fonte falhou), m.merge_source_not_composable (não é data_source), m.calc_division_by_zero / m.calc_invalid_operand / m.calc_null_operand (fórmula). Sempre falha tipada, nunca dado vazio.",
       "Preview com error/resolved.error = FALHA — nunca tratar como sucesso nem commitar; dataset vazio legítimo retorna ok sem error."
     ],
     "forbidden": [

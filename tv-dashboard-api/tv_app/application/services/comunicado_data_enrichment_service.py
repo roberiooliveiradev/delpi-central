@@ -1265,7 +1265,9 @@ class ComunicadoDataEnrichmentService:
             first = next(
                 item for item in graph.diagnostics if item.get("severity") == "error"
             )
-            raise ValueError(str(first.get("message") or "Consulta M inválida."))
+            code = str(first.get("code") or "").strip()
+            message = str(first.get("message") or "Consulta M inválida.")
+            raise ValueError(f"{code}: {message}" if code else message)
         query_bindings = graph.bindings()
         graph_nodes = {node.source_id: node for node in graph.nodes}
 
@@ -1330,6 +1332,16 @@ class ComunicadoDataEnrichmentService:
             or str(block.get("id") or "") not in set(graph.ordered_source_ids)
         ]
         query_tables: dict[str, dict[str, Any]] = {}
+        # Status de cada bloco referenciável como sibling: distingue "não existe"
+        # de "existe mas falhou"/"sem tabela"/"não é fonte de dados" para o merge
+        # tipificar a causa em vez de m.merge_source_unavailable genérico.
+        source_status: dict[str, dict[str, Any]] = {
+            str(block.get("id") or ""): {"status": "not_composable"}
+            for block in blocks
+            if isinstance(block, dict)
+            and str(block.get("id") or "").strip()
+            and str(block.get("type") or "") not in DATA_BLOCK_TYPES
+        }
         for block in ordered_blocks:
             if not isinstance(block, dict):
                 continue
@@ -1344,6 +1356,7 @@ class ComunicadoDataEnrichmentService:
                         block,
                         input_overrides=input_overrides,
                         sibling_tables=query_tables,
+                        sibling_status=source_status,
                         query_bindings=query_bindings,
                         target_step_name=(
                             target_step_name
@@ -1360,11 +1373,30 @@ class ComunicadoDataEnrichmentService:
                     if isinstance(resolved, dict)
                     else None
                 )
+                node = graph_nodes.get(source_id)
+                status_keys = [source_id]
+                if node is not None and node.query_name != source_id:
+                    status_keys.append(node.query_name)
                 if isinstance(query_table, dict):
-                    query_tables[source_id] = query_table
-                    node = graph_nodes.get(source_id)
-                    if node is not None:
-                        query_tables[node.query_name] = query_table
+                    for key in status_keys:
+                        query_tables[key] = query_table
+                else:
+                    if isinstance(resolved, dict) and resolved.get("error"):
+                        transform_error = resolved.get("transformError")
+                        status = {
+                            "status": "failed",
+                            "code": (
+                                str(transform_error.get("code") or "")
+                                if isinstance(transform_error, dict)
+                                else "data.fetch_failed"
+                            )
+                            or "data.fetch_failed",
+                            "message": str(resolved.get("error") or ""),
+                        }
+                    else:
+                        status = {"status": "no_table"}
+                    for key in status_keys:
+                        source_status[key] = status
                 continue
             if block_type in DATA_VIEW_BLOCK_TYPES:
                 enriched.append(dict(block))
@@ -1380,8 +1412,11 @@ class ComunicadoDataEnrichmentService:
                 continue
             enriched.append(block)
 
-        # Compatibilidade v1: o merge legado ainda endereça sourceId.
-        sibling_tables = self._build_sibling_tables(enriched)
+        # Compatibilidade v1: merge endereça sibling por sourceId/queryName.
+        # O DAG já ordena deps v1+v2, então `query_tables` contém TODAS as tabelas
+        # materializadas (incluindo saída de transforms encadeados); reexecutar
+        # transforms sem siblings quebraria fontes encadeadas — reusar o resultado.
+        sibling_tables = query_tables
         if sibling_tables and any(self._transform_needs_siblings(block) for block in enriched):
             re_enriched: list[dict[str, Any]] = []
             for block in enriched:
@@ -1397,6 +1432,7 @@ class ComunicadoDataEnrichmentService:
                         block,
                         input_overrides=input_overrides,
                         sibling_tables=siblings,
+                        sibling_status=source_status,
                         query_bindings=query_bindings,
                         **enrich_kwargs,
                     )
@@ -1435,32 +1471,6 @@ class ComunicadoDataEnrichmentService:
         if not steps:
             return False
         return any(str(step.get("op") or "") == "merge" for step in steps if isinstance(step, dict))
-
-    @staticmethod
-    def _build_sibling_tables(blocks: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
-        tables: dict[str, dict[str, Any]] = {}
-        for block in blocks:
-            if not isinstance(block, dict) or str(block.get("type") or "") != "data_source":
-                continue
-            source_id = str(block.get("id") or "").strip()
-            resolved = block.get("resolved")
-            if not source_id or not isinstance(resolved, dict):
-                continue
-            data = resolved.get("data")
-            result = apply_data_transform_to_payload_result(
-                data, block.get("dataTransform")
-            )
-            # Sibling com transform quebrado não alimenta merge: a falha já está
-            # tipada no próprio bloco; aqui a ausência vira m.merge_source_unavailable
-            # no consumidor em vez de casar contra a tabela crua.
-            if result.get("failed"):
-                continue
-            table = result.get("table")
-            if table is None:
-                table = coerce_payload_to_table(data)
-            if table is not None:
-                tables[source_id] = table
-        return tables
 
     @staticmethod
     def _filter_context_blocks(
@@ -1786,6 +1796,7 @@ class ComunicadoDataEnrichmentService:
         request_memo: dict[str, dict[str, Any]] | None = None,
         input_overrides: dict[str, Any] | None = None,
         sibling_tables: dict[str, dict[str, Any]] | None = None,
+        sibling_status: dict[str, dict[str, Any]] | None = None,
         query_bindings: tuple[dict[str, Any], ...] = (),
         target_step_name: str | None = None,
         preview_options: dict[str, Any] | None = None,
@@ -1876,6 +1887,7 @@ class ComunicadoDataEnrichmentService:
                 data,
                 block.get("dataTransform"),
                 sibling_tables=sibling_tables,
+                sibling_status=sibling_status,
                 query_bindings=query_bindings,
                 target_step_name=target_step_name,
                 culture=str(m_query_setting("defaultCulture", "pt-BR")),

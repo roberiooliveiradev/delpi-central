@@ -46,6 +46,36 @@ def _query_name(block: dict[str, Any]) -> str:
     ).strip()
 
 
+def _legacy_step_dependencies(
+    transform: Any,
+    ref_to_source: dict[str, str],
+    *,
+    self_id: str,
+) -> tuple[str, ...]:
+    """Deps de composição v1: steps `merge` endereçam sibling por `sourceId`.
+
+    Refs que não correspondem a uma fonte do slide não viram dependência —
+    o executor tipifica a ausência como `m.merge_source_unavailable` no bloco,
+    sem derrubar o DAG inteiro.
+    """
+    if not isinstance(transform, dict):
+        return ()
+    steps = transform.get("steps")
+    if not isinstance(steps, list):
+        return ()
+    deps: list[str] = []
+    seen: set[str] = {self_id}
+    for step in steps:
+        if not isinstance(step, dict) or str(step.get("op") or "") != "merge":
+            continue
+        ref = str(step.get("sourceId") or "").strip()
+        target = ref_to_source.get(ref)
+        if target and target not in seen:
+            seen.add(target)
+            deps.append(target)
+    return tuple(deps)
+
+
 def _diagnostic(code: str, message: str, *, source_id: str | None = None) -> dict[str, Any]:
     payload: dict[str, Any] = {"code": code, "severity": "error", "message": message}
     if source_id:
@@ -97,6 +127,10 @@ class MQueryDependencyService:
         bindings = tuple(
             {"name": name, "sourceId": source_id} for name, source_id in name_to_source.items()
         )
+        # Merge v1 endereça sibling por block.id; M v2 endereça por queryName.
+        ref_to_source: dict[str, str] = dict(name_to_source)
+        for sid in source_to_block:
+            ref_to_source.setdefault(sid, sid)
         nodes: list[QueryNode] = []
         for query_name, source_id in name_to_source.items():
             block = source_to_block[source_id]
@@ -128,6 +162,10 @@ class MQueryDependencyService:
                     name_to_source[name]
                     for name in compiled.referenced_queries
                     if name in name_to_source and name_to_source[name] != source_id
+                )
+            else:
+                dependencies = _legacy_step_dependencies(
+                    transform, ref_to_source, self_id=source_id
                 )
             nodes.append(QueryNode(source_id, query_name, block, compiled, dependencies))
 

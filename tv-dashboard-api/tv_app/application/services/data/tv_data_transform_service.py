@@ -38,8 +38,17 @@ _OPS = {
     ast.Sub: operator.sub,
     ast.Mult: operator.mul,
     ast.Div: operator.truediv,
+    ast.Mod: operator.mod,
     ast.USub: operator.neg,
 }
+
+
+class _ExprEvalError(Exception):
+    """Falha tipada de avaliação da DSL de coluna (strict mode)."""
+
+    def __init__(self, code: str, message: str) -> None:
+        super().__init__(message)
+        self.code = code
 _CMP_OPS = {
     ast.Eq: operator.eq,
     ast.NotEq: operator.ne,
@@ -197,11 +206,14 @@ def evaluate_safe_arithmetic_expr(expr: str, row: dict[str, Any]) -> float | Non
     return _as_number(evaluate_safe_column_expr(expr, row))
 
 
-def evaluate_safe_column_expr(expr: str, row: dict[str, Any]) -> Any:
+def evaluate_safe_column_expr(expr: str, row: dict[str, Any], *, strict: bool = False) -> Any:
     """
     DSL segura de coluna calculada (sandbox AST).
     if(cond, a, b), concat(...), abs/min/max/coalesce/len/lower/upper/trim,
-    aritmética e comparadores == != > >= < <=.
+    aritmética (+ - * / %) e comparadores == != > >= < <=.
+
+    ``strict=True``: erros aritméticos/de operando viram ``_ExprEvalError``
+    tipado em vez de ``None`` silencioso (TRANSFORM FAILURE != null).
     """
     trimmed = (expr or "").strip()
     if not trimmed:
@@ -224,7 +236,15 @@ def evaluate_safe_column_expr(expr: str, row: dict[str, Any]) -> Any:
     def _num(value: Any) -> float:
         num = _as_number(value)
         if num is None:
-            raise ValueError("nan")
+            if value is None or (isinstance(value, str) and not value.strip()):
+                raise _ExprEvalError(
+                    "m.calc_null_operand",
+                    "Operando nulo/vazio em expressão aritmética (use coalesce).",
+                )
+            raise _ExprEvalError(
+                "m.calc_invalid_operand",
+                f'Operando não numérico em expressão aritmética: {value!r}.',
+            )
         return num
 
     def _eval(node: ast.AST) -> Any:
@@ -245,8 +265,11 @@ def evaluate_safe_column_expr(expr: str, row: dict[str, Any]) -> Any:
         if isinstance(node, ast.BinOp) and type(node.op) in _OPS:
             left = _num(_eval(node.left))
             right = _num(_eval(node.right))
-            if isinstance(node.op, ast.Div) and right == 0:
-                raise ZeroDivisionError
+            if isinstance(node.op, (ast.Div, ast.Mod)) and right == 0:
+                raise _ExprEvalError(
+                    "m.calc_division_by_zero",
+                    "Divisão por zero em expressão de coluna calculada.",
+                )
             return float(_OPS[type(node.op)](left, right))
         if isinstance(node, ast.Compare):
             if len(node.ops) != 1 or len(node.comparators) != 1:
@@ -281,11 +304,16 @@ def evaluate_safe_column_expr(expr: str, row: dict[str, Any]) -> Any:
                 raise ValueError("fn")
             if node.keywords:
                 raise ValueError("kw")
-            args = [_eval(arg) for arg in node.args]
             if fname == "iff":
-                if len(args) != 3:
+                # Lazy: não avaliar o branch não escolhido (div/0 guardado por iff).
+                if len(node.args) != 3:
                     raise ValueError("iff")
-                return args[1] if _truthy(args[0]) else args[2]
+                return (
+                    _eval(node.args[1])
+                    if _truthy(_eval(node.args[0]))
+                    else _eval(node.args[2])
+                )
+            args = [_eval(arg) for arg in node.args]
             if fname == "concat":
                 return "".join("" if a is None else str(a) for a in args)
             if fname == "abs":
@@ -325,6 +353,10 @@ def evaluate_safe_column_expr(expr: str, row: dict[str, Any]) -> Any:
         if isinstance(value, float) and value != value:  # noqa: PLR0124
             return None
         return value
+    except _ExprEvalError:
+        if strict:
+            raise
+        return None
     except (ValueError, ZeroDivisionError, TypeError, KeyError, OverflowError):
         return None
 
@@ -412,10 +444,12 @@ def apply_data_transform_steps(
     steps: list[dict[str, Any]] | None,
     *,
     sibling_tables: dict[str, dict[str, Any]] | None = None,
+    sibling_status: dict[str, dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     columns = [str(col) for col in (table.get("columns") or [])]
     rows = [dict(row) for row in (table.get("rows") or []) if isinstance(row, dict)]
     siblings = sibling_tables or {}
+    dep_status = sibling_status or {}
     if not steps:
         return {"columns": columns, "rows": rows}
 
@@ -478,7 +512,17 @@ def apply_data_transform_steps(
                     + ", ".join(missing),
                 )
             columns.append(name)
-            rows = [{**row, name: evaluate_safe_column_expr(expr, row)} for row in rows]
+            next_rows = []
+            for row_index, row in enumerate(rows):
+                try:
+                    value = evaluate_safe_column_expr(expr, row, strict=True)
+                except _ExprEvalError as exc:
+                    raise MExecutionError(
+                        exc.code,
+                        f'addColumn "{name}": {exc}',
+                    ) from exc
+                next_rows.append({**row, name: value})
+            rows = next_rows
         elif op == "replace":
             column = str(step.get("column") or "")
             _require_step_column(column, columns, rows, "replace")
@@ -623,6 +667,24 @@ def apply_data_transform_steps(
             source_id = str(step.get("sourceId") or "")
             other = siblings.get(source_id)
             if not isinstance(other, dict):
+                status = dep_status.get(source_id) or {}
+                st = str(status.get("status") or "")
+                if st == "failed":
+                    raise MExecutionError(
+                        "m.merge_source_failed",
+                        f'A fonte "{source_id}" do merge falhou: '
+                        + (str(status.get("message") or "sem diagnóstico.")),
+                    )
+                if st == "no_table":
+                    raise MExecutionError(
+                        "m.merge_source_no_table",
+                        f'A fonte "{source_id}" do merge não produziu dados tabulares.',
+                    )
+                if st == "not_composable":
+                    raise MExecutionError(
+                        "m.merge_source_not_composable",
+                        f'"{source_id}" não é uma fonte de dados componível.',
+                    )
                 raise MExecutionError(
                     "m.merge_source_unavailable",
                     f'A fonte "{source_id}" do merge não está disponível.',
@@ -1412,6 +1474,7 @@ def execute_transform_plan(
     plan: TransformPlan,
     *,
     sibling_tables: dict[str, dict[str, Any]] | None = None,
+    sibling_status: dict[str, dict[str, Any]] | None = None,
     culture: str = "pt-BR",
     deadline_ms: int | None = None,
 ) -> TransformExecutionResult:
@@ -1423,6 +1486,7 @@ def execute_transform_plan(
             table,
             plan_to_legacy_steps(plan),
             sibling_tables=sibling_tables,
+            sibling_status=sibling_status,
         )
         return TransformExecutionResult(
             legacy_table,
@@ -1517,11 +1581,29 @@ def apply_transform_plan(
     ).table
 
 
+def _composition_source_table(data: Any) -> dict[str, Any] | None:
+    """Tabela canônica de entrada para transform/composição multi-source.
+
+    Objeto só-escalar (ex.: ``{"rol": 80}``) → linha única larga, permitindo
+    merge/fórmula por nome de campo; demais shapes seguem
+    ``coerce_payload_to_table`` (listas, séries, envelopes).
+    """
+    raw = unwrap_operational_data(data)
+    if (
+        isinstance(raw, dict)
+        and raw
+        and all(not isinstance(value, (dict, list)) for value in raw.values())
+    ):
+        return {"columns": [str(k) for k in raw], "rows": [dict(raw)]}
+    return coerce_payload_to_table(data)
+
+
 def apply_data_transform_to_payload_result(
     data: Any,
     transform: Any,
     *,
     sibling_tables: dict[str, dict[str, Any]] | None = None,
+    sibling_status: dict[str, dict[str, Any]] | None = None,
     query_bindings: tuple[dict[str, Any], ...] = (),
     target_step_name: str | None = None,
     culture: str | None = None,
@@ -1537,7 +1619,11 @@ def apply_data_transform_to_payload_result(
     )
     # A fonte canônica (`Fonte`) deve ser a tabela já normalizada pela rota (ex.: série
     # temporal → periodo/value); só cai no coerce genérico quando o chamador não a fornece.
-    table = source_table if isinstance(source_table, dict) else coerce_payload_to_table(data)
+    table = (
+        source_table
+        if isinstance(source_table, dict)
+        else _composition_source_table(data)
+    )
     source_schema = list(_table_schema(table, {})) if isinstance(table, dict) else []
     script_hash = (
         "sha256:"
@@ -1561,6 +1647,7 @@ def apply_data_transform_to_payload_result(
             table,
             read_result.plan,
             sibling_tables=sibling_tables,
+            sibling_status=sibling_status,
             culture=selected_culture,
             deadline_ms=deadline_ms,
         )
@@ -1602,6 +1689,7 @@ def apply_data_transform_to_payload(
     transform: Any,
     *,
     sibling_tables: dict[str, dict[str, Any]] | None = None,
+    sibling_status: dict[str, dict[str, Any]] | None = None,
     query_bindings: tuple[dict[str, Any], ...] = (),
     target_step_name: str | None = None,
     culture: str | None = None,
@@ -1612,6 +1700,7 @@ def apply_data_transform_to_payload(
         data,
         transform,
         sibling_tables=sibling_tables,
+        sibling_status=sibling_status,
         query_bindings=query_bindings,
         target_step_name=target_step_name,
         culture=culture,
