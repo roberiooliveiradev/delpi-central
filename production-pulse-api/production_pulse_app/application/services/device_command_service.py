@@ -21,11 +21,13 @@ from production_pulse_app.domain.services.device_command_payload_service import 
     normalize_set_command_payload,
 )
 from production_pulse_app.domain.services.device_monotonic_counter_continuity_service import (
+    COUNTER_EPOCH_KEY,
     COUNTER_OFFSET_KEY,
     COUNTER_RAW_KEY,
     apply_monotonic_continuity,
     build_hardware_set_payload,
     counter_floor,
+    next_counter_epoch,
     public_metrics,
 )
 from production_pulse_app.domain.services.device_reading_delta_service import compute_delta_metrics
@@ -146,12 +148,17 @@ class DeviceCommandService:
                 # set/reset definem baseline absoluta no hardware
                 floor = counter_floor()
                 counter = max(floor, int(result.metrics["counter"]))
+                bumped = next_counter_epoch(previous_metrics)
                 canonical = {
                     "counter": counter,
                     COUNTER_RAW_KEY: counter,
                     COUNTER_OFFSET_KEY: 0,
+                    COUNTER_EPOCH_KEY: bumped,
                 }
-                continuity_meta = {}
+                continuity_meta = {
+                    "counter_epoch_bumped": True,
+                    "counter_epoch": bumped,
+                }
                 if int(result.metrics["counter"]) < floor:
                     continuity_meta["counter_floored"] = True
                     continuity_meta["counter_floor"] = floor
@@ -172,12 +179,16 @@ class DeviceCommandService:
                         synced = floor
                 except (DeviceDriverNotImplementedError, DeviceDriverError, TypeError, ValueError):
                     synced = floor
+                bumped = next_counter_epoch(previous_metrics)
                 canonical = {
                     "counter": synced,
                     COUNTER_RAW_KEY: synced,
                     COUNTER_OFFSET_KEY: 0,
+                    COUNTER_EPOCH_KEY: bumped,
                 }
                 continuity_meta["counter_floor_sync"] = "hardware_set"
+                continuity_meta["counter_epoch_bumped"] = True
+                continuity_meta["counter_epoch"] = bumped
             previous_public = public_metrics(previous_metrics)
             canonical_public = public_metrics(canonical)
             delta_metrics, delta_meta = compute_delta_metrics(

@@ -28,6 +28,7 @@ from production_pulse_app.domain.services.device_connectivity_status_service imp
 )
 from production_pulse_app.domain.services.device_led_state import normalize_led_state
 from production_pulse_app.domain.services.device_monotonic_counter_continuity_service import (
+    COUNTER_EPOCH_KEY,
     COUNTER_OFFSET_KEY,
     COUNTER_RAW_KEY,
     apply_monotonic_continuity,
@@ -37,6 +38,7 @@ from production_pulse_app.domain.services.device_monotonic_counter_continuity_se
     intentional_decrease_command_grace_ms,
     intentional_decrease_command_keys,
     is_unexplained_counter_drop,
+    next_counter_epoch,
     public_metrics,
 )
 from production_pulse_app.domain.services.device_reading_delta_service import compute_delta_metrics
@@ -391,27 +393,34 @@ class DevicePollService:
                 "counter": floor,
                 COUNTER_RAW_KEY: floor,
                 COUNTER_OFFSET_KEY: 0,
+                COUNTER_EPOCH_KEY: next_counter_epoch(device.get("last_metrics")),
             }
             return metrics, {
                 "counter_floored": True,
                 "counter_floor": floor,
                 "counter_floor_from_raw": int(new_raw),
                 "counter_floor_sync": "software_only",
+                "counter_epoch_bumped": True,
+                "counter_epoch": metrics[COUNTER_EPOCH_KEY],
             }
 
         restored_raw = result.metrics.get("counter")
         if not isinstance(restored_raw, (int, float)) or isinstance(restored_raw, bool):
             restored_raw = floor
         value = max(floor, int(restored_raw))
+        bumped = next_counter_epoch(device.get("last_metrics"))
         return {
             "counter": value,
             COUNTER_RAW_KEY: value,
             COUNTER_OFFSET_KEY: 0,
+            COUNTER_EPOCH_KEY: bumped,
         }, {
             "counter_floored": True,
             "counter_floor": floor,
             "counter_floor_from_raw": int(new_raw),
             "counter_floor_sync": "hardware_set",
+            "counter_epoch_bumped": True,
+            "counter_epoch": bumped,
         }
 
     def _maybe_hardware_restore_counter(
@@ -459,10 +468,12 @@ class DevicePollService:
             return None
 
         value = max(counter_floor(), int(restored_raw))
+        bumped = next_counter_epoch(previous_metrics)
         metrics = {
             "counter": value,
             COUNTER_RAW_KEY: value,
             COUNTER_OFFSET_KEY: 0,
+            COUNTER_EPOCH_KEY: bumped,
         }
         meta = {
             "counter_restored": True,
@@ -471,6 +482,8 @@ class DevicePollService:
             "counter_restore_raw": int(new_raw),
             "counter_restore_target": target,
             "counter_restore_reason": "unexplained_drop",
+            "counter_epoch_bumped": True,
+            "counter_epoch": bumped,
         }
         return metrics, meta
 

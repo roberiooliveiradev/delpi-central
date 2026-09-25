@@ -23,7 +23,8 @@ _DEVICE_BINDING_COLUMNS = """
     d.led_state,
     b.anchor_type,
     b.placement_label,
-    b.placement_key
+    b.placement_key,
+    b.work_center_code
 """
 
 

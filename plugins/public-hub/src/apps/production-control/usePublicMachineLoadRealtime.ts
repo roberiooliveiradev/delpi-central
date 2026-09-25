@@ -57,7 +57,7 @@ export function usePublicMachineLoadRealtime({ token, branch, onChanged }: Optio
         } catch {
           return;
         }
-        if (message.type === "machine_load_updated") {
+        if (message.type === "machine_load_updated" || message.type === "production_run_updated") {
           onChangedRef.current(message.reason || "update");
         }
       };

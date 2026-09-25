@@ -25,6 +25,7 @@ Até lá: não renomear o launcher só para “prometer” um portal que ainda n
 | UI | `plugins/production-control` |
 | BFF / regra PCP | `production-control-api` |
 | SQL TOTVS | `api-delpi` (`/production/otd*`, `/production/pcp-orders/*`, `/production/machine-load/*`, `/production/orders/operation-materials*`, `/pedidos-venda-abertos/totvs-open-orders`, `/pedidos-venda-abertos/ops-abertas`, `/supplies/purchase-requests/open-coverage`, `/supplies/stock-balances/items`, `/products/{code}/raw-material-set-shortages`) |
+| Contagem MES (shadow) no cockpit | `production-control-api` + telemetria `production-pulse-api` — ver [MES-PULSE-COUNTING.md](./MES-PULSE-COUNTING.md) |
 
 MFE não chama api-delpi. Subplugins são views internas do mesmo remote (não manifests aninhados).
 

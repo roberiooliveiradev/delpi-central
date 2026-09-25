@@ -16,6 +16,7 @@ from production_pulse_app.interface.http.routes.device_ota_routes import router 
 from production_pulse_app.interface.http.routes.device_routes import router as devices_router
 from production_pulse_app.interface.http.routes.driver_routes import router as drivers_router
 from production_pulse_app.interface.http.routes.firmware_routes import router as firmware_router
+from production_pulse_app.interface.http.routes.integration_routes import router as integration_router
 from production_pulse_app.interface.http.routes.operator_routes import router as operator_router
 from production_pulse_app.interface.http.routes.realtime_routes import router as realtime_router
 from production_pulse_app.interface.http.routes.summary_routes import router as summary_router
@@ -108,6 +109,7 @@ def create_app() -> FastAPI:
     app.include_router(summary_router)
     app.include_router(firmware_router)
     app.include_router(device_ota_router)
+    app.include_router(integration_router)
     app.include_router(realtime_router)
     return app
 

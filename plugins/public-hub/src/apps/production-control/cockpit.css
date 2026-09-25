@@ -2613,3 +2613,114 @@
     height: 40px;
   }
 }
+
+/* Contagem MES (Pulso) no card "Agora nesta bancada" */
+.pcp-pub__run {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid color-mix(in srgb, var(--pcp-pub-border, #d1d5db) 80%, transparent);
+}
+
+.pcp-pub__run-title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 650;
+}
+
+.pcp-pub__run-note,
+.pcp-pub__run-warn,
+.pcp-pub__run-error {
+  margin: 0.35rem 0 0;
+  font-size: 0.82rem;
+}
+
+.pcp-pub__run-warn {
+  color: #b45309;
+}
+
+.pcp-pub__run-error {
+  color: #b91c1c;
+}
+
+.pcp-pub__run-identify,
+.pcp-pub__run-session {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.pcp-pub__run-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.8rem;
+}
+
+.pcp-pub__run-field input {
+  min-height: 44px;
+  padding: 0.5rem 0.75rem;
+  border-radius: 10px;
+  border: 1px solid var(--pcp-pub-border, #d1d5db);
+  background: var(--pcp-pub-surface, #fff);
+  color: inherit;
+  font: inherit;
+}
+
+.pcp-pub__run-session-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.pcp-pub__run-readout {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.pcp-pub__run-count {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.pcp-pub__run-count span {
+  font-size: 0.78rem;
+  opacity: 0.75;
+}
+
+.pcp-pub__run-count strong {
+  font-size: clamp(1.8rem, 4vw, 2.6rem);
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.pcp-pub__run-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 0.5rem 1rem;
+  margin: 0;
+}
+
+.pcp-pub__run-meta dt {
+  font-size: 0.72rem;
+  opacity: 0.7;
+}
+
+.pcp-pub__run-meta dd {
+  margin: 0.1rem 0 0;
+  font-size: 0.88rem;
+}
+
+.pcp-pub__run-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.pcp-pub__run-actions .pcp-pub__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}

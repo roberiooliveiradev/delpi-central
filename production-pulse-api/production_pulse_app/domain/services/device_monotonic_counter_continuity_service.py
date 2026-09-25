@@ -11,9 +11,23 @@ from production_pulse_app.infrastructure.content.device_validation_content_servi
 
 COUNTER_RAW_KEY = "counterRaw"
 COUNTER_OFFSET_KEY = "counterOffset"
-_INTERNAL_METRIC_KEYS = frozenset({COUNTER_RAW_KEY, COUNTER_OFFSET_KEY})
+COUNTER_EPOCH_KEY = "counterEpoch"
+_INTERNAL_METRIC_KEYS = frozenset({COUNTER_RAW_KEY, COUNTER_OFFSET_KEY, COUNTER_EPOCH_KEY})
 _DEFAULT_INTENTIONAL_DECREASE_COMMANDS = frozenset({"decrement", "reset", "set"})
 _DEFAULT_INTENTIONAL_DECREASE_GRACE_MS = 15_000
+
+
+def counter_epoch_value(metrics: dict[str, Any] | None) -> int:
+    """Epoch do contador lógico (0 se ausente). Interno a ``last_metrics``."""
+    if not isinstance(metrics, dict):
+        return 0
+    raw = _as_int(metrics.get(COUNTER_EPOCH_KEY))
+    return max(0, raw) if raw is not None else 0
+
+
+def next_counter_epoch(previous_metrics: dict[str, Any] | None) -> int:
+    """Próximo epoch após reset/set/restore material."""
+    return counter_epoch_value(previous_metrics) + 1
 
 
 def _monotonic_metric_keys(driver_key: str) -> frozenset[str]:
@@ -109,7 +123,10 @@ def apply_monotonic_continuity(
     """Normaliza métricas monotônicas com offset após perda de memória no hardware.
 
     Retorna (metrics_para_persistir, meta). ``counter`` fica lógico (visível);
-    ``counterRaw`` / ``counterOffset`` ficam só no last_metrics interno.
+    ``counterRaw`` / ``counterOffset`` / ``counterEpoch`` ficam só no last_metrics interno.
+
+    ``counterEpoch`` sobe em reset/set (``clear_offsets``) e em restore material
+    (power-loss), para consumidores MES fecharem o segmento de âncora absoluta.
 
     ``accept_decrease``: provenance de comando (decrement/reset/set) ou path de comando —
     nunca trata queda como power-loss. No poll sem comando recente, qualquer queda restaura.
@@ -118,8 +135,10 @@ def apply_monotonic_continuity(
     previous = previous_metrics if isinstance(previous_metrics, dict) else {}
     result = dict(raw_metrics)
     meta: dict[str, Any] = {}
+    carried_epoch = counter_epoch_value(previous)
 
     if clear_offsets:
+        bumped = next_counter_epoch(previous)
         for key in _monotonic_metric_keys(driver_key):
             raw_val = _as_int(raw_metrics.get(key))
             if raw_val is None:
@@ -133,6 +152,13 @@ def apply_monotonic_continuity(
             result[key] = logical
             result[COUNTER_RAW_KEY] = stored_raw
             result[COUNTER_OFFSET_KEY] = offset
+            result[COUNTER_EPOCH_KEY] = bumped
+            meta["counter_epoch_bumped"] = True
+            meta["counter_epoch"] = bumped
+        if COUNTER_EPOCH_KEY not in result:
+            result[COUNTER_EPOCH_KEY] = bumped
+            meta["counter_epoch_bumped"] = True
+            meta["counter_epoch"] = bumped
         return result, meta
 
     for key in _monotonic_metric_keys(driver_key):
@@ -156,6 +182,7 @@ def apply_monotonic_continuity(
             result[key] = logical
             result[COUNTER_RAW_KEY] = stored_raw
             result[COUNTER_OFFSET_KEY] = offset
+            result[COUNTER_EPOCH_KEY] = carried_epoch
             continue
 
         power_loss = (not accept_decrease) and is_unexplained_counter_drop(prev_raw, raw_val)
@@ -169,14 +196,18 @@ def apply_monotonic_continuity(
                 offset=offset,
                 meta=meta,
             )
+            bumped = next_counter_epoch(previous)
             result[key] = logical
             result[COUNTER_RAW_KEY] = stored_raw
             result[COUNTER_OFFSET_KEY] = offset
+            result[COUNTER_EPOCH_KEY] = bumped
             meta["counter_restored"] = True
             meta["counter_restore_mode"] = "software_offset"
             meta["counter_restore_from"] = prev_logical
             meta["counter_restore_raw"] = raw_val
             meta["counter_restore_reason"] = "unexplained_drop"
+            meta["counter_epoch_bumped"] = True
+            meta["counter_epoch"] = bumped
         else:
             # Provenance de comando (ou incremento): mantém offset e acompanha o raw.
             logical = raw_val + prev_offset
@@ -189,9 +220,13 @@ def apply_monotonic_continuity(
             result[key] = logical
             result[COUNTER_RAW_KEY] = stored_raw
             result[COUNTER_OFFSET_KEY] = offset
+            result[COUNTER_EPOCH_KEY] = carried_epoch
             if accept_decrease and is_unexplained_counter_drop(prev_raw, raw_val):
                 meta["counter_decrease_accepted"] = True
                 meta["counter_decrease_provenance"] = "recent_command"
+
+    if COUNTER_EPOCH_KEY not in result:
+        result[COUNTER_EPOCH_KEY] = carried_epoch
 
     return result, meta
 
@@ -208,14 +243,17 @@ def counter_restore_enabled(driver_key: str) -> bool:
 
 
 __all__ = [
+    "COUNTER_EPOCH_KEY",
     "COUNTER_OFFSET_KEY",
     "COUNTER_RAW_KEY",
     "apply_monotonic_continuity",
     "build_hardware_set_payload",
+    "counter_epoch_value",
     "counter_floor",
     "counter_restore_enabled",
     "intentional_decrease_command_grace_ms",
     "intentional_decrease_command_keys",
     "is_unexplained_counter_drop",
+    "next_counter_epoch",
     "public_metrics",
 ]

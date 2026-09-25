@@ -29,6 +29,20 @@ Envelope: `{ "success", "message", "data" }`.
 | GET | `/health` | não |
 | WS | `/v1/realtime/ws?token=&client_id=` | JWT na query + RBAC (`devices.view` / access) — ver `docs/architecture/realtime-pulse.md` |
 
+### Integrações S2S (MES / production-control)
+
+Auth: `X-Delpi-Service-Token` (= `API_DELPI_INTERNAL_SERVICE_TOKEN`) **ou** JWT com `devices.view`.
+Consumidor canônico: **production-control-api** (nunca o MFE do cockpit).
+
+| Método | Path | Descrição |
+|--------|------|-----------|
+| GET | `/integrations/devices/snapshot?branch=&workCenter=&roleKey=pulse_counter` | Devices bound ao CT com `counter`, `counterEpoch`, online |
+| GET | `/integrations/devices/{deviceId}/snapshot` | Snapshot de um device |
+
+`counterEpoch` sobe em reset/set e restore material — o MES fecha o segmento de âncora quando o epoch muda.
+
+Doc canônico: [MES-PULSE-COUNTING.md](../docs/12-roadmap-e-evolucao/production-control/MES-PULSE-COUNTING.md).
+
 ### Catálogo
 
 | Método | Path | Permissão |

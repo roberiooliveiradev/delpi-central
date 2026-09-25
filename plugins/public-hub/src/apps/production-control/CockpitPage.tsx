@@ -24,6 +24,7 @@ import {
   WorkCenterShiftMetrics,
 } from "./cockpitShared";
 import { OperationDetailPage } from "./OperationDetailPage";
+import { ProductionRunControls } from "./ProductionRunControls";
 import { usePublicMachineLoadRealtime } from "./usePublicMachineLoadRealtime";
 import { useCockpitView } from "./useCockpitView";
 import { useWorkCenterPerformance } from "./useWorkCenterPerformance";
@@ -133,6 +134,7 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
   const [downtimeOpen, setDowntimeOpen] = useState(false);
   const [queueQuery, setQueueQuery] = useState("");
   const [hideFinished, setHideFinished] = useState(false);
+  const [runUpdatedSignal, setRunUpdatedSignal] = useState(0);
   const workCenterRef = useRef(workCenter);
   workCenterRef.current = workCenter;
   const reloadGenerationRef = useRef(0);
@@ -179,7 +181,10 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
   const connected = usePublicMachineLoadRealtime({
     token,
     branch,
-    onChanged: useCallback(() => {
+    onChanged: useCallback((reason: string) => {
+      if (reason.startsWith("run_") || reason === "pieces_updated") {
+        setRunUpdatedSignal((value) => value + 1);
+      }
       // Sequência/refresh do PCP: atualiza sem flicker de loading.
       void reload(workCenterRef.current, { quiet: true });
     }, [reload]),
@@ -458,9 +463,13 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
           </p>
         ) : (
           <>
-            {activeEntry ? (
+            {activeEntry && workCenter ? (
               <ActiveNowCard
                 entry={activeEntry}
+                token={token}
+                branch={branch}
+                workCenter={workCenter}
+                runUpdatedSignal={runUpdatedSignal}
                 onOpenVisual={setVisualTarget}
                 onOpenDetail={() =>
                   openOperation(
@@ -733,10 +742,18 @@ function WorkCenterPicker({ branch, workCenters, onSelect }: PickerProps) {
 
 function ActiveNowCard({
   entry,
+  token,
+  branch,
+  workCenter,
+  runUpdatedSignal,
   onOpenVisual,
   onOpenDetail,
 }: {
   entry: QueueEntry;
+  token: string;
+  branch: string;
+  workCenter: string;
+  runUpdatedSignal: number;
   onOpenVisual: (target: VisualTarget) => void;
   onOpenDetail: () => void;
 }) {
@@ -747,7 +764,7 @@ function ActiveNowCard({
     resolveVisualMeta(operation);
 
   const openFromCard = (event: MouseEvent<HTMLElement>) => {
-    if ((event.target as HTMLElement).closest("button")) return;
+    if ((event.target as HTMLElement).closest("button, input, form, .pcp-pub__run")) return;
     onOpenDetail();
   };
 
@@ -853,6 +870,14 @@ function ActiveNowCard({
             ) : null}
           </div>
         </div>
+
+        <ProductionRunControls
+          token={token}
+          branch={branch}
+          workCenter={workCenter}
+          operation={operation}
+          runUpdatedSignal={runUpdatedSignal}
+        />
       </article>
     </section>
   );

@@ -38,6 +38,28 @@ BFF do **Portal PCP**. Dono do catálogo de subplugins, da **gestão à vista**,
 | GET | `/public/machine-load/{token}?branch=01\|02&workCenter=` | público (token do cockpit) |
 | GET | `/public/machine-load/{token}/drawings/{paCode}/pdf?branch=01\|02` | público (PDF do PA na fila) |
 | GET | `/public/machine-load/{token}/models/{productCode}/glb?branch=01\|02` | público (GLB do produto da OP na fila) |
+| POST | `/public/machine-load/{token}/bench-sessions` | público + honeypot (identifica operador) |
+| DELETE | `/public/machine-load/{token}/bench-sessions/current` | público + header de sessão |
+| POST | `/public/machine-load/{token}/runs` | play (sessão obrigatória) |
+| POST | `/public/machine-load/{token}/runs/{id}/pause` | pause |
+| POST | `/public/machine-load/{token}/runs/{id}/resume` | resume |
+| POST | `/public/machine-load/{token}/runs/{id}/stop` | stop |
+| GET | `/public/machine-load/{token}/runs/active?branch=&workCenter=` | run ativo + peças + device |
+
+### Integração Production Pulse (MES shadow)
+
+Contagem em tempo real no cockpit: este BFF **puxa** snapshot S2S do Pulse
+(`GET /integrations/devices/.../snapshot`) via `PRODUCTION_PULSE_API_URL`.
+
+| Ambiente | `PRODUCTION_PULSE_API_URL` típico |
+|----------|-----------------------------------|
+| Dev (pulse `network_mode: host`) | `http://host.docker.internal:80/apps/production-pulse-api` |
+| Prod (mesma `delpi-network`) | `http://delpi-production-pulse-api:8000` |
+
+Auth outbound: `API_DELPI_INTERNAL_SERVICE_TOKEN` + `X-Delpi-Caller-App: production-control-api`.
+O Pulse **não** conhece OP/run; a fórmula de peças é âncora absoluta + `counterEpoch` (tabelas `production_runs` / `production_run_segments`).
+
+Doc canônico: [MES-PULSE-COUNTING.md](../docs/12-roadmap-e-evolucao/production-control/MES-PULSE-COUNTING.md).
 | GET | `/product-3d-models` | JWT + `product-3d-models.manage` |
 | PUT | `/product-3d-models/{productCode}` | JWT + `product-3d-models.manage` (multipart `.glb`) |
 | DELETE | `/product-3d-models/{productCode}` | JWT + `product-3d-models.manage` |

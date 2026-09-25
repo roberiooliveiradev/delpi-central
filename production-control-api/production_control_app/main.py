@@ -72,9 +72,15 @@ async def lifespan(_app: FastAPI):
     run_migrations_on_startup()
     machine_load_realtime_hub.bind_loop(asyncio.get_running_loop())
     worker = asyncio.create_task(machine_load_realtime_hub.worker())
+    from production_control_app.application.services.production_run_poller_service import (
+        production_run_poller,
+    )
+
+    await production_run_poller.start()
     try:
         yield
     finally:
+        await production_run_poller.stop()
         worker.cancel()
 
 

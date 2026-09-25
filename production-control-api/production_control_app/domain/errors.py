@@ -51,3 +51,31 @@ class Product3DModelInvalid(ProductionControlError):
 
 class PublicAccessDenied(ProductionControlError):
     """Token do link público inválido ou desativado."""
+
+
+class BenchSessionRequired(ProductionControlError):
+    """Sessão de bancada ausente, expirada ou inválida."""
+
+
+class BenchSessionConflict(ProductionControlError):
+    """Já existe sessão ativa conflitante no posto."""
+
+
+class ProductionRunConflict(ProductionControlError):
+    """Já existe run ativo no posto ou transição inválida."""
+
+
+class ProductionRunNotFound(ProductionControlError):
+    """Run inexistente ou fora do escopo do posto."""
+
+
+class PulseDeviceUnavailable(ProductionControlError):
+    """Nenhum device Pulse elegível / snapshot indisponível para o posto."""
+
+
+class PulseGatewayError(ProductionControlError):
+    """Falha ao consultar o production-pulse-api."""
+
+    def __init__(self, message: str, *, status_code: int | None = None) -> None:
+        super().__init__(message)
+        self.status_code = status_code

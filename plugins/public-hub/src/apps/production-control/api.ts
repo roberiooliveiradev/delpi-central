@@ -552,3 +552,194 @@ export async function fetchPublicDeliveryMapDrawingPdf(
   }
   return response.blob();
 }
+
+export type ProductionRunSnapshot = {
+  id: string;
+  branch: string;
+  workCenter: string;
+  productionOrder: string;
+  operationCode: string;
+  deviceId: string;
+  operatorCode: string;
+  operatorName: string | null;
+  status: "running" | "paused" | "completed" | "aborted";
+  startedAt: string | null;
+  endedAt: string | null;
+  piecesTotal: number;
+  plannedQty: number | null;
+  countedPieces?: number;
+  totvsProducedQty?: number | null;
+  divergencePieces?: number | null;
+  device?: {
+    deviceId?: string;
+    name?: string | null;
+    counter?: number | null;
+    counterEpoch?: number | null;
+    online?: boolean;
+    status?: string | null;
+    lastSeenAt?: string | null;
+    pollIntervalMs?: number | null;
+  } | null;
+};
+
+export type BenchSessionSnapshot = {
+  sessionToken: string;
+  expiresAt: string | null;
+  branch: string;
+  workCenter: string;
+  operatorCode: string;
+  operatorName: string | null;
+};
+
+const BENCH_SESSION_HEADER = "X-Delpi-Bench-Session";
+
+async function readEnvelope<T>(response: Response, fallback: string): Promise<T> {
+  if (!response.ok) {
+    throw new Error(await readError(response, fallback));
+  }
+  const envelope = (await response.json()) as ApiEnvelope<T>;
+  if (envelope.success === false) {
+    throw new Error(envelope.message || fallback);
+  }
+  return envelope.data;
+}
+
+export async function createBenchSession(
+  token: string,
+  body: {
+    branch: string;
+    workCenter: string;
+    operatorCode: string;
+    operatorName?: string | null;
+  },
+): Promise<BenchSessionSnapshot> {
+  const response = await fetch(
+    `${API_BASE}/public/machine-load/${encodeURIComponent(token)}/bench-sessions`,
+    {
+      method: "POST",
+      headers: { Accept: "application/json", "Content-Type": "application/json" },
+      body: JSON.stringify({
+        branch: body.branch,
+        workCenter: body.workCenter,
+        operatorCode: body.operatorCode,
+        operatorName: body.operatorName || null,
+        website: "",
+      }),
+    },
+  );
+  return readEnvelope<BenchSessionSnapshot>(response, "Não foi possível identificar o operador.");
+}
+
+export async function endBenchSession(token: string, sessionToken: string): Promise<void> {
+  const response = await fetch(
+    `${API_BASE}/public/machine-load/${encodeURIComponent(token)}/bench-sessions/current`,
+    {
+      method: "DELETE",
+      headers: {
+        Accept: "application/json",
+        [BENCH_SESSION_HEADER]: sessionToken,
+      },
+    },
+  );
+  await readEnvelope<{ ended: boolean }>(response, "Não foi possível encerrar a sessão.");
+}
+
+export async function fetchActiveProductionRun(
+  token: string,
+  branch: string,
+  workCenter: string,
+): Promise<ProductionRunSnapshot | null> {
+  const params = new URLSearchParams({ branch, workCenter });
+  const response = await fetch(
+    `${API_BASE}/public/machine-load/${encodeURIComponent(token)}/runs/active?${params}`,
+    { headers: { Accept: "application/json" } },
+  );
+  return readEnvelope<ProductionRunSnapshot | null>(response, "Contagem indisponível.");
+}
+
+export async function startProductionRun(
+  token: string,
+  sessionToken: string,
+  body: {
+    branch: string;
+    workCenter: string;
+    productionOrder: string;
+    operationCode: string;
+    plannedQty?: number | null;
+  },
+): Promise<ProductionRunSnapshot> {
+  const response = await fetch(
+    `${API_BASE}/public/machine-load/${encodeURIComponent(token)}/runs`,
+    {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        [BENCH_SESSION_HEADER]: sessionToken,
+      },
+      body: JSON.stringify({
+        branch: body.branch,
+        workCenter: body.workCenter,
+        productionOrder: body.productionOrder,
+        operationCode: body.operationCode,
+        plannedQty: body.plannedQty ?? null,
+        website: "",
+      }),
+    },
+  );
+  return readEnvelope<ProductionRunSnapshot>(response, "Não foi possível iniciar a produção.");
+}
+
+export async function pauseProductionRun(
+  token: string,
+  sessionToken: string,
+  runId: string,
+): Promise<ProductionRunSnapshot> {
+  const response = await fetch(
+    `${API_BASE}/public/machine-load/${encodeURIComponent(token)}/runs/${encodeURIComponent(runId)}/pause`,
+    {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        [BENCH_SESSION_HEADER]: sessionToken,
+      },
+    },
+  );
+  return readEnvelope<ProductionRunSnapshot>(response, "Não foi possível pausar.");
+}
+
+export async function resumeProductionRun(
+  token: string,
+  sessionToken: string,
+  runId: string,
+): Promise<ProductionRunSnapshot> {
+  const response = await fetch(
+    `${API_BASE}/public/machine-load/${encodeURIComponent(token)}/runs/${encodeURIComponent(runId)}/resume`,
+    {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        [BENCH_SESSION_HEADER]: sessionToken,
+      },
+    },
+  );
+  return readEnvelope<ProductionRunSnapshot>(response, "Não foi possível retomar.");
+}
+
+export async function stopProductionRun(
+  token: string,
+  sessionToken: string,
+  runId: string,
+): Promise<ProductionRunSnapshot> {
+  const response = await fetch(
+    `${API_BASE}/public/machine-load/${encodeURIComponent(token)}/runs/${encodeURIComponent(runId)}/stop`,
+    {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        [BENCH_SESSION_HEADER]: sessionToken,
+      },
+    },
+  );
+  return readEnvelope<ProductionRunSnapshot>(response, "Não foi possível encerrar.");
+}

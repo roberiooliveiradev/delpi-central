@@ -24,6 +24,7 @@ Plataforma de **dispositivos IoT** na rede industrial: contadores de golpe, rota
 | [DESIGN-FRONTEND.md](./DESIGN-FRONTEND.md) | Cores, tokens, componentes plugin-ui, estrutura MFE |
 | [VISUAL-WIREFRAMES-AND-COLORS.md](./VISUAL-WIREFRAMES-AND-COLORS.md) | Wireframes coloridos por página/componente + mapa de tokens |
 | [INTEGRATIONS-TOTVS.md](./INTEGRATIONS-TOTVS.md) | Matriz api-delpi / TOTVS vs dados locais |
+| [MES shadow / PCP](../production-control/MES-PULSE-COUNTING.md) | Contagem em tempo real no cockpit (Pulse → production-control) |
 | [DEVICE-DRIVERS.md](./DEVICE-DRIVERS.md) | Registry JSON de drivers e métricas |
 | [GLOSSARY.md](./GLOSSARY.md) | Vocabulário device × âncora × CT |
 | [USER-JOURNEYS.md](./USER-JOURNEYS.md) | Jornadas supervisor / operador / admin |

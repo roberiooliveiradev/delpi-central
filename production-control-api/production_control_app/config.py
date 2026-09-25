@@ -42,6 +42,23 @@ class Settings:
     DELPI_API_TIMEOUT: float = float(_get_env("DELPI_API_TIMEOUT", default="30"))
     DELPI_API_CALLER_APP: str = _get_env("DELPI_API_CALLER_APP", default="production-control-api")
 
+    # Integração MES → Production Pulse (snapshot de contador).
+    # Dev (pulse em network_mode:host): http://host.docker.internal:80/apps/production-pulse-api
+    # Prod (mesma delpi-network): http://delpi-production-pulse-api:8000
+    PRODUCTION_PULSE_API_URL: str = _get_env(
+        "PRODUCTION_PULSE_API_URL",
+        default="http://delpi-production-pulse-api:8000",
+    )
+    PRODUCTION_PULSE_API_TIMEOUT: float = float(
+        _get_env("PRODUCTION_PULSE_API_TIMEOUT", default="5")
+    )
+    PC_PRODUCTION_RUN_POLL_MS: int = int(
+        _get_env("PC_PRODUCTION_RUN_POLL_MS", default="1000") or "1000"
+    )
+    PC_BENCH_SESSION_TTL_HOURS: int = int(
+        _get_env("PC_BENCH_SESSION_TTL_HOURS", default="12") or "12"
+    )
+
     PLUGINS_DB_HOST: str | None = _get_env("PLUGINS_DB_HOST")
     PLUGINS_DB_PORT: str = _get_env("PLUGINS_DB_PORT", default="5432")
     PLUGINS_DB_NAME: str | None = _get_env("PLUGINS_DB_NAME")

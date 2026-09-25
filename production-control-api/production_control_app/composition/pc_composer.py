@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any
+
 from production_control_app.application.services.machine_load_change_notifier import (
     notify_machine_load_changed,
 )
@@ -379,4 +381,49 @@ def build_delivery_map_drawing_service(
         branch_access=build_branch_access_service(),
         access=build_public_delivery_map_access_service(),
         drawings=drawings or build_drawing_library_storage(),
+    )
+
+
+def build_production_run_service(
+    gateway: DelpiProductionGateway | None = None,
+    *,
+    snapshots: MachineLoadSnapshotRepositoryPort | None = None,
+    pulse_gateway: Any | None = None,
+) -> Any:
+    from production_control_app.application.services.production_run_service import (
+        ProductionRunService,
+    )
+    from production_control_app.infrastructure.gateways.production_pulse_gateway import (
+        ProductionPulseGateway,
+    )
+
+    machine_load = build_machine_load_service(gateway, snapshots=snapshots)
+
+    def _queue_lookup(
+        *,
+        branch: str,
+        work_center: str,
+        production_order: str,
+        operation_code: str,
+    ):
+        try:
+            payload = machine_load.build_public(branch=branch, work_center=work_center)
+        except Exception:  # noqa: BLE001
+            return None
+        operations = payload.get("operations") if isinstance(payload, dict) else None
+        if not isinstance(operations, list):
+            return None
+        for op in operations:
+            if not isinstance(op, dict):
+                continue
+            if str(op.get("production_order") or "") != str(production_order):
+                continue
+            if str(op.get("operation_code") or "") != str(operation_code):
+                continue
+            return op
+        return None
+
+    return ProductionRunService(
+        pulse_gateway=pulse_gateway or ProductionPulseGateway(),
+        queue_lookup=_queue_lookup,
     )
