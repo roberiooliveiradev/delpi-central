@@ -468,6 +468,7 @@
       "Pedido 'filtro da programação / default da playlist' → patch_playlist_data_defaults.",
       "Pedido 'filtro deste slide / vale para todos os indicadores' → patch_native_config.dataFilters; recipe TV_FILTER_STRIP se precisar de controles no palco.",
       "Pedido 'só nesta tabela/KPI' → params naquela fonte.",
+      "Ajuste somente de params de fonte existente (ex.: 'mude o período desta fonte para este ano', 'troque a filial desta consulta') → patch_data_source_params com blockId + set/unset — preserva operationId/transforms/bindings/label; não usar upsert_data_source para isso (reexige operationId e reescreve o binding inteiro).",
       "Datas: preferir preset/periodDays; hardcode absoluto só se o usuário INFORMAR intervalo fixo.",
       "paramSchema da rota manda — nunca inventar chave de filtro.",
       "branch_scope + filter_layering: filial inventada = anti-padrão.",

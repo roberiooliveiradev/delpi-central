@@ -1,5 +1,6 @@
 from datetime import date
 
+from tv_app.application.services.comunicado_data_params_service import merge_data_params
 from tv_app.infrastructure.gateways.delpi_operational_gateway import _build_query_params
 
 
@@ -633,6 +634,54 @@ def test_commercial_rol_this_month_full_civil_month(monkeypatch):
     assert query["start_date"] == "2026-09-01"
     assert query["end_date"] == "2026-09-30"
     assert "dateRangePreset" not in query
+
+
+def test_commercial_rol_this_month_previous_year(monkeypatch):
+    """Mês civil completo do mesmo número no ano anterior (≠ SPLY YTD)."""
+    _freeze_business_today(monkeypatch, date(2026, 9, 25))
+    query = _build_query_params(
+        _commercial_rol_route(),
+        {"dateRangePreset": "this_month_previous_year"},
+    )
+    assert query["start_date"] == "2025-09-01"
+    assert query["end_date"] == "2025-09-30"
+    assert "dateRangePreset" not in query
+
+
+def test_commercial_rol_full_trace_persisted_to_wire(monkeypatch):
+    """Trace completo: params persistidos → merge → preset → query sanitizada.
+
+    Persisted (só preset + branch — pós-normalização não há datas stale);
+    playlist dataDefaults compete mas perde; query final tem só chaves do schema.
+    """
+    _freeze_business_today(monkeypatch, date(2026, 9, 25))
+    route = _commercial_rol_route()
+    playlist_defaults = {"dateRangePreset": "this_month_full", "branch": "01"}
+    cases = [
+        ("this_year", ("2026-01-01", "2026-09-25")),
+        ("same_period_previous_year", ("2025-01-01", "2025-09-25")),
+        ("this_month_full", ("2026-09-01", "2026-09-30")),
+        ("this_month_previous_year", ("2025-09-01", "2025-09-30")),
+    ]
+    for preset, (expected_start, expected_end) in cases:
+        persisted_source_params = {"dateRangePreset": preset}
+        merged = merge_data_params(
+            playlist_defaults=playlist_defaults,
+            slide_filters=None,
+            block_params=persisted_source_params,
+        )
+        # Precedência: fonte vence dataDefaults; branch herda da playlist.
+        assert merged["dateRangePreset"] == preset
+        assert merged["branch"] == "01"
+        assert "start_date" not in merged and "end_date" not in merged
+
+        query = _build_query_params(route, merged)
+        # Sanitização: só chaves do contrato downstream.
+        assert query["start_date"] == expected_start, preset
+        assert query["end_date"] == expected_end, preset
+        assert query["branch"] == "01"
+        assert set(query) <= set(route["paramSchema"]) | {"start_date", "end_date"}
+        assert "dateRangePreset" not in query
 
 
 def test_commercial_rol_custom_dates_pass_through_exact(monkeypatch):

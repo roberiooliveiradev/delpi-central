@@ -389,6 +389,7 @@
     "transformStepUnknown": "set_data_transform não aceita o step «{stepOp}». Use apenas steps allowlisted do catálogo.",
     "fieldLabelsInvalid": "fieldLabels deve ser um mapa string→string.",
     "paramsInvalid": "params deve ser um objeto com valores primitivos (string/number/boolean).",
+    "dataSourceParamNotAllowed": "A fonte «{blockId}» não aceita a(s) chave(s) de params: {keys}.",
     "patchNestedInvalid": "patch_native_config.patch.{field} tem tipo inválido.",
     "readySlideQualityFailed": "Slide não ficou pronto para TV: {issues}. Corrija params/projeção antes de considerar VERIFIED.",
     "playlistDefaultsRequired": "patch_playlist_data_defaults exige um objeto dataDefaults.",
@@ -934,6 +935,78 @@
       "produces": [
         "dataSource"
       ],
+      "consumes": [
+        "playlist",
+        "slide"
+      ]
+    },
+    "patch_data_source_params": {
+      "requiresPlaylist": true,
+      "requiresSlide": true,
+      "risk": "mutation",
+      "confirmationPolicy": "direct",
+      "sideEffectHints": [
+        "replaceNativeConfig"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "op",
+          "blockId"
+        ],
+        "example": {
+          "op": "patch_data_source_params",
+          "blockId": "rx_tot_y26",
+          "set": {
+            "dateRangePreset": "this_year"
+          },
+          "unset": [
+            "start_date",
+            "end_date"
+          ]
+        },
+        "description": "Patch atomico de params de uma data_source existente (set/unset). Preserva operationId, transforms, bindings, layout, label e displayMode. Chaves aceitas: paramSchema da rota + params virtuais TV (dateRangePreset, periodDays, excludeWeekends) + aliases legados de data.",
+        "properties": {
+          "op": {
+            "const": "patch_data_source_params"
+          },
+          "blockId": {
+            "type": "string",
+            "description": "Id da data_source existente a alterar."
+          },
+          "set": {
+            "type": "object",
+            "description": "Params a definir. Valor null/vazio equivale a unset. Apenas chaves do paramSchema da rota ou virtuais TV.",
+            "additionalProperties": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "unset": {
+            "type": "array",
+            "description": "Chaves de params a remover (ex.: datas fixas stale ao ativar preset).",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "produces": [],
       "consumes": [
         "playlist",
         "slide"
@@ -3433,6 +3506,49 @@
         "op": "upsert_data_source",
         "blockId": "{{dataSourceId}}",
         "label": "{{sourceLabel}}"
+      }
+    },
+    {
+      "key": "patch_data_source_params",
+      "op": "patch_data_source_params",
+      "whenToUse": "Alterar somente os params de uma fonte de dados existente (ex.: trocar o período para este ano, filial ou segmento) sem recriar o bloco nem mexer em label/transforms/bindings.",
+      "contentMarkers": [
+        "período da fonte",
+        "periodo da fonte",
+        "mude o período",
+        "mudar o período",
+        "troque o período",
+        "trocar o período",
+        "param da fonte",
+        "params da fonte",
+        "parâmetro da fonte",
+        "dateRangePreset",
+        "este ano na fonte",
+        "ano anterior na fonte"
+      ],
+      "excludeMarkers": [
+        "adicione um kpi",
+        "adicione um gráfico",
+        "adicione uma tabela",
+        "crie um slide",
+        "renomeie a fonte",
+        "nome da fonte",
+        "filtro da tela",
+        "filtros da tela",
+        "programação inteira"
+      ],
+      "actionTermSet": "mutation",
+      "requiresFilledPlaceholders": [
+        "dataSourceId"
+      ],
+      "clarificationMessageKey": "suggestNeedDataSource",
+      "payloadTemplate": {
+        "op": "patch_data_source_params",
+        "blockId": "{{dataSourceId}}",
+        "set": {
+          "dateRangePreset": "this_month"
+        },
+        "unset": []
       }
     },
     {

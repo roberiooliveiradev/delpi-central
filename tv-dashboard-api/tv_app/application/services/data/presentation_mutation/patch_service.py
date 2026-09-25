@@ -42,6 +42,14 @@ from tv_app.application.services.data.presentation_nested_contract import (
     patch_native_keys,
     validate_operation_payload,
 )
+from tv_app.application.services.data.tv_data_binding_hydrate_service import (
+    _KEEP_WITHOUT_SCHEMA,
+    _PARAM_KEY_REMAP,
+    _remap_param_keys,
+)
+from tv_app.application.services.tv_date_range_preset_service import (
+    merge_period_params_layer,
+)
 from tv_app.application.services.data.presentation_mutation.plan_compiler import (
     PlanCompileError,
     compile_presentation_plan,
@@ -320,6 +328,7 @@ def _validate_target_for_ops(
 _NATIVE_OP_NAMES = frozenset(
     {
         "upsert_data_source",
+        "patch_data_source_params",
         "set_data_transform",
         "upsert_block",
         "set_display_format",
@@ -805,6 +814,10 @@ class PresentationPatchService:
                 self._op_upsert_data_source(
                     native_config, raw_op, playlist_defaults=playlist_defaults
                 )
+            elif op_name == "patch_data_source_params":
+                self._op_patch_data_source_params(
+                    native_config, raw_op, side_effects=side_effects
+                )
             elif op_name == "set_data_transform":
                 self._op_set_data_transform(native_config, raw_op)
             elif op_name == "upsert_block":
@@ -1217,6 +1230,107 @@ class PresentationPatchService:
             }
         blocks.append(block)
         cfg["blocks"] = blocks
+
+    def _op_patch_data_source_params(
+        self,
+        cfg: dict[str, Any],
+        op: dict[str, Any],
+        *,
+        side_effects: dict[str, Any] | None = None,
+    ) -> None:
+        """Patch atomico de `dataBinding.params`: set/unset com allowlist da rota.
+
+        Preserva operationId/transforms/bindings/layout/label/displayMode do
+        bloco. Período mergeia como intenção atômica via
+        ``merge_period_params_layer`` — `set` com preset dinâmico remove datas
+        stale mesmo sem `unset` explícito.
+        """
+        block_id = str(op.get("blockId") or "").strip()
+        blocks = _blocks_of(cfg)
+        existing = _find_block(blocks, block_id) if block_id else None
+        if existing is None or str(existing.get("type") or "") != "data_source":
+            raise PresentationPatchError(
+                PresentationOpsContentService.message(
+                    "blockNotFound", blockId=block_id or "?"
+                )
+            )
+        binding = (
+            existing.get("dataBinding")
+            if isinstance(existing.get("dataBinding"), dict)
+            else {}
+        )
+        operation_id = str(binding.get("operationId") or "").strip()
+        route = self._catalog.get_route(operation_id) if operation_id else None
+        if not isinstance(route, dict):
+            raise PresentationPatchError(
+                PresentationOpsContentService.message(
+                    "operationNotInCatalog", operationId=operation_id
+                )
+            )
+
+        raw_set = op.get("set") if isinstance(op.get("set"), dict) else {}
+        raw_unset = op.get("unset") if isinstance(op.get("unset"), list) else []
+
+        set_patch: dict[str, Any] = {}
+        unset_keys: set[str] = set()
+        for key, value in raw_set.items():
+            key_str = str(key).strip()
+            if not key_str:
+                continue
+            if value is None or value == "":
+                unset_keys.add(key_str)
+                continue
+            if not isinstance(value, (str, int, float, bool)):
+                raise PresentationPatchError(
+                    PresentationOpsContentService.message("paramsInvalid")
+                )
+            set_patch[key_str] = value
+        for item in raw_unset:
+            key_str = str(item or "").strip()
+            if key_str:
+                unset_keys.add(key_str)
+        unset_keys.difference_update(set_patch)
+
+        schema = (
+            route.get("paramSchema") if isinstance(route.get("paramSchema"), dict) else {}
+        )
+        schema_keys = set(schema.keys())
+        allowed = schema_keys | _KEEP_WITHOUT_SCHEMA | set(_PARAM_KEY_REMAP)
+        current = binding.get("params") if isinstance(binding.get("params"), dict) else {}
+
+        rejected = sorted(key for key in set_patch if key not in allowed) + sorted(
+            key for key in unset_keys if key not in allowed and key not in current
+        )
+        if rejected:
+            raise PresentationPatchError(
+                PresentationOpsContentService.message(
+                    "dataSourceParamNotAllowed",
+                    blockId=block_id,
+                    keys=", ".join(rejected),
+                )
+            )
+
+        set_patch, _ = _remap_param_keys(set_patch, schema_keys)
+        base = {key: value for key, value in current.items() if key not in unset_keys}
+        next_params = merge_period_params_layer(base, set_patch)
+
+        removed = sorted(key for key in current if key not in next_params)
+        changed_set = {
+            key: next_params[key]
+            for key in set_patch
+            if key in next_params and current.get(key) != next_params[key]
+        }
+        next_binding = dict(binding)
+        next_binding["params"] = next_params
+        existing["dataBinding"] = next_binding
+        existing.pop("resolved", None)
+        if side_effects is not None:
+            side_effects.setdefault("dataSourceParamPatches", []).append(
+                {
+                    "blockId": block_id,
+                    "changed": {"set": changed_set, "unset": removed},
+                }
+            )
 
     @staticmethod
     def _is_data_source_label_only_patch(

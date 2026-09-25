@@ -1423,6 +1423,74 @@
                           "type": "object",
                           "required": [
                             "op",
+                            "blockId"
+                          ],
+                          "example": {
+                            "op": "patch_data_source_params",
+                            "blockId": "rx_tot_y26",
+                            "set": {
+                              "dateRangePreset": "this_year"
+                            },
+                            "unset": [
+                              "start_date",
+                              "end_date"
+                            ]
+                          },
+                          "description": "Patch atomico de params de uma data_source existente (set/unset). Preserva operationId, transforms, bindings, layout, label e displayMode. Chaves aceitas: paramSchema da rota + params virtuais TV (dateRangePreset, periodDays, excludeWeekends) + aliases legados de data.",
+                          "properties": {
+                            "op": {
+                              "const": "patch_data_source_params",
+                              "type": "string"
+                            },
+                            "blockId": {
+                              "type": "string",
+                              "description": "Id da data_source existente a alterar."
+                            },
+                            "set": {
+                              "type": "object",
+                              "description": "Params a definir. Valor null/vazio equivale a unset. Apenas chaves do paramSchema da rota ou virtuais TV.",
+                              "additionalProperties": {
+                                "oneOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "number"
+                                  },
+                                  {
+                                    "type": "integer"
+                                  },
+                                  {
+                                    "type": "boolean"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              }
+                            },
+                            "unset": {
+                              "type": "array",
+                              "description": "Chaves de params a remover (ex.: datas fixas stale ao ativar preset).",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "playlistRef": {
+                              "type": "string",
+                              "description": "Alias or authoritative playlist UUID. Omit to use current playlist slot."
+                            },
+                            "slideRef": {
+                              "type": "string",
+                              "description": "Alias or authoritative slide UUID. Omit to use current slide slot."
+                            }
+                          },
+                          "title": "patch_data_source_params"
+                        },
+                        {
+                          "type": "object",
+                          "required": [
+                            "op",
                             "patch"
                           ],
                           "example": {

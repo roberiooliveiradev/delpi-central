@@ -20,6 +20,7 @@ from tv_app.application.services.data.presentation_ops_content_service import (
 _NATIVE_CONFIG_OPS = frozenset(
     {
         "upsert_data_source",
+        "patch_data_source_params",
         "set_data_transform",
         "upsert_block",
         "set_display_format",
