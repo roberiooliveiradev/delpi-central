@@ -106,21 +106,31 @@ import {
 } from "../presentation/ticketListViewModel";
 import { useHelpdeskTicketListColumns } from "../presentation/useHelpdeskTicketListColumns";
 import { TicketAttachmentPreview } from "./TicketAttachmentPreview";
+import { TicketActionCard } from "./TicketActionCard";
 import { TicketActionMenu } from "./TicketActionMenu";
 import { TicketContextPanel } from "./TicketContextPanel";
 import { TicketListCards } from "./TicketListCards";
+import { ticketActionPresentation } from "../presentation/ticketActionPresentation";
 import {
   defaultTicketWorkspaceAction,
   ticketWorkspaceActions,
   ticketWorkspaceActionById,
+  ticketWorkspaceSelectorActions,
   TICKET_WORKSPACE_SURFACES,
   type TicketWorkspaceActionId,
   type TicketWorkspaceSurfaceId,
 } from "../presentation/ticketWorkspaceActions";
+import {
+  conversationMessageVisible,
+  DEFAULT_TIMELINE_VISIBILITY,
+  ticketTasksFromTimeline,
+  type TimelineVisibilityState,
+} from "../presentation/timelineVisibility";
 import { TicketListFilterPopover } from "./TicketListFilterPopover";
 import { TicketListSortPopover } from "./TicketListSortPopover";
 import { TicketListTable } from "./TicketListTable";
 import { TicketListToolbar } from "./TicketListToolbar";
+import { TicketTaskListPopover, TicketTimelineFilterPopover } from "./TicketTimelineTools";
 import {
   HelpdeskAssigneePicker,
   type HelpdeskAssigneeValue,
@@ -1039,7 +1049,9 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
   const [satisfactionComment, setSatisfactionComment] = useState("");
   const [satisfactionCommentOpen, setSatisfactionCommentOpen] = useState(false);
   const [workspaceSurface, setWorkspaceSurface] = useState<TicketWorkspaceSurfaceId>("conversation");
-  const [activeAction, setActiveAction] = useState<TicketWorkspaceActionId | null>("reply");
+  const [activeAction, setActiveAction] = useState<TicketWorkspaceActionId | null>(null);
+  const [timelineVisibility, setTimelineVisibility] =
+    useState<TimelineVisibilityState>(DEFAULT_TIMELINE_VISIBILITY);
   const [documentFiles, setDocumentFiles] = useState<File[]>([]);
   const documentInputRef = useRef<HTMLInputElement>(null);
   const [solutionContent, setSolutionContent] = useState("");
@@ -1189,32 +1201,49 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
       .then(() => {
         setCycleNote("");
         setCycleKey(newIdempotencyKey());
+        closeActionAfterSuccess();
         load();
       })
       .catch((error) => setErrorText(messageFor(error).text))
       .finally(() => setCycleSaving(false));
   }
 
+  function isActiveActionDirty(): boolean {
+    if (!activeAction) return false;
+    if (activeAction === "reply") return hasVisibleRichText(content);
+    if (activeAction === "create_solution") return hasVisibleRichText(solutionContent);
+    if (activeAction === "create_task") return hasVisibleRichText(taskContent);
+    if (activeAction === "request_approval") {
+      return hasVisibleRichText(approvalContent) || Boolean(approverPick);
+    }
+    if (activeAction === "attach_file") return documentFiles.length > 0;
+    if (activeAction === "accept_solution" || activeAction === "reject_solution") {
+      return hasVisibleRichText(cycleNote);
+    }
+    return false;
+  }
+
+  function confirmDiscardDraft(message: string): boolean {
+    if (!isActiveActionDirty()) return true;
+    if (typeof window === "undefined") return true;
+    return window.confirm(message);
+  }
+
   function selectWorkspaceAction(next: TicketWorkspaceActionId) {
     if (next === activeAction) return;
-    const dirty =
-      (activeAction === "reply" && hasVisibleRichText(content)) ||
-      (activeAction === "create_solution" && hasVisibleRichText(solutionContent)) ||
-      (activeAction === "create_task" && hasVisibleRichText(taskContent)) ||
-      (activeAction === "request_approval" &&
-        (hasVisibleRichText(approvalContent) || Boolean(approverPick))) ||
-      (activeAction === "attach_file" && documentFiles.length > 0);
-    if (
-      dirty &&
-      typeof window !== "undefined" &&
-      !window.confirm("Há conteúdo em edição. Descartar o rascunho e trocar de ação?")
-    ) {
+    if (!confirmDiscardDraft("Há conteúdo em edição. Descartar o rascunho e trocar de ação?")) {
       return;
     }
     setActiveAction(next);
   }
 
   function cancelActiveActionForm() {
+    if (!confirmDiscardDraft("Há conteúdo em edição. Descartar e fechar esta ação?")) {
+      return;
+    }
+    if (activeAction === "reply") {
+      /* keep sessionStorage reply draft — only close the card */
+    }
     if (activeAction === "create_solution") setSolutionContent("");
     if (activeAction === "create_task") setTaskContent("");
     if (activeAction === "request_approval") {
@@ -1222,11 +1251,25 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
       setApproverPick(null);
     }
     if (activeAction === "attach_file") setDocumentFiles([]);
-    setActiveAction(defaultTicketWorkspaceAction(workspaceActions));
+    if (activeAction === "accept_solution" || activeAction === "reject_solution") {
+      setCycleNote("");
+    }
+    setActiveAction(null);
+  }
+
+  function closeActionAfterSuccess() {
+    setActiveAction(null);
   }
 
   const workspaceActions = ticket ? ticketWorkspaceActions(ticket) : [];
+  const selectorActions = ticketWorkspaceSelectorActions(workspaceActions);
   const activeWorkspaceAction = ticketWorkspaceActionById(workspaceActions, activeAction);
+  const visibleMessages = ticket
+    ? conversationMessages(ticket, new Date()).filter((message) =>
+        conversationMessageVisible(message.kind, timelineVisibility),
+      )
+    : [];
+  const ticketTasks = ticket ? ticketTasksFromTimeline(ticket.timeline) : [];
 
   return (
     <HelpdeskPageStack>
@@ -1366,9 +1409,30 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                       ) : null}
                     </div>
                     {cue.showNativeActions ? (
-                      <p className="helpdesk-lifecycle-cue__hint">
-                        Use o seletor de ação abaixo para aceitar ou recusar a solução.
-                      </p>
+                      <div className="helpdesk-lifecycle-actions">
+                        <p className="helpdesk-lifecycle-cue__hint">
+                          Aceite ou recuse a solução abaixo, ou use o seletor de ação.
+                        </p>
+                        {ticket.can_accept_solution ? (
+                          <ActionButton
+                            variant="primary"
+                            type="button"
+                            disabled={cycleSaving}
+                            onClick={() => selectWorkspaceAction("accept_solution")}
+                          >
+                            Aceitar solução
+                          </ActionButton>
+                        ) : null}
+                        {ticket.can_reject_solution ? (
+                          <ActionButton
+                            type="button"
+                            disabled={cycleSaving}
+                            onClick={() => selectWorkspaceAction("reject_solution")}
+                          >
+                            Recusar / reabrir
+                          </ActionButton>
+                        ) : null}
+                      </div>
                     ) : null}
                     {cue.showValidationActions ? (
                       <div className="helpdesk-lifecycle-actions">
@@ -1542,6 +1606,19 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                   />
                 ) : (
                   <div className="helpdesk-detail__conversation">
+                    <div className="helpdesk-detail__conversation-toolbar">
+                      <TicketTimelineFilterPopover
+                        value={timelineVisibility}
+                        onChange={setTimelineVisibility}
+                      />
+                      <TicketTaskListPopover
+                        tasks={ticketTasks.map((task) => ({
+                          id: task.id,
+                          content: task.content,
+                          author: task.author,
+                        }))}
+                      />
+                    </div>
                     <div className="helpdesk-detail__conversation-inner">
                       <HelpdeskMessageThread
                         listAriaLabel="Conversa do chamado"
@@ -1561,7 +1638,7 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                             },
                           );
                         }}
-                        messages={conversationMessages(ticket, new Date()).map((message) => ({
+                        messages={visibleMessages.map((message) => ({
                           id: message.id,
                           kind: message.kind,
                           headingText: message.headingText || undefined,
@@ -1583,26 +1660,114 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                             ) : undefined,
                         }))}
                       />
-                      {workspaceActions.length > 0 ? (
+                      {(timelineVisibility.documents || timelineVisibility.approvals) &&
+                      ((timelineVisibility.documents && ticket.attachments.length > 0) ||
+                        (timelineVisibility.approvals && (ticket.validations?.length ?? 0) > 0)) ? (
+                        <div className="helpdesk-timeline-extras">
+                          {timelineVisibility.documents && ticket.attachments.length > 0 ? (
+                            <section
+                              className="helpdesk-timeline-extras__block"
+                              data-action-variant="attachment"
+                              aria-label="Documentos do chamado"
+                            >
+                              <h3 className="helpdesk-timeline-extras__title">Documentos</h3>
+                              <TicketAttachmentPreview
+                                ticketId={ticketId}
+                                attachments={ticket.attachments}
+                                onError={(text) => setErrorText(text)}
+                              />
+                            </section>
+                          ) : null}
+                          {timelineVisibility.approvals && (ticket.validations?.length ?? 0) > 0 ? (
+                            <section
+                              className="helpdesk-timeline-extras__block"
+                              data-action-variant="approval"
+                              aria-label="Aprovações do chamado"
+                            >
+                              <h3 className="helpdesk-timeline-extras__title">Aprovações</h3>
+                              <ul className="helpdesk-timeline-extras__list">
+                                {(ticket.validations ?? []).map((item) => (
+                                  <li key={item.id}>
+                                    #{item.id} · status {item.status}
+                                    {item.submission_comment
+                                      ? ` — ${item.submission_comment}`
+                                      : ""}
+                                  </li>
+                                ))}
+                              </ul>
+                            </section>
+                          ) : null}
+                        </div>
+                      ) : null}
+                      {selectorActions.length > 0 || workspaceActions.length > 0 ? (
                         <div className="helpdesk-ticket-workspace__composer">
                           <HintAction
                             hint={helpTooltips.detailUi.actionMenu}
                             ariaLabel="Ajuda: Ações do chamado"
                           >
                             <TicketActionMenu
-                              actions={workspaceActions}
+                              actions={
+                                selectorActions.length > 0 ? selectorActions : workspaceActions
+                              }
                               activeId={activeAction}
                               disabled={saving || cycleSaving}
                               onChange={selectWorkspaceAction}
+                              idleLabel="Responder"
                             />
                           </HintAction>
                           {activeAction === "reply" && draftFilesReady ? (
+                            <TicketActionCard
+                              actionId="reply"
+                              disabled={saving}
+                              onCancel={cancelActiveActionForm}
+                              footer={
+                                <HelpdeskFormActions align="end" className="helpdesk-reply-form__actions">
+                                  <ActionButton
+                                    type="button"
+                                    variant="ghost"
+                                    disabled={saving}
+                                    onClick={cancelActiveActionForm}
+                                  >
+                                    Cancelar
+                                  </ActionButton>
+                                  <HelpdeskAttachButton
+                                    hint={helpTooltips.detailUi.attach}
+                                    disabled={saving}
+                                    className="helpdesk-compose-attach"
+                                    onClick={() => replyComposerRef.current?.openAttachPicker()}
+                                  />
+                                  <HintAction
+                                    hint={helpTooltips.detailUi.send}
+                                    ariaLabel="Ajuda: Enviar resposta"
+                                  >
+                                    <ActionButton
+                                      variant="primary"
+                                      type="submit"
+                                      form="helpdesk-reply-action-form"
+                                      aria-label={
+                                        saving
+                                          ? ticketActionPresentation("reply").submittingLabel
+                                          : ticketActionPresentation("reply").submitLabel
+                                      }
+                                      disabled={saving || !hasVisibleRichText(content)}
+                                    >
+                                      <Send size={18} aria-hidden />
+                                      {saving
+                                        ? ticketActionPresentation("reply").submittingLabel
+                                        : ticketActionPresentation("reply").submitLabel}
+                                    </ActionButton>
+                                  </HintAction>
+                                </HelpdeskFormActions>
+                              }
+                            >
                             <form
+                              id="helpdesk-reply-action-form"
                               className="helpdesk-reply-form"
                               onSubmit={(event) => {
                                 event.preventDefault();
                                 if (saving || !hasVisibleRichText(content)) return;
                                 setSaving(true);
+                                setErrorText(null);
                                 const payload = attachmentPreview.persistHtml(content.trim());
                                 void createFollowup(ticketId, payload, idempotencyKey)
                                   .then(() => {
@@ -1613,9 +1778,15 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                                       replyDraftPendingScope(ticketId),
                                     );
                                     setIdempotencyKey(newIdempotencyKey());
+                                    closeActionAfterSuccess();
                                     load();
                                   })
-                                  .catch((error) => setErrorText(messageFor(error).text))
+                                  .catch((error) =>
+                                    setErrorText(
+                                      messageFor(error).text ||
+                                        ticketActionPresentation("reply").errorFallback,
+                                    ),
+                                  )
                                   .finally(() => setSaving(false));
                               }}
                             >
@@ -1712,36 +1883,44 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                                 }}
                                 onUploadError={(error) => setErrorText(messageFor(error).text)}
                               />
-                              <HelpdeskFormActions
-                                align="end"
-                                className="helpdesk-reply-form__actions"
-                              >
-                                <HelpdeskAttachButton
-                                  hint={helpTooltips.detailUi.attach}
-                                  disabled={saving}
-                                  className="helpdesk-compose-attach"
-                                  onClick={() => replyComposerRef.current?.openAttachPicker()}
-                                />
-                                <HintAction
-                                  hint={helpTooltips.detailUi.send}
-                                  ariaLabel="Ajuda: Enviar resposta"
-                                >
-                                  <ActionButton
-                                    variant="primary"
-                                    type="submit"
-                                    aria-label={saving ? "Enviando" : "Enviar resposta"}
-                                    disabled={saving || !hasVisibleRichText(content)}
-                                  >
-                                    <Send size={18} aria-hidden />
-                                    {saving ? "Enviando…" : "Enviar"}
-                                  </ActionButton>
-                                </HintAction>
-                              </HelpdeskFormActions>
                             </form>
+                            </TicketActionCard>
                           ) : null}
                           {activeAction === "accept_solution" ||
                           activeAction === "reject_solution" ? (
-                            <div className="helpdesk-ticket-workspace__decision">
+                            <TicketActionCard
+                              actionId={activeAction}
+                              disabled={cycleSaving}
+                              onCancel={cancelActiveActionForm}
+                              footer={
+                                <HelpdeskFormActions align="end">
+                                  <ActionButton
+                                    type="button"
+                                    variant="ghost"
+                                    disabled={cycleSaving}
+                                    onClick={cancelActiveActionForm}
+                                  >
+                                    Cancelar
+                                  </ActionButton>
+                                  <ActionButton
+                                    variant={
+                                      activeAction === "accept_solution" ? "primary" : "default"
+                                    }
+                                    type="button"
+                                    disabled={cycleSaving}
+                                    onClick={() =>
+                                      runCycle(
+                                        activeAction === "accept_solution" ? "accept" : "reject",
+                                      )
+                                    }
+                                  >
+                                    {cycleSaving
+                                      ? ticketActionPresentation(activeAction).submittingLabel
+                                      : ticketActionPresentation(activeAction).submitLabel}
+                                  </ActionButton>
+                                </HelpdeskFormActions>
+                              }
+                            >
                               <label className="helpdesk-lifecycle-note">
                                 <span>Comentário (opcional)</span>
                                 <input
@@ -1752,27 +1931,14 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                                   maxLength={2000}
                                 />
                               </label>
-                              <HelpdeskFormActions align="end">
-                                <ActionButton
-                                  variant={
-                                    activeAction === "accept_solution" ? "primary" : "default"
-                                  }
-                                  type="button"
-                                  disabled={cycleSaving}
-                                  onClick={() =>
-                                    runCycle(
-                                      activeAction === "accept_solution" ? "accept" : "reject",
-                                    )
-                                  }
-                                >
-                                  {cycleSaving
-                                    ? "Salvando…"
-                                    : activeWorkspaceAction?.submitLabel || "Confirmar"}
-                                </ActionButton>
-                              </HelpdeskFormActions>
-                            </div>
+                            </TicketActionCard>
                           ) : null}
                           {activeAction === "create_solution" ? (
+                            <TicketActionCard
+                              actionId="create_solution"
+                              disabled={saving}
+                              onCancel={cancelActiveActionForm}
+                            >
                             <form
                               className="helpdesk-reply-form"
                               onSubmit={(event) => {
@@ -1788,7 +1954,7 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                                   .then(() => {
                                     setSolutionContent("");
                                     setIdempotencyKey(newIdempotencyKey());
-                                    setActiveAction("reply");
+                                    closeActionAfterSuccess();
                                     load();
                                   })
                                   .catch((error) => setErrorText(messageFor(error).text))
@@ -1821,8 +1987,14 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                                 </ActionButton>
                               </HelpdeskFormActions>
                             </form>
+                            </TicketActionCard>
                           ) : null}
                           {activeAction === "create_task" ? (
+                            <TicketActionCard
+                              actionId="create_task"
+                              disabled={saving}
+                              onCancel={cancelActiveActionForm}
+                            >
                             <form
                               className="helpdesk-reply-form"
                               onSubmit={(event) => {
@@ -1834,7 +2006,7 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                                   .then(() => {
                                     setTaskContent("");
                                     setIdempotencyKey(newIdempotencyKey());
-                                    setActiveAction("reply");
+                                    closeActionAfterSuccess();
                                     load();
                                   })
                                   .catch((error) => setErrorText(messageFor(error).text))
@@ -1867,8 +2039,14 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                                 </ActionButton>
                               </HelpdeskFormActions>
                             </form>
+                            </TicketActionCard>
                           ) : null}
                           {activeAction === "request_approval" ? (
+                            <TicketActionCard
+                              actionId="request_approval"
+                              disabled={saving}
+                              onCancel={cancelActiveActionForm}
+                            >
                             <form
                               className="helpdesk-reply-form"
                               onSubmit={(event) => {
@@ -1889,7 +2067,7 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                                     setApprovalContent("");
                                     setApproverPick(null);
                                     setIdempotencyKey(newIdempotencyKey());
-                                    setActiveAction("reply");
+                                    closeActionAfterSuccess();
                                     load();
                                   })
                                   .catch((error) => setErrorText(messageFor(error).text))
@@ -1940,79 +2118,92 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                                 </ActionButton>
                               </HelpdeskFormActions>
                             </form>
+                            </TicketActionCard>
                           ) : null}
                           {activeAction === "attach_file" ? (
-                            <div className="helpdesk-ticket-workspace__document">
-                              <input
-                                ref={documentInputRef}
-                                type="file"
-                                multiple
-                                hidden
-                                onChange={(event) => {
-                                  setDocumentFiles(Array.from(event.target.files || []));
-                                  event.target.value = "";
-                                }}
-                              />
-                              <p className="helpdesk-ticket-workspace__document-hint">
-                                Anexa arquivos ao chamado sem enviar uma mensagem.
-                              </p>
-                              {documentFiles.length > 0 ? (
-                                <ul className="helpdesk-ticket-workspace__document-list">
-                                  {documentFiles.map((file) => (
-                                    <li key={`${file.name}-${file.size}-${file.lastModified}`}>
-                                      {file.name}
-                                    </li>
-                                  ))}
-                                </ul>
-                              ) : null}
-                              <HelpdeskFormActions align="end">
-                                <ActionButton
-                                  type="button"
-                                  variant="ghost"
-                                  disabled={saving}
-                                  onClick={cancelActiveActionForm}
-                                >
-                                  Cancelar
-                                </ActionButton>
-                                <ActionButton
-                                  type="button"
-                                  variant="ghost"
-                                  onClick={() => documentInputRef.current?.click()}
-                                  disabled={saving}
-                                >
-                                  Escolher arquivos
-                                </ActionButton>
-                                <ActionButton
-                                  type="button"
-                                  variant="primary"
-                                  disabled={saving || documentFiles.length === 0}
-                                  onClick={() => {
-                                    if (documentFiles.length === 0) return;
-                                    setSaving(true);
-                                    setErrorText(null);
-                                    void (async () => {
-                                      try {
-                                        for (const file of documentFiles) {
-                                          await uploadTicketAttachment(
-                                            ticketId,
-                                            file,
-                                            newIdempotencyKey(),
-                                          );
-                                        }
-                                        setDocumentFiles([]);
-                                        load();
-                                      } catch (error) {
-                                        setErrorText(messageFor(error).text);
-                                      } finally {
-                                        setSaving(false);
-                                      }
-                                    })();
+                            <TicketActionCard
+                              actionId="attach_file"
+                              disabled={saving}
+                              onCancel={cancelActiveActionForm}
+                            >
+                              <div className="helpdesk-ticket-workspace__document">
+                                <input
+                                  ref={documentInputRef}
+                                  type="file"
+                                  multiple
+                                  hidden
+                                  onChange={(event) => {
+                                    setDocumentFiles(Array.from(event.target.files || []));
+                                    event.target.value = "";
                                   }}
-                                >
-                                  {saving ? "Enviando…" : "Anexar arquivo"}
-                                </ActionButton>
-                              </HelpdeskFormActions>
-                            </div>
+                                />
+                                <p className="helpdesk-ticket-workspace__document-hint">
+                                  Anexa arquivos ao chamado sem enviar uma mensagem.
+                                </p>
+                                {documentFiles.length > 0 ? (
+                                  <ul className="helpdesk-ticket-workspace__document-list">
+                                    {documentFiles.map((file) => (
+                                      <li key={`${file.name}-${file.size}-${file.lastModified}`}>
+                                        {file.name}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                ) : null}
+                                <HelpdeskFormActions align="end">
+                                  <ActionButton
+                                    type="button"
+                                    variant="ghost"
+                                    disabled={saving}
+                                    onClick={cancelActiveActionForm}
+                                  >
+                                    Cancelar
+                                  </ActionButton>
+                                  <ActionButton
+                                    type="button"
+                                    variant="ghost"
+                                    onClick={() => documentInputRef.current?.click()}
+                                    disabled={saving}
+                                  >
+                                    Escolher arquivos
+                                  </ActionButton>
+                                  <ActionButton
+                                    type="button"
+                                    variant="primary"
+                                    disabled={saving || documentFiles.length === 0}
+                                    onClick={() => {
+                                      if (documentFiles.length === 0) return;
+                                      setSaving(true);
+                                      setErrorText(null);
+                                      void (async () => {
+                                        try {
+                                          for (const file of documentFiles) {
+                                            await uploadTicketAttachment(
+                                              ticketId,
+                                              file,
+                                              newIdempotencyKey(),
+                                            );
+                                          }
+                                          setDocumentFiles([]);
+                                          closeActionAfterSuccess();
+                                          load();
+                                        } catch (error) {
+                                          setErrorText(
+                                            messageFor(error).text ||
+                                              ticketActionPresentation("attach_file").errorFallback,
+                                          );
+                                        } finally {
+                                          setSaving(false);
+                                        }
+                                      })();
+                                    }}
+                                  >
+                                    {saving
+                                      ? ticketActionPresentation("attach_file").submittingLabel
+                                      : ticketActionPresentation("attach_file").submitLabel}
+                                  </ActionButton>
+                                </HelpdeskFormActions>
+                              </div>
+                            </TicketActionCard>
                           ) : null}
                         </div>
                       ) : null}

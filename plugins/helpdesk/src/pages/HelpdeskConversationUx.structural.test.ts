@@ -41,16 +41,20 @@ describe("HELPDESK-MFE-UX-001-R3 conversation detail", () => {
   it("composer starts compact without fill and keeps attach/send + rich text", () => {
     const page = read("HelpdeskPage.tsx");
     const detail = page.slice(page.indexOf("function TicketDetailPage"));
-    const replyBlock = detail.slice(detail.indexOf('label="Responder"'));
+    const replyStart = detail.indexOf('actionId="reply"');
+    const replyEnd = detail.indexOf('activeAction === "accept_solution"');
+    const replyBlock = detail.slice(replyStart, replyEnd > replyStart ? replyEnd : undefined);
     expect(replyBlock).toContain("minHeight={144}");
-    expect(replyBlock).not.toMatch(/\bfill\b/);
+    expect(replyBlock).not.toMatch(/HelpdeskRichTextField[\s\S]*?\bfill\b/);
     expect(replyBlock).toContain("enableMentions");
     expect(replyBlock).toContain("HelpdeskAttachButton");
     expect(replyBlock).toContain("openAttachPicker");
-    expect(replyBlock).toContain('aria-label={saving ? "Enviando" : "Enviar resposta"}');
+    expect(replyBlock).toContain("Enviar resposta");
     expect(replyBlock).toContain("helpdesk-reply-form__actions");
+    expect(replyBlock).toContain("TicketActionCard");
     expect(detail).toContain("createFollowup");
     expect(detail).toContain('className="helpdesk-reply-form"');
+    expect(detail).toContain("useState<TicketWorkspaceActionId | null>(null)");
   });
 
   it("technician control stays permission-gated; summary always shows técnico", () => {
@@ -130,10 +134,12 @@ describe("HELPDESK-MFE-UX-001-R4 conversation density", () => {
   it("keeps mine alignment and comfortable composer height", () => {
     const page = read("HelpdeskPage.tsx");
     const detail = page.slice(page.indexOf("function TicketDetailPage"));
-    const replyBlock = detail.slice(detail.indexOf('label="Responder"'));
+    const replyStart = detail.indexOf('actionId="reply"');
+    const replyEnd = detail.indexOf('activeAction === "accept_solution"');
+    const replyBlock = detail.slice(replyStart, replyEnd > replyStart ? replyEnd : undefined);
     expect(detail).toContain("mine: message.mine");
     expect(replyBlock).toContain("minHeight={144}");
-    expect(replyBlock).not.toMatch(/\bfill\b/);
+    expect(replyBlock).not.toMatch(/HelpdeskRichTextField[\s\S]*?\bfill\b/);
   });
 });
 
@@ -142,14 +148,18 @@ describe("HELPDESK-MFE-UX-001-R5 composer + message media", () => {
     const page = read("HelpdeskPage.tsx");
     const css = read("../index.css");
     const detail = page.slice(page.indexOf("function TicketDetailPage"));
-    const replyBlock = detail.slice(detail.indexOf('label="Responder"'));
+    const replyStart = detail.indexOf('actionId="reply"');
+    const replyEnd = detail.indexOf('activeAction === "accept_solution"');
+    const replyBlock = detail.slice(replyStart, replyEnd > replyStart ? replyEnd : undefined);
     expect(replyBlock).toContain("minHeight={144}");
     expect(replyBlock).not.toContain("minHeight={72}");
     expect(css).toMatch(/\.helpdesk-reply-form[\s\S]*?min-height:\s*9rem/);
     expect(css).not.toMatch(/\.helpdesk-reply-form[\s\S]*?min-height:\s*4\.5rem/);
     expect(replyBlock).toContain("HelpdeskAttachButton");
-    expect(replyBlock).toContain('aria-label={saving ? "Enviando" : "Enviar resposta"}');
+    expect(replyBlock).toContain("TicketActionCard");
+    expect(replyBlock).toContain("Enviar resposta");
     expect(replyBlock).toContain("enableMentions");
+    expect(replyBlock).toContain("Cancelar");
   });
 
   it("message rich body contains images and wide content inside the bubble", () => {
@@ -192,8 +202,10 @@ describe("HELPDESK-MFE-UX-002 ticket workspace", () => {
     const css = read("../index.css");
     expect(detail).toContain("helpdesk-ticket-workspace");
     expect(detail).toContain("TicketActionMenu");
+    expect(detail).toContain("TicketActionCard");
     expect(detail).toContain("TicketContextPanel");
     expect(detail).toContain("ticketWorkspaceActions");
+    expect(detail).toContain("useState<TicketWorkspaceActionId | null>(null)");
     expect(detail).toContain('activeAction === "reply"');
     expect(detail).toContain('activeAction === "attach_file"');
     expect(detail).toContain('activeAction === "create_solution"');
@@ -202,12 +214,15 @@ describe("HELPDESK-MFE-UX-002 ticket workspace", () => {
     expect(detail).toContain("createTicketSolution");
     expect(detail).toContain("createTicketTask");
     expect(detail).toContain("requestTicketApproval");
+    expect(detail).toContain("TicketTimelineFilterPopover");
     expect(detail).toContain("helpTooltips.detailUi.actionMenu");
     expect(detail).toContain("helpTooltips.detailUi.createSolution");
     expect(detail).toContain("helpTooltips.detailUi.createTask");
     expect(detail).toContain("helpTooltips.detailUi.requestApproval");
     expect(css).toContain(".helpdesk-ticket-workspace__body");
     expect(css).toContain("grid-template-columns");
+    expect(css).toContain('data-action-variant="task"');
+    expect(css).toContain(".helpdesk-action-card");
   });
 
   it("wires proven operational actions from BFF capabilities", () => {

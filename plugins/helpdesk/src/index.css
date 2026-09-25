@@ -1106,6 +1106,228 @@
   min-width: 0;
 }
 
+.dashboard-helpdesk .helpdesk-detail__conversation-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+  margin-block-end: 0.45rem;
+}
+
+.dashboard-helpdesk .helpdesk-timeline-tools {
+  display: inline-flex;
+  align-items: center;
+}
+
+.dashboard-helpdesk .helpdesk-timeline-tools__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0.35rem 0.65rem;
+  min-height: 2rem;
+  border: 1px solid var(--helpdesk-border);
+  border-radius: 10px;
+  background: var(--helpdesk-surface);
+  color: var(--helpdesk-text);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.dashboard-helpdesk .helpdesk-timeline-filter__panel,
+.dashboard-helpdesk .helpdesk-task-list__panel {
+  left: 0;
+  right: auto;
+  width: min(18rem, calc(100vw - 1.5rem));
+  padding: 0.55rem 0.65rem;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.dashboard-helpdesk .helpdesk-timeline-filter__title {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 650;
+}
+
+.dashboard-helpdesk .helpdesk-timeline-filter__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.25rem;
+}
+
+.dashboard-helpdesk .helpdesk-timeline-filter__option {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.dashboard-helpdesk .helpdesk-task-list__item {
+  padding: 0.4rem 0.45rem;
+  border-radius: 8px;
+  border-inline-start: 3px solid var(--helpdesk-action-accent, var(--helpdesk-accent));
+  background: color-mix(in srgb, var(--helpdesk-action-accent, var(--helpdesk-accent)) 10%, transparent);
+}
+
+.dashboard-helpdesk .helpdesk-task-list__content {
+  margin: 0;
+  font-size: 0.85rem;
+  overflow-wrap: anywhere;
+}
+
+.dashboard-helpdesk .helpdesk-task-list__meta {
+  margin: 0.2rem 0 0;
+  font-size: 0.75rem;
+  color: var(--helpdesk-text-muted);
+}
+
+.dashboard-helpdesk .helpdesk-timeline-extras {
+  display: grid;
+  gap: 0.55rem;
+  margin-block: 0.55rem;
+}
+
+.dashboard-helpdesk .helpdesk-timeline-extras__block {
+  padding: 0.55rem 0.65rem;
+  border-radius: 12px;
+  border: 1px solid var(--helpdesk-border);
+  border-inline-start: 3px solid var(--helpdesk-action-accent, var(--helpdesk-accent));
+  background: color-mix(in srgb, var(--helpdesk-action-accent, var(--helpdesk-accent)) 8%, var(--helpdesk-surface));
+}
+
+.dashboard-helpdesk .helpdesk-timeline-extras__title {
+  margin: 0 0 0.35rem;
+  font-size: 0.85rem;
+  font-weight: 650;
+}
+
+.dashboard-helpdesk .helpdesk-timeline-extras__list {
+  margin: 0;
+  padding-inline-start: 1.1rem;
+  font-size: 0.85rem;
+}
+
+.dashboard-helpdesk .helpdesk-action-menu__trigger-icon,
+.dashboard-helpdesk .helpdesk-action-menu__item-icon {
+  display: inline-flex;
+  color: var(--helpdesk-action-accent, var(--helpdesk-accent));
+}
+
+.dashboard-helpdesk .helpdesk-action-menu__item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.dashboard-helpdesk .helpdesk-action-card {
+  --helpdesk-action-accent: var(--helpdesk-accent);
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding: 0;
+  border: 1px solid var(--helpdesk-border);
+  border-radius: 12px;
+  border-block-start: 3px solid var(--helpdesk-action-accent);
+  background: color-mix(in srgb, var(--helpdesk-action-accent) 7%, var(--helpdesk-surface));
+  overflow: hidden;
+}
+
+.dashboard-helpdesk .helpdesk-action-card__header {
+  padding: 0.55rem 0.7rem 0.35rem;
+  background: color-mix(in srgb, var(--helpdesk-action-accent) 12%, transparent);
+}
+
+.dashboard-helpdesk .helpdesk-action-card__title-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.dashboard-helpdesk .helpdesk-action-card__icon {
+  display: inline-flex;
+  color: var(--helpdesk-action-accent);
+  margin-block-start: 0.1rem;
+}
+
+.dashboard-helpdesk .helpdesk-action-card__titles {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.dashboard-helpdesk .helpdesk-action-card__title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.dashboard-helpdesk .helpdesk-action-card__helper {
+  margin: 0.15rem 0 0;
+  font-size: 0.8rem;
+  color: var(--helpdesk-text-muted);
+}
+
+.dashboard-helpdesk .helpdesk-action-card__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0.25rem;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--helpdesk-text-muted);
+  cursor: pointer;
+}
+
+.dashboard-helpdesk .helpdesk-action-card__close:hover {
+  color: var(--helpdesk-text);
+  background: color-mix(in srgb, var(--helpdesk-text) 8%, transparent);
+}
+
+.dashboard-helpdesk .helpdesk-action-card__body {
+  padding: 0.35rem 0.7rem 0.55rem;
+}
+
+.dashboard-helpdesk .helpdesk-action-card__footer {
+  padding: 0.45rem 0.7rem 0.65rem;
+  border-block-start: 1px solid var(--helpdesk-border);
+}
+
+.dashboard-helpdesk [data-action-variant="reply"] {
+  --helpdesk-action-accent: var(--helpdesk-accent, #089bdb);
+}
+
+.dashboard-helpdesk [data-action-variant="task"] {
+  --helpdesk-action-accent: #d97706;
+}
+
+.dashboard-helpdesk [data-action-variant="solution"] {
+  --helpdesk-action-accent: #0d9488;
+}
+
+.dashboard-helpdesk [data-action-variant="attachment"] {
+  --helpdesk-action-accent: #059669;
+}
+
+.dashboard-helpdesk [data-action-variant="approval"],
+.dashboard-helpdesk [data-action-variant="accept"] {
+  --helpdesk-action-accent: #16a34a;
+}
+
+.dashboard-helpdesk [data-action-variant="reject"] {
+  --helpdesk-action-accent: var(--helpdesk-danger, #b42318);
+}
+
+.dashboard-helpdesk [data-action-variant="description"] {
+  --helpdesk-action-accent: var(--helpdesk-text-muted);
+}
+
 .dashboard-helpdesk .helpdesk-action-menu {
   display: flex;
   align-items: center;

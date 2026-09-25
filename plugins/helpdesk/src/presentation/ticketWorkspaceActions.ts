@@ -1,5 +1,10 @@
 import type { TicketDetail } from "../api/helpdeskApi";
 
+import {
+  SELECTOR_ACTION_IDS,
+  ticketActionPresentation,
+} from "./ticketActionPresentation";
+
 /** Proven ticket write/action modes — capability-driven, no invented roles. */
 export type TicketWorkspaceActionId =
   | "reply"
@@ -16,47 +21,14 @@ export type TicketWorkspaceAction = {
   submitLabel: string;
 };
 
-const REPLY: TicketWorkspaceAction = {
-  id: "reply",
-  label: "Responder",
-  submitLabel: "Enviar",
-};
-
-const CREATE_SOLUTION: TicketWorkspaceAction = {
-  id: "create_solution",
-  label: "Adicionar solução",
-  submitLabel: "Adicionar solução",
-};
-
-const CREATE_TASK: TicketWorkspaceAction = {
-  id: "create_task",
-  label: "Criar tarefa",
-  submitLabel: "Criar tarefa",
-};
-
-const ATTACH_FILE: TicketWorkspaceAction = {
-  id: "attach_file",
-  label: "Anexar arquivo",
-  submitLabel: "Anexar arquivo",
-};
-
-const REQUEST_APPROVAL: TicketWorkspaceAction = {
-  id: "request_approval",
-  label: "Pedir aprovação",
-  submitLabel: "Pedir aprovação",
-};
-
-const ACCEPT_SOLUTION: TicketWorkspaceAction = {
-  id: "accept_solution",
-  label: "Aceitar solução",
-  submitLabel: "Aceitar solução",
-};
-
-const REJECT_SOLUTION: TicketWorkspaceAction = {
-  id: "reject_solution",
-  label: "Recusar / reabrir",
-  submitLabel: "Recusar / reabrir",
-};
+function actionFromId(id: TicketWorkspaceActionId): TicketWorkspaceAction {
+  const presentation = ticketActionPresentation(id);
+  return {
+    id,
+    label: presentation.label,
+    submitLabel: presentation.submitLabel,
+  };
+}
 
 /** Surfaces available in left/context nav — only proven content. */
 export type TicketWorkspaceSurfaceId = "conversation" | "details";
@@ -69,6 +41,9 @@ export const TICKET_WORKSPACE_SURFACES: { id: TicketWorkspaceSurfaceId; label: s
 /**
  * Build action menu from ticket capabilities only.
  * Frontend disclosure ≠ AuthZ — backend remains authoritative.
+ * Accept/reject solution stay capability-driven but open as contextual cards
+ * (also reachable from lifecycle cue); still listed when capability is true so
+ * keyboard users can select them if no cue is visible.
  */
 export function ticketWorkspaceActions(ticket: Pick<
   TicketDetail,
@@ -81,26 +56,33 @@ export function ticketWorkspaceActions(ticket: Pick<
 >): TicketWorkspaceAction[] {
   const actions: TicketWorkspaceAction[] = [];
   if (ticket.can_followup !== false) {
-    actions.push(REPLY);
+    actions.push(actionFromId("reply"));
   }
-  if (ticket.can_create_solution) actions.push(CREATE_SOLUTION);
-  if (ticket.can_create_task) actions.push(CREATE_TASK);
+  if (ticket.can_create_solution) actions.push(actionFromId("create_solution"));
+  if (ticket.can_create_task) actions.push(actionFromId("create_task"));
   if (ticket.can_followup !== false) {
     // Attachment endpoint (H12 Document + Document_Item) — not a separate Document entity action.
-    actions.push(ATTACH_FILE);
+    actions.push(actionFromId("attach_file"));
   }
-  if (ticket.can_request_approval) actions.push(REQUEST_APPROVAL);
-  if (ticket.can_accept_solution) actions.push(ACCEPT_SOLUTION);
-  if (ticket.can_reject_solution) actions.push(REJECT_SOLUTION);
+  if (ticket.can_request_approval) actions.push(actionFromId("request_approval"));
+  if (ticket.can_accept_solution) actions.push(actionFromId("accept_solution"));
+  if (ticket.can_reject_solution) actions.push(actionFromId("reject_solution"));
   return actions;
 }
 
-export function defaultTicketWorkspaceAction(
+/** Selector-primary actions (idle menu). Lifecycle accept/reject remain available via full list. */
+export function ticketWorkspaceSelectorActions(
   actions: readonly TicketWorkspaceAction[],
+): TicketWorkspaceAction[] {
+  const allowed = new Set<string>(SELECTOR_ACTION_IDS);
+  return actions.filter((item) => allowed.has(item.id));
+}
+
+/** Idle default: no composer open. */
+export function defaultTicketWorkspaceAction(
+  _actions: readonly TicketWorkspaceAction[],
 ): TicketWorkspaceActionId | null {
-  if (actions.length === 0) return null;
-  if (actions.some((item) => item.id === "reply")) return "reply";
-  return actions[0]?.id ?? null;
+  return null;
 }
 
 export function ticketWorkspaceActionById(
