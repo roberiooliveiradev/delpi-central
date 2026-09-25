@@ -37,7 +37,7 @@ class ProductionRunPollerService:
         from production_control_app.composition.pc_composer import build_production_run_service
 
         while not self._stopped.is_set():
-            interval_ms = max(250, int(settings.PC_PRODUCTION_RUN_POLL_MS or 1000))
+            interval_ms = max(250, int(settings.PC_PRODUCTION_RUN_POLL_MS or 500))
             try:
                 service = build_production_run_service()
                 await asyncio.to_thread(service.tick_running_runs)

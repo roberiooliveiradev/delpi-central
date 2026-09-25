@@ -11,9 +11,9 @@ type Options = {
 };
 
 /**
- * Escuta mudanças estruturais da fila (reordenação e refresh TOTVS pelo PCP).
- * Status de apontamento (em produção / já apontada) não passa por este canal —
- * o cockpit faz polling HTTP periódico com enrich ao vivo.
+ * Escuta mudanças estruturais da fila e atualizações do run de produção.
+ * O WebSocket é o caminho principal da contagem; o polling HTTP do run fica
+ * ativo somente como fallback enquanto a conexão estiver indisponível.
  */
 export function usePublicMachineLoadRealtime({ token, branch, onChanged }: Options): boolean {
   const [connected, setConnected] = useState(false);

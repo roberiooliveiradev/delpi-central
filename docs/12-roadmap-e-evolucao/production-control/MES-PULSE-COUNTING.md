@@ -124,9 +124,9 @@ Writes: header `X-Delpi-Bench-Session` + honeypot `website`.
 | POST | `.../runs/{id}/stop` | Stop → `completed` |
 | GET | `.../runs/active?branch=&workCenter=` | Snapshot + peças + device + divergência TOTVS |
 
-Realtime: mesmo WS da fila (`.../ws?branch=`). Evento adicional `production_run_updated` (reason: `run_started`, `pieces_updated`, …). O cliente também faz poll HTTP ~1 s enquanto o run está `running`.
+Realtime: mesmo WS da fila (`.../ws?branch=`). Evento adicional `production_run_updated` (reason: `run_started`, `pieces_updated`, …). O WebSocket é o caminho principal; o cliente faz poll HTTP ~1 s enquanto o run está `running` somente como fallback quando o socket está desconectado.
 
-Worker: `ProductionRunPollerService` no lifespan do PCP atualiza peças dos runs `running` e emite o hint WS.
+Worker: `ProductionRunPollerService` no lifespan do PCP consulta os runs `running` a cada 500 ms e emite o hint WS. `pieces_updated` atualiza somente o snapshot do run no cockpit, sem recarregar a fila completa.
 
 ---
 
@@ -137,7 +137,10 @@ Worker: `ProductionRunPollerService` no lifespan do PCP atualiza peças dos runs
 | Controles play / pause / stop + readout | `plugins/public-hub/.../ProductionRunControls.tsx` |
 | Hook sessão + poll | `useProductionRun.ts` |
 | Card “Agora nesta bancada” | `CockpitPage.tsx` → `ActiveNowCard` |
+| Detalhamento da operação | `OperationDetailPage.tsx` reutiliza os mesmos controles e o mesmo snapshot do run |
 | Copy / Ajuda Portal | `plugins/production-control/src/content/copy.ts`, `helpTooltips.ts` |
+
+A fila e o detalhamento da operação reutilizam `ProductionRunControls`: não mantêm contadores locais independentes. Ambas as superfícies atualizam pelo evento do mesmo WS; o poll HTTP de ~1 s só assume enquanto o socket está desconectado.
 
 Sessão fica em `sessionStorage` por filial+posto (`delpi.pcp.cockpit.bench-session.*`).
 
@@ -149,7 +152,7 @@ Sessão fica em `sessionStorage` por filial+posto (`delpi.pcp.cockpit.bench-sess
 |----------|------|------------|-------------|
 | `PRODUCTION_PULSE_API_URL` | PCP | `http://host.docker.internal:80/apps/production-pulse-api` | `http://delpi-production-pulse-api:8000` |
 | `PRODUCTION_PULSE_API_TIMEOUT` | PCP | `5` | `5` |
-| `PC_PRODUCTION_RUN_POLL_MS` | PCP | `1000` | `1000` |
+| `PC_PRODUCTION_RUN_POLL_MS` | PCP | `500` | `500` |
 | `PC_BENCH_SESSION_TTL_HOURS` | PCP | `12` | `12` |
 | `API_DELPI_INTERNAL_SERVICE_TOKEN` | ambos | compartilhado | compartilhado |
 
@@ -177,10 +180,11 @@ Compose: `infra/docker-compose.dev.yml` / `infra/docker-compose.yml` (serviço `
 4. Selecionar o posto
 5. Identificar operador → Iniciar contagem na OP do card
 6. Incrementar golpes no pad / hardware
-7. Ver “Peças contadas” subir; device Online
-8. Pausar / Retomar / Encerrar
-9. Conferir divergência vs apontado TOTVS (se houver HZA/SH6)
-10. Reset no pad durante run → total não corrompe (novo segmento / epoch)
+7. Ver “Peças contadas” subir no card da fila; device Online
+8. Abrir “Detalhes da OP” e confirmar que a mesma contagem continua subindo
+9. Pausar / Retomar / Encerrar em qualquer uma das duas superfícies
+10. Conferir divergência vs apontado TOTVS (se houver HZA/SH6)
+11. Reset no pad durante run → total não corrompe (novo segmento / epoch)
 ```
 
 Negativos esperados:

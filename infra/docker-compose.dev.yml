@@ -2499,7 +2499,7 @@ services:
       # Dev: pulse usa network_mode:host — alcança via gateway no host do container.
       PRODUCTION_PULSE_API_URL: ${PRODUCTION_PULSE_API_URL:-http://host.docker.internal:80/apps/production-pulse-api}
       PRODUCTION_PULSE_API_TIMEOUT: ${PRODUCTION_PULSE_API_TIMEOUT:-5}
-      PC_PRODUCTION_RUN_POLL_MS: ${PC_PRODUCTION_RUN_POLL_MS:-1000}
+      PC_PRODUCTION_RUN_POLL_MS: ${PC_PRODUCTION_RUN_POLL_MS:-500}
 
       PC_PRODUCT_3D_MODELS_DIR: ${PC_PRODUCT_3D_MODELS_DIR:-/app/data/product-3d-models}
       PC_PRODUCT_3D_MAX_BYTES: ${PC_PRODUCT_3D_MAX_BYTES:-26214400}

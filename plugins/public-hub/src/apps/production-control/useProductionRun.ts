@@ -46,6 +46,7 @@ type Options = {
   workCenter: string | null;
   operation: MachineLoadOperation | null;
   runUpdatedSignal?: number;
+  realtimeConnected?: boolean;
 };
 
 export function useProductionRun({
@@ -54,6 +55,7 @@ export function useProductionRun({
   workCenter,
   operation,
   runUpdatedSignal = 0,
+  realtimeConnected = false,
 }: Options) {
   const [session, setSession] = useState<BenchSessionSnapshot | null>(null);
   const [run, setRun] = useState<ProductionRunSnapshot | null>(null);
@@ -92,12 +94,12 @@ export function useProductionRun({
 
   useEffect(() => {
     window.clearInterval(pollRef.current);
-    if (!workCenter || !run || run.status !== "running") return;
+    if (!workCenter || realtimeConnected || !run || run.status !== "running") return;
     pollRef.current = window.setInterval(() => {
       void refreshRun();
     }, RUN_POLL_MS);
     return () => window.clearInterval(pollRef.current);
-  }, [workCenter, run?.id, run?.status, refreshRun]);
+  }, [workCenter, realtimeConnected, run?.id, run?.status, refreshRun]);
 
   const identify = useCallback(async () => {
     if (!workCenter) return;
