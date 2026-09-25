@@ -38,6 +38,9 @@ def resolve_gpt_actions_server_url(
 
 GPT_OPAQUE_OBJECT_EXTENSION = "x-delpi-gpt-opaque-object"
 
+# OpenAI Custom GPT Builder rejects operation.description longer than this.
+CUSTOM_GPT_OPERATION_DESCRIPTION_MAX_CHARS = 300
+
 
 def _opaque_object_schema(*, description: str) -> dict[str, Any]:
     """Intentional free-form object. Requires marker + description."""
@@ -518,11 +521,10 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "operationId": "gpt_get_catalog",
                 "summary": "TV presentation mutation capability catalog",
                 "description": (
-                    "Returns catalogVersion, compact ops index (risk/requires/"
-                    "requiredFields — not full JSON Schemas), capabilities, and "
-                    "capability_surface.agent_directives. Full op schemas are in "
-                    "this OpenAPI requestBody oneOf. Call before writes; obey "
-                    "agent_directives. Backend authorizes. Requires tv-dashboard.write."
+                    "Returns catalogVersion, compact ops index, capabilities, and "
+                    "capability_surface.agent_directives. Full op schemas live in this "
+                    "OpenAPI requestBody. Call before writes; obey agent_directives. "
+                    "Backend authorizes. Requires tv-dashboard.write."
                 ),
                 "tags": [tag],
                 "security": [{"BearerAuth": []}],
@@ -562,14 +564,11 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "operationId": "gpt_get_playlist_context",
                 "summary": "Authorized playlist context",
                 "description": (
-                    "Playlist summary + slides index + focusedSlide. "
-                    "dataSources[] = id/label/operationId/params. "
-                    "scope=editorFocus omits nativeConfig and returns blockIndex "
-                    "(persisted visual/object addressability). "
-                    "full auto-downgrades to editorFocus if over Actions budget "
-                    "(scopeDowngraded) while retaining blockIndex. "
-                    "includePreview adds slidePreview PNG URL. "
-                    "Optional objectQuery returns objectMatches[] without inventing IDs."
+                    "Playlist context with slides and focused slide. "
+                    "editorFocus omits nativeConfig and returns dataSources + blockIndex. "
+                    "full may auto-downgrade when over budget. "
+                    "objectQuery can return persisted objectMatches. "
+                    "includePreview adds a signed slide preview."
                 ),
                 "tags": [tag],
                 "security": [{"BearerAuth": []}],

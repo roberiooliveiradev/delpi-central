@@ -182,17 +182,13 @@ def get_playlist_context(
     scope: str | None = Query(
         default="full",
         description=(
-            "full (default): focusedSlide with nativeConfig + digests. "
-            "editorFocus: omit nativeConfig/heavy digests; return dataSources[] + "
-            "blockIndex for existing-object addressability without ResponseTooLargeError."
+            "full: nativeConfig + digests. editorFocus: dataSources + blockIndex "
+            "without nativeConfig (auto-downgrade uses the same)."
         ),
     ),
     objectQuery: str | None = Query(
         default=None,
-        description=(
-            "Optional read-only filter for objectMatches[] (contentPreview/label/groupId/role). "
-            "Does not invent IDs; matches persisted blockIndex items only."
-        ),
+        description="Optional filter for objectMatches[] from persisted blockIndex.",
     ),
     objectTypes: str | None = Query(
         default=None,
