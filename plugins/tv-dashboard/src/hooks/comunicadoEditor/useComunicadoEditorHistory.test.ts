@@ -33,7 +33,7 @@ describe("useComunicadoEditorHistory", () => {
     act(() => {
       result.current.commitWithHistory(v2);
     });
-    expect(applyConfig).toHaveBeenLastCalledWith(snapshotConfig(v2));
+    expect(applyConfig).toHaveBeenLastCalledWith(v2);
     expect(result.current.canUndo).toBe(true);
     expect(result.current.canRedo).toBe(false);
 
@@ -95,6 +95,57 @@ describe("useComunicadoEditorHistory", () => {
     expect(deckHistory.undo).not.toHaveBeenCalled();
     expect(applyConfig).toHaveBeenLastCalledWith(v1Snap);
     expect(result.current.canRedo).toBe(true);
+  });
+
+  it("aplica runtime-only ack mesmo quando authoring já foi aplicado otimisticamente", () => {
+    const applyConfig = vi.fn();
+    const staleRuntime = emptyConfig([
+      {
+        id: "heading-1",
+        type: "heading",
+        frame: { x: 0, y: 0, w: 50, h: 10 },
+        content: "REALIZADO 2025 X 2026",
+        contentRuns: [{ text: "REALIZADO 2025 X 2026" }],
+        style: { textCase: "lower" },
+        resolved: {
+          serverDisplayApplied: true,
+          displayText: "REALIZADO 2025 X 2026",
+          displayRuns: [{ text: "REALIZADO 2025 X 2026" }],
+        },
+      } as never,
+    ]);
+    const canonicalAck = emptyConfig([
+      {
+        id: "heading-1",
+        type: "heading",
+        frame: { x: 0, y: 0, w: 50, h: 10 },
+        content: "REALIZADO 2025 X 2026",
+        contentRuns: [{ text: "REALIZADO 2025 X 2026" }],
+        style: { textCase: "lower" },
+        resolved: {
+          serverDisplayApplied: true,
+          displayText: "realizado 2025 x 2026",
+          displayRuns: [{ text: "realizado 2025 x 2026" }],
+        },
+      } as never,
+    ]);
+    const configRef = { current: staleRuntime };
+
+    const { result } = renderHook(() =>
+      useComunicadoEditorHistory({
+        configRef,
+        applyConfig,
+        deckHistory: null,
+      }),
+    );
+
+    act(() => {
+      result.current.commitWithHistory(canonicalAck);
+    });
+
+    expect(applyConfig).toHaveBeenCalledOnce();
+    expect(applyConfig).toHaveBeenCalledWith(canonicalAck, { persist: false });
+    expect(result.current.canUndo).toBe(false);
   });
 
   it("commit idêntico não empilha undo (saída de texto blur+cleanup)", () => {
