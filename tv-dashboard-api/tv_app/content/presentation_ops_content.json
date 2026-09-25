@@ -1494,6 +1494,61 @@
                   },
                   "fallback": {
                     "type": "string"
+                  },
+                  "displayFormat": {
+                    "type": "object",
+                    "required": [
+                      "category"
+                    ],
+                    "additionalProperties": false,
+                    "properties": {
+                      "category": {
+                        "type": "string",
+                        "enum": [
+                          "general",
+                          "number",
+                          "currency",
+                          "accounting",
+                          "date",
+                          "time",
+                          "percent",
+                          "scientific",
+                          "text",
+                          "custom"
+                        ]
+                      },
+                      "presetId": {
+                        "type": "string"
+                      },
+                      "locale": {
+                        "type": "string"
+                      },
+                      "currency": {
+                        "type": "string"
+                      },
+                      "decimalPlaces": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "pattern": {
+                        "type": "string"
+                      },
+                      "useThousandsSeparator": {
+                        "type": "boolean"
+                      },
+                      "negativeStyle": {
+                        "type": "string"
+                      },
+                      "symbol": {
+                        "type": "string"
+                      },
+                      "prefix": {
+                        "type": "string"
+                      },
+                      "suffix": {
+                        "type": "string"
+                      }
+                    }
                   }
                 }
               },
@@ -1516,6 +1571,61 @@
                         },
                         "format": {
                           "type": "string"
+                        },
+                        "displayFormat": {
+                          "type": "object",
+                          "required": [
+                            "category"
+                          ],
+                          "additionalProperties": false,
+                          "properties": {
+                            "category": {
+                              "type": "string",
+                              "enum": [
+                                "general",
+                                "number",
+                                "currency",
+                                "accounting",
+                                "date",
+                                "time",
+                                "percent",
+                                "scientific",
+                                "text",
+                                "custom"
+                              ]
+                            },
+                            "presetId": {
+                              "type": "string"
+                            },
+                            "locale": {
+                              "type": "string"
+                            },
+                            "currency": {
+                              "type": "string"
+                            },
+                            "decimalPlaces": {
+                              "type": "integer",
+                              "minimum": 0
+                            },
+                            "pattern": {
+                              "type": "string"
+                            },
+                            "useThousandsSeparator": {
+                              "type": "boolean"
+                            },
+                            "negativeStyle": {
+                              "type": "string"
+                            },
+                            "symbol": {
+                              "type": "string"
+                            },
+                            "prefix": {
+                              "type": "string"
+                            },
+                            "suffix": {
+                              "type": "string"
+                            }
+                          }
                         }
                       }
                     }
@@ -2585,10 +2695,28 @@
             "type": "string"
           },
           "frame": {
-            "type": "object"
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "x": {
+                "type": "number"
+              },
+              "y": {
+                "type": "number"
+              },
+              "w": {
+                "type": "number"
+              },
+              "h": {
+                "type": "number"
+              }
+            }
           },
           "style": {
-            "type": "object"
+            "type": "object",
+            "properties": {},
+            "x-delpi-gpt-opaque-object": true,
+            "additionalProperties": true
           }
         }
       },
@@ -2854,6 +2982,113 @@
         "playlist",
         "slide"
       ]
+    },
+    "set_display_format": {
+      "requiresPlaylist": true,
+      "requiresSlide": true,
+      "consumes": [
+        "playlist",
+        "slide"
+      ],
+      "risk": "mutation",
+      "confirmationPolicy": "direct",
+      "sideEffectHints": [
+        "replaceNativeConfig"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "op",
+          "blockId",
+          "target",
+          "displayFormat"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "op": {
+            "const": "set_display_format"
+          },
+          "blockId": {
+            "type": "string"
+          },
+          "target": {
+            "type": "object",
+            "required": [
+              "owner",
+              "field"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "owner": {
+                "type": "string",
+                "enum": [
+                  "contentRunDataRef",
+                  "textProjection"
+                ]
+              },
+              "field": {
+                "type": "string"
+              },
+              "occurrence": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          },
+          "displayFormat": {
+            "type": "object",
+            "required": [
+              "category"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "category": {
+                "type": "string",
+                "enum": [
+                  "general",
+                  "number",
+                  "currency",
+                  "accounting",
+                  "date",
+                  "time",
+                  "percent",
+                  "scientific",
+                  "text",
+                  "custom"
+                ]
+              },
+              "presetId": {
+                "type": "string"
+              },
+              "locale": {
+                "type": "string"
+              },
+              "currency": {
+                "type": "string"
+              },
+              "decimalPlaces": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0
+              },
+              "pattern": {
+                "type": "string"
+              },
+              "useThousandsSeparator": {
+                "type": "boolean"
+              }
+            }
+          },
+          "playlistRef": {
+            "type": "string"
+          },
+          "slideRef": {
+            "type": "string"
+          }
+        }
+      }
     }
   },
   "capabilities": [

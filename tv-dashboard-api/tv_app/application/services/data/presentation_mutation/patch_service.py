@@ -322,6 +322,7 @@ _NATIVE_OP_NAMES = frozenset(
         "upsert_data_source",
         "set_data_transform",
         "upsert_block",
+        "set_display_format",
         "delete_block",
         "bind_visual",
         "patch_native_config",
@@ -810,6 +811,8 @@ class PresentationPatchService:
                 block_id, frame_informed = self._op_upsert_block(native_config, raw_op)
                 if frame_informed and block_id:
                     informed_frame_ids.add(block_id)
+            elif op_name == "set_display_format":
+                self._op_set_display_format(native_config, raw_op)
             elif op_name == "create_block":
                 block_id, frame_informed = self._op_create_block(native_config, raw_op)
                 if frame_informed and block_id:
@@ -1293,6 +1296,63 @@ class PresentationPatchService:
                 {"steps": list(steps) if isinstance(steps, list) else []}
             )
         block["dataTransform"] = transform
+        block.pop("resolved", None)
+
+    def _op_set_display_format(self, cfg: dict[str, Any], op: dict[str, Any]) -> None:
+        from tv_app.application.services.data.display_format_service import DisplayFormatService
+
+        block_id = str(op.get("blockId") or "").strip()
+        block = _find_block(_blocks_of(cfg), block_id)
+        if block is None:
+            raise PresentationPatchError(
+                f"Bloco {block_id!r} não encontrado.",
+                code="DISPLAY_FORMAT_TARGET_NOT_FOUND",
+                details={"blockId": block_id},
+            )
+        target = op.get("target") or {}
+        owner = target.get("owner")
+        field = str(target.get("field") or "").strip()
+        try:
+            spec = DisplayFormatService.validate_write_spec(op.get("displayFormat"))
+        except ValueError as exc:
+            raise PresentationPatchError(str(exc), code="DISPLAY_FORMAT_INVALID") from exc
+        if owner == "contentRunDataRef":
+            if str(block.get("type") or "") not in {"text", "heading", "shape"}:
+                raise PresentationPatchError("Tipo de bloco não suporta contentRuns.", code="DISPLAY_FORMAT_UNSUPPORTED_TARGET")
+            runs = block.get("contentRuns")
+            candidates = [
+                run.get("dataRef") for run in (runs if isinstance(runs, list) else [])
+                if isinstance(run, dict) and isinstance(run.get("dataRef"), dict)
+                and str(run["dataRef"].get("field") or "") == field
+            ]
+            if not candidates:
+                raise PresentationPatchError("Binding não encontrado.", code="DISPLAY_FORMAT_TARGET_NOT_FOUND")
+            occurrence = target.get("occurrence")
+            if occurrence is None and len(candidates) > 1:
+                raise PresentationPatchError(
+                    "Binding ambíguo; informe occurrence.",
+                    code="DISPLAY_FORMAT_TARGET_AMBIGUOUS",
+                    details={"candidates": [
+                        {"owner": owner, "field": field, "occurrence": i}
+                        for i in range(len(candidates))
+                    ]},
+                )
+            index = occurrence if occurrence is not None else 0
+            if not isinstance(index, int) or isinstance(index, bool) or index < 0 or index >= len(candidates):
+                raise PresentationPatchError("Occurrence não encontrado.", code="DISPLAY_FORMAT_TARGET_NOT_FOUND")
+            candidates[index]["displayFormat"] = copy.deepcopy(spec)
+        elif owner == "textProjection":
+            if str(block.get("type") or "") not in {"text", "heading", "shape"}:
+                raise PresentationPatchError("Tipo de bloco não suporta textProjection.", code="DISPLAY_FORMAT_UNSUPPORTED_TARGET")
+            projection = block.get("textProjection")
+            if not isinstance(projection, dict) or str(projection.get("field") or "") != field:
+                raise PresentationPatchError("Binding não encontrado.", code="DISPLAY_FORMAT_TARGET_NOT_FOUND")
+            runs = block.get("contentRuns")
+            if any(isinstance(run, dict) and isinstance(run.get("dataRef"), dict) and run["dataRef"].get("field") for run in (runs if isinstance(runs, list) else [])):
+                raise PresentationPatchError("textProjection não é owner ativo.", code="DISPLAY_FORMAT_UNSUPPORTED_TARGET")
+            projection["displayFormat"] = copy.deepcopy(spec)
+        else:
+            raise PresentationPatchError("Owner de formato não suportado.", code="DISPLAY_FORMAT_UNSUPPORTED_TARGET")
         block.pop("resolved", None)
 
     def _op_upsert_block(self, cfg: dict[str, Any], op: dict[str, Any]) -> tuple[str, bool]:

@@ -38,6 +38,7 @@ _NATIVE_CONFIG_OPS = frozenset(
         "upsert_data_source",
         "set_data_transform",
         "upsert_block",
+        "set_display_format",
         "delete_block",
         "bind_visual",
         "patch_native_config",
@@ -1083,6 +1084,8 @@ class TvGptCommitService:
             applied=applied,
             expected_native=expected_native_for_verify,
             ops=ops,
+            user=user,
+            authorization=authorization,
         )
         from tv_app.application.services.data.visual_verification_service import (
             VisualVerificationService,
@@ -1163,6 +1166,8 @@ class TvGptCommitService:
         applied: list[dict[str, Any]],
         expected_native: dict[str, Any] | None,
         ops: list[Any] | None = None,
+        user: Any | None = None,
+        authorization: str | None = None,
     ) -> tuple[bool, dict[str, Any]]:
         details: dict[str, Any] = {"checks": []}
         if not applied:
@@ -1339,6 +1344,98 @@ class TvGptCommitService:
                         }
                     ]
                     return False, details
+
+                # A format mutation needs its own authoritative postcondition.
+                # Native equality and revision alone cannot prove presentation.
+                format_ops = [
+                    raw for raw in (ops or [])
+                    if isinstance(raw, dict) and raw.get("op") == "set_display_format"
+                ]
+                if format_ops:
+                    from tv_app.application.gpt_actions.response_compact import project_block_index_item
+                    from tv_app.application.services.data.display_format_service import DisplayFormatService
+                    from tv_app.application.services.data.slide_data_resolution_service import SlideDataResolutionService
+                    blocks_by_format_id = {
+                        str(block.get("id") or ""): block
+                        for block in (persisted.get("blocks") or [])
+                        if isinstance(block, dict)
+                    }
+                    for request in format_ops:
+                        block_id = str(request.get("blockId") or "")
+                        target = request.get("target") or {}
+                        row = project_block_index_item(blocks_by_format_id.get(block_id) or {}) or {}
+                        matches = [binding for binding in row.get("formatBindings", [])
+                                   if binding.get("owner") == target.get("owner")
+                                   and binding.get("field") == target.get("field")
+                                   and (target.get("occurrence") is None
+                                        or binding.get("occurrence") == target.get("occurrence"))]
+                        ok = len(matches) == 1 and matches[0].get("displayFormat") == request.get("displayFormat")
+                        details["checks"].append({"op": "set_display_format", "ok": ok,
+                                                   "blockId": block_id, "reason": "persisted_format"})
+                        if not ok:
+                            details["reason"] = "DISPLAY_FORMAT_NOT_PERSISTED"
+                            return False, details
+                    try:
+                        enriched = SlideDataResolutionService().resolve_blocks(
+                            persisted.get("blocks") or [], cfg=persisted,
+                            authorization=authorization,
+                            playlist_defaults=(playlist.get("dataDefaults") if isinstance(playlist, dict) else None),
+                            user=user,
+                        )
+                    except Exception:
+                        enriched = []
+                    enriched_by_id = {
+                        str(block.get("id") or ""): block for block in enriched
+                        if isinstance(block, dict)
+                    }
+                    for request in format_ops:
+                        block_id = str(request.get("blockId") or "")
+                        block = enriched_by_id.get(block_id) or {}
+                        resolved = block.get("resolved") if isinstance(block.get("resolved"), dict) else {}
+                        target = request.get("target") or {}
+                        field = str(target.get("field") or "")
+                        actual_display = resolved.get("displayText")
+                        aggregation = "first"
+                        selected_run = None
+                        if target.get("owner") == "contentRunDataRef":
+                            runs = block.get("contentRuns") if isinstance(block.get("contentRuns"), list) else []
+                            displayed = resolved.get("displayRuns") if isinstance(resolved.get("displayRuns"), list) else []
+                            candidates = [i for i, run in enumerate(runs)
+                                          if isinstance(run, dict) and isinstance(run.get("dataRef"), dict)
+                                          and str(run["dataRef"].get("field") or "") == field]
+                            offset = target.get("occurrence", 0)
+                            if isinstance(offset, int) and not isinstance(offset, bool) and offset < len(candidates):
+                                index = candidates[offset]
+                                selected_run = runs[index]
+                                aggregation = str(selected_run["dataRef"].get("aggregation") or "first")
+                                actual_display = displayed[index].get("text") if index < len(displayed) and isinstance(displayed[index], dict) else None
+                        elif target.get("owner") == "textProjection":
+                            projection = block.get("textProjection") or {}
+                            aggregation = str(projection.get("aggregation") or "first")
+                        projected = DisplayFormatService.resolve_projected_field(resolved, field, aggregation) if resolved else {}
+                        raw_value = projected.get("scalar") if projected.get("kind") == "scalar" else None
+                        formatted = DisplayFormatService.try_format_value(raw_value, request.get("displayFormat")) if raw_value is not None else {}
+                        expected_display = formatted.get("preview") if formatted.get("convertible") else None
+                        if expected_display is not None:
+                            from tv_app.application.services.data.text_typography_service import apply_presentation_text_case
+                            if target.get("owner") == "contentRunDataRef" and isinstance(offset, int) and not isinstance(offset, bool) and offset < len(candidates):
+                                expected_display = apply_presentation_text_case(
+                                    expected_display, DisplayFormatService._resolve_run_text_case(selected_run, block)
+                                )
+                            elif target.get("owner") == "textProjection":
+                                projection = block.get("textProjection") or {}
+                                style = block.get("style") or {}
+                                expected_display = (
+                                    str(projection.get("prefix") or "")
+                                    + apply_presentation_text_case(expected_display, style.get("textCase"))
+                                    + str(projection.get("suffix") or "")
+                                )
+                        ok = expected_display is not None and actual_display == expected_display
+                        details["checks"].append({"op": "set_display_format", "ok": ok,
+                                                   "blockId": block_id, "reason": "materialized_display" if ok else "display_unresolved"})
+                        if not ok:
+                            details["reason"] = "DISPLAY_FORMAT_NOT_MATERIALIZED"
+                            return False, details
 
                 # Caller intent (upsert_block frame/projection) vs authoritative read-back.
                 intent_diffs: list[dict[str, Any]] = []

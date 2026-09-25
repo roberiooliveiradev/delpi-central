@@ -39,3 +39,15 @@
 - **VISTA VERIFY / outcome:** after enrich/preview, read `resolved.displayText` / `displayRuns` / `kpi.displayValue` / `table.displayRows` / chart `displayLabel|displayValue` / `yAxisTicks` (or `DisplayFormatService.display_signals_for_verify`). Do not treat raw ISO / unformatted numbers as format success.
 - **Rebaseline TV-DASHBOARD-FE-BE-001 (2026-09-24):** (1) client `applyViewProjection` that drops `display*` must clear `serverDisplayApplied`; (2) MFE `serializeComunicadoConfig` drops ghost `textProjection` when dataRefs paint; (3) canvas_table enrich materializes `displayRuns` per source.
 - **Rebaseline TV-DASHBOARD-FE-BE-002 (semantic zero):** ALL_SEMANTIC_PROJECTION_BACKEND_OWNED / ALL_BUSINESS_DISPLAY_BACKEND_OWNED; paint views consume enrich only; VISTA VERIFY via `display_signals_for_verify` (+ kpiPresentation / yAxisTicks / gaugeModel / efficiencyPinPresentation / displaySeries).
+
+## VISTA typed format mutation (2026-09-25)
+
+VISTA transports the product `DisplayFormatSpec` through PresentationMutation's
+`set_display_format` op. `DisplayFormatService` validates presets and materializes
+`display*`; VISTA does not format raw values. For text blocks,
+`contentRuns[].dataRef` and `textProjection` are distinct target owners. A
+repeated field needs an occurrence selector, otherwise mutation fails closed.
+`blockIndex.formatBindings` projects persisted specs without full nativeConfig;
+`gpt_get_catalog.displayFormatCatalog` projects the existing DisplayFormatService presets.
+Other editor format slots remain outside this typed op pending owner-specific
+selectors and integration coverage; this does not change their legacy rendering.

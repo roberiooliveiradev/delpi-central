@@ -143,7 +143,8 @@ Typed vs heuristic:
 | Decision | Typed | Heuristic (directives/suggest) |
 |---|---|---|
 | merge step shape | `set_data_transform` schema | which keys → JoinPlanService |
-| valueFormat/displayFormat | upsert_block schema + validation | NL markers / field types |
+| DisplayFormatSpec on text data bindings | `set_display_format` + compact `blockIndex.formatBindings` | copy proven sibling spec; verify materialization |
+| Other format owners | editor authoring; typed VISTA target pending | legacy `valueFormat` remains compatibility |
 | background/style/frame | patch/upsert schemas | recipe markers |
 | image bytes | — | forbidden without assetId |
 
@@ -196,3 +197,23 @@ Importable operations remain **8**. Margin vs ≤30 unchanged.
 | Binding | actor + playlist target + ops + catalogVersion + baseRevision + TTL |
 | Suitability | single replica uvicorn → **ACCEPT_WITH_RESIDUAL** |
 | Review trigger | workers/replicas > 1 or cross-process prepare/commit |
+
+## Display format bridge (2026-09-25)
+
+`DisplayFormatService` remains the formatting authority. VISTA reads persisted
+`blockIndex.items[].formatBindings[]`, discovers canonical presets in
+`gpt_get_catalog.displayFormatCatalog`, and sends `DisplayFormatSpec` through
+`set_display_format` in the existing PREPARE/COMMIT actions. The semantic target is
+`blockId` + `owner` (`contentRunDataRef` or `textProjection`) + `field`; repeated
+content-run fields require `occurrence`. No new GPT Action or client formatter exists.
+
+The current typed mutation covers the active text binding owners. The editor
+also stores canonical specs in `kpiOptions.displayValueFormat`,
+`kpiProjection.metrics[].displayFormat`, `chartOptions.displayValueFormat`,
+`chartOptions.displayCategoryFormat`, `tableOptions.displayValueFormat`,
+`tableProjection.columns[].displayFormat`, and canvas table cells/dataRefs.
+These owner-specific slots are **not yet addressable** through
+`set_display_format`; legacy `valueFormat`/`format` fields stay readable.
+Consequently, generic display-format mutation is **PARTIAL**, and an
+authenticated READ→PREPARE→COMMIT→READ→enrich regression is still required
+before marking the end-to-end capability PROVEN.

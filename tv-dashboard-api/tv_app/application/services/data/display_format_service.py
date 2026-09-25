@@ -1135,6 +1135,39 @@ class DisplayFormatService:
         return out
 
     @classmethod
+    def validate_write_spec(cls, spec: Any) -> dict[str, Any]:
+        """Reject invalid authored specs before normalize_spec can fall back to General."""
+        if not isinstance(spec, dict):
+            raise ValueError("displayFormat deve ser um objeto")
+        category = spec.get("category")
+        if not isinstance(category, str) or not DisplayFormatHintsService.is_valid_category(category):
+            raise ValueError("category desconhecida")
+        preset_id = spec.get("presetId")
+        if preset_id is not None:
+            if not isinstance(preset_id, str) or preset_id not in _PRESETS:
+                raise ValueError("presetId desconhecido")
+            if _PRESETS[preset_id]["category"] != category:
+                raise ValueError("presetId incompatível com category")
+        elif category == "date":
+            if not isinstance(spec.get("pattern"), str) or not spec["pattern"].strip():
+                raise ValueError("date exige presetId ou pattern")
+        if category == "custom" and (
+            not isinstance(spec.get("pattern"), str) or not spec["pattern"].strip()
+        ):
+            raise ValueError("custom exige pattern")
+        if "decimalPlaces" in spec and spec["decimalPlaces"] is not None and (
+            isinstance(spec["decimalPlaces"], bool)
+            or not isinstance(spec["decimalPlaces"], int)
+            or not 0 <= spec["decimalPlaces"] <= 20
+        ):
+            raise ValueError("decimalPlaces inválido")
+        if "locale" in spec and spec["locale"] != "pt-BR":
+            raise ValueError("locale não suportado")
+        if "currency" in spec and spec["currency"] != "BRL":
+            raise ValueError("currency não suportada")
+        return dict(spec)
+
+    @classmethod
     def spec_from_preset_id(cls, preset_id: str) -> dict[str, Any]:
         preset = _PRESETS.get(preset_id)
         if not preset:

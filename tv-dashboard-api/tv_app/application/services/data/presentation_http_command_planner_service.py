@@ -22,6 +22,7 @@ _NATIVE_CONFIG_OPS = frozenset(
         "upsert_data_source",
         "set_data_transform",
         "upsert_block",
+        "set_display_format",
         "delete_block",
         "bind_visual",
         "patch_native_config",

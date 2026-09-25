@@ -201,7 +201,7 @@ def project_editor_focus_context(
     note = (
         "scope=editorFocus omits focusedSlide.nativeConfig and heavy digests. "
         "dataSources[] = data_source addressability (id/label/operationId/params). "
-        "blockIndex = persisted visual/object addressability (id/type/frame/preview). "
+        "blockIndex = persisted visual/object addressability (id/type/frame/preview/formatBindings). "
         "editorFocus.selectedIds are hints, not required to resolve blockIds. "
         "Never invent UUID. Use scope=full only when nativeConfig is required."
     )
@@ -362,6 +362,29 @@ def project_block_index_item(block: Mapping[str, Any]) -> dict[str, Any] | None:
         item["hasDataBinding"] = True
     elif ds_id or btype == "data_source":
         item["hasDataBinding"] = True
+    format_bindings: list[dict[str, Any]] = []
+    occurrences: dict[str, int] = {}
+    runs = block.get("contentRuns")
+    if isinstance(runs, list):
+        for run in runs:
+            ref = run.get("dataRef") if isinstance(run, dict) else None
+            if not isinstance(ref, dict) or not str(ref.get("field") or "").strip():
+                continue
+            field = str(ref["field"])
+            occurrence = occurrences.get(field, 0)
+            occurrences[field] = occurrence + 1
+            row: dict[str, Any] = {"owner": "contentRunDataRef", "field": field, "occurrence": occurrence}
+            if isinstance(ref.get("displayFormat"), dict):
+                row["displayFormat"] = ref["displayFormat"]
+            format_bindings.append(row)
+    projection = block.get("textProjection")
+    if isinstance(projection, dict) and str(projection.get("field") or "").strip() and not format_bindings:
+        row = {"owner": "textProjection", "field": str(projection["field"])}
+        if isinstance(projection.get("displayFormat"), dict):
+            row["displayFormat"] = projection["displayFormat"]
+        format_bindings.append(row)
+    if format_bindings:
+        item["formatBindings"] = format_bindings
     return item
 
 

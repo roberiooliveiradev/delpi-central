@@ -27,7 +27,15 @@
   "design_intelligence": {
     "principle": "CATALOG_AUTHORITY",
     "summary": "componentSpecs, semanticDigest, visualRecommendation and designAudit are structured catalog/READ fields. Directives point at them; they do not replace the catalog.",
-    "fields": ["componentSpecs", "semanticDigest", "visualRecommendation", "designAudit", "storyDigest", "candidatePreview", "visualVerification"]
+    "fields": [
+      "componentSpecs",
+      "semanticDigest",
+      "visualRecommendation",
+      "designAudit",
+      "storyDigest",
+      "candidatePreview",
+      "visualVerification"
+    ]
   },
   "visual_selection": {
     "principle": "SHAPE_FOLLOWS_DATA",
@@ -679,18 +687,21 @@
   },
   "display_format": {
     "principle": "TYPED_DISPLAY_FORMAT",
-    "summary": "Persistir spec (kpiOptions/chartOptions/tableProjection/textProjection displayFormat|valueFormat). A formatação efetiva é do enrich (DisplayFormatService → display*); VERIFY no resolved.display*. Inferir spec de valueFieldTypes / nome do campo / NL / projeção automática. Allowlist = DisplayFormatHintsService.",
+    "summary": "Leia DisplayFormatSpec persistido em blockIndex.formatBindings; mutação textual via set_display_format no PREPARE/ACT; DisplayFormatService materializa display*. Outros owners seguem edição e contrato próprios.",
     "rules": [
+      "Leia o bloco correto e o formatBindings correspondente; para paridade, copie o DisplayFormatSpec canônico do sibling comprovado.",
+      "Para contentRunDataRef ou textProjection, use set_display_format com blockId real, owner e field; informe occurrence se o mesmo field aparecer duas vezes.",
+      "Não use máscaras yyyy/MMM/yyyy em dataRef.format quando houver preset canônico; não reconstrua contentRuns para alterar uma máscara.",
+      "Após COMMIT, releia formatBindings e faça VERIFY em display* do enrich. Revision incrementada ou persistência estrutural não bastam para declarar formato aplicado.",
+      "Preserve binding, tipografia e demais runs; se formato materializado não puder ser comprovado, reporte inconclusivo.",
       "Percentual/% → valueFormat=percent / category percent.",
       "R$/reais/moeda → currency BRL.",
       "Inteiro → number com decimalPlaces=0.",
       "Data abreviada → category date preset date-short (dd/mm/yyyy no enrich).",
       "Texto puro → raw/text.",
-      "Nunca inventar category fora do allowlist.",
-      "Não deixar textProjection.field contradizendo contentRuns.dataRef no mesmo bloco (binding single-owner); upsert sanitiza limpando dataRefs quando textProjection single-field é gravado.",
-      "Sucesso de formato = display* no enrich / preview (resolved.displayText|displayRuns|kpi.displayValue|…), não ISO cru no canvas.",
-      "VERIFY/outcome: ler DisplayFormatService.display_signals_for_verify(resolved) ou os display* do enrich — nunca reformatar no cliente GPT."
-    ]
+      "Nunca inventar category fora do allowlist."
+    ],
+    "mutationPrinciple": "DISPLAY_FORMAT_MUTATION"
   },
   "presentation_recipes": {
     "principle": "TYPED_PRESENTATION_RECIPES",

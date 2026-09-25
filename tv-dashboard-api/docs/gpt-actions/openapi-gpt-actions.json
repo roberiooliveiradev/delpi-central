@@ -1170,10 +1170,29 @@
                               "type": "string"
                             },
                             "frame": {
-                              "type": "object"
+                              "type": "object",
+                              "additionalProperties": false,
+                              "properties": {
+                                "x": {
+                                  "type": "number"
+                                },
+                                "y": {
+                                  "type": "number"
+                                },
+                                "w": {
+                                  "type": "number"
+                                },
+                                "h": {
+                                  "type": "number"
+                                }
+                              }
                             },
                             "style": {
-                              "type": "object"
+                              "type": "object",
+                              "properties": {},
+                              "x-delpi-gpt-opaque-object": true,
+                              "additionalProperties": true,
+                              "description": "Intentionally opaque object for GPT Builder import (x-delpi-gpt-opaque-object)."
                             },
                             "as": {
                               "type": "string",
@@ -2177,6 +2196,100 @@
                           "required": [
                             "op",
                             "blockId",
+                            "target",
+                            "displayFormat"
+                          ],
+                          "additionalProperties": false,
+                          "properties": {
+                            "op": {
+                              "const": "set_display_format",
+                              "type": "string"
+                            },
+                            "blockId": {
+                              "type": "string"
+                            },
+                            "target": {
+                              "type": "object",
+                              "required": [
+                                "owner",
+                                "field"
+                              ],
+                              "additionalProperties": false,
+                              "properties": {
+                                "owner": {
+                                  "type": "string",
+                                  "enum": [
+                                    "contentRunDataRef",
+                                    "textProjection"
+                                  ]
+                                },
+                                "field": {
+                                  "type": "string"
+                                },
+                                "occurrence": {
+                                  "type": "integer",
+                                  "minimum": 0
+                                }
+                              }
+                            },
+                            "displayFormat": {
+                              "type": "object",
+                              "required": [
+                                "category"
+                              ],
+                              "additionalProperties": false,
+                              "properties": {
+                                "category": {
+                                  "type": "string",
+                                  "enum": [
+                                    "general",
+                                    "number",
+                                    "currency",
+                                    "accounting",
+                                    "date",
+                                    "time",
+                                    "percent",
+                                    "scientific",
+                                    "text",
+                                    "custom"
+                                  ]
+                                },
+                                "presetId": {
+                                  "type": "string"
+                                },
+                                "locale": {
+                                  "type": "string"
+                                },
+                                "currency": {
+                                  "type": "string"
+                                },
+                                "decimalPlaces": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "nullable": true
+                                },
+                                "pattern": {
+                                  "type": "string"
+                                },
+                                "useThousandsSeparator": {
+                                  "type": "boolean"
+                                }
+                              }
+                            },
+                            "playlistRef": {
+                              "type": "string"
+                            },
+                            "slideRef": {
+                              "type": "string"
+                            }
+                          },
+                          "title": "set_display_format"
+                        },
+                        {
+                          "type": "object",
+                          "required": [
+                            "op",
+                            "blockId",
                             "mode"
                           ],
                           "example": {
@@ -2355,6 +2468,61 @@
                                     },
                                     "fallback": {
                                       "type": "string"
+                                    },
+                                    "displayFormat": {
+                                      "type": "object",
+                                      "required": [
+                                        "category"
+                                      ],
+                                      "additionalProperties": false,
+                                      "properties": {
+                                        "category": {
+                                          "type": "string",
+                                          "enum": [
+                                            "general",
+                                            "number",
+                                            "currency",
+                                            "accounting",
+                                            "date",
+                                            "time",
+                                            "percent",
+                                            "scientific",
+                                            "text",
+                                            "custom"
+                                          ]
+                                        },
+                                        "presetId": {
+                                          "type": "string"
+                                        },
+                                        "locale": {
+                                          "type": "string"
+                                        },
+                                        "currency": {
+                                          "type": "string"
+                                        },
+                                        "decimalPlaces": {
+                                          "type": "integer",
+                                          "minimum": 0
+                                        },
+                                        "pattern": {
+                                          "type": "string"
+                                        },
+                                        "useThousandsSeparator": {
+                                          "type": "boolean"
+                                        },
+                                        "negativeStyle": {
+                                          "type": "string"
+                                        },
+                                        "symbol": {
+                                          "type": "string"
+                                        },
+                                        "prefix": {
+                                          "type": "string"
+                                        },
+                                        "suffix": {
+                                          "type": "string"
+                                        }
+                                      }
                                     }
                                   }
                                 },
@@ -2377,6 +2545,61 @@
                                           },
                                           "format": {
                                             "type": "string"
+                                          },
+                                          "displayFormat": {
+                                            "type": "object",
+                                            "required": [
+                                              "category"
+                                            ],
+                                            "additionalProperties": false,
+                                            "properties": {
+                                              "category": {
+                                                "type": "string",
+                                                "enum": [
+                                                  "general",
+                                                  "number",
+                                                  "currency",
+                                                  "accounting",
+                                                  "date",
+                                                  "time",
+                                                  "percent",
+                                                  "scientific",
+                                                  "text",
+                                                  "custom"
+                                                ]
+                                              },
+                                              "presetId": {
+                                                "type": "string"
+                                              },
+                                              "locale": {
+                                                "type": "string"
+                                              },
+                                              "currency": {
+                                                "type": "string"
+                                              },
+                                              "decimalPlaces": {
+                                                "type": "integer",
+                                                "minimum": 0
+                                              },
+                                              "pattern": {
+                                                "type": "string"
+                                              },
+                                              "useThousandsSeparator": {
+                                                "type": "boolean"
+                                              },
+                                              "negativeStyle": {
+                                                "type": "string"
+                                              },
+                                              "symbol": {
+                                                "type": "string"
+                                              },
+                                              "prefix": {
+                                                "type": "string"
+                                              },
+                                              "suffix": {
+                                                "type": "string"
+                                              }
+                                            }
                                           }
                                         }
                                       }
