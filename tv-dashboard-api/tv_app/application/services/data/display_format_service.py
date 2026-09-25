@@ -1349,6 +1349,26 @@ class DisplayFormatService:
                 "spec": resolved,
             }
 
+        if category == "general":
+            num = _coerce_number(value)
+            if num is None:
+                return {
+                    "formatId": format_id,
+                    "preview": _stringify_fallback(value),
+                    "convertible": True,
+                    "reasonCode": None,
+                    "reason": None,
+                    "spec": resolved,
+                }
+            return {
+                "formatId": format_id,
+                "preview": _format_number_spec(num, resolved),
+                "convertible": True,
+                "reasonCode": None,
+                "reason": None,
+                "spec": resolved,
+            }
+
         if category == "custom":
             pattern = str(resolved.get("pattern") or "").strip()
             if not pattern:
