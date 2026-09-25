@@ -343,6 +343,11 @@ def test_get_playlist_context_auto_downgrades_when_full_exceeds_budget():
     assert out.get("scopeDowngradeReason") == "response_budget"
     assert "nativeConfig" not in (out.get("focusedSlide") or {})
     assert any(row["id"] == ds_id and "setembro 2025" in row["label"] for row in out["dataSources"])
+    assert "blockIndex" in out
+    assert out["blockIndex"]["total"] >= 60
+    assert {item["id"] for item in out["blockIndex"]["items"]} <= {
+        str(b["id"]) for b in heavy["blocks"]
+    }
     assert utf8_size(out) < GPT_ACTIONS_RESPONSE_MAX_BYTES
 
 

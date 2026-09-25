@@ -134,13 +134,20 @@ class GptActionsDispatchService:
         include_preview: bool = False,
         preview_slide_id: str | None = None,
         scope: str | None = None,
+        object_query: str | None = None,
+        object_types: str | None = None,
+        block_cursor: str | int | None = None,
+        block_limit: int | None = None,
     ) -> dict[str, Any]:
         from tv_app.application.gpt_actions.response_compact import (
             exceeds_actions_budget,
+            iter_block_index_items,
             pick_focus_slide_id,
+            project_block_index,
             project_data_sources_from_slide,
             project_editor_focus_context,
             project_media_inventory,
+            project_object_matches,
             project_playlist_summary,
             project_slide_detail,
             project_slide_index_row,
@@ -231,6 +238,31 @@ class GptActionsDispatchService:
         if editor_focus is not None and selected_ds:
             editor_focus = {**editor_focus, "selectedDataSourceId": selected_ds}
 
+        native_for_index = (
+            detail_slide.get("nativeConfig")
+            if isinstance(detail_slide, dict)
+            and isinstance(detail_slide.get("nativeConfig"), dict)
+            else {}
+        )
+        focus_sid = (
+            str(detail_slide.get("id"))
+            if isinstance(detail_slide, dict) and detail_slide.get("id")
+            else None
+        )
+        block_index = project_block_index(
+            native_for_index,
+            slide_id=focus_sid,
+            revision=revision,
+            cursor=block_cursor,
+            limit=block_limit,
+            object_types=object_types,
+        )
+        object_matches = project_object_matches(
+            iter_block_index_items(native_for_index, object_types=object_types),
+            object_query=object_query,
+            object_types=object_types,
+        )
+
         if focused_scope:
             return project_editor_focus_context(
                 playlist=playlist if isinstance(playlist, dict) else {},
@@ -242,6 +274,8 @@ class GptActionsDispatchService:
                 access_role=access.level,
                 revision=revision,
                 editor_focus=editor_focus,
+                block_index=block_index,
+                object_matches=object_matches,
             )
 
         out: dict[str, Any] = {
@@ -269,8 +303,9 @@ class GptActionsDispatchService:
                 "slides[] is a compact index (no nativeConfig). "
                 "focusedSlide has full nativeConfig for the editorFocus/preview/first slide. "
                 "dataSources[] lists id/label/operationId/params for the focused slide. "
-                "If this response is too large, the API auto-downgrades to scope=editorFocus. "
-                "Pass scope=editorFocus explicitly for label/rename without nativeConfig."
+                "If this response is too large, the API auto-downgrades to scope=editorFocus "
+                "and retains blockIndex + dataSources[] (no invented blockIds). "
+                "Pass scope=editorFocus explicitly for compact addressability without nativeConfig."
             ),
         }
         if editor_focus:
@@ -345,7 +380,7 @@ class GptActionsDispatchService:
             out["slidePreview"] = slide_preview
 
         # Custom GPT Actions rejects oversized tool responses (ResponseTooLargeError).
-        # Auto-downgrade keeps dataSources[] so rename/label can proceed without nativeConfig.
+        # Auto-downgrade keeps dataSources[] + blockIndex so existing-object mutation can proceed.
         if exceeds_actions_budget(out):
             return project_editor_focus_context(
                 playlist=playlist if isinstance(playlist, dict) else {},
@@ -359,6 +394,8 @@ class GptActionsDispatchService:
                 editor_focus=editor_focus,
                 scope_downgraded=True,
                 slide_preview=slide_preview,
+                block_index=block_index,
+                object_matches=object_matches,
             )
         return out
 

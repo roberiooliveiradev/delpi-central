@@ -229,7 +229,7 @@
       "get": {
         "operationId": "gpt_get_playlist_context",
         "summary": "Authorized playlist context",
-        "description": "Playlist summary + slides index + focusedSlide. dataSources[] = id/label/operationId/params. scope=editorFocus omits nativeConfig. full auto-downgrades to editorFocus if over Actions budget (scopeDowngraded). includePreview adds slidePreview PNG URL.",
+        "description": "Playlist summary + slides index + focusedSlide. dataSources[] = id/label/operationId/params. scope=editorFocus omits nativeConfig and returns blockIndex (persisted visual/object addressability). full auto-downgrades to editorFocus if over Actions budget (scopeDowngraded) while retaining blockIndex. includePreview adds slidePreview PNG URL. Optional objectQuery returns objectMatches[] without inventing IDs.",
         "tags": [
           "TV Dashboard GPT"
         ],
@@ -281,7 +281,43 @@
               ],
               "default": "full"
             },
-            "description": "full: focusedSlide.nativeConfig + digests. editorFocus: omit nativeConfig; return dataSources[] and dataSource (selected) for label/metadata mutations."
+            "description": "full: focusedSlide.nativeConfig + digests. editorFocus: omit nativeConfig; return dataSources[] + blockIndex for existing-object addressability."
+          },
+          {
+            "name": "objectQuery",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Optional filter for objectMatches[] (contentPreview/label/groupId/role). Persisted IDs only."
+          },
+          {
+            "name": "objectTypes",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Optional comma-separated types filter for blockIndex/objectMatches."
+          },
+          {
+            "name": "blockCursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Absolute offset cursor for blockIndex pagination."
+          },
+          {
+            "name": "blockLimit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Max items in blockIndex.items for this page."
           }
         ],
         "responses": {
@@ -941,6 +977,63 @@
                         {
                           "type": "object",
                           "required": [
+                            "op",
+                            "blockIds",
+                            "command"
+                          ],
+                          "example": {
+                            "op": "align_blocks",
+                            "blockIds": [
+                              "blk_a",
+                              "blk_b"
+                            ],
+                            "command": "align-left"
+                          },
+                          "properties": {
+                            "op": {
+                              "const": "align_blocks",
+                              "type": "string"
+                            },
+                            "blockIds": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              },
+                              "minItems": 1
+                            },
+                            "command": {
+                              "type": "string",
+                              "enum": [
+                                "align-left",
+                                "align-center-h",
+                                "align-right",
+                                "align-top",
+                                "align-center-v",
+                                "align-bottom",
+                                "distribute-h",
+                                "distribute-v",
+                                "align-slide-left",
+                                "align-slide-center-h",
+                                "align-slide-right",
+                                "align-slide-top",
+                                "align-slide-center-v",
+                                "align-slide-bottom"
+                              ]
+                            },
+                            "playlistRef": {
+                              "type": "string",
+                              "description": "Alias or authoritative playlist UUID. Omit to use current playlist slot."
+                            },
+                            "slideRef": {
+                              "type": "string",
+                              "description": "Alias or authoritative slide UUID. Omit to use current slide slot."
+                            }
+                          },
+                          "title": "align_blocks"
+                        },
+                        {
+                          "type": "object",
+                          "required": [
                             "op"
                           ],
                           "properties": {
@@ -1001,6 +1094,101 @@
                             }
                           },
                           "title": "bind_visual"
+                        },
+                        {
+                          "type": "object",
+                          "required": [
+                            "op",
+                            "blockId",
+                            "deltaSteps"
+                          ],
+                          "example": {
+                            "op": "bump_font_size",
+                            "blockId": "blk_a",
+                            "deltaSteps": 1
+                          },
+                          "properties": {
+                            "op": {
+                              "const": "bump_font_size",
+                              "type": "string"
+                            },
+                            "blockId": {
+                              "type": "string"
+                            },
+                            "deltaSteps": {
+                              "type": "integer"
+                            },
+                            "as": {
+                              "type": "string",
+                              "description": "Local alias for the resource this op produces (compound plans)."
+                            },
+                            "playlistRef": {
+                              "type": "string",
+                              "description": "Alias or authoritative playlist UUID. Omit to use current playlist slot."
+                            },
+                            "slideRef": {
+                              "type": "string",
+                              "description": "Alias or authoritative slide UUID. Omit to use current slide slot."
+                            }
+                          },
+                          "title": "bump_font_size"
+                        },
+                        {
+                          "type": "object",
+                          "required": [
+                            "op",
+                            "type"
+                          ],
+                          "example": {
+                            "op": "create_block",
+                            "type": "chart_view",
+                            "chartType": "line"
+                          },
+                          "properties": {
+                            "op": {
+                              "const": "create_block",
+                              "type": "string"
+                            },
+                            "type": {
+                              "type": "string",
+                              "description": "ComunicadoBlock.type discriminator."
+                            },
+                            "blockId": {
+                              "type": "string",
+                              "description": "Optional informed id."
+                            },
+                            "chartType": {
+                              "type": "string"
+                            },
+                            "shape": {
+                              "type": "string"
+                            },
+                            "iconName": {
+                              "type": "string"
+                            },
+                            "content": {
+                              "type": "string"
+                            },
+                            "frame": {
+                              "type": "object"
+                            },
+                            "style": {
+                              "type": "object"
+                            },
+                            "as": {
+                              "type": "string",
+                              "description": "Local alias for the resource this op produces (compound plans)."
+                            },
+                            "playlistRef": {
+                              "type": "string",
+                              "description": "Alias or authoritative playlist UUID. Omit to use current playlist slot."
+                            },
+                            "slideRef": {
+                              "type": "string",
+                              "description": "Alias or authoritative slide UUID. Omit to use current slide slot."
+                            }
+                          },
+                          "title": "create_block"
                         },
                         {
                           "type": "object",
@@ -1106,6 +1294,51 @@
                             }
                           },
                           "title": "delete_slide"
+                        },
+                        {
+                          "type": "object",
+                          "required": [
+                            "op",
+                            "blockIds"
+                          ],
+                          "example": {
+                            "op": "duplicate_blocks",
+                            "blockIds": [
+                              "blk_a"
+                            ]
+                          },
+                          "properties": {
+                            "op": {
+                              "const": "duplicate_blocks",
+                              "type": "string"
+                            },
+                            "blockIds": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              },
+                              "minItems": 1
+                            },
+                            "offsetX": {
+                              "type": "number"
+                            },
+                            "offsetY": {
+                              "type": "number"
+                            },
+                            "as": {
+                              "type": "string",
+                              "description": "Local alias for the resource this op produces (compound plans)."
+                            },
+                            "playlistRef": {
+                              "type": "string",
+                              "description": "Alias or authoritative playlist UUID. Omit to use current playlist slot."
+                            },
+                            "slideRef": {
+                              "type": "string",
+                              "description": "Alias or authoritative slide UUID. Omit to use current slide slot."
+                            }
+                          },
+                          "title": "duplicate_blocks"
                         },
                         {
                           "type": "object",
@@ -1393,6 +1626,52 @@
                             }
                           },
                           "title": "re_layer_playlist_filters"
+                        },
+                        {
+                          "type": "object",
+                          "required": [
+                            "op",
+                            "blockIds",
+                            "command"
+                          ],
+                          "example": {
+                            "op": "reorder_block_z",
+                            "blockIds": [
+                              "blk_a"
+                            ],
+                            "command": "bring-to-front"
+                          },
+                          "properties": {
+                            "op": {
+                              "const": "reorder_block_z",
+                              "type": "string"
+                            },
+                            "blockIds": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              },
+                              "minItems": 1
+                            },
+                            "command": {
+                              "type": "string",
+                              "enum": [
+                                "bring-to-front",
+                                "send-to-back",
+                                "bring-forward",
+                                "send-backward"
+                              ]
+                            },
+                            "playlistRef": {
+                              "type": "string",
+                              "description": "Alias or authoritative playlist UUID. Omit to use current playlist slot."
+                            },
+                            "slideRef": {
+                              "type": "string",
+                              "description": "Alias or authoritative slide UUID. Omit to use current slide slot."
+                            }
+                          },
+                          "title": "reorder_block_z"
                         },
                         {
                           "type": "object",
@@ -1896,6 +2175,61 @@
                         {
                           "type": "object",
                           "required": [
+                            "op",
+                            "blockId",
+                            "mode"
+                          ],
+                          "example": {
+                            "op": "transform_text_case",
+                            "blockId": "blk_a",
+                            "mode": "upper"
+                          },
+                          "properties": {
+                            "op": {
+                              "const": "transform_text_case",
+                              "type": "string"
+                            },
+                            "blockId": {
+                              "type": "string"
+                            },
+                            "mode": {
+                              "type": "string",
+                              "enum": [
+                                "sentence",
+                                "lower",
+                                "upper",
+                                "title",
+                                "toggle"
+                              ]
+                            },
+                            "start": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "description": "Optional plain-text start offset (authoring contentRuns)."
+                            },
+                            "end": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "description": "Optional plain-text end offset (exclusive)."
+                            },
+                            "as": {
+                              "type": "string",
+                              "description": "Local alias for the resource this op produces (compound plans)."
+                            },
+                            "playlistRef": {
+                              "type": "string",
+                              "description": "Alias or authoritative playlist UUID. Omit to use current playlist slot."
+                            },
+                            "slideRef": {
+                              "type": "string",
+                              "description": "Alias or authoritative slide UUID. Omit to use current slide slot."
+                            }
+                          },
+                          "title": "transform_text_case"
+                        },
+                        {
+                          "type": "object",
+                          "required": [
                             "op"
                           ],
                           "properties": {
@@ -1941,6 +2275,14 @@
                             "op": {
                               "const": "upsert_block",
                               "type": "string"
+                            },
+                            "blockId": {
+                              "type": "string",
+                              "description": "Alias de identidade do bloco existente (ALTER_EXISTING). Preferir block.id; se informado e o bloco não existir, falha — não cria fantasma."
+                            },
+                            "createIfMissing": {
+                              "type": "boolean",
+                              "description": "Quando true, permite criar bloco com id novo/ausente. Padrão seguro: false para text/heading/shape sem frame."
                             },
                             "block": {
                               "type": "object",
@@ -2487,7 +2829,7 @@
                     "name": "Testando a VISTA"
                   }
                 ],
-                "catalogVersion": "2026.09.24.vista-ready",
+                "catalogVersion": "2026.09.24.presentation-authority",
                 "commit_now": true,
                 "confirmation": {
                   "confirmed": true

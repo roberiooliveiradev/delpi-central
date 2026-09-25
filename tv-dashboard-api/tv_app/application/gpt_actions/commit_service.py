@@ -454,12 +454,24 @@ class TvGptCommitService:
                 str(getattr(exc, "code", None) or "INVALID_CHANGE").strip()
                 or "INVALID_CHANGE"
             )
+            details = dict(getattr(exc, "details", None) or {})
+            if details.get("reason") == "TARGET_BLOCK_NOT_FOUND":
+                target_map = target if isinstance(target, dict) else {}
+                details.setdefault("slideId", target_map.get("slideId"))
+                pid_raw = str(target_map.get("playlistId") or "").strip()
+                if pid_raw and "currentRevision" not in details:
+                    try:
+                        details["currentRevision"] = self._writes.get_revision(UUID(pid_raw))
+                    except Exception:
+                        details["currentRevision"] = None
+                details.setdefault("refetchRequired", True)
             err = {
                 "status": code,
                 "_raise": True,
                 "_code": code,
                 "_statusCode": 422,
                 "message": str(exc),
+                "details": details,
             }
             self._complete(
                 key=key,
@@ -467,7 +479,12 @@ class TvGptCommitService:
                 request_fingerprint=request_fingerprint,
                 snapshot=err,
             )
-            raise GptActionsError(str(exc), code=code, status_code=422) from exc
+            raise GptActionsError(
+                str(exc),
+                code=code,
+                status_code=422,
+                details=details,
+            ) from exc
 
         applied: list[dict[str, Any]] = []
         outcome: dict[str, Any] = {"appliedOps": [], "created": {}}

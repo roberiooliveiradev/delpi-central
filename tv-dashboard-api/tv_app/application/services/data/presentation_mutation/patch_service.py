@@ -1448,7 +1448,16 @@ class PresentationPatchService:
                 raise PresentationPatchError(
                     PresentationOpsContentService.message(
                         "blockNotFound", blockId=block_id
-                    )
+                    ),
+                    details={
+                        "reason": "TARGET_BLOCK_NOT_FOUND",
+                        "requestedBlockId": block_id,
+                        "refetchRequired": True,
+                        "resolutionHint": (
+                            "Call gpt_get_playlist_context (scope=editorFocus) and "
+                            "resolve blockId from blockIndex/objectMatches; never invent IDs."
+                        ),
+                    },
                 )
             raise PresentationPatchError(
                 PresentationOpsContentService.message("upsertBlockTargetRequired")

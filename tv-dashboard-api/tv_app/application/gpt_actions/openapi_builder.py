@@ -564,9 +564,12 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "description": (
                     "Playlist summary + slides index + focusedSlide. "
                     "dataSources[] = id/label/operationId/params. "
-                    "scope=editorFocus omits nativeConfig. "
+                    "scope=editorFocus omits nativeConfig and returns blockIndex "
+                    "(persisted visual/object addressability). "
                     "full auto-downgrades to editorFocus if over Actions budget "
-                    "(scopeDowngraded). includePreview adds slidePreview PNG URL."
+                    "(scopeDowngraded) while retaining blockIndex. "
+                    "includePreview adds slidePreview PNG URL. "
+                    "Optional objectQuery returns objectMatches[] without inventing IDs."
                 ),
                 "tags": [tag],
                 "security": [{"BearerAuth": []}],
@@ -609,9 +612,42 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                         },
                         "description": (
                             "full: focusedSlide.nativeConfig + digests. "
-                            "editorFocus: omit nativeConfig; return dataSources[] and "
-                            "dataSource (selected) for label/metadata mutations."
+                            "editorFocus: omit nativeConfig; return dataSources[] + "
+                            "blockIndex for existing-object addressability."
                         ),
+                    },
+                    {
+                        "name": "objectQuery",
+                        "in": "query",
+                        "required": False,
+                        "schema": {"type": "string"},
+                        "description": (
+                            "Optional filter for objectMatches[] "
+                            "(contentPreview/label/groupId/role). Persisted IDs only."
+                        ),
+                    },
+                    {
+                        "name": "objectTypes",
+                        "in": "query",
+                        "required": False,
+                        "schema": {"type": "string"},
+                        "description": (
+                            "Optional comma-separated types filter for blockIndex/objectMatches."
+                        ),
+                    },
+                    {
+                        "name": "blockCursor",
+                        "in": "query",
+                        "required": False,
+                        "schema": {"type": "string"},
+                        "description": "Absolute offset cursor for blockIndex pagination.",
+                    },
+                    {
+                        "name": "blockLimit",
+                        "in": "query",
+                        "required": False,
+                        "schema": {"type": "integer"},
+                        "description": "Max items in blockIndex.items for this page.",
                     },
                 ],
                 "responses": {"200": _ok_response("Playlist context"), **_error_responses()},

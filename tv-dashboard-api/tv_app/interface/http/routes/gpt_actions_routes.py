@@ -183,9 +183,28 @@ def get_playlist_context(
         default="full",
         description=(
             "full (default): focusedSlide with nativeConfig + digests. "
-            "editorFocus: omit nativeConfig/heavy digests; return dataSources[] and "
-            "selected dataSource for rename/label mutations without ResponseTooLargeError."
+            "editorFocus: omit nativeConfig/heavy digests; return dataSources[] + "
+            "blockIndex for existing-object addressability without ResponseTooLargeError."
         ),
+    ),
+    objectQuery: str | None = Query(
+        default=None,
+        description=(
+            "Optional read-only filter for objectMatches[] (contentPreview/label/groupId/role). "
+            "Does not invent IDs; matches persisted blockIndex items only."
+        ),
+    ),
+    objectTypes: str | None = Query(
+        default=None,
+        description="Optional comma-separated block types filter for blockIndex/objectMatches.",
+    ),
+    blockCursor: str | None = Query(
+        default=None,
+        description="Pagination cursor (absolute offset) for blockIndex.items.",
+    ),
+    blockLimit: int | None = Query(
+        default=None,
+        description="Max blockIndex.items in this page (server-capped).",
     ),
 ):
     cid = _correlation_id(request)
@@ -196,6 +215,10 @@ def get_playlist_context(
             include_preview=bool(includePreview),
             preview_slide_id=slideId,
             scope=scope,
+            object_query=objectQuery,
+            object_types=objectTypes,
+            block_cursor=blockCursor,
+            block_limit=blockLimit,
         )
         return ok(data)
     except Exception as exc:  # noqa: BLE001
