@@ -12,7 +12,7 @@ import {
 } from "../../displayFormat";
 import { AnchoredPanelPortal } from "../shape/AnchoredPanelPortal";
 import { dismissActiveExclusiveAnchoredPanel } from "../shape/exclusiveAnchoredPanel";
-import { DisplayFormatDialog } from "./DisplayFormatDialog";
+import { DisplayFormatDialog, type DisplayFormatDialogProps } from "./DisplayFormatDialog";
 import { DisplayFormatMenu } from "./DisplayFormatMenu";
 import { DisplayFormatTargetHint } from "./DisplayFormatTargetHint";
 import { DEFAULT_DISPLAY_FORMAT_CN } from "./displayFormatClasses";
@@ -24,6 +24,9 @@ export type DisplayFormatRibbonGroupProps = {
   /** Rótulo fino do alvo (ex.: Coluna "Qtd"). Fallback = label genérico do target. */
   targetHint?: string;
   sampleValue?: unknown;
+  semanticType?: string | null;
+  valueSource?: "authoritative" | "representative" | "sample" | "none";
+  previewLoader?: DisplayFormatDialogProps["previewLoader"];
   density?: "ribbon" | "compact";
   portalScopeClassName?: string;
   /**
@@ -42,6 +45,9 @@ export function DisplayFormatRibbonGroup({
   target,
   targetHint,
   sampleValue,
+  semanticType,
+  valueSource,
+  previewLoader,
   density = "ribbon",
   portalScopeClassName,
   formatDialog,
@@ -174,6 +180,9 @@ export function DisplayFormatRibbonGroup({
           spec={spec}
           onApply={onChange}
           sampleValue={sampleValue}
+          semanticType={semanticType}
+          valueSource={valueSource}
+          previewLoader={previewLoader}
           target={target}
           targetHint={targetHint}
           portalScopeClassName={portalScopeClassName}

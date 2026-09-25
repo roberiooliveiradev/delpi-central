@@ -6,7 +6,7 @@ import {
 } from "./parseDisplayDate";
 import type { ParsedDisplayDate } from "./types";
 
-const DATE_HINT = /dd|yyyy|aaaa|mmm|HH|hh|ss|yy/i;
+const DATE_HINT = /dd|yyyy|aaaa|mmmm|mmm|mm|HH|hh|ss|yy/i;
 
 export function patternLooksLikeDate(pattern: string): boolean {
   const stripped = stripQuoted(pattern);

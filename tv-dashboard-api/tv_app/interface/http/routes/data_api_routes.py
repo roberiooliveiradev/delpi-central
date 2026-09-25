@@ -58,6 +58,18 @@ class ValidateDataConfigBody(BaseModel):
     nativeConfig: dict[str, Any] = Field(default_factory=dict)
 
 
+class DisplayFormatPreviewBody(BaseModel):
+    """Batch format catalog + previews for the Formatar dialog."""
+
+    value: Any = None
+    semanticType: str | None = None
+    locale: str = "pt-BR"
+    timezone: str | None = None
+    valueSource: str = "authoritative"
+    customPattern: str | None = None
+    selectedSpec: dict[str, Any] | None = None
+
+
 class MSourceColumnBody(BaseModel):
     key: str
     type: str = "any"
@@ -487,6 +499,29 @@ def sync_openapi_catalog(request: Request):
     except Exception as exc:  # noqa: BLE001
         return fail(f"Falha ao sincronizar OpenAPI: {exc}", 502)
     return ok(report)
+
+
+@router.post("/display-format/previews")
+def display_format_previews(request: Request, body: DisplayFormatPreviewBody):
+    """One-shot format catalog + materialised previews (server authority)."""
+    user = resolve_user(request)
+    try:
+        assert_permission(user, TV_READ)
+    except PermissionError as exc:
+        return fail(str(exc), 403)
+
+    from tv_app.application.services.data.display_format_service import DisplayFormatService
+
+    payload = DisplayFormatService.preview_format_catalog(
+        value=body.value,
+        semantic_type=body.semanticType,
+        locale=body.locale or "pt-BR",
+        timezone=body.timezone,
+        value_source=body.valueSource or "authoritative",
+        custom_pattern=body.customPattern,
+        selected_spec=body.selectedSpec,
+    )
+    return ok(payload)
 
 
 @router.post("/preview-block")

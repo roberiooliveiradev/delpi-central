@@ -171,6 +171,54 @@
   color: var(--delpi-ui-text, #0f172a);
 }
 
+.delpi-ui-display-format__sample--error {
+  border-color: color-mix(in srgb, #dc2626 45%, var(--delpi-ui-border, #e5e7eb));
+  background: color-mix(in srgb, #dc2626 8%, var(--delpi-ui-surface, #fff));
+}
+
+.delpi-ui-display-format__sample--error .delpi-ui-display-format__sample-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: #b91c1c;
+}
+
+.delpi-ui-display-format__sample-detail {
+  font-size: 11px;
+  color: var(--delpi-ui-muted, #64748b);
+}
+
+.delpi-ui-display-format__type-preview {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--delpi-ui-text, #111);
+}
+
+.delpi-ui-display-format__type--disabled {
+  opacity: 0.62;
+  cursor: not-allowed;
+}
+
+.delpi-ui-display-format__type--disabled .delpi-ui-display-format__type-preview {
+  font-weight: 500;
+  font-style: italic;
+  color: var(--delpi-ui-muted, #64748b);
+}
+
+.delpi-ui-display-format__type-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--delpi-ui-text, #0f172a) 4%, transparent);
+}
+
+.delpi-ui-display-format__apply-error {
+  margin: 0 0 8px;
+  font-size: 12px;
+  color: #b91c1c;
+}
+
 .delpi-ui-display-format__custom {
   display: flex;
   flex-direction: column;

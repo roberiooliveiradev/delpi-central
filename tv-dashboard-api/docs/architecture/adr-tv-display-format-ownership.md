@@ -28,6 +28,7 @@
    - **G30–G33** — table paint prefers `displayRows`; dead stale helper deprecated; `hasServerDisplayPaint` PAINT-only; legacy `data_*` modes not used on paint path.
    - Principle: `MFE = AUTHOR + INTERACT + LAYOUT + GEOMETRY + PAINT` / `BACKEND = RESOLVE + PROJECT + AGGREGATE + FORMAT + MATERIALIZE`.
   - **Superseded for persisted LAYOUT/GEOMETRY/style/defaults (2026-09-24):** see `adr-tv-full-presentation-authority.md` (TV-DASHBOARD-PRESENTATION-001). Paint-only `display*` / `serverProjectionApplied` remains.
+  - **TV-DASHBOARD-FORMAT-001 (2026-09-25):** Format picker catalog + live previews are server-owned (`DisplayFormatService.preview_format_catalog` + `POST /data/display-format/previews`). MFE `DisplayFormatDialog` renders backend `preview`/`convertible`/`reason` only — no client `formatDisplayValue` for picker previews. Kit TS formatter remains corpus/legacy paint fallback outside the picker path until retired.
 
 ## Consequences
 

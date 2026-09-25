@@ -30,6 +30,13 @@ export {
 } from "./parseDisplayDate";
 export { formatCustomPattern, patternLooksLikeDate } from "./formatCustomPattern";
 export { formatDisplayValue, normalizeSpec } from "./formatDisplayValue";
+export type {
+  DisplayFormatPreviewLoader,
+  DisplayFormatPreviewOption,
+  DisplayFormatPreviewRequest,
+  DisplayFormatPreviewResponse,
+  DisplayFormatValueSource,
+} from "./previewTypes";
 export {
   canvasNumberFormatFromSpec,
   categoryLabelFormatFromSpec,

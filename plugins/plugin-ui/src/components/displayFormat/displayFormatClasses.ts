@@ -22,13 +22,19 @@ export type DisplayFormatClassNames = {
   sample: string;
   sampleLabel: string;
   sampleValue: string;
+  sampleError: string;
+  sampleDetail: string;
   typeList: string;
   typeBtn: string;
   typeBtnActive: string;
+  typeBtnDisabled: string;
+  typePreview: string;
   typeMeta: string;
+  typeSkeleton: string;
   customField: string;
   customHelp: string;
   locale: string;
+  applyError: string;
   footer: string;
 };
 
@@ -58,13 +64,19 @@ export function displayFormatBemClasses(prefix = "delpi-ui"): DisplayFormatClass
     sample: pair(`${base}__sample`, `${ui}__sample`),
     sampleLabel: pair(`${base}__sample-label`, `${ui}__sample-label`),
     sampleValue: pair(`${base}__sample-value`, `${ui}__sample-value`),
+    sampleError: pair(`${base}__sample--error`, `${ui}__sample--error`),
+    sampleDetail: pair(`${base}__sample-detail`, `${ui}__sample-detail`),
     typeList: pair(`${base}__types`, `${ui}__types`),
     typeBtn: pair(`${base}__type`, `${ui}__type`),
     typeBtnActive: pair(`${base}__type--active`, `${ui}__type--active`),
+    typeBtnDisabled: pair(`${base}__type--disabled`, `${ui}__type--disabled`),
+    typePreview: pair(`${base}__type-preview`, `${ui}__type-preview`),
     typeMeta: pair(`${base}__type-meta`, `${ui}__type-meta`),
+    typeSkeleton: pair(`${base}__type-skeleton`, `${ui}__type-skeleton`),
     customField: pair(`${base}__custom`, `${ui}__custom`),
     customHelp: pair(`${base}__custom-help`, `${ui}__custom-help`),
     locale: pair(`${base}__locale`, `${ui}__locale`),
+    applyError: pair(`${base}__apply-error`, `${ui}__apply-error`),
     footer: pair(`${base}__footer`, `${ui}__footer`),
   };
 }

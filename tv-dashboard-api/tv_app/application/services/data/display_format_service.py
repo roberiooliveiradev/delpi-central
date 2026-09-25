@@ -93,7 +93,7 @@ _EN_MONTH_TO_PT_LABEL: dict[str, str] = {
     "dec": "Dez",
 }
 
-_DATE_HINT = re.compile(r"dd|yyyy|aaaa|mmm|HH|hh|ss|yy", re.IGNORECASE)
+_DATE_HINT = re.compile(r"dd|yyyy|aaaa|mmmm|mmm|mm|HH|hh|ss|yy", re.IGNORECASE)
 _LOCALIZED_MONTH_YEAR = re.compile(
     r"^(jan|fev|feb|mar|abr|apr|mai|may|jun|jul|ago|aug|set|sep|sept|out|oct|nov|dez|dec)"
     r"\.?\s+de\s+(\d{2}|\d{4})$",
@@ -146,6 +146,11 @@ _PRESETS: dict[str, dict[str, Any]] = {
         "presetId": "date-short",
         "pattern": "dd/mm/yyyy",
     },
+    "date-short-yy": {
+        "category": "date",
+        "presetId": "date-short-yy",
+        "pattern": "dd/mm/yy",
+    },
     "date-long": {"category": "date", "presetId": "date-long"},
     "date-iso": {
         "category": "date",
@@ -155,12 +160,385 @@ _PRESETS: dict[str, dict[str, Any]] = {
     "date-day-mon": {"category": "date", "presetId": "date-day-mon"},
     "date-month": {"category": "date", "presetId": "date-month"},
     "date-year": {"category": "date", "presetId": "date-year"},
+    "date-year-yy": {
+        "category": "date",
+        "presetId": "date-year-yy",
+        "pattern": "yy",
+    },
     "date-auto": {"category": "date", "presetId": "date-auto"},
+    "date-month-year": {
+        "category": "date",
+        "presetId": "date-month-year",
+        "pattern": "mm/yyyy",
+    },
+    "date-month-year-yy": {
+        "category": "date",
+        "presetId": "date-month-year-yy",
+        "pattern": "mm/yy",
+    },
+    "date-month-year-dash": {
+        "category": "date",
+        "presetId": "date-month-year-dash",
+        "pattern": "mm-yyyy",
+    },
+    "date-month-year-dash-yy": {
+        "category": "date",
+        "presetId": "date-month-year-dash-yy",
+        "pattern": "mm-yy",
+    },
+    "date-year-month": {
+        "category": "date",
+        "presetId": "date-year-month",
+        "pattern": "yyyy/mm",
+    },
+    "date-year-month-yy": {
+        "category": "date",
+        "presetId": "date-year-month-yy",
+        "pattern": "yy/mm",
+    },
+    "date-month-abbrev-year": {
+        "category": "date",
+        "presetId": "date-month-abbrev-year",
+        "pattern": 'mmm"."/yyyy',
+    },
+    "date-month-abbrev-year-yy": {
+        "category": "date",
+        "presetId": "date-month-abbrev-year-yy",
+        "pattern": 'mmm"."/yy',
+    },
+    "date-month-full-year": {
+        "category": "date",
+        "presetId": "date-month-full-year",
+        "pattern": "mmmm/yyyy",
+    },
+    "date-month-full-year-yy": {
+        "category": "date",
+        "presetId": "date-month-full-year-yy",
+        "pattern": "mmmm/yy",
+    },
+    "date-month-abbrev-de-year": {
+        "category": "date",
+        "presetId": "date-month-abbrev-de-year",
+        "pattern": 'mmm "de" yyyy',
+    },
+    "date-month-full-de-year": {
+        "category": "date",
+        "presetId": "date-month-full-de-year",
+        "pattern": 'mmmm "de" yyyy',
+    },
+    "date-day-mon-year": {
+        "category": "date",
+        "presetId": "date-day-mon-year",
+        "pattern": 'dd mmm"." yyyy',
+    },
+    "date-day-mon-year-yy": {
+        "category": "date",
+        "presetId": "date-day-mon-year-yy",
+        "pattern": 'dd mmm"." yy',
+    },
+    "date-day-full-long": {
+        "category": "date",
+        "presetId": "date-day-full-long",
+        "pattern": 'dd "de" mmmm "de" yyyy',
+    },
+    "date-day-full-long-yy": {
+        "category": "date",
+        "presetId": "date-day-full-long-yy",
+        "pattern": 'dd "de" mmmm "de" yy',
+    },
+    "date-month-num": {
+        "category": "date",
+        "presetId": "date-month-num",
+        "pattern": "mm",
+    },
+    "date-month-abbrev": {
+        "category": "date",
+        "presetId": "date-month-abbrev",
+        "pattern": 'mmm"."',
+    },
+    "date-month-full": {
+        "category": "date",
+        "presetId": "date-month-full",
+        "pattern": "mmmm",
+    },
     "time-hhmm": {"category": "time", "pattern": "HH:mm"},
     "percent": {"category": "percent", "decimalPlaces": 1},
     "scientific": {"category": "scientific", "decimalPlaces": 2},
     "text": {"category": "text"},
     "custom": {"category": "custom", "pattern": ""},
+}
+
+# UI catalog metadata (labels/patterns for picker). Spec authority remains `_PRESETS`.
+_FORMAT_CATALOG: tuple[dict[str, Any], ...] = (
+    {"formatId": "general", "category": "general", "label": "Geral", "pattern": None, "compatibleTypes": ("any",)},
+    {"formatId": "number-0", "category": "number", "label": "0 casas", "pattern": "0", "compatibleTypes": ("number", "any")},
+    {"formatId": "number-2", "category": "number", "label": "2 casas", "pattern": "0,00", "compatibleTypes": ("number", "any")},
+    {
+        "formatId": "number-thousands",
+        "category": "number",
+        "label": "Milhar",
+        "pattern": "#.##0,00",
+        "compatibleTypes": ("number", "any"),
+    },
+    {
+        "formatId": "number-compact",
+        "category": "number",
+        "label": "Compacto",
+        "pattern": None,
+        "compatibleTypes": ("number", "any"),
+    },
+    {
+        "formatId": "currency-brl",
+        "category": "currency",
+        "label": "Real (BRL)",
+        "pattern": "R$ #.##0,00",
+        "compatibleTypes": ("number", "currency", "any"),
+    },
+    {
+        "formatId": "currency-brl-4",
+        "category": "currency",
+        "label": "Real (4 casas)",
+        "pattern": "R$ #.##0,0000",
+        "compatibleTypes": ("number", "currency", "any"),
+    },
+    {
+        "formatId": "accounting",
+        "category": "accounting",
+        "label": "Contábil (R$)",
+        "pattern": "R$ #.##0,00",
+        "compatibleTypes": ("number", "currency", "any"),
+    },
+    {
+        "formatId": "date-short",
+        "category": "date",
+        "label": "Data curta",
+        "pattern": "dd/MM/yyyy",
+        "compatibleTypes": ("date", "datetime", "any"),
+    },
+    {
+        "formatId": "date-short-yy",
+        "category": "date",
+        "label": "Data curta (ano curto)",
+        "pattern": "dd/MM/yy",
+        "compatibleTypes": ("date", "datetime", "any"),
+    },
+    {
+        "formatId": "date-month-year",
+        "category": "date",
+        "label": "Mês/ano",
+        "pattern": "MM/yyyy",
+        "compatibleTypes": ("date", "datetime", "any"),
+    },
+    {
+        "formatId": "date-month-year-yy",
+        "category": "date",
+        "label": "Mês/ano curto",
+        "pattern": "MM/yy",
+        "compatibleTypes": ("date", "datetime", "any"),
+    },
+    {
+        "formatId": "date-month-year-dash",
+        "category": "date",
+        "label": "Mês-ano",
+        "pattern": "MM-yyyy",
+        "compatibleTypes": ("date", "datetime", "any"),
+    },
+    {
+        "formatId": "date-month-year-dash-yy",
+        "category": "date",
+        "label": "Mês-ano curto",
+        "pattern": "MM-yy",
+        "compatibleTypes": ("date", "datetime", "any"),
+    },
+    {
+        "formatId": "date-year-month",
+        "category": "date",
+        "label": "Ano/mês",
+        "pattern": "yyyy/MM",
+        "compatibleTypes": ("date", "datetime", "any"),
+    },
+    {
+        "formatId": "date-year-month-yy",
+        "category": "date",
+        "label": "Ano curto/mês",
+        "pattern": "yy/MM",
+        "compatibleTypes": ("date", "datetime", "any"),
+    },
+    {
+        "formatId": "date-month-abbrev-year",
+        "category": "date",
+        "label": "Mês abreviado/ano",
+        "pattern": "MMM/yyyy",
+        "compatibleTypes": ("date", "datetime", "any"),
+    },
+    {
+        "formatId": "date-month-abbrev-year-yy",
+        "category": "date",
+        "label": "Mês abreviado/ano curto",
+        "pattern": "MMM/yy",
+        "compatibleTypes": ("date", "datetime", "any"),
+    },
+    {
+        "formatId": "date-month-full-year",
+        "category": "date",
+        "label": "Mês por extenso/ano",
+        "pattern": "MMMM/yyyy",
+        "compatibleTypes": ("date", "datetime", "any"),
+    },
+    {
+        "formatId": "date-month-full-year-yy",
+        "category": "date",
+        "label": "Mês por extenso/ano curto",
+        "pattern": "MMMM/yy",
+        "compatibleTypes": ("date", "datetime", "any"),
+    },
+    {
+        "formatId": "date-month-abbrev-de-year",
+        "category": "date",
+        "label": "Mês abreviado de ano",
+        "pattern": "MMM 'de' yyyy",
+        "compatibleTypes": ("date", "datetime", "any"),
+    },
+    {
+        "formatId": "date-month-full-de-year",
+        "category": "date",
+        "label": "Mês de ano",
+        "pattern": "MMMM 'de' yyyy",
+        "compatibleTypes": ("date", "datetime", "any"),
+    },
+    {
+        "formatId": "date-day-mon-year",
+        "category": "date",
+        "label": "Dia mês ano",
+        "pattern": "dd MMM yyyy",
+        "compatibleTypes": ("date", "datetime", "any"),
+    },
+    {
+        "formatId": "date-day-mon-year-yy",
+        "category": "date",
+        "label": "Dia mês ano curto",
+        "pattern": "dd MMM yy",
+        "compatibleTypes": ("date", "datetime", "any"),
+    },
+    {
+        "formatId": "date-day-full-long",
+        "category": "date",
+        "label": "Dia de mês de ano",
+        "pattern": "dd 'de' MMMM 'de' yyyy",
+        "compatibleTypes": ("date", "datetime", "any"),
+    },
+    {
+        "formatId": "date-day-full-long-yy",
+        "category": "date",
+        "label": "Dia de mês de ano curto",
+        "pattern": "dd 'de' MMMM 'de' yy",
+        "compatibleTypes": ("date", "datetime", "any"),
+    },
+    {
+        "formatId": "date-iso",
+        "category": "date",
+        "label": "ISO",
+        "pattern": "yyyy-MM-dd",
+        "compatibleTypes": ("date", "datetime", "any"),
+    },
+    {
+        "formatId": "date-day-mon",
+        "category": "date",
+        "label": "Dia mês",
+        "pattern": "dd MMM",
+        "compatibleTypes": ("date", "datetime", "any"),
+    },
+    {
+        "formatId": "date-month",
+        "category": "date",
+        "label": "Mês de ano (legado)",
+        "pattern": "MMM. 'de' yyyy",
+        "compatibleTypes": ("date", "datetime", "any"),
+    },
+    {
+        "formatId": "date-year",
+        "category": "date",
+        "label": "Ano",
+        "pattern": "yyyy",
+        "compatibleTypes": ("date", "datetime", "any"),
+    },
+    {
+        "formatId": "date-year-yy",
+        "category": "date",
+        "label": "Ano curto",
+        "pattern": "yy",
+        "compatibleTypes": ("date", "datetime", "any"),
+    },
+    {
+        "formatId": "date-month-num",
+        "category": "date",
+        "label": "Mês (número)",
+        "pattern": "MM",
+        "compatibleTypes": ("date", "datetime", "any"),
+    },
+    {
+        "formatId": "date-month-abbrev",
+        "category": "date",
+        "label": "Mês abreviado",
+        "pattern": "MMM",
+        "compatibleTypes": ("date", "datetime", "any"),
+    },
+    {
+        "formatId": "date-month-full",
+        "category": "date",
+        "label": "Mês por extenso",
+        "pattern": "MMMM",
+        "compatibleTypes": ("date", "datetime", "any"),
+    },
+    {
+        "formatId": "date-long",
+        "category": "date",
+        "label": "Data completa",
+        "pattern": None,
+        "compatibleTypes": ("date", "datetime", "any"),
+    },
+    {
+        "formatId": "date-auto",
+        "category": "date",
+        "label": "Data (auto)",
+        "pattern": None,
+        "compatibleTypes": ("date", "datetime", "any"),
+    },
+    {
+        "formatId": "time-hhmm",
+        "category": "time",
+        "label": "Hora",
+        "pattern": "HH:mm",
+        "compatibleTypes": ("time", "datetime", "any"),
+    },
+    {
+        "formatId": "percent",
+        "category": "percent",
+        "label": "Porcentagem",
+        "pattern": "0,0%",
+        "compatibleTypes": ("number", "percent", "any"),
+    },
+    {
+        "formatId": "scientific",
+        "category": "scientific",
+        "label": "Científico",
+        "pattern": "0,00E+00",
+        "compatibleTypes": ("number", "any"),
+    },
+    {"formatId": "text", "category": "text", "label": "Texto", "pattern": None, "compatibleTypes": ("any", "text")},
+)
+
+_REASON_MESSAGES_PT: dict[str, str] = {
+    "TYPE_INCOMPATIBLE": "Este formato não é compatível com o tipo do valor.",
+    "VALUE_NULL": "Não há valor para formatar.",
+    "VALUE_MISSING": "Valor ausente.",
+    "VALUE_EMPTY": "O valor está vazio.",
+    "VALUE_INVALID": "O valor atual não pode ser convertido para este formato.",
+    "PARSE_FAILED": "Não foi possível interpretar o valor.",
+    "FORMAT_UNSUPPORTED": "Formato não suportado.",
+    "VALUE_NOT_DATE": "O valor atual não pode ser convertido para data.",
+    "VALUE_NOT_NUMBER": "O valor atual não pode ser convertido para número.",
+    "VALUE_NOT_TIME": "O valor atual não pode ser convertido para hora.",
 }
 
 _FIELD_LIST_JOIN = "\n"
@@ -634,7 +1012,8 @@ def _format_date_spec(date: dict[str, Any], spec: dict[str, Any], raw: str) -> s
 
     pattern = str(spec.get("pattern") or "").strip()
     if pattern and preset not in {"date-long", "date-auto", "date-day-mon"}:
-        return format_custom_pattern(raw, pattern) or raw
+        # Date-category patterns always format via date tokens (mm = month even alone).
+        return _format_date_pattern(date, pattern)
 
     if preset == "date-iso":
         return f"{date['year']}-{_pad2(int(date['month']) + 1)}-{_pad2(int(date['day']))}"
@@ -881,6 +1260,342 @@ class DisplayFormatService:
         if num is None:
             return _stringify_fallback(value)
         return _format_number_spec(num, resolved)
+
+    @classmethod
+    def format_catalog_entries(cls) -> list[dict[str, Any]]:
+        """Canonical picker catalog (labels/patterns) — specs come from `_PRESETS`."""
+        out: list[dict[str, Any]] = []
+        for entry in _FORMAT_CATALOG:
+            format_id = str(entry["formatId"])
+            out.append(
+                {
+                    "formatId": format_id,
+                    "category": entry["category"],
+                    "label": entry["label"],
+                    "pattern": entry.get("pattern"),
+                    "compatibleTypes": list(entry.get("compatibleTypes") or ("any",)),
+                    "spec": cls.spec_from_preset_id(format_id),
+                }
+            )
+        return out
+
+    @classmethod
+    def reason_message(cls, reason_code: str | None) -> str | None:
+        if not reason_code:
+            return None
+        return _REASON_MESSAGES_PT.get(str(reason_code), _REASON_MESSAGES_PT["VALUE_INVALID"])
+
+    @classmethod
+    def classify_value_presence(cls, value: Any) -> str | None:
+        """Return presence reasonCode when value cannot be formatted, else None."""
+        if value is None:
+            return "VALUE_NULL"
+        if isinstance(value, str) and value.strip() == "":
+            return "VALUE_EMPTY"
+        return None
+
+    @classmethod
+    def try_format_value(
+        cls,
+        value: Any,
+        spec: dict[str, Any] | None = None,
+        *,
+        semantic_type: str | None = None,
+    ) -> dict[str, Any]:
+        """Format with explicit convertibility (no fabricated dates/NaN for picker)."""
+        resolved = cls.normalize_spec(spec)
+        category = str(resolved.get("category") or "general")
+        format_id = str(resolved.get("presetId") or category)
+        presence = cls.classify_value_presence(value)
+        if presence:
+            return {
+                "formatId": format_id,
+                "preview": None,
+                "convertible": False,
+                "reasonCode": presence,
+                "reason": cls.reason_message(presence),
+                "spec": resolved,
+            }
+
+        sem = str(semantic_type or "").strip().lower() or None
+        type_block = cls._type_incompatible(category, sem, value)
+        if type_block:
+            return {
+                "formatId": format_id,
+                "preview": None,
+                "convertible": False,
+                "reasonCode": type_block,
+                "reason": cls.reason_message(type_block),
+                "spec": resolved,
+            }
+
+        if category == "text":
+            return {
+                "formatId": format_id,
+                "preview": str(value),
+                "convertible": True,
+                "reasonCode": None,
+                "reason": None,
+                "spec": resolved,
+            }
+
+        if category == "general" and _is_zero_padded_numeric_code(value):
+            return {
+                "formatId": format_id,
+                "preview": str(value).strip(),
+                "convertible": True,
+                "reasonCode": None,
+                "reason": None,
+                "spec": resolved,
+            }
+
+        if category == "custom":
+            pattern = str(resolved.get("pattern") or "").strip()
+            if not pattern:
+                return {
+                    "formatId": format_id,
+                    "preview": None,
+                    "convertible": False,
+                    "reasonCode": "FORMAT_UNSUPPORTED",
+                    "reason": cls.reason_message("FORMAT_UNSUPPORTED"),
+                    "spec": resolved,
+                }
+            custom = format_custom_pattern(value, pattern)
+            if custom is None:
+                code = (
+                    "VALUE_NOT_DATE"
+                    if _pattern_looks_like_date(pattern)
+                    else "VALUE_NOT_NUMBER"
+                )
+                return {
+                    "formatId": format_id,
+                    "preview": None,
+                    "convertible": False,
+                    "reasonCode": code,
+                    "reason": cls.reason_message(code),
+                    "spec": resolved,
+                }
+            return {
+                "formatId": format_id,
+                "preview": custom,
+                "convertible": True,
+                "reasonCode": None,
+                "reason": None,
+                "spec": resolved,
+            }
+
+        if category in {"date", "time"}:
+            if isinstance(value, str) and is_localized_chart_period_label(value):
+                preview = localize_english_month_tokens_in_label(value)
+                return {
+                    "formatId": format_id,
+                    "preview": preview,
+                    "convertible": True,
+                    "reasonCode": None,
+                    "reason": None,
+                    "spec": resolved,
+                }
+            date = parse_display_date(value)
+            if not date:
+                code = "VALUE_NOT_DATE" if category == "date" else "VALUE_NOT_TIME"
+                if isinstance(value, str) and value.strip():
+                    code = "PARSE_FAILED" if category == "date" else code
+                return {
+                    "formatId": format_id,
+                    "preview": None,
+                    "convertible": False,
+                    "reasonCode": code,
+                    "reason": cls.reason_message(code),
+                    "spec": resolved,
+                }
+            if category == "time" and bool(date.get("dateOnly")) and not cls._has_time_parts(
+                value
+            ):
+                # DATE-only values are not times; avoid inventing 00:00 as success for time formats
+                # when semantic type is date.
+                if sem in {"date"}:
+                    return {
+                        "formatId": format_id,
+                        "preview": None,
+                        "convertible": False,
+                        "reasonCode": "TYPE_INCOMPATIBLE",
+                        "reason": cls.reason_message("TYPE_INCOMPATIBLE"),
+                        "spec": resolved,
+                    }
+            preview = _format_date_spec(date, resolved, str(value))
+            return {
+                "formatId": format_id,
+                "preview": preview,
+                "convertible": True,
+                "reasonCode": None,
+                "reason": None,
+                "spec": resolved,
+            }
+
+        num = _coerce_number(value)
+        if num is None:
+            code = "VALUE_NOT_NUMBER"
+            if isinstance(value, str) and value.strip():
+                code = "PARSE_FAILED"
+            return {
+                "formatId": format_id,
+                "preview": None,
+                "convertible": False,
+                "reasonCode": code,
+                "reason": cls.reason_message(code),
+                "spec": resolved,
+            }
+        return {
+            "formatId": format_id,
+            "preview": _format_number_spec(num, resolved),
+            "convertible": True,
+            "reasonCode": None,
+            "reason": None,
+            "spec": resolved,
+        }
+
+    @classmethod
+    def _has_time_parts(cls, value: Any) -> bool:
+        if not isinstance(value, str):
+            return isinstance(value, (int, float))
+        return bool(re.search(r"[T\s]\d{2}:\d{2}", value.strip()))
+
+    @classmethod
+    def _type_incompatible(
+        cls, category: str, semantic_type: str | None, value: Any
+    ) -> str | None:
+        if not semantic_type or semantic_type in {"any", "unknown", "text", "string"}:
+            return None
+        if category in {"date"} and semantic_type in {
+            "number",
+            "currency",
+            "percent",
+            "integer",
+            "float",
+        }:
+            # Allow numeric timestamps (unix) — only block when value is clearly non-date text.
+            if isinstance(value, str) and not parse_display_date(value) and _coerce_number(value) is None:
+                return "TYPE_INCOMPATIBLE"
+            if isinstance(value, (int, float)):
+                return None
+            if parse_display_date(value):
+                return None
+            return "TYPE_INCOMPATIBLE"
+        if category in {"number", "currency", "accounting", "percent", "scientific"} and semantic_type in {
+            "date",
+            "datetime",
+            "time",
+        }:
+            if _coerce_number(value) is not None:
+                return None
+            return "TYPE_INCOMPATIBLE"
+        return None
+
+    @classmethod
+    def preview_format_catalog(
+        cls,
+        *,
+        value: Any = None,
+        semantic_type: str | None = None,
+        locale: str = "pt-BR",
+        timezone: str | None = None,
+        value_source: str = "authoritative",
+        custom_pattern: str | None = None,
+        selected_spec: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Batch catalog + previews for one value (picker contract)."""
+        _ = timezone  # reserved for DATETIME; DATE-only paths ignore TZ shifts
+        options: list[dict[str, Any]] = []
+        for entry in cls.format_catalog_entries():
+            result = cls.try_format_value(
+                value, entry["spec"], semantic_type=semantic_type
+            )
+            options.append(
+                {
+                    "formatId": entry["formatId"],
+                    "category": entry["category"],
+                    "label": entry["label"],
+                    "pattern": entry.get("pattern"),
+                    "compatibleTypes": entry["compatibleTypes"],
+                    "spec": entry["spec"],
+                    "preview": result.get("preview"),
+                    "convertible": bool(result.get("convertible")),
+                    "reasonCode": result.get("reasonCode"),
+                    "reason": result.get("reason"),
+                }
+            )
+
+        custom_spec = {
+            "category": "custom",
+            "presetId": "custom",
+            "pattern": str(custom_pattern or "").strip(),
+            "locale": locale or "pt-BR",
+        }
+        custom_result = cls.try_format_value(
+            value, custom_spec, semantic_type=semantic_type
+        )
+        custom_option = {
+            "formatId": "custom",
+            "category": "custom",
+            "label": "Personalizado",
+            "pattern": custom_spec["pattern"] or None,
+            "compatibleTypes": ["any"],
+            "spec": custom_spec,
+            "preview": custom_result.get("preview"),
+            "convertible": bool(custom_result.get("convertible"))
+            if custom_spec["pattern"]
+            else False,
+            "reasonCode": custom_result.get("reasonCode")
+            if custom_spec["pattern"]
+            else "FORMAT_UNSUPPORTED",
+            "reason": custom_result.get("reason")
+            if custom_spec["pattern"]
+            else cls.reason_message("FORMAT_UNSUPPORTED"),
+        }
+
+        selected = None
+        if isinstance(selected_spec, dict) and selected_spec.get("category"):
+            selected = cls.try_format_value(
+                value, selected_spec, semantic_type=semantic_type
+            )
+            selected = {
+                **selected,
+                "category": str(selected_spec.get("category") or ""),
+                "label": None,
+                "pattern": selected_spec.get("pattern"),
+            }
+        elif custom_pattern is not None and str(custom_pattern).strip():
+            selected = {**custom_result, "category": "custom", "label": "Personalizado"}
+
+        source = str(value_source or "authoritative").strip().lower()
+        if source not in {"authoritative", "representative", "sample", "none"}:
+            source = "authoritative"
+        if cls.classify_value_presence(value) and source != "none":
+            # Keep declared source; UI may still show sample badge when source=sample.
+            pass
+
+        return {
+            "locale": locale or "pt-BR",
+            "timezone": timezone,
+            "semanticType": semantic_type,
+            "valueSource": source if value is not None else "none",
+            "value": value if source != "none" else None,
+            "options": options,
+            "custom": custom_option,
+            "selected": selected,
+            "categories": [
+                {"category": "general", "label": "Geral"},
+                {"category": "number", "label": "Número"},
+                {"category": "currency", "label": "Moeda"},
+                {"category": "accounting", "label": "Contábil"},
+                {"category": "date", "label": "Data abreviada"},
+                {"category": "time", "label": "Hora"},
+                {"category": "percent", "label": "Porcentagem"},
+                {"category": "scientific", "label": "Científico"},
+                {"category": "text", "label": "Texto"},
+                {"category": "custom", "label": "Personalizado"},
+            ],
+        }
 
     # --- field resolution (text / dataRef) ---------------------------------
 

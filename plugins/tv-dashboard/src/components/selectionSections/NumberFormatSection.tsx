@@ -1,6 +1,7 @@
 import {
   DisplayFormatDialog,
   DisplayFormatRibbonGroup,
+  type DisplayFormatPreviewLoader,
   type DisplayFormatSpec,
 } from "@delpi/plugin-ui/index";
 import {
@@ -8,14 +9,15 @@ import {
   mergeKpiPartsWithOptions,
   type ComunicadoBlock,
 } from "@delpi/tv-dashboard-presentation";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
+import { fetchDisplayFormatPreviews } from "../../api/displayFormatPreviewApi";
 import { TV_DASHBOARD_ROOT_CLASS } from "../../constants/pluginRootClass";
 import {
   applyDisplayFormatSpecToBlock,
   resolveCurrentDisplayFormatSpec,
   resolveDisplayFormatDescriptor,
-  sampleValueForDisplayFormat,
+  resolveDisplayFormatSample,
 } from "../../utils/displayFormatSelection";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
 import { DeckRibbonGroup } from "../deck/DeckRibbonGroup";
@@ -59,10 +61,15 @@ export function NumberFormatSection({ layout }: { layout: SelectionSectionLayout
     textEditSelection: activeTextEdit,
   };
   const descriptor = resolveDisplayFormatDescriptor(ctx);
+  const previewLoader = useCallback<DisplayFormatPreviewLoader>(
+    (request) => fetchDisplayFormatPreviews(request),
+    [],
+  );
+
   if (!selected || !descriptor) return null;
 
   const spec = resolveCurrentDisplayFormatSpec(ctx);
-  const sampleValue = sampleValueForDisplayFormat(ctx);
+  const sample = resolveDisplayFormatSample(ctx);
 
   const onChange = (next: DisplayFormatSpec) => {
     const patch = applyDisplayFormatSpecToBlock(ctx, next);
@@ -90,7 +97,10 @@ export function NumberFormatSection({ layout }: { layout: SelectionSectionLayout
       onChange={onChange}
       target={descriptor.target}
       targetHint={descriptor.hint}
-      sampleValue={sampleValue}
+      sampleValue={sample.value}
+      semanticType={sample.semanticType}
+      valueSource={sample.valueSource}
+      previewLoader={previewLoader}
       density={layout === "pane" ? "compact" : "ribbon"}
       portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}
       formatDialog={{ open: formatDialogOpen, onOpenChange: setFormatDialogOpen }}
@@ -103,7 +113,10 @@ export function NumberFormatSection({ layout }: { layout: SelectionSectionLayout
       onClose={() => setFormatDialogOpen(false)}
       spec={spec}
       onApply={onChange}
-      sampleValue={sampleValue}
+      sampleValue={sample.value}
+      semanticType={sample.semanticType}
+      valueSource={sample.valueSource}
+      previewLoader={previewLoader}
       target={descriptor.target}
       targetHint={descriptor.hint}
       portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}

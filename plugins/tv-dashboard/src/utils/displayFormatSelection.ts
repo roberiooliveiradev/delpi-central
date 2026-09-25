@@ -360,21 +360,41 @@ export function resolveCurrentDisplayFormatSpec(
 }
 
 export function sampleValueForDisplayFormat(ctx: DisplayFormatSelectionContext): unknown {
+  return resolveDisplayFormatSample(ctx).value;
+}
+
+export function resolveDisplayFormatSample(ctx: DisplayFormatSelectionContext): {
+  value: unknown;
+  valueSource: "authoritative" | "sample" | "none";
+  semanticType: string | null;
+} {
   const target = resolveDisplayFormatTarget(ctx);
   const selected = ctx.selected;
   const resolved = selected && "resolved" in selected ? selected.resolved : undefined;
   if (target === "chartCategory") {
     const row = resolved?.table?.rows?.[0];
     const key = resolved?.table?.columns?.[0]?.key;
-    if (row && key != null && row[key] != null) return row[key];
-    return "2026-08-03";
+    if (row && key != null && row[key] != null) {
+      return { value: row[key], valueSource: "authoritative", semanticType: inferSemanticType(row[key]) };
+    }
+    return { value: "2026-08-03", valueSource: "sample", semanticType: "date" };
   }
   if (target === "kpi") {
-    return resolved?.kpi?.value ?? 41.7;
+    const value = resolved?.kpi?.value;
+    if (value != null && value !== "") {
+      return { value, valueSource: "authoritative", semanticType: inferSemanticType(value) };
+    }
+    return { value: 41.7, valueSource: "sample", semanticType: "number" };
   }
   if (target === "canvasCell" && selected?.type === "canvas_table") {
     const cell = resolveSelectedCanvasCell(selected, ctx.selectedCanvasTableCell);
-    if (cell?.value != null) return cell.value;
+    if (cell?.value != null) {
+      return {
+        value: cell.value,
+        valueSource: "authoritative",
+        semanticType: inferSemanticType(cell.value),
+      };
+    }
   }
   if ((target === "textProjection" || target === "textDataRef") && selected && "resolved" in selected) {
     if (isVisualTextBlock(selected)) {
@@ -384,30 +404,62 @@ export function sampleValueForDisplayFormat(ctx: DisplayFormatSelectionContext):
       const aggregation =
         bound[0]?.dataRef.aggregation ?? selected.textProjection?.aggregation ?? "first";
       if (field) {
-        /*
-         * Ribbon sample stays on raw projected value (local UX preview).
-         * Paint path uses enrich display* — do not feed painted strings back into format preview.
-         */
         const projected = resolveProjectedField(selected.resolved, field, aggregation);
         if (projected.kind === "list" && projected.values[0] != null) {
-          return projected.values[0];
+          return {
+            value: projected.values[0],
+            valueSource: "authoritative",
+            semanticType: inferSemanticType(projected.values[0], field),
+          };
         }
         if (projected.kind === "scalar" && projected.scalar != null && projected.scalar !== "") {
-          return projected.scalar;
+          return {
+            value: projected.scalar,
+            valueSource: "authoritative",
+            semanticType: inferSemanticType(projected.scalar, field),
+          };
         }
       }
     }
-    return selected.resolved?.kpi?.value ?? 30;
+    const kpi = selected.resolved?.kpi?.value;
+    if (kpi != null && kpi !== "") {
+      return { value: kpi, valueSource: "authoritative", semanticType: inferSemanticType(kpi) };
+    }
+    return { value: 30, valueSource: "sample", semanticType: "number" };
   }
   if (target === "tableColumn" && selected?.type === "table_view") {
     const keys = resolveTableColumnKeys(ctx);
     const row = resolved?.table?.rows?.[0];
-    if (keys[0] && row && row[keys[0]] != null) return row[keys[0]];
+    if (keys[0] && row && row[keys[0]] != null) {
+      return {
+        value: row[keys[0]],
+        valueSource: "authoritative",
+        semanticType: inferSemanticType(row[keys[0]], keys[0]),
+      };
+    }
   }
   const row = resolved?.table?.rows?.[0];
   const valueKey = resolved?.table?.columns?.[1]?.key;
-  if (row && valueKey != null && row[valueKey] != null) return row[valueKey];
-  return 30;
+  if (row && valueKey != null && row[valueKey] != null) {
+    return {
+      value: row[valueKey],
+      valueSource: "authoritative",
+      semanticType: inferSemanticType(row[valueKey], valueKey),
+    };
+  }
+  return { value: 30, valueSource: "sample", semanticType: "number" };
+}
+
+function inferSemanticType(value: unknown, _field?: string): string | null {
+  if (typeof value === "string") {
+    const text = value.trim();
+    if (/^\d{4}-\d{2}-\d{2}/.test(text) || /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(text)) {
+      return "date";
+    }
+    if (/^\d{4}-\d{2}-\d{2}[T\s]\d{2}:\d{2}/.test(text)) return "datetime";
+  }
+  if (typeof value === "number" && Number.isFinite(value)) return "number";
+  return null;
 }
 
 export function applyDisplayFormatSpecToBlock(
