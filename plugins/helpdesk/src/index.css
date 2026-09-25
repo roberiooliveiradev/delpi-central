@@ -349,11 +349,16 @@
 }
 
 .dashboard-helpdesk .helpdesk-record-list {
-  /* Kit define o grid; aqui só a superfície de scroll da listagem. */
-  min-height: 0;
-  min-width: 0;
-  overflow: auto;
+  /* Grid local + kit: não encolher no flex do list-shell (evita overlap de rows). */
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr));
+  grid-auto-rows: max-content;
+  gap: var(--helpdesk-section-gap, 12px);
   align-content: start;
+  flex: 0 0 auto;
+  width: 100%;
+  min-width: 0;
+  /* Scroll fica no .helpdesk-list-shell — não comprimir tracks aqui. */
 }
 
 .dashboard-helpdesk .helpdesk-record-list .delpi-ui-data-record-card,
@@ -362,7 +367,7 @@
   height: auto;
   max-width: 100%;
   overflow: hidden;
-  align-self: start;
+  align-self: stretch;
 }
 
 .dashboard-helpdesk .helpdesk-record-list .delpi-ui-data-record-card__fields,

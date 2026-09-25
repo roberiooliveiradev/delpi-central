@@ -60,6 +60,14 @@ describe("Helpdesk list UX structural", () => {
     expect(cards).toContain("showRequester");
     expect(css).toContain("helpdesk-record-list .delpi-ui-data-record-card__fields");
     expect(css).toMatch(/helpdesk-record-list[\s\S]*grid-template-columns:\s*1fr/);
+    // Anti-overlap: grid content-sized, não comprimido no flex do list-shell.
+    expect(css).toMatch(
+      /\.helpdesk-record-list\s*\{[\s\S]*?grid-auto-rows:\s*max-content/,
+    );
+    expect(css).toMatch(/\.helpdesk-record-list\s*\{[\s\S]*?flex:\s*0\s+0\s+auto/);
+    expect(css).not.toMatch(
+      /\.helpdesk-record-list\s*\{[^}]*min-height:\s*0[^}]*overflow:\s*auto/,
+    );
   });
 
   it("CSS escuro scoped no host do MFE", () => {
