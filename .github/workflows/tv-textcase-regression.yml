@@ -1,0 +1,25 @@
+name: TV TextCase Regression
+
+on:
+  pull_request:
+    paths:
+      - "plugins/tv-dashboard/**"
+      - "plugins/tv-dashboard-presentation/**"
+      - ".github/workflows/tv-textcase-regression.yml"
+
+jobs:
+  textcase-regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: plugins/tv-dashboard/package-lock.json
+      - name: Install tv-dashboard dependencies
+        working-directory: plugins/tv-dashboard
+        run: npm ci
+      - name: Run textCase runtime regression tests
+        working-directory: plugins/tv-dashboard
+        run: npx vitest run src/hooks/comunicadoEditor/useComunicadoEditorHistory.test.ts src/utils/applyComunicadoBlockStylePatch.test.ts
