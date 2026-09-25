@@ -2809,7 +2809,8 @@
             "startField": "delivery_start",
             "endField": "delivery_end",
             "maxDays": 90,
-            "dayCountMode": "inclusive"
+            "dayCountMode": "inclusive",
+            "requireBothOrNeither": true
           }
         ]
       }
@@ -2870,7 +2871,8 @@
             "startField": "delivery_start",
             "endField": "delivery_end",
             "maxDays": 90,
-            "dayCountMode": "inclusive"
+            "dayCountMode": "inclusive",
+            "requireBothOrNeither": true
           }
         ],
         "argumentLimits": {

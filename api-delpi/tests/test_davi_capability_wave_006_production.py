@@ -475,28 +475,52 @@ def test_wave006_machine_load_inclusive_90_calendar_days():
     cleaned = validate_arguments(action, {"branch": "01"})
     assert "scheduled_start" not in cleaned
     assert "delivery_start" not in cleaned
+    assert "delivery_end" not in cleaned
 
 
-def test_wave006_machine_load_partial_delivery_range_documents_existing_fill(monkeypatch):
-    """Open delivery bounds are not newly invented here.
+def test_wave006_machine_load_delivery_require_both_or_neither():
+    """Wave 006 delivery window is fail-closed: both bounds or neither.
 
-    When only one delivery_* field is sent, the generic validator still applies
-    its existing fill rules (other side ← today / same-day). This documents
-    current DAVI behavior vs canonical MachineLoadWindow open-boundary filter;
-    we do not invent a new open-range maxDays rule in this corrective pass.
+    Partial delivery_* would reach canonical MachineLoadWindow as an open
+    bound; DAVI must reject XOR without synthesizing dates.
     """
+    action = _action("get_production_machine_load_operations")
+    # both absent → PASS (already covered above; assert no injection)
+    cleaned = validate_arguments(action, {"branch": "01"})
+    assert "delivery_start" not in cleaned
+    assert "delivery_end" not in cleaned
+    # both present 90 inclusive → PASS
+    validate_arguments(
+        action,
+        {"delivery_start": "2026-01-01", "delivery_end": "2026-03-31"},
+    )
+    # both present 91 inclusive → FAIL
+    with pytest.raises(ArgumentValidationError, match="inclusive"):
+        validate_arguments(
+            action,
+            {"delivery_start": "2026-01-01", "delivery_end": "2026-04-01"},
+        )
+    # start only / end only → FAIL CLOSED (no date synthesis)
+    with pytest.raises(ArgumentValidationError, match="both be provided or both omitted"):
+        validate_arguments(action, {"delivery_start": "2026-01-01"})
+    with pytest.raises(ArgumentValidationError, match="both be provided or both omitted"):
+        validate_arguments(action, {"delivery_end": "2026-03-31"})
+
+
+def test_wave006_machine_load_scheduled_partial_still_accepted(monkeypatch):
+    """Scheduled window keeps canonical open-bound resolution; DAVI does not inject."""
     from app.application.external_capabilities.dynamic_information import (
         argument_validator as av,
     )
 
-    monkeypatch.setattr(av, "_constraint_today", lambda: date(2026, 3, 1))
+    monkeypatch.setattr(av, "_constraint_today", lambda: date(2026, 1, 1))
     action = _action("get_production_machine_load_operations")
-    # delivery_end only → start filled as today (2026-03-01); inclusive span OK
-    cleaned = validate_arguments(action, {"delivery_end": "2026-03-31"})
-    assert cleaned["delivery_end"] == "2026-03-31"
-    # delivery_start only → end filled as start (zero-length) under existing rules
-    cleaned_start = validate_arguments(action, {"delivery_start": "2026-01-01"})
-    assert cleaned_start["delivery_start"] == "2026-01-01"
+    cleaned_start = validate_arguments(action, {"scheduled_start": "2026-01-01"})
+    assert cleaned_start["scheduled_start"] == "2026-01-01"
+    assert "scheduled_end" not in cleaned_start
+    cleaned_end = validate_arguments(action, {"scheduled_end": "2026-01-07"})
+    assert cleaned_end["scheduled_end"] == "2026-01-07"
+    assert "scheduled_start" not in cleaned_end
 
 
 def test_wave006_machine_load_page_size_bound():

@@ -217,6 +217,13 @@ def _validate_one_date_range_spec(
 
     start_raw = cleaned.get(start_field)
     end_raw = cleaned.get(end_field)
+    # Fail-closed pair contract: when enabled, XOR is rejected without synthesizing
+    # the missing bound (no today / same-day / window injection into arguments).
+    if bool(spec.get("requireBothOrNeither")):
+        if (start_raw is None) != (end_raw is None):
+            raise ArgumentValidationError(
+                f"{start_field} and {end_field} must both be provided or both omitted"
+            )
     if start_raw is None and end_raw is None and not uses_effective_window:
         return
 
