@@ -165,6 +165,70 @@ def test_preview_unknown_operation_negative():
     assert exc.value.code == "UNKNOWN_OPERATION"
 
 
+def test_preview_transform_failure_surfaces_typed_error_not_success(monkeypatch):
+    """INVALID MODEL: transform quebrado → ok=False + error.code, nunca rows=[]."""
+    dispatch = _dispatch()
+
+    def _fake_preview(block, **kwargs):
+        return {
+            "id": block.get("id"),
+            "resolved": {
+                "error": 'A fonte "src-b" do merge não está disponível.',
+                "transformError": {
+                    "code": "m.merge_source_unavailable",
+                    "message": 'A fonte "src-b" do merge não está disponível.',
+                    "stepName": "Mesclar",
+                },
+                "table": {"columns": [], "rows": []},
+            },
+        }
+
+    monkeypatch.setattr(dispatch._preview, "preview_block", _fake_preview)
+    monkeypatch.setattr(dispatch._validation, "sanitize", lambda cfg: cfg)
+
+    result = dispatch.preview_data_block(
+        user=_user(),
+        body={
+            "block": {"id": "src-a", "type": "data_source"},
+            "nativeConfig": {"version": 1, "blocks": []},
+        },
+        authorization=None,
+    )
+    assert result["ok"] is False
+    assert result["error"]["code"] == "m.merge_source_unavailable"
+    assert result["error"]["stage"] == "transform"
+    assert result["error"]["blockId"] == "src-a"
+
+
+def test_preview_valid_empty_dataset_is_success(monkeypatch):
+    """VALID EMPTY DATA: rota/transform válidos com zero linhas → sucesso vazio."""
+    dispatch = _dispatch()
+
+    def _fake_preview(block, **kwargs):
+        return {
+            "id": block.get("id"),
+            "resolved": {
+                "error": None,
+                "table": {"columns": [{"key": "rol"}], "rows": []},
+            },
+        }
+
+    monkeypatch.setattr(dispatch._preview, "preview_block", _fake_preview)
+    monkeypatch.setattr(dispatch._validation, "sanitize", lambda cfg: cfg)
+
+    result = dispatch.preview_data_block(
+        user=_user(),
+        body={
+            "block": {"id": "src-a", "type": "data_source"},
+            "nativeConfig": {"version": 1, "blocks": []},
+        },
+        authorization=None,
+    )
+    assert result.get("ok") is not False
+    assert "error" not in result
+    assert result["persisted"] is False
+
+
 def test_preview_legacy_block_sibling(monkeypatch):
     dispatch = _dispatch()
 

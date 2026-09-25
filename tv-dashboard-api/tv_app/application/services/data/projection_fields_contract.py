@@ -403,6 +403,99 @@ def collect_projection_field_refs(block: dict[str, Any]) -> list[str]:
     return refs
 
 
+def collect_view_projection_field_refs(block: dict[str, Any]) -> list[str]:
+    """Campos referenciados por kpiProjection/chartProjection/tableProjection."""
+    if not isinstance(block, dict):
+        return []
+    refs: list[str] = []
+    seen: set[str] = set()
+
+    def push(raw: Any) -> None:
+        key = str(raw or "").strip()
+        if not key or key in seen:
+            return
+        seen.add(key)
+        refs.append(key)
+
+    kpi = block.get("kpiProjection")
+    if isinstance(kpi, dict):
+        push(kpi.get("valueField"))
+        push(kpi.get("field"))
+        push(kpi.get("goalField"))
+        for metric in kpi.get("metrics") or []:
+            if isinstance(metric, dict):
+                push(metric.get("field"))
+
+    chart = block.get("chartProjection")
+    if isinstance(chart, dict):
+        push(chart.get("xField"))
+        push(chart.get("yField"))
+        push(chart.get("categoryField"))
+        push(chart.get("seriesField"))
+        push(chart.get("goalField"))
+        for series in chart.get("series") or []:
+            if isinstance(series, dict):
+                push(series.get("field"))
+
+    table = block.get("tableProjection")
+    if isinstance(table, dict):
+        for col in table.get("columns") or []:
+            if isinstance(col, dict):
+                push(col.get("key"))
+                push(col.get("field"))
+
+    return refs
+
+
+def collect_source_consumer_field_refs(
+    blocks: list[Any],
+    source_id: str,
+) -> dict[str, list[str]]:
+    """``{block_id: [fields]}`` de todos os consumers vinculados a ``source_id``.
+
+    Cobre textProjection/contentRuns/canvas cells (``dataRef.field``) e as
+    projeções de view (kpi/chart/table). Células de canvas_table com
+    ``dataSourceId`` próprio são atribuídas à fonte correta.
+    """
+    target = str(source_id or "").strip()
+    out: dict[str, list[str]] = {}
+    if not target or not isinstance(blocks, list):
+        return out
+    for block in blocks:
+        if not isinstance(block, dict):
+            continue
+        block_id = str(block.get("id") or "").strip()
+        refs: list[str] = []
+        if str(block.get("type") or "") == "canvas_table":
+            default_source = str(block.get("dataSourceId") or "").strip()
+            cells = block.get("cells")
+            if isinstance(cells, list):
+                for row in cells:
+                    if not isinstance(row, list):
+                        continue
+                    for cell in row:
+                        if not isinstance(cell, dict):
+                            continue
+                        cell_source = (
+                            str(cell.get("dataSourceId") or "").strip() or default_source
+                        )
+                        if cell_source != target:
+                            continue
+                        data_ref = cell.get("dataRef")
+                        if isinstance(data_ref, dict):
+                            field = str(data_ref.get("field") or "").strip()
+                            if field and field not in refs:
+                                refs.append(field)
+        elif str(block.get("dataSourceId") or "").strip() == target:
+            refs = list(collect_projection_field_refs(block))
+            for field in collect_view_projection_field_refs(block):
+                if field not in refs:
+                    refs.append(field)
+        if refs:
+            out[block_id or "?"] = refs
+    return out
+
+
 def validate_block_projection_fields(
     block: dict[str, Any],
     *,

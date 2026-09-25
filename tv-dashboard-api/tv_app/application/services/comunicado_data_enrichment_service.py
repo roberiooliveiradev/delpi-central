@@ -31,7 +31,6 @@ from tv_app.application.services.data.m_query.m_query_dependency_service import 
     MQueryDependencyService,
 )
 from tv_app.application.services.data.tv_data_transform_service import (
-    apply_data_transform_to_payload,
     apply_data_transform_to_payload_result,
     coerce_payload_to_table,
     normalize_data_transform,
@@ -1448,7 +1447,15 @@ class ComunicadoDataEnrichmentService:
             if not source_id or not isinstance(resolved, dict):
                 continue
             data = resolved.get("data")
-            _, _, table = apply_data_transform_to_payload(data, block.get("dataTransform"))
+            result = apply_data_transform_to_payload_result(
+                data, block.get("dataTransform")
+            )
+            # Sibling com transform quebrado não alimenta merge: a falha já está
+            # tipada no próprio bloco; aqui a ausência vira m.merge_source_unavailable
+            # no consumidor em vez de casar contra a tabela crua.
+            if result.get("failed"):
+                continue
+            table = result.get("table")
             if table is None:
                 table = coerce_payload_to_table(data)
             if table is not None:
@@ -1910,8 +1917,16 @@ class ComunicadoDataEnrichmentService:
             sample = errors.get("sample") if isinstance(errors, dict) else None
             first_error = sample[0] if isinstance(sample, list) and sample else {}
             resolved["error"] = str(
-                first_error.get("message") or "A transformação M falhou."
+                first_error.get("message") or "A transformação de dados falhou."
             )
+            # Diagnóstico tipado: TRANSFORM FAILURE nunca vira só "—" no visual.
+            resolved["transformError"] = {
+                "code": str(first_error.get("code") or "m.execution_error"),
+                "message": resolved["error"],
+                "stepName": first_error.get("stepName") or None,
+                "column": first_error.get("column") or None,
+            }
+            resolved["runtimeErrors"] = errors
 
         if block_type == "data_source":
             for mode in ("kpi", "line_chart", "table"):

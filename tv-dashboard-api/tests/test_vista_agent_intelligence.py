@@ -270,7 +270,8 @@ def test_data_discovery_owner_local_no_dump():
 def test_data_transform_typed_steps_only():
     directives = VistaAgentIntelligenceService.agent_directives()
     transform = directives["data_transform"]
-    assert transform["principle"] == "TYPED_STEPS_ONLY"
+    assert "TYPED_STEPS_ONLY" in transform["principle"]
+    assert "AUTHORITATIVE" in transform["principle"]
     rules = " ".join(transform["rules"]).lower()
     assert "set_data_transform" in rules or "steps" in rules
     assert "mforbidden" in rules.replace(" ", "") or "m/" in rules or "script" in rules

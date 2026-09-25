@@ -657,7 +657,7 @@ class GptActionsDispatchService:
         if playlist_id:
             story = StoryDigestService.digest(self._writes.list_slides(pid))
             dominant = StoryDigestService.dominant_family(story)
-        return {
+        response = {
             "block": block,
             "persisted": False,
             "operationId": operation_id or None,
@@ -669,6 +669,28 @@ class GptActionsDispatchService:
                 dominant_visual_family=dominant,
             ),
         }
+        # Transform/binding failure nunca é dataset vazio: erro tipado no topo do
+        # payload para o caller não tratar preview quebrado como sucesso.
+        resolved = block.get("resolved") if isinstance(block, dict) else None
+        if isinstance(resolved, dict):
+            transform_error = resolved.get("transformError")
+            if isinstance(transform_error, dict):
+                response["ok"] = False
+                response["error"] = {
+                    "code": transform_error.get("code") or "m.execution_error",
+                    "message": str(resolved.get("error") or transform_error.get("message") or ""),
+                    "blockId": str(block.get("id") or "") or None,
+                    "stage": "transform",
+                }
+            elif resolved.get("error"):
+                response["ok"] = False
+                response["error"] = {
+                    "code": "DATA_RESOLUTION_FAILED",
+                    "message": str(resolved.get("error")),
+                    "blockId": str(block.get("id") or "") or None,
+                    "stage": "resolution",
+                }
+        return response
 
     @staticmethod
     def _columns_from_preview_block(block: dict[str, Any]) -> list[str]:

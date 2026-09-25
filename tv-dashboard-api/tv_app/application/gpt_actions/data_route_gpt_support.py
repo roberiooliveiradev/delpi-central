@@ -17,6 +17,9 @@ _GPT_ROUTE_KEYS = (
     "paramStrategy",
     "allowedDisplayModes",
     "dateRangeKeys",
+    "valueFields",
+    "valueFieldLabels",
+    "valueFieldTypes",
 )
 
 
@@ -25,8 +28,21 @@ def project_route_for_gpt(route: Mapping[str, Any]) -> dict[str, Any]:
     out: dict[str, Any] = {}
     for key in _GPT_ROUTE_KEYS:
         value = route.get(key)
-        if value is not None and value != "" and value != []:
+        if value is not None and value != "" and value != [] and value != {}:
             out[key] = value
+    # AUTHORITATIVE ROUTE FIELD > DERIVED TV CALCULATION: o caller precisa ver
+    # os campos que a rota já fornece antes de derivar métricas via transform.
+    projectable = route.get("projectableFields")
+    if isinstance(projectable, list) and projectable:
+        out["projectableFields"] = [
+            {
+                key: item[key]
+                for key in ("name", "label", "semanticType")
+                if isinstance(item, dict) and item.get(key) not in (None, "")
+            }
+            for item in projectable
+            if isinstance(item, dict) and str(item.get("name") or "").strip()
+        ]
     if route.get("reason") is not None:
         out["reason"] = route.get("reason")
     if route.get("score") is not None:

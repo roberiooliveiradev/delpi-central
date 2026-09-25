@@ -26,6 +26,14 @@ from tv_app.application.services.data.presentation_ops_content_service import (
 from tv_app.application.services.data.data_transform_contract import (
     sanitize_data_transform_for_persistence,
 )
+from tv_app.application.services.data.m_query.m_legacy_adapter import (
+    normalize_legacy_transform,
+)
+from tv_app.application.services.data.tv_data_transform_service import (
+    STRUCTURAL_TRANSFORM_OPS,
+    normalize_data_transform,
+    project_transform_output_columns,
+)
 from tv_app.application.services.data.presentation_mutation.execution_context import (
     ExecutionContext,
     is_synthetic_id,
@@ -1204,6 +1212,11 @@ class PresentationPatchService:
                 existing["dataTransform"] = self._sanitize_vista_data_transform(
                     op["dataTransform"]
                 )
+                self._assert_transform_no_authoritative_shadow(
+                    existing,
+                    existing["dataTransform"].get("steps") or [],
+                )
+                self._assert_transform_preserves_consumers(cfg, existing)
             if isinstance(op.get("fieldLabels"), dict):
                 existing["fieldLabels"] = {
                     str(k): str(v)
@@ -1221,6 +1234,9 @@ class PresentationPatchService:
         if isinstance(op.get("dataTransform"), dict):
             block["dataTransform"] = self._sanitize_vista_data_transform(
                 op["dataTransform"]
+            )
+            self._assert_transform_no_authoritative_shadow(
+                block, block["dataTransform"].get("steps") or []
             )
         if isinstance(op.get("fieldLabels"), dict):
             block["fieldLabels"] = {
@@ -1368,12 +1384,171 @@ class PresentationPatchService:
             or raw.get("version") == 2
         ):
             raise PresentationPatchError(PresentationOpsContentService.message("mForbidden"))
+        raw_steps = raw.get("steps")
+        if isinstance(raw_steps, list):
+            for index, step in enumerate(raw_steps):
+                # Um step malformado não pode sumir em silêncio: o modelo
+                # persistido divergiria da intenção declarada.
+                if not isinstance(step, dict) or (
+                    normalize_legacy_transform({"steps": [step]}) is None
+                ):
+                    raise PresentationPatchError(
+                        "Etapa de transformação inválida.",
+                        code="DATA_TRANSFORM_INVALID_STEP",
+                        details={
+                            "stepIndex": index,
+                            "op": str(step.get("op") or "") if isinstance(step, dict) else None,
+                        },
+                    )
         sanitized = sanitize_data_transform_for_persistence(raw)
         if sanitized is None:
             return {"steps": []}
         if sanitized.get("script") is not None or sanitized.get("version") == 2:
             raise PresentationPatchError(PresentationOpsContentService.message("mForbidden"))
         return sanitized
+
+    def _route_result_field_names(self, block: dict[str, Any]) -> set[str] | None:
+        """Campos declarados da rota do binding (schema autoritativo de entrada)."""
+        binding = (
+            block.get("dataBinding") if isinstance(block.get("dataBinding"), dict) else {}
+        )
+        operation_id = str(binding.get("operationId") or "").strip()
+        route = (
+            self._catalog.get_route(operation_id)
+            if operation_id and self._catalog is not None
+            else None
+        )
+        if not isinstance(route, dict):
+            return None
+        names: set[str] = set()
+        for item in route.get("projectableFields") or []:
+            if isinstance(item, dict) and item.get("projectable", True):
+                name = str(item.get("name") or "").strip()
+                if name:
+                    names.add(name)
+        for raw in route.get("valueFields") or []:
+            name = str(raw or "").strip()
+            if name:
+                names.add(name)
+        return names or None
+
+    def _projected_source_output_columns(
+        self,
+        cfg: dict[str, Any],
+        block: dict[str, Any],
+        _visited: frozenset[str] = frozenset(),
+    ) -> set[str] | None:
+        """Schema de saída da fonte após dataTransform (estático, sem executar)."""
+        block_id = str(block.get("id") or "")
+        if block_id in _visited:
+            return None  # ciclo de merges — indeterminável
+        visited = _visited | {block_id}
+        normalized = normalize_data_transform(block.get("dataTransform"))
+        steps = normalized.get("steps") if normalized else []
+        input_columns = self._route_result_field_names(block)
+        if not steps:
+            return input_columns
+
+        def sibling_columns(source_id: str) -> set[str] | None:
+            sibling = _find_block(_blocks_of(cfg), source_id)
+            if sibling is None:
+                return None
+            return self._projected_source_output_columns(cfg, sibling, visited)
+
+        return project_transform_output_columns(
+            input_columns,
+            steps,
+            sibling_columns=sibling_columns,
+        )
+
+    def _assert_transform_preserves_consumers(
+        self,
+        cfg: dict[str, Any],
+        source_block: dict[str, Any],
+    ) -> None:
+        """Fonte compartilhada: transform estrutural não pode remover campo
+        ligado por consumer existente (kpi/chart/table/text/canvas)."""
+        from tv_app.application.services.data.projection_fields_contract import (
+            collect_source_consumer_field_refs,
+        )
+
+        source_id = str(source_block.get("id") or "").strip()
+        consumers = collect_source_consumer_field_refs(_blocks_of(cfg), source_id)
+        if not consumers:
+            return
+        normalized = normalize_data_transform(source_block.get("dataTransform"))
+        steps = normalized.get("steps") if normalized else []
+        if not steps:
+            return
+        projected = self._projected_source_output_columns(cfg, source_block)
+        if projected is None:
+            structural = any(
+                isinstance(step, dict)
+                and str(step.get("op") or "") in STRUCTURAL_TRANSFORM_OPS
+                for step in steps
+            )
+            if structural:
+                raise PresentationPatchError(
+                    "Transform estrutural em fonte compartilhada: schema de saída "
+                    "indeterminável e a fonte possui consumers. Use uma fonte "
+                    "auxiliar ou declare colunas explícitas.",
+                    code="DATA_TRANSFORM_SCHEMA_UNKNOWN",
+                    details={
+                        "blockId": source_id,
+                        "consumers": {k: v for k, v in consumers.items()},
+                    },
+                )
+            return
+        missing = {
+            block_id: [
+                field
+                for field in refs
+                if field not in projected and not field.startswith("filter.")
+            ]
+            for block_id, refs in consumers.items()
+        }
+        missing = {key: value for key, value in missing.items() if value}
+        if missing:
+            raise PresentationPatchError(
+                "O transform remove campos ligados por consumers da fonte: "
+                + ", ".join(sorted({f for fields in missing.values() for f in fields})),
+                code="DATA_BINDING_FIELD_MISSING",
+                details={
+                    "blockId": source_id,
+                    "consumers": missing,
+                    "outputColumns": sorted(projected),
+                },
+            )
+
+    def _assert_transform_no_authoritative_shadow(
+        self,
+        block: dict[str, Any],
+        steps: list[dict[str, Any]],
+    ) -> None:
+        """AUTHORITATIVE ROUTE FIELD > DERIVED TV CALCULATION.
+
+        addColumn cujo nome coincide com campo que a rota já retorna é shadow
+        de campo autoritativo → rejeita; o binding deve usar o campo da rota.
+        """
+        route_fields = self._route_result_field_names(block)
+        if not route_fields:
+            return
+        for index, step in enumerate(steps):
+            if not isinstance(step, dict) or str(step.get("op") or "") != "addColumn":
+                continue
+            name = str(step.get("name") or "").strip()
+            if name and name in route_fields:
+                raise PresentationPatchError(
+                    f'A coluna derivada "{name}" sombreia um campo que a rota já '
+                    "fornece; vincule o campo autoritativo diretamente.",
+                    code="DATA_FIELD_AUTHORITATIVE",
+                    details={
+                        "blockId": str(block.get("id") or ""),
+                        "stepIndex": index,
+                        "field": name,
+                        "routeFields": sorted(route_fields),
+                    },
+                )
 
     def _op_set_data_transform(self, cfg: dict[str, Any], op: dict[str, Any]) -> None:
         if (
@@ -1410,6 +1585,10 @@ class PresentationPatchService:
                 {"steps": list(steps) if isinstance(steps, list) else []}
             )
         block["dataTransform"] = transform
+        self._assert_transform_no_authoritative_shadow(
+            block, transform.get("steps") or []
+        )
+        self._assert_transform_preserves_consumers(cfg, block)
         block.pop("resolved", None)
 
     def _op_set_display_format(self, cfg: dict[str, Any], op: dict[str, Any]) -> None:
@@ -1533,6 +1712,7 @@ class PresentationPatchService:
         )
 
         projection_route: dict[str, Any] | None = None
+        projected_fields: list[dict[str, Any]] | None = None
         source_id = str(cleaned.get("dataSourceId") or "").strip()
         if source_id:
             source_block = _find_block(_blocks_of(cfg), source_id)
@@ -1544,13 +1724,29 @@ class PresentationPatchService:
             operation_id = str((binding or {}).get("operationId") or "").strip()
             if operation_id and self._catalog is not None:
                 projection_route = self._catalog.get_route(operation_id)
+            # Fonte com transform: refs validam contra o schema de SAÍDA, não
+            # contra os campos da rota (campo renomeado/removido não pode virar
+            # binding inválido silencioso).
+            if isinstance(source_block, dict) and isinstance(
+                source_block.get("dataTransform"), dict
+            ):
+                projected = self._projected_source_output_columns(cfg, source_block)
+                if projected is not None:
+                    projected_fields = [
+                        {"name": name, "projectable": True}
+                        for name in sorted(projected)
+                    ]
         # Fonte embutida (data_* com binding próprio).
         if projection_route is None and isinstance(cleaned.get("dataBinding"), dict):
             operation_id = str(cleaned["dataBinding"].get("operationId") or "").strip()
             if operation_id and self._catalog is not None:
                 projection_route = self._catalog.get_route(operation_id)
 
-        field_error = validate_block_projection_fields(cleaned, route=projection_route)
+        field_error = validate_block_projection_fields(
+            cleaned,
+            route=projection_route if projected_fields is None else None,
+            fields=projected_fields,
+        )
         if field_error:
             raise PresentationPatchError(
                 str(field_error.get("message") or "Campo de projeção inválido"),

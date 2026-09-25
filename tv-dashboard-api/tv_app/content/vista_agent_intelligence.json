@@ -644,22 +644,30 @@
     ]
   },
   "data_transform": {
-    "principle": "TYPED_STEPS_ONLY",
-    "summary": "Transform = set_data_transform com steps tipados allowlisted. M/script/v2/DAX/SQL proibidos (mForbidden). Produto M desligado.",
+    "principle": "TYPED_STEPS_ONLY + AUTHORITATIVE_ROUTE_FIELD_FIRST",
+    "summary": "Transform = set_data_transform com steps tipados allowlisted. M/script/v2/DAX/SQL proibidos (mForbidden). Produto M desligado. Antes de derivar qualquer métrica, inspecionar valueFields/projectableFields da rota — campo autoritativo existente é vinculado diretamente, nunca recalculado.",
     "rules": [
       "SoT: dataTransform = { steps: [...] }. Ops tipadas do catálogo (keepRows, merge, select, rename, …).",
+      "AUTHORITATIVE_FIELD_FIRST: ao pedir métrica, conferir valueFields/valueFieldLabels/projectableFields retornados por gpt_search_data_routes; se a rota já fornece o campo (ex.: percentual, meta, total), bind direto — sem addColumn/join_key/merge equivalentes.",
+      "addColumn com nome de campo que a rota já retorna é rejeitado (DATA_FIELD_AUTHORITATIVE) — shadow de campo autoritativo.",
+      "Merge é 1:1 estrito e tipado: falta de chave, duplicata, colisão de campo, tipo incompatível ou chave nula = erro explícito, não resultado vazio.",
+      "Fonte compartilhada: set_data_transform que remova/renomeie campo referenciado por qualquer consumer (KPI/chart/table/text/canvas) é rejeitado (DATA_BINDING_FIELD_MISSING) — usar fonte auxiliar separada para lógica que muda grain/schema.",
       "Unir fontes: step op=merge com sourceId da outra data_source — usar joinHints/JoinPlan do preview; nunca script M NestedJoin.",
       "Chaves de join: interseção de colunas (branch/filial/codigo/id/periodo). Confidence baixa → UMA pergunta — não inventar.",
       "select/rename/fieldLabels/top-N: resolver colunas de NL/aspas ou clarificar UMA vez — nunca emitir {{placeholders}} quebrados.",
       "Nunca emitir language/script/version:2 nem smuggle via upsert_block.dataTransform.",
-      "Editor M / workbench / compile-mutate não fazem parte do caminho VISTA."
+      "Editor M / workbench / compile-mutate não fazem parte do caminho VISTA.",
+      "Preview com error/resolved.error = FALHA — nunca tratar como sucesso nem commitar; dataset vazio legítimo retorna ok sem error."
     ],
     "forbidden": [
       "Script M livre / Power Query M / DAX / SQL",
       "dataTransform.version=2 ou dataTransform.script",
       "Orientar o usuário a 'abrir o editor M'",
       "Inventar leftKey/rightKey sem schema/preview comum",
-      "Emitir steps com {{placeholders}} não resolvidos"
+      "Emitir steps com {{placeholders}} não resolvidos",
+      "Derivar via addColumn/merge uma métrica que a rota já retorna",
+      "Transform estrutural (select/drop/rename/merge) em fonte já consumida sem verificar os campos ligados",
+      "Commitar preview que retornou error/resolved.error"
     ]
   },
   "compound_slide": {

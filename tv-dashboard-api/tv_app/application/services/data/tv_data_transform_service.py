@@ -337,6 +337,76 @@ def _safe_header(value: Any, index: int) -> str:
     return cleaned
 
 
+def _row_keys(rows: list[dict[str, Any]]) -> set[str]:
+    out: set[str] = set()
+    for row in rows:
+        out.update(str(key) for key in row.keys())
+    return out
+
+
+def _require_step_column(
+    column: str,
+    columns: list[str],
+    rows: list[dict[str, Any]],
+    operation: str,
+) -> None:
+    """Paridade com ``_require_column`` do executor M; aceita chaves só em rows."""
+    if column in columns or column in _row_keys(rows):
+        return
+    raise MExecutionError(
+        "m.unknown_column",
+        f'A coluna "{column}" não existe na etapa {operation}.',
+    )
+
+
+def _expression_column_refs(expr: str) -> tuple[set[str], bool]:
+    """Identificadores de coluna referenciados pela DSL segura + flag de parse."""
+    trimmed = (expr or "").strip()
+    if not trimmed:
+        return set(), False
+    rewritten = _IF_CALL_RE.sub("iff(", trimmed)
+    try:
+        tree = ast.parse(rewritten, mode="eval")
+    except SyntaxError:
+        return set(), False
+    call_funcs: set[int] = set()
+    refs: set[str] = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
+            call_funcs.add(id(node.func))
+        elif isinstance(node, ast.Name) and id(node) not in call_funcs:
+            if _IDENT_RE.match(node.id):
+                refs.add(node.id)
+    return refs, True
+
+
+def _merge_key_value(value: Any) -> str | None:
+    """Normalização explícita de chave de merge (documentada):
+
+    - ``None``/string vazia → ``None`` (nunca casa; join não colide nulls);
+    - int/float → forma canônica (``1`` == ``1.0``; ``bool`` isolado antes);
+    - string numérica → mesma forma canônica do número;
+    - demais strings → ``str(value).strip()``.
+    """
+    if value is None:
+        return None
+    if isinstance(value, bool):
+        return str(value)
+    if isinstance(value, int):
+        return str(value)
+    if isinstance(value, float):
+        if value != value:  # noqa: PLR0124 - NaN nunca casa
+            return None
+        return str(int(value)) if value.is_integer() else repr(value)
+    text = str(value).strip()
+    if not text:
+        return None
+    numeric = _as_number(text)
+    if numeric is not None and numeric == numeric:  # noqa: PLR0124
+        return str(int(numeric)) if float(numeric).is_integer() else repr(numeric)
+    return text
+
+
 def apply_data_transform_steps(
     table: dict[str, Any],
     steps: list[dict[str, Any]] | None,
@@ -354,6 +424,12 @@ def apply_data_transform_steps(
         if op == "rename":
             frm = str(step.get("from") or "")
             to = str(step.get("to") or "")
+            _require_step_column(frm, columns, rows, "rename")
+            if to != frm and to in columns:
+                raise MExecutionError(
+                    "m.column_collision",
+                    f'A coluna "{to}" já existe; rename de "{frm}" colidiria.',
+                )
             columns = [to if col == frm else col for col in columns]
             next_rows: list[dict[str, Any]] = []
             for row in rows:
@@ -366,12 +442,14 @@ def apply_data_transform_steps(
             rows = next_rows
         elif op == "select":
             keep = [str(col) for col in (step.get("columns") or []) if str(col).strip()]
-            keep = [col for col in keep if col in columns or any(col in row for row in rows)]
+            for col in keep:
+                _require_step_column(col, columns, rows, "select")
             if keep:
                 columns = keep
             rows = [{col: row.get(col) for col in columns} for row in rows]
         elif op == "filter":
             column = str(step.get("column") or "")
+            _require_step_column(column, columns, rows, "filter")
             cmp_ = str(step.get("cmp") or "")
             value = step.get("value")
             rows = [row for row in rows if _compare_filter(row.get(column), cmp_, value)]
@@ -380,11 +458,30 @@ def apply_data_transform_steps(
             expr = str(step.get("expr") or "").strip()
             if not name or not expr:
                 continue
-            if name not in columns:
-                columns.append(name)
+            if name in columns or name in _row_keys(rows):
+                raise MExecutionError(
+                    "m.column_collision",
+                    f'addColumn "{name}" sobrescreveria uma coluna existente.',
+                )
+            refs, parsed = _expression_column_refs(expr)
+            if not parsed:
+                raise MExecutionError(
+                    "m.expression_invalid",
+                    f'A expressão de addColumn "{name}" não é válida.',
+                )
+            known = set(columns) | _row_keys(rows)
+            missing = sorted(ref for ref in refs if ref not in known)
+            if missing:
+                raise MExecutionError(
+                    "m.unknown_column",
+                    f'addColumn "{name}" referencia coluna inexistente: '
+                    + ", ".join(missing),
+                )
+            columns.append(name)
             rows = [{**row, name: evaluate_safe_column_expr(expr, row)} for row in rows]
         elif op == "replace":
             column = str(step.get("column") or "")
+            _require_step_column(column, columns, rows, "replace")
             find = str(step.get("find") if step.get("find") is not None else "")
             replace_with = str(step.get("replaceWith") if step.get("replaceWith") is not None else "")
             rows = [
@@ -393,6 +490,7 @@ def apply_data_transform_steps(
             ]
         elif op == "sort":
             column = str(step.get("column") or "")
+            _require_step_column(column, columns, rows, "sort")
             reverse = str(step.get("direction") or "") == "desc"
 
             def _sort_key(row: dict[str, Any]) -> tuple[int, float | str]:
@@ -417,6 +515,7 @@ def apply_data_transform_steps(
                 rows = rows[count:]
         elif op == "changeType":
             column = str(step.get("column") or "")
+            _require_step_column(column, columns, rows, "changeType")
             to = str(step.get("to") or "string")
             if to == "number":
                 rows = [{**row, column: _as_number(row.get(column))} for row in rows]
@@ -430,6 +529,7 @@ def apply_data_transform_steps(
                 ]
         elif op == "fillDown":
             column = str(step.get("column") or "")
+            _require_step_column(column, columns, rows, "fillDown")
             last: Any = None
             next_rows = []
             for row in rows:
@@ -454,6 +554,12 @@ def apply_data_transform_steps(
         elif op == "groupBy":
             keys = [str(k) for k in (step.get("keys") or [])]
             aggregations = [a for a in (step.get("aggregations") or []) if isinstance(a, dict)]
+            for key_col in keys:
+                _require_step_column(key_col, columns, rows, "groupBy")
+            for agg in aggregations:
+                _require_step_column(
+                    str(agg.get("column") or ""), columns, rows, "groupBy"
+                )
             groups: dict[str, list[dict[str, Any]]] = {}
             for row in rows:
                 key = "\u0001".join(str(row.get(k) if row.get(k) is not None else "") for k in keys)
@@ -472,6 +578,8 @@ def apply_data_transform_steps(
         elif op == "pivot":
             column = str(step.get("column") or "")
             value_column = str(step.get("valueColumn") or "")
+            _require_step_column(column, columns, rows, "pivot")
+            _require_step_column(value_column, columns, rows, "pivot")
             aggregation = str(step.get("aggregation") or "sum")
             stay = [c for c in columns if c not in {column, value_column}]
             pivot_values = sorted(
@@ -497,6 +605,8 @@ def apply_data_transform_steps(
             rows = next_rows
         elif op == "unpivot":
             unpivot_cols = [str(c) for c in (step.get("columns") or [])]
+            for col in unpivot_cols:
+                _require_step_column(col, columns, rows, "unpivot")
             stay = [c for c in columns if c not in unpivot_cols]
             name_col = str(step.get("nameColumn") or "atributo")
             value_col = str(step.get("valueColumn") or "valor")
@@ -513,33 +623,164 @@ def apply_data_transform_steps(
             source_id = str(step.get("sourceId") or "")
             other = siblings.get(source_id)
             if not isinstance(other, dict):
-                continue
+                raise MExecutionError(
+                    "m.merge_source_unavailable",
+                    f'A fonte "{source_id}" do merge não está disponível.',
+                )
             left_key = str(step.get("leftKey") or "")
             right_key = str(step.get("rightKey") or "")
+            _require_step_column(left_key, columns, rows, "merge.leftKey")
             other_cols = [str(c) for c in (other.get("columns") or [])]
             other_rows = [dict(r) for r in (other.get("rows") or []) if isinstance(r, dict)]
+            if right_key not in other_cols and right_key not in _row_keys(other_rows):
+                raise MExecutionError(
+                    "m.unknown_column",
+                    f'A coluna "{right_key}" não existe na fonte "{source_id}".',
+                )
             take_cols = [str(c) for c in (step.get("columns") or []) if str(c).strip()]
             if not take_cols:
                 take_cols = [c for c in other_cols if c != right_key]
-            right_index = {
-                str(r.get(right_key) if r.get(right_key) is not None else ""): r for r in other_rows
-            }
+            else:
+                other_known = set(other_cols) | _row_keys(other_rows)
+                for col in take_cols:
+                    if col not in other_known:
+                        raise MExecutionError(
+                            "m.unknown_column",
+                            f'A coluna "{col}" não existe na fonte "{source_id}".',
+                        )
+            collisions = [
+                col for col in take_cols if col in columns or col in _row_keys(rows)
+            ]
+            if collisions:
+                raise MExecutionError(
+                    "m.merge_field_collision",
+                    "O merge sobrescreveria colunas existentes: "
+                    + ", ".join(collisions)
+                    + ". Renomeie no lado direito antes do merge.",
+                )
+            # Cardinalidade esperada N:1 — a direita precisa de chave única.
+            right_index: dict[str, dict[str, Any]] = {}
+            for r in other_rows:
+                key = _merge_key_value(r.get(right_key))
+                if key is None:
+                    continue  # chave nula nunca casa (política explícita)
+                if key in right_index:
+                    raise MExecutionError(
+                        "m.merge_cardinality_violation",
+                        f'A chave "{key}" aparece mais de uma vez na fonte "{source_id}".',
+                    )
+                right_index[key] = r
             for col in take_cols:
                 if col not in columns:
                     columns.append(col)
+            matched = 0
             next_rows = []
             for row in rows:
-                match = right_index.get(str(row.get(left_key) if row.get(left_key) is not None else ""))
-                if not match:
-                    next_rows.append(row)
+                key = _merge_key_value(row.get(left_key))
+                match = right_index.get(key) if key is not None else None
+                if match is None:
+                    next_rows.append({**row, **{col: None for col in take_cols}})
                     continue
+                matched += 1
                 merged = dict(row)
                 for col in take_cols:
                     merged[col] = match.get(col)
                 next_rows.append(merged)
+            if rows and other_rows and matched == 0:
+                raise MExecutionError(
+                    "m.merge_no_matches",
+                    f'Nenhuma linha casou na chave "{left_key}" ↔ "{right_key}".',
+                )
             rows = next_rows
 
     return {"columns": columns, "rows": rows}
+
+
+# Ops que mudam o schema de saída (removem/renomeiam/abrem campos dinâmicos).
+STRUCTURAL_TRANSFORM_OPS = frozenset(
+    {"rename", "select", "merge", "groupBy", "pivot", "unpivot", "firstRowAsHeader"}
+)
+
+
+def project_transform_output_columns(
+    input_columns: list[str] | set[str] | None,
+    steps: list[dict[str, Any]] | None,
+    *,
+    sibling_columns: Any | None = None,
+) -> set[str] | None:
+    """Projeção estática do schema de saída de steps v1.
+
+    ``None`` = indeterminável sem dados (ex.: firstRowAsHeader, pivot com
+    entrada desconhecida, merge sem ``columns`` e sibling indisponível).
+    ``input_columns=None`` também devolve ``None`` exceto para ops cujo output
+    é fechado (select/groupBy definem o conjunto inteiro).
+    """
+    cols: set[str] | None = (
+        {str(c) for c in input_columns if str(c).strip()}
+        if input_columns is not None
+        else None
+    )
+    for step in steps or []:
+        if not isinstance(step, dict):
+            continue
+        op = str(step.get("op") or "")
+        if op == "rename":
+            if cols is None:
+                return None
+            cols.discard(str(step.get("from") or ""))
+            to = str(step.get("to") or "").strip()
+            if to:
+                cols.add(to)
+        elif op == "select":
+            keep = {
+                str(c).strip()
+                for c in (step.get("columns") or [])
+                if str(c).strip()
+            }
+            cols = keep
+        elif op == "addColumn":
+            name = str(step.get("name") or "").strip()
+            if not name:
+                continue
+            if cols is None:
+                return None
+            cols.add(name)
+        elif op == "firstRowAsHeader":
+            return None
+        elif op == "groupBy":
+            cols = {
+                str(k).strip() for k in (step.get("keys") or []) if str(k).strip()
+            } | {
+                str(a.get("as") or "").strip()
+                for a in (step.get("aggregations") or [])
+                if isinstance(a, dict) and str(a.get("as") or "").strip()
+            }
+        elif op == "pivot":
+            if cols is None:
+                return None
+            cols.discard(str(step.get("column") or ""))
+            cols.discard(str(step.get("valueColumn") or ""))
+            # Valores dinamizados viram colunas dinâmicas — fora do schema estático.
+        elif op == "unpivot":
+            if cols is None:
+                return None
+            for col in step.get("columns") or []:
+                cols.discard(str(col))
+            cols.add(str(step.get("nameColumn") or "atributo"))
+            cols.add(str(step.get("valueColumn") or "valor"))
+        elif op == "merge":
+            take_cols = {
+                str(c).strip() for c in (step.get("columns") or []) if str(c).strip()
+            }
+            if not take_cols and callable(sibling_columns):
+                sibling = sibling_columns(str(step.get("sourceId") or ""))
+                if sibling is None:
+                    return None
+                take_cols = set(sibling) - {str(step.get("rightKey") or "")}
+            if cols is None:
+                return None
+            cols |= take_cols
+    return cols
 
 
 @dataclass(frozen=True, slots=True)
