@@ -42,7 +42,10 @@ def test_enrich_fetch_failure_exposes_api_error() -> None:
                 "type": "data_source",
                 "dataBinding": {
                     "operationId": "get_overall_equipment_effectiveness_pct",
-                    "params": {},
+                    "params": {
+                        "start_date": "2025-01-01",
+                        "end_date": "2025-01-31",
+                    },
                 },
             }
         ],

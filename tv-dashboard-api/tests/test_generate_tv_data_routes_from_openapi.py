@@ -201,13 +201,9 @@ def test_overlays_file_exists_for_curated_routes():
 
 
 def test_si_indicator_prefix_overlay_applies_kpi_value_fields():
-    from scripts.generate_tv_data_routes_from_openapi import (
-        generate_routes,
-        OPENAPI_BASELINE_PATH,
-    )
-
-    generated = generate_routes(
-        baseline_path=OPENAPI_BASELINE_PATH,
+    gen = _load_generator_module()
+    generated = gen.generate_routes(
+        baseline_path=BASELINE,
         routes_path=ROUTES_PATH,
         overlays_path=OVERLAYS_PATH,
     )
@@ -222,13 +218,9 @@ def test_si_indicator_prefix_overlay_applies_kpi_value_fields():
 
 
 def test_quality_ppm_hub_overlay_label_is_not_realized_suffix():
-    from scripts.generate_tv_data_routes_from_openapi import (
-        generate_routes,
-        OPENAPI_BASELINE_PATH,
-    )
-
-    generated = generate_routes(
-        baseline_path=OPENAPI_BASELINE_PATH,
+    gen = _load_generator_module()
+    generated = gen.generate_routes(
+        baseline_path=BASELINE,
         routes_path=ROUTES_PATH,
         overlays_path=OVERLAYS_PATH,
     )
@@ -289,7 +281,8 @@ def test_merge_with_existing_openapi_wins_on_optional():
     assert ((merged.get("paramSchema") or {}).get("motivo") or {}).get("label") == "Motivo curado"
 
 
-def test_scrap_cost_pct_filial_optional_in_generated_catalog():
+def test_scrap_cost_pct_branch_optional_in_generated_catalog():
+    """O filtro de filial virou `branch` no OpenAPI — deve seguir opcional na TV."""
     gen = _load_generator_module()
     generated = gen.generate_routes(
         baseline_path=BASELINE,
@@ -297,8 +290,8 @@ def test_scrap_cost_pct_filial_optional_in_generated_catalog():
         overlays_path=OVERLAYS_PATH,
     )
     scrap = next(item for item in generated if item["operationId"] == "get_refugos_scrap_cost_pct")
-    filial = (scrap.get("paramSchema") or {}).get("filial") or {}
-    assert filial.get("optional") is True
+    branch = (scrap.get("paramSchema") or {}).get("branch") or {}
+    assert branch.get("optional") is True
     required = [
         key
         for key, value in (scrap.get("paramSchema") or {}).items()
@@ -328,7 +321,9 @@ def test_transformometro_savings_series_is_open_ended_without_period_days():
         "filial",
         "department",
     ]
-    assert schema.get("filial_id", {}).get("enum") == ["01", "02"]
+    # Filtro de filial é `branch` no OpenAPI (all = consolidado; 01/02 por filial).
+    assert schema.get("branch", {}).get("enum") == ["all", "01", "02"]
+    assert "setor_id" in schema
     assert schema.get("granularity", {}).get("enum") == ["day", "month"]
 
 

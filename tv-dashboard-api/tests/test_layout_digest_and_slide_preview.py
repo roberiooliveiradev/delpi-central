@@ -273,7 +273,9 @@ def test_spatial_adjust_from_digest_without_print_smoke():
     assert adjusted["w"] > fr["w"]
     assert adjusted["x"] == fr["x"]
     directives = VistaAgentIntelligenceService.agent_directives()["layout_perception"]
-    assert "digest" in directives["summary"].lower()
+    # `summary` é dropado pela compactação de budget Actions; principle+rules ficam.
+    assert "digest" in directives["principle"].lower()
+    assert any("digest" in str(r).lower() for r in directives["rules"])
     assert any("print" in str(f).lower() for f in directives["forbidden"])
 
 

@@ -336,7 +336,12 @@
       },
       "label": "Comercial — série da taxa de fechamento",
       "description": "Série temporal da taxa de conversão por filial, com quantidades de propostas e vendas.",
-      "whenToUse": "Gráfico comercial da taxa de conversão ao longo do tempo. Manter as métricas conversion_filial_* e qtd_* como séries; não colapsar para um único ponto."
+      "whenToUse": "Gráfico comercial da taxa de conversão ao longo do tempo. Manter as métricas conversion_filial_* e qtd_* como séries; não colapsar para um único ponto.",
+      "paramSchema": {
+        "granularity": {
+          "default": "day"
+        }
+      }
     },
     "get_supplies_stock_value": {
       "tableFields": "top_products",

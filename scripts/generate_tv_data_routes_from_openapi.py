@@ -662,18 +662,28 @@ def _clear_period_days_defaults(route: dict[str, Any]) -> None:
             route["paramSchema"] = schema
 
 
-def _clear_identity_filter_defaults(route: dict[str, Any]) -> None:
+def _clear_identity_filter_defaults(
+    route: dict[str, Any],
+    *,
+    protected: set[str] | None = None,
+) -> None:
     """Filtros de identidade/select: usuário escolhe — sem default commercial/01 no catálogo TV.
 
     - department_id: nunca default
     - branch/filial opcional: omitir = consolidado («Todas as filiais»)
+
+    ``protected``: chaves cujo default é declarado pelo OpenAPI — autoritativo,
+    nunca limpo (só defaults herdados do catálogo antigo são removidos).
     """
     schema = route.get("paramSchema")
     if not isinstance(schema, dict):
         return
+    protected = protected or set()
     changed = False
     next_schema = dict(schema)
     for key in ("department_id", "branch", "filial", "branch_code"):
+        if key in protected:
+            continue
         entry = next_schema.get(key)
         if not isinstance(entry, dict) or "default" not in entry:
             continue
@@ -751,12 +761,14 @@ def merge_with_existing(base: dict[str, Any], existing: dict[str, Any] | None) -
                     merged["defaultParams"] = cleaned
                 else:
                     merged.pop("defaultParams", None)
+    # Schema derivado do OpenAPI desta rota (base), antes da mesclagem com o
+    # catálogo antigo — usado para proteger defaults declarados pela API.
+    openapi_schema = merged.get("paramSchema") if isinstance(merged.get("paramSchema"), dict) else {}
     existing_schema = existing.get("paramSchema")
     if isinstance(existing_schema, dict) and existing_schema:
         # OpenAPI vence em contrato (optional/type/enum/default); existing só preenche
         # buracos e labels extras. Sem isso, sync live congela optional:false antigo
         # enquanto description/whenToUse já vêm do OpenAPI (ex.: filial consolidada).
-        openapi_schema = merged.get("paramSchema") if isinstance(merged.get("paramSchema"), dict) else {}
         patched_existing: dict[str, Any] = {}
         for key, value in existing_schema.items():
             if not isinstance(value, dict):
@@ -779,9 +791,11 @@ def merge_with_existing(base: dict[str, Any], existing: dict[str, Any] | None) -
                 entry["type"] = openapi_entry["type"]
             if openapi_entry.get("enum"):
                 entry["enum"] = list(openapi_entry["enum"])
-            if openapi_entry.get("label"):
+            # Label/description curados do catálogo vencem; OpenAPI só preenche
+            # quando o param não tem curadoria TV.
+            if openapi_entry.get("label") and not entry.get("label"):
                 entry["label"] = openapi_entry["label"]
-            if openapi_entry.get("description"):
+            if openapi_entry.get("description") and not entry.get("description"):
                 entry["description"] = openapi_entry["description"]
             if "default" in openapi_entry:
                 entry["default"] = openapi_entry["default"]
@@ -792,7 +806,16 @@ def merge_with_existing(base: dict[str, Any], existing: dict[str, Any] | None) -
             patched_existing[key] = entry
         merged["paramSchema"] = merge_param_schema(openapi_schema, patched_existing)
     _clear_period_days_defaults(merged)
-    _clear_identity_filter_defaults(merged)
+    # Default declarado no OpenAPI é autoritativo — a limpeza só remove defaults
+    # herdados do catálogo antigo (UX «01» legado), não os que a API fixa hoje.
+    _clear_identity_filter_defaults(
+        merged,
+        protected={
+            key
+            for key, value in (openapi_schema if openapi_schema else {}).items()
+            if isinstance(value, dict) and "default" in value
+        },
+    )
     return prune_legacy_period_aliases_from_schema(merged)
 
 

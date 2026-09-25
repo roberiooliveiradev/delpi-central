@@ -2349,6 +2349,10 @@
                             },
                             "slideRef": {
                               "type": "string"
+                            },
+                            "as": {
+                              "type": "string",
+                              "description": "Local alias for the resource this op produces (compound plans)."
                             }
                           },
                           "title": "set_display_format"

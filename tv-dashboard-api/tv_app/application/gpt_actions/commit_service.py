@@ -254,7 +254,9 @@ class TvGptCommitService:
                 status_code=int(snapshot.get("_statusCode") or 409),
                 details=project_mutation_actions_payload(snapshot),
             )
-        return project_mutation_actions_payload(snapshot)
+        # Snapshot raw: a projeção compacta é responsabilidade do caller
+        # (commit_change/dispatch), igual ao caminho do commit primário.
+        return dict(snapshot)
 
     def _complete(
         self,

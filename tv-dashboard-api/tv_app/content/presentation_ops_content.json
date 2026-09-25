@@ -411,9 +411,31 @@
     "branchParam": "suggestNeedBranchParam",
     "fieldLabelsJson": "suggestNeedFieldLabels",
     "slideId": "suggestNeedSlideOrCreate",
-    "playlistId": "suggestNeedPlaylist"
+    "playlistId": "suggestNeedPlaylist",
+    "selectedBlockIdsJson": "suggestNeedSelection",
+    "alignCommand": "suggestIncompleteGeneric",
+    "zOrderCommand": "suggestIncompleteGeneric",
+    "textCaseMode": "suggestIncompleteGeneric",
+    "fontSizeDelta": "suggestIncompleteGeneric",
+    "blockType": "createBlockTypeRequired",
+    "formatTargetOwner": "suggestNeedSelection",
+    "formatField": "suggestNeedSelection",
+    "formatHintJson": "suggestIncompleteGeneric"
   },
   "opFieldClarifications": {
+    "align_blocks.blockIds": "layoutNeedBlockIds",
+    "align_blocks.command": "suggestIncompleteGeneric",
+    "bump_font_size.blockId": "suggestNeedSelection",
+    "bump_font_size.deltaSteps": "suggestIncompleteGeneric",
+    "create_block.type": "createBlockTypeRequired",
+    "duplicate_blocks.blockIds": "layoutNeedBlockIds",
+    "reorder_block_z.blockIds": "layoutNeedBlockIds",
+    "reorder_block_z.command": "suggestIncompleteGeneric",
+    "set_display_format.blockId": "suggestNeedSelection",
+    "set_display_format.displayFormat": "suggestIncompleteGeneric",
+    "set_display_format.target": "suggestNeedSelection",
+    "transform_text_case.blockId": "suggestNeedSelection",
+    "transform_text_case.mode": "suggestIncompleteGeneric",
     "delete_block.blockId": "suggestNeedSelection",
     "add_slide_from_preset.presetKey": "suggestNeedPreset",
     "upsert_data_source.operationId": "suggestNeedOperationId",
@@ -3063,6 +3085,9 @@
         "playlist",
         "slide"
       ],
+      "produces": [
+        "block"
+      ],
       "risk": "mutation",
       "confirmationPolicy": "direct",
       "sideEffectHints": [
@@ -4104,6 +4129,232 @@
       "payloadTemplate": {
         "op": "apply_published_slide_template",
         "templateKey": "{{templateKey}}"
+      }
+    },
+    {
+      "key": "create_block",
+      "op": "create_block",
+      "whenToUse": "Criar um bloco tipado no slide (text, heading, shape, icon, image, chart, table, kpi) com tipo/content/frame.",
+      "contentMarkers": [
+        "crie um bloco",
+        "criar bloco",
+        "adicione um bloco",
+        "novo bloco",
+        "inserir bloco",
+        "crie uma forma",
+        "adicione um ícone",
+        "adicione um icone"
+      ],
+      "excludeMarkers": [
+        "fonte de dados",
+        "modelo de dados",
+        "slide",
+        "tela",
+        "kpi",
+        "indicador",
+        "gráfico",
+        "grafico",
+        "tabela",
+        "chart",
+        "table"
+      ],
+      "actionTermSet": "create",
+      "requiresFilledPlaceholders": [
+        "blockType"
+      ],
+      "clarificationMessageKey": "createBlockTypeRequired",
+      "payloadTemplate": {
+        "op": "create_block",
+        "type": "{{blockType}}"
+      }
+    },
+    {
+      "key": "align_blocks",
+      "op": "align_blocks",
+      "whenToUse": "Alinhar ou distribuir blocos do slide por blockIds (esquerda/centro/direita/topo/base ou distribuição H/V, inclusive relativo ao slide).",
+      "contentMarkers": [
+        "alinhar",
+        "alinhe",
+        "alinhamento",
+        "distribuir",
+        "distribua",
+        "alinhar à esquerda",
+        "alinhar ao centro",
+        "alinhar à direita",
+        "alinhar no topo",
+        "alinhar na base",
+        "distribuir horizontalmente",
+        "distribuir verticalmente"
+      ],
+      "excludeMarkers": [
+        "slide",
+        "tela",
+        "seção",
+        "secao"
+      ],
+      "actionTermSet": "mutation",
+      "requiresFilledPlaceholders": [
+        "selectedBlockIdsJson",
+        "alignCommand"
+      ],
+      "clarificationMessageKey": "suggestNeedSelection",
+      "payloadTemplate": {
+        "op": "align_blocks",
+        "blockIds": [],
+        "command": "{{alignCommand}}"
+      }
+    },
+    {
+      "key": "reorder_block_z",
+      "op": "reorder_block_z",
+      "whenToUse": "Reordenar camadas (z-order) de blocos: trazer para frente, enviar ao fundo, avançar ou recuar um nível.",
+      "contentMarkers": [
+        "trazer para frente",
+        "enviar para trás",
+        "enviar ao fundo",
+        "para frente",
+        "para trás",
+        "camada",
+        "z-order",
+        "sobrepor",
+        "atrás do",
+        "na frente de"
+      ],
+      "excludeMarkers": [
+        "slide",
+        "tela",
+        "seção",
+        "secao"
+      ],
+      "actionTermSet": "mutation",
+      "requiresFilledPlaceholders": [
+        "selectedBlockIdsJson",
+        "zOrderCommand"
+      ],
+      "clarificationMessageKey": "suggestNeedSelection",
+      "payloadTemplate": {
+        "op": "reorder_block_z",
+        "blockIds": [],
+        "command": "{{zOrderCommand}}"
+      }
+    },
+    {
+      "key": "duplicate_blocks",
+      "op": "duplicate_blocks",
+      "whenToUse": "Duplicar blocos existentes do slide (blockIds) com deslocamento opcional.",
+      "contentMarkers": [
+        "duplique",
+        "duplicar",
+        "duplicar o bloco",
+        "copie o bloco",
+        "copiar bloco",
+        "clone o bloco",
+        "replicar bloco"
+      ],
+      "excludeMarkers": [
+        "slide",
+        "tela",
+        "seção",
+        "secao"
+      ],
+      "actionTermSet": "mutation",
+      "requiresFilledPlaceholders": [
+        "selectedBlockIdsJson"
+      ],
+      "clarificationMessageKey": "suggestNeedSelection",
+      "payloadTemplate": {
+        "op": "duplicate_blocks",
+        "blockIds": []
+      }
+    },
+    {
+      "key": "bump_font_size",
+      "op": "bump_font_size",
+      "whenToUse": "Aumentar ou diminuir o tamanho da fonte de um bloco em steps relativos (deltaSteps positivo/negativo).",
+      "contentMarkers": [
+        "aumentar fonte",
+        "aumente a fonte",
+        "diminuir fonte",
+        "diminua a fonte",
+        "fonte maior",
+        "fonte menor",
+        "letra maior",
+        "letra menor",
+        "aumentar o tamanho do texto"
+      ],
+      "excludeMarkers": [],
+      "actionTermSet": "mutation",
+      "requiresFilledPlaceholders": [
+        "selectedBlockId",
+        "fontSizeDelta"
+      ],
+      "clarificationMessageKey": "suggestNeedSelection",
+      "payloadTemplate": {
+        "op": "bump_font_size",
+        "blockId": "{{selectedBlockId}}",
+        "deltaSteps": "{{fontSizeDelta}}"
+      }
+    },
+    {
+      "key": "transform_text_case",
+      "op": "transform_text_case",
+      "whenToUse": "Transformar caixa do texto de um bloco (maiúsculas, minúsculas, title case, sentence case).",
+      "contentMarkers": [
+        "maiúsculas",
+        "maiusculas",
+        "minúsculas",
+        "minusculas",
+        "caixa alta",
+        "caixa baixa",
+        "tudo em maiúsculo",
+        "tudo em minúsculo",
+        "primeira letra maiúscula"
+      ],
+      "excludeMarkers": [],
+      "actionTermSet": "mutation",
+      "requiresFilledPlaceholders": [
+        "selectedBlockId",
+        "textCaseMode"
+      ],
+      "clarificationMessageKey": "suggestNeedSelection",
+      "payloadTemplate": {
+        "op": "transform_text_case",
+        "blockId": "{{selectedBlockId}}",
+        "mode": "{{textCaseMode}}"
+      }
+    },
+    {
+      "key": "set_display_format",
+      "op": "set_display_format",
+      "whenToUse": "Definir formato de exibição (number/currency/percent/date) de um campo ligado em contentRunDataRef ou textProjection de um bloco.",
+      "contentMarkers": [
+        "formato de número",
+        "formato de moeda",
+        "em percentual",
+        "formatar como moeda",
+        "formatar como percentual",
+        "formatar data",
+        "duas casas decimais",
+        "separador de milhar",
+        "formate o valor"
+      ],
+      "excludeMarkers": [],
+      "actionTermSet": "mutation",
+      "requiresFilledPlaceholders": [
+        "selectedBlockId",
+        "formatTargetOwner",
+        "formatField",
+        "formatHintJson"
+      ],
+      "clarificationMessageKey": "suggestNeedSelection",
+      "payloadTemplate": {
+        "op": "set_display_format",
+        "blockId": "{{selectedBlockId}}",
+        "target": {
+          "owner": "{{formatTargetOwner}}",
+          "field": "{{formatField}}"
+        },
+        "displayFormat": {}
       }
     }
   ]

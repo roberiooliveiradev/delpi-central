@@ -1017,6 +1017,12 @@ class PresentationSuggestOpsService:
                 json.dumps(format_hint, ensure_ascii=False) if format_hint else ""
             ),
             "branchParam": str(params.get("branch", "")) if "branch" in params else "",
+            "selectedBlockIdsJson": cls._selected_block_ids_json(host),
+            "alignCommand": cls._extract_align_command(normalized),
+            "zOrderCommand": cls._extract_z_order_command(normalized),
+            "textCaseMode": cls._extract_text_case_mode(normalized),
+            "fontSizeDelta": cls._extract_font_size_delta(normalized),
+            "blockType": cls._extract_block_type(normalized),
             "newDataSourceId": cls._new_id("ds"),
             "newVisualId": cls._new_id("viz"),
             "newTextBlockId": cls._new_id("txt"),
@@ -1024,6 +1030,93 @@ class PresentationSuggestOpsService:
             "name": quoted or default_playlist,
             "sectionName": quoted or default_section,
         }
+
+    @classmethod
+    def _selected_block_ids_json(cls, host: dict[str, Any]) -> str:
+        raw = host.get("selectedBlockIds")
+        ids: list[str] = []
+        if isinstance(raw, list):
+            ids = [str(item).strip() for item in raw if str(item or "").strip()]
+        if not ids:
+            single = cls._first_selected_block_id(host)
+            if single:
+                ids = [single]
+        return json.dumps(ids, ensure_ascii=False) if ids else ""
+
+    @classmethod
+    def _extract_align_command(cls, normalized: str) -> str:
+        mapping = (
+            (("distribuir horizontal", "distribua horizontal", "distribuir na horizontal"), "distribute-h"),
+            (("distribuir vertical", "distribua vertical", "distribuir na vertical"), "distribute-v"),
+            (("centro vertical", "alinhar ao centro vertical"), "align-center-v"),
+            (("alinhar à esquerda", "alinhar a esquerda", "alinhe à esquerda", "alinhe a esquerda", "alinhados à esquerda"), "align-left"),
+            (("alinhar à direita", "alinhar a direita", "alinhe à direita", "alinhe a direita", "alinhados à direita"), "align-right"),
+            (("alinhar no topo", "alinhar ao topo", "alinhe no topo", "alinhe ao topo"), "align-top"),
+            (("alinhar na base", "alinhar embaixo", "alinhe na base", "alinhe embaixo", "alinhar abaixo"), "align-bottom"),
+            (("centralizar", "centro horizontal", "alinhar ao centro", "alinhe ao centro"), "align-center-h"),
+        )
+        for markers, command in mapping:
+            if any(cls._marker_hit(marker, normalized) for marker in markers):
+                return command
+        return ""
+
+    @classmethod
+    def _extract_z_order_command(cls, normalized: str) -> str:
+        mapping = (
+            (("trazer para frente", "traga para frente", "primeiro plano", "para a frente de tudo", "frente de tudo"), "bring-to-front"),
+            (("enviar para trás", "enviar ao fundo", "envie para trás", "envie ao fundo", "para o fundo", "atrás de tudo", "atras de tudo"), "send-to-back"),
+            (("avançar uma camada", "avance uma camada", "subir uma camada", "suba uma camada", "trazer um nível", "para frente"), "bring-forward"),
+            (("recuar uma camada", "recue uma camada", "descer uma camada", "desça uma camada", "enviar um nível", "para trás", "para tras"), "send-backward"),
+        )
+        for markers, command in mapping:
+            if any(cls._marker_hit(marker, normalized) for marker in markers):
+                return command
+        return ""
+
+    @classmethod
+    def _extract_text_case_mode(cls, normalized: str) -> str:
+        mapping = (
+            (("title case", "cada palavra", "primeira letra de cada palavra", "capitalizar"), "title"),
+            (("maiúsculas", "maiusculas", "caixa alta", "em caps", "tudo maiúsculo", "tudo maiusculo", "all caps"), "upper"),
+            (("minúsculas", "minusculas", "caixa baixa", "tudo minúsculo", "tudo minusculo"), "lower"),
+            (("alternar caixa", "inverter caixa", "toggle"), "toggle"),
+            (("sentence case", "primeira letra", "somente a primeira"), "sentence"),
+        )
+        for markers, mode in mapping:
+            if any(cls._marker_hit(marker, normalized) for marker in markers):
+                return mode
+        return ""
+
+    @classmethod
+    def _extract_font_size_delta(cls, normalized: str) -> str:
+        increase = (
+            "aumentar fonte", "aumente a fonte", "aumenta a fonte", "fonte maior",
+            "letra maior", "aumentar o tamanho do texto", "aumente o tamanho",
+            "aumentar texto", "aumente o texto",
+        )
+        decrease = (
+            "diminuir fonte", "diminua a fonte", "diminua o texto", "fonte menor",
+            "letra menor", "reduzir fonte", "reduza a fonte", "diminuir o tamanho",
+        )
+        if any(cls._marker_hit(marker, normalized) for marker in increase):
+            return "1"
+        if any(cls._marker_hit(marker, normalized) for marker in decrease):
+            return "-1"
+        return ""
+
+    @classmethod
+    def _extract_block_type(cls, normalized: str) -> str:
+        mapping = (
+            (("bloco de texto", "caixa de texto", "bloco texto"), "text"),
+            (("título", "titulo", "heading"), "heading"),
+            (("forma", "retângulo", "retangulo", "círculo", "circulo", "shape"), "shape"),
+            (("ícone", "icone", "icon"), "icon"),
+            (("imagem", "foto", "image"), "image"),
+        )
+        for markers, block_type in mapping:
+            if any(cls._marker_hit(marker, normalized) for marker in markers):
+                return block_type
+        return ""
 
     @classmethod
     def _enrich_filled_op(
@@ -1140,6 +1233,50 @@ class PresentationSuggestOpsService:
                             opts["valueFormat"] = hint.value_format
                             block["tableOptions"] = opts
                         op["block"] = block
+        elif name in {"align_blocks", "reorder_block_z", "duplicate_blocks"}:
+            ids = op.get("blockIds")
+            if not isinstance(ids, list) or not [i for i in ids if str(i or "").strip()]:
+                raw = str(placeholders.get("selectedBlockIdsJson") or "").strip()
+                if raw:
+                    try:
+                        parsed = json.loads(raw)
+                    except json.JSONDecodeError:
+                        parsed = None
+                    if isinstance(parsed, list) and parsed:
+                        op["blockIds"] = [
+                            str(item).strip()
+                            for item in parsed
+                            if str(item or "").strip()
+                        ]
+        elif name == "bump_font_size":
+            try:
+                op["deltaSteps"] = int(op.get("deltaSteps"))
+            except (TypeError, ValueError):
+                raw = str(placeholders.get("fontSizeDelta") or "").strip()
+                if raw:
+                    try:
+                        op["deltaSteps"] = int(raw)
+                    except ValueError:
+                        pass
+        elif name == "set_display_format":
+            fmt = op.get("displayFormat")
+            if not (isinstance(fmt, dict) and str(fmt.get("category") or "").strip()):
+                hint_raw = str(placeholders.get("formatHintJson") or "").strip()
+                if hint_raw:
+                    try:
+                        hint_payload = json.loads(hint_raw)
+                    except json.JSONDecodeError:
+                        hint_payload = None
+                    if isinstance(hint_payload, dict):
+                        from tv_app.application.services.data.display_format_hints_service import (
+                            DisplayFormatHintsService,
+                        )
+
+                        hint = DisplayFormatHintsService._from_payload(
+                            hint_payload, source="suggest"
+                        )
+                        if hint:
+                            op["displayFormat"] = hint.display_format_spec()
         return op
 
     @classmethod
@@ -1277,6 +1414,46 @@ class PresentationSuggestOpsService:
         if name == "add_slide_from_preset":
             if not str(op.get("presetKey") or "").strip():
                 return "add_slide_from_preset.presetKey"
+            return None
+        if name in {"align_blocks", "reorder_block_z", "duplicate_blocks"}:
+            ids = op.get("blockIds")
+            if not isinstance(ids, list) or not [
+                item for item in ids if str(item or "").strip()
+            ]:
+                return f"{name}.blockIds"
+            if name != "duplicate_blocks" and not str(op.get("command") or "").strip():
+                return f"{name}.command"
+            return None
+        if name == "bump_font_size":
+            if not str(op.get("blockId") or "").strip():
+                return "bump_font_size.blockId"
+            try:
+                int(op.get("deltaSteps"))
+            except (TypeError, ValueError):
+                return "bump_font_size.deltaSteps"
+            return None
+        if name == "transform_text_case":
+            if not str(op.get("blockId") or "").strip():
+                return "transform_text_case.blockId"
+            if not str(op.get("mode") or "").strip():
+                return "transform_text_case.mode"
+            return None
+        if name == "create_block":
+            if not str(op.get("type") or "").strip():
+                return "create_block.type"
+            return None
+        if name == "set_display_format":
+            if not str(op.get("blockId") or "").strip():
+                return "set_display_format.blockId"
+            target = op.get("target")
+            if not isinstance(target, dict) or not (
+                str(target.get("owner") or "").strip()
+                and str(target.get("field") or "").strip()
+            ):
+                return "set_display_format.target"
+            fmt = op.get("displayFormat")
+            if not isinstance(fmt, dict) or not str(fmt.get("category") or "").strip():
+                return "set_display_format.displayFormat"
             return None
         if name == "update_slide":
             if "title" in op and not str(op.get("title") or "").strip():

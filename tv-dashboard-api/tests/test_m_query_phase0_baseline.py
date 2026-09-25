@@ -113,12 +113,30 @@ def test_lark_parser_dependency_is_pinned_without_runtime_integration():
     assert all("import lark" not in path.read_text(encoding="utf-8") for path in application_files)
 
 
-def test_baseline_catalog_has_232_unique_allowlisted_get_operations():
+def test_baseline_catalog_covers_every_allowlisted_get_operation():
+    """O catálogo TV cobre exatamente os GETs não-deprecated do baseline OpenAPI.
+
+    O número congela contra o baseline (não contra um literal): qualquer rota
+    nova/removida no OpenAPI deve entrar no catálogo no mesmo commit.
+    """
+    baseline = json.loads(
+        (REPOSITORY_ROOT / "api-delpi" / "app" / "content" / "openapi_baseline.json")
+        .read_text(encoding="utf-8")
+    )
+    expected = {
+        str(op.get("operationId") or "").strip()
+        for op in baseline.get("operations") or []
+        if isinstance(op, dict)
+        and str(op.get("method") or "").upper() == "GET"
+        and not op.get("deprecated")
+        and str(op.get("operationId") or "").strip()
+    }
+
     routes = TvDataRouteCatalogService().list_routes()
     operation_ids = [route["operationId"] for route in routes]
 
-    assert len(operation_ids) == 232
-    assert len(set(operation_ids)) == 232
+    assert len(operation_ids) == len(set(operation_ids)), "operationId duplicado"
+    assert set(operation_ids) == expected
 
 
 def test_cache_key_isolated_between_distinct_authenticated_users_after_phase1():

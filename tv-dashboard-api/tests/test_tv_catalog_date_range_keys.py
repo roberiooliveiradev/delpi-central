@@ -57,18 +57,30 @@ def test_all_catalog_routes_emit_only_canonical_date_keys():
             continue
         checked += 1
         start_key, end_key = pair
-        query = _build_query_params(
-            route,
-            {
-                "branch": "01",
-                "date_start": "2026-01-01",
-                "date_end": "2026-07-13",
-                "start_date": "2026-01-01",
-                "end_date": "2026-07-13",
-                "issue_date_start": "2026-01-01",
-                "issue_date_end": "2026-07-13",
-            },
-        )
+        seed = {
+            "branch": "01",
+            "date_start": "2026-01-01",
+            "date_end": "2026-07-13",
+            "start_date": "2026-01-01",
+            "end_date": "2026-07-13",
+            "issue_date_start": "2026-01-01",
+            "issue_date_end": "2026-07-13",
+        }
+        # Rotas de detalhe/drill-down combinam datas com ids obrigatórios
+        # (proposal_number, code, record_id…) — semear com valor válido do
+        # schema (primeiro enum ou placeholder) para exercitar só o contrato
+        # de chaves de data que este teste cobre.
+        fixed = route.get("fixedQueryParams") or {}
+        for key, spec in (route.get("paramSchema") or {}).items():
+            if (
+                isinstance(spec, dict)
+                and spec.get("optional") is False
+                and key not in seed
+                and fixed.get(key) in (None, "")
+            ):
+                enum = spec.get("enum")
+                seed[key] = enum[0] if isinstance(enum, list) and enum else "1"
+        query = _build_query_params(route, seed)
         assert start_key in query, route.get("operationId")
         assert end_key in query, route.get("operationId")
         leaked = (_DATE_ALIASES - {start_key, end_key}) & set(query)
