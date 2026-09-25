@@ -189,6 +189,21 @@ def test_merge_data_params_relative_preset_clears_stale_dates():
     assert "end_date" not in merged
 
 
+def test_merge_data_params_same_layer_relative_drops_stale_dates():
+    """this_year + end_date D-1 na mesma camada → só o preset (recalcula no gateway)."""
+    merged = merge_data_params(
+        playlist_defaults=None,
+        slide_filters=None,
+        block_params={
+            "dateRangePreset": "this_year",
+            "start_date": "2026-01-01",
+            "end_date": "2026-09-24",
+            "branch": "01",
+        },
+    )
+    assert merged == {"dateRangePreset": "this_year", "branch": "01"}
+
+
 def test_merge_data_params_block_custom_without_dates_clears_inherited_dates():
     """Bloco custom vazio não reaproveita datas corruptas (causa do 400 24 meses)."""
     merged = merge_data_params(

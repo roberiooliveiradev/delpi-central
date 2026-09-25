@@ -25,8 +25,10 @@ def _extract_summary(envelope: dict[str, Any] | Any) -> dict[str, Any]:
 
 
 def _date_range(period_days: int) -> tuple[str, str]:
-    end = date.today()
-    start = end - timedelta(days=max(period_days, 1))
+    from tv_app.application.services.tv_date_range_preset_service import calendar_today
+
+    end = calendar_today()
+    start = end - timedelta(days=max(period_days, 1) - 1)
     return start.isoformat(), end.isoformat()
 
 

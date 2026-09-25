@@ -196,6 +196,53 @@ def test_apply_preset_does_not_mirror_aliases():
     assert "end_date" not in out
 
 
+def test_apply_preset_relative_overwrites_stale_absolute_dates():
+    """Defesa: mesmo se merge falhar, this_year recalcula e ignora end D-1."""
+    today = date(2026, 9, 25)
+    out = apply_date_range_preset(
+        {
+            "dateRangePreset": "this_year",
+            "start_date": "2026-01-01",
+            "end_date": "2026-09-24",
+        },
+        schema_keys=["start_date", "end_date"],
+        strategy="date_range",
+        today=today,
+    )
+    assert out["start_date"] == "2026-01-01"
+    assert out["end_date"] == "2026-09-25"
+    assert "dateRangePreset" not in out
+
+
+def test_sibling_this_month_and_this_week_also_refresh_past_stale_end():
+    today = date(2026, 9, 25)
+    month = apply_date_range_preset(
+        {"dateRangePreset": "this_month", "start_date": "2026-09-01", "end_date": "2026-09-24"},
+        schema_keys=["start_date", "end_date"],
+        strategy="date_range",
+        today=today,
+    )
+    week = apply_date_range_preset(
+        {"dateRangePreset": "this_week", "start_date": "2026-09-21", "end_date": "2026-09-24"},
+        schema_keys=["start_date", "end_date"],
+        strategy="date_range",
+        today=today,
+    )
+    assert month["end_date"] == "2026-09-25"
+    assert week["end_date"] == "2026-09-25"
+    # Negativo: custom preserva a janela fixa.
+    custom = apply_date_range_preset(
+        {
+            "dateRangePreset": "custom",
+            "start_date": "2026-01-01",
+            "end_date": "2026-09-24",
+        },
+        schema_keys=["start_date", "end_date"],
+        today=today,
+    )
+    assert custom["end_date"] == "2026-09-24"
+
+
 def test_custom_keeps_manual_dates():
     out = apply_date_range_preset(
         {

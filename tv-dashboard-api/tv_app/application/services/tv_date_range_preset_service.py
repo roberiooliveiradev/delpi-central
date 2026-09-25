@@ -3,12 +3,17 @@
 from __future__ import annotations
 
 import calendar
-from datetime import date, timedelta
+import os
+from datetime import date, datetime, timedelta, timezone
 from typing import Any, Mapping, Sequence
+from zoneinfo import ZoneInfo
 
 DATE_RANGE_PRESET_KEY = "dateRangePreset"
 PERIOD_DAYS_KEY = "periodDays"
 EXCLUDE_WEEKENDS_KEY = "excludeWeekends"
+
+# Calendário civil de negócio DELPI — alinhado a plugin-ui/periodPreset e docs TZ.
+DEFAULT_BUSINESS_TIMEZONE = "America/Sao_Paulo"
 
 # Pares canônicos OpenAPI (ordem = preferência ao detectar no schema).
 # Canônico HTTP api-delpi primeiro; aliases legado depois (remoção planejada 2027-01).
@@ -104,6 +109,23 @@ def date_alias_keys(*, keep: tuple[str, str]) -> frozenset[str]:
     return frozenset(set(START_KEYS) | set(END_KEYS) | keep_set)
 
 
+def business_timezone_name() -> str:
+    """Fuso canônico para «hoje» dos presets (env TZ ou America/Sao_Paulo)."""
+    raw = (os.getenv("TZ") or "").strip()
+    return raw or DEFAULT_BUSINESS_TIMEZONE
+
+
+def calendar_today(*, today: date | None = None, tz_name: str | None = None) -> date:
+    """Dia civil atual no fuso de negócio — nunca depender só de date.today() do host."""
+    if today is not None:
+        return today
+    name = (tz_name or business_timezone_name()).strip() or DEFAULT_BUSINESS_TIMEZONE
+    try:
+        return datetime.now(ZoneInfo(name)).date()
+    except Exception:
+        return datetime.now(timezone.utc).date()
+
+
 def previous_business_day(day: date) -> date:
     """Dia útil anterior (seg–sex). Segunda → sexta; domingo/sábado → sexta."""
     candidate = day - timedelta(days=1)
@@ -126,7 +148,7 @@ def compute_preset_range(
     today: date | None = None,
 ) -> tuple[date, date] | None:
     """Retorna (início, fim) inclusivos. None = usar datas manuais (custom)."""
-    day = today or date.today()
+    day = calendar_today(today=today)
     normalized = (preset or "").strip().lower().replace("-", "_")
     if not normalized or normalized == "custom":
         return None
@@ -321,26 +343,15 @@ def apply_date_range_preset(
         alias_start, alias_end = read_date_range_values(merged, start_key, end_key)
         explicit_start = _as_iso(merged.get(start_key)) or _as_iso(alias_start)
         explicit_end = _as_iso(merged.get(end_key)) or _as_iso(alias_end)
-        preset_token = preset.strip().lower()
-        # Explicit interval wins over relative presets (this_month / this_month_full / …).
-        if (
-            explicit_start
-            and explicit_end
-            and preset_token
-            and preset_token not in {"", "custom"}
-        ):
-            merged[start_key] = str(explicit_start).strip()
-            merged[end_key] = str(explicit_end).strip()
-            merged.pop(DATE_RANGE_PRESET_KEY, None)
-            return merged
-
+        # Preset relativo sempre recalcula (datas absolutas na mesma carga são stale —
+        # a UI as esconde quando Período ≠ Personalizado). custom / ausente → manuais.
         computed = compute_preset_range(preset, period_days=period_days, today=today)
         if computed is not None:
             start_d, end_d = computed
             merged[start_key] = start_d.isoformat()
             merged[end_key] = end_d.isoformat()
         elif period_days is not None and not _as_iso(merged.get(start_key)):
-            day = today or date.today()
+            day = calendar_today(today=today)
             start_d, end_d = day - timedelta(days=max(period_days, 1) - 1), day
             # Se o valor canônico ainda não existe, tenta aliases antes de calcular.
             alias_start, alias_end = read_date_range_values(merged, start_key, end_key)
@@ -351,11 +362,10 @@ def apply_date_range_preset(
                 merged[start_key] = start_d.isoformat()
                 merged[end_key] = end_d.isoformat()
         else:
-            alias_start, alias_end = read_date_range_values(merged, start_key, end_key)
-            if _as_iso(alias_start):
-                merged[start_key] = str(alias_start).strip()
-            if _as_iso(alias_end):
-                merged[end_key] = str(alias_end).strip()
+            if explicit_start:
+                merged[start_key] = str(explicit_start).strip()
+            if explicit_end:
+                merged[end_key] = str(explicit_end).strip()
 
     merged.pop(DATE_RANGE_PRESET_KEY, None)
     return merged

@@ -32,6 +32,7 @@ from tv_app.application.services.tv_date_range_preset_service import (
     EXCLUDE_WEEKENDS_KEY,
     PERIOD_DAYS_KEY,
     apply_date_range_preset,
+    calendar_today,
     date_alias_keys,
     read_date_range_values,
     resolve_output_date_range_keys,
@@ -158,9 +159,9 @@ def _build_query_params(
                     or 7
                 )
                 try:
-                    end_d = date.fromisoformat(str(end)[:10]) if end else date.today()
+                    end_d = date.fromisoformat(str(end)[:10]) if end else calendar_today()
                 except ValueError:
-                    end_d = date.today()
+                    end_d = calendar_today()
                 try:
                     start_d = (
                         date.fromisoformat(str(start)[:10])

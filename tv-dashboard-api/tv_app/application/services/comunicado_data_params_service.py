@@ -160,6 +160,19 @@ def _strip_competence_for_relative_preset(merged: dict[str, Any]) -> None:
         merged.pop("competence", None)
 
 
+def _layer_relative_preset(layer: dict[str, Any]) -> str | None:
+    """Preset relativo declarado nesta camada (None = ausente / custom / vazio)."""
+    if DATE_RANGE_PRESET_KEY not in layer:
+        return None
+    raw = layer.get(DATE_RANGE_PRESET_KEY)
+    if raw is None or raw == "":
+        return None
+    preset = _normalize_preset(raw)
+    if not preset or preset == "custom":
+        return None
+    return preset
+
+
 def _apply_period_layer(merged: dict[str, Any], layer: dict[str, Any]) -> None:
     """Aplica intenção de período da camada sem vazar datas stale das camadas inferiores.
 
@@ -195,12 +208,18 @@ def merge_data_params(
 ) -> dict[str, Any]:
     """programação → tela → dados (bloco) → input (maior precedência ganha)."""
     merged: dict[str, Any] = {}
+    date_keys = frozenset((*START_KEYS, *END_KEYS))
     for layer in (playlist_defaults, slide_filters, block_params, input_overrides):
         if not isinstance(layer, dict):
             continue
         _apply_period_layer(merged, layer)
+        # Mesma camada com this_year + start/end stale: UI esconde as datas quando o
+        # preset é relativo — não reintroduzir absolutas no merge (fim congelado D-1).
+        skip_layer_dates = _layer_relative_preset(layer) is not None
         for key, value in layer.items():
             key_str = str(key)
+            if skip_layer_dates and key_str in date_keys:
+                continue
             # Filial vazia limpa herança; all/Todas grava wire canônico ``all``.
             if key_str in BRANCH_PARAM_KEYS and _is_all_branches_scope(value):
                 _clear_branch_aliases(merged)
@@ -221,7 +240,11 @@ def merge_data_params(
 
 
 def _prefer_explicit_dates_over_relative_preset(merged: dict[str, Any]) -> None:
-    """Explicit start+end win over inherited relative dateRangePreset (this_month…)."""
+    """Datas fechadas de camada superior (sem preset relativo próprio) vencem preset herdado.
+
+    Ex.: programação ``this_month`` + bloco só com start/end da semana → janela explícita.
+    Não cobre mesma camada preset+datas (já filtrado no loop de merge).
+    """
     has_closed = False
     for start_key, end_key in (
         ("start_date", "end_date"),

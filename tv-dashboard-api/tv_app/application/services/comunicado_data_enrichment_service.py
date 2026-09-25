@@ -197,6 +197,11 @@ def _build_data_cache_key(
     user: Any | None = None,
     service_context: str | None = None,
 ) -> str:
+    from tv_app.application.services.tv_date_range_preset_service import (
+        DATE_RANGE_PRESET_KEY,
+        calendar_today,
+    )
+
     permissions = sorted(
         {
             str(permission).strip()
@@ -232,11 +237,19 @@ def _build_data_cache_key(
     auth_fingerprint = hashlib.sha256(
         json.dumps(principal, sort_keys=True, separators=(",", ":")).encode("utf-8")
     ).hexdigest()
+    # Presets relativos expandem «hoje» — chave deve mudar no virar do dia civil.
+    preset = str(params.get(DATE_RANGE_PRESET_KEY) or "").strip().lower().replace("-", "_")
+    calendar_day = (
+        calendar_today().isoformat()
+        if preset and preset != "custom"
+        else ""
+    )
     return json.dumps(
         {
             "operationId": operation_id,
             "params": params,
             "authorizationFingerprint": f"sha256:{auth_fingerprint}",
+            "calendarDay": calendar_day,
         },
         sort_keys=True,
         default=str,

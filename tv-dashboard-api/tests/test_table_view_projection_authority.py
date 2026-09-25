@@ -180,6 +180,7 @@ def test_validate_table_parts_rejects_body_allows_row_banding():
 
 
 def test_explicit_weekly_dates_win_over_this_month_preset():
+    """Camada superior só com datas fecha a janela; preset herdado some."""
     merged = merge_data_params(
         playlist_defaults={"dateRangePreset": "this_month"},
         slide_filters=None,
@@ -189,18 +190,49 @@ def test_explicit_weekly_dates_win_over_this_month_preset():
     assert merged.get("end_date") == "2026-09-27"
     assert "dateRangePreset" not in merged
 
+    # Sem preset relativo → datas manuais.
     resolved = apply_date_range_preset(
         {
-            "dateRangePreset": "this_month",
             "start_date": "2026-09-21",
             "end_date": "2026-09-27",
         },
         schema_keys={"start_date": {}, "end_date": {}},
         strategy="date_range",
-        today=date(2026, 9, 24),
+        today=date(2026, 9, 25),
     )
     assert resolved["start_date"] == "2026-09-21"
     assert resolved["end_date"] == "2026-09-27"
+
+
+def test_same_layer_relative_preset_ignores_stale_absolute_dates():
+    """Regressão «Este ano até hoje» com end_date D-1 escondido na UI."""
+    merged = merge_data_params(
+        playlist_defaults=None,
+        slide_filters=None,
+        block_params={
+            "dateRangePreset": "this_year",
+            "start_date": "2026-01-01",
+            "end_date": "2026-09-24",
+            "branch": "01",
+        },
+    )
+    assert merged.get("dateRangePreset") == "this_year"
+    assert "start_date" not in merged
+    assert "end_date" not in merged
+
+    resolved = apply_date_range_preset(
+        {
+            "dateRangePreset": "this_year",
+            "start_date": "2026-01-01",
+            "end_date": "2026-09-24",
+        },
+        schema_keys={"start_date": {}, "end_date": {}},
+        strategy="date_range",
+        today=date(2026, 9, 25),
+    )
+    assert resolved["start_date"] == "2026-01-01"
+    assert resolved["end_date"] == "2026-09-25"
+    assert "dateRangePreset" not in resolved
 
 
 def test_monthly_fallback_without_explicit_dates():
