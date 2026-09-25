@@ -22,6 +22,7 @@ import type {
   ComunicadoTextDecoration,
 } from "./comunicadoTypes";
 import { buildTextDecoration, parseTextDecorationFlags } from "./comunicadoHelpers";
+import { normalizeTextDataRef } from "./textViewProjection";
 
 export {
   groupContentRunsForDisplay,
@@ -671,6 +672,8 @@ function styleFromElement(element: Element): ComunicadoContentRunStyle {
       const parsed = Number.parseFloat(computed.fontSize);
       if (Number.isFinite(parsed)) patch.fontSize = parsed;
     }
+    const textCase = textCaseFromAttr(element.getAttribute(TEXT_CASE_ATTR));
+    if (textCase) patch.textCase = textCase;
   }
 
   return patch;
@@ -743,7 +746,7 @@ export function contentRunsFromEditableRoot(root: HTMLElement): ComunicadoConten
     if (!text) return;
     const normalizedStyle = pruneRunStyle(style ?? {});
     const previous = runs[runs.length - 1];
-    if (previous && runStylesEqual(previous.style, normalizedStyle)) {
+    if (previous && !previous.dataRef && runStylesEqual(previous.style, normalizedStyle)) {
       previous.text += text;
       return;
     }
@@ -759,6 +762,15 @@ export function contentRunsFromEditableRoot(root: HTMLElement): ComunicadoConten
     const element = node as Element;
     if (element.tagName === "BR") {
       appendText("\n", inherited);
+      return;
+    }
+    const dataRef = decodeDataRefAttr(element.getAttribute(DATA_REF_ATTR));
+    if (dataRef?.field?.trim()) {
+      runs.push({
+        text: element.textContent ?? "…",
+        dataRef,
+        style: mergeInheritedRunStyle(inherited, styleFromElement(element)),
+      });
       return;
     }
     const merged = mergeInheritedRunStyle(inherited, styleFromElement(element));
@@ -793,27 +805,58 @@ const LINE_ATTR = "data-comunicado-line";
 const LIST_TYPE_ATTR = "data-list-type";
 const NAMED_STYLE_ATTR = "data-named-style";
 const DATA_REF_ATTR = "data-comunicado-data-ref";
+const TEXT_CASE_ATTR = "data-comunicado-text-case";
 
 function encodeDataRefAttr(ref: ComunicadoTextDataRef): string {
-  return encodeURIComponent(
-    JSON.stringify({
-      field: ref.field,
-      aggregation: ref.aggregation,
-      format: ref.format,
-      label: ref.label,
-    }),
-  );
+  const payload: Record<string, unknown> = {
+    field: ref.field,
+  };
+  if (ref.aggregation) payload.aggregation = ref.aggregation;
+  if (ref.format) payload.format = ref.format;
+  if (ref.label) payload.label = ref.label;
+  /* Ortogonal a tipografia: round-trip DOM não pode perder DisplayFormat (H3). */
+  if (ref.displayFormat) payload.displayFormat = ref.displayFormat;
+  if (typeof ref.decimalPlaces === "number") payload.decimalPlaces = ref.decimalPlaces;
+  if (ref.colorRules?.length) payload.colorRules = ref.colorRules;
+  return encodeURIComponent(JSON.stringify(payload));
 }
 
 function decodeDataRefAttr(raw: string | null): ComunicadoTextDataRef | undefined {
   if (!raw?.trim()) return undefined;
   try {
-    const parsed = JSON.parse(decodeURIComponent(raw)) as ComunicadoTextDataRef;
-    if (!parsed?.field?.trim()) return undefined;
-    return parsed;
+    const parsed = JSON.parse(decodeURIComponent(raw)) as unknown;
+    return normalizeTextDataRef(parsed);
   } catch {
     return undefined;
   }
+}
+
+function textCaseAttrValue(style: ComunicadoContentRunStyle | undefined): string | null {
+  const raw = String(style?.textCase || "").trim().toLowerCase();
+  if (
+    raw === "sentence" ||
+    raw === "lower" ||
+    raw === "upper" ||
+    raw === "title" ||
+    raw === "toggle"
+  ) {
+    return raw;
+  }
+  return null;
+}
+
+function textCaseFromAttr(raw: string | null): ComunicadoContentRunStyle["textCase"] | undefined {
+  const token = String(raw || "").trim().toLowerCase();
+  if (
+    token === "sentence" ||
+    token === "lower" ||
+    token === "upper" ||
+    token === "title" ||
+    token === "toggle"
+  ) {
+    return token;
+  }
+  return undefined;
 }
 
 function stripPresetTypographyForEditorInline(
@@ -844,14 +887,21 @@ function renderRunsInlineHtml(
         const badge = escapeHtml(label);
         const text = escapeHtml(run.text || "…");
         const refAttr = encodeDataRefAttr(run.dataRef);
-        return `<span class="td-composer__data-ref-run" ${DATA_REF_ATTR}="${refAttr}" title="Campo: ${badge}"${inline ? ` style="${inline}"` : ""}>${text}</span>`;
+        const caseAttr = textCaseAttrValue(run.style);
+        const caseHtml = caseAttr ? ` ${TEXT_CASE_ATTR}="${caseAttr}"` : "";
+        return `<span class="td-composer__data-ref-run" ${DATA_REF_ATTR}="${refAttr}" title="Campo: ${badge}"${caseHtml}${inline ? ` style="${inline}"` : ""}>${text}</span>`;
       }
       const styleForInline = lineNamedStyle
         ? stripPresetTypographyForEditorInline(run.style)
         : run.style;
       const inline = runStyleToInlineCss(styleForInline, options);
-      if (!inline) return escapeHtml(run.text);
-      return `<span style="${inline}">${escapeHtml(run.text)}</span>`;
+      const caseAttr = textCaseAttrValue(run.style);
+      if (!inline && !caseAttr) return escapeHtml(run.text);
+      const caseHtml = caseAttr ? ` ${TEXT_CASE_ATTR}="${caseAttr}"` : "";
+      if (!inline) {
+        return `<span${caseHtml}>${escapeHtml(run.text)}</span>`;
+      }
+      return `<span${caseHtml} style="${inline}">${escapeHtml(run.text)}</span>`;
     })
     .join("");
 }

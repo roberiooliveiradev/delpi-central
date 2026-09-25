@@ -61,4 +61,28 @@ describe("FORMAT-COMPOSITION-001 textCase selection + merge", () => {
       formatId: "date-short",
     });
   });
+
+  it("HTML editável round-trip não perde displayFormat sob estilo (H3)", async () => {
+    const { renderContentRunsHtml, contentRunsFromEditableRoot } = await import(
+      "./comunicadoContentRunEditing"
+    );
+    const html = renderContentRunsHtml([
+      {
+        text: "…",
+        style: { color: "#f00" },
+        dataRef: {
+          field: "a",
+          displayFormat: { category: "currency", currency: "BRL", decimalPlaces: 2 },
+          format: "currency",
+        },
+      },
+    ]);
+    const root = document.createElement("div");
+    root.innerHTML = html;
+    const hydrated = contentRunsFromEditableRoot(root);
+    expect(hydrated[0]?.dataRef?.displayFormat).toEqual(
+      expect.objectContaining({ category: "currency", currency: "BRL" }),
+    );
+    expect(hydrated[0]?.style?.color).toMatch(/^(#f00|rgb\(255,\s*0,\s*0\))$/i);
+  });
 });

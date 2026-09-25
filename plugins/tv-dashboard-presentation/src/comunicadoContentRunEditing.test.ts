@@ -72,6 +72,8 @@ describe("comunicadoContentRunEditing", () => {
       fontSize: null,
       color: null,
       textHighlight: null,
+      baselineShift: "none",
+      textCase: "none",
     });
     expect(selectionRunStyleState(runs, 1, 2).fontWeight).toBe("normal");
     expect(selectionRunStyleState(runs, 0, 1).fontWeight).toBe("bold");
@@ -118,6 +120,50 @@ describe("comunicadoContentRunEditing", () => {
     expect(contentRunsFromEditableRoot(root)).toEqual([
       { text: "Oi " },
       { text: "mundo", style: { fontWeight: "bold", fontStyle: "italic" } },
+    ]);
+  });
+
+  it("round-trip DOM preserva dataRef.displayFormat + tipografia (H3)", () => {
+    const runs: ComunicadoContentRun[] = [
+      { text: "Fim: " },
+      {
+        text: "…",
+        style: { fontWeight: "bold", textCase: "upper" },
+        dataRef: {
+          field: "filter.end_date",
+          format: "date",
+          displayFormat: {
+            category: "date",
+            presetId: "date-short",
+            pattern: "dd/mm/yyyy",
+          },
+          label: "Fim",
+        },
+      },
+    ];
+    const html = renderContentRunsHtml(runs);
+    expect(html).toContain("displayFormat");
+    expect(html).toContain("data-comunicado-data-ref");
+    expect(html).toContain('data-comunicado-text-case="upper"');
+    const root = document.createElement("div");
+    root.innerHTML = html;
+    const hydrated = contentRunsFromEditableRoot(root);
+    expect(hydrated).toEqual([
+      { text: "Fim: " },
+      {
+        text: "…",
+        style: { fontWeight: "bold", textCase: "upper" },
+        dataRef: {
+          field: "filter.end_date",
+          format: "date",
+          displayFormat: {
+            category: "date",
+            presetId: "date-short",
+            pattern: "dd/mm/yyyy",
+          },
+          label: "Fim",
+        },
+      },
     ]);
   });
 

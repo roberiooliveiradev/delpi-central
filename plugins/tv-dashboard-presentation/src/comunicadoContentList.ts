@@ -3,6 +3,7 @@ import type {
   ComunicadoContentRunStyle,
   ComunicadoListType,
   ComunicadoNamedTextStyle,
+  ComunicadoTextDataRef,
 } from "./comunicadoTypes";
 
 export type ContentLineSegment = {
@@ -23,7 +24,15 @@ export type ContentRunListSelectionState = {
 type CharToken = {
   text: string;
   style?: ComunicadoContentRunStyle;
+  dataRef?: ComunicadoTextDataRef;
 };
+
+function dataRefsEqual(
+  left?: ComunicadoTextDataRef,
+  right?: ComunicadoTextDataRef,
+): boolean {
+  return JSON.stringify(left ?? null) === JSON.stringify(right ?? null);
+}
 
 function pruneRunStyle(style: ComunicadoContentRunStyle): ComunicadoContentRunStyle | undefined {
   const cleaned: ComunicadoContentRunStyle = {};
@@ -42,6 +51,18 @@ function pruneRunStyle(style: ComunicadoContentRunStyle): ComunicadoContentRunSt
   if (style.namedStyle === "title1" || style.namedStyle === "subtitle" || style.namedStyle === "body") {
     cleaned.namedStyle = style.namedStyle;
   }
+  if (style.baselineShift === "sub" || style.baselineShift === "super") {
+    cleaned.baselineShift = style.baselineShift;
+  }
+  if (
+    style.textCase === "sentence" ||
+    style.textCase === "lower" ||
+    style.textCase === "upper" ||
+    style.textCase === "title" ||
+    style.textCase === "toggle"
+  ) {
+    cleaned.textCase = style.textCase;
+  }
   return Object.keys(cleaned).length > 0 ? cleaned : undefined;
 }
 
@@ -55,10 +76,14 @@ function runStylesEqual(
 function compactContentRuns(runs: ComunicadoContentRun[]): ComunicadoContentRun[] {
   const compacted: ComunicadoContentRun[] = [];
   for (const run of runs) {
-    if (!run.text) continue;
+    if (!run.text && !run.dataRef?.field?.trim()) continue;
+    if (run.dataRef?.field?.trim()) {
+      compacted.push(run);
+      continue;
+    }
     const style = pruneRunStyle(run.style ?? {});
     const previous = compacted[compacted.length - 1];
-    if (previous && runStylesEqual(previous.style, style)) {
+    if (previous && !previous.dataRef && runStylesEqual(previous.style, style)) {
       previous.text += run.text;
       continue;
     }
@@ -71,6 +96,16 @@ function flattenRunsToChars(runs: ComunicadoContentRun[]): CharToken[] {
   const chars: CharToken[] = [];
   for (const run of runs) {
     const style = pruneRunStyle(run.style ?? {});
+    if (run.dataRef?.field?.trim()) {
+      for (const char of run.text || "…") {
+        chars.push({
+          text: char,
+          dataRef: run.dataRef,
+          ...(style ? { style } : {}),
+        });
+      }
+      continue;
+    }
     for (const char of run.text) {
       chars.push(style ? { text: char, style } : { text: char });
     }
@@ -82,11 +117,18 @@ function charsToRuns(chars: CharToken[]): ComunicadoContentRun[] {
   const runs: ComunicadoContentRun[] = [];
   for (const token of chars) {
     const previous = runs[runs.length - 1];
-    if (previous && runStylesEqual(previous.style, token.style)) {
+    if (
+      previous &&
+      runStylesEqual(previous.style, token.style) &&
+      dataRefsEqual(previous.dataRef, token.dataRef)
+    ) {
       previous.text += token.text;
       continue;
     }
-    runs.push(token.style ? { text: token.text, style: token.style } : { text: token.text });
+    const next: ComunicadoContentRun = { text: token.text };
+    if (token.style) next.style = token.style;
+    if (token.dataRef) next.dataRef = token.dataRef;
+    runs.push(next);
   }
   return compactContentRuns(runs);
 }
@@ -195,6 +237,7 @@ export function joinContentLinesToRuns(lines: ContentLineSegment[]): ComunicadoC
           const base = stripListTypeFromStyle(run.style) ?? {};
           return {
             text: run.text,
+            ...(run.dataRef ? { dataRef: run.dataRef } : {}),
             style: pruneRunStyle({ ...base, listType: line.listType }),
           };
         });
@@ -204,6 +247,7 @@ export function joinContentLinesToRuns(lines: ContentLineSegment[]): ComunicadoC
           const base = stripNamedStyleFromStyle(run.style) ?? {};
           return {
             text: run.text,
+            ...(run.dataRef ? { dataRef: run.dataRef } : {}),
             style: pruneRunStyle({ ...base, namedStyle: line.namedStyle }),
           };
         });
@@ -211,20 +255,33 @@ export function joinContentLinesToRuns(lines: ContentLineSegment[]): ComunicadoC
       if (!line.listType && !line.namedStyle) {
         runs = runs.map((run) => {
           const style = stripNamedStyleFromStyle(stripListTypeFromStyle(run.style));
-          return style ? { text: run.text, style } : { text: run.text };
+          return {
+            text: run.text,
+            ...(run.dataRef ? { dataRef: run.dataRef } : {}),
+            ...(style ? { style } : {}),
+          };
         });
       }
       return runs;
     })();
 
     for (const run of lineRuns) {
-      if (!run.text) continue;
+      if (!run.text && !run.dataRef?.field?.trim()) continue;
       const previous = merged[merged.length - 1];
-      if (previous && runStylesEqual(previous.style, run.style)) {
+      if (
+        previous &&
+        !previous.dataRef &&
+        !run.dataRef &&
+        runStylesEqual(previous.style, run.style)
+      ) {
         previous.text += run.text;
         continue;
       }
-      merged.push(run.style ? { text: run.text, style: run.style } : { text: run.text });
+      merged.push({
+        text: run.text,
+        ...(run.style ? { style: run.style } : {}),
+        ...(run.dataRef ? { dataRef: run.dataRef } : {}),
+      });
     }
 
     if (index < lines.length - 1) {
