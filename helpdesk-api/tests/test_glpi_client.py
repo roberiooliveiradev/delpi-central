@@ -898,6 +898,31 @@ def test_conversation_identity_uses_id_or_email_never_name():
     assert same_name_other_id.requester_mine is False
     assert same_name_other_id.timeline[0].mine is False
     assert parse_viewer_identity({"user_id": -1}, "").user_id is None
+    assert parse_viewer_identity({"users_id": 44}, "").user_id == 44
+    assert parse_viewer_identity({"user": {"id": 51}}, "").user_id == 51
+    assert parse_viewer_identity({"user_id": 12, "users_id": 99}, "").user_id == 12
+
+
+def test_add_ticket_solution_and_task_force_public():
+    bodies: list[dict] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.method == "POST":
+            bodies.append(json.loads(request.content.decode()))
+            return httpx.Response(201, json={"id": 77 + len(bodies)})
+        return httpx.Response(404)
+
+    client = HttpxGlpiClient(
+        base_url="https://glpi.example",
+        client_id="id",
+        client_secret="super-secret",
+        redirect_uri="https://centraldelpi.com.br/apps/helpdesk-api/auth/glpi/callback",
+        transport=httpx.MockTransport(handler),
+    )
+    assert client.add_ticket_solution("token", 7, "<p>sol</p>") == 78
+    assert client.add_ticket_task("token", 7, "<p>task</p>") == 79
+    assert bodies[0] == {"content": "<p>sol</p>", "is_private": 0}
+    assert bodies[1] == {"content": "<p>task</p>", "is_private": 0}
 
 
 def test_requester_falls_back_to_user_recipient():

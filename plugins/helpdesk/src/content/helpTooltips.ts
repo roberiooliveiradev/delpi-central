@@ -6,7 +6,7 @@ export const helpTooltips = {
   create:
     "Título e descrição; à direita categoria, urgência, técnico (se permitido) e observadores. O rascunho sobrevive ao F5.",
   detail:
-    "Conversa do chamado. Responda no rodapé enquanto estiver aberto; solução e arquivos aparecem no fio.",
+    "Workspace do chamado. Seletor de ação: responder, solução, tarefa, anexo ou aprovação — só o que o helpdesk liberar.",
 
   createUi: {
     back: "Volta à lista com o mesmo recorte, sem gravar este formulário.",
@@ -23,8 +23,16 @@ export const helpTooltips = {
 
   detailUi: {
     back: "Volta à lista com o mesmo recorte (filtros e página).",
+    actionMenu:
+      "Tipo de interação: responder, solução, tarefa, anexo ou aprovação — só o que o helpdesk liberar.",
     reply:
       "Formatação, @ para mencionar, clipe, colar ou arrastar. Arraste o canto da imagem para redimensionar.",
+    createSolution:
+      "Registra a solução pública no chamado. O status passa a solucionado quando o helpdesk aceitar.",
+    createTask:
+      "Cria uma tarefa pública no fio do chamado, visível na conversa da Minha DELPI.",
+    requestApproval:
+      "Envia pedido de aprovação. Busque o aprovador por nome ou e-mail.",
     attach: "Anexa por clipe ou arrastar; imagem entra no texto da resposta.",
     send: "Grava o acompanhamento público. Em chamado fechado o botão some.",
     assignee: "Busque o responsável por nome ou e-mail. Só aparece se o helpdesk permitir atribuir no seu perfil.",

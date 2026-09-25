@@ -569,7 +569,11 @@ class HttpxGlpiClient:
         return parse_created_id(payload)
 
     def add_ticket_solution(self, access_token: str, ticket_id: int, content: str) -> int:
-        """Create ITILSolution via HLAPI Timeline/Solution (content required)."""
+        """Create ITILSolution via HLAPI Timeline/Solution (content required).
+
+        Force public (``is_private=0``) so the BFF timeline and MFE conversation
+        can confirm and display the entry — private solutions are stripped on read.
+        """
         ticket_id = int(ticket_id)
         if ticket_id <= 0:
             raise GlpiValidation("ticket_id inválido.")
@@ -577,12 +581,17 @@ class HttpxGlpiClient:
             "POST",
             f"/api.php/v2.2/Assistance/Ticket/{ticket_id}/Timeline/Solution",
             token=access_token,
-            json_body={"content": content},
+            json_body={"content": content, "is_private": 0},
         )
         return parse_created_id(payload)
 
     def add_ticket_task(self, access_token: str, ticket_id: int, content: str) -> int:
-        """Create TicketTask via HLAPI Timeline/Task (content required)."""
+        """Create TicketTask via HLAPI Timeline/Task (content required).
+
+        Force public (``is_private=0``): GLPI often defaults tasks to private; private
+        entries are omitted from Helpdesk timeline, which would break create-task
+        confirmation and hide the task from the workspace conversation.
+        """
         ticket_id = int(ticket_id)
         if ticket_id <= 0:
             raise GlpiValidation("ticket_id inválido.")
@@ -590,7 +599,7 @@ class HttpxGlpiClient:
             "POST",
             f"/api.php/v2.2/Assistance/Ticket/{ticket_id}/Timeline/Task",
             token=access_token,
-            json_body={"content": content},
+            json_body={"content": content, "is_private": 0},
         )
         return parse_created_id(payload)
 

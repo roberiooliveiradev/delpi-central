@@ -54,6 +54,13 @@ describe("helpTooltips budget", () => {
     expect(helpTooltips.detailUi.rejectValidation).toMatch(/recus|aprova/i);
   });
 
+  it("cobre ações operacionais do workspace (solução/tarefa/aprovação)", () => {
+    expect(helpTooltips.detailUi.actionMenu).toMatch(/solução|tarefa|aprova/i);
+    expect(helpTooltips.detailUi.createSolution).toMatch(/solução/i);
+    expect(helpTooltips.detailUi.createTask).toMatch(/tarefa/i);
+    expect(helpTooltips.detailUi.requestApproval).toMatch(/aprova/i);
+  });
+
   it("não reintroduz o bloco filters órfão da FiltersRow antiga", () => {
     expect(helpTooltips).not.toHaveProperty("filters");
   });

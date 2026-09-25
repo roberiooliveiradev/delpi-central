@@ -84,7 +84,7 @@ Lista vazia com sessão válida é `200`, `items: []` e `has_more: false`. Não 
 
 `status` na lista e no detalhe é o **rótulo** do GLPI. `status_id` é o id ITIL (1, 2, 3, 4, 5, 6, 10), aditivo. `open` continua incluindo 10. `pending` e `approval` recortam 4 e 10. Ciclo e badges: [`14-pagina-e-estados-do-chamado.md`](./14-pagina-e-estados-do-chamado.md).
 
-`GET /tickets/{id}` inclui `description`, `description_html` (HTML sanitizado, aditivo), `created_at` (instante de abertura), `solved_at` / `closed_at` (aditivos, vazios se o GLPI não trouxer), `sla_ttr` / `sla_tto` (rótulos do SLA, aditivos), `status` (rótulo), `status_id` (id ITIL, aditivo), `can_followup` (aditivo: **false só se `status_id==6`**; solucionado 5 ainda aceita acompanhamento), `requester_display_name` (primeiro membro de `team` com papel `requester`; se faltar, `user_recipient`), `requester_mine`, `assigned_display_name` (primeiro `assigned` do `team`), `observers_display_name` (rótulos de `team` com papel `observer`, unidos por vírgula; vazio se não houver), `timeline[]` com `id`, `kind` (`followup` | `solution`), `content`, `content_html` (aditivo), `created_at`, `author_display_name`, `mine`, e `attachments[]` com `document_id`, `filename` e `mime`. `description` e `timeline[].content` continuam **texto puro**, derivados do HTML já sanitizado. `description_html` / `content_html` passam pela allowlist do BFF ([`12-conteudo-da-mensagem.md`](./12-conteudo-da-mensagem.md) §7): sem `script`/`on*`/`javascript:`; `src`/`href` de `document.send.php` só viram o GET autenticado se o `docid` estiver em `attachments` daquele chamado — caso contrário a imagem some. `kind=solution` é leitura da Timeline `Solution`/`ITILSolution`. Com H10 Branch B, o detalhe também publica `can_accept_solution` / `can_reject_solution` / `can_submit_satisfaction` (e `satisfaction` / `satisfaction_comment` quando já respondida) — **backend-first**, só se `requester_mine` e status coerente e legado ligado. O nome de pessoa é só rótulo. `mine` / `requester_mine` vêm do id do usuário na sessão HLAPI (`GET /session` → `user_id`) ou do e-mail do JWT contra o e-mail do autor; nome nunca identifica pessoa. O nome visível usa o rótulo mais completo entre `firstname`+`realname` e `display_name`. A lista de anexos traz só arquivos já ligados àquele chamado. Lista vazia é `[]`. Acompanhamento privado, tarefa e Validation não entram em `timeline`. Os campos novos são aditivos.
+`GET /tickets/{id}` inclui `description`, `description_html` (HTML sanitizado, aditivo), `created_at` (instante de abertura), `solved_at` / `closed_at` (aditivos, vazios se o GLPI não trouxer), `sla_ttr` / `sla_tto` (rótulos do SLA, aditivos), `status` (rótulo), `status_id` (id ITIL, aditivo), `can_followup` (aditivo: **false só se `status_id==6`**; solucionado 5 ainda aceita acompanhamento), `requester_display_name` (primeiro membro de `team` com papel `requester`; se faltar, `user_recipient`), `requester_mine`, `assigned_display_name` (primeiro `assigned` do `team`), `observers_display_name` (rótulos de `team` com papel `observer`, unidos por vírgula; vazio se não houver), `timeline[]` com `id`, `kind` (`followup` | `solution` | `task`), `content`, `content_html` (aditivo), `created_at`, `author_display_name`, `mine`, e `attachments[]` com `document_id`, `filename` e `mime`. `description` e `timeline[].content` continuam **texto puro**, derivados do HTML já sanitizado. `description_html` / `content_html` passam pela allowlist do BFF ([`12-conteudo-da-mensagem.md`](./12-conteudo-da-mensagem.md) §7): sem `script`/`on*`/`javascript:`; `src`/`href` de `document.send.php` só viram o GET autenticado se o `docid` estiver em `attachments` daquele chamado — caso contrário a imagem some. `kind=solution` é leitura da Timeline `Solution`/`ITILSolution`; `kind=task` é leitura pública de `Task`/`TicketTask`/`ITILTask` (entradas privadas não entram). Com H10 Branch B, o detalhe também publica `can_accept_solution` / `can_reject_solution` / `can_submit_satisfaction` (e `satisfaction` / `satisfaction_comment` quando já respondida) — **backend-first**, só se `requester_mine` e status coerente e legado ligado. O detalhe também publica capabilities de técnico (aditivas, backend-first): `can_create_solution` / `can_create_task` / `can_request_approval` — verdadeiras quando o viewer resolve para perfil técnico no GLPI (`GET /session` → `user_id` ∈ catálogo de técnicos, com fallback e-mail→catálogo) **e** o chamado não está fechado (`status_id!=6`). Distinto de `can_assign`. O nome de pessoa é só rótulo. `mine` / `requester_mine` vêm do id do usuário na sessão HLAPI (`GET /session` → `user_id`) ou do e-mail do JWT contra o e-mail do autor; nome nunca identifica pessoa. O nome visível usa o rótulo mais completo entre `firstname`+`realname` e `display_name`. A lista de anexos traz só arquivos já ligados àquele chamado. Lista vazia é `[]`. Acompanhamento privado e Validation **não** entram em `timeline` (Validation fica em `validations[]`). Os campos novos são aditivos.
 
 A lista (`GET /tickets`) também publica `sla_ttr` / `sla_tto` e `requester_display_name` aditivos quando o GLPI os envia. `requester_display_name` segue a mesma regra do detalhe: primeiro `team` com papel `requester`; se faltar, `user_recipient`. Nome é só rótulo.
 
@@ -163,6 +163,18 @@ HLAPI não fecha o ciclo; o BFF usa `apirest` após ACL OAuth (mesmo token técn
 
 Não solicitante → 403. Status incoerente → 422. Legado desligado → 503.
 
+### Operações de técnico (Solution / Task / pedido de aprovação)
+
+HLAPI Timeline. Exigem `Idempotency-Key`. AuthZ: mesmo gate de `can_create_*` (sessão técnico + chamado não fechado). Conteúdo HTML re-sanitizado. Solution e Task são gravadas **públicas** (`is_private=0`) para aparecerem na conversa.
+
+| Método | Path | Body | Resposta |
+|---|---|---|---|
+| POST | `/tickets/{id}/solutions` | `{ "content": "…" }` | `201` `{ "id", "status_id" }` |
+| POST | `/tickets/{id}/tasks` | `{ "content": "…" }` | `201` `{ "id" }` |
+| POST | `/tickets/{id}/validations` | `{ "approver_user_id": N, "content"?: "…" }` | `201` `{ "id", "status", "requested_approver_id" }` |
+
+Não técnico → 403. Chamado fechado → 422. Aprovador inacessível → 422.
+
 ### Aprovação (TicketValidation — HLAPI)
 
 | Método | Path | Efeito |
@@ -184,10 +196,13 @@ Chamadas com `Authorization: Bearer` do access token da pessoa e cabeçalho `GLP
 | Detalhe | `GET /api.php/v2.2/Assistance/Ticket/{id}` |
 | Linha do tempo | `GET /api.php/v2.2/Assistance/Ticket/{id}/Timeline` |
 | Acompanhamento | `POST /api.php/v2.2/Assistance/Ticket/{id}/Timeline/Followup` |
+| Solução | `POST /api.php/v2.2/Assistance/Ticket/{id}/Timeline/Solution` |
+| Tarefa | `POST /api.php/v2.2/Assistance/Ticket/{id}/Timeline/Task` |
+| Pedido / decisão de aprovação | `POST` / `PATCH` `/api.php/v2.2/Assistance/Ticket/{id}/Timeline/Validation` |
 
 Categoria: `GET /api.php/v2.2/Dropdowns/ITILCategory?filter=is_helpdesk_visible==true`, usando `completename`, com página `start`/`limit`. A HLAPI não devolve o catálogo do formulário de chamado se o perfil não tiver leitura de `itilcategory`; quem só abre chamado precisa dessa leitura. Urgência é o enum 1–5 do schema de Ticket (Muito baixa, Baixa, Média, Alta, Muito alta), não um dropdown.
 
-Fora do mapa, mesmo que o escopo `api` permita: `Change`, `Problem`, ativo, inventário, GraphQL, tarefa de técnico, validação e solução. O BFF não publica rota para isso.
+Fora do mapa, mesmo que o escopo `api` permita: `Change`, `Problem`, ativo, inventário, GraphQL. O BFF não publica rota para isso.
 
 ## 6. Erros
 

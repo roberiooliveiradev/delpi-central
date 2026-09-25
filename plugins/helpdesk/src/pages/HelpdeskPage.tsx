@@ -1585,12 +1585,17 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                       />
                       {workspaceActions.length > 0 ? (
                         <div className="helpdesk-ticket-workspace__composer">
-                          <TicketActionMenu
-                            actions={workspaceActions}
-                            activeId={activeAction}
-                            disabled={saving || cycleSaving}
-                            onChange={selectWorkspaceAction}
-                          />
+                          <HintAction
+                            hint={helpTooltips.detailUi.actionMenu}
+                            ariaLabel="Ajuda: Ações do chamado"
+                          >
+                            <TicketActionMenu
+                              actions={workspaceActions}
+                              activeId={activeAction}
+                              disabled={saving || cycleSaving}
+                              onChange={selectWorkspaceAction}
+                            />
+                          </HintAction>
                           {activeAction === "reply" && draftFilesReady ? (
                             <form
                               className="helpdesk-reply-form"
@@ -1792,6 +1797,7 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                             >
                               <HelpdeskRichTextField
                                 label="Solução"
+                                hint={helpTooltips.detailUi.createSolution}
                                 value={solutionContent}
                                 onChange={setSolutionContent}
                                 minHeight={144}
@@ -1837,6 +1843,7 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                             >
                               <HelpdeskRichTextField
                                 label="Tarefa"
+                                hint={helpTooltips.detailUi.createTask}
                                 value={taskContent}
                                 onChange={setTaskContent}
                                 minHeight={144}
@@ -1905,6 +1912,7 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                               </div>
                               <HelpdeskRichTextField
                                 label="Mensagem"
+                                hint={helpTooltips.detailUi.requestApproval}
                                 value={approvalContent}
                                 onChange={setApprovalContent}
                                 minHeight={120}

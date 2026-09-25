@@ -694,7 +694,22 @@ def apply_validation_viewer(
 
 
 def parse_viewer_identity(session: dict, viewer_email: str = "") -> PersonIdentity:
-    return PersonIdentity(user_id=_person_id({"id": session.get("user_id")}), emails=_emails(viewer_email))
+    """Map HLAPI ``GET /session`` to PersonIdentity.
+
+    Canonical field is ``user_id`` (proven). Accept ``users_id`` and nested
+    ``user.id`` as fail-soft aliases so technician-ops AuthZ does not miss
+    the session identity when the payload shape varies slightly.
+    """
+    nested = session.get("user") if isinstance(session.get("user"), dict) else {}
+    return PersonIdentity(
+        user_id=_person_id(
+            {
+                "id": session.get("user_id"),
+                "users_id": session.get("users_id") or nested.get("id") or nested.get("users_id"),
+            }
+        ),
+        emails=_emails(viewer_email),
+    )
 
 
 def _requester_name(row: dict) -> str:

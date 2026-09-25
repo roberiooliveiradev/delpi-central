@@ -202,6 +202,10 @@ describe("HELPDESK-MFE-UX-002 ticket workspace", () => {
     expect(detail).toContain("createTicketSolution");
     expect(detail).toContain("createTicketTask");
     expect(detail).toContain("requestTicketApproval");
+    expect(detail).toContain("helpTooltips.detailUi.actionMenu");
+    expect(detail).toContain("helpTooltips.detailUi.createSolution");
+    expect(detail).toContain("helpTooltips.detailUi.createTask");
+    expect(detail).toContain("helpTooltips.detailUi.requestApproval");
     expect(css).toContain(".helpdesk-ticket-workspace__body");
     expect(css).toContain("grid-template-columns");
   });
