@@ -61,6 +61,7 @@ export type TextFormatStyleSnapshot = {
   indentLevel?: number;
   paragraphSpacingBefore?: number;
   paragraphSpacingAfter?: number;
+  textCase?: string | null;
 };
 
 export type ComplexTextFormatSource =

@@ -83,6 +83,27 @@ export function transformTextCase(
   }
 }
 
+/** Aplica `textCase` de apresentação; `none`/vazio = identidade. */
+export function applyPresentationTextCase(
+  text: string,
+  mode: string | null | undefined,
+): string {
+  const token = String(mode || "")
+    .trim()
+    .toLowerCase();
+  if (!token || token === "none") return text;
+  if (
+    token === "sentence" ||
+    token === "lower" ||
+    token === "upper" ||
+    token === "title" ||
+    token === "toggle"
+  ) {
+    return transformTextCase(text, token);
+  }
+  return text;
+}
+
 /** Aplica case transform aos runs; dataRef permanece atômico (texto placeholder preservado). */
 export function transformContentRunsCase(
   runs: ComunicadoContentRun[],

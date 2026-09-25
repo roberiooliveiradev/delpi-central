@@ -140,15 +140,27 @@ export type ComunicadoContentRunStyle = {
   baselineShift?: "sub" | "super";
   /** Nível de recuo de parágrafo/linha (0 = nenhum; não usar espaços). */
   indentLevel?: number;
+  /**
+   * Apresentação de maiúsculas (estado canônico, não mutação destrutiva do conteúdo).
+   * Materializado no BE após DisplayFormat; conteúdo/dataRef permanecem intactos.
+   */
+  textCase?: ComunicadoTextCase;
 };
 
-/** Transformação de maiúsculas/minúsculas (mutação de conteúdo, não CSS). */
-export type ComunicadoTextCaseTransform =
+/**
+ * Case de apresentação (estado). `toggle` aplica-se ao texto materializado a cada paint.
+ * Mutação destrutiva legada (`transform_text_case`) é comando separado, não formatação.
+ */
+export type ComunicadoTextCase =
+  | "none"
   | "sentence"
   | "lower"
   | "upper"
   | "title"
   | "toggle";
+
+/** @deprecated Preferir `ComunicadoTextCase` — alias dos modos aplicáveis (sem `none`). */
+export type ComunicadoTextCaseTransform = Exclude<ComunicadoTextCase, "none">;
 
 
 export type ComunicadoContentRun = {
@@ -221,6 +233,8 @@ export type ComunicadoBlockStyle = {
   baselineShift?: "sub" | "super";
   /** Recuo de parágrafo do bloco (0–8). */
   indentLevel?: number;
+  /** Case de apresentação do bloco (herdado pelos runs sem override). */
+  textCase?: ComunicadoTextCase;
   objectFit?: "cover" | "contain";
   backgroundColor?: string;
   borderColor?: string;

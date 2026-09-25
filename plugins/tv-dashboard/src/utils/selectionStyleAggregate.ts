@@ -46,6 +46,7 @@ export function aggregateVisualBoxTextFormatStyle(
     "indentLevel",
     "paragraphSpacingBefore",
     "paragraphSpacingAfter",
+    "textCase",
   ];
   const out: AggregatedTextFormatStyle = {};
   for (const key of keys) {

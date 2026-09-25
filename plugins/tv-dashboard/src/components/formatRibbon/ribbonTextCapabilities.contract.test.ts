@@ -23,16 +23,18 @@ const patchService = readFileSync(
 );
 
 describe("RIBBON-TEXT-001 matrices", () => {
-  it("Ribbon: sub/sup, case, indent, bump size, paragraph spacing", () => {
+  it("Ribbon: sub/sup, case presentation, indent, bump size, paragraph spacing", () => {
     expect(typography).toContain("Subscript");
     expect(typography).toContain("Superscript");
-    expect(typography).toContain("transformSelectedTextCase");
+    expect(typography).toContain("textCase");
+    expect(typography).toContain("textCaseSelectValue");
     expect(typography).toContain("IndentIncrease");
     expect(typography).toContain("IndentDecrease");
     expect(typography).toContain("fontSizeMode: \"delta\"");
     expect(typography).toContain("paragraphSpacingBefore");
     expect(typography).toContain("paragraphSpacingAfter");
     expect(typography).toContain("updateSelectedTextFormatStyle");
+    expect(typography).not.toContain("transformSelectedTextCase");
     expect(typography).not.toMatch(/text-transform:\s*uppercase/i);
   });
 
@@ -51,7 +53,7 @@ describe("RIBBON-TEXT-001 matrices", () => {
     expect(textBlock).toContain("superscript");
   });
 
-  it("Ownership: BE ops transform_text_case + bump_font_size + style normalize", () => {
+  it("Ownership: BE legacy transform_text_case + bump + style textCase normalize", () => {
     expect(patchService).toContain("_op_transform_text_case");
     expect(patchService).toContain("_op_bump_font_size");
     expect(patchService).toContain("normalize_block_text_style");

@@ -13,7 +13,8 @@ export type ContainerTypographyStyleKey =
   | "fontFamily"
   | "fontSize"
   | "color"
-  | "textHighlight";
+  | "textHighlight"
+  | "textCase";
 
 const CONTAINER_TYPOGRAPHY_KEYS: readonly ContainerTypographyStyleKey[] = [
   "fontWeight",
@@ -23,6 +24,7 @@ const CONTAINER_TYPOGRAPHY_KEYS: readonly ContainerTypographyStyleKey[] = [
   "fontSize",
   "color",
   "textHighlight",
+  "textCase",
 ] as const;
 
 function prunePartialRunStyle(
@@ -61,6 +63,32 @@ function prunePartialRunStyle(
   if (style.lineHeight != null && Number.isFinite(style.lineHeight)) {
     cleaned.lineHeight = style.lineHeight;
   }
+  if (style.baselineShift === "sub" || style.baselineShift === "super") {
+    cleaned.baselineShift = style.baselineShift;
+  }
+  if (typeof style.indentLevel === "number" && style.indentLevel > 0) {
+    cleaned.indentLevel = Math.min(8, Math.trunc(style.indentLevel));
+  }
+  /* textCase is orthogonal to container font patches — never drop on prune. */
+  if (
+    style.textCase === "sentence" ||
+    style.textCase === "lower" ||
+    style.textCase === "upper" ||
+    style.textCase === "title" ||
+    style.textCase === "toggle"
+  ) {
+    cleaned.textCase = style.textCase;
+  }
+  if (typeof style.textShadow === "string" && style.textShadow.trim()) {
+    cleaned.textShadow = style.textShadow.trim();
+  }
+  if (typeof style.textStrokeColor === "string" && style.textStrokeColor.trim()) {
+    cleaned.textStrokeColor = style.textStrokeColor.trim();
+  }
+  if (typeof style.textStrokeWidth === "number" && Number.isFinite(style.textStrokeWidth)) {
+    cleaned.textStrokeWidth = Math.max(0, style.textStrokeWidth);
+  }
+  if (style.textReflection === true) cleaned.textReflection = true;
   return Object.keys(cleaned).length > 0 ? cleaned : undefined;
 }
 

@@ -34,14 +34,15 @@ describe("RIBBON-TEXT-002 case/ack/range contracts", () => {
     expect(selectField).toContain("preserveTextEditFocusAttr");
   });
 
-  it("case usa BE transform_text_case com start/end e authoring runs", () => {
-    expect(blocks).toContain('op: "transform_text_case"');
-    expect(blocks).toContain("start: partial.start");
-    expect(blocks).toContain("end: partial.end");
-    expect(blocks).toContain("commitOpsAndApplyAck");
-    expect(blocks).not.toMatch(
-      /transformSelectedTextCase[\s\S]*resolveTextBlockDisplayRuns/,
-    );
+  it("case usa textCase de apresentação (não mutação destrutiva no ribbon)", () => {
+    expect(typography).toContain('applyTextFormatStyle({ textCase: next })');
+    expect(typography).toContain("textCaseSelectValue");
+    expect(typography).toContain("textCaseActiveLabel");
+    expect(typography).toContain('value: "none"');
+    expect(typography).toContain('label: "minúsculas"');
+    expect(typography).toContain('label: "Misto"');
+    expect(typography).not.toContain("transformSelectedTextCase");
+    expect(typography).not.toMatch(/value=\"\"[\s\S]*Maiúsculas/);
   });
 
   it("ack aplica nativeConfig com generation gate", () => {

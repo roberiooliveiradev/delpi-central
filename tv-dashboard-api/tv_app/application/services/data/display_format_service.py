@@ -1993,6 +1993,7 @@ class DisplayFormatService:
         fallback: str = EMPTY_DISPLAY,
         prefix: str = "",
         suffix: str = "",
+        text_case: str | None = None,
     ) -> str:
         field = str(ref.get("field") or "").strip()
         if not field:
@@ -2016,10 +2017,31 @@ class DisplayFormatService:
             if raw is None or raw == "":
                 return f"{prefix}{fallback}{suffix}"
             core = cls.format_value(raw, spec)
+        from tv_app.application.services.data.text_typography_service import (
+            apply_presentation_text_case,
+        )
+
+        core = apply_presentation_text_case(core, text_case)
         return f"{prefix}{core}{suffix}"
 
     @classmethod
+    def _resolve_run_text_case(
+        cls, run: dict[str, Any], block: dict[str, Any]
+    ) -> str | None:
+        style = run.get("style") if isinstance(run.get("style"), dict) else {}
+        case = str(style.get("textCase") or "").strip().lower()
+        if case and case != "none":
+            return case
+        block_style = block.get("style") if isinstance(block.get("style"), dict) else {}
+        case = str(block_style.get("textCase") or "").strip().lower()
+        return case if case and case != "none" else None
+
+    @classmethod
     def _apply_text_display(cls, resolved: dict[str, Any], block: dict[str, Any]) -> None:
+        from tv_app.application.services.data.text_typography_service import (
+            apply_presentation_text_case,
+        )
+
         runs = block.get("contentRuns")
         has_data_runs = False
         if isinstance(runs, list):
@@ -2031,6 +2053,11 @@ class DisplayFormatService:
             )
         linked = bool(str(block.get("dataSourceId") or "").strip())
         empty_fallback = EMPTY_DISPLAY if linked else ""
+        block_case = None
+        block_style = block.get("style") if isinstance(block.get("style"), dict) else {}
+        raw_case = str(block_style.get("textCase") or "").strip().lower()
+        if raw_case and raw_case != "none":
+            block_case = raw_case
 
         if has_data_runs and isinstance(runs, list):
             display_runs: list[dict[str, Any]] = []
@@ -2038,13 +2065,18 @@ class DisplayFormatService:
                 if not isinstance(run, dict):
                     continue
                 data_ref = run.get("dataRef")
+                case = cls._resolve_run_text_case(run, block)
                 if isinstance(data_ref, dict) and str(data_ref.get("field") or "").strip():
                     text = cls._format_data_ref(
-                        resolved, data_ref, fallback=empty_fallback or EMPTY_DISPLAY
+                        resolved,
+                        data_ref,
+                        fallback=empty_fallback or EMPTY_DISPLAY,
+                        text_case=case,
                     )
                     display_runs.append({**run, "text": text})
                 else:
-                    display_runs.append(dict(run))
+                    text = apply_presentation_text_case(str(run.get("text") or ""), case)
+                    display_runs.append({**run, "text": text})
             resolved["displayRuns"] = display_runs
             resolved["displayText"] = "".join(
                 str(r.get("text") or "") for r in display_runs
@@ -2071,7 +2103,27 @@ class DisplayFormatService:
                 fallback=fallback or EMPTY_DISPLAY,
                 prefix=str(projection.get("prefix") or ""),
                 suffix=str(projection.get("suffix") or ""),
+                text_case=block_case,
             )
+            resolved["displayText"] = text
+            resolved["displayRuns"] = [{"text": text}]
+            return
+
+        # Static text with presentation textCase — materialize displayRuns.
+        if block_case and isinstance(runs, list) and runs:
+            display_runs = []
+            for run in runs:
+                if not isinstance(run, dict):
+                    continue
+                case = cls._resolve_run_text_case(run, block)
+                text = apply_presentation_text_case(str(run.get("text") or ""), case)
+                display_runs.append({**run, "text": text})
+            resolved["displayRuns"] = display_runs
+            resolved["displayText"] = "".join(str(r.get("text") or "") for r in display_runs)
+            return
+        if block_case:
+            content = str(block.get("content") or "")
+            text = apply_presentation_text_case(content, block_case)
             resolved["displayText"] = text
             resolved["displayRuns"] = [{"text": text}]
 

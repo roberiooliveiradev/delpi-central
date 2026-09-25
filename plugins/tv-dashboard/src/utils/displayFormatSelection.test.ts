@@ -382,12 +382,61 @@ describe("displayFormatSelection", () => {
         },
       ],
     });
+    /*
+     * Paint canônico é server-owned (displayRuns). Sem enrich, fallback local
+     * não reformatá data no cliente — assert estrutural do patch acima basta.
+     */
     const painted = resolveTextBlockDisplayRuns({
       content: text.content,
       contentRuns: (allPatch as { contentRuns: typeof text.contentRuns }).contentRuns,
-      resolved: text.resolved,
+      resolved: {
+        ...text.resolved,
+        displayRuns: [
+          {
+            text: "24/09/2025",
+            dataRef: { field: "a", displayFormat: { category: "date", presetId: "date-short" } },
+          },
+          { text: " " },
+          {
+            text: "24/09/2026",
+            dataRef: { field: "b", displayFormat: { category: "date", presetId: "date-short" } },
+          },
+        ],
+      },
+      dataSourceId: "src-1",
     });
     expect(painted.map((run) => run.text).join("")).toBe("24/09/2025 24/09/2026");
+
+    /* RQ-06: displayFormat patch não apaga tipografia do run. */
+    const styled = {
+      ...text,
+      contentRuns: [
+        {
+          text: "A",
+          style: { fontWeight: "bold" as const, textCase: "upper" as const, color: "#abc" },
+          dataRef: {
+            field: "a",
+            displayFormat: { category: "currency" as const, currency: "BRL" },
+            format: "currency" as const,
+          },
+        },
+        { text: " " },
+        text.contentRuns[2]!,
+      ],
+    };
+    const stylePreserving = applyDisplayFormatSpecToBlock(
+      { selected: styled },
+      { category: "date", presetId: "date-short", pattern: "dd/mm/yyyy" },
+    ) as { contentRuns: typeof styled.contentRuns };
+    expect(stylePreserving.contentRuns[0]?.style).toEqual({
+      fontWeight: "bold",
+      textCase: "upper",
+      color: "#abc",
+    });
+    expect(stylePreserving.contentRuns[0]?.dataRef?.displayFormat).toEqual(
+      expect.objectContaining({ category: "date", presetId: "date-short" }),
+    );
+    expect(stylePreserving.contentRuns[0]?.dataRef?.field).toBe("a");
 
     expect(
       resolveDisplayFormatTarget({

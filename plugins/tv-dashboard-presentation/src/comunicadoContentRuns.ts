@@ -24,6 +24,7 @@ const RUN_STYLE_KEYS: Array<keyof ComunicadoContentRunStyle> = [
   "textStrokeWidth",
   "baselineShift",
   "indentLevel",
+  "textCase",
 ];
 
 function hasRunStyle(run: ComunicadoContentRun): boolean {
@@ -86,6 +87,16 @@ function normalizeRunStyle(value: unknown): ComunicadoContentRunStyle | undefine
   if (typeof raw.indentLevel === "number" && Number.isFinite(raw.indentLevel)) {
     const level = Math.trunc(raw.indentLevel);
     if (level > 0) style.indentLevel = Math.min(8, level);
+  }
+  if (
+    raw.textCase === "none" ||
+    raw.textCase === "sentence" ||
+    raw.textCase === "lower" ||
+    raw.textCase === "upper" ||
+    raw.textCase === "title" ||
+    raw.textCase === "toggle"
+  ) {
+    style.textCase = raw.textCase;
   }
   return Object.keys(style).length > 0 ? style : undefined;
 }

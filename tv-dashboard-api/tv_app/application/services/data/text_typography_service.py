@@ -34,8 +34,16 @@ def clamp_indent_level(raw: Any) -> int:
     return max(0, min(_INDENT_MAX, level))
 
 
+def apply_presentation_text_case(text: str, mode: str | None) -> str:
+    """Aplica textCase de apresentação após DisplayFormat; none/vazio = identidade."""
+    token = str(mode or "").strip().lower()
+    if not token or token == "none":
+        return text
+    return transform_text_case(text, token)
+
+
 def transform_text_case(text: str, mode: str) -> str:
-    """Mutate content casing (pt-BR). Not CSS text-transform."""
+    """Mutate casing (pt-BR). Used by presentation textCase and legacy transform_text_case op."""
     if not text:
         return text
     token = str(mode or "").strip().lower()
@@ -72,10 +80,9 @@ def transform_text_case(text: str, mode: str) -> str:
 def transform_content_runs_case(
     runs: list[Any], mode: str, *, start: int | None = None, end: int | None = None
 ) -> list[dict[str, Any]]:
-    """Transform case on authoring runs. dataRef runs stay atomic.
+    """Legacy destructive case on authoring runs. dataRef runs stay atomic.
 
-    Optional start/end are plain-text offsets over concatenated run texts
-    (dataRef placeholder length = len(text) or 1 for empty).
+    Prefer style.textCase + apply_presentation_text_case for ribbon formatting.
     """
     if start is None or end is None or start >= end:
         out: list[dict[str, Any]] = []
@@ -95,7 +102,7 @@ def transform_content_runs_case(
 
     safe_start = max(0, int(start))
     safe_end = max(safe_start, int(end))
-    out = []
+    out: list[dict[str, Any]] = []
     pos = 0
     for raw in runs:
         if not isinstance(raw, dict):
@@ -141,6 +148,13 @@ def normalize_run_style(style: dict[str, Any] | None) -> dict[str, Any] | None:
             out["indentLevel"] = level
         else:
             out.pop("indentLevel", None)
+    case = str(out.get("textCase") or "").strip().lower()
+    if case in _CASE_MODES:
+        out["textCase"] = case
+    elif case == "none":
+        out.pop("textCase", None)
+    else:
+        out.pop("textCase", None)
     return out
 
 
@@ -168,6 +182,11 @@ def normalize_block_text_style(style: dict[str, Any] | None) -> dict[str, Any] |
             out.pop(key, None)
         else:
             out[key] = value
+    case = str(out.get("textCase") or "").strip().lower()
+    if case in _CASE_MODES:
+        out["textCase"] = case
+    else:
+        out.pop("textCase", None)
     return out
 
 

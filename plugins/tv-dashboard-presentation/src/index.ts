@@ -310,6 +310,7 @@ export type {
   ComunicadoEfficiencyPinInfoMode,
   ComunicadoEfficiencyPinRole,
   ComunicadoTextBlock,
+  ComunicadoTextCase,
   ComunicadoTextCaseTransform,
   ComunicadoTextDecoration,
 } from "./comunicadoTypes";
@@ -818,6 +819,7 @@ export {
   indentPaddingPx,
   transformContentRunsCase,
   transformTextCase,
+  applyPresentationTextCase,
 } from "./textTypographyModel";
 export {
   COMUNICADO_TEXT_SHADOW_PRESETS,

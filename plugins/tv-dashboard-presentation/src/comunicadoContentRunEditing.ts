@@ -138,6 +138,8 @@ export type ContentRunStylePatch = {
   textDecoration?: ComunicadoTextDecoration | null;
   /** `null` remove sub/sup. */
   baselineShift?: "sub" | "super" | null;
+  /** `null` / `none` remove case de apresentação. */
+  textCase?: import("./comunicadoTypes").ComunicadoTextCase | null;
 };
 
 export type ContentRunSelectionStyleState = {
@@ -150,6 +152,8 @@ export type ContentRunSelectionStyleState = {
   color: string | "mixed" | null;
   textHighlight: string | "mixed" | null;
   baselineShift: "sub" | "super" | "none" | "mixed";
+  /** Case de apresentação no intervalo; `none` = sem transformação. */
+  textCase: import("./comunicadoTypes").ComunicadoTextCase | "mixed";
 };
 
 const TOGGLE_SPECS: Record<
@@ -254,6 +258,15 @@ function pruneRunStyle(style: ComunicadoContentRunStyle): ComunicadoContentRunSt
   }
   if (typeof style.indentLevel === "number" && style.indentLevel > 0) {
     cleaned.indentLevel = Math.min(8, Math.trunc(style.indentLevel));
+  }
+  if (
+    style.textCase === "sentence" ||
+    style.textCase === "lower" ||
+    style.textCase === "upper" ||
+    style.textCase === "title" ||
+    style.textCase === "toggle"
+  ) {
+    cleaned.textCase = style.textCase;
   }
   return Object.keys(cleaned).length > 0 ? cleaned : undefined;
 }
@@ -421,6 +434,7 @@ export function selectionRunStyleState(
       color: null,
       textHighlight: null,
       baselineShift: "none",
+      textCase: "none",
     };
   }
 
@@ -455,6 +469,21 @@ export function selectionRunStyleState(
         : "none",
     ),
   );
+  const textCaseStates = new Set(
+    chars.map((char) => {
+      const raw = String(char.style?.textCase || "none").trim().toLowerCase();
+      if (
+        raw === "sentence" ||
+        raw === "lower" ||
+        raw === "upper" ||
+        raw === "title" ||
+        raw === "toggle"
+      ) {
+        return raw;
+      }
+      return "none";
+    }),
+  );
 
   const singleOrMixed = <T extends string>(states: Set<T>, emptyAsNull = true): T | "mixed" | null => {
     if (states.size > 1) return "mixed";
@@ -485,6 +514,10 @@ export function selectionRunStyleState(
           : baselineStates.has("super")
             ? "super"
             : "none",
+    textCase:
+      textCaseStates.size > 1
+        ? "mixed"
+        : (([...textCaseStates][0] as import("./comunicadoTypes").ComunicadoTextCase) ?? "none"),
   };
 }
 
@@ -534,6 +567,10 @@ function applyStylePatchToRunStyle(
   if ("baselineShift" in patch) {
     if (patch.baselineShift == null) delete next.baselineShift;
     else next.baselineShift = patch.baselineShift;
+  }
+  if ("textCase" in patch) {
+    if (patch.textCase == null || patch.textCase === "none") delete next.textCase;
+    else next.textCase = patch.textCase;
   }
   return pruneRunStyle(next);
 }

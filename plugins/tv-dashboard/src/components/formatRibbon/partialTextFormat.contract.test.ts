@@ -40,7 +40,7 @@ describe("partial text format (ribbon → contentRuns)", () => {
     expect(shapeBlock).toContain("contentRunsFromEditableRoot");
   });
 
-  it("limpar formatação usa clearVisualBoxTextFormatting (zera runs)", () => {
+  it("limpar formatação usa clearVisualBoxTextFormatting (preserva binding)", () => {
     expect(typography).toContain("clearVisualBoxTextFormatting");
   });
 

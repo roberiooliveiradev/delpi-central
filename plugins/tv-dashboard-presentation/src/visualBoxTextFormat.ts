@@ -42,6 +42,7 @@ export type VisualBoxTextFormatSnapshot = {
   indentLevel?: number;
   paragraphSpacingBefore?: number;
   paragraphSpacingAfter?: number;
+  textCase?: string;
 };
 
 function resolveBlockRuns(block: ComunicadoVisualBoxBlock): ComunicadoContentRun[] {
@@ -107,6 +108,7 @@ function snapshotFromBlockStyle(
     indentLevel: style?.indentLevel,
     paragraphSpacingBefore: style?.paragraphSpacingBefore,
     paragraphSpacingAfter: style?.paragraphSpacingAfter,
+    textCase: style?.textCase && style.textCase !== "none" ? style.textCase : undefined,
   };
 }
 
@@ -162,6 +164,8 @@ export function resolveVisualBoxEffectiveTextFormatSnapshot(
     indentLevel: container.indentLevel,
     paragraphSpacingBefore: container.paragraphSpacingBefore,
     paragraphSpacingAfter: container.paragraphSpacingAfter,
+    textCase:
+      aggregateOptional(lineTypographies.map((item) => item.textCase)) ?? container.textCase,
   };
 }
 

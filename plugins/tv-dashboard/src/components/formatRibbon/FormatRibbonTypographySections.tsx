@@ -43,7 +43,6 @@ import {
   selectionListTypeState,
   resolveInputContrastBackground,
   type ComunicadoBlock,
-  type ComunicadoTextCaseTransform,
 } from "@delpi/tv-dashboard-presentation";
 import {
   NumberStepperControl,
@@ -155,7 +154,6 @@ export function FormatRibbonTypographySections({
     applySelectedNamedTextStyle,
     uploadCustomFont,
     uploading,
-    transformSelectedTextCase,
     bumpSelectedFontSize,
   } = useComunicadoEditor();
   const fontUploadInputRef = useRef<HTMLInputElement>(null);
@@ -329,6 +327,10 @@ export function FormatRibbonTypographySections({
       if (patch.baselineShift !== undefined) {
         runPatch.baselineShift = patch.baselineShift;
       }
+      if (patch.textCase !== undefined) {
+        runPatch.textCase =
+          patch.textCase as import("@delpi/tv-dashboard-presentation").ComunicadoTextCase | null;
+      }
       if (Object.keys(runPatch).length > 0 && applyEditingTextRunStylePatch(runPatch)) {
         return;
       }
@@ -350,6 +352,10 @@ export function FormatRibbonTypographySections({
       }
       if (patch.baselineShift !== undefined) {
         runPatch.baselineShift = patch.baselineShift;
+      }
+      if (patch.textCase !== undefined) {
+        runPatch.textCase =
+          patch.textCase as import("@delpi/tv-dashboard-presentation").ComunicadoTextCase | null;
       }
       if (applyEditingTextRunStylePatch(runPatch)) return;
     }
@@ -547,14 +553,33 @@ export function FormatRibbonTypographySections({
   const fontTitle =
     textFormatTarget.mode === "part" ? `Fonte · ${textFormatTarget.partLabel}` : "Fonte";
 
-  const TEXT_CASE_OPTIONS: Array<{ value: ComunicadoTextCaseTransform | ""; label: string }> = [
-    { value: "", label: "Maiúsculas" },
+  const TEXT_CASE_OPTIONS: Array<{ value: string; label: string }> = [
+    { value: "none", label: "Aa" },
     { value: "sentence", label: "Tipo frase" },
     { value: "lower", label: "minúsculas" },
     { value: "upper", label: "MAIÚSCULAS" },
     { value: "title", label: "Todas As Palavras" },
     { value: "toggle", label: "aLTERNAR cASO" },
   ];
+  const aggregatedTextCase =
+    multiVisualBox && aggregatedStyle ? aggregatedStyle.textCase : undefined;
+  const effectiveTextCaseRaw =
+    partialTextSelectionActive && textEditSelectionStyle
+      ? textEditSelectionStyle.textCase
+      : formatStyle?.textCase;
+  const textCaseSelectValue =
+    aggregatedTextCase === "mixed" || effectiveTextCaseRaw === "mixed"
+      ? "mixed"
+      : String(effectiveTextCaseRaw || "none").toLowerCase() === "none" || !effectiveTextCaseRaw
+        ? "none"
+        : String(effectiveTextCaseRaw).toLowerCase();
+  const textCaseOptions =
+    textCaseSelectValue === "mixed"
+      ? [{ value: "mixed", label: "Misto" }, ...TEXT_CASE_OPTIONS]
+      : TEXT_CASE_OPTIONS;
+  const textCaseActiveLabel =
+    TEXT_CASE_OPTIONS.find((opt) => opt.value === textCaseSelectValue)?.label ??
+    (textCaseSelectValue === "mixed" ? "Misto" : "Aa");
 
   const paragraphAlignBody = (
     <div className="td-deck-ribbon__toolbar td-deck-ribbon__toolbar--paragraph">
@@ -934,16 +959,24 @@ export function FormatRibbonTypographySections({
             {showParagraphLists || isTextBlock || isShapeTextTarget ? (
               <>
                 <span className="td-deck-ribbon__toolbar-sep" aria-hidden="true" />
-                <HintAction hint={H.textCase} ariaLabel="Ajuda: Maiúsculas e minúsculas">
+                <HintAction
+                  hint={`${H.textCase} Ativo: ${textCaseActiveLabel}`}
+                  ariaLabel="Ajuda: Maiúsculas e minúsculas"
+                >
                   <TdRibbonSelect
-                    aria-label="Alterar maiúsculas"
+                    aria-label={`Maiúsculas e minúsculas: ${textCaseActiveLabel}`}
                     className="td-deck-ribbon__select--compact"
-                    value=""
+                    value={textCaseSelectValue}
+                    disabled={textCaseSelectValue === "mixed" && !multiVisualBox}
                     onChange={(value) => {
-                      if (!value) return;
-                      transformSelectedTextCase(value as ComunicadoTextCaseTransform);
+                      if (!value || value === "mixed") return;
+                      const next =
+                        value === "none"
+                          ? null
+                          : (value as import("@delpi/tv-dashboard-presentation").ComunicadoTextCase);
+                      applyTextFormatStyle({ textCase: next });
                     }}
-                    options={TEXT_CASE_OPTIONS}
+                    options={textCaseOptions}
                   />
                 </HintAction>
               </>

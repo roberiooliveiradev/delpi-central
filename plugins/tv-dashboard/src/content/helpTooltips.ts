@@ -59,7 +59,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     paragraphSpacingAfter: "Espaço abaixo do parágrafo, em pixels.",
     subscript: "Aplica subscrito ao texto selecionado (Ctrl+=).",
     superscript: "Aplica sobrescrito ao texto selecionado (Ctrl+Shift+=).",
-    textCase: "Altera maiúsculas/minúsculas do conteúdo (não é CSS text-transform).",
+    textCase: "Define maiúsculas/minúsculas como propriedade de apresentação (reversível; não altera o texto canônico nem o dataRef).",
     indentDecrease: "Diminui o recuo do parágrafo.",
     indentIncrease: "Aumenta o recuo do parágrafo.",
     box: "Estilos, sombra, preenchimento, contorno, raio e opacidade da caixa de texto.",
@@ -116,7 +116,8 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     italic: "Aplica ou remove itálico no trecho selecionado ou no bloco inteiro.",
     underline: "Sublinha o trecho selecionado ou o bloco inteiro.",
     strikethrough: "Tacha o trecho selecionado ou o bloco inteiro.",
-    clearFormatting: "Remove formatação de fonte e volta ao estilo padrão do bloco.",
+    clearFormatting:
+      "Remove tipografia (fonte, cor, case, realce). Preserva binding, dataRef e formato de número/data.",
     textColor: "Cor do texto do bloco ou do trecho selecionado.",
     textHighlight: "Cor de realce (marca-texto) do trecho selecionado.",
     alignLeft: "Alinha o parágrafo à esquerda.",

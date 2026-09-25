@@ -26,6 +26,7 @@ export const CLEARABLE_STYLE_KEYS = new Set<string>([
   "indentLevel",
   "paragraphSpacingBefore",
   "paragraphSpacingAfter",
+  "textCase",
 ]);
 
 function shouldClearStyleValue(key: string, value: unknown): boolean {
