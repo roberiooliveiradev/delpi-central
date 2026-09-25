@@ -181,6 +181,13 @@ export type DataTableSectionProps<T> = {
    * Chave localStorage — ativa toggle Tabela/Cards (exige `renderCard`).
    */
   viewLayoutPreferencesKey?: string;
+  /**
+   * Layout inicial quando não há valor persistido (desktop).
+   * Em viewports ≤ `viewLayoutMobileMaxWidthPx` o default vira cards.
+   */
+  viewLayoutDefaultMode?: "table" | "cards" | "board";
+  /** Breakpoint (px) em que o default sem preferência passa a cards. Default 768. */
+  viewLayoutMobileMaxWidthPx?: number;
   /** Render de cada linha no modo Cards. */
   renderCard?: (row: T) => ReactNode;
   /** Export Excel nativo na toolbar (opt-in). */
@@ -326,6 +333,8 @@ export function DataTableSection<T>({
   fontSizePreferencesKey,
   fontSizeLegacyStorageKeys,
   viewLayoutPreferencesKey,
+  viewLayoutDefaultMode = "table",
+  viewLayoutMobileMaxWidthPx = 768,
   renderCard,
   excelExport,
   uiPrefix = "ds",
@@ -405,6 +414,8 @@ export function DataTableSection<T>({
   const { layout, setLayout } = usePersistedViewLayout({
     storageKey: viewLayoutPreferencesKey ?? "",
     enabled: viewLayoutEnabled,
+    defaultMode: viewLayoutDefaultMode,
+    mobileMaxWidthPx: viewLayoutMobileMaxWidthPx,
   });
 
   const visibleColumns = useMemo(

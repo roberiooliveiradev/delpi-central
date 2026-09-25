@@ -2944,6 +2944,13 @@
       "stable": true
     },
     {
+      "operationId": "list_product_inventory_blocks",
+      "method": "POST",
+      "path": "/products/inventory-blocks",
+      "tag": "products",
+      "stable": true
+    },
+    {
       "operationId": "search_products",
       "method": "GET",
       "path": "/products/search",

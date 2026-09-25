@@ -3992,6 +3992,15 @@
       "status": "covered"
     },
     {
+      "operationId": "list_product_inventory_blocks",
+      "method": "POST",
+      "path": "/products/inventory-blocks",
+      "module": "products",
+      "entity": "product_inventory_blocks",
+      "shape": "list",
+      "status": "covered"
+    },
+    {
       "operationId": "search_products",
       "method": "GET",
       "path": "/products/search",

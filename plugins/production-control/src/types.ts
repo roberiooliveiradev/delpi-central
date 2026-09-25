@@ -953,6 +953,7 @@ export type LineFeederRequirement = {
   production_orders: string[];
   operation_count: number;
   pickup_location?: string;
+  inventory_blocked?: boolean;
 };
 
 export type LineFeederSummary = {
@@ -1023,6 +1024,7 @@ export type LineFeederProductDetail = {
     description: string;
     unit: string;
     pickup_location: string;
+    inventory_blocked?: boolean;
   };
   work_centers: LineFeederProductWorkCenter[];
   stock: {

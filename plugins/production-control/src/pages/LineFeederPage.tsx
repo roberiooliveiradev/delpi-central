@@ -17,6 +17,7 @@ import {
 } from "../api/ppcApi";
 import { LineFeederPickPlanPanel } from "../components/LineFeederPickPlanPanel";
 import { LineFeederProductDetailModal } from "../components/LineFeederProductDetailModal";
+import { LineFeederRequirementCard } from "../components/LineFeederRequirementCard";
 import { PpcWorkspaceHeader } from "../components/PpcWorkspaceHeader";
 import { copy } from "../content/copy";
 import { helpTooltips } from "../content/helpTooltips";
@@ -261,6 +262,26 @@ export function LineFeederPage({
 
   const columns = [
     {
+      key: "inventory_blocked",
+      header: texts.columns.inventoryBlock,
+      align: "center" as const,
+      className: "ppc-feeder__inv-col",
+      render: (row: LineFeederRequirement) => {
+        const blocked = Boolean(row.inventory_blocked);
+        return (
+          <span
+            className={
+              blocked
+                ? "ppc-feeder__inv-dot ppc-feeder__inv-dot--blocked"
+                : "ppc-feeder__inv-dot ppc-feeder__inv-dot--ok"
+            }
+            title={blocked ? texts.inventoryBlocked : texts.inventoryFree}
+            aria-label={blocked ? texts.inventoryBlocked : texts.inventoryFree}
+          />
+        );
+      },
+    },
+    {
       key: "work_center",
       header: texts.columns.workCenter,
       render: (row: LineFeederRequirement) => row.work_center,
@@ -305,12 +326,6 @@ export function LineFeederPage({
       key: "first_scheduled_at",
       header: texts.columns.firstScheduled,
       render: (row: LineFeederRequirement) => formatScheduleTime(row.first_scheduled_at),
-    },
-    {
-      key: "first_production_order",
-      header: texts.columns.order,
-      render: (row: LineFeederRequirement) =>
-        `${row.first_production_order}/${row.first_operation_code}`,
     },
   ];
 
@@ -461,7 +476,6 @@ export function LineFeederPage({
 
           <DataTableSection<LineFeederRequirement>
             title={texts.tableTitle}
-            hint={texts.tableHint}
             columns={columns}
             rows={rows}
             rowKey={(row) => `${row.work_center}|${row.product_code}`}
@@ -469,7 +483,16 @@ export function LineFeederPage({
             refreshing={refreshing}
             emptyMessage={texts.empty}
             searchPlaceholder={texts.searchPlaceholder}
-            columnPreferencesKey="production-control:line-feeder:columns:v3"
+            columnPreferencesKey="production-control:line-feeder:columns:v5"
+            viewLayoutPreferencesKey="production-control:line-feeder:layout:v1"
+            viewLayoutMobileMaxWidthPx={1280}
+            renderCard={(row) => (
+              <LineFeederRequirementCard
+                row={row}
+                statuses={statuses}
+                onOpen={(item) => setSelectedProductCode(item.product_code)}
+              />
+            )}
             onRowClick={(row) => setSelectedProductCode(row.product_code)}
           />
 

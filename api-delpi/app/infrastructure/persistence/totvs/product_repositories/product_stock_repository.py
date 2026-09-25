@@ -7,6 +7,9 @@ from app.infrastructure.persistence.totvs.pagination import paginate
 from app.infrastructure.persistence.totvs.product_repositories.product_physical_locations_sql import (
     physical_locations_sql,
 )
+from app.infrastructure.persistence.totvs.product_repositories.product_inventory_blocks_sql import (
+    inventory_blocks_sql,
+)
 from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
 
 from app.application.models.page import Page
@@ -118,3 +121,20 @@ class ProductStockRepository(
         params = (branch, *codes)
         with self as repo:
             return repo.execute_query(sql, params)
+
+    def fetch_inventory_blocks(
+        self,
+        *,
+        branch: str,
+        warehouse: str,
+        product_codes: Sequence[str],
+    ) -> list[dict]:
+        codes = tuple(product_codes or ())
+        if not codes:
+            return []
+
+        sql = inventory_blocks_sql(product_count=len(codes))
+        params = (branch, warehouse, *codes)
+        with self as repo:
+            return repo.execute_query(sql, params)
+

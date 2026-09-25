@@ -66,4 +66,24 @@ describe("usePersistedViewLayout", () => {
     expect(result.current.layout).toBe("board");
     expect(storage.get("demo:layout")).toBe("board");
   });
+
+  it("usa cards no breakpoint de tablet quando mobileMaxWidthPx cobre a viewport", () => {
+    vi.stubGlobal("matchMedia", (query: string) => ({
+      matches: query.includes("1280"),
+      media: query,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+      addListener: () => undefined,
+      removeListener: () => undefined,
+      dispatchEvent: () => false,
+      onchange: null,
+    }));
+    const { result } = renderHook(() =>
+      usePersistedViewLayout({
+        storageKey: "demo:layout:tablet",
+        mobileMaxWidthPx: 1280,
+      }),
+    );
+    expect(result.current.layout).toBe("cards");
+  });
 });

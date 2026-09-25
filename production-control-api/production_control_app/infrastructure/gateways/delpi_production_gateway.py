@@ -494,6 +494,25 @@ class DelpiProductionGateway:
             },
         )
 
+    def fetch_product_inventory_blocks(
+        self,
+        *,
+        branch: str,
+        product_codes: Sequence[str],
+        warehouse: str = "01",
+    ) -> dict[str, Any]:
+        """Bloqueio de inventário SB2 em lote — TOTVS puro, sem inventar ausência."""
+        codes = [str(code or "").strip() for code in product_codes or ()]
+        return self._request(
+            "POST",
+            "/products/inventory-blocks",
+            json_body={
+                "branch": branch,
+                "warehouse": warehouse,
+                "product_codes": [code for code in codes if code],
+            },
+        )
+
     def fetch_process_inspections_for_operation(
         self,
         *,

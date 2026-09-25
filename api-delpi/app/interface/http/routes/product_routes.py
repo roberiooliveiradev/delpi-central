@@ -49,6 +49,9 @@ from app.application.dto.product.list_product_stock_request import ListProductSt
 from app.application.dto.product.list_product_physical_locations_request import (
     ListProductPhysicalLocationsRequest,
 )
+from app.application.dto.product.list_product_inventory_blocks_request import (
+    ListProductInventoryBlocksRequest,
+)
 from app.application.dto.product.list_product_inbound_invoice_items_request import ListProductInboundInvoiceItemsRequest
 from app.application.dto.product.list_product_outbound_invoice_items_request import ListProductOutboundInvoiceItemsRequest
 from app.application.dto.product.list_product_purchases_request import ListProductPurchasesRequest
@@ -151,6 +154,7 @@ from app.composition.product_composer import (
     build_list_product_internal_movements_use_case,
     build_list_product_stock_use_case,
     build_list_product_physical_locations_use_case,
+    build_list_product_inventory_blocks_use_case,
     build_list_product_inbound_invoice_items_use_case,
     build_list_product_outbound_invoice_items_use_case,
     build_list_product_purchases,
@@ -268,6 +272,60 @@ def list_product_physical_locations(
         log_error(f"Erro em products/physical-locations: {e}")
         return error_response(
             "Erro interno ao buscar locais físicos dos produtos.",
+            status_code=500,
+        )
+
+
+class InventoryBlocksBatchRequest(BaseModel):
+    branch: str = Field(..., min_length=2, max_length=2)
+    product_codes: list[str] = Field(default_factory=list)
+    warehouse: str = Field(default="01", min_length=1, max_length=10)
+
+
+_INVENTORY_BLOCKS_FIELDS = {
+    "product_code": {"label": "Produto", "type": "string"},
+    "warehouse": {"label": "Armazém", "type": "string"},
+    "inventory_blocked": {"label": "Bloqueado para inventário", "type": "boolean"},
+    "inventory_block_start": {"label": "Início do bloqueio", "type": "string"},
+    "inventory_block_end": {"label": "Fim do bloqueio", "type": "string"},
+}
+
+
+@router.post(
+    "/inventory-blocks",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "list_product_inventory_blocks",
+        path="/products/inventory-blocks",
+    ),
+)
+@require_permission(API_DELPI_ACCESS)
+def list_product_inventory_blocks(
+    body: InventoryBlocksBatchRequest = Body(...),
+):
+    """Bloqueio de inventário SB2 (B2_DTINV/B2_DINVFIM) de vários produtos no armazém."""
+    try:
+        result = build_list_product_inventory_blocks_use_case().execute(
+            ListProductInventoryBlocksRequest(
+                product_codes=body.product_codes,
+                branch=body.branch,
+                warehouse=body.warehouse,
+            )
+        )
+        return product_success(
+            result,
+            operation_id="list_product_inventory_blocks",
+            entity="product_inventory_blocks",
+            shape="list",
+            fields=_INVENTORY_BLOCKS_FIELDS,
+            message="Bloqueios de inventário dos produtos carregados com sucesso.",
+        )
+    except ValueError as e:
+        log_error(f"Erro de validação em products/inventory-blocks: {e}")
+        return error_response(str(e), status_code=400)
+    except Exception as e:
+        log_error(f"Erro em products/inventory-blocks: {e}")
+        return error_response(
+            "Erro interno ao buscar bloqueios de inventário dos produtos.",
             status_code=500,
         )
 

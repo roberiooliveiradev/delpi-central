@@ -39,6 +39,7 @@ const DETAIL: LineFeederProductDetail = {
     description: "CHAPA",
     unit: "PC",
     pickup_location: "A-01",
+    inventory_blocked: false,
   },
   work_centers: [
     {
@@ -75,7 +76,7 @@ describe("LineFeederProductDetailModal", () => {
     expect(screen.getByText("A-01")).toBeTruthy();
     expect(screen.getByText("Saldo no almoxarifado")).toBeTruthy();
     expect(screen.getByText(`${formatOpQuantity(250)} PC`)).toBeTruthy();
-    expect(screen.getByText("Já na bancada")).toBeTruthy();
+    expect(screen.getByText("Já na fábrica")).toBeTruthy();
     expect(screen.queryByText("Nenhuma transferência recente para este produto.")).toBeNull();
   });
 

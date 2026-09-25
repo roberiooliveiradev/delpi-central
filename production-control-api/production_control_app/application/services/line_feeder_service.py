@@ -87,6 +87,8 @@ class _Requirements:
     truncated_orders: bool
     # product_code -> BZ_MPLOCAL; ausência no mapa = local vazio.
     pickup_locations: dict[str, str]
+    # product_code -> bloqueado para inventário no armazém 01; ausência = livre.
+    inventory_blocks: dict[str, bool]
 
 
 class _RequirementsCache:
@@ -165,11 +167,20 @@ class LineFeederService:
             list(computed.items), work_center=center or None, status=wanted_status
         )
         locations = computed.pickup_locations
-        items_payload = [_requirement_payload(item, locations) for item in visible]
+        blocks = computed.inventory_blocks
+        items_payload = [
+            _requirement_payload(item, locations, blocks) for item in visible
+        ]
         groups = group_by_work_center(visible)
         for group in groups:
             group["items"] = [
-                {**row, "pickup_location": locations.get(row.get("product_code") or "", "")}
+                {
+                    **row,
+                    "pickup_location": locations.get(row.get("product_code") or "", ""),
+                    "inventory_blocked": bool(
+                        blocks.get(row.get("product_code") or "", False)
+                    ),
+                }
                 for row in group["items"]
             ]
 
@@ -259,6 +270,9 @@ class LineFeederService:
                 "description": first.description,
                 "unit": first.unit,
                 "pickup_location": computed.pickup_locations.get(first.product_code, ""),
+                "inventory_blocked": bool(
+                    computed.inventory_blocks.get(first.product_code, False)
+                ),
             },
             "work_centers": work_centers,
             "stock": self._product_stock(branch=code, product_code=wanted, warehouse=warehouse),
@@ -366,6 +380,7 @@ class LineFeederService:
                 balances_available=True,
                 truncated_orders=False,
                 pickup_locations={},
+                inventory_blocks={},
             )
             self._cache.set(cache_key, computed)
             return computed
@@ -387,6 +402,9 @@ class LineFeederService:
         pickup_locations = self._fetch_pickup_locations(
             branch=branch, product_codes=product_codes
         )
+        inventory_blocks = self._fetch_inventory_blocks(
+            branch=branch, product_codes=product_codes
+        )
 
         items = build_requirements(
             operations,
@@ -403,6 +421,7 @@ class LineFeederService:
             balances_available=balances_available,
             truncated_orders=truncated,
             pickup_locations=pickup_locations,
+            inventory_blocks=inventory_blocks,
         )
         self._cache.set(cache_key, computed)
         return computed
@@ -619,6 +638,33 @@ class LineFeederService:
                 continue
             locations[code] = _text(row.get("physical_location"))
         return locations
+
+    def _fetch_inventory_blocks(
+        self,
+        *,
+        branch: str,
+        product_codes: list[str],
+    ) -> dict[str, bool]:
+        """Bloqueio de inventário no armazém fonte. Bloco degradável: ausência = livre."""
+        if not product_codes:
+            return {}
+        warehouse = setting_str("sourceWarehouse", "01")
+        try:
+            payload = self._gateway.fetch_product_inventory_blocks(
+                branch=branch,
+                product_codes=product_codes,
+                warehouse=warehouse,
+            )
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("line_feeder_inventory_blocks_unavailable: %s", exc)
+            return {}
+        blocks: dict[str, bool] = {}
+        for row in _items(payload):
+            code = _text(row.get("product_code"))
+            if not code:
+                continue
+            blocks[code] = bool(row.get("inventory_blocked"))
+        return blocks
 
     # ------------------------------------------------------------------ #
     # Lista de coleta
@@ -839,9 +885,13 @@ def _commitment_batch_size() -> int:
 def _requirement_payload(
     item: MaterialRequirement,
     locations: dict[str, str],
+    inventory_blocks: dict[str, bool] | None = None,
 ) -> dict[str, Any]:
     payload = item.as_dict()
     payload["pickup_location"] = locations.get(item.product_code, "")
+    payload["inventory_blocked"] = bool(
+        (inventory_blocks or {}).get(item.product_code, False)
+    )
     return payload
 
 

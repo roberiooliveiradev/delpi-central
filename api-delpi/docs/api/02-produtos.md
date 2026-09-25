@@ -359,6 +359,20 @@ Resposta: `items[]` com `product_code` e `physical_location`. Produto **sem** re
 
 ---
 
+## POST /products/inventory-blocks
+
+Bloqueio de inventário de **vários** produtos (`SB2010.B2_DTINV` / `B2_DINVFIM`) na filial e armazém.
+
+| Body | Obrigatório | Descrição |
+|---|---|---|
+| `branch` | sim | Filial TOTVS (`01` ou `02`). |
+| `product_codes` | sim (pode ser `[]`) | Lista de códigos; teto 2000; deduplica e trim. |
+| `warehouse` | não (default `01`) | Armazém (`B2_LOCAL`). |
+
+Resposta: `items[]` com `product_code`, `warehouse`, datas de bloqueio e `inventory_blocked` (hoje ∈ intervalo). Produto **sem** saldo SB2 no armazém **não** entra — o consumidor trata ausência como livre. Regra: sem `B2_DTINV` = livre; com início e sem fim = bloqueado a partir do início; com fim = bloqueado enquanto início ≤ hoje ≤ fim.
+
+---
+
 ## GET /products/{code}/inbound-invoice-items
 
 Itens de NF-e de **entrada** com o produto.

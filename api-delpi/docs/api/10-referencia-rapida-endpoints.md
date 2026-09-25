@@ -54,6 +54,7 @@ Legenda de permissões:
 | GET | `/products/{code}/internal-movements` | A |
 | GET | `/products/{code}/stock` | A |
 | POST | `/products/physical-locations` | A |
+| POST | `/products/inventory-blocks` | A |
 | GET | `/products/{code}/inbound-invoice-items` | A |
 | GET | `/products/{code}/outbound-invoice-items` | A |
 | GET | `/products/{code}/purchases` | A |

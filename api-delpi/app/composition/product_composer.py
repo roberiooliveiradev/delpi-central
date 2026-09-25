@@ -138,6 +138,14 @@ def build_list_product_physical_locations_use_case():
 
     return ListProductPhysicalLocationsUseCase(repository=ProductStockRepository())
 
+
+def build_list_product_inventory_blocks_use_case():
+    from app.application.use_cases.product.list_product_inventory_blocks_use_case import (
+        ListProductInventoryBlocksUseCase,
+    )
+
+    return ListProductInventoryBlocksUseCase(repository=ProductStockRepository())
+
 def build_list_product_inbound_invoice_items_use_case():
     repository = ProductInvoiceItemsRepository()
     return ListProductInboundInvoiceItemsUseCase(repository)

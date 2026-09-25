@@ -28,3 +28,15 @@ class ProductStockRepositoryPort(ABC):
     ) -> list[dict]:
         """Locais físicos (BZ_MPLOCAL) dos produtos na filial — só quem tem SBZ."""
         pass
+
+    @abstractmethod
+    def fetch_inventory_blocks(
+        self,
+        *,
+        branch: str,
+        warehouse: str,
+        product_codes: Sequence[str],
+    ) -> list[dict]:
+        """Bloqueio de inventário SB2 (B2_DTINV/B2_DINVFIM) — só quem tem saldo no armazém."""
+        pass
+

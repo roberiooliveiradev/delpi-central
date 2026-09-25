@@ -9148,5 +9148,20 @@
       },
       "category": "commercial"
     }
+  },
+  "list_product_inventory_blocks": {
+    "locale": {
+      "en": {
+        "summary": "Inventory block status in batch",
+        "description": "SB2 inventory block window (B2_DTINV/B2_DINVFIM) for product codes in one branch and warehouse. Products without SB2 are omitted — the consumer treats absence as not blocked.",
+        "label": "Product inventory blocks (batch)"
+      },
+      "pt-BR": {
+        "label": "Bloqueios de inventário dos produtos em lote",
+        "summary": "Bloqueio de inventário (SB2) de vários produtos",
+        "description": "Janela B2_DTINV/B2_DINVFIM para uma lista de códigos na filial e armazém. Produto sem SB2 não aparece — o consumidor trata ausência como livre."
+      }
+    },
+    "category": "products"
   }
 }

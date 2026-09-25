@@ -16,6 +16,7 @@ const DETAIL: LineFeederProductDetail = {
     description: "CHAPA",
     unit: "PC",
     pickup_location: "A-01",
+    inventory_blocked: false,
   },
   work_centers: [
     {

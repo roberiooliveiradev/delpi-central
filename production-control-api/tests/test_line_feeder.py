@@ -105,6 +105,8 @@ class FakeGateway:
         balances_fail: bool = False,
         locations: dict[str, str] | None = None,
         locations_fail: bool = False,
+        inventory_blocks: dict[str, bool] | None = None,
+        inventory_blocks_fail: bool = False,
         movements: list[dict[str, Any]] | None = None,
         movements_fail: bool = False,
     ) -> None:
@@ -113,11 +115,14 @@ class FakeGateway:
         self.balances_fail = balances_fail
         self.locations = locations or {}
         self.locations_fail = locations_fail
+        self.inventory_blocks = inventory_blocks or {}
+        self.inventory_blocks_fail = inventory_blocks_fail
         self.movements = movements or []
         self.movements_fail = movements_fail
         self.batch_calls: list[dict[str, Any]] = []
         self.balance_calls: list[dict[str, Any]] = []
         self.location_calls: list[dict[str, Any]] = []
+        self.inventory_block_calls: list[dict[str, Any]] = []
         self.movement_calls: list[dict[str, Any]] = []
 
     def fetch_operation_materials_batch(
@@ -152,6 +157,34 @@ class FakeGateway:
         rows = [
             {"product_code": code, "physical_location": location}
             for code, location in self.locations.items()
+            if not wanted or code in wanted
+        ]
+        return {"success": True, "data": {"items": rows}}
+
+    def fetch_product_inventory_blocks(
+        self,
+        *,
+        branch: str,
+        product_codes: list[str],
+        warehouse: str = "01",
+    ) -> dict[str, Any]:
+        if self.inventory_blocks_fail:
+            raise DelpiGatewayError("api-delpi indisponível.")
+        self.inventory_block_calls.append(
+            {
+                "branch": branch,
+                "warehouse": warehouse,
+                "product_codes": list(product_codes),
+            }
+        )
+        wanted = set(product_codes or [])
+        rows = [
+            {
+                "product_code": code,
+                "warehouse": warehouse,
+                "inventory_blocked": blocked,
+            }
+            for code, blocked in self.inventory_blocks.items()
             if not wanted or code in wanted
         ]
         return {"success": True, "data": {"items": rows}}
@@ -349,6 +382,8 @@ def _service(
     balances_fail: bool = False,
     locations: dict[str, str] | None = None,
     locations_fail: bool = False,
+    inventory_blocks: dict[str, bool] | None = None,
+    inventory_blocks_fail: bool = False,
     movements: list[dict[str, Any]] | None = None,
     movements_fail: bool = False,
     payload: dict[str, Any] | None = None,
@@ -361,6 +396,8 @@ def _service(
         balances_fail=balances_fail,
         locations=locations,
         locations_fail=locations_fail,
+        inventory_blocks=inventory_blocks,
+        inventory_blocks_fail=inventory_blocks_fail,
         movements=movements,
         movements_fail=movements_fail,
     )
@@ -826,6 +863,56 @@ def test_pickup_location_failure_does_not_block_requirements() -> None:
     )
     data = _requirements(service)
     assert data["items"][0]["pickup_location"] == ""
+
+
+def test_requirements_include_inventory_blocked() -> None:
+    service, gateway, _ = _service(
+        operations=[_operation(work_center="CT-01", order="10840401001")],
+        commitments=[_commitment("10840401001", "50320064", 10.0)],
+        balances={"99": {}, "01": {"50320064": 10.0}},
+        inventory_blocks={"50320064": True},
+    )
+    data = _requirements(service)
+    assert data["items"][0]["inventory_blocked"] is True
+    assert gateway.inventory_block_calls[0]["warehouse"] == "01"
+
+
+def test_requirements_default_inventory_not_blocked() -> None:
+    service, _, _ = _service(
+        operations=[_operation(work_center="CT-01", order="10840401001")],
+        commitments=[_commitment("10840401001", "50320064", 10.0)],
+        balances={"99": {}, "01": {"50320064": 10.0}},
+    )
+    data = _requirements(service)
+    assert data["items"][0]["inventory_blocked"] is False
+
+
+def test_inventory_blocks_failure_does_not_block_requirements() -> None:
+    service, _, _ = _service(
+        operations=[_operation(work_center="CT-01", order="10840401001")],
+        commitments=[_commitment("10840401001", "50320064", 10.0)],
+        balances={"99": {}, "01": {"50320064": 10.0}},
+        inventory_blocks_fail=True,
+    )
+    data = _requirements(service)
+    assert data["items"][0]["inventory_blocked"] is False
+
+
+def test_product_detail_includes_inventory_blocked() -> None:
+    service, _, _ = _service(
+        operations=[_operation(work_center="CT-01", order="10840401001")],
+        commitments=[_commitment("10840401001", "50320064", 10.0)],
+        balances={"99": {}, "01": {"50320064": 10.0}},
+        inventory_blocks={"50320064": True},
+    )
+    detail = service.get_product_detail(
+        _user(*FULL_PERMS),
+        product_code="50320064",
+        branch="01",
+        cutoff_date="2026-09-22",
+        cutoff_time="14:00",
+    )
+    assert detail["product"]["inventory_blocked"] is True
 
 
 def test_pick_plan_for_single_work_center_ignores_other_benches() -> None:

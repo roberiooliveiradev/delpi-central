@@ -98,6 +98,9 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "list_product_physical_locations": RouteContract(
         "product_physical_locations", "list"
     ),
+    "list_product_inventory_blocks": RouteContract(
+        "product_inventory_blocks", "list"
+    ),
     "get_product_analyser": RouteContract("product_analyser", "composite_analysis"),
     "get_product_drawing": RouteContract("product_drawing", "scalar"),
     "get_product_drawing_pdf": RouteContract("product_drawing", "document_export"),

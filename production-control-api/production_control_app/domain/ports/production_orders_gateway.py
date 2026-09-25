@@ -135,6 +135,15 @@ class ProductionOrdersGateway(Protocol):
     ) -> dict[str, Any]:
         ...
 
+    def fetch_product_inventory_blocks(
+        self,
+        *,
+        branch: str,
+        product_codes: Sequence[str],
+        warehouse: str = "01",
+    ) -> dict[str, Any]:
+        ...
+
     def fetch_production_order_sets_incomplete(
         self,
         *,

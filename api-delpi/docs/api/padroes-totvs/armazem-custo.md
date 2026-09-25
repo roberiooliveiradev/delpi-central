@@ -119,3 +119,24 @@ Filial (`B2_FILIAL`) **não** é armazém (`B2_LOCAL`). Ver [filiais.md](./filia
 | Saldos por armazém | [supplies-stock-balances.md](../supplies-stock-balances.md) · `stock_balances_sql.py` |
 | Estoque de segurança | [estoque-seguranca.md](../estoque-seguranca.md) · `PRIMARY_WAREHOUSE` / `AVAILABLE_BALANCE_*` |
 | Constantes compartilhadas | `app/domain/totvs/protheus_warehouses.py` |
+
+---
+
+## Bloqueio de inventário (SB2)
+
+Campos do saldo físico/financeiro no armazém:
+
+| Campo | Significado |
+|-------|-------------|
+| `B2_DTINV` | Data inicial do bloqueio de inventário |
+| `B2_DINVFIM` | Data final do bloqueio |
+
+Regra Delpi (lote HTTP `POST /products/inventory-blocks`):
+
+- sem `B2_DTINV` → **livre**;
+- com início e sem fim → **bloqueado** a partir do início;
+- com início e fim → **bloqueado** se início ≤ hoje ≤ fim;
+- armazém canônico do alimentador de linha: **`01`** (almoxarifado) + filial corrente.
+
+Código: `app/domain/totvs/protheus_inventory_block.py`.
+

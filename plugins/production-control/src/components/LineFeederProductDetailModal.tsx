@@ -154,6 +154,14 @@ export function LineFeederProductDetailModal({
                       }
                     />
                     <Fact
+                      label={texts.inventoryBlock}
+                      value={
+                        product.inventory_blocked
+                          ? texts.inventoryBlocked
+                          : texts.inventoryFree
+                      }
+                    />
+                    <Fact
                       label={texts.destinations}
                       value={summary.destinations || texts.workCentersEmpty}
                     />

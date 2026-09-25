@@ -98,6 +98,9 @@ _ENTITY_LABELS: dict[str, str] = {
     "product_physical_locations": (
         "local físico de retirada (BZ_MPLOCAL) de vários produtos na filial"
     ),
+    "product_inventory_blocks": (
+        "bloqueio de inventário SB2 (B2_DTINV/B2_DINVFIM) de vários produtos no armazém"
+    ),
     "production_order_sets_incomplete": (
         "conjuntos de OP cujas ordens filhas não batem com a estrutura do produto raiz"
     ),
