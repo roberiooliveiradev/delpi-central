@@ -1,9 +1,11 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { ChevronDown } from "lucide-react";
-import { useClickOutside } from "@delpi/plugin-ui/index";
+import { AnchoredPanelPortal } from "@delpi/plugin-ui/index";
 
 import { ticketActionPresentation } from "../presentation/ticketActionPresentation";
 import type { TicketWorkspaceAction, TicketWorkspaceActionId } from "../presentation/ticketWorkspaceActions";
+
+const HELPDESK_PORTAL_SCOPE = "dashboard-helpdesk";
 
 export function TicketActionMenu({
   actions,
@@ -20,8 +22,8 @@ export function TicketActionMenu({
   idleLabel?: string;
 }) {
   const [open, setOpen] = useState(false);
-  const wrapperRef = useRef<HTMLDivElement>(null);
-  const panelId = useId();
+  const anchorRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const selected = actions.find((item) => item.id === activeId) ?? null;
   const triggerPresentation = selected
     ? ticketActionPresentation(selected.id)
@@ -31,23 +33,12 @@ export function TicketActionMenu({
   const TriggerIcon = triggerPresentation?.icon;
   const triggerLabel = selected?.label ?? idleLabel;
 
-  useClickOutside([wrapperRef], open, () => setOpen(false));
-
-  useEffect(() => {
-    if (!open) return;
-    function handleKey(event: KeyboardEvent) {
-      if (event.key === "Escape") setOpen(false);
-    }
-    document.addEventListener("keydown", handleKey);
-    return () => document.removeEventListener("keydown", handleKey);
-  }, [open]);
-
   if (actions.length === 0) return null;
 
   return (
     <div
-      className="helpdesk-action-menu helpdesk-anchored-popover"
-      ref={wrapperRef}
+      className="helpdesk-action-menu"
+      ref={anchorRef}
       data-action-idle={selected ? "false" : "true"}
     >
       <button
@@ -55,7 +46,6 @@ export function TicketActionMenu({
         className="helpdesk-action-menu__trigger"
         aria-label={selected ? `Ação ativa: ${selected.label}` : "Escolher ação do chamado"}
         aria-expanded={open}
-        aria-controls={panelId}
         aria-haspopup="menu"
         disabled={disabled}
         data-action-variant={triggerPresentation?.variant}
@@ -69,42 +59,48 @@ export function TicketActionMenu({
         <span>{triggerLabel}</span>
         <ChevronDown size={16} aria-hidden />
       </button>
-      {open ? (
-        <div
-          id={panelId}
-          className="helpdesk-anchored-popover__panel helpdesk-action-menu__panel"
-          role="menu"
-          aria-label="Ações do chamado"
-        >
-          {actions.map((action) => {
-            const presentation = ticketActionPresentation(action.id);
-            const Icon = presentation.icon;
-            return (
-              <button
-                key={action.id}
-                type="button"
-                role="menuitem"
-                className={[
-                  "helpdesk-action-menu__item",
-                  action.id === activeId ? "helpdesk-action-menu__item--active" : null,
-                ]
-                  .filter(Boolean)
-                  .join(" ")}
-                data-action-variant={presentation.variant}
-                onClick={() => {
-                  onChange(action.id);
-                  setOpen(false);
-                }}
-              >
-                <span className="helpdesk-action-menu__item-icon" aria-hidden>
-                  <Icon size={16} />
-                </span>
-                <span>{action.label}</span>
-              </button>
-            );
-          })}
-        </div>
-      ) : null}
+      <AnchoredPanelPortal
+        open={open}
+        anchorRef={anchorRef}
+        panelRef={panelRef}
+        className="helpdesk-action-menu__panel"
+        variant="bare"
+        role="menu"
+        aria-label="Ações do chamado"
+        preferredPlacement="top"
+        horizontalAlign="start"
+        gap={6}
+        portalScopeClassName={HELPDESK_PORTAL_SCOPE}
+        onDismiss={() => setOpen(false)}
+      >
+        {actions.map((action) => {
+          const presentation = ticketActionPresentation(action.id);
+          const Icon = presentation.icon;
+          return (
+            <button
+              key={action.id}
+              type="button"
+              role="menuitem"
+              className={[
+                "helpdesk-action-menu__item",
+                action.id === activeId ? "helpdesk-action-menu__item--active" : null,
+              ]
+                .filter(Boolean)
+                .join(" ")}
+              data-action-variant={presentation.variant}
+              onClick={() => {
+                onChange(action.id);
+                setOpen(false);
+              }}
+            >
+              <span className="helpdesk-action-menu__item-icon" aria-hidden>
+                <Icon size={16} />
+              </span>
+              <span>{action.label}</span>
+            </button>
+          );
+        })}
+      </AnchoredPanelPortal>
     </div>
   );
 }

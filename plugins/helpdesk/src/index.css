@@ -1360,13 +1360,19 @@
   font-weight: 650;
 }
 
+/* Portaled via AnchoredPanelPortal — position/top/left come from kit inline style. */
 .dashboard-helpdesk .helpdesk-action-menu__panel {
-  left: 0;
-  right: auto;
+  box-sizing: border-box;
   width: min(18rem, calc(100vw - 1.5rem));
+  max-height: min(28rem, 70vh);
+  overflow: auto;
   display: grid;
   gap: 0.15rem;
   padding: 0.4rem;
+  border: 1px solid var(--helpdesk-border);
+  border-radius: 12px;
+  background: var(--helpdesk-surface);
+  box-shadow: 0 8px 28px color-mix(in srgb, #000 18%, transparent);
 }
 
 .dashboard-helpdesk .helpdesk-action-menu__item {

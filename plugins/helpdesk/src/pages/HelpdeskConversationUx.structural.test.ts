@@ -223,6 +223,11 @@ describe("HELPDESK-MFE-UX-002 ticket workspace", () => {
     expect(css).toContain("grid-template-columns");
     expect(css).toContain('data-action-variant="task"');
     expect(css).toContain(".helpdesk-action-card");
+    const actionMenu = read("TicketActionMenu.tsx");
+    expect(actionMenu).toContain("AnchoredPanelPortal");
+    expect(actionMenu).toContain('preferredPlacement="top"');
+    expect(actionMenu).toContain('portalScopeClassName={HELPDESK_PORTAL_SCOPE}');
+    expect(actionMenu).not.toContain("useClickOutside");
   });
 
   it("wires proven operational actions from BFF capabilities", () => {

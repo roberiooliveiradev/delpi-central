@@ -1287,6 +1287,33 @@ declare module "@delpi/plugin-ui/index" {
     onOutside: () => void,
   ): void;
 
+  export type AnchoredPanelPlacement = "top" | "bottom" | "left" | "right";
+
+  export type AnchoredPanelPortalProps = {
+    open: boolean;
+    anchorRef: { current: HTMLElement | null };
+    panelRef: { current: HTMLDivElement | null };
+    className?: string;
+    variant?: "shape" | "bare";
+    role?: string;
+    "aria-label"?: string;
+    matchAnchorWidth?: boolean;
+    preferredPlacement?: AnchoredPanelPlacement;
+    allowFlip?: boolean;
+    horizontalAlign?: "start" | "end";
+    gap?: number;
+    containWithinRef?: { current: HTMLElement | null };
+    portalScopeClassName?: string;
+    onDismiss?: () => void;
+    exclusive?: boolean;
+    density?: "comfortable" | "compact";
+    onPanelMouseEnter?: () => void;
+    onPanelMouseLeave?: () => void;
+    children?: ReactNode;
+  };
+
+  export function AnchoredPanelPortal(props: AnchoredPanelPortalProps): ReactElement | null;
+
   export function useTableColumnVisibility(options: {
     storageKey: string;
     columns: readonly TableColumnVisibilityItem[];
