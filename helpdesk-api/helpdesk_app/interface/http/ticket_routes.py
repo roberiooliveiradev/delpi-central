@@ -28,18 +28,27 @@ class FollowupBody(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     content: str = Field(min_length=1)
+    request_type_id: int | None = Field(default=None, gt=0)
 
 
 class SolutionCreateBody(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     content: str = Field(min_length=1)
+    solution_type_id: int | None = Field(default=None, gt=0)
 
 
 class TaskCreateBody(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     content: str = Field(min_length=1)
+    state: int | None = Field(default=None, ge=0, le=2)
+    duration_seconds: int | None = Field(default=None, ge=0)
+    category_id: int | None = Field(default=None, gt=0)
+    user_tech_id: int | None = Field(default=None, gt=0)
+    group_tech_id: int | None = Field(default=None, gt=0)
+    planned_begin: str | None = None
+    planned_end: str | None = None
 
 
 class ApprovalRequestBody(BaseModel):
@@ -87,6 +96,119 @@ def ticket_categories(request: Request):
     except HelpdeskError as exc:
         return _error(exc, request)
     return {"items": [{"id": row.id, "name": row.name} for row in rows]}
+
+
+def _catalog_items(rows) -> dict:
+    return {"items": [{"id": row.id, "name": row.name} for row in rows]}
+
+
+def _template_items(rows) -> dict:
+    return {
+        "items": [
+            {
+                "id": row.id,
+                "name": row.name,
+                "content": row.content,
+                "is_private": row.is_private,
+                "request_type_id": row.request_type_id,
+                "solution_type_id": row.solution_type_id,
+                "category_id": row.category_id,
+                "state": row.state,
+                "duration_seconds": row.duration_seconds,
+                "user_tech_id": row.user_tech_id,
+                "group_tech_id": row.group_tech_id,
+                "use_current_user": row.use_current_user,
+            }
+            for row in rows
+        ]
+    }
+
+
+@router.get("/request-types")
+def request_types(request: Request):
+    actor = require_actor(request)
+    try:
+        return _catalog_items(_tickets(request).request_types(actor.subject))
+    except HelpdeskError as exc:
+        return _error(exc, request)
+
+
+@router.get("/followup-templates")
+def followup_templates(request: Request):
+    actor = require_actor(request)
+    try:
+        return _template_items(_tickets(request).followup_templates(actor.subject))
+    except HelpdeskError as exc:
+        return _error(exc, request)
+
+
+@router.get("/solution-types")
+def solution_types(request: Request):
+    actor = require_actor(request)
+    try:
+        return _catalog_items(_tickets(request).solution_types(actor.subject))
+    except HelpdeskError as exc:
+        return _error(exc, request)
+
+
+@router.get("/solution-templates")
+def solution_templates(request: Request):
+    actor = require_actor(request)
+    try:
+        return _template_items(_tickets(request).solution_templates(actor.subject))
+    except HelpdeskError as exc:
+        return _error(exc, request)
+
+
+@router.get("/task-categories")
+def task_categories(request: Request):
+    actor = require_actor(request)
+    try:
+        return _catalog_items(_tickets(request).task_categories(actor.subject))
+    except HelpdeskError as exc:
+        return _error(exc, request)
+
+
+@router.get("/task-templates")
+def task_templates(request: Request):
+    actor = require_actor(request)
+    try:
+        return _template_items(_tickets(request).task_templates(actor.subject))
+    except HelpdeskError as exc:
+        return _error(exc, request)
+
+
+@router.get("/task-statuses")
+def task_statuses(request: Request):
+    require_actor(request)
+    return _catalog_items(_tickets(request).task_statuses())
+
+
+@router.get("/groups")
+def groups(request: Request):
+    actor = require_actor(request)
+    try:
+        return _catalog_items(_tickets(request).groups(actor.subject))
+    except HelpdeskError as exc:
+        return _error(exc, request)
+
+
+@router.get("/validation-templates")
+def validation_templates(request: Request):
+    actor = require_actor(request)
+    try:
+        return _template_items(_tickets(request).validation_templates(actor.subject))
+    except HelpdeskError as exc:
+        return _error(exc, request)
+
+
+@router.get("/approval-steps")
+def approval_steps(request: Request):
+    actor = require_actor(request)
+    try:
+        return _catalog_items(_tickets(request).approval_steps(actor.subject))
+    except HelpdeskError as exc:
+        return _error(exc, request)
 
 
 @router.get("/urgencies")
@@ -245,6 +367,15 @@ def get_ticket(request: Request, ticket_id: int):
                 "created_at": entry.created_at,
                 "author_display_name": entry.author_display_name,
                 "mine": entry.mine,
+                "state": entry.state,
+                "duration_seconds": entry.duration_seconds,
+                "category_name": entry.category_name,
+                "user_tech_display_name": entry.user_tech_display_name,
+                "group_tech_display_name": entry.group_tech_display_name,
+                "planned_begin": entry.planned_begin,
+                "planned_end": entry.planned_end,
+                "solution_type_name": entry.solution_type_name,
+                "solution_status": entry.solution_status,
             }
             for entry in ticket.timeline
         ],
@@ -359,6 +490,7 @@ def create_followup(
             actor.subject,
             ticket_id,
             content=body.content,
+            request_type_id=body.request_type_id,
             idempotency_key=idempotency_key,
         )
     except HelpdeskError as exc:
@@ -379,6 +511,7 @@ def create_ticket_solution(
             actor.subject,
             ticket_id,
             content=body.content,
+            solution_type_id=body.solution_type_id,
             viewer_email=actor.email,
             idempotency_key=idempotency_key,
         )
@@ -400,6 +533,13 @@ def create_ticket_task(
             actor.subject,
             ticket_id,
             content=body.content,
+            state=body.state,
+            duration_seconds=body.duration_seconds,
+            category_id=body.category_id,
+            user_tech_id=body.user_tech_id,
+            group_tech_id=body.group_tech_id,
+            planned_begin=body.planned_begin,
+            planned_end=body.planned_end,
             viewer_email=actor.email,
             idempotency_key=idempotency_key,
         )

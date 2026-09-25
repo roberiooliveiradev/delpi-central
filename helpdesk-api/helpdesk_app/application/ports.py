@@ -22,6 +22,26 @@ class GlpiGateway(Protocol):
 
     def list_categories(self, access_token: str) -> list[Category]: ...
 
+    def list_request_types(self, access_token: str) -> list[Category]: ...
+
+    def list_followup_templates(self, access_token: str): ...
+
+    def list_solution_types(self, access_token: str) -> list[Category]: ...
+
+    def list_solution_templates(self, access_token: str): ...
+
+    def list_task_categories(self, access_token: str) -> list[Category]: ...
+
+    def list_task_templates(self, access_token: str): ...
+
+    def list_task_statuses(self): ...
+
+    def list_groups(self, access_token: str) -> list[Category]: ...
+
+    def list_validation_templates(self, access_token: str): ...
+
+    def list_approval_steps(self, access_token: str) -> list[Category]: ...
+
     def list_tickets(self, access_token: str, query: TicketListQuery) -> TicketListPage: ...
 
     def get_ticket(self, access_token: str, ticket_id: int, viewer_email: str = "") -> TicketDetail: ...
@@ -52,11 +72,38 @@ class GlpiGateway(Protocol):
 
     def can_assign_tickets(self, access_token: str) -> bool: ...
 
-    def add_followup(self, access_token: str, ticket_id: int, content: str) -> int: ...
+    def add_followup(
+        self,
+        access_token: str,
+        ticket_id: int,
+        content: str,
+        *,
+        request_type_id: int | None = None,
+    ) -> int: ...
 
-    def add_ticket_solution(self, access_token: str, ticket_id: int, content: str) -> int: ...
+    def add_ticket_solution(
+        self,
+        access_token: str,
+        ticket_id: int,
+        content: str,
+        *,
+        solution_type_id: int | None = None,
+    ) -> int: ...
 
-    def add_ticket_task(self, access_token: str, ticket_id: int, content: str) -> int: ...
+    def add_ticket_task(
+        self,
+        access_token: str,
+        ticket_id: int,
+        content: str,
+        *,
+        state: int | None = None,
+        duration_seconds: int | None = None,
+        category_id: int | None = None,
+        user_tech_id: int | None = None,
+        group_tech_id: int | None = None,
+        planned_begin: str | None = None,
+        planned_end: str | None = None,
+    ) -> int: ...
 
     def create_ticket_validation(
         self,

@@ -228,6 +228,11 @@ describe("HELPDESK-MFE-UX-002 ticket workspace", () => {
     expect(actionMenu).toContain('preferredPlacement="top"');
     expect(actionMenu).toContain('portalScopeClassName={HELPDESK_PORTAL_SCOPE}');
     expect(actionMenu).not.toContain("useClickOutside");
+    expect(detail).toContain("TicketTaskActionFields");
+    expect(detail).toContain("ticketTaskFormToBody");
+    expect(detail).toContain("TicketReplyActionFields");
+    expect(detail).toContain("TicketSolutionActionFields");
+    expect(detail).toContain("TicketApprovalActionFields");
   });
 
   it("wires proven operational actions from BFF capabilities", () => {

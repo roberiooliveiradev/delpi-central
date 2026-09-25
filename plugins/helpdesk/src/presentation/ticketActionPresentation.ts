@@ -51,7 +51,7 @@ const PRESENTATION: Record<TicketWorkspaceActionId, TicketActionPresentation> = 
     label: "Adicionar solução",
     submitLabel: "Adicionar solução",
     submittingLabel: "Adicionando solução…",
-    helperText: "Registra a solução pública e marca o chamado como solucionado.",
+    helperText: "Registra a solução pública do chamado (status depende do helpdesk).",
     errorFallback: "Não foi possível adicionar a solução.",
     successLabel: "Solução adicionada.",
   },

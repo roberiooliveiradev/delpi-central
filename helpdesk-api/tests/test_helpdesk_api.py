@@ -868,3 +868,54 @@ def test_session_user_id_outside_technician_profiles_stays_denied():
     headers = {**auth_headers(), "x-email": "rh_ues@delpi.com.br"}
     detail = client.get("/tickets/7", headers=headers)
     assert detail.json()["can_create_solution"] is False
+
+
+def test_ops004_catalogs_and_enriched_task_write():
+    client, glpi = build_client()
+    link(client)
+    tech = {**auth_headers(), "x-email": "ana.silva@delpi.com.br"}
+
+    assert client.get("/task-statuses", headers=tech).json()["items"][1]["name"] == "A fazer"
+    assert client.get("/task-categories", headers=tech).json()["items"][0]["id"] == 4
+    assert client.get("/task-templates", headers=tech).json()["items"][0]["duration_seconds"] == 3600
+    assert client.get("/solution-types", headers=tech).json()["items"][0]["id"] == 2
+    assert client.get("/request-types", headers=tech).json()["items"][0]["id"] == 1
+    assert client.get("/groups", headers=tech).json()["items"][0]["id"] == 9
+
+    task = client.post(
+        "/tickets/7/tasks",
+        json={
+            "content": "<p>planejada</p>",
+            "state": 1,
+            "duration_seconds": 1800,
+            "category_id": 4,
+            "user_tech_id": 15,
+            "group_tech_id": 9,
+            "planned_begin": "2026-09-25T10:00:00",
+            "planned_end": "2026-09-25T10:30:00",
+        },
+        headers={**tech, "Idempotency-Key": "task-rich-ok"},
+    )
+    assert task.status_code == 201
+    body = task.json()
+    assert body["id"] >= 60
+    assert body["state"] == 1
+    assert body["duration_seconds"] == 1800
+    assert body["planned_begin"] == "2026-09-25T10:00:00"
+    assert glpi.tasks[-1][2:7] == (1, 1800, 4, 15, 9)
+
+    sol = client.post(
+        "/tickets/7/solutions",
+        json={"content": "<p>com tipo</p>", "solution_type_id": 2},
+        headers={**tech, "Idempotency-Key": "sol-type-ok"},
+    )
+    assert sol.status_code == 201
+    assert glpi.solutions[-1][2] == 2
+
+    fu = client.post(
+        "/tickets/7/followups",
+        json={"content": "<p>origem</p>", "request_type_id": 1},
+        headers={**tech, "Idempotency-Key": "fu-type-ok"},
+    )
+    assert fu.status_code == 201
+    assert glpi.followups[-1][2] == 1

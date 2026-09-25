@@ -57,6 +57,36 @@ class TicketService:
     def categories(self, subject: str):
         return self._glpi.list_categories(self._token(subject))
 
+    def request_types(self, subject: str):
+        return self._glpi.list_request_types(self._token(subject))
+
+    def followup_templates(self, subject: str):
+        return self._glpi.list_followup_templates(self._token(subject))
+
+    def solution_types(self, subject: str):
+        return self._glpi.list_solution_types(self._token(subject))
+
+    def solution_templates(self, subject: str):
+        return self._glpi.list_solution_templates(self._token(subject))
+
+    def task_categories(self, subject: str):
+        return self._glpi.list_task_categories(self._token(subject))
+
+    def task_templates(self, subject: str):
+        return self._glpi.list_task_templates(self._token(subject))
+
+    def task_statuses(self):
+        return self._glpi.list_task_statuses()
+
+    def groups(self, subject: str):
+        return self._glpi.list_groups(self._token(subject))
+
+    def validation_templates(self, subject: str):
+        return self._glpi.list_validation_templates(self._token(subject))
+
+    def approval_steps(self, subject: str):
+        return self._glpi.list_approval_steps(self._token(subject))
+
     def users(
         self, subject: str, *, q: str = "", limit: int = 20, purpose: str = "mention"
     ) -> list[CatalogUser]:
@@ -387,7 +417,8 @@ class TicketService:
         ticket_id: int,
         *,
         content: str,
-        idempotency_key: str | None,
+        request_type_id: int | None = None,
+        idempotency_key: str | None = None,
     ) -> StoredResponse:
         key = _require_key(idempotency_key)
         # H12: Document_Item via legacy upload may still be absent from Timeline.
@@ -417,7 +448,10 @@ class TicketService:
         if existing is not None:
             return existing
         followup_id = self._glpi.add_followup(
-            self._token(subject), ticket_id, content_html
+            self._token(subject),
+            ticket_id,
+            content_html,
+            request_type_id=request_type_id,
         )
         stored = StoredResponse(status_code=201, body={"id": followup_id})
         self._idempotency.save(subject, operation, key, stored)
@@ -429,8 +463,9 @@ class TicketService:
         ticket_id: int,
         *,
         content: str,
+        solution_type_id: int | None = None,
         viewer_email: str = "",
-        idempotency_key: str | None,
+        idempotency_key: str | None = None,
     ) -> StoredResponse:
         key = _require_key(idempotency_key)
         operation = f"create_solution:{ticket_id}"
@@ -441,7 +476,12 @@ class TicketService:
         detail = self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
         self._require_technician_ops(token, detail, viewer_email=viewer_email, action="solução")
         content_html = _prepare_message_html(content, "content", ticket_id=ticket_id)
-        solution_id = self._glpi.add_ticket_solution(token, ticket_id, content_html)
+        solution_id = self._glpi.add_ticket_solution(
+            token,
+            ticket_id,
+            content_html,
+            solution_type_id=solution_type_id,
+        )
         refreshed = self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
         if not (
             timeline_has_entry(refreshed.timeline, kind="solution", entry_id=solution_id)
@@ -467,8 +507,15 @@ class TicketService:
         ticket_id: int,
         *,
         content: str,
+        state: int | None = None,
+        duration_seconds: int | None = None,
+        category_id: int | None = None,
+        user_tech_id: int | None = None,
+        group_tech_id: int | None = None,
+        planned_begin: str | None = None,
+        planned_end: str | None = None,
         viewer_email: str = "",
-        idempotency_key: str | None,
+        idempotency_key: str | None = None,
     ) -> StoredResponse:
         key = _require_key(idempotency_key)
         operation = f"create_task:{ticket_id}"
@@ -479,11 +526,39 @@ class TicketService:
         detail = self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
         self._require_technician_ops(token, detail, viewer_email=viewer_email, action="tarefa")
         content_html = _prepare_message_html(content, "content", ticket_id=ticket_id)
-        task_id = self._glpi.add_ticket_task(token, ticket_id, content_html)
+        task_id = self._glpi.add_ticket_task(
+            token,
+            ticket_id,
+            content_html,
+            state=state,
+            duration_seconds=duration_seconds,
+            category_id=category_id,
+            user_tech_id=user_tech_id,
+            group_tech_id=group_tech_id,
+            planned_begin=planned_begin,
+            planned_end=planned_end,
+        )
         refreshed = self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
         if not timeline_has_entry(refreshed.timeline, kind="task", entry_id=task_id):
             raise GlpiValidation("A tarefa não foi confirmada no chamado.")
-        stored = StoredResponse(status_code=201, body={"id": task_id})
+        entry = next(
+            (item for item in refreshed.timeline if item.kind == "task" and item.id == task_id),
+            None,
+        )
+        body: dict = {"id": task_id}
+        if entry is not None:
+            body.update(
+                {
+                    "state": entry.state,
+                    "duration_seconds": entry.duration_seconds,
+                    "category_name": entry.category_name,
+                    "user_tech_display_name": entry.user_tech_display_name,
+                    "group_tech_display_name": entry.group_tech_display_name,
+                    "planned_begin": entry.planned_begin,
+                    "planned_end": entry.planned_end,
+                }
+            )
+        stored = StoredResponse(status_code=201, body=body)
         self._idempotency.save(subject, operation, key, stored)
         logger.info("helpdesk_create_task ticket_id=%s task_id=%s", ticket_id, task_id)
         return stored

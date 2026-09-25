@@ -925,6 +925,72 @@ def test_add_ticket_solution_and_task_force_public():
     assert bodies[1] == {"content": "<p>task</p>", "is_private": 0}
 
 
+def test_add_ticket_task_sends_hlapi_nested_fields():
+    bodies: list[dict] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.method == "POST":
+            bodies.append(json.loads(request.content.decode()))
+            return httpx.Response(201, json={"id": 90})
+        return httpx.Response(404)
+
+    client = HttpxGlpiClient(
+        base_url="https://glpi.example",
+        client_id="id",
+        client_secret="super-secret",
+        redirect_uri="https://centraldelpi.com.br/apps/helpdesk-api/auth/glpi/callback",
+        transport=httpx.MockTransport(handler),
+    )
+    assert (
+        client.add_ticket_task(
+            "token",
+            7,
+            "<p>task</p>",
+            state=1,
+            duration_seconds=1800,
+            category_id=4,
+            user_tech_id=11,
+            group_tech_id=9,
+            planned_begin="2026-09-25T10:00:00",
+            planned_end="2026-09-25T10:30:00",
+        )
+        == 90
+    )
+    assert bodies[0] == {
+        "content": "<p>task</p>",
+        "is_private": 0,
+        "state": 1,
+        "duration": 1800,
+        "category": {"id": 4},
+        "user_tech": {"id": 11},
+        "group_tech": {"id": 9},
+        "planned_begin": "2026-09-25T10:00:00",
+        "planned_end": "2026-09-25T10:30:00",
+    }
+
+
+def test_add_followup_and_solution_optional_catalog_refs():
+    bodies: list[dict] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.method == "POST":
+            bodies.append(json.loads(request.content.decode()))
+            return httpx.Response(201, json={"id": 100 + len(bodies)})
+        return httpx.Response(404)
+
+    client = HttpxGlpiClient(
+        base_url="https://glpi.example",
+        client_id="id",
+        client_secret="super-secret",
+        redirect_uri="https://centraldelpi.com.br/apps/helpdesk-api/auth/glpi/callback",
+        transport=httpx.MockTransport(handler),
+    )
+    assert client.add_followup("token", 7, "<p>fu</p>", request_type_id=3) == 101
+    assert client.add_ticket_solution("token", 7, "<p>sol</p>", solution_type_id=2) == 102
+    assert bodies[0] == {"content": "<p>fu</p>", "request_type": {"id": 3}}
+    assert bodies[1] == {"content": "<p>sol</p>", "is_private": 0, "type": {"id": 2}}
+
+
 def test_requester_falls_back_to_user_recipient():
     detail = parse_ticket_detail(
         {

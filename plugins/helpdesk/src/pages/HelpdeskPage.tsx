@@ -108,6 +108,22 @@ import { useHelpdeskTicketListColumns } from "../presentation/useHelpdeskTicketL
 import { TicketAttachmentPreview } from "./TicketAttachmentPreview";
 import { TicketActionCard } from "./TicketActionCard";
 import { TicketActionMenu } from "./TicketActionMenu";
+import {
+  EMPTY_TICKET_TASK_FORM,
+  TicketTaskActionFields,
+  ticketTaskFormToBody,
+} from "./TicketTaskActionFields";
+import {
+  EMPTY_TICKET_REPLY_META,
+  TicketReplyActionFields,
+  type TicketReplyMetaState,
+} from "./TicketReplyActionFields";
+import {
+  EMPTY_TICKET_SOLUTION_FORM,
+  TicketSolutionActionFields,
+  ticketSolutionFormToBody,
+} from "./TicketSolutionActionFields";
+import { TicketApprovalActionFields } from "./TicketApprovalActionFields";
 import { TicketContextPanel } from "./TicketContextPanel";
 import { TicketListCards } from "./TicketListCards";
 import { ticketActionPresentation } from "../presentation/ticketActionPresentation";
@@ -920,7 +936,7 @@ function CreateTicketPage() {
                   if (imageBlocks.length > 0) {
                     await createFollowup(
                       ticketId,
-                      imageBlocks.join(""),
+                      { content: imageBlocks.join("") },
                       `${idempotencyKey}:images`,
                     );
                   }
@@ -1054,9 +1070,11 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
     useState<TimelineVisibilityState>(DEFAULT_TIMELINE_VISIBILITY);
   const [documentFiles, setDocumentFiles] = useState<File[]>([]);
   const documentInputRef = useRef<HTMLInputElement>(null);
-  const [solutionContent, setSolutionContent] = useState("");
-  const [taskContent, setTaskContent] = useState("");
+  const [solutionForm, setSolutionForm] = useState(EMPTY_TICKET_SOLUTION_FORM);
+  const [replyMeta, setReplyMeta] = useState<TicketReplyMetaState>(EMPTY_TICKET_REPLY_META);
+  const [taskForm, setTaskForm] = useState(EMPTY_TICKET_TASK_FORM);
   const [approvalContent, setApprovalContent] = useState("");
+  const [approvalTemplateId, setApprovalTemplateId] = useState<number | null>(null);
   const [approverPick, setApproverPick] = useState<HelpdeskAssigneeValue | null>(null);
   /** Bumps resolve identity after IDB seed (create parity). */
   const [pendingHydrated, setPendingHydrated] = useState(0);
@@ -1211,8 +1229,8 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
   function isActiveActionDirty(): boolean {
     if (!activeAction) return false;
     if (activeAction === "reply") return hasVisibleRichText(content);
-    if (activeAction === "create_solution") return hasVisibleRichText(solutionContent);
-    if (activeAction === "create_task") return hasVisibleRichText(taskContent);
+    if (activeAction === "create_solution") return hasVisibleRichText(solutionForm.content);
+    if (activeAction === "create_task") return hasVisibleRichText(taskForm.content);
     if (activeAction === "request_approval") {
       return hasVisibleRichText(approvalContent) || Boolean(approverPick);
     }
@@ -1244,10 +1262,12 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
     if (activeAction === "reply") {
       /* keep sessionStorage reply draft — only close the card */
     }
-    if (activeAction === "create_solution") setSolutionContent("");
-    if (activeAction === "create_task") setTaskContent("");
+    if (activeAction === "create_solution") setSolutionForm(EMPTY_TICKET_SOLUTION_FORM);
+    if (activeAction === "create_task") setTaskForm(EMPTY_TICKET_TASK_FORM);
+    if (activeAction === "reply") setReplyMeta(EMPTY_TICKET_REPLY_META);
     if (activeAction === "request_approval") {
       setApprovalContent("");
+      setApprovalTemplateId(null);
       setApproverPick(null);
     }
     if (activeAction === "attach_file") setDocumentFiles([]);
@@ -1769,9 +1789,19 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                                 setSaving(true);
                                 setErrorText(null);
                                 const payload = attachmentPreview.persistHtml(content.trim());
-                                void createFollowup(ticketId, payload, idempotencyKey)
+                                void createFollowup(
+                                  ticketId,
+                                  {
+                                    content: payload,
+                                    ...(replyMeta.requestTypeId != null
+                                      ? { request_type_id: replyMeta.requestTypeId }
+                                      : null),
+                                  },
+                                  idempotencyKey,
+                                )
                                   .then(() => {
                                     setContent("");
+                                    setReplyMeta(EMPTY_TICKET_REPLY_META);
                                     clearReplyDraft(ticketId);
                                     pendingFilesRef.current.clear();
                                     void clearHelpdeskDraftPendingFiles(
@@ -1790,6 +1820,14 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                                   .finally(() => setSaving(false));
                               }}
                             >
+                              <TicketReplyActionFields
+                                value={replyMeta}
+                                onChange={setReplyMeta}
+                                disabled={saving}
+                                onApplyContent={(html) =>
+                                  setContent(attachmentPreview.persistHtml(html))
+                                }
+                              />
                               <HelpdeskRichTextField
                                 ref={replyComposerRef}
                                 label="Responder"
@@ -1940,19 +1978,22 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                               onCancel={cancelActiveActionForm}
                             >
                             <form
-                              className="helpdesk-reply-form"
+                              className="helpdesk-reply-form helpdesk-action-form--solution"
                               onSubmit={(event) => {
                                 event.preventDefault();
-                                if (saving || !hasVisibleRichText(solutionContent)) return;
+                                if (saving || !hasVisibleRichText(solutionForm.content)) return;
                                 setSaving(true);
                                 setErrorText(null);
                                 void createTicketSolution(
                                   ticketId,
-                                  solutionContent.trim(),
+                                  ticketSolutionFormToBody({
+                                    ...solutionForm,
+                                    content: solutionForm.content.trim(),
+                                  }),
                                   idempotencyKey,
                                 )
                                   .then(() => {
-                                    setSolutionContent("");
+                                    setSolutionForm(EMPTY_TICKET_SOLUTION_FORM);
                                     setIdempotencyKey(newIdempotencyKey());
                                     closeActionAfterSuccess();
                                     load();
@@ -1961,14 +2002,23 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                                   .finally(() => setSaving(false));
                               }}
                             >
-                              <HelpdeskRichTextField
-                                label="Solução"
-                                hint={helpTooltips.detailUi.createSolution}
-                                value={solutionContent}
-                                onChange={setSolutionContent}
-                                minHeight={144}
-                                enableMentions
-                              />
+                              <div className="helpdesk-action-form__solution-layout">
+                                <HelpdeskRichTextField
+                                  label="Solução"
+                                  hint={helpTooltips.detailUi.createSolution}
+                                  value={solutionForm.content}
+                                  onChange={(next) =>
+                                    setSolutionForm((current) => ({ ...current, content: next }))
+                                  }
+                                  minHeight={144}
+                                  enableMentions
+                                />
+                                <TicketSolutionActionFields
+                                  value={solutionForm}
+                                  onChange={setSolutionForm}
+                                  disabled={saving}
+                                />
+                              </div>
                               <HelpdeskFormActions align="end">
                                 <ActionButton
                                   type="button"
@@ -1981,9 +2031,11 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                                 <ActionButton
                                   variant="primary"
                                   type="submit"
-                                  disabled={saving || !hasVisibleRichText(solutionContent)}
+                                  disabled={saving || !hasVisibleRichText(solutionForm.content)}
                                 >
-                                  {saving ? "Salvando…" : "Adicionar solução"}
+                                  {saving
+                                    ? ticketActionPresentation("create_solution").submittingLabel
+                                    : ticketActionPresentation("create_solution").submitLabel}
                                 </ActionButton>
                               </HelpdeskFormActions>
                             </form>
@@ -1996,15 +2048,22 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                               onCancel={cancelActiveActionForm}
                             >
                             <form
-                              className="helpdesk-reply-form"
+                              className="helpdesk-reply-form helpdesk-action-form--task"
                               onSubmit={(event) => {
                                 event.preventDefault();
-                                if (saving || !hasVisibleRichText(taskContent)) return;
+                                if (saving || !hasVisibleRichText(taskForm.content)) return;
                                 setSaving(true);
                                 setErrorText(null);
-                                void createTicketTask(ticketId, taskContent.trim(), idempotencyKey)
+                                void createTicketTask(
+                                  ticketId,
+                                  ticketTaskFormToBody({
+                                    ...taskForm,
+                                    content: taskForm.content.trim(),
+                                  }),
+                                  idempotencyKey,
+                                )
                                   .then(() => {
-                                    setTaskContent("");
+                                    setTaskForm(EMPTY_TICKET_TASK_FORM);
                                     setIdempotencyKey(newIdempotencyKey());
                                     closeActionAfterSuccess();
                                     load();
@@ -2013,14 +2072,21 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                                   .finally(() => setSaving(false));
                               }}
                             >
-                              <HelpdeskRichTextField
-                                label="Tarefa"
-                                hint={helpTooltips.detailUi.createTask}
-                                value={taskContent}
-                                onChange={setTaskContent}
-                                minHeight={144}
-                                enableMentions
-                              />
+                              <div className="helpdesk-action-form__task-layout">
+                                <HelpdeskRichTextField
+                                  label="Tarefa"
+                                  hint={helpTooltips.detailUi.createTask}
+                                  value={taskForm.content}
+                                  onChange={(next) => setTaskForm((current) => ({ ...current, content: next }))}
+                                  minHeight={144}
+                                  enableMentions
+                                />
+                                <TicketTaskActionFields
+                                  value={taskForm}
+                                  onChange={setTaskForm}
+                                  disabled={saving}
+                                />
+                              </div>
                               <HelpdeskFormActions align="end">
                                 <ActionButton
                                   type="button"
@@ -2033,9 +2099,11 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                                 <ActionButton
                                   variant="primary"
                                   type="submit"
-                                  disabled={saving || !hasVisibleRichText(taskContent)}
+                                  disabled={saving || !hasVisibleRichText(taskForm.content)}
                                 >
-                                  {saving ? "Criando…" : "Criar tarefa"}
+                                  {saving
+                                    ? ticketActionPresentation("create_task").submittingLabel
+                                    : ticketActionPresentation("create_task").submitLabel}
                                 </ActionButton>
                               </HelpdeskFormActions>
                             </form>
@@ -2065,6 +2133,7 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                                 )
                                   .then(() => {
                                     setApprovalContent("");
+                                    setApprovalTemplateId(null);
                                     setApproverPick(null);
                                     setIdempotencyKey(newIdempotencyKey());
                                     closeActionAfterSuccess();
@@ -2074,6 +2143,12 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                                   .finally(() => setSaving(false));
                               }}
                             >
+                              <TicketApprovalActionFields
+                                templateId={approvalTemplateId}
+                                onTemplateIdChange={setApprovalTemplateId}
+                                onApplyContent={setApprovalContent}
+                                disabled={saving}
+                              />
                               <div className="helpdesk-ticket-workspace__approval-approver">
                                 <span className="helpdesk-ticket-workspace__field-label">
                                   Aprovador
@@ -2114,7 +2189,9 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                                     !Number.isFinite(Number(approverPick.id))
                                   }
                                 >
-                                  {saving ? "Enviando…" : "Pedir aprovação"}
+                                  {saving
+                                    ? ticketActionPresentation("request_approval").submittingLabel
+                                    : ticketActionPresentation("request_approval").submitLabel}
                                 </ActionButton>
                               </HelpdeskFormActions>
                             </form>

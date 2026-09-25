@@ -27,6 +27,7 @@ from helpdesk_app.domain.models import (
 )
 from helpdesk_app.infrastructure.glpi.mapping import (
     URGENCIES,
+    TASK_STATUSES,
     apply_viewer_identity,
     apply_validation_viewer,
     attachment_filename,
@@ -36,7 +37,11 @@ from helpdesk_app.infrastructure.glpi.mapping import (
     parse_categories,
     parse_catalog_users,
     parse_created_id,
+    parse_followup_templates,
+    parse_named_catalog,
     parse_profile_user_ids,
+    parse_solution_templates,
+    parse_task_templates,
     payload_row_count,
     parse_ticket_detail,
     parse_ticket_list,
@@ -180,6 +185,158 @@ class HttpxGlpiClient:
                 break
             start += _CATEGORY_PAGE
         return collected
+
+    def _list_dropdown_pages(
+        self,
+        access_token: str,
+        path: str,
+        *,
+        filter_expr: str | None = None,
+        require_helpdesk_visible: bool = False,
+        require_active: bool = False,
+    ) -> list[Category]:
+        collected: list[Category] = []
+        start = 0
+        while start < _CATEGORY_CAP:
+            params: dict[str, str | int] = {"start": start, "limit": _CATEGORY_PAGE}
+            if filter_expr:
+                params["filter"] = filter_expr
+            payload = self._json("GET", path, token=access_token, params=params)
+            collected.extend(
+                parse_named_catalog(
+                    payload,
+                    require_helpdesk_visible=require_helpdesk_visible,
+                    require_active=require_active,
+                )
+            )
+            if payload_row_count(payload) < _CATEGORY_PAGE:
+                break
+            start += _CATEGORY_PAGE
+        return collected
+
+    def list_request_types(self, access_token: str) -> list[Category]:
+        # Prefer followup-visible when the filter is accepted; fall back without filter.
+        try:
+            return self._list_dropdown_pages(
+                access_token,
+                "/api.php/v2.2/Dropdowns/RequestType",
+                filter_expr="is_visible_followup==true",
+                require_active=True,
+            )
+        except GlpiValidation:
+            return self._list_dropdown_pages(
+                access_token,
+                "/api.php/v2.2/Dropdowns/RequestType",
+                require_active=True,
+            )
+
+    def list_followup_templates(self, access_token: str):
+        collected = []
+        start = 0
+        while start < _CATEGORY_CAP:
+            payload = self._json(
+                "GET",
+                "/api.php/v2.2/Dropdowns/FollowupTemplate",
+                token=access_token,
+                params={"start": start, "limit": _CATEGORY_PAGE},
+            )
+            collected.extend(parse_followup_templates(payload))
+            if payload_row_count(payload) < _CATEGORY_PAGE:
+                break
+            start += _CATEGORY_PAGE
+        return collected
+
+    def list_solution_types(self, access_token: str) -> list[Category]:
+        return self._list_dropdown_pages(access_token, "/api.php/v2.2/Dropdowns/SolutionType")
+
+    def list_solution_templates(self, access_token: str):
+        collected = []
+        start = 0
+        while start < _CATEGORY_CAP:
+            payload = self._json(
+                "GET",
+                "/api.php/v2.2/Dropdowns/SolutionTemplate",
+                token=access_token,
+                params={"start": start, "limit": _CATEGORY_PAGE},
+            )
+            collected.extend(parse_solution_templates(payload))
+            if payload_row_count(payload) < _CATEGORY_PAGE:
+                break
+            start += _CATEGORY_PAGE
+        return collected
+
+    def list_task_categories(self, access_token: str) -> list[Category]:
+        try:
+            return self._list_dropdown_pages(
+                access_token,
+                "/api.php/v2.2/Dropdowns/TaskCategory",
+                filter_expr="is_helpdesk_visible==true",
+                require_helpdesk_visible=True,
+                require_active=True,
+            )
+        except GlpiValidation:
+            return self._list_dropdown_pages(
+                access_token,
+                "/api.php/v2.2/Dropdowns/TaskCategory",
+                require_helpdesk_visible=True,
+                require_active=True,
+            )
+
+    def list_task_templates(self, access_token: str):
+        collected = []
+        start = 0
+        while start < _CATEGORY_CAP:
+            payload = self._json(
+                "GET",
+                "/api.php/v2.2/Dropdowns/TaskTemplate",
+                token=access_token,
+                params={"start": start, "limit": _CATEGORY_PAGE},
+            )
+            collected.extend(parse_task_templates(payload))
+            if payload_row_count(payload) < _CATEGORY_PAGE:
+                break
+            start += _CATEGORY_PAGE
+        return collected
+
+    def list_task_statuses(self):
+        return [Category(item_id, name) for item_id, name in TASK_STATUSES]
+
+    def list_groups(self, access_token: str) -> list[Category]:
+        return self._list_dropdown_pages(access_token, "/api.php/v2.2/Administration/Group")
+
+    def list_validation_templates(self, access_token: str):
+        from helpdesk_app.domain.models import TemplateCatalogItem
+        from helpdesk_app.infrastructure.glpi.mapping import _results
+
+        collected: list[TemplateCatalogItem] = []
+        start = 0
+        while start < _CATEGORY_CAP:
+            payload = self._json(
+                "GET",
+                "/api.php/v2.2/Dropdowns/ValidationTemplate",
+                token=access_token,
+                params={"start": start, "limit": _CATEGORY_PAGE},
+            )
+            for row in _results(payload):
+                if not isinstance(row, dict) or "id" not in row:
+                    continue
+                name = display_text(row.get("name"))
+                if not name:
+                    continue
+                collected.append(
+                    TemplateCatalogItem(
+                        id=int(row["id"]),
+                        name=name,
+                        content=str(row.get("content") or ""),
+                    )
+                )
+            if payload_row_count(payload) < _CATEGORY_PAGE:
+                break
+            start += _CATEGORY_PAGE
+        return collected
+
+    def list_approval_steps(self, access_token: str) -> list[Category]:
+        return self._list_dropdown_pages(access_token, "/api.php/v2.2/Dropdowns/ApprovalStep")
 
     def list_urgencies(self):
         return list(URGENCIES)
@@ -559,47 +716,104 @@ class HttpxGlpiClient:
         except GlpiForbidden:
             return False
 
-    def add_followup(self, access_token: str, ticket_id: int, content: str) -> int:
+    def add_followup(
+        self,
+        access_token: str,
+        ticket_id: int,
+        content: str,
+        *,
+        request_type_id: int | None = None,
+    ) -> int:
+        body: dict = {"content": content}
+        if request_type_id is not None and int(request_type_id) > 0:
+            body["request_type"] = {"id": int(request_type_id)}
         payload = self._json(
             "POST",
             f"/api.php/v2.2/Assistance/Ticket/{ticket_id}/Timeline/Followup",
             token=access_token,
-            json_body={"content": content},
+            json_body=body,
         )
         return parse_created_id(payload)
 
-    def add_ticket_solution(self, access_token: str, ticket_id: int, content: str) -> int:
+    def add_ticket_solution(
+        self,
+        access_token: str,
+        ticket_id: int,
+        content: str,
+        *,
+        solution_type_id: int | None = None,
+    ) -> int:
         """Create ITILSolution via HLAPI Timeline/Solution (content required).
 
         Force public (``is_private=0``) so the BFF timeline and MFE conversation
         can confirm and display the entry — private solutions are stripped on read.
+        ``solution_type_id`` maps to HLAPI ``type.id`` (SolutionType).
         """
         ticket_id = int(ticket_id)
         if ticket_id <= 0:
             raise GlpiValidation("ticket_id inválido.")
+        body: dict = {"content": content, "is_private": 0}
+        if solution_type_id is not None and int(solution_type_id) > 0:
+            body["type"] = {"id": int(solution_type_id)}
         payload = self._json(
             "POST",
             f"/api.php/v2.2/Assistance/Ticket/{ticket_id}/Timeline/Solution",
             token=access_token,
-            json_body={"content": content, "is_private": 0},
+            json_body=body,
         )
         return parse_created_id(payload)
 
-    def add_ticket_task(self, access_token: str, ticket_id: int, content: str) -> int:
+    def add_ticket_task(
+        self,
+        access_token: str,
+        ticket_id: int,
+        content: str,
+        *,
+        state: int | None = None,
+        duration_seconds: int | None = None,
+        category_id: int | None = None,
+        user_tech_id: int | None = None,
+        group_tech_id: int | None = None,
+        planned_begin: str | None = None,
+        planned_end: str | None = None,
+    ) -> int:
         """Create TicketTask via HLAPI Timeline/Task (content required).
 
         Force public (``is_private=0``): GLPI often defaults tasks to private; private
         entries are omitted from Helpdesk timeline, which would break create-task
         confirmation and hide the task from the workspace conversation.
+
+        ``duration_seconds`` maps to HLAPI ``duration`` (integer; unit matches provider).
         """
         ticket_id = int(ticket_id)
         if ticket_id <= 0:
             raise GlpiValidation("ticket_id inválido.")
+        body: dict = {"content": content, "is_private": 0}
+        if state is not None:
+            state_i = int(state)
+            if state_i not in {0, 1, 2}:
+                raise GlpiValidation("state inválido.")
+            body["state"] = state_i
+        if duration_seconds is not None:
+            duration_i = int(duration_seconds)
+            if duration_i < 0:
+                raise GlpiValidation("duration_seconds inválido.")
+            body["duration"] = duration_i
+        if category_id is not None and int(category_id) > 0:
+            body["category"] = {"id": int(category_id)}
+        if user_tech_id is not None and int(user_tech_id) > 0:
+            body["user_tech"] = {"id": int(user_tech_id)}
+        if group_tech_id is not None and int(group_tech_id) > 0:
+            body["group_tech"] = {"id": int(group_tech_id)}
+        if planned_begin:
+            body["planned_begin"] = str(planned_begin).strip()
+        if planned_end:
+            body["planned_end"] = str(planned_end).strip()
         payload = self._json(
             "POST",
             f"/api.php/v2.2/Assistance/Ticket/{ticket_id}/Timeline/Task",
             token=access_token,
-            json_body={"content": content, "is_private": 0},
+            json_body=body,
         )
         return parse_created_id(payload)
 

@@ -237,37 +237,128 @@ export function setTicketAssignee(ticketId: string, userId: number, idempotencyK
   });
 }
 
-export function createFollowup(ticketId: string, content: string, idempotencyKey: string) {
+export function createFollowup(
+  ticketId: string,
+  body: { content: string; request_type_id?: number },
+  idempotencyKey: string,
+) {
   return request<{ id: number }>(`/tickets/${ticketId}/followups`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "Idempotency-Key": idempotencyKey,
     },
-    body: JSON.stringify({ content }),
+    body: JSON.stringify(body),
   });
 }
 
-export function createTicketSolution(ticketId: string, content: string, idempotencyKey: string) {
+export function createTicketSolution(
+  ticketId: string,
+  body: { content: string; solution_type_id?: number },
+  idempotencyKey: string,
+) {
   return request<{ id: number; status_id: number | null }>(`/tickets/${ticketId}/solutions`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "Idempotency-Key": idempotencyKey,
     },
-    body: JSON.stringify({ content }),
+    body: JSON.stringify(body),
   });
 }
 
-export function createTicketTask(ticketId: string, content: string, idempotencyKey: string) {
-  return request<{ id: number }>(`/tickets/${ticketId}/tasks`, {
+export type TicketTaskCreateBody = {
+  content: string;
+  state?: number;
+  duration_seconds?: number;
+  category_id?: number;
+  user_tech_id?: number;
+  group_tech_id?: number;
+  planned_begin?: string;
+  planned_end?: string;
+};
+
+export function createTicketTask(ticketId: string, body: TicketTaskCreateBody, idempotencyKey: string) {
+  return request<{
+    id: number;
+    state?: number | null;
+    duration_seconds?: number | null;
+    category_name?: string;
+    user_tech_display_name?: string;
+    group_tech_display_name?: string;
+    planned_begin?: string;
+    planned_end?: string;
+  }>(`/tickets/${ticketId}/tasks`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "Idempotency-Key": idempotencyKey,
     },
-    body: JSON.stringify({ content }),
+    body: JSON.stringify(body),
   });
+}
+
+export type CatalogItem = { id: number; name: string };
+
+export type TemplateCatalogItem = CatalogItem & {
+  content?: string;
+  is_private?: boolean | null;
+  request_type_id?: number | null;
+  solution_type_id?: number | null;
+  category_id?: number | null;
+  state?: number | null;
+  duration_seconds?: number | null;
+  user_tech_id?: number | null;
+  group_tech_id?: number | null;
+  use_current_user?: boolean | null;
+};
+
+function listCatalog(path: string) {
+  return request<{ items: CatalogItem[] }>(path).then((payload) => payload.items ?? []);
+}
+
+function listTemplates(path: string) {
+  return request<{ items: TemplateCatalogItem[] }>(path).then((payload) => payload.items ?? []);
+}
+
+export function listRequestTypes() {
+  return listCatalog("/request-types");
+}
+
+export function listFollowupTemplates() {
+  return listTemplates("/followup-templates");
+}
+
+export function listSolutionTypes() {
+  return listCatalog("/solution-types");
+}
+
+export function listSolutionTemplates() {
+  return listTemplates("/solution-templates");
+}
+
+export function listTaskCategories() {
+  return listCatalog("/task-categories");
+}
+
+export function listTaskTemplates() {
+  return listTemplates("/task-templates");
+}
+
+export function listTaskStatuses() {
+  return listCatalog("/task-statuses");
+}
+
+export function listGroups() {
+  return listCatalog("/groups");
+}
+
+export function listValidationTemplates() {
+  return listTemplates("/validation-templates");
+}
+
+export function listApprovalSteps() {
+  return listCatalog("/approval-steps");
 }
 
 export function requestTicketApproval(

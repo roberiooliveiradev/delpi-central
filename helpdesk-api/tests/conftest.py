@@ -117,6 +117,64 @@ class FakeGlpi:
         assert access_token
         return [Category(3, "Hardware")]
 
+    def list_request_types(self, access_token: str):
+        self.calls += 1
+        return [Category(1, "Direct")]
+
+    def list_followup_templates(self, access_token: str):
+        from helpdesk_app.domain.models import TemplateCatalogItem
+
+        self.calls += 1
+        return [TemplateCatalogItem(1, "Modelo FU", content="<p>tpl</p>", request_type_id=1)]
+
+    def list_solution_types(self, access_token: str):
+        self.calls += 1
+        return [Category(2, "Workaround")]
+
+    def list_solution_templates(self, access_token: str):
+        from helpdesk_app.domain.models import TemplateCatalogItem
+
+        self.calls += 1
+        return [TemplateCatalogItem(3, "Modelo SOL", content="<p>sol</p>", solution_type_id=2)]
+
+    def list_task_categories(self, access_token: str):
+        self.calls += 1
+        return [Category(4, "Diagnóstico")]
+
+    def list_task_templates(self, access_token: str):
+        from helpdesk_app.domain.models import TemplateCatalogItem
+
+        self.calls += 1
+        return [
+            TemplateCatalogItem(
+                5,
+                "Modelo TASK",
+                content="<p>task</p>",
+                state=1,
+                duration_seconds=3600,
+                category_id=4,
+            )
+        ]
+
+    def list_task_statuses(self):
+        from helpdesk_app.infrastructure.glpi.mapping import TASK_STATUSES
+
+        return [Category(i, n) for i, n in TASK_STATUSES]
+
+    def list_groups(self, access_token: str):
+        self.calls += 1
+        return [Category(9, "N1")]
+
+    def list_validation_templates(self, access_token: str):
+        from helpdesk_app.domain.models import TemplateCatalogItem
+
+        self.calls += 1
+        return [TemplateCatalogItem(6, "Modelo VAL", content="<p>val</p>")]
+
+    def list_approval_steps(self, access_token: str):
+        self.calls += 1
+        return [Category(1, "Padrão")]
+
     def list_tickets(self, access_token: str, query):
         self.calls += 1
         assert access_token
@@ -233,14 +291,28 @@ class FakeGlpi:
         assert access_token
         return bool(self.can_assign)
 
-    def add_followup(self, access_token: str, ticket_id: int, content: str):
+    def add_followup(
+        self,
+        access_token: str,
+        ticket_id: int,
+        content: str,
+        *,
+        request_type_id: int | None = None,
+    ):
         self.calls += 1
         if ticket_id == 99:
             raise GlpiNotFound("ausente")
-        self.followups.append((ticket_id, content))
+        self.followups.append((ticket_id, content, request_type_id))
         return 8
 
-    def add_ticket_solution(self, access_token: str, ticket_id: int, content: str):
+    def add_ticket_solution(
+        self,
+        access_token: str,
+        ticket_id: int,
+        content: str,
+        *,
+        solution_type_id: int | None = None,
+    ):
         from dataclasses import replace
 
         self.calls += 1
@@ -248,7 +320,7 @@ class FakeGlpi:
         if ticket_id == 99:
             raise GlpiNotFound("ausente")
         solution_id = 50 + len(self.solutions)
-        self.solutions.append((ticket_id, content))
+        self.solutions.append((ticket_id, content, solution_type_id))
         if self.detail.id == ticket_id:
             entry = TimelineEntry(
                 solution_id,
@@ -265,7 +337,20 @@ class FakeGlpi:
             )
         return solution_id
 
-    def add_ticket_task(self, access_token: str, ticket_id: int, content: str):
+    def add_ticket_task(
+        self,
+        access_token: str,
+        ticket_id: int,
+        content: str,
+        *,
+        state: int | None = None,
+        duration_seconds: int | None = None,
+        category_id: int | None = None,
+        user_tech_id: int | None = None,
+        group_tech_id: int | None = None,
+        planned_begin: str | None = None,
+        planned_end: str | None = None,
+    ):
         from dataclasses import replace
 
         self.calls += 1
@@ -273,7 +358,19 @@ class FakeGlpi:
         if ticket_id == 99:
             raise GlpiNotFound("ausente")
         task_id = 60 + len(self.tasks)
-        self.tasks.append((ticket_id, content))
+        self.tasks.append(
+            (
+                ticket_id,
+                content,
+                state,
+                duration_seconds,
+                category_id,
+                user_tech_id,
+                group_tech_id,
+                planned_begin,
+                planned_end,
+            )
+        )
         if self.detail.id == ticket_id:
             entry = TimelineEntry(
                 task_id,
@@ -281,6 +378,13 @@ class FakeGlpi:
                 content,
                 "2026-09-24T12:05:00Z",
                 "Ana",
+                state=state,
+                duration_seconds=duration_seconds,
+                category_name="Diagnóstico" if category_id else "",
+                user_tech_display_name="Tech" if user_tech_id else "",
+                group_tech_display_name="N1" if group_tech_id else "",
+                planned_begin=planned_begin or "",
+                planned_end=planned_end or "",
             )
             self.detail = replace(
                 self.detail,

@@ -92,6 +92,148 @@ def parse_categories(payload: dict | list) -> list[Category]:
     return categories
 
 
+# HLAPI TicketTask.state — OpenAPI enum on helpdesk.centraldelpi.com.br (API 2.2.0).
+TASK_STATUSES: tuple[tuple[int, str], ...] = (
+    (0, "Informação"),
+    (1, "A fazer"),
+    (2, "Concluída"),
+)
+
+
+def parse_named_catalog(
+    payload: dict | list,
+    *,
+    require_helpdesk_visible: bool = False,
+    require_active: bool = False,
+) -> list[Category]:
+    """Map dropdown rows with id + name/completename (Reuse Category DTO)."""
+    rows = _results(payload)
+    items: list[Category] = []
+    for row in rows:
+        if not isinstance(row, dict) or "id" not in row:
+            continue
+        if require_helpdesk_visible and not _helpdesk_visible(row):
+            continue
+        if require_active and not _is_truthy(row.get("is_active"), default=True):
+            continue
+        name = display_text(row.get("completename") or row.get("name"))
+        if not name:
+            continue
+        items.append(Category(id=int(row["id"]), name=name))
+    return items
+
+
+def _ref_id(value) -> int | None:
+    if value is None or value == "":
+        return None
+    if isinstance(value, dict):
+        raw = value.get("id")
+    else:
+        raw = value
+    try:
+        parsed = int(raw)
+    except (TypeError, ValueError):
+        return None
+    return parsed if parsed > 0 else None
+
+
+def _ref_name(value) -> str:
+    if not isinstance(value, dict):
+        return ""
+    return display_text(value.get("completename") or value.get("name") or value.get("display_name"))
+
+
+def parse_followup_templates(payload: dict | list):
+    from helpdesk_app.domain.models import TemplateCatalogItem
+
+    items: list[TemplateCatalogItem] = []
+    for row in _results(payload):
+        if not isinstance(row, dict) or "id" not in row:
+            continue
+        name = display_text(row.get("name"))
+        if not name:
+            continue
+        private = row.get("is_private")
+        items.append(
+            TemplateCatalogItem(
+                id=int(row["id"]),
+                name=name,
+                content=str(row.get("content") or ""),
+                is_private=_is_truthy(private, default=False) if private is not None else None,
+                request_type_id=_ref_id(row.get("request_type")),
+            )
+        )
+    return items
+
+
+def parse_solution_templates(payload: dict | list):
+    from helpdesk_app.domain.models import TemplateCatalogItem
+
+    items: list[TemplateCatalogItem] = []
+    for row in _results(payload):
+        if not isinstance(row, dict) or "id" not in row:
+            continue
+        name = display_text(row.get("name"))
+        if not name:
+            continue
+        items.append(
+            TemplateCatalogItem(
+                id=int(row["id"]),
+                name=name,
+                content=str(row.get("content") or ""),
+                solution_type_id=_ref_id(row.get("type")),
+            )
+        )
+    return items
+
+
+def parse_task_templates(payload: dict | list):
+    from helpdesk_app.domain.models import TemplateCatalogItem
+
+    items: list[TemplateCatalogItem] = []
+    for row in _results(payload):
+        if not isinstance(row, dict) or "id" not in row:
+            continue
+        name = display_text(row.get("name"))
+        if not name:
+            continue
+        duration = row.get("duration")
+        try:
+            duration_seconds = int(duration) if duration not in (None, "") else None
+        except (TypeError, ValueError):
+            duration_seconds = None
+        state = row.get("state")
+        try:
+            state_id = int(state) if state not in (None, "") else None
+        except (TypeError, ValueError):
+            state_id = None
+        private = row.get("is_private")
+        use_current = row.get("use_current_user")
+        items.append(
+            TemplateCatalogItem(
+                id=int(row["id"]),
+                name=name,
+                content=str(row.get("content") or ""),
+                is_private=_is_truthy(private, default=False) if private is not None else None,
+                category_id=_ref_id(row.get("category")),
+                state=state_id,
+                duration_seconds=duration_seconds,
+                user_tech_id=_ref_id(row.get("user_tech")),
+                group_tech_id=_ref_id(row.get("group_tech")),
+                use_current_user=_is_truthy(use_current, default=False)
+                if use_current is not None
+                else None,
+            )
+        )
+    return items
+
+
+def _is_truthy(value, *, default: bool = False) -> bool:
+    if value is None:
+        return default
+    return value is True or value == 1 or value == "1"
+
+
 def payload_row_count(payload: dict | list) -> int:
     return len(_results(payload))
 
@@ -536,6 +678,37 @@ def _timeline_entry(
         allowed_document_ids=allowed_document_ids,
     )
     content = _text(content_html) if content_html else _text(row.get("content"))
+    state = None
+    duration_seconds = None
+    category_name = ""
+    user_tech_display_name = ""
+    group_tech_display_name = ""
+    planned_begin = ""
+    planned_end = ""
+    solution_type_name = ""
+    solution_status = None
+    if entry_kind == "task":
+        try:
+            state = int(row["state"]) if row.get("state") not in (None, "") else None
+        except (TypeError, ValueError):
+            state = None
+        try:
+            duration_seconds = (
+                int(row["duration"]) if row.get("duration") not in (None, "") else None
+            )
+        except (TypeError, ValueError):
+            duration_seconds = None
+        category_name = _ref_name(row.get("category"))
+        user_tech_display_name = _ref_name(row.get("user_tech"))
+        group_tech_display_name = _ref_name(row.get("group_tech"))
+        planned_begin = _optional_instant(row.get("planned_begin"))
+        planned_end = _optional_instant(row.get("planned_end"))
+    elif entry_kind == "solution":
+        solution_type_name = _ref_name(row.get("type"))
+        try:
+            solution_status = int(row["status"]) if row.get("status") not in (None, "") else None
+        except (TypeError, ValueError):
+            solution_status = None
     return TimelineEntry(
         id=int(row.get("id") or 0),
         kind=entry_kind,
@@ -544,6 +717,15 @@ def _timeline_entry(
         created_at=str(row.get("date_creation") or row.get("date") or ""),
         author_display_name=author,
         author_identity=_person_identity(user if isinstance(user, dict) else {}),
+        state=state,
+        duration_seconds=duration_seconds,
+        category_name=category_name,
+        user_tech_display_name=user_tech_display_name,
+        group_tech_display_name=group_tech_display_name,
+        planned_begin=planned_begin,
+        planned_end=planned_end,
+        solution_type_name=solution_type_name,
+        solution_status=solution_status,
     )
 
 

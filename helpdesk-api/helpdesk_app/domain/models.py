@@ -100,6 +100,32 @@ class TimelineEntry:
     author_identity: PersonIdentity = PersonIdentity()
     mine: bool = False
     content_html: str = ""
+    # Task / solution metadata (HLAPI 2.2) — additive for field-level postcondition.
+    state: int | None = None
+    duration_seconds: int | None = None
+    category_name: str = ""
+    user_tech_display_name: str = ""
+    group_tech_display_name: str = ""
+    planned_begin: str = ""
+    planned_end: str = ""
+    solution_type_name: str = ""
+    solution_status: int | None = None
+
+
+@dataclass(frozen=True)
+class TemplateCatalogItem:
+    id: int
+    name: str
+    content: str = ""
+    is_private: bool | None = None
+    request_type_id: int | None = None
+    solution_type_id: int | None = None
+    category_id: int | None = None
+    state: int | None = None
+    duration_seconds: int | None = None
+    user_tech_id: int | None = None
+    group_tech_id: int | None = None
+    use_current_user: bool | None = None
 
 
 @dataclass(frozen=True)
