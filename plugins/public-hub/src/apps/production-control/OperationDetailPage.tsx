@@ -18,6 +18,7 @@ import {
   type VisualMode,
 } from "./cockpitShared";
 import { ProductModelViewer } from "./ProductModelViewer";
+import { ProductionRunControls } from "./ProductionRunControls";
 import {
   usePublicOperationAppointments,
   type PublicOperationAppointmentsState,
@@ -44,6 +45,8 @@ type Props = {
   shiftProducedQty: number | null;
   downtimeHours: number | null;
   downtimeAvailable: boolean;
+  runUpdatedSignal: number;
+  realtimeConnected: boolean;
   onOpenPerformance: () => void;
   onOpenDowntime: () => void;
   onBack: () => void;
@@ -68,6 +71,8 @@ export function OperationDetailPage({
   shiftProducedQty,
   downtimeHours,
   downtimeAvailable,
+  runUpdatedSignal,
+  realtimeConnected,
   onOpenPerformance,
   onOpenDowntime,
   onBack,
@@ -253,6 +258,15 @@ export function OperationDetailPage({
                     : `${formatQty(pendingQty)} ${formatUnit(operation.unit, pendingQty)}`}
               </Fact>
             </dl>
+
+            <ProductionRunControls
+              token={token}
+              branch={branch}
+              workCenter={workCenter}
+              operation={operation}
+              runUpdatedSignal={runUpdatedSignal}
+              realtimeConnected={realtimeConnected}
+            />
 
             <h3 className="pcp-pub__detail-section">Programação e entrega</h3>
             <dl className="pcp-pub__facts pcp-pub__facts--num">

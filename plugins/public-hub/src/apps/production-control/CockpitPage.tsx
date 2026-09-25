@@ -185,6 +185,7 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
       if (reason.startsWith("run_") || reason === "pieces_updated") {
         setRunUpdatedSignal((value) => value + 1);
       }
+      if (reason === "pieces_updated") return;
       // Sequência/refresh do PCP: atualiza sem flicker de loading.
       void reload(workCenterRef.current, { quiet: true });
     }, [reload]),
@@ -373,6 +374,8 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
           shiftProducedQty={shiftProducedQty}
           downtimeHours={downtimeHours}
           downtimeAvailable={downtimeAvailable}
+          runUpdatedSignal={runUpdatedSignal}
+          realtimeConnected={connected}
           onOpenPerformance={openPerformance}
           onOpenDowntime={() => setDowntimeOpen(true)}
           onBack={openQueue}
@@ -470,6 +473,7 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
                 branch={branch}
                 workCenter={workCenter}
                 runUpdatedSignal={runUpdatedSignal}
+                realtimeConnected={connected}
                 onOpenVisual={setVisualTarget}
                 onOpenDetail={() =>
                   openOperation(
@@ -746,6 +750,7 @@ function ActiveNowCard({
   branch,
   workCenter,
   runUpdatedSignal,
+  realtimeConnected,
   onOpenVisual,
   onOpenDetail,
 }: {
@@ -754,6 +759,7 @@ function ActiveNowCard({
   branch: string;
   workCenter: string;
   runUpdatedSignal: number;
+  realtimeConnected: boolean;
   onOpenVisual: (target: VisualTarget) => void;
   onOpenDetail: () => void;
 }) {
@@ -877,6 +883,7 @@ function ActiveNowCard({
           workCenter={workCenter}
           operation={operation}
           runUpdatedSignal={runUpdatedSignal}
+          realtimeConnected={realtimeConnected}
         />
       </article>
     </section>

@@ -9,6 +9,7 @@ type Props = {
   workCenter: string;
   operation: MachineLoadOperation;
   runUpdatedSignal?: number;
+  realtimeConnected?: boolean;
 };
 
 export function ProductionRunControls({
@@ -17,6 +18,7 @@ export function ProductionRunControls({
   workCenter,
   operation,
   runUpdatedSignal = 0,
+  realtimeConnected = false,
 }: Props) {
   const {
     session,
@@ -40,6 +42,7 @@ export function ProductionRunControls({
     workCenter,
     operation,
     runUpdatedSignal,
+    realtimeConnected,
   });
 
   const counted = run?.countedPieces ?? run?.piecesTotal ?? 0;

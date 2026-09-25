@@ -53,7 +53,7 @@ class Settings:
         _get_env("PRODUCTION_PULSE_API_TIMEOUT", default="5")
     )
     PC_PRODUCTION_RUN_POLL_MS: int = int(
-        _get_env("PC_PRODUCTION_RUN_POLL_MS", default="1000") or "1000"
+        _get_env("PC_PRODUCTION_RUN_POLL_MS", default="500") or "500"
     )
     PC_BENCH_SESSION_TTL_HOURS: int = int(
         _get_env("PC_BENCH_SESSION_TTL_HOURS", default="12") or "12"
