@@ -12,6 +12,8 @@ Resumo operacional abaixo — **não** duplicar o playbook nesta seção.
 | Convenção | Significado |
 |-----------|-------------|
 | `B1_UM = MI` (PA) | Na Delpi, **1 MI = 1000 peças** no contexto produtivo das rotas api-delpi que aplicam a conversão |
+| `B1_UM = MT` | Metro no apontamento: **milheiro = H6 ÷ 1000** (`toMilheiroFactor`); UN de MT permanece 1:1 (sem ×1000) |
+| `B1_UM = PC` | Peça no apontamento: **milheiro = H6 ÷ 1000** (mesma regra); UN de PC permanece 1:1 |
 | Contextos distintos | Cadastro, BOM/estrutura, fiscal e apontamento podem divergir — ver playbook §§ 1–3 |
 | Rotas consumidoras | Listadas no playbook (§ 3.2) — estrutura, estoque, simulador de impacto, etc. |
 

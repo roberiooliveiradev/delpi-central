@@ -1,13 +1,27 @@
 {
   "default": {
     "displayUnitFactor": 1,
-    "displayUnit": null
+    "displayUnit": null,
+    "toMilheiroFactor": 1
   },
   "units": {
     "MI": {
       "catalogUnit": "MI",
       "displayUnitFactor": 1000,
-      "displayUnit": "UN"
+      "displayUnit": "UN",
+      "toMilheiroFactor": 1
+    },
+    "MT": {
+      "catalogUnit": "MT",
+      "displayUnitFactor": 1,
+      "displayUnit": null,
+      "toMilheiroFactor": 0.001
+    },
+    "PC": {
+      "catalogUnit": "PC",
+      "displayUnitFactor": 1,
+      "displayUnit": null,
+      "toMilheiroFactor": 0.001
     }
   },
   "quantityFields": [

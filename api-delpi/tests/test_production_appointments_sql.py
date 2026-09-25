@@ -68,12 +68,37 @@ def test_produced_totals_uses_h6_qtdprod_and_display_factor() -> None:
         branch="01",
         product_types=["PA", "PI"],
     )
-    assert "SUM(CAST(SH6.H6_QTDPROD AS FLOAT)) AS qty_produced_milheiro" in query
+    assert "AS qty_produced_milheiro" in query
+    assert "WHEN UPPER(LTRIM(RTRIM(ISNULL(SB1.B1_UM, '')))) = 'MT' THEN 0.001" in query
+    assert "WHEN UPPER(LTRIM(RTRIM(ISNULL(SB1.B1_UM, '')))) = 'PC' THEN 0.001" in query
     assert "THEN 1000" in query
+    assert "IN ('', 'MI')" in query
     assert "%INSPE%FINAL%" in query
     assert "RIGHT(LTRIM(RTRIM(SH6.H6_OP)), 3) = ?" in query
     assert params[0] == "01"
     assert params[-1] == "001"
+
+
+def test_produced_by_product_applies_mt_to_milheiro_factor() -> None:
+    from app.infrastructure.persistence.totvs.production_appointments.production_appointments_sql import (
+        build_produced_quantity_by_product_query,
+        _qty_display_expr,
+    )
+
+    query, _params = build_produced_quantity_by_product_query(
+        date_start="20260615",
+        date_end_exclusive="20260716",
+        branch="02",
+        product_types=["PA", "PI"],
+    )
+    assert "AS produced_milheiro" in query
+    assert "WHEN UPPER(LTRIM(RTRIM(ISNULL(SB1.B1_UM, '')))) = 'MT' THEN 0.001" in query
+    assert "WHEN UPPER(LTRIM(RTRIM(ISNULL(SB1.B1_UM, '')))) = 'PC' THEN 0.001" in query
+    # Negative: display (UN) does not multiply MT/PC by 1000 — only MI/empty.
+    display = _qty_display_expr("SH6.H6_QTDPROD")
+    assert "IN ('', 'MI') THEN 1000" in display
+    assert "'MT'" not in display
+    assert "'PC'" not in display
 
 
 def test_appointments_where_applies_free_text_search() -> None:

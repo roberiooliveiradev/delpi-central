@@ -95,13 +95,29 @@ Para `C2_UM = MI` ou `B1_UM = MI` em rotas de OP/cronograma/apontamento:
 {
   "catalogUnit": "MI",
   "displayUnitFactor": 1000,
-  "displayUnit": "UN"
+  "displayUnit": "UN",
+  "toMilheiroFactor": 1
 }
 ```
 
 **Interpretação:** `C2_QUANT`, `C2_QUJE`, `H6_QTDPROD` etc. vêm do Protheus em **milheiro**; a API expõe **peças** (`planned_qty`, `produced_qty`, …) com `unit = UN`. Distinto de `ProductPaBomReferenceService` (BOM por 1 PA/MI).
 
-Rotas: `/production/schedule/today`, `/production/orders/open`, `/production/orders/finished`, `/production/orders/by-op/{op}`, OEE (listagem e detalhe de apontamento).
+Para `B1_UM = MT` (metro) no denominador/agregados de produção (PPM / produced-quantity):
+
+```json
+{
+  "catalogUnit": "MT",
+  "displayUnitFactor": 1,
+  "displayUnit": null,
+  "toMilheiroFactor": 0.001
+}
+```
+
+**Interpretação:** `H6_QTDPROD` em metro → **milheiro = H6 × 0.001** (÷1000); quantidade em UN permanece 1:1 (não multiplica por 1000). Perfil em `production_operational_units.json`; SQL via `_qty_milheiro_expr`.
+
+Para `B1_UM = PC` (peça), o mesmo `toMilheiroFactor: 0.001` — peça já está em unidade; milheiro = H6 ÷ 1000; UN permanece 1:1. Assim `Σ milheiro ≈ Σ un / 1000` no agregado PPM.
+
+Rotas: `/production/schedule/today`, `/production/orders/open`, `/production/orders/finished`, `/production/orders/by-op/{op}`, OEE (listagem e detalhe de apontamento); agregados PPM/produced-quantity usam o mesmo perfil para milheiro.
 
 ### 3.4 Fórmula do simulador de custo
 

@@ -6,6 +6,8 @@ Quantidades H6 em MI: conversão para UN via ``ProductionOperationalQuantityServ
 (`production_operational_units.json` → displayUnitFactor). Listagens/by-op
 trazem ``unit`` (B1_UM) e o use case normaliza; agregações aplicam o fator no SQL
 por linha (CASE B1_UM vazia ou MI).
+
+Milheiro agregado: ``toMilheiroFactor`` (ex.: MT × 0.001) via ``_qty_milheiro_expr``.
 """
 
 from __future__ import annotations
@@ -60,13 +62,35 @@ def _mi_display_factor() -> float:
     return ProductionOperationalQuantityService.resolve("MI").display_unit_factor
 
 
+def _b1_um_expr() -> str:
+    return "UPPER(LTRIM(RTRIM(ISNULL(SB1.B1_UM, ''))))"
+
+
 def _qty_display_expr(column_sql: str) -> str:
     """H6 qty → unidade de exibição (MI ou UM vazia × displayUnitFactor; demais inalteradas)."""
     factor = _mi_display_factor()
-    um = "UPPER(LTRIM(RTRIM(ISNULL(SB1.B1_UM, ''))))"
+    um = _b1_um_expr()
     return (
         f"(CAST({column_sql} AS FLOAT) * CASE "
         f"WHEN {um} IN ('', 'MI') THEN {factor:g} "
+        f"ELSE 1.0 END)"
+    )
+
+
+def _qty_milheiro_expr(column_sql: str) -> str:
+    """H6 qty → milheiro (UMs com toMilheiroFactor ≠ 1, ex. MT × 0.001; demais × 1)."""
+    um = _b1_um_expr()
+    when_parts: list[str] = []
+    for unit, factor in sorted(
+        ProductionOperationalQuantityService.non_default_to_milheiro_factors().items()
+    ):
+        safe_unit = unit.replace("'", "''")
+        when_parts.append(f"WHEN {um} = '{safe_unit}' THEN {factor:g} ")
+    if not when_parts:
+        return f"CAST({column_sql} AS FLOAT)"
+    return (
+        f"(CAST({column_sql} AS FLOAT) * CASE "
+        f"{''.join(when_parts)}"
         f"ELSE 1.0 END)"
     )
 
@@ -616,11 +640,13 @@ def build_produced_totals_query(
     )
     qty_prod = _qty_display_expr("SH6.H6_QTDPROD")
     qty_lost = _qty_display_expr("SH6.H6_QTDPERD")
+    qty_milheiro = _qty_milheiro_expr("SH6.H6_QTDPROD")
+    qty_lost_milheiro = _qty_milheiro_expr("SH6.H6_QTDPERD")
     sql = f"""
     SELECT
-        SUM(CAST(SH6.H6_QTDPROD AS FLOAT)) AS qty_produced_milheiro,
+        SUM({qty_milheiro}) AS qty_produced_milheiro,
         SUM({qty_prod}) AS qty_produced_un,
-        SUM(CAST(SH6.H6_QTDPERD AS FLOAT)) AS qty_lost_milheiro,
+        SUM({qty_lost_milheiro}) AS qty_lost_milheiro,
         SUM({qty_lost}) AS qty_lost_un,
         COUNT(*) AS appointment_count,
         COUNT(DISTINCT LTRIM(RTRIM(SH6.H6_OP))) AS orders_count
@@ -648,6 +674,7 @@ def build_produced_quantity_by_product_query(
         product_types=product_types,
     )
     qty_prod = _qty_display_expr("SH6.H6_QTDPROD")
+    qty_milheiro = _qty_milheiro_expr("SH6.H6_QTDPROD")
     sql = f"""
     SELECT
         LTRIM(RTRIM(SH6.H6_FILIAL)) AS branch,
@@ -655,7 +682,7 @@ def build_produced_quantity_by_product_query(
         LTRIM(RTRIM(SB1.B1_TIPO)) AS product_type,
         MAX(LTRIM(RTRIM(SB1.B1_DESC))) AS description,
         MAX(LTRIM(RTRIM(SB1.B1_UM))) AS unit,
-        SUM(CAST(SH6.H6_QTDPROD AS FLOAT)) AS produced_milheiro,
+        SUM({qty_milheiro}) AS produced_milheiro,
         SUM({qty_prod}) AS produced_un,
         COUNT(DISTINCT LTRIM(RTRIM(SH6.H6_OP))) AS orders_count
     {_BASE_FROM}

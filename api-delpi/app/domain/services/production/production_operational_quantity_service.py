@@ -24,13 +24,21 @@ class ProductionOperationalUnitProfile:
     catalog_unit: str | None
     display_unit_factor: float
     display_unit: str | None
+    to_milheiro_factor: float = 1.0
 
     def converts_catalog_unit(self) -> bool:
         return self.display_unit_factor not in (0, 1)
 
+    def converts_to_milheiro(self) -> bool:
+        return self.to_milheiro_factor not in (0, 1)
+
 
 class ProductionOperationalQuantityService:
-    """Quantidades de OP/apontamento em MI (C2_UM / B1_UM) → peças (UN) na resposta."""
+    """Quantidades de OP/apontamento em MI (C2_UM / B1_UM) → peças (UN) na resposta.
+
+    Também converte H6 para milheiro agregado quando ``toMilheiroFactor`` ≠ 1
+    (ex.: MT → milheiro ÷1000).
+    """
 
     @classmethod
     def resolve(cls, unit: str | None) -> ProductionOperationalUnitProfile:
@@ -48,13 +56,44 @@ class ProductionOperationalQuantityService:
         if display_unit is not None:
             display_unit = str(display_unit).strip() or None
 
+        to_milheiro_raw = profile.get("toMilheiroFactor")
+        if to_milheiro_raw is None:
+            to_milheiro_raw = default.get("toMilheiroFactor")
+
         return ProductionOperationalUnitProfile(
             catalog_unit=catalog_unit,
             display_unit_factor=float(
                 profile.get("displayUnitFactor") or default.get("displayUnitFactor") or 1
             ),
             display_unit=display_unit,
+            to_milheiro_factor=float(to_milheiro_raw if to_milheiro_raw is not None else 1),
         )
+
+    @classmethod
+    def to_milheiro_quantity(cls, quantity: object, unit: str | None) -> float:
+        """H6 / quantidade cadastral → milheiro (MT × 0.001; MI e demais × 1)."""
+        profile = cls.resolve(unit)
+        return ProductPlaybookNumericService.to_float(quantity) * profile.to_milheiro_factor
+
+    @classmethod
+    def non_default_to_milheiro_factors(cls) -> dict[str, float]:
+        """UMs com ``toMilheiroFactor`` ≠ 1 — usadas no CASE SQL de milheiro."""
+        bundle = cls._bundle()
+        default = bundle.get("default") if isinstance(bundle.get("default"), dict) else {}
+        default_factor = float(default.get("toMilheiroFactor") or 1)
+        units = bundle.get("units") if isinstance(bundle.get("units"), dict) else {}
+        result: dict[str, float] = {}
+        for raw_unit, profile in units.items():
+            if not isinstance(profile, dict):
+                continue
+            unit = str(raw_unit or "").strip().upper()
+            if not unit:
+                continue
+            factor_raw = profile.get("toMilheiroFactor")
+            factor = float(factor_raw if factor_raw is not None else default_factor)
+            if factor not in (0, 1):
+                result[unit] = factor
+        return result
 
     @classmethod
     def quantity_fields(cls) -> tuple[str, ...]:

@@ -9,7 +9,27 @@ def test_resolve_mi_converts_to_display_units() -> None:
     assert profile.catalog_unit == "MI"
     assert profile.display_unit_factor == 1000
     assert profile.display_unit == "UN"
+    assert profile.to_milheiro_factor == 1
     assert profile.converts_catalog_unit() is True
+    assert profile.converts_to_milheiro() is False
+
+
+def test_resolve_mt_to_milheiro_divides_by_1000() -> None:
+    profile = ProductionOperationalQuantityService.resolve("MT")
+
+    assert profile.catalog_unit == "MT"
+    assert profile.display_unit_factor == 1
+    assert profile.to_milheiro_factor == 0.001
+    assert profile.converts_catalog_unit() is False
+    assert profile.converts_to_milheiro() is True
+    assert ProductionOperationalQuantityService.to_milheiro_quantity(300, "MT") == 0.3
+    assert ProductionOperationalQuantityService.to_milheiro_quantity(300, "MI") == 300.0
+    assert ProductionOperationalQuantityService.to_milheiro_quantity(0.015, "PC") == 0.000015
+    assert ProductionOperationalQuantityService.to_milheiro_quantity(12, "KG") == 12.0
+    assert ProductionOperationalQuantityService.non_default_to_milheiro_factors() == {
+        "MT": 0.001,
+        "PC": 0.001,
+    }
 
 
 def test_convert_mi_planned_qty_to_pieces() -> None:
