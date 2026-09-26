@@ -19,6 +19,7 @@ import {
 } from "./cockpitShared";
 import { ProductModelViewer } from "./ProductModelViewer";
 import { ProductionRunControls } from "./ProductionRunControls";
+import type { MachineLoadRealtimeEvent } from "./usePublicMachineLoadRealtime";
 import {
   usePublicOperationAppointments,
   type PublicOperationAppointmentsState,
@@ -46,6 +47,7 @@ type Props = {
   downtimeHours: number | null;
   downtimeAvailable: boolean;
   runUpdatedSignal: number;
+  runRealtimeEvent: MachineLoadRealtimeEvent | null;
   realtimeConnected: boolean;
   onOpenPerformance: () => void;
   onOpenDowntime: () => void;
@@ -72,6 +74,7 @@ export function OperationDetailPage({
   downtimeHours,
   downtimeAvailable,
   runUpdatedSignal,
+  runRealtimeEvent,
   realtimeConnected,
   onOpenPerformance,
   onOpenDowntime,
@@ -265,6 +268,7 @@ export function OperationDetailPage({
               workCenter={workCenter}
               operation={operation}
               runUpdatedSignal={runUpdatedSignal}
+              runRealtimeEvent={runRealtimeEvent}
               realtimeConnected={realtimeConnected}
             />
 

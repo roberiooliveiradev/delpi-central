@@ -2,6 +2,7 @@ import { Pause, Play, Square } from "lucide-react";
 import type { MachineLoadOperation } from "./api";
 import { formatQty } from "./cockpitShared";
 import { useProductionRun } from "./useProductionRun";
+import type { MachineLoadRealtimeEvent } from "./usePublicMachineLoadRealtime";
 
 type Props = {
   token: string;
@@ -9,6 +10,7 @@ type Props = {
   workCenter: string;
   operation: MachineLoadOperation;
   runUpdatedSignal?: number;
+  runRealtimeEvent?: MachineLoadRealtimeEvent | null;
   realtimeConnected?: boolean;
 };
 
@@ -18,6 +20,7 @@ export function ProductionRunControls({
   workCenter,
   operation,
   runUpdatedSignal = 0,
+  runRealtimeEvent = null,
   realtimeConnected = false,
 }: Props) {
   const {
@@ -42,6 +45,7 @@ export function ProductionRunControls({
     workCenter,
     operation,
     runUpdatedSignal,
+    runRealtimeEvent,
     realtimeConnected,
   });
 

@@ -20,12 +20,19 @@ class ProductionPulseGateway:
         base_url: str | None = None,
         timeout: float | None = None,
         caller_app: str = "production-control-api",
+        client: httpx.Client | None = None,
     ) -> None:
         self._base_url = (base_url or settings.PRODUCTION_PULSE_API_URL).rstrip("/")
         self._timeout = (
             timeout if timeout is not None else float(settings.PRODUCTION_PULSE_API_TIMEOUT)
         )
         self._caller_app = caller_app
+        self._client = client or httpx.Client(timeout=self._timeout)
+        self._owns_client = client is None
+
+    def close(self) -> None:
+        if self._owns_client:
+            self._client.close()
 
     def _headers(self) -> dict[str, str]:
         headers = {
@@ -43,13 +50,12 @@ class ProductionPulseGateway:
     def _request(self, method: str, path: str, *, params: dict[str, Any] | None = None) -> Any:
         url = f"{self._base_url}{path}"
         try:
-            with httpx.Client(timeout=self._timeout) as client:
-                response = client.request(
-                    method,
-                    url,
-                    headers=self._headers(),
-                    params=params,
-                )
+            response = self._client.request(
+                method,
+                url,
+                headers=self._headers(),
+                params=params,
+            )
         except httpx.HTTPError as exc:
             raise PulseGatewayError(f"Falha de rede ao consultar o Pulso: {exc}") from exc
 

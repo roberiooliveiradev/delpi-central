@@ -13,8 +13,8 @@ logger = logging.getLogger(__name__)
 class MachineLoadRealtimeHub:
     """Salas WebSocket por filial — avisa o cockpit do operador quando o PCP altera a fila.
 
-    O payload é só um aviso (`type` + `reason`); o cliente refaz a leitura HTTP pública,
-    mantendo uma única fonte de verdade para o conteúdo da fila.
+    Mudanças estruturais são hints (`type` + `reason`) para releitura HTTP. A contagem
+    pode incluir o snapshot mínimo absoluto do run produzido pelo backend.
     """
 
     def __init__(self) -> None:

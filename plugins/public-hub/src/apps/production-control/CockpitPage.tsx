@@ -25,7 +25,10 @@ import {
 } from "./cockpitShared";
 import { OperationDetailPage } from "./OperationDetailPage";
 import { ProductionRunControls } from "./ProductionRunControls";
-import { usePublicMachineLoadRealtime } from "./usePublicMachineLoadRealtime";
+import {
+  usePublicMachineLoadRealtime,
+  type MachineLoadRealtimeEvent,
+} from "./usePublicMachineLoadRealtime";
 import { useCockpitView } from "./useCockpitView";
 import { useWorkCenterPerformance } from "./useWorkCenterPerformance";
 import { usePublicWorkCenterDowntimeItems } from "./usePublicWorkCenterDowntimeItems";
@@ -135,6 +138,7 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
   const [queueQuery, setQueueQuery] = useState("");
   const [hideFinished, setHideFinished] = useState(false);
   const [runUpdatedSignal, setRunUpdatedSignal] = useState(0);
+  const [runRealtimeEvent, setRunRealtimeEvent] = useState<MachineLoadRealtimeEvent | null>(null);
   const workCenterRef = useRef(workCenter);
   workCenterRef.current = workCenter;
   const reloadGenerationRef = useRef(0);
@@ -181,14 +185,20 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
   const connected = usePublicMachineLoadRealtime({
     token,
     branch,
-    onChanged: useCallback((reason: string) => {
-      if (reason.startsWith("run_") || reason === "pieces_updated") {
+    onChanged: useCallback((event: MachineLoadRealtimeEvent) => {
+      if (event.type === "production_run_updated" && event.reason === "pieces_updated") {
+        setRunRealtimeEvent(event);
+        return;
+      }
+      if (event.type === "production_run_updated" && event.reason.startsWith("run_")) {
         setRunUpdatedSignal((value) => value + 1);
       }
-      if (reason === "pieces_updated") return;
       // Sequência/refresh do PCP: atualiza sem flicker de loading.
       void reload(workCenterRef.current, { quiet: true });
     }, [reload]),
+    onReconnected: useCallback(() => {
+      setRunUpdatedSignal((value) => value + 1);
+    }, []),
   });
 
   // Status ao vivo (em produção / já apontada) vem do enrich no GET — o WS não cobre apontamentos.
@@ -375,6 +385,7 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
           downtimeHours={downtimeHours}
           downtimeAvailable={downtimeAvailable}
           runUpdatedSignal={runUpdatedSignal}
+          runRealtimeEvent={runRealtimeEvent}
           realtimeConnected={connected}
           onOpenPerformance={openPerformance}
           onOpenDowntime={() => setDowntimeOpen(true)}
@@ -473,6 +484,7 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
                 branch={branch}
                 workCenter={workCenter}
                 runUpdatedSignal={runUpdatedSignal}
+                runRealtimeEvent={runRealtimeEvent}
                 realtimeConnected={connected}
                 onOpenVisual={setVisualTarget}
                 onOpenDetail={() =>
@@ -750,6 +762,7 @@ function ActiveNowCard({
   branch,
   workCenter,
   runUpdatedSignal,
+  runRealtimeEvent,
   realtimeConnected,
   onOpenVisual,
   onOpenDetail,
@@ -759,6 +772,7 @@ function ActiveNowCard({
   branch: string;
   workCenter: string;
   runUpdatedSignal: number;
+  runRealtimeEvent: MachineLoadRealtimeEvent | null;
   realtimeConnected: boolean;
   onOpenVisual: (target: VisualTarget) => void;
   onOpenDetail: () => void;
@@ -883,6 +897,7 @@ function ActiveNowCard({
           workCenter={workCenter}
           operation={operation}
           runUpdatedSignal={runUpdatedSignal}
+          runRealtimeEvent={runRealtimeEvent}
           realtimeConnected={realtimeConnected}
         />
       </article>
