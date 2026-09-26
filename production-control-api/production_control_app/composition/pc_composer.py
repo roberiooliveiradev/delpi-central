@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from functools import lru_cache
 from typing import Any
 
 from production_control_app.application.services.machine_load_change_notifier import (
@@ -384,6 +385,21 @@ def build_delivery_map_drawing_service(
     )
 
 
+@lru_cache(maxsize=1)
+def build_production_pulse_gateway() -> Any:
+    from production_control_app.infrastructure.gateways.production_pulse_gateway import (
+        ProductionPulseGateway,
+    )
+
+    return ProductionPulseGateway()
+
+
+def close_production_pulse_gateway() -> None:
+    if build_production_pulse_gateway.cache_info().currsize:
+        build_production_pulse_gateway().close()
+        build_production_pulse_gateway.cache_clear()
+
+
 def build_production_run_service(
     gateway: DelpiProductionGateway | None = None,
     *,
@@ -392,9 +408,6 @@ def build_production_run_service(
 ) -> Any:
     from production_control_app.application.services.production_run_service import (
         ProductionRunService,
-    )
-    from production_control_app.infrastructure.gateways.production_pulse_gateway import (
-        ProductionPulseGateway,
     )
 
     machine_load = build_machine_load_service(gateway, snapshots=snapshots)
@@ -424,6 +437,6 @@ def build_production_run_service(
         return None
 
     return ProductionRunService(
-        pulse_gateway=pulse_gateway or ProductionPulseGateway(),
+        pulse_gateway=pulse_gateway or build_production_pulse_gateway(),
         queue_lookup=_queue_lookup,
     )

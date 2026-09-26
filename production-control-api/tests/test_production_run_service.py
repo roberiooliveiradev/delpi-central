@@ -2,11 +2,23 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 
+import httpx
+import pytest
+
+from production_control_app.application.services.machine_load_realtime_hub import (
+    machine_load_realtime_hub,
+)
+from production_control_app.application.services.production_run_poller_service import (
+    remaining_cycle_delay,
+)
 from production_control_app.application.services.production_run_service import ProductionRunService
 from production_control_app.domain.errors import (
     BenchSessionRequired,
     ProductionRunConflict,
     PulseDeviceUnavailable,
+)
+from production_control_app.infrastructure.gateways.production_pulse_gateway import (
+    ProductionPulseGateway,
 )
 from production_control_app.infrastructure.persistence.postgres_production_run_repository import (
     hash_session_token,
@@ -253,6 +265,63 @@ def test_start_and_count_pieces():
     assert active["countedPieces"] == 30
 
 
+def test_tick_emits_absolute_minimal_run_snapshot(monkeypatch: pytest.MonkeyPatch):
+    repo = FakeRepo()
+    session = service_session(repo)
+    device = {"deviceId": "dev-1", "counter": 100, "counterEpoch": 1, "online": True}
+    pulse = FakePulse(devices=[device], device_by_id={"dev-1": device})
+    service = ProductionRunService(repository=repo, pulse_gateway=pulse)
+    started = service.start_run(
+        branch="01",
+        work_center="CT01",
+        production_order="OP1",
+        operation_code="10",
+        session_token=session,
+    )
+    messages = []
+    monkeypatch.setattr(
+        machine_load_realtime_hub,
+        "schedule_broadcast",
+        lambda room, message: messages.append((room, dict(message))),
+    )
+
+    pulse.device_by_id["dev-1"] = {**device, "counter": 142}
+    assert service.tick_running_runs() == 1
+    assert messages == [
+        (
+            "01:CT01",
+            {
+                "type": "production_run_updated",
+                "reason": "pieces_updated",
+                "branch": "01",
+                "workCenter": "CT01",
+                "runId": started["id"],
+                "piecesTotal": 42,
+            },
+        ),
+        (
+            "01",
+            {
+                "type": "production_run_updated",
+                "reason": "pieces_updated",
+                "branch": "01",
+                "workCenter": "CT01",
+                "runId": started["id"],
+                "piecesTotal": 42,
+            },
+        ),
+    ]
+
+    messages.clear()
+    pulse.device_by_id["dev-1"] = {**device, "counter": 130}
+    assert service.tick_running_runs() == 1
+    assert [message["piecesTotal"] for _, message in messages] == [30, 30]
+
+    messages.clear()
+    assert service.tick_running_runs() == 0
+    assert messages == []
+
+
 def test_second_start_conflicts():
     repo = FakeRepo()
     session = service_session(repo)
@@ -277,6 +346,31 @@ def test_second_start_conflicts():
         assert False
     except ProductionRunConflict:
         pass
+
+
+def test_production_pulse_gateway_reuses_injected_client():
+    requests = []
+
+    def handle(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        return httpx.Response(200, json={"data": {"deviceId": "dev-1"}})
+
+    with httpx.Client(transport=httpx.MockTransport(handle)) as client:
+        gateway = ProductionPulseGateway(base_url="http://pulse", client=client)
+        gateway.fetch_device_snapshot("dev-1")
+        gateway.fetch_device_snapshot("dev-1")
+        gateway.close()
+        assert not client.is_closed
+
+    assert len(requests) == 2
+
+
+def test_remaining_cycle_delay_compensates_processing_time():
+    assert round(remaining_cycle_delay(500, 0.08), 3) == 0.42
+
+
+def test_remaining_cycle_delay_does_not_wait_after_overrun():
+    assert remaining_cycle_delay(500, 0.65) == 0.0
 
 
 def service_session(repo: FakeRepo) -> str:

@@ -12,6 +12,7 @@ import {
   type ProductionRunSnapshot,
 } from "./api";
 import { operationPendingQty } from "./cockpitStatus";
+import type { MachineLoadRealtimeEvent } from "./usePublicMachineLoadRealtime";
 
 const SESSION_STORAGE_PREFIX = "delpi.pcp.cockpit.bench-session";
 const RUN_POLL_MS = 1_000;
@@ -46,6 +47,7 @@ type Options = {
   workCenter: string | null;
   operation: MachineLoadOperation | null;
   runUpdatedSignal?: number;
+  runRealtimeEvent?: MachineLoadRealtimeEvent | null;
   realtimeConnected?: boolean;
 };
 
@@ -55,6 +57,7 @@ export function useProductionRun({
   workCenter,
   operation,
   runUpdatedSignal = 0,
+  runRealtimeEvent = null,
   realtimeConnected = false,
 }: Options) {
   const [session, setSession] = useState<BenchSessionSnapshot | null>(null);
@@ -64,6 +67,10 @@ export function useProductionRun({
   const [operatorCode, setOperatorCode] = useState("");
   const [operatorName, setOperatorName] = useState("");
   const pollRef = useRef(0);
+  const refreshInFlightRef = useRef(false);
+  const refreshPendingRef = useRef(false);
+  const refreshRequestRef = useRef({ token, branch, workCenter });
+  refreshRequestRef.current = { token, branch, workCenter };
 
   useEffect(() => {
     if (!workCenter) {
@@ -75,22 +82,78 @@ export function useProductionRun({
   }, [branch, workCenter]);
 
   const refreshRun = useCallback(async () => {
-    if (!workCenter) {
-      setRun(null);
+    if (refreshInFlightRef.current) {
+      refreshPendingRef.current = true;
       return;
     }
+
+    refreshInFlightRef.current = true;
     try {
-      const next = await fetchActiveProductionRun(token, branch, workCenter);
-      setRun(next);
-      setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Falha ao ler a contagem.");
+      do {
+        refreshPendingRef.current = false;
+        const request = refreshRequestRef.current;
+        if (!request.workCenter) {
+          setRun(null);
+          continue;
+        }
+        try {
+          const next = await fetchActiveProductionRun(
+            request.token,
+            request.branch,
+            request.workCenter,
+          );
+          const current = refreshRequestRef.current;
+          if (
+            current.token === request.token &&
+            current.branch === request.branch &&
+            current.workCenter === request.workCenter
+          ) {
+            setRun(next);
+            setError(null);
+          }
+        } catch (err) {
+          const current = refreshRequestRef.current;
+          if (
+            current.token === request.token &&
+            current.branch === request.branch &&
+            current.workCenter === request.workCenter
+          ) {
+            setError(err instanceof Error ? err.message : "Falha ao ler a contagem.");
+          }
+        }
+      } while (refreshPendingRef.current);
+    } finally {
+      refreshInFlightRef.current = false;
     }
-  }, [token, branch, workCenter]);
+  }, []);
 
   useEffect(() => {
     void refreshRun();
   }, [refreshRun, runUpdatedSignal]);
+
+  useEffect(() => {
+    if (
+      runRealtimeEvent?.type !== "production_run_updated" ||
+      runRealtimeEvent.reason !== "pieces_updated" ||
+      runRealtimeEvent.branch !== branch ||
+      runRealtimeEvent.workCenter !== workCenter ||
+      !runRealtimeEvent.runId ||
+      typeof runRealtimeEvent.piecesTotal !== "number" ||
+      !Number.isFinite(runRealtimeEvent.piecesTotal)
+    ) {
+      return;
+    }
+    const { piecesTotal, runId } = runRealtimeEvent;
+    setRun((current) => {
+      if (!current || current.id !== runId) return current;
+      return {
+        ...current,
+        piecesTotal,
+        countedPieces: piecesTotal,
+        divergencePieces: undefined,
+      };
+    });
+  }, [branch, workCenter, runRealtimeEvent]);
 
   useEffect(() => {
     window.clearInterval(pollRef.current);

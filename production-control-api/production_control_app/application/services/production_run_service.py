@@ -342,7 +342,13 @@ class ProductionRunService:
                         pieces_total=pieces_total,
                         open_segment_pieces=open_pieces,
                     )
-                    self._notify(run["branch"], run["work_center"], reason="pieces_updated")
+                    self._notify(
+                        run["branch"],
+                        run["work_center"],
+                        reason="pieces_updated",
+                        run_id=str(run["id"]),
+                        pieces_total=pieces_total,
+                    )
                     updated += 1
             except (PulseGatewayError, PulseDeviceUnavailable, ProductionRunNotFound):
                 continue
@@ -400,24 +406,25 @@ class ProductionRunService:
         pieces_total = sum_segment_pieces(closed_pieces, result.pieces)
         return pieces_total, result.pieces, device
 
-    def _notify(self, branch: str, work_center: str, *, reason: str) -> None:
+    def _notify(
+        self,
+        branch: str,
+        work_center: str,
+        *,
+        reason: str,
+        run_id: str | None = None,
+        pieces_total: int | None = None,
+    ) -> None:
         room = f"{branch}:{work_center}"
-        machine_load_realtime_hub.schedule_broadcast(
-            room if ":" in room else branch,
-            {
-                "type": "production_run_updated",
-                "reason": reason,
-                "branch": branch,
-                "workCenter": work_center,
-            },
-        )
+        message: dict[str, Any] = {
+            "type": "production_run_updated",
+            "reason": reason,
+            "branch": branch,
+            "workCenter": work_center,
+        }
+        if run_id is not None and pieces_total is not None:
+            message["runId"] = run_id
+            message["piecesTotal"] = pieces_total
+        machine_load_realtime_hub.schedule_broadcast(room if ":" in room else branch, message)
         # Também na sala por filial (cockpit WS atual).
-        machine_load_realtime_hub.schedule_broadcast(
-            branch,
-            {
-                "type": "production_run_updated",
-                "reason": reason,
-                "branch": branch,
-                "workCenter": work_center,
-            },
-        )
+        machine_load_realtime_hub.schedule_broadcast(branch, message)

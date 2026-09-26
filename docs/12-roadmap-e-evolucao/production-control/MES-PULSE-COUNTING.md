@@ -124,9 +124,9 @@ Writes: header `X-Delpi-Bench-Session` + honeypot `website`.
 | POST | `.../runs/{id}/stop` | Stop → `completed` |
 | GET | `.../runs/active?branch=&workCenter=` | Snapshot + peças + device + divergência TOTVS |
 
-Realtime: mesmo WS da fila (`.../ws?branch=`). Evento adicional `production_run_updated` (reason: `run_started`, `pieces_updated`, …). O WebSocket é o caminho principal; o cliente faz poll HTTP ~1 s enquanto o run está `running` somente como fallback quando o socket está desconectado.
+Realtime: mesmo WS da fila (`.../ws?branch=`). Evento adicional `production_run_updated` (reason: `run_started`, `pieces_updated`, …). Em `pieces_updated`, o backend envia o snapshot mínimo absoluto `{ branch, workCenter, runId, piecesTotal }`; o cockpit aplica o valor exatamente quando todas as identidades correspondem, sem nova chamada HTTP. Eventos de ciclo de vida continuam buscando o snapshot completo. O cliente faz poll HTTP ~1 s enquanto o run está `running` somente como fallback quando o socket está desconectado e executa uma reconciliação completa ao reconectar.
 
-Worker: `ProductionRunPollerService` no lifespan do PCP consulta os runs `running` a cada 500 ms e emite o hint WS. `pieces_updated` atualiza somente o snapshot do run no cockpit, sem recarregar a fila completa.
+Worker: `ProductionRunPollerService` no lifespan do PCP consulta os runs `running` em cadência start-to-start de 500 ms e emite o snapshot mínimo WS. O tempo gasto no tick é descontado da espera seguinte. O `ProductionPulseGateway` compartilha um `httpx.Client` durante o lifespan para reutilizar keep-alive/pool e o fecha no shutdown. `pieces_updated` não recarrega a fila nem consulta o Pulse novamente pelo cockpit.
 
 ---
 
@@ -140,7 +140,7 @@ Worker: `ProductionRunPollerService` no lifespan do PCP consulta os runs `runnin
 | Detalhamento da operação | `OperationDetailPage.tsx` reutiliza os mesmos controles e o mesmo snapshot do run |
 | Copy / Ajuda Portal | `plugins/production-control/src/content/copy.ts`, `helpTooltips.ts` |
 
-A fila e o detalhamento da operação reutilizam `ProductionRunControls`: não mantêm contadores locais independentes. Ambas as superfícies atualizam pelo evento do mesmo WS; o poll HTTP de ~1 s só assume enquanto o socket está desconectado.
+A fila e o detalhamento da operação reutilizam `ProductionRunControls`: não mantêm contadores locais independentes. Ambas aplicam o `piecesTotal` absoluto do mesmo evento WS, inclusive quando o contador reduz; não usam incremento nem `Math.max()`. O poll HTTP de ~1 s só assume enquanto o socket está desconectado. Leituras completas do run são single-flight: gatilhos recebidos durante uma consulta são coalescidos em um refresh pendente, executado imediatamente após a consulta atual.
 
 Sessão fica em `sessionStorage` por filial+posto (`delpi.pcp.cockpit.bench-session.*`).
 

@@ -4,10 +4,20 @@ import { buildPublicMachineLoadWsUrl } from "./api";
 const PING_MS = 25_000;
 const RECONNECT_MS = 5_000;
 
+export type MachineLoadRealtimeEvent = {
+  type: "machine_load_updated" | "production_run_updated";
+  reason: string;
+  branch?: string;
+  workCenter?: string;
+  runId?: string;
+  piecesTotal?: number;
+};
+
 type Options = {
   token: string;
   branch: string;
-  onChanged: (reason: string) => void;
+  onChanged: (event: MachineLoadRealtimeEvent) => void;
+  onReconnected?: () => void;
 };
 
 /**
@@ -15,16 +25,24 @@ type Options = {
  * O WebSocket é o caminho principal da contagem; o polling HTTP do run fica
  * ativo somente como fallback enquanto a conexão estiver indisponível.
  */
-export function usePublicMachineLoadRealtime({ token, branch, onChanged }: Options): boolean {
+export function usePublicMachineLoadRealtime({
+  token,
+  branch,
+  onChanged,
+  onReconnected,
+}: Options): boolean {
   const [connected, setConnected] = useState(false);
   const onChangedRef = useRef(onChanged);
+  const onReconnectedRef = useRef(onReconnected);
   onChangedRef.current = onChanged;
+  onReconnectedRef.current = onReconnected;
 
   useEffect(() => {
     let socket: WebSocket | null = null;
     let pingTimer = 0;
     let reconnectTimer = 0;
     let disposed = false;
+    let hasConnected = false;
 
     const clearTimers = () => {
       window.clearInterval(pingTimer);
@@ -45,20 +63,26 @@ export function usePublicMachineLoadRealtime({ token, branch, onChanged }: Optio
       socket.onopen = () => {
         if (disposed) return;
         setConnected(true);
+        if (hasConnected) onReconnectedRef.current?.();
+        hasConnected = true;
         pingTimer = window.setInterval(() => {
           if (socket?.readyState === WebSocket.OPEN) socket.send("ping");
         }, PING_MS);
       };
 
       socket.onmessage = (event) => {
-        let message: { type?: string; reason?: string };
+        let message: Partial<MachineLoadRealtimeEvent>;
         try {
-          message = JSON.parse(String(event.data)) as { type?: string; reason?: string };
+          message = JSON.parse(String(event.data)) as Partial<MachineLoadRealtimeEvent>;
         } catch {
           return;
         }
         if (message.type === "machine_load_updated" || message.type === "production_run_updated") {
-          onChangedRef.current(message.reason || "update");
+          onChangedRef.current({
+            ...message,
+            type: message.type,
+            reason: message.reason || "update",
+          });
         }
       };
 
