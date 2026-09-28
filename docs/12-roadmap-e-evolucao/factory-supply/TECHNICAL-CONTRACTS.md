@@ -145,11 +145,16 @@ Evidência: códigos `idempotency_required`, `branch_access_denied` (via `Branch
 - **Transporte:** header HTTP `Idempotency-Key` — `PROVEN` em `requests-api/requests_app/interface/http/routes/requests_routes.py` (`Header(alias="Idempotency-Key")`, obrigatório em writes → `422 idempotency_required`).
 - **Escopo:** `(key, route, actor_user_id)` — mesma key em rota/ator distinto não colide.
 - **Storage:** tabela `{schema}.idempotency_keys(key, route, actor_user_id, response_snapshot JSONB, created_at)` — DDL `PROVEN` em `requests-api/migrations/V003__idempotency_keys.sql` e `helpdesk-api/migrations/V003__idempotency_keys.sql`.
-- **Request fingerprint (TARGET — congelado como semântica, algoritmo `TO_INVENTORY`):** toda key persistida grava `request_fingerprint` — hash determinístico da **requisição de comando semântica** (campos de domínio do body: comando, parâmetros, quantidades, motivo, `expected_version`), serializada canonicamente. **Exclui** metadados voláteis de transporte (Authorization, request-id, trace). Algoritmo exato (ex.: canonical-JSON + SHA-256) não é congelado — sem precedente PROVEN no repo.
-- **Replay:** mesma key + mesma rota + mesmo ator + **mesmo fingerprint** → resposta gravada retornada, **sem** reexecutar transição; resposta marca `data.idempotent_replay: true` (TARGET — marcador aditivo observável sobre o padrão atual).
-- **Conflito:** mesma key + mesma rota + mesmo ator + **fingerprint diferente** → `409 idempotency_conflict` — key nova = intenção nova.
-- requests-api atual não persiste fingerprint (`PROVEN` — tabela tem só key/route/actor/snapshot) → `TO_INVENTORY`: evoluir a convenção compartilhada `idempotency_keys` vs coluna extra local; schema planejado já reserva a coluna (§39).
-- **Retenção:** chaves são registros de deduplicação, não auditoria — retenção à definir (`TO_INVENTORY`, sugestão ≥ 90 dias; auditoria vive em `supply_events`, §31).
+- **Request fingerprint (TARGET — congelado FS-C0.T6):** `request_fingerprint = SHA-256(bytes UTF-8 de canonical_json(comando_semântico))`. **Canonicalização:** modelo tipado validado → dict JSON-compatível → chaves de objeto ordenadas recursivamente → arrays preservam ordem de negócio → `Decimal`→string canônica (`normalize()`, `1`/`1.0`/`1.000` → `"1"`) → nulos/omissos resolvidos pela semântica do comando tipado (default ≠ ausente só se o schema os distinguir) → `json.dumps(sort_keys=True, separators=(",",":"), ensure_ascii=False)` → UTF-8. **Nunca** hash do body bruto (ordem de propriedade não é semântica). SHA-256 = digest determinístico de identidade, não autenticação — sem HMAC/secret (sem requisito de segurança provado no repo; nenhum helper canônico existe → implementação **local** em factory-supply-api).
+- **Input do fingerprint:** `operation_id` (ou identidade de rota) + identificadores de path (`mission_id`, `item_id`) + `branch` + todos os campos de domínio do body tipado (quantidade, unidade, motivo, `expected_version`, etc.). **Excluídos:** ator (já no escopo UNIQUE), Authorization/JWT, timestamp, User-Agent, request/trace-id, metadados de rede, ordem de headers/propriedades. `expected_version` participa: retry pós-`version_conflict` com versão corrigida = **nova intenção → nova key** (mantém §4 do produto: mesmo key+comando diferente → 409).
+- **Replay:** mesma key + mesma rota + mesmo ator + **mesmo fingerprint** → resposta gravada retornada (mesmo status), **sem** reexecutar transição; resposta marca `data.idempotent_replay: true` (TARGET — marcador aditivo observável). **AuthN/AuthZ reavaliados em todo request antes do replay** — snapshot nunca vaza para ator desautorizado.
+- **Conflito:** mesma key + mesma rota + mesmo ator + **fingerprint diferente** → `409 idempotency_conflict` — key nova = intenção nova; nada é mutado nem sobrescrito.
+- **Fluxo (primeira requisição):** AuthN/AuthZ → validação tipada → fingerprint → claim `INSERT` na `idempotency_keys` → comando de domínio → mutation + `supply_events` + outbox + `response_snapshot` → **um único commit** → resposta. `response_snapshot` gravado na mesma tx da mutação (elimina a janela requests-api, que comita em conexão separada — desvio TARGET justificado).
+- **Falhas não consomem key:** validação/AuthZ/precondição/`version_conflict`/downstream falham **antes ou com** rollback — a tx não comita, logo **nenhum registro de key permanece**; falha transitória nunca envenena a key. Apenas respostas de sucesso (2xx) são persistidas.
+- **Concorrência mesma key:** a constraint UNIQUE faz o segundo `INSERT` esperar o commit/rollback do primeiro; ao resolver: rollback → contender tenta de novo como claim novo; commit+mesmo fingerprint → replay; commit+fingerprint divergente → `409`. Nunca mutação dupla.
+- **Mesma key / outro ator ou outra rota:** escopo independente — UNIQUE é por `(key, route, actor_user_id)`; key de um usuário nunca devolve snapshot de outro.
+- requests-api atual não persiste fingerprint (`PROVEN` — tabela tem só key/route/actor/snapshot) → convenção compartilhada evolui para `(key, route, actor_user_id, request_fingerprint)`; coluna reservada no schema planejado (§39). Adicionar `response_status INT` (precedente helpdesk `response_status`+`response_body`) para replay fiel do status.
+- **Retenção:** chaves são registros de deduplicação, não auditoria — política final `TO_FS_C0_T12` (deve cobrir retries realistas; precedente requests-api usa janela `max_age_hours=24` no read; auditoria vive em `supply_events`, §31).
 - **Semântica pós-timeout:** se o comando comitou e a resposta se perdeu, o retry com a mesma key devolve a resposta gravada → cliente converge para o estado real sem duplicar efeito.
 - **GETs puros:** `NOT_APPLICABLE` (Doc 2/5).
 - **Observação ERP persistida + sync de sinais:** replay-safe **sem exigir key do cliente** — deduplicação por chave natural (ver §25, §19): mesma evidência ERP observada duas vezes não duplica correlação; mesma necessidade planejada ressincronizada não duplica `demand_signal` ativo.
@@ -333,7 +338,7 @@ Snapshots permitidos como **evidência de decisão** (não verdade corrente): `p
 | `not_found` | avaliação autoritativa **autorizada** completou com sucesso e **zero** evidência compatível — factual, nunca erro |
 | `unknown` | evidência ainda não avaliada ou informação de correlação insuficiente |
 | `unavailable` | fonte autoritativa **não pôde ser avaliada tecnicamente**: timeout, falha de conexão, downstream 5xx, resposta parcial inutilizável — carrega `retryable` + `observed_at` |
-| `divergent` | evidência autoritativa existe mas conflita materialmente com o rastro operacional (ex.: qty/direção/tipo) |
+| `divergent` | evidência autoritativa existe mas conflita materialmente com o rastro operacional (ex.: qty/direção/tipo/**unidade** — igualdade numérica com `unit` diferente é `divergent`, nunca `matched`; unit do movimento ausente → `unknown`, §51) |
 
 **401/403 da api-delpi (ou de qualquer dependência autoritativa) NÃO são estados de evidência ERP.** São falhas de autenticação/autorização/integração: seguem o contrato de erro técnico (§9), fail-closed, observabilidade, e **jamais** persistem `erp_evidence`. Falta de permissão para perguntar ≠ incapacidade da fonte responder.
 
@@ -548,11 +553,11 @@ Schema `factory_supply` — todas `PLANNED` (DDL na implementação; sem SQL aqu
 | handoffs | custódia por item | id UUID | mission_item_id FK, direction(collection|delivery|return), from_actor_user_id, to_actor_user_id?, to_context, qty NUMERIC, unit, at, note | FK→items | via item→mission | — | (mission_item_id), (to_actor_user_id,at) | PLANNED |
 | erp_observations | evidência ERP por item | id UUID | mission_item_id FK, status enum, evidence_fingerprint, matched_ref JSONB?, confidence?, observed_at, source, payload_snapshot JSONB bounded | UNIQUE(mission_item_id, evidence_fingerprint) | via item | — | (mission_item_id,status) | PLANNED |
 | supply_events | auditoria append-only | id UUID | mission_id, item_id?, event_type, action, actor_user_id, actor_display_name, prev_state, new_state, qty_delta, reason, idempotency_key, request_id, correlation_id, created_at | — | via mission (denorm branch col para filtro) | — | (branch,created_at) cursor, (mission_id,created_at) | PLANNED |
-| idempotency_keys | dedup de comandos | id UUID | key, route, actor_user_id, **request_fingerprint** (hash canônico do comando semântico — §10), response_snapshot JSONB, created_at | UNIQUE(key,route,actor_user_id); fingerprint compara dentro do escopo | — | — | (created_at) retenção | PLANNED (convenção PROVEN + extensão TARGET) |
+| idempotency_keys | dedup de comandos | id UUID | key, route, actor_user_id, **request_fingerprint** (SHA-256 canonical-JSON — §10 congelado T6), response_status INT, response_snapshot JSONB, created_at | UNIQUE(key,route,actor_user_id); fingerprint compara dentro do escopo | — | — | (created_at) retenção TO_FS_C0_T12 | PLANNED (convenção PROVEN + extensão TARGET) |
 | integration_outbox | entrega pós-commit (portal notif + realtime routing, §33) | id UUID | event_type, aggregate_type, aggregate_id, payload JSONB (userIds, permissionCodes, dedupeKey, actionTarget), attempts, next_attempt_at, published_at, created_at | UNIQUE(event_type,aggregate_id,dedupe_key?) — dedupe semântico §33 | branch no payload | — | (published_at NULL, next_attempt_at) | PLANNED (precedente `PROVEN` requests-api V005 + commercial) |
 | integration_checkpoints | snapshot/diff de syncs (§33) | id UUID | source_key, cursor_value, metadata JSONB `{keys,keyCount}`, updated_at | UNIQUE(source_key) | por source_key (ex.: `demand_sync:01`) | — | (source_key) | PLANNED (precedente `PROVEN` `IntegrationCheckpointRepositoryPort`) |
 
-Notas: `qty` NUMERIC (nunca float — precisão de quantidade); `unit` NOT NULL com CHECK/validação de unidade compatível por material (TO_INVENTORY tabela de conversão TOTVS via api-delpi); nenhuma FK cruzando contexto (API DELPI = identificadores + snapshots); branch denormalizado em `supply_events` para filtro eficiente; `integration_outbox` enfileirado na **mesma transação** da mutação de domínio e publicado pós-commit pelo worker (§33).
+Notas: `qty` NUMERIC(18,6) (nunca float — precisão de quantidade); `unit` NOT NULL = `B1_UM` autoritativa do material (FS-C0.T7 — **sem** tabela/engine de conversão; igualdade exata com `accepted_unit` do item); nenhuma FK cruzando contexto (API DELPI = identificadores + snapshots); branch denormalizado em `supply_events` para filtro eficiente; `integration_outbox` enfileirado na **mesma transação** da mutação de domínio e publicado pós-commit pelo worker (§33).
 
 ## 40. Complete RBAC matrix
 
@@ -657,7 +662,7 @@ Capacidades de serviço **nunca** expandem autoridade além do read-only ERP: n�
 
 1. `factory-supply-api` — backend dedicado (dir/pacote/mount/schema).
 2. Envelope bounded `{success,message,data}` + `data.code` de erro estável.
-3. `Idempotency-Key` header + tabela `idempotency_keys` (key,route,actor,request_fingerprint) + replay de snapshot; mesmo escopo+fingerprint → replay; fingerprint divergente → `idempotency_conflict` (algoritmo do fingerprint `TO_INVENTORY`).
+3. `Idempotency-Key` header + tabela `idempotency_keys` (key,route,actor,request_fingerprint) + replay de snapshot; mesmo escopo+fingerprint → replay; fingerprint divergente → `idempotency_conflict` (algoritmo congelado FS-C0.T6: canonical-JSON tipado + SHA-256, §10).
 4. `expected_version` + `version` — conflito 409 `version_conflict`; sem last-write-wins.
 5. `overall_stage` derivado no backend; `available_actions` semânticas; frontend nunca rederiva.
 6. ERP evidence: `matched|not_found|unknown|unavailable|divergent` com semântica fechada (§26); 401/403 downstream são falha de integração/AuthZ (`downstream_access_denied`), nunca evidência persistida.
@@ -682,7 +687,7 @@ Capacidades de serviço **nunca** expandem autoridade além do read-only ERP: n�
 6. Cache operacional (TTL/fail-open) — `TO_DESIGN`; v1 sem cache semântico.
 7. Header exato de correlação propagado ao api-delpi — `TO_INVENTORY` convenção do gateway.
 8. Forma interna de `matched_ref`/fingerprint de movimento — pendente da confirmação de ID estável (§25).
-9. Algoritmo de `request_fingerprint` (semântica congelada; implementação `TO_INVENTORY`) + retenção de `idempotency_keys`.
+9. ~~Algoritmo de `request_fingerprint`~~ — RESOLVIDO FS-C0.T6: canonical-JSON tipado + SHA-256, escopo `(key,route,actor_user_id)`, single-tx claim+mutation+snapshot, replay `idempotent_replay:true`, falha não consome key (§10). Retenção de `idempotency_keys` permanece `TO_FS_C0_T12`.
 10. ~~Identidade das capacidades de serviço~~ — RESOLVIDO FS-C0.T5: in-process + shared service token (§40-B); sem service account, sem permissões Core.
 11. Gatilho interativo opcional para refresh manual de evidência ERP — se existir, coberto por `access`+`filial` (§40-B; decisão UX).
 
@@ -697,9 +702,9 @@ Capacidades de serviço **nunca** expandem autoridade além do read-only ERP: n�
 | Convenção de header de correlação no gateway portal→api-delpi | §32 |
 | ~~Política de escopo de escrita por filial~~ — RESOLVIDO FS-C0.T3: `.view.filial-*` = escopo de filial (leitura+escrita), precedente `PROVEN`; composição `access`+`filial` congelada §40-A | — |
 | ~~Registro das 3 permissões~~ — RESOLVIDO FS-C0.T4: contrato de manifesto, sync declarativo (`sync_module`), atribuição via `rbac.manage`+`roles.manage`, resolver `/me`, default DENY, fail-closed documentados em §40-A — apenas execução pendente | — |
-| Tabela/serviço de conversão de unidades TOTVS (validação de unidade compatível) | §39 |
+| ~~Tabela/serviço de conversão de unidades~~ — RESOLVIDO FS-C0.T7: `NOT_REQUIRED`; unidade autoritativa `B1_UM` provada em todos os contratos (§51) | — |
 | ~~Identidade de serviço~~ — RESOLVIDO FS-C0.T5: in-process jobs + `API_DELPI_INTERNAL_SERVICE_TOKEN` (§40-B); sem service account/permissões Core | — |
-| Algoritmo de `request_fingerprint` + evolução da convenção `idempotency_keys` compartilhada vs campo local | §10, §39 |
+| ~~Algoritmo de `request_fingerprint`~~ — RESOLVIDO FS-C0.T6: canonical-JSON+SHA-256, convenção `(key,route,actor_user_id)` + coluna `request_fingerprint`+`response_status` (§10, §39); helper local (sem consumidor cruzado provado) | — |
 | Retenção de idempotency_keys e volume estimado de supply_events | §23 |
 | Empenho como campo vs rota dedicada (hoje via operation materials — confirmar) | §41 |
 | Decisão de produto: reconciliação pedido×sinal (§29) e regra de retorno | comandos |
@@ -770,9 +775,13 @@ Até política existir, o backend expõe apenas fatos determinísticos:
 
 ## 51. Units/quantities contract
 
-- **Tipo:** `NUMERIC` no banco; JSON number com precisão decimal — **nunca** float binário para quantidade (`platform-data-persistence` "tipos adequados a precisão").
-- **Unidade:** `unit` (string, código TOTVS do produto — ex.: `PC`,`KG`,`CX`) obrigatória ao lado de **toda** quantidade em request/response.
-- **Sem agregação entre unidades incompatíveis:** contagens agregadas são de itens/missões (inteiros); somas de quantidade só dentro de `product_code × unit` idênticos.
-- **Validação:** unidade do comando deve ser igual ou conversível à unidade autoritativa do material (api-delpi master data); conversão exata exige tabela de unidades TOTVS — `TO_INVENTORY` qual contrato api-delpi a expõe; até lá, escrita de quantidade em unidade diferente da cadastrada **falha fechado** (`422 domain_rule_violation`).
-- **Arredondamento/exibição:** UI formata; backend valida precisão máxima por unidade (placeholder `TO_INVENTORY` da precisão autoritativa).
-- **`null` semântico:** `returned_qty`/`prepared_qty` etc. `null` = não estabelecido — distinto de `0` (Doc 3/5 — "quantidade não estabelecida" é caso real de devolução).
+- **Tipo:** `NUMERIC` no banco (alvo `NUMERIC(18,6)` — precedente `PROVEN` `DECIMAL(18,6)` em `stock_balances_sql.py`); JSON number com precisão decimal — **nunca** float binário para quantidade (`platform-data-persistence`). **Caveat de fronteira:** api-delpi serializa quantidades SD4 como float (`CAST AS FLOAT` + `float()` — PROVEN em `operation_materials_item.py`); o gateway FS converte na entrada `Decimal(str(value))` — nunca opera/persiste o float bruto. Comparação: **Decimal exato** — `QUANTITY_TOLERANCE = EXACT_DECIMAL_COMPARISON` (sem tolerância inventada).
+- **Unidade — política congelada FS-C0.T7 (`AUTHORITATIVE_TOTVS_UNIT`):** `unit` = código `SB1.B1_UM` autoritativo — **mesma fonte em todos os contratos consumidos**: operation-materials (`unit`, PROVEN join `P.B1_UM`), internal-movements (`unit` ← `SB1.B1_UM`), stock-balances items (`unit_of_measure` ← `MAX(NULLIF(TRIM(B1_UM),''))`), demand_signals (`unit` do sinal). `get_product_stock` **omite** unit → compor via `B1_UM` do master data/produto no mesmo `product_code` (nunca inferir).
+- **Sem conversão:** `UNIT_CONVERSION_ENGINE=NOT_REQUIRED`, `UNIT_CONVERSION_TABLE=NOT_REQUIRED`, `UNIT_CONVERSION_CONFIGURATION=NOT_REQUIRED`, sem UI de configuração. SD4 soma `original_qty/open_qty/consumed_qty` já agrupadas por `(product_code, B1_UM)` — interpretadas na unidade retornada, sem relabel.
+- **Sem agregação entre unidades incompatíveis:** contagens agregadas são de itens/missões (inteiros); somas de quantidade só dentro de `product_code × unit` idênticos — card de missão nunca soma `100 KG + 50 MT`.
+- **Validação de escrita:** quantidade = `Decimal` válido, não-negativo onde aplicável; `unit` do comando **idêntica** à `accepted_unit` do item (não "conversível" — igualdade exata); divergente → `422 domain_rule_violation`; caller não submete unidade alternativa; MFE nunca é validador final.
+- **Unidade ausente/desconhecida:** estado explícito `unit_unknown` de qualidade de dado — nunca default silencioso; **writes que mudam quantidade falham fechado** quando a unidade autoritativa está indisponível; leitura/exibição mostra "unidade indisponível".
+- **Divergência de unidade (`UNIT_DIVERGENCE`):** se sync autoritativo retornar unidade diferente para o mesmo material/contexto de um item já operado → classificar como divergência de unidade (exceção persistente §33), **não** delta numérico; quantidades históricas preservam a unidade registrada; nunca subtrair entre unidades distintas.
+- **Correlação ERP:** compara `material × branch × quantity × unit` (+ fingerprint §25); igualdade numérica com unidade diferente → `DIVERGENT` (não `MATCHED`); unidade do movimento ausente → `unknown` (não MATCHED).
+- **Arredondamento/exibição:** backend persiste e compara `NUMERIC(18,6)` exato; UI formata PT-BR (`126,895 MT`) só na exibição — formatação nunca muta o valor persistido; sem precisão máxima por unidade além da escala 6 (não inventar arredondamento de negócio).
+- **`null` semântico:** `returned_qty`/`prepared_qty` etc. `null` = não estabelecido — distinto de `0` (Doc 3/5 — "quantidade não estabelecida" é caso real de devolução); `null` nunca carrega unidade implícita.

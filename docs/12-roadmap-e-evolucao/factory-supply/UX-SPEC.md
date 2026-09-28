@@ -158,7 +158,7 @@ Preparado 80 · Coletado 70 · Entregue 60
 Local de retirada: A-03-02
 ```
 
-Regras: quantidade ausente → "—" / "Não informado"; saldo não medido → "Indisponível"; unidade sempre ao lado do número; exceções do item inline. `required` (autoritativo-derivado) e `requested` (sinal humano) são **rótulos distintos** quando ambos existem — um nunca substitui o outro.
+Regras: quantidade ausente → "—" / "Não informado"; saldo não medido → "Indisponível"; unidade sempre ao lado do número (`126,895 MT` — formatação PT-BR só de exibição, nunca altera o valor); unidade ausente → "unidade indisponível" explícito, **nunca** unidade chutada; exceções do item inline. `required` (autoritativo-derivado) e `requested` (sinal humano) são **rótulos distintos** quando ambos existem — um nunca substitui o outro.
 
 ## 11. Necessidades (tabela)
 

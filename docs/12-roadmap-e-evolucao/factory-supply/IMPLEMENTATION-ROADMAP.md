@@ -37,7 +37,7 @@ Invariantes (não reabrir): `factory-supply-api` BFF dedicado · MFE nunca chama
 | Cadeia de registro de permissões (manifesto→`sync_module`→roles→`/me` resolver→middleware `load_user_rbac`→`has_permission`; default DENY; claims fallback = `permissions[]`) | `PROVEN` — FS-C0.T4 |
 | Decisões de produto: reconciliação pedido×sinal, regra de devolução, prioridade | `TO_INVENTORY` (product gates) |
 | ~~Identidade de serviço~~ — RESOLVIDO FS-C0.T5: jobs in-process + `API_DELPI_INTERNAL_SERVICE_TOKEN`+`X-Delpi-Caller-App`; sem service account/permissões Core (TC §40-B) | `PROVEN` (mecanismo) |
-| Algoritmo de `request_fingerprint` | `TO_INVENTORY` (semântica congelada) |
+| ~~Algoritmo de `request_fingerprint`~~ | `PROVEN` contrato — canonical-JSON+SHA-256 (FS-C0.T6) |
 
 ## 4. Unresolved blockers
 
@@ -48,8 +48,8 @@ Consolidado de `TECHNICAL-CONTRACTS.md` §43–44 — todos tratados como gates 
 3. ~~Escopo de escrita por filial~~ — RESOLVIDO FS-C0.T3 (`.view.filial-*` = escopo filial leitura+escrita, `PROVEN`)
 4. ~~Registro das 3 permissões usuário~~ — RESOLVIDO FS-C0.T4 (contrato de manifesto, `sync_module` declarativo, atribuição `rbac.manage`+`roles.manage`, resolver `/me`, default DENY — TC §40-A; resta apenas execução na implantação)
 5. ~~Identidade de serviço~~ — RESOLVIDO FS-C0.T5 (in-process jobs + `API_DELPI_INTERNAL_SERVICE_TOKEN`; sem service account — TC §40-B)
-6. Algoritmo `request_fingerprint` — **técnico**
-7. Conversão de unidades (necessária? dono autoritativo?) — **técnico**
+6. ~~Algoritmo `request_fingerprint`~~ — RESOLVIDO FS-C0.T6 (canonical-JSON tipado + SHA-256; escopo `(key,route,actor)`; single-tx; falha não consome key — TC §10/§39)
+7. ~~Conversão de unidades~~ — RESOLVIDO FS-C0.T7: `AUTHORITATIVE_TOTVS_UNIT` (`B1_UM` em todos os contratos — §51); `UNIT_CONVERSION_*=NOT_REQUIRED`; divergência de unidade → `UNIT_DIVERGENCE`/falha fechada
 8. Reconciliação pedido operador×sinal planejado — **PRODUTO** (gate Product Master)
 9. Regra de quantidade de devolução — **PRODUTO** (gate; ver escopo §21)
 10. Política de prioridade — **PRODUTO** (gate; default factual ordering)
@@ -124,7 +124,7 @@ Status: `ACCEPTED` (congelado na spec) / `GATED` (depende de C0/produto). Owner:
 | FS-API-01 | Envelope `{success,message,data}`; erros `data:{code,field?}` estáveis | Doc4 §8–9 | FS | C1 | ACCEPTED | contract tests | FS-AR-01 |
 | FS-API-02 | Rotas query §15 (11) e comandos §14 (13) com operationIds TARGET | Doc4 §38 | FS | C4–C9 | ACCEPTED | contract tests | FS-API-01 |
 | FS-API-03 | `Idempotency-Key` obrigatório em comandos; `422 idempotency_required` | Doc4 §10 | FS | C2 | ACCEPTED | adversarial §29 | FS-API-01 |
-| FS-API-04 | `request_fingerprint` persistido; mesmo escopo+fingerprint → replay; divergente → `409 idempotency_conflict` | Doc4 §10 | FS | C2 | GATED→C0.T6 | §18 tests | FS-API-03 |
+| FS-API-04 | `request_fingerprint` persistido; mesmo escopo+fingerprint → replay; divergente → `409 idempotency_conflict` — **RESOLVIDO FS-C0.T6** (canonical-JSON tipado+SHA-256; single-tx claim; falha não consome key) | Doc4 §10 | FS | C2 | ACCEPTED | §18 tests | FS-API-03 |
 | FS-API-05 | `expected_version` em comandos; `409 version_conflict` + `current_version`; sem last-write-wins | Doc4 §11 | FS | C2 | ACCEPTED | §19 tests | FS-DM-08 |
 | FS-API-06 | Paginação: page/page_size (≤200) listas; cursor history; sem endpoint ilimitado | Doc4 §50 | FS | C4+ | ACCEPTED | contract tests | FS-API-01 |
 | FS-API-07 | `branch` query/body obrigatório, validado server-side | Doc4 §12,20 | FS | C2 | ACCEPTED | branch tests | C0.T3 |
@@ -143,7 +143,7 @@ Status: `ACCEPTED` (congelado na spec) / `GATED` (depende de C0/produto). Owner:
 | FS-DATA-05 | Snapshots `_at_decision` ≠ verdade corrente; sem shadow inventory | Doc4 §24 | FS | C2 | ACCEPTED | review+tests | — |
 | FS-DATA-06 | Migrations `V00N` append-only, imutáveis, checksum, sem reset prod | regras canônicas | FS | C2 | ACCEPTED | migration tests §32 | — |
 | FS-DATA-07 | Version INT em missions; compare-update atômico | Doc4 §22–23 | FS | C2 | ACCEPTED | §19 tests | FS-DATA-02 |
-| FS-DATA-08 | `request_fingerprint` em idempotency_keys | Doc4 §10,39 | FS | C2 | GATED→C0.T6 | constraint test | FS-DATA-02 |
+| FS-DATA-08 | `request_fingerprint`+`response_status` em idempotency_keys — **RESOLVIDO FS-C0.T6** (`UNIQUE(key,route,actor_user_id)`+fingerprint dentro do escopo) | Doc4 §10,39 | FS | C2 | ACCEPTED | constraint test | FS-DATA-02 |
 
 ### FS-SEC — Security/RBAC
 
@@ -252,8 +252,8 @@ Primeira fase obrigatória — só evidência e decisão, **sem código de produ
 | FS-C0.T3 | ~~Inventariar convenção de escopo de escrita por filial + persistir modelo RBAC~~ — **`DONE`**: modelo Product Master congelado (3 permissões, TC §40-A); `.view.filial-*` PROVEN em writes (`BranchAccessService`/`close_pick_plan`); cadeia manifesto→Core→middleware→`has_permission` verificada | PROVEN | FS-SEC-01/04 | — |
 | FS-C0.T4 | ~~Registro mínimo RBAC~~ — **`DONE`**: cadeia completa PROVEN — manifesto `{code,name,description,module}` → `register`+`sync_module` (declarativo, versionado; remoção de código deleta do catálogo) → `rbac.manage`+`roles.manage` atribui a roles → `PermissionResolver`/`/me` → middleware `load_user_rbac` → `has_permission`; default DENY; sem gap arquitetural | PROVEN | FS-SEC-01 | — |
 | FS-C0.T5 | ~~Identidade de serviço~~ — **`DONE`**: IN_PROCESS jobs asyncio (precedentes pc-poller/outbox/notification-loops); api-delpi auth = `API_DELPI_INTERNAL_SERVICE_TOKEN`+`X-Delpi-Caller-App` (identity `internal-service` is_superadmin na superfície read-only, `PROVEN`); sem service account, sem permissões Core, sem endpoints internos; multi-instância por env-flag. **Correção realtime (T5-bounded):** `OUTBOX_REQUIRED_NOW=YES` + hub WS local + diff/checkpoint + presence `FACTORY_SUPPLY_APP` + cold-start anti-flood (TC §33; padrão Commercial `PROVEN`) | PROVEN | FS-SEC-02 | — |
-| FS-C0.T6 | Congelar `request_fingerprint`: serialização canônica + hash (sugestão canonical-JSON+SHA-256) | spec de algoritmo | FS-API-04/DATA-08 | — |
-| FS-C0.T7 | Conversão de unidades: necessária? se sim, dono autoritativo | decisão (default: não — fail-closed unidade divergente) | FS-DM-09 | — |
+| FS-C0.T6 | ~~Congelar `request_fingerprint`~~ — **`DONE`**: SHA-256 sobre canonical-JSON do comando tipado (chaves ordenadas, Decimal→string `normalize()`, nulos/default por semântica tipada, UTF-8); input = operation+path+branch+campos de domínio+`expected_version`; escopo `UNIQUE(key,route,actor_user_id)`; claim+mutation+audit+outbox+snapshot em **uma tx** (elimina janela do requests-api); UNIQUE-wait resolve corrida; falha não consome key; AuthZ reavaliado no replay; helper **local** (sem consumidor cruzado provado) | TC §10/§39 | FS-API-04/DATA-08→ACCEPTED | — |
+| FS-C0.T7 | ~~Conversão de unidades~~ — **`DONE`**: unidade autoritativa `B1_UM` PROVEN em operation-materials, internal-movements, stock-balances (`unit_of_measure`); `get_product_stock` omite unit → compõe via master data; `UNIT_CONVERSION_*=NOT_REQUIRED`; Decimal `NUMERIC(18,6)` + comparação exata; `accepted_unit` estável; re-sync com unit diferente → `UNIT_DIVERGENCE`; ERP qty+unit divergentes → `divergent` não `matched`; unit ausente → `unknown`/fail-closed em writes | PROVEN (contratos) | FS-DM-09→ACCEPTED | — |
 | FS-C0.T11 | Header de correlação aceito pelo gateway portal→api-delpi | convenção documentada | FS-INT-03 | — |
 | FS-C0.T12 | Retenção: idempotency_keys, supply_events | política | data tasks | — |
 
@@ -420,8 +420,22 @@ Matriz de teste §18:
 | mesmo ator, rota diferente, mesma key | execuções independentes |
 | retry após sucesso com resposta perdida | replay converge |
 | retry em boundary de falha (commit incerto) | sem efeito duplicado |
+| dois requests simultâneos mesma key+fingerprint | UNIQUE-wait → 1 mutação + 1 replay (zero dupla mutação) |
+| dois requests simultâneos mesma key+fingerprints distintos | 1 mutação + 1 `409 idempotency_conflict` |
+| falha validação/AuthZ/transitória → retry mesma key | key não consumida → nova tentativa executa normal |
+| mesma key, ator diferente | escopo independente — snapshot de um ator nunca vaza p/ outro |
+| replay com AuthZ revogada após sucesso | `403` (AuthZ reavaliado antes do replay) |
+| retry pós-`version_conflict` com versão corrigida, mesma key | `409 idempotency_conflict` (expected_version no fingerprint) — cliente usa nova key |
 | `expected_version` stale | `409 version_conflict`+`current_version` |
 | dois workers mesma transição | 1 sucesso + 1 conflito — zero last-write-wins |
+| comando qty com unidade ≠ `accepted_unit` | `422 domain_rule_violation` (igualdade exata, não "conversível") |
+| unidade autoritativa indisponível + write de qty | fail-closed; `unit_unknown` explícito |
+| Decimal 1 / 1.0 / 1.000 | igualdade semântica (mesmo fingerprint T6, mesmo valor) |
+| re-sync retorna unidade diferente p/ item operado | `UNIT_DIVERGENCE` — histórico preserva unit registrada |
+| ERP movimento qty igual + unit diferente | `divergent`, nunca `matched` |
+| ERP movimento sem unit | `unknown`, nunca `matched` |
+| card de missão multi-unidade | agrega itens (inteiros), nunca soma qty entre units |
+| formatação PT-BR `126,895 MT` | exibição apenas — valor persistido inalterado |
 
 ## 26. Audit/observability
 
@@ -466,6 +480,15 @@ Pirâmide por camada (resumo — detalhe em §33–35, 39–40):
 18. frontend envia `overall_stage`/`can_*` → ignorado/400
 19. re-sync planejado → zero sinais duplicados
 20. observação ERP repetida → zero correlações duplicadas
+21. mesma key simultânea, mesmo fingerprint → 1 mutação+1 replay; fingerprints distintos → 1 mutação+1 `idempotency_conflict`
+22. falha transitória → key livre p/ retry (não envenenada)
+23. replay com permissão revogada → `403` (sem vazamento de snapshot)
+24. mesma key em ator diverso → escopo independente
+25. replay não duplica `supply_events` nem evento outbox/notificação
+26. qty com unidade adulterada no body → `422` (backend compara com `accepted_unit`, MFE não valida)
+27. movimento ERP numericamente igual com unit divergente → `divergent` (sem conversão)
+28. re-sync que troca unidade do material → `UNIT_DIVERGENCE`, nunca reescrita silenciosa
+29. unidade autoritativa ausente → `unit_unknown` + fail-closed no write (nunca "UN" default)
 
 ## 30. Acceptance scenarios
 

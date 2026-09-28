@@ -525,6 +525,10 @@ Catálogo de domínio — **não são rotas HTTP**. AuthZ sempre `factory-supply
 8. `closed`/`cancelled` não aceitam transições normais de avanço — em nenhum nível.
 9. Movimento ERP nunca é fabricado — correlação só por observação real de contrato.
 10. Quantidade de devolução não deriva de fórmula não aprovada (`TO_INVENTORY`).
+11. Toda quantidade operacional carrega unidade — `accepted_unit` do item vem da unidade autoritativa `B1_UM` (TC §51) e é estável durante o trabalho operacional; sem unidade confiável, escrita que muda quantidade **falha fechado** (`unit_unknown` explícito, nunca default silencioso).
+12. Mudança de unidade autoritativa em re-sync/replanejamento = `UNIT_DIVERGENCE` (exceção de reconciliação explícita), **não** delta numérico — quantidades históricas preservam a unidade registrada; nunca subtrair entre unidades distintas.
+13. Correlação ERP compara quantidade **e** unidade — igualdade numérica com unidade divergente é `divergent`, nunca `matched`; unidade ausente no movimento → `unknown`.
+14. Sem engine/tabela/configuração de conversão de unidades (`UNIT_CONVERSION_*=NOT_REQUIRED` — FS-C0.T7); conversão futura exige decisão de owner/contrato.
 11. Toda escrita operacional material é atribuível a ator autenticado (backend resolve identidade).
 12. Boundary de filial preservada em toda leitura/escrita (`PROVEN` no legado; obrigatório no alvo).
 13. `prepared ≠ reserved`, `collected ≠ transferred`, `delivered ≠ ERP movement`, `ERP movement ≠ consumed`.
