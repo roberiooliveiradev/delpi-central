@@ -98,7 +98,11 @@ def _view_filter_params_from_merged(merged: Any) -> dict[str, Any]:
 
 
 def _collect_canvas_table_source_ids(block: dict[str, Any]) -> list[str]:
-    """Fonte default do bloco + overrides por célula (`dataSourceId`)."""
+    """Fonte default do bloco + overrides por célula (``modelId``/`dataSourceId`)."""
+    from tv_app.application.services.data.projection_fields_contract import (
+        binding_target_id,
+    )
+
     ids: list[str] = []
     seen: set[str] = set()
 
@@ -109,7 +113,7 @@ def _collect_canvas_table_source_ids(block: dict[str, Any]) -> list[str]:
         seen.add(sid)
         ids.append(sid)
 
-    push(block.get("dataSourceId"))
+    push(binding_target_id(block))
     cells = block.get("cells")
     if isinstance(cells, list):
         for row in cells:
@@ -117,7 +121,7 @@ def _collect_canvas_table_source_ids(block: dict[str, Any]) -> list[str]:
                 continue
             for cell in row:
                 if isinstance(cell, dict):
-                    push(cell.get("dataSourceId"))
+                    push(binding_target_id(cell))
     return ids
 
 
@@ -1789,6 +1793,10 @@ class ComunicadoDataEnrichmentService:
         *,
         model_resolved: dict[str, dict[str, Any]] | None = None,
     ) -> list[dict[str, Any]]:
+        from tv_app.application.services.data.projection_fields_contract import (
+            binding_target_id,
+        )
+
         source_resolved: dict[str, dict[str, Any]] = {}
         for block in blocks:
             if str(block.get("type") or "") == "data_source":
@@ -1831,7 +1839,7 @@ class ComunicadoDataEnrichmentService:
                     by_source,
                 )
                 merged["resolvedBySourceId"] = formatted_by_source
-                primary = str(block.get("dataSourceId") or "").strip()
+                primary = binding_target_id(block)
                 if primary and primary in formatted_by_source:
                     merged["resolved"] = dict(formatted_by_source[primary])
                 else:
@@ -1839,7 +1847,7 @@ class ComunicadoDataEnrichmentService:
                 merged["serverCanvasTableProjectionApplied"] = True
                 linked.append(merged)
                 continue
-            source_id = str(block.get("dataSourceId") or "").strip()
+            source_id = binding_target_id(block)
             if not source_id or source_id not in source_resolved:
                 linked.append(block)
                 continue

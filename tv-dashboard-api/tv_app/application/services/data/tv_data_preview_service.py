@@ -18,6 +18,15 @@ from tv_app.application.services.tv_data_route_catalog_service import (
 )
 
 
+def _binding_target(node: dict[str, Any]) -> str:
+    """modelId > dataSourceId — mesmo dual-read do link canônico (DM2)."""
+    from tv_app.application.services.data.projection_fields_contract import (
+        binding_target_id,
+    )
+
+    return binding_target_id(node)
+
+
 class TvDataPreviewService:
     def __init__(
         self,
@@ -172,8 +181,8 @@ class TvDataPreviewService:
             resolved = item.get("resolved")
             if not isinstance(resolved, dict):
                 continue
-            # Direct link to this source.
-            if str(item.get("dataSourceId") or "").strip() == target:
+            # Direct link to this source/model (modelId > dataSourceId).
+            if _binding_target(item) == target:
                 linked[item_id] = resolved
                 continue
             # Canvas table may bind cells to this source.
@@ -217,7 +226,7 @@ class TvDataPreviewService:
                 continue
             if str(item.get("type") or "") not in view_types:
                 continue
-            if str(item.get("dataSourceId") or "").strip() == target:
+            if _binding_target(item) == target:
                 return True
             if str(item.get("type") or "") == "canvas_table":
                 cells = item.get("cells")
@@ -228,7 +237,7 @@ class TvDataPreviewService:
                         for cell in row:
                             if (
                                 isinstance(cell, dict)
-                                and str(cell.get("dataSourceId") or "").strip() == target
+                                and _binding_target(cell) == target
                             ):
                                 return True
         return False

@@ -134,6 +134,39 @@ def _blocks_of(cfg: dict[str, Any]) -> list[dict[str, Any]]:
     return [b for b in raw if isinstance(b, dict)]
 
 
+def _model_output_columns(resolved: dict[str, Any]) -> set[str] | None:
+    """Colunas materializadas de um DataModel resolvido (schema dinâmico).
+
+    Autoridade = colunas realmente produzidas pelo pipeline (linhas/dados),
+    não ``fields``/``projectableFields`` — estes misturam nomes semânticos
+    genéricos (ex.: ``value`` do modo kpi) que não são colunas do output.
+    ``None`` quando o resolved não materializa colunas (não validar).
+    """
+    if not isinstance(resolved, dict):
+        return None
+    cols: set[str] = set()
+    table = resolved.get("table")
+    if isinstance(table, dict):
+        for col in table.get("columns") or []:
+            if isinstance(col, dict):
+                key = str(col.get("key") or col.get("field") or "").strip()
+                if key:
+                    cols.add(key)
+            elif str(col or "").strip():
+                cols.add(str(col).strip())
+        for row in table.get("rows") or []:
+            if isinstance(row, dict):
+                cols.update(str(k) for k in row.keys())
+    data = resolved.get("data")
+    if isinstance(data, dict):
+        cols.update(str(k) for k in data.keys())
+    elif isinstance(data, list):
+        for row in data:
+            if isinstance(row, dict):
+                cols.update(str(k) for k in row.keys())
+    return cols or None
+
+
 def _cfg_has_model_consumer(cfg: dict[str, Any], model_id: str) -> bool:
     """True se algum bloco (visual/célula) referencia ``modelId``."""
 
@@ -1176,6 +1209,9 @@ class PresentationPatchService:
             "apply_published_slide_template",
             # DM1 — modelo novo/substituído precisa executar antes do proposal.
             "upsert_data_model",
+            # DM2 — binding/rebind a modelId valida consumer contra output do modelo.
+            "bind_visual",
+            "upsert_block",
         }
     )
 
@@ -1267,6 +1303,18 @@ class PresentationPatchService:
             str(op.get("op") or "").strip() == "upsert_data_model"
             for op in touching_ops
         )
+        if not models_touched and models:
+            # DM2 — bind/upsert de visual ligado a modelId também valida consumidores.
+            has_model_consumers = any(
+                str(b.get("modelId") or "").strip() for b in cfg_blocks
+            ) or any(
+                str(op.get("modelId") or "").strip() for op in touching_ops
+            )
+            models_touched = has_model_consumers and any(
+                str(op.get("op") or "").strip()
+                in {"bind_visual", "upsert_block", "delete_block", "duplicate_blocks"}
+                for op in touching_ops
+            )
         if models and models_touched:
             self._validate_candidate_models(
                 cfg,
@@ -1420,6 +1468,7 @@ class PresentationPatchService:
             )
         ]
         if not failures:
+            self._assert_model_consumers_satisfied(cfg, resolved_map)
             return
         model_id, resolved = next(
             (
@@ -1459,6 +1508,52 @@ class PresentationPatchService:
             code=code,
             details=details,
         )
+
+    def _assert_model_consumers_satisfied(
+        self,
+        cfg: dict[str, Any],
+        resolved_map: dict[str, dict[str, Any]],
+    ) -> None:
+        """DM2 — update de modelo não pode remover campo ligado por consumer.
+
+        Para cada modelo executado no candidate, valida os fields usados por
+        visuais/células ligados via ``modelId`` contra o output schema
+        dinâmico do resolved (mesmo padrão de `_assert_transform_preserves_consumers`).
+        """
+        from tv_app.application.services.data.projection_fields_contract import (
+            collect_source_consumer_field_refs,
+        )
+
+        blocks = _blocks_of(cfg)
+        for model_id, resolved in resolved_map.items():
+            if not isinstance(resolved, dict):
+                continue
+            consumers = collect_source_consumer_field_refs(blocks, model_id)
+            if not consumers:
+                continue
+            output_columns = _model_output_columns(resolved)
+            if output_columns is None:
+                continue
+            missing = {
+                block_id: [
+                    field
+                    for field in refs
+                    if field not in output_columns and not field.startswith("filter.")
+                ]
+                for block_id, refs in consumers.items()
+            }
+            missing = {key: value for key, value in missing.items() if value}
+            if missing:
+                raise PresentationPatchError(
+                    "O modelo remove campos ligados por consumers: "
+                    + ", ".join(sorted({f for fields in missing.values() for f in fields})),
+                    code="DATA_BINDING_FIELD_MISSING",
+                    details={
+                        "modelId": model_id,
+                        "consumers": missing,
+                        "outputColumns": sorted(output_columns),
+                    },
+                )
 
     def _op_upsert_data_model(
         self,
@@ -2190,12 +2285,13 @@ class PresentationPatchService:
             )
 
         from tv_app.application.services.data.projection_fields_contract import (
+            binding_target_id,
             validate_block_projection_fields,
         )
 
         projection_route: dict[str, Any] | None = None
         projected_fields: list[dict[str, Any]] | None = None
-        source_id = str(cleaned.get("dataSourceId") or "").strip()
+        source_id = binding_target_id(cleaned)
         if source_id:
             source_block = _find_block(_blocks_of(cfg), source_id)
             binding = (
@@ -2536,22 +2632,44 @@ class PresentationPatchService:
         return block_id
 
     def _op_bind_visual(self, cfg: dict[str, Any], op: dict[str, Any]) -> None:
+        from tv_app.application.services.data.data_model_service import find_data_model
+
         visual_id = str(op.get("visualId") or "").strip()
         data_source_id = str(op.get("dataSourceId") or "").strip()
-        if not visual_id or not data_source_id:
+        model_id = str(op.get("modelId") or "").strip()
+        if not visual_id or (not data_source_id and not model_id):
             raise PresentationPatchError(PresentationOpsContentService.message("bindNeedIds"))
+        if data_source_id and model_id:
+            raise PresentationPatchError(
+                "bind_visual aceita um único target: dataSourceId ou modelId.",
+                code="data_model.contract_invalid",
+                details={"visualId": visual_id},
+            )
         blocks = _blocks_of(cfg)
         visual = _find_block(blocks, visual_id)
-        source = _find_block(blocks, data_source_id)
         if visual is None:
             raise PresentationPatchError(
                 PresentationOpsContentService.message("blockNotFound", blockId=visual_id)
             )
+        if model_id:
+            # DM2 — target único ativo: modelId remove dataSourceId.
+            if find_data_model(cfg, model_id) is None:
+                raise PresentationPatchError(
+                    f'DataModel "{model_id}" não encontrado no slide.',
+                    code="data_model.not_found",
+                    details={"modelId": model_id, "visualId": visual_id},
+                )
+            visual["modelId"] = model_id
+            visual.pop("dataSourceId", None)
+            visual.pop("resolved", None)
+            return
+        source = _find_block(blocks, data_source_id)
         if source is None:
             raise PresentationPatchError(
                 PresentationOpsContentService.message("blockNotFound", blockId=data_source_id)
             )
         visual["dataSourceId"] = data_source_id
+        visual.pop("modelId", None)
         visual.pop("resolved", None)
         binding = (
             source.get("dataBinding")

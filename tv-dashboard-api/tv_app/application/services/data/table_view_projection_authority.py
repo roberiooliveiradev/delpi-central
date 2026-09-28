@@ -4,6 +4,10 @@ from __future__ import annotations
 
 from typing import Any, Mapping, Sequence
 
+from tv_app.application.services.data.projection_fields_contract import (
+    binding_target_id,
+)
+
 # Part kinds supported by plugin-ui ConfigurablePresentationTable / TablePartRef.
 # rowEven/rowOdd drive banded-row fills (CSS vars); body/footer remain unsupported.
 _ALLOWED_TABLE_PART_KINDS = frozenset(
@@ -203,9 +207,9 @@ def compare_explicit_block_intent(
                         }
                     )
 
-    intent_ds = str(intent_block.get("dataSourceId") or "").strip()
+    intent_ds = binding_target_id(intent_block)
     if intent_ds:
-        got_ds = str(actual_block.get("dataSourceId") or "").strip()
+        got_ds = binding_target_id(actual_block)
         if intent_ds != got_ds:
             diffs.append(
                 {
@@ -231,7 +235,7 @@ def collect_upsert_block_intents(ops: list[Any] | None) -> list[dict[str, Any]]:
             continue
         has_frame = isinstance(block.get("frame"), dict) and bool(block.get("frame"))
         has_proj = has_explicit_table_columns(block)
-        has_ds = bool(str(block.get("dataSourceId") or "").strip())
+        has_ds = bool(binding_target_id(block))
         if not (has_frame or has_proj or has_ds):
             continue
         intents.append(dict(block))

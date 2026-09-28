@@ -185,9 +185,13 @@ class ReadySlideQualityService:
                     except ValueError:
                         issues.append(f"params.incomplete:{op_id}")
             if str(block.get("type") or "") in _DATA_VISUAL_TYPES:
-                # Só exige projection se o visual está bound a uma fonte.
+                # Só exige projection se o visual está bound a uma fonte/modelo.
+                from tv_app.application.services.data.projection_fields_contract import (
+                    binding_target_id,
+                )
+
                 has_bind = bool(
-                    str(block.get("dataSourceId") or "").strip()
+                    binding_target_id(block)
                     or (
                         isinstance(block.get("dataBinding"), dict)
                         and block.get("dataBinding", {}).get("operationId")

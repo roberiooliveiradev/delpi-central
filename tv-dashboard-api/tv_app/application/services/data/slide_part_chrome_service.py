@@ -14,7 +14,11 @@ from collections import defaultdict
 from typing import Any, Mapping
 
 from tv_app.application.services.data.presentation_recipe_service import (
+
     PresentationRecipeService,
+)
+from tv_app.application.services.data.projection_fields_contract import (
+    binding_target_id,
 )
 
 _KPI_TYPES = frozenset({"kpi_view", "data_kpi"})
@@ -447,7 +451,7 @@ def _rebalance_text_bound_hierarchy(block: dict[str, Any], chrome: dict[str, Any
     style = _ensure_dict(block, "style")
     absolute_min = int(text_chrome.get("absoluteMinFontSize") or 16)
     cur = _as_float(style.get("fontSize"))
-    has_data = bool(block.get("textProjection") or block.get("dataSourceId"))
+    has_data = bool(block.get("textProjection") or binding_target_id(block))
 
     if not has_data:
         # Decorative / static copy: only rescue illegible sizes — never force hero scale.

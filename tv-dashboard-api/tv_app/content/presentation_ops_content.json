@@ -345,7 +345,7 @@
     "blockIdRequired": "delete_block exige blockId.",
     "upsertBlockTargetRequired": "upsert_block de alteração exige block.id ou blockId de um bloco existente no slide (ALTER_EXISTING). Para criar, informe frame ou createIfMissing:true.",
     "upsertBlockIdConflict": "upsert_block: block.id («{blockId}») e blockId («{rootBlockId}») divergem.",
-    "bindNeedIds": "bind_visual exige visualId e dataSourceId.",
+    "bindNeedIds": "bind_visual exige visualId e um target (dataSourceId ou modelId).",
     "presetRequired": "add_slide_from_preset exige presetKey.",
     "playlistNameRequired": "create_playlist exige name.",
     "patchRequired": "patch_native_config exige um objeto patch.",
@@ -2045,8 +2045,7 @@
         "type": "object",
         "required": [
           "op",
-          "visualId",
-          "dataSourceId"
+          "visualId"
         ],
         "properties": {
           "op": {
@@ -2056,7 +2055,12 @@
             "type": "string"
           },
           "dataSourceId": {
-            "type": "string"
+            "type": "string",
+            "description": "Legacy data_source block target. Exactly one of dataSourceId|modelId; binding to a source clears modelId."
+          },
+          "modelId": {
+            "type": "string",
+            "description": "DataModel target (nativeConfig.dataModels[]). Exactly one of dataSourceId|modelId; binding to a model clears dataSourceId. modelId wins on read when both persisted."
           }
         }
       },

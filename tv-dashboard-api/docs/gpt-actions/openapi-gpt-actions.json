@@ -1229,8 +1229,7 @@
                           "type": "object",
                           "required": [
                             "op",
-                            "visualId",
-                            "dataSourceId"
+                            "visualId"
                           ],
                           "properties": {
                             "op": {
@@ -1241,7 +1240,12 @@
                               "type": "string"
                             },
                             "dataSourceId": {
-                              "type": "string"
+                              "type": "string",
+                              "description": "Legacy data_source block target. Exactly one of dataSourceId|modelId; binding to a source clears modelId."
+                            },
+                            "modelId": {
+                              "type": "string",
+                              "description": "DataModel target (nativeConfig.dataModels[]). Exactly one of dataSourceId|modelId; binding to a model clears dataSourceId. modelId wins on read when both persisted."
                             },
                             "playlistRef": {
                               "type": "string",

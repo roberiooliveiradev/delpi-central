@@ -13,6 +13,9 @@ from typing import Any
 from tv_app.application.services.data.display_format_hints_service import (
     DisplayFormatHintsService,
 )
+from tv_app.application.services.data.projection_fields_contract import (
+    binding_target_id,
+)
 
 EMPTY_DISPLAY = "—"
 
@@ -1872,7 +1875,7 @@ class DisplayFormatService:
     def _canvas_table_data_refs_by_source(
         cls, block: dict[str, Any]
     ) -> dict[str, list[dict[str, Any]]]:
-        primary = str(block.get("dataSourceId") or "").strip()
+        primary = binding_target_id(block)
         by_source: dict[str, list[dict[str, Any]]] = {}
         seen: dict[str, set[str]] = {}
         cells = block.get("cells")
@@ -1890,7 +1893,7 @@ class DisplayFormatService:
                 field = str(data_ref.get("field") or "").strip()
                 if not field:
                     continue
-                sid = str(cell.get("dataSourceId") or "").strip() or primary
+                sid = binding_target_id(cell) or primary
                 if not sid:
                     continue
                 key = field
@@ -1903,8 +1906,8 @@ class DisplayFormatService:
 
     @classmethod
     def _apply_canvas_table_display(cls, resolved: dict[str, Any], block: dict[str, Any]) -> None:
-        """Primary resolved: format fields used by cells pointing at block.dataSourceId."""
-        primary = str(block.get("dataSourceId") or "").strip()
+        """Primary resolved: format fields used by cells pointing at the block binding target."""
+        primary = binding_target_id(block)
         refs_by_source = cls._canvas_table_data_refs_by_source(block)
         refs = refs_by_source.get(primary) or []
         if not refs:
@@ -2084,7 +2087,7 @@ class DisplayFormatService:
                 and str((run.get("dataRef") or {}).get("field") or "").strip()
                 for run in runs
             )
-        linked = bool(str(block.get("dataSourceId") or "").strip())
+        linked = bool(binding_target_id(block))
         empty_fallback = EMPTY_DISPLAY if linked else ""
         block_case = None
         block_style = block.get("style") if isinstance(block.get("style"), dict) else {}
@@ -2173,7 +2176,7 @@ class DisplayFormatService:
         """True when display* must be (re)stamped for paint completeness."""
         if isinstance(block.get("resolved"), dict):
             return True
-        if str(block.get("dataSourceId") or "").strip():
+        if binding_target_id(block):
             return True
         projection = block.get("textProjection")
         if isinstance(projection, dict) and str(projection.get("field") or "").strip():

@@ -7,6 +7,9 @@ from typing import Any, Mapping
 from tv_app.application.services.data.presentation_recipe_service import (
     PresentationRecipeService,
 )
+from tv_app.application.services.data.projection_fields_contract import (
+    binding_target_id,
+)
 
 _KPI_TYPES = frozenset({"kpi_view", "data_kpi"})
 _CHART_TYPES = frozenset({"chart_view", "data_chart"})
@@ -90,7 +93,7 @@ def _block_signals(block: Mapping[str, Any]) -> dict[str, Any]:
     if btype in _TEXT_BOUND:
         tp = block.get("textProjection")
         signals["hasTextProjection"] = isinstance(tp, dict) and bool(tp.get("field"))
-        if block.get("dataSourceId"):
+        if binding_target_id(block):
             signals["hasDataSource"] = True
     if btype in _KPI_TYPES:
         parts = block.get("parts") if isinstance(block.get("parts"), dict) else {}

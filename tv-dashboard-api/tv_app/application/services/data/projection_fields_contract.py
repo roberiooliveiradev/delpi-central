@@ -447,6 +447,21 @@ def collect_view_projection_field_refs(block: dict[str, Any]) -> list[str]:
     return refs
 
 
+def binding_target_id(node: dict[str, Any]) -> str:
+    """Id do target de dados do bloco/célula — ``modelId`` vence ``dataSourceId``.
+
+    Dual-read DM2: visuais podem ligar a um DataModel (``modelId``) ou a um
+    bloco data_source legado (``dataSourceId``). ``modelId`` tem precedência
+    determinística quando ambos existem.
+    """
+    if not isinstance(node, dict):
+        return ""
+    model_id = str(node.get("modelId") or "").strip()
+    if model_id:
+        return model_id
+    return str(node.get("dataSourceId") or "").strip()
+
+
 def collect_source_consumer_field_refs(
     blocks: list[Any],
     source_id: str,
@@ -455,7 +470,8 @@ def collect_source_consumer_field_refs(
 
     Cobre textProjection/contentRuns/canvas cells (``dataRef.field``) e as
     projeções de view (kpi/chart/table). Células de canvas_table com
-    ``dataSourceId`` próprio são atribuídas à fonte correta.
+    ``dataSourceId``/``modelId`` próprio são atribuídas à fonte correta.
+    ``source_id`` pode ser um dataSourceId legado ou um modelId de DataModel.
     """
     target = str(source_id or "").strip()
     out: dict[str, list[str]] = {}
@@ -467,7 +483,7 @@ def collect_source_consumer_field_refs(
         block_id = str(block.get("id") or "").strip()
         refs: list[str] = []
         if str(block.get("type") or "") == "canvas_table":
-            default_source = str(block.get("dataSourceId") or "").strip()
+            default_source = binding_target_id(block)
             cells = block.get("cells")
             if isinstance(cells, list):
                 for row in cells:
@@ -476,9 +492,7 @@ def collect_source_consumer_field_refs(
                     for cell in row:
                         if not isinstance(cell, dict):
                             continue
-                        cell_source = (
-                            str(cell.get("dataSourceId") or "").strip() or default_source
-                        )
+                        cell_source = binding_target_id(cell) or default_source
                         if cell_source != target:
                             continue
                         data_ref = cell.get("dataRef")
@@ -486,7 +500,7 @@ def collect_source_consumer_field_refs(
                             field = str(data_ref.get("field") or "").strip()
                             if field and field not in refs:
                                 refs.append(field)
-        elif str(block.get("dataSourceId") or "").strip() == target:
+        elif binding_target_id(block) == target:
             refs = list(collect_projection_field_refs(block))
             for field in collect_view_projection_field_refs(block):
                 if field not in refs:
