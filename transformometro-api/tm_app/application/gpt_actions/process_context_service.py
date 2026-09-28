@@ -167,6 +167,11 @@ class ProcessContextService:
 
         baseline = None
         scenario = None
+        reference = None
+        explicit_baseline_selected = bool(
+            selected_revision
+            and str(selected_revision.get("cenario_tipo") or "").lower() == "baseline"
+        )
         if not requires_instance_selection:
             baseline = self._pick_baseline(revisoes, selected_instance_id)
             scenario = self._pick_scenario(
@@ -181,6 +186,13 @@ class ProcessContextService:
                     warnings.append("baseline_scenario_instance_mismatch_blocked")
                     baseline = None
                     scenario = None
+            if scenario:
+                reference = self._pick_reference(
+                    revisoes,
+                    scenario,
+                    missing=missing,
+                    warnings=warnings,
+                )
 
         if not instancias:
             missing.append("instances")
@@ -215,11 +227,26 @@ class ProcessContextService:
             decomp_row=decomp_row,
         )
 
-        as_is = self._revision_snapshot(baseline, label="as_is")
+        baseline_snapshot = self._revision_snapshot(baseline, label="baseline")
+        reference_snapshot = self._revision_snapshot(reference, label="reference")
         to_be = self._revision_snapshot(scenario, label="to_be")
 
-        if baseline and not as_is.get("measurement"):
+        if scenario:
+            # AS-IS of the selected comparison = the revision referenced by the
+            # selected scenario (revisao_referencia_id), never a baseline fallback.
+            as_is_source = reference
+        elif explicit_baseline_selected and selected_revision:
+            as_is_source = selected_revision
+        else:
+            as_is_source = baseline
+        as_is = self._revision_snapshot(as_is_source, label="as_is")
+
+        if baseline and not baseline_snapshot.get("measurement"):
             missing.append("baseline_measurement")
+        if reference and not reference_snapshot.get("measurement"):
+            reference_id = str(reference.get("revisao_id") or "")
+            if reference_id != str((baseline or {}).get("revisao_id") or ""):
+                missing.append("reference_measurement")
         if scenario and not to_be.get("measurement"):
             missing.append("scenario_measurement")
 
@@ -268,8 +295,7 @@ class ProcessContextService:
             revisions=revisoes,
             has_diagram=has_diagram,
             has_decomp=has_decomp,
-            as_is=as_is,
-            to_be=to_be,
+            snapshots=[baseline_snapshot, reference_snapshot, to_be],
         )
 
         resources = self._collect_resources(as_is, to_be)
@@ -291,13 +317,28 @@ class ProcessContextService:
                 "baseline_revisao_id": str(baseline.get("revisao_id"))
                 if baseline
                 else None,
+                "reference_revisao_id": str(reference.get("revisao_id"))
+                if reference
+                else None,
                 "scenario_revisao_id": str(scenario.get("revisao_id"))
                 if scenario
                 else None,
                 "resolved": selection_resolved and not requires_instance_selection,
                 "requires_instance_selection": requires_instance_selection,
             },
-            "baseline": as_is,
+            "baseline": baseline_snapshot,
+            "reference": {
+                "role": "REFERENCE",
+                "revision": reference_snapshot.get("revision"),
+                "measurement": reference_snapshot.get("measurement"),
+                "investments": reference_snapshot.get("investments") or [],
+                "mermaid": None,
+                "diagram": {
+                    "epistemic_status": "UNKNOWN",
+                    "reason": _DIAGRAM_UNAVAILABLE_V1,
+                },
+                "epistemic_status": "OBSERVED" if reference else "UNKNOWN",
+            },
             "scenario": to_be,
             "as_is": {
                 "role": "AS_IS",
@@ -309,7 +350,7 @@ class ProcessContextService:
                     "epistemic_status": "UNKNOWN",
                     "reason": _DIAGRAM_UNAVAILABLE_V1,
                 },
-                "epistemic_status": "OBSERVED" if baseline else "UNKNOWN",
+                "epistemic_status": "OBSERVED" if as_is_source else "UNKNOWN",
             },
             "to_be": {
                 "role": "TO_BE",
@@ -490,9 +531,11 @@ class ProcessContextService:
         selected_instance_id: str | None,
     ) -> dict[str, Any] | None:
         if selected_revision:
-            tipo = str(selected_revision.get("cenario_tipo") or "").lower()
-            if tipo != "baseline":
-                return selected_revision
+            # An explicitly selected revision always wins; a selected baseline is
+            # never silently substituted by an active/latest scenario.
+            if str(selected_revision.get("cenario_tipo") or "").lower() == "baseline":
+                return None
+            return selected_revision
         pool = revisoes
         if selected_instance_id:
             pool = [
@@ -516,6 +559,37 @@ class ProcessContextService:
             key=lambda r: str(r.get("data_inicio_vigencia") or ""),
             reverse=True,
         )[0]
+
+    def _pick_reference(
+        self,
+        revisoes: list[dict[str, Any]],
+        scenario: dict[str, Any],
+        *,
+        missing: list[str],
+        warnings: list[str],
+    ) -> dict[str, Any] | None:
+        """Resolve the scenario's comparison reference (revisao_referencia_id).
+
+        Resolved only inside the already-visible, already-scoped revisions of the
+        selected instance. Never falls back to baseline, active or latest.
+        """
+        reference_id = str(scenario.get("revisao_referencia_id") or "").strip()
+        if not reference_id:
+            missing.append("reference_revision")
+            return None
+        reference = next(
+            (
+                r
+                for r in revisoes
+                if str(r.get("revisao_id") or "") == reference_id
+            ),
+            None,
+        )
+        if reference is None:
+            missing.append("reference_revision")
+            warnings.append("reference_revision_out_of_scope")
+            return None
+        return reference
 
     def _revision_snapshot(
         self, revisao: dict[str, Any] | None, *, label: str
@@ -563,8 +637,7 @@ class ProcessContextService:
         revisions: list[dict[str, Any]],
         has_diagram: bool,
         has_decomp: bool,
-        as_is: dict[str, Any],
-        to_be: dict[str, Any],
+        snapshots: list[dict[str, Any]],
     ) -> dict[str, Any]:
         nodes: list[dict[str, Any]] = [
             {
@@ -642,9 +715,20 @@ class ProcessContextService:
                     }
                 )
 
+        seen_snapshot_revisions: set[str] = set()
+        unique_snapshots = []
+        for snapshot in snapshots:
+            snapshot_rid = str(
+                (snapshot.get("revision") or {}).get("revisao_id") or ""
+            )
+            if snapshot_rid and snapshot_rid in seen_snapshot_revisions:
+                continue
+            if snapshot_rid:
+                seen_snapshot_revisions.add(snapshot_rid)
+            unique_snapshots.append(snapshot)
+
         for snapshot, edge_type in (
-            (as_is, "measured_by"),
-            (to_be, "measured_by"),
+            (snapshot, "measured_by") for snapshot in unique_snapshots
         ):
             rev = snapshot.get("revision") or {}
             rid = str(rev.get("revisao_id") or "")
