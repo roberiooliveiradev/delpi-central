@@ -131,7 +131,7 @@ export function ProductionRunControls({
                       {formatQty(toOperatorUnit(progress.countedPieces))} /{" "}
                       {formatQty(toOperatorUnit(progress.targetPieces))} peças
                     </strong>
-                    <span>{formatQty(progress.progressPercent)}%</span>
+                    <span>{Math.round(progress.progressPercent)}%</span>
                   </div>
                   <div
                     className="pcp-pub__run-progress-track"
