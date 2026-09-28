@@ -93,6 +93,11 @@ class Settings:
         _get_env("MINHA_DELPI_AI_API_TIMEOUT_SECONDS", default="20") or "20"
     )
 
+    # MCP transport security (DNS-rebinding / Origin). Comma-separated lists;
+    # empty = platform defaults in tv_app/interface/mcp/server.py.
+    TV_MCP_ALLOWED_HOSTS: str = _get_env("TV_MCP_ALLOWED_HOSTS", default="") or ""
+    TV_MCP_ALLOWED_ORIGINS: str = _get_env("TV_MCP_ALLOWED_ORIGINS", default="") or ""
+
 
 settings = Settings()
 

@@ -151,3 +151,18 @@ app.include_router(data_api_router)
 app.include_router(gpt_actions_router)
 app.include_router(public_router)
 app.include_router(presentation_realtime_router)
+
+# MCP (Streamable HTTP) — VISTA READ surface, mounted in parallel with HTTP API.
+from tv_app.interface.mcp import (  # noqa: E402
+    combine_lifespan,
+    create_mcp_server,
+    mcp_http_app,
+    mcp_metadata_router,
+    mcp_mount_path_middleware,
+)
+
+_mcp_server = create_mcp_server()
+combine_lifespan(app, _mcp_server)
+app.include_router(mcp_metadata_router)
+app.mount("/mcp", mcp_http_app(_mcp_server))
+app.middleware("http")(mcp_mount_path_middleware)
