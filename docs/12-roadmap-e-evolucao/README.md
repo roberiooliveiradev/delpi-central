@@ -62,6 +62,12 @@ Estado atual, decisões consolidadas, pendências e plano de evolução.
 | [helpdesk/WIREFRAMES.md](./helpdesk/WIREFRAMES.md) | Telas, componentes do kit, estados e claro/escuro |
 | [helpdesk/06-plano-execucao.md](./helpdesk/06-plano-execucao.md) | Ordem executável E1–E5 (não autoriza implementação sozinha) |
 
+### Abastecimento Fabril (Factory Supply)
+
+| Arquivo | Conteúdo |
+|---|---|
+| [factory-supply/README.md](./factory-supply/README.md) | Baseline de produto/arquitetura do `factory-supply` — boundary próprio, referência Line Feeder, duas verdades, Doc 1/5 |
+
 ### Apontamento de Produção
 
 | Arquivo | Conteúdo |

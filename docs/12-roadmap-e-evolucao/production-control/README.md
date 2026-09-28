@@ -54,6 +54,10 @@ Contrato TOTVS da carga máquina: [production-machine-load.md](../../../api-delp
 
 A Análise de problemas é **grade de detectores**: cada card é uma regra registrada no BFF e descrita em `production-control-api/production_control_app/content/problem_analysis.json`. A OP atrasada saiu da área e continua na gestão à vista, com a fila da home abrindo a Carga máquina no rastreio (`?locate=`).
 
+## Produto relacionado
+
+**Factory Supply (Abastecimento Fabril)** — `docs/12-roadmap-e-evolucao/factory-supply/` — é produto distinto, fora do ownership `production-control-api`. O `line-feeder` continua capability ativa deste portal e serve de referência de implementação para o Factory Supply; nenhuma dependência de backend é criada entre eles.
+
 ## Fora desta versão
 
 APS/Gantt, escrita no TOTVS, drag-and-drop de sequenciamento, export CSV da fila, embed de outros MFEs de chão de fábrica.
