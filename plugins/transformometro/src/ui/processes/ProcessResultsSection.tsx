@@ -50,6 +50,7 @@ import {
 } from "./buildRevisionComparisonView";
 import { MeasurementComparisonTable } from "./MeasurementComparisonTable";
 import { instanciaNavLabel } from "./processWorkspaceNav";
+import { publishTeoWorkspaceSelection } from "../../integrations/teo/teoWorkspaceSelection";
 import { ResultsContextHeader } from "./ResultsContextHeader";
 import { ResultsProvenanceLegend } from "./ResultsProvenanceLegend";
 import { ResultsSectionBlock } from "./ResultsSectionBlock";
@@ -115,6 +116,17 @@ export function ProcessResultsSection({
       }),
     [instancias, processoId, revisoes, selectedInstanciaId, selectedRevisaoId],
   );
+
+  // Publica a seleção exibida ("Melhoria analisada"/"Cenário proposto")
+  // para o TÉO context bridge — atômica, sem cross-instance mix.
+  useEffect(() => {
+    publishTeoWorkspaceSelection({
+      process_id: processoId,
+      instance_id: comparison.instanceId,
+      revision_id: comparison.selectedRevisionId,
+    });
+    return () => publishTeoWorkspaceSelection(null);
+  }, [processoId, comparison.instanceId, comparison.selectedRevisionId]);
 
   const scopedComparisonItems = useMemo(
     () => filterComparativoByRevisoes(items, comparison.scopedRevisoes),

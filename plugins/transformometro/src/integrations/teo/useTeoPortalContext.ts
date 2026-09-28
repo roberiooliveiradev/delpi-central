@@ -7,6 +7,11 @@ import {
   resolveTeoPortalContext,
   type TeoPortalContext,
 } from "./teoPortalContext";
+import {
+  readTeoWorkspaceSelection,
+  subscribeTeoWorkspaceSelection,
+  type TeoWorkspaceSelection,
+} from "./teoWorkspaceSelection";
 
 function subscribeLocationHash(onStoreChange: () => void) {
   window.addEventListener("hashchange", onStoreChange);
@@ -40,9 +45,17 @@ export function useTeoPortalContext(pathname: string): TeoPortalContextState {
     readLocationHash,
     () => "",
   );
+  const selection = useSyncExternalStore<TeoWorkspaceSelection | null>(
+    subscribeTeoWorkspaceSelection,
+    readTeoWorkspaceSelection,
+    () => null,
+  );
 
   return useMemo(() => {
     const route = parseTransformometroPath(pathname);
-    return { context: resolveTeoPortalContext(pathname, hash), view: route.view };
-  }, [pathname, hash]);
+    return {
+      context: resolveTeoPortalContext(pathname, hash, selection),
+      view: route.view,
+    };
+  }, [pathname, hash, selection]);
 }

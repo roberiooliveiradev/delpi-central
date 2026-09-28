@@ -140,6 +140,165 @@ describe("resolveTeoPortalContext", () => {
   });
 });
 
+describe("resolveTeoPortalContext + workspace selection", () => {
+  it("A: rota process-only sem seleção publicada", () => {
+    const ctx = resolveTeoPortalContext(PROCESS, "#resultados", null);
+    expect(ctx.process_id).toBe("proc-1");
+    expect(ctx.instance_id).toBeNull();
+    expect(ctx.revision_id).toBeNull();
+    expect(ctx.area).toBe("resultados");
+  });
+
+  it("B: rota process + melhoria selecionada no workspace", () => {
+    const ctx = resolveTeoPortalContext(PROCESS, "#resultados", {
+      process_id: "proc-1",
+      instance_id: "inst-1",
+      revision_id: null,
+    });
+    expect(ctx.instance_id).toBe("inst-1");
+    expect(ctx.revision_id).toBeNull();
+  });
+
+  it("C: rota process + melhoria + cenário selecionados", () => {
+    const ctx = resolveTeoPortalContext(PROCESS, "#resultados", {
+      process_id: "proc-1",
+      instance_id: "inst-1",
+      revision_id: "rev-1",
+    });
+    expect(ctx.process_id).toBe("proc-1");
+    expect(ctx.instance_id).toBe("inst-1");
+    expect(ctx.revision_id).toBe("rev-1");
+  });
+
+  it("D: troca de cenário R1→R2 sem mudar rota atualiza o contexto", () => {
+    const r1 = resolveTeoPortalContext(PROCESS, "#resultados", {
+      process_id: "proc-1",
+      instance_id: "inst-1",
+      revision_id: "rev-1",
+    });
+    const r2 = resolveTeoPortalContext(PROCESS, "#resultados", {
+      process_id: "proc-1",
+      instance_id: "inst-1",
+      revision_id: "rev-2",
+    });
+    expect(r1.revision_id).toBe("rev-1");
+    expect(r2.revision_id).toBe("rev-2");
+  });
+
+  it("E: troca de melhoria nunca mistura revisão da melhoria anterior", () => {
+    const mixed = resolveTeoPortalContext(PROCESS, "#resultados", {
+      process_id: "proc-1",
+      instance_id: "inst-2",
+      revision_id: null,
+    });
+    expect(mixed.instance_id).toBe("inst-2");
+    expect(mixed.revision_id).toBeNull();
+
+    const selected = resolveTeoPortalContext(PROCESS, "#resultados", {
+      process_id: "proc-1",
+      instance_id: "inst-2",
+      revision_id: "rev-9",
+    });
+    expect(selected.revision_id).toBe("rev-9");
+  });
+
+  it("F: limpar cenário remove revision_id", () => {
+    const ctx = resolveTeoPortalContext(PROCESS, "#resultados", {
+      process_id: "proc-1",
+      instance_id: "inst-1",
+      revision_id: null,
+    });
+    expect(ctx.revision_id).toBeNull();
+  });
+
+  it("G: limpar melhoria remove instance_id e revision_id", () => {
+    const ctx = resolveTeoPortalContext(PROCESS, "#resultados", {
+      process_id: "proc-1",
+      instance_id: null,
+      revision_id: null,
+    });
+    expect(ctx.instance_id).toBeNull();
+    expect(ctx.revision_id).toBeNull();
+  });
+
+  it("H: troca de seção mantém a seleção e muda area", () => {
+    const selection = {
+      process_id: "proc-1",
+      instance_id: "inst-1",
+      revision_id: "rev-1",
+    };
+    const resultados = resolveTeoPortalContext(PROCESS, "#resultados", selection);
+    const mapeamento = resolveTeoPortalContext(PROCESS, "#mapeamento", selection);
+    expect(resultados.area).toBe("resultados");
+    expect(mapeamento.area).toBe("mapeamento");
+    expect(resultados.revision_id).toBe("rev-1");
+    expect(mapeamento.revision_id).toBe("rev-1");
+  });
+
+  it("I: rota explícita de revisão prevalece sobre a seleção", () => {
+    const ctx = resolveTeoPortalContext(REVISION, "", {
+      process_id: "proc-1",
+      instance_id: "inst-9",
+      revision_id: "rev-9",
+    });
+    expect(ctx.process_id).toBe("proc-1");
+    expect(ctx.instance_id).toBe("inst-1");
+    expect(ctx.revision_id).toBe("rev-1");
+  });
+
+  it("rota de instância explícita não herda revisão de outra melhoria", () => {
+    const ctx = resolveTeoPortalContext(`${BASE}/proc-1/instances/inst-2`, "", {
+      process_id: "proc-1",
+      instance_id: "inst-1",
+      revision_id: "rev-1",
+    });
+    expect(ctx.instance_id).toBe("inst-2");
+    expect(ctx.revision_id).toBeNull();
+  });
+
+  it("rota de instância explícita aceita revisão da mesma melhoria selecionada", () => {
+    const ctx = resolveTeoPortalContext(INSTANCE, "", {
+      process_id: "proc-1",
+      instance_id: "inst-1",
+      revision_id: "rev-1",
+    });
+    expect(ctx.instance_id).toBe("inst-1");
+    expect(ctx.revision_id).toBe("rev-1");
+  });
+
+  it("seleção de outro processo é ignorada", () => {
+    const ctx = resolveTeoPortalContext(PROCESS, "#resultados", {
+      process_id: "proc-outro",
+      instance_id: "inst-x",
+      revision_id: "rev-x",
+    });
+    expect(ctx.process_id).toBe("proc-1");
+    expect(ctx.instance_id).toBeNull();
+    expect(ctx.revision_id).toBeNull();
+  });
+
+  it("M: múltiplas melhorias sem seleção explícita — sem fallback", () => {
+    const ctx = resolveTeoPortalContext(PROCESS, "#resultados", {
+      process_id: "proc-1",
+      instance_id: null,
+      revision_id: null,
+    });
+    expect(ctx.instance_id).toBeNull();
+    expect(ctx.revision_id).toBeNull();
+  });
+
+  it("não aplica seleção fora do workspace de processo", () => {
+    const ctx = resolveTeoPortalContext(TRANSFORMOMETRO_ROUTES.dashboard, "", {
+      process_id: "proc-1",
+      instance_id: "inst-1",
+      revision_id: "rev-1",
+    });
+    expect(ctx.process_id).toBeNull();
+    expect(ctx.instance_id).toBeNull();
+    expect(ctx.revision_id).toBeNull();
+  });
+});
+
 describe("teoAreaLabel", () => {
   it("rotula a seção conforme a view", () => {
     expect(teoAreaLabel("processo", "resultados")).toBe("Resultados");

@@ -8,6 +8,8 @@ import {
   resetTeoContextSiteToolRegistration,
   type TeoContextSiteTool,
 } from "./teoContextBridge";
+import { buildTeoContextClipboardText } from "./teoPortalContext";
+import type { TeoWorkspaceSelection } from "./teoWorkspaceSelection";
 
 const BASE = "/apps/transformometro/processes";
 const REVISION = `${BASE}/proc-1/instances/inst-1/revisions/rev-1`;
@@ -51,6 +53,49 @@ describe("buildTeoContextSiteTool", () => {
     const second = await tool.execute();
     expect(second.process_id).toBeNull();
     expect(second.revision_id).toBeNull();
+  });
+
+  it("L: seleção trocada na tela reflete no execute seguinte (sem stale)", async () => {
+    let selection: TeoWorkspaceSelection | null = {
+      process_id: "proc-1",
+      instance_id: "inst-1",
+      revision_id: "rev-1",
+    };
+    const tool = buildTeoContextSiteTool(
+      () => ({ pathname: `${BASE}/proc-1`, hash: "#resultados" }),
+      () => selection,
+    );
+
+    const r1 = await tool.execute();
+    expect(r1.instance_id).toBe("inst-1");
+    expect(r1.revision_id).toBe("rev-1");
+
+    selection = { process_id: "proc-1", instance_id: "inst-1", revision_id: "rev-2" };
+    const r2 = await tool.execute();
+    expect(r2.revision_id).toBe("rev-2");
+
+    selection = { process_id: "proc-1", instance_id: "inst-2", revision_id: null };
+    const swapped = await tool.execute();
+    expect(swapped.instance_id).toBe("inst-2");
+    expect(swapped.revision_id).toBeNull();
+  });
+
+  it("J: clipboard e site tool produzem os mesmos IDs", async () => {
+    const selection: TeoWorkspaceSelection = {
+      process_id: "proc-1",
+      instance_id: "inst-1",
+      revision_id: "rev-1",
+    };
+    const tool = buildTeoContextSiteTool(
+      () => ({ pathname: `${BASE}/proc-1`, hash: "#resultados" }),
+      () => selection,
+    );
+    const context = await tool.execute();
+    const clipboard = buildTeoContextClipboardText(context);
+    expect(clipboard).toContain(`process_id=${context.process_id}`);
+    expect(clipboard).toContain(`instance_id=${context.instance_id}`);
+    expect(clipboard).toContain(`revision_id=${context.revision_id}`);
+    expect(clipboard).toContain("area=resultados");
   });
 });
 

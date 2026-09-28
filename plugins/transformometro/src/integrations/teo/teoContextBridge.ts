@@ -2,6 +2,10 @@ import {
   resolveTeoPortalContext,
   type TeoPortalContext,
 } from "./teoPortalContext";
+import {
+  readTeoWorkspaceSelection,
+  type TeoWorkspaceSelection,
+} from "./teoWorkspaceSelection";
 
 export const TEO_CONTEXT_SITE_TOOL_NAME = "get_current_transformometro_context";
 
@@ -16,6 +20,8 @@ export type TeoContextLocationReader = () => {
   pathname: string;
   hash: string;
 };
+
+export type TeoWorkspaceSelectionReader = () => TeoWorkspaceSelection | null;
 
 export type TeoContextSiteTool = {
   name: string;
@@ -63,6 +69,7 @@ export function resolveWebModelContext(): WebModelContextLike | null {
  */
 export function buildTeoContextSiteTool(
   readLocation: TeoContextLocationReader = defaultReadLocation,
+  readSelection: TeoWorkspaceSelectionReader = readTeoWorkspaceSelection,
 ): TeoContextSiteTool {
   return {
     name: TEO_CONTEXT_SITE_TOOL_NAME,
@@ -71,7 +78,7 @@ export function buildTeoContextSiteTool(
     annotations: { readOnlyHint: true },
     execute: async () => {
       const { pathname, hash } = readLocation();
-      return resolveTeoPortalContext(pathname, hash);
+      return resolveTeoPortalContext(pathname, hash, readSelection());
     },
   };
 }

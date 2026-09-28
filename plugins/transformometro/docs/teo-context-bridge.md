@@ -46,11 +46,33 @@ policy e não restringe o TÉO.
 
 | Rota | IDs | area |
 |---|---|---|
-| `/processes/:p` | process_id | seção do workspace (8 seções) |
+| `/processes/:p` | process_id (+ seleção do workspace) | seção do workspace (8 seções) |
 | `/processes/:p/instances/:i` | + instance_id | seção da melhoria |
 | `…/instances/:i/revisions/:r` | + revision_id | seção da revisão |
 | `…/diagram/edit` | ids do nível | `mapeamento` (processo) / `diagrama` |
 | demais telas | todos `null` | `null` |
+
+## Seleção do workspace (V1.1)
+
+A rota nem sempre carrega melhoria/revisão: em Resultados o usuário pode
+estar vendo "Melhoria analisada" e "Cenário proposto" na rota
+`/processes/:p#resultados`. A fonte da seleção é o `comparison` de
+`ProcessResultsSection` (view-model `buildRevisionComparisonView`), que é
+exatamente o que a UI exibe — incluindo a auto-resolução de item único e
+`needs_*_selection` quando há ambiguidade.
+
+Precedência:
+
+```text
+process_id  ← rota
+instance_id ← rota explícita, senão seleção do workspace do mesmo processo
+revision_id ← rota explícita, senão seleção cuja instance_id bate
+```
+
+A seleção é publicada atomicamente (`instance_id` + `revision_id` juntos)
+— nunca revisão de uma melhoria com id de outra. Ao sair do processo, a
+publicação é removida; seleção de outro processo é ignorada por guarda de
+`process_id`.
 
 Aliases legados de hash (`#diagrama`, `#arquivos`, `#priorizacao`,
 `#dados`, `#timeline`) normalizam para a seção canônica. Rotas PT legadas
@@ -100,10 +122,12 @@ injetado — nenhuma URL é inventada.
 
 - `src/integrations/teo/teoPortalContext.ts` — modelo + resolver puro +
   payload de clipboard;
+- `src/integrations/teo/teoWorkspaceSelection.ts` — loja mínima da
+  seleção corrente do workspace (publicada por `ProcessResultsSection`);
 - `src/integrations/teo/teoContextBridge.ts` — adapter WebMCP
   (`document.modelContext`, fallback `navigator.modelContext` legado);
-- `src/integrations/teo/useTeoPortalContext.ts` — hook reativo a rota e
-  hash;
+- `src/integrations/teo/useTeoPortalContext.ts` — hook reativo a rota,
+  hash e seleção;
 - `src/integrations/teo/TeoContextAction.tsx` — ação TÉO no
   `PortalTopBar`.
 
