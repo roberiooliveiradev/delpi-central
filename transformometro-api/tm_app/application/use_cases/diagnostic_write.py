@@ -61,7 +61,13 @@ def _raise(code: str, message: str) -> None:
 
 
 def _map_domain_error(exc: DiagnosticError) -> DiagnosticWriteError:
-    return DiagnosticWriteError(exc.code, str(exc))
+    # DiagnosticError.__str__ is already "<code>: <message>" — strip the
+    # prefix so the write error does not surface "code: code: message".
+    message = str(exc)
+    prefix = f"{exc.code}: "
+    if message.startswith(prefix):
+        message = message[len(prefix):]
+    return DiagnosticWriteError(exc.code, message)
 
 
 class DiagnosticWriteUseCase:

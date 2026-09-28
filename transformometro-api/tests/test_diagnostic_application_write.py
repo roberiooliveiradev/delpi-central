@@ -302,6 +302,35 @@ def test_adapter_fails_closed_when_authority_unavailable(monkeypatch):
     _reset_ctx()
 
 
+def test_adapter_denies_principal_without_marker(monkeypatch):
+    # Legacy contexts mounting request.state.user manually must NOT fall
+    # implicitly into "user": fail-closed when the canonical marker is absent.
+    _reset_ctx()
+    called = []
+
+    async def fake_rbac(token, *, force_refresh=False):
+        called.append(token)
+        return {"permissions": [ACCESS_PERMISSION]}
+
+    monkeypatch.setattr(
+        "tm_app.infrastructure.security.diagnostic_authorization.load_user_rbac",
+        fake_rbac,
+    )
+    set_current_user(
+        SimpleNamespace(
+            id="legacy", email="l@delpi", is_superadmin=False,
+            permissions=[ACCESS_PERMISSION],
+            # principal_type deliberately absent
+        )
+    )
+    set_request_authorization("Bearer tok")
+    with pytest.raises(DiagnosticAuthorizationError) as excinfo:
+        run(FreshAuthorizationAdapter().authorize_fresh())
+    assert _code(excinfo) == "diagnostic.authorization_denied"
+    assert called == []  # authority never consulted
+    _reset_ctx()
+
+
 def test_adapter_denies_user_without_access(monkeypatch):
     _reset_ctx()
 
@@ -592,6 +621,7 @@ def test_domain_rule_violation_maps_and_does_not_save():
             hypothesis_id="inexistente",
         ))
     assert _code(excinfo) == "invalid_causal_link"
+    assert "invalid_causal_link: invalid_causal_link" not in str(excinfo.value)
     repo.save.assert_not_called()
 
 
