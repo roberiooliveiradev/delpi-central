@@ -1,4 +1,7 @@
 import {
+  bindingTargetId,
+  bindingTargetKind,
+  findDataModel,
   isCanvasTableDataBoundBlockType,
   isDataSourceBlockType,
   isDataViewBlockType,
@@ -6,6 +9,7 @@ import {
   isTextDataBoundBlockType,
   type ComunicadoBlock,
   type ComunicadoDataSourceBlock,
+  type TvDataModel,
 } from "@delpi/tv-dashboard-presentation";
 
 export type SelectedDataContextKind = "none" | "single" | "homogeneous" | "mixed";
@@ -28,18 +32,23 @@ export type SelectedDataContext = {
    * Ordem estável pela ordem de seleção.
    */
   bindingTargets: ComunicadoBlock[];
+  /**
+   * DataModel ligado ao bloco primário (binding `modelId` — vence `dataSourceId`).
+   * `null` quando o binding ativo é legacy source ou inexistente.
+   */
+  bindingModel: TvDataModel | null;
   /** Mensagem auxiliar (ribbon / empty). */
   message?: string;
 };
 
 function dataFingerprint(block: ComunicadoBlock): string {
   if (isDataViewBlockType(block.type)) {
-    const sourceId = "dataSourceId" in block ? block.dataSourceId?.trim() : undefined;
-    return sourceId ? `source:${sourceId}` : `unbound:${block.id}`;
+    const targetId = bindingTargetId(block);
+    return targetId ? `target:${targetId}` : `unbound:${block.id}`;
   }
   if (isTextDataBoundBlockType(block.type) || isCanvasTableDataBoundBlockType(block.type)) {
-    const sourceId = "dataSourceId" in block ? block.dataSourceId?.trim() : undefined;
-    return sourceId ? `source:${sourceId}` : `text-unbound:${block.id}`;
+    const targetId = bindingTargetId(block);
+    return targetId ? `target:${targetId}` : `text-unbound:${block.id}`;
   }
   if (isDataSourceBlockType(block.type)) {
     return `source:${block.id}`;
@@ -55,12 +64,12 @@ function resolveBindingTarget(
   primary: ComunicadoBlock,
 ): ComunicadoBlock | null {
   if (isDataViewBlockType(primary.type)) {
-    const sourceId = "dataSourceId" in primary ? primary.dataSourceId?.trim() : undefined;
+    const sourceId = bindingTargetId(primary);
     if (!sourceId) return null;
     return blocks.find((block) => block.id === sourceId) ?? null;
   }
   if (isTextDataBoundBlockType(primary.type) || isCanvasTableDataBoundBlockType(primary.type)) {
-    const sourceId = "dataSourceId" in primary ? primary.dataSourceId?.trim() : undefined;
+    const sourceId = bindingTargetId(primary);
     if (!sourceId) return null;
     return blocks.find((block) => block.id === sourceId) ?? null;
   }
@@ -68,6 +77,15 @@ function resolveBindingTarget(
     return primary;
   }
   return null;
+}
+
+function resolveBindingModel(
+  dataModels: readonly TvDataModel[] | null | undefined,
+  primary: ComunicadoBlock | null,
+): TvDataModel | null {
+  if (!primary || !dataModels?.length) return null;
+  if (bindingTargetKind(primary) !== "model") return null;
+  return findDataModel({ dataModels: [...dataModels] }, bindingTargetId(primary));
 }
 
 function collectBindingTargets(
@@ -101,6 +119,7 @@ function isSelectedDataBlock(block: ComunicadoBlock): boolean {
 export function resolveSelectedDataContext(
   blocks: ComunicadoBlock[],
   selectedIds: string[],
+  dataModels?: readonly TvDataModel[] | null,
 ): SelectedDataContext {
   const byId = new Map(blocks.map((block) => [block.id, block]));
   const dataBlocks = selectedIds
@@ -114,6 +133,7 @@ export function resolveSelectedDataContext(
       primary: null,
       bindingTarget: null,
       bindingTargets: [],
+      bindingModel: null,
     };
   }
 
@@ -125,11 +145,13 @@ export function resolveSelectedDataContext(
       primary: null,
       bindingTarget: null,
       bindingTargets: [],
+      bindingModel: null,
     };
   }
 
   const bindingTargets = collectBindingTargets(blocks, dataBlocks);
   const bindingTarget = resolveBindingTarget(blocks, primary);
+  const bindingModel = resolveBindingModel(dataModels, primary);
 
   if (dataBlocks.length === 1) {
     return {
@@ -138,6 +160,7 @@ export function resolveSelectedDataContext(
       primary,
       bindingTarget,
       bindingTargets,
+      bindingModel,
     };
   }
 
@@ -149,6 +172,7 @@ export function resolveSelectedDataContext(
       primary,
       bindingTarget,
       bindingTargets,
+      bindingModel,
     };
   }
 
@@ -158,6 +182,7 @@ export function resolveSelectedDataContext(
     primary,
     bindingTarget: bindingTargets.length === 1 ? bindingTargets[0]! : null,
     bindingTargets,
+    bindingModel,
     message:
       bindingTargets.length > 0
         ? "Seleção com várias fontes — filtros unificados abaixo."
@@ -170,6 +195,6 @@ export function resolveLinkedSourceForBlock(
   block: ComunicadoBlock,
 ): ComunicadoDataSourceBlock | null {
   const target = resolveBindingTarget(blocks, block);
-  if (target && isDataSourceBlockType(target.type)) return target;
+  if (target?.type === "data_source") return target;
   return null;
 }

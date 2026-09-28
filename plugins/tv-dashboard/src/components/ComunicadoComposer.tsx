@@ -7,6 +7,7 @@ import {
   buildCanvasTableDataLinkPatch,
   buildTextDataLinkPatch,
   comunicadoBackgroundRootStyle,
+  bindingTargetId,
   hugFrameToContentSizePx,
   isClickPathDrawTool,
   isComunicadoVisualBoxBlock,
@@ -112,13 +113,9 @@ function resolveComposerBlockDataLoading(
   if (!isFetchableDataBlockType(block.type) && !isDataViewBlockType(block.type)) {
     return false;
   }
-  const sourceId =
-    isDataViewBlockType(block.type) &&
-    "dataSourceId" in block &&
-    typeof block.dataSourceId === "string" &&
-    block.dataSourceId
-      ? block.dataSourceId
-      : block.id;
+  const sourceId = isDataViewBlockType(block.type)
+    ? bindingTargetId(block) || block.id
+    : block.id;
   if (refreshingSourceIds.includes(sourceId)) return true;
   const hasResolved = "resolved" in block && Boolean(block.resolved);
   return !hasResolved && dataPreviewLoading;
@@ -958,7 +955,7 @@ export function ComunicadoComposerCanvas() {
             (selected.type === "chart_view" ||
               selected.type === "kpi_view" ||
               selected.type === "table_view") &&
-            !selected.dataSourceId?.trim()
+            !bindingTargetId(selected)
           ) {
             const resolved = "resolved" in block ? block.resolved : undefined;
             updateBlock(
@@ -985,7 +982,7 @@ export function ComunicadoComposerCanvas() {
             isDataSourceBlockType(block.type) &&
             selected &&
             isComunicadoVisualBoxBlock(selected) &&
-            !selected.dataSourceId?.trim()
+            !bindingTargetId(selected)
           ) {
             const resolved = "resolved" in block ? block.resolved : undefined;
             updateBlock(
@@ -1004,7 +1001,7 @@ export function ComunicadoComposerCanvas() {
             selected &&
             isCanvasTableDataBoundBlockType(selected.type) &&
             selected.type === "canvas_table" &&
-            !selected.dataSourceId?.trim()
+            !bindingTargetId(selected)
           ) {
             const resolved = "resolved" in block ? block.resolved : undefined;
             updateBlock(
@@ -1263,7 +1260,7 @@ export function ComunicadoComposerCanvas() {
                     (selected.type === "chart_view" ||
                       selected.type === "kpi_view" ||
                       selected.type === "table_view") &&
-                    !selected.dataSourceId?.trim()
+                    !bindingTargetId(selected)
                   ) {
                     const resolved =
                       "resolved" in block ? block.resolved : undefined;
@@ -1291,7 +1288,7 @@ export function ComunicadoComposerCanvas() {
                     isDataSourceBlockType(block.type) &&
                     selected &&
                     isComunicadoVisualBoxBlock(selected) &&
-                    !selected.dataSourceId?.trim()
+                    !bindingTargetId(selected)
                   ) {
                     const resolved =
                       "resolved" in block ? block.resolved : undefined;
@@ -1311,7 +1308,7 @@ export function ComunicadoComposerCanvas() {
                     selected &&
                     isCanvasTableDataBoundBlockType(selected.type) &&
                     selected.type === "canvas_table" &&
-                    !selected.dataSourceId?.trim()
+                    !bindingTargetId(selected)
                   ) {
                     const resolved =
                       "resolved" in block ? block.resolved : undefined;

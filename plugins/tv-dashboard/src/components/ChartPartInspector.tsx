@@ -1,6 +1,7 @@
 import { FormSelectControl, NativeCheckboxControl, NativeTextControl } from "@delpi/plugin-ui/index";
 import {
   applyMarkerStyleToAll,
+  bindingTargetId,
   chartPartAllowsDelete,
   chartPartAllowsFrame,
   chartPartVisualPrimitive,
@@ -606,7 +607,7 @@ export function ChartPartInspector({ pane = false, block }: Props) {
               options={[
                 { value: "", label: "Nenhuma (só número fixo)" },
                 ...(() => {
-                  const sourceId = block.dataSourceId?.trim();
+                  const sourceId = bindingTargetId(block);
                   const source = sourceId
                     ? blocks.find(
                         (item) => item.id === sourceId && isDataSourceBlockType(item.type),

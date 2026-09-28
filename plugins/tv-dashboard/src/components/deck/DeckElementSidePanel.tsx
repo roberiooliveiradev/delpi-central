@@ -40,6 +40,7 @@ export function DeckElementSidePanel({ labels = {}, embedded = true, branchScope
     selected,
     selectedIds,
     blocks,
+    config,
     dataPanelOpen,
     setDataPanelOpen,
     dataPanelIntent,
@@ -73,8 +74,8 @@ export function DeckElementSidePanel({ labels = {}, embedded = true, branchScope
   }, [open, width]);
 
   const dataContext = useMemo(
-    () => resolveSelectedDataContext(blocks, selectedIds),
-    [blocks, selectedIds],
+    () => resolveSelectedDataContext(blocks, selectedIds, config.dataModels),
+    [blocks, selectedIds, config.dataModels],
   );
 
   const hasSelection = selectedIds.length > 0;

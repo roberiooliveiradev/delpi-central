@@ -1,4 +1,5 @@
 import {
+  bindingTargetId,
   isDataSourceBlockType,
   isDataViewBlockType,
   shouldHideDataSourceOnStage,
@@ -60,8 +61,7 @@ export function listViewsLinkedToDataSource(
   if (!wanted) return [];
   return blocks.filter((block) => {
     if (!isDataViewBlockType(block.type)) return false;
-    const sourceId = "dataSourceId" in block ? block.dataSourceId?.trim() : undefined;
-    return sourceId === wanted;
+    return bindingTargetId(block) === wanted;
   });
 }
 

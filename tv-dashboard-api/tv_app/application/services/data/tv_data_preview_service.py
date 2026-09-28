@@ -152,12 +152,64 @@ class TvDataPreviewService:
         )
         model_id = str(model.get("id") or "")
         resolved = resolved_map.get(model_id)
-        if isinstance(resolved, dict):
-            return resolved
-        return next(
-            (r for r in resolved_map.values() if isinstance(r, dict)),
-            {"error": "Modelo não resolvido."},
+        if not isinstance(resolved, dict):
+            resolved = next(
+                (r for r in resolved_map.values() if isinstance(r, dict)),
+                {"error": "Modelo não resolvido."},
+            )
+        # FE-BE-002 (model variant): editor paints views/text from the model
+        # preview — attach per-block enrich so linked visuals resolve by own id.
+        if model_id:
+            resolved = self._attach_linked_resolved_for_model(
+                resolved,
+                native_config,
+                model_resolved={model_id: resolved},
+                model_id=model_id,
+            )
+        return resolved
+
+    @staticmethod
+    def _attach_linked_resolved_for_model(
+        resolved: dict[str, Any],
+        native_config: dict[str, Any],
+        *,
+        model_resolved: dict[str, dict[str, Any]],
+        model_id: str,
+    ) -> dict[str, Any]:
+        """Stamp linkedResolvedByBlockId on the model preview for editor paint."""
+        cfg_blocks = (
+            native_config.get("blocks")
+            if isinstance(native_config, dict)
+            else None
         )
+        if not isinstance(cfg_blocks, list):
+            return resolved
+        linked_blocks = (
+            ComunicadoDataEnrichmentService._link_view_blocks_to_sources(
+                [block for block in cfg_blocks if isinstance(block, dict)],
+                model_resolved=model_resolved,
+            )
+        )
+        linked: dict[str, Any] = {}
+        for item in linked_blocks:
+            if not isinstance(item, dict):
+                continue
+            item_id = str(item.get("id") or "").strip()
+            item_resolved = item.get("resolved")
+            if not item_id or not isinstance(item_resolved, dict):
+                continue
+            if _binding_target(item) == model_id:
+                linked[item_id] = item_resolved
+                continue
+            if str(item.get("type") or "") == "canvas_table":
+                by_source = item.get("resolvedBySourceId")
+                if isinstance(by_source, dict) and model_id in by_source:
+                    linked[item_id] = item_resolved
+        if not linked:
+            return resolved
+        next_resolved = dict(resolved)
+        next_resolved["linkedResolvedByBlockId"] = linked
+        return next_resolved
 
     @staticmethod
     def _attach_linked_resolved_for_editor(

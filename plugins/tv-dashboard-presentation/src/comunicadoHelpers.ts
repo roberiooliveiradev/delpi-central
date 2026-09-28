@@ -209,6 +209,8 @@ import type {
   ComunicadoShapeKind,
   ComunicadoTextDecoration,
   ComunicadoVerticalAlign,
+  TvDataModel,
+  TvDataModelInput,
 } from "./comunicadoTypes";
 import { resolveInputTargetScope } from "./comunicadoInputFilters";
 import { COMUNICADO_FONT_SIZE_MIN } from "./comunicadoTypes";
@@ -243,12 +245,23 @@ export {
   isDataViewBlockType,
   isTextDataBoundBlockType,
   isFetchableDataBlockType,
+  isTechnicalDataBlockType,
+  isRenderableBlockType,
+  bindingTargetId,
+  bindingTargetKind,
+  findDataModel,
+  dataModelOptionsForInspector,
   getLinkedDataSourceIds,
   shouldHideDataSourceOnStage,
   listDataSourceBlocks,
   resolveDataSourceLabel,
+  isCatalogLikeDataSourceLabel,
   resolvePreferredDataSourceId,
   dataSourceOptionsForInspector,
+  type BindingTargetSlice,
+  type BindingTargetKind,
+  type DataSourceLabelCatalog,
+  type DataSourceLabelRouteInfo,
 } from "./comunicadoDataArchitecture";
 
 export {
@@ -836,6 +849,68 @@ function normalizeVertices(value: unknown): ComunicadoGeometryVertex[] | undefin
   return points.length > 0 ? points : undefined;
 }
 
+/**
+ * Whitelist do contrato persistido de DataModel (DM1).
+ * Artefatos de runtime (`resolved`, `outputSchema`, `runtimeErrors`,
+ * `effectiveParams`, `rows`, `data`) são descartados aqui.
+ */
+export function normalizeDataModels(raw: unknown): TvDataModel[] {
+  if (!Array.isArray(raw)) return [];
+  const models: TvDataModel[] = [];
+  for (const item of raw) {
+    if (!item || typeof item !== "object") continue;
+    const source = item as Record<string, unknown>;
+    const id = typeof source.id === "string" ? source.id.trim() : "";
+    const primaryInputId =
+      typeof source.primaryInputId === "string" ? source.primaryInputId.trim() : "";
+    if (!id || !primaryInputId) continue;
+    const inputsRaw = Array.isArray(source.inputs) ? source.inputs : [];
+    const inputs: TvDataModelInput[] = [];
+    for (const rawInput of inputsRaw) {
+      if (!rawInput || typeof rawInput !== "object") continue;
+      const src = rawInput as Record<string, unknown>;
+      const inputId = typeof src.id === "string" ? src.id.trim() : "";
+      const operationId =
+        typeof src.operationId === "string" ? src.operationId.trim() : "";
+      if (!inputId || !operationId) continue;
+      const params =
+        src.params && typeof src.params === "object" && !Array.isArray(src.params)
+          ? (src.params as TvDataModelInput["params"])
+          : undefined;
+      inputs.push({
+        id: inputId,
+        operationId,
+        ...(typeof src.label === "string" && src.label.trim()
+          ? { label: src.label.trim() }
+          : {}),
+        ...(typeof src.queryName === "string" && src.queryName.trim()
+          ? { queryName: src.queryName.trim() }
+          : {}),
+        ...(params ? { params } : {}),
+        ...(src.transform !== undefined && src.transform !== null
+          ? { transform: src.transform }
+          : {}),
+      });
+    }
+    if (inputs.length === 0) continue;
+    models.push({
+      id,
+      primaryInputId,
+      inputs,
+      ...(typeof source.label === "string" && source.label.trim()
+        ? { label: source.label.trim() }
+        : {}),
+      ...(source.transform !== undefined && source.transform !== null
+        ? { transform: source.transform }
+        : {}),
+      ...(source.fieldLabels && typeof source.fieldLabels === "object"
+        ? { fieldLabels: { ...(source.fieldLabels as Record<string, string>) } }
+        : {}),
+    });
+  }
+  return models;
+}
+
 export function parseComunicadoConfig(raw: Record<string, unknown> | undefined | null): ComunicadoConfig {
   const cfg = raw ?? {};
 
@@ -843,12 +918,14 @@ export function parseComunicadoConfig(raw: Record<string, unknown> | undefined |
   if (Array.isArray(cfg.blocks)) {
     const blocks = cfg.blocks as ComunicadoBlock[];
     const normalized = syncEfficiencyPinBandsAcrossSources(blocks.map(normalizeBlock));
+    const dataModels = normalizeDataModels(cfg.dataModels);
     return {
       version: Number(cfg.version) || (normalized.length > 0 ? detectConfigVersion(normalized) : 2),
       headline: String(cfg.headline ?? ""),
       subtitle: String(cfg.subtitle ?? ""),
       background: normalizeBackground(cfg.background),
       blocks: normalized,
+      ...(dataModels.length > 0 ? { dataModels } : {}),
       groupTransforms: normalizeGroupTransforms(cfg.groupTransforms),
       dataFilters: normalizeDataFilters(cfg.dataFilters),
       customFonts: normalizeCustomFonts(cfg.customFonts),
@@ -862,12 +939,14 @@ export function parseComunicadoConfig(raw: Record<string, unknown> | undefined |
 
   const headline = String(cfg.headline ?? DEFAULT_HEADLINE);
   const subtitle = String(cfg.subtitle ?? "");
+  const dataModels = normalizeDataModels(cfg.dataModels);
   return {
     version: 2,
     headline,
     subtitle,
     background: normalizeBackground(cfg.background),
     customFonts: normalizeCustomFonts(cfg.customFonts),
+    ...(dataModels.length > 0 ? { dataModels } : {}),
     blocks: [
       createBlock("heading", headline),
       ...(subtitle ? [createBlock("text", subtitle)] : []),
@@ -941,6 +1020,27 @@ export function serializeComunicadoConfig(config: ComunicadoConfig): Record<stri
     background: serializedBackground,
     blocks,
   };
+  if (config.dataModels?.length) {
+    payload.dataModels = config.dataModels.map((model) => ({
+      id: model.id,
+      primaryInputId: model.primaryInputId,
+      inputs: model.inputs.map((input) => ({
+        id: input.id,
+        operationId: input.operationId,
+        ...(input.label ? { label: input.label } : {}),
+        ...(input.queryName ? { queryName: input.queryName } : {}),
+        ...(input.params ? { params: { ...input.params } } : {}),
+        ...(input.transform !== undefined && input.transform !== null
+          ? { transform: input.transform }
+          : {}),
+      })),
+      ...(model.label ? { label: model.label } : {}),
+      ...(model.transform !== undefined && model.transform !== null
+        ? { transform: model.transform }
+        : {}),
+      ...(model.fieldLabels ? { fieldLabels: { ...model.fieldLabels } } : {}),
+    }));
+  }
   if (config.dataFilters && Object.keys(config.dataFilters).length > 0) {
     payload.dataFilters = config.dataFilters;
   }
@@ -979,6 +1079,7 @@ function serializeBlock(block: ComunicadoBlock): Record<string, unknown> {
     const textFields = serializeTextBlockFields(sanitized);
     Object.assign(base, textFields);
     if (sanitized.dataSourceId?.trim()) base.dataSourceId = sanitized.dataSourceId.trim();
+    if (sanitized.modelId?.trim()) base.modelId = sanitized.modelId.trim();
     if (sanitized.textProjection?.field?.trim()) {
       base.textProjection = { ...sanitized.textProjection };
     }
@@ -996,6 +1097,7 @@ function serializeBlock(block: ComunicadoBlock): Record<string, unknown> {
     const serializedRuns = serializeContentRuns(sanitized.contentRuns);
     if (serializedRuns) base.contentRuns = serializedRuns;
     if (sanitized.dataSourceId?.trim()) base.dataSourceId = sanitized.dataSourceId.trim();
+    if (sanitized.modelId?.trim()) base.modelId = sanitized.modelId.trim();
     if (sanitized.textProjection?.field?.trim()) {
       base.textProjection = { ...sanitized.textProjection };
     }
@@ -1057,12 +1159,14 @@ function serializeBlock(block: ComunicadoBlock): Record<string, unknown> {
   } else if (block.type === "chart_view") {
     base.chartType = block.chartType;
     if (block.dataSourceId) base.dataSourceId = block.dataSourceId;
+    if (block.modelId) base.modelId = block.modelId;
     if (block.chartProjection) base.chartProjection = block.chartProjection;
     if (block.chartOptions) base.chartOptions = { ...block.chartOptions };
     if (block.chartParts) base.chartParts = { ...block.chartParts };
   } else if (block.type === "table_view") {
     base.tablePreset = block.tablePreset;
     if (block.dataSourceId) base.dataSourceId = block.dataSourceId;
+    if (block.modelId) base.modelId = block.modelId;
     if (block.tableProjection) base.tableProjection = block.tableProjection;
     if (block.maxRows != null) base.maxRows = block.maxRows;
     if (block.maxCols != null) base.maxCols = block.maxCols;
@@ -1079,6 +1183,7 @@ function serializeBlock(block: ComunicadoBlock): Record<string, unknown> {
         ...(cell.dataSourceId?.trim()
           ? { dataSourceId: cell.dataSourceId.trim() }
           : {}),
+        ...(cell.modelId?.trim() ? { modelId: cell.modelId.trim() } : {}),
       })),
     );
     if (block.headerRow != null) base.headerRow = block.headerRow;
@@ -1087,8 +1192,10 @@ function serializeBlock(block: ComunicadoBlock): Record<string, unknown> {
     }
     if (block.canvasTableOptions) base.canvasTableOptions = { ...block.canvasTableOptions };
     if (block.dataSourceId?.trim()) base.dataSourceId = block.dataSourceId.trim();
+    if (block.modelId?.trim()) base.modelId = block.modelId.trim();
   } else if (block.type === "kpi_view") {
     if (block.dataSourceId) base.dataSourceId = block.dataSourceId;
+    if (block.modelId) base.modelId = block.modelId;
     if (block.kpiProjection) base.kpiProjection = block.kpiProjection;
     if (block.kpiOptions) base.kpiOptions = { ...block.kpiOptions };
     if (block.kpiParts) base.kpiParts = { ...block.kpiParts };
@@ -1277,6 +1384,7 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
     const legacyContent = typeof block.content === "string" ? block.content : "";
     const textFields = syncTextBlockFields(legacyContent, block.contentRuns);
     const dataSourceId = typeof block.dataSourceId === "string" ? block.dataSourceId.trim() : undefined;
+    const modelId = typeof block.modelId === "string" ? block.modelId.trim() : undefined;
     const textProjection = normalizeTextProjection(block.textProjection);
     return attachBlockAnimations(
       {
@@ -1287,6 +1395,7 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
         groupId,
         ...textFields,
         ...(dataSourceId ? { dataSourceId } : {}),
+        ...(modelId ? { modelId } : {}),
         ...(textProjection ? { textProjection } : {}),
         href: links.href,
         linkTarget: links.linkTarget,
@@ -1313,6 +1422,7 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
       block.contentRuns,
     );
     const dataSourceId = typeof block.dataSourceId === "string" ? block.dataSourceId.trim() : undefined;
+    const modelId = typeof block.modelId === "string" ? block.modelId.trim() : undefined;
     const textProjection = normalizeTextProjection(block.textProjection);
     let shapeNorm = {
       id,
@@ -1324,6 +1434,7 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
       content: shapeTextFields.content,
       ...(shapeTextFields.contentRuns ? { contentRuns: shapeTextFields.contentRuns } : {}),
       ...(dataSourceId ? { dataSourceId } : {}),
+      ...(modelId ? { modelId } : {}),
       ...(textProjection ? { textProjection } : {}),
       ...(efficiencyPin ? { efficiencyPin } : {}),
       href: links.href,
@@ -1477,6 +1588,7 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
         chartOptions,
         chartParts,
         dataSourceId: typeof block.dataSourceId === "string" ? block.dataSourceId : undefined,
+        modelId: typeof block.modelId === "string" ? block.modelId : undefined,
         chartProjection,
         resolved:
           block.resolved && typeof block.resolved === "object"
@@ -1514,6 +1626,7 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
         tableOptions,
         tableParts,
         dataSourceId: typeof block.dataSourceId === "string" ? block.dataSourceId : undefined,
+        modelId: typeof block.modelId === "string" ? block.modelId : undefined,
         tableProjection,
         maxRows: normalizeTableViewLimit(block.maxRows, TABLE_VIEW_MAX_ROWS_CAP),
         maxCols: normalizeTableViewLimit(block.maxCols, TABLE_VIEW_MAX_COLS_CAP),
@@ -1543,6 +1656,8 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
     );
     const dataSourceId =
       typeof block.dataSourceId === "string" ? block.dataSourceId.trim() : undefined;
+    const modelId =
+      typeof block.modelId === "string" ? block.modelId.trim() : undefined;
     const merges = normalizeCanvasTableMerges(
       (block as { merges?: unknown }).merges,
       rows,
@@ -1562,6 +1677,7 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
         ...(merges.length ? { merges } : {}),
         ...(canvasTableOptions ? { canvasTableOptions } : {}),
         ...(dataSourceId ? { dataSourceId } : {}),
+        ...(modelId ? { modelId } : {}),
         resolved:
           block.resolved && typeof block.resolved === "object"
             ? (block.resolved as ComunicadoDataResolved)
@@ -1646,6 +1762,7 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
         style: { ...defaultStyle("kpi_view"), ...style },
         groupId,
         dataSourceId: typeof block.dataSourceId === "string" ? block.dataSourceId : undefined,
+        modelId: typeof block.modelId === "string" ? block.modelId : undefined,
         kpiProjection,
         kpiOptions,
         kpiParts,

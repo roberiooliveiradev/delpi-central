@@ -1,4 +1,5 @@
 import {
+  bindingTargetId,
   discoverResolvedFieldOptions,
   type ChartViewProjection,
   type ComunicadoChartViewBlock,
@@ -24,10 +25,11 @@ export function ChartSelectDataModal({ open, onClose, block }: Props) {
   const { blocks, updateSelected, selectedChartPart, selectChartPart } = useComunicadoEditor();
 
   const source = useMemo(() => {
-    if (!block.dataSourceId) return null;
-    const found = blocks.find((item) => item.id === block.dataSourceId);
+    const targetId = bindingTargetId(block);
+    if (!targetId) return null;
+    const found = blocks.find((item) => item.id === targetId);
     return found?.type === "data_source" ? (found as ComunicadoDataSourceBlock) : null;
-  }, [block.dataSourceId, blocks]);
+  }, [block, blocks]);
 
   const fieldOptions: ChartAxisFieldOption[] = useMemo(() => {
     const resolved = source?.resolved ?? block.resolved;

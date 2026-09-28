@@ -54,6 +54,17 @@ class PreviewDataBlockBody(BaseModel):
     previewOptions: PreviewOptionsBody = Field(default_factory=PreviewOptionsBody)
 
 
+class PreviewDataModelBody(BaseModel):
+    """Editor preview of a DataModel (persisted via modelId or inline candidate)."""
+
+    model: dict[str, Any] | None = None
+    modelId: str | None = None
+    nativeConfig: dict[str, Any] = Field(default_factory=dict)
+    playlistId: str | None = None
+    playlistDefaults: dict[str, Any] | None = None
+    forceRefresh: bool = False
+
+
 class ValidateDataConfigBody(BaseModel):
     nativeConfig: dict[str, Any] = Field(default_factory=dict)
 
@@ -524,6 +535,42 @@ def display_format_previews(request: Request, body: DisplayFormatPreviewBody):
     return ok(payload)
 
 
+def _resolve_preview_playlist_defaults(
+    request: Request,
+    playlist_id: str | None,
+    body_playlist_defaults: dict[str, Any] | None,
+):
+    """Shared preview playlistDefaults resolution (live editor state wins).
+
+    Returns ``(playlist_defaults, access_error)`` — ``access_error`` is the
+    ready-made ``fail()``/access response when the caller must abort.
+    """
+    # Sentinels do editor de template (ex.: "template-library") não são UUID —
+    # preview segue sem dataDefaults da programação (mesmo efeito de omitir playlistId).
+    # Body.playlistDefaults (estado live do editor) prevalece sobre o valor só no banco.
+    playlist_defaults: dict[str, Any] | None = None
+    playlist_uuid: UUID | None = None
+    if playlist_id:
+        try:
+            playlist_uuid = UUID(playlist_id)
+        except ValueError:
+            playlist_uuid = None
+        if playlist_uuid is not None:
+            guarded = require_playlist_access(request, playlist_uuid, need="read")
+            if is_access_error(guarded):
+                return None, guarded
+            _, access = guarded
+            if isinstance(body_playlist_defaults, dict):
+                playlist_defaults = body_playlist_defaults
+            else:
+                playlist = access.playlist or {}
+                defaults = playlist.get("dataDefaults")
+                playlist_defaults = defaults if isinstance(defaults, dict) else {}
+    elif isinstance(body_playlist_defaults, dict):
+        playlist_defaults = body_playlist_defaults
+    return playlist_defaults, None
+
+
 @router.post("/preview-block")
 def preview_data_block_v2(request: Request, body: PreviewDataBlockBody):
     user = resolve_user(request)
@@ -532,29 +579,13 @@ def preview_data_block_v2(request: Request, body: PreviewDataBlockBody):
     except PermissionError as exc:
         return fail(str(exc), 403)
 
-    # Sentinels do editor de template (ex.: "template-library") não são UUID —
-    # preview segue sem dataDefaults da programação (mesmo efeito de omitir playlistId).
-    # Body.playlistDefaults (estado live do editor) prevalece sobre o valor só no banco.
-    playlist_defaults: dict[str, Any] | None = None
-    playlist_uuid: UUID | None = None
-    if body.playlistId:
-        try:
-            playlist_uuid = UUID(body.playlistId)
-        except ValueError:
-            playlist_uuid = None
-        if playlist_uuid is not None:
-            guarded = require_playlist_access(request, playlist_uuid, need="read")
-            if is_access_error(guarded):
-                return guarded
-            _, access = guarded
-            if isinstance(body.playlistDefaults, dict):
-                playlist_defaults = body.playlistDefaults
-            else:
-                playlist = access.playlist or {}
-                defaults = playlist.get("dataDefaults")
-                playlist_defaults = defaults if isinstance(defaults, dict) else {}
-    elif isinstance(body.playlistDefaults, dict):
-        playlist_defaults = body.playlistDefaults
+    playlist_defaults, access_error = _resolve_preview_playlist_defaults(
+        request,
+        body.playlistId,
+        body.playlistDefaults,
+    )
+    if access_error is not None:
+        return access_error
 
     auth = request.headers.get("Authorization")
     try:
@@ -581,6 +612,58 @@ def preview_data_block_v2(request: Request, body: PreviewDataBlockBody):
         if isinstance(resolved.get("preview"), dict):
             payload["preview"] = resolved["preview"]
     return ok(payload)
+
+
+@router.post("/preview-model")
+def preview_data_model_v2(request: Request, body: PreviewDataModelBody):
+    """DataModel preview — same resolver as enrichment, nothing persisted."""
+    user = resolve_user(request)
+    try:
+        assert_permission(user, TV_READ)
+    except PermissionError as exc:
+        return fail(str(exc), 403)
+
+    playlist_defaults, access_error = _resolve_preview_playlist_defaults(
+        request,
+        body.playlistId,
+        body.playlistDefaults,
+    )
+    if access_error is not None:
+        return access_error
+
+    cfg = _validation.sanitize(body.nativeConfig)
+    model = body.model if isinstance(body.model, dict) else None
+    if model is None:
+        model_id = str(body.modelId or "").strip()
+        if not model_id:
+            return fail("modelId ou model é obrigatório.", 422)
+        models = cfg.get("dataModels")
+        model = next(
+            (
+                item
+                for item in models
+                if isinstance(item, dict) and str(item.get("id") or "") == model_id
+            ),
+            None,
+        ) if isinstance(models, list) else None
+        if model is None:
+            return fail("Modelo de dados não encontrado.", 404)
+
+    auth = request.headers.get("Authorization")
+    try:
+        resolved = _preview.preview_data_model(
+            model,
+            native_config=cfg,
+            authorization=auth,
+            user=user,
+            playlist_defaults=playlist_defaults,
+            force_refresh=bool(body.forceRefresh),
+        )
+    except ValueError as exc:
+        return fail(str(exc), 422)
+    except Exception as exc:  # noqa: BLE001
+        return fail(str(exc), 502)
+    return ok({"model": {"id": str(model.get("id") or ""), "resolved": resolved}})
 
 
 @router.post("/validate-config")

@@ -10,12 +10,13 @@ import {
   type CanvasTableCell,
   type CanvasTableCellRef,
 } from "./comunicadoCanvasTable";
-import type {
-  ComunicadoBlock,
-  ComunicadoCanvasTableBlock,
-  ComunicadoDataResolved,
-  ComunicadoTextDataRef,
-  TextProjectionFormat,
+import {
+  bindingTargetId,
+  type ComunicadoBlock,
+  type ComunicadoCanvasTableBlock,
+  type ComunicadoDataResolved,
+  type ComunicadoTextDataRef,
+  type TextProjectionFormat,
 } from "./comunicadoTypes";
 import {
   parseProjectionNumber,
@@ -44,13 +45,13 @@ export function isCanvasTableDataBoundBlock(
 }
 
 export function canvasTableHasDataBinding(
-  block: Pick<ComunicadoCanvasTableBlock, "dataSourceId" | "cells">,
+  block: Pick<ComunicadoCanvasTableBlock, "dataSourceId" | "modelId" | "cells">,
 ): boolean {
-  if (block.dataSourceId?.trim()) return true;
+  if (bindingTargetId(block)) return true;
   return block.cells.some((row) =>
     row.some((raw) => {
       const cell = normalizeCanvasTableCell(raw);
-      return Boolean(cell.dataRef?.field?.trim() || cell.dataSourceId?.trim());
+      return Boolean(cell.dataRef?.field?.trim() || bindingTargetId(cell));
     }),
   );
 }
@@ -59,20 +60,20 @@ export function canvasTableCellHasDataRef(cell: CanvasTableCell | unknown): bool
   return Boolean(normalizeCanvasTableCell(cell).dataRef?.field?.trim());
 }
 
-/** Fonte efetiva da célula (override ou default do bloco). */
+/** Target efetivo da célula (override ou default do bloco; `modelId` vence). */
 export function resolveCanvasTableCellSourceId(
-  block: Pick<ComunicadoCanvasTableBlock, "dataSourceId">,
+  block: Pick<ComunicadoCanvasTableBlock, "dataSourceId" | "modelId">,
   cell: CanvasTableCell | unknown,
 ): string {
   const normalized = normalizeCanvasTableCell(cell);
-  const cellSource = normalized.dataSourceId?.trim() ?? "";
-  if (cellSource) return cellSource;
-  return block.dataSourceId?.trim() ?? "";
+  const cellTarget = bindingTargetId(normalized);
+  if (cellTarget) return cellTarget;
+  return bindingTargetId(block);
 }
 
-/** Ids únicos de fonte usados pela Grade (bloco + células). */
+/** Ids únicos de target usados pela Grade (bloco + células; source ou model). */
 export function collectCanvasTableSourceIds(
-  block: Pick<ComunicadoCanvasTableBlock, "dataSourceId" | "cells">,
+  block: Pick<ComunicadoCanvasTableBlock, "dataSourceId" | "modelId" | "cells">,
 ): string[] {
   const ids: string[] = [];
   const seen = new Set<string>();
@@ -82,20 +83,20 @@ export function collectCanvasTableSourceIds(
     seen.add(id);
     ids.push(id);
   };
-  push(block.dataSourceId);
+  push(bindingTargetId(block));
   for (const row of block.cells) {
     for (const cell of row) {
-      push(normalizeCanvasTableCell(cell).dataSourceId);
+      push(bindingTargetId(normalizeCanvasTableCell(cell)));
     }
   }
   return ids;
 }
 
-/** Resolved da fonte efetiva da célula (`resolvedBySourceId` ou `resolved` do bloco). */
+/** Resolved do target efetivo da célula (`resolvedBySourceId` ou `resolved` do bloco). */
 export function resolveCanvasTableCellResolved(
   block: Pick<
     ComunicadoCanvasTableBlock,
-    "dataSourceId" | "resolved" | "resolvedBySourceId"
+    "dataSourceId" | "modelId" | "resolved" | "resolvedBySourceId"
   >,
   cell: CanvasTableCell | unknown,
 ): ComunicadoDataResolved | undefined {
@@ -103,7 +104,7 @@ export function resolveCanvasTableCellResolved(
   if (!sourceId) return undefined;
   const bySource = block.resolvedBySourceId?.[sourceId];
   if (bySource) return bySource;
-  if (sourceId === (block.dataSourceId?.trim() ?? "")) return block.resolved;
+  if (sourceId === bindingTargetId(block)) return block.resolved;
   return undefined;
 }
 
@@ -114,8 +115,8 @@ export type CanvasTableDataBindingEntry = {
   field: string;
   aggregation: ViewAggregation;
   format?: TextProjectionFormat;
-  /** Fonte efetiva (célula ou bloco). */
-  dataSourceId?: string;
+  /** Target efetivo do binding (fonte legacy ou DataModel — célula ou bloco). */
+  targetId?: string;
 };
 
 /**
@@ -123,7 +124,7 @@ export type CanvasTableDataBindingEntry = {
  * N campos e, opcionalmente, N fontes no mesmo componente.
  */
 export function listCanvasTableDataBindings(
-  block: Pick<ComunicadoCanvasTableBlock, "dataSourceId" | "cells">,
+  block: Pick<ComunicadoCanvasTableBlock, "dataSourceId" | "modelId" | "cells">,
 ): CanvasTableDataBindingEntry[] {
   const entries: CanvasTableDataBindingEntry[] = [];
   block.cells.forEach((row, rowIndex) => {
@@ -131,14 +132,14 @@ export function listCanvasTableDataBindings(
       const cell = normalizeCanvasTableCell(raw);
       const ref = normalizeTextDataRef(cell.dataRef);
       if (!ref?.field?.trim()) return;
-      const dataSourceId = resolveCanvasTableCellSourceId(block, cell) || undefined;
+      const targetId = resolveCanvasTableCellSourceId(block, cell) || undefined;
       entries.push({
         row: rowIndex,
         col: colIndex,
         field: ref.field,
         aggregation: (ref.aggregation ?? "first") as ViewAggregation,
         format: ref.format,
-        ...(dataSourceId ? { dataSourceId } : {}),
+        ...(targetId ? { targetId } : {}),
       });
     });
   });
@@ -266,7 +267,10 @@ function mapNumberFormatToTextFormat(
 }
 
 export type BuildCanvasTableDataLinkPatchInput = {
+  /** Target legacy `data_source`. Ignorado quando `modelId` informado. */
   dataSourceId: string;
+  /** Target DataModel — exclusivo com `dataSourceId` (contrato DM2). */
+  modelId?: string;
   resolved?: ComunicadoDataResolved;
   catalogFields?: Array<{ field: string; label: string }>;
   /** Célula alvo para sugerir dataRef (opcional). */
@@ -274,12 +278,16 @@ export type BuildCanvasTableDataLinkPatchInput = {
   existingCells?: CanvasTableCell[][];
 };
 
-/** Liga a fonte ao bloco; se houver célula alvo sem dataRef, sugere campo. */
+/** Liga o target ao bloco; se houver célula alvo sem dataRef, sugere campo. */
 export function buildCanvasTableDataLinkPatch(
   input: BuildCanvasTableDataLinkPatchInput,
 ): Partial<ComunicadoCanvasTableBlock> {
-  const { dataSourceId, resolved, catalogFields, targetCell, existingCells } = input;
-  const patch: Partial<ComunicadoCanvasTableBlock> = { dataSourceId };
+  const { dataSourceId, modelId, resolved, catalogFields, targetCell, existingCells } = input;
+  // Escrita exclusiva: modelId remove dataSourceId; source remove modelId.
+  const cleanModelId = modelId?.trim() || "";
+  const patch: Partial<ComunicadoCanvasTableBlock> = cleanModelId
+    ? { modelId: cleanModelId, dataSourceId: undefined }
+    : { dataSourceId, modelId: undefined };
   if (!targetCell || !existingCells) return patch;
   const current = normalizeCanvasTableCell(
     existingCells[targetCell.row]?.[targetCell.col],
@@ -293,7 +301,7 @@ export function buildCanvasTableDataLinkPatch(
     format: suggested.format,
   };
   const cells = existingCells.map((row) => row.map((cell) => normalizeCanvasTableCell(cell)));
-  const kind =
+  const kind: CanvasTableCell["kind"] =
     current.kind === "sparkline"
       ? "sparkline"
       : suggested.format === "raw"
@@ -336,7 +344,7 @@ export function applyCanvasTableDataRef(
         delete next.dataRef;
         return next;
       }
-      const kind =
+      const kind: CanvasTableCell["kind"] =
         cell.kind === "sparkline"
           ? "sparkline"
           : ref.format === "raw"
@@ -377,7 +385,32 @@ export function applyCanvasTableCellDataSourceId(
         delete next.dataSourceId;
         return next;
       }
-      return { ...cell, dataSourceId: nextId };
+      // Exclusividade: fonte legacy na célula limpa modelId.
+      return { ...cell, dataSourceId: nextId, modelId: undefined };
+    }),
+  );
+  return { ...block, cells };
+}
+
+/** Define (ou limpa) o DataModel de uma célula — exclusivo com dataSourceId. */
+export function applyCanvasTableCellModelId(
+  block: ComunicadoCanvasTableBlock,
+  cellRef: CanvasTableCellRef,
+  modelId: string | null | undefined,
+): ComunicadoCanvasTableBlock {
+  const nextId = modelId?.trim() || undefined;
+  const cells = block.cells.map((row, rowIndex) =>
+    row.map((raw, colIndex) => {
+      if (rowIndex !== cellRef.row || colIndex !== cellRef.col) {
+        return normalizeCanvasTableCell(raw);
+      }
+      const cell = normalizeCanvasTableCell(raw);
+      if (!nextId) {
+        const next = { ...cell };
+        delete next.modelId;
+        return next;
+      }
+      return { ...cell, modelId: nextId, dataSourceId: undefined };
     }),
   );
   return { ...block, cells };
@@ -419,7 +452,7 @@ export function syncCanvasTableBlocksWithResolved(
   const next = blocks.map((block) => {
     if (!isCanvasTableDataBoundBlock(block)) return block;
     if (!canvasTableHasDataBinding(block)) return block;
-    const sourceId = block.dataSourceId?.trim();
+    const sourceId = bindingTargetId(block);
     if (!sourceId) return block;
     const resolved = resolvedBySourceId[sourceId];
     if (!resolved) return block;

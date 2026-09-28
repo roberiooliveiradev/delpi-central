@@ -9,6 +9,8 @@ import {
 } from "react";
 
 import {
+  bindingTargetId,
+  bindingTargetKind,
   chartPartAllowsDelete,
   chartPartAllowsMove,
   mergeChartPartsWithOptions,
@@ -514,13 +516,13 @@ export function useComunicadoEditorBlocks({
       if (
         selectedBlock &&
         isDataViewBlockType(selectedBlock.type) &&
-        !("dataSourceId" in selectedBlock && selectedBlock.dataSourceId?.trim())
+        !bindingTargetId(selectedBlock)
       ) {
         linkedExistingView = true;
       } else if (
         selectedBlock &&
         isComunicadoVisualBoxBlock(selectedBlock) &&
-        !selectedBlock.dataSourceId?.trim()
+        !bindingTargetId(selectedBlock)
       ) {
         linkedExistingView = true;
       }
@@ -873,21 +875,32 @@ export function useComunicadoEditorBlocks({
             : undefined;
       const renameViaSource =
         Boolean(metricField) &&
-        Boolean(block.dataSourceId?.trim()) &&
+        Boolean(bindingTargetId(block)) &&
         (part.kind === "metricCard" ||
           (part.kind === "title" && !block.kpiOptions?.title?.trim()));
 
       if (renameViaSource && metricField) {
-        const { sourcePatch, kpiProjection } = renameKpiMetricFieldLabel({
+        const { sourcePatch, modelPatch, kpiProjection } = renameKpiMetricFieldLabel({
           blocks: configRef.current.blocks ?? [],
           kpiBlock: block,
           field: metricField,
           label: content,
+          dataModels: configRef.current.dataModels,
         });
         if (sourcePatch) {
           updateBlock(sourcePatch.id, {
             fieldLabels: sourcePatch.fieldLabels,
           } as Partial<ComunicadoBlock>);
+        }
+        if (modelPatch) {
+          commitWithHistory({
+            ...configRef.current,
+            dataModels: (configRef.current.dataModels ?? []).map((model) =>
+              model.id === modelPatch.id
+                ? { ...model, fieldLabels: modelPatch.fieldLabels }
+                : model,
+            ),
+          });
         }
         const viewPatch: Partial<ComunicadoBlock> = {};
         if (kpiProjection) {
@@ -895,7 +908,7 @@ export function useComunicadoEditorBlocks({
             kpiProjection;
         }
         if (part.kind === "title") {
-          viewPatch.kpiOptions = mergeComunicadoKpiOptions({
+          (viewPatch as Partial<typeof block>).kpiOptions = mergeComunicadoKpiOptions({
             ...block.kpiOptions,
             title: undefined,
           });
@@ -1241,7 +1254,7 @@ export function useComunicadoEditorBlocks({
 
     // Prefer backend identity mint when no data-source clone policy is needed.
     const needsDataPolicy = sources.some(
-      (s) => isDataSourceBlockType(s.type) || ("dataSourceId" in s && Boolean(s.dataSourceId)),
+      (s) => isDataSourceBlockType(s.type) || bindingTargetKind(s) === "source",
     );
     if (playlistId && slideId && !needsDataPolicy) {
       try {

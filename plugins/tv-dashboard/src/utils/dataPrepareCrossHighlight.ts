@@ -1,7 +1,8 @@
-import type {
-  ComunicadoBlock,
-  ComunicadoChartViewBlock,
-  ChartViewProjection,
+import {
+  bindingTargetId,
+  type ComunicadoBlock,
+  type ComunicadoChartViewBlock,
+  type ChartViewProjection,
 } from "@delpi/tv-dashboard-presentation";
 
 export type LinkedChartSeries = {
@@ -23,7 +24,7 @@ export function linkedChartSeriesForSource(
   for (const block of blocks) {
     if (block.type !== "chart_view") continue;
     const chart = block as ComunicadoChartViewBlock;
-    if (String(chart.dataSourceId || "").trim() !== sid) continue;
+    if (bindingTargetId(chart) !== sid) continue;
     const projection = chart.chartProjection as ChartViewProjection | undefined;
     const series = projection?.series ?? [];
     series.forEach((item, seriesIndex) => {

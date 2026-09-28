@@ -2,7 +2,9 @@ import { Braces } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 
 import {
+  bindingTargetId,
   discoverResolvedFieldOptions,
+  findDataModel,
   isComunicadoVisualBoxBlock,
   normalizeCanvasTableCell,
   resolveCanvasTableCellResolved,
@@ -31,11 +33,13 @@ export function DynamicContentInsertControl({ variant = "ribbon" }: Props) {
   const {
     selected,
     blocks,
+    config,
     editingTextId,
     selectedCanvasTableCell,
     applyDynamicContentSpec,
     openDataCatalog,
     requestRibbonTab,
+    getDataPreviewResolved,
   } = useComunicadoEditor();
 
   const anchorRef = useRef<HTMLElement | null>(null);
@@ -61,7 +65,7 @@ export function DynamicContentInsertControl({ variant = "ribbon" }: Props) {
     return null;
   }, [blocks, editingTextId, primaryCellRef, selected]);
 
-  const sourceId = useMemo(() => {
+  const targetId = useMemo(() => {
     if (!targetBlock) return "";
     if (targetBlock.type === "canvas_table" && primaryCellRef) {
       const cell = normalizeCanvasTableCell(
@@ -69,13 +73,17 @@ export function DynamicContentInsertControl({ variant = "ribbon" }: Props) {
       );
       return resolveCanvasTableCellSourceId(targetBlock, cell);
     }
-    if ("dataSourceId" in targetBlock) {
-      return String(targetBlock.dataSourceId ?? "").trim();
+    if ("dataSourceId" in targetBlock || "modelId" in targetBlock) {
+      return bindingTargetId(targetBlock);
     }
     return "";
   }, [primaryCellRef, targetBlock]);
 
-  const linkedSource = sourceId ? blocks.find((block) => block.id === sourceId) ?? null : null;
+  const linkedModel = targetId ? findDataModel(config, targetId) : null;
+  const linkedSource =
+    targetId && !linkedModel
+      ? blocks.find((block) => block.id === targetId) ?? null
+      : null;
   const resolved = useMemo(() => {
     if (targetBlock?.type === "canvas_table" && primaryCellRef) {
       const cell = normalizeCanvasTableCell(
@@ -84,16 +92,21 @@ export function DynamicContentInsertControl({ variant = "ribbon" }: Props) {
       const fromMap = resolveCanvasTableCellResolved(targetBlock, cell);
       if (fromMap) return fromMap;
     }
+    if (linkedModel) {
+      const modelResolved = getDataPreviewResolved?.(linkedModel.id);
+      if (modelResolved) return modelResolved;
+    }
     if (linkedSource && "resolved" in linkedSource && linkedSource.resolved) {
       return linkedSource.resolved;
     }
     if (targetBlock && "resolved" in targetBlock) return targetBlock.resolved;
     return undefined;
-  }, [linkedSource, primaryCellRef, targetBlock]);
+  }, [getDataPreviewResolved, linkedModel, linkedSource, primaryCellRef, targetBlock]);
   const fieldLabels =
-    linkedSource && "fieldLabels" in linkedSource
+    linkedModel?.fieldLabels ??
+    (linkedSource && "fieldLabels" in linkedSource
       ? (linkedSource as { fieldLabels?: Record<string, string> }).fieldLabels
-      : undefined;
+      : undefined);
 
   const fieldOptions = useMemo(
     () =>
@@ -121,7 +134,7 @@ export function DynamicContentInsertControl({ variant = "ribbon" }: Props) {
 
   const linkOrCatalog = () => {
     requestRibbonTab("data");
-    if (!sourceId) openDataCatalog("insert");
+    if (!targetId) openDataCatalog("insert");
   };
 
   return (
@@ -165,7 +178,7 @@ export function DynamicContentInsertControl({ variant = "ribbon" }: Props) {
         kind={kind}
         onKindChange={setKind}
         fieldOptions={fieldOptions}
-        hasDataSource={Boolean(sourceId)}
+        hasDataSource={Boolean(targetId)}
         onPick={(spec) => {
           applyDynamicContentSpec(spec);
         }}

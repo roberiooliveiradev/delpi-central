@@ -3,13 +3,66 @@ import {
   isCanvasTableDataBoundBlock,
   isCanvasTableDataBoundBlockType,
 } from "./canvasTableProjection";
-import type { ComunicadoBlock, ComunicadoDataSourceBlock } from "./comunicadoTypes";
+import {
+  bindingTargetId,
+  type ComunicadoBlock,
+  type ComunicadoConfig,
+  type ComunicadoDataSourceBlock,
+  type TvDataModel,
+} from "./comunicadoTypes";
 import { isTextDataBoundBlock, textBlockHasDataBinding } from "./textViewProjection";
 
 const DATA_VIEW_BLOCK_TYPES = new Set(["chart_view", "table_view", "kpi_view"]);
 
 export function isDataSourceBlockType(type: string): type is "data_source" {
   return type === "data_source";
+}
+
+/**
+ * Bloco técnico de dados — objeto sem papel visual na apresentação.
+ * `data_source` renderiza só o chip de authoring no editor; no palco/playback
+ * o componente próprio já devolve null. DataModels nunca são blocos.
+ */
+export function isTechnicalDataBlockType(type: string): boolean {
+  return type === "data_source";
+}
+
+/**
+ * Semântica de renderização no palco/canvas do editor.
+ * Objeto de dados técnico ≠ visual oculto (`hidden` é estado do usuário,
+ * não classificação de tipo). DataModel não é bloco — nunca entra no loop.
+ */
+export function isRenderableBlockType(type: string): boolean {
+  return !isTechnicalDataBlockType(type);
+}
+
+// `bindingTargetId`/`bindingTargetKind`/`BindingTargetSlice`/`BindingTargetKind`
+// vivem em `comunicadoTypes` (leaf) — re-exportados aqui para API estável.
+export {
+  bindingTargetId,
+  bindingTargetKind,
+  type BindingTargetKind,
+  type BindingTargetSlice,
+} from "./comunicadoTypes";
+
+/** Lookup de DataModel persistido (`nativeConfig.dataModels[]`). */
+export function findDataModel(
+  config: Pick<ComunicadoConfig, "dataModels"> | null | undefined,
+  modelId: string | null | undefined,
+): TvDataModel | null {
+  const id = typeof modelId === "string" ? modelId.trim() : "";
+  if (!id) return null;
+  return (config?.dataModels ?? []).find((model) => model.id === id) ?? null;
+}
+
+/** Opções de modelo para seletores de binding (label → id). */
+export function dataModelOptionsForInspector(
+  config: Pick<ComunicadoConfig, "dataModels"> | null | undefined,
+): Array<{ value: string; label: string }> {
+  return (config?.dataModels ?? []).map((model) => ({
+    value: model.id,
+    label: model.label?.trim() || model.id,
+  }));
 }
 
 export function isDataViewBlockType(type: string): type is "chart_view" | "table_view" | "kpi_view" {
@@ -47,17 +100,17 @@ export function getLinkedDataSourceIds(blocks: ComunicadoBlock[]): Set<string> {
   const linked = new Set<string>();
   for (const block of blocks) {
     if (isDataViewBlockType(block.type)) {
-      const sourceId = "dataSourceId" in block ? block.dataSourceId?.trim() : undefined;
+      const sourceId = bindingTargetId(block);
       if (sourceId) linked.add(sourceId);
       continue;
     }
     if (isTextDataBoundBlock(block) && textBlockHasDataBinding(block)) {
-      const sourceId = block.dataSourceId?.trim();
+      const sourceId = bindingTargetId(block);
       if (sourceId) linked.add(sourceId);
       continue;
     }
     if (isCanvasTableDataBoundBlock(block) && canvasTableHasDataBinding(block)) {
-      const sourceId = block.dataSourceId?.trim();
+      const sourceId = bindingTargetId(block);
       if (sourceId) linked.add(sourceId);
     }
   }
@@ -88,8 +141,13 @@ function catalogRouteFor(
   operationId: string,
 ): DataSourceLabelRouteInfo | null {
   if (!catalog || !operationId) return null;
-  if (catalog instanceof Map) return catalog.get(operationId) ?? null;
-  return catalog[operationId] ?? null;
+  if (
+    catalog instanceof Map ||
+    typeof (catalog as ReadonlyMap<string, DataSourceLabelRouteInfo>).get === "function"
+  ) {
+    return (catalog as ReadonlyMap<string, DataSourceLabelRouteInfo>).get(operationId) ?? null;
+  }
+  return (catalog as Readonly<Record<string, DataSourceLabelRouteInfo>>)[operationId] ?? null;
 }
 
 /** True se o rótulo gravado é só eco do catálogo (atual ou alias de renome). */

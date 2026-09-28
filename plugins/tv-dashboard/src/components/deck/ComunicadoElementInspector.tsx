@@ -61,6 +61,7 @@ export function ComunicadoElementInspector({
     updateSelected,
     updateBlockLink,
     blocks,
+    config,
   } = useComunicadoEditor();
 
   const hasPartSelection = Boolean(
@@ -80,8 +81,8 @@ export function ComunicadoElementInspector({
   const { routes, labelCatalog } = useTvDataRouteLabelCatalog({ enabled: needsRouteCatalog });
 
   const selectedRoute = useMemo(
-    () => resolveRouteForDataBoundBlock(selected, blocks, routes),
-    [blocks, routes, selected],
+    () => resolveRouteForDataBoundBlock(selected, blocks, routes, config.dataModels),
+    [blocks, config.dataModels, routes, selected],
   );
 
   if (selectedIds.length === 0 || !selected) {

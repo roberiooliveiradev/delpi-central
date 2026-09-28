@@ -1,13 +1,17 @@
 import {
+  bindingTargetId,
+  bindingTargetKind,
   chartTypeLabel,
   discoverResolvedFieldOptions,
   catalogFieldsFromRouteLabels,
+  findDataModel,
   isDataSourceBlockType,
   buildViewDataLinkPatch,
   buildViewFrameFitPatch,
   patchFieldLabels,
   tablePresetLabel,
   type ComunicadoBlock,
+  type ComunicadoDataResolved,
   type ComunicadoDataSourceBlock,
   type ComunicadoTableViewBlock,
   type ChartViewProjection,
@@ -48,6 +52,8 @@ type Props = {
 function viewValueFieldOptions(
   route: TvDataRouteCatalogItem | null | undefined,
   source: ComunicadoBlock | null,
+  modelResolved?: ComunicadoDataResolved,
+  modelFieldLabels?: Record<string, string>,
 ): ValueFieldOption[] {
   const catalog = catalogFieldsFromRouteLabels(
     route?.valueFields,
@@ -55,11 +61,13 @@ function viewValueFieldOptions(
     route?.projectableFields,
   );
   const resolved =
-    source && "resolved" in source && source.resolved ? source.resolved : undefined;
+    modelResolved ??
+    (source && "resolved" in source && source.resolved ? source.resolved : undefined);
   const sourceFieldLabels =
-    source && isDataSourceBlockType(source.type)
+    modelFieldLabels ??
+    (source && isDataSourceBlockType(source.type)
       ? (source as ComunicadoDataSourceBlock).fieldLabels
-      : undefined;
+      : undefined);
   return discoverResolvedFieldOptions(resolved, catalog, sourceFieldLabels);
 }
 
@@ -74,6 +82,7 @@ export function VisualDataViewInspector({
   const {
     selected,
     blocks,
+    config,
     updateSelected,
     updateBlock,
     openDataCatalog,
@@ -85,6 +94,8 @@ export function VisualDataViewInspector({
     selectTablePart,
     reconcileTablePartsForVisibleKeys,
     reconcileChartPartForSeriesFields,
+    getDataPreviewResolved,
+    saveDataModel,
   } = useComunicadoEditor();
   const isRibbon = layout === "ribbon";
   const compactSelect = isRibbon ? "delpi-ui-select--compact" : undefined;
@@ -99,17 +110,27 @@ export function VisualDataViewInspector({
     return null;
   }
 
-  const hasSource = Boolean(selected.dataSourceId?.trim());
+  const targetId = bindingTargetId(selected);
+  const targetKind = bindingTargetKind(selected);
+  const hasSource = Boolean(targetId);
   const openSources = onOpenDataSources ?? (() => openDataCatalog("insert"));
   const tableBlock = selected.type === "table_view" ? (selected as ComunicadoTableViewBlock) : null;
+  const linkedModel =
+    targetKind === "model" ? findDataModel(config, targetId) : null;
+  const modelResolved = linkedModel ? getDataPreviewResolved?.(linkedModel.id) : undefined;
   const linkedSource =
-    hasSource
+    targetKind === "source" && targetId
       ? blocks.find(
           (block) =>
-            block.id === selected.dataSourceId && isDataSourceBlockType(block.type),
+            block.id === targetId && isDataSourceBlockType(block.type),
         ) ?? null
       : null;
-  const valueFieldOptions = viewValueFieldOptions(route, linkedSource).map((item) => ({
+  const valueFieldOptions = viewValueFieldOptions(
+    route,
+    linkedSource,
+    modelResolved,
+    linkedModel?.fieldLabels,
+  ).map((item) => ({
     ...item,
     fieldType: route?.valueFieldTypes?.[item.field],
   }));
@@ -192,13 +213,18 @@ export function VisualDataViewInspector({
         blocks={blocks}
         selectedId={selected.id}
         sourceId={selected.dataSourceId ?? ""}
+        modelId={"modelId" in selected ? selected.modelId ?? "" : ""}
+        dataModels={config.dataModels}
         compactSelect={compactSelect}
         pane={!isRibbon}
         labelCatalog={labelCatalog}
         onChangeSourceId={(value) => {
             const sourceId = value || undefined;
             if (!sourceId) {
-              updateSelected({ dataSourceId: undefined } as Partial<ComunicadoBlock>);
+              updateSelected({
+                dataSourceId: undefined,
+                modelId: undefined,
+              } as Partial<ComunicadoBlock>);
               return;
             }
             const source = blocks.find(
@@ -211,6 +237,32 @@ export function VisualDataViewInspector({
               dataSourceId: sourceId,
               resolved,
               fieldTypes: route?.valueFieldTypes ?? null,
+              currentFrame: selected.frame,
+              existing: {
+                kpiProjection: "kpiProjection" in selected ? selected.kpiProjection : undefined,
+                chartProjection:
+                  "chartProjection" in selected ? selected.chartProjection : undefined,
+                tableProjection:
+                  "tableProjection" in selected ? selected.tableProjection : undefined,
+              },
+              chartType: selected.type === "chart_view" ? selected.chartType : undefined,
+            });
+            updateSelected(patch as Partial<ComunicadoBlock>);
+          }}
+        onChangeModelId={(value) => {
+            const nextModelId = value?.trim() || undefined;
+            if (!nextModelId) {
+              updateSelected({
+                dataSourceId: undefined,
+                modelId: undefined,
+              } as Partial<ComunicadoBlock>);
+              return;
+            }
+            const patch = buildViewDataLinkPatch({
+              viewType: selected.type,
+              dataSourceId: "",
+              modelId: nextModelId,
+              resolved: getDataPreviewResolved?.(nextModelId),
               currentFrame: selected.frame,
               existing: {
                 kpiProjection: "kpiProjection" in selected ? selected.kpiProjection : undefined,
@@ -317,19 +369,27 @@ export function VisualDataViewInspector({
               selectTablePart(selected.id, { kind: "headerCell", colIndex });
             }}
             sourceFieldLabels={
-              linkedSource && isDataSourceBlockType(linkedSource.type)
+              linkedModel?.fieldLabels ??
+              (linkedSource && isDataSourceBlockType(linkedSource.type)
                 ? (linkedSource as ComunicadoDataSourceBlock).fieldLabels
-                : undefined
+                : undefined)
             }
             onRenameField={
-              linkedSource && isDataSourceBlockType(linkedSource.type)
+              linkedModel
                 ? (key, label) => {
-                    const source = linkedSource as ComunicadoDataSourceBlock;
-                    updateBlock(source.id, {
-                      fieldLabels: patchFieldLabels(source.fieldLabels, key, label),
-                    } as Partial<ComunicadoBlock>);
+                    void saveDataModel({
+                      ...linkedModel,
+                      fieldLabels: patchFieldLabels(linkedModel.fieldLabels, key, label),
+                    });
                   }
-                : undefined
+                : linkedSource && isDataSourceBlockType(linkedSource.type)
+                  ? (key, label) => {
+                      const source = linkedSource as ComunicadoDataSourceBlock;
+                      updateBlock(source.id, {
+                        fieldLabels: patchFieldLabels(source.fieldLabels, key, label),
+                      } as Partial<ComunicadoBlock>);
+                    }
+                  : undefined
             }
           />
         </DeckField>

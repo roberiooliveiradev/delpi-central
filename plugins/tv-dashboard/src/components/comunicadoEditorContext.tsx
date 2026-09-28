@@ -9,6 +9,7 @@ import {
 
 import {
   applyFieldLabelsToResolved,
+  bindingTargetId,
   collectCanvasTableSourceIds,
   defaultFrame,
   ensureEfficiencyPinResizableFrame,
@@ -30,6 +31,7 @@ import {
   type PresentationSelectionUpdateEvent,
   type ComunicadoShapeBlock,
   type ComunicadoTextBlock,
+  type TvDataModel,
 } from "@delpi/tv-dashboard-presentation";
 
 import type { PlaylistMasterConfig } from "../api/tvDashboardApi";
@@ -53,7 +55,12 @@ import { useInputFilterDataRefresh } from "../hooks/useInputFilterDataRefresh";
 import { useComunicadoEditorKeyboard } from "../hooks/useComunicadoEditorKeyboard";
 import { useSyncViewDataLinks } from "../hooks/useSyncViewDataLinks";
 import { resolveCanvasTableMergeCommand } from "../utils/canvasTableMergeCommands";
+import { serializeDataModelForPreview } from "../utils/dataPreviewRequest";
 import { preferEditorViewResolved } from "../utils/preferEditorViewResolved";
+import {
+  commitDeleteDataModel,
+  commitUpsertDataModel,
+} from "../utils/presentationMutationClient";
 import { resolveStageHasPartSelection } from "../utils/stageInteractionPolicy";
 import { resolveViewportPixelSize } from "../utils/viewportPixelSize";
 import { MediaLibraryModal } from "./MediaLibraryModal";
@@ -279,8 +286,6 @@ export function ComunicadoEditorProvider({
   });
 
   const { scheduleInputFilterRefresh, scheduleInputFilterRefreshById } = useInputFilterDataRefresh({
-    blocks: config.blocks,
-    refreshDataPreview,
     clearStaleForSourceIds,
   });
 
@@ -301,6 +306,13 @@ export function ComunicadoEditorProvider({
         fieldLabelsBySourceId.set(block.id, (block as ComunicadoDataSourceBlock).fieldLabels);
       }
     }
+    // DataModels carregam fieldLabels próprios (contrato DM1) — lookup por target id.
+    const fieldLabelsByTargetId = new Map<string, ComunicadoDataSourceBlock["fieldLabels"]>();
+    for (const model of config.dataModels ?? []) {
+      if (model.fieldLabels) fieldLabelsByTargetId.set(model.id, model.fieldLabels);
+    }
+    const labelsForTarget = (targetId: string) =>
+      fieldLabelsBySourceId.get(targetId) ?? fieldLabelsByTargetId.get(targetId);
     return sorted.map((block) => {
       if (isFetchableDataBlockType(block.type) && "dataBinding" in block) {
         const preview = resolvedByBlockId[block.id];
@@ -316,14 +328,9 @@ export function ComunicadoEditorProvider({
         }
         return block;
       }
-      if (
-        isDataViewBlockType(block.type) &&
-        "dataSourceId" in block &&
-        typeof block.dataSourceId === "string" &&
-        block.dataSourceId
-      ) {
-        const sourceId = block.dataSourceId;
-        const sourcePreview = resolvedByBlockId[sourceId];
+      if (isDataViewBlockType(block.type) && bindingTargetId(block)) {
+        const targetId = bindingTargetId(block);
+        const sourcePreview = resolvedByBlockId[targetId];
         const linked =
           sourcePreview?.linkedResolvedByBlockId?.[block.id] ??
           resolvedByBlockId[block.id];
@@ -336,14 +343,14 @@ export function ComunicadoEditorProvider({
           const labeled =
             applyFieldLabelsToResolved(
               preview,
-              fieldLabelsBySourceId.get(sourceId),
+              labelsForTarget(targetId),
             ) ?? preview;
           return { ...block, resolved: labeled };
         }
       }
-      if (isComunicadoVisualBoxBlock(block) && block.dataSourceId?.trim()) {
-        const sourceId = block.dataSourceId.trim();
-        const sourcePreview = resolvedByBlockId[sourceId];
+      if (isComunicadoVisualBoxBlock(block) && bindingTargetId(block)) {
+        const targetId = bindingTargetId(block);
+        const sourcePreview = resolvedByBlockId[targetId];
         const linked =
           sourcePreview?.linkedResolvedByBlockId?.[block.id] ??
           resolvedByBlockId[block.id];
@@ -354,7 +361,7 @@ export function ComunicadoEditorProvider({
         });
         if (preview) {
           const labeled =
-            applyFieldLabelsToResolved(preview, fieldLabelsBySourceId.get(sourceId)) ??
+            applyFieldLabelsToResolved(preview, labelsForTarget(targetId)) ??
             preview;
           return { ...block, resolved: labeled };
         }
@@ -368,10 +375,10 @@ export function ComunicadoEditorProvider({
           const preview = resolvedByBlockId[sourceId];
           if (!preview) continue;
           resolvedBySourceId[sourceId] =
-            applyFieldLabelsToResolved(preview, fieldLabelsBySourceId.get(sourceId)) ?? preview;
+            applyFieldLabelsToResolved(preview, labelsForTarget(sourceId)) ?? preview;
         }
         if (Object.keys(resolvedBySourceId).length === 0) return block;
-        const primary = block.dataSourceId?.trim() ?? "";
+        const primary = bindingTargetId(block);
         // Prefer canvas enrich stamp from any linked source map.
         const linkedCanvas =
           (primary &&
@@ -684,6 +691,64 @@ export function ComunicadoEditorProvider({
       applyConfig({ ...configRef.current, blocks: nextBlocks }, { persist: false });
     },
     [applyConfig],
+  );
+
+  /**
+   * DataModel mutations — backend ops (`upsert_data_model`/`delete_data_model`)
+   * quando há playlist+slide persistidos; fallback local no editor standalone.
+   * Erros da API propagam para o chamador (ex.: `data_model.in_use`).
+   */
+  const saveDataModel = useCallback(
+    async (model: TvDataModel) => {
+      const next = {
+        ...configRef.current,
+        dataModels: [
+          ...(configRef.current.dataModels ?? []).filter((item) => item.id !== model.id),
+          model,
+        ],
+      };
+      const currentSlideId = slideIdRef.current;
+      if (playlistId && currentSlideId) {
+        const canonical = await commitUpsertDataModel({
+          playlistId,
+          slideId: currentSlideId,
+          model: serializeDataModelForPreview(model),
+        });
+        if (canonical) {
+          commitWithHistory(canonical);
+          return;
+        }
+      }
+      commitWithHistory(next);
+    },
+    [commitWithHistory, playlistId],
+  );
+
+  const deleteDataModel = useCallback(
+    async (modelId: string) => {
+      const currentSlideId = slideIdRef.current;
+      if (playlistId && currentSlideId) {
+        const canonical = await commitDeleteDataModel({
+          playlistId,
+          slideId: currentSlideId,
+          modelId,
+        });
+        if (canonical) commitWithHistory(canonical);
+        return;
+      }
+      commitWithHistory({
+        ...configRef.current,
+        dataModels: (configRef.current.dataModels ?? []).filter(
+          (model) => model.id !== modelId,
+        ),
+      });
+    },
+    [commitWithHistory, playlistId],
+  );
+
+  const getDataPreviewResolved = useCallback(
+    (targetId: string) => resolvedByBlockId[targetId],
+    [resolvedByBlockId],
   );
 
   const snapshotEditorConfig = useCallback(() => configRef.current, []);
@@ -1002,6 +1067,9 @@ export function ComunicadoEditorProvider({
     loadingMoreSourceIds,
     refreshDataPreview,
     loadMoreDataPreview,
+    getDataPreviewResolved,
+    saveDataModel,
+    deleteDataModel,
     scheduleInputFilterRefresh,
     scheduleInputFilterRefreshById,
     globalRefreshSec,

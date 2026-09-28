@@ -1,12 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import {
+  bindingTargetId,
   buildCanvasTableDataLinkPatch,
   buildTextDataLinkPatch,
   buildViewDataLinkPatch,
+  findDataModel,
   isCanvasTableDataBoundBlockType,
   isDataSourceBlockType,
   isDataViewBlockType,
   isTextDataBoundBlock,
+  resolveDataBlockErrorText,
   staticLabelFromTextBoundBlock,
   type ComunicadoBlock,
 } from "@delpi/tv-dashboard-presentation";
@@ -28,8 +31,11 @@ import { DataPreparePanel } from "./DataPreparePanel";
 import { DataBuilderChatPanel } from "./DataBuilderChatPanel";
 import {
   canLinkBlockToProjectDataSource,
+  DataModelsCatalogSection,
   ProjectDataSourcesCatalogSection,
+  type DataModelPreviewStatus,
 } from "./DataSourceLinkSection";
+import { DataModelInspector } from "./DataModelInspector";
 import {
   CanvasTableDataBindingInspector,
   canShowCanvasTableDataBindingInspector,
@@ -82,17 +88,23 @@ export function SelectedDataSidePanel({
     updateSelected,
     updateBlocksAtomically,
     setDataFilters,
+    getDataPreviewResolved,
+    refreshingSourceIds,
   } = useComunicadoEditor();
   const context = useMemo(
-    () => resolveSelectedDataContext(blocks, selectedIds),
-    [blocks, selectedIds],
+    () => resolveSelectedDataContext(blocks, selectedIds, config.dataModels),
+    [blocks, selectedIds, config.dataModels],
   );
   const showCatalog = dataPanelIntent === "catalog" || context.kind === "none";
   const isRibbon = layout === "ribbon";
   const openCatalog = onOpenCatalog ?? openDataCatalog;
 
   const [hydrateHint, setHydrateHint] = useState<string | null>(null);
+  const [inspectedModelId, setInspectedModelId] = useState<string | null>(null);
   const bindingTarget = context.bindingTarget;
+  const bindingModel = context.bindingModel;
+  const inspectedModel =
+    inspectedModelId ? findDataModel(config, inspectedModelId) : null;
   const primary = context.primary;
   const isView = primary ? isDataViewBlockType(primary.type) : false;
   const isTextBound = primary ? canShowTextDataBindingInspector(primary) : false;
@@ -129,14 +141,83 @@ export function SelectedDataSidePanel({
   }, [routes, config, setDataFilters, updateBlocksAtomically]);
 
   const selectedRoute = useMemo(
-    () => resolveRouteForDataBoundBlock(bindingTarget, blocks, routes),
-    [bindingTarget, blocks, routes],
+    () => resolveRouteForDataBoundBlock(bindingTarget, blocks, routes, config.dataModels),
+    [bindingTarget, blocks, config.dataModels, routes],
   );
 
   const orphanRoute =
     Boolean(bindingTarget && "dataBinding" in bindingTarget && bindingTarget.dataBinding.operationId) &&
     routes.length > 0 &&
     selectedRoute == null;
+
+  /** Status de preview por modelo — pronto/loading/erro (≠ vazio). */
+  const modelStatusById = useMemo(() => {
+    const map: Record<string, { status: DataModelPreviewStatus; message?: string }> = {};
+    for (const model of config.dataModels ?? []) {
+      if (refreshingSourceIds.includes(model.id)) {
+        map[model.id] = { status: "loading" };
+        continue;
+      }
+      const resolved = getDataPreviewResolved?.(model.id);
+      const errorText = resolveDataBlockErrorText(resolved);
+      if (errorText) {
+        map[model.id] = { status: "error", message: errorText };
+      } else if (resolved) {
+        map[model.id] = { status: "ready" };
+      } else {
+        map[model.id] = { status: "idle" };
+      }
+    }
+    return map;
+  }, [config.dataModels, getDataPreviewResolved, refreshingSourceIds]);
+
+  /** Vínculo a DataModel — write exclusivo: modelId + remove dataSourceId. */
+  function linkPrimaryToModel(modelId: string) {
+    if (!primary) return;
+    const model = findDataModel(config, modelId);
+    if (!model) return;
+    const resolved = getDataPreviewResolved?.(modelId);
+    if (isDataViewBlockType(primary.type)) {
+      const patch = buildViewDataLinkPatch({
+        viewType: primary.type,
+        dataSourceId: "",
+        modelId,
+        resolved,
+        currentFrame: primary.frame,
+        existing: {
+          kpiProjection: "kpiProjection" in primary ? primary.kpiProjection : undefined,
+          chartProjection: "chartProjection" in primary ? primary.chartProjection : undefined,
+          tableProjection: "tableProjection" in primary ? primary.tableProjection : undefined,
+        },
+        chartType: primary.type === "chart_view" ? primary.chartType : undefined,
+      });
+      updateSelected(patch as Partial<ComunicadoBlock>);
+      setDataPanelIntent("binding");
+      return;
+    }
+    if (isTextDataBoundBlock(primary)) {
+      const patch = buildTextDataLinkPatch({
+        dataSourceId: "",
+        modelId,
+        resolved,
+        existing: primary.textProjection,
+        staticContent: staticLabelFromTextBoundBlock(primary),
+      });
+      updateSelected(patch as Partial<ComunicadoBlock>);
+      setDataPanelIntent("binding");
+      return;
+    }
+    if (isCanvasTableDataBoundBlockType(primary.type) && primary.type === "canvas_table") {
+      const patch = buildCanvasTableDataLinkPatch({
+        dataSourceId: "",
+        modelId,
+        resolved,
+        existingCells: primary.cells,
+      });
+      updateSelected(patch as Partial<ComunicadoBlock>);
+      setDataPanelIntent("binding");
+    }
+  }
 
   function linkPrimaryToSource(sourceId: string) {
     if (!primary) return;
@@ -233,10 +314,30 @@ export function SelectedDataSidePanel({
     );
   }
 
+  if (inspectedModel) {
+    return (
+      <div>
+        <div className="td-data-routes-panel__toolbar">
+          <button
+            type="button"
+            className="td-btn td-btn--sm td-btn--ghost"
+            onClick={() => setInspectedModelId(null)}
+          >
+            Voltar
+          </button>
+        </div>
+        <DataModelInspector pane model={inspectedModel} />
+      </div>
+    );
+  }
+
   if (showCatalog) {
     const canLink = canLinkBlockToProjectDataSource(selected);
-    const activeSourceId =
-      selected && "dataSourceId" in selected ? selected.dataSourceId?.trim() : undefined;
+    const activeTargetId = selected ? bindingTargetId(selected) : undefined;
+    const activeModelId = activeTargetId
+      ? findDataModel(config, activeTargetId)?.id
+      : undefined;
+    const activeSourceId = activeModelId ? undefined : activeTargetId;
     return (
       <div>
         {context.kind !== "none" ? (
@@ -249,6 +350,15 @@ export function SelectedDataSidePanel({
               Voltar à fonte atual
             </button>
           </div>
+        ) : null}
+        {canLink ? (
+          <DataModelsCatalogSection
+            dataModels={config.dataModels ?? []}
+            activeModelId={activeModelId}
+            statusById={modelStatusById}
+            onPickModel={linkPrimaryToModel}
+            onInspectModel={setInspectedModelId}
+          />
         ) : null}
         {canLink ? (
           <ProjectDataSourcesCatalogSection
@@ -354,6 +464,8 @@ export function SelectedDataSidePanel({
         </>
       ) : null}
 
+      {bindingModel ? <DataModelInspector pane model={bindingModel} /> : null}
+
       {bindingTarget && "dataBinding" in bindingTarget ? (
         <DataBindingInspector
           route={selectedRoute}
@@ -361,7 +473,7 @@ export function SelectedDataSidePanel({
           branchScope={branchScope}
           block={selected?.id !== bindingTarget.id ? bindingTarget : null}
         />
-      ) : isView || isTextBound || isCanvasTableBound || isEfficiencyPin ? (
+      ) : !bindingModel && (isView || isTextBound || isCanvasTableBound || isEfficiencyPin) ? (
         <DeckPropertySection pane title="Parâmetros da fonte" defaultOpen>
           <p className="td-deck-inspector__hint">
             Conecte uma fonte acima para editar parâmetros da rota api-delpi.
@@ -373,7 +485,7 @@ export function SelectedDataSidePanel({
         <DataPreparePanel pane block={bindingTarget} />
       ) : null}
 
-      {!isView && !isTextBound && !isCanvasTableBound && !isEfficiencyPin && !isInputFilter && !bindingTarget ? (
+      {!isView && !isTextBound && !isCanvasTableBound && !isEfficiencyPin && !isInputFilter && !bindingTarget && !bindingModel ? (
         <DeckPropertySection pane title="Dados" defaultOpen>
           <p className="td-deck-inspector__hint">Nenhuma configuração de dados disponível.</p>
         </DeckPropertySection>

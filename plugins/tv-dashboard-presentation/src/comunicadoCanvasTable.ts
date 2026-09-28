@@ -70,6 +70,8 @@ export type CanvasTableCell = {
    * Vazio = herda `ComunicadoCanvasTableBlock.dataSourceId`.
    */
   dataSourceId?: string;
+  /** DataModel desta célula — wins over `dataSourceId` (contrato DM2). */
+  modelId?: string;
 };
 
 export type CanvasTableHeaderStyle = "subtle" | "accent" | "none";
@@ -149,9 +151,14 @@ export function normalizeCanvasTableCell(value: unknown): CanvasTableCell {
     if (dataRef) cell.dataRef = dataRef;
     const cellSource =
       typeof (value as CanvasTableCell).dataSourceId === "string"
-        ? (value as CanvasTableCell).dataSourceId.trim()
+        ? ((value as CanvasTableCell).dataSourceId ?? "").trim()
         : "";
     if (cellSource) cell.dataSourceId = cellSource;
+    const cellModel =
+      typeof (value as CanvasTableCell).modelId === "string"
+        ? ((value as CanvasTableCell).modelId ?? "").trim()
+        : "";
+    if (cellModel) cell.modelId = cellModel;
     return cell;
   }
   return { kind: "text", text: value == null ? "" : String(value) };

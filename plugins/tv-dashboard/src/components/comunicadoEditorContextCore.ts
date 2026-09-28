@@ -1,7 +1,10 @@
 import { createContext, useContext, type RefObject } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
 
-import type { CanvasTableCellSelectionRequest } from "../utils/canvasTableCellSelection";
+import type {
+  CanvasTableCellSelectionRequest,
+  ComunicadoCanvasTableCellSelection,
+} from "../utils/canvasTableCellSelection";
 
 import type {
   ComunicadoBackground,
@@ -25,7 +28,9 @@ import type {
   ContentRunSelectionStyleState,
   ContentRunStyleToggleKey,
   ComunicadoContentRun,
+  ComunicadoDataResolved,
   PresentationSelectionUpdateEvent,
+  TvDataModel,
 } from "@delpi/tv-dashboard-presentation";
 
 import type { MediaAsset } from "../api/tvDashboardApi";
@@ -521,6 +526,18 @@ export type ComunicadoEditorContextValue = {
   dataPreviewLoadingLabel: string | null;
   refreshDataPreview: (options?: { force?: boolean; blockIds?: string[] }) => Promise<void>;
   loadMoreDataPreview: (blockId: string) => Promise<void>;
+  /** Resolved live do preview por target id (blockId de `data_source` ou `modelId`). */
+  getDataPreviewResolved: (targetId: string) => ComunicadoDataResolved | undefined;
+  /**
+   * Upsert DataModel (`nativeConfig.dataModels[]`). Backend mutation ops quando
+   * há playlist/slide persistido; fallback local no editor sem backend.
+   */
+  saveDataModel: (model: TvDataModel) => Promise<void>;
+  /**
+   * Remove DataModel. Backend rejeita `data_model.in_use` — o erro propaga para
+   * o chamador exibir (não desvincula visuais automaticamente).
+   */
+  deleteDataModel: (modelId: string) => Promise<void>;
   globalRefreshSec: number;
   lastDataDisplayMode: ComunicadoDataDisplayMode;
   setLastDataDisplayMode: (mode: ComunicadoDataDisplayMode) => void;

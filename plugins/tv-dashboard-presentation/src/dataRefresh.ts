@@ -1,12 +1,14 @@
 import { omitVisualOnlyDataParams } from "./chartWeekendFilter";
 import { isComunicadoInputBlock, listFetchableSourceIds, resolveInputRefreshSourceIds } from "./comunicadoInputFilters";
 import { isDataBlockType, isDataSourceBlockType } from "./comunicadoHelpers";
-import type {
-  ComunicadoBlock,
-  ComunicadoConfig,
-  ComunicadoDataBinding,
-  ComunicadoDataBlock,
-  ComunicadoDataSourceBlock,
+import {
+  bindingTargetId,
+  type ComunicadoBlock,
+  type ComunicadoConfig,
+  type ComunicadoDataBinding,
+  type ComunicadoDataBlock,
+  type ComunicadoDataSourceBlock,
+  type TvDataModel,
 } from "./comunicadoTypes";
 
 export const DATA_REFRESH_SEC_MIN = 30;
@@ -61,6 +63,25 @@ type FingerprintBlock = {
   dataTransform?: unknown;
 };
 
+/** Definição persistida do DataModel no fingerprint — artefatos de runtime fora. */
+function serializeDataModelForFingerprint(model: TvDataModel): Record<string, unknown> {
+  return {
+    id: model.id,
+    label: model.label ?? null,
+    primaryInputId: model.primaryInputId,
+    inputs: model.inputs.map((input) => ({
+      id: input.id,
+      operationId: input.operationId,
+      label: input.label ?? null,
+      queryName: input.queryName ?? null,
+      params: omitVisualOnlyDataParams(input.params ?? {}),
+      transform: input.transform ?? null,
+    })),
+    transform: model.transform ?? null,
+    fieldLabels: model.fieldLabels ?? null,
+  };
+}
+
 function diffChangedFetchableBlockIds(
   prevBlocks: unknown,
   nextBlocks: unknown,
@@ -110,11 +131,12 @@ function changedSourceIdsFromViewLinkDiff(
   for (const entry of nextList) {
     if (!entry || typeof entry !== "object") continue;
     const id = String((entry as { id?: unknown }).id ?? "").trim();
-    const sid = String((entry as { dataSourceId?: unknown }).dataSourceId ?? "").trim();
+    // Target ativo: modelId vence sobre dataSourceId (contrato DM2).
+    const sid = bindingTargetId(entry as { modelId?: unknown; dataSourceId?: unknown });
     if (!sid || !fetchableSet.has(sid)) continue;
     const previous = id ? prevById.get(id) : undefined;
     if (!previous) {
-      // View nova ligada à fonte — um bake para carimbar linkedResolved.
+      // View nova ligada ao target — um bake para carimbar linkedResolved.
       affected.add(sid);
       continue;
     }
@@ -155,17 +177,16 @@ export function buildDataPreviewFingerprint(
         block.type === "kpi_view" ||
         block.type === "canvas_table" ||
         ((block.type === "heading" || block.type === "text" || block.type === "shape") &&
-          "dataSourceId" in block &&
-          block.dataSourceId?.trim()),
+          bindingTargetId(block)),
     )
     .filter((block) => {
       if (block.type === "canvas_table") {
         return Boolean(
-          block.dataSourceId?.trim() ||
+          bindingTargetId(block) ||
             block.cells.some((row) =>
               row.some(
                 (cell) =>
-                  Boolean(cell.dataRef?.field?.trim()) || Boolean(cell.dataSourceId?.trim()),
+                  Boolean(cell.dataRef?.field?.trim()) || bindingTargetId(cell),
               ),
             ),
         );
@@ -199,6 +220,7 @@ export function buildDataPreviewFingerprint(
             : "dataSourceId" in block
               ? block.dataSourceId
               : undefined,
+        modelId: "modelId" in block ? block.modelId : undefined,
         // FE-BE-003: encoding + displayFormat — bake server-side exige re-preview.
         textProjection: textProj
           ? {
@@ -280,8 +302,7 @@ export function buildDataPreviewFingerprint(
                 row
                   .map((cell, colIndex) => {
                     if (!cell.dataRef?.field) return null;
-                    const src =
-                      cell.dataSourceId?.trim() || block.dataSourceId?.trim() || "";
+                    const src = bindingTargetId(cell) || bindingTargetId(block);
                     const fmt = cell.dataRef.displayFormat ?? cell.displayFormat ?? null;
                     return `${rowIndex}:${colIndex}:${src}:${cell.dataRef.field}:${JSON.stringify(fmt)}`;
                   })
@@ -304,12 +325,14 @@ export function buildDataPreviewFingerprint(
         : null,
     )
     .filter(Boolean);
+  const dataModels = (config.dataModels ?? []).map(serializeDataModelForFingerprint);
   return JSON.stringify({
     dataFilters,
     playlistDefaults,
     blocks: [...legacyBlocks, ...sourceBlocks],
     viewLinks,
     inputs: inputBlocks,
+    dataModels,
   });
 }
 
@@ -319,6 +342,7 @@ type PreviewFingerprintPayload = {
   blocks?: unknown;
   viewLinks?: unknown;
   inputs?: unknown;
+  dataModels?: unknown;
 };
 
 function parsePreviewFingerprint(fingerprint: string): PreviewFingerprintPayload | null {
@@ -398,6 +422,103 @@ export function resolvePreviewRefreshSourceIds(params: {
   }
 
   return [...ids];
+}
+
+/** Modelos cuja definição persistida mudou entre fingerprints. */
+function diffChangedDataModelIds(
+  prevModels: unknown,
+  nextModels: unknown,
+  allModelIds: string[],
+): string[] {
+  const modelSet = new Set(allModelIds);
+  const prevList = (Array.isArray(prevModels) ? prevModels : []) as Array<{
+    id?: unknown;
+  }>;
+  const nextList = (Array.isArray(nextModels) ? nextModels : []) as Array<{
+    id?: unknown;
+  }>;
+  const prevById = new Map(
+    prevList
+      .map((model) => [String(model?.id ?? "").trim(), model] as const)
+      .filter(([id]) => id),
+  );
+  const changed: string[] = [];
+  for (const model of nextList) {
+    const id = String(model?.id ?? "").trim();
+    if (!id || !modelSet.has(id)) continue;
+    const previous = prevById.get(id);
+    if (!previous || JSON.stringify(previous) !== JSON.stringify(model)) {
+      changed.push(id);
+    }
+  }
+  return changed;
+}
+
+/**
+ * Quais DataModels recarregar quando o fingerprint muda.
+ * Espelho de `resolvePreviewRefreshSourceIds` para `dataModels[]`:
+ * filtros do slide → todos; definição alterada/nova → id afetado;
+ * view link de model-bound visual → id afetado (bake de linkedResolved).
+ */
+export function resolvePreviewRefreshModelIds(params: {
+  previousFingerprint: string | null;
+  nextFingerprint: string;
+  allModelIds: string[];
+}): string[] {
+  const { previousFingerprint, nextFingerprint, allModelIds } = params;
+  if (allModelIds.length === 0) return [];
+  if (!previousFingerprint || previousFingerprint === nextFingerprint) return [];
+  const prev = parsePreviewFingerprint(previousFingerprint);
+  const next = parsePreviewFingerprint(nextFingerprint);
+  if (!prev || !next) return allModelIds;
+
+  const modelSet = new Set(allModelIds);
+  const dataFiltersChanged =
+    JSON.stringify(prev.dataFilters ?? null) !== JSON.stringify(next.dataFilters ?? null);
+  const playlistDefaultsChanged =
+    JSON.stringify(prev.playlistDefaults ?? null) !==
+    JSON.stringify(next.playlistDefaults ?? null);
+  if (dataFiltersChanged || playlistDefaultsChanged) {
+    return allModelIds;
+  }
+
+  const ids = new Set<string>();
+
+  if (JSON.stringify(prev.dataModels ?? null) !== JSON.stringify(next.dataModels ?? null)) {
+    for (const id of diffChangedDataModelIds(prev.dataModels, next.dataModels, allModelIds)) {
+      ids.add(id);
+    }
+  }
+
+  if (JSON.stringify(prev.viewLinks ?? null) !== JSON.stringify(next.viewLinks ?? null)) {
+    for (const id of changedSourceIdsFromViewLinkDiff(
+      prev.viewLinks,
+      next.viewLinks,
+      allModelIds,
+    )) {
+      if (modelSet.has(id)) ids.add(id);
+    }
+  }
+
+  return [...ids];
+}
+
+/**
+ * Plano canônico de refresh de preview de DataModels — único ponto de decisão
+ * para `preview_data_model`. Espelha `planDataPreviewRefresh`.
+ */
+export function planDataModelPreviewRefresh(params: {
+  previousFingerprint: string | null;
+  nextFingerprint: string;
+  dataModels: TvDataModel[] | undefined | null;
+}): string[] {
+  const allModelIds = (params.dataModels ?? []).map((model) => model.id).filter(Boolean);
+  if (allModelIds.length === 0) return [];
+  return resolvePreviewRefreshModelIds({
+    previousFingerprint: params.previousFingerprint,
+    nextFingerprint: params.nextFingerprint,
+    allModelIds,
+  });
 }
 
 /**

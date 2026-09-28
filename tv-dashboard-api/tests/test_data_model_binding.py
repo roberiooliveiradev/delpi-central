@@ -487,3 +487,40 @@ class TestRuntimeAcceptance:
         rows = table.get("rows") or []
         assert rows, "model output should materialize rows"
         assert rows[0].get("value") == pytest.approx(2.6667, abs=0.01)
+
+
+# ---------------------------------------------------------------------------
+# DM3 — model preview stamps linkedResolvedByBlockId (editor paint contract)
+# ---------------------------------------------------------------------------
+
+
+class TestModelPreviewLinkedResolved:
+    def test_preview_data_model_attaches_linked_view_resolved(self):
+        from tv_app.application.services.data.tv_data_preview_service import (
+            TvDataPreviewService,
+        )
+        from tv_app.application.services.tv_data_route_catalog_service import (
+            TvDataRouteCatalogService,
+        )
+
+        gateway = _gateway_by_preset(
+            {"previous": _rol_payload(4399153.22), "current": _rol_payload(4516461.10)}
+        )
+        model = _rol_model()
+        cfg = {
+            "version": 5,
+            "blocks": [_visual("kpi1", modelId="mdl_rol_delta")],
+            "dataModels": [model],
+        }
+        service = TvDataPreviewService(TvDataRouteCatalogService())
+        service._resolution = _enrichment(gateway)
+        resolved = service.preview_data_model(
+            model,
+            native_config=cfg,
+            authorization=None,
+        )
+        linked = resolved.get("linkedResolvedByBlockId") or {}
+        assert "kpi1" in linked
+        view_resolved = linked["kpi1"]
+        rows = (view_resolved.get("table") or {}).get("rows") or []
+        assert rows[0].get("value") == pytest.approx(2.6667, abs=0.01)

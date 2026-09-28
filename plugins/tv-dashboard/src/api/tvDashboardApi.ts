@@ -969,6 +969,34 @@ export async function previewDataBlockV2(body: {
   );
 }
 
+export async function previewDataModelV2(body: {
+  /** Modelo inline (candidate) — quando omitido, resolve por `modelId` no nativeConfig. */
+  model?: Record<string, unknown>;
+  modelId?: string;
+  nativeConfig: Record<string, unknown>;
+  playlistId?: string;
+  /** Estado live de dataDefaults (editor) — tem prioridade sobre o valor só no banco. */
+  playlistDefaults?: Record<string, unknown>;
+  forceRefresh?: boolean;
+  signal?: AbortSignal;
+}) {
+  const { signal, playlistId, ...rest } = body;
+  const previewPlaylistId = resolvePreviewPlaylistId(playlistId);
+  const payload = {
+    ...rest,
+    ...(previewPlaylistId ? { playlistId: previewPlaylistId } : {}),
+  };
+  return unwrap(
+    httpPost<ApiEnvelope<{
+      model: { id: string; resolved: Record<string, unknown> };
+    }>>(
+      `${API_BASE}/data/preview-model`,
+      payload,
+      { signal },
+    ),
+  );
+}
+
 /** @deprecated Prefer previewDataBlockV2 — não exige slide persistido. */
 export async function previewDataBlock(
   playlistId: string,

@@ -127,6 +127,32 @@ export async function commitPatchNativeConfig(args: {
   });
 }
 
+/** Upsert DataModel persisted in `nativeConfig.dataModels[]` (DM1/DM3). */
+export async function commitUpsertDataModel(args: {
+  playlistId: string;
+  slideId: string;
+  model: Record<string, unknown>;
+}): Promise<ComunicadoConfig | null> {
+  return commitPresentationOps({
+    playlistId: args.playlistId,
+    slideId: args.slideId,
+    ops: [{ op: "upsert_data_model", model: args.model }],
+  });
+}
+
+/** Delete DataModel — backend rejects `data_model.in_use` with consumer details. */
+export async function commitDeleteDataModel(args: {
+  playlistId: string;
+  slideId: string;
+  modelId: string;
+}): Promise<ComunicadoConfig | null> {
+  return commitPresentationOps({
+    playlistId: args.playlistId,
+    slideId: args.slideId,
+    ops: [{ op: "delete_data_model", modelId: args.modelId }],
+  });
+}
+
 export async function commitUpsertBlocks(args: {
   playlistId: string;
   slideId: string;

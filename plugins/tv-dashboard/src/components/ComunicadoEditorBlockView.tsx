@@ -1,4 +1,5 @@
 import {
+  bindingTargetId,
   ChartViewBlockView,
   TableViewBlockView,
   ComunicadoBlockView,
@@ -520,7 +521,7 @@ function EditorChartViewBlock({
         filterParams={mergeChartViewFilterParams([
           playlistDefaults,
           config.dataFilters,
-          lookupLinkedDataSourceParams(blocks, block.dataSourceId),
+          lookupLinkedDataSourceParams(blocks, bindingTargetId(block)),
         ])}
       />
     </div>
@@ -552,6 +553,8 @@ function EditorTableViewBlock({
     cancelEditTablePart,
     updateBlock,
     blocks,
+    config,
+    saveDataModel,
     loadMoreDataPreview,
     loadingMoreSourceIds,
     startDrag,
@@ -668,20 +671,27 @@ function EditorTableViewBlock({
       if (ref.kind !== "headerCell") return;
       const columnKey = selectedTableProjectionColumnKeys(block, [ref])[0];
       if (!columnKey) return;
-      const { sourcePatch, tableProjection } = renameTableColumnFieldLabel({
+      const { sourcePatch, modelPatch, tableProjection } = renameTableColumnFieldLabel({
         blocks,
         tableBlock: block,
         columnKey,
         label: content,
+        dataModels: config.dataModels,
       });
       if (sourcePatch) {
         updateBlock(sourcePatch.id, { fieldLabels: sourcePatch.fieldLabels } as Partial<ComunicadoBlock>);
+      }
+      if (modelPatch) {
+        const model = (config.dataModels ?? []).find((item) => item.id === modelPatch.id);
+        if (model) {
+          void saveDataModel({ ...model, fieldLabels: modelPatch.fieldLabels });
+        }
       }
       if (tableProjection) {
         updateBlock(block.id, { tableProjection });
       }
     },
-    [block, blocks, cancelEditTablePart, updateBlock],
+    [block, blocks, cancelEditTablePart, config.dataModels, saveDataModel, updateBlock],
   );
 
   const onColumnResize = useCallback(
@@ -696,7 +706,7 @@ function EditorTableViewBlock({
     [block, selectedTableParts, updateBlock],
   );
   const pageState = resolveComunicadoDataPageState(block.resolved);
-  const sourceId = block.dataSourceId?.trim();
+  const sourceId = bindingTargetId(block) || undefined;
   const loadingMoreRows = Boolean(sourceId && loadingMoreSourceIds.includes(sourceId));
 
   const interaction = shouldAttachCompositePartInteraction("table_view")

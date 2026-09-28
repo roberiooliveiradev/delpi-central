@@ -6,6 +6,7 @@ import {
 import type { ComunicadoChartInteraction } from "./comunicadoChartParts";
 import { resolveChartDisplayOptions } from "./comunicadoChartOptions";
 import type { ComunicadoChartViewBlock } from "./comunicadoTypes";
+import { bindingTargetId } from "./comunicadoTypes";
 import {
   DataBlockRefreshBadge,
   withDataBlockLoadingClass,
@@ -73,7 +74,7 @@ export function ChartViewBlockView({
   const resolved = block.resolved;
   const label = resolved?.label ?? chartTypeLabel(block.chartType);
   const chartInteraction = interactive ? interaction : null;
-  const bound = Boolean(block.dataSourceId?.trim());
+  const bound = Boolean(bindingTargetId(block));
 
   const errorText = resolveDataBlockErrorText(resolved);
   if (errorText) {

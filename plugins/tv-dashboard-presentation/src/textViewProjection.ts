@@ -7,15 +7,16 @@ import {
   specFromTextProjectionFormat,
 } from "@delpi/plugin-ui/index";
 import { normalizeDecimalPlaces } from "./nativeFormat";
-import type {
-  ComunicadoBlock,
-  ComunicadoContentRun,
-  ComunicadoDataResolved,
-  ComunicadoShapeBlock,
-  ComunicadoTextBlock,
-  ComunicadoTextDataRef,
-  ComunicadoTextProjection,
-  TextProjectionFormat,
+import {
+  bindingTargetId,
+  type ComunicadoBlock,
+  type ComunicadoContentRun,
+  type ComunicadoDataResolved,
+  type ComunicadoShapeBlock,
+  type ComunicadoTextBlock,
+  type ComunicadoTextDataRef,
+  type ComunicadoTextProjection,
+  type TextProjectionFormat,
 } from "./comunicadoTypes";
 import { isComunicadoVisualBoxBlock } from "./comunicadoVisualBox";
 import { plainTextFromContentRuns } from "./comunicadoContentRuns";
@@ -39,16 +40,16 @@ export function isTextDataBoundBlock(block: { type: string }): block is TextData
 }
 
 export function textBlockHasDataBinding(
-  block: { dataSourceId?: string; textProjection?: ComunicadoTextProjection; contentRuns?: ComunicadoContentRun[] },
+  block: { dataSourceId?: string; modelId?: string; textProjection?: ComunicadoTextProjection; contentRuns?: ComunicadoContentRun[] },
 ): boolean {
-  if (block.dataSourceId?.trim()) return true;
+  if (bindingTargetId(block)) return true;
   if (block.textProjection?.field?.trim()) return true;
   return Boolean(block.contentRuns?.some((run) => run.dataRef?.field?.trim()));
 }
 
-/** Fonte de dados ligada — sem isso, projeção/dataRef órfãos não devem pintar «—». */
-export function textBlockHasLinkedDataSource(block: { dataSourceId?: string }): boolean {
-  return Boolean(block.dataSourceId?.trim());
+/** Target de dados ligado (fonte legacy ou modelo) — sem isso, projeção/dataRef órfãos não devem pintar «—». */
+export function textBlockHasLinkedDataSource(block: { dataSourceId?: string; modelId?: string }): boolean {
+  return Boolean(bindingTargetId(block));
 }
 
 /**
@@ -56,7 +57,7 @@ export function textBlockHasLinkedDataSource(block: { dataSourceId?: string }): 
  * (mantém prefixo/rótulo estático, sem travessão fantasma).
  */
 export function dynamicTextEmptyFallback(
-  block: { dataSourceId?: string },
+  block: { dataSourceId?: string; modelId?: string },
   explicitFallback?: string | null,
 ): string {
   if (!textBlockHasLinkedDataSource(block)) return "";
@@ -275,6 +276,7 @@ export function suggestDefaultTextProjection(
 export function resolveTextBlockDisplayRuns(
   block: Pick<ComunicadoTextBlock, "content" | "contentRuns" | "textProjection"> & {
     dataSourceId?: string;
+    modelId?: string;
     resolved?: ComunicadoDataResolved;
   },
   resolved?: ComunicadoDataResolved,
@@ -337,6 +339,7 @@ export function resolveVisualBoxDisplayText(
           contentRuns: block.contentRuns,
           textProjection: block.textProjection,
           dataSourceId: block.dataSourceId,
+          modelId: block.modelId,
         }
       : block,
     data,
@@ -384,7 +387,10 @@ export function textProjectionPrefixFromStaticLabel(
 }
 
 export type BuildTextDataLinkPatchInput = {
+  /** Target legacy `data_source`. Ignorado quando `modelId` informado. */
   dataSourceId: string;
+  /** Target DataModel — exclusivo com `dataSourceId` (contrato DM2). */
+  modelId?: string;
   resolved?: ComunicadoDataResolved;
   existing?: ComunicadoTextProjection;
   /** Campos do catálogo da rota — fallback quando o resolved ainda não listou fields. */
@@ -399,8 +405,12 @@ export type BuildTextDataLinkPatchInput = {
 export function buildTextDataLinkPatch(
   input: BuildTextDataLinkPatchInput,
 ): Partial<TextDataBoundBlock> {
-  const { dataSourceId, resolved, existing, catalogFields, staticContent } = input;
-  const patch: Partial<TextDataBoundBlock> = { dataSourceId };
+  const { dataSourceId, modelId, resolved, existing, catalogFields, staticContent } = input;
+  // Escrita exclusiva: modelId remove dataSourceId; source remove modelId.
+  const cleanModelId = modelId?.trim() || "";
+  const patch: Partial<TextDataBoundBlock> = cleanModelId
+    ? { modelId: cleanModelId, dataSourceId: undefined }
+    : { dataSourceId, modelId: undefined };
   if (!textProjectionHasField(existing)) {
     const suggested = suggestDefaultTextProjection(resolved, catalogFields);
     if (suggested) {
@@ -427,7 +437,7 @@ export function syncTextBlocksWithResolved(
   const next = blocks.map((block) => {
     if (!isComunicadoVisualBoxBlock(block)) return block;
     if (!textBlockHasDataBinding(block)) return block;
-    const sourceId = block.dataSourceId?.trim();
+    const sourceId = bindingTargetId(block);
     if (!sourceId) return block;
     const resolved = resolvedBySourceId[sourceId];
     if (!resolved) return block;

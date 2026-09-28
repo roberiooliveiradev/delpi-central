@@ -17,6 +17,7 @@ import {
   visualBoxBlockModifierClasses,
 } from "./comunicadoVisualBox";
 import type { ComunicadoBlock, ComunicadoDataBlock, ComunicadoDataFilters } from "./comunicadoTypes";
+import { bindingTargetId } from "./comunicadoTypes";
 import {
   lookupLinkedDataSourceParams,
   mergeChartViewFilterParams,
@@ -273,7 +274,7 @@ export function ComunicadoBlockView({
   if (block.type === "chart_view") {
     const chartFilterParams = mergeChartViewFilterParams([
       slideDataFilters as Record<string, unknown> | null,
-      lookupLinkedDataSourceParams(stageBlocks, block.dataSourceId),
+      lookupLinkedDataSourceParams(stageBlocks, bindingTargetId(block)),
     ]);
     return mountBlockRoot(
       blockClass("tdp-comunicado__block--chart-view"),

@@ -1,6 +1,10 @@
-import { serializeComunicadoConfig, type ComunicadoConfig } from "@delpi/tv-dashboard-presentation";
+import {
+  serializeComunicadoConfig,
+  type ComunicadoConfig,
+  type TvDataModel,
+} from "@delpi/tv-dashboard-presentation";
 
-import { previewDataBlockV2 } from "../api/tvDashboardApi";
+import { previewDataBlockV2, previewDataModelV2 } from "../api/tvDashboardApi";
 
 /**
  * Contrato único do POST `/data/preview-block` no editor.
@@ -74,4 +78,56 @@ export function buildDataPreviewBlockRequest(
 /** Único caminho HTTP de preview-block a partir do MFE. */
 export async function requestDataPreviewBlock(input: DataPreviewBlockRequestInput) {
   return previewDataBlockV2(buildDataPreviewBlockRequest(input));
+}
+
+export type DataPreviewModelRequestInput = {
+  /** Modelo persistido no config (enviado serializado — sem artefatos de runtime). */
+  model: TvDataModel;
+  nativeConfig: Record<string, unknown>;
+  playlistId?: string;
+  playlistDefaults?: Record<string, unknown> | null;
+  forceRefresh?: boolean;
+  signal?: AbortSignal;
+};
+
+/** Serializa o modelo pelo whitelist persistido — nunca artefatos de runtime. */
+export function serializeDataModelForPreview(
+  model: TvDataModel,
+): Record<string, unknown> {
+  return {
+    id: model.id,
+    primaryInputId: model.primaryInputId,
+    inputs: model.inputs.map((input) => ({
+      id: input.id,
+      operationId: input.operationId,
+      ...(input.label ? { label: input.label } : {}),
+      ...(input.queryName ? { queryName: input.queryName } : {}),
+      ...(input.params ? { params: { ...input.params } } : {}),
+      ...(input.transform !== undefined && input.transform !== null
+        ? { transform: input.transform }
+        : {}),
+    })),
+    ...(model.label ? { label: model.label } : {}),
+    ...(model.transform !== undefined && model.transform !== null
+      ? { transform: model.transform }
+      : {}),
+    ...(model.fieldLabels ? { fieldLabels: { ...model.fieldLabels } } : {}),
+  };
+}
+
+/** Único caminho HTTP de preview-model a partir do MFE (`/data/preview-model`). */
+export async function requestDataPreviewModel(input: DataPreviewModelRequestInput) {
+  const defaults =
+    input.playlistDefaults && typeof input.playlistDefaults === "object"
+      ? input.playlistDefaults
+      : undefined;
+  return previewDataModelV2({
+    model: serializeDataModelForPreview(input.model),
+    modelId: input.model.id,
+    nativeConfig: input.nativeConfig,
+    ...(input.playlistId ? { playlistId: input.playlistId } : {}),
+    ...(defaults ? { playlistDefaults: defaults } : {}),
+    forceRefresh: Boolean(input.forceRefresh),
+    ...(input.signal ? { signal: input.signal } : {}),
+  });
 }

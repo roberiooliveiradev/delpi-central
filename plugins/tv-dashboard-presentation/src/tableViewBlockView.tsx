@@ -3,6 +3,7 @@ import { tablePresetLabel } from "./comunicadoChartView";
 import { resolveTableDisplayOptions } from "./comunicadoTableOptions";
 import type { ComunicadoTableInteraction } from "./comunicadoTableParts";
 import type { ComunicadoTableViewBlock } from "./comunicadoTypes";
+import { bindingTargetId } from "./comunicadoTypes";
 import {
   DataBlockRefreshBadge,
   withDataBlockLoadingClass,
@@ -96,7 +97,7 @@ export function TableViewBlockView({
           {loading
             ? "Carregando dados…"
             : interactive
-              ? block.dataSourceId?.trim()
+              ? bindingTargetId(block)
                 ? "Sem linhas — escolha colunas na conexão do visual"
                 : "Conecte uma fonte de dados"
               : "…"}

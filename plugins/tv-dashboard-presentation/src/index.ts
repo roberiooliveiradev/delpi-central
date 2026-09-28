@@ -576,8 +576,10 @@ export {
   DATA_REFRESH_SEC_DEFAULT,
   DATA_REFRESH_SEC_MAX,
   DATA_REFRESH_SEC_MIN,
+  planDataModelPreviewRefresh,
   planDataPreviewRefresh,
   resolveDataBlockRefreshSec,
+  resolvePreviewRefreshModelIds,
   resolvePreviewRefreshSourceIds,
   resolveStaleSourceIdsForPreviewChange,
 } from "./dataRefresh";
@@ -636,6 +638,13 @@ export {
   isTextDataBoundBlockType,
   isCanvasTableDataBoundBlockType,
   isFetchableDataBlockType,
+  isTechnicalDataBlockType,
+  isRenderableBlockType,
+  bindingTargetId,
+  bindingTargetKind,
+  findDataModel,
+  dataModelOptionsForInspector,
+  normalizeDataModels,
   getLinkedDataSourceIds,
   shouldHideDataSourceOnStage,
   filterBlocksVisibleOnStage,
@@ -1254,7 +1263,8 @@ export {
 } from "./tableElementCatalog";
 export { ConfigurableSeriesChart } from "./ConfigurableSeriesChart";
 export { ConfigurableTable } from "./ConfigurableTable";
-export type { ComunicadoChartType, ComunicadoTablePreset, ComunicadoDataSourceBlock, ComunicadoChartViewBlock, ComunicadoTableViewBlock, ComunicadoKpiViewBlock } from "./comunicadoTypes";
+export type { ComunicadoChartType, ComunicadoTablePreset, ComunicadoDataSourceBlock, ComunicadoChartViewBlock, ComunicadoTableViewBlock, ComunicadoKpiViewBlock, TvDataModel, TvDataModelInput } from "./comunicadoTypes";
+export type { BindingTargetSlice, BindingTargetKind } from "./comunicadoDataArchitecture";
 export {
   applyDataTransformSteps,
   applyDataTransformToPayload,
@@ -1459,6 +1469,7 @@ export {
 } from "./textBindingOwner";
 export {
   applyCanvasTableCellDataSourceId,
+  applyCanvasTableCellModelId,
   applyCanvasTableDataRef,
   buildCanvasTableDataLinkPatch,
   canvasTableCellHasDataRef,

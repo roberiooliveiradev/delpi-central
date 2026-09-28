@@ -5,6 +5,7 @@ import {
   DATA_REFRESH_SEC_DEFAULT,
   isFetchableDataBlockType,
   mergeComunicadoDataPages,
+  planDataModelPreviewRefresh,
   planDataPreviewRefresh,
   resolveComunicadoDataPageState,
   resolveDataBlockErrorText,
@@ -13,6 +14,7 @@ import {
   type ComunicadoConfig,
   type ComunicadoDataBinding,
   type ComunicadoDataResolved,
+  type TvDataModel,
 } from "@delpi/tv-dashboard-presentation";
 
 import {
@@ -24,6 +26,7 @@ import {
 } from "../utils/dataPreviewFetchGuard";
 import {
   requestDataPreviewBlock,
+  requestDataPreviewModel,
   serializeNativeConfigForPreview,
   stripBlockResolvedForPreview,
 } from "../utils/dataPreviewRequest";
@@ -45,6 +48,14 @@ type Options = {
 };
 
 type FetchableBlock = Extract<ComunicadoBlock, { dataBinding: ComunicadoDataBinding }>;
+
+/**
+ * Unidade de preview: bloco `data_source`/data_* (kind `source`) ou
+ * DataModel persistido (kind `model`, `/data/preview-model`).
+ */
+type PreviewTarget =
+  | { kind: "source"; id: string; block: FetchableBlock }
+  | { kind: "model"; id: string; model: TvDataModel };
 
 function seedFromConfigBlocks(config: ComunicadoConfig): Record<string, ComunicadoDataResolved> {
   const seeded: Record<string, ComunicadoDataResolved> = {};
@@ -69,9 +80,9 @@ function initialResolvedMap(
 
 function hasAnyResolved(
   map: Record<string, ComunicadoDataResolved>,
-  blocks: FetchableBlock[],
+  targets: ReadonlyArray<{ id: string }>,
 ): boolean {
-  return blocks.some((block) => map[block.id] !== undefined);
+  return targets.some((target) => map[target.id] !== undefined);
 }
 
 /** Agrega mensagens de erro soft/hard dos resolved para a barra do palco. */
@@ -156,6 +167,22 @@ export function useComunicadoDataPreview({
     [],
   );
 
+  const readDataTargets = useCallback((): PreviewTarget[] => {
+    const cfg = configRef.current;
+    const sources: PreviewTarget[] = (cfg.blocks ?? [])
+      .filter(
+        (block): block is FetchableBlock =>
+          isFetchableDataBlockType(block.type) && "dataBinding" in block,
+      )
+      .map((block) => ({ kind: "source", id: block.id, block }));
+    const models: PreviewTarget[] = (cfg.dataModels ?? []).map((model) => ({
+      kind: "model",
+      id: model.id,
+      model,
+    }));
+    return [...sources, ...models];
+  }, []);
+
   useEffect(() => {
     return () => {
       if (autoRefreshTimerRef.current != null) window.clearTimeout(autoRefreshTimerRef.current);
@@ -220,22 +247,22 @@ export function useComunicadoDataPreview({
     [],
   );
 
-  const fetchBlocks = useCallback(
+  const fetchTargets = useCallback(
     async (
-      blocks: FetchableBlock[],
-      options: { showLoading: boolean; blockIds?: Set<string>; force?: boolean },
+      targets: PreviewTarget[],
+      options: { showLoading: boolean; targetIds?: Set<string>; force?: boolean },
     ) => {
-      if (blocks.length === 0) {
+      if (targets.length === 0) {
         setInitialLoading(false);
         setError(null);
         setLoadingProgress(null);
         return;
       }
 
-      const targetIds = options.blockIds ?? new Set(blocks.map((block) => block.id));
-      const targets = blocks.filter((block) => targetIds.has(block.id));
-      const hasExistingData = targets.some(
-        (block) => resolvedRef.current[block.id] !== undefined,
+      const targetIds = options.targetIds ?? new Set(targets.map((target) => target.id));
+      const active = targets.filter((target) => targetIds.has(target.id));
+      const hasExistingData = active.some(
+        (target) => resolvedRef.current[target.id] !== undefined,
       );
 
       if (options.showLoading && !hasExistingData) {
@@ -251,11 +278,16 @@ export function useComunicadoDataPreview({
       setRefreshingSourceIds([...targetIds]);
       setStaleSourceIds((prev) => prev.filter((id) => !targetIds.has(id)));
 
-      const pendingIds = new Set(targets.map((block) => block.id));
+      const progressLabel = (target: PreviewTarget) =>
+        target.kind === "model"
+          ? target.model.label?.trim() || target.model.id
+          : resolveDataSourceProgressLabel(target.block);
+
+      const pendingIds = new Set(active.map((target) => target.id));
       setLoadingProgress({
         completed: 0,
-        total: targets.length,
-        pendingLabels: targets.map(resolveDataSourceProgressLabel),
+        total: active.length,
+        pendingLabels: active.map(progressLabel),
       });
 
       const nativeConfig = serializeNativeConfigForPreview(configRef.current);
@@ -265,24 +297,42 @@ export function useComunicadoDataPreview({
         if (requestIdRef.current !== requestId) return;
         pendingIds.delete(finishedId);
         setLoadingProgress({
-          completed: targets.length - pendingIds.size,
-          total: targets.length,
-          pendingLabels: targets
-            .filter((block) => pendingIds.has(block.id))
-            .map(resolveDataSourceProgressLabel),
+          completed: active.length - pendingIds.size,
+          total: active.length,
+          pendingLabels: active
+            .filter((target) => pendingIds.has(target.id))
+            .map(progressLabel),
         });
       };
 
       try {
         const pairs = await Promise.all(
-          targets.map(async (block) => {
+          active.map(async (target) => {
             const { signal, cleanup } = createLinkedTimeoutSignal(
               DATA_PREVIEW_BLOCK_TIMEOUT_MS,
               batchAbort.signal,
             );
             try {
+              if (target.kind === "model") {
+                const response = await requestDataPreviewModel({
+                  model: target.model,
+                  nativeConfig,
+                  playlistId: playlistIdRef.current,
+                  playlistDefaults: playlistDefaultsRef.current,
+                  forceRefresh: Boolean(options.force),
+                  signal,
+                });
+                const resolved = response.model?.resolved;
+                if (resolved && typeof resolved === "object") {
+                  return [target.id, resolved] as const;
+                }
+                return [
+                  target.id,
+                  { error: "Resposta de preview sem dados resolvidos." },
+                ] as const;
+              }
               const response = await requestDataPreviewBlock({
-                block: stripBlockResolvedForPreview(block),
+                block: stripBlockResolvedForPreview(target.block),
                 nativeConfig,
                 playlistId: playlistIdRef.current,
                 playlistDefaults: playlistDefaultsRef.current,
@@ -291,26 +341,26 @@ export function useComunicadoDataPreview({
               });
               const resolved = response.block?.resolved;
               if (resolved && typeof resolved === "object") {
-                return [block.id, resolved] as const;
+                return [target.id, resolved] as const;
               }
               return [
-                block.id,
+                target.id,
                 { error: "Resposta de preview sem dados resolvidos." },
               ] as const;
             } catch (err) {
               const superseded = requestIdRef.current !== requestId;
               const message = resolvePreviewAbortMessage(err, superseded);
               if (!message) {
-                const previous = resolvedRef.current[block.id];
+                const previous = resolvedRef.current[target.id];
                 return [
-                  block.id,
+                  target.id,
                   previous ?? { error: "Carregamento cancelado." },
                 ] as const;
               }
-              return [block.id, { error: message }] as const;
+              return [target.id, { error: message }] as const;
             } finally {
               cleanup();
-              bumpProgressById(block.id);
+              bumpProgressById(target.id);
             }
           }),
         );
@@ -341,22 +391,22 @@ export function useComunicadoDataPreview({
 
   const refreshDataPreview = useCallback(
     async (options?: RefreshDataPreviewOptions) => {
-      const blocks = readDataBlocks();
-      if (blocks.length === 0) {
+      const targets = readDataTargets();
+      if (targets.length === 0) {
         setStaleSourceIds([]);
         setError(null);
         return;
       }
-      const blockIds = options?.blockIds?.length
+      const targetIds = options?.blockIds?.length
         ? new Set(options.blockIds)
-        : new Set(blocks.map((block) => block.id));
-      await fetchBlocks(blocks, {
+        : new Set(targets.map((target) => target.id));
+      await fetchTargets(targets, {
         showLoading: true,
-        blockIds,
+        targetIds,
         force: options?.force !== false,
       });
     },
-    [fetchBlocks, readDataBlocks],
+    [fetchTargets, readDataTargets],
   );
 
   const loadMoreDataPreview = useCallback(
@@ -435,14 +485,14 @@ export function useComunicadoDataPreview({
   );
 
   const scheduleAutoRefresh = useCallback(
-    (sourceIds: string[], blocks: FetchableBlock[]) => {
-      if (sourceIds.length === 0) return;
+    (changedTargetIds: string[], targets: PreviewTarget[]) => {
+      if (changedTargetIds.length === 0) return;
       // G5/G21: mark stale immediately — never present prior semantic payload as current.
-      setStaleSourceIds((prev) => [...new Set([...prev, ...sourceIds])]);
+      setStaleSourceIds((prev) => [...new Set([...prev, ...changedTargetIds])]);
       setResolvedByBlockId((previous) => {
         let changed = false;
         const next = { ...previous };
-        for (const id of sourceIds) {
+        for (const id of changedTargetIds) {
           const resolved = previous[id];
           if (!resolved || resolved.presentationStale === true) continue;
           const linked = resolved.linkedResolvedByBlockId;
@@ -475,26 +525,26 @@ export function useComunicadoDataPreview({
       if (autoRefreshTimerRef.current != null) window.clearTimeout(autoRefreshTimerRef.current);
       autoRefreshTimerRef.current = window.setTimeout(() => {
         autoRefreshTimerRef.current = null;
-        void fetchBlocks(blocks, {
+        void fetchTargets(targets, {
           showLoading: false,
-          blockIds: new Set(sourceIds),
+          targetIds: new Set(changedTargetIds),
           force: true,
         });
       }, DATA_PREVIEW_AUTO_REFRESH_DEBOUNCE_MS);
     },
-    [fetchBlocks],
+    [fetchTargets],
   );
 
-  // Fingerprint: auto-refresh das fontes afetadas; carga inicial se ainda não há dados.
+  // Fingerprint: auto-refresh das fontes/modelos afetados; carga inicial se ainda não há dados.
   useEffect(() => {
-    const blocks = readDataBlocks();
-    if (blocks.length === 0) {
+    const targets = readDataTargets();
+    if (targets.length === 0) {
       setStaleSourceIds([]);
       setError(null);
       return;
     }
 
-    const hasData = hasAnyResolved(resolvedRef.current, blocks);
+    const hasData = hasAnyResolved(resolvedRef.current, targets);
     const synced = syncedFingerprintRef.current;
 
     if (dataFingerprint !== synced) {
@@ -504,17 +554,23 @@ export function useComunicadoDataPreview({
           nextFingerprint: dataFingerprint,
           blocks: configRef.current.blocks,
         });
+        const modelIds = planDataModelPreviewRefresh({
+          previousFingerprint: synced,
+          nextFingerprint: dataFingerprint,
+          dataModels: configRef.current.dataModels,
+        });
+        const changedIds = [...new Set([...sourceIds, ...modelIds])];
         // Exclusão de visual / mudança sem impacto em dados: avança fingerprint sem fetch.
-        if (sourceIds.length === 0) {
+        if (changedIds.length === 0) {
           syncedFingerprintRef.current = dataFingerprint;
           setStaleSourceIds([]);
           return;
         }
-        scheduleAutoRefresh(sourceIds, blocks);
+        scheduleAutoRefresh(changedIds, targets);
         return;
       }
       didInitialFetchRef.current = true;
-      void fetchBlocks(blocks, { showLoading: true, force: false });
+      void fetchTargets(targets, { showLoading: true, force: false });
       return;
     }
 
@@ -525,29 +581,29 @@ export function useComunicadoDataPreview({
     }
     if (!didInitialFetchRef.current) {
       didInitialFetchRef.current = true;
-      void fetchBlocks(blocks, { showLoading: true, force: false });
+      void fetchTargets(targets, { showLoading: true, force: false });
     }
-  }, [playlistId, dataFingerprint, fetchBlocks, readDataBlocks, scheduleAutoRefresh]);
+  }, [playlistId, dataFingerprint, fetchTargets, readDataTargets, scheduleAutoRefresh]);
 
   // Refresh periódico no editor: intervalo da programação (globalRefreshSec).
   // Add/delete e layout NÃO refetcham; encoding/filtros/Atualizar continuam no fingerprint.
   useEffect(() => {
-    const blocks = readDataBlocks();
-    if (blocks.length === 0) return;
+    const targets = readDataTargets();
+    if (targets.length === 0) return;
     const intervalSec = resolveDataBlockRefreshSec(undefined, globalRefreshSecRef.current);
     if (!Number.isFinite(intervalSec) || intervalSec <= 0) return;
     const timer = window.setInterval(() => {
-      const current = readDataBlocks();
+      const current = readDataTargets();
       if (current.length === 0) return;
       // Não empilhar se já há lote em andamento.
       if (batchAbortRef.current) return;
-      void fetchBlocks(current, {
+      void fetchTargets(current, {
         showLoading: false,
         force: true,
       });
     }, intervalSec * 1000);
     return () => window.clearInterval(timer);
-  }, [playlistId, fetchBlocks, readDataBlocks, globalRefreshSec]);
+  }, [playlistId, fetchTargets, readDataTargets, globalRefreshSec]);
 
   const isDataPreviewStale = staleSourceIds.length > 0;
 

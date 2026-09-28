@@ -207,6 +207,8 @@ export type ComunicadoTextProjection = {
 /** Campos compartilhados por blocos de texto/forma ligados a `data_source`. */
 export type ComunicadoTextDataBoundFields = {
   dataSourceId?: string;
+  /** DataModel binding target — wins over `dataSourceId` when both are present. */
+  modelId?: string;
   textProjection?: ComunicadoTextProjection;
   /** Runtime — enrichment / preview; não persistir no native_config. */
   resolved?: ComunicadoDataResolved;
@@ -494,6 +496,8 @@ export type ComunicadoChartViewBlock = ComunicadoBlockBase & {
   type: "chart_view";
   chartType: ComunicadoChartType;
   dataSourceId?: string;
+  /** DataModel binding target — wins over `dataSourceId` when both are present. */
+  modelId?: string;
   /** Projeção de eixos/séries (contrato canônico). */
   chartProjection?: import("./viewProjection").ChartViewProjection;
   chartOptions?: ComunicadoChartOptions;
@@ -509,6 +513,8 @@ export type ComunicadoTableViewBlock = ComunicadoBlockBase & {
   /** Onda 4G.8 — estilo/visibilidade por parte (adapter com tableOptions). */
   tableParts?: ComunicadoTablePartsMap;
   dataSourceId?: string;
+  /** DataModel binding target — wins over `dataSourceId` when both are present. */
+  modelId?: string;
   /** Colunas visíveis/ordem (contrato canônico). */
   tableProjection?: import("./viewProjection").TableViewProjection;
   /** Truncamento de exibição: máx. de linhas (vazio = todas do resolved, com scroll). */
@@ -541,6 +547,8 @@ export type ComunicadoCanvasTableCell = {
   text?: string;
   value?: number | null;
   format?: ComunicadoCanvasTableNumberFormat;
+  /** Spec canônico da célula — na leitura ganha do enum `format`. */
+  displayFormat?: import("@delpi/plugin-ui/index").DisplayFormatSpec;
   series?: number[];
   style?: ComunicadoCanvasTableCellStyle;
   /**
@@ -554,6 +562,8 @@ export type ComunicadoCanvasTableCell = {
    * Omitido = herda `dataSourceId` do bloco Grade.
    */
   dataSourceId?: string;
+  /** DataModel binding desta célula — wins over `dataSourceId` when both present. */
+  modelId?: string;
 };
 
 export type ComunicadoCanvasTableOptions = {
@@ -585,6 +595,8 @@ export type ComunicadoCanvasTableBlock = ComunicadoBlockBase & {
   canvasTableOptions?: ComunicadoCanvasTableOptions;
   /** Fonte default do bloco; células podem sobrescrever com `cells[][].dataSourceId`. */
   dataSourceId?: string;
+  /** DataModel default target — wins over `dataSourceId` when both are present. */
+  modelId?: string;
   /** Runtime — enrichment / preview; não persistir no native_config. */
   resolved?: ComunicadoDataResolved;
   /**
@@ -624,6 +636,8 @@ export type ComunicadoInputBlock = ComunicadoBlockBase & {
 export type ComunicadoKpiViewBlock = ComunicadoBlockBase & {
   type: "kpi_view";
   dataSourceId?: string;
+  /** DataModel binding target — wins over `dataSourceId` when both are present. */
+  modelId?: string;
   /** Métricas com agregação/formato/regras por coluna (contrato canônico). */
   kpiProjection?: import("./viewProjection").KpiViewProjection;
   kpiOptions?: import("./comunicadoKpiOptions").ComunicadoKpiOptions;
@@ -865,12 +879,44 @@ export type ComunicadoGroupTransform = {
   rotation: number;
 };
 
+/**
+ * Input embutido de um DataModel — rota/params internos do modelo.
+ * Nunca é elemento de canvas nem recebe binding próprio.
+ */
+export type TvDataModelInput = {
+  id: string;
+  operationId: string;
+  label?: string;
+  queryName?: string;
+  params?: Record<string, string | number | boolean | null>;
+  /** Transform local do input (executa antes do transform do modelo). */
+  transform?: unknown;
+};
+
+/**
+ * DataModel persistido — objeto lógico de dados, não visual.
+ * Campos de runtime (`resolved`, `outputSchema`, `runtimeErrors`,
+ * `effectiveParams`, `rows`) nunca pertencem a este tipo.
+ */
+export type TvDataModel = {
+  id: string;
+  label?: string;
+  primaryInputId: string;
+  inputs: TvDataModelInput[];
+  /** Transform do modelo (aplicado após o transform do input primário). */
+  transform?: unknown;
+  /** Rótulos de display por campo do output. */
+  fieldLabels?: Record<string, string>;
+};
+
 export type ComunicadoConfig = {
   version?: number;
   headline?: string;
   subtitle?: string;
   background?: ComunicadoBackground;
   blocks?: ComunicadoBlock[];
+  /** DataModels do slide (objetos lógicos — nunca renderizáveis). */
+  dataModels?: TvDataModel[];
   groupTransforms?: Record<string, ComunicadoGroupTransform>;
   dataFilters?: ComunicadoDataFilters;
   /** Notas do apresentador (não exibidas no kiosk TV). */
@@ -898,6 +944,7 @@ export type ComunicadoScreenData = {
   subtitle?: string;
   background?: ComunicadoBackground;
   blocks?: ComunicadoBlock[];
+  dataModels?: TvDataModel[];
   groupTransforms?: Record<string, ComunicadoGroupTransform>;
   dataFilters?: ComunicadoDataFilters;
   customFonts?: ComunicadoCustomFontRef[];
@@ -942,6 +989,32 @@ export const COMUNICADO_FONT_FAMILIES = [
   "Trebuchet MS, sans-serif",
   "Impact, Haettenschweiler, sans-serif",
 ] as const;
+
+/** Slice mínimo para resolver o target de binding de um consumidor. */
+export type BindingTargetSlice = {
+  modelId?: unknown;
+  dataSourceId?: unknown;
+};
+
+export type BindingTargetKind = "model" | "source" | null;
+
+/** Id do target ativo — `modelId` vence sobre `dataSourceId` (contrato DM2). */
+export function bindingTargetId(node: unknown): string {
+  const slice = node as BindingTargetSlice | null | undefined;
+  if (!slice) return "";
+  const modelId = typeof slice.modelId === "string" ? slice.modelId.trim() : "";
+  if (modelId) return modelId;
+  const sourceId = typeof slice.dataSourceId === "string" ? slice.dataSourceId.trim() : "";
+  return sourceId;
+}
+
+export function bindingTargetKind(node: unknown): BindingTargetKind {
+  const slice = node as BindingTargetSlice | null | undefined;
+  if (!slice) return null;
+  if (typeof slice.modelId === "string" && slice.modelId.trim()) return "model";
+  if (typeof slice.dataSourceId === "string" && slice.dataSourceId.trim()) return "source";
+  return null;
+}
 
 export const COMUNICADO_FONT_SIZE_MIN = 12;
 /**

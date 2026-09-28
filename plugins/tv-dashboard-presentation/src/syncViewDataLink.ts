@@ -6,7 +6,7 @@
  * KPI/tabela: default compacto → substitui; senão grow-only.
  */
 
-import { isDataViewBlockType } from "./comunicadoDataArchitecture";
+import { bindingTargetId, isDataViewBlockType } from "./comunicadoDataArchitecture";
 import type {
   ComunicadoBlock,
   ComunicadoChartViewBlock,
@@ -23,6 +23,13 @@ import {
 } from "./viewProjection";
 
 export type DataViewBlockType = "kpi_view" | "chart_view" | "table_view";
+
+/** Patch aplicável a qualquer view de dados — união dos campos sem o discriminante. */
+export type ViewDataLinkPatch = Partial<
+  Omit<ComunicadoKpiViewBlock, "type"> &
+    Omit<ComunicadoChartViewBlock, "type"> &
+    Omit<ComunicadoTableViewBlock, "type">
+>;
 
 export type ViewFieldTypes = Record<string, "number" | "string" | "date"> | null | undefined;
 
@@ -136,7 +143,10 @@ export function framesDiffer(a: ComunicadoFrame, b: ComunicadoFrame): boolean {
 
 export type BuildViewDataLinkPatchInput = {
   viewType: DataViewBlockType;
+  /** Target legacy `data_source`. Ignorado quando `modelId` informado. */
   dataSourceId: string;
+  /** Target DataModel — exclusivo com `dataSourceId` (contrato DM2). */
+  modelId?: string;
   resolved?: ComunicadoDataResolved;
   fieldTypes?: ViewFieldTypes;
   currentFrame: ComunicadoFrame;
@@ -155,10 +165,11 @@ export type BuildViewDataLinkPatchInput = {
  */
 export function buildViewDataLinkPatch(
   input: BuildViewDataLinkPatchInput,
-): Partial<ComunicadoKpiViewBlock & ComunicadoChartViewBlock & ComunicadoTableViewBlock> {
+): ViewDataLinkPatch {
   const {
     viewType,
     dataSourceId,
+    modelId,
     resolved,
     fieldTypes,
     currentFrame,
@@ -172,10 +183,11 @@ export function buildViewDataLinkPatch(
     fieldTypes,
     viewType === "chart_view" ? chartType : undefined,
   );
-  const patch: Partial<ComunicadoKpiViewBlock & ComunicadoChartViewBlock & ComunicadoTableViewBlock> =
-    {
-      dataSourceId,
-    };
+  // Escrita exclusiva: bind a modelo remove dataSourceId; bind a fonte remove modelId.
+  const cleanModelId = modelId?.trim() || "";
+  const patch: ViewDataLinkPatch = cleanModelId
+    ? { modelId: cleanModelId, dataSourceId: undefined }
+    : { dataSourceId, modelId: undefined };
 
   let kpiProjection = existing?.kpiProjection;
   let chartProjection = existing?.chartProjection;
@@ -238,21 +250,26 @@ export function syncDataViewBlocksWithResolved(
   const changedIds: string[] = [];
   const next = blocks.map((block) => {
     if (!isDataViewBlockType(block.type)) return block;
-    const sourceId =
-      "dataSourceId" in block && typeof block.dataSourceId === "string"
-        ? block.dataSourceId.trim()
-        : "";
-    if (!sourceId) return block;
+    // Dual-read: modelId (DataModel) ou dataSourceId (legacy) — modelId vence.
+    const targetId = bindingTargetId(block);
+    if (!targetId) return block;
 
-    const resolved = resolvedBySourceId[sourceId];
-    const fieldTypes = fieldTypesBySourceId?.[sourceId];
+    const resolved = resolvedBySourceId[targetId];
+    const fieldTypes = fieldTypesBySourceId?.[targetId];
     const hasProjection = viewHasProjectionConfigured(block);
 
     if (!hasProjection) {
       if (!resolved) return block;
       const patch = buildViewDataLinkPatch({
         viewType: block.type,
-        dataSourceId: sourceId,
+        dataSourceId:
+          "dataSourceId" in block && typeof block.dataSourceId === "string"
+            ? block.dataSourceId
+            : "",
+        modelId:
+          "modelId" in block && typeof block.modelId === "string"
+            ? block.modelId
+            : undefined,
         resolved,
         fieldTypes,
         currentFrame: block.frame,

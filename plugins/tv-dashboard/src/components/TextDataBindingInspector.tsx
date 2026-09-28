@@ -1,10 +1,13 @@
 import { FormSelectControl, NativeTextControl } from "@delpi/plugin-ui/index";
 import {
   TEXT_FIELD_AGGREGATION_OPTIONS,
+  bindingTargetId,
+  bindingTargetKind,
   buildTextDataLinkPatch,
   catalogFieldsFromRouteLabels,
   consolidateTextBindingToProjection,
   discoverResolvedFieldOptions,
+  findDataModel,
   isComunicadoVisualBoxBlock,
   isEfficiencyPinBlock,
   readEffectiveTextProjection,
@@ -42,7 +45,14 @@ export function TextDataBindingInspector({
   labelCatalog = null,
   onOpenDataSources,
 }: Props) {
-  const { selected, blocks, updateSelected, openDataCatalog } = useComunicadoEditor();
+  const {
+    selected,
+    blocks,
+    config,
+    updateSelected,
+    openDataCatalog,
+    getDataPreviewResolved,
+  } = useComunicadoEditor();
   const isRibbon = layout === "ribbon";
   const compactSelect = isRibbon ? "delpi-ui-select--compact" : undefined;
   const compactNative = isRibbon ? "delpi-ui-native-control--compact" : undefined;
@@ -58,25 +68,32 @@ export function TextDataBindingInspector({
   );
 
   const visualBox = selected && isComunicadoVisualBoxBlock(selected) ? selected : null;
-  const sourceId = visualBox?.dataSourceId?.trim() ?? "";
+  const targetId = visualBox ? bindingTargetId(visualBox) : "";
+  const targetKind = visualBox ? bindingTargetKind(visualBox) : "none";
+  const linkedModel =
+    targetKind === "model" ? findDataModel(config, targetId) : null;
+  const modelResolved = linkedModel ? getDataPreviewResolved?.(linkedModel.id) : undefined;
+  const sourceId = targetKind === "source" ? targetId : "";
   const linkedSource = sourceId ? blocks.find((block) => block.id === sourceId) ?? null : null;
   const resolved =
-    linkedSource && "resolved" in linkedSource && linkedSource.resolved
+    modelResolved ??
+    (linkedSource && "resolved" in linkedSource && linkedSource.resolved
       ? linkedSource.resolved
       : visualBox && "resolved" in visualBox && visualBox.resolved
         ? visualBox.resolved
-        : undefined;
+        : undefined);
 
   const fieldOptions = useMemo(
     () =>
       discoverResolvedFieldOptions(
         resolved,
         catalogFields,
-        linkedSource && "fieldLabels" in linkedSource
-          ? (linkedSource as { fieldLabels?: Record<string, string> }).fieldLabels
-          : undefined,
+        linkedModel?.fieldLabels ??
+          (linkedSource && "fieldLabels" in linkedSource
+            ? (linkedSource as { fieldLabels?: Record<string, string> }).fieldLabels
+            : undefined),
       ),
-    [catalogFields, linkedSource, resolved],
+    [catalogFields, linkedModel, linkedSource, resolved],
   );
 
   /** Owner do paint — não textProjection paralelo quando há dataRefs. */
@@ -88,10 +105,10 @@ export function TextDataBindingInspector({
   const projectionRef = useRef(projection);
   projectionRef.current = projection;
 
-  // Fonte ligada sem campo: materializa o 1º disponível (catálogo ou resolved).
+  // Fonte/modelo ligado sem campo: materializa o 1º disponível (catálogo ou resolved).
   // Não recriar textProjection quando o paint já usa contentRuns.dataRef.
   useEffect(() => {
-    if (!selectedBlockId || !sourceId) return;
+    if (!selectedBlockId || !targetId) return;
     if (projectionField) return;
     if (!firstFieldOption) return;
     if (bindingOwner === "contentRuns") return;
@@ -120,7 +137,7 @@ export function TextDataBindingInspector({
     projectionField,
     resolved,
     selectedBlockId,
-    sourceId,
+    targetId,
     updateSelected,
     visualBox,
   ]);
@@ -128,6 +145,7 @@ export function TextDataBindingInspector({
   if (!visualBox) return null;
 
   function patchProjection(patch: Partial<ComunicadoTextProjection>) {
+    if (!visualBox) return;
     const consolidated = consolidateTextBindingToProjection(visualBox, patch);
     updateSelected({
       textProjection: consolidated.textProjection,
@@ -137,9 +155,11 @@ export function TextDataBindingInspector({
   }
 
   function linkSource(nextSourceId: string) {
+    if (!visualBox) return;
     if (!nextSourceId.trim()) {
       updateSelected({
         dataSourceId: undefined,
+        modelId: undefined,
         textProjection: undefined,
         resolved: undefined,
       } as Partial<typeof visualBox>);
@@ -171,6 +191,38 @@ export function TextDataBindingInspector({
     updateSelected(patch as Partial<typeof visualBox>);
   }
 
+  /** Liga a um DataModel — mesma consolidação de owner do fluxo de fonte. */
+  function linkModel(nextModelId: string) {
+    if (!visualBox) return;
+    const trimmed = nextModelId.trim();
+    if (!trimmed) {
+      linkSource("");
+      return;
+    }
+    const targetResolved = getDataPreviewResolved?.(trimmed) ?? resolved;
+    const effective = readEffectiveTextProjection(visualBox);
+    const patch = buildTextDataLinkPatch({
+      dataSourceId: "",
+      modelId: trimmed,
+      resolved: targetResolved,
+      existing: effective.field?.trim() ? effective : visualBox.textProjection,
+      catalogFields,
+      staticContent: staticLabelFromTextBoundBlock(visualBox),
+    });
+    if (resolveTextBindingOwner(visualBox) === "contentRuns") {
+      const consolidated = consolidateTextBindingToProjection(visualBox, {
+        ...(patch.textProjection ?? effective),
+      });
+      updateSelected({
+        ...patch,
+        textProjection: consolidated.textProjection ?? patch.textProjection,
+        contentRuns: consolidated.contentRuns,
+      } as Partial<typeof visualBox>);
+      return;
+    }
+    updateSelected(patch as Partial<typeof visualBox>);
+  }
+
   const openCatalog = onOpenDataSources ?? (() => openDataCatalog("insert"));
 
   return (
@@ -179,20 +231,23 @@ export function TextDataBindingInspector({
         blocks={blocks}
         selectedId={visualBox.id}
         sourceId={sourceId}
+        modelId={"modelId" in visualBox ? visualBox.modelId ?? "" : ""}
+        dataModels={config.dataModels}
         compactSelect={compactSelect}
         pane={pane}
         labelCatalog={labelCatalog}
         onChangeSourceId={linkSource}
+        onChangeModelId={linkModel}
         onOpenCatalog={openCatalog}
         catalogLabel="Inserir nova fonte…"
         emptyHint={
-          sourceId
+          targetId
             ? undefined
             : "Escolha uma fonte deste slide ou insira uma nova no catálogo."
         }
       />
 
-      {sourceId ? (
+      {targetId ? (
         <div className="td-text-data-binding-sections">
           <DeckPropertySection
             title="Campo dinâmico"

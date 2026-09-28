@@ -429,6 +429,12 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
       "Conecte o gráfico, tabela, KPI ou texto/forma a qualquer fonte do palco. A forma sugerida no catálogo não restringe o vínculo.",
     projectSources:
       "Fontes já inseridas neste slide. Use uma existente em vez de criar outra rota no catálogo.",
+    dataModels:
+      "Modelos de dados do slide: cada modelo combina uma ou mais rotas e um transform num único objeto lógico. Visuais ligam ao modelo — as rotas internas não aparecem no palco.",
+    modelInspector:
+      "Objeto lógico de dados (não visual). «Rotas do modelo» mostra as rotas internas, parâmetros e transform; «Campos de saída» lista o que os visuais podem projetar.",
+    modelBinding:
+      "Liga este bloco ao modelo de dados. O seletor de campo usa a saída do modelo; trocar para uma fonte legacy remove o vínculo do modelo.",
     valueFields:
       "Marque quais métricas escalares da rota entram no KPI, gráfico ou tabela. Vazio (todas marcadas) = exibir todas.",
     viewValueFields:

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, type MutableRefObject } from "react";
 
 import {
+  bindingTargetId,
   canvasTableHasDataBinding,
   isCanvasTableDataBoundBlockType,
   isComunicadoVisualBoxBlock,
@@ -37,10 +38,7 @@ export function useSyncViewDataLinks({
     const viewPart = blocks
       .filter((block) => isDataViewBlockType(block.type))
       .map((block) => {
-        const sourceId =
-          "dataSourceId" in block && typeof block.dataSourceId === "string"
-            ? block.dataSourceId.trim()
-            : "";
+        const sourceId = bindingTargetId(block);
         const hasResolved = Boolean(sourceId && resolvedByBlockId[sourceId]);
         const hasProj = viewHasProjectionConfigured(block);
         return `${block.id}:${sourceId}:${hasProj ? 1 : 0}:${hasResolved ? 1 : 0}:${block.frame.w}x${block.frame.h}`;
@@ -48,11 +46,11 @@ export function useSyncViewDataLinks({
       .sort()
       .join("|");
     const textPart = blocks
-      .filter((block) => isComunicadoVisualBoxBlock(block) && block.dataSourceId?.trim())
+      .filter((block) => isComunicadoVisualBoxBlock(block) && bindingTargetId(block))
       .map((block) => {
-        const sourceId = block.dataSourceId?.trim() ?? "";
+        const sourceId = bindingTargetId(block);
         const hasResolved = Boolean(sourceId && resolvedByBlockId[sourceId]);
-        const field = block.textProjection?.field ?? "";
+        const field = "textProjection" in block ? (block.textProjection?.field ?? "") : "";
         return `${block.id}:${sourceId}:${field}:${hasResolved ? 1 : 0}`;
       })
       .sort()
@@ -63,10 +61,7 @@ export function useSyncViewDataLinks({
           isCanvasTableDataBoundBlockType(block.type) && canvasTableHasDataBinding(block as never),
       )
       .map((block) => {
-        const sourceId =
-          "dataSourceId" in block && typeof block.dataSourceId === "string"
-            ? block.dataSourceId.trim()
-            : "";
+        const sourceId = bindingTargetId(block);
         const hasResolved = Boolean(sourceId && resolvedByBlockId[sourceId]);
         return `${block.id}:${sourceId}:${hasResolved ? 1 : 0}`;
       })
@@ -90,7 +85,7 @@ export function useSyncViewDataLinks({
       .map((id) => {
         const block = next.find((item) => item.id === id);
         if (!block) return id;
-        if (!("dataSourceId" in block)) return id;
+        if (!("dataSourceId" in block) && !("modelId" in block)) return id;
         const frame = block.frame;
         const proj =
           block.type === "kpi_view"
@@ -102,7 +97,7 @@ export function useSyncViewDataLinks({
                 : isComunicadoVisualBoxBlock(block)
                   ? block.textProjection?.field ?? ""
                   : "";
-        return `${id}:${block.dataSourceId}:${proj}:${frame.w}x${frame.h}`;
+        return `${id}:${bindingTargetId(block)}:${proj}:${frame.w}x${frame.h}`;
       })
       .sort()
       .join("|");
