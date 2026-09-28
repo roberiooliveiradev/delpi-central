@@ -7,9 +7,21 @@ from typing import Any, Callable
 
 from fastapi import Request
 
+from tm_app.application.governed_writes.diagnostic_capabilities import (
+    CREATE_CAPABILITY as _DIAG_CREATE,
+    MANAGE_CAPABILITY as _DIAG_MANAGE,
+    DiagnosticWriteStack,
+    execute as _diag_execute,
+    prepare_create as _diag_prepare_create,
+    prepare_manage as _diag_prepare_manage,
+    recompute_fingerprint as _diag_recompute_fingerprint,
+    require_prepare_authz as _diag_prepare_authz,
+    verify as _diag_verify,
+)
 from tm_app.application.governed_writes.errors import (
     BUSINESS_RULE,
     FORBIDDEN,
+    INTERNAL,
     NOT_FOUND,
     OUTCOME_VERIFICATION_FAILED,
     PROPOSAL_MISMATCH,
@@ -51,6 +63,8 @@ WRITE_CAPABILITIES = frozenset(
         "manage_evidence",
         "adjust_shared_resource_cost",
         "meeting_minute_manage",
+        _DIAG_CREATE,
+        _DIAG_MANAGE,
     }
 )
 
@@ -105,9 +119,13 @@ class GovernedWriteOrchestrator:
         self,
         dispatch: GptActionsDispatchService | None = None,
         packages: GuidedImprovementPackageService | None = None,
+        diagnostic_stack: DiagnosticWriteStack | None = None,
     ) -> None:
         self._dispatch = dispatch or GptActionsDispatchService()
         self._packages = packages or GuidedImprovementPackageService(self._dispatch)
+        # Canonical Diagnostic write path — composed at the interface layer
+        # (application never instantiates infrastructure).
+        self._diagnostic_stack = diagnostic_stack
 
     # ------------------------------------------------------------------ prepare
 
@@ -180,11 +198,26 @@ class GovernedWriteOrchestrator:
             return self._prep_cost(request, args)
         if capability == "meeting_minute_manage":
             return self._prep_minute_manage(request, args)
+        if capability in (_DIAG_CREATE, _DIAG_MANAGE):
+            stack = self._require_diag_stack()
+            _diag_prepare_authz(request)
+            if capability == _DIAG_CREATE:
+                return _diag_prepare_create(stack, args)
+            return _diag_prepare_manage(stack, args)
         raise GovernedWriteError(
             f"Prepare not implemented for '{capability}'.",
             code=VALIDATION,
             status_code=400,
         )
+
+    def _require_diag_stack(self) -> DiagnosticWriteStack:
+        if self._diagnostic_stack is None:
+            raise GovernedWriteError(
+                "Diagnostic write stack not configured.",
+                code=INTERNAL,
+                status_code=500,
+            )
+        return self._diagnostic_stack
 
     def _prep_create(self, request: Request, args: dict[str, Any]) -> dict[str, Any]:
         entity = str(args.get("entity") or "").strip()
@@ -695,6 +728,10 @@ class GovernedWriteOrchestrator:
                     self._dispatch.get_record(request, "meeting_minute", str(mid))
                 )
             return fingerprint({"minute_id": None})
+        if cap in (_DIAG_CREATE, _DIAG_MANAGE):
+            return _diag_recompute_fingerprint(
+                self._require_diag_stack(), cap, change
+            )
         raise GovernedWriteError(
             "Fingerprint recompute unsupported.",
             code=VALIDATION,
@@ -778,6 +815,8 @@ class GovernedWriteOrchestrator:
                 minute_id=change.get("minute_id"),
                 payload=dict(change.get("data") or {}),
             )
+        if cap in (_DIAG_CREATE, _DIAG_MANAGE):
+            return _diag_execute(self._require_diag_stack(), change)
         raise GovernedWriteError(
             f"ACT not implemented for '{cap}'.",
             code=VALIDATION,
@@ -921,6 +960,11 @@ class GovernedWriteOrchestrator:
                 except GptActionsError:
                     read = None
             return {"result": write_result, "minute": read}
+
+        if cap in (_DIAG_CREATE, _DIAG_MANAGE):
+            # write_result is the authoritative DiagnosticReadView returned
+            # by the canonical use case — verify it matches the sealed change.
+            return _diag_verify(change, write_result)
 
         return {"write_result": write_result, "expected": expected}
 

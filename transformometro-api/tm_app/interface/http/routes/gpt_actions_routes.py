@@ -34,6 +34,9 @@ from tm_app.config import settings
 from tm_app.core.auth_actor import actor_from_request
 from tm_app.core.errors import public_error_parts
 from tm_app.core.responses import fail, ok
+from tm_app.infrastructure.diagnostic_composition import (
+    build_diagnostic_write_stack,
+)
 from tm_app.infrastructure.gateways.core_person_profile_gateway import (
     CorePersonProfileGateway,
 )
@@ -45,7 +48,11 @@ router = APIRouter(
 logger = logging.getLogger(__name__)
 _dispatch = GptActionsDispatchService()
 _packages = GuidedImprovementPackageService(_dispatch)
-_orchestrator = GovernedWriteOrchestrator(_dispatch, _packages)
+_orchestrator = GovernedWriteOrchestrator(
+    _dispatch,
+    _packages,
+    diagnostic_stack=build_diagnostic_write_stack(),
+)
 _governed = GovernedActionsFacade(_orchestrator, _dispatch)
 _process_context = ProcessContextService()
 _user_context = UserContextService(

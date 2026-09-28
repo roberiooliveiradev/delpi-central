@@ -43,6 +43,9 @@ from tm_app.application.gpt_actions.user_context_service import (
     AuthenticatedUserContext,
     UserContextService,
 )
+from tm_app.infrastructure.diagnostic_composition import (
+    build_diagnostic_write_stack,
+)
 from tm_app.infrastructure.gateways.core_person_profile_gateway import (
     CorePersonProfileGateway,
 )
@@ -56,7 +59,11 @@ logger = logging.getLogger(__name__)
 
 _dispatch = GptActionsDispatchService()
 _packages = GuidedImprovementPackageService(_dispatch)
-_orchestrator = GovernedWriteOrchestrator(_dispatch, _packages)
+_orchestrator = GovernedWriteOrchestrator(
+    _dispatch,
+    _packages,
+    diagnostic_stack=build_diagnostic_write_stack(),
+)
 _governed = GovernedActionsFacade(orchestrator=_orchestrator, dispatch=_dispatch)
 _process_context = ProcessContextService()
 _user_context = UserContextService(person_profile_reader=CorePersonProfileGateway())
