@@ -116,6 +116,7 @@ def create_mcp_server() -> MCPServer:
     mcp = TvDashboardMCPServer(
         name="tv-dashboard",
         instructions=VISTA_MCP_INSTRUCTIONS,
+        version="0.1.0",
     )
 
     _register_read_tools(mcp)
@@ -146,9 +147,12 @@ def _register_read_tools(mcp: MCPServer) -> None:
     )
 
     def _meta(name: str) -> dict:
+        # `_meta` keys must be vendor-namespaced: bare `securitySchemes` is a
+        # reserved key for the OpenAI connector (it parses the value as typed
+        # OAuthSecurityScheme objects) and broke action discovery.
         return {
-            "securitySchemes": list(MCP_TOOL_SECURITY_SCHEMES),
-            "toolClass": TOOL_CLASS[name],
+            "delpi/securitySchemes": list(MCP_TOOL_SECURITY_SCHEMES),
+            "delpi/toolClass": TOOL_CLASS[name],
         }
 
     mcp.add_tool(

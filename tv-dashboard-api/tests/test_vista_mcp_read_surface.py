@@ -620,6 +620,19 @@ def test_modern_era_tools_list_served_natively():
     assert {t["name"] for t in tools} == set(MCP_TOOL_NAMES)
 
 
+def test_tool_meta_keys_are_vendor_namespaced():
+    """Bare `securitySchemes` in tool _meta is a reserved key for the OpenAI
+    connector (parsed as typed OAuthSecurityScheme objects) — string values
+    there broke ChatGPT action discovery. Vendor keys must stay `delpi/*`."""
+    tools = {t.name: t for t in asyncio.run(create_mcp_server().list_tools())}
+    for name, t in tools.items():
+        meta = t.meta or {}
+        assert "securitySchemes" not in meta, name
+        assert "toolClass" not in meta, name
+        assert meta.get("delpi/toolClass") == TOOL_CLASS[name], name
+        assert meta.get("delpi/securitySchemes"), name
+
+
 def test_modern_protocol_header_does_not_emit_unsupported_version_400():
     """A request under the modern era must never fail with the v1-era
     'Unsupported protocol version' 400 (the exact production failure)."""
