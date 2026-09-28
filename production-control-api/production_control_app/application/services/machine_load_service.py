@@ -443,6 +443,33 @@ class MachineLoadService:
             "operation_pending_qty": _optional_float(item.get("operation_pending_qty")),
         }
 
+    def public_operation_run_quantity(
+        self,
+        *,
+        branch: str,
+        production_order: str,
+        operation_code: str,
+    ) -> dict[str, float | None] | None:
+        """Saldo pendente + fator de conversão em peças para congelar no start do run.
+
+        A mesma fonte do cockpit: snapshot publicado enriquecido com o saldo vivo.
+        """
+        item = self._public_operation_item(
+            branch=branch,
+            production_order=production_order,
+            operation_code=operation_code,
+            enrich=True,
+        )
+        if item is None:
+            return None
+        return {
+            "operation_pending_qty": _optional_float(item.get("operation_pending_qty")),
+            "pending_qty": _optional_float(item.get("pending_qty")),
+            "pieces_conversion_factor": _optional_float(
+                item.get("pieces_conversion_factor")
+            ),
+        }
+
     def _public_operation_item(
         self,
         *,
