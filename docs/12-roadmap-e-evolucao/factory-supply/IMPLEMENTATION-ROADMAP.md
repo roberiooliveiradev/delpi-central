@@ -54,7 +54,7 @@ Consolidado de `TECHNICAL-CONTRACTS.md` §43–44 — todos tratados como gates 
 9. Regra de quantidade de devolução — **PRODUTO** (gate; ver escopo §21)
 10. Política de prioridade — **PRODUTO** (gate; default factual ordering)
 11. ~~Header de correlação~~ — RESOLVIDO FS-C0.T11 (`X-Request-ID` `SINGLE_ID`, UUID4, adapter-propagated — TC §32)
-12. Retenção de `idempotency_keys`/`supply_events`/`integration_outbox` — **técnico**
+12. ~~Retenção~~ — RESOLVIDO FS-C0.T12 (matriz §52: 5y audit/histórico, 24h idempotency, 30d outbox pub, checkpoint corrente; ROPA-compliant — pendente só registro da categoria FS na ROPA na implantação)
 13. `SYNC_CADENCE` benchmark — **técnico** (carga/fan-out api-delpi validada antes de fixar; TC §33)
 14. Categorias de notificação FS no catálogo canônico Core (`notification-catalog-preferences`) — **técnico** (registro junto ao manifesto C7.T1)
 
@@ -255,7 +255,7 @@ Primeira fase obrigatória — só evidência e decisão, **sem código de produ
 | FS-C0.T6 | ~~Congelar `request_fingerprint`~~ — **`DONE`**: SHA-256 sobre canonical-JSON do comando tipado (chaves ordenadas, Decimal→string `normalize()`, nulos/default por semântica tipada, UTF-8); input = operation+path+branch+campos de domínio+`expected_version`; escopo `UNIQUE(key,route,actor_user_id)`; claim+mutation+audit+outbox+snapshot em **uma tx** (elimina janela do requests-api); UNIQUE-wait resolve corrida; falha não consome key; AuthZ reavaliado no replay; helper **local** (sem consumidor cruzado provado) | TC §10/§39 | FS-API-04/DATA-08→ACCEPTED | — |
 | FS-C0.T7 | ~~Conversão de unidades~~ — **`DONE`**: unidade autoritativa `B1_UM` PROVEN em operation-materials, internal-movements, stock-balances (`unit_of_measure`); `get_product_stock` omite unit → compõe via master data; `UNIT_CONVERSION_*=NOT_REQUIRED`; Decimal `NUMERIC(18,6)` + comparação exata; `accepted_unit` estável; re-sync com unit diferente → `UNIT_DIVERGENCE`; ERP qty+unit divergentes → `divergent` não `matched`; unit ausente → `unknown`/fail-closed em writes | PROVEN (contratos) | FS-DM-09→ACCEPTED | — |
 | FS-C0.T11 | ~~Header de correlação~~ — **`DONE`**: inventário prova ausência de header canônico (gateway/shared/api-delpi/bounded APIs/portal limpos); `X-Request-ID` `SINGLE_ID` UUID4 congelado — inbound aceita/gera, contextvar, echo em response + `error.correlation_id`, adapters propagam a api-delpi (aditivo), jobs geram por run, replay idempotente preserva correlation original + novo ID só em logs, `supply_events`/`integration_outbox` persistem, async = nova correlação+link por aggregate (§32) | PROVEN (inventário) | FS-INT-03→ACCEPTED | — |
-| FS-C0.T12 | Retenção: idempotency_keys, supply_events | política | data tasks | — |
+| FS-C0.T12 | ~~Retenção~~ — **`DONE`**: governança canônica encontrada (ROPA + `DATA_RETENTION_DAYS` + `data_retention_job` — audit 730d **anonimização**, consent 1825d); targets PM compatíveis, sem conflito; matriz §52 (5y audit+histórico+divergências, 24h idempotency, 30d outbox pub/falho sem TTL+dead-letter TO_DESIGN, checkpoint corrente+mínimo, erp_observations com histórico, logs=platform-owned); `actor_display_name` anonimiza 2y (padrão ROPA); cleanup = job in-process `factory_supply_retention_cleanup` (modelo T5), cadência TO_BENCHMARK (precedente diário), ordem dependência segura, anti-recursão; **ação pendente:** registrar categoria FS na ROPA na implantação | PROVEN (governança) | data tasks | — |
 
 ### 8.2 Product decision gates (C0.P)
 
@@ -358,6 +358,7 @@ Nenhuma rota nova api-delpi (decisão §27 TC). Evolve internal-movements **some
 | FS-C4.T3 | `request_supply_material` (cria missão+itens+auditoria; sem colisão até P1) | PR-01/02, API-02/03/05 | C2, P1 p/ colisão | colisão → bloquear ou linkar só após P1 |
 | FS-C4.T4 | `plan/replan/cancel/close` comandos + pós-condições | DM-07, API-09 | C2 | transitions tests |
 | FS-C4.T5 | `get_supply_mission` agregado completo + `get_supply_lookup_metadata` | API-02 | C2 | contract |
+| FS-C4.T6 | `factory_supply_retention_cleanup` job in-process (§52): lotes limitados, predicados indexados, ordem dependência-safe, sem purge de ativos, telemetria+correlation por run; cadência TO_BENCHMARK | DATA-02..08 | C4.T1b | §52 pós-condições |
 
 Regra: leituras ERP viram **sinais/missões só via decisão da aplicação** — nunca persistir todo resultado de leitura como missão. Snapshot `_at_decision` gravado na criação do item.
 
@@ -444,6 +445,13 @@ Matriz de teste §18:
 | replay idempotente | sem 2º `supply_events`; novo correlation só em logs |
 | job `demand_signal_sync` | correlation própria por run + `job_name`/`run_id` nos logs |
 | 2 requests distintas | correlation distintos (zero vazamento) |
+| idempotency <24h | retido/replayable; >24h elegível p/ purge; auditoria intacta |
+| outbox publicado <30d retido / >30d elegível; pendente/falho >30d **não** purgado |
+| missão ativa >5y | **não** purgada por idade (lifecycle > TTL) |
+| divergência não-resolvida | nunca purgada; resolvida segue histórico 5y |
+| checkpoint corrente | nunca removido (sem falso cold-start §33) |
+| cleanup run | contagens emitidas + correlation; 2 workers sem corromper; referencial íntegro |
+| `actor_display_name` >2y | anonimizado; `actor_user_id`+fatos retidos 5y |
 
 ## 26. Audit/observability
 

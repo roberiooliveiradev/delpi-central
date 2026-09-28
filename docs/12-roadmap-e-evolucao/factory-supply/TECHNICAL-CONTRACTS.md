@@ -154,7 +154,7 @@ Evidência: códigos `idempotency_required`, `branch_access_denied` (via `Branch
 - **Concorrência mesma key:** a constraint UNIQUE faz o segundo `INSERT` esperar o commit/rollback do primeiro; ao resolver: rollback → contender tenta de novo como claim novo; commit+mesmo fingerprint → replay; commit+fingerprint divergente → `409`. Nunca mutação dupla.
 - **Mesma key / outro ator ou outra rota:** escopo independente — UNIQUE é por `(key, route, actor_user_id)`; key de um usuário nunca devolve snapshot de outro.
 - requests-api atual não persiste fingerprint (`PROVEN` — tabela tem só key/route/actor/snapshot) → convenção compartilhada evolui para `(key, route, actor_user_id, request_fingerprint)`; coluna reservada no schema planejado (§39). Adicionar `response_status INT` (precedente helpdesk `response_status`+`response_body`) para replay fiel do status.
-- **Retenção:** chaves são registros de deduplicação, não auditoria — política final `TO_FS_C0_T12` (deve cobrir retries realistas; precedente requests-api usa janela `max_age_hours=24` no read; auditoria vive em `supply_events`, §31).
+- **Retenção:** `24_HOURS` replay window — CONGELADO FS-C0.T12 (§52; precedente requests-api `max_age_hours=24`); após a janela a key expira e retry exige nova intenção; claim in-flight nunca deletado; auditoria vive em `supply_events` (§31, §52).
 - **Semântica pós-timeout:** se o comando comitou e a resposta se perdeu, o retry com a mesma key devolve a resposta gravada → cliente converge para o estado real sem duplicar efeito.
 - **GETs puros:** `NOT_APPLICABLE` (Doc 2/5).
 - **Observação ERP persistida + sync de sinais:** replay-safe **sem exigir key do cliente** — deduplicação por chave natural (ver §25, §19): mesma evidência ERP observada duas vezes não duplica correlação; mesma necessidade planejada ressincronizada não duplica `demand_signal` ativo.
@@ -392,7 +392,7 @@ Auditoria de domínio ≠ log técnico. `supply_events` append-only:
 `{event_id, mission_id, item_id?, event_type(command|transition|erp_observation|signal_sync), action, actor_user_id, actor_display_name, prev_state?, new_state?, qty_delta?, reason?, idempotency_key?, correlation_id?, created_at}` — `correlation_id` = identificador `X-Request-ID` da requisição/execução de job (§32); `request_id` separado **removido** no modelo SINGLE_ID (redundante — o request id **é** o correlation id).
 
 - Gravado na **mesma transação** do agregado — transição sem evento não existe.
-- Append-only lógico; nunca update/delete (retenção: integral — rastreabilidade é o produto).
+- Append-only lógico; nunca update/delete (retenção: **5 anos** — CONGELADO FS-C0.T12 §52; `actor_display_name` elegível a anonimização após 2 anos conforme padrão canônico ROPA audit_logs 730d; rastreabilidade é o produto).
 - Logs de aplicação não são auditoria.
 
 ## 32. Observability
@@ -566,7 +566,7 @@ Schema `factory_supply` — todas `PLANNED` (DDL na implementação; sem SQL aqu
 | handoffs | custódia por item | id UUID | mission_item_id FK, direction(collection|delivery|return), from_actor_user_id, to_actor_user_id?, to_context, qty NUMERIC, unit, at, note | FK→items | via item→mission | — | (mission_item_id), (to_actor_user_id,at) | PLANNED |
 | erp_observations | evidência ERP por item | id UUID | mission_item_id FK, status enum, evidence_fingerprint, matched_ref JSONB?, confidence?, observed_at, source, payload_snapshot JSONB bounded | UNIQUE(mission_item_id, evidence_fingerprint) | via item | — | (mission_item_id,status) | PLANNED |
 | supply_events | auditoria append-only | id UUID | mission_id, item_id?, event_type, action, actor_user_id, actor_display_name, prev_state, new_state, qty_delta, reason, idempotency_key, request_id, correlation_id, created_at | — | via mission (denorm branch col para filtro) | — | (branch,created_at) cursor, (mission_id,created_at) | PLANNED |
-| idempotency_keys | dedup de comandos | id UUID | key, route, actor_user_id, **request_fingerprint** (SHA-256 canonical-JSON — §10 congelado T6), response_status INT, response_snapshot JSONB, created_at | UNIQUE(key,route,actor_user_id); fingerprint compara dentro do escopo | — | — | (created_at) retenção TO_FS_C0_T12 | PLANNED (convenção PROVEN + extensão TARGET) |
+| idempotency_keys | dedup de comandos | id UUID | key, route, actor_user_id, **request_fingerprint** (SHA-256 canonical-JSON — §10 congelado T6), response_status INT, response_snapshot JSONB, created_at | UNIQUE(key,route,actor_user_id); fingerprint compara dentro do escopo | — | — | (created_at) retenção 24h — §52 | PLANNED (convenção PROVEN + extensão TARGET) |
 | integration_outbox | entrega pós-commit (portal notif + realtime routing, §33) | id UUID | event_type, aggregate_type, aggregate_id, **correlation_id** (do comando/run originador — §32), payload JSONB (userIds, permissionCodes, dedupeKey, actionTarget), attempts, next_attempt_at, published_at, created_at | UNIQUE(event_type,aggregate_id,dedupe_key?) — dedupe semântico §33 | branch no payload | — | (published_at NULL, next_attempt_at) | PLANNED (precedente `PROVEN` requests-api V005 + commercial) |
 | integration_checkpoints | snapshot/diff de syncs (§33) | id UUID | source_key, cursor_value, metadata JSONB `{keys,keyCount}`, updated_at | UNIQUE(source_key) | por source_key (ex.: `demand_sync:01`) | — | (source_key) | PLANNED (precedente `PROVEN` `IntegrationCheckpointRepositoryPort`) |
 
@@ -700,7 +700,7 @@ Capacidades de serviço **nunca** expandem autoridade além do read-only ERP: n�
 6. Cache operacional (TTL/fail-open) — `TO_DESIGN`; v1 sem cache semântico.
 7. ~~Header exato de correlação propagado ao api-delpi~~ — RESOLVIDO FS-C0.T11: `X-Request-ID` propagado pelos adapters (padrão `X-Delpi-*` headers); api-delpi ignora hoje, propagação aditiva (§32).
 8. Forma interna de `matched_ref`/fingerprint de movimento — pendente da confirmação de ID estável (§25).
-9. ~~Algoritmo de `request_fingerprint`~~ — RESOLVIDO FS-C0.T6: canonical-JSON tipado + SHA-256, escopo `(key,route,actor_user_id)`, single-tx claim+mutation+snapshot, replay `idempotent_replay:true`, falha não consome key (§10). Retenção de `idempotency_keys` permanece `TO_FS_C0_T12`.
+9. ~~Algoritmo de `request_fingerprint`~~ — RESOLVIDO FS-C0.T6 (§10). ~~Retenção~~ — RESOLVIDO FS-C0.T12: matriz completa §52 (audit/histórico 5y, idempotency 24h, outbox pub 30d/falho sem TTL, checkpoint corrente, ROPA-compliant).
 10. ~~Identidade das capacidades de serviço~~ — RESOLVIDO FS-C0.T5: in-process + shared service token (§40-B); sem service account, sem permissões Core.
 11. Gatilho interativo opcional para refresh manual de evidência ERP — se existir, coberto por `access`+`filial` (§40-B; decisão UX).
 
@@ -718,7 +718,7 @@ Capacidades de serviço **nunca** expandem autoridade além do read-only ERP: n�
 | ~~Tabela/serviço de conversão de unidades~~ — RESOLVIDO FS-C0.T7: `NOT_REQUIRED`; unidade autoritativa `B1_UM` provada em todos os contratos (§51) | — |
 | ~~Identidade de serviço~~ — RESOLVIDO FS-C0.T5: in-process jobs + `API_DELPI_INTERNAL_SERVICE_TOKEN` (§40-B); sem service account/permissões Core | — |
 | ~~Algoritmo de `request_fingerprint`~~ — RESOLVIDO FS-C0.T6: canonical-JSON+SHA-256, convenção `(key,route,actor_user_id)` + coluna `request_fingerprint`+`response_status` (§10, §39); helper local (sem consumidor cruzado provado) | — |
-| Retenção de idempotency_keys e volume estimado de supply_events | §23 |
+| ~~Retenção~~ — RESOLVIDO FS-C0.T12: matriz §52; resta apenas registrar categoria FS na ROPA na implementação (ação docs) e estimar volume `supply_events` em homologação | §52 |
 | Empenho como campo vs rota dedicada (hoje via operation materials — confirmar) | §41 |
 | Decisão de produto: reconciliação pedido×sinal (§29) e regra de retorno | comandos |
 
@@ -798,3 +798,35 @@ Até política existir, o backend expõe apenas fatos determinísticos:
 - **Correlação ERP:** compara `material × branch × quantity × unit` (+ fingerprint §25); igualdade numérica com unidade diferente → `DIVERGENT` (não `MATCHED`); unidade do movimento ausente → `unknown` (não MATCHED).
 - **Arredondamento/exibição:** backend persiste e compara `NUMERIC(18,6)` exato; UI formata PT-BR (`126,895 MT`) só na exibição — formatação nunca muta o valor persistido; sem precisão máxima por unidade além da escala 6 (não inventar arredondamento de negócio).
 - **`null` semântico:** `returned_qty`/`prepared_qty` etc. `null` = não estabelecido — distinto de `0` (Doc 3/5 — "quantidade não estabelecida" é caso real de devolução); `null` nunca carrega unidade implícita.
+
+## 52. Retention + cleanup contract (CONGELADO FS-C0.T12)
+
+**Governança encontrada (PROVEN):** ROPA `docs/13-auditoria-lgpd/ropa-registro-tratamento.md` + constantes canônicas `core-api/app/domain/lgpd/privacy_constants.py::DATA_RETENTION_DAYS` (`audit_logs=730` com **anonimização** de IP/payload — não delete; `notifications=180`, `deleted_notifications=30`, `usage_*=365`, `consent_records=1825`) + job canônico `core-api/app/infrastructure/jobs/data_retention_job.py` (CLI `flask data-retention run`, agendado ~24h, UPDATE de anonimização + DELETE por cutoff, `logger.info` com contagens). **Sem política que exceda/conflite com os targets do Product Master** — regra superior não existe; precedente de 5 anos existe (`consent_records=1825` — evidência legal). **Sem conflito de governança** — mas com obrigação de minimização PII (ver abaixo).
+
+| Classe | Tabela(s) | Retenção-alvo | Início do relógio | Exceção ativo/não-resolvido | Evidência/base |
+|---|---|---|---|---|---|
+| A. Auditoria de domínio | `supply_events` | **5 anos** (Product Master; precedente legal 1825d) | `created_at` | append-only; nunca purge rotineiro antes do prazo | legítimo interesse/rastreabilidade (ROPA §2) |
+| B. Histórico operacional | `supply_missions`, `supply_mission_items`, `handoffs`, exceções resolvidas | **5 anos** | `completed_at`/`cancelled_at` (estado terminal) | ativo/aberto **nunca** purgado por idade | Product Master |
+| B2. Divergências resolvidas | exceptions/`UNIT_DIVERGENCE`/`divergent` resolvidos | **5 anos** com o histórico | `resolved_at` | não-resolvido nunca purgado | Product Master |
+| C. Idempotência técnica | `idempotency_keys` | **24 h replay window** | `created_at` | claim in-flight nunca deletado (UNIQUE-wait §10) | PM + precedente requests-api `max_age_hours=24` |
+| D. Outbox publicado | `integration_outbox` (`published_at NOT NULL`) | **30 dias** | `published_at` | — | PM (transporte técnico; evento de negócio vive em A) |
+| D2. Outbox pendente/falho | `integration_outbox` (`published_at NULL`) | **sem TTL por idade** — retry→published→30d; dead-letter = `TO_IMPLEMENTATION_DESIGN`, preservado até resolução explícita | — | nunca purge por idade | PM |
+| E. Checkpoints de sync | `integration_checkpoints` | **estado corrente + histórico técnico mínimo** (geração anterior só até substituição confirmada) | `updated_at` | checkpoint corrente **nunca** removido (anti cold-start §33) | PM |
+| F. Observações ERP | `erp_observations` | com o histórico operacional que referenciam (**5 anos** quando ligadas a item/missão retida); snapshots ERP contínuos não retidos só por existir | `observed_at` | evidência referenciada por histórico retido nunca órfã | PM + §19 |
+| G. Logs/métricas técnicas | fora do schema | `PLATFORM_OWNED / OUT_OF_SCOPE` — FS emite telemetria, não cria política própria | — | — | plataforma |
+
+**PII/minimização (ROPA-compliant):** `supply_events` guarda `actor_user_id` + `actor_display_name` (snapshot). Alinhado ao padrão canônico de anonimização (audit_logs 730d → campos pessoais nulados, linha preservada): `actor_display_name` elegível a anonimização após **2 anos**; `actor_user_id`+fatos de negócio persistem os 5 anos (rastreabilidade legítima — mesma lógica de `consent_records=1825`). **Obrigação de documentação:** registrar categoria Factory Supply na ROPA na implementação (ação docs, não runtime). Nunca persistir JWT/service token/email/claims — retenção não autoriza coletar mais.
+
+**Direitos do titular/legal hold:** mecanismo canônico = anonimização (UPDATE nulando campos pessoais — `data_retention_job`), não delete de auditoria; exclusão de titular segue fluxo Core ("anonimizado após solicitação" — ROPA §1). **LEGAL_HOLD_SUPPORT = NOT_PROVEN** — nenhum mecanismo de legal hold existe; FS não inventa.
+
+**Cleanup ownership/execution:** `factory_supply_retention_cleanup` — job **in-process** em factory-supply-api (modelo T5: env-flag `FACTORY_SUPPLY_JOBS_ENABLED`, single-run; sem service identity — trabalho local no próprio schema). Sem Core/api-delpi/pc-api tocando tabelas FS. Lotes limitados, predicados indexados (`created_at`/`published_at`/`status`), sem table lock, retry-safe, `correlation_id`+`job_name`/`run_id` por execução, métricas de contagens (padrão `logger.info(results=...)` do job canônico). **CLEANUP_CADENCE = TO_BENCHMARK** (precedente diário ~24h do core retention job é candidato default, não congelado).
+
+**Ordem segura (conceitual):** (1) `idempotency_keys` >24h não-in-flight → (2) `integration_outbox` publicado >30d → (3) gerações obsoletas de `integration_checkpoints` (nunca o corrente) → (4) histórico operacional >5y em estado terminal (quando elegível, com dependents preservados: não deletar pai enquanto auditoria/evidência retida depender). Purge técnica ≠ purge de auditoria — classes distintas, nunca o mesmo predicado.
+
+**Pós-condições de purge:** sucesso só se o DB provar: elegíveis removidos + inelegíveis retidos + ativos intactos + integridade referencial preservada. "DELETE executou" não é evidência.
+
+**Anti-recursão de auditoria:** cleanup técnico emite telemetria de execução (contagens), **não** `supply_events` por linha deletada; purge de histórico de negócio (se um dia aplicável) gera no máximo um registro governamental sumarizado — nunca evento por linha.
+
+**Backup ≠ retenção:** remoção do banco ativo não implica remoção imediata de mídia de backup — lifecycle de backup é infra/plataforma; sem promessas de eliminação LGPD além do provado.
+
+**Índices candidatos (defer físico p/ migration design):** `idempotency_keys(created_at)`, `integration_outbox(published_at NULL, next_attempt_at)` já planejado + `(published_at)`, `supply_events(created_at)`, `missions(status, completed_at)` se coluna existir — colunas novas só se o lifecycle não expuser equivalente (`completed_at`/`resolved_at` avaliados no DDL V001).
