@@ -102,6 +102,7 @@ class FakeGlpi:
         # Administration/User rows for profile parity (get_user/update_user_profile).
         self.user_profiles: dict[int, SimpleNamespace] = {}
         self.profile_updates: list[tuple[int, object, object]] = []
+        self.get_user_error: Exception | None = None
         self.update_profile_error: Exception | None = None
         self.profile_update_applies = True
 
@@ -297,6 +298,8 @@ class FakeGlpi:
 
         self.calls += 1
         assert access_token
+        if self.get_user_error is not None:
+            raise self.get_user_error
         row = self.user_profiles.get(int(user_id))
         if row is None:
             return None

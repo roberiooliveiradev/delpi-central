@@ -1,4 +1,4 @@
-"""HELPDESK-IDENTITY-001 — GLPI user profile parity with the canonical identity.
+"""HELPDESK-IDENTITY-001B — GLPI user profile parity with the canonical identity.
 
 Direction: Minha DELPI identity (Keycloak claims, validated JWT)
            → Helpdesk/GLPI projection (firstname / realname).
@@ -6,6 +6,15 @@ Direction: Minha DELPI identity (Keycloak claims, validated JWT)
 Never the reverse; never trusts request bodies; never blanks provider fields
 when the canonical source has no value. Every outcome is a distinct status —
 authentication success is never proof that sync succeeded.
+
+Write semantics (001B): runtime evidence proved the per-user OAuth token
+(profile "Colaborador - Chamados", right `user`=READ) cannot PATCH
+Administration/User — `GLPI_SELF_PROFILE_WRITE_NOT_AUTHORIZED`. The reconcile
+therefore detects drift and reports ``deferred_write_authority`` instead of
+firing a permanently-denied PATCH. Continuous write-parity for existing users
+requires a separate provider authority — HELPDESK-IDENTITY-002 (ADR pending
+owner decision). New users are fixed upstream by the Keycloak SAML mappers
+(JIT_CREATE_PARITY).
 """
 
 from __future__ import annotations
@@ -20,9 +29,7 @@ from helpdesk_app.application.ports import GlpiGateway
 from helpdesk_app.domain.errors import (
     GlpiForbidden,
     GlpiNotFound,
-    GlpiUnauthorized,
     GlpiUnavailable,
-    GlpiValidation,
     LinkRequired,
 )
 from helpdesk_app.domain.models import Actor
@@ -31,6 +38,7 @@ logger = logging.getLogger("helpdesk.profile_sync")
 
 SYNCED = "synced"
 NOOP = "noop"
+DEFERRED_WRITE_AUTHORITY = "deferred_write_authority"
 SKIPPED_NO_CANONICAL_NAME = "skipped_no_canonical_name"
 SKIPPED_NOT_LINKED = "skipped_not_linked"
 SKIPPED_NO_GLPI_USER = "skipped_no_glpi_user"
@@ -45,9 +53,9 @@ FAILED = "failed"
 # next access self-heals without hammering a rejecting provider.
 _MEMO_OK_TTL_SECONDS = 3600.0
 _MEMO_FAIL_TTL_SECONDS = 60.0
-# Only settled parity is held for the long window — skipped/failed states use
+# Settled detections are held for the long window — skipped/failed states use
 # the short TTL so the next access self-heals once linking/JIT completes.
-_TERMINAL_OK = {SYNCED, NOOP}
+_TERMINAL_OK = {SYNCED, NOOP, DEFERRED_WRITE_AUTHORITY}
 
 
 def _clean(value: str) -> str:
@@ -55,13 +63,14 @@ def _clean(value: str) -> str:
 
 
 class ProfileSyncService:
-    """Idempotent reconcile: canonical first/last name → GLPI firstname/realname.
+    """Idempotent drift detection: canonical first/last name vs GLPI profile.
 
-    Write is self-scoped: the only target is the GLPI ``user_id`` resolved from
-    the caller's own OAuth session, and the payload comes exclusively from the
-    validated identity claims. The provider may still deny the write (profile
-    without the ``user`` UPDATE right) — that surfaces as ``failed_forbidden``,
-    never as success.
+    Reads the caller's own GLPI user (``user_id`` resolved from the OAuth
+    session) and compares ``firstname``/``realname`` to the validated identity
+    claims. On divergence it reports ``deferred_write_authority`` — the
+    user-scoped OAuth authority provably cannot write User names (GLPI right
+    `user`=READ), so no PATCH is attempted. Write-parity is deferred to the
+    dedicated authority decided in HELPDESK-IDENTITY-002.
     """
 
     def __init__(self, glpi: GlpiGateway, oauth: OAuthService, *, now=None):
@@ -90,7 +99,7 @@ class ProfileSyncService:
             return SKIPPED_NOT_LINKED
 
         # Memo key = hashed token: a re-link/refresh yields a new key, so a
-        # stale "synced" can never leak into a different GLPI session.
+        # stale outcome can never leak into a different GLPI session.
         memo_key = hashlib.sha256(token.encode()).hexdigest()
         cached = self._cached(memo_key, first, last)
         if cached is not None:
@@ -146,37 +155,22 @@ class ProfileSyncService:
         if not diff:
             return NOOP
 
-        try:
-            self._glpi.update_user_profile(token, user_id, **diff)
-        except GlpiForbidden:
-            logger.warning("helpdesk_profile_sync outcome=%s subject=%s user_id=%s stage=write fields=%s", FAILED_FORBIDDEN, subject, user_id, sorted(diff))
-            return FAILED_FORBIDDEN
-        except (GlpiNotFound, GlpiValidation, GlpiUnauthorized):
-            logger.warning("helpdesk_profile_sync outcome=%s subject=%s user_id=%s stage=write fields=%s", FAILED, subject, user_id, sorted(diff))
-            return FAILED
-        except GlpiUnavailable:
-            logger.warning("helpdesk_profile_sync outcome=%s subject=%s user_id=%s stage=write", FAILED_UNAVAILABLE, subject, user_id)
-            return FAILED_UNAVAILABLE
-        except Exception:
-            logger.exception("helpdesk_profile_sync outcome=%s subject=%s user_id=%s stage=write", FAILED, subject, user_id)
-            return FAILED
-
-        # Postcondition: HTTP 2xx is not proof — reread the provider state.
-        try:
-            refreshed = self._glpi.get_user(token, user_id)
-        except Exception:
-            logger.exception("helpdesk_profile_sync outcome=%s subject=%s user_id=%s stage=verify", FAILED, subject, user_id)
-            return FAILED
-        if refreshed is None or self._diff(refreshed, first, last):
-            logger.warning("helpdesk_profile_sync outcome=%s subject=%s user_id=%s stage=verify", FAILED_VERIFICATION, subject, user_id)
-            return FAILED_VERIFICATION
-
-        logger.info("helpdesk_profile_sync outcome=%s subject=%s user_id=%s fields=%s", SYNCED, subject, user_id, sorted(diff))
-        return SYNCED
+        # Drift detected. The user-scoped OAuth token provably lacks `user`
+        # UPDATE (PROVEN: profile "Colaborador - Chamados", rights=READ) —
+        # write is intentionally deferred to the IDENTITY-002 authority.
+        logger.warning(
+            "helpdesk_profile_sync outcome=%s subject=%s user_id=%s stage=diff fields=%s",
+            DEFERRED_WRITE_AUTHORITY,
+            subject,
+            user_id,
+            sorted(diff),
+        )
+        return DEFERRED_WRITE_AUTHORITY
 
     @staticmethod
     def _diff(profile, first: str, last: str) -> dict:
-        """Only non-empty canonical values are written — empty never erases."""
+        """Fields whose canonical value differs — empty canonical never counts
+        as drift (an absent claim must never be projected as a blank name)."""
         diff: dict = {}
         if first and _clean(profile.firstname) != first:
             diff["firstname"] = first

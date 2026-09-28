@@ -25,14 +25,14 @@ Base do MFE: `/apps/helpdesk-api`.
 |---|---|---|
 | GET | `/auth/glpi/start` | Responde 302 para `api.php/authorize` (PKCE S256, `state` ligado ao sujeito do JWT) |
 | GET | `/auth/glpi/callback` | Troca o código em `api.php/token`, grava a sessão, redireciona para `/apps/helpdesk` |
-| GET | `/auth/glpi/session` | `{ "linked": true }` ou `{ "linked": false }`; quando `linked`, o campo aditivo `profile_sync` reporta o resultado da reconciliação de identidade (`synced`, `noop`, `skipped_*` ou `failed_*`) |
+| GET | `/auth/glpi/session` | `{ "linked": true }` ou `{ "linked": false }`; quando `linked`, o campo aditivo `profile_sync` reporta o resultado da reconciliação de identidade (`synced`, `noop`, `deferred_write_authority`, `skipped_*` ou `failed_*`) |
 | DELETE | `/auth/glpi/session` | Apaga o vínculo local. Não revoga a sessão SAML do GLPI |
 
 `state` é de uso único e expira em 10 minutos. O código de autorização do GLPI também expira em 10 minutos. Access token do GLPI expira em 1 hora; o BFF renova com o refresh token no servidor.
 
-### 2.1. Paridade de identidade (HELPDESK-IDENTITY-001)
+### 2.1. Paridade de identidade (HELPDESK-IDENTITY-001B)
 
-Em todo acesso autenticado ao Helpdesk BFF (`require_actor`, portão de todas as rotas), o backend reconcilia a projeção de identidade do usuário no GLPI — de forma idempotente, memoizada por sessão OAuth e nunca bloqueante para o acesso:
+Em todo acesso autenticado ao Helpdesk BFF (`require_actor`, portão de todas as rotas), o backend verifica a projeção de identidade do usuário no GLPI — de forma idempotente, memoizada por sessão OAuth e nunca bloqueante para o acesso:
 
 ```text
 claims do JWT validado (given_name / family_name)   ← fonte canônica: Keycloak
@@ -41,19 +41,18 @@ GET /api.php/v2.2/session → user_id (mapeamento estável)
         ↓
 GET /api.php/v2.2/Administration/User/{user_id}
         ↓
-diff → PATCH apenas campos divergentes (firstname / realname)
-        ↓
-releitura + verificação de pós-condição (2xx não é prova)
+diff → noop | deferred_write_authority
 ```
 
 Regras invioláveis:
 
 - a fonte é o claim validado do JWT, **nunca** body/query do cliente;
-- valor canônico vazio nunca apaga campo no GLPI; sem `given_name`/`family_name` o sync é `skipped_no_canonical_name` (nenhum split silencioso de `name`);
-- o write é self-scoped: só o `user_id` resolvido da própria sessão OAuth da pessoa;
+- valor canônico vazio nunca conta como drift — claim ausente nunca projeta nome em branco; sem `given_name`/`family_name` o sync é `skipped_no_canonical_name` (nenhum split silencioso de `name`);
+- o token OAuth da pessoa (perfil "Colaborador - Chamados", right `user`=READ) **não pode** escrever `Administration/User` — drift divergente retorna `deferred_write_authority` com **zero PATCH**; o write contínuo exige autoridade dedicada (HELPDESK-IDENTITY-002, ADR pendente);
 - direção única: Minha DELPI → GLPI. Não existe sincronização reversa;
 - `linked: true` nunca prova paridade — `profile_sync` é a evidência separada;
-- falha de sync não invalida autenticação nem quebra o acesso ao Helpdesk.
+- falha de sync não invalida autenticação nem quebra o acesso ao Helpdesk;
+- novos usuários nascem corretos via **JIT_CREATE_PARITY**: o client SAML do Keycloak emite `givenname`/`surname`/`emailaddress` (claims WS-* lidos pelo samlsso JIT); usuários já existentes não são atualizados pelo SSO (JIT só cria).
 
 ## 3. Leitura
 

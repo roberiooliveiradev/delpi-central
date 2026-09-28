@@ -1,21 +1,23 @@
-"""HELPDESK-IDENTITY-001 — canonical first/last name → GLPI firstname/realname.
+"""HELPDESK-IDENTITY-001B — canonical first/last name vs GLPI firstname/realname.
 
-Covers: repair on link, changed canonical name, noop, idempotency, stable
-mapping, no duplicate user, provider failures, postcondition verification,
-no client-supplied profile, no credential leakage.
+Runtime evidence proved the user-scoped OAuth authority cannot write
+Administration/User names (GLPI_SELF_PROFILE_WRITE_NOT_AUTHORIZED). The
+reconcile therefore detects drift and reports deferred_write_authority with
+ZERO PATCH attempts. Covers: noop, deferred drift, read failures, skip paths,
+memo behavior, access trigger, no client-supplied profile, no leakage.
 """
 
+import logging
 from types import SimpleNamespace
 
 from helpdesk_app.application.profile_sync_service import (
+    DEFERRED_WRITE_AUTHORITY,
     FAILED,
     FAILED_FORBIDDEN,
     FAILED_UNAVAILABLE,
-    FAILED_VERIFICATION,
     NOOP,
     SKIPPED_NO_CANONICAL_NAME,
     SKIPPED_NO_GLPI_USER,
-    SYNCED,
     ProfileSyncService,
 )
 from helpdesk_app.domain.errors import GlpiForbidden, GlpiUnavailable
@@ -35,7 +37,7 @@ def _glpi_user(glpi: FakeGlpi, user_id=15, firstname="", realname="", username="
     return user_id
 
 
-def test_session_bootstrap_repairs_missing_names():
+def test_session_bootstrap_reports_deferred_on_drift():
     glpi = FakeGlpi()
     _glpi_user(glpi, firstname="", realname="")
     client, glpi = build_client(glpi)
@@ -45,14 +47,14 @@ def test_session_bootstrap_repairs_missing_names():
         headers={**auth_headers(), "x-given-name": "Ana", "x-family-name": "Silva"},
     )
     assert response.status_code == 200
-    assert response.json() == {"linked": True, "profile_sync": SYNCED}
-    row = glpi.user_profiles[15]
-    assert row.firstname == "Ana"
-    assert row.realname == "Silva"
-    assert glpi.profile_updates == [(15, "Ana", "Silva")]
+    assert response.json() == {"linked": True, "profile_sync": DEFERRED_WRITE_AUTHORITY}
+    # Drift detected, authority insufficient — ZERO writes, GLPI untouched.
+    assert glpi.profile_updates == []
+    assert glpi.user_profiles[15].firstname == ""
+    assert glpi.user_profiles[15].realname == ""
 
 
-def test_existing_user_with_partial_name_gets_repaired():
+def test_partial_name_drift_is_deferred_not_written():
     glpi = FakeGlpi()
     _glpi_user(glpi, firstname="Ana", realname="")
     client, glpi = build_client(glpi)
@@ -61,11 +63,12 @@ def test_existing_user_with_partial_name_gets_repaired():
         "/auth/glpi/session",
         headers={**auth_headers(), "x-given-name": "Ana", "x-family-name": "Silva"},
     )
-    assert response.json()["profile_sync"] == SYNCED
-    assert glpi.user_profiles[15].realname == "Silva"
+    assert response.json()["profile_sync"] == DEFERRED_WRITE_AUTHORITY
+    assert glpi.profile_updates == []
+    assert glpi.user_profiles[15].realname == ""
 
 
-def test_changed_canonical_name_updates_glpi():
+def test_changed_canonical_name_deferred_zero_patch():
     glpi = FakeGlpi()
     _glpi_user(glpi, firstname="Ana", realname="Silva")
     client, glpi = build_client(glpi)
@@ -74,9 +77,9 @@ def test_changed_canonical_name_updates_glpi():
         "/auth/glpi/session",
         headers={**auth_headers(), "x-given-name": "Ana Beatriz", "x-family-name": "Silva Souza"},
     )
-    assert response.json()["profile_sync"] == SYNCED
-    assert glpi.user_profiles[15].firstname == "Ana Beatriz"
-    assert glpi.user_profiles[15].realname == "Silva Souza"
+    assert response.json()["profile_sync"] == DEFERRED_WRITE_AUTHORITY
+    assert glpi.profile_updates == []
+    assert glpi.user_profiles[15].firstname == "Ana"
 
 
 def test_synced_profile_is_noop():
@@ -92,15 +95,18 @@ def test_synced_profile_is_noop():
     assert glpi.profile_updates == []
 
 
-def test_repeated_reconciliation_is_idempotent():
+def test_deferred_outcome_is_memoized_zero_provider_reads_in_window():
     glpi = FakeGlpi()
     _glpi_user(glpi, firstname="", realname="")
     client, glpi = build_client(glpi)
     link(client)
     headers = {**auth_headers(), "x-given-name": "Ana", "x-family-name": "Silva"}
-    assert client.get("/auth/glpi/session", headers=headers).json()["profile_sync"] == SYNCED
-    assert client.get("/auth/glpi/session", headers=headers).json()["profile_sync"] == SYNCED
-    assert len(glpi.profile_updates) == 1
+    assert client.get("/auth/glpi/session", headers=headers).json()["profile_sync"] == DEFERRED_WRITE_AUTHORITY
+    calls_after_first = glpi.calls
+    assert client.get("/auth/glpi/session", headers=headers).json()["profile_sync"] == DEFERRED_WRITE_AUTHORITY
+    # Settled detection memoized — no repeated provider reads, still zero PATCH.
+    assert glpi.calls == calls_after_first
+    assert glpi.profile_updates == []
 
 
 def test_mapping_stable_and_no_duplicate_user_after_name_change():
@@ -112,8 +118,8 @@ def test_mapping_stable_and_no_duplicate_user_after_name_change():
         "/auth/glpi/session",
         headers={**auth_headers(), "x-given-name": "Ana Maria", "x-family-name": "Silva"},
     )
-    assert response.json()["profile_sync"] == SYNCED
-    assert glpi.profile_updates == [(42, "Ana Maria", None)]
+    assert response.json()["profile_sync"] == DEFERRED_WRITE_AUTHORITY
+    assert glpi.profile_updates == []
     assert set(glpi.user_profiles) == {42}
 
 
@@ -126,8 +132,8 @@ def test_empty_canonical_value_never_erases_provider_field():
         "/auth/glpi/session",
         headers={**auth_headers(), "x-given-name": "Ana Maria"},
     )
-    assert response.json()["profile_sync"] == SYNCED
-    assert glpi.profile_updates == [(15, "Ana Maria", None)]
+    assert response.json()["profile_sync"] == DEFERRED_WRITE_AUTHORITY
+    assert glpi.profile_updates == []
     assert glpi.user_profiles[15].realname == "Silva"
 
 
@@ -164,10 +170,10 @@ def test_session_without_glpi_user_is_skipped():
     assert response.json()["profile_sync"] == SKIPPED_NO_GLPI_USER
 
 
-def test_provider_forbidden_write_is_fail_closed():
+def test_provider_forbidden_read_is_fail_closed():
     glpi = FakeGlpi()
     _glpi_user(glpi, firstname="", realname="")
-    glpi.update_profile_error = GlpiForbidden("negado")
+    glpi.get_user_error = GlpiForbidden("negado")
     client, _ = build_client(glpi)
     link(client)
     response = client.get(
@@ -182,7 +188,7 @@ def test_provider_forbidden_write_is_fail_closed():
 def test_provider_unavailable_is_fail_closed():
     glpi = FakeGlpi()
     _glpi_user(glpi, firstname="", realname="")
-    glpi.update_profile_error = GlpiUnavailable("fora")
+    glpi.get_user_error = GlpiUnavailable("fora")
     client, _ = build_client(glpi)
     link(client)
     response = client.get(
@@ -190,19 +196,6 @@ def test_provider_unavailable_is_fail_closed():
         headers={**auth_headers(), "x-given-name": "Ana", "x-family-name": "Silva"},
     )
     assert response.json()["profile_sync"] == FAILED_UNAVAILABLE
-
-
-def test_silent_provider_drift_is_detected_by_postcondition():
-    glpi = FakeGlpi()
-    _glpi_user(glpi, firstname="", realname="")
-    glpi.profile_update_applies = False  # 2xx mas o GLPI não persistiu
-    client, _ = build_client(glpi)
-    link(client)
-    response = client.get(
-        "/auth/glpi/session",
-        headers={**auth_headers(), "x-given-name": "Ana", "x-family-name": "Silva"},
-    )
-    assert response.json()["profile_sync"] == FAILED_VERIFICATION
 
 
 def test_request_body_cannot_supply_profile():
@@ -217,8 +210,11 @@ def test_request_body_cannot_supply_profile():
         headers={**auth_headers(), "x-given-name": "Ana", "x-family-name": "Silva"},
         json={"firstname": "Hacker", "realname": "X", "user_id": 2},
     )
-    assert response.json()["profile_sync"] == SYNCED
-    assert glpi.profile_updates == [(15, "Ana", "Silva")]
+    assert response.json()["profile_sync"] == DEFERRED_WRITE_AUTHORITY
+    assert glpi.profile_updates == []
+    # Provider state untouched — injection attempt changed nothing.
+    assert glpi.user_profiles[15].firstname == ""
+    assert glpi.user_profiles[15].realname == ""
 
 
 def test_response_and_payload_carry_no_tokens():
@@ -232,9 +228,23 @@ def test_response_and_payload_carry_no_tokens():
     )
     body = response.json()
     assert set(body) == {"linked", "profile_sync"}
-    for _uid, first, last in glpi.profile_updates:
-        assert "access" not in str(first).lower()
-        assert "Bearer" not in str(last)
+    assert glpi.profile_updates == []
+
+
+def test_logs_contain_no_name_values_or_tokens(caplog):
+    glpi = FakeGlpi()
+    _glpi_user(glpi, firstname="", realname="")
+    client, _ = build_client(glpi)
+    link(client)
+    with caplog.at_level(logging.WARNING, logger="helpdesk.profile_sync"):
+        client.get(
+            "/auth/glpi/session",
+            headers={**auth_headers(), "x-given-name": "Ana", "x-family-name": "Silva"},
+        )
+    text = caplog.text
+    assert "deferred_write_authority" in text
+    for leaked in ("Ana", "Silva", "access-a", "Bearer", "good-code"):
+        assert leaked not in text
 
 
 def test_direct_service_call_reports_each_outcome():
@@ -246,26 +256,29 @@ def test_direct_service_call_reports_each_outcome():
     sync = ProfileSyncService(glpi, client.app.state.oauth, now=lambda: tick[0])
     actor = Actor(subject="user-a", email="ana@delpi.com.br", first_name="Ana", last_name="Silva")
 
-    assert sync.ensure_profile(actor) == SYNCED
-    # Settled outcome is memoized — provider is not touched again in-window.
-    calls_after_sync = glpi.calls
-    assert sync.ensure_profile(actor) == SYNCED
-    assert glpi.calls == calls_after_sync
+    assert sync.ensure_profile(actor) == DEFERRED_WRITE_AUTHORITY
+    # Settled detection memoized — provider untouched in-window.
+    calls_after = glpi.calls
+    assert sync.ensure_profile(actor) == DEFERRED_WRITE_AUTHORITY
+    assert glpi.calls == calls_after
+    assert glpi.profile_updates == []
 
-    # Provider-side drift after the memo window is reconciled again.
-    glpi.user_profiles[15].firstname = "Outra"
-    tick[0] += 3700.0
-    assert sync.ensure_profile(actor) == SYNCED
-
-    glpi.update_profile_error = RuntimeError("boom")
-    glpi.user_profiles[15].firstname = "Outra"
+    # Provider read failure after the memo window surfaces distinctly.
+    glpi.get_user_error = RuntimeError("boom")
     tick[0] += 3700.0
     assert sync.ensure_profile(actor) == FAILED
+
+    # Provider-side drift resolution re-reads as NOOP once observable.
+    glpi.get_user_error = None
+    glpi.user_profiles[15].firstname = "Ana"
+    glpi.user_profiles[15].realname = "Silva"
+    tick[0] += 3700.0
+    assert sync.ensure_profile(actor) == NOOP
 
 
 def test_reconcile_runs_on_any_authenticated_helpdesk_access():
     """The real entry trigger: the MFE loads /tickets on page entry — it never
-    calls /auth/glpi/session. require_actor must fire the reconcile."""
+    calls /auth/glpi/session. require_actor must fire the drift check."""
     glpi = FakeGlpi()
     _glpi_user(glpi, firstname="", realname="")
     client, glpi = build_client(glpi)
@@ -275,16 +288,16 @@ def test_reconcile_runs_on_any_authenticated_helpdesk_access():
         headers={**auth_headers(), "x-given-name": "Ana", "x-family-name": "Silva"},
     )
     assert response.status_code == 200
-    assert glpi.profile_updates == [(15, "Ana", "Silva")]
-    assert glpi.user_profiles[15].firstname == "Ana"
-    assert glpi.user_profiles[15].realname == "Silva"
+    assert glpi.profile_updates == []  # bounded check, zero writes
+    # The drift check DID run (session_user_id + get_user calls happened).
+    assert glpi.calls >= 3
 
 
 def test_reconcile_failure_does_not_break_ticket_access():
     """AUTHENTICATION_SUCCESS must never depend on profile sync succeeding."""
     glpi = FakeGlpi()
     _glpi_user(glpi, firstname="", realname="")
-    glpi.update_profile_error = GlpiForbidden("negado")
+    glpi.get_user_error = GlpiForbidden("negado")
     client, _ = build_client(glpi)
     link(client)
     response = client.get(
