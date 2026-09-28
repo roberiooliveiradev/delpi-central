@@ -24,10 +24,13 @@ from tm_app.domain.diagnostic.diagnostic import (
 
 
 def _diagnostic(**kwargs) -> Diagnostic:
+    kwargs.setdefault(
+        "problem_statement",
+        ProblemStatement(text="Atraso no fechamento"),
+    )
     return Diagnostic(
         diagnostic_id="d1",
         revision_id="rev-1",
-        problem_statement=ProblemStatement(text="Atraso no fechamento"),
         **kwargs,
     )
 
@@ -272,23 +275,34 @@ def test_valid_root_cause_designation():
     d = _diagnostic(hypotheses=[_hypothesis("h1")])
     d.validate_hypothesis("h1")
     d.add_conclusion(
-        _conclusion("c1", root_cause=RootCauseDesignation(hypothesis_id="h1"))
+        _conclusion(
+            "c1",
+            hypothesis_ids=("h1",),
+            root_cause=RootCauseDesignation(hypothesis_id="h1"),
+        )
     )
     d.validate_conclusion("c1")
     assert d.diagnostic_conclusions[0].root_cause.hypothesis_id == "h1"
 
 
-# 29 — Root Cause → non-VALIDATED Hypothesis blocked
+# 29 — Root Cause → non-VALIDATED Hypothesis blocked at validation
 def test_root_cause_non_validated_hypothesis_blocked():
     d = _diagnostic(hypotheses=[_hypothesis("h1")])
+    # A DRAFT conclusion may carry a proposed designation; the
+    # VALIDATED+CURRENT rule is enforced when the conclusion is validated.
+    d.add_conclusion(
+        _conclusion(
+            "c1",
+            hypothesis_ids=("h1",),
+            root_cause=RootCauseDesignation(hypothesis_id="h1"),
+        )
+    )
     with pytest.raises(
         DiagnosticError, match="invalid_root_cause_designation"
     ):
-        d.add_conclusion(
-            _conclusion(
-                "c1", root_cause=RootCauseDesignation(hypothesis_id="h1")
-            )
-        )
+        d.validate_conclusion("c1")
+    d.validate_hypothesis("h1")
+    d.validate_conclusion("c1")
 
 
 # 30 — Root Cause → STALE Hypothesis blocked
@@ -296,14 +310,17 @@ def test_root_cause_stale_hypothesis_blocked():
     d = _diagnostic(hypotheses=[_hypothesis("h1")])
     d.validate_hypothesis("h1")
     d.mark_hypothesis_stale_evidence("h1")
+    d.add_conclusion(
+        _conclusion(
+            "c1",
+            hypothesis_ids=("h1",),
+            root_cause=RootCauseDesignation(hypothesis_id="h1"),
+        )
+    )
     with pytest.raises(
         DiagnosticError, match="invalid_root_cause_designation"
     ):
-        d.add_conclusion(
-            _conclusion(
-                "c1", root_cause=RootCauseDesignation(hypothesis_id="h1")
-            )
-        )
+        d.validate_conclusion("c1")
 
 
 # 31 — historical VALIDATED lifecycle preserved when freshness goes stale
@@ -400,3 +417,153 @@ def test_conclusion_references_must_exist():
         d.add_conclusion(_conclusion("c1", hypothesis_ids=["h?"]))
     with pytest.raises(DiagnosticError):
         d.add_conclusion(_conclusion("c2", finding_ids=["f?"]))
+
+
+# ---------------------------------------------------------------------------
+# Correction pass — aggregate encapsulation
+# ---------------------------------------------------------------------------
+
+
+def test_consumer_cannot_append_findings_directly():
+    d = _diagnostic(findings=[_finding("f1")])
+    with pytest.raises(AttributeError):
+        d.findings.append(_finding("f2"))
+
+
+def test_consumer_cannot_clear_or_pop_hypotheses():
+    d = _diagnostic(hypotheses=[_hypothesis("h1")])
+    with pytest.raises(AttributeError):
+        d.hypotheses.clear()
+    with pytest.raises(AttributeError):
+        d.hypotheses.pop()
+
+
+def test_consumer_cannot_replace_collection_or_remove_validated_material():
+    d = _diagnostic(hypotheses=[_hypothesis("h1")])
+    d.validate_hypothesis("h1")
+    d.add_conclusion(_conclusion("c1"))
+    d.validate_conclusion("c1")
+    with pytest.raises(AttributeError):
+        d.findings = []
+    with pytest.raises(AttributeError):
+        d.diagnostic_conclusions = []
+    with pytest.raises(AttributeError):
+        d.version = 9
+    with pytest.raises(AttributeError):
+        d.diagnostic_id = "other"
+    # Read-only views still expose the material.
+    assert d.hypotheses[0].lifecycle is ClaimLifecycle.VALIDATED
+    assert d.diagnostic_conclusions[0].lifecycle is ClaimLifecycle.VALIDATED
+
+
+def test_mutating_returned_tuple_does_not_touch_aggregate():
+    d = _diagnostic(findings=[_finding("f1")])
+    leaked = d.findings
+    assert isinstance(leaked, tuple)
+    leaked += (_finding("evil"),)
+    assert len(d.findings) == 1
+
+
+def test_stable_ids_cannot_be_reassigned():
+    f = _finding("f1")
+    h = _hypothesis("h1")
+    c = _conclusion("c1")
+    for entity, attr in (
+        (f, "finding_id"),
+        (h, "hypothesis_id"),
+        (c, "conclusion_id"),
+    ):
+        with pytest.raises(AttributeError):
+            setattr(entity, attr, "novo")
+
+
+def test_epistemic_and_lifecycle_cannot_be_bypassed():
+    h = _hypothesis("h1")
+    c = _conclusion("c1")
+    with pytest.raises(AttributeError):
+        h.epistemic_state = EpistemicState.OBSERVED
+    with pytest.raises(AttributeError):
+        h.lifecycle = ClaimLifecycle.VALIDATED
+    with pytest.raises(AttributeError):
+        c.lifecycle = ClaimLifecycle.VALIDATED
+    with pytest.raises(AttributeError):
+        h.effective_validation = EffectiveValidation.STALE_EVIDENCE
+
+
+def test_aggregate_can_still_mark_effective_validation():
+    d = _diagnostic(hypotheses=[_hypothesis("h1")])
+    d.mark_hypothesis_stale_evidence("h1")
+    assert d.hypotheses[0].effective_validation is (
+        EffectiveValidation.STALE_EVIDENCE
+    )
+    d.mark_hypothesis_revalidation_required("h1")
+    assert d.hypotheses[0].effective_validation is (
+        EffectiveValidation.REVALIDATION_REQUIRED
+    )
+
+
+# ---------------------------------------------------------------------------
+# Correction pass — rehydration
+# ---------------------------------------------------------------------------
+
+
+def test_rehydrate_with_exactly_one_validated_conclusion():
+    d = _diagnostic()
+    d.add_conclusion(_conclusion("c1"))
+    d.validate_conclusion("c1")
+    rehydrated = _diagnostic(diagnostic_conclusions=list(d.diagnostic_conclusions))
+    assert rehydrated.diagnostic_conclusions[0].lifecycle is (
+        ClaimLifecycle.VALIDATED
+    )
+
+
+def test_rehydrate_with_two_validated_conclusions_fails():
+    with pytest.raises(DiagnosticError, match="effective_conclusion_conflict"):
+        _diagnostic(
+            diagnostic_conclusions=[
+                _conclusion("c1", lifecycle=ClaimLifecycle.VALIDATED),
+                _conclusion("c2", lifecycle=ClaimLifecycle.VALIDATED),
+            ]
+        )
+
+
+def test_superseded_then_validated_rehydrates():
+    d = _diagnostic(
+        diagnostic_conclusions=[
+            _conclusion("c1", lifecycle=ClaimLifecycle.SUPERSEDED),
+            _conclusion("c2", lifecycle=ClaimLifecycle.VALIDATED),
+        ]
+    )
+    assert d.diagnostic_conclusions[1].lifecycle is ClaimLifecycle.VALIDATED
+
+
+# ---------------------------------------------------------------------------
+# Correction pass — problem statement canonical rule
+# ---------------------------------------------------------------------------
+
+
+def test_short_non_empty_problem_statement_accepted():
+    ps = ProblemStatement(text="NC")
+    assert ps.text == "NC"
+    d = _diagnostic(problem_statement=ProblemStatement(text="NC"))
+    assert d.problem_statement.text == "NC"
+
+
+# ---------------------------------------------------------------------------
+# Correction pass — root cause subset invariant
+# ---------------------------------------------------------------------------
+
+
+def test_root_cause_must_be_subset_of_conclusion_hypotheses():
+    d = _diagnostic(hypotheses=[_hypothesis("h1"), _hypothesis("h2")])
+    d.validate_hypothesis("h2")
+    with pytest.raises(
+        DiagnosticError, match="invalid_root_cause_designation"
+    ):
+        d.add_conclusion(
+            _conclusion(
+                "c1",
+                hypothesis_ids=("h1",),
+                root_cause=RootCauseDesignation(hypothesis_id="h2"),
+            )
+        )

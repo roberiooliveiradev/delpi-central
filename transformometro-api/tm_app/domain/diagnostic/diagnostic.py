@@ -19,14 +19,16 @@ interface code, never queries storage and never performs cross-aggregate
 checks (e.g. ``Evidence.revision_id == Diagnostic.revision_id``) — those are
 application-slice concerns.
 
-Epistemic semantics are deliberately separated:
+Encapsulation rules (frozen by design):
 
-- ``ClaimLifecycle`` is the historical claim state (DRAFT/VALIDATED/…).
-- ``EffectiveValidation`` is the *current* freshness of that validation
-  (CURRENT/STALE_EVIDENCE/REVALIDATION_REQUIRED) — a representation only;
-  no freshness engine lives in the domain.
-- ``EpistemicState`` describes the nature of the claim itself.
-  VALIDATED != FACT: a hypothesis stays INFERRED even when validated.
+- Internal entities are frozen dataclasses: stable identity, epistemic state
+  and lifecycle cannot be reassigned by consumers.
+- Aggregate collections are private lists exposed read-only as tuples;
+  mutation happens only through aggregate methods.
+- ``ClaimLifecycle`` is the historical claim state; ``EffectiveValidation``
+  is the *current* freshness of that validation (representation only — no
+  freshness engine lives in the domain); ``EpistemicState`` is the nature of
+  the claim. VALIDATED != FACT: a hypothesis stays INFERRED when validated.
 """
 
 from __future__ import annotations
@@ -143,16 +145,14 @@ class Provenance:
 
 @dataclass(frozen=True)
 class ProblemStatement:
-    """Exactly one per Diagnostic. Content must be meaningful."""
+    """Exactly one per Diagnostic. Non-empty trimmed string is required."""
 
     text: str
 
     def __post_init__(self) -> None:
-        if not isinstance(self.text, str) or len(self.text.strip()) < 3:
-            _raise(
-                "invalid_problem_statement",
-                "problem_statement deve ser texto não vazio (mín. 3 chars).",
-            )
+        _require_non_empty(
+            self.text, "invalid_problem_statement", "problem_statement"
+        )
 
 
 @dataclass(frozen=True)
@@ -181,6 +181,10 @@ class RootCauseDesignation:
 
 # ---------------------------------------------------------------------------
 # Internal entities (stable identity; no per-entity repositories by design)
+#
+# Frozen dataclasses: identity, epistemic state and lifecycle cannot be
+# reassigned externally. The aggregate mutates lifecycle/effective state
+# internally through object.__setattr__ — the only door to state change.
 # ---------------------------------------------------------------------------
 
 
@@ -195,7 +199,7 @@ def _assert_lifecycle_transition(
         )
 
 
-@dataclass
+@dataclass(frozen=True)
 class Finding:
     """What was found. A finding is never a cause."""
 
@@ -206,7 +210,9 @@ class Finding:
     provenance: Provenance | None = None
 
     def __post_init__(self) -> None:
-        _require_non_empty(self.finding_id, "duplicate_internal_identity", "finding_id")
+        _require_non_empty(
+            self.finding_id, "duplicate_internal_identity", "finding_id"
+        )
         _require_non_empty(self.statement, "invalid_problem_statement", "statement")
         if self.epistemic_state not in (
             EpistemicState.OBSERVED,
@@ -217,10 +223,13 @@ class Finding:
                 "finding admite somente OBSERVED ou CALCULATED.",
             )
         if self.role is not None and not isinstance(self.role, FindingRole):
-            _raise("invalid_epistemic_state", f"finding role inválido: {self.role!r}.")
+            _raise(
+                "invalid_epistemic_state",
+                f"finding role inválido: {self.role!r}.",
+            )
 
 
-@dataclass
+@dataclass(frozen=True)
 class Hypothesis:
     """Proposed causal explanation. Always INFERRED — even when VALIDATED."""
 
@@ -230,7 +239,7 @@ class Hypothesis:
     effective_validation: EffectiveValidation = EffectiveValidation.CURRENT
     provenance: Provenance | None = None
     epistemic_state: EpistemicState = EpistemicState.INFERRED
-    validation_history: list[ValidationSnapshot] = field(default_factory=list)
+    validation_history: tuple[ValidationSnapshot, ...] = ()
 
     def __post_init__(self) -> None:
         _require_non_empty(
@@ -249,6 +258,9 @@ class Hypothesis:
                 "invalid_epistemic_state",
                 f"effective_validation inválido: {self.effective_validation!r}.",
             )
+        object.__setattr__(
+            self, "validation_history", tuple(self.validation_history or ())
+        )
 
 
 @dataclass(frozen=True)
@@ -288,7 +300,9 @@ class EvidenceLink:
 
     def __post_init__(self) -> None:
         _require_non_empty(self.link_id, "duplicate_internal_identity", "link_id")
-        _require_non_empty(self.evidence_id, "invalid_evidence_relation", "evidence_id")
+        _require_non_empty(
+            self.evidence_id, "invalid_evidence_relation", "evidence_id"
+        )
         if not isinstance(self.relation, EvidenceRelation):
             _raise(
                 "invalid_evidence_relation",
@@ -296,7 +310,7 @@ class EvidenceLink:
             )
 
 
-@dataclass
+@dataclass(frozen=True)
 class DiagnosticConclusion:
     """Always INFERRED. At most one may be VALIDATED per Diagnostic."""
 
@@ -304,12 +318,12 @@ class DiagnosticConclusion:
     statement: str
     lifecycle: ClaimLifecycle = ClaimLifecycle.DRAFT
     rationale: str | None = None
-    hypothesis_ids: list[str] = field(default_factory=list)
-    finding_ids: list[str] = field(default_factory=list)
+    hypothesis_ids: tuple[str, ...] = ()
+    finding_ids: tuple[str, ...] = ()
     root_cause: RootCauseDesignation | None = None
     provenance: Provenance | None = None
     epistemic_state: EpistemicState = EpistemicState.INFERRED
-    validation_history: list[ValidationSnapshot] = field(default_factory=list)
+    validation_history: tuple[ValidationSnapshot, ...] = ()
 
     def __post_init__(self) -> None:
         _require_non_empty(
@@ -323,58 +337,142 @@ class DiagnosticConclusion:
             )
         if not isinstance(self.lifecycle, ClaimLifecycle):
             _raise("invalid_lifecycle_transition", "lifecycle inválido.")
+        object.__setattr__(self, "hypothesis_ids", tuple(self.hypothesis_ids or ()))
+        object.__setattr__(self, "finding_ids", tuple(self.finding_ids or ()))
+        object.__setattr__(
+            self, "validation_history", tuple(self.validation_history or ())
+        )
 
 
 # ---------------------------------------------------------------------------
 # Aggregate root
+#
+# Manual __init__ + __slots__: constructor accepts plain iterables for
+# rehydration, stores them in private lists and exposes read-only tuple views.
+# There are no setters for identity, statement, provenance or version, and no
+# delete operations anywhere — materialized material cannot be hard-deleted.
 # ---------------------------------------------------------------------------
 
 
-@dataclass
 class Diagnostic:
     """Aggregate root anchored to exactly one Revision."""
 
-    diagnostic_id: str
-    revision_id: str
-    problem_statement: ProblemStatement
-    version: int = 1
-    findings: list[Finding] = field(default_factory=list)
-    hypotheses: list[Hypothesis] = field(default_factory=list)
-    causal_links: list[CausalLink] = field(default_factory=list)
-    evidence_links: list[EvidenceLink] = field(default_factory=list)
-    diagnostic_conclusions: list[DiagnosticConclusion] = field(default_factory=list)
-    provenance: Provenance | None = None
+    __slots__ = (
+        "_diagnostic_id",
+        "_revision_id",
+        "_problem_statement",
+        "_version",
+        "_provenance",
+        "_findings",
+        "_hypotheses",
+        "_causal_links",
+        "_evidence_links",
+        "_diagnostic_conclusions",
+    )
 
-    def __post_init__(self) -> None:
-        _require_non_empty(
-            self.diagnostic_id, "duplicate_internal_identity", "diagnostic_id"
+    def __init__(
+        self,
+        *,
+        diagnostic_id: str,
+        revision_id: str,
+        problem_statement: ProblemStatement,
+        version: int = 1,
+        findings=(),
+        hypotheses=(),
+        causal_links=(),
+        evidence_links=(),
+        diagnostic_conclusions=(),
+        provenance: Provenance | None = None,
+    ) -> None:
+        self._diagnostic_id = _require_non_empty(
+            diagnostic_id, "duplicate_internal_identity", "diagnostic_id"
         )
-        _require_non_empty(self.revision_id, "invalid_problem_statement", "revision_id")
-        if not isinstance(self.problem_statement, ProblemStatement):
+        self._revision_id = _require_non_empty(
+            revision_id, "invalid_problem_statement", "revision_id"
+        )
+        if not isinstance(problem_statement, ProblemStatement):
             _raise(
                 "invalid_problem_statement",
                 "diagnostic exige exatamente um ProblemStatement.",
             )
-        if not isinstance(self.version, int) or isinstance(self.version, bool) or self.version < 1:
+        self._problem_statement = problem_statement
+        if (
+            not isinstance(version, int)
+            or isinstance(version, bool)
+            or version < 1
+        ):
             _raise("invalid_version", "version deve ser inteiro >= 1.")
+        self._version = version
+        if provenance is not None and not isinstance(provenance, Provenance):
+            _raise("invalid_epistemic_state", "provenance inválida.")
+        self._provenance = provenance
+
+        self._findings = list(findings)
+        self._hypotheses = list(hypotheses)
+        self._causal_links = list(causal_links)
+        self._evidence_links = list(evidence_links)
+        self._diagnostic_conclusions = list(diagnostic_conclusions)
+
         self._assert_unique_identities()
-        for link in self.causal_links:
+        for link in self._causal_links:
             self._assert_causal_link(link)
-        for link in self.evidence_links:
+        for link in self._evidence_links:
             self._assert_evidence_link(link)
-        for conclusion in self.diagnostic_conclusions:
+        for conclusion in self._diagnostic_conclusions:
             self._assert_conclusion_references(conclusion)
         self._assert_single_effective_conclusion()
+
+    # -- read-only views ------------------------------------------------------
+
+    @property
+    def diagnostic_id(self) -> str:
+        return self._diagnostic_id
+
+    @property
+    def revision_id(self) -> str:
+        return self._revision_id
+
+    @property
+    def problem_statement(self) -> ProblemStatement:
+        return self._problem_statement
+
+    @property
+    def version(self) -> int:
+        return self._version
+
+    @property
+    def provenance(self) -> Provenance | None:
+        return self._provenance
+
+    @property
+    def findings(self) -> tuple[Finding, ...]:
+        return tuple(self._findings)
+
+    @property
+    def hypotheses(self) -> tuple[Hypothesis, ...]:
+        return tuple(self._hypotheses)
+
+    @property
+    def causal_links(self) -> tuple[CausalLink, ...]:
+        return tuple(self._causal_links)
+
+    @property
+    def evidence_links(self) -> tuple[EvidenceLink, ...]:
+        return tuple(self._evidence_links)
+
+    @property
+    def diagnostic_conclusions(self) -> tuple[DiagnosticConclusion, ...]:
+        return tuple(self._diagnostic_conclusions)
 
     # -- identity / lookup --------------------------------------------------
 
     def _assert_unique_identities(self) -> None:
         for label, id_attr, items in (
-            ("finding", "finding_id", self.findings),
-            ("hypothesis", "hypothesis_id", self.hypotheses),
-            ("causal_link", "link_id", self.causal_links),
-            ("evidence_link", "link_id", self.evidence_links),
-            ("conclusion", "conclusion_id", self.diagnostic_conclusions),
+            ("finding", "finding_id", self._findings),
+            ("hypothesis", "hypothesis_id", self._hypotheses),
+            ("causal_link", "link_id", self._causal_links),
+            ("evidence_link", "link_id", self._evidence_links),
+            ("conclusion", "conclusion_id", self._diagnostic_conclusions),
         ):
             seen: set[str] = set()
             for item in items:
@@ -388,12 +486,12 @@ class Diagnostic:
 
     def _finding(self, finding_id: str) -> Finding | None:
         return next(
-            (f for f in self.findings if f.finding_id == finding_id), None
+            (f for f in self._findings if f.finding_id == finding_id), None
         )
 
     def _hypothesis(self, hypothesis_id: str) -> Hypothesis | None:
         return next(
-            (h for h in self.hypotheses if h.hypothesis_id == hypothesis_id),
+            (h for h in self._hypotheses if h.hypothesis_id == hypothesis_id),
             None,
         )
 
@@ -401,7 +499,7 @@ class Diagnostic:
         return next(
             (
                 c
-                for c in self.diagnostic_conclusions
+                for c in self._diagnostic_conclusions
                 if c.conclusion_id == conclusion_id
             ),
             None,
@@ -415,7 +513,7 @@ class Diagnostic:
                 "duplicate_internal_identity",
                 f"finding_id duplicado: {finding.finding_id}.",
             )
-        self.findings.append(finding)
+        self._findings.append(finding)
 
     def add_hypothesis(self, hypothesis: Hypothesis) -> None:
         if self._hypothesis(hypothesis.hypothesis_id):
@@ -423,7 +521,7 @@ class Diagnostic:
                 "duplicate_internal_identity",
                 f"hypothesis_id duplicado: {hypothesis.hypothesis_id}.",
             )
-        self.hypotheses.append(hypothesis)
+        self._hypotheses.append(hypothesis)
 
     def _assert_causal_link(self, link: CausalLink) -> None:
         if self._hypothesis(link.source_hypothesis_id) is None:
@@ -445,13 +543,13 @@ class Diagnostic:
             )
 
     def add_causal_link(self, link: CausalLink) -> None:
-        if any(l.link_id == link.link_id for l in self.causal_links):
+        if any(l.link_id == link.link_id for l in self._causal_links):
             _raise(
                 "duplicate_internal_identity",
                 f"link_id duplicado: {link.link_id}.",
             )
         self._assert_causal_link(link)
-        self.causal_links.append(link)
+        self._causal_links.append(link)
 
     def _assert_evidence_link(self, link: EvidenceLink) -> None:
         if link.target_id is not None and not (
@@ -465,15 +563,20 @@ class Diagnostic:
             )
 
     def add_evidence_link(self, link: EvidenceLink) -> None:
-        if any(l.link_id == link.link_id for l in self.evidence_links):
+        if any(l.link_id == link.link_id for l in self._evidence_links):
             _raise(
                 "duplicate_internal_identity",
                 f"link_id duplicado: {link.link_id}.",
             )
         self._assert_evidence_link(link)
-        self.evidence_links.append(link)
+        self._evidence_links.append(link)
 
     # -- lifecycle transitions (historical) ----------------------------------
+
+    @staticmethod
+    def _set(claim: Any, name: str, value: Any) -> None:
+        """Internal door to frozen-entity state change — aggregate only."""
+        object.__setattr__(claim, name, value)
 
     def _transition_claim(
         self,
@@ -486,15 +589,18 @@ class Diagnostic:
         effective = getattr(
             claim, "effective_validation", EffectiveValidation.CURRENT
         )
-        claim.validation_history.append(
-            ValidationSnapshot(
-                from_lifecycle=claim.lifecycle,
-                to_lifecycle=target,
-                effective_validation=effective,
-                note=note,
-            )
+        snapshot = ValidationSnapshot(
+            from_lifecycle=claim.lifecycle,
+            to_lifecycle=target,
+            effective_validation=effective,
+            note=note,
         )
-        claim.lifecycle = target
+        self._set(
+            claim,
+            "validation_history",
+            (*claim.validation_history, snapshot),
+        )
+        self._set(claim, "lifecycle", target)
 
     def validate_hypothesis(
         self, hypothesis_id: str, *, note: str | None = None
@@ -517,19 +623,26 @@ class Diagnostic:
     def _require_hypothesis(self, hypothesis_id: str) -> Hypothesis:
         hypothesis = self._hypothesis(hypothesis_id)
         if hypothesis is None:
-            _raise("invalid_causal_link", f"hypothesis inexistente: {hypothesis_id}.")
+            _raise(
+                "invalid_causal_link",
+                f"hypothesis inexistente: {hypothesis_id}.",
+            )
         return hypothesis
 
     # -- effective validation (representation only) ---------------------------
 
     def mark_hypothesis_stale_evidence(self, hypothesis_id: str) -> None:
-        self._require_hypothesis(hypothesis_id).effective_validation = (
-            EffectiveValidation.STALE_EVIDENCE
+        hypothesis = self._require_hypothesis(hypothesis_id)
+        self._set(
+            hypothesis, "effective_validation", EffectiveValidation.STALE_EVIDENCE
         )
 
     def mark_hypothesis_revalidation_required(self, hypothesis_id: str) -> None:
-        self._require_hypothesis(hypothesis_id).effective_validation = (
-            EffectiveValidation.REVALIDATION_REQUIRED
+        hypothesis = self._require_hypothesis(hypothesis_id)
+        self._set(
+            hypothesis,
+            "effective_validation",
+            EffectiveValidation.REVALIDATION_REQUIRED,
         )
 
     # -- conclusions -----------------------------------------------------------
@@ -546,15 +659,23 @@ class Diagnostic:
                     f"finding inexistente: {finding_id}.",
                 )
         if conclusion.root_cause is not None:
-            self._assert_root_cause(conclusion.root_cause)
+            designation = conclusion.root_cause
+            if self._hypothesis(designation.hypothesis_id) is None:
+                _raise(
+                    "invalid_root_cause_designation",
+                    f"hypothesis inexistente: {designation.hypothesis_id}.",
+                )
+            if designation.hypothesis_id not in conclusion.hypothesis_ids:
+                _raise(
+                    "invalid_root_cause_designation",
+                    "root cause deve apontar para hypothesis referenciada "
+                    "pela conclusão.",
+                )
 
-    def _assert_root_cause(self, designation: RootCauseDesignation) -> None:
-        hypothesis = self._hypothesis(designation.hypothesis_id)
-        if hypothesis is None:
-            _raise(
-                "invalid_root_cause_designation",
-                f"hypothesis inexistente: {designation.hypothesis_id}.",
-            )
+    def _assert_root_cause_effective(
+        self, designation: RootCauseDesignation
+    ) -> None:
+        hypothesis = self._require_hypothesis(designation.hypothesis_id)
         if hypothesis.lifecycle is not ClaimLifecycle.VALIDATED:
             _raise(
                 "invalid_root_cause_designation",
@@ -566,17 +687,22 @@ class Diagnostic:
                 "root cause exige hypothesis com effective_validation CURRENT.",
             )
 
-    def _assert_single_effective_conclusion(
+    def _validated_conclusion_count(
         self, excluding: DiagnosticConclusion | None = None
-    ) -> None:
-        for conclusion in self.diagnostic_conclusions:
-            if conclusion is excluding:
-                continue
-            if conclusion.lifecycle is ClaimLifecycle.VALIDATED:
-                _raise(
-                    "effective_conclusion_conflict",
-                    "já existe conclusão VALIDATED neste diagnostic.",
-                )
+    ) -> int:
+        return sum(
+            1
+            for conclusion in self._diagnostic_conclusions
+            if conclusion is not excluding
+            and conclusion.lifecycle is ClaimLifecycle.VALIDATED
+        )
+
+    def _assert_single_effective_conclusion(self) -> None:
+        if self._validated_conclusion_count() > 1:
+            _raise(
+                "effective_conclusion_conflict",
+                "mais de uma conclusão VALIDATED neste diagnostic.",
+            )
 
     def add_conclusion(self, conclusion: DiagnosticConclusion) -> None:
         if self._conclusion(conclusion.conclusion_id):
@@ -585,9 +711,15 @@ class Diagnostic:
                 f"conclusion_id duplicado: {conclusion.conclusion_id}.",
             )
         self._assert_conclusion_references(conclusion)
-        if conclusion.lifecycle is ClaimLifecycle.VALIDATED:
-            self._assert_single_effective_conclusion()
-        self.diagnostic_conclusions.append(conclusion)
+        if (
+            conclusion.lifecycle is ClaimLifecycle.VALIDATED
+            and self._validated_conclusion_count() > 0
+        ):
+            _raise(
+                "effective_conclusion_conflict",
+                "já existe conclusão VALIDATED neste diagnostic.",
+            )
+        self._diagnostic_conclusions.append(conclusion)
 
     def _require_conclusion(
         self, conclusion_id: str
@@ -604,10 +736,16 @@ class Diagnostic:
         self, conclusion_id: str, *, note: str | None = None
     ) -> None:
         conclusion = self._require_conclusion(conclusion_id)
-        _assert_lifecycle_transition(conclusion.lifecycle, ClaimLifecycle.VALIDATED)
-        self._assert_single_effective_conclusion(excluding=conclusion)
+        _assert_lifecycle_transition(
+            conclusion.lifecycle, ClaimLifecycle.VALIDATED
+        )
+        if self._validated_conclusion_count(excluding=conclusion) > 0:
+            _raise(
+                "effective_conclusion_conflict",
+                "já existe conclusão VALIDATED neste diagnostic.",
+            )
         if conclusion.root_cause is not None:
-            self._assert_root_cause(conclusion.root_cause)
+            self._assert_root_cause_effective(conclusion.root_cause)
         self._transition_claim(conclusion, ClaimLifecycle.VALIDATED, note=note)
 
     def reject_conclusion(
