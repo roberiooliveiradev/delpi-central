@@ -53,13 +53,18 @@ from tm_app.application.use_cases.diagnostic_write import (  # noqa: E402
     DiagnosticWriteUseCase,
 )
 from tm_app.domain.diagnostic.diagnostic import (  # noqa: E402
+    CausalLink,
     ClaimLifecycle,
+    DiagnosticConclusion,
+    EffectiveValidation,
+    EpistemicState,
     EvidenceLink,
     EvidenceRelation,
     Finding,
     Hypothesis,
     Provenance,
     ProvenanceOrigin,
+    RootCauseDesignation,
 )
 from tm_app.infrastructure.persistence.repositories.diagnostic_readers import (  # noqa: E402
     EvidenceReaderAdapter,
@@ -335,15 +340,44 @@ def test_real_db_full_diagnostic_lifecycle(db, anchors, rbac):
             ),
         )
     )
+    # Conclusion with root cause → validate → durable reload.
+    _H = "a1a1a1a1-0000-4000-8000-000000000001"
+    _C = "c1c1c1c1-0000-4000-8000-000000000001"
+    conclusion = DiagnosticConclusion(
+        _C,
+        "causa raiz identificada",
+        hypothesis_ids=(_H,),
+        root_cause=RootCauseDesignation(_H),
+    )
+    run(uc.add_conclusion(diagnostic_id=did, conclusion=conclusion))
+    run(uc.validate_conclusion(diagnostic_id=did, conclusion_id=_C, note="ok"))
     db.commit()
 
     repo, _, _ = _repos(db)
     reloaded = repo.get(did)
-    assert reloaded.version == 5
+    assert reloaded.version == 7
     assert len(reloaded.findings) == 1
-    hypo = next(h for h in reloaded.hypotheses if h.hypothesis_id == "a1a1a1a1-0000-4000-8000-000000000001")
+    hypo = next(h for h in reloaded.hypotheses if h.hypothesis_id == _H)
     assert hypo.lifecycle is ClaimLifecycle.VALIDATED
+    assert hypo.epistemic_state is EpistemicState.INFERRED
     assert len(reloaded.evidence_links) == 1
+    concl = next(
+        c for c in reloaded.diagnostic_conclusions if c.conclusion_id == _C
+    )
+    assert concl.lifecycle is ClaimLifecycle.VALIDATED
+    assert concl.epistemic_state is EpistemicState.INFERRED
+    assert concl.effective_validation is EffectiveValidation.CURRENT
+    assert concl.root_cause is not None
+    assert concl.root_cause.hypothesis_id == _H
+    # validation history preserved through reload
+    assert any(
+        s.to_lifecycle is ClaimLifecycle.VALIDATED
+        for s in hypo.validation_history
+    )
+    assert any(
+        s.to_lifecycle is ClaimLifecycle.VALIDATED
+        for s in concl.validation_history
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -664,6 +698,187 @@ def test_validate_missing_hypothesis_denied(db, anchors, rbac):
 # ---------------------------------------------------------------------------
 # §16 Read side — real persisted data, detached views, no side effects
 # ---------------------------------------------------------------------------
+
+
+# ---------------------------------------------------------------------------
+# GAP B — invalid root cause: authorized user, domain rejection, durable proof
+# ---------------------------------------------------------------------------
+
+
+def test_root_cause_unvalidated_hypothesis_rejected(db, anchors, rbac):
+    _prime_ctx()
+    uc = _use_case(db)
+    did = str(uuid4())
+    anchors["created"].append(did)
+    run = asyncio.run
+    _H = "a1a1a1a1-0000-4000-8000-000000000001"
+    _C = "c1c1c1c1-0000-4000-8000-000000000001"
+    run(
+        uc.create_diagnostic(
+            diagnostic_id=did,
+            revision_id=anchors["revisao_id"],
+            problem_statement="p",
+        )
+    )
+    run(
+        uc.add_hypothesis(
+            diagnostic_id=did,
+            hypothesis=Hypothesis(_H, "h draft — nunca validada"),
+        )
+    )
+    run(
+        uc.add_conclusion(
+            diagnostic_id=did,
+            conclusion=DiagnosticConclusion(
+                _C,
+                "conclusao com root cause nao validada",
+                hypothesis_ids=(_H,),
+                root_cause=RootCauseDesignation(_H),
+            ),
+        )
+    )
+    db.commit()
+    repo, _, _ = _repos(db)
+    version_before = repo.get(did).version
+
+    with pytest.raises(DiagnosticWriteError) as excinfo:
+        run(uc.validate_conclusion(diagnostic_id=did, conclusion_id=_C))
+    assert excinfo.value.code == "invalid_root_cause_designation"
+    db.commit()
+
+    reloaded = repo.get(did)
+    assert reloaded.version == version_before
+    concl = next(
+        c for c in reloaded.diagnostic_conclusions if c.conclusion_id == _C
+    )
+    assert concl.lifecycle is ClaimLifecycle.DRAFT
+    assert not any(
+        c.lifecycle is ClaimLifecycle.VALIDATED
+        for c in reloaded.diagnostic_conclusions
+    )
+
+
+# ---------------------------------------------------------------------------
+# GAP C — second VALIDATED conclusion
+# ---------------------------------------------------------------------------
+
+
+def test_second_validated_conclusion_rejected(db, anchors, rbac):
+    _prime_ctx()
+    uc = _use_case(db)
+    did = str(uuid4())
+    anchors["created"].append(did)
+    run = asyncio.run
+    _H = "a1a1a1a1-0000-4000-8000-000000000001"
+    _C1 = "c1c1c1c1-0000-4000-8000-000000000001"
+    _C2 = "c2c2c2c2-0000-4000-8000-000000000002"
+    run(
+        uc.create_diagnostic(
+            diagnostic_id=did,
+            revision_id=anchors["revisao_id"],
+            problem_statement="p",
+        )
+    )
+    run(
+        uc.add_hypothesis(
+            diagnostic_id=did, hypothesis=Hypothesis(_H, "h")
+        )
+    )
+    run(uc.validate_hypothesis(diagnostic_id=did, hypothesis_id=_H))
+    run(
+        uc.add_conclusion(
+            diagnostic_id=did,
+            conclusion=DiagnosticConclusion(
+                _C1,
+                "primeira",
+                hypothesis_ids=(_H,),
+                root_cause=RootCauseDesignation(_H),
+            ),
+        )
+    )
+    run(uc.validate_conclusion(diagnostic_id=did, conclusion_id=_C1))
+    run(
+        uc.add_conclusion(
+            diagnostic_id=did,
+            conclusion=DiagnosticConclusion(_C2, "segunda"),
+        )
+    )
+    db.commit()
+    repo, _, _ = _repos(db)
+    version_before = repo.get(did).version
+
+    with pytest.raises(DiagnosticWriteError) as excinfo:
+        run(uc.validate_conclusion(diagnostic_id=did, conclusion_id=_C2))
+    assert excinfo.value.code == "effective_conclusion_conflict"
+    db.commit()
+
+    reloaded = repo.get(did)
+    assert reloaded.version == version_before
+    by_id = {c.conclusion_id: c for c in reloaded.diagnostic_conclusions}
+    assert by_id[_C1].lifecycle is ClaimLifecycle.VALIDATED
+    assert by_id[_C2].lifecycle is ClaimLifecycle.DRAFT
+    assert sum(
+        c.lifecycle is ClaimLifecycle.VALIDATED
+        for c in reloaded.diagnostic_conclusions
+    ) == 1
+
+
+# ---------------------------------------------------------------------------
+# GAP D — invalid causal reference
+# ---------------------------------------------------------------------------
+
+
+def test_invalid_causal_reference_rejected(db, anchors, rbac):
+    _prime_ctx()
+    uc = _use_case(db)
+    did = str(uuid4())
+    anchors["created"].append(did)
+    run = asyncio.run
+    _F = "f1f1f1f1-0000-4000-8000-000000000001"
+    run(
+        uc.create_diagnostic(
+            diagnostic_id=did,
+            revision_id=anchors["revisao_id"],
+            problem_statement="p",
+        )
+    )
+    run(
+        uc.add_finding(
+            diagnostic_id=did, finding=Finding(_F, "achado")
+        )
+    )
+    db.commit()
+    repo, _, _ = _repos(db)
+    version_before = repo.get(did).version
+
+    link = CausalLink(
+        "caca1111-0000-4000-8000-000000000001",
+        source_hypothesis_id=str(uuid4()),  # hypothesis inexistente
+        target_id=_F,
+    )
+    with pytest.raises(DiagnosticWriteError) as excinfo:
+        run(uc.add_causal_link(diagnostic_id=did, link=link))
+    assert excinfo.value.code == "invalid_causal_link"
+    db.commit()
+
+    reloaded = repo.get(did)
+    assert reloaded.version == version_before
+    assert len(reloaded.causal_links) == 0
+    assert len(reloaded.findings) == 1
+
+
+# ---------------------------------------------------------------------------
+# §8 — confirmation policy deny-by-default for Diagnostic capabilities
+# ---------------------------------------------------------------------------
+
+
+def test_diagnostic_commit_now_deny_by_default():
+    from tm_app.application.governed_writes.confirmation_policy import (
+        allows_commit_now_for_capability,
+    )
+
+    assert allows_commit_now_for_capability("create_diagnostic") is False
+    assert allows_commit_now_for_capability("manage_diagnostic") is False
 
 
 def test_read_side_detached_and_no_writes(db, anchors, rbac):
