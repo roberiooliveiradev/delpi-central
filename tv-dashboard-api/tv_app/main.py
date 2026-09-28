@@ -162,7 +162,8 @@ from tv_app.interface.mcp import (  # noqa: E402
 )
 
 _mcp_server = create_mcp_server()
+_mcp_app = mcp_http_app(_mcp_server)
 combine_lifespan(app, _mcp_server)
 app.include_router(mcp_metadata_router)
-app.mount("/mcp", mcp_http_app(_mcp_server))
+app.mount("/mcp", _mcp_app)
 app.middleware("http")(mcp_mount_path_middleware)

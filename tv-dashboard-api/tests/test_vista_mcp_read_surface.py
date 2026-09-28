@@ -162,15 +162,15 @@ def test_tool_annotations_match_class():
         ann = t.annotations
         assert ann is not None, name
         if TOOL_CLASS[name] == "READ":
-            assert ann.readOnlyHint is True, name
-            assert ann.destructiveHint in (False, None), name
+            assert ann.read_only_hint is True, name
+            assert ann.destructive_hint in (False, None), name
         elif TOOL_CLASS[name] == "PREPARE":
-            assert ann.readOnlyHint is False, name
-            assert ann.destructiveHint is False, name
+            assert ann.read_only_hint is False, name
+            assert ann.destructive_hint is False, name
         else:  # ACT
-            assert ann.readOnlyHint is False, name
-            assert ann.destructiveHint is True, name
-            assert ann.idempotentHint is True, name
+            assert ann.read_only_hint is False, name
+            assert ann.destructive_hint is True, name
+            assert ann.idempotent_hint is True, name
 
 
 def test_no_resources_or_prompts_registered():
@@ -304,10 +304,10 @@ def test_list_playlists_delegates_to_dispatch():
         tool_bridge._dispatch, "list_playlists", return_value=expected
     ) as fn:
         result = tool_bridge.tool_list_playlists(limit=10, offset=0)
-    assert result.isError is False
+    assert result.is_error is False
     fn.assert_called_once()
-    assert result.structuredContent["status"] == "success"
-    assert result.structuredContent["data"]["items"][0]["id"] == "p1"
+    assert result.structured_content["status"] == "success"
+    assert result.structured_content["data"]["items"][0]["id"] == "p1"
 
 
 def test_identity_propagates_to_dispatch():
@@ -320,7 +320,7 @@ def test_identity_propagates_to_dispatch():
 
     with _ctx(user), patch.object(tool_bridge._dispatch, "list_playlists", side_effect=_capture):
         result = tool_bridge.tool_list_playlists()
-    assert result.isError is False
+    assert result.is_error is False
     assert seen["user"] is user
     assert seen["user"].id == "viewer-1"
 
@@ -328,8 +328,8 @@ def test_identity_propagates_to_dispatch():
 def test_unauthenticated_tool_call_401():
     with _ctx(None, None):
         result = tool_bridge.tool_list_playlists()
-    assert result.isError is True
-    body = result.structuredContent
+    assert result.is_error is True
+    body = result.structured_content
     assert body["httpStatus"] == 401
     assert body["code"] == "AUTHENTICATION_REQUIRED"
     meta = getattr(result, "meta", None) or {}
@@ -345,7 +345,7 @@ def test_get_playlist_context_delegates():
         result = tool_bridge.tool_get_playlist_context(
             playlist_id="850d110a-4ec8-4fe8-91be-225f1dcfcf0e", scope="full"
         )
-    assert result.isError is False
+    assert result.is_error is False
     kwargs = fn.call_args.kwargs
     assert kwargs["playlist_id"] == "850d110a-4ec8-4fe8-91be-225f1dcfcf0e"
     assert kwargs["scope"] == "full"
@@ -356,7 +356,7 @@ def test_get_catalog_delegates():
         tool_bridge._dispatch, "get_catalog", return_value={"operations": ["x"]}
     ) as fn:
         result = tool_bridge.tool_get_catalog()
-    assert result.isError is False
+    assert result.is_error is False
     fn.assert_called_once()
 
 
@@ -369,8 +369,8 @@ def test_get_catalog_write_permission_preserved_as_403():
         side_effect=PermissionError("Você não tem permissão para esta ação."),
     ):
         result = tool_bridge.tool_get_catalog()
-    assert result.isError is True
-    assert result.structuredContent["httpStatus"] == 403
+    assert result.is_error is True
+    assert result.structured_content["httpStatus"] == 403
 
 
 def test_search_data_routes_delegates_and_preserves_validation():
@@ -380,9 +380,9 @@ def test_search_data_routes_delegates_and_preserves_validation():
         side_effect=GptActionsError("Informe uma busca.", code="QUERY_REQUIRED", status_code=422),
     ):
         result = tool_bridge.tool_search_data_routes(query="")
-    assert result.isError is True
-    assert result.structuredContent["code"] == "QUERY_REQUIRED"
-    assert result.structuredContent["httpStatus"] == 422
+    assert result.is_error is True
+    assert result.structured_content["code"] == "QUERY_REQUIRED"
+    assert result.structured_content["httpStatus"] == 422
 
 
 def test_inspect_data_model_passes_authorization_from_context():
@@ -398,7 +398,7 @@ def test_inspect_data_model_passes_authorization_from_context():
         result = tool_bridge.tool_inspect_data_model(
             playlist_id="p", slide_id="s", model_id="mdl_14b3b212b2"
         )
-    assert result.isError is False
+    assert result.is_error is False
     assert seen["authorization"] == "Bearer user-token-abc"
 
 
@@ -414,8 +414,8 @@ def test_inspect_model_not_found_preserves_domain_code():
         ),
     ):
         result = tool_bridge.tool_inspect_data_model(playlist_id="p", slide_id="s", model_id="m")
-    assert result.isError is True
-    body = result.structuredContent
+    assert result.is_error is True
+    body = result.structured_content
     assert body["code"] == "data_model.not_found"
     assert body["httpStatus"] == 404
     assert body["details"] == {"modelId": "mdl_x"}
@@ -431,9 +431,9 @@ def test_unauthorized_playlist_fails_closed():
         ),
     ):
         result = tool_bridge.tool_get_playlist_context(playlist_id="other-tenant")
-    assert result.isError is True
-    assert result.structuredContent["code"] == "RESOURCE_NOT_FOUND"
-    assert "slides" not in result.structuredContent.get("data", {})
+    assert result.is_error is True
+    assert result.structured_content["code"] == "RESOURCE_NOT_FOUND"
+    assert "slides" not in result.structured_content.get("data", {})
 
 
 def test_internal_error_no_stack_leak():
@@ -441,8 +441,8 @@ def test_internal_error_no_stack_leak():
         tool_bridge._dispatch, "list_playlists", side_effect=RuntimeError("db conn secret")
     ):
         result = tool_bridge.tool_list_playlists()
-    assert result.isError is True
-    body = result.structuredContent
+    assert result.is_error is True
+    body = result.structured_content
     assert body["code"] == "INTERNAL_ERROR"
     assert "db conn secret" not in json.dumps(body)
 
@@ -475,8 +475,8 @@ def test_preview_data_model_rol_value_through_mcp():
     cfg, model = _inline_model_body()
     with _ctx(_viewer()), patch.object(tool_bridge, "_dispatch", dispatch):
         result = tool_bridge.tool_preview_data_model(model=model)
-    assert result.isError is False
-    data = result.structuredContent["data"]
+    assert result.is_error is False
+    data = result.structured_content["data"]
     resolved = data["resolved"]
     rows = (resolved.get("table") or {}).get("rows") or []
     assert rows, "preview should materialize rows"
@@ -491,7 +491,7 @@ def test_preview_inline_candidate_not_persisted():
     cfg, model = _inline_model_body()
     with _ctx(_viewer()), patch.object(tool_bridge, "_dispatch", dispatch):
         result = tool_bridge.tool_preview_data_model(model=model)
-    assert result.isError is False
+    assert result.is_error is False
     # No persistence port touched by the inline preview path.
     assert dispatch._repo.method_calls == []
     assert dispatch._writes.method_calls == []
@@ -501,9 +501,9 @@ def test_preview_inline_candidate_not_persisted():
 def test_preview_requires_model_or_model_id():
     with _ctx(_viewer()):
         result = tool_bridge.tool_preview_data_model()
-    assert result.isError is True
-    assert result.structuredContent["code"] == "INVALID_CHANGE"
-    assert result.structuredContent["httpStatus"] == 422
+    assert result.is_error is True
+    assert result.structured_content["code"] == "INVALID_CHANGE"
+    assert result.structured_content["httpStatus"] == 422
 
 
 # ---------------------------------------------------------------------------
@@ -538,7 +538,7 @@ def test_mcp_trailing_path_untouched_for_non_mcp():
 
 
 def test_calling_forbidden_tool_fails_tool_not_found():
-    from mcp.server.fastmcp.exceptions import ToolError
+    from mcp.server.mcpserver.exceptions import ToolError
 
     mcp = create_mcp_server()
     with pytest.raises(ToolError, match="upsert_data_model"):
@@ -561,3 +561,123 @@ def test_app_mounts_mcp_and_metadata_and_health():
     assert any(p.startswith("/.well-known/oauth-protected-resource") for p in well_known)
     api_paths = [getattr(r, "path", "") for r in app.routes]
     assert "/health" in api_paths
+
+
+# ---------------------------------------------------------------------------
+# Modern protocol era (2026-07-28) — regression for the ChatGPT discovery
+# failure: SDK 1.30 rejected non-initialize requests carrying
+# ``MCP-Protocol-Version: 2026-07-28`` with HTTP 400
+# "Unsupported protocol version". With mcp>=2 the modern era is served
+# natively on the same streamable endpoint (no fallback required).
+# ---------------------------------------------------------------------------
+
+_MODERN_HEADERS = {
+    "Content-Type": "application/json",
+    "Accept": "application/json, text/event-stream",
+    "MCP-Protocol-Version": "2026-07-28",
+}
+_MODERN_META = {
+    "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+    "io.modelcontextprotocol/clientCapabilities": {},
+}
+
+
+async def _mcp_post(client, payload, headers=None):
+    return await client.post("/", json=payload, headers=headers or {})
+
+
+def test_modern_era_tools_list_served_natively():
+    """Modern-era request envelope (MCP-Method header + params._meta) → 200.
+
+    Regression: this class of request returned HTTP 400 under mcp 1.30.
+    """
+    import httpx
+
+    from tv_app.interface.mcp.asgi import mcp_http_app
+
+    async def _run():
+        mcp = create_mcp_server()
+        app = mcp_http_app(mcp)
+        async with mcp.session_manager.run():
+            transport = httpx.ASGITransport(app=app)
+            async with httpx.AsyncClient(
+                transport=transport, base_url="http://localhost"
+            ) as client:
+                headers = {**_MODERN_HEADERS, "MCP-Method": "tools/list"}
+                payload = {
+                    "jsonrpc": "2.0",
+                    "id": 1,
+                    "method": "tools/list",
+                    "params": {"_meta": dict(_MODERN_META)},
+                }
+                return await _mcp_post(client, payload, headers)
+
+    resp = asyncio.run(_run())
+    assert resp.status_code == 200, resp.text
+    body = resp.json()
+    assert "error" not in body, body
+    tools = body["result"]["tools"]
+    assert {t["name"] for t in tools} == set(MCP_TOOL_NAMES)
+
+
+def test_modern_protocol_header_does_not_emit_unsupported_version_400():
+    """A request under the modern era must never fail with the v1-era
+    'Unsupported protocol version' 400 (the exact production failure)."""
+    import httpx
+
+    from tv_app.interface.mcp.asgi import mcp_http_app
+
+    async def _run():
+        mcp = create_mcp_server()
+        app = mcp_http_app(mcp)
+        async with mcp.session_manager.run():
+            transport = httpx.ASGITransport(app=app)
+            async with httpx.AsyncClient(
+                transport=transport, base_url="http://localhost"
+            ) as client:
+                return await _mcp_post(
+                    client,
+                    {"jsonrpc": "2.0", "id": 1, "method": "tools/list"},
+                    _MODERN_HEADERS,
+                )
+
+    resp = asyncio.run(_run())
+    assert "Unsupported protocol version" not in resp.text
+
+
+def test_legacy_initialize_still_accepted():
+    """Handshake-era initialize (no MCP-Protocol-Version header) → 200."""
+    import httpx
+
+    from tv_app.interface.mcp.asgi import mcp_http_app
+
+    async def _run():
+        mcp = create_mcp_server()
+        app = mcp_http_app(mcp)
+        async with mcp.session_manager.run():
+            transport = httpx.ASGITransport(app=app)
+            async with httpx.AsyncClient(
+                transport=transport, base_url="http://localhost"
+            ) as client:
+                return await _mcp_post(
+                    client,
+                    {
+                        "jsonrpc": "2.0",
+                        "id": 1,
+                        "method": "initialize",
+                        "params": {
+                            "protocolVersion": "2025-06-18",
+                            "capabilities": {},
+                            "clientInfo": {"name": "regression", "version": "0"},
+                        },
+                    },
+                    {
+                        "Content-Type": "application/json",
+                        "Accept": "application/json, text/event-stream",
+                    },
+                )
+
+    resp = asyncio.run(_run())
+    assert resp.status_code == 200, resp.text
+    body = resp.json()
+    assert body["result"]["serverInfo"]["name"] == "tv-dashboard"

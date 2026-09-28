@@ -16,7 +16,7 @@ from typing import Any
 from delpi_auth.request_context import get_current_user, get_request_authorization
 from fastapi import Request
 from mcp.types import CallToolResult, TextContent, Tool as _Tool
-from mcp.server.fastmcp.exceptions import ToolError
+from mcp.server.mcpserver.exceptions import ToolError
 
 from tv_app.application.gpt_actions.commit_service import TvGptCommitService
 from tv_app.application.gpt_actions.dispatch_service import GptActionsDispatchService
@@ -80,9 +80,9 @@ def _ok_result(data: dict) -> CallToolResult:
     payload = {"status": "success", "data": data}
     body = json.dumps(payload, ensure_ascii=False)
     return CallToolResult(
-        isError=False,
+        is_error=False,
         content=[TextContent(type="text", text=body)],
-        structuredContent=payload,
+        structured_content=payload,
     )
 
 
@@ -127,10 +127,10 @@ def _error_result(
     if http_status == 401:
         meta = {"mcp/www_authenticate": build_www_authenticate_challenge()}
     return CallToolResult(
-        isError=True,
+        is_error=True,
         content=[TextContent(type="text", text=json.dumps(err, ensure_ascii=False))],
-        structuredContent=err,
-        _meta=meta,
+        structured_content=err,
+        meta=meta,
     )
 
 

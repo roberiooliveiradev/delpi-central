@@ -1,4 +1,4 @@
-"""FastMCP server for TV Dashboard (VISTA) — Streamable HTTP, stateless, JSON."""
+"""MCPServer for TV Dashboard (VISTA) — Streamable HTTP, stateless, JSON."""
 
 from __future__ import annotations
 
@@ -7,11 +7,10 @@ import re
 from collections.abc import Awaitable, Callable
 from typing import Annotated, Any
 
-from mcp.server.fastmcp import Context, FastMCP
-from mcp.server.fastmcp.exceptions import ToolError
-from mcp.server.fastmcp.tools.base import Tool
+from mcp.server.mcpserver import MCPServer
+from mcp.server.mcpserver.exceptions import ToolError
 from mcp.server.transport_security import TransportSecuritySettings
-from mcp.types import CallToolResult, ToolAnnotations
+from mcp.types import CallToolResult, InputRequiredResult, ToolAnnotations
 
 from tv_app.config import settings
 
@@ -60,7 +59,15 @@ def _mcp_allowed_origins() -> list[str]:
     ]
 
 
-class TvDashboardFastMCP(FastMCP):
+def mcp_transport_security() -> TransportSecuritySettings:
+    return TransportSecuritySettings(
+        enable_dns_rebinding_protection=True,
+        allowed_hosts=_mcp_allowed_hosts(),
+        allowed_origins=_mcp_allowed_origins(),
+    )
+
+
+class TvDashboardMCPServer(MCPServer):
     """Preserve domain/contract error codes on the transport path.
 
     Tool fns already return typed CallToolResult errors; this subclass only
@@ -71,10 +78,10 @@ class TvDashboardFastMCP(FastMCP):
     _CODE_RE = re.compile(r"^[a-z_]+(?:\.[a-z_]+)+$|^INVALID_CHANGE$|^QUERY_REQUIRED$")
 
     async def call_tool(
-        self, name: str, arguments: dict[str, Any]
-    ) -> CallToolResult:
+        self, name: str, arguments: dict[str, Any], context: Any = None
+    ) -> CallToolResult | InputRequiredResult:
         try:
-            return await super().call_tool(name, arguments)
+            return await super().call_tool(name, arguments, context)
         except ToolError:
             # Protocol-level failure (e.g. unknown tool) — let the SDK emit
             # the canonical JSON-RPC error instead of an app-level envelope.
@@ -84,9 +91,9 @@ class TvDashboardFastMCP(FastMCP):
             if self._CODE_RE.match(msg.split(":")[0].strip()):
                 logger.warning("mcp tool %s domain error: %s", name, msg.split(":")[0])
                 return CallToolResult(
-                    isError=True,
+                    is_error=True,
                     content=[],
-                    structuredContent={
+                    structured_content={
                         "status": "error",
                         "code": msg.split(":")[0].strip(),
                         "message": msg,
@@ -94,9 +101,9 @@ class TvDashboardFastMCP(FastMCP):
                 )
             logger.exception("mcp tool %s failed: %s", name, type(e).__name__)
             return CallToolResult(
-                isError=True,
+                is_error=True,
                 content=[],
-                structuredContent={
+                structured_content={
                     "status": "error",
                     "code": "INTERNAL_ERROR",
                     "message": "Falha interna na tool.",
@@ -104,48 +111,38 @@ class TvDashboardFastMCP(FastMCP):
             )
 
 
-def create_mcp_server() -> FastMCP:
-    """Build the VISTA MCP server — exactly six semantic READ tools."""
-    hosts = _mcp_allowed_hosts()
-    origins = _mcp_allowed_origins()
-    mcp = TvDashboardFastMCP(
+def create_mcp_server() -> MCPServer:
+    """Build the VISTA MCP server — exactly eight semantic tools."""
+    mcp = TvDashboardMCPServer(
         name="tv-dashboard",
         instructions=VISTA_MCP_INSTRUCTIONS,
-        streamable_http_path="/",
-        stateless_http=True,
-        json_response=True,
-        transport_security=TransportSecuritySettings(
-            enable_dns_rebinding_protection=True,
-            allowed_hosts=hosts,
-            allowed_origins=origins,
-        ),
     )
 
     _register_read_tools(mcp)
     return mcp
 
 
-def _register_read_tools(mcp: FastMCP) -> None:
+def _register_read_tools(mcp: MCPServer) -> None:
     ann = ToolAnnotations(
         title="READ — tv-dashboard",
-        readOnlyHint=True,
-        destructiveHint=False,
-        idempotentHint=True,
-        openWorldHint=False,
+        read_only_hint=True,
+        destructive_hint=False,
+        idempotent_hint=True,
+        open_world_hint=False,
     )
     ann_prepare = ToolAnnotations(
         title="PREPARE — tv-dashboard",
-        readOnlyHint=False,
-        destructiveHint=False,
-        idempotentHint=True,
-        openWorldHint=False,
+        read_only_hint=False,
+        destructive_hint=False,
+        idempotent_hint=True,
+        open_world_hint=False,
     )
     ann_act = ToolAnnotations(
         title="ACT — tv-dashboard",
-        readOnlyHint=False,
-        destructiveHint=True,
-        idempotentHint=True,
-        openWorldHint=False,
+        read_only_hint=False,
+        destructive_hint=True,
+        idempotent_hint=True,
+        open_world_hint=False,
     )
 
     def _meta(name: str) -> dict:

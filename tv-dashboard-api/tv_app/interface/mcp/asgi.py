@@ -14,19 +14,26 @@ from collections.abc import AsyncIterator, Callable
 from typing import Any
 
 from fastapi import FastAPI, Request
-from mcp.server.fastmcp import FastMCP
+from mcp.server.mcpserver import MCPServer
+
+from .server import mcp_transport_security
 from starlette.types import ASGIApp
 
 _MCP_EXACT_PATHS = {"/mcp", "/apps/tv-dashboard-api/mcp"}
 
 
-def mcp_http_app(mcp: FastMCP) -> ASGIApp:
+def mcp_http_app(mcp: MCPServer) -> ASGIApp:
     """Streamable HTTP ASGI app (`streamable_http_path="/"`)."""
-    return mcp.streamable_http_app()
+    return mcp.streamable_http_app(
+        streamable_http_path="/",
+        json_response=True,
+        stateless_http=True,
+        transport_security=mcp_transport_security(),
+    )
 
 
-def combine_lifespan(app: FastAPI, mcp: FastMCP) -> None:
-    """Compose existing FastAPI lifespan with FastMCP session/task-group lifespan."""
+def combine_lifespan(app: FastAPI, mcp: MCPServer) -> None:
+    """Compose existing FastAPI lifespan with the MCP session/task-group lifespan."""
     original = app.router.lifespan_context
 
     @contextlib.asynccontextmanager

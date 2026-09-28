@@ -178,9 +178,9 @@ def test_prepare_change_delegates_with_commit_now_false():
             target={"playlistId": str(uuid4())},
             ops=[{"op": "add_blank_slide", "title": "T"}],
         )
-    assert result.isError is False
+    assert result.is_error is False
     prev.assert_called_once()
-    data = result.structuredContent["data"]
+    data = result.structured_content["data"]
     assert data["proposal_handle"]
     assert data["canCommit"] is True
     assert data["persisted"] is False
@@ -197,17 +197,17 @@ def test_prepare_change_requires_write_permission():
             target={"playlistId": str(uuid4())},
             ops=[{"op": "add_blank_slide"}],
         )
-    assert result.isError is True
-    assert result.structuredContent["httpStatus"] == 403
+    assert result.is_error is True
+    assert result.structured_content["httpStatus"] == 403
     assert writes.method_calls == []
 
 
 def test_prepare_change_requires_ops():
     with _ctx(_editor()):
         result = tool_bridge.tool_prepare_change(target={"playlistId": str(uuid4())}, ops=[])
-    assert result.isError is True
-    assert result.structuredContent["code"] == "INVALID_CHANGE"
-    assert result.structuredContent["httpStatus"] == 422
+    assert result.is_error is True
+    assert result.structured_content["code"] == "INVALID_CHANGE"
+    assert result.structured_content["httpStatus"] == 422
 
 
 def test_prepare_unknown_op_fails_via_application():
@@ -230,9 +230,9 @@ def test_prepare_unknown_op_fails_via_application():
             target={"playlistId": str(uuid4())},
             ops=[{"op": "bogus_op"}],
         )
-    assert result.isError is True
-    assert result.structuredContent["code"] == "INVALID_CHANGE"
-    assert result.structuredContent["httpStatus"] == 422
+    assert result.is_error is True
+    assert result.structured_content["code"] == "INVALID_CHANGE"
+    assert result.structured_content["httpStatus"] == 422
     assert writes.method_calls == []
 
 
@@ -247,9 +247,9 @@ def test_prepare_unauthorized_playlist_fails_closed():
             target={"playlistId": str(uuid4())},
             ops=[{"op": "add_blank_slide"}],
         )
-    assert result.isError is True
-    assert result.structuredContent["code"] == "RESOURCE_NOT_FOUND"
-    assert result.structuredContent["httpStatus"] == 404
+    assert result.is_error is True
+    assert result.structured_content["code"] == "RESOURCE_NOT_FOUND"
+    assert result.structured_content["httpStatus"] == 404
     assert writes.method_calls == []
 
 
@@ -265,8 +265,8 @@ def _prepare_handle(dispatch, user, ops, playlist_id) -> str:
         result = tool_bridge.tool_prepare_change(
             target={"playlistId": playlist_id}, ops=ops
         )
-    assert result.isError is False
-    return result.structuredContent["data"]["proposal_handle"]
+    assert result.is_error is False
+    return result.structured_content["data"]["proposal_handle"]
 
 
 def test_commit_requires_idempotency_key():
@@ -278,9 +278,9 @@ def test_commit_requires_idempotency_key():
         result = tool_bridge.tool_commit_proposal(
             proposal_handle=handle, idempotency_key="", confirmation=True
         )
-    assert result.isError is True
-    assert result.structuredContent["code"] == "INVALID_CHANGE"
-    assert result.structuredContent["httpStatus"] == 422
+    assert result.is_error is True
+    assert result.structured_content["code"] == "INVALID_CHANGE"
+    assert result.structured_content["httpStatus"] == 422
     assert writes.method_calls == []
 
 
@@ -293,9 +293,9 @@ def test_commit_requires_explicit_confirmation():
         result = tool_bridge.tool_commit_proposal(
             proposal_handle=handle, idempotency_key="k-1", confirmation=False
         )
-    assert result.isError is True
-    assert result.structuredContent["code"] == "CONFIRMATION_REQUIRED"
-    assert result.structuredContent["httpStatus"] == 400
+    assert result.is_error is True
+    assert result.structured_content["code"] == "CONFIRMATION_REQUIRED"
+    assert result.structured_content["httpStatus"] == 400
     assert writes.method_calls == []
 
 
@@ -305,8 +305,8 @@ def test_commit_unknown_handle_fails_closed():
         result = tool_bridge.tool_commit_proposal(
             proposal_handle="AAAA.BBBBCCCC", idempotency_key="k-2", confirmation=True
         )
-    assert result.isError is True
-    assert result.structuredContent["code"] == "PROPOSAL_NOT_FOUND"
+    assert result.is_error is True
+    assert result.structured_content["code"] == "PROPOSAL_NOT_FOUND"
 
 
 def test_commit_tampered_handle_fails_closed():
@@ -319,8 +319,8 @@ def test_commit_tampered_handle_fails_closed():
         result = tool_bridge.tool_commit_proposal(
             proposal_handle=tampered, idempotency_key="k-3", confirmation=True
         )
-    assert result.isError is True
-    assert result.structuredContent["code"] == "PROPOSAL_NOT_FOUND"
+    assert result.is_error is True
+    assert result.structured_content["code"] == "PROPOSAL_NOT_FOUND"
 
 
 def test_commit_cross_user_fails_closed():
@@ -332,9 +332,9 @@ def test_commit_cross_user_fails_closed():
         result = tool_bridge.tool_commit_proposal(
             proposal_handle=handle, idempotency_key="k-4", confirmation=True
         )
-    assert result.isError is True
-    assert result.structuredContent["code"] == "AUTHZ_DENIED"
-    assert result.structuredContent["httpStatus"] == 403
+    assert result.is_error is True
+    assert result.structured_content["code"] == "AUTHZ_DENIED"
+    assert result.structured_content["httpStatus"] == 403
     assert writes.method_calls == []
 
 
@@ -362,8 +362,8 @@ def test_commit_verified_end_to_end():
         result = tool_bridge.tool_commit_proposal(
             proposal_handle=handle, idempotency_key="k-verified-1", confirmation=True
         )
-    assert result.isError is False
-    data = result.structuredContent["data"]
+    assert result.is_error is False
+    data = result.structured_content["data"]
     assert data["status"] == "VERIFIED"
     writes.add_slide.assert_called_once()
 
@@ -391,11 +391,11 @@ def test_commit_idempotency_replay_same_key_same_handle():
         second = tool_bridge.tool_commit_proposal(
             proposal_handle=handle, idempotency_key="k-replay", confirmation=True
         )
-    assert first.isError is False
-    assert first.structuredContent["data"]["status"] == "VERIFIED"
+    assert first.is_error is False
+    assert first.structured_content["data"]["status"] == "VERIFIED"
     # Replay: snapshot returned, no second execution.
-    assert second.isError is False
-    assert second.structuredContent["data"]["status"] == "VERIFIED"
+    assert second.is_error is False
+    assert second.structured_content["data"]["status"] == "VERIFIED"
     writes.add_slide.assert_called_once()
 
 
@@ -423,10 +423,10 @@ def test_commit_same_key_different_payload_conflicts():
         conflict = tool_bridge.tool_commit_proposal(
             proposal_handle=handle_b, idempotency_key="k-shared", confirmation=True
         )
-    assert first.isError is False
-    assert conflict.isError is True
-    assert conflict.structuredContent["code"] == "IDEMPOTENCY_CONFLICT"
-    assert conflict.structuredContent["httpStatus"] == 409
+    assert first.is_error is False
+    assert conflict.is_error is True
+    assert conflict.structured_content["code"] == "IDEMPOTENCY_CONFLICT"
+    assert conflict.structured_content["httpStatus"] == 409
     writes.add_slide.assert_called_once()
 
 
@@ -453,9 +453,9 @@ def test_commit_consumed_proposal_fails_closed():
         second = tool_bridge.tool_commit_proposal(
             proposal_handle=handle, idempotency_key="k-consume-2", confirmation=True
         )
-    assert first.isError is False
-    assert second.isError is True
-    assert second.structuredContent["code"] in {"PROPOSAL_NOT_FOUND", "PROPOSAL_CHANGED"}
+    assert first.is_error is False
+    assert second.is_error is True
+    assert second.structured_content["code"] in {"PROPOSAL_NOT_FOUND", "PROPOSAL_CHANGED"}
     writes.add_slide.assert_called_once()
 
 
@@ -465,8 +465,8 @@ def test_commit_requires_write_permission():
         result = tool_bridge.tool_commit_proposal(
             proposal_handle="AAAA.BBBB", idempotency_key="k-9", confirmation=True
         )
-    assert result.isError is True
-    assert result.structuredContent["httpStatus"] == 403
+    assert result.is_error is True
+    assert result.structured_content["httpStatus"] == 403
     assert writes.method_calls == []
 
 
@@ -490,9 +490,9 @@ def test_commit_stale_revision_fails_typed():
         result = tool_bridge.tool_commit_proposal(
             proposal_handle=handle, idempotency_key="k-stale", confirmation=True
         )
-    assert result.isError is True
-    assert result.structuredContent["code"] == "REVISION_CONFLICT"
-    assert result.structuredContent["httpStatus"] == 409
+    assert result.is_error is True
+    assert result.structured_content["code"] == "REVISION_CONFLICT"
+    assert result.structured_content["httpStatus"] == 409
     writes.add_slide.assert_not_called()
 
 
@@ -528,8 +528,8 @@ def test_domain_codes_preserved_through_commit_path():
         result = tool_bridge.tool_commit_proposal(
             proposal_handle="AAAA.BBBBCCCC", idempotency_key="k-dom", confirmation=True
         )
-    assert result.isError is True
-    body = result.structuredContent
+    assert result.is_error is True
+    body = result.structured_content
     assert body["code"] == "data_model.in_use"
     assert body["httpStatus"] == 409
     assert "Traceback" not in str(body)
@@ -554,6 +554,6 @@ def test_prepare_preserves_migration_conflict_code():
             target={"playlistId": str(uuid4())},
             ops=[{"op": "migrate_data_sources_to_model", "sourceIds": ["ds1"], "modelId": "m2"}],
         )
-    assert result.isError is True
-    assert result.structuredContent["code"] == "data_model.migration_conflict"
-    assert result.structuredContent["httpStatus"] == 422
+    assert result.is_error is True
+    assert result.structured_content["code"] == "data_model.migration_conflict"
+    assert result.structured_content["httpStatus"] == 422
