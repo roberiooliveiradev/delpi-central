@@ -1264,10 +1264,25 @@
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+/* Com um action card aberto, o composer vira região limitada:
+   o trigger fica pinado e o card é quem encolhe/rola. */
+.dashboard-helpdesk .helpdesk-ticket-workspace__composer:has(> .helpdesk-action-card) {
   flex: 0 1 auto;
   min-height: 0;
-  min-width: 0;
   overflow: hidden;
+}
+
+.dashboard-helpdesk .helpdesk-ticket-workspace__composer > * {
+  flex: 0 0 auto;
+}
+
+.dashboard-helpdesk .helpdesk-ticket-workspace__composer > .helpdesk-action-card {
+  flex: 0 1 auto;
+  min-height: 0;
 }
 
 .dashboard-helpdesk .helpdesk-detail__conversation-toolbar {
@@ -1355,8 +1370,8 @@
   display: grid;
   gap: 0.55rem;
   margin-block: 0.55rem;
-  flex: 0 1 auto;
-  min-height: 0;
+  flex: 0 0 auto;
+  max-height: min(18rem, 45%);
   overflow-y: auto;
 }
 

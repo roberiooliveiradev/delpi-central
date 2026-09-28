@@ -35,15 +35,26 @@ describe("HELPDESK-MFE-UX-007 composer height ownership", () => {
     expect(rule).not.toContain("grid-template-rows: minmax(0, 1fr) auto");
   });
 
-  it("composer can shrink and clips overflow instead of pushing footer away", () => {
-    const rule = cssRule(css, ".helpdesk-ticket-workspace__composer {");
-    expect(rule).toContain("flex: 0 1 auto");
-    expect(rule).toContain("min-height: 0");
-    expect(rule).toContain("overflow: hidden");
+  it("idle composer never collapses; open-card composer bounds and clips", () => {
+    const idle = cssRule(css, ".helpdesk-ticket-workspace__composer {");
+    expect(idle).toContain("flex: 0 0 auto");
+    const open = cssRule(
+      css,
+      ".helpdesk-ticket-workspace__composer:has(> .helpdesk-action-card) {",
+    );
+    expect(open).toContain("flex: 0 1 auto");
+    expect(open).toContain("min-height: 0");
+    expect(open).toContain("overflow: hidden");
+    const card = cssRule(
+      css,
+      ".helpdesk-ticket-workspace__composer > .helpdesk-action-card {",
+    );
+    expect(card).toContain("flex: 0 1 auto");
+    expect(card).toContain("min-height: 0");
   });
 
   it("action card is bounded: body carries scroll, header/footer stay pinned", () => {
-    const card = cssRule(css, ".helpdesk-action-card {");
+    const card = cssRule(css, ".dashboard-helpdesk .helpdesk-action-card {");
     expect(card).toContain("min-height: 0");
     expect(card).toContain("max-height: 100%");
     const body = cssRule(css, ".helpdesk-action-card__body {");
@@ -64,10 +75,11 @@ describe("HELPDESK-MFE-UX-007 composer height ownership", () => {
     expect(footerIdx).toBeGreaterThan(bodyIdx);
   });
 
-  it("timeline extras scroll instead of competing with the composer", () => {
+  it("timeline extras are bounded and scroll — never collapse to a sliver", () => {
     const rule = cssRule(css, ".helpdesk-timeline-extras {");
+    expect(rule).toContain("flex: 0 0 auto");
+    expect(rule).toContain("max-height:");
     expect(rule).toContain("overflow-y: auto");
-    expect(rule).toContain("min-height: 0");
   });
 
   it("workspace main keeps min-width: 0 so aside never causes horizontal overflow", () => {
