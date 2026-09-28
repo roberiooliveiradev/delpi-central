@@ -51,7 +51,7 @@ Consolidado de `TECHNICAL-CONTRACTS.md` §43–44 — todos tratados como gates 
 6. ~~Algoritmo `request_fingerprint`~~ — RESOLVIDO FS-C0.T6 (canonical-JSON tipado + SHA-256; escopo `(key,route,actor)`; single-tx; falha não consome key — TC §10/§39)
 7. ~~Conversão de unidades~~ — RESOLVIDO FS-C0.T7: `AUTHORITATIVE_TOTVS_UNIT` (`B1_UM` em todos os contratos — §51); `UNIT_CONVERSION_*=NOT_REQUIRED`; divergência de unidade → `UNIT_DIVERGENCE`/falha fechada
 8. ~~Reconciliação pedido operador×sinal planejado~~ — RESOLVIDO FS-C0.P1: `intent` explícita `ANTICIPATE|ADDITIONAL` (sem merge/soma automático; excesso de anticipate → conflict; cockpit público → boundary = service-caller §28 TC)
-9. Regra de quantidade de devolução — **PRODUTO** (gate; ver escopo §21)
+9. Regra de quantidade de devolução — **P2-A inventário feito** (TC §53: fatos A–F, sobreposições, gaps); falta **P2-B** decisão PM da fórmula (gate; ver escopo §21)
 10. Política de prioridade — **PRODUTO** (gate; default factual ordering)
 11. ~~Header de correlação~~ — RESOLVIDO FS-C0.T11 (`X-Request-ID` `SINGLE_ID`, UUID4, adapter-propagated — TC §32)
 12. ~~Retenção~~ — RESOLVIDO FS-C0.T12 (matriz §52: 5y audit/histórico, 24h idempotency, 30d outbox pub, checkpoint corrente; ROPA-compliant — pendente só registro da categoria FS na ROPA na implantação)
@@ -70,7 +70,7 @@ Status: `ACCEPTED` (congelado na spec) / `GATED` (depende de C0/produto). Owner:
 | FS-PR-02 | Necessidade planejada e pedido humano são fatos distintos, nunca reescritos | Doc1 §invariante | FS | C4 | ACCEPTED | teste de reconciliação | FS-DM-04, C0.P1 |
 | FS-PR-03 | Coexistência com Line Feeder sem dual-write/migração silenciosa | Doc4 §30 | FS | sempre | ACCEPTED | gate cutover §35 | — |
 | FS-PR-04 | Cockpit integra por contrato semântico, sem internals/DB | Doc4 §28 | FS | C10 | ACCEPTED | contrato+teste | C0.P1 |
-| FS-PR-05 | Devolução sem quantidade inventada; estado "não estabelecida" suportado | Doc3/4 | FS | C9 | GATED→C0.P2 | Cenário G | C0.P2 |
+| FS-PR-05 | Devolução sem quantidade inventada; estado "não estabelecida" suportado | Doc3/4 | FS | C9 | GATED→C0.P2-B | Cenário G | C0.P2-B |
 | FS-PR-06 | Prioridade factual (`due_at`,`overdue`,`time_to_need`) até política existir | Doc4 §49 | FS | C2+ | ACCEPTED | projeção sem score | C0.P3 |
 | FS-PR-07 | Métricas operacionais ≠ scoring de trabalhador | Doc1, Doc4 §32 | FS | C8 | ACCEPTED | revisão métricas | — |
 
@@ -262,7 +262,8 @@ Primeira fase obrigatória — só evidência e decisão, **sem código de produ
 | Gate | Decisão | Dono | Bloqueia |
 |---|---|---|---|
 | FS-C0.P1 | ~~Reconciliação pedido×sinal~~ — **`DONE`**: `OPERATOR_REQUEST_UI_OWNER=OPERATOR_COCKPIT` (MFE FS sem tela de pedido); `OperatorRequest` entidade durável §39; `intent` explícita ANTICIPATE (link+urgência, qty planejado inalterado, excesso→conflict sem auto-split) | ADDITIONAL (fato separado, planejado intacto); match = branch×work_center×material×unit×contexto(op/seq)×janela(TO_DESIGN) — owner FS; auth = **service-caller** (cockpit público sem JWT; `operator_ref` = dado de negócio); contrato `POST /v1/operator-requests` +KEY+X-Request-ID; sem TOTVS write | PROVEN (decisão PM + inventário cockpit) | C10 desbloqueado | — |
-| FS-C0.P2 | Regra/fórmula autoritativa de quantidade de devolução (ou confirmar manual+`null`) | Product Master | C9 auto-qty; NÃO bloqueia C1–C8 |
+| FS-C0.P2-A | ~~Inventário autoritativo TOTVS produção/perda/consumo~~ — **`DONE`**: matriz §53 TC (SH6/HZA/SBC/SD4/SD3/SB2/SC2/SG1-2); `RETURN_POLICY=HYBRID` aceita; sobreposições mapeadas; gaps api-delpi §53.4; grão máximo = OP/material | FS (evidência) | — |
+| FS-C0.P2-B | Decisão da fórmula de sugestão de devolução: qual combinação de fatos (§53.3 A–F), política de sobreposição perda×consumo, estados `*_UNKNOWN`, ou confirmar manual+`null` | Product Master | C9 auto-qty; NÃO bloqueia C1–C8 |
 | FS-C0.P3 | Prioridade além de `due_at/overdue/time_to_need` necessária no MVP? (default: não) | Product Master | — se "não" |
 
 ## 9. Readiness gates (capability-scoped)
@@ -277,7 +278,7 @@ Nenhum gate global único. Cada fase exige só seu subconjunto:
 | C0.G-RBAC | C0.T3 ✅, C0.T4 ✅ — **PASS** (modelo FROZEN + registro/enforcement PROVEN; execução do registro ocorre dentro de C7.T1) | C7 (MFE com writes) |
 | C0.G-SVC | C0.T5 ✅ — **PASS** (in-process + service token PROVEN; cadências `TO_DESIGN` são decisão ops, não gate) | sync/reconcile em C4, C8 |
 | C0.G-REQ | C0.P1 | request-material com colisão; C10 |
-| C0.G-RET | C0.P2 | C9 (se qty automática for MVP) |
+| C0.G-RET | C0.P2-A ✅ (evidência) + C0.P2-B (fórmula PM) | C9 (se qty automática for MVP) |
 
 `C0.READY` por gate = `PASS` quando a evidência correspondente existe e está registrada em relatório.
 
@@ -395,7 +396,7 @@ Projeção §16 TC implementada em application service; testada deterministicame
 
 ## 21. Returns (C9)
 
-Worklist + `record_item_return` com `returned_qty` **manual/nullável** + handoff `direction=return` + eventos. **Quantidade automática só após C0.P2 provar regra/dono**; se MVP exigir auto-qty → P2 vira release gate. UI mostra "não estabelecida" — nunca inventa (Cenário G).
+Worklist + `record_item_return` com `returned_qty` **manual/nullável** + handoff `direction=return` + eventos. **Quantidade automática só após C0.P2-B decidir a fórmula** (evidência P2-A em TC §53: fatos A–F, sobreposições, gaps api-delpi); se MVP exigir auto-qty → P2-B vira release gate. UI mostra "não estabelecida"/`*_UNKNOWN` — nunca inventa (Cenário G).
 
 ## 22. Operator Cockpit (C10)
 
@@ -462,6 +463,12 @@ Matriz de teste §18:
 | mesma key + `intent` diferente | `409 idempotency_conflict` |
 | `operator_requests` pós-missão | evidência auditável permanece (§39) |
 | chamada sem service token válido | `401`/`403` (boundary service-caller) |
+| sugestão retorno: perda `R`+`S` mesmo material/OP | nunca somada duas vezes — fórmula P2-B respeita matriz §53.2 |
+| sugestão retorno: consumo SD4-derivado × `TM 999` | nunca ambos na mesma fórmula (PARTIAL_OVERLAP) |
+| sugestão retorno c/ evidência ausente | `*_UNKNOWN` explícito — nunca zero silencioso |
+| `PR0`/SH6 `QTDPROD` (PA) | nunca entra na fórmula de material — produto/unit errados |
+| retorno 99→01 × sugestão | confirmação reconcilia por `erp_observations`; divergência → exceção |
+| unit MP ≠ unit do item na sugestão | `UNIT_DIVERGENCE` — sem conversão (§51) |
 
 ## 26. Audit/observability
 

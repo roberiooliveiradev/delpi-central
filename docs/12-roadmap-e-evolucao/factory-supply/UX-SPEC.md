@@ -207,11 +207,12 @@ Visão de antecipação: necessidades planejadas da próxima janela/turno/dia �
 
 **`RETURNS_WORKSPACE = HYBRID`** — tabela default + quadro opcional por dimensão `return` (A recolher / Em retorno / Recebimento / Concluído — derivados).
 
-Como `RETURN_QUANTITY_RULE = TO_INVENTORY`, a UI suporta ambos os casos sem inventar cálculo:
+`RETURN_POLICY = HYBRID` (P2): a UI suporta os três casos sem inventar cálculo — a quantidade sempre vem do backend:
 
-- quantidade esperada fornecida pelo backend → "Esperado: N";
-- não estabelecida → "Quantidade a devolver: não estabelecida" (badge neutro), aceita registrar `returned_qty` factual;
-- reconciliação rotulada como manual/declarativa enquanto a regra não existe.
+- sugestão calculada pelo backend → "Sugerido: N" (rótulo de sugestão, nunca "esperado" autoritativo);
+- quantidade esperada/confirmável → "Esperado: N";
+- não estabelecida → "Quantidade a devolver: não estabelecida" (badge neutro; estados `*_UNKNOWN` do §53 têm label honesto), aceita registrar `returned_qty` factual;
+- reconciliação rotulada como manual/declarativa enquanto a fórmula não existe (P2-B).
 
 Campos: CT origem, material, unidade, esperado?, devolvido, destino de retorno, estado de coleta/recebimento, evidência ERP. Destino não resolvido = exceção visível.
 

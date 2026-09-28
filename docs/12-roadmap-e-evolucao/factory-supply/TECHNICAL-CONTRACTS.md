@@ -219,7 +219,7 @@ AuthZ de usuário para **todos** os comandos interativos: `factory-supply.access
 | `sync_supply_demand_signals` | job interno `demand_signal_sync` (§40-B — sem rota pública; execução in-process) | system actor | signals ativas atualizadas de forma replay-safe |
 | `refresh_item_erp_evidence` | POST `/v1/missions/{id}/items/{item_id}/erp-evidence/refresh` — opcional `TO_INVENTORY` | job `erp_evidence_reconcile` (§40-B); se interativo: `access`+`filial` | observação ERP deduplicada persistida |
 
-Notas: `record-collection` cobre "iniciar coleta" — a primeira coleta registrada marca a dimensão em progresso (não inventar comando separado sem justificativa). Quantidade de retorno pode ser `null` quando não estabelecida (Doc 3/5 — `RETURN_QUANTITY_RULE = TO_INVENTORY`).
+Notas: `record-collection` cobre "iniciar coleta" — a primeira coleta registrada marca a dimensão em progresso (não inventar comando separado sem justificativa). Quantidade de retorno pode ser `null` quando não estabelecida (Doc 3/5 — sugestão híbrida `PARTIAL` até P2-B, §53).
 
 ## 15. Query model
 
@@ -557,6 +557,10 @@ Base FS: `/apps/factory-supply-api/v1` — todas `PLANNED_NEW`. api-delpi paths 
 | api-delpi | list_product_inventory_blocks | /products/inventory-blocks | bloqueios de disponibilidade | REUSE_AS_IS |
 | api-delpi | get_product_internal_movements | /products/{code}/internal-movements | evidência de movimento → correlação | REUSE_AS_IS (fingerprint composto §25 — FS-C0.T1; evolve opcional `movement_recno`) |
 | api-delpi | get_production_consumption_by_item | /production/consumption/by-item | contexto de consumo | REUSE_AS_IS |
+| api-delpi | get_production_losses_records | /production/losses/records | evidência perda MP (`R`/`S`) → sugestão retorno (§53) | REUSE_AS_IS — somente se P2-B decidir usar |
+| api-delpi | get_production_losses_top_materials | /production/losses/top-materials | idem agregado | REUSE_AS_IS — idem |
+| api-delpi | list_production_appointments* | /production/appointments/* | contexto produzido/perdido PA (§53.1) | REUSE_AS_IS — contexto, não fórmula |
+| api-delpi | — | movimentos `TM 999` / devolução tipada / saldo-99-por-OP | confirmação de retorno | **GAP §53.4** — avaliar `EVOLVE_EXISTING`/nova rota no P2-B |
 | api-delpi | get_product_detail / get_product_summary | /products/{code}/… | master data | REUSE_AS_IS |
 | api-delpi | ~~list_warehouses~~ | — | fatos de armazém cobertos por composição (§27) | NOT_NEEDED |
 
@@ -703,8 +707,8 @@ Capacidades de serviço **nunca** expandem autoridade além do read-only ERP: n�
 ## 43. Decisions not frozen
 
 1. Algoritmo exato de derivação de `overall_stage` (owner=backend congelado; regra detalhada na implementação a partir das dimensões Doc 2/5).
-2. Semântica de reconciliação pedido↔sinal existente (§29) — decisão de produto pendente.
-3. Regra de quantidade de retorno (`RETURN_QUANTITY_RULE = TO_INVENTORY` herdado).
+2. ~~Semântica de reconciliação pedido↔sinal existente (§29)~~ — RESOLVIDO FS-C0.P1: `intent` explícita `anticipate|additional`, `operator_requests` + boundary service-caller (§28).
+3. Regra de quantidade de retorno — `RETURN_POLICY = HYBRID` (PM); inventário de evidência congelado §53 (FS-C0.P2-A); fórmula `PARTIAL` — decisão P2-B pendente (não bloqueia C1–C8; `record_item_return` manual/`null` até lá).
 4. Prioridade/score (`priority_score = NOT_SUPPORTED` até política existir — expostos `due_at|overdue|time_to_need` factuais).
 5. ~~Escopo de escrita por filial~~ — RESOLVIDO FS-C0.T3: `.view.filial-*` é escopo de filial e gateia writes (precedente `PROVEN`: `assert_can_view_branch` em mutações do Line Feeder); composição congelada `access` + `view.filial-{branch}` (§40-A).
 6. Cache operacional (TTL/fail-open) — `TO_DESIGN`; v1 sem cache semântico.
@@ -730,7 +734,8 @@ Capacidades de serviço **nunca** expandem autoridade além do read-only ERP: n�
 | ~~Algoritmo de `request_fingerprint`~~ — RESOLVIDO FS-C0.T6: canonical-JSON+SHA-256, convenção `(key,route,actor_user_id)` + coluna `request_fingerprint`+`response_status` (§10, §39); helper local (sem consumidor cruzado provado) | — |
 | ~~Retenção~~ — RESOLVIDO FS-C0.T12: matriz §52; resta apenas registrar categoria FS na ROPA na implementação (ação docs) e estimar volume `supply_events` em homologação | §52 |
 | Empenho como campo vs rota dedicada (hoje via operation materials — confirmar) | §41 |
-| Decisão de produto: reconciliação pedido×sinal (§29) e regra de retorno | comandos |
+| ~~Decisão de produto: reconciliação pedido×sinal (§29)~~ — RESOLVIDO FS-C0.P1 | — |
+| Decisão de produto: fórmula de retorno — **P2-B** (evidência §53; gaps §53.4) | `ReconcileReturn` automático / C9 |
 
 ## 45. Inputs for Documentation 5/5
 
@@ -840,3 +845,67 @@ Até política existir, o backend expõe apenas fatos determinísticos:
 **Backup ≠ retenção:** remoção do banco ativo não implica remoção imediata de mídia de backup — lifecycle de backup é infra/plataforma; sem promessas de eliminação LGPD além do provado.
 
 **Índices candidatos (defer físico p/ migration design):** `idempotency_keys(created_at)`, `integration_outbox(published_at NULL, next_attempt_at)` já planejado + `(published_at)`, `supply_events(created_at)`, `missions(status, completed_at)` se coluna existir — colunas novas só se o lifecycle não expuser equivalente (`completed_at`/`resolved_at` avaliados no DDL V001).
+
+---
+
+## 53. Return evidence inventory (CONGELADO FS-C0.P2-A — inventário, não fórmula)
+
+**Decisão PM:** `RETURN_POLICY = HYBRID` — FS **pode** sugerir quantidade de devolução a partir de fatos autoritativos; sugestão é explicável e **nunca** verdade de estoque; confirmação reconcilia contra evidência ERP de saldo/movimento. Apontamentos TOTVS (produção/refugo/setup/perda) jamais são escritos pelo FS (`FACTORY_SUPPLY_TOTVS_WRITE = NO`). `SUGGESTED_RETURN_QTY ≠ CONFIRMED_RETURN_QTY`.
+
+### 53.1 Inventário de fatos autoritativos (PROVEN — fonte: api-delpi working tree)
+
+| Fonte | Tabela(s) | Campos/semântica | Rotas/contratos PROVEN | Impacto em quantidade |
+|---|---|---|---|---|
+| Apontamento de produção | `SH6010` (`H6_TIPO=P`) + `SH1010`→`SHB010` (CT) + `SYS_USR` | OP, produto PA, operação, recurso→CT, operador, ini/fim, `H6_QTDPROD`, `H6_QTDPERD` (perda do **PA apontado**, unidade `B1_UM` do PA, conversão MI), `R_E_C_N_O_` | `list_production_appointments*`, `get_production_appointments_*` | `QTDPROD` última operação do PA = origem do `SD3 PR0` (entrada estoque — mesmo fato, doc `producao-entrada-estoque.md`). `QTDPERD` = PA perdido na operação — **não** é perda de MP |
+| Apontamento de operação | `HZA010` | `HZA_STATUS` 1=rodando·2=encerrado c/ apontamento·3=descartado, `HZA_TPTRNS` 1=m.o.·2=máquina, `HZA_IDAPON`→SH6 | machine-load (agregado interno) | **STATUS/TIME_ONLY** — zero campos de quantidade; dedup SH6 via `IDAPON` |
+| Perdas de material | `SBC010` + `SB1` + `SC2` + `CYO` + `SYS_USR` | `BC_TIPO` `R`=refugo/`S`=scrap (mutuamente exclusivos por linha), `BC_PRODUTO`=MP (`B1_TIPO=MP` no repo losses), `BC_QUANT`, unit=`B1_UM` do MP, OP, operação, recurso, motivo, operador, data; **`BC_SEQSD3`→SD3**, **`BC_IDENSH6`→SH6** | `get_production_losses_records`, `get_production_losses_top_materials`, rotas `refugos/*` (`R` apenas, exclui MP de terceiro) | **QUANTITY_AFFECTING** — perda de MP por OP/material |
+| Empenho/consumo | `SD4010` + `SB1` (+`SH8` p/ CT) | `D4_COD`=componente, `D4_PRODUTO`=PA pai, `D4_QTDEORI`=empenho original, `D4_QUANT`=saldo empenhado, `D4_QTNECES`=requerido; **`consumed = QTDEORI−QUANT` derivado** | `list_production_order_operation_materials(_batch)`, `get_production_consumption_*` | **QUANTITY_AFFECTING** — "consumo derivado" ≠ consumo físico garantido |
+| Movimentações | `SD3010` + `SB1` | `D3_COD`, `D3_LOCAL`, `D3_DOC`, `D3_EMISSAO`, `D3_TM`, `D3_CF`, `D3_QUANT`, `D3_OP`, `D3_USUARIO`, `D3_ESTORNO`; `kind=warehouse_transfer`→`CF DE0/RE0`; sem `kind`→todos CFs. Doc canônica: `PR0`=entrada produção, `TM 999`=baixa de consumo | `get_product_internal_movements` (`/{code}/internal-movements`) | **QUANTITY_AFFECTING** — transferência 01↔99, PR0, baixas |
+| Saldos | `SB2010` | `B2_LOCAL` 01=almox·99=fábrica·50=WIP·98=aux; saldo por item+armazém | `get_product_stock`, `get_supplies_stock_balances_*` | `factory_stock` corrente — sem grão OP/missão |
+| OPs | `SC2010` / `VW_PCP_ORDENS_PRODUCAO` | `C2_QUANT` planejada, `C2_QUJE` produzida, `C2_DATRF` encerramento, `C2_PRODUTO` | `get_production_pcp_orders_*`, `get_production_order_by_op` | contexto de ordem |
+| BOM/roteiro | `SG1010` (`G1_COMP`), `SG2010` (`G2_OPERAC`/`G2_SETUP`) | estrutura componente↔PA, última operação, setup horas | `get_production_shared_structure_intermediates` | conversão PA→MP **não** congelada — preferir evidência real |
+| Setup/paradas | `SHY.HY_SETUP`, `SG2.G2_SETUP`, view horas improdutivas | horas de preparo/parada + custo R$ | `get_production_unproductive_hours_*`, OEE | **TIME_ONLY** — nunca subtrair de material |
+
+### 53.2 Matriz de sobreposição (double-counting)
+
+| Par | Classificação | Base |
+|---|---|---|
+| SH6 `QTDPROD` ↔ SD3 `PR0` | **SAME_FACT** | doc canônica: apontamento última operação origina o PR0 — nunca somar ambos |
+| SH6 `QTDPERD` ↔ SBC `BC_QUANT` | **DISTINCT_FACT** provável, correlação `UNKNOWN` | QTDPERD=PA perdido; SBC=MP perdido (`BC_IDENSH6` permite cruzar — se o mesmo evento físico gera ambos não provado) |
+| SBC `R` ↔ SBC `S` | **DISTINCT** por linha (tipo exclusivo) | mesma tabela, filtro `loss_type`; se evento físico único pode ser duplo-registrado: `UNKNOWN` |
+| SBC ↔ SD3 baixas | **PARTIAL_OVERLAP** | `BC_SEQSD3` linka perda→movimento; se toda baixa SD3 de perda tem SBC (e vice-versa): `UNKNOWN` |
+| SD4 consumido ↔ SD3 `TM 999` | **PARTIAL_OVERLAP** | baixa de empenho corresponde à requisição `TM 999` (doc canônica); correlação linha-a-linha não provada → escolher **uma** fonte na fórmula |
+| SD4 consumido ↔ SBC perda | **UNKNOWN** | se refugo baixa o empenho (incluído em `QTDEORI−QUANT`) ou é fato separado — **pergunta P2-B obrigatória** |
+| Transferência 99→01 ↔ devolução operacional | DISTINCT direção | `D3_LOCAL`+`CF` determinam sentido; correlação à missão por atributos |
+
+> **Regra:** nenhuma fórmula é congelável enquanto pares `UNKNOWN`/`PARTIAL_OVERLAP` puderem gerar dupla subtração.
+
+### 53.3 Fatos de retorno candidatos (A–F)
+
+| # | Fato | Fonte+contrato | Grão | Confiança | Lacuna |
+|---|---|---|---|---|---|
+| A | `delivered_to_factory_qty` | SD3 `DE0/RE0` via `internal-movements` | filial+mat+OP?+janela | média | rota é por-produto; sem recorte por missão |
+| B | `actual_consumed_qty` | SD4 derivado via operation-materials/consumption | filial+OP+oper+mat | alta (derivado) | físico real não garantido; alternativa `TM 999` sem rota dedicada |
+| C | `authoritative_loss_qty` | SBC `R` via losses | filial+OP+mat | alta | sobreposição com B `UNKNOWN` |
+| D | `authoritative_scrap_qty` | SBC `S` via losses | idem | alta | idem |
+| E | `authoritative_returned_qty` | SD3 99→01 via `internal-movements` | filial+mat+janela | média | direção por `LOCAL+CF` é convenção de código, não contrato tipado |
+| F | `current_factory_stock_qty` | SB2 99 via stock/balances | filial+mat | alta | saldo corrente global — não histórico nem por OP |
+
+### 53.4 Gaps de contrato api-delpi (P2-B follow-up)
+
+1. Sem rota dedicada de **movimentos de consumo/requisição** (`TM 999`) — hoje só legível via `internal-movements` sem `kind`, por produto.
+2. Sem contrato expondo **sentido tipado** da transferência (in/out por `LOCAL+CF`) — hoje convenção documentada em código.
+3. Sem contrato de **saldo 99 por OP** — SB2 é por produto+armazém.
+4. Sem rota de **perda correlacionada a empenho** — necessária para provar se refugo já está dentro de `QTDEORI−QUANT`.
+5. `internal-movements` é `GET /products/{code}/…` — fan-out por material da missão (padrão batch já usado em operation-materials pode ser precedente).
+6. BOM/estrutura→consumo teórico: semântica SG1/`G1_COMP`+versão+unidade não validada p/ fórmula — preferir evidência real (§53.3-B/C/D).
+
+### 53.5 Estados de sugestão e confirmação
+
+- Sugestão omite componente ausente como `*_UNKNOWN` (Doc 2/5 §15-A) — nunca zero silencioso.
+- `CONFIRMED_RETURN_QTY` = handoffs `direction=return` factuais + evidência SD3 99→01 correlacionada (`erp_observations` §26); divergência abre exceção `divergent`.
+- **`RETURN_FORMULA_STATUS = PARTIAL`** → P2-B (decisão PM) é pré-requisito de `ReconcileReturn` automático; `record_item_return` segue manual/`null` (Doc 3/5).
+
+### 53.6 Testes futuros obrigatórios (spec-only)
+
+perda `R` e `S` não somadas duas vezes no mesmo material/OP · consumo SD4-derivado nunca somado a `TM 999` da mesma OP · `PR0` nunca subtraído de material · sugestão com `LOSS_UNKNOWN` não vira zero · divergência sugestão×saldo-99 observado abre exceção · `correlation_basis` registrada em toda sugestão · unit mismatch MP×PA → `UNIT_DIVERGENCE`, nunca conversão.

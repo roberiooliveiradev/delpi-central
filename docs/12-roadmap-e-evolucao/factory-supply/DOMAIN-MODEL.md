@@ -334,10 +334,14 @@ Exceções podem ser **por item** (material-específicas) ou **por missão**:
 `TARGET` conceitual — nada de devolução está implementado hoje.
 
 ```text
-RETURN_QUANTITY_RULE = TO_INVENTORY
+RETURN_POLICY           = HYBRID            — decisão Product Master (FS-C0.P2)
+RETURN_FORMULA_STATUS   = PARTIAL           — evidência inventariada (§ 15-A); fórmula não congelada
+SUGGESTED_RETURN_QTY    ≠ CONFIRMED_RETURN_QTY
 ```
 
-A fórmula autoritativa (ex.: candidatos `saldo_ponto_uso − empenho` visíveis no Power BI) **não** é regra de negócio até provada em contrato — frontend nunca computa quantidade de devolução (Doc 1/5 § 17).
+**Política híbrida (P2):** Factory Supply **pode** calcular uma *sugestão* de quantidade de devolução a partir de fatos autoritativos de produção/consumo/perda — explicável e rotulada como sugestão. A sugestão **não** é verdade de estoque: a confirmação da devolução continua reconciliada contra evidência autoritativa de saldo/movimento ERP. Apontamentos de produção/refugo/setup/perda acontecem no TOTVS — Factory Supply nunca os escreve.
+
+**Evidência inventariada (FS-C0.P2-A, contrato em Doc 4/5 §53):** `SUGGESTED` candidatos com contrato `PROVEN` — saldo no ponto de uso (SB2 `B2_LOCAL=99`), empenho em aberto/consumido derivado (SD4 `QTDEORI−QUANT`), perdas de material (SBC `BC_TIPO=R|S` por OP/material), transferências 01↔99 (SD3 `CF=DE0/RE0`), entrada de produção (SD3 `CF=PR0` espelha apontamento SH6). **Pendências que impedem congelar a fórmula:** sobreposição entre perda SBC e baixa SD4/SD3 não provada (risco de dupla subtração); semântica `R` vs `S` vs refugo material × produto-acabado mapeada em tipo, mas causalidade com empenho é `UNKNOWN`; correlação SD3↔missão é por coincidência de atributos (§16); nenhum fato prova quantidade no **grão destino/feeder** — tudo no máximo OP/operação/material.
 
 O que o domínio modela **independente** da fórmula, **por item**:
 
@@ -345,6 +349,26 @@ O que o domínio modela **independente** da fórmula, **por item**:
 - dimensão `return` no item: `not_applicable → requested → in_return → received → reconciled`;
 - `reconciled` exige quantidade esperada resolvida por fonte autoritativa — enquanto `TO_INVENTORY`, reconciliação é manual/declarativa e assim rotulada;
 - devolução sem item de origem correlacionado é possível (material avulso) — `need_key` opcional no retorno, `TO_DESIGN` se vira entidade solta.
+
+### 15-A. Return suggestion evidence model (P2-A)
+
+Fatos autoritativos candidatos (fonte única = api-delpi; nunca TOTVS direto):
+
+| Fato candidato | Fonte TOTVS | Contrato api-delpi | Grão provável | Confiança |
+|---|---|---|---|---|
+| `delivered_to_factory_qty` | SD3 transferência `CF=DE0/RE0`, `D3_LOCAL` 01→99 | `get_product_internal_movements` (por produto; `op`/`location`/`tm` opcionais) | filial+material+janela(+OP se `D3_OP` preenchido) | Média — correlação por atributos (§16) |
+| `actual_consumed_qty` | SD4 `QTDEORI − QUANT` (>0) — **derivado do empenho**, não registro físico | `list_production_order_operation_materials(_batch)`, `get_production_consumption_*` | filial+OP+operação+material | Alta como "empenho baixado"; físico real `UNKNOWN` |
+| `authoritative_loss_qty` | SBC `BC_TIPO='R'` (refugo) — perda de material (`B1_TIPO=MP`) | `get_production_losses_records` (`loss_type`) | filial+OP(+operação)+material | Alta |
+| `authoritative_scrap_qty` | SBC `BC_TIPO='S'` | mesmo contrato, `loss_type=scrap` | idem | Alta |
+| `authoritative_returned_qty` | SD3 transferência 99→01 | `get_product_internal_movements` | filial+material+janela | Média |
+| `current_factory_stock_qty` | SB2 `B2_LOCAL='99'` | `get_product_stock` / `get_supplies_stock_balances_items` (`warehouse`) | filial+material | Alta — mas saldo **corrente**, não por missão/OP |
+| produzida PA (contexto) | SH6 `H6_QTDPROD` última operação = origem do `PR0` | `list_production_appointments*`, `pcp-orders` (`C2_QUANT`/`C2_QUJE`) | filial+OP+operação | Alta — **nunca** subtrair de material sem BOM |
+
+**Não-candidatos (TIME_ONLY/STATUS_ONLY):** HZA010 (execução de operação, sem quantidade; `HZA_IDAPON`→SH6 evita dupla contagem), setup (`HY_SETUP`/`G2_SETUP` = horas na fórmula de eficiência), horas improdutivas (view horas+custo de parada).
+
+**Estados de sugestão quando evidência falta** — nunca silenciar como zero: `CONSUMPTION_UNKNOWN`, `LOSS_UNKNOWN`, `MOVEMENT_UNKNOWN`, `STOCK_UNAVAILABLE`, `CORRELATION_AMBIGUOUS`, `UNIT_DIVERGENCE` (já `FROZEN` Doc 4/5 §51).
+
+**Grão:** nenhum fato prova quantidade no grão **destino/feeder** — sugestão operaria no grão missão/OP+material; rateio por item/destino seria regra própria, dependente da decisão P2-B.
 
 ## 16. ERP correlation
 
@@ -563,7 +587,7 @@ Catálogo de domínio — **não são rotas HTTP**. AuthZ sempre `factory-supply
 - Concorrência: versão otimista + expected-state + idempotência (conceitual; físico `TO_DESIGN`).
 - Idempotência refinada: leitura ERP pura `NOT_APPLICABLE`; observação persistida e sync de sinais `REQUIRED`.
 - Auditoria append-only; **`EVENT_SOURCING_REQUIRED = NO`**.
-- `RETURN_QUANTITY_RULE = TO_INVENTORY`; `PRIORITY_POLICY = TO_DESIGN`.
+- `RETURN_POLICY = HYBRID` (PM/P2 — sugestão calculada, confirmação reconciliada); `RETURN_FORMULA_STATUS = PARTIAL` (§ 15-A); `PRIORITY_POLICY = TO_DESIGN`.
 - Persistência operacional em schema dedicado no Postgres Minha DELPI; tabelas físicas não nomeadas.
 
 ## 29. Decisions NOT frozen
@@ -585,7 +609,7 @@ Catálogo de domínio — **não são rotas HTTP**. AuthZ sempre `factory-supply
 
 | Item | Bloqueia |
 |---|---|
-| Fórmula autoritativa de quantidade de devolução | `ReconcileReturn` com quantidade autoritativa |
+| Fórmula autoritativa de quantidade de devolução — **P2-A inventário feito** (Doc 4/5 §53): falta decisão PM da fórmula (P2-B) + prova de não-sobreposição perda×consumo | `ReconcileReturn` com quantidade autoritativa |
 | Contrato ERP de correlação estável (ID causal no SD3?) | `match_confidence` confirmado vs heurístico |
 | Criticidade de produção autoritativa para prioridade | PRIORITY_POLICY |
 | ~~Permissões por ator~~ — RESOLVIDO Doc 4/5 §40-A | 3 permissões `access`+`view.filial-*`; papel do ator não vira permission code |
