@@ -92,6 +92,7 @@ class FakeRepo:
             "ended_at": None,
             "pieces_total": 0,
             "planned_qty_snapshot": kwargs.get("planned_qty_snapshot"),
+            "target_pieces_snapshot": kwargs.get("target_pieces_snapshot"),
         }
         seg = {
             "id": self._id(),
@@ -263,6 +264,143 @@ def test_start_and_count_pieces():
     assert active is not None
     assert active["piecesTotal"] == 30
     assert active["countedPieces"] == 30
+
+
+def test_run_target_is_frozen_from_queue_and_survives_pause_resume():
+    repo = FakeRepo()
+    session = service_session(repo)
+    device = {"deviceId": "dev-1", "counter": 100, "counterEpoch": 1, "online": True}
+    pulse = FakePulse(devices=[device], device_by_id={"dev-1": device})
+    operation = {
+        "operation_pending_qty": 0.5,
+        "planned_qty": 1.0,
+        "unit": "MI",
+        "pieces_conversion_factor": 1000,
+    }
+    service = ProductionRunService(
+        repository=repo,
+        pulse_gateway=pulse,
+        queue_lookup=lambda **_kwargs: dict(operation),
+    )
+
+    started = service.start_run(
+        branch="01",
+        work_center="CT01",
+        production_order="OP1",
+        operation_code="10",
+        session_token=session,
+    )
+    assert started["plannedQty"] == 0.5
+    assert started["targetPieces"] == 500
+    assert started["remainingPieces"] == 500
+    assert started["progressPercent"] == 0
+    assert started["targetReached"] is False
+
+    pulse.device_by_id["dev-1"] = {**device, "counter": 350}
+    halfway = service.get_active(branch="01", work_center="CT01")
+    assert halfway["piecesTotal"] == 250
+    assert halfway["remainingPieces"] == 250
+    assert halfway["progressPercent"] == 50
+    assert halfway["targetReached"] is False
+
+    pulse.device_by_id["dev-1"] = {**device, "counter": 600}
+    reached = service.get_active(branch="01", work_center="CT01")
+    assert reached["piecesTotal"] == 500
+    assert reached["remainingPieces"] == 0
+    assert reached["targetReached"] is True
+
+    pulse.device_by_id["dev-1"] = {**device, "counter": 620}
+    exceeded = service.get_active(branch="01", work_center="CT01")
+    assert exceeded["piecesTotal"] == 520
+    assert exceeded["progressPercent"] == 104
+    assert exceeded["overproductionPieces"] == 20
+
+    pulse.device_by_id["dev-1"] = {**device, "counter": 345}
+    decreased = service.get_active(branch="01", work_center="CT01")
+    assert decreased["piecesTotal"] == 245
+    assert decreased["progressPercent"] == 49
+
+    operation["operation_pending_qty"] = 0.2
+    paused = service.pause_run(started["id"], session_token=session)
+    assert paused["targetPieces"] == 500
+    resumed = service.resume_run(started["id"], session_token=session)
+    assert resumed["targetPieces"] == 500
+    assert repo.runs[started["id"]]["target_pieces_snapshot"] == 500
+
+
+def test_run_target_uses_header_balance_only_for_legacy_queue_snapshot():
+    repo = FakeRepo()
+    session = service_session(repo)
+    device = {"deviceId": "dev-1", "counter": 100, "counterEpoch": 1, "online": True}
+    pulse = FakePulse(devices=[device], device_by_id={"dev-1": device})
+    service = ProductionRunService(
+        repository=repo,
+        pulse_gateway=pulse,
+        queue_lookup=lambda **_kwargs: {
+            "planned_qty": 1.0,
+            "pending_qty": 0.25,
+            "unit": "MI",
+            "pieces_conversion_factor": 1000,
+        },
+    )
+
+    started = service.start_run(
+        branch="01",
+        work_center="CT01",
+        production_order="OP1",
+        operation_code="10",
+        session_token=session,
+    )
+
+    assert started["plannedQty"] == 0.25
+    assert started["targetPieces"] == 250
+
+
+def test_run_target_stays_unknown_when_unit_has_no_piece_factor():
+    repo = FakeRepo()
+    session = service_session(repo)
+    device = {"deviceId": "dev-1", "counter": 100, "counterEpoch": 1, "online": True}
+    service = ProductionRunService(
+        repository=repo,
+        pulse_gateway=FakePulse(devices=[device], device_by_id={"dev-1": device}),
+        queue_lookup=lambda **_kwargs: {
+            "operation_pending_qty": 0.5,
+            "unit": "KG",
+            "pieces_conversion_factor": None,
+        },
+    )
+
+    started = service.start_run(
+        branch="01",
+        work_center="CT01",
+        production_order="OP1",
+        operation_code="10",
+        session_token=session,
+    )
+
+    assert started["plannedQty"] == 0.5
+    assert started["targetPieces"] is None
+
+
+def test_legacy_run_without_target_has_no_progress():
+    repo = FakeRepo()
+    session = service_session(repo)
+    device = {"deviceId": "dev-1", "counter": 100, "counterEpoch": 1, "online": True}
+    service = ProductionRunService(
+        repository=repo,
+        pulse_gateway=FakePulse(devices=[device], device_by_id={"dev-1": device}),
+    )
+    payload = service.start_run(
+        branch="01",
+        work_center="CT01",
+        production_order="OP1",
+        operation_code="10",
+        session_token=session,
+    )
+    assert payload["targetPieces"] is None
+    assert payload["remainingPieces"] is None
+    assert payload["progressPercent"] is None
+    assert payload["targetReached"] is False
 
 
 def test_tick_emits_absolute_minimal_run_snapshot(monkeypatch: pytest.MonkeyPatch):

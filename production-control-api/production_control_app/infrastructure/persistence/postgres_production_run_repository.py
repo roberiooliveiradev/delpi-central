@@ -107,7 +107,8 @@ class PostgresProductionRunRepository:
                            operator_code, operator_name,
                            bench_session_id::text AS bench_session_id,
                            status, started_at, ended_at, pieces_total,
-                           planned_qty_snapshot, created_at, updated_at
+                           planned_qty_snapshot, target_pieces_snapshot,
+                           created_at, updated_at
                     FROM {_RUNS}
                     WHERE branch = %s
                       AND work_center = %s
@@ -129,7 +130,8 @@ class PostgresProductionRunRepository:
                            operator_code, operator_name,
                            bench_session_id::text AS bench_session_id,
                            status, started_at, ended_at, pieces_total,
-                           planned_qty_snapshot, created_at, updated_at
+                           planned_qty_snapshot, target_pieces_snapshot,
+                           created_at, updated_at
                     FROM {_RUNS}
                     WHERE id = %s::uuid
                     LIMIT 1
@@ -147,7 +149,7 @@ class PostgresProductionRunRepository:
                     SELECT id::text AS id, branch, work_center, production_order,
                            operation_code, device_id::text AS device_id,
                            operator_code, operator_name, status, started_at,
-                           pieces_total, planned_qty_snapshot
+                           pieces_total, planned_qty_snapshot, target_pieces_snapshot
                     FROM {_RUNS}
                     WHERE status = 'running'
                     ORDER BY started_at
@@ -167,6 +169,7 @@ class PostgresProductionRunRepository:
         operator_name: str | None,
         bench_session_id: str | None,
         planned_qty_snapshot: float | None,
+        target_pieces_snapshot: int | None,
         anchor_counter: int,
         anchor_epoch: int,
     ) -> dict[str, Any]:
@@ -177,15 +180,19 @@ class PostgresProductionRunRepository:
                     INSERT INTO {_RUNS} (
                         branch, work_center, production_order, operation_code,
                         device_id, operator_code, operator_name, bench_session_id,
-                        status, planned_qty_snapshot
+                        status, planned_qty_snapshot, target_pieces_snapshot
                     )
-                    VALUES (%s, %s, %s, %s, %s::uuid, %s, %s, %s::uuid, 'running', %s)
+                    VALUES (
+                        %s, %s, %s, %s, %s::uuid, %s, %s, %s::uuid,
+                        'running', %s, %s
+                    )
                     RETURNING id::text AS id, branch, work_center, production_order,
                               operation_code, device_id::text AS device_id,
                               operator_code, operator_name,
                               bench_session_id::text AS bench_session_id,
                               status, started_at, ended_at, pieces_total,
-                              planned_qty_snapshot, created_at, updated_at
+                              planned_qty_snapshot, target_pieces_snapshot,
+                              created_at, updated_at
                     """,
                     (
                         branch,
@@ -197,6 +204,7 @@ class PostgresProductionRunRepository:
                         operator_name,
                         bench_session_id,
                         planned_qty_snapshot,
+                        target_pieces_snapshot,
                     ),
                 )
                 run = dict(cur.fetchone())
@@ -367,7 +375,8 @@ class PostgresProductionRunRepository:
                     RETURNING id::text AS id, branch, work_center, production_order,
                               operation_code, device_id::text AS device_id,
                               operator_code, operator_name, status, started_at,
-                              ended_at, pieces_total, planned_qty_snapshot
+                              ended_at, pieces_total, planned_qty_snapshot,
+                              target_pieces_snapshot
                     """,
                     params,
                 )

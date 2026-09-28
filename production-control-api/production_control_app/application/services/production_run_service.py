@@ -16,6 +16,7 @@ from production_control_app.domain.errors import (
 from production_control_app.domain.services.production_run_counting import (
     pieces_from_anchor,
     sum_segment_pieces,
+    target_pieces_from_quantity,
 )
 from production_control_app.infrastructure.gateways.production_pulse_gateway import (
     ProductionPulseGateway,
@@ -33,6 +34,11 @@ def _iso(value: Any) -> Any:
 
 
 def _run_to_api(run: dict[str, Any], *, device: dict[str, Any] | None = None) -> dict[str, Any]:
+    counted = int(run.get("pieces_total") or 0)
+    target_raw = run.get("target_pieces_snapshot")
+    target = int(target_raw) if target_raw is not None and int(target_raw) > 0 else None
+    remaining = max(target - counted, 0) if target is not None else None
+    overproduction = max(counted - target, 0) if target is not None else None
     payload = {
         "id": run.get("id"),
         "branch": run.get("branch"),
@@ -45,12 +51,17 @@ def _run_to_api(run: dict[str, Any], *, device: dict[str, Any] | None = None) ->
         "status": run.get("status"),
         "startedAt": _iso(run.get("started_at")),
         "endedAt": _iso(run.get("ended_at")),
-        "piecesTotal": int(run.get("pieces_total") or 0),
+        "piecesTotal": counted,
         "plannedQty": (
             float(run["planned_qty_snapshot"])
             if run.get("planned_qty_snapshot") is not None
             else None
         ),
+        "targetPieces": target,
+        "remainingPieces": remaining,
+        "progressPercent": round(counted / target * 100, 2) if target is not None else None,
+        "targetReached": target is not None and counted >= target,
+        "overproductionPieces": overproduction,
     }
     if device is not None:
         payload["device"] = {
@@ -177,7 +188,6 @@ class ProductionRunService:
         production_order: str,
         operation_code: str,
         session_token: str | None,
-        planned_qty: float | None = None,
     ) -> dict[str, Any]:
         session = self.resolve_bench_session(session_token)
         if session.get("branch") != branch or session.get("work_center") != work_center:
@@ -194,15 +204,20 @@ class ProductionRunService:
             production_order=production_order,
             operation_code=operation_code,
         )
-        planned = planned_qty
-        if planned is None and op is not None:
+        planned = None
+        target_pieces = None
+        if op is not None:
             raw = op.get("operation_pending_qty")
             if raw is None:
-                raw = op.get("planned_qty")
+                raw = op.get("pending_qty")
             try:
                 planned = float(raw) if raw is not None else None
             except (TypeError, ValueError):
                 planned = None
+            target_pieces = target_pieces_from_quantity(
+                planned,
+                op.get("pieces_conversion_factor"),
+            )
 
         run = self._repo.create_run_with_segment(
             branch=branch,
@@ -214,6 +229,7 @@ class ProductionRunService:
             operator_name=session.get("operator_name"),
             bench_session_id=session["id"],
             planned_qty_snapshot=planned,
+            target_pieces_snapshot=target_pieces,
             anchor_counter=int(device.get("counter") or 0),
             anchor_epoch=int(device.get("counterEpoch") or 0),
         )

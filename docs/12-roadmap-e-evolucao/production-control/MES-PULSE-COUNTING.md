@@ -48,7 +48,8 @@ ESP /api/contador
 |------|---------|
 | Identidade no cockpit | Público + código Protheus digitado → sessão opaca (`X-Delpi-Bench-Session`) |
 | Conversão golpe → peça | **1:1** (MVP); cavidades fora |
-| Fechamento do run | Shadow only — sem write TOTVS |
+| Meta do run | Saldo da operação congelado no Play; fator de peças vem do contrato canônico de unidades da api-delpi |
+| Fechamento do run | Shadow only — sem write TOTVS; atingir a meta não encerra automaticamente |
 | Fonte da contagem | Âncora absoluta em `counter` + `counterEpoch` (não `SUM(delta_metrics)` na janela) |
 | Integração BFF↔BFF | S2S com `API_DELPI_INTERNAL_SERVICE_TOKEN` + `X-Delpi-Caller-App: production-control-api` |
 | Devices no posto | Exatamente **um** `pulse_counter` elegível; caso contrário o play rejeita |
@@ -81,7 +82,9 @@ Consumidor MES fecha o segmento quando o epoch muda.
 
 ## Modelo de dados (schema `production_control`)
 
-Migration: [`production-control-api/migrations/V008__production_runs_mes_shadow.sql`](../../../production-control-api/migrations/V008__production_runs_mes_shadow.sql)
+Migrations: [`production-control-api/migrations/V008__production_runs_mes_shadow.sql`](../../../production-control-api/migrations/V008__production_runs_mes_shadow.sql) e [`V009__production_run_target_pieces_snapshot.sql`](../../../production-control-api/migrations/V009__production_run_target_pieces_snapshot.sql).
+
+`planned_qty_snapshot` preserva o saldo original na unidade TOTVS. `target_pieces_snapshot` guarda a meta positiva normalizada em peças; permanece `NULL` em runs legados, metas não positivas ou unidades sem conversão canônica.
 
 | Tabela | Papel |
 |--------|-------|
@@ -106,6 +109,8 @@ Auth: `X-Delpi-Service-Token` **ou** JWT com `devices.view`.
 
 Campos relevantes do item: `deviceId`, `counter`, `counterEpoch`, `online`, `status`, `lastSeenAt`, `pollIntervalMs`, `workCenterCode`, `placementKey`.
 
+A fila importada da api-delpi expõe `pieces_conversion_factor`, derivado de `production_operational_units.json`: `MI=1000`, unidades explicitamente classificadas como peça usam `1` e unidades sem regra ficam `null`. O BFF aplica esse fator ao `operation_pending_qty` somente no Play.
+
 Binding esperado: `anchor_type=work_center`, `placement_key=wc:{branch}:{workCenterCode}`.
 
 ### PCP — público (cockpit)
@@ -123,6 +128,8 @@ Writes: header `X-Delpi-Bench-Session` + honeypot `website`.
 | POST | `.../runs/{id}/resume` | Resume |
 | POST | `.../runs/{id}/stop` | Stop → `completed` |
 | GET | `.../runs/active?branch=&workCenter=` | Snapshot + peças + device + divergência TOTVS |
+
+O snapshot completo do run inclui `piecesTotal`, `plannedQty`, `targetPieces`, `remainingPieces`, `progressPercent`, `targetReached` e `overproductionPieces`. Para run legado sem `target_pieces_snapshot`, a meta e os derivados numéricos são `null` e `targetReached` é `false`.
 
 Realtime: mesmo WS da fila (`.../ws?branch=`). Evento adicional `production_run_updated` (reason: `run_started`, `pieces_updated`, …). Em `pieces_updated`, o backend envia o snapshot mínimo absoluto `{ branch, workCenter, runId, piecesTotal }`; o cockpit aplica o valor exatamente quando todas as identidades correspondem, sem nova chamada HTTP. Eventos de ciclo de vida continuam buscando o snapshot completo. O cliente faz poll HTTP ~1 s enquanto o run está `running` somente como fallback quando o socket está desconectado e executa uma reconciliação completa ao reconectar.
 

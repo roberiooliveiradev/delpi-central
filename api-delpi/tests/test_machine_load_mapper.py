@@ -55,6 +55,16 @@ def test_map_operation_converts_protheus_dates_to_iso() -> None:
     assert item["pa_due_date"] == "2026-08-21"
 
 
+def test_map_operation_exposes_canonical_pieces_conversion_factor() -> None:
+    assert MachineLoadOperationMapper.map_operation(_ROW)["pieces_conversion_factor"] == 1000
+    assert MachineLoadOperationMapper.map_operation(
+        {**_ROW, "unit": "UN"}
+    )["pieces_conversion_factor"] == 1
+    assert MachineLoadOperationMapper.map_operation(
+        {**_ROW, "unit": "KG"}
+    )["pieces_conversion_factor"] is None
+
+
 def test_map_operation_keeps_full_production_order_and_tool() -> None:
     item = MachineLoadOperationMapper.map_operation(_ROW)
     assert item["production_order"] == "24640401002"

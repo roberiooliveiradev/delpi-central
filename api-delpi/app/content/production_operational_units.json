@@ -2,14 +2,16 @@
   "default": {
     "displayUnitFactor": 1,
     "displayUnit": null,
-    "toMilheiroFactor": 1
+    "toMilheiroFactor": 1,
+    "piecesFactor": null
   },
   "units": {
     "MI": {
       "catalogUnit": "MI",
       "displayUnitFactor": 1000,
       "displayUnit": "UN",
-      "toMilheiroFactor": 1
+      "toMilheiroFactor": 1,
+      "piecesFactor": 1000
     },
     "MT": {
       "catalogUnit": "MT",
@@ -21,7 +23,15 @@
       "catalogUnit": "PC",
       "displayUnitFactor": 1,
       "displayUnit": null,
-      "toMilheiroFactor": 0.001
+      "toMilheiroFactor": 0.001,
+      "piecesFactor": 1
+    },
+    "UN": {
+      "catalogUnit": "UN",
+      "displayUnitFactor": 1,
+      "displayUnit": "UN",
+      "toMilheiroFactor": 0.001,
+      "piecesFactor": 1
     }
   },
   "quantityFields": [

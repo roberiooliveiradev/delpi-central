@@ -2696,6 +2696,61 @@
   font-variant-numeric: tabular-nums;
 }
 
+.pcp-pub__run-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.pcp-pub__run-progress-state,
+.pcp-pub__run-progress-note {
+  margin: 0;
+}
+
+.pcp-pub__run-progress-state {
+  color: var(--pcp-pub-primary, #0f766e);
+  font-size: 0.75rem;
+  font-weight: 750;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.pcp-pub__run-progress-values {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.pcp-pub__run-progress-values strong {
+  font-size: clamp(1.35rem, 3vw, 2rem);
+}
+
+.pcp-pub__run-progress-values span {
+  font-weight: 700;
+}
+
+.pcp-pub__run-progress-track {
+  height: 12px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--pcp-pub-border, #d1d5db) 70%, transparent);
+}
+
+.pcp-pub__run-progress-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--pcp-pub-primary, #0f766e);
+  transition: width 180ms ease-out;
+}
+
+.pcp-pub__run-progress-note {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
 .pcp-pub__run-meta {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));

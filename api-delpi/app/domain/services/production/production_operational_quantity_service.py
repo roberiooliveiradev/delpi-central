@@ -25,6 +25,7 @@ class ProductionOperationalUnitProfile:
     display_unit_factor: float
     display_unit: str | None
     to_milheiro_factor: float = 1.0
+    pieces_factor: float | None = None
 
     def converts_catalog_unit(self) -> bool:
         return self.display_unit_factor not in (0, 1)
@@ -59,6 +60,7 @@ class ProductionOperationalQuantityService:
         to_milheiro_raw = profile.get("toMilheiroFactor")
         if to_milheiro_raw is None:
             to_milheiro_raw = default.get("toMilheiroFactor")
+        pieces_raw = profile.get("piecesFactor")
 
         return ProductionOperationalUnitProfile(
             catalog_unit=catalog_unit,
@@ -67,6 +69,7 @@ class ProductionOperationalQuantityService:
             ),
             display_unit=display_unit,
             to_milheiro_factor=float(to_milheiro_raw if to_milheiro_raw is not None else 1),
+            pieces_factor=float(pieces_raw) if pieces_raw is not None else None,
         )
 
     @classmethod

@@ -1,6 +1,7 @@
 import { Pause, Play, Square } from "lucide-react";
 import type { MachineLoadOperation } from "./api";
 import { formatQty } from "./cockpitShared";
+import { resolveProductionRunProgress } from "./productionRunProgress";
 import { useProductionRun } from "./useProductionRun";
 import type { MachineLoadRealtimeEvent } from "./usePublicMachineLoadRealtime";
 
@@ -50,6 +51,7 @@ export function ProductionRunControls({
   });
 
   const counted = run?.countedPieces ?? run?.piecesTotal ?? 0;
+  const progress = resolveProductionRunProgress(counted, run?.targetPieces);
   const deviceOnline = run?.device?.online;
   const otherRun =
     run && !runMatchesOperation
@@ -114,10 +116,45 @@ export function ProductionRunControls({
 
           {run && runMatchesOperation ? (
             <div className="pcp-pub__run-readout" aria-live="polite">
-              <div className="pcp-pub__run-count">
-                <span>Peças contadas</span>
-                <strong>{formatQty(counted)}</strong>
-              </div>
+              {progress ? (
+                <div className="pcp-pub__run-progress">
+                  <p className="pcp-pub__run-progress-state">
+                    {progress.targetReached ? "Meta atingida" : "Produção em andamento"}
+                  </p>
+                  <div className="pcp-pub__run-progress-values">
+                    <strong>
+                      {formatQty(progress.countedPieces)} / {formatQty(progress.targetPieces)} peças
+                    </strong>
+                    <span>{formatQty(progress.progressPercent)}%</span>
+                  </div>
+                  <div
+                    className="pcp-pub__run-progress-track"
+                    role="progressbar"
+                    aria-label="Progresso da meta do run"
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-valuenow={progress.visualPercent}
+                    aria-valuetext={`${formatQty(progress.countedPieces)} de ${formatQty(progress.targetPieces)} peças`}
+                  >
+                    <span
+                      className="pcp-pub__run-progress-fill"
+                      style={{ width: `${progress.visualPercent}%` }}
+                    />
+                  </div>
+                  <p className="pcp-pub__run-progress-note">
+                    {progress.overproductionPieces > 0
+                      ? `+${formatQty(progress.overproductionPieces)} peças acima da meta`
+                      : progress.targetReached
+                        ? "Produção prevista concluída"
+                        : `Faltam ${formatQty(progress.remainingPieces)} peças`}
+                  </p>
+                </div>
+              ) : (
+                <div className="pcp-pub__run-count">
+                  <span>Peças contadas</span>
+                  <strong>{formatQty(counted)}</strong>
+                </div>
+              )}
               <dl className="pcp-pub__run-meta">
                 <div>
                   <dt>Status</dt>

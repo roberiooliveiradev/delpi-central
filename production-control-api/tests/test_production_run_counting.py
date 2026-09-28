@@ -1,7 +1,21 @@
 from production_control_app.domain.services.production_run_counting import (
     pieces_from_anchor,
     sum_segment_pieces,
+    target_pieces_from_quantity,
 )
+
+
+def test_target_pieces_converts_mi_factor():
+    assert target_pieces_from_quantity(0.5, 1000) == 500
+
+
+def test_target_pieces_keeps_piece_unit_without_extra_conversion():
+    assert target_pieces_from_quantity(500, 1) == 500
+
+
+def test_target_pieces_is_absent_without_known_conversion_or_positive_quantity():
+    assert target_pieces_from_quantity(0.5, None) is None
+    assert target_pieces_from_quantity(0, 1000) is None
 
 
 def test_pieces_from_anchor_positive():

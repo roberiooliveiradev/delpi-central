@@ -92,9 +92,9 @@ Quando `delivery_start` ou `delivery_end` chega, a janela de programação é **
 
 **Centro de trabalho:** `work_center`, `work_center_name`, `operation_count`, `order_count`, `in_production_count`, `first_scheduled_date`, `last_scheduled_date`, `first_due_date`, `last_due_date`, `missing_due_date_count`.
 
-**Operação:** `branch`, `work_center`, `work_center_name`, `scheduled_date`, `scheduled_start_time`, `production_order`, `operation_code`, `operation_description`, `tool`, `is_manual_operation`, `product_code`, `product_description`, `unit`, `planned_qty`, `pending_qty`, `operation_produced_qty`, `operation_pending_qty`, `pa_due_date`, `pa_product_code`, `due_date`, `due_date_source`.
+**Operação:** `branch`, `work_center`, `work_center_name`, `scheduled_date`, `scheduled_start_time`, `production_order`, `operation_code`, `operation_description`, `tool`, `is_manual_operation`, `product_code`, `product_description`, `unit`, `pieces_conversion_factor`, `planned_qty`, `pending_qty`, `operation_produced_qty`, `operation_pending_qty`, `pa_due_date`, `pa_product_code`, `due_date`, `due_date_source`.
 
-`pending_qty` continua sendo o saldo do cabeçalho (consumido por Mapa de Entregas, Overview e chat). O saldo da bancada é `operation_pending_qty`; ambos vêm `null` apenas quando o dado da operação não foi consultado.
+`pending_qty` continua sendo o saldo do cabeçalho (consumido por Mapa de Entregas, Overview e chat). O saldo da bancada é `operation_pending_qty`; ambos vêm `null` apenas quando o dado da operação não foi consultado. `pieces_conversion_factor` vem do catálogo canônico `production_operational_units.json`: vale `1000` para `MI`, `1` para unidades explicitamente classificadas como peça e `null` quando não há conversão definida.
 
 **Produção (derivado da `HZA010`):** `production_status`, `is_in_production`, `production_started_date`, `production_started_time`, `active_operator_code`, `active_operator_name`, `active_operator_count`, `appointment_count`, `last_appointment_date`.
 

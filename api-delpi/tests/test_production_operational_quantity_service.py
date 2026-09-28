@@ -9,6 +9,7 @@ def test_resolve_mi_converts_to_display_units() -> None:
     assert profile.catalog_unit == "MI"
     assert profile.display_unit_factor == 1000
     assert profile.display_unit == "UN"
+    assert profile.pieces_factor == 1000
     assert profile.to_milheiro_factor == 1
     assert profile.converts_catalog_unit() is True
     assert profile.converts_to_milheiro() is False
@@ -25,10 +26,12 @@ def test_resolve_mt_to_milheiro_divides_by_1000() -> None:
     assert ProductionOperationalQuantityService.to_milheiro_quantity(300, "MT") == 0.3
     assert ProductionOperationalQuantityService.to_milheiro_quantity(300, "MI") == 300.0
     assert ProductionOperationalQuantityService.to_milheiro_quantity(0.015, "PC") == 0.000015
+    assert ProductionOperationalQuantityService.to_milheiro_quantity(15, "UN") == 0.015
     assert ProductionOperationalQuantityService.to_milheiro_quantity(12, "KG") == 12.0
     assert ProductionOperationalQuantityService.non_default_to_milheiro_factors() == {
         "MT": 0.001,
         "PC": 0.001,
+        "UN": 0.001,
     }
 
 
