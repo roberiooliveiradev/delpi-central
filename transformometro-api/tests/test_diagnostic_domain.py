@@ -684,3 +684,175 @@ def test_problem_statement_trim_normalization():
 def test_problem_statement_blank_remains_invalid():
     with pytest.raises(DiagnosticError, match="invalid_problem_statement"):
         ProblemStatement(text="   ")
+
+
+# ---------------------------------------------------------------------------
+# Prompt 2/10 correction — conclusion effective_validation + root-cause
+# freshness propagation (A–H)
+# ---------------------------------------------------------------------------
+
+
+def _validated_root_and_conclusion() -> Diagnostic:
+    """H1 VALIDATED+CURRENT, C1 VALIDATED+CURRENT with root_cause=H1."""
+    return _diagnostic(
+        hypotheses=[
+            _hypothesis(
+                "h1",
+                lifecycle=ClaimLifecycle.VALIDATED,
+                effective_validation=EffectiveValidation.CURRENT,
+            )
+        ],
+        diagnostic_conclusions=[
+            _conclusion(
+                "c1",
+                lifecycle=ClaimLifecycle.VALIDATED,
+                effective_validation=EffectiveValidation.CURRENT,
+                hypothesis_ids=("h1",),
+                root_cause=RootCauseDesignation(hypothesis_id="h1"),
+            )
+        ],
+    )
+
+
+# A — validate_conclusion yields VALIDATED+CURRENT on C1
+def test_validate_conclusion_sets_current():
+    d = _diagnostic(
+        hypotheses=[
+            _hypothesis(
+                "h1",
+                lifecycle=ClaimLifecycle.VALIDATED,
+                effective_validation=EffectiveValidation.CURRENT,
+            )
+        ]
+    )
+    d.add_conclusion(
+        _conclusion(
+            "c1",
+            hypothesis_ids=("h1",),
+            root_cause=RootCauseDesignation(hypothesis_id="h1"),
+        )
+    )
+    d.validate_conclusion("c1")
+    c1 = d.diagnostic_conclusions[0]
+    assert c1.lifecycle is ClaimLifecycle.VALIDATED
+    assert c1.effective_validation is EffectiveValidation.CURRENT
+
+
+# B — stale root cause propagates to VALIDATED conclusion
+def test_stale_root_cause_propagates_to_conclusion():
+    d = _validated_root_and_conclusion()
+    d.mark_hypothesis_stale_evidence("h1")
+    h1 = d.hypotheses[0]
+    c1 = d.diagnostic_conclusions[0]
+    assert h1.lifecycle is ClaimLifecycle.VALIDATED
+    assert h1.effective_validation is EffectiveValidation.STALE_EVIDENCE
+    assert c1.lifecycle is ClaimLifecycle.VALIDATED
+    assert c1.effective_validation is EffectiveValidation.STALE_EVIDENCE
+
+
+# C — degraded state is rehydratable
+def test_rehydrate_validated_stale_conclusion_with_stale_root():
+    d = _diagnostic(
+        hypotheses=[
+            _hypothesis(
+                "h1",
+                lifecycle=ClaimLifecycle.VALIDATED,
+                effective_validation=EffectiveValidation.STALE_EVIDENCE,
+            )
+        ],
+        diagnostic_conclusions=[
+            _conclusion(
+                "c1",
+                lifecycle=ClaimLifecycle.VALIDATED,
+                effective_validation=EffectiveValidation.STALE_EVIDENCE,
+                hypothesis_ids=("h1",),
+                root_cause=RootCauseDesignation(hypothesis_id="h1"),
+            )
+        ],
+    )
+    assert d.diagnostic_conclusions[0].effective_validation is (
+        EffectiveValidation.STALE_EVIDENCE
+    )
+
+
+# D — REVALIDATION_REQUIRED propagates
+def test_revalidation_required_propagates_to_conclusion():
+    d = _validated_root_and_conclusion()
+    d.mark_hypothesis_revalidation_required("h1")
+    c1 = d.diagnostic_conclusions[0]
+    assert c1.lifecycle is ClaimLifecycle.VALIDATED
+    assert c1.effective_validation is (
+        EffectiveValidation.REVALIDATION_REQUIRED
+    )
+
+
+# E — superseded root cause degrades conclusion, keeps lifecycle
+def test_superseded_root_cause_keeps_validated_but_degrades():
+    d = _validated_root_and_conclusion()
+    d.supersede_hypothesis("h1")
+    h1 = d.hypotheses[0]
+    c1 = d.diagnostic_conclusions[0]
+    assert h1.lifecycle is ClaimLifecycle.SUPERSEDED
+    assert c1.lifecycle is ClaimLifecycle.VALIDATED
+    assert c1.effective_validation is (
+        EffectiveValidation.REVALIDATION_REQUIRED
+    )
+
+
+# F — VALIDATED+CURRENT conclusion with stale root cause is rejected
+def test_rehydrate_rejects_current_conclusion_with_stale_root():
+    with pytest.raises(
+        DiagnosticError, match="invalid_root_cause_designation"
+    ):
+        _diagnostic(
+            hypotheses=[
+                _hypothesis(
+                    "h1",
+                    lifecycle=ClaimLifecycle.VALIDATED,
+                    effective_validation=EffectiveValidation.STALE_EVIDENCE,
+                )
+            ],
+            diagnostic_conclusions=[
+                _conclusion(
+                    "c1",
+                    lifecycle=ClaimLifecycle.VALIDATED,
+                    effective_validation=EffectiveValidation.CURRENT,
+                    hypothesis_ids=("h1",),
+                    root_cause=RootCauseDesignation(hypothesis_id="h1"),
+                )
+            ],
+        )
+
+
+# G — VALIDATED+REVALIDATION_REQUIRED conclusion tolerates superseded root
+def test_rehydrate_accepts_degraded_conclusion_with_superseded_root():
+    d = _diagnostic(
+        hypotheses=[
+            _hypothesis(
+                "h1",
+                lifecycle=ClaimLifecycle.SUPERSEDED,
+                effective_validation=EffectiveValidation.STALE_EVIDENCE,
+            )
+        ],
+        diagnostic_conclusions=[
+            _conclusion(
+                "c1",
+                lifecycle=ClaimLifecycle.VALIDATED,
+                effective_validation=EffectiveValidation.REVALIDATION_REQUIRED,
+                hypothesis_ids=("h1",),
+                root_cause=RootCauseDesignation(hypothesis_id="h1"),
+            )
+        ],
+    )
+    assert d.diagnostic_conclusions[0].lifecycle is ClaimLifecycle.VALIDATED
+
+
+# H — stale on a non-root referenced hypothesis does not propagate
+def test_stale_non_root_hypothesis_does_not_propagate():
+    d = _validated_root_and_conclusion()
+    d.add_hypothesis(_hypothesis("h2"))
+    d.validate_hypothesis("h2")
+    d.mark_hypothesis_stale_evidence("h2")
+    c1 = d.diagnostic_conclusions[0]
+    assert c1.lifecycle is ClaimLifecycle.VALIDATED
+    assert c1.effective_validation is EffectiveValidation.CURRENT

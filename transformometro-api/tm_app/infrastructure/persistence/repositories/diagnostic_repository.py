@@ -62,6 +62,39 @@ class DiagnosticConcurrencyError(PluginsRepositoryError):
         )
 
 
+class DiagnosticFidelityError(PluginsRepositoryError):
+    """Durable read-back diverges from the submitted aggregate.
+
+    Raised for silently-dropped history (omitted children) and for
+    mutations the domain does not authorize (immutable field changes) —
+    the write transaction is rolled back.
+    """
+
+    code = "diagnostic.save_fidelity_mismatch"
+
+    def __init__(self, diagnostic_id: str) -> None:
+        self.diagnostic_id = diagnostic_id
+        super().__init__(
+            f"{self.code}: aggregate reidratado diverge do submetido "
+            f"para diagnostic {diagnostic_id}."
+        )
+
+
+def _same_semantics(a: Diagnostic, b: Diagnostic) -> bool:
+    """Field-level equality ignoring persistence metadata (timestamps)."""
+    return (
+        a.diagnostic_id == b.diagnostic_id
+        and a.revision_id == b.revision_id
+        and a.problem_statement == b.problem_statement
+        and a.provenance == b.provenance
+        and set(a.findings) == set(b.findings)
+        and set(a.hypotheses) == set(b.hypotheses)
+        and set(a.causal_links) == set(b.causal_links)
+        and set(a.evidence_links) == set(b.evidence_links)
+        and set(a.diagnostic_conclusions) == set(b.diagnostic_conclusions)
+    )
+
+
 def _provenance_fields(provenance: Provenance | None) -> tuple[str | None, str | None]:
     if provenance is None:
         return (None, None)
@@ -307,6 +340,9 @@ class DiagnosticRepository(PluginBaseRepository, DiagnosticRepositoryPort):
                     conclusion_id=conclusion_id,
                     statement=r["statement"],
                     lifecycle=ClaimLifecycle(r["lifecycle"]),
+                    effective_validation=EffectiveValidation(
+                        r["effective_validation"]
+                    ),
                     rationale=r.get("rationale"),
                     hypothesis_ids=hypothesis_ids,
                     finding_ids=finding_ids,
@@ -342,8 +378,11 @@ class DiagnosticRepository(PluginBaseRepository, DiagnosticRepositoryPort):
             with self.db() as connection:
                 self._insert_root(connection, diagnostic)
                 self._write_children(connection, diagnostic)
+                self._assert_durable_fidelity(
+                    connection, diagnostic, expected_version=None
+                )
                 connection.commit()
-        except DiagnosticConcurrencyError:
+        except (DiagnosticConcurrencyError, DiagnosticFidelityError):
             raise
         except Exception as exc:
             logger.exception("diagnostic create failed")
@@ -359,8 +398,11 @@ class DiagnosticRepository(PluginBaseRepository, DiagnosticRepositoryPort):
                     connection, diagnostic, expected_version
                 )
                 self._write_children(connection, diagnostic)
+                self._assert_durable_fidelity(
+                    connection, diagnostic, expected_version=new_version
+                )
                 connection.commit()
-        except DiagnosticConcurrencyError:
+        except (DiagnosticConcurrencyError, DiagnosticFidelityError):
             raise
         except Exception as exc:
             logger.exception("diagnostic save failed")
@@ -368,6 +410,33 @@ class DiagnosticRepository(PluginBaseRepository, DiagnosticRepositoryPort):
                 f"Falha ao persistir diagnostic: {exc}"
             ) from exc
         return new_version
+
+    def _assert_durable_fidelity(
+        self,
+        connection: Connection[dict[str, Any]],
+        diagnostic: Diagnostic,
+        *,
+        expected_version: int | None,
+    ) -> None:
+        """Authoritative in-transaction read-back.
+
+        Success requires the durable aggregate to be semantically equal to
+        the submitted one (plus the expected version on save). An aggregate
+        that omits persisted children or mutates fields the domain freezes
+        fails closed here — never hard-deleted, never silently kept.
+        """
+        root = self._fetch_root(connection, diagnostic.diagnostic_id)
+        if root is None:
+            raise DiagnosticFidelityError(diagnostic.diagnostic_id)
+        children = self._fetch_children(connection, [diagnostic.diagnostic_id])
+        rehydrated = self._rehydrate(root, children)
+        if expected_version is not None:
+            if rehydrated.version != expected_version:
+                raise DiagnosticFidelityError(diagnostic.diagnostic_id)
+        elif rehydrated.version != diagnostic.version:
+            raise DiagnosticFidelityError(diagnostic.diagnostic_id)
+        if not _same_semantics(diagnostic, rehydrated):
+            raise DiagnosticFidelityError(diagnostic.diagnostic_id)
 
     def _insert_root(
         self, connection: Connection[dict[str, Any]], diagnostic: Diagnostic
@@ -518,13 +587,15 @@ class DiagnosticRepository(PluginBaseRepository, DiagnosticRepositoryPort):
                 cursor.executemany(
                     f"""INSERT INTO {_S}.diagnostic_conclusions
                         (conclusion_id, diagnostic_id, statement, rationale,
-                         epistemic_state, lifecycle,
+                         epistemic_state, lifecycle, effective_validation,
                          root_cause_hypothesis_id,
                          provenance_origin, provenance_detail)
-                        VALUES (%s::uuid, %s::uuid, %s, %s, %s, %s,
+                        VALUES (%s::uuid, %s::uuid, %s, %s, %s, %s, %s,
                                 %s::uuid, %s, %s)
                         ON CONFLICT (conclusion_id) DO UPDATE SET
                             lifecycle = EXCLUDED.lifecycle,
+                            effective_validation =
+                                EXCLUDED.effective_validation,
                             updated_at = NOW()""",
                     [
                         (
@@ -534,6 +605,7 @@ class DiagnosticRepository(PluginBaseRepository, DiagnosticRepositoryPort):
                             c.rationale,
                             c.epistemic_state.value,
                             c.lifecycle.value,
+                            c.effective_validation.value,
                             (
                                 c.root_cause.hypothesis_id
                                 if c.root_cause

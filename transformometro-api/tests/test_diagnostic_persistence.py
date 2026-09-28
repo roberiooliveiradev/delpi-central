@@ -39,6 +39,7 @@ from tm_app.infrastructure.persistence.plugins.plugin_base_repository import (  
 )
 from tm_app.infrastructure.persistence.repositories.diagnostic_repository import (  # noqa: E402
     DiagnosticConcurrencyError,
+    DiagnosticFidelityError,
     DiagnosticRepository,
 )
 
@@ -711,3 +712,258 @@ def test_version_increments_once_per_save(repo, db, fixture_ids):
     reloaded = repo.get(diagnostic.diagnostic_id)
     assert reloaded.version == 2
     assert repo.save(reloaded, expected_version=2) == 3
+
+
+# ---------------------------------------------------------------------------
+# Prompt 2/10 correction — freshness propagation round-trip + save fidelity
+# ---------------------------------------------------------------------------
+
+
+def _validated_root_aggregate(revisao_id: str) -> tuple[Diagnostic, str, str]:
+    """H1 VALIDATED+CURRENT + C1 VALIDATED+CURRENT with root_cause=H1.
+
+    Built through the real transition path so validation snapshots exist.
+    """
+    h1_id, c1_id = _uid(), _uid()
+    diagnostic = Diagnostic(
+        diagnostic_id=_uid(),
+        revision_id=revisao_id,
+        problem_statement=ProblemStatement("propagação"),
+        hypotheses=[Hypothesis(hypothesis_id=h1_id, statement="causa raiz")],
+    )
+    diagnostic.validate_hypothesis(h1_id)
+    diagnostic.add_conclusion(
+        DiagnosticConclusion(
+            conclusion_id=c1_id,
+            statement="conclusão efetiva",
+            hypothesis_ids=(h1_id,),
+            root_cause=RootCauseDesignation(h1_id),
+        )
+    )
+    diagnostic.validate_conclusion(c1_id)
+    return diagnostic, h1_id, c1_id
+
+
+def test_stale_root_cause_postcondition(repo, db, fixture_ids):
+    """Spec §30: stale propagation persists and rehydrates identically."""
+    diagnostic, h1_id, c1_id = _validated_root_aggregate(
+        fixture_ids["revisao_id"]
+    )
+    fixture_ids["created_diagnostics"].append(diagnostic.diagnostic_id)
+    repo.create(diagnostic)
+
+    loaded = repo.get(diagnostic.diagnostic_id)
+    loaded.mark_hypothesis_stale_evidence(h1_id)
+    assert repo.save(loaded, expected_version=1) == 2
+
+    authoritative = repo.get(diagnostic.diagnostic_id)
+    h1 = _find(authoritative.hypotheses, "hypothesis_id", h1_id)
+    c1 = _find(authoritative.diagnostic_conclusions, "conclusion_id", c1_id)
+    assert h1.lifecycle is ClaimLifecycle.VALIDATED
+    assert h1.effective_validation is EffectiveValidation.STALE_EVIDENCE
+    assert c1.lifecycle is ClaimLifecycle.VALIDATED
+    assert c1.effective_validation is EffectiveValidation.STALE_EVIDENCE
+    assert c1.root_cause is not None
+    assert c1.root_cause.hypothesis_id == h1_id
+    # the original validation snapshot stays historical (CURRENT at
+    # transition time is not rewritten)
+    assert c1.validation_history[0].effective_validation is (
+        EffectiveValidation.CURRENT
+    )
+
+
+def test_revalidation_required_round_trip(repo, db, fixture_ids):
+    diagnostic, h1_id, c1_id = _validated_root_aggregate(
+        fixture_ids["revisao_id"]
+    )
+    fixture_ids["created_diagnostics"].append(diagnostic.diagnostic_id)
+    repo.create(diagnostic)
+
+    loaded = repo.get(diagnostic.diagnostic_id)
+    loaded.mark_hypothesis_revalidation_required(h1_id)
+    assert repo.save(loaded, expected_version=1) == 2
+
+    authoritative = repo.get(diagnostic.diagnostic_id)
+    c1 = _find(authoritative.diagnostic_conclusions, "conclusion_id", c1_id)
+    assert c1.effective_validation is (
+        EffectiveValidation.REVALIDATION_REQUIRED
+    )
+
+
+def test_superseded_root_cause_round_trip(repo, db, fixture_ids):
+    diagnostic, h1_id, c1_id = _validated_root_aggregate(
+        fixture_ids["revisao_id"]
+    )
+    fixture_ids["created_diagnostics"].append(diagnostic.diagnostic_id)
+    repo.create(diagnostic)
+
+    loaded = repo.get(diagnostic.diagnostic_id)
+    loaded.supersede_hypothesis(h1_id)
+    assert repo.save(loaded, expected_version=1) == 2
+
+    authoritative = repo.get(diagnostic.diagnostic_id)
+    h1 = _find(authoritative.hypotheses, "hypothesis_id", h1_id)
+    c1 = _find(authoritative.diagnostic_conclusions, "conclusion_id", c1_id)
+    assert h1.lifecycle is ClaimLifecycle.SUPERSEDED
+    assert c1.lifecycle is ClaimLifecycle.VALIDATED
+    assert c1.effective_validation is (
+        EffectiveValidation.REVALIDATION_REQUIRED
+    )
+
+
+# ---------------------------------------------------------------------------
+# Composite ownership constraints
+# ---------------------------------------------------------------------------
+
+
+def test_causal_source_cross_diagnostic_rejected(db, fixture_ids):
+    repo = DiagnosticRepository(connection=db)
+    a = Diagnostic(
+        diagnostic_id=_uid(),
+        revision_id=fixture_ids["revisao_id"],
+        problem_statement=ProblemStatement("A"),
+    )
+    b = Diagnostic(
+        diagnostic_id=_uid(),
+        revision_id=fixture_ids["revisao_id"],
+        problem_statement=ProblemStatement("B"),
+        hypotheses=[Hypothesis(hypothesis_id=_uid(), statement="h de B")],
+    )
+    fixture_ids["created_diagnostics"] += [a.diagnostic_id, b.diagnostic_id]
+    repo.create(a)
+    repo.create(b)
+    b_hypothesis = b.hypotheses[0].hypothesis_id
+    b_finding = _uid()
+    with db.cursor() as cur:
+        cur.execute(
+            """INSERT INTO transformometro.diagnostic_findings
+               (finding_id, diagnostic_id, statement, epistemic_state)
+               VALUES (%s, %s, 'f de A', 'OBSERVED')""",
+            (b_finding, a.diagnostic_id),
+        )
+        db.commit()
+        with pytest.raises(Exception):
+            cur.execute(
+                """INSERT INTO transformometro.diagnostic_causal_links
+                   (link_id, diagnostic_id, source_hypothesis_id, target_id,
+                    relation)
+                   VALUES (%s, %s, %s, %s, 'CONTRIBUTES_TO')""",
+                (_uid(), a.diagnostic_id, b_hypothesis, b_finding),
+            )
+            db.commit()
+    db.rollback()
+
+
+def test_root_cause_cross_diagnostic_rejected(db, fixture_ids):
+    repo = DiagnosticRepository(connection=db)
+    a = Diagnostic(
+        diagnostic_id=_uid(),
+        revision_id=fixture_ids["revisao_id"],
+        problem_statement=ProblemStatement("A"),
+    )
+    b = Diagnostic(
+        diagnostic_id=_uid(),
+        revision_id=fixture_ids["revisao_id"],
+        problem_statement=ProblemStatement("B"),
+        hypotheses=[Hypothesis(hypothesis_id=_uid(), statement="h de B")],
+    )
+    fixture_ids["created_diagnostics"] += [a.diagnostic_id, b.diagnostic_id]
+    repo.create(a)
+    repo.create(b)
+    b_hypothesis = b.hypotheses[0].hypothesis_id
+    with db.cursor() as cur, pytest.raises(Exception):
+        cur.execute(
+            """INSERT INTO transformometro.diagnostic_conclusions
+               (conclusion_id, diagnostic_id, statement, lifecycle,
+                root_cause_hypothesis_id)
+               VALUES (%s, %s, 'c de A', 'DRAFT', %s)""",
+            (_uid(), a.diagnostic_id, b_hypothesis),
+        )
+        db.commit()
+    db.rollback()
+
+
+# ---------------------------------------------------------------------------
+# Save fidelity — fail closed, never hard-delete
+# ---------------------------------------------------------------------------
+
+
+def test_historical_child_omission_rejected(repo, db, fixture_ids):
+    f1 = Finding(finding_id=_uid(), statement="F1")
+    f2 = Finding(finding_id=_uid(), statement="F2")
+    diagnostic = Diagnostic(
+        diagnostic_id=_uid(),
+        revision_id=fixture_ids["revisao_id"],
+        problem_statement=ProblemStatement("base"),
+        findings=[f1, f2],
+    )
+    fixture_ids["created_diagnostics"].append(diagnostic.diagnostic_id)
+    repo.create(diagnostic)
+
+    # Manually constructed aggregate silently drops F2.
+    partial = Diagnostic(
+        diagnostic_id=diagnostic.diagnostic_id,
+        revision_id=fixture_ids["revisao_id"],
+        problem_statement=ProblemStatement("base"),
+        findings=[f1],
+    )
+    with pytest.raises(DiagnosticFidelityError) as excinfo:
+        repo.save(partial, expected_version=1)
+    assert excinfo.value.code == "diagnostic.save_fidelity_mismatch"
+    db.rollback()
+
+    authoritative = repo.get(diagnostic.diagnostic_id)
+    assert authoritative.version == 1
+    assert {f.finding_id for f in authoritative.findings} == {
+        f1.finding_id,
+        f2.finding_id,
+    }
+
+
+def test_immutable_child_mismatch_rejected(repo, db, fixture_ids):
+    f1 = Finding(finding_id=_uid(), statement="texto original")
+    diagnostic = Diagnostic(
+        diagnostic_id=_uid(),
+        revision_id=fixture_ids["revisao_id"],
+        problem_statement=ProblemStatement("base"),
+        findings=[f1],
+    )
+    fixture_ids["created_diagnostics"].append(diagnostic.diagnostic_id)
+    repo.create(diagnostic)
+
+    tampered = Diagnostic(
+        diagnostic_id=diagnostic.diagnostic_id,
+        revision_id=fixture_ids["revisao_id"],
+        problem_statement=ProblemStatement("base"),
+        findings=[
+            Finding(finding_id=f1.finding_id, statement="texto adulterado")
+        ],
+    )
+    with pytest.raises(DiagnosticFidelityError):
+        repo.save(tampered, expected_version=1)
+    db.rollback()
+
+    authoritative = repo.get(diagnostic.diagnostic_id)
+    assert authoritative.findings[0].statement == "texto original"
+
+
+def test_mutation_supported_by_domain_round_trips(repo, db, fixture_ids):
+    """Contrast: mutations the domain DOES authorize must persist."""
+    h = Hypothesis(hypothesis_id=_uid(), statement="h")
+    diagnostic = Diagnostic(
+        diagnostic_id=_uid(),
+        revision_id=fixture_ids["revisao_id"],
+        problem_statement=ProblemStatement("mutável"),
+        hypotheses=[h],
+    )
+    fixture_ids["created_diagnostics"].append(diagnostic.diagnostic_id)
+    repo.create(diagnostic)
+
+    loaded = repo.get(diagnostic.diagnostic_id)
+    loaded.validate_hypothesis(h.hypothesis_id, note="ok")
+    assert repo.save(loaded, expected_version=1) == 2
+
+    authoritative = repo.get(diagnostic.diagnostic_id)
+    h_loaded = authoritative.hypotheses[0]
+    assert h_loaded.lifecycle is ClaimLifecycle.VALIDATED
+    assert len(h_loaded.validation_history) == 1

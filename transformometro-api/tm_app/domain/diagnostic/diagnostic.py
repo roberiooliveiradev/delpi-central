@@ -321,6 +321,7 @@ class DiagnosticConclusion:
     conclusion_id: str
     statement: str
     lifecycle: ClaimLifecycle = ClaimLifecycle.DRAFT
+    effective_validation: EffectiveValidation = EffectiveValidation.CURRENT
     rationale: str | None = None
     hypothesis_ids: tuple[str, ...] = ()
     finding_ids: tuple[str, ...] = ()
@@ -341,6 +342,12 @@ class DiagnosticConclusion:
             )
         if not isinstance(self.lifecycle, ClaimLifecycle):
             _raise("invalid_lifecycle_transition", "lifecycle inválido.")
+        if not isinstance(self.effective_validation, EffectiveValidation):
+            _raise(
+                "invalid_epistemic_state",
+                f"effective_validation inválido: "
+                f"{self.effective_validation!r}.",
+            )
         object.__setattr__(self, "hypothesis_ids", tuple(self.hypothesis_ids or ()))
         object.__setattr__(self, "finding_ids", tuple(self.finding_ids or ()))
         object.__setattr__(
@@ -424,10 +431,16 @@ class Diagnostic:
             self._assert_evidence_link(link)
         for conclusion in self._diagnostic_conclusions:
             self._assert_conclusion_references(conclusion)
-            # A conclusion arriving already VALIDATED must satisfy the same
-            # effective root-cause invariant enforced at validate_conclusion.
+            # VALIDATED+CURRENT conclusion claims a fully-effective root
+            # cause — the same invariant enforced at validate_conclusion.
+            # VALIDATED conclusions carrying degraded freshness
+            # (STALE_EVIDENCE / REVALIDATION_REQUIRED) may rehydrate a
+            # historically degraded dependency: lifecycle is historical,
+            # effective_validation is current freshness.
             if (
                 conclusion.lifecycle is ClaimLifecycle.VALIDATED
+                and conclusion.effective_validation
+                is EffectiveValidation.CURRENT
                 and conclusion.root_cause is not None
             ):
                 self._assert_root_cause_effective(conclusion.root_cause)
@@ -638,6 +651,11 @@ class Diagnostic:
     ) -> None:
         hypothesis = self._require_hypothesis(hypothesis_id)
         self._transition_claim(hypothesis, ClaimLifecycle.SUPERSEDED, note=note)
+        # A superseded designated root cause degrades dependent VALIDATED
+        # conclusions to REVALIDATION_REQUIRED — lifecycle stays VALIDATED.
+        self._propagate_root_cause_freshness(
+            hypothesis_id, EffectiveValidation.REVALIDATION_REQUIRED
+        )
 
     def _require_hypothesis(self, hypothesis_id: str) -> Hypothesis:
         hypothesis = self._hypothesis(hypothesis_id)
@@ -650,10 +668,25 @@ class Diagnostic:
 
     # -- effective validation (representation only) ---------------------------
 
+    def _propagate_root_cause_freshness(
+        self, hypothesis_id: str, effective: EffectiveValidation
+    ) -> None:
+        """Freshness flows ONLY through designated root-cause dependency."""
+        for conclusion in self._diagnostic_conclusions:
+            if (
+                conclusion.lifecycle is ClaimLifecycle.VALIDATED
+                and conclusion.root_cause is not None
+                and conclusion.root_cause.hypothesis_id == hypothesis_id
+            ):
+                self._set(conclusion, "effective_validation", effective)
+
     def mark_hypothesis_stale_evidence(self, hypothesis_id: str) -> None:
         hypothesis = self._require_hypothesis(hypothesis_id)
         self._set(
             hypothesis, "effective_validation", EffectiveValidation.STALE_EVIDENCE
+        )
+        self._propagate_root_cause_freshness(
+            hypothesis_id, EffectiveValidation.STALE_EVIDENCE
         )
 
     def mark_hypothesis_revalidation_required(self, hypothesis_id: str) -> None:
@@ -662,6 +695,9 @@ class Diagnostic:
             hypothesis,
             "effective_validation",
             EffectiveValidation.REVALIDATION_REQUIRED,
+        )
+        self._propagate_root_cause_freshness(
+            hypothesis_id, EffectiveValidation.REVALIDATION_REQUIRED
         )
 
     # -- conclusions -----------------------------------------------------------
@@ -764,6 +800,11 @@ class Diagnostic:
             )
         if conclusion.root_cause is not None:
             self._assert_root_cause_effective(conclusion.root_cause)
+        # Validation is performed against a CURRENT dependency graph; the
+        # conclusion itself becomes CURRENT at this instant.
+        self._set(
+            conclusion, "effective_validation", EffectiveValidation.CURRENT
+        )
         self._transition_claim(conclusion, ClaimLifecycle.VALIDATED, note=note)
 
     def reject_conclusion(
