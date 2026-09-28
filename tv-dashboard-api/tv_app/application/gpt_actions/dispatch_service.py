@@ -81,7 +81,7 @@ class GptActionsDispatchService:
             )
         return actor
 
-    def get_catalog(self, *, user: Any) -> dict[str, Any]:
+    def get_catalog(self, *, user: Any, transport: str = "actions") -> dict[str, Any]:
         assert_permission(user, TV_WRITE)
         doc = PresentationOpsContentService.capability_catalog_document()
         from tv_app.application.services.data.display_format_service import DisplayFormatService
@@ -90,7 +90,7 @@ class GptActionsDispatchService:
             {"formatId": entry["formatId"], "spec": entry["spec"]}
             for entry in DisplayFormatService.format_catalog_entries()
         ]
-        doc["capability_surface"] = build_capability_surface()
+        doc["capability_surface"] = build_capability_surface(transport=transport)
         return doc
 
     def list_playlists(

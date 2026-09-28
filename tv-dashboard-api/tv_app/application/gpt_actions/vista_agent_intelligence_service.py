@@ -1,7 +1,7 @@
 """Deployable VISTA agent intelligence (not GPT Builder Instructions).
 
 Loaded from ``vista_agent_intelligence.json`` and projected on
-``gpt_get_catalog`` → ``capability_surface.agent_directives`` so behavior
+``get_catalog`` → ``capability_surface.agent_directives`` so behavior
 evolves with API deploy without re-pasting Builder Instructions.
 """
 
@@ -65,8 +65,14 @@ class VistaAgentIntelligenceService:
         return str(cls.document().get("version") or "").strip()
 
     @classmethod
-    def agent_directives(cls) -> dict[str, Any]:
-        """Compact directives for the external specialist to obey at runtime."""
+    def agent_directives(cls, *, transport: str = "mcp") -> dict[str, Any]:
+        """Compact directives for the external specialist to obey at runtime.
+
+        ``transport="mcp"`` projects the full document (MCP-primary surface:
+        ``surface_parity`` + ``write_flow_mcp`` included). ``transport="actions"``
+        drops the MCP-facing sections — the GPT Actions envelope sits at the
+        ~100 KiB OpenAI ceiling and its own tool names are already ``gpt_*``.
+        """
         from tv_app.application.services.data.presentation_recipe_service import (
             PresentationRecipeService,
         )
@@ -83,7 +89,8 @@ class VistaAgentIntelligenceService:
         raw = {
             "version": cls.version(),
             "authority": (
-                "Obey these directives from live gpt_get_catalog. "
+                "Obey these directives from live get_catalog "
+                "(Actions: gpt_get_catalog). "
                 "They override stale Builder Knowledge for mutation behavior."
             ),
             "execution_posture": doc.get("execution_posture") or {},
@@ -116,12 +123,25 @@ class VistaAgentIntelligenceService:
             "published_templates": doc.get("published_templates") or {},
             "mcp_delia": doc.get("mcp_delia") or {},
             "modes": doc.get("modes") or {},
+            # Actions write-flow variant (commit_now/confirmation.confirmed
+            # semantics) — labeled `surface: gpt_actions` in the JSON document.
             "write_flow": doc.get("write_flow") or {},
-            # MCP3 — surface_parity / write_flow_mcp live in the JSON document
-            # but are intentionally NOT projected: the Actions catalog envelope
-            # is already at its byte ceiling (known headroom backlog). The MCP
-            # instructions variant carries the envelope skeleton inline.
+            # MCP3 — projected now that the shared directives are
+            # transport-neutral: parity map + MCP-primary governed envelope.
+            "surface_parity": doc.get("surface_parity") or {},
+            "write_flow_mcp": doc.get("write_flow_mcp") or {},
             "anti_patterns": list(doc.get("anti_patterns") or []),
             "auth_errors": doc.get("auth_errors") or {},
         }
+        if transport == "actions":
+            # Actions stays inside the ~100 KiB OpenAI ceiling: MCP-facing
+            # sections are projected for the MCP transport only, and the
+            # write_flow surface labels are noise for the Actions specialist.
+            raw.pop("surface_parity", None)
+            raw.pop("write_flow_mcp", None)
+            raw.pop("mcp_delia", None)
+            write_flow = raw.get("write_flow")
+            if isinstance(write_flow, dict):
+                write_flow.pop("surface", None)
+                write_flow.pop("note", None)
         return _compact_for_actions(raw)

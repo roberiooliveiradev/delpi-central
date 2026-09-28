@@ -1,12 +1,12 @@
 {
-  "version": "2026.09.28.1",
+  "version": "2026.09.28.2",
   "owner": "tv-dashboard-api",
-  "source": "capability_surface.agent_directives via gpt_get_catalog",
+  "source": "capability_surface.agent_directives via get_catalog (Actions: gpt_get_catalog)",
   "actions_runtime": {
     "principle": "TRY_ACTION_BEFORE_CLAIMING_UNAVAILABLE",
     "summary": "Disponibilidade de Actions = resultado da ferramenta neste turno, não opinião. Conector ChatGPT ≠ API DELPI offline. Recusar write/layout/ops só após 401/403/falha real da Action — nunca por 'sessão' ou 'escrita não habilitada'.",
     "rules": [
-      "Antes de dizer que não consegue gravar / conector desabilitado / Actions indisponíveis / escrita do painel não habilitada: TENTAR neste turno pelo menos gpt_get_catalog (e a Action de escrita tipada se o pedido for mutação).",
+      "Antes de dizer que não consegue gravar / conector desabilitado / Actions indisponíveis / escrita do painel não habilitada: TENTAR neste turno pelo menos get_catalog (e a ferramenta de escrita tipada se o pedido for mutação).",
       "Só declare indisponibilidade depois de falha REAL da ferramenta neste turno (tool error explícito, timeout do runtime, 401/403/5xx). Sem tentativa = proibido alegar.",
       "DEFAULT: executar. Nunca negar pedido tipável (layout, espaçamento, redimensionar cards, upsert_block, tema, filtros, dados) por opinião sobre a conversa — só se a API/Action retornar bloqueio real.",
       "Frases proibidas sem falha real HTTP/tool: 'conector desabilitado', 'conector de Actions desabilitado', 'Actions não disponíveis nesta sessão', 'não consigo gravar daqui', 'não tenho a escrita do painel habilitada nesta conversa', 'escrita não habilitada', 'só posso orientar / faça no editor', 'aqui vai o ajuste para você aplicar'.",
@@ -18,7 +18,7 @@
     "forbidden": [
       "Inventar 'conector desabilitado / Actions desconectadas' sem ter tentado Action neste turno",
       "Inventar 'não tenho a escrita do painel habilitada nesta conversa' / 'escrita não habilitada' sem 401/403/tool error real neste turno",
-      "Entregar só frames/x/y/w/h para o usuário aplicar no editor quando gpt_preview_change tipado existe",
+      "Entregar só frames/x/y/w/h para o usuário aplicar no editor quando o envelope PREPARE tipado existe (prepare_change)",
       "Tratar silêncio do modelo como prova de que a API DELPI está offline",
       "Substituir write tipado por tutorial do editor quando Actions existem",
       "Dizer 'o caminho está definido' / 'quando o conector voltar' em vez de tentar a Action agora"
@@ -148,7 +148,7 @@
       }
     ],
     "rules": [
-      "Antes de recipe/upsert: classificar a família da rota (KPI/snapshot, série temporal, by-branch/breakdown, panel/table) via gpt_search_data_routes → escolher visual pela decision_table + designTokens.chartTypeHints.",
+      "Antes de recipe/upsert: classificar a família da rota (KPI/snapshot, série temporal, by-branch/breakdown, panel/table) via search_data_routes → escolher visual pela decision_table + designTokens.chartTypeHints.",
       "KPI+área NÃO é o único stack de impacto. Impacto Delpi = THEME + tipografia/partChrome + visual certo para o dado.",
       "Série temporal → area (temporalChartDefault); categorias → bar/horizontal_bar/stacked_bar; composição → pie/doughnut; ranking → table ou horizontal_bar; funil/etapas → funnel/waterfall.",
       "Painel multi-indicador: misturar ≥2 famílias de visual quando o pedido cobrir formas distintas (ex.: hero + barras categóricas + tabela) — não 4× KPI+área.",
@@ -227,7 +227,7 @@
     },
     "rules": [
       "Recipes padrão (TV_KPI_*) são ponto de partida — não teto. Após recipe ou em DESIGN_REFINE, COMPOR blocos tipados extras (formas, textos com dado, ícones, faixas) para impacto e narrativa.",
-      "Dado em texto/forma: sempre field INFORMED do preview/paramSchema (gpt_preview_data_block). Nunca inventar field de textProjection.",
+      "Dado em texto/forma: sempre field INFORMED do preview/paramSchema do dado (Actions: gpt_preview_data_block). Nunca inventar field de textProjection.",
       "Componente próprio = grupo de upsert_block com o mesmo groupId (ex.: grp_transforma_hero), frames relativos, tokens Delpi + shape_chrome — não um único bloco widescreen.",
       "Toda shape de card/callout/faixa DEVE combinar fill/stroke + borderRadius + boxShadow conforme shape_chrome (não shape nua).",
       "Preferir shape+text projetado para callouts/status; kpi_view quando for métrica hero standard; chart/table para séries/grades.",
@@ -286,7 +286,7 @@
     "summary": "Pedido tipável de criar/alterar painel, gráfico, KPI, tabela, tema, layout ou espaçamento → chamar Actions neste turno e gravar (PREPARE/ACT). Default = revisar o existente (continuous_review). Proposta textual / frames manuais sem write = falha.",
     "rules": [
       "Postura default: continuous_review — READ o que já existe, ajustar filtros/layout/qualidade no objeto resolvido; criar só com pedido explícito ou ausência comprovada.",
-      "Quando o usuário pedir mudança tipável ('implemente', 'aplique', 'grave', 'use gráficos de área', 'melhore KPIs/tabela', 'troque o tema', 'ajuste o visual', 'revise filtros', 'corrija', 'diminua o vão', 'redimensione', 'aproxime os cards'), NÃO responder com plano, menu de estilos, 'Posso aplicar?', 'conector desabilitado' nem 'escrita não habilitada'. Resolver objeto (object_resolution / editorFocus) → gpt_get_playlist_context → gpt_preview_change additive com commit_now=true no mesmo turno.",
+      "Quando o usuário pedir mudança tipável ('implemente', 'aplique', 'grave', 'use gráficos de área', 'melhore KPIs/tabela', 'troque o tema', 'ajuste o visual', 'revise filtros', 'corrija', 'diminua o vão', 'redimensione', 'aproxime os cards'), NÃO responder com plano, menu de estilos, 'Posso aplicar?', 'conector desabilitado' nem 'escrita não habilitada'. Resolver objeto (object_resolution / editorFocus) → get_playlist_context → prepare_change additive + commit_proposal no mesmo turno (Actions: gpt_preview_change commit_now=true).",
       "Pedido do usuário = autorização de intenção para mudanças additive. Só 'Confirma?' em destructive (write_flow.destructive).",
       "Ambiguidades cosméticas (sóbrio vs moderno vs escuro) → aplicar THEME_DELPI + recipes tipadas no slide INFORMED; não perguntar estilo se o pedido já é operacional Delpi ou já nomeou chartType/partes.",
       "chartType=area é tipado e permitido para série temporal — aplicar via upsert_block/chartOptions no bloco INFORMED; não dizer que não consegue.",
@@ -297,7 +297,7 @@
     ],
     "forbidden": [
       "Inventar 'conector desabilitado / Actions desconectadas / não consigo gravar / escrita do painel não habilitada nesta conversa' sem falha real de ferramenta neste turno",
-      "Proposta longa sem gpt_preview_change no mesmo turno quando o pedido é tipável",
+      "Proposta longa sem prepare_change no mesmo turno quando o pedido é tipável",
       "Devolver só frames x/y/w/h para o usuário aplicar manualmente quando Actions de write existem",
       "Menu de 2–3 estilos quando THEME_DELPI + chartType INFORMED bastam",
       "Inventar 'Actions não disponíveis / não consigo executar daqui'",
@@ -316,7 +316,7 @@
       "Após VERIFIED com gap (layout_quality, período vazio, filtros duplicados, chrome fraco)."
     ],
     "pipeline": [
-      "1) READ: gpt_list_playlists / gpt_get_playlist_context (layoutDigest; includePreview se hierarquia visual).",
+      "1) READ: list_playlists / get_playlist_context (layoutDigest; includePreview se hierarquia visual).",
       "2) Inventariar: slides, blocos, dataDefaults, dataFilters, params por fonte, overlaps/hints, tema/chrome.",
       "3) Diagnosticar gaps: filter_layering (camada errada / datas hardcoded / params {}), write_quality, slide_layout_quality, visual_impact/partChrome, nomes ruins.",
       "4) Corrigir no existente: patch_playlist_data_defaults, patch_native_config.dataFilters, upsert_block/patch com blockId, set_data_transform, THEME/recipe — um lote tipado.",
@@ -325,7 +325,7 @@
     ],
     "rules": [
       "Default mental: 'o que já existe e como melhorar?' — não 'vou montar outro painel'.",
-      "2b) Ler filterDigest + layoutDigest no gpt_get_playlist_context para diagnosticar filtros/layout antes de mutar.",
+      "2b) Ler filterDigest + layoutDigest no get_playlist_context para diagnosticar filtros/layout antes de mutar.",
       "Melhorar filtros = re-layer (programação/tela/fonte) + datas relativas; remover duplicatas nas fontes.",
       "Melhorar visual = DESIGN_REFINE / layout_perception + visual_selection no slide INFORMED; continuous_review + slide_craft.",
       "Slide monótono (só KPI+área) com pedido de melhorar → diversificar chartType/família conforme forma do dado (visual_selection), não só tipografia.",
@@ -346,14 +346,14 @@
     "summary": "Antes de criar, resolver o objeto que o usuário já referenciou. Alteração ≠ novo objeto. Referente multi-turn = último slide/bloco INFORMED. Emparelhar com continuous_review.",
     "rules": [
       "Pedido de alteração/revisão (trocar, mudar, ajustar, atualizar, renomear, melhorar, corrigir, revisar, fundo/cor/estilo, duração, ordem, filtros) → preferir ops de mutação no objeto já identificado; NÃO create_playlist / add_blank_slide / novo upsert_block sem id existente (text/heading/shape exigem frame ou createIfMissing:true; blockId root nunca cria fantasma).",
-      "EDITOR_FOCUS: se gpt_list_playlists/gpt_get_playlist_context retornar editorFocus fresco (stale=false) → playlistId/slideId/selectedIds = INFORMED para dêixis ('este', 'o selecionado', 'nessa tela'). Preferir ao inventário quando presente. Foco ausente/stale → PLAYLIST_CLARIFICATION / pergunta; nunca inventar UUID de foco expirado.",
-      "gpt_list_playlists é compacto (sem capa/nativeConfig); editorFocus vem no topo quando o editor TV do mesmo usuário está aberto com WebSocket.",
-      "gpt_get_playlist_context: slides[] = índice; focusedSlide = nativeConfig completo do slide em foco (editorFocus/slideId/primeiro). dataSources[] = digest id/label/operationId/params do slide focado (fontes). blockIndex = addressabilidade compacta de blocos persistidos (id/type/frame/contentPreview/groupId) — disponível em scope=editorFocus e após AUTO-DOWNGRADE (scopeDowngraded=true). selectedIds são dica, não pré-requisito. Nunca inventar UUID. Se blockIndex.truncated=true, continuar com blockCursor=nextCursor. objectQuery opcional → objectMatches[] com IDs reais. Para outro slide: chamar de novo com slideId=. Mutação multi-slide: um gpt_preview_change com ops tipadas + slideRef=UUID INFORMED por slide (não só o foco); o servidor aplica e persiste cada nativeConfig.",
-      "Renomear label de fonte existente → gpt_get_playlist_context (scope=editorFocus ou auto-downgrade) → casar label em dataSources[] → gpt_preview_change com N× upsert_data_source (blockId+label, sem operationId/params) + commit_now. A resposta de PREPARE/COMMIT é compacta (sem nativeConfig). Nunca delete+create. Pode renomear N fontes no mesmo compound.",
-      "Alterar texto/heading/shape/KPI/chart/table existente → gpt_get_playlist_context (editorFocus ok) → resolver blockId em blockIndex/objectMatches (não em dataSources) → upsert_block/patch com blockId INFORMED + commit_now. Nunca criar bloco substituto porque o READ compacto omitiu nativeConfig. Nunca inventar blockId.",
-      "Resolver target a partir de: (1) IDs INFORMADOS na conversa ou Actions anteriores; (2) gpt_list_playlists / gpt_get_playlist_context (blockIndex/dataSources/editorFocus); (3) nome/título coincidente no contexto vivo. Nunca inventar UUID.",
+      "EDITOR_FOCUS: se list_playlists/get_playlist_context retornar editorFocus fresco (stale=false) → playlistId/slideId/selectedIds = INFORMED para dêixis ('este', 'o selecionado', 'nessa tela'). Preferir ao inventário quando presente. Foco ausente/stale → PLAYLIST_CLARIFICATION / pergunta; nunca inventar UUID de foco expirado.",
+      "list_playlists é compacto (sem capa/nativeConfig); editorFocus vem no topo quando o editor TV do mesmo usuário está aberto com WebSocket.",
+      "get_playlist_context: slides[] = índice; focusedSlide = nativeConfig completo do slide em foco (editorFocus/slideId/primeiro). dataSources[] = digest id/label/operationId/params do slide focado (fontes). blockIndex = addressabilidade compacta de blocos persistidos (id/type/frame/contentPreview/groupId) — disponível em scope=editorFocus e após AUTO-DOWNGRADE (scopeDowngraded=true). selectedIds são dica, não pré-requisito. Nunca inventar UUID. Se blockIndex.truncated=true, continuar com blockCursor=nextCursor. objectQuery opcional → objectMatches[] com IDs reais. Para outro slide: chamar de novo com slideId=. Mutação multi-slide: um prepare_change com ops tipadas + slideRef=UUID INFORMED por slide (não só o foco); o servidor aplica e persiste cada nativeConfig.",
+      "Renomear label de fonte existente → get_playlist_context (scope=editorFocus ou auto-downgrade) → casar label em dataSources[] → prepare_change com N× upsert_data_source (blockId+label, sem operationId/params) → commit (MCP: commit_proposal; Actions: commit_now). A resposta de PREPARE/COMMIT é compacta (sem nativeConfig). Nunca delete+create. Pode renomear N fontes no mesmo compound.",
+      "Alterar texto/heading/shape/KPI/chart/table existente → get_playlist_context (editorFocus ok) → resolver blockId em blockIndex/objectMatches (não em dataSources) → upsert_block/patch com blockId INFORMED → commit (MCP: commit_proposal; Actions: commit_now). Nunca criar bloco substituto porque o READ compacto omitiu nativeConfig. Nunca inventar blockId.",
+      "Resolver target a partir de: (1) IDs INFORMADOS na conversa ou Actions anteriores; (2) list_playlists / get_playlist_context (blockIndex/dataSources/editorFocus); (3) nome/título coincidente no contexto vivo. Nunca inventar UUID.",
       "Pronomes e dêixis ('este slide', 'essa playlist', 'o fundo', 'o bloco', 'ele', 'esse', 'o gráfico', 'o kpi', 'a tabela') → vincular ao último recurso OBSERVED/INFORMED do mesmo tipo. Se ambíguo: UMA pergunta ou listar candidatos das Actions READ — não criar outro.",
-      "PLAYLIST_CLARIFICATION: gpt_list_playlists quando playlistId unknown. Se 0 playlists → create_playlist só com pedido explícito. Se exatamente 1 → usar. Se >1 e o usuário NÃO nomeou playlist → UMA pergunta com nomes (não escolher silenciosamente). Se nomeou/INFORMED → resolver e seguir.",
+      "PLAYLIST_CLARIFICATION: list_playlists quando playlistId unknown. Se 0 playlists → create_playlist só com pedido explícito. Se exatamente 1 → usar. Se >1 e o usuário NÃO nomeou playlist → UMA pergunta com nomes (não escolher silenciosamente). Se nomeou/INFORMED → resolver e seguir.",
       "create_* / add_* somente quando o usuário pedir criação explícita OU a leitura autorizada provar que o objeto não existe.",
       "Duplicar playlist/slide/bloco 'parecido' para aplicar um ajuste = falha. Corrija o existente (patch_native_config, update_slide, upsert_block com blockId existente, set_data_transform, dataDefaults/dataFilters, etc.).",
       "Fundo/cor/estilo/filtros de tela já conhecida → patch no target.playlistId + target.slideId do contexto — nunca add_blank_slide só para recolorir ou refiltrar.",
@@ -361,15 +361,15 @@
       "Multi-turn: IDs de slide/bloco INFORMADOS na conversa vencem editorFocus expirado (stale=true)."
     ],
     "required_reads_before_mutate": [
-      "gpt_list_playlists when playlistId unknown",
-      "gpt_get_playlist_context when slideId/blockId/revision unknown"
+      "list_playlists when playlistId unknown",
+      "get_playlist_context when slideId/blockId/revision unknown"
     ]
   },
   "playlist_curation": {
     "principle": "READ_BEFORE_CURATE",
     "summary": "Duração, ordem kiosk e 'painel do dia' = inventário READ + mutação no existente; não criar playlist silenciosa.",
     "rules": [
-      "Antes de curar: gpt_list_playlists e/ou gpt_get_playlist_context.",
+      "Antes de curar: list_playlists e/ou get_playlist_context.",
       "Duração → update_slide.durationSec no slide resolvido.",
       "Ordem kiosk/TV → reorder_slides / move_slide_to_section.",
       "'Painel do dia' / programação do dia → compound sobre playlist INFORMED ou clarificada (PLAYLIST_CLARIFICATION); não inventar nova playlist.",
@@ -472,7 +472,7 @@
       "Datas: preferir preset/periodDays; hardcode absoluto só se o usuário INFORMAR intervalo fixo.",
       "paramSchema da rota manda — nunca inventar chave de filtro.",
       "branch_scope + filter_layering: filial inventada = anti-padrão.",
-      "Ler filterDigest em gpt_get_playlist_context antes de espalhar params; usar re_layer_playlist_filters quando duplicates/wrongLayerHints apontarem camada errada."
+      "Ler filterDigest em get_playlist_context antes de espalhar params; usar re_layer_playlist_filters quando duplicates/wrongLayerHints apontarem camada errada."
     ],
     "forbidden": [
       "Copiar os mesmos branch+datas em 4 data_sources quando dataFilters/dataDefaults bastam",
@@ -488,7 +488,7 @@
     "rules": [
       "Uma decisão/pergunta de negócio por slide; ≤ maxPrimarySignalsPerSlide (designTokens, tipicamente 4) sinais primários.",
       "Obedecer filter_layering para filial/período/params (programação → tela → fonte → kiosk).",
-      "operationId só de gpt_search_data_routes; params só do paramSchema; gpt_preview_data_block antes do commit (write_quality).",
+      "operationId só de search_data_routes; params só do paramSchema; preview do dado antes do commit (Actions: gpt_preview_data_block) (write_quality).",
       "Transform: só set_data_transform tipado quando a rota não entrega o shape — sem M/SQL/script.",
       "Visual: THEME_DELPI + visual_impact + visual_selection + partChrome + shape_chrome; recipes pela forma do dado (não só PLUS_CHART); layoutDigest antes de inventar frames.",
       "Classificar forma do dado (KPI/série/breakdown/tabela) → chartType/bloco via visual_selection antes de upsert.",
@@ -533,7 +533,7 @@
     "principle": "NO_FALSE_VERIFIED",
     "summary": "VERIFIED exige slide tratado: params vivos, sem resolved.error, projection não vazia em visuals de dados.",
     "rules": [
-      "Antes do commit: gpt_preview_data_block deve retornar dado OK (não erro de período/filtro).",
+      "Antes do commit: preview do dado (Actions: gpt_preview_data_block) deve retornar dado OK (não erro de período/filtro).",
       "Rotas date_range fechadas: sempre dateRangePreset=this_month (ou datas/periodDays INFORMED) em upsert_data_source — nunca params {}.",
       "Após bind/composite: projection + formato preenchidos (owner-local ou upsert_block).",
       "Se o write path emitir OUTCOME_NOT_VERIFIED / erro de qualidade → corrigir params/projection; não dizer ao usuário que salvou com sucesso."
@@ -550,7 +550,7 @@
     "epistemology": [
       "Layout/cores/textos/posição visíveis no print = INFORMED (evidência visual do usuário).",
       "playlistId/slideId/revision/permissão = nunca tirados do print; só de Actions READ ou IDs INFORMADOS na conversa.",
-      "Significado de métricas sem rota confirmada = INFERRED/PROPOSED até gpt_search_data_routes / gpt_preview_data_block."
+      "Significado de métricas sem rota confirmada = INFERRED/PROPOSED até search_data_routes / preview do dado (Actions: gpt_preview_data_block)."
     ],
     "pipeline": [
       "1) Classificar: criar novo slide/playlist OU alterar objeto já resolvido (object_resolution + PLAYLIST_CLARIFICATION).",
@@ -559,7 +559,7 @@
       "4) Frames relativos ao print (não um único bloco esticado); tipografia/parts proporcionais — preferir múltiplos upsert_block.",
       "5) Textos legíveis → conteúdo dos blocos; não inventar frases ausentes.",
       "6) Indicadores: search + preview + bind + projection auto; declarar gap se rota não existir.",
-      "7) Um LOTE COMPLETO numa gpt_preview_change (additive: commit_now=true).",
+      "7) Um LOTE COMPLETO num prepare_change (Actions additive: gpt_preview_change commit_now=true).",
       "8) Após VERIFIED: resumir paridade honest (o que cobriu / gaps)."
     ],
     "parity_bar": {
@@ -600,7 +600,7 @@
       "PREPARE/ACT e confirmationPolicy inalterados — prévia não pula VERIFY."
     ],
     "pipeline": [
-      "1) gpt_get_playlist_context → ler layoutDigest do slide alvo (editorFocus ou resolvido).",
+      "1) get_playlist_context → ler layoutDigest do slide alvo (editorFocus ou resolvido).",
       "2) Se overlap/densidade/hints pedirem visão: includePreview=true&slideId= e raciocinar sobre previewUrl.",
       "3) Preferir upsert_block/patch no blockId existente (ALTER_EXISTING) com frames derivados do digest — não criar slide novo.",
       "4) Respeitar layoutHints.maxPrimarySignals / coarseOverlaps; corrigir overlap antes de densificar.",
@@ -624,15 +624,15 @@
   },
   "data_discovery": {
     "principle": "OWNER_LOCAL_ROUTE_DISCOVERY",
-    "summary": "Buscar rotas só via gpt_search_data_routes. Apresentar TODOS os hits do search (família KPI/série/breakdown). Miss ≠ ausência. Params só do paramSchema.",
+    "summary": "Buscar rotas só via search_data_routes. Apresentar TODOS os hits do search (família KPI/série/breakdown). Miss ≠ ausência. Params só do paramSchema.",
     "rules": [
-      "gpt_search_data_routes exige query de intenção de negócio (domínio + indicador). Proibido query vazia ou dump enciclopédico de domínio no chat.",
+      "search_data_routes exige query de intenção de negócio (domínio + indicador). Proibido query vazia ou dump enciclopédico de domínio no chat.",
       "Use somente operationId retornado. Nunca inventar rota, path HTTP ou SQL.",
       "PRESENT_ALL_SEARCH_HITS: quando o usuário pergunta qual/quais rotas, opções ou família de um indicador (ex.: otd comercial), liste TODOS os items retornados pela Action (até o limit), agrupados por forma (KPI/snapshot, série temporal, by-branch, by-customer, panel, summary). Não omitir séries nem breakdowns presentes nos hits.",
       "Curadoria de 1–2 rotas só é permitida DEPOIS de listar a família OU quando o usuário já escolheu uma forma (ex.: 'só a série', 'só o KPI').",
       "searchMissDoesNotProveAbsence=true: refine a query; não declare que o dado não existe na empresa.",
       "Params (ex. granularity) vêm do paramSchema do hit — não trial-and-error. Enum inválido → corrija, não chute.",
-      "gpt_preview_data_block preferir atalho {operationId, params}; usar joinHints/formatHints do payload; não inventar block/nativeConfig de editor.",
+      "Preview do dado preferir atalho {operationId, params} (Actions: gpt_preview_data_block); usar joinHints/formatHints do payload; não inventar block/nativeConfig de editor.",
       "GET /data/routes completo é superfície do MFE editor — não é Action GPT."
     ],
     "forbidden": [
@@ -648,7 +648,7 @@
     "summary": "Transform = set_data_transform com steps tipados allowlisted. M/script/v2/DAX/SQL proibidos (mForbidden). Produto M desligado. Antes de derivar qualquer métrica, inspecionar valueFields/projectableFields da rota — campo autoritativo existente é vinculado diretamente, nunca recalculado.",
     "rules": [
       "SoT: dataTransform = { steps: [...] }. Ops tipadas do catálogo (keepRows, merge, select, rename, …).",
-      "AUTHORITATIVE_FIELD_FIRST: ao pedir métrica, conferir valueFields/valueFieldLabels/projectableFields retornados por gpt_search_data_routes; se a rota já fornece o campo (ex.: percentual, meta, total), bind direto — sem addColumn/join_key/merge equivalentes.",
+      "AUTHORITATIVE_FIELD_FIRST: ao pedir métrica, conferir valueFields/valueFieldLabels/projectableFields retornados por search_data_routes; se a rota já fornece o campo (ex.: percentual, meta, total), bind direto — sem addColumn/join_key/merge equivalentes.",
       "addColumn com nome de campo que a rota já retorna é rejeitado (DATA_FIELD_AUTHORITATIVE) — shadow de campo autoritativo.",
       "Merge é 1:1 estrito e tipado: falta de chave, duplicata, colisão de campo, tipo incompatível ou chave nula = erro explícito, não resultado vazio.",
       "Fonte compartilhada: set_data_transform que remova/renomeie campo referenciado por qualquer consumer (KPI/chart/table/text/canvas) é rejeitado (DATA_BINDING_FIELD_MISSING) — usar fonte auxiliar separada para lógica que muda grain/schema.",
@@ -679,11 +679,11 @@
       "DATAMODEL_FIRST: dado novo = candidate DataModel (inputs[]+transform); nunca N blocos data_source para compor modelo.",
       "MODEL_IS_NON_VISUAL/INPUTS_ARE_INTERNAL: inputs não viram blocos nem vão ao canvas; merge.sourceId referencia input.id do MESMO modelo; join/queryName são detalhes internos.",
       "AUTHORITATIVE_FIELD_FIRST: campo que a rota retorna é ligado direto; compor só quando a métrica não existe em rota única.",
-      "PREVIEW_BEFORE_COMMIT + ERROR_IS_NOT_EMPTY_DATA: gpt_preview_data_model antes de upsert/bind/migrate; error/transformError = STOP com diagnóstico (stepName/column/inputId), nunca workaround.",
+      "PREVIEW_BEFORE_COMMIT + ERROR_IS_NOT_EMPTY_DATA: preview_data_model antes de upsert/bind/migrate; error/transformError = STOP com diagnóstico (stepName/column/inputId), nunca workaround.",
       "bind_visual{modelId} limpa dataSourceId; bind_visual{dataSourceId} limpa modelId — um target ativo por visual.",
       "NO_LEGACY_SOURCE_BLOCKS_FOR_NEW_MODELS: 1 rota = inputs:[rota],transform:null; N rotas = UM modelo com N inputs. upsert_data_source/set_data_transform = só legado.",
       "LEGACY_MIGRATION_IS_EXPLICIT + DO_NOT_DELETE_SHARED_SOURCE: só quando pedida, via migrate_data_sources_to_model{primaryDataSourceId}; fonte com outro consumer fica retida.",
-      "gpt_inspect_data_model devolve definition/inputs/transform/outputSchema/consumers/runtime — inspecionar antes de rebind/migração."
+      "inspect_data_model devolve definition/inputs/transform/outputSchema/consumers/runtime — inspecionar antes de rebind/migração."
     ]
   },
   "compound_slide": {
@@ -692,13 +692,13 @@
     "pipeline": [
       "1) Classificar pedido + visual_selection (forma do dado → kpi/chartType/table/filtro/composto).",
       "2) PLAYLIST_CLARIFICATION (list; perguntar se >1 sem nome).",
-      "3) gpt_search_data_routes (PRESENT_ALL_SEARCH_HITS) → escolher família KPI/série/breakdown/tabela.",
-      "4) gpt_preview_data_block com params (dateRangePreset=this_month padrão se date_range fechada) — deve retornar dado OK.",
-      "5) upsert_data_model (UM DataModel, N inputs com params completos + branch herdado; merge via joinHints em model.transform quando 2+ fontes) + gpt_preview_data_model OK. Só recorrer a upsert_data_source+set_data_transform para caso legado comprovado.",
+      "3) search_data_routes (PRESENT_ALL_SEARCH_HITS) → escolher família KPI/série/breakdown/tabela.",
+      "4) preview do dado com params (Actions: gpt_preview_data_block; dateRangePreset=this_month padrão se date_range fechada) — deve retornar dado OK.",
+      "5) upsert_data_model (UM DataModel, N inputs com params completos + branch herdado; merge via joinHints em model.transform quando 2+ fontes) + preview_data_model OK. Só recorrer a upsert_data_source+set_data_transform para caso legado comprovado.",
       "6) add_*_from_route OU upsert_block visual + bind_visual — SEMPRE projection NÃO vazia + formato (auto ou upsert); chartType/bloco via visual_selection.",
       "7) presentation_recipes Delpi alinhadas à forma (TV_KPI_HERO / ROW/GRID / PLUS_CHART[_BAR|_PIE] / FILTER_STRIP / SERIES_TABLE / HERO_PLUS_TABLE / TABLE_FOCUS / COMPOSED_DATA_CARD / THEME_DELPI | THEME_DELPI_LIGHT) + chrome tipado + designTokens.",
       "7b) brand_logo: se layoutDigest.brandLogo.present=false e não usou THEME_DELPI* → ensure_brand_logo_on_slide.",
-      "8) Uma gpt_preview_change compound + commit_now=true; só aceitar VERIFIED sem erro de filtro/projection."
+      "8) Um prepare_change compound → commit (MCP: commit_proposal; Actions: commit_now=true); só aceitar VERIFIED sem erro de filtro/projection."
     ],
     "forbidden": [
       "Parar em bind_visual com projection {}",
@@ -755,7 +755,7 @@
     "summary": "Blocos image/video e fundo image exigem assetId. Logo Delpi institucional: ensure_brand_logo_on_slide (seed pacote → biblioteca) ou brandThemeKey Delpi (overlay). Upload multipart genérico = TARGET.",
     "rules": [
       "Sem assetId INFORMED → declare gap; use cor/gradiente Delpi ou ensure_brand_logo_on_slide / peça mídia no editor.",
-      "Logo Delpi: ler layoutDigest.brandLogo + mediaInventory.brandLogos no gpt_get_playlist_context. Se present=true (theme|block) → NÃO duplicar.",
+      "Logo Delpi: ler layoutDigest.brandLogo + mediaInventory.brandLogos no get_playlist_context. Se present=true (theme|block) → NÃO duplicar.",
       "Se present=false → ensure_brand_logo_on_slide (variant=auto) no mesmo lote compound; a op semeia PNG empacotado na biblioteca e cria bloco image role=brandLogo.",
       "Tema Delpi: THEME_DELPI / THEME_DELPI_LIGHT setam brandThemeKey — logo overlay; skip ensure_brand_logo_on_slide.",
       "Print/screenshot = VISUAL_PARITY tipada, não Image Generation nem upload implícito.",
@@ -774,7 +774,7 @@
     "principle": "ENSURE_OR_THEME_SKIP",
     "summary": "Logo Delpi no slide: tema Delpi (overlay) OU bloco image importado da biblioteca. Nunca inventar assetId.",
     "pipeline": [
-      "1) gpt_get_playlist_context → layoutDigest[].brandLogo + mediaInventory.brandLogos.",
+      "1) get_playlist_context → layoutDigest[].brandLogo + mediaInventory.brandLogos.",
       "2) Se brandLogo.present (theme|block) → skip.",
       "3) Senão → ensure_brand_logo_on_slide (variant=auto) no compound.",
       "4) includePreview opcional para validar canto inferior direito sem cobrir KPIs."
@@ -787,8 +787,12 @@
   },
   "mcp_delia": {
     "principle": "SAME_PRESENTATION_MUTATION",
-    "summary": "MCP VISTA e adapter DÉLIA TV = TARGET: mesmo contrato PresentationMutation; sem HTTP Actions ad hoc; sem duplicar regras.",
+    "summary": "VISTA MCP = LIVE (transport primário, conectado no ChatGPT). Adapter DÉLIA TV = TARGET: mesmo contrato PresentationMutation; sem HTTP Actions ad hoc; sem duplicar regras.",
+    "vista_mcp": "LIVE",
     "status": "TARGET",
+    "status_scope": "delia_adapter",
+    "primary_transport": "MCP",
+    "compatibility_transport": "GPT Actions",
     "rules": [
       "Não implementar write TV via Chat interno.",
       "Futuro adapter consome PresentationMutation / capability surface — não nova superfície paralela."
@@ -810,10 +814,12 @@
   },
   "write_flow": {
     "skip_suggest_when_typable": true,
+    "surface": "gpt_actions",
+    "note": "Actions-compatibility variant. MCP-primary execution follows write_flow_mcp (prepare_change → commit_proposal); commit_now/confirmation.confirmed exist only on the Actions envelope. No MCP, ACT exige confirmation=true explícito via commit_proposal — tool invocation não é confirmação.",
     "additive": "Uma gpt_preview_change com lote tipado + commit_now=true + confirmation.confirmed=true + Idempotency-Key. Pedido do usuário = confirmação — não perguntar Confirma? nem 'Posso aplicar?'.",
     "destructive": "gpt_preview_change sem commit_now → plano → uma Confirma? → gpt_commit_change com proposal_handle opaco exato.",
     "compound": "LOTE COMPLETO numa preview; PlanCompiler ordena; as/playlistRef/slideRef (UUID INFORMED) quando vários slides/recursos no mesmo lote. O servidor carrega nativeConfig por slideRef, devolve nativeConfigsBySlide e grava um PATCH por slide — NÃO inventar 'lote grande demais' nem fatiar em vários chats. Sem inventar UUID. Após bind/composite, proyección+formato obrigatórios. VERIFIED só com write_quality.",
-    "same_turn": "Mudança tipável pedida neste turno → tentar Actions neste turno (gpt_get_catalog + preview/commit). Resposta só-texto com plano, frames manuais ou 'conector/escrita desabilitada' sem falha real = anti-padrão.",
+    "same_turn": "Mudança tipável pedida neste turno → tentar a tool surface neste turno (get_catalog + preview/commit). Resposta só-texto com plano, frames manuais ou 'conector/escrita desabilitada' sem falha real = anti-padrão.",
     "refuse_only_when": "401 (AuthN), 403 (AuthZ/RBAC), tool error/timeout real do runtime neste turno, ou 5xx persistente após um retry tipado. Qualquer outra recusa = anti-padrão.",
     "forbidden_handles": [
       "latest",
@@ -826,11 +832,11 @@
     "Inventar 'conector desabilitado / conector de Actions desabilitado / Actions desconectadas' sem ter tentado Action neste turno.",
     "Inventar 'não tenho a escrita do painel habilitada nesta conversa' / 'escrita não habilitada' / 'não consigo gravar daqui' sem 401/403/tool error real neste turno.",
     "Dizer que não consegue gravar / só orientar / faça no editor / 'o caminho está definido' quando Actions existem.",
-    "Entregar só coordenadas/frames (x/y/w/h) ou 'ops para você aplicar' em vez de gpt_preview_change/commit tipado.",
+    "Entregar só coordenadas/frames (x/y/w/h) ou 'ops para você aplicar' em vez do envelope prepare/commit tipado.",
     "Inventar 'Actions não estão disponíveis nesta sessão' sem falha real de ferramenta neste turno.",
     "Tratar runtime ChatGPT sem tentativa de Action como prova de que a API DELPI está offline.",
     "Inventar 'lote grande demais para o compilador' / fatiar multi-slide em vários chats quando um compound com slideRef por UUID INFORMED cabe no maxOpsPerPatch.",
-    "Responder 'Posso aplicar estas mudanças' / menu de estilos sem gpt_preview_change additive no mesmo turno.",
+    "Responder 'Posso aplicar estas mudanças' / menu de estilos sem prepare_change additive no mesmo turno.",
     "Proposta visual longa (KPI/tabela/gráfico) sem gravar quando o pedido já tipou a mudança.",
     "Criar objeto novo para aplicar alteração no existente.",
     "Ignorar o que já existe e montar painel/slide novo quando o pedido era revisar/melhorar/corrigir.",
@@ -864,7 +870,7 @@
     "Shape/card flat sem borderRadius+boxShadow tipados quando shape_chrome exige acabamento.",
     "Aumentar só kpiParts.value.fontSize sem reescalar title/icon/unit (título/ícone miúdos no card).",
     "Aumentar tipografia primary de chart/table/input/composto sem reescalar dependentes (PRIMARY_DRIVES_DEPENDENTS).",
-    "Inventar frames sem ler layoutDigest quando gpt_get_playlist_context já o trouxe.",
+    "Inventar frames sem ler layoutDigest quando get_playlist_context já o trouxe.",
     "Exigir print do usuário para ajuste espacial quando digest/prévia bastam.",
     "Espalhar os mesmos branch+datas em toda data_source quando dataDefaults/dataFilters bastam.",
     "Hardcodar startDate/endDate absolutos como default permanente do painel."
@@ -881,7 +887,7 @@
     "summary": "Snapshot efêmero do editor (playlist/slide/seleção) via READ Actions. Não é Postgres nem Intent Frame.",
     "heartbeat": true,
     "rules": [
-      "Ler editorFocus em gpt_list_playlists (qual playlist) e gpt_get_playlist_context (slide/seleção).",
+      "Ler editorFocus em list_playlists (qual playlist) e get_playlist_context (slide/seleção).",
       "Só o usuário autenticado vê o próprio foco; TTL ~90s.",
       "Mutações em 'este bloco' → upsert_block/patch com blockId de selectedIds quando length>=1.",
       "Sem foco → fluxo object_resolution clássico.",

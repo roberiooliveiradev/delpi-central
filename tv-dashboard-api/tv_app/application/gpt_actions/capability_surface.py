@@ -23,8 +23,13 @@ from tv_app.application.services.data.design_intelligence_service import (
 from tv_app.application.services.data.presentation_ops_content_service import PresentationOpsContentService
 
 
-def build_capability_surface() -> dict[str, Any]:
-    """Project Action-facing capability taxonomy without a second domain catalog."""
+def build_capability_surface(*, transport: str = "actions") -> dict[str, Any]:
+    """Project Action-facing capability taxonomy without a second domain catalog.
+
+    ``transport="actions"`` (default) keeps the Actions byte budget: the
+    MCP-facing directive sections stay out. ``transport="mcp"`` projects the
+    full document for the MCP get_catalog tool.
+    """
     ops = PresentationOpsContentService.operations()
     destructive = sorted(
         name
@@ -35,7 +40,9 @@ def build_capability_surface() -> dict[str, Any]:
     return {
         "lifecycle": "GOVERNED_PREPARE_COMMIT_V2",
         "mutation_owner": "PresentationMutation",
-        "agent_directives": VistaAgentIntelligenceService.agent_directives(),
+        "agent_directives": VistaAgentIntelligenceService.agent_directives(
+            transport=transport
+        ),
         "designIntelligence": DesignIntelligenceService.catalog_projection(),
         "action_surface_budget": {
             "importable_operations": len(GPT_ACTIONS_OPERATION_IDS),

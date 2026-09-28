@@ -235,7 +235,7 @@ def tool_get_playlist_context(
 def tool_get_catalog() -> CallToolResult:
     try:
         user, _ = _authed_context()
-        return _ok_result(_dispatch.get_catalog(user=user))
+        return _ok_result(_dispatch.get_catalog(user=user, transport="mcp"))
     except Exception as e:
         return handle_tool_error(e, tool="get_catalog", label="mcp tool")
 

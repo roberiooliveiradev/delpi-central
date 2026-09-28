@@ -20,6 +20,7 @@ from tv_app.application.gpt_actions.response_compact import (
     utf8_size,
 )
 from tv_app.application.gpt_actions.vista_agent_intelligence_service import (
+    VistaAgentIntelligenceService,
     clear_vista_agent_intelligence_cache,
 )
 from tv_app.application.services.data.design_intelligence_service import (
@@ -161,7 +162,10 @@ def test_catalog_keeps_nine_actions_and_core_mutation_ops():
     directives = doc["capability_surface"]["agent_directives"]
     assert directives["object_resolution"]["principle"] == "ALTER_EXISTING_BEFORE_CREATE"
     assert "TV_KPI_HERO" in directives["presentation_recipes"]["catalog"]["recipes"]
-    assert "mcp_delia" in directives
+    assert (
+        "mcp_delia"
+        in VistaAgentIntelligenceService.agent_directives(transport="mcp")
+    )
 
 
 def test_http_catalog_response_fits_actions_budget():

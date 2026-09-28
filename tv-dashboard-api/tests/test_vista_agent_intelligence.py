@@ -70,7 +70,7 @@ def test_actions_runtime_try_before_claiming_unavailable():
     runtime = directives["actions_runtime"]
     assert runtime["principle"] == "TRY_ACTION_BEFORE_CLAIMING_UNAVAILABLE"
     rules = " ".join(runtime["rules"]).lower()
-    assert "gpt_get_catalog" in rules
+    assert "get_catalog" in rules
     assert "conector" in rules
     assert "tentar" in rules or "tente" in rules
     assert "escrita do painel" in rules or "escrita não habilitada" in rules

@@ -197,11 +197,10 @@ def test_actions_instructions_variant_preserved():
 # ---------------------------------------------------------------------------
 
 
-def test_mcp_sections_documented_but_not_projected():
-    """MCP3 parity/write sections are canonical in the JSON document but are
-    intentionally NOT projected into agent_directives: the Actions catalog
-    envelope is already at its byte ceiling (known headroom backlog). The MCP
-    instructions variant carries the envelope skeleton inline instead."""
+def test_mcp_sections_projected_into_agent_directives():
+    """MCP3 parity/write sections are canonical in the JSON document AND
+    projected into agent_directives: the shared directives are now
+    transport-neutral, so both transports get the same live surface."""
     from tv_app.application.gpt_actions.vista_agent_intelligence_service import (
         VistaAgentIntelligenceService,
         clear_vista_agent_intelligence_cache,
@@ -213,6 +212,148 @@ def test_mcp_sections_documented_but_not_projected():
 
     clear_vista_agent_intelligence_cache()
     directives = VistaAgentIntelligenceService.agent_directives()
-    assert "write_flow_mcp" not in directives
-    assert "surface_parity" not in directives
+    assert "write_flow_mcp" in directives
+    assert "surface_parity" in directives
+    # Parity map survives compaction intact: exactly 8 mappings to the
+    # registered MCP tools.
+    mapping = directives["surface_parity"]["parity_map"]
+    assert len(mapping) == 8
+    assert set(mapping.values()) == set(MCP_TOOL_NAMES)
+    clear_vista_agent_intelligence_cache()
+
+
+def test_agent_directives_mcp_primary_tool_names():
+    """Live directives must name the real MCP tools in primary guidance."""
+    from tv_app.application.gpt_actions.vista_agent_intelligence_service import (
+        VistaAgentIntelligenceService,
+        clear_vista_agent_intelligence_cache,
+    )
+
+    clear_vista_agent_intelligence_cache()
+    directives = VistaAgentIntelligenceService.agent_directives()
+    blob = json.dumps(directives, ensure_ascii=False)
+    for tool in (
+        "get_catalog",
+        "get_playlist_context",
+        "list_playlists",
+        "search_data_routes",
+        "inspect_data_model",
+        "preview_data_model",
+        "prepare_change",
+        "commit_proposal",
+    ):
+        assert tool in blob, tool
+    clear_vista_agent_intelligence_cache()
+
+
+def _stale_gpt_refs(node, path=()):
+    """Collect gpt_* mentions outside labeled Actions-compatibility zones."""
+    found = []
+    if isinstance(node, dict):
+        for k, v in node.items():
+            found += _stale_gpt_refs(v, path + (k,))
+    elif isinstance(node, list):
+        for i, v in enumerate(node):
+            found += _stale_gpt_refs(v, path + (str(i),))
+    elif isinstance(node, str) and "gpt_" in node:
+        found.append((".".join(path), node))
+    return found
+
+
+def test_agent_directives_no_unlabeled_actions_names():
+    """gpt_* names may only appear inside the labeled Actions write_flow
+    variant, the parity map, or prose explicitly tagged '(Actions: ...)'."""
+    from tv_app.application.gpt_actions.vista_agent_intelligence_service import (
+        VistaAgentIntelligenceService,
+        clear_vista_agent_intelligence_cache,
+    )
+
+    clear_vista_agent_intelligence_cache()
+    directives = VistaAgentIntelligenceService.agent_directives()
+    refs = _stale_gpt_refs(directives)
+    for path, text in refs:
+        if path.startswith("surface_parity"):
+            continue  # the parity map is the compatibility registry itself
+        if path.startswith("write_flow."):
+            # whole section is the labeled Actions variant
+            assert directives["write_flow"]["surface"] == "gpt_actions"
+            continue
+        assert "Actions" in text, f"unlabeled gpt_* reference at {path}: {text}"
+    clear_vista_agent_intelligence_cache()
+
+
+def test_write_flow_actions_variant_labeled():
+    """The legacy write_flow keeps Actions semantics but must be labeled so
+    MCP-facing readers don't treat commit_now/confirmation.confirmed as the
+    primary execution path."""
+    from tv_app.application.gpt_actions.vista_agent_intelligence_service import (
+        VistaAgentIntelligenceService,
+        clear_vista_agent_intelligence_cache,
+    )
+
+    clear_vista_agent_intelligence_cache()
+    directives = VistaAgentIntelligenceService.agent_directives()
+    write_flow = directives["write_flow"]
+    assert write_flow["surface"] == "gpt_actions"
+    assert "write_flow_mcp" in write_flow["note"]
+    clear_vista_agent_intelligence_cache()
+
+
+def test_write_flow_mcp_projected_confirmation_semantics():
+    """MCP-facing write flow: PREPARE != ACT, opaque handle, explicit
+    confirmation, stable idempotency, no cross-transport ACT replay."""
+    from tv_app.application.gpt_actions.vista_agent_intelligence_service import (
+        VistaAgentIntelligenceService,
+        clear_vista_agent_intelligence_cache,
+    )
+
+    clear_vista_agent_intelligence_cache()
+    directives = VistaAgentIntelligenceService.agent_directives()
+    wf = directives["write_flow_mcp"]
+    assert "prepare_change" in wf["additive"]
+    assert "commit_proposal" in wf["additive"]
+    assert "confirmation=true" in wf["additive"]
+    assert "commit_now" not in json.dumps(wf, ensure_ascii=False)
+    assert "confirmation.confirmed" not in json.dumps(wf, ensure_ascii=False)
+    assert "mesma key" in wf["idempotency_key"].lower()
+    assert "read-back" in wf["unknown_outcome"].lower()
+    assert "persisted=true" in wf["success_requires"]
+    clear_vista_agent_intelligence_cache()
+
+
+def test_mcp_delia_status_scoped_to_delia_adapter():
+    """VISTA MCP is LIVE; TARGET refers only to the future DÉLIA adapter."""
+    from tv_app.application.gpt_actions.vista_agent_intelligence_service import (
+        VistaAgentIntelligenceService,
+        clear_vista_agent_intelligence_cache,
+    )
+
+    clear_vista_agent_intelligence_cache()
+    directives = VistaAgentIntelligenceService.agent_directives()
+    mcp_delia = directives["mcp_delia"]
+    assert mcp_delia["vista_mcp"] == "LIVE"
+    assert mcp_delia["status"] == "TARGET"
+    assert mcp_delia["status_scope"] == "delia_adapter"
+    assert mcp_delia["primary_transport"] == "MCP"
+    clear_vista_agent_intelligence_cache()
+
+
+def test_actions_transport_directives_drop_mcp_sections():
+    """The Actions catalog variant stays inside the OpenAI byte ceiling:
+    MCP-facing sections are projected only for transport="mcp"."""
+    from tv_app.application.gpt_actions.vista_agent_intelligence_service import (
+        VistaAgentIntelligenceService,
+        clear_vista_agent_intelligence_cache,
+    )
+
+    clear_vista_agent_intelligence_cache()
+    actions = VistaAgentIntelligenceService.agent_directives(transport="actions")
+    assert "surface_parity" not in actions
+    assert "write_flow_mcp" not in actions
+    assert "mcp_delia" not in actions
+    assert "write_flow" in actions  # Actions variant keeps its own write flow
+    assert "surface" not in actions["write_flow"]
+    mcp = VistaAgentIntelligenceService.agent_directives(transport="mcp")
+    assert "surface_parity" in mcp
+    assert "write_flow_mcp" in mcp
     clear_vista_agent_intelligence_cache()
