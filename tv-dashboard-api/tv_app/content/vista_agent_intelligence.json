@@ -1,5 +1,5 @@
 {
-  "version": "2026.09.24.3",
+  "version": "2026.09.28.1",
   "owner": "tv-dashboard-api",
   "source": "capability_surface.agent_directives via gpt_get_catalog",
   "actions_runtime": {
@@ -936,5 +936,34 @@
       "KPI/chart/table/input com primary grande e dependentes no mínimo absoluto (desproporção interna)",
       "Escalar só um campo tipográfico sem hierarquia de partes do mesmo componente"
     ]
+  },
+  "surface_parity": {
+    "principle": "SAME_DISPATCH_BOTH_TRANSPORTS",
+    "parity_map": {
+      "gpt_get_catalog": "get_catalog",
+      "gpt_list_playlists": "list_playlists",
+      "gpt_get_playlist_context": "get_playlist_context",
+      "gpt_search_data_routes": "search_data_routes",
+      "gpt_inspect_data_model": "inspect_data_model",
+      "gpt_preview_data_model": "preview_data_model",
+      "gpt_preview_change": "prepare_change",
+      "gpt_commit_change": "commit_proposal"
+    },
+    "not_exposed_in_mcp": [
+      "gpt_preview_data_block",
+      "gpt_suggest_change",
+      "gpt_get_slide_preview_png"
+    ]
+  },
+  "write_flow_mcp": {
+    "principle": "GOVERNED_ENVELOPE_PREPARE_THEN_ACT",
+    "additive": "prepare_change(target + ops[] do catálogo) → commit_proposal(proposal_handle exato + idempotency_key + confirmation=true) no mesmo turno; MCP não tem atalho de commit no PREPARE.",
+    "destructive": "prepare_change → apresentar plano/risco/diff → uma única Confirma? explícita → commit_proposal; nunca pular PREPARE.",
+    "idempotency_key": "1 tentativa lógica de ACT = 1 key estável; retry do mesmo ACT = MESMA key; mutação materialmente nova = nova key; nunca gerar key nova em retry cego.",
+    "unknown_outcome": "UNKNOWN_OUTCOME em ACT incerta/timeout: read-back autoritativo (get_playlist_context/inspect_data_model) ANTES de qualquer retry; nunca reenviar cego.",
+    "no_cross_transport_act_replay": "NUNCA repetir ACT por GPT Actions após resultado MCP incerto — duplicaria mutação de negócio; reconciliar estado primeiro.",
+    "error_is_not_empty": "Erro tipado (FORBIDDEN, data_model.not_found, data_model.in_use, DATA_BINDING_FIELD_MISSING, m.*, OUTCOME_NOT_VERIFIED) != dado vazio; propagar a distinção.",
+    "success_requires": "Sucesso só quando status=VERIFIED + persisted=true; tool call completada não é prova de gravação.",
+    "proposal_handle_forbidden": "latest, current, null, new, ou handle inventado — só o handle exato retornado por prepare_change."
   }
 }

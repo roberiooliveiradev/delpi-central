@@ -117,6 +117,10 @@ class VistaAgentIntelligenceService:
             "mcp_delia": doc.get("mcp_delia") or {},
             "modes": doc.get("modes") or {},
             "write_flow": doc.get("write_flow") or {},
+            # MCP3 — surface_parity / write_flow_mcp live in the JSON document
+            # but are intentionally NOT projected: the Actions catalog envelope
+            # is already at its byte ceiling (known headroom backlog). The MCP
+            # instructions variant carries the envelope skeleton inline.
             "anti_patterns": list(doc.get("anti_patterns") or []),
             "auth_errors": doc.get("auth_errors") or {},
         }

@@ -136,8 +136,62 @@ Required on `mcp-tv-dashboard` (confidential, Authorization Code + PKCE):
 
 Until provisioning evidence exists, status is **PENDING** — do not mark live.
 
-## GPT Actions coexistence
+## Parity map + coexistence
 
-`/gpt-actions/v1/changes/preview` and `/gpt-actions/v1/changes/commit` remain
-the same canonical flow — MCP exposes the identical dispatch services through
-the governed envelope. VISTA client migration is MCP3 scope.
+GPT Actions and MCP expose the **same** `GptActionsDispatchService` — semantic
+parity is total; only transport names differ.
+
+| GPT Actions op | MCP tool | Class |
+|---|---|---|
+| `gpt_get_catalog` | `get_catalog` | READ |
+| `gpt_list_playlists` | `list_playlists` | READ |
+| `gpt_get_playlist_context` | `get_playlist_context` | READ |
+| `gpt_search_data_routes` | `search_data_routes` | READ |
+| `gpt_inspect_data_model` | `inspect_data_model` | READ |
+| `gpt_preview_data_model` | `preview_data_model` | READ |
+| `gpt_preview_change` | `prepare_change` | PREPARE |
+| `gpt_commit_change` | `commit_proposal` | ACT |
+
+Semantic differences:
+
+- `gpt_preview_change` accepts `commit_now=true` as an HTTP shortcut; MCP has
+  no commit_now — PREPARE is never ACT. Additive commits still call
+  `commit_proposal` explicitly.
+- `gpt_preview_data_block`, `gpt_suggest_change`, `gpt_get_slide_preview_png`
+  are Actions-only (legacy auxiliary); they are *not* part of the governed
+  MCP vocabulary. VISTA must not depend on them in MCP-primary mode.
+
+### Coexistence / rollout
+
+Both surfaces stay live. Transport preference is **client configuration**
+(connector choice in the provider), not a backend flag:
+
+```text
+rollout : Actions connector → MCP connector (same Keycloak realm, mcp-tv-dashboard)
+rollback: MCP connector → Actions connector — no code change, no data loss
+```
+
+### Safe fallback rules
+
+| Stage | Cross-transport fallback |
+|---|---|
+| READ | Allowed when identical semantics/auth context are proven |
+| PREPARE (before proposal_handle exists) | Allowed — no material side effect |
+| ACT / uncertain ACT outcome | **FORBIDDEN** — never replay a mutation across transports; reconcile authoritative state first (UNKNOWN_OUTCOME → read-back → retry only via same key/transport) |
+
+Client-side rules live in `vista_agent_intelligence.json` → `write_flow_mcp`
+(idempotency key stability, unknown outcome, error-is-not-empty). The section
+is canonical-but-not-projected into `agent_directives`: the Actions catalog
+envelope is already at its byte ceiling, so the MCP instructions variant
+carries the envelope skeleton inline.
+
+### VISTA client migration (MCP3)
+
+- `specialist-instructions.md` carries **two paste variants**: MCP-primary
+  block and Actions block — paste exactly one, matching the configured
+  connector.
+- Keycloak client `mcp-tv-dashboard` (confidential, Auth Code + PKCE) —
+  provisioning PENDING; see section below.
+- Provider: configure the MCP connector URL
+  `https://minhadelpi.com.br/apps/tv-dashboard-api/mcp` with OAuth —
+  discovery via `/.well-known/oauth-protected-resource`.
