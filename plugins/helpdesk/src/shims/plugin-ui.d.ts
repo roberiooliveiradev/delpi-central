@@ -393,6 +393,8 @@ declare module "@delpi/plugin-ui/index" {
     type?: "button" | "submit";
     href?: string;
     onClick?: () => void;
+    /** Associa o botão a um `<form id>` fora da árvore do botão. */
+    form?: string;
   };
 
   export function ActionButton(props: ActionButtonProps): ReactElement;

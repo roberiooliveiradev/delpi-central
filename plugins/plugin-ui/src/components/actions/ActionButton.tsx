@@ -28,6 +28,8 @@ export type ActionButtonProps = ActionButtonBaseProps &
         href?: undefined;
         type?: "button" | "submit";
         onClick?: () => void;
+        /** Associa o botão a um `<form id>` fora da árvore do botão (ex.: footer de card). */
+        form?: string;
       }
   );
 
@@ -97,6 +99,7 @@ export function ActionButton(props: ActionButtonProps) {
       className={rootClass}
       disabled={disabled}
       onClick={buttonProps.onClick}
+      form={buttonProps.form}
       aria-label={ariaLabel}
       aria-expanded={ariaExpanded}
       title={title}

@@ -1,5 +1,5 @@
-import { useEffect, useId, useRef, useState } from "react";
-import { ActionButton, HintAction, useClickOutside } from "@delpi/plugin-ui/index";
+import { useEffect, useRef, useState } from "react";
+import { ActionButton, AnchoredPanelPortal, HintAction } from "@delpi/plugin-ui/index";
 
 import { helpTooltips } from "../content/helpTooltips";
 import {
@@ -30,23 +30,11 @@ export function HelpdeskAssignPopover({
 }) {
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
-  const panelId = useId();
+  const panelRef = useRef<HTMLDivElement>(null);
   const hasAssignee = Boolean(assignedUserId);
   const label = (assignedDisplayName || "").trim() || "Sem técnico";
   const actionLabel = hasAssignee ? "Alterar" : "Atribuir";
   const inline = variant === "inline";
-
-  // UserDirectoryPicker / selects abrem no body — useClickOutside ignora overlays aninhados.
-  useClickOutside([wrapperRef], open, () => setOpen(false));
-
-  useEffect(() => {
-    if (!open) return;
-    function handleKey(event: KeyboardEvent) {
-      if (event.key === "Escape") setOpen(false);
-    }
-    document.addEventListener("keydown", handleKey);
-    return () => document.removeEventListener("keydown", handleKey);
-  }, [open]);
 
   useEffect(() => {
     if (!canAssign && open) setOpen(false);
@@ -59,18 +47,24 @@ export function HelpdeskAssignPopover({
         className="helpdesk-anchored-popover__trigger delpi-ui-table-toolbar-action"
         aria-label={actionLabel}
         aria-expanded={open}
-        aria-controls={panelId}
         onClick={() => setOpen((current) => !current)}
       >
         {actionLabel}
       </button>
-      {open ? (
-        <div
-          id={panelId}
-          className="helpdesk-anchored-popover__panel"
-          role="dialog"
-          aria-label={hasAssignee ? "Reatribuir técnico" : "Atribuir técnico"}
-        >
+      <AnchoredPanelPortal
+        open={open}
+        anchorRef={wrapperRef}
+        panelRef={panelRef}
+        className="helpdesk-anchored-popover__panel helpdesk-anchored-popover__panel--wide"
+        variant="bare"
+        role="dialog"
+        aria-label={hasAssignee ? "Reatribuir técnico" : "Atribuir técnico"}
+        preferredPlacement="bottom"
+        horizontalAlign="end"
+        gap={6}
+        portalScopeClassName="dashboard-helpdesk"
+        onDismiss={() => setOpen(false)}
+      >
           <div className="helpdesk-anchored-popover__header">
             <strong className="helpdesk-anchored-popover__title">
               {hasAssignee ? "Reatribuir técnico" : "Atribuir técnico"}
@@ -104,8 +98,7 @@ export function HelpdeskAssignPopover({
               </ActionButton>
             </HintAction>
           </div>
-        </div>
-      ) : null}
+      </AnchoredPanelPortal>
     </div>
   ) : null;
 

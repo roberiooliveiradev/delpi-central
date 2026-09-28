@@ -255,14 +255,14 @@ describe("Helpdesk list UX structural", () => {
     expect(filter).toContain('role="dialog"');
     expect(filter).toContain("aria-expanded");
     expect(filter).toContain("TicketListFilterBuilder");
-    expect(filter).toContain("Escape");
-    expect(filter).toContain("useClickOutside");
+    expect(filter).toContain("AnchoredPanelPortal");
+    expect(filter).toContain("onDismiss");
     expect(filter).not.toContain("onBeforeOpen");
     expect(sort).toContain('role="dialog"');
     expect(sort).toContain("TicketListSortBuilder");
-    expect(sort).toContain("useClickOutside");
+    expect(sort).toContain("AnchoredPanelPortal");
     expect(sort).not.toContain("onBeforeOpen");
-    expect(assign).toContain("useClickOutside");
+    expect(assign).toContain("AnchoredPanelPortal");
     expect(page).not.toContain("onBeforeOpen");
     expect(page).toContain("setBuilderGroup(ticketListViewModelFromFilters(filters).filterRoot)");
     expect(page).toContain("setSortDraft(parseTicketSortLevels(filters.sort))");
