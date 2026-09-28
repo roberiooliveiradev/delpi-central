@@ -77,6 +77,15 @@ class Settings:
         _get_env("GLPI_LEGACY_MAX_UPLOAD_BYTES", default=str(20 * 1024 * 1024))
         or str(20 * 1024 * 1024)
     )
+    # IDENTITY-002A — dedicated profile-sync technical principal (kill switch
+    # OFF by default; credential pair is backend-only, distinct from H12).
+    GLPI_PROFILE_SYNC_ENABLED: bool = (
+        str(_get_env("GLPI_PROFILE_SYNC_ENABLED", default="false") or "false").lower()
+        in {"1", "true", "yes", "on"}
+    )
+    GLPI_PROFILE_SYNC_APP_TOKEN: str = _get_env("GLPI_PROFILE_SYNC_APP_TOKEN", default="") or ""
+    GLPI_PROFILE_SYNC_USER_TOKEN: str = _get_env("GLPI_PROFILE_SYNC_USER_TOKEN", default="") or ""
+
     # Perfis GLPI atribuíveis como «Técnico» (default Technician = 6). CSV de ids.
     GLPI_ASSIGNEE_PROFILE_IDS: str = (
         _get_env("GLPI_ASSIGNEE_PROFILE_IDS", default="6") or "6"

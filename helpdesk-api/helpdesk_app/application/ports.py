@@ -73,15 +73,6 @@ class GlpiGateway(Protocol):
 
     def get_user(self, access_token: str, user_id: int) -> GlpiUserProfile | None: ...
 
-    def update_user_profile(
-        self,
-        access_token: str,
-        user_id: int,
-        *,
-        firstname: str | None = None,
-        realname: str | None = None,
-    ) -> None: ...
-
     def can_assign_tickets(self, access_token: str) -> bool: ...
 
     def add_followup(
@@ -168,6 +159,26 @@ class GlpiGateway(Protocol):
         *,
         accept: bool,
         comment: str = "",
+    ) -> None: ...
+
+
+class ProfileSyncWriterPort(Protocol):
+    """HELPDESK-IDENTITY-002A — narrow technical-authority write.
+
+    Implemented by the dedicated profile-sync principal adapter (backend-only
+    credential). The ONLY writable surface is the pair of canonical display
+    fields; there is intentionally no generic ``update_user`` upward. The
+    ``user_id`` must already be the internally resolved session user — the
+    port offers no way to pick an arbitrary target… beyond that id itself,
+    which always comes from ``GlpiGateway.session_user_id``.
+    """
+
+    def update_profile_names(
+        self,
+        user_id: int,
+        *,
+        firstname: str | None = None,
+        realname: str | None = None,
     ) -> None: ...
 
 

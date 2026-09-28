@@ -243,6 +243,10 @@ async def jwt_middleware(request: Request, call_next):
             name=rbac.get("name") or name,
             given_name=(claims.get("given_name") or "").strip() or None,
             family_name=(claims.get("family_name") or "").strip() or None,
+            # Keycloak session id (`sid`/`session_state`) — lets backends scope
+            # per-login semantics (e.g. bounded identity reconciliation)
+            # without token material leaving the auth layer.
+            session_id=str(claims.get("sid") or claims.get("session_state") or ""),
             roles=rbac.get("roles", []),
             groups=rbac.get("groups", []),
             permissions=rbac.get("permissions", []),

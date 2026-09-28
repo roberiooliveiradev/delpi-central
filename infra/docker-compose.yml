@@ -2012,6 +2012,11 @@ services:
       GLPI_LEGACY_APP_TOKEN: ${GLPI_LEGACY_APP_TOKEN:-}
       GLPI_LEGACY_USER_TOKEN: ${GLPI_LEGACY_USER_TOKEN:-}
       GLPI_LEGACY_MAX_UPLOAD_BYTES: ${GLPI_LEGACY_MAX_UPLOAD_BYTES:-20971520}
+      # IDENTITY-002A — profile-sync dedicated technical credential
+      # (kill switch OFF; principal/apiclient NOT yet created — see ADR 15).
+      GLPI_PROFILE_SYNC_ENABLED: ${GLPI_PROFILE_SYNC_ENABLED:-false}
+      GLPI_PROFILE_SYNC_APP_TOKEN: ${GLPI_PROFILE_SYNC_APP_TOKEN:-}
+      GLPI_PROFILE_SYNC_USER_TOKEN: ${GLPI_PROFILE_SYNC_USER_TOKEN:-}
 
     depends_on:
       keycloak:

@@ -62,6 +62,9 @@ def build_runtime():
         legacy_app_token=settings.GLPI_LEGACY_APP_TOKEN,
         legacy_user_token=settings.GLPI_LEGACY_USER_TOKEN,
         legacy_max_upload_bytes=settings.GLPI_LEGACY_MAX_UPLOAD_BYTES,
+        profile_sync_enabled=settings.GLPI_PROFILE_SYNC_ENABLED,
+        profile_sync_app_token=settings.GLPI_PROFILE_SYNC_APP_TOKEN,
+        profile_sync_user_token=settings.GLPI_PROFILE_SYNC_USER_TOKEN,
     )
     states = PostgresStateStore(cipher)
     sessions = PostgresSessionStore(cipher)
@@ -75,7 +78,14 @@ def build_runtime():
         directory=directory,
         person_profiles=person_profiles,
     )
-    profile_sync = ProfileSyncService(glpi, oauth)
+    # IDENTITY-002A: technical writer only when flag+pair are complete —
+    # otherwise reconcile stays in deferred_write_authority semantics (001B).
+    writer = glpi if glpi.profile_sync_ready() else None
+    if settings.GLPI_PROFILE_SYNC_ENABLED and writer is None:
+        logging.getLogger("helpdesk.main").warning(
+            "glpi_profile_sync_flag_on_but_credentials_incomplete"
+        )
+    profile_sync = ProfileSyncService(glpi, oauth, writer=writer)
     return oauth, tickets, profile_sync
 
 

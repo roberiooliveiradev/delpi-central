@@ -87,6 +87,9 @@ class HttpxGlpiClient:
         legacy_app_token: str = "",
         legacy_user_token: str = "",
         legacy_max_upload_bytes: int = _MAX_ATTACHMENT_BYTES,
+        profile_sync_enabled: bool = False,
+        profile_sync_app_token: str = "",
+        profile_sync_user_token: str = "",
         assignee_profile_ids: tuple[int, ...] | list[int] | None = None,
         transport: httpx.BaseTransport | None = None,
     ):
@@ -99,6 +102,12 @@ class HttpxGlpiClient:
         self._legacy_app_token = (legacy_app_token or "").strip()
         self._legacy_user_token = (legacy_user_token or "").strip()
         self._legacy_max_upload_bytes = max(1, int(legacy_max_upload_bytes))
+        # IDENTITY-002A — dedicated profile-sync technical credential.
+        # Deliberately SEPARATE from the H12 upload pair: different GLPI
+        # principal, different apiclient, different lifecycle.
+        self._profile_sync_enabled = bool(profile_sync_enabled)
+        self._profile_sync_app_token = (profile_sync_app_token or "").strip()
+        self._profile_sync_user_token = (profile_sync_user_token or "").strip()
         if assignee_profile_ids is None:
             from helpdesk_app.config import parse_assignee_profile_ids
 
@@ -521,30 +530,63 @@ class HttpxGlpiClient:
             return None
         return parse_user_profile(payload if isinstance(payload, dict) else {})
 
-    def update_user_profile(
+    def profile_sync_ready(self) -> bool:
+        """True when the feature flag AND both dedicated credentials exist.
+
+        The reconcile treats a missing/incomplete pair as "no writer" →
+        deferred_write_authority, never a partial attempt.
+        """
+        return bool(
+            self._profile_sync_enabled
+            and self._profile_sync_app_token
+            and self._profile_sync_user_token
+        )
+
+    def update_profile_names(
         self,
-        access_token: str,
         user_id: int,
         *,
         firstname: str | None = None,
         realname: str | None = None,
     ) -> None:
-        """PATCH own Administration/User names — self-scoped via the OAuth token.
+        """IDENTITY-002A — dedicated-principal names-only write (narrow port).
 
-        Provider may deny (profile without `user` UPDATE right); callers must
-        treat errors as failed sync, never as fake parity.
+        Legacy apirest ``PUT /User/{id}`` under the profile-sync technical
+        session (separate user_token + apiclient from H12). The provider
+        cannot restrict fields, so the boundary is enforced HERE: the body
+        contains only ``firstname``/``realname`` — nothing else can be
+        injected through this port. ``user_id`` is always the internally
+        session-resolved target; the port carries no way to pick another.
         """
+        self._profile_sync_require_ready()
         from helpdesk_app.infrastructure.glpi.mapping import user_profile_update_body
 
         body = user_profile_update_body(firstname=firstname, realname=realname)
         if not body:
             raise GlpiValidation("Nenhum campo de perfil para atualizar.")
-        self._json(
-            "PATCH",
-            f"/api.php/v2.2/Administration/User/{int(user_id)}",
-            token=access_token,
-            json_body=body,
+        session_token = self._legacy_init_session(
+            app_token=self._profile_sync_app_token,
+            user_token=self._profile_sync_user_token,
         )
+        try:
+            self._legacy_put_json(
+                session_token,
+                f"/apirest.php/User/{int(user_id)}",
+                {"input": body},
+                app_token=self._profile_sync_app_token,
+            )
+        finally:
+            self._legacy_kill_session(
+                session_token, app_token=self._profile_sync_app_token
+            )
+
+    def _profile_sync_require_ready(self) -> None:
+        if not self._profile_sync_enabled:
+            raise GlpiFeatureDisabled("Sincronização de perfil desligada neste ambiente.")
+        if not self._profile_sync_app_token:
+            raise GlpiFeatureDisabled("App-Token de profile-sync não configurado.")
+        if not self._profile_sync_user_token:
+            raise GlpiFeatureDisabled("User-Token de profile-sync não configurado.")
 
     def download_attachment(self, access_token: str, document_id: int) -> tuple[bytes, str]:
         response = self._request(
@@ -1090,7 +1132,7 @@ class HttpxGlpiClient:
         if not self._legacy_user_token:
             raise GlpiFeatureDisabled("User-Token da API legada não configurado.")
 
-    def _legacy_get_json(self, session_token: str, path: str):
+    def _legacy_get_json(self, session_token: str, path: str, *, app_token: str = ""):
         try:
             response = self._http.request(
                 "GET",
@@ -1098,7 +1140,7 @@ class HttpxGlpiClient:
                 headers={
                     "Accept": "application/json",
                     "Content-Type": "application/json",
-                    "App-Token": self._legacy_app_token,
+                    "App-Token": app_token or self._legacy_app_token,
                     "Session-Token": session_token,
                 },
             )
@@ -1115,7 +1157,7 @@ class HttpxGlpiClient:
         _raise_for_status(response, "GET", path)
         return []
 
-    def _legacy_post_json(self, session_token: str, path: str, body: dict) -> dict:
+    def _legacy_post_json(self, session_token: str, path: str, body: dict, *, app_token: str = "") -> dict:
         try:
             response = self._http.request(
                 "POST",
@@ -1123,7 +1165,7 @@ class HttpxGlpiClient:
                 headers={
                     "Accept": "application/json",
                     "Content-Type": "application/json",
-                    "App-Token": self._legacy_app_token,
+                    "App-Token": app_token or self._legacy_app_token,
                     "Session-Token": session_token,
                 },
                 json=body,
@@ -1140,11 +1182,37 @@ class HttpxGlpiClient:
         _raise_for_status(response, "POST", path)
         return {}
 
-    def _legacy_init_session(self) -> str:
-        """Open apirest session with App-Token + dedicated user_token (H12/H10).
+    def _legacy_put_json(self, session_token: str, path: str, body: dict, *, app_token: str = "") -> dict:
+        """apirest PUT — used by the profile-sync technical writer only."""
+        try:
+            response = self._http.request(
+                "PUT",
+                f"{self._base}{path}",
+                headers={
+                    "Accept": "application/json",
+                    "Content-Type": "application/json",
+                    "App-Token": app_token or self._legacy_app_token,
+                    "Session-Token": session_token,
+                },
+                json=body,
+            )
+        except httpx.TimeoutException as exc:
+            raise GlpiUnavailable("GLPI indisponível.") from exc
+        logger.info("glpi_legacy_put path=%s status=%s", path, response.status_code)
+        if response.status_code in {200, 201}:
+            data = response.json() if response.content else {}
+            return data if isinstance(data, dict) else {"results": data}
+        _raise_for_status(response, "PUT", path)
+        return {}
 
-        OAuth Bearer is HLAPI-only. Legacy writes run as technical user after HLAPI ACL check.
+    def _legacy_init_session(self, *, app_token: str = "", user_token: str = "") -> str:
+        """Open apirest session with App-Token + dedicated user_token (H12/H10/002A).
+
+        OAuth Bearer is HLAPI-only. Legacy writes run as a technical user after
+        HLAPI ACL check; each capability uses its own credential pair.
         """
+        effective_app = app_token or self._legacy_app_token
+        effective_user = user_token or self._legacy_user_token
         try:
             response = self._http.request(
                 "GET",
@@ -1152,8 +1220,8 @@ class HttpxGlpiClient:
                 headers={
                     "Accept": "application/json",
                     "Content-Type": "application/json",
-                    "App-Token": self._legacy_app_token,
-                    "Authorization": f"user_token {self._legacy_user_token}",
+                    "App-Token": effective_app,
+                    "Authorization": f"user_token {effective_user}",
                 },
             )
         except httpx.TimeoutException as exc:
@@ -1171,14 +1239,14 @@ class HttpxGlpiClient:
             "API legada recusou a sessão. Confira enable_api, App-Token cifrado e User-Token."
         )
 
-    def _legacy_kill_session(self, session_token: str) -> None:
+    def _legacy_kill_session(self, session_token: str, *, app_token: str = "") -> None:
         try:
             self._http.request(
                 "GET",
                 f"{self._base}/apirest.php/killSession",
                 headers={
                     "Accept": "application/json",
-                    "App-Token": self._legacy_app_token,
+                    "App-Token": app_token or self._legacy_app_token,
                     "Session-Token": session_token,
                 },
             )

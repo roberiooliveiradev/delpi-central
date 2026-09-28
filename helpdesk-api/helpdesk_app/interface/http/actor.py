@@ -28,6 +28,7 @@ def require_actor(request: Request) -> Actor:
         name=str(getattr(user, "name", "") or ""),
         first_name=str(getattr(user, "given_name", "") or ""),
         last_name=str(getattr(user, "family_name", "") or ""),
+        session_id=str(getattr(user, "session_id", "") or ""),
     )
     sync = getattr(request.app.state, "profile_sync", None)
     if sync is not None:

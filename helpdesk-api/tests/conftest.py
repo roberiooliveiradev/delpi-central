@@ -99,7 +99,7 @@ class FakeGlpi:
         # When False, upload does not appear on ticket.attachments (Timeline lag).
         self.attach_uploads_to_timeline = True
         self.refresh_error: Exception | None = None
-        # Administration/User rows for profile parity (get_user/update_user_profile).
+        # Administration/User rows for profile parity (get_user/update_profile_names).
         self.user_profiles: dict[int, SimpleNamespace] = {}
         self.profile_updates: list[tuple[int, object, object]] = []
         self.get_user_error: Exception | None = None
@@ -311,11 +311,11 @@ class FakeGlpi:
             emails=tuple(getattr(row, "emails", ()) or ()),
         )
 
-    def update_user_profile(
-        self, access_token: str, user_id: int, *, firstname=None, realname=None
+    def update_profile_names(
+        self, user_id: int, *, firstname=None, realname=None
     ) -> None:
+        """Fake ProfileSyncWriterPort — technical names-only write."""
         self.calls += 1
-        assert access_token
         self.profile_updates.append((int(user_id), firstname, realname))
         if self.update_profile_error is not None:
             raise self.update_profile_error
@@ -601,6 +601,7 @@ def build_client(
     glpi: FakeGlpi | None = None,
     directory=None,
     person_profiles=None,
+    sync_writer=None,
 ) -> tuple[TestClient, FakeGlpi]:
     glpi = glpi or FakeGlpi()
     app = FastAPI()
@@ -627,7 +628,10 @@ def build_client(
     )
     from helpdesk_app.application.profile_sync_service import ProfileSyncService
 
-    app.state.profile_sync = ProfileSyncService(glpi, oauth)
+    # sync_writer sentinel: True = reuse the FakeGlpi as writer port (records
+    # in profile_updates); a custom port instance is also accepted.
+    writer = glpi if sync_writer is True else sync_writer
+    app.state.profile_sync = ProfileSyncService(glpi, oauth, writer=writer)
     app.state.public_base_url = "https://centraldelpi.com.br"
 
     @app.middleware("http")
@@ -641,6 +645,7 @@ def build_client(
             name=request.headers.get("x-name", ""),
             given_name=request.headers.get("x-given-name", ""),
             family_name=request.headers.get("x-family-name", ""),
+            session_id=request.headers.get("x-sid", ""),
             permissions=permissions,
             is_superadmin=False,
         )

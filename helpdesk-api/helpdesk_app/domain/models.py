@@ -10,6 +10,9 @@ class Actor:
     name: str = ""
     first_name: str = ""
     last_name: str = ""
+    # Keycloak session id (`sid`) — semantic session identity for bounded
+    # per-login reconciliation (IDENTITY-002A); never carries token material.
+    session_id: str = ""
 
 
 @dataclass(frozen=True)
