@@ -2067,3 +2067,72 @@ def test_live_status_omits_operations_that_match_the_frozen_queue() -> None:
     assert live["items"] == []
     assert live["summary"]["operation_count"] == 2
     assert live["summary"]["in_production_count"] == 0
+
+
+def _snapshots_with_run_target_operation() -> FakeSnapshotRepo:
+    snapshots = FakeSnapshotRepo()
+    snapshots.upsert(
+        branch="01",
+        start_date=date(2026, 9, 1),
+        end_date=date(2026, 9, 30),
+        payload={
+            "work_centers": [
+                {
+                    "work_center": "CT-35",
+                    "work_center_name": "MONTAGEM",
+                    "operation_count": 1,
+                    "in_production_count": 0,
+                }
+            ],
+            "operations": [
+                {
+                    "work_center": "CT-35",
+                    "production_order": "24822601002",
+                    "operation_code": "02",
+                    "planned_qty": 0.5,
+                    "pending_qty": 0.5,
+                    "unit": "MI",
+                    "pieces_conversion_factor": 1000.0,
+                }
+            ],
+            "summary": {"work_center_count": 1, "operation_count": 1},
+        },
+        refreshed_by="planner-1",
+    )
+    return snapshots
+
+
+def test_public_operation_run_quantity_returns_pending_and_factor() -> None:
+    """O target do run usa saldo vivo + fator de peças da fila publicada."""
+    gateway = FakeGateway()
+    gateway.status_by_key[("24822601002", "02")] = {
+        "production_status": "in_progress",
+        "is_in_production": True,
+        "operation_produced_qty": 0.1,
+        "operation_pending_qty": 0.4,
+    }
+    service = _service(gateway, _snapshots_with_run_target_operation())
+
+    result = service.public_operation_run_quantity(
+        branch="01",
+        production_order="24822601002",
+        operation_code="02",
+    )
+
+    assert result == {
+        "operation_pending_qty": 0.4,
+        "pending_qty": 0.5,
+        "pieces_conversion_factor": 1000.0,
+    }
+
+
+def test_public_operation_run_quantity_returns_none_for_unknown_operation() -> None:
+    service = _service(FakeGateway(), _snapshots_with_run_target_operation())
+
+    result = service.public_operation_run_quantity(
+        branch="01",
+        production_order="00000000000",
+        operation_code="02",
+    )
+
+    assert result is None

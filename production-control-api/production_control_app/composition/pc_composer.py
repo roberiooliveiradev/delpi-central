@@ -420,21 +420,13 @@ def build_production_run_service(
         operation_code: str,
     ):
         try:
-            payload = machine_load.build_public(branch=branch, work_center=work_center)
+            return machine_load.public_operation_run_quantity(
+                branch=branch,
+                production_order=production_order,
+                operation_code=operation_code,
+            )
         except Exception:  # noqa: BLE001
             return None
-        operations = payload.get("operations") if isinstance(payload, dict) else None
-        if not isinstance(operations, list):
-            return None
-        for op in operations:
-            if not isinstance(op, dict):
-                continue
-            if str(op.get("production_order") or "") != str(production_order):
-                continue
-            if str(op.get("operation_code") or "") != str(operation_code):
-                continue
-            return op
-        return None
 
     return ProductionRunService(
         pulse_gateway=pulse_gateway or build_production_pulse_gateway(),
