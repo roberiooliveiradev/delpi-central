@@ -11,7 +11,7 @@ import {
   type MachineLoadOperation,
   type ProductionRunSnapshot,
 } from "./api";
-import { operationPendingQty } from "./cockpitStatus";
+import { applyProductionRunPiecesSnapshot } from "./productionRunRealtime";
 import type { MachineLoadRealtimeEvent } from "./usePublicMachineLoadRealtime";
 
 const SESSION_STORAGE_PREFIX = "delpi.pcp.cockpit.bench-session";
@@ -70,15 +70,22 @@ export function useProductionRun({
   const refreshInFlightRef = useRef(false);
   const refreshPendingRef = useRef(false);
   const refreshRequestRef = useRef({ token, branch, workCenter });
-  refreshRequestRef.current = { token, branch, workCenter };
 
   useEffect(() => {
-    if (!workCenter) {
-      setSession(null);
-      setRun(null);
-      return;
-    }
-    setSession(readStoredSession(branch, workCenter));
+    refreshRequestRef.current = { token, branch, workCenter };
+  }, [token, branch, workCenter]);
+
+  useEffect(() => {
+    let active = true;
+    const nextSession = workCenter ? readStoredSession(branch, workCenter) : null;
+    queueMicrotask(() => {
+      if (!active) return;
+      setSession(nextSession);
+      if (!workCenter) setRun(null);
+    });
+    return () => {
+      active = false;
+    };
   }, [branch, workCenter]);
 
   const refreshRun = useCallback(async () => {
@@ -132,37 +139,13 @@ export function useProductionRun({
   }, [refreshRun, runUpdatedSignal]);
 
   useEffect(() => {
-    if (
-      runRealtimeEvent?.type !== "production_run_updated" ||
-      runRealtimeEvent.reason !== "pieces_updated" ||
-      runRealtimeEvent.branch !== branch ||
-      runRealtimeEvent.workCenter !== workCenter ||
-      !runRealtimeEvent.runId ||
-      typeof runRealtimeEvent.piecesTotal !== "number" ||
-      !Number.isFinite(runRealtimeEvent.piecesTotal)
-    ) {
-      return;
-    }
-    const { piecesTotal, runId } = runRealtimeEvent;
-    setRun((current) => {
-      if (!current || current.id !== runId) return current;
-      return {
-        ...current,
-        piecesTotal,
-        countedPieces: piecesTotal,
-        divergencePieces: undefined,
-      };
-    });
-  }, [branch, workCenter, runRealtimeEvent]);
-
-  useEffect(() => {
     window.clearInterval(pollRef.current);
     if (!workCenter || realtimeConnected || !run || run.status !== "running") return;
     pollRef.current = window.setInterval(() => {
       void refreshRun();
     }, RUN_POLL_MS);
     return () => window.clearInterval(pollRef.current);
-  }, [workCenter, realtimeConnected, run?.id, run?.status, refreshRun]);
+  }, [workCenter, realtimeConnected, run, refreshRun]);
 
   const identify = useCallback(async () => {
     if (!workCenter) return;
@@ -208,7 +191,6 @@ export function useProductionRun({
         workCenter,
         productionOrder: operation.production_order,
         operationCode: operation.operation_code,
-        plannedQty: operationPendingQty(operation),
       });
       setRun(started);
     } catch (err) {
@@ -255,17 +237,22 @@ export function useProductionRun({
     }
   }, [token, run, session]);
 
+  const resolvedRun = useMemo(
+    () => applyProductionRunPiecesSnapshot(run, runRealtimeEvent, branch, workCenter),
+    [branch, run, runRealtimeEvent, workCenter],
+  );
+
   const runMatchesOperation = useMemo(() => {
-    if (!run || !operation) return false;
+    if (!resolvedRun || !operation) return false;
     return (
-      run.productionOrder === operation.production_order &&
-      run.operationCode === operation.operation_code
+      resolvedRun.productionOrder === operation.production_order &&
+      resolvedRun.operationCode === operation.operation_code
     );
-  }, [run, operation]);
+  }, [resolvedRun, operation]);
 
   return {
     session,
-    run,
+    run: resolvedRun,
     runMatchesOperation,
     busy,
     error,

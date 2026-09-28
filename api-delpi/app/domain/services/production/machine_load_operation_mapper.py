@@ -6,6 +6,9 @@ from datetime import date, datetime
 from typing import Any
 
 from app.domain.production.machine_load_scope import MANUAL_LABOR_TOOL_CODE
+from app.domain.services.production.production_operational_quantity_service import (
+    ProductionOperationalQuantityService,
+)
 from app.domain.totvs.protheus_operation_appointments import (
     PRODUCTION_STATUS_IN_PROGRESS,
     PRODUCTION_STATUS_NOT_STARTED,
@@ -204,6 +207,8 @@ class MachineLoadOperationMapper:
 
         tool = _clean(row.get("tool"))
         work_center = _clean(row.get("work_center"))
+        unit = _clean(row.get("unit")) or None
+        pieces_factor = ProductionOperationalQuantityService.resolve(unit).pieces_factor
 
         return {
             "branch": _clean(row.get("branch")),
@@ -221,7 +226,8 @@ class MachineLoadOperationMapper:
             "resource": _clean(row.get("resource")) or None,
             "product_code": _clean(row.get("product_code")),
             "product_description": _clean(row.get("product_description")),
-            "unit": _clean(row.get("unit")) or None,
+            "unit": unit,
+            "pieces_conversion_factor": pieces_factor,
             "planned_qty": round(planned, 6),
             "produced_qty": round(produced, 6),
             "pending_qty": pending_qty,

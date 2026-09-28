@@ -590,6 +590,7 @@ export type MachineLoadOperation = {
   product_code: string;
   product_description: string;
   unit: string | null;
+  pieces_conversion_factor?: number | null;
   planned_qty: number;
   pending_qty: number;
   operation_produced_qty?: number | null;

@@ -61,7 +61,12 @@ class StartRunBody(BaseModel):
     work_center: str = Field(..., alias="workCenter", min_length=1, max_length=40)
     production_order: str = Field(..., alias="productionOrder", min_length=1, max_length=40)
     operation_code: str = Field(..., alias="operationCode", min_length=1, max_length=20)
-    planned_qty: float | None = Field(default=None, alias="plannedQty")
+    planned_qty: float | None = Field(
+        default=None,
+        alias="plannedQty",
+        deprecated=True,
+        description="Legado ignorado; a meta vem da operação localizada no backend.",
+    )
     website: str | None = None  # honeypot
 
 
@@ -361,7 +366,6 @@ def start_production_run(
             production_order=body.production_order,
             operation_code=body.operation_code,
             session_token=session_token,
-            planned_qty=body.planned_qty,
         )
     except Exception as exc:  # noqa: BLE001
         return _handle_public_errors(exc)

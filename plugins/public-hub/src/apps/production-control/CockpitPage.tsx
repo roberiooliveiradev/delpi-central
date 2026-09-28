@@ -191,12 +191,17 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
         return;
       }
       if (event.type === "production_run_updated" && event.reason.startsWith("run_")) {
+        setRunRealtimeEvent(null);
         setRunUpdatedSignal((value) => value + 1);
       }
       // Sequência/refresh do PCP: atualiza sem flicker de loading.
       void reload(workCenterRef.current, { quiet: true });
     }, [reload]),
+    onDisconnected: useCallback(() => {
+      setRunRealtimeEvent(null);
+    }, []),
     onReconnected: useCallback(() => {
+      setRunRealtimeEvent(null);
       setRunUpdatedSignal((value) => value + 1);
     }, []),
   });

@@ -3,12 +3,27 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 
 
 @dataclass(frozen=True)
 class SegmentPiecesResult:
     pieces: int
     epoch_changed: bool
+
+
+def target_pieces_from_quantity(
+    quantity: object,
+    pieces_conversion_factor: object,
+) -> int | None:
+    try:
+        normalized = Decimal(str(quantity)) * Decimal(str(pieces_conversion_factor))
+    except (InvalidOperation, TypeError, ValueError):
+        return None
+    if not normalized.is_finite() or normalized <= 0:
+        return None
+    target = int(normalized.quantize(Decimal("1"), rounding=ROUND_HALF_UP))
+    return target if target > 0 else None
 
 
 def pieces_from_anchor(

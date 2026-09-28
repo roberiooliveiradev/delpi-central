@@ -27,6 +27,7 @@ export type MachineLoadOperation = {
   product_code: string;
   product_description: string;
   unit: string | null;
+  pieces_conversion_factor?: number | null;
   planned_qty: number;
   produced_qty: number;
   /** Saldo do cabeçalho da OP (C2_QUANT − C2_QUJE) — igual em todas as operações. */
@@ -567,6 +568,11 @@ export type ProductionRunSnapshot = {
   endedAt: string | null;
   piecesTotal: number;
   plannedQty: number | null;
+  targetPieces: number | null;
+  remainingPieces: number | null;
+  progressPercent: number | null;
+  targetReached: boolean;
+  overproductionPieces: number | null;
   countedPieces?: number;
   totvsProducedQty?: number | null;
   divergencePieces?: number | null;
@@ -665,7 +671,6 @@ export async function startProductionRun(
     workCenter: string;
     productionOrder: string;
     operationCode: string;
-    plannedQty?: number | null;
   },
 ): Promise<ProductionRunSnapshot> {
   const response = await fetch(
@@ -682,7 +687,6 @@ export async function startProductionRun(
         workCenter: body.workCenter,
         productionOrder: body.productionOrder,
         operationCode: body.operationCode,
-        plannedQty: body.plannedQty ?? null,
         website: "",
       }),
     },

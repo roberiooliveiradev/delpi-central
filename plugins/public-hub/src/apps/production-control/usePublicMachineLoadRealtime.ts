@@ -17,6 +17,7 @@ type Options = {
   token: string;
   branch: string;
   onChanged: (event: MachineLoadRealtimeEvent) => void;
+  onDisconnected?: () => void;
   onReconnected?: () => void;
 };
 
@@ -29,13 +30,19 @@ export function usePublicMachineLoadRealtime({
   token,
   branch,
   onChanged,
+  onDisconnected,
   onReconnected,
 }: Options): boolean {
   const [connected, setConnected] = useState(false);
   const onChangedRef = useRef(onChanged);
+  const onDisconnectedRef = useRef(onDisconnected);
   const onReconnectedRef = useRef(onReconnected);
-  onChangedRef.current = onChanged;
-  onReconnectedRef.current = onReconnected;
+
+  useEffect(() => {
+    onChangedRef.current = onChanged;
+    onDisconnectedRef.current = onDisconnected;
+    onReconnectedRef.current = onReconnected;
+  }, [onChanged, onDisconnected, onReconnected]);
 
   useEffect(() => {
     let socket: WebSocket | null = null;
@@ -56,6 +63,7 @@ export function usePublicMachineLoadRealtime({
       try {
         socket = new WebSocket(buildPublicMachineLoadWsUrl(token, branch));
       } catch {
+        onDisconnectedRef.current?.();
         reconnectTimer = window.setTimeout(connect, RECONNECT_MS);
         return;
       }
@@ -90,6 +98,7 @@ export function usePublicMachineLoadRealtime({
 
       socket.onclose = () => {
         setConnected(false);
+        if (!disposed) onDisconnectedRef.current?.();
         window.clearInterval(pingTimer);
         pingTimer = 0;
         if (!disposed) reconnectTimer = window.setTimeout(connect, RECONNECT_MS);
