@@ -387,7 +387,9 @@ Nunca tela em branco; nunca spinner sem contexto.
 
 ## 29. Operator Cockpit future interaction
 
-Conceito apenas. Ação do operador: **"Solicitar matéria-prima"** — usando o contexto corrente do cockpit (OP/operação/CT pré-preenchidos de fonte autoritativa), quantidade pedida + unidade + janela, mínimo de digitação. O pedido renderiza para o operador como status do sinal (`pendente → em atendimento → atendido`), distinguindo **quantidade pedida** de **quantidade planejada**. No Factory Supply: sinais `operator_request` aparecem na Necessidades e no detalhe da missão com origem "Operador". Integração é semântica (contrato), nunca acoplamento a internals do cockpit.
+Conceito (CONGELADO FS-C0.P1). Ação do operador no **Cockpit** (owner da UI): **"Solicitar matéria-prima"** — contexto corrente (OP/operação/CT pré-preenchidos de fonte autoritativa), quantidade + unidade + janela, mínimo de digitação. **Intenção explícita obrigatória quando há necessidade planejada compatível:** projeção UX sugerida — "Já existe uma necessidade planejada de 100 KG" → "Antecipar 40 KG dessa necessidade" **ou** "Solicitar 40 KG adicional" (`intent ∈ {anticipate|additional}`, sempre declarada pelo operador — nunca inferida, nunca soma automática). Estado exibido pode estar stale: `conflict` do backend devolve contexto para nova pergunta ao operador (ex.: saldo elegível < pedido → pergunta se quer ADDITIONAL — backend nunca faz split automático). O pedido renderiza como status do sinal (`pendente → em atendimento → atendido`), distinguindo **quantidade pedida** de **quantidade planejada**.
+
+No Factory Supply MFE: `operator_request` aparece como **contexto** na Necessidades e no detalhe da missão — Origem "Operador", Intenção (Antecipação/Adicional), Quantidade+unidade, Solicitante (`operator_ref` declarado), Solicitado em — sujeito às regras de privacidade aceitas. **O MFE FS não é superfície de entrada de pedido** (`FACTORY_SUPPLY_OPERATOR_REQUEST_SCREEN = NOT_REQUIRED`). Integração é semântica (contrato HTTP service-caller, §28 TC), nunca acoplamento a internals do cockpit.
 
 ## 30. Wireframes
 

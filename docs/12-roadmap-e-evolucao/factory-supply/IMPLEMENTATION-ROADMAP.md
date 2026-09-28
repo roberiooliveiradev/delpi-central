@@ -50,7 +50,7 @@ Consolidado de `TECHNICAL-CONTRACTS.md` §43–44 — todos tratados como gates 
 5. ~~Identidade de serviço~~ — RESOLVIDO FS-C0.T5 (in-process jobs + `API_DELPI_INTERNAL_SERVICE_TOKEN`; sem service account — TC §40-B)
 6. ~~Algoritmo `request_fingerprint`~~ — RESOLVIDO FS-C0.T6 (canonical-JSON tipado + SHA-256; escopo `(key,route,actor)`; single-tx; falha não consome key — TC §10/§39)
 7. ~~Conversão de unidades~~ — RESOLVIDO FS-C0.T7: `AUTHORITATIVE_TOTVS_UNIT` (`B1_UM` em todos os contratos — §51); `UNIT_CONVERSION_*=NOT_REQUIRED`; divergência de unidade → `UNIT_DIVERGENCE`/falha fechada
-8. Reconciliação pedido operador×sinal planejado — **PRODUTO** (gate Product Master)
+8. ~~Reconciliação pedido operador×sinal planejado~~ — RESOLVIDO FS-C0.P1: `intent` explícita `ANTICIPATE|ADDITIONAL` (sem merge/soma automático; excesso de anticipate → conflict; cockpit público → boundary = service-caller §28 TC)
 9. Regra de quantidade de devolução — **PRODUTO** (gate; ver escopo §21)
 10. Política de prioridade — **PRODUTO** (gate; default factual ordering)
 11. ~~Header de correlação~~ — RESOLVIDO FS-C0.T11 (`X-Request-ID` `SINGLE_ID`, UUID4, adapter-propagated — TC §32)
@@ -165,7 +165,7 @@ Status: `ACCEPTED` (congelado na spec) / `GATED` (depende de C0/produto). Owner:
 | FS-INT-02 | Timeouts explícitos, retry limitado só em GET, backoff+jitter, classificação de erro | Doc4 §37 + regra | FS | C3 | ACCEPTED | resilience tests | FS-INT-01 |
 | FS-INT-03 | `X-Request-ID` propagado MFE→BFF→api-delpi (`SINGLE_ID`, UUID4) — **RESOLVIDO FS-C0.T11** | Doc4 §32 | FS | C3 | ACCEPTED | trace test | C0.T11 |
 | FS-INT-04 | Evidência ERP: matched/not_found/unknown/unavailable/divergent; dedup fingerprint | Doc4 §25–26 | FS | C8 | GATED→C0.T1 | §28 tests | C0.T1 |
-| FS-INT-05 | Cockpit: `request-material` `source=operator_cockpit`+correlation+key | Doc4 §28 | FS+Cockpit | C10 | GATED→C0.P1 | contract tests | C0.P1 |
+| FS-INT-05 | Cockpit: `POST /v1/operator-requests` — service-caller (`X-Delpi-Service-Token`+`X-Delpi-Caller-App: production-control-api`), `intent`, `operator_ref`, KEY+X-Request-ID — **RESOLVIDO FS-C0.P1** | Doc4 §28 | FS+Cockpit | C10 | ACCEPTED | contract tests | C0.P1 |
 | FS-INT-06 | Evolve `get_product_internal_movements` somente se C0.T1 provar lacuna | Doc4 §27 | DELPI | C8 | GATED→C0.T1 | decisão C0 | C0.T1 |
 
 ### FS-OBS — Observability/Audit
@@ -237,7 +237,7 @@ IMPLEMENTATION
 RELEASE: staged §33; cutover gate §35 independente de C9/C10.
 ```
 
-**Não-bloqueios explícitos:** C0.P2 não bloqueia C1–C8 (returns é slice tardio); C0.P1 só bloqueia `request-material` com `source=cockpit` e reconciliação — não bloqueia pedido manual já saneado… **correção:** C0.P1 bloqueia também o comportamento de pedido humano que colide com sinal existente; pedidos sem colisão prosseguem. C10 e C9 são paralelos ao tronco pós-C7.
+**Não-bloqueios explícitos:** C0.P2 não bloqueia C1–C8 (returns é slice tardio); ~~C0.P1~~ **RESOLVIDO** — reconciliação congelada (`intent` explícita; `request_supply_material` humano com colisão aplica a mesma semântica ANTICIPATE/ADDITIONAL no caminho usuário FS com `access`+`filial`). C10 (cockpit) desbloqueado para implementação futura.
 
 ## 8. C0 — Implementation readiness / contract closure
 
@@ -261,7 +261,7 @@ Primeira fase obrigatória — só evidência e decisão, **sem código de produ
 
 | Gate | Decisão | Dono | Bloqueia |
 |---|---|---|---|
-| FS-C0.P1 | Reconciliação pedido×sinal existente: link / adiciona qty / trabalho separado / por intenção | Product Master | `request-material` com colisão; C10 |
+| FS-C0.P1 | ~~Reconciliação pedido×sinal~~ — **`DONE`**: `OPERATOR_REQUEST_UI_OWNER=OPERATOR_COCKPIT` (MFE FS sem tela de pedido); `OperatorRequest` entidade durável §39; `intent` explícita ANTICIPATE (link+urgência, qty planejado inalterado, excesso→conflict sem auto-split) | ADDITIONAL (fato separado, planejado intacto); match = branch×work_center×material×unit×contexto(op/seq)×janela(TO_DESIGN) — owner FS; auth = **service-caller** (cockpit público sem JWT; `operator_ref` = dado de negócio); contrato `POST /v1/operator-requests` +KEY+X-Request-ID; sem TOTVS write | PROVEN (decisão PM + inventário cockpit) | C10 desbloqueado | — |
 | FS-C0.P2 | Regra/fórmula autoritativa de quantidade de devolução (ou confirmar manual+`null`) | Product Master | C9 auto-qty; NÃO bloqueia C1–C8 |
 | FS-C0.P3 | Prioridade além de `due_at/overdue/time_to_need` necessária no MVP? (default: não) | Product Master | — se "não" |
 
@@ -399,7 +399,7 @@ Worklist + `record_item_return` com `returned_qty` **manual/nullável** + handof
 
 ## 22. Operator Cockpit (C10)
 
-Somente após C0.P1: contrato `request-material` `source=operator_cockpit`+`correlation_ref`+key do Cockpit; FS valida tudo; testes de contrato + reconciliação. Cockpit não importa código/DB FS.
+C0.P1 RESOLVIDO: contrato `POST /v1/operator-requests` — `production-control-api` (BFF do cockpit público) → FS com `X-Delpi-Service-Token`+`X-Delpi-Caller-App` (sem usuário Keycloak); payload com `intent`, `operator_ref`, `candidate_signal_id?`, `correlation_ref?` + Idempotency-Key + X-Request-ID. FS valida tudo no estado corrente (candidate nunca autoridade); conflict determinístico devolve contexto ao Cockpit. Cockpit não importa código/DB FS; FS MFE não é superfície de pedido.
 
 ## 23. Line Feeder coexistence
 
@@ -452,6 +452,16 @@ Matriz de teste §18:
 | checkpoint corrente | nunca removido (sem falso cold-start §33) |
 | cleanup run | contagens emitidas + correlation; 2 workers sem corromper; referencial íntegro |
 | `actor_display_name` >2y | anonimizado; `actor_user_id`+fatos retidos 5y |
+| ANTICIPATE 40 p/ planejado 100 | `reconciled_signal_id` vinculado; sinal segue 100 (nunca 140) |
+| ADDITIONAL 40 p/ planejado 100 | fato separado `source=operator_request`; planejado intacto |
+| ANTICIPATE sem sinal compatível | `conflict` determinístico (sem auto-criação) |
+| ANTICIPATE 40 c/ elegível 30 | `conflict` — nunca split 30+10 automático |
+| `candidate_signal_id` forjado/obsoleto | FS reavalia estado corrente — nunca autoridade |
+| qty c/ unidade ≠ `accepted_unit` ou filial inválida | `422`/`403` (service-caller não bypassa validação) |
+| mesma key + mesmo pedido | replay sem duplicar `operator_requests`/efeito |
+| mesma key + `intent` diferente | `409 idempotency_conflict` |
+| `operator_requests` pós-missão | evidência auditável permanece (§39) |
+| chamada sem service token válido | `401`/`403` (boundary service-caller) |
 
 ## 26. Audit/observability
 

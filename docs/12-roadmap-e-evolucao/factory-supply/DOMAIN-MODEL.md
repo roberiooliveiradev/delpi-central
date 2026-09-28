@@ -457,17 +457,33 @@ Separados por natureza: **owned** (workflow), **referenced** (fatos ERP — só 
 
 Implicação de migração (sem executar): convivência Line Feeder ↔ Factory Supply durante transição é `TO_DESIGN` (Doc 5/5 roadmap); nenhuma escrita cruzada entre schemas `production_control` e o futuro schema de factory-supply.
 
-## 23. Operator request semantics
+## 23. Operator request semantics (CONGELADO FS-C0.P1)
 
-Domínio apenas (sem UI/endpoint):
+**Owner de UI: Operator Cockpit** (`OPERATOR_REQUEST_UI_OWNER = OPERATOR_COCKPIT`; `FACTORY_SUPPLY_MFE_OPERATOR_REQUEST_SCREEN = NOT_REQUIRED` — o MFE FS exibe o pedido como contexto operacional, nunca como superfície de entrada). **Owner semântico/workflow: Factory Supply** — validação autoritativa, compatibilidade, reconciliação, workflow resultante, auditoria.
+
+**`OperatorRequest` = evidência de negócio durável** — entidade própria, distinta de `DemandSignal`/`SupplyMission`/`Idempotency-Key`/`correlation_id`:
 
 ```text
-OperatorRequest (DemandSignal kind=operator_request) precisa de:
-  branch, material, destination_ct (ou contexto de operação que o resolva),
-  requested_qty + unit, need_window (quando precisa), actor autenticado, reason/contexto livre curto
+operator_requests: {request_id, branch, work_center, op_order?, operation_seq?,
+  product_code, requested_qty, unit, intent, candidate_signal_id?, reconciled_signal_id?,
+  operator_ref, reason?, status(received|reconciled|conflict|rejected|fulfilled),
+  outcome_ref?, idempotency_key, correlation_id, requested_at, decided_at}
 ```
 
-Um pedido do cockpit **é sinal**: não autoriza movimento de estoque, não altera programação ERP, não muda prioridade, não cria transferência oficial. O sinal correlaciona a um item de missão pelo `need_key`; aceite/execução passam pelo workflow normal (validação de backend, AuthZ, decisão de missão).
+- `intent ∈ {ANTICIPATE, ADDITIONAL}` — **declarada explicitamente pelo operador**; nunca inferida.
+- `operator_ref` = identidade **declarada** do operador (bench-session `operator_code`/`operator_name` do cockpit público — dado de negócio, **não** identidade autenticada nem RBAC).
+- `candidate_signal_id` = referência sugerida pelo cliente; FS reavalia — nunca é autoridade.
+
+**Intenções (semântica de domínio):**
+
+- `ANTICIPATE` — o operador quer **antecipar** quantidade já representada por necessidade planejada compatível: o sinal planejado **permanece com a quantidade original** (100 KG continuam 100 KG); o pedido **vincula-se** ao sinal compatível e altera apenas semântica operacional de tempo/urgência. Validação no estado corrente: sinal compatível existe, material/unidade iguais, `requested_qty ≤ saldo elegível`. **Excesso nunca vira ADDITIONAL automaticamente** (`ANTICIPATE 40` com elegível 30 → `409 domain_rule_violation`/`conflict` determinístico — o Cockpit pergunta ao operador).
+- `ADDITIONAL` — demanda operacional **além** do planejado, preservada como fato distinto; **nunca** reescreve o registro autoritativo TOTVS nem o `qty_needed` do sinal planejado.
+
+**Proibido (FROZEN):** `AUTO_MERGE_WITHOUT_EXPLICIT_INTENT`, `AUTO_SUM`, `PLANNED_REQUIREMENT_REWRITE`, `COCKPIT_DECIDES_RECONCILIATION`, `COCKPIT_DIRECT_DB_ACCESS`, `CROSS_CONTEXT_INTERNAL_IMPORT`, `FACTORY_SUPPLY_OPERATOR_REQUEST_SCREEN`, `FACTORY_SUPPLY_TOTVS_WRITE`.
+
+**Compatibilidade (owner = FS, menor contrato suportado por evidência):** match por `branch × work_center × material × unit` + contexto de produção quando presente (`op_order`/`operation_seq` — campos PROVEN de `demand_signals`) + janela compatível (`need_at` — semântica de janela `TO_DESIGN` no algoritmo de match, não inventada). Dimensões não suportadas pelos campos do sinal não entram.
+
+Um pedido do cockpit **é sinal**: não autoriza movimento de estoque, não altera programação ERP, não muda prioridade, não cria transferência oficial. Aceite/execução passam pelo workflow normal (validação de backend, AuthZ, decisão de missão).
 
 ## 24. Priority semantics
 
@@ -487,6 +503,7 @@ Catálogo de domínio — **não são rotas HTTP**. AuthZ sempre `factory-supply
 |---|---|---|---|---|---|---|---|---|
 | `SyncPlannedNeeds` | — | Recalcular sinais planejados | branch, janela/corte | sinais emitidos/superseded deduplicados | leituras ERP ok | SH8+SD4+SB2 via api-delpi | sinais; snapshot de cálculo | `REPLAY_SAFE REQUIRED` |
 | `RequestMaterial` | — | Sinal humano de material | § 23 | `DemandSignal` ativo | destino/material resolvíveis | validação de material/CT via api-delpi | sinal; correlação a item | `REQUIRED` |
+| `CreateOperatorRequest` | — | Pedido de operador (Cockpit) | § 23 — branch, work_center, contexto OP?, material, `requested_qty`+unit, **`intent` (anticipate|additional)**, `operator_ref`, `candidate_signal_id?` | `operator_requests` + link/sinal conforme intent | sinal compatível (anticipate) | validação filial/produto/unidade via api-delpi + estado corrente | evidência durável + reconciliação; conflict sem auto-split | `REQUIRED` |
 | `AnticipateSupply` | — | Antecipação do alimentador | material, destino/janela, qty | sinal `feeder_anticipation` | idem | idem | idem | `REQUIRED` |
 | `PlanSupplyWork` | M | Decidir cobertura → missão+itens | destino, janela, itens {material, `supply_qty`, signal refs} | `SupplyMission` open | sinais ativos; saldo medido se a regra exigir | saldo via api-delpi | missão+itens+snapshots | `REQUIRED` |
 | `StartPreparation` | I | Almoxarifado inicia separação | item_id, expected_version | preparation=in_progress | open, not_started | — | evento+audit | `REQUIRED` |
@@ -529,6 +546,8 @@ Catálogo de domínio — **não são rotas HTTP**. AuthZ sempre `factory-supply
 12. Mudança de unidade autoritativa em re-sync/replanejamento = `UNIT_DIVERGENCE` (exceção de reconciliação explícita), **não** delta numérico — quantidades históricas preservam a unidade registrada; nunca subtrair entre unidades distintas.
 13. Correlação ERP compara quantidade **e** unidade — igualdade numérica com unidade divergente é `divergent`, nunca `matched`; unidade ausente no movimento → `unknown`.
 14. Sem engine/tabela/configuração de conversão de unidades (`UNIT_CONVERSION_*=NOT_REQUIRED` — FS-C0.T7); conversão futura exige decisão de owner/contrato.
+15. Nenhum merge/soma automático de pedido de operador com necessidade planejada — reconciliação exige `intent` explícita (`ANTICIPATE`/`ADDITIONAL`, FS-C0.P1); excesso de `ANTICIPATE` nunca vira `ADDITIONAL` silencioso.
+16. Pedido de operador nunca altera quantidade autoritativa planejada (`PLANNED_REQUIREMENT_REWRITE = FORBIDDEN`) e nunca escreve TOTVS.
 11. Toda escrita operacional material é atribuível a ator autenticado (backend resolve identidade).
 12. Boundary de filial preservada em toda leitura/escrita (`PROVEN` no legado; obrigatório no alvo).
 13. `prepared ≠ reserved`, `collected ≠ transferred`, `delivered ≠ ERP movement`, `ERP movement ≠ consumed`.

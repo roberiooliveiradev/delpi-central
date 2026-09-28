@@ -361,21 +361,29 @@ Snapshots permitidos como **evidência de decisão** (não verdade corrente): `p
 
 Demais necessidades: `REUSE_AS_IS` ou `EVOLVE_EXISTING` (§41/§38). Nenhuma rota com nome/conceito Factory Supply na api-delpi.
 
-## 28. Operator Cockpit future integration
+## 28. Operator Cockpit future integration (CONGELADO FS-C0.P1)
 
-**Contrato semântico futuro (FUTURE, não implementar):** Cockpit → `POST /v1/missions/request-material` (o mesmo comando, com `source=operator_cockpit` + `correlation_ref`). Payload: `{branch, op_order, operation_seq, work_center, items[{product_code, qty, unit}], requested_at, reason, source, correlation_ref}` + `Idempotency-Key` gerado pelo Cockpit por intenção.
+**Inventário do estado atual do Cockpit (PROVEN):** Operator Cockpit = superfície **pública** do bounded context `production-control` — `public-hub` `/p/production-control/cockpit/{token}` → rotas `/public/machine-load/{token}/*` em `production-control-api` (somente leitura + `POST /{token}/bench-sessions` com `operator_code`/`operator_name` **auto-declarados** via `X-Delpi-Bench-Session`). **Não há JWT Keycloak no surface** — operadores de chão de fábrica não são usuários Portal. `plugins/production-control/.../operatorCockpitLink.ts` gera os links. Nenhuma rota "request material" existe hoje → tudo `TARGET`.
 
-- Factory Supply valida AuthZ/domínio — Cockpit nunca autoriza.
-- Resposta: `request_accepted`, `correlated_mission_id?`, estado corrente.
-- Contexto autoritativo prefilled pelo Cockpit; necessidade planejada vs pedido humano permanecem fatos distintos (Doc 1/5 invariante).
+**Consequência de AuthZ (modelo fechado):** o pedido do operador **não é comando com RBAC de usuário** — não existe usuário Keycloak para propagar. A fronteira é **service-to-service**: `production-control-api` (BFF do cockpit) → `factory-supply-api` com **identidade de serviço confiável** (padrão `PROVEN`: `X-Delpi-Service-Token` + `X-Delpi-Caller-App`; precedente de trusted-caller por rota `PROVEN` em `api-delpi/.../supplies_bff_service_access.py`). O FS expõe a rota para o caller `production-control-api` **sem** `factory-supply.access` de usuário (que exigiria usuário); valida: caller trusted + payload de domínio (filial válida, material existe, unidade = `B1_UM`, qty Decimal>0, intent ∈ {anticipate,additional}). `operator_ref` = `operator_code`/`operator_name` declarados — **dado de negócio auditável, nunca autoridade de acesso**. Usuários FS (almoxarife/feeder) seguem RBAC normal nas ações operacionais subsequentes.
 
-## 29. Duplicate-request reconciliation
+**Contrato semântico futuro (FUTURE, não implementar):** `POST /v1/operator-requests` — serviço `production-control-api` → FS. Payload: `{branch, work_center, op_order?, operation_seq?, product_code, requested_qty, unit, intent, candidate_signal_id?, operator_ref, reason?, requested_at, correlation_ref?}` + headers `Idempotency-Key` (Cockpit gera por intenção — FS-C0.T6), `X-Request-ID` (T11), `X-Delpi-Service-Token`+`X-Delpi-Caller-App: production-control-api`.
+
+- FS valida tudo no estado **corrente** — `candidate_signal_id` e quantidades exibidas ao operador são hints, nunca autoridade; estado stale → reavaliação server-side (concorrência §10/§11: match+reconcile dentro da tx, `expected_version`/lock de sinal quando aplicável).
+- Resposta: `{request_id, status(received|reconciled|conflict), reconciled_signal_id?, current_state}` — `conflict` determinístico (sem saldo elegível / sem sinal compatível / unidade divergente) devolve contexto p/ o Cockpit decidir UX; **nunca** split automático.
+- Reconciliação: `ANTICIPATE` → link `operator_request.reconciled_signal_id` + semântica de urgência no sinal (qty planejado inalterado); `ADDITIONAL` → `demand_signal` `source=operator_request` próprio vinculado ao request (planejado intacto).
+- Workflow resultante entra nos mecanismos aceitos (outbox §33 → realtime/notificação para usuários FS autorizados); **sem** canal realtime dedicado ao Cockpit até requisito provado.
+- Sem TOTVS write (`FACTORY_SUPPLY_TOTVS_WRITE = NO`); sem acesso Cockpit ao DB FS; sem imports cross-context.
+
+## 29. Duplicate-request reconciliation (RESOLVIDO FS-C0.P1)
 
 Propriedade da reconciliação: **aplicação/domínio do Factory Supply**, não do Cockpit nem do MFE.
 
-- Pedido humano chega → compara com `demand_signals`/`mission_items` ativos na mesma `(branch, work_center, material, unit, janela compatível)`.
-- **TO_INVENTORY (decisão de negócio pendente):** vínculo ao item existente (`mission_demand_links` + marcação `operator_requested`) vs quantidade adicional. O schema suporta ambos — a escolha de semântica **não** foi inventada aqui; Doc 5/5 deve registrar a decisão de produto antes do código.
-- O que está congelado: **nunca** dobrar quantidade silenciosamente; todo pedido gera fato auditável próprio.
+- Pedido chega com `intent` explícita → FS avalia `demand_signals`/`mission_items` ativos na mesma `(branch, work_center, material, unit)` + contexto de produção (`op_order`/`operation_seq` quando presente) + janela compatível (`need_at` — algoritmo de janela `TO_DESIGN`).
+- `ANTICIPATE` → **vínculo** ao sinal compatível (`reconciled_signal_id` + marcação `operator_requested`/urgência); quantidade planejada inalterada; `requested_qty` > saldo elegível → `conflict` (nunca auto-split para ADDITIONAL).
+- `ADDITIONAL` → **novo fato** (`demand_signal` `source=operator_request` vinculado ao `operator_request`); planejado inalterado.
+- Sem `intent` compatível → `409 conflict`/`422` determinístico; sem sinal compatível para `ANTICIPATE` → `conflict` com contexto.
+- Congelado: **nunca** dobrar quantidade silenciosamente; todo pedido gera `operator_requests` auditável próprio (§39) — evidência durável mesmo sem missão imediata.
 
 ## 30. Line Feeder coexistence/cutover
 
@@ -518,6 +526,7 @@ Base FS: `/apps/factory-supply-api/v1` — todas `PLANNED_NEW`. api-delpi paths 
 | 10 | FS | GET | `/v1/missions/{id}/history` | get_supply_mission_history | R | `access`+`filial` | N/A | — | cursor | nenhum | PLANNED_NEW |
 | 11 | FS | GET | `/v1/lookup-metadata` | get_supply_lookup_metadata | R | `access`+`filial` | N/A | — | — | CTs/warehouses via api-delpi | PLANNED_NEW |
 | 12 | FS | POST | `/v1/missions/request-material` | request_supply_material | W | `access`+`filial` | KEY | — | — | valida produto/CT | PLANNED_NEW |
+| 12b | FS | POST | `/v1/operator-requests` | create_operator_request | W | **trusted service caller** (`X-Delpi-Service-Token`+`X-Delpi-Caller-App: production-control-api` — cockpit é superfície pública sem JWT usuário; `operator_ref` = dado de negócio) | KEY | — | — | valida filial/produto/unidade/sinal corrente (§28) | PLANNED_NEW (FS-C0.P1) |
 | 13 | FS | POST | `/v1/missions/{id}/plan` | plan_supply_mission | W | `access`+`filial` | KEY | EV | — | — | PLANNED_NEW |
 | 14 | FS | POST | `/v1/missions/{id}/replan` | replan_supply_mission | W | `access`+`filial` | KEY | EV | — | — | PLANNED_NEW |
 | 15 | FS | POST | `/v1/missions/{id}/cancel` | cancel_supply_mission | W | `access`+`filial` | KEY | EV | — | — | PLANNED_NEW |
@@ -551,7 +560,7 @@ Base FS: `/apps/factory-supply-api/v1` — todas `PLANNED_NEW`. api-delpi paths 
 | api-delpi | get_product_detail / get_product_summary | /products/{code}/… | master data | REUSE_AS_IS |
 | api-delpi | ~~list_warehouses~~ | — | fatos de armazém cobertos por composição (§27) | NOT_NEEDED |
 
-Contagem: FS 25 superfícies planejadas (11 query/meta + 12 comandos + 1 WS + 1 job). api-delpi: 13 reuse + 1 evolve + 0 new.
+Contagem: FS 26 superfícies planejadas (11 query/meta + 13 comandos + 1 WS + 1 job). api-delpi: 13 reuse + 1 evolve + 0 new.
 
 ## 39. Complete data model matrix
 
@@ -563,6 +572,7 @@ Schema `factory_supply` — todas `PLANNED` (DDL na implementação; sem SQL aqu
 | supply_mission_items | itens do agregado | id UUID | mission_id FK, seq, product_code, unit, qty_required/requested/prepared/collected/delivered/returned NUMERIC, dim status, snapshots (desc, location, stock_at_decision, committed_at_decision), exception | UNIQUE(mission_id,seq) FK→missions | via mission | herdada | (mission_id), (branch implícito via join) | PLANNED |
 | demand_signals | necessidades planejadas/operacionais | id UUID | signal_key, source, branch, work_center, op_order, operation_seq, product_code, unit, qty_needed, need_at, status, fingerprint, synced_at | UNIQUE(branch,signal_key) WHERE status='active' | sim | — | (branch,work_center,need_at) | PLANNED |
 | mission_demand_links | reconciliação signal↔missão/item | id UUID | signal_id FK, mission_id FK, mission_item_id FK?, link_type(planned|operator_requested), created_at | UNIQUE(signal_id,mission_item_id) | via mission | — | (mission_id) | PLANNED |
+| operator_requests | evidência durável de pedido de operador (FS-C0.P1 §28) | id UUID | branch, work_center, op_order?, operation_seq?, product_code, unit, requested_qty NUMERIC, intent(anticipate|additional), candidate_signal_id?, reconciled_signal_id FK?, operator_ref JSONB{code,name}, reason?, status(received|reconciled|conflict|rejected|fulfilled), outcome_ref JSONB?, idempotency_key, correlation_id, requested_at, decided_at, created_at | dedupe por `idempotency_keys` (mesma convenção §10 — sem UNIQUE extra); FK→demand_signals | sim | — | (branch,work_center,product_code), (reconciled_signal_id), (requested_at) | PLANNED |
 | handoffs | custódia por item | id UUID | mission_item_id FK, direction(collection|delivery|return), from_actor_user_id, to_actor_user_id?, to_context, qty NUMERIC, unit, at, note | FK→items | via item→mission | — | (mission_item_id), (to_actor_user_id,at) | PLANNED |
 | erp_observations | evidência ERP por item | id UUID | mission_item_id FK, status enum, evidence_fingerprint, matched_ref JSONB?, confidence?, observed_at, source, payload_snapshot JSONB bounded | UNIQUE(mission_item_id, evidence_fingerprint) | via item | — | (mission_item_id,status) | PLANNED |
 | supply_events | auditoria append-only | id UUID | mission_id, item_id?, event_type, action, actor_user_id, actor_display_name, prev_state, new_state, qty_delta, reason, idempotency_key, request_id, correlation_id, created_at | — | via mission (denorm branch col para filtro) | — | (branch,created_at) cursor, (mission_id,created_at) | PLANNED |
@@ -665,7 +675,7 @@ Capacidades de serviço **nunca** expandem autoridade além do read-only ERP: n�
 | MFE factory-supply | factory-supply-api | HTTP/JSON `/apps/factory-supply-api/v1` | → | JWT usuário (Keycloak) | permissões factory-supply.* + filial server-side | KEY em comandos | BFF | envelope erro + codes | TARGET |
 | factory-supply-api | api-delpi | HTTP GET rotas §38 | → | Bearer propagado do usuário (PROVEN) | permissões api-delpi do usuário | GET retry limitado | api-delpi | 503→downstream_unavailable | TARGET |
 | factory-supply-api | PostgreSQL | driver/SQL schema factory_supply | → | credencial serviço (backend-only) | — | transação agregado | FS | transacional | TARGET |
-| Operator Cockpit | factory-supply-api | `request-material` source=cockpit | → (futuro) | JWT usuário operador | `access` + `.view.filial-*` | KEY cockpit | BFF | mesmo envelope | FUTURE |
+| production-control-api (BFF do Cockpit — superfície pública sem JWT usuário) | factory-supply-api | `POST /v1/operator-requests` | → (futuro) | **service identity**: `X-Delpi-Service-Token` + `X-Delpi-Caller-App` (sem `access`/`.view.filial-*` de usuário — não há usuário Keycloak; `operator_ref` declarado = dado de negócio) | validação de domínio FS (§28) | KEY cockpit | BFF | mesmo envelope | FUTURE |
 | factory-supply-api (jobs §40-B) | api-delpi | GETs §38 (`X-Delpi-Caller-App: factory-supply-api`) | → | `API_DELPI_INTERNAL_SERVICE_TOKEN` (identity `internal-service`, read-only surface) | proven shared-token S2S; sem permissões Core | GET retry limitado | api-delpi | 5xx→retry próximo tick; 401/403→falha técnica | PROVEN |
 | api-delpi | factory-supply-api (erros) | 401/403 downstream | ← | — | — | — | api-delpi | `downstream_access_denied` — nunca persiste evidência ERP | TARGET |
 | factory-supply | consumidor de notificações | evento derivado de supply_events | → (futuro) | plataforma | — | dedup natural | FS | fora do caminho síncrono | FUTURE_CONSUMER_EVENT |
