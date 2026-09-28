@@ -184,7 +184,8 @@ def test_get_returns_aggregate_revision_and_evidence_views():
     diagnostics.seed(d)
 
     ctx = get.execute(d.diagnostic_id)
-    assert ctx.diagnostic is d
+    assert ctx.diagnostic.diagnostic_id == d.diagnostic_id
+    assert ctx.diagnostic.revision_id == REV_A
     assert ctx.revision.revision_id == REV_A
     assert ctx.revision.versao_revisao == "v2.0.0"
     assert evidences.calls == [REV_A]  # single revision-scoped inventory
@@ -377,15 +378,26 @@ def test_list_one_diagnostic_summary_fields():
 
 
 def test_list_multiple_deterministic_order():
+    """Ordering is an Application contract — independent of repo order."""
     diagnostics, _, _, _, listing = _use_cases()
-    first = _diagnostic()
-    second = _diagnostic()
-    diagnostics.seed(first)
-    diagnostics.seed(second)
-    result = listing.execute(REV_A)
-    assert [i.diagnostic_id for i in result.items] == [
-        d.diagnostic_id
-        for d in diagnostics.list_by_revision(REV_A)
+    # Fake repo returns D3, D1, D2 (arbitrary persistence order).
+    for did in ("d-003", "d-001", "d-002"):
+        diagnostics.seed(
+            Diagnostic(
+                diagnostic_id=did,
+                revision_id=REV_A,
+                problem_statement=ProblemStatement(f"p {did}"),
+            )
+        )
+    first = listing.execute(REV_A)
+    second = listing.execute(REV_A)
+    assert [i.diagnostic_id for i in first.items] == [
+        "d-001",
+        "d-002",
+        "d-003",
+    ]
+    assert [i.diagnostic_id for i in second.items] == [
+        i.diagnostic_id for i in first.items
     ]
 
 
@@ -430,6 +442,110 @@ def test_read_does_not_mutate_aggregate_state():
     h_after = ctx.diagnostic.hypotheses[0]
     assert (h_after.lifecycle, h_after.effective_validation) == before[:2]
     assert ctx.diagnostic.version == before[2]
+
+
+# ---------------------------------------------------------------------------
+# Deep read-only contract (Prompt 3 correction)
+# ---------------------------------------------------------------------------
+
+
+# A — read surface exposes no aggregate mutation methods
+def test_read_view_has_no_mutation_methods():
+    diagnostics, _, _, get, _ = _use_cases()
+    d = _full_diagnostic()
+    diagnostics.seed(d)
+    view = get.execute(d.diagnostic_id).diagnostic
+    for method in (
+        "add_finding",
+        "add_hypothesis",
+        "add_causal_link",
+        "add_evidence_link",
+        "add_conclusion",
+        "validate_hypothesis",
+        "validate_conclusion",
+        "reject_hypothesis",
+        "reject_conclusion",
+        "supersede_hypothesis",
+        "supersede_conclusion",
+        "mark_hypothesis_stale_evidence",
+        "mark_hypothesis_revalidation_required",
+    ):
+        assert not hasattr(view, method), method
+
+
+# B — view collections are read-only tuples
+def test_read_view_collections_are_tuples():
+    diagnostics, _, _, get, _ = _use_cases()
+    d = _full_diagnostic()
+    diagnostics.seed(d)
+    view = get.execute(d.diagnostic_id).diagnostic
+    for collection in (
+        view.findings,
+        view.hypotheses,
+        view.causal_links,
+        view.evidence_links,
+        view.diagnostic_conclusions,
+    ):
+        assert isinstance(collection, tuple)
+        with pytest.raises(AttributeError):
+            collection.append(object())
+
+
+# C — view fields cannot be reassigned
+def test_read_view_fields_frozen():
+    diagnostics, _, _, get, _ = _use_cases()
+    d = _full_diagnostic()
+    diagnostics.seed(d)
+    view = get.execute(d.diagnostic_id).diagnostic
+    with pytest.raises(Exception):
+        view.version = 99
+    with pytest.raises(Exception):
+        view.problem_statement = ProblemStatement("outro")
+
+
+# D — mutating the source aggregate does not alter the returned snapshot
+def test_source_mutation_does_not_alias_snapshot():
+    diagnostics, _, _, get, _ = _use_cases()
+    d = _diagnostic(
+        hypotheses=[
+            Hypothesis(hypothesis_id=str(uuid4()), statement="h1")
+        ]
+    )
+    diagnostics.seed(d)
+    ctx = get.execute(d.diagnostic_id)
+    snapshot_h = ctx.diagnostic.hypotheses[0]
+    assert snapshot_h.lifecycle is ClaimLifecycle.DRAFT
+    assert len(ctx.diagnostic.findings) == 0
+
+    # consumer mutates the aggregate AFTER the read returned
+    d.validate_hypothesis(d.hypotheses[0].hypothesis_id)
+    d.add_finding(Finding(finding_id=str(uuid4()), statement="novo"))
+
+    # snapshot stays at read-time state
+    assert ctx.diagnostic.hypotheses[0].lifecycle is ClaimLifecycle.DRAFT
+    assert len(ctx.diagnostic.findings) == 0
+    # and it is a different object than the mutated entity
+    assert ctx.diagnostic.hypotheses[0] is not d.hypotheses[0]
+
+
+# E — persisted semantics preserved verbatim in the view
+def test_view_preserves_epistemic_lifecycle_effective():
+    diagnostics, _, _, get, _ = _use_cases()
+    h = Hypothesis(
+        hypothesis_id=str(uuid4()),
+        statement="h",
+        lifecycle=ClaimLifecycle.VALIDATED,
+        effective_validation=EffectiveValidation.STALE_EVIDENCE,
+    )
+    d = _diagnostic(hypotheses=[h])
+    diagnostics.seed(d)
+    view = get.execute(d.diagnostic_id).diagnostic
+    h_view = view.hypotheses[0]
+    assert h_view.epistemic_state is EpistemicState.INFERRED
+    assert h_view.lifecycle is ClaimLifecycle.VALIDATED
+    assert h_view.effective_validation is (
+        EffectiveValidation.STALE_EVIDENCE
+    )
 
 
 # ---------------------------------------------------------------------------

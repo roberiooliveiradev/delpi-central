@@ -12,7 +12,7 @@ Semantic errors carry stable codes (transport-agnostic):
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Any
 
 from tm_app.application.ports.evidence_reader_port import (
@@ -24,9 +24,16 @@ from tm_app.application.ports.revision_reader_port import (
     RevisionReaderPort,
 )
 from tm_app.domain.diagnostic.diagnostic import (
+    CausalLink,
     ClaimLifecycle,
     Diagnostic,
+    DiagnosticConclusion,
     EffectiveValidation,
+    EvidenceLink,
+    Finding,
+    Hypothesis,
+    ProblemStatement,
+    Provenance,
 )
 from tm_app.domain.ports.diagnostic_repository_port import (
     DiagnosticRepositoryPort,
@@ -89,10 +96,51 @@ class DiagnosticDataQuality:
 
 
 @dataclass(frozen=True)
-class DiagnosticReadContext:
-    """Aggregate + revision context + resolved evidence + quality."""
+class DiagnosticReadView:
+    """Immutable snapshot of the aggregate state — no mutation methods.
 
-    diagnostic: Diagnostic
+    Built from detached copies of the frozen domain entities so a later
+    aggregate transition (``object.__setattr__`` on claims) cannot alias
+    into an already-returned read model.
+    """
+
+    diagnostic_id: str
+    revision_id: str
+    problem_statement: ProblemStatement
+    version: int
+    provenance: Provenance | None
+    findings: tuple[Finding, ...]
+    hypotheses: tuple[Hypothesis, ...]
+    causal_links: tuple[CausalLink, ...]
+    evidence_links: tuple[EvidenceLink, ...]
+    diagnostic_conclusions: tuple[DiagnosticConclusion, ...]
+
+
+def _snapshot(diagnostic: Diagnostic) -> DiagnosticReadView:
+    """Detach read surface from the mutable aggregate root."""
+    return DiagnosticReadView(
+        diagnostic_id=diagnostic.diagnostic_id,
+        revision_id=diagnostic.revision_id,
+        problem_statement=diagnostic.problem_statement,
+        version=diagnostic.version,
+        provenance=diagnostic.provenance,
+        findings=tuple(replace(f) for f in diagnostic.findings),
+        hypotheses=tuple(replace(h) for h in diagnostic.hypotheses),
+        causal_links=tuple(replace(l) for l in diagnostic.causal_links),
+        evidence_links=tuple(
+            replace(l) for l in diagnostic.evidence_links
+        ),
+        diagnostic_conclusions=tuple(
+            replace(c) for c in diagnostic.diagnostic_conclusions
+        ),
+    )
+
+
+@dataclass(frozen=True)
+class DiagnosticReadContext:
+    """Aggregate snapshot + revision context + resolved evidence + quality."""
+
+    diagnostic: DiagnosticReadView
     revision: RevisionContext
     evidence_links: tuple[EvidenceLinkView, ...]
     data_quality: DiagnosticDataQuality
@@ -125,7 +173,7 @@ class DiagnosticListResult:
 # ---------------------------------------------------------------------------
 
 
-def _target_kind(diagnostic: Diagnostic, target_id: str) -> str | None:
+def _target_kind(diagnostic: DiagnosticReadView, target_id: str) -> str | None:
     """Classify a link target using only entities present in the aggregate."""
     kinds: list[str] = []
     if any(f.finding_id == target_id for f in diagnostic.findings):
@@ -144,7 +192,7 @@ def _target_kind(diagnostic: Diagnostic, target_id: str) -> str | None:
     return None  # ambiguous — reported via integrity signal
 
 
-def _target_is_ambiguous(diagnostic: Diagnostic, target_id: str) -> bool:
+def _target_is_ambiguous(diagnostic: DiagnosticReadView, target_id: str) -> bool:
     matches = sum(
         1
         for pred in (
@@ -164,7 +212,7 @@ def _target_is_ambiguous(diagnostic: Diagnostic, target_id: str) -> bool:
     return matches > 1
 
 
-def _attention_required(diagnostic: Diagnostic) -> bool:
+def _attention_required(diagnostic: DiagnosticReadView) -> bool:
     """Any VALIDATED claim whose current effective validation degraded."""
     for hypothesis in diagnostic.hypotheses:
         if (
@@ -208,25 +256,26 @@ class GetDiagnostic:
                 "diagnostic.not_found",
                 f"diagnostic {diagnostic_id} não encontrado.",
             )
+        view = _snapshot(diagnostic)
 
-        revision = self._revisions.get(diagnostic.revision_id)
+        revision = self._revisions.get(view.revision_id)
         if revision is None:
             _raise(
                 "diagnostic.revision_not_found",
-                f"revision {diagnostic.revision_id} do diagnostic "
+                f"revision {view.revision_id} do diagnostic "
                 f"{diagnostic_id} não resolveu.",
             )
 
         # One revision-scoped inventory — never per-link lookups.
         evidence_by_id = {
             e.evidence_id: e
-            for e in self._evidences.list_by_revision(diagnostic.revision_id)
+            for e in self._evidences.list_by_revision(view.revision_id)
         }
 
         signals: list[ReadSignal] = []
         views: list[EvidenceLinkView] = []
         unresolved: list[str] = []
-        for link in diagnostic.evidence_links:
+        for link in view.evidence_links:
             evidence = evidence_by_id.get(link.evidence_id)
             resolved = evidence is not None
             if not resolved:
@@ -237,13 +286,13 @@ class GetDiagnostic:
                         detail=(
                             f"EvidenceLink {link.link_id} → evidence "
                             f"{link.evidence_id} não resolve na revision "
-                            f"{diagnostic.revision_id}."
+                            f"{view.revision_id}."
                         ),
                     )
                 )
             target_kind: str | None = None
             if link.target_id is not None:
-                if _target_is_ambiguous(diagnostic, link.target_id):
+                if _target_is_ambiguous(view, link.target_id):
                     signals.append(
                         ReadSignal(
                             code="evidence_link_target_ambiguous",
@@ -255,7 +304,7 @@ class GetDiagnostic:
                         )
                     )
                 else:
-                    target_kind = _target_kind(diagnostic, link.target_id)
+                    target_kind = _target_kind(view, link.target_id)
             views.append(
                 EvidenceLinkView(
                     link_id=link.link_id,
@@ -268,7 +317,7 @@ class GetDiagnostic:
                 )
             )
 
-        if _attention_required(diagnostic):
+        if _attention_required(view):
             signals.append(
                 ReadSignal(
                     code="revalidation_attention_required",
@@ -280,7 +329,7 @@ class GetDiagnostic:
             )
 
         return DiagnosticReadContext(
-            diagnostic=diagnostic,
+            diagnostic=view,
             revision=revision,
             evidence_links=tuple(views),
             data_quality=DiagnosticDataQuality(
@@ -310,6 +359,9 @@ class ListDiagnosticsByRevision:
             )
 
         diagnostics = self._diagnostics.list_by_revision(revision_id)
+        # Canonical read ordering is defined HERE, not inherited from the
+        # repository implementation: diagnostic_id ASC is the smallest
+        # stable order available without adding fields to the domain.
         items = tuple(
             DiagnosticSummary(
                 diagnostic_id=d.diagnostic_id,
@@ -326,7 +378,9 @@ class ListDiagnosticsByRevision:
                 ),
                 revalidation_attention_required=_attention_required(d),
             )
-            for d in diagnostics
+            for d in sorted(
+                diagnostics, key=lambda x: x.diagnostic_id
+            )
         )
         return DiagnosticListResult(revision=revision, items=items)
 
@@ -338,6 +392,7 @@ __all__ = [
     "DiagnosticListResult",
     "DiagnosticReadContext",
     "DiagnosticReadError",
+    "DiagnosticReadView",
     "DiagnosticSummary",
     "EvidenceLinkView",
     "GetDiagnostic",
