@@ -33,7 +33,7 @@ Encapsulation rules (frozen by design):
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 from typing import Any
 
@@ -150,8 +150,12 @@ class ProblemStatement:
     text: str
 
     def __post_init__(self) -> None:
-        _require_non_empty(
-            self.text, "invalid_problem_statement", "problem_statement"
+        object.__setattr__(
+            self,
+            "text",
+            _require_non_empty(
+                self.text, "invalid_problem_statement", "problem_statement"
+            ),
         )
 
 
@@ -420,6 +424,13 @@ class Diagnostic:
             self._assert_evidence_link(link)
         for conclusion in self._diagnostic_conclusions:
             self._assert_conclusion_references(conclusion)
+            # A conclusion arriving already VALIDATED must satisfy the same
+            # effective root-cause invariant enforced at validate_conclusion.
+            if (
+                conclusion.lifecycle is ClaimLifecycle.VALIDATED
+                and conclusion.root_cause is not None
+            ):
+                self._assert_root_cause_effective(conclusion.root_cause)
         self._assert_single_effective_conclusion()
 
     # -- read-only views ------------------------------------------------------
@@ -520,6 +531,14 @@ class Diagnostic:
             _raise(
                 "duplicate_internal_identity",
                 f"hypothesis_id duplicado: {hypothesis.hypothesis_id}.",
+            )
+        # Materialized lifecycle cannot be injected: mutation enters as DRAFT
+        # and advances only through aggregate transitions. Historical states
+        # remain rehydratable via the aggregate constructor.
+        if hypothesis.lifecycle is not ClaimLifecycle.DRAFT:
+            _raise(
+                "invalid_lifecycle_transition",
+                "add_hypothesis aceita somente lifecycle DRAFT.",
             )
         self._hypotheses.append(hypothesis)
 
@@ -710,15 +729,14 @@ class Diagnostic:
                 "duplicate_internal_identity",
                 f"conclusion_id duplicado: {conclusion.conclusion_id}.",
             )
-        self._assert_conclusion_references(conclusion)
-        if (
-            conclusion.lifecycle is ClaimLifecycle.VALIDATED
-            and self._validated_conclusion_count() > 0
-        ):
+        # Same anti-injection rule as hypotheses: only DRAFT conclusions may
+        # be added; materialized states arrive via constructor rehydration.
+        if conclusion.lifecycle is not ClaimLifecycle.DRAFT:
             _raise(
-                "effective_conclusion_conflict",
-                "já existe conclusão VALIDATED neste diagnostic.",
+                "invalid_lifecycle_transition",
+                "add_conclusion aceita somente lifecycle DRAFT.",
             )
+        self._assert_conclusion_references(conclusion)
         self._diagnostic_conclusions.append(conclusion)
 
     def _require_conclusion(

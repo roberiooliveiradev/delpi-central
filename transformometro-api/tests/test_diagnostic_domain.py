@@ -567,3 +567,120 @@ def test_root_cause_must_be_subset_of_conclusion_hypotheses():
                 root_cause=RootCauseDesignation(hypothesis_id="h2"),
             )
         )
+
+
+# ---------------------------------------------------------------------------
+# Final hardening — lifecycle injection via add_*
+# ---------------------------------------------------------------------------
+
+
+def test_add_hypothesis_blocks_lifecycle_injection():
+    d = _diagnostic()
+    for state in (
+        ClaimLifecycle.VALIDATED,
+        ClaimLifecycle.REJECTED,
+        ClaimLifecycle.SUPERSEDED,
+    ):
+        with pytest.raises(
+            DiagnosticError, match="invalid_lifecycle_transition"
+        ):
+            d.add_hypothesis(_hypothesis("h1", lifecycle=state))
+
+
+def test_add_conclusion_blocks_lifecycle_injection():
+    d = _diagnostic()
+    for state in (
+        ClaimLifecycle.VALIDATED,
+        ClaimLifecycle.REJECTED,
+        ClaimLifecycle.SUPERSEDED,
+    ):
+        with pytest.raises(
+            DiagnosticError, match="invalid_lifecycle_transition"
+        ):
+            d.add_conclusion(_conclusion("c1", lifecycle=state))
+
+
+def test_rehydrate_validated_hypothesis_remains_valid():
+    d = _diagnostic(
+        hypotheses=[_hypothesis("h1", lifecycle=ClaimLifecycle.VALIDATED)]
+    )
+    assert d.hypotheses[0].lifecycle is ClaimLifecycle.VALIDATED
+
+
+def test_rehydrate_validated_conclusion_without_root_cause():
+    d = _diagnostic(
+        diagnostic_conclusions=[
+            _conclusion("c1", lifecycle=ClaimLifecycle.VALIDATED)
+        ]
+    )
+    assert d.diagnostic_conclusions[0].lifecycle is ClaimLifecycle.VALIDATED
+
+
+def test_rehydrate_validated_conclusion_with_draft_root_cause_fails():
+    with pytest.raises(
+        DiagnosticError, match="invalid_root_cause_designation"
+    ):
+        _diagnostic(
+            hypotheses=[_hypothesis("h1", lifecycle=ClaimLifecycle.DRAFT)],
+            diagnostic_conclusions=[
+                _conclusion(
+                    "c1",
+                    lifecycle=ClaimLifecycle.VALIDATED,
+                    hypothesis_ids=("h1",),
+                    root_cause=RootCauseDesignation(hypothesis_id="h1"),
+                )
+            ],
+        )
+
+
+def test_rehydrate_validated_conclusion_with_stale_root_cause_fails():
+    with pytest.raises(
+        DiagnosticError, match="invalid_root_cause_designation"
+    ):
+        _diagnostic(
+            hypotheses=[
+                _hypothesis(
+                    "h1",
+                    lifecycle=ClaimLifecycle.VALIDATED,
+                    effective_validation=EffectiveValidation.STALE_EVIDENCE,
+                )
+            ],
+            diagnostic_conclusions=[
+                _conclusion(
+                    "c1",
+                    lifecycle=ClaimLifecycle.VALIDATED,
+                    hypothesis_ids=("h1",),
+                    root_cause=RootCauseDesignation(hypothesis_id="h1"),
+                )
+            ],
+        )
+
+
+def test_rehydrate_validated_conclusion_with_valid_root_cause():
+    d = _diagnostic(
+        hypotheses=[
+            _hypothesis(
+                "h1",
+                lifecycle=ClaimLifecycle.VALIDATED,
+                effective_validation=EffectiveValidation.CURRENT,
+            )
+        ],
+        diagnostic_conclusions=[
+            _conclusion(
+                "c1",
+                lifecycle=ClaimLifecycle.VALIDATED,
+                hypothesis_ids=("h1",),
+                root_cause=RootCauseDesignation(hypothesis_id="h1"),
+            )
+        ],
+    )
+    assert d.diagnostic_conclusions[0].root_cause.hypothesis_id == "h1"
+
+
+def test_problem_statement_trim_normalization():
+    assert ProblemStatement(text="  NC  ").text == "NC"
+
+
+def test_problem_statement_blank_remains_invalid():
+    with pytest.raises(DiagnosticError, match="invalid_problem_statement"):
+        ProblemStatement(text="   ")
