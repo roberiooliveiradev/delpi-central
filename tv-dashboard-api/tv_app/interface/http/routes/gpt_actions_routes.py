@@ -73,6 +73,16 @@ class DataPreviewBody(BaseModel):
     previewOptions: dict[str, Any] | None = None
 
 
+class DataModelPreviewBody(BaseModel):
+    modelId: str | None = None
+    model: dict[str, Any] | None = None
+    nativeConfig: dict[str, Any] | None = None
+    playlistId: str | None = None
+    slideId: str | None = None
+    playlistDefaults: dict[str, Any] | None = None
+    forceRefresh: bool = False
+
+
 def _correlation_id(request: Request) -> str:
     return correlation_id_from_request(request)
 
@@ -272,6 +282,20 @@ def preview_data_block(request: Request, body: DataPreviewBody):
     cid = _correlation_id(request)
     try:
         data = _dispatch.preview_data_block(
+            user=resolve_user(request),
+            body=body.model_dump(),
+            authorization=request.headers.get("Authorization"),
+        )
+        return ok(data)
+    except Exception as exc:  # noqa: BLE001
+        return _handle(exc, correlation_id=cid)
+
+
+@router.post("/data-model-preview")
+def preview_data_model(request: Request, body: DataModelPreviewBody):
+    cid = _correlation_id(request)
+    try:
+        data = _dispatch.preview_data_model(
             user=resolve_user(request),
             body=body.model_dump(),
             authorization=request.headers.get("Authorization"),

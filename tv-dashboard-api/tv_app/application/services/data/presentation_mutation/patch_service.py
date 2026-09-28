@@ -134,6 +134,23 @@ def _blocks_of(cfg: dict[str, Any]) -> list[dict[str, Any]]:
     return [b for b in raw if isinstance(b, dict)]
 
 
+def _cfg_has_model_consumer(cfg: dict[str, Any], model_id: str) -> bool:
+    """True se algum bloco (visual/célula) referencia ``modelId``."""
+
+    def _walk(node: Any) -> bool:
+        if isinstance(node, dict):
+            for key, value in node.items():
+                if key == "modelId" and str(value or "") == model_id:
+                    return True
+                if _walk(value):
+                    return True
+        elif isinstance(node, list):
+            return any(_walk(item) for item in node)
+        return False
+
+    return _walk(_blocks_of(cfg))
+
+
 def _find_block(blocks: list[dict[str, Any]], block_id: str) -> dict[str, Any] | None:
     for block in blocks:
         if str(block.get("id") or "") == block_id:
@@ -355,6 +372,9 @@ _NATIVE_OP_NAMES = frozenset(
         "duplicate_blocks",
         "transform_text_case",
         "bump_font_size",
+        # DM1 — DataModel é objeto lógico em nativeConfig.dataModels (não-block).
+        "upsert_data_model",
+        "delete_data_model",
     }
 )
 
@@ -863,6 +883,12 @@ class PresentationPatchService:
                     removed_block_ids.append(removed)
             elif op_name == "bind_visual":
                 self._op_bind_visual(native_config, raw_op)
+            elif op_name == "upsert_data_model":
+                self._op_upsert_data_model(
+                    native_config, raw_op, playlist_defaults=playlist_defaults
+                )
+            elif op_name == "delete_data_model":
+                self._op_delete_data_model(native_config, raw_op)
             elif op_name == "patch_native_config":
                 self._op_patch_native_config(native_config, raw_op)
             elif op_name == "ensure_brand_logo_on_slide":
@@ -1148,6 +1174,8 @@ class PresentationPatchService:
             "re_layer_playlist_filters",
             "add_slide_from_preset",
             "apply_published_slide_template",
+            # DM1 — modelo novo/substituído precisa executar antes do proposal.
+            "upsert_data_model",
         }
     )
 
@@ -1209,7 +1237,12 @@ class PresentationPatchService:
             for b in cfg_blocks
             if isinstance(b, dict) and str(b.get("type") or "") == "data_source"
         }
-        if not ds_ids:
+        models = (
+            [m for m in cfg.get("dataModels") if isinstance(m, dict)]
+            if isinstance(cfg.get("dataModels"), list)
+            else []
+        )
+        if not ds_ids and not models:
             return
         touched: set[str] = set()
         validate_all = False
@@ -1230,7 +1263,19 @@ class PresentationPatchService:
                 validate_all = True
                 continue
             touched.update(ids)
-        if not validate_all and not (touched & ds_ids):
+        models_touched = validate_all or any(
+            str(op.get("op") or "").strip() == "upsert_data_model"
+            for op in touching_ops
+        )
+        if models and models_touched:
+            self._validate_candidate_models(
+                cfg,
+                models,
+                user=user,
+                authorization=authorization,
+                playlist_defaults=playlist_defaults,
+            )
+        if not ds_ids or (not validate_all and not (touched & ds_ids)):
             return  # ops de dados apontam para outros slides
         scope = ds_ids if validate_all else touched
         graph = MQueryDependencyService().resolve(cfg_blocks)
@@ -1340,6 +1385,209 @@ class PresentationPatchService:
                 code=code,
                 details=details,
             )
+
+    def _validate_candidate_models(
+        self,
+        cfg: dict[str, Any],
+        models: list[dict[str, Any]],
+        *,
+        user: Any,
+        authorization: str | None,
+        playlist_defaults: dict[str, Any] | None,
+    ) -> None:
+        """Executa os DataModels do candidate; falha tipada impede o proposal."""
+        try:
+            resolved_map = self._resolution.enrich_data_models(
+                models,
+                cfg=cfg,
+                authorization=authorization,
+                playlist_defaults=playlist_defaults,
+                user=user,
+            )
+        except Exception as exc:  # noqa: BLE001 — propaga como erro de gate
+            raise PresentationPatchError(
+                str(exc) or "Execução de dados do candidate falhou.",
+                code="DATA_EXECUTION_FAILED",
+                details={"stage": "data_execution"},
+            ) from exc
+        failures: list[tuple[str, dict[str, Any]]] = [
+            (model_id, resolved)
+            for model_id, resolved in resolved_map.items()
+            if isinstance(resolved, dict)
+            and (
+                isinstance(resolved.get("transformError"), dict)
+                or str(resolved.get("error") or "").strip()
+            )
+        ]
+        if not failures:
+            return
+        model_id, resolved = next(
+            (
+                item
+                for item in failures
+                if str(
+                    ((item[1].get("transformError") or {}).get("code")) or ""
+                ).startswith("m.")
+            ),
+            failures[0],
+        )
+        transform_error = (
+            resolved.get("transformError")
+            if isinstance(resolved.get("transformError"), dict)
+            else {}
+        )
+        code = str(transform_error.get("code") or "data.fetch_failed")
+        details: dict[str, Any] = {
+            "stage": "data_execution",
+            "modelId": model_id,
+            "errorCode": code,
+        }
+        if resolved.get("dataModelInputId"):
+            details["inputId"] = resolved["dataModelInputId"]
+        if transform_error.get("stepName"):
+            details["stepName"] = transform_error["stepName"]
+        if transform_error.get("column"):
+            details["column"] = transform_error["column"]
+        if transform_error.get("availableColumns"):
+            details["availableColumns"] = list(transform_error["availableColumns"])
+        raise PresentationPatchError(
+            str(
+                transform_error.get("message")
+                or resolved.get("error")
+                or "Execução de dados do candidate falhou."
+            ),
+            code=code,
+            details=details,
+        )
+
+    def _op_upsert_data_model(
+        self,
+        cfg: dict[str, Any],
+        op: dict[str, Any],
+        *,
+        playlist_defaults: dict[str, Any] | None = None,
+    ) -> None:
+        from tv_app.application.services.data.data_model_service import (
+            DataModelContractError,
+            normalize_data_model,
+        )
+        from tv_app.application.services.data.ready_slide_quality_service import (
+            ReadySlideQualityService,
+        )
+
+        raw_model = op.get("model")
+        if not isinstance(raw_model, dict):
+            raise PresentationPatchError(
+                "model é obrigatório para upsert_data_model.",
+                code="data_model.contract_invalid",
+                details={"field": "model"},
+            )
+        model_draft = dict(raw_model)
+        # Mesma hidratação de params de upsert_data_source: defaults de
+        # playlist/route preenchem o input antes da validação/persistência.
+        inputs = model_draft.get("inputs")
+        if isinstance(inputs, list):
+            hydrated_inputs: list[dict[str, Any]] = []
+            slide_filters = (
+                cfg.get("dataFilters")
+                if isinstance(cfg.get("dataFilters"), dict)
+                else None
+            )
+            for item in inputs:
+                if not isinstance(item, dict):
+                    hydrated_inputs.append(item)
+                    continue
+                row = dict(item)
+                operation_id = str(row.get("operationId") or "").strip()
+                route = self._catalog.get_route(operation_id) if operation_id else None
+                if isinstance(route, dict):
+                    params = (
+                        dict(row["params"])
+                        if isinstance(row.get("params"), dict)
+                        else {}
+                    )
+                    params = ReadySlideQualityService.enrich_data_source_params(
+                        route, params, playlist_defaults=playlist_defaults
+                    )
+                    try:
+                        ReadySlideQualityService.assert_data_source_params_ready(
+                            route,
+                            params,
+                            playlist_defaults=playlist_defaults,
+                            slide_filters=slide_filters,
+                        )
+                    except ValueError as exc:
+                        raise PresentationPatchError(str(exc)) from exc
+                    row["params"] = params
+                hydrated_inputs.append(row)
+            model_draft["inputs"] = hydrated_inputs
+        try:
+            model = normalize_data_model(
+                model_draft,
+                catalog=self._catalog,
+                sanitize_transform=self._sanitize_vista_data_transform,
+                generate_id=True,
+            )
+        except DataModelContractError as exc:
+            raise PresentationPatchError(
+                str(exc), code=exc.code, details=dict(exc.details)
+            ) from exc
+        model_id = str(model["id"])
+        # modelId e block.id vivem no mesmo documento; ids são namespaces
+        # distintos e não podem colidir (binding dual-read depende disso).
+        if any(
+            isinstance(b, dict) and str(b.get("id") or "") == model_id
+            for b in _blocks_of(cfg)
+        ):
+            raise PresentationPatchError(
+                f'O id "{model_id}" já é usado por um bloco do slide.',
+                code="data_model.contract_invalid",
+                details={"modelId": model_id},
+            )
+        models = cfg.get("dataModels")
+        if not isinstance(models, list):
+            models = []
+            cfg["dataModels"] = models
+        for index, existing in enumerate(models):
+            if (
+                isinstance(existing, dict)
+                and str(existing.get("id") or "") == model_id
+            ):
+                models[index] = model
+                return
+        models.append(model)
+
+    def _op_delete_data_model(self, cfg: dict[str, Any], op: dict[str, Any]) -> None:
+        from tv_app.application.services.data.data_model_service import (
+            MODEL_IN_USE,
+            find_data_model,
+        )
+
+        model_id = str(op.get("modelId") or "").strip()
+        if not model_id:
+            raise PresentationPatchError(
+                "modelId é obrigatório para delete_data_model.",
+                code="data_model.contract_invalid",
+                details={"field": "modelId"},
+            )
+        models = cfg.get("dataModels")
+        if not isinstance(models, list) or find_data_model(cfg, model_id) is None:
+            raise PresentationPatchError(
+                f'DataModel "{model_id}" não encontrado no slide.',
+                code="data_model.not_found",
+                details={"modelId": model_id},
+            )
+        if _cfg_has_model_consumer(cfg, model_id):
+            raise PresentationPatchError(
+                f'DataModel "{model_id}" está ligado a um ou mais visuais.',
+                code=MODEL_IN_USE,
+                details={"modelId": model_id},
+            )
+        cfg["dataModels"] = [
+            model
+            for model in models
+            if not (isinstance(model, dict) and str(model.get("id") or "") == model_id)
+        ]
 
     @staticmethod
     def _merge_dependency_ref(block: dict[str, Any]) -> str | None:
@@ -1606,6 +1854,10 @@ class PresentationPatchService:
         prior_op = str(prior.get("operationId") or "").strip()
         # Same route + label only (optional operationId echo) still label-only.
         return bool(prior_op) and prior_op == op_id
+
+    def sanitize_vista_data_transform(self, raw: dict[str, Any]) -> dict[str, Any]:
+        """Validator canônico público de TransformPlan (usado por DataModel)."""
+        return self._sanitize_vista_data_transform(raw)
 
     def _sanitize_vista_data_transform(self, raw: dict[str, Any]) -> dict[str, Any]:
         if (

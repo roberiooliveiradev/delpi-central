@@ -369,6 +369,7 @@
     "suggestNeedPreset": "Informe o presetKey do catálogo de slides (ex.: production_oee_overview).",
     "suggestNeedSection": "Informe ou selecione a seção alvo.",
     "suggestNeedDataSource": "Selecione a fonte de dados no slide ou informe o dataSourceId.",
+    "suggestNeedDataModel": "Informe o modelId do DataModel.",
     "suggestNeedDataSourceLabel": "Informe o dataSourceId da fonte e o novo nome entre aspas (ex.: renomeie a fonte \"WEG SC · setembro 2025\" para \"WEG SC · setembro ano passado\").",
     "suggestNeedQuotedTitle": "Informe o novo nome entre aspas (ex.: renomeie o slide \"Manhã\").",
     "suggestNeedReorder": "Para reordenar, descreva a ordem desejada ou use o filmstrip; o Copiloto precisa dos ids dos slides.",
@@ -405,6 +406,7 @@
     "presetKey": "suggestNeedPreset",
     "sectionId": "suggestNeedSection",
     "dataSourceId": "suggestNeedDataSource",
+    "modelId": "suggestNeedDataModel",
     "sourceLabel": "suggestNeedDataSourceLabel",
     "quoted": "suggestNeedQuotedTitle",
     "transformStepsJson": "suggestNeedTransformSteps",
@@ -447,7 +449,8 @@
     "patch_native_config.background": "suggestNeedColor",
     "update_slide.title": "suggestNeedQuotedTitle",
     "set_data_transform.steps": "suggestNeedTransformSteps",
-    "set_data_transform.blockId": "suggestNeedDataSource"
+    "set_data_transform.blockId": "suggestNeedDataSource",
+    "delete_data_model.modelId": "suggestNeedDataModel"
   },
   "recognition": {
     "fuzzyThreshold": 0.8,
@@ -3187,6 +3190,182 @@
           }
         }
       }
+    },
+    "upsert_data_model": {
+      "requiresPlaylist": true,
+      "requiresSlide": true,
+      "risk": "mutation",
+      "confirmationPolicy": "direct",
+      "sideEffectHints": [
+        "replaceNativeConfig"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "op",
+          "model"
+        ],
+        "example": {
+          "op": "upsert_data_model",
+          "model": {
+            "id": "mdl_demo",
+            "primaryInputId": "current",
+            "inputs": [
+              {
+                "id": "previous",
+                "operationId": "get_commercial_rol_summary",
+                "params": {
+                  "dateRangePreset": "same_period_previous_year"
+                }
+              },
+              {
+                "id": "current",
+                "operationId": "get_commercial_rol_summary",
+                "params": {
+                  "dateRangePreset": "this_year"
+                }
+              }
+            ],
+            "transform": {
+              "version": 1,
+              "steps": [
+                {
+                  "op": "merge",
+                  "sourceId": "previous",
+                  "leftKey": "join_key",
+                  "rightKey": "join_key"
+                }
+              ]
+            }
+          }
+        },
+        "properties": {
+          "op": {
+            "const": "upsert_data_model"
+          },
+          "model": {
+            "type": "object",
+            "required": [
+              "inputs",
+              "primaryInputId"
+            ],
+            "description": "DataModel (DM0 contract): non-visual logical model persisted in nativeConfig.dataModels[]. inputs embed sources; merge.sourceId references input.id of the same model.",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Stable model id; omit to generate (mdl_*)."
+              },
+              "label": {
+                "type": "string"
+              },
+              "primaryInputId": {
+                "type": "string"
+              },
+              "inputs": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "operationId"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "queryName": {
+                      "type": "string"
+                    },
+                    "operationId": {
+                      "type": "string"
+                    },
+                    "params": {
+                      "type": "object",
+                      "description": "Route params as a primitive map.",
+                      "additionalProperties": {
+                        "oneOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "integer"
+                          },
+                          {
+                            "type": "boolean"
+                          }
+                        ]
+                      }
+                    },
+                    "transform": {
+                      "type": "object",
+                      "nullable": true,
+                      "x-delpi-gpt-opaque-object": true,
+                      "properties": {},
+                      "description": "TransformPlan v1 {version, steps}; same step contract as set_data_transform.steps."
+                    }
+                  }
+                }
+              },
+              "transform": {
+                "type": "object",
+                "nullable": true,
+                "x-delpi-gpt-opaque-object": true,
+                "properties": {},
+                "description": "TransformPlan v1 {version, steps}; same step contract as set_data_transform.steps."
+              },
+              "fieldLabels": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "produces": [
+        "dataModel"
+      ],
+      "consumes": [
+        "playlist",
+        "slide"
+      ]
+    },
+    "delete_data_model": {
+      "requiresPlaylist": true,
+      "requiresSlide": true,
+      "risk": "mutation",
+      "confirmationPolicy": "direct",
+      "sideEffectHints": [
+        "replaceNativeConfig"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "op",
+          "modelId"
+        ],
+        "properties": {
+          "op": {
+            "const": "delete_data_model"
+          },
+          "modelId": {
+            "type": "string"
+          }
+        }
+      },
+      "produces": [],
+      "consumes": [
+        "playlist",
+        "slide"
+      ]
     }
   },
   "capabilities": [
@@ -3773,6 +3952,38 @@
       "payloadTemplate": {
         "op": "delete_block",
         "blockId": "{{selectedBlockId}}"
+      }
+    },
+    {
+      "key": "upsert_data_model",
+      "op": "upsert_data_model",
+      "whenToUse": "Criar/substituir DataModel (modelo lógico) do slide.",
+      "contentMarkers": [
+        "modelo de dados",
+        "data model"
+      ],
+      "actionTermSet": "create",
+      "payloadTemplate": {
+        "op": "upsert_data_model",
+        "model": {
+          "id": "{{newModelId}}",
+          "inputs": []
+        }
+      }
+    },
+    {
+      "key": "delete_data_model",
+      "op": "delete_data_model",
+      "whenToUse": "Remover DataModel do slide pelo modelId.",
+      "contentMarkers": [
+        "modelo de dados",
+        "data model"
+      ],
+      "actionTermSet": "mutation",
+      "clarificationMessageKey": "suggestNeedDataModel",
+      "payloadTemplate": {
+        "op": "delete_data_model",
+        "modelId": "{{modelId}}"
       }
     },
     {

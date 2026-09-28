@@ -443,6 +443,47 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
         },
     }
 
+    data_model_preview_schema = {
+        "type": "object",
+        "properties": {
+            "modelId": {
+                "type": "string",
+                "description": (
+                    "Persisted DataModel id inside playlistId+slideId (or "
+                    "nativeConfig) context."
+                ),
+            },
+            "model": _opaque_object_schema(
+                description=(
+                    "Candidate DataModel definition (DM0 contract: id/label/"
+                    "primaryInputId/inputs[]/transform). Previewed without "
+                    "persisting; merge.sourceId references input.id."
+                )
+            ),
+            "nativeConfig": _opaque_object_schema(
+                description=(
+                    "Candidate slide config providing dataModels[] context. "
+                    "Inline model is upserted by id inside this context."
+                )
+            ),
+            "playlistId": {
+                "type": "string",
+                "description": (
+                    "Authoritative context: loads the persisted playlist "
+                    "(dataDefaults) and, with slideId, the slide nativeConfig."
+                ),
+            },
+            "slideId": {
+                "type": "string",
+                "description": "With playlistId: resolve the model inside the persisted slide.",
+            },
+            "playlistDefaults": _opaque_object_schema(
+                description="Optional playlist dataDefaults blob for dry-run."
+            ),
+            "forceRefresh": {"type": "boolean"},
+        },
+    }
+
     suggest_schema = {
         "type": "object",
         "required": ["message"],
@@ -731,6 +772,30 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                     },
                 ),
                 "responses": {"200": _ok_response("Block preview"), **_error_responses()},
+            }
+        },
+        f"{base}/data-model-preview": {
+            "post": {
+                "operationId": "gpt_preview_data_model",
+                "summary": "Preview a DataModel without persisting",
+                "description": (
+                    "Executes a persisted (modelId) or candidate (model) "
+                    "DataModel through the canonical resolver: inputs fetch, "
+                    "per-input transforms, model transform, merge/dependency "
+                    "DAG. Returns resolved output, dynamic outputSchema, "
+                    "runtimeErrors/transformError and dependencyStatus."
+                ),
+                "tags": [tag],
+                "security": [{"BearerAuth": []}],
+                "requestBody": _json_body(
+                    data_model_preview_schema,
+                    example={
+                        "playlistId": "uuid",
+                        "slideId": "uuid",
+                        "modelId": "mdl_rol_delta",
+                    },
+                ),
+                "responses": {"200": _ok_response("DataModel preview"), **_error_responses()},
             }
         },
         f"{base}/changes/suggest": {

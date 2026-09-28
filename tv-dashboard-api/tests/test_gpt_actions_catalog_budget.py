@@ -151,9 +151,9 @@ def test_design_intelligence_catalog_authority_survives_compaction():
     assert utf8_size(design) <= utf8_size(raw) + 64
 
 
-def test_catalog_keeps_eight_actions_and_core_mutation_ops():
+def test_catalog_keeps_nine_actions_and_core_mutation_ops():
     doc = _catalog_document()
-    assert len(GPT_ACTIONS_OPERATION_IDS) == 8
+    assert len(GPT_ACTIONS_OPERATION_IDS) == 9
     assert "re_layer_playlist_filters" in (doc.get("operations") or {})
     directives = doc["capability_surface"]["agent_directives"]
     assert directives["object_resolution"]["principle"] == "ALTER_EXISTING_BEFORE_CREATE"

@@ -122,6 +122,34 @@ class TvDataPreviewService:
             set_cached_preview(cache_key, selected)
         return selected
 
+    def preview_data_model(
+        self,
+        model: dict[str, Any],
+        *,
+        native_config: dict[str, Any],
+        authorization: str | None = None,
+        user: Any | None = None,
+        playlist_defaults: dict[str, Any] | None = None,
+        force_refresh: bool = False,
+    ) -> dict[str, Any]:
+        """Preview de DataModel — mesmo resolver do enrichment (sem persistir)."""
+        resolved_map = self._resolution.enrich_data_models(
+            [model],
+            cfg=native_config,
+            authorization=authorization,
+            playlist_defaults=playlist_defaults,
+            user=user,
+            force_refresh=force_refresh,
+        )
+        model_id = str(model.get("id") or "")
+        resolved = resolved_map.get(model_id)
+        if isinstance(resolved, dict):
+            return resolved
+        return next(
+            (r for r in resolved_map.values() if isinstance(r, dict)),
+            {"error": "Modelo não resolvido."},
+        )
+
     @staticmethod
     def _attach_linked_resolved_for_editor(
         selected: dict[str, Any],

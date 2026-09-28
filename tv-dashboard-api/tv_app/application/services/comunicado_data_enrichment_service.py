@@ -1217,41 +1217,13 @@ class ComunicadoDataEnrichmentService:
         slide_filters = cfg.get("dataFilters") if isinstance(cfg.get("dataFilters"), dict) else {}
         # Preview isola um data_source em `blocks`, mas inputs vivem no slide (`cfg.blocks`).
         context_blocks = self._filter_context_blocks(blocks, cfg)
-        schema_by_source_id: dict[str, dict[str, Any]] = {}
-        slide_schemas: list[dict[str, Any]] = []
-        for block in context_blocks:
-            if str(block.get("type") or "") not in DATA_BLOCK_TYPES:
-                continue
-            binding = block.get("dataBinding")
-            if not isinstance(binding, dict):
-                continue
-            operation_id = str(binding.get("operationId") or "").strip()
-            route = self._catalog.get_route(operation_id) if operation_id else None
-            schema = (
-                route.get("paramSchema")
-                if isinstance(route, dict) and isinstance(route.get("paramSchema"), dict)
-                else {}
-            )
-            source_id = str(block.get("id") or "")
-            if source_id:
-                schema_by_source_id[source_id] = schema
-            if schema:
-                slide_schemas.append(schema)
-
-        contributions = collect_input_filter_contributions(
-            context_blocks,
-            runtime_overrides=filter_overrides,
-            schema_by_source_id=schema_by_source_id,
-            slide_schemas=slide_schemas,
+        ctx = self._slide_param_context(
+            context_blocks, filter_overrides=filter_overrides
         )
-        slide_input_contrib = (
-            contributions.get("slide") if isinstance(contributions.get("slide"), dict) else {}
-        )
-        by_source = (
-            contributions.get("bySourceId")
-            if isinstance(contributions.get("bySourceId"), dict)
-            else {}
-        )
+        schema_by_source_id = ctx["schema_by_source_id"]
+        slide_schemas = ctx["slide_schemas"]
+        slide_input_contrib = ctx["slide_input_contrib"]
+        by_source = ctx["by_source"]
 
         graph = MQueryDependencyService().resolve(
             blocks,
@@ -1449,9 +1421,287 @@ class ComunicadoDataEnrichmentService:
             else block
             for block in blocks
         ]
+        model_resolved = self.enrich_data_models(
+            cfg.get("dataModels") if isinstance(cfg.get("dataModels"), list) else [],
+            cfg=cfg,
+            authorization=authorization,
+            playlist_defaults=playlist_defaults,
+            user=user,
+            force_refresh=force_refresh,
+            preview_options=preview_options,
+            request_memo=request_memo,
+            _slide_ctx=ctx,
+        )
         # Always stamp text presentation (static textCase → display*) even without
         # dataSource — otherwise unbound heading/text paint raw content forever.
-        return self._stamp_text_presentation(self._link_view_blocks_to_sources(restored))
+        return self._stamp_text_presentation(
+            self._link_view_blocks_to_sources(restored, model_resolved=model_resolved)
+        )
+
+    def enrich_data_models(
+        self,
+        models: list[dict[str, Any]],
+        *,
+        cfg: dict[str, Any],
+        authorization: str | None = None,
+        playlist_defaults: dict[str, Any] | None = None,
+        user: Any | None = None,
+        force_refresh: bool = False,
+        request_memo: dict[str, dict[str, Any]] | None = None,
+        preview_options: dict[str, Any] | None = None,
+        _slide_ctx: dict[str, Any] | None = None,
+    ) -> dict[str, dict[str, Any]]:
+        """Executa DataModels de ``nativeConfig.dataModels[]`` → resolved por modelId.
+
+        Cada modelo é um grafo fechado (merge.sourceId → input do próprio
+        modelo, contrato DM1); a projeção em nós data_source sintéticos
+        reutiliza DAG, fetch, AuthZ, transforms e erros tipados existentes.
+        """
+        from tv_app.application.services.data.data_model_service import (
+            DataModelContractError,
+            data_model_source_blocks,
+            normalize_data_model,
+        )
+
+        if _slide_ctx is not None:
+            ctx = _slide_ctx
+        else:
+            context_blocks = [
+                block
+                for block in (cfg.get("blocks") or [])
+                if isinstance(block, dict)
+            ]
+            ctx = self._slide_param_context(context_blocks, filter_overrides=None)
+        slide_filters = (
+            cfg.get("dataFilters") if isinstance(cfg.get("dataFilters"), dict) else {}
+        )
+        slide_input_contrib = ctx["slide_input_contrib"]
+        memo = request_memo if request_memo is not None else {}
+        enrich_kwargs: dict[str, Any] = {
+            "slide_filters": slide_filters,
+            "playlist_defaults": playlist_defaults,
+            "authorization": authorization,
+            "user": user,
+            "force_refresh": force_refresh,
+            "request_memo": memo,
+        }
+
+        resolved_by_model: dict[str, dict[str, Any]] = {}
+        for model in models:
+            if not isinstance(model, dict):
+                continue
+            model_id = str(model.get("id") or "").strip()
+            resolved_key = model_id or "?"
+            try:
+                normalized = normalize_data_model(model)
+                nodes, primary_id = data_model_source_blocks(normalized)
+            except DataModelContractError as exc:
+                resolved_by_model[resolved_key] = self._model_error_resolved(
+                    str(exc), code=exc.code, model_id=model_id
+                )
+                continue
+
+            graph = MQueryDependencyService().resolve(nodes)
+            if not graph.valid:
+                first = next(
+                    item
+                    for item in graph.diagnostics
+                    if item.get("severity") == "error"
+                )
+                resolved_by_model[model_id] = self._model_error_resolved(
+                    str(first.get("message") or "Consulta inválida."),
+                    code=str(first.get("code") or ""),
+                    model_id=model_id,
+                )
+                continue
+
+            graph_nodes = {node.source_id: node for node in graph.nodes}
+            # Mesma pré-autorização do DAG de blocos: input não autorizado
+            # nunca entra no ambiente de execução dos dependentes.
+            denied: tuple[str, str] | None = None
+            for source_id in graph.ordered_source_ids:
+                binding = graph_nodes[source_id].block.get("dataBinding")
+                operation_id = (
+                    str(binding.get("operationId") or "").strip()
+                    if isinstance(binding, dict)
+                    else ""
+                )
+                route = self._catalog.get_route(operation_id) if operation_id else None
+                if (
+                    not operation_id
+                    or not self._catalog.is_allowed(operation_id)
+                    or route is None
+                ):
+                    denied = (source_id, "Indicador indisponível")
+                    break
+                merged = merge_data_params(
+                    playlist_defaults=playlist_defaults,
+                    slide_filters=slide_filters,
+                    block_params=binding.get("params")
+                    if isinstance(binding.get("params"), dict)
+                    else {},
+                    input_overrides=merge_filter_layers(slide_input_contrib, None),
+                )
+                try:
+                    validate_data_route_branch(route, merged, user=user)
+                except ValueError as exc:
+                    denied = (source_id, str(exc))
+                    break
+            if denied is not None:
+                source_id, message_text = denied
+                resolved_by_model[model_id] = self._model_error_resolved(
+                    message_text,
+                    code="data.fetch_failed",
+                    model_id=model_id,
+                    input_id=source_id,
+                )
+                continue
+
+            query_tables: dict[str, dict[str, Any]] = {}
+            source_status: dict[str, dict[str, Any]] = {}
+            query_bindings = graph.bindings()
+            primary_resolved: dict[str, Any] | None = None
+            failed_input: str | None = None
+            for source_id in graph.ordered_source_ids:
+                node = graph_nodes[source_id]
+                enriched_node = self._enrich_data_block(
+                    node.block,
+                    input_overrides=merge_filter_layers(slide_input_contrib, None),
+                    sibling_tables=query_tables,
+                    sibling_status=source_status,
+                    query_bindings=query_bindings,
+                    preview_options=preview_options,
+                    **enrich_kwargs,
+                )
+                resolved = (
+                    enriched_node.get("resolved")
+                    if isinstance(enriched_node.get("resolved"), dict)
+                    else {}
+                )
+                query_table = resolved.pop("_queryTable", None)
+                status_keys = [source_id]
+                if node.query_name != source_id:
+                    status_keys.append(node.query_name)
+                if isinstance(query_table, dict):
+                    for key in status_keys:
+                        query_tables[key] = query_table
+                else:
+                    if resolved.get("error"):
+                        transform_error = resolved.get("transformError")
+                        status = {
+                            "status": "failed",
+                            "code": (
+                                str(transform_error.get("code") or "")
+                                if isinstance(transform_error, dict)
+                                else "data.fetch_failed"
+                            )
+                            or "data.fetch_failed",
+                            "message": str(resolved.get("error") or ""),
+                        }
+                    else:
+                        status = {"status": "no_table"}
+                    for key in status_keys:
+                        source_status[key] = status
+                    if failed_input is None and resolved.get("error"):
+                        failed_input = source_id
+                if source_id == primary_id:
+                    primary_resolved = resolved
+
+            result = (
+                primary_resolved
+                if isinstance(primary_resolved, dict)
+                else {"error": "Modelo sem saída do input primário."}
+            )
+            result = dict(result)
+            result["dataModelId"] = model_id
+            if failed_input:
+                result["dataModelInputId"] = failed_input
+            field_labels = normalized.get("fieldLabels")
+            if isinstance(field_labels, dict) and field_labels:
+                result = apply_field_labels_to_resolved(result, field_labels)
+            resolved_by_model[model_id] = result
+
+        return resolved_by_model
+
+    @staticmethod
+    def _model_error_resolved(
+        message_text: str,
+        *,
+        code: str,
+        model_id: str,
+        input_id: str | None = None,
+    ) -> dict[str, Any]:
+        resolved: dict[str, Any] = {
+            "error": message_text,
+            "dataModelId": model_id,
+            "transformError": {
+                "code": code or "data_model.contract_invalid",
+                "message": message_text,
+                "stepName": None,
+                "column": None,
+                "availableColumns": [],
+            },
+            "runtimeErrors": {
+                "total": 1,
+                "sample": [
+                    {"code": code or "data_model.contract_invalid", "message": message_text}
+                ],
+            },
+        }
+        if input_id:
+            resolved["dataModelInputId"] = input_id
+        return resolved
+
+    def _slide_param_context(
+        self,
+        context_blocks: list[dict[str, Any]],
+        *,
+        filter_overrides: dict[str, Any] | None,
+    ) -> dict[str, Any]:
+        """Contexto de parâmetros do slide: schemas por fonte + contribuições
+        de input controls (slide + por fonte)."""
+        schema_by_source_id: dict[str, dict[str, Any]] = {}
+        slide_schemas: list[dict[str, Any]] = []
+        for block in context_blocks:
+            if str(block.get("type") or "") not in DATA_BLOCK_TYPES:
+                continue
+            binding = block.get("dataBinding")
+            if not isinstance(binding, dict):
+                continue
+            operation_id = str(binding.get("operationId") or "").strip()
+            route = self._catalog.get_route(operation_id) if operation_id else None
+            schema = (
+                route.get("paramSchema")
+                if isinstance(route, dict) and isinstance(route.get("paramSchema"), dict)
+                else {}
+            )
+            source_id = str(block.get("id") or "")
+            if source_id:
+                schema_by_source_id[source_id] = schema
+            if schema:
+                slide_schemas.append(schema)
+
+        contributions = collect_input_filter_contributions(
+            context_blocks,
+            runtime_overrides=filter_overrides,
+            schema_by_source_id=schema_by_source_id,
+            slide_schemas=slide_schemas,
+        )
+        return {
+            "schema_by_source_id": schema_by_source_id,
+            "slide_schemas": slide_schemas,
+            "contributions": contributions,
+            "slide_input_contrib": (
+                contributions.get("slide")
+                if isinstance(contributions.get("slide"), dict)
+                else {}
+            ),
+            "by_source": (
+                contributions.get("bySourceId")
+                if isinstance(contributions.get("bySourceId"), dict)
+                else {}
+            ),
+        }
 
     @staticmethod
     def _stamp_text_presentation(blocks: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -1534,7 +1784,11 @@ class ComunicadoDataEnrichmentService:
         return result
 
     @staticmethod
-    def _link_view_blocks_to_sources(blocks: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    def _link_view_blocks_to_sources(
+        blocks: list[dict[str, Any]],
+        *,
+        model_resolved: dict[str, dict[str, Any]] | None = None,
+    ) -> list[dict[str, Any]]:
         source_resolved: dict[str, dict[str, Any]] = {}
         for block in blocks:
             if str(block.get("type") or "") == "data_source":
@@ -1546,6 +1800,9 @@ class ComunicadoDataEnrichmentService:
                         block.get("fieldLabels"),
                     )
                     source_resolved[source_id] = labeled
+        if model_resolved:
+            # DataModels resolvem por modelId; visual vincula via `modelId` (DM2).
+            source_resolved.update(model_resolved)
         if not source_resolved:
             return blocks
         linked: list[dict[str, Any]] = []

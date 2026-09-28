@@ -58,3 +58,23 @@ class SlideDataResolutionService:
             target_source_id=target_source_id,
             preview_options=preview_options,
         )
+
+    def enrich_data_models(
+        self,
+        models: list[dict[str, Any]],
+        *,
+        cfg: dict[str, Any],
+        authorization: str | None = None,
+        playlist_defaults: dict[str, Any] | None = None,
+        user: Any | None = None,
+        force_refresh: bool = False,
+    ) -> dict[str, dict[str, Any]]:
+        """Executa DataModels do cfg → resolved por modelId (runtime canônico)."""
+        return self._enrichment.enrich_data_models(
+            models,
+            cfg=cfg,
+            authorization=authorization,
+            playlist_defaults=playlist_defaults,
+            user=user,
+            force_refresh=force_refresh,
+        )

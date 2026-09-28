@@ -1024,6 +1024,7 @@ class PresentationSuggestOpsService:
             "fontSizeDelta": cls._extract_font_size_delta(normalized),
             "blockType": cls._extract_block_type(normalized),
             "newDataSourceId": cls._new_id("ds"),
+            "newModelId": cls._new_id("mdl"),
             "newVisualId": cls._new_id("viz"),
             "newTextBlockId": cls._new_id("txt"),
             "title": quoted or default_title,

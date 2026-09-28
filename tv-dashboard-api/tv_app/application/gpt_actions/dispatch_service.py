@@ -938,6 +938,174 @@ class GptActionsDispatchService:
             "persisted": False,
         }
 
+    def preview_data_model(
+        self,
+        *,
+        user: Any,
+        body: dict[str, Any],
+        authorization: str | None,
+    ) -> dict[str, Any]:
+        """Preview de DataModel persistido (modelId) ou candidate inline (model).
+
+        Mesmo resolver canônico do enrichment — sem persistir, sem engine nova.
+        """
+        from tv_app.application.services.data.data_model_service import (
+            DataModelContractError,
+            find_data_model,
+            normalize_data_model,
+        )
+        from tv_app.application.services.data.presentation_mutation import (
+            PresentationPatchError,
+        )
+
+        assert_permission(user, TV_READ)
+        playlist_id = str(body.get("playlistId") or "").strip()
+        playlist_defaults = body.get("playlistDefaults")
+        pid = None
+        if playlist_id:
+            try:
+                pid = UUID(playlist_id)
+            except ValueError as exc:
+                raise GptActionsError(
+                    "playlistId inválido.",
+                    code="INVALID_CHANGE",
+                    status_code=422,
+                ) from exc
+            access = self._access.resolve(pid, user)
+            if not access.can_read:
+                raise GptActionsError(
+                    "Programação não encontrada.",
+                    code="RESOURCE_NOT_FOUND",
+                    status_code=404,
+                )
+            if not isinstance(playlist_defaults, dict):
+                defaults = (access.playlist or {}).get("dataDefaults")
+                playlist_defaults = defaults if isinstance(defaults, dict) else {}
+
+        slide_id = str(body.get("slideId") or "").strip()
+        slide_native: dict[str, Any] | None = None
+        if slide_id:
+            if not playlist_id:
+                raise GptActionsError(
+                    "slideId requer playlistId para resolver o contexto autorizado.",
+                    code="INVALID_CHANGE",
+                    status_code=422,
+                )
+            try:
+                slide_row = self._writes.get_slide(UUID(slide_id), playlist_id=pid)
+            except Exception as exc:
+                raise GptActionsError(
+                    "Tela não encontrada.",
+                    code="RESOURCE_NOT_FOUND",
+                    status_code=404,
+                ) from exc
+            raw_native = slide_row.get("nativeConfig")
+            slide_native = raw_native if isinstance(raw_native, dict) else {"version": 1}
+
+        native_in = (
+            body.get("nativeConfig") if isinstance(body.get("nativeConfig"), dict) else None
+        )
+        base = (
+            native_in
+            if isinstance(native_in, dict)
+            else slide_native
+            if isinstance(slide_native, dict)
+            else {"version": 1, "blocks": []}
+        )
+        cfg = copy.deepcopy(base)
+        cfg.setdefault("version", 1)
+
+        model_in = body.get("model") if isinstance(body.get("model"), dict) else None
+        model_id = str(body.get("modelId") or "").strip()
+        if model_in is not None:
+            try:
+                model = normalize_data_model(
+                    model_in,
+                    catalog=self._catalog,
+                    sanitize_transform=self._patch.sanitize_vista_data_transform,
+                    generate_id=True,
+                )
+            except DataModelContractError as exc:
+                raise GptActionsError(
+                    str(exc),
+                    code=exc.code or "INVALID_CHANGE",
+                    status_code=422,
+                    details=dict(exc.details),
+                ) from exc
+            except PresentationPatchError as exc:
+                raise GptActionsError(
+                    str(exc),
+                    code=exc.code or "INVALID_CHANGE",
+                    status_code=422,
+                    details=exc.details,
+                ) from exc
+            models = cfg.get("dataModels")
+            if not isinstance(models, list):
+                models = []
+                cfg["dataModels"] = models
+            for index, existing in enumerate(models):
+                if isinstance(existing, dict) and str(existing.get("id") or "") == model["id"]:
+                    models[index] = model
+                    break
+            else:
+                models.append(model)
+            model_id = str(model["id"])
+        elif model_id:
+            model = find_data_model(cfg, model_id)
+            if model is None:
+                raise GptActionsError(
+                    "Modelo não encontrado no contexto do slide.",
+                    code="RESOURCE_NOT_FOUND",
+                    status_code=404,
+                )
+        else:
+            raise GptActionsError(
+                "Informe model (candidate) ou modelId (+playlistId/slideId/nativeConfig).",
+                code="INVALID_CHANGE",
+                status_code=422,
+            )
+
+        try:
+            resolved = self._preview.preview_data_model(
+                model,
+                native_config=cfg,
+                authorization=authorization,
+                user=user,
+                playlist_defaults=(
+                    playlist_defaults if isinstance(playlist_defaults, dict) else None
+                ),
+                force_refresh=bool(body.get("forceRefresh")),
+            )
+        except ValueError as exc:
+            raise GptActionsError(str(exc), code="INVALID_CHANGE", status_code=422) from exc
+        except Exception as exc:  # noqa: BLE001
+            raise GptActionsError(
+                str(exc),
+                code="UPSTREAM_FAILURE",
+                status_code=502,
+                retryable=True,
+            ) from exc
+
+        transform_error = (
+            resolved.get("transformError")
+            if isinstance(resolved.get("transformError"), dict)
+            else None
+        )
+        output_schema = {
+            "fields": resolved.get("fields") or resolved.get("projectableFields") or [],
+            "valueFields": resolved.get("valueFields") or [],
+        }
+        return {
+            "modelId": model_id,
+            "resolved": resolved,
+            "outputSchema": output_schema,
+            "runtimeErrors": resolved.get("runtimeErrors"),
+            "transformError": transform_error,
+            "dependencyStatus": (
+                "failed" if (transform_error or resolved.get("error")) else "ok"
+            ),
+        }
+
     def preview_change(
         self,
         *,

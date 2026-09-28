@@ -64,6 +64,7 @@ class PresentationCatalogAuditService:
                 "section",
                 "block",
                 "dataSource",
+                "dataModel",
             }
             for field_name, values in (("produces", produces), ("consumes", consumes)):
                 if not isinstance(values, list):

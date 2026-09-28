@@ -30,6 +30,9 @@ _NATIVE_CONFIG_OPS = frozenset(
         "ensure_brand_logo_on_slide",
         "apply_published_slide_template",
         "re_layer_playlist_filters",
+        # DM1 — DataModel é documento lógico dentro do nativeConfig do slide.
+        "upsert_data_model",
+        "delete_data_model",
     }
 )
 

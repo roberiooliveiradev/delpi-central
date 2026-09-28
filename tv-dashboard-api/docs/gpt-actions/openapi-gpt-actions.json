@@ -705,6 +705,156 @@
         }
       }
     },
+    "/gpt-actions/v1/data-model-preview": {
+      "post": {
+        "operationId": "gpt_preview_data_model",
+        "summary": "Preview a DataModel without persisting",
+        "description": "Executes a persisted (modelId) or candidate (model) DataModel through the canonical resolver: inputs fetch, per-input transforms, model transform, merge/dependency DAG. Returns resolved output, dynamic outputSchema, runtimeErrors/transformError and dependencyStatus.",
+        "tags": [
+          "TV Dashboard GPT"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "modelId": {
+                    "type": "string",
+                    "description": "Persisted DataModel id inside playlistId+slideId (or nativeConfig) context."
+                  },
+                  "model": {
+                    "type": "object",
+                    "description": "Candidate DataModel definition (DM0 contract: id/label/primaryInputId/inputs[]/transform). Previewed without persisting; merge.sourceId references input.id.",
+                    "x-delpi-gpt-opaque-object": true,
+                    "additionalProperties": true,
+                    "properties": {}
+                  },
+                  "nativeConfig": {
+                    "type": "object",
+                    "description": "Candidate slide config providing dataModels[] context. Inline model is upserted by id inside this context.",
+                    "x-delpi-gpt-opaque-object": true,
+                    "additionalProperties": true,
+                    "properties": {}
+                  },
+                  "playlistId": {
+                    "type": "string",
+                    "description": "Authoritative context: loads the persisted playlist (dataDefaults) and, with slideId, the slide nativeConfig."
+                  },
+                  "slideId": {
+                    "type": "string",
+                    "description": "With playlistId: resolve the model inside the persisted slide."
+                  },
+                  "playlistDefaults": {
+                    "type": "object",
+                    "description": "Optional playlist dataDefaults blob for dry-run.",
+                    "x-delpi-gpt-opaque-object": true,
+                    "additionalProperties": true,
+                    "properties": {}
+                  },
+                  "forceRefresh": {
+                    "type": "boolean"
+                  }
+                }
+              },
+              "example": {
+                "playlistId": "uuid",
+                "slideId": "uuid",
+                "modelId": "mdl_rol_delta"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "DataModel preview",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptSuccessEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation or unsupported capability",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid Bearer token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking TV permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict (revision/catalog/plan/idempotency/partial/in-progress)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid change payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Upstream failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/gpt-actions/v1/changes/suggest": {
       "post": {
         "operationId": "gpt_suggest_change",
@@ -1280,6 +1430,31 @@
                             }
                           },
                           "title": "delete_block"
+                        },
+                        {
+                          "type": "object",
+                          "required": [
+                            "op",
+                            "modelId"
+                          ],
+                          "properties": {
+                            "op": {
+                              "const": "delete_data_model",
+                              "type": "string"
+                            },
+                            "modelId": {
+                              "type": "string"
+                            },
+                            "playlistRef": {
+                              "type": "string",
+                              "description": "Alias or authoritative playlist UUID. Omit to use current playlist slot."
+                            },
+                            "slideRef": {
+                              "type": "string",
+                              "description": "Alias or authoritative slide UUID. Omit to use current slide slot."
+                            }
+                          },
+                          "title": "delete_data_model"
                         },
                         {
                           "type": "object",
@@ -2964,6 +3139,151 @@
                             }
                           },
                           "title": "upsert_block"
+                        },
+                        {
+                          "type": "object",
+                          "required": [
+                            "op",
+                            "model"
+                          ],
+                          "example": {
+                            "op": "upsert_data_model",
+                            "model": {
+                              "id": "mdl_demo",
+                              "primaryInputId": "current",
+                              "inputs": [
+                                {
+                                  "id": "previous",
+                                  "operationId": "get_commercial_rol_summary",
+                                  "params": {
+                                    "dateRangePreset": "same_period_previous_year"
+                                  }
+                                },
+                                {
+                                  "id": "current",
+                                  "operationId": "get_commercial_rol_summary",
+                                  "params": {
+                                    "dateRangePreset": "this_year"
+                                  }
+                                }
+                              ],
+                              "transform": {
+                                "version": 1,
+                                "steps": [
+                                  {
+                                    "op": "merge",
+                                    "sourceId": "previous",
+                                    "leftKey": "join_key",
+                                    "rightKey": "join_key"
+                                  }
+                                ]
+                              }
+                            }
+                          },
+                          "properties": {
+                            "op": {
+                              "const": "upsert_data_model",
+                              "type": "string"
+                            },
+                            "model": {
+                              "type": "object",
+                              "required": [
+                                "inputs",
+                                "primaryInputId"
+                              ],
+                              "description": "DataModel (DM0 contract): non-visual logical model persisted in nativeConfig.dataModels[]. inputs embed sources; merge.sourceId references input.id of the same model.",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "description": "Stable model id; omit to generate (mdl_*)."
+                                },
+                                "label": {
+                                  "type": "string"
+                                },
+                                "primaryInputId": {
+                                  "type": "string"
+                                },
+                                "inputs": {
+                                  "type": "array",
+                                  "minItems": 1,
+                                  "items": {
+                                    "type": "object",
+                                    "required": [
+                                      "id",
+                                      "operationId"
+                                    ],
+                                    "properties": {
+                                      "id": {
+                                        "type": "string"
+                                      },
+                                      "label": {
+                                        "type": "string"
+                                      },
+                                      "queryName": {
+                                        "type": "string"
+                                      },
+                                      "operationId": {
+                                        "type": "string"
+                                      },
+                                      "params": {
+                                        "type": "object",
+                                        "description": "Route params as a primitive map.",
+                                        "additionalProperties": {
+                                          "oneOf": [
+                                            {
+                                              "type": "string"
+                                            },
+                                            {
+                                              "type": "number"
+                                            },
+                                            {
+                                              "type": "integer"
+                                            },
+                                            {
+                                              "type": "boolean"
+                                            }
+                                          ]
+                                        }
+                                      },
+                                      "transform": {
+                                        "type": "object",
+                                        "nullable": true,
+                                        "x-delpi-gpt-opaque-object": true,
+                                        "properties": {},
+                                        "description": "TransformPlan v1 {version, steps}; same step contract as set_data_transform.steps."
+                                      }
+                                    }
+                                  }
+                                },
+                                "transform": {
+                                  "type": "object",
+                                  "nullable": true,
+                                  "x-delpi-gpt-opaque-object": true,
+                                  "properties": {},
+                                  "description": "TransformPlan v1 {version, steps}; same step contract as set_data_transform.steps."
+                                },
+                                "fieldLabels": {
+                                  "type": "object",
+                                  "additionalProperties": {
+                                    "type": "string"
+                                  }
+                                }
+                              }
+                            },
+                            "as": {
+                              "type": "string",
+                              "description": "Local alias for the resource this op produces (compound plans)."
+                            },
+                            "playlistRef": {
+                              "type": "string",
+                              "description": "Alias or authoritative playlist UUID. Omit to use current playlist slot."
+                            },
+                            "slideRef": {
+                              "type": "string",
+                              "description": "Alias or authoritative slide UUID. Omit to use current slide slot."
+                            }
+                          },
+                          "title": "upsert_data_model"
                         },
                         {
                           "type": "object",

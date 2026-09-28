@@ -32,8 +32,8 @@ def main() -> int:
     if total > 30:
         print("ERROR: Custom GPT limit is ~30 operations", file=sys.stderr)
         return 1
-    if total != 8:
-        print(f"ERROR: expected 8 imported operations, got {total}", file=sys.stderr)
+    if total != 9:
+        print(f"ERROR: expected 9 imported operations, got {total}", file=sys.stderr)
         return 1
     return 0
 
