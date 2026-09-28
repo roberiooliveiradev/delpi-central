@@ -64,6 +64,9 @@ type Props = {
   getAccessToken?: () => string | undefined;
   onNavigate: (path: string) => void;
   active: boolean;
+  /** Seleção material da rota (deep link P/I/R) — autoridade é a URL. */
+  routeInstanciaId?: string;
+  routeRevisaoId?: string;
 };
 
 const EMPTY = emptyStateCardBemClasses("ds");
@@ -89,14 +92,14 @@ export function ProcessResultsSection({
   getAccessToken,
   onNavigate,
   active,
+  routeInstanciaId,
+  routeRevisaoId,
 }: Props) {
   const [items, setItems] = useState<ProcessoComparativoItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [errorStatus, setErrorStatus] = useState<number | null>(null);
   const [loadedOnce, setLoadedOnce] = useState(false);
-  const [selectedInstanciaId, setSelectedInstanciaId] = useState<string | null>(null);
-  const [selectedRevisaoId, setSelectedRevisaoId] = useState<string | null>(null);
   const [toBeBundle, setToBeBundle] = useState<RevisionBundle | null>(null);
   const [asIsMedicao, setAsIsMedicao] = useState<Medicao | null>(null);
   const [revisionLoading, setRevisionLoading] = useState(false);
@@ -104,6 +107,19 @@ export function ProcessResultsSection({
   const [revisionError, setRevisionError] = useState<string | null>(null);
   const [revisionErrorStatus, setRevisionErrorStatus] = useState<number | null>(null);
   const [showHeavyStructure, setShowHeavyStructure] = useState(false);
+
+  // URL = autoridade de seleção material. Escolhas navegam (push) —
+  // refresh/share/back-forward restauram exatamente P/I/R.
+  const selectedInstanciaId = routeInstanciaId ?? null;
+  const selectedRevisaoId = routeRevisaoId ?? null;
+
+  const navigateSelection = useCallback(
+    (instanciaId: string | null, revisaoId: string | null) => {
+      const hash = window.location.hash || "#resultados";
+      onNavigate(`${buildProcessoPath(processoId, revisaoId, instanciaId)}${hash}`);
+    },
+    [onNavigate, processoId],
+  );
 
   const comparison = useMemo(
     () =>
@@ -170,7 +186,6 @@ export function ProcessResultsSection({
   }, [active, error, loadComparison, loadedOnce]);
 
   useEffect(() => {
-    setSelectedRevisaoId(null);
     setToBeBundle(null);
     setAsIsMedicao(null);
     setRevisionError(null);
@@ -308,7 +323,9 @@ export function ProcessResultsSection({
             <span className="sr-only">Cenário proposto</span>
             <select
               value={comparison.selectedRevisionId ?? ""}
-              onChange={(event) => setSelectedRevisaoId(event.target.value || null)}
+              onChange={(event) =>
+                navigateSelection(comparison.instanceId, event.target.value || null)
+              }
             >
               <option value="">Selecione um cenário…</option>
               {comparison.scopedRevisoes.map((revisao) => (
@@ -334,7 +351,9 @@ export function ProcessResultsSection({
                         ? "tm-processo-results-scenario tm-processo-results-scenario--selected"
                         : "tm-processo-results-scenario"
                     }
-                    onClick={() => setSelectedRevisaoId(revisao.revisao_id)}
+                    onClick={() =>
+                      navigateSelection(comparison.instanceId, revisao.revisao_id)
+                    }
                   >
                     <span className="tm-processo-results-scenario__label">
                       {revisaoDisplayLabel(revisao)}
@@ -386,7 +405,7 @@ export function ProcessResultsSection({
                 <button
                   type="button"
                   className={DS_GHOST_BTN}
-                  onClick={() => setSelectedInstanciaId(instancia.instancia_id)}
+                  onClick={() => navigateSelection(instancia.instancia_id, null)}
                 >
                   {instanciaNavLabel(instancia)}
                 </button>
@@ -409,7 +428,7 @@ export function ProcessResultsSection({
             asIs={comparison.asIs}
             mode={comparison.mode}
             canChangeInstance={instancias.length > 1}
-            onChangeInstance={() => setSelectedInstanciaId(null)}
+            onChangeInstance={() => navigateSelection(null, null)}
             onOpenRevision={
               comparison.selectedRevisionId
                 ? () => openRevisionSection(comparison.selectedRevisionId!, "medicao")

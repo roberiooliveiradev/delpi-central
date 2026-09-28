@@ -39,7 +39,9 @@ describe("Process Workspace finalization — Results composition", () => {
     expect(results).toMatch(/filterComparativoByRevisoes/);
     expect(results).toMatch(/scopedComparisonItems/);
     expect(results).toMatch(/loadToBeBundle\(comparison\.selectedRevisionId/);
-    expect(results).toMatch(/setSelectedRevisaoId\(null\)/);
+    // Seleção vive na URL: trocar de melhoria navega sem revisão da anterior.
+    expect(results).toMatch(/navigateSelection\(instancia\.instancia_id, null\)/);
+    expect(results).toMatch(/navigateSelection\(null, null\)/);
   });
 
   it("custos unitários do catálogo permanecem link-only (owner Configurações)", () => {

@@ -21,7 +21,6 @@ import {
 } from "./processScope";
 import {
   buildInstanciaSectionHref,
-  buildProcessoSectionHref,
   buildRevisaoSectionHref,
   instanciaNavLabel,
   INSTANCIA_WORKSPACE_SECTIONS,
@@ -31,7 +30,7 @@ import {
   type ProcessoWorkspaceSectionId,
   type RevisaoWorkspaceSectionId,
 } from "./processWorkspaceNav";
-import { buildInstanciaPath } from "../../utils/routeParser";
+import { buildInstanciaPath, buildProcessWorkspacePath } from "../../utils/routeParser";
 
 type View = "processo" | "instancia" | "revisao";
 
@@ -240,6 +239,16 @@ export function ProcessWorkspaceChrome({
     return items;
   }, [activeInstancia, instanciaId, processo?.codigo_processo, processoHref, processoId, view]);
 
+  // Troca de seção preserva a seleção material da rota (P/I/R) — só o hash muda.
+  const processoSectionHref = (section: ProcessoWorkspaceSectionId) =>
+    buildProcessWorkspacePath({
+      processoId,
+      instanciaId,
+      revisaoId,
+      section:
+        section === "visao-geral" && !instanciaId && !revisaoId ? null : section,
+    });
+
   const nav: ReactNode =
     view === "processo" ? (
       <TmUnderlineNav
@@ -251,7 +260,7 @@ export function ProcessWorkspaceChrome({
         items={PROCESSO_WORKSPACE_SECTIONS.map((section) => ({
           id: section.id,
           label: section.label,
-          onSelect: () => onNavigate(buildProcessoSectionHref(processoId, section.id)),
+          onSelect: () => onNavigate(processoSectionHref(section.id)),
         }))}
       />
     ) : view === "instancia" && instanciaId ? (

@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildInstanciaDiagramaEditPath,
   buildProcessoDiagramaEditPath,
+  buildProcessWorkspacePath,
   buildRevisaoDiagramaEditPath,
   canonicalizeTransformometroPath,
   parseTransformometroPath,
@@ -105,5 +106,42 @@ describe("parseTransformometroPath - diagram edit", () => {
     expect(
       parseTransformometroPath("/apps/transformometro/processes/p-1/instances/i-1"),
     ).toMatchObject({ view: "instancia" });
+  });
+});
+
+describe("buildProcessWorkspacePath", () => {
+  it("monta path canônico por nível + seção", () => {
+    expect(buildProcessWorkspacePath({ processoId: "p-1" })).toBe(
+      "/apps/transformometro/processes/p-1",
+    );
+    expect(
+      buildProcessWorkspacePath({ processoId: "p-1", section: "resultados" }),
+    ).toBe("/apps/transformometro/processes/p-1#resultados");
+    expect(
+      buildProcessWorkspacePath({
+        processoId: "p-1",
+        instanciaId: "i-1",
+        section: "resultados",
+      }),
+    ).toBe("/apps/transformometro/processes/p-1/instances/i-1#resultados");
+    expect(
+      buildProcessWorkspacePath({
+        processoId: "p-1",
+        instanciaId: "i-1",
+        revisaoId: "r-1",
+        section: "resultados",
+      }),
+    ).toBe(
+      "/apps/transformometro/processes/p-1/instances/i-1/revisions/r-1#resultados",
+    );
+  });
+
+  it("revisão sem instância não produz path inválido", () => {
+    expect(
+      buildProcessWorkspacePath({ processoId: "p-1", revisaoId: "r-1" }),
+    ).toBe("/apps/transformometro/processes/p-1");
+    expect(
+      buildProcessWorkspacePath({ processoId: "p-1", instanciaId: "i-1" }),
+    ).toBe("/apps/transformometro/processes/p-1/instances/i-1");
   });
 });

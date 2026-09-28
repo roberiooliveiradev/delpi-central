@@ -10,6 +10,7 @@ import {
   parseProcessoSectionFromHash,
   parseRevisaoSectionFromHash,
   resolveActiveWorkspaceNodeId,
+  resolveWorkspacePanelView,
   PROCESSO_WORKSPACE_SECTIONS,
 } from "./processWorkspaceNav";
 
@@ -181,4 +182,53 @@ describe("instancia workspace sections", () => {
     expect(parseInstanciaSectionFromHash("#nova-revisao")).toBe("revisoes");
     expect(parseInstanciaSectionFromHash("#desconhecido")).toBe("dados");
   });
+});
+
+describe("resolveWorkspacePanelView — deep-linked selection (V1)", () => {
+  const cases: Array<{
+    view: "processo" | "instancia" | "revisao";
+    hash: string;
+    expected: "processo" | "instancia" | "revisao";
+  }> = [
+    { view: "processo", hash: "#resultados", expected: "processo" },
+    { view: "instancia", hash: "", expected: "instancia" },
+    { view: "instancia", hash: "#dados", expected: "instancia" },
+    { view: "instancia", hash: "#mapeamento", expected: "instancia" },
+    { view: "instancia", hash: "#diagrama", expected: "instancia" },
+    { view: "instancia", hash: "#contexto", expected: "instancia" },
+    { view: "instancia", hash: "#revisoes", expected: "instancia" },
+    { view: "instancia", hash: "#nova-revisao", expected: "instancia" },
+    { view: "instancia", hash: "#resultados", expected: "processo" },
+    { view: "instancia", hash: "#melhorias", expected: "processo" },
+    { view: "instancia", hash: "#documentacao", expected: "processo" },
+    { view: "instancia", hash: "#documentacao/801f161a-71e6-4591-865c-eff294525420", expected: "processo" },
+    { view: "instancia", hash: "#tarefas", expected: "processo" },
+    { view: "instancia", hash: "#sala", expected: "processo" },
+    { view: "instancia", hash: "#historico", expected: "processo" },
+    { view: "instancia", hash: "#visao-geral", expected: "processo" },
+    { view: "instancia", hash: "#timeline", expected: "processo" },
+    { view: "instancia", hash: "#arquivos", expected: "processo" },
+    { view: "instancia", hash: "#priorizacao", expected: "processo" },
+    { view: "instancia", hash: "#nova-instancia", expected: "processo" },
+    { view: "revisao", hash: "", expected: "revisao" },
+    { view: "revisao", hash: "#vigencia", expected: "revisao" },
+    { view: "revisao", hash: "#matriz", expected: "revisao" },
+    { view: "revisao", hash: "#mapeamento", expected: "revisao" },
+    { view: "revisao", hash: "#diagrama", expected: "revisao" },
+    { view: "revisao", hash: "#medicao", expected: "revisao" },
+    { view: "revisao", hash: "#investimentos", expected: "revisao" },
+    { view: "revisao", hash: "#recursos", expected: "revisao" },
+    { view: "revisao", hash: "#evidencias", expected: "revisao" },
+    { view: "revisao", hash: "#resultados", expected: "processo" },
+    { view: "revisao", hash: "#melhorias", expected: "processo" },
+    { view: "revisao", hash: "#visao-geral", expected: "processo" },
+    { view: "revisao", hash: "#timeline", expected: "processo" },
+    { view: "revisao", hash: "#dados", expected: "processo" },
+  ];
+  it.each(cases)(
+    "view=%s hash=%s → %s",
+    ({ view, hash, expected }) => {
+      expect(resolveWorkspacePanelView({ view, hash })).toBe(expected);
+    },
+  );
 });

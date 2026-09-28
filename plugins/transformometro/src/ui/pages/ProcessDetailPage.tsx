@@ -40,6 +40,7 @@ import {
   buildProcessoDiagramaEditPath,
   buildInstanciaPath,
   buildProcessoPath,
+  buildProcessWorkspacePath,
 } from "../../utils/routeParser";
 import {
   createProcessoInstancia,
@@ -87,10 +88,9 @@ import {
   useProcessoWorkspaceSection,
 } from "../processes/ProcessWorkspaceShell";
 import {
-  buildProcessoSecondaryHref,
-  buildProcessoSectionHref,
+  PROCESSO_SECONDARY_HASH,
+  type ProcessoWorkspaceSectionId,
 } from "../processes/processWorkspaceNav";
-import type { ProcessoWorkspaceSectionId } from "../processes/processWorkspaceNav";
 import { ProcessWorkspaceSectionPanel } from "../processes/ProcessWorkspaceSectionPanel";
 import { TmUnderlineNav } from "../../components/tmChromeUi";
 import { DS_GHOST_BTN, dsGhostBtn } from "../../components/ghostChrome";
@@ -103,6 +103,9 @@ type Props = Pick<AppProps, "getAccessToken"> & {
   embedded?: boolean;
   embeddedActive?: boolean;
   onHeroExtrasChange?: (node: import("react").ReactNode) => void;
+  /** Seleção material vinda da rota (deep link P/I/R) — autoridade da URL. */
+  routeInstanciaId?: string;
+  routeRevisaoId?: string;
 };
 
 export function ProcessDetailPage({
@@ -114,6 +117,8 @@ export function ProcessDetailPage({
   embedded = false,
   embeddedActive = true,
   onHeroExtrasChange,
+  routeInstanciaId,
+  routeRevisaoId,
 }: Props) {
   const confirm = useConfirm();
   const [openInstanciaForm, setOpenInstanciaForm] = useState(false);
@@ -355,6 +360,26 @@ export function ProcessDetailPage({
     }
   }
 
+  /** Href de seção preservando a seleção material da rota (P/I/R). */
+  const processoSectionHref = (section: ProcessoWorkspaceSectionId) =>
+    buildProcessWorkspacePath({
+      processoId,
+      instanciaId: routeInstanciaId,
+      revisaoId: routeRevisaoId,
+      section:
+        section === "visao-geral" && !routeInstanciaId && !routeRevisaoId
+          ? null
+          : section,
+    });
+  /** Href de foco secundário (hash canônico) preservando P/I/R. */
+  const processoSecondaryHref = (focus: "fluxo" | "arquivos" | "priorizacao") =>
+    buildProcessWorkspacePath({
+      processoId,
+      instanciaId: routeInstanciaId,
+      revisaoId: routeRevisaoId,
+      section: PROCESSO_SECONDARY_HASH[focus],
+    });
+
   const activeSection = useProcessoWorkspaceSection();
   const secondaryFocus = useProcessoWorkspaceSecondaryFocus();
   const [mountedSections, setMountedSections] = useState<Set<ProcessoWorkspaceSectionId>>(
@@ -549,43 +574,43 @@ export function ProcessDetailPage({
               <nav className="tm-processo-workspace-overview__links" aria-label="Atalhos do processo">
                 <SoftActionButton
                   icon={GitBranch}
-                  onClick={() => onNavigate(buildProcessoSectionHref(processoId, "mapeamento"))}
+                  onClick={() => onNavigate(processoSectionHref("mapeamento"))}
                 >
                   Mapeamento
                 </SoftActionButton>
                 <SoftActionButton
                   icon={FileText}
-                  onClick={() => onNavigate(buildProcessoSectionHref(processoId, "documentacao"))}
+                  onClick={() => onNavigate(processoSectionHref("documentacao"))}
                 >
                   Documentação
                 </SoftActionButton>
                 <SoftActionButton
                   icon={Layers}
-                  onClick={() => onNavigate(buildProcessoSectionHref(processoId, "melhorias"))}
+                  onClick={() => onNavigate(processoSectionHref("melhorias"))}
                 >
                   Melhorias
                 </SoftActionButton>
                 <SoftActionButton
                   icon={BarChart3}
-                  onClick={() => onNavigate(buildProcessoSectionHref(processoId, "resultados"))}
+                  onClick={() => onNavigate(processoSectionHref("resultados"))}
                 >
                   Resultados
                 </SoftActionButton>
                 <SoftActionButton
                   icon={CalendarCheck}
-                  onClick={() => onNavigate(buildProcessoSectionHref(processoId, "tarefas"))}
+                  onClick={() => onNavigate(processoSectionHref("tarefas"))}
                 >
                   Tarefas relacionadas
                 </SoftActionButton>
                 <SoftActionButton
                   icon={MessagesSquare}
-                  onClick={() => onNavigate(buildProcessoSectionHref(processoId, "sala"))}
+                  onClick={() => onNavigate(processoSectionHref("sala"))}
                 >
                   Sala
                 </SoftActionButton>
                 <SoftActionButton
                   icon={History}
-                  onClick={() => onNavigate(buildProcessoSectionHref(processoId, "historico"))}
+                  onClick={() => onNavigate(processoSectionHref("historico"))}
                 >
                   Histórico
                 </SoftActionButton>
@@ -609,12 +634,12 @@ export function ProcessDetailPage({
                   {
                     id: "estrutura",
                     label: "Estrutura",
-                    onSelect: () => onNavigate(buildProcessoSecondaryHref(processoId, "estrutura")),
+                    onSelect: () => onNavigate(processoSectionHref("mapeamento")),
                   },
                   {
                     id: "fluxo",
                     label: "Fluxo",
-                    onSelect: () => onNavigate(buildProcessoSecondaryHref(processoId, "fluxo")),
+                    onSelect: () => onNavigate(processoSecondaryHref("fluxo")),
                   },
                 ]}
               />
@@ -741,12 +766,12 @@ export function ProcessDetailPage({
                   {
                     id: "documentos",
                     label: "Documentos",
-                    onSelect: () => onNavigate(buildProcessoSecondaryHref(processoId, "documentos")),
+                    onSelect: () => onNavigate(processoSectionHref("documentacao")),
                   },
                   {
                     id: "arquivos",
                     label: "Arquivos",
-                    onSelect: () => onNavigate(buildProcessoSecondaryHref(processoId, "arquivos")),
+                    onSelect: () => onNavigate(processoSecondaryHref("arquivos")),
                   },
                 ]}
               />
@@ -809,12 +834,12 @@ export function ProcessDetailPage({
                   {
                     id: "lista",
                     label: "Instâncias",
-                    onSelect: () => onNavigate(buildProcessoSecondaryHref(processoId, "lista")),
+                    onSelect: () => onNavigate(processoSectionHref("melhorias")),
                   },
                   {
                     id: "priorizacao",
                     label: "Priorização",
-                    onSelect: () => onNavigate(buildProcessoSecondaryHref(processoId, "priorizacao")),
+                    onSelect: () => onNavigate(processoSecondaryHref("priorizacao")),
                   },
                 ]}
               />
@@ -822,7 +847,7 @@ export function ProcessDetailPage({
               <div data-subsection="lista">
                 <ProcessInstancesPanel
                   instancias={instancias}
-                  selectedInstanciaId={null}
+                  selectedInstanciaId={routeInstanciaId ?? null}
                   options={options}
                   processScope={processScopeFromEntity(processo)}
                   busy={refreshing}
@@ -880,6 +905,8 @@ export function ProcessDetailPage({
               getAccessToken={getAccessToken}
               onNavigate={onNavigate}
               active={activeSection === "resultados"}
+              routeInstanciaId={routeInstanciaId}
+              routeRevisaoId={routeRevisaoId}
             />
           </ProcessWorkspaceSectionPanel>
         ) : null}

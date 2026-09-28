@@ -332,6 +332,23 @@ export function buildProcessoDiagramaEditPath(processoId: string): string {
   return `${buildProcessoPath(processoId)}/diagram/edit`;
 }
 
+/**
+ * Caminho canônico do Process Workspace com a seleção material na URL.
+ * `section` é o token de hash da seção (sem "#"); seções exclusivas do
+ * processo (ex.: "resultados") funcionam em rotas de instância/revisão.
+ */
+export function buildProcessWorkspacePath(input: {
+  processoId: string;
+  instanciaId?: string | null;
+  revisaoId?: string | null;
+  section?: string | null;
+}): string {
+  const base = buildProcessoPath(input.processoId, input.revisaoId, input.instanciaId);
+  const section = input.section?.trim();
+  if (!section) return base;
+  return `${base}#${section}`;
+}
+
 export function buildInstanciaDiagramaEditPath(processoId: string, instanciaId: string): string {
   return `${buildInstanciaPath(processoId, instanciaId)}/diagram/edit`;
 }

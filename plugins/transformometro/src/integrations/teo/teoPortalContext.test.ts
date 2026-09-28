@@ -343,3 +343,59 @@ describe("TeoPortalContext shape", () => {
     });
   });
 });
+
+describe("deep-linked selection — process sections on nested routes", () => {
+  it("P: /P/I/R#resultados resolve P/I/R + area resultados direto da rota", () => {
+    const ctx = resolveTeoPortalContext(REVISION, "#resultados");
+    expect(ctx.process_id).toBe("proc-1");
+    expect(ctx.instance_id).toBe("inst-1");
+    expect(ctx.revision_id).toBe("rev-1");
+    expect(ctx.area).toBe("resultados");
+    expect(ctx.canonical_path).toBe(REVISION + "#resultados");
+  });
+
+  it("/P/I#resultados resolve P/I + area resultados", () => {
+    const ctx = resolveTeoPortalContext(INSTANCE, "#resultados");
+    expect(ctx.instance_id).toBe("inst-1");
+    expect(ctx.revision_id).toBeNull();
+    expect(ctx.area).toBe("resultados");
+  });
+
+  it("hash de seção do próprio nível continua área do nível", () => {
+    expect(resolveTeoPortalContext(REVISION, "#medicao").area).toBe("medicao");
+    expect(resolveTeoPortalContext(INSTANCE, "#contexto").area).toBe("contexto");
+    // #mapeamento é ambíguo: level-wins mantém a seção do nível.
+    expect(resolveTeoPortalContext(REVISION, "#mapeamento").area).toBe("mapeamento");
+    expect(resolveTeoPortalContext(INSTANCE, "#mapeamento").area).toBe("mapeamento");
+  });
+
+  it("aliases legados de processo em rota aninhada resolvem a seção do processo", () => {
+    expect(resolveTeoPortalContext(REVISION, "#timeline").area).toBe("historico");
+    expect(resolveTeoPortalContext(INSTANCE, "#arquivos").area).toBe("documentacao");
+  });
+
+  it("contexto não depende da seleção publicada quando a rota já tem P/I/R", () => {
+    const ctx = resolveTeoPortalContext(REVISION, "#resultados", null);
+    expect(ctx).toMatchObject({
+      process_id: "proc-1",
+      instance_id: "inst-1",
+      revision_id: "rev-1",
+      area: "resultados",
+    });
+  });
+
+  it("fixture de aceite real: URL completa produz o contexto esperado", () => {
+    const path =
+      "/apps/transformometro/processes/801f161a-71e6-4591-865c-eff294525420" +
+      "/instances/b8625950-d369-471f-83f4-c15b7c72cae5" +
+      "/revisions/4298dfe5-a615-4467-87c0-fc5323231973";
+    const ctx = resolveTeoPortalContext(path, "#resultados");
+    expect(ctx).toMatchObject({
+      process_id: "801f161a-71e6-4591-865c-eff294525420",
+      instance_id: "b8625950-d369-471f-83f4-c15b7c72cae5",
+      revision_id: "4298dfe5-a615-4467-87c0-fc5323231973",
+      area: "resultados",
+      canonical_path: path + "#resultados",
+    });
+  });
+});

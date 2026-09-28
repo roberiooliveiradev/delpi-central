@@ -424,6 +424,31 @@ export function resolveActiveWorkspaceNodeId(input: {
   return `section:${section}`;
 }
 
+/**
+ * Painel efetivo do workspace para uma rota aninhada + hash.
+ * Level-wins: tokens que são seção do próprio nível (instância/revisão)
+ * abrem o painel daquele nível; tokens exclusivos do processo
+ * (resultados, melhorias, documentacao, tarefas, sala, historico,
+ * visao-geral e aliases legados) abrem o painel de processo com a
+ * seleção da rota — é o que permite `…/revisions/:r#resultados`.
+ */
+export function resolveWorkspacePanelView(input: {
+  view: "processo" | "instancia" | "revisao";
+  hash: string;
+}): "processo" | "instancia" | "revisao" {
+  if (input.view === "processo") return "processo";
+  const token = rawProcessoHashToken(input.hash);
+  if (!token) return input.view;
+  if (input.view === "instancia") {
+    if (token === "nova-revisao" || isInstanciaWorkspaceSectionId(token)) {
+      return "instancia";
+    }
+    return "processo";
+  }
+  if (isRevisaoWorkspaceSectionId(token)) return "revisao";
+  return "processo";
+}
+
 export function resolveWorkspacePanelKey(input: {
   view: "processo" | "instancia" | "revisao";
   instanciaId?: string;

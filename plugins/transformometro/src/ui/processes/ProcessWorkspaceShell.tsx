@@ -60,6 +60,15 @@ function readWorkspaceSectionSnapshot(): ProcessoWorkspaceSectionId {
   return parseProcessoSectionFromHash(window.location.hash);
 }
 
+/** Hash cru da localização (reativo a hashchange/popstate/workspace-hash). */
+export function useWorkspaceLocationHash(): string {
+  return useSyncExternalStore(
+    subscribeWorkspaceSection,
+    () => window.location.hash,
+    () => "",
+  );
+}
+
 export function useProcessoWorkspaceSection(): ProcessoWorkspaceSectionId {
   return useSyncExternalStore(
     subscribeWorkspaceSection,

@@ -33,8 +33,12 @@ import {
   useInstanciaWorkspaceSection,
   useProcessoWorkspaceSection,
   useRevisaoWorkspaceSection,
+  useWorkspaceLocationHash,
 } from "../processes/ProcessWorkspaceShell";
-import { resolveWorkspacePanelKey } from "../processes/processWorkspaceNav";
+import {
+  resolveWorkspacePanelKey,
+  resolveWorkspacePanelView,
+} from "../processes/processWorkspaceNav";
 import { reloadProcessWorkspaceTree } from "../processes/reloadProcessWorkspaceTree";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
@@ -102,14 +106,27 @@ export function ProcessWorkspacePage({
   );
   const activeRevisaoSection = useRevisaoWorkspaceSection(activeRevisao?.cenario_tipo);
 
+  const locationHash = useWorkspaceLocationHash();
+  /** Painel efetivo: seções exclusivas do processo (ex.: #resultados)
+   *  abrem o painel de processo mesmo em rota de instância/revisão —
+   *  a seleção material fica na URL. */
+  const effectiveView = useMemo(
+    () =>
+      resolveWorkspacePanelView({
+        view: route.view as "processo" | "instancia" | "revisao",
+        hash: locationHash,
+      }),
+    [locationHash, route.view],
+  );
+
   const activePanelKey = useMemo(
     () =>
       resolveWorkspacePanelKey({
-        view: route.view as "processo" | "instancia" | "revisao",
+        view: effectiveView,
         instanciaId: route.instanciaId,
         revisaoId: route.revisaoId,
       }),
-    [route.instanciaId, route.revisaoId, route.view],
+    [effectiveView, route.instanciaId, route.revisaoId],
   );
 
   useEffect(() => {
@@ -235,6 +252,8 @@ export function ProcessWorkspacePage({
           embeddedActive={isActive}
           getAccessToken={getAccessToken}
           processoId={processoId}
+          routeInstanciaId={route.instanciaId}
+          routeRevisaoId={route.revisaoId}
           pathname={pathname ?? `${TRANSFORMOMETRO_ROUTES.processos}/${processoId}`}
           onNavigate={onNavigate}
           onBack={onBack}
@@ -289,7 +308,7 @@ export function ProcessWorkspacePage({
 
   const chrome = (
     <ProcessWorkspaceChrome
-      view={route.view as "processo" | "instancia" | "revisao"}
+      view={effectiveView}
       processo={processo}
       instancias={instancias}
       revisoes={revisoes}

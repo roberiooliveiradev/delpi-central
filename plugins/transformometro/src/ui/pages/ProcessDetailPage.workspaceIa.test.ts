@@ -100,3 +100,37 @@ describe("ProcessResultsSection context isolation", () => {
     expect(resultsSection).toMatch(/scopedComparisonItems/);
   });
 });
+
+describe("Deep-linked selection — URL = navigation authority", () => {
+  it("R: seleção de melhoria/cenário vem da rota, não de state local", () => {
+    expect(resultsSection).toMatch(/routeInstanciaId/);
+    expect(resultsSection).toMatch(/routeRevisaoId/);
+    expect(resultsSection).toMatch(/selectedInstanciaId = routeInstanciaId/);
+    expect(resultsSection).toMatch(/selectedRevisaoId = routeRevisaoId/);
+    expect(resultsSection).not.toMatch(/useState<string \| null>\(null\);\s*\n\s*const \[selected/);
+  });
+
+  it("B/C: escolhas navegam para P/I/R preservando a seção atual", () => {
+    expect(resultsSection).toMatch(/navigateSelection/);
+    expect(resultsSection).toMatch(/buildProcessoPath\(processoId, revisaoId, instanciaId\)/);
+    expect(resultsSection).toMatch(/window\.location\.hash \|\| "#resultados"/);
+    expect(resultsSection).toMatch(/navigateSelection\(comparison\.instanceId, revisao\.revisao_id\)/);
+    expect(resultsSection).toMatch(/navigateSelection\(instancia\.instancia_id, null\)/);
+  });
+
+  it("J/K: trocar melhoria limpa revisão — nunca mistura cross-instance", () => {
+    expect(resultsSection).toMatch(/navigateSelection\(null, null\)/);
+    expect(resultsSection).not.toMatch(/setSelectedRevisaoId/);
+    expect(resultsSection).not.toMatch(/setSelectedInstanciaId/);
+  });
+
+  it("D: nav de seções preserva P/I/R — workspace page e chrome usam view efetiva", () => {
+    expect(workspacePage).toMatch(/resolveWorkspacePanelView/);
+    expect(workspacePage).toMatch(/useWorkspaceLocationHash/);
+    expect(workspacePage).toMatch(/routeInstanciaId=\{route\.instanciaId\}/);
+    expect(workspacePage).toMatch(/routeRevisaoId=\{route\.revisaoId\}/);
+    expect(detailPage).toMatch(/buildProcessWorkspacePath/);
+    expect(detailPage).toMatch(/routeInstanciaId=\{routeInstanciaId\}/);
+    expect(detailPage).toMatch(/routeRevisaoId=\{routeRevisaoId\}/);
+  });
+});

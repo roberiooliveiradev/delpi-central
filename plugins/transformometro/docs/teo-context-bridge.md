@@ -52,27 +52,29 @@ policy e não restringe o TÉO.
 | `…/diagram/edit` | ids do nível | `mapeamento` (processo) / `diagrama` |
 | demais telas | todos `null` | `null` |
 
-## Seleção do workspace (V1.1)
+## Seleção do workspace (deep-link V1)
 
-A rota nem sempre carrega melhoria/revisão: em Resultados o usuário pode
-estar vendo "Melhoria analisada" e "Cenário proposto" na rota
-`/processes/:p#resultados`. A fonte da seleção é o `comparison` de
-`ProcessResultsSection` (view-model `buildRevisionComparisonView`), que é
-exatamente o que a UI exibe — incluindo a auto-resolução de item único e
-`needs_*_selection` quando há ambiguidade.
+Desde a deep-linked selection, **a URL é a autoridade da seleção
+material**: escolher melhoria/cenário em Resultados navega para
+`/processes/:p/instances/:i[/revisions/:r]#<seção>` — refresh, share e
+back/forward restauram P/I/R sem state paralelo.
 
-Precedência:
+Em rotas aninhadas, um hash que é **seção exclusiva do processo**
+(resultados, melhorias, documentacao, tarefas, sala, historico,
+visao-geral + aliases) abre o painel de processo com a seleção da rota
+(`resolveWorkspacePanelView`, level-wins); hashes que são seção do
+próprio nível continuam abrindo o painel de instância/revisão.
+
+A loja `teoWorkspaceSelection` (publicada por `ProcessResultsSection`)
+permanece apenas como **fallback de transição**: cobre os casos em que a
+UI exibe uma seleção auto-resolvida pelo view-model sem escolha explícita
+(ex.: única melhoria) e a URL não a materializa. Precedência inalterada:
 
 ```text
 process_id  ← rota
-instance_id ← rota explícita, senão seleção do workspace do mesmo processo
+instance_id ← rota explícita, senão seleção publicada do mesmo processo
 revision_id ← rota explícita, senão seleção cuja instance_id bate
 ```
-
-A seleção é publicada atomicamente (`instance_id` + `revision_id` juntos)
-— nunca revisão de uma melhoria com id de outra. Ao sair do processo, a
-publicação é removida; seleção de outro processo é ignorada por guarda de
-`process_id`.
 
 Aliases legados de hash (`#diagrama`, `#arquivos`, `#priorizacao`,
 `#dados`, `#timeline`) normalizam para a seção canônica. Rotas PT legadas

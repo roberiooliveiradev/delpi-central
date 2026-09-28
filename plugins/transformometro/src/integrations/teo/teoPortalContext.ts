@@ -9,6 +9,7 @@ import {
   parseInstanciaSectionFromHash,
   parseProcessoSectionFromHash,
   parseRevisaoSectionFromHash,
+  resolveWorkspacePanelView,
 } from "../../ui/processes/processWorkspaceNav";
 import type { TeoWorkspaceSelection } from "./teoWorkspaceSelection";
 
@@ -54,9 +55,17 @@ function isProcessWorkspaceView(view: string): view is ProcessWorkspaceView {
 }
 
 function resolveArea(view: ProcessWorkspaceView, hash: string): string | null {
+  if (view === "instancia" || view === "revisao") {
+    // Seções exclusivas do processo (ex.: #resultados) abrem o painel de
+    // processo mesmo em rota de instância/revisão — a área segue o painel
+    // efetivamente exibido.
+    const panelView = resolveWorkspacePanelView({ view, hash });
+    if (panelView === "processo") return parseProcessoSectionFromHash(hash);
+    return panelView === "instancia"
+      ? parseInstanciaSectionFromHash(hash)
+      : parseRevisaoSectionFromHash(hash);
+  }
   if (view === "processo") return parseProcessoSectionFromHash(hash);
-  if (view === "instancia") return parseInstanciaSectionFromHash(hash);
-  if (view === "revisao") return parseRevisaoSectionFromHash(hash);
   // Diagrama edit é tela cheia: processo vive sob Mapeamento; melhoria e
   // revisão têm seção "diagrama" própria.
   if (view === "processoDiagramaEdit") return "mapeamento";

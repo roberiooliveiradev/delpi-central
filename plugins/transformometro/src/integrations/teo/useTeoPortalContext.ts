@@ -3,6 +3,7 @@ import { useSyncExternalStore } from "react";
 
 import { TRANSFORMOMETRO_WORKSPACE_HASH_EVENT } from "../../utils/navigation";
 import { parseTransformometroPath } from "../../utils/routeParser";
+import { resolveWorkspacePanelView } from "../../ui/processes/processWorkspaceNav";
 import {
   resolveTeoPortalContext,
   type TeoPortalContext,
@@ -53,9 +54,14 @@ export function useTeoPortalContext(pathname: string): TeoPortalContextState {
 
   return useMemo(() => {
     const route = parseTransformometroPath(pathname);
+    // View efetiva do painel — usada só para rotular a área na UI.
+    const view =
+      route.view === "instancia" || route.view === "revisao"
+        ? resolveWorkspacePanelView({ view: route.view, hash })
+        : route.view;
     return {
       context: resolveTeoPortalContext(pathname, hash, selection),
-      view: route.view,
+      view,
     };
   }, [pathname, hash, selection]);
 }
