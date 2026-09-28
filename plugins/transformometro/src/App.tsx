@@ -37,6 +37,7 @@ import { navigateTransformometro } from "./utils/navigation";
 import { buildTransformometroTransitionKey } from "./utils/transitionKey";
 import { PortalChromeProvider, useCanManagePortal } from "./state/portalChrome";
 import { recordPortalRecentAccess } from "./state/portalRecentAccess";
+import { registerTeoContextSiteTool } from "./integrations/teo/teoContextBridge";
 
 export type AppProps = {
   getAccessToken?: () => string | undefined;
@@ -51,6 +52,15 @@ function AppRoutes({ getAccessToken, pathname: pathnameFromHost }: AppProps) {
   const transitionKey = buildTransformometroTransitionKey(pathname);
 
   useDelpiPortalBridge(pathname);
+
+  // Site tool WebMCP (ChatGPT desktop, built-in browser): contexto de
+  // navegação read-only. execute resolve window.location no momento da
+  // chamada — sem estado obsoleto entre rotas. Sem suporte = no-op.
+  useEffect(() => {
+    const controller = new AbortController();
+    registerTeoContextSiteTool({ signal: controller.signal });
+    return () => controller.abort();
+  }, []);
 
   const onNavigate = useGuardedNavigate(navigateTransformometro);
   const canManage = useCanManagePortal();

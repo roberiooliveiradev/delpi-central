@@ -42,6 +42,7 @@ describe("Transforma+ user manual", () => {
       "process-documentation",
       "my-tasks",
       "interaction",
+      "teo",
       "minutes",
       "data",
       "administration",

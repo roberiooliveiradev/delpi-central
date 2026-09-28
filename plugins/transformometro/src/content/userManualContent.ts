@@ -231,6 +231,26 @@ export const USER_MANUAL_CONTENT = {
       ],
     },
     {
+      id: "teo",
+      title: "TÉO no ChatGPT",
+      intro:
+        "Dentro do workspace de um processo, a barra superior mostra a ação TÉO. Ela copia o contexto de navegação atual — processo, melhoria, revisão e seção — para você colar no ChatGPT.",
+      bullets: [
+        "O contexto é só a localização: identificadores e a seção aberta. Não leva token, permissão nem conteúdo do processo.",
+        "No navegador integrado do ChatGPT para desktop, o portal já oferece o contexto como ferramenta do site — o TÉO descobre onde você está sem copiar nada.",
+        "O TÉO usa os identificadores para consultar os dados canônicos do Transformômetro. O contexto não concede acesso: quem não pode ver o processo continua sem acesso.",
+        "Mudar de processo, melhoria, revisão ou seção atualiza o contexto — copie de novo se mudar de tela.",
+      ],
+      links: [
+        {
+          want: "Analisar o contexto atual com TÉO",
+          where: "Workspace do processo",
+          how: "Abra o processo, escolha a melhoria/revisão e a seção, e use TÉO na barra superior. Cole o contexto no ChatGPT.",
+          path: TRANSFORMOMETRO_ROUTES.processes,
+        },
+      ],
+    },
+    {
       id: "minutes",
       title: "Atas",
       intro: "Reuniões, registros e assinaturas. Assinar depende de ser signatário daquela ata.",
