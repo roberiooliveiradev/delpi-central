@@ -21,7 +21,10 @@ from mcp.server.fastmcp.exceptions import ToolError
 from tv_app.application.gpt_actions.commit_service import TvGptCommitService
 from tv_app.application.gpt_actions.dispatch_service import GptActionsDispatchService
 from tv_app.application.gpt_actions.errors import GptActionsError
-from tv_app.application.services.tv_presentation_write_service import TvPresentationWriteService
+from tv_app.application.services.tv_presentation_write_service import (
+    PresentationWriteError,
+    TvPresentationWriteService,
+)
 from tv_app.infrastructure.persistence.repositories.idempotency_repository import (
     PostgresIdempotencyRepository,
 )
@@ -161,6 +164,35 @@ def handle_tool_error(exc: Exception, *, tool: str, label: str) -> CallToolResul
             retryable=exc.retryable,
             details=exc.details or None,
         )
+    # PresentationWriteError carries typed code/status (e.g. REVISION_CONFLICT,
+    # DATA_BINDING_FIELD_MISSING) — preserve them; the HTTP surface collapses
+    # these into UPSTREAM_FAILURE, but MCP keeps the canonical typed domain code.
+    if isinstance(exc, PresentationWriteError):
+        http_status = exc.status_code if 400 <= exc.status_code <= 599 else 400
+        return _error_result(
+            status="error",
+            http_status=http_status,
+            error_kind=_kind_for_status(http_status),
+            code=exc.code or "INVALID_CHANGE",
+            message=str(exc),
+            details=exc.details or None,
+        )
+    if isinstance(exc, LookupError):
+        return _error_result(
+            status="error",
+            http_status=404,
+            error_kind="not_found",
+            code="RESOURCE_NOT_FOUND",
+            message=str(exc) or "Recurso não encontrado.",
+        )
+    if isinstance(exc, ValueError):
+        return _error_result(
+            status="error",
+            http_status=422,
+            error_kind="validation",
+            code="INVALID_CHANGE",
+            message=str(exc),
+        )
     logger.exception("%s failed: %s (%s)", label, type(exc).__name__, tool)
     return _error_result(
         status="error",
@@ -275,6 +307,74 @@ def tool_preview_data_model(
         return _ok_result(_dispatch.preview_data_model(user=user, body=body, authorization=auth))
     except Exception as e:
         return handle_tool_error(e, tool="preview_data_model", label="mcp tool")
+
+
+# ---------------------------------------------------------------------------
+# MCP2 — governed write envelope (PREPARE → proposal_handle → ACT).
+# Adapter only: ops[] are canonical catalog vocabulary validated by the
+# application pipeline; proposal_handle is opaque, HMAC-signed, actor-bound,
+# single-use, TTL'd — owned entirely by the application layer.
+# ---------------------------------------------------------------------------
+
+
+def tool_prepare_change(
+    target: dict | None = None,
+    ops: list | None = None,
+    catalog_version: str | None = None,
+) -> CallToolResult:
+    """Evaluate a governed candidate mutation without material persistence.
+
+    Returns the canonical proposal payload (proposal_handle, canCommit, risk,
+    confirmationPolicy, sideEffectHints, diff/candidate preview). PREPARE never
+    commits — commit happens only via ``commit_proposal``.
+    """
+    try:
+        if not isinstance(ops, list) or not ops:
+            raise GptActionsError(
+                "ops[] é obrigatório (vocabulary do catálogo de operações).",
+                code="INVALID_CHANGE",
+                status_code=422,
+            )
+        user, auth = _authed_context()
+        return _ok_result(
+            _dispatch.preview_change(
+                user=user,
+                target=target if isinstance(target, dict) else {},
+                ops=ops,
+                catalog_version=catalog_version,
+                authorization=auth,
+                commit_now=False,
+            )
+        )
+    except Exception as e:
+        return handle_tool_error(e, tool="prepare_change", label="mcp tool")
+
+
+def tool_commit_proposal(
+    proposal_handle: str,
+    idempotency_key: str,
+    confirmation: bool = False,
+) -> CallToolResult:
+    """Commit a proposal returned by ``prepare_change``.
+
+    Caller must supply the exact opaque ``proposal_handle``, a caller-owned
+    ``idempotency_key``, and ``confirmation=True`` — tool invocation alone is
+    never confirmation. Postcondition is verified by the canonical backend
+    (VERIFIED / OUTCOME_NOT_VERIFIED).
+    """
+    try:
+        user, auth = _authed_context()
+        return _ok_result(
+            _dispatch.commit_change(
+                user=user,
+                proposal_handle=proposal_handle,
+                confirmation=confirmation,
+                idempotency_key=idempotency_key,
+                authorization=auth,
+            )
+        )
+    except Exception as e:
+        return handle_tool_error(e, tool="commit_proposal", label="mcp tool")
 
 
 def list_tool_names() -> list[str]:

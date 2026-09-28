@@ -48,27 +48,50 @@ Workspace Agent / ChatGPT Plugin (VISTA)
 
 No HTTP loop: tools call the dispatch service directly — never `/gpt-actions` over HTTP.
 
-## Surface policy (MCP1)
+## Surface policy (MCP2)
 
 ```text
-VISTA_MCP_SURFACE = READ_V1
-six semantic READ tools = REQUIRED
-write / PREPARE / ACT tools = MCP2 (not this surface)
+VISTA_MCP_SURFACE = GOVERNED_WRITE_V1
+6 READ + 1 PREPARE + 1 ACT = exactly 8 tools
+native ops (upsert_data_model, bind_visual, migrate_data_sources_to_model,
+upsert_data_source, patch_data_source_params, …) = vocabulary inside
+prepare_change.ops[] — never per-op tools
 resources / prompts = FORBIDDEN
-legacy primitive tools (upsert_data_source, patch_data_source_params,
-suggest_change, preview_data_block, preview_change, commit_change) = FORBIDDEN
+legacy primitive tools (suggest_change, preview_data_block,
+preview_change, commit_change) = FORBIDDEN as tools
 ```
 
-Tools (all `READ`, non-persisting):
+Tools:
 
-| Tool | Delegates to |
-|---|---|
-| `list_playlists` | `GptActionsDispatchService.list_playlists` |
-| `get_playlist_context` | `GptActionsDispatchService.get_playlist_context` |
-| `get_catalog` | `GptActionsDispatchService.get_catalog` |
-| `search_data_routes` | `GptActionsDispatchService.search_data_routes` |
-| `inspect_data_model` | `GptActionsDispatchService.inspect_data_model` |
-| `preview_data_model` | `GptActionsDispatchService.preview_data_model` (inline candidate never persisted) |
+| Tool | Class | Delegates to |
+|---|---|---|
+| `list_playlists` | READ | `GptActionsDispatchService.list_playlists` |
+| `get_playlist_context` | READ | `GptActionsDispatchService.get_playlist_context` |
+| `get_catalog` | READ | `GptActionsDispatchService.get_catalog` |
+| `search_data_routes` | READ | `GptActionsDispatchService.search_data_routes` |
+| `inspect_data_model` | READ | `GptActionsDispatchService.inspect_data_model` |
+| `preview_data_model` | READ | `GptActionsDispatchService.preview_data_model` (inline candidate never persisted) |
+| `prepare_change` | PREPARE | `GptActionsDispatchService.preview_change` (commit_now=False) |
+| `commit_proposal` | ACT | `GptActionsDispatchService.commit_change` |
+
+## Governed write envelope
+
+```text
+prepare_change(target, ops[], catalogVersion?)
+  → canonical preview pipeline (catalog validation, policy, diff)
+  → opaque proposal_handle (HMAC-signed, actor-bound, TTL, single-use)
+  → canCommit / risk / confirmationPolicy / sideEffectHints
+  → NOTHING persisted (no revision change, no write port call)
+
+commit_proposal(proposal_handle, idempotency_key, confirmation=true)
+  → actor binding (AUTHZ_DENIED cross-user)
+  → Idempotency-Key required (REPLAY / CONFLICT / IN_PROGRESS)
+  → explicit confirmation required (tool invocation ≠ confirmation)
+  → canonical commit + postcondition verification
+  → status VERIFIED / OUTCOME_NOT_VERIFIED / typed failure
+```
+
+`TV_WRITE` permission is enforced by the application on both tools.
 
 ## OAuth transport requirements
 
@@ -113,8 +136,8 @@ Required on `mcp-tv-dashboard` (confidential, Authorization Code + PKCE):
 
 Until provisioning evidence exists, status is **PENDING** — do not mark live.
 
-## Writes are MCP2
+## GPT Actions coexistence
 
-This surface exposes no mutation path. Writes will arrive as the governed
-envelope (`prepare_change` → proposal handle → `commit_proposal`) over the
-existing `changes/preview|commit` flow — same contract as GPT Actions.
+`/gpt-actions/v1/changes/preview` and `/gpt-actions/v1/changes/commit` remain
+the same canonical flow — MCP exposes the identical dispatch services through
+the governed envelope. VISTA client migration is MCP3 scope.

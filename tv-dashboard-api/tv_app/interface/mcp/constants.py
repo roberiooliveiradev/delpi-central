@@ -20,10 +20,11 @@ CANONICAL_MCP_RESOURCE_URL = "https://minhadelpi.com.br/apps/tv-dashboard-api/mc
 
 MCP_AUTH_MODEL = "TRANSPORT_REQUIRES_OAUTH"
 
-# MCP1 surface: semantic READ tools only.
-VISTA_MCP_SURFACE = "READ_V1"
+# MCP2 surface: semantic READ tools + governed PREPARE/ACT envelope.
+VISTA_MCP_SURFACE = "GOVERNED_WRITE_V1"
 
-# READ (MCP1). PREPARE/ACT classes reserved for MCP2 envelope tools.
+# READ (MCP1) + governed envelope (MCP2). Native ops remain vocabulary inside
+# prepare_change.ops[] — never per-op tools.
 TOOL_CLASS: dict[str, str] = {
     "list_playlists": "READ",
     "get_playlist_context": "READ",
@@ -31,16 +32,16 @@ TOOL_CLASS: dict[str, str] = {
     "search_data_routes": "READ",
     "inspect_data_model": "READ",
     "preview_data_model": "READ",
+    "prepare_change": "PREPARE",
+    "commit_proposal": "ACT",
 }
 
 MCP_TOOL_NAMES: tuple[str, ...] = tuple(TOOL_CLASS.keys())
 
-# Names that must never appear in tools/list for this surface. MCP2 writes are
-# envelope tools (prepare_change/commit_proposal), not per-op tools.
+# Names that must never appear in tools/list for this surface. Writes flow
+# exclusively through prepare_change/commit_proposal envelope tools.
 MCP_FORBIDDEN_TOOLS: frozenset[str] = frozenset(
     {
-        "prepare_change",
-        "commit_proposal",
         "upsert_data_model",
         "delete_data_model",
         "bind_visual",
@@ -50,6 +51,8 @@ MCP_FORBIDDEN_TOOLS: frozenset[str] = frozenset(
         "patch_data_source_params",
         "preview_data_block",
         "suggest_change",
+        "preview_change",
+        "commit_change",
         "execute_capability",
         "invoke_tool",
         "generic_http",

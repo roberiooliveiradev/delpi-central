@@ -16,13 +16,15 @@ from mcp.types import CallToolResult, ToolAnnotations
 from tv_app.config import settings
 
 from .branding import VISTA_MCP_INSTRUCTIONS
-from .constants import MCP_TOOL_NAMES
+from .constants import MCP_TOOL_NAMES, TOOL_CLASS
 from .oauth_contract import MCP_TOOL_SECURITY_SCHEMES
 from .tool_bridge import (
+    tool_commit_proposal,
     tool_get_catalog,
     tool_get_playlist_context,
     tool_inspect_data_model,
     tool_list_playlists,
+    tool_prepare_change,
     tool_preview_data_model,
     tool_search_data_routes,
 )
@@ -131,9 +133,26 @@ def _register_read_tools(mcp: FastMCP) -> None:
         idempotentHint=True,
         openWorldHint=False,
     )
+    ann_prepare = ToolAnnotations(
+        title="PREPARE — tv-dashboard",
+        readOnlyHint=False,
+        destructiveHint=False,
+        idempotentHint=True,
+        openWorldHint=False,
+    )
+    ann_act = ToolAnnotations(
+        title="ACT — tv-dashboard",
+        readOnlyHint=False,
+        destructiveHint=True,
+        idempotentHint=True,
+        openWorldHint=False,
+    )
 
     def _meta(name: str) -> dict:
-        return {"securitySchemes": list(MCP_TOOL_SECURITY_SCHEMES), "toolClass": "READ"}
+        return {
+            "securitySchemes": list(MCP_TOOL_SECURITY_SCHEMES),
+            "toolClass": TOOL_CLASS[name],
+        }
 
     mcp.add_tool(
         tool_list_playlists,
@@ -213,6 +232,34 @@ def _register_read_tools(mcp: FastMCP) -> None:
         ),
         annotations=ann,
         meta=_meta("preview_data_model"),
+    )
+
+    mcp.add_tool(
+        tool_prepare_change,
+        name="prepare_change",
+        title="PREPARE — candidato de mutação governado",
+        description=(
+            "Avalia um candidato de mutação governado (target + ops[] do "
+            "catálogo canônico) sem persistir. Retorna proposal_handle opaco, "
+            "canCommit, risk, confirmationPolicy e diff/candidate preview. "
+            "Nada é gravado — commit só via commit_proposal."
+        ),
+        annotations=ann_prepare,
+        meta=_meta("prepare_change"),
+    )
+
+    mcp.add_tool(
+        tool_commit_proposal,
+        name="commit_proposal",
+        title="ACT — commit de proposta validada",
+        description=(
+            "Executa o commit de uma proposta retornada por prepare_change. "
+            "Exige proposal_handle exato, idempotency_key do chamador e "
+            "confirmation=true explícito. O postcondition é verificado pelo "
+            "backend (VERIFIED / OUTCOME_NOT_VERIFIED)."
+        ),
+        annotations=ann_act,
+        meta=_meta("commit_proposal"),
     )
 
     registered = {t.name for t in mcp._tool_manager.list_tools()}

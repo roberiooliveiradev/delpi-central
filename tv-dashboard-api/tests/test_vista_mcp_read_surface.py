@@ -123,7 +123,7 @@ def _test_dispatch(**overrides) -> GptActionsDispatchService:
 # ---------------------------------------------------------------------------
 
 
-def test_tools_list_exactly_six_read_tools():
+def test_tools_list_exactly_eight_governed_tools():
     tools = asyncio.run(create_mcp_server().list_tools())
     names = {t.name for t in tools}
     assert names == set(MCP_TOOL_NAMES)
@@ -134,30 +134,43 @@ def test_tools_list_exactly_six_read_tools():
         "search_data_routes",
         "inspect_data_model",
         "preview_data_model",
+        "prepare_change",
+        "commit_proposal",
     }
-    assert len(tools) == 6
+    assert len(tools) == 8
 
 
-def test_no_write_or_legacy_tools_registered():
+def test_no_native_op_or_legacy_tools_registered():
     names = {t.name for t in asyncio.run(create_mcp_server().list_tools())}
     assert MCP_FORBIDDEN_TOOLS.isdisjoint(names)
-    banned = {"prepare_change", "commit_proposal", "preview_change", "commit_change",
-              "suggest_change", "preview_data_block", "execute_capability", "generic_http"}
+    banned = {"preview_change", "commit_change", "suggest_change", "preview_data_block",
+              "upsert_data_model", "bind_visual", "migrate_data_sources_to_model",
+              "execute_capability", "generic_http"}
     assert banned.isdisjoint(names)
 
 
-def test_all_tools_classified_read():
-    assert set(TOOL_CLASS.values()) == {"READ"}
+def test_tool_classification_read_prepare_act():
+    assert TOOL_CLASS["prepare_change"] == "PREPARE"
+    assert TOOL_CLASS["commit_proposal"] == "ACT"
+    assert sum(1 for v in TOOL_CLASS.values() if v == "READ") == 6
     assert set(TOOL_CLASS.keys()) == set(MCP_TOOL_NAMES)
 
 
-def test_tool_annotations_read_only():
-    tools = asyncio.run(create_mcp_server().list_tools())
-    for t in tools:
+def test_tool_annotations_match_class():
+    tools = {t.name: t for t in asyncio.run(create_mcp_server().list_tools())}
+    for name, t in tools.items():
         ann = t.annotations
-        assert ann is not None, t.name
-        assert ann.readOnlyHint is True, t.name
-        assert ann.destructiveHint in (False, None), t.name
+        assert ann is not None, name
+        if TOOL_CLASS[name] == "READ":
+            assert ann.readOnlyHint is True, name
+            assert ann.destructiveHint in (False, None), name
+        elif TOOL_CLASS[name] == "PREPARE":
+            assert ann.readOnlyHint is False, name
+            assert ann.destructiveHint is False, name
+        else:  # ACT
+            assert ann.readOnlyHint is False, name
+            assert ann.destructiveHint is True, name
+            assert ann.idempotentHint is True, name
 
 
 def test_no_resources_or_prompts_registered():
@@ -524,14 +537,14 @@ def test_mcp_trailing_path_untouched_for_non_mcp():
 # ---------------------------------------------------------------------------
 
 
-def test_calling_prepare_change_fails_tool_not_found():
+def test_calling_forbidden_tool_fails_tool_not_found():
     from mcp.server.fastmcp.exceptions import ToolError
 
     mcp = create_mcp_server()
-    with pytest.raises(ToolError, match="prepare_change"):
-        asyncio.run(mcp.call_tool("prepare_change", {}))
-    with pytest.raises(ToolError, match="commit_proposal"):
-        asyncio.run(mcp.call_tool("commit_proposal", {}))
+    with pytest.raises(ToolError, match="upsert_data_model"):
+        asyncio.run(mcp.call_tool("upsert_data_model", {}))
+    with pytest.raises(ToolError, match="migrate_data_sources_to_model"):
+        asyncio.run(mcp.call_tool("migrate_data_sources_to_model", {}))
 
 
 def test_app_mounts_mcp_and_metadata_and_health():
