@@ -38,6 +38,7 @@ Regras Cursor: **`totvs-product-patterns.mdc`** (quando **usar** e como **enriqu
 | ROL financeiro (receita líquida) | — | Campo HTTP canônico **`rol`** = vendas − devoluções (`VLR_VENDA − VLR_DEVOLUCAO`); identificador legado `rol_with_ipi` removido (breaking). Expressão reutilizável: `CommercialRolReturnSql` em `app/domain/services/commercial/commercial_rol_return_sql.py` (billing líquido da carteira / série `nature=net`). Bruto de NF = `F2_VALBRUT`; bruto no envelope by-customer = `gross_revenue`. |
 | Carteira semanal previsto × realizado | [carteira-semanal-previsto-realizado.md](./carteira-semanal-previsto-realizado.md) | Forecast SC6 por `C6_ENTREG` vs realizado por `D2_EMISSAO`; família HTTP `/commercial/billing-portfolio/*` — [commercial-billing-portfolio.md](../commercial-billing-portfolio.md) |
 | ROL — mercado interno/externo | [rol-mercado-cfop.md](./rol-mercado-cfop.md) | CFOP `5`/`6` = interno; `7` = exportação; países via `A1_PAIS` |
+| ROL — divergência vs relatório Protheus | [rol-divergencia-protheus.md](./rol-divergencia-protheus.md) | Diagnóstico de diferença Portal × Protheus; incidente Helpdesk #0001164 (materiais de terceiros inflando relatório customizado) |
 | Paginação HTTP (tiers) | [paginacao.md](./paginacao.md) | `pagination_tiers.json`, factories Query, `PaginationEnvelopeBuilder`; gate `--check-complete` |
 
 ---

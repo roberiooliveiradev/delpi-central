@@ -69,5 +69,7 @@ parceiro.
 ## Referências
 
 - Rota / plugin: [materiais-terceiros.md](../materiais-terceiros.md)
+- Divergência ROL × Protheus por materiais de terceiros no faturamento:
+  [rol-divergencia-protheus.md](./rol-divergencia-protheus.md) (Helpdesk #0001164)
 - Relatórios TOTVS descontinuados: MATR480 / MATR485 (TDN)
 - Cadastro SB1 `B1_TPMAT`: [cadastro-produto.md](./cadastro-produto.md)
