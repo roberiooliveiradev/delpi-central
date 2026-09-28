@@ -389,7 +389,7 @@ Propriedade da reconciliação: **aplicação/domínio do Factory Supply**, não
 
 Auditoria de domínio ≠ log técnico. `supply_events` append-only:
 
-`{event_id, mission_id, item_id?, event_type(command|transition|erp_observation|signal_sync), action, actor_user_id, actor_display_name, prev_state?, new_state?, qty_delta?, reason?, idempotency_key?, request_id?, correlation_id?, created_at}`.
+`{event_id, mission_id, item_id?, event_type(command|transition|erp_observation|signal_sync), action, actor_user_id, actor_display_name, prev_state?, new_state?, qty_delta?, reason?, idempotency_key?, correlation_id?, created_at}` — `correlation_id` = identificador `X-Request-ID` da requisição/execução de job (§32); `request_id` separado **removido** no modelo SINGLE_ID (redundante — o request id **é** o correlation id).
 
 - Gravado na **mesma transação** do agregado — transição sem evento não existe.
 - Append-only lógico; nunca update/delete (retenção: integral — rastreabilidade é o produto).
@@ -399,8 +399,21 @@ Auditoria de domínio ≠ log técnico. `supply_events` append-only:
 
 Conforme `platform-reliability-observability.mdc`/`observability-standards.mdc`:
 
-- Logs estruturados: `request_id`, `operation_id`, `route`, `actor_user_id`, `branch`, `duration_ms`, outcome; sem tokens/segredos/payloads ERP sensíveis.
-- Correlation ID propagado MFE→BFF→api-delpi (`X-Request-Id`/traceparent conforme gateway — `TO_INVENTORY` convenção exata de header no gateway atual).
+- Logs estruturados: `correlation_id`, `operation_id`, `route`, `actor_user_id` (ou `job_name`+`run_id` em jobs), `branch`, `duration_ms`, outcome; sem tokens/segredos/payloads ERP sensíveis.
+
+**Correlation contract (CONGELADO FS-C0.T11 — modelo `SINGLE_ID`):**
+
+- **Header canônico:** `X-Request-ID` — inventário prova que **nenhum** header de correlação existe hoje (gateway sem injeção, `shared/delpi_auth` sem request-id, api-delpi `request_observability_middleware` só propaga `X-Operation-Id`/`X-Response-Time-Ms`, bounded APIs e portal client sem correlação). Convenção de headers custom é `X-*`/adapter-propagated (`X-Delpi-Caller-App` PROVEN). FS adota `X-Request-ID` como candidata a convenção de plataforma — sem `traceparent`/W3C (não PROVEN) e sem segundo ID: o request id **é** o correlation id propagado entre hops (`SINGLE_ID`, menor modelo compatível com `observability-standards` "reutilizar header canônico existente").
+- **Formato:** UUID4 (`gen_random_uuid`/uuid4 — convenção PROVEN do repo para identificadores).
+- **Inbound:** aceita `X-Request-ID` válido (string não-vazia, ≤120 chars, charset seguro); ausente/malformado → **gera servidor-side** (nunca rejeita por metadado de observabilidade); valor do cliente nunca é autoridade (só rastreio). Bind em contextvar (padrão `request_context.py` api-delpi). **Response:** ecoa `X-Request-ID` no header da resposta (precedente `X-Operation-Id` echo); envelope `fail` inclui `error.correlation_id` p/ suporte (mensagem amigável + referência técnica; sem stack).
+- **Downstream api-delpi:** gateway FS propaga `X-Request-ID` junto a `X-Delpi-Caller-App` nos adapters (mesmo padrão `headers={...}` PROVEN). api-delpi hoje ignora header desconhecido — propagação é aditiva e segura; quando api-delpi adotar o padrão, o FS já está correto.
+- **Idempotência × correlação:** `Idempotency-Key` = identidade semântica de retry; `correlation_id` = identidade de rastreio — conceitos distintos. Replay idempotente: o evento de negócio original preserva seu `correlation_id`; o retry carrega **novo** `correlation_id` apenas em logs/telemetria (sem segundo `supply_events`, sem novo outbox).
+- **Audit:** `supply_events.correlation_id` persiste o ID da requisição/job que causou o evento (liga ação→comando→auditoria→outbox→notificação); não substitui `event_id`/`aggregate_id`/`actor`/`idempotency_key`.
+- **Outbox:** `integration_outbox.correlation_id` copiado da transação de origem — entrega WS/notificação rastreável até o comando/run que a gerou.
+- **Jobs (`demand_signal_sync`, `erp_evidence_reconcile`):** cada run gera `correlation_id` UUID4 próprio + `job_name`/`run_id` nos logs — propagado para leituras api-delpi, mutações, audit (`actor_type=system`), outbox e telemetria. Não se personifica request de usuário.
+- **Async multi-etapa:** reconciliação posterior **nova** correlation por execução + link via `aggregate_id`/`mission_item_id` + referência ao evento originador (`handoff`/`delivery` id no payload) — sem `causation_id` (não PROVEN) e sem correlação eterna entre jobs.
+- **WebSocket payload:** `{event_id, event_type, aggregate_id, occurred_at, dedupe_key?, correlation_id?}` — correlation só como metadado de diagnóstico; frontend nunca o usa para lógica de negócio.
+- **Notificação portal:** `dedupeKey`+`actionTarget` (§33) permanecem os campos canônicos; `correlation_id` pode ir em `payload.metadata` se o catálogo suportar — nunca como dedupe key nem visível ao usuário final.
 - Métricas: latência/erro por rota; latência+taxa de erro da api-delpi por operationId; contagem por `erp_evidence.status`; `version_conflict` rate; `idempotent_replay` rate; `idempotency_conflict` count; signals sync result (created/updated/superseded).
 - Métricas operacionais ≠ scoring de trabalhador (Doc 1/5).
 - Tracing ponta a ponta desejável — `TARGET` alinhado ao que a plataforma já fizer (sem inventar stack nova).
@@ -554,7 +567,7 @@ Schema `factory_supply` — todas `PLANNED` (DDL na implementação; sem SQL aqu
 | erp_observations | evidência ERP por item | id UUID | mission_item_id FK, status enum, evidence_fingerprint, matched_ref JSONB?, confidence?, observed_at, source, payload_snapshot JSONB bounded | UNIQUE(mission_item_id, evidence_fingerprint) | via item | — | (mission_item_id,status) | PLANNED |
 | supply_events | auditoria append-only | id UUID | mission_id, item_id?, event_type, action, actor_user_id, actor_display_name, prev_state, new_state, qty_delta, reason, idempotency_key, request_id, correlation_id, created_at | — | via mission (denorm branch col para filtro) | — | (branch,created_at) cursor, (mission_id,created_at) | PLANNED |
 | idempotency_keys | dedup de comandos | id UUID | key, route, actor_user_id, **request_fingerprint** (SHA-256 canonical-JSON — §10 congelado T6), response_status INT, response_snapshot JSONB, created_at | UNIQUE(key,route,actor_user_id); fingerprint compara dentro do escopo | — | — | (created_at) retenção TO_FS_C0_T12 | PLANNED (convenção PROVEN + extensão TARGET) |
-| integration_outbox | entrega pós-commit (portal notif + realtime routing, §33) | id UUID | event_type, aggregate_type, aggregate_id, payload JSONB (userIds, permissionCodes, dedupeKey, actionTarget), attempts, next_attempt_at, published_at, created_at | UNIQUE(event_type,aggregate_id,dedupe_key?) — dedupe semântico §33 | branch no payload | — | (published_at NULL, next_attempt_at) | PLANNED (precedente `PROVEN` requests-api V005 + commercial) |
+| integration_outbox | entrega pós-commit (portal notif + realtime routing, §33) | id UUID | event_type, aggregate_type, aggregate_id, **correlation_id** (do comando/run originador — §32), payload JSONB (userIds, permissionCodes, dedupeKey, actionTarget), attempts, next_attempt_at, published_at, created_at | UNIQUE(event_type,aggregate_id,dedupe_key?) — dedupe semântico §33 | branch no payload | — | (published_at NULL, next_attempt_at) | PLANNED (precedente `PROVEN` requests-api V005 + commercial) |
 | integration_checkpoints | snapshot/diff de syncs (§33) | id UUID | source_key, cursor_value, metadata JSONB `{keys,keyCount}`, updated_at | UNIQUE(source_key) | por source_key (ex.: `demand_sync:01`) | — | (source_key) | PLANNED (precedente `PROVEN` `IntegrationCheckpointRepositoryPort`) |
 
 Notas: `qty` NUMERIC(18,6) (nunca float — precisão de quantidade); `unit` NOT NULL = `B1_UM` autoritativa do material (FS-C0.T7 — **sem** tabela/engine de conversão; igualdade exata com `accepted_unit` do item); nenhuma FK cruzando contexto (API DELPI = identificadores + snapshots); branch denormalizado em `supply_events` para filtro eficiente; `integration_outbox` enfileirado na **mesma transação** da mutação de domínio e publicado pós-commit pelo worker (§33).
@@ -685,7 +698,7 @@ Capacidades de serviço **nunca** expandem autoridade além do read-only ERP: n�
 4. Prioridade/score (`priority_score = NOT_SUPPORTED` até política existir — expostos `due_at|overdue|time_to_need` factuais).
 5. ~~Escopo de escrita por filial~~ — RESOLVIDO FS-C0.T3: `.view.filial-*` é escopo de filial e gateia writes (precedente `PROVEN`: `assert_can_view_branch` em mutações do Line Feeder); composição congelada `access` + `view.filial-{branch}` (§40-A).
 6. Cache operacional (TTL/fail-open) — `TO_DESIGN`; v1 sem cache semântico.
-7. Header exato de correlação propagado ao api-delpi — `TO_INVENTORY` convenção do gateway.
+7. ~~Header exato de correlação propagado ao api-delpi~~ — RESOLVIDO FS-C0.T11: `X-Request-ID` propagado pelos adapters (padrão `X-Delpi-*` headers); api-delpi ignora hoje, propagação aditiva (§32).
 8. Forma interna de `matched_ref`/fingerprint de movimento — pendente da confirmação de ID estável (§25).
 9. ~~Algoritmo de `request_fingerprint`~~ — RESOLVIDO FS-C0.T6: canonical-JSON tipado + SHA-256, escopo `(key,route,actor_user_id)`, single-tx claim+mutation+snapshot, replay `idempotent_replay:true`, falha não consome key (§10). Retenção de `idempotency_keys` permanece `TO_FS_C0_T12`.
 10. ~~Identidade das capacidades de serviço~~ — RESOLVIDO FS-C0.T5: in-process + shared service token (§40-B); sem service account, sem permissões Core.
@@ -699,7 +712,7 @@ Capacidades de serviço **nunca** expandem autoridade além do read-only ERP: n�
 | ~~Campos de `list_production_order_operation_materials(_batch)`~~ — RESOLVIDO FS-C0.T1: SD4 `original_qty/open_qty/consumed_qty/commitment_count`; batch sem cap server-side → FS auto-chunk obrigatório | — |
 | Estabilidade de `R_E_C_N_O_` como identidade persistente (pack/reorg Protheus) — decide se EVOLVE_EXISTING `movement_recno` vale a pena sobre o fingerprint | §25, C8 |
 | ~~Catálogo de armazéns~~ — RESOLVIDO §27: REUSE_AS_IS + composição BFF (sem nova rota) | — |
-| Convenção de header de correlação no gateway portal→api-delpi | §32 |
+| ~~Convenção de header de correlação~~ — RESOLVIDO FS-C0.T11: `X-Request-ID` `SINGLE_ID` (nenhum header canônico existia — gateway/shared/api-delpi/bounded APIs limpos); formato UUID4; propagação adapter-side (§32) | — |
 | ~~Política de escopo de escrita por filial~~ — RESOLVIDO FS-C0.T3: `.view.filial-*` = escopo de filial (leitura+escrita), precedente `PROVEN`; composição `access`+`filial` congelada §40-A | — |
 | ~~Registro das 3 permissões~~ — RESOLVIDO FS-C0.T4: contrato de manifesto, sync declarativo (`sync_module`), atribuição via `rbac.manage`+`roles.manage`, resolver `/me`, default DENY, fail-closed documentados em §40-A — apenas execução pendente | — |
 | ~~Tabela/serviço de conversão de unidades~~ — RESOLVIDO FS-C0.T7: `NOT_REQUIRED`; unidade autoritativa `B1_UM` provada em todos os contratos (§51) | — |

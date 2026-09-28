@@ -53,7 +53,7 @@ Consolidado de `TECHNICAL-CONTRACTS.md` §43–44 — todos tratados como gates 
 8. Reconciliação pedido operador×sinal planejado — **PRODUTO** (gate Product Master)
 9. Regra de quantidade de devolução — **PRODUTO** (gate; ver escopo §21)
 10. Política de prioridade — **PRODUTO** (gate; default factual ordering)
-11. Header de correlação no gateway portal→api-delpi — **técnico**
+11. ~~Header de correlação~~ — RESOLVIDO FS-C0.T11 (`X-Request-ID` `SINGLE_ID`, UUID4, adapter-propagated — TC §32)
 12. Retenção de `idempotency_keys`/`supply_events`/`integration_outbox` — **técnico**
 13. `SYNC_CADENCE` benchmark — **técnico** (carga/fan-out api-delpi validada antes de fixar; TC §33)
 14. Categorias de notificação FS no catálogo canônico Core (`notification-catalog-preferences`) — **técnico** (registro junto ao manifesto C7.T1)
@@ -163,7 +163,7 @@ Status: `ACCEPTED` (congelado na spec) / `GATED` (depende de C0/produto). Owner:
 |---|---|---|---|---|---|---|---|
 | FS-INT-01 | Reuso api-delpi: 13 rotas tipadas §38 + batch obrigatório (anti-N+1) | Doc4 §38,37 | FS | C3 | ACCEPTED | gateway tests | FS-AR-03 |
 | FS-INT-02 | Timeouts explícitos, retry limitado só em GET, backoff+jitter, classificação de erro | Doc4 §37 + regra | FS | C3 | ACCEPTED | resilience tests | FS-INT-01 |
-| FS-INT-03 | Correlação/request-id propagado MFE→BFF→api-delpi | Doc4 §32 | FS | C3 | GATED→C0.T11 | trace test | C0.T11 |
+| FS-INT-03 | `X-Request-ID` propagado MFE→BFF→api-delpi (`SINGLE_ID`, UUID4) — **RESOLVIDO FS-C0.T11** | Doc4 §32 | FS | C3 | ACCEPTED | trace test | C0.T11 |
 | FS-INT-04 | Evidência ERP: matched/not_found/unknown/unavailable/divergent; dedup fingerprint | Doc4 §25–26 | FS | C8 | GATED→C0.T1 | §28 tests | C0.T1 |
 | FS-INT-05 | Cockpit: `request-material` `source=operator_cockpit`+correlation+key | Doc4 §28 | FS+Cockpit | C10 | GATED→C0.P1 | contract tests | C0.P1 |
 | FS-INT-06 | Evolve `get_product_internal_movements` somente se C0.T1 provar lacuna | Doc4 §27 | DELPI | C8 | GATED→C0.T1 | decisão C0 | C0.T1 |
@@ -254,7 +254,7 @@ Primeira fase obrigatória — só evidência e decisão, **sem código de produ
 | FS-C0.T5 | ~~Identidade de serviço~~ — **`DONE`**: IN_PROCESS jobs asyncio (precedentes pc-poller/outbox/notification-loops); api-delpi auth = `API_DELPI_INTERNAL_SERVICE_TOKEN`+`X-Delpi-Caller-App` (identity `internal-service` is_superadmin na superfície read-only, `PROVEN`); sem service account, sem permissões Core, sem endpoints internos; multi-instância por env-flag. **Correção realtime (T5-bounded):** `OUTBOX_REQUIRED_NOW=YES` + hub WS local + diff/checkpoint + presence `FACTORY_SUPPLY_APP` + cold-start anti-flood (TC §33; padrão Commercial `PROVEN`) | PROVEN | FS-SEC-02 | — |
 | FS-C0.T6 | ~~Congelar `request_fingerprint`~~ — **`DONE`**: SHA-256 sobre canonical-JSON do comando tipado (chaves ordenadas, Decimal→string `normalize()`, nulos/default por semântica tipada, UTF-8); input = operation+path+branch+campos de domínio+`expected_version`; escopo `UNIQUE(key,route,actor_user_id)`; claim+mutation+audit+outbox+snapshot em **uma tx** (elimina janela do requests-api); UNIQUE-wait resolve corrida; falha não consome key; AuthZ reavaliado no replay; helper **local** (sem consumidor cruzado provado) | TC §10/§39 | FS-API-04/DATA-08→ACCEPTED | — |
 | FS-C0.T7 | ~~Conversão de unidades~~ — **`DONE`**: unidade autoritativa `B1_UM` PROVEN em operation-materials, internal-movements, stock-balances (`unit_of_measure`); `get_product_stock` omite unit → compõe via master data; `UNIT_CONVERSION_*=NOT_REQUIRED`; Decimal `NUMERIC(18,6)` + comparação exata; `accepted_unit` estável; re-sync com unit diferente → `UNIT_DIVERGENCE`; ERP qty+unit divergentes → `divergent` não `matched`; unit ausente → `unknown`/fail-closed em writes | PROVEN (contratos) | FS-DM-09→ACCEPTED | — |
-| FS-C0.T11 | Header de correlação aceito pelo gateway portal→api-delpi | convenção documentada | FS-INT-03 | — |
+| FS-C0.T11 | ~~Header de correlação~~ — **`DONE`**: inventário prova ausência de header canônico (gateway/shared/api-delpi/bounded APIs/portal limpos); `X-Request-ID` `SINGLE_ID` UUID4 congelado — inbound aceita/gera, contextvar, echo em response + `error.correlation_id`, adapters propagam a api-delpi (aditivo), jobs geram por run, replay idempotente preserva correlation original + novo ID só em logs, `supply_events`/`integration_outbox` persistem, async = nova correlação+link por aggregate (§32) | PROVEN (inventário) | FS-INT-03→ACCEPTED | — |
 | FS-C0.T12 | Retenção: idempotency_keys, supply_events | política | data tasks | — |
 
 ### 8.2 Product decision gates (C0.P)
@@ -436,6 +436,14 @@ Matriz de teste §18:
 | ERP movimento sem unit | `unknown`, nunca `matched` |
 | card de missão multi-unidade | agrega itens (inteiros), nunca soma qty entre units |
 | formatação PT-BR `126,895 MT` | exibição apenas — valor persistido inalterado |
+| request sem `X-Request-ID` | servidor gera UUID4, ecoa no response |
+| request com `X-Request-ID` válido | preservado; propagado ao adapter api-delpi |
+| `X-Request-ID` malformado | ignorado+regenerado (nunca 4xx por metadado) |
+| erro de domínio | `error.correlation_id` no envelope fail |
+| comando com sucesso | `supply_events`+`integration_outbox` carregam `correlation_id` |
+| replay idempotente | sem 2º `supply_events`; novo correlation só em logs |
+| job `demand_signal_sync` | correlation própria por run + `job_name`/`run_id` nos logs |
+| 2 requests distintas | correlation distintos (zero vazamento) |
 
 ## 26. Audit/observability
 
