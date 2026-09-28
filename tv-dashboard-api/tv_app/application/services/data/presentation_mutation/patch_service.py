@@ -1819,6 +1819,36 @@ class PresentationPatchService:
                 modelId=model_id,
             )
 
+        # Idempotência: re-migrar um conjunto de fontes já embebido por
+        # completo como inputs de um DataModel existente geraria um segundo
+        # modelo lógico para o mesmo grupo legacy (duplicação silenciosa).
+        # Overlap parcial é permitido: a fonte compartilhada segue input do
+        # modelo existente e do novo, e o bloco legacy é retido.
+        existing_models = (
+            [m for m in cfg.get("dataModels") if isinstance(m, dict)]
+            if isinstance(cfg.get("dataModels"), list)
+            else []
+        )
+        for existing in existing_models:
+            existing_id = str(existing.get("id") or "")
+            raw_inputs = (
+                existing.get("inputs")
+                if isinstance(existing.get("inputs"), list)
+                else []
+            )
+            input_ids = {
+                str(inp.get("id") or "").strip()
+                for inp in raw_inputs
+                if isinstance(inp, dict)
+            }
+            if input_ids and migrated_set <= input_ids:
+                _conflict(
+                    f'Fonte(s) {sorted(migrated_set)} já são inputs do '
+                    f'DataModel "{existing_id}".',
+                    modelId=existing_id,
+                    sourceIds=sorted(migrated_set),
+                )
+
         inputs: list[dict[str, Any]] = []
         for sid in migrated_ids:
             source = sources[sid]

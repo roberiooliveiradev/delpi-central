@@ -738,6 +738,33 @@ class TestDispatchGate:
             )
         assert exc_info.value.code == "data_model.migration_conflict"
 
+    def test_repeat_migration_with_new_model_id_conflicts(self):
+        """Idempotência: re-migrar fontes já embebidas como inputs de um modelo
+        existente conflita mesmo com outro targetModelId — nunca cria um
+        segundo modelo lógico para o mesmo grupo legacy."""
+        slide = _slide([_kpi(dataSourceId="ds1", field="rol"), _src("ds1")])
+        svc = _patch_service(_rol_gateway(), slide=slide)
+        first = svc.preview(
+            _preview_envelope(
+                [_migrate_op(primaryDataSourceId="ds1", targetModelId="mdl_once")]
+            ),
+            user=_user(),
+        )
+        slide2 = _slide(
+            [_kpi(modelId="mdl_once"), _src("ds1")],
+            models=_models_of(first),
+        )
+        svc2 = _patch_service(_rol_gateway(), slide=slide2)
+        with pytest.raises(PresentationPatchError) as exc_info:
+            svc2.preview(
+                _preview_envelope(
+                    [_migrate_op(primaryDataSourceId="ds1", targetModelId="mdl_dup")]
+                ),
+                user=_user(),
+            )
+        assert exc_info.value.code == "data_model.migration_conflict"
+        assert "mdl_once" in str(exc_info.value)
+
 
 # ---------------------------------------------------------------------------
 # inspect_data_model — superfície de leitura semântica VISTA

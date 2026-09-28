@@ -36,6 +36,7 @@ from tv_app.application.services.tv_presentation_write_service import (
 _NATIVE_CONFIG_OPS = frozenset(
     {
         "upsert_data_source",
+        "patch_data_source_params",
         "set_data_transform",
         "upsert_block",
         "set_display_format",
@@ -48,6 +49,8 @@ _NATIVE_CONFIG_OPS = frozenset(
         # DM1 — DataModel muta o documento nativeConfig (coalescido por slide).
         "upsert_data_model",
         "delete_data_model",
+        # DM4 — migração legacy→DataModel também resolve em PATCH do slide.
+        "migrate_data_sources_to_model",
     }
 )
 
