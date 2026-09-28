@@ -435,34 +435,33 @@ def get_active_production_run(
         data = service.get_active(branch=branch, work_center=work_center)
         if data is not None:
             produced_qty = None
+            pieces_factor = None
             try:
-                queue = build_machine_load_service().build_public(
+                qty = build_machine_load_service().public_operation_run_quantity(
                     branch=branch,
-                    work_center=work_center,
+                    production_order=str(data.get("productionOrder") or ""),
+                    operation_code=str(data.get("operationCode") or ""),
                 )
-                for op in (queue or {}).get("operations") or []:
-                    if not isinstance(op, dict):
-                        continue
-                    if str(op.get("production_order") or "") != str(
-                        data.get("productionOrder") or ""
-                    ):
-                        continue
-                    if str(op.get("operation_code") or "") != str(data.get("operationCode") or ""):
-                        continue
-                    raw = op.get("operation_produced_qty")
-                    if raw is None:
-                        raw = op.get("produced_qty")
-                    produced_qty = float(raw) if raw is not None else None
-                    break
+                if qty is not None:
+                    produced_qty = qty.get("operation_produced_qty")
+                    pieces_factor = qty.get("pieces_conversion_factor")
             except Exception:  # noqa: BLE001
                 produced_qty = None
             if produced_qty is not None:
                 counted = int(data.get("countedPieces") or data.get("piecesTotal") or 0)
+                counted_operator = (
+                    counted / pieces_factor
+                    if isinstance(pieces_factor, (int, float)) and pieces_factor > 0
+                    else counted
+                )
                 data = {
                     **data,
                     "totvsProducedQty": produced_qty,
-                    "divergencePieces": counted - produced_qty,
+                    "divergencePieces": counted_operator - produced_qty,
+                    "piecesConversionFactor": pieces_factor,
                 }
+            elif pieces_factor is not None:
+                data = {**data, "piecesConversionFactor": pieces_factor}
     except Exception as exc:  # noqa: BLE001
         return _handle_public_errors(exc)
     return ok(data)

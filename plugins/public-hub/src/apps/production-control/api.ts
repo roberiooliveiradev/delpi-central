@@ -575,7 +575,10 @@ export type ProductionRunSnapshot = {
   overproductionPieces: number | null;
   countedPieces?: number;
   totvsProducedQty?: number | null;
+  /** Divergência na unidade de leitura do operador (peças ÷ fator − produzido TOTVS). */
   divergencePieces?: number | null;
+  /** Fator canônico peças→unidade da operação (MI = 1000), vindo da fila publicada. */
+  piecesConversionFactor?: number | null;
   device?: {
     deviceId?: string;
     name?: string | null;

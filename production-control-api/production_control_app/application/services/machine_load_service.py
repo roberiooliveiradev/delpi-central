@@ -462,9 +462,13 @@ class MachineLoadService:
         )
         if item is None:
             return None
+        produced = _optional_float(item.get("operation_produced_qty"))
+        if produced is None:
+            produced = _optional_float(item.get("produced_qty"))
         return {
             "operation_pending_qty": _optional_float(item.get("operation_pending_qty")),
             "pending_qty": _optional_float(item.get("pending_qty")),
+            "operation_produced_qty": produced,
             "pieces_conversion_factor": _optional_float(
                 item.get("pieces_conversion_factor")
             ),
