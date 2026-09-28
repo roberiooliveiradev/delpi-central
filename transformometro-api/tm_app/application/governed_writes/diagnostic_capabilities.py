@@ -737,12 +737,20 @@ def execute(stack: DiagnosticWriteStack, change: dict[str, Any]) -> Any:
                     note=note,
                 )
             )
-        return run_sync(
-            use_case.supersede_conclusion(
-                diagnostic_id=diagnostic_id,
-                conclusion_id=str(conclusion_id),
-                note=note,
+        if action == "supersede_conclusion":
+            return run_sync(
+                use_case.supersede_conclusion(
+                    diagnostic_id=diagnostic_id,
+                    conclusion_id=str(conclusion_id),
+                    note=note,
+                )
             )
+        # Fail closed: an action outside MANAGE_ACTIONS must never reach a
+        # mutation through an implicit fallthrough.
+        _raise(
+            f"Ação de manage_diagnostic desconhecida: {action}.",
+            code=VALIDATION,
+            status_code=400,
         )
     except (
         DiagnosticWriteError,

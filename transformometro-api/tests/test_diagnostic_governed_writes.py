@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import time
 from types import SimpleNamespace
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
 import pytest
@@ -43,6 +43,7 @@ from tm_app.application.governed_writes.orchestrator import (
 from tm_app.application.governed_writes.diagnostic_capabilities import (
     MANAGE_ACTIONS,
     DiagnosticWriteStack,
+    execute as diag_execute,
     parse_manage_payload,
 )
 from tm_app.application.governed_writes.proposal_store import (
@@ -886,6 +887,29 @@ def test_act_remaining_actions_explicit_dispatch(
     items = result["data"]["diagnostic"][target_key]
     assert items[0][target_field] == target_value
     repo.save.assert_called_once()
+
+
+def test_execute_unknown_action_fails_closed(rbac):
+    # An action outside MANAGE_ACTIONS must never fall through to an implicit
+    # final branch — it must fail closed before any mutation.
+    orch, repo = _orch()
+    stack = orch._diagnostic_stack
+    assert stack is not None
+    with patch.object(
+        stack.use_case, "supersede_conclusion", autospec=True
+    ) as spy_supersede:
+        with pytest.raises(GovernedWriteError) as excinfo:
+            diag_execute(
+                stack,
+                {
+                    "diagnostic_id": "d-1",
+                    "action": "unknown_action",
+                    "payload": {"conclusion_id": "c-1"},
+                },
+            )
+    assert _code(excinfo) == VALIDATION
+    spy_supersede.assert_not_called()
+    repo.save.assert_not_called()
 
 
 def test_act_mark_stale_effective_validation(rbac):
