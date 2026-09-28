@@ -305,7 +305,6 @@ class ProductionRunService:
         *,
         branch: str,
         work_center: str,
-        produced_qty_totvs: float | None = None,
     ) -> dict[str, Any] | None:
         run = self._repo.get_active_run(branch=branch, work_center=work_center)
         if run is None:
@@ -337,11 +336,7 @@ class ProductionRunService:
                 device = {"deviceId": run.get("device_id"), "online": False, "status": "offline"}
 
         payload = _run_to_api(run, device=device)
-        counted = int(run.get("pieces_total") or 0)
-        payload["countedPieces"] = counted
-        if produced_qty_totvs is not None:
-            payload["totvsProducedQty"] = float(produced_qty_totvs)
-            payload["divergencePieces"] = counted - float(produced_qty_totvs)
+        payload["countedPieces"] = int(run.get("pieces_total") or 0)
         return payload
 
     def tick_running_runs(self) -> int:

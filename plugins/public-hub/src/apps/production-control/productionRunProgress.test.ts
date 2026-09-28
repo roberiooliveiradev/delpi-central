@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { resolveProductionRunProgress } from "./productionRunProgress.ts";
+import {
+  piecesToOperatorUnit,
+  resolveProductionRunProgress,
+} from "./productionRunProgress.ts";
 
 describe("production run progress", () => {
   it("evolves from 0 to 250 to 500 pieces", () => {
@@ -31,5 +34,24 @@ describe("production run progress", () => {
   it("does not invent progress without a positive target", () => {
     assert.equal(resolveProductionRunProgress(10, null), null);
     assert.equal(resolveProductionRunProgress(10, 0), null);
+  });
+});
+
+describe("pieces to operator unit", () => {
+  it("converts absolute pieces to milheiro reading (MI factor 1000)", () => {
+    assert.equal(piecesToOperatorUnit(10, 1000), 0.01);
+    assert.equal(piecesToOperatorUnit(1, 1000), 0.001);
+    assert.equal(piecesToOperatorUnit(520, 1000), 0.52);
+  });
+
+  it("keeps pieces unchanged for piece units (factor 1)", () => {
+    assert.equal(piecesToOperatorUnit(520, 1), 520);
+  });
+
+  it("does not invent a conversion when the factor is missing or invalid", () => {
+    assert.equal(piecesToOperatorUnit(7, null), 7);
+    assert.equal(piecesToOperatorUnit(7, undefined), 7);
+    assert.equal(piecesToOperatorUnit(7, 0), 7);
+    assert.equal(piecesToOperatorUnit(7, Number.NaN), 7);
   });
 });

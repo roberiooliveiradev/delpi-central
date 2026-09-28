@@ -1,7 +1,10 @@
 import { Pause, Play, Square } from "lucide-react";
 import type { MachineLoadOperation } from "./api";
 import { formatQty } from "./cockpitShared";
-import { resolveProductionRunProgress } from "./productionRunProgress";
+import {
+  piecesToOperatorUnit,
+  resolveProductionRunProgress,
+} from "./productionRunProgress";
 import { useProductionRun } from "./useProductionRun";
 import type { MachineLoadRealtimeEvent } from "./usePublicMachineLoadRealtime";
 
@@ -52,6 +55,8 @@ export function ProductionRunControls({
 
   const counted = run?.countedPieces ?? run?.piecesTotal ?? 0;
   const progress = resolveProductionRunProgress(counted, run?.targetPieces);
+  const piecesFactor = run?.piecesConversionFactor ?? operation.pieces_conversion_factor;
+  const toOperatorUnit = (pieces: number) => piecesToOperatorUnit(pieces, piecesFactor);
   const deviceOnline = run?.device?.online;
   const otherRun =
     run && !runMatchesOperation
@@ -123,7 +128,8 @@ export function ProductionRunControls({
                   </p>
                   <div className="pcp-pub__run-progress-values">
                     <strong>
-                      {formatQty(progress.countedPieces)} / {formatQty(progress.targetPieces)} peças
+                      {formatQty(toOperatorUnit(progress.countedPieces))} /{" "}
+                      {formatQty(toOperatorUnit(progress.targetPieces))} peças
                     </strong>
                     <span>{formatQty(progress.progressPercent)}%</span>
                   </div>
@@ -134,7 +140,7 @@ export function ProductionRunControls({
                     aria-valuemin={0}
                     aria-valuemax={100}
                     aria-valuenow={progress.visualPercent}
-                    aria-valuetext={`${formatQty(progress.countedPieces)} de ${formatQty(progress.targetPieces)} peças`}
+                    aria-valuetext={`${formatQty(toOperatorUnit(progress.countedPieces))} de ${formatQty(toOperatorUnit(progress.targetPieces))} peças`}
                   >
                     <span
                       className="pcp-pub__run-progress-fill"
@@ -143,16 +149,16 @@ export function ProductionRunControls({
                   </div>
                   <p className="pcp-pub__run-progress-note">
                     {progress.overproductionPieces > 0
-                      ? `+${formatQty(progress.overproductionPieces)} peças acima da meta`
+                      ? `+${formatQty(toOperatorUnit(progress.overproductionPieces))} peças acima da meta`
                       : progress.targetReached
                         ? "Produção prevista concluída"
-                        : `Faltam ${formatQty(progress.remainingPieces)} peças`}
+                        : `Faltam ${formatQty(toOperatorUnit(progress.remainingPieces))} peças`}
                   </p>
                 </div>
               ) : (
                 <div className="pcp-pub__run-count">
                   <span>Peças contadas</span>
-                  <strong>{formatQty(counted)}</strong>
+                  <strong>{formatQty(toOperatorUnit(counted))}</strong>
                 </div>
               )}
               <dl className="pcp-pub__run-meta">

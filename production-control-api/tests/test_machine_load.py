@@ -2122,6 +2122,7 @@ def test_public_operation_run_quantity_returns_pending_and_factor() -> None:
     assert result == {
         "operation_pending_qty": 0.4,
         "pending_qty": 0.5,
+        "operation_produced_qty": 0.1,
         "pieces_conversion_factor": 1000.0,
     }
 

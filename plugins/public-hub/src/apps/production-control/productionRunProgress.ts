@@ -32,3 +32,22 @@ export function resolveProductionRunProgress(
     overproductionPieces: countedPieces > targetPieces ? countedPieces - targetPieces : 0,
   };
 }
+
+/**
+ * Converte peças absolutas do Pulse para a unidade de leitura do operador.
+ * O fator vem da fila (api-delpi): MI usa 1000, então 3 peças viram 0,003.
+ * Sem fator válido o valor é exibido em peças inteiras, sem conversão inventada.
+ */
+export function piecesToOperatorUnit(
+  pieces: number,
+  piecesConversionFactor: number | null | undefined,
+): number {
+  if (
+    typeof piecesConversionFactor !== "number" ||
+    !Number.isFinite(piecesConversionFactor) ||
+    piecesConversionFactor <= 0
+  ) {
+    return pieces;
+  }
+  return pieces / piecesConversionFactor;
+}
