@@ -100,24 +100,33 @@ def _rbac_from_claims(claims: dict, token: str, *, rbac_unavailable: bool = Fals
     }
 
 
-async def load_user_rbac(token: str):
+async def load_user_rbac(token: str, *, force_refresh: bool = False):
+    """Resolve effective permissions from Core ``/me``.
+
+    ``force_refresh`` bypasses the normal+stale cache and is fail-closed:
+    the stale fallback is disabled, so a Core failure propagates instead of
+    serving possibly-revoked authorization. Use it for material writes that
+    must observe current permissions.
+    """
     key = _cache_key(token)
     now = time.monotonic()
 
-    cached = _RBAC_CACHE.get(key)
-    if cached:
-        expires_at, _stale_until, data = cached
-        if now <= expires_at:
-            return data
-
-    lock = _RBAC_LOCKS.setdefault(key, asyncio.Lock())
-    async with lock:
-        now = time.monotonic()
+    if not force_refresh:
         cached = _RBAC_CACHE.get(key)
         if cached:
             expires_at, _stale_until, data = cached
             if now <= expires_at:
                 return data
+
+    lock = _RBAC_LOCKS.setdefault(key, asyncio.Lock())
+    async with lock:
+        now = time.monotonic()
+        if not force_refresh:
+            cached = _RBAC_CACHE.get(key)
+            if cached:
+                expires_at, _stale_until, data = cached
+                if now <= expires_at:
+                    return data
 
         try:
             timeout = httpx.Timeout(RBAC_TIMEOUT_SECONDS, connect=RBAC_TIMEOUT_SECONDS)
@@ -139,16 +148,17 @@ async def load_user_rbac(token: str):
             return data
 
         except (httpx.TimeoutException, httpx.RequestError, RuntimeError):
-            cached = _RBAC_CACHE.get(key)
-            if cached:
-                _expires_at, stale_until, data = cached
-                if now <= stale_until:
-                    logger.warning(
-                        "rbac_lookup_failed_using_stale_cache core_api_url=%s",
-                        CORE_API_URL,
-                        exc_info=True,
-                    )
-                    return data
+            if not force_refresh:
+                cached = _RBAC_CACHE.get(key)
+                if cached:
+                    _expires_at, stale_until, data = cached
+                    if now <= stale_until:
+                        logger.warning(
+                            "rbac_lookup_failed_using_stale_cache core_api_url=%s",
+                            CORE_API_URL,
+                            exc_info=True,
+                        )
+                        return data
             raise
         finally:
             # Evita crescimento indefinido da tabela de locks em processos longos.
@@ -190,6 +200,11 @@ async def jwt_middleware(request: Request, call_next):
             is_superadmin=True,
             rbac_unavailable=False,
             access_token=None,
+            # Canonical principal marker: service tokens mint a non-human
+            # principal. Human end-user principals carry ``principal_type``
+            # "user"; governed/conversational writes must reject anything
+            # that is not explicitly "user".
+            principal_type="service",
         )
         request.state.user = service_user
         context_token = set_current_user(service_user)
@@ -253,6 +268,7 @@ async def jwt_middleware(request: Request, call_next):
             is_superadmin=rbac.get("is_superadmin", False),
             rbac_unavailable=bool(rbac.get("rbac_unavailable")),
             access_token=token,
+            principal_type="user",
         )
 
         request.state.user = user
