@@ -447,11 +447,11 @@ Programa documental — exatamente 5 etapas:
 |---|---|---|
 | 1/5 | Product + Architecture Baseline | este documento |
 | 2/5 | Domain + State Machines + Data + Contract Model | [DOMAIN-MODEL.md](./DOMAIN-MODEL.md) |
-| 3/5 | Frontend + UX + Screens + Kanban + plugin-ui | pendente |
-| 4/5 | APIs + Routes + RBAC + Persistence + Integrations | pendente |
-| 5/5 | Implementation Roadmap + Requirements + Tests + Consolidation | pendente |
+| 3/5 | Frontend + UX + Screens + Kanban + plugin-ui | [UX-SPEC.md](./UX-SPEC.md) |
+| 4/5 | APIs + Routes + RBAC + Persistence + Integrations | [TECHNICAL-CONTRACTS.md](./TECHNICAL-CONTRACTS.md) |
+| 5/5 | Implementation Roadmap + Requirements + Tests + Consolidation | [IMPLEMENTATION-ROADMAP.md](./IMPLEMENTATION-ROADMAP.md) |
 
-Sem sexta fase. Documentação 2/5 não inicia automaticamente — aguarda revisão.
+**SPECIFICATION PROGRAM COMPLETE** — especificação 5/5 encerrada; runtime **não** implementado, produto **não** releaseado. Sem sexta fase.
 
 ---
 
