@@ -21,7 +21,7 @@ def test_sessions_are_isolated_by_subject():
     link(client, "user-a")
     mine = client.get("/auth/glpi/session", headers=auth_headers("user-a"))
     other = client.get("/auth/glpi/session", headers=auth_headers("user-b"))
-    assert mine.json() == {"linked": True}
+    assert mine.json()["linked"] is True
     assert other.json() == {"linked": False}
     missing = client.get("/tickets", headers=auth_headers("user-b"))
     assert missing.status_code == 409

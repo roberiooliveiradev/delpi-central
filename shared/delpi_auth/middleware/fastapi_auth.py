@@ -241,6 +241,8 @@ async def jwt_middleware(request: Request, call_next):
             id=rbac.get("id") or sub,
             email=rbac.get("email") or email,
             name=rbac.get("name") or name,
+            given_name=(claims.get("given_name") or "").strip() or None,
+            family_name=(claims.get("family_name") or "").strip() or None,
             roles=rbac.get("roles", []),
             groups=rbac.get("groups", []),
             permissions=rbac.get("permissions", []),

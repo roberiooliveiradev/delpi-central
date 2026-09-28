@@ -1,8 +1,12 @@
+import logging
+
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse, RedirectResponse
 
 from helpdesk_app.interface.http.actor import require_actor
 from helpdesk_app.domain.errors import HelpdeskError
+
+logger = logging.getLogger("helpdesk.auth")
 
 router = APIRouter(tags=["Helpdesk OAuth"])
 
@@ -37,7 +41,20 @@ def glpi_callback(request: Request, code: str = "", state: str = ""):
 @router.get("/auth/glpi/session")
 def glpi_session(request: Request):
     actor = require_actor(request)
-    return {"linked": _services(request).linked(actor.subject)}
+    linked = _services(request).linked(actor.subject)
+    payload = {"linked": linked}
+    if linked:
+        # HELPDESK-IDENTITY-001: reconcile on first authenticated Helpdesk access
+        # (session bootstrap), not on the global Portal login. The sync status
+        # is surfaced explicitly — `linked` alone is never proof of parity.
+        sync = getattr(request.app.state, "profile_sync", None)
+        if sync is not None:
+            try:
+                payload["profile_sync"] = sync.ensure_profile(actor)
+            except Exception:
+                logger.exception("helpdesk_profile_sync_route_failed subject=%s", actor.subject)
+                payload["profile_sync"] = "failed"
+    return payload
 
 
 @router.delete("/auth/glpi/session")

@@ -9,6 +9,7 @@ from fastapi.responses import JSONResponse
 
 from delpi_auth.credential_guard import check_credentials
 from helpdesk_app.application.oauth_service import OAuthService
+from helpdesk_app.application.profile_sync_service import ProfileSyncService
 from helpdesk_app.application.ticket_service import TicketService
 from helpdesk_app.config import settings
 from helpdesk_app.domain.errors import HelpdeskError
@@ -74,16 +75,18 @@ def build_runtime():
         directory=directory,
         person_profiles=person_profiles,
     )
-    return oauth, tickets
+    profile_sync = ProfileSyncService(glpi, oauth)
+    return oauth, tickets, profile_sync
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     check_credentials()
     run_migrations_on_startup()
-    oauth, tickets = build_runtime()
+    oauth, tickets, profile_sync = build_runtime()
     app.state.oauth = oauth
     app.state.tickets = tickets
+    app.state.profile_sync = profile_sync
     app.state.public_base_url = settings.PUBLIC_BASE_URL
     yield
 

@@ -6,6 +6,21 @@ from datetime import datetime
 class Actor:
     subject: str
     email: str = ""
+    # Canonical display names from the Keycloak identity claims — never client input.
+    name: str = ""
+    first_name: str = ""
+    last_name: str = ""
+
+
+@dataclass(frozen=True)
+class GlpiUserProfile:
+    """GLPI Administration/User projection for identity parity checks."""
+
+    id: int
+    username: str = ""
+    firstname: str = ""
+    realname: str = ""
+    emails: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)

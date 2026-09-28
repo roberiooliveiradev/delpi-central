@@ -3,6 +3,7 @@ from typing import Protocol
 from helpdesk_app.domain.models import (
     Attachment,
     Category,
+    GlpiUserProfile,
     OAuthSession,
     PendingAuthorization,
     StoredResponse,
@@ -69,6 +70,17 @@ class GlpiGateway(Protocol):
     def find_user_by_email(self, access_token: str, email: str): ...
 
     def session_user_id(self, access_token: str) -> int | None: ...
+
+    def get_user(self, access_token: str, user_id: int) -> GlpiUserProfile | None: ...
+
+    def update_user_profile(
+        self,
+        access_token: str,
+        user_id: int,
+        *,
+        firstname: str | None = None,
+        realname: str | None = None,
+    ) -> None: ...
 
     def can_assign_tickets(self, access_token: str) -> bool: ...
 

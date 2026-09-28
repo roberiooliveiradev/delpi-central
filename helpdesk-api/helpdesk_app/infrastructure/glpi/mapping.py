@@ -18,6 +18,7 @@ from helpdesk_app.domain.models import (
     Attachment,
     CatalogUser,
     Category,
+    GlpiUserProfile,
     PersonIdentity,
     TicketDetail,
     TicketListPage,
@@ -566,6 +567,39 @@ def filter_assignable_catalog_users(users: list[CatalogUser] | tuple[CatalogUser
             )
         )
     return out
+
+
+def parse_user_profile(payload: dict) -> GlpiUserProfile | None:
+    """HLAPI ``GET /Administration/User/{id}`` → GlpiUserProfile (parity check)."""
+    if not isinstance(payload, dict):
+        return None
+    try:
+        user_id = int(payload.get("id") or 0)
+    except (TypeError, ValueError):
+        return None
+    if user_id <= 0:
+        return None
+    return GlpiUserProfile(
+        id=user_id,
+        username=display_text(payload.get("username") or payload.get("name")),
+        firstname=display_text(payload.get("firstname")),
+        realname=display_text(payload.get("realname")),
+        emails=_emails(payload),
+    )
+
+
+def user_profile_update_body(*, firstname: str | None = None, realname: str | None = None) -> dict:
+    """PATCH body for ``/Administration/User/{id}`` — only proven non-empty fields."""
+    body: dict = {}
+    if firstname is not None:
+        cleaned = " ".join(str(firstname).split())
+        if cleaned:
+            body["firstname"] = cleaned
+    if realname is not None:
+        cleaned = " ".join(str(realname).split())
+        if cleaned:
+            body["realname"] = cleaned
+    return body
 
 
 def parse_profile_user_ids(payload: dict | list) -> set[int]:

@@ -99,6 +99,11 @@ class FakeGlpi:
         # When False, upload does not appear on ticket.attachments (Timeline lag).
         self.attach_uploads_to_timeline = True
         self.refresh_error: Exception | None = None
+        # Administration/User rows for profile parity (get_user/update_user_profile).
+        self.user_profiles: dict[int, SimpleNamespace] = {}
+        self.profile_updates: list[tuple[int, object, object]] = []
+        self.update_profile_error: Exception | None = None
+        self.profile_update_applies = True
 
     def authorization_url(self, *, state: str, code_challenge: str) -> str:
         return f"https://glpi.example/authorize?state={state}&challenge={code_challenge}"
@@ -285,6 +290,42 @@ class FakeGlpi:
         assert access_token
         uid = getattr(self, "session_uid", None)
         return int(uid) if uid else None
+
+    def get_user(self, access_token: str, user_id: int):
+        """Fake ``GET /Administration/User/{id}`` → GlpiUserProfile or None."""
+        from helpdesk_app.domain.models import GlpiUserProfile
+
+        self.calls += 1
+        assert access_token
+        row = self.user_profiles.get(int(user_id))
+        if row is None:
+            return None
+        return GlpiUserProfile(
+            id=int(user_id),
+            username=getattr(row, "username", ""),
+            firstname=getattr(row, "firstname", ""),
+            realname=getattr(row, "realname", ""),
+            emails=tuple(getattr(row, "emails", ()) or ()),
+        )
+
+    def update_user_profile(
+        self, access_token: str, user_id: int, *, firstname=None, realname=None
+    ) -> None:
+        self.calls += 1
+        assert access_token
+        self.profile_updates.append((int(user_id), firstname, realname))
+        if self.update_profile_error is not None:
+            raise self.update_profile_error
+        if not self.profile_update_applies:
+            # Provider accepted but silently ignored the fields (verify fails).
+            return
+        row = self.user_profiles.get(int(user_id))
+        if row is None:
+            raise GlpiNotFound("ausente")
+        if firstname is not None:
+            row.firstname = firstname
+        if realname is not None:
+            row.realname = realname
 
     def can_assign_tickets(self, access_token: str) -> bool:
         self.calls += 1
@@ -573,6 +614,7 @@ def build_client(
     sessions = MemorySessionStore()
     oauth = OAuthService(glpi, states, sessions, now)
     app.state.oauth = oauth
+    app.state.oauth_sessions = sessions
     app.state.tickets = TicketService(
         glpi,
         oauth,
@@ -580,6 +622,9 @@ def build_client(
         directory=directory,
         person_profiles=person_profiles,
     )
+    from helpdesk_app.application.profile_sync_service import ProfileSyncService
+
+    app.state.profile_sync = ProfileSyncService(glpi, oauth)
     app.state.public_base_url = "https://centraldelpi.com.br"
 
     @app.middleware("http")
@@ -590,6 +635,9 @@ def build_client(
         request.state.user = SimpleNamespace(
             sub=request.headers.get("x-subject", ""),
             email=request.headers.get("x-email", ""),
+            name=request.headers.get("x-name", ""),
+            given_name=request.headers.get("x-given-name", ""),
+            family_name=request.headers.get("x-family-name", ""),
             permissions=permissions,
             is_superadmin=False,
         )

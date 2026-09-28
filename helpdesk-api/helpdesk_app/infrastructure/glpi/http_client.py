@@ -18,6 +18,7 @@ from helpdesk_app.domain.models import (
     Attachment,
     CatalogUser,
     Category,
+    GlpiUserProfile,
     PersonIdentity,
     TicketDetail,
     TicketListPage,
@@ -505,6 +506,45 @@ class HttpxGlpiClient:
         identity = self._viewer_identity(access_token, "")
         user_id = int(identity.user_id or 0)
         return user_id if user_id > 0 else None
+
+    def get_user(self, access_token: str, user_id: int) -> GlpiUserProfile | None:
+        """Read a single Administration/User row (firstname/realname parity check)."""
+        from helpdesk_app.infrastructure.glpi.mapping import parse_user_profile
+
+        try:
+            payload = self._json(
+                "GET",
+                f"/api.php/v2.2/Administration/User/{int(user_id)}",
+                token=access_token,
+            )
+        except GlpiNotFound:
+            return None
+        return parse_user_profile(payload if isinstance(payload, dict) else {})
+
+    def update_user_profile(
+        self,
+        access_token: str,
+        user_id: int,
+        *,
+        firstname: str | None = None,
+        realname: str | None = None,
+    ) -> None:
+        """PATCH own Administration/User names — self-scoped via the OAuth token.
+
+        Provider may deny (profile without `user` UPDATE right); callers must
+        treat errors as failed sync, never as fake parity.
+        """
+        from helpdesk_app.infrastructure.glpi.mapping import user_profile_update_body
+
+        body = user_profile_update_body(firstname=firstname, realname=realname)
+        if not body:
+            raise GlpiValidation("Nenhum campo de perfil para atualizar.")
+        self._json(
+            "PATCH",
+            f"/api.php/v2.2/Administration/User/{int(user_id)}",
+            token=access_token,
+            json_body=body,
+        )
 
     def download_attachment(self, access_token: str, document_id: int) -> tuple[bytes, str]:
         response = self._request(
