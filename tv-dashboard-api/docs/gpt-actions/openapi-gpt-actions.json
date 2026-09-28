@@ -855,6 +855,142 @@
         }
       }
     },
+    "/gpt-actions/v1/data-models/inspect": {
+      "get": {
+        "operationId": "gpt_inspect_data_model",
+        "summary": "Inspect a persisted DataModel",
+        "description": "Read-only DataModel inspection: persisted definition (inputs, transform, fieldLabels), output schema, consumer bindings (views/text/canvas cells) and runtime state. Use before binding or migration decisions.",
+        "tags": [
+          "TV Dashboard GPT"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "playlistId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Playlist UUID."
+          },
+          {
+            "name": "slideId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Slide UUID."
+          },
+          {
+            "name": "modelId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Persisted DataModel id (mdl_*)."
+          },
+          {
+            "name": "includeRuntime",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true
+            },
+            "description": "Execute the model to expose outputSchema + runtime state."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "DataModel inspect",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptSuccessEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation or unsupported capability",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid Bearer token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking TV permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict (revision/catalog/plan/idempotency/partial/in-progress)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid change payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Upstream failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/gpt-actions/v1/changes/suggest": {
       "post": {
         "operationId": "gpt_suggest_change",
@@ -1579,6 +1715,61 @@
                             }
                           },
                           "title": "ensure_brand_logo_on_slide"
+                        },
+                        {
+                          "type": "object",
+                          "required": [
+                            "op",
+                            "primaryDataSourceId"
+                          ],
+                          "example": {
+                            "op": "migrate_data_sources_to_model",
+                            "primaryDataSourceId": "blk_rol_current"
+                          },
+                          "description": "Legacy to DataModel migration: primary data_source + merge deps become one embedded-input DataModel; visuals/cells bound to the primary rebind to modelId; sibling sources with direct consumers stay legacy. Preview executes the candidate model and validates consumer fields before any write.",
+                          "properties": {
+                            "op": {
+                              "const": "migrate_data_sources_to_model",
+                              "type": "string"
+                            },
+                            "primaryDataSourceId": {
+                              "type": "string",
+                              "description": "Legacy data_source block id that hosts the final transform."
+                            },
+                            "relatedDataSourceIds": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              },
+                              "description": "Optional explicit sibling source ids embedded as extra model inputs. When omitted, the backend derives them from the primary transform merge.sourceId dependency closure."
+                            },
+                            "modelLabel": {
+                              "type": "string",
+                              "description": "Optional user-facing DataModel label; defaults to the primary source binding label."
+                            },
+                            "targetModelId": {
+                              "type": "string",
+                              "description": "Optional explicit model id; omit to generate mdl_*."
+                            },
+                            "removeOrphanedSources": {
+                              "type": "boolean",
+                              "default": false,
+                              "description": "When true, migrated legacy source blocks are removed only if nothing still consumes them (no visual/cell binding and no legacy merge dependency outside the migrated set). Sibling sources with direct consumers are always retained."
+                            },
+                            "as": {
+                              "type": "string",
+                              "description": "Local alias for the resource this op produces (compound plans)."
+                            },
+                            "playlistRef": {
+                              "type": "string",
+                              "description": "Alias or authoritative playlist UUID. Omit to use current playlist slot."
+                            },
+                            "slideRef": {
+                              "type": "string",
+                              "description": "Alias or authoritative slide UUID. Omit to use current slide slot."
+                            }
+                          },
+                          "title": "migrate_data_sources_to_model"
                         },
                         {
                           "type": "object",

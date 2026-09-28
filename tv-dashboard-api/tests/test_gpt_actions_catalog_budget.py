@@ -36,9 +36,12 @@ from tv_app.application.services.data.presentation_recipe_service import (
 from tv_app.main import app
 
 # Catch slow drift before the hard ceiling fails in production.
-# Keep ≥8 KiB after ascii envelope so the next additive directive/recipe does not
+# Keep ≥4 KiB after ascii envelope so the next additive directive/recipe does not
 # land on ResponseTooLargeError (production has less headroom than unit tests).
-_MIN_ASCII_ENVELOPE_HEADROOM = 8 * 1024
+# DM4 deliberately expanded the semantic surface (data_model directives,
+# data_model_lifecycle capability, migrate_data_sources_to_model op) — the
+# 100 KiB OpenAI ceiling and the live HTTP budget test remain the hard guards.
+_MIN_ASCII_ENVELOPE_HEADROOM = 4 * 1024
 
 
 def _clear_caches() -> None:
@@ -153,7 +156,7 @@ def test_design_intelligence_catalog_authority_survives_compaction():
 
 def test_catalog_keeps_nine_actions_and_core_mutation_ops():
     doc = _catalog_document()
-    assert len(GPT_ACTIONS_OPERATION_IDS) == 9
+    assert len(GPT_ACTIONS_OPERATION_IDS) == 10
     assert "re_layer_playlist_filters" in (doc.get("operations") or {})
     directives = doc["capability_surface"]["agent_directives"]
     assert directives["object_resolution"]["principle"] == "ALTER_EXISTING_BEFORE_CREATE"

@@ -1,5 +1,5 @@
 {
-  "version": "2026.09.24.2",
+  "version": "2026.09.24.3",
   "owner": "tv-dashboard-api",
   "source": "capability_surface.agent_directives via gpt_get_catalog",
   "actions_runtime": {
@@ -652,12 +652,11 @@
       "addColumn com nome de campo que a rota já retorna é rejeitado (DATA_FIELD_AUTHORITATIVE) — shadow de campo autoritativo.",
       "Merge é 1:1 estrito e tipado: falta de chave, duplicata, colisão de campo, tipo incompatível ou chave nula = erro explícito, não resultado vazio.",
       "Fonte compartilhada: set_data_transform que remova/renomeie campo referenciado por qualquer consumer (KPI/chart/table/text/canvas) é rejeitado (DATA_BINDING_FIELD_MISSING) — usar fonte auxiliar separada para lógica que muda grain/schema.",
-      "Unir fontes: step op=merge com sourceId da outra data_source — usar joinHints/JoinPlan do preview; nunca script M NestedJoin.",
+      "Unir fontes: step op=merge com sourceId da outra data_source — usar joinHints/JoinPlan do preview; nunca script M NestedJoin. Para modelo NOVO, o merge vive em DataModel (ver data_model), não em data_source.",
       "Chaves de join: interseção de colunas (branch/filial/codigo/id/periodo). Confidence baixa → UMA pergunta — não inventar.",
       "select/rename/fieldLabels/top-N: resolver colunas de NL/aspas ou clarificar UMA vez — nunca emitir {{placeholders}} quebrados.",
-      "Nunca emitir language/script/version:2 nem smuggle via upsert_block.dataTransform.",
-      "Editor M / workbench / compile-mutate não fazem parte do caminho VISTA.",
-      "Composição multi-source: quando a métrica NÃO existe em uma única rota, fontes data_source do mesmo slide podem ser combinadas — merge.sourceId resolve dependências automaticamente (inclusive fonte escalar, que vira linha única com seus campos) e addColumn opera sobre os campos merged. Não pedir rota nova na API para cálculo derivável de fontes existentes.",
+      "Nunca emitir language/script/version:2 nem smuggle via upsert_block.dataTransform. Editor M/workbench/compile-mutate não fazem parte do caminho VISTA.",
+      "Composição multi-source em modelo novo = inputs[] + model.transform do DataModel (merge.sourceId = input.id do mesmo modelo, fonte escalar vira linha única). Em fonte legada existente vale a mesma mecânica entre data_source do slide. Não pedir rota nova na API para cálculo derivável.",
       "Colisão de nomes entre fontes: antes do merge dar alias (addColumn/rename) aos campos homônimos (ex.: rol → rol_prev) — merge com colisão é erro tipado (m.merge_field_collision).",
       "Erros de dependência são tipados: m.merge_source_unavailable (fonte inexistente), m.merge_source_failed (fetch/transform da fonte falhou), m.merge_source_not_composable (não é data_source), m.calc_division_by_zero / m.calc_invalid_operand / m.calc_null_operand (fórmula). Sempre falha tipada, nunca dado vazio.",
       "Preview com error/resolved.error = FALHA — nunca tratar como sucesso nem commitar; dataset vazio legítimo retorna ok sem error."
@@ -673,6 +672,20 @@
       "Commitar preview que retornou error/resolved.error"
     ]
   },
+  "data_model": {
+    "principle": "DATAMODEL_FIRST + PREVIEW_BEFORE_COMMIT",
+    "summary": "DataModel (nativeConfig.dataModels[]) é a unidade lógica de dados para fluxos novos: 1..N inputs embutidos + transform do modelo — objeto lógico, nunca visual. Visual consome modelId+field. preview_data_model é obrigatório antes de commit; migração legacy é explícita via migrate_data_sources_to_model.",
+    "rules": [
+      "DATAMODEL_FIRST: dado novo = candidate DataModel (inputs[]+transform); nunca N blocos data_source para compor modelo.",
+      "MODEL_IS_NON_VISUAL/INPUTS_ARE_INTERNAL: inputs não viram blocos nem vão ao canvas; merge.sourceId referencia input.id do MESMO modelo; join/queryName são detalhes internos.",
+      "AUTHORITATIVE_FIELD_FIRST: campo que a rota retorna é ligado direto; compor só quando a métrica não existe em rota única.",
+      "PREVIEW_BEFORE_COMMIT + ERROR_IS_NOT_EMPTY_DATA: gpt_preview_data_model antes de upsert/bind/migrate; error/transformError = STOP com diagnóstico (stepName/column/inputId), nunca workaround.",
+      "bind_visual{modelId} limpa dataSourceId; bind_visual{dataSourceId} limpa modelId — um target ativo por visual.",
+      "NO_LEGACY_SOURCE_BLOCKS_FOR_NEW_MODELS: 1 rota = inputs:[rota],transform:null; N rotas = UM modelo com N inputs. upsert_data_source/set_data_transform = só legado.",
+      "LEGACY_MIGRATION_IS_EXPLICIT + DO_NOT_DELETE_SHARED_SOURCE: só quando pedida, via migrate_data_sources_to_model{primaryDataSourceId}; fonte com outro consumer fica retida.",
+      "gpt_inspect_data_model devolve definition/inputs/transform/outputSchema/consumers/runtime — inspecionar antes de rebind/migração."
+    ]
+  },
   "compound_slide": {
     "principle": "READY_COMPOUND_SLIDE",
     "summary": "Pedido complexo → um lote compound: playlist clarificada + rotas + params vivos + merge tipado + visuals escolhidos por visual_selection + recipe Delpi.",
@@ -681,7 +694,7 @@
       "2) PLAYLIST_CLARIFICATION (list; perguntar se >1 sem nome).",
       "3) gpt_search_data_routes (PRESENT_ALL_SEARCH_HITS) → escolher família KPI/série/breakdown/tabela.",
       "4) gpt_preview_data_block com params (dateRangePreset=this_month padrão se date_range fechada) — deve retornar dado OK.",
-      "5) upsert_data_source (N fontes, params completos + branch herdado) + set_data_transform merge via joinHints quando 2+ fontes.",
+      "5) upsert_data_model (UM DataModel, N inputs com params completos + branch herdado; merge via joinHints em model.transform quando 2+ fontes) + gpt_preview_data_model OK. Só recorrer a upsert_data_source+set_data_transform para caso legado comprovado.",
       "6) add_*_from_route OU upsert_block visual + bind_visual — SEMPRE projection NÃO vazia + formato (auto ou upsert); chartType/bloco via visual_selection.",
       "7) presentation_recipes Delpi alinhadas à forma (TV_KPI_HERO / ROW/GRID / PLUS_CHART[_BAR|_PIE] / FILTER_STRIP / SERIES_TABLE / HERO_PLUS_TABLE / TABLE_FOCUS / COMPOSED_DATA_CARD / THEME_DELPI | THEME_DELPI_LIGHT) + chrome tipado + designTokens.",
       "7b) brand_logo: se layoutDigest.brandLogo.present=false e não usou THEME_DELPI* → ensure_brand_logo_on_slide.",

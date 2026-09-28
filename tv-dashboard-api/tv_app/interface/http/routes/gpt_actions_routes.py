@@ -305,6 +305,32 @@ def preview_data_model(request: Request, body: DataModelPreviewBody):
         return _handle(exc, correlation_id=cid)
 
 
+@router.get("/data-models/inspect")
+def inspect_data_model(
+    request: Request,
+    playlistId: str = Query(..., description="Playlist UUID"),
+    slideId: str = Query(..., description="Slide UUID"),
+    modelId: str = Query(..., description="Persisted DataModel id (mdl_*)"),
+    includeRuntime: bool = Query(
+        default=True,
+        description="When true, execute the model to expose outputSchema + runtime state.",
+    ),
+):
+    cid = _correlation_id(request)
+    try:
+        data = _dispatch.inspect_data_model(
+            user=resolve_user(request),
+            playlist_id=playlistId,
+            slide_id=slideId,
+            model_id=modelId,
+            authorization=request.headers.get("Authorization"),
+            include_runtime=bool(includeRuntime),
+        )
+        return ok(data)
+    except Exception as exc:  # noqa: BLE001
+        return _handle(exc, correlation_id=cid)
+
+
 @router.post("/changes/suggest")
 def suggest_change(request: Request, body: SuggestBody):
     cid = _correlation_id(request)

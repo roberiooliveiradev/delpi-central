@@ -2535,6 +2535,64 @@
         "playlist"
       ]
     },
+    "migrate_data_sources_to_model": {
+      "requiresPlaylist": true,
+      "requiresSlide": true,
+      "risk": "mutation",
+      "confirmationPolicy": "direct",
+      "sideEffectHints": [
+        "replaceNativeConfig",
+        "dataModelMigration"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "op",
+          "primaryDataSourceId"
+        ],
+        "example": {
+          "op": "migrate_data_sources_to_model",
+          "primaryDataSourceId": "blk_rol_current"
+        },
+        "description": "Legacy to DataModel migration: primary data_source + merge deps become one embedded-input DataModel; visuals/cells bound to the primary rebind to modelId; sibling sources with direct consumers stay legacy. Preview executes the candidate model and validates consumer fields before any write.",
+        "properties": {
+          "op": {
+            "const": "migrate_data_sources_to_model"
+          },
+          "primaryDataSourceId": {
+            "type": "string",
+            "description": "Legacy data_source block id that hosts the final transform."
+          },
+          "relatedDataSourceIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Optional explicit sibling source ids embedded as extra model inputs. When omitted, the backend derives them from the primary transform merge.sourceId dependency closure."
+          },
+          "modelLabel": {
+            "type": "string",
+            "description": "Optional user-facing DataModel label; defaults to the primary source binding label."
+          },
+          "targetModelId": {
+            "type": "string",
+            "description": "Optional explicit model id; omit to generate mdl_*."
+          },
+          "removeOrphanedSources": {
+            "type": "boolean",
+            "default": false,
+            "description": "When true, migrated legacy source blocks are removed only if nothing still consumes them (no visual/cell binding and no legacy merge dependency outside the migrated set). Sibling sources with direct consumers are always retained."
+          }
+        }
+      },
+      "produces": [
+        "dataModel"
+      ],
+      "consumes": [
+        "playlist",
+        "slide"
+      ]
+    },
     "move_slide_to_section": {
       "requiresPlaylist": true,
       "requiresSlide": true,
@@ -3988,6 +4046,21 @@
       "payloadTemplate": {
         "op": "delete_data_model",
         "modelId": "{{modelId}}"
+      }
+    },
+    {
+      "key": "migrate_data_sources_to_model",
+      "op": "migrate_data_sources_to_model",
+      "whenToUse": "Migrar fontes data_source legadas para um DataModel (primária + deps merge), religando visuais ao modelId.",
+      "contentMarkers": [
+        "migrar fonte",
+        "converter fonte em modelo",
+        "migração para modelo"
+      ],
+      "actionTermSet": "mutation",
+      "payloadTemplate": {
+        "op": "migrate_data_sources_to_model",
+        "primaryDataSourceId": "{{dataSourceId}}"
       }
     },
     {

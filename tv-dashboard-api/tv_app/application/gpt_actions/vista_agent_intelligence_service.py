@@ -106,6 +106,8 @@ class VistaAgentIntelligenceService:
             "layout_perception": doc.get("layout_perception") or {},
             "data_discovery": doc.get("data_discovery") or {},
             "data_transform": doc.get("data_transform") or {},
+            # DM4 — DataModel-first + migração legacy explícita.
+            "data_model": doc.get("data_model") or {},
             "compound_slide": doc.get("compound_slide") or {},
             "display_format": doc.get("display_format") or {},
             "presentation_recipes": recipes,

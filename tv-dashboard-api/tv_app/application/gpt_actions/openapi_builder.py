@@ -798,6 +798,51 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "responses": {"200": _ok_response("DataModel preview"), **_error_responses()},
             }
         },
+        f"{base}/data-models/inspect": {
+            "get": {
+                "operationId": "gpt_inspect_data_model",
+                "summary": "Inspect a persisted DataModel",
+                "description": (
+                    "Read-only DataModel inspection: persisted definition "
+                    "(inputs, transform, fieldLabels), output schema, consumer "
+                    "bindings (views/text/canvas cells) and runtime state. "
+                    "Use before binding or migration decisions."
+                ),
+                "tags": [tag],
+                "security": [{"BearerAuth": []}],
+                "parameters": [
+                    {
+                        "name": "playlistId",
+                        "in": "query",
+                        "required": True,
+                        "schema": {"type": "string"},
+                        "description": "Playlist UUID.",
+                    },
+                    {
+                        "name": "slideId",
+                        "in": "query",
+                        "required": True,
+                        "schema": {"type": "string"},
+                        "description": "Slide UUID.",
+                    },
+                    {
+                        "name": "modelId",
+                        "in": "query",
+                        "required": True,
+                        "schema": {"type": "string"},
+                        "description": "Persisted DataModel id (mdl_*).",
+                    },
+                    {
+                        "name": "includeRuntime",
+                        "in": "query",
+                        "required": False,
+                        "schema": {"type": "boolean", "default": True},
+                        "description": "Execute the model to expose outputSchema + runtime state.",
+                    },
+                ],
+                "responses": {"200": _ok_response("DataModel inspect"), **_error_responses()},
+            }
+        },
         f"{base}/changes/suggest": {
             "post": {
                 "operationId": "gpt_suggest_change",

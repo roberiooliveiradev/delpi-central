@@ -142,6 +142,29 @@ def build_capability_surface() -> dict[str, Any]:
                 "prepare_act_policy": None,
                 "required_permission_metadata": {"read": "tv-dashboard.read"},
             },
+            {
+                "id": "data_model_lifecycle",
+                "kind": "ANALYSIS",
+                "owner": "tv-dashboard-api",
+                "description": (
+                    "DataModel = logical data unit (1..N embedded inputs + "
+                    "transform, non-visual). Preview/inspect read-only; "
+                    "upsert/delete/migrate via governed typed ops."
+                ),
+                "read_operations": [
+                    "gpt_preview_data_model",
+                    "gpt_inspect_data_model",
+                ],
+                "write_operations": [
+                    "upsert_data_model",
+                    "delete_data_model",
+                    "migrate_data_sources_to_model",
+                    "bind_visual",
+                ],
+                "confirmation_policy": None,
+                "prepare_act_policy": None,
+                "required_permission_metadata": {"read": "tv-dashboard.read"},
+            },
         ],
         "rules": {
             "catalog_is_not_authz": True,

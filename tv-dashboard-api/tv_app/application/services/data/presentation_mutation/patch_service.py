@@ -408,6 +408,8 @@ _NATIVE_OP_NAMES = frozenset(
         # DM1 — DataModel é objeto lógico em nativeConfig.dataModels (não-block).
         "upsert_data_model",
         "delete_data_model",
+        # DM4 — migração legacy→DataModel também atua sobre nativeConfig.
+        "migrate_data_sources_to_model",
     }
 )
 
@@ -922,6 +924,12 @@ class PresentationPatchService:
                 )
             elif op_name == "delete_data_model":
                 self._op_delete_data_model(native_config, raw_op)
+            elif op_name == "migrate_data_sources_to_model":
+                self._op_migrate_data_sources_to_model(
+                    native_config,
+                    raw_op,
+                    side_effects=side_effects,
+                )
             elif op_name == "patch_native_config":
                 self._op_patch_native_config(native_config, raw_op)
             elif op_name == "ensure_brand_logo_on_slide":
@@ -1201,6 +1209,8 @@ class PresentationPatchService:
             # grafo pré-op — validar todas as fontes do candidate é o seguro.
             "delete_block",
             "duplicate_blocks",
+            # DM4 — migração cria modelo, rebinda consumers e pode remover fontes.
+            "migrate_data_sources_to_model",
             # Ops sem alvo de bloco que podem alterar params/estado de dados.
             "patch_native_config",
             "patch_playlist_data_defaults",
@@ -1284,7 +1294,11 @@ class PresentationPatchService:
         validate_all = False
         for op in touching_ops:
             name = str(op.get("op") or "").strip()
-            if name in {"delete_block", "duplicate_blocks"}:
+            if name in {
+                "delete_block",
+                "duplicate_blocks",
+                "migrate_data_sources_to_model",
+            }:
                 # Conjunto de fontes mudou estruturalmente: dependents de um id
                 # removido/duplicado não aparecem no grafo pós-op → validar tudo.
                 validate_all = True
@@ -1300,7 +1314,8 @@ class PresentationPatchService:
                 continue
             touched.update(ids)
         models_touched = validate_all or any(
-            str(op.get("op") or "").strip() == "upsert_data_model"
+            str(op.get("op") or "").strip()
+            in {"upsert_data_model", "migrate_data_sources_to_model"}
             for op in touching_ops
         )
         if not models_touched and models:
@@ -1683,6 +1698,335 @@ class PresentationPatchService:
             for model in models
             if not (isinstance(model, dict) and str(model.get("id") or "") == model_id)
         ]
+
+    def _op_migrate_data_sources_to_model(
+        self,
+        cfg: dict[str, Any],
+        op: dict[str, Any],
+        *,
+        side_effects: dict[str, Any] | None = None,
+    ) -> None:
+        """DM4 — migração explícita legacy→DataModel.
+
+        Converte a fonte primária + dependências de merge em um DataModel de
+        inputs embutidos (ids preservados → ``merge.sourceId`` segue válido),
+        rebinda consumers do primário para ``modelId`` e só remove fontes
+        quando ``removeOrphanedSources=true`` e nada mais as consome.
+        """
+        from tv_app.application.services.data.data_model_service import (
+            DataModelContractError,
+            find_data_model,
+            new_data_model_id,
+            normalize_data_model,
+        )
+        from tv_app.application.services.data.m_query.m_query_dependency_service import (
+            MQueryDependencyService,
+        )
+
+        def _conflict(message: str, **details: Any) -> None:
+            raise PresentationPatchError(
+                message,
+                code="data_model.migration_conflict",
+                details={k: v for k, v in details.items() if v is not None},
+            )
+
+        def _binding_label(block: dict[str, Any]) -> str:
+            binding = block.get("dataBinding")
+            label = (
+                str(binding.get("label") or "").strip()
+                if isinstance(binding, dict)
+                else ""
+            )
+            return label or str(block.get("label") or "").strip()
+
+        blocks = _blocks_of(cfg)
+
+        def _source(sid: str) -> dict[str, Any] | None:
+            block = _find_block(blocks, sid)
+            if (
+                isinstance(block, dict)
+                and str(block.get("type") or "") == "data_source"
+            ):
+                return block
+            return None
+
+        primary_id = str(
+            op.get("primaryDataSourceId") or op.get("blockId") or ""
+        ).strip()
+        if not primary_id:
+            _conflict(
+                "primaryDataSourceId é obrigatório.",
+                field="primaryDataSourceId",
+            )
+        primary = _source(primary_id)
+        if primary is None:
+            _conflict(
+                f'Fonte legada "{primary_id}" não encontrada no slide.',
+                primaryDataSourceId=primary_id,
+            )
+
+        # Sibling closure via DAG canônico (merge.sourceId transitivo).
+        graph = MQueryDependencyService().resolve(blocks)
+        deps_by_id = {
+            node.source_id: set(node.dependencies) for node in graph.nodes
+        }
+        closure: list[str] = []
+        seen: set[str] = {primary_id}
+        queue = [primary_id]
+        while queue:
+            sid = queue.pop(0)
+            for dep in sorted(deps_by_id.get(sid, ())):
+                if dep in seen:
+                    continue
+                seen.add(dep)
+                closure.append(dep)
+                queue.append(dep)
+
+        explicit_raw = op.get("relatedDataSourceIds")
+        if isinstance(explicit_raw, list) and explicit_raw:
+            closure_set = set(closure)
+            for raw in explicit_raw:
+                sid = str(raw or "").strip()
+                if not sid or sid == primary_id or sid in closure_set:
+                    continue
+                _conflict(
+                    f'Fonte "{sid}" não é dependência do primário — migração '
+                    "não adivinha fontes não relacionadas.",
+                    primaryDataSourceId=primary_id,
+                    relatedDataSourceId=sid,
+                )
+
+        migrated_ids = [primary_id, *closure]
+        migrated_set = set(migrated_ids)
+        sources: dict[str, dict[str, Any]] = {}
+        for sid in migrated_ids:
+            source = _source(sid)
+            if source is None:
+                _conflict(
+                    f'Dependência "{sid}" do primário não é um data_source '
+                    "válido no slide.",
+                    primaryDataSourceId=primary_id,
+                    relatedDataSourceId=sid,
+                )
+            sources[sid] = source
+
+        model_id = str(op.get("targetModelId") or "").strip() or new_data_model_id()
+        if _find_block(blocks, model_id) is not None or find_data_model(
+            cfg, model_id
+        ) is not None:
+            _conflict(
+                f'O id "{model_id}" já é usado por um bloco ou modelo do slide.',
+                modelId=model_id,
+            )
+
+        inputs: list[dict[str, Any]] = []
+        for sid in migrated_ids:
+            source = sources[sid]
+            binding = (
+                source.get("dataBinding")
+                if isinstance(source.get("dataBinding"), dict)
+                else {}
+            )
+            operation_id = str(binding.get("operationId") or "").strip()
+            if not operation_id:
+                _conflict(
+                    f'Fonte "{sid}" não tem dataBinding.operationId — '
+                    "não é migrável.",
+                    relatedDataSourceId=sid,
+                )
+            local_transform = source.get("dataTransform")
+            inputs.append(
+                {
+                    "id": sid,
+                    "label": _binding_label(source),
+                    "queryName": str(
+                        source.get("queryName")
+                        or binding.get("queryName")
+                        or sid
+                    ).strip(),
+                    "operationId": operation_id,
+                    "params": (
+                        dict(binding["params"])
+                        if isinstance(binding.get("params"), dict)
+                        else {}
+                    ),
+                    # Primário: transform sobe para model.transform (ordem
+                    # congelada input→model mantém equivalência). Siblings
+                    # preservam o transform local.
+                    "transform": (
+                        None
+                        if sid == primary_id
+                        else (
+                            copy.deepcopy(local_transform)
+                            if isinstance(local_transform, dict)
+                            else None
+                        )
+                    ),
+                }
+            )
+
+        model_draft: dict[str, Any] = {
+            "id": model_id,
+            "label": str(op.get("modelLabel") or "").strip()
+            or _binding_label(primary),
+            "primaryInputId": primary_id,
+            "inputs": inputs,
+            "transform": (
+                copy.deepcopy(primary["dataTransform"])
+                if isinstance(primary.get("dataTransform"), dict)
+                else None
+            ),
+        }
+        if isinstance(primary.get("fieldLabels"), dict):
+            model_draft["fieldLabels"] = dict(primary["fieldLabels"])
+        try:
+            model = normalize_data_model(
+                model_draft,
+                catalog=self._catalog,
+                sanitize_transform=self._sanitize_vista_data_transform,
+            )
+        except DataModelContractError as exc:
+            _conflict(str(exc), modelId=model_id, **dict(exc.details))
+
+        models = cfg.get("dataModels")
+        if not isinstance(models, list):
+            models = []
+            cfg["dataModels"] = models
+        models.append(model)
+
+        # Rebind de consumers do primário: dataSourceId=primary → modelId.
+        # Consumers de siblings ficam legados (DM0 — conservador).
+        rebound: list[str] = []
+
+        def _rebind(node: dict[str, Any], tag: str) -> None:
+            if str(node.get("dataSourceId") or "").strip() != primary_id:
+                return
+            if str(node.get("modelId") or "").strip():
+                return  # modelId já vence — não é consumer do primário
+            node["modelId"] = model_id
+            node.pop("dataSourceId", None)
+            node.pop("resolved", None)
+            rebound.append(tag)
+
+        for block in blocks:
+            if not isinstance(block, dict):
+                continue
+            if str(block.get("type") or "") == "data_source":
+                continue
+            block_id = str(block.get("id") or "")
+            _rebind(block, block_id or "?")
+            cells = block.get("cells")
+            if isinstance(cells, list):
+                for row in cells:
+                    if not isinstance(row, list):
+                        continue
+                    for cell in row:
+                        if isinstance(cell, dict):
+                            _rebind(cell, f"{block_id}[cell]")
+
+        # Retenção/remoção: consumido por visual/célula OU dependência de merge
+        # de fonte retida/não-migrada → retém (propagação a ponto fixo).
+        def _merge_refs(block: dict[str, Any]) -> set[str]:
+            transform = block.get("dataTransform")
+            steps = transform.get("steps") if isinstance(transform, dict) else None
+            refs: set[str] = set()
+            for step in steps or []:
+                if isinstance(step, dict) and str(step.get("op") or "") == "merge":
+                    ref = str(step.get("sourceId") or "").strip()
+                    if ref:
+                        refs.add(ref)
+            return refs
+
+        def _bound_by_consumers(sid: str) -> bool:
+            for block in blocks:
+                if not isinstance(block, dict):
+                    continue
+                if str(block.get("type") or "") == "data_source":
+                    continue
+                if not str(block.get("modelId") or "").strip() and (
+                    str(block.get("dataSourceId") or "").strip() == sid
+                ):
+                    return True
+                cells = block.get("cells")
+                if isinstance(cells, list):
+                    for row in cells:
+                        if not isinstance(row, list):
+                            continue
+                        for cell in row:
+                            if not isinstance(cell, dict):
+                                continue
+                            if not str(cell.get("modelId") or "").strip() and (
+                                str(cell.get("dataSourceId") or "").strip() == sid
+                            ):
+                                return True
+            return False
+
+        retained: set[str] = set()
+        for sid in migrated_ids:
+            if _bound_by_consumers(sid):
+                retained.add(sid)
+        for block in blocks:
+            if not isinstance(block, dict):
+                continue
+            if str(block.get("type") or "") != "data_source":
+                continue
+            bid = str(block.get("id") or "")
+            if bid in migrated_set:
+                continue
+            retained |= _merge_refs(block) & migrated_set
+        # Fonte migrada referenciada como input de outro DataModel → retida.
+        for other in cfg.get("dataModels") or []:
+            if not isinstance(other, dict) or other.get("id") == model_id:
+                continue
+            for item in other.get("inputs") or []:
+                iid = str(item.get("id") or "") if isinstance(item, dict) else ""
+                if iid in migrated_set:
+                    retained.add(iid)
+        # Propagação a ponto fixo na direção correta: uma fonte RETIDA que
+        # segue com dataTransform próprio precisa das fontes que seu merge
+        # referencia — sem elas o merge retido quebraria.
+        changed = True
+        while changed:
+            changed = False
+            for sid in migrated_ids:
+                if sid not in retained:
+                    continue
+                for dep in _merge_refs(sources[sid]) & migrated_set:
+                    if dep not in retained:
+                        retained.add(dep)
+                        changed = True
+
+        removable = sorted(migrated_set - retained)
+        removed: list[str] = []
+        if op.get("removeOrphanedSources") is True:
+            # ``_blocks_of`` devolve cópia filtrada — remover da lista real
+            # de ``cfg`` para a mutação persistir no candidate state.
+            raw_blocks = cfg.get("blocks")
+            if isinstance(raw_blocks, list):
+                kept = [
+                    b
+                    for b in raw_blocks
+                    if str(b.get("id") or "") not in set(removable)
+                ]
+                if len(kept) != len(raw_blocks):
+                    cfg["blocks"] = kept
+                    removed = list(removable)
+                    blocks = _blocks_of(cfg)
+            removable = [
+                sid for sid in removable if sid not in set(removed)
+            ]
+
+        if side_effects is not None:
+            side_effects["dataModelMigration"] = {
+                "modelId": model_id,
+                "primaryDataSourceId": primary_id,
+                "migratedSources": migrated_ids,
+                "consumersRebound": rebound,
+                "legacySourcesRetained": sorted(retained),
+                "legacySourcesRemoved": removed,
+                "legacySourcesRemovable": removable,
+                "rollback": "slide_revision",
+            }
 
     @staticmethod
     def _merge_dependency_ref(block: dict[str, Any]) -> str | None:

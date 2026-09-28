@@ -1106,6 +1106,146 @@ class GptActionsDispatchService:
             ),
         }
 
+    def inspect_data_model(
+        self,
+        *,
+        user: Any,
+        playlist_id: str,
+        slide_id: str,
+        model_id: str,
+        authorization: str | None,
+        include_runtime: bool = True,
+    ) -> dict[str, Any]:
+        """Inspect persistido de DataModel — definition, inputs, transform,
+        output schema, consumers e runtime status. Somente leitura."""
+        from tv_app.application.services.data.data_model_service import (
+            find_data_model,
+        )
+        from tv_app.application.services.data.presentation_mutation.patch_service import (
+            _model_output_columns,
+        )
+        from tv_app.application.services.data.projection_fields_contract import (
+            collect_source_consumer_field_refs,
+        )
+
+        assert_permission(user, TV_READ)
+        pid_raw = str(playlist_id or "").strip()
+        sid_raw = str(slide_id or "").strip()
+        mid = str(model_id or "").strip()
+        if not pid_raw or not sid_raw or not mid:
+            raise GptActionsError(
+                "playlistId, slideId e modelId são obrigatórios.",
+                code="INVALID_CHANGE",
+                status_code=422,
+            )
+        try:
+            pid = UUID(pid_raw)
+            sid = UUID(sid_raw)
+        except ValueError as exc:
+            raise GptActionsError(
+                "playlistId/slideId inválidos.",
+                code="INVALID_CHANGE",
+                status_code=422,
+            ) from exc
+        access = self._access.resolve(pid, user)
+        if not access.can_read:
+            raise GptActionsError(
+                "Programação não encontrada.",
+                code="RESOURCE_NOT_FOUND",
+                status_code=404,
+            )
+        try:
+            slide_row = self._writes.get_slide(sid, playlist_id=pid)
+        except Exception as exc:
+            raise GptActionsError(
+                "Tela não encontrada.",
+                code="RESOURCE_NOT_FOUND",
+                status_code=404,
+            ) from exc
+        cfg = (
+            slide_row.get("nativeConfig")
+            if isinstance(slide_row.get("nativeConfig"), dict)
+            else {}
+        )
+        model = find_data_model(cfg, mid)
+        if model is None:
+            raise GptActionsError(
+                f'DataModel "{mid}" não encontrado no slide.',
+                code="RESOURCE_NOT_FOUND",
+                status_code=404,
+                details={"modelId": mid},
+            )
+
+        # Definição persistida — whitelist do contrato (sem artefatos de runtime).
+        definition = {
+            "id": model.get("id"),
+            "label": model.get("label"),
+            "primaryInputId": model.get("primaryInputId"),
+            "inputs": [
+                {
+                    "id": item.get("id"),
+                    "label": item.get("label"),
+                    "queryName": item.get("queryName"),
+                    "operationId": item.get("operationId"),
+                    "params": item.get("params") or {},
+                    "hasTransform": isinstance(item.get("transform"), dict),
+                }
+                for item in model.get("inputs") or []
+                if isinstance(item, dict)
+            ],
+            "transform": model.get("transform"),
+            "fieldLabels": model.get("fieldLabels") or {},
+        }
+
+        blocks = cfg.get("blocks")
+        consumers = collect_source_consumer_field_refs(
+            blocks if isinstance(blocks, list) else [], mid
+        )
+
+        runtime: dict[str, Any] = {"state": "not_executed"}
+        output_schema: dict[str, Any] | None = None
+        if include_runtime:
+            defaults = (access.playlist or {}).get("dataDefaults")
+            try:
+                resolved = self._preview.preview_data_model(
+                    model,
+                    native_config=cfg,
+                    authorization=authorization,
+                    user=user,
+                    playlist_defaults=(
+                        defaults if isinstance(defaults, dict) else None
+                    ),
+                )
+            except Exception as exc:  # noqa: BLE001 — runtime é best-effort
+                resolved = {"error": str(exc)}
+            transform_error = (
+                resolved.get("transformError")
+                if isinstance(resolved.get("transformError"), dict)
+                else None
+            )
+            error_msg = str(resolved.get("error") or "").strip()
+            columns = _model_output_columns(resolved)
+            if transform_error or error_msg:
+                runtime = {
+                    "state": "error",
+                    "error": transform_error or {"message": error_msg},
+                }
+            else:
+                runtime = {
+                    "state": "ready" if columns else "empty",
+                }
+            if columns is not None:
+                output_schema = {"columns": sorted(columns)}
+
+        return {
+            "modelId": mid,
+            "definition": definition,
+            "consumers": consumers,
+            "consumerCount": len(consumers),
+            "outputSchema": output_schema,
+            "runtime": runtime,
+        }
+
     def preview_change(
         self,
         *,
