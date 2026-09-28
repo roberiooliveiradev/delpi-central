@@ -194,23 +194,25 @@ Categorias (não 1:1 com widgets):
 
 ## 14. Command model
 
-Somente comandos justificados por Doc 2/5 (transições das dimensões) + Doc 3/5 (ações das superfícies). Cada comando: `POST` semântico, `Idempotency-Key`, `expected_version`, `branch` no body, permissão dedicada, auditoria obrigatória. Resposta: `{mission, items, overall_stage, version, available_actions}` resultante.
+Somente comandos justificados por Doc 2/5 (transições das dimensões) + Doc 3/5 (ações das superfícies). Cada comando: `POST` semântico, `Idempotency-Key`, `expected_version`, `branch` no body, auditoria obrigatória. Resposta: `{mission, items, overall_stage, version, available_actions}` resultante.
 
-| Command | Path | Permissão | Pós-condição |
+AuthZ de usuário para **todos** os comandos interativos: `factory-supply.access` + `factory-supply.view.filial-{branch}` — modelo congelado §40-A (Product Master, FS-C0.T3). **Não existe permissão por comando**: a coluna AuthZ abaixo expressa sempre a mesma composição; proteção adicional = validação de filial do agregado + invariantes de domínio + versão + idempotência, não catálogo RBAC granular.
+
+| Command | Path | AuthZ user | Pós-condição |
 |---|---|---|---|
-| `request_supply_material` | POST `/v1/missions/request-material` | `factory-supply.missions.request` | missão criada (ou vinculada — §29) com itens requisitados; auditoria `request` |
-| `plan_supply_mission` | POST `/v1/missions/{id}/plan` | `factory-supply.missions.manage` | destino/janela/atribuição confirmados; missão entra no funil |
-| `replan_supply_mission` | POST `/v1/missions/{id}/replan` | `factory-supply.missions.manage` | campos alterados + rastro de replanejamento |
-| `cancel_supply_mission` | POST `/v1/missions/{id}/cancel` | `factory-supply.missions.manage` | `lifecycle=cancelled` + motivo; itens travam |
-| `close_supply_mission` | POST `/v1/missions/{id}/close` | `factory-supply.missions.manage` | `lifecycle=closed` se invariantes de fechamento ok |
-| `start_item_preparation` | POST `/v1/missions/{id}/items/{item_id}/start-preparation` | `factory-supply.preparation.manage` | item dimensão prep → in_progress |
-| `record_item_preparation` | POST `/v1/missions/{id}/items/{item_id}/record-preparation` | `factory-supply.preparation.manage` | `prepared_qty` registrada (parcial permitida) |
-| `record_item_collection` | POST `/v1/missions/{id}/items/{item_id}/record-collection` | `factory-supply.collection.manage` | `collected_qty` + handoff implícito armazém→alimentador |
-| `record_item_handoff` | POST `/v1/missions/{id}/items/{item_id}/record-handoff` | `factory-supply.collection.manage` | handoff alimentador→CT aceito/pendente |
-| `record_item_delivery` | POST `/v1/missions/{id}/items/{item_id}/record-delivery` | `factory-supply.delivery.confirm` | `delivered_qty` + recebido_por CT |
-| `record_item_return` | POST `/v1/missions/{id}/items/{item_id}/record-return` | `factory-supply.returns.manage` | `returned_qty` + motivo + handoff→armazém |
-| `sync_supply_demand_signals` | POST `/v1/demand-signals/sync` | **SERVICE** `factory-supply.service.demand-sync` (§40-B — não é permissão de usuário) | signals ativas atualizadas de forma replay-safe |
-| `refresh_item_erp_evidence` | POST `/v1/missions/{id}/items/{item_id}/erp-evidence/refresh` | **SERVICE** `factory-supply.service.erp-evidence-reconcile` (§40-B; gatilho interativo opcional `TO_INVENTORY`) | observação ERP deduplicada persistida |
+| `request_supply_material` | POST `/v1/missions/request-material` | `access`+`filial` (§40-A) | missão criada (ou vinculada — §29) com itens requisitados; auditoria `request` |
+| `plan_supply_mission` | POST `/v1/missions/{id}/plan` | `access`+`filial` | destino/janela/atribuição confirmados; missão entra no funil |
+| `replan_supply_mission` | POST `/v1/missions/{id}/replan` | `access`+`filial` | campos alterados + rastro de replanejamento |
+| `cancel_supply_mission` | POST `/v1/missions/{id}/cancel` | `access`+`filial` | `lifecycle=cancelled` + motivo; itens travam |
+| `close_supply_mission` | POST `/v1/missions/{id}/close` | `access`+`filial` | `lifecycle=closed` se invariantes de fechamento ok |
+| `start_item_preparation` | POST `/v1/missions/{id}/items/{item_id}/start-preparation` | `access`+`filial` | item dimensão prep → in_progress |
+| `record_item_preparation` | POST `/v1/missions/{id}/items/{item_id}/record-preparation` | `access`+`filial` | `prepared_qty` registrada (parcial permitida) |
+| `record_item_collection` | POST `/v1/missions/{id}/items/{item_id}/record-collection` | `access`+`filial` | `collected_qty` + handoff implícito armazém→alimentador |
+| `record_item_handoff` | POST `/v1/missions/{id}/items/{item_id}/record-handoff` | `access`+`filial` | handoff alimentador→CT aceito/pendente |
+| `record_item_delivery` | POST `/v1/missions/{id}/items/{item_id}/record-delivery` | `access`+`filial` | `delivered_qty` + recebido_por CT |
+| `record_item_return` | POST `/v1/missions/{id}/items/{item_id}/record-return` | `access`+`filial` | `returned_qty` + motivo + handoff→armazém |
+| `sync_supply_demand_signals` | job interno `demand_signal_sync` (§40-B — sem rota pública; execução in-process) | system actor | signals ativas atualizadas de forma replay-safe |
+| `refresh_item_erp_evidence` | POST `/v1/missions/{id}/items/{item_id}/erp-evidence/refresh` — opcional `TO_INVENTORY` | job `erp_evidence_reconcile` (§40-B); se interativo: `access`+`filial` | observação ERP deduplicada persistida |
 
 Notas: `record-collection` cobre "iniciar coleta" — a primeira coleta registrada marca a dimensão em progresso (não inventar comando separado sem justificativa). Quantidade de retorno pode ser `null` quando não estabelecida (Doc 3/5 — `RETURN_QUANTITY_RULE = TO_INVENTORY`).
 
@@ -313,10 +315,13 @@ Snapshots permitidos como **evidência de decisão** (não verdade corrente): `p
 
 ## 25. ERP correlation
 
-- Rota de leitura autoritativa: `get_product_internal_movements` (`/products/{code}/internal-movements`) — `PROVEN`.
-- Correlação determinística por composição: `branch × product × qty × janela ± tolerância × destino/origem × tipo de movimento`. **Sem inferência LLM.**
-- Se a resposta de movimentos expuser ID estável de movimento → usar direto (`TO_INVENTORY` — campo a confirmar; se ausente, fingerprint composto persistido em `erp_observations.evidence_fingerprint` com `confidence` resultante `high|medium` documentado).
+- Rota de leitura autoritativa: `get_product_internal_movements` (`GET /products/{code}/internal-movements`) — `PROVEN` (FS-C0.T1 executado): fonte `SD3010` (SD3) + `SB1010`, filtros `D_E_L_E_T_=''` e `D3_ESTORNO<>'S'`; campos `branch, location, document, issue_date, product_code, product_description, unit, movement_type(TM), cf, quantity, production_order(OP), user_name`; filtros `branch/location/tm/op/kind=warehouse_transfer(DE0|RE0)`; paginação `page/page_size` (máx 500).
+- **Identidade estável de movimento: `NO_STABLE_MOVEMENT_ID_EXPOSED`** — `R_E_C_N_O_` existe na fonte e ordena a resposta mas **não é exposto**. Não inventar ID.
+- **Fingerprint composto (TARGET — baseline de correlação):** `(branch, product_code, document, issue_date, cf, movement_type, location, quantity, production_order?)` — determinístico sobre campos autoritativos retornados; unicidade **não provada** para ocorrências idênticas (mesmo doc/produto/cf/local/qtd) — dedup aceita esse colapso documentado (`confidence` `high` quando tuple única na página avaliada, `medium` caso contrário).
+- Pairing de transferência DE0(sai)/RE0(entra): `DETERMINISTIC_DERIVATION` consumer-side por `(document, issue_date, product_code)` com tolerância a órfãos — referência `PROVEN` em `line_feeder_warehouse_transfers.py`; sem chave de par autoritativa em SD3.
+- Evolução opcional (`EVOLVE_EXISTING`, não bloqueante): expor `R_E_C_N_O_` como `movement_recno` — campo já presente na mesma query autoritativa (gate A); estabilidade condicional (RECNO reciclável em pack/reorg Protheus) — `TO_INVENTORY` se decisão for assumi-lo como identidade persistente; fingerprint composto permanece o baseline seguro.
 - Deduplicação: UNIQUE `(mission_item_id, evidence_fingerprint)` — reobservação do mesmo fato não duplica correlação nem efeito operacional.
+- Erros downstream: falha genérica na rota retorna `error_response` status 400 — gateway FS trata todo não-2xx como falha técnica (`unavailable`/`downstream_*`), nunca como `not_found`.
 
 ## 26. ERP evidence states
 
@@ -399,10 +404,52 @@ Conforme `platform-reliability-observability.mdc`/`observability-standards.mdc`:
 
 ```text
 EVENT_BUS_REQUIRED_NOW = NO
-OUTBOX_REQUIRED_NOW   = NO
+OUTBOX_REQUIRED_NOW   = YES   ← corrigido FS-C0.T5-realtime (antes: NO)
 ```
 
-Comando síncrono + auditoria transacional cobrem os fluxos atuais; não existe consumidor assíncrono real hoje. Candidatos `FUTURE_CONSUMER_EVENT` (pronta→alimentador, pedido→almoxarifado, exceção, devolução requerida) ficam em `supply_events` — um consumidor futuro lê do audit ou de outbox se/adicionar broker real com owner+consumer+semântica de entrega justificados. Precedente existe quando necessário: `requests-api/migrations/V005__integration_outbox.sql` (`PROVEN`) — adotar **somente** quando um consumidor assíncrono real existir.
+Gate reavaliado após decisão de produto (sync automático + push realtime + fallback de notificação): entrega de notificação portal deve sobreviver falha/rate-limit do provedor, routing online×offline acontece **após** o commit de domínio, e WS é efêmero — portanto outbox PostgreSQL transacional **é** necessária (precedente `PROVEN`: `requests-api/migrations/V005__integration_outbox.sql`, `commercial_app/.../integration_outbox_repository_port.py`). Event bus/broker externo segue `NO` — não há consumidor assíncrono externo; nenhum Kafka/RabbitMQ/Redis.
+
+**Cadeia congelada (padrão Commercial `PROVEN`, adaptado ao bounded context FS — padrão reutilizado, código nunca importado):**
+
+```text
+job de sync/reconcile (§40-B)
+→ leitura autoritativa api-delpi
+→ snapshot/checkpoint persistido + diff determinístico (keys naturais)
+→ mutação de domínio + auditoria na mesma transação
+→ enqueue integration_outbox (mesma tx)
+→ worker flush pós-commit:
+    online  → realtime hub → WebSocket → MFE (toast + estado)
+    offline → portal notification (dedupeKey + deep link)
+```
+
+- **Diff:** checkpoint por `source_key` com keys estáveis (`IntegrationCheckpoint.metadata["keys"]` — precedente `ReadyToInvoiceSnapshotDeltaService.compute_delta`: `entered = current − previous`, serviço puro). FS: diff de `demand_signals` por `need_key`+fingerprint; evidência por movement fingerprint. Nenhum evento por alteração de campo — só transições de estado significativas.
+- **Cold start:** primeiro scan persiste baseline e **enfileira zero** (`previous_key_count == 0` → `enqueued=0`, `PROVEN` — anti-flood); exceção crítica preexistente vai só à área de exceções persistente, não à notificação.
+- **WS é canal de entrega, nunca fonte de verdade** — mutação de domínio nunca depende de socket conectado; 1 leitura ERP por ciclo, nunca 1 por cliente WS.
+- **Hub realtime (owner = factory-supply-api):** implementação local seguindo o padrão `CommercialRealtimeHub` (`PROVEN` — rooms, presence por user com multi-aba=1 online, ping/pong ~25s, idle-close ~75s, `schedule_broadcast` thread-safe→queue→broadcast, dead-socket cleanup, worker em lifespan). Rooms FS: `user:{id}` + `filial:{01|02}` (atribuídas server-side por permissão resolvida — cliente nunca escolhe sala).
+- **WS authZ (precedente `resolve_websocket_user`, `PROVEN`):** `validate_token(JWT)` → `load_user_rbac` (`/me` Core) → exige `factory-supply.access` + resolve filiais por `BRANCH_PERMISSIONS` → `WS_1008_POLICY_VIOLATION` em falha; claims fallback = `permissions[]` (fail-closed).
+- **Presence scope = `FACTORY_SUPPLY_APP`:** `is_user_online` conta sockets **do WS do Factory Supply** (precedente `TaskPortalNotificationDeliveryPolicy.split_online_offline` usa o hub do próprio app, não "online no Portal").
+- **Delivery policy:** usuário ativo no FS → realtime + toast + atualização de estado/área de exceções, **sem** notificação portal duplicada; usuário fora do FS → Minha DELPI notification com deep link ao contexto FS; retry (`attempts>0`) **não** re-broadcast WS (evita toast duplicado — precedente `PublishIntegrationOutboxUseCase`); rate-limit → `defer`+backoff por linha.
+- **Dedupe:** identidade semântica por `event_type × aggregate_id × recipient` (`dedupeKey` em payload — precedente); uma ocorrência de negócio nunca vira toast+notificação+retry para o mesmo usuário.
+- **Destinatários:** resolvidos por `factory-supply.access` + `view.filial-{branch}` (+ ator atribuído quando a semântica exigir — ex.: feeder designado); entrega pode usar `permissionCodes` (precedente portal). **Nenhuma permissão `notifications.*` extra.**
+- **Audiência filial:** evento de filial 01 nunca chega a socket/notificação de usuário sem `view.filial-01` — filtro server-side por sala/recipient.
+- **Notificações portal:** categorias declaradas no catálogo canônico `core-api/app/content/notification_catalog.json` (regra `notification-catalog-preferences` — mute/estrela/e-mail vêm de graça); categorias mínimas por outcome/exceção, nunca por tick.
+- **Mensagem de sucesso:** "Transferência confirmada" — material, quantidade, destino/contexto, timestamp; ator somente se autoritativo (`user_name` SD3 exposto em internal-movements — §25); nunca inferir identidade.
+- **Exceções persistentes:** divergência/erro não é toast-only — área persistente de exceções no produto (quantidade divergente, movimento divergente, evidência não localizada após política, fonte indisponível, falha de sync acionável, correlação não resolvida). Falha transitória (timeout/retry) = telemetria, não exceção de negócio.
+- **Multi-instância (restrição MVP explícita):** hub in-memory é por-réplica; jobs + WS no MVP vivem na mesma réplica designada (`FACTORY_SUPPLY_JOBS_ENABLED` + deploy de 1 réplica para o slice realtime). Réplicas múltiplas servindo WS exigiriam fan-out entre réplicas — `TO_INVENTORY` futuro, sem Redis/pubsub sem necessidade provada.
+- **Cadência:** `TO_BENCHMARK` — `SYNC_CADENCE` não é congelada; roadmap exige validação de carga/fan-out api-delpi antes de fixar (precedente existente: ~60s no Commercial — apenas referência, não alvo). "Realtime" UX = poll autoritativo + push WS imediato pós-diff.
+- **Manual trigger ops:** precedente Commercial expõe `POST /integrations/jobs/*-scan` com permissão `manage` — FS não tem `manage`; gatilho manual permanece `TO_INVENTORY` (sem endpoint enquanto não houver justificativa+permissão explícita).
+
+### Taxonomia de eventos FS (TARGET — nomes canônicos `domain.verb` conforme precedente `presence.updated`/`worklist.*`)
+
+| Evento | Classe | Destino |
+|---|---|---|
+| `supply_need.changed` | REALTIME_ONLY | sala `filial:{b}` — refresh Necessidades/Kanban; sem spam portal |
+| `supply_mission.changed` | REALTIME_ONLY | sala `filial:{b}` — invalida listas/drawer |
+| `supply_transfer.matched` | REALTIME_AND_PORTAL_NOTIFICATION | toast sucesso + notificação offline; actor se autoritativo |
+| `supply_transfer.divergent` | REALTIME_AND_PORTAL_NOTIFICATION + PERSISTENT_EXCEPTION | toast warning + notificação + área de exceções |
+| `supply_transfer.not_found` | REALTIME_AND_PORTAL_NOTIFICATION + PERSISTENT_EXCEPTION | toast error + notificação + área de exceções |
+| `supply_sync.error` | PERSISTENT_EXCEPTION (ação) / TECHNICAL_TELEMETRY (transitório) | área de exceções quando acionável; métrica/log sempre |
+| `presence.updated` | REALTIME_ONLY (interno hub) | sala `team`/gestor — opcional FS |
 
 ## 34. Migration strategy
 
@@ -420,8 +467,9 @@ Comando síncrono + auditoria transacional cobrem os fluxos atuais; não existe 
 
 ## 36. Security
 
-- Credenciais só no backend; JWT do usuário propagado à api-delpi (`bearer_authorization_from_context` `PROVEN`) — sem service-account nova nesta fase (`TO_INVENTORY` se syncs agendados exigirem S2S).
+- Credenciais só no backend; JWT do usuário propagado à api-delpi em contexto interativo (`bearer_authorization_from_context` `PROVEN`); jobs internos usam `API_DELPI_INTERNAL_SERVICE_TOKEN` + `X-Delpi-Caller-App` (§40-B, `PROVEN`) — sem service-account nova, sem JWT fabricado.
 - Sem segredo ERP no MFE; sem JWT/claims como autoridade final — permissões avaliadas server-side a cada request.
+- Modelo de usuário FROZEN §40-A: `factory-supply.access` + `.view.filial-{branch}`; enforcement por request: AuthN → `access` → `assert_valid_branch` → `.view.filial-*` → `aggregate.branch` confere → invariantes → mutação+auditoria (padrão `PROVEN` `BranchAccessService`/`can`/`has_permission` do delpi_auth+Core).
 - Writes fail-closed (sem permissão → 403; sem key → 422; sem versão → 422/400).
 - Branch fail-closed (`branch_access_denied`).
 - `TOTVS_WRITE_SUPPORT = NO` — não desenhar credencial de escrita TOTVS.
@@ -438,34 +486,35 @@ Comando síncrono + auditoria transacional cobrem os fluxos atuais; não existe 
 
 Base FS: `/apps/factory-supply-api/v1` — todas `PLANNED_NEW`. api-delpi paths `PROVEN` via `delpi_production_gateway.py` + `route_contract_registry.py`.
 
-| # | Owner | Método | Path | operationId | R/W | Permissão | Idemp. | Conc. | Paginação | Deps ERP | Status |
+| # | Owner | Método | Path | operationId | R/W | AuthZ user | Idemp. | Conc. | Paginação | Deps ERP | Status |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| 1 | FS | GET | `/v1/overview` | get_factory_supply_overview | R | .view | N/A | — | — | nenhum (projeção local) | PLANNED_NEW |
-| 2 | FS | GET | `/v1/missions` | list_supply_missions | R | .view | N/A | — | page | nenhum | PLANNED_NEW |
-| 3 | FS | GET | `/v1/missions/{id}` | get_supply_mission | R | .view | N/A | — | — | opcional (evidence) | PLANNED_NEW |
-| 4 | FS | GET | `/v1/needs` | list_supply_needs | R | .view | N/A | — | page | sinais já sincronizados | PLANNED_NEW |
-| 5 | FS | GET | `/v1/needs/upcoming` | list_upcoming_supply_needs | R | .view | N/A | — | page | sinais | PLANNED_NEW |
-| 6 | FS | GET | `/v1/warehouse/work-queue` | list_warehouse_work_queue | R | .view | N/A | — | page | nenhum | PLANNED_NEW |
-| 7 | FS | GET | `/v1/my-collection` | list_my_collection | R | .view | N/A | — | page | nenhum | PLANNED_NEW |
-| 8 | FS | GET | `/v1/returns` | list_supply_returns | R | .view | N/A | — | page | nenhum | PLANNED_NEW |
-| 9 | FS | GET | `/v1/history` | list_supply_history | R | .view | N/A | — | cursor | nenhum | PLANNED_NEW |
-| 10 | FS | GET | `/v1/missions/{id}/history` | get_supply_mission_history | R | .view | N/A | — | cursor | nenhum | PLANNED_NEW |
-| 11 | FS | GET | `/v1/lookup-metadata` | get_supply_lookup_metadata | R | .view | N/A | — | — | CTs/warehouses via api-delpi | PLANNED_NEW |
-| 12 | FS | POST | `/v1/missions/request-material` | request_supply_material | W | .missions.request | KEY | — | — | valida produto/CT | PLANNED_NEW |
-| 13 | FS | POST | `/v1/missions/{id}/plan` | plan_supply_mission | W | .missions.manage | KEY | EV | — | — | PLANNED_NEW |
-| 14 | FS | POST | `/v1/missions/{id}/replan` | replan_supply_mission | W | .missions.manage | KEY | EV | — | — | PLANNED_NEW |
-| 15 | FS | POST | `/v1/missions/{id}/cancel` | cancel_supply_mission | W | .missions.manage | KEY | EV | — | — | PLANNED_NEW |
-| 16 | FS | POST | `/v1/missions/{id}/close` | close_supply_mission | W | .missions.manage | KEY | EV | — | — | PLANNED_NEW |
-| 17 | FS | POST | `/v1/missions/{id}/items/{iid}/start-preparation` | start_item_preparation | W | .preparation.manage | KEY | EV | — | — | PLANNED_NEW |
-| 18 | FS | POST | `/v1/missions/{id}/items/{iid}/record-preparation` | record_item_preparation | W | .preparation.manage | KEY | EV | — | — | PLANNED_NEW |
-| 19 | FS | POST | `/v1/missions/{id}/items/{iid}/record-collection` | record_item_collection | W | .collection.manage | KEY | EV | — | — | PLANNED_NEW |
-| 20 | FS | POST | `/v1/missions/{id}/items/{iid}/record-handoff` | record_item_handoff | W | .collection.manage | KEY | EV | — | — | PLANNED_NEW |
-| 21 | FS | POST | `/v1/missions/{id}/items/{iid}/record-delivery` | record_item_delivery | W | .delivery.confirm | KEY | EV | — | — | PLANNED_NEW |
-| 22 | FS | POST | `/v1/missions/{id}/items/{iid}/record-return` | record_item_return | W | .returns.manage | KEY | EV | — | — | PLANNED_NEW |
-| 23 | FS | POST | `/v1/demand-signals/sync` | sync_supply_demand_signals | W | SERVICE .service.demand-sync | NATURAL | — | — | machine-load + materials batch | PLANNED_NEW |
-| 24 | FS | POST | `/v1/missions/{id}/items/{iid}/erp-evidence/refresh` | refresh_item_erp_evidence | W | SERVICE .service.erp-evidence-reconcile | NATURAL | — | — | internal-movements | PLANNED_NEW |
+| 1 | FS | GET | `/v1/overview` | get_factory_supply_overview | R | `access`+`filial` | N/A | — | — | nenhum (projeção local) | PLANNED_NEW |
+| 2 | FS | GET | `/v1/missions` | list_supply_missions | R | `access`+`filial` | N/A | — | page | nenhum | PLANNED_NEW |
+| 3 | FS | GET | `/v1/missions/{id}` | get_supply_mission | R | `access`+`filial` | N/A | — | — | opcional (evidence) | PLANNED_NEW |
+| 4 | FS | GET | `/v1/needs` | list_supply_needs | R | `access`+`filial` | N/A | — | page | sinais já sincronizados | PLANNED_NEW |
+| 5 | FS | GET | `/v1/needs/upcoming` | list_upcoming_supply_needs | R | `access`+`filial` | N/A | — | page | sinais | PLANNED_NEW |
+| 6 | FS | GET | `/v1/warehouse/work-queue` | list_warehouse_work_queue | R | `access`+`filial` | N/A | — | page | nenhum | PLANNED_NEW |
+| 7 | FS | GET | `/v1/my-collection` | list_my_collection | R | `access`+`filial` | N/A | — | page | nenhum | PLANNED_NEW |
+| 8 | FS | GET | `/v1/returns` | list_supply_returns | R | `access`+`filial` | N/A | — | page | nenhum | PLANNED_NEW |
+| 9 | FS | GET | `/v1/history` | list_supply_history | R | `access`+`filial` | N/A | — | cursor | nenhum | PLANNED_NEW |
+| 10 | FS | GET | `/v1/missions/{id}/history` | get_supply_mission_history | R | `access`+`filial` | N/A | — | cursor | nenhum | PLANNED_NEW |
+| 11 | FS | GET | `/v1/lookup-metadata` | get_supply_lookup_metadata | R | `access`+`filial` | N/A | — | — | CTs/warehouses via api-delpi | PLANNED_NEW |
+| 12 | FS | POST | `/v1/missions/request-material` | request_supply_material | W | `access`+`filial` | KEY | — | — | valida produto/CT | PLANNED_NEW |
+| 13 | FS | POST | `/v1/missions/{id}/plan` | plan_supply_mission | W | `access`+`filial` | KEY | EV | — | — | PLANNED_NEW |
+| 14 | FS | POST | `/v1/missions/{id}/replan` | replan_supply_mission | W | `access`+`filial` | KEY | EV | — | — | PLANNED_NEW |
+| 15 | FS | POST | `/v1/missions/{id}/cancel` | cancel_supply_mission | W | `access`+`filial` | KEY | EV | — | — | PLANNED_NEW |
+| 16 | FS | POST | `/v1/missions/{id}/close` | close_supply_mission | W | `access`+`filial` | KEY | EV | — | — | PLANNED_NEW |
+| 17 | FS | POST | `/v1/missions/{id}/items/{iid}/start-preparation` | start_item_preparation | W | `access`+`filial` | KEY | EV | — | — | PLANNED_NEW |
+| 18 | FS | POST | `/v1/missions/{id}/items/{iid}/record-preparation` | record_item_preparation | W | `access`+`filial` | KEY | EV | — | — | PLANNED_NEW |
+| 19 | FS | POST | `/v1/missions/{id}/items/{iid}/record-collection` | record_item_collection | W | `access`+`filial` | KEY | EV | — | — | PLANNED_NEW |
+| 20 | FS | POST | `/v1/missions/{id}/items/{iid}/record-handoff` | record_item_handoff | W | `access`+`filial` | KEY | EV | — | — | PLANNED_NEW |
+| 21 | FS | POST | `/v1/missions/{id}/items/{iid}/record-delivery` | record_item_delivery | W | `access`+`filial` | KEY | EV | — | — | PLANNED_NEW |
+| 22 | FS | POST | `/v1/missions/{id}/items/{iid}/record-return` | record_item_return | W | `access`+`filial` | KEY | EV | — | — | PLANNED_NEW |
+| 23 | FS | — | job interno `demand_signal_sync` (sem rota pública) | sync_supply_demand_signals | W | system actor | NATURAL | — | — | machine-load + materials batch | PLANNED_JOB |
+| 24 | FS | POST | `/v1/missions/{id}/items/{iid}/erp-evidence/refresh` — opcional | refresh_item_erp_evidence | W | job `erp_evidence_reconcile` (+`access`+`filial` se interativo) | NATURAL | — | — | internal-movements | PLANNED_JOB + TO_INVENTORY |
+| 25 | FS | WS | `/v1/realtime` (upgrade) | factory_supply_realtime_connect | R | `access`+`filial` (resolve_websocket_user §33) | N/A | — | — | nenhum | PLANNED_NEW |
 
-(KEY = `Idempotency-Key` obrigatório + `request_fingerprint` persistido; NATURAL = dedup por chave natural; EV = `expected_version`; SERVICE = capacidade interna/serviço §40-B — não exposta como permissão de usuário no manifesto.)
+(`access`+`filial` = `factory-supply.access` + `factory-supply.view.filial-{branch}` — modelo FROZEN §40-A, sem permissão por rota; KEY = `Idempotency-Key` obrigatório + `request_fingerprint` persistido; NATURAL = dedup por chave natural; EV = `expected_version`; SERVICE = capacidade interna/serviço §40-B — não exposta como permissão de usuário no manifesto.)
 
 | Owner | operationId | Path (PROVEN) | Uso FS | Status |
 |---|---|---|---|---|
@@ -479,12 +528,12 @@ Base FS: `/apps/factory-supply-api/v1` — todas `PLANNED_NEW`. api-delpi paths 
 | api-delpi | get_product_stock | /products/{code}/stock | saldo pontual por produto | REUSE_AS_IS |
 | api-delpi | list_product_physical_locations | /products/physical-locations | local físico de retirada | REUSE_AS_IS |
 | api-delpi | list_product_inventory_blocks | /products/inventory-blocks | bloqueios de disponibilidade | REUSE_AS_IS |
-| api-delpi | get_product_internal_movements | /products/{code}/internal-movements | evidência de movimento → correlação | EVOLVE_EXISTING (verificar ID estável/fingerprint — TO_INVENTORY) |
+| api-delpi | get_product_internal_movements | /products/{code}/internal-movements | evidência de movimento → correlação | REUSE_AS_IS (fingerprint composto §25 — FS-C0.T1; evolve opcional `movement_recno`) |
 | api-delpi | get_production_consumption_by_item | /production/consumption/by-item | contexto de consumo | REUSE_AS_IS |
 | api-delpi | get_product_detail / get_product_summary | /products/{code}/… | master data | REUSE_AS_IS |
 | api-delpi | ~~list_warehouses~~ | — | fatos de armazém cobertos por composição (§27) | NOT_NEEDED |
 
-Contagem: FS 24 rotas planejadas (11 query/meta + 13 comandos). api-delpi: 13 reuse + 1 evolve + 0 new.
+Contagem: FS 25 superfícies planejadas (11 query/meta + 12 comandos + 1 WS + 1 job). api-delpi: 13 reuse + 1 evolve + 0 new.
 
 ## 39. Complete data model matrix
 
@@ -500,37 +549,96 @@ Schema `factory_supply` — todas `PLANNED` (DDL na implementação; sem SQL aqu
 | erp_observations | evidência ERP por item | id UUID | mission_item_id FK, status enum, evidence_fingerprint, matched_ref JSONB?, confidence?, observed_at, source, payload_snapshot JSONB bounded | UNIQUE(mission_item_id, evidence_fingerprint) | via item | — | (mission_item_id,status) | PLANNED |
 | supply_events | auditoria append-only | id UUID | mission_id, item_id?, event_type, action, actor_user_id, actor_display_name, prev_state, new_state, qty_delta, reason, idempotency_key, request_id, correlation_id, created_at | — | via mission (denorm branch col para filtro) | — | (branch,created_at) cursor, (mission_id,created_at) | PLANNED |
 | idempotency_keys | dedup de comandos | id UUID | key, route, actor_user_id, **request_fingerprint** (hash canônico do comando semântico — §10), response_snapshot JSONB, created_at | UNIQUE(key,route,actor_user_id); fingerprint compara dentro do escopo | — | — | (created_at) retenção | PLANNED (convenção PROVEN + extensão TARGET) |
+| integration_outbox | entrega pós-commit (portal notif + realtime routing, §33) | id UUID | event_type, aggregate_type, aggregate_id, payload JSONB (userIds, permissionCodes, dedupeKey, actionTarget), attempts, next_attempt_at, published_at, created_at | UNIQUE(event_type,aggregate_id,dedupe_key?) — dedupe semântico §33 | branch no payload | — | (published_at NULL, next_attempt_at) | PLANNED (precedente `PROVEN` requests-api V005 + commercial) |
+| integration_checkpoints | snapshot/diff de syncs (§33) | id UUID | source_key, cursor_value, metadata JSONB `{keys,keyCount}`, updated_at | UNIQUE(source_key) | por source_key (ex.: `demand_sync:01`) | — | (source_key) | PLANNED (precedente `PROVEN` `IntegrationCheckpointRepositoryPort`) |
 
-Notas: `qty` NUMERIC (nunca float — precisão de quantidade); `unit` NOT NULL com CHECK/validação de unidade compatível por material (TO_INVENTORY tabela de conversão TOTVS via api-delpi); nenhuma FK cruzando contexto (API DELPI = identificadores + snapshots); branch denormalizado em `supply_events` para filtro eficiente.
+Notas: `qty` NUMERIC (nunca float — precisão de quantidade); `unit` NOT NULL com CHECK/validação de unidade compatível por material (TO_INVENTORY tabela de conversão TOTVS via api-delpi); nenhuma FK cruzando contexto (API DELPI = identificadores + snapshots); branch denormalizado em `supply_events` para filtro eficiente; `integration_outbox` enfileirado na **mesma transação** da mutação de domínio e publicado pós-commit pelo worker (§33).
 
 ## 40. Complete RBAC matrix
 
-Códigos `factory-supply.*` (convenção `PROVEN`: `production-control.{surface}.{view|manage}`, `.access`, `.view.filial-{code}`). Capacidades — rótulos de cargo **não** são autoridade. Duas classes distintas:
+**Modelo de usuário — FROZEN pelo Product Master (FS-C0.T3).** Factory Supply é deliberadamente um app operacional simples: **exatamente 3 permissões de usuário**, duas dimensões (acesso à aplicação + escopo de filial). Não existem permissões por comando, por superfície, por CRUD, por histórico ou por configuração — e nenhuma pode ser adicionada sem nova decisão explícita de produto.
+
+```text
+PRODUCT_RBAC_MODEL:        FROZEN
+USER_PERMISSION_COUNT:     3
+USER_PERMISSION_CATALOG:   factory-supply.access
+                           factory-supply.view.filial-01
+                           factory-supply.view.filial-02
+PER_COMMAND_USER_PERMISSIONS: NO
+CONFIGURATION_UI_REQUIRED: NO
+```
 
 ### A. USER / INTERACTIVE capabilities (manifesto/Core/Keycloak)
 
-| Permissão | Cobertura backend | Superfícies MFE | R/W | Escopo filial | Status |
-|---|---|---|---|---|---|
-| factory-supply.access | entrada no app (gate mínimo) | todas (visibilidade) | R | — | PLANNED |
-| factory-supply.view | todas as queries §15 (todas filiais) | todas leitura | R | ambas | PLANNED |
-| factory-supply.view.filial-01 / -02 | queries restritas à filial | todas leitura | R | única | PLANNED (convenção PROVEN) |
-| factory-supply.missions.request | request-material | Necessidades/Cockpit path | W | valida filial do body | PLANNED |
-| factory-supply.missions.manage | plan/replan/cancel/close | Kanban/detail | W | idem | PLANNED |
-| factory-supply.preparation.manage | start/record preparation | Almoxarifado | W | idem | PLANNED |
-| factory-supply.collection.manage | record collection/handoff | Minha coleta | W | idem | PLANNED |
-| factory-supply.delivery.confirm | record delivery | Minha coleta/CT recebedor | W | idem | PLANNED |
-| factory-supply.returns.manage | record return | Devoluções | W | idem | PLANNED |
-
-### B. SYSTEM / SERVICE capabilities (não expostas como permissão de usuário)
-
-| Capacidade (contrato interno) | Owner AuthN/AuthZ | Gatilho | Limite de autoridade | Status |
+| Permissão | Semântica | Cobertura backend | Escopo | Status |
 |---|---|---|---|---|
-| `factory-supply.service.demand-sync` | **factory-supply-api** — invocação in-process (scheduler/runner próprio) ou S2S futura; **não** é permissão Core de usuário | agendamento interno / trigger de serviço | somente leitura ERP via api-delpi + escrita nos próprios `demand_signals`; nunca autoridade além da integração read-only | TARGET + `TO_INVENTORY` (identidade de serviço: in-process vs service-account) |
-| `factory-supply.service.erp-evidence-reconcile` | idem | pós-entrega automático, reavaliação agendada; gatilho interativo opcional seria permissão separada (`TO_INVENTORY` se `.missions.manage` ou código novo o cobre) | idem — observa e persiste correlação, nunca escreve ERP | TARGET |
+| `factory-supply.access` | gate de aplicação | entrada no app + pré-condição de toda rota | — | TARGET |
+| `factory-supply.view.filial-01` | **escopo de filial** — autoriza leitura **e** mutações operacionais na filial 01 | todas queries + todos comandos §14/§15 restritos à filial | filial 01 | TARGET (convenção PROVEN) |
+| `factory-supply.view.filial-02` | idem, filial 02 | idem | filial 02 | TARGET (convenção PROVEN) |
+
+Semântica congelada:
+
+```text
+factory-supply.access + factory-supply.view.filial-{branch}
+= ler e executar todos os comandos operacionais da filial autorizada
+```
+
+- **`.view.filial-*` não é read-only** — é escopo de filial. Convenção `PROVEN` no repo: `production-control.view.filial-{01|02}` gateia escritas (`BranchAccessService.assert_can_view_branch` invocado em mutações como `close_pick_plan`/picked/delivered, `production_control_app/domain/services/branch_access_service.py` + `line_feeder_service.py`), não apenas leituras; a mesma permissão governa ver a necessidade e alterar a lista de coleta (Doc 1/5 §18). Manifest declara `production-control.view.filial-01|02` (linhas 68–79 do manifest).
+- **Ambas as filiais** = usuário opera 01 e 02; front oferece seletor. Sem `factory-supply.access` → 403 mesmo com `.view.filial-*` presente. Sem `.view.filial-{b}` → 403 `branch_access_denied` na filial b. Superadmin: bypass via `is_superadmin` (`PROVEN`: `authz_core.has_permission` + `security.can`) — sem reimplementação local.
+- **Resolução de autoridade (`PROVEN`):** manifesto `permissions[]` declara códigos → Core registra no catálogo na ativação do plugin (`register_plugin_use_case` → `PluginPermissionSyncService`/`plugin_permissions.sync_module`; mudança de permissões exige nova versão do plugin, `plugin.permission_change_not_allowed`) → admin RBAC atribui a roles (`rbac.manage`) → `delpi_auth` middleware valida JWT Keycloak e resolve `user.permissions` via Core API (`load_user_rbac`, `DELPI_AUTH_CORE_API_URL`) → backend checa `has_permission`/`can` por request.
+- **Enforcement backend por request:** AuthN → `can(user, "factory-supply.access")` → `assert_valid_branch` → `can(user, BRANCH_PERMISSIONS[branch])` → carregar agregado → `aggregate.branch == branch autorizada` → invariantes → mutação + auditoria na mesma transação. `branch` do cliente **nunca** é autoridade (§20); missão de outra filial falha fechada mesmo com `branch` forjado. Frontend esconde ações por UX apenas.
+
+**Declaração de manifesto (TARGET — contrato `PROVEN` em `plugins/production-control/production-control.manifest.json`):** cada permissão é `{code, name, description, module}` — `module` normalizado para o plugin id pelo `PluginPermissionSyncService.normalize_desired`; `code` obrigatório e único por módulo; `name`/`description` PT-BR user-facing. Declarações alvo:
+
+```json
+{ "code": "factory-supply.access",             "name": "Abastecimento Fabril",                 "description": "Acessar e operar o Abastecimento Fabril." },
+{ "code": "factory-supply.view.filial-01",     "name": "Abastecimento Fabril — filial 01 (SC)", "description": "Acessar dados e operações da filial 01 (SC)." },
+{ "code": "factory-supply.view.filial-02",     "name": "Abastecimento Fabril — filial 02 (ES)", "description": "Acessar dados e operações da filial 02 (ES)." }
+```
+
+**Versionamento de permissões (`PROVEN`):** `sync_module` é **declarativo por módulo** — código mantido preserva o UUID (e portanto `role_permissions`/overrides de usuário); código novo é inserido; código removido do manifesto é **deletado** do catálogo. Mudança no conjunto exige **nova versão do plugin** (`register_plugin_use_case` na branch de versão nova); `update_plugin_manifest` rejeita diff de permissões (`plugin.permission_change_not_allowed`). Nenhuma remoção prevista para as 3 permissões — o conjunto nasce completo na primeira versão.
+
+**Atribuição e resolução (`PROVEN`):** admin atribui via `POST/PUT /admin/rbac/roles/{id}/permissions` (`AddPermissionToRoleUseCase`/`ReplaceRolePermissionsUseCase`, guard `rbac.manage`+`roles.manage`); efetivo por usuário = roles diretas ∪ roles via grupos ± overrides de usuário (`PermissionResolver.resolve`, com cache). Registro de plugin **não** auto-atribui a role alguma → `DEFAULT_ACCESS = DENY` até mapeamento administrativo (fail-closed). Semântica de papel (`almoxarife`, `alimentador`, `operador`) **não** é identidade RBAC — são personas operacionais sobre os mesmos 3 códigos.
+
+**Consumo backend (contrato — precedente `PROVEN` `production_control_app/core/security.py`):**
+
+```python
+FS_ACCESS = "factory-supply.access"
+BRANCH_PERMISSIONS = {"01": "factory-supply.view.filial-01",
+                      "02": "factory-supply.view.filial-02"}
+```
+
+Mapa branch→permission é do backend FS; Core conhece apenas códigos (rótulos SC/ES são nome/descritivo user-facing do manifesto, não mapeamento técnico). Superadmin: bypass automático — `is_superadmin` resolve **todos** os códigos no Core (`PermissionResolver`) e `has_permission`/`can` retornam `True`; FS não implementa nada customizado e não cria outro modelo admin.
+
+**Falhas (fail-closed, `PROVEN`):** permissão não registrada ou não atribuída → `has_permission` falso → 403; Core indisponível → cache stale dentro do `RBAC_STALE_TTL`, senão `_rbac_from_claims` com `permissions=[]`, `is_superadmin=False` → 403 (claims **nunca** concedem permissão; sem flag de confiança em claims); sem `access` → 403 `PermissionError`; filial não autorizada → 403 `branch_access_denied`; filial inválida → 422 `InvalidBranch`; sem JWT válido → 401.
+
+**Ordem de implementação:** (1) manifesto `factory-supply` com as 3 permissões na versão inicial → (2) registro do plugin no Core (`register` → `sync_module` insere catálogo) → (3) admin mapeia permissões→roles → (4) usuários efetivos recebem escopo → (5) backend enforce (constantes já especificadas acima). Nenhuma rota FS pode existir em produção antes de (2); testes de §15 do roadmap validam (3)–(5).
+
+### B. SYSTEM / SERVICE capabilities — execution model FROZEN (FS-C0.T5)
+
+Capacidades internas são **jobs in-process** de `factory-supply-api`, não identidades RBAC. `SERVICE_PERMISSION_CODES_REQUIRED = NO` — os placeholders `factory-supply.service.*` abaixo são **nomes de job/contrato interno**, nunca códigos de permissão a registrar no Core.
+
+| Job interno | Owner | Gatilho | Autoridade | Status |
+|---|---|---|---|---|
+| `demand_signal_sync` | factory-supply-api — task asyncio no lifespan (precedente `PROVEN`: `ProductionRunPollerService`, `run_outbox_worker_loop`, purchase-requests notification jobs, `integration_jobs_scheduler`) | loop periódico interno; **cadência `TO_BENCHMARK`** (§33 — validar carga antes de fixar) | leituras api-delpi §38 + checkpoint/diff §33 + escrita `demand_signals`+outbox; nunca TOTVS write | TARGET |
+| `erp_evidence_reconcile` | idem | pós-`record_item_delivery` (hook interno) + passo periódico replay-safe; cadência `TO_BENCHMARK` | leitura internal-movements + upsert `erp_observations` + eventos de divergência §33; nunca escreve ERP | TARGET |
+| `manual evidence refresh` (opcional) | idem — rota §38 #24 coberta por `access`+`filial` se interativa | request de usuário | idem | TO_INVENTORY (só se UX pedir gatilho manual) |
+
+**Modelo de execução (`PROVEN`):**
+- **Runtime:** `asyncio.create_task` com loop `while not stopped`, start/stop no lifespan do FastAPI, intervalo via settings, erro por tick isolado (try/except + log + continua), shutdown limpo via `asyncio.Event` — padrão exato de `production_run_poller_service.py` / `outbox_worker.py` / purchase-requests `startup/*_job.py`. Sem OS cron/K8s cron/automação externa.
+- **Multi-instância:** env-flag `FACTORY_SUPPLY_JOBS_ENABLED` habilita workers apenas na réplica designada (precedente `PROVEN`: `REQUESTS_OUTBOX_WORKER_ENABLED`); dedup por chave natural (signal fingerprint / movement fingerprint) torna execução dupla replay-safe mesmo em corrida.
+- **Identidade técnica:** sem usuário sintético, sem JWT fabricado, sem token de usuário persistido. Actor em `supply_events` de origem job: `actor_type="system"`, `actor_user_id="factory-supply-api"`; ação humana que dispara follow-up preserva ator humano separado do ator técnico.
+- **Auth api-delpi (`PROVEN`, nenhum evolve necessário):** gateway FS emite `X-Delpi-Caller-App: factory-supply-api` + `API_DELPI_INTERNAL_SERVICE_TOKEN` via `apply_internal_service_headers`/`bearer_authorization_from_context` — com usuário no contexto propaga JWT; em background usa o token interno. O middleware `delpi_auth` resolve token de serviço válido como identidade interna (`id="internal-service"`, `is_superadmin=True`) → lê qualquer rota api-delpi (superfície já read-only; MCP exclui identidade de serviço explicitamente). Credencial existente, guarded por `credential_guard` (sem Keycloak client, sem service account nova, sem escopo extra: FS só consome os GETs documentados §38 — least-privilege é contratual, não mecânico).
+- **Escopo de filial:** jobs iteram filiais do catálogo autoritativo/config (`ALLOWED_BRANCHES` — precedente `production_control_app/core/security.py`); execução técnica **não** usa `.view.filial-*` (isso é escopo de usuário, não de job).
+- **Retry/replay:** leituras autoritativas retriáveis; passos locais idempotentes por upsert/natural-key dedup — reconheciliação repetida do mesmo movimento não duplica evidência; nenhum retry cego em mutação local não-idempotente; contagens de retry fixos não congeladas (política `http-integration-resilience`).
+- **Falhas:** downstream 5xx/timeout → retry próximo tick + observabilidade; 401/403 downstream → falha técnica AuthZ/integração (`downstream_access_denied` path, §9/§26), **nunca** evidência persistida; resposta inválida → falha técnica; DB local → transação atômica, sem sinal parcial; correlação ambígua → `unknown`, nunca match fabricado; nenhuma falha vira `NOT_FOUND` ou sucesso.
+- **Observabilidade:** log estruturado por tick — job, run_id, started/finished, branch, records observed/created/superseded/correlated, erros, latência downstream, retry/replay — sem payloads sensíveis/tokens; métricas de saúde do sistema, nunca performance de pessoas.
+- **Auditoria:** mudança de domínio (signal criado/superado, evidência correlacionada) → `supply_events` `actor_type=system` na mesma transação; poll sem alteração → telemetria técnica apenas, sem inundação de auditoria.
+- **Endpoints internos:** `NO` — sem `POST /internal/*` enquanto execução for in-process; gatilho manual operacional exige contrato+segurança explícitos futuros.
 
 Capacidades de serviço **nunca** expandem autoridade além do read-only ERP: não leem o que o canal api-delpi não expõe e nunca implicam escrita TOTVS.
 
-**Não pronto para implementação (NO):** (a) política de **escopo de escrita por filial** não tem precedente PROVEN — leitura usa sufixo `.view.filial-*`, mas nenhuma permissão de escrita sufixada foi observada (`TO_INVENTORY`: adotar `.{cap}.filial-*` ou validar filial no payload sem sufixo); (b) mapeamento capacidade→grupos Keycloak pendente; (c) modelo de identidade das capacidades de serviço (in-process vs S2S) pendente; (d) seeding no Core/manifesto é fase de implementação. Enforcement: sempre backend; visibilidade no MFE é apenas UX.
+**Pendências restantes:** (a) execução do registro — manifesto declarado na versão inicial do plugin + `register` no Core + mapeamento admin a roles (mecanismo 100% `PROVEN` — FS-C0.T4; resta apenas execução em fase de implementação, sem gap arquitetural); (b) identidade das capacidades §40-B (FS-C0.T5); (c) definição operacional de quais roles recebem os 3 códigos (decisão administrativa na implantação, fora do escopo técnico). Enforcement: sempre backend; visibilidade no MFE é apenas UX.
 
 ## 41. Complete integration matrix
 
@@ -539,8 +647,8 @@ Capacidades de serviço **nunca** expandem autoridade além do read-only ERP: n�
 | MFE factory-supply | factory-supply-api | HTTP/JSON `/apps/factory-supply-api/v1` | → | JWT usuário (Keycloak) | permissões factory-supply.* + filial server-side | KEY em comandos | BFF | envelope erro + codes | TARGET |
 | factory-supply-api | api-delpi | HTTP GET rotas §38 | → | Bearer propagado do usuário (PROVEN) | permissões api-delpi do usuário | GET retry limitado | api-delpi | 503→downstream_unavailable | TARGET |
 | factory-supply-api | PostgreSQL | driver/SQL schema factory_supply | → | credencial serviço (backend-only) | — | transação agregado | FS | transacional | TARGET |
-| Operator Cockpit | factory-supply-api | `request-material` source=cockpit | → (futuro) | JWT usuário operador | .missions.request + filial | KEY cockpit | BFF | mesmo envelope | FUTURE |
-| scheduler/internal (FS) | factory-supply-api | demand-signals/sync, erp-evidence reconcile | → (interno) | identidade de serviço (`TO_INVENTORY`: in-process vs S2S) | service capabilities §40-B | NATURAL dedup | FS domain | reagenda/observa | TARGET |
+| Operator Cockpit | factory-supply-api | `request-material` source=cockpit | → (futuro) | JWT usuário operador | `access` + `.view.filial-*` | KEY cockpit | BFF | mesmo envelope | FUTURE |
+| factory-supply-api (jobs §40-B) | api-delpi | GETs §38 (`X-Delpi-Caller-App: factory-supply-api`) | → | `API_DELPI_INTERNAL_SERVICE_TOKEN` (identity `internal-service`, read-only surface) | proven shared-token S2S; sem permissões Core | GET retry limitado | api-delpi | 5xx→retry próximo tick; 401/403→falha técnica | PROVEN |
 | api-delpi | factory-supply-api (erros) | 401/403 downstream | ← | — | — | — | api-delpi | `downstream_access_denied` — nunca persiste evidência ERP | TARGET |
 | factory-supply | consumidor de notificações | evento derivado de supply_events | → (futuro) | plataforma | — | dedup natural | FS | fora do caminho síncrono | FUTURE_CONSUMER_EVENT |
 | api-delpi | TOTVS | read-only existente | → | existente | existente | — | TOTVS | propagada | PROVEN |
@@ -556,12 +664,13 @@ Capacidades de serviço **nunca** expandem autoridade além do read-only ERP: n�
 7. `branch` em query/body, validado server-side; dados persistidos branch-scoped.
 8. TIMESTAMPTZ + ISO 8601 instants; unidade+NUMERIC em toda quantidade; sem soma entre unidades incompatíveis.
 9. Auditoria append-only `supply_events` na mesma transação; ator = `id/sub` + display snapshot; sem tokens persistidos.
-10. `EVENT_BUS_REQUIRED_NOW=NO`, `OUTBOX_REQUIRED_NOW=NO` (triggers documentados §33).
+10. `EVENT_BUS_REQUIRED_NOW=NO`; `OUTBOX_REQUIRED_NOW=YES` (corrigido FS-C0.T5-realtime: delivery portal retryable/dedup/pós-commit — §33); realtime hub local + presence `FACTORY_SUPPLY_APP` + diff/checkpoint + cold-start anti-flood; `SYNC_CADENCE=TO_BENCHMARK`.
 11. `TOTVS_WRITE_SUPPORT=NO`, `DIRECT_MFE_TO_API_DELPI=NO`, `LINE_FEEDER_RUNTIME_DEPENDENCY=NO`.
 12. Catálogo de comandos §14 e queries §15 (contratos conceituais congelados; nomes de operationId `TARGET`).
 13. Batch api-delpi obrigatório para fan-out; nenhuma rota ilimitada; cursor para histórico.
-14. api-delpi: 13 reuse + 1 evolve + 0 new — `NEW_API_DELPI_ROUTES_REQUIRED = NO` (§27 inspeção bounded).
-15. RBAC dividido em capacidades USER (9, manifesto/Core) e SYSTEM/SERVICE (2 contratos internos — §40-B); capacidades de serviço nunca excedem read-only ERP.
+14. api-delpi: 13 reuse + 0 evolve obrigatório + 0 new — `NEW_API_DELPI_ROUTES_REQUIRED = NO` (§27 inspeção bounded; FS-C0.T1 confirmou campos; `movement_recno` é evolução opcional não-bloqueante §25).
+15. RBAC de usuário **FROZEN** (Product Master, FS-C0.T3): exatamente 3 permissões — `factory-supply.access` + `factory-supply.view.filial-01` + `factory-supply.view.filial-02`; sem permissão por comando/superfície; `.view.filial-*` = escopo de filial (leitura+escrita), convenção `PROVEN` em production-control.
+16. Service identity **FROZEN** (FS-C0.T5): jobs in-process `demand_signal_sync`/`erp_evidence_reconcile` em `factory-supply-api`; auth api-delpi via `API_DELPI_INTERNAL_SERVICE_TOKEN` + `X-Delpi-Caller-App` (`PROVEN`); `SERVICE_PERMISSION_CODES_REQUIRED=NO`, `SERVICE_ACCOUNT_REQUIRED=NO`, `INTERNAL_ENDPOINTS_REQUIRED=NO`; multi-instância por env-flag single-replica; nunca excedem read-only ERP.
 
 ## 43. Decisions not frozen
 
@@ -569,26 +678,27 @@ Capacidades de serviço **nunca** expandem autoridade além do read-only ERP: n�
 2. Semântica de reconciliação pedido↔sinal existente (§29) — decisão de produto pendente.
 3. Regra de quantidade de retorno (`RETURN_QUANTITY_RULE = TO_INVENTORY` herdado).
 4. Prioridade/score (`priority_score = NOT_SUPPORTED` até política existir — expostos `due_at|overdue|time_to_need` factuais).
-5. Escopo de escrita por filial (sufixo `.{cap}.filial-*` vs validação payload) — `TO_INVENTORY`.
+5. ~~Escopo de escrita por filial~~ — RESOLVIDO FS-C0.T3: `.view.filial-*` é escopo de filial e gateia writes (precedente `PROVEN`: `assert_can_view_branch` em mutações do Line Feeder); composição congelada `access` + `view.filial-{branch}` (§40-A).
 6. Cache operacional (TTL/fail-open) — `TO_DESIGN`; v1 sem cache semântico.
 7. Header exato de correlação propagado ao api-delpi — `TO_INVENTORY` convenção do gateway.
 8. Forma interna de `matched_ref`/fingerprint de movimento — pendente da confirmação de ID estável (§25).
 9. Algoritmo de `request_fingerprint` (semântica congelada; implementação `TO_INVENTORY`) + retenção de `idempotency_keys`.
-10. Identidade das capacidades de serviço (in-process scheduler vs S2S/service-account) — §40-B.
-11. Permissão interativa para refresh manual de evidência ERP, se desejada (§40-B).
+10. ~~Identidade das capacidades de serviço~~ — RESOLVIDO FS-C0.T5: in-process + shared service token (§40-B); sem service account, sem permissões Core.
+11. Gatilho interativo opcional para refresh manual de evidência ERP — se existir, coberto por `access`+`filial` (§40-B; decisão UX).
 
 ## 44. TO_INVENTORY
 
 | Item | Bloqueia |
 |---|---|
-| Campos exatos de `get_product_internal_movements` (ID estável de movimento? fingerprint composto necessário?) | §25, readiness de contratos |
-| Campos de `list_production_order_operation_materials(_batch)` (empenho/open_qty/janela por material — confirmar contra resposta real) | sync de sinais |
+| ~~Campos de `get_product_internal_movements`~~ — RESOLVIDO FS-C0.T1: sem ID estável; fingerprint composto §25 é o baseline | — |
+| ~~Campos de `list_production_order_operation_materials(_batch)`~~ — RESOLVIDO FS-C0.T1: SD4 `original_qty/open_qty/consumed_qty/commitment_count`; batch sem cap server-side → FS auto-chunk obrigatório | — |
+| Estabilidade de `R_E_C_N_O_` como identidade persistente (pack/reorg Protheus) — decide se EVOLVE_EXISTING `movement_recno` vale a pena sobre o fingerprint | §25, C8 |
 | ~~Catálogo de armazéns~~ — RESOLVIDO §27: REUSE_AS_IS + composição BFF (sem nova rota) | — |
 | Convenção de header de correlação no gateway portal→api-delpi | §32 |
-| Política de escopo de escrita por filial (precedente `.filial-*` só em `.view`) | RBAC ready |
-| Mapeamento capacidades→grupos Keycloak/Core manifesto | RBAC ready |
+| ~~Política de escopo de escrita por filial~~ — RESOLVIDO FS-C0.T3: `.view.filial-*` = escopo de filial (leitura+escrita), precedente `PROVEN`; composição `access`+`filial` congelada §40-A | — |
+| ~~Registro das 3 permissões~~ — RESOLVIDO FS-C0.T4: contrato de manifesto, sync declarativo (`sync_module`), atribuição via `rbac.manage`+`roles.manage`, resolver `/me`, default DENY, fail-closed documentados em §40-A — apenas execução pendente | — |
 | Tabela/serviço de conversão de unidades TOTVS (validação de unidade compatível) | §39 |
-| Identidade de serviço para capacidades §40-B (scheduler in-process vs S2S/service-account) — não criar service account sem decisão | §36, §40-B |
+| ~~Identidade de serviço~~ — RESOLVIDO FS-C0.T5: in-process jobs + `API_DELPI_INTERNAL_SERVICE_TOKEN` (§40-B); sem service account/permissões Core | — |
 | Algoritmo de `request_fingerprint` + evolução da convenção `idempotency_keys` compartilhada vs campo local | §10, §39 |
 | Retenção de idempotency_keys e volume estimado de supply_events | §23 |
 | Empenho como campo vs rota dedicada (hoje via operation materials — confirmar) | §41 |
@@ -601,7 +711,7 @@ Capacidades de serviço **nunca** expandem autoridade além do read-only ERP: n�
 3. Itens TO_INVENTORY desta doc viram tarefas de inventário/decisão do roadmap.
 4. Critérios de aceite do gate de qualidade (§58 da tarefa) mapeados para testes de contrato.
 5. Cutover Line Feeder: checklist de paridade + depreciação governada.
-6. Manifesto do plugin `factory-supply` + permissões Core (implementation phase).
+6. Manifesto do plugin `factory-supply` + registro das 3 permissões Core (§40-A; implementation phase).
 
 ---
 
@@ -622,7 +732,7 @@ factory_supply_app/
 ```
 
 - `domain`/`application` **não** importam FastAPI, ORM, psycopg, httpx, SDK Keycloak, código de MFE ou provider externo (DIP — `clean-code-architecture-guardrails.mdc`).
-- Ports exigidos pelo domínio/aplicação: `SupplyMissionRepositoryPort`, `DemandSignalRepositoryPort`, `HandoffRepositoryPort`, `ErpObservationRepositoryPort`, `SupplyEventRepositoryPort`, `IdempotencyRepositoryPort` (precedente `PROVEN` em requests-api), `ProductionReadGateway` (OPs/operações/materiais/CTs), `StockReadGateway` (saldos/locations/blocks), `MovementReadGateway` (movimentos internos), `MasterDataGateway` (produtos/warehouses), `ClockPort`/`UnitOfWorkPort`.
+- Ports exigidos pelo domínio/aplicação: `SupplyMissionRepositoryPort`, `DemandSignalRepositoryPort`, `HandoffRepositoryPort`, `ErpObservationRepositoryPort`, `SupplyEventRepositoryPort`, `IdempotencyRepositoryPort`, `IntegrationOutboxRepositoryPort`, `IntegrationCheckpointRepositoryPort` (precedentes `PROVEN` requests-api/commercial-api), `RealtimeHubPort` (entrega WS — §33), `PortalNotificationPort` (fallback offline — precedente `CoreNotificationAdapter`), `ProductionReadGateway` (OPs/operações/materiais/CTs), `StockReadGateway` (saldos/locations/blocks), `MovementReadGateway` (movimentos internos), `MasterDataGateway` (produtos/warehouses), `ClockPort`/`UnitOfWorkPort`.
 - Chamada HTTP externa **fora** da transação DB do agregado (platform-data-persistence §Transações): leituras ERP acontecem antes do commit; observações persistidas guardam só resultado.
 
 ## 47. Contract ownership (API surface)
@@ -636,7 +746,7 @@ Rotas novas na api-delpi só quando o fato ERP não tem contrato tipado (§27). 
 
 ## 48. Available-action projection
 
-`available_actions: string[]` em respostas de missão — códigos técnicos dos comandos §14 atualmente permitidos **pelo estado do agregado** (não por papel do usuário). Owner: serviço de aplicação/domínio. Caráter: **metadado consultivo de UX** — não é autorização: toda rota de escrita revalida permissão + invariante + versão. Semântico (verbos de domínio), não nomes de botão. Convenção repo compatível: payloads já carregam flags derivadas (`PROVEN` — LineFeederRequirementCard consome `can_*`-style derivados do backend em production-control).
+`available_actions: string[]` em respostas de missão — códigos técnicos dos comandos §14 atualmente permitidos **pelo estado do agregado** (não por papel do usuário). Owner: serviço de aplicação/domínio. Caráter: **metadado consultivo de UX** — não é autorização: toda rota de escrita revalida permissão + invariante + versão. **`available_actions` ≠ catálogo de permissões** — a disponibilidade da ação deriva de filial autorizada + estado de domínio + invariantes (§40-A); RBAC de usuário é só `access`+`filial`. Semântico (verbos de domínio), não nomes de botão. Convenção repo compatível: payloads já carregam flags derivadas (`PROVEN` — LineFeederRequirementCard consome `can_*`-style derivados do backend em production-control).
 
 ## 49. Priority contract
 

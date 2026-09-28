@@ -87,7 +87,7 @@ Não expande autoridade para PLC/CNC/controle de máquina.
 | Factory Feeder | Coordena coleta, movimentação, entrega e devolução | `TARGET` (hoje: mesma permissão de leitura do Line Feeder) |
 | PCP | Contexto de planejamento/produção onde aplicável | `TARGET` |
 
-**RBAC não é inventado aqui.** As permissões reais por ator são `TO_INVENTORY` — hoje existe apenas `production-control.line-feeder.view` (+ filial) na capability de referência (§ 18).
+**RBAC de usuário — decidido (Product Master, FS-C0.T3):** exatamente 3 permissões — `factory-supply.access` + `factory-supply.view.filial-01` + `factory-supply.view.filial-02`; `.view.filial-*` é escopo de filial (leitura+escrita), não permissão read-only. Atores (almoxarifado, alimentador, operador) são papéis de negócio sobre o mesmo modelo — sem permissão por papel/ação. Referência existente: `production-control.line-feeder.view` + filial (§ 18). Detalhe de contrato em TECHNICAL-CONTRACTS §40.
 
 ---
 
@@ -414,7 +414,7 @@ Inventário `PROVEN` da capability existente:
 - máquina(s) de estado finais (necessidade, preparo, coleta, entrega, devolução);
 - schema/migrations finais;
 - fórmula/fonte autoritativa da quantidade de devolução;
-- catálogo de permissões por ator;
+- ~~catálogo de permissões por ator~~ — decidido FS-C0.T3: 3 permissões `access`+`view.filial-{01|02}` (TECHNICAL-CONTRACTS §40-A);
 - colunas Kanban finais e interação (drag-and-drop não presumido);
 - `SupplyMission` (Missão de Abastecimento) como entidade: candidato conceitual `TARGET` — pode correlacionar need → request → preparo → transferência oficial → coleta → handoff → entrega → devolução, mas **não** é declarado agregado obrigatório por ter sido nomeado; Doc 2/5 avalia o modelo existente e aplica Abstraction Gate (`PROVEN`/`PLANNED`/`TARGET`/`REJECTED_BY_EXISTING_MODEL`/`TO_INVENTORY`);
 - convivência/migração entre o modelo PickPlan do Line Feeder e o agregado operacional do Factory Supply;
@@ -430,7 +430,7 @@ Inventário `PROVEN` da capability existente:
 | Fórmula autoritativa da quantidade de devolução | O painel Power BI exibe "total return quantity / committed balance / factory balance" — a fórmula não está no repo; não inferir do visual |
 | Internals do painel Power BI "Painel Alimentador Fábrica" | Não documentado no repositório; conceitos são entrada de requisito, não regra |
 | Contrato de leitura para correlacionar transação oficial ↔ missão | `internal-movements` prova o movimento (SD3); vínculo causal com a missão a modelar |
-| Catálogo de permissões por ator | Hoje só `production-control.line-feeder.view` + filial na referência; papéis almoxarifado/operador não existem |
+| ~~Catálogo de permissões por ator~~ — RESOLVIDO FS-C0.T3 | Modelo FROZEN: `factory-supply.access` + `view.filial-01` + `view.filial-02`; papéis são contexto de negócio, não permission codes (TC §40-A) |
 | Handoff (ator→ator com timestamp/quantidade/origem/destino) | Conceito não existe no modelo atual |
 | Solicitação do operador | Sem contrato; cockpit atual é somente leitura + sessões/runs |
 | Inventário/gap-analysis formal anterior do Line Feeder | Referenciado pelo programa documental, **não encontrado** no repo — o inventário é reconstruído aqui (§ 18) |

@@ -373,7 +373,17 @@ Nunca tela em branco; nunca spinner sem contexto.
 
 - Frontend pode esconder/desabilitar ações para UX — **backend é a autoridade final**.
 - Ação não autorizada: ausente ou desabilitada com razão legível; nenhum fallback perigoso; sem vazar dados não autorizados (filial que o usuário não vê simplesmente não aparece — `PROVEN`: repositório filtra tudo por `branch`).
-- Nomes de permissão: **não inventados** — `AUTHZ_TO_DESIGN` (Doc 4/5). A UI consome capabilities declaradas pelo backend (`can_*`/lista de ações elegíveis no payload) em vez de hardcodar perfis.
+- Modelo de permissões congelado (Doc 4/5 §40-A, FS-C0.T3): usuário = `factory-supply.access` + `view.filial-{01|02}` (escopo filial, não read-only). A UI consome capabilities declaradas pelo backend (`can_*`/`available_actions` no payload — metadado de UX, **não** catálogo de permissões) em vez de hardcodar perfis.
+
+### 28a. Realtime, presença e exceções (correção FS-C0.T5)
+
+- **Atualização automática** — o produto não oferece botão "Atualizar" como mecanismo primário: sync de necessidades e reconciliação ERP rodam no backend; o MFE recebe diffs via WebSocket `/v1/realtime` e re-renderiza (TC §33).
+- **Presença = socket do Factory Supply** (`FACTORY_SUPPLY_APP`) — "usuário ativo" significa conectado ao WS do app, não "logado no Portal". Evento entregue ao vivo **não** gera notificação portal duplicada.
+- **Online:** evento relevante → atualização de estado + toast transitório no padrão visual existente da Minha DELPI/Comercial (sucesso "Transferência confirmada"; warning "Quantidade divergente"; error "Falha na verificação") — auto-dismiss conforme componente canônico; sem sistema de toast novo.
+- **Offline (sem WS FS ativo):** notificação Minha DELPI com deep link para o contexto (missão/filial) — dedupe semântico por evento×destinatário.
+- **Área de exceções persistente** — divergências e falhas acionáveis (quantidade/movimento divergente, evidência não localizada, fonte indisponível, falha de sync, correlação não resolvida) ficam visíveis em área persistente do produto (seção em Visão Geral + marcador no detalhe da missão); **nunca** apenas toast transitório. Falha transitória ≠ exceção de negócio.
+- **Escopo de filial server-side** — o usuário só recebe eventos das filiais autorizadas; o front nunca filtra autorização.
+- **Mensagem de transferência confirmada:** material, quantidade, destino/contexto, timestamp e **ator somente quando autoritativo** (`user_name` do SD3 via api-delpi); sem inferência de identidade.
 
 ## 29. Operator Cockpit future interaction
 
@@ -603,7 +613,7 @@ Evita jargão ERP cru ("SD4", "empenho") em labels de operação — "necessidad
 - Se devolução avulsa (sem item/missão) terá superfície dedicada.
 - Página de item/trace dedicada se a densidade crescer (hoje: dentro do drawer).
 - Nomes de rotas finais (conceitos § 31; manifest na fase de implementação).
-- Catálogo de permissões → visibilidade de ações (`AUTHZ_TO_DESIGN`).
+- ~~Catálogo de permissões → visibilidade de ações~~ — RESOLVIDO Doc 4/5 §40-A (FROZEN): `access`+`view.filial-*`; visibilidade de ações vem de `available_actions` do backend.
 
 ## 35. TO_INVENTORY
 
@@ -611,7 +621,7 @@ Evita jargão ERP cru ("SD4", "empenho") em labels de operação — "necessidad
 |---|---|
 | `RETURN_QUANTITY_RULE` | rótulo/validação da quantidade esperada de devolução |
 | `PRIORITY_POLICY` + limiares | bandas de urgência e ordenação default |
-| Catálogo de permissões por ator | quais ações cada superfície mostra |
+| ~~Catálogo de permissões por ator~~ — RESOLVIDO Doc 4/5 §40-A | 3 permissões `access`+`view.filial-*`; `available_actions` decide visibilidade por estado |
 | API de `Timeline`/`InlineMeter`/`JourneyProgressBar` (props exatas) | seleção final do componente de progresso/histórico |
 | Contrato de capabilities no payload (`can_*`) | como a UI decide exibir/esconder ações |
 | Exposição backend do estágio derivado por missão | posição da coluna Kanban |

@@ -209,7 +209,7 @@ Estados são nominais; a **quantidade** carrega a parcialidade (item com prepare
 
 ## 10. State machines
 
-Autorização por transição: `AUTHZ_TO_DESIGN` (catálogo de permissões não existe; Doc 4/5). "Ator" abaixo é papel de negócio, não permission code.
+Autorização por transição: modelo resolvido no Doc 4/5 (§40-A, FROZEN FS-C0.T3) — toda transição de usuário exige `factory-supply.access` + `factory-supply.view.filial-{branch}`; não há permissão por transição. "Ator" abaixo é papel de negócio, não permission code.
 
 ### 10.1 `lifecycle` — nível missão
 
@@ -258,7 +258,7 @@ Re-leitura ERP pura não é idempotente nem não-idempotente — é `NOT_APPLICA
 
 ### 10.6 `return` — nível item
 
-§ 15 — máquina `requested → in_return → received → reconciled` por item; `AUTHZ_TO_DESIGN` por transição; quantidade autoritativa `TO_INVENTORY`.
+§ 15 — máquina `requested → in_return → received → reconciled` por item; AuthZ = `access`+`view.filial-*` (Doc 4/5 §40-A) por transição; quantidade autoritativa `TO_INVENTORY`.
 
 ### 10.7 Sinais de demanda
 
@@ -481,7 +481,7 @@ Kanban consome a política; não a possui. Ordenação manual de cards nunca é 
 
 ## 25. Conceptual command catalog
 
-Catálogo de domínio — **não são rotas HTTP**. AuthZ sempre `AUTHZ_TO_DESIGN`. Nível = missão (M) ou item (I).
+Catálogo de domínio — **não são rotas HTTP**. AuthZ sempre `factory-supply.access`+`view.filial-{branch}` (Doc 4/5 §40-A, FROZEN) — sem permissão por comando. Nível = missão (M) ou item (I).
 
 | Comando | Nível | Intent | Inputs conceituais | Result | Pré-condições | Dep. autoritativa | Efeitos | Idempotência |
 |---|---|---|---|---|---|---|---|---|
@@ -553,7 +553,7 @@ Catálogo de domínio — **não são rotas HTTP**. AuthZ sempre `AUTHZ_TO_DESIG
 - Tratamento de destino mudando após custódia (correção vs cancelar+recriar).
 - Devolução sem item correlacionado (entidade solta?).
 - Política de prioridade final e entradas autoritativas.
-- Catálogo de permissões e mapeamento ator→transição (`AUTHZ_TO_DESIGN` em toda a § 10).
+- ~~Catálogo de permissões e mapeamento ator→transição~~ — RESOLVIDO Doc 4/5 §40-A (FROZEN FS-C0.T3): `access`+`view.filial-*`; ator→transição é regra de negócio, não RBAC.
 - Transporte de idempotência (header vs payload), formato de `expected_version` no contrato.
 - Convivência/cutover Line Feeder ↔ Factory Supply.
 - Reuso de código do motor de necessidade/FIFO (porta nova vs dependência).
@@ -565,7 +565,7 @@ Catálogo de domínio — **não são rotas HTTP**. AuthZ sempre `AUTHZ_TO_DESIG
 | Fórmula autoritativa de quantidade de devolução | `ReconcileReturn` com quantidade autoritativa |
 | Contrato ERP de correlação estável (ID causal no SD3?) | `match_confidence` confirmado vs heurístico |
 | Criticidade de produção autoritativa para prioridade | PRIORITY_POLICY |
-| Permissões por ator (almoxarifado, alimentador, operador, PCP) | § 10 AUTHZ em todas as transições |
+| ~~Permissões por ator~~ — RESOLVIDO Doc 4/5 §40-A | 3 permissões `access`+`view.filial-*`; papel do ator não vira permission code |
 | Comportamento quando material preparado é usado para outra necessidade | política de alocação de preparo |
 | Tolerância coletada > preparada (exceção física real) | invariante de quantidade § 8 |
 
@@ -573,7 +573,7 @@ Catálogo de domínio — **não são rotas HTTP**. AuthZ sempre `AUTHZ_TO_DESIG
 
 **Para Doc 3/5 (Frontend/UX):** dimensões por nível e derivação de estágio (§ 9–11); progresso parcial por item dentro do card da missão; parcialidade como quantidade (badges, não cores); superfícies mapeadas a queries (§ 26); ações por ator mapeadas a comandos (§ 25); `unknown` exige UI distinta de "zero".
 
-**Para Doc 4/5 (APIs/RBAC/Persistência):** catálogo de comandos/queries por nível (§ 25–26) → rotas/OpenAPI; `AUTHZ_TO_DESIGN` → catálogo de permissões real; idempotência → transporte (Idempotency-Key etc.) + dedup keys (`need_key`+fingerprint, movement identity); versão otimista → contrato de `version`; grupos de persistência § 21 → schema/migrations; portas api-delpi → contratos de gateway; `TO_INVENTORY` de § 30 → decisões pendentes antes de endpoints de devolução/prioridade.
+**Para Doc 4/5 (APIs/RBAC/Persistência):** catálogo de comandos/queries por nível (§ 25–26) → rotas/OpenAPI; autorização → modelo FROZEN §40-A (`access`+`view.filial-*`, decidido FS-C0.T3); idempotência → transporte (Idempotency-Key etc.) + dedup keys (`need_key`+fingerprint, movement identity); versão otimista → contrato de `version`; grupos de persistência § 21 → schema/migrations; portas api-delpi → contratos de gateway; `TO_INVENTORY` de § 30 → decisões pendentes antes de endpoints de devolução/prioridade.
 
 ---
 

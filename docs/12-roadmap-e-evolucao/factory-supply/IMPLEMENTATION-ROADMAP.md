@@ -32,28 +32,31 @@ Invariantes (não reabrir): `factory-supply-api` BFF dedicado · MFE nunca chama
 |---|---|
 | Convenções de bounded API (envelope, `ok/fail`, `ApplicationError`, `Idempotency-Key`, `idempotency_keys`, migrations `V00N`, mount `/apps/*-api`, schema próprio, `.{view|manage}`+`.view.filial-*`) | `PROVEN` |
 | Caminhos/operationIds api-delpi consumidos (gateway PCP) | `PROVEN` |
-| Campos internos das respostas api-delpi necessárias (internal-movements, operation-materials) | `TO_INVENTORY` |
-| Escopo de **escrita** por filial (precedente só `.view.filial-*`) | `TO_INVENTORY` |
+| Campos internos das respostas api-delpi necessárias (internal-movements, operation-materials) | `PROVEN` — FS-C0.T1 (§8.1 T1/T2 `DONE`) |
+| ~~Escopo de **escrita** por filial~~ — RESOLVIDO FS-C0.T3: `.view.filial-*` é escopo de filial e gateia writes (`assert_can_view_branch` em mutações Line Feeder, `PROVEN`); modelo de usuário FROZEN = 3 permissões (TC §40-A) | `PROVEN` (mecanismo) |
+| Cadeia de registro de permissões (manifesto→`sync_module`→roles→`/me` resolver→middleware `load_user_rbac`→`has_permission`; default DENY; claims fallback = `permissions[]`) | `PROVEN` — FS-C0.T4 |
 | Decisões de produto: reconciliação pedido×sinal, regra de devolução, prioridade | `TO_INVENTORY` (product gates) |
-| Identidade de serviço para capacidades §40-B | `TO_INVENTORY` |
+| ~~Identidade de serviço~~ — RESOLVIDO FS-C0.T5: jobs in-process + `API_DELPI_INTERNAL_SERVICE_TOKEN`+`X-Delpi-Caller-App`; sem service account/permissões Core (TC §40-B) | `PROVEN` (mecanismo) |
 | Algoritmo de `request_fingerprint` | `TO_INVENTORY` (semântica congelada) |
 
 ## 4. Unresolved blockers
 
 Consolidado de `TECHNICAL-CONTRACTS.md` §43–44 — todos tratados como gates C0 ou tarefas de inventário, nunca resolvidos por inferência:
 
-1. Campos exatos de `get_product_internal_movements` (ID estável? fingerprint composto?) — **técnico**
-2. Campos de `list_production_order_operation_materials(_batch)` (empenho/janela por material) — **técnico**
-3. Escopo de escrita por filial — **técnico/arquitetural**
-4. Seeding/mapping RBAC usuário (Core+Keycloak+manifesto) — **técnico**
-5. Identidade de serviço (in-process scheduler vs S2S) — **técnico**
+1. ~~Campos de `get_product_internal_movements`~~ — RESOLVIDO FS-C0.T1 (`NO_STABLE_MOVEMENT_ID_EXPOSED`; fingerprint composto congelado em TC §25)
+2. ~~Campos de `list_production_order_operation_materials(_batch)`~~ — RESOLVIDO FS-C0.T1 (SD4: `original_qty`=empenho original, `open_qty`=saldo do empenho, `consumed_qty`, `commitment_count`; sem cap de batch → FS auto-chunk)
+3. ~~Escopo de escrita por filial~~ — RESOLVIDO FS-C0.T3 (`.view.filial-*` = escopo filial leitura+escrita, `PROVEN`)
+4. ~~Registro das 3 permissões usuário~~ — RESOLVIDO FS-C0.T4 (contrato de manifesto, `sync_module` declarativo, atribuição `rbac.manage`+`roles.manage`, resolver `/me`, default DENY — TC §40-A; resta apenas execução na implantação)
+5. ~~Identidade de serviço~~ — RESOLVIDO FS-C0.T5 (in-process jobs + `API_DELPI_INTERNAL_SERVICE_TOKEN`; sem service account — TC §40-B)
 6. Algoritmo `request_fingerprint` — **técnico**
 7. Conversão de unidades (necessária? dono autoritativo?) — **técnico**
 8. Reconciliação pedido operador×sinal planejado — **PRODUTO** (gate Product Master)
 9. Regra de quantidade de devolução — **PRODUTO** (gate; ver escopo §21)
 10. Política de prioridade — **PRODUTO** (gate; default factual ordering)
 11. Header de correlação no gateway portal→api-delpi — **técnico**
-12. Retenção de `idempotency_keys`/`supply_events` — **técnico**
+12. Retenção de `idempotency_keys`/`supply_events`/`integration_outbox` — **técnico**
+13. `SYNC_CADENCE` benchmark — **técnico** (carga/fan-out api-delpi validada antes de fixar; TC §33)
+14. Categorias de notificação FS no catálogo canônico Core (`notification-catalog-preferences`) — **técnico** (registro junto ao manifesto C7.T1)
 
 ## 5. Requirement ledger
 
@@ -112,6 +115,7 @@ Status: `ACCEPTED` (congelado na spec) / `GATED` (depende de C0/produto). Owner:
 | FS-UX-08 | A11y: teclado, foco, labels, sem cor-só, ≥44px, reduced-motion, drawer focus | Doc3/§37 | MFE | C7 | ACCEPTED | a11y checklist | — |
 | FS-UX-09 | Separação visual fato operacional vs evidência ERP | Doc3 | MFE | C8 | ACCEPTED | labels distintas | FS-DM-03 |
 | FS-UX-10 | Frontend nunca deriva estado/permissão; consome `overall_stage`,`available_actions`,`can_*` | Doc3/4 | MFE | C7 | ACCEPTED | grep + tests | FS-DM-05,06 |
+| FS-UX-11 | Realtime: WS→toast/outcome+estado; área de exceções persistente p/ divergências (nunca toast-only); presença = socket FS, não Portal | Doc3 §28, Doc4 §33 | MFE | C7.T8 | ACCEPTED | WS+UX tests | C4.T1b |
 
 ### FS-API — Contracts
 
@@ -145,8 +149,8 @@ Status: `ACCEPTED` (congelado na spec) / `GATED` (depende de C0/produto). Owner:
 
 | ID | Statement | Fonte | Owner | Fase | Status | Aceite | Deps |
 |---|---|---|---|---|---|---|---|
-| FS-SEC-01 | 9 capacidades USER §40-A (access/view/view.filial-*/missions.request/manage/preparation/collection/delivery/returns) | Doc4 §40-A | CORE+FS | C0.T4→C7 | ACCEPTED | §35 tests | C0.T3,T4 |
-| FS-SEC-02 | 2 capacidades SERVICE §40-B (demand-sync, erp-evidence-reconcile) — não-user, identidade própria | Doc4 §40-B | FS | C4,C8 | GATED→C0.T5 | §35 tests | C0.T5 |
+| FS-SEC-01 | 3 permissões USER §40-A FROZEN (Product Master, FS-C0.T3): `factory-supply.access` + `view.filial-01` + `view.filial-02`; sem permissão por comando/superfície; registro/execução em C7.T1 | Doc4 §40-A | CORE+FS | C7.T1 | ACCEPTED | §35 tests | C0.T3,T4 (DONE) |
+| FS-SEC-02 | 2 jobs internos §40-B (`demand_signal_sync`, `erp_evidence_reconcile`) — in-process, actor `system/factory-supply-api`, service token api-delpi; **não** são permissões Core | Doc4 §40-B | FS | C4,C8 | ACCEPTED | §35 tests | C0.T5 (DONE) |
 | FS-SEC-03 | JWT identifica; permissão resolve server-side a cada request; UI visível ≠ autorizado | Doc4 §36 | FS | sempre | ACCEPTED | adversarial §29 | — |
 | FS-SEC-04 | Branch fail-closed: `branch_access_denied` em filial não autorizada | Doc4 §20,36 | FS | C2 | ACCEPTED | §29 tests | C0.T3 |
 | FS-SEC-05 | Nenhum token/JWT persistido; ator = `id/sub` + display snapshot | Doc4 §21 | FS | C2 | ACCEPTED | §35 tests | — |
@@ -243,11 +247,11 @@ Primeira fase obrigatória — só evidência e decisão, **sem código de produ
 
 | Task | Escopo | Evidência esperada | Desbloqueia | Stop |
 |---|---|---|---|---|
-| FS-C0.T1 | Verificar `get_product_internal_movements`: operationId, campos, ID estável de movimento, timestamps, warehouses src/dst, qty/unit, branch, paginação, permissão, erros | resposta real/fixture + doc de campos | FS-INT-04/06; congela correlação | sem contrato verificado → não projetar fingerprint |
-| FS-C0.T2 | Verificar `list_production_order_operation_materials(_batch)`: material, OP, operação, CT, empenho/open_qty, janela/need context, unit, branch | idem | signal sync C4; demand contract | não inferir de transforms do Line Feeder |
-| FS-C0.T3 | Inventariar convenção de **escopo de escrita** por filial (Core/backend) — `.filial-*` em writes existe? | decisão: sufixo vs payload-validation | FS-SEC-01/04 | sem convenção → gate arquitetura |
-| FS-C0.T4 | Mapear seeding RBAC: registro Core, manifesto, relação Keycloak/Core, enforcement | catálogo implementável | FS-SEC-01 | — |
-| FS-C0.T5 | Identidade de serviço: scheduler in-process vs S2S autenticado para §40-B | decisão com justificativa | FS-SEC-02 | não criar service account por padrão |
+| FS-C0.T1 | ~~Verificar `get_product_internal_movements`~~ — **`DONE`**: SD3 canônico verificado; sem ID estável → fingerprint composto (TC §25); pairing DE0/RE0 = `DETERMINISTIC_DERIVATION`; campos/filtros/paginação/erros documentados | PROVEN | FS-INT-04 (parcial: RECNO evolve opcional) | — |
+| FS-C0.T2 | ~~Verificar `list_production_order_operation_materials(_batch)`~~ — **`DONE`**: SD4 SQL canônico verificado; sem CT/scheduling (produtor = machine-load); batch sem cap → auto-chunk FS | PROVEN | signal sync C4 | — |
+| FS-C0.T3 | ~~Inventariar convenção de escopo de escrita por filial + persistir modelo RBAC~~ — **`DONE`**: modelo Product Master congelado (3 permissões, TC §40-A); `.view.filial-*` PROVEN em writes (`BranchAccessService`/`close_pick_plan`); cadeia manifesto→Core→middleware→`has_permission` verificada | PROVEN | FS-SEC-01/04 | — |
+| FS-C0.T4 | ~~Registro mínimo RBAC~~ — **`DONE`**: cadeia completa PROVEN — manifesto `{code,name,description,module}` → `register`+`sync_module` (declarativo, versionado; remoção de código deleta do catálogo) → `rbac.manage`+`roles.manage` atribui a roles → `PermissionResolver`/`/me` → middleware `load_user_rbac` → `has_permission`; default DENY; sem gap arquitetural | PROVEN | FS-SEC-01 | — |
+| FS-C0.T5 | ~~Identidade de serviço~~ — **`DONE`**: IN_PROCESS jobs asyncio (precedentes pc-poller/outbox/notification-loops); api-delpi auth = `API_DELPI_INTERNAL_SERVICE_TOKEN`+`X-Delpi-Caller-App` (identity `internal-service` is_superadmin na superfície read-only, `PROVEN`); sem service account, sem permissões Core, sem endpoints internos; multi-instância por env-flag. **Correção realtime (T5-bounded):** `OUTBOX_REQUIRED_NOW=YES` + hub WS local + diff/checkpoint + presence `FACTORY_SUPPLY_APP` + cold-start anti-flood (TC §33; padrão Commercial `PROVEN`) | PROVEN | FS-SEC-02 | — |
 | FS-C0.T6 | Congelar `request_fingerprint`: serialização canônica + hash (sugestão canonical-JSON+SHA-256) | spec de algoritmo | FS-API-04/DATA-08 | — |
 | FS-C0.T7 | Conversão de unidades: necessária? se sim, dono autoritativo | decisão (default: não — fail-closed unidade divergente) | FS-DM-09 | — |
 | FS-C0.T11 | Header de correlação aceito pelo gateway portal→api-delpi | convenção documentada | FS-INT-03 | — |
@@ -270,8 +274,8 @@ Nenhum gate global único. Cada fase exige só seu subconjunto:
 | C0.G-BASE | C0.T6, C0.T7 decididos | C1–C2 |
 | C0.G-DATA | C0.T3, C0.T12 | C2 migrations |
 | C0.G-ERP | C0.T1, C0.T2 (+T11 para correlação) | C3, C4, C8 |
-| C0.G-RBAC | C0.T3, C0.T4 | C7 (MFE com writes) |
-| C0.G-SVC | C0.T5 | sync/reconcile em C4, C8 |
+| C0.G-RBAC | C0.T3 ✅, C0.T4 ✅ — **PASS** (modelo FROZEN + registro/enforcement PROVEN; execução do registro ocorre dentro de C7.T1) | C7 (MFE com writes) |
+| C0.G-SVC | C0.T5 ✅ — **PASS** (in-process + service token PROVEN; cadências `TO_DESIGN` são decisão ops, não gate) | sync/reconcile em C4, C8 |
 | C0.G-REQ | C0.P1 | request-material com colisão; C10 |
 | C0.G-RET | C0.P2 | C9 (se qty automática for MVP) |
 
@@ -348,7 +352,8 @@ Nenhuma rota nova api-delpi (decisão §27 TC). Evolve internal-movements **some
 
 | Task | Escopo | Reqs | Deps | Stop |
 |---|---|---|---|---|
-| FS-C4.T1 | `sync_supply_demand_signals` use case: batch machine-load+materials → signals (dedup/supersede), service capability | DM-04, SEC-02, INT-01 | C0.G-SVC, C3 | sem G-SVC → não agendar |
+| FS-C4.T1 | `demand_signal_sync` job in-process (§40-B/§33): batch machine-load+materials → checkpoint/diff → signals (dedup/supersede) + `integration_outbox` enqueue mesma tx; env-flag single-replica | DM-04, SEC-02, INT-01 | C0.G-SVC ✅, C3 | — |
+| FS-C4.T1b | `integration_outbox`+`integration_checkpoints` migrations+repositórios; flush worker (outbox→hub WS + portal notif, split online/offline, dedupeKey, rate-limit defer) | SEC-02 | C4.T1 | contract+replay tests |
 | FS-C4.T2 | Queries `list_supply_needs`, `list_upcoming_supply_needs`, `get_factory_supply_overview`, `list_supply_missions` | API-02/06 | C2 | contract tests |
 | FS-C4.T3 | `request_supply_material` (cria missão+itens+auditoria; sem colisão até P1) | PR-01/02, API-02/03/05 | C2, P1 p/ colisão | colisão → bloquear ou linkar só após P1 |
 | FS-C4.T4 | `plan/replan/cancel/close` comandos + pós-condições | DM-07, API-09 | C2 | transitions tests |
@@ -372,19 +377,20 @@ Projeção §16 TC implementada em application service; testada deterministicame
 
 | Task | Escopo | Reqs | Stop |
 |---|---|---|---|
-| FS-C7.T1 | Plugin `factory-supply`: manifesto (permissões §40-A), rotas portal, cliente `/apps/factory-supply-api/v1`, httpClient envelope+errors | UX-01, AR-02, SEC-01 | sem G-RBAC → não registrar permissões |
+| FS-C7.T1 | Plugin `factory-supply`: manifesto com as 3 permissões §40-A (`access`, `view.filial-01`, `view.filial-02`), rotas portal, cliente `/apps/factory-supply-api/v1`, httpClient envelope+errors | UX-01, AR-02, SEC-01 | sem G-RBAC → não registrar permissões |
 | FS-C7.T2 | Visão geral + Abastecimento/Kanban (`KanbanBoard`, stage selector mobile, cards missão) | UX-01/02/06 | — |
 | FS-C7.T3 | Necessidades + Próximos períodos (DataTableSection) | UX-01 | — |
 | FS-C7.T4 | Minha coleta execução (step-flow, qty confirm, command envelope, key+EV) | UX-03, API-03/05 | — |
 | FS-C7.T5 | Almoxarifado + Devoluções híbridos | UX-04 | — |
 | FS-C7.T6 | Drawer detalhe + timeline + deep-link + Histórico | UX-05 | — |
 | FS-C7.T7 | Estados: loading/empty/error/forbidden + a11y + help (§27) | UX-08, help | — |
+| FS-C7.T8 | Realtime client: WS `/v1/realtime` (ping, reconnect, eventos §33), toasts de outcome, atualização de estado, área de exceções persistente (divergências/sync) | UX §28, TC §33 | entrega só em réplica com hub; MVP = 1 réplica |
 
 **Residual grep gate (obrigatório em todo PR MFE):** `apiDelpiUrl|API_DELPI_BASE|apps/api-delpi` = zero ocorrências fora de testes/docs de proibição.
 
 ## 20. ERP evidence (C8)
 
-`refresh_item_erp_evidence` (service) + observações dedup + badges UI. Semântica §26 TC congelada. Matriz de teste §28: lookup ok+zero→NOT_FOUND; timeout/5xx→UNAVAILABLE; insuficiente→UNKNOWN; compatível→MATCHED; conflito→DIVERGENT; **403→`downstream_access_denied` + NADA persistido**.
+`erp_evidence_reconcile` (job §40-B — hook pós-delivery + passo periódico) + observações dedup + eventos `supply_transfer.*` (§33) + badges UI. Semântica §26 TC congelada. Matriz de teste §28: lookup ok+zero→NOT_FOUND; timeout/5xx→UNAVAILABLE; insuficiente→UNKNOWN; compatível→MATCHED; conflito→DIVERGENT; **403→`downstream_access_denied` + NADA persistido**. Divergências alimentam a área de exceções persistente (§33), nunca toast-only.
 
 ## 21. Returns (C9)
 
@@ -400,7 +406,7 @@ Invariantes contínuas (cada fase re-verifica): sem import/http a `production-co
 
 ## 24. RBAC/security (transversal)
 
-Implementação por fase: C0.T3/T4 → seeding Core+manifesto em C7.T1; enforcement por decorador/`_authorize(user, branch)` padrão PROVEN; cada write: AuthN→AuthZ→branch→precondition→mutation→audit→postcondition. Service capabilities via mecanismo §40-B (não decoradores de usuário).
+Implementação por fase: C0.T3+T4 (DONE — modelo FROZEN 3 permissões; cadeia manifesto→Core sync→roles→`/me`→`has_permission` 100% PROVEN) → registro executado em C7.T1 (manifesto inicial + roles); enforcement por `_authorize(user, branch)` padrão PROVEN (`BranchAccessService.assert_can_view_branch` = `access` + `.view.filial-*`, já aplicado a writes no Line Feeder); cada write: AuthN→AuthZ→branch→`aggregate.branch`→precondition→mutation→audit→postcondition. Service capabilities via mecanismo §40-B (não decoradores de usuário).
 
 ## 25. Idempotency/concurrency (C2 + contínuo)
 
@@ -486,13 +492,13 @@ Clean DB; upgrade de versão anterior; checksum immutability (migration aplicada
 | Estágio | Conteúdo | Mecanismo |
 |---|---|---|
 | 1 | backend dark deploy (rotas sem tráfego) | deploy sem nav/permissões |
-| 2 | read-only (Visão geral/Necessidades/Histórico) | `.view` para grupo piloto |
-| 3 | piloto almoxarifado (1 filial/CT) | caps prep + `.filial-*` |
-| 4 | piloto coleta/entrega | caps collection/delivery |
-| 5 | evidência ERP | service cap + badges |
-| 6 | devoluções | cap returns (P2 se auto) |
+| 2 | leitura piloto (Visão geral/Necessidades/Histórico) | `access`+`filial` para grupo piloto; escritas indisponíveis por exposição de rotas/`available_actions` — **não** existe permissão "somente-leitura" (§40-A) |
+| 3 | piloto almoxarifado (1 filial/CT) | `access` + `.view.filial-01|02` conforme a filial piloto |
+| 4 | piloto coleta/entrega | mesmas 3 permissões; expansão é de exposição/auditoria, não de catálogo |
+| 5 | evidência ERP | job `erp_evidence_reconcile` §40-B + badges |
+| 6 | devoluções | mesmo RBAC (P2 se qty automática) |
 | 7 | cockpit | contrato + P1 |
-Flags = permissões (padrão repo) — sem workflow dual autoritativo em nenhum estágio.
+Flags = permissões/exposição de rotas (padrão repo) — sem workflow dual autoritativo e sem permissões extras em nenhum estágio; o modelo FROZEN §40-A não cria granularidade por fase.
 
 ## 34. Rollback/reversibility
 
@@ -545,7 +551,7 @@ Tudo de TECHNICAL-CONTRACTS §42 + correções (REUSE_AS_IS warehouses, authz≠
 
 ## 41. Decisions pending
 
-C0.P1 reconciliação · C0.P2 regra devolução · C0.P3 prioridade · C0.T3 escopo escrita-filial · C0.T5 identidade serviço · C0.T6 algoritmo fingerprint · C0.T7 conversão de unidade · C0.T11 header correlação · C0.T12 retenção · C0.T1/T2 verificações de campos api-delpi.
+C0.P1 reconciliação · C0.P2 regra devolução · C0.P3 prioridade · C0.T6 algoritmo fingerprint · C0.T7 conversão de unidade · C0.T11 header correlação · C0.T12 retenção · decisão opcional `movement_recno` (evolve §25 TC). ~~C0.T1/T2/T3/T4/T5~~ — DONE.
 
 ## 42. TO_INVENTORY
 
