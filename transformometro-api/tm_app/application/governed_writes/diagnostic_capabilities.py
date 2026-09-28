@@ -393,6 +393,9 @@ def parse_manage_payload(action: str, payload: dict) -> dict[str, Any]:
 
 
 def prepare_create(stack: DiagnosticWriteStack, args: dict) -> dict[str, Any]:
+    _reject_unknown(
+        args, {"diagnostic_id", "revision_id", "problem_statement", "provenance"}
+    )
     diagnostic_id = _req_str(args, "diagnostic_id")
     revision_id = _req_str(args, "revision_id")
     problem_statement = _req_str(args, "problem_statement")
@@ -452,6 +455,7 @@ def prepare_create(stack: DiagnosticWriteStack, args: dict) -> dict[str, Any]:
 
 
 def prepare_manage(stack: DiagnosticWriteStack, args: dict) -> dict[str, Any]:
+    _reject_unknown(args, {"diagnostic_id", "action", "payload"})
     diagnostic_id = _req_str(args, "diagnostic_id")
     action = str(args.get("action") or "").strip()
     if action not in MANAGE_ACTIONS:
@@ -676,29 +680,68 @@ def execute(stack: DiagnosticWriteStack, change: dict[str, Any]) -> Any:
                     conclusion=_parse_conclusion(payload),
                 )
             )
-        if action in HYPOTHESIS_LIFECYCLE_ACTIONS:
-            method = getattr(use_case, action)
+        hypothesis_id = payload.get("hypothesis_id")
+        conclusion_id = payload.get("conclusion_id")
+        note = payload.get("note")
+        if action == "validate_hypothesis":
             return run_sync(
-                method(
+                use_case.validate_hypothesis(
                     diagnostic_id=diagnostic_id,
-                    hypothesis_id=str(payload["hypothesis_id"]),
-                    note=payload.get("note"),
+                    hypothesis_id=str(hypothesis_id),
+                    note=note,
                 )
             )
-        if action in HYPOTHESIS_MARK_ACTIONS:
-            method = getattr(use_case, action)
+        if action == "reject_hypothesis":
             return run_sync(
-                method(
+                use_case.reject_hypothesis(
                     diagnostic_id=diagnostic_id,
-                    hypothesis_id=str(payload["hypothesis_id"]),
+                    hypothesis_id=str(hypothesis_id),
+                    note=note,
                 )
             )
-        method = getattr(use_case, action)
+        if action == "supersede_hypothesis":
+            return run_sync(
+                use_case.supersede_hypothesis(
+                    diagnostic_id=diagnostic_id,
+                    hypothesis_id=str(hypothesis_id),
+                    note=note,
+                )
+            )
+        if action == "mark_hypothesis_stale_evidence":
+            return run_sync(
+                use_case.mark_hypothesis_stale_evidence(
+                    diagnostic_id=diagnostic_id,
+                    hypothesis_id=str(hypothesis_id),
+                )
+            )
+        if action == "mark_hypothesis_revalidation_required":
+            return run_sync(
+                use_case.mark_hypothesis_revalidation_required(
+                    diagnostic_id=diagnostic_id,
+                    hypothesis_id=str(hypothesis_id),
+                )
+            )
+        if action == "validate_conclusion":
+            return run_sync(
+                use_case.validate_conclusion(
+                    diagnostic_id=diagnostic_id,
+                    conclusion_id=str(conclusion_id),
+                    note=note,
+                )
+            )
+        if action == "reject_conclusion":
+            return run_sync(
+                use_case.reject_conclusion(
+                    diagnostic_id=diagnostic_id,
+                    conclusion_id=str(conclusion_id),
+                    note=note,
+                )
+            )
         return run_sync(
-            method(
+            use_case.supersede_conclusion(
                 diagnostic_id=diagnostic_id,
-                conclusion_id=str(payload["conclusion_id"]),
-                note=payload.get("note"),
+                conclusion_id=str(conclusion_id),
+                note=note,
             )
         )
     except (

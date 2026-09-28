@@ -41,7 +41,9 @@ from tm_app.application.governed_writes.orchestrator import (
     GovernedWriteOrchestrator,
 )
 from tm_app.application.governed_writes.diagnostic_capabilities import (
+    MANAGE_ACTIONS,
     DiagnosticWriteStack,
+    parse_manage_payload,
 )
 from tm_app.application.governed_writes.proposal_store import (
     get_proposal_store,
@@ -227,6 +229,95 @@ def _prime_act_ctx(user=None):
 
 def _code(excinfo) -> str:
     return excinfo.value.code
+
+
+# ---------------------------------------------------------------------------
+# ACTION INVENTORY + STRICT ENVELOPE
+# ---------------------------------------------------------------------------
+
+
+EXPECTED_MANAGE_ACTIONS = {
+    "add_finding",
+    "add_hypothesis",
+    "add_causal_link",
+    "add_evidence_link",
+    "add_conclusion",
+    "validate_hypothesis",
+    "reject_hypothesis",
+    "supersede_hypothesis",
+    "mark_hypothesis_stale_evidence",
+    "mark_hypothesis_revalidation_required",
+    "validate_conclusion",
+    "reject_conclusion",
+    "supersede_conclusion",
+}
+
+
+def test_manage_action_inventory_is_exactly_13():
+    assert len(MANAGE_ACTIONS) == 13
+    assert MANAGE_ACTIONS == EXPECTED_MANAGE_ACTIONS
+
+
+@pytest.mark.parametrize("action", sorted(EXPECTED_MANAGE_ACTIONS))
+def test_every_manage_action_parses_explicitly(action):
+    # Each allowlisted action must reach its own explicit parser — never a
+    # generic passthrough.
+    payload = {
+        "add_finding": {"finding_id": "f", "statement": "s"},
+        "add_hypothesis": {"hypothesis_id": "h", "statement": "s"},
+        "add_causal_link": {
+            "link_id": "l", "source_hypothesis_id": "h", "target_id": "f",
+        },
+        "add_evidence_link": {
+            "link_id": "l", "evidence_id": "e", "relation": "SUPPORTS",
+        },
+        "add_conclusion": {"conclusion_id": "c", "statement": "s"},
+    }.get(action) or {"hypothesis_id": "h"}
+    if action in {"validate_conclusion", "reject_conclusion",
+                  "supersede_conclusion"}:
+        payload = {"conclusion_id": "c"}
+    normalized = parse_manage_payload(action, payload)
+    assert normalized
+    assert "lifecycle" not in normalized
+    assert "effective_validation" not in normalized
+
+
+def test_prepare_create_rejects_extra_top_level_fields(rbac):
+    orch, repo = _orch()
+    with pytest.raises(GovernedWriteError) as excinfo:
+        orch.prepare(
+            _request(),
+            capability="create_diagnostic",
+            args={
+                "diagnostic_id": "d-1",
+                "revision_id": REV_A,
+                "problem_statement": "p",
+                "silently_ignored_field": True,
+            },
+        )
+    assert _code(excinfo) == VALIDATION
+    assert len(get_proposal_store()._items) == 0
+    repo.create.assert_not_called()
+
+
+def test_prepare_manage_rejects_extra_top_level_fields(rbac):
+    orch, repo = _orch()
+    diag = _diagnostic()
+    repo.seed(diag)
+    with pytest.raises(GovernedWriteError) as excinfo:
+        orch.prepare(
+            _request(),
+            capability="manage_diagnostic",
+            args={
+                "diagnostic_id": diag.diagnostic_id,
+                "action": "add_finding",
+                "payload": {"finding_id": "f", "statement": "s"},
+                "extra_envelope_field": "x",
+            },
+        )
+    assert _code(excinfo) == VALIDATION
+    assert len(get_proposal_store()._items) == 0
+    repo.save.assert_not_called()
 
 
 # ---------------------------------------------------------------------------
@@ -732,6 +823,69 @@ def test_act_divergent_readback_no_verified_success(rbac):
         )
     assert _code(excinfo) == OUTCOME_VERIFICATION_FAILED
     assert excinfo.value.status_code == 409
+
+
+@pytest.mark.parametrize(
+    "action,target_key,target_field,target_value",
+    [
+        ("reject_hypothesis", "hypotheses", "lifecycle", "REJECTED"),
+        ("supersede_hypothesis", "hypotheses", "lifecycle", "SUPERSEDED"),
+        (
+            "mark_hypothesis_revalidation_required",
+            "hypotheses",
+            "effective_validation",
+            "REVALIDATION_REQUIRED",
+        ),
+        ("reject_conclusion", "diagnostic_conclusions", "lifecycle", "REJECTED"),
+        (
+            "supersede_conclusion",
+            "diagnostic_conclusions",
+            "lifecycle",
+            "SUPERSEDED",
+        ),
+    ],
+)
+def test_act_remaining_actions_explicit_dispatch(
+    rbac, action, target_key, target_field, target_value
+):
+    # Every allowlisted action must reach its explicit use-case branch and
+    # produce its declared postcondition — never a generic branch.
+    if "hypothesis" in action:
+        lifecycle = (
+            ClaimLifecycle.VALIDATED if action == "supersede_hypothesis"
+            else ClaimLifecycle.DRAFT
+        )
+        diag = _diagnostic(
+            hypotheses=[Hypothesis("h-1", "causa", lifecycle=lifecycle)]
+        )
+        payload = {"hypothesis_id": "h-1"}
+    else:
+        lifecycle = (
+            ClaimLifecycle.VALIDATED
+            if action == "supersede_conclusion"
+            else ClaimLifecycle.DRAFT
+        )
+        from tm_app.domain.diagnostic.diagnostic import DiagnosticConclusion
+
+        diag = _diagnostic(
+            diagnostic_conclusions=[
+                DiagnosticConclusion("c-1", "concl", lifecycle=lifecycle)
+            ]
+        )
+        payload = {"conclusion_id": "c-1"}
+
+    orch, repo, prepared = _prepare(rbac, diag=diag, action=action,
+                                    payload=payload)
+    _prime_act_ctx()
+    result = orch.act(
+        _request(),
+        capability="manage_diagnostic",
+        proposal_handle=prepared["proposal_handle"],
+    )
+    assert result["verified"] is True
+    items = result["data"]["diagnostic"][target_key]
+    assert items[0][target_field] == target_value
+    repo.save.assert_called_once()
 
 
 def test_act_mark_stale_effective_validation(rbac):
