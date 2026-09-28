@@ -860,52 +860,79 @@ Até política existir, o backend expõe apenas fatos determinísticos:
 | Apontamento de operação | `HZA010` | `HZA_STATUS` 1=rodando·2=encerrado c/ apontamento·3=descartado, `HZA_TPTRNS` 1=m.o.·2=máquina, `HZA_IDAPON`→SH6 | machine-load (agregado interno) | **STATUS/TIME_ONLY** — zero campos de quantidade; dedup SH6 via `IDAPON` |
 | Perdas de material | `SBC010` + `SB1` + `SC2` + `CYO` + `SYS_USR` | `BC_TIPO` `R`=refugo/`S`=scrap (mutuamente exclusivos por linha), `BC_PRODUTO`=MP (`B1_TIPO=MP` no repo losses), `BC_QUANT`, unit=`B1_UM` do MP, OP, operação, recurso, motivo, operador, data; **`BC_SEQSD3`→SD3**, **`BC_IDENSH6`→SH6** | `get_production_losses_records`, `get_production_losses_top_materials`, rotas `refugos/*` (`R` apenas, exclui MP de terceiro) | **QUANTITY_AFFECTING** — perda de MP por OP/material |
 | Empenho/consumo | `SD4010` + `SB1` (+`SH8` p/ CT) | `D4_COD`=componente, `D4_PRODUTO`=PA pai, `D4_QTDEORI`=empenho original, `D4_QUANT`=saldo empenhado, `D4_QTNECES`=requerido; **`consumed = QTDEORI−QUANT` derivado** | `list_production_order_operation_materials(_batch)`, `get_production_consumption_*` | **QUANTITY_AFFECTING** — "consumo derivado" ≠ consumo físico garantido |
-| Movimentações | `SD3010` + `SB1` | `D3_COD`, `D3_LOCAL`, `D3_DOC`, `D3_EMISSAO`, `D3_TM`, `D3_CF`, `D3_QUANT`, `D3_OP`, `D3_USUARIO`, `D3_ESTORNO`; `kind=warehouse_transfer`→`CF DE0/RE0`; sem `kind`→todos CFs. Doc canônica: `PR0`=entrada produção, `TM 999`=baixa de consumo | `get_product_internal_movements` (`/{code}/internal-movements`) | **QUANTITY_AFFECTING** — transferência 01↔99, PR0, baixas |
+| Movimentações | `SD3010` + `SB1` | `D3_COD`, `D3_LOCAL`, `D3_DOC`, `D3_EMISSAO`, `D3_TM`, `D3_CF`, `D3_QUANT`, `D3_OP`, `D3_USUARIO`, `D3_ESTORNO`, `D3_NUMSEQ`. **Padrões provados (P2-A.1)**: entrada produção=`010/PR0`@01+OP · consumo/perda=saída `TM999`+OP (CF `RE0/RE1/RE2/RE9`, local 99 ou 01) · **transferência=par 2 linhas** mesmo `D3_DOC`: saída `999/RE4`@origem + entrada `499/DE*`@destino, `D3_OP` vazio · perda SBC=saída `999/RE0`@99 linkada por `BC_SEQSD3=D3_NUMSEQ` | `get_product_internal_movements` (`/{code}/internal-movements`) | **QUANTITY_AFFECTING** — direção = TM(`<500` entrada/`≥500` saída)+LOCAL; `D3_NUMSEQ` = identidade de movimento linkável |
 | Saldos | `SB2010` | `B2_LOCAL` 01=almox·99=fábrica·50=WIP·98=aux; saldo por item+armazém | `get_product_stock`, `get_supplies_stock_balances_*` | `factory_stock` corrente — sem grão OP/missão |
 | OPs | `SC2010` / `VW_PCP_ORDENS_PRODUCAO` | `C2_QUANT` planejada, `C2_QUJE` produzida, `C2_DATRF` encerramento, `C2_PRODUTO` | `get_production_pcp_orders_*`, `get_production_order_by_op` | contexto de ordem |
 | BOM/roteiro | `SG1010` (`G1_COMP`), `SG2010` (`G2_OPERAC`/`G2_SETUP`) | estrutura componente↔PA, última operação, setup horas | `get_production_shared_structure_intermediates` | conversão PA→MP **não** congelada — preferir evidência real |
 | Setup/paradas | `SHY.HY_SETUP`, `SG2.G2_SETUP`, view horas improdutivas | horas de preparo/parada + custo R$ | `get_production_unproductive_hours_*`, OEE | **TIME_ONLY** — nunca subtrair de material |
 
-### 53.2 Matriz de sobreposição (double-counting)
+### 53.2 Matriz de sobreposição (double-counting) — **RESOLVIDA por dados TOTVS** (FS-C0.P2-A.1, probes read-only `scripts/sql/fs_return_overlap_probe*.py`, set/2026)
 
-| Par | Classificação | Base |
+| Par | Classificação | Base probada |
 |---|---|---|
-| SH6 `QTDPROD` ↔ SD3 `PR0` | **SAME_FACT** | doc canônica: apontamento última operação origina o PR0 — nunca somar ambos |
-| SH6 `QTDPERD` ↔ SBC `BC_QUANT` | **DISTINCT_FACT** provável, correlação `UNKNOWN` | QTDPERD=PA perdido; SBC=MP perdido (`BC_IDENSH6` permite cruzar — se o mesmo evento físico gera ambos não provado) |
-| SBC `R` ↔ SBC `S` | **DISTINCT** por linha (tipo exclusivo) | mesma tabela, filtro `loss_type`; se evento físico único pode ser duplo-registrado: `UNKNOWN` |
-| SBC ↔ SD3 baixas | **PARTIAL_OVERLAP** | `BC_SEQSD3` linka perda→movimento; se toda baixa SD3 de perda tem SBC (e vice-versa): `UNKNOWN` |
-| SD4 consumido ↔ SD3 `TM 999` | **PARTIAL_OVERLAP** | baixa de empenho corresponde à requisição `TM 999` (doc canônica); correlação linha-a-linha não provada → escolher **uma** fonte na fórmula |
-| SD4 consumido ↔ SBC perda | **UNKNOWN** | se refugo baixa o empenho (incluído em `QTDEORI−QUANT`) ou é fato separado — **pergunta P2-B obrigatória** |
-| Transferência 99→01 ↔ devolução operacional | DISTINCT direção | `D3_LOCAL`+`CF` determinam sentido; correlação à missão por atributos |
+| SH6 `QTDPROD` ↔ SD3 `PR0` | **SAME_FACT** | doc canônica + dados: `010/PR0`@01 sempre com OP — nunca somar ambos |
+| SH6 `QTDPERD` ↔ SBC `BC_QUANT` | **DISTINCT_FACT** | QTDPERD = PA perdido na operação; SBC = MP perdido (produto/unidade diferentes); `BC_IDENSH6` existe mas está **sempre vazio** (50153 linhas `R` → `idh6_null`=50153) |
+| SBC `'R'` ↔ SBC `'S'` | **DISTINCT** por linha; `'S'` **sem ocorrências** desde 2025 | census por `BC_TIPO`: só `R` populado; somar R+S é seguro, manter filtro `both` |
+| SBC ↔ SD3 saída@99 | **SAME_PHYSICAL_FACT** | `BC_SEQSD3` (varchar, ex. `UDALFY`) = `SD3.D3_NUMSEQ`; join linha-a-linha: qtd e OP idênticos, movimento = **`LOCAL=99, TM=999, CF=RE0`** — SBC é o registro descritivo/motivo da baixa SD3; nunca somar os dois |
+| SD4 consumido (`QTDEORI−QUANT`) ↔ SD3 saída@99 com OP | **PARTIAL_OVERLAP — mesma família física** | probe por OP+material: `Σ saída@99 (TM≥500, OP)` ≈ `Σ(QTDEORI−QUANT) + Σ SBC` — exato em ~80% das OPs; exceções existem (consumo em outro armazém) |
+| SD4 consumido ↔ SBC perda | **DISTINCT_FACT** | a identidade acima prova que a perda **não** baixa `D4_QUANT` → `SBC_DOES_NOT_REDUCE_SD4`; subtrair SD4-consumido **e** SBC é seguro |
+| SD3 `TM999`@99 com OP ↔ consumo **mais** perda | **PARTIAL_OVERLAP (agrega ambos)** | `TM999`@99 com `D3_OP` inclui baixas de consumo (CF `RE0/RE1/RE2/RE9`) **e** perdas (CF `RE0` via SBC); para isolar consumo físico: `D3_NUMSEQ ∉ SBC.BC_SEQSD3` |
+| Transferência 01↔99 ↔ consumo/perda | **DISTINCT_FACT** | pares de transferência têm `D3_OP` **vazio**; consumo/perda têm OP |
+| Entrada@99 `499/DE*` ↔ saída@01 `999/RE4` | **SAME_FACT — par de abastecimento 01→99** | mesmo `D3_DOC`+`D3_COD`+`qtd`; `D3_OP` vazio |
+| Entrada@01 `499/DE*` ↔ saída@99 `999/RE4` | **SAME_FACT — par de devolução 99→01** | mesmo `D3_DOC`+`D3_COD`+`qtd`; `D3_OP` vazio |
 
-> **Regra:** nenhuma fórmula é congelável enquanto pares `UNKNOWN`/`PARTIAL_OVERLAP` puderem gerar dupla subtração.
+> **Regra pós-prova:** uma fonte por fato físico — `delivered` (par 01→99), `consumed` (SD4-derivado **ou** `TM999@99+OP` menos SBC — nunca ambos), `loss` (SBC **ou** seu SD3 linkado — mesmo fato), `returned` (par 99→01).
 
 ### 53.3 Fatos de retorno candidatos (A–F)
 
 | # | Fato | Fonte+contrato | Grão | Confiança | Lacuna |
 |---|---|---|---|---|---|
-| A | `delivered_to_factory_qty` | SD3 `DE0/RE0` via `internal-movements` | filial+mat+OP?+janela | média | rota é por-produto; sem recorte por missão |
-| B | `actual_consumed_qty` | SD4 derivado via operation-materials/consumption | filial+OP+oper+mat | alta (derivado) | físico real não garantido; alternativa `TM 999` sem rota dedicada |
-| C | `authoritative_loss_qty` | SBC `R` via losses | filial+OP+mat | alta | sobreposição com B `UNKNOWN` |
-| D | `authoritative_scrap_qty` | SBC `S` via losses | idem | alta | idem |
-| E | `authoritative_returned_qty` | SD3 99→01 via `internal-movements` | filial+mat+janela | média | direção por `LOCAL+CF` é convenção de código, não contrato tipado |
-| F | `current_factory_stock_qty` | SB2 99 via stock/balances | filial+mat | alta | saldo corrente global — não histórico nem por OP |
+| A | `delivered_to_factory_qty` | **par SD3**: saída `TM999/CF RE4`@01 + entrada `TM499/CF DE*`@99, mesmo `D3_DOC` (PROVEN) | filial+material+data | **alta** | `D3_OP` **vazio** em transferências — correlação a OP/missão só por FS-trace+atributos |
+| B | `actual_consumed_qty` | SD4 derivado `QTDEORI−QUANT` (PROVEN) **ou** `Σ SD3 TM999@99 + OP` **excluindo** `NUMSEQ ∈ SBC` (PROVEN ≈ equivalente) | filial+OP+operação+material | alta | SD4=ledger derivado; SD3=físico — escolher um (P2-B) |
+| C | `authoritative_loss_qty` | SBC `BC_TIPO='R'` (único tipo populado) = saída `999/RE0`@99 linkada (`BC_SEQSD3=D3_NUMSEQ`) | filial+OP+operação+material | **alta** (físico) | `production_losses_records` não expõe `loss_qty` por unit tipada? — expõe; `motivo`/CYO ok |
+| D | `authoritative_scrap_qty` | SBC `BC_TIPO='S'` | idem | n/a | **0 ocorrências desde 2025** — tipo existe no contrato mas sem dados; manter `both` |
+| E | `authoritative_returned_qty` | **par SD3**: saída `999/RE4`@99 + entrada `499/DE4`@01 (PROVEN) | filial+material+data | alta | sem `D3_OP` — correlação por atributos/FS-trace |
+| F | `current_factory_stock_qty` | SB2 `B2_LOCAL='99'` | filial+material | alta | saldo corrente global, sem grão OP |
 
-### 53.4 Gaps de contrato api-delpi (P2-B follow-up)
+### 53.4 Gaps de contrato api-delpi (P2-B follow-up) — revisado pós-P2-A.1
 
-1. Sem rota dedicada de **movimentos de consumo/requisição** (`TM 999`) — hoje só legível via `internal-movements` sem `kind`, por produto.
-2. Sem contrato expondo **sentido tipado** da transferência (in/out por `LOCAL+CF`) — hoje convenção documentada em código.
-3. Sem contrato de **saldo 99 por OP** — SB2 é por produto+armazém.
-4. Sem rota de **perda correlacionada a empenho** — necessária para provar se refugo já está dentro de `QTDEORI−QUANT`.
-5. `internal-movements` é `GET /products/{code}/…` — fan-out por material da missão (padrão batch já usado em operation-materials pode ser precedente).
-6. BOM/estrutura→consumo teórico: semântica SG1/`G1_COMP`+versão+unidade não validada p/ fórmula — preferir evidência real (§53.3-B/C/D).
+1. Sem rota dedicada de **movimentos de consumo/requisição** (`TM 999`+OP) — hoje só legível via `internal-movements` sem `kind`, por produto.
+2. Sem contrato expondo **sentido tipado** da transferência — semântica provada (TM+LOCAL+CF, par `RE4`/`DE*`), mas hoje é convenção de código/documento, não campo tipado no DTO.
+3. Sem contrato de **saldo 99 por OP** — SB2 é por produto+armazém; `D3_OP` ausente nas transferências impede correlação ERP de saldo por OP — o grão por missão/CT é responsabilidade do **trace operacional FS** (§13, Doc 1/5).
+4. ~~Perda↔empenho~~ **RESOLVIDO**: SBC não baixa `D4_QUANT`; perda está dentro de `TM999`@99 mas **fora** de `QTDEORI−QUANT`.
+5. `internal-movements` é `GET /products/{code}/…` — fan-out por material da missão (padrão batch já usado em operation-materials pode ser precedente); expõe `D3_NUMSEQ`? — **verificar exposição do NUMSEQ** (hoje `R_E_C_N_O_` ordena internamente; NUMSEQ é o link SBC↔SD3 probado).
+6. BOM/estrutura→consumo teórico: não necessário — evidência real suficiente (§53.3-B/C/D).
 
 ### 53.5 Estados de sugestão e confirmação
 
 - Sugestão omite componente ausente como `*_UNKNOWN` (Doc 2/5 §15-A) — nunca zero silencioso.
 - `CONFIRMED_RETURN_QTY` = handoffs `direction=return` factuais + evidência SD3 99→01 correlacionada (`erp_observations` §26); divergência abre exceção `divergent`.
-- **`RETURN_FORMULA_STATUS = PARTIAL`** → P2-B (decisão PM) é pré-requisito de `ReconcileReturn` automático; `record_item_return` segue manual/`null` (Doc 3/5).
+- **`RETURN_FORMULA_STATUS = READY` — congelado FS-C0.P2-B** (modelo §53.7): consumo preferido = **SD3 físico** `TM999`+OP menos `NUMSEQ ∈ SBC`; SD4 = contexto de empenho; `already_returned` reduz a sugestão; capacidade global BI reconcilia. `record_item_return` segue manual/`null` até implementação.
 
 ### 53.6 Testes futuros obrigatórios (spec-only)
 
 perda `R` e `S` não somadas duas vezes no mesmo material/OP · consumo SD4-derivado nunca somado a `TM 999` da mesma OP · `PR0` nunca subtraído de material · sugestão com `LOSS_UNKNOWN` não vira zero · divergência sugestão×saldo-99 observado abre exceção · `correlation_basis` registrada em toda sugestão · unit mismatch MP×PA → `UNIT_DIVERGENCE`, nunca conversão.
+
+### 53.7 Return policy freeze (FS-C0.P2-B — `ACCEPTED`)
+
+**Power BI baseline (`PROVEN_REFERENCE_IMPLEMENTATION`):** `Qtd devolver total = Saldo fábrica(Σ SB2 99) − Saldo Empenho(Σ SD4.D4_QUANT)`, filtro `> 0` → `ERP_GLOBAL_RETURN_CAPACITY = MAX(0, warehouse_99_stock − open_commitment)`. FS preserva o conceito global e adiciona trace por missão/CT, evidência física, histórico de retorno, divergência e auditoria — não copia o BI cegamente.
+
+**Modelo congelado:**
+
+```text
+OPERATIONAL_RETURN_SUGGESTION(item/CT)
+  = FS delivered_qty − consumido reconhecido (SD3 físico 99 excl. SBC)
+    − perda SBC (uma vez) − already_returned_qty
+   por material+filial, alocado a CT somente via trace FS
+
+erp_global_return_capacity(material) = MAX(0, stock_99 − open_commitment)
+
+reconciliation = Σ suggested vs capacity
+  → matched | divergent | incomplete_evidence | unavailable
+```
+
+- `AUTOMATIC_RETURN_SUGGESTION = YES` — calculada e exibida quando evidência suficiente; label user-facing **"Sugestão de devolução"** (nunca "saldo oficial"/"quantidade garantida");
+- divergente: expõe sugestão operacional **e** capacidade ERP — nenhum lado alterado silenciosamente;
+- `suggested < capacity` é alocação válida — não auto-expande;
+- UI item: entregue / consumido reconhecido / perdas / já devolvido / sugestão restante / ERP global / status;
+- contract fitness final: `internal-movements` **EVOLVE_EXISTING** (expor `D3_NUMSEQ` p/ dedup SBC↔SD3 + direção tipada TM+LOCAL); `production_losses_records`, operation-materials/consumption, `get_product_stock` = REUSE_AS_IS; sem SQL genérico em runtime FS.

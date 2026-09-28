@@ -51,7 +51,7 @@ Consolidado de `TECHNICAL-CONTRACTS.md` §43–44 — todos tratados como gates 
 6. ~~Algoritmo `request_fingerprint`~~ — RESOLVIDO FS-C0.T6 (canonical-JSON tipado + SHA-256; escopo `(key,route,actor)`; single-tx; falha não consome key — TC §10/§39)
 7. ~~Conversão de unidades~~ — RESOLVIDO FS-C0.T7: `AUTHORITATIVE_TOTVS_UNIT` (`B1_UM` em todos os contratos — §51); `UNIT_CONVERSION_*=NOT_REQUIRED`; divergência de unidade → `UNIT_DIVERGENCE`/falha fechada
 8. ~~Reconciliação pedido operador×sinal planejado~~ — RESOLVIDO FS-C0.P1: `intent` explícita `ANTICIPATE|ADDITIONAL` (sem merge/soma automático; excesso de anticipate → conflict; cockpit público → boundary = service-caller §28 TC)
-9. Regra de quantidade de devolução — **P2-A inventário feito** (TC §53: fatos A–F, sobreposições, gaps); falta **P2-B** decisão PM da fórmula (gate; ver escopo §21)
+9. ~~Regra de quantidade de devolução~~ — **`DONE` (P2-B `FROZEN`, TC §53.7)**: modelo 3-camadas (trace FS / evidência TOTVS física / capacidade global BI `MAX(0,stock99−empenho)`); `AUTOMATIC_RETURN_SUGGESTION=YES`; reconciliação `matched|divergent|incomplete_evidence|unavailable`; pendência única = evolução contrato `internal-movements` (`D3_NUMSEQ`+direção tipada) — aditiva, não-bloqueante
 10. Política de prioridade — **PRODUTO** (gate; default factual ordering)
 11. ~~Header de correlação~~ — RESOLVIDO FS-C0.T11 (`X-Request-ID` `SINGLE_ID`, UUID4, adapter-propagated — TC §32)
 12. ~~Retenção~~ — RESOLVIDO FS-C0.T12 (matriz §52: 5y audit/histórico, 24h idempotency, 30d outbox pub, checkpoint corrente; ROPA-compliant — pendente só registro da categoria FS na ROPA na implantação)
@@ -70,7 +70,7 @@ Status: `ACCEPTED` (congelado na spec) / `GATED` (depende de C0/produto). Owner:
 | FS-PR-02 | Necessidade planejada e pedido humano são fatos distintos, nunca reescritos | Doc1 §invariante | FS | C4 | ACCEPTED | teste de reconciliação | FS-DM-04, C0.P1 |
 | FS-PR-03 | Coexistência com Line Feeder sem dual-write/migração silenciosa | Doc4 §30 | FS | sempre | ACCEPTED | gate cutover §35 | — |
 | FS-PR-04 | Cockpit integra por contrato semântico, sem internals/DB | Doc4 §28 | FS | C10 | ACCEPTED | contrato+teste | C0.P1 |
-| FS-PR-05 | Devolução sem quantidade inventada; estado "não estabelecida" suportado | Doc3/4 | FS | C9 | GATED→C0.P2-B | Cenário G | C0.P2-B |
+| FS-PR-05 | Devolução sem quantidade inventada; estado "não estabelecida" suportado | Doc3/4 | FS | C9 | ~~GATED→C0.P2-B~~ READY (P2-B `DONE`) | Cenário G | C0.P2-B ✅ |
 | FS-PR-06 | Prioridade factual (`due_at`,`overdue`,`time_to_need`) até política existir | Doc4 §49 | FS | C2+ | ACCEPTED | projeção sem score | C0.P3 |
 | FS-PR-07 | Métricas operacionais ≠ scoring de trabalhador | Doc1, Doc4 §32 | FS | C8 | ACCEPTED | revisão métricas | — |
 
@@ -263,7 +263,8 @@ Primeira fase obrigatória — só evidência e decisão, **sem código de produ
 |---|---|---|---|
 | FS-C0.P1 | ~~Reconciliação pedido×sinal~~ — **`DONE`**: `OPERATOR_REQUEST_UI_OWNER=OPERATOR_COCKPIT` (MFE FS sem tela de pedido); `OperatorRequest` entidade durável §39; `intent` explícita ANTICIPATE (link+urgência, qty planejado inalterado, excesso→conflict sem auto-split) | ADDITIONAL (fato separado, planejado intacto); match = branch×work_center×material×unit×contexto(op/seq)×janela(TO_DESIGN) — owner FS; auth = **service-caller** (cockpit público sem JWT; `operator_ref` = dado de negócio); contrato `POST /v1/operator-requests` +KEY+X-Request-ID; sem TOTVS write | PROVEN (decisão PM + inventário cockpit) | C10 desbloqueado | — |
 | FS-C0.P2-A | ~~Inventário autoritativo TOTVS produção/perda/consumo~~ — **`DONE`**: matriz §53 TC (SH6/HZA/SBC/SD4/SD3/SB2/SC2/SG1-2); `RETURN_POLICY=HYBRID` aceita; sobreposições mapeadas; gaps api-delpi §53.4; grão máximo = OP/material | FS (evidência) | — |
-| FS-C0.P2-B | Decisão da fórmula de sugestão de devolução: qual combinação de fatos (§53.3 A–F), política de sobreposição perda×consumo, estados `*_UNKNOWN`, ou confirmar manual+`null` | Product Master | C9 auto-qty; NÃO bloqueia C1–C8 |
+| FS-C0.P2-A.1 | ~~Verificação de sobreposição com dados reais TOTVS~~ — **`DONE`**: probes read-only provaram `BC_SEQSD3=D3_NUMSEQ` (perda=saída `999/RE0`@99, mesmo fato), `saída99+OP ≈ SD4-consumido + SBC` (SBC não baixa empenho), transferência 01↔99 = par `RE4`/`DE*` mesmo `D3_DOC` sem OP, só `BC_TIPO='R'` ocorre | FS (evidência) | — |
+| FS-C0.P2-B | ~~Decisão da fórmula de sugestão de devolução~~ — **`DONE`/`ACCEPTED`**: consumo = SD3 físico 99 excl. SBC (SD4=empenho); `AUTOMATIC_RETURN_SUGGESTION=YES`; capacidade global BI preservada como reconciliação; CT só via trace FS; `already_returned` reduz sugestão | Product Master | C9 auto-qty liberado |
 | FS-C0.P3 | Prioridade além de `due_at/overdue/time_to_need` necessária no MVP? (default: não) | Product Master | — se "não" |
 
 ## 9. Readiness gates (capability-scoped)
@@ -278,7 +279,7 @@ Nenhum gate global único. Cada fase exige só seu subconjunto:
 | C0.G-RBAC | C0.T3 ✅, C0.T4 ✅ — **PASS** (modelo FROZEN + registro/enforcement PROVEN; execução do registro ocorre dentro de C7.T1) | C7 (MFE com writes) |
 | C0.G-SVC | C0.T5 ✅ — **PASS** (in-process + service token PROVEN; cadências `TO_DESIGN` são decisão ops, não gate) | sync/reconcile em C4, C8 |
 | C0.G-REQ | C0.P1 | request-material com colisão; C10 |
-| C0.G-RET | C0.P2-A ✅ (evidência) + C0.P2-B (fórmula PM) | C9 (se qty automática for MVP) |
+| C0.G-RET | C0.P2-A ✅ + C0.P2-A.1 ✅ + C0.P2-B ✅ (`READY`) — evolução `internal-movements` (`D3_NUMSEQ`/direção tipada) é aditiva, não hard blocker | C9 auto-qty |
 
 `C0.READY` por gate = `PASS` quando a evidência correspondente existe e está registrada em relatório.
 
@@ -396,7 +397,7 @@ Projeção §16 TC implementada em application service; testada deterministicame
 
 ## 21. Returns (C9)
 
-Worklist + `record_item_return` com `returned_qty` **manual/nullável** + handoff `direction=return` + eventos. **Quantidade automática só após C0.P2-B decidir a fórmula** (evidência P2-A em TC §53: fatos A–F, sobreposições, gaps api-delpi); se MVP exigir auto-qty → P2-B vira release gate. UI mostra "não estabelecida"/`*_UNKNOWN` — nunca inventa (Cenário G).
+Worklist + `record_item_return` com `returned_qty` **manual/nullável** + handoff `direction=return` + eventos. **P2-B `DONE`:** fórmula congelada (TC §53.7) — `suggested_return_qty` automático (`AUTOMATIC_RETURN_SUGGESTION=YES`) por item/CT via trace FS − consumo SD3-físico-99 excl. SBC − perda SBC − `already_returned_qty`; `erp_global_return_capacity=MAX(0,stock99−empenho)` como reconciliação `matched|divergent|incomplete_evidence|unavailable`. Pré-requisito de implementação aditiva: `internal-movements` expor `D3_NUMSEQ`+direção tipada (EVOLVE_EXISTING). UI mostra "Sugestão de devolução"/"não estabelecida"/`*_UNKNOWN` — nunca inventa (Cenário G).
 
 ## 22. Operator Cockpit (C10)
 
@@ -469,6 +470,15 @@ Matriz de teste §18:
 | `PR0`/SH6 `QTDPROD` (PA) | nunca entra na fórmula de material — produto/unit errados |
 | retorno 99→01 × sugestão | confirmação reconcilia por `erp_observations`; divergência → exceção |
 | unit MP ≠ unit do item na sugestão | `UNIT_DIVERGENCE` — sem conversão (§51) |
+| stock99=100, empenho=70 | `erp_global_return_capacity`=30 |
+| stock99=50, empenho=80 | capacidade=0 (`MAX(0,·)`) |
+| Σ sugestões=30 × capacidade=30 | `matched` |
+| Σ sugestões=35 × capacidade=30 | `divergent` — ambos os lados expostos, nenhum ajustado |
+| Σ sugestões=20 × capacidade=30 | `matched`/alocação válida — nunca auto-expande para 30 |
+| movimento SD3 linkado a SBC | dedup `D3_NUMSEQ` — contado uma vez |
+| já devolvido=10 | sugestão restante reduz 10 — feeder nunca recolhe o retornado |
+| saldo-99 indisponível | `unavailable`/`STOCK_UNAVAILABLE` — nunca zero implícito |
+| capacidade ERP sem trace FS | nenhum CT atribuído — destino só via trace operacional |
 
 ## 26. Audit/observability
 

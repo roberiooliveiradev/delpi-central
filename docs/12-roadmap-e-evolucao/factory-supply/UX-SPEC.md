@@ -207,12 +207,14 @@ Visão de antecipação: necessidades planejadas da próxima janela/turno/dia �
 
 **`RETURNS_WORKSPACE = HYBRID`** — tabela default + quadro opcional por dimensão `return` (A recolher / Em retorno / Recebimento / Concluído — derivados).
 
-`RETURN_POLICY = HYBRID` (P2): a UI suporta os três casos sem inventar cálculo — a quantidade sempre vem do backend:
+`RETURN_POLICY = HYBRID` + `AUTOMATIC_RETURN_SUGGESTION = YES` (P2-B `FROZEN`, TC §53.7): a quantidade sempre vem do backend:
 
-- sugestão calculada pelo backend → "Sugerido: N" (rótulo de sugestão, nunca "esperado" autoritativo);
-- quantidade esperada/confirmável → "Esperado: N";
+- sugestão calculada → "Sugestão de devolução: N" (rótulo de sugestão, nunca "saldo oficial"/"quantidade garantida"/"esperado" autoritativo);
+- quantidade confirmada pelo workflow → "Esperado: N" / "Devolvido: N";
+- detalhe por item/CT — entregue · consumido reconhecido · perdas/refugos · já devolvido · **sugestão restante** · ERP global (`MAX(0, stock99−empenho)`);
+- status de reconciliação → `Consistente` / `Divergente` / `Evidência incompleta` / `Indisponível` — divergente expõe ambos os lados (sugestão operacional × capacidade ERP), nunca ajusta valores silenciosamente;
 - não estabelecida → "Quantidade a devolver: não estabelecida" (badge neutro; estados `*_UNKNOWN` do §53 têm label honesto), aceita registrar `returned_qty` factual;
-- reconciliação rotulada como manual/declarativa enquanto a fórmula não existe (P2-B).
+- já-devolvido reduz a sugestão restante — o feeder nunca é instruído a recolher o que já voltou.
 
 Campos: CT origem, material, unidade, esperado?, devolvido, destino de retorno, estado de coleta/recebimento, evidência ERP. Destino não resolvido = exceção visível.
 

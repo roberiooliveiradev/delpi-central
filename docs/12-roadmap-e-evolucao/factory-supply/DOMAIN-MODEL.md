@@ -334,14 +334,16 @@ Exceções podem ser **por item** (material-específicas) ou **por missão**:
 `TARGET` conceitual — nada de devolução está implementado hoje.
 
 ```text
-RETURN_POLICY           = HYBRID            — decisão Product Master (FS-C0.P2)
-RETURN_FORMULA_STATUS   = PARTIAL           — evidência inventariada (§ 15-A); fórmula não congelada
-SUGGESTED_RETURN_QTY    ≠ CONFIRMED_RETURN_QTY
+RETURN_POLICY                = HYBRID         — decisão Product Master (FS-C0.P2)
+AUTOMATIC_RETURN_SUGGESTION  = YES            — decisão Product Master (FS-C0.P2-B)
+RETURN_FORMULA_STATUS        = READY          — modelo 3-camadas congelado (§15-B)
+SUGGESTED_RETURN_QTY         ≠ CONFIRMED_RETURN_QTY ≠ ERP_GLOBAL_RETURN_CAPACITY ≠ ALREADY_RETURNED_QTY
+POWER_BI_BASELINE            = PROVEN_REFERENCE_IMPLEMENTATION — MAX(0, stock99 − open_commitment)
 ```
 
 **Política híbrida (P2):** Factory Supply **pode** calcular uma *sugestão* de quantidade de devolução a partir de fatos autoritativos de produção/consumo/perda — explicável e rotulada como sugestão. A sugestão **não** é verdade de estoque: a confirmação da devolução continua reconciliada contra evidência autoritativa de saldo/movimento ERP. Apontamentos de produção/refugo/setup/perda acontecem no TOTVS — Factory Supply nunca os escreve.
 
-**Evidência inventariada (FS-C0.P2-A, contrato em Doc 4/5 §53):** `SUGGESTED` candidatos com contrato `PROVEN` — saldo no ponto de uso (SB2 `B2_LOCAL=99`), empenho em aberto/consumido derivado (SD4 `QTDEORI−QUANT`), perdas de material (SBC `BC_TIPO=R|S` por OP/material), transferências 01↔99 (SD3 `CF=DE0/RE0`), entrada de produção (SD3 `CF=PR0` espelha apontamento SH6). **Pendências que impedem congelar a fórmula:** sobreposição entre perda SBC e baixa SD4/SD3 não provada (risco de dupla subtração); semântica `R` vs `S` vs refugo material × produto-acabado mapeada em tipo, mas causalidade com empenho é `UNKNOWN`; correlação SD3↔missão é por coincidência de atributos (§16); nenhum fato prova quantidade no **grão destino/feeder** — tudo no máximo OP/operação/material.
+**Evidência inventariada (FS-C0.P2-A + verificação P2-A.1 com dados TOTVS, contrato em Doc 4/5 §53):** `SUGGESTED` candidatos `PROVEN` — saldo no ponto de uso (SB2 `B2_LOCAL=99`), consumo de empenho derivado (SD4 `QTDEORI−QUANT`), perdas de material (SBC `BC_TIPO` — só `R` ocorre; `S` sem registros), abastecimento/devolução 01↔99 (par SD3 `999/RE4`@origem + `499/DE*`@destino, mesmo `D3_DOC`, sem OP), entrada de produção (SD3 `010/PR0` espelha SH6), perda física = saída `999/RE0`@99 linkada `BC_SEQSD3=D3_NUMSEQ`. **Resolvido em P2-A.1:** SBC não reduz `D4_QUANT` (perda é fora do empenho) e SBC↔SD3-saída é o **mesmo fato físico** (dedup via `NUMSEQ`). **Congelado em P2-B (§15-B):** fonte de consumo preferida = **físico SD3** `TM999`+OP excluindo SBC para armazém 99 (SD4 segue como contexto de empenho, não estoque); CT/destino só via trace FS; capacidade global `MAX(0, stock99−empenho)` = reconciliação.
 
 O que o domínio modela **independente** da fórmula, **por item**:
 
@@ -356,11 +358,11 @@ Fatos autoritativos candidatos (fonte única = api-delpi; nunca TOTVS direto):
 
 | Fato candidato | Fonte TOTVS | Contrato api-delpi | Grão provável | Confiança |
 |---|---|---|---|---|
-| `delivered_to_factory_qty` | SD3 transferência `CF=DE0/RE0`, `D3_LOCAL` 01→99 | `get_product_internal_movements` (por produto; `op`/`location`/`tm` opcionais) | filial+material+janela(+OP se `D3_OP` preenchido) | Média — correlação por atributos (§16) |
-| `actual_consumed_qty` | SD4 `QTDEORI − QUANT` (>0) — **derivado do empenho**, não registro físico | `list_production_order_operation_materials(_batch)`, `get_production_consumption_*` | filial+OP+operação+material | Alta como "empenho baixado"; físico real `UNKNOWN` |
-| `authoritative_loss_qty` | SBC `BC_TIPO='R'` (refugo) — perda de material (`B1_TIPO=MP`) | `get_production_losses_records` (`loss_type`) | filial+OP(+operação)+material | Alta |
-| `authoritative_scrap_qty` | SBC `BC_TIPO='S'` | mesmo contrato, `loss_type=scrap` | idem | Alta |
-| `authoritative_returned_qty` | SD3 transferência 99→01 | `get_product_internal_movements` | filial+material+janela | Média |
+| `delivered_to_factory_qty` | SD3 **par**: saída `999/RE4`@01 + entrada `499/DE*`@99 (mesmo `D3_DOC`, `D3_OP` vazio) | `get_product_internal_movements` (por produto; `op`/`location`/`tm` opcionais) | filial+material+data — **sem OP** | Alta — correlação a missão por atributos+FS-trace (§16) |
+| `actual_consumed_qty` | SD4 `QTDEORI − QUANT` (empenho baixado) **ou** `Σ SD3 TM999 + OP` excluindo `NUMSEQ ∈ SBC` — provada equivalência parcial (escolha P2-B) | `list_production_order_operation_materials(_batch)`, `get_production_consumption_*` | filial+OP+operação+material | Alta |
+| `authoritative_loss_qty` | SBC `BC_TIPO='R'` — único tipo populado; perda de material MP; movimento físico = saída `999/RE0`@99 (`BC_SEQSD3=D3_NUMSEQ` — mesmo fato, não somar) | `get_production_losses_records` (`loss_type`) | filial+OP(+operação)+material | Alta |
+| `authoritative_scrap_qty` | SBC `BC_TIPO='S'` — **0 ocorrências** desde 2025 | mesmo contrato, `loss_type=scrap` | idem | n/a (tipo existe, sem dados) |
+| `authoritative_returned_qty` | SD3 **par**: saída `999/RE4`@99 + entrada `499/DE*`@01 (mesmo `D3_DOC`, `D3_OP` vazio) | `get_product_internal_movements` | filial+material+data — **sem OP** | Alta — correlação por atributos |
 | `current_factory_stock_qty` | SB2 `B2_LOCAL='99'` | `get_product_stock` / `get_supplies_stock_balances_items` (`warehouse`) | filial+material | Alta — mas saldo **corrente**, não por missão/OP |
 | produzida PA (contexto) | SH6 `H6_QTDPROD` última operação = origem do `PR0` | `list_production_appointments*`, `pcp-orders` (`C2_QUANT`/`C2_QUJE`) | filial+OP+operação | Alta — **nunca** subtrair de material sem BOM |
 
@@ -368,7 +370,28 @@ Fatos autoritativos candidatos (fonte única = api-delpi; nunca TOTVS direto):
 
 **Estados de sugestão quando evidência falta** — nunca silenciar como zero: `CONSUMPTION_UNKNOWN`, `LOSS_UNKNOWN`, `MOVEMENT_UNKNOWN`, `STOCK_UNAVAILABLE`, `CORRELATION_AMBIGUOUS`, `UNIT_DIVERGENCE` (já `FROZEN` Doc 4/5 §51).
 
-**Grão:** nenhum fato prova quantidade no grão **destino/feeder** — sugestão operaria no grão missão/OP+material; rateio por item/destino seria regra própria, dependente da decisão P2-B.
+**Grão:** fatos ERP param em `filial+material+OP` (consumo/perda) ou `filial+material+data` (transferências/devoluções — `D3_OP` vazio nos pares RE4/DE*). Nenhum fato prova grão **destino/feeder**: esse grão é do trace operacional FS (`delivered_qty`, `destination_ct`, handoffs) — não é shadow inventory, é traço operacional (§13). **Congelado P2-B:** CT/destino é alocado **somente** pelo trace FS; capacidade global ERP nunca atribui CT.
+
+### 15-B. Return model freeze (FS-C0.P2-B — `FROZEN`)
+
+**Três camadas conceituais** — nenhuma substitui outra:
+
+| Camada | Owner | Papel |
+|---|---|---|
+| **L1 FS operational trace** | Factory Supply | missão/item, CT/destino, `delivered_qty`, `returned_qty`, handoffs, timestamps, atores — responde *onde* o material foi entregue |
+| **L2 TOTVS authoritative evidence** | api-delpi (read-only) | SD3 01→99 / consumo físico `TM999`+OP / SBC perda / SD3 99→01 / SD4 empenho / SB2 99 — preferência a evidência **física SD3** para armazém 99; SD4 = contexto de empenho, **não** verdade de estoque |
+| **L3 ERP global return capacity** | api-delpi (derivado) | `ERP_GLOBAL_RETURN_CAPACITY = MAX(0, warehouse_99_stock − open_commitment)` — baseline Power BI `PROVEN` (`SD4.D4_QUANT`, `SB2` 99): quanto do material excede empenhos no 99; **nunca** atribui CT/missão |
+
+**Conceitos congelados (distintos, com unidade, sem conversão automática):**
+
+- `suggested_return_qty` — `OPERATIONAL_RETURN_SUGGESTION` por item/CT: `delivered(FS) − consumed+loss compatíveis − already_returned`; label "Sugestão de devolução";
+- `erp_global_return_capacity` — reconciliação global por material (L3);
+- `confirmed_return_qty` — fato do workflow de retorno FS + evidência ERP posterior;
+- `already_returned_qty` — devoluções 99→01 já observadas/recebidas, reduz a sugestão.
+
+**Reconciliação** (Σ sugestões do material vs `erp_global_return_capacity`): estados `matched` / `divergent` / `incomplete_evidence` / `unavailable` — vocabulário de evidência §16/§51, sem enum redundante. Divergente: expõe ambos os lados; **nunca** reduz CTs nem infla capacidade silenciosamente. `suggestion < capacity` = alocação válida, não expande. Evidência ausente → `*_UNKNOWN`, nunca zero.
+
+**Dedup (P2-A.1):** SBC e seu SD3 linkado (`NUMSEQ`) = um fato; SD4-derivado e SD3-`TM999`+OP = escolher uma fonte; `QTDPROD`/`PR0` = PA, fora da fórmula de material; setup/HZA = `TIME_ONLY`.
 
 ## 16. ERP correlation
 
