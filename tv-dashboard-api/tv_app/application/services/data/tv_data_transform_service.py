@@ -385,9 +385,14 @@ def _require_step_column(
     """Paridade com ``_require_column`` do executor M; aceita chaves só em rows."""
     if column in columns or column in _row_keys(rows):
         return
+    available = tuple(
+        list(columns) + sorted(_row_keys(rows) - set(columns))
+    )[:30]
     raise MExecutionError(
         "m.unknown_column",
         f'A coluna "{column}" não existe na etapa {operation}.',
+        column=column,
+        available_columns=available,
     )
 
 
@@ -510,6 +515,8 @@ def apply_data_transform_steps(
                     "m.unknown_column",
                     f'addColumn "{name}" referencia coluna inexistente: '
                     + ", ".join(missing),
+                    column=missing[0],
+                    available_columns=tuple(columns)[:30],
                 )
             columns.append(name)
             next_rows = []
@@ -694,21 +701,28 @@ def apply_data_transform_steps(
             _require_step_column(left_key, columns, rows, "merge.leftKey")
             other_cols = [str(c) for c in (other.get("columns") or [])]
             other_rows = [dict(r) for r in (other.get("rows") or []) if isinstance(r, dict)]
-            if right_key not in other_cols and right_key not in _row_keys(other_rows):
+            other_known = set(other_cols) | _row_keys(other_rows)
+            other_available = tuple(
+                list(other_cols) + sorted(other_known - set(other_cols))
+            )[:30]
+            if right_key not in other_known:
                 raise MExecutionError(
                     "m.unknown_column",
                     f'A coluna "{right_key}" não existe na fonte "{source_id}".',
+                    column=right_key,
+                    available_columns=other_available,
                 )
             take_cols = [str(c) for c in (step.get("columns") or []) if str(c).strip()]
             if not take_cols:
                 take_cols = [c for c in other_cols if c != right_key]
             else:
-                other_known = set(other_cols) | _row_keys(other_rows)
                 for col in take_cols:
                     if col not in other_known:
                         raise MExecutionError(
                             "m.unknown_column",
                             f'A coluna "{col}" não existe na fonte "{source_id}".',
+                            column=col,
+                            available_columns=other_available,
                         )
             collisions = [
                 col for col in take_cols if col in columns or col in _row_keys(rows)
@@ -973,7 +987,12 @@ def _column_list(value: Any, operation: str) -> list[str]:
 
 def _require_column(table: dict[str, Any], column: str, operation: str) -> None:
     if column not in table["columns"]:
-        raise MExecutionError("m.unknown_column", f'A coluna "{column}" não existe em {operation}.')
+        raise MExecutionError(
+            "m.unknown_column",
+            f'A coluna "{column}" não existe em {operation}.',
+            column=column,
+            available_columns=tuple(str(c) for c in table["columns"])[:30],
+        )
 
 
 def _aggregate_m(values: list[Any], function_name: str, culture: str) -> Any:
@@ -1589,12 +1608,18 @@ def _composition_source_table(data: Any) -> dict[str, Any] | None:
     ``coerce_payload_to_table`` (listas, séries, envelopes).
     """
     raw = unwrap_operational_data(data)
-    if (
-        isinstance(raw, dict)
-        and raw
-        and all(not isinstance(value, (dict, list)) for value in raw.values())
-    ):
-        return {"columns": [str(k) for k in raw], "rows": [dict(raw)]}
+    if isinstance(raw, dict) and raw:
+        has_scalar = any(
+            not isinstance(value, (dict, list)) for value in raw.values()
+        )
+        has_list = any(isinstance(value, list) for value in raw.values())
+        # Objeto de campos (ex.: ``{"rol": 80, "goal": {...}}``) → linha única
+        # larga, permitindo merge/fórmula por nome de campo; campos aninhados
+        # de metadata (ex.: ``goal``) viajam como células opacas sem impedir o
+        # acesso aos campos autoritativos. Valores-lista seguem
+        # ``coerce_payload_to_table`` (rotas tabulares/séries).
+        if has_scalar and not has_list:
+            return {"columns": [str(k) for k in raw], "rows": [dict(raw)]}
     return coerce_payload_to_table(data)
 
 
@@ -1652,7 +1677,13 @@ def apply_data_transform_to_payload_result(
             deadline_ms=deadline_ms,
         )
     except MExecutionError as exc:
-        runtime_error = MRuntimeError(exc.step_name, exc.code, str(exc))
+        runtime_error = MRuntimeError(
+            exc.step_name,
+            exc.code,
+            str(exc),
+            column=exc.column,
+            available_columns=exc.available_columns,
+        )
         return {
             "data": data,
             "applied": False,

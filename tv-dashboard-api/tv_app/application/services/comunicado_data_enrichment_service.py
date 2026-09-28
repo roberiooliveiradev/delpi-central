@@ -1937,6 +1937,7 @@ class ComunicadoDataEnrichmentService:
                 "message": resolved["error"],
                 "stepName": first_error.get("stepName") or None,
                 "column": first_error.get("column") or None,
+                "availableColumns": list(first_error.get("availableColumns") or []),
             }
             resolved["runtimeErrors"] = errors
 

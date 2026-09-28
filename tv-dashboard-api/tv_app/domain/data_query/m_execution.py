@@ -13,6 +13,7 @@ class MRuntimeError:
     message: str
     row_index: int | None = None
     column: str | None = None
+    available_columns: tuple[str, ...] = ()
 
     def to_dict(self) -> dict[str, Any]:
         payload: dict[str, Any] = {
@@ -24,6 +25,8 @@ class MRuntimeError:
             payload["rowIndex"] = self.row_index
         if self.column is not None:
             payload["column"] = self.column
+        if self.available_columns:
+            payload["availableColumns"] = list(self.available_columns)
         return payload
 
 
@@ -38,7 +41,17 @@ class MCellError:
 class MExecutionError(ValueError):
     """Falha estrutural que interrompe a etapa atual."""
 
-    def __init__(self, code: str, message: str, *, step_name: str = "") -> None:
+    def __init__(
+        self,
+        code: str,
+        message: str,
+        *,
+        step_name: str = "",
+        column: str | None = None,
+        available_columns: tuple[str, ...] = (),
+    ) -> None:
         super().__init__(message)
         self.code = code
         self.step_name = step_name
+        self.column = column
+        self.available_columns = available_columns

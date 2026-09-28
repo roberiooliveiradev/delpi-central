@@ -1319,6 +1319,15 @@ class PresentationPatchService:
                 "blockId": block_id,
                 "errorCode": code,
             }
+            if isinstance(transform_error, dict):
+                if transform_error.get("stepName"):
+                    details["stepName"] = transform_error["stepName"]
+                if transform_error.get("column"):
+                    details["column"] = transform_error["column"]
+                if transform_error.get("availableColumns"):
+                    details["availableColumns"] = list(
+                        transform_error["availableColumns"]
+                    )
             dep_id = self._merge_dependency_ref(block)
             if dep_id:
                 details["dependencySourceId"] = dep_id

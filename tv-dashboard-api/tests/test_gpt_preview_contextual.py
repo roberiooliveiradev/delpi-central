@@ -54,9 +54,29 @@ def _gateway(payload_by_sid: dict[str, dict], fails: dict[str, Exception] | None
 
 
 def _rol_payload(value: float) -> dict:
+    """Shape fiel de get_commercial_rol_summary com meta SI anexada.
+
+    goal é um objeto aninhado — a presença dele não pode rebaixar os
+    campos autoritativos para a tabela de apresentação campo/valor.
+    """
     return {
-        "meta": {"shape": "scalar"},
-        "data": {"rol": value},
+        "meta": {"shape": "scalar", "entity": "commercial_rol_summary"},
+        "data": {
+            "branch": "01",
+            "start_date": "2025-01-01",
+            "end_date": "2025-12-31",
+            "rol": value,
+            "comparable_goal": 1000000.0,
+            "rol_target_pct": 88.0,
+            "goal_value": 1000000.0,
+            "reference_goal": 950000.0,
+            "goal": {
+                "goal_label": "Meta anual",
+                "comparable_goal": 1000000.0,
+                "goal_periodicity": "monthly",
+                "goal_scope": {"branch": "01"},
+            },
+        },
         "route": {"label": "ROL", "valueFields": ["rol"]},
     }
 
@@ -715,3 +735,109 @@ class TestVistaRealCaseSameBranch:
         presets = {str(p.get("dateRangePreset") or "") for p in gateway.calls}
         assert "same_period_previous_year" in presets
         assert "this_year" in presets
+
+
+# ---------------------------------------------------------------------------
+# Scalar multi-field payloads com metadata aninhada + precedência de preset
+# ---------------------------------------------------------------------------
+
+
+class TestScalarCompositionSourceTable:
+    """Dict escalar + objetos aninhados de metadata deve virar linha larga."""
+
+    def test_scalar_payload_with_nested_metadata_keeps_fields(self):
+        """Genérico: metric_a/metric_b + objeto aninhado → rename funciona."""
+        from tv_app.application.services.data.tv_data_transform_service import (
+            apply_data_transform_to_payload_result,
+        )
+
+        payload = {
+            "metric_a": 100,
+            "metric_b": 80,
+            "details": {"unit": "BRL", "scope": {"branch": "01"}},
+        }
+        result = apply_data_transform_to_payload_result(
+            payload,
+            {"steps": [{"op": "rename", "from": "metric_a", "to": "metric_prev"}]},
+        )
+        assert result["applied"] is True
+        table = result["table"]
+        assert "metric_prev" in table["columns"]
+        assert "metric_b" in table["columns"]
+        assert table["rows"][0]["metric_prev"] == 100
+
+    def test_list_payload_still_uses_tabular_path(self):
+        """Dict com lista continua indo para coerce (rotas tabulares)."""
+        from tv_app.application.services.data.tv_data_transform_service import (
+            apply_data_transform_to_payload_result,
+        )
+
+        payload = {"items": [{"sku": "A", "qty": 3}], "total": 1}
+        result = apply_data_transform_to_payload_result(
+            payload,
+            {"steps": [{"op": "rename", "from": "qty", "to": "qty_prev"}]},
+        )
+        assert result["applied"] is True
+        assert "qty_prev" in result["table"]["columns"]
+
+    def test_unknown_column_error_lists_available_columns(self):
+        """m.unknown_column deve carregar column + availableColumns."""
+        from tv_app.application.services.data.tv_data_transform_service import (
+            apply_data_transform_to_payload_result,
+        )
+
+        result = apply_data_transform_to_payload_result(
+            {"metric_a": 100, "metric_b": 80},
+            {"steps": [{"op": "rename", "from": "ghost", "to": "x"}]},
+        )
+        assert result["failed"] is True
+        sample = (result.get("runtimeErrors") or {}).get("sample") or []
+        err = sample[0]
+        assert err["code"] == "m.unknown_column"
+        assert err["column"] == "ghost"
+        assert "metric_a" in err["availableColumns"]
+        assert "metric_b" in err["availableColumns"]
+
+
+class TestExplicitPresetPrecedence:
+    """Preset explícito no bloco vence default de playlist."""
+
+    def test_explicit_preset_beats_playlist_default(self):
+        """dateRangePreset explícito não pode ser rebaixado pelo default."""
+        gateway = MagicMock()
+        calls: list[dict] = []
+
+        def _fetch(operation_id, params=None, **kw):
+            calls.append(dict(params or {}))
+            return _rol_payload(4399153.22)
+
+        gateway.fetch_by_operation_id.side_effect = _fetch
+        catalog = TvDataRouteCatalogService()
+        enrichment = ComunicadoDataEnrichmentService(
+            catalog=catalog, gateway=gateway
+        )
+        block = {
+            "id": "src-preset",
+            "type": "data_source",
+            "frame": {"x": 4, "y": 4, "w": 20, "h": 8},
+            "dataBinding": {
+                "operationId": _OP,
+                "params": {
+                    "branch": "01",
+                    "customer_segment": "weg",
+                    "dateRangePreset": "same_period_previous_year",
+                },
+            },
+        }
+        cfg = {"version": 5, "blocks": [block]}
+        enriched = enrichment.enrich_blocks(
+            [block],
+            cfg=cfg,
+            authorization=None,
+            playlist_defaults={"dateRangePreset": "this_month_full"},
+        )
+        assert calls, "fetch deveria ter sido chamado"
+        sent = calls[0]
+        assert sent.get("dateRangePreset") == "same_period_previous_year"
+        resolved = enriched[0].get("resolved") or {}
+        assert resolved.get("error") in (None, "")
