@@ -51,11 +51,10 @@ def _actions_instructions_block() -> str:
 # ---------------------------------------------------------------------------
 
 
-def test_mcp_surface_still_exactly_nine():
+def test_mcp_surface_still_exactly_eight():
     tools = asyncio.run(create_mcp_server().list_tools())
     assert {t.name for t in tools} == set(MCP_TOOL_NAMES)
-    assert len(tools) == 9
-    assert TOOL_CLASS["inspect_data_source"] == "READ"
+    assert len(tools) == 8
     assert TOOL_CLASS["prepare_change"] == "PREPARE"
     assert TOOL_CLASS["commit_proposal"] == "ACT"
 
@@ -70,11 +69,8 @@ def test_surface_parity_map_matches_registered_tools():
     parity = intel["surface_parity"]
     assert parity["principle"] == "SAME_DISPATCH_BOTH_TRANSPORTS"
     mapping = parity["parity_map"]
-    # Every MCP name in the map must be a real registered tool; MCP-only
-    # additions are declared in `mcp_only` (no Actions counterpart required).
-    mcp_only = set(parity.get("mcp_only") or [])
-    assert set(mapping.values()) | mcp_only == set(MCP_TOOL_NAMES)
-    assert mcp_only.isdisjoint(set(mapping.values()))
+    # Every MCP name in the map must be a real registered tool.
+    assert set(mapping.values()) == set(MCP_TOOL_NAMES)
     assert len(mapping) == 8
     # Canonical Actions op names expected on the left side.
     assert set(mapping.keys()) == {
@@ -218,12 +214,12 @@ def test_mcp_sections_projected_into_agent_directives():
     directives = VistaAgentIntelligenceService.agent_directives()
     assert "write_flow_mcp" in directives
     assert "surface_parity" in directives
-    # Parity map survives compaction intact: 8 Actions↔MCP mappings plus the
-    # declared MCP-only additions cover the registered tool set.
+    # Parity map survives compaction intact: 8 Actions↔MCP mappings cover the
+    # registered tool set.
     parity = directives["surface_parity"]
     mapping = parity["parity_map"]
     assert len(mapping) == 8
-    assert set(mapping.values()) | set(parity.get("mcp_only") or []) == set(MCP_TOOL_NAMES)
+    assert set(mapping.values()) == set(MCP_TOOL_NAMES)
     clear_vista_agent_intelligence_cache()
 
 
@@ -243,7 +239,6 @@ def test_agent_directives_mcp_primary_tool_names():
         "list_playlists",
         "search_data_routes",
         "inspect_data_model",
-        "inspect_data_source",
         "preview_data_model",
         "prepare_change",
         "commit_proposal",

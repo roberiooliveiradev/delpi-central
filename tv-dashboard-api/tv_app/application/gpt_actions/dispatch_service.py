@@ -46,7 +46,7 @@ def _typed_ops(ops: list[Any] | None) -> list[dict[str, Any]]:
     return out
 
 
-# inspect_data_source response bounds — bounded observability, never a data dump.
+# focused data_source inspection bounds — bounded observability, never a dump.
 _INSPECT_MAX_COLUMNS = 40
 _INSPECT_MAX_RESULT_ROWS = 10
 _INSPECT_MAX_SAMPLE_FIELDS = 20
@@ -276,6 +276,9 @@ class GptActionsDispatchService:
         object_types: str | None = None,
         block_cursor: str | int | None = None,
         block_limit: int | None = None,
+        data_source_id: str | None = None,
+        include_runtime: bool = False,
+        authorization: str | None = None,
     ) -> dict[str, Any]:
         from tv_app.application.gpt_actions.response_compact import (
             exceeds_actions_budget,
@@ -401,8 +404,28 @@ class GptActionsDispatchService:
             object_types=object_types,
         )
 
+        # Inspeção focada de data_source legado: bounded à fonte + deps dela.
+        # Sem data_source_id o comportamento do contexto é inalterado;
+        # include_runtime sem fonte focada é ignorado (nunca runtime do slide
+        # inteiro por acidente).
+        focused_did = str(data_source_id or "").strip()
+        focused_payload: dict[str, Any] | None = None
+        if focused_did:
+            focused_payload = self._inspect_data_source(
+                slide_row=self._find_data_source_host_slide(
+                    slides,
+                    data_source_id=focused_did,
+                    preview_slide_id=preview_slide_id,
+                ),
+                data_source_id=focused_did,
+                user=user,
+                authorization=authorization,
+                playlist_defaults=programming_defaults,
+                include_runtime=include_runtime,
+            )
+
         if focused_scope:
-            return project_editor_focus_context(
+            focused_ctx = project_editor_focus_context(
                 playlist=playlist if isinstance(playlist, dict) else {},
                 slides_index=slide_index,
                 detail_slide=detail_slide if isinstance(detail_slide, dict) else None,
@@ -415,6 +438,9 @@ class GptActionsDispatchService:
                 block_index=block_index,
                 object_matches=object_matches,
             )
+            if focused_payload is not None:
+                focused_ctx["focusedDataSource"] = focused_payload
+            return focused_ctx
 
         out: dict[str, Any] = {
             "scope": "full",
@@ -516,6 +542,9 @@ class GptActionsDispatchService:
                 title=str(slide.get("title") or "") or None,
             )
             out["slidePreview"] = slide_preview
+
+        if focused_payload is not None:
+            out["focusedDataSource"] = focused_payload
 
         # Custom GPT Actions rejects oversized tool responses (ResponseTooLargeError).
         # Auto-downgrade keeps dataSources[] + blockIndex so existing-object mutation can proceed.
@@ -1377,18 +1406,75 @@ class GptActionsDispatchService:
             "runtime": runtime,
         }
 
-    def inspect_data_source(
+    @staticmethod
+    def _find_data_source_host_slide(
+        slides: Any,
+        *,
+        data_source_id: str,
+        preview_slide_id: str | None,
+    ) -> dict[str, Any]:
+        """Slide que hospeda o data_source pedido — canônico: persisted blocks,
+        nunca inferência por label/nome. Quando preview_slide_id é passado, a
+        fonte precisa existir nessa tela; caso contrário varre os slides."""
+
+        def _hosts(slide: dict[str, Any]) -> bool:
+            cfg = slide.get("nativeConfig")
+            blocks = (
+                cfg.get("blocks") if isinstance(cfg, dict) else []
+            ) or []
+            return any(
+                isinstance(b, dict)
+                and str(b.get("type") or "") == "data_source"
+                and str(b.get("id") or "") == data_source_id
+                for b in blocks
+            )
+
+        wanted = str(preview_slide_id or "").strip()
+        if wanted:
+            slide = next(
+                (
+                    s
+                    for s in slides
+                    if isinstance(s, dict) and str(s.get("id") or "") == wanted
+                ),
+                None,
+            )
+            if slide is None:
+                raise GptActionsError(
+                    "Tela não encontrada.",
+                    code="RESOURCE_NOT_FOUND",
+                    status_code=404,
+                )
+            if _hosts(slide):
+                return slide
+        else:
+            slide = next(
+                (s for s in slides if isinstance(s, dict) and _hosts(s)),
+                None,
+            )
+            if slide is not None:
+                return slide
+        raise GptActionsError(
+            f'Data source "{data_source_id}" não encontrado.',
+            code="RESOURCE_NOT_FOUND",
+            status_code=404,
+            details={"dataSourceId": data_source_id},
+        )
+
+    def _inspect_data_source(
         self,
         *,
-        user: Any,
-        playlist_id: str,
-        slide_id: str,
+        slide_row: dict[str, Any],
         data_source_id: str,
+        user: Any,
         authorization: str | None,
+        playlist_defaults: dict[str, Any] | None,
         include_runtime: bool = False,
     ) -> dict[str, Any]:
-        """Inspect persistido de um data_source legado — definição, transform,
-        dependências, consumidores e evidência de runtime. Somente leitura."""
+        """Inspeção focada de um data_source legado do slide — definição,
+        transform, dependências, consumidores e evidência de runtime.
+        Somente leitura; chamada pelo modo focado de `get_playlist_context`
+        (AuthZ + resolução de playlist/slide já verificados pelo caller)."""
         from tv_app.application.services.data.m_query.m_query_dependency_service import (
             MQueryDependencyService,
         )
@@ -1396,40 +1482,7 @@ class GptActionsDispatchService:
             collect_source_consumer_field_refs,
         )
 
-        assert_permission(user, TV_READ)
-        pid_raw = str(playlist_id or "").strip()
-        sid_raw = str(slide_id or "").strip()
         did = str(data_source_id or "").strip()
-        if not pid_raw or not sid_raw or not did:
-            raise GptActionsError(
-                "playlistId, slideId e dataSourceId são obrigatórios.",
-                code="INVALID_CHANGE",
-                status_code=422,
-            )
-        try:
-            pid = UUID(pid_raw)
-            sid = UUID(sid_raw)
-        except ValueError as exc:
-            raise GptActionsError(
-                "playlistId/slideId inválidos.",
-                code="INVALID_CHANGE",
-                status_code=422,
-            ) from exc
-        access = self._access.resolve(pid, user)
-        if not access.can_read:
-            raise GptActionsError(
-                "Programação não encontrada.",
-                code="RESOURCE_NOT_FOUND",
-                status_code=404,
-            )
-        try:
-            slide_row = self._writes.get_slide(sid, playlist_id=pid)
-        except Exception as exc:
-            raise GptActionsError(
-                "Tela não encontrada.",
-                code="RESOURCE_NOT_FOUND",
-                status_code=404,
-            ) from exc
         cfg = (
             slide_row.get("nativeConfig")
             if isinstance(slide_row.get("nativeConfig"), dict)
@@ -1551,7 +1604,6 @@ class GptActionsDispatchService:
 
         runtime: dict[str, Any] = {"state": "not_executed"}
         if include_runtime:
-            defaults = (access.playlist or {}).get("dataDefaults")
             closure_ids = {did, *dep_ids}
             closure = [
                 dict(b)
@@ -1564,9 +1616,7 @@ class GptActionsDispatchService:
                     native_config=cfg,
                     authorization=authorization,
                     user=user,
-                    playlist_defaults=(
-                        defaults if isinstance(defaults, dict) else None
-                    ),
+                    playlist_defaults=playlist_defaults,
                 )
             except Exception as exc:  # noqa: BLE001 — runtime é best-effort
                 enriched = []
@@ -1595,9 +1645,7 @@ class GptActionsDispatchService:
                 )
 
         return {
-            "playlistId": pid_raw,
-            "slideId": sid_raw,
-            "revision": (access.playlist or {}).get("revision"),
+            "slideId": str(slide_row.get("id") or ""),
             "dataSourceId": did,
             "source": source,
             "transform": {

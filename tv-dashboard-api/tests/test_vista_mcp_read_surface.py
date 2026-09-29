@@ -123,7 +123,7 @@ def _test_dispatch(**overrides) -> GptActionsDispatchService:
 # ---------------------------------------------------------------------------
 
 
-def test_tools_list_exactly_nine_governed_tools():
+def test_tools_list_exactly_eight_governed_tools():
     tools = asyncio.run(create_mcp_server().list_tools())
     names = {t.name for t in tools}
     assert names == set(MCP_TOOL_NAMES)
@@ -133,12 +133,12 @@ def test_tools_list_exactly_nine_governed_tools():
         "get_catalog",
         "search_data_routes",
         "inspect_data_model",
-        "inspect_data_source",
         "preview_data_model",
         "prepare_change",
         "commit_proposal",
     }
-    assert len(tools) == 9
+    assert len(tools) == 8
+    assert "inspect_data_source" not in names
 
 
 def test_no_native_op_or_legacy_tools_registered():
@@ -153,7 +153,7 @@ def test_no_native_op_or_legacy_tools_registered():
 def test_tool_classification_read_prepare_act():
     assert TOOL_CLASS["prepare_change"] == "PREPARE"
     assert TOOL_CLASS["commit_proposal"] == "ACT"
-    assert sum(1 for v in TOOL_CLASS.values() if v == "READ") == 7
+    assert sum(1 for v in TOOL_CLASS.values() if v == "READ") == 6
     assert set(TOOL_CLASS.keys()) == set(MCP_TOOL_NAMES)
 
 

@@ -25,7 +25,6 @@ from .tool_bridge import (
     tool_get_catalog,
     tool_get_playlist_context,
     tool_inspect_data_model,
-    tool_inspect_data_source,
     tool_list_playlists,
     tool_prepare_change,
     tool_preview_data_model,
@@ -182,8 +181,11 @@ def _register_read_tools(mcp: MCPServer) -> None:
         description=(
             "Retorna o contexto compacto de uma programação: identidade, "
             "telas, blocos, filtros e revisão — sem conteúdo pesado de "
-            "renderização. Requer playlist_id e permissão de leitura sobre a "
-            "programação."
+            "renderização. Opcionalmente foca uma fonte de dados legada "
+            "(data_source_id): devolve o transform persistido, dependências, "
+            "consumidores e — com include_runtime=true — effectiveParams e "
+            "resultado do runtime. Requer playlist_id e permissão de leitura "
+            "sobre a programação."
         ),
         annotations=ann,
         meta=_meta("get_playlist_context"),
@@ -226,22 +228,6 @@ def _register_read_tools(mcp: MCPServer) -> None:
         ),
         annotations=ann,
         meta=_meta("inspect_data_model"),
-    )
-
-    mcp.add_tool(
-        tool_inspect_data_source,
-        name="inspect_data_source",
-        title="Inspecionar fonte de dados legada",
-        description=(
-            "Inspeciona um data_source persistido em uma tela: binding, "
-            "transform persistido, dependências (merge/queries), consumidores "
-            "e — somente com include_runtime=true — evidência de runtime "
-            "(effectiveParams por entrada, valores de entrada do transform, "
-            "resultado transformado, transformError/runtimeErrors). "
-            "data_source_id é apenas referência — não concede permissão."
-        ),
-        annotations=ann,
-        meta=_meta("inspect_data_source"),
     )
 
     mcp.add_tool(

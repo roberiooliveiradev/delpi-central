@@ -186,9 +186,11 @@ def tool_get_playlist_context(
     slide_id: str | None = None,
     include_preview: bool = False,
     scope: str | None = None,
+    data_source_id: str | None = None,
+    include_runtime: bool = False,
 ) -> CallToolResult:
     try:
-        user, _ = _authed_context()
+        user, auth = _authed_context()
         return _ok_result(
             _dispatch.get_playlist_context(
                 user=user,
@@ -196,6 +198,9 @@ def tool_get_playlist_context(
                 include_preview=include_preview,
                 preview_slide_id=slide_id,
                 scope=scope,
+                data_source_id=data_source_id,
+                include_runtime=include_runtime,
+                authorization=auth,
             )
         )
     except Exception as e:
@@ -246,28 +251,6 @@ def tool_inspect_data_model(
         )
     except Exception as e:
         return handle_tool_error(e, tool="inspect_data_model", label="mcp tool")
-
-
-def tool_inspect_data_source(
-    playlist_id: str,
-    slide_id: str,
-    data_source_id: str,
-    include_runtime: bool = False,
-) -> CallToolResult:
-    try:
-        user, auth = _authed_context()
-        return _ok_result(
-            _dispatch.inspect_data_source(
-                user=user,
-                playlist_id=playlist_id,
-                slide_id=slide_id,
-                data_source_id=data_source_id,
-                authorization=auth,
-                include_runtime=include_runtime,
-            )
-        )
-    except Exception as e:
-        return handle_tool_error(e, tool="inspect_data_source", label="mcp tool")
 
 
 def tool_preview_data_model(
