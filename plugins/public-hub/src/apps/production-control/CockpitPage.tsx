@@ -2,9 +2,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { MouseEvent } from "react";
 import { BarChart3, Eye, ListFilter, MoreVertical, RefreshCw, Search, User } from "lucide-react";
 import {
+  fetchActiveProductionRun,
   fetchPublicMachineLoad,
   type MachineLoadOperation,
   type MachineLoadWorkCenter,
+  type ProductionRunSnapshot,
   type PublicMachineLoadPayload,
 } from "./api";
 import {
@@ -22,6 +24,7 @@ import {
   operationPendingQty,
   resolveStatus,
   WorkCenterShiftMetrics,
+  type StatusView,
 } from "./cockpitShared";
 import { OperationDetailPage } from "./OperationDetailPage";
 import { ProductionRunControls } from "./ProductionRunControls";
@@ -138,6 +141,8 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
   const [queueQuery, setQueueQuery] = useState("");
   const [hideFinished, setHideFinished] = useState(false);
   const [runUpdatedSignal, setRunUpdatedSignal] = useState(0);
+  // Run ativo no contador Pulse deste posto — decide o card "Agora nesta bancada".
+  const [counterRun, setCounterRun] = useState<ProductionRunSnapshot | null>(null);
   const [runRealtimeEvent, setRunRealtimeEvent] = useState<MachineLoadRealtimeEvent | null>(null);
   const workCenterRef = useRef(workCenter);
   workCenterRef.current = workCenter;
@@ -162,9 +167,15 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
       const generation = ++reloadGenerationRef.current;
       if (!quiet) setLoading(true);
       try {
-        const next = await fetchPublicMachineLoad(token, branch, center);
+        const [next, activeRun] = await Promise.all([
+          fetchPublicMachineLoad(token, branch, center),
+          center
+            ? fetchActiveProductionRun(token, branch, center).catch(() => null)
+            : Promise.resolve(null),
+        ]);
         if (generation !== reloadGenerationRef.current) return;
         setPayload(next);
+        setCounterRun(activeRun);
         setUpdatedAt(new Date());
         setError(null);
       } catch (err) {
@@ -280,11 +291,22 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
 
   const activeEntry = useMemo<QueueEntry | null>(() => {
     if (visibleItems.length === 0) return null;
+    // Regra: "Agora nesta bancada" é sempre a operação do run ativo no
+    // contador (Pulse/MES). Sem run ativo, cai na regra anterior — primeira
+    // operação com apontamento em produção, senão o topo da fila.
+    const counterOperation = counterRun
+      ? items.find(
+          (item) =>
+            item.production_order === counterRun.productionOrder &&
+            item.operation_code === counterRun.operationCode,
+        )
+      : null;
     const runningIndex = visibleItems.findIndex(isRunningOperation);
-    const operation = visibleItems[runningIndex >= 0 ? runningIndex : 0]!;
+    const operation =
+      counterOperation ?? visibleItems[runningIndex >= 0 ? runningIndex : 0]!;
     const position = items.findIndex((item) => operationKey(item) === operationKey(operation)) + 1;
     return { operation, position: Math.max(1, position) };
-  }, [visibleItems, items]);
+  }, [visibleItems, items, counterRun]);
 
   const upcomingEntries = useMemo(() => {
     const term = queueQuery.trim().toLowerCase();
@@ -493,6 +515,11 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
                 token={token}
                 branch={branch}
                 workCenter={workCenter}
+                counterActive={Boolean(
+                  counterRun &&
+                    counterRun.productionOrder === activeEntry.operation.production_order &&
+                    counterRun.operationCode === activeEntry.operation.operation_code,
+                )}
                 runUpdatedSignal={runUpdatedSignal}
                 runRealtimeEvent={runRealtimeEvent}
                 realtimeConnected={connected}
@@ -771,6 +798,7 @@ function ActiveNowCard({
   token,
   branch,
   workCenter,
+  counterActive = false,
   runUpdatedSignal,
   runRealtimeEvent,
   realtimeConnected,
@@ -781,6 +809,7 @@ function ActiveNowCard({
   token: string;
   branch: string;
   workCenter: string;
+  counterActive?: boolean;
   runUpdatedSignal: number;
   runRealtimeEvent: MachineLoadRealtimeEvent | null;
   realtimeConnected: boolean;
@@ -788,7 +817,17 @@ function ActiveNowCard({
   onOpenDetail: () => void;
 }) {
   const { operation } = entry;
-  const status = resolveStatus(operation);
+  const baseStatus = resolveStatus(operation);
+  // Ativa no contador mesmo sem apontamento TOTVS em aberto: ainda é a
+  // operação em produção nesta bancada.
+  const status: StatusView =
+    counterActive && baseStatus.tone !== "running"
+      ? {
+          tone: "running",
+          label: "Em produção",
+          operatorNote: baseStatus.operatorNote ?? "Contagem ativa neste posto",
+        }
+      : baseStatus;
   const pendingQty = operationPendingQty(operation);
   const { paCode, productCode, has3dModel, canOpenVisual, visualLabel, displayProductCode } =
     resolveVisualMeta(operation);

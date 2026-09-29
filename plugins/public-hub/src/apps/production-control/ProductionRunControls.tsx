@@ -71,11 +71,6 @@ export function ProductionRunControls({
   const openDowntime = run?.downtime ?? null;
   const pendingDowntime = run?.pendingDowntime ?? null;
   const downtimeUnclassified = Boolean(openDowntime && !openDowntime.confirmed);
-  // Alvo do modal: escolha manual (lista de pendências/timeline) primeiro;
-  // senão a parada aberta; senão a pendência encerrada do run ativo.
-  const modalDowntime = manualTarget?.downtime ?? openDowntime ?? pendingDowntime;
-  const autoStopped =
-    run?.status === "running" && Boolean(openDowntime ?? null);
 
   const {
     items: pendingItems,
@@ -94,6 +89,11 @@ export function ProductionRunControls({
     runId: string;
     downtime: RunDowntimeView;
   } | null>(null);
+  // Alvo do modal: escolha manual (lista de pendências/timeline) primeiro;
+  // senão a parada aberta; senão a pendência encerrada do run ativo.
+  const modalDowntime = manualTarget?.downtime ?? openDowntime ?? pendingDowntime;
+  const autoStopped =
+    run?.status === "running" && Boolean(openDowntime ?? null);
 
   const { timeline, serverNow } = useRunTimeline({
     token,
@@ -190,7 +190,6 @@ export function ProductionRunControls({
               <p className="pcp-pub__run-title">
                 {session.operatorName || session.operatorCode}
               </p>
-              <p className="pcp-pub__run-note">Sessão neste posto · contagem via Pulso</p>
             </div>
             <button
               type="button"
