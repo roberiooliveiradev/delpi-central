@@ -149,14 +149,82 @@ describe("Revision Diagnostic — realtime", () => {
   });
 });
 
+describe("Revision Diagnostic — plugin-ui adoption", () => {
+  it("seções usam TmSectionCard do kit com título + hint canônicos", () => {
+    expect(content).toMatch(/TmSectionCard/);
+    for (const title of [
+      "Problema investigado",
+      "Achados",
+      "Hipóteses",
+      "Análise causal",
+      "Evidências vinculadas",
+      "Conclusão diagnóstica",
+    ]) {
+      expect(content).toContain(`title="${title}"`);
+    }
+    // Chrome local de bloco foi removido — kit é o owner do section card.
+    expect(content).not.toMatch(/tm-diagnostic__block|tm-diagnostic__heading/);
+  });
+
+  it("empty states usam EmptyState canônico (não parágrafo local)", () => {
+    expect(content).toMatch(/EmptyState/);
+    expect(content).toMatch(/emptyStateCardBemClasses\("ds"\)/);
+    for (const message of [
+      "Nenhum achado registrado.",
+      "Nenhuma hipótese formulada.",
+      "Nenhuma relação causal registrada.",
+      "Nenhuma evidência vinculada.",
+      "Nenhuma conclusão registrada.",
+    ]) {
+      expect(content).toContain(message);
+    }
+  });
+
+  it("botões usam ActionButton do kit — chrome ds-btn removido", () => {
+    for (const source of [section, content, panel]) {
+      expect(source).not.toMatch(/ds-btn/);
+    }
+    expect(content).toMatch(/ActionButton/);
+    expect(section).toMatch(/ActionButton/);
+    expect(panel).toMatch(/ActionButton/);
+    // Hierarquia: confirmação = primary; voltar/cancelar = ghost.
+    expect(panel).toMatch(/variant="primary"[\s\S]*?Confirmando…/);
+    expect(section).toMatch(/variant="primary"[\s\S]*?Confirmar diagnóstico/);
+  });
+
+  it("forms usam primitives do kit (shell/controls nativos)", () => {
+    expect(panel).toMatch(/TmFormFieldShell/);
+    expect(panel).toMatch(/NativeSelectControl/);
+    expect(panel).toMatch(/NativeTextAreaControl/);
+    expect(panel).toMatch(/NativeCheckboxControl/);
+    expect(section).toMatch(/NativeTextAreaControl/);
+    // Review de exact_change usa o detail grid canônico.
+    expect(panel).toMatch(/TmDetailFieldGrid/);
+    expect(section).toMatch(/TmDetailFieldGrid/);
+  });
+
+  it("painel de ação renderiza dentro da section dona (inline)", () => {
+    expect(section).toMatch(/actionSlot=\{/);
+    expect(content).toMatch(/diagnosticActionFamily/);
+    expect(content).toMatch(/inlinePanel\("findings"\)/);
+    expect(content).toMatch(/inlinePanel\("hypotheses"\)/);
+    expect(content).toMatch(/inlinePanel\("causal"\)/);
+    expect(content).toMatch(/inlinePanel\("evidence"\)/);
+    expect(content).toMatch(/inlinePanel\("conclusion"\)/);
+  });
+
+  it("help nos headings via hint do SectionCard — sem HelpTooltip local duplicado", () => {
+    expect(content).not.toMatch(/import \{[^}]*HelpTooltip/);
+    expect(content).toMatch(/hint=/);
+  });
+});
+
 describe("Revision Diagnostic — acessibilidade/estados", () => {
-  it("headings semânticos e aria nos blocos", () => {
-    expect(content).toMatch(/aria-labelledby="tm-diag-problem"/);
-    expect(content).toMatch(/aria-labelledby="tm-diag-findings"/);
-    expect(content).toMatch(/aria-labelledby="tm-diag-hypotheses"/);
-    expect(content).toMatch(/aria-labelledby="tm-diag-causal"/);
-    expect(content).toMatch(/aria-labelledby="tm-diag-evidence"/);
-    expect(content).toMatch(/aria-labelledby="tm-diag-conclusion"/);
+  it("headings semânticos via TmSectionCard (h2 canônico do kit)", () => {
+    // SectionCard renderiza h2 + delpi-ui-section-title; semântica de heading
+    // vem do kit — não de ids aria-labelledby locais.
+    expect(content).toMatch(/title="Achados"/);
+    expect(content).toMatch(/title="Conclusão diagnóstica"/);
   });
 
   it("estados vazio/erro/forbidden/não encontrado separados", () => {

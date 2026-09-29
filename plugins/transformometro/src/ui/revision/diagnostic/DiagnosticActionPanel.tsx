@@ -11,11 +11,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
-  FieldLabel,
+  ActionButton,
+  NativeCheckboxControl,
   NativeSelectControl,
+  NativeTextAreaControl,
 } from "@delpi/plugin-ui/index";
 
 import { StateBox } from "../../../components/StateBox";
+import {
+  TmDetailFieldGrid,
+  TmFormFieldShell,
+} from "../../../components/tmChromeUi";
 import {
   commitGovernedProposal,
   fetchDiagnostic,
@@ -399,32 +405,29 @@ export function DiagnosticActionPanel({
           {(action === "add_finding" ||
             action === "add_hypothesis" ||
             action === "add_conclusion") ? (
-            <div className="ds-field">
-              <FieldLabel label="Enunciado" htmlFor={`diag-${action}-statement`} />
-              <textarea
+            <TmFormFieldShell id={`diag-${action}-statement`} label="Enunciado" span>
+              <NativeTextAreaControl
                 id={`diag-${action}-statement`}
-                className="delpi-ui-native-control tm-diagnostic-textarea"
+                className="tm-diagnostic-textarea"
                 value={draft.statement}
-                onChange={(e) => set("statement", e.target.value)}
+                onChange={(v) => set("statement", v)}
                 rows={action === "add_conclusion" ? 3 : 2}
                 aria-label="Enunciado"
               />
-            </div>
+            </TmFormFieldShell>
           ) : null}
 
           {action === "add_finding" ? (
             <>
-              <div className="ds-field">
-                <FieldLabel label="Natureza epistêmica" htmlFor={`diag-${action}-epistemic`} />
+              <TmFormFieldShell id={`diag-${action}-epistemic`} label="Natureza epistêmica">
                 <NativeSelectControl
                   id={`diag-${action}-epistemic`}
                   value={draft.epistemic_state}
                   onChange={(v) => set("epistemic_state", v)}
                   options={EPISTEMIC_OPTIONS}
                 />
-              </div>
-              <div className="ds-field">
-                <FieldLabel label="Papel do achado" htmlFor={`diag-${action}-role`} />
+              </TmFormFieldShell>
+              <TmFormFieldShell id={`diag-${action}-role`} label="Papel do achado">
                 <NativeSelectControl
                   id={`diag-${action}-role`}
                   value={draft.role}
@@ -432,7 +435,7 @@ export function DiagnosticActionPanel({
                   options={[{ value: "SYMPTOM", label: "Sintoma" }]}
                   placeholderOption="Nenhum"
                 />
-              </div>
+              </TmFormFieldShell>
             </>
           ) : null}
 
@@ -442,8 +445,7 @@ export function DiagnosticActionPanel({
                 A única relação causal disponível é “{CAUSAL_RELATION_LABEL}” — a
                 hipótese de origem contribui para o destino, sem afirmar causa ou prova.
               </p>
-              <div className="ds-field">
-                <FieldLabel label="Hipótese de origem" htmlFor={`diag-${action}-source`} />
+              <TmFormFieldShell id={`diag-${action}-source`} label="Hipótese de origem">
                 <NativeSelectControl
                   id={`diag-${action}-source`}
                   value={draft.source_hypothesis_id}
@@ -451,16 +453,15 @@ export function DiagnosticActionPanel({
                   options={hypothesisOptions}
                   placeholderOption="Selecione a hipótese"
                 />
-              </div>
-              <div className="ds-field">
-                <FieldLabel label={`${CAUSAL_RELATION_LABEL} (destino)`} htmlFor={`diag-${action}-target`} />
+              </TmFormFieldShell>
+              <TmFormFieldShell id={`diag-${action}-target`} label={`${CAUSAL_RELATION_LABEL} (destino)`}>
                 <NativeSelectControl
                   id={`diag-${action}-target`}
                   value={draft.target_id}
                   onChange={(v) => set("target_id", v)}
                   options={causalTargetOptions}
                 />
-              </div>
+              </TmFormFieldShell>
             </>
           ) : null}
 
@@ -475,8 +476,7 @@ export function DiagnosticActionPanel({
                   Evidências antes de vinculá-la ao diagnóstico.
                 </StateBox>
               ) : null}
-              <div className="ds-field">
-                <FieldLabel label="Evidência existente" htmlFor={`diag-${action}-evidence`} />
+              <TmFormFieldShell id={`diag-${action}-evidence`} label="Evidência existente">
                 <NativeSelectControl
                   id={`diag-${action}-evidence`}
                   value={draft.evidence_id}
@@ -485,88 +485,80 @@ export function DiagnosticActionPanel({
                   placeholderOption="Selecione a evidência"
                   disabled={!evidences || evidences.length === 0}
                 />
-              </div>
-              <div className="ds-field">
-                <FieldLabel label="Relação com o item" htmlFor={`diag-${action}-relation`} />
+              </TmFormFieldShell>
+              <TmFormFieldShell id={`diag-${action}-relation`} label="Relação com o item">
                 <NativeSelectControl
                   id={`diag-${action}-relation`}
                   value={draft.relation}
                   onChange={(v) => set("relation", v)}
                   options={EVIDENCE_RELATION_OPTIONS}
                 />
-              </div>
-              <div className="ds-field">
-                <FieldLabel label="Item relacionado" htmlFor={`diag-${action}-target`} />
+              </TmFormFieldShell>
+              <TmFormFieldShell id={`diag-${action}-target`} label="Item relacionado">
                 <NativeSelectControl
                   id={`diag-${action}-target`}
                   value={draft.target_id}
                   onChange={(v) => set("target_id", v)}
                   options={targetOptions}
                 />
-              </div>
+              </TmFormFieldShell>
             </>
           ) : null}
 
           {action === "add_conclusion" ? (
             <>
-              <div className="ds-field">
-                <FieldLabel label="Justificativa" htmlFor={`diag-${action}-rationale`} />
-                <textarea
+              <TmFormFieldShell id={`diag-${action}-rationale`} label="Justificativa" span>
+                <NativeTextAreaControl
                   id={`diag-${action}-rationale`}
-                  className="delpi-ui-native-control tm-diagnostic-textarea"
+                  className="tm-diagnostic-textarea"
                   value={draft.rationale}
-                  onChange={(e) => set("rationale", e.target.value)}
+                  onChange={(v) => set("rationale", v)}
                   rows={2}
                   aria-label="Justificativa"
                 />
-              </div>
+              </TmFormFieldShell>
               {hypothesisOptions.length ? (
-                <fieldset className="ds-field">
+                <fieldset className="ds-field ds-span-2">
                   <legend className="ds-field__label">Hipóteses referenciadas</legend>
                   {detail.diagnostic.hypotheses.map((h) => (
-                    <label key={h.hypothesis_id} className="tm-diagnostic-check">
-                      <input
-                        type="checkbox"
-                        checked={draft.hypothesis_ids.includes(h.hypothesis_id)}
-                        onChange={(e) =>
-                          set(
-                            "hypothesis_ids",
-                            e.target.checked
-                              ? [...draft.hypothesis_ids, h.hypothesis_id]
-                              : draft.hypothesis_ids.filter((id) => id !== h.hypothesis_id),
-                          )
-                        }
-                      />
-                      <span>{h.statement}</span>
-                    </label>
+                    <NativeCheckboxControl
+                      key={h.hypothesis_id}
+                      checked={draft.hypothesis_ids.includes(h.hypothesis_id)}
+                      onChange={(checked) =>
+                        set(
+                          "hypothesis_ids",
+                          checked
+                            ? [...draft.hypothesis_ids, h.hypothesis_id]
+                            : draft.hypothesis_ids.filter((id) => id !== h.hypothesis_id),
+                        )
+                      }
+                      label={h.statement}
+                    />
                   ))}
                 </fieldset>
               ) : null}
               {detail.diagnostic.findings.length ? (
-                <fieldset className="ds-field">
+                <fieldset className="ds-field ds-span-2">
                   <legend className="ds-field__label">Achados referenciados</legend>
                   {detail.diagnostic.findings.map((f) => (
-                    <label key={f.finding_id} className="tm-diagnostic-check">
-                      <input
-                        type="checkbox"
-                        checked={draft.finding_ids.includes(f.finding_id)}
-                        onChange={(e) =>
-                          set(
-                            "finding_ids",
-                            e.target.checked
-                              ? [...draft.finding_ids, f.finding_id]
-                              : draft.finding_ids.filter((id) => id !== f.finding_id),
-                          )
-                        }
-                      />
-                      <span>{f.statement}</span>
-                    </label>
+                    <NativeCheckboxControl
+                      key={f.finding_id}
+                      checked={draft.finding_ids.includes(f.finding_id)}
+                      onChange={(checked) =>
+                        set(
+                          "finding_ids",
+                          checked
+                            ? [...draft.finding_ids, f.finding_id]
+                            : draft.finding_ids.filter((id) => id !== f.finding_id),
+                        )
+                      }
+                      label={f.statement}
+                    />
                   ))}
                 </fieldset>
               ) : null}
               {draft.hypothesis_ids.length ? (
-                <div className="ds-field">
-                  <FieldLabel label="Hipótese causa-raiz" htmlFor={`diag-${action}-root`} />
+                <TmFormFieldShell id={`diag-${action}-root`} label="Hipótese causa-raiz">
                   <NativeSelectControl
                     id={`diag-${action}-root`}
                     value={draft.root_cause_hypothesis_id}
@@ -576,23 +568,22 @@ export function DiagnosticActionPanel({
                       .map((h) => ({ value: h.hypothesis_id, label: h.statement.slice(0, 80) }))}
                     placeholderOption="Nenhuma"
                   />
-                </div>
+                </TmFormFieldShell>
               ) : null}
             </>
           ) : null}
 
           {isClaimAction ? (
-            <div className="ds-field">
-              <FieldLabel label="Nota (opcional)" htmlFor={`diag-${action}-note`} />
-              <textarea
+            <TmFormFieldShell id={`diag-${action}-note`} label="Nota (opcional)" span>
+              <NativeTextAreaControl
                 id={`diag-${action}-note`}
-                className="delpi-ui-native-control tm-diagnostic-textarea"
+                className="tm-diagnostic-textarea"
                 value={draft.note}
-                onChange={(e) => set("note", e.target.value)}
+                onChange={(v) => set("note", v)}
                 rows={2}
                 aria-label="Nota"
               />
-            </div>
+            </TmFormFieldShell>
           ) : null}
 
           {needsEvidencePicker && !evidences ? (
@@ -600,22 +591,19 @@ export function DiagnosticActionPanel({
           ) : null}
 
           <div className="tm-diagnostic-action__actions">
-            <button
-              type="button"
-              className="ds-btn ds-btn--primary"
+            <ActionButton
               disabled={busy != null || !draftValid(action, draft, targetId)}
               onClick={() => void handlePrepare()}
             >
               {busy === "prepare" ? "Preparando…" : "Preparar alteração"}
-            </button>
-            <button
-              type="button"
-              className="ds-btn ds-btn--ghost"
+            </ActionButton>
+            <ActionButton
+              variant="ghost"
               disabled={busy != null}
               onClick={onCancel}
             >
               Cancelar
-            </button>
+            </ActionButton>
           </div>
         </div>
       ) : null}
@@ -629,18 +617,15 @@ export function DiagnosticActionPanel({
             Confirme a alteração preparada abaixo. Ela só é aplicada após a confirmação
             explícita e a verificação da leitura canônica.
           </p>
-          <dl className="tm-diagnostic-action__change">
-            <div>
-              <dt>Ação</dt>
-              <dd>{actionLabel}</dd>
-            </div>
-            {exactChangeEntries(proposal).map(([key, value]) => (
-              <div key={key}>
-                <dt>{EXACT_CHANGE_FIELD_LABELS[key] ?? key}</dt>
-                <dd>{renderChangeValue(key, value)}</dd>
-              </div>
-            ))}
-          </dl>
+          <TmDetailFieldGrid
+            fields={[
+              { label: "Ação", value: actionLabel },
+              ...exactChangeEntries(proposal).map(([key, value]) => ({
+                label: EXACT_CHANGE_FIELD_LABELS[key] ?? key,
+                value: renderChangeValue(key, value),
+              })),
+            ]}
+          />
           {proposal.validation_result && proposal.validation_result.ready === false ? (
             <StateBox variant="warning">
               Esta proposta não está pronta para aplicação
@@ -650,9 +635,8 @@ export function DiagnosticActionPanel({
             </StateBox>
           ) : null}
           <div className="tm-diagnostic-action__actions">
-            <button
-              type="button"
-              className="ds-btn ds-btn--primary"
+            <ActionButton
+              variant="primary"
               disabled={busy != null || remoteStale || proposal.act_allowed === false}
               onClick={() => void handleConfirm()}
             >
@@ -661,10 +645,9 @@ export function DiagnosticActionPanel({
                 : busy === "verify"
                   ? "Verificando…"
                   : "Confirmar alteração"}
-            </button>
-            <button
-              type="button"
-              className="ds-btn ds-btn--ghost"
+            </ActionButton>
+            <ActionButton
+              variant="ghost"
               disabled={busy != null}
               onClick={() => {
                 setProposal(null);
@@ -672,16 +655,14 @@ export function DiagnosticActionPanel({
               }}
             >
               Voltar e editar
-            </button>
+            </ActionButton>
           </div>
         </div>
       ) : null}
 
       {stage === "stale" ? (
         <div className="tm-diagnostic-action__actions">
-          <button
-            type="button"
-            className="ds-btn ds-btn--secondary"
+          <ActionButton
             onClick={() => {
               setProposal(null);
               setStaleNotice(null);
@@ -689,14 +670,10 @@ export function DiagnosticActionPanel({
             }}
           >
             Revisar e preparar novamente
-          </button>
-          <button
-            type="button"
-            className="ds-btn ds-btn--ghost"
-            onClick={onCancel}
-          >
+          </ActionButton>
+          <ActionButton variant="ghost" onClick={onCancel}>
             Cancelar
-          </button>
+          </ActionButton>
         </div>
       ) : null}
     </div>

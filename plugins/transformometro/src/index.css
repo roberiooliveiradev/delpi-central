@@ -4923,23 +4923,8 @@
   flex-direction: column;
   gap: 0.9rem;
 }
-.dashboard-transformometro .tm-diagnostic__block{
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  padding: 0.75rem 0.9rem;
-  border: 1px solid var(--ds-border);
-  border-radius: var(--ds-radius-sm, 0.5rem);
-  background: var(--ds-surface);
-}
-.dashboard-transformometro .tm-diagnostic__heading{
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  margin: 0;
-  font-size: 0.95rem;
-  font-weight: 650;
-}
+/* Section chrome (title/subtitle/actions/card) vem do kit
+   `delpi-ui-section-card` via TmSectionCard — não recriar aqui. */
 .dashboard-transformometro .tm-diagnostic__statement{
   margin: 0;
   font-size: 1rem;
@@ -5041,7 +5026,8 @@
   grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
   gap: 0.6rem;
 }
-.dashboard-transformometro .tm-diagnostic-action__form > .ds-field:first-child{
+/* FormFieldShell `span` — campo ocupa a linha inteira do form grid. */
+.dashboard-transformometro .ds-span-2{
   grid-column: 1 / -1;
 }
 .dashboard-transformometro .tm-diagnostic-action__actions{
@@ -5049,41 +5035,13 @@
   flex-wrap: wrap;
   gap: 0.5rem;
 }
-.dashboard-transformometro .tm-diagnostic-action__change{
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  margin: 0;
-}
-.dashboard-transformometro .tm-diagnostic-action__change > div{
-  display: grid;
-  grid-template-columns: minmax(7rem, 11rem) 1fr;
-  gap: 0.5rem;
-}
-.dashboard-transformometro .tm-diagnostic-action__change dt{
-  font-size: 0.82rem;
-  color: var(--ds-text-muted);
-}
-.dashboard-transformometro .tm-diagnostic-action__change dd{
-  margin: 0;
-  overflow-wrap: anywhere;
-}
-.dashboard-transformometro .tm-diagnostic-check{
-  display: flex;
-  align-items: flex-start;
-  gap: 0.45rem;
-  padding: 0.25rem 0;
-}
+/* Review de exact_change usa TmDetailFieldGrid (`delpi-ui-detail-grid`, kit).
+   Checkboxes usam NativeCheckboxControl (kit) — layout próprio. */
 .dashboard-transformometro .tm-diagnostic-textarea{
-  width: 100%;
   resize: vertical;
 }
 @media (max-width: 900px){
   .dashboard-transformometro .tm-diagnostic-action__form{
     grid-template-columns: 1fr;
-  }
-  .dashboard-transformometro .tm-diagnostic-action__change > div{
-    grid-template-columns: 1fr;
-    gap: 0.1rem;
   }
 }

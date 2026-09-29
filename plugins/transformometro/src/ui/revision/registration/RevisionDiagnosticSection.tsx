@@ -15,15 +15,20 @@ import {
 } from "react";
 
 import {
+  ActionButton,
   EmptyState,
-  FieldLabel,
+  NativeTextAreaControl,
   emptyStateCardBemClasses,
 } from "@delpi/plugin-ui/index";
 
 import type { AppProps } from "../../../App";
 import { LoadingActivityCard } from "../../../components/LoadingActivityCard";
 import { StateBox } from "../../../components/StateBox";
-import { TmStatusBadge } from "../../../components/tmChromeUi";
+import {
+  TmDetailFieldGrid,
+  TmFormFieldShell,
+  TmStatusBadge,
+} from "../../../components/tmChromeUi";
 import {
   commitGovernedProposal,
   fetchDiagnostic,
@@ -363,9 +368,8 @@ export function RevisionDiagnosticSection({
           Diagnóstico
         </h2>
         {listState === "ready" && (list?.items.length ?? 0) > 0 ? (
-          <button
-            type="button"
-            className="ds-btn ds-btn--ghost ds-btn--sm"
+          <ActionButton
+            variant="ghost"
             onClick={() => {
               setSuccessNotice(null);
               setCreateError(null);
@@ -375,7 +379,7 @@ export function RevisionDiagnosticSection({
             }}
           >
             Iniciar diagnóstico
-          </button>
+          </ActionButton>
         ) : null}
       </div>
       <p className="ds-hint">
@@ -387,13 +391,9 @@ export function RevisionDiagnosticSection({
         <StateBox variant="warning">
           Este diagnóstico foi atualizado em outro local. Revise o estado atual
           antes de preparar ou confirmar novamente.
-          <button
-            type="button"
-            className="ds-btn ds-btn--secondary ds-btn--sm"
-            onClick={handleReloadAfterConflict}
-          >
+          <ActionButton onClick={handleReloadAfterConflict}>
             Recarregar diagnóstico
-          </button>
+          </ActionButton>
         </StateBox>
       ) : null}
 
@@ -419,13 +419,9 @@ export function RevisionDiagnosticSection({
       {listState === "error" ? (
         <StateBox variant="error">
           {listError}
-          <button
-            type="button"
-            className="ds-btn ds-btn--secondary ds-btn--sm"
-            onClick={() => void loadList()}
-          >
+          <ActionButton onClick={() => void loadList()}>
             Tentar novamente
-          </button>
+          </ActionButton>
         </StateBox>
       ) : null}
 
@@ -435,13 +431,11 @@ export function RevisionDiagnosticSection({
           defaultTitle="Nenhum diagnóstico registrado nesta revisão."
           defaultMessage="Registre o problema, os achados, hipóteses, relações causais e a conclusão desta revisão."
         >
-          <button
-            type="button"
-            className="ds-btn ds-btn--primary"
+          <ActionButton
             onClick={() => setCreateStage("form")}
           >
             Iniciar diagnóstico
-          </button>
+          </ActionButton>
         </EmptyState>
       ) : null}
 
@@ -483,32 +477,32 @@ export function RevisionDiagnosticSection({
 
       {createStage === "form" ? (
         <div className="tm-diagnostic-create">
-          <div className="ds-field">
-            <FieldLabel label="Problema investigado" htmlFor="tm-diagnostic-create-statement" />
-            <textarea
+          <TmFormFieldShell
+            id="tm-diagnostic-create-statement"
+            label="Problema investigado"
+            span
+          >
+            <NativeTextAreaControl
               id="tm-diagnostic-create-statement"
-              className="delpi-ui-native-control tm-diagnostic-textarea"
+              className="tm-diagnostic-textarea"
               value={createStatement}
-              onChange={(e) => setCreateStatement(e.target.value)}
+              onChange={setCreateStatement}
               rows={3}
               placeholder="Descreva o problema que este diagnóstico investiga."
             />
-          </div>
+          </TmFormFieldShell>
           {createError ? (
             <StateBox variant="error">{createError}</StateBox>
           ) : null}
           <div className="tm-diagnostic-action__actions">
-            <button
-              type="button"
-              className="ds-btn ds-btn--primary"
+            <ActionButton
               disabled={createBusy != null || !createStatement.trim()}
               onClick={() => void handleCreatePrepare()}
             >
               {createBusy === "prepare" ? "Preparando…" : "Preparar diagnóstico"}
-            </button>
-            <button
-              type="button"
-              className="ds-btn ds-btn--ghost"
+            </ActionButton>
+            <ActionButton
+              variant="ghost"
               disabled={createBusy != null}
               onClick={() => {
                 setCreateStage("idle");
@@ -516,7 +510,7 @@ export function RevisionDiagnosticSection({
               }}
             >
               Cancelar
-            </button>
+            </ActionButton>
           </div>
         </div>
       ) : null}
@@ -530,16 +524,15 @@ export function RevisionDiagnosticSection({
             Confirme a alteração preparada abaixo. O diagnóstico só é criado após a
             confirmação explícita e a verificação da leitura canônica.
           </p>
-          <dl className="tm-diagnostic-action__change">
-            <div>
-              <dt>Ação</dt>
-              <dd>Criar diagnóstico</dd>
-            </div>
-            <div>
-              <dt>Problema investigado</dt>
-              <dd>{String(createProposal.exact_change?.problem_statement ?? "")}</dd>
-            </div>
-          </dl>
+          <TmDetailFieldGrid
+            fields={[
+              { label: "Ação", value: "Criar diagnóstico" },
+              {
+                label: "Problema investigado",
+                value: String(createProposal.exact_change?.problem_statement ?? ""),
+              },
+            ]}
+          />
           {createStale ? (
             <StateBox variant="warning">{STALE_PROPOSAL_MESSAGE}</StateBox>
           ) : null}
@@ -547,9 +540,8 @@ export function RevisionDiagnosticSection({
             <StateBox variant="error">{createError}</StateBox>
           ) : null}
           <div className="tm-diagnostic-action__actions">
-            <button
-              type="button"
-              className="ds-btn ds-btn--primary"
+            <ActionButton
+              variant="primary"
               disabled={createBusy != null || createStale}
               onClick={() => void handleCreateConfirm()}
             >
@@ -558,10 +550,9 @@ export function RevisionDiagnosticSection({
                 : createBusy === "verify"
                   ? "Verificando…"
                   : "Confirmar diagnóstico"}
-            </button>
-            <button
-              type="button"
-              className="ds-btn ds-btn--ghost"
+            </ActionButton>
+            <ActionButton
+              variant="ghost"
               disabled={createBusy != null}
               onClick={() => {
                 setCreateStage("form");
@@ -570,7 +561,7 @@ export function RevisionDiagnosticSection({
               }}
             >
               Voltar e editar
-            </button>
+            </ActionButton>
           </div>
         </div>
       ) : null}
@@ -597,38 +588,37 @@ export function RevisionDiagnosticSection({
       {detailState === "error" ? (
         <StateBox variant="error">
           {detailError}
-          <button
-            type="button"
-            className="ds-btn ds-btn--secondary ds-btn--sm"
+          <ActionButton
             onClick={() => selectedId && void loadDetail(selectedId)}
           >
             Tentar novamente
-          </button>
+          </ActionButton>
         </StateBox>
       ) : null}
 
       {detailState === "ready" && detail ? (
-        <>
-          <DiagnosticContent
-            detail={detail}
-            onStartAction={startAction}
-          />
-          {activeAction ? (
-            <DiagnosticActionPanel
-              diagnosticId={detail.diagnostic.diagnostic_id}
-              action={activeAction.action}
-              targetId={activeAction.targetId}
-              targetLabel={activeAction.targetLabel}
-              detail={detail}
-              evidences={evidences}
-              evidencesLoading={evidencesLoading}
-              remoteStale={remoteConflict}
-              getAccessToken={getAccessToken}
-              onCancel={() => setActiveAction(null)}
-              onApplied={handleActionApplied}
-            />
-          ) : null}
-        </>
+        <DiagnosticContent
+          detail={detail}
+          onStartAction={startAction}
+          activeAction={activeAction?.action ?? null}
+          actionSlot={
+            activeAction ? (
+              <DiagnosticActionPanel
+                diagnosticId={detail.diagnostic.diagnostic_id}
+                action={activeAction.action}
+                targetId={activeAction.targetId}
+                targetLabel={activeAction.targetLabel}
+                detail={detail}
+                evidences={evidences}
+                evidencesLoading={evidencesLoading}
+                remoteStale={remoteConflict}
+                getAccessToken={getAccessToken}
+                onCancel={() => setActiveAction(null)}
+                onApplied={handleActionApplied}
+              />
+            ) : null
+          }
+        />
       ) : null}
     </section>
   );

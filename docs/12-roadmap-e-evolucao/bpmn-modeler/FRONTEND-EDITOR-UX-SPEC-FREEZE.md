@@ -120,7 +120,7 @@ BpmnEditorAdapter
   listDiagrams(): DiagramRef[]                  // { id, name? } — multi-BPMNDiagram
   openDiagram(diagramId: string): void
 
-  isDirty(): boolean                            // position vs savedPosition (contador público do adapter)
+  isDirty(): boolean                            // token no cursor vs savedToken (identidade branch-aware)
   markSaved(): void                             // fixa save point
   undo(): void
   redo(): void
@@ -238,12 +238,29 @@ Não existe autosave; não existe merge.
 
 ## 13. Dirty State Contract
 
-`FROZEN` — fonte da verdade = **command stack do editor** via **APIs/eventos públicos apenas**, não boolean React. O adapter mantém um contador de posição próprio (`position`): o evento público `commandStack.changed` informa `trigger` ∈ `execute | undo | redo | clear`; `execute`/`redo` incrementam, `undo` decrementa, `clear` reseta; `markSaved()` fixa `savedPosition`. Dirty = `position ≠ savedPosition`. **Proibido** acessar internals privados do vendor (`commandStack._stack`, `commandStack._stackIdx` ou equivalentes) — correção aplicada neste documento pelo Prompt 5:
+`FROZEN` — fonte da verdade = **command stack do editor** via **APIs/eventos públicos apenas**, não boolean React, e com **identidade de estado branch-aware** — profundidade numérica não basta (undo→undo→2 novas edições retornaria à mesma posição numérica com estado diferente; isso seria false CLEAN). O adapter mantém um histórico de identidade externo:
+
+```text
+stateTokens: token[]        // identidades de estado do editor
+cursor: int                 // posição lógica corrente
+savedToken: token           // token do último save verificado
+
+load/import              → stateTokens = [newToken()], cursor = 0, savedToken = t0 → CLEAN
+trigger = execute        → truncate(stateTokens após cursor); append novo token único; cursor += 1
+                           (edição após undo cria branch de identidade distinta — nunca colide)
+trigger = undo           → cursor -= 1
+trigger = redo           → cursor += 1
+trigger = clear          → reset conforme operação de load/import
+dirty                    ⇔  stateTokens[cursor] ≠ savedToken
+markSaved()              → savedToken = stateTokens[cursor]   (apenas após read-back verificado)
+```
+
+O `trigger` vem do evento público `commandStack.changed` (`execute | undo | redo | clear`). **Proibido** acessar internals privados do vendor (`commandStack._stack`, `commandStack._stackIdx` ou equivalentes). Se a versão lockada do diagram-js expuser API pública superior com a mesma semântica, ela pode substituir o mecanismo — mas a propriedade obrigatória permanece: **branch-aware state identity**, nunca stack depth. Correção aplicada neste documento pelo Prompt 6 (refinamento da correção do Prompt 5):
 
 | Evento | Efeito no dirty |
 |---|---|
 | import/load inicial | save point fixado → CLEAN |
-| edição que gera command (`execute`) | position ≠ savedPosition → DIRTY |
+| edição que gera command (`execute`) | novo token no cursor ≠ savedToken → DIRTY (inclusive após undo — nova branch) |
 | undo até o save point | CLEAN |
 | redo além do save point | DIRTY |
 | save verificado | `markSaved()` → CLEAN |
