@@ -21,6 +21,9 @@ from tv_app.application.services.data.design_intelligence_service import (
     DesignIntelligenceService,
 )
 from tv_app.application.services.data.presentation_ops_content_service import PresentationOpsContentService
+from tv_app.application.services.data.value_expression_service import (
+    expression_capability,
+)
 
 
 def build_capability_surface(*, transport: str = "actions") -> dict[str, Any]:
@@ -44,6 +47,7 @@ def build_capability_surface(*, transport: str = "actions") -> dict[str, Any]:
             transport=transport
         ),
         "designIntelligence": DesignIntelligenceService.catalog_projection(),
+        "expressions": expression_capability(transport=transport),
         "action_surface_budget": {
             "importable_operations": len(GPT_ACTIONS_OPERATION_IDS),
             "platform_prefer_max": 30,

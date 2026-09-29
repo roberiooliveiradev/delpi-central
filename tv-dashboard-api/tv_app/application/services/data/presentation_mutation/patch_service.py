@@ -39,6 +39,9 @@ from tv_app.application.services.data.presentation_mutation.execution_context im
     is_synthetic_id,
     mint_synthetic_id,
 )
+from tv_app.application.services.data.m_query.m_expression_interpreter import (
+    MExpressionError,
+)
 from tv_app.application.services.data.presentation_mutation.merge import (
     deep_merge_dicts,
     merge_block_patch,
@@ -54,6 +57,10 @@ from tv_app.application.services.data.tv_data_binding_hydrate_service import (
     _KEEP_WITHOUT_SCHEMA,
     _PARAM_KEY_REMAP,
     _remap_param_keys,
+)
+from tv_app.application.services.data.value_expression_service import (
+    is_expression_value,
+    validate_expression_param_value,
 )
 from tv_app.application.services.tv_date_range_preset_service import (
     merge_period_params_layer,
@@ -2244,6 +2251,17 @@ class PresentationPatchService:
                 unset_keys.add(key_str)
                 continue
             if not isinstance(value, (str, int, float, bool)):
+                if is_expression_value(value):
+                    # ExpressionSpec é dado tipado permitido em params de schema.
+                    try:
+                        validate_expression_param_value(key_str, value, route=route)
+                    except MExpressionError as exc:
+                        raise PresentationPatchError(
+                            PresentationOpsContentService.message("paramsInvalid"),
+                            code=exc.code,
+                        ) from exc
+                    set_patch[key_str] = value
+                    continue
                 raise PresentationPatchError(
                     PresentationOpsContentService.message("paramsInvalid")
                 )

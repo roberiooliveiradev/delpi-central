@@ -52,6 +52,12 @@
     "profileTimeoutMs": 750,
     "previewDeadlineMaxMs": 3000
   },
+  "valueExpressions": {
+    "enabled": true,
+    "maxDepth": 40,
+    "maxNodes": 256,
+    "maxStringBytes": 512
+  },
   "tableIncrementalPageSize": 30,
   "presentationHeartbeat": {
     "intervalSec": 60

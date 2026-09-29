@@ -85,6 +85,11 @@ def m_query_setting(key: str, default: Any = None) -> Any:
     return settings.get(key, default) if isinstance(settings, dict) else default
 
 
+def value_expression_setting(key: str, default: Any = None) -> Any:
+    settings = _load_settings().get("valueExpressions") or {}
+    return settings.get(key, default) if isinstance(settings, dict) else default
+
+
 def branch_policy_setting(key: str, default: Any = None) -> Any:
     policy = _load_settings().get("branchPolicy") or {}
     return policy.get(key, default) if isinstance(policy, dict) else default

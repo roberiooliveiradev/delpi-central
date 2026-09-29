@@ -10,6 +10,9 @@ from tv_app.application.services.data.tv_data_presentation_modes_service import 
     validate_block_type_for_binding,
     validate_display_mode,
 )
+from tv_app.application.services.data.value_expression_service import (
+    is_expression_value,
+)
 from tv_app.application.services.tv_data_route_catalog_service import TvDataRouteCatalogService
 from tv_app.application.services.tv_dashboard_content_service import filter_label, message
 from tv_app.application.services.tv_date_range_preset_service import (
@@ -177,6 +180,11 @@ def validate_params_against_schema(
         if key in date_keys_covered_by_preset:
             continue
         raw_value = seeded.get(key) if key in seeded else None
+        # ExpressionSpec é dado tipado — passa intacto; avaliação/coerção ocorre
+        # na resolução pós-merge (resolve_param_expressions), nunca aqui.
+        if is_expression_value(raw_value):
+            normalized[key] = raw_value
+            continue
         empty = raw_value is None or raw_value == ""
         if empty:
             if should_apply_schema_default(key, spec):

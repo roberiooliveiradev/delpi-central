@@ -1,5 +1,5 @@
 {
-  "version": "2026.09.28.2",
+  "version": "2026.09.28.3",
   "owner": "tv-dashboard-api",
   "source": "capability_surface.agent_directives via get_catalog (Actions: gpt_get_catalog)",
   "actions_runtime": {
@@ -480,6 +480,30 @@
       "Persistir fonte date_range com params {}",
       "Colocar TOP N / productCode na programação quando é exceção de um bloco",
       "Usar input kiosk como único lugar do período padrão (deve haver default persistido)"
+    ]
+  },
+  "param_expressions": {
+    "principle": "EXPRESSION_IS_TYPED_DATA_NOT_CODE",
+    "summary": "Quando nenhum dateRangePreset cobre o período pedido (ex.: mesmo mês do ano anterior até o dia corrente), persistir ExpressionSpec em vez de data absoluta ou preset novo. params[name] = {\"expression\": {\"version\": 1, \"expression\": <AST>}}. Backend valida e avalia; VISTA só declara.",
+    "wire_shape": "params[name]={\"expression\":{\"version\":1,\"expression\":<ast>}}",
+    "allowed_refs": [
+      "literal (kind=literal)",
+      "context: today / now (kind=identifier)",
+      "param.<schemaParam> (kind=identifier, só params declarados no paramSchema)"
+    ],
+    "rules": [
+      "Preset primeiro: só usar expression quando nenhum dateRangePreset cobre o período; nunca criar preset novo por pedido.",
+      "Funções/operadores só os declarados em capability_surface.expressions (registry tipado); nunca inventar sintaxe, operador ou função.",
+      "Só escrever expression em params com expressionAllowed=true na projeção da rota (paramSchema); nunca em in:path/fixedQueryParams.",
+      "Expressão é fase PARAMETER: proibido referenciar campo retornado pela rota (kind=field) — isso é DERIVED_VALUE (não persistível ainda).",
+      "Preview obrigatório antes de persistir: erro m.expression_* não é dado vazio; ler resolved.paramExpressions para ver valor resolvido.",
+      "Mesmo mês do ano anterior até hoje: start = Date.StartOfMonth(Date.AddMonths(today, -12)); end = Date.AddMonths(today, -12). Ano corrente: start = Date.StartOfYear(today); end = today."
+    ],
+    "forbidden": [
+      "Escrever script/M/SQL/Python/JS em params",
+      "Inventar nome de função fora do registry projetado",
+      "Tratar paramExpressions.error como dado vazio",
+      "Referência field/each/record em fase PARAMETER"
     ]
   },
   "slide_craft": {

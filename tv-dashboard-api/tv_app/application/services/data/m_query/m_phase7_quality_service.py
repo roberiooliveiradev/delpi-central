@@ -13,7 +13,11 @@ from typing import Any, Mapping
 
 from tv_app.application.services.branch_policy_service import resolve_branch_access_scope
 from tv_app.application.services.data.m_query.m_function_registry import get_function_registry
+from tv_app.application.services.data.value_expression_service import (
+    params_contain_expressions,
+)
 from tv_app.application.services.tv_dashboard_content_service import m_query_setting
+from tv_app.application.services.tv_date_range_preset_service import calendar_today
 from tv_app.domain.data_query.transform_plan import CompiledMPlanStep, TransformPlan
 from tv_app.infrastructure.cache.bounded_ttl_lru_cache import BoundedTtlLruCache
 
@@ -144,6 +148,17 @@ def preview_cache_key(
             }
         )
     principal = _principal_fingerprint(user, authorization)
+    # ExpressionSpec relativo a «today» — chave deve mudar no virar do dia civil
+    # (mesmo contrato do calendarDay em _build_data_cache_key do fetch).
+    expression_relative = params_contain_expressions(
+        playlist_defaults if isinstance(playlist_defaults, Mapping) else {},
+        native_config.get("dataFilters") or {},
+        *[
+            (item.get("dataBinding") or {}).get("params") or {}
+            for item in source_candidates
+            if isinstance(item, Mapping)
+        ],
+    )
     key = _stable_hash(
         {
             "profile": (
@@ -157,6 +172,7 @@ def preview_cache_key(
             "targetStepName": target_step_name,
             "culture": m_query_setting("defaultCulture", "pt-BR"),
             "principalFingerprint": principal,
+            "evaluationDate": calendar_today().isoformat() if expression_relative else "",
             "branchAndParams": {
                 "playlistDefaults": playlist_defaults or {},
                 "dataFilters": native_config.get("dataFilters") or {},
