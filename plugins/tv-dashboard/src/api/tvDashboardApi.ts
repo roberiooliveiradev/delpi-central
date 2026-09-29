@@ -804,6 +804,47 @@ export async function listDataRoutes() {
   return data.items;
 }
 
+/**
+ * Item do catálogo M (`GET /data/m/functions`) — mesmo registry que o
+ * contrato de expressões usa (`expressions.functions` no capability surface).
+ */
+export type MFunctionCatalogItem = {
+  name: string;
+  kind?: string;
+  category?: string;
+  signature?: string;
+  description?: string;
+  parameters?: string[];
+  examples?: string[];
+  introducedIn?: string;
+  availability?: Record<string, boolean>;
+};
+
+export type MFunctionCatalog = {
+  profile: string;
+  registryVersion: string;
+  items: MFunctionCatalogItem[];
+};
+
+/** Catálogo de funções escalar — fonte do seletor de funções das expressões. */
+export async function listMFunctions(): Promise<MFunctionCatalog> {
+  const data = await unwrap(
+    httpGet<
+      ApiEnvelope<{
+        profile: string;
+        registryVersion: string;
+        items: MFunctionCatalogItem[];
+        total: number;
+      }>
+    >(`${API_BASE}/data/m/functions`),
+  );
+  return {
+    profile: data.profile,
+    registryVersion: data.registryVersion,
+    items: Array.isArray(data.items) ? data.items : [],
+  };
+}
+
 export type TvDataRouteSuggestion = TvDataRouteCatalogItem & {
   reason?: string;
   score?: number | null;

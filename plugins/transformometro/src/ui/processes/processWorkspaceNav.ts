@@ -49,7 +49,8 @@ export type RevisaoWorkspaceSectionId =
   | "medicao"
   | "investimentos"
   | "recursos"
-  | "evidencias";
+  | "evidencias"
+  | "diagnostico";
 
 export type InstanciaWorkspaceSectionId =
   | "dados"
@@ -143,6 +144,7 @@ export const REVISAO_WORKSPACE_SECTIONS: Array<{
   { id: "investimentos", label: "Investimentos" },
   { id: "recursos", label: "Recursos compartilhados" },
   { id: "evidencias", label: "Evidências" },
+  { id: "diagnostico", label: "Diagnóstico" },
 ];
 
 export const INSTANCIA_WORKSPACE_SECTIONS: Array<{
@@ -235,9 +237,11 @@ export function parseRevisaoSectionFromHash(
   cenarioTipo?: string | null
 ): RevisaoWorkspaceSectionId {
   const raw = (hash.startsWith("#") ? hash.slice(1) : hash).trim().toLowerCase();
+  // Section token may carry an entity suffix (`#diagnostico/{id}`).
+  const token = raw.split("/")[0] ?? "";
   const allowed = new Set(revisaoSectionsForCenario(cenarioTipo).map((section) => section.id));
-  if (raw && isRevisaoWorkspaceSectionId(raw) && allowed.has(raw)) {
-    return raw;
+  if (token && isRevisaoWorkspaceSectionId(token) && allowed.has(token)) {
+    return token;
   }
   return defaultRevisaoSection(cenarioTipo);
 }
@@ -252,6 +256,26 @@ export function buildRevisaoSectionHref(
   const base = buildProcessoPath(processoId, revisaoId, instanciaId);
   if (section === defaultRevisaoSection(cenarioTipo)) return base;
   return `${base}#${section}`;
+}
+
+/** Deep link for one Diagnostic inside the Revision workspace. */
+export function parseRevisaoDiagnosticIdFromHash(hash: string): string | null {
+  const raw = (hash.startsWith("#") ? hash.slice(1) : hash).trim();
+  const [section, diagnosticId] = raw.split("/");
+  if ((section || "").toLowerCase() !== "diagnostico") return null;
+  const id = (diagnosticId || "").trim();
+  return DOCUMENT_ID_RE.test(id) ? id : null;
+}
+
+export function buildRevisaoDiagnosticHref(
+  processoId: string,
+  instanciaId: string,
+  revisaoId: string,
+  diagnosticId?: string | null
+): string {
+  const base = `${buildProcessoPath(processoId, revisaoId, instanciaId)}#diagnostico`;
+  const id = (diagnosticId || "").trim();
+  return id ? `${base}/${id}` : base;
 }
 
 function buildRevisaoSectionNodes(input: {

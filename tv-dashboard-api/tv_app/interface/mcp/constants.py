@@ -31,6 +31,7 @@ TOOL_CLASS: dict[str, str] = {
     "get_catalog": "READ",
     "search_data_routes": "READ",
     "inspect_data_model": "READ",
+    "inspect_data_source": "READ",
     "preview_data_model": "READ",
     "prepare_change": "PREPARE",
     "commit_proposal": "ACT",

@@ -37,6 +37,7 @@ import { createCoalescedAsyncRunner } from "../../utils/coalescedAsync";
 import { buildRevisaoDiagramaEditPath } from "../../utils/routeParser";
 import { TRANSFORMOMETRO_API_BASE, buildAuthHeaders } from "../../data/api/transformometroApiBase";
 import { parseApiEnvelope } from "../../data/api/transformometroHttp";
+import { RevisionDiagnosticSection } from "../revision/registration/RevisionDiagnosticSection";
 import { RevisionEvidenceSection } from "../revision/registration/RevisionEvidenceSection";
 import { RevisaoDiagramSection } from "../../components/diagram/sections/RevisaoDiagramSection";
 import { RevisaoDecompositionSection } from "../../components/decomposition/RevisaoDecompositionSection";
@@ -785,6 +786,17 @@ export function RevisionRegistrationPanel({
           />
         }
       />
+      </RevisionWorkspaceSectionPanel>
+
+      <RevisionWorkspaceSectionPanel active={activeSection === "diagnostico"} sectionId="diagnostico">
+        {activeSection === "diagnostico" ? (
+          <RevisionDiagnosticSection
+            revisao={revisao}
+            getAccessToken={getAccessToken}
+            onError={onError}
+            onNavigate={onNavigate}
+          />
+        ) : null}
       </RevisionWorkspaceSectionPanel>
       </div>
     </div>

@@ -8,7 +8,9 @@ import {
   parseProcessDocumentIdFromHash,
   parseProcessoSecondaryFocusFromHash,
   parseProcessoSectionFromHash,
+  parseRevisaoDiagnosticIdFromHash,
   parseRevisaoSectionFromHash,
+  buildRevisaoDiagnosticHref,
   resolveActiveWorkspaceNodeId,
   resolveWorkspacePanelView,
   PROCESSO_WORKSPACE_SECTIONS,
@@ -129,6 +131,34 @@ describe("revisao workspace sections", () => {
     expect(parseRevisaoSectionFromHash("#matriz", "baseline")).toBe("vigencia");
     expect(defaultRevisaoSection("baseline")).toBe("vigencia");
     expect(defaultRevisaoSection("melhoria")).toBe("vigencia");
+  });
+
+  it("expõe Diagnóstico como seção da revisão (inclusive baseline)", () => {
+    expect(parseRevisaoSectionFromHash("#diagnostico", "melhoria")).toBe("diagnostico");
+    expect(parseRevisaoSectionFromHash("#diagnostico", "baseline")).toBe("diagnostico");
+  });
+
+  it("resolve seção diagnostico com id no hash (#diagnostico/{id})", () => {
+    const id = "11111111-2222-3333-4444-555555555555";
+    expect(parseRevisaoSectionFromHash(`#diagnostico/${id}`, "melhoria")).toBe("diagnostico");
+    expect(parseRevisaoDiagnosticIdFromHash(`#diagnostico/${id}`)).toBe(id);
+  });
+
+  it("ignora id de diagnóstico inválido ou de outra seção", () => {
+    expect(parseRevisaoDiagnosticIdFromHash("#diagnostico")).toBeNull();
+    expect(parseRevisaoDiagnosticIdFromHash("#diagnostico/not-an-id")).toBeNull();
+    expect(parseRevisaoDiagnosticIdFromHash("#evidencias/11111111-2222-3333-4444-555555555555")).toBeNull();
+    expect(parseRevisaoDiagnosticIdFromHash("")).toBeNull();
+  });
+
+  it("monta href canônico do diagnóstico sem nova rota", () => {
+    const id = "11111111-2222-3333-4444-555555555555";
+    const href = buildRevisaoDiagnosticHref("proc-1", "inst-1", "rev-1", id);
+    expect(href).toContain("#diagnostico/");
+    expect(href).toContain(id);
+    expect(href).not.toContain("/diagnostics");
+    expect(buildRevisaoDiagnosticHref("proc-1", "inst-1", "rev-1")).toContain("#diagnostico");
+    expect(buildRevisaoDiagnosticHref("proc-1", "inst-1", "rev-1")).not.toContain("#diagnostico/");
   });
 });
 

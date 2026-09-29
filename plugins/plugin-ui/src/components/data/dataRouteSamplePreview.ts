@@ -26,6 +26,13 @@ export type DataRoutePreviewPayload = {
   }>;
   error?: string;
   source: "sample" | "live";
+  /**
+   * Trace de expressões tipadas resolvido no backend (`resolved.paramExpressions`) —
+   * lista `{param, expression, expectedType, resolved | error}`. Frontend nunca avalia.
+   */
+  paramExpressions?: Array<Record<string, unknown>>;
+  /** Parâmetros efetivos aplicados pelo backend (`resolved.effectiveParams`). */
+  effectiveParams?: Record<string, unknown>;
 };
 
 const SAMPLE_MAX_ROWS = 4;
@@ -205,12 +212,24 @@ export function mapEnrichedBlockToDataRoutePreview(
     };
   }
 
+  const paramExpressionsRaw = resolved.paramExpressions;
+  const paramExpressions = Array.isArray(paramExpressionsRaw)
+    ? paramExpressionsRaw
+        .map((item) => asRecord(item))
+        .filter((item): item is Record<string, unknown> => item != null)
+    : undefined;
+  const effectiveParams = asRecord(resolved.effectiveParams) ?? undefined;
+  const trace =
+    (paramExpressions && paramExpressions.length > 0) || effectiveParams
+      ? { paramExpressions, effectiveParams }
+      : {};
+
   const error =
     (typeof resolved.error === "string" && resolved.error.trim()) ||
     (typeof resolved.detail === "string" && resolved.detail.trim()) ||
     "";
   if (error) {
-    return { kind: preferred, source: "live", error };
+    return { kind: preferred, source: "live", error, ...trace };
   }
 
   const title =
@@ -336,16 +355,20 @@ export function mapEnrichedBlockToDataRoutePreview(
 
   const primary = pickPreferred();
   if (!primary || primary.error) {
-    return (
-      primary ?? {
+    return {
+      ...(primary ?? {
         kind: preferred,
         title,
         source: "live",
         error: "A rota respondeu, mas sem KPI, tabela ou série reconhecíveis neste preview.",
-      }
-    );
+      }),
+      ...trace,
+    };
   }
 
   const extraSlices = slices.filter((slice) => slice.kind !== primary.kind);
-  return extraSlices.length > 0 ? { ...primary, extraSlices } : primary;
+  return {
+    ...(extraSlices.length > 0 ? { ...primary, extraSlices } : primary),
+    ...trace,
+  };
 }

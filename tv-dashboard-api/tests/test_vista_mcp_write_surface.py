@@ -155,11 +155,11 @@ def _clean_proposal_store():
 # ---------------------------------------------------------------------------
 
 
-def test_surface_has_exactly_eight_tools():
-    assert len(MCP_TOOL_NAMES) == 8
+def test_surface_has_exactly_nine_tools():
+    assert len(MCP_TOOL_NAMES) == 9
     assert TOOL_CLASS["prepare_change"] == "PREPARE"
     assert TOOL_CLASS["commit_proposal"] == "ACT"
-    assert sum(1 for v in TOOL_CLASS.values() if v == "READ") == 6
+    assert sum(1 for v in TOOL_CLASS.values() if v == "READ") == 7
 
 
 # ---------------------------------------------------------------------------

@@ -46,6 +46,137 @@ def _typed_ops(ops: list[Any] | None) -> list[dict[str, Any]]:
     return out
 
 
+# inspect_data_source response bounds — bounded observability, never a data dump.
+_INSPECT_MAX_COLUMNS = 40
+_INSPECT_MAX_RESULT_ROWS = 10
+_INSPECT_MAX_SAMPLE_FIELDS = 20
+
+
+def _legacy_merge_source_refs(transform: Any) -> list[str]:
+    """Raw `sourceId` refs of v1 merge steps (resolved or not)."""
+    if not isinstance(transform, dict):
+        return []
+    steps = transform.get("steps")
+    if not isinstance(steps, list):
+        return []
+    refs: list[str] = []
+    for step in steps:
+        if isinstance(step, dict) and str(step.get("op") or "") == "merge":
+            ref = str(step.get("sourceId") or "").strip()
+            if ref:
+                refs.append(ref)
+    return refs
+
+
+def _merge_consumed_fields(
+    transform: Any,
+    source_id: str,
+    ref_to_source: dict[str, str],
+) -> list[str] | None:
+    """Fields consumed from `source_id` by v1 merge steps — `rightKey` +
+    declared `columns`. `None` when the contract takes all columns or the
+    transform is v2 (field consumption not statically declared)."""
+    if not isinstance(transform, dict):
+        return None
+    steps = transform.get("steps")
+    if not isinstance(steps, list):
+        return None
+    fields: list[str] = []
+    takes_all = False
+    for step in steps:
+        if not isinstance(step, dict) or str(step.get("op") or "") != "merge":
+            continue
+        ref = str(step.get("sourceId") or "").strip()
+        if ref_to_source.get(ref) != source_id:
+            continue
+        key = str(step.get("rightKey") or "").strip()
+        if key and key not in fields:
+            fields.append(key)
+        columns = step.get("columns")
+        if isinstance(columns, list):
+            for col in columns:
+                col_str = str(col or "").strip()
+                if col_str and col_str not in fields:
+                    fields.append(col_str)
+        else:
+            takes_all = True
+    if not fields and not takes_all:
+        return []
+    return None if takes_all else fields
+
+
+def _expression_context_refs(params: dict[str, Any]) -> set[str]:
+    """Context identifiers (`today`, `now`, `param.*`) referenced by expression
+    params — static AST walk only, never evaluation."""
+    refs: set[str] = set()
+
+    def _walk(node: Any) -> None:
+        if isinstance(node, dict):
+            if node.get("kind") == "identifier":
+                value = str(node.get("value") or "").strip()
+                if value:
+                    refs.add(value)
+            children = node.get("children")
+            if isinstance(children, list):
+                for child in children:
+                    _walk(child)
+        elif isinstance(node, list):
+            for item in node:
+                _walk(item)
+
+    for value in params.values():
+        if isinstance(value, dict) and isinstance(value.get("expression"), dict):
+            spec = value["expression"]
+            _walk(spec.get("expression") if isinstance(spec.get("expression"), dict) else spec)
+    return refs
+
+
+def _inspect_source_table(resolved: dict[str, Any]) -> dict[str, Any] | None:
+    """Post-transform table de um bloco resolvido — `_queryTable` (tabela
+    materializada da DAG quando sobrevive) com fallback para `resolved.table`
+    (presentation bounded, mesma tabela transformada)."""
+    dag_table = resolved.get("_queryTable")
+    if isinstance(dag_table, dict) and isinstance(dag_table.get("rows"), list):
+        return {
+            "columns": [str(c) for c in (dag_table.get("columns") or [])],
+            "rows": dag_table["rows"],
+        }
+    table = resolved.get("table")
+    if isinstance(table, dict) and isinstance(table.get("rows"), list):
+        return {
+            "columns": [
+                str(c.get("key") if isinstance(c, dict) else c)
+                for c in (table.get("columns") or [])
+            ],
+            "rows": table["rows"],
+        }
+    return None
+
+
+def _inspect_table_sample(
+    table: Any,
+    fields: list[str] | None,
+) -> tuple[int, dict[str, Any] | None]:
+    """(rowCount, first-row field sample) — only fields the transform consumes
+    when declared; otherwise all columns bounded. `None` sample when no rows."""
+    if not isinstance(table, dict):
+        return 0, None
+    rows = table.get("rows") or []
+    row_count = len(rows)
+    first = rows[0] if rows and isinstance(rows[0], dict) else None
+    if first is None:
+        return row_count, None
+    columns = fields if isinstance(fields, list) and fields else [
+        str(c) for c in (table.get("columns") or [])
+    ]
+    sample = {
+        col: first.get(col)
+        for col in columns[: _INSPECT_MAX_SAMPLE_FIELDS]
+        if col in first
+    }
+    return row_count, sample
+
+
 class GptActionsDispatchService:
     def __init__(
         self,
@@ -1245,6 +1376,342 @@ class GptActionsDispatchService:
             "outputSchema": output_schema,
             "runtime": runtime,
         }
+
+    def inspect_data_source(
+        self,
+        *,
+        user: Any,
+        playlist_id: str,
+        slide_id: str,
+        data_source_id: str,
+        authorization: str | None,
+        include_runtime: bool = False,
+    ) -> dict[str, Any]:
+        """Inspect persistido de um data_source legado — definição, transform,
+        dependências, consumidores e evidência de runtime. Somente leitura."""
+        from tv_app.application.services.data.m_query.m_query_dependency_service import (
+            MQueryDependencyService,
+        )
+        from tv_app.application.services.data.projection_fields_contract import (
+            collect_source_consumer_field_refs,
+        )
+
+        assert_permission(user, TV_READ)
+        pid_raw = str(playlist_id or "").strip()
+        sid_raw = str(slide_id or "").strip()
+        did = str(data_source_id or "").strip()
+        if not pid_raw or not sid_raw or not did:
+            raise GptActionsError(
+                "playlistId, slideId e dataSourceId são obrigatórios.",
+                code="INVALID_CHANGE",
+                status_code=422,
+            )
+        try:
+            pid = UUID(pid_raw)
+            sid = UUID(sid_raw)
+        except ValueError as exc:
+            raise GptActionsError(
+                "playlistId/slideId inválidos.",
+                code="INVALID_CHANGE",
+                status_code=422,
+            ) from exc
+        access = self._access.resolve(pid, user)
+        if not access.can_read:
+            raise GptActionsError(
+                "Programação não encontrada.",
+                code="RESOURCE_NOT_FOUND",
+                status_code=404,
+            )
+        try:
+            slide_row = self._writes.get_slide(sid, playlist_id=pid)
+        except Exception as exc:
+            raise GptActionsError(
+                "Tela não encontrada.",
+                code="RESOURCE_NOT_FOUND",
+                status_code=404,
+            ) from exc
+        cfg = (
+            slide_row.get("nativeConfig")
+            if isinstance(slide_row.get("nativeConfig"), dict)
+            else {}
+        )
+        blocks = cfg.get("blocks") if isinstance(cfg.get("blocks"), list) else []
+        source_blocks = [
+            b
+            for b in blocks
+            if isinstance(b, dict) and str(b.get("type") or "") == "data_source"
+        ]
+        target = next(
+            (b for b in source_blocks if str(b.get("id") or "") == did),
+            None,
+        )
+        if target is None:
+            raise GptActionsError(
+                f'Data source "{did}" não encontrado no slide.',
+                code="RESOURCE_NOT_FOUND",
+                status_code=404,
+                details={"dataSourceId": did},
+            )
+
+        binding = (
+            target.get("dataBinding")
+            if isinstance(target.get("dataBinding"), dict)
+            else {}
+        )
+        operation_id = str(binding.get("operationId") or "").strip()
+        params = binding.get("params") if isinstance(binding.get("params"), dict) else {}
+        transform = target.get("dataTransform")
+        has_transform = isinstance(transform, dict) and (
+            bool(transform.get("steps")) or bool(transform.get("script"))
+        )
+        route = self._catalog.get_route(operation_id) if operation_id else None
+
+        source: dict[str, Any] = {
+            "id": did,
+            "label": binding.get("label") or target.get("label"),
+            "queryName": str(
+                target.get("queryName") or binding.get("queryName") or did
+            ).strip(),
+            "operationId": operation_id or None,
+            "displayMode": binding.get("displayMode"),
+            "params": params,
+            "fieldLabels": target.get("fieldLabels") or {},
+            "hasTransform": has_transform,
+        }
+        if isinstance(route, dict):
+            source["route"] = {
+                "operationId": route.get("operationId"),
+                "label": route.get("label"),
+            }
+        context_refs = _expression_context_refs(params)
+        if context_refs:
+            source["contextReferences"] = sorted(context_refs)
+
+        # Dependências derivadas do contrato persistido (DAG canônico) — nunca
+        # por convenção de nome. Merge v1 endereça sibling por sourceId; M v2
+        # endereça por queryName via referenced_queries compiladas.
+        graph = MQueryDependencyService().resolve(source_blocks)
+        node = next((n for n in graph.nodes if n.source_id == did), None)
+        ref_to_source: dict[str, str] = {n.query_name: n.source_id for n in graph.nodes}
+        for n in graph.nodes:
+            ref_to_source.setdefault(n.source_id, n.source_id)
+        name_by_source = {n.source_id: n.query_name for n in graph.nodes}
+
+        block_by_id = {
+            str(b.get("id") or ""): b
+            for b in source_blocks
+            if str(b.get("id") or "")
+        }
+        dependencies: list[dict[str, Any]] = []
+        dep_ids: list[str] = list(node.dependencies) if node else []
+        for dep_id in dep_ids:
+            fields = _merge_consumed_fields(transform, dep_id, ref_to_source)
+            dep_block = block_by_id.get(dep_id) or {}
+            dep_binding = (
+                dep_block.get("dataBinding")
+                if isinstance(dep_block.get("dataBinding"), dict)
+                else {}
+            )
+            dep_params = dep_binding.get("params")
+            entry: dict[str, Any] = {
+                "kind": "data_source",
+                "sourceId": dep_id,
+                "queryName": name_by_source.get(dep_id),
+                "status": "resolved",
+                # Params persistidos do dependente — AST de expressão intacto
+                # aqui; runtime.inputResults mostra o resolvido por entrada.
+                "params": dep_params if isinstance(dep_params, dict) else {},
+            }
+            if fields is not None:
+                entry["fields"] = fields
+            dependencies.append(entry)
+        unresolved_refs = [
+            ref
+            for ref in _legacy_merge_source_refs(transform)
+            if ref not in ref_to_source
+        ]
+        for ref in sorted(set(unresolved_refs)):
+            dependencies.append(
+                {"kind": "data_source", "ref": ref, "status": "unresolved"}
+            )
+        if dep_ids:
+            dependency_status = (
+                "INCONCLUSIVE" if unresolved_refs else "RESOLVED"
+            )
+        else:
+            dependency_status = "INCONCLUSIVE" if unresolved_refs else "NONE"
+
+        transform_diagnostics = [
+            item
+            for item in graph.diagnostics
+            if isinstance(item, dict) and item.get("sourceId") == did
+        ]
+
+        consumers = collect_source_consumer_field_refs(blocks, did)
+
+        runtime: dict[str, Any] = {"state": "not_executed"}
+        if include_runtime:
+            defaults = (access.playlist or {}).get("dataDefaults")
+            closure_ids = {did, *dep_ids}
+            closure = [
+                dict(b)
+                for b in source_blocks
+                if str(b.get("id") or "") in closure_ids
+            ]
+            try:
+                enriched = self._preview.resolve_blocks(
+                    closure,
+                    native_config=cfg,
+                    authorization=authorization,
+                    user=user,
+                    playlist_defaults=(
+                        defaults if isinstance(defaults, dict) else None
+                    ),
+                )
+            except Exception as exc:  # noqa: BLE001 — runtime é best-effort
+                enriched = []
+                runtime = {
+                    "state": "error",
+                    "error": {"code": "RUNTIME_FAILURE", "message": str(exc)},
+                }
+            if enriched:
+                resolved_by_id = {
+                    str(b.get("id") or ""): b.get("resolved")
+                    for b in enriched
+                    if isinstance(b, dict)
+                    and isinstance(b.get("resolved"), dict)
+                }
+                runtime = self._inspect_source_runtime(
+                    did,
+                    dep_ids,
+                    transform=transform,
+                    ref_to_source=ref_to_source,
+                    resolved_by_id=resolved_by_id,
+                    execution_order=[
+                        sid
+                        for sid in graph.ordered_source_ids
+                        if sid in closure_ids
+                    ],
+                )
+
+        return {
+            "playlistId": pid_raw,
+            "slideId": sid_raw,
+            "revision": (access.playlist or {}).get("revision"),
+            "dataSourceId": did,
+            "source": source,
+            "transform": {
+                "persisted": transform if has_transform else None,
+                "version": transform.get("version") if has_transform else None,
+                "diagnostics": transform_diagnostics,
+            },
+            "dependencies": dependencies,
+            "dependencyStatus": dependency_status,
+            "consumers": consumers,
+            "consumerCount": len(consumers),
+            "runtime": runtime,
+        }
+
+    @staticmethod
+    def _inspect_source_runtime(
+        data_source_id: str,
+        dependency_ids: list[str],
+        *,
+        transform: Any,
+        ref_to_source: dict[str, str],
+        resolved_by_id: dict[str, Any],
+        execution_order: list[str],
+    ) -> dict[str, Any]:
+        target_resolved = resolved_by_id.get(data_source_id)
+        if not isinstance(target_resolved, dict):
+            return {
+                "state": "error",
+                "error": {
+                    "code": "SOURCE_NOT_RESOLVED",
+                    "message": "Fonte não produziu resultado de runtime.",
+                },
+            }
+
+        input_results: list[dict[str, Any]] = []
+        for dep_id in dependency_ids:
+            dep_resolved = resolved_by_id.get(dep_id)
+            entry: dict[str, Any] = {
+                "sourceId": dep_id,
+                "status": "resolved" if isinstance(dep_resolved, dict) else "unresolved",
+            }
+            if not isinstance(dep_resolved, dict):
+                input_results.append(entry)
+                continue
+            fields = _merge_consumed_fields(transform, dep_id, ref_to_source)
+            entry["effectiveParams"] = dict(dep_resolved.get("effectiveParams") or {})
+            entry["requestedParams"] = dict(dep_resolved.get("requestedParams") or {})
+            if dep_resolved.get("paramExpressions"):
+                entry["paramExpressions"] = dep_resolved["paramExpressions"]
+            row_count, sample = _inspect_table_sample(
+                _inspect_source_table(dep_resolved), fields
+            )
+            entry["rowCount"] = row_count
+            if sample is not None:
+                entry["fields"] = sample
+            if dep_resolved.get("transformError"):
+                entry["transformError"] = dep_resolved["transformError"]
+            if dep_resolved.get("error"):
+                entry["error"] = str(dep_resolved["error"])
+            input_results.append(entry)
+
+        output_table = _inspect_source_table(target_resolved)
+        transformed_result: dict[str, Any] | None = None
+        if isinstance(output_table, dict):
+            columns = [
+                str(c)
+                for c in (output_table.get("columns") or [])[: _INSPECT_MAX_COLUMNS]
+            ]
+            available = len(output_table.get("rows") or [])
+            returned = min(available, _INSPECT_MAX_RESULT_ROWS)
+            transformed_result = {
+                "columns": columns,
+                "rows": [
+                    {col: row.get(col) for col in columns}
+                    for row in (output_table.get("rows") or [])[:returned]
+                    if isinstance(row, dict)
+                ],
+                "rowCount": available,
+                "truncated": returned < available
+                or len(output_table.get("columns") or []) > len(columns),
+            }
+
+        query_meta = (
+            target_resolved.get("query")
+            if isinstance(target_resolved.get("query"), dict)
+            else {}
+        )
+        step_metrics = query_meta.get("stepMetrics")
+        transform_error = target_resolved.get("transformError")
+        error_msg = str(target_resolved.get("error") or "").strip()
+        if transform_error or error_msg:
+            state = "error"
+        elif transformed_result is None or not transformed_result["rowCount"]:
+            state = "empty"
+        else:
+            state = "ready"
+
+        runtime: dict[str, Any] = {
+            "state": state,
+            "effectiveParams": dict(target_resolved.get("effectiveParams") or {}),
+            "requestedParams": dict(target_resolved.get("requestedParams") or {}),
+            "executionOrder": list(execution_order),
+            "inputResults": input_results,
+            "transformedResult": transformed_result,
+            "transformError": transform_error or None,
+            "runtimeErrors": target_resolved.get("runtimeErrors") or None,
+        }
+        if target_resolved.get("paramExpressions"):
+            runtime["paramExpressions"] = target_resolved["paramExpressions"]
+        if error_msg:
+            runtime["error"] = {"message": error_msg}
+        if isinstance(step_metrics, list) and step_metrics:
+            runtime["trace"] = {"steps": step_metrics}
+        return runtime
 
     def preview_change(
         self,

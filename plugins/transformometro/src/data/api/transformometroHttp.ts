@@ -9,11 +9,19 @@ export type ApiEnvelope<T> = {
 
 export class TransformometroHttpError extends Error {
   readonly status: number;
+  /** `data.error_code` do envelope fail() — códigos de negócio canônicos. */
+  readonly code?: string;
+  readonly data?: unknown;
 
-  constructor(status: number, message: string) {
+  constructor(status: number, message: string, data?: unknown) {
     super(message);
     this.name = "TransformometroHttpError";
     this.status = status;
+    this.data = data;
+    if (data && typeof data === "object") {
+      const code = (data as { error_code?: unknown }).error_code;
+      if (typeof code === "string" && code) this.code = code;
+    }
   }
 }
 
@@ -55,6 +63,7 @@ export async function parseApiEnvelope<T>(response: Response): Promise<T> {
     throw new TransformometroHttpError(
       response.status,
       describeHttpError(response.status, detailFromBody(body)),
+      body.data,
     );
   }
   return body.data;

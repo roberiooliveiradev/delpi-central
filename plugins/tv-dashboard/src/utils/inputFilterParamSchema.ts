@@ -88,8 +88,8 @@ export function buildInputEditorValues(
   block: ComunicadoInputBlock,
   slideFilters: ComunicadoDataFilters,
   schema: DataParamSchema,
-): Record<string, string | number | boolean | null | undefined> {
-  const values: Record<string, string | number | boolean | null | undefined> = {};
+): Record<string, ComunicadoDataFilters[string] | undefined> {
+  const values: Record<string, ComunicadoDataFilters[string] | undefined> = {};
   const scope = block.input.targetScope === "sources" ? "sources" : "slide";
   const paramKey = String(block.input.paramKey || "").trim();
 

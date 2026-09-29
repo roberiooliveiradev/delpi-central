@@ -1,14 +1,22 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   discoverResolvedFieldOptions,
   resolveDataBlockErrorText,
+  type DataParamValue,
   type TvDataModel,
+  type TvDataModelInput,
 } from "@delpi/tv-dashboard-presentation";
 import { NativeTextControl } from "@delpi/plugin-ui/index";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { useParamExpressionCapability } from "../hooks/useParamExpressionCapability";
 import { useTvDataRouteLabelCatalog } from "../hooks/useTvDataRouteLabelCatalog";
+import {
+  applyDataParamRawUpdates,
+  type DataParamUpdateValue,
+} from "../utils/applyDataParamUpdates";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
+import { DataParamFields, visibleParamSchema } from "./DataParamFields";
 import type { PanelLayout } from "./SelectedDataSidePanel";
 import { DeckField } from "./deck/DeckField";
 import { DeckPropertySection } from "./deck/DeckPropertySection";
@@ -34,10 +42,21 @@ export function DataModelInspector({ model, pane = false, layout = "pane" }: Pro
   } = useComunicadoEditor();
   const { routes } = useTvDataRouteLabelCatalog();
   const isRibbon = layout === "ribbon";
+  // Capability do catálogo vivo (`/data/m/functions`) — modo Expressão nos inputs.
+  const expressionSupport = useParamExpressionCapability();
 
   const [labelDraft, setLabelDraft] = useState(model.label ?? "");
   const [actionError, setActionError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  /** Rascunho local por input — save explícito via `upsert_data_model` governado. */
+  const [paramDrafts, setParamDrafts] = useState<
+    Record<string, Record<string, DataParamValue | null | undefined>>
+  >({});
+
+  useEffect(() => {
+    setParamDrafts({});
+    setLabelDraft(model.label ?? "");
+  }, [model.id, model.label]);
 
   const resolved = getDataPreviewResolved?.(model.id);
   const loading = refreshingSourceIds.includes(model.id);
@@ -48,13 +67,20 @@ export function DataModelInspector({ model, pane = false, layout = "pane" }: Pro
     [resolved, model.fieldLabels],
   );
 
-  const routeLabelById = useMemo(() => {
-    const map = new Map<string, string>();
+  const routeById = useMemo(() => {
+    const map = new Map<string, (typeof routes)[number]>();
     for (const route of routes) {
-      if (route.operationId) map.set(route.operationId, route.label ?? route.operationId);
+      if (route.operationId) map.set(route.operationId, route);
     }
     return map;
   }, [routes]);
+  const routeLabelById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const [operationId, route] of routeById) {
+      map.set(operationId, route.label ?? operationId);
+    }
+    return map;
+  }, [routeById]);
 
   const isEmpty =
     !loading &&
@@ -82,6 +108,67 @@ export function DataModelInspector({ model, pane = false, layout = "pane" }: Pro
         setActionError(err instanceof Error ? err.message : "Falha ao salvar o modelo.");
       })
       .finally(() => setBusy(false));
+  };
+
+  const stableParamsJson = (params: Record<string, unknown> | undefined) => {
+    const keys = Object.keys(params ?? {}).sort();
+    const normalized: Record<string, unknown> = {};
+    for (const key of keys) {
+      const value = params?.[key];
+      if (value !== undefined && value !== null && value !== "") normalized[key] = value;
+    }
+    return JSON.stringify(normalized);
+  };
+
+  const patchInputParams = (
+    input: TvDataModelInput,
+    updates: Record<string, DataParamUpdateValue>,
+  ) => {
+    const route = routeById.get(input.operationId);
+    const schema = visibleParamSchema(
+      route?.paramSchema as Parameters<typeof visibleParamSchema>[0],
+      route?.fixedQueryParams,
+    );
+    const base = paramDrafts[input.id] ?? input.params ?? {};
+    const next = applyDataParamRawUpdates(base, updates, schema);
+    setParamDrafts((prev) => ({ ...prev, [input.id]: next }));
+  };
+
+  const saveInputParams = (input: TvDataModelInput) => {
+    const draft = paramDrafts[input.id];
+    if (!draft) return;
+    const nextModel: TvDataModel = {
+      ...model,
+      inputs: model.inputs.map((item) =>
+        item.id === input.id
+          ? { ...item, params: { ...(draft as Record<string, DataParamValue>) } }
+          : item,
+      ),
+    };
+    setBusy(true);
+    setActionError(null);
+    void saveDataModel(nextModel)
+      .then(() => {
+        setParamDrafts((prev) => {
+          const next = { ...prev };
+          delete next[input.id];
+          return next;
+        });
+      })
+      .catch((err: unknown) => {
+        setActionError(
+          err instanceof Error ? err.message : "Falha ao salvar os parâmetros do modelo.",
+        );
+      })
+      .finally(() => setBusy(false));
+  };
+
+  const discardInputParams = (input: TvDataModelInput) => {
+    setParamDrafts((prev) => {
+      const next = { ...prev };
+      delete next[input.id];
+      return next;
+    });
   };
 
   const onDelete = () => {
@@ -173,23 +260,67 @@ export function DataModelInspector({ model, pane = false, layout = "pane" }: Pro
         </div>
       </DeckPropertySection>
 
-      <DeckPropertySection pane={pane} title="Rotas do modelo" defaultOpen={false}>
+      <DeckPropertySection pane={pane} title="Rotas do modelo" defaultOpen>
         <ul className="td-project-sources-list">
-          {model.inputs.map((input) => (
-            <li key={input.id} className="td-project-sources-list__item--static">
-              <span className="td-project-sources-list__label">
-                {input.label?.trim() || routeLabelById.get(input.operationId) || input.operationId}
-              </span>
-              <span className="td-project-sources-list__meta">
-                {input.operationId}
-                {input.id === model.primaryInputId ? " · principal" : ""}
-                {input.transform ? " · transform" : ""}
-                {input.params && Object.keys(input.params).length > 0
-                  ? ` · ${Object.keys(input.params).length} parâmetro(s)`
-                  : ""}
-              </span>
-            </li>
-          ))}
+          {model.inputs.map((input) => {
+            const route = routeById.get(input.operationId);
+            const inputSchema = visibleParamSchema(
+              route?.paramSchema as Parameters<typeof visibleParamSchema>[0],
+              route?.fixedQueryParams,
+            );
+            const draft = paramDrafts[input.id];
+            const hasDraft = draft != null && stableParamsJson(draft) !== stableParamsJson(input.params);
+            return (
+              <li key={input.id} className="td-project-sources-list__item--static">
+                <span className="td-project-sources-list__label">
+                  {input.label?.trim() || routeLabelById.get(input.operationId) || input.operationId}
+                </span>
+                <span className="td-project-sources-list__meta">
+                  {input.operationId}
+                  {input.id === model.primaryInputId ? " · principal" : ""}
+                  {input.transform ? " · transform" : ""}
+                  {input.params && Object.keys(input.params).length > 0
+                    ? ` · ${Object.keys(input.params).length} parâmetro(s)`
+                    : ""}
+                </span>
+                {route && Object.keys(inputSchema).length > 0 ? (
+                  <details className="td-data-model-input-params">
+                    <summary>Parâmetros</summary>
+                    <DataParamFields
+                      schema={inputSchema}
+                      values={(draft ?? input.params) as
+                        | Record<string, DataParamValue | null | undefined>
+                        | undefined}
+                      idPrefix={`td-model-input-${input.id}`}
+                      expressionSupport={expressionSupport}
+                      fixedQueryParams={route.fixedQueryParams}
+                      onChange={(updates) => patchInputParams(input, updates)}
+                    />
+                    {hasDraft ? (
+                      <div className="td-deck-ribbon__toolbar-row">
+                        <button
+                          type="button"
+                          className="td-btn td-btn--sm"
+                          disabled={busy}
+                          onClick={() => saveInputParams(input)}
+                        >
+                          Salvar parâmetros
+                        </button>
+                        <button
+                          type="button"
+                          className="td-btn td-btn--sm td-btn--ghost"
+                          disabled={busy}
+                          onClick={() => discardInputParams(input)}
+                        >
+                          Descartar
+                        </button>
+                      </div>
+                    ) : null}
+                  </details>
+                ) : null}
+              </li>
+            );
+          })}
         </ul>
       </DeckPropertySection>
 

@@ -248,6 +248,28 @@ def tool_inspect_data_model(
         return handle_tool_error(e, tool="inspect_data_model", label="mcp tool")
 
 
+def tool_inspect_data_source(
+    playlist_id: str,
+    slide_id: str,
+    data_source_id: str,
+    include_runtime: bool = False,
+) -> CallToolResult:
+    try:
+        user, auth = _authed_context()
+        return _ok_result(
+            _dispatch.inspect_data_source(
+                user=user,
+                playlist_id=playlist_id,
+                slide_id=slide_id,
+                data_source_id=data_source_id,
+                authorization=auth,
+                include_runtime=include_runtime,
+            )
+        )
+    except Exception as e:
+        return handle_tool_error(e, tool="inspect_data_source", label="mcp tool")
+
+
 def tool_preview_data_model(
     playlist_id: str | None = None,
     slide_id: str | None = None,

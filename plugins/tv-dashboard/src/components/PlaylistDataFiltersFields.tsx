@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import type { ParamExpressionSpec } from "@delpi/tv-dashboard-presentation";
 import { listDataRoutes, type BranchScope, type Slide, type TvDataRouteCatalogItem } from "../api/tvDashboardApi";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { applyDataParamRawUpdates } from "../utils/applyDataParamUpdates";
@@ -12,7 +13,7 @@ type Props = {
   slides: Slide[];
   values: Record<string, unknown> | null | undefined;
   branchScope?: BranchScope | null;
-  onChange: (next: Record<string, string | number | boolean>) => void;
+  onChange: (next: Record<string, string | number | boolean | ParamExpressionSpec>) => void;
 };
 
 /** Campos de dataDefaults da programação — schema = união das fontes usadas. */

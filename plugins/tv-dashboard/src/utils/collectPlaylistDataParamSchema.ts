@@ -2,6 +2,7 @@ import {
   isFetchableDataBlockType,
   parseComunicadoConfig,
   type ComunicadoBlock,
+  type ParamExpressionSpec,
 } from "@delpi/tv-dashboard-presentation";
 import type { TvDataRouteCatalogItem } from "../api/tvDashboardApi";
 import {
@@ -142,13 +143,16 @@ export function collectSlideDataParamSchema(
 /** Normaliza dataDefaults / dataFilters para o editor de params. */
 export function asDataFilterValues(
   raw: Record<string, unknown> | null | undefined,
-): Record<string, string | number | boolean | null> {
+): Record<string, string | number | boolean | null | ParamExpressionSpec> {
   if (!raw || typeof raw !== "object") return {};
-  const next: Record<string, string | number | boolean | null> = {};
+  const next: Record<string, string | number | boolean | null | ParamExpressionSpec> = {};
   for (const [key, value] of Object.entries(raw)) {
     if (value === undefined) continue;
     if (value === null || typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
       next[key] = value;
+    } else if (typeof value === "object" && !Array.isArray(value)) {
+      // ExpressionSpec (objeto) persiste intacto — backend é autoridade do contrato.
+      next[key] = value as ParamExpressionSpec;
     } else {
       next[key] = String(value);
     }

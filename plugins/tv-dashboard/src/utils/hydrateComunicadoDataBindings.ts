@@ -3,6 +3,7 @@ import type {
   ComunicadoConfig,
   ComunicadoDataBinding,
   DataSourceLabelRouteInfo,
+  ParamExpressionSpec,
 } from "@delpi/tv-dashboard-presentation";
 
 import type { TvDataRouteCatalogItem } from "../api/tvDashboardApi";
@@ -70,15 +71,17 @@ function routeInfoFromCatalog(
 }
 
 function stableRecordJson(
-  value: Record<string, string | number | boolean | null | undefined> | undefined,
+  value:
+    | Record<string, string | number | boolean | null | ParamExpressionSpec | undefined>
+    | undefined,
 ): string {
   if (!value || typeof value !== "object") return "{}";
   const keys = Object.keys(value).sort();
-  const normalized: Record<string, string | number | boolean> = {};
+  const normalized: Record<string, unknown> = {};
   for (const key of keys) {
     const entry = value[key];
     if (entry === undefined || entry === null || entry === "") continue;
-    normalized[key] = entry as string | number | boolean;
+    normalized[key] = entry;
   }
   return JSON.stringify(normalized);
 }
@@ -92,12 +95,13 @@ function canonicalBranchWireValue(value: unknown): string | null {
 }
 
 function resolveAnyBranchValue(
-  params: Record<string, string | number | boolean | null | undefined>,
+  params: Record<string, string | number | boolean | null | ParamExpressionSpec | undefined>,
 ): unknown {
   for (const key of BRANCH_PARAM_KEYS) {
     if (!(key in params)) continue;
     const value = params[key];
-    if (value === undefined || value === null || value === "") continue;
+    // ExpressionSpec permanece opaco — hydrate não resolve nem projeta AST.
+    if (value === undefined || value === null || value === "" || typeof value === "object") continue;
     if (String(value).trim()) return value;
   }
   return null;
@@ -109,32 +113,37 @@ function resolveAnyBranchValue(
  * de `branch` perder o valor quando a rota só declara `filial` / `filial_id`.
  */
 export function projectBranchParamsOntoRouteSchema(
-  params: Record<string, string | number | boolean | null | undefined>,
+  params: Record<string, string | number | boolean | null | ParamExpressionSpec | undefined>,
   schemaKeys: Set<string>,
-): Record<string, string | number | boolean | null | undefined> {
-  const out: Record<string, string | number | boolean | null | undefined> = { ...params };
+): Record<string, string | number | boolean | null | ParamExpressionSpec | undefined> {
+  const out: Record<string, string | number | boolean | null | ParamExpressionSpec | undefined> = {
+    ...params,
+  };
   const targets = [...schemaKeys].filter((key) => BRANCH_PARAM_KEYS.has(key));
   if (targets.length === 0) return out;
   const wire = canonicalBranchWireValue(resolveAnyBranchValue(out));
   for (const key of BRANCH_PARAM_KEYS) {
-    delete out[key];
+    // ExpressionSpec é opaco para projeção de filial — preservar AST.
+    if (typeof out[key] !== "object") delete out[key];
   }
   if (wire == null) return out;
   for (const key of targets) {
-    out[key] = wire;
+    if (out[key] == null || typeof out[key] !== "object") out[key] = wire;
   }
   return out;
 }
 
 function hydrateBindingParams(
-  params: Record<string, string | number | boolean | null | undefined> | undefined,
+  params:
+    | Record<string, string | number | boolean | null | ParamExpressionSpec | undefined>
+    | undefined,
   route: TvDataRouteCatalogItem | undefined,
 ): {
-  params: Record<string, string | number | boolean>;
+  params: Record<string, string | number | boolean | ParamExpressionSpec>;
   stripped: string[];
   remapped: string[];
 } {
-  let raw: Record<string, string | number | boolean | null | undefined> = {
+  let raw: Record<string, string | number | boolean | null | ParamExpressionSpec | undefined> = {
     ...(params ?? {}),
   };
   const remapped: string[] = [];
@@ -161,9 +170,23 @@ function hydrateBindingParams(
   }
 
   const stripped: string[] = [];
-  const next: Record<string, string | number | boolean> = {};
+  const next: Record<string, string | number | boolean | ParamExpressionSpec> = {};
   for (const [key, value] of Object.entries(raw)) {
     if (value === undefined || value === null || value === "") continue;
+    // ExpressionSpec passa intacto — schema key é validado, AST é opaco ao hydrate.
+    if (typeof value === "object") {
+      if (INTERNAL_PARAM_KEYS.has(key)) {
+        next[key] = value;
+        continue;
+      }
+      if (key in fixed) continue;
+      if (schemaKeys.size > 0 && !schemaKeys.has(key)) {
+        stripped.push(key);
+        continue;
+      }
+      next[key] = value;
+      continue;
+    }
     if (INTERNAL_PARAM_KEYS.has(key)) {
       next[key] = value as string | number | boolean;
       continue;

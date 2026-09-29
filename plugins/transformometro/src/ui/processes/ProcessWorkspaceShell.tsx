@@ -8,6 +8,7 @@ import {
   parseInstanciaSectionFromHash,
   parseProcessoSecondaryFocusFromHash,
   parseProcessoSectionFromHash,
+  parseRevisaoDiagnosticIdFromHash,
   parseRevisaoSectionFromHash,
   type InstanciaWorkspaceSectionId,
   type ProcessoWorkspaceSecondaryFocus,
@@ -98,6 +99,15 @@ export function useRevisaoWorkspaceSection(cenarioTipo?: string | null): Revisao
     subscribeWorkspaceSection,
     () => readRevisaoSectionSnapshot(cenarioTipo),
     () => defaultRevisaoSection(cenarioTipo),
+  );
+}
+
+/** Selected Diagnostic id from `#diagnostico/{id}` (null when section root). */
+export function useRevisaoDiagnosticId(): string | null {
+  return useSyncExternalStore(
+    subscribeWorkspaceSection,
+    () => parseRevisaoDiagnosticIdFromHash(window.location.hash),
+    () => null,
   );
 }
 
