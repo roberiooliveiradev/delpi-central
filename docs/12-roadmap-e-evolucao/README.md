@@ -58,6 +58,9 @@ Estado atual, decisões consolidadas, pendências e plano de evolução.
 | Arquivo | Conteúdo |
 |---|---|
 | [bpmn-modeler/V1-SCOPE-FREEZE.md](./bpmn-modeler/V1-SCOPE-FREEZE.md) | Specification freeze da V1 — escopo, capability matrix, editing profile, DoD (não autoriza implementação por si só) |
+| [bpmn-modeler/BACKEND-DOMAIN-SPEC-FREEZE.md](./bpmn-modeler/BACKEND-DOMAIN-SPEC-FREEZE.md) | Freeze backend/domain — aggregate, WorkingCopy/Revision, save/restore, concorrência, use cases, erros |
+| [bpmn-modeler/BPMN-INTEROPERABILITY-SPEC-FREEZE.md](./bpmn-modeler/BPMN-INTEROPERABILITY-SPEC-FREEZE.md) | Freeze BPMN/validação — recognition, stages, rule catalog, preservation, round-trip, stack lxml, input safety |
+| [bpmn-modeler/FRONTEND-EDITOR-UX-SPEC-FREEZE.md](./bpmn-modeler/FRONTEND-EDITOR-UX-SPEC-FREEZE.md) | Freeze frontend/editor/UX — host MFE, bpmn-js, adapter, state ownership, save/conflict, read-only, revisions, validation UX |
 
 ### Meus Chamados de TI
 
