@@ -106,7 +106,6 @@ import {
   filtersRowBemClasses,
   inlineMeterBemClasses,
   compareSparklineBemClasses,
-  trendDeltaBemClasses,
   navigationCardBemClasses,
   pageHeaderBrandBemClasses,
   sectionCardPacBemClasses,

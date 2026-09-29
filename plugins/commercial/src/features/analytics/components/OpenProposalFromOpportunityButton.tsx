@@ -1,4 +1,4 @@
-import { useState, type MouseEvent } from "react";
+import { useState } from "react";
 
 import { CommercialActionButton } from "../../../app/commercialUi";
 import { currentLocationAsReturnTo } from "../../../app/commercialNavigationReturn";
@@ -22,8 +22,7 @@ export function OpenProposalFromOpportunityButton({
   const [busy, setBusy] = useState(false);
   const copy = ANALYTICS_CONTENT.oportunidades;
 
-  const onClick = async (event: MouseEvent) => {
-    event.stopPropagation();
+  const onClick = async () => {
     if (busy) return;
     setBusy(true);
     try {
@@ -54,8 +53,14 @@ export function OpenProposalFromOpportunityButton({
   };
 
   return (
-    <CommercialActionButton variant="ghost" disabled={busy} onClick={onClick}>
-      {busy ? copy.openProposalBusy : copy.openProposal}
-    </CommercialActionButton>
+    <span onClick={(event) => event.stopPropagation()}>
+      <CommercialActionButton
+        variant="ghost"
+        disabled={busy}
+        onClick={() => void onClick()}
+      >
+        {busy ? copy.openProposalBusy : copy.openProposal}
+      </CommercialActionButton>
+    </span>
   );
 }

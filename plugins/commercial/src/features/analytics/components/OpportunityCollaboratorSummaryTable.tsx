@@ -139,7 +139,7 @@ export function OpportunityCollaboratorSummaryTable({
 
   if (!rows.length) {
     return (
-      <CommercialEmptyState defaultMessage="Nenhum colaborador com oportunidades no período." />
+      <CommercialEmptyState message="Nenhum colaborador com oportunidades no período." />
     );
   }
 

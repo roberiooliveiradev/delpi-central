@@ -21,7 +21,7 @@ describe("portalHomeSignals", () => {
     });
     expect(tiles.map((item) => item.id)).toEqual(["net-economy", "hours", "solutions"]);
     expect(tiles.every((item) => item.loading !== true)).toBe(true);
-    expect(tiles.every((item) => item.description?.includes("todas as unidades"))).toBe(true);
+    expect(tiles.every((item) => String(item.description ?? "").includes("todas as unidades"))).toBe(true);
   });
 
   it("mostra só eventos comprovados", () => {

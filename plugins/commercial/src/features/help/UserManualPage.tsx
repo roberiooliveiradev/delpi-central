@@ -51,7 +51,7 @@ export function UserManualPage({ basePath }: UserManualPageProps) {
         description={c.pageSubtitle}
         actions={
           <CommercialActionButton
-            variant="secondary"
+            variant="ghost"
             onClick={() => navigatePluginView("home", { basePath })}
           >
             {c.backHome}

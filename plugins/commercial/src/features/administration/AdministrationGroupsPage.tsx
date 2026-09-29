@@ -443,8 +443,8 @@ export function AdministrationGroupsPage({ basePath }: AdministrationGroupsPageP
 
       {!loading && view === "list" && groups.length === 0 && !showCreateForm ? (
         <CommercialEmptyState
-          defaultTitle={copy.emptyTitle}
-          defaultMessage={copy.emptyDescription}
+          title={copy.emptyTitle}
+          message={copy.emptyDescription}
         >
           <CommercialActionButton variant="primary" onClick={openCreateForm}>
             <UsersRound size={16} strokeWidth={1.75} aria-hidden="true" />
@@ -456,7 +456,7 @@ export function AdministrationGroupsPage({ basePath }: AdministrationGroupsPageP
       {!loading && view === "org" ? (
         <CommercialSectionCard title={copy.orgTitle} subtitle={copy.orgSubtitle}>
           {orgFlowModel.nodes.length === 0 ? (
-            <CommercialEmptyState defaultMessage={copy.orgEmpty} />
+            <CommercialEmptyState message={copy.orgEmpty} />
           ) : (
             <CommercialOrgMembershipFlow
               nodes={orgFlowNodes}

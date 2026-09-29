@@ -1,7 +1,6 @@
 import type { PortfolioBillingAmountNature } from "../../../content/billingNature";
 import {
   formatQuantityWithUnit,
-  includesQuantityMetric,
   includesValueMetric,
   type PortfolioBillingMetric,
 } from "../../../content/billingMetric";

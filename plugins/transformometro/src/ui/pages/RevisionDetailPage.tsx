@@ -64,8 +64,8 @@ export function RevisionDetailPage({
   const [processo, setProcesso] = useState<Processo | null>(null);
   const [revisao, setRevisao] = useState<Revisao | null>(null);
   const [revisoesInstancia, setRevisoesInstancia] = useState<Revisao[]>([]);
-  const [allInstancias, setAllInstancias] = useState<ProcessoInstancia[]>([]);
-  const [allRevisoes, setAllRevisoes] = useState<Revisao[]>([]);
+  const [, setAllInstancias] = useState<ProcessoInstancia[]>([]);
+  const [, setAllRevisoes] = useState<Revisao[]>([]);
   const [options, setOptions] = useState<OptionsData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [errorTitle, setErrorTitle] = useState("Não foi possível carregar");

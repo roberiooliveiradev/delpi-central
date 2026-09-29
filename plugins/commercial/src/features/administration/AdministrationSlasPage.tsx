@@ -333,8 +333,8 @@ export function AdministrationSlasPage({ basePath }: AdministrationSlasPageProps
         {error ? <CommercialStateBanner variant="error">{error}</CommercialStateBanner> : null}
         {!loading && !error && items.length === 0 ? (
           <CommercialEmptyState
-            defaultTitle={copy.emptyTitle}
-            defaultMessage={copy.emptyDescription}
+            title={copy.emptyTitle}
+            message={copy.emptyDescription}
           />
         ) : null}
         {!loading && !error && items.length > 0 ? (

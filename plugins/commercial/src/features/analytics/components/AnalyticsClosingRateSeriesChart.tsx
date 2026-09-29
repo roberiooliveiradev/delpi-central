@@ -57,7 +57,7 @@ type ClosingRateChartPoint = SalesConversionRateSeriesPoint & {
 type ClosingRateSeriesChartProps = {
   filters: Pick<
     AnalyticsFilterParams,
-    "start_date" | "end_date" | "customer_segment" | "seller_id" | "branch"
+    "start_date" | "end_date" | "customer_segment" | "seller_id" | "customer_codes" | "branch"
   >;
   onDrillDown?: (dateStart: string, dateEnd: string) => void;
   onPointsChange?: (points: SalesConversionRateSeriesPoint[]) => void;

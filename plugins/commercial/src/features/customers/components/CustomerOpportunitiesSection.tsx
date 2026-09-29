@@ -293,17 +293,17 @@ export function CustomerOpportunitiesSection({
       {showInitialLoader ? (
         <CommercialLoadingCard title="Carregando oportunidades…" variant="panel" />
       ) : null}
-      {error ? <CommercialEmptyState defaultMessage={error} /> : null}
+      {error ? <CommercialEmptyState message={error} /> : null}
       {!showInitialLoader && !error ? (
         <div aria-busy={loading || undefined}>
           {items.length === 0 ? (
             <CommercialEmptyState
-              defaultTitle="Nenhuma OV neste filtro"
-              defaultMessage="Não há oportunidades com este código de cliente no recorte atual."
+              title="Nenhuma OV neste filtro"
+              message="Não há oportunidades com este código de cliente no recorte atual."
             />
           ) : null}
           {items.length > 0 && filteredItems.length === 0 ? (
-            <CommercialEmptyState defaultMessage={copy.emptyFiltered} />
+            <CommercialEmptyState message={copy.emptyFiltered} />
           ) : null}
           {filteredItems.length > 0 ? (
             <CommercialProposalsTable
