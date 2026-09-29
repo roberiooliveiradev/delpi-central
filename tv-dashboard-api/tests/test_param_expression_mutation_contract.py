@@ -551,3 +551,167 @@ def test_prepare_creates_proposal_with_ast_and_no_side_effects():
     assert params["start_date"] == _expr(PREV_YEAR_MONTH_START_AST)
     assert params["end_date"] == _expr(PREV_YEAR_SAME_DAY_AST)
     assert repo.updated == []
+
+
+# ---------------------------------------------------------------------------
+# Integridade de proposta — AST sobrevive o round-trip da projeção pública
+# ---------------------------------------------------------------------------
+
+
+def _dispatch_with_service(
+    svc: PresentationPatchService,
+) -> GptActionsDispatchService:
+    writes = MagicMock()
+    writes.get_revision.return_value = 7
+    commit = TvGptCommitService(
+        writes=writes, idempotency=InMemoryIdempotencyRepository()
+    )
+    access = MagicMock()
+    access.resolve.return_value = SimpleNamespace(can_edit=True, can_read=True)
+    access.actor_id.return_value = "actor-1"
+    return GptActionsDispatchService(
+        repo=MagicMock(), writes=writes, commit=commit, access=access, patch=svc
+    )
+
+
+def _prepare(
+    svc: PresentationPatchService, op: dict[str, Any]
+) -> dict[str, Any]:
+    return _dispatch_with_service(svc).preview_change(
+        user=SimpleNamespace(is_superadmin=True, permissions=[], id="actor-1"),
+        target={"playlistId": PLAYLIST_ID, "slideId": SLIDE_ID},
+        ops=[op],
+        catalog_version=PresentationOpsContentService.catalog_version(),
+        authorization=None,
+        idempotency_key=f"expr-prepare-{uuid4()}",
+    )
+
+
+def _stored_proposal(handle: str):
+    from tv_app.application.gpt_actions.proposal_store import (
+        get_proposal_store,
+        parse_proposal_handle,
+    )
+
+    return get_proposal_store().get(parse_proposal_handle(handle))
+
+
+ROUND_TRIP_ASTS = {
+    "identifier_today": {"kind": "identifier", "value": "today"},
+    "identifier_now": {"kind": "identifier", "value": "now"},
+    "identifier_param": {"kind": "identifier", "value": "param.branch"},
+    "literal_int": {"kind": "literal", "value": -12},
+    "literal_str": {"kind": "literal", "value": "abc"},
+    "literal_bool": {"kind": "literal", "value": True},
+    "literal_null": {"kind": "literal", "value": None},
+    "nested_call": PREV_YEAR_MONTH_START_AST,
+    "binary": {
+        "kind": "binary",
+        "value": "*",
+        "children": [
+            {
+                "kind": "binary",
+                "value": "-",
+                "children": [
+                    {
+                        "kind": "binary",
+                        "value": "/",
+                        "children": [
+                            {"kind": "literal", "value": 120},
+                            {"kind": "literal", "value": 100},
+                        ],
+                    },
+                    {"kind": "literal", "value": 1},
+                ],
+            },
+            {"kind": "literal", "value": 100},
+        ],
+    },
+    "unary": {
+        "kind": "unary",
+        "value": "-",
+        "children": [{"kind": "literal", "value": 12}],
+    },
+    "if": {
+        "kind": "if",
+        "children": [
+            {"kind": "literal", "value": True},
+            {"kind": "literal", "value": 1},
+            {"kind": "literal", "value": 2},
+        ],
+    },
+    "list": {
+        "kind": "list",
+        "children": [
+            {"kind": "literal", "value": 1},
+            {"kind": "literal", "value": 2},
+        ],
+    },
+}
+
+
+# Casos avaliáveis de ponta a ponta (coerção ao tipo do param é válida).
+ROUND_TRIP_EVALUABLE = {
+    "identifier_today": ("start_date", {"kind": "identifier", "value": "today"}),
+    "identifier_now": ("start_date", {"kind": "identifier", "value": "now"}),
+    "identifier_param": (
+        "customer_segment",
+        {"kind": "identifier", "value": "param.branch"},
+    ),
+    "literal_int": ("customer_segment", {"kind": "literal", "value": -12}),
+    "literal_str": ("customer_segment", {"kind": "literal", "value": "abc"}),
+    "literal_bool": ("customer_segment", {"kind": "literal", "value": True}),
+    "nested_call": ("start_date", PREV_YEAR_MONTH_START_AST),
+    "binary": ("customer_segment", ROUND_TRIP_ASTS["binary"]),
+    "unary": ("customer_segment", ROUND_TRIP_ASTS["unary"]),
+    "if": ("customer_segment", ROUND_TRIP_ASTS["if"]),
+}
+
+
+@pytest.mark.parametrize("kind", sorted(ROUND_TRIP_EVALUABLE))
+def test_proposal_exact_change_preserves_ast_nodes(kind: str):
+    """input == orderedOps == proposal.exact_change == stored proposal."""
+    param, ast = ROUND_TRIP_EVALUABLE[kind]
+    op = {
+        "op": "patch_data_source_params",
+        "blockId": SOURCE_ID,
+        "set": {param: _expr(ast)},
+    }
+    result = _prepare(_service(), op)
+
+    public_ops = result["proposal"]["exact_change"]["ops"]
+    assert public_ops[0]["set"][param] == _expr(ast)
+    ordered = result["orderedOps"][0]["set"][param]
+    assert ordered == _expr(ast)
+    stored = _stored_proposal(result["proposal_handle"])
+    assert stored is not None
+    stored_ops = stored.exact_change["ops"]
+    assert stored_ops[0]["set"][param] == _expr(ast)
+
+
+@pytest.mark.parametrize("kind", sorted(ROUND_TRIP_ASTS))
+def test_actions_projection_preserves_ast_node(kind: str):
+    """strip_heavy_mutation_blobs não pode corromper nós AST em profundidade."""
+    from tv_app.application.gpt_actions.response_compact import (
+        project_mutation_actions_payload,
+    )
+
+    payload = {
+        "proposal": {
+            "exact_change": {
+                "ops": [{"set": {"start_date": _expr(ROUND_TRIP_ASTS[kind])}}]
+            }
+        }
+    }
+    out = project_mutation_actions_payload(payload)
+    node = out["proposal"]["exact_change"]["ops"][0]["set"]["start_date"]
+    assert node == _expr(ROUND_TRIP_ASTS[kind])
+
+
+def test_prepare_patch_expression_exact_change_equals_ordered_ops():
+    """Caso real da VISTA: patch com datas em expressão + unset preset."""
+    result = _prepare(_service(), _patch_op())
+    public_op = result["proposal"]["exact_change"]["ops"][0]
+    ordered_op = result["orderedOps"][0]
+    assert public_op["set"] == ordered_op["set"] == _patch_op()["set"]
+    assert public_op["unset"] == ordered_op["unset"] == ["dateRangePreset"]

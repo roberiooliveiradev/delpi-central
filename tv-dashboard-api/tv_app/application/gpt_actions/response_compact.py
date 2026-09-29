@@ -53,9 +53,18 @@ _DROP_KEYS = frozenset(
 )
 
 
+_MAX_STRIP_DEPTH = 128
+
+
 def strip_heavy_mutation_blobs(value: Any, *, depth: int = 0) -> Any:
-    """Remove nativeConfig/resolved blobs from GPT Actions public payloads/errors."""
-    if depth > 12:
+    """Remove nativeConfig/resolved blobs from GPT Actions public payloads/errors.
+
+    O cap de profundidade é defesa contra payloads patológicos, mas deve
+    comportar contratos legítimos profundos: ParamExpression AST aceita até
+    ``maxDepth``=40 nós (≈2 níveis de dict/list por nó) dentro de
+    proposal.exact_change.ops, ~90 níveis no pior caso.
+    """
+    if depth > _MAX_STRIP_DEPTH:
         return None
     if isinstance(value, dict):
         out: dict[str, Any] = {}
