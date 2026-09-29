@@ -1,7 +1,15 @@
+import { useEffect, useState } from "react";
 import { Pause, Play, Square } from "lucide-react";
 import type { MachineLoadOperation } from "./api";
+import { DowntimeElapsedTimer } from "./DowntimeElapsedTimer";
+import { DowntimeReasonModal } from "./DowntimeReasonModal";
+import { ProductionRunTimeline } from "./ProductionRunTimeline";
+import { useRunTimeline } from "./useRunTimeline";
 import { formatQty } from "./cockpitShared";
-import { resolveProductionRunProgress } from "./productionRunProgress";
+import {
+  piecesToOperatorUnit,
+  resolveProductionRunProgress,
+} from "./productionRunProgress";
 import { useProductionRun } from "./useProductionRun";
 import type { MachineLoadRealtimeEvent } from "./usePublicMachineLoadRealtime";
 
@@ -40,6 +48,8 @@ export function ProductionRunControls({
     pause,
     resume,
     stop,
+    loadDowntimeReasons,
+    classifyDowntime,
   } = useProductionRun({
     token,
     branch,
@@ -52,6 +62,28 @@ export function ProductionRunControls({
 
   const counted = run?.countedPieces ?? run?.piecesTotal ?? 0;
   const progress = resolveProductionRunProgress(counted, run?.targetPieces);
+  const [reasonModalOpen, setReasonModalOpen] = useState(false);
+  const openDowntime = run?.status === "paused" ? run.downtime : null;
+  const downtimeUnclassified = Boolean(openDowntime && !openDowntime.confirmed);
+
+  const { timeline, serverNow } = useRunTimeline({
+    token,
+    sessionToken: session?.sessionToken ?? null,
+    runId: run?.id ?? null,
+    branch,
+    workCenter,
+    runRealtimeEvent,
+    realtimeConnected,
+  });
+
+  // Assim que o Pause grava a parada, a classificação abre automaticamente.
+  const openDowntimeId = openDowntime?.id ?? null;
+  const needsClassification = downtimeUnclassified;
+  useEffect(() => {
+    if (needsClassification && openDowntimeId) setReasonModalOpen(true);
+  }, [needsClassification, openDowntimeId]);
+  const piecesFactor = run?.piecesConversionFactor ?? operation.pieces_conversion_factor;
+  const toOperatorUnit = (pieces: number) => piecesToOperatorUnit(pieces, piecesFactor);
   const deviceOnline = run?.device?.online;
   const otherRun =
     run && !runMatchesOperation
@@ -114,8 +146,36 @@ export function ProductionRunControls({
 
           {otherRun ? <p className="pcp-pub__run-warn">{otherRun}</p> : null}
 
+          {run && runMatchesOperation && deviceOnline === false ? (
+            <p className="pcp-pub__run-warn pcp-pub__run-warn--telemetry" role="status">
+              Contador sem comunicação — última contagem conhecida mantida.
+              Você ainda pode pausar ou encerrar.
+            </p>
+          ) : null}
+
           {run && runMatchesOperation ? (
             <div className="pcp-pub__run-readout" aria-live="polite">
+              {run.status === "paused" ? (
+                <div
+                  className="pcp-pub__downtime"
+                  role="status"
+                  aria-label="Produção parada"
+                >
+                  <p className="pcp-pub__downtime-title">Produção parada</p>
+                  {openDowntime?.startedAt ? (
+                    <DowntimeElapsedTimer
+                      startedAt={openDowntime.startedAt}
+                      serverNow={serverNow}
+                    />
+                  ) : null}
+                  <p className="pcp-pub__downtime-reason">
+                    {openDowntime?.reasonLabel ?? "Motivo não informado"}
+                  </p>
+                  {openDowntime?.note ? (
+                    <p className="pcp-pub__downtime-note">{openDowntime.note}</p>
+                  ) : null}
+                </div>
+              ) : null}
               {progress ? (
                 <div className="pcp-pub__run-progress">
                   <p className="pcp-pub__run-progress-state">
@@ -123,9 +183,10 @@ export function ProductionRunControls({
                   </p>
                   <div className="pcp-pub__run-progress-values">
                     <strong>
-                      {formatQty(progress.countedPieces)} / {formatQty(progress.targetPieces)} peças
+                      {formatQty(toOperatorUnit(progress.countedPieces))} /{" "}
+                      {formatQty(toOperatorUnit(progress.targetPieces))} peças
                     </strong>
-                    <span>{formatQty(progress.progressPercent)}%</span>
+                    <span>{Math.round(progress.progressPercent)}%</span>
                   </div>
                   <div
                     className="pcp-pub__run-progress-track"
@@ -134,7 +195,7 @@ export function ProductionRunControls({
                     aria-valuemin={0}
                     aria-valuemax={100}
                     aria-valuenow={progress.visualPercent}
-                    aria-valuetext={`${formatQty(progress.countedPieces)} de ${formatQty(progress.targetPieces)} peças`}
+                    aria-valuetext={`${formatQty(toOperatorUnit(progress.countedPieces))} de ${formatQty(toOperatorUnit(progress.targetPieces))} peças`}
                   >
                     <span
                       className="pcp-pub__run-progress-fill"
@@ -143,23 +204,34 @@ export function ProductionRunControls({
                   </div>
                   <p className="pcp-pub__run-progress-note">
                     {progress.overproductionPieces > 0
-                      ? `+${formatQty(progress.overproductionPieces)} peças acima da meta`
+                      ? `+${formatQty(toOperatorUnit(progress.overproductionPieces))} peças acima da meta`
                       : progress.targetReached
                         ? "Produção prevista concluída"
-                        : `Faltam ${formatQty(progress.remainingPieces)} peças`}
+                        : `Faltam ${formatQty(toOperatorUnit(progress.remainingPieces))} peças`}
                   </p>
                 </div>
               ) : (
                 <div className="pcp-pub__run-count">
                   <span>Peças contadas</span>
-                  <strong>{formatQty(counted)}</strong>
+                  <strong>{formatQty(toOperatorUnit(counted))}</strong>
                 </div>
               )}
               <dl className="pcp-pub__run-meta">
                 <div>
                   <dt>Status</dt>
-                  <dd>{run.status === "running" ? "Contando" : "Pausada"}</dd>
+                  <dd>
+                    {run.status === "running" ? "Contando" : "Produção pausada"}
+                  </dd>
                 </div>
+                {run.status === "paused" ? (
+                  <div>
+                    <dt>Motivo</dt>
+                    <dd>
+                      {openDowntime?.reasonLabel ??
+                        (openDowntime ? "Não informado" : "—")}
+                    </dd>
+                  </div>
+                ) : null}
                 <div>
                   <dt>Dispositivo</dt>
                   <dd>
@@ -194,26 +266,50 @@ export function ProductionRunControls({
                     Pausar
                   </button>
                 ) : (
-                  <button
-                    type="button"
-                    className="pcp-pub__btn pcp-pub__btn--primary"
-                    onClick={() => void resume()}
-                    disabled={busy}
-                  >
-                    <Play size={16} aria-hidden="true" />
-                    Retomar
-                  </button>
+                  <>
+                    {openDowntime ? (
+                      <button
+                        type="button"
+                        className="pcp-pub__btn pcp-pub__btn--ghost"
+                        onClick={() => setReasonModalOpen(true)}
+                        disabled={busy}
+                      >
+                        {openDowntime.confirmed ? "Alterar motivo" : "Informar motivo"}
+                      </button>
+                    ) : null}
+                    <button
+                      type="button"
+                      className="pcp-pub__btn pcp-pub__btn--primary"
+                      onClick={() => {
+                        if (downtimeUnclassified) setReasonModalOpen(true);
+                        else void resume();
+                      }}
+                      disabled={busy}
+                    >
+                      <Play size={16} aria-hidden="true" />
+                      Retomar
+                    </button>
+                  </>
                 )}
                 <button
                   type="button"
                   className="pcp-pub__btn pcp-pub__btn--ghost"
-                  onClick={() => void stop()}
+                  onClick={() => {
+                    if (downtimeUnclassified) setReasonModalOpen(true);
+                    else void stop();
+                  }}
                   disabled={busy}
                 >
                   <Square size={16} aria-hidden="true" />
                   Encerrar
                 </button>
               </div>
+              {timeline && timeline.items.length > 0 ? (
+                <details className="pcp-pub__timeline">
+                  <summary>Linha do tempo</summary>
+                  <ProductionRunTimeline timeline={timeline} serverNow={serverNow} />
+                </details>
+              ) : null}
             </div>
           ) : (
             <div className="pcp-pub__run-actions">
@@ -232,6 +328,15 @@ export function ProductionRunControls({
       )}
 
       {error ? <p className="pcp-pub__run-error">{error}</p> : null}
+
+      <DowntimeReasonModal
+        open={reasonModalOpen && run?.status === "paused"}
+        downtime={openDowntime}
+        busy={busy}
+        loadReasons={loadDowntimeReasons}
+        onClassify={classifyDowntime}
+        onClose={() => setReasonModalOpen(false)}
+      />
     </div>
   );
 }

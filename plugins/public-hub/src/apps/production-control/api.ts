@@ -575,7 +575,10 @@ export type ProductionRunSnapshot = {
   overproductionPieces: number | null;
   countedPieces?: number;
   totvsProducedQty?: number | null;
+  /** Divergência na unidade de leitura do operador (peças ÷ fator − produzido TOTVS). */
   divergencePieces?: number | null;
+  /** Fator canônico peças→unidade da operação (MI = 1000), vindo da fila publicada. */
+  piecesConversionFactor?: number | null;
   device?: {
     deviceId?: string;
     name?: string | null;
@@ -586,6 +589,63 @@ export type ProductionRunSnapshot = {
     lastSeenAt?: string | null;
     pollIntervalMs?: number | null;
   } | null;
+  /** Parada MES aberta quando o run está pausado; `null`/ausente caso contrário. */
+  downtime?: RunDowntimeView | null;
+};
+
+/** Parada MES aberta do run (fato realtime — diferente das paradas TOTVS). */
+export type RunDowntimeView = {
+  id: string;
+  runId: string;
+  reasonCode: string | null;
+  reasonLabel: string | null;
+  category: string | null;
+  note: string | null;
+  confirmed: boolean;
+  startedAt: string | null;
+  endedAt: string | null;
+};
+
+/** Motivo de parada do catálogo MES (`downtime_reason_catalog`). */
+export type MesDowntimeReason = {
+  code: string;
+  label: string;
+  category: string | null;
+  requiresNote: boolean;
+};
+
+/** Item da timeline operacional do run (Etapa 04). */
+export type RunTimelineItem = {
+  id: string;
+  state: "producing" | "stopped" | "setup" | "idle" | "planned_stop" | string;
+  startedAt: string;
+  endedAt: string | null;
+  durationSeconds: number;
+  source: string | null;
+  downtime: {
+    id: string;
+    reasonCode: string | null;
+    reasonLabel: string | null;
+    category: string | null;
+    note: string | null;
+    confirmed: boolean;
+  } | null;
+};
+
+export type RunTimeline = {
+  runId: string;
+  branch: string;
+  workCenter: string;
+  status: string;
+  /** Horário atual do backend em UTC — base do relógio do cockpit. */
+  referenceAt: string;
+  summary: {
+    elapsedSeconds: number;
+    producingSeconds: number;
+    stoppedSeconds: number;
+    stopCount: number;
+  };
+  items: RunTimelineItem[];
 };
 
 export type BenchSessionSnapshot = {
@@ -599,13 +659,27 @@ export type BenchSessionSnapshot = {
 
 const BENCH_SESSION_HEADER = "X-Delpi-Bench-Session";
 
+/** Erro de API com status HTTP preservado (ex.: 401 = sessão expirada). */
+export class ApiError extends Error {
+  status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.status = status;
+  }
+}
+
+export function isAuthError(err: unknown): boolean {
+  return err instanceof ApiError && err.status === 401;
+}
+
 async function readEnvelope<T>(response: Response, fallback: string): Promise<T> {
   if (!response.ok) {
-    throw new Error(await readError(response, fallback));
+    throw new ApiError(await readError(response, fallback), response.status);
   }
   const envelope = (await response.json()) as ApiEnvelope<T>;
   if (envelope.success === false) {
-    throw new Error(envelope.message || fallback);
+    throw new ApiError(envelope.message || fallback, response.status);
   }
   return envelope.data;
 }
@@ -648,6 +722,60 @@ export async function endBenchSession(token: string, sessionToken: string): Prom
     },
   );
   await readEnvelope<{ ended: boolean }>(response, "Não foi possível encerrar a sessão.");
+}
+
+export async function fetchMesDowntimeReasons(token: string): Promise<MesDowntimeReason[]> {
+  const response = await fetch(
+    `${API_BASE}/public/machine-load/${encodeURIComponent(token)}/mes/downtime-reasons`,
+    { headers: { Accept: "application/json" } },
+  );
+  const data = await readEnvelope<{ items: MesDowntimeReason[] }>(
+    response,
+    "Motivos de parada indisponíveis.",
+  );
+  return data.items ?? [];
+}
+
+export async function classifyRunDowntime(
+  token: string,
+  sessionToken: string,
+  runId: string,
+  body: { reasonCode: string; note?: string | null },
+): Promise<RunDowntimeView> {
+  const response = await fetch(
+    `${API_BASE}/public/machine-load/${encodeURIComponent(token)}/runs/${encodeURIComponent(runId)}/downtime/classify`,
+    {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        [BENCH_SESSION_HEADER]: sessionToken,
+      },
+      body: JSON.stringify({
+        reasonCode: body.reasonCode,
+        note: body.note ?? null,
+        website: "",
+      }),
+    },
+  );
+  return readEnvelope<RunDowntimeView>(response, "Não foi possível registrar o motivo.");
+}
+
+export async function fetchRunTimeline(
+  token: string,
+  sessionToken: string,
+  runId: string,
+): Promise<RunTimeline> {
+  const response = await fetch(
+    `${API_BASE}/public/machine-load/${encodeURIComponent(token)}/runs/${encodeURIComponent(runId)}/timeline`,
+    {
+      headers: {
+        Accept: "application/json",
+        [BENCH_SESSION_HEADER]: sessionToken,
+      },
+    },
+  );
+  return readEnvelope<RunTimeline>(response, "Linha do tempo indisponível.");
 }
 
 export async function fetchActiveProductionRun(

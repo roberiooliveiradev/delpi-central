@@ -12,6 +12,8 @@ from production_control_app.application.services.machine_load_realtime_hub impor
 from production_control_app.composition.pc_composer import (
     build_branch_access_service,
     build_machine_load_service,
+    build_mes_downtime_classification_service,
+    build_mes_run_timeline_service,
     build_production_run_service,
     build_public_cockpit_access_service,
     build_public_machine_load_drawing_service,
@@ -26,9 +28,13 @@ from production_control_app.core.responses import fail, ok
 from production_control_app.domain.errors import (
     BenchSessionRequired,
     DelpiGatewayError,
+    DowntimeConflict,
+    DowntimeNotFound,
     DrawingNotFound,
     DrawingSourceUnavailable,
     InvalidBranch,
+    InvalidMesEvent,
+    MesStateConflict,
     Product3DModelNotFound,
     ProductionRunConflict,
     ProductionRunNotFound,
@@ -51,6 +57,14 @@ class BenchSessionBody(BaseModel):
     work_center: str = Field(..., alias="workCenter", min_length=1, max_length=40)
     operator_code: str = Field(..., alias="operatorCode", min_length=1, max_length=40)
     operator_name: str | None = Field(default=None, alias="operatorName", max_length=120)
+    website: str | None = None  # honeypot
+
+
+class ClassifyDowntimeBody(BaseModel):
+    model_config = {"populate_by_name": True}
+
+    reason_code: str = Field(..., alias="reasonCode", min_length=1, max_length=40)
+    note: str | None = Field(default=None, max_length=500)
     website: str | None = None  # honeypot
 
 
@@ -89,6 +103,12 @@ def _handle_public_errors(exc: Exception):
         return fail(str(exc), 409)
     if isinstance(exc, ProductionRunNotFound):
         return fail(str(exc), 404)
+    if isinstance(exc, (MesStateConflict, DowntimeConflict)):
+        return fail(str(exc), 409)
+    if isinstance(exc, DowntimeNotFound):
+        return fail(str(exc), 404)
+    if isinstance(exc, InvalidMesEvent):
+        return fail(str(exc), 422)
     if isinstance(exc, PulseDeviceUnavailable):
         return fail(str(exc), 422)
     if isinstance(exc, PulseGatewayError):
@@ -420,6 +440,63 @@ def stop_production_run(
     return ok(data)
 
 
+@router.get("/{token}/mes/downtime-reasons")
+def get_mes_downtime_reasons(token: str):
+    """Catálogo MES de motivos de parada ativos (não confundir com paradas TOTVS)."""
+    denied = _assert_cockpit_token(token)
+    if denied is not None:
+        return denied
+    try:
+        items = build_mes_downtime_classification_service().list_reasons()
+    except Exception as exc:  # noqa: BLE001
+        return _handle_public_errors(exc)
+    return ok({"items": items})
+
+
+@router.post("/{token}/runs/{run_id}/downtime/classify")
+def classify_run_downtime(
+    token: str,
+    run_id: str,
+    body: ClassifyDowntimeBody,
+    session_token: str | None = Header(default=None, alias=_BENCH_SESSION_HEADER),
+):
+    """Confirma ou altera o motivo da parada aberta do run (nunca cria outra)."""
+    denied = _assert_cockpit_token(token)
+    if denied is not None:
+        return denied
+    if not _honeypot_ok(body.website):
+        return ok({"accepted": True, "id": None})
+    try:
+        data = build_mes_downtime_classification_service().classify(
+            run_id,
+            reason_code=body.reason_code,
+            note=body.note,
+            session_token=session_token,
+        )
+    except Exception as exc:  # noqa: BLE001
+        return _handle_public_errors(exc)
+    return ok(data)
+
+
+@router.get("/{token}/runs/{run_id}/timeline")
+def get_run_timeline(
+    token: str,
+    run_id: str,
+    session_token: str | None = Header(default=None, alias=_BENCH_SESSION_HEADER),
+):
+    """Timeline operacional do run (estados + paradas derivadas)."""
+    denied = _assert_cockpit_token(token)
+    if denied is not None:
+        return denied
+    try:
+        data = build_mes_run_timeline_service().get_timeline(
+            run_id, session_token=session_token
+        )
+    except Exception as exc:  # noqa: BLE001
+        return _handle_public_errors(exc)
+    return ok(data)
+
+
 @router.get("/{token}/runs/active")
 def get_active_production_run(
     token: str,
@@ -435,34 +512,33 @@ def get_active_production_run(
         data = service.get_active(branch=branch, work_center=work_center)
         if data is not None:
             produced_qty = None
+            pieces_factor = None
             try:
-                queue = build_machine_load_service().build_public(
+                qty = build_machine_load_service().public_operation_run_quantity(
                     branch=branch,
-                    work_center=work_center,
+                    production_order=str(data.get("productionOrder") or ""),
+                    operation_code=str(data.get("operationCode") or ""),
                 )
-                for op in (queue or {}).get("operations") or []:
-                    if not isinstance(op, dict):
-                        continue
-                    if str(op.get("production_order") or "") != str(
-                        data.get("productionOrder") or ""
-                    ):
-                        continue
-                    if str(op.get("operation_code") or "") != str(data.get("operationCode") or ""):
-                        continue
-                    raw = op.get("operation_produced_qty")
-                    if raw is None:
-                        raw = op.get("produced_qty")
-                    produced_qty = float(raw) if raw is not None else None
-                    break
+                if qty is not None:
+                    produced_qty = qty.get("operation_produced_qty")
+                    pieces_factor = qty.get("pieces_conversion_factor")
             except Exception:  # noqa: BLE001
                 produced_qty = None
             if produced_qty is not None:
                 counted = int(data.get("countedPieces") or data.get("piecesTotal") or 0)
+                counted_operator = (
+                    counted / pieces_factor
+                    if isinstance(pieces_factor, (int, float)) and pieces_factor > 0
+                    else counted
+                )
                 data = {
                     **data,
                     "totvsProducedQty": produced_qty,
-                    "divergencePieces": counted - produced_qty,
+                    "divergencePieces": counted_operator - produced_qty,
+                    "piecesConversionFactor": pieces_factor,
                 }
+            elif pieces_factor is not None:
+                data = {**data, "piecesConversionFactor": pieces_factor}
     except Exception as exc:  # noqa: BLE001
         return _handle_public_errors(exc)
     return ok(data)

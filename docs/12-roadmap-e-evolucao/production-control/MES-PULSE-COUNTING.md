@@ -94,6 +94,8 @@ Migrations: [`production-control-api/migrations/V008__production_runs_mes_shadow
 
 Invariante: no máximo um run `running|paused` por `(branch, work_center)`.
 
+Existe também a fundação MES de estados/paradas ([MES-STATE-DOWNTIME.md](MES-STATE-DOWNTIME.md), V010): `work_center_state_events`, `downtime_events` e `downtime_reason_catalog`. A contagem realtime continua **independente** do estado/parada — aquelas tabelas são fatos paralelos, ainda sem integração com Pause/Resume.
+
 ---
 
 ## Contratos HTTP

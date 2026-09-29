@@ -1,4 +1,4 @@
-import type { ProductionRunSnapshot } from "./api";
+import type { ProductionRunSnapshot, RunDowntimeView } from "./api";
 import type { MachineLoadRealtimeEvent } from "./usePublicMachineLoadRealtime";
 
 export function applyProductionRunPiecesSnapshot(
@@ -25,4 +25,26 @@ export function applyProductionRunPiecesSnapshot(
     countedPieces: event.piecesTotal,
     divergencePieces: undefined,
   };
+}
+
+/** Mescla o downtime do evento `downtime_classified` no snapshot do run. */
+export function applyProductionRunDowntimeEvent(
+  run: ProductionRunSnapshot | null,
+  event: MachineLoadRealtimeEvent | null,
+  branch: string,
+  workCenter: string | null,
+): ProductionRunSnapshot | null {
+  const downtime = event?.downtime as RunDowntimeView | undefined;
+  if (
+    !run ||
+    event?.type !== "production_run_updated" ||
+    event.reason !== "downtime_classified" ||
+    event.branch !== branch ||
+    event.workCenter !== workCenter ||
+    event.runId !== run.id ||
+    !downtime
+  ) {
+    return run;
+  }
+  return { ...run, downtime };
 }

@@ -70,6 +70,14 @@ ALLOWED_ORIGINS = build_allowed_origins()
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     run_migrations_on_startup()
+    from production_control_app.application.services.mes_runtime_integrity_service import (  # noqa: E501
+        MesRuntimeIntegrityService,
+    )
+
+    try:
+        await asyncio.to_thread(MesRuntimeIntegrityService().run)
+    except Exception:  # noqa: BLE001 — integridade nunca derruba o startup
+        logging.getLogger(__name__).exception("mes_integrity_check_failed")
     machine_load_realtime_hub.bind_loop(asyncio.get_running_loop())
     worker = asyncio.create_task(machine_load_realtime_hub.worker())
     from production_control_app.application.services.production_run_poller_service import (
