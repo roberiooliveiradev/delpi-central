@@ -4,10 +4,16 @@
  * only causal relation, CONTRADICTS evidence is first-class, and no generic
  * edit/remove affordances exist here.
  */
-import { HelpTooltip } from "@delpi/plugin-ui/index";
+import type { ReactNode } from "react";
+
+import {
+  ActionButton,
+  EmptyState,
+  emptyStateCardBemClasses,
+} from "@delpi/plugin-ui/index";
 
 import { StateBox } from "../../../components/StateBox";
-import { TmStatusBadge } from "../../../components/tmChromeUi";
+import { TmSectionCard, TmStatusBadge } from "../../../components/tmChromeUi";
 import type {
   DiagnosticConclusion,
   DiagnosticEvidenceLinkView,
@@ -28,11 +34,41 @@ import {
   lifecycleLabel,
 } from "./diagnosticDisplay";
 
+const EMPTY_CARD_CLASSES = emptyStateCardBemClasses("ds");
+
 type StartAction = (
   action: DiagnosticManageAction,
   targetId?: string | null,
   targetLabel?: string | null,
 ) => void;
+
+type DiagnosticActionFamily =
+  | "findings"
+  | "hypotheses"
+  | "causal"
+  | "evidence"
+  | "conclusion";
+
+/** Maps the 13 canonical actions to the section that owns the inline form. */
+function diagnosticActionFamily(
+  action: DiagnosticManageAction,
+): DiagnosticActionFamily {
+  switch (action) {
+    case "add_finding":
+      return "findings";
+    case "add_causal_link":
+      return "causal";
+    case "add_evidence_link":
+      return "evidence";
+    case "add_conclusion":
+    case "validate_conclusion":
+    case "reject_conclusion":
+    case "supersede_conclusion":
+      return "conclusion";
+    default:
+      return "hypotheses";
+  }
+}
 
 function EffectiveBadge({ value }: { value: string }) {
   const variant =
@@ -132,14 +168,13 @@ function ClaimActions({
   return (
     <div className="tm-diagnostic-item__actions" role="group" aria-label={`Ações: ${claimLabel}`}>
       {actions.map((action) => (
-        <button
+        <ActionButton
           key={action}
-          type="button"
-          className="ds-btn ds-btn--ghost ds-btn--sm"
+          variant="ghost"
           onClick={() => onStartAction(action, claimId, claimLabel)}
         >
           {DIAGNOSTIC_ACTION_LABELS[action]}
-        </button>
+        </ActionButton>
       ))}
     </div>
   );
@@ -162,10 +197,16 @@ const CONCLUSION_ACTIONS: DiagnosticManageAction[] = [
 export function DiagnosticContent({
   detail,
   busy = false,
+  activeAction = null,
+  actionSlot = null,
   onStartAction,
 }: {
   detail: DiagnosticReadContext;
   busy?: boolean;
+  /** Action whose inline form is open; rendered inside its owning section. */
+  activeAction?: DiagnosticManageAction | null;
+  /** Governed action panel node, injected into the owning SectionCard. */
+  actionSlot?: ReactNode;
   onStartAction: StartAction;
 }) {
   const d = detail.diagnostic;
@@ -177,6 +218,10 @@ export function DiagnosticContent({
   const hasRevalidation =
     d.hypotheses.some((h) => h.effective_validation === "REVALIDATION_REQUIRED") ||
     d.conclusions.some((c) => c.effective_validation === "REVALIDATION_REQUIRED");
+
+  const family = activeAction ? diagnosticActionFamily(activeAction) : null;
+  const inlinePanel = (target: DiagnosticActionFamily) =>
+    family === target ? actionSlot : null;
 
   return (
     <div className="tm-diagnostic" aria-busy={busy || undefined}>
@@ -198,27 +243,27 @@ export function DiagnosticContent({
         </StateBox>
       ) : null}
 
-      <section className="tm-diagnostic__block" aria-labelledby="tm-diag-problem">
-        <h3 id="tm-diag-problem" className="tm-diagnostic__heading">
-          Problema investigado
-          <HelpTooltip
-            content="Problema que orienta este diagnóstico. Registrado na criação e mantido somente leitura nesta versão."
-            ariaLabel="Ajuda: problem statement"
-          />
-        </h3>
+      <TmSectionCard
+        title="Problema investigado"
+        hint="Problema que orienta este diagnóstico. Registrado na criação e mantido somente leitura nesta versão."
+      >
         <p className="tm-diagnostic__statement">{d.problem_statement}</p>
-      </section>
+      </TmSectionCard>
 
-      <section className="tm-diagnostic__block" aria-labelledby="tm-diag-findings">
-        <h3 id="tm-diag-findings" className="tm-diagnostic__heading">
-          Achados
-          <HelpTooltip
-            content="Achados são registros do que se observa. “Observado” veio da operação; “Calculado” deriva de cálculo — nenhum dos dois é opinião. “Sintoma” é o papel do achado, separado da natureza epistêmica."
-            ariaLabel="Ajuda: achados"
-          />
-        </h3>
+      <TmSectionCard
+        title="Achados"
+        hint="Achados são registros do que se observa. “Observado” veio da operação; “Calculado” deriva de cálculo — nenhum dos dois é opinião. “Sintoma” é o papel do achado, separado da natureza epistêmica."
+        actions={
+          <ActionButton variant="ghost" onClick={() => onStartAction("add_finding")}>
+            {DIAGNOSTIC_ACTION_LABELS.add_finding}
+          </ActionButton>
+        }
+      >
         {d.findings.length === 0 ? (
-          <p className="ds-hint">Nenhum achado registrado.</p>
+          <EmptyState
+            classNames={EMPTY_CARD_CLASSES}
+            defaultMessage="Nenhum achado registrado."
+          />
         ) : (
           <ul className="tm-diagnostic__list">
             {d.findings.map((f: DiagnosticFinding) => (
@@ -240,25 +285,23 @@ export function DiagnosticContent({
             ))}
           </ul>
         )}
-        <button
-          type="button"
-          className="ds-btn ds-btn--ghost ds-btn--sm"
-          onClick={() => onStartAction("add_finding")}
-        >
-          {DIAGNOSTIC_ACTION_LABELS.add_finding}
-        </button>
-      </section>
+        {inlinePanel("findings")}
+      </TmSectionCard>
 
-      <section className="tm-diagnostic__block" aria-labelledby="tm-diag-hypotheses">
-        <h3 id="tm-diag-hypotheses" className="tm-diagnostic__heading">
-          Hipóteses
-          <HelpTooltip
-            content="Hipóteses são interpretações — sempre “Inferido”, mesmo quando validadas. “Validada” indica revisão registrada; não transforma a hipótese em fato."
-            ariaLabel="Ajuda: hipóteses"
-          />
-        </h3>
+      <TmSectionCard
+        title="Hipóteses"
+        hint="Hipóteses são interpretações — sempre “Inferido”, mesmo quando validadas. “Validada” indica revisão registrada; não transforma a hipótese em fato."
+        actions={
+          <ActionButton variant="ghost" onClick={() => onStartAction("add_hypothesis")}>
+            {DIAGNOSTIC_ACTION_LABELS.add_hypothesis}
+          </ActionButton>
+        }
+      >
         {d.hypotheses.length === 0 ? (
-          <p className="ds-hint">Nenhuma hipótese formulada.</p>
+          <EmptyState
+            classNames={EMPTY_CARD_CLASSES}
+            defaultMessage="Nenhuma hipótese formulada."
+          />
         ) : (
           <ul className="tm-diagnostic__list">
             {d.hypotheses.map((h: DiagnosticHypothesis) => (
@@ -288,25 +331,27 @@ export function DiagnosticContent({
             ))}
           </ul>
         )}
-        <button
-          type="button"
-          className="ds-btn ds-btn--ghost ds-btn--sm"
-          onClick={() => onStartAction("add_hypothesis")}
-        >
-          {DIAGNOSTIC_ACTION_LABELS.add_hypothesis}
-        </button>
-      </section>
+        {inlinePanel("hypotheses")}
+      </TmSectionCard>
 
-      <section className="tm-diagnostic__block" aria-labelledby="tm-diag-causal">
-        <h3 id="tm-diag-causal" className="tm-diagnostic__heading">
-          Análise causal
-          <HelpTooltip
-            content="Relações causais indicam apenas que uma hipótese contribui para outra ou para um achado — nunca que ela causa ou prova."
-            ariaLabel="Ajuda: análise causal"
-          />
-        </h3>
+      <TmSectionCard
+        title="Análise causal"
+        hint="Relações causais indicam apenas que uma hipótese contribui para outra ou para um achado — nunca que ela causa ou prova."
+        actions={
+          <ActionButton
+            variant="ghost"
+            disabled={d.hypotheses.length === 0}
+            onClick={() => onStartAction("add_causal_link")}
+          >
+            {DIAGNOSTIC_ACTION_LABELS.add_causal_link}
+          </ActionButton>
+        }
+      >
         {d.causal_links.length === 0 ? (
-          <p className="ds-hint">Nenhuma relação causal registrada.</p>
+          <EmptyState
+            classNames={EMPTY_CARD_CLASSES}
+            defaultMessage="Nenhuma relação causal registrada."
+          />
         ) : (
           <ul className="tm-diagnostic__list tm-diagnostic-causal">
             {d.causal_links.map((link) => (
@@ -323,26 +368,23 @@ export function DiagnosticContent({
             ))}
           </ul>
         )}
-        <button
-          type="button"
-          className="ds-btn ds-btn--ghost ds-btn--sm"
-          disabled={d.hypotheses.length === 0}
-          onClick={() => onStartAction("add_causal_link")}
-        >
-          {DIAGNOSTIC_ACTION_LABELS.add_causal_link}
-        </button>
-      </section>
+        {inlinePanel("causal")}
+      </TmSectionCard>
 
-      <section className="tm-diagnostic__block" aria-labelledby="tm-diag-evidence">
-        <h3 id="tm-diag-evidence" className="tm-diagnostic__heading">
-          Evidências vinculadas
-          <HelpTooltip
-            content="Somente evidências já registradas na revisão podem ser vinculadas — sustentam, contradizem ou contextualizam o item. “Contradiz” é exibido explicitamente."
-            ariaLabel="Ajuda: evidências vinculadas"
-          />
-        </h3>
+      <TmSectionCard
+        title="Evidências vinculadas"
+        hint="Somente evidências já registradas na revisão podem ser vinculadas — sustentam, contradizem ou contextualizam o item. “Contradiz” é exibido explicitamente."
+        actions={
+          <ActionButton variant="ghost" onClick={() => onStartAction("add_evidence_link")}>
+            {DIAGNOSTIC_ACTION_LABELS.add_evidence_link}
+          </ActionButton>
+        }
+      >
         {detail.evidence_links.length === 0 ? (
-          <p className="ds-hint">Nenhuma evidência vinculada.</p>
+          <EmptyState
+            classNames={EMPTY_CARD_CLASSES}
+            defaultMessage="Nenhuma evidência vinculada."
+          />
         ) : (
           <ul className="tm-diagnostic__list">
             {detail.evidence_links.map((link) => (
@@ -355,25 +397,23 @@ export function DiagnosticContent({
             ))}
           </ul>
         )}
-        <button
-          type="button"
-          className="ds-btn ds-btn--ghost ds-btn--sm"
-          onClick={() => onStartAction("add_evidence_link")}
-        >
-          {DIAGNOSTIC_ACTION_LABELS.add_evidence_link}
-        </button>
-      </section>
+        {inlinePanel("evidence")}
+      </TmSectionCard>
 
-      <section className="tm-diagnostic__block" aria-labelledby="tm-diag-conclusion">
-        <h3 id="tm-diag-conclusion" className="tm-diagnostic__heading">
-          Conclusão diagnóstica
-          <HelpTooltip
-            content="A conclusão é sempre uma interpretação (“Inferido”). Status e validação efetiva aparecem separados; conclusão validada não é fato."
-            ariaLabel="Ajuda: conclusão diagnóstica"
-          />
-        </h3>
+      <TmSectionCard
+        title="Conclusão diagnóstica"
+        hint="A conclusão é sempre uma interpretação (“Inferido”). Status e validação efetiva aparecem separados; conclusão validada não é fato."
+        actions={
+          <ActionButton variant="ghost" onClick={() => onStartAction("add_conclusion")}>
+            {DIAGNOSTIC_ACTION_LABELS.add_conclusion}
+          </ActionButton>
+        }
+      >
         {d.conclusions.length === 0 ? (
-          <p className="ds-hint">Nenhuma conclusão registrada.</p>
+          <EmptyState
+            classNames={EMPTY_CARD_CLASSES}
+            defaultMessage="Nenhuma conclusão registrada."
+          />
         ) : (
           <ul className="tm-diagnostic__list">
             {d.conclusions.map((c: DiagnosticConclusion) => (
@@ -424,14 +464,8 @@ export function DiagnosticContent({
             ))}
           </ul>
         )}
-        <button
-          type="button"
-          className="ds-btn ds-btn--ghost ds-btn--sm"
-          onClick={() => onStartAction("add_conclusion")}
-        >
-          {DIAGNOSTIC_ACTION_LABELS.add_conclusion}
-        </button>
-      </section>
+        {inlinePanel("conclusion")}
+      </TmSectionCard>
     </div>
   );
 }
