@@ -60,7 +60,10 @@ import {
   rewritePendingInlineImages,
   stripPendingInlineImages,
 } from "../presentation/inlineUpload";
-import type { HelpdeskInlineUploadResult } from "../ui/helpdeskUi";
+import type {
+  HelpdeskInlineUploadResult,
+  HelpdeskPendingAttachmentItem,
+} from "../ui/helpdeskUi";
 import { helpdeskListPaginationBounds } from "../presentation/listPagination";
 import { shouldForceTicketCards } from "../presentation/listViewport";
 import { glpiTicketFormUrl } from "../presentation/glpiPublicLinks";
@@ -203,6 +206,12 @@ function formatAttachmentBytes(size: number): string {
   if (size < 1024) return `${size} B`;
   if (size < 1024 * 1024) return `${(size / 1024).toFixed(size < 10 * 1024 ? 1 : 0)} KB`;
   return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function isInlineImageFile(file: File): boolean {
+  return (
+    file.type.startsWith("image/") || /\.(png|jpe?g|gif|webp|bmp)$/i.test(file.name || "")
+  );
 }
 
 export function HelpdeskPage({ route }: { route: HelpdeskRoute }) {
@@ -717,6 +726,13 @@ function CreateTicketPage() {
   const pendingFilesRef = useRef<Map<string, File>>(new Map());
   const pendingPreviewUrlsRef = useRef<Map<string, string>>(new Map());
   const createComposerRef = useRef<HelpdeskRichTextFieldHandle>(null);
+  /** Non-image staged files shown as removable chips (they are not inline imgs). */
+  const [pendingAttachments, setPendingAttachments] = useState<HelpdeskPendingAttachmentItem[]>([]);
+  const [pendingPreviewId, setPendingPreviewId] = useState<string | null>(null);
+  const pendingPreview = useMemo(
+    () => pendingAttachments.find((item) => item.id === pendingPreviewId) ?? null,
+    [pendingAttachments, pendingPreviewId],
+  );
 
   useEffect(() => {
     return () => {
@@ -738,6 +754,15 @@ function CreateTicketPage() {
       for (const row of rows) {
         pendingFilesRef.current.set(row.id, row.file);
       }
+      setPendingAttachments(
+        rows
+          .filter((row) => !isInlineImageFile(row.file))
+          .map((row) => ({
+            id: row.id,
+            fileName: row.file.name || "anexo",
+            contentType: row.file.type || null,
+          })),
+      );
       if (rows.length > 0) setPendingHydrated((n) => n + 1);
     });
     return () => {
@@ -860,12 +885,31 @@ function CreateTicketPage() {
     return `attachment:pending:${pending}`;
   }, []);
 
+  const removePendingAttachment = useCallback(
+    (pendingId: string) => {
+      const cached = pendingPreviewUrlsRef.current.get(pendingId);
+      if (cached) {
+        try {
+          URL.revokeObjectURL(cached);
+        } catch {
+          /* ignore */
+        }
+        pendingPreviewUrlsRef.current.delete(pendingId);
+      }
+      pendingFilesRef.current.delete(pendingId);
+      setPendingAttachments((current) => current.filter((item) => item.id !== pendingId));
+      persistCreatePendingFiles();
+    },
+    [persistCreatePendingFiles],
+  );
+
   const queuePendingFiles = async (files: File[]): Promise<HelpdeskInlineUploadResult[]> => {
     const results: HelpdeskInlineUploadResult[] = [];
+    const staged: HelpdeskPendingAttachmentItem[] = [];
     for (const file of files) {
       const pendingId = newIdempotencyKey();
       pendingFilesRef.current.set(pendingId, file);
-      if (file.type.startsWith("image/") || /\.(png|jpe?g|gif|webp|bmp)$/i.test(file.name || "")) {
+      if (isInlineImageFile(file)) {
         let src = pendingPreviewUrlsRef.current.get(pendingId);
         if (!src) {
           src = URL.createObjectURL(file);
@@ -877,7 +921,16 @@ function CreateTicketPage() {
           src,
           alt: file.name || "imagem",
         });
+      } else {
+        staged.push({
+          id: pendingId,
+          fileName: file.name || "anexo",
+          contentType: file.type || null,
+        });
       }
+    }
+    if (staged.length > 0) {
+      setPendingAttachments((current) => [...current, ...staged]);
     }
     persistCreatePendingFiles();
     return results;
@@ -951,6 +1004,8 @@ function CreateTicketPage() {
                   }
                 }
                 clearCreateDraft();
+                setPendingAttachments([]);
+                setPendingPreviewId(null);
                 void clearHelpdeskDraftPendingFiles(HELPDESK_CREATE_DRAFT_SCOPE);
                 navigateHelpdesk(`/apps/helpdesk/tickets/${created.id}`);
               })
@@ -982,6 +1037,9 @@ function CreateTicketPage() {
                 icon={<AlignLeft size={14} aria-hidden />}
                 onUploadFiles={queuePendingFiles}
                 onUploadError={(error) => setErrorText(messageFor(error).text)}
+                pendingAttachments={pendingAttachments}
+                onPendingAttachmentOpen={(id) => setPendingPreviewId(id)}
+                onPendingAttachmentRemove={removePendingAttachment}
                 resolveAttachmentImageSrc={resolveCreatePendingSrc}
                 persistAttachmentImageSrc={persistCreatePendingSrc}
               />
@@ -1045,6 +1103,19 @@ function CreateTicketPage() {
           </div>
         </form>
       </HelpdeskSectionCard>
+      <FilePreviewModal
+        open={pendingPreviewId !== null}
+        title="Anexo"
+        fileName={pendingPreview?.fileName || "anexo"}
+        mimeType={pendingPreview?.contentType || "application/octet-stream"}
+        source={
+          pendingPreviewId
+            ? () => Promise.resolve(pendingFilesRef.current.get(pendingPreviewId) as Blob)
+            : null
+        }
+        portalScopeClassName="dashboard-helpdesk"
+        onClose={() => setPendingPreviewId(null)}
+      />
     </HelpdeskPageStack>
   );
 }
@@ -1093,6 +1164,13 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
   const myPhotoUrl = useMyPersonProfilePhoto();
   const pendingFilesRef = useRef<Map<string, File>>(new Map());
   const replyComposerRef = useRef<HelpdeskRichTextFieldHandle>(null);
+  /** Non-image files staged in the reply composer — removable chips below the editor. */
+  const [pendingAttachments, setPendingAttachments] = useState<HelpdeskPendingAttachmentItem[]>([]);
+  const [pendingPreviewId, setPendingPreviewId] = useState<string | null>(null);
+  const pendingPreview = useMemo(
+    () => pendingAttachments.find((item) => item.id === pendingPreviewId) ?? null,
+    [pendingAttachments, pendingPreviewId],
+  );
 
   const conversationHtml = useMemo(() => {
     if (!ticket) return "";
@@ -1115,6 +1193,15 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
     );
   }, [ticketId]);
 
+  const removePendingAttachment = useCallback(
+    (pendingId: string) => {
+      pendingFilesRef.current.delete(pendingId);
+      setPendingAttachments((current) => current.filter((item) => item.id !== pendingId));
+      void persistReplyPendingFiles();
+    },
+    [persistReplyPendingFiles],
+  );
+
   useEffect(() => {
     let cancelled = false;
     setDraftFilesReady(false);
@@ -1125,6 +1212,15 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
         // Keys are pending uuid and/or document id after upload rekey.
         attachmentPreview.seedFile(row.id, row.file);
       }
+      setPendingAttachments(
+        rows
+          .filter((row) => !isInlineImageFile(row.file))
+          .map((row) => ({
+            id: row.id,
+            fileName: row.file.name || "anexo",
+            contentType: row.file.type || null,
+          })),
+      );
       if (rows.length > 0) setPendingHydrated((n) => n + 1);
       setDraftFilesReady(true);
     });
@@ -1855,21 +1951,35 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                                 setSaving(true);
                                 setErrorText(null);
                                 const payload = attachmentPreview.persistHtml(content.trim());
-                                void createFollowup(
-                                  ticketId,
-                                  {
-                                    content: payload,
-                                    ...(replyMeta.requestTypeId != null
-                                      ? { request_type_id: replyMeta.requestTypeId }
-                                      : null),
-                                  },
-                                  idempotencyKey,
-                                )
+                                void (async () => {
+                                  for (const item of pendingAttachments) {
+                                    const file = pendingFilesRef.current.get(item.id);
+                                    if (!file) continue;
+                                    await uploadTicketAttachment(
+                                      ticketId,
+                                      file,
+                                      newIdempotencyKey(),
+                                    );
+                                    pendingFilesRef.current.delete(item.id);
+                                  }
+                                  await createFollowup(
+                                    ticketId,
+                                    {
+                                      content: payload,
+                                      ...(replyMeta.requestTypeId != null
+                                        ? { request_type_id: replyMeta.requestTypeId }
+                                        : null),
+                                    },
+                                    idempotencyKey,
+                                  );
+                                })()
                                   .then(() => {
                                     setContent("");
                                     setReplyMeta(EMPTY_TICKET_REPLY_META);
                                     clearReplyDraft(ticketId);
                                     pendingFilesRef.current.clear();
+                                    setPendingAttachments([]);
+                                    setPendingPreviewId(null);
                                     void clearHelpdeskDraftPendingFiles(
                                       replyDraftPendingScope(ticketId),
                                     );
@@ -1912,16 +2022,16 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                                 onUploadFiles={async (files) => {
                                   const results: HelpdeskInlineUploadResult[] = [];
                                   const pendingUploads: { pendingId: string; file: File }[] = [];
+                                  const staged: HelpdeskPendingAttachmentItem[] = [];
                                   for (const file of files) {
-                                    const isImage =
-                                      file.type.startsWith("image/") ||
-                                      /\.(png|jpe?g|gif|webp|bmp)$/i.test(file.name || "");
-                                    if (!isImage) {
-                                      await uploadTicketAttachment(
-                                        ticketId,
-                                        file,
-                                        newIdempotencyKey(),
-                                      );
+                                    if (!isInlineImageFile(file)) {
+                                      const pendingId = newIdempotencyKey();
+                                      pendingFilesRef.current.set(pendingId, file);
+                                      staged.push({
+                                        id: pendingId,
+                                        fileName: file.name || "anexo",
+                                        contentType: file.type || null,
+                                      });
                                       continue;
                                     }
                                     const pendingId = newIdempotencyKey();
@@ -1934,6 +2044,9 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                                       alt: file.name || "imagem",
                                     });
                                     pendingUploads.push({ pendingId, file });
+                                  }
+                                  if (staged.length > 0) {
+                                    setPendingAttachments((current) => [...current, ...staged]);
                                   }
                                   void persistReplyPendingFiles();
                                   if (pendingUploads.length > 0) {
@@ -1981,12 +2094,13 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                                         setErrorText(messageFor(error).text);
                                       }
                                     })();
-                                  } else if (files.length > 0) {
-                                    load();
                                   }
                                   return results;
                                 }}
                                 onUploadError={(error) => setErrorText(messageFor(error).text)}
+                                pendingAttachments={pendingAttachments}
+                                onPendingAttachmentOpen={(id) => setPendingPreviewId(id)}
+                                onPendingAttachmentRemove={removePendingAttachment}
                               />
                             </form>
                             </TicketActionCard>
@@ -2475,6 +2589,22 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                   </ActionButton>
                 ) : null
               }
+            />
+            <FilePreviewModal
+              open={pendingPreviewId !== null}
+              title="Anexo"
+              fileName={pendingPreview?.fileName || "anexo"}
+              mimeType={pendingPreview?.contentType || "application/octet-stream"}
+              source={
+                pendingPreviewId
+                  ? () =>
+                      Promise.resolve(
+                        pendingFilesRef.current.get(pendingPreviewId) as Blob,
+                      )
+                  : null
+              }
+              portalScopeClassName="dashboard-helpdesk"
+              onClose={() => setPendingPreviewId(null)}
             />
           </>
         ) : null}

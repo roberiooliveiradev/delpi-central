@@ -961,6 +961,10 @@ class HttpxGlpiClient:
             raise GlpiValidation("ticket_id inválido.")
         # Ensure the ticket is visible to this OAuth subject before legacy write.
         self._json("GET", f"/api.php/v2.2/Assistance/Ticket/{ticket_id}", token=access_token)
+        # The legacy write runs as a technical account, so Document.users_id is
+        # stamped with the uploader. Resolve the actor's GLPI id to restore
+        # end-user attribution right after the document exists.
+        owner_user_id = self._current_user_id(access_token)
         session_token = self._legacy_init_session()
         try:
             document_id = self._legacy_post_document(
@@ -978,9 +982,64 @@ class HttpxGlpiClient:
                 document_id=document_id,
                 ticket_id=ticket_id,
             )
+            if owner_user_id is not None:
+                self._legacy_update_document_owner(
+                    session_token=session_token,
+                    document_id=document_id,
+                    users_id=owner_user_id,
+                )
         finally:
             self._legacy_kill_session(session_token)
         return Attachment(document_id=document_id, filename=safe_name, mime=mime or "")
+
+    def _current_user_id(self, access_token: str) -> int | None:
+        """GLPI users_id of the OAuth subject (HLAPI User/Me), None when unknown."""
+        try:
+            payload = self._json(
+                "GET", "/api.php/v2.2/Administration/User/Me", token=access_token
+            )
+        except Exception:
+            logger.info("glpi_current_user_id_unresolved")
+            return None
+        if isinstance(payload, dict):
+            raw = payload.get("id")
+            try:
+                resolved = int(raw)
+            except (TypeError, ValueError):
+                return None
+            return resolved if resolved > 0 else None
+        return None
+
+    def _legacy_update_document_owner(
+        self,
+        *,
+        session_token: str,
+        document_id: int,
+        users_id: int,
+    ) -> None:
+        """Restore end-user authorship on a document uploaded by the technical session."""
+        try:
+            response = self._http.put(
+                f"{self._base}/apirest.php/Document/{int(document_id)}",
+                headers={
+                    "Accept": "application/json",
+                    "Content-Type": "application/json",
+                    "App-Token": self._legacy_app_token,
+                    "Session-Token": session_token,
+                },
+                json={"input": {"id": int(document_id), "users_id": int(users_id)}},
+            )
+        except httpx.HTTPError:
+            logger.info(
+                "glpi_document_owner_update_failed document_id=%s", document_id
+            )
+            return
+        logger.info(
+            "glpi_document_owner_update status=%s document_id=%s users_id=%s",
+            response.status_code,
+            document_id,
+            users_id,
+        )
 
     def ticket_owns_document(self, access_token: str, ticket_id: int, document_id: int) -> bool:
         """True when Document_Item links document_id to this Ticket (legacy check).

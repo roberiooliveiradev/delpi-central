@@ -194,6 +194,16 @@ export type HelpdeskInlineUploadResult =
   | { kind: "uploaded"; documentId: number; src: string; alt?: string }
   | { kind: "pending"; pendingId: string; src: string; alt?: string };
 
+/** Non-image file staged by the composer — rendered as a removable chip
+ *  below the editor so dropped PDFs/DOCs never "disappear". */
+export type HelpdeskPendingAttachmentItem = {
+  id: string;
+  fileName: string;
+  contentType?: string | null;
+  previewUrl?: string | null;
+  busy?: boolean;
+};
+
 export type HelpdeskRichTextFieldHandle = {
   openAttachPicker: () => void;
 };
@@ -228,6 +238,10 @@ export type HelpdeskRichTextFieldProps = {
    * Ligado no create e reply (mesmo campo).
    */
   enableMentions?: boolean;
+  /** Staged non-image files rendered as a manageable strip below the editor. */
+  pendingAttachments?: readonly HelpdeskPendingAttachmentItem[];
+  onPendingAttachmentOpen?: (id: string) => void;
+  onPendingAttachmentRemove?: (id: string) => void;
 };
 
 /** CTA Anexar — placed next to Enviar in form actions. */
@@ -287,6 +301,9 @@ export const HelpdeskRichTextField = forwardRef<
     resolveAttachmentImageSrc,
     persistAttachmentImageSrc,
     enableMentions = false,
+    pendingAttachments,
+    onPendingAttachmentOpen,
+    onPendingAttachmentRemove,
   },
   ref,
 ) {
@@ -413,6 +430,24 @@ export const HelpdeskRichTextField = forwardRef<
         onMentionQueryChange={enableMentions ? handleMentionQueryChange : undefined}
         mentionLabels={enableMentions ? HELPDESK_MENTION_LABELS : undefined}
       />
+      {pendingAttachments && pendingAttachments.length > 0 ? (
+        <HelpdeskAttachmentPreviewStrip
+          mode="manage"
+          className="helpdesk-rich-text-field__attachments"
+          heading={
+            <span className="delpi-ui-section-hint-label">Anexos a enviar</span>
+          }
+          items={pendingAttachments.map((item) => ({
+            id: item.id,
+            fileName: item.fileName,
+            contentType: item.contentType,
+            previewUrl: item.previewUrl,
+            busy: item.busy,
+          }))}
+          onOpen={(item) => onPendingAttachmentOpen?.(item.id)}
+          onRemove={(item) => onPendingAttachmentRemove?.(item.id)}
+        />
+      ) : null}
       {onUploadFiles ? (
         <input
           ref={fileRef}

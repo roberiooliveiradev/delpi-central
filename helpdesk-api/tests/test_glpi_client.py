@@ -1077,6 +1077,102 @@ def test_legacy_document_upload_uses_apirest_with_app_token():
     assert any("killSession" in item for item in calls)
 
 
+def test_legacy_document_upload_restores_actor_as_document_owner():
+    """Uploads run on a technical legacy session; owner must be re-attributed
+    to the OAuth subject resolved via HLAPI User/Me."""
+    calls: list[str] = []
+    owner_update: dict | None = None
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal owner_update
+        calls.append(f"{request.method} {request.url.path}")
+        if request.url.path.endswith("/Assistance/Ticket/7"):
+            return httpx.Response(200, json={"id": 7, "name": "t"})
+        if request.url.path.endswith("/Administration/User/Me"):
+            assert request.headers.get("Authorization") == "Bearer oauth-access"
+            return httpx.Response(200, json={"id": 68, "name": "franciely"})
+        if request.url.path.endswith("/apirest.php/initSession"):
+            return httpx.Response(200, json={"session_token": "sess-1"})
+        if request.url.path.endswith("/apirest.php/Document/55") and request.method == "PUT":
+            owner_update = json.loads(request.content.decode())["input"]
+            return httpx.Response(200, json=[{"55": True}])
+        if request.url.path.endswith("/apirest.php/Document"):
+            return httpx.Response(201, json={"id": 55})
+        if request.url.path.endswith("/apirest.php/Document/55/Document_Item"):
+            return httpx.Response(200, json=[])
+        if request.url.path.endswith("/apirest.php/Document_Item"):
+            return httpx.Response(201, json={"id": 1})
+        if request.url.path.endswith("/apirest.php/killSession"):
+            return httpx.Response(200, json={})
+        return httpx.Response(404, json={"error": "missing"})
+
+    client = HttpxGlpiClient(
+        base_url="https://glpi.example",
+        client_id="id",
+        client_secret="super-secret",
+        redirect_uri="https://centraldelpi.com.br/apps/helpdesk-api/auth/glpi/callback",
+        legacy_upload_enabled=True,
+        legacy_app_token="app-token-x",
+        legacy_user_token="user-token-x",
+        transport=httpx.MockTransport(handler),
+    )
+    uploaded = client.upload_ticket_document(
+        "oauth-access",
+        ticket_id=7,
+        filename="laudo.pdf",
+        content=b"pdf-bytes",
+        mime="application/pdf",
+    )
+    assert uploaded.document_id == 55
+    assert owner_update == {"id": 55, "users_id": 68}
+    assert "GET /api.php/v2.2/Administration/User/Me" in calls
+
+
+def test_legacy_document_upload_keeps_upload_when_owner_unresolved():
+    """If User/Me is unavailable the upload still succeeds (technical owner)."""
+    owner_puts: list[dict] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path.endswith("/Assistance/Ticket/7"):
+            return httpx.Response(200, json={"id": 7, "name": "t"})
+        if request.url.path.endswith("/Administration/User/Me"):
+            return httpx.Response(403, json={"error": "denied"})
+        if request.url.path.endswith("/apirest.php/initSession"):
+            return httpx.Response(200, json={"session_token": "sess-1"})
+        if request.url.path.endswith("/apirest.php/Document/55") and request.method == "PUT":
+            owner_puts.append(json.loads(request.content.decode())["input"])
+            return httpx.Response(200, json=[{"55": True}])
+        if request.url.path.endswith("/apirest.php/Document"):
+            return httpx.Response(201, json={"id": 55})
+        if request.url.path.endswith("/apirest.php/Document/55/Document_Item"):
+            return httpx.Response(200, json=[])
+        if request.url.path.endswith("/apirest.php/Document_Item"):
+            return httpx.Response(201, json={"id": 1})
+        if request.url.path.endswith("/apirest.php/killSession"):
+            return httpx.Response(200, json={})
+        return httpx.Response(404, json={"error": "missing"})
+
+    client = HttpxGlpiClient(
+        base_url="https://glpi.example",
+        client_id="id",
+        client_secret="super-secret",
+        redirect_uri="https://centraldelpi.com.br/apps/helpdesk-api/auth/glpi/callback",
+        legacy_upload_enabled=True,
+        legacy_app_token="app-token-x",
+        legacy_user_token="user-token-x",
+        transport=httpx.MockTransport(handler),
+    )
+    uploaded = client.upload_ticket_document(
+        "oauth-access",
+        ticket_id=7,
+        filename="laudo.pdf",
+        content=b"pdf-bytes",
+        mime="application/pdf",
+    )
+    assert uploaded.document_id == 55
+    assert owner_puts == []
+
+
 def test_legacy_cycle_accept_reject_satisfaction():
     calls: list[str] = []
 
