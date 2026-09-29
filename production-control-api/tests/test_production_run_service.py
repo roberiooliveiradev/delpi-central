@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 
 import httpx
@@ -8,12 +9,18 @@ import pytest
 from production_control_app.application.services.machine_load_realtime_hub import (
     machine_load_realtime_hub,
 )
+from production_control_app.application.services.mes_run_lifecycle_service import (
+    MesRunLifecycleService,
+)
 from production_control_app.application.services.production_run_poller_service import (
     remaining_cycle_delay,
 )
 from production_control_app.application.services.production_run_service import ProductionRunService
 from production_control_app.domain.errors import (
     BenchSessionRequired,
+    DowntimeConflict,
+    InvalidMesEvent,
+    MesStateConflict,
     ProductionRunConflict,
     PulseDeviceUnavailable,
 )
@@ -181,6 +188,153 @@ class FakeRepo:
     def list_open_running_runs(self):
         return [dict(r) for r in self.runs.values() if r["status"] == "running"]
 
+    @contextmanager
+    def transaction(self):
+        yield None
+
+    def lock_run(self, run_id: str, *, conn=None):
+        return self.get_run(run_id)
+
+
+class FakeStateRepo:
+    def __init__(self) -> None:
+        self.events: list[dict] = []
+        self._seq = 0
+
+    def get_open(self, *, branch, work_center, conn=None):
+        for e in self.events:
+            if (
+                e["branch"] == branch
+                and e["work_center"] == work_center
+                and e["ended_at"] is None
+            ):
+                return dict(e)
+        return None
+
+    def open_event(self, *, branch, work_center, state, source, run_id=None, started_at=None, conn=None):
+        if self.get_open(branch=branch, work_center=work_center) is not None:
+            raise MesStateConflict("Já existe um estado operacional aberto neste posto.")
+        self._seq += 1
+        ev = {
+            "id": f"st-{self._seq}",
+            "branch": branch,
+            "work_center": work_center,
+            "run_id": run_id,
+            "state": state,
+            "source": source,
+            "started_at": started_at or datetime.now(timezone.utc),
+            "ended_at": None,
+            "created_at": datetime.now(timezone.utc),
+        }
+        self.events.append(ev)
+        return dict(ev)
+
+    def close_open(self, *, branch, work_center, ended_at=None, conn=None):
+        for e in self.events:
+            if (
+                e["branch"] == branch
+                and e["work_center"] == work_center
+                and e["ended_at"] is None
+            ):
+                e["ended_at"] = ended_at or datetime.now(timezone.utc)
+                return dict(e)
+        return None
+
+    def list_for_work_center(self, *, branch, work_center, limit=200):
+        out = [e for e in self.events if e["branch"] == branch and e["work_center"] == work_center]
+        return [dict(e) for e in sorted(out, key=lambda e: e["started_at"], reverse=True)]
+
+    def list_for_run(self, run_id):
+        out = [e for e in self.events if e["run_id"] == run_id]
+        return [dict(e) for e in sorted(out, key=lambda e: e["started_at"])]
+
+
+class FakeDowntimeRepo:
+    def __init__(self) -> None:
+        self.events: list[dict] = []
+        self._seq = 0
+
+    def get_open(self, *, branch, work_center, conn=None):
+        for e in self.events:
+            if (
+                e["branch"] == branch
+                and e["work_center"] == work_center
+                and e["ended_at"] is None
+            ):
+                return dict(e)
+        return None
+
+    def get(self, downtime_id):
+        for e in self.events:
+            if e["id"] == downtime_id:
+                return dict(e)
+        return None
+
+    def create(self, *, branch, work_center, source, run_id=None, state_event_id=None,
+               production_order=None, operation_code=None, started_at=None, conn=None):
+        if self.get_open(branch=branch, work_center=work_center) is not None:
+            raise DowntimeConflict("Já existe uma parada aberta neste posto.")
+        self._seq += 1
+        ev = {
+            "id": f"dt-{self._seq}",
+            "branch": branch,
+            "work_center": work_center,
+            "run_id": run_id,
+            "state_event_id": state_event_id,
+            "production_order": production_order,
+            "operation_code": operation_code,
+            "started_at": started_at or datetime.now(timezone.utc),
+            "ended_at": None,
+            "reason_code": None,
+            "planned": None,
+            "counts_as_availability_loss": None,
+            "source": source,
+            "confirmed": False,
+            "confirmed_at": None,
+            "confirmed_by_type": None,
+            "confirmed_by_ref": None,
+            "note": None,
+            "created_at": datetime.now(timezone.utc),
+            "updated_at": datetime.now(timezone.utc),
+        }
+        self.events.append(ev)
+        return dict(ev)
+
+    def close_open(self, *, branch, work_center, ended_at=None, conn=None):
+        for e in self.events:
+            if (
+                e["branch"] == branch
+                and e["work_center"] == work_center
+                and e["ended_at"] is None
+            ):
+                e["ended_at"] = ended_at or datetime.now(timezone.utc)
+                return dict(e)
+        return None
+
+    def list_for_run(self, run_id):
+        out = [e for e in self.events if e["run_id"] == run_id]
+        return [dict(e) for e in sorted(out, key=lambda e: e["started_at"])]
+
+    def list_for_work_center(self, *, branch, work_center, start=None, end=None, limit=200):
+        out = [e for e in self.events if e["branch"] == branch and e["work_center"] == work_center]
+        return [dict(e) for e in sorted(out, key=lambda e: e["started_at"], reverse=True)]
+
+
+def make_mes() -> tuple[MesRunLifecycleService, FakeStateRepo, FakeDowntimeRepo]:
+    states = FakeStateRepo()
+    downtimes = FakeDowntimeRepo()
+    return (
+        MesRunLifecycleService(states=states, downtimes=downtimes),
+        states,
+        downtimes,
+    )
+
+
+def make_service(repo: FakeRepo, pulse: "FakePulse", **kwargs) -> ProductionRunService:
+    if "mes_lifecycle" not in kwargs:
+        kwargs["mes_lifecycle"] = make_mes()[0]
+    return ProductionRunService(repository=repo, pulse_gateway=pulse, **kwargs)
+
 
 class FakePulse:
     def __init__(self, devices=None, device_by_id=None):
@@ -205,7 +359,7 @@ class FakePulse:
 
 
 def test_start_run_requires_session():
-    service = ProductionRunService(repository=FakeRepo(), pulse_gateway=FakePulse())
+    service = make_service(FakeRepo(), FakePulse())
     try:
         service.start_run(
             branch="01",
@@ -223,7 +377,7 @@ def test_start_run_requires_exactly_one_device():
     repo = FakeRepo()
     session = service_session(repo)
     pulse = FakePulse(devices=[])
-    service = ProductionRunService(repository=repo, pulse_gateway=pulse)
+    service = make_service(repo, pulse)
     try:
         service.start_run(
             branch="01",
@@ -248,7 +402,7 @@ def test_start_and_count_pieces():
         "name": "Pad",
     }
     pulse = FakePulse(devices=[device], device_by_id={"dev-1": device})
-    service = ProductionRunService(repository=repo, pulse_gateway=pulse)
+    service = make_service(repo, pulse)
     started = service.start_run(
         branch="01",
         work_center="CT01",
@@ -277,9 +431,9 @@ def test_run_target_is_frozen_from_queue_and_survives_pause_resume():
         "unit": "MI",
         "pieces_conversion_factor": 1000,
     }
-    service = ProductionRunService(
-        repository=repo,
-        pulse_gateway=pulse,
+    service = make_service(
+        repo,
+        pulse,
         queue_lookup=lambda **_kwargs: dict(operation),
     )
 
@@ -333,9 +487,9 @@ def test_run_target_uses_header_balance_only_for_legacy_queue_snapshot():
     session = service_session(repo)
     device = {"deviceId": "dev-1", "counter": 100, "counterEpoch": 1, "online": True}
     pulse = FakePulse(devices=[device], device_by_id={"dev-1": device})
-    service = ProductionRunService(
-        repository=repo,
-        pulse_gateway=pulse,
+    service = make_service(
+        repo,
+        pulse,
         queue_lookup=lambda **_kwargs: {
             "planned_qty": 1.0,
             "pending_qty": 0.25,
@@ -360,9 +514,9 @@ def test_run_target_stays_unknown_when_unit_has_no_piece_factor():
     repo = FakeRepo()
     session = service_session(repo)
     device = {"deviceId": "dev-1", "counter": 100, "counterEpoch": 1, "online": True}
-    service = ProductionRunService(
-        repository=repo,
-        pulse_gateway=FakePulse(devices=[device], device_by_id={"dev-1": device}),
+    service = make_service(
+        repo,
+        FakePulse(devices=[device], device_by_id={"dev-1": device}),
         queue_lookup=lambda **_kwargs: {
             "operation_pending_qty": 0.5,
             "unit": "KG",
@@ -386,9 +540,9 @@ def test_legacy_run_without_target_has_no_progress():
     repo = FakeRepo()
     session = service_session(repo)
     device = {"deviceId": "dev-1", "counter": 100, "counterEpoch": 1, "online": True}
-    service = ProductionRunService(
-        repository=repo,
-        pulse_gateway=FakePulse(devices=[device], device_by_id={"dev-1": device}),
+    service = make_service(
+        repo,
+        FakePulse(devices=[device], device_by_id={"dev-1": device}),
     )
     payload = service.start_run(
         branch="01",
@@ -408,7 +562,7 @@ def test_tick_emits_absolute_minimal_run_snapshot(monkeypatch: pytest.MonkeyPatc
     session = service_session(repo)
     device = {"deviceId": "dev-1", "counter": 100, "counterEpoch": 1, "online": True}
     pulse = FakePulse(devices=[device], device_by_id={"dev-1": device})
-    service = ProductionRunService(repository=repo, pulse_gateway=pulse)
+    service = make_service(repo, pulse)
     started = service.start_run(
         branch="01",
         work_center="CT01",
@@ -465,7 +619,7 @@ def test_second_start_conflicts():
     session = service_session(repo)
     device = {"deviceId": "dev-1", "counter": 0, "counterEpoch": 0, "online": True}
     pulse = FakePulse(devices=[device], device_by_id={"dev-1": device})
-    service = ProductionRunService(repository=repo, pulse_gateway=pulse)
+    service = make_service(repo, pulse)
     service.start_run(
         branch="01",
         work_center="CT01",
@@ -512,7 +666,7 @@ def test_remaining_cycle_delay_does_not_wait_after_overrun():
 
 
 def service_session(repo: FakeRepo) -> str:
-    service = ProductionRunService(repository=repo, pulse_gateway=FakePulse(devices=[{"deviceId": "x"}]))
+    service = make_service(repo, FakePulse(devices=[{"deviceId": "x"}]))
     created = service.create_bench_session(
         branch="01",
         work_center="CT01",

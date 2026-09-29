@@ -1,9 +1,9 @@
 # MES — estados operacionais e paradas (fundação)
 
-> **Status:** Etapa 01 implementada (set/2026) — fundação de domínio e persistência.
+> **Status:** Etapa 02 implementada — ciclo de vida do run grava fatos MES.
 > **Owner do domínio MES:** `production-control-api`
 > **Owner da telemetria:** `production-pulse-api` (apenas hardware/counter/epoch/saúde)
-> **Runtime de transição (Pause/Resume → estados):** Etapa 02 — *não implementado ainda*
+> **Classificação visual do motivo:** Etapa 03 — *não implementada ainda*
 
 Documento canônico do modelo MES de estados do centro de trabalho e paradas.
 A contagem de peças Pulse → run permanece documentada em
@@ -107,37 +107,61 @@ Etapa 02.
 | Estados/origens/validações | `domain/services/mes_operational_state.py` |
 | Erros | `domain/errors.py` (`InvalidMesEvent`, `MesStateConflict`, `DowntimeConflict`, `DowntimeNotFound`) |
 | Ports | `domain/ports/work_center_state_repository.py`, `downtime_event_repository.py`, `downtime_reason_repository.py` |
+| Orquestração | `application/services/mes_run_lifecycle_service.py` |
 | Adapter | `infrastructure/persistence/postgres_mes_repository.py` |
 | Migration | `migrations/V010__mes_state_and_downtime_foundation.sql` |
 
-**Transações:** o adapter usa `get_connection()` autocommit-off como os demais
-repositories. Os métodos de escrita aceitam `conn` opcional para que, na
-Etapa 02, o Pause execute *fecha PRODUCING + abre STOPPED + cria parada +
-pausa run* numa única transação — sem estado intermediário inconsistente.
-Hoje não há wiring no `pc_composer` (dead wiring evitado).
+**Transações:** os adapters aceitam `conn` opcional; quando fornecida, não
+fazem commit próprio. O `PostgresProductionRunRepository` expõe
+`transaction()` (contextmanager: commit ao sair, rollback em exceção) e
+`lock_run()` (`SELECT ... FOR UPDATE`). Toda transição do run abre **uma**
+transação compartilhada cobrindo run + segmentos + fatos MES.
 
-**Concorrência:** o índice único parcial é a última barreira; violações são
-convertidas em `MesStateConflict`/`DowntimeConflict` (nunca erro cru do
-Postgres para a camada HTTP).
+**Concorrência:** `lock_run` serializa Pause/Resume/Stop do mesmo run; os
+índices únicos parciais continuam a última barreira e violações viram erros
+de domínio. `update_run_pieces` só atualiza runs `running` — um tick do
+poller concorrente nunca sobrescreve a contagem consolidada por uma
+transição. A leitura HTTP ao Pulse acontece **antes** de abrir a transação
+(nenhum I/O externo dentro dela).
 
-## 6. O que NÃO foi feito (escopo da etapa)
+## 6. Lifecycle implementado (Etapa 02)
 
-- nenhuma mudança em Play/Pause/Resume/Stop;
-- nenhum endpoint HTTP novo;
+```text
+PLAY   → cria run + segmento → abre PRODUCING (source=operator, run_id)
+PAUSE  → consolida peças → fecha segmento → run=paused
+         → fecha PRODUCING → abre STOPPED → cria downtime (motivo NULL)
+RESUME → encerra downtime → fecha STOPPED → abre PRODUCING
+         → reabre segmento (nova âncora Pulse) → run=running
+STOP   → consolida peças (se running) → fecha segmento → run=completed
+         → encerra downtime/estado abertos do run
+```
+
+Cada transição usa um único timestamp de transição (`at`) para todos os
+fatos criados juntos. Orquestração em
+`application/services/mes_run_lifecycle_service.py` (`MesRunLifecycleService`),
+composta no `pc_composer` junto ao `ProductionRunService`. Nenhum endpoint
+novo; o contrato WS (`run_started`/`run_paused`/`run_resumed`/`run_stopped`/
+`pieces_updated`) e o poller de 500 ms permanecem inalterados.
+
+### Política para dados legados e inconsistências
+
+- **Run criado antes da Etapa 02** (sem nenhum evento de estado observado):
+  o Pause/Stop passa a gravar fatos reais a partir daquele instante
+  (`stopped` + `downtime` no Pause são fatos novos, não backfill); o Resume
+  de um run pausado "pré-MES" apenas abre `producing` — o que o MES não
+  observou, não é inventado.
+- **Inconsistência observada** (estado aberto de outro run, parada ausente
+  quando o `stopped` existe, estado diferente do esperado para a transição):
+  erro de domínio controlado (`InvalidMesEvent`/`MesStateConflict`/
+  `DowntimeConflict`) e rollback completo. Nunca sobrescrever nem inventar.
+
+## 7. O que NÃO foi feito (fica para etapas seguintes)
+
+- classificação do motivo no cockpit (Etapa 03): a parada nasce com
+  `reason_code = NULL`, `confirmed = false`;
+- abertura de `idle` ao finalizar run — não necessária nesta fase;
+- nenhum endpoint HTTP novo, modal, timer ou timeline visual;
 - nenhum cálculo de OEE/disponibilidade/performance;
 - nenhum backfill de histórico;
 - nenhuma alteração no Production Pulse;
-- nenhuma máquina de transição completa (só invariantes estruturais);
-- nenhuma mudança visual no cockpit.
-
-## 7. Pré-visualização da Etapa 02
-
-```text
-PLAY   → PRODUCING aberto (run_id vinculado)
-PAUSE  → fecha PRODUCING → abre STOPPED → cria downtime (motivo NULL)
-RESUME → encerra downtime → fecha STOPPED → abre PRODUCING
-STOP   → encerra estado/downtime abertos → run completed
-```
-
-Tudo em transação única por transição, com eventos WS existentes
-(`run_started`, `run_paused`, …) continuando a alimentar o cockpit.
+- detecção automática de parada / microparadas.

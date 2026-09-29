@@ -2,10 +2,14 @@ from __future__ import annotations
 
 import hashlib
 import secrets
+from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
-from typing import Any
+from typing import Any, Iterator
+
+from psycopg.errors import UniqueViolation
 
 from production_control_app.config import settings
+from production_control_app.domain.errors import ProductionRunConflict
 from production_control_app.infrastructure.persistence.plugins_postgres_connection import (
     PC_SCHEMA_NAME,
     get_connection,
@@ -29,6 +33,44 @@ def generate_session_token() -> str:
 
 
 class PostgresProductionRunRepository:
+    @contextmanager
+    def transaction(self) -> Iterator[Any]:
+        """Uma conexão/transação compartilhada: commit ao sair, rollback em erro.
+
+        Permite que transições do run (pause/resume/stop) gravem run, segmentos
+        e fatos MES atomicamente. Nunca mantenha chamada HTTP ao Pulse dentro.
+        """
+        conn = get_connection()
+        try:
+            yield conn
+            conn.commit()
+        except Exception:
+            conn.rollback()
+            raise
+        finally:
+            conn.close()
+
+    def lock_run(self, run_id: str, *, conn: Any) -> dict[str, Any] | None:
+        """SELECT FOR UPDATE: serializa transições concorrentes do mesmo run."""
+        with conn.cursor() as cur:
+            cur.execute(
+                f"""
+                SELECT id::text AS id, branch, work_center, production_order,
+                       operation_code, device_id::text AS device_id,
+                       operator_code, operator_name,
+                       bench_session_id::text AS bench_session_id,
+                       status, started_at, ended_at, pieces_total,
+                       planned_qty_snapshot, target_pieces_snapshot,
+                       created_at, updated_at
+                FROM {_RUNS}
+                WHERE id = %s::uuid
+                FOR UPDATE
+                """,
+                (run_id,),
+            )
+            row = cur.fetchone()
+            return dict(row) if row else None
+
     def create_bench_session(
         self,
         *,
@@ -172,8 +214,45 @@ class PostgresProductionRunRepository:
         target_pieces_snapshot: int | None,
         anchor_counter: int,
         anchor_epoch: int,
+        conn: Any | None = None,
     ) -> dict[str, Any]:
-        with get_connection() as conn:
+        if conn is not None:
+            return self._create_run_with_segment(
+                conn,
+                branch=branch,
+                work_center=work_center,
+                production_order=production_order,
+                operation_code=operation_code,
+                device_id=device_id,
+                operator_code=operator_code,
+                operator_name=operator_name,
+                bench_session_id=bench_session_id,
+                planned_qty_snapshot=planned_qty_snapshot,
+                target_pieces_snapshot=target_pieces_snapshot,
+                anchor_counter=anchor_counter,
+                anchor_epoch=anchor_epoch,
+            )
+        with get_connection() as own:
+            row = self._create_run_with_segment(
+                own,
+                branch=branch,
+                work_center=work_center,
+                production_order=production_order,
+                operation_code=operation_code,
+                device_id=device_id,
+                operator_code=operator_code,
+                operator_name=operator_name,
+                bench_session_id=bench_session_id,
+                planned_qty_snapshot=planned_qty_snapshot,
+                target_pieces_snapshot=target_pieces_snapshot,
+                anchor_counter=anchor_counter,
+                anchor_epoch=anchor_epoch,
+            )
+            own.commit()
+            return row
+
+    def _create_run_with_segment(self, conn: Any, **kwargs: Any) -> dict[str, Any]:
+        try:
             with conn.cursor() as cur:
                 cur.execute(
                     f"""
@@ -195,34 +274,38 @@ class PostgresProductionRunRepository:
                               created_at, updated_at
                     """,
                     (
-                        branch,
-                        work_center,
-                        production_order,
-                        operation_code,
-                        device_id,
-                        operator_code,
-                        operator_name,
-                        bench_session_id,
-                        planned_qty_snapshot,
-                        target_pieces_snapshot,
+                        kwargs["branch"],
+                        kwargs["work_center"],
+                        kwargs["production_order"],
+                        kwargs["operation_code"],
+                        kwargs["device_id"],
+                        kwargs["operator_code"],
+                        kwargs["operator_name"],
+                        kwargs["bench_session_id"],
+                        kwargs["planned_qty_snapshot"],
+                        kwargs["target_pieces_snapshot"],
                     ),
                 )
                 run = dict(cur.fetchone())
-                cur.execute(
-                    f"""
-                    INSERT INTO {_SEGMENTS} (
-                        run_id, device_id, anchor_counter, anchor_epoch
-                    )
-                    VALUES (%s::uuid, %s::uuid, %s, %s)
-                    RETURNING id::text AS id, run_id::text AS run_id,
-                              device_id::text AS device_id,
-                              anchor_counter, anchor_epoch, started_at,
-                              ended_at, pieces, end_reason
-                    """,
-                    (run["id"], device_id, int(anchor_counter), int(anchor_epoch)),
+        except UniqueViolation as exc:
+            raise ProductionRunConflict(
+                "Já existe produção em andamento neste posto."
+            ) from exc
+        with conn.cursor() as cur:
+            cur.execute(
+                f"""
+                INSERT INTO {_SEGMENTS} (
+                    run_id, device_id, anchor_counter, anchor_epoch
                 )
-                segment = dict(cur.fetchone())
-            conn.commit()
+                VALUES (%s::uuid, %s::uuid, %s, %s)
+                RETURNING id::text AS id, run_id::text AS run_id,
+                          device_id::text AS device_id,
+                          anchor_counter, anchor_epoch, started_at,
+                          ended_at, pieces, end_reason
+                """,
+                (run["id"], kwargs["device_id"], int(kwargs["anchor_counter"]), int(kwargs["anchor_epoch"])),
+            )
+            segment = dict(cur.fetchone())
         run["open_segment"] = segment
         return run
 
@@ -272,9 +355,37 @@ class PostgresProductionRunRepository:
         anchor_counter: int,
         anchor_epoch: int,
         pieces_total: int,
+        conn: Any | None = None,
     ) -> dict[str, Any]:
-        with get_connection() as conn:
-            with conn.cursor() as cur:
+        if conn is not None:
+            return self._close_segment_open_new(
+                conn,
+                run_id=run_id,
+                segment_id=segment_id,
+                pieces=pieces,
+                end_reason=end_reason,
+                device_id=device_id,
+                anchor_counter=anchor_counter,
+                anchor_epoch=anchor_epoch,
+                pieces_total=pieces_total,
+            )
+        with get_connection() as own:
+            row = self._close_segment_open_new(
+                own,
+                run_id=run_id,
+                segment_id=segment_id,
+                pieces=pieces,
+                end_reason=end_reason,
+                device_id=device_id,
+                anchor_counter=anchor_counter,
+                anchor_epoch=anchor_epoch,
+                pieces_total=pieces_total,
+            )
+            own.commit()
+            return row
+
+    def _close_segment_open_new(self, conn: Any, **kwargs: Any) -> dict[str, Any]:
+        with conn.cursor() as cur:
                 cur.execute(
                     f"""
                     UPDATE {_SEGMENTS}
@@ -283,7 +394,7 @@ class PostgresProductionRunRepository:
                            end_reason = %s
                      WHERE id = %s::uuid AND ended_at IS NULL
                     """,
-                    (int(pieces), end_reason, segment_id),
+                    (int(kwargs["pieces"]), kwargs["end_reason"], kwargs["segment_id"]),
                 )
                 cur.execute(
                     f"""
@@ -296,7 +407,12 @@ class PostgresProductionRunRepository:
                               anchor_counter, anchor_epoch, started_at,
                               ended_at, pieces, end_reason
                     """,
-                    (run_id, device_id, int(anchor_counter), int(anchor_epoch)),
+                    (
+                        kwargs["run_id"],
+                        kwargs["device_id"],
+                        int(kwargs["anchor_counter"]),
+                        int(kwargs["anchor_epoch"]),
+                    ),
                 )
                 segment = dict(cur.fetchone())
                 cur.execute(
@@ -307,34 +423,50 @@ class PostgresProductionRunRepository:
                      WHERE id = %s::uuid
                     RETURNING id::text AS id, pieces_total, status
                     """,
-                    (int(pieces_total), run_id),
+                    (int(kwargs["pieces_total"]), kwargs["run_id"]),
                 )
                 run = dict(cur.fetchone())
-            conn.commit()
         run["open_segment"] = segment
         return run
 
-    def update_run_pieces(self, run_id: str, *, pieces_total: int, open_segment_pieces: int) -> None:
-        with get_connection() as conn:
-            with conn.cursor() as cur:
-                cur.execute(
-                    f"""
-                    UPDATE {_RUNS}
-                       SET pieces_total = %s,
-                           updated_at = NOW()
-                     WHERE id = %s::uuid
-                    """,
-                    (int(pieces_total), run_id),
-                )
-                cur.execute(
-                    f"""
-                    UPDATE {_SEGMENTS}
-                       SET pieces = %s
-                     WHERE run_id = %s::uuid AND ended_at IS NULL
-                    """,
-                    (int(open_segment_pieces), run_id),
-                )
-            conn.commit()
+    def update_run_pieces(
+        self,
+        run_id: str,
+        *,
+        pieces_total: int,
+        open_segment_pieces: int,
+        conn: Any | None = None,
+    ) -> None:
+        if conn is not None:
+            self._update_run_pieces(
+                conn, run_id, pieces_total=pieces_total, open_segment_pieces=open_segment_pieces
+            )
+            return
+        with get_connection() as own:
+            self._update_run_pieces(
+                own, run_id, pieces_total=pieces_total, open_segment_pieces=open_segment_pieces
+            )
+            own.commit()
+
+    def _update_run_pieces(self, conn: Any, run_id: str, **kwargs: Any) -> None:
+        with conn.cursor() as cur:
+            cur.execute(
+                f"""
+                UPDATE {_RUNS}
+                   SET pieces_total = %s,
+                       updated_at = NOW()
+                 WHERE id = %s::uuid AND status = 'running'
+                """,
+                (int(kwargs["pieces_total"]), run_id),
+            )
+            cur.execute(
+                f"""
+                UPDATE {_SEGMENTS}
+                   SET pieces = %s
+                 WHERE run_id = %s::uuid AND ended_at IS NULL
+                """,
+                (int(kwargs["open_segment_pieces"]), run_id),
+            )
 
     def set_run_status(
         self,
@@ -345,43 +477,66 @@ class PostgresProductionRunRepository:
         close_open_segment: bool = False,
         open_segment_pieces: int = 0,
         end_reason: str | None = None,
+        conn: Any | None = None,
     ) -> dict[str, Any]:
-        with get_connection() as conn:
-            with conn.cursor() as cur:
-                if close_open_segment:
-                    cur.execute(
-                        f"""
-                        UPDATE {_SEGMENTS}
-                           SET ended_at = NOW(),
-                               pieces = %s,
-                               end_reason = %s
-                         WHERE run_id = %s::uuid AND ended_at IS NULL
-                        """,
-                        (int(open_segment_pieces), end_reason, run_id),
-                    )
-                sets = ["status = %s", "updated_at = NOW()"]
-                params: list[Any] = [status]
-                if status in {"completed", "aborted"}:
-                    sets.append("ended_at = NOW()")
-                if pieces_total is not None:
-                    sets.append("pieces_total = %s")
-                    params.append(int(pieces_total))
-                params.append(run_id)
+        if conn is not None:
+            return self._set_run_status(
+                conn,
+                run_id,
+                status=status,
+                pieces_total=pieces_total,
+                close_open_segment=close_open_segment,
+                open_segment_pieces=open_segment_pieces,
+                end_reason=end_reason,
+            )
+        with get_connection() as own:
+            row = self._set_run_status(
+                own,
+                run_id,
+                status=status,
+                pieces_total=pieces_total,
+                close_open_segment=close_open_segment,
+                open_segment_pieces=open_segment_pieces,
+                end_reason=end_reason,
+            )
+            own.commit()
+            return row
+
+    def _set_run_status(self, conn: Any, run_id: str, **kwargs: Any) -> dict[str, Any]:
+        with conn.cursor() as cur:
+            if kwargs["close_open_segment"]:
                 cur.execute(
                     f"""
-                    UPDATE {_RUNS}
-                       SET {", ".join(sets)}
-                     WHERE id = %s::uuid
-                    RETURNING id::text AS id, branch, work_center, production_order,
-                              operation_code, device_id::text AS device_id,
-                              operator_code, operator_name, status, started_at,
-                              ended_at, pieces_total, planned_qty_snapshot,
-                              target_pieces_snapshot
+                    UPDATE {_SEGMENTS}
+                       SET ended_at = NOW(),
+                           pieces = %s,
+                           end_reason = %s
+                     WHERE run_id = %s::uuid AND ended_at IS NULL
                     """,
-                    params,
+                    (int(kwargs["open_segment_pieces"]), kwargs["end_reason"], run_id),
                 )
-                row = dict(cur.fetchone())
-            conn.commit()
+            sets = ["status = %s", "updated_at = NOW()"]
+            params: list[Any] = [kwargs["status"]]
+            if kwargs["status"] in {"completed", "aborted"}:
+                sets.append("ended_at = NOW()")
+            if kwargs["pieces_total"] is not None:
+                sets.append("pieces_total = %s")
+                params.append(int(kwargs["pieces_total"]))
+            params.append(run_id)
+            cur.execute(
+                f"""
+                UPDATE {_RUNS}
+                   SET {", ".join(sets)}
+                 WHERE id = %s::uuid
+                RETURNING id::text AS id, branch, work_center, production_order,
+                          operation_code, device_id::text AS device_id,
+                          operator_code, operator_name, status, started_at,
+                          ended_at, pieces_total, planned_qty_snapshot,
+                          target_pieces_snapshot
+                """,
+                params,
+            )
+            row = dict(cur.fetchone())
         return row
 
     def reopen_segment_on_resume(
@@ -391,34 +546,58 @@ class PostgresProductionRunRepository:
         device_id: str,
         anchor_counter: int,
         anchor_epoch: int,
+        conn: Any | None = None,
     ) -> dict[str, Any]:
-        with get_connection() as conn:
-            with conn.cursor() as cur:
-                cur.execute(
-                    f"""
-                    UPDATE {_RUNS}
-                       SET status = 'running',
-                           updated_at = NOW()
-                     WHERE id = %s::uuid
-                    RETURNING id::text AS id, status, pieces_total
-                    """,
-                    (run_id,),
+        if conn is not None:
+            return self._reopen_segment_on_resume(
+                conn,
+                run_id=run_id,
+                device_id=device_id,
+                anchor_counter=anchor_counter,
+                anchor_epoch=anchor_epoch,
+            )
+        with get_connection() as own:
+            row = self._reopen_segment_on_resume(
+                own,
+                run_id=run_id,
+                device_id=device_id,
+                anchor_counter=anchor_counter,
+                anchor_epoch=anchor_epoch,
+            )
+            own.commit()
+            return row
+
+    def _reopen_segment_on_resume(self, conn: Any, **kwargs: Any) -> dict[str, Any]:
+        with conn.cursor() as cur:
+            cur.execute(
+                f"""
+                UPDATE {_RUNS}
+                   SET status = 'running',
+                       updated_at = NOW()
+                 WHERE id = %s::uuid
+                RETURNING id::text AS id, status, pieces_total
+                """,
+                (kwargs["run_id"],),
+            )
+            run = dict(cur.fetchone())
+            cur.execute(
+                f"""
+                INSERT INTO {_SEGMENTS} (
+                    run_id, device_id, anchor_counter, anchor_epoch
                 )
-                run = dict(cur.fetchone())
-                cur.execute(
-                    f"""
-                    INSERT INTO {_SEGMENTS} (
-                        run_id, device_id, anchor_counter, anchor_epoch
-                    )
-                    VALUES (%s::uuid, %s::uuid, %s, %s)
-                    RETURNING id::text AS id, run_id::text AS run_id,
-                              device_id::text AS device_id,
-                              anchor_counter, anchor_epoch, started_at,
-                              ended_at, pieces, end_reason
-                    """,
-                    (run_id, device_id, int(anchor_counter), int(anchor_epoch)),
-                )
-                segment = dict(cur.fetchone())
-            conn.commit()
+                VALUES (%s::uuid, %s::uuid, %s, %s)
+                RETURNING id::text AS id, run_id::text AS run_id,
+                          device_id::text AS device_id,
+                          anchor_counter, anchor_epoch, started_at,
+                          ended_at, pieces, end_reason
+                """,
+                (
+                    kwargs["run_id"],
+                    kwargs["device_id"],
+                    int(kwargs["anchor_counter"]),
+                    int(kwargs["anchor_epoch"]),
+                ),
+            )
+            segment = dict(cur.fetchone())
         run["open_segment"] = segment
         return run

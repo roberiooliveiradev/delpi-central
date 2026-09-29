@@ -406,8 +406,15 @@ def build_production_run_service(
     snapshots: MachineLoadSnapshotRepositoryPort | None = None,
     pulse_gateway: Any | None = None,
 ) -> Any:
+    from production_control_app.application.services.mes_run_lifecycle_service import (
+        MesRunLifecycleService,
+    )
     from production_control_app.application.services.production_run_service import (
         ProductionRunService,
+    )
+    from production_control_app.infrastructure.persistence.postgres_mes_repository import (
+        PostgresDowntimeEventRepository,
+        PostgresWorkCenterStateRepository,
     )
 
     machine_load = build_machine_load_service(gateway, snapshots=snapshots)
@@ -431,4 +438,8 @@ def build_production_run_service(
     return ProductionRunService(
         pulse_gateway=pulse_gateway or build_production_pulse_gateway(),
         queue_lookup=_queue_lookup,
+        mes_lifecycle=MesRunLifecycleService(
+            states=PostgresWorkCenterStateRepository(),
+            downtimes=PostgresDowntimeEventRepository(),
+        ),
     )
