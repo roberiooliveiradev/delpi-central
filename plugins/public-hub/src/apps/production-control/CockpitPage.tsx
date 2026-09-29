@@ -196,7 +196,7 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
           event.reason.startsWith("automatic_downtime_") ||
           event.reason === "downtime_classified")
       ) {
-        setRunRealtimeEvent(null);
+        setRunRealtimeEvent(event);
         setRunUpdatedSignal((value) => value + 1);
       }
       // Sequência/refresh do PCP: atualiza sem flicker de loading.
