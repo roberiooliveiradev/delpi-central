@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "delpi-mes",
+  "name": "Delpi MES",
+  "description": "Supervisão e análise gerencial da execução industrial da Delpi.",
+  "category": "producao",
+  "icon": "factory",
+  "version": "0.1.0",
+  "type": "microfrontend",
+  "basePath": "/apps/delpi-mes",
+  "entry": "/apps/delpi-mes/assets/remoteEntry.js",
+  "permissions": [
+    { "code": "delpi-mes.access", "name": "Acessar Delpi MES", "description": "Abrir o Delpi MES na Minha DELPI.", "module": "delpi-mes" },
+    { "code": "delpi-mes.monitoring.view", "name": "Visualizar monitoramento", "description": "Acessar a área de monitoramento industrial.", "module": "delpi-mes" },
+    { "code": "delpi-mes.downtimes.view", "name": "Visualizar paradas", "description": "Consultar paradas MES.", "module": "delpi-mes" },
+    { "code": "delpi-mes.history.view", "name": "Visualizar histórico", "description": "Consultar timeline e histórico de runs MES.", "module": "delpi-mes" },
+    { "code": "delpi-mes.view.filial-01", "name": "Delpi MES — filial 01 (SC)", "description": "Consultar dados MES da filial 01 (SC).", "module": "delpi-mes" },
+    { "code": "delpi-mes.view.filial-02", "name": "Delpi MES — filial 02 (ES)", "description": "Consultar dados MES da filial 02 (ES).", "module": "delpi-mes" }
+  ],
+  "routes": [
+    { "path": "/apps/delpi-mes", "label": "Delpi MES", "permission": "delpi-mes.access", "icon": "factory", "order": 54, "showInMenu": true, "menuGroup": "Produção" },
+    { "path": "/apps/delpi-mes/monitoring", "label": "Monitoramento", "permission": "delpi-mes.monitoring.view", "icon": "activity", "order": 55, "showInMenu": false },
+    { "path": "/apps/delpi-mes/downtimes", "label": "Paradas", "permission": "delpi-mes.downtimes.view", "icon": "clock", "order": 56, "showInMenu": false },
+    { "path": "/apps/delpi-mes/history", "label": "Histórico", "permission": "delpi-mes.history.view", "icon": "file-text", "order": 57, "showInMenu": false }
+  ],
+  "backend": {
+    "required": true,
+    "serviceName": "delpi-mes-api",
+    "baseUrl": "/apps/delpi-mes-api",
+    "validateJwt": true,
+    "issuer": "http://localhost/auth/realms/delpi",
+    "audience": "delpi-central"
+  },
+  "ui": { "renderMode": "federated" }
+}

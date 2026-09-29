@@ -1,0 +1,105 @@
+.delpi-mes-shell {
+  min-height: 100%;
+  padding: clamp(1rem, 2vw, 2rem);
+  color: var(--text-primary, #172033);
+  background:
+    radial-gradient(circle at top right, color-mix(in srgb, #0f766e 10%, transparent), transparent 34rem),
+    var(--surface-page, #f5f7fa);
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+}
+
+.delpi-mes-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  max-width: 78rem;
+  margin: 0 auto 1.25rem;
+}
+
+.delpi-mes-brand { display: flex; align-items: center; gap: 1rem; }
+.delpi-mes-brand h1 { margin: 0; font-size: clamp(1.7rem, 3vw, 2.35rem); }
+.delpi-mes-brand p { margin: 0.3rem 0 0; color: var(--text-secondary, #5c667a); }
+.delpi-mes-brand__icon {
+  display: grid;
+  width: 3.5rem;
+  height: 3.5rem;
+  place-items: center;
+  border-radius: 1rem;
+  color: #fff;
+  background: linear-gradient(135deg, #0f766e, #155e75);
+  box-shadow: 0 12px 28px rgb(15 118 110 / 22%);
+}
+.delpi-mes-brand__icon svg { width: 1.7rem; height: 1.7rem; }
+.delpi-mes-eyebrow {
+  margin: 0 0 0.3rem !important;
+  color: #0f766e !important;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.delpi-mes-branch { display: grid; gap: 0.35rem; color: var(--text-secondary, #5c667a); font-size: 0.78rem; font-weight: 700; }
+.delpi-mes-branch select {
+  min-width: 8.5rem;
+  min-height: 2.65rem;
+  padding: 0 0.75rem;
+  border: 1px solid var(--border-subtle, #d9dee8);
+  border-radius: 0.7rem;
+  color: inherit;
+  background: var(--surface-raised, #fff);
+}
+
+.delpi-mes-nav {
+  display: flex;
+  gap: 0.45rem;
+  max-width: 78rem;
+  margin: 0 auto 1rem;
+  padding: 0.35rem;
+  overflow-x: auto;
+  border: 1px solid var(--border-subtle, #d9dee8);
+  border-radius: 0.9rem;
+  background: var(--surface-raised, #fff);
+}
+.delpi-mes-nav__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.5rem;
+  padding: 0 0.85rem;
+  border-radius: 0.65rem;
+  color: var(--text-secondary, #5c667a);
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.delpi-mes-nav__link svg { width: 1rem; height: 1rem; }
+.delpi-mes-nav__link:hover { background: color-mix(in srgb, #0f766e 8%, transparent); }
+.delpi-mes-nav__link:focus-visible, .delpi-mes-branch select:focus-visible { outline: 3px solid rgb(14 165 233 / 35%); outline-offset: 2px; }
+.delpi-mes-nav__link--active { color: #0f766e; background: color-mix(in srgb, #0f766e 12%, transparent); }
+
+.delpi-mes-page, .delpi-mes-forbidden {
+  max-width: 78rem;
+  margin: 0 auto;
+  padding: clamp(1.2rem, 3vw, 2.2rem);
+  border: 1px solid var(--border-subtle, #d9dee8);
+  border-radius: 1rem;
+  background: var(--surface-raised, #fff);
+  box-shadow: 0 18px 45px rgb(15 23 42 / 6%);
+}
+.delpi-mes-page__heading { max-width: 50rem; margin-bottom: 1.5rem; }
+.delpi-mes-page__heading h2, .delpi-mes-forbidden h2 { margin: 0; font-size: clamp(1.35rem, 2vw, 1.75rem); }
+.delpi-mes-page__heading > p:last-child, .delpi-mes-forbidden p { color: var(--text-secondary, #5c667a); line-height: 1.65; }
+.delpi-mes-state { border-radius: 0.8rem; background: color-mix(in srgb, #0f766e 6%, transparent); }
+.delpi-mes-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
+@media (max-width: 680px) {
+  .delpi-mes-header { align-items: flex-start; flex-direction: column; }
+  .delpi-mes-branch, .delpi-mes-branch select { width: 100%; }
+  .delpi-mes-nav__link { flex: 1 0 auto; justify-content: center; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .delpi-mes-nav__link { transition: color 150ms ease, background-color 150ms ease; }
+}

@@ -131,6 +131,7 @@ FASE_MFE=(
   strategic-indicators
   customer-experience
   production-control
+  delpi-mes
   financial
   travel-expenses
   production-pulse
@@ -168,6 +169,7 @@ FASE_API=(
   comite-etica-conduta-api
   customer-experience-api
   production-control-api
+  delpi-mes-api
   financial-api
   travel-expenses-api
   production-pulse-api

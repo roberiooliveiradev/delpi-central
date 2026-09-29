@@ -897,6 +897,20 @@ services:
     networks:
       - delpi-network
 
+  delpi-mes:
+    depends_on:
+      - plugin-ui
+    build:
+      context: ../plugins
+      dockerfile: delpi-mes/Dockerfile
+      target: production
+    container_name: delpi-delpi-mes
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ}
+    networks:
+      - delpi-network
+
   public-hub:
     depends_on:
       - plugin-ui
@@ -2661,6 +2675,51 @@ services:
         max-size: "10m"
         max-file: "3"
 
+    networks:
+      - delpi-network
+
+  delpi-mes-api:
+    build:
+      context: ..
+      dockerfile: delpi-mes-api/Dockerfile.prod
+    container_name: delpi-delpi-mes-api
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      PORT: "8000"
+      DELPI_MES_API_ROOT_PATH: /apps/delpi-mes-api
+      PRODUCTION_CONTROL_API_URL: http://production-control-api:8000
+      PRODUCTION_CONTROL_API_TIMEOUT: ${PRODUCTION_CONTROL_API_TIMEOUT:-5}
+      API_DELPI_INTERNAL_SERVICE_TOKEN: ${API_DELPI_INTERNAL_SERVICE_TOKEN:-}
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL}
+      DELPI_AUTH_CORE_API_URL: http://core-api:8000
+      JWT_SECRET: ${API_DELPI_JWT_SECRET}
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM}
+      KEYCLOAK_AUDIENCE: ${KEYCLOAK_AUDIENCE}
+      KEYCLOAK_JWKS_URL: ${KEYCLOAK_JWKS_URL}
+      KEYCLOAK_ISSUER: ${KEYCLOAK_ISSUER}
+      JWT_ALGORITHMS: ${JWT_ALGORITHMS}
+      LOG_LEVEL: ${LOG_LEVEL}
+      TZ: ${TZ}
+    depends_on:
+      keycloak:
+        condition: service_started
+      core-api:
+        condition: service_started
+      production-control-api:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 20s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     networks:
       - delpi-network
 

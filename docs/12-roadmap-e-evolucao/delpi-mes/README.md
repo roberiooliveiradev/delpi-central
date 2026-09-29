@@ -18,10 +18,14 @@ production-control-api
     → owner atual dos fatos MES
 /integrations/mes/*
     → contrato interno S2S somente leitura
-delpi-mes-api
-    → futuro BFF gerencial/read model
 plugins/delpi-mes
     → futura interface gerencial
+    ↓ JWT
+delpi-mes-api
+    → BFF gerencial stateless/read-only
+    ↓ S2S
+production-control-api
+    → owner e persistência dos fatos MES
 ```
 
 O ownership dos fatos MES permanece no `production-control-api` nesta etapa. Uma futura refatoração poderá extrair esse domínio, mas ela não faz parte do MVP inicial do Delpi MES. O Production Control não se torna um guarda-chuva gerencial: PCP, Delpi MES e OEE permanecem capacidades com fronteiras próprias.
@@ -51,9 +55,9 @@ Assim, uma parada iniciada antes da janela e encerrada dentro dela é retornada.
 
 ## Fases
 
-1. **Fase 0 — Contrato e Fundação:** contrato S2S somente leitura dentro do owner atual.
-2. **Fase 1 — `delpi-mes-api`:** BFF gerencial consumidor de `/integrations/mes/*`.
-3. **Fase 2 — plugin `delpi-mes` + Manifesto/RBAC:** superfície gerencial governada pela plataforma.
+1. **Fase 0 — Contrato e Fundação (concluída):** contrato S2S somente leitura dentro do owner atual.
+2. **Fase 1 — `delpi-mes-api` (implementada):** BFF gerencial autenticado, stateless e consumidor de `/integrations/mes/*`.
+3. **Fase 2 — plugin `delpi-mes` + Manifesto/RBAC (implementada):** shell federada, rotas, filial, permissões declaradas e manifesto pronto para importação manual; sem registro automático.
 4. **Fase 3 — Monitoramento Industrial:** visão consolidada dos centros de trabalho.
 5. **Fase 4 — Histórico e Paradas:** exploração gerencial dos runs e downtimes.
 6. **Fase 5 — Hardening do MVP:** capacidade, operação, observabilidade e homologação.

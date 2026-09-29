@@ -59,6 +59,7 @@ Especificação: [../05-plugin-system/plugin-vs-module.md](../05-plugin-system/p
 | `plugins/financial` | `financial` | microfrontend | **módulo** | `/apps/financial` | `delpi-financial` |
 | `plugins/travel-expenses` | `travel-expenses` | microfrontend | plugin | `/apps/travel-expenses` | `delpi-travel-expenses` |
 | `plugins/production-pulse` | `production-pulse` | microfrontend | plugin | `/apps/production-pulse` | `delpi-production-pulse` |
+| `plugins/delpi-mes` | `delpi-mes` | microfrontend | plugin | `/apps/delpi-mes` | `delpi-delpi-mes` |
 | `plugins/dashboard-commercial` | `dashboard-commercial` | microfrontend | plugin | `/apps/dashboard-commercial` | `delpi-dashboard-commercial` |
 | `plugins/dashboard-production` | `dashboard-production` | microfrontend | plugin | `/apps/dashboard-production` | `delpi-dashboard-production` |
 | `plugins/dashboard-financial` | `dashboard-financial` | microfrontend | plugin | `/apps/dashboard-financial` | `delpi-dashboard-financial` |
@@ -150,6 +151,7 @@ Especificação: [../05-plugin-system/plugin-vs-module.md](../05-plugin-system/p
 | Portal Financeiro | `/apps/financial-api/*` (subplugins + overview + faturamento + inadimplência + centros de custo + IDD/IGD; TOTVS via api-delpi, SI direto) |
 | Despesas de Viagem | `/apps/travel-expenses-api/*` (prestações, cupons, PDF; Postgres plugins) |
 | Pulso de Produção | `/apps/production-pulse-api/*` (devices, bindings, readings, poll, operador; Postgres plugins; CT via api-delpi gateway) |
+| Delpi MES | `/apps/delpi-mes-api/*` (BFF gerencial read-only; fatos MES permanecem no Production Control) |
 | Painéis TV | `/apps/tv-dashboard-api/*` (programações + payload público); agregadores nativos via api-delpi |
 | Transformômetro | `/apps/transformometro-api/transformometro/*` (Postgres; atas + Kimi) — [README](../../plugins/transformometro/README.md) · [atas](../../plugins/transformometro/docs/meeting-minutes.md) · [Kimi](../../transformometro-api/docs/meeting-minutes/kimi.md) |
 | Comitê de Ética e Conduta | `/apps/comite-etica-conduta-api/*` (Postgres; atas + membros) — [README](../../plugins/comite-etica-conduta/README.md) · [API](../../comite-etica-conduta-api/README.md) · [roadmap](../12-roadmap-e-evolucao/comite-etica-conduta/) |
@@ -214,6 +216,7 @@ Implementado em `plugins/*/src/api/httpClient.ts`.
 | commercial | `commercial` |
 | financial | `financial` (BFF; não chama api-delpi no browser) |
 | travel-expenses | `travel-expenses` (API própria; não chama api-delpi no browser) |
+| delpi-mes | `delpi-mes` (BFF próprio; não chama Production Control no browser) |
 
 O middleware da api-delpi repassa o valor à Core API para rastreamento agregado (consentimento `usage_tracking`). Ver [rastreamento-uso-apps.md](../04-core-api/rastreamento-uso-apps.md).
 
