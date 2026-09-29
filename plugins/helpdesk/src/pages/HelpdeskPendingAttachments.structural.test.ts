@@ -47,4 +47,27 @@ describe("Helpdesk pending attachments structural", () => {
     const branchBody = segment.slice(nonImageBranch, segment.indexOf("continue;", nonImageBranch));
     expect(branchBody).not.toContain("uploadTicketAttachment(");
   });
+
+  it("fill layout cannot overflow the card — card shrinks and body scrolls", () => {
+    const css = read("../index.css");
+    // trailing utility siblings (FilePreviewModal hidden anchor) take :last-child,
+    // so the fill card needs an explicit shrink override
+    expect(css).toContain("helpdesk-page-stack > .delpi-ui-section-card--fill");
+    expect(css).toMatch(/section-card--fill\s*{[^}]*flex-shrink:\s*1/);
+    // drop wrapper must be a flex column so the editor yields space to the strip
+    expect(css).toMatch(/rich-text-field--fill\s*>\s*\.helpdesk-conversation-drop[^{]*{[^}]*flex-direction:\s*column/);
+    const uiCss = read("../../../plugin-ui/src/styles/section-card.css");
+    // height:100% on a flex child double-counts siblings — flex must govern
+    const fillRule = uiCss.match(/\.delpi-ui-section-card--fill\s*{([^}]*)}/);
+    expect(fillRule).not.toBeNull();
+    expect(fillRule![1]).not.toContain("height: 100%");
+    expect(fillRule![1]).not.toContain("height:100%");
+    // body must scroll, not clip, when content exceeds the card
+    expect(uiCss).toMatch(/section-card__body\s*{[^}]*overflow-y:\s*auto/);
+    const richCss = read("../../../plugin-ui/src/styles/rich-text-editor.css");
+    const richFill = richCss.match(/\.delpi-ui-rich-text--fill\s*{([^}]*)}/);
+    expect(richFill).not.toBeNull();
+    expect(richFill![1]).not.toContain("height: 100%");
+    expect(richFill![1]).not.toContain("height:100%");
+  });
 });
