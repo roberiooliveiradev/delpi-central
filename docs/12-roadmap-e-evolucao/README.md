@@ -53,6 +53,12 @@ Estado atual, decisões consolidadas, pendências e plano de evolução.
 |---|---|
 | [davi/README.md](./davi/README.md) | Product/architecture baseline, capability/source model, CURRENT PROVEN vs TARGET e authority boundaries |
 
+### BPMN Modeler (Meu Modelador de Processos)
+
+| Arquivo | Conteúdo |
+|---|---|
+| [bpmn-modeler/V1-SCOPE-FREEZE.md](./bpmn-modeler/V1-SCOPE-FREEZE.md) | Specification freeze da V1 — escopo, capability matrix, editing profile, DoD (não autoriza implementação por si só) |
+
 ### Meus Chamados de TI
 
 | Arquivo | Conteúdo |
