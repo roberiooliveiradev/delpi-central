@@ -13,11 +13,13 @@ This package currently contains ONLY the conformance layer:
   document builder and route factory, ``mcp/www_authenticate`` envelope.
 - ``transport`` (S2): canonical ``/mcp`` path rewrite middleware, lifespan
   composition, and the DNS-rebinding-enabled transport-security shape.
+- ``auth`` (S3): MCP transport AuthN gate — Bearer/audience/scope checks
+  composing ``delpi_auth`` (never reimplementing it), plus the shared
+  ``/mcp`` data-path predicate.
 
 It deliberately does NOT contain (per the design freeze):
 
 - server factories or server-class abstractions;
-- auth middleware (S3);
 - identity bridge or error adapter helpers (S4–S5);
 - any domain knowledge, tool registry, or business semantics.
 
@@ -25,6 +27,11 @@ Dependency direction: ``delpi_mcp`` may depend on ``delpi_auth``; never on
 ``tv_app`` / ``tm_app`` / ``app.*`` domain namespaces.
 """
 
+from .auth import (
+    McpTransportAuthPolicy,
+    is_mcp_data_path,
+    mcp_transport_auth,
+)
 from .resource_contract import (
     MCP_TRANSPORT_SCOPES,
     MCP_WWW_AUTHENTICATE_META_KEY,
@@ -73,6 +80,7 @@ __all__ = [
     "MCP_WWW_AUTHENTICATE_META_KEY",
     "McpConformanceConfig",
     "McpResourceConfig",
+    "McpTransportAuthPolicy",
     "ValidationIssue",
     "ValidationLayer",
     "build_protected_resource_metadata",
@@ -82,9 +90,11 @@ __all__ = [
     "combine_lifespans",
     "extract_token_audiences",
     "extract_token_scopes",
+    "is_mcp_data_path",
     "mcp_allowed_hosts_and_origins",
     "mcp_metadata_router",
     "mcp_mount_path_middleware",
+    "mcp_transport_auth",
     "mcp_transport_security_settings",
     "missing_required_scopes",
     "normalize_mcp_mount_path",

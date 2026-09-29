@@ -373,61 +373,127 @@ export function ProcessWorkspaceChrome({
       <TmStatusBadge label="inativa" variant="neutral" />
     ) : undefined;
 
-  const nestedActions =
-    view === "revisao" && revisionActions ? (
-      <div className="tm-processo-workspace-chrome__actions">
-        {revisionActions.canActivate ? (
-          <button
-            type="button"
-            className="ds-primary-btn"
-            disabled={revisionActions.busy}
-            onClick={revisionActions.onActivate}
-          >
-            <CheckCircle2 size={16} aria-hidden />
-            Definir como ativa
-          </button>
-        ) : null}
-        <div ref={revisionMoreAnchorRef} className="tm-processo-workspace-chrome__more">
-          <button
-            type="button"
-            className={DS_GHOST_BTN}
-            aria-label="Mais ações da revisão"
-            aria-expanded={revisionMoreOpen}
-            aria-haspopup="menu"
-            disabled={revisionActions.busy}
-            onClick={() => setRevisionMoreOpen((open) => !open)}
-          >
-            <MoreHorizontal size={16} aria-hidden />
-            Mais
-          </button>
-          <AnchoredPanelPortal
-            open={revisionMoreOpen}
-            anchorRef={revisionMoreAnchorRef}
-            panelRef={revisionMorePanelRef}
-            className="delpi-ui-context-menu"
-            variant="bare"
-            role="menu"
-            aria-label="Ações da revisão"
-            preferredPlacement="bottom"
-            horizontalAlign="end"
-            gap={10}
-            portalScopeClassName="dashboard-transformometro"
-            onDismiss={() => setRevisionMoreOpen(false)}
-          >
-            <ContextMenuItem
-              label="Excluir revisão"
-              icon={Trash2}
-              destructive
+  // Ações do processo-pai permanecem acessíveis nas views de melhoria/revisão
+  // via menu contextual — sem ocupar um segundo hero.
+  const processMenu = (
+    <div ref={moreAnchorRef} className="tm-processo-workspace-chrome__more">
+      <button
+        type="button"
+        className={DS_GHOST_BTN}
+        aria-label="Ações do processo"
+        aria-expanded={moreOpen}
+        aria-haspopup="menu"
+        disabled={!processo}
+        onClick={() => setMoreOpen((open) => !open)}
+      >
+        <MoreHorizontal size={16} aria-hidden />
+        Processo
+      </button>
+      <AnchoredPanelPortal
+        open={moreOpen}
+        anchorRef={moreAnchorRef}
+        panelRef={morePanelRef}
+        className="delpi-ui-context-menu"
+        variant="bare"
+        role="menu"
+        aria-label="Ações do processo"
+        preferredPlacement="bottom"
+        horizontalAlign="end"
+        gap={10}
+        portalScopeClassName="dashboard-transformometro"
+        onDismiss={() => setMoreOpen(false)}
+      >
+        <ContextMenuItem
+          label={openingRoom ? "Abrindo sala…" : "Sala de interação"}
+          icon={MessagesSquare}
+          disabled={!processo || openingRoom}
+          onSelect={() => {
+            setMoreOpen(false);
+            onOpenRoom();
+          }}
+        />
+        <ContextMenuItem
+          label="Duplicar processo"
+          icon={Copy}
+          onSelect={() => {
+            setMoreOpen(false);
+            onDuplicate();
+          }}
+        />
+        <ContextMenuItem
+          label="Excluir processo"
+          icon={Trash2}
+          destructive
+          onSelect={() => {
+            setMoreOpen(false);
+            onDelete();
+          }}
+        />
+      </AnchoredPanelPortal>
+    </div>
+  );
+
+  const nestedActions = (
+    <div className="tm-processo-workspace-chrome__actions">
+      {view === "revisao" && revisionActions ? (
+        <>
+          {revisionActions.canActivate ? (
+            <button
+              type="button"
+              className="ds-primary-btn"
               disabled={revisionActions.busy}
-              onSelect={() => {
-                setRevisionMoreOpen(false);
-                revisionActions.onDelete();
-              }}
-            />
-          </AnchoredPanelPortal>
-        </div>
-      </div>
-    ) : undefined;
+              onClick={revisionActions.onActivate}
+            >
+              <CheckCircle2 size={16} aria-hidden />
+              Definir como ativa
+            </button>
+          ) : null}
+          <div ref={revisionMoreAnchorRef} className="tm-processo-workspace-chrome__more">
+            <button
+              type="button"
+              className={DS_GHOST_BTN}
+              aria-label="Mais ações da revisão"
+              aria-expanded={revisionMoreOpen}
+              aria-haspopup="menu"
+              disabled={revisionActions.busy}
+              onClick={() => setRevisionMoreOpen((open) => !open)}
+            >
+              <MoreHorizontal size={16} aria-hidden />
+              Mais
+            </button>
+            <AnchoredPanelPortal
+              open={revisionMoreOpen}
+              anchorRef={revisionMoreAnchorRef}
+              panelRef={revisionMorePanelRef}
+              className="delpi-ui-context-menu"
+              variant="bare"
+              role="menu"
+              aria-label="Ações da revisão"
+              preferredPlacement="bottom"
+              horizontalAlign="end"
+              gap={10}
+              portalScopeClassName="dashboard-transformometro"
+              onDismiss={() => setRevisionMoreOpen(false)}
+            >
+              <ContextMenuItem
+                label="Excluir revisão"
+                icon={Trash2}
+                destructive
+                disabled={revisionActions.busy}
+                onSelect={() => {
+                  setRevisionMoreOpen(false);
+                  revisionActions.onDelete();
+                }}
+              />
+            </AnchoredPanelPortal>
+          </div>
+        </>
+      ) : null}
+      {processMenu}
+    </div>
+  );
+
+  const showNestedHero = view !== "processo" && nestedLabel != null;
 
   return (
     <div className="tm-processo-workspace-chrome">
@@ -450,38 +516,40 @@ export function ProcessWorkspaceChrome({
         current={nestedLabel ?? processLabel}
       />
 
-      {/* Primeira topbar: identidade do processo em todos os escopos. */}
-      <TmPageHero
-        density="compact"
-        aria-label="Processo"
-        eyebrow="Processo"
-        title={processLabel}
-        description={
-          processo
-            ? [
-                processo.codigo_processo,
-                processo.familia_processo ? `família ${processo.familia_processo}` : null,
-              ]
-                .filter(Boolean)
-                .join(" · ")
-            : undefined
-        }
-        badge={
-          processo?.status_processo ? (
-            <TmStatusBadge label={processo.status_processo} variant="neutral" />
-          ) : undefined
-        }
-        highlights={
-          processo ? processHighlights(processo, instancias, revisoes) : undefined
-        }
-        actions={processActions}
-      >
-        {view === "processo" && heroExtras ? (
-          <div className="tm-processo-hero-presence">{heroExtras}</div>
-        ) : null}
-      </TmPageHero>
+      {/* Um hero por página: Processo ou a entidade aninhada (melhoria/revisão). */}
+      {!showNestedHero ? (
+        <TmPageHero
+          density="compact"
+          aria-label="Processo"
+          eyebrow="Processo"
+          title={processLabel}
+          description={
+            processo
+              ? [
+                  processo.codigo_processo,
+                  processo.familia_processo ? `família ${processo.familia_processo}` : null,
+                ]
+                  .filter(Boolean)
+                  .join(" · ")
+              : undefined
+          }
+          badge={
+            processo?.status_processo ? (
+              <TmStatusBadge label={processo.status_processo} variant="neutral" />
+            ) : undefined
+          }
+          highlights={
+            processo ? processHighlights(processo, instancias, revisoes) : undefined
+          }
+          actions={processActions}
+        >
+          {view === "processo" && heroExtras ? (
+            <div className="tm-processo-hero-presence">{heroExtras}</div>
+          ) : null}
+        </TmPageHero>
+      ) : null}
 
-      {view !== "processo" && nestedLabel ? (
+      {showNestedHero ? (
         <TmPageHero
           density="compact"
           className="tm-processo-workspace-chrome__nested-hero"

@@ -40,13 +40,36 @@ describe("Process experience parity wiring", () => {
 });
 
 describe("Hero consolidation density", () => {
-  it("chrome mantém hero do processo em todos os escopos e nav de seção legível", () => {
+  it("chrome renderiza no máximo 1 hero por view (processo | melhoria | revisão)", () => {
+    const chrome = readFileSync(join(root, "ui/processes/ProcessWorkspaceChrome.tsx"), "utf8");
+    // Dois branches mutuamente exclusivos: hero Processo OU hero aninhado.
+    expect(chrome).toMatch(
+      /const showNestedHero = view !== "processo" && nestedLabel != null/,
+    );
+    expect(chrome).toMatch(/\{!showNestedHero \? \(/);
+    expect(chrome).toMatch(/\{showNestedHero \? \(/);
+    expect(chrome.match(/<TmPageHero/g)).toHaveLength(2);
+    // Contexto do processo-pai migra para descrição/breadcrumb do hero aninhado.
+    expect(chrome).toMatch(/processo\.codigo_processo\} · \$\{processo\.nome_processo/);
+    expect(chrome).toMatch(/aria-label=\{view === "instancia" \? "Melhoria" : "Revisão"\}/);
+  });
+
+  it("ações do processo-pai permanecem acessíveis via menu contextual nas views aninhadas", () => {
+    const chrome = readFileSync(join(root, "ui/processes/ProcessWorkspaceChrome.tsx"), "utf8");
+    expect(chrome).toMatch(/const processMenu = \(/);
+    expect(chrome).toMatch(/Sala de interação/);
+    expect(chrome).toMatch(/Duplicar processo/);
+    expect(chrome).toMatch(/Excluir processo/);
+    expect(chrome).toMatch(/aria-label="Ações do processo"/);
+    expect(chrome).toMatch(/revisionActions/);
+    expect(chrome).toMatch(/Excluir revisão/);
+  });
+
+  it("chrome mantém hero extras, highlights factuais e nav de seção legível", () => {
     const chrome = readFileSync(join(root, "ui/processes/ProcessWorkspaceChrome.tsx"), "utf8");
     expect(chrome).toMatch(/heroExtras/);
     expect(chrome).toMatch(/instanceHighlights/);
     expect(chrome).toMatch(/revisionHighlights/);
-    expect(chrome).toMatch(/revisionActions/);
-    expect(chrome).toMatch(/Excluir revisão/);
     expect(chrome).toMatch(/aria-label="Processo"/);
     expect(chrome).toMatch(/tm-processo-workspace-chrome__nested-hero/);
     expect(chrome).toMatch(/tm-processo-workspace-chrome__section-nav/);
