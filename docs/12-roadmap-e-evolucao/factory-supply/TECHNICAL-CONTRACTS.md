@@ -708,8 +708,8 @@ Capacidades de serviço **nunca** expandem autoridade além do read-only ERP: n�
 
 1. Algoritmo exato de derivação de `overall_stage` (owner=backend congelado; regra detalhada na implementação a partir das dimensões Doc 2/5).
 2. ~~Semântica de reconciliação pedido↔sinal existente (§29)~~ — RESOLVIDO FS-C0.P1: `intent` explícita `anticipate|additional`, `operator_requests` + boundary service-caller (§28).
-3. Regra de quantidade de retorno — `RETURN_POLICY = HYBRID` (PM); inventário de evidência congelado §53 (FS-C0.P2-A); fórmula `PARTIAL` — decisão P2-B pendente (não bloqueia C1–C8; `record_item_return` manual/`null` até lá).
-4. Prioridade/score (`priority_score = NOT_SUPPORTED` até política existir — expostos `due_at|overdue|time_to_need` factuais).
+3. ~~Regra de quantidade de retorno~~ — RESOLVIDO FS-C0.P2-B: `RETURN_FORMULA_STATUS=READY`, modelo 3-camadas §53.7; evolução `internal-movements` (`D3_NUMSEQ`) aditiva na implementação.
+4. ~~Prioridade/score~~ — RESOLVIDO FS-C0.P3: `TIME_TO_NEED_FIRST` (§49); `priority_score = NOT_SUPPORTED` permanece; limiares de banda `TO_DESIGN/TO_BENCHMARK` (não bloqueia).
 5. ~~Escopo de escrita por filial~~ — RESOLVIDO FS-C0.T3: `.view.filial-*` é escopo de filial e gateia writes (precedente `PROVEN`: `assert_can_view_branch` em mutações do Line Feeder); composição congelada `access` + `view.filial-{branch}` (§40-A).
 6. Cache operacional (TTL/fail-open) — `TO_DESIGN`; v1 sem cache semântico.
 7. ~~Header exato de correlação propagado ao api-delpi~~ — RESOLVIDO FS-C0.T11: `X-Request-ID` propagado pelos adapters (padrão `X-Delpi-*` headers); api-delpi ignora hoje, propagação aditiva (§32).
@@ -735,7 +735,7 @@ Capacidades de serviço **nunca** expandem autoridade além do read-only ERP: n�
 | ~~Retenção~~ — RESOLVIDO FS-C0.T12: matriz §52; resta apenas registrar categoria FS na ROPA na implementação (ação docs) e estimar volume `supply_events` em homologação | §52 |
 | Empenho como campo vs rota dedicada (hoje via operation materials — confirmar) | §41 |
 | ~~Decisão de produto: reconciliação pedido×sinal (§29)~~ — RESOLVIDO FS-C0.P1 | — |
-| Decisão de produto: fórmula de retorno — **P2-B** (evidência §53; gaps §53.4) | `ReconcileReturn` automático / C9 |
+| ~~Decisão de produto: fórmula de retorno~~ — RESOLVIDO FS-C0.P2-B (§53.7); resta evolução aditiva `internal-movements` (`D3_NUMSEQ`/direção tipada) na implementação | — |
 
 ## 45. Inputs for Documentation 5/5
 
@@ -783,13 +783,15 @@ Rotas novas na api-delpi só quando o fato ERP não tem contrato tipado (§27). 
 
 ## 49. Priority contract
 
-**DECISÃO:** `priority_score = NOT_SUPPORTED` — não existe política de negócio autorizada (`TO_DESIGN` desde Doc 2/5); nenhum score será inventado.
+**DECISÃO `FROZEN` (FS-C0.P3):** `PRIORITY_POLICY = TIME_TO_NEED_FIRST`; `priority_score = NOT_SUPPORTED` permanece — sem score opaco, sem AI/ML.
 
-Até política existir, o backend expõe apenas fatos determinísticos:
+Backend computa por fila (worklist): `ELIGIBILITY(stage-aware) → OVERDUE(need_at<now ∧ ação pendente, derivado — nunca flag) → need_at ASC → tie-breakers` (creation seq → stable item id; sem significado de negócio).
 
-- `due_at` (= `need_window.end`), `overdue: bool` (comparação server-side, instant), `time_to_need` (segundos — campo derivado opcional);
-- ordenação default das listas de trabalho: `need_window.start` ASC (FIFO por início da necessidade — mesmo princípio `PROVEN` do Line Feeder: alocação FIFO por `scheduled start`), com `urgency.classification` apenas se classificação explícita vier do dado (ex.: OP marcada urgente — `TO_INVENTORY` se api-delpi expõe tal flag);
-- frontend **não** inventa prioridade relativa nem cor de urgência fora desses fatos.
+- Filas por estágio: **warehouse** (preparável) × **feeder** (coletável) — não-acionável aparece como `waiting`/`blocked`, nunca como próxima ação executável;
+- campos do DTO de worklist/Kanban: `need_at`, `stage`, `eligibility` (`actionable|waiting|blocked`), `overdue`, `priority_reason` (explicável, string de domínio), `blocked_reason?`, `urgency_band?` (`ATRASADO|URGENTE|ALTA|NORMAL|FUTURA` — limiares `TO_DESIGN/TO_BENCHMARK`, backend-owned; ausentes até definidos);
+- operator request: sem boost — ANTICIPATE reconciliado reordena pelo `need_at` resultante; ADDITIONAL compete pela mesma política;
+- shortage/exceção ERP: `blocked`/warning, não prioridade — `ACTIONABILITY != IMPORTANCE`;
+- urgência nunca altera `stage`/lifecycle; reordenação por realtime via outbox aceito.
 
 ## 50. Pagination/filtering conventions
 
