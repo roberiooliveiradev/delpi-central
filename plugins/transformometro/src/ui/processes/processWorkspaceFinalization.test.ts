@@ -57,12 +57,12 @@ describe("Process Workspace finalization — Results composition", () => {
 });
 
 describe("Process Workspace finalization — Documentation CTA", () => {
-  it("mantém uma única CTA primária Novo documento no header", () => {
+  it("mantém CTA primária Novo documento no header e no empty state", () => {
     const primaryCtas = docs.match(/Novo documento/g) ?? [];
-    expect(primaryCtas).toHaveLength(1);
+    expect(primaryCtas).toHaveLength(2);
     expect(docs).toMatch(/ds-btn--primary[\s\S]{0,80}Novo documento/);
     const emptyBlock = docs.slice(docs.indexOf("<EmptyState"));
-    expect(emptyBlock).not.toMatch(/Novo documento/);
+    expect(emptyBlock).toMatch(/Novo documento/);
   });
 
   it("usa heading Documentos sob a primary Documentação", () => {

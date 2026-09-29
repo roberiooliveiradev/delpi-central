@@ -48,7 +48,7 @@ Isso é inadequado: ata é registro de **reunião**, que pode tratar vários ass
 ### Fact classification — V2 (2026-09-29)
 
 - **PROVEN:** `ProcessDocument.content_md` como fonte textual canônica; renderer GFM; Mermaid documental/ilustrativo; sanitização; title dedupe; outline; library/reader/editor UX; emissão realtime em writes HTTP; GPT/MCP audit → realtime notify; fan-out `processo:{id}`; anti-echo por clientId; preservação de stale-draft; deploy MFE + API (bundle e código verificados nos containers).
-- **TEST_NOT_RUN:** realtime two-session authenticated browser smoke (create/update/delete entre abas e banner de stale-draft observados em runtime autenticado).
+- **TEST_NOT_RUN:** realtime two-session authenticated browser smoke (create/update/delete entre abas e comportamento de stale-draft).
 - **ABSENT / ACCEPTED RESIDUAL:** lost-update protection / ETag / `expected_version` (follow-up proposto, não mascarado por UX).
 - **OUT_OF_SCOPE:** versionamento, tags, attachments, approval, autosave, presence/lock de documento, edição simultânea, sync Mermaid↔`flowchart_v1`.
 

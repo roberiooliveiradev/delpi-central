@@ -71,21 +71,25 @@ type RemoteNotice = { type: "updated" | "deleted" } | null;
 
 const EMPTY = emptyStateCardBemClasses("ds");
 
-const TOOLBAR: Array<{
-  action: MarkdownToolbarAction;
-  label: string;
-  icon: typeof Bold;
-}> = [
-  { action: "heading", label: "Título de seção", icon: Heading2 },
-  { action: "bold", label: "Negrito", icon: Bold },
-  { action: "italic", label: "Itálico", icon: Italic },
-  { action: "link", label: "Link", icon: Link2 },
-  { action: "list", label: "Lista", icon: List },
-  { action: "checklist", label: "Checklist", icon: ListChecks },
-  { action: "quote", label: "Citação", icon: Quote },
-  { action: "table", label: "Tabela", icon: Table },
-  { action: "code", label: "Bloco de código", icon: Code },
-  { action: "mermaid", label: "Diagrama Mermaid", icon: GitBranch },
+const TOOLBAR_GROUPS: Array<
+  Array<{ action: MarkdownToolbarAction; label: string; icon: typeof Bold }>
+> = [
+  [
+    { action: "heading", label: "Título de seção", icon: Heading2 },
+    { action: "bold", label: "Negrito", icon: Bold },
+    { action: "italic", label: "Itálico", icon: Italic },
+  ],
+  [
+    { action: "link", label: "Link", icon: Link2 },
+    { action: "list", label: "Lista", icon: List },
+    { action: "checklist", label: "Checklist", icon: ListChecks },
+    { action: "quote", label: "Citação", icon: Quote },
+  ],
+  [
+    { action: "table", label: "Tabela", icon: Table },
+    { action: "code", label: "Bloco de código", icon: Code },
+    { action: "mermaid", label: "Diagrama Mermaid", icon: GitBranch },
+  ],
 ];
 
 const EDITOR_PANES: Array<{ id: EditorPane; label: string }> = [
@@ -105,6 +109,8 @@ export function ProcessDocumentationSection({
   const moreAnchorRef = useRef<HTMLDivElement | null>(null);
   const morePanelRef = useRef<HTMLDivElement | null>(null);
   const readerRef = useRef<HTMLDivElement | null>(null);
+  const sectionRef = useRef<HTMLElement | null>(null);
+  const stickyOffsetRef = useRef(56);
 
   const [items, setItems] = useState<ProcessDocumentSummary[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(() =>
@@ -130,6 +136,7 @@ export function ProcessDocumentationSection({
   const [search, setSearch] = useState("");
   const [remoteNotice, setRemoteNotice] = useState<RemoteNotice>(null);
   const [moreOpen, setMoreOpen] = useState(false);
+  const [activeHeadingId, setActiveHeadingId] = useState<string | null>(null);
 
   const editing = mode === "create" || mode === "edit";
   const editingDocumentId = mode === "edit" ? baseline?.documentId ?? null : null;
@@ -185,6 +192,30 @@ export function ProcessDocumentationSection({
     [getAccessToken, processoId],
   );
 
+  const filteredItems = useMemo(() => {
+    const needle = search.trim().toLowerCase();
+    if (!needle) return items;
+    return items.filter((item) => item.title.toLowerCase().includes(needle));
+  }, [items, search]);
+
+  const docModel = useMemo(
+    () =>
+      detail
+        ? buildMarkdownDocumentModel(detail.content_md, {
+            documentTitle: detail.title,
+          })
+        : null,
+    [detail],
+  );
+
+  const draftModel = useMemo(
+    () =>
+      buildMarkdownDocumentModel(draftMarkdown, { documentTitle: draftTitle }),
+    [draftMarkdown, draftTitle],
+  );
+
+  const outlineItems = useMemo(() => docModel?.outline ?? [], [docModel]);
+
   useEffect(() => {
     void loadList();
   }, [loadList]);
@@ -201,6 +232,64 @@ export function ProcessDocumentationSection({
     if (!selectedId || editing) return;
     void loadDetail(selectedId);
   }, [editing, loadDetail, selectedId]);
+
+  // Canonical sticky offset: measured height of the MFE sticky top bar
+  // (delpi-ui-topbar--sticky sits at top:0 of the portal `.content` scroller).
+  // One measured value feeds rail/outline sticky `top` and heading
+  // `scroll-margin-top` via --tm-documentation-sticky-offset.
+  useEffect(() => {
+    const section = sectionRef.current;
+    if (!section) return;
+    const scope = section.closest(".dashboard-transformometro") ?? document;
+    const topbar =
+      scope.querySelector<HTMLElement>(".delpi-ui-topbar--sticky") ??
+      scope.querySelector<HTMLElement>(".delpi-ui-topbar");
+    const apply = () => {
+      const height = Math.ceil(topbar?.getBoundingClientRect().height ?? 0) || 56;
+      stickyOffsetRef.current = height;
+      section.style.setProperty(
+        "--tm-documentation-sticky-offset",
+        `${height}px`,
+      );
+    };
+    apply();
+    if (!topbar || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(apply);
+    observer.observe(topbar);
+    return () => observer.disconnect();
+  }, []);
+
+  // Active heading highlight in the outline (enhancement only — derived from
+  // the DOM, never persisted). IntersectionObserver callbacks are async, so
+  // the setState below never runs synchronously inside the effect body.
+  useEffect(() => {
+    if (editing || outlineItems.length === 0) return;
+    const scroller =
+      sectionRef.current?.closest<HTMLElement>(".content") ?? null;
+    const headings = outlineItems
+      .map((item) =>
+        readerRef.current?.querySelector<HTMLElement>(
+          `#${CSS.escape(item.id)}`,
+        ),
+      )
+      .filter((el): el is HTMLElement => el != null);
+    if (headings.length === 0 || typeof IntersectionObserver === "undefined")
+      return;
+    const pickActive = () => {
+      const limit =
+        (scroller?.getBoundingClientRect().top ?? 0) +
+        stickyOffsetRef.current +
+        24;
+      let current: string | null = null;
+      for (const heading of headings) {
+        if (heading.getBoundingClientRect().top <= limit) current = heading.id;
+      }
+      setActiveHeadingId(current ?? headings[0]?.id ?? null);
+    };
+    const observer = new IntersectionObserver(pickActive, { root: scroller });
+    for (const heading of headings) observer.observe(heading);
+    return () => observer.disconnect();
+  }, [editing, outlineItems]);
 
   // Remote delete while viewing the deleted doc: deterministic fallback
   // (first remaining doc) or back to the section root when the list is empty.
@@ -440,51 +529,62 @@ export function ProcessDocumentationSection({
     });
   };
 
-  const filteredItems = useMemo(() => {
-    const needle = search.trim().toLowerCase();
-    if (!needle) return items;
-    return items.filter((item) => item.title.toLowerCase().includes(needle));
-  }, [items, search]);
-
-  const docModel = useMemo(
-    () =>
-      detail
-        ? buildMarkdownDocumentModel(detail.content_md, {
-            documentTitle: detail.title,
-          })
-        : null,
-    [detail],
-  );
-
-  const draftModel = useMemo(
-    () =>
-      buildMarkdownDocumentModel(draftMarkdown, { documentTitle: draftTitle }),
-    [draftMarkdown, draftTitle],
-  );
-
   const scrollToHeading = (id: string) => {
     const target = readerRef.current?.querySelector(`#${CSS.escape(id)}`);
     target?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
-  const outlineItems = docModel?.outline ?? [];
-
   const createdLabel = detail ? nameFor(detail.created_by_user_id) : null;
   const updatedLabel = detail ? nameFor(detail.updated_by_user_id) : null;
+
+  const libraryMode = !editing && selectedId == null;
 
   const renderPreview = () => (
     <div className="tm-process-documentation__preview" aria-label="Pré-visualização">
       {draftModel.segments.length > 0 ? (
-        <MarkdownDocumentView model={draftModel} />
+        <MarkdownDocumentView
+          model={draftModel}
+          onInternalAnchorNavigate={scrollToHeading}
+        />
       ) : (
         <p className="ds-hint">Nada para visualizar ainda.</p>
       )}
     </div>
   );
 
+  const searchField = (
+    <div className="tm-process-documentation__rail-search">
+      <Search size={14} aria-hidden="true" />
+      <input
+        type="search"
+        value={search}
+        onChange={(event) => setSearch(event.target.value)}
+        placeholder="Buscar por título"
+        aria-label="Buscar documento por título"
+      />
+    </div>
+  );
+
+  const searchEmptyNotice =
+    !listLoading && items.length > 0 && filteredItems.length === 0 ? (
+      <p className="ds-hint tm-process-documentation__rail-empty">
+        Nenhum documento corresponde a “{search.trim()}”.
+        <button
+          type="button"
+          className="tm-process-documentation__link-btn"
+          onClick={() => setSearch("")}
+        >
+          Limpar busca
+        </button>
+      </p>
+    ) : null;
+
   return (
     <section
-      className="ds-card tm-processo-workspace-panel tm-process-documentation"
+      ref={sectionRef}
+      className={`ds-card tm-processo-workspace-panel tm-process-documentation${
+        libraryMode ? " is-library" : ""
+      }`}
       aria-labelledby="tm-process-documentacao-title"
     >
       <div className="tm-process-documentation__header">
@@ -506,26 +606,13 @@ export function ProcessDocumentationSection({
 
       {listError ? <StateBox variant="error">{listError}</StateBox> : null}
 
-      <div className="tm-process-documentation__layout">
-        <aside
-          className="tm-process-documentation__rail"
-          aria-label="Documentos do processo"
-        >
-          <div className="tm-process-documentation__rail-head">
-            <span className="tm-process-documentation__rail-title">
-              Documentos
-              <span className="tm-process-documentation__rail-count">{items.length}</span>
+      {libraryMode ? (
+        <div className="tm-process-documentation__library">
+          <div className="tm-process-documentation__library-head">
+            {searchField}
+            <span className="tm-process-documentation__rail-count">
+              {items.length} {items.length === 1 ? "documento" : "documentos"}
             </span>
-            <div className="tm-process-documentation__rail-search">
-              <Search size={14} aria-hidden="true" />
-              <input
-                type="search"
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Buscar por título"
-                aria-label="Buscar documento por título"
-              />
-            </div>
           </div>
 
           {listLoading ? (
@@ -535,11 +622,73 @@ export function ProcessDocumentationSection({
             />
           ) : null}
 
-          {!listLoading && items.length > 0 && filteredItems.length === 0 ? (
-            <p className="ds-hint tm-process-documentation__rail-empty">
-              Nenhum documento corresponde à busca.
-            </p>
+          {searchEmptyNotice}
+
+          {!listLoading && items.length === 0 ? (
+            <div className="tm-process-documentation__library-empty">
+              <EmptyState
+                classNames={EMPTY}
+                title="Nenhum documento criado"
+                defaultMessage="Este processo ainda não possui documentação registrada."
+              />
+              <button
+                type="button"
+                className="ds-btn ds-btn--primary"
+                onClick={startCreate}
+              >
+                Novo documento
+              </button>
+            </div>
           ) : null}
+
+          <ul className="tm-process-documentation__library-items">
+            {filteredItems.map((item) => (
+              <li key={item.id}>
+                <button
+                  type="button"
+                  className="tm-process-documentation__library-row"
+                  onClick={() => openDocument(item.id)}
+                >
+                  <span className="tm-process-documentation__library-row-title">
+                    {item.title}
+                  </span>
+                  <span className="tm-process-documentation__library-row-meta">
+                    {item.updated_by_user_id
+                      ? `Atualizado por ${nameFor(item.updated_by_user_id)} · `
+                      : "Atualizado "}
+                    {formatDateTime(item.updated_at)}
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : (
+      <div
+        className={`tm-process-documentation__layout${
+          !editing && outlineItems.length > 0 ? " has-outline" : ""
+        }`}
+      >
+        <aside
+          className="tm-process-documentation__rail"
+          aria-label="Documentos do processo"
+        >
+          <div className="tm-process-documentation__rail-head">
+            <span className="tm-process-documentation__rail-title">
+              Documentos
+              <span className="tm-process-documentation__rail-count">{items.length}</span>
+            </span>
+            {searchField}
+          </div>
+
+          {listLoading ? (
+            <LoadingActivityCard
+              title="Carregando documentação"
+              description="Buscando documentos deste processo."
+            />
+          ) : null}
+
+          {searchEmptyNotice}
 
           <ul className="tm-process-documentation__items">
             {filteredItems.map((item) => {
@@ -591,17 +740,25 @@ export function ProcessDocumentationSection({
                 role="toolbar"
                 aria-label="Formatação Markdown"
               >
-                {TOOLBAR.map(({ action, label, icon: Icon }) => (
-                  <button
-                    key={action}
-                    type="button"
-                    className="tm-process-documentation__tool"
-                    title={label}
-                    aria-label={label}
-                    onClick={() => applyToolbar(action)}
+                {TOOLBAR_GROUPS.map((group, groupIndex) => (
+                  <div
+                    key={groupIndex}
+                    className="tm-process-documentation__tool-group"
+                    role="group"
                   >
-                    <Icon size={15} aria-hidden="true" />
-                  </button>
+                    {group.map(({ action, label, icon: Icon }) => (
+                      <button
+                        key={action}
+                        type="button"
+                        className="tm-process-documentation__tool"
+                        title={label}
+                        aria-label={label}
+                        onClick={() => applyToolbar(action)}
+                      >
+                        <Icon size={16} aria-hidden="true" />
+                      </button>
+                    ))}
+                  </div>
                 ))}
               </div>
 
@@ -726,18 +883,6 @@ export function ProcessDocumentationSection({
             <StateBox variant="error">{detailError}</StateBox>
           ) : null}
 
-          {!editing && !detailLoading && !detail && items.length > 0 ? (
-            <p className="ds-hint">Selecione um documento na lista.</p>
-          ) : null}
-
-          {!editing && !listLoading && items.length === 0 ? (
-            <EmptyState
-              classNames={EMPTY}
-              title="Sem documentação"
-              defaultMessage="Nenhum documento de processo registrado."
-            />
-          ) : null}
-
           {!editing && detail ? (
             <article className="tm-process-documentation__article">
               <header className="tm-process-documentation__article-header">
@@ -828,6 +973,7 @@ export function ProcessDocumentationSection({
                   <MarkdownDocumentView
                     model={docModel}
                     className="tm-process-documentation__markdown"
+                    onInternalAnchorNavigate={scrollToHeading}
                   />
                 ) : (
                   <p className="ds-hint">Documento sem conteúdo Markdown.</p>
@@ -851,7 +997,16 @@ export function ProcessDocumentationSection({
                   <li key={item.id} data-depth={item.depth}>
                     <button
                       type="button"
-                      onClick={() => scrollToHeading(item.id)}
+                      className={
+                        item.id === activeHeadingId ? "is-active" : undefined
+                      }
+                      aria-current={
+                        item.id === activeHeadingId ? "true" : undefined
+                      }
+                      onClick={() => {
+                        setActiveHeadingId(item.id);
+                        scrollToHeading(item.id);
+                      }}
                     >
                       {item.text}
                     </button>
@@ -862,6 +1017,7 @@ export function ProcessDocumentationSection({
           </aside>
         ) : null}
       </div>
+      )}
     </section>
   );
 }

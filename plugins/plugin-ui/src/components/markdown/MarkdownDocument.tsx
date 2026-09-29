@@ -182,16 +182,42 @@ export type MarkdownDocumentViewProps = {
   model: MarkdownDocumentModel;
   labels?: MarkdownDocumentLabels;
   className?: string;
+  /**
+   * Called when the user clicks an in-document anchor (`href="#…"`).
+   * When provided, the default browser navigation is prevented so the
+   * embedding app can scroll within its own routing context (e.g. hash
+   * routes like `#documentacao/{id}` must not be replaced by `#anchor`).
+   */
+  onInternalAnchorNavigate?: (anchorId: string) => void;
 };
 
 export function MarkdownDocumentView({
   model,
   labels = MARKDOWN_DOCUMENT_LABELS_PT,
   className,
+  onInternalAnchorNavigate,
 }: MarkdownDocumentViewProps) {
   const segments = useMemo(() => model.segments, [model]);
+  const handleClick = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      if (!onInternalAnchorNavigate || event.defaultPrevented) return;
+      const anchor = (event.target as HTMLElement | null)?.closest?.(
+        'a[href^="#"]',
+      );
+      if (!(anchor instanceof HTMLAnchorElement)) return;
+      const raw = anchor.getAttribute("href") ?? "";
+      const anchorId = decodeURIComponent(raw.slice(1)).trim();
+      if (!anchorId) return;
+      event.preventDefault();
+      onInternalAnchorNavigate(anchorId);
+    },
+    [onInternalAnchorNavigate],
+  );
   return (
-    <div className={["delpi-ui-md-doc", className].filter(Boolean).join(" ")}>
+    <div
+      className={["delpi-ui-md-doc", className].filter(Boolean).join(" ")}
+      onClick={handleClick}
+    >
       {segments.map((segment, index) => (
         <MarkdownDocumentSegmentView
           key={index}
