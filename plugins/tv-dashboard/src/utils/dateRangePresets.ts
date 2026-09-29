@@ -124,3 +124,39 @@ export function periodParamFieldKeys(schemaKeys: Iterable<string>): Set<string> 
   if (keys.has("competence")) group.add("competence");
   return group;
 }
+
+const DATE_PARAM_KEYS = new Set([
+  "start_date",
+  "end_date",
+  "date_start",
+  "date_end",
+  "dataInicio",
+  "dataFim",
+  "data_inicial",
+  "data_final",
+  "reference_date",
+  "date",
+  "date_from",
+  "date_to",
+  "data_inicio",
+  "data_fim",
+  "issue_date_start",
+  "issue_date_end",
+  "modified_from",
+  "modified_to",
+  "from",
+  "to",
+]);
+
+/**
+ * Param de data (par de período ou `format: date/date-time` no schema) —
+ * usado por presets de período, input nativo e AST inicial de expressão.
+ */
+export function isDateParam(
+  key: string,
+  field?: { format?: unknown } | null,
+): boolean {
+  if (DATE_PARAM_KEYS.has(key)) return true;
+  const format = String(field?.format ?? "").toLowerCase();
+  return format === "date" || format === "date-time";
+}

@@ -1,4 +1,4 @@
-import { FieldLabel, HelpTooltip, NativeCheckboxControl } from "@delpi/plugin-ui/index";
+import { FieldLabel, NativeCheckboxControl } from "@delpi/plugin-ui/index";
 
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import type { OptionsData } from "../../data/api/transformometroApi";
@@ -88,10 +88,10 @@ export function ProcessScopeFields({
                         ),
                 });
               }}
-            label={<><span>Todas as unidades ativas</span><HelpTooltip
-              content={multiplicadorHint(activeFilialCount)}
-              ariaLabel="Ajuda: todas as unidades"
-            /></>}
+            label="Todas as unidades ativas"
+            hint={multiplicadorHint(activeFilialCount)}
+            hintPlacement="tooltip"
+            hintAriaLabel="Ajuda: todas as unidades"
           />
         </div>
       ) : null}

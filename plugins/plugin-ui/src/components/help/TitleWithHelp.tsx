@@ -42,7 +42,7 @@ export function TitleWithHelp({
           wrap
           placement="bottom"
         >
-          <span className="delpi-ui-section-hint-label">{title}</span>
+          <span className="delpi-ui-section-hint-label" tabIndex={0}>{title}</span>
         </HelpTooltip>
       ) : (
         <span>{title}</span>

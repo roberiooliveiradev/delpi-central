@@ -32,7 +32,6 @@ import {
 } from "../utils/paramExpressions";
 import {
   EXPRESSION_NODE_GROUPS,
-  expressionNodeSummary,
   friendlyFunctionLabel,
   friendlyFunctionReturnTypeLabel,
 } from "../utils/paramExpressionLabels";
@@ -259,7 +258,7 @@ function ExpressionNodeEditor(props: NodeEditorProps) {
   );
 
   return (
-    <div className="td-param-expression__node">
+    <div className="td-param-expression__node" data-node-kind={node.kind}>
       <div className="td-param-expression__node-head">{kindSelector}</div>
       <NodeBody
         {...props}
@@ -358,13 +357,21 @@ function NodeBody(props: NodeBodyProps) {
             return aOk - bOk || a.name.localeCompare(b.name);
           })
         : metas;
-      const options = ordered.map((item) => ({
-        value: item.name,
-        label:
+      const options = ordered.map((item) => {
+        const friendly = friendlyFunctionLabel(item.name);
+        const typeMark =
           expected && item.returnType != null && expected.has(item.returnType)
-            ? `${item.name} → ${item.returnType}`
-            : item.name,
-      }));
+            ? ` → ${friendlyFunctionReturnTypeLabel(item.returnType)}`
+            : "";
+        // Label amigável + nome canônico — a busca continua achando "Date.Add…".
+        return {
+          value: item.name,
+          label:
+            friendly === item.name
+              ? `${item.name}${typeMark}`
+              : `${friendly} (${item.name})${typeMark}`,
+        };
+      });
       const argCount = node.children?.length ?? 0;
       const canAddArg = meta ? argCount < meta.maxArgs : false;
       return (
@@ -393,8 +400,13 @@ function NodeBody(props: NodeBodyProps) {
             ]}
           />
           {meta?.signature ? (
-            <p className="td-param-expression__signature" title={meta.description}>
-              {meta.signature}
+            <p className="td-param-expression__signature">
+              {meta.description ? (
+                <span className="td-param-expression__fn-desc">
+                  {meta.description}
+                </span>
+              ) : null}
+              <code>{meta.signature}</code>
             </p>
           ) : null}
           {(node.children ?? []).map((_, index) => (

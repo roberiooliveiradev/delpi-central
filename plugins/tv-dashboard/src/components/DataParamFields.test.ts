@@ -12,7 +12,7 @@ import {
   resolveParamSelectOptions,
   visibleParamSchema,
   withExcludeWeekendsSchemaField,
-} from "./DataParamFields";
+} from "../utils/dataParamSchema";
 
 describe("resolveParamFieldLabel", () => {
   it("traduz date_start / work_center mesmo com label EN do schema", () => {
@@ -182,11 +182,16 @@ describe("DataParamFields date range UX contract", () => {
   it("respeita openEndedDateRange e resolveFallbackPreset (contrato)", () => {
     const base = dirname(fileURLToPath(import.meta.url));
     const source = readFileSync(join(base, "./DataParamFields.tsx"), "utf8");
+    // Helpers de schema vivem no owner canônico `utils/dataParamSchema.ts`.
+    const schemaSource = readFileSync(
+      join(base, "../utils/dataParamSchema.ts"),
+      "utf8",
+    );
     expect(source).toMatch(/openEndedDateRange/);
     expect(source).toMatch(/hydrateDefaultPreset/);
     expect(source).toMatch(/filterLayer/);
-    expect(source).toMatch(/resolveFallbackPreset/);
-    expect(source).toMatch(/openEndedDateRange \? "custom" : "this_month"/);
+    expect(schemaSource).toMatch(/resolveFallbackPreset/);
+    expect(schemaSource).toMatch(/openEndedDateRange \? "custom" : "this_month"/);
     expect(source).toMatch(/filterPeriodRequired/);
     expect(source).toMatch(/buildFilterSelectOptions/);
     expect(source).toMatch(/DIVERGED_FILTER_SELECT_VALUE|dataParamFilterUi/);

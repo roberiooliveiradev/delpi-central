@@ -2,6 +2,7 @@ import { ComunicadoComposerCanvas } from "./ComunicadoComposer";
 import { ComunicadoEditorProvider } from "./comunicadoEditorContext";
 import { ComunicadoEmbeddedEditorChrome } from "./ComunicadoEmbeddedEditorChrome";
 import { DataCatalogModalHost } from "./DataCatalogModalHost";
+import { ExpressionEditorDrawerHost } from "./ExpressionEditorDrawerHost";
 import { DeckElementSidePanel } from "./deck";
 
 type Props = {
@@ -35,6 +36,7 @@ export function ComunicadoComposerField({ playlistId, value, onChange, labels = 
           </div>
         </main>
         <DataCatalogModalHost />
+        <ExpressionEditorDrawerHost />
       </div>
     </ComunicadoEditorProvider>
   );

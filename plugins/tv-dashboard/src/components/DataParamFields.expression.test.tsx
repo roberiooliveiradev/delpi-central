@@ -141,6 +141,71 @@ describe("DataParamFields — preset × expressão (conflito deliberado)", () =>
     expect(updates.end_date).toBe("");
   });
 
+  it("expressão→valor fixo pede confirmação; Cancelar preserva o AST (cenário E)", () => {
+    const onChange = vi.fn();
+    render(
+      <DataParamFields
+        schema={SCHEMA}
+        values={{ start_date: EXPR }}
+        expressionSupport={SUPPORT}
+        onChange={onChange}
+      />,
+    );
+    fireEvent.click(
+      screen.getAllByRole("button", { name: "Valor fixo" })[0]!,
+    );
+    // ConfirmModal abre — nada foi gravado ainda.
+    expect(screen.getByText("Voltar para valor fixo?")).toBeTruthy();
+    expect(onChange).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Cancelar" }));
+    expect(onChange).not.toHaveBeenCalled();
+    // Cartão-resumo da expressão continua intacto.
+    expect(document.querySelector(".td-expression-summary")).toBeTruthy();
+  });
+
+  it("expressão→valor fixo confirmado grava o valor vazio (cenário E)", () => {
+    const onChange = vi.fn();
+    render(
+      <DataParamFields
+        schema={SCHEMA}
+        values={{ start_date: EXPR }}
+        expressionSupport={SUPPORT}
+        onChange={onChange}
+      />,
+    );
+    fireEvent.click(
+      screen.getAllByRole("button", { name: "Valor fixo" })[0]!,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Usar valor fixo" }));
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(onChange.mock.calls[0][0].start_date).toBe("");
+  });
+
+  it("valor fixo→expressão com literal gravado pede confirmação e abre o drawer", () => {
+    const onChange = vi.fn();
+    const onEditExpression = vi.fn();
+    render(
+      <DataParamFields
+        schema={SCHEMA}
+        values={{ start_date: "2024-01-01" }}
+        expressionSupport={SUPPORT}
+        onChange={onChange}
+        onEditExpression={onEditExpression}
+      />,
+    );
+    fireEvent.click(
+      screen.getAllByRole("button", { name: "Expressão" })[0]!,
+    );
+    expect(screen.getByText("Trocar para expressão?")).toBeTruthy();
+    expect(onChange).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Trocar para expressão" }));
+    expect(onChange).toHaveBeenCalledTimes(1);
+    // Spec inicial «hoje» + drawer aberto para o mesmo param.
+    expect(onChange.mock.calls[0][0].start_date).toEqual(EXPR);
+    expect(onEditExpression).toHaveBeenCalledTimes(1);
+    expect(onEditExpression.mock.calls[0][0].paramKey).toBe("start_date");
+  });
+
   it("expressão persistida sem capability renderiza read-only preservada", () => {
     render(
       <DataParamFields

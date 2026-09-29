@@ -319,12 +319,24 @@
   height: 14px;
 }
 
+/* Label/título é o trigger do help (sem ícone ?): cursor + foco de teclado. */
 .delpi-ui-field-label__text {
   cursor: help;
 }
 
 .delpi-ui-section-hint-label {
   cursor: help;
+}
+
+.delpi-ui-field-label__text[tabindex],
+.delpi-ui-section-hint-label[tabindex] {
+  border-radius: 4px;
+}
+
+.delpi-ui-field-label__text:focus-visible,
+.delpi-ui-section-hint-label:focus-visible {
+  outline: 2px solid var(--delpi-ui-accent, var(--primary, #089bdb));
+  outline-offset: 2px;
 }
 
 .delpi-ui-tab-cell {

@@ -13,11 +13,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActionButton,
   NativeCheckboxControl,
-  NativeSelectControl,
   NativeTextAreaControl,
 } from "@delpi/plugin-ui/index";
 
 import { StateBox } from "../../../components/StateBox";
+import { SelectControl } from "../../../components/ui/SelectControl";
 import {
   TmDetailFieldGrid,
   TmFormFieldShell,
@@ -255,7 +255,6 @@ export function DiagnosticActionPanel({
   const targetOptions = useMemo(() => {
     const diagnostic = detail.diagnostic;
     return [
-      { value: "", label: "Nenhum destino específico" },
       ...diagnostic.findings.map((f) => ({
         value: f.finding_id,
         label: `Achado — ${f.statement.slice(0, 60)}`,
@@ -274,7 +273,6 @@ export function DiagnosticActionPanel({
   const causalTargetOptions = useMemo(() => {
     const diagnostic = detail.diagnostic;
     return [
-      { value: "", label: "Selecione o destino" },
       ...diagnostic.hypotheses.map((h) => ({
         value: h.hypothesis_id,
         label: `Hipótese — ${h.statement.slice(0, 60)}`,
@@ -419,21 +417,32 @@ export function DiagnosticActionPanel({
 
           {action === "add_finding" ? (
             <>
-              <TmFormFieldShell id={`diag-${action}-epistemic`} label="Natureza epistêmica">
-                <NativeSelectControl
+              <TmFormFieldShell
+                id={`diag-${action}-epistemic`}
+                label="Natureza epistêmica"
+                hint="Indica como este achado foi obtido: observado diretamente, calculado ou ainda não identificado."
+              >
+                <SelectControl
                   id={`diag-${action}-epistemic`}
                   value={draft.epistemic_state}
                   onChange={(v) => set("epistemic_state", v)}
                   options={EPISTEMIC_OPTIONS}
+                  ariaLabel="Natureza epistêmica"
                 />
               </TmFormFieldShell>
-              <TmFormFieldShell id={`diag-${action}-role`} label="Papel do achado">
-                <NativeSelectControl
+              <TmFormFieldShell
+                id={`diag-${action}-role`}
+                label="Papel do achado"
+                hint="Indica o papel deste achado na análise. Sintoma descreve um efeito observado — não prova uma causa."
+              >
+                <SelectControl
                   id={`diag-${action}-role`}
                   value={draft.role}
                   onChange={(v) => set("role", v)}
                   options={[{ value: "SYMPTOM", label: "Sintoma" }]}
-                  placeholderOption="Nenhum"
+                  allowEmpty
+                  emptyLabel="Nenhum"
+                  ariaLabel="Papel do achado"
                 />
               </TmFormFieldShell>
             </>
@@ -446,20 +455,27 @@ export function DiagnosticActionPanel({
                 hipótese de origem contribui para o destino, sem afirmar causa ou prova.
               </p>
               <TmFormFieldShell id={`diag-${action}-source`} label="Hipótese de origem">
-                <NativeSelectControl
+                <SelectControl
                   id={`diag-${action}-source`}
                   value={draft.source_hypothesis_id}
                   onChange={(v) => set("source_hypothesis_id", v)}
                   options={hypothesisOptions}
-                  placeholderOption="Selecione a hipótese"
+                  placeholder="Selecione a hipótese"
+                  allowEmpty
+                  emptyLabel="Selecione a hipótese"
+                  ariaLabel="Hipótese de origem"
                 />
               </TmFormFieldShell>
               <TmFormFieldShell id={`diag-${action}-target`} label={`${CAUSAL_RELATION_LABEL} (destino)`}>
-                <NativeSelectControl
+                <SelectControl
                   id={`diag-${action}-target`}
                   value={draft.target_id}
                   onChange={(v) => set("target_id", v)}
                   options={causalTargetOptions}
+                  placeholder="Selecione o destino"
+                  allowEmpty
+                  emptyLabel="Selecione o destino"
+                  ariaLabel={`${CAUSAL_RELATION_LABEL} (destino)`}
                 />
               </TmFormFieldShell>
             </>
@@ -477,29 +493,40 @@ export function DiagnosticActionPanel({
                 </StateBox>
               ) : null}
               <TmFormFieldShell id={`diag-${action}-evidence`} label="Evidência existente">
-                <NativeSelectControl
+                <SelectControl
                   id={`diag-${action}-evidence`}
                   value={draft.evidence_id}
                   onChange={(v) => set("evidence_id", v)}
                   options={evidenceOptions}
-                  placeholderOption="Selecione a evidência"
+                  placeholder="Selecione a evidência"
+                  allowEmpty
+                  emptyLabel="Selecione a evidência"
                   disabled={!evidences || evidences.length === 0}
+                  ariaLabel="Evidência existente"
                 />
               </TmFormFieldShell>
-              <TmFormFieldShell id={`diag-${action}-relation`} label="Relação com o item">
-                <NativeSelectControl
+              <TmFormFieldShell
+                id={`diag-${action}-relation`}
+                label="Relação com o item"
+                hint="“Sustenta” apoia a afirmação; “Contradiz” entra em conflito com ela; “Contextualiza” dá contexto sem provar."
+              >
+                <SelectControl
                   id={`diag-${action}-relation`}
                   value={draft.relation}
                   onChange={(v) => set("relation", v)}
                   options={EVIDENCE_RELATION_OPTIONS}
+                  ariaLabel="Relação com o item"
                 />
               </TmFormFieldShell>
               <TmFormFieldShell id={`diag-${action}-target`} label="Item relacionado">
-                <NativeSelectControl
+                <SelectControl
                   id={`diag-${action}-target`}
                   value={draft.target_id}
                   onChange={(v) => set("target_id", v)}
                   options={targetOptions}
+                  allowEmpty
+                  emptyLabel="Nenhum destino específico"
+                  ariaLabel="Item relacionado"
                 />
               </TmFormFieldShell>
             </>
@@ -559,14 +586,16 @@ export function DiagnosticActionPanel({
               ) : null}
               {draft.hypothesis_ids.length ? (
                 <TmFormFieldShell id={`diag-${action}-root`} label="Hipótese causa-raiz">
-                  <NativeSelectControl
+                  <SelectControl
                     id={`diag-${action}-root`}
                     value={draft.root_cause_hypothesis_id}
                     onChange={(v) => set("root_cause_hypothesis_id", v)}
                     options={detail.diagnostic.hypotheses
                       .filter((h) => draft.hypothesis_ids.includes(h.hypothesis_id))
                       .map((h) => ({ value: h.hypothesis_id, label: h.statement.slice(0, 80) }))}
-                    placeholderOption="Nenhuma"
+                    allowEmpty
+                    emptyLabel="Nenhuma"
+                    ariaLabel="Hipótese causa-raiz"
                   />
                 </TmFormFieldShell>
               ) : null}

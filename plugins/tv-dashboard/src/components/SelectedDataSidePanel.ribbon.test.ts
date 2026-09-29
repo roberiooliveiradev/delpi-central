@@ -4,22 +4,40 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 /**
- * Regressão: ribbon Dados não monta VisualDataViewInspector / onboarding —
- * o bloco alto vazava sobre o filmstrip (slides «Personalizado»).
+ * Contrato da ribbon Dados (redesign): grupos reais colapsáveis em vez de
+ * painel embutido — o inspector completo vive só no painel lateral e a
+ * faixa nunca renderiza inspector/onboarding (vazava sobre o filmstrip).
  */
-describe("SelectedDataSidePanel ribbon contract", () => {
+describe("Data ribbon contract", () => {
   const base = dirname(fileURLToPath(import.meta.url));
   const source = readFileSync(join(base, "./SelectedDataSidePanel.tsx"), "utf8");
   const ribbon = readFileSync(join(base, "./ComunicadoDataRibbon.tsx"), "utf8");
   const chrome = readFileSync(join(base, "./DeckEditorChrome.tsx"), "utf8");
 
-  it("ribbon retorna cedo com toolbar compacta, sem VisualDataViewInspector", () => {
-    const ribbonBranch = source.slice(source.indexOf("if (isRibbon)"));
-    const beforePane = ribbonBranch.slice(0, ribbonBranch.indexOf("if (showCatalog)"));
-    expect(beforePane).toMatch(/td-deck-ribbon__panel--dados-compact/);
-    expect(beforePane).not.toMatch(/VisualDataViewInspector/);
-    expect(beforePane).not.toMatch(/td-deck-inspector__onboarding/);
-    expect(beforePane).toMatch(/Abrir catálogo de fontes/);
+  it("ribbon usa grupos DeckRibbonGroup estáveis, sem painel embutido", () => {
+    // Sem o painel compacto legado — conteúdo da faixa é só grupos + flyouts.
+    expect(ribbon).not.toMatch(/SelectedDataSidePanel/);
+    expect(ribbon).not.toMatch(/overflowEnabled=\{false\}/);
+    expect(ribbon).toMatch(/DeckRibbonGroup/);
+    for (const groupId of [
+      "data-source",
+      "data-field",
+      "data-period",
+      "data-refresh",
+      "data-expression",
+      "data-more",
+    ]) {
+      expect(ribbon).toContain(`groupId="${groupId}"`);
+    }
+    // Flyouts canônicos ancorados — nunca inspector inline na faixa.
+    expect(ribbon).toMatch(/DeckRibbonTilePopover/);
+    expect(ribbon).not.toMatch(/VisualDataViewInspector/);
+    expect(ribbon).not.toMatch(/td-deck-inspector__onboarding/);
+  });
+
+  it("painel lateral não tem mais branch de ribbon (sem dead code)", () => {
+    expect(source).not.toMatch(/isRibbon/);
+    expect(source).not.toMatch(/layout="ribbon"/);
   });
 
   it("ao abrir aba Dados, ribbon força o painel lateral", () => {

@@ -15,12 +15,27 @@ import { useComunicadoEditor } from "../components/comunicadoEditorContext";
 import { useParamExpressionCapability } from "./useParamExpressionCapability";
 import { useTvDataRouteLabelCatalog } from "./useTvDataRouteLabelCatalog";
 import { applyDataParamRawUpdates, type DataParamUpdateValue } from "../utils/applyDataParamUpdates";
+import { resolveParamFieldLabel } from "../content/dataParamCatalog";
+import {
+  paramAllowsExpression,
+  paramFormatToReturnTypes,
+  paramTypeToReturnTypes,
+} from "../utils/paramExpressions";
 import {
   visibleParamSchema,
   type DataParamSchema,
-} from "../components/DataParamFields";
+  type DataParamSchemaField,
+} from "../utils/dataParamSchema";
 import { resolveRouteForDataBoundBlock } from "../utils/resolveDataBoundBlockRoute";
 import { resolveSelectedDataContext, type SelectedDataContext } from "../utils/selectedDataContext";
+
+/** Parâmetro elegível a expressão tipada — projeção canônica do model. */
+export type RibbonExpressionParam = {
+  key: string;
+  field: DataParamSchemaField;
+  label: string;
+  expectedReturnTypes: ReadonlySet<string> | null;
+};
 
 export type DataRibbonModel = {
   context: SelectedDataContext;
@@ -37,7 +52,14 @@ export type DataRibbonModel = {
   /** Rótulo da fonte/modelo ligado e total de fontes na seleção (§70 "+2"). */
   targetLabel: string;
   targetCount: number;
+  /** Catálogo de rótulos de rotas (compartilhado com inspector/flyouts). */
+  labelCatalog: ReturnType<typeof useTvDataRouteLabelCatalog>["labelCatalog"];
   expressionSupport: ReturnType<typeof useParamExpressionCapability>;
+  /**
+   * Params editáveis por expressão — mesmo predicado do backend
+   * (`paramAllowsExpression` + fixedQueryParams + capability).
+   */
+  expressionParams: RibbonExpressionParam[];
   /** Patch de params — mesma regra do inspector (`applyDataParamRawUpdates`). */
   updateParams: (updates: Record<string, DataParamUpdateValue>) => void;
   /** Patch do binding inteiro (ex.: refreshSec, label). */
@@ -119,6 +141,21 @@ export function useDataRibbonModel(): DataRibbonModel {
     [binding, bindingTarget, paramSchema, updateBlock],
   );
 
+  const expressionParams = useMemo<RibbonExpressionParam[]>(() => {
+    if (!expressionSupport.enabled) return [];
+    const fixedKeys = new Set(Object.keys(route?.fixedQueryParams ?? {}));
+    return Object.entries(paramSchema)
+      .filter(([key, field]) => paramAllowsExpression(key, field, fixedKeys))
+      .map(([key, field]) => ({
+        key,
+        field,
+        label: resolveParamFieldLabel(key, field.label),
+        expectedReturnTypes:
+          paramFormatToReturnTypes(field.format) ??
+          paramTypeToReturnTypes(field.type),
+      }));
+  }, [expressionSupport.enabled, paramSchema, route]);
+
   const applyBinding = useCallback(
     (patch: Partial<ComunicadoDataBinding>) => {
       if (!bindingTarget || !binding) return;
@@ -140,7 +177,9 @@ export function useDataRibbonModel(): DataRibbonModel {
     resolved,
     targetLabel,
     targetCount: bindingTargets.length,
+    labelCatalog,
     expressionSupport,
+    expressionParams,
     updateParams,
     applyBinding,
   };

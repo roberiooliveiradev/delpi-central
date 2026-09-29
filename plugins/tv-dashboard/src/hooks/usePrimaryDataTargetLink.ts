@@ -166,15 +166,16 @@ export function usePrimaryDataTargetLink(options?: {
     [blocks, fieldTypes, setDataPanelIntent, updateSelected],
   );
 
-  const unlink = useCallback(
-    (primary: ComunicadoBlock) => {
-      updateSelected({
-        dataSourceId: undefined,
-        modelId: undefined,
-      } as Partial<ComunicadoBlock>);
-    },
-    [updateSelected],
-  );
+  /**
+   * Desvincula a seleção inteira — `updateSelected` aplica o patch em todos
+   * os blocos selecionados, como no inspector.
+   */
+  const unlink = useCallback(() => {
+    updateSelected({
+      dataSourceId: undefined,
+      modelId: undefined,
+    } as Partial<ComunicadoBlock>);
+  }, [updateSelected]);
 
   return { linkSource, linkModel, unlink, primary: selected };
 }

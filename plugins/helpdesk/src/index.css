@@ -77,6 +77,13 @@
   min-height: 0;
 }
 
+/* Fill cards must keep shrinking even when a trailing utility sibling
+   (e.g. FilePreviewModal's hidden anchor span) takes :last-child. */
+.dashboard-helpdesk .helpdesk-page-stack > .delpi-ui-section-card--fill {
+  flex-shrink: 1;
+  min-height: 0;
+}
+
 #root:has(> .dashboard-helpdesk.dashboard-page--fill) {
   height: 100%;
   min-height: 100%;
@@ -896,6 +903,31 @@
 .dashboard-helpdesk .helpdesk-rich-text-field--fill > .delpi-ui-rich-text {
   flex: 1 1 auto;
   min-height: 6rem;
+}
+
+/* Fill + file-drop: the drop wrapper sits between the field and the editor,
+   so it must be the flex column that distributes height — otherwise the
+   editor keeps full size and the attachments strip gets clipped. */
+.dashboard-helpdesk .helpdesk-rich-text-field--fill > .helpdesk-conversation-drop,
+.dashboard-helpdesk .helpdesk-rich-text-field--fill > .delpi-ui-conversation-drop {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: inherit;
+  min-height: 0;
+}
+
+.dashboard-helpdesk .helpdesk-rich-text-field--fill > .helpdesk-conversation-drop > .delpi-ui-rich-text,
+.dashboard-helpdesk .helpdesk-rich-text-field--fill > .delpi-ui-conversation-drop > .delpi-ui-rich-text {
+  flex: 1 1 auto;
+  min-height: 6rem;
+  /* plugin-ui --fill sets height:100% — inside the drop column it would
+     consume the whole wrapper and push the attachments strip out. */
+  height: auto;
+}
+
+.dashboard-helpdesk .helpdesk-rich-text-field__attachments {
+  flex: 0 0 auto;
 }
 
 .dashboard-helpdesk .helpdesk-reply-form {

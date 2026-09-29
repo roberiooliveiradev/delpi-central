@@ -3,10 +3,10 @@ import { ImageDown } from "lucide-react";
 
 import {
   FieldLabel,
-  HelpTooltip,
   ImpactEffortMatrix,
   ImpactEffortMatrixLegend,
   NativeTextControl,
+  SectionHintLabel,
   impactEffortMatrixTransformometroClasses,
   segmentToggleBemClasses,
   type ImpactEffortMatrixMode,
@@ -249,13 +249,8 @@ export function RevisionImpactEffortMatrixSection({
               <span
                 className="tm-matrix-rateio-chip"
                 role="status"
-                title={M.rateioExcedeGanho}
               >
-                Rateio &gt; ganho
-                <HelpTooltip
-                  content={M.rateioExcedeGanho}
-                  ariaLabel="Ajuda: rateio excede ganho"
-                />
+                <SectionHintLabel label="Rateio > ganho" hint={M.rateioExcedeGanho} />
               </span>
             ) : null}
             <button
@@ -380,11 +375,7 @@ export function RevisionImpactEffortMatrixSection({
               defaultOpen={modo !== "auto"}
               header={
                 <span className="tm-matrix-manual__trigger-inner">
-                  Ajustes qualitativos
-                  <HelpTooltip
-                    content={M.ajustesManuais}
-                    ariaLabel="Ajuda: ajustes qualitativos"
-                  />
+                  <SectionHintLabel label="Ajustes qualitativos" hint={M.ajustesManuais} />
                 </span>
               }
               bodyClassName="tm-matrix-manual__body"
@@ -458,11 +449,7 @@ export function RevisionImpactEffortMatrixSection({
                 </div>
               ) : (
                 <p className="ds-hint tm-matrix-manual__hint">
-                  {M.modoAutomaticoHint}
-                  <HelpTooltip
-                    content={M.modo}
-                    ariaLabel="Ajuda: modo automático"
-                  />
+                  <SectionHintLabel label={M.modoAutomaticoHint} hint={M.modo} />
                 </p>
               )}
             </CollapsiblePanel>

@@ -283,11 +283,7 @@
   text-underline-offset: 2px;
 }.dashboard-transformometro .ds-link-btn:hover{
   color: color-mix(in srgb, var(--ds-accent) 80%, var(--ds-title));
-}/* Filters *//* Seleção múltipla (Unidade/Setor) — padrão do dashboard de engenharia */.dashboard-transformometro .ds-btn--sm{
-  min-height: 28px;
-  padding: 4px 8px;
-  font-size: var(--ds-font-xs, 12px);
-}/* Select único — padrão action plans (PAC) */.dashboard-transformometro .ds-field__required{
+}/* Filters *//* Select único — padrão action plans (PAC) */.dashboard-transformometro .ds-field__required{
   color: var(--ds-danger, #c0392b);
 }.dashboard-transformometro .tm-inst-setores-label{
   display: block;
@@ -1296,10 +1292,6 @@
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-}.dashboard-transformometro .tm-process-documentation__article-actions .ds-btn{
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
 }.dashboard-transformometro .tm-process-documentation__more{
   position: relative;
 }.dashboard-transformometro .tm-process-documentation__document-scroll{
@@ -5031,8 +5023,10 @@
   grid-column: 1 / -1;
 }
 .dashboard-transformometro .tm-diagnostic-action__actions{
+  grid-column: 1 / -1;
   display: flex;
   flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 0.5rem;
 }
 /* Review de exact_change usa TmDetailFieldGrid (`delpi-ui-detail-grid`, kit).

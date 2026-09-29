@@ -13,6 +13,7 @@ import {
 import { DataTable } from "../../components/DataTable";
 import { InlineErrorState } from "../../components/ErrorStateBox";
 import { LoadingActivityCard } from "../../components/LoadingActivityCard";
+import { SelectControl } from "../../components/ui/SelectControl";
 import { SoftActionButton } from "../../components/SoftActionButton";
 import { DS_GHOST_BTN } from "../../components/ghostChrome";
 import { TmStatusBadge } from "../../components/tmChromeUi";
@@ -319,23 +320,24 @@ export function ProcessResultsSection({
       >
         <p className="tm-processo-results-block__helper">Trocar cenário</p>
         {comparison.scopedRevisoes.length >= SCENARIO_SELECT_THRESHOLD ? (
-          <label className="tm-processo-results-revisao-select">
-            <span className="sr-only">Cenário proposto</span>
-            <select
+          <div className="tm-processo-results-revisao-select">
+            <SelectControl
               value={comparison.selectedRevisionId ?? ""}
-              onChange={(event) =>
-                navigateSelection(comparison.instanceId, event.target.value || null)
+              onChange={(value) =>
+                navigateSelection(comparison.instanceId, value || null)
               }
-            >
-              <option value="">Selecione um cenário…</option>
-              {comparison.scopedRevisoes.map((revisao) => (
-                <option key={revisao.revisao_id} value={revisao.revisao_id}>
-                  {revisaoDisplayLabel(revisao)} · {cenarioLabel(revisao.cenario_tipo)}
-                  {!revisao.revisao_ativa ? " · inativa" : ""}
-                </option>
-              ))}
-            </select>
-          </label>
+              options={comparison.scopedRevisoes.map((revisao) => ({
+                value: revisao.revisao_id,
+                label: `${revisaoDisplayLabel(revisao)} · ${cenarioLabel(revisao.cenario_tipo)}${
+                  !revisao.revisao_ativa ? " · inativa" : ""
+                }`,
+              }))}
+              placeholder="Selecione um cenário…"
+              allowEmpty
+              emptyLabel="Selecione um cenário…"
+              ariaLabel="Cenário proposto"
+            />
+          </div>
         ) : (
           <ul className="tm-processo-results-scenario-list" role="listbox" aria-label="Cenários">
             {comparison.scopedRevisoes.map((revisao) => {

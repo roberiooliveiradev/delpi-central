@@ -60,21 +60,18 @@ type Props = {
   branchScope?: BranchScope | null;
   onInserted?: () => void;
   onOpenCatalog?: OpenCatalogFn;
-  /** ribbon = top bar compacta; pane = painel lateral com inspector completo. */
-  layout?: PanelLayout;
 };
 
 /**
- * Conteúdo da aba Dados (side bar e ribbon):
- * - ribbon: só ações curtas (nunca inspector/onboarding — vazava sobre o filmstrip)
+ * Conteúdo da aba Dados do painel lateral:
  * - pane: configuração da fonte / vínculo (texto, visual e data_source no mesmo fluxo)
  * - intent catalog → listagem; com fontes no slide, lista «Fontes neste slide» no topo
+ * (a faixa Dados usa grupos próprios em ComunicadoDataRibbon — não este painel)
  */
 export function SelectedDataSidePanel({
   branchScope = null,
   onInserted,
   onOpenCatalog,
-  layout = "pane",
 }: Props) {
   const {
     blocks,
@@ -83,7 +80,6 @@ export function SelectedDataSidePanel({
     selectedIds,
     dataPanelIntent,
     openDataCatalog,
-    openDataPanel,
     setDataPanelIntent,
     updateSelected,
     updateBlocksAtomically,
@@ -96,7 +92,6 @@ export function SelectedDataSidePanel({
     [blocks, selectedIds, config.dataModels],
   );
   const showCatalog = dataPanelIntent === "catalog" || context.kind === "none";
-  const isRibbon = layout === "ribbon";
   const openCatalog = onOpenCatalog ?? openDataCatalog;
 
   const [hydrateHint, setHydrateHint] = useState<string | null>(null);
@@ -264,54 +259,6 @@ export function SelectedDataSidePanel({
       updateSelected(patch as Partial<ComunicadoBlock>);
       setDataPanelIntent("binding");
     }
-  }
-
-  /** Faixa superior: toolbar horizontal — inspector completo só no painel lateral. */
-  if (isRibbon) {
-    const unboundView = isView && !bindingTarget;
-    const unboundText = (isTextBound || isCanvasTableBound) && !bindingTarget;
-    const hint = showCatalog
-      ? "Escolha uma fonte do slide ou uma rota nova no catálogo."
-      : context.kind === "mixed"
-        ? context.message
-        : unboundView || unboundText
-          ? "Sem fonte — conecte no painel ao lado (fontes do slide ou catálogo)."
-          : bindingTarget
-            ? "Fonte ligada — edite parâmetros e conexão no painel Dados."
-            : "Configure os dados no painel ao lado.";
-
-    return (
-      <div className="td-deck-ribbon__panel td-deck-ribbon__panel--dados td-deck-ribbon__panel--dados-compact">
-        <p className="td-deck-inspector__hint">{hint}</p>
-        <div className="td-deck-ribbon__field-grid">
-          <button
-            type="button"
-            className="td-btn td-btn--sm"
-            onClick={(event) => openCatalog("insert", { anchor: event.currentTarget })}
-          >
-            Abrir catálogo de fontes
-          </button>
-          {!showCatalog && context.kind !== "none" ? (
-            <button
-              type="button"
-              className="td-btn td-btn--sm td-btn--ghost"
-              onClick={() => openDataPanel()}
-            >
-              {unboundView || unboundText ? "Conectar no painel" : "Abrir painel Dados"}
-            </button>
-          ) : null}
-          {showCatalog && context.kind !== "none" ? (
-            <button
-              type="button"
-              className="td-btn td-btn--sm td-btn--ghost"
-              onClick={() => setDataPanelIntent("binding")}
-            >
-              Voltar à fonte atual
-            </button>
-          ) : null}
-        </div>
-      </div>
-    );
   }
 
   if (inspectedModel) {

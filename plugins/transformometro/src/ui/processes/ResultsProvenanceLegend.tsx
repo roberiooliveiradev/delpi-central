@@ -1,4 +1,4 @@
-import { HelpTooltip } from "@delpi/plugin-ui/index";
+import { SectionHintLabel } from "@delpi/plugin-ui/index";
 
 import { TmStatusBadge } from "../../components/tmChromeUi";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
@@ -17,8 +17,7 @@ export function ResultsProvenanceLegend() {
       aria-label="Natureza dos dados"
     >
       <span className="tm-processo-results-legend__label">
-        Natureza dos dados
-        <HelpTooltip content={H.naturezaLegenda} ariaLabel="Ajuda: Natureza dos dados" />
+        <SectionHintLabel label="Natureza dos dados" hint={H.naturezaLegenda} />
       </span>
       <ul className="tm-processo-results-legend__list">
         <li>

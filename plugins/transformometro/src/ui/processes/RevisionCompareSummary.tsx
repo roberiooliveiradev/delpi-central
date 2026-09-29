@@ -1,4 +1,4 @@
-import { HelpTooltip } from "@delpi/plugin-ui/index";
+import { SectionHintLabel } from "@delpi/plugin-ui/index";
 
 import { TmStatusBadge } from "../../components/tmChromeUi";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
@@ -48,9 +48,8 @@ export function RevisionCompareSummary({
       >
         <div className="tm-revision-compare-summary__role-row">
           <h4 id="tm-cmp-asis-title" className="tm-revision-compare-summary__role">
-            AS-IS
+            <SectionHintLabel label="AS-IS" hint={H.asIs} />
           </h4>
-          <HelpTooltip content={H.asIs} ariaLabel="Ajuda: AS-IS" />
         </div>
         <p className="tm-revision-compare-summary__helper">Referência atual</p>
         <p className="tm-revision-compare-summary__value">{asIsLabel}</p>
@@ -68,9 +67,8 @@ export function RevisionCompareSummary({
       >
         <div className="tm-revision-compare-summary__role-row">
           <h4 id="tm-cmp-tobe-title" className="tm-revision-compare-summary__role">
-            TO-BE
+            <SectionHintLabel label="TO-BE" hint={H.toBe} />
           </h4>
-          <HelpTooltip content={H.toBe} ariaLabel="Ajuda: TO-BE" />
         </div>
         <p className="tm-revision-compare-summary__helper">Cenário proposto</p>
         {mode === "baseline_only" || !toBeLabel ? (
@@ -98,9 +96,8 @@ export function RevisionCompareSummary({
       >
         <div className="tm-revision-compare-summary__role-row">
           <h4 id="tm-cmp-delta-title" className="tm-revision-compare-summary__role">
-            DELTA
+            <SectionHintLabel label="DELTA" hint={H.delta} />
           </h4>
-          <HelpTooltip content={H.delta} ariaLabel="Ajuda: DELTA" />
         </div>
         <p className="tm-revision-compare-summary__helper">Diferença calculada</p>
         {mode === "pair" && calculatedSummary?.deltaEconomy != null ? (

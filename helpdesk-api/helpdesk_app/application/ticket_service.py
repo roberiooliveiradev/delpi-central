@@ -142,10 +142,20 @@ class TicketService:
             )
 
         # 1) Sempre busca no GLPI (nome/username) — fonte do id atribuível.
+        # Para assignee, o catálogo do próprio usuário é escopo de entidade/perfil:
+        # requesters não veem Administration/User — assignable_users faz merge com
+        # leitura legada limitada aos technician_ids (bounded, sem ampliar GLPI).
         try:
-            for row in filter_assignable_catalog_users(
-                self._glpi.list_users(token, q=term, limit=safe_limit)
-            ):
+            if assignee_only:
+                rows = self._glpi.assignable_users(
+                    token,
+                    q=term,
+                    limit=safe_limit,
+                    technician_ids=technician_ids or set(),
+                )
+            else:
+                rows = self._glpi.list_users(token, q=term, limit=safe_limit)
+            for row in filter_assignable_catalog_users(rows):
                 put(row)
         except GlpiValidation:
             pass
@@ -273,7 +283,16 @@ class TicketService:
 
     def capabilities(self, subject: str) -> dict:
         token = self._token(subject)
-        return {"can_assign": bool(self._glpi.can_assign_tickets(token))}
+        return {"can_assign": self._assignee_catalog_ready(token)}
+
+    def _assignee_catalog_ready(self, token: str) -> bool:
+        """Assignment é BFF-bounded: o alvo é validado contra o catálogo de
+        técnicos e a escrita tem fallback legado. Disponibilidade depende do
+        catálogo resolver — não dos direitos de leitura do próprio usuário."""
+        try:
+            return bool(self._glpi.list_technician_user_ids(token))
+        except Exception:
+            return False
 
     def tickets(self, subject: str, query: TicketListQuery) -> TicketListPage:
         return self._glpi.list_tickets(self._token(subject), query)
@@ -281,7 +300,7 @@ class TicketService:
     def ticket(self, subject: str, ticket_id: int, viewer_email: str = "") -> TicketDetail:
         token = self._token(subject)
         detail = self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
-        detail = replace(detail, can_assign=bool(self._glpi.can_assign_tickets(token)))
+        detail = replace(detail, can_assign=self._assignee_catalog_ready(token))
         detail = self._with_technician_ops_flags(token, detail, viewer_email=viewer_email)
         return self._with_cycle_flags(token, detail)
 

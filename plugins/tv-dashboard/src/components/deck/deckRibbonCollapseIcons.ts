@@ -4,6 +4,7 @@ import {
   ArrowLeft,
   BarChart3,
   Baseline,
+  CalendarDays,
   Circle,
   Clapperboard,
   Database,
@@ -29,6 +30,8 @@ import {
   Sparkles,
   Square,
   Scaling,
+  Sigma,
+  SlidersHorizontal,
   SwatchBook,
   Table,
   Table2,
@@ -109,6 +112,13 @@ export const DECK_RIBBON_COLLAPSE_ICONS: Readonly<Record<string, LucideIcon>> = 
   "chart-data": Database,
   "chart-series": LineChart,
   "number-format": Hash,
+  /* Dados (aba Dados do editor) */
+  "data-source": Database,
+  "data-field": Tag,
+  "data-period": CalendarDays,
+  "data-refresh": RotateCw,
+  "data-expression": Sigma,
+  "data-more": SlidersHorizontal,
 };
 
 export function resolveDeckRibbonCollapseIcon(

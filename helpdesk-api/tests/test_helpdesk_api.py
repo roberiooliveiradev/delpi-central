@@ -309,6 +309,26 @@ def test_list_users_assignee_purpose_filters_non_technicians():
     assert 2 not in assignee_ids
 
 
+def test_assignee_picker_works_when_user_cannot_read_user_catalog():
+    """Requester profile: Administration/User read is denied (entity/profile
+    scoped), but the bounded technician catalog must still resolve and
+    can_assign stays true — assignment is a BFF-bounded write."""
+    client, glpi = build_client()
+    link(client)
+    glpi.user_catalog_denied = True
+
+    caps = client.get("/session/capabilities", headers=auth_headers())
+    assert caps.status_code == 200
+    assert caps.json() == {"can_assign": True}
+
+    assignees = client.get("/users?q=a&purpose=assignee", headers=auth_headers())
+    assert assignees.status_code == 200
+    assignee_ids = {item["id"] for item in assignees.json()["items"]}
+    assert 15 in assignee_ids
+    assert 22 in assignee_ids
+    assert 40 not in assignee_ids
+
+
 def test_list_users_filters_system_and_noise_labels():
     client, glpi = build_client()
     link(client)

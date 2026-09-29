@@ -7,7 +7,7 @@ import {
   dataTableSectionBemClasses,
   ensureDelpiUiClass,
   FieldLabel,
-  HelpTooltip,
+  SectionHintLabel,
 } from "@delpi/plugin-ui/index";
 import { SelectField } from "../../components/ui/SelectField";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
@@ -187,8 +187,7 @@ export function ImprovementFolderBrowser({
         <div>
           <h2 className={SECTION_CN.title}>
             <span className="ds-field-label">
-              Melhorias
-              <HelpTooltip content={I.escopo} ariaLabel="Ajuda: Melhorias" />
+              <SectionHintLabel label="Melhorias" hint={I.escopo} />
             </span>
           </h2>
           <p className="ds-hint">
@@ -336,8 +335,10 @@ export function ImprovementFolderBrowser({
       <Pagination page={page} pageSize={pageSize} total={total} onPageChange={setPage} />
 
       <p className="ds-hint tm-processo-browser__mode-hint">
-        Visualização: {currentMode.label}. Clique na pasta para abrir a melhoria.
-        <HelpTooltip content={I.modosVisualizacao} ariaLabel="Ajuda: modos de visualização" />
+        <SectionHintLabel
+          label={`Visualização: ${currentMode.label}. Clique na pasta para abrir a melhoria.`}
+          hint={I.modosVisualizacao}
+        />
       </p>
     </section>
   );

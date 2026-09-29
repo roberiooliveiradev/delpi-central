@@ -8,8 +8,6 @@ import {
 } from "@delpi/plugin-ui/index";
 import {
   blockTypeForDisplayMode,
-  DATA_REFRESH_SEC_MAX,
-  DATA_REFRESH_SEC_MIN,
   defaultFrame,
   displayModeOptionLabel,
   isDataBlockType,
@@ -22,7 +20,7 @@ import {
 } from "@delpi/tv-dashboard-presentation";
 
 import type { BranchScope, TvDataRouteCatalogItem } from "../api/tvDashboardApi";
-import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
+
 import { useParamExpressionCapability } from "../hooks/useParamExpressionCapability";
 import {
   applyDataParamRawUpdates,
@@ -31,20 +29,21 @@ import {
 import { previewTvDataRoute } from "../utils/previewTvDataRoute";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import {
-  DataParamFields,
   RIBBON_INLINE_PARAM_LIMIT,
   visibleParamSchema,
-  type DataParamExpressionEditRequest,
   type DataParamSchema,
+} from "../utils/dataParamSchema";
+import {
+  DataParamFields,
+  type DataParamExpressionEditRequest,
 } from "./DataParamFields";
+import { DataRefreshIntervalField } from "./DataRefreshIntervalField";
 import { FieldLabelsEditor } from "./FieldLabelsEditor";
 import type { PanelLayout } from "./SelectedDataSidePanel";
 import { DeckField } from "./deck/DeckField";
 import { DeckPropertySection } from "./deck/DeckPropertySection";
 import { HostContainedDialog } from "./ui/Modal";
 import type { ValueFieldOption } from "./ValueFieldsMultiSelect";
-
-const REFRESH_PRESET_VALUES = new Set(["60", "120", "300", "600"]);
 
 function routeSuggestedModes(route: TvDataRouteCatalogItem | null): string[] | undefined {
   if (!route) return undefined;
@@ -189,7 +188,6 @@ export function DataBindingInspector({
     openExpressionEditor,
   } = useComunicadoEditor();
   const [paramsModalOpen, setParamsModalOpen] = useState(false);
-  const [refreshCustom, setRefreshCustom] = useState(false);
   const [testing, setTesting] = useState(false);
   const [livePreview, setLivePreview] = useState<DataRoutePreviewPayload | null>(null);
   const [testError, setTestError] = useState<string | null>(null);
@@ -250,11 +248,6 @@ export function DataBindingInspector({
   const paramCount = Object.keys(paramSchema).length;
   const paramsNeedModal = isRibbon && paramCount > RIBBON_INLINE_PARAM_LIMIT;
 
-  const refreshAsStr = binding.refreshSec == null ? "" : String(binding.refreshSec);
-  const refreshSelectValue =
-    binding.refreshSec == null ? "" : REFRESH_PRESET_VALUES.has(refreshAsStr) ? refreshAsStr : "__custom__";
-  const showCustomRefresh = refreshCustom || refreshSelectValue === "__custom__";
-
   function updateParams(updates: Record<string, DataParamUpdateValue>) {
     const nextParams = applyDataParamRawUpdates(binding.params, updates, paramSchema);
     applyPatch({
@@ -277,24 +270,8 @@ export function DataBindingInspector({
     } as Partial<ComunicadoBlock>);
   }
 
-  function applyRefreshSec(raw: string) {
-    const nextBinding: ComunicadoDataBinding = { ...binding };
-    if (!raw.trim()) {
-      delete nextBinding.refreshSec;
-    } else {
-      const parsed = Number(raw);
-      if (Number.isFinite(parsed)) {
-        nextBinding.refreshSec = Math.min(
-          DATA_REFRESH_SEC_MAX,
-          Math.max(DATA_REFRESH_SEC_MIN, Math.round(parsed)),
-        );
-      }
-    }
-    applyPatch({ dataBinding: nextBinding } as Partial<ComunicadoBlock>);
-  }
-
   async function handleTestRoute() {
-    if (!route || !("dataBinding" in target)) return;
+    if (!route || !target || !("dataBinding" in target)) return;
     setTesting(true);
     setTestError(null);
     try {
@@ -429,60 +406,17 @@ export function DataBindingInspector({
 
   const refreshFields = (
     <>
-      <DeckField
-        id="td-data-refresh"
-        label="Atualizar na TV a cada (s)"
-        hint={TV_DASHBOARD_HELP_TOOLTIPS.fields.dataBlockRefreshInterval}
-      >
-        {isRibbon ? (
-          <>
-            <FormSelectControl
-              id="td-data-refresh"
-              className={compactSelect}
-              ariaLabel="Atualizar a cada (s)"
-              value={showCustomRefresh ? "__custom__" : refreshSelectValue}
-              onChange={(value) => {
-                if (value === "__custom__") {
-                  setRefreshCustom(true);
-                  return;
-                }
-                setRefreshCustom(false);
-                applyRefreshSec(value);
-              }}
-              options={[
-                { value: "", label: `Padrão (${inheritedRefreshSec}s)` },
-                { value: "60", label: "60s" },
-                { value: "120", label: "120s" },
-                { value: "300", label: "300s" },
-                { value: "600", label: "600s" },
-                { value: "__custom__", label: "Personalizado…" },
-              ]}
-            />
-            {showCustomRefresh ? (
-              <NativeTextControl
-                id="td-data-refresh-custom"
-                type="number"
-                className={compactNative}
-                min={DATA_REFRESH_SEC_MIN}
-                max={DATA_REFRESH_SEC_MAX}
-                placeholder={`${DATA_REFRESH_SEC_MIN}–${DATA_REFRESH_SEC_MAX}`}
-                value={binding.refreshSec ?? ""}
-                onChange={applyRefreshSec}
-              />
-            ) : null}
-          </>
-        ) : (
-          <NativeTextControl
-            id="td-data-refresh"
-            type="number"
-            min={DATA_REFRESH_SEC_MIN}
-            max={DATA_REFRESH_SEC_MAX}
-            placeholder={`Padrão (${inheritedRefreshSec}s)`}
-            value={binding.refreshSec ?? ""}
-            onChange={applyRefreshSec}
-          />
-        )}
-      </DeckField>
+      <DataRefreshIntervalField
+        refreshSec={binding.refreshSec}
+        inheritedRefreshSec={inheritedRefreshSec}
+        compact={isRibbon}
+        onChange={(sec) => {
+          const nextBinding: ComunicadoDataBinding = { ...binding };
+          if (sec == null) delete nextBinding.refreshSec;
+          else nextBinding.refreshSec = sec;
+          applyPatch({ dataBinding: nextBinding } as Partial<ComunicadoBlock>);
+        }}
+      />
       {isRibbon && onOpenCatalog ? (
         <button type="button" className="td-btn td-btn--sm td-btn--ghost" onClick={onOpenCatalog}>
           Inserir nova fonte…

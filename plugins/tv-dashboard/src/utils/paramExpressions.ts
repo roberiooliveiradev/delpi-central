@@ -231,3 +231,27 @@ export function paramFormatToReturnTypes(
   if (normalized === "date-time") return new Set(["datetime", "date"]);
   return null;
 }
+
+/** Entrada do trace backend (`resolved.paramExpressions`) de um parâmetro. */
+export type ParamExpressionTraceEntry = {
+  resolved?: unknown;
+  error?: { message?: unknown; code?: unknown } | null;
+  expectedType?: unknown;
+};
+
+/** Lookup do trace por parâmetro no `resolved` enriquecido do backend. */
+export function findParamExpressionTrace(
+  resolved: unknown,
+  paramKey: string,
+): ParamExpressionTraceEntry | null {
+  if (!resolved || typeof resolved !== "object") return null;
+  const raw = (resolved as { paramExpressions?: unknown }).paramExpressions;
+  if (!Array.isArray(raw)) return null;
+  const entry = raw.find(
+    (item) =>
+      item &&
+      typeof item === "object" &&
+      (item as { param?: unknown }).param === paramKey,
+  );
+  return (entry as ParamExpressionTraceEntry | undefined) ?? null;
+}

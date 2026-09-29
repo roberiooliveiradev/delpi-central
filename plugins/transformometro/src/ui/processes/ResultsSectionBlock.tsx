@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { HelpTooltip } from "@delpi/plugin-ui/index";
+import { SectionHintLabel } from "@delpi/plugin-ui/index";
 
 type Props = {
   id: string;
@@ -31,11 +31,8 @@ export function ResultsSectionBlock({
       <div className="tm-processo-results-block__head">
         <div className="tm-processo-results-block__title-row">
           <h3 id={headingId} className="ds-subsection-title tm-processo-results-block__title">
-            {title}
+            {help ? <SectionHintLabel label={title} hint={help} /> : title}
           </h3>
-          {help ? (
-            <HelpTooltip content={help} ariaLabel={`Ajuda: ${title}`} placement="bottom" />
-          ) : null}
         </div>
         {action ? <div className="tm-processo-results-block__action">{action}</div> : null}
       </div>

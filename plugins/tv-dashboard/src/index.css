@@ -828,6 +828,22 @@
   font-family: var(--td-font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
   font-size: 11px;
 }
+.dashboard-tv-dashboard .td-param-expression--compact{
+  font-size: 12px;
+}
+.dashboard-tv-dashboard .td-param-expression--compact .td-param-expression__child{
+  padding-left: 10px;
+}
+.dashboard-tv-dashboard .td-param-expression--readonly{
+  cursor: not-allowed;
+  opacity: 0.82;
+}
+.dashboard-tv-dashboard .td-param-expression__fn-desc{
+  display: block;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--td-muted, #475467);
+}
 .dashboard-tv-dashboard .td-param-expression-trace{
   margin: 8px 0 0;
   font-size: 12px;
@@ -7248,7 +7264,7 @@ body.td-composer--marqueeing *{
 .dashboard-tv-dashboard .td-reorder--drop-after::after{
   bottom: -2px;
 }
-.td-reorder-ghost{
+.dashboard-tv-dashboard.td-reorder-ghost{
   border-radius: 12px;
   box-shadow:
     0 12px 28px color-mix(in srgb, #000 28%, transparent),
@@ -10255,3 +10271,114 @@ body.td-composer--marqueeing *{
   gap: 8px;
 }
 
+
+/* ==========================================================================
+   Ribbon «Dados» + expressões tipadas — drawer, cartão-resumo e label-aside
+   (redesign UX; apresentação only, tokens --td-* respeitam tema claro/escuro)
+   ========================================================================== */
+
+/* Linha do label com slot auxiliar (switch «Valor fixo | Expressão»). */
+.dashboard-tv-dashboard .td-field__label-row{
+  display: flex;
+  flex-flow: row nowrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.dashboard-tv-dashboard .td-field__label-row > .td-field__label{
+  flex: 0 1 auto;
+  min-width: 0;
+}
+.dashboard-tv-dashboard .td-field__label-aside{
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+.dashboard-tv-dashboard .td-field__label-aside .td-data-param-mode{
+  margin: 0;
+}
+
+/* Cartão-resumo de expressão (sidebar + flyout «Expressão» da ribbon). */
+.dashboard-tv-dashboard .td-expression-summary{
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px;
+  border: 1px solid var(--td-border, #d0d5dd);
+  border-radius: 8px;
+  background: var(--td-surface-2, color-mix(in srgb, var(--td-surface, #fff) 60%, transparent));
+}
+.dashboard-tv-dashboard .td-expression-summary__title{
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--td-text, #101828);
+}
+.dashboard-tv-dashboard .td-expression-summary__canonical{
+  display: block;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--td-text, #101828) 5%, transparent);
+  color: var(--td-muted, #475467);
+  font-size: 11px;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.dashboard-tv-dashboard .td-expression-summary__result{
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 12px;
+  color: var(--td-success, #067647);
+}
+.dashboard-tv-dashboard .td-expression-summary__error{
+  font-size: 12px;
+  color: var(--td-danger, #d92d20);
+}
+.dashboard-tv-dashboard .td-expression-summary__error > p{
+  margin: 0 0 4px;
+}
+.dashboard-tv-dashboard .td-expression-summary__details summary{
+  cursor: pointer;
+  font-size: 11.5px;
+  color: var(--td-muted, #475467);
+}
+.dashboard-tv-dashboard .td-expression-summary__edit{
+  align-self: flex-start;
+}
+
+/* Drawer «Expressão» — docking à direita via delpi-ui-drawer; aqui só largura. */
+.dashboard-tv-dashboard .td-drawer--expression{
+  width: min(460px, 92vw);
+}
+.dashboard-tv-dashboard .td-expression-drawer{
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.dashboard-tv-dashboard .td-expression-drawer__summary{
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.dashboard-tv-dashboard .td-expression-drawer__templates{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.dashboard-tv-dashboard .td-expression-drawer__technical summary{
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--td-muted, #475467);
+}
+.dashboard-tv-dashboard .td-expression-drawer__actions{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+.dashboard-tv-dashboard .td-expression-drawer__spacer{
+  flex: 1 1 auto;
+}

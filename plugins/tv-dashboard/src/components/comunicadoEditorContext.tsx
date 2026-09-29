@@ -107,7 +107,6 @@ type ProviderProps = {
 };
 
 function ComunicadoEditorKeyboardBridge() {
-  const deckHistory = useDeckEditorHistoryContext();
   const {
     blocks,
     selectedIds,

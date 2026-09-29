@@ -13,7 +13,7 @@ import { PageHeader } from "../../components/PageHeader";
 import { InlineErrorState } from "../../components/ErrorStateBox";
 import { StatusAlerts } from "../../components/StatusAlerts";
 import { TransformometroShell } from "../../components/TransformometroShell";
-import { FieldLabel, HelpTooltip, NativeCheckboxControl, NativeTextControl, valuesEqual } from "@delpi/plugin-ui/index";
+import { FieldLabel, NativeCheckboxControl, NativeTextControl, valuesEqual } from "@delpi/plugin-ui/index";
 import {
   DS_TABLE_CLASS_NAMES,
   DS_TABLE_SECTION_CLASS_NAMES,
@@ -575,7 +575,10 @@ export function SharedResourceDetailPage({
                                    
                                     checked={editVinculoForm.ativo}
                                     onChange={(ativo) => setEditVinculoForm({ ...editVinculoForm, ativo })}
-                                    label={<span className="tm-field__label">Vínculo ativo <HelpTooltip content={R.vinculoAtivo} ariaLabel="Ajuda: Vínculo ativo" /></span>}
+                                    label="Vínculo ativo"
+                                    hint={R.vinculoAtivo}
+                                    hintPlacement="tooltip"
+                                    hintAriaLabel="Ajuda: Vínculo ativo"
                                   />
                                 </div>
                                 <label className={DS_FILTER_BOX_WIDE}>

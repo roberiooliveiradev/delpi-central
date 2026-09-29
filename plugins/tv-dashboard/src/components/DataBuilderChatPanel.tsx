@@ -26,7 +26,11 @@ import { previewTvDataRoute } from "../utils/previewTvDataRoute";
 import { shouldRequestDataRouteSuggestions } from "../utils/shouldRequestDataRouteSuggestions";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import type { DataCatalogMode } from "./comunicadoEditorContextCore";
-import { DataParamFields, type DataParamSchema, visibleParamSchema } from "./DataParamFields";
+import {
+  visibleParamSchema,
+  type DataParamSchema,
+} from "../utils/dataParamSchema";
+import { DataParamFields } from "./DataParamFields";
 import {
   DATA_ROUTE_CATALOG_CONTENT,
   DataRouteCatalogPanel,

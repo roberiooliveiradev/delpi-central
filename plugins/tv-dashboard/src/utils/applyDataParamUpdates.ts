@@ -3,7 +3,7 @@ import {
   type ParamExpressionSpec,
 } from "@delpi/tv-dashboard-presentation";
 
-import type { DataParamSchema } from "../components/DataParamFields";
+import type { DataParamSchema } from "./dataParamSchema";
 import {
   DATE_RANGE_PRESET_PARAM,
   PERIOD_DAYS_PARAM,
