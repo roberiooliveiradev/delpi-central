@@ -6,6 +6,10 @@ from typing import Any
 
 from tv_app.application.services.branch_policy_service import validate_data_route_branch
 from tv_app.application.services.comunicado_data_params_service import merge_data_params
+from tv_app.application.services.data.value_expression_service import (
+    is_expression_value,
+    resolve_param_expressions,
+)
 from tv_app.application.services.comunicado_input_filters_service import (
     collect_input_filter_contributions,
     merge_filter_layers,
@@ -1279,6 +1283,12 @@ class ComunicadoDataEnrichmentService:
                 block_params=block_params,
                 input_overrides=merge_filter_layers(slide_input_contrib, source_contrib),
             )
+            # Expressões resolvem pós-merge e antes de AuthZ/fetch; em erro o
+            # bloco falha fechado em _enrich_data_block com trace tipado.
+            expr_resolution = resolve_param_expressions(merged, route=route)
+            if expr_resolution.error is not None:
+                continue
+            merged = expr_resolution.params
             validate_data_route_branch(route, merged, user=user)
 
         # Dedupe in-request: mesmas operationId+params ⇒ um fetch nesta montagem.
@@ -1546,6 +1556,17 @@ class ComunicadoDataEnrichmentService:
                     else {},
                     input_overrides=merge_filter_layers(slide_input_contrib, None),
                 )
+                expr_resolution = resolve_param_expressions(merged, route=route)
+                if expr_resolution.error is not None:
+                    denied = (
+                        source_id,
+                        str(
+                            expr_resolution.error.get("message")
+                            or "Expressão de parâmetro inválida."
+                        ),
+                    )
+                    break
+                merged = expr_resolution.params
                 try:
                     validate_data_route_branch(route, merged, user=user)
                 except ValueError as exc:
@@ -2099,6 +2120,24 @@ class ComunicadoDataEnrichmentService:
                 or any(str(alias or "").strip() == stored_label for alias in aliases)
             )
             result["resolvedRouteLabel"] = route_label if catalog_like else stored_label or route_label
+
+        # ExpressionSpec → escalar pós-merge, antes de AuthZ/validação de rota.
+        # O valor resolvido segue o mesmo pipeline de preset/defaults/wire.
+        param_expression_trace: list[dict[str, Any]] = []
+        if any(is_expression_value(v) for v in merged_params.values()):
+            expr_resolution = resolve_param_expressions(merged_params, route=route)
+            merged_params = expr_resolution.params
+            param_expression_trace = expr_resolution.trace
+            if expr_resolution.error is not None:
+                result["resolved"] = {
+                    "error": str(
+                        expr_resolution.error.get("message")
+                        or "Expressão de parâmetro inválida."
+                    ),
+                    "paramExpressions": expr_resolution.trace,
+                }
+                return result
+
         try:
             validate_data_route_branch(route, merged_params, user=user)
         except ValueError as exc:
@@ -2366,6 +2405,8 @@ class ComunicadoDataEnrichmentService:
         annotated["requestedParams"] = (
             dict(merged_params) if isinstance(merged_params, dict) else {}
         )
+        if param_expression_trace:
+            annotated["paramExpressions"] = param_expression_trace
         if merged_field_labels:
             annotated["fieldLabelsEffective"] = {
                 str(k): str(v) for k, v in merged_field_labels.items() if str(k).strip()

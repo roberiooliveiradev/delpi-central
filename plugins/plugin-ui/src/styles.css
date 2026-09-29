@@ -121,6 +121,7 @@
 @import "./styles/state-banner.css";
 @import "./styles/floating-notice.css";
 @import "./styles/document-reader.css";
+@import "./styles/markdown-document.css";
 
 .delpi-ui-help-tooltip {
   display: inline-flex;

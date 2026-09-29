@@ -1,9 +1,5 @@
 """Platform conformance: run the shared delpi_mcp gate set over TÉO's real
-serialized tools/list.
-
-TÉO runs mcp 1.x (declared legacy migration state): the protocol_minimum
-gate must report KNOWN_DRIFT, not PASS and not a silent skip.
-"""
+serialized tools/list (mcp 2.x generation — expected fully green)."""
 
 from __future__ import annotations
 
@@ -11,7 +7,6 @@ import asyncio
 
 import pytest
 from delpi_mcp.conformance import (
-    CLASSIFICATION_KNOWN_DRIFT,
     McpConformanceConfig,
     run_mcp_conformance,
 )
@@ -35,10 +30,10 @@ def report():
         expected_tool_names=tuple(MCP_TOOL_NAMES),
         expected_tool_count=len(MCP_TOOL_NAMES),
         provider_profile="openai",
-        sdk_generation="v1",
+        sdk_generation="v2",
         sdk_latest_protocol=LATEST_PROTOCOL_VERSION,
         protocol_minimum=DELPI_MCP_PROTOCOL_MINIMUM,
-        legacy_protocol_allowed=True,
+        legacy_protocol_allowed=False,
     )
     return run_mcp_conformance(_wire_tools(), config)
 
@@ -47,11 +42,10 @@ def test_no_hard_failures(report):
     assert report.hard_failures == [], report.summary()
 
 
-def test_protocol_minimum_is_known_drift(report):
-    """mcp 1.x cannot serve the 2026-07-28 era — reported, not hidden."""
+def test_protocol_minimum_satisfied(report):
+    """mcp 2.x serves the 2026-07-28 era — S7 convergence gate."""
     gate = next(r for r in report.results if r.gate == "protocol_minimum")
-    assert gate.status.value == "FAIL"
-    assert gate.classification == CLASSIFICATION_KNOWN_DRIFT
+    assert gate.status.value == "PASS"
 
 
 def test_tool_manifest_exact(report):

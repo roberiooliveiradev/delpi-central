@@ -6,7 +6,7 @@ import asyncio
 
 import pytest
 from fastapi import FastAPI
-from mcp.server.fastmcp import FastMCP
+from mcp.server.mcpserver import MCPServer
 from mcp.server.transport_security import (
     TransportSecurityMiddleware,
     TransportSecuritySettings,
@@ -72,8 +72,10 @@ async def test_post_mcp_without_trailing_slash_does_not_redirect(
     """Regression: ChatGPT uses canonical URL without slash; Mount must not 307."""
     monkeypatch.setenv("PUBLIC_BASE_URL", "https://minhadelpi.com.br")
     hosts, origins = public_host_allowed_for_mcp()
-    mcp = FastMCP(
+    mcp = MCPServer(
         name="routing-probe",
+    )
+    child = mcp.streamable_http_app(
         streamable_http_path="/",
         stateless_http=True,
         json_response=True,
@@ -83,7 +85,6 @@ async def test_post_mcp_without_trailing_slash_does_not_redirect(
             allowed_origins=origins,
         ),
     )
-    child = mcp.streamable_http_app()
     app = FastAPI()
 
     @app.middleware("http")

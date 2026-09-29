@@ -3,6 +3,7 @@ import { useEffect, useRef } from "react";
 import type { CollaborationEntityType } from "../data/api/transformometroCollaborationApi";
 import {
   buildTransformometroRealtimeWsUrl,
+  type RealtimeBroadcastEntityType,
   type TransformometroEntityUpdatedEvent,
 } from "../constants/realtime";
 import { getTransformometroClientId } from "../utils/clientId";
@@ -126,7 +127,7 @@ export function useTransformometroEntityWatch({
         try {
           const payload = JSON.parse(String(event.data)) as {
             type?: string;
-            entityType?: CollaborationEntityType;
+            entityType?: RealtimeBroadcastEntityType;
             entityId?: string;
             action?: string;
             sectionKey?: string | null;

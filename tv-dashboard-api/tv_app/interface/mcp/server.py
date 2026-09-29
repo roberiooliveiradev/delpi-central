@@ -11,6 +11,7 @@ from mcp.server.mcpserver import MCPServer
 from mcp.server.mcpserver.exceptions import ToolError
 from mcp.server.transport_security import TransportSecuritySettings
 
+from delpi_mcp.tool_metadata import delpi_tool_meta, tool_annotations_payload
 from delpi_mcp.transport import mcp_transport_security_settings
 from mcp.types import CallToolResult, InputRequiredResult, ToolAnnotations
 
@@ -125,36 +126,40 @@ def create_mcp_server() -> MCPServer:
 
 
 def _register_read_tools(mcp: MCPServer) -> None:
-    ann = ToolAnnotations(
-        title="READ — tv-dashboard",
-        read_only_hint=True,
-        destructive_hint=False,
-        idempotent_hint=True,
-        open_world_hint=False,
+    # S5: shared annotation/meta vocabulary — wire semantics unchanged.
+    ann = ToolAnnotations.model_validate(
+        tool_annotations_payload(
+            "READ — tv-dashboard",
+            read_only=True,
+            destructive=False,
+            idempotent=True,
+        )
     )
-    ann_prepare = ToolAnnotations(
-        title="PREPARE — tv-dashboard",
-        read_only_hint=False,
-        destructive_hint=False,
-        idempotent_hint=True,
-        open_world_hint=False,
+    ann_prepare = ToolAnnotations.model_validate(
+        tool_annotations_payload(
+            "PREPARE — tv-dashboard",
+            read_only=False,
+            destructive=False,
+            idempotent=True,
+        )
     )
-    ann_act = ToolAnnotations(
-        title="ACT — tv-dashboard",
-        read_only_hint=False,
-        destructive_hint=True,
-        idempotent_hint=True,
-        open_world_hint=False,
+    ann_act = ToolAnnotations.model_validate(
+        tool_annotations_payload(
+            "ACT — tv-dashboard",
+            read_only=False,
+            destructive=True,
+            idempotent=True,
+        )
     )
 
     def _meta(name: str) -> dict:
         # `_meta` keys must be vendor-namespaced: bare `securitySchemes` is a
         # reserved key for the OpenAI connector (it parses the value as typed
         # OAuthSecurityScheme objects) and broke action discovery.
-        return {
-            "delpi/securitySchemes": list(MCP_TOOL_SECURITY_SCHEMES),
-            "delpi/toolClass": TOOL_CLASS[name],
-        }
+        return delpi_tool_meta(
+            tool_class=TOOL_CLASS[name],
+            security_schemes=MCP_TOOL_SECURITY_SCHEMES,
+        )
 
     mcp.add_tool(
         tool_list_playlists,

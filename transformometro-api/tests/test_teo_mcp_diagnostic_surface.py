@@ -224,8 +224,8 @@ def governed(stack, monkeypatch):
 
 
 def _structured(result) -> dict:
-    assert result.structuredContent is not None
-    return result.structuredContent
+    assert result.structured_content is not None
+    return result.structured_content
 
 
 def _seed_diagnostic(repo, **kwargs) -> Diagnostic:
@@ -299,28 +299,28 @@ class TestSurfaceRegistration:
 
     def test_annotations_read_vs_prepare(self):
         tools = {t.name: t for t in asyncio.run(create_mcp_server().list_tools())}
-        assert tools["get_diagnostic"].annotations.readOnlyHint is True
-        assert tools["list_diagnostics_by_revision"].annotations.readOnlyHint is True
-        assert tools["prepare_create_diagnostic"].annotations.readOnlyHint is False
-        assert tools["prepare_manage_diagnostic"].annotations.readOnlyHint is False
-        assert tools["prepare_manage_diagnostic"].annotations.destructiveHint is False
+        assert tools["get_diagnostic"].annotations.read_only_hint is True
+        assert tools["list_diagnostics_by_revision"].annotations.read_only_hint is True
+        assert tools["prepare_create_diagnostic"].annotations.read_only_hint is False
+        assert tools["prepare_manage_diagnostic"].annotations.read_only_hint is False
+        assert tools["prepare_manage_diagnostic"].annotations.destructive_hint is False
 
     def test_create_schema_never_requests_diagnostic_id(self):
         tools = {t.name: t for t in asyncio.run(create_mcp_server().list_tools())}
-        props = tools["prepare_create_diagnostic"].inputSchema["properties"]
+        props = tools["prepare_create_diagnostic"].input_schema["properties"]
         assert "diagnostic_id" not in props
         assert "commit_now" not in props
         assert set(props) == {"revision_id", "problem_statement", "provenance"}
 
     def test_manage_schema_action_is_closed_allowlist_of_13(self):
         tools = {t.name: t for t in asyncio.run(create_mcp_server().list_tools())}
-        action_schema = tools["prepare_manage_diagnostic"].inputSchema[
+        action_schema = tools["prepare_manage_diagnostic"].input_schema[
             "properties"
         ]["action"]
         assert set(action_schema["enum"]) == set(MANAGE_ACTIONS)
         assert len(action_schema["enum"]) == 13
         # commit_now must not leak into the public schema
-        props = tools["prepare_manage_diagnostic"].inputSchema["properties"]
+        props = tools["prepare_manage_diagnostic"].input_schema["properties"]
         assert "commit_now" not in props
 
 
@@ -413,7 +413,7 @@ class TestGetDiagnostic:
         _prime_ctx()
         diagnostic = _seed_diagnostic(repo)
         blob = json.dumps(
-            bridge.tool_get_diagnostic(diagnostic.diagnostic_id).structuredContent
+            bridge.tool_get_diagnostic(diagnostic.diagnostic_id).structured_content
         )
         for forbidden in (
             "access_token",
@@ -714,7 +714,7 @@ class TestCommonCommit:
 
     def test_commit_only_accepts_proposal_handle(self):
         tools = {t.name: t for t in asyncio.run(create_mcp_server().list_tools())}
-        props = tools["commit_proposal"].inputSchema["properties"]
+        props = tools["commit_proposal"].input_schema["properties"]
         assert "capability" not in props
         assert "action" not in props
         assert set(props) <= {"proposal_handle", "confirmation"}

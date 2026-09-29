@@ -84,9 +84,9 @@ def test_list_tools_exposes_top_level_security_schemes() -> None:
         assert dumped.get("securitySchemes") == [
             {"type": "oauth2", "scopes": list(MCP_OAUTH_SCOPES)}
         ]
-        assert tool.annotations.readOnlyHint is True
-        assert tool.annotations.destructiveHint is False
-        assert tool.annotations.openWorldHint is False
+        assert tool.annotations.read_only_hint is True
+        assert tool.annotations.destructive_hint is False
+        assert tool.annotations.open_world_hint is False
         assert "ENGINEERING_LMP_ACCESS" not in json.dumps(dumped)
 
 

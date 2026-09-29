@@ -9,16 +9,16 @@ allowlist lives here.
 
 from __future__ import annotations
 
-import json
 import logging
 from typing import Any
 
+from delpi_mcp.errors import kind_for_http_status, mcp_tool_result
 from delpi_mcp.identity import (
     build_mcp_request as _shared_build_request,
     current_mcp_context,
 )
 from fastapi import Request
-from mcp.types import CallToolResult, TextContent, Tool as _Tool
+from mcp.types import CallToolResult, Tool as _Tool
 from mcp.server.mcpserver.exceptions import ToolError
 
 from tv_app.application.gpt_actions.commit_service import TvGptCommitService
@@ -70,28 +70,11 @@ def _authed_context() -> tuple[Any, str]:
 
 def _ok_result(data: dict) -> CallToolResult:
     payload = {"status": "success", "data": data}
-    body = json.dumps(payload, ensure_ascii=False)
-    return CallToolResult(
-        is_error=False,
-        content=[TextContent(type="text", text=body)],
-        structured_content=payload,
-    )
+    return mcp_tool_result(payload, is_error=False)
 
 
 def _kind_for_status(status: int) -> str:
-    if status == 401:
-        return "unauthenticated"
-    if status == 403:
-        return "forbidden"
-    if status == 404:
-        return "not_found"
-    if status == 409:
-        return "conflict"
-    if status == 422:
-        return "validation"
-    if status >= 500:
-        return "upstream"
-    return "validation"
+    return kind_for_http_status(status)
 
 
 def _error_result(
@@ -118,12 +101,7 @@ def _error_result(
     meta = None
     if http_status == 401:
         meta = {"mcp/www_authenticate": build_www_authenticate_challenge()}
-    return CallToolResult(
-        is_error=True,
-        content=[TextContent(type="text", text=json.dumps(err, ensure_ascii=False))],
-        structured_content=err,
-        meta=meta,
-    )
+    return mcp_tool_result(err, is_error=True, meta=meta)
 
 
 def handle_tool_error(exc: Exception, *, tool: str, label: str) -> CallToolResult:

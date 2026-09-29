@@ -4,7 +4,9 @@ from fastapi import APIRouter, Request
 from pydantic import BaseModel, Field
 
 from tm_app.application.security.authorization_policy import AuthorizationDenied
+from tm_app.application.services.transformometro_realtime_notify import notify_entity_updated
 from tm_app.application.use_cases.manage_process_documents import ProcessDocumentUseCases
+from tm_app.core.auth_actor import actor_from_request, client_id_from_request
 from tm_app.core.responses import fail, ok
 from tm_app.domain.services.process_document_rules import (
     MAX_CONTENT_MD_LENGTH,
@@ -42,6 +44,25 @@ def _handle(exc: Exception):
     raise exc
 
 
+def _notify_document_change(
+    request: Request,
+    *,
+    processo_id: str,
+    document_id: str,
+    action: str,
+) -> None:
+    """Invalidation signal only: no content_md or sensitive data over WS."""
+    user_id, _, _ = actor_from_request(request)
+    notify_entity_updated(
+        entity_type="process_document",
+        entity_id=document_id,
+        action=action,
+        actor_user_id=user_id,
+        actor_client_id=client_id_from_request(request),
+        payload={"processo_id": processo_id, "document_id": document_id},
+    )
+
+
 @router.get(
     "/processos/{processo_id}/documents",
     operation_id="list_process_documents",
@@ -71,6 +92,12 @@ def create_process_document(request: Request, processo_id: str, body: ProcessDoc
             processo_id,
             title=body.title,
             content_md=body.content_md,
+        )
+        _notify_document_change(
+            request,
+            processo_id=processo_id,
+            document_id=created.id,
+            action="create",
         )
         return ok(created.to_dict(), "Documento criado.", 201)
     except Exception as exc:
@@ -107,6 +134,12 @@ def update_process_document(
             title=body.title,
             content_md=body.content_md,
         )
+        _notify_document_change(
+            request,
+            processo_id=processo_id,
+            document_id=document_id,
+            action="update",
+        )
         return ok(updated.to_dict(), "Documento atualizado.")
     except Exception as exc:
         return _handle(exc)
@@ -119,6 +152,12 @@ def update_process_document(
 def delete_process_document(request: Request, processo_id: str, document_id: str):
     try:
         deleted = _docs.delete_document(request.state.user, processo_id, document_id)
+        _notify_document_change(
+            request,
+            processo_id=processo_id,
+            document_id=document_id,
+            action="delete",
+        )
         return ok(deleted.to_summary_dict(), "Documento excluído.")
     except Exception as exc:
         return _handle(exc)

@@ -24,6 +24,7 @@ export {
 export * from "./components/menu";
 export * from "./components/signature";
 export * from "./components/rich-text";
+export * from "./components/markdown";
 /**
  * Hosts TV (presentation) importam paint de runs via Index.
  * `export *` sozinho pode sumir no tree-shake MF → React #130 (undefined).

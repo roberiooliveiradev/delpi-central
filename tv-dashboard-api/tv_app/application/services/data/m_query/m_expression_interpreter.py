@@ -45,6 +45,10 @@ _SCALAR_FUNCTIONS = frozenset(
         "Date.Day",
         "Date.StartOfMonth",
         "Date.EndOfMonth",
+        "Date.StartOfYear",
+        "Date.EndOfYear",
+        "Date.StartOfQuarter",
+        "Date.EndOfQuarter",
         "Date.AddDays",
         "Date.AddMonths",
         "DateTime.From",
@@ -245,6 +249,17 @@ def _call_scalar(name: str, args: list[Any], culture: str) -> Any:
             return current.replace(day=1)
         if name == "Date.EndOfMonth":
             return current.replace(day=calendar.monthrange(current.year, current.month)[1])
+        if name == "Date.StartOfYear":
+            return current.replace(month=1, day=1)
+        if name == "Date.EndOfYear":
+            return current.replace(month=12, day=31)
+        if name == "Date.StartOfQuarter":
+            quarter_start = 3 * ((current.month - 1) // 3) + 1
+            return current.replace(month=quarter_start, day=1)
+        if name == "Date.EndOfQuarter":
+            quarter_end = 3 * ((current.month - 1) // 3) + 3
+            last_day = calendar.monthrange(current.year, quarter_end)[1]
+            return current.replace(month=quarter_end, day=last_day)
         if name == "Date.AddDays":
             return current + timedelta(days=int(_number(args[1], culture)))
         if name == "Date.AddMonths":

@@ -105,6 +105,7 @@ class VistaAgentIntelligenceService:
             "playlist_curation": doc.get("playlist_curation") or {},
             "branch_scope": doc.get("branch_scope") or {},
             "filter_layering": doc.get("filter_layering") or {},
+            "param_expressions": doc.get("param_expressions") or {},
             "slide_craft": doc.get("slide_craft") or {},
             "si_goals": doc.get("si_goals") or {},
             "write_quality": doc.get("write_quality") or {},
@@ -140,6 +141,9 @@ class VistaAgentIntelligenceService:
             raw.pop("surface_parity", None)
             raw.pop("write_flow_mcp", None)
             raw.pop("mcp_delia", None)
+            # Expression contract is MCP-primary: the Actions envelope sits at
+            # the ~100 KiB OpenAI ceiling with no residual budget.
+            raw.pop("param_expressions", None)
             write_flow = raw.get("write_flow")
             if isinstance(write_flow, dict):
                 write_flow.pop("surface", None)

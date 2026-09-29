@@ -20,6 +20,9 @@ from tv_app.application.services.data.tv_data_param_validation_service import (
     assert_closed_date_range_has_period,
     assert_merged_route_params,
 )
+from tv_app.application.services.data.value_expression_service import (
+    assert_no_unresolved_expressions,
+)
 from tv_app.application.services.tv_dashboard_content_service import message
 from tv_app.application.services.tv_data_route_catalog_service import TvDataRouteCatalogService
 from tv_app.application.services.series_points_extractor import (
@@ -300,6 +303,9 @@ class DelpiOperationalGateway:
 
         schema = route.get("paramSchema") if isinstance(route.get("paramSchema"), dict) else {}
         with_defaults = apply_catalog_param_defaults(params or {}, route)
+        # Defense-in-depth: ExpressionSpec é avaliado no enrichment pós-merge;
+        # dict de expressão nunca pode virar str() na query/path.
+        assert_no_unresolved_expressions(with_defaults)
         resolved_path = resolve_route_path(path, with_defaults, schema=schema)
         query = _build_query_params(route, params or {})
         query = _strip_path_params_from_query(query, path=path)

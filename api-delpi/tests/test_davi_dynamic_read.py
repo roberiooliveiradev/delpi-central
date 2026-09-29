@@ -1667,11 +1667,11 @@ def test_mcp_output_schemas_present_for_all_three_tools():
         "execute_delpi_information",
     }
     assert (
-        by_name["discover_delpi_information"].outputSchema
+        by_name["discover_delpi_information"].output_schema
         == discover_delpi_information_output_json_schema()
     )
     assert (
-        by_name["execute_delpi_information"].outputSchema
+        by_name["execute_delpi_information"].output_schema
         == execute_delpi_information_output_json_schema()
     )
     # Capability projection model remains available (not MCP-registered).

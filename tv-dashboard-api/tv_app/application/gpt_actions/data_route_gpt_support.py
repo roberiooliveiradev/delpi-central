@@ -4,6 +4,15 @@ from __future__ import annotations
 
 from typing import Any, Mapping
 
+from tv_app.application.services.data.m_query.m_expression_interpreter import (
+    MExpressionError,
+)
+from tv_app.application.services.data.value_expression_service import (
+    is_expression_value,
+    param_allows_expression,
+    validate_expression_param_value,
+)
+
 
 _GPT_ROUTE_KEYS = (
     "operationId",
@@ -30,6 +39,16 @@ def project_route_for_gpt(route: Mapping[str, Any]) -> dict[str, Any]:
         value = route.get(key)
         if value is not None and value != "" and value != [] and value != {}:
             out[key] = value
+    # Expõe por-param se a rota aceita ExpressionSpec (VISTA nunca inventa).
+    schema = route.get("paramSchema")
+    if isinstance(schema, Mapping) and schema:
+        out["paramSchema"] = {
+            str(key): {
+                **(dict(spec) if isinstance(spec, Mapping) else {}),
+                "expressionAllowed": param_allows_expression(str(key), route),
+            }
+            for key, spec in schema.items()
+        }
     # AUTHORITATIVE ROUTE FIELD > DERIVED TV CALCULATION: o caller precisa ver
     # os campos que a rota já fornece antes de derivar métricas via transform.
     projectable = route.get("projectableFields")
@@ -83,6 +102,13 @@ def validate_route_params(
             if not optional:
                 label = str(spec.get("label") or name).strip() or name
                 raise ValueError(f"PARAM_REQUIRED:{name}:{label}")
+            continue
+        if is_expression_value(value):
+            try:
+                validate_expression_param_value(name, value, route=route)
+            except MExpressionError as exc:
+                raise ValueError(f"PARAM_INVALID:{name}:{exc.code}") from exc
+            cleaned[name] = value
             continue
         enum_values = spec.get("enum")
         if isinstance(enum_values, list) and enum_values:

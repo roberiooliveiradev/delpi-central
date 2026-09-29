@@ -14,6 +14,7 @@ MUTATING_ROUTE_FILES = (
     "dashboard_routes.py",
     "json_backup_routes.py",
     "process_file_routes.py",
+    "process_document_routes.py",
     "revision_evidence_routes.py",
 )
 

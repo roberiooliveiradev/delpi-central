@@ -4,9 +4,49 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import TypeAlias
+from typing import Any, Mapping, TypeAlias
 
 FilterValue: TypeAlias = str | int | float | bool | None
+
+
+class ExpressionSpecError(ValueError):
+    """Spec serializado inválido para CompiledExpression (deny-by-default)."""
+
+    def __init__(self, code: str, message: str) -> None:
+        super().__init__(message)
+        self.code = code
+
+
+_SPEC_NODE_KINDS = frozenset(
+    {
+        "literal",
+        "identifier",
+        "field",
+        "type",
+        "call",
+        "each",
+        "if",
+        "unary",
+        "binary",
+        "list",
+        "record",
+        "recordField",
+    }
+)
+
+_SPEC_NODE_KEYS = frozenset({"kind", "value", "children"})
+
+_BINARY_OPERATORS = frozenset(
+    {"+", "-", "*", "/", "=", "<>", ">", ">=", "<", "<=", "and", "or", "&"}
+)
+
+_UNARY_OPERATORS = frozenset({"+", "-", "not"})
+
+_LITERAL_TYPES = (str, int, float, bool)
+
+
+def _spec_fail(code: str, message: str) -> None:
+    raise ExpressionSpecError(code, message)
 
 
 @dataclass(frozen=True, slots=True)
@@ -24,6 +64,129 @@ class CompiledExpression:
         if self.children:
             payload["children"] = [child.to_dict() for child in self.children]
         return payload
+
+    @classmethod
+    def from_dict(
+        cls,
+        payload: Any,
+        *,
+        max_depth: int = 40,
+        max_nodes: int = 256,
+        max_string_bytes: int = 512,
+    ) -> "CompiledExpression":
+        """Reconstrói o IR a partir de JSON persistido, com validação estrita.
+
+        Sem fallback permissivo: kind desconhecido, campo extra, aridade ou
+        tipo de literal inválidos abortam com ``ExpressionSpecError`` tipado.
+        """
+        counter = {"count": 0}
+
+        def parse(node: Any, depth: int) -> "CompiledExpression":
+            if depth > max_depth:
+                _spec_fail(
+                    "m.expression_complexity_limit",
+                    "A expressão excedeu a profundidade permitida.",
+                )
+            counter["count"] += 1
+            if counter["count"] > max_nodes:
+                _spec_fail(
+                    "m.expression_complexity_limit",
+                    "A expressão excedeu o número de nós permitido.",
+                )
+            if not isinstance(node, Mapping):
+                _spec_fail(
+                    "m.expression_schema_invalid",
+                    "Nó da expressão deve ser um objeto.",
+                )
+            unknown_keys = set(node.keys()) - _SPEC_NODE_KEYS
+            if unknown_keys:
+                _spec_fail(
+                    "m.expression_schema_invalid",
+                    "Nó da expressão contém campos não permitidos.",
+                )
+            kind = node.get("kind")
+            if not isinstance(kind, str) or kind not in _SPEC_NODE_KINDS:
+                _spec_fail(
+                    "m.expression_schema_invalid",
+                    "Tipo de nó de expressão não permitido.",
+                )
+            value = node.get("value")
+            if isinstance(value, str) and len(value.encode("utf-8")) > max_string_bytes:
+                _spec_fail(
+                    "m.expression_complexity_limit",
+                    "Literal/identificador da expressão excede o tamanho permitido.",
+                )
+            raw_children = node.get("children")
+            if raw_children is None:
+                children: tuple["CompiledExpression", ...] = ()
+            elif isinstance(raw_children, list):
+                children = tuple(
+                    parse(child, depth + 1) for child in raw_children
+                )
+            else:
+                _spec_fail(
+                    "m.expression_schema_invalid",
+                    "children da expressão deve ser uma lista.",
+                )
+
+            expected_children = {
+                "if": 3,
+                "each": 1,
+                "unary": 1,
+                "recordField": 1,
+                "binary": 2,
+            }
+            if kind in expected_children and len(children) != expected_children[kind]:
+                _spec_fail(
+                    "m.expression_schema_invalid",
+                    f"Nó {kind} exige {expected_children[kind]} filho(s).",
+                )
+            if kind == "literal":
+                if children:
+                    _spec_fail(
+                        "m.expression_schema_invalid",
+                        "Nó literal não aceita filhos.",
+                    )
+                if value is not None and not isinstance(value, _LITERAL_TYPES):
+                    _spec_fail(
+                        "m.expression_schema_invalid",
+                        "Literal deve ser string, número, booleano ou null.",
+                    )
+            elif kind in {"identifier", "field", "type", "recordField"}:
+                if not isinstance(value, str) or not value.strip():
+                    _spec_fail(
+                        "m.expression_schema_invalid",
+                        f"Nó {kind} exige nome textual não vazio.",
+                    )
+                if kind != "recordField" and children:
+                    _spec_fail(
+                        "m.expression_schema_invalid",
+                        f"Nó {kind} não aceita filhos.",
+                    )
+            elif kind == "call":
+                if not isinstance(value, str) or not value.strip():
+                    _spec_fail(
+                        "m.expression_schema_invalid",
+                        "Nó call exige nome de função.",
+                    )
+                if not children:
+                    _spec_fail(
+                        "m.expression_schema_invalid",
+                        "Nó call exige ao menos um argumento.",
+                    )
+            elif kind == "unary" and str(value) not in _UNARY_OPERATORS:
+                _spec_fail(
+                    "m.expression_schema_invalid",
+                    "Operador unário não permitido.",
+                )
+            elif kind == "binary" and str(value) not in _BINARY_OPERATORS:
+                _spec_fail(
+                    "m.expression_schema_invalid",
+                    "Operador binário não permitido.",
+                )
+            return cls(kind=kind, value=value, children=children)
+
+        return parse(payload, 1)
 
 
 class TransformOperation(StrEnum):

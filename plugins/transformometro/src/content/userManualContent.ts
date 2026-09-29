@@ -133,7 +133,7 @@ export const USER_MANUAL_CONTENT = {
         "Abra um processo para trabalhar no workspace. O caminho, o Hero e as abas horizontais organizam o processo, melhorias e revisões.",
         "Processo-mestre não pertence a uma única unidade: unidade e departamento aparecem na melhoria.",
         "Medições, investimentos e recursos compartilhados ficam em cada revisão — não invente pontuação no resumo.",
-        "Documentação do processo guarda textos em Markdown (criar, visualizar, editar e excluir). Não substitui diagrama, revisão nem dados estruturados.",
+        "Documentação do processo guarda textos em Markdown (criar, visualizar, editar e excluir), com tabelas, código e diagramas ilustrativos. Não substitui diagrama, revisão nem dados estruturados.",
         "Sala de interação abre a conversa canônica daquele processo. Tarefas relacionadas são só as criadas a partir de mensagens da sala.",
         "Atas continuam em Atas; não há vínculo de ata ao processo neste workspace.",
         "Não há árvore de pastas: a hierarquia Processo → Melhoria → Revisão aparece no caminho e na aba Melhorias.",
@@ -166,8 +166,11 @@ export const USER_MANUAL_CONTENT = {
         "Registre o conhecimento textual do processo em documentos Markdown dentro do workspace.",
       bullets: [
         "Crie quantos documentos precisar; cada um tem título, conteúdo Markdown, autoria e data de atualização.",
-        "Use Editar / Visualizar para escrever e conferir a renderização segura antes de salvar.",
-        "A documentação descreve o processo — não redefine diagrama, revisão, medição, ata ou evidências.",
+        "A biblioteca lateral lista os documentos com busca por título; o sumário do documento navega pelos títulos do conteúdo.",
+        "Use Editar / Dividido / Visualizar para escrever e conferir a renderização segura antes de salvar. A barra de ferramentas insere Markdown (negrito, listas, tabelas, código e diagramas Mermaid ilustrativos).",
+        "Se outra pessoa (ou o assistente) alterar o documento enquanto você edita, um aviso aparece e seu rascunho é preservado — escolha recarregar a versão atual ou continuar seu rascunho.",
+        "Documentos atualizados por outras abas ou pelo assistente aparecem automaticamente, sem atualizar a página.",
+        "A documentação descreve o processo — não redefine diagrama, revisão, medição, ata ou evidências. Diagramas no texto são ilustrativos.",
         "Excluir um documento pede confirmação e remove apenas aquela documentação.",
       ],
       links: [

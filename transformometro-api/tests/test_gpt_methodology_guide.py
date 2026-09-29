@@ -137,12 +137,12 @@ def test_action_and_mcp_project_the_same_sipoc_playbook() -> None:
             return_value=None,
         ):
             mcp = tool_get_methodology_guide(method="sipoc", task="interview")
-        assert mcp.isError is False
-        assert mcp.structuredContent["data"] == query_methodology_guide(
+        assert mcp.is_error is False
+        assert mcp.structured_content["data"] == query_methodology_guide(
             method="sipoc",
             task="interview",
         )
-        assert mcp.structuredContent["data"]["writes"] is False
+        assert mcp.structured_content["data"]["writes"] is False
     finally:
         reset_request_authorization(auth_token)
         reset_current_user(user_token)
