@@ -79,3 +79,19 @@ class PulseGatewayError(ProductionControlError):
     def __init__(self, message: str, *, status_code: int | None = None) -> None:
         super().__init__(message)
         self.status_code = status_code
+
+
+class InvalidMesEvent(ProductionControlError):
+    """Evento MES inválido: estado, origem, timestamps ou confirmação incoerentes."""
+
+
+class MesStateConflict(ProductionControlError):
+    """Já existe evento de estado aberto no posto."""
+
+
+class DowntimeConflict(ProductionControlError):
+    """Já existe parada aberta no posto."""
+
+
+class DowntimeNotFound(ProductionControlError):
+    """Parada inexistente ou já encerrada para a operação pedida."""
