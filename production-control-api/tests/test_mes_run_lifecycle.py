@@ -7,6 +7,7 @@ Postgres real para provar atomicidade/rollback das transições compostas.
 from __future__ import annotations
 
 import os
+from datetime import datetime, timezone
 
 import pytest
 
@@ -130,6 +131,17 @@ class TestPauseProducesStoppedAndDowntime:
             service.pause_run(started["id"], session_token=session)
 
 
+def _classify_open(downtimes) -> None:
+    """Marca a parada aberta como classificada (simula POST classify da Etapa 03)."""
+    for e in downtimes.events:
+        if e["ended_at"] is None:
+            e["reason_code"] = "other"
+            e["confirmed"] = True
+            e["confirmed_at"] = datetime.now(timezone.utc)
+            return
+    raise AssertionError("expected an open downtime")
+
+
 class TestResumeClosesDowntime:
     def test_resume_closes_downtime_and_reopens_producing(self):
         repo = FakeRepo()
@@ -138,6 +150,7 @@ class TestResumeClosesDowntime:
         service = make_service(repo, FakePulse(devices=[_device()]), mes_lifecycle=mes)
         started = _started_run(service, repo, session)
         service.pause_run(started["id"], session_token=session)
+        _classify_open(downtimes)
 
         service.resume_run(started["id"], session_token=session)
 
@@ -188,9 +201,11 @@ class TestResumeClosesDowntime:
     def test_double_resume_rejected(self):
         repo = FakeRepo()
         session = service_session(repo)
-        service = make_service(repo, FakePulse(devices=[_device()]))
+        mes, _, downtimes = make_mes()
+        service = make_service(repo, FakePulse(devices=[_device()]), mes_lifecycle=mes)
         started = _started_run(service, repo, session)
         service.pause_run(started["id"], session_token=session)
+        _classify_open(downtimes)
         service.resume_run(started["id"], session_token=session)
         with pytest.raises(ProductionRunConflict):
             service.resume_run(started["id"], session_token=session)
@@ -217,6 +232,7 @@ class TestStopClosesFacts:
         service = make_service(repo, FakePulse(devices=[_device()]), mes_lifecycle=mes)
         started = _started_run(service, repo, session)
         service.pause_run(started["id"], session_token=session)
+        _classify_open(downtimes)
 
         service.stop_run(started["id"], session_token=session)
 
@@ -378,6 +394,17 @@ class TestLifecyclePostgresAtomicity:
             session_token=token,
         )
         service.pause_run(run["id"], session_token=token)
+        open_dt = downtimes.get_open(branch="01", work_center=clean_ct)
+        assert open_dt["reason_code"] is None
+        assert open_dt["confirmed"] is False
+        downtimes.classify(
+            open_dt["id"],
+            reason_code="raw_material",
+            planned=None,
+            counts_as_availability_loss=None,
+            confirmed_by_type="operator",
+            confirmed_by_ref="USR01",
+        )
         service.resume_run(run["id"], session_token=token)
         service.stop_run(run["id"], session_token=token)
 
@@ -387,5 +414,5 @@ class TestLifecyclePostgresAtomicity:
         dts = downtimes.list_for_run(run["id"])
         assert len(dts) == 1
         assert dts[0]["ended_at"] is not None
-        assert dts[0]["reason_code"] is None
+        assert dts[0]["reason_code"] == "raw_material"
         assert repo.get_run(run["id"])["status"] == "completed"

@@ -95,3 +95,7 @@ class DowntimeConflict(ProductionControlError):
 
 class DowntimeNotFound(ProductionControlError):
     """Parada inexistente ou já encerrada para a operação pedida."""
+
+
+class DowntimeClassificationRequired(ProductionRunConflict):
+    """Resume/Stop bloqueado: parada MES aberta ainda sem motivo classificado."""

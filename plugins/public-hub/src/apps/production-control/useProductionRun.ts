@@ -1,17 +1,23 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  classifyRunDowntime,
   createBenchSession,
   endBenchSession,
   fetchActiveProductionRun,
+  fetchMesDowntimeReasons,
   pauseProductionRun,
   resumeProductionRun,
   startProductionRun,
   stopProductionRun,
   type BenchSessionSnapshot,
   type MachineLoadOperation,
+  type MesDowntimeReason,
   type ProductionRunSnapshot,
 } from "./api";
-import { applyProductionRunPiecesSnapshot } from "./productionRunRealtime";
+import {
+  applyProductionRunDowntimeEvent,
+  applyProductionRunPiecesSnapshot,
+} from "./productionRunRealtime";
 import type { MachineLoadRealtimeEvent } from "./usePublicMachineLoadRealtime";
 
 const SESSION_STORAGE_PREFIX = "delpi.pcp.cockpit.bench-session";
@@ -66,6 +72,8 @@ export function useProductionRun({
   const [error, setError] = useState<string | null>(null);
   const [operatorCode, setOperatorCode] = useState("");
   const [operatorName, setOperatorName] = useState("");
+  const [downtimeReasons, setDowntimeReasons] = useState<MesDowntimeReason[] | null>(null);
+  const downtimeReasonsInFlightRef = useRef(false);
   const pollRef = useRef(0);
   const refreshInFlightRef = useRef(false);
   const refreshPendingRef = useRef(false);
@@ -237,9 +245,51 @@ export function useProductionRun({
     }
   }, [token, run, session]);
 
-  const resolvedRun = useMemo(
-    () => applyProductionRunPiecesSnapshot(run, runRealtimeEvent, branch, workCenter),
-    [branch, run, runRealtimeEvent, workCenter],
+  const resolvedRun = useMemo(() => {
+    const withPieces = applyProductionRunPiecesSnapshot(
+      run,
+      runRealtimeEvent,
+      branch,
+      workCenter,
+    );
+    return applyProductionRunDowntimeEvent(withPieces, runRealtimeEvent, branch, workCenter);
+  }, [branch, run, runRealtimeEvent, workCenter]);
+
+  const loadDowntimeReasons = useCallback(async (): Promise<MesDowntimeReason[]> => {
+    if (downtimeReasons) return downtimeReasons;
+    if (!downtimeReasonsInFlightRef.current) {
+      downtimeReasonsInFlightRef.current = true;
+      try {
+        const items = await fetchMesDowntimeReasons(token);
+        setDowntimeReasons(items);
+        return items;
+      } finally {
+        downtimeReasonsInFlightRef.current = false;
+      }
+    }
+    return fetchMesDowntimeReasons(token);
+  }, [downtimeReasons, token]);
+
+  const classifyDowntime = useCallback(
+    async (reasonCode: string, note: string | null) => {
+      if (!run || !session) return;
+      setBusy(true);
+      try {
+        const downtime = await classifyRunDowntime(token, session.sessionToken, run.id, {
+          reasonCode,
+          note,
+        });
+        setRun((current) =>
+          current && current.id === run.id ? { ...current, downtime } : current,
+        );
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Falha ao registrar o motivo.");
+        throw err;
+      } finally {
+        setBusy(false);
+      }
+    },
+    [token, run, session],
   );
 
   const runMatchesOperation = useMemo(() => {
@@ -267,5 +317,8 @@ export function useProductionRun({
     resume,
     stop,
     refreshRun,
+    downtimeReasons,
+    loadDowntimeReasons,
+    classifyDowntime,
   };
 }

@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import type { ProductionRunSnapshot } from "./api.ts";
-import { applyProductionRunPiecesSnapshot } from "./productionRunRealtime.ts";
+import {
+  applyProductionRunDowntimeEvent,
+  applyProductionRunPiecesSnapshot,
+} from "./productionRunRealtime.ts";
 
 const run: ProductionRunSnapshot = {
   id: "run-1",
@@ -53,6 +56,68 @@ describe("production run realtime snapshot", () => {
         workCenter: "CT01",
         runId: "run-2",
         piecesTotal: 500,
+      },
+      "01",
+      "CT01",
+    );
+    assert.equal(updated, run);
+  });
+});
+
+describe("downtime_classified realtime event", () => {
+  it("merges the classified downtime into the run snapshot", () => {
+    const paused: ProductionRunSnapshot = {
+      ...run,
+      status: "paused",
+      downtime: {
+        id: "dt-1",
+        runId: "run-1",
+        reasonCode: null,
+        reasonLabel: null,
+        category: null,
+        note: null,
+        confirmed: false,
+        startedAt: "2026-01-01T10:00:00Z",
+        endedAt: null,
+      },
+    };
+    const updated = applyProductionRunDowntimeEvent(
+      paused,
+      {
+        type: "production_run_updated",
+        reason: "downtime_classified",
+        branch: "01",
+        workCenter: "CT01",
+        runId: "run-1",
+        downtime: {
+          id: "dt-1",
+          runId: "run-1",
+          reasonCode: "raw_material",
+          reasonLabel: "Falta de material",
+          category: "material",
+          note: null,
+          confirmed: true,
+          startedAt: "2026-01-01T10:00:00Z",
+          endedAt: null,
+        },
+      },
+      "01",
+      "CT01",
+    );
+    assert.equal(updated?.downtime?.reasonCode, "raw_material");
+    assert.equal(updated?.downtime?.confirmed, true);
+    assert.equal(updated?.id, "run-1");
+  });
+
+  it("ignores the event when the downtime payload is missing", () => {
+    const updated = applyProductionRunDowntimeEvent(
+      run,
+      {
+        type: "production_run_updated",
+        reason: "downtime_classified",
+        branch: "01",
+        workCenter: "CT01",
+        runId: "run-1",
       },
       "01",
       "CT01",

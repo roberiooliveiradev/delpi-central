@@ -12,6 +12,7 @@ from production_control_app.application.services.machine_load_realtime_hub impor
 from production_control_app.composition.pc_composer import (
     build_branch_access_service,
     build_machine_load_service,
+    build_mes_downtime_classification_service,
     build_production_run_service,
     build_public_cockpit_access_service,
     build_public_machine_load_drawing_service,
@@ -26,9 +27,13 @@ from production_control_app.core.responses import fail, ok
 from production_control_app.domain.errors import (
     BenchSessionRequired,
     DelpiGatewayError,
+    DowntimeConflict,
+    DowntimeNotFound,
     DrawingNotFound,
     DrawingSourceUnavailable,
     InvalidBranch,
+    InvalidMesEvent,
+    MesStateConflict,
     Product3DModelNotFound,
     ProductionRunConflict,
     ProductionRunNotFound,
@@ -51,6 +56,14 @@ class BenchSessionBody(BaseModel):
     work_center: str = Field(..., alias="workCenter", min_length=1, max_length=40)
     operator_code: str = Field(..., alias="operatorCode", min_length=1, max_length=40)
     operator_name: str | None = Field(default=None, alias="operatorName", max_length=120)
+    website: str | None = None  # honeypot
+
+
+class ClassifyDowntimeBody(BaseModel):
+    model_config = {"populate_by_name": True}
+
+    reason_code: str = Field(..., alias="reasonCode", min_length=1, max_length=40)
+    note: str | None = Field(default=None, max_length=500)
     website: str | None = None  # honeypot
 
 
@@ -89,6 +102,12 @@ def _handle_public_errors(exc: Exception):
         return fail(str(exc), 409)
     if isinstance(exc, ProductionRunNotFound):
         return fail(str(exc), 404)
+    if isinstance(exc, (MesStateConflict, DowntimeConflict)):
+        return fail(str(exc), 409)
+    if isinstance(exc, DowntimeNotFound):
+        return fail(str(exc), 404)
+    if isinstance(exc, InvalidMesEvent):
+        return fail(str(exc), 422)
     if isinstance(exc, PulseDeviceUnavailable):
         return fail(str(exc), 422)
     if isinstance(exc, PulseGatewayError):
@@ -415,6 +434,44 @@ def stop_production_run(
         return denied
     try:
         data = build_production_run_service().stop_run(run_id, session_token=session_token)
+    except Exception as exc:  # noqa: BLE001
+        return _handle_public_errors(exc)
+    return ok(data)
+
+
+@router.get("/{token}/mes/downtime-reasons")
+def get_mes_downtime_reasons(token: str):
+    """Catálogo MES de motivos de parada ativos (não confundir com paradas TOTVS)."""
+    denied = _assert_cockpit_token(token)
+    if denied is not None:
+        return denied
+    try:
+        items = build_mes_downtime_classification_service().list_reasons()
+    except Exception as exc:  # noqa: BLE001
+        return _handle_public_errors(exc)
+    return ok({"items": items})
+
+
+@router.post("/{token}/runs/{run_id}/downtime/classify")
+def classify_run_downtime(
+    token: str,
+    run_id: str,
+    body: ClassifyDowntimeBody,
+    session_token: str | None = Header(default=None, alias=_BENCH_SESSION_HEADER),
+):
+    """Confirma ou altera o motivo da parada aberta do run (nunca cria outra)."""
+    denied = _assert_cockpit_token(token)
+    if denied is not None:
+        return denied
+    if not _honeypot_ok(body.website):
+        return ok({"accepted": True, "id": None})
+    try:
+        data = build_mes_downtime_classification_service().classify(
+            run_id,
+            reason_code=body.reason_code,
+            note=body.note,
+            session_token=session_token,
+        )
     except Exception as exc:  # noqa: BLE001
         return _handle_public_errors(exc)
     return ok(data)

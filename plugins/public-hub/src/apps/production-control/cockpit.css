@@ -2779,3 +2779,57 @@
   align-items: center;
   gap: 0.35rem;
 }
+
+/* ---------- Motivo de parada MES ---------- */
+
+.pcp-pub-modal__panel--downtime-reason {
+  width: min(640px, 100%);
+}
+
+.pcp-pub-reasons {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 0.6rem;
+  margin: 0.9rem 0;
+}
+
+.pcp-pub-reasons__item {
+  min-height: 56px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--pcp-accent) 45%, var(--pcp-border));
+  background: var(--pcp-surface);
+  color: var(--pcp-text, inherit);
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: center;
+}
+
+.pcp-pub-reasons__item:hover,
+.pcp-pub-reasons__item:focus-visible {
+  border-color: var(--pcp-accent);
+  background: color-mix(in srgb, var(--pcp-accent) 10%, transparent);
+}
+
+.pcp-pub-reasons__item--selected {
+  border-color: var(--pcp-brand);
+  background: color-mix(in srgb, var(--pcp-brand) 14%, transparent);
+  color: var(--pcp-brand);
+  box-shadow: 0 0 0 1px var(--pcp-brand);
+}
+
+.pcp-pub-reasons__note {
+  margin-top: 0.4rem;
+}
+
+.pcp-pub-reasons__note textarea {
+  width: 100%;
+  resize: vertical;
+  font: inherit;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--pcp-border);
+  background: var(--pcp-surface);
+  color: inherit;
+}

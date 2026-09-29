@@ -300,6 +300,25 @@ class FakeDowntimeRepo:
         self.events.append(ev)
         return dict(ev)
 
+    def classify(self, downtime_id, *, reason_code, planned, counts_as_availability_loss,
+                 note=None, confirmed_by_type=None, confirmed_by_ref=None, confirmed=True):
+        from production_control_app.domain.errors import DowntimeNotFound
+
+        for e in self.events:
+            if e["id"] == downtime_id:
+                e["reason_code"] = reason_code
+                e["planned"] = planned
+                e["counts_as_availability_loss"] = counts_as_availability_loss
+                if note is not None:
+                    e["note"] = note
+                e["confirmed"] = confirmed
+                e["confirmed_at"] = datetime.now(timezone.utc) if confirmed else None
+                e["confirmed_by_type"] = confirmed_by_type
+                e["confirmed_by_ref"] = confirmed_by_ref
+                e["updated_at"] = datetime.now(timezone.utc)
+                return dict(e)
+        raise DowntimeNotFound("Parada nao encontrada.")
+
     def close_open(self, *, branch, work_center, ended_at=None, conn=None):
         for e in self.events:
             if (
@@ -320,11 +339,75 @@ class FakeDowntimeRepo:
         return [dict(e) for e in sorted(out, key=lambda e: e["started_at"], reverse=True)]
 
 
-def make_mes() -> tuple[MesRunLifecycleService, FakeStateRepo, FakeDowntimeRepo]:
+class FakeReasonRepo:
+    def __init__(self) -> None:
+        self.reasons: dict[str, dict] = {
+            "raw_material": {
+                "code": "raw_material",
+                "label": "Falta de material",
+                "category": "material",
+                "default_planned": None,
+                "default_counts_as_availability_loss": None,
+                "requires_note": False,
+                "active": True,
+                "sort_order": 40,
+            },
+            "maintenance": {
+                "code": "maintenance",
+                "label": "Manutenção",
+                "category": "maintenance",
+                "default_planned": None,
+                "default_counts_as_availability_loss": None,
+                "requires_note": False,
+                "active": True,
+                "sort_order": 70,
+            },
+            "other": {
+                "code": "other",
+                "label": "Outro",
+                "category": "other",
+                "default_planned": None,
+                "default_counts_as_availability_loss": None,
+                "requires_note": True,
+                "active": True,
+                "sort_order": 990,
+            },
+            "obsolete": {
+                "code": "obsolete",
+                "label": "Obsoleto",
+                "category": "other",
+                "default_planned": None,
+                "default_counts_as_availability_loss": None,
+                "requires_note": False,
+                "active": False,
+                "sort_order": 999,
+            },
+        }
+
+    def get(self, code: str):
+        row = self.reasons.get(str(code).strip().lower())
+        return dict(row) if row else None
+
+    def list_active(self):
+        return [
+            dict(r)
+            for r in sorted(self.reasons.values(), key=lambda r: (r["sort_order"], r["code"]))
+            if r["active"]
+        ]
+
+    def set_active(self, code: str, *, active: bool):
+        row = self.reasons.get(code)
+        if row is None:
+            return None
+        row["active"] = active
+        return dict(row)
+
+
+def make_mes(reasons=None) -> tuple[MesRunLifecycleService, FakeStateRepo, FakeDowntimeRepo]:
     states = FakeStateRepo()
     downtimes = FakeDowntimeRepo()
     return (
-        MesRunLifecycleService(states=states, downtimes=downtimes),
+        MesRunLifecycleService(states=states, downtimes=downtimes, reasons=reasons),
         states,
         downtimes,
     )
@@ -431,10 +514,12 @@ def test_run_target_is_frozen_from_queue_and_survives_pause_resume():
         "unit": "MI",
         "pieces_conversion_factor": 1000,
     }
+    mes, _, downtimes = make_mes()
     service = make_service(
         repo,
         pulse,
         queue_lookup=lambda **_kwargs: dict(operation),
+        mes_lifecycle=mes,
     )
 
     started = service.start_run(
@@ -477,6 +562,10 @@ def test_run_target_is_frozen_from_queue_and_survives_pause_resume():
     operation["operation_pending_qty"] = 0.2
     paused = service.pause_run(started["id"], session_token=session)
     assert paused["targetPieces"] == 500
+    for e in downtimes.events:
+        if e["ended_at"] is None:
+            e["reason_code"] = "other"
+            e["confirmed"] = True
     resumed = service.resume_run(started["id"], session_token=session)
     assert resumed["targetPieces"] == 500
     assert repo.runs[started["id"]]["target_pieces_snapshot"] == 500
