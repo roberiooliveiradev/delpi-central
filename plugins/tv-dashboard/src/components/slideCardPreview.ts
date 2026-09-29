@@ -418,6 +418,10 @@ function buildComunicadoPreviewData(
     // Sempre enviar fundo explícito — evita thumb preto (stage/#master escuro) em tela vazia.
     background: resolvedBackground,
     blocks,
+    ...(cfg.dataModels?.length ? { dataModels: cfg.dataModels } : {}),
+    ...(cfg.groupTransforms && Object.keys(cfg.groupTransforms).length > 0
+      ? { groupTransforms: cfg.groupTransforms }
+      : {}),
     ...(cfg.dataFilters ? { dataFilters: cfg.dataFilters } : {}),
     ...(cfg.speakerNotes ? { speakerNotes: cfg.speakerNotes } : {}),
     ...(cfg.brandThemeKey ? { brandThemeKey: cfg.brandThemeKey } : {}),
