@@ -27,19 +27,12 @@ class ConformanceStatus(str, Enum):
     INCONCLUSIVE = "INCONCLUSIVE"
 
 
-# Explicit marker for expected-but-real drift (e.g. TÉO/DAVI on mcp 1.x
-# pending SDK convergence). Rendered as ``status=FAIL +
-# classification=KNOWN_DRIFT`` so expected drift is never greenwashed.
-CLASSIFICATION_KNOWN_DRIFT = "KNOWN_DRIFT"
-
-
 @dataclass(frozen=True)
 class GateResult:
     gate: str
     status: ConformanceStatus
     message: str
     component: str = ""
-    classification: str | None = None
     details: Mapping[str, Any] = field(default_factory=dict)
 
 
@@ -53,10 +46,8 @@ class McpConformanceConfig:
     expected_resources_count: int | None = None
     expected_prompts_count: int | None = None
     provider_profile: str = "core"  # "core" | "openai"
-    sdk_generation: str = ""  # "v1" (mcp 1.x) | "v2" (mcp 2.x)
     sdk_latest_protocol: str | None = None  # e.g. runtime LATEST_PROTOCOL_VERSION
     protocol_minimum: str = DELPI_MCP_PROTOCOL_MINIMUM
-    legacy_protocol_allowed: bool = False  # declared migration state only
 
 
 @dataclass
@@ -67,15 +58,6 @@ class ConformanceReport:
     @property
     def failures(self) -> list[GateResult]:
         return [r for r in self.results if r.status is ConformanceStatus.FAIL]
-
-    @property
-    def hard_failures(self) -> list[GateResult]:
-        """Failures that are NOT declared known drift."""
-        return [
-            r
-            for r in self.failures
-            if r.classification != CLASSIFICATION_KNOWN_DRIFT
-        ]
 
     @property
     def passed(self) -> bool:
@@ -91,7 +73,6 @@ def _gate(
     ok: bool | None,
     message: str,
     *,
-    classification: str | None = None,
     details: Mapping[str, Any] | None = None,
 ) -> GateResult:
     if ok is None:
@@ -102,7 +83,6 @@ def _gate(
         gate=name,
         status=status,
         message=message,
-        classification=classification,
         details=details or {},
     )
 
@@ -278,21 +258,10 @@ def run_mcp_conformance(
     else:
         check = check_protocol_minimum(
             config.sdk_latest_protocol,
-            legacy_allowed=config.legacy_protocol_allowed,
             platform_minimum=config.protocol_minimum,
         )
         if check.support == "SUPPORTED":
             results.append(_gate("protocol_minimum", True, check.message))
-        elif check.support == "LEGACY_ALLOWED_TEMPORARILY":
-            results.append(
-                _gate(
-                    "protocol_minimum",
-                    False,
-                    check.message,
-                    classification=CLASSIFICATION_KNOWN_DRIFT,
-                    details={"sdk_latest": check.sdk_latest_protocol},
-                )
-            )
         else:
             results.append(
                 _gate(
@@ -307,7 +276,6 @@ def run_mcp_conformance(
 
 
 __all__ = [
-    "CLASSIFICATION_KNOWN_DRIFT",
     "ConformanceReport",
     "ConformanceStatus",
     "GateResult",

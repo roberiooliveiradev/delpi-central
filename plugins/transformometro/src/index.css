@@ -1127,8 +1127,11 @@
   gap: 0.5rem 1rem;
 }.dashboard-transformometro .tm-process-documentation__library-head
   .tm-process-documentation__rail-search{
-  flex: 0 1 24rem;
+  /* Library-mode search is the primary discovery action: wide, tall field. */
+  flex: 1 1 30rem;
   min-width: 12rem;
+  max-width: 38rem;
+  padding: 0.45rem 0.7rem;
 }.dashboard-transformometro .tm-process-documentation__library-items{
   list-style: none;
   margin: 0;
@@ -1299,16 +1302,43 @@
   gap: 0.35rem;
 }.dashboard-transformometro .tm-process-documentation__more{
   position: relative;
+}.dashboard-transformometro .tm-process-documentation__document-scroll{
+  min-width: 0;
+  min-height: 0;
+}
+.dashboard-transformometro .tm-process-documentation__document-scroll:focus-visible{
+  outline: 2px solid var(--ds-accent);
+  outline-offset: -2px;
+  border-radius: var(--ds-radius-sm, 0.5rem);
 }.dashboard-transformometro .tm-process-documentation__body{
   min-width: 0;
   max-width: 58rem;
 }
-/* Headings âncora: o scroll do documento ocorre no `.content` do portal,
-   onde a top bar sticky do MFE ocupa o topo — o offset medido impede
-   que o heading fique escondido atrás dela. */
+/* Headings âncora fora do scroller interno (ex.: preview do editor): o scroll
+   cai no `.content` do portal, onde a top bar sticky do MFE ocupa o topo —
+   o offset medido impede que o heading fique escondido atrás dela. */
 .dashboard-transformometro .tm-process-documentation .delpi-ui-md-doc
   :is(h1, h2, h3, h4, h5, h6)[id]{
   scroll-margin-top: calc(var(--tm-documentation-sticky-offset) + 0.75rem);
+}
+/* Dentro do scroller interno a top bar não participa — offset local pequeno. */
+.dashboard-transformometro
+  .tm-process-documentation__document-scroll
+  .delpi-ui-md-doc
+  :is(h1, h2, h3, h4, h5, h6)[id]{
+  scroll-margin-top: 0.75rem;
+}@media (min-width: 900px){
+  /* Desktop: o corpo do documento rola dentro do reader; rail e outline
+     permanecem utilizáveis e o header do documento fica fora do scroll. */
+  .dashboard-transformometro .tm-process-documentation__document-scroll{
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+    max-height: calc(
+      100dvh - var(--tm-documentation-sticky-offset) - 10.5rem
+    );
+    min-height: 22rem;
+  }
 }
 .dashboard-transformometro .tm-process-documentation__outline{
   display: none;

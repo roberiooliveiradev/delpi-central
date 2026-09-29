@@ -4,8 +4,8 @@ This package currently contains ONLY the conformance layer:
 
 - ``tool_validation``: wire-level validation of serialized MCP tool
   definitions (reserved ``_meta`` keys, schema shapes, DELPI namespaces).
-- ``protocol``: protocol-version policy primitives (platform minimum and
-  legacy-migration handling for the VISTA 2026-07-28 incident class).
+- ``protocol``: protocol-version policy primitives (platform minimum for
+  the 2026-07-28 era required by the VISTA incident class).
 - ``conformance``: reusable conformance config/report/runner consumed by
   each app's own test suite.
 - ``resource_contract`` (S1): MCP transport-facing OAuth + RFC 9728
@@ -18,10 +18,10 @@ This package currently contains ONLY the conformance layer:
   ``/mcp`` data-path predicate.
 - ``identity`` (S4): read-only snapshot of the delpi_auth-established
   context and the minimal Starlette Request bridge for adapters.
-- ``errors`` / ``tool_metadata`` (S5): SDK-tolerant CallToolResult wire
-  assembly, HTTP-status→kind vocabulary, detail redaction, and the frozen
-  DELPI ToolClass/annotation/meta vocabulary. Envelope shapes and domain
-  error mapping remain app-owned.
+- ``errors`` / ``tool_metadata`` (S5): CallToolResult wire assembly on the
+  canonical mcp 2.x model, HTTP-status→kind vocabulary, detail redaction,
+  and the frozen DELPI ToolClass/annotation/meta vocabulary. Envelope
+  shapes and domain error mapping remain app-owned.
 
 It deliberately does NOT contain (per the design freeze):
 

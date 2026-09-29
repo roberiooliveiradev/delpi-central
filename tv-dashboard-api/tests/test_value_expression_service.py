@@ -14,13 +14,18 @@ from tv_app.application.services.data.value_expression_service import (
     ExpressionPhase,
     build_evaluation_context,
     compile_expression_spec,
+    expression_capability,
     is_expression_value,
     params_contain_expressions,
     resolve_param_expressions,
     assert_no_unresolved_expressions,
     validate_expression_param_value,
 )
-from tv_app.domain.data_query.transform_plan import CompiledExpression
+from tv_app.domain.data_query.transform_plan import (
+    CompiledExpression,
+    _BINARY_OPERATORS as _BACKEND_BINARY_OPERATORS,
+    _UNARY_OPERATORS as _BACKEND_UNARY_OPERATORS,
+)
 
 
 ROUTE = {
@@ -416,3 +421,76 @@ def test_marker_detection():
     assert not is_expression_value("2026-01-01")
     assert params_contain_expressions({"a": 1}, {"b": _spec(_lit(1))})
     assert not params_contain_expressions({"a": 1}, {"b": 2})
+
+
+# --------------------------------------------------------- catalog contract
+
+
+def test_catalog_examples_round_trip_through_loader_and_phase():
+    examples = expression_capability()["ast"]["examples"]
+    assert {
+        "today",
+        "previousYearSameDay",
+        "previousYearMonthStart",
+        "yearStart",
+        "numericVariationPct",
+    } <= set(examples)
+    for name, ast in examples.items():
+        node = compile_expression_spec(
+            _spec(ast),
+            phase=ExpressionPhase.PARAMETER,
+            allowed_identifiers=frozenset({"today", "now"}),
+        )
+        assert isinstance(node, CompiledExpression), name
+
+
+def test_catalog_ast_node_kinds_match_parameter_phase():
+    published = set(expression_capability()["ast"]["nodeKinds"])
+    assert published == {
+        "literal", "identifier", "call", "binary", "unary", "if", "list",
+    }
+    # Kinds DERIVED-only / fora de PARAMETER nunca são anunciados.
+    assert published.isdisjoint({"field", "record", "recordField", "each", "type"})
+
+
+def test_catalog_operators_match_backend_loader():
+    ops = expression_capability()["ast"]["operators"]
+    assert set(ops["binary"]) == set(_BACKEND_BINARY_OPERATORS)
+    assert set(ops["unary"]) == set(_BACKEND_UNARY_OPERATORS)
+
+
+def test_catalog_refs_map_to_identifier_nodes():
+    refs = expression_capability()["ast"]["refs"]
+    assert set(refs) == {"context:today", "context:now", "param.<schemaParam>"}
+    for node in refs.values():
+        assert node["kind"] == "identifier"
+        compile_expression_spec(
+            _spec(dict(node)),
+            phase=ExpressionPhase.PARAMETER,
+            allowed_identifiers=frozenset({"today", "now", "param.<schemaParam>"}),
+        )
+
+
+def test_catalog_node_contract_shapes_accepted_by_loader():
+    kinds = expression_capability()["ast"]["nodeKinds"]
+    samples = {
+        "literal": _lit(1),
+        "identifier": _ident("today"),
+        "call": _call("Date.StartOfMonth", _ident("today")),
+        "binary": _bin("+", _lit(1), _lit(2)),
+        "unary": {"kind": "unary", "value": "-", "children": [_lit(1)]},
+        "if": {"kind": "if", "children": [_lit(True), _lit(1), _lit(2)]},
+        "list": {"kind": "list", "children": [_lit(1), _lit(2)]},
+    }
+    assert set(samples) == set(kinds)
+    for kind, ast in samples.items():
+        node = CompiledExpression.from_dict(ast)
+        assert node.kind == kind
+
+
+def test_actions_stub_has_no_ast_details():
+    stub = expression_capability(transport="actions")
+    assert "ast" not in stub
+    assert "functions" not in stub
+    assert "examples" not in stub
+    assert stub["detailTransport"] == "mcp"

@@ -196,9 +196,25 @@
   max-width: 100%;
 }
 
+/* Document-grade Mermaid viewport: taller than the collaboration/diagram
+   defaults — enough vertical room to read real technical diagrams while
+   pan/zoom/fit stay owned by SvgDiagramViewport. */
 .delpi-ui-md-doc__mermaid .delpi-ui-bpmn-editor__mermaid-preview {
-  min-height: 120px;
-  max-height: 460px;
+  min-height: 0;
+  height: clamp(16rem, 38vh, 22rem);
+  max-height: none;
+}
+
+@media (min-width: 900px) {
+  .delpi-ui-md-doc__mermaid .delpi-ui-bpmn-editor__mermaid-preview {
+    height: clamp(18rem, 42vh, 28rem);
+  }
+}
+
+@media (min-width: 1200px) {
+  .delpi-ui-md-doc__mermaid .delpi-ui-bpmn-editor__mermaid-preview {
+    height: clamp(22rem, 48vh, 34rem);
+  }
 }
 
 .delpi-ui-md-doc__mermaid .delpi-ui-bpmn-mermaid {

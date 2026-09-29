@@ -30,16 +30,14 @@ def report():
         expected_tool_names=tuple(MCP_TOOL_NAMES),
         expected_tool_count=len(MCP_TOOL_NAMES),
         provider_profile="openai",
-        sdk_generation="v2",
         sdk_latest_protocol=LATEST_PROTOCOL_VERSION,
         protocol_minimum=DELPI_MCP_PROTOCOL_MINIMUM,
-        legacy_protocol_allowed=False,
     )
     return run_mcp_conformance(_wire_tools(), config)
 
 
-def test_no_hard_failures(report):
-    assert report.hard_failures == [], report.summary()
+def test_no_failures(report):
+    assert report.failures == [], report.summary()
 
 
 def test_protocol_minimum_satisfied(report):
