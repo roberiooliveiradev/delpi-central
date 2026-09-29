@@ -1,16 +1,19 @@
 # app/middleware/auth_middleware.py
 
 from fastapi import Request
-from fastapi.responses import JSONResponse
 
 from delpi_auth.jwt_validator import validate_token
 from delpi_auth.middleware.fastapi_auth import jwt_middleware as _base_jwt_middleware
 from delpi_auth.service_token import request_has_valid_internal_service_token
+from delpi_mcp.auth import (
+    McpTransportAuthPolicy,
+    is_mcp_data_path,
+    mcp_transport_auth,
+)
 
 from app.interface.mcp.oauth_contract import (
-    missing_required_oauth_scopes,
+    MCP_OAUTH_SCOPES,
     resolve_required_mcp_resource_audience,
-    token_has_exact_audience,
 )
 from app.interface.mcp.resource_metadata import www_authenticate_challenge
 
@@ -49,7 +52,7 @@ def _is_oauth_metadata_path(normalized: str) -> bool:
 
 
 def _is_mcp_data_path(normalized: str) -> bool:
-    return normalized == "/mcp" or normalized.startswith("/mcp/")
+    return is_mcp_data_path(normalized)
 
 
 def _is_public_delpi_path(path: str) -> bool:
@@ -61,21 +64,14 @@ def _is_public_delpi_path(path: str) -> bool:
     return any(normalized.startswith(prefix) for prefix in _PUBLIC_PREFIXES)
 
 
-def _unauthorized_mcp(
-    *,
-    error: str = "invalid_token",
-    error_description: str = "Authentication required",
-) -> JSONResponse:
-    return JSONResponse(
-        status_code=401,
-        content={"detail": "Unauthorized"},
-        headers={
-            "WWW-Authenticate": www_authenticate_challenge(
-                error=error,
-                error_description=error_description,
-            )
-        },
-    )
+# S3: MCP transport AuthN policy (DAVI wire preserved — space-separated
+# challenge, redecoration of a base-middleware 401 with the MCP challenge).
+_MCP_TRANSPORT_POLICY = McpTransportAuthPolicy(
+    resolve_resource_audience=resolve_required_mcp_resource_audience,
+    required_scopes=MCP_OAUTH_SCOPES,
+    challenge=www_authenticate_challenge,
+    redecorate_base_401=True,
+)
 
 
 async def jwt_middleware(request: Request, call_next):
@@ -86,52 +82,14 @@ async def jwt_middleware(request: Request, call_next):
     if _is_mcp_data_path(normalized):
         # Auth model A: entire MCP transport requires user OAuth before tools/list.
         # Machine/service identity is forbidden on this user-data surface.
-        if request_has_valid_internal_service_token(request):
-            return _unauthorized_mcp(
-                error="invalid_token",
-                error_description="User authentication required",
-            )
-
-        auth_header = request.headers.get("Authorization") or ""
-        if not auth_header.startswith("Bearer "):
-            return _unauthorized_mcp()
-
-        token = auth_header.split(" ", 1)[1].strip()
-        if not token:
-            return _unauthorized_mcp()
-
-        try:
-            # 1) Canonical platform JWT validation (signature/issuer/exp/nbf/aud=delpi-central).
-            claims = validate_token(token)
-            # 2) MCP-specific resource audience (exact MCP_RESOURCE_URL membership).
-            #    Does not alter shared JWT semantics for non-MCP routes.
-            mcp_resource = resolve_required_mcp_resource_audience()
-            if not token_has_exact_audience(claims, mcp_resource):
-                return _unauthorized_mcp(
-                    error="invalid_token",
-                    error_description="MCP resource audience is required",
-                )
-            # 3) Required OAuth scopes in JWT scope claim (identity + mcp:tools).
-            #    audience-delpi is a Keycloak client scope that mints aud=delpi-central;
-            #    it is NOT required in the JWT scope string.
-            missing = missing_required_oauth_scopes(claims)
-            if missing:
-                return _unauthorized_mcp(
-                    error="insufficient_scope",
-                    error_description="Required OAuth scopes are missing",
-                )
-        except Exception:
-            return _unauthorized_mcp(
-                error="invalid_token",
-                error_description="Access token validation failed",
-            )
-
-        response = await _base_jwt_middleware(request, call_next)
-        if getattr(response, "status_code", None) == 401:
-            response.headers["WWW-Authenticate"] = www_authenticate_challenge(
-                error="invalid_token",
-                error_description="Authentication required",
-            )
-        return response
+        # Business AuthZ remains application-owned downstream of delpi_auth.
+        return await mcp_transport_auth(
+            request,
+            call_next,
+            policy=_MCP_TRANSPORT_POLICY,
+            token_validator=validate_token,
+            service_token_gate=request_has_valid_internal_service_token,
+            base_auth_middleware=_base_jwt_middleware,
+        )
 
     return await _base_jwt_middleware(request, call_next)
