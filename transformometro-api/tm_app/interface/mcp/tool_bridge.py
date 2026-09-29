@@ -18,9 +18,10 @@ from fastapi.responses import JSONResponse
 from mcp.types import CallToolResult, TextContent
 from starlette.requests import Request
 
-from delpi_auth.request_context import (
-    get_current_user,
-    get_request_authorization,
+from delpi_mcp.identity import (
+    build_mcp_request as _shared_build_request,
+    current_mcp_context,
+    require_mcp_context,
 )
 from tm_app.application.governed_writes.errors import (
     OUTCOME_VERIFICATION_FAILED,
@@ -100,29 +101,18 @@ _ERROR_KIND_BY_CODE = {
 
 
 def build_mcp_request() -> Request:
-    user = get_current_user()
-    if user is None:
-        raise PermissionError("Unauthorized")
-    auth = (get_request_authorization() or "").strip()
-    headers: list[tuple[bytes, bytes]] = []
-    if auth:
-        headers.append((b"authorization", auth.encode("utf-8")))
-    scope = {
-        "type": "http",
-        "asgi": {"version": "3.0", "spec_version": "2.3"},
-        "http_version": "1.1",
-        "method": "POST",
-        "scheme": "https",
-        "path": "/mcp",
-        "raw_path": b"/mcp",
-        "query_string": b"",
-        "headers": headers,
-        "client": ("127.0.0.1", 0),
-        "server": ("transformometro-api", 443),
-    }
-    request = Request(scope)
-    request.state.user = user
-    return request
+    """Rebuild the adapter Request from the delpi_auth-established context.
+
+    S4: context snapshot + scope reconstruction delegated to
+    delpi_mcp.identity; missing user fails closed with the same
+    PermissionError("Unauthorized") the error adapter maps to 401.
+    """
+    context = require_mcp_context()
+    return _shared_build_request(
+        context=context,
+        server=("transformometro-api", 443),
+        client=("127.0.0.1", 0),
+    )
 
 
 def _ok_result(data: Any, message: str = "ok") -> CallToolResult:
@@ -296,12 +286,11 @@ def _act(capability: str, proposal_handle: str | None) -> CallToolResult:
 
 def tool_get_my_context() -> CallToolResult:
     try:
-        user = get_current_user()
-        if user is None:
+        context = require_mcp_context()
+        if not context.authorization:
             raise PermissionError("Unauthorized")
-        authorization = (get_request_authorization() or "").strip()
-        if not authorization:
-            raise PermissionError("Unauthorized")
+        user = context.user
+        authorization = context.authorization
         email = getattr(user, "email", None)
         display_name = getattr(user, "name", None) or email
         data = _user_context.get_my_context(
