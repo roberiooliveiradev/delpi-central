@@ -23,6 +23,7 @@ O `delpi-mes-api` não é o owner dos fatos MES. Runs, estados, paradas, contage
 | GET | `/health` | público |
 | GET | `/monitoring?branch=01` | `delpi-mes.monitoring.view` |
 | GET | `/runs/{runId}/timeline` | `delpi-mes.history.view` |
+| GET | `/work-centers/{workCenter}/timeline?branch=&from=&to=` | `delpi-mes.history.view` |
 | GET | `/downtimes?branch=&workCenter=&from=&to=&page=&pageSize=` | `delpi-mes.downtimes.view` |
 
 Toda rota gerencial também exige `delpi-mes.access`, principal humano e `delpi-mes.view.filial-01|02` para a filial consultada. O provisionamento dessas permissões e o manifesto pertencem à Fase 2.

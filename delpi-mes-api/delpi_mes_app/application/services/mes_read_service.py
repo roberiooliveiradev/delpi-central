@@ -25,6 +25,11 @@ _TIMELINE_FIELDS = ("runId", "branch", "workCenter", "status", "referenceAt", "s
 _TIMELINE_ITEM_FIELDS = (
     "id", "state", "startedAt", "endedAt", "durationSeconds", "source", "downtime",
 )
+_WORK_CENTER_TIMELINE_FIELDS = ("branch", "workCenter", "from", "to", "referenceAt")
+_WORK_CENTER_TIMELINE_ITEM_FIELDS = (
+    "stateEventId", "runId", "productionOrder", "operationCode",
+    "state", "startedAt", "endedAt", "source", "downtime",
+)
 _DOWNTIME_FIELDS = (
     "id", "startedAt", "source", "reasonCode", "reasonLabel", "category", "confirmed", "note",
 )
@@ -56,6 +61,35 @@ class MesReadService:
         result = self._pick(data, _TIMELINE_FIELDS)
         result["summary"] = self._pick(data.get("summary") or {}, _TIMELINE_SUMMARY_FIELDS)
         result["items"] = [self._timeline_item(item) for item in data.get("items", [])]
+        return result
+
+    def get_work_center_timeline(
+        self,
+        user: Any,
+        *,
+        work_center: str,
+        branch: str,
+        period_from: datetime | None,
+        period_to: datetime | None,
+        permission: str,
+    ) -> dict[str, Any]:
+        code = self._authorize(user, branch=branch, permission=permission)
+        center = (work_center or "").strip()
+        if not center or len(center) > 40:
+            raise ValueError("Centro de trabalho inválido.")
+        if period_from is None:
+            raise ValueError("from é obrigatório.")
+        self._validate_period(period_from, period_to)
+        data = self._gateway.get_work_center_timeline(
+            branch=code,
+            work_center=center,
+            period_from=period_from,
+            period_to=period_to,
+        )
+        result = self._pick(data, _WORK_CENTER_TIMELINE_FIELDS)
+        result["items"] = [
+            self._work_center_timeline_item(item) for item in data.get("items", [])
+        ]
         return result
 
     def get_downtimes(
@@ -136,6 +170,13 @@ class MesReadService:
     @classmethod
     def _timeline_item(cls, data: dict[str, Any]) -> dict[str, Any]:
         item = cls._pick(data, _TIMELINE_ITEM_FIELDS)
+        if isinstance(data.get("downtime"), dict):
+            item["downtime"] = cls._pick(data["downtime"], _DOWNTIME_FIELDS)
+        return item
+
+    @classmethod
+    def _work_center_timeline_item(cls, data: dict[str, Any]) -> dict[str, Any]:
+        item = cls._pick(data, _WORK_CENTER_TIMELINE_ITEM_FIELDS)
         if isinstance(data.get("downtime"), dict):
             item["downtime"] = cls._pick(data["downtime"], _DOWNTIME_FIELDS)
         return item

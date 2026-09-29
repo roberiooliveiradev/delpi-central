@@ -59,19 +59,42 @@ class MesIntegrationReadService:
             raise ProductionRunNotFound("Produção não encontrada.")
         events = []
         for row in self._repository.list_timeline_facts(run_id):
-            downtime = None
-            if row.get("downtime_id"):
-                downtime = {
-                    "id": row["downtime_id"],
-                    "reasonCode": row.get("reason_code"),
-                    "reasonLabel": row.get("reason_label"),
-                    "category": row.get("category"),
-                    "note": row.get("note"),
-                    "confirmed": bool(row.get("confirmed")),
-                    "source": row.get("downtime_source"),
-                }
-            events.append({**row, "downtime": downtime})
+            events.append({**row, "downtime": self._downtime_view(row)})
         return self._timeline_builder.build(run=run, events=events, reference_at=self._clock())
+
+    def get_work_center_timeline(
+        self,
+        *,
+        branch: str,
+        work_center: str,
+        period_from: datetime,
+        period_to: datetime | None = None,
+    ) -> dict[str, Any]:
+        code = self._branch_access.assert_valid_branch(branch)
+        center = (work_center or "").strip()
+        if not center or len(center) > 40:
+            raise ValueError("Centro de trabalho inválido.")
+        for name, value in (("from", period_from), ("to", period_to)):
+            if value is not None and value.tzinfo is None:
+                raise ValueError(f"{name} deve incluir timezone.")
+        reference_at = self._clock()
+        effective_to = period_to or reference_at
+        if period_from >= effective_to:
+            raise ValueError("O início do período deve ser anterior ao fim.")
+        rows = self._repository.list_work_center_timeline_facts(
+            branch=code,
+            work_center=center,
+            period_from=period_from,
+            period_to=effective_to,
+        )
+        return {
+            "branch": code,
+            "workCenter": center,
+            "from": period_from.isoformat(),
+            "to": effective_to.isoformat(),
+            "referenceAt": reference_at.isoformat(),
+            "items": [self._work_center_timeline_item(row) for row in rows],
+        }
 
     def list_downtimes(
         self,
@@ -139,6 +162,34 @@ class MesIntegrationReadService:
             "targetPieces": row.get("target_pieces"),
             "lastCountActivityAt": _iso(row.get("last_count_activity_at")),
             "downtime": downtime,
+        }
+
+    @staticmethod
+    def _downtime_view(row: dict[str, Any]) -> dict[str, Any] | None:
+        if not row.get("downtime_id"):
+            return None
+        return {
+            "id": row["downtime_id"],
+            "reasonCode": row.get("reason_code"),
+            "reasonLabel": row.get("reason_label"),
+            "category": row.get("category"),
+            "note": row.get("note"),
+            "confirmed": bool(row.get("confirmed")),
+            "source": row.get("downtime_source"),
+        }
+
+    @classmethod
+    def _work_center_timeline_item(cls, row: dict[str, Any]) -> dict[str, Any]:
+        return {
+            "stateEventId": row["id"],
+            "runId": row.get("run_id"),
+            "productionOrder": row.get("production_order"),
+            "operationCode": row.get("operation_code"),
+            "state": row.get("state"),
+            "startedAt": _iso(row.get("started_at")),
+            "endedAt": _iso(row.get("ended_at")),
+            "source": row.get("source"),
+            "downtime": cls._downtime_view(row),
         }
 
     @staticmethod

@@ -13,6 +13,13 @@ class FakeService:
     def get_run_timeline(self, run_id):
         return {"runId": run_id, "referenceAt": "2026-09-29T13:00:00+00:00", "summary": {}, "items": []}
 
+    def get_work_center_timeline(self, **kwargs):
+        return {
+            "branch": kwargs["branch"], "workCenter": kwargs["work_center"],
+            "from": kwargs["period_from"].isoformat(), "to": "2026-09-29T13:00:00+00:00",
+            "referenceAt": "2026-09-29T13:00:00+00:00", "items": [],
+        }
+
     def list_downtimes(self, **kwargs):
         return {
             "branch": kwargs["branch"], "referenceAt": "2026-09-29T13:00:00+00:00",
@@ -62,10 +69,22 @@ def test_valid_service_token_allows_all_read_contracts(monkeypatch):
         api.get("/integrations/mes/work-centers/live?branch=01", headers=headers),
         api.get("/integrations/mes/runs/run-1/timeline", headers=headers),
         api.get("/integrations/mes/downtimes?branch=01&page=1&pageSize=50", headers=headers),
+        api.get(
+            "/integrations/mes/work-centers/CT-35/timeline?branch=01&from=2026-09-29T00:00:00%2B00:00",
+            headers=headers,
+        ),
     ]
-    assert [response.status_code for response in responses] == [200, 200, 200]
+    assert [response.status_code for response in responses] == [200, 200, 200, 200]
     assert all(response.json()["success"] is True for response in responses)
     assert "internal-secret" not in str([response.json() for response in responses])
+
+
+def test_work_center_timeline_requires_service_token(monkeypatch):
+    monkeypatch.setenv("API_DELPI_INTERNAL_SERVICE_TOKEN", "internal-secret")
+    response = client(monkeypatch).get(
+        "/integrations/mes/work-centers/CT-35/timeline?branch=01&from=2026-09-29T00:00:00%2B00:00"
+    )
+    assert response.status_code == 401
 
 
 def test_bearer_service_token_is_supported(monkeypatch):

@@ -9,6 +9,15 @@ class ProductionControlMesGatewayPort(Protocol):
 
     def get_timeline(self, run_id: str) -> dict[str, Any]: ...
 
+    def get_work_center_timeline(
+        self,
+        *,
+        branch: str,
+        work_center: str,
+        period_from: datetime,
+        period_to: datetime | None,
+    ) -> dict[str, Any]: ...
+
     def get_downtimes(
         self,
         *,
