@@ -6,6 +6,8 @@ import logging
 from typing import Any
 
 from mcp.server.fastmcp import FastMCP
+from delpi_mcp.errors import mcp_tool_result
+from delpi_mcp.tool_metadata import security_schemes_meta, tool_annotations_payload
 from delpi_mcp.transport import mcp_transport_security_settings
 from mcp.types import CallToolResult, TextContent, Tool as MCPTool, ToolAnnotations
 from pydantic import ValidationError
@@ -63,13 +65,13 @@ VALIDATION_ERROR_MESSAGE = "Invalid search parameters."
 
 def validation_error_tool_result(message: str = VALIDATION_ERROR_MESSAGE) -> CallToolResult:
     """Stable external validation failure — no Pydantic/framework details."""
-    return CallToolResult(
-        content=[TextContent(type="text", text=message)],
-        structuredContent={
+    return mcp_tool_result(
+        {
             "code": VALIDATION_ERROR_CODE,
             "message": message,
         },
-        isError=True,
+        is_error=True,
+        text=message,
     )
 
 
@@ -95,20 +97,15 @@ def _authorization() -> str | None:
 def _authz_error_result(exc: PermissionError) -> CallToolResult:
     message = str(exc) or "Forbidden"
     if message == "Unauthorized":
-        return CallToolResult.model_validate(
-            {
-                "content": [{"type": "text", "text": "Authentication required."}],
-                "isError": True,
-                "_meta": mcp_www_authenticate_meta(
-                    error="invalid_token",
-                    error_description="Authentication required",
-                ),
-            }
+        return mcp_tool_result(
+            is_error=True,
+            text="Authentication required.",
+            meta=mcp_www_authenticate_meta(
+                error="invalid_token",
+                error_description="Authentication required",
+            ),
         )
-    return CallToolResult(
-        content=[TextContent(type="text", text="Forbidden")],
-        isError=True,
-    )
+    return mcp_tool_result(is_error=True, text="Forbidden")
 
 
 class ApiDelpiFastMCP(FastMCP):
@@ -187,13 +184,14 @@ def create_mcp_server() -> FastMCP:
             "candidate_token values for execute_delpi_information. "
             "Does not accept URL, path, method, operationId, or SQL."
         ),
-        annotations=ToolAnnotations(
-            readOnlyHint=True,
-            destructiveHint=False,
-            openWorldHint=False,
-            title=MCP_TOOL_DISCOVER_DELPI_INFORMATION_TITLE,
+        annotations=ToolAnnotations.model_validate(
+            tool_annotations_payload(
+                MCP_TOOL_DISCOVER_DELPI_INFORMATION_TITLE,
+                read_only=True,
+                destructive=False,
+            )
         ),
-        meta={"securitySchemes": DAVI_MCP_SECURITY_SCHEMES},
+        meta=security_schemes_meta(DAVI_MCP_SECURITY_SCHEMES),
         structured_output=True,
     )
     def discover_delpi_information_tool(
@@ -227,13 +225,14 @@ def create_mcp_server() -> FastMCP:
             "call. Requires that candidate_token. Does not accept URL, path, method, "
             "free operationId, or SQL. Backend AuthZ remains authoritative."
         ),
-        annotations=ToolAnnotations(
-            readOnlyHint=True,
-            destructiveHint=False,
-            openWorldHint=False,
-            title=MCP_TOOL_EXECUTE_DELPI_INFORMATION_TITLE,
+        annotations=ToolAnnotations.model_validate(
+            tool_annotations_payload(
+                MCP_TOOL_EXECUTE_DELPI_INFORMATION_TITLE,
+                read_only=True,
+                destructive=False,
+            )
         ),
-        meta={"securitySchemes": DAVI_MCP_SECURITY_SCHEMES},
+        meta=security_schemes_meta(DAVI_MCP_SECURITY_SCHEMES),
         structured_output=True,
     )
     def execute_delpi_information_tool(
