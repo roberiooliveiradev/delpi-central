@@ -131,6 +131,33 @@ class TvDataPreviewService:
             set_cached_preview(cache_key, selected)
         return selected
 
+    def resolve_blocks(
+        self,
+        blocks: list[dict[str, Any]],
+        *,
+        native_config: dict[str, Any],
+        authorization: str | None = None,
+        user: Any | None = None,
+        playlist_defaults: dict[str, Any] | None = None,
+        force_refresh: bool = False,
+        target_step_name: str | None = None,
+        preview_options: dict[str, Any] | None = None,
+    ) -> list[dict[str, Any]]:
+        """Bounded enrich of an explicit block set — same canonical resolver as
+        `preview_block` (params merge, expression resolution, fetch, transform
+        DAG, linked views). Used by read-only inspection flows that must scope
+        execution to a dependency closure instead of the whole slide."""
+        return self._resolution.resolve_blocks(
+            blocks,
+            cfg=native_config,
+            authorization=authorization,
+            playlist_defaults=playlist_defaults,
+            user=user,
+            force_refresh=force_refresh,
+            target_step_name=target_step_name,
+            preview_options=preview_options,
+        )
+
     def preview_data_model(
         self,
         model: dict[str, Any],

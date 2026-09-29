@@ -979,6 +979,9 @@
       "gpt_preview_change": "prepare_change",
       "gpt_commit_change": "commit_proposal"
     },
+    "mcp_only": [
+      "inspect_data_source"
+    ],
     "not_exposed_in_mcp": [
       "gpt_preview_data_block",
       "gpt_suggest_change",
