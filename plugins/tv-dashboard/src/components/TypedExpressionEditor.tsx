@@ -30,20 +30,20 @@ import {
   readExpressionAst,
   type ParamExpressionNodeKind,
 } from "../utils/paramExpressions";
+import {
+  EXPRESSION_NODE_GROUPS,
+  expressionNodeSummary,
+  friendlyFunctionLabel,
+  friendlyFunctionReturnTypeLabel,
+} from "../utils/paramExpressionLabels";
 
 /** Limite de authoring da UI (não é o limite do backend — só guarda estrutural). */
 const UI_MAX_AUTHORING_DEPTH = 10;
 const UI_MAX_AUTHORING_NODES = 64;
 
-const NODE_KIND_OPTIONS: Array<{ value: ParamExpressionNodeKind; label: string }> = [
-  { value: "call", label: "Função" },
-  { value: "identifier", label: "Referência" },
-  { value: "literal", label: "Literal" },
-  { value: "binary", label: "Operação" },
-  { value: "unary", label: "Unário" },
-  { value: "if", label: "Se" },
-  { value: "list", label: "Lista" },
-];
+/** Tipos de nó — taxonomia amigável canônica (Básicos primeiro, §25). */
+const NODE_KIND_OPTIONS: Array<{ value: ParamExpressionNodeKind; label: string }> =
+  EXPRESSION_NODE_GROUPS.map((entry) => ({ value: entry.kind, label: entry.label }));
 
 const BINARY_OPERATOR_LABELS: Record<string, string> = {
   "&": "& (texto)",

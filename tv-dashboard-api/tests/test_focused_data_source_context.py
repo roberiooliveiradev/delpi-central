@@ -1,9 +1,11 @@
-"""inspect_data_source — superfície READ de inspeção focada de data_source legado.
+"""get_playlist_context(data_source_id=...) — inspeção focada de data_source
+legado aninhada no contexto da programação (não é tool standalone).
 
 Contrato: definição persistida + transform canônico + dependências derivadas
 do contrato (nunca inferência por nome) + consumers + evidência de runtime sob
 demanda (effectiveParams por entrada, inputResults, transformedResult, erros
-tipados). Somente leitura — nenhuma proposta/mutação é criada.
+tipados) em `focusedDataSource`. Somente leitura — nenhuma proposta/mutação é
+criada. Sem `data_source_id`, o contexto permanece inalterado.
 """
 
 from __future__ import annotations
@@ -154,6 +156,14 @@ def _dispatch(*, slide: dict, gateway=None) -> GptActionsDispatchService:
     writes.get_slide.side_effect = lambda slide_id, playlist_id=None: repo.get_slide(
         slide_id, playlist_id=playlist_id
     )
+    writes.get_playlist.return_value = {
+        "id": PLAYLIST_ID,
+        "name": "TV",
+        "dataDefaults": {"branch": "01"},
+    }
+    writes.list_slides.return_value = [dict(slide)]
+    writes.list_sections.return_value = []
+    writes.get_revision.return_value = 7
     return GptActionsDispatchService(
         repo=repo,
         writes=writes,
@@ -166,23 +176,74 @@ def _access(**over):
     base = {
         "can_read": True,
         "can_edit": True,
-        "playlist": {"dataDefaults": {"branch": "01"}, "revision": 7},
+        "level": "owner",
+        "playlist": {
+            "id": PLAYLIST_ID,
+            "name": "TV",
+            "dataDefaults": {"branch": "01"},
+            "revision": 7,
+        },
     }
     base.update(over)
     return SimpleNamespace(**base)
 
 
-def _inspect(dispatch: GptActionsDispatchService, source_id: str, **kw):
+def _context(dispatch: GptActionsDispatchService, **kw):
     access = kw.pop("access", _access())
-    with patch.object(dispatch._access, "resolve", return_value=access):
-        return dispatch.inspect_data_source(
+    with (
+        patch.object(dispatch._access, "resolve", return_value=access),
+        patch.object(dispatch, "_actor", return_value=None),
+        patch(
+            "tv_app.application.services.data.brand_logo_media_service.BrandLogoMediaService.list_brand_assets",
+            return_value={},
+        ),
+        patch(
+            "tv_app.application.services.data.brand_logo_media_service.BrandLogoMediaService.list_playlist_assets",
+            return_value=[],
+        ),
+    ):
+        return dispatch.get_playlist_context(
             user=_user(),
             playlist_id=PLAYLIST_ID,
-            slide_id=SLIDE_ID,
-            data_source_id=source_id,
-            authorization=None,
             **kw,
         )
+
+
+def _inspect(dispatch: GptActionsDispatchService, source_id: str, **kw):
+    out = _context(
+        dispatch,
+        preview_slide_id=kw.pop("preview_slide_id", SLIDE_ID),
+        data_source_id=source_id,
+        **kw,
+    )
+    return out["focusedDataSource"]
+
+
+# ---------------------------------------------------------------------------
+# Backward compatibility — sem data_source_id nada muda
+# ---------------------------------------------------------------------------
+
+
+class TestDefaultContextUnchanged:
+    def test_no_focused_field_without_data_source_id(self):
+        slide = _slide(_pct_sources())
+        out = _context(_dispatch(slide=slide))
+        assert "focusedDataSource" not in out
+        assert out["scope"] == "full"
+        assert out["currentRevision"] == 7
+        assert out["slides"]
+        assert out["dataSources"]
+
+    def test_include_runtime_without_source_is_ignored(self):
+        """include_runtime sem data_source_id nunca executa runtime do slide."""
+        slide = _slide(_pct_sources())
+        gateway = _rol_gateway()
+        out = _context(
+            _dispatch(slide=slide, gateway=gateway),
+            include_runtime=True,
+        )
+        assert "focusedDataSource" not in out
+        assert gateway.fetch_by_operation_id.call_count == 0
 
 
 # ---------------------------------------------------------------------------
@@ -193,18 +254,23 @@ def _inspect(dispatch: GptActionsDispatchService, source_id: str, **kw):
 class TestInspectDefinition:
     def test_source_identity_projection(self):
         slide = _slide(_pct_sources())
-        out = _inspect(_dispatch(slide=slide), "pct_weg_sc_m26")
-        src = out["source"]
+        dispatch = _dispatch(slide=slide)
+        out = _context(
+            dispatch, preview_slide_id=SLIDE_ID, data_source_id="pct_weg_sc_m26"
+        )
+        focused = out["focusedDataSource"]
+        src = focused["source"]
         assert src["id"] == "pct_weg_sc_m26"
         assert src["label"] == "ROL WEG SC MTD"
         assert src["queryName"] == "pct_weg_sc_m26"
         assert src["operationId"] == _OP
         assert src["params"]["dateRangePreset"] == "this_month"
         assert src["hasTransform"] is True
-        assert out["dataSourceId"] == "pct_weg_sc_m26"
-        assert out["playlistId"] == PLAYLIST_ID
-        assert out["slideId"] == SLIDE_ID
-        assert out["revision"] == 7
+        assert focused["dataSourceId"] == "pct_weg_sc_m26"
+        assert focused["slideId"] == SLIDE_ID
+        # Contexto base permanece: revisão e slide focado intactos.
+        assert out["currentRevision"] == 7
+        assert out["focusedSlideId"] == SLIDE_ID
 
     def test_persisted_transform_is_canonical(self):
         slide = _slide(_pct_sources())
@@ -235,7 +301,7 @@ class TestInspectDefinition:
         start_spec = dep["params"]["start_date"]["expression"]["expression"]
         assert start_spec["value"] == "Date.StartOfMonth"
 
-    def test_source_without_transform_has_no_dependencies(self):
+    def test_source_without_merge_has_no_dependencies(self):
         slide = _slide(_pct_sources())
         out = _inspect(_dispatch(slide=slide), "pct_weg_sc_m25")
         # m25 tem transform (rename+addColumn) mas nenhum merge → sem deps.
@@ -301,12 +367,30 @@ class TestInspectDefinition:
         out = _inspect(_dispatch(slide=slide), "expr_src")
         assert out["source"]["contextReferences"] == ["param.branch", "today"]
 
+    def test_source_found_without_slide_hint(self):
+        """Sem slide_id o modo focado localiza a fonte varrendo os slides."""
+        slide = _slide(_pct_sources())
+        dispatch = _dispatch(slide=slide)
+        out = _context(dispatch, data_source_id="pct_weg_sc_m26")
+        assert out["focusedDataSource"]["dataSourceId"] == "pct_weg_sc_m26"
+        assert out["focusedDataSource"]["slideId"] == SLIDE_ID
+
     def test_missing_source_404(self):
         slide = _slide(_pct_sources())
         with pytest.raises(GptActionsError) as exc_info:
             _inspect(_dispatch(slide=slide), "pct_ghost")
         assert exc_info.value.status_code == 404
         assert exc_info.value.details == {"dataSourceId": "pct_ghost"}
+
+    def test_missing_slide_404(self):
+        slide = _slide(_pct_sources())
+        with pytest.raises(GptActionsError) as exc_info:
+            _context(
+                _dispatch(slide=slide),
+                preview_slide_id="00000000-0000-0000-0000-000000000099",
+                data_source_id="pct_weg_sc_m26",
+            )
+        assert exc_info.value.status_code == 404
 
     def test_no_read_access_404(self):
         slide = _slide(_pct_sources())
@@ -336,11 +420,15 @@ class TestInspectDefinition:
 class TestInspectRuntime:
     def test_default_include_runtime_false(self):
         slide = _slide(_pct_sources())
-        out = _inspect(_dispatch(slide=slide), "pct_weg_sc_m26")
+        gateway = _rol_gateway()
+        out = _inspect(
+            _dispatch(slide=slide, gateway=gateway), "pct_weg_sc_m26"
+        )
         assert out["runtime"]["state"] == "not_executed"
+        assert gateway.fetch_by_operation_id.call_count == 0
 
     def test_runtime_dependency_contract(self):
-        """Contrato §30: dependência B aparece em dependencies, inputResults e
+        """Contrato: dependência B aparece em dependencies, inputResults e
         effectiveParams — sem inferência do caller."""
         slide = _slide(_pct_sources())
         out = _inspect(
@@ -464,6 +552,34 @@ class TestInspectRuntime:
         )
         assert out["runtime"]["state"] == "error"
 
+    def test_runtime_bounded_rows(self):
+        """Resultado transformado respeita o bound de linhas da inspeção."""
+        many = {
+            "meta": {"shape": "list", "entity": "commercial_rol_summary"},
+            "data": [{"rol": CUR, "branch": "01"}] * 50,
+        }
+        gateway = _gateway_by_preset({"current": many})
+        slide = _slide(
+            [
+                _src(
+                    "big",
+                    transform=[{"op": "addColumn", "name": "x", "expr": "1"}],
+                )
+            ]
+        )
+        out = _inspect(
+            _dispatch(slide=slide, gateway=gateway), "big", include_runtime=True
+        )
+        result = out["runtime"]["transformedResult"]
+        assert result is not None
+        # Bound invariant: nunca mais que o limite de linhas, e truncação é
+        # sempre declarada consistente com rowCount vs. linhas retornadas.
+        assert len(result["rows"]) <= 10
+        assert result["rowCount"] >= len(result["rows"])
+        assert result["truncated"] == (
+            result["rowCount"] > len(result["rows"]) or len(result["columns"]) > 40
+        )
+
     def test_runtime_never_persists(self):
         """READ: nenhum write/port de mutação é chamado pelo caminho."""
         slide = _slide(_pct_sources())
@@ -475,41 +591,67 @@ class TestInspectRuntime:
 
 
 # ---------------------------------------------------------------------------
-# MCP surface
+# MCP surface — focused mode via get_playlist_context (8 tools, sem 9ª tool)
 # ---------------------------------------------------------------------------
 
 
 class TestMcpSurface:
-    def test_tool_registered_read_class(self):
+    def test_standalone_tool_not_registered(self):
         import asyncio
 
         from tv_app.interface.mcp.constants import MCP_TOOL_NAMES, TOOL_CLASS
         from tv_app.interface.mcp.server import create_mcp_server
 
-        assert "inspect_data_source" in MCP_TOOL_NAMES
-        assert TOOL_CLASS["inspect_data_source"] == "READ"
+        assert "inspect_data_source" not in MCP_TOOL_NAMES
+        assert "inspect_data_source" not in TOOL_CLASS
         tools = asyncio.run(create_mcp_server().list_tools())
-        tool = next(t for t in tools if t.name == "inspect_data_source")
-        assert tool.annotations.read_only_hint is True
+        assert len(tools) == 8
+        assert "inspect_data_source" not in {t.name for t in tools}
 
-    def test_bridge_passes_authorization_and_runtime_flag(self):
+    def test_get_playlist_context_schema_has_focused_args(self):
+        import asyncio
+
+        from tv_app.interface.mcp.server import create_mcp_server
+
+        tools = asyncio.run(create_mcp_server().list_tools())
+        tool = next(t for t in tools if t.name == "get_playlist_context")
+        schema = tool.inputSchema if hasattr(tool, "inputSchema") else tool.input_schema
+        props = schema["properties"]
+        assert "data_source_id" in props
+        assert "include_runtime" in props
+        assert "slide_id" in props
+        required = schema.get("required") or []
+        assert "data_source_id" not in required
+        assert "include_runtime" not in required
+
+    def test_bridge_passes_authorization_and_focused_args(self):
         from test_vista_mcp_read_surface import _ctx, _viewer
         from tv_app.interface.mcp import tool_bridge
 
         seen = {}
 
-        def _capture(*, user, playlist_id, slide_id, data_source_id, authorization, include_runtime):
+        def _capture(
+            *,
+            user,
+            playlist_id,
+            preview_slide_id=None,
+            data_source_id=None,
+            include_runtime=False,
+            authorization=None,
+            **kw,
+        ):
             seen.update(
                 authorization=authorization,
                 include_runtime=include_runtime,
                 data_source_id=data_source_id,
+                preview_slide_id=preview_slide_id,
             )
-            return {"dataSourceId": data_source_id}
+            return {"focusedDataSource": {"dataSourceId": data_source_id}}
 
         with _ctx(_viewer(), "Bearer user-token-xyz"), patch.object(
-            tool_bridge._dispatch, "inspect_data_source", side_effect=_capture
+            tool_bridge._dispatch, "get_playlist_context", side_effect=_capture
         ):
-            result = tool_bridge.tool_inspect_data_source(
+            result = tool_bridge.tool_get_playlist_context(
                 playlist_id="p",
                 slide_id="s",
                 data_source_id="pct_weg_sc_m26",
@@ -519,14 +661,16 @@ class TestMcpSurface:
         assert seen["authorization"] == "Bearer user-token-xyz"
         assert seen["include_runtime"] is True
         assert seen["data_source_id"] == "pct_weg_sc_m26"
+        assert seen["preview_slide_id"] == "s"
 
     def test_bridge_default_include_runtime_false(self):
         import inspect as py_inspect
 
-        from tv_app.interface.mcp.tool_bridge import tool_inspect_data_source
+        from tv_app.interface.mcp.tool_bridge import tool_get_playlist_context
 
-        sig = py_inspect.signature(tool_inspect_data_source)
+        sig = py_inspect.signature(tool_get_playlist_context)
         assert sig.parameters["include_runtime"].default is False
+        assert sig.parameters["data_source_id"].default is None
 
     def test_bridge_domain_error_preserved(self):
         from test_vista_mcp_read_surface import _ctx, _viewer
@@ -534,15 +678,15 @@ class TestMcpSurface:
 
         with _ctx(_viewer()), patch.object(
             tool_bridge._dispatch,
-            "inspect_data_source",
+            "get_playlist_context",
             side_effect=GptActionsError(
-                'Data source "x" não encontrado no slide.',
+                'Data source "x" não encontrado.',
                 code="RESOURCE_NOT_FOUND",
                 status_code=404,
                 details={"dataSourceId": "x"},
             ),
         ):
-            result = tool_bridge.tool_inspect_data_source(
+            result = tool_bridge.tool_get_playlist_context(
                 playlist_id="p", slide_id="s", data_source_id="x"
             )
         assert result.is_error is True

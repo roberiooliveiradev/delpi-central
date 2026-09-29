@@ -62,6 +62,12 @@ _SKIP_PREFIXES: tuple[str, ...] = (
     "/transformometro/integrations",
     # Custom GPT Actions — superfície 100% EN (catalog/activate/duplicate/recalculate).
     "/transformometro/gpt-actions",
+    # Diagnostic V1 — superfície canônica EN-nativa; não existe contraparte PT
+    # registrada, então /revisions/{id}/diagnostics não pode ser reescrito para
+    # /revisoes/{id}/diagnostics (404). Match por token (/diagnostics ou /diagnostics/).
+    "/diagnostics",
+    # Commit governado — mesma superfície EN-nativa do Diagnostic PREPARE/COMMIT.
+    "/transformometro/governed-proposals",
     "/health",
 )
 

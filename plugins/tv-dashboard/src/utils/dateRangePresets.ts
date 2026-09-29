@@ -107,3 +107,20 @@ export function isDateRangePairKey(key: string, pair: DateRangeKeyPair | null): 
 export function defaultDateRangePreset(pair: DateRangeKeyPair | null): DateRangePresetId | null {
   return pair ? "this_month" : null;
 }
+
+/**
+ * Chaves do grupo «Período» da UI — preset, datas do par, `periodDays` e
+ * `competence` (mês fechado SI). Usado pela ribbon para projetar o flyout
+ * de Período a partir do mesmo `DataParamFields` canônico.
+ */
+export function periodParamFieldKeys(schemaKeys: Iterable<string>): Set<string> {
+  const keys = new Set(schemaKeys);
+  const group = new Set<string>([DATE_RANGE_PRESET_PARAM, PERIOD_DAYS_PARAM]);
+  const pair = findDateRangeKeys(keys);
+  if (pair) {
+    group.add(pair.startKey);
+    group.add(pair.endKey);
+  }
+  if (keys.has("competence")) group.add("competence");
+  return group;
+}

@@ -1,0 +1,50 @@
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { describe, expect, it } from "vitest";
+
+const dir = dirname(fileURLToPath(import.meta.url));
+
+function read(relativePath: string): string {
+  return readFileSync(join(dir, relativePath), "utf8");
+}
+
+/**
+ * Regression: dropped/picked non-image files (PDF, DOCX, …) used to vanish —
+ * they were queued in pendingFilesRef but never rendered. The composer must
+ * stage them as removable chips and upload them on submit.
+ */
+describe("Helpdesk pending attachments structural", () => {
+  it("rich text field renders a manage strip for staged attachments", () => {
+    const ui = read("../ui/helpdeskUi.tsx");
+    expect(ui).toContain("HelpdeskPendingAttachmentItem");
+    expect(ui).toContain("pendingAttachments");
+    expect(ui).toContain("onPendingAttachmentOpen");
+    expect(ui).toContain("onPendingAttachmentRemove");
+    expect(ui).toContain('mode="manage"');
+    expect(ui).toContain("HelpdeskAttachmentPreviewStrip");
+  });
+
+  it("create composer stages non-image files and uploads them on submit", () => {
+    const page = read("HelpdeskPage.tsx");
+    expect(page).toContain("function isInlineImageFile");
+    expect(page).toContain("setPendingAttachments");
+    expect(page).toContain("onPendingAttachmentRemove={removePendingAttachment}");
+    expect(page).toContain("onPendingAttachmentOpen={(id) => setPendingPreviewId(id)}");
+    // submit drains the staged map — pending ids include non-image keys
+    expect(page).toContain("pendingFilesRef.current.keys()");
+  });
+
+  it("reply composer defers non-image upload to submit (removable before send)", () => {
+    const page = read("HelpdeskPage.tsx");
+    const uploadHandler = page.indexOf("onUploadFiles={async (files) => {");
+    expect(uploadHandler).toBeGreaterThan(-1);
+    const segment = page.slice(uploadHandler, uploadHandler + 4000);
+    expect(segment).toContain("staged.push");
+    // non-images must NOT upload immediately inside onUploadFiles
+    const nonImageBranch = segment.indexOf("if (!isInlineImageFile(file))");
+    expect(nonImageBranch).toBeGreaterThan(-1);
+    const branchBody = segment.slice(nonImageBranch, segment.indexOf("continue;", nonImageBranch));
+    expect(branchBody).not.toContain("uploadTicketAttachment(");
+  });
+});

@@ -8,6 +8,8 @@ export const TD_FIELD_CLASS_NAMES: FormFieldShellClassNames = {
   root: "td-field",
   spanWideModifier: "td-deck-tabs__field--wide",
   fieldLabel: "td-field__label",
+  labelRow: "td-field__label-row",
+  labelAside: "td-field__label-aside",
 };
 
 export const {

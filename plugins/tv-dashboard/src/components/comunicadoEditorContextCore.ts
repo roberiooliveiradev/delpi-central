@@ -104,6 +104,24 @@ export type OpenDataCatalogOptions = {
   anchor?: HTMLElement | null;
 };
 
+/**
+ * Pedido de abertura do drawer de expressão tipada (ribbon/sidebar → drawer).
+ * `apply` é criado no clique pelo host do param (já embute a regra de
+ * conflito preset/expressão); o drawer mantém draft local até «Aplicar».
+ */
+export type ExpressionEditRequest = {
+  paramKey: string;
+  paramLabel: string;
+  /** Spec atual persistido — draft inicial do drawer. */
+  spec: import("@delpi/tv-dashboard-presentation").ParamExpressionSpec;
+  expectedReturnTypes?: ReadonlySet<string> | null;
+  /** Refs `param.<key>` sugeridas no seletor de referência. */
+  refParamKeys?: Array<{ key: string; label: string }>;
+  /** Bloco com `dataBinding` usado no preview backend (quando houver). */
+  previewBlockId?: string | null;
+  apply: (spec: import("@delpi/tv-dashboard-presentation").ParamExpressionSpec) => void;
+};
+
 /** Contrato do editor — separado do Provider para evitar ciclos ESM com hooks/modais. */
 export type ComunicadoEditorContextValue = {
   config: ComunicadoConfig;
@@ -300,6 +318,10 @@ export type ComunicadoEditorContextValue = {
   setDataPanelOpen: (open: boolean) => void;
   dataPanelIntent: DataPanelIntent;
   setDataPanelIntent: (intent: DataPanelIntent) => void;
+  /** Pedido ativo do drawer de expressão — sobrevive a troca de aba. */
+  expressionEditRequest: ExpressionEditRequest | null;
+  openExpressionEditor: (request: ExpressionEditRequest) => void;
+  closeExpressionEditor: () => void;
   /** Aba Elemento/Dados/Camadas compartilhada entre ribbon e painel lateral. */
   selectionPanelTab: SelectionPanelTab;
   setSelectionPanelTab: (tab: SelectionPanelTab) => void;

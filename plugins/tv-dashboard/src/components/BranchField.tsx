@@ -33,6 +33,8 @@ type Props = {
   /** Multi-seleção: fontes discordam neste campo. */
   diverged?: boolean;
   divergedLabel?: string;
+  /** Slot à direita do label (ex.: switch Valor/Expressão). */
+  labelAside?: React.ReactNode;
 };
 
 /** Opções de filial: RBAC (scope) ∩ enum da API, ou um dos dois. Inclui `all` se o enum tiver e consolidado for permitido. */
@@ -76,6 +78,7 @@ export function BranchField({
   emptyOptionLabel,
   diverged = false,
   divergedLabel,
+  labelAside,
 }: Props) {
   const branches = resolveBranchFieldOptions(scope, schemaEnum);
   const clearLabel = emptyOptionLabel ?? TV_DASHBOARD_HELP_TOOLTIPS.data.filterClear;
@@ -94,7 +97,7 @@ export function BranchField({
       },
     );
     return (
-      <DeckField id={id} label={label} hint={hint}>
+      <DeckField id={id} label={label} hint={hint} labelAside={labelAside}>
         <FormSelectControl
           id={id}
           portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}
@@ -113,7 +116,7 @@ export function BranchField({
 
   const hasValue = String(value ?? "").trim() !== "";
   return (
-    <DeckField id={id} label={label} hint={hint}>
+    <DeckField id={id} label={label} hint={hint} labelAside={labelAside}>
       <div className="td-data-param-clearable">
         <NativeTextControl
           id={id}

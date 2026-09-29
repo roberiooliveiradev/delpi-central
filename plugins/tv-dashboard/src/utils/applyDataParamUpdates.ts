@@ -4,7 +4,12 @@ import {
 } from "@delpi/tv-dashboard-presentation";
 
 import type { DataParamSchema } from "../components/DataParamFields";
-import { findDateRangeKeys, isDateRangePairKey } from "./dateRangePresets";
+import {
+  DATE_RANGE_PRESET_PARAM,
+  PERIOD_DAYS_PARAM,
+  findDateRangeKeys,
+  isDateRangePairKey,
+} from "./dateRangePresets";
 import { isParamExpressionValue } from "./paramExpressions";
 
 /** Valor de update do editor: string parseada pelo schema ou ExpressionSpec intacto. */
@@ -50,6 +55,66 @@ export function parseDataParamRaw(
  * quando Período + competence / datas mudam juntos).
  * ExpressionSpec passa intacto — parse de scalars continua via schema.
  */
+type ParamPatchContext = {
+  /** Schema visível do editor (visibleParamSchema já aplicado). */
+  schema?: DataParamSchema;
+  /** Valores atuais — necessários para saber se há preset ativo. */
+  values?: Record<string, unknown> | undefined;
+};
+
+/**
+ * Updates de UM param com a regra de conflito de período:
+ * expressão/data explícita no par nunca coexiste com `dateRangePreset`
+ * relativo, e `competence` (mês fechado SI) força preset `custom`.
+ * Compartilhado por DataParamFields e pelo drawer de expressão — mesma regra.
+ */
+export function buildParamValueUpdates(
+  key: string,
+  value: DataParamUpdateValue,
+  context: ParamPatchContext = {},
+): Record<string, DataParamUpdateValue> {
+  const schema = context.schema ?? {};
+  const activeDatePair = findDateRangeKeys(Object.keys(schema));
+  const preset = String(context.values?.[DATE_RANGE_PRESET_PARAM] ?? "").trim();
+  const updates: Record<string, DataParamUpdateValue> = { [key]: value };
+  if (key === "competence" && typeof value === "string" && value.trim() && activeDatePair) {
+    updates[DATE_RANGE_PRESET_PARAM] = "custom";
+  }
+  if (activeDatePair && isDateRangePairKey(key, activeDatePair)) {
+    if (isParamExpressionValue(value)) {
+      updates[DATE_RANGE_PRESET_PARAM] = "";
+    } else if (preset && preset !== "custom") {
+      updates[DATE_RANGE_PRESET_PARAM] = "custom";
+    }
+  }
+  return updates;
+}
+
+/**
+ * Updates de `dateRangePreset` — preset relativo limpa datas fixas do par,
+ * `periodDays` (fora de last_n_days) e `competence` quando aplicável.
+ */
+export function buildDateRangePresetUpdates(
+  value: string,
+  context: ParamPatchContext = {},
+): Record<string, string> {
+  const schema = context.schema ?? {};
+  const activeDatePair = findDateRangeKeys(Object.keys(schema));
+  const hasCompetence = "competence" in schema;
+  const updates: Record<string, string> = { [DATE_RANGE_PRESET_PARAM]: value };
+  if (hasCompetence && value && value !== "custom") {
+    updates.competence = "";
+  }
+  if (activeDatePair && value !== "custom") {
+    updates[activeDatePair.startKey] = "";
+    updates[activeDatePair.endKey] = "";
+    if (value !== "last_n_days") {
+      updates[PERIOD_DAYS_PARAM] = "";
+    }
+  }
+  return updates;
+}
+
 export function applyDataParamRawUpdates(
   current:
     | Record<string, string | number | boolean | null | ParamExpressionSpec | undefined>

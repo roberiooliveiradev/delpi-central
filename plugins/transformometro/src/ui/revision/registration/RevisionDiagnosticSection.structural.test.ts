@@ -40,8 +40,8 @@ describe("Revision Diagnostic — wiring", () => {
 });
 
 describe("Revision Diagnostic — semântica canônica", () => {
-  it("Problem statement é read-only (sem edição/exclusão)", () => {
-    expect(content).toMatch(/Problem statement/);
+  it("Problema investigado é read-only (sem edição/exclusão)", () => {
+    expect(content).toMatch(/Problema investigado/);
     expect(content).not.toMatch(/edit[a-z_]*\s*problem|onEdit.*statement/i);
     // Nenhuma action material edita o statement pós-criação.
     expect(content).not.toMatch(/edit_problem|delete_problem|update_problem/);

@@ -70,7 +70,6 @@ Tools:
 | `get_catalog` | READ | `GptActionsDispatchService.get_catalog` |
 | `search_data_routes` | READ | `GptActionsDispatchService.search_data_routes` |
 | `inspect_data_model` | READ | `GptActionsDispatchService.inspect_data_model` |
-| `inspect_data_source` | READ | `GptActionsDispatchService.inspect_data_source` (MCP-only — no GPT Actions budget) |
 | `preview_data_model` | READ | `GptActionsDispatchService.preview_data_model` (inline candidate never persisted) |
 | `prepare_change` | PREPARE | `GptActionsDispatchService.preview_change` (commit_now=False) |
 | `commit_proposal` | ACT | `GptActionsDispatchService.commit_change` |
@@ -153,15 +152,12 @@ parity is total; only transport names differ.
 | `gpt_preview_change` | `prepare_change` | PREPARE |
 | `gpt_commit_change` | `commit_proposal` | ACT |
 
-MCP-only additions (no Actions counterpart — read surface is unbounded
-there; `mcp_only` in `surface_parity`):
-
-| MCP tool | Class |
-|---|---|
-| `inspect_data_source` | READ |
-
 Semantic differences:
 
+- `get_playlist_context` accepts optional `slide_id`, `data_source_id` and
+  `include_runtime` — focused inspection of a persisted legacy `data_source`
+  (binding, transform, dependencies, consumers, and bounded runtime evidence)
+  is nested in playlist context, not exposed as a standalone tool.
 - `gpt_preview_change` accepts `commit_now=true` as an HTTP shortcut; MCP has
   no commit_now — PREPARE is never ACT. Additive commits still call
   `commit_proposal` explicitly.

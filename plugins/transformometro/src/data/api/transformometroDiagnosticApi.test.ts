@@ -99,6 +99,7 @@ describe("diagnostic api client", () => {
     const [url, init] = spy.mock.calls[0] as [string, RequestInit];
     expect(url).toBe(`${BASE}/revisions/rev-1/diagnostics/prepare`);
     expect(init.method).toBe("POST");
+    expect((init.headers as Record<string, string>)["Content-Type"]).toBe("application/json");
     const body = JSON.parse(String(init.body));
     expect(body).toEqual({ problem_statement: "Problema X" });
     expect(body).not.toHaveProperty("diagnostic_id");
@@ -116,6 +117,7 @@ describe("diagnostic api client", () => {
     );
     const [url, init] = spy.mock.calls[0] as [string, RequestInit];
     expect(url).toBe(`${BASE}/diagnostics/diag-1/prepare`);
+    expect((init.headers as Record<string, string>)["Content-Type"]).toBe("application/json");
     const body = JSON.parse(String(init.body));
     expect(body).toEqual({ action: "add_hypothesis", payload: { statement: "Hipótese Y" } });
     expect(body.payload).not.toHaveProperty("hypothesis_id");
@@ -127,6 +129,7 @@ describe("diagnostic api client", () => {
     await commitGovernedProposal("gp_9", () => "tok");
     const [url, init] = spy.mock.calls[0] as [string, RequestInit];
     expect(url).toBe(`${BASE}/governed-proposals/commit`);
+    expect((init.headers as Record<string, string>)["Content-Type"]).toBe("application/json");
     const body = JSON.parse(String(init.body));
     expect(body).toEqual({ proposal_handle: "gp_9", confirmation: true });
   });
