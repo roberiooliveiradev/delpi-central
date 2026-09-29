@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { Pause, Play, Square } from "lucide-react";
-import type { MachineLoadOperation } from "./api";
+import type { MachineLoadOperation, PendingMesDowntime, RunDowntimeView } from "./api";
 import { DowntimeElapsedTimer } from "./DowntimeElapsedTimer";
 import { DowntimeReasonModal } from "./DowntimeReasonModal";
+import { PendingDowntimesModal } from "./PendingDowntimesModal";
 import { ProductionRunTimeline } from "./ProductionRunTimeline";
+import { usePendingMesDowntimes } from "./usePendingMesDowntimes";
 import { useRunTimeline } from "./useRunTimeline";
 import { formatQty } from "./cockpitShared";
 import {
@@ -50,6 +52,7 @@ export function ProductionRunControls({
     stop,
     loadDowntimeReasons,
     classifyDowntime,
+    classifyDowntimeById,
   } = useProductionRun({
     token,
     branch,
@@ -68,10 +71,29 @@ export function ProductionRunControls({
   const openDowntime = run?.downtime ?? null;
   const pendingDowntime = run?.pendingDowntime ?? null;
   const downtimeUnclassified = Boolean(openDowntime && !openDowntime.confirmed);
-  // Alvo do modal: parada aberta primeiro; senão a pendência encerrada.
-  const modalDowntime = openDowntime ?? pendingDowntime;
+  // Alvo do modal: escolha manual (lista de pendências/timeline) primeiro;
+  // senão a parada aberta; senão a pendência encerrada do run ativo.
+  const modalDowntime = manualTarget?.downtime ?? openDowntime ?? pendingDowntime;
   const autoStopped =
     run?.status === "running" && Boolean(openDowntime ?? null);
+
+  const {
+    items: pendingItems,
+    error: pendingError,
+    refresh: refreshPending,
+  } = usePendingMesDowntimes({
+    token,
+    sessionToken: session?.sessionToken ?? null,
+    branch,
+    workCenter,
+    refreshSignal: runUpdatedSignal,
+  });
+  const [pendingModalOpen, setPendingModalOpen] = useState(false);
+  // Alvo manual: parada escolhida na lista de pendências ou na timeline.
+  const [manualTarget, setManualTarget] = useState<{
+    runId: string;
+    downtime: RunDowntimeView;
+  } | null>(null);
 
   const { timeline, serverNow } = useRunTimeline({
     token,
@@ -97,6 +119,27 @@ export function ProductionRunControls({
     }
     if (!classifyTargetId) autoOpenRef.current = null;
   }, [classifyTargetId]);
+
+  const openPendingTarget = (item: PendingMesDowntime) => {
+    if (!item.runId) return;
+    setPendingModalOpen(false);
+    setManualTarget({
+      runId: item.runId,
+      downtime: {
+        id: item.id,
+        runId: item.runId,
+        reasonCode: item.reasonCode,
+        reasonLabel: null,
+        category: null,
+        note: item.note,
+        confirmed: item.confirmed,
+        source: item.source,
+        startedAt: item.startedAt,
+        endedAt: item.endedAt,
+      },
+    });
+    setReasonModalOpen(true);
+  };
   const piecesFactor = run?.piecesConversionFactor ?? operation.pieces_conversion_factor;
   const toOperatorUnit = (pieces: number) => piecesToOperatorUnit(pieces, piecesFactor);
   const deviceOnline = run?.device?.online;
@@ -158,6 +201,19 @@ export function ProductionRunControls({
               Sair
             </button>
           </div>
+
+          {pendingItems && pendingItems.length > 0 ? (
+            <div className="pcp-pub__run-actions">
+              <button
+                type="button"
+                className="pcp-pub__btn pcp-pub__btn--ghost"
+                onClick={() => setPendingModalOpen(true)}
+                disabled={busy}
+              >
+                Paradas sem motivo ({pendingItems.length})
+              </button>
+            </div>
+          ) : null}
 
           {otherRun ? <p className="pcp-pub__run-warn">{otherRun}</p> : null}
 
@@ -350,7 +406,29 @@ export function ProductionRunControls({
               {timeline && timeline.items.length > 0 ? (
                 <details className="pcp-pub__timeline">
                   <summary>Linha do tempo</summary>
-                  <ProductionRunTimeline timeline={timeline} serverNow={serverNow} />
+                  <ProductionRunTimeline
+                    timeline={timeline}
+                    serverNow={serverNow}
+                    onSelectDowntime={(item) => {
+                      if (!item.downtime || item.downtime.confirmed || !run) return;
+                      setManualTarget({
+                        runId: run.id,
+                        downtime: {
+                          id: item.downtime.id,
+                          runId: run.id,
+                          reasonCode: item.downtime.reasonCode,
+                          reasonLabel: item.downtime.reasonLabel,
+                          category: item.downtime.category,
+                          note: item.downtime.note,
+                          confirmed: item.downtime.confirmed,
+                          source: item.downtime.source,
+                          startedAt: item.startedAt,
+                          endedAt: item.endedAt,
+                        },
+                      });
+                      setReasonModalOpen(true);
+                    }}
+                  />
                 </details>
               ) : null}
             </div>
@@ -372,15 +450,38 @@ export function ProductionRunControls({
 
       {error ? <p className="pcp-pub__run-error">{error}</p> : null}
 
+      <PendingDowntimesModal
+        open={pendingModalOpen}
+        items={pendingItems}
+        error={pendingError}
+        busy={busy}
+        onSelect={openPendingTarget}
+        onClose={() => setPendingModalOpen(false)}
+      />
+
       <DowntimeReasonModal
         open={reasonModalOpen && Boolean(modalDowntime)}
         downtime={modalDowntime}
         busy={busy}
         loadReasons={loadDowntimeReasons}
-        onClassify={(reasonCode, note) =>
-          classifyDowntime(reasonCode, note, modalDowntime?.id ?? null)
-        }
-        onClose={() => setReasonModalOpen(false)}
+        onClassify={async (reasonCode, note) => {
+          if (manualTarget) {
+            await classifyDowntimeById(
+              manualTarget.runId,
+              manualTarget.downtime.id,
+              reasonCode,
+              note,
+            );
+            setManualTarget(null);
+            void refreshPending();
+            return;
+          }
+          await classifyDowntime(reasonCode, note, modalDowntime?.id ?? null);
+        }}
+        onClose={() => {
+          setManualTarget(null);
+          setReasonModalOpen(false);
+        }}
       />
     </div>
   );

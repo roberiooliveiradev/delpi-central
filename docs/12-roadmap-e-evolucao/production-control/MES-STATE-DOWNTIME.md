@@ -455,3 +455,22 @@ e sessão. `requires_note` e auditoria de operador se aplicam igualmente.
 Timeline: os trechos `stopped` automáticos surgem naturalmente
 (`source='system'` no item e na parada); durações seguem derivadas de
 timestamps — nada de `duration_seconds` persistido.
+
+### Pendências do posto (paradas encerradas sem motivo)
+
+`pendingDowntime` cobre apenas o run ativo. Para paradas de runs já
+encerrados no mesmo posto existe a listagem de pendências:
+
+- `GET /public/machine-load/{token}/mes/downtimes/pending?branch&workCenter`
+  — requer `X-Delpi-Bench-Session` da mesma filial/CT. Retorna paradas
+  **encerradas** e sem classificação (`confirmed=false` ou `reason_code`
+  nulo), mais recente primeiro, limite 50, com `runId`, OP, duração e fonte.
+- A classificação usa o mesmo endpoint por identidade
+  (`POST /runs/{run_id}/downtimes/{downtime_id}/classify`) — a sessão só
+  precisa pertencer ao posto; o run não precisa estar ativo.
+
+No cockpit (`ProductionRunControls`), o botão "Paradas sem motivo (n)"
+abre a lista (`usePendingMesDowntimes`, reconciliada pelo mesmo
+`runUpdatedSignal` do WS — sem polling próprio); itens da timeline do run
+ativo sem motivo também são clicáveis e abrem o `DowntimeReasonModal`
+mirando aquele `downtime_id`.

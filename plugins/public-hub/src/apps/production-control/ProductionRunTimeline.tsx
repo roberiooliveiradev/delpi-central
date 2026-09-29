@@ -11,6 +11,8 @@ import {
 type Props = {
   timeline: RunTimeline;
   serverNow: () => number;
+  /** Chamado ao clicar numa parada ainda sem motivo (classificação por id). */
+  onSelectDowntime?: (item: RunTimeline["items"][number]) => void;
 };
 
 function itemDescription(item: RunTimeline["items"][number], seconds: number): string {
@@ -27,7 +29,7 @@ function itemDescription(item: RunTimeline["items"][number], seconds: number): s
  * Timeline do run: faixa proporcional compacta + histórico legível.
  * O trecho aberto continua evoluindo localmente com o relógio do servidor.
  */
-export function ProductionRunTimeline({ timeline, serverNow }: Props) {
+export function ProductionRunTimeline({ timeline, serverNow, onSelectDowntime }: Props) {
   const [now, setNow] = useState(() => serverNow());
 
   useEffect(() => {
@@ -66,10 +68,13 @@ export function ProductionRunTimeline({ timeline, serverNow }: Props) {
         ))}
       </div>
       <ol className="pcp-pub-timeline__list">
-        {timeline.items.map((item, i) => (
-          <li key={item.id} className="pcp-pub-timeline__entry">
-            <span className="pcp-pub-timeline__time">{formatTimeHm(item.startedAt)}</span>
-            <span className="pcp-pub-timeline__body">
+        {timeline.items.map((item, i) => {
+          const unclassified =
+            item.state === "stopped" &&
+            Boolean(item.downtime) &&
+            !item.downtime?.confirmed;
+          const body = (
+            <>
               <strong>
                 {item.state === "stopped" ? "Parada" : stateLabel(item.state)}
                 {item.state === "producing" && i > 0 ? " retomada" : ""}
@@ -79,7 +84,7 @@ export function ProductionRunTimeline({ timeline, serverNow }: Props) {
                 <span className="pcp-pub-timeline__reason">
                   {item.downtime?.reasonLabel ??
                     (item.downtime ? "Motivo não informado" : "Motivo não disponível")}
-                  {item.downtime && !item.downtime.confirmed ? " · pendente" : ""}
+                  {unclassified ? " · pendente" : ""}
                 </span>
               ) : null}
               {item.downtime?.note ? (
@@ -88,9 +93,26 @@ export function ProductionRunTimeline({ timeline, serverNow }: Props) {
               <span className="pcp-pub-timeline__duration">
                 {formatDurationHms(durations[i])}
               </span>
-            </span>
-          </li>
-        ))}
+            </>
+          );
+          return (
+            <li key={item.id} className="pcp-pub-timeline__entry">
+              <span className="pcp-pub-timeline__time">{formatTimeHm(item.startedAt)}</span>
+              {unclassified && onSelectDowntime ? (
+                <button
+                  type="button"
+                  className="pcp-pub-timeline__body pcp-pub-timeline__body--action"
+                  onClick={() => onSelectDowntime(item)}
+                >
+                  {body}
+                  <span className="pcp-pub-timeline__cta">Informar motivo</span>
+                </button>
+              ) : (
+                <span className="pcp-pub-timeline__body">{body}</span>
+              )}
+            </li>
+          );
+        })}
       </ol>
       <p className="pcp-pub-timeline__summary">
         Produzindo {formatDurationHms(summary.producingSeconds)} · Parado{" "}

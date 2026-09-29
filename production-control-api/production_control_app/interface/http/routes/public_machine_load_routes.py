@@ -453,6 +453,29 @@ def get_mes_downtime_reasons(token: str):
     return ok({"items": items})
 
 
+@router.get("/{token}/mes/downtimes/pending")
+def list_pending_mes_downtimes(
+    token: str,
+    branch: str = Query(..., min_length=2, max_length=2),
+    work_center: str = Query(..., alias="workCenter", max_length=40),
+    session_token: str | None = Header(default=None, alias=_BENCH_SESSION_HEADER),
+):
+    """Paradas MES encerradas do posto ainda sem motivo — sessão de bancada
+    obrigatória; inclui paradas de runs já encerrados."""
+    denied = _assert_cockpit_token(token)
+    if denied is not None:
+        return denied
+    try:
+        items = build_mes_downtime_classification_service().list_unclassified(
+            branch=branch,
+            work_center=work_center,
+            session_token=session_token,
+        )
+    except Exception as exc:  # noqa: BLE001
+        return _handle_public_errors(exc)
+    return ok({"items": items})
+
+
 @router.post("/{token}/runs/{run_id}/downtime/classify")
 def classify_run_downtime(
     token: str,

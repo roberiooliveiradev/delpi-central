@@ -287,23 +287,27 @@ export function useProductionRun({
     return fetchMesDowntimeReasons(token);
   }, [downtimeReasons, token]);
 
-  const classifyDowntime = useCallback(
-    async (reasonCode: string, note: string | null, downtimeId?: string | null) => {
-      if (!run || !session) return;
+  /**
+   * Classifica uma parada por identidade explícita — funciona também para
+   * paradas de runs já encerrados (o backend só exige sessão do mesmo posto).
+   */
+  const classifyDowntimeById = useCallback(
+    async (runId: string, downtimeId: string, reasonCode: string, note: string | null) => {
+      if (!session) return;
       setBusy(true);
       try {
-        const downtime = await classifyRunDowntime(token, session.sessionToken, run.id, {
+        const downtime = await classifyRunDowntime(token, session.sessionToken, runId, {
           reasonCode,
           note,
-          downtimeId: downtimeId ?? null,
+          downtimeId,
         });
-        if (downtime.endedAt) {
-          // Parada já encerrada: não é mais a parada aberta — reconcilia o
-          // snapshot para limpar pendingDowntime/pendingDowntimeCount.
+        if (downtime.endedAt || !run || run.id !== runId) {
+          // Parada encerrada ou de outro run: reconcilia o snapshot para
+          // limpar pendingDowntime/pendingDowntimeCount se aplicável.
           void refreshRun();
         } else {
           setRun((current) =>
-            current && current.id === run.id ? { ...current, downtime } : current,
+            current && current.id === runId ? { ...current, downtime } : current,
           );
         }
       } catch (err) {
@@ -315,6 +319,37 @@ export function useProductionRun({
       }
     },
     [token, run, session, dropStaleSession, refreshRun],
+  );
+
+  const classifyDowntime = useCallback(
+    async (reasonCode: string, note: string | null, downtimeId?: string | null) => {
+      if (!run) return;
+      const target = downtimeId ?? run.downtime?.id ?? null;
+      if (target) {
+        await classifyDowntimeById(run.id, target, reasonCode, note);
+        return;
+      }
+      // Sem identidade: endpoint legado classifica a parada aberta do run.
+      if (!session) return;
+      setBusy(true);
+      try {
+        const downtime = await classifyRunDowntime(token, session.sessionToken, run.id, {
+          reasonCode,
+          note,
+          downtimeId: null,
+        });
+        setRun((current) =>
+          current && current.id === run.id ? { ...current, downtime } : current,
+        );
+      } catch (err) {
+        dropStaleSession(err);
+        setError(err instanceof Error ? err.message : "Falha ao registrar o motivo.");
+        throw err;
+      } finally {
+        setBusy(false);
+      }
+    },
+    [token, run, session, dropStaleSession, classifyDowntimeById],
   );
 
   const runMatchesOperation = useMemo(() => {
@@ -345,5 +380,6 @@ export function useProductionRun({
     downtimeReasons,
     loadDowntimeReasons,
     classifyDowntime,
+    classifyDowntimeById,
   };
 }

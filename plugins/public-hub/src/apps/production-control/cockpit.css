@@ -2953,6 +2953,61 @@
   align-items: baseline;
 }
 
+button.pcp-pub-timeline__body--action {
+  appearance: none;
+  border: 0;
+  padding: 0.15rem 0.35rem;
+  margin: -0.15rem -0.35rem;
+  border-radius: 0.4rem;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+button.pcp-pub-timeline__body--action:hover,
+button.pcp-pub-timeline__body--action:focus-visible {
+  background: rgba(255, 255, 255, 0.08);
+  outline: none;
+}
+
+.pcp-pub-timeline__cta {
+  width: 100%;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--pcp-pub-accent, #f2b544);
+}
+
+.pcp-pub-pending {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.pcp-pub-pending__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0.5rem;
+}
+
+.pcp-pub-pending__info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.pcp-pub-pending__meta {
+  font-size: 0.78rem;
+  opacity: 0.7;
+}
+
 .pcp-pub-timeline__reason {
   opacity: 0.85;
 }

@@ -11,6 +11,7 @@ from __future__ import annotations
 from typing import Any
 
 from production_control_app.domain.errors import (
+    BenchSessionRequired,
     DowntimeNotFound,
     InvalidMesEvent,
 )
@@ -50,6 +51,51 @@ class MesDowntimeClassificationService:
             }
             for row in self._reasons.list_active()
         ]
+
+    def list_unclassified(
+        self,
+        *,
+        branch: str,
+        work_center: str,
+        session_token: str | None,
+        limit: int = 50,
+    ) -> list[dict[str, Any]]:
+        """Paradas encerradas do posto ainda sem motivo — cockpit do posto.
+
+        A sessão de bancada precisa pertencer à filial/CT informados; lista
+        inclui paradas de runs já encerrados, não só do run ativo.
+        """
+        session = self._run_service.resolve_bench_session(session_token)
+        if session.get("branch") != branch or session.get("work_center") != work_center:
+            raise BenchSessionRequired("A sessão não pertence a este posto.")
+        rows = self._downtimes.list_unclassified_for_work_center(
+            branch=branch, work_center=work_center, limit=limit
+        )
+        return [self._pending_view(row) for row in rows]
+
+    @staticmethod
+    def _pending_view(row: dict[str, Any]) -> dict[str, Any]:
+        started = row.get("started_at")
+        ended = row.get("ended_at")
+        duration = 0
+        try:
+            if started is not None and ended is not None:
+                duration = max(0, int((ended - started).total_seconds()))
+        except Exception:  # noqa: BLE001 — defensivo para timestamps heterogêneos
+            duration = 0
+        return {
+            "id": row["id"],
+            "runId": row.get("run_id"),
+            "productionOrder": row.get("production_order"),
+            "operationCode": row.get("operation_code"),
+            "source": row.get("source"),
+            "reasonCode": row.get("reason_code"),
+            "note": row.get("note"),
+            "confirmed": bool(row.get("confirmed")),
+            "startedAt": started.isoformat() if hasattr(started, "isoformat") else started,
+            "endedAt": ended.isoformat() if hasattr(ended, "isoformat") else ended,
+            "durationSeconds": duration,
+        }
 
     def classify(
         self,

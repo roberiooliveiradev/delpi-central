@@ -356,6 +356,20 @@ class FakeDowntimeRepo:
         out = [e for e in self.events if e["branch"] == branch and e["work_center"] == work_center]
         return [dict(e) for e in sorted(out, key=lambda e: e["started_at"], reverse=True)]
 
+    def list_unclassified_for_work_center(self, *, branch, work_center, limit=50):
+        out = [
+            e
+            for e in self.events
+            if e["branch"] == branch
+            and e["work_center"] == work_center
+            and e["ended_at"] is not None
+            and (not e["confirmed"] or e["reason_code"] is None)
+        ]
+        return [
+            dict(e)
+            for e in sorted(out, key=lambda e: e["started_at"], reverse=True)
+        ][:limit]
+
 
 class FakeReasonRepo:
     def __init__(self) -> None:

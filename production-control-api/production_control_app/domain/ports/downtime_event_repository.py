@@ -70,6 +70,17 @@ class DowntimeEventRepositoryPort(ABC):
         mais antiga primeiro — alimenta `pendingDowntime` do snapshot."""
 
     @abstractmethod
+    def list_unclassified_for_work_center(
+        self,
+        *,
+        branch: str,
+        work_center: str,
+        limit: int = 50,
+    ) -> list[dict[str, Any]]:
+        """Paradas encerradas do CT ainda sem motivo confirmado, mais
+        recente primeiro — alimenta a lista de pendências do cockpit."""
+
+    @abstractmethod
     def list_for_work_center(
         self,
         *,

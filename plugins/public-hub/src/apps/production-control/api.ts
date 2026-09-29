@@ -746,6 +746,44 @@ export async function fetchMesDowntimeReasons(token: string): Promise<MesDowntim
   return data.items ?? [];
 }
 
+/** Parada MES encerrada do posto ainda sem motivo (inclui runs finalizados). */
+export type PendingMesDowntime = {
+  id: string;
+  runId: string | null;
+  productionOrder: string | null;
+  operationCode: string | null;
+  source: string | null;
+  reasonCode: string | null;
+  note: string | null;
+  confirmed: boolean;
+  startedAt: string | null;
+  endedAt: string | null;
+  durationSeconds: number;
+};
+
+export async function fetchPendingMesDowntimes(
+  token: string,
+  sessionToken: string,
+  branch: string,
+  workCenter: string,
+): Promise<PendingMesDowntime[]> {
+  const params = new URLSearchParams({ branch, workCenter });
+  const response = await fetch(
+    `${API_BASE}/public/machine-load/${encodeURIComponent(token)}/mes/downtimes/pending?${params}`,
+    {
+      headers: {
+        Accept: "application/json",
+        [BENCH_SESSION_HEADER]: sessionToken,
+      },
+    },
+  );
+  const data = await readEnvelope<{ items: PendingMesDowntime[] }>(
+    response,
+    "Paradas sem motivo indisponíveis.",
+  );
+  return data.items ?? [];
+}
+
 export async function classifyRunDowntime(
   token: string,
   sessionToken: string,

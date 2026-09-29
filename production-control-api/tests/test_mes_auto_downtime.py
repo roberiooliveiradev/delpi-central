@@ -814,3 +814,110 @@ def test_integrity_rejects_running_with_manual_stopped():
     codes = {i["issue_code"] for i in inspect_runtime_integrity(report)}
     assert "running_with_open_stopped" in codes
     assert "running_without_open_producing" in codes
+
+
+def _finish_run_with_unclassified_downtime(
+    service, downtimes, repo, pulse, clock, session
+):
+    """Run com parada automática já encerrada sem motivo → run stop."""
+    run = _start(service, session)
+    _sync_clock(clock, repo, run["id"])
+    clock.advance(THRESHOLD)
+    service.tick_running_runs()
+    assert downtimes.events and downtimes.events[0]["ended_at"] is None
+    clock.advance(60)
+    pulse.device_by_id["dev-1"] = {
+        "deviceId": "dev-1",
+        "counter": 105,
+        "counterEpoch": 1,
+        "online": True,
+        "status": "online",
+    }
+    service.tick_running_runs()
+    assert downtimes.events[0]["ended_at"] is not None
+    service.stop_run(run["id"], session_token=session)
+    return run
+
+
+def test_unclassified_list_covers_finished_run_and_classify_by_id():
+    service, _st, downtimes, repo, pulse, clock, session, _a = _setup()
+    run = _finish_run_with_unclassified_downtime(
+        service, downtimes, repo, pulse, clock, session
+    )
+    classifier = _classifier(service, downtimes)
+
+    items = classifier.list_unclassified(
+        branch="01", work_center="CT01", session_token=session
+    )
+    assert len(items) == 1
+    item = items[0]
+    assert item["runId"] == run["id"]
+    assert item["confirmed"] is False
+    assert item["endedAt"] is not None
+    assert item["durationSeconds"] > 0
+    assert item["productionOrder"] == "OP1"
+
+    # Classifica a parada encerrada do run já finalizado, pela identidade.
+    payload = classifier.classify(
+        run["id"],
+        reason_code="raw_material",
+        note=None,
+        session_token=session,
+        downtime_id=item["id"],
+    )
+    assert payload["reasonCode"] == "raw_material"
+    assert payload["endedAt"] is not None
+    assert (
+        classifier.list_unclassified(
+            branch="01", work_center="CT01", session_token=session
+        )
+        == []
+    )
+
+
+def test_unclassified_list_excludes_open_and_classified_downtimes():
+    service, _st, downtimes, repo, pulse, clock, session, _a = _setup()
+    _finish_run_with_unclassified_downtime(
+        service, downtimes, repo, pulse, clock, session
+    )
+    classifier = _classifier(service, downtimes)
+    downtimes.events[0]["reason_code"] = "raw_material"
+    downtimes.events[0]["confirmed"] = True
+    assert (
+        classifier.list_unclassified(
+            branch="01", work_center="CT01", session_token=session
+        )
+        == []
+    )
+
+    # Parada ainda aberta não entra na lista de pendências encerradas.
+    run2 = _start(service, session)
+    _sync_clock(clock, repo, run2["id"])
+    service.tick_running_runs()  # 1º tick: delta do contador conta como atividade
+    clock.advance(THRESHOLD)
+    service.tick_running_runs()
+    open_items = classifier.list_unclassified(
+        branch="01", work_center="CT01", session_token=session
+    )
+    assert open_items == []
+    open_dt = [e for e in downtimes.events if e["ended_at"] is None]
+    assert len(open_dt) == 1 and open_dt[0]["run_id"] == run2["id"]
+
+
+def test_unclassified_list_requires_session_of_same_work_center():
+    service, _st, downtimes, repo, pulse, clock, session, _a = _setup()
+    _finish_run_with_unclassified_downtime(
+        service, downtimes, repo, pulse, clock, session
+    )
+    classifier = _classifier(service, downtimes)
+
+    from production_control_app.domain.errors import BenchSessionRequired
+
+    with pytest.raises(BenchSessionRequired):
+        classifier.list_unclassified(
+            branch="01", work_center="CT99", session_token=session
+        )
+    with pytest.raises(BenchSessionRequired):
+        classifier.list_unclassified(
+            branch="01", work_center="CT01", session_token=None
+        )
