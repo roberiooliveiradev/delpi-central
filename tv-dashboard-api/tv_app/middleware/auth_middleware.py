@@ -3,17 +3,21 @@ from __future__ import annotations
 from delpi_auth.jwt_validator import validate_token
 from delpi_auth.middleware.fastapi_auth import jwt_middleware as _base_jwt_middleware
 from delpi_auth.service_token import request_has_valid_internal_service_token
+from delpi_mcp.auth import (
+    McpTransportAuthPolicy,
+    is_mcp_data_path,
+    mcp_transport_auth,
+)
 from fastapi import Request
-from fastapi.responses import JSONResponse
 
 from tv_app.interface.http.gpt_actions_response import (
     correlation_id_from_request,
     gpt_fail,
 )
 from tv_app.interface.mcp.oauth_contract import (
+    MCP_CLIENT_SCOPES,
     build_www_authenticate_challenge,
-    mcp_audience_satisfied,
-    mcp_required_scopes_satisfied,
+    resolve_required_mcp_resource_audience,
 )
 from tv_app.middleware.media_access_token import (
     normalize_tv_api_path,
@@ -89,21 +93,20 @@ def _is_gpt_actions_protected_path(path: str) -> bool:
     return normalized != _GPT_ACTIONS_OPENAPI
 
 
-_MCP_PREFIX = "/mcp"
-
-
 def _is_mcp_data_path(path: str) -> bool:
     """MCP JSON-RPC transport (mounted app). Metadata well-known stays public."""
     normalized = normalize_tv_api_path(path)
-    return normalized == _MCP_PREFIX or normalized.startswith(_MCP_PREFIX + "/")
+    return is_mcp_data_path(normalized)
 
 
-def _oauth_json_401() -> JSONResponse:
-    return JSONResponse(
-        status_code=401,
-        content={"detail": "Unauthorized"},
-        headers={"WWW-Authenticate": build_www_authenticate_challenge()},
-    )
+# S3: MCP transport AuthN policy (VISTA wire preserved — comma-separated
+# historical challenge, no redecoration of a base-middleware 401).
+_MCP_TRANSPORT_POLICY = McpTransportAuthPolicy(
+    resolve_resource_audience=resolve_required_mcp_resource_audience,
+    required_scopes=MCP_CLIENT_SCOPES,
+    challenge=lambda **_: build_www_authenticate_challenge(),
+    redecorate_base_401=False,
+)
 
 
 async def _mcp_oauth_transport(request: Request, call_next):
@@ -114,23 +117,14 @@ async def _mcp_oauth_transport(request: Request, call_next):
     whose `scope` contains the generic MCP scopes. Business AuthZ remains
     application-owned downstream.
     """
-    if request_has_valid_internal_service_token(request):
-        return _oauth_json_401()
-    auth = request.headers.get("Authorization") or request.headers.get("authorization")
-    if not auth or not auth.startswith("Bearer "):
-        return _oauth_json_401()
-    token = auth.split(" ", 1)[1].strip()
-    if not token:
-        return _oauth_json_401()
-    try:
-        payload = validate_token(token)
-    except Exception:
-        return _oauth_json_401()
-    if not mcp_audience_satisfied(payload):
-        return _oauth_json_401()
-    if not mcp_required_scopes_satisfied(payload):
-        return _oauth_json_401()
-    return await _base_jwt_middleware(request, call_next)
+    return await mcp_transport_auth(
+        request,
+        call_next,
+        policy=_MCP_TRANSPORT_POLICY,
+        token_validator=validate_token,
+        service_token_gate=request_has_valid_internal_service_token,
+        base_auth_middleware=_base_jwt_middleware,
+    )
 
 
 async def jwt_middleware(request: Request, call_next):
