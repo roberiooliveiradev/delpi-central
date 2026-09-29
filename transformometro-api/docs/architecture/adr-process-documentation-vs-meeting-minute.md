@@ -1,9 +1,9 @@
 # ADR — Documentação de processo ≠ Ata
 
-**Status:** DECIDED (2026-09-21). Capability de documentação: **IMPLEMENTED** (pacote V1 local). Runtime prod fica **PROVEN** após deploy/read-back.  
+**Status:** DECIDED (2026-09-21). Capability de documentação: **V2 IMPLEMENTED** (Markdown experience + realtime). Deployment MFE/API: **PROVEN**. Realtime code/integration: **PROVEN**. Realtime two-session authenticated smoke: **TEST_NOT_RUN**.\
 **Escopo:** Transformômetro / Portal Transforma+.
 
-Documentação não prova runtime. Tabela/API abaixo são IMPLEMENTED no código; PROVEN só com evidência de deploy.
+Documentação não prova runtime. PROVEN exige evidência de deploy/read-back; smoke autenticado de duas sessões segue pendente e não é afirmado aqui.
 
 ## Contexto
 
@@ -35,7 +35,7 @@ Isso é inadequado: ata é registro de **reunião**, que pode tratar vários ass
 - Fora de escopo V1: versionamento, tags, attachments, approval, Mermaid.
 - **Surface TÉO (2026-09-22):** exposição via entidade governada `process_document` no catálogo GPT/MCP CRUD — ver [`../integrations/teo-capability-matrix.md`](../integrations/teo-capability-matrix.md) e ADR [`adr-teo-specialist-capability-surfaces.md`](./adr-teo-specialist-capability-surfaces.md). Sem novas operations Action dedicadas.
 
-## Implementação V2 — Markdown experience + realtime (2026-10-27)
+## Implementação V2 — Markdown experience + realtime (2026-09-29)
 
 - **Renderer documental:** `MarkdownDocumentView` + `buildMarkdownDocumentModel` no `plugin-ui` (`components/markdown/`). GFM via `marked`, sanitização via `stripDangerousRichTextTags` (sem HTML ativo, sem `javascript:`), fenced code com label/copy/scroll interno, anchors determinísticos (`h2+` com ids estáveis + outline derivado — nunca persistido).
 - **Mermaid documental:** fenced block ```` ```mermaid ```` renderizado via `DiagramMermaidPreview` (lazy `import("mermaid")`, `securityLevel: "sandbox"`, pós-processamento seguro). **É apenas DOCUMENTAL/ILUSTRATIVO** — nunca sincroniza, sobrescreve ou substitui `flowchart_v1`, que permanece a única autoridade do diagrama do processo.
@@ -44,6 +44,13 @@ Isso é inadequado: ata é registro de **reunião**, que pode tratar vários ass
 - **Frontend:** `ProcessDocumentationSection` assina `processo:{processo_id}` e re-lê via API canônica: create/update/delete → refresh de lista; update do doc aberto em view → refresh do detalhe; update do doc em edição → banner de stale-draft (rascunho nunca sobrescrito); delete do doc aberto → fallback/empty state; delete em edição → rascunho preservado + aviso. Anti-eco por `actorClientId` (mesma aba não refaz fetch).
 - **Concurrency:** `LOST UPDATE PROTECTION = ABSENT` — `ProcessDocument` não tem version/ETag/expected_version. O banner stale-draft é aviso de UX, **não** proteção de escrita; overwrite concorrente segue possível e é débito conhecido.
 - Permanece fora de escopo: versionamento, tags, attachments, approval, autosave, edição colaborativa simultânea, presence/lock de documento, sync Mermaid↔`flowchart_v1`.
+
+### Fact classification — V2 (2026-09-29)
+
+- **PROVEN:** `ProcessDocument.content_md` como fonte textual canônica; renderer GFM; Mermaid documental/ilustrativo; sanitização; title dedupe; outline; library/reader/editor UX; emissão realtime em writes HTTP; GPT/MCP audit → realtime notify; fan-out `processo:{id}`; anti-echo por clientId; preservação de stale-draft; deploy MFE + API (bundle e código verificados nos containers).
+- **TEST_NOT_RUN:** realtime two-session authenticated browser smoke (create/update/delete entre abas e banner de stale-draft observados em runtime autenticado).
+- **ABSENT / ACCEPTED RESIDUAL:** lost-update protection / ETag / `expected_version` (follow-up proposto, não mascarado por UX).
+- **OUT_OF_SCOPE:** versionamento, tags, attachments, approval, autosave, presence/lock de documento, edição simultânea, sync Mermaid↔`flowchart_v1`.
 
 ## Consequências
 
@@ -55,4 +62,4 @@ Isso é inadequado: ata é registro de **reunião**, que pode tratar vários ass
 
 - 2026-09-21: ADR inicial com capability TARGET e relação processo↔ata ABSENT.
 - 2026-09-21: V1 implementada (domain/API/MFE); status IMPLEMENTED até aceite runtime.
-- 2026-10-27: V2 — renderer documental GFM+Mermaid (ilustrativo), anchors/outline, title dedupe apresentacional e realtime invalidation `process_document`→`processo:{id}` (HTTP + GPT/MCP). `flowchart_v1` segue autoridade única do diagrama.
+- 2026-09-29: V2 — renderer documental GFM+Mermaid (ilustrativo), anchors/outline, title dedupe apresentacional e realtime invalidation `process_document`→`processo:{id}` (HTTP + GPT/MCP). `flowchart_v1` segue autoridade única do diagrama.
