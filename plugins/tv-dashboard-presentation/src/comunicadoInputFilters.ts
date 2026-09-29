@@ -130,13 +130,18 @@ export function collectInputFilterContributions(
   const applyValue = (
     target: ComunicadoDataFilters,
     paramKey: string,
-    value: string | number | boolean | null | undefined,
+    value: ComunicadoDataFilters[string] | undefined,
     field: InputParamSchemaField | null,
   ) => {
     if (value === undefined || value === null || value === "") {
       if (BRANCH_PARAM_KEYS.has(paramKey)) {
         target[paramKey] = "";
       }
+      return;
+    }
+    // ExpressionSpec — overrides tipados passam; backend valida a semântica.
+    if (typeof value === "object") {
+      target[paramKey] = value;
       return;
     }
     if (!isValueAllowedByParamSchema(value, field) && field !== null) return;
@@ -153,7 +158,7 @@ export function collectInputFilterContributions(
   const applyMaybeEmpty = (
     target: ComunicadoDataFilters,
     paramKey: string,
-    value: string | number | boolean | null | undefined,
+    value: ComunicadoDataFilters[string] | undefined,
   ) => {
     if (value === undefined || value === null || value === "") {
       if (BRANCH_PARAM_KEYS.has(paramKey)) target[paramKey] = "";

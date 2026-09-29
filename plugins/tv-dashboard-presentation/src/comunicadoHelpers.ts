@@ -209,6 +209,7 @@ import type {
   ComunicadoShapeKind,
   ComunicadoTextDecoration,
   ComunicadoVerticalAlign,
+  ParamExpressionSpec,
   TvDataModel,
   TvDataModelInput,
 } from "./comunicadoTypes";
@@ -354,7 +355,7 @@ export function createDataSourceBlock(
   operationId: string,
   options: {
     label?: string;
-    defaultParams?: Record<string, string | number | boolean | null>;
+    defaultParams?: Record<string, string | number | boolean | null | ParamExpressionSpec>;
     refreshSec?: number;
   } = {},
 ): ComunicadoBlock {

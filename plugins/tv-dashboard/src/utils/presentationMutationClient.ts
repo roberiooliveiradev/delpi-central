@@ -11,6 +11,7 @@ import {
   applyPresentationMutations,
   type PresentationMutationOp,
 } from "../api/tvDashboardApi";
+import { isParamExpressionValue } from "./paramExpressions";
 
 export async function commitPresentationOps(args: {
   playlistId: string;
@@ -153,19 +154,66 @@ export async function commitDeleteDataModel(args: {
   });
 }
 
+/**
+ * Divide `dataBinding.params` do bloco: ExpressionSpec não entra em
+ * `upsert_block` (schema scalar-only do contrato) — vai por
+ * `patch_data_source_params`, op governada que aceita ExpressionSpec em `set`.
+ * Retorna `{block, expressionSet}` — `expressionSet` vazio quando nada a patchear.
+ * Exportado para testes do contrato de split.
+ */
+export function splitBlockForAck(block: Record<string, unknown>): {
+  block: Record<string, unknown>;
+  expressionSet: Record<string, unknown>;
+} {
+  const binding =
+    block.dataBinding && typeof block.dataBinding === "object" && !Array.isArray(block.dataBinding)
+      ? (block.dataBinding as Record<string, unknown>)
+      : null;
+  const params =
+    binding?.params && typeof binding.params === "object" && !Array.isArray(binding.params)
+      ? (binding.params as Record<string, unknown>)
+      : null;
+  if (!binding || !params) return { block, expressionSet: {} };
+
+  const expressionSet: Record<string, unknown> = {};
+  const scalarParams: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(params)) {
+    if (isParamExpressionValue(value)) expressionSet[key] = value;
+    else scalarParams[key] = value;
+  }
+  if (Object.keys(expressionSet).length === 0) {
+    return { block, expressionSet: {} };
+  }
+  return {
+    block: {
+      ...block,
+      dataBinding: { ...binding, params: scalarParams },
+    },
+    expressionSet,
+  };
+}
+
 export async function commitUpsertBlocks(args: {
   playlistId: string;
   slideId: string;
   blocks: Record<string, unknown>[];
 }): Promise<ComunicadoConfig | null> {
   if (args.blocks.length === 0) return null;
+  const ops: PresentationMutationOp[] = [];
+  for (const raw of args.blocks) {
+    const { block, expressionSet } = splitBlockForAck(raw);
+    ops.push({ op: "upsert_block", block, createIfMissing: true });
+    if (Object.keys(expressionSet).length > 0 && typeof block.id === "string") {
+      ops.push({
+        op: "patch_data_source_params",
+        blockId: block.id,
+        set: expressionSet,
+      });
+    }
+  }
   return commitPresentationOps({
     playlistId: args.playlistId,
     slideId: args.slideId,
-    ops: args.blocks.map((block) => ({
-      op: "upsert_block",
-      block,
-      createIfMissing: true,
-    })),
+    ops,
   });
 }

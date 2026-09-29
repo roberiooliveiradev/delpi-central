@@ -398,6 +398,8 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     dateRangeFixedOpenEnded:
       "Datas opcionais (AAAA-MM-DD). Vazias = histórico completo. Só início = a partir dessa data até hoje; só fim = do início do histórico até essa data.",
     lastNDays: "Quantidade de dias corridos até hoje (inclusivo). Ex.: 15 = de 15 dias atrás até hoje.",
+    paramExpression:
+      "Expressão tipada: valor calculado pela API a cada carga (ex.: Date.AddMonths(Hoje,-12)). Persiste como fórmula, não como data fixa — use «Testar rota» / Detalhes técnicos para ver o valor resolvido.",
     excludeWeekends:
       "Quando a granularidade é diária, oculta sábado e domingo no gráfico. Não altera a consulta à API — só a apresentação.",
     paramGranularity:

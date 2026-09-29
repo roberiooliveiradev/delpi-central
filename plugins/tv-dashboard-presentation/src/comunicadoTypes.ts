@@ -437,9 +437,31 @@ export type ComunicadoIconBlock = ComunicadoBlockBase & {
 
 export type ComunicadoDataDisplayMode = "kpi" | "line_chart" | "bar_chart" | "table" | "auto";
 
+/**
+ * Typed param expression — canonical ExpressionSpec v1 (backend contract).
+ * Persisted wire shape: `params[name] = {expression: {version: 1, expression: <ast>}}`.
+ * The frontend authors/hydrates the AST structure only — evaluation is
+ * backend-owned (`resolve_param_expressions`); never serialize resolved values.
+ */
+export type ParamExpressionAst = {
+  kind: string;
+  value?: string | number | boolean | null;
+  children?: ParamExpressionAst[];
+};
+
+export type ParamExpressionSpec = {
+  expression: {
+    version: number;
+    expression: ParamExpressionAst;
+  };
+};
+
+/** Scalar param value or canonical typed expression spec. */
+export type DataParamValue = string | number | boolean | null | ParamExpressionSpec;
+
 export type ComunicadoDataBinding = {
   operationId: string;
-  params?: Record<string, string | number | boolean | null>;
+  params?: Record<string, DataParamValue>;
   displayMode?: ComunicadoDataDisplayMode;
   label?: string;
   /** @deprecated Legado da fonte monolítica; visuais usam *Projection. */
@@ -868,7 +890,7 @@ export type ComunicadoBlock =
   | ComunicadoKpiViewBlock
   | ComunicadoInputBlock;
 
-export type ComunicadoDataFilters = Record<string, string | number | boolean | null>;
+export type ComunicadoDataFilters = Record<string, DataParamValue>;
 
 /**
  * Transform persistido do grupo.
@@ -888,7 +910,7 @@ export type TvDataModelInput = {
   operationId: string;
   label?: string;
   queryName?: string;
-  params?: Record<string, string | number | boolean | null>;
+  params?: Record<string, DataParamValue>;
   /** Transform local do input (executa antes do transform do modelo). */
   transform?: unknown;
 };

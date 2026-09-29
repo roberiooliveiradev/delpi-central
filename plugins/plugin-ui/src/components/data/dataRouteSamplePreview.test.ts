@@ -156,3 +156,61 @@ describe("mapEnrichedBlockToDataRoutePreview", () => {
     expect(payload.extraSlices?.map((slice) => slice.kind).sort()).toEqual(["series", "table"]);
   });
 });
+
+describe("mapEnrichedBlockToDataRoutePreview — expression trace", () => {
+  it("propaga paramExpressions + effectiveParams do resolved", () => {
+    const block = {
+      resolved: {
+        kpi: { label: "Total", value: 10 },
+        paramExpressions: [
+          {
+            param: "start_date",
+            expectedType: "date",
+            resolved: "2025-09-01",
+          },
+          {
+            param: "end_date",
+            expectedType: "date",
+            error: { code: "m.expression_eval", message: "falhou" },
+          },
+        ],
+        effectiveParams: { start_date: "2025-09-01", branch: "01" },
+      },
+    };
+    const payload = mapEnrichedBlockToDataRoutePreview(block, "kpi");
+    expect(payload.paramExpressions).toHaveLength(2);
+    expect(payload.paramExpressions?.[0]).toMatchObject({
+      param: "start_date",
+      resolved: "2025-09-01",
+    });
+    expect(payload.effectiveParams).toEqual({
+      start_date: "2025-09-01",
+      branch: "01",
+    });
+  });
+
+  it("mantém trace também em resposta com erro", () => {
+    const payload = mapEnrichedBlockToDataRoutePreview(
+      {
+        resolved: {
+          error: "param start_date expression inválida",
+          paramExpressions: [
+            { param: "start_date", error: { code: "x", message: "falhou" } },
+          ],
+        },
+      },
+      "table",
+    );
+    expect(payload.error).toBeTruthy();
+    expect(payload.paramExpressions).toHaveLength(1);
+  });
+
+  it("sem trace no resolved não emite campos", () => {
+    const payload = mapEnrichedBlockToDataRoutePreview(
+      { resolved: { kpi: { label: "K", value: 1 } } },
+      "kpi",
+    );
+    expect(payload.paramExpressions).toBeUndefined();
+    expect(payload.effectiveParams).toBeUndefined();
+  });
+});

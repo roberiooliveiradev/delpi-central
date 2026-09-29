@@ -3,9 +3,11 @@ import {
   EXCLUDE_WEEKENDS_PARAM,
   isEffectiveDailyGranularity,
   routeSupportsDailyGranularity,
+  type ParamExpressionSpec,
 } from "@delpi/tv-dashboard-presentation";
-import type { ReactNode } from "react";
+import { Fragment, useState, type ReactNode } from "react";
 import type { BranchScope } from "../api/tvDashboardApi";
+import type { DataParamUpdateValue } from "../utils/applyDataParamUpdates";
 import {
   ENUM_OPTION_LABELS,
   UI_FALLBACK_ENUMS,
@@ -33,8 +35,17 @@ import {
   resolveFilterTextPlaceholder,
   type DataParamFilterLayer,
 } from "../utils/dataParamFilterUi";
+import type { ParamExpressionSupport } from "../hooks/useParamExpressionCapability";
+import {
+  buildExpressionParamValue,
+  isParamExpressionValue,
+  paramAllowsExpression,
+  paramFormatToReturnTypes,
+  paramTypeToReturnTypes,
+} from "../utils/paramExpressions";
 import { BranchField } from "./BranchField";
 import { DeckField } from "./deck/DeckField";
+import { TypedExpressionEditor } from "./TypedExpressionEditor";
 
 export type DataParamSchemaField = {
   type?: string;
@@ -43,6 +54,11 @@ export type DataParamSchemaField = {
   default?: string | number | boolean;
   optional?: boolean;
   enum?: Array<string | number | boolean>;
+  /** `in: path` — parâmetro de path, nunca editável por expressão. */
+  in?: string;
+  /** Opt-out do contrato — expressionAllowed=false no paramSchema. */
+  expressionAllowed?: boolean;
+  format?: string;
 };
 
 export type DataParamSchema = Record<string, DataParamSchemaField>;
@@ -127,10 +143,11 @@ function isDateParam(key: string, field: DataParamSchemaField): boolean {
 }
 
 function displayParamValue(
-  current: string | number | boolean | undefined | null,
+  current: string | number | boolean | ParamExpressionSpec | undefined | null,
   field: DataParamSchemaField,
   applySchemaDefault: boolean,
 ): string {
+  if (isParamExpressionValue(current)) return "";
   if (current === undefined || current === null || current === "") {
     // Camada agregada / limpar: vazio = sem filtro — não preencher com default OpenAPI.
     if (
@@ -147,7 +164,12 @@ function displayParamValue(
 
 type Props = {
   schema: DataParamSchema;
-  values: Record<string, string | number | boolean | null | undefined> | undefined;
+  values:
+    | Record<
+        string,
+        string | number | boolean | null | ParamExpressionSpec | undefined
+      >
+    | undefined;
   inheritedKeys?: Set<string>;
   /** Chaves com valores divergentes entre fontes (multi-seleção). */
   divergedKeys?: Set<string>;
@@ -170,10 +192,19 @@ type Props = {
    */
   hydrateDefaultPreset?: boolean;
   /**
+   * Capability de expressões tipadas (catálogo `/data/m/functions`).
+   * Ausente/desabilitado → só edição literal/preset (graceful).
+   */
+  expressionSupport?: ParamExpressionSupport;
+  /** fixedQueryParams da rota — nunca editáveis por expressão. */
+  fixedQueryParams?: Record<string, unknown> | null;
+  /**
    * Patch atômico de parâmetros. Sempre em lote — evita race quando Período +
    * competence / datas mudam juntos (binding stale sobrescrevia o preset).
+   * Valores podem ser string (parse via schema) ou ExpressionSpec intacto.
+   * (assinatura de método — hosts sem expressionSupport nunca recebem specs)
    */
-  onChange: (updates: Record<string, string>) => void;
+  onChange(updates: Record<string, DataParamUpdateValue>): void;
 };
 
 /** @deprecated Preferir rótulos em helpTooltips; mantido para testes de contrato. */
@@ -205,6 +236,79 @@ function ClearableControl({
         >
           ×
         </button>
+      ) : null}
+    </div>
+  );
+}
+
+/**
+ * Chips «Valor fixo | Expressão». Trocar de modo com valor armazenado pede
+ * confirmação inline — nunca descarta silenciosamente (a troca efetiva
+ * remove a chave anterior via patchParam).
+ */
+function ParamValueModeSwitch({
+  mode,
+  hasStoredValue,
+  idPrefix,
+  onSwitch,
+}: {
+  mode: "literal" | "expression";
+  hasStoredValue: boolean;
+  idPrefix: string;
+  onSwitch: (mode: "literal" | "expression") => void;
+}) {
+  const [pending, setPending] = useState<"literal" | "expression" | null>(null);
+
+  const request = (next: "literal" | "expression") => {
+    if (next === mode) return;
+    if (hasStoredValue) setPending(next);
+    else onSwitch(next);
+  };
+  const confirm = () => {
+    if (pending) onSwitch(pending);
+    setPending(null);
+  };
+
+  const btnClass = (active: boolean) =>
+    `td-data-param-mode__btn${active ? " td-data-param-mode__btn--active" : ""}`;
+
+  return (
+    <div
+      className="td-data-param-mode"
+      role="group"
+      aria-label="Modo do valor"
+      id={idPrefix}
+    >
+      <button
+        type="button"
+        className={btnClass(mode === "literal")}
+        aria-pressed={mode === "literal"}
+        onClick={() => request("literal")}
+      >
+        Valor fixo
+      </button>
+      <button
+        type="button"
+        className={btnClass(mode === "expression")}
+        aria-pressed={mode === "expression"}
+        onClick={() => request("expression")}
+      >
+        Expressão
+      </button>
+      {pending ? (
+        <span className="td-data-param-mode__confirm" role="alert">
+          Substituir valor atual?
+          <button type="button" className="td-data-param-mode__btn" onClick={confirm}>
+            Sim
+          </button>
+          <button
+            type="button"
+            className="td-data-param-mode__btn"
+            onClick={() => setPending(null)}
+          >
+            Não
+          </button>
+        </span>
       ) : null}
     </div>
   );
@@ -249,10 +353,18 @@ export function DataParamFields({
   openEndedDateRange = false,
   filterLayer: filterLayerProp,
   hydrateDefaultPreset = true,
+  expressionSupport,
+  fixedQueryParams = null,
   onChange,
 }: Props) {
   const schemaForUi = withExcludeWeekendsSchemaField(schema);
   const entries = orderedParamEntries(schemaForUi);
+  const fixedQueryParamKeys = new Set(Object.keys(fixedQueryParams ?? {}));
+  // Refs `param.<key>` disponíveis — chaves do próprio schema da rota.
+  const refParamKeys = entries.map(([refKey, refField]) => ({
+    key: refKey,
+    label: resolveParamFieldLabel(refKey, refField.label),
+  }));
   if (entries.length === 0) return null;
 
   const filterLayer = resolveFilterLayer(filterLayerProp, hydrateDefaultPreset);
@@ -313,14 +425,19 @@ export function DataParamFields({
     divergedLabel: uiLabels.diverged,
   });
 
-  function patchParam(key: string, value: string) {
-    const updates: Record<string, string> = { [key]: value };
-    if (key === "competence" && value.trim() && activeDatePair) {
+  function patchParam(key: string, value: string | ParamExpressionSpec) {
+    const updates: Record<string, DataParamUpdateValue> = { [key]: value };
+    if (key === "competence" && typeof value === "string" && value.trim() && activeDatePair) {
       // Competência (mês fechado SI) → datas manuais; evita conflito com preset relativo.
       updates[DATE_RANGE_PRESET_PARAM] = "custom";
     }
-    if (activeDatePair && isDateRangePairKey(key, activeDatePair) && preset && preset !== "custom") {
-      updates[DATE_RANGE_PRESET_PARAM] = "custom";
+    if (activeDatePair && isDateRangePairKey(key, activeDatePair)) {
+      // Expressão ou data explícita no par nunca coexiste com preset relativo.
+      if (isParamExpressionValue(value)) {
+        updates[DATE_RANGE_PRESET_PARAM] = "";
+      } else if (preset && preset !== "custom") {
+        updates[DATE_RANGE_PRESET_PARAM] = "custom";
+      }
     }
     onChange(updates);
   }
@@ -438,7 +555,105 @@ export function DataParamFields({
     const emptyLabel = emptyChoiceLabel(inherited);
     const fieldDiverged = divergedKeys.has(key);
     const hasStoredValue =
-      current !== undefined && current !== null && String(current).trim() !== "";
+      current !== undefined &&
+      current !== null &&
+      (isParamExpressionValue(current) || String(current).trim() !== "");
+
+    // Typed expressions — capability do catálogo + predicate da rota
+    // (paramSchema + in:path + expressionAllowed + fixedQueryParams).
+    const expressionSpec = isParamExpressionValue(current) ? current : null;
+    const exprAllowed = Boolean(expressionSupport?.enabled) && paramAllowsExpression(
+      key,
+      field,
+      fixedQueryParamKeys,
+    );
+    const expectedReturnTypes = isDateParam(key, field)
+      ? new Set(["date"])
+      : (paramFormatToReturnTypes(field.format) ??
+        paramTypeToReturnTypes(field.type));
+
+    /** Chips «Valor fixo | Expressão» + editor — substitui o controle literal. */
+    const withExpressionMode = (literalJsx: ReactNode) => {
+      if (!exprAllowed) return literalJsx;
+      return (
+        <Fragment key={key}>
+          <ParamValueModeSwitch
+            mode={expressionSpec ? "expression" : "literal"}
+            hasStoredValue={hasStoredValue}
+            idPrefix={`${fieldId}-mode`}
+            onSwitch={(mode) => {
+              if (mode === "expression") {
+                patchParam(
+                  key,
+                  buildExpressionParamValue(
+                    isDateParam(key, field)
+                      ? { kind: "identifier", value: "today" }
+                      : { kind: "literal" },
+                  ),
+                );
+              } else {
+                patchParam(key, "");
+              }
+            }}
+          />
+          {expressionSpec ? (
+            <DeckField
+              key={key}
+              id={fieldId}
+              label={label}
+              hint={`${hint ? `${hint} ` : ""}${TV_DASHBOARD_HELP_TOOLTIPS.data.paramExpression}`}
+            >
+              <ClearableControl
+                clearLabel={clearLabel}
+                canClear={canClearFilterValue({
+                  diverged: fieldDiverged,
+                  hasStoredValue,
+                })}
+                onClear={() => patchParam(key, "")}
+              >
+                <TypedExpressionEditor
+                  value={expressionSpec}
+                  onChange={(spec) => patchParam(key, spec)}
+                  support={expressionSupport!}
+                  refParamKeys={refParamKeys.filter((ref) => ref.key !== key)}
+                  expectedReturnTypes={expectedReturnTypes}
+                  idPrefix={`${fieldId}-expr`}
+                  compact={compact}
+                />
+              </ClearableControl>
+            </DeckField>
+          ) : (
+            literalJsx
+          )}
+        </Fragment>
+      );
+    };
+
+    // Expressão persistida sem capability (catálogo indisponível ou param
+    // fora do contrato) — preservar intacta, sem destruir em "[object Object]".
+    if (expressionSpec && !exprAllowed) {
+      return (
+        <DeckField key={key} id={fieldId} label={label} hint={hint}>
+          <div className="td-param-expression td-param-expression--readonly">
+            <p className="td-param-expression__hint" role="status">
+              Expressão tipada persistida — edição indisponível nesta tela.
+            </p>
+            <ClearableControl
+              clearLabel={clearLabel}
+              canClear={canClearFilterValue({
+                diverged: fieldDiverged,
+                hasStoredValue,
+              })}
+              onClear={() => patchParam(key, "")}
+            >
+              <pre className="td-param-expression__json">
+                {JSON.stringify(expressionSpec.expression.expression, null, 2)}
+              </pre>
+            </ClearableControl>
+          </div>
+        </DeckField>
+      );
+    }
 
     if (BRANCH_PARAM_KEYS.has(key)) {
       const fieldOptional = field.optional !== false;
@@ -449,7 +664,7 @@ export function DataParamFields({
         inherited,
         labels: uiLabels,
       });
-      return (
+      return withExpressionMode(
         <BranchField
           key={key}
           id={fieldId}
@@ -467,7 +682,7 @@ export function DataParamFields({
           }
           emptyOptionLabel={branchEmptyLabel}
           divergedLabel={uiLabels.diverged}
-        />
+        />,
       );
     }
 
@@ -477,7 +692,7 @@ export function DataParamFields({
         diverged: fieldDiverged,
         divergedLabel: uiLabels.diverged,
       });
-      return (
+      return withExpressionMode(
         <DeckField key={key} id={fieldId} label={label} hint={hint}>
           <FormSelectControl
             id={fieldId}
@@ -490,7 +705,7 @@ export function DataParamFields({
             }
             options={options}
           />
-        </DeckField>
+        </DeckField>,
       );
     }
 
@@ -507,7 +722,7 @@ export function DataParamFields({
           : "Vazio = até hoje"
         : null;
 
-    return (
+    return withExpressionMode(
       <DeckField key={key} id={fieldId} label={label} hint={hint}>
         <ClearableControl
           clearLabel={clearLabel}
@@ -540,7 +755,7 @@ export function DataParamFields({
             onChange={(value: string) => patchParam(key, value)}
           />
         </ClearableControl>
-      </DeckField>
+      </DeckField>,
     );
   });
 
