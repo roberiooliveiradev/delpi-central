@@ -23,7 +23,7 @@ Princípios preservados: BPMN XML = semântica canônica; BPMN-DI = geometria ca
 
 `FROZEN` — correção aplicada neste prompt ao `FRONTEND-EDITOR-UX-SPEC-FREEZE.md`:
 
-- Contrato corrigido: dirty/save-point tracking = **estado mantido pelo `BpmnEditorAdapter` a partir de APIs/eventos públicos** do command stack (`commandStack.changed` com `trigger` ∈ `execute | undo | redo | clear`; contador `position`/`savedPosition` interno ao adapter).
+- Contrato corrigido: dirty/save-point tracking = **histórico de identidade de estado mantido pelo `BpmnEditorAdapter` a partir de APIs/eventos públicos** do command stack (`commandStack.changed` com `trigger` ∈ `execute | undo | redo | clear`; modelo `stateTokens`/`cursor`/`savedToken` — ver contrato completo no `FRONTEND-EDITOR-UX-SPEC-FREEZE.md` §13). Identidade branch-aware: edição após undo gera novo token — profundidade numérica **nunca** é comparada sozinha (sem false CLEAN).
 - **Proibido** acessar `commandStack._stack`, `commandStack._stackIdx` ou qualquer membro privado do vendor para determinar dirty state — nos docs e na implementação.
 - O documento do Prompt 4 foi atualizado nesta mesma entrega (linhas do contrato de dirty, matriz de transições e assinatura `isDirty`).
 
@@ -168,7 +168,7 @@ authoritativeXml sem BPMN-DI
 
 - A DI transitória **não substitui `authoritativeXml`**, **não é enviada ao backend** e **não marca dirty** (seção 20 do Prompt 4 mantém-se).
 - Banner do Prompt 4 ("layout automático não salvo") permanece visível enquanto a DI for transitória.
-- **Save sem edição**: persiste o artefato **original sem DI** — `exportXml()` em sessão sem edição devolve a representação sem DI transitória (o adapter marca a DI gerada como `transient` e a exclui da serialização de save enquanto `dirty=false`/`position==savedPosition`). Persistir DI só ocorre quando a geometria foi efetivamente adotada: primeira edição de geometria do usuário **ou** `Organizar diagrama` → Accept. Transição congelada: `transient DI + dirty=false → canonical-excluded`; `primeira mutação de geometria/Accept → DI torna-se candidata canônica → DIRTY`.
+- **Save sem edição**: persiste o artefato **original sem DI** — `exportXml()` em sessão sem edição devolve a representação sem DI transitória (o adapter marca a DI gerada como `transient` e a exclui da serialização de save enquanto `dirty=false` (token corrente == savedToken)). Persistir DI só ocorre quando a geometria foi efetivamente adotada: primeira edição de geometria do usuário **ou** `Organizar diagrama` → Accept. Transição congelada: `transient DI + dirty=false → canonical-excluded`; `primeira mutação de geometria/Accept → DI torna-se candidata canônica → DIRTY`.
 
 ## 16. Transient DI Contract
 
@@ -211,7 +211,7 @@ Decisão sobre alternativas: **B (apply + undo de command group)** rejeitada —
 
 **Accept:**
 - aplica a proposta no diagrama ativo do main editor como **um único logical command batch** (implementação pode gerar vários commands internos — devem compor um único passo de undo);
-- `position` avança → `DIRTY`;
+- um novo token de estado entra no cursor → `DIRTY`;
 - banner de preview fecha; `fitViewport` aplicado uma vez (efeito visual, não persistido — seção 33);
 - sem save automático; sem backend round-trip;
 - DI sanity check local pós-aplicação (seção 36); falha ⇒ proposal rejeitada retroativamente, estado anterior restaurado, diagnóstico `LAYOUT_FAILED`.
