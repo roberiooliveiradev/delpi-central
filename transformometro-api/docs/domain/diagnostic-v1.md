@@ -1,6 +1,6 @@
 # Diagnostic V1 — domain capability & governance record
 
-**Status:** PROVEN IN PRODUCTION (deployed SHA `721db1d469`)
+**Status:** PROVEN IN PRODUCTION (deployed SHA `230fbb9b6a`)
 **Date:** 2026-09-29
 **Owner:** Transformômetro (domain + persistence + use cases)
 **Surface:** TÉO MCP (`/apps/transformometro-api/mcp`) — MCP-only; no GPT Actions operations.
