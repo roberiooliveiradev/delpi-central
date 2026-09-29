@@ -914,6 +914,9 @@
 .dashboard-helpdesk .helpdesk-rich-text-field--fill > .delpi-ui-conversation-drop > .delpi-ui-rich-text {
   flex: 1 1 auto;
   min-height: 6rem;
+  /* plugin-ui --fill sets height:100% — inside the drop column it would
+     consume the whole wrapper and push the attachments strip out. */
+  height: auto;
 }
 
 .dashboard-helpdesk .helpdesk-rich-text-field__attachments {
