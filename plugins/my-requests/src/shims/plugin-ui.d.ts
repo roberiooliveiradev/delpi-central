@@ -6,6 +6,7 @@
 declare module "@delpi/plugin-ui/index" {
   import type {
     ComponentType,
+    ErrorInfo,
     InputHTMLAttributes,
     ReactElement,
     ReactNode,
@@ -698,6 +699,23 @@ declare module "@delpi/plugin-ui/index" {
   export function listInlinePendingIdsFromMarkdown(bodyText: string): string[];
 
   export function listInlineAttachmentIdsFromMarkdown(bodyText: string): string[];
+
+  export type PluginErrorBoundaryLabels = {
+    title: string;
+    message?: string;
+    retry?: string;
+  };
+
+  export type PluginErrorBoundaryProps = {
+    children: ReactNode;
+    labels: PluginErrorBoundaryLabels;
+    prefix?: string;
+    resetKey?: unknown;
+    onError?: (error: Error, info: ErrorInfo) => void;
+    onRetry?: () => void;
+  };
+
+  export const PluginErrorBoundary: ComponentType<PluginErrorBoundaryProps>;
 
   export function createDashboardMessageThread(
     prefix: string,

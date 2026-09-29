@@ -35,7 +35,6 @@ import {
 
 type Props = {
   getAccessToken?: () => string | undefined;
-  pathname?: string;
   userId: string;
   onNavigate: (path: string) => void;
 };
@@ -74,7 +73,6 @@ type Shortcut = {
  */
 export function PersonDirectoryPage({
   getAccessToken,
-  pathname,
   userId,
   onNavigate,
 }: Props) {

@@ -1,5 +1,6 @@
 import { useEffect, type ReactNode } from "react";
 
+import { PluginErrorBoundary } from "@delpi/plugin-ui/index";
 import { PageTransition } from "./components/PageTransition";
 import { PortalTopBar } from "./components/TransformometroNav";
 import { ConfirmDialogProvider } from "./components/ui/ConfirmDialogProvider";
@@ -85,18 +86,28 @@ function AppRoutes({ getAccessToken, pathname: pathnameFromHost }: AppProps) {
     );
   } else if (route.view === "interactionRooms") {
     page = (
-      <InteractionRoomsPage
-        getAccessToken={getAccessToken}
-        pathname={pathname}
-        roomId={route.roomId}
-        onNavigate={onNavigate}
-      />
+      <PluginErrorBoundary
+        prefix="tm"
+        resetKey={route.roomId ?? "inbox"}
+        labels={{
+          title: "Não foi possível abrir a sala",
+          message:
+            "A conversa encontrou um erro inesperado. Tente de novo ou volte à lista de salas.",
+          retry: "Tentar de novo",
+        }}
+        onError={(error) => console.error("[transformometro] sala de interação", error)}
+      >
+        <InteractionRoomsPage
+          getAccessToken={getAccessToken}
+          roomId={route.roomId}
+          onNavigate={onNavigate}
+        />
+      </PluginErrorBoundary>
     );
   } else if (route.view === "user" && route.userId) {
     page = (
       <PersonDirectoryPage
         getAccessToken={getAccessToken}
-        pathname={pathname}
         userId={route.userId}
         onNavigate={onNavigate}
       />

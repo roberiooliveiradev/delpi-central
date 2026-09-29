@@ -1,5 +1,5 @@
-import type { InteractionMessageDto, InteractionReactionDto } from "../api/interactionRoomsApi";
-import type { CommercialInteractionRoomEvent } from "../constants/interactionRoomRealtime";
+import type { InteractionMessageDto, InteractionReactionDto } from "../../api/interactionRoomsApi";
+import type { CommercialInteractionRoomEvent } from "../../constants/interactionRoomRealtime";
 
 export type InteractionRoomThreadState = {
   messages: InteractionMessageDto[];

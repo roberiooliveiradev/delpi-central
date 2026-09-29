@@ -181,7 +181,7 @@ function insertZwsp(doc: Document, ref: Node, before: boolean): void {
   }
 }
 
-function hasCaretAnchor(node: Node | null, before: boolean): boolean {
+function hasCaretAnchor(node: Node | null, _before: boolean): boolean {
   if (!node) return false;
   if (node.nodeType === Node.TEXT_NODE) {
     return (node.textContent ?? "").length > 0;
@@ -248,7 +248,7 @@ function splitParagraphAtFirstBreak(block: HTMLElement): void {
   // Trailing `<br>` is an empty-paragraph placeholder — do not recurse forever.
   if (!br || !br.nextSibling) return;
   const next = block.ownerDocument.createElement("p");
-  let sibling = br.nextSibling;
+  let sibling: ChildNode | null = br.nextSibling;
   while (sibling) {
     const move = sibling;
     sibling = sibling.nextSibling;

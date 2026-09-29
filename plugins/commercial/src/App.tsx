@@ -40,6 +40,8 @@ import { AdministrationGroupsPage } from "./features/administration/Administrati
 import { AdministrationSlasPage } from "./features/administration/AdministrationSlasPage";
 import { AdministrationTeamPage } from "./features/administration/AdministrationTeamPage";
 import { InteractionRoomWorkspace } from "./features/interaction-rooms/InteractionRoomWorkspace";
+import { INTERACTION_ROOMS_CONTENT } from "./content/interactionRoomsContent";
+import { PluginErrorBoundary } from "@delpi/plugin-ui/index";
 import { UserManualPage } from "./features/help/UserManualPage";
 import { SellerPortfolioDetailPage } from "./features/seller-portfolios/SellerPortfolioDetailPage";
 import { SellerPortfoliosPage } from "./features/seller-portfolios/SellerPortfoliosPage";
@@ -309,11 +311,22 @@ function AppRoutes({
         )
       ) : null}
       {view === "interaction_rooms" || view === "interaction_room_detail" ? (
-        <InteractionRoomWorkspace
-          basePath={basePath}
-          roomId={route.roomId}
-          search={search}
-        />
+        <PluginErrorBoundary
+          prefix="cm"
+          resetKey={route.roomId ?? "inbox"}
+          labels={{
+            title: INTERACTION_ROOMS_CONTENT.roomFatalTitle,
+            message: INTERACTION_ROOMS_CONTENT.roomFatalMessage,
+            retry: INTERACTION_ROOMS_CONTENT.reloadLabel,
+          }}
+          onError={(error) => console.error("[commercial] sala de interação", error)}
+        >
+          <InteractionRoomWorkspace
+            basePath={basePath}
+            roomId={route.roomId}
+            search={search}
+          />
+        </PluginErrorBoundary>
       ) : null}
       {view === "help" ? <UserManualPage basePath={basePath} /> : null}
       {view === "not_found" ? <NotFoundPage basePath={basePath} /> : null}

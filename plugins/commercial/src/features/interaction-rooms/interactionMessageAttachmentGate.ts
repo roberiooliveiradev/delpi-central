@@ -12,12 +12,14 @@ export function interactionMessageLooksLikeRawHtml(body: string): boolean {
   return RAW_HTML_PROBE.test(cleaned);
 }
 
-export function formatAttachTooMany(max = INTERACTION_ROOMS_CONTENT.attachMaxCount): string {
+export function formatAttachTooMany(
+  max: number = INTERACTION_ROOMS_CONTENT.attachMaxCount,
+): string {
   return INTERACTION_ROOMS_CONTENT.attachTooMany.replace("{max}", String(max));
 }
 
 export function formatAttachTooLarge(
-  maxBytes = INTERACTION_ROOMS_CONTENT.attachMaxBytes,
+  maxBytes: number = INTERACTION_ROOMS_CONTENT.attachMaxBytes,
 ): string {
   const maxMb = Math.max(1, Math.floor(maxBytes / (1024 * 1024)));
   return INTERACTION_ROOMS_CONTENT.attachTooLarge.replace("{maxMb}", String(maxMb));

@@ -6,8 +6,9 @@ export function parseInteractionRoomSearch(search: string | undefined): {
   filter: InteractionInboxFilter;
   q: string;
 } {
+  const rawSearch = search ?? "";
   const params = new URLSearchParams(
-    (search ?? "").startsWith("?") ? search.slice(1) : search ?? "",
+    rawSearch.startsWith("?") ? rawSearch.slice(1) : rawSearch,
   );
   const raw = (params.get("filter") ?? "all").trim().toLowerCase();
   const filter = FILTERS.has(raw) ? raw : "all";

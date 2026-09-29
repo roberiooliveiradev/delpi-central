@@ -1,4 +1,4 @@
-import { canonicalizeTransformometroPath, normalizeTransformometroPath } from "./routeParser";
+import { canonicalizeTransformometroPath } from "./routeParser";
 
 export const TRANSFORMOMETRO_WORKSPACE_HASH_EVENT = "transformometro:workspace-hash";
 /** Árvore do processo (melhorias/revisões) ficou desatualizada após mutação. */

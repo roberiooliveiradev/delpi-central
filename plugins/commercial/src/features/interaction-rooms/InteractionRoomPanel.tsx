@@ -137,7 +137,7 @@ export function InteractionRoomPanel({
   if (!entityKey?.trim()) {
     return (
       <CommercialSectionCard {...sectionCardProps}>
-        <CommercialStateBanner variant="warning">
+        <CommercialStateBanner>
           {content.panelMissingKey}
         </CommercialStateBanner>
       </CommercialSectionCard>

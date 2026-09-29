@@ -286,7 +286,6 @@ function toReactFlow(
     onSelectLane?: (laneId: string) => void;
   }
 ): { nodes: EditorNode[]; edges: Edge[] } {
-  const lanes = normalizeLanes(value.lanes);
   const activityNodes: ActivityNode[] = value.nodes.map((node) => ({
     id: node.id,
     type: "flowchart",

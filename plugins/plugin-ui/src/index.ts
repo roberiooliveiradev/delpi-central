@@ -46,6 +46,18 @@ export {
   InteractionRoomPage,
   INTERACTION_ROOM_PAGE_LABELS_PT,
 } from "./components/collaboration/InteractionRoomPage";
+/**
+ * Parser canônico de tokens de imagem markdown (`attachment:`/`attachment:pending:`)
+ * usado só por hosts (composer da sala, comentários). `export *` some no tree-shake
+ * do remote MF → o host recebe `undefined` → `TypeError: X is not a function`.
+ */
+export {
+  parseMarkdownImages,
+  listInlinePendingIdsFromMarkdown,
+  listInlineAttachmentIdsFromMarkdown,
+  rewriteInlinePendingInMarkdown,
+} from "./components/rich-text/markdownImageTokens";
+export type { MarkdownImageToken } from "./components/rich-text/markdownImageTokens";
 /** Perfil de usuário dos portais — consumido só por hosts MFE. */
 export {
   PORTAL_USER_PROFILE_LABELS_PT,
@@ -75,6 +87,14 @@ export {
 } from "./utils/portalGreeting";
 /** Hosts sinalizam refresh sem fetch no kit. */
 export { LoadingActivityBadge } from "./components/feedback/LoadingActivityBadge";
+/**
+ * Hosts montam o boundary no ponto de falha do MFE (sala, comentários).
+ * `export *` some no tree-shake do remote → host recebe `undefined`.
+ */
+export {
+  PluginErrorBoundary,
+  pluginErrorBoundaryBemClasses,
+} from "./components/feedback/PluginErrorBoundary";
 /** Hosts consomem chrome de tarefas sem persistência no kit. */
 export {
   TaskEditorFrame,

@@ -63,7 +63,6 @@ import { buildProcessoPath } from "../../utils/routeParser";
 import { formatDateTime } from "../../utils/format";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
-  pathname?: string;
   roomId?: string;
   onNavigate: (path: string) => void;
 };
@@ -135,7 +134,7 @@ type PreviewTarget = {
   blob: Blob;
 };
 
-export function InteractionRoomsPage({ getAccessToken, pathname, roomId, onNavigate }: Props) {
+export function InteractionRoomsPage({ getAccessToken, roomId, onNavigate }: Props) {
   const confirm = useConfirm();
   const mentionsRef = useRef<InteractionMentionDto[]>([]);
   const [rooms, setRooms] = useState<InteractionRoomDto[] | null>(null);
@@ -976,7 +975,11 @@ export function InteractionRoomsPage({ getAccessToken, pathname, roomId, onNavig
         editingId={editingId}
         editDraft={editDraft}
         onEditDraftChange={setEditDraft}
-        onSaveEdit={(markdown) => void saveEdit(markdown)}
+        onSaveEdit={(markdown) =>
+          void saveEdit(markdown).catch((reason) =>
+            setActionError(errorText(reason, "Não foi possível editar a mensagem.")),
+          )
+        }
         onCancelEdit={() => {
           setEditingId(null);
           setEditDraft("");
@@ -985,7 +988,11 @@ export function InteractionRoomsPage({ getAccessToken, pathname, roomId, onNavig
         portalScopeClassName={TM_PORTAL_SCOPE}
         draft={draft}
         onDraftChange={setDraft}
-        onSubmit={(markdown) => void send(markdown)}
+        onSubmit={(markdown) =>
+          void send(markdown).catch((reason) =>
+            setSendError(errorText(reason, "Não foi possível enviar a mensagem.")),
+          )
+        }
         submitting={sending}
         pendingAttachments={pending}
         onFiles={addFiles}

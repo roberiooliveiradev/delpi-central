@@ -51,6 +51,9 @@ export const INTERACTION_ROOMS_CONTENT = {
   roomLoadingLabel: "Carregando a sala…",
   roomRefreshingLabel: "Atualizando mensagens…",
   roomLoadError: "Não foi possível carregar a sala.",
+  roomFatalTitle: "Não foi possível abrir a sala",
+  roomFatalMessage:
+    "A conversa encontrou um erro inesperado. Tente de novo ou volte à lista de salas.",
   roomSendError: "Não foi possível enviar a mensagem.",
   roomMembersAriaLabel: "Participantes da sala",
   roomMessagesAriaLabel: "Mensagens da sala",

@@ -1,3 +1,4 @@
+/// <reference path="../../types/turndown-plugin-gfm.d.ts" />
 /**
  * Markdown ↔ HTML for collaboration composer / message bubble (GFM subset).
  * Chat persistence = markdown in `body_text`; these helpers convert at the

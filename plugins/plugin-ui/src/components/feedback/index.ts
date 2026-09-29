@@ -223,6 +223,12 @@ export {
   type ScopeChipBarProps,
 } from "./ScopeChipBar";
 export {
+  PluginErrorBoundary,
+  pluginErrorBoundaryBemClasses,
+  type PluginErrorBoundaryLabels,
+  type PluginErrorBoundaryProps,
+} from "./PluginErrorBoundary";
+export {
   WorklistItem,
   worklistItemBemClasses,
   createDashboardWorklistItem,

@@ -408,7 +408,7 @@ export function SpeedometerGauge({
   const legendTypography = chartPartTypographyStyle(chartParts, legendRef);
   const legendShowResize = legendPart.selected && chartPartAllowsResize(legendRef);
   const legendHostStyle =
-    legendFrameStyle || Object.keys(legendTypography).length > 0
+    legendFrameStyle || Object.keys(legendTypography ?? {}).length > 0
       ? { ...legendFrameStyle, ...legendTypography }
       : undefined;
 

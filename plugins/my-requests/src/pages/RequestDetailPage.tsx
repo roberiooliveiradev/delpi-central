@@ -1,4 +1,4 @@
-import { ActionButton } from "@delpi/plugin-ui/index";
+import { ActionButton, PluginErrorBoundary } from "@delpi/plugin-ui/index";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { useMyRequestsFloatingNotice } from "../app/MyRequestsFloatingNoticeProvider";
@@ -362,12 +362,26 @@ export function RequestDetailPage({ requestId }: RequestDetailPageProps) {
                 />
               </MyRequestsSectionCard>
 
-              <CommentsPanel
-                requestId={requestId}
-                canComment={capabilities?.can_comment ?? false}
-                conversationFrozen={Boolean(capabilities?.conversation_frozen)}
-                refreshKey={timelineEpoch}
-              />
+              <PluginErrorBoundary
+                prefix="mr"
+                resetKey={requestId}
+                labels={{
+                  title: "Não foi possível carregar os comentários",
+                  message:
+                    "A conversa encontrou um erro inesperado. Tente de novo ou recarregue a página.",
+                  retry: "Tentar de novo",
+                }}
+                onError={(error) =>
+                  console.error("[my-requests] comentários", error)
+                }
+              >
+                <CommentsPanel
+                  requestId={requestId}
+                  canComment={capabilities?.can_comment ?? false}
+                  conversationFrozen={Boolean(capabilities?.conversation_frozen)}
+                  refreshKey={timelineEpoch}
+                />
+              </PluginErrorBoundary>
 
               <ArtifactsPanel
                 requestId={requestId}

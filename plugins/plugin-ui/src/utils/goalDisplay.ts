@@ -506,7 +506,7 @@ export function resolveGoalLabel(
   }
 
   const raw = goal.comparable_goal ?? goal.target;
-  if (raw != null && raw !== "") {
+  if (raw != null && String(raw) !== "") {
     const comparable = positiveGoalNumber(raw);
     // Meta explícita zero/inválida: não cair no nome do indicador (`goal_label`).
     if (comparable == null) {
@@ -566,10 +566,7 @@ export function resolveGoalPeriodKind(
   const start = (goal?.start_date ?? options?.dateStart ?? "").trim();
   const end = (goal?.end_date ?? options?.dateEnd ?? "").trim();
   if (!start || !end) {
-    // Sem datas: partial explícito manda; caso contrário Meta (não acumulada).
-    if (goal?.goal_period_partial === true) {
-      return "partial";
-    }
+    // Sem datas: partial explícito já retornou acima; caso contrário Meta (não acumulada).
     return "exact";
   }
 

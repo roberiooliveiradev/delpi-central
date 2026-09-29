@@ -95,7 +95,7 @@ export function InteractionRoomWorkspace({
   return (
     <section className="cm-room-workspace">
       {connectionError ? (
-        <CommercialStateBanner variant="warning">
+        <CommercialStateBanner>
           {content.roomConnectionErrorBanner}
         </CommercialStateBanner>
       ) : null}

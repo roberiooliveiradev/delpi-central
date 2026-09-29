@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
 import { CalendarCheck, MessagesSquare } from "lucide-react";
-import { EmptyState, emptyStateCardBemClasses } from "@delpi/plugin-ui/index";
 
 import { SoftActionButton } from "../../components/SoftActionButton";
 import { InlineErrorState } from "../../components/ErrorStateBox";

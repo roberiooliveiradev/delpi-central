@@ -114,7 +114,7 @@ function useInteractionRoomReactionToggle({
  * Chips agregados abaixo do body (sem «+» — picker fica na barra de opções).
  */
 export function InteractionRoomMessageReactions(props: ReactionHostProps) {
-  const { content, items, busy, toggle } = useInteractionRoomReactionToggle(props);
+  const { content, items, toggle } = useInteractionRoomReactionToggle(props);
   if (props.disabled || items.length === 0) return null;
 
   return (

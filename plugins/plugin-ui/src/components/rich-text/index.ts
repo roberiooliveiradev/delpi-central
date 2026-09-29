@@ -36,3 +36,10 @@ export {
   type DeckContentRun,
   type DeckContentRunStyle,
 } from "./deckContentRuns";
+export {
+  parseMarkdownImages,
+  listInlinePendingIdsFromMarkdown,
+  listInlineAttachmentIdsFromMarkdown,
+  rewriteInlinePendingInMarkdown,
+  type MarkdownImageToken,
+} from "./markdownImageTokens";

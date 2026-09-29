@@ -639,7 +639,11 @@ export function InteractionRoomMessageComposer({
         value={draft}
         onChange={setDraft}
         onSubmit={(body) => {
-          void onSubmit(body);
+          void onSubmit(body).catch((err: unknown) =>
+            onError(
+              err instanceof Error ? err.message : content.roomSendError,
+            ),
+          );
         }}
         submitting={submitting}
         disabled={disabled || submitting}
