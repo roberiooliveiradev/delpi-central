@@ -299,6 +299,18 @@ export const TM_HELP_TOOLTIPS = {
       "Tabela com economia, breakdown (tempo/retrabalho/erros), categoria, Δ volume, capacidade e meses com dados.",
     comparativoAvisos:
       "Alertas quando o volume diverge da referência — ajuda a interpretar se a economia vem de tempo, volume ou capacidade.",
+    diagnostico:
+      "Diagnóstico desta revisão: problem statement, achados, hipóteses, relações causais e conclusão. Toda alteração passa por preparar → revisar → confirmar.",
+    diagnosticoAchado:
+      "Achado é um registro do que se observa. «Observado» veio da operação; «Calculado» deriva de cálculo; «Sintoma» é o papel do achado.",
+    diagnosticoHipotese:
+      "Hipótese é uma interpretação — sempre «Inferido», mesmo quando validada. Validada não é fato.",
+    diagnosticoCausal:
+      "Relação causal «contribui para»: uma hipótese contribui para outra ou para um achado — nunca causa ou prova.",
+    diagnosticoEvidencia:
+      "Vínculo com evidência já registrada na revisão: sustenta, contradiz ou contextualiza. «Contradiz» é exibido explicitamente.",
+    diagnosticoConclusao:
+      "Conclusão diagnóstica é sempre inferida; status e validação efetiva aparecem separados.",
   },
   matriz: {
     titulo:

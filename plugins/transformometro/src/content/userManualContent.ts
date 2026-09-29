@@ -183,6 +183,29 @@ export const USER_MANUAL_CONTENT = {
       ],
     },
     {
+      id: "revision-diagnostic",
+      title: "Diagnóstico da revisão",
+      intro:
+        "Cada revisão pode ter diagnósticos: problem statement, achados, hipóteses, relações causais e conclusão — dentro do workspace do processo.",
+      bullets: [
+        "Na página da revisão, a aba Diagnóstico lista os diagnósticos daquela revisão. Com nenhum, use «Iniciar diagnóstico» e descreva o problema.",
+        "Achados são observações («Observado» ou «Calculado»); «Sintoma» é o papel do achado, separado da natureza.",
+        "Hipóteses são sempre interpretações («Inferido») — mesmo validadas, não viram fato. O status (rascunho, validada, rejeitada, substituída) aparece separado.",
+        "A análise causal registra apenas «contribui para» entre hipóteses e achados — nunca causa ou prova.",
+        "Evidências vinculadas vêm da seção Evidências da revisão: podem sustentar, contradizer ou contextualizar. «Contradiz» é sempre exibido.",
+        "Toda alteração é preparada, revisada com a mudança exata e confirmada explicitamente — nada é gravado no envio do formulário.",
+        "Se outra pessoa alterar o diagnóstico enquanto você prepara uma mudança, um aviso aparece e a confirmação é bloqueada até recarregar e revisar.",
+      ],
+      links: [
+        {
+          want: "Abrir o diagnóstico de uma revisão",
+          where: "Workspace do processo",
+          how: "Abra a revisão e escolha a aba Diagnóstico.",
+          path: TRANSFORMOMETRO_ROUTES.processes,
+        },
+      ],
+    },
+    {
       id: "my-tasks",
       title: "Minhas tarefas",
       intro:

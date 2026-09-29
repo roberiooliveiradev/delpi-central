@@ -42,6 +42,7 @@ describe("Transforma+ user manual", () => {
       "targets-idd",
       "processes",
       "process-documentation",
+      "revision-diagnostic",
       "my-tasks",
       "interaction",
       "teo",
