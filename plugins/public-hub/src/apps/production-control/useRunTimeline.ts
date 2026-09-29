@@ -10,6 +10,8 @@ const TIMELINE_REASONS = new Set([
   "run_resumed",
   "run_stopped",
   "downtime_classified",
+  "automatic_downtime_started",
+  "automatic_downtime_ended",
 ]);
 
 type Options = {

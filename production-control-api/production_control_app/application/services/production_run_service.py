@@ -8,6 +8,7 @@ import logging
 from production_control_app.application.services.machine_load_realtime_hub import (
     machine_load_realtime_hub,
 )
+from production_control_app.config import settings
 from production_control_app.domain.errors import (
     BenchSessionRequired,
     ProductionRunConflict,
@@ -100,9 +101,17 @@ class ProductionRunService:
         queue_lookup: Callable[..., dict[str, Any] | None] | None = None,
         mes_lifecycle: Any | None = None,
         audit: Any | None = None,
+        clock: Callable[[], datetime] | None = None,
+        auto_downtime_seconds: int | None = None,
     ) -> None:
         self._repo = repository or PostgresProductionRunRepository()
         self._audit_repo = audit
+        self._clock = clock or _utc_now
+        self._auto_downtime_seconds = (
+            int(settings.PC_MES_AUTO_DOWNTIME_SECONDS or 0)
+            if auto_downtime_seconds is None
+            else int(auto_downtime_seconds)
+        )
         self._pulse = pulse_gateway or ProductionPulseGateway()
         self._queue_lookup = queue_lookup
         if mes_lifecycle is None:
@@ -274,7 +283,7 @@ class ProductionRunService:
                 anchor_epoch=int(device.get("counterEpoch") or 0),
                 conn=conn,
             )
-            at = _utc_now()
+            at = self._clock()
             self._mes.record_run_started(run, conn=conn, at=at)
             self._audit(
                 "run_started", run=run, session=session, conn=conn, occurred_at=at
@@ -311,7 +320,7 @@ class ProductionRunService:
                 raise ProductionRunNotFound("Produção não encontrada.")
             if locked.get("status") != "running":
                 raise ProductionRunConflict("A produção não está em execução.")
-            at = _utc_now()
+            at = self._clock()
             updated = self._repo.set_run_status(
                 run_id,
                 status="paused",
@@ -353,7 +362,7 @@ class ProductionRunService:
                 raise ProductionRunNotFound("Produção não encontrada.")
             if locked.get("status") != "paused":
                 raise ProductionRunConflict("A produção não está pausada.")
-            at = _utc_now()
+            at = self._clock()
             self._mes.record_run_resumed(locked, conn=conn, at=at)
             self._audit(
                 "run_resumed", run=locked, session=session, conn=conn,
@@ -388,6 +397,10 @@ class ProductionRunService:
                 raise ProductionRunNotFound("Produção não encontrada.")
             if locked.get("status") not in {"running", "paused"}:
                 raise ProductionRunConflict("A produção já foi encerrada.")
+            at = self._clock()
+            # Fecha fatos MES antes de mutar o status — se a parada aberta
+            # estiver sem classificação, a transição inteira falha aqui.
+            self._mes.record_run_finished(locked, conn=conn, at=at)
             updated = self._repo.set_run_status(
                 run_id,
                 status="completed",
@@ -397,8 +410,6 @@ class ProductionRunService:
                 end_reason="stop",
                 conn=conn,
             )
-            at = _utc_now()
-            self._mes.record_run_finished(locked, conn=conn, at=at)
             self._audit(
                 "run_stopped", run=locked, session=session, conn=conn,
                 occurred_at=at,
@@ -454,33 +465,193 @@ class ProductionRunService:
         payload = _run_to_api(run, device=device)
         payload["countedPieces"] = int(run.get("pieces_total") or 0)
         payload["downtime"] = self._mes.open_downtime_view(run)
+        payload["operationalState"] = self._mes.open_state_view(run)
+        pending, pending_count = self._mes.pending_classification_view(run)
+        payload["pendingDowntime"] = pending
+        payload["pendingDowntimeCount"] = pending_count
         return payload
 
     def tick_running_runs(self) -> int:
-        """Atualiza peças dos runs running; retorna quantos foram atualizados."""
+        """Atualiza peças dos runs ``running`` e detecta parada automática.
+
+        Regras (Etapa 05+auto-stop):
+        - snapshot Pulse não ``usable`` → nada muda (offline não é parada);
+        - incremento real de peças → atualiza ``last_count_activity_at`` e, se
+          houver parada automática aberta, encerra-a e reabre ``producing``;
+        - sem incremento → verifica threshold sobre ``last_count_activity_at``.
+        """
         updated = 0
         for run in self._repo.list_open_running_runs():
             try:
-                pieces_total, open_pieces, _device = self._refresh_pieces(
-                    run, allow_epoch_roll=True
-                )
-                if pieces_total != int(run.get("pieces_total") or 0):
-                    self._repo.update_run_pieces(
-                        run["id"],
-                        pieces_total=pieces_total,
-                        open_segment_pieces=open_pieces,
-                    )
-                    self._notify(
-                        run["branch"],
-                        run["work_center"],
-                        reason="pieces_updated",
-                        run_id=str(run["id"]),
-                        pieces_total=pieces_total,
-                    )
-                    updated += 1
+                updated += self._tick_run(run)
             except (PulseGatewayError, PulseDeviceUnavailable, ProductionRunNotFound):
                 continue
+            except Exception:  # noqa: BLE001 — um run ruim não derruba os demais
+                logger.exception("mes_tick_run_failed run_id=%s", run.get("id"))
         return updated
+
+    def _tick_run(self, run: dict[str, Any]) -> int:
+        pieces_total, open_pieces, _device = self._refresh_pieces(
+            run, allow_epoch_roll=True
+        )
+        prev_total = int(run.get("pieces_total") or 0)
+        at = self._clock()
+        if pieces_total > prev_total:
+            self._tick_counted(
+                run, pieces_total=pieces_total, open_pieces=open_pieces, at=at
+            )
+            return 1
+        if pieces_total != prev_total:
+            # Correção/decaimento do contador não é golpe: atualiza e notifica,
+            # mas sem tocar `last_count_activity_at` nem auto-resumir.
+            self._repo.update_run_pieces(
+                run["id"],
+                pieces_total=pieces_total,
+                open_segment_pieces=open_pieces,
+            )
+            self._notify(
+                run["branch"],
+                run["work_center"],
+                reason="pieces_updated",
+                run_id=str(run["id"]),
+                pieces_total=pieces_total,
+            )
+            self._tick_idle(run, at=at)
+            return 1
+        self._tick_idle(run, at=at)
+        return 0
+
+    def _tick_counted(
+        self, run: dict[str, Any], *, pieces_total: int, open_pieces: int, at: datetime
+    ) -> None:
+        """Incremento real: atualiza contagem + atividade; auto-resume se
+        estiver em ``stopped`` automático (run continua ``running``)."""
+        closed_dt = None
+        with self._repo.transaction() as conn:
+            locked = self._repo.lock_run(str(run["id"]), conn=conn)
+            if locked is None or locked.get("status") != "running":
+                return
+            self._repo.update_run_pieces(
+                str(run["id"]),
+                pieces_total=pieces_total,
+                open_segment_pieces=open_pieces,
+                activity_at=at,
+                conn=conn,
+            )
+            closed_dt = self._mes.record_automatic_resumed(locked, conn=conn, at=at)
+            if closed_dt is not None:
+                self._audit(
+                    "automatic_downtime_ended",
+                    run=locked,
+                    session=None,
+                    conn=conn,
+                    occurred_at=at,
+                    details={
+                        "downtimeId": closed_dt["id"],
+                        "endedAt": at.isoformat(),
+                    },
+                )
+        self._notify(
+            run["branch"],
+            run["work_center"],
+            reason="pieces_updated",
+            run_id=str(run["id"]),
+            pieces_total=pieces_total,
+        )
+        if closed_dt is not None:
+            ended = closed_dt.get("ended_at")
+            self._notify(
+                run["branch"],
+                run["work_center"],
+                reason="automatic_downtime_ended",
+                extra={
+                    "runId": str(run["id"]),
+                    "operationalState": "producing",
+                    "piecesTotal": pieces_total,
+                    "downtime": {
+                        "id": closed_dt["id"],
+                        "endedAt": ended.isoformat()
+                        if hasattr(ended, "isoformat")
+                        else str(ended or at.isoformat()),
+                    },
+                },
+            )
+            logger.info("mes_auto_downtime_ended run_id=%s", run["id"])
+
+    def _tick_idle(self, run: dict[str, Any], *, at: datetime) -> None:
+        """Sem incremento: baseline legado ou parada automática no threshold."""
+        threshold = self._auto_downtime_seconds
+        if threshold <= 0:
+            return
+        last = run.get("last_count_activity_at")
+        if last is None:
+            # Run legado/ativo sem baseline: marca agora — janela começa daqui.
+            self._repo.init_count_activity(str(run["id"]), at=at)
+            return
+        if getattr(last, "tzinfo", None) is None:
+            last = last.replace(tzinfo=timezone.utc)
+        idle = (at - last).total_seconds()
+        if idle < threshold:
+            return
+
+        created = False
+        detected_at = at
+        started_at = last
+        with self._repo.transaction() as conn:
+            locked = self._repo.lock_run(str(run["id"]), conn=conn)
+            if locked is None or locked.get("status") != "running":
+                return
+            last2 = locked.get("last_count_activity_at")
+            if last2 is None:
+                self._repo.init_count_activity(str(locked["id"]), at=at, conn=conn)
+                return
+            if getattr(last2, "tzinfo", None) is None:
+                last2 = last2.replace(tzinfo=timezone.utc)
+            if (at - last2).total_seconds() < threshold:
+                return
+            # started_at retroage à última atividade — os minutos de inatividade
+            # contam como parada, não como produção.
+            # Não retroagir além do início do próprio run.
+            run_started = locked.get("started_at")
+            if run_started is not None:
+                if getattr(run_started, "tzinfo", None) is None:
+                    run_started = run_started.replace(tzinfo=timezone.utc)
+                started_at = max(last2, run_started)
+            else:
+                started_at = last2
+            dt = self._mes.record_automatic_stopped(locked, conn=conn, at=started_at)
+            if dt is None:
+                return  # já existe parada aberta — tick idempotente
+            self._audit(
+                "automatic_downtime_started",
+                run=locked,
+                session=None,
+                conn=conn,
+                occurred_at=detected_at,
+                details={
+                    "thresholdSeconds": threshold,
+                    "lastCountActivityAt": last2.isoformat(),
+                    "detectedAt": detected_at.isoformat(),
+                    "idleSecondsAtDetection": int((detected_at - last2).total_seconds()),
+                },
+            )
+            created = True
+        if created:
+            self._notify(
+                run["branch"],
+                run["work_center"],
+                reason="automatic_downtime_started",
+                extra={
+                    "runId": str(run["id"]),
+                    "operationalState": "stopped",
+                    "downtime": self._mes.open_downtime_view(run),
+                },
+            )
+            logger.info(
+                "mes_auto_downtime_started run_id=%s started_at=%s",
+                run["id"],
+                started_at,
+            )
 
     def _usable_device_snapshot(self, run: dict[str, Any]) -> dict[str, Any]:
         """Snapshot Pulse do device do run; exige utilizável (Etapa 05)."""
@@ -621,6 +792,7 @@ class ProductionRunService:
         reason: str,
         run_id: str | None = None,
         pieces_total: int | None = None,
+        extra: dict[str, Any] | None = None,
     ) -> None:
         room = f"{branch}:{work_center}"
         message: dict[str, Any] = {
@@ -632,6 +804,8 @@ class ProductionRunService:
         if run_id is not None and pieces_total is not None:
             message["runId"] = run_id
             message["piecesTotal"] = pieces_total
+        if extra:
+            message.update(extra)
         machine_load_realtime_hub.schedule_broadcast(room if ":" in room else branch, message)
         # Também na sala por filial (cockpit WS atual).
         machine_load_realtime_hub.schedule_broadcast(branch, message)

@@ -309,9 +309,12 @@ actor_ref, occurred_at, details JSONB, created_at`. Sem tokens/JWT/segredos.
 
 Ações registradas: `run_started`, `run_paused`, `run_resumed`, `run_stopped`,
 `downtime_classified`, `downtime_reason_changed` (com previous/new no
-`details`), `counter_epoch_changed`, `telemetry_fallback_used`.
+`details`), `counter_epoch_changed`, `telemetry_fallback_used`,
+`automatic_downtime_started` (details: `thresholdSeconds`,
+`lastCountActivityAt`, `detectedAt`, `idleSecondsAtDetection`) e
+`automatic_downtime_ended` (details: `downtimeId`, `endedAt`).
 `actor_type=operator` com `actor_ref` = código do operador da sessão;
-`system` para eventos sem operador.
+`system` para eventos sem operador — incluindo as transições automáticas.
 
 A auditoria participa da **mesma transação** da transição: se estado/downtime
 faz rollback, nenhuma linha de audit "falso-sucesso" sobrevive. A
@@ -326,9 +329,12 @@ issues `{severity, issue_code, run_id, branch, work_center}` logadas de forma
 estruturada. A API **continua subindo** mesmo com inconsistências — o serviço
 precisa estar disponível para diagnóstico/recuperação.
 
-Regras: `running` observado pelo MES exige segmento aberto + `producing`
-aberto e nenhum downtime aberto; `paused` exige `stopped` + downtime aberto e
-nenhum segmento aberto; `completed/aborted` não podem ter segmento/estado/
+Regras: `running` observado pelo MES exige segmento aberto e OU
+`producing` aberto sem downtime OU — desde a detecção automática — `stopped`
+aberto com **exatamente uma** parada aberta `source='system'` (parada
+automática por inatividade); `running + stopped` com parada de operador, sem
+parada ou com `producing` simultâneo continua `CRITICAL`. `paused` exige
+`stopped` + downtime aberto e nenhum segmento aberto; `completed/aborted` não podem ter segmento/estado/
 downtime abertos; fatos abertos de run A em CT cujo ativo é B = `CRITICAL`
 cross-run; run sem nenhum evento MES = `WARNING` legado. Anomalias detectadas
 incluem `paused_with_open_producing`, `running_with_open_stopped`,
@@ -356,7 +362,96 @@ valor confiável.
 - nenhum cálculo de OEE/disponibilidade/performance;
 - nenhum backfill de histórico;
 - nenhuma alteração no Production Pulse;
-- detecção automática de parada / microparadas;
+- threshold dinâmico por ciclo/OP e supervisório consolidado de máquinas
+  (a detecção automática existe — ver § 11 — mas sem tuning por item);
 - integração da parada MES com TOTVS.
 
 Homologação industrial formal: `MES-PHASE-01-HOMOLOGATION.md`.
+
+## 11. Detecção automática de parada por ausência de peças (extensão da Fase 01)
+
+Enquanto `run.status = running` + estado operacional `producing` + telemetria
+Pulse `usable`, o MES observa `last_count_activity_at` do run — o instante do
+**último incremento real** de peças (ou o Play, como baseline inicial).
+
+Configuração: `PC_MES_AUTO_DOWNTIME_SECONDS` (default `120`; `0` desabilita).
+Definida em `production-control-api/config.py`, propagada pelos exemplos de
+ambiente e pelos compose — nunca hardcoded.
+
+### Detecção
+
+A detecção roda dentro do `ProductionRunPollerService` existente (~500 ms),
+sem worker extra. A cada tick:
+
+- snapshot Pulse **não `usable`** (offline/invalid/unavailable/stale) → nada
+  muda — falha de Wi-Fi/ESP32 **não** é parada de máquina;
+- incremento real de peças → `update_run_pieces(..., activity_at=agora)` e, se
+  houver parada automática aberta, auto-resume;
+- sem incremento → compara `agora − last_count_activity_at` com o threshold.
+
+`last_count_activity_at` é coluna persistida (`V012`), criada no Play
+(`NOW()`) e atualizada **somente** quando há incremento — nunca a cada tick.
+Runs legados com `NULL`: o primeiro tick com snapshot válido grava o baseline
+e só então a janela começa — nenhuma parada retroativa é inventada.
+
+### Abertura da parada automática
+
+Quando o threshold é atingido, em transação + `lock_run()` (revalidando o
+baseline depois do lock):
+
+- `producing` fecha em `started_at = last_count_activity_at` — a parada conta
+  desde o último golpe, não desde a detecção;
+- `stopped` abre com `source='system'`;
+- `downtime_event` abre com `source='system'`, `reason_code=NULL`,
+  `confirmed=false`;
+- auditoria `automatic_downtime_started` (`actor_type='system'`) na mesma tx;
+- WS `production_run_updated` + `reason='automatic_downtime_started'` com
+  `operationalState='stopped'` e o `downtime`.
+
+Estado resultante: `run.status='running'` + `stopped` + parada aberta — o
+cockpit mostra "Produção parada" + cronômetro desde `startedAt` e permite
+Informar motivo enquanto parada segue aberta. `paused` continua reservado ao
+Pause explícito.
+
+Ticks seguintes são idempotentes: parada já aberta → nenhum fato/evento novo.
+
+### Retorno automático
+
+Novo incremento real em `running` + `stopped` automático, com um único `at`:
+
+- `downtime.ended_at = at`; `stopped` fecha; `producing` reabre
+  (`source='system'`); `last_count_activity_at = at`;
+- auditoria `automatic_downtime_ended`; WS `automatic_downtime_ended` com
+  `operationalState='producing'`.
+
+O run nunca sai de `running`; nenhum Resume manual é exigido. `paused`
+**nunca** auto-resume — o poller só processa `running`.
+
+### Interações
+
+- **Pause durante auto-stop**: `record_run_paused` reutiliza o `stopped` +
+  parada abertos (só muda `run.status`) — sem fatos duplicados.
+- **Stop durante auto-stop**: exige classificação da parada aberta
+  (`DowntimeClassificationRequired`); os fatos são validados **antes** de
+  mutar `run.status`, dentro da mesma transação.
+- **Decaimento/correção do contador** não é golpe: atualiza `pieces_total` e
+  emite `pieces_updated`, mas não mexe no baseline nem auto-resume.
+
+### Snapshot e classificação
+
+`get_active` passa a expor `operationalState` (estado aberto do run),
+`pendingDowntime` (parada mais antiga sem classificação, aberta ou já
+encerrada — `list_pending_classification`, limite 5) e
+`pendingDowntimeCount`. Após o auto-resume, uma parada encerrada sem motivo
+reaparece como pendência — inclusive após F5/reconnect — e o cockpit abre o
+modal "Por que a produção parou?" sem bloquear a produção.
+
+Classificação: o endpoint legado `POST /runs/{id}/downtime/classify`
+continua classificando a parada **aberta**. O novo
+`POST /runs/{id}/downtimes/{downtime_id}/classify` classifica uma parada
+específica do run — inclusive já encerrada — validando `run_id`, filial/posto
+e sessão. `requires_note` e auditoria de operador se aplicam igualmente.
+
+Timeline: os trechos `stopped` automáticos surgem naturalmente
+(`source='system'` no item e na parada); durações seguem derivadas de
+timestamps — nada de `duration_seconds` persistido.

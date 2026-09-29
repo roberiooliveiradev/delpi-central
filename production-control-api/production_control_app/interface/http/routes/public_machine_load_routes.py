@@ -478,6 +478,34 @@ def classify_run_downtime(
     return ok(data)
 
 
+@router.post("/{token}/runs/{run_id}/downtimes/{downtime_id}/classify")
+def classify_run_downtime_by_id(
+    token: str,
+    run_id: str,
+    downtime_id: str,
+    body: ClassifyDowntimeBody,
+    session_token: str | None = Header(default=None, alias=_BENCH_SESSION_HEADER),
+):
+    """Classifica uma parada específica do run (inclui parada automática já
+    encerrada sem motivo). O downtime deve pertencer ao run informado."""
+    denied = _assert_cockpit_token(token)
+    if denied is not None:
+        return denied
+    if not _honeypot_ok(body.website):
+        return ok({"accepted": True, "id": None})
+    try:
+        data = build_mes_downtime_classification_service().classify(
+            run_id,
+            reason_code=body.reason_code,
+            note=body.note,
+            session_token=session_token,
+            downtime_id=downtime_id,
+        )
+    except Exception as exc:  # noqa: BLE001
+        return _handle_public_errors(exc)
+    return ok(data)
+
+
 @router.get("/{token}/runs/{run_id}/timeline")
 def get_run_timeline(
     token: str,

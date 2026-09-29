@@ -94,7 +94,15 @@ Migrations: [`production-control-api/migrations/V008__production_runs_mes_shadow
 
 Invariante: no máximo um run `running|paused` por `(branch, work_center)`.
 
-Existe também a fundação MES de estados/paradas ([MES-STATE-DOWNTIME.md](MES-STATE-DOWNTIME.md), V010): `work_center_state_events`, `downtime_events` e `downtime_reason_catalog`. A contagem realtime continua **independente** do estado/parada — aquelas tabelas são fatos paralelos, ainda sem integração com Pause/Resume.
+Existe também a fundação MES de estados/paradas ([MES-STATE-DOWNTIME.md](MES-STATE-DOWNTIME.md), V010): `work_center_state_events`, `downtime_events` e `downtime_reason_catalog`. A contagem realtime continua **independente** do estado/parada — aquelas tabelas são fatos paralelos alimentados pelo mesmo snapshot Pulse.
+
+O incremento real da contagem também alimenta a **detecção automática de
+parada** (MES-STATE-DOWNTIME § 11): `production_runs.last_count_activity_at`
+(V012) registra o instante do último incremento; `PC_MES_AUTO_DOWNTIME_SECONDS`
+sem atividade abre `stopped` + `downtime` `source='system'` com
+`started_at` retroativo ao último golpe, e o próximo incremento encerra a
+parada e reabre `producing` — run sempre `running`. Snapshot não `usable`
+nunca inicia nem encerra parada automática.
 
 ---
 

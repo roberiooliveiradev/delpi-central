@@ -76,6 +76,17 @@ class MesRunLifecycleService:
         """PAUSE → fecha ``producing``, abre ``stopped``, cria parada sem motivo."""
         branch, wc = run["branch"], run["work_center"]
         open_state = self._states.get_open(branch=branch, work_center=wc, conn=conn)
+        open_dt = self._downtimes.get_open(branch=branch, work_center=wc, conn=conn)
+        if (
+            open_state is not None
+            and open_state["state"] == WorkCenterOperationalState.STOPPED.value
+            and open_state["run_id"] == run["id"]
+            and open_dt is not None
+            and open_dt["run_id"] == run["id"]
+        ):
+            # Parada automática já aberta: Pause manual só muda run.status —
+            # stopped/downtime existentes são reutilizados, sem fatos duplicados.
+            return open_dt
         if open_state is not None:
             self._expect_run_state(
                 open_state, run, expected=WorkCenterOperationalState.PRODUCING
@@ -101,6 +112,88 @@ class MesRunLifecycleService:
             started_at=at,
             conn=conn,
         )
+
+    def record_automatic_stopped(
+        self, run: dict[str, Any], *, conn: Any, at: datetime
+    ) -> dict[str, Any] | None:
+        """Auto-stop por ausência de golpes: fecha ``producing``, abre
+        ``stopped`` + downtime ``source='system'`` — tudo em ``at`` =
+        ``last_count_activity_at``. Idempotente: retorna ``None`` quando a
+        parada automática já existe (tick seguinte não duplica)."""
+        branch, wc = run["branch"], run["work_center"]
+        open_dt = self._downtimes.get_open(branch=branch, work_center=wc, conn=conn)
+        if open_dt is not None:
+            if open_dt["run_id"] != run["id"]:
+                raise DowntimeConflict(
+                    "Existe parada aberta de outro run neste posto."
+                )
+            return None
+        open_state = self._states.get_open(branch=branch, work_center=wc, conn=conn)
+        if open_state is not None:
+            self._expect_run_state(
+                open_state, run, expected=WorkCenterOperationalState.PRODUCING
+            )
+            self._states.close_open(branch=branch, work_center=wc, ended_at=at, conn=conn)
+        stopped = self._states.open_event(
+            branch=branch,
+            work_center=wc,
+            state=WorkCenterOperationalState.STOPPED.value,
+            source="system",
+            run_id=run["id"],
+            started_at=at,
+            conn=conn,
+        )
+        return self._downtimes.create(
+            branch=branch,
+            work_center=wc,
+            source="system",
+            run_id=run["id"],
+            state_event_id=stopped["id"],
+            production_order=run.get("production_order"),
+            operation_code=run.get("operation_code"),
+            started_at=at,
+            conn=conn,
+        )
+
+    def record_automatic_resumed(
+        self, run: dict[str, Any], *, conn: Any, at: datetime
+    ) -> dict[str, Any] | None:
+        """Novo golpe em ``running`` + ``stopped`` automático: encerra parada e
+        estado, reabre ``producing``. Retorna a parada encerrada (``None``
+        quando nada a fechar). Não exige classificação — o motivo pode ser
+        informado depois, com a máquina já produzindo."""
+        branch, wc = run["branch"], run["work_center"]
+        open_state = self._states.get_open(branch=branch, work_center=wc, conn=conn)
+        open_dt = self._downtimes.get_open(branch=branch, work_center=wc, conn=conn)
+        if open_state is None and open_dt is None:
+            return None
+        if (
+            open_state is None
+            or open_state["state"] != WorkCenterOperationalState.STOPPED.value
+        ):
+            return None
+        self._expect_run_state(
+            open_state, run, expected=WorkCenterOperationalState.STOPPED
+        )
+        if open_dt is not None:
+            if open_dt["run_id"] != run["id"]:
+                raise DowntimeConflict(
+                    "Existe parada aberta de outro run neste posto."
+                )
+            self._downtimes.close_open(
+                branch=branch, work_center=wc, ended_at=at, conn=conn
+            )
+        self._states.close_open(branch=branch, work_center=wc, ended_at=at, conn=conn)
+        self._states.open_event(
+            branch=branch,
+            work_center=wc,
+            state=WorkCenterOperationalState.PRODUCING.value,
+            source="system",
+            run_id=run["id"],
+            started_at=at,
+            conn=conn,
+        )
+        return open_dt
 
     def record_run_resumed(
         self, run: dict[str, Any], *, conn: Any, at: datetime
@@ -171,6 +264,49 @@ class MesRunLifecycleService:
                 branch=branch, work_center=wc, ended_at=at, conn=conn
             )
 
+    def open_state_view(self, run: dict[str, Any]) -> str | None:
+        """Estado operacional aberto do run (``producing``/``stopped``/…)."""
+        open_state = self._states.get_open(
+            branch=run["branch"], work_center=run["work_center"]
+        )
+        if open_state is None or open_state["run_id"] != run["id"]:
+            return None
+        return str(open_state["state"])
+
+    def pending_classification_view(
+        self, run: dict[str, Any]
+    ) -> tuple[dict[str, Any] | None, int]:
+        """Parada não classificada mais antiga do run + total pendente."""
+        rows = self._downtimes.list_pending_classification(run["id"], limit=5)
+        if not rows:
+            return None, 0
+        return self._downtime_view(rows[0], run), len(rows)
+
+    def _downtime_view(
+        self, dt: dict[str, Any], run: dict[str, Any]
+    ) -> dict[str, Any]:
+        reason_label = None
+        category = None
+        if dt.get("reason_code") and self._reasons is not None:
+            reason = self._reasons.get(str(dt["reason_code"]))
+            if reason is not None:
+                reason_label = reason.get("label")
+                category = reason.get("category")
+        started = dt.get("started_at")
+        ended = dt.get("ended_at")
+        return {
+            "id": dt["id"],
+            "runId": run["id"],
+            "reasonCode": dt.get("reason_code"),
+            "reasonLabel": reason_label,
+            "category": category,
+            "note": dt.get("note"),
+            "confirmed": bool(dt.get("confirmed")),
+            "source": dt.get("source"),
+            "startedAt": started.isoformat() if hasattr(started, "isoformat") else started,
+            "endedAt": ended.isoformat() if hasattr(ended, "isoformat") else None,
+        }
+
     def open_downtime_view(self, run: dict[str, Any]) -> dict[str, Any] | None:
         """Resumo público da parada aberta do run (classificada ou pendente)."""
         open_dt = self._downtimes.get_open(
@@ -178,26 +314,7 @@ class MesRunLifecycleService:
         )
         if open_dt is None or open_dt["run_id"] != run["id"]:
             return None
-        reason_label = None
-        category = None
-        if open_dt.get("reason_code") and self._reasons is not None:
-            reason = self._reasons.get(str(open_dt["reason_code"]))
-            if reason is not None:
-                reason_label = reason.get("label")
-                category = reason.get("category")
-        return {
-            "id": open_dt["id"],
-            "runId": run["id"],
-            "reasonCode": open_dt.get("reason_code"),
-            "reasonLabel": reason_label,
-            "category": category,
-            "note": open_dt.get("note"),
-            "confirmed": bool(open_dt.get("confirmed")),
-            "startedAt": open_dt["started_at"].isoformat()
-            if hasattr(open_dt.get("started_at"), "isoformat")
-            else open_dt.get("started_at"),
-            "endedAt": None,
-        }
+        return self._downtime_view(open_dt, run)
 
     @staticmethod
     def _require_classified(open_downtime: dict[str, Any]) -> None:

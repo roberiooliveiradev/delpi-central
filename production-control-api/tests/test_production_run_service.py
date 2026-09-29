@@ -100,6 +100,7 @@ class FakeRepo:
             "pieces_total": 0,
             "planned_qty_snapshot": kwargs.get("planned_qty_snapshot"),
             "target_pieces_snapshot": kwargs.get("target_pieces_snapshot"),
+            "last_count_activity_at": datetime.now(timezone.utc),
         }
         seg = {
             "id": self._id(),
@@ -127,11 +128,19 @@ class FakeRepo:
     def list_segments(self, run_id: str):
         return [dict(s) for s in self.segments.get(run_id, [])]
 
-    def update_run_pieces(self, run_id, *, pieces_total, open_segment_pieces):
+    def update_run_pieces(self, run_id, *, pieces_total, open_segment_pieces,
+                          activity_at=None, conn=None):
         self.runs[run_id]["pieces_total"] = pieces_total
+        if activity_at is not None:
+            self.runs[run_id]["last_count_activity_at"] = activity_at
         for seg in self.segments[run_id]:
             if seg.get("ended_at") is None:
                 seg["pieces"] = open_segment_pieces
+
+    def init_count_activity(self, run_id, *, at, conn=None):
+        run = self.runs[run_id]
+        if run.get("last_count_activity_at") is None:
+            run["last_count_activity_at"] = at
 
     def close_segment_open_new(self, **kwargs):
         for seg in self.segments[kwargs["run_id"]]:
@@ -334,6 +343,14 @@ class FakeDowntimeRepo:
     def list_for_run(self, run_id):
         out = [e for e in self.events if e["run_id"] == run_id]
         return [dict(e) for e in sorted(out, key=lambda e: e["started_at"])]
+
+    def list_pending_classification(self, run_id, *, limit=5):
+        out = [
+            e
+            for e in self.events
+            if e["run_id"] == run_id and (not e["confirmed"] or e["reason_code"] is None)
+        ]
+        return [dict(e) for e in sorted(out, key=lambda e: e["started_at"])][:limit]
 
     def list_for_work_center(self, *, branch, work_center, start=None, end=None, limit=200):
         out = [e for e in self.events if e["branch"] == branch and e["work_center"] == work_center]

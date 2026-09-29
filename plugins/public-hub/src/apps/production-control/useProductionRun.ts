@@ -288,17 +288,24 @@ export function useProductionRun({
   }, [downtimeReasons, token]);
 
   const classifyDowntime = useCallback(
-    async (reasonCode: string, note: string | null) => {
+    async (reasonCode: string, note: string | null, downtimeId?: string | null) => {
       if (!run || !session) return;
       setBusy(true);
       try {
         const downtime = await classifyRunDowntime(token, session.sessionToken, run.id, {
           reasonCode,
           note,
+          downtimeId: downtimeId ?? null,
         });
-        setRun((current) =>
-          current && current.id === run.id ? { ...current, downtime } : current,
-        );
+        if (downtime.endedAt) {
+          // Parada já encerrada: não é mais a parada aberta — reconcilia o
+          // snapshot para limpar pendingDowntime/pendingDowntimeCount.
+          void refreshRun();
+        } else {
+          setRun((current) =>
+            current && current.id === run.id ? { ...current, downtime } : current,
+          );
+        }
       } catch (err) {
         dropStaleSession(err);
         setError(err instanceof Error ? err.message : "Falha ao registrar o motivo.");
@@ -307,7 +314,7 @@ export function useProductionRun({
         setBusy(false);
       }
     },
-    [token, run, session, dropStaleSession],
+    [token, run, session, dropStaleSession, refreshRun],
   );
 
   const runMatchesOperation = useMemo(() => {

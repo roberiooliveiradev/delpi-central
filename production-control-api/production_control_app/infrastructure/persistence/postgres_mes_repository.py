@@ -434,6 +434,24 @@ class PostgresDowntimeEventRepository:
                 )
                 return [dict(row) for row in cur.fetchall()]
 
+    def list_pending_classification(
+        self, run_id: str, *, limit: int = 5
+    ) -> list[dict[str, Any]]:
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"""
+                    SELECT {_DOWNTIME_COLUMNS}
+                    FROM {_DOWNTIMES}
+                    WHERE run_id = %s::uuid
+                      AND (confirmed = FALSE OR reason_code IS NULL)
+                    ORDER BY started_at
+                    LIMIT %s
+                    """,
+                    (run_id, int(limit)),
+                )
+                return [dict(row) for row in cur.fetchall()]
+
     def list_for_work_center(
         self,
         *,

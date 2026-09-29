@@ -73,6 +73,32 @@ SELECT anchor_counter, anchor_epoch, pieces, started_at, ended_at, end_reason
 
 ---
 
+## Matriz de cenários — detecção automática de parada (extensão)
+
+`PC_MES_AUTO_DOWNTIME_SECONDS=120` no ambiente de homologação. Timestamps no
+resultado esperado referem-se ao **último golpe**, não à detecção.
+
+| # | Cenário | Pré-condição | Passo a passo | Resultado esperado | Evidência | Resultado |
+|---|---------|--------------|---------------|--------------------|-----------|-----------|
+| 31 | 119 s sem golpe | Run `running`/`producing` | Produzir 1 peça e aguardar 119 s | Nenhum `stopped`/`downtime`; cockpit segue "Contando" | states + downtime_events | PENDENTE |
+| 32 | 120 s sem golpe | Cenário 31 | Aguardar mais ~1 s | `stopped` + downtime `source='system'` abertos; `started_at` = instante do último golpe; run continua `running`; WS `automatic_downtime_started` | Query + WS payload | PENDENTE |
+| 33 | Cronômetro desde o último golpe | Cenário 32 | Observar timer do cockpit na detecção | Timer já mostra ~02:00 — não zera na detecção | Screenshot | PENDENTE |
+| 34 | Ticks seguintes idempotentes | Cenário 32 | Aguardar mais 5 min parado | Exatamente 1 downtime e 1 `stopped`; nenhum evento WS extra | Query + console | PENDENTE |
+| 35 | Classificação durante a parada | Cenário 32 | "Informar motivo" no cockpit enquanto parada | Motivo gravado no mesmo downtime; `started_at` inalterado; audit `downtime_classified` | Query + audit | PENDENTE |
+| 36 | Auto-resume com novo golpe | Cenário 32 | Acionar 1 golpe no ESP32 | Downtime/`stopped` fechados; novo `producing`; WS `automatic_downtime_ended`; run segue `running`; modal "Por que a produção parou?" abre se sem motivo | Fatos + screenshot | PENDENTE |
+| 37 | Classificação após encerrada | Cenário 36 sem classificar | "Informar motivo" com máquina produzindo | `POST /runs/{id}/downtimes/{dt}/classify` grava na parada certa; pendência some do snapshot | Snapshot + query | PENDENTE |
+| 38 | ESP32 offline não é parada | Run `running` | Desligar ESP32 e aguardar > 120 s | Banner "Contador sem comunicação"; **nenhum** downtime aberto | Query downtime_events | PENDENTE |
+| 39 | Queda e retorno do Wi-Fi | Run `running`, auto-stop aberto | ESP32 offline > 2 min, depois online **sem** novo golpe | Parada automática permanece aberta durante a queda; retorno sem golpe não a encerra | Fatos | PENDENTE |
+| 40 | Retorno com golpe após Wi-Fi | Cenário 39 | Novo golpe após reconexão | Parada encerra; `producing` reabre; contagem consistente | Query | PENDENTE |
+| 41 | Restart da API antes do threshold | Run `running`, ~60 s sem golpe | `docker restart` e aguardar | Baseline persistido: parada abre ~120 s após o último golpe, não após o restart | last_count_activity_at | PENDENTE |
+| 42 | Restart da API durante auto-stop | Cenário 32 | `docker restart` | Parada/estado persistidos; timer correto; integrity check sem CRITICAL para o run | Log + fatos | PENDENTE |
+| 43 | Múltiplas auto-paradas no run | Run `running` | Parar → golpe → parar → golpe (2 ciclos) | 2 downtimes distintos encerrados; timeline `producing/stopped` alternada | Timeline | PENDENTE |
+| 44 | Pause manual durante auto-stop | Cenário 32 | Clicar Pausar | Run `paused`; **mesmos** `stopped`/downtime reutilizados — nada duplicado; golpe posterior NÃO auto-resume | Query | PENDENTE |
+| 45 | Stop durante auto-stop sem motivo | Cenário 32 | Clicar Encerrar | Erro pedindo classificação; após classificar, Encerrar fecha tudo consistente | UI + fatos | PENDENTE |
+| 46 | Duas abas no mesmo CT | Cenário 32, cockpit em 2 abas | Auto-stop e auto-resume | Ambas exibem parada/timer; modal não duplica escrita | Screenshots | PENDENTE |
+| 47 | Reload com motivo pendente | Cenário 36 sem classificar | F5 | `pendingDowntime` reaparece; modal abre; classificação grava | Screenshot + query | PENDENTE |
+| 48 | Sem golpe desde o Play | Run recém-iniciado, nenhum golpe | Aguardar 120 s | Parada abre com `started_at` = baseline do Play (não antes do run) | Query | PENDENTE |
+
 ## Verificação pós-rodada (integridade)
 
 Após a bateria, inspecionar o banco (somente-leitura):
@@ -99,5 +125,5 @@ ocorreu sem telemetria confiável — com consistência preservada após falhas
 normais de infraestrutura.
 
 **IMPLEMENTAÇÃO concluída ≠ HOMOLOGAÇÃO concluída.** A Fase 01 só se considera
-homologada quando os 30 cenários forem executados em bancada real com
-evidência registrada.
+homologada quando os cenários (1–30 + detecção automática 31–48) forem
+executados em bancada real com evidência registrada.

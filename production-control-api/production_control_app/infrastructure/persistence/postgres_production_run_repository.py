@@ -57,7 +57,7 @@ class PostgresProductionRunRepository:
                 f"""
                 SELECT id::text AS id, branch, work_center, production_order,
                        operation_code, device_id::text AS device_id,
-                       operator_code, operator_name,
+                       operator_code, operator_name, last_count_activity_at,
                        bench_session_id::text AS bench_session_id,
                        status, started_at, ended_at, pieces_total,
                        planned_qty_snapshot, target_pieces_snapshot,
@@ -150,7 +150,7 @@ class PostgresProductionRunRepository:
                            bench_session_id::text AS bench_session_id,
                            status, started_at, ended_at, pieces_total,
                            planned_qty_snapshot, target_pieces_snapshot,
-                           created_at, updated_at
+                           last_count_activity_at, created_at, updated_at
                     FROM {_RUNS}
                     WHERE branch = %s
                       AND work_center = %s
@@ -173,7 +173,7 @@ class PostgresProductionRunRepository:
                            bench_session_id::text AS bench_session_id,
                            status, started_at, ended_at, pieces_total,
                            planned_qty_snapshot, target_pieces_snapshot,
-                           created_at, updated_at
+                           last_count_activity_at, created_at, updated_at
                     FROM {_RUNS}
                     WHERE id = %s::uuid
                     LIMIT 1
@@ -191,7 +191,8 @@ class PostgresProductionRunRepository:
                     SELECT id::text AS id, branch, work_center, production_order,
                            operation_code, device_id::text AS device_id,
                            operator_code, operator_name, status, started_at,
-                           pieces_total, planned_qty_snapshot, target_pieces_snapshot
+                           pieces_total, planned_qty_snapshot, target_pieces_snapshot,
+                           last_count_activity_at
                     FROM {_RUNS}
                     WHERE status = 'running'
                     ORDER BY started_at
@@ -259,11 +260,12 @@ class PostgresProductionRunRepository:
                     INSERT INTO {_RUNS} (
                         branch, work_center, production_order, operation_code,
                         device_id, operator_code, operator_name, bench_session_id,
-                        status, planned_qty_snapshot, target_pieces_snapshot
+                        status, planned_qty_snapshot, target_pieces_snapshot,
+                        last_count_activity_at
                     )
                     VALUES (
                         %s, %s, %s, %s, %s::uuid, %s, %s, %s::uuid,
-                        'running', %s, %s
+                        'running', %s, %s, NOW()
                     )
                     RETURNING id::text AS id, branch, work_center, production_order,
                               operation_code, device_id::text AS device_id,
@@ -271,7 +273,7 @@ class PostgresProductionRunRepository:
                               bench_session_id::text AS bench_session_id,
                               status, started_at, ended_at, pieces_total,
                               planned_qty_snapshot, target_pieces_snapshot,
-                              created_at, updated_at
+                              last_count_activity_at, created_at, updated_at
                     """,
                     (
                         kwargs["branch"],
@@ -435,17 +437,43 @@ class PostgresProductionRunRepository:
         *,
         pieces_total: int,
         open_segment_pieces: int,
+        activity_at: datetime | None = None,
         conn: Any | None = None,
     ) -> None:
         if conn is not None:
             self._update_run_pieces(
-                conn, run_id, pieces_total=pieces_total, open_segment_pieces=open_segment_pieces
+                conn,
+                run_id,
+                pieces_total=pieces_total,
+                open_segment_pieces=open_segment_pieces,
+                activity_at=activity_at,
             )
             return
         with get_connection() as own:
             self._update_run_pieces(
-                own, run_id, pieces_total=pieces_total, open_segment_pieces=open_segment_pieces
+                own,
+                run_id,
+                pieces_total=pieces_total,
+                open_segment_pieces=open_segment_pieces,
+                activity_at=activity_at,
             )
+            own.commit()
+
+    def init_count_activity(
+        self, run_id: str, *, at: datetime, conn: Any | None = None
+    ) -> None:
+        """Baseline de runs legados (NULL): só grava se ainda não houver."""
+        sql = (
+            f"UPDATE {_RUNS} SET last_count_activity_at = %s "
+            "WHERE id = %s::uuid AND last_count_activity_at IS NULL"
+        )
+        if conn is not None:
+            with conn.cursor() as cur:
+                cur.execute(sql, (at, run_id))
+            return
+        with get_connection() as own:
+            with own.cursor() as cur:
+                cur.execute(sql, (at, run_id))
             own.commit()
 
     def _update_run_pieces(self, conn: Any, run_id: str, **kwargs: Any) -> None:
@@ -454,10 +482,11 @@ class PostgresProductionRunRepository:
                 f"""
                 UPDATE {_RUNS}
                    SET pieces_total = %s,
+                       last_count_activity_at = COALESCE(%s, last_count_activity_at),
                        updated_at = NOW()
                  WHERE id = %s::uuid AND status = 'running'
                 """,
-                (int(kwargs["pieces_total"]), run_id),
+                (int(kwargs["pieces_total"]), kwargs.get("activity_at"), run_id),
             )
             cur.execute(
                 f"""
@@ -532,7 +561,7 @@ class PostgresProductionRunRepository:
                           operation_code, device_id::text AS device_id,
                           operator_code, operator_name, status, started_at,
                           ended_at, pieces_total, planned_qty_snapshot,
-                          target_pieces_snapshot
+                          target_pieces_snapshot, last_count_activity_at
                 """,
                 params,
             )
