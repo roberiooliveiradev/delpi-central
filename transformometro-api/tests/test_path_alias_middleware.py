@@ -86,3 +86,38 @@ def test_rewrite_hybrid_legacy_mfe_paths():
         rewrite_en_path_to_legacy_pt("/transformometro/instances/i1/diagram-escopo")
         == "/transformometro/instancias/i1/diagrama-escopo"
     )
+
+def test_rewrite_skips_diagnostic_en_native_surface():
+    """Diagnostic V1 é EN-canônico: /revisions/{id}/diagnostics não deve virar
+    /revisoes/{id}/diagnostics — não há rota PT registrada (404 em produção)."""
+    base = "/transformometro/revisions/816b1c54-8b5b-464e-ba55-242a7ec4a22e"
+    assert rewrite_en_path_to_legacy_pt(f"{base}/diagnostics") == f"{base}/diagnostics"
+    assert (
+        rewrite_en_path_to_legacy_pt(f"{base}/diagnostics/prepare")
+        == f"{base}/diagnostics/prepare"
+    )
+    detail = "/transformometro/diagnostics/72550c29-464f-4d28-9ce9-31986a09273d"
+    assert rewrite_en_path_to_legacy_pt(detail) == detail
+    assert rewrite_en_path_to_legacy_pt(f"{detail}/prepare") == f"{detail}/prepare"
+    commit = "/transformometro/governed-proposals/commit"
+    assert rewrite_en_path_to_legacy_pt(commit) == commit
+    # gateway path com prefixo /apps/... também deve preservar
+    gw = f"/apps/transformometro-api{base}/diagnostics"
+    assert rewrite_en_path_to_legacy_pt(gw) == gw
+
+
+def test_rewrite_still_maps_legacy_revision_siblings():
+    """Irmãos PT continuam reescritos — a isenção é apenas de /diagnostics."""
+    base = "/transformometro/revisions/r1"
+    assert rewrite_en_path_to_legacy_pt(base) == "/transformometro/revisoes/r1"
+    assert (
+        rewrite_en_path_to_legacy_pt(f"{base}/evidences")
+        == "/transformometro/revisoes/r1/evidencias"
+    )
+    assert (
+        rewrite_en_path_to_legacy_pt(f"{base}/diagram")
+        == "/transformometro/revisoes/r1/diagrama"
+    )
+    # /diagnostico-rateio (PT) não é o token /diagnostics — não pode casar.
+    pt = "/transformometro/revisoes/r1/diagnostico-rateio"
+    assert rewrite_en_path_to_legacy_pt(pt) == pt
