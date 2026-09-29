@@ -17,10 +17,15 @@ from delpi_mcp.transport import (
     normalize_mcp_mount_path as _shared_normalize_path,
 )
 
-from tm_app.interface.mcp.server import create_mcp_server
+from tm_app.interface.mcp.server import create_mcp_server, teo_mcp_transport_security
 
 _mcp = create_mcp_server()
-mcp_http_app: Starlette = _mcp.streamable_http_app()
+mcp_http_app: Starlette = _mcp.streamable_http_app(
+    streamable_http_path="/",
+    json_response=True,
+    stateless_http=True,
+    transport_security=teo_mcp_transport_security(),
+)
 
 _MCP_EXACT_PATHS = frozenset(
     {
