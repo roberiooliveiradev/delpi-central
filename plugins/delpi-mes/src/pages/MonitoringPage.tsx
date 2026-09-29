@@ -1,4 +1,5 @@
-import { EmptyState, LoadingState, MetricStrip, emptyStatePanelBemClasses, loadingStatePanelBemClasses, metricStripBemClasses } from "@delpi/plugin-ui/index";
+import { EmptyState, LoadingState, emptyStatePanelBemClasses, loadingStatePanelBemClasses } from "@delpi/plugin-ui/index";
+import { RefreshCw } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { BranchCode } from "../constants/routes";
 import { useMonitoringData } from "../hooks/useMonitoringData";
@@ -7,9 +8,9 @@ import type { MonitoringFilters, SortMode, StatusFilter } from "../utils/monitor
 import { filterMonitoringItems } from "../utils/monitoringFilters";
 import { elapsedSeconds } from "../utils/duration";
 import { WorkCenterCard } from "../components/monitoring/WorkCenterCard";
+import { MonitoringStatCards } from "../components/monitoring/MonitoringStatCards";
 import { RunDetailDrawer } from "../components/monitoring/RunDetailDrawer";
 
-const metricClasses = metricStripBemClasses("delpi-mes");
 const loadingClasses = loadingStatePanelBemClasses("delpi-mes");
 const emptyClasses = emptyStatePanelBemClasses("delpi-mes");
 const initialFilters: MonitoringFilters = { search: "", status: "all", reason: "", sort: "attention" };
@@ -31,15 +32,25 @@ export function MonitoringPage({ branch, canViewHistory }: { branch: BranchCode;
   if (!monitoring.data || !summary) return null;
 
   return <section className="delpi-mes-monitoring" aria-labelledby="monitoring-title">
-    <header className="delpi-mes-monitoring__head"><div><p className="delpi-mes-eyebrow">Supervisão gerencial</p><h2 id="monitoring-title">Monitoramento Industrial</h2><p>Runs MES ativos na filial {branch === "01" ? "SC" : "ES"}.</p></div><div className="delpi-mes-monitoring__refresh" aria-live="polite"><span>{monitoring.refreshing ? "Atualizando…" : `Atualizado há ${updatedAgo} s`}</span><button type="button" onClick={() => void monitoring.refresh()} disabled={monitoring.refreshing}>Atualizar</button></div></header>
+    <header className="delpi-mes-monitoring__head">
+      <div>
+        <p className="delpi-mes-eyebrow">Supervisão gerencial</p>
+        <h2 id="monitoring-title">Monitoramento Industrial</h2>
+        <p>Runs MES ativos na filial {branch === "01" ? "SC" : "ES"}.</p>
+      </div>
+      <div className="delpi-mes-monitoring__refresh" aria-live="polite">
+        <span className="delpi-mes-monitoring__updated">
+          <span className="delpi-mes-live-dot" aria-hidden="true" />
+          {monitoring.refreshing ? "Atualizando…" : `Atualizado há ${updatedAgo} s`}
+        </span>
+        <button type="button" className="delpi-mes-refresh-btn" onClick={() => void monitoring.refresh()} disabled={monitoring.refreshing}>
+          <RefreshCw aria-hidden="true" />
+          Atualizar
+        </button>
+      </div>
+    </header>
     {monitoring.error ? <p className="delpi-mes-monitoring__stale" role="status">Último snapshot mantido. A atualização falhou: {monitoring.error}</p> : null}
-    <MetricStrip classNames={metricClasses} aria-label="Resumo dos runs ativos" items={[
-      { id: "active", label: "Runs ativos", value: summary.activeRuns },
-      { id: "producing", label: "Produzindo", value: summary.producing, tone: "success" },
-      { id: "stopped", label: "Estado parado", value: summary.stopped, tone: "warning", description: "Inclui pausas manuais" },
-      { id: "paused", label: "Pausas manuais", value: summary.paused, tone: "warning" },
-      { id: "pending", label: "Motivos pendentes", value: summary.unclassifiedDowntimes, tone: "danger" },
-    ]} />
+    <MonitoringStatCards summary={summary} />
     <div className="delpi-mes-monitoring__filters" aria-label="Filtros do monitoramento">
       <label>Busca<input type="search" value={filters.search} placeholder="CT, OP, operação, operador ou motivo" onChange={(event) => setFilters((current) => ({ ...current, search: event.target.value }))} /></label>
       <label>Estado<select value={filters.status} onChange={(event) => setFilters((current) => ({ ...current, status: event.target.value as StatusFilter }))}><option value="all">Todos</option><option value="producing">Produzindo</option><option value="stopped">Parada</option><option value="paused">Pausa manual</option><option value="pending">Motivo pendente</option><option value="incomplete">Dados incompletos</option></select></label>
