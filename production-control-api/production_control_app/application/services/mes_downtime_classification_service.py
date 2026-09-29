@@ -32,10 +32,12 @@ class MesDowntimeClassificationService:
         run_service: Any,
         downtimes: DowntimeEventRepositoryPort,
         reasons: DowntimeReasonRepositoryPort,
+        audit: Any | None = None,
     ) -> None:
         self._run_service = run_service
         self._downtimes = downtimes
         self._reasons = reasons
+        self._audit = audit
 
     def list_reasons(self) -> list[dict[str, Any]]:
         """Catálogo público: somente motivos ativos, contrato mínimo."""
@@ -74,17 +76,45 @@ class MesDowntimeClassificationService:
         if reason.get("requires_note") and not clean_note:
             raise InvalidMesEvent("Este motivo exige uma observação.")
 
-        row = self._downtimes.classify(
-            open_dt["id"],
-            reason_code=reason["code"],
-            planned=reason.get("default_planned"),
-            counts_as_availability_loss=reason.get(
-                "default_counts_as_availability_loss"
-            ),
-            note=clean_note,
-            confirmed_by_type="operator",
-            confirmed_by_ref=str(session["operator_code"]),
+        previous_reason = open_dt.get("reason_code")
+        action = (
+            "downtime_reason_changed" if previous_reason else "downtime_classified"
         )
+        details: dict[str, Any] = {}
+        if previous_reason:
+            details = {
+                "previousReasonCode": previous_reason,
+                "newReasonCode": reason["code"],
+            }
+
+        def _persist(conn: Any | None) -> dict[str, Any]:
+            row_ = self._downtimes.classify(
+                open_dt["id"],
+                reason_code=reason["code"],
+                planned=reason.get("default_planned"),
+                counts_as_availability_loss=reason.get(
+                    "default_counts_as_availability_loss"
+                ),
+                note=clean_note,
+                confirmed_by_type="operator",
+                confirmed_by_ref=str(session["operator_code"]),
+                conn=conn,
+            )
+            if self._audit is not None:
+                self._audit.append(
+                    branch=run["branch"],
+                    work_center=run["work_center"],
+                    run_id=run["id"],
+                    action=action,
+                    actor_type="operator",
+                    actor_ref=str(session["operator_code"]),
+                    details=details,
+                    conn=conn,
+                )
+            return row_
+
+        transaction = getattr(self._run_service, "transaction", None)
+        row = _persist(None) if transaction is None else self._with_tx(transaction, _persist)
         payload = {
             "id": row["id"],
             "runId": run["id"],
@@ -100,6 +130,11 @@ class MesDowntimeClassificationService:
         }
         self._notify(run, payload)
         return payload
+
+    @staticmethod
+    def _with_tx(transaction: Any, persist: Any) -> dict[str, Any]:
+        with transaction() as conn:
+            return persist(conn)
 
     @staticmethod
     def _notify(run: dict[str, Any], downtime: dict[str, Any]) -> None:

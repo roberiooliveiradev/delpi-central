@@ -70,6 +70,8 @@ export function ProductionRunControls({
     token,
     sessionToken: session?.sessionToken ?? null,
     runId: run?.id ?? null,
+    branch,
+    workCenter,
     runRealtimeEvent,
     realtimeConnected,
   });
@@ -143,6 +145,13 @@ export function ProductionRunControls({
           </div>
 
           {otherRun ? <p className="pcp-pub__run-warn">{otherRun}</p> : null}
+
+          {run && runMatchesOperation && deviceOnline === false ? (
+            <p className="pcp-pub__run-warn pcp-pub__run-warn--telemetry" role="status">
+              Contador sem comunicação — última contagem conhecida mantida.
+              Você ainda pode pausar ou encerrar.
+            </p>
+          ) : null}
 
           {run && runMatchesOperation ? (
             <div className="pcp-pub__run-readout" aria-live="polite">

@@ -29,6 +29,29 @@ export function liveDurationSeconds(item: RunTimelineItem, nowMs: number): numbe
   return elapsedSeconds(item.startedAt, nowMs);
 }
 
+/**
+ * Resumo "vivo" derivado dos itens + relógio do servidor — o segmento aberto
+ * continua somando sem precisar de novo GET.
+ */
+export function liveSummary(
+  items: RunTimelineItem[],
+  nowMs: number,
+): { producingSeconds: number; stoppedSeconds: number; stopCount: number } {
+  let producing = 0;
+  let stopped = 0;
+  let stops = 0;
+  for (const item of items) {
+    const secs = liveDurationSeconds(item, nowMs);
+    if (item.state === "stopped") {
+      stopped += secs;
+      stops += 1;
+    } else if (item.state === "producing") {
+      producing += secs;
+    }
+  }
+  return { producingSeconds: producing, stoppedSeconds: stopped, stopCount: stops };
+}
+
 /** HH:MM:SS sem limite de 59 minutos (horas podem exceder 99). */
 export function formatDurationHms(totalSeconds: number): string {
   const safe = Math.max(0, Math.floor(totalSeconds));

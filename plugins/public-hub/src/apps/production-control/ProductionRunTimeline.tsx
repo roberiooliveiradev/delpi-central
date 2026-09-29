@@ -4,6 +4,7 @@ import {
   formatDurationHms,
   formatTimeHm,
   liveDurationSeconds,
+  liveSummary,
   stateLabel,
 } from "./runTimeline";
 
@@ -40,6 +41,7 @@ export function ProductionRunTimeline({ timeline, serverNow }: Props) {
   }
 
   const durations = timeline.items.map((item) => liveDurationSeconds(item, now));
+  const summary = liveSummary(timeline.items, now);
   const total = Math.max(
     1,
     durations.reduce((acc, v) => acc + v, 0),
@@ -91,10 +93,10 @@ export function ProductionRunTimeline({ timeline, serverNow }: Props) {
         ))}
       </ol>
       <p className="pcp-pub-timeline__summary">
-        Produzindo {formatDurationHms(timeline.summary.producingSeconds)} · Parado{" "}
-        {formatDurationHms(timeline.summary.stoppedSeconds)} ·{" "}
-        {timeline.summary.stopCount}{" "}
-        {timeline.summary.stopCount === 1 ? "parada" : "paradas"}
+        Produzindo {formatDurationHms(summary.producingSeconds)} · Parado{" "}
+        {formatDurationHms(summary.stoppedSeconds)} ·{" "}
+        {summary.stopCount}{" "}
+        {summary.stopCount === 1 ? "parada" : "paradas"}
       </p>
     </div>
   );

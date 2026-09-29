@@ -5,6 +5,7 @@ import {
   elapsedSeconds,
   formatDurationHms,
   liveDurationSeconds,
+  liveSummary,
   serverClockOffsetMs,
   serverNowMs,
   stateLabel,
@@ -80,5 +81,40 @@ describe("stateLabel", () => {
     assert.equal(stateLabel("idle"), "Livre");
     assert.equal(stateLabel("planned_stop"), "Parada planejada");
     assert.equal(stateLabel("custom_x"), "custom_x");
+  });
+});
+
+describe("liveSummary", () => {
+  const closed = (
+    state: string,
+    durationSeconds: number,
+  ): RunTimelineItem => ({
+    id: `${state}-${durationSeconds}`,
+    state,
+    startedAt: "2026-09-28T14:00:00Z",
+    endedAt: "2026-09-28T14:05:00Z",
+    durationSeconds,
+    source: "state",
+    downtime: null,
+  });
+
+  it("open stopped keeps accumulating without a new GET", () => {
+    const open: RunTimelineItem = {
+      id: "s-open",
+      state: "stopped",
+      startedAt: "2026-09-28T14:10:00Z",
+      endedAt: null,
+      durationSeconds: 0,
+      source: "state",
+      downtime: null,
+    };
+    const items = [closed("producing", 300), open];
+    const t1 = liveSummary(items, Date.parse("2026-09-28T14:11:00Z"));
+    assert.equal(t1.producingSeconds, 300);
+    assert.equal(t1.stoppedSeconds, 60);
+    assert.equal(t1.stopCount, 1);
+    const t2 = liveSummary(items, Date.parse("2026-09-28T14:16:00Z"));
+    assert.equal(t2.stoppedSeconds, 360);
+    assert.equal(t2.producingSeconds, 300);
   });
 });

@@ -301,7 +301,8 @@ class FakeDowntimeRepo:
         return dict(ev)
 
     def classify(self, downtime_id, *, reason_code, planned, counts_as_availability_loss,
-                 note=None, confirmed_by_type=None, confirmed_by_ref=None, confirmed=True):
+                 note=None, confirmed_by_type=None, confirmed_by_ref=None, confirmed=True,
+                 conn=None):
         from production_control_app.domain.errors import DowntimeNotFound
 
         for e in self.events:

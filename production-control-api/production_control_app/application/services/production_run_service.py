@@ -3,6 +3,8 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any, Callable
 
+import logging
+
 from production_control_app.application.services.machine_load_realtime_hub import (
     machine_load_realtime_hub,
 )
@@ -12,6 +14,9 @@ from production_control_app.domain.errors import (
     ProductionRunNotFound,
     PulseDeviceUnavailable,
     PulseGatewayError,
+)
+from production_control_app.domain.services.pulse_snapshot import (
+    classify_pulse_snapshot,
 )
 from production_control_app.domain.services.production_run_counting import (
     pieces_from_anchor,
@@ -25,6 +30,9 @@ from production_control_app.infrastructure.persistence.postgres_production_run_r
     PostgresProductionRunRepository,
     generate_session_token,
 )
+
+
+logger = logging.getLogger(__name__)
 
 
 def _utc_now() -> datetime:
@@ -91,8 +99,10 @@ class ProductionRunService:
         pulse_gateway: ProductionPulseGateway | None = None,
         queue_lookup: Callable[..., dict[str, Any] | None] | None = None,
         mes_lifecycle: Any | None = None,
+        audit: Any | None = None,
     ) -> None:
         self._repo = repository or PostgresProductionRunRepository()
+        self._audit_repo = audit
         self._pulse = pulse_gateway or ProductionPulseGateway()
         self._queue_lookup = queue_lookup
         if mes_lifecycle is None:
@@ -111,6 +121,10 @@ class ProductionRunService:
                 reasons=PostgresDowntimeReasonRepository(),
             )
         self._mes = mes_lifecycle
+
+    def transaction(self) -> Any:
+        """Transação compartilhada do run repo (uso por serviços compostos)."""
+        return self._repo.transaction()
 
     def create_bench_session(
         self,
@@ -219,6 +233,10 @@ class ProductionRunService:
             raise ProductionRunConflict("Já existe produção em andamento neste posto.")
 
         device = self._pick_device(branch=branch, work_center=work_center)
+        if classify_pulse_snapshot(device) != "usable":
+            raise PulseDeviceUnavailable(
+                "Contador do posto indisponível ou inválido. Não é possível iniciar."
+            )
         op = self._operation_from_queue(
             branch=branch,
             work_center=work_center,
@@ -256,8 +274,13 @@ class ProductionRunService:
                 anchor_epoch=int(device.get("counterEpoch") or 0),
                 conn=conn,
             )
-            self._mes.record_run_started(run, conn=conn, at=_utc_now())
+            at = _utc_now()
+            self._mes.record_run_started(run, conn=conn, at=at)
+            self._audit(
+                "run_started", run=run, session=session, conn=conn, occurred_at=at
+            )
         self._notify(branch, work_center, reason="run_started")
+        logger.info("mes_run_started run_id=%s", run["id"])
         return _run_to_api(run, device=device)
 
     def _require_active_run(self, run_id: str, *, session: dict[str, Any]) -> dict[str, Any]:
@@ -281,7 +304,7 @@ class ProductionRunService:
         run = self._require_active_run(run_id, session=session)
         if run.get("status") != "running":
             raise ProductionRunConflict("A produção não está em execução.")
-        pieces_total, open_pieces, device = self._refresh_pieces(run, allow_epoch_roll=True)
+        pieces_total, open_pieces, device, degraded = self._pieces_for_close(run)
         with self._repo.transaction() as conn:
             locked = self._repo.lock_run(run_id, conn=conn)
             if locked is None:
@@ -299,9 +322,23 @@ class ProductionRunService:
                 conn=conn,
             )
             self._mes.record_run_paused(locked, conn=conn, at=at)
+            self._audit(
+                "run_paused", run=locked, session=session, conn=conn,
+                occurred_at=at,
+            )
+            if degraded:
+                self._audit(
+                    "telemetry_fallback_used",
+                    run=locked,
+                    session=session,
+                    conn=conn,
+                    occurred_at=at,
+                    details={"transition": "pause"},
+                )
         payload = _run_to_api(updated, device=device)
         payload["downtime"] = self._mes.open_downtime_view(locked)
         self._notify(run["branch"], run["work_center"], reason="run_paused")
+        logger.info("mes_run_paused run_id=%s degraded=%s", run["id"], degraded)
         return payload
 
     def resume_run(self, run_id: str, *, session_token: str | None) -> dict[str, Any]:
@@ -309,14 +346,19 @@ class ProductionRunService:
         run = self._require_active_run(run_id, session=session)
         if run.get("status") != "paused":
             raise ProductionRunConflict("A produção não está pausada.")
-        device = self._pulse.fetch_device_snapshot(str(run["device_id"]))
+        device = self._usable_device_snapshot(run)
         with self._repo.transaction() as conn:
             locked = self._repo.lock_run(run_id, conn=conn)
             if locked is None:
                 raise ProductionRunNotFound("Produção não encontrada.")
             if locked.get("status") != "paused":
                 raise ProductionRunConflict("A produção não está pausada.")
-            self._mes.record_run_resumed(locked, conn=conn, at=_utc_now())
+            at = _utc_now()
+            self._mes.record_run_resumed(locked, conn=conn, at=at)
+            self._audit(
+                "run_resumed", run=locked, session=session, conn=conn,
+                occurred_at=at,
+            )
             updated = self._repo.reopen_segment_on_resume(
                 run_id=run_id,
                 device_id=str(run["device_id"]),
@@ -326,6 +368,7 @@ class ProductionRunService:
             )
         run = {**run, **updated}
         self._notify(run["branch"], run["work_center"], reason="run_resumed")
+        logger.info("mes_run_resumed run_id=%s", run["id"])
         return _run_to_api(run, device=device)
 
     def stop_run(self, run_id: str, *, session_token: str | None) -> dict[str, Any]:
@@ -336,8 +379,9 @@ class ProductionRunService:
         pieces_total = int(run.get("pieces_total") or 0)
         open_pieces = 0
         device = None
+        degraded = False
         if run.get("status") == "running":
-            pieces_total, open_pieces, device = self._refresh_pieces(run, allow_epoch_roll=True)
+            pieces_total, open_pieces, device, degraded = self._pieces_for_close(run)
         with self._repo.transaction() as conn:
             locked = self._repo.lock_run(run_id, conn=conn)
             if locked is None:
@@ -353,8 +397,23 @@ class ProductionRunService:
                 end_reason="stop",
                 conn=conn,
             )
-            self._mes.record_run_finished(locked, conn=conn, at=_utc_now())
+            at = _utc_now()
+            self._mes.record_run_finished(locked, conn=conn, at=at)
+            self._audit(
+                "run_stopped", run=locked, session=session, conn=conn,
+                occurred_at=at,
+            )
+            if degraded:
+                self._audit(
+                    "telemetry_fallback_used",
+                    run=locked,
+                    session=session,
+                    conn=conn,
+                    occurred_at=at,
+                    details={"transition": "stop"},
+                )
         self._notify(run["branch"], run["work_center"], reason="run_stopped")
+        logger.info("mes_run_stopped run_id=%s", run["id"])
         return _run_to_api(updated, device=device)
 
     def get_active(
@@ -423,6 +482,72 @@ class ProductionRunService:
                 continue
         return updated
 
+    def _usable_device_snapshot(self, run: dict[str, Any]) -> dict[str, Any]:
+        """Snapshot Pulse do device do run; exige utilizável (Etapa 05)."""
+        try:
+            device = self._pulse.fetch_device_snapshot(str(run["device_id"]))
+        except PulseGatewayError as exc:
+            raise PulseDeviceUnavailable(
+                "Contador indisponível no momento. Aguarde a telemetria voltar."
+            ) from exc
+        status = classify_pulse_snapshot(device)
+        if status != "usable":
+            raise PulseDeviceUnavailable(
+                "Contador indisponível no momento. Aguarde a telemetria voltar."
+            )
+        return device
+
+    def _pieces_for_close(
+        self, run: dict[str, Any]
+    ) -> tuple[int, int, dict[str, Any] | None, bool]:
+        """Consolida peças antes de Pause/Stop.
+
+        Retorna (pieces_total, open_pieces, device, degraded). Quando o Pulse
+        está indisponível, usa somente os últimos valores persistidos —
+        nunca inventa contagem.
+        """
+        try:
+            pieces_total, open_pieces, device = self._refresh_pieces(
+                run, allow_epoch_roll=True
+            )
+            return pieces_total, open_pieces, device, False
+        except (PulseGatewayError, PulseDeviceUnavailable):
+            segment = self._repo.get_open_segment(str(run["id"]))
+            pieces_total = int(run.get("pieces_total") or 0)
+            open_pieces = int(segment.get("pieces") or 0) if segment else 0
+            logger.warning(
+                "mes_telemetry_fallback run_id=%s branch=%s work_center=%s",
+                run.get("id"), run.get("branch"), run.get("work_center"),
+            )
+            return pieces_total, open_pieces, None, True
+
+    def _audit(
+        self,
+        action: str,
+        *,
+        run: dict[str, Any] | None,
+        session: dict[str, Any] | None,
+        conn: Any | None = None,
+        details: dict[str, Any] | None = None,
+        occurred_at: datetime | None = None,
+    ) -> None:
+        if self._audit_repo is None:
+            return
+        if run is None:
+            return
+        actor_type = "operator" if session else "system"
+        self._audit_repo.append(
+            branch=run["branch"],
+            work_center=run["work_center"],
+            run_id=str(run["id"]),
+            action=action,
+            actor_type=actor_type,
+            actor_ref=(session or {}).get("operator_code"),
+            occurred_at=occurred_at,
+            details=details or {},
+            conn=conn,
+        )
+
     def _refresh_pieces(
         self,
         run: dict[str, Any],
@@ -430,6 +555,10 @@ class ProductionRunService:
         allow_epoch_roll: bool,
     ) -> tuple[int, int, dict[str, Any]]:
         device = self._pulse.fetch_device_snapshot(str(run["device_id"]))
+        if classify_pulse_snapshot(device) != "usable":
+            raise PulseDeviceUnavailable(
+                "Snapshot do contador indisponível ou inválido."
+            )
         segment = self._repo.get_open_segment(str(run["id"]))
         if segment is None:
             return int(run.get("pieces_total") or 0), 0, device
@@ -464,6 +593,15 @@ class ProductionRunService:
                 anchor_counter=current_counter,
                 anchor_epoch=current_epoch,
                 pieces_total=pieces_total,
+            )
+            self._audit(
+                "counter_epoch_changed",
+                run=run,
+                session=None,
+                details={
+                    "previousEpoch": int(segment["anchor_epoch"]),
+                    "newEpoch": current_epoch,
+                },
             )
             return int(rolled.get("pieces_total") or pieces_total), 0, device
 
