@@ -6,6 +6,9 @@ export type FormFieldShellClassNames = {
   root: string;
   spanWideModifier: string;
   fieldLabel: string;
+  /** Opcional — linha label + aside; fallback `fieldLabel` quando ausente. */
+  labelRow?: string;
+  labelAside?: string;
 };
 
 export type FormFieldShellProps = {
@@ -14,6 +17,8 @@ export type FormFieldShellProps = {
   hint?: string;
   span?: boolean;
   className?: string;
+  /** Conteúdo na linha do label, à direita (ex.: switch Valor/Expressão). */
+  labelAside?: ReactNode;
   /** Conteúdo antes do controle (ex.: ícone à esquerda). */
   beforeControl?: ReactNode;
   /** Envolve beforeControl + controle (ex.: `a5s-nc-input-wrap`). */
@@ -29,6 +34,8 @@ export function formFieldShellBemClasses(prefix: string): FormFieldShellClassNam
     root: `${prefix}-field`,
     spanWideModifier: `${prefix}-span-2`,
     fieldLabel: `${prefix}-field__label`,
+    labelRow: `${prefix}-field__label-row`,
+    labelAside: `${prefix}-field__label-aside`,
   };
 }
 
@@ -41,6 +48,7 @@ export function FormFieldShell({
   hint,
   span = false,
   className,
+  labelAside,
   beforeControl,
   controlWrapperClassName,
   afterControl,
@@ -63,9 +71,20 @@ export function FormFieldShell({
     </>
   );
 
+  const labelNode = (
+    <FieldLabel label={label} htmlFor={id} hint={hint} className={classNames.fieldLabel} />
+  );
+
   return (
     <div className={rootClass}>
-      <FieldLabel label={label} htmlFor={id} hint={hint} className={classNames.fieldLabel} />
+      {labelAside != null ? (
+        <div className={classNames.labelRow ?? classNames.fieldLabel}>
+          {labelNode}
+          <span className={classNames.labelAside}>{labelAside}</span>
+        </div>
+      ) : (
+        labelNode
+      )}
       {control}
       {afterControl}
     </div>
