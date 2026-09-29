@@ -12,7 +12,7 @@ export function SectionHintLabel({ label, hint, className }: SectionHintLabelPro
 
   return (
     <HelpTooltip content={hint} ariaLabel={`Ajuda: ${label}`} wrap placement="bottom">
-      <span className={mergedClass}>{label}</span>
+      <span className={mergedClass} tabIndex={0}>{label}</span>
     </HelpTooltip>
   );
 }

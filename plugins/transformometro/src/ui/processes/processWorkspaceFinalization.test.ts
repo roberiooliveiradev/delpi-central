@@ -60,7 +60,7 @@ describe("Process Workspace finalization — Documentation CTA", () => {
   it("mantém CTA primária Novo documento no header e no empty state", () => {
     const primaryCtas = docs.match(/Novo documento/g) ?? [];
     expect(primaryCtas).toHaveLength(2);
-    expect(docs).toMatch(/ds-btn--primary[\s\S]{0,80}Novo documento/);
+    expect(docs).toMatch(/variant="primary"[\s\S]{0,80}Novo documento/);
     const emptyBlock = docs.slice(docs.indexOf("<EmptyState"));
     expect(emptyBlock).toMatch(/Novo documento/);
   });

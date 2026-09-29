@@ -18,7 +18,7 @@ import {
   payloadFromRecursoForm,
 } from "../../shared-resources/recursoCatalogForm";
 import { Pagination } from "../../../components/Pagination";
-import { FieldLabel, HelpTooltip, NativeCheckboxControl, NativeTextControl } from "@delpi/plugin-ui/index";
+import { FieldLabel, NativeCheckboxControl, NativeTextControl } from "@delpi/plugin-ui/index";
 import { DS_TABLE_CLASS_NAMES } from "../../../components/dataTableUi";
 import { TableHeader } from "../../../components/TableHeader";
 import { TableRowActions } from "../../../components/ui/TableRowActions";
@@ -256,10 +256,10 @@ export function RevisionSharedResourcesSection({
                            
                             checked={editVinculoForm.ativo}
                             onChange={(ativo) => setEditVinculoForm({ ...editVinculoForm, ativo })}
-                            label={<span className="tm-field__label">
-                              Ativo
-                              <HelpTooltip content={R.vinculoAtivo} ariaLabel="Ajuda: Ativo" />
-                            </span>}
+                            label="Ativo"
+                            hint={R.vinculoAtivo}
+                            hintPlacement="tooltip"
+                            hintAriaLabel="Ajuda: Ativo"
                           />
                         </div>
                         <label className={DS_FILTER_BOX_WIDE}>
@@ -409,10 +409,10 @@ export function RevisionSharedResourcesSection({
            
             checked={vinculoForm.ativo}
             onChange={(ativo) => setVinculoForm({ ...vinculoForm, ativo })}
-            label={<span className="tm-field__label">
-              Vínculo ativo
-              <HelpTooltip content={R.vinculoAtivo} ariaLabel="Ajuda: Vínculo ativo" />
-            </span>}
+            label="Vínculo ativo"
+            hint={R.vinculoAtivo}
+            hintPlacement="tooltip"
+            hintAriaLabel="Ajuda: Vínculo ativo"
           />
         </div>
         <label className={DS_FILTER_BOX_WIDE}>

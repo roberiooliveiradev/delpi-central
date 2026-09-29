@@ -1,5 +1,5 @@
 import type { OptionsData, Revisao } from "../../../data/api/transformometroApi";
-import { FieldLabel, HelpTooltip, NativeCheckboxControl, NativeTextControl } from "@delpi/plugin-ui/index";
+import { FieldLabel, NativeCheckboxControl, NativeTextControl } from "@delpi/plugin-ui/index";
 import { SelectField } from "../../../components/ui/SelectField";
 import { cenarioLabel, cenarioSelectLabel } from "../../../content/cenarioLabels";
 import {
@@ -243,10 +243,10 @@ export function RevisionValiditySection({
             checked={revisaoVigencia.revisao_ativa}
             disabled={isBaseline || Boolean(revisaoVigencia.data_fim_vigencia)}
             onChange={(revisao_ativa) => onChange({ ...revisaoVigencia, revisao_ativa })}
-            label={<span className="tm-field__label">
-              Marcar como revisão ativa
-              <HelpTooltip content={R.revisaoAtiva} ariaLabel="Ajuda: Marcar como revisão ativa" />
-            </span>}
+            label="Marcar como revisão ativa"
+            hint={R.revisaoAtiva}
+            hintPlacement="tooltip"
+            hintAriaLabel="Ajuda: Marcar como revisão ativa"
           />
         </div>
         <label className={DS_FILTER_BOX_WIDE}>

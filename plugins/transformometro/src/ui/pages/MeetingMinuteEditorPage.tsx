@@ -3,7 +3,6 @@ import {
   ActionButton,
   FieldLabel,
   NativeCheckboxControl,
-  NativeSelectControl,
   NativeTextControl,
   parseDocxPreview,
   RichTextEditor,
@@ -24,6 +23,7 @@ import {
 
 import type { AppProps } from "../../App";
 import { PageHeader } from "../../components/PageHeader";
+import { SelectControl } from "../../components/ui/SelectControl";
 import { TransformometroShell } from "../../components/TransformometroShell";
 import { buildAtaPath, TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
 import {
@@ -420,7 +420,7 @@ export function MeetingMinuteEditorPage({ getAccessToken, ataId, onNavigate }: P
             </div>
             <div className="tm-ata-editor__field">
               <FieldLabel label="Unidade" htmlFor="ata-unit" />
-              <NativeSelectControl
+              <SelectControl
                 id="ata-unit"
                 value={unitCode}
                 onChange={setUnitCode}
@@ -428,11 +428,12 @@ export function MeetingMinuteEditorPage({ getAccessToken, ataId, onNavigate }: P
                   { value: "01", label: "Unidade 01" },
                   { value: "02", label: "Unidade 02" },
                 ]}
+                ariaLabel="Unidade"
               />
             </div>
             <div className="tm-ata-editor__field">
               <FieldLabel label="Tipo" htmlFor="ata-type" />
-              <NativeSelectControl
+              <SelectControl
                 id="ata-type"
                 value={meetingType}
                 onChange={setMeetingType}
@@ -440,6 +441,7 @@ export function MeetingMinuteEditorPage({ getAccessToken, ataId, onNavigate }: P
                   value,
                   label,
                 }))}
+                ariaLabel="Tipo"
               />
             </div>
             <div className="tm-ata-editor__field">

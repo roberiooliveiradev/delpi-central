@@ -2,7 +2,7 @@ import { useCallback, useRef, useState } from "react";
 import { AlertTriangle, Archive, ArrowDownUp, Download, FileJson, RefreshCw, Upload } from "lucide-react";
 
 import type { AppProps } from "../../App";
-import { HelpTooltip } from "@delpi/plugin-ui/index";
+import { SectionHintLabel } from "@delpi/plugin-ui/index";
 import { DS_TABLE_CLASS_NAMES } from "../../components/dataTableUi";
 import { TableHeader } from "../../components/TableHeader";
 import { PageHeader } from "../../components/PageHeader";
@@ -252,10 +252,9 @@ export function DataTransferPage({ getAccessToken, pathname, onNavigate }: Props
               </span>
               <div className="tm-data-transfer__panel-text">
                 <h2 className="ds-section-title">
-                  Exportar
-                  <HelpTooltip
-                    content={TM_HELP_TOOLTIPS.dataTransfer.export}
-                    ariaLabel="Ajuda: Exportar"
+                  <SectionHintLabel
+                    label="Exportar"
+                    hint={TM_HELP_TOOLTIPS.dataTransfer.export}
                   />
                 </h2>
                 <p className="ds-hint">

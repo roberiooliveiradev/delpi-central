@@ -12,7 +12,7 @@ import {
 import type { DataTableColumn } from "../DataTable";
 import { DataTableSection } from "../DataTableSection";
 import { ChartCard } from "../ChartCard";
-import { HelpTooltip } from "@delpi/plugin-ui/index";
+import { SectionHintLabel } from "@delpi/plugin-ui/index";
 import { SegmentToggle } from "../SegmentToggle";
 import { CollapsiblePanel } from "../CollapsiblePanel";
 import { BeneficioCalculoChip } from "../BeneficioCalculoChip";
@@ -207,10 +207,9 @@ export function RevisionComparisonSection({ items, columns }: Props) {
       {avisos.length > 0 ? (
         <div className="ds-card" role="status">
           <p className="ds-section-title" style={{ marginBottom: 8 }}>
-            Avisos de volume
-            <HelpTooltip
-              content={TM_HELP_TOOLTIPS.revisao.comparativoAvisos}
-              ariaLabel="Ajuda: avisos de volume no comparativo"
+            <SectionHintLabel
+              label="Avisos de volume"
+              hint={TM_HELP_TOOLTIPS.revisao.comparativoAvisos}
             />
           </p>
           <ul className="ds-hint" style={{ margin: 0, paddingLeft: "1.25rem" }}>
@@ -228,10 +227,9 @@ export function RevisionComparisonSection({ items, columns }: Props) {
         defaultOpen={false}
         header={
           <span className="tm-comparativo-table__trigger">
-            Ver tabela detalhada
-            <HelpTooltip
-              content={TM_HELP_TOOLTIPS.revisao.comparativoTable}
-              ariaLabel="Ajuda: tabela detalhada do comparativo"
+            <SectionHintLabel
+              label="Ver tabela detalhada"
+              hint={TM_HELP_TOOLTIPS.revisao.comparativoTable}
             />
             <span className="ds-muted tm-comparativo-table__count">{items.length} registro(s)</span>
           </span>

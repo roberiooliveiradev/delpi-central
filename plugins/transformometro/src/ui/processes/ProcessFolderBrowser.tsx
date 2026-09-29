@@ -8,7 +8,7 @@ import {
   dataTableSectionBemClasses,
   ensureDelpiUiClass,
   FieldLabel,
-  HelpTooltip,
+  SectionHintLabel,
 } from "@delpi/plugin-ui/index";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { Pagination } from "../../components/Pagination";
@@ -574,8 +574,7 @@ export function ProcessFolderBrowser({
       {footer ? <div className="tm-processo-browser__footer">{footer}</div> : null}
 
       <p className="ds-hint tm-processo-browser__mode-hint">
-        {modeHint}
-        <HelpTooltip content={P.visaoOrganizacao} ariaLabel="Ajuda: visualizar por" />
+        <SectionHintLabel label={modeHint} hint={P.visaoOrganizacao} />
       </p>
     </section>
   );

@@ -6,11 +6,13 @@ import {
   useState,
 } from "react";
 import {
+  ActionButton,
   AnchoredPanelPortal,
   ContextMenuItem,
   EmptyState,
   emptyStateCardBemClasses,
   FieldLabel,
+  IconButton,
   MarkdownDocumentView,
   NativeTextControl,
   buildMarkdownDocumentModel,
@@ -614,9 +616,9 @@ export function ProcessDocumentationSection({
           </p>
         </div>
         {!editing ? (
-          <button type="button" className="ds-btn ds-btn--primary" onClick={startCreate}>
+          <ActionButton variant="primary" onClick={startCreate}>
             Novo documento
-          </button>
+          </ActionButton>
         ) : null}
       </div>
 
@@ -647,13 +649,9 @@ export function ProcessDocumentationSection({
                 title="Nenhum documento criado"
                 defaultMessage="Este processo ainda não possui documentação registrada."
               />
-              <button
-                type="button"
-                className="ds-btn ds-btn--primary"
-                onClick={startCreate}
-              >
+              <ActionButton variant="primary" onClick={startCreate}>
                 Novo documento
-              </button>
+              </ActionButton>
             </div>
           ) : null}
 
@@ -834,20 +832,18 @@ export function ProcessDocumentationSection({
                     O servidor já possui uma versão mais nova.
                   </p>
                   <div className="tm-process-documentation__actions">
-                    <button
-                      type="button"
-                      className="ds-btn ds-btn--ghost"
+                    <ActionButton
+                      variant="ghost"
                       onClick={() => void reloadRemoteDocument()}
                     >
                       Recarregar versão atual
-                    </button>
-                    <button
-                      type="button"
-                      className="ds-btn ds-btn--ghost"
+                    </ActionButton>
+                    <ActionButton
+                      variant="ghost"
                       onClick={() => setRemoteNotice(null)}
                     >
                       Continuar com meu rascunho
-                    </button>
+                    </ActionButton>
                   </div>
                 </StateBox>
               ) : null}
@@ -867,23 +863,20 @@ export function ProcessDocumentationSection({
               ) : null}
 
               <div className="tm-process-documentation__actions">
-                <button
-                  type="button"
-                  className="ds-btn ds-btn--ghost"
+                <ActionButton
+                  variant="ghost"
                   onClick={() => void cancelEditor()}
                   disabled={saving}
                 >
                   Cancelar
-                </button>
-                <button
-                  type="button"
-                  className="ds-btn ds-btn--primary"
+                </ActionButton>
+                <ActionButton
+                  variant="primary"
                   onClick={() => void saveDocument().catch(() => undefined)}
                   disabled={saving || !dirty || remoteNotice?.type === "deleted"}
-                  aria-busy={saving || undefined}
                 >
                   {saving ? "Salvando…" : "Salvar"}
-                </button>
+                </ActionButton>
               </div>
             </div>
           ) : null}
@@ -913,28 +906,22 @@ export function ProcessDocumentationSection({
                   </p>
                 </div>
                 <div className="tm-process-documentation__article-actions">
-                  <button
-                    type="button"
-                    className="ds-btn ds-btn--ghost"
-                    onClick={startEdit}
-                  >
+                  <ActionButton variant="ghost" onClick={startEdit}>
                     <Pencil size={14} aria-hidden="true" />
                     Editar
-                  </button>
+                  </ActionButton>
                   <div
                     ref={moreAnchorRef}
                     className="tm-process-documentation__more"
                   >
-                    <button
-                      type="button"
-                      className="ds-btn ds-btn--ghost"
+                    <IconButton
                       aria-label="Mais ações do documento"
                       aria-expanded={moreOpen}
                       aria-haspopup="menu"
                       onClick={() => setMoreOpen((open) => !open)}
                     >
                       <MoreHorizontal size={16} aria-hidden="true" />
-                    </button>
+                    </IconButton>
                     <AnchoredPanelPortal
                       open={moreOpen}
                       anchorRef={moreAnchorRef}

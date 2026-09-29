@@ -9,7 +9,7 @@ import {
   Ruler,
 } from "lucide-react";
 
-import { FieldLabel, HelpTooltip } from "@delpi/plugin-ui/index";
+import { FieldLabel, SectionHintLabel } from "@delpi/plugin-ui/index";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import type { ProcessoAuditLogEntry } from "../../utils/processoTimeline";
 import {
@@ -72,8 +72,10 @@ export function ProcessTimeline({ entries, loading = false }: Props) {
       <div className="ds-editable-section__header">
         <div>
           <h2 className="ds-section-title tm-timeline__title">
-            Linha do tempo
-            <HelpTooltip content={TM_HELP_TOOLTIPS.processos.timeline} ariaLabel="Ajuda: Linha do tempo" />
+            <SectionHintLabel
+              label="Linha do tempo"
+              hint={TM_HELP_TOOLTIPS.processos.timeline}
+            />
           </h2>
           <p className="ds-hint">
             Alterações do processo, mapeamento WBS, diagramas, instâncias, revisões, medições, investimentos e

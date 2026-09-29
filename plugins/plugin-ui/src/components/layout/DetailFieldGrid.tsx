@@ -69,7 +69,7 @@ function renderFieldLabel(
       wrap
       placement="bottom"
     >
-      <span className="delpi-ui-section-hint-label">{field.label}</span>
+      <span className="delpi-ui-section-hint-label" tabIndex={0}>{field.label}</span>
     </HelpTooltip>
   ) : (
     field.label

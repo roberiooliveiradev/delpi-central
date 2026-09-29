@@ -192,15 +192,24 @@ describe("Revision Diagnostic — plugin-ui adoption", () => {
     expect(section).toMatch(/variant="primary"[\s\S]*?Confirmar diagnóstico/);
   });
 
-  it("forms usam primitives do kit (shell/controls nativos)", () => {
+  it("forms usam primitives do kit (shell + select moderno + controls nativos)", () => {
     expect(panel).toMatch(/TmFormFieldShell/);
-    expect(panel).toMatch(/NativeSelectControl/);
+    // Select canônico do kit (SelectControl), não <select>/NativeSelectControl.
+    expect(panel).toMatch(/SelectControl/);
+    expect(panel).not.toMatch(/NativeSelectControl|placeholderOption|<select/);
     expect(panel).toMatch(/NativeTextAreaControl/);
     expect(panel).toMatch(/NativeCheckboxControl/);
     expect(section).toMatch(/NativeTextAreaControl/);
     // Review de exact_change usa o detail grid canônico.
     expect(panel).toMatch(/TmDetailFieldGrid/);
     expect(section).toMatch(/TmDetailFieldGrid/);
+  });
+
+  it("help nos labels de campo via hint do shell — sem ícone «?»", () => {
+    expect(panel).toMatch(/hint="Indica como este achado foi obtido/);
+    expect(panel).toMatch(/hint="Indica o papel deste achado/);
+    expect(panel).not.toMatch(/ariaLabel="Ajuda/);
+    expect(panel).not.toMatch(/HelpTooltip/);
   });
 
   it("painel de ação renderiza dentro da section dona (inline)", () => {

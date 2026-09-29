@@ -6,7 +6,6 @@ import { TableRowActions } from "../../components/ui/TableRowActions";
 import { DS_TABLE_SECTION_CLASS_NAMES } from "../../components/dataTableUi";
 import {
   FieldLabel,
-  HelpTooltip,
   IconButton,
   NativeCheckboxControl,
   NativeTextControl,
@@ -814,10 +813,10 @@ export function ProcessInstancesPanel({
                                 setSetorIds(defaultSetorIdsForFilial(options.setores, firstFilial));
                               }
                             }}
-                          label={<><span>Todas as unidades ativas (melhoria multi-unidade)</span><HelpTooltip
-                            content={multiplicadorHint(activeFilialCount)}
-                            ariaLabel="Ajuda: Instância multi-unidade"
-                          /></>}
+                          label="Todas as unidades ativas (melhoria multi-unidade)"
+                          hint={multiplicadorHint(activeFilialCount)}
+                          hintPlacement="tooltip"
+                          hintAriaLabel="Ajuda: Instância multi-unidade"
                         />
                       </div>
 
@@ -881,10 +880,10 @@ export function ProcessInstancesPanel({
                             setSetorIds(defaultSetorIdsForFilial(options.setores, fallback));
                           }
                         }}
-                      label={<><span>Todas as unidades ativas (melhoria multi-unidade)</span><HelpTooltip
-                        content={multiplicadorHint(activeFilialCount)}
-                        ariaLabel="Ajuda: Instância multi-unidade"
-                      /></>}
+                      label="Todas as unidades ativas (melhoria multi-unidade)"
+                      hint={multiplicadorHint(activeFilialCount)}
+                      hintPlacement="tooltip"
+                      hintAriaLabel="Ajuda: Instância multi-unidade"
                     />
                   </div>
 

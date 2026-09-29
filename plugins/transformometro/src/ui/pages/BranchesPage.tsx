@@ -23,7 +23,7 @@ import {
   type OptionsData,
 } from "../../data/api/transformometroApi";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
-import { HelpTooltip, NativeCheckboxControl } from "@delpi/plugin-ui/index";
+import { NativeCheckboxControl } from "@delpi/plugin-ui/index";
 import { TableRowActions } from "../../components/ui/TableRowActions";
 import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
 import { useTransformometroCatalogWatch } from "../../hooks/useTransformometroCatalogWatch";
@@ -211,10 +211,10 @@ export function BranchesPage({ getAccessToken, pathname, onNavigate, embedded = 
            
             checked={includeInactive}
             onChange={setIncludeInactive}
-            label={<span className="tm-field__label">
-              Incluir unidades inativas
-              <HelpTooltip content={F.incluirInativas} ariaLabel="Ajuda: Incluir unidades inativas" />
-            </span>}
+            label="Incluir unidades inativas"
+            hint={F.incluirInativas}
+            hintPlacement="tooltip"
+            hintAriaLabel="Ajuda: Incluir unidades inativas"
           />
         }
         columns={columns}
