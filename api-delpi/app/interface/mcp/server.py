@@ -152,7 +152,9 @@ class ApiDelpiMCPServer(MCPServer):
             listed.append(_DaviWireTool.model_validate(payload))
         return listed
 
-    async def call_tool(self, name: str, arguments: dict[str, Any]) -> Any:
+    async def call_tool(
+        self, name: str, arguments: dict[str, Any], context: Any = None
+    ) -> Any:
         try:
             if name == MCP_TOOL_DISCOVER_DELPI_INFORMATION:
                 DiscoverDelpiInformationInput.model_validate(arguments or {})
@@ -161,7 +163,7 @@ class ApiDelpiMCPServer(MCPServer):
         except ValidationError as exc:
             log_error(f"mcp {name} validation rejected error_count={exc.error_count()}")
             return validation_error_tool_result()
-        return await super().call_tool(name, arguments)
+        return await super().call_tool(name, arguments, context)
 
 
 def davi_mcp_transport_security() -> TransportSecuritySettings:
