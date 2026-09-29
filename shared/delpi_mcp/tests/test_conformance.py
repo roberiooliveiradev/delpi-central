@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from delpi_mcp.conformance import (
-    CLASSIFICATION_KNOWN_DRIFT,
     ConformanceStatus,
     McpConformanceConfig,
     run_mcp_conformance,
@@ -32,7 +31,6 @@ def _config(**over) -> McpConformanceConfig:
         expected_tool_names=("a", "b"),
         expected_tool_count=2,
         provider_profile="core",
-        sdk_generation="v2",
         sdk_latest_protocol=DELPI_MCP_PROTOCOL_MINIMUM,
     )
     base.update(over)
@@ -95,32 +93,12 @@ def test_protocol_minimum_v2_passes():
     assert check.support == "SUPPORTED"
 
 
-def test_protocol_minimum_legacy_declared_is_known_drift():
-    config = _config(
-        sdk_generation="v1",
-        sdk_latest_protocol="2025-11-25",
-        legacy_protocol_allowed=True,
-    )
+def test_protocol_minimum_below_floor_is_hard_fail():
+    config = _config(sdk_latest_protocol="2025-11-25")
     report = run_mcp_conformance(_tools(), config)
     gate = _result(report, "protocol_minimum")
     assert gate.status is ConformanceStatus.FAIL
-    assert gate.classification == CLASSIFICATION_KNOWN_DRIFT
-    # known drift shows in failures but not hard_failures
     assert gate in report.failures
-    assert gate not in report.hard_failures
-
-
-def test_protocol_minimum_new_server_on_v1_is_hard_fail():
-    config = _config(
-        sdk_generation="v1",
-        sdk_latest_protocol="2025-11-25",
-        legacy_protocol_allowed=False,
-    )
-    report = run_mcp_conformance(_tools(), config)
-    gate = _result(report, "protocol_minimum")
-    assert gate.status is ConformanceStatus.FAIL
-    assert gate.classification is None
-    assert gate in report.hard_failures
 
 
 def test_protocol_minimum_undeclared_is_inconclusive():

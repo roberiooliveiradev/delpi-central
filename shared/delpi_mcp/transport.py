@@ -11,15 +11,15 @@ across VISTA, TÉO and DAVI:
 
 Deliberately NOT shared (Abstraction Gate):
 
-- server/streamable-app construction — mcp 1.30 ``FastMCP`` and mcp 2.x
-  ``MCPServer`` expose different construction APIs; a shared adapter would
-  become a server factory, which the design freeze forbids;
+- server/streamable-app construction — ``MCPServer`` construction is
+  app-local; a shared adapter would become a server factory, which the
+  design freeze forbids;
 - tool registration, bridges, dispatch, domain services;
 - auth middleware ordering/semantics (S1/S3 boundary).
 
-The helpers below are plain ASGI/Python — they do not import FastMCP or
-MCPServer types (``mcp_transport_security_settings`` lazy-imports the SDK
-settings type only inside the function).
+The helpers below are plain ASGI/Python — they do not import SDK server
+types (``mcp_transport_security_settings`` lazy-imports the SDK settings
+type only inside the function).
 """
 
 from __future__ import annotations

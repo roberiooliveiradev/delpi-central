@@ -4,11 +4,10 @@ Owns ONLY the vocabulary-level duplication across the three MCPs:
 
 - the DELPI ToolClass taxonomy actually in use (READ / ANALYSIS / PREPARE /
   ACT — frozen to what apps already register, no speculative classes);
-- wire-shaped annotation payloads (SDK-neutral dicts — each app builds the
-  ``ToolAnnotations`` object of its own SDK generation);
+- wire-shaped annotation payloads (SDK-neutral dicts — each app validates
+  them into ``ToolAnnotations``);
 - DELPI-namespaced ``_meta`` keys (``delpi/securitySchemes``,
-  ``delpi/toolClass``) versus the reserved ``securitySchemes`` key both
-  current SDK eras legitimately use.
+  ``delpi/toolClass``) versus the reserved ``securitySchemes`` key.
 
 Metadata describes semantics — it NEVER authorizes execution. Backend
 AuthZ remains authoritative regardless of hints/classes.
@@ -38,7 +37,7 @@ TOOL_CLASS_ANALYSIS = "ANALYSIS"
 TOOL_CLASS_PREPARE = "PREPARE"
 TOOL_CLASS_ACT = "ACT"
 
-# Reserved wire key both SDK generations accept as typed securitySchemes.
+# Reserved wire key for typed securitySchemes metadata.
 SECURITY_SCHEMES_KEY = "securitySchemes"
 
 # DELPI-namespaced _meta keys (VISTA wire — bare `securitySchemes` inside
@@ -57,10 +56,9 @@ def tool_annotations_payload(
 ) -> dict[str, Any]:
     """Wire-shaped annotation payload — SDK-neutral dict.
 
-    Apps pass it through ``ToolAnnotations.model_validate(...)`` of their
-    own SDK generation (mcp 1.30 camelCase vs 2.x snake-case kwargs differ;
-    both accept wire aliases on validation). Hints describe semantics only
-    — they never grant permission.
+    Apps pass it through ``ToolAnnotations.model_validate(...)`` — the SDK
+    accepts the wire (camelCase) aliases on validation. Hints describe
+    semantics only — they never grant permission.
     """
     payload: dict[str, Any] = {
         "title": title,
