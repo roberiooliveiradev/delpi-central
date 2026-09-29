@@ -10,7 +10,7 @@ from typing import Any
 class DowntimeEventRepositoryPort(ABC):
     @abstractmethod
     def get_open(
-        self, *, branch: str, work_center: str
+        self, *, branch: str, work_center: str, conn: Any | None = None
     ) -> dict[str, Any] | None:
         """Parada aberta (ended_at NULL) do CT — no máximo uma por invariante."""
 

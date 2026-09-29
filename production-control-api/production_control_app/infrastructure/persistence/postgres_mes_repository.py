@@ -53,9 +53,11 @@ def _utc_now() -> datetime:
 
 
 class PostgresWorkCenterStateRepository:
-    def get_open(self, *, branch: str, work_center: str) -> dict[str, Any] | None:
-        with get_connection() as conn:
-            with conn.cursor() as cur:
+    def get_open(
+        self, *, branch: str, work_center: str, conn: Any | None = None
+    ) -> dict[str, Any] | None:
+        def _read(c: Any) -> dict[str, Any] | None:
+            with c.cursor() as cur:
                 cur.execute(
                     f"""
                     SELECT {_STATE_COLUMNS}
@@ -67,6 +69,11 @@ class PostgresWorkCenterStateRepository:
                 )
                 row = cur.fetchone()
                 return dict(row) if row else None
+
+        if conn is not None:
+            return _read(conn)
+        with get_connection() as own:
+            return _read(own)
 
     def open_event(
         self,
@@ -200,9 +207,11 @@ class PostgresWorkCenterStateRepository:
 
 
 class PostgresDowntimeEventRepository:
-    def get_open(self, *, branch: str, work_center: str) -> dict[str, Any] | None:
-        with get_connection() as conn:
-            with conn.cursor() as cur:
+    def get_open(
+        self, *, branch: str, work_center: str, conn: Any | None = None
+    ) -> dict[str, Any] | None:
+        def _read(c: Any) -> dict[str, Any] | None:
+            with c.cursor() as cur:
                 cur.execute(
                     f"""
                     SELECT {_DOWNTIME_COLUMNS}
@@ -214,6 +223,11 @@ class PostgresDowntimeEventRepository:
                 )
                 row = cur.fetchone()
                 return dict(row) if row else None
+
+        if conn is not None:
+            return _read(conn)
+        with get_connection() as own:
+            return _read(own)
 
     def get(self, downtime_id: str) -> dict[str, Any] | None:
         with get_connection() as conn:

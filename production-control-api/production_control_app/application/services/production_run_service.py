@@ -27,6 +27,10 @@ from production_control_app.infrastructure.persistence.postgres_production_run_r
 )
 
 
+def _utc_now() -> datetime:
+    return datetime.now(timezone.utc)
+
+
 def _iso(value: Any) -> Any:
     if hasattr(value, "isoformat"):
         return value.isoformat()
@@ -86,10 +90,25 @@ class ProductionRunService:
         repository: PostgresProductionRunRepository | None = None,
         pulse_gateway: ProductionPulseGateway | None = None,
         queue_lookup: Callable[..., dict[str, Any] | None] | None = None,
+        mes_lifecycle: Any | None = None,
     ) -> None:
         self._repo = repository or PostgresProductionRunRepository()
         self._pulse = pulse_gateway or ProductionPulseGateway()
         self._queue_lookup = queue_lookup
+        if mes_lifecycle is None:
+            from production_control_app.application.services.mes_run_lifecycle_service import (  # noqa: E501
+                MesRunLifecycleService,
+            )
+            from production_control_app.infrastructure.persistence.postgres_mes_repository import (  # noqa: E501
+                PostgresDowntimeEventRepository,
+                PostgresWorkCenterStateRepository,
+            )
+
+            mes_lifecycle = MesRunLifecycleService(
+                states=PostgresWorkCenterStateRepository(),
+                downtimes=PostgresDowntimeEventRepository(),
+            )
+        self._mes = mes_lifecycle
 
     def create_bench_session(
         self,
@@ -219,20 +238,23 @@ class ProductionRunService:
                 op.get("pieces_conversion_factor"),
             )
 
-        run = self._repo.create_run_with_segment(
-            branch=branch,
-            work_center=work_center,
-            production_order=str(production_order).strip(),
-            operation_code=str(operation_code).strip(),
-            device_id=str(device["deviceId"]),
-            operator_code=session["operator_code"],
-            operator_name=session.get("operator_name"),
-            bench_session_id=session["id"],
-            planned_qty_snapshot=planned,
-            target_pieces_snapshot=target_pieces,
-            anchor_counter=int(device.get("counter") or 0),
-            anchor_epoch=int(device.get("counterEpoch") or 0),
-        )
+        with self._repo.transaction() as conn:
+            run = self._repo.create_run_with_segment(
+                branch=branch,
+                work_center=work_center,
+                production_order=str(production_order).strip(),
+                operation_code=str(operation_code).strip(),
+                device_id=str(device["deviceId"]),
+                operator_code=session["operator_code"],
+                operator_name=session.get("operator_name"),
+                bench_session_id=session["id"],
+                planned_qty_snapshot=planned,
+                target_pieces_snapshot=target_pieces,
+                anchor_counter=int(device.get("counter") or 0),
+                anchor_epoch=int(device.get("counterEpoch") or 0),
+                conn=conn,
+            )
+            self._mes.record_run_started(run, conn=conn, at=_utc_now())
         self._notify(branch, work_center, reason="run_started")
         return _run_to_api(run, device=device)
 
@@ -252,14 +274,23 @@ class ProductionRunService:
         if run.get("status") != "running":
             raise ProductionRunConflict("A produção não está em execução.")
         pieces_total, open_pieces, device = self._refresh_pieces(run, allow_epoch_roll=True)
-        updated = self._repo.set_run_status(
-            run_id,
-            status="paused",
-            pieces_total=pieces_total,
-            close_open_segment=True,
-            open_segment_pieces=open_pieces,
-            end_reason="pause",
-        )
+        with self._repo.transaction() as conn:
+            locked = self._repo.lock_run(run_id, conn=conn)
+            if locked is None:
+                raise ProductionRunNotFound("Produção não encontrada.")
+            if locked.get("status") != "running":
+                raise ProductionRunConflict("A produção não está em execução.")
+            at = _utc_now()
+            updated = self._repo.set_run_status(
+                run_id,
+                status="paused",
+                pieces_total=pieces_total,
+                close_open_segment=True,
+                open_segment_pieces=open_pieces,
+                end_reason="pause",
+                conn=conn,
+            )
+            self._mes.record_run_paused(locked, conn=conn, at=at)
         self._notify(run["branch"], run["work_center"], reason="run_paused")
         return _run_to_api(updated, device=device)
 
@@ -269,15 +300,23 @@ class ProductionRunService:
         if run.get("status") != "paused":
             raise ProductionRunConflict("A produção não está pausada.")
         device = self._pulse.fetch_device_snapshot(str(run["device_id"]))
-        updated = self._repo.reopen_segment_on_resume(
-            run_id=run_id,
-            device_id=str(run["device_id"]),
-            anchor_counter=int(device.get("counter") or 0),
-            anchor_epoch=int(device.get("counterEpoch") or 0),
-        )
-        run = self._repo.get_run(run_id) or run
+        with self._repo.transaction() as conn:
+            locked = self._repo.lock_run(run_id, conn=conn)
+            if locked is None:
+                raise ProductionRunNotFound("Produção não encontrada.")
+            if locked.get("status") != "paused":
+                raise ProductionRunConflict("A produção não está pausada.")
+            self._mes.record_run_resumed(locked, conn=conn, at=_utc_now())
+            updated = self._repo.reopen_segment_on_resume(
+                run_id=run_id,
+                device_id=str(run["device_id"]),
+                anchor_counter=int(device.get("counter") or 0),
+                anchor_epoch=int(device.get("counterEpoch") or 0),
+                conn=conn,
+            )
+        run = {**run, **updated}
         self._notify(run["branch"], run["work_center"], reason="run_resumed")
-        return _run_to_api({**run, **updated}, device=device)
+        return _run_to_api(run, device=device)
 
     def stop_run(self, run_id: str, *, session_token: str | None) -> dict[str, Any]:
         session = self.resolve_bench_session(session_token)
@@ -289,14 +328,22 @@ class ProductionRunService:
         device = None
         if run.get("status") == "running":
             pieces_total, open_pieces, device = self._refresh_pieces(run, allow_epoch_roll=True)
-        updated = self._repo.set_run_status(
-            run_id,
-            status="completed",
-            pieces_total=pieces_total,
-            close_open_segment=run.get("status") == "running",
-            open_segment_pieces=open_pieces,
-            end_reason="stop",
-        )
+        with self._repo.transaction() as conn:
+            locked = self._repo.lock_run(run_id, conn=conn)
+            if locked is None:
+                raise ProductionRunNotFound("Produção não encontrada.")
+            if locked.get("status") not in {"running", "paused"}:
+                raise ProductionRunConflict("A produção já foi encerrada.")
+            updated = self._repo.set_run_status(
+                run_id,
+                status="completed",
+                pieces_total=pieces_total,
+                close_open_segment=locked.get("status") == "running",
+                open_segment_pieces=open_pieces,
+                end_reason="stop",
+                conn=conn,
+            )
+            self._mes.record_run_finished(locked, conn=conn, at=_utc_now())
         self._notify(run["branch"], run["work_center"], reason="run_stopped")
         return _run_to_api(updated, device=device)
 
