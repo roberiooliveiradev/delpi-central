@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import type { WorkCenterTimelineItem } from "../types/mes";
-import { dayEventContext, dayEventDurationSeconds, dayEventReason, formatDayEventRange, presentDayEvent, startOfLocalDayIso } from "./dayTimeline";
+import {
+  buildDaySegments, dayEventContext, dayEventDurationSeconds, dayEventReason,
+  dayRangeIso, downtimeReasonTotals, formatDayEventRange, formatHoursMinutes,
+  localDayKey, presentDayEvent, startOfLocalDayIso, summarizeDay,
+} from "./dayTimeline";
 
 const FROM = "2026-01-01T00:00:00.000Z";
 const TO = "2026-01-01T12:00:00.000Z";
@@ -55,5 +59,57 @@ describe("work center day timeline", () => {
     const from = startOfLocalDayIso(new Date("2026-01-01T15:30:00"));
     expect(Date.parse(from)).toBeLessThanOrEqual(Date.parse("2026-01-01T15:30:00"));
     expect(new Date(from).getHours()).toBe(0);
+  });
+
+  it("builds day segments with inactivity gaps covering the whole day", () => {
+    const segments = buildDaySegments([
+      item({ startedAt: "2026-01-01T08:02:00.000Z", endedAt: "2026-01-01T08:47:00.000Z" }),
+      item({ state: "stopped", startedAt: "2026-01-01T08:47:00.000Z", endedAt: "2026-01-01T08:56:00.000Z" }),
+    ], FROM, NOW);
+    expect(segments.map((segment) => segment.state)).toEqual(["inactive", "producing", "stopped", "inactive"]);
+    expect(segments[0].endMs).toBe(Date.parse("2026-01-01T08:02:00.000Z"));
+    expect(segments[2].startMs).toBe(Date.parse("2026-01-01T08:47:00.000Z"));
+  });
+
+  it("ends an open event at now and fills the rest of the day as inactive", () => {
+    const segments = buildDaySegments([item({ startedAt: "2026-01-01T11:00:00.000Z", endedAt: null })], FROM, NOW);
+    const open = segments.find((segment) => segment.state === "producing");
+    expect(open?.endMs).toBe(NOW);
+    expect(segments[segments.length - 1].state).toBe("inactive");
+  });
+
+  it("summarizes producing time, stopped time, stops and availability", () => {
+    const segments = buildDaySegments([
+      item({ startedAt: "2026-01-01T00:00:00.000Z", endedAt: "2026-01-01T09:00:00.000Z" }),
+      item({ state: "stopped", startedAt: "2026-01-01T09:00:00.000Z", endedAt: "2026-01-01T10:00:00.000Z" }),
+      item({ state: "stopped", startedAt: "2026-01-01T10:00:00.000Z", endedAt: "2026-01-01T11:00:00.000Z" }),
+    ], FROM, NOW);
+    const summary = summarizeDay(segments, FROM, NOW);
+    expect(summary.producingSec).toBe(9 * 3600);
+    expect(summary.stoppedSec).toBe(2 * 3600);
+    expect(summary.stops).toBe(2);
+    expect(summary.availabilityPct).toBe(75);
+  });
+
+  it("aggregates downtime reasons ordered by total duration", () => {
+    const stopsItems = [
+      item({ state: "stopped", startedAt: "2026-01-01T08:00:00.000Z", endedAt: "2026-01-01T08:30:00.000Z", downtime: { id: "1", source: "o", reasonCode: "m", reasonLabel: "Falta de material", category: null, confirmed: true, note: null } }),
+      item({ state: "stopped", startedAt: "2026-01-01T09:00:00.000Z", endedAt: "2026-01-01T09:10:00.000Z", downtime: { id: "2", source: "o", reasonCode: "s", reasonLabel: "Setup", category: null, confirmed: true, note: null } }),
+      item({ state: "stopped", startedAt: "2026-01-01T09:10:00.000Z", endedAt: "2026-01-01T09:20:00.000Z", downtime: { id: "3", source: "o", reasonCode: null, reasonLabel: null, category: null, confirmed: false, note: null } }),
+    ];
+    const totals = downtimeReasonTotals(buildDaySegments(stopsItems, FROM, NOW));
+    expect(totals.map((t) => t.label)).toEqual(["Falta de material", "Setup", "Sem motivo informado"]);
+    expect(totals[0].seconds).toBe(1800);
+  });
+
+  it("formats hours and minutes and resolves day ranges", () => {
+    expect(formatHoursMinutes(9 * 3600 + 42 * 60)).toBe("9h 42min");
+    expect(formatHoursMinutes(14 * 60)).toBe("0h 14min");
+    const today = dayRangeIso(localDayKey(), new Date());
+    expect(today.to).toBeUndefined();
+    expect(new Date(today.from).getHours()).toBe(0);
+    const past = dayRangeIso("2020-05-10", new Date());
+    expect(past.to).toBeDefined();
+    expect(new Date(past.from).getHours()).toBe(0);
   });
 });

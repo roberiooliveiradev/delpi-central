@@ -536,7 +536,228 @@
   .delpi-mes-work-center-card__tiles { grid-template-columns: repeat(3, 1fr); }
 }
 
+/* ---------- Work center detail page ---------- */
+.delpi-mes-wc { max-width: 82rem; margin: 0 auto; }
+.delpi-mes-wc__breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.9rem;
+  color: #7d8a9c;
+  font-size: 0.85rem;
+}
+.delpi-mes-wc__breadcrumb a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: #5c6b80;
+  font-weight: 600;
+  text-decoration: none;
+}
+.delpi-mes-wc__breadcrumb a:hover { color: #1e63c4; }
+.delpi-mes-wc__breadcrumb a:focus-visible { outline: 3px solid rgb(30 99 196 / 40%); outline-offset: 2px; border-radius: 0.3rem; }
+.delpi-mes-wc__breadcrumb svg { width: 0.95rem; height: 0.95rem; }
+.delpi-mes-wc__breadcrumb strong { color: #1b2a41; }
+
+.delpi-mes-wc__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1.5rem;
+  margin-bottom: 1.25rem;
+}
+.delpi-mes-wc__identity h2 { margin: 0; font-size: clamp(1.7rem, 2.6vw, 2.2rem); font-weight: 800; letter-spacing: -0.02em; }
+.delpi-mes-wc__status { display: inline-flex; align-items: center; gap: 0.45rem; margin-top: 0.35rem; font-size: 0.95rem; font-weight: 700; }
+.delpi-mes-wc__status--success { color: #15803d; }
+.delpi-mes-wc__status--warning { color: #b45309; }
+.delpi-mes-wc__status--danger { color: #b91c1c; }
+.delpi-mes-wc__status--neutral { color: #5c6b80; }
+.delpi-mes-wc__meta { display: flex; flex-wrap: wrap; gap: 0.55rem; margin-top: 0.8rem; }
+.delpi-mes-wc__meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.4rem 0.8rem;
+  border: 1px solid #dde5ef;
+  border-radius: 999px;
+  color: #5c6b80;
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: #fff;
+}
+.delpi-mes-wc__meta svg { width: 0.9rem; height: 0.9rem; color: #94a3b8; }
+.delpi-mes-wc__aside { display: flex; align-items: flex-start; gap: 1rem; flex: none; }
+
+.delpi-mes-date-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.55rem 0.9rem;
+  border: 1px solid #dde5ef;
+  border-radius: 0.85rem;
+  background: #fff;
+  box-shadow: 0 8px 22px rgb(15 23 42 / 7%);
+  cursor: pointer;
+}
+.delpi-mes-date-pill > svg { width: 1rem; height: 1rem; color: #1e63c4; }
+.delpi-mes-date-pill__text { display: grid; line-height: 1.2; }
+.delpi-mes-date-pill__text strong { font-size: 0.78rem; }
+.delpi-mes-date-pill__text em { font-size: 0.7rem; font-style: normal; color: #7d8a9c; }
+.delpi-mes-date-pill input {
+  border: 0;
+  padding: 0;
+  width: 1.4rem;
+  color: transparent;
+  background: transparent;
+  cursor: pointer;
+}
+.delpi-mes-date-pill input::-webkit-calendar-picker-indicator { cursor: pointer; opacity: 0.55; }
+.delpi-mes-date-pill input:focus-visible { outline: 3px solid rgb(30 99 196 / 40%); outline-offset: 2px; }
+
+.delpi-mes-wc__photo {
+  position: relative;
+  width: 13rem;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border: 1px solid #dde5ef;
+  border-radius: 0.9rem;
+  background: #eef2f7;
+}
+.delpi-mes-wc__photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.delpi-mes-panel {
+  padding: 1.25rem 1.4rem;
+  border: 1px solid #dde5ef;
+  border-radius: 1rem;
+  background: #fff;
+  box-shadow: 0 10px 26px rgb(15 23 42 / 5%);
+  margin-bottom: 1.25rem;
+}
+.delpi-mes-panel__head { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-bottom: 1rem; }
+.delpi-mes-panel__head h3 { margin: 0; font-size: 1rem; font-weight: 800; }
+.delpi-mes-panel__head p { margin: 0.2rem 0 0; color: #7d8a9c; font-size: 0.8rem; }
+.delpi-mes-panel__empty { color: #7d8a9c; font-size: 0.85rem; }
+
+/* day bar */
+.delpi-mes-daybar__legend { display: flex; gap: 1rem; margin: 0; padding: 0; list-style: none; font-size: 0.75rem; font-weight: 600; color: #5c6b80; }
+.delpi-mes-daybar__legend li { display: inline-flex; align-items: center; gap: 0.4rem; }
+.delpi-mes-daybar__dot { width: 0.6rem; height: 0.6rem; border-radius: 50%; display: inline-block; }
+.delpi-mes-daybar__dot--producing { background: #22c55e; }
+.delpi-mes-daybar__dot--stopped { background: #ef4444; }
+.delpi-mes-daybar__dot--inactive { background: #cbd5e1; }
+.delpi-mes-daybar__ticks { position: relative; height: 1rem; margin-bottom: 0.3rem; }
+.delpi-mes-daybar__ticks span {
+  position: absolute;
+  transform: translateX(-50%);
+  font-size: 0.66rem;
+  color: #94a3b8;
+  font-weight: 600;
+}
+.delpi-mes-daybar__ticks span:first-child { transform: none; }
+.delpi-mes-daybar__ticks span:last-child { transform: translateX(-100%); }
+.delpi-mes-daybar__track {
+  position: relative;
+  height: 1rem;
+  overflow: visible;
+  border-radius: 999px;
+  background: #e6ebf2;
+}
+.delpi-mes-daybar__segment { position: absolute; top: 0; bottom: 0; border-radius: 2px; }
+.delpi-mes-daybar__segment--producing { background: #22c55e; }
+.delpi-mes-daybar__segment--stopped { background: #ef4444; }
+.delpi-mes-daybar__segment--inactive { background: #d7dee8; }
+.delpi-mes-daybar__segment--other { background: #f59e0b; }
+.delpi-mes-daybar__now {
+  position: absolute;
+  top: -0.45rem;
+  bottom: -0.45rem;
+  border-left: 2px dashed #1e63c4;
+}
+.delpi-mes-daybar__now-label {
+  position: absolute;
+  top: -1.15rem;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  color: #fff;
+  font-size: 0.66rem;
+  font-weight: 800;
+  background: #1e63c4;
+  white-space: nowrap;
+}
+.delpi-mes-daybar__marks { position: relative; height: 2.4rem; margin-top: 0.4rem; }
+.delpi-mes-daybar__mark {
+  position: absolute;
+  transform: translateX(-50%);
+  max-width: 7rem;
+  padding-top: 0.55rem;
+  color: #b91c1c;
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1.15;
+  text-align: center;
+}
+.delpi-mes-daybar__mark::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  height: 0.4rem;
+  border-left: 1px solid #ef4444;
+}
+.delpi-mes-daybar__mark[data-lane="1"] { padding-top: 1.35rem; }
+.delpi-mes-daybar__mark[data-lane="1"]::before { height: 1.2rem; }
+
+/* reasons + events */
+.delpi-mes-wc__columns { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr); gap: 1.25rem; align-items: start; }
+.delpi-mes-reasons { display: grid; gap: 0.8rem; margin: 0; padding: 0; list-style: none; }
+.delpi-mes-reasons li { display: grid; grid-template-columns: minmax(7rem, 10rem) 1fr auto; align-items: center; gap: 0.8rem; }
+.delpi-mes-reasons__label { font-size: 0.82rem; font-weight: 600; color: #31435c; }
+.delpi-mes-reasons__bar { height: 0.8rem; overflow: hidden; border-radius: 999px; background: #eef2f7; }
+.delpi-mes-reasons__fill { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #fb923c, #f97316); }
+.delpi-mes-reasons__fill--danger { background: linear-gradient(90deg, #f87171, #ef4444); }
+.delpi-mes-reasons strong { font-size: 0.8rem; white-space: nowrap; }
+
+.delpi-mes-events { overflow-x: auto; }
+.delpi-mes-events table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+.delpi-mes-events th {
+  padding: 0.55rem 0.7rem;
+  border-bottom: 1px solid #e6ebf2;
+  color: #94a3b8;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-align: left;
+  text-transform: uppercase;
+}
+.delpi-mes-events td { padding: 0.55rem 0.7rem; border-bottom: 1px solid #f0f4f9; color: #31435c; }
+.delpi-mes-events tr:last-child td { border-bottom: 0; }
+.delpi-mes-event-state {
+  display: inline-block;
+  padding: 0.18rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+.delpi-mes-event-state--success { color: #15803d; background: #ddf3e5; }
+.delpi-mes-event-state--danger { color: #b91c1c; background: #fbe0e0; }
+.delpi-mes-event-state--warning { color: #b45309; background: #fcecd3; }
+.delpi-mes-event-state--info { color: #1e63c4; background: #e3eefa; }
+.delpi-mes-event-state--inactive { color: #64748b; background: #eef2f7; }
+
 @media (prefers-reduced-motion: no-preference) {
   .delpi-mes-nav__link, .delpi-mes-sidebar-nav__link { transition: color 150ms ease, background-color 150ms ease; }
   .delpi-mes-work-center-card { transition: box-shadow 200ms ease; }
+}
+
+@media (max-width: 900px) {
+  .delpi-mes-wc__head { flex-direction: column; }
+  .delpi-mes-wc__aside { width: 100%; }
+  .delpi-mes-wc__columns { grid-template-columns: 1fr; }
+  .delpi-mes-daybar__marks { height: 3.4rem; }
+}
+@media (max-width: 560px) {
+  .delpi-mes-wc__photo { width: 100%; }
+  .delpi-mes-wc__aside { flex-direction: column; align-items: stretch; }
 }

@@ -8,6 +8,7 @@ import { DELPI_MES_COPY } from "./content/copy";
 import { buildDelpiMesHref, useDelpiMesRoute } from "./hooks/useDelpiMesRoute";
 import { FoundationPage } from "./pages/FoundationPage";
 import { MonitoringPage } from "./pages/MonitoringPage";
+import { WorkCenterDetailPage } from "./pages/WorkCenterDetailPage";
 import { heroImageUrl, sidebarLogoUrl } from "./utils/assets";
 
 export type AppProps = {
@@ -47,8 +48,8 @@ export default function App({
     if (`${window.location.pathname}${window.location.search}` !== canonical) navigate(canonical);
   }, [activeArea, activeBranch, navigate]);
 
-  const navigateTo = (area: DelpiMesArea, branch: BranchCode) => {
-    navigate(buildDelpiMesHref(area, branch));
+  const navigateTo = (area: DelpiMesArea, branch: BranchCode, workCenter?: string) => {
+    navigate(buildDelpiMesHref(area, branch, workCenter));
   };
 
   const navLinks = (activeId: DelpiMesArea | undefined, branch: BranchCode | undefined, classPrefix: string) =>
@@ -132,10 +133,19 @@ export default function App({
               {navLinks(activeArea, activeBranch, "delpi-mes-nav")}
             </nav>
             {activeArea === "monitoring" ? (
-              <MonitoringPage
-                branch={activeBranch}
-                canViewHistory={can("delpi-mes.history.view")}
-              />
+              route.workCenter ? (
+                <WorkCenterDetailPage
+                  branch={activeBranch}
+                  workCenter={route.workCenter}
+                  canViewHistory={can("delpi-mes.history.view")}
+                  onBack={() => navigateTo("monitoring", activeBranch)}
+                />
+              ) : (
+                <MonitoringPage
+                  branch={activeBranch}
+                  onOpenWorkCenter={(workCenter) => navigateTo("monitoring", activeBranch, workCenter)}
+                />
+              )
             ) : (
               <FoundationPage area={activeArea} />
             )}

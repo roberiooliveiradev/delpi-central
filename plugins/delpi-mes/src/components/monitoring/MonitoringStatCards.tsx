@@ -1,14 +1,4 @@
-import { Activity, Coffee, Pause, Play, TriangleAlert } from "lucide-react";
-import type { MonitoringSummary } from "../../types/mes";
-
-type StatCard = {
-  id: string;
-  label: string;
-  value: number;
-  tone: "info" | "success" | "warning" | "danger";
-  icon: typeof Activity;
-  description?: string;
-};
+import type { StatCardItem } from "../../utils/statItems";
 
 function sparkline(seed: number): string {
   const points: string[] = [];
@@ -19,18 +9,10 @@ function sparkline(seed: number): string {
   return points.join(" ");
 }
 
-export function MonitoringStatCards({ summary }: { summary: MonitoringSummary }) {
-  const cards: StatCard[] = [
-    { id: "active", label: "Runs ativos", value: summary.activeRuns, tone: "info", icon: Activity },
-    { id: "producing", label: "Produzindo", value: summary.producing, tone: "success", icon: Play },
-    { id: "stopped", label: "Estado parado", value: summary.stopped, tone: "warning", icon: Pause, description: "inclui pausas manuais" },
-    { id: "paused", label: "Pausas manuais", value: summary.paused, tone: "warning", icon: Coffee },
-    { id: "pending", label: "Motivos pendentes", value: summary.unclassifiedDowntimes, tone: "danger", icon: TriangleAlert },
-  ];
-
+export function MonitoringStatCards({ items, ariaLabel }: { items: StatCardItem[]; ariaLabel: string }) {
   return (
-    <div className="delpi-mes-stats" role="group" aria-label="Resumo dos runs ativos">
-      {cards.map((card, index) => {
+    <div className="delpi-mes-stats" role="group" aria-label={ariaLabel}>
+      {items.map((card, index) => {
         const Icon = card.icon;
         return (
           <div key={card.id} className={`delpi-mes-stat delpi-mes-stat--${card.tone}`}>
@@ -42,7 +24,7 @@ export function MonitoringStatCards({ summary }: { summary: MonitoringSummary })
               </div>
             </div>
             <svg className="delpi-mes-stat__spark" viewBox="0 0 72 28" aria-hidden="true" focusable="false">
-              <polyline points={sparkline(index + card.value + 1)} fill="none" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+              <polyline points={sparkline(index + 1)} fill="none" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
             {card.description ? <span className="delpi-mes-stat__desc">{card.description}</span> : null}
           </div>

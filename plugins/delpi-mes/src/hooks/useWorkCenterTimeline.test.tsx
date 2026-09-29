@@ -21,7 +21,7 @@ describe("useWorkCenterTimeline", () => {
     const hook = renderHook(() => useWorkCenterTimeline("01", "CT-35", "sig", true));
     await waitFor(() => expect(hook.result.current.data).toEqual(timeline));
     expect(getWorkCenterTimeline).toHaveBeenCalledTimes(1);
-    expect(getWorkCenterTimeline).toHaveBeenCalledWith("01", "CT-35", expect.any(String), expect.any(AbortSignal));
+    expect(getWorkCenterTimeline).toHaveBeenCalledWith("01", "CT-35", expect.objectContaining({ from: expect.any(String) }), expect.any(AbortSignal));
   });
 
   it("isolates errors and retries on demand", async () => {
@@ -35,13 +35,13 @@ describe("useWorkCenterTimeline", () => {
 
   it("aborts the previous request when the selected work center changes", async () => {
     const signals: AbortSignal[] = [];
-    vi.mocked(getWorkCenterTimeline).mockImplementation((_b, _w, _f, signal) => { signals.push(signal!); return new Promise(() => {}); });
+    vi.mocked(getWorkCenterTimeline).mockImplementation((_b, _w, _range, signal) => { signals.push(signal!); return new Promise(() => {}); });
     const hook = renderHook(({ center }) => useWorkCenterTimeline("01", center, "sig", true), { initialProps: { center: "CT-35" } });
     await waitFor(() => expect(signals).toHaveLength(1));
     hook.rerender({ center: "CT-41" });
     await waitFor(() => expect(signals).toHaveLength(2));
     expect(signals[0].aborted).toBe(true);
-    expect(getWorkCenterTimeline).toHaveBeenLastCalledWith("01", "CT-41", expect.any(String), expect.any(AbortSignal));
+    expect(getWorkCenterTimeline).toHaveBeenLastCalledWith("01", "CT-41", expect.objectContaining({ from: expect.any(String) }), expect.any(AbortSignal));
   });
 
   it("refetches when the selected run signature changes", async () => {
@@ -50,5 +50,17 @@ describe("useWorkCenterTimeline", () => {
     await waitFor(() => expect(hook.result.current.data).toEqual(timeline));
     hook.rerender({ signature: "b" });
     await waitFor(() => expect(getWorkCenterTimeline).toHaveBeenCalledTimes(2));
+  });
+
+  it("requests a past day with an explicit end of day", async () => {
+    vi.mocked(getWorkCenterTimeline).mockResolvedValue(timeline);
+    const hook = renderHook(() => useWorkCenterTimeline("01", "CT-35", "sig", true, "2020-05-10"));
+    await waitFor(() => expect(hook.result.current.data).toEqual(timeline));
+    expect(getWorkCenterTimeline).toHaveBeenCalledWith(
+      "01",
+      "CT-35",
+      expect.objectContaining({ from: expect.any(String), to: expect.any(String) }),
+      expect.any(AbortSignal),
+    );
   });
 });

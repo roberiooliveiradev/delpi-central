@@ -9,18 +9,16 @@ import { filterMonitoringItems } from "../utils/monitoringFilters";
 import { elapsedSeconds } from "../utils/duration";
 import { WorkCenterCard } from "../components/monitoring/WorkCenterCard";
 import { MonitoringStatCards } from "../components/monitoring/MonitoringStatCards";
-import { RunDetailDrawer } from "../components/monitoring/RunDetailDrawer";
+import { monitoringStatItems } from "../utils/statItems";
 
 const loadingClasses = loadingStatePanelBemClasses("delpi-mes");
 const emptyClasses = emptyStatePanelBemClasses("delpi-mes");
 const initialFilters: MonitoringFilters = { search: "", status: "all", reason: "", sort: "attention" };
 
-export function MonitoringPage({ branch, canViewHistory }: { branch: BranchCode; canViewHistory: boolean }) {
+export function MonitoringPage({ branch, onOpenWorkCenter }: { branch: BranchCode; onOpenWorkCenter: (workCenter: string) => void }) {
   const monitoring = useMonitoringData(branch);
   const nowMs = useServerClock(monitoring.data?.referenceAt);
   const [filters, setFilters] = useState(initialFilters);
-  const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
-  const selected = monitoring.data?.items.find((item) => item.runId === selectedRunId) ?? null;
   const reasons = useMemo(() => Array.from(new Set((monitoring.data?.items ?? []).map((item) => item.downtime?.reasonLabel).filter((value): value is string => Boolean(value)))).sort(), [monitoring.data]);
   const items = useMemo(() => filterMonitoringItems(monitoring.data?.items ?? [], filters, nowMs), [monitoring.data, filters, nowMs]);
   const hasFilters = filters.search !== "" || filters.status !== "all" || filters.reason !== "";
@@ -50,7 +48,7 @@ export function MonitoringPage({ branch, canViewHistory }: { branch: BranchCode;
       </div>
     </header>
     {monitoring.error ? <p className="delpi-mes-monitoring__stale" role="status">Último snapshot mantido. A atualização falhou: {monitoring.error}</p> : null}
-    <MonitoringStatCards summary={summary} />
+    <MonitoringStatCards items={monitoringStatItems(summary)} ariaLabel="Resumo dos runs ativos" />
     <div className="delpi-mes-monitoring__filters" aria-label="Filtros do monitoramento">
       <label>Busca<input type="search" value={filters.search} placeholder="CT, OP, operação, operador ou motivo" onChange={(event) => setFilters((current) => ({ ...current, search: event.target.value }))} /></label>
       <label>Estado<select value={filters.status} onChange={(event) => setFilters((current) => ({ ...current, status: event.target.value as StatusFilter }))}><option value="all">Todos</option><option value="producing">Produzindo</option><option value="stopped">Parada</option><option value="paused">Pausa manual</option><option value="pending">Motivo pendente</option><option value="incomplete">Dados incompletos</option></select></label>
@@ -58,7 +56,6 @@ export function MonitoringPage({ branch, canViewHistory }: { branch: BranchCode;
       <label>Ordenação<select value={filters.sort} onChange={(event) => setFilters((current) => ({ ...current, sort: event.target.value as SortMode }))}><option value="attention">Atenção primeiro</option><option value="workCenter">Centro de trabalho</option><option value="duration">Maior tempo no estado</option><option value="productionOrder">OP</option></select></label>
       {hasFilters ? <button type="button" onClick={() => setFilters(initialFilters)}>Limpar filtros</button> : null}
     </div>
-    {monitoring.data.items.length === 0 ? <EmptyState title="Nenhuma produção ativa nesta filial" defaultMessage="Os centros aparecem aqui quando possuem um Production Run ativo." classNames={emptyClasses} /> : items.length === 0 ? <EmptyState title="Nenhum centro corresponde aos filtros atuais" defaultMessage="Ajuste ou limpe os filtros para voltar a visualizar os runs ativos." classNames={emptyClasses}><button type="button" onClick={() => setFilters(initialFilters)}>Limpar filtros</button></EmptyState> : <div className="delpi-mes-work-center-grid">{items.map((item) => <WorkCenterCard key={item.runId} item={item} nowMs={nowMs} onOpen={() => setSelectedRunId(item.runId)} />)}</div>}
-    <RunDetailDrawer item={selected} branch={branch} nowMs={nowMs} canViewHistory={canViewHistory} onClose={() => setSelectedRunId(null)} />
+    {monitoring.data.items.length === 0 ? <EmptyState title="Nenhuma produção ativa nesta filial" defaultMessage="Os centros aparecem aqui quando possuem um Production Run ativo." classNames={emptyClasses} /> : items.length === 0 ? <EmptyState title="Nenhum centro corresponde aos filtros atuais" defaultMessage="Ajuste ou limpe os filtros para voltar a visualizar os runs ativos." classNames={emptyClasses}><button type="button" onClick={() => setFilters(initialFilters)}>Limpar filtros</button></EmptyState> : <div className="delpi-mes-work-center-grid">{items.map((item) => <WorkCenterCard key={item.runId} item={item} nowMs={nowMs} onOpen={() => onOpenWorkCenter(item.workCenter)} />)}</div>}
   </section>;
 }
