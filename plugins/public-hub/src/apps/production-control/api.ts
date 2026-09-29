@@ -659,13 +659,27 @@ export type BenchSessionSnapshot = {
 
 const BENCH_SESSION_HEADER = "X-Delpi-Bench-Session";
 
+/** Erro de API com status HTTP preservado (ex.: 401 = sessão expirada). */
+export class ApiError extends Error {
+  status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.status = status;
+  }
+}
+
+export function isAuthError(err: unknown): boolean {
+  return err instanceof ApiError && err.status === 401;
+}
+
 async function readEnvelope<T>(response: Response, fallback: string): Promise<T> {
   if (!response.ok) {
-    throw new Error(await readError(response, fallback));
+    throw new ApiError(await readError(response, fallback), response.status);
   }
   const envelope = (await response.json()) as ApiEnvelope<T>;
   if (envelope.success === false) {
-    throw new Error(envelope.message || fallback);
+    throw new ApiError(envelope.message || fallback, response.status);
   }
   return envelope.data;
 }
