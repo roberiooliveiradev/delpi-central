@@ -41,6 +41,7 @@ As rotas exigem `API_DELPI_INTERNAL_SERVICE_TOKEN`, aceito em `X-Delpi-Service-T
 | GET | `/integrations/mes/work-centers/live?branch=01` | Snapshot consolidado dos runs ativos e estados operacionais atuais da filial |
 | GET | `/integrations/mes/runs/{runId}/timeline` | Timeline do run com a mesma regra de duração do cockpit, sem sessão de bancada |
 | GET | `/integrations/mes/downtimes?branch=01&workCenter=&from=&to=&page=1&pageSize=50` | Histórico paginado de paradas MES |
+| GET | `/integrations/mes/work-centers/{workCenter}/timeline?branch=01&from=&to=` | Timeline do CT no período, unindo múltiplos runs/OPs com sobreposição temporal |
 
 Todas as respostas usam o envelope `{ success, message, data }`. `pageSize` é limitado a 100. Timestamps são timezone-aware.
 
@@ -59,5 +60,6 @@ Assim, uma parada iniciada antes da janela e encerrada dentro dela é retornada.
 2. **Fase 1 — `delpi-mes-api` (implementada):** BFF gerencial autenticado, stateless e consumidor de `/integrations/mes/*`.
 3. **Fase 2 — plugin `delpi-mes` + Manifesto/RBAC (implementada):** shell federada, rotas, filial, permissões declaradas e manifesto pronto para importação manual; sem registro automático.
 4. **Fase 3 — Monitoramento Industrial MVP (implementada):** polling consolidado de 5 s, pausa hidden/offline, timers corrigidos por relógio do servidor, filtros locais e timeline sob demanda sem N+1. A visão cobre somente runs ativos e ainda não inclui telemetria offline.
-5. **Fase 4 — Histórico e Paradas:** exploração gerencial dos runs e downtimes.
-6. **Fase 5 — Hardening do MVP:** capacidade, operação, observabilidade e homologação.
+5. **Fase 3.1 — Histórico diário do CT (implementada):** o detalhe do Monitoramento passa a listar todos os estados do CT no dia corrente (início do dia local → agora), cobrindo múltiplos runs/OPs via `GET /work-centers/{workCenter}/timeline`. Carregamento lazy ao abrir o CT, refetch pontual quando a assinatura do run muda, sem polling próprio e sem N+1. O grid de Monitoramento permanece inalterado.
+6. **Fase 4 — Histórico e Paradas:** exploração gerencial dos runs e downtimes.
+7. **Fase 5 — Hardening do MVP:** capacidade, operação, observabilidade e homologação.

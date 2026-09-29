@@ -72,6 +72,37 @@ class PostgresMesMonitoringReadRepository:
             )
             return [dict(row) for row in cur.fetchall()]
 
+    def list_work_center_timeline_facts(
+        self,
+        *,
+        branch: str,
+        work_center: str,
+        period_from: datetime,
+        period_to: datetime,
+    ) -> list[dict[str, Any]]:
+        with get_connection() as conn, conn.cursor() as cur:
+            cur.execute(
+                f"""
+                SELECT s.id::text AS id, s.branch, s.work_center,
+                       s.run_id::text AS run_id, s.state,
+                       s.started_at, s.ended_at, s.source,
+                       r.production_order, r.operation_code,
+                       d.id::text AS downtime_id, d.reason_code,
+                       reason.label AS reason_label, reason.category,
+                       d.confirmed, d.note, d.source AS downtime_source
+                  FROM {_STATES} s
+             LEFT JOIN {_RUNS} r ON r.id = s.run_id
+             LEFT JOIN {_DOWNTIMES} d ON d.state_event_id = s.id
+             LEFT JOIN {_REASONS} reason ON reason.code = d.reason_code
+                 WHERE s.branch = %s AND s.work_center = %s
+                   AND s.started_at < %s
+                   AND (s.ended_at IS NULL OR s.ended_at >= %s)
+              ORDER BY s.started_at, s.id
+                """,
+                (branch, work_center, period_to, period_from),
+            )
+            return [dict(row) for row in cur.fetchall()]
+
     def list_downtimes(
         self,
         *,

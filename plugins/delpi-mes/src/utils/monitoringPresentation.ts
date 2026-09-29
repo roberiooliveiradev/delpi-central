@@ -21,5 +21,5 @@ export function progressPercent(item: MonitoringItem): number | null {
 }
 
 export function runStateSignature(item: MonitoringItem): string {
-  return [item.runStatus, item.operationalState, item.stateStartedAt, item.downtime?.id, item.downtime?.confirmed].join("|");
+  return [item.runId, item.runStatus, item.operationalState, item.stateStartedAt, item.downtime?.id, item.downtime?.confirmed].join("|");
 }

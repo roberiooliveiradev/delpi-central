@@ -48,6 +48,6 @@ export function MonitoringPage({ branch, canViewHistory }: { branch: BranchCode;
       {hasFilters ? <button type="button" onClick={() => setFilters(initialFilters)}>Limpar filtros</button> : null}
     </div>
     {monitoring.data.items.length === 0 ? <EmptyState title="Nenhuma produção ativa nesta filial" defaultMessage="Os centros aparecem aqui quando possuem um Production Run ativo." classNames={emptyClasses} /> : items.length === 0 ? <EmptyState title="Nenhum centro corresponde aos filtros atuais" defaultMessage="Ajuste ou limpe os filtros para voltar a visualizar os runs ativos." classNames={emptyClasses}><button type="button" onClick={() => setFilters(initialFilters)}>Limpar filtros</button></EmptyState> : <div className="delpi-mes-work-center-grid">{items.map((item) => <WorkCenterCard key={item.runId} item={item} nowMs={nowMs} onOpen={() => setSelectedRunId(item.runId)} />)}</div>}
-    <RunDetailDrawer item={selected} nowMs={nowMs} canViewHistory={canViewHistory} onClose={() => setSelectedRunId(null)} />
+    <RunDetailDrawer item={selected} branch={branch} nowMs={nowMs} canViewHistory={canViewHistory} onClose={() => setSelectedRunId(null)} />
   </section>;
 }

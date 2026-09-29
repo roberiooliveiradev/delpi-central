@@ -24,6 +24,10 @@ class Service:
         return {"branch": "01", "referenceAt": "ref", "summary": {}, "items": []}
     def get_timeline(self, user, run_id, **kwargs):
         return {"runId": run_id, "branch": "01", "workCenter": "CT", "status": "running", "referenceAt": "ref", "summary": {}, "items": []}
+    def get_work_center_timeline(self, user, **kwargs):
+        if not getattr(user, "is_superadmin", False) and "delpi-mes.history.view" not in getattr(user, "permissions", []):
+            raise PermissionError("Sem permissão para esta consulta do Delpi MES.")
+        return {"branch": "01", "workCenter": "CT-35", "from": "f", "to": "t", "referenceAt": "r", "items": []}
     def get_downtimes(self, user, **kwargs):
         return {"branch": "01", "referenceAt": "ref", "page": 1, "pageSize": 50, "total": 0, "items": []}
 
@@ -76,6 +80,14 @@ def test_authorized_user_and_superadmin_are_allowed(monkeypatch):
     allowed = user("delpi-mes.access", "delpi-mes.monitoring.view", "delpi-mes.view.filial-01")
     assert route_client(monkeypatch, allowed).get("/monitoring?branch=01").status_code == 200
     assert route_client(monkeypatch, user(superadmin=True)).get("/monitoring?branch=01").status_code == 200
+
+
+def test_work_center_timeline_requires_history_view(monkeypatch):
+    allowed = user("delpi-mes.access", "delpi-mes.history.view", "delpi-mes.view.filial-01")
+    denied = user("delpi-mes.access", "delpi-mes.monitoring.view", "delpi-mes.view.filial-01")
+    path = "/work-centers/CT-35/timeline?branch=01&from=2026-09-29T03:00:00%2B00:00"
+    assert route_client(monkeypatch, allowed).get(path).status_code == 200
+    assert route_client(monkeypatch, denied).get(path).status_code == 403
 
 
 def test_upstream_unavailable_is_controlled(monkeypatch):

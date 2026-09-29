@@ -42,6 +42,35 @@ def get_timeline(request: Request, run_id: str):
     return ok(data)
 
 
+@router.get(
+    "/work-centers/{work_center}/timeline",
+    operation_id="get_delpi_mes_work_center_timeline",
+)
+def get_work_center_timeline(
+    request: Request,
+    work_center: str,
+    branch: str = Query(..., min_length=2, max_length=2),
+    period_from: datetime | None = Query(default=None, alias="from"),
+    period_to: datetime | None = Query(default=None, alias="to"),
+):
+    try:
+        data = build_mes_read_service().get_work_center_timeline(
+            request.state.user,
+            work_center=work_center,
+            branch=branch,
+            period_from=period_from,
+            period_to=period_to,
+            permission=MES_HISTORY_VIEW,
+        )
+    except Exception as exc:
+        return fail_from_exception(exc)
+    logger.info(
+        "delpi_mes_work_center_timeline_read branch=%s work_center=%s item_count=%s",
+        branch, work_center, len(data["items"]),
+    )
+    return ok(data)
+
+
 @router.get("/downtimes", operation_id="list_delpi_mes_downtimes")
 def get_downtimes(
     request: Request,

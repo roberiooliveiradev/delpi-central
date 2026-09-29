@@ -55,6 +55,6 @@ Para subir com a infraestrutura canônica:
 
 A página de monitoramento consulta `/monitoring` a cada 5 segundos em um único fluxo centralizado. O polling pausa com aba oculta ou navegador offline e retoma imediatamente ao voltar. Cronômetros são derivados de `stateStartedAt` com correção pelo `referenceAt` do servidor, sem requests por segundo.
 
-Cada snapshot gera N cards sem fan-out. O detalhe usa os dados do card e consulta uma única timeline, somente ao abrir um run e apenas com `delpi-mes.history.view`. A visão cobre exclusivamente runs ativos; não representa catálogo de máquinas nem saúde/offline da telemetria.
+Cada snapshot gera N cards sem fan-out. O detalhe usa os dados do card e, apenas ao abrir um CT e somente com `delpi-mes.history.view`, consulta o histórico do dia daquele centro (`/work-centers/{workCenter}/timeline?branch=&from=`): todos os estados do dia corrente, inclusive de runs/OPs anteriores, com refetch pontual quando o estado do CT muda — sem polling próprio e sem N+1. A visão cobre exclusivamente runs ativos; não representa catálogo de máquinas nem saúde/offline da telemetria.
 
 Paradas e Histórico completos continuam nas fases seguintes.

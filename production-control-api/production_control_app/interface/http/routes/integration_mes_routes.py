@@ -50,6 +50,38 @@ def get_live_work_centers(
     return ok(data)
 
 
+@router.get(
+    "/work-centers/{work_center}/timeline",
+    operation_id="get_mes_integration_work_center_timeline",
+)
+def get_work_center_timeline(
+    request: Request,
+    work_center: str,
+    branch: str = Query(..., min_length=2, max_length=2),
+    period_from: datetime = Query(..., alias="from"),
+    period_to: datetime | None = Query(default=None, alias="to"),
+):
+    denied = _deny_unless_internal(request)
+    if denied is not None:
+        return denied
+    try:
+        data = build_mes_integration_read_service().get_work_center_timeline(
+            branch=branch,
+            work_center=work_center,
+            period_from=_aware(period_from, "from"),
+            period_to=_aware(period_to, "to"),
+        )
+    except Exception as exc:  # noqa: BLE001
+        return _error(exc)
+    logger.info(
+        "mes_integration_work_center_timeline_read branch=%s work_center=%s item_count=%s",
+        branch,
+        work_center,
+        len(data["items"]),
+    )
+    return ok(data)
+
+
 @router.get("/runs/{run_id}/timeline", operation_id="get_mes_integration_run_timeline")
 def get_run_timeline(request: Request, run_id: str):
     denied = _deny_unless_internal(request)

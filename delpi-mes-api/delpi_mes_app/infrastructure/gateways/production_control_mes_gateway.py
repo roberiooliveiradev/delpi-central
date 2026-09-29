@@ -45,6 +45,22 @@ class ProductionControlMesGateway:
         encoded = quote(str(run_id), safe="")
         return self._get(f"/integrations/mes/runs/{encoded}/timeline")
 
+    def get_work_center_timeline(
+        self,
+        *,
+        branch: str,
+        work_center: str,
+        period_from: datetime,
+        period_to: datetime | None,
+    ) -> dict[str, Any]:
+        encoded = quote(str(work_center), safe="")
+        params: dict[str, Any] = {"branch": branch, "from": period_from.isoformat()}
+        if period_to:
+            params["to"] = period_to.isoformat()
+        return self._get(
+            f"/integrations/mes/work-centers/{encoded}/timeline", params=params
+        )
+
     def get_downtimes(
         self,
         *,

@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
 
 import pytest
@@ -20,9 +20,23 @@ class Gateway:
         self.monitoring = {"branch": "01", "referenceAt": "ref", "summary": {}, "items": []}
         self.timeline = {"runId": "run-1", "branch": "01", "workCenter": "CT", "status": "running", "referenceAt": "ref", "summary": {"producingSeconds": 10}, "items": [{"durationSeconds": 10}]}
         self.downtimes = {"branch": "01", "referenceAt": "ref", "page": 1, "pageSize": 50, "total": 0, "items": []}
+        self.wc_timeline = {
+            "branch": "01", "workCenter": "CT-35", "from": "f", "to": "t", "referenceAt": "r",
+            "items": [{
+                "stateEventId": "e1", "runId": "run-1", "productionOrder": "123",
+                "operationCode": "20", "state": "stopped", "startedAt": "s", "endedAt": None,
+                "source": "system", "internalNote": "drop-me",
+                "downtime": {"id": "d1", "reasonCode": None, "reasonLabel": None,
+                             "category": None, "confirmed": False, "note": None,
+                             "source": "system", "extra": "drop"},
+            }],
+        }
         self.args = None
     def get_monitoring(self, **kwargs): self.args = kwargs; return self.monitoring
     def get_timeline(self, run_id): return self.timeline
+    def get_work_center_timeline(self, **kwargs):
+        self.args = kwargs
+        return self.wc_timeline
     def get_downtimes(self, **kwargs): self.args = kwargs; return self.downtimes
 
 
@@ -82,6 +96,79 @@ def test_timeline_not_found_propagates():
     gateway.get_timeline = lambda run_id: (_ for _ in ()).throw(MesSourceNotFound())
     with pytest.raises(MesSourceNotFound):
         MesReadService(gateway).get_timeline(user(*FULL), "missing", permission=MES_HISTORY_VIEW)
+
+
+def test_work_center_timeline_forwarded_with_allowlist():
+    gateway = Gateway()
+    start = datetime(2026, 9, 29, 3, tzinfo=timezone.utc)
+    data = MesReadService(gateway).get_work_center_timeline(
+        user(*FULL), work_center="CT-35", branch="01",
+        period_from=start, period_to=None, permission=MES_HISTORY_VIEW,
+    )
+    assert gateway.args == {
+        "branch": "01", "work_center": "CT-35",
+        "period_from": start, "period_to": None,
+    }
+    assert set(data) == {"branch", "workCenter", "from", "to", "referenceAt", "items"}
+    item = data["items"][0]
+    assert item["stateEventId"] == "e1" and item["productionOrder"] == "123"
+    assert "internalNote" not in item
+    assert "extra" not in item["downtime"]
+
+
+def test_work_center_timeline_requires_history_permission_and_branch():
+    gateway = Gateway()
+    start = datetime(2026, 9, 29, 3, tzinfo=timezone.utc)
+    service = MesReadService(gateway)
+    without_history = user("delpi-mes.access", "delpi-mes.monitoring.view", "delpi-mes.view.filial-01")
+    with pytest.raises(PermissionError):
+        service.get_work_center_timeline(
+            without_history, work_center="CT-35", branch="01",
+            period_from=start, period_to=None, permission=MES_HISTORY_VIEW,
+        )
+    from delpi_mes_app.domain.errors import BranchAccessDenied
+    with pytest.raises(BranchAccessDenied):
+        service.get_work_center_timeline(
+            user(*[p for p in FULL if p != "delpi-mes.view.filial-01"]),
+            work_center="CT-35", branch="01",
+            period_from=start, period_to=None, permission=MES_HISTORY_VIEW,
+        )
+    with pytest.raises(HumanPrincipalRequired):
+        service.get_work_center_timeline(
+            user(*FULL, principal_type="service"), work_center="CT-35", branch="01",
+            period_from=start, period_to=None, permission=MES_HISTORY_VIEW,
+        )
+
+
+def test_work_center_timeline_validates_period():
+    service = MesReadService(Gateway())
+    start = datetime(2026, 9, 29, 3, tzinfo=timezone.utc)
+    with pytest.raises(ValueError):
+        service.get_work_center_timeline(
+            user(*FULL), work_center="CT-35", branch="01",
+            period_from=None, period_to=None, permission=MES_HISTORY_VIEW,
+        )
+    with pytest.raises(ValueError):
+        service.get_work_center_timeline(
+            user(*FULL), work_center="CT-35", branch="01",
+            period_from=datetime(2026, 9, 29, 3), period_to=None, permission=MES_HISTORY_VIEW,
+        )
+    with pytest.raises(ValueError):
+        service.get_work_center_timeline(
+            user(*FULL), work_center="CT-35", branch="01",
+            period_from=start, period_to=start - timedelta(hours=1), permission=MES_HISTORY_VIEW,
+        )
+
+
+def test_work_center_timeline_upstream_error_is_propagated():
+    gateway = Gateway()
+    gateway.get_work_center_timeline = lambda **kw: (_ for _ in ()).throw(MesSourceNotFound())
+    with pytest.raises(MesSourceNotFound):
+        MesReadService(gateway).get_work_center_timeline(
+            user(*FULL), work_center="CT-35", branch="01",
+            period_from=datetime(2026, 9, 29, 3, tzinfo=timezone.utc),
+            period_to=None, permission=MES_HISTORY_VIEW,
+        )
 
 
 def test_downtime_filters_and_pagination_are_forwarded():

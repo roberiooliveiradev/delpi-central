@@ -65,6 +65,26 @@ def test_live_read_is_one_consolidated_query(monkeypatch):
     assert params == ["01"]
 
 
+def test_work_center_timeline_is_one_consolidated_overlap_query(monkeypatch):
+    cursor = FakeCursor([[{"id": "state-1"}]])
+    monkeypatch.setattr(module, "get_connection", lambda: fake_connection(cursor))
+    start = datetime(2026, 9, 29, 0, 0, tzinfo=timezone.utc)
+    end = datetime(2026, 9, 29, 12, 0, tzinfo=timezone.utc)
+    rows = module.PostgresMesMonitoringReadRepository().list_work_center_timeline_facts(
+        branch="01", work_center="CT-35", period_from=start, period_to=end,
+    )
+    assert rows == [{"id": "state-1"}]
+    assert len(cursor.executions) == 1
+    sql, params = cursor.executions[0]
+    assert "work_center_state_events" in sql
+    assert "production_runs" in sql
+    assert "downtime_events" in sql
+    assert "downtime_reason_catalog" in sql
+    assert "s.started_at < %s" in sql
+    assert "s.ended_at IS NULL OR s.ended_at >= %s" in sql
+    assert params == ["01", "CT-35", end, start]
+
+
 def test_downtime_read_is_bounded_and_uses_interval_overlap(monkeypatch):
     cursor = FakeCursor([[{"total": 1}], [{"id": "down-1"}]])
     monkeypatch.setattr(module, "get_connection", lambda: fake_connection(cursor))

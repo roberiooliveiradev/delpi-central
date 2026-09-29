@@ -36,6 +36,27 @@ def test_sends_s2s_headers_and_preserves_query(monkeypatch):
     assert dict(request.url.params)["pageSize"] == "25"
 
 
+def test_work_center_timeline_targets_consolidated_s2s_route(monkeypatch):
+    monkeypatch.setenv("API_DELPI_INTERNAL_SERVICE_TOKEN", "secret")
+    seen = {}
+    def handler(request):
+        seen["request"] = request
+        return httpx.Response(200, json={"success": True, "message": "OK", "data": {"items": []}})
+    subject, _ = gateway(handler)
+    subject.get_work_center_timeline(
+        branch="01", work_center="CT 35",
+        period_from=datetime(2026, 9, 29, 3, tzinfo=timezone.utc), period_to=None,
+    )
+    request = seen["request"]
+    assert request.headers["X-Delpi-Service-Token"] == "secret"
+    assert request.url.path == "/integrations/mes/work-centers/CT 35/timeline"
+    assert b"CT%2035" in request.url.raw_path or request.url.raw_path.endswith(b"/CT%2035/timeline")
+    params = dict(request.url.params)
+    assert params["branch"] == "01"
+    assert params["from"] == "2026-09-29T03:00:00+00:00"
+    assert "to" not in params
+
+
 @pytest.mark.parametrize(
     ("status", "error"),
     [(401, MesSourceUnauthorized), (404, MesSourceNotFound), (422, MesSourceValidationError), (500, MesSourceUnavailable)],
