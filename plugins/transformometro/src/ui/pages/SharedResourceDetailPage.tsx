@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Search, Trash2 } from "lucide-react";
+import { ArrowLeft, Coins, Search, Trash2 } from "lucide-react";
 
 import type { AppProps } from "../../App";
 import { SharedResourceReadView } from "../../components/shared-resource/SharedResourceReadView";
@@ -37,7 +37,7 @@ import {
   type VinculoRecurso,
 } from "../../data/api/transformometroApi";
 import { optionalDateField, toDateInputValue } from "../../utils/dateInputs";
-import { buildProcessoPath, buildRecursoPath } from "../../utils/routeParser";
+import { buildProcessoPath, buildRecursoPath, buildRecursoSectionPath } from "../../utils/routeParser";
 import { SharedResourceWorkspaceSectionPanel } from "../settings/SharedResourceWorkspaceSectionPanel";
 import type { RecursoWorkspaceSectionId } from "../settings/settingsWorkspaceNav";
 import { defaultRecursoSection } from "../settings/settingsWorkspaceNav";
@@ -397,6 +397,18 @@ export function SharedResourceDetailPage({
             <EditableSectionCard
               title="Dados do recurso"
               description="Cadastro principal — rateio, escopo e vigência."
+              headerActions={
+                embedded && !isCreate && activeSection === "identificacao" ? (
+                  <button
+                    type="button"
+                    className={DS_GHOST_BTN}
+                    onClick={() => onNavigate(buildRecursoSectionPath(recursoId, "custos"))}
+                  >
+                    <Coins size={14} aria-hidden />
+                    Ver e atualizar custos
+                  </button>
+                ) : null
+              }
               isEditing={isCreate || sectionEdit.isEditing("recurso")}
               onEdit={() => void sectionEdit.startEdit("recurso")}
               onCancel={cancelRecursoEdit}
@@ -431,7 +443,7 @@ export function SharedResourceDetailPage({
           <SharedResourceWorkspaceSectionPanel active={!embedded || activeSection === "custos"} sectionId="custos">
             <EditableSectionCard
               title="Custos ao longo do tempo"
-              description="Histórico de vigências de custo mensal usado no dashboard."
+              description="Consulte o histórico de vigências, corrija um período existente ou registre um novo valor vigente (reajuste)."
               isEditing={sectionEdit.isEditing("custos")}
               onEdit={() => void sectionEdit.startEdit("custos")}
               onCancel={() => sectionEdit.cancelEdit("custos")}
