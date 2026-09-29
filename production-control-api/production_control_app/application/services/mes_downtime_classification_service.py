@@ -58,16 +58,27 @@ class MesDowntimeClassificationService:
         reason_code: str,
         note: str | None,
         session_token: str | None,
+        downtime_id: str | None = None,
     ) -> dict[str, Any]:
-        """Confirma/altera o motivo da parada aberta do run — nunca cria outra."""
+        """Confirma/altera o motivo de uma parada do run — nunca cria outra.
+
+        Sem ``downtime_id``: classifica a parada **aberta** (contrato legado).
+        Com ``downtime_id``: classifica aquela parada específica — inclui
+        paradas automáticas já encerradas sem motivo.
+        """
         session = self._run_service.resolve_bench_session(session_token)
         run = self._run_service.require_active_run_for_session(run_id, session=session)
 
-        open_dt = self._downtimes.get_open(
-            branch=run["branch"], work_center=run["work_center"]
-        )
-        if open_dt is None or open_dt["run_id"] != run["id"]:
-            raise DowntimeNotFound("Não há parada aberta para esta produção.")
+        if downtime_id is None:
+            dt = self._downtimes.get_open(
+                branch=run["branch"], work_center=run["work_center"]
+            )
+            if dt is None or dt["run_id"] != run["id"]:
+                raise DowntimeNotFound("Não há parada aberta para esta produção.")
+        else:
+            dt = self._downtimes.get(str(downtime_id))
+            if dt is None or dt["run_id"] != run["id"]:
+                raise DowntimeNotFound("Parada não encontrada para esta produção.")
 
         reason = self._reasons.get(normalize_reason_code(reason_code))
         if reason is None or not reason.get("active"):
@@ -76,7 +87,7 @@ class MesDowntimeClassificationService:
         if reason.get("requires_note") and not clean_note:
             raise InvalidMesEvent("Este motivo exige uma observação.")
 
-        previous_reason = open_dt.get("reason_code")
+        previous_reason = dt.get("reason_code")
         action = (
             "downtime_reason_changed" if previous_reason else "downtime_classified"
         )
@@ -89,7 +100,7 @@ class MesDowntimeClassificationService:
 
         def _persist(conn: Any | None) -> dict[str, Any]:
             row_ = self._downtimes.classify(
-                open_dt["id"],
+                dt["id"],
                 reason_code=reason["code"],
                 planned=reason.get("default_planned"),
                 counts_as_availability_loss=reason.get(
@@ -126,7 +137,9 @@ class MesDowntimeClassificationService:
             "startedAt": row["started_at"].isoformat()
             if hasattr(row.get("started_at"), "isoformat")
             else row.get("started_at"),
-            "endedAt": None,
+            "endedAt": row["ended_at"].isoformat()
+            if hasattr(row.get("ended_at"), "isoformat")
+            else row.get("ended_at"),
         }
         self._notify(run, payload)
         return payload

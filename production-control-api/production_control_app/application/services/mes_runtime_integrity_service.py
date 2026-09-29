@@ -62,12 +62,24 @@ def inspect_runtime_integrity(report: dict[str, Any]) -> list[dict[str, Any]]:
             if not observed:
                 issue(run, "legacy_run_without_mes_events", SEVERITY_WARNING)
                 continue
-            if any(st["state"] == "stopped" for st in states):
-                issue(run, "running_with_open_stopped", SEVERITY_CRITICAL)
-            if not any(st["state"] == "producing" for st in states):
-                issue(run, "running_without_open_producing", SEVERITY_CRITICAL)
-            if dts:
-                issue(run, "running_with_open_downtime", SEVERITY_CRITICAL)
+            stopped_open = any(st["state"] == "stopped" for st in states)
+            producing_open = any(st["state"] == "producing" for st in states)
+            # Estado válido novo (auto-stop por inatividade): run running +
+            # stopped aberto + exatamente uma parada aberta source='system' +
+            # nenhum producing. Qualquer desvio continua inconsistência.
+            auto_stopped = (
+                stopped_open
+                and not producing_open
+                and len(dts) == 1
+                and str(dts[0].get("source") or "") == "system"
+            )
+            if not auto_stopped:
+                if stopped_open:
+                    issue(run, "running_with_open_stopped", SEVERITY_CRITICAL)
+                if not producing_open:
+                    issue(run, "running_without_open_producing", SEVERITY_CRITICAL)
+                if dts:
+                    issue(run, "running_with_open_downtime", SEVERITY_CRITICAL)
             if rid not in segments_by_run:
                 issue(run, "running_without_open_segment", SEVERITY_CRITICAL)
         elif status == "paused":
@@ -177,7 +189,7 @@ class MesRuntimeIntegrityService:
                 open_states = [dict(r) for r in cur.fetchall()]
                 cur.execute(
                     f"SELECT id::text, run_id::text, state_event_id::text, "
-                    f"branch, work_center FROM {schema}.downtime_events "
+                    f"branch, work_center, source FROM {schema}.downtime_events "
                     f"WHERE ended_at IS NULL"
                 )
                 open_downtimes = [dict(r) for r in cur.fetchall()]

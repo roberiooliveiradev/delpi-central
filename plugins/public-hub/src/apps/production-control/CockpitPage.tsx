@@ -190,7 +190,12 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
         setRunRealtimeEvent(event);
         return;
       }
-      if (event.type === "production_run_updated" && event.reason.startsWith("run_")) {
+      if (
+        event.type === "production_run_updated" &&
+        (event.reason.startsWith("run_") ||
+          event.reason.startsWith("automatic_downtime_") ||
+          event.reason === "downtime_classified")
+      ) {
         setRunRealtimeEvent(null);
         setRunUpdatedSignal((value) => value + 1);
       }

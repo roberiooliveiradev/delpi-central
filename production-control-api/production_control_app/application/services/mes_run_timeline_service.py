@@ -88,6 +88,7 @@ class MesRunTimelineService:
                     "category": category,
                     "note": downtime.get("note"),
                     "confirmed": bool(downtime.get("confirmed")),
+                    "source": downtime.get("source"),
                 }
 
             if event["state"] == "producing":

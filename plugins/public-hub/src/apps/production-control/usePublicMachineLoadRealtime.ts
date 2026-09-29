@@ -11,8 +11,10 @@ export type MachineLoadRealtimeEvent = {
   workCenter?: string;
   runId?: string;
   piecesTotal?: number;
-  /** Presente em `downtime_classified`: parada MES recém-classificada. */
+  /** Presente em `downtime_classified`/`automatic_downtime_*`: parada MES. */
   downtime?: unknown;
+  /** Presente em `automatic_downtime_*`: estado operacional após a transição. */
+  operationalState?: string;
 };
 
 type Options = {

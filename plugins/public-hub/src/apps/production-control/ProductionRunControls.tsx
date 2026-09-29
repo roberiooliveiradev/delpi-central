@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Pause, Play, Square } from "lucide-react";
 import type { MachineLoadOperation } from "./api";
 import { DowntimeElapsedTimer } from "./DowntimeElapsedTimer";
@@ -63,8 +63,15 @@ export function ProductionRunControls({
   const counted = run?.countedPieces ?? run?.piecesTotal ?? 0;
   const progress = resolveProductionRunProgress(counted, run?.targetPieces);
   const [reasonModalOpen, setReasonModalOpen] = useState(false);
-  const openDowntime = run?.status === "paused" ? run.downtime : null;
+  // `downtime` é a parada aberta do run — também com status "running"
+  // quando a parada foi detectada automaticamente por ausência de peças.
+  const openDowntime = run?.downtime ?? null;
+  const pendingDowntime = run?.pendingDowntime ?? null;
   const downtimeUnclassified = Boolean(openDowntime && !openDowntime.confirmed);
+  // Alvo do modal: parada aberta primeiro; senão a pendência encerrada.
+  const modalDowntime = openDowntime ?? pendingDowntime;
+  const autoStopped =
+    run?.status === "running" && Boolean(openDowntime ?? null);
 
   const { timeline, serverNow } = useRunTimeline({
     token,
@@ -76,12 +83,20 @@ export function ProductionRunControls({
     realtimeConnected,
   });
 
-  // Assim que o Pause grava a parada, a classificação abre automaticamente.
-  const openDowntimeId = openDowntime?.id ?? null;
-  const needsClassification = downtimeUnclassified;
+  // A classificação abre automaticamente quando há parada aberta sem motivo
+  // (Pause manual ou auto-stop) ou uma parada encerrada pendente — inclusive
+  // após F5/reconexão, via pendingDowntime do snapshot.
+  const autoOpenRef = useRef<string | null>(null);
+  const classifyTarget = openDowntime?.confirmed === false ? openDowntime : null;
+  const pendingTarget = pendingDowntime?.confirmed === false ? pendingDowntime : null;
+  const classifyTargetId = (classifyTarget ?? pendingTarget)?.id ?? null;
   useEffect(() => {
-    if (needsClassification && openDowntimeId) setReasonModalOpen(true);
-  }, [needsClassification, openDowntimeId]);
+    if (classifyTargetId && autoOpenRef.current !== classifyTargetId) {
+      autoOpenRef.current = classifyTargetId;
+      setReasonModalOpen(true);
+    }
+    if (!classifyTargetId) autoOpenRef.current = null;
+  }, [classifyTargetId]);
   const piecesFactor = run?.piecesConversionFactor ?? operation.pieces_conversion_factor;
   const toOperatorUnit = (pieces: number) => piecesToOperatorUnit(pieces, piecesFactor);
   const deviceOnline = run?.device?.online;
@@ -155,7 +170,7 @@ export function ProductionRunControls({
 
           {run && runMatchesOperation ? (
             <div className="pcp-pub__run-readout" aria-live="polite">
-              {run.status === "paused" ? (
+              {openDowntime ? (
                 <div
                   className="pcp-pub__downtime"
                   role="status"
@@ -220,10 +235,14 @@ export function ProductionRunControls({
                 <div>
                   <dt>Status</dt>
                   <dd>
-                    {run.status === "running" ? "Contando" : "Produção pausada"}
+                    {run.status === "running"
+                      ? autoStopped
+                        ? "Parada detectada"
+                        : "Contando"
+                      : "Produção pausada"}
                   </dd>
                 </div>
-                {run.status === "paused" ? (
+                {openDowntime ? (
                   <div>
                     <dt>Motivo</dt>
                     <dd>
@@ -256,15 +275,39 @@ export function ProductionRunControls({
               </dl>
               <div className="pcp-pub__run-actions">
                 {run.status === "running" ? (
-                  <button
-                    type="button"
-                    className="pcp-pub__btn pcp-pub__btn--ghost"
-                    onClick={() => void pause()}
-                    disabled={busy}
-                  >
-                    <Pause size={16} aria-hidden="true" />
-                    Pausar
-                  </button>
+                  <>
+                    {openDowntime ? (
+                      <button
+                        type="button"
+                        className="pcp-pub__btn pcp-pub__btn--ghost"
+                        onClick={() => setReasonModalOpen(true)}
+                        disabled={busy}
+                      >
+                        {openDowntime.confirmed ? "Alterar motivo" : "Informar motivo"}
+                      </button>
+                    ) : pendingDowntime ? (
+                      <button
+                        type="button"
+                        className="pcp-pub__btn pcp-pub__btn--ghost"
+                        onClick={() => setReasonModalOpen(true)}
+                        disabled={busy}
+                      >
+                        Informar motivo
+                        {(run.pendingDowntimeCount ?? 0) > 1
+                          ? ` (${run.pendingDowntimeCount})`
+                          : ""}
+                      </button>
+                    ) : null}
+                    <button
+                      type="button"
+                      className="pcp-pub__btn pcp-pub__btn--ghost"
+                      onClick={() => void pause()}
+                      disabled={busy}
+                    >
+                      <Pause size={16} aria-hidden="true" />
+                      Pausar
+                    </button>
+                  </>
                 ) : (
                   <>
                     {openDowntime ? (
@@ -330,11 +373,13 @@ export function ProductionRunControls({
       {error ? <p className="pcp-pub__run-error">{error}</p> : null}
 
       <DowntimeReasonModal
-        open={reasonModalOpen && run?.status === "paused"}
-        downtime={openDowntime}
+        open={reasonModalOpen && Boolean(modalDowntime)}
+        downtime={modalDowntime}
         busy={busy}
         loadReasons={loadDowntimeReasons}
-        onClassify={classifyDowntime}
+        onClassify={(reasonCode, note) =>
+          classifyDowntime(reasonCode, note, modalDowntime?.id ?? null)
+        }
         onClose={() => setReasonModalOpen(false)}
       />
     </div>

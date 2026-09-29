@@ -58,6 +58,11 @@ class Settings:
     PC_BENCH_SESSION_TTL_HOURS: int = int(
         _get_env("PC_BENCH_SESSION_TTL_HOURS", default="12") or "12"
     )
+    # Segundos sem incremento de peças para o MES abrir parada automática.
+    # 0 = detecção desabilitada.
+    PC_MES_AUTO_DOWNTIME_SECONDS: int = int(
+        _get_env("PC_MES_AUTO_DOWNTIME_SECONDS", default="120") or "120"
+    )
 
     PLUGINS_DB_HOST: str | None = _get_env("PLUGINS_DB_HOST")
     PLUGINS_DB_PORT: str = _get_env("PLUGINS_DB_PORT", default="5432")

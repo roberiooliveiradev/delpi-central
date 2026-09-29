@@ -63,6 +63,13 @@ class DowntimeEventRepositoryPort(ABC):
         """Paradas vinculadas ao run, cronológicas."""
 
     @abstractmethod
+    def list_pending_classification(
+        self, run_id: str, *, limit: int = 5
+    ) -> list[dict[str, Any]]:
+        """Paradas do run sem motivo confirmado (abertas ou já encerradas),
+        mais antiga primeiro — alimenta `pendingDowntime` do snapshot."""
+
+    @abstractmethod
     def list_for_work_center(
         self,
         *,

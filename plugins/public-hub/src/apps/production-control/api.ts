@@ -589,8 +589,15 @@ export type ProductionRunSnapshot = {
     lastSeenAt?: string | null;
     pollIntervalMs?: number | null;
   } | null;
-  /** Parada MES aberta quando o run está pausado; `null`/ausente caso contrário. */
+  /** Parada MES atualmente aberta — existe também com `status: "running"`
+   * quando a parada foi detectada automaticamente por ausência de peças. */
   downtime?: RunDowntimeView | null;
+  /** Estado operacional aberto do run ("producing" | "stopped" | ...). */
+  operationalState?: string | null;
+  /** Parada já encerrada ainda sem motivo — cockpit deve oferecer a
+   * classificação mesmo com a máquina produzindo (sobrevive a F5). */
+  pendingDowntime?: RunDowntimeView | null;
+  pendingDowntimeCount?: number;
 };
 
 /** Parada MES aberta do run (fato realtime — diferente das paradas TOTVS). */
@@ -602,6 +609,8 @@ export type RunDowntimeView = {
   category: string | null;
   note: string | null;
   confirmed: boolean;
+  /** "operator_pause" (manual) | "system" (parada automática por inatividade). */
+  source?: string | null;
   startedAt: string | null;
   endedAt: string | null;
 };
@@ -629,6 +638,7 @@ export type RunTimelineItem = {
     category: string | null;
     note: string | null;
     confirmed: boolean;
+    source?: string | null;
   } | null;
 };
 
@@ -740,10 +750,13 @@ export async function classifyRunDowntime(
   token: string,
   sessionToken: string,
   runId: string,
-  body: { reasonCode: string; note?: string | null },
+  body: { reasonCode: string; note?: string | null; downtimeId?: string | null },
 ): Promise<RunDowntimeView> {
+  const path = body.downtimeId
+    ? `${API_BASE}/public/machine-load/${encodeURIComponent(token)}/runs/${encodeURIComponent(runId)}/downtimes/${encodeURIComponent(body.downtimeId)}/classify`
+    : `${API_BASE}/public/machine-load/${encodeURIComponent(token)}/runs/${encodeURIComponent(runId)}/downtime/classify`;
   const response = await fetch(
-    `${API_BASE}/public/machine-load/${encodeURIComponent(token)}/runs/${encodeURIComponent(runId)}/downtime/classify`,
+    path,
     {
       method: "POST",
       headers: {
