@@ -180,7 +180,7 @@ Quantidades vivem **no item** (por material). Cada uma tem **um** significado, *
 | `delivered_qty` | Quanto do item chegou operacionalmente ao destino | Factory Supply | handoff feeder→CT | Não | Acumula por entregas |
 | `erp_transferred_qty` | Quanto o ERP registra movimentado deste material | TOTVS | observação correlacionada (SD3) | Sim (ERP) | Nunca escrita localmente |
 | `erp_consumed_qty` | Quanto o ERP registra baixado deste material | TOTVS | observação (SH6/consumo) | Sim (ERP) | Nunca |
-| `return_required_qty` | Quanto deveria voltar | **TO_INVENTORY** — fórmula autoritativa indefinida | § 15 | — | — |
+| `return_required_qty` | Quanto deveria voltar — **RESOLVIDO P2-B**: `suggested_return_qty` (sugestão operacional) + `erp_global_return_capacity` (reconciliação), §15-B | § 15 | — | — |
 | `returned_qty` | Quanto do item voltou operacionalmente | Factory Supply | handoffs CT→feeder→almoxarifado | Não | Acumula |
 
 Invariantes de quantidade (por item): `0 ≤ delivered_qty ≤ collected_qty` (não se entrega mais do que se coletou), `collected_qty ≤ prepared_qty` (não se coleta mais do que o separado — tolerância/`reason` se exceção operacional for aceita, `TO_DESIGN`), e nenhuma quantidade derivada de outra silenciosamente — cada uma é fato registrado.
@@ -324,7 +324,7 @@ Exceções podem ser **por item** (material-específicas) ou **por missão**:
 | Movimento ERP diverge do operacional | item | `erp_evidence=divergent`; nenhum lado reescrito |
 | Comando duplicado/replay | qualquer | § 19 — mesmo efeito, mesmo resultado, sem duplicar registro |
 | Transição concorrente | missão/item | § 18 expected-state — segundo ator recebe conflito |
-| Quantidade de devolução indisponível | item | `RETURN_QUANTITY_RULE=TO_INVENTORY`; `returned_qty` factual sem afirmar "quanto devia" |
+| Quantidade de devolução indisponível | item | ~~`RETURN_QUANTITY_RULE=TO_INVENTORY`~~ RESOLVIDO P2-B: sugestão omitida como `*_UNKNOWN`; `returned_qty` factual sem afirmar "quanto devia" |
 | Destino de devolução não resolvido | item | retorno para em `in_return`/`received` sem `reconciled` |
 | CT/operação/material sem cadastro | missão/item | contrato autoritativo decide; domínio nunca fabrica identidade ERP |
 | Material de item fora do escopo MP | item | elegibilidade por `product_type` (`PROVEN`: só `MP`; fail-closed sem tipo cadastrado) |
@@ -349,7 +349,7 @@ O que o domínio modela **independente** da fórmula, **por item**:
 
 - `ReturnRecord` por item de missão: `requested_qty?` (declarada, se houver), `returned_qty` (factual, acumulada por handoffs CT→feeder→almoxarifado), destino de retorno, motivo;
 - dimensão `return` no item: `not_applicable → requested → in_return → received → reconciled`;
-- `reconciled` exige quantidade esperada resolvida por fonte autoritativa — enquanto `TO_INVENTORY`, reconciliação é manual/declarativa e assim rotulada;
+- `reconciled` exige quantidade resolvida por fonte autoritativa — P2-B: sugestão híbrida (§15-B) quando evidência suficiente, senão `*_UNKNOWN`/manual rotulado;
 - devolução sem item de origem correlacionado é possível (material avulso) — `need_key` opcional no retorno, `TO_DESIGN` se vira entidade solta.
 
 ### 15-A. Return suggestion evidence model (P2-A)
@@ -530,15 +530,34 @@ operator_requests: {request_id, branch, work_center, op_order?, operation_seq?,
 
 **Compatibilidade (owner = FS, menor contrato suportado por evidência):** match por `branch × work_center × material × unit` + contexto de produção quando presente (`op_order`/`operation_seq` — campos PROVEN de `demand_signals`) + janela compatível (`need_at` — semântica de janela `TO_DESIGN` no algoritmo de match, não inventada). Dimensões não suportadas pelos campos do sinal não entram.
 
-Um pedido do cockpit **é sinal**: não autoriza movimento de estoque, não altera programação ERP, não muda prioridade, não cria transferência oficial. Aceite/execução passam pelo workflow normal (validação de backend, AuthZ, decisão de missão).
+Um pedido do cockpit **é sinal**: não autoriza movimento de estoque, não altera programação ERP, não recebe bônus de prioridade (ANTICIPATE aceito reordena via `need_at` reconciliado — §24), não cria transferência oficial. Aceite/execução passam pelo workflow normal (validação de backend, AuthZ, decisão de missão).
 
-## 24. Priority semantics
+## 24. Priority semantics — `FROZEN` (FS-C0.P3)
 
 ```text
-PRIORITY_POLICY = TO_DESIGN
+PRIORITY_POLICY    = TIME_TO_NEED_FIRST   — decisão Product Master (FS-C0.P3)
+PRIORITY_TIME_BANDS = TO_DESIGN/TO_BENCHMARK — limiares exatos NÃO autorizados; need_at é a dimensão autoritativa
+priority_score     = NOT_SUPPORTED        — sem score opaco, sem AI/ML, sem ranking manual
 ```
 
-Entradas candidatas (sinais, nenhuma fórmula inventada): tempo planejado da necessidade (`first_scheduled_at` `PROVEN`), tempo do pedido do operador, criticidade de produção se autoritativa (`TO_INVENTORY` — `machine_load_priority` é candidata a reuso, não confirmada), risco de estoque (`at_risk`), estado do preparo.
+Prioridade responde *"qual trabalho acionável este papel deve executar em seguida"* — não *"qual material é globalmente mais importante"*. Política determinística, role/stage-aware, **owned pelo backend**; frontend nunca reconstrói ordenação.
+
+**Pipeline de ordenação (por fila):**
+
+```text
+ELIGIBILITY (stage-aware) → OVERDUE (need_at < now, ação do estágio pendente)
+→ need_at ASC → TIEBREAKERS determinísticos
+```
+
+- **Eligibility primeiro:** trabalho não acionável nunca supera acionável por `need_at` menor — aparece como `waiting`/`blocked` com contexto. Almoxarifado (preparação) e Feeder (coleta) têm filas de elegibilidade distintas sob a mesma política: item não preparado é acionável p/ almoxarifado, `waiting` p/ feeder.
+- **Overdue é derivado** (`need_at < now` ∧ ação pendente), nunca flag persistida; label PT-BR "Atrasado".
+- **Operator request não é boost:** ANTICIPATE aceito altera a janela autoritativa → ordena pelo `need_at` reconciliado; ADDITIONAL cria sinal próprio que compete pela mesma política. Sem "operator bonus".
+- **Shortage/risco/exceção ERP ≠ prioridade:** gera warning/exceção/blocked — `ACTIONABILITY != IMPORTANCE`; trabalho impossível nunca aparece como executável.
+- **Explicável:** backend expõe `priority_reason` (ex.: "Atrasado — necessidade 13:50", "Solicitação do operador antecipou a janela", "Aguardando preparação — não elegível para coleta"). Nunca `priority_score`.
+- **Tie-breakers** (`need_at` igual): timestamp/sequência estável de criação → identificador estável do item — estabilidade técnica, sem significado de negócio (não usar valor de material, operador, prestígio de CT, ordem alfabética, random).
+- **Bandas UX** (`ATRASADO`/`URGENTE`/`ALTA`/`NORMAL`/`FUTURA`): semântica do backend, determinística; limiares `TO_DESIGN/TO_BENCHMARK`.
+- **Prioridade ≠ lifecycle ≠ Kanban stage:** urgência nunca move card de estágio; ordenação dentro do estágio usa a política.
+- **Realtime:** mudança de `need_at`/elegibilidade/readiness/overdue (sync, reconciliação de pedido, transição local) recomputa ordenação e publica via outbox/realtime aceito — sem segundo mecanismo.
 
 Kanban consome a política; não a possui. Ordenação manual de cards nunca é prioridade de negócio.
 
@@ -561,7 +580,7 @@ Catálogo de domínio — **não são rotas HTTP**. AuthZ sempre `factory-supply
 | `ObserveErpMovement` | I | Correlacionar movimento oficial | item_id | erp_evidence transiciona | leitura disponível | SD3 via api-delpi | observação deduplicada+divergência | `REQUIRED` (dedup; leitura pura seria `NOT_APPLICABLE`) |
 | `RequestReturn` | I | Iniciar devolução | item_id?, material, qty?, destino retorno | return=requested | item coerente | — | ReturnRecord | `REQUIRED` |
 | `RecordReturnProgress` / `RecordReturnReceipt` | I | Avanços da devolução | return_id, qty | in_return/received | fluxo aberto | — | qty+handoffs | `REQUIRED` |
-| `ReconcileReturn` | I | Fechar devolução | return_id, expected_qty resolvida | reconciled | quantidade autoritativa ou declaração rotulada | fórmula `TO_INVENTORY` | audit | `REQUIRED` |
+| `ReconcileReturn` | I | Fechar devolução | return_id, expected_qty resolvida | reconciled | quantidade autoritativa ou declaração rotulada | fórmula congelada §15-B | audit | `REQUIRED` |
 | `CancelMission` / `CancelSignal` | M / sinal | Cancelar trabalho/sinal | id, reason, version | cancelled | não-terminal | — | libera correlações | `REQUIRED` |
 | `CloseMission` | M | Encerrar missão | mission_id, version, reason se parcial | closed | § 12 (todos os itens resolvidos ou reason) | — | audit | `REQUIRED` |
 
@@ -588,7 +607,7 @@ Catálogo de domínio — **não são rotas HTTP**. AuthZ sempre `factory-supply
 7. Comandos duplicados não duplicam efeitos (§ 19): sinal planejado reemitido ≠ novo sinal; movimento ERP re-observado ≠ nova correlação.
 8. `closed`/`cancelled` não aceitam transições normais de avanço — em nenhum nível.
 9. Movimento ERP nunca é fabricado — correlação só por observação real de contrato.
-10. Quantidade de devolução não deriva de fórmula não aprovada (`TO_INVENTORY`).
+10. Quantidade de devolução deriva somente do modelo congelado §15-B (P2-B) — nunca de fórmula improvisada.
 11. Toda quantidade operacional carrega unidade — `accepted_unit` do item vem da unidade autoritativa `B1_UM` (TC §51) e é estável durante o trabalho operacional; sem unidade confiável, escrita que muda quantidade **falha fechado** (`unit_unknown` explícito, nunca default silencioso).
 12. Mudança de unidade autoritativa em re-sync/replanejamento = `UNIT_DIVERGENCE` (exceção de reconciliação explícita), **não** delta numérico — quantidades históricas preservam a unidade registrada; nunca subtrair entre unidades distintas.
 13. Correlação ERP compara quantidade **e** unidade — igualdade numérica com unidade divergente é `divergent`, nunca `matched`; unidade ausente no movimento → `unknown`.
@@ -610,7 +629,7 @@ Catálogo de domínio — **não são rotas HTTP**. AuthZ sempre `factory-supply
 - Concorrência: versão otimista + expected-state + idempotência (conceitual; físico `TO_DESIGN`).
 - Idempotência refinada: leitura ERP pura `NOT_APPLICABLE`; observação persistida e sync de sinais `REQUIRED`.
 - Auditoria append-only; **`EVENT_SOURCING_REQUIRED = NO`**.
-- `RETURN_POLICY = HYBRID` (PM/P2 — sugestão calculada, confirmação reconciliada); `RETURN_FORMULA_STATUS = PARTIAL` (§ 15-A); `PRIORITY_POLICY = TO_DESIGN`.
+- `RETURN_POLICY = HYBRID` (PM/P2 — sugestão calculada, confirmação reconciliada); `RETURN_FORMULA_STATUS = READY` (§ 15-A/B); `PRIORITY_POLICY = TIME_TO_NEED_FIRST` (PM/P3, § 24).
 - Persistência operacional em schema dedicado no Postgres Minha DELPI; tabelas físicas não nomeadas.
 
 ## 29. Decisions NOT frozen
@@ -632,9 +651,9 @@ Catálogo de domínio — **não são rotas HTTP**. AuthZ sempre `factory-supply
 
 | Item | Bloqueia |
 |---|---|
-| Fórmula autoritativa de quantidade de devolução — **P2-A inventário feito** (Doc 4/5 §53): falta decisão PM da fórmula (P2-B) + prova de não-sobreposição perda×consumo | `ReconcileReturn` com quantidade autoritativa |
+| ~~Fórmula autoritativa de quantidade de devolução~~ — RESOLVIDO P2-A.1+P2-B (§15-B): modelo 3-camadas congelado; evolução `D3_NUMSEQ` restante é aditiva | `ReconcileReturn` implementável |
 | Contrato ERP de correlação estável (ID causal no SD3?) | `match_confidence` confirmado vs heurístico |
-| Criticidade de produção autoritativa para prioridade | PRIORITY_POLICY |
+| ~~Criticidade de produção autoritativa para prioridade~~ — RESOLVIDO P3: política `TIME_TO_NEED_FIRST` não depende de criticidade ERP; limiares de banda `TO_DESIGN/TO_BENCHMARK` não bloqueiam | — |
 | ~~Permissões por ator~~ — RESOLVIDO Doc 4/5 §40-A | 3 permissões `access`+`view.filial-*`; papel do ator não vira permission code |
 | Comportamento quando material preparado é usado para outra necessidade | política de alocação de preparo |
 | Tolerância coletada > preparada (exceção física real) | invariante de quantidade § 8 |
@@ -643,7 +662,7 @@ Catálogo de domínio — **não são rotas HTTP**. AuthZ sempre `factory-supply
 
 **Para Doc 3/5 (Frontend/UX):** dimensões por nível e derivação de estágio (§ 9–11); progresso parcial por item dentro do card da missão; parcialidade como quantidade (badges, não cores); superfícies mapeadas a queries (§ 26); ações por ator mapeadas a comandos (§ 25); `unknown` exige UI distinta de "zero".
 
-**Para Doc 4/5 (APIs/RBAC/Persistência):** catálogo de comandos/queries por nível (§ 25–26) → rotas/OpenAPI; autorização → modelo FROZEN §40-A (`access`+`view.filial-*`, decidido FS-C0.T3); idempotência → transporte (Idempotency-Key etc.) + dedup keys (`need_key`+fingerprint, movement identity); versão otimista → contrato de `version`; grupos de persistência § 21 → schema/migrations; portas api-delpi → contratos de gateway; `TO_INVENTORY` de § 30 → decisões pendentes antes de endpoints de devolução/prioridade.
+**Para Doc 4/5 (APIs/RBAC/Persistência):** catálogo de comandos/queries por nível (§ 25–26) → rotas/OpenAPI; autorização → modelo FROZEN §40-A (`access`+`view.filial-*`, decidido FS-C0.T3); idempotência → transporte (Idempotency-Key etc.) + dedup keys (`need_key`+fingerprint, movement identity); versão otimista → contrato de `version`; grupos de persistência § 21 → schema/migrations; portas api-delpi → contratos de gateway; itens `TO_INVENTORY`/`TO_DESIGN` remanescentes de § 30 são detalhes de implementação (`collection_round`, versão por item, tolerância de preparo, política de destino/cancelamento) — nenhum é gate C0.
 
 ---
 

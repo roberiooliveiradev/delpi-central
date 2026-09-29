@@ -35,7 +35,7 @@ Invariantes (não reabrir): `factory-supply-api` BFF dedicado · MFE nunca chama
 | Campos internos das respostas api-delpi necessárias (internal-movements, operation-materials) | `PROVEN` — FS-C0.T1 (§8.1 T1/T2 `DONE`) |
 | ~~Escopo de **escrita** por filial~~ — RESOLVIDO FS-C0.T3: `.view.filial-*` é escopo de filial e gateia writes (`assert_can_view_branch` em mutações Line Feeder, `PROVEN`); modelo de usuário FROZEN = 3 permissões (TC §40-A) | `PROVEN` (mecanismo) |
 | Cadeia de registro de permissões (manifesto→`sync_module`→roles→`/me` resolver→middleware `load_user_rbac`→`has_permission`; default DENY; claims fallback = `permissions[]`) | `PROVEN` — FS-C0.T4 |
-| Decisões de produto: reconciliação pedido×sinal, regra de devolução, prioridade | `TO_INVENTORY` (product gates) |
+| ~~Decisões de produto: reconciliação pedido×sinal, regra de devolução, prioridade~~ | **RESOLVIDO** — P1/P2/P3 todos `DONE`/`ACCEPTED` |
 | ~~Identidade de serviço~~ — RESOLVIDO FS-C0.T5: jobs in-process + `API_DELPI_INTERNAL_SERVICE_TOKEN`+`X-Delpi-Caller-App`; sem service account/permissões Core (TC §40-B) | `PROVEN` (mecanismo) |
 | ~~Algoritmo de `request_fingerprint`~~ | `PROVEN` contrato — canonical-JSON+SHA-256 (FS-C0.T6) |
 
@@ -52,10 +52,12 @@ Consolidado de `TECHNICAL-CONTRACTS.md` §43–44 — todos tratados como gates 
 7. ~~Conversão de unidades~~ — RESOLVIDO FS-C0.T7: `AUTHORITATIVE_TOTVS_UNIT` (`B1_UM` em todos os contratos — §51); `UNIT_CONVERSION_*=NOT_REQUIRED`; divergência de unidade → `UNIT_DIVERGENCE`/falha fechada
 8. ~~Reconciliação pedido operador×sinal planejado~~ — RESOLVIDO FS-C0.P1: `intent` explícita `ANTICIPATE|ADDITIONAL` (sem merge/soma automático; excesso de anticipate → conflict; cockpit público → boundary = service-caller §28 TC)
 9. ~~Regra de quantidade de devolução~~ — **`DONE` (P2-B `FROZEN`, TC §53.7)**: modelo 3-camadas (trace FS / evidência TOTVS física / capacidade global BI `MAX(0,stock99−empenho)`); `AUTOMATIC_RETURN_SUGGESTION=YES`; reconciliação `matched|divergent|incomplete_evidence|unavailable`; pendência única = evolução contrato `internal-movements` (`D3_NUMSEQ`+direção tipada) — aditiva, não-bloqueante
-10. Política de prioridade — **PRODUTO** (gate; default factual ordering)
+10. ~~Política de prioridade~~ — **`DONE` (P3 `FROZEN`)**: `TIME_TO_NEED_FIRST` role/stage-aware (eligibility→overdue→need_at→tie-break); limiares de banda `TO_DESIGN/TO_BENCHMARK` não bloqueiam
 11. ~~Header de correlação~~ — RESOLVIDO FS-C0.T11 (`X-Request-ID` `SINGLE_ID`, UUID4, adapter-propagated — TC §32)
 12. ~~Retenção~~ — RESOLVIDO FS-C0.T12 (matriz §52: 5y audit/histórico, 24h idempotency, 30d outbox pub, checkpoint corrente; ROPA-compliant — pendente só registro da categoria FS na ROPA na implantação)
-13. `SYNC_CADENCE` benchmark — **técnico** (carga/fan-out api-delpi validada antes de fixar; TC §33)
+13. `SYNC_CADENCE` benchmark — **técnico, `BENCHMARK_REQUIRED_LATER`** (carga/fan-out api-delpi validada antes de fixar; TC §33) — **não é C0 blocker**
+
+> **Fechamento C0 (FS-C0.CLOSURE):** itens 1–12 resolvidos; item 13 = benchmark de implementação. Nenhum `C0_BLOCKER` remanescente — `DOCUMENTATION_CYCLE = COMPLETE`, `RUNTIME_IMPLEMENTED = NO`.
 14. Categorias de notificação FS no catálogo canônico Core (`notification-catalog-preferences`) — **técnico** (registro junto ao manifesto C7.T1)
 
 ## 5. Requirement ledger
@@ -71,7 +73,7 @@ Status: `ACCEPTED` (congelado na spec) / `GATED` (depende de C0/produto). Owner:
 | FS-PR-03 | Coexistência com Line Feeder sem dual-write/migração silenciosa | Doc4 §30 | FS | sempre | ACCEPTED | gate cutover §35 | — |
 | FS-PR-04 | Cockpit integra por contrato semântico, sem internals/DB | Doc4 §28 | FS | C10 | ACCEPTED | contrato+teste | C0.P1 |
 | FS-PR-05 | Devolução sem quantidade inventada; estado "não estabelecida" suportado | Doc3/4 | FS | C9 | ~~GATED→C0.P2-B~~ READY (P2-B `DONE`) | Cenário G | C0.P2-B ✅ |
-| FS-PR-06 | Prioridade factual (`due_at`,`overdue`,`time_to_need`) até política existir | Doc4 §49 | FS | C2+ | ACCEPTED | projeção sem score | C0.P3 |
+| FS-PR-06 | Prioridade factual + política `TIME_TO_NEED_FIRST` (`eligibility`,`overdue`,`need_at`,`priority_reason`,`urgency_band?`) | Doc4 §49 | FS | C2+ | ACCEPTED | projeção sem score | C0.P3 ✅ |
 | FS-PR-07 | Métricas operacionais ≠ scoring de trabalhador | Doc1, Doc4 §32 | FS | C8 | ACCEPTED | revisão métricas | — |
 
 ### FS-AR — Architecture
@@ -222,7 +224,7 @@ Regra: tarefa sem requirement = suspeita; requirement sem tarefa/teste = incompl
 PRODUCT DECISIONS (C0.P)                    TECHNICAL INVENTORY (C0.T)
  C0.P1 reconciliação pedido×sinal ──┐        C0.T1 internal-movements ──→ FS-INT-04/06 → C8
  C0.P2 regra de devolução ──────────┼──→ só bloqueia C9 (returns)      C0.T2 op-materials ────→ signal sync → C4
- C0.P3 prioridade além do factual ──┘        C0.T3 branch-write scope ──→ FS-API-07/SEC-04 → C2+
+ ~~C0.P3 prioridade~~ ✅ ──┘                C0.T3 branch-write scope ──→ FS-API-07/SEC-04 → C2+
                                              C0.T4 RBAC seeding ───────→ FS-SEC-01 → C7
                                              C0.T5 service identity ───→ FS-SEC-02 → C4,C8
                                              C0.T6 fingerprint algo ───→ FS-API-04/DATA-08 → C2
@@ -265,7 +267,7 @@ Primeira fase obrigatória — só evidência e decisão, **sem código de produ
 | FS-C0.P2-A | ~~Inventário autoritativo TOTVS produção/perda/consumo~~ — **`DONE`**: matriz §53 TC (SH6/HZA/SBC/SD4/SD3/SB2/SC2/SG1-2); `RETURN_POLICY=HYBRID` aceita; sobreposições mapeadas; gaps api-delpi §53.4; grão máximo = OP/material | FS (evidência) | — |
 | FS-C0.P2-A.1 | ~~Verificação de sobreposição com dados reais TOTVS~~ — **`DONE`**: probes read-only provaram `BC_SEQSD3=D3_NUMSEQ` (perda=saída `999/RE0`@99, mesmo fato), `saída99+OP ≈ SD4-consumido + SBC` (SBC não baixa empenho), transferência 01↔99 = par `RE4`/`DE*` mesmo `D3_DOC` sem OP, só `BC_TIPO='R'` ocorre | FS (evidência) | — |
 | FS-C0.P2-B | ~~Decisão da fórmula de sugestão de devolução~~ — **`DONE`/`ACCEPTED`**: consumo = SD3 físico 99 excl. SBC (SD4=empenho); `AUTOMATIC_RETURN_SUGGESTION=YES`; capacidade global BI preservada como reconciliação; CT só via trace FS; `already_returned` reduz sugestão | Product Master | C9 auto-qty liberado |
-| FS-C0.P3 | Prioridade além de `due_at/overdue/time_to_need` necessária no MVP? (default: não) | Product Master | — se "não" |
+| FS-C0.P3 | ~~Prioridade além de `due_at/overdue/time_to_need`~~ — **`DONE`/`ACCEPTED`**: `TIME_TO_NEED_FIRST` congelado (Doc 2/5 §24, Doc 4/5 §49); eligibility stage-aware, overdue derivado, operator-request sem boost, shortage≠prioridade, tie-break técnico; bandas `TO_DESIGN/TO_BENCHMARK` | Product Master | — |
 
 ## 9. Readiness gates (capability-scoped)
 
@@ -273,13 +275,13 @@ Nenhum gate global único. Cada fase exige só seu subconjunto:
 
 | Gate | Exige | Libera |
 |---|---|---|
-| C0.G-BASE | C0.T6, C0.T7 decididos | C1–C2 |
-| C0.G-DATA | C0.T3, C0.T12 | C2 migrations |
-| C0.G-ERP | C0.T1, C0.T2 (+T11 para correlação) | C3, C4, C8 |
+| C0.G-BASE | C0.T6 ✅, C0.T7 ✅ — **PASS** (fingerprint congelado + unidade autoritativa `NOT_REQUIRED`) | C1–C2 |
+| C0.G-DATA | C0.T3 ✅, C0.T12 ✅ — **PASS** (branch-scope PROVEN + matriz de retenção §52; registro ROPA = ação de implantação) | C2 migrations |
+| C0.G-ERP | C0.T1 ✅, C0.T2 ✅, C0.T11 ✅ — **PASS** (contratos tipados + fingerprint composto + `X-Request-ID`) | C3, C4, C8 |
 | C0.G-RBAC | C0.T3 ✅, C0.T4 ✅ — **PASS** (modelo FROZEN + registro/enforcement PROVEN; execução do registro ocorre dentro de C7.T1) | C7 (MFE com writes) |
 | C0.G-SVC | C0.T5 ✅ — **PASS** (in-process + service token PROVEN; cadências `TO_DESIGN` são decisão ops, não gate) | sync/reconcile em C4, C8 |
-| C0.G-REQ | C0.P1 | request-material com colisão; C10 |
-| C0.G-RET | C0.P2-A ✅ + C0.P2-A.1 ✅ + C0.P2-B ✅ (`READY`) — evolução `internal-movements` (`D3_NUMSEQ`/direção tipada) é aditiva, não hard blocker | C9 auto-qty |
+| C0.G-REQ | C0.P1 ✅ — **PASS** (contrato `POST /v1/operator-requests` + boundary service-caller congelados) | request-material com colisão; C10 |
+| C0.G-RET | C0.P2-A ✅ + C0.P2-A.1 ✅ + C0.P2-B ✅ — **PASS** (modelo 3-camadas `READY`; evolução `internal-movements` `D3_NUMSEQ` é aditiva, não hard blocker) | C9 auto-qty |
 
 `C0.READY` por gate = `PASS` quando a evidência correspondente existe e está registrada em relatório.
 
@@ -479,6 +481,18 @@ Matriz de teste §18:
 | já devolvido=10 | sugestão restante reduz 10 — feeder nunca recolhe o retornado |
 | saldo-99 indisponível | `unavailable`/`STOCK_UNAVAILABLE` — nunca zero implícito |
 | capacidade ERP sem trace FS | nenhum CT atribuído — destino só via trace operacional |
+| prioridade: acionável `need_at` 14:00 × 14:10 | mais cedo vence |
+| prioridade: `need_at` 13:50 pendente, now=14:00 | overdue vence futuro acionável |
+| feeder: A não preparado (14:00) × B pronto (14:10) | B = próxima ação; A aparece `waiting`, nunca executável |
+| warehouse: mesmo caso | A acionável pode preceder B — elegibilidade por estágio |
+| operator request sem boost | pedido não vence `need_at` mais cedo |
+| ANTICIPATE aceito muda `need_at` 16:00→13:55 | reordena pelo `need_at` reconciliado — não por bônus |
+| ADDITIONAL novo sinal | compete pela mesma política — sem prioridade automática |
+| shortage 13:55 indisponível × ready 14:05 | feeder: pronto executa; shortage permanece blocked/exceção visível |
+| `need_at` igual | tie-break determinístico estável (creation seq → item id) — sem significado de negócio |
+| frontend reordena sem backend | rejeitado — ordenação é projeção backend (`priority_reason` explica) |
+| urgência muda | `stage`/lifecycle inalterado — só posição na fila |
+| realtime: `need_at`/elegibilidade muda | recomputa fila + outbox; sem notificação duplicada nem segundo canal |
 
 ## 26. Audit/observability
 
@@ -617,7 +631,7 @@ Tudo de TECHNICAL-CONTRACTS §42 + correções (REUSE_AS_IS warehouses, authz≠
 
 ## 41. Decisions pending
 
-C0.P1 reconciliação · C0.P2 regra devolução · C0.P3 prioridade · C0.T6 algoritmo fingerprint · C0.T7 conversão de unidade · C0.T11 header correlação · C0.T12 retenção · decisão opcional `movement_recno` (evolve §25 TC). ~~C0.T1/T2/T3/T4/T5~~ — DONE.
+~~C0.P1 reconciliação~~ ✅ · ~~C0.P2 regra devolução~~ ✅ · ~~C0.P3 prioridade~~ ✅ · C0.T6 algoritmo fingerprint · C0.T7 conversão de unidade · C0.T11 header correlação · C0.T12 retenção · decisão opcional `movement_recno` (evolve §25 TC). ~~C0.T1/T2/T3/T4/T5~~ — DONE.
 
 ## 42. TO_INVENTORY
 

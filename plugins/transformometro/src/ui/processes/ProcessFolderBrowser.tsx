@@ -1,11 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import {
-  ChevronLeft,
-  Grid2X2,
-  LayoutGrid,
-  LayoutList,
-  Rows3,
-} from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 
 import type { DataTableColumn } from "../../components/DataTable";
 import { DataTable } from "../../components/DataTable";
@@ -16,7 +10,6 @@ import {
   FieldLabel,
   HelpTooltip,
 } from "@delpi/plugin-ui/index";
-import { SelectField } from "../../components/ui/SelectField";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { Pagination } from "../../components/Pagination";
 import { ProcessFormProgress } from "../../components/process/ProcessFormProgress";

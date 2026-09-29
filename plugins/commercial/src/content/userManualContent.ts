@@ -58,7 +58,7 @@ export const USER_MANUAL_CONTENT = {
   ],
   scopeNote:
     "O chip Escopo no topo indica de quem você vê os dados (sua carteira / equipe / todas). Não é o filtro de datas da Visão geral.",
-  sections: [
+  sections: ([
     {
       id: "want",
       title: "Quero… → vá em…",
@@ -393,5 +393,5 @@ export const USER_MANUAL_CONTENT = {
         "Significados já usados no Portal e nos ? das telas. «Onde aparece» é a aplicação. Os mesmos textos dos helps — sem inventar outro glossário.",
       glossaryGroups: USER_MANUAL_TERM_CATALOG,
     },
-  ] satisfies readonly UserManualSection[],
+  ] satisfies readonly UserManualSection[]) as readonly UserManualSection[],
 } as const;

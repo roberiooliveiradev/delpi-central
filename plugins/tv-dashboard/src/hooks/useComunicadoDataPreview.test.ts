@@ -8,12 +8,15 @@ import { writeDataPreviewCache } from "../utils/editorSessionCache";
 
 vi.mock("../api/tvDashboardApi", () => ({
   previewDataBlockV2: vi.fn(),
+  previewDataModelV2: vi.fn(),
 }));
 
-import { previewDataBlockV2 } from "../api/tvDashboardApi";
+import { previewDataBlockV2, previewDataModelV2 } from "../api/tvDashboardApi";
 import { DATA_PREVIEW_BLOCK_TIMEOUT_MS } from "../utils/dataPreviewFetchGuard";
+import { enrichComunicadoConfigForEditor } from "../components/slideCardPreview";
 
 const mockedPreview = vi.mocked(previewDataBlockV2);
+const mockedModelPreview = vi.mocked(previewDataModelV2);
 
 const configWithDataBlock: ComunicadoConfig = {
   blocks: [
@@ -513,5 +516,56 @@ describe("useComunicadoDataPreview", () => {
     expect(result.current.loadingProgressPercent).toBeNull();
     expect(result.current.refreshingSourceIds).toEqual([]);
     vi.useRealTimers();
+  });
+
+  it("hidrata dataModels do nativeConfig e dispara preview-model no mount (regressão F5)", async () => {
+    const hydrated = enrichComunicadoConfigForEditor(
+      {
+        version: 2,
+        background: { type: "color", value: "#ffffff" },
+        dataModels: [
+          {
+            id: "dm-1",
+            primaryInputId: "in-1",
+            inputs: [
+              { id: "in-1", operationId: "get_comercial_rol_summary", params: {} },
+            ],
+          },
+        ],
+        blocks: [
+          {
+            id: "kpi-1",
+            type: "kpi_view",
+            frame: { x: 0, y: 0, w: 20, h: 10 },
+            modelId: "dm-1",
+            textProjection: { field: "meta_ytd" },
+          },
+        ],
+      },
+      "pl-1",
+    );
+
+    mockedModelPreview.mockResolvedValue({
+      model: { resolved: { table: { rows: [{ meta_ytd: 4842666.67 }] } } },
+    } as Awaited<ReturnType<typeof previewDataModelV2>>);
+
+    const { result } = renderHook(() =>
+      useComunicadoDataPreview({
+        playlistId: "pl-1",
+        config: hydrated,
+      }),
+    );
+
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(mockedModelPreview).toHaveBeenCalledTimes(1);
+    expect(mockedModelPreview.mock.calls[0]?.[0]?.modelId).toBe("dm-1");
+    expect(result.current.resolvedByBlockId["dm-1"]?.table?.rows).toEqual([
+      { meta_ytd: 4842666.67 },
+    ]);
+    expect(result.current.loading).toBe(false);
   });
 });

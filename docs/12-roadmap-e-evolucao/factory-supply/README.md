@@ -1,6 +1,7 @@
 # Factory Supply — Abastecimento Fabril
 
 > **Status:** baseline de produto/arquitetura — Documentation 1/5 (set/2026)
+> **DOCUMENTATION_CYCLE:** `COMPLETE` — todos os gates C0 (P1/P2/P3, T1–T12) resolvidos; **DOCUMENTATION_COMPLETE = YES / RUNTIME_IMPLEMENTED = NO** (FS-C0.CLOSURE)
 > **Nome técnico:** `factory-supply`
 > **Nome de produto (PT-BR):** Abastecimento Fabril
 > **Natureza:** documentação canônica de evolução. **Não** autoriza implementação, scaffold, migration, manifest ou qualquer mudança de runtime.
@@ -170,7 +171,7 @@ Duas verdades coexistem e **não** se fundem:
 | Lista de coleta / pick workflow | Factory Supply | próprio backend + Postgres | — | `PLANNED` — existe referência PROVEN no Line Feeder | Reuso/migração do modelo `line_feeder_pick_plans` é decisão da Doc 2/5 |
 | Handoff operacional | Factory Supply | próprio backend + Postgres | — | `TARGET` | Ator autenticado + timestamp + quantidade + origem/destino |
 | Rastro de entrega operacional | Factory Supply | próprio backend + Postgres | — | `TARGET` | Não é movimento ERP |
-| Rastro de devolução operacional | Factory Supply | próprio backend + Postgres | — | `TARGET` | Fórmula/fonte da quantidade de devolução: `TO_INVENTORY` |
+| Rastro de devolução operacional | Factory Supply | próprio backend + Postgres | — | `TARGET` | ~~Fórmula/fonte da quantidade de devolução: `TO_INVENTORY`~~ — RESOLVIDO FS-C0.P2 (modelo 3-camadas, Doc 4/5 §53.7) |
 | Correlação com transação oficial | Factory Supply | referência à evidência api-delpi/TOTVS | — | `TARGET` | Correlação ≠ execução |
 
 Factory Supply **nunca** vira fonte paralela de inventário: não persiste campos locais como versão autoritativa de saldo corrente, saldo de armazém, saldo de empenho, consumo oficial ou resultado de transação de estoque. Onde decisões operacionais exigem fatos do ERP, preserva-se **referência autoritativa** e, quando justificado depois, **snapshot do momento da decisão** como evidência — nunca como verdade de estoque.
@@ -352,7 +353,7 @@ Backend-first, fail-closed — conforme `platform-security-identity-authorizatio
 - Secrets/tokens nunca em prompt, logs comuns, persistência de MFE ou configuração visível além dos mecanismos legítimos de auth.
 - Distinções: `read ≠ write`; `recommendation ≠ authorization`; `preparation ≠ official transfer`; `collection ≠ delivery`; `delivery ≠ consumption`; `technical success ≠ verified business outcome`.
 - Frontend jamais é autoridade de estoque, quantidade de devolução, empenho, consumo, transferência oficial, permissão ou regra de negócio final — a **quantidade de devolução** virá de regra/contrato de backend autoritativo, nunca de fórmula em React.
-- Permissões por ator (operador, almoxarifado, alimentador, PCP): `TO_INVENTORY` — não inventadas aqui.
+- Permissões por ator (operador, almoxarifado, alimentador, PCP): ~~`TO_INVENTORY`~~ — RESOLVIDO FS-C0.T3/T4: 3 permissões usuário (`access`+`view.filial-*`), papéis = contexto, não permission codes (TC §40-A).
 
 ---
 
@@ -427,7 +428,7 @@ Inventário `PROVEN` da capability existente:
 
 | Item | Por quê |
 |---|---|
-| Fórmula autoritativa da quantidade de devolução | O painel Power BI exibe "total return quantity / committed balance / factory balance" — a fórmula não está no repo; não inferir do visual |
+| ~~Fórmula autoritativa da quantidade de devolução~~ — RESOLVIDO FS-C0.P2: baseline Power BI provado (`MAX(0, stock99 − empenho)` = `erp_global_return_capacity`); modelo híbrido 3-camadas congelado (Doc 2/5 §15-B, Doc 4/5 §53.7) |
 | Internals do painel Power BI "Painel Alimentador Fábrica" | Não documentado no repositório; conceitos são entrada de requisito, não regra |
 | Contrato de leitura para correlacionar transação oficial ↔ missão | `internal-movements` prova o movimento (SD3); vínculo causal com a missão a modelar |
 | ~~Catálogo de permissões por ator~~ — RESOLVIDO FS-C0.T3 | Modelo FROZEN: `factory-supply.access` + `view.filial-01` + `view.filial-02`; papéis são contexto de negócio, não permission codes (TC §40-A) |

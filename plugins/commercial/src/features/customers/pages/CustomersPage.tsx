@@ -159,7 +159,6 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
     hasData,
     aggregation,
     filteredCustomers,
-    pagedCustomers,
     page,
     lastSuccessAt,
     reload,
@@ -622,7 +621,7 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
                       className="cm-customers-page__trend-window-days"
                       label="Dias"
                       hint={CM_HELP.customers.trendWindowCustom}
-                      type="number"
+                      type="text"
                       value={customTrendWindowDays}
                       onChange={setCustomTrendWindowDays}
                       placeholder="1–365"

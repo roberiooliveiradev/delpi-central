@@ -292,7 +292,7 @@ export function AnalyticsOpportunitiesPage({ basePath }: AnalyticsOpportunitiesP
           hint={CM_HELP.analytics.opportunitiesList}
         >
           {loading ? <CommercialLoadingCard title="Carregando…" variant="panel" /> : null}
-          {error ? <CommercialEmptyState defaultMessage={error} /> : null}
+          {error ? <CommercialEmptyState message={error} /> : null}
           {!loading && !error ? (
             <CommercialProposalsTable
               rows={items}

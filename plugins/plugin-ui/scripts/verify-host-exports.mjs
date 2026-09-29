@@ -3,18 +3,18 @@
  * no remote) não podem sumir do chunk federado — sintoma típico:
  * `TypeError: X is not a function` no consumer.
  *
+ * A verificação usa a cláusula `export { ... }` real do chunk — não substring,
+ * que daria falso positivo com nomes colados (ex.: `parseMarkdownImagesX`).
+ *
  * Uso: node scripts/verify-host-exports.mjs [dist/assets]
+ *      node scripts/verify-host-exports.mjs --selftest
  */
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const assetsDir = path.resolve(
-  __dirname,
-  "..",
-  process.argv[2] ?? "dist/assets",
-);
 
 /** Símbolos host-only que o Index MF deve preservar no bundle. */
 const REQUIRED_HOST_EXPORTS = [
@@ -84,34 +84,23 @@ function findIndexExpose(dir) {
   );
 }
 
-const exposePath = findIndexExpose(assetsDir);
-
-if (!exposePath) {
-  console.error(
-    `verify-host-exports: não achei __federation_expose_Index-*.js em ${assetsDir}`,
-  );
-  process.exit(1);
-}
-
-const source = fs.readFileSync(exposePath, "utf8");
-const missing = REQUIRED_HOST_EXPORTS.filter((name) => !source.includes(name));
-
-if (missing.length > 0) {
-  console.error(
-    `verify-host-exports FAIL (${path.basename(exposePath)}): ausentes: ${missing.join(", ")}`,
-  );
-  process.exit(1);
-}
-
 /**
- * Varredura de imports de hosts: todo nome importado de "@delpi/plugin-ui/index"
- * em plugins/<app>/src precisa existir no chunk do remote — senão o consumer recebe
- * `undefined` e só descobre em runtime (`TypeError: X is not a function`).
- * Imports type-only (símbolo exportado como `export type`/`export interface`)
- * são apagados no build e não são exigidos no chunk.
+ * Extrai os nomes realmente exportados pelo chunk federado a partir das
+ * cláusulas `export { a as b, c }` — superfície efetiva do módulo remoto.
  */
-const pluginsRoot = path.resolve(__dirname, "../..");
-const uiSrc = path.resolve(__dirname, "../src");
+function collectRealExports(source) {
+  const names = new Set();
+  const exportBlock = /export\s*\{([^}]*)\}/g;
+  for (const m of source.matchAll(exportBlock)) {
+    for (const spec of m[1].split(",")) {
+      const s = spec.trim();
+      if (!s) continue;
+      const exported = s.split(/\s+as\s+/).at(-1)?.trim();
+      if (exported) names.add(exported.replace(/^["']|["']$/g, ""));
+    }
+  }
+  return names;
+}
 
 function walk(dir, out = []) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -151,39 +140,147 @@ function collectTypeOnlyExports(dir) {
   return types;
 }
 
-const typeOnly = collectTypeOnlyExports(uiSrc);
-const importRe =
-  /import\s*(?:type\s*)?\{([^}]*)\}\s*from\s*["']@delpi\/plugin-ui(?:\/index)?["']/g;
-
-const hostMissing = [];
-for (const pluginDir of fs.readdirSync(pluginsRoot, { withFileTypes: true })) {
-  if (!pluginDir.isDirectory() || pluginDir.name === "plugin-ui") continue;
-  const srcDir = path.join(pluginsRoot, pluginDir.name, "src");
-  if (!fs.existsSync(srcDir)) continue;
-  for (const file of walk(srcDir)) {
-    if (file.endsWith(".d.ts") || /\.test\.tsx?$/.test(file)) continue;
-    const text = fs.readFileSync(file, "utf8");
-    for (const m of text.matchAll(importRe)) {
-      for (const spec of m[1].split(",")) {
-        const name = spec.trim();
-        if (!name || name.startsWith("type ")) continue;
-        const local = name.split(/\s+as\s+/)[0].trim();
-        if (!local || typeOnly.has(local)) continue;
-        if (!source.includes(local)) {
-          hostMissing.push(`${local} (${path.relative(pluginsRoot, file)})`);
+/**
+ * Varredura de imports de hosts: todo nome importado de "@delpi/plugin-ui/index"
+ * em plugins/<app>/src precisa existir como export real do remote — senão o
+ * consumer recebe `undefined` e só descobre em runtime.
+ */
+function collectHostImportsMissing(realExports, typeOnly, pluginsRoot) {
+  const importRe =
+    /import\s*(?:type\s*)?\{([^}]*)\}\s*from\s*["']@delpi\/plugin-ui(?:\/index)?["']/g;
+  const missing = [];
+  for (const pluginDir of fs.readdirSync(pluginsRoot, { withFileTypes: true })) {
+    if (!pluginDir.isDirectory() || pluginDir.name === "plugin-ui") continue;
+    const srcDir = path.join(pluginsRoot, pluginDir.name, "src");
+    if (!fs.existsSync(srcDir)) continue;
+    for (const file of walk(srcDir)) {
+      if (file.endsWith(".d.ts") || /\.test\.tsx?$/.test(file)) continue;
+      const text = fs.readFileSync(file, "utf8");
+      for (const m of text.matchAll(importRe)) {
+        for (const spec of m[1].split(",")) {
+          const name = spec.trim();
+          if (!name || name.startsWith("type ")) continue;
+          const local = name.split(/\s+as\s+/)[0].trim();
+          if (!local || typeOnly.has(local)) continue;
+          if (!realExports.has(local)) {
+            missing.push(`${local} (${path.relative(pluginsRoot, file)})`);
+          }
         }
       }
     }
   }
+  return missing;
 }
 
-if (hostMissing.length > 0) {
-  console.error(
-    `verify-host-exports FAIL: imports de hosts ausentes no remote final:\n  ${[...new Set(hostMissing)].join("\n  ")}`,
-  );
+function verifyAssets(assetsDir, { checkHosts = true } = {}) {
+  const exposePath = findIndexExpose(assetsDir);
+  if (!exposePath) {
+    return {
+      ok: false,
+      error: `verify-host-exports: não achei __federation_expose_Index-*.js em ${assetsDir}`,
+    };
+  }
+
+  const source = fs.readFileSync(exposePath, "utf8");
+  const realExports = collectRealExports(source);
+  const missing = REQUIRED_HOST_EXPORTS.filter((name) => !realExports.has(name));
+
+  let hostMissing = [];
+  if (checkHosts) {
+    const pluginsRoot = path.resolve(__dirname, "../..");
+    const uiSrc = path.resolve(__dirname, "../src");
+    const typeOnly = collectTypeOnlyExports(uiSrc);
+    hostMissing = collectHostImportsMissing(realExports, typeOnly, pluginsRoot);
+  }
+
+  if (missing.length === 0 && hostMissing.length === 0) {
+    return { ok: true, exposePath };
+  }
+  const parts = [];
+  if (missing.length > 0) {
+    parts.push(`exports obrigatórios ausentes: ${missing.join(", ")}`);
+  }
+  if (hostMissing.length > 0) {
+    parts.push(
+      `imports de hosts ausentes no remote:\n  ${[...new Set(hostMissing)].join("\n  ")}`,
+    );
+  }
+  return {
+    ok: false,
+    exposePath,
+    error: `verify-host-exports FAIL (${path.basename(exposePath)}): ${parts.join("\n")}`,
+  };
+}
+
+/**
+ * Teste negativo: copia o chunk real para um tmp dir, remove um export usado
+ * por host e prova que o gate falha — inclusive onde `includes()` passaria
+ * (a substring continua presente em `parseMarkdownImagesDisabled`).
+ */
+function selftest(assetsDir) {
+  const exposePath = findIndexExpose(assetsDir);
+  if (!exposePath) {
+    console.error(`selftest: chunk não encontrado em ${assetsDir}`);
+    return 1;
+  }
+  const real = fs.readFileSync(exposePath, "utf8");
+  if (!/ as parseMarkdownImages[,}\s]/.test(real)) {
+    console.error("selftest: chunk real não exporta parseMarkdownImages — corrija o build antes do selftest");
+    return 1;
+  }
+
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "verify-exports-"));
+  try {
+    const name = path.basename(exposePath);
+    fs.writeFileSync(path.join(tmp, name), real);
+    const positive = verifyAssets(tmp, { checkHosts: false });
+    if (!positive.ok) {
+      console.error(`selftest FAIL: cópia intacta deveria passar: ${positive.error}`);
+      return 1;
+    }
+
+    const mutated = real.replace(" as parseMarkdownImages", " as parseMarkdownImagesDisabled");
+    if (mutated === real) {
+      console.error("selftest FAIL: mutação não aplicada");
+      return 1;
+    }
+    fs.writeFileSync(path.join(tmp, name), mutated);
+    const negative = verifyAssets(tmp, { checkHosts: false });
+    if (negative.ok) {
+      console.error("selftest FAIL: gate passou com export removido");
+      return 1;
+    }
+    if (!negative.error.includes("parseMarkdownImages")) {
+      console.error(`selftest FAIL: ausência detectada, mas símbolo errado: ${negative.error}`);
+      return 1;
+    }
+    console.log(
+      `selftest OK: positivo passa (${path.basename(name)}) e remoção de parseMarkdownImages falha como esperado`,
+    );
+    return 0;
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
+}
+
+const argv = process.argv.slice(2);
+const selftestMode = argv.includes("--selftest");
+const assetsDir = path.resolve(
+  __dirname,
+  "..",
+  argv.find((a) => !a.startsWith("--")) ?? "dist/assets",
+);
+
+if (selftestMode) {
+  process.exit(selftest(assetsDir));
+}
+
+const result = verifyAssets(assetsDir);
+if (!result.ok) {
+  console.error(result.error);
   process.exit(1);
 }
 
 console.log(
-  `verify-host-exports OK (${path.basename(exposePath)}): ${REQUIRED_HOST_EXPORTS.join(", ")}`,
+  `verify-host-exports OK (${path.basename(result.exposePath)}): ${REQUIRED_HOST_EXPORTS.join(", ")}`,
 );

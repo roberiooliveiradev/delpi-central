@@ -399,8 +399,8 @@ export function AdministrationTeamPage({ basePath }: AdministrationTeamPageProps
 
       {!loading && rows.length === 0 ? (
         <CommercialEmptyState
-          defaultTitle={copy.emptyTitle}
-          defaultMessage={copy.emptyDescription}
+          title={copy.emptyTitle}
+          message={copy.emptyDescription}
         >
           <div className="cm-portfolios-page__actions">
             <CommercialActionButton
@@ -445,7 +445,7 @@ export function AdministrationTeamPage({ basePath }: AdministrationTeamPageProps
         <CommercialSectionCard title={copy.orgTitle} subtitle={copy.orgSubtitle}>
           {orgFlowModel.edges.length === 0 &&
           orgFlowModel.nodes.every((node) => node.kind === "person") ? (
-            <CommercialEmptyState defaultMessage={copy.orgEmpty} />
+            <CommercialEmptyState message={copy.orgEmpty} />
           ) : (
             <CommercialOrgMembershipFlow
               nodes={orgFlowNodes}

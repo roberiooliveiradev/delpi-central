@@ -16,6 +16,7 @@ import {
   buildCustomerEntityKey,
   INTERACTION_ENTITY_TYPES,
 } from "../../interaction-rooms/interactionRoomEntityKeys";
+import type { CustomerDetailSection } from "../utils/customerDetailSection";
 import { CustomerActivityTimelinePanel } from "./CustomerActivityTimelinePanel";
 import { CustomerConversationPoints } from "./CustomerConversationPoints";
 import { CustomerPreMeetingChecklist } from "./CustomerPreMeetingChecklist";
@@ -33,7 +34,7 @@ type CustomerOverviewSectionProps = {
   basePath: string;
   onGoToOrders: () => void;
   onGoToActivities: () => void;
-  onGoToSection: (section: "historico" | "pedidos" | "oportunidades" | "atividades") => void;
+  onGoToSection: (section: CustomerDetailSection) => void;
 };
 
 /**

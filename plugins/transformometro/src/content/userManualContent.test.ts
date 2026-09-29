@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { TRANSFORMOMETRO_ROUTES } from "../constants/routes";
-import { USER_MANUAL_CONTENT } from "./userManualContent";
+import { USER_MANUAL_CONTENT, type UserManualLink } from "./userManualContent";
 
 const REAL_PATHS = new Set(Object.values(TRANSFORMOMETRO_ROUTES));
 
@@ -20,7 +20,9 @@ describe("Transforma+ user manual", () => {
     expect(text).not.toMatch(/Keycloak/);
     expect(text).not.toMatch(/ainda não faz(em)? parte deste portal/);
     expect(text).not.toMatch(/carteira/);
-    const linked = USER_MANUAL_CONTENT.sections.flatMap((section) => section.links ?? []);
+    const linked = USER_MANUAL_CONTENT.sections.flatMap(
+      (section): readonly UserManualLink[] => section.links ?? [],
+    );
     expect(
       linked
         .filter(
@@ -57,7 +59,9 @@ describe("Transforma+ user manual", () => {
 
   it("só liga caminhos reais do MFE", () => {
     const paths = USER_MANUAL_CONTENT.sections.flatMap((section) =>
-      (section.links ?? []).map((link) => link.path).filter((path): path is string => Boolean(path)),
+      (section.links ?? [])
+        .map((link) => link.path)
+        .filter((path): path is NonNullable<typeof path> => path != null),
     );
     expect(paths.length).toBeGreaterThan(0);
     expect(paths.every((path) => REAL_PATHS.has(path))).toBe(true);

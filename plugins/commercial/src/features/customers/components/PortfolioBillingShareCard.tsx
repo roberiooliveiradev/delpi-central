@@ -43,9 +43,8 @@ export function PortfolioBillingShareCard({
 
   return (
     <CommercialSectionCard
-      title={
-        <span title={CM_HELP.customers.portfolioBillingShare}>Share empresa</span>
-      }
+      title="Share empresa"
+      hint={CM_HELP.customers.portfolioBillingShare}
       className="cm-customers-share-card"
     >
       <CommercialDashboardKpiCard

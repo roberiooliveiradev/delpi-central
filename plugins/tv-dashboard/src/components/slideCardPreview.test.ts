@@ -551,4 +551,56 @@ describe("slideCardPreview", () => {
     );
     expect(enriched.brandThemeKey).toBeUndefined();
   });
+
+  it("enrich preserva dataModels para o preview disparar no F5", () => {
+    const enriched = enrichComunicadoConfigForEditor(
+      {
+        version: 2,
+        background: { type: "color", value: "#ffffff" },
+        dataModels: [
+          {
+            id: "dm-1",
+            primaryInputId: "in-1",
+            inputs: [
+              {
+                id: "in-1",
+                operationId: "get_comercial_rol_summary",
+                params: { dateRangePreset: "ytd" },
+              },
+            ],
+            transform: { kind: "record" },
+            fieldLabels: { meta_ytd: "META YTD" },
+          },
+        ],
+        blocks: [
+          {
+            id: "kpi-1",
+            type: "kpi_view",
+            frame: { x: 0, y: 0, w: 20, h: 10 },
+            modelId: "dm-1",
+            textProjection: { field: "meta_ytd" },
+          },
+        ],
+      },
+      "playlist-1",
+    );
+    expect(enriched.dataModels).toHaveLength(1);
+    expect(enriched.dataModels?.[0]?.id).toBe("dm-1");
+    expect(enriched.dataModels?.[0]?.primaryInputId).toBe("in-1");
+    const bound = enriched.blocks?.[0] as { modelId?: string };
+    expect(bound?.modelId).toBe("dm-1");
+  });
+
+  it("enrich preserva groupTransforms do slide persistido", () => {
+    const enriched = enrichComunicadoConfigForEditor(
+      {
+        version: 2,
+        background: { type: "color", value: "#ffffff" },
+        groupTransforms: { grp_abc: { rotation: 45 } },
+        blocks: [],
+      },
+      "playlist-1",
+    );
+    expect(enriched.groupTransforms).toEqual({ grp_abc: { rotation: 45 } });
+  });
 });

@@ -9,7 +9,6 @@ describe("diagram validation + IO chrome", () => {
   it("agrupa IO em popover e coloca validação no split lateral", () => {
     const section = readFileSync(join(here, "sections/ProcessoDiagramSection.tsx"), "utf8");
     const panel = readFileSync(join(here, "validation/DiagramValidationPanel.tsx"), "utf8");
-    const ioMenu = readFileSync(join(here, "DiagramIoMenu.tsx"), "utf8");
 
     expect(section).toMatch(/DiagramIoMenu/);
     expect(section).toMatch(/delpi-ui-bpmn-workspace__split--with-panel/);

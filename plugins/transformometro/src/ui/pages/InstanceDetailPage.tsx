@@ -107,8 +107,8 @@ export function InstanceDetailPage({
   const [processo, setProcesso] = useState<Processo | null>(null);
   const [instancia, setInstancia] = useState<ProcessoInstancia | null>(null);
   const [revisoes, setRevisoes] = useState<Revisao[]>([]);
-  const [allRevisoes, setAllRevisoes] = useState<Revisao[]>([]);
-  const [allInstancias, setAllInstancias] = useState<ProcessoInstancia[]>([]);
+  const [, setAllRevisoes] = useState<Revisao[]>([]);
+  const [, setAllInstancias] = useState<ProcessoInstancia[]>([]);
   const [comparativo, setComparativo] = useState<ProcessoComparativoItem[]>([]);
   const [options, setOptions] = useState<OptionsData | null>(null);
   const [error, setError] = useState<string | null>(null);

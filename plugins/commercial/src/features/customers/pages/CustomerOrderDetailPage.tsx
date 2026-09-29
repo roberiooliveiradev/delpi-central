@@ -34,6 +34,7 @@ import { CustomerOrderLines } from "../components/CustomerOrderLines";
 import { orderSituationLabel } from "../utils/customerOrderAggregation";
 import { buildOrderKey } from "../utils/customerIdentity";
 import { buildCustomerDetailSearch } from "../utils/customerDetailSection";
+import { buildSellerNameByCustomerKey } from "../utils/sellerNameByCustomer";
 
 type CustomerOrderDetailPageProps = {
   basePath: string;
@@ -58,7 +59,14 @@ export function CustomerOrderDetailPage({
   orderNumber,
   search,
 }: CustomerOrderDetailPageProps) {
-  const { sellerNameByKey, canViewAnalytics } = usePortfolioScope();
+  const { canViewAnalytics, canUseTeamScope, sellers, myPortfolios } =
+    usePortfolioScope();
+  const sellerNameByKey = useMemo(() => {
+    if (canUseTeamScope) return buildSellerNameByCustomerKey(sellers);
+    if (myPortfolios.length > 0)
+      return buildSellerNameByCustomerKey(myPortfolios);
+    return new Map<string, string>();
+  }, [canUseTeamScope, sellers, myPortfolios]);
   const {
     loading,
     refreshing,
@@ -143,13 +151,13 @@ export function CustomerOrderDetailPage({
 
       {error ? <CommercialStateBanner variant="error">{error}</CommercialStateBanner> : null}
       {ordersError ? (
-        <CommercialStateBanner variant="warning">{ordersError}</CommercialStateBanner>
+        <CommercialStateBanner variant="default">{ordersError}</CommercialStateBanner>
       ) : null}
 
       {loading ? <CommercialLoadingCard title="Carregando pedido" /> : null}
 
       {!loading && !order ? (
-        <CommercialStateBanner variant="warning">
+        <CommercialStateBanner variant="default">
           Pedido não encontrado nos abertos desta conta. Ele pode ter sido faturado ou
           fechado.
         </CommercialStateBanner>

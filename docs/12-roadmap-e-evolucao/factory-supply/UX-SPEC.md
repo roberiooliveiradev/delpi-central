@@ -295,7 +295,7 @@ Componentes: `FiltersRow`/`FilterBarShell` + `MultiSelectField`/`SelectField`/`D
 
 ## 22. Priority presentation
 
-`PRIORITY_POLICY = TO_DESIGN` — o frontend **não** computa score. Backend fornece ordenação + banda opcional (`Atrasado` / `Agora` / `Próximo` / `Depois` derivados de `need_window` vs `now`). A UI renderiza a banda como badge e respeita a ordenação recebida; ordenação manual de cards nunca é prioridade.
+`PRIORITY_POLICY = TIME_TO_NEED_FIRST` (P3 `FROZEN`) — o frontend **não** computa score nem reordena. Backend fornece ordenação por fila (eligibility → overdue → `need_at` → tie-break) + `priority_reason` explicável + `urgency_band` opcional (`Atrasado`/`Urgente`/`Alta`/`Normal`/`Futura` — limiares `TO_DESIGN/TO_BENCHMARK`, semântica backend). A UI renderiza banda como badge, `priority_reason` como tooltip/label, e respeita a ordem recebida; não-acionável aparece como `waiting`/`blocked`, nunca como próxima ação; ordenação manual de cards nunca é prioridade.
 
 ## 23. plugin-ui reuse matrix
 
@@ -614,7 +614,7 @@ Evita jargão ERP cru ("SD4", "empenho") em labels de operação — "necessidad
 
 - Derivação exata do estágio da missão com itens mistos (regra "mais atrasado aberto" é candidata — congelar com o backend na Doc 4/5).
 - `collection_round` como contrato persistido (hoje: conceito de sessão UX).
-- Limiar "próximo do prazo" e bandas de prioridade finais (`PRIORITY_POLICY`).
+- Limiar "próximo do prazo" e limiares das bandas de urgência (`PRIORITY_TIME_BANDS = TO_DESIGN/TO_BENCHMARK` — política `TIME_TO_NEED_FIRST` já FROZEN em P3; só os números faltam).
 - Se devolução avulsa (sem item/missão) terá superfície dedicada.
 - Página de item/trace dedicada se a densidade crescer (hoje: dentro do drawer).
 - Nomes de rotas finais (conceitos § 31; manifest na fase de implementação).
@@ -624,8 +624,8 @@ Evita jargão ERP cru ("SD4", "empenho") em labels de operação — "necessidad
 
 | Item | Bloqueia |
 |---|---|
-| `RETURN_QUANTITY_RULE` | rótulo/validação da quantidade esperada de devolução |
-| `PRIORITY_POLICY` + limiares | bandas de urgência e ordenação default |
+| ~~`RETURN_QUANTITY_RULE`~~ — RESOLVIDO P2-B (TC §53.7: sugestão híbrida 3-camadas) | rótulo "Sugestão de devolução" + status de reconciliação |
+| ~~`PRIORITY_POLICY`~~ — RESOLVIDO P3 (`TIME_TO_NEED_FIRST`); limiares de banda `TO_DESIGN/TO_BENCHMARK` | bandas de urgência (ordenação já determinística por `need_at`) |
 | ~~Catálogo de permissões por ator~~ — RESOLVIDO Doc 4/5 §40-A | 3 permissões `access`+`view.filial-*`; `available_actions` decide visibilidade por estado |
 | API de `Timeline`/`InlineMeter`/`JourneyProgressBar` (props exatas) | seleção final do componente de progresso/histórico |
 | Contrato de capabilities no payload (`can_*`) | como a UI decide exibir/esconder ações |
