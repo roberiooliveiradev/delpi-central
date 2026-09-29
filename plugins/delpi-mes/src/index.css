@@ -94,10 +94,43 @@
 .delpi-mes-state { border-radius: 0.8rem; background: color-mix(in srgb, #0f766e 6%, transparent); }
 .delpi-mes-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 
+.delpi-mes-monitoring { max-width: 78rem; margin: 0 auto; }
+.delpi-mes-monitoring__head { display: flex; justify-content: space-between; gap: 1rem; align-items: flex-start; margin-bottom: 1rem; }
+.delpi-mes-monitoring__head h2 { margin: 0; }
+.delpi-mes-monitoring__head p { color: var(--text-secondary, #5c667a); }
+.delpi-mes-monitoring__refresh { display: flex; align-items: center; gap: .75rem; font-size: .82rem; color: var(--text-secondary, #5c667a); }
+.delpi-mes-monitoring button { min-height: 2.5rem; padding: 0 .85rem; border: 1px solid var(--border-subtle, #d9dee8); border-radius: .65rem; color: inherit; background: var(--surface-raised, #fff); cursor: pointer; }
+.delpi-mes-monitoring button:focus-visible, .delpi-mes-work-center-card:focus-visible { outline: 3px solid rgb(14 165 233 / 35%); outline-offset: 2px; }
+.delpi-mes-monitoring__stale, .delpi-mes-monitoring-error { padding: .85rem 1rem; border: 1px solid color-mix(in srgb, #d97706 35%, transparent); border-radius: .7rem; background: color-mix(in srgb, #d97706 8%, transparent); }
+.delpi-mes-monitoring__filters { display: grid; grid-template-columns: minmax(13rem, 2fr) repeat(3, minmax(9rem, 1fr)) auto; gap: .75rem; align-items: end; margin: 1rem 0; }
+.delpi-mes-monitoring__filters label { display: grid; gap: .35rem; color: var(--text-secondary, #5c667a); font-size: .78rem; font-weight: 700; }
+.delpi-mes-monitoring__filters input, .delpi-mes-monitoring__filters select { min-height: 2.55rem; padding: 0 .7rem; border: 1px solid var(--border-subtle, #d9dee8); border-radius: .65rem; color: var(--text-primary, #172033); background: var(--surface-raised, #fff); }
+.delpi-mes-work-center-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr)); gap: .9rem; }
+.delpi-mes-work-center-card { display: grid; gap: .55rem; width: 100%; padding: 1rem !important; text-align: left; border-left: 4px solid var(--border-subtle, #d9dee8) !important; box-shadow: 0 10px 28px rgb(15 23 42 / 6%); }
+.delpi-mes-work-center-card--success { border-left-color: #0f766e !important; }
+.delpi-mes-work-center-card--warning { border-left-color: #d97706 !important; }
+.delpi-mes-work-center-card--danger { border-left-color: #b91c1c !important; }
+.delpi-mes-work-center-card__head { display: flex; align-items: center; justify-content: space-between; gap: .7rem; }
+.delpi-mes-work-center-card__head strong { font-size: 1.12rem; }
+.delpi-mes-work-center-card__duration, .delpi-mes-work-center-card__count { font-weight: 800; }
+.delpi-mes-work-center-card__line, .delpi-mes-work-center-card__secondary { color: var(--text-secondary, #5c667a); font-size: .84rem; }
+.delpi-mes-work-center-card__downtime { padding: .45rem .6rem; border-radius: .5rem; color: #92400e; background: color-mix(in srgb, #f59e0b 12%, transparent); font-size: .82rem; font-weight: 800; }
+.delpi-mes-detail dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; }
+.delpi-mes-detail dl div { padding: .75rem; border-radius: .65rem; background: color-mix(in srgb, #64748b 8%, transparent); }
+.delpi-mes-detail dt { color: var(--text-secondary, #5c667a); font-size: .75rem; }
+.delpi-mes-detail dd { margin: .25rem 0 0; font-weight: 700; }
+.delpi-mes-detail__summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: .5rem; margin: 1rem 0; }
+.delpi-mes-detail__summary span { display: grid; gap: .2rem; padding: .6rem; border: 1px solid var(--border-subtle, #d9dee8); border-radius: .55rem; font-size: .75rem; }
+.delpi-mes-detail__history-disabled { color: var(--text-secondary, #5c667a); }
+
+@media (max-width: 900px) { .delpi-mes-monitoring__filters { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 680px) {
   .delpi-mes-header { align-items: flex-start; flex-direction: column; }
   .delpi-mes-branch, .delpi-mes-branch select { width: 100%; }
   .delpi-mes-nav__link { flex: 1 0 auto; justify-content: center; }
+  .delpi-mes-monitoring__head { flex-direction: column; }
+  .delpi-mes-monitoring__filters, .delpi-mes-detail dl, .delpi-mes-detail__summary { grid-template-columns: 1fr; }
+  .delpi-mes-monitoring__refresh { width: 100%; justify-content: space-between; }
 }
 
 @media (prefers-reduced-motion: no-preference) {

@@ -7,6 +7,7 @@ import { AREAS, BRANCH_PERMISSIONS, type BranchCode, type DelpiMesArea } from ".
 import { DELPI_MES_COPY } from "./content/copy";
 import { buildDelpiMesHref, useDelpiMesRoute } from "./hooks/useDelpiMesRoute";
 import { FoundationPage } from "./pages/FoundationPage";
+import { MonitoringPage } from "./pages/MonitoringPage";
 
 export type AppProps = {
   getAccessToken?: () => string | undefined;
@@ -95,7 +96,14 @@ export default function App({
               );
             })}
           </nav>
-          <FoundationPage area={activeArea} />
+          {activeArea === "monitoring" ? (
+            <MonitoringPage
+              branch={activeBranch}
+              canViewHistory={can("delpi-mes.history.view")}
+            />
+          ) : (
+            <FoundationPage area={activeArea} />
+          )}
         </>
       ) : (
         <section className="delpi-mes-forbidden" role="alert">

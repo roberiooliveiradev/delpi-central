@@ -38,7 +38,7 @@ export default defineConfig(({ mode }) => {
     base: "/apps/delpi-mes/",
     build: { target: "esnext", modulePreload: false, cssCodeSplit: false },
     test: {
-      environment: "node",
+      environment: "jsdom",
       include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
       alias: pluginUiTestAliases(__dirname),
     },

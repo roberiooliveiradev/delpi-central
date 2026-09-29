@@ -51,6 +51,10 @@ Para subir com a infraestrutura canônica:
 
 `delpi-mes.manifest.json` está pronto para importação manual. Esta entrega não registra o manifesto nem busca token administrativo.
 
-## Escopo da Fase 2
+## Monitoramento Industrial MVP
 
-A shell, navegação, permissões, filial, HTTP client e integração federada estão prontas. Monitoramento com dados, paradas e histórico completos pertencem às fases seguintes.
+A página de monitoramento consulta `/monitoring` a cada 5 segundos em um único fluxo centralizado. O polling pausa com aba oculta ou navegador offline e retoma imediatamente ao voltar. Cronômetros são derivados de `stateStartedAt` com correção pelo `referenceAt` do servidor, sem requests por segundo.
+
+Cada snapshot gera N cards sem fan-out. O detalhe usa os dados do card e consulta uma única timeline, somente ao abrir um run e apenas com `delpi-mes.history.view`. A visão cobre exclusivamente runs ativos; não representa catálogo de máquinas nem saúde/offline da telemetria.
+
+Paradas e Histórico completos continuam nas fases seguintes.

@@ -58,6 +58,6 @@ Assim, uma parada iniciada antes da janela e encerrada dentro dela é retornada.
 1. **Fase 0 — Contrato e Fundação (concluída):** contrato S2S somente leitura dentro do owner atual.
 2. **Fase 1 — `delpi-mes-api` (implementada):** BFF gerencial autenticado, stateless e consumidor de `/integrations/mes/*`.
 3. **Fase 2 — plugin `delpi-mes` + Manifesto/RBAC (implementada):** shell federada, rotas, filial, permissões declaradas e manifesto pronto para importação manual; sem registro automático.
-4. **Fase 3 — Monitoramento Industrial:** visão consolidada dos centros de trabalho.
+4. **Fase 3 — Monitoramento Industrial MVP (implementada):** polling consolidado de 5 s, pausa hidden/offline, timers corrigidos por relógio do servidor, filtros locais e timeline sob demanda sem N+1. A visão cobre somente runs ativos e ainda não inclui telemetria offline.
 5. **Fase 4 — Histórico e Paradas:** exploração gerencial dos runs e downtimes.
 6. **Fase 5 — Hardening do MVP:** capacidade, operação, observabilidade e homologação.

@@ -1,0 +1,7 @@
+export type MonitoringSummary = { activeRuns: number; producing: number; stopped: number; paused: number; unclassifiedDowntimes: number };
+export type MonitoringDowntime = { id: string; startedAt: string | null; source: string | null; reasonCode: string | null; reasonLabel: string | null; category: string | null; confirmed: boolean; note: string | null };
+export type MonitoringItem = { branch: string; workCenter: string; runId: string; runStatus: string; operationalState: string | null; stateStartedAt: string | null; stateSource: string | null; integrityStatus: string | null; productionOrder: string | null; operationCode: string | null; operatorCode: string | null; operatorName: string | null; piecesTotal: number; targetPieces: number | null; lastCountActivityAt: string | null; downtime: MonitoringDowntime | null };
+export type MonitoringResponse = { branch: string; referenceAt: string; summary: MonitoringSummary; items: MonitoringItem[] };
+export type TimelineDowntime = Pick<MonitoringDowntime, "id" | "source" | "reasonCode" | "reasonLabel" | "category" | "confirmed" | "note">;
+export type TimelineItem = { id: string; state: string; startedAt: string; endedAt: string | null; durationSeconds: number; source: string | null; downtime: TimelineDowntime | null };
+export type RunTimeline = { runId: string; branch: string; workCenter: string; status: string; referenceAt: string; summary: { elapsedSeconds: number; producingSeconds: number; stoppedSeconds: number; stopCount: number }; items: TimelineItem[] };
