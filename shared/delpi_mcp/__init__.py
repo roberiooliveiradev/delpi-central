@@ -11,11 +11,13 @@ This package currently contains ONLY the conformance layer:
 - ``resource_contract`` (S1): MCP transport-facing OAuth + RFC 9728
   protected-resource contract — challenge/scope/audience helpers, metadata
   document builder and route factory, ``mcp/www_authenticate`` envelope.
+- ``transport`` (S2): canonical ``/mcp`` path rewrite middleware, lifespan
+  composition, and the DNS-rebinding-enabled transport-security shape.
 
 It deliberately does NOT contain (per the design freeze):
 
 - server factories or server-class abstractions;
-- auth middleware or ASGI glue (S2–S3);
+- auth middleware (S3);
 - identity bridge or error adapter helpers (S4–S5);
 - any domain knowledge, tool registry, or business semantics.
 
@@ -37,6 +39,12 @@ from .resource_contract import (
     missing_required_scopes,
     protected_resource_metadata_url,
     token_has_required_audience,
+)
+from .transport import (
+    combine_lifespans,
+    mcp_mount_path_middleware,
+    mcp_transport_security_settings,
+    normalize_mcp_mount_path,
 )
 from .conformance import (
     ConformanceReport,
@@ -71,11 +79,15 @@ __all__ = [
     "build_www_authenticate_challenge",
     "build_www_authenticate_meta",
     "check_protocol_minimum",
+    "combine_lifespans",
     "extract_token_audiences",
     "extract_token_scopes",
     "mcp_allowed_hosts_and_origins",
     "mcp_metadata_router",
+    "mcp_mount_path_middleware",
+    "mcp_transport_security_settings",
     "missing_required_scopes",
+    "normalize_mcp_mount_path",
     "protected_resource_metadata_url",
     "run_mcp_conformance",
     "token_has_required_audience",

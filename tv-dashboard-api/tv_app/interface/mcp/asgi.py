@@ -9,17 +9,20 @@ pattern as TÉO/DAVI).
 
 from __future__ import annotations
 
-import contextlib
-from collections.abc import AsyncIterator, Callable
-from typing import Any
-
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from mcp.server.mcpserver import MCPServer
+
+from delpi_mcp.transport import (
+    combine_lifespans as _shared_combine_lifespans,
+)
+from delpi_mcp.transport import (
+    mcp_mount_path_middleware as _shared_mount_middleware,
+)
 
 from .server import mcp_transport_security
 from starlette.types import ASGIApp
 
-_MCP_EXACT_PATHS = {"/mcp", "/apps/tv-dashboard-api/mcp"}
+_MCP_EXACT_PATHS = frozenset({"/mcp", "/apps/tv-dashboard-api/mcp"})
 
 
 def mcp_http_app(mcp: MCPServer) -> ASGIApp:
@@ -34,28 +37,11 @@ def mcp_http_app(mcp: MCPServer) -> ASGIApp:
 
 def combine_lifespan(app: FastAPI, mcp: MCPServer) -> None:
     """Compose existing FastAPI lifespan with the MCP session/task-group lifespan."""
-    original = app.router.lifespan_context
-
-    @contextlib.asynccontextmanager
-    async def combined(a: FastAPI) -> AsyncIterator[dict]:
-        async with original(a):
-            async with mcp.session_manager.run():
-                yield {}
-
-    app.router.lifespan_context = combined
+    app.router.lifespan_context = _shared_combine_lifespans(
+        app.router.lifespan_context,
+        lambda _app: mcp.session_manager.run(),
+        yield_state={},
+    )
 
 
-async def mcp_mount_path_middleware(request: Request, call_next: Callable[..., Any]) -> Any:
-    """Internal path rewrite so POST to the canonical MCP URL does not 307.
-
-    Registered via ``app.middleware("http")`` — runs before route/mount
-    resolution; `/mcp` → `/mcp/` (and the gateway-prefixed variant) so the
-    Streamable HTTP mount matches without emitting a redirect.
-    """
-    path = request.scope.get("path") or ""
-    if path in _MCP_EXACT_PATHS:
-        normalized = path + "/"
-        request.scope["path"] = normalized
-        if "raw_path" in request.scope:
-            request.scope["raw_path"] = normalized.encode("ascii")
-    return await call_next(request)
+mcp_mount_path_middleware = _shared_mount_middleware(_MCP_EXACT_PATHS)

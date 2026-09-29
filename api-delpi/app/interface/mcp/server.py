@@ -6,7 +6,7 @@ import logging
 from typing import Any
 
 from mcp.server.fastmcp import FastMCP
-from mcp.server.transport_security import TransportSecuritySettings
+from delpi_mcp.transport import mcp_transport_security_settings
 from mcp.types import CallToolResult, TextContent, Tool as MCPTool, ToolAnnotations
 from pydantic import ValidationError
 
@@ -172,8 +172,7 @@ def create_mcp_server() -> FastMCP:
         streamable_http_path="/",
         stateless_http=True,
         json_response=True,
-        transport_security=TransportSecuritySettings(
-            enable_dns_rebinding_protection=True,
+        transport_security=mcp_transport_security_settings(
             allowed_hosts=hosts,
             allowed_origins=origins,
         ),

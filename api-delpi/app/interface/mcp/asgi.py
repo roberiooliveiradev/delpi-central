@@ -2,12 +2,20 @@
 
 from __future__ import annotations
 
-from contextlib import AsyncExitStack, asynccontextmanager
-from collections.abc import AsyncIterator, Callable
+from collections.abc import Callable
 from typing import Any
 
 from starlette.applications import Starlette
-from starlette.requests import Request
+
+from delpi_mcp.transport import (
+    combine_lifespans as _shared_combine_lifespans,
+)
+from delpi_mcp.transport import (
+    mcp_mount_path_middleware as _shared_mount_middleware,
+)
+from delpi_mcp.transport import (
+    normalize_mcp_mount_path as _shared_normalize_path,
+)
 
 from app.interface.mcp.server import create_mcp_server
 
@@ -22,20 +30,10 @@ _MCP_EXACT_PATHS = frozenset({"/mcp", "/apps/api-delpi/mcp"})
 
 def normalize_mcp_mount_path(path: str) -> str:
     """Map exact MCP mount paths to the trailing-slash form without redirect."""
-    if path in _MCP_EXACT_PATHS:
-        return f"{path}/"
-    return path
+    return _shared_normalize_path(path, _MCP_EXACT_PATHS)
 
 
-async def mcp_mount_path_middleware(request: Request, call_next: Callable[..., Any]) -> Any:
-    """Internal path rewrite so POST to the canonical MCP URL does not 307."""
-    path = request.scope.get("path") or ""
-    normalized = normalize_mcp_mount_path(path)
-    if normalized != path:
-        request.scope["path"] = normalized
-        if "raw_path" in request.scope:
-            request.scope["raw_path"] = normalized.encode("ascii")
-    return await call_next(request)
+mcp_mount_path_middleware = _shared_mount_middleware(_MCP_EXACT_PATHS)
 
 
 def combine_lifespan(
@@ -43,15 +41,10 @@ def combine_lifespan(
     mcp_app: Starlette,
 ) -> Callable[..., Any]:
     """Run api-delpi lifespan together with the MCP session manager lifespan."""
-
-    @asynccontextmanager
-    async def combined(app: Any) -> AsyncIterator[None]:
-        async with AsyncExitStack() as stack:
-            await stack.enter_async_context(app_lifespan(app))
-            await stack.enter_async_context(mcp_app.router.lifespan_context(mcp_app))
-            yield
-
-    return combined
+    return _shared_combine_lifespans(
+        app_lifespan,
+        lambda _app: mcp_app.router.lifespan_context(mcp_app),
+    )
 
 
 __all__ = [

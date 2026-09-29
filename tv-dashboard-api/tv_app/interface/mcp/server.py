@@ -10,6 +10,8 @@ from typing import Annotated, Any
 from mcp.server.mcpserver import MCPServer
 from mcp.server.mcpserver.exceptions import ToolError
 from mcp.server.transport_security import TransportSecuritySettings
+
+from delpi_mcp.transport import mcp_transport_security_settings
 from mcp.types import CallToolResult, InputRequiredResult, ToolAnnotations
 
 from tv_app.config import settings
@@ -60,8 +62,7 @@ def _mcp_allowed_origins() -> list[str]:
 
 
 def mcp_transport_security() -> TransportSecuritySettings:
-    return TransportSecuritySettings(
-        enable_dns_rebinding_protection=True,
+    return mcp_transport_security_settings(
         allowed_hosts=_mcp_allowed_hosts(),
         allowed_origins=_mcp_allowed_origins(),
     )

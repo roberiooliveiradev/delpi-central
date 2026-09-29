@@ -27,10 +27,11 @@ def test_delpi_mcp_has_no_domain_imports():
     assert offenders == []
 
 
-def test_delpi_mcp_has_no_mcp_sdk_runtime_dependency():
-    """The validator operates on wire dicts — the mcp SDK is not imported."""
+def test_delpi_mcp_has_no_top_level_mcp_sdk_dependency():
+    """SDK imports must stay lazy (function-level) — the package must remain
+    importable without the mcp SDK installed."""
     pkg_dir = Path(delpi_mcp.__file__).parent
-    mcp_import = re.compile(r"^\s*(?:from|import)\s+mcp\b", re.MULTILINE)
+    mcp_import = re.compile(r"^(?:from|import)\s+mcp\b", re.MULTILINE)
     offenders = [
         py.name
         for py in pkg_dir.glob("*.py")  # package modules only, not tests
