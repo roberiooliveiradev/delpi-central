@@ -82,7 +82,7 @@ export const DIAGNOSTIC_ACTION_LABELS: Record<DiagnosticManageAction, string> = 
 /** Field labels for the sealed exact_change payload shown in the review. */
 export const EXACT_CHANGE_FIELD_LABELS: Record<string, string> = {
   statement: "Enunciado",
-  problem_statement: "Problem statement",
+  problem_statement: "Problema investigado",
   role: "Papel",
   epistemic_state: "Natureza epistêmica",
   provenance: "Origem",

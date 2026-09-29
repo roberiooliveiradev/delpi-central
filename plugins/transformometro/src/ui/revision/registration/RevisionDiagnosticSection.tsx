@@ -484,7 +484,7 @@ export function RevisionDiagnosticSection({
       {createStage === "form" ? (
         <div className="tm-diagnostic-create">
           <div className="ds-field">
-            <FieldLabel label="Problem statement" htmlFor="tm-diagnostic-create-statement" />
+            <FieldLabel label="Problema investigado" htmlFor="tm-diagnostic-create-statement" />
             <textarea
               id="tm-diagnostic-create-statement"
               className="delpi-ui-native-control tm-diagnostic-textarea"
@@ -536,7 +536,7 @@ export function RevisionDiagnosticSection({
               <dd>Criar diagnóstico</dd>
             </div>
             <div>
-              <dt>Problem statement</dt>
+              <dt>Problema investigado</dt>
               <dd>{String(createProposal.exact_change?.problem_statement ?? "")}</dd>
             </div>
           </dl>

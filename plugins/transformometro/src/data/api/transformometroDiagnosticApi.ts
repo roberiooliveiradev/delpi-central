@@ -283,7 +283,10 @@ export async function prepareCreateDiagnostic(
     `${TRANSFORMOMETRO_API_BASE}/revisions/${revisaoId}/diagnostics/prepare`,
     {
       method: "POST",
-      headers: buildAuthHeaders(getAccessToken),
+      headers: {
+        ...buildAuthHeaders(getAccessToken),
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({ problem_statement: problemStatement }),
     }
   );
@@ -300,7 +303,10 @@ export async function prepareManageDiagnostic(
     `${TRANSFORMOMETRO_API_BASE}/diagnostics/${diagnosticId}/prepare`,
     {
       method: "POST",
-      headers: buildAuthHeaders(getAccessToken),
+      headers: {
+        ...buildAuthHeaders(getAccessToken),
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({ action, payload }),
     }
   );
@@ -315,7 +321,10 @@ export async function commitGovernedProposal(
     `${TRANSFORMOMETRO_API_BASE}/governed-proposals/commit`,
     {
       method: "POST",
-      headers: buildAuthHeaders(getAccessToken),
+      headers: {
+        ...buildAuthHeaders(getAccessToken),
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({
         proposal_handle: proposalHandle,
         confirmation: true,

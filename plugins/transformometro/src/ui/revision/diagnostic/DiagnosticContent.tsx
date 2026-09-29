@@ -200,7 +200,7 @@ export function DiagnosticContent({
 
       <section className="tm-diagnostic__block" aria-labelledby="tm-diag-problem">
         <h3 id="tm-diag-problem" className="tm-diagnostic__heading">
-          Problem statement
+          Problema investigado
           <HelpTooltip
             content="Problema que orienta este diagnóstico. Registrado na criação e mantido somente leitura nesta versão."
             ariaLabel="Ajuda: problem statement"
