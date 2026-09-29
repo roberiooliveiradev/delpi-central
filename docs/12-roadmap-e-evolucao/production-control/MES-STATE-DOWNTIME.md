@@ -3,7 +3,7 @@
 > **Status:** Etapa 04 implementada — timer realtime da parada + timeline do run.
 > **Owner do domínio MES:** `production-control-api`
 > **Owner da telemetria:** `production-pulse-api` (apenas hardware/counter/epoch/saúde)
-> **Robustez/recuperação/homologação:** Etapa 05 — *não implementada ainda*
+> **Robustez/recuperação/auditoria/integridade:** Etapa 05 implementada (§9). Homologação industrial: `MES-PHASE-01-HOMOLOGATION.md`.
 
 Documento canônico do modelo MES de estados do centro de trabalho e paradas.
 A contagem de peças Pulse → run permanece documentada em
@@ -271,7 +271,85 @@ Contrato:
 
 Sem polling periódico de timeline; o trecho aberto evolui localmente.
 
-## 9. O que NÃO foi feito (fica para a Etapa 05+)
+## 9. Robustez, auditoria e integridade (Etapa 05)
+
+### Política de falha do Production Pulse
+
+Telemetria indisponível **não** é máquina parada e nunca cria downtime. A
+validação do snapshot é centralizada em
+`domain/services/pulse_snapshot.py` → `classify_pulse_snapshot`, com estados
+`usable | offline | invalid | unavailable`; nenhum caminho converte
+counter/counterEpoch ausentes para `0`.
+
+- **Play**: exige snapshot `usable` (device único do CT, counter/epoch válidos,
+  online e sem staleness > 3× `pollIntervalMs`). Rejeita com erro claro ao
+  operador.
+- **Resume**: exige snapshot `usable` — cria a nova âncora do contador. Sem
+  Pulse: run permanece `paused`, downtime aberto, nenhum segmento falso.
+- **Pause**: funciona degradado — usa somente o último `pieces_total`
+  persistido e as peças já conhecidas do segmento aberto, fecha o segmento sem
+  inventar contagem, abre `stopped` + downtime e registra
+  `telemetry_fallback_used`.
+- **Stop running**: mesma estratégia do Pause (consolida com snapshot
+  confiável ou fecha com último valor conhecido e completa em modo degradado).
+- **Stop paused**: não depende do Pulse.
+- **Poller**: snapshot inválido/offline mantém a última contagem e o segmento
+  aberto inalterados; não gera epoch artificial; retenta no próximo ciclo.
+- **`get_active`**: falha de telemetria devolve `device.online=false` no
+  payload sem derrubar a leitura do run.
+
+`counterEpoch` alterado fecha o segmento com o último valor conhecido e abre
+nova âncora — auditado como `counter_epoch_changed` com
+`{previousEpoch, newEpoch}`.
+
+### Auditoria MES (V011 `mes_audit_events`)
+
+Tabela append-only: `id, branch, work_center, run_id, action, actor_type,
+actor_ref, occurred_at, details JSONB, created_at`. Sem tokens/JWT/segredos.
+
+Ações registradas: `run_started`, `run_paused`, `run_resumed`, `run_stopped`,
+`downtime_classified`, `downtime_reason_changed` (com previous/new no
+`details`), `counter_epoch_changed`, `telemetry_fallback_used`.
+`actor_type=operator` com `actor_ref` = código do operador da sessão;
+`system` para eventos sem operador.
+
+A auditoria participa da **mesma transação** da transição: se estado/downtime
+faz rollback, nenhuma linha de audit "falso-sucesso" sobrevive. A
+classificação (`downtime classify`) também é atômica com sua auditoria via
+`conn` compartilhada.
+
+### Integrity check (`MesRuntimeIntegrityService`)
+
+Executado no startup: migrations → integrity check → poller. Somente-leitura;
+**nunca auto-repara** (auto-repair inventaria história industrial). Saída:
+issues `{severity, issue_code, run_id, branch, work_center}` logadas de forma
+estruturada. A API **continua subindo** mesmo com inconsistências — o serviço
+precisa estar disponível para diagnóstico/recuperação.
+
+Regras: `running` observado pelo MES exige segmento aberto + `producing`
+aberto e nenhum downtime aberto; `paused` exige `stopped` + downtime aberto e
+nenhum segmento aberto; `completed/aborted` não podem ter segmento/estado/
+downtime abertos; fatos abertos de run A em CT cujo ativo é B = `CRITICAL`
+cross-run; run sem nenhum evento MES = `WARNING` legado. Anomalias detectadas
+incluem `paused_with_open_producing`, `running_with_open_stopped`,
+`open_downtime_of_other_run`, `finished_with_open_state`, entre outras.
+
+### Recuperação após restart
+
+Run/segmento/estados/downtime são fatos persistidos: restart de API,
+navegador ou container não cria run novo, não duplica `producing`/`stopped`,
+não duplica downtime e não move a âncora. O poller retoma os runs `running`
+do banco. O timer volta pelo `startedAt` persistido; o cockpit reconcilia via
+HTTP no reconnect do WebSocket (single-flight) — sem polling de timeline.
+
+### Telemetria offline na UI
+
+`device.online === false` exibe o banner "Contador sem comunicação — última
+contagem conhecida mantida", visual e semanticamente distinto de "Produção
+parada". Pausar/Encerrar seguem disponíveis; o contador congela no último
+valor confiável.
+
+## 10. O que NÃO foi feito (fica para fases seguintes)
 
 - abertura de `idle` ao finalizar run — não necessária nesta fase;
 - administração do catálogo de motivos;
@@ -279,5 +357,6 @@ Sem polling periódico de timeline; o trecho aberto evolui localmente.
 - nenhum backfill de histórico;
 - nenhuma alteração no Production Pulse;
 - detecção automática de parada / microparadas;
-- integração da parada MES com TOTVS;
-- robustez/recuperação/auditoria e homologação industrial (Etapa 05).
+- integração da parada MES com TOTVS.
+
+Homologação industrial formal: `MES-PHASE-01-HOMOLOGATION.md`.

@@ -444,6 +444,7 @@ def build_production_run_service(
             downtimes=PostgresDowntimeEventRepository(),
             reasons=PostgresDowntimeReasonRepository(),
         ),
+        audit=PostgresMesAuditRepository(),
     )
 
 
@@ -484,6 +485,7 @@ def build_mes_downtime_classification_service(
     from production_control_app.infrastructure.persistence.postgres_mes_repository import (  # noqa: E501
         PostgresDowntimeEventRepository,
         PostgresDowntimeReasonRepository,
+        PostgresMesAuditRepository,
     )
 
     return MesDowntimeClassificationService(
@@ -492,4 +494,5 @@ def build_mes_downtime_classification_service(
         ),
         downtimes=PostgresDowntimeEventRepository(),
         reasons=PostgresDowntimeReasonRepository(),
+        audit=PostgresMesAuditRepository(),
     )

@@ -328,10 +328,11 @@ class PostgresDowntimeEventRepository:
         confirmed_by_type: str | None = None,
         confirmed_by_ref: str | None = None,
         confirmed: bool = True,
+        conn: Any | None = None,
     ) -> dict[str, Any]:
-        with get_connection() as conn:
+        def _run(conn_: Any) -> dict[str, Any]:
             try:
-                with conn.cursor() as cur:
+                with conn_.cursor() as cur:
                     cur.execute(
                         f"""
                         UPDATE {_DOWNTIMES}
@@ -361,18 +362,25 @@ class PostgresDowntimeEventRepository:
                     )
                     row = cur.fetchone()
             except ForeignKeyViolation as exc:
-                conn.rollback()
                 raise InvalidMesEvent(
                     "Motivo de parada inexistente no catálogo."
                 ) from exc
             except psycopg.errors.CheckViolation as exc:
-                conn.rollback()
                 raise InvalidMesEvent(str(exc)) from exc
             if row is None:
-                conn.rollback()
                 raise DowntimeNotFound("Parada não encontrada.")
-            conn.commit()
             return dict(row)
+
+        if conn is not None:
+            return _run(conn)
+        with get_connection() as conn_:
+            try:
+                row = _run(conn_)
+            except Exception:
+                conn_.rollback()
+                raise
+            conn_.commit()
+            return row
 
     def close_open(
         self,
@@ -510,3 +518,71 @@ class PostgresDowntimeReasonRepository:
                 row = cur.fetchone()
             conn.commit()
             return dict(row) if row else None
+
+
+_AUDIT = f"{PC_SCHEMA_NAME}.mes_audit_events"
+
+
+class PostgresMesAuditRepository:
+    """Auditoria append-only das ações MES — nunca registra tokens/segredos."""
+
+    def append(
+        self,
+        *,
+        branch: str,
+        work_center: str,
+        action: str,
+        actor_type: str,
+        actor_ref: str | None = None,
+        run_id: str | None = None,
+        occurred_at: Any | None = None,
+        details: dict[str, Any] | None = None,
+        conn: Any | None = None,
+    ) -> dict[str, Any]:
+        from psycopg.types.json import Jsonb
+
+        sql = f"""
+            INSERT INTO {_AUDIT}
+                (branch, work_center, run_id, action, actor_type, actor_ref,
+                 occurred_at, details)
+            VALUES (%s, %s, %s::uuid, %s, %s, %s,
+                    COALESCE(%s, NOW()), %s)
+            RETURNING id, branch, work_center, run_id::text AS run_id, action,
+                      actor_type, actor_ref, occurred_at, details, created_at
+        """
+        params = (
+            branch,
+            work_center,
+            run_id,
+            str(action).strip(),
+            actor_type,
+            actor_ref,
+            occurred_at,
+            Jsonb(details or {}),
+        )
+        if conn is not None:
+            with conn.cursor() as cur:
+                cur.execute(sql, params)
+                return dict(cur.fetchone())
+        with get_connection() as conn_:
+            with conn_.cursor() as cur:
+                cur.execute(sql, params)
+                row = dict(cur.fetchone())
+            conn_.commit()
+            return row
+
+    def list_for_run(self, run_id: str) -> list[dict[str, Any]]:
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"""
+                    SELECT id, branch, work_center, run_id::text AS run_id,
+                           action, actor_type, actor_ref, occurred_at, details,
+                           created_at
+                    FROM {_AUDIT}
+                    WHERE run_id = %s::uuid
+                    ORDER BY occurred_at, created_at
+                    """,
+                    (run_id,),
+                )
+                return [dict(row) for row in cur.fetchall()]

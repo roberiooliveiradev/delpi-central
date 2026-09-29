@@ -16,6 +16,8 @@ type Options = {
   token: string;
   sessionToken: string | null;
   runId: string | null;
+  branch?: string | null;
+  workCenter?: string | null;
   runRealtimeEvent?: MachineLoadRealtimeEvent | null;
   realtimeConnected?: boolean;
 };
@@ -28,6 +30,8 @@ export function useRunTimeline({
   token,
   sessionToken,
   runId,
+  branch = null,
+  workCenter = null,
   runRealtimeEvent = null,
   realtimeConnected = false,
 }: Options) {
@@ -87,14 +91,20 @@ export function useRunTimeline({
 
   // Eventos de lifecycle/classificação disparam reconciliação coalescida.
   useEffect(() => {
+    const scoped =
+      (!branch || !runRealtimeEvent?.branch || runRealtimeEvent.branch === branch) &&
+      (!workCenter ||
+        !runRealtimeEvent?.workCenter ||
+        runRealtimeEvent.workCenter === workCenter) &&
+      (!runRealtimeEvent?.runId || runRealtimeEvent.runId === runId);
     if (
       runRealtimeEvent?.type === "production_run_updated" &&
       TIMELINE_REASONS.has(runRealtimeEvent.reason) &&
-      (!runRealtimeEvent.runId || runRealtimeEvent.runId === runId)
+      scoped
     ) {
       void refresh();
     }
-  }, [runRealtimeEvent, runId, refresh]);
+  }, [runRealtimeEvent, runId, branch, workCenter, refresh]);
 
   // Reconexão do WS: uma reconciliação HTTP, mesmo princípio do run.
   const wasConnectedRef = useRef(realtimeConnected);
