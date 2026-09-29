@@ -75,9 +75,9 @@ def validation_error_tool_result(message: str = VALIDATION_ERROR_MESSAGE) -> Cal
 
 def _actor_id() -> str | None:
     try:
-        from delpi_auth.request_context import get_current_user
+        from delpi_mcp.identity import current_mcp_context
 
-        user = get_current_user()
+        user = current_mcp_context().user
         return str(getattr(user, "id", None) or "") or None
     except Exception:
         return None
@@ -85,9 +85,9 @@ def _actor_id() -> str | None:
 
 def _authorization() -> str | None:
     try:
-        from delpi_auth.request_context import get_request_authorization
+        from delpi_mcp.identity import current_mcp_context
 
-        return get_request_authorization()
+        return current_mcp_context().authorization or None
     except Exception:
         return None
 
