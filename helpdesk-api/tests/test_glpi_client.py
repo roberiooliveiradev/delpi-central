@@ -1079,7 +1079,7 @@ def test_legacy_document_upload_uses_apirest_with_app_token():
 
 def test_legacy_document_upload_restores_actor_as_document_owner():
     """Uploads run on a technical legacy session; owner must be re-attributed
-    to the OAuth subject resolved via HLAPI User/Me."""
+    to the OAuth subject resolved via HLAPI GET /session (scope 'api')."""
     calls: list[str] = []
     owner_update: dict | None = None
 
@@ -1088,9 +1088,9 @@ def test_legacy_document_upload_restores_actor_as_document_owner():
         calls.append(f"{request.method} {request.url.path}")
         if request.url.path.endswith("/Assistance/Ticket/7"):
             return httpx.Response(200, json={"id": 7, "name": "t"})
-        if request.url.path.endswith("/Administration/User/Me"):
+        if request.url.path.endswith("/api.php/v2.2/session"):
             assert request.headers.get("Authorization") == "Bearer oauth-access"
-            return httpx.Response(200, json={"id": 68, "name": "franciely"})
+            return httpx.Response(200, json={"user_id": 68})
         if request.url.path.endswith("/apirest.php/initSession"):
             return httpx.Response(200, json={"session_token": "sess-1"})
         if request.url.path.endswith("/apirest.php/Document/55") and request.method == "PUT":
@@ -1125,17 +1125,18 @@ def test_legacy_document_upload_restores_actor_as_document_owner():
     )
     assert uploaded.document_id == 55
     assert owner_update == {"id": 55, "users_id": 68}
-    assert "GET /api.php/v2.2/Administration/User/Me" in calls
+    assert "GET /api.php/v2.2/session" in calls
 
 
 def test_legacy_document_upload_keeps_upload_when_owner_unresolved():
-    """If User/Me is unavailable the upload still succeeds (technical owner)."""
+    """If the session identity cannot be resolved the upload still succeeds
+    (document keeps the technical owner instead of failing the request)."""
     owner_puts: list[dict] = []
 
     def handler(request: httpx.Request) -> httpx.Response:
         if request.url.path.endswith("/Assistance/Ticket/7"):
             return httpx.Response(200, json={"id": 7, "name": "t"})
-        if request.url.path.endswith("/Administration/User/Me"):
+        if request.url.path.endswith("/api.php/v2.2/session"):
             return httpx.Response(403, json={"error": "denied"})
         if request.url.path.endswith("/apirest.php/initSession"):
             return httpx.Response(200, json={"session_token": "sess-1"})
