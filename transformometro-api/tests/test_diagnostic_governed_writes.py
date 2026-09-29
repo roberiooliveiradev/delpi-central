@@ -928,3 +928,37 @@ def test_act_mark_stale_effective_validation(rbac):
     hyp_view = result["data"]["diagnostic"]["hypotheses"][0]
     assert hyp_view["effective_validation"] == "STALE_EVIDENCE"
     assert hyp_view["lifecycle"] == "DRAFT"
+
+
+def test_run_sync_inside_running_loop_propagates_context():
+    # Regression for MCP runtime: the mcp SDK invokes sync tool handlers
+    # on the event-loop thread, so run_sync must drive the coroutine on a
+    # dedicated thread while preserving request-context contextvars.
+    import asyncio
+    import contextvars
+
+    from tm_app.application.governed_writes.diagnostic_capabilities import (
+        run_sync,
+    )
+
+    marker: contextvars.ContextVar[str] = contextvars.ContextVar("marker")
+    marker.set("request-ctx")
+
+    async def coro():
+        return marker.get()
+
+    async def main():
+        return run_sync(coro())
+
+    assert asyncio.run(main()) == "request-ctx"
+
+
+def test_run_sync_without_loop_executes_directly():
+    from tm_app.application.governed_writes.diagnostic_capabilities import (
+        run_sync,
+    )
+
+    async def coro():
+        return 42
+
+    assert run_sync(coro()) == 42

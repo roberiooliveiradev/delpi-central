@@ -17,6 +17,8 @@ mutation, optimistic save, authoritative read-back and postcondition).
 from __future__ import annotations
 
 import asyncio
+import concurrent.futures
+import contextvars
 from dataclasses import asdict
 from typing import Any, Callable, NamedTuple
 
@@ -612,20 +614,20 @@ def _map_write_error(exc: Exception) -> GovernedWriteError:
 def run_sync(coro: Any) -> Any:
     """Execute the async write use case from the sync governed path.
 
-    All current call sites run outside an event loop (sync FastAPI
-    handlers run in a threadpool; MCP tools call sync bridges). Inside a
-    running loop we fail loudly rather than silently pick wrong semantics.
+    Sync call sites without a running loop drive the coroutine directly.
+    Callers that execute sync code on a running event loop (the MCP SDK
+    invokes sync tool handlers on the loop thread) get the coroutine
+    driven on a dedicated thread with its own loop; ``copy_context``
+    propagates request-context contextvars so fresh AuthZ keeps the
+    caller identity.
     """
     try:
         asyncio.get_running_loop()
     except RuntimeError:
         return asyncio.run(coro)
-    coro.close()
-    _raise(
-        "Diagnostic ACT requires a non-async execution context.",
-        code=INTERNAL,
-        status_code=500,
-    )
+    ctx = contextvars.copy_context()
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+        return executor.submit(ctx.run, asyncio.run, coro).result()
 
 
 def execute(stack: DiagnosticWriteStack, change: dict[str, Any]) -> Any:
