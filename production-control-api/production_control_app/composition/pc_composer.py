@@ -415,6 +415,7 @@ def build_production_run_service(
     from production_control_app.infrastructure.persistence.postgres_mes_repository import (
         PostgresDowntimeEventRepository,
         PostgresDowntimeReasonRepository,
+        PostgresMesAuditRepository,
         PostgresWorkCenterStateRepository,
     )
 
