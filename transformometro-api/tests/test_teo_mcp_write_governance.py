@@ -438,8 +438,8 @@ class TestMcpBridgeGoverned:
                 },
             ):
                 result = tool_validate_improvement_package(process={}, instance={})
-            assert result.isError is False
-            assert result.structuredContent["data"]["ready"] is False
+            assert result.is_error is False
+            assert result.structured_content["data"]["ready"] is False
         finally:
             reset_request_authorization(auth_token)
             reset_current_user(user_token)
@@ -452,9 +452,9 @@ class TestMcpBridgeGoverned:
                 instance={"filial_id": "filial-01"},
                 dry_run=False,
             )
-            assert result.isError is True
+            assert result.is_error is True
             assert (
-                result.structuredContent["data"]["error_code"] == "proposal_required"
+                result.structured_content["data"]["error_code"] == "proposal_required"
             )
         finally:
             reset_request_authorization(auth_token)
@@ -470,8 +470,8 @@ class TestMcpBridgeGoverned:
                 evidence_id="e1",
                 confirm_delete=False,
             )
-            assert result.isError is True
-            assert "confirm_delete" in result.structuredContent["message"]
+            assert result.is_error is True
+            assert "confirm_delete" in result.structured_content["message"]
         finally:
             reset_request_authorization(auth_token)
             reset_current_user(user_token)
@@ -490,9 +490,9 @@ class TestMcpBridgeGoverned:
                 from tm_app.interface.mcp.tool_bridge import tool_commit_proposal
 
                 result = tool_commit_proposal("fake.handle", confirmation=True)
-            assert result.isError is True
+            assert result.is_error is True
             assert (
-                result.structuredContent["data"]["error_code"]
+                result.structured_content["data"]["error_code"]
                 == OUTCOME_VERIFICATION_FAILED
             )
         finally:
@@ -501,15 +501,15 @@ class TestMcpBridgeGoverned:
 
     def test_get_catalog_unauthorized_without_user(self):
         result = tool_get_catalog()
-        assert result.isError is True
-        assert result.structuredContent["status_code"] == 401
+        assert result.is_error is True
+        assert result.structured_content["status_code"] == 401
 
     def test_prepare_recalculate_forbidden_via_bridge(self):
         user_token, auth_token = self._auth(permissions=[])
         try:
             result = tool_prepare_recalculate_dashboard()
-            assert result.isError is True
-            assert result.structuredContent["status_code"] == 403
+            assert result.is_error is True
+            assert result.structured_content["status_code"] == 403
         finally:
             reset_request_authorization(auth_token)
             reset_current_user(user_token)
@@ -534,8 +534,8 @@ class TestMcpBridgeGoverned:
                         return_value={"id": "r1"},
                     ):
                         result = tool_prepare_activate_revision("r1")
-            assert result.isError is True
-            assert result.structuredContent["status_code"] == 403
+            assert result.is_error is True
+            assert result.structured_content["status_code"] == 403
         finally:
             reset_request_authorization(auth_token)
             reset_current_user(user_token)
@@ -550,7 +550,7 @@ class TestExplicitConfirmationHardening:
         from tm_app.interface.mcp.server import create_mcp_server
 
         tools = {t.name: t for t in asyncio.run(create_mcp_server().list_tools())}
-        schema = tools["commit_proposal"].inputSchema
+        schema = tools["commit_proposal"].input_schema
         assert set(schema.get("required") or []) == {
             "proposal_handle",
             "confirmation",

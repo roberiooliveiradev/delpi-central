@@ -122,9 +122,9 @@ def test_list_tools_exposes_governed_full_crud_tools() -> None:
         assert tool.securitySchemes == TEO_MCP_SECURITY_SCHEMES  # type: ignore[attr-defined]
         ann = tool.annotations
         if tool.name == "commit_proposal":
-            assert ann is not None and ann.destructiveHint is True
+            assert ann is not None and ann.destructive_hint is True
         if TOOL_CLASS[tool.name] in {"READ", "ANALYSIS"}:
-            assert ann is not None and ann.readOnlyHint is True
+            assert ann is not None and ann.read_only_hint is True
 
 
 

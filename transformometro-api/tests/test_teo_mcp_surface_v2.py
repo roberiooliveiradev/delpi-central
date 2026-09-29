@@ -89,12 +89,12 @@ def test_prepare_record_change_delegates_to_shared_facade() -> None:
                 operation="create",
                 changes={"titulo": "Doc"},
             )
-        assert result.isError is False
+        assert result.is_error is False
         prep.assert_called_once()
         kwargs = prep.call_args.kwargs
         assert kwargs["entity"] == "process_document"
         assert kwargs["operation"] == "create"
-        data = result.structuredContent["data"]
+        data = result.structured_content["data"]
         assert data["status"] == "proposal_ready"
         assert data["proposal"]["handle"] == "opaque.handle"
     finally:
@@ -118,10 +118,10 @@ def test_commit_proposal_rejects_confirmation_false() -> None:
     auth_token = set_request_authorization("Bearer test")
     try:
         result = tool_commit_proposal("any.handle", confirmation=False)
-        assert result.isError is True
-        msg = (result.structuredContent or {}).get("message", "")
+        assert result.is_error is True
+        msg = (result.structured_content or {}).get("message", "")
         assert "confirmation" in msg.lower() or "CONFIRMATION" in str(
-            result.structuredContent
+            result.structured_content
         )
     finally:
         reset_request_authorization(auth_token)

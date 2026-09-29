@@ -135,8 +135,8 @@ def test_tool_registered_read_only_and_not_an_act() -> None:
     assert len(tools) == 24
     guide = tools["get_methodology_guide"]
     assert guide.annotations is not None
-    assert guide.annotations.readOnlyHint is True
-    assert guide.annotations.destructiveHint is False
+    assert guide.annotations.read_only_hint is True
+    assert guide.annotations.destructive_hint is False
     assert "proposal_handle" not in (guide.description or "")
 
 
@@ -154,8 +154,8 @@ def _user():
 
 def test_bridge_requires_authentication() -> None:
     result = tool_get_methodology_guide(method="sipoc")
-    assert result.isError is True
-    assert result.structuredContent["status_code"] == 401
+    assert result.is_error is True
+    assert result.structured_content["status_code"] == 401
 
 
 def test_bridge_forbidden_does_not_return_playbook() -> None:
@@ -167,9 +167,9 @@ def test_bridge_forbidden_does_not_return_playbook() -> None:
             return_value=JSONResponse({"message": "denied"}, status_code=403),
         ):
             result = tool_get_methodology_guide(method="lean")
-        assert result.isError is True
-        assert result.structuredContent["status_code"] == 403
-        assert "purpose" not in json.dumps(result.structuredContent)
+        assert result.is_error is True
+        assert result.structured_content["status_code"] == 403
+        assert "purpose" not in json.dumps(result.structured_content)
     finally:
         reset_request_authorization(auth_token)
         reset_current_user(user_token)
@@ -184,8 +184,8 @@ def test_bridge_returns_sipoc_without_write_fields() -> None:
             return_value=None,
         ):
             result = tool_get_methodology_guide(method="sipoc")
-        assert result.isError is False
-        data = result.structuredContent["data"]
+        assert result.is_error is False
+        data = result.structured_content["data"]
         assert data["method"]["id"] == "sipoc"
         assert data["writes"] is False
         assert "act_" not in json.dumps(data["method"]["steps"])
