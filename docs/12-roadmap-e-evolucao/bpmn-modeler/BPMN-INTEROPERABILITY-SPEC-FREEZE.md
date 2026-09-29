@@ -22,7 +22,7 @@ Fechar WHAT + HOW técnico de validação/interoperabilidade BPMN da V1: o que �
 |---|---|
 | BPMN 2.0 XML = semântica canônica; BPMN-DI no mesmo artefato = geometria canônica | FROZEN |
 | `CanonicalBpmnArtifact(content: str)` = representação, não validade | FROZEN |
-| `BpmnArtifactValidationPort → ValidationReport` (`ValidationIssue`, `ValidationStage`, `ValidationSeverity`, `RuleSource`) | FROZEN — nenhuma mudança de contrato exigida por este spec (seção 7) |
+| `BpmnArtifactValidationPort → ValidationReport` (`ValidationIssue`, `ValidationStage`, `ValidationSeverity`, `RuleSource`) | FROZEN para stage/report model; **mudança de contrato REQUIRED** na assinatura de validate — `InputSafetyEvidence` opcional (seção 24) |
 | ValidationReport = evidência ≠ operation policy; preservation risk ≠ preservation proof | FROZEN |
 | Domain não conhece parser; `flowchart_v1` = legado do Transformômetro; JSON visual paralelo proibido | FROZEN (enforced por `test_architecture.py`) |
 | Save pipeline: validation → operation policy → persist/reject (`VALIDATION_BLOCKED`) | FROZEN (Prompt 2, seção 8) |
@@ -35,7 +35,7 @@ Fechar WHAT + HOW técnico de validação/interoperabilidade BPMN da V1: o que �
 | Fonte | Uso | Referência |
 |---|---|---|
 | OMG BPMN 2.0.2 (formal/2013-12-09) | regras semânticas/estruturais, connection rules (Tabelas 7.3/7.4), extension mechanism (§8.2.3), exchange format (§15) | `omg.org/spec/BPMN/2.0.2/` |
-| OMG machine-readable XSDs | validação estrutural | `spec/BPMN/20100501/`: `BPMN20.xsd`, `Semantic.xsd`, `BPMNDI.xsd`, `DI.xsd`, `DC.xsd` (file id `dtc/10-05-04`) |
+| OMG machine-readable XSDs | validação estrutural | source files em `spec/BPMN/20100501/`: `BPMN20.xsd`, `Semantic.xsd`, `BPMNDI.xsd`, `DI.xsd`, `DC.xsd` (file id `dtc/10-05-04`). **Atenção: data do path dos arquivos (`20100501`) ≠ data dos XML namespaces (`20100524`)** — ver seção 37 |
 | W3C XML 1.0 / XMLNS | well-formedness, namespaces | w3.org |
 | Vendor docs (lxml, bpmn-moddle) | comportamento de biblioteca somente — nunca autoridade normativa | lxml.de, github.com/bpmn-io |
 
@@ -45,14 +45,17 @@ Estados conceituais de intake (`FROZEN`):
 
 | Estado | Significado | Cond |
 |---|---|---|
-| `NON_XML` | conteúdo não é texto XML utilizável (binário, vazio, não-decodável) | INPUT_SAFETY/WF fail antes de qualquer parse útil |
+| `INPUT_REJECTED_SECURITY` | input recusado na intake segura (antes ou durante) — oversize, DTD/doctype, XXE, profundidade, entity expansion | evidência de intake com check SEC-* falho; `CanonicalBpmnArtifact` nunca existe; BPMN recognition NOT_EVALUATED |
+| `NON_XML` | conteúdo não pode produzir texto XML utilizável (binário, não-decodável, payload sem XML text) | falha de decode/intake antes de artifact existir — **não** é rejeição de segurança nem falha de well-formedness |
 | `MALFORMED_XML` | é XML-aspirante mas falha well-formedness | XML_WELL_FORMEDNESS com issue fatal |
 | `XML_NOT_BPMN` | XML bem-formado cujo root não é BPMN `definitions` no namespace BPMN 2.0 | recognition rules BPMN-REC-001/002 |
 | `BPMN_RECOGNIZED_INCOMPLETE` | root é BPMN definitions mas estrutura mínima ausente/degradada (ex.: sem nenhum process/participant; falhas XSD graves) | recognized + issues estruturais |
 | `BPMN_RECOGNIZED_WITH_ISSUES` | BPMN reconhecido, carrega issues (ERROR/WARNING/INFO) em stages avaliados | recognized + issues não-fatais |
 | `BPMN_RECOGNIZED` | BPMN reconhecido sem issues acima de INFO | clean |
 
-Distinções obrigatórias mantidas: `BPMN_RECOGNIZED_INCOMPLETE` ≠ `XML_NOT_BPMN` — falha XSD **não** rebaixa para "não BPMN" se root+namespace forem BPMN. Um documento é "BPMN" pela raiz expandida `{http://www.omg.org/spec/BPMN/20100501/MODEL}definitions`, não pela validade XSD.
+Distinções obrigatórias mantidas: `BPMN_RECOGNIZED_INCOMPLETE` ≠ `XML_NOT_BPMN` — falha XSD **não** rebaixa para "não BPMN" se root+namespace forem BPMN. Um documento é "BPMN" pela raiz expandida `{http://www.omg.org/spec/BPMN/20100524/MODEL}definitions`, não pela validade XSD.
+
+**Rejeição de segurança não é recognition:** `INPUT_REJECTED_SECURITY` denota input recusado no intake seguro (antes ou durante). Nesse estado, BPMN recognition é `NOT_EVALUATED` — nunca afirmar `NON_XML` quando recognition não ocorreu. `NON_XML` fica restrito a conteúdo que não pode produzir texto XML utilizável (binário, não-decodável, payload sem XML text). `MALFORMED_XML` continua separado: texto XML + parse tentado + falha de well-formedness.
 
 ## 5. Validation Stage Contract
 
@@ -60,8 +63,8 @@ Stages congelados (contrato existente). Para cada um: o que avalia, quando EVALU
 
 | Stage | Avalia | EVALUATED quando | NOT_EVALUATED quando | Prerequisito fatal |
 |---|---|---|---|---|
-| `INPUT_SAFETY` | tamanho, decodabilidade, DTD/doctype, external entities, profundidade | regras SEC-* executadas a termo | falha interna do avaliador (→ INFRASTRUCTURE_FAILURE) | nenhum — é o primeiro estágio executável |
-| `XML_WELL_FORMEDNESS` | W3C well-formedness + namespace well-formedness | parse executado a termo (sucesso ou fatal issue) | INPUT_SAFETY bloqueou parse (issue SEC-* presente) | INPUT_SAFETY fatal |
+| `INPUT_SAFETY` | checks de segurança do input original (byte size, encoding/decode, BOM, DTD/doctype, external entities, profundidade) — **consome `InputSafetyEvidence` produzida pelo input adapter** (seção 24) | evidência presente e suficiente para todas as checks habilitadas + checks executadas a termo | `InputSafetyEvidence` ausente ou insuficiente (ex.: artifact já persistido, validação de working copy/revision) — **NOT_EVALUATED por falta de evidência, não é falha nem sucesso**; falha interna do avaliador → INFRASTRUCTURE_FAILURE | stage independente — sem upstream |
+| `XML_WELL_FORMEDNESS` | W3C well-formedness + namespace well-formedness sobre `CanonicalBpmnArtifact.content` | parse executado a termo (sucesso ou fatal issue) — **independe de INPUT_SAFETY**: `INPUT_SAFETY = NOT_EVALUATED` (falta de evidência) **não** impede avaliar se a str atual é XML well-formed | artifact inexistente (input rejeitado na intake, `INPUT_REJECTED_SECURITY`) ou falha interna do parser | artifact existir — é o único pré-requisito |
 | `BPMN_STRUCTURE` | recognition (root/ns/targetNamespace), XSD conformance, resolução de referências estruturais (sourceRef/targetRef/endpoints/processRef/boundary attachedToRef/membership) | parse bem-sucedido + todas as regras habilitadas executadas | XML malformado (issue XML-WF fatal) | XML_WELL_FORMEDNESS fatal |
 | `BPMN_SEMANTICS` | regras semânticas do profile (connection rules, gateway/boundary/default-flow/link) | índice de elementos construído + regras executadas | XML malformado; ou estrutura tão degradada que o índice semântico não pode ser construído — exige issue em BPMN_STRUCTURE avaliado explicando | fatal: índice de elementos não construível |
 | `BPMN_DI` | presença de DI, referências bpmnElement/plane, cardinalidade de waypoints, cobertura de depiction | parse bem-sucedido + regras DI executadas (DI ausente conta como executada → emite BPMNDI-001) | XML malformado | XML_WELL_FORMEDNESS fatal |
@@ -72,17 +75,19 @@ O pipeline **não é linear forçado**: `BPMN_SEMANTICS` e `BPMN_DI` são indepe
 
 ## 6. Stage Dependency Matrix
 
-| Stage | Depende de | Tipo de dependência | Efeito de falha no prerequisito |
+| Stage | Depende de | Tipo de dependência | Efeito de falha/ausência no prerequisito |
 |---|---|---|---|
-| INPUT_SAFETY | — | — | — |
-| XML_WELL_FORMEDNESS | INPUT_SAFETY | hard | INPUT_SAFETY fatal → NOT_EVALUATED |
+| INPUT_SAFETY | `InputSafetyEvidence` do input adapter | evidence stage independente | evidência ausente → NOT_EVALUATED (sem falha); evidência com check falho → EVALUATED com issues SEC-* → rejeição pela operation policy |
+| XML_WELL_FORMEDNESS | existência de `CanonicalBpmnArtifact.content` | hard | sem artifact (rejeição na intake) → NOT_EVALUATED; **INPUT_SAFETY NOT_EVALUATED não afeta este stage** |
 | BPMN_STRUCTURE | XML_WELL_FORMEDNESS | hard | malformado → NOT_EVALUATED |
 | BPMN_SEMANTICS | XML_WELL_FORMEDNESS + índice de elementos | hard (parse) + soft (índice) | índice não construível → NOT_EVALUATED + issue em STRUCTURE |
 | BPMN_DI | XML_WELL_FORMEDNESS | hard | malformado → NOT_EVALUATED |
 | PRODUCT_RULES | índice semântico | soft | NOT_EVALUATED quando SEMANTICS NOT_EVALUATED |
 | INTEGRATION_CONSTRAINTS | n/a (V1) | — | sempre NOT_EVALUATED |
 
-**Invariante de evidência `FROZEN`:** um stage só pode ser `NOT_EVALUATED` por bloqueio se existir ao menos um issue em stage `EVALUATED` upstream explicando a causa — ou ser `NOT_EVALUATED` por design (sem regras habilitadas, caso de INTEGRATION_CONSTRAINTS). Evidência nunca fica muda sobre o motivo.
+**Distinção obrigatória `FROZEN`:** `NOT_EVALUATED` por **falta de evidência** (ex.: `InputSafetyEvidence` ausente num artifact persistido) ≠ stage **EVALUATED e rejeitado** por segurança (issues SEC-* presentes → operation policy rejeita). O primeiro é ausência de dados para avaliar; o segundo é avaliação concluída com resultado negativo. Não usar os dois como sinônimos.
+
+**Invariante de evidência `FROZEN`:** um stage só pode ser `NOT_EVALUATED` por **bloqueio** se existir ao menos um issue em stage `EVALUATED` upstream explicando a causa. Exceções legítimas sem issue upstream: `NOT_EVALUATED` por design (sem regras habilitadas — INTEGRATION_CONSTRAINTS) e `NOT_EVALUATED` por falta de evidência (INPUT_SAFETY sem `InputSafetyEvidence`). Evidência nunca fica muda sobre o motivo.
 
 ## 7. Partial Evaluation Policy
 
@@ -92,7 +97,7 @@ O pipeline **não é linear forçado**: `BPMN_SEMANTICS` e `BPMN_DI` são indepe
 - Qualquer prerequisito que impeça execução completa → `NOT_EVALUATED` (conservador; evita falsa evidência).
 - Regras "não aplicáveis" ao documento (ex.: regra de messageFlow sem messageFlows presentes) não afetam a marca do stage — aplicabilidade não é avaliação perdida.
 - Diagnósticos parciais de um stage bloqueado não são inventados: a causa aparece como issue no stage upstream avaliado (invariante da seção 6).
-- `ValidationReport` atual (`evaluated_stages` + `not_evaluated_stages` + issues) **é suficiente**: Application contract change = NONE.
+- `ValidationReport` atual (`evaluated_stages` + `not_evaluated_stages` + issues) **é suficiente para o modelo de stages**: nenhuma mudança de contrato exigida pela partial-evaluation policy. Mudança de contrato necessária por outro motivo (evidência de input) está documentada na seção 24 → `APPLICATION CONTRACT CHANGE: REQUIRED`.
 
 ## 8. Validation Rule Catalog
 
@@ -100,14 +105,17 @@ Catálogo V1 versionável. `rule_id != message`. Severity default; operation pol
 
 ### INPUT_SAFETY — família `SEC-*` (source: `SECURITY`)
 
-| RULE_ID | CLASSIFICATION | CONDITION | SEVERITY | PREREQ |
+Todas as checks consomem `InputSafetyEvidence` (seção 24). Sem evidência → stage `NOT_EVALUATED`, não "passou". Issues destas regras resultam em `INPUT_REJECTED_SECURITY` (intake) ou `VALIDATION_BLOCKED` (save), nunca `NON_XML`.
+
+| RULE_ID | CLASSIFICATION | CONDITION (sobre a evidência) | SEVERITY | PREREQ |
 |---|---|---|---|---|
-| SEC-SIZE-001 | `SECURITY_POLICY` | bytes UTF-8 do conteúdo > `MAX_INPUT_BYTES` (limite físico → P6) | ERROR | — |
-| SEC-DTD-001 | `SECURITY_POLICY` | doctype/DTD presente (internal ou external subset) | ERROR | — |
-| SEC-EXT-001 | `SECURITY_POLICY` | external entity declaration/reference (XXE) | ERROR | — |
-| SEC-DEPTH-001 | `SECURITY_POLICY` | profundidade de aninhamento > `MAX_XML_DEPTH` (P6) | ERROR | — |
-| SEC-ENC-001 | `PRODUCT_POLICY` | conteúdo não decodável como UTF-8 | ERROR | — |
-| SEC-ENT-001 | `SECURITY_POLICY` | expansão de entidade interna além de builtins XML (`&amp;` etc.) | ERROR | — |
+| SEC-SIZE-001 | `SECURITY_POLICY` | `original_byte_length` > `MAX_INPUT_BYTES` (valor físico → P6) — bytes originais do upload/input | ERROR | evidência presente |
+| SEC-SIZE-002 | `SECURITY_POLICY` | `canonical_utf8_byte_length` > `MAX_INPUT_BYTES` — bytes UTF-8 da str canônica (check distinto de SEC-SIZE-001: tamanho do upload ≠ tamanho da representação canônica) | ERROR | evidência presente |
+| SEC-DTD-001 | `SECURITY_POLICY` | `dtd_detected` — doctype/DTD presente no input original (internal ou external subset) | ERROR | evidência presente |
+| SEC-EXT-001 | `SECURITY_POLICY` | `external_entity_declarations_detected` — declaração/referência de entidade externa (XXE) no input original | ERROR | evidência presente |
+| SEC-DEPTH-001 | `SECURITY_POLICY` | `depth_within_limit == false` — profundidade > `MAX_XML_DEPTH` (P6) no scan guardado do intake | ERROR | evidência presente |
+| SEC-ENT-001 | `SECURITY_POLICY` | `entity_expansion_beyond_builtins_detected` — expansão de entidade além dos builtins XML (`&amp;` etc.) | ERROR | evidência presente |
+| SEC-ENC-001 | `PRODUCT_POLICY` | `decode_result` indica falha de decode do input original → rejeição na intake **antes de `CanonicalBpmnArtifact` existir** (classificação `NON_XML`, não issue sobre artifact); encode original não-UTF8 decodado com sucesso é registrado na evidência, sem issue | ERROR (intake) | intake path — **não diagnosticável a partir do artifact** (a str já está decodificada) |
 
 ### XML_WELL_FORMEDNESS — família `XML-WF-*` (source: `XML_W3C`)
 
@@ -121,7 +129,7 @@ Catálogo V1 versionável. `rule_id != message`. Severity default; operation pol
 | RULE_ID | CLASSIFICATION | CONDITION | SEVERITY | PREREQ |
 |---|---|---|---|---|
 | BPMN-REC-001 | `PROVEN_NORMATIVE` | root localName != `definitions` | ERROR | WF passou |
-| BPMN-REC-002 | `PROVEN_NORMATIVE` | root namespace URI != `http://www.omg.org/spec/BPMN/20100501/MODEL` | ERROR | WF passou |
+| BPMN-REC-002 | `PROVEN_NORMATIVE` | root namespace URI != `http://www.omg.org/spec/BPMN/20100524/MODEL` | ERROR | WF passou |
 | BPMN-REC-003 | `PRODUCT_POLICY` | definitions sem nenhum process/collaboration (nada modelável) | WARNING | REC-001/002 ok |
 | BPMN-REC-004 | `PROVEN_NORMATIVE` | `definitions@targetNamespace` ausente (atributo obrigatório no XSD) | ERROR | REC-001/002 ok |
 | BPMN-STRUCT-001 | `PROVEN_NORMATIVE` | violação do BPMN20.xsd oficial vendored (cada erro XSD → issue) | ERROR | REC-001/002 ok |
@@ -200,8 +208,10 @@ Nenhuma regra habilitada na V1 → stage `NOT_EVALUATED` by design (seção 29).
 
 | Condição | Effect |
 |---|---|
-| INPUT_SAFETY issue (SEC-*) | import REJECT; save REJECT (`VALIDATION_BLOCKED`); demais ops n/a |
-| MALFORMED_XML / NON_XML | import REJECT; save REJECT |
+| INPUT_SAFETY **evaluated com issue SEC-*** (evidência presente + check falho) | intake → `INPUT_REJECTED_SECURITY` (import REJECT antes de artifact); save → `VALIDATION_BLOCKED`; demais ops n/a |
+| INPUT_SAFETY **NOT_EVALUATED** (evidência ausente/insuficiente) | sem efeito de bloqueio — não é falha nem sucesso; demais stages seguem seus próprios prerequisitos |
+| NON_XML (input não-decodável/binário/sem texto XML) | import REJECT na intake (artifact nunca existe); save REJECT |
+| MALFORMED_XML | import REJECT; save REJECT |
 | XML_NOT_BPMN (root não-BPMN) | import REJECT; save REJECT |
 | Reconhecido BPMN com issues estruturais/semânticas/DI (qualquer ERROR/WARNING/INFO dessas famílias) | **todas as operações permitidas** — issues são evidência, não bloqueio |
 | `extension@mustUnderstand=true` não suportada (EXT-003) | import ALLOW; open/read-only ALLOW; edit DISABLED; save BLOCKED (`VALIDATION_BLOCKED`); export ALLOW; revision ALLOW |
@@ -216,7 +226,8 @@ Nenhuma regra habilitada na V1 → stage `NOT_EVALUATED` by design (seção 29).
 
 | Estado | IMPORT | OPEN RO | RENDER | EDIT | SAVE | EXPORT | CREATE REVISION |
 |---|---|---|---|---|---|---|---|
-| `NON_XML` | REJECT | — | — | — | — | — | — |
+| `INPUT_REJECTED_SECURITY` | REJECT (intake; artifact nunca existe) | — | — | — | — | — | — |
+| `NON_XML` (não-decodável/binário/sem texto XML) | REJECT (intake; artifact nunca existe) | — | — | — | — | — | — |
 | `MALFORMED_XML` | REJECT | — | — | — | — | — | — |
 | `XML_NOT_BPMN` | REJECT | — | — | — | — | — | — |
 | `BPMN_RECOGNIZED_INCOMPLETE` | ALLOW + issues | ALLOW | best-effort (definido: render do que parseou; elementos sem DI usam layout transitório) | ALLOW | ALLOW | ALLOW | ALLOW |
@@ -238,7 +249,7 @@ Salvar **sempre** re-executa validation no conteúdo submetido: se o novo conte�
 
 - CreateRevision **não** é bloqueado por validation — snapshot registra o estado atual, incluindo estados com issues.
 - Consequência: revisões **podem** conter BPMN reconhecido com issues estruturais/semânticas/DI e extensions desconhecidas.
-- Revisões **não podem** conter NON_XML/MALFORMED/XML_NOT_BPMN na V1, porque nenhum caminho de persistência (import/save) admite esses estados — invariante de intake. Se conteúdo assim aparecer, é evidência de bypass do pipeline, não estado legítimo.
+- Revisões **não podem** conter INPUT_REJECTED_SECURITY/NON_XML/MALFORMED/XML_NOT_BPMN na V1, porque nenhum caminho de persistência (import/save) admite esses estados — invariante de intake. Se conteúdo assim aparecer, é evidência de bypass do pipeline, não estado legítimo.
 - Revisão com conteúdo mustUnderstand-unsupported pode existir (importada) e pode ser restaurada — restore replica exatamente o snapshot (edit/save subsequente cai na policy da seção 11).
 
 ## 13. BPMN Without DI Contract
@@ -272,8 +283,8 @@ XML declaration: <?xml version="1.0" encoding="UTF-8"?>
 root: <bpmn:definitions>
   id="Definitions_<generated-id>"
   xmlns:xsi   = http://www.w3.org/2001/XMLSchema-instance
-  xmlns:bpmn  = http://www.omg.org/spec/BPMN/20100501/MODEL
-  xmlns:bpmndi= http://www.omg.org/spec/BPMN/20100501/DI
+  xmlns:bpmn  = http://www.omg.org/spec/BPMN/20100524/MODEL
+  xmlns:bpmndi= http://www.omg.org/spec/BPMN/20100524/DI
   xmlns:dc    = http://www.omg.org/spec/DD/20100524/DC
   xmlns:di    = http://www.omg.org/spec/DD/20100524/DI
   targetNamespace="urn:delpi:bpmn-modeler"
@@ -403,7 +414,7 @@ Rationale lxml: XSD 1.0 nativo (obrigatório pelos XSDs OMG), `error_log` com `l
 `FROZEN` — **usar XSD oficial OMG**:
 
 - Arquivos vendored no repo do produto (recursos do validation adapter, versionados): `BPMN20.xsd`, `Semantic.xsd`, `BPMNDI.xsd`, `DI.xsd`, `DC.xsd` (de `spec/BPMN/20100501/`, OMG file id `dtc/10-05-04`) + `xml.xsd` (W3C, para o import de `http://www.w3.org/XML/1998/namespace` presente nos XSDs BPMN).
-- Proveniência: cada arquivo registra URL oficial, OMG file id e **SHA-256** no manifesto do diretório de schemas (`schemas/MANIFEST` — criado na implementação, formato do manifesto → P6 ou P7 conforme owner; este spec define que **existe** manifesto versionado com checksums).
+- Proveniência: cada arquivo registra separadamente no manifesto do diretório de schemas (`schemas/MANIFEST` — criado na implementação, formato → P6/P7 conforme owner): `source_url`/`source_path` oficial (`BPMN/20100501/*.xsd`), OMG `file_id`, `sha256` **e** o `targetNamespace` que o schema serve (`.../20100524/...`). A distinção path-vs-namespace é obrigatória no manifesto.
 - Runtime: **zero acesso a rede** — resolver custom mapeia namespaces/schemaLocations para arquivos locais vendored; `xsi:schemaLocation` do documento do usuário é **ignorado** (validação sempre contra schemas vendored).
 - Cache: schema compilado (`XMLSchema`) construído uma vez no startup/warm-up do adapter; build do schema em teste CI prova resolução offline.
 - Falha de import/include na construção do schema → `INFRASTRUCTURE_FAILURE` no startup (fail closed).
@@ -419,23 +430,61 @@ Rationale lxml: XSD 1.0 nativo (obrigatório pelos XSDs OMG), `error_log` com `l
 | Network resolution | `no_network=True` + resolver bloqueia qualquer fetch — nunca implícito |
 | XInclude | não habilitado (parser sem `xinclude`); documento com `<xi:include>` vira conteúdo desconhecido, não executado |
 | Entity expansion / billion laughs | libxml2 protection ativa (sem `huge_tree`) + SEC-ENT-001 |
-| Resource exhaustion | `huge_tree=False` (depth/text limits nativos) + SEC-SIZE-001 + SEC-DEPTH-001; limites físicos exatos → P6 |
-| Encoding | decode estrito UTF-8; `SEC-ENC-001` rejeita não-decodável; BOM UTF-8 aceito e removido no decode |
+| Resource exhaustion | `huge_tree=False` (depth/text limits nativos) + SEC-SIZE-001/002 + SEC-DEPTH-001 (via `InputSafetyEvidence`); limites físicos exatos → P6 |
+| Encoding | decodabilidade avaliada na intake (`SEC-ENC-001`, sobre `InputSafetyEvidence`): input não-decodável → `NON_XML` antes de artifact; encoding não-UTF8 decodado com sucesso é normalizado para str e registrado na evidência; BOM UTF-8 aceito e removido no decode |
 | schemaLocation | usuário nunca influencia schema de validação |
 
 ## 24. Input Safety Evidence Contract
 
-`FROZEN` — **sem mudança no Application contract**: `BpmnArtifactValidationPort.validate(artifact)` recebe `CanonicalBpmnArtifact.content` (str já decodada); INPUT_SAFETY deriva evidência do próprio conteúdo:
+`FROZEN` — **APPLICATION CONTRACT CHANGE: REQUIRED.**
 
-| Evidência | Derivação |
+### Problema epistêmico
+
+`CanonicalBpmnArtifact(content: str)` é uma str **já decodificada**. Ela não prova: bytes originais do upload, tamanho original em bytes, encoding original, BOM original, origem de upload/stream nem metadados de transporte. `len(content.encode("utf-8"))` mede apenas o tamanho da representação UTF-8 **atual** — nunca o `original_byte_length` do input recebido. São checks distintos (SEC-SIZE-001 vs SEC-SIZE-002); um não serve de prova do outro.
+
+### Conceito adicionado: `InputSafetyEvidence`
+
+`Input Adapter`
+`    │`
+`    ├── produz InputSafetyEvidence (antes/junto de CanonicalBpmnArtifact)`
+`    ▼`
+`Application validation orchestration`
+`    ▼`
+`BpmnArtifactValidationPort.validate(artifact, evidence)`
+
+| Decisão | Valor `FROZEN` |
 |---|---|
-| byte_length | `len(content.encode("utf-8"))` |
-| decodabilidade | já garantida pelo tipo str (adapter de intake falha antes se bytes não decodarem → intake rejeita com SEC-ENC-001 como erro de input) |
-| doctype/DTD presence | scan estrutural de `<!DOCTYPE`/`ENTITY` markers + verificação parser |
-| external entity decls | markers `<!ENTITY` + `SYSTEM`/`PUBLIC` |
-| depth | contagem no parse (iterparse/traverse) |
+| Tipo/conceito | `InputSafetyEvidence` — value/contrato de evidência imutável |
+| Layer | Application (contrato de aplicação), ao lado de `BpmnArtifactValidationPort` |
+| Ownership | Application-owned; **produzida pelo input adapter** no boundary de intake |
+| Port signature impact | `validate(artifact: CanonicalBpmnArtifact, evidence: InputSafetyEvidence \| None = None) -> ValidationReport` (ou equivalente mínimo: `ValidationContext` contendo a evidência) |
+| Quem cria | input adapter, durante intake do upload/arquivo — **antes** de construir o `CanonicalBpmnArtifact` |
+| Quem consome | orquestração de validação → `BpmnArtifactValidationPort` (stage INPUT_SAFETY) |
+| Quando disponível | caminho de import/intake (upload). Evidência produzida mesmo quando intake falha — a falha é classificada na intake, não como issue de artifact |
+| Quando indisponível | validação de artifact já persistido (working copy, revision, revalidação) — bytes originais não existem mais |
+| Classificação no report | evidência ausente/insuficiente → `INPUT_SAFETY = NOT_EVALUATED` (sem issue; não é falha nem sucesso); evidência presente → stage EVALUATED, checks SEC-* emitem issues normalmente |
+| Por que necessário | sem evidência o validator não pode provar nada sobre o input original — tratar como passou seria falsa evidência |
+| Por que Domain não muda | `CanonicalBpmnArtifact` permanece opaco (`content: str`), sem metadata de upload — evidência é conceito de intake/validação, não de domínio |
 
-Sem nova estrutura/field em `ValidationIssue` ou `ValidationReport`. Evidence permanece expressa como issues SEC-*.
+### Campos mínimos de `InputSafetyEvidence`
+
+Cobrem todas as checks SEC-* habilitadas — sem campos inventados:
+
+| Campo | Prova para |
+|---|---|
+| `original_byte_length: int` | SEC-SIZE-001 (bytes originais do input) |
+| `canonical_utf8_byte_length: int` | SEC-SIZE-002 (UTF-8 da str canônica) |
+| `declared_encoding: str \| None` + `detected_encoding: str \| None` + `bom_present: bool` + `decode_result` | SEC-ENC-001 (encoding/decode do input original; falha de decode → rejeição na intake antes de artifact) |
+| `dtd_detected: bool` | SEC-DTD-001 |
+| `external_entity_declarations_detected: bool` | SEC-EXT-001 |
+| `entity_expansion_beyond_builtins_detected: bool` | SEC-ENT-001 |
+| `depth_within_limit: bool` | SEC-DEPTH-001 (scan guardado do intake contra `MAX_XML_DEPTH` → P6) |
+
+`MAX_INPUT_BYTES`, `MAX_XML_DEPTH` e demais limites físicos continuam delegados ao Prompt 6.
+
+### Validação de artifact persistido
+
+É legítimo e esperado validar artifact persistido sem `InputSafetyEvidence`: `INPUT_SAFETY = NOT_EVALUATED` coexistindo com `XML_WELL_FORMEDNESS`, `BPMN_STRUCTURE`, `BPMN_SEMANTICS` e `BPMN_DI` avaliados conforme seus prerequisitos próprios. Sem nova estrutura/field em `ValidationIssue` ou `ValidationReport` — a evidência entra via parâmetro de validação, e sua ausência é expressa pelo `NOT_EVALUATED` do stage.
 
 ## 25. Structural Validation Strategy
 
@@ -513,9 +562,12 @@ Adapters nunca devolvem ordem arbitrária — testes e UX dependem de determinis
 | FX-NOTBPMN-001 | XML não-BPMN | root `<note>` | XML_NOT_BPMN | até BPMN_STRUCTURE | demais | BPMN-REC-001 | ERROR | REJECT | — | — | — | n/a |
 | FX-NS-001 | ns BPMN errado | definitions com ns diverso | XML_NOT_BPMN | idem | idem | BPMN-REC-002 | ERROR | REJECT | — | — | — | n/a |
 | FX-NS-002 | sem targetNamespace | definitions BPMN sem targetNamespace | BPMN_RECOGNIZED_WITH_ISSUES | todos exceto INTEGRATION | INTEGRATION | BPMN-REC-004 (+XSD) | ERROR | ALLOW | ALLOW | ALLOW | ALLOW | preservado |
-| FX-SEC-001 | doctype | `<!DOCTYPE>` | NON_XML (safety reject) | INPUT_SAFETY | demais | SEC-DTD-001 | ERROR | REJECT | — | — | — | n/a |
-| FX-SEC-002 | XXE | `<!ENTITY xxe SYSTEM ...>` | NON_XML | INPUT_SAFETY | demais | SEC-EXT-001, SEC-DTD-001 | ERROR | REJECT | — | — | — | n/a |
-| FX-SEC-003 | oversize | > MAX_INPUT_BYTES | NON_XML | INPUT_SAFETY | demais | SEC-SIZE-001 | ERROR | REJECT | — | — | — | n/a |
+| FX-SEC-001 | doctype | `<!DOCTYPE>` no input | INPUT_REJECTED_SECURITY | INPUT_SAFETY | demais (artifact nunca existe) | SEC-DTD-001 | ERROR | REJECT | — | — | — | n/a |
+| FX-SEC-002 | XXE | `<!ENTITY xxe SYSTEM ...>` | INPUT_REJECTED_SECURITY | INPUT_SAFETY | demais (artifact nunca existe) | SEC-EXT-001, SEC-DTD-001 | ERROR | REJECT | — | — | — | n/a |
+| FX-SEC-003 | oversize | > MAX_INPUT_BYTES | INPUT_REJECTED_SECURITY | INPUT_SAFETY | demais (artifact nunca existe) | SEC-SIZE-001 (+SEC-SIZE-002 se str canônica também exceder) | ERROR | REJECT | — | — | — | n/a |
+| FX-SEC-004 | profundidade | aninhamento > MAX_XML_DEPTH (gerado no teste) | INPUT_REJECTED_SECURITY | INPUT_SAFETY | demais (artifact nunca existe) | SEC-DEPTH-001 | ERROR | REJECT | — | — | — | n/a |
+| FX-SEC-005 | encoding inválido | bytes não-decodáveis como XML text (gerado no teste) | NON_XML | INPUT_SAFETY | demais (artifact nunca existe) | SEC-ENC-001 | ERROR | REJECT | — | — | — | n/a |
+| FX-SEC-006 | entity expansion | expansão além de builtins (gerado no teste) | INPUT_REJECTED_SECURITY | INPUT_SAFETY | demais (artifact nunca existe) | SEC-ENT-001 | ERROR | REJECT | — | — | — | n/a |
 | FX-REF-001 | sourceRef quebrado | seq flow → id inexistente | BPMN_RECOGNIZED_WITH_ISSUES | todos exceto INTEGRATION | INTEGRATION | BPMN-STRUCT-010 (+XSD possível) | ERROR | ALLOW | ALLOW | ALLOW | ALLOW | preservado |
 | FX-REF-002 | targetRef quebrado | idem target | idem | idem | idem | BPMN-STRUCT-011 | ERROR | ALLOW | ALLOW | ALLOW | ALLOW | preservado |
 | FX-REF-003 | endpoint inválido | seq flow → elemento não-FlowNode | idem | idem | idem | BPMN-STRUCT-012 | ERROR | ALLOW | ALLOW | ALLOW | ALLOW | preservado |
@@ -544,12 +596,13 @@ Cobertura 100% das regras habilitadas. Grupo `→` fixture(s):
 
 | Stage/Rules | Fixtures |
 |---|---|
-| SEC-SIZE-001 | FX-SEC-003 |
+| SEC-SIZE-001 | FX-SEC-003 (original_byte_length > limite) |
+| SEC-SIZE-002 | FX-SEC-003 (mesmo input; check independente sobre canonical_utf8_byte_length) |
 | SEC-DTD-001 | FX-SEC-001, FX-SEC-002 |
 | SEC-EXT-001 | FX-SEC-002 |
-| SEC-DEPTH-001 | fixture sintético de profundidade (gerado no teste, FX-SEC-004) |
-| SEC-ENC-001 | fixture de bytes não-UTF8 (gerado no teste, FX-SEC-005) |
-| SEC-ENT-001 | fixture entity-expansion leve (gerado, FX-SEC-006) |
+| SEC-DEPTH-001 | FX-SEC-004 (gerado no teste) |
+| SEC-ENC-001 | FX-SEC-005 (gerado no teste — classificação `NON_XML`, intake-only) |
+| SEC-ENT-001 | FX-SEC-006 (gerado no teste) |
 | XML-WF-001 | FX-BADXML-001/002 |
 | XML-WF-NS-001 | fixture prefixo não declarado (FX-NS-003) |
 | BPMN-REC-001/002 | FX-NOTBPMN-001, FX-NS-001 |
@@ -578,7 +631,7 @@ Cobertura 100% das regras habilitadas. Grupo `→` fixture(s):
 | PROD-002 | fixture participant sem processRef com filhos (FX-PROD-002) |
 | EXT-001/002/003/004 | FX-EXT-001/002/003/004 |
 
-Fixtures "gerados no teste" (FX-SEC-004..006, FX-NS-003, FX-REC-001, FX-DUP-001, FX-REF-006..009, FX-BND-001, FX-LINK-001, FX-FLOW-003/004, FX-DI-006/007, FX-PROD-001/002) são variantes mínimas derivadas dos arquivos-base — mesmos EXPECTED_* da linha correspondente da família.
+Fixtures "gerados no teste" (FX-SEC-004..006 — EXPECTED_* explícitos na tabela da seção 32; FX-NS-003, FX-REC-001, FX-DUP-001, FX-REF-006..009, FX-BND-001, FX-LINK-001, FX-FLOW-003/004, FX-DI-006/007, FX-PROD-001/002) são variantes mínimas derivadas dos arquivos-base — mesmos EXPECTED_* da linha correspondente da família.
 
 ## 34. BPMN Element-to-Fixture Matrix
 
@@ -640,8 +693,8 @@ Candidato esperado: **bpmn-js + bpmn-moddle** — capabilities documentadas indi
 
 | Namespace | URI | Papel |
 |---|---|---|
-| BPMN | `http://www.omg.org/spec/BPMN/20100501/MODEL` | semântica — recognition exige esta URI no root |
-| BPMNDI | `http://www.omg.org/spec/BPMN/20100501/DI` | diagram interchange |
+| BPMN | `http://www.omg.org/spec/BPMN/20100524/MODEL` | semântica — recognition exige esta URI no root |
+| BPMNDI | `http://www.omg.org/spec/BPMN/20100524/DI` | diagram interchange |
 | DC | `http://www.omg.org/spec/DD/20100524/DC` | bounds/waypoint types |
 | DI | `http://www.omg.org/spec/DD/20100524/DI` | diagram element base |
 | XSI | `http://www.w3.org/2001/XMLSchema-instance` | schema instance |
@@ -688,10 +741,11 @@ Nenhuma questão de WHAT/validação/interoperabilidade aberta — parser, XSD s
 
 ## 42. Specification Freeze Status
 
-- [x] Recognition fechado (6 estados, distinções preservadas)
-- [x] Rule catalog V1 (46 rules: 6 SEC, 2 XML-WF, 4 REC, 11 STRUCT, 8 SEM, 9 BPMNDI, 2 PROD, 4 EXT, 0 INTEGRATION) com fontes/classificação
-- [x] Stages fechados com prerequisitos e matriz de dependência
-- [x] Partial evaluation fechado (binário conservador, sem mudança de contrato)
+- [x] Recognition fechado (7 estados: INPUT_REJECTED_SECURITY + NON_XML + MALFORMED_XML + XML_NOT_BPMN + 3 BPMN_RECOGNIZED_*; security rejection ≠ NON_XML)
+- [x] Rule catalog V1 (47 rules: 7 SEC, 2 XML-WF, 4 REC, 11 STRUCT, 8 SEM, 9 BPMNDI, 2 PROD, 4 EXT, 0 INTEGRATION) com fontes/classificação
+- [x] Stages fechados com prerequisitos e matriz de dependência (XML_WELL_FORMEDNESS independente de INPUT_SAFETY NOT_EVALUATED)
+- [x] Partial evaluation fechado (binário conservador, sem mudança de contrato no stage model)
+- [x] Input Safety Evidence Contract fechado (`InputSafetyEvidence` — APPLICATION CONTRACT CHANGE: REQUIRED, seção 24)
 - [x] Operation policy fechada por condição (severity ≠ policy, rationale registrado)
 - [x] Import/Open/Edit/Save/Export/Revision matrix fechada
 - [x] BPMN sem DI fechado (persist original, layout transitório, DI via editor/save)
