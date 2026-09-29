@@ -24,8 +24,13 @@ def _is_public_route(path: str) -> bool:
     return normalized.startswith("/public/") or "/production-control-api/public/" in normalized
 
 
+def _is_internal_integration(path: str) -> bool:
+    normalized = normalize_path(path)
+    return normalized.startswith("/integrations/mes/") or "/production-control-api/integrations/mes/" in normalized
+
+
 async def jwt_middleware(request: Request, call_next):
     path = request.url.path
-    if _is_public_health(path) or _is_public_route(path):
+    if _is_public_health(path) or _is_public_route(path) or _is_internal_integration(path):
         return await call_next(request)
     return await _base_jwt_middleware(request, call_next)

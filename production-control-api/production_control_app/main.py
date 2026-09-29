@@ -22,6 +22,9 @@ from production_control_app.interface.http.routes.demand_routes import router as
 from production_control_app.interface.http.routes.line_feeder_routes import (
     router as line_feeder_router,
 )
+from production_control_app.interface.http.routes.integration_mes_routes import (
+    router as integration_mes_router,
+)
 from production_control_app.interface.http.routes.materials_routes import router as materials_router
 from production_control_app.interface.http.routes.machine_load_routes import (
     router as machine_load_router,
@@ -136,6 +139,7 @@ def health():
     return {"status": "online", "service": "production-control-api"}
 
 
+app.include_router(integration_mes_router)
 app.include_router(subplugin_router)
 app.include_router(overview_router)
 app.include_router(machine_load_router)

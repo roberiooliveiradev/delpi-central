@@ -449,6 +449,20 @@ def build_production_run_service(
     )
 
 
+def build_mes_integration_read_service() -> Any:
+    from production_control_app.application.services.mes_integration_read_service import (
+        MesIntegrationReadService,
+    )
+    from production_control_app.infrastructure.persistence.postgres_mes_monitoring_read_repository import (
+        PostgresMesMonitoringReadRepository,
+    )
+
+    return MesIntegrationReadService(
+        repository=PostgresMesMonitoringReadRepository(),
+        branch_access=build_branch_access_service(),
+    )
+
+
 def build_mes_run_timeline_service(
     gateway: DelpiProductionGateway | None = None,
     *,

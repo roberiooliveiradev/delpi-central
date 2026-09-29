@@ -26,8 +26,11 @@ Até lá: não renomear o launcher só para “prometer” um portal que ainda n
 | BFF / regra PCP | `production-control-api` |
 | SQL TOTVS | `api-delpi` (`/production/otd*`, `/production/pcp-orders/*`, `/production/machine-load/*`, `/production/orders/operation-materials*`, `/pedidos-venda-abertos/totvs-open-orders`, `/pedidos-venda-abertos/ops-abertas`, `/supplies/purchase-requests/open-coverage`, `/supplies/stock-balances/items`, `/products/{code}/raw-material-set-shortages`) |
 | Contagem MES (shadow) no cockpit | `production-control-api` + telemetria `production-pulse-api` — ver [MES-PULSE-COUNTING.md](./MES-PULSE-COUNTING.md) |
+| Fatos MES e contrato S2S temporário | `production-control-api` expõe `/integrations/mes/*` para o futuro `delpi-mes-api` — ver [Delpi MES](../delpi-mes/README.md) |
 
 MFE não chama api-delpi. Subplugins são views internas do mesmo remote (não manifests aninhados).
+
+O ownership dos fatos MES permanece temporariamente neste BFF, sem transformá-lo em umbrella gerencial. A superfície interna somente leitura existe para permitir que o futuro `delpi-mes-api` atravesse a fronteira por contrato, sem banco compartilhado, repositories internos ou rotas públicas do cockpit.
 
 ## Visual
 

@@ -45,6 +45,9 @@ BFF do **Portal PCP**. Dono do catálogo de subplugins, da **gestão à vista**,
 | POST | `/public/machine-load/{token}/runs/{id}/resume` | resume |
 | POST | `/public/machine-load/{token}/runs/{id}/stop` | stop |
 | GET | `/public/machine-load/{token}/runs/active?branch=&workCenter=` | run ativo + peças + device |
+| GET | `/integrations/mes/work-centers/live?branch=01\|02` | S2S interno — snapshot gerencial consolidado dos runs MES ativos |
+| GET | `/integrations/mes/runs/{runId}/timeline` | S2S interno — timeline MES sem sessão de bancada |
+| GET | `/integrations/mes/downtimes?branch=&workCenter=&from=&to=&page=&pageSize=` | S2S interno — paradas MES paginadas por sobreposição temporal |
 
 ### Integração Production Pulse (MES shadow)
 
@@ -60,6 +63,12 @@ Auth outbound: `API_DELPI_INTERNAL_SERVICE_TOKEN` + `X-Delpi-Caller-App: product
 O Pulse **não** conhece OP/run; a fórmula de peças é âncora absoluta + `counterEpoch` (tabelas `production_runs` / `production_run_segments`).
 
 Doc canônico: [MES-PULSE-COUNTING.md](../docs/12-roadmap-e-evolucao/production-control/MES-PULSE-COUNTING.md).
+
+### Integração Delpi MES
+
+O `production-control-api` permanece temporariamente owner dos fatos MES e expõe `/integrations/mes/*` como contrato interno exclusivamente de leitura para o futuro `delpi-mes-api`. Essas rotas exigem o service token interno; JWT humano, sessão de bancada e token público do cockpit não concedem acesso. O consumidor previsto envia `X-Delpi-Caller-App: delpi-mes-api`, sem tratar esse header como credencial.
+
+A leitura live usa uma consulta Postgres consolidada sobre `production_runs`, `work_center_state_events`, `downtime_events` e `downtime_reason_catalog`; não chama o Pulse, não consulta timeline e não faz fan-out por centro. O histórico de paradas é paginado e usa sobreposição temporal. Contrato e fases: [Delpi MES](../docs/12-roadmap-e-evolucao/delpi-mes/README.md).
 | GET | `/product-3d-models` | JWT + `product-3d-models.manage` |
 | PUT | `/product-3d-models/{productCode}` | JWT + `product-3d-models.manage` (multipart `.glb`) |
 | DELETE | `/product-3d-models/{productCode}` | JWT + `product-3d-models.manage` |

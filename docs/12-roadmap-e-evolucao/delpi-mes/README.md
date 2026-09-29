@@ -1,0 +1,59 @@
+# Delpi MES
+
+## Objetivo
+
+O **Delpi MES** é a plataforma gerencial MES da Delpi destinada à supervisão dos centros de trabalho, análise de estados produtivos, análise de paradas, histórico dos runs e, em fases futuras, capacidades de Performance, Qualidade e OEE.
+
+Identificadores reservados para as próximas fases:
+
+- plugin: `delpi-mes`;
+- API/BFF: `delpi-mes-api`.
+
+## Ownership atual
+
+```text
+production-pulse-api
+    → telemetria e hardware
+production-control-api
+    → owner atual dos fatos MES
+/integrations/mes/*
+    → contrato interno S2S somente leitura
+delpi-mes-api
+    → futuro BFF gerencial/read model
+plugins/delpi-mes
+    → futura interface gerencial
+```
+
+O ownership dos fatos MES permanece no `production-control-api` nesta etapa. Uma futura refatoração poderá extrair esse domínio, mas ela não faz parte do MVP inicial do Delpi MES. O Production Control não se torna um guarda-chuva gerencial: PCP, Delpi MES e OEE permanecem capacidades com fronteiras próprias.
+
+Não há banco, tabela ou cópia de fatos do Delpi MES nesta fase. Production Runs, estados operacionais, paradas, segmentos de contagem, motivos, timeline e auditoria continuam no schema do owner atual.
+
+## Contrato interno
+
+As rotas exigem `API_DELPI_INTERNAL_SERVICE_TOKEN`, aceito em `X-Delpi-Service-Token` ou `Authorization: Bearer ...`. O consumidor previsto deve enviar `X-Delpi-Caller-App: delpi-mes-api`; esse header identifica o chamador para operação, mas não substitui a credencial S2S. JWT humano e sessão de bancada não concedem acesso.
+
+| Método | Endpoint | Finalidade |
+|---|---|---|
+| GET | `/integrations/mes/work-centers/live?branch=01` | Snapshot consolidado dos runs ativos e estados operacionais atuais da filial |
+| GET | `/integrations/mes/runs/{runId}/timeline` | Timeline do run com a mesma regra de duração do cockpit, sem sessão de bancada |
+| GET | `/integrations/mes/downtimes?branch=01&workCenter=&from=&to=&page=1&pageSize=50` | Histórico paginado de paradas MES |
+
+Todas as respostas usam o envelope `{ success, message, data }`. `pageSize` é limitado a 100. Timestamps são timezone-aware.
+
+O filtro temporal de paradas usa sobreposição de intervalos:
+
+```text
+event.started_at < to
+AND (event.ended_at IS NULL OR event.ended_at >= from)
+```
+
+Assim, uma parada iniciada antes da janela e encerrada dentro dela é retornada. A rota live deriva seus contadores dos mesmos itens retornados, não consulta timeline e não consulta o Production Pulse por centro. Run ativo sem estado aberto retorna `operationalState: null` e `integrityStatus: incomplete`; a leitura não repara fatos.
+
+## Fases
+
+1. **Fase 0 — Contrato e Fundação:** contrato S2S somente leitura dentro do owner atual.
+2. **Fase 1 — `delpi-mes-api`:** BFF gerencial consumidor de `/integrations/mes/*`.
+3. **Fase 2 — plugin `delpi-mes` + Manifesto/RBAC:** superfície gerencial governada pela plataforma.
+4. **Fase 3 — Monitoramento Industrial:** visão consolidada dos centros de trabalho.
+5. **Fase 4 — Histórico e Paradas:** exploração gerencial dos runs e downtimes.
+6. **Fase 5 — Hardening do MVP:** capacidade, operação, observabilidade e homologação.
