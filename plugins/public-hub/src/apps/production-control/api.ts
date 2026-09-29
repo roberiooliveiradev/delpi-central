@@ -589,6 +589,29 @@ export type ProductionRunSnapshot = {
     lastSeenAt?: string | null;
     pollIntervalMs?: number | null;
   } | null;
+  /** Parada MES aberta quando o run está pausado; `null`/ausente caso contrário. */
+  downtime?: RunDowntimeView | null;
+};
+
+/** Parada MES aberta do run (fato realtime — diferente das paradas TOTVS). */
+export type RunDowntimeView = {
+  id: string;
+  runId: string;
+  reasonCode: string | null;
+  reasonLabel: string | null;
+  category: string | null;
+  note: string | null;
+  confirmed: boolean;
+  startedAt: string | null;
+  endedAt: string | null;
+};
+
+/** Motivo de parada do catálogo MES (`downtime_reason_catalog`). */
+export type MesDowntimeReason = {
+  code: string;
+  label: string;
+  category: string | null;
+  requiresNote: boolean;
 };
 
 export type BenchSessionSnapshot = {
@@ -651,6 +674,43 @@ export async function endBenchSession(token: string, sessionToken: string): Prom
     },
   );
   await readEnvelope<{ ended: boolean }>(response, "Não foi possível encerrar a sessão.");
+}
+
+export async function fetchMesDowntimeReasons(token: string): Promise<MesDowntimeReason[]> {
+  const response = await fetch(
+    `${API_BASE}/public/machine-load/${encodeURIComponent(token)}/mes/downtime-reasons`,
+    { headers: { Accept: "application/json" } },
+  );
+  const data = await readEnvelope<{ items: MesDowntimeReason[] }>(
+    response,
+    "Motivos de parada indisponíveis.",
+  );
+  return data.items ?? [];
+}
+
+export async function classifyRunDowntime(
+  token: string,
+  sessionToken: string,
+  runId: string,
+  body: { reasonCode: string; note?: string | null },
+): Promise<RunDowntimeView> {
+  const response = await fetch(
+    `${API_BASE}/public/machine-load/${encodeURIComponent(token)}/runs/${encodeURIComponent(runId)}/downtime/classify`,
+    {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        [BENCH_SESSION_HEADER]: sessionToken,
+      },
+      body: JSON.stringify({
+        reasonCode: body.reasonCode,
+        note: body.note ?? null,
+        website: "",
+      }),
+    },
+  );
+  return readEnvelope<RunDowntimeView>(response, "Não foi possível registrar o motivo.");
 }
 
 export async function fetchActiveProductionRun(

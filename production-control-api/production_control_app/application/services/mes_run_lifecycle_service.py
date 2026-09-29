@@ -23,12 +23,16 @@ from datetime import datetime
 from typing import Any
 
 from production_control_app.domain.errors import (
+    DowntimeClassificationRequired,
     DowntimeConflict,
     InvalidMesEvent,
     MesStateConflict,
 )
 from production_control_app.domain.ports.downtime_event_repository import (
     DowntimeEventRepositoryPort,
+)
+from production_control_app.domain.ports.downtime_reason_repository import (
+    DowntimeReasonRepositoryPort,
 )
 from production_control_app.domain.ports.work_center_state_repository import (
     WorkCenterStateRepositoryPort,
@@ -46,9 +50,11 @@ class MesRunLifecycleService:
         *,
         states: WorkCenterStateRepositoryPort,
         downtimes: DowntimeEventRepositoryPort,
+        reasons: DowntimeReasonRepositoryPort | None = None,
     ) -> None:
         self._states = states
         self._downtimes = downtimes
+        self._reasons = reasons
 
     def record_run_started(
         self, run: dict[str, Any], *, conn: Any, at: datetime
@@ -120,6 +126,7 @@ class MesRunLifecycleService:
             raise InvalidMesEvent(
                 "Resume esperava a parada aberta deste run e não a encontrou."
             )
+        self._require_classified(open_downtime)
         if open_state is None:
             raise InvalidMesEvent(
                 "Resume esperava estado 'stopped' aberto e não encontrou nenhum."
@@ -150,6 +157,7 @@ class MesRunLifecycleService:
                 raise DowntimeConflict(
                     "Existe parada aberta de outro run neste posto."
                 )
+            self._require_classified(open_downtime)
             self._downtimes.close_open(
                 branch=branch, work_center=wc, ended_at=at, conn=conn
             )
@@ -161,6 +169,41 @@ class MesRunLifecycleService:
                 )
             self._states.close_open(
                 branch=branch, work_center=wc, ended_at=at, conn=conn
+            )
+
+    def open_downtime_view(self, run: dict[str, Any]) -> dict[str, Any] | None:
+        """Resumo público da parada aberta do run (classificada ou pendente)."""
+        open_dt = self._downtimes.get_open(
+            branch=run["branch"], work_center=run["work_center"]
+        )
+        if open_dt is None or open_dt["run_id"] != run["id"]:
+            return None
+        reason_label = None
+        category = None
+        if open_dt.get("reason_code") and self._reasons is not None:
+            reason = self._reasons.get(str(open_dt["reason_code"]))
+            if reason is not None:
+                reason_label = reason.get("label")
+                category = reason.get("category")
+        return {
+            "id": open_dt["id"],
+            "runId": run["id"],
+            "reasonCode": open_dt.get("reason_code"),
+            "reasonLabel": reason_label,
+            "category": category,
+            "note": open_dt.get("note"),
+            "confirmed": bool(open_dt.get("confirmed")),
+            "startedAt": open_dt["started_at"].isoformat()
+            if hasattr(open_dt.get("started_at"), "isoformat")
+            else open_dt.get("started_at"),
+            "endedAt": None,
+        }
+
+    @staticmethod
+    def _require_classified(open_downtime: dict[str, Any]) -> None:
+        if not open_downtime.get("reason_code") or not open_downtime.get("confirmed"):
+            raise DowntimeClassificationRequired(
+                "Informe o motivo da parada antes de continuar."
             )
 
     @staticmethod

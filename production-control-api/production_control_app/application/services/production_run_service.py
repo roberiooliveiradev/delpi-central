@@ -101,12 +101,14 @@ class ProductionRunService:
             )
             from production_control_app.infrastructure.persistence.postgres_mes_repository import (  # noqa: E501
                 PostgresDowntimeEventRepository,
+                PostgresDowntimeReasonRepository,
                 PostgresWorkCenterStateRepository,
             )
 
             mes_lifecycle = MesRunLifecycleService(
                 states=PostgresWorkCenterStateRepository(),
                 downtimes=PostgresDowntimeEventRepository(),
+                reasons=PostgresDowntimeReasonRepository(),
             )
         self._mes = mes_lifecycle
 
@@ -268,6 +270,12 @@ class ProductionRunService:
             raise ProductionRunNotFound("Produção não pertence a este posto.")
         return run
 
+    def require_active_run_for_session(
+        self, run_id: str, *, session: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Run existente e pertencente à filial/posto da sessão resolvida."""
+        return self._require_active_run(run_id, session=session)
+
     def pause_run(self, run_id: str, *, session_token: str | None) -> dict[str, Any]:
         session = self.resolve_bench_session(session_token)
         run = self._require_active_run(run_id, session=session)
@@ -291,8 +299,10 @@ class ProductionRunService:
                 conn=conn,
             )
             self._mes.record_run_paused(locked, conn=conn, at=at)
+        payload = _run_to_api(updated, device=device)
+        payload["downtime"] = self._mes.open_downtime_view(locked)
         self._notify(run["branch"], run["work_center"], reason="run_paused")
-        return _run_to_api(updated, device=device)
+        return payload
 
     def resume_run(self, run_id: str, *, session_token: str | None) -> dict[str, Any]:
         session = self.resolve_bench_session(session_token)
@@ -384,6 +394,7 @@ class ProductionRunService:
 
         payload = _run_to_api(run, device=device)
         payload["countedPieces"] = int(run.get("pieces_total") or 0)
+        payload["downtime"] = self._mes.open_downtime_view(run)
         return payload
 
     def tick_running_runs(self) -> int:

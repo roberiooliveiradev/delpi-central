@@ -1,5 +1,7 @@
+import { useEffect, useState } from "react";
 import { Pause, Play, Square } from "lucide-react";
 import type { MachineLoadOperation } from "./api";
+import { DowntimeReasonModal } from "./DowntimeReasonModal";
 import { formatQty } from "./cockpitShared";
 import {
   piecesToOperatorUnit,
@@ -43,6 +45,8 @@ export function ProductionRunControls({
     pause,
     resume,
     stop,
+    loadDowntimeReasons,
+    classifyDowntime,
   } = useProductionRun({
     token,
     branch,
@@ -55,6 +59,16 @@ export function ProductionRunControls({
 
   const counted = run?.countedPieces ?? run?.piecesTotal ?? 0;
   const progress = resolveProductionRunProgress(counted, run?.targetPieces);
+  const [reasonModalOpen, setReasonModalOpen] = useState(false);
+  const openDowntime = run?.status === "paused" ? run.downtime : null;
+  const downtimeUnclassified = Boolean(openDowntime && !openDowntime.confirmed);
+
+  // Assim que o Pause grava a parada, a classificação abre automaticamente.
+  const openDowntimeId = openDowntime?.id ?? null;
+  const needsClassification = downtimeUnclassified;
+  useEffect(() => {
+    if (needsClassification && openDowntimeId) setReasonModalOpen(true);
+  }, [needsClassification, openDowntimeId]);
   const piecesFactor = run?.piecesConversionFactor ?? operation.pieces_conversion_factor;
   const toOperatorUnit = (pieces: number) => piecesToOperatorUnit(pieces, piecesFactor);
   const deviceOnline = run?.device?.online;
@@ -164,8 +178,19 @@ export function ProductionRunControls({
               <dl className="pcp-pub__run-meta">
                 <div>
                   <dt>Status</dt>
-                  <dd>{run.status === "running" ? "Contando" : "Pausada"}</dd>
+                  <dd>
+                    {run.status === "running" ? "Contando" : "Produção pausada"}
+                  </dd>
                 </div>
+                {run.status === "paused" ? (
+                  <div>
+                    <dt>Motivo</dt>
+                    <dd>
+                      {openDowntime?.reasonLabel ??
+                        (openDowntime ? "Não informado" : "—")}
+                    </dd>
+                  </div>
+                ) : null}
                 <div>
                   <dt>Dispositivo</dt>
                   <dd>
@@ -200,20 +225,38 @@ export function ProductionRunControls({
                     Pausar
                   </button>
                 ) : (
-                  <button
-                    type="button"
-                    className="pcp-pub__btn pcp-pub__btn--primary"
-                    onClick={() => void resume()}
-                    disabled={busy}
-                  >
-                    <Play size={16} aria-hidden="true" />
-                    Retomar
-                  </button>
+                  <>
+                    {openDowntime ? (
+                      <button
+                        type="button"
+                        className="pcp-pub__btn pcp-pub__btn--ghost"
+                        onClick={() => setReasonModalOpen(true)}
+                        disabled={busy}
+                      >
+                        {openDowntime.confirmed ? "Alterar motivo" : "Informar motivo"}
+                      </button>
+                    ) : null}
+                    <button
+                      type="button"
+                      className="pcp-pub__btn pcp-pub__btn--primary"
+                      onClick={() => {
+                        if (downtimeUnclassified) setReasonModalOpen(true);
+                        else void resume();
+                      }}
+                      disabled={busy}
+                    >
+                      <Play size={16} aria-hidden="true" />
+                      Retomar
+                    </button>
+                  </>
                 )}
                 <button
                   type="button"
                   className="pcp-pub__btn pcp-pub__btn--ghost"
-                  onClick={() => void stop()}
+                  onClick={() => {
+                    if (downtimeUnclassified) setReasonModalOpen(true);
+                    else void stop();
+                  }}
                   disabled={busy}
                 >
                   <Square size={16} aria-hidden="true" />
@@ -238,6 +281,15 @@ export function ProductionRunControls({
       )}
 
       {error ? <p className="pcp-pub__run-error">{error}</p> : null}
+
+      <DowntimeReasonModal
+        open={reasonModalOpen && run?.status === "paused"}
+        downtime={openDowntime}
+        busy={busy}
+        loadReasons={loadDowntimeReasons}
+        onClassify={classifyDowntime}
+        onClose={() => setReasonModalOpen(false)}
+      />
     </div>
   );
 }

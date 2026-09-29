@@ -1,9 +1,9 @@
 # MES — estados operacionais e paradas (fundação)
 
-> **Status:** Etapa 02 implementada — ciclo de vida do run grava fatos MES.
+> **Status:** Etapa 03 implementada — classificação do motivo no cockpit.
 > **Owner do domínio MES:** `production-control-api`
 > **Owner da telemetria:** `production-pulse-api` (apenas hardware/counter/epoch/saúde)
-> **Classificação visual do motivo:** Etapa 03 — *não implementada ainda*
+> **Timer/timeline visual da parada:** Etapa 04 — *não implementada ainda*
 
 Documento canônico do modelo MES de estados do centro de trabalho e paradas.
 A contagem de peças Pulse → run permanece documentada em
@@ -155,13 +155,53 @@ novo; o contrato WS (`run_started`/`run_paused`/`run_resumed`/`run_stopped`/
   erro de domínio controlado (`InvalidMesEvent`/`MesStateConflict`/
   `DowntimeConflict`) e rollback completo. Nunca sobrescrever nem inventar.
 
-## 7. O que NÃO foi feito (fica para etapas seguintes)
+## 7. Classificação do motivo (Etapa 03)
 
-- classificação do motivo no cockpit (Etapa 03): a parada nasce com
-  `reason_code = NULL`, `confirmed = false`;
+A parada nasce no Pause com `reason_code = NULL`, `confirmed = false` — o
+`started_at` da Etapa 02 continua sendo a fonte oficial do início. A
+classificação apenas confirma o motivo, **sem alterar o início**.
+
+### Endpoints públicos do cockpit
+
+| Rota | Descrição |
+|---|---|
+| `GET /public/machine-load/{token}/mes/downtime-reasons` | Catálogo ativo: `{ items: [{ code, label, category, requiresNote }] }`. Frontend usa `code` como identidade, `label` só para exibição. |
+| `POST /public/machine-load/{token}/runs/{run_id}/downtime/classify` | Confirma **ou altera** o motivo da parada aberta. Body: `{ reasonCode, note }` + `X-Delpi-Bench-Session`. Nunca cria outra parada. |
+| `GET /public/machine-load/{token}/runs/active` | Snapshot do run agora inclui `downtime` (view da parada aberta com `reasonCode`, `reasonLabel`, `confirmed`), cobrindo reload/navegação/reconexão sem endpoint extra. |
+
+`MesDowntimeClassificationService` (application) valida sessão, vínculo
+run↔parada, motivo existente e ativo, `requires_note`, e aplica os snapshots
+`planned` / `counts_as_availability_loss` a partir do catálogo — o cliente
+nunca envia esses campos nem `confirmed_at`/`confirmed_by_ref`
+(`confirmed_by_ref` = `operator_code` da sessão).
+
+Após classificar, é emitido `production_run_updated` com
+`reason = "downtime_classified"` no WebSocket existente, permitindo que
+outros cockpits do mesmo CT sincronizem sem polling novo.
+
+### Guarda de qualidade do dado
+
+Com parada MES **observada e aberta**:
+
+- `Resume`/`Stop` exigem `reason_code != NULL` e `confirmed = true`; caso
+  contrário `DowntimeClassificationRequired` (409 — "Informe o motivo da
+  parada antes de continuar.");
+- runs **legados** (sem downtime MES observado) não são bloqueados — a
+  política de não inventar histórico da Etapa 02 é preservada.
+
+### Distinção: parada MES × parada TOTVS
+
+`downtime_events` = fato MES realtime desta produção (classificável aqui).
+`/performance/downtime-items` = histórico/indicador de horas improdutivas do
+ecossistema TOTVS — conceito diferente, **não reutilizado** para classificação.
+
+## 8. O que NÃO foi feito (fica para a Etapa 04+)
+
 - abertura de `idle` ao finalizar run — não necessária nesta fase;
-- nenhum endpoint HTTP novo, modal, timer ou timeline visual;
+- timer realtime da parada e timeline visual do run (Etapa 04);
+- administração do catálogo de motivos;
 - nenhum cálculo de OEE/disponibilidade/performance;
 - nenhum backfill de histórico;
 - nenhuma alteração no Production Pulse;
-- detecção automática de parada / microparadas.
+- detecção automática de parada / microparadas;
+- integração da parada MES com TOTVS.
