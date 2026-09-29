@@ -176,9 +176,11 @@ describe("Helpdesk list UX structural", () => {
     expect(context).toContain("canAssign={ticket.can_assign === true}");
     expect(page).toContain("helpTooltips.createUi.assignee");
     expect(page).toContain("assignee_id: canAssign === true && assignee?.id ? Number(assignee.id) : undefined");
-    expect(page).toContain("canAssign !== true");
+    // UX contract: a capability the user cannot use must not render at all —
+    // the picker only mounts when can_assign is proven true by the BFF.
+    expect(page).toMatch(/canAssign === true \? \(\s*<HelpdeskAssigneePicker/);
     expect(page).toContain("assigneeFromCreateDraft");
-    expect(page).not.toMatch(/canAssign \? \([\s\S]*HelpdeskAssigneePicker[\s\S]*HelpdeskSelect/);
+    expect(page).not.toContain("canAssign !== true || saving");
     expect(assignPopover).toContain("HelpdeskAssigneePicker");
     expect(assignPopover).toContain("helpdesk-assign-summary");
     expect(assignPopover).toContain("aria-expanded");

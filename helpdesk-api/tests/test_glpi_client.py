@@ -1174,6 +1174,148 @@ def test_legacy_document_upload_keeps_upload_when_owner_unresolved():
     assert owner_puts == []
 
 
+def test_assignable_users_falls_back_to_legacy_when_user_catalog_denied():
+    """Requester tokens get 403 on Administration/User; the picker must still
+    resolve technicians through the bounded legacy read."""
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path.endswith("/Administration/User"):
+            return httpx.Response(403, json={"error": "denied"})
+        if request.url.path.endswith("/apirest.php/initSession"):
+            return httpx.Response(200, json={"session_token": "sess-1"})
+        if request.url.path.endswith("/apirest.php/User/8"):
+            return httpx.Response(
+                200,
+                json={
+                    "id": 8,
+                    "name": "Michael",
+                    "firstname": "Michael",
+                    "realname": "Marotto",
+                    "is_active": 1,
+                },
+            )
+        if request.url.path.endswith("/apirest.php/User/11"):
+            return httpx.Response(
+                200,
+                json={
+                    "id": 11,
+                    "name": "Roberio",
+                    "firstname": "Robério",
+                    "realname": "Oliveira",
+                    "is_active": 1,
+                },
+            )
+        if request.url.path.endswith("/apirest.php/killSession"):
+            return httpx.Response(200, json={})
+        return httpx.Response(404, json={"error": "missing"})
+
+    client = HttpxGlpiClient(
+        base_url="https://glpi.example",
+        client_id="id",
+        client_secret="super-secret",
+        redirect_uri="https://centraldelpi.com.br/apps/helpdesk-api/auth/glpi/callback",
+        legacy_upload_enabled=True,
+        legacy_app_token="app-token-x",
+        legacy_user_token="user-token-x",
+        transport=httpx.MockTransport(handler),
+    )
+    all_hits = client.assignable_users(
+        "oauth-access", q="", limit=20, technician_ids={8, 11}
+    )
+    assert {u.id for u in all_hits} == {8, 11}
+    roberio = client.assignable_users(
+        "oauth-access", q="robério", limit=20, technician_ids={8, 11}
+    )
+    assert [u.id for u in roberio] == [11]
+    michael = client.assignable_users(
+        "oauth-access", q="michael", limit=20, technician_ids={8, 11}
+    )
+    assert [u.id for u in michael] == [8]
+
+
+def test_add_ticket_assignee_falls_back_to_legacy_ticket_user():
+    calls: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls.append(f"{request.method} {request.url.path}")
+        if request.url.path.endswith("/Assistance/Ticket/7/TeamMember"):
+            return httpx.Response(403, json={"error": "denied"})
+        if request.url.path.endswith("/apirest.php/initSession"):
+            return httpx.Response(200, json={"session_token": "sess-1"})
+        if request.url.path.endswith("/apirest.php/Ticket/7/Ticket_User"):
+            return httpx.Response(200, json=[])
+        if request.url.path.endswith("/apirest.php/Ticket_User"):
+            body = json.loads(request.content.decode())
+            assert body["input"] == {"tickets_id": 7, "users_id": 11, "type": 2}
+            return httpx.Response(201, json={"id": 9})
+        if request.url.path.endswith("/apirest.php/killSession"):
+            return httpx.Response(200, json={})
+        return httpx.Response(404, json={"error": "missing"})
+
+    client = HttpxGlpiClient(
+        base_url="https://glpi.example",
+        client_id="id",
+        client_secret="super-secret",
+        redirect_uri="https://centraldelpi.com.br/apps/helpdesk-api/auth/glpi/callback",
+        legacy_upload_enabled=True,
+        legacy_app_token="app-token-x",
+        legacy_user_token="user-token-x",
+        transport=httpx.MockTransport(handler),
+    )
+    client.add_ticket_assignee("oauth-access", 7, 11)
+    assert any("POST /apirest.php/Ticket_User" in item for item in calls)
+
+    calls.clear()
+
+    def remove_handler(request: httpx.Request) -> httpx.Response:
+        calls.append(f"{request.method} {request.url.path}")
+        if request.url.path.endswith("/Assistance/Ticket/7/TeamMember"):
+            return httpx.Response(403, json={"error": "denied"})
+        if request.url.path.endswith("/apirest.php/initSession"):
+            return httpx.Response(200, json={"session_token": "sess-1"})
+        if request.url.path.endswith("/apirest.php/Ticket/7/Ticket_User"):
+            return httpx.Response(
+                200, json=[{"id": 9, "tickets_id": 7, "users_id": 11, "type": 2}]
+            )
+        if request.url.path.endswith("/apirest.php/Ticket_User/9"):
+            return httpx.Response(200, json=[{"9": True}])
+        if request.url.path.endswith("/apirest.php/killSession"):
+            return httpx.Response(200, json={})
+        return httpx.Response(404, json={"error": "missing"})
+
+    client_remove = HttpxGlpiClient(
+        base_url="https://glpi.example",
+        client_id="id",
+        client_secret="super-secret",
+        redirect_uri="https://centraldelpi.com.br/apps/helpdesk-api/auth/glpi/callback",
+        legacy_upload_enabled=True,
+        legacy_app_token="app-token-x",
+        legacy_user_token="user-token-x",
+        transport=httpx.MockTransport(remove_handler),
+    )
+    client_remove.remove_ticket_assignee("oauth-access", 7, 11)
+    assert any("DELETE /apirest.php/Ticket_User/9" in item for item in calls)
+
+
+def test_add_ticket_assignee_403_without_legacy_still_raises():
+    from helpdesk_app.domain.errors import GlpiForbidden
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path.endswith("/Assistance/Ticket/7/TeamMember"):
+            return httpx.Response(403, json={"error": "denied"})
+        return httpx.Response(404, json={"error": "missing"})
+
+    client = HttpxGlpiClient(
+        base_url="https://glpi.example",
+        client_id="id",
+        client_secret="super-secret",
+        redirect_uri="https://centraldelpi.com.br/apps/helpdesk-api/auth/glpi/callback",
+        transport=httpx.MockTransport(handler),
+    )
+    with pytest.raises(GlpiForbidden):
+        client.add_ticket_assignee("oauth-access", 7, 11)
+
+
 def test_legacy_cycle_accept_reject_satisfaction():
     calls: list[str] = []
 

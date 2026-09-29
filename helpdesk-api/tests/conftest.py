@@ -254,10 +254,35 @@ class FakeGlpi:
     def list_users(self, access_token: str, *, q: str = "", limit: int = 20):
         self.calls += 1
         assert access_token
-        if not self.can_assign:
+        if not self.can_assign or getattr(self, "user_catalog_denied", False):
             raise GlpiForbidden("negado")
         term = (q or "").strip().lower()
         rows = self.users
+        if term:
+            rows = [
+                u
+                for u in rows
+                if term in str(u.id)
+                or term in u.display_name.lower()
+                or term in str(getattr(u, "email", "") or "").lower()
+            ]
+        return rows[: max(1, min(int(limit or 20), 50))]
+
+    def assignable_users(
+        self,
+        access_token: str,
+        *,
+        q: str = "",
+        limit: int = 20,
+        technician_ids=None,
+    ):
+        """Bounded technician catalog — readable for every caller (the real
+        client merges a legacy read when the user's own catalog is scoped)."""
+        self.calls += 1
+        assert access_token
+        ids = {int(item) for item in (technician_ids or set())}
+        term = (q or "").strip().lower()
+        rows = [u for u in self.users if int(u.id) in ids]
         if term:
             rows = [
                 u
@@ -278,7 +303,7 @@ class FakeGlpi:
     def find_user_by_email(self, access_token: str, email: str):
         self.calls += 1
         assert access_token
-        if not self.can_assign:
+        if not self.can_assign or getattr(self, "user_catalog_denied", False):
             raise GlpiForbidden("negado")
         needle = (email or "").strip().lower()
         for user in self.users:

@@ -1064,14 +1064,16 @@ function CreateTicketPage() {
                 options={urgencies.map((item) => ({ value: String(item.id), label: item.name }))}
                 icon={<Gauge size={14} aria-hidden />}
               />
-              <HelpdeskAssigneePicker
-                label="Técnico atribuído"
-                hint={helpTooltips.createUi.assignee}
-                value={assignee}
-                onChange={setAssignee}
-                emptyLabel="Sem técnico"
-                disabled={canAssign !== true || saving || loading}
-              />
+              {canAssign === true ? (
+                <HelpdeskAssigneePicker
+                  label="Técnico atribuído"
+                  hint={helpTooltips.createUi.assignee}
+                  value={assignee}
+                  onChange={setAssignee}
+                  emptyLabel="Sem técnico"
+                  disabled={saving || loading}
+                />
+              ) : null}
               <HelpdeskTextField
                 label="Observadores"
                 hint={helpTooltips.createUi.observers}

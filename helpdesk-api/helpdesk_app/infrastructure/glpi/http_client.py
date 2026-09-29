@@ -1,6 +1,7 @@
 import json
 import logging
 import re
+import unicodedata
 from dataclasses import replace
 from urllib.parse import quote
 
@@ -634,21 +635,165 @@ class HttpxGlpiClient:
 
     def add_ticket_assignee(self, access_token: str, ticket_id: int, user_id: int) -> None:
         body = team_member_assigned_body(user_id)
-        self._json(
-            "POST",
-            f"/api.php/v2.2/Assistance/Ticket/{int(ticket_id)}/TeamMember",
-            token=access_token,
-            json_body=body,
+        try:
+            self._json(
+                "POST",
+                f"/api.php/v2.2/Assistance/Ticket/{int(ticket_id)}/TeamMember",
+                token=access_token,
+                json_body=body,
+            )
+            return
+        except (GlpiForbidden, GlpiUnauthorized):
+            # Requester profiles lack Ticket::ASSIGN — the BFF already bounded
+            # the target to technician ids, so the write runs on the technical
+            # legacy session (same pattern as document upload).
+            if not self._legacy_ready():
+                raise
+        self._legacy_set_ticket_assignee(
+            ticket_id=int(ticket_id), user_id=int(user_id), present=True
         )
 
     def remove_ticket_assignee(self, access_token: str, ticket_id: int, user_id: int) -> None:
         body = team_member_assigned_body(user_id)
-        self._json(
-            "DELETE",
-            f"/api.php/v2.2/Assistance/Ticket/{int(ticket_id)}/TeamMember",
-            token=access_token,
-            json_body=body,
+        try:
+            self._json(
+                "DELETE",
+                f"/api.php/v2.2/Assistance/Ticket/{int(ticket_id)}/TeamMember",
+                token=access_token,
+                json_body=body,
+            )
+            return
+        except (GlpiForbidden, GlpiUnauthorized):
+            if not self._legacy_ready():
+                raise
+        self._legacy_set_ticket_assignee(
+            ticket_id=int(ticket_id), user_id=int(user_id), present=False
         )
+
+    def assignable_users(
+        self,
+        access_token: str,
+        *,
+        q: str = "",
+        limit: int = 20,
+        technician_ids: set[int] | frozenset[int] | None = None,
+    ) -> list[CatalogUser]:
+        """Technician catalog for the assignee picker, bounded to technician_ids.
+
+        Caller-visible list first (techs/admins); requester profiles get an
+        entity-scoped or forbidden Administration/User catalog, so merge a
+        bounded legacy read of the technician rows.
+        """
+        ids = {int(item) for item in (technician_ids or ()) if int(item) > 0}
+        if not ids:
+            return []
+        term = (q or "").strip()
+        safe_limit = max(1, min(int(limit or 20), 50))
+        by_id: dict[int, CatalogUser] = {}
+        try:
+            for user in self.list_users(access_token, q=term, limit=safe_limit):
+                if int(user.id) in ids:
+                    by_id[int(user.id)] = user
+        except (
+            GlpiValidation,
+            GlpiForbidden,
+            GlpiUnauthorized,
+            GlpiNotFound,
+            GlpiUnavailable,
+        ):
+            pass
+        try:
+            for user in self._legacy_assignable_users(
+                term=term, limit=safe_limit, technician_ids=ids
+            ):
+                by_id.setdefault(int(user.id), user)
+        except Exception:
+            logger.info("glpi_assignable_legacy_unavailable")
+        return list(by_id.values())[:safe_limit]
+
+    def _legacy_assignable_users(
+        self, *, term: str, limit: int, technician_ids: set[int]
+    ) -> list[CatalogUser]:
+        if not self._legacy_ready():
+            return []
+        session_token = self._legacy_init_session()
+        try:
+            users: list[CatalogUser] = []
+            needle = _fold_text(term)
+            for user_id in sorted(technician_ids):
+                try:
+                    row = self._legacy_get_json(
+                        session_token, f"/apirest.php/User/{int(user_id)}"
+                    )
+                except Exception:
+                    logger.info("glpi_legacy_user_row_failed users_id=%s", user_id)
+                    continue
+                if not isinstance(row, dict) or not row.get("id"):
+                    continue
+                if str(row.get("is_active", "1")) in {"0", "false"} or str(
+                    row.get("is_deleted", "0")
+                ) in {"1", "true"}:
+                    continue
+                user = _legacy_catalog_user(row)
+                if user is None:
+                    continue
+                if needle:
+                    haystack = _fold_text(
+                        " ".join(
+                            [
+                                user.display_name,
+                                user.email or "",
+                                str(row.get("name") or ""),
+                            ]
+                        )
+                    )
+                    if needle not in haystack:
+                        continue
+                users.append(user)
+            return users[:limit]
+        finally:
+            self._legacy_kill_session(session_token)
+
+    def _legacy_set_ticket_assignee(
+        self, *, ticket_id: int, user_id: int, present: bool
+    ) -> None:
+        """Bounded assignee write via technical session (Ticket_User type=2)."""
+        session_token = self._legacy_init_session()
+        try:
+            rows = self._legacy_get_json(
+                session_token,
+                f"/apirest.php/Ticket/{int(ticket_id)}/Ticket_User?range=0-999",
+            )
+            link_id: int | None = None
+            for row in rows if isinstance(rows, list) else []:
+                if (
+                    int(row.get("users_id") or 0) == int(user_id)
+                    and int(row.get("type") or 0) == 2
+                ):
+                    link_id = int(row.get("id") or 0) or None
+                    break
+            if present:
+                if link_id is not None:
+                    return
+                self._legacy_post_json(
+                    session_token,
+                    "/apirest.php/Ticket_User",
+                    {
+                        "input": {
+                            "tickets_id": int(ticket_id),
+                            "users_id": int(user_id),
+                            "type": 2,
+                        }
+                    },
+                )
+                return
+            if link_id is None:
+                return
+            self._legacy_delete_json(
+                session_token, f"/apirest.php/Ticket_User/{link_id}"
+            )
+        finally:
+            self._legacy_kill_session(session_token)
 
     def list_users(self, access_token: str, *, q: str = "", limit: int = 20) -> list[CatalogUser]:
         safe_limit = max(1, min(int(limit or 20), 50))
@@ -1246,6 +1391,24 @@ class HttpxGlpiClient:
         _raise_for_status(response, "PUT", path)
         return {}
 
+    def _legacy_delete_json(self, session_token: str, path: str, *, app_token: str = "") -> None:
+        try:
+            response = self._http.request(
+                "DELETE",
+                f"{self._base}{path}",
+                headers={
+                    "Accept": "application/json",
+                    "App-Token": app_token or self._legacy_app_token,
+                    "Session-Token": session_token,
+                },
+            )
+        except httpx.TimeoutException as exc:
+            raise GlpiUnavailable("GLPI indisponível.") from exc
+        logger.info("glpi_legacy_delete path=%s status=%s", path, response.status_code)
+        if response.status_code in {200, 204}:
+            return
+        _raise_for_status(response, "DELETE", path)
+
     def _legacy_init_session(self, *, app_token: str = "", user_token: str = "") -> str:
         """Open apirest session with App-Token + dedicated user_token (H12/H10/002A).
 
@@ -1552,3 +1715,26 @@ def _safe_upload_filename(value: str) -> str:
     name = attachment_filename(value)
     cleaned = _SAFE_UPLOAD_NAME.sub("_", name).strip(" ._")
     return (cleaned or "anexo")[:180]
+
+
+def _fold_text(value: str) -> str:
+    text = " ".join(str(value or "").split()).casefold()
+    decomposed = unicodedata.normalize("NFD", text)
+    return "".join(char for char in decomposed if unicodedata.category(char) != "Mn")
+
+
+def _legacy_catalog_user(row: dict) -> CatalogUser | None:
+    """Legacy ``GET /apirest.php/User/{id}`` row → CatalogUser for the picker."""
+    try:
+        user_id = int(row.get("id") or 0)
+    except (TypeError, ValueError):
+        return None
+    if user_id <= 0:
+        return None
+    first = str(row.get("firstname") or "").strip()
+    last = str(row.get("realname") or "").strip()
+    login = str(row.get("name") or "").strip()
+    display_name = " ".join(part for part in (first, last) if part) or login
+    if not display_name:
+        return None
+    return CatalogUser(id=user_id, display_name=display_name, email="")

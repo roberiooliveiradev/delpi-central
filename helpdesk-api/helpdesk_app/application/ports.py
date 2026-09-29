@@ -65,6 +65,15 @@ class GlpiGateway(Protocol):
 
     def list_users(self, access_token: str, *, q: str = "", limit: int = 20): ...
 
+    def assignable_users(
+        self,
+        access_token: str,
+        *,
+        q: str = "",
+        limit: int = 20,
+        technician_ids: set[int] | frozenset[int] | None = None,
+    ): ...
+
     def list_technician_user_ids(self, access_token: str) -> set[int]: ...
 
     def find_user_by_email(self, access_token: str, email: str): ...
