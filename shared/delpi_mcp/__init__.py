@@ -16,11 +16,13 @@ This package currently contains ONLY the conformance layer:
 - ``auth`` (S3): MCP transport AuthN gate — Bearer/audience/scope checks
   composing ``delpi_auth`` (never reimplementing it), plus the shared
   ``/mcp`` data-path predicate.
+- ``identity`` (S4): read-only snapshot of the delpi_auth-established
+  context and the minimal Starlette Request bridge for adapters.
 
 It deliberately does NOT contain (per the design freeze):
 
 - server factories or server-class abstractions;
-- identity bridge or error adapter helpers (S4–S5);
+- error adapter helpers (S5);
 - any domain knowledge, tool registry, or business semantics.
 
 Dependency direction: ``delpi_mcp`` may depend on ``delpi_auth``; never on
@@ -31,6 +33,12 @@ from .auth import (
     McpTransportAuthPolicy,
     is_mcp_data_path,
     mcp_transport_auth,
+)
+from .identity import (
+    McpRequestContext,
+    build_mcp_request,
+    current_mcp_context,
+    require_mcp_context,
 )
 from .resource_contract import (
     MCP_TRANSPORT_SCOPES,
@@ -79,15 +87,18 @@ __all__ = [
     "MCP_TRANSPORT_SCOPES",
     "MCP_WWW_AUTHENTICATE_META_KEY",
     "McpConformanceConfig",
+    "McpRequestContext",
     "McpResourceConfig",
     "McpTransportAuthPolicy",
     "ValidationIssue",
     "ValidationLayer",
+    "build_mcp_request",
     "build_protected_resource_metadata",
     "build_www_authenticate_challenge",
     "build_www_authenticate_meta",
     "check_protocol_minimum",
     "combine_lifespans",
+    "current_mcp_context",
     "extract_token_audiences",
     "extract_token_scopes",
     "is_mcp_data_path",
@@ -98,6 +109,7 @@ __all__ = [
     "mcp_transport_security_settings",
     "missing_required_scopes",
     "normalize_mcp_mount_path",
+    "require_mcp_context",
     "protected_resource_metadata_url",
     "run_mcp_conformance",
     "token_has_required_audience",

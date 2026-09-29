@@ -13,7 +13,10 @@ import json
 import logging
 from typing import Any
 
-from delpi_auth.request_context import get_current_user, get_request_authorization
+from delpi_mcp.identity import (
+    build_mcp_request as _shared_build_request,
+    current_mcp_context,
+)
 from fastapi import Request
 from mcp.types import CallToolResult, TextContent, Tool as _Tool
 from mcp.server.mcpserver.exceptions import ToolError
@@ -44,28 +47,17 @@ def build_mcp_request() -> tuple[Request, Any, str]:
     """Reconstruct the request context expected by application services.
 
     Reads the shared delpi_auth ContextVars populated by the OAuth-bearing MCP
-    HTTP middleware — never forges identity or permissions.
+    HTTP middleware — never forges identity or permissions. S4: scope/header
+    reconstruction delegated to delpi_mcp.identity.
     """
-    user = get_current_user()
-    auth = (get_request_authorization() or "").strip()
-    headers = {"authorization": auth} if auth else {}
-    headers["mcp-context"] = "tv-dashboard"
-    scope = {
-        "type": "http",
-        "method": "POST",
-        "path": "/mcp",
-        "headers": [
-            (k.lower().encode("latin-1"), v.encode("latin-1")) for k, v in headers.items()
-        ],
-        "query_string": b"",
-        "server": ("tv-dashboard-api", 443),
-        "client": ("mcp-bridge", 0),
-        "scheme": "https",
-        "state": {},
-    }
-    request = Request(scope)
-    request.state.user = user
-    return request, user, auth
+    context = current_mcp_context()
+    request = _shared_build_request(
+        context=context,
+        server=("tv-dashboard-api", 443),
+        client=("mcp-bridge", 0),
+        extra_headers={"mcp-context": "tv-dashboard"},
+    )
+    return request, context.user, context.authorization
 
 
 def _authed_context() -> tuple[Any, str]:
