@@ -268,15 +268,15 @@ async def test_mcp_tools_list_and_call_discover_contract(monkeypatch) -> None:
     assert "discover→execute" in directives["modes"]["QUICK_LOOKUP"]
     assert all("fast path" not in rule.lower() for rule in directives["discovery"]["rules"])
     discover = next(t for t in tools if t.name == MCP_TOOL_DISCOVER_DELPI_INFORMATION)
-    out = discover.outputSchema or {}
+    out = discover.output_schema or {}
     assert out.get("additionalProperties") is False
     assert "capability_surface" in (out.get("properties") or {})
 
     result = await mcp.call_tool(
         MCP_TOOL_DISCOVER_DELPI_INFORMATION, {"query": "estoque"}
     )
-    assert result.isError is False
-    structured = result.structuredContent
+    assert result.is_error is False
+    structured = result.structured_content
     assert structured is not None
     DiscoverDelpiInformationOutput.model_validate(structured)
     assert structured["capability_surface"]["agent_directives"]["read_only"] is True

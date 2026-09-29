@@ -123,9 +123,9 @@ def test_mcp_server_exposes_only_discover_execute_with_annotations() -> None:
     for tool in tools:
         annotations = tool.annotations
         assert isinstance(annotations, ToolAnnotations)
-        assert annotations.readOnlyHint is True
-        assert annotations.destructiveHint is False
-        assert annotations.openWorldHint is False
+        assert annotations.read_only_hint is True
+        assert annotations.destructive_hint is False
+        assert annotations.open_world_hint is False
 
 
 @pytest.mark.asyncio
@@ -137,7 +137,7 @@ async def test_mcp_tools_list_contract_has_discover_execute_schemas() -> None:
         "execute_delpi_information",
     ]
     discover = tools[0]
-    schema = discover.inputSchema
+    schema = discover.input_schema
     assert schema["type"] == "object"
     assert schema.get("additionalProperties") is False
     assert "query" in schema["properties"]
@@ -145,10 +145,10 @@ async def test_mcp_tools_list_contract_has_discover_execute_schemas() -> None:
         {"type": "oauth2", "scopes": ["openid", "profile", "email", "mcp:tools"]}
     ]
     assert discover.annotations is not None
-    assert discover.annotations.readOnlyHint is True
+    assert discover.annotations.read_only_hint is True
 
     execute = tools[1]
-    assert "candidate_token" in execute.inputSchema["properties"]
+    assert "candidate_token" in execute.input_schema["properties"]
     assert execute.securitySchemes == discover.securitySchemes
 
 
@@ -156,7 +156,7 @@ async def test_mcp_tools_list_contract_has_discover_execute_schemas() -> None:
 async def test_mcp_call_tool_sanitizes_discover_validation_errors() -> None:
     mcp = create_mcp_server()
     result = await mcp.call_tool("discover_delpi_information", {"query": ""})
-    assert result.isError is True
+    assert result.is_error is True
     text = " ".join(
         block.text for block in result.content if getattr(block, "text", None)
     )
@@ -168,7 +168,7 @@ async def test_mcp_call_tool_sanitizes_discover_validation_errors() -> None:
 async def test_mcp_call_tool_sanitizes_execute_validation_errors() -> None:
     mcp = create_mcp_server()
     result = await mcp.call_tool("execute_delpi_information", {"candidate_token": ""})
-    assert result.isError is True
+    assert result.is_error is True
     assert "pydantic" not in str(result).lower()
 
 

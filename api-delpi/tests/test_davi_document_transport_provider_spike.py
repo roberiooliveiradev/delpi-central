@@ -19,7 +19,7 @@ from app.interface.mcp.document_transport_spike import (
     register_document_transport_spike,
 )
 from app.interface.mcp.server import create_mcp_server
-from mcp.server.fastmcp import FastMCP
+from mcp.server.mcpserver import MCPServer
 from mcp.types import EmbeddedResource, ResourceLink
 
 # Expected hidden values — assertions only; must not appear in MCP metadata.
@@ -42,7 +42,7 @@ def _enable_isolated_spike(monkeypatch: pytest.MonkeyPatch, *, mode: str = SPIKE
     monkeypatch.setattr(settings, "DAVI_DOCUMENT_TRANSPORT_SPIKE_MODE", mode)
 
 
-def _metadata_blob(mcp: FastMCP) -> str:
+def _metadata_blob(mcp: MCPServer) -> str:
     resources = asyncio.run(mcp.list_resources())
     tools = asyncio.run(mcp.list_tools())
     parts: list[str] = []
@@ -115,7 +115,7 @@ def test_spike_enabled_registers_resources_and_tool(monkeypatch: pytest.MonkeyPa
     resources = asyncio.run(mcp.list_resources())
     by_uri = {str(r.uri): r for r in resources}
     assert SPIKE_PDF_RESOURCE_URI in by_uri
-    assert by_uri[SPIKE_PDF_RESOURCE_URI].mimeType == SPIKE_PDF_MIME
+    assert by_uri[SPIKE_PDF_RESOURCE_URI].mime_type == SPIKE_PDF_MIME
     assert SPIKE_TEXT_RESOURCE_URI in by_uri
 
 
@@ -165,12 +165,12 @@ def test_embedded_resource_tool_result_is_pdf_blob(monkeypatch: pytest.MonkeyPat
     block = result.content[0]
     assert isinstance(block, EmbeddedResource)
     resource = block.resource
-    assert resource.mimeType == SPIKE_PDF_MIME
+    assert resource.mime_type == SPIKE_PDF_MIME
     raw = base64.standard_b64decode(resource.blob)
     assert raw.startswith(b"%PDF")
     assert _PROBE_CODE.encode("latin-1") in raw
     # structuredContent must not carry the PDF
-    assert result.structuredContent in (None, {})
+    assert result.structured_content in (None, {})
 
 
 def test_spike_refuses_missing_mcp_resource_url(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -198,7 +198,7 @@ def test_spike_refuses_production_mcp_resource_url(monkeypatch: pytest.MonkeyPat
 
 
 def test_register_on_fresh_server_without_production_tools() -> None:
-    mcp = FastMCP("isolated-spike")
+    mcp = MCPServer("isolated-spike")
     register_document_transport_spike(mcp)
     resources = asyncio.run(mcp.list_resources())
     assert {str(r.uri) for r in resources} == {
