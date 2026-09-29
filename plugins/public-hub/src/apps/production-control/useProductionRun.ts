@@ -5,6 +5,7 @@ import {
   endBenchSession,
   fetchActiveProductionRun,
   fetchMesDowntimeReasons,
+  isAuthError,
   pauseProductionRun,
   resumeProductionRun,
   startProductionRun,
@@ -96,6 +97,17 @@ export function useProductionRun({
     };
   }, [branch, workCenter]);
 
+  const dropStaleSession = useCallback(
+    (err: unknown) => {
+      // 401 = sessão expirada/inválida no backend: descarta a sessão local
+      // para o formulário de identificação reaparecer.
+      if (!isAuthError(err)) return;
+      if (workCenter) storeSession(branch, workCenter, null);
+      setSession(null);
+    },
+    [branch, workCenter],
+  );
+
   const refreshRun = useCallback(async () => {
     if (refreshInFlightRef.current) {
       refreshPendingRef.current = true;
@@ -133,6 +145,7 @@ export function useProductionRun({
             current.branch === request.branch &&
             current.workCenter === request.workCenter
           ) {
+            dropStaleSession(err);
             setError(err instanceof Error ? err.message : "Falha ao ler a contagem.");
           }
         }
@@ -140,7 +153,7 @@ export function useProductionRun({
     } finally {
       refreshInFlightRef.current = false;
     }
-  }, []);
+  }, [dropStaleSession]);
 
   useEffect(() => {
     void refreshRun();
@@ -202,11 +215,12 @@ export function useProductionRun({
       });
       setRun(started);
     } catch (err) {
+      dropStaleSession(err);
       setError(err instanceof Error ? err.message : "Falha ao iniciar.");
     } finally {
       setBusy(false);
     }
-  }, [token, branch, workCenter, operation, session]);
+  }, [token, branch, workCenter, operation, session, dropStaleSession]);
 
   const pause = useCallback(async () => {
     if (!run || !session) return;
@@ -214,11 +228,12 @@ export function useProductionRun({
     try {
       setRun(await pauseProductionRun(token, session.sessionToken, run.id));
     } catch (err) {
+      dropStaleSession(err);
       setError(err instanceof Error ? err.message : "Falha ao pausar.");
     } finally {
       setBusy(false);
     }
-  }, [token, run, session]);
+  }, [token, run, session, dropStaleSession]);
 
   const resume = useCallback(async () => {
     if (!run || !session) return;
@@ -226,11 +241,12 @@ export function useProductionRun({
     try {
       setRun(await resumeProductionRun(token, session.sessionToken, run.id));
     } catch (err) {
+      dropStaleSession(err);
       setError(err instanceof Error ? err.message : "Falha ao retomar.");
     } finally {
       setBusy(false);
     }
-  }, [token, run, session]);
+  }, [token, run, session, dropStaleSession]);
 
   const stop = useCallback(async () => {
     if (!run || !session) return;
@@ -239,11 +255,12 @@ export function useProductionRun({
       await stopProductionRun(token, session.sessionToken, run.id);
       setRun(null);
     } catch (err) {
+      dropStaleSession(err);
       setError(err instanceof Error ? err.message : "Falha ao encerrar.");
     } finally {
       setBusy(false);
     }
-  }, [token, run, session]);
+  }, [token, run, session, dropStaleSession]);
 
   const resolvedRun = useMemo(() => {
     const withPieces = applyProductionRunPiecesSnapshot(
@@ -283,13 +300,14 @@ export function useProductionRun({
           current && current.id === run.id ? { ...current, downtime } : current,
         );
       } catch (err) {
+        dropStaleSession(err);
         setError(err instanceof Error ? err.message : "Falha ao registrar o motivo.");
         throw err;
       } finally {
         setBusy(false);
       }
     },
-    [token, run, session],
+    [token, run, session, dropStaleSession],
   );
 
   const runMatchesOperation = useMemo(() => {
