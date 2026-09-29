@@ -102,28 +102,28 @@ export default function App({
             <h1>{DELPI_MES_COPY.productName}</h1>
             <p>{DELPI_MES_COPY.productDescription}</p>
           </div>
-          <div className="delpi-mes-hero">
+          <div className="delpi-mes-hero" aria-hidden="true">
             {heroUrl ? (
-              <img src={heroUrl} alt="" aria-hidden="true" className="delpi-mes-hero__image" />
+              <img src={heroUrl} alt="" className="delpi-mes-hero__image" />
             ) : (
-              <div className="delpi-mes-hero__placeholder" aria-hidden="true" />
+              <div className="delpi-mes-hero__placeholder" />
             )}
-            {activeBranch ? (
-              <label className="delpi-mes-branch">
-                <span>Filial</span>
-                <select
-                  value={activeBranch}
-                  onChange={(event) => navigateTo(activeArea ?? "monitoring", event.target.value as BranchCode)}
-                  aria-describedby="delpi-mes-branch-help"
-                >
-                  {visibleBranches.map((branch) => (
-                    <option key={branch} value={branch}>{branch === "01" ? "01 - SC" : "02 - ES"}</option>
-                  ))}
-                </select>
-                <span id="delpi-mes-branch-help" className="delpi-mes-sr-only">{DELPI_MES_COPY.help.branch}</span>
-              </label>
-            ) : null}
           </div>
+          {activeBranch ? (
+            <label className="delpi-mes-branch">
+              <span>Filial</span>
+              <select
+                value={activeBranch}
+                onChange={(event) => navigateTo(activeArea ?? "monitoring", event.target.value as BranchCode)}
+                aria-describedby="delpi-mes-branch-help"
+              >
+                {visibleBranches.map((branch) => (
+                  <option key={branch} value={branch}>{branch === "01" ? "01 - SC" : "02 - ES"}</option>
+                ))}
+              </select>
+              <span id="delpi-mes-branch-help" className="delpi-mes-sr-only">{DELPI_MES_COPY.help.branch}</span>
+            </label>
+          ) : null}
         </header>
 
         {activeArea && activeBranch ? (

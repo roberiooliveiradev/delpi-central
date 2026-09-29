@@ -77,14 +77,29 @@
 }
 
 .delpi-mes-header {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(18rem, 34rem);
-  gap: 1.5rem;
-  align-items: stretch;
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 10.5rem;
   max-width: 82rem;
   margin: 0 auto 1.25rem;
 }
-.delpi-mes-brand { display: flex; flex-direction: column; justify-content: center; }
+.delpi-mes-header::before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  top: -1.8rem;
+  left: 55%;
+  width: 9rem;
+  height: 9rem;
+  border: 1.4rem solid rgb(56 189 248 / 18%);
+  border-left-color: transparent;
+  border-bottom-color: transparent;
+  border-radius: 50%;
+  transform: rotate(-30deg);
+  pointer-events: none;
+}
+.delpi-mes-brand { position: relative; z-index: 2; max-width: 30rem; }
 .delpi-mes-brand h1 { margin: 0; font-size: clamp(1.9rem, 3vw, 2.6rem); font-weight: 800; letter-spacing: -0.02em; }
 .delpi-mes-brand > p:last-child { margin: 0.45rem 0 0; color: #5c6b80; max-width: 34rem; }
 .delpi-mes-eyebrow {
@@ -96,24 +111,55 @@
   text-transform: uppercase;
 }
 .delpi-mes-hero {
-  position: relative;
-  min-height: 9.5rem;
-  overflow: hidden;
-  border-radius: 1.1rem;
-  box-shadow: 0 18px 40px rgb(11 42 74 / 18%);
+  position: absolute;
+  z-index: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 45%;
+  pointer-events: none;
 }
-.delpi-mes-hero__image { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.delpi-mes-hero__placeholder {
+.delpi-mes-hero__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center right;
+  filter: brightness(1.06) saturate(0.88);
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    rgb(0 0 0 / 15%) 10%,
+    rgb(0 0 0 / 65%) 28%,
+    #000 48%,
+    #000 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    rgb(0 0 0 / 15%) 10%,
+    rgb(0 0 0 / 65%) 28%,
+    #000 48%,
+    #000 100%
+  );
+}
+.delpi-mes-hero::after {
+  content: "";
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(circle at 75% 20%, rgb(96 165 250 / 45%), transparent 55%),
-    linear-gradient(135deg, #10345f, #1e63c4);
+    linear-gradient(to top, rgb(238 242 247 / 85%), transparent 45%),
+    linear-gradient(105deg, transparent 55%, rgb(30 99 196 / 12%) 100%);
+}
+.delpi-mes-hero__placeholder {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, transparent 30%, rgb(30 99 196 / 8%) 100%);
 }
 .delpi-mes-branch {
   position: absolute;
-  top: 0.85rem;
-  right: 0.85rem;
+  z-index: 3;
+  top: 1.5rem;
+  right: 1.5rem;
   display: flex;
   align-items: center;
   gap: 0.55rem;
@@ -122,8 +168,8 @@
   color: #31435c;
   font-size: 0.78rem;
   font-weight: 700;
-  background: rgb(255 255 255 / 92%);
-  box-shadow: 0 8px 22px rgb(11 42 74 / 20%);
+  background: rgb(255 255 255 / 94%);
+  box-shadow: 0 6px 18px rgb(11 42 74 / 14%);
   backdrop-filter: blur(6px);
 }
 .delpi-mes-branch select {
@@ -456,8 +502,7 @@
 
 /* ---------- Responsive ---------- */
 @media (max-width: 1100px) {
-  .delpi-mes-header { grid-template-columns: 1fr; }
-  .delpi-mes-hero { min-height: 8rem; }
+  .delpi-mes-hero { left: 40%; }
   .delpi-mes-work-center-card { grid-template-columns: 1fr 1.2fr; }
   .delpi-mes-work-center-card__media { grid-column: 1 / -1; max-width: 22rem; }
 }
@@ -479,9 +524,10 @@
   .delpi-mes-monitoring__filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 680px) {
-  .delpi-mes-header { gap: 1rem; }
-  .delpi-mes-branch { position: static; margin-top: 0.75rem; }
-  .delpi-mes-hero { min-height: 6rem; }
+  .delpi-mes-header { flex-direction: column; align-items: flex-start; gap: 0.9rem; min-height: 9rem; }
+  .delpi-mes-hero { left: 55%; }
+  .delpi-mes-header::before { left: 62%; width: 6.5rem; height: 6.5rem; }
+  .delpi-mes-branch { position: static; }
   .delpi-mes-nav__link { flex: 1 0 auto; justify-content: center; }
   .delpi-mes-monitoring__head { flex-direction: column; }
   .delpi-mes-monitoring__filters, .delpi-mes-detail dl, .delpi-mes-detail__summary { grid-template-columns: 1fr; }
