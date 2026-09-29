@@ -34,6 +34,7 @@ from tm_app.application.governed_writes.orchestrator import (
 )
 from tm_app.application.governed_writes.diagnostic_capabilities import (
     MANAGE_ACTIONS,
+    SERVER_GENERATED_ID_FIELD,
     require_prepare_authz,
 )
 from tm_app.application.gpt_actions.dispatch_service import (
@@ -59,6 +60,11 @@ from tm_app.infrastructure.diagnostic_composition import (
 )
 from tm_app.infrastructure.gateways.core_person_profile_gateway import (
     CorePersonProfileGateway,
+)
+from tm_app.interface.diagnostic_projection import (
+    project_read_context,
+    project_revision,
+    project_summary,
 )
 from tm_app.interface.mcp.constants import (
     ACT_TOOL_CAPABILITY,
@@ -699,154 +705,12 @@ def tool_prepare_meeting_minute_manage(
 
 # --- Diagnostic V1 (MCP-native): canonical READ use cases + governed PREPARE ---
 
-# New entity ids the MCP boundary generates — the caller must never supply
-# these keys. Existing referenced ids (revision_id, evidence_id, target
-# hypothesis/conclusion ids, causal/evidence targets) stay caller-provided.
-_DIAGNOSTIC_ADDITIVE_ID_FIELD = {
-    "add_finding": "finding_id",
-    "add_hypothesis": "hypothesis_id",
-    "add_causal_link": "link_id",
-    "add_evidence_link": "link_id",
-    "add_conclusion": "conclusion_id",
-}
+# Server-generated ids for additive manage actions — canonical policy lives
+# in diagnostic_capabilities; this alias keeps the boundary readable.
+_DIAGNOSTIC_ADDITIVE_ID_FIELD = SERVER_GENERATED_ID_FIELD
 
-
-def _project_provenance(provenance: Any) -> dict | None:
-    if provenance is None:
-        return None
-    return {
-        "origin": provenance.origin.value,
-        "detail": provenance.detail,
-    }
-
-
-def _project_validation_history(history: Any) -> list[dict]:
-    return [
-        {
-            "from_lifecycle": s.from_lifecycle.value,
-            "to_lifecycle": s.to_lifecycle.value,
-            "effective_validation": s.effective_validation.value,
-            "note": s.note,
-        }
-        for s in (history or ())
-    ]
-
-
-def _project_revision(revision: Any) -> dict:
-    return {
-        "revision_id": revision.revision_id,
-        "processo_id": revision.processo_id,
-        "instancia_id": revision.instancia_id,
-        "versao_revisao": revision.versao_revisao,
-        "cenario_tipo": revision.cenario_tipo,
-        "revisao_referencia_id": revision.revisao_referencia_id,
-    }
-
-
-def _project_finding(finding: Any) -> dict:
-    return {
-        "finding_id": finding.finding_id,
-        "statement": finding.statement,
-        "epistemic_state": finding.epistemic_state.value,
-        "role": finding.role.value if finding.role is not None else None,
-        "provenance": _project_provenance(finding.provenance),
-    }
-
-
-def _project_claim_fields(claim: Any) -> dict:
-    return {
-        "lifecycle": claim.lifecycle.value,
-        "effective_validation": claim.effective_validation.value,
-        "epistemic_state": claim.epistemic_state.value,
-        "provenance": _project_provenance(claim.provenance),
-        "validation_history": _project_validation_history(
-            claim.validation_history
-        ),
-    }
-
-
-def _project_hypothesis(hypothesis: Any) -> dict:
-    return {
-        "hypothesis_id": hypothesis.hypothesis_id,
-        "statement": hypothesis.statement,
-        **_project_claim_fields(hypothesis),
-    }
-
-
-def _project_causal_link(link: Any) -> dict:
-    return {
-        "link_id": link.link_id,
-        "source_hypothesis_id": link.source_hypothesis_id,
-        "target_id": link.target_id,
-        "relation": link.relation.value,
-    }
-
-
-def _project_evidence_link_entity(link: Any) -> dict:
-    return {
-        "link_id": link.link_id,
-        "evidence_id": link.evidence_id,
-        "relation": link.relation.value,
-        "target_id": link.target_id,
-    }
-
-
-def _project_conclusion(conclusion: Any) -> dict:
-    return {
-        "conclusion_id": conclusion.conclusion_id,
-        "statement": conclusion.statement,
-        "rationale": conclusion.rationale,
-        "hypothesis_ids": list(conclusion.hypothesis_ids),
-        "finding_ids": list(conclusion.finding_ids),
-        "root_cause_hypothesis_id": conclusion.root_cause_hypothesis_id,
-        **_project_claim_fields(conclusion),
-    }
-
-
-def _project_evidence_link_view(link: Any) -> dict:
-    evidence = link.evidence
-    return {
-        "link_id": link.link_id,
-        "evidence_id": link.evidence_id,
-        "relation": link.relation,
-        "target_id": link.target_id,
-        "target_kind": link.target_kind,
-        "resolved_in_revision": link.resolved_in_revision,
-        "evidence": (
-            {
-                "evidence_id": evidence.evidence_id,
-                "revisao_id": evidence.revisao_id,
-                "tipo": evidence.tipo,
-                "nome_arquivo": evidence.nome_arquivo,
-                "descricao": evidence.descricao,
-            }
-            if evidence is not None
-            else None
-        ),
-    }
-
-
-def _project_diagnostic(diagnostic: Any) -> dict:
-    return {
-        "diagnostic_id": diagnostic.diagnostic_id,
-        "revision_id": diagnostic.revision_id,
-        "problem_statement": diagnostic.problem_statement.text,
-        "version": diagnostic.version,
-        "provenance": _project_provenance(diagnostic.provenance),
-        "findings": [_project_finding(f) for f in diagnostic.findings],
-        "hypotheses": [_project_hypothesis(h) for h in diagnostic.hypotheses],
-        "causal_links": [
-            _project_causal_link(l) for l in diagnostic.causal_links
-        ],
-        "evidence_links": [
-            _project_evidence_link_entity(l)
-            for l in diagnostic.evidence_links
-        ],
-        "conclusions": [
-            _project_conclusion(c)
-            for c in diagnostic.diagnostic_conclusions
-        ],
-    }
+# Transport projections shared with the Portal HTTP surface — single source:
+# tm_app/interface/diagnostic_projection.py.
 
 
 def tool_get_diagnostic(diagnostic_id: str) -> CallToolResult:
@@ -861,23 +725,7 @@ def tool_get_diagnostic(diagnostic_id: str) -> CallToolResult:
             _diagnostic_stack.revisions,
             _diagnostic_stack.evidence,
         ).execute(str(diagnostic_id))
-        payload = {
-            "diagnostic": _project_diagnostic(ctx.diagnostic),
-            "revision": _project_revision(ctx.revision),
-            "evidence_links": [
-                _project_evidence_link_view(l)
-                for l in ctx.evidence_links
-            ],
-            "data_quality": {
-                "signals": [
-                    {"code": s.code, "detail": s.detail}
-                    for s in ctx.data_quality.signals
-                ],
-                "unresolved_evidence_links": list(
-                    ctx.data_quality.unresolved_evidence_links
-                ),
-            },
-        }
+        payload = project_read_context(ctx)
         return _ok_result(payload, "Diagnostic carregado.")
     except Exception as exc:  # noqa: BLE001
         return handle_tool_error(exc)
@@ -892,23 +740,9 @@ def tool_list_diagnostics_by_revision(revision_id: str) -> CallToolResult:
             _diagnostic_stack.diagnostics,
             _diagnostic_stack.revisions,
         ).execute(str(revision_id))
-        items = [
-            {
-                "diagnostic_id": item.diagnostic_id,
-                "version": item.version,
-                "problem_statement": item.problem_statement,
-                "findings_count": item.findings_count,
-                "hypotheses_count": item.hypotheses_count,
-                "causal_links_count": item.causal_links_count,
-                "evidence_links_count": item.evidence_links_count,
-                "conclusions_count": item.conclusions_count,
-                "has_validated_conclusion": item.has_validated_conclusion,
-                "revalidation_attention_required": item.revalidation_attention_required,
-            }
-            for item in result.items
-        ]
+        items = [project_summary(item) for item in result.items]
         payload = {
-            "revision": _project_revision(result.revision),
+            "revision": project_revision(result.revision),
             "items": items,
         }
         return _ok_result(payload, "Diagnostics da revisão carregados.")
