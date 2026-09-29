@@ -68,7 +68,7 @@ Prova contra os requisitos congelados:
 | BPMN-DI | `BPMNDiagram`/`BPMNPlane`/shapes/edges serializados no mesmo XML; renderer nativo |
 | Editing profile `CREATE_EDIT` | modeling rules + palette/contextPad/replaceMenu customizáveis via modules (`additionalModules`) — perfil enforçado em §31 |
 | Preservation (Prompt 3) | moddle-xml mantém elementos/atributos de namespaces desconhecidos no model tree e re-serializa; provado por fixtures FX-EXT no editor (§48) |
-| Command stack / dirty | `commandStack.changed` + stack index = marcador de save point confiável (§13) |
+| Command stack / dirty | evento público `commandStack.changed` (trigger `execute`/`undo`/`redo`/`clear`) + posição mantida pelo adapter = save point confiável (§13) |
 | Palette / context pad / keyboard / copy-paste / multi-select | módulos diagram-js/bpmn-js incluídos; todos customizáveis/substituíveis |
 | Properties panel | `bpmn-js-properties-panel` oficial (seção 30) |
 | Read-only | `NavigatedViewer` — sem módulos de mutação (seção 21) |
@@ -120,7 +120,7 @@ BpmnEditorAdapter
   listDiagrams(): DiagramRef[]                  // { id, name? } — multi-BPMNDiagram
   openDiagram(diagramId: string): void
 
-  isDirty(): boolean                            // commandStack vs save point
+  isDirty(): boolean                            // position vs savedPosition (contador público do adapter)
   markSaved(): void                             // fixa save point
   undo(): void
   redo(): void
@@ -238,12 +238,12 @@ Não existe autosave; não existe merge.
 
 ## 13. Dirty State Contract
 
-`FROZEN` — fonte da verdade = **command stack do editor** (eventos `commandStack.changed` + índice de save point mantido pelo adapter), não boolean React:
+`FROZEN` — fonte da verdade = **command stack do editor** via **APIs/eventos públicos apenas**, não boolean React. O adapter mantém um contador de posição próprio (`position`): o evento público `commandStack.changed` informa `trigger` ∈ `execute | undo | redo | clear`; `execute`/`redo` incrementam, `undo` decrementa, `clear` reseta; `markSaved()` fixa `savedPosition`. Dirty = `position ≠ savedPosition`. **Proibido** acessar internals privados do vendor (`commandStack._stack`, `commandStack._stackIdx` ou equivalentes) — correção aplicada neste documento pelo Prompt 5:
 
 | Evento | Efeito no dirty |
 |---|---|
 | import/load inicial | save point fixado → CLEAN |
-| edição que gera command | stackIdx ≠ savePoint → DIRTY |
+| edição que gera command (`execute`) | position ≠ savedPosition → DIRTY |
 | undo até o save point | CLEAN |
 | redo além do save point | DIRTY |
 | save verificado | `markSaved()` → CLEAN |
