@@ -75,8 +75,8 @@ def test_package_hints_commit_via_proposal():
 def test_mcp_surface_budget_matches_registration():
     assert TEO_MCP_SURFACE == "CAPABILITY_GOVERNED_V2"
     assert MCP_SURFACE_BUDGET["before_total"] == 33
-    assert MCP_SURFACE_BUDGET["after_total"] == 20
-    assert len(MCP_TOOL_NAMES) == 20
+    assert MCP_SURFACE_BUDGET["after_total"] == 24
+    assert len(MCP_TOOL_NAMES) == 24
     assert "prepare_record_change" in MCP_TOOL_NAMES
     assert "commit_proposal" in MCP_TOOL_NAMES
     for name in MCP_LEGACY_REMOVED_TOOLS:

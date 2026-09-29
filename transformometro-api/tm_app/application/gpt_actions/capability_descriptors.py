@@ -268,6 +268,55 @@ def build_capability_surface_catalog() -> dict[str, Any]:
             "builder_instructions_are_stable_only": True,
         },
         "agent_directives": TeoAgentIntelligenceService.agent_directives(),
+        # MCP-native capabilities: discoverable here, but they declare NO
+        # gpt_* operation and must not be treated as GPT Actions.
+        "mcp_only_capabilities": [
+            {
+                "id": "diagnostic_v1",
+                "kind": "domain_capability",
+                "owner": "transformometro-api",
+                "surface_availability": {"mcp": True, "gpt_actions": False},
+                "mcp": {
+                    "read_tools": [
+                        "get_diagnostic",
+                        "list_diagnostics_by_revision",
+                    ],
+                    "prepare_tools": [
+                        "prepare_create_diagnostic",
+                        "prepare_manage_diagnostic",
+                    ],
+                    "commit_tool": "commit_proposal",
+                },
+                "manage_actions": [
+                    "add_finding",
+                    "add_hypothesis",
+                    "add_causal_link",
+                    "add_evidence_link",
+                    "add_conclusion",
+                    "validate_hypothesis",
+                    "reject_hypothesis",
+                    "supersede_hypothesis",
+                    "mark_hypothesis_stale_evidence",
+                    "mark_hypothesis_revalidation_required",
+                    "validate_conclusion",
+                    "reject_conclusion",
+                    "supersede_conclusion",
+                ],
+                "confirmation_requirement": True,
+                "commit_now": False,
+                "server_generated_ids": [
+                    "diagnostic_id",
+                    "finding_id",
+                    "hypothesis_id",
+                    "link_id",
+                    "conclusion_id",
+                ],
+                "permission_metadata": {
+                    "note": "Catalog is not AuthZ. Backend enforces transformometro.access.",
+                    "typical_gate": "transformometro.access",
+                },
+            }
+        ],
         "not_exposed_by_design": ["tm_task", "interaction_room", "process_workspace"],
         "entities": entities,
         "workflows": workflows,

@@ -334,6 +334,26 @@
         "read_context"
       ],
       "confirmation_policy": "read_only"
+    },
+    "diagnostic_v1": {
+      "gpt_operations": [],
+      "mcp_tools": [
+        "get_diagnostic",
+        "list_diagnostics_by_revision",
+        "prepare_create_diagnostic",
+        "prepare_manage_diagnostic",
+        "commit_proposal"
+      ],
+      "pipeline": [
+        "read_first",
+        "prepare",
+        "show_exact_change",
+        "explicit_confirmation",
+        "commit_proposal",
+        "read_back"
+      ],
+      "confirmation_policy": "explicit_confirmation_required_no_commit_now",
+      "notes": "MCP-native. New claim ids are server-generated; existing reference ids are caller-provided and never fabricated."
     }
   }
 }
