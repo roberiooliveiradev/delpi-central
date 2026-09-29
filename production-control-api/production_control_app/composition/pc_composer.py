@@ -447,6 +447,31 @@ def build_production_run_service(
     )
 
 
+def build_mes_run_timeline_service(
+    gateway: DelpiProductionGateway | None = None,
+    *,
+    snapshots: MachineLoadSnapshotRepositoryPort | None = None,
+    pulse_gateway: Any | None = None,
+) -> Any:
+    from production_control_app.application.services.mes_run_timeline_service import (  # noqa: E501
+        MesRunTimelineService,
+    )
+    from production_control_app.infrastructure.persistence.postgres_mes_repository import (  # noqa: E501
+        PostgresDowntimeEventRepository,
+        PostgresDowntimeReasonRepository,
+        PostgresWorkCenterStateRepository,
+    )
+
+    return MesRunTimelineService(
+        run_service=build_production_run_service(
+            gateway, snapshots=snapshots, pulse_gateway=pulse_gateway
+        ),
+        states=PostgresWorkCenterStateRepository(),
+        downtimes=PostgresDowntimeEventRepository(),
+        reasons=PostgresDowntimeReasonRepository(),
+    )
+
+
 def build_mes_downtime_classification_service(
     gateway: DelpiProductionGateway | None = None,
     *,
