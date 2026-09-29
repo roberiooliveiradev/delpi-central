@@ -45,7 +45,7 @@ Canonical domain capability
 | Entity contracts | `entities.py` + `registration_guide.entity_schemas` |
 | Capability metadata | `capability_descriptors` + catalog `capability_surface` |
 | Actions surface | `openapi_builder.py` → generated OpenAPI (18 ops) |
-| MCP surface | `constants.py` / `server.py` registration (20 tools) |
+| MCP surface | `constants.py` / `server.py` registration (24 tools) |
 | AuthZ | Core RBAC + domain enforcement |
 | GPT Instructions | `docs/gpt-actions/specialist-instructions.md` |
 | Methodology | `teo-method-playbooks.md` + `query_methodology_guide` |
@@ -135,6 +135,7 @@ Justification: list/get/create/update/delete fit governed allowlisted CRUD with 
 | Process timeline | TM | R | `get_process_timeline` | `gpt_get_process_timeline` | PLANNED | view | FULL_PARITY* |
 | Shared resource cost adjust | TM | W | prepare_adjust_shared_resource_cost → commit_proposal | `gpt_adjust_shared_resource_cost` + commit | PLANNED | parity | FULL_PARITY* |
 | Meeting minute workflow/manage | TM | R/W | prepare_* + commit_proposal (+ read/analysis) | gpt_meeting_* + commit | PLANNED | minutes svc | FULL_PARITY* |
+| **Diagnostic V1** | TM | R/W | `get_diagnostic` / `list_diagnostics_by_revision` + `prepare_create_diagnostic` / `prepare_manage_diagnostic` → `commit_proposal` | — (MCP-native, no GPT ops) | PLANNED | `transformometro.access` + fresh Core AuthZ on ACT | **MCP_ONLY** |
 | **Process documentation** | TM | R/W | via record tools | via record entity | PLANNED | `transformometro.access` | FULL_PARITY* |
 | Tasks | TM | R/W | — | — | — | access | DOMAIN_ONLY_BY_DESIGN |
 | Interaction room | TM | R/W | — | — | — | access | DOMAIN_ONLY_BY_DESIGN |
@@ -149,7 +150,8 @@ Justification: list/get/create/update/delete fit governed allowlisted CRUD with 
 | Process document | User JWT → use case `require_access` | Same dispatch → use case | Must use user delegation when built | `ProcessDocumentUseCases` |
 | Entity CRUD (other) | Same as GPT services | Same | PLANNED | Domain + branch_access helpers |
 | Writes governed | PREPARE → commit_proposal + confirm flags | Conversational confirm + backend AuthZ | Must show + human confirm before commit | Orchestrator / services |
-| MCP tool count | **20** (`CAPABILITY_GOVERNED_V2`) | — | — | constants.MCP_SURFACE_BUDGET |
+| MCP tool count | **24** (`CAPABILITY_GOVERNED_V2`) | — | — | constants.MCP_SURFACE_BUDGET |
+| Explicit confirmation | `commit_proposal` requires `confirmation` (no default — omitted ≠ confirmed) | `gpt_commit_proposal` body `confirmation` default `false` (fail-closed) | Same contract | `GovernedActionsFacade.commit_proposal` CONFIRMATION_REQUIRED gate |
 
 Profile/cargo/department/context ≠ AuthZ. Service account must not impersonate user on MCP `/mcp`.
 

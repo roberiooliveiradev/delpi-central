@@ -8,8 +8,8 @@ Gate (MCP Surface V2 — HEAD capability-driven):
 ```text
 CURRENT_CAPABILITIES (GPT Actions importable) = 18
 MCP_COVERED = 18
-MCP_NATIVE = none
-MCP_TOOLS = 20
+MCP_NATIVE = diagnostic_v1 (4 tools)
+MCP_TOOLS = 24
 MISSING = 0
 UNMAPPED GPT = 0
 REGRESSED = 0
@@ -20,20 +20,24 @@ TEO_MCP_SURFACE = CAPABILITY_GOVERNED_V2
 ```text
 18 GPT Actions capabilities
 ≠
-20 MCP tools
+24 MCP tools
 ```
 
 One GPT capability may map to READ + specialized PREPARE; all governed writes share `commit_proposal`.
 `gpt_get_methodology_guide` and `get_methodology_guide` share `query_methodology_guide`.
-`18 ≠ 20` is not a regression (meeting manage projects to multiple READ/ANALYSIS/PREPARE tools).
+`18 ≠ 24` is not a regression: meeting manage projects to multiple tools **and** Diagnostic V1
+(`diagnostic_v1`) is MCP-native — `get_diagnostic`, `list_diagnostics_by_revision`,
+`prepare_create_diagnostic`, `prepare_manage_diagnostic` — with no GPT Actions surface.
 
 Composition:
 
 ```text
-10 READ + 1 ANALYSIS + 8 PREPARE + 1 ACT(commit) = 20
-READ includes get_methodology_guide
-PREPARE includes prepare_record_change + 7 specialized workflow prepares
+12 READ + 1 ANALYSIS + 10 PREPARE + 1 ACT(commit) = 24
+READ includes get_methodology_guide + 2 Diagnostic reads
+PREPARE includes prepare_record_change + specialized workflow prepares + 2 Diagnostic prepares
 ACT = commit_proposal only (opaque proposal_handle; capability from store)
+commit_proposal schema: proposal_handle and confirmation are BOTH required;
+confirmation has NO default — omitted confirmation never means confirmed.
 unbound ACT = 0
 GPT importable operations = 18
 meta route gpt_get_openapi_schema is not importable
@@ -61,6 +65,8 @@ Principle: new CRUD entity ⇒ **0** new MCP tools; new workflow ⇒ specialized
 | `gpt_activate_revision` | PREPARE WORKFLOW | `prepare_activate_revision` → `commit_proposal` | revisao manage | yes | OK |
 | `gpt_validate_improvement_package` | PREPARE WORKFLOW | `prepare_improvement_package` → `commit_proposal` | package | yes | OK |
 | `gpt_manage_evidence` | PREPARE WORKFLOW | `prepare_manage_evidence` → `commit_proposal` | manage + confirm | yes | OK |
+| — (MCP-native) | READ | `get_diagnostic` / `list_diagnostics_by_revision` | `transformometro.access` | n/a | OK |
+| — (MCP-native) | PREPARE | `prepare_create_diagnostic` / `prepare_manage_diagnostic` → `commit_proposal` | fresh Core AuthZ on ACT | authoritative | OK |
 
 ## Removed from registration (V1 mechanical pairs)
 
