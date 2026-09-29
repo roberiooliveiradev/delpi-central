@@ -3,7 +3,8 @@
 **Status:** PROVEN IN PRODUCTION (deployed SHA `230fbb9b6a`)
 **Date:** 2026-09-29
 **Owner:** Transformômetro (domain + persistence + use cases)
-**Surface:** TÉO MCP (`/apps/transformometro-api/mcp`) — MCP-only; no GPT Actions operations.
+**Surfaces:** TÉO MCP (`/apps/transformometro-api/mcp`) and Portal HTTP
+(`/transformometro/...`) — no GPT Actions operations.
 
 ## Capability inventory
 
@@ -20,6 +21,30 @@ Manage actions (closed enum): `add_finding`, `add_hypothesis`, `add_causal_link`
 `supersede_hypothesis`, `mark_hypothesis_stale_evidence`,
 `mark_hypothesis_revalidation_required`, `validate_conclusion`, `reject_conclusion`,
 `supersede_conclusion`.
+
+## Portal HTTP surface (IMPLEMENTED — backend only)
+
+| Route | Kind | Canonical path |
+|---|---|---|
+|  | READ |  →  |
+|  | READ |  →  |
+|  | PREPARE |  capability; server-generated ; provenance forced  |
+|  | PREPARE |  capability; closed ; server-generated entity ids (); provenance forced  |
+|  | ACT (shared, single) |  — same proposal store, fingerprint, actor binding, stale detection, read-back verification as GPT/MCP |
+
+- All routes require authenticated end-user () +
+  ; service principals are denied at PREPARE and again
+  at fresh ACT AuthZ. Confirmation ≠ AuthZ.
+- Realtime: exactly one  (,
+  , payload  only) emitted after
+  WRITE + read-back + postcondition verification; fan-out  +
+  . Never on PREPARE or failed/unverified ACT.
+- Error contract: 401 unauthenticated · 403 denied/actor-mismatch/service
+  principal · 404 not found · 409 stale/concurrency/outcome-verification ·
+  422 validation/unsupported action/server-owned field/confirmation missing ·
+  503 Core AuthZ unavailable.
+- Shared transport projections live in
+  (single source for HTTP and MCP).
 
 ## Authority model
 
@@ -73,6 +98,17 @@ on ACT, MCP 4-tool surface discovered at runtime (24 total), server-generated id
 explicit confirmation backend (omitted → validation error; false →
 CONFIRMATION_REQUIRED; true → persisted + verified read-back), single-use handles,
 authoritative read-back in production.
+
+**IMPLEMENTED (this pass)** — Portal HTTP Diagnostic surface (2 reads, 2
+governed prepares, shared commit route), Portal-forced `USER` provenance,
+server-generated ids, post-verify realtime invalidation
+(`entityType=diagnostic`, `sectionKey=diagnostico`, `revisao:{id}` fan-out).
+Proven by `tests/test_diagnostic_portal_routes.py` (29 tests). No GPT Actions
+operations added; MCP unchanged.
+
+**TEST_NOT_RUN** — authenticated HTTP runtime smoke of the Portal routes
+(end-to-end through gateway + real JWT); frontend does not consume these
+routes yet (Prompt 2/3).
 
 **TEST_NOT_RUN** — TÉO conversational confirmation UX (no real ChatGPT driver in this
 environment); runtime authz negatives (missing-permission user, service principal,

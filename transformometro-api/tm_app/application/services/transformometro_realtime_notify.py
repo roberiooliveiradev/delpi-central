@@ -84,6 +84,8 @@ def infer_section_key(entity_type: str, action: str) -> str | None:
             return "medicao"
         if entity_type == "process_document":
             return "documentacao"
+        if entity_type == "diagnostic":
+            return "diagnostico"
         if entity_type == "catalog":
             return "catalog"
     if entity_type == "processo":
@@ -108,6 +110,8 @@ def infer_section_key(entity_type: str, action: str) -> str | None:
         return "custos"
     if entity_type == "process_document":
         return "documentacao"
+    if entity_type == "diagnostic":
+        return "diagnostico"
     if entity_type == "catalog":
         return "catalog"
     return None
@@ -241,6 +245,10 @@ def _related_rooms(entity_type: str, entity_id: str, payload: dict[str, Any]) ->
         rooms.append(room_key(entity_type, entity_id))
 
     revisao_id = payload.get("revisao_id")
+    if revisao_id and entity_type == "diagnostic":
+        # Diagnostic invalidation contract: revisao:{revision_id} fan-out only —
+        # payload stays minimal (no claim/evidence content over WS).
+        rooms.append(room_key("revisao", str(revisao_id)))
     if revisao_id and entity_type in {"medicao", "investimento", "vinculo"}:
         rooms.append(room_key("revisao", str(revisao_id)))
         # Matriz/comparativo da melhoria e árvore do processo precisam invalidar.

@@ -106,6 +106,18 @@ MANAGE_ACTIONS = (
     | CONCLUSION_LIFECYCLE_ACTIONS
 )
 
+# New entity ids are generated server-side by the calling boundary — the
+# caller must never supply these keys. Existing referenced ids
+# (revision_id, evidence_id, target hypothesis/conclusion ids, causal or
+# evidence targets) stay caller-provided.
+SERVER_GENERATED_ID_FIELD = {
+    "add_finding": "finding_id",
+    "add_hypothesis": "hypothesis_id",
+    "add_causal_link": "link_id",
+    "add_evidence_link": "link_id",
+    "add_conclusion": "conclusion_id",
+}
+
 
 def _raise(message: str, *, code: str, status_code: int) -> None:
     raise GovernedWriteError(message, code=code, status_code=status_code)
