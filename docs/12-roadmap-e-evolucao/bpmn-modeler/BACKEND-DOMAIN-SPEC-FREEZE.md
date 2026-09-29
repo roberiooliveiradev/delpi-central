@@ -275,7 +275,7 @@ INPUT: model_id, RevisionSelector(N), expected_version
 | `GetRevision` | metadata + artefato snapshot de uma revisão | não |
 | `ExportWorkingCopy` | conteúdo exato do artefato corrente | não |
 | `ExportRevision` | conteúdo exato do snapshot da revisão | não |
-| `ValidateWorkingCopy` | `ValidationReport` do artefato corrente (evidência efêmera) | não |
+| `ValidateWorkingCopy` | `ValidationReport` do **artefato candidato** fornecido pelo caller (evidência efêmera; nunca persiste) | não |
 
 `search models` **não** é use case separado — é filtro de `ListModels` (mesma semântica de leitura).
 
@@ -286,7 +286,7 @@ INPUT: model_id, RevisionSelector(N), expected_version
 - Filtro `query`: **case-insensitive, contains** sobre `display_name`; match **exato** sobre `id`.
 - Filtro `archived`: `active` (default — exclui arquivados), `archived`, `all`.
 - Sort: `updated_at` (default, desc — "recentes primeiro"), `created_at`, `display_name` (asc; desc permitido).
-- Paginação: cursor- ou offset-based → `DELEGATED_TO_PROMPT_7` (transporte); Application recebe `page_size` + posição e retorna `items` + `has_more` + cursor de continuação quando aplicável. `total_count` **não** é exigido na V1 (não inventar count caro sem requirement).
+- Paginação: wire resolvido em `API-E2E-ACCEPTANCE-SPEC-FREEZE` §18 (offset page-based, `page`/`page_size`, `has_more`); Application recebe `page_size` + posição e retorna `items` + `has_more`. `total_count` **não** é exigido na V1 (não inventar count caro sem requirement).
 - Resultado contém apenas metadata (nunca artefato) — listagem não carrega XML.
 
 ## 19. Export Contract
@@ -363,7 +363,7 @@ Lista autoritativa — nenhum use case adicional sem requirement:
 | UC-WC-001 | `GetWorkingCopy` | VIEW | ler artefato canônico corrente + version + checksum |
 | UC-WC-002 | `SaveWorkingCopy` | EDIT | substituir artefato da working copy (seção 8) |
 | UC-WC-003 | `ExportWorkingCopy` | VIEW | exportar `.bpmn` corrente |
-| UC-WC-004 | `ValidateWorkingCopy` | VIEW | obter ValidationReport do artefato corrente |
+| UC-WC-004 | `ValidateWorkingCopy` | VIEW | obter ValidationReport do **artefato candidato** enviado pelo editor (estado visível, possivelmente dirty); sem persistência; não altera version nem escreve revision |
 | UC-REV-001 | `ListRevisions` | VIEW | listar metadata de revisions |
 | UC-REV-002 | `GetRevision` | VIEW | ler revisão (metadata + snapshot) |
 | UC-REV-003 | `CreateRevision` | MANAGE | snapshot imutável explícito da working copy |
@@ -465,7 +465,7 @@ Qualquer divergência de read-back → `OUTCOME_VERIFICATION_FAILED`: write **n�
 | create revision idêntico à latest | `NO_CHANGES` (rejeição) |
 | duplicate / import | sempre criam novo agregado — sem no-op |
 
-Idempotência de transporte (retry de cliente, idempotency-key HTTP): `DELEGATED_TO_PROMPT_7`. Semanticamente: mutations com `expected_version` são naturalmente protegidas — retry com versão stale → `CONFLICT`; retry que encontra estado final idêntico → `NO_OP_SUCCESS` onde definido.
+Idempotência de transporte (retry de cliente, idempotency-key HTTP): resolvido em `API-E2E-ACCEPTANCE-SPEC-FREEZE` §19 — `Idempotency-Key` é `OUT_OF_V1`; frontend nunca auto-retenta writes. Semanticamente: mutations com `expected_version` são naturalmente protegidas — retry com versão stale → `CONFLICT`; retry que encontra estado final idêntico → `NO_OP_SUCCESS` onde definido.
 
 ## 30. Archived Model Operation Matrix
 

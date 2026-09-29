@@ -314,7 +314,7 @@ all               → sem filtro
 
 ### 5.4 Pagination ownership
 
-`FROZEN`: **mecanismo físico de paginação = `DELEGATED_TO_PROMPT_7`** junto ao wire contract. Prompt 7 escolhe `cursor` vs `offset` e produz a query/index compatibility correspondente. Prompt 7 **está autorizado** a adicionar **somente** o índice estritamente necessário à escolha (ex.: cursor por `updated_at, id`), sem reabrir o restante da persistência. Sem paginação ilimitada — o mecanismo escolhido deve ter `LIMIT`/bound explícito.
+`FROZEN`: **mecanismo físico de paginação resolvido por `API-E2E-ACCEPTANCE-SPEC-FREEZE` §18** — offset page-based (`page`/`page_size`, máx. 100, `has_more`). Autorização exercida: **nenhum índice adicional necessário** — `idx_models_list`, `idx_models_name_lower` e `idx_revisions_model` cobrem os sorts/paginação congelados (rationale em API-E2E §18.3). Sem paginação ilimitada — `page_size` sempre bounded.
 
 ### 5.5 Sort allowlist
 

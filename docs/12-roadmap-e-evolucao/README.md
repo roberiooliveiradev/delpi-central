@@ -63,6 +63,7 @@ Estado atual, decisões consolidadas, pendências e plano de evolução.
 | [bpmn-modeler/FRONTEND-EDITOR-UX-SPEC-FREEZE.md](./bpmn-modeler/FRONTEND-EDITOR-UX-SPEC-FREEZE.md) | Freeze frontend/editor/UX — host MFE, bpmn-js, adapter, state ownership, save/conflict, read-only, revisions, validation UX |
 | [bpmn-modeler/LAYOUT-BPMN-DI-SPEC-FREEZE.md](./bpmn-modeler/LAYOUT-BPMN-DI-SPEC-FREEZE.md) | Freeze layout/BPMN-DI — elkjs worker, BpmnLayoutAdapter, transient DI, preview, Accept/Cancel, pools/lanes, routing, quality gates |
 | [bpmn-modeler/SECURITY-PERSISTENCE-RUNTIME-SPEC-FREEZE.md](./bpmn-modeler/SECURITY-PERSISTENCE-RUNTIME-SPEC-FREEZE.md) | Freeze segurança/persistência/runtime — versões exatas, schema físico, CAS, limits, Keycloak/AuthZ 17/17, worker, CI |
+| [bpmn-modeler/API-E2E-ACCEPTANCE-SPEC-FREEZE.md](./bpmn-modeler/API-E2E-ACCEPTANCE-SPEC-FREEZE.md) | Freeze API/E2E/aceite — route map, ETag/If-Match, envelope, paginação, OpenAPI, E2E journeys, DoD da V1 (último freeze) |
 
 ### Meus Chamados de TI
 
