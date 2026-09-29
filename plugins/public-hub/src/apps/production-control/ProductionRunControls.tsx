@@ -190,7 +190,6 @@ export function ProductionRunControls({
               <p className="pcp-pub__run-title">
                 {session.operatorName || session.operatorCode}
               </p>
-              <p className="pcp-pub__run-note">Sessão neste posto · contagem via Pulso</p>
             </div>
             <button
               type="button"
