@@ -9,15 +9,15 @@ Material writes: PREPARE → opaque proposal_handle → commit_proposal
 
 from __future__ import annotations
 
-import json
 import logging
 from typing import Any
 from uuid import uuid4
 
 from fastapi.responses import JSONResponse
-from mcp.types import CallToolResult, TextContent
+from mcp.types import CallToolResult
 from starlette.requests import Request
 
+from delpi_mcp.errors import kind_for_http_status, mcp_tool_result
 from delpi_mcp.identity import (
     build_mcp_request as _shared_build_request,
     current_mcp_context,
@@ -117,12 +117,7 @@ def build_mcp_request() -> Request:
 
 def _ok_result(data: Any, message: str = "ok") -> CallToolResult:
     payload = {"success": True, "message": message, "data": data}
-    text = json.dumps(payload, ensure_ascii=False, default=str)
-    return CallToolResult(
-        content=[TextContent(type="text", text=text)],
-        structuredContent=payload,
-        isError=False,
-    )
+    return mcp_tool_result(payload, is_error=False)
 
 
 def _error_result(
@@ -144,18 +139,13 @@ def _error_result(
         "data": err_data,
         "status_code": status_code,
     }
-    text = json.dumps(payload, ensure_ascii=False, default=str)
-    result: dict[str, Any] = {
-        "content": [{"type": "text", "text": text}],
-        "structuredContent": payload,
-        "isError": True,
-    }
+    meta = None
     if status_code == 401:
-        result["_meta"] = mcp_www_authenticate_meta(
+        meta = mcp_www_authenticate_meta(
             error="invalid_token",
             error_description="Authentication required",
         )
-    return CallToolResult.model_validate(result)
+    return mcp_tool_result(payload, is_error=True, meta=meta)
 
 
 def handle_tool_error(exc: Exception) -> CallToolResult:
@@ -195,15 +185,7 @@ def handle_tool_error(exc: Exception) -> CallToolResult:
             error_code=exc.code,
         )
     if isinstance(exc, GptActionsError):
-        code = "validation"
-        if exc.status_code == 401:
-            code = "unauthenticated"
-        elif exc.status_code == 403:
-            code = "forbidden"
-        elif exc.status_code == 404:
-            code = "not_found"
-        elif exc.status_code == 409:
-            code = "conflict"
+        code = kind_for_http_status(exc.status_code, server_error="validation")
         return _error_result(
             exc.message,
             status_code=exc.status_code,

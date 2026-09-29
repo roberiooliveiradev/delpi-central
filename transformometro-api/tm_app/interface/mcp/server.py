@@ -6,6 +6,7 @@ import logging
 from typing import Any, Literal
 
 from mcp.server.fastmcp import FastMCP
+from delpi_mcp.tool_metadata import security_schemes_meta, tool_annotations_payload
 from delpi_mcp.transport import mcp_transport_security_settings
 from mcp.types import CallToolResult, Tool as MCPTool, ToolAnnotations
 
@@ -51,11 +52,12 @@ def _annotations(tool_name: str, title: str) -> ToolAnnotations:
     read_only = kind in {"READ", "ANALYSIS"}
     # PREPARE is not read-only (plans a write) and not destructive by itself.
     destructive = tool_name in DESTRUCTIVE_ACT_TOOLS
-    return ToolAnnotations(
-        readOnlyHint=read_only,
-        destructiveHint=destructive,
-        openWorldHint=False,
-        title=title,
+    return ToolAnnotations.model_validate(
+        tool_annotations_payload(
+            title,
+            read_only=read_only,
+            destructive=destructive,
+        )
     )
 
 
@@ -72,7 +74,7 @@ def create_mcp_server() -> FastMCP:
             allowed_origins=origins,
         ),
     )
-    meta = {"securitySchemes": TEO_MCP_SECURITY_SCHEMES}
+    meta = security_schemes_meta(TEO_MCP_SECURITY_SCHEMES)
 
     # --- READ -------------------------------------------------------------
 
