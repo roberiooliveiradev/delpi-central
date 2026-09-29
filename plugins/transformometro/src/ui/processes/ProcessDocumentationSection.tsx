@@ -1,14 +1,41 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import {
+  AnchoredPanelPortal,
+  ContextMenuItem,
   EmptyState,
   emptyStateCardBemClasses,
   FieldLabel,
-  MessageBodyReadonly,
+  MarkdownDocumentView,
   NativeTextControl,
+  buildMarkdownDocumentModel,
 } from "@delpi/plugin-ui/index";
+import {
+  Bold,
+  Code,
+  GitBranch,
+  Heading2,
+  Italic,
+  Link2,
+  List,
+  ListChecks,
+  MoreHorizontal,
+  Pencil,
+  Quote,
+  Search,
+  Table,
+  Trash2,
+} from "lucide-react";
 
 import { LoadingActivityCard } from "../../components/LoadingActivityCard";
+import { StateBox } from "../../components/StateBox";
 import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
+import { useUnsavedChangesGuard } from "../../components/ui/UnsavedChangesGuard";
 import {
   createProcessDocument,
   deleteProcessDocument,
@@ -17,13 +44,20 @@ import {
   updateProcessDocument,
 } from "../../data/api/transformometroProcessDocumentApi";
 import { useDirectoryUserLabels } from "../../hooks/useDirectoryUserLabels";
+import { useTransformometroEntityWatch } from "../../hooks/useTransformometroEntityWatch";
 import type { ProcessDocument, ProcessDocumentSummary } from "../../types/processDocument";
+import { getTransformometroClientId } from "../../utils/clientId";
 import { formatDateTime } from "../../utils/format";
 import {
   buildProcessDocumentHref,
   buildProcessoSectionHref,
   parseProcessDocumentIdFromHash,
 } from "./processWorkspaceNav";
+import {
+  applyMarkdownToolbarAction,
+  type MarkdownToolbarAction,
+} from "./processDocumentEditor";
+import { resolveProcessDocumentEventIntent } from "./processDocumentRealtime";
 
 type Props = {
   processoId: string;
@@ -32,8 +66,33 @@ type Props = {
 };
 
 type EditorMode = "view" | "create" | "edit";
+type EditorPane = "edit" | "split" | "preview";
+type RemoteNotice = { type: "updated" | "deleted" } | null;
 
 const EMPTY = emptyStateCardBemClasses("ds");
+
+const TOOLBAR: Array<{
+  action: MarkdownToolbarAction;
+  label: string;
+  icon: typeof Bold;
+}> = [
+  { action: "heading", label: "Título de seção", icon: Heading2 },
+  { action: "bold", label: "Negrito", icon: Bold },
+  { action: "italic", label: "Itálico", icon: Italic },
+  { action: "link", label: "Link", icon: Link2 },
+  { action: "list", label: "Lista", icon: List },
+  { action: "checklist", label: "Checklist", icon: ListChecks },
+  { action: "quote", label: "Citação", icon: Quote },
+  { action: "table", label: "Tabela", icon: Table },
+  { action: "code", label: "Bloco de código", icon: Code },
+  { action: "mermaid", label: "Diagrama Mermaid", icon: GitBranch },
+];
+
+const EDITOR_PANES: Array<{ id: EditorPane; label: string }> = [
+  { id: "edit", label: "Editar" },
+  { id: "split", label: "Dividido" },
+  { id: "preview", label: "Visualizar" },
+];
 
 export function ProcessDocumentationSection({
   processoId,
@@ -41,8 +100,16 @@ export function ProcessDocumentationSection({
   onNavigate,
 }: Props) {
   const confirm = useConfirm();
+  const clientIdRef = useRef(getTransformometroClientId());
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const moreAnchorRef = useRef<HTMLDivElement | null>(null);
+  const morePanelRef = useRef<HTMLDivElement | null>(null);
+  const readerRef = useRef<HTMLDivElement | null>(null);
+
   const [items, setItems] = useState<ProcessDocumentSummary[]>([]);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(() =>
+    parseProcessDocumentIdFromHash(window.location.hash),
+  );
   const [detail, setDetail] = useState<ProcessDocument | null>(null);
   const [listLoading, setListLoading] = useState(true);
   const [detailLoading, setDetailLoading] = useState(false);
@@ -52,9 +119,25 @@ export function ProcessDocumentationSection({
   const [mode, setMode] = useState<EditorMode>("view");
   const [draftTitle, setDraftTitle] = useState("");
   const [draftMarkdown, setDraftMarkdown] = useState("");
-  const [previewTab, setPreviewTab] = useState<"edit" | "preview">("edit");
+  const [baseline, setBaseline] = useState<{
+    documentId: string | null;
+    title: string;
+    content_md: string;
+  } | null>(null);
+  const [editorPane, setEditorPane] = useState<EditorPane>("edit");
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [search, setSearch] = useState("");
+  const [remoteNotice, setRemoteNotice] = useState<RemoteNotice>(null);
+  const [moreOpen, setMoreOpen] = useState(false);
+
+  const editing = mode === "create" || mode === "edit";
+  const editingDocumentId = mode === "edit" ? baseline?.documentId ?? null : null;
+  const baselineDocumentId = baseline?.documentId ?? null;
+  const dirty =
+    editing &&
+    baseline != null &&
+    (draftTitle !== baseline.title || draftMarkdown !== baseline.content_md);
 
   const authorIds = useMemo(() => {
     const ids = new Set<string>();
@@ -108,66 +191,143 @@ export function ProcessDocumentationSection({
 
   useEffect(() => {
     const syncFromHash = () => {
-      const fromHash = parseProcessDocumentIdFromHash(window.location.hash);
-      setSelectedId(fromHash);
-      if (!fromHash) {
-        setDetail(null);
-        if (mode !== "create") setMode("view");
-      }
+      setSelectedId(parseProcessDocumentIdFromHash(window.location.hash));
     };
-    syncFromHash();
     window.addEventListener("hashchange", syncFromHash);
     return () => window.removeEventListener("hashchange", syncFromHash);
-  }, [mode]);
+  }, []);
 
   useEffect(() => {
-    if (!selectedId || mode === "create") return;
+    if (!selectedId || editing) return;
     void loadDetail(selectedId);
-  }, [loadDetail, mode, selectedId]);
+  }, [editing, loadDetail, selectedId]);
+
+  // Remote delete while viewing the deleted doc: deterministic fallback
+  // (first remaining doc) or back to the section root when the list is empty.
+  const handleRemoteDeleteView = useCallback(async () => {
+    setRemoteNotice(null);
+    const next = await loadList();
+    setDetail(null);
+    const target = next?.[0]?.id ?? null;
+    onNavigate(
+      target
+        ? buildProcessDocumentHref(processoId, target)
+        : buildProcessoSectionHref(processoId, "documentacao"),
+    );
+  }, [loadList, onNavigate, processoId]);
+
+  // Realtime invalidation: document writes land on the processo room.
+  const handleRemoteEvent = useCallback(
+    async (event: Parameters<typeof resolveProcessDocumentEventIntent>[0]) => {
+      const intent = resolveProcessDocumentEventIntent(event, {
+        selectedId,
+        editingDocumentId,
+        clientId: clientIdRef.current,
+      });
+      switch (intent.type) {
+        case "ignore":
+          return;
+        case "refresh-list":
+          void loadList();
+          return;
+        case "refresh-list-and-detail":
+          void loadList();
+          if (selectedId) void loadDetail(selectedId);
+          return;
+        case "stale-draft":
+          void loadList();
+          setRemoteNotice({ type: "updated" });
+          return;
+        case "remote-delete": {
+          void loadList();
+          if (intent.editing) {
+            setRemoteNotice({ type: "deleted" });
+            return;
+          }
+          void handleRemoteDeleteView();
+          return;
+        }
+      }
+    },
+    [
+      editingDocumentId,
+      handleRemoteDeleteView,
+      loadDetail,
+      loadList,
+      selectedId,
+    ],
+  );
+
+  useTransformometroEntityWatch({
+    entities: [{ entityType: "processo", entityId: processoId }],
+    getAccessToken,
+    enabled: Boolean(processoId),
+    onEntityUpdated: (event) => {
+      void handleRemoteEvent(event);
+    },
+  });
+
+  const resetEditor = useCallback(() => {
+    setMode("view");
+    setBaseline(null);
+    setDraftTitle("");
+    setDraftMarkdown("");
+    setEditorPane("edit");
+    setSaveError(null);
+    setRemoteNotice(null);
+  }, []);
 
   const openDocument = (documentId: string) => {
-    setMode("view");
     setSaveError(null);
     onNavigate(buildProcessDocumentHref(processoId, documentId));
   };
 
   const startCreate = () => {
     setMode("create");
-    setSelectedId(null);
-    setDetail(null);
+    setBaseline({ documentId: null, title: "", content_md: "" });
     setDraftTitle("");
     setDraftMarkdown("");
-    setPreviewTab("edit");
+    setEditorPane("edit");
     setSaveError(null);
+    setRemoteNotice(null);
     onNavigate(buildProcessoSectionHref(processoId, "documentacao"));
   };
 
   const startEdit = () => {
     if (!detail) return;
     setMode("edit");
+    setBaseline({
+      documentId: detail.id,
+      title: detail.title,
+      content_md: detail.content_md,
+    });
     setDraftTitle(detail.title);
     setDraftMarkdown(detail.content_md);
-    setPreviewTab("edit");
+    setEditorPane("edit");
     setSaveError(null);
+    setRemoteNotice(null);
   };
 
-  const cancelEditor = () => {
-    setSaveError(null);
-    if (mode === "create") {
-      setMode("view");
-      setDraftTitle("");
-      setDraftMarkdown("");
-      return;
+  const cancelEditor = async () => {
+    if (dirty) {
+      const okLeave = await confirm({
+        title: "Descartar alterações?",
+        message: "As alterações não salvas deste documento serão perdidas.",
+        confirmLabel: "Descartar",
+        cancelLabel: "Continuar editando",
+        variant: "danger",
+      });
+      if (!okLeave) return;
     }
-    setMode("view");
-    if (selectedId) void loadDetail(selectedId);
+    resetEditor();
+    if (mode === "edit" && selectedId) void loadDetail(selectedId);
   };
 
-  const saveDocument = async () => {
+  const saveDocument = useCallback(async () => {
     const title = draftTitle.trim();
     if (!title) {
       setSaveError("Informe um título para o documento.");
-      return;
+      throw new Error("missing title");
     }
     setSaving(true);
     setSaveError(null);
@@ -179,50 +339,88 @@ export function ProcessDocumentationSection({
           getAccessToken,
         );
         await loadList();
-        setMode("view");
+        resetEditor();
         onNavigate(buildProcessDocumentHref(processoId, created.id));
         setDetail(created);
         return;
       }
-      if (!selectedId) return;
+      if (!baselineDocumentId) return;
       const updated = await updateProcessDocument(
         processoId,
-        selectedId,
+        baselineDocumentId,
         { title, content_md: draftMarkdown },
         getAccessToken,
       );
       await loadList();
       setDetail(updated);
-      setMode("view");
+      resetEditor();
     } catch (reason) {
       setSaveError(reason instanceof Error ? reason.message : "Não foi possível salvar.");
+      throw reason;
     } finally {
       setSaving(false);
     }
+  }, [
+    baselineDocumentId,
+    draftMarkdown,
+    draftTitle,
+    getAccessToken,
+    loadList,
+    mode,
+    onNavigate,
+    processoId,
+    resetEditor,
+  ]);
+
+  useUnsavedChangesGuard({
+    id: `processo:${processoId}:documentacao`,
+    editing,
+    dirty,
+    onSave: saveDocument,
+    onDiscard: resetEditor,
+    enabled: Boolean(processoId),
+  });
+
+  const reloadRemoteDocument = async () => {
+    if (!baselineDocumentId) return;
+    const fresh = await fetchProcessDocument(
+      processoId,
+      baselineDocumentId,
+      getAccessToken,
+    );
+    setBaseline({
+      documentId: fresh.id,
+      title: fresh.title,
+      content_md: fresh.content_md,
+    });
+    setDraftTitle(fresh.title);
+    setDraftMarkdown(fresh.content_md);
+    setRemoteNotice(null);
+    setDetail(fresh);
   };
 
   const removeDocument = async () => {
     if (!selectedId || !detail) return;
-    const ok = await confirm({
+    const okLeave = await confirm({
       title: "Excluir documento?",
       message: `O documento “${detail.title}” será removido da documentação deste processo.`,
       confirmLabel: "Excluir",
       cancelLabel: "Cancelar",
       variant: "danger",
     });
-    if (!ok) return;
+    if (!okLeave) return;
     setDeleting(true);
     try {
       await deleteProcessDocument(processoId, selectedId, getAccessToken);
       const next = await loadList();
-      const fallback = next?.[0]?.id ?? null;
       setMode("view");
       setDetail(null);
-      if (fallback) {
-        onNavigate(buildProcessDocumentHref(processoId, fallback));
-      } else {
-        onNavigate(buildProcessoSectionHref(processoId, "documentacao"));
-      }
+      const fallback = next?.[0]?.id ?? null;
+      onNavigate(
+        fallback
+          ? buildProcessDocumentHref(processoId, fallback)
+          : buildProcessoSectionHref(processoId, "documentacao"),
+      );
     } catch (reason) {
       setDetailError(reason instanceof Error ? reason.message : "Não foi possível excluir.");
     } finally {
@@ -230,9 +428,59 @@ export function ProcessDocumentationSection({
     }
   };
 
-  const editing = mode === "create" || mode === "edit";
+  const applyToolbar = (action: MarkdownToolbarAction) => {
+    const area = textareaRef.current;
+    const start = area?.selectionStart ?? draftMarkdown.length;
+    const end = area?.selectionEnd ?? start;
+    const result = applyMarkdownToolbarAction(draftMarkdown, start, end, action);
+    setDraftMarkdown(result.next);
+    requestAnimationFrame(() => {
+      area?.focus();
+      area?.setSelectionRange(result.selectionStart, result.selectionEnd);
+    });
+  };
+
+  const filteredItems = useMemo(() => {
+    const needle = search.trim().toLowerCase();
+    if (!needle) return items;
+    return items.filter((item) => item.title.toLowerCase().includes(needle));
+  }, [items, search]);
+
+  const docModel = useMemo(
+    () =>
+      detail
+        ? buildMarkdownDocumentModel(detail.content_md, {
+            documentTitle: detail.title,
+          })
+        : null,
+    [detail],
+  );
+
+  const draftModel = useMemo(
+    () =>
+      buildMarkdownDocumentModel(draftMarkdown, { documentTitle: draftTitle }),
+    [draftMarkdown, draftTitle],
+  );
+
+  const scrollToHeading = (id: string) => {
+    const target = readerRef.current?.querySelector(`#${CSS.escape(id)}`);
+    target?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const outlineItems = docModel?.outline ?? [];
+
   const createdLabel = detail ? nameFor(detail.created_by_user_id) : null;
   const updatedLabel = detail ? nameFor(detail.updated_by_user_id) : null;
+
+  const renderPreview = () => (
+    <div className="tm-process-documentation__preview" aria-label="Pré-visualização">
+      {draftModel.segments.length > 0 ? (
+        <MarkdownDocumentView model={draftModel} />
+      ) : (
+        <p className="ds-hint">Nada para visualizar ainda.</p>
+      )}
+    </div>
+  );
 
   return (
     <section
@@ -242,7 +490,7 @@ export function ProcessDocumentationSection({
       <div className="tm-process-documentation__header">
         <div>
           <h2 id="tm-process-documentacao-title" className="ds-section-title">
-            Documentos
+            Documentação
           </h2>
           <p className="ds-hint">
             Documentos em Markdown que descrevem o processo. Não substituem diagrama, revisão
@@ -256,29 +504,45 @@ export function ProcessDocumentationSection({
         ) : null}
       </div>
 
-      {listError ? (
-        <div className="ds-alert ds-alert--error" role="alert">
-          {listError}
-        </div>
-      ) : null}
+      {listError ? <StateBox variant="error">{listError}</StateBox> : null}
 
       <div className="tm-process-documentation__layout">
-        <aside className="tm-process-documentation__list" aria-label="Lista de documentos">
+        <aside
+          className="tm-process-documentation__rail"
+          aria-label="Documentos do processo"
+        >
+          <div className="tm-process-documentation__rail-head">
+            <span className="tm-process-documentation__rail-title">
+              Documentos
+              <span className="tm-process-documentation__rail-count">{items.length}</span>
+            </span>
+            <div className="tm-process-documentation__rail-search">
+              <Search size={14} aria-hidden="true" />
+              <input
+                type="search"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Buscar por título"
+                aria-label="Buscar documento por título"
+              />
+            </div>
+          </div>
+
           {listLoading ? (
             <LoadingActivityCard
               title="Carregando documentação"
               description="Buscando documentos deste processo."
             />
           ) : null}
-          {!listLoading && items.length === 0 && !editing ? (
-            <EmptyState
-              classNames={EMPTY}
-              title="Sem documentação"
-              defaultMessage="Nenhum documento de processo registrado."
-            />
+
+          {!listLoading && items.length > 0 && filteredItems.length === 0 ? (
+            <p className="ds-hint tm-process-documentation__rail-empty">
+              Nenhum documento corresponde à busca.
+            </p>
           ) : null}
+
           <ul className="tm-process-documentation__items">
-            {items.map((item) => {
+            {filteredItems.map((item) => {
               const active = item.id === selectedId && !editing;
               return (
                 <li key={item.id}>
@@ -292,7 +556,9 @@ export function ProcessDocumentationSection({
                     aria-current={active ? "true" : undefined}
                     onClick={() => openDocument(item.id)}
                   >
-                    <span className="tm-process-documentation__item-title">{item.title}</span>
+                    <span className="tm-process-documentation__item-title">
+                      {item.title}
+                    </span>
                     <span className="tm-process-documentation__item-meta">
                       {formatDateTime(item.updated_at)}
                     </span>
@@ -303,7 +569,11 @@ export function ProcessDocumentationSection({
           </ul>
         </aside>
 
-        <div className="tm-process-documentation__detail" aria-live="polite">
+        <div
+          className="tm-process-documentation__reader"
+          aria-live="polite"
+          ref={readerRef}
+        >
           {editing ? (
             <div className="tm-process-documentation__editor">
               <FieldLabel label="Título" htmlFor="tm-process-doc-title" />
@@ -316,61 +586,118 @@ export function ProcessDocumentationSection({
                 aria-label="Título do documento"
               />
 
-              <div className="tm-process-documentation__tabs" role="tablist" aria-label="Editor">
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={previewTab === "edit"}
-                  className={previewTab === "edit" ? "is-active" : undefined}
-                  onClick={() => setPreviewTab("edit")}
-                >
-                  Editar
-                </button>
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={previewTab === "preview"}
-                  className={previewTab === "preview" ? "is-active" : undefined}
-                  onClick={() => setPreviewTab("preview")}
-                >
-                  Visualizar
-                </button>
+              <div
+                className="tm-process-documentation__toolbar"
+                role="toolbar"
+                aria-label="Formatação Markdown"
+              >
+                {TOOLBAR.map(({ action, label, icon: Icon }) => (
+                  <button
+                    key={action}
+                    type="button"
+                    className="tm-process-documentation__tool"
+                    title={label}
+                    aria-label={label}
+                    onClick={() => applyToolbar(action)}
+                  >
+                    <Icon size={15} aria-hidden="true" />
+                  </button>
+                ))}
               </div>
 
-              {previewTab === "edit" ? (
-                <>
-                  <FieldLabel label="Markdown" htmlFor="tm-process-doc-md" />
-                  <textarea
-                    id="tm-process-doc-md"
-                    className="tm-process-documentation__textarea"
-                    value={draftMarkdown}
-                    onChange={(event) => setDraftMarkdown(event.target.value)}
-                    rows={16}
-                    aria-label="Conteúdo Markdown"
-                  />
-                </>
-              ) : (
-                <div className="tm-process-documentation__preview" aria-label="Pré-visualização">
-                  <h3 className="ds-section-subtitle">Pré-visualização</h3>
-                  {draftMarkdown.trim() ? (
-                    <MessageBodyReadonly markdown={draftMarkdown} />
-                  ) : (
-                    <p className="ds-hint">Nada para visualizar ainda.</p>
-                  )}
-                </div>
-              )}
+              <div
+                className="tm-process-documentation__tabs"
+                role="tablist"
+                aria-label="Modo do editor"
+              >
+                {EDITOR_PANES.map((pane) => (
+                  <button
+                    key={pane.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={editorPane === pane.id}
+                    className={
+                      editorPane === pane.id ? "is-active" : undefined
+                    }
+                    onClick={() => setEditorPane(pane.id)}
+                  >
+                    {pane.label}
+                  </button>
+                ))}
+              </div>
+
+              <div
+                className={
+                  editorPane === "split"
+                    ? "tm-process-documentation__panes is-split"
+                    : "tm-process-documentation__panes"
+                }
+              >
+                {editorPane !== "preview" ? (
+                  <div className="tm-process-documentation__pane-source">
+                    <FieldLabel label="Markdown" htmlFor="tm-process-doc-md" />
+                    <textarea
+                      id="tm-process-doc-md"
+                      ref={textareaRef}
+                      className="tm-process-documentation__textarea"
+                      value={draftMarkdown}
+                      onChange={(event) => setDraftMarkdown(event.target.value)}
+                      rows={16}
+                      aria-label="Conteúdo Markdown"
+                      spellCheck={false}
+                    />
+                  </div>
+                ) : null}
+                {editorPane !== "edit" ? renderPreview() : null}
+              </div>
+
+              {remoteNotice?.type === "updated" ? (
+                <StateBox
+                  variant="warning"
+                  className="tm-process-documentation__stale"
+                >
+                  <p>
+                    Este documento foi atualizado em outro local enquanto você edita.
+                    O servidor já possui uma versão mais nova.
+                  </p>
+                  <div className="tm-process-documentation__actions">
+                    <button
+                      type="button"
+                      className="ds-btn ds-btn--ghost"
+                      onClick={() => void reloadRemoteDocument()}
+                    >
+                      Recarregar versão atual
+                    </button>
+                    <button
+                      type="button"
+                      className="ds-btn ds-btn--ghost"
+                      onClick={() => setRemoteNotice(null)}
+                    >
+                      Continuar com meu rascunho
+                    </button>
+                  </div>
+                </StateBox>
+              ) : null}
+
+              {remoteNotice?.type === "deleted" ? (
+                <StateBox
+                  variant="error"
+                  className="tm-process-documentation__stale"
+                >
+                  O documento original foi removido em outro local. Seu rascunho foi
+                  preservado — copie o conteúdo se ainda precisar dele.
+                </StateBox>
+              ) : null}
 
               {saveError ? (
-                <div className="ds-alert ds-alert--error" role="alert">
-                  {saveError}
-                </div>
+                <StateBox variant="error">{saveError}</StateBox>
               ) : null}
 
               <div className="tm-process-documentation__actions">
                 <button
                   type="button"
                   className="ds-btn ds-btn--ghost"
-                  onClick={cancelEditor}
+                  onClick={() => void cancelEditor()}
                   disabled={saving}
                 >
                   Cancelar
@@ -378,8 +705,8 @@ export function ProcessDocumentationSection({
                 <button
                   type="button"
                   className="ds-btn ds-btn--primary"
-                  onClick={() => void saveDocument()}
-                  disabled={saving}
+                  onClick={() => void saveDocument().catch(() => undefined)}
+                  disabled={saving || !dirty || remoteNotice?.type === "deleted"}
                   aria-busy={saving || undefined}
                 >
                   {saving ? "Salvando…" : "Salvar"}
@@ -396,44 +723,112 @@ export function ProcessDocumentationSection({
           ) : null}
 
           {!editing && detailError ? (
-            <div className="ds-alert ds-alert--error" role="alert">
-              {detailError}
-            </div>
+            <StateBox variant="error">{detailError}</StateBox>
           ) : null}
 
           {!editing && !detailLoading && !detail && items.length > 0 ? (
             <p className="ds-hint">Selecione um documento na lista.</p>
           ) : null}
 
+          {!editing && !listLoading && items.length === 0 ? (
+            <EmptyState
+              classNames={EMPTY}
+              title="Sem documentação"
+              defaultMessage="Nenhum documento de processo registrado."
+            />
+          ) : null}
+
           {!editing && detail ? (
             <article className="tm-process-documentation__article">
               <header className="tm-process-documentation__article-header">
-                <h3 className="ds-section-subtitle">{detail.title}</h3>
-                <p className="ds-hint">
-                  {createdLabel ? `Criado por ${createdLabel}` : "Criado"}
-                  {detail.created_at ? ` · ${formatDateTime(detail.created_at)}` : ""}
-                  {" · "}
-                  {updatedLabel ? `Atualizado por ${updatedLabel}` : "Atualizado"}
-                  {detail.updated_at ? ` · ${formatDateTime(detail.updated_at)}` : ""}
-                </p>
-                <div className="tm-process-documentation__actions">
-                  <button type="button" className="ds-btn ds-btn--ghost" onClick={startEdit}>
-                    Editar
-                  </button>
+                <div className="tm-process-documentation__article-heading">
+                  <h3 className="ds-section-subtitle">{detail.title}</h3>
+                  <p className="ds-hint">
+                    {createdLabel ? `Criado por ${createdLabel}` : "Criado"}
+                    {detail.created_at ? ` · ${formatDateTime(detail.created_at)}` : ""}
+                    {" · "}
+                    {updatedLabel ? `Atualizado por ${updatedLabel}` : "Atualizado"}
+                    {detail.updated_at ? ` · ${formatDateTime(detail.updated_at)}` : ""}
+                  </p>
+                </div>
+                <div className="tm-process-documentation__article-actions">
                   <button
                     type="button"
-                    className="ds-btn ds-btn--danger"
-                    onClick={() => void removeDocument()}
-                    disabled={deleting}
-                    aria-busy={deleting || undefined}
+                    className="ds-btn ds-btn--ghost"
+                    onClick={startEdit}
                   >
-                    {deleting ? "Excluindo…" : "Excluir"}
+                    <Pencil size={14} aria-hidden="true" />
+                    Editar
                   </button>
+                  <div
+                    ref={moreAnchorRef}
+                    className="tm-process-documentation__more"
+                  >
+                    <button
+                      type="button"
+                      className="ds-btn ds-btn--ghost"
+                      aria-label="Mais ações do documento"
+                      aria-expanded={moreOpen}
+                      aria-haspopup="menu"
+                      onClick={() => setMoreOpen((open) => !open)}
+                    >
+                      <MoreHorizontal size={16} aria-hidden="true" />
+                    </button>
+                    <AnchoredPanelPortal
+                      open={moreOpen}
+                      anchorRef={moreAnchorRef}
+                      panelRef={morePanelRef}
+                      className="delpi-ui-context-menu"
+                      variant="bare"
+                      role="menu"
+                      aria-label="Ações do documento"
+                      preferredPlacement="bottom"
+                      horizontalAlign="end"
+                      gap={10}
+                      portalScopeClassName="dashboard-transformometro"
+                      onDismiss={() => setMoreOpen(false)}
+                    >
+                      <ContextMenuItem
+                        label={deleting ? "Excluindo…" : "Excluir documento"}
+                        icon={Trash2}
+                        destructive
+                        disabled={deleting}
+                        onSelect={() => {
+                          setMoreOpen(false);
+                          void removeDocument();
+                        }}
+                      />
+                    </AnchoredPanelPortal>
+                  </div>
                 </div>
               </header>
+
+              {outlineItems.length > 0 ? (
+                <details className="tm-process-documentation__outline-popover">
+                  <summary>Sumário</summary>
+                  <nav aria-label="Sumário do documento">
+                    <ul>
+                      {outlineItems.map((item) => (
+                        <li key={item.id} data-depth={item.depth}>
+                          <button
+                            type="button"
+                            onClick={() => scrollToHeading(item.id)}
+                          >
+                            {item.text}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </nav>
+                </details>
+              ) : null}
+
               <div className="tm-process-documentation__body">
-                {detail.content_md.trim() ? (
-                  <MessageBodyReadonly markdown={detail.content_md} />
+                {detail.content_md.trim() && docModel ? (
+                  <MarkdownDocumentView
+                    model={docModel}
+                    className="tm-process-documentation__markdown"
+                  />
                 ) : (
                   <p className="ds-hint">Documento sem conteúdo Markdown.</p>
                 )}
@@ -441,6 +836,31 @@ export function ProcessDocumentationSection({
             </article>
           ) : null}
         </div>
+
+        {!editing && outlineItems.length > 0 ? (
+          <aside
+            className="tm-process-documentation__outline"
+            aria-label="Sumário do documento"
+          >
+            <span className="tm-process-documentation__outline-title">
+              Nesta página
+            </span>
+            <nav>
+              <ul>
+                {outlineItems.map((item) => (
+                  <li key={item.id} data-depth={item.depth}>
+                    <button
+                      type="button"
+                      onClick={() => scrollToHeading(item.id)}
+                    >
+                      {item.text}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          </aside>
+        ) : null}
       </div>
     </section>
   );

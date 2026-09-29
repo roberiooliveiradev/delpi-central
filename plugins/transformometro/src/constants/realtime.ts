@@ -1,8 +1,19 @@
 import type { CollaborationEntityType, CollaborationPresencePayload } from "../data/api/transformometroCollaborationApi";
 
+/**
+ * Broadcast invalidation can reference entities that are NOT collaboration
+ * (presence/lock) entities — e.g. `process_document` events land on the
+ * `processo:{id}` room. Presence/lock APIs stay bound to
+ * `CollaborationEntityType`.
+ */
+export type RealtimeBroadcastEntityType =
+  | CollaborationEntityType
+  | "process_document"
+  | (string & {});
+
 export type TransformometroEntityUpdatedEvent = {
   type: "entity.updated";
-  entityType: CollaborationEntityType;
+  entityType: RealtimeBroadcastEntityType;
   entityId: string;
   action: string;
   sectionKey?: string | null;

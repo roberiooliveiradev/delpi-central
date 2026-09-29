@@ -35,6 +35,16 @@ Isso é inadequado: ata é registro de **reunião**, que pode tratar vários ass
 - Fora de escopo V1: versionamento, tags, attachments, approval, Mermaid.
 - **Surface TÉO (2026-09-22):** exposição via entidade governada `process_document` no catálogo GPT/MCP CRUD — ver [`../integrations/teo-capability-matrix.md`](../integrations/teo-capability-matrix.md) e ADR [`adr-teo-specialist-capability-surfaces.md`](./adr-teo-specialist-capability-surfaces.md). Sem novas operations Action dedicadas.
 
+## Implementação V2 — Markdown experience + realtime (2026-10-27)
+
+- **Renderer documental:** `MarkdownDocumentView` + `buildMarkdownDocumentModel` no `plugin-ui` (`components/markdown/`). GFM via `marked`, sanitização via `stripDangerousRichTextTags` (sem HTML ativo, sem `javascript:`), fenced code com label/copy/scroll interno, anchors determinísticos (`h2+` com ids estáveis + outline derivado — nunca persistido).
+- **Mermaid documental:** fenced block ```` ```mermaid ```` renderizado via `DiagramMermaidPreview` (lazy `import("mermaid")`, `securityLevel: "sandbox"`, pós-processamento seguro). **É apenas DOCUMENTAL/ILUSTRATIVO** — nunca sincroniza, sobrescreve ou substitui `flowchart_v1`, que permanece a única autoridade do diagrama do processo.
+- **Title dedupe (apresentação):** se o primeiro bloco do `content_md` for `H1` igual ao título do documento (comparação case/whitespace-safe), o H1 não é renderizado no body. O Markdown persistido permanece intacto.
+- **Realtime invalidation:** writes de `ProcessDocument` (HTTP Portal + entidade governada GPT/MCP `process_document`) emitem `entity.updated` com `entityType="process_document"`, `sectionKey="documentacao"`, payload mínimo `{processo_id, document_id}` (sem `content_md`, sem claims). Fan-out para a sala existente `processo:{processo_id}` — `process_document` **não** vira entidade de presence/lock (`ALLOWED_ENTITY_TYPES` inalterado).
+- **Frontend:** `ProcessDocumentationSection` assina `processo:{processo_id}` e re-lê via API canônica: create/update/delete → refresh de lista; update do doc aberto em view → refresh do detalhe; update do doc em edição → banner de stale-draft (rascunho nunca sobrescrito); delete do doc aberto → fallback/empty state; delete em edição → rascunho preservado + aviso. Anti-eco por `actorClientId` (mesma aba não refaz fetch).
+- **Concurrency:** `LOST UPDATE PROTECTION = ABSENT` — `ProcessDocument` não tem version/ETag/expected_version. O banner stale-draft é aviso de UX, **não** proteção de escrita; overwrite concorrente segue possível e é débito conhecido.
+- Permanece fora de escopo: versionamento, tags, attachments, approval, autosave, edição colaborativa simultânea, presence/lock de documento, sync Mermaid↔`flowchart_v1`.
+
 ## Consequências
 
 - Process Workspace integra **Documentação**, não Atas.
@@ -45,3 +55,4 @@ Isso é inadequado: ata é registro de **reunião**, que pode tratar vários ass
 
 - 2026-09-21: ADR inicial com capability TARGET e relação processo↔ata ABSENT.
 - 2026-09-21: V1 implementada (domain/API/MFE); status IMPLEMENTED até aceite runtime.
+- 2026-10-27: V2 — renderer documental GFM+Mermaid (ilustrativo), anchors/outline, title dedupe apresentacional e realtime invalidation `process_document`→`processo:{id}` (HTTP + GPT/MCP). `flowchart_v1` segue autoridade única do diagrama.

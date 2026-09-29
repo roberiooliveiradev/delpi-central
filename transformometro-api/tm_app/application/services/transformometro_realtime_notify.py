@@ -82,6 +82,8 @@ def infer_section_key(entity_type: str, action: str) -> str | None:
             return "custos"
         if entity_type == "medicao":
             return "medicao"
+        if entity_type == "process_document":
+            return "documentacao"
         if entity_type == "catalog":
             return "catalog"
     if entity_type == "processo":
@@ -104,6 +106,8 @@ def infer_section_key(entity_type: str, action: str) -> str | None:
         return "recurso"
     if entity_type == "recurso_custo":
         return "custos"
+    if entity_type == "process_document":
+        return "documentacao"
     if entity_type == "catalog":
         return "catalog"
     return None
@@ -206,6 +210,19 @@ def enrich_realtime_scope_payload(
             body["processo_id"] = processo_id
         return body
 
+    if entity_type == "process_document" and not body.get("processo_id"):
+        try:
+            from tm_app.infrastructure.persistence.repositories.process_document_repository import (
+                ProcessDocumentRepository,
+            )
+
+            document = ProcessDocumentRepository().get_by_document_id(entity_id)
+        except Exception:
+            document = None
+        if document is not None:
+            body["processo_id"] = str(document.processo_id)
+        return body
+
     if entity_type in {"medicao", "investimento", "vinculo"}:
         revisao_id = body.get("revisao_id")
         if revisao_id and (not body.get("processo_id") or not body.get("instancia_id")):
@@ -235,7 +252,11 @@ def _related_rooms(entity_type: str, entity_id: str, payload: dict[str, Any]) ->
             rooms.append(room_key("processo", str(processo_id_op)))
 
     processo_id = payload.get("processo_id")
-    if processo_id and entity_type in {"processo_instancia", "revisao"}:
+    if processo_id and entity_type in {
+        "processo_instancia",
+        "revisao",
+        "process_document",
+    }:
         rooms.append(room_key("processo", str(processo_id)))
 
     instancia_id = payload.get("instancia_id")

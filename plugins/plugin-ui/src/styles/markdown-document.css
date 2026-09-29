@@ -1,0 +1,267 @@
+/**
+ * Markdown document article typography — shared by MFE document readers
+ * (Process Documentation, future documental surfaces). Scoped to
+ * `.delpi-ui-md-doc` so it never leaks into message/chat prose.
+ */
+
+.delpi-ui-md-doc {
+  min-width: 0;
+  color: var(--delpi-ui-text, #1f2937);
+  font-size: var(--delpi-ui-font-size, 14px);
+  line-height: 1.65;
+  overflow-wrap: break-word;
+}
+
+.delpi-ui-md-doc__segment {
+  min-width: 0;
+}
+
+.delpi-ui-md-doc :is(h1, h2, h3, h4, h5, h6) {
+  line-height: 1.25;
+  font-weight: 650;
+  margin: 1.4em 0 0.5em;
+  scroll-margin-top: 12px;
+}
+
+.delpi-ui-md-doc h1 { font-size: 1.7em; }
+.delpi-ui-md-doc h2 { font-size: 1.4em; }
+.delpi-ui-md-doc h3 { font-size: 1.18em; }
+.delpi-ui-md-doc h4 { font-size: 1.05em; }
+.delpi-ui-md-doc h5 { font-size: 0.95em; }
+.delpi-ui-md-doc h6 { font-size: 0.9em; color: var(--delpi-ui-muted, #6b7280); }
+
+.delpi-ui-md-doc :is(h1, h2, h3, h4, h5, h6):first-child {
+  margin-top: 0;
+}
+
+.delpi-ui-md-doc p {
+  margin: 0.65em 0;
+}
+
+.delpi-ui-md-doc :is(ul, ol) {
+  margin: 0.5em 0;
+  padding-inline-start: 1.5em;
+}
+
+.delpi-ui-md-doc li {
+  margin: 0.25em 0;
+}
+
+.delpi-ui-md-doc li > :is(ul, ol) {
+  margin: 0.2em 0;
+}
+
+.delpi-ui-md-doc input[type="checkbox"] {
+  margin-inline-end: 0.4em;
+  accent-color: var(--delpi-ui-accent, #2563eb);
+}
+
+.delpi-ui-md-doc blockquote {
+  margin: 0.9em 0;
+  padding: 0.4em 1em;
+  border-inline-start: 3px solid var(--delpi-ui-border, #d1d5db);
+  color: var(--delpi-ui-muted, #4b5563);
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-text, #111) 3%,
+    transparent
+  );
+  border-radius: 0 8px 8px 0;
+}
+
+.delpi-ui-md-doc hr {
+  border: 0;
+  border-top: 1px solid var(--delpi-ui-border, #d1d5db);
+  margin: 1.4em 0;
+}
+
+.delpi-ui-md-doc a {
+  color: var(--delpi-ui-accent, #2563eb);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.delpi-ui-md-doc code {
+  font-family: var(--delpi-ui-font-mono, "JetBrains Mono", ui-monospace, monospace);
+  font-size: 0.88em;
+  padding: 0.12em 0.38em;
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--delpi-ui-text, #111) 7%, transparent);
+}
+
+.delpi-ui-md-doc table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+  margin: 0.9em 0;
+  font-size: 0.94em;
+}
+
+.delpi-ui-md-doc :is(th, td) {
+  border: 1px solid var(--delpi-ui-border, #d1d5db);
+  padding: 0.45em 0.8em;
+  text-align: start;
+  vertical-align: top;
+}
+
+.delpi-ui-md-doc th {
+  background: color-mix(in srgb, var(--delpi-ui-text, #111) 4%, transparent);
+  font-weight: 600;
+}
+
+.delpi-ui-md-doc img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+}
+
+/* Fenced code block — header bar + scrollable pre; never widens the page. */
+.delpi-ui-md-doc__code {
+  margin: 0.9em 0;
+  border: 1px solid var(--delpi-ui-border, #d1d5db);
+  border-radius: 10px;
+  overflow: hidden;
+  max-width: 100%;
+  background: color-mix(in srgb, var(--delpi-ui-text, #111) 4%, transparent);
+}
+
+.delpi-ui-md-doc__code-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 5px 10px;
+  border-bottom: 1px solid var(--delpi-ui-border, #d1d5db);
+  background: color-mix(in srgb, var(--delpi-ui-text, #111) 3%, transparent);
+}
+
+.delpi-ui-md-doc__code-lang {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--delpi-ui-font-mono, ui-monospace, monospace);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: lowercase;
+  color: var(--delpi-ui-muted, #6b7280);
+}
+
+.delpi-ui-md-doc__code-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 0;
+  background: transparent;
+  color: var(--delpi-ui-muted, #6b7280);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 3px 6px;
+  border-radius: 6px;
+}
+
+.delpi-ui-md-doc__code-copy:hover {
+  color: var(--delpi-ui-text, #111);
+  background: color-mix(in srgb, var(--delpi-ui-text, #111) 7%, transparent);
+}
+
+.delpi-ui-md-doc__code-copy:focus-visible {
+  outline: 2px solid var(--delpi-ui-accent, #2563eb);
+  outline-offset: 1px;
+}
+
+.delpi-ui-md-doc__code-pre {
+  margin: 0;
+  padding: 12px 14px;
+  overflow-x: auto;
+  font-size: 0.86em;
+  line-height: 1.55;
+  tab-size: 2;
+}
+
+.delpi-ui-md-doc__code-pre code {
+  padding: 0;
+  background: transparent;
+  font-size: inherit;
+}
+
+/* Mermaid figure — constrained viewport; pan/zoom handled by the preview. */
+.delpi-ui-md-doc__mermaid {
+  margin: 1em 0;
+  border: 1px solid var(--delpi-ui-border, #d1d5db);
+  border-radius: 10px;
+  overflow: hidden;
+  max-width: 100%;
+}
+
+.delpi-ui-md-doc__mermaid .delpi-ui-bpmn-editor__mermaid-preview {
+  min-height: 120px;
+  max-height: 460px;
+}
+
+.delpi-ui-md-doc__mermaid .delpi-ui-bpmn-mermaid {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+}
+
+.delpi-ui-md-doc__mermaid .delpi-ui-bpmn-mermaid svg {
+  max-width: 100%;
+  height: auto;
+}
+
+.delpi-ui-md-doc__mermaid .delpi-ui-bpmn-mermaid--loading,
+.delpi-ui-md-doc__mermaid .delpi-ui-bpmn-mermaid--error {
+  padding: 18px;
+  font-size: 0.88em;
+  color: var(--delpi-ui-muted, #6b7280);
+}
+
+.delpi-ui-md-doc__mermaid .delpi-ui-bpmn-mermaid--error {
+  color: var(--delpi-ui-danger, #b91c1c);
+}
+
+.delpi-ui-md-doc__mermaid-caption {
+  padding: 6px 12px;
+  border-top: 1px solid var(--delpi-ui-border, #d1d5db);
+  font-size: 0.78em;
+  color: var(--delpi-ui-muted, #6b7280);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.delpi-ui-md-doc__mermaid-source {
+  margin-inline-start: auto;
+}
+
+.delpi-ui-md-doc__mermaid-source summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  list-style: none;
+  font-size: 0.95em;
+  color: var(--delpi-ui-accent, #2563eb);
+}
+
+.delpi-ui-md-doc__mermaid-source summary:focus-visible {
+  outline: 2px solid var(--delpi-ui-accent, #2563eb);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.delpi-ui-md-doc__mermaid-source .delpi-ui-md-doc__code {
+  margin: 8px 0 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .delpi-ui-md-doc * {
+    scroll-behavior: auto;
+    transition: none !important;
+  }
+}
