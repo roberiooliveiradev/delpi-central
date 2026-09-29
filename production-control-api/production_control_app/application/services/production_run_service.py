@@ -128,6 +128,7 @@ class ProductionRunService:
                 states=PostgresWorkCenterStateRepository(),
                 downtimes=PostgresDowntimeEventRepository(),
                 reasons=PostgresDowntimeReasonRepository(),
+                run_lookup=self._repo.get_run,
             )
         self._mes = mes_lifecycle
 
@@ -633,6 +634,7 @@ class ProductionRunService:
                     "lastCountActivityAt": last2.isoformat(),
                     "detectedAt": detected_at.isoformat(),
                     "idleSecondsAtDetection": int((detected_at - last2).total_seconds()),
+                    "initialReasonCode": dt.get("reason_code"),
                 },
             )
             created = True

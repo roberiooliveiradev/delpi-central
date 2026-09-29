@@ -418,6 +418,9 @@ def build_production_run_service(
         PostgresMesAuditRepository,
         PostgresWorkCenterStateRepository,
     )
+    from production_control_app.infrastructure.persistence.postgres_production_run_repository import (  # noqa: E501
+        PostgresProductionRunRepository,
+    )
 
     machine_load = build_machine_load_service(gateway, snapshots=snapshots)
 
@@ -444,6 +447,7 @@ def build_production_run_service(
             states=PostgresWorkCenterStateRepository(),
             downtimes=PostgresDowntimeEventRepository(),
             reasons=PostgresDowntimeReasonRepository(),
+            run_lookup=PostgresProductionRunRepository().get_run,
         ),
         audit=PostgresMesAuditRepository(),
     )

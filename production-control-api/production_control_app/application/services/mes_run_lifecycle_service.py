@@ -19,8 +19,9 @@ forma controlada é preferível a gravar fato falso.
 
 from __future__ import annotations
 
-from datetime import datetime
-from typing import Any
+import logging
+from datetime import datetime, timezone
+from typing import Any, Callable
 
 from production_control_app.domain.errors import (
     DowntimeClassificationRequired,
@@ -42,6 +43,9 @@ from production_control_app.domain.services.mes_operational_state import (
 )
 
 
+logger = logging.getLogger(__name__)
+
+
 class MesRunLifecycleService:
     """Sequência MES de cada transição do run, dentro da transação do chamador."""
 
@@ -51,10 +55,12 @@ class MesRunLifecycleService:
         states: WorkCenterStateRepositoryPort,
         downtimes: DowntimeEventRepositoryPort,
         reasons: DowntimeReasonRepositoryPort | None = None,
+        run_lookup: Callable[[str], dict[str, Any] | None] | None = None,
     ) -> None:
         self._states = states
         self._downtimes = downtimes
         self._reasons = reasons
+        self._run_lookup = run_lookup
 
     def record_run_started(
         self, run: dict[str, Any], *, conn: Any, at: datetime
@@ -121,6 +127,7 @@ class MesRunLifecycleService:
         ``last_count_activity_at``. Idempotente: retorna ``None`` quando a
         parada automática já existe (tick seguinte não duplica)."""
         branch, wc = run["branch"], run["work_center"]
+        self._close_finished_owner_facts(branch=branch, work_center=wc, conn=conn)
         open_dt = self._downtimes.get_open(branch=branch, work_center=wc, conn=conn)
         if open_dt is not None:
             if open_dt["run_id"] != run["id"]:
@@ -143,7 +150,7 @@ class MesRunLifecycleService:
             started_at=at,
             conn=conn,
         )
-        return self._downtimes.create(
+        dt = self._downtimes.create(
             branch=branch,
             work_center=wc,
             source="system",
@@ -154,6 +161,11 @@ class MesRunLifecycleService:
             started_at=at,
             conn=conn,
         )
+        if int(run.get("pieces_total") or 0) == 0:
+            # Parada sem nenhuma peça contada desde o Play: motivo inicial
+            # ``setup`` (editável pelo operador enquanto a parada está aberta).
+            dt = self._apply_initial_setup_reason(dt, conn=conn)
+        return dt
 
     def record_automatic_resumed(
         self, run: dict[str, Any], *, conn: Any, at: datetime
@@ -163,6 +175,7 @@ class MesRunLifecycleService:
         quando nada a fechar). Não exige classificação — o motivo pode ser
         informado depois, com a máquina já produzindo."""
         branch, wc = run["branch"], run["work_center"]
+        self._close_finished_owner_facts(branch=branch, work_center=wc, conn=conn)
         open_state = self._states.get_open(branch=branch, work_center=wc, conn=conn)
         open_dt = self._downtimes.get_open(branch=branch, work_center=wc, conn=conn)
         if open_state is None and open_dt is None:
@@ -315,6 +328,70 @@ class MesRunLifecycleService:
         if open_dt is None or open_dt["run_id"] != run["id"]:
             return None
         return self._downtime_view(open_dt, run)
+
+    def _apply_initial_setup_reason(
+        self, dt: dict[str, Any], *, conn: Any
+    ) -> dict[str, Any]:
+        """Motivo inicial ``setup`` para parada automática sem peça contada.
+
+        Confirmado pelo sistema — permanece editável pelo operador enquanto
+        a parada está aberta, como qualquer parada classificada. Se o
+        catálogo não oferecer o motivo, a parada segue pendente (nunca
+        inventa código fora do catálogo).
+        """
+        if self._reasons is None:
+            return dt
+        reason = self._reasons.get("setup")
+        if reason is None or not reason.get("active"):
+            return dt
+        return self._downtimes.classify(
+            dt["id"],
+            reason_code=reason["code"],
+            planned=reason.get("default_planned"),
+            counts_as_availability_loss=reason.get("default_counts_as_availability_loss"),
+            confirmed_by_type="system",
+            confirmed_by_ref="auto-downtime",
+            conn=conn,
+        )
+
+    def _close_finished_owner_facts(
+        self, *, branch: str, work_center: str, conn: Any
+    ) -> None:
+        """Encerra parada/estado abertos cujo run dono já terminou.
+
+        Fato operacional não pode sobreviver ao próprio run — a fronteira
+        real é o ``ended_at`` do run dono. Sem a cura, a parada órfã
+        bloqueia toda detecção automática do posto (conflito a cada tick)
+        sem aparecer em nenhuma pendência. Se o dono segue ``running``/
+        ``paused`` o conflito é real e os callers abortam como antes.
+        """
+        if self._run_lookup is None:
+            return
+        for kind, repo in (("downtime", self._downtimes), ("state", self._states)):
+            open_fact = repo.get_open(
+                branch=branch, work_center=work_center, conn=conn
+            )
+            if open_fact is None or not open_fact.get("run_id"):
+                continue
+            owner = self._run_lookup(str(open_fact["run_id"]))
+            if owner is None or str(owner.get("status")) in {"running", "paused"}:
+                continue
+            boundary = owner.get("ended_at") or datetime.now(timezone.utc)
+            started = open_fact.get("started_at")
+            if started is not None and boundary < started:
+                boundary = started
+            repo.close_open(
+                branch=branch, work_center=work_center, ended_at=boundary, conn=conn
+            )
+            logger.warning(
+                "mes_orphan_fact_closed kind=%s fact_id=%s owner_run=%s "
+                "branch=%s work_center=%s",
+                kind,
+                open_fact.get("id"),
+                open_fact.get("run_id"),
+                branch,
+                work_center,
+            )
 
     @staticmethod
     def _require_classified(open_downtime: dict[str, Any]) -> None:

@@ -402,18 +402,37 @@ baseline depois do lock):
 - `producing` fecha em `started_at = last_count_activity_at` — a parada conta
   desde o último golpe, não desde a detecção;
 - `stopped` abre com `source='system'`;
-- `downtime_event` abre com `source='system'`, `reason_code=NULL`,
-  `confirmed=false`;
+- `downtime_event` abre com `source='system'`;
 - auditoria `automatic_downtime_started` (`actor_type='system'`) na mesma tx;
 - WS `production_run_updated` + `reason='automatic_downtime_started'` com
   `operationalState='stopped'` e o `downtime`.
 
+**Motivo inicial** (dois casos, decididos no momento da abertura):
+
+- `pieces_total == 0` — nenhuma peça contada desde o Play → a parada nasce
+  classificada com `reason_code='setup'`, `confirmed=true`,
+  `confirmed_by_type='system'` (snapshots do catálogo, como na classificação
+  manual). É a hipótese "ainda em preparação": o cockpit mostra "Setup /
+  preparação" e o operador pode **alterar** o motivo enquanto a parada segue
+  aberta, pelo mesmo endpoint de sempre;
+- `pieces_total > 0` — máquina já produziu → `reason_code=NULL`,
+  `confirmed=false` (pende classificação, como antes). O audit carrega
+  `initialReasonCode` para distinguir os casos.
+
 Estado resultante: `run.status='running'` + `stopped` + parada aberta — o
 cockpit mostra "Produção parada" + cronômetro desde `startedAt` e permite
-Informar motivo enquanto parada segue aberta. `paused` continua reservado ao
-Pause explícito.
+Informar/alterar motivo enquanto parada segue aberta. `paused` continua
+reservado ao Pause explícito.
 
 Ticks seguintes são idempotentes: parada já aberta → nenhum fato/evento novo.
+
+**Fatos órfãos de run encerrado**: parada/estado abertos cujo run dono já
+terminou (`ended_at` preenchido) são fechados na fronteira real do run
+(`ended_at` do dono) no início das transições automáticas — fato operacional
+não pode sobreviver ao próprio run e, sem a cura, a parada órfã bloquearia a
+detecção do posto para sempre (conflito a cada tick, invisível nas
+pendências). Se o dono segue `running`/`paused` o conflito é real e a
+transição aborta como antes.
 
 ### Retorno automático
 

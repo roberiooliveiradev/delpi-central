@@ -384,6 +384,16 @@ class FakeReasonRepo:
                 "active": True,
                 "sort_order": 40,
             },
+            "setup": {
+                "code": "setup",
+                "label": "Setup / preparação",
+                "category": "setup",
+                "default_planned": None,
+                "default_counts_as_availability_loss": None,
+                "requires_note": False,
+                "active": True,
+                "sort_order": 60,
+            },
             "maintenance": {
                 "code": "maintenance",
                 "label": "Manutenção",

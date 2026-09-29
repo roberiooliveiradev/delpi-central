@@ -84,7 +84,10 @@ def _setup(
     downtimes = FakeDowntimeRepo()
     reasons = FakeReasonRepo() if with_reasons else None
     lifecycle = MesRunLifecycleService(
-        states=states, downtimes=downtimes, reasons=reasons
+        states=states,
+        downtimes=downtimes,
+        reasons=reasons,
+        run_lookup=repo.get_run,
     )
     clock = FakeClock()
     audit = FakeAudit()
@@ -151,7 +154,10 @@ def test_threshold_opens_exactly_one_auto_downtime():
     dt = downtimes.events[0]
     assert dt["run_id"] == run["id"]
     assert dt["source"] == "system"
-    assert dt["reason_code"] is None and dt["confirmed"] is False
+    # Sem peça contada desde o Play: motivo inicial setup confirmado
+    # pelo sistema (operador pode alterar enquanto a parada segue aberta).
+    assert dt["reason_code"] == "setup" and dt["confirmed"] is True
+    assert dt["confirmed_by_type"] == "system"
     assert states.events[-1]["state"] == "stopped"
     assert states.events[-1]["source"] == "system"
     # started_at retroage à última atividade (baseline do run neste caso)
@@ -312,6 +318,15 @@ def test_stop_during_auto_stop_requires_classification_then_closes():
     service, states, downtimes, repo, pulse, clock, session, audit = _setup()
     run = _start(service, session)
     _sync_clock(clock, repo, run["id"])
+    # Produz peças antes — só parada após produção nasce sem motivo.
+    pulse.device_by_id["dev-1"] = {
+        "deviceId": "dev-1",
+        "counter": 105,
+        "counterEpoch": 1,
+        "online": True,
+        "status": "online",
+    }
+    service.tick_running_runs()
     clock.advance(THRESHOLD)
     service.tick_running_runs()
 
@@ -455,6 +470,15 @@ def test_pending_downtime_survives_in_snapshot():
     service, states, downtimes, repo, pulse, clock, session, audit = _setup()
     run_ = _start(service, session)
     _sync_clock(clock, repo, run_["id"])
+    # Produz peças antes — parada automática pós-produção fica pendente.
+    pulse.device_by_id["dev-1"] = {
+        "deviceId": "dev-1",
+        "counter": 103,
+        "counterEpoch": 1,
+        "online": True,
+        "status": "online",
+    }
+    service.tick_running_runs()
     clock.advance(THRESHOLD)
     service.tick_running_runs()
     pulse.device_by_id["dev-1"] = {
@@ -481,7 +505,7 @@ def test_get_active_exposes_operational_state_stopped():
     active = service.get_active(branch="01", work_center="CT01")
     assert active["status"] == "running"
     assert active["operationalState"] == "stopped"
-    assert active["downtime"]["reasonCode"] is None
+    assert active["downtime"]["reasonCode"] == "setup"
 
 
 def test_ws_emitted_once_per_transition(monkeypatch: pytest.MonkeyPatch):
@@ -603,7 +627,10 @@ class TestAutoDowntimePostgres:
         reasons = PostgresDowntimeReasonRepository()
         repo = PostgresProductionRunRepository()
         lifecycle = MesRunLifecycleService(
-            states=states, downtimes=downtimes, reasons=reasons
+            states=states,
+            downtimes=downtimes,
+            reasons=reasons,
+            run_lookup=repo.get_run,
         )
         return repo, lifecycle, states, downtimes
 
@@ -687,12 +714,19 @@ class TestAutoDowntimePostgres:
         baseline = repo.get_run(run["id"])["last_count_activity_at"]
         assert baseline is not None
 
-        clock.now = baseline + timedelta(seconds=THRESHOLD)
+        # Produz peças antes — parada pós-produção nasce sem motivo.
+        clock.now = baseline + timedelta(seconds=10)
+        service._pulse.device_by_id["00000000-0000-4000-8000-0000000000a1"] = _pg_device(counter=140)
+        service.tick_running_runs()
+        activity = repo.get_run(run["id"])["last_count_activity_at"]
+
+        clock.now = activity + timedelta(seconds=THRESHOLD)
         service.tick_running_runs()
 
         open_dt = downtimes.get_open(branch="01", work_center=clean_ct)
         assert open_dt is not None and open_dt["source"] == "system"
-        assert open_dt["started_at"] == baseline
+        assert open_dt["started_at"] == activity
+        assert open_dt["reason_code"] is None
         open_state = states.get_open(branch="01", work_center=clean_ct)
         assert open_state["state"] == "stopped" and open_state["source"] == "system"
         assert repo.get_run(run["id"])["status"] == "running"
@@ -704,14 +738,14 @@ class TestAutoDowntimePostgres:
 
         # incremento real → auto-resume
         resumed_at = clock.now
-        service._pulse.device_by_id["00000000-0000-4000-8000-0000000000a1"] = _pg_device(counter=140)
+        service._pulse.device_by_id["00000000-0000-4000-8000-0000000000a1"] = _pg_device(counter=180)
         service.tick_running_runs()
         assert downtimes.get_open(branch="01", work_center=clean_ct) is None
         open_state = states.get_open(branch="01", work_center=clean_ct)
         assert open_state["state"] == "producing"
         fresh = repo.get_run(run["id"])
         assert fresh["status"] == "running"
-        assert fresh["pieces_total"] == 40
+        assert fresh["pieces_total"] == 80
         assert fresh["last_count_activity_at"] == resumed_at
 
         # pendente de classificação aparece no snapshot
@@ -822,13 +856,23 @@ def _finish_run_with_unclassified_downtime(
     """Run com parada automática já encerrada sem motivo → run stop."""
     run = _start(service, session)
     _sync_clock(clock, repo, run["id"])
+    # Produz 4 peças — a parada seguinte nasce sem motivo (não é setup).
+    pulse.device_by_id["dev-1"] = {
+        "deviceId": "dev-1",
+        "counter": 104,
+        "counterEpoch": 1,
+        "online": True,
+        "status": "online",
+    }
+    service.tick_running_runs()
     clock.advance(THRESHOLD)
     service.tick_running_runs()
     assert downtimes.events and downtimes.events[0]["ended_at"] is None
+    assert downtimes.events[0]["reason_code"] is None
     clock.advance(60)
     pulse.device_by_id["dev-1"] = {
         "deviceId": "dev-1",
-        "counter": 105,
+        "counter": 110,
         "counterEpoch": 1,
         "online": True,
         "status": "online",
@@ -921,3 +965,149 @@ def test_unclassified_list_requires_session_of_same_work_center():
         classifier.list_unclassified(
             branch="01", work_center="CT01", session_token=None
         )
+
+
+def test_auto_stop_after_pieces_has_no_reason():
+    """Parada automática DEPOIS de produzir nasce sem motivo — setup só
+    vale para parada antes da primeira peça do run."""
+    service, _st, downtimes, _r, pulse, clock, session, _a = _setup()
+    _start(service, session)
+    pulse.device_by_id["dev-1"] = {
+        "deviceId": "dev-1",
+        "counter": 105,
+        "counterEpoch": 1,
+        "online": True,
+        "status": "online",
+    }
+    service.tick_running_runs()  # 5 peças
+    clock.advance(THRESHOLD)
+    service.tick_running_runs()
+    assert len(downtimes.events) == 1
+    dt = downtimes.events[0]
+    assert dt["source"] == "system"
+    assert dt["reason_code"] is None
+    assert dt["confirmed"] is False
+
+
+def test_setup_reason_is_editable_while_downtime_open():
+    """O motivo inicial setup pode ser trocado pelo operador com a
+    parada ainda aberta — mesmo fluxo de classificação de sempre."""
+    service, _st, downtimes, repo, _p, clock, session, _a = _setup()
+    run = _start(service, session)
+    _sync_clock(clock, repo, run["id"])
+    clock.advance(THRESHOLD)
+    service.tick_running_runs()
+    dt = downtimes.events[0]
+    assert dt["reason_code"] == "setup" and dt["ended_at"] is None
+
+    classifier = _classifier(service, downtimes)
+    out = classifier.classify(
+        run["id"],
+        reason_code="maintenance",
+        note=None,
+        session_token=session,
+    )
+    assert out["reasonCode"] == "maintenance"
+    assert downtimes.events[0]["reason_code"] == "maintenance"
+    assert downtimes.events[0]["confirmed_by_type"] == "operator"
+
+
+def test_setup_stop_audit_carries_initial_reason():
+    service, _st, _dt, repo, _p, clock, session, audit = _setup()
+    run_ = _start(service, session)
+    _sync_clock(clock, repo, run_["id"])
+    clock.advance(THRESHOLD)
+    service.tick_running_runs()
+    started = next(
+        e for e in audit.events if e["action"] == "automatic_downtime_started"
+    )
+    assert started["details"]["initialReasonCode"] == "setup"
+
+
+def test_orphan_downtime_of_finished_run_is_healed_on_detection():
+    """Parada órfã de um run já encerrado não pode bloquear a detecção do
+    run atual: o tick a encerra no ended_at do run dono (fronteira
+    real) e abre a parada do run corrente."""
+    service, states, downtimes, repo, _p, clock, session, _a = _setup()
+    run_a = _start(service, session)
+    _sync_clock(clock, repo, run_a["id"])
+    clock.advance(THRESHOLD)
+    service.tick_running_runs()
+    orphan = downtimes.events[0]
+    assert orphan["run_id"] == run_a["id"] and orphan["ended_at"] is None
+
+    # Simula o zumbi: run encerra sem fechar a parada (fecha só o estado
+    # para o Play do próximo run não colidir no estado aberto).
+    states.close_open(branch="01", work_center="CT01")
+    repo.set_run_status(run_a["id"], status="completed")
+    owner_ended = repo.runs[run_a["id"]]["ended_at"]
+
+    run_b = _start(service, session)
+    _sync_clock(clock, repo, run_b["id"])
+    clock.advance(THRESHOLD)
+    service.tick_running_runs()
+
+    assert orphan["ended_at"] == owner_ended
+    current = [e for e in downtimes.events if e["ended_at"] is None]
+    assert len(current) == 1
+    assert current[0]["run_id"] == run_b["id"]
+    assert current[0]["source"] == "system"
+    assert current[0]["reason_code"] == "setup"
+
+
+def test_orphan_downtime_of_active_run_still_conflicts():
+    """Se o dono da parada aberta segue ativo, o conflito é real: nada é
+    fechado e o erro de domínio continua."""
+    from production_control_app.domain.errors import DowntimeConflict
+
+    service, _st, downtimes, repo, _p, clock, session, _a = _setup()
+    run_a = _start(service, session)
+    _sync_clock(clock, repo, run_a["id"])
+    clock.advance(THRESHOLD)
+    service.tick_running_runs()
+    orphan = downtimes.events[0]
+    assert orphan["ended_at"] is None
+
+    run_b = {
+        "id": "run-b",
+        "branch": "01",
+        "work_center": "CT01",
+        "production_order": "OP2",
+        "operation_code": "10",
+        "pieces_total": 0,
+        "status": "running",
+    }
+    with pytest.raises(DowntimeConflict):
+        service._mes.record_automatic_stopped(run_b, conn=None, at=clock.now)
+    assert orphan["ended_at"] is None
+
+
+def test_orphan_state_of_finished_run_is_healed_on_detection():
+    """Estado operacional órfão de run encerrado é fechado na fronteira do
+    run dono em vez de bloquear a detecção para sempre."""
+    service, states, downtimes, repo, _p, clock, session, _a = _setup()
+    run_a = _start(service, session)
+    _sync_clock(clock, repo, run_a["id"])
+    clock.advance(THRESHOLD)
+    service.tick_running_runs()
+    orphan_state = states.events[-1]
+    assert orphan_state["state"] == "stopped" and orphan_state["ended_at"] is None
+    orphan_dt = downtimes.events[0]
+
+    # Zumbi: run dono encerrado, estado + parada ainda abertos.
+    repo.set_run_status(run_a["id"], status="completed")
+    owner_ended = repo.runs[run_a["id"]]["ended_at"]
+
+    run_b = {
+        "id": "run-b",
+        "branch": "01",
+        "work_center": "CT01",
+        "production_order": "OP2",
+        "operation_code": "10",
+        "pieces_total": 0,
+        "status": "running",
+    }
+    dt = service._mes.record_automatic_stopped(run_b, conn=None, at=clock.now)
+    assert dt is not None and dt["run_id"] == "run-b"
+    assert orphan_state["ended_at"] == owner_ended
+    assert orphan_dt["ended_at"] == owner_ended
