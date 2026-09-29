@@ -570,5 +570,10 @@ def expression_capability(*, transport: str = "mcp") -> dict[str, Any]:
             "maxStringBytes": int(value_expression_setting("maxStringBytes", 512)),
         },
         "paramPolicy": "paramSchema query params; spec.expressionAllowed=false opts out; path/fixed params denied",
+        "writableVia": [
+            "patch_data_source_params.set.<param>",
+            "upsert_data_source.params.<param>",
+            "upsert_data_model.model.inputs[].params.<param>",
+        ],
         "ast": _parameter_ast_contract(),
     }

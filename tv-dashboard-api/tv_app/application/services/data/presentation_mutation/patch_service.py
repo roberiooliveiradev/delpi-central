@@ -60,6 +60,8 @@ from tv_app.application.services.data.tv_data_binding_hydrate_service import (
 )
 from tv_app.application.services.data.value_expression_service import (
     is_expression_value,
+    params_contain_expressions,
+    resolve_param_expressions,
     validate_expression_param_value,
 )
 from tv_app.application.services.tv_date_range_preset_service import (
@@ -895,7 +897,10 @@ class PresentationPatchService:
                 )
             elif op_name == "patch_data_source_params":
                 self._op_patch_data_source_params(
-                    native_config, raw_op, side_effects=side_effects
+                    native_config,
+                    raw_op,
+                    side_effects=side_effects,
+                    playlist_defaults=playlist_defaults,
                 )
             elif op_name == "set_data_transform":
                 self._op_set_data_transform(native_config, raw_op)
@@ -1635,6 +1640,12 @@ class PresentationPatchService:
                         )
                     except ValueError as exc:
                         raise PresentationPatchError(str(exc)) from exc
+                    self._assert_data_source_expressions(
+                        route,
+                        params,
+                        playlist_defaults=playlist_defaults,
+                        slide_filters=slide_filters,
+                    )
                     row["params"] = params
                 hydrated_inputs.append(row)
             model_draft["inputs"] = hydrated_inputs
@@ -2146,6 +2157,12 @@ class PresentationPatchService:
             )
         except ValueError as exc:
             raise PresentationPatchError(str(exc)) from exc
+        self._assert_data_source_expressions(
+            route,
+            params,
+            playlist_defaults=playlist_defaults,
+            slide_filters=slide_filters,
+        )
         label = op.get("label") or route.get("label") or operation_id
         binding = {
             "operationId": operation_id,
@@ -2207,6 +2224,7 @@ class PresentationPatchService:
         op: dict[str, Any],
         *,
         side_effects: dict[str, Any] | None = None,
+        playlist_defaults: dict[str, Any] | None = None,
     ) -> None:
         """Patch atomico de `dataBinding.params`: set/unset com allowlist da rota.
 
@@ -2252,14 +2270,9 @@ class PresentationPatchService:
                 continue
             if not isinstance(value, (str, int, float, bool)):
                 if is_expression_value(value):
-                    # ExpressionSpec é dado tipado permitido em params de schema.
-                    try:
-                        validate_expression_param_value(key_str, value, route=route)
-                    except MExpressionError as exc:
-                        raise PresentationPatchError(
-                            PresentationOpsContentService.message("paramsInvalid"),
-                            code=exc.code,
-                        ) from exc
+                    # ExpressionSpec é dado tipado permitido em params de schema;
+                    # spec/fase/refs/tipo validados pós-merge em
+                    # _assert_data_source_expressions.
                     set_patch[key_str] = value
                     continue
                 raise PresentationPatchError(
@@ -2294,6 +2307,16 @@ class PresentationPatchService:
         set_patch, _ = _remap_param_keys(set_patch, schema_keys)
         base = {key: value for key, value in current.items() if key not in unset_keys}
         next_params = merge_period_params_layer(base, set_patch)
+        self._assert_data_source_expressions(
+            route,
+            next_params,
+            playlist_defaults=playlist_defaults,
+            slide_filters=(
+                cfg.get("dataFilters")
+                if isinstance(cfg.get("dataFilters"), dict)
+                else None
+            ),
+        )
 
         removed = sorted(key for key in current if key not in next_params)
         changed_set = {
@@ -2311,6 +2334,44 @@ class PresentationPatchService:
                     "blockId": block_id,
                     "changed": {"set": changed_set, "unset": removed},
                 }
+            )
+
+    def _assert_data_source_expressions(
+        self,
+        route: dict[str, Any],
+        params: dict[str, Any],
+        *,
+        playlist_defaults: dict[str, Any] | None = None,
+        slide_filters: dict[str, Any] | None = None,
+    ) -> None:
+        """ExpressionSpec em params: spec/fase/refs/expressionAllowed + avaliação
+        determinística do tipo de saída (mesmo resolvedor canônico do preview)."""
+        if not params_contain_expressions(params):
+            return
+        from tv_app.application.services.data.ready_slide_quality_service import (
+            ReadySlideQualityService,
+        )
+
+        for key, value in params.items():
+            if not is_expression_value(value):
+                continue
+            try:
+                validate_expression_param_value(str(key), value, route=route)
+            except MExpressionError as exc:
+                raise PresentationPatchError(
+                    PresentationOpsContentService.message("paramsInvalid"),
+                    code=exc.code,
+                ) from exc
+        merged = ReadySlideQualityService.merged_params_for_readiness(
+            params,
+            playlist_defaults=playlist_defaults,
+            slide_filters=slide_filters,
+        )
+        resolution = resolve_param_expressions(merged, route=route)
+        if resolution.error:
+            raise PresentationPatchError(
+                PresentationOpsContentService.message("paramsInvalid"),
+                code=str(resolution.error.get("code") or "m.expression_invalid"),
             )
 
     @staticmethod

@@ -915,7 +915,7 @@
           },
           "params": {
             "type": "object",
-            "description": "Route params as a primitive map. Omit for label-only rename.",
+            "description": "Route params: literal scalars or canonical ParamExpression spec {expression:{version:1,expression:<CompiledExpression AST>}} (AST node contract in expressions.ast, MCP catalog). Omit for label-only rename.",
             "additionalProperties": {
               "oneOf": [
                 {
@@ -929,6 +929,86 @@
                 },
                 {
                   "type": "boolean"
+                },
+                {
+                  "type": "object",
+                  "description": "Canonical ParamExpression spec (ExpressionSpec v1); semantic validation enforces route paramSchema/expressionAllowed.",
+                  "required": [
+                    "expression"
+                  ],
+                  "properties": {
+                    "expression": {
+                      "type": "object",
+                      "required": [
+                        "version",
+                        "expression"
+                      ],
+                      "properties": {
+                        "version": {
+                          "const": 1
+                        },
+                        "expression": {
+                          "type": "object",
+                          "description": "CompiledExpression AST root node {kind,value,children}.",
+                          "required": [
+                            "kind"
+                          ],
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "literal",
+                                "identifier",
+                                "call",
+                                "binary",
+                                "unary",
+                                "if",
+                                "list"
+                              ]
+                            },
+                            "value": {
+                              "oneOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "number"
+                                },
+                                {
+                                  "type": "integer"
+                                },
+                                {
+                                  "type": "boolean"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "children": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "description": "Nested CompiledExpression AST node.",
+                                "required": [
+                                  "kind"
+                                ],
+                                "properties": {
+                                  "kind": {
+                                    "type": "string"
+                                  }
+                                },
+                                "additionalProperties": true
+                              }
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
                 }
               ]
             }
@@ -1001,7 +1081,7 @@
           },
           "set": {
             "type": "object",
-            "description": "Params a definir. Valor null/vazio equivale a unset. Apenas chaves do paramSchema da rota ou virtuais TV.",
+            "description": "Params a definir: literais escalares ou ParamExpression canônica {expression:{version:1,expression:<AST CompiledExpression>}} (contrato AST em expressions.ast, catálogo MCP). Valor null/vazio equivale a unset. Apenas chaves do paramSchema da rota ou virtuais TV.",
             "additionalProperties": {
               "oneOf": [
                 {
@@ -1018,6 +1098,86 @@
                 },
                 {
                   "type": "null"
+                },
+                {
+                  "type": "object",
+                  "description": "Canonical ParamExpression spec (ExpressionSpec v1); semantic validation enforces route paramSchema/expressionAllowed.",
+                  "required": [
+                    "expression"
+                  ],
+                  "properties": {
+                    "expression": {
+                      "type": "object",
+                      "required": [
+                        "version",
+                        "expression"
+                      ],
+                      "properties": {
+                        "version": {
+                          "const": 1
+                        },
+                        "expression": {
+                          "type": "object",
+                          "description": "CompiledExpression AST root node {kind,value,children}.",
+                          "required": [
+                            "kind"
+                          ],
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "literal",
+                                "identifier",
+                                "call",
+                                "binary",
+                                "unary",
+                                "if",
+                                "list"
+                              ]
+                            },
+                            "value": {
+                              "oneOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "number"
+                                },
+                                {
+                                  "type": "integer"
+                                },
+                                {
+                                  "type": "boolean"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "children": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "description": "Nested CompiledExpression AST node.",
+                                "required": [
+                                  "kind"
+                                ],
+                                "properties": {
+                                  "kind": {
+                                    "type": "string"
+                                  }
+                                },
+                                "additionalProperties": true
+                              }
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
                 }
               ]
             }
@@ -3347,7 +3507,7 @@
                     },
                     "params": {
                       "type": "object",
-                      "description": "Route params as a primitive map.",
+                      "description": "Route params: literal scalars or canonical ParamExpression spec {expression:{version:1,expression:<CompiledExpression AST>}} (AST node contract in expressions.ast, MCP catalog).",
                       "additionalProperties": {
                         "oneOf": [
                           {
@@ -3361,6 +3521,86 @@
                           },
                           {
                             "type": "boolean"
+                          },
+                          {
+                            "type": "object",
+                            "description": "Canonical ParamExpression spec (ExpressionSpec v1); semantic validation enforces route paramSchema/expressionAllowed.",
+                            "required": [
+                              "expression"
+                            ],
+                            "properties": {
+                              "expression": {
+                                "type": "object",
+                                "required": [
+                                  "version",
+                                  "expression"
+                                ],
+                                "properties": {
+                                  "version": {
+                                    "const": 1
+                                  },
+                                  "expression": {
+                                    "type": "object",
+                                    "description": "CompiledExpression AST root node {kind,value,children}.",
+                                    "required": [
+                                      "kind"
+                                    ],
+                                    "properties": {
+                                      "kind": {
+                                        "type": "string",
+                                        "enum": [
+                                          "literal",
+                                          "identifier",
+                                          "call",
+                                          "binary",
+                                          "unary",
+                                          "if",
+                                          "list"
+                                        ]
+                                      },
+                                      "value": {
+                                        "oneOf": [
+                                          {
+                                            "type": "string"
+                                          },
+                                          {
+                                            "type": "number"
+                                          },
+                                          {
+                                            "type": "integer"
+                                          },
+                                          {
+                                            "type": "boolean"
+                                          },
+                                          {
+                                            "type": "null"
+                                          }
+                                        ]
+                                      },
+                                      "children": {
+                                        "type": "array",
+                                        "items": {
+                                          "type": "object",
+                                          "description": "Nested CompiledExpression AST node.",
+                                          "required": [
+                                            "kind"
+                                          ],
+                                          "properties": {
+                                            "kind": {
+                                              "type": "string"
+                                            }
+                                          },
+                                          "additionalProperties": true
+                                        }
+                                      }
+                                    },
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "additionalProperties": false
+                              }
+                            },
+                            "additionalProperties": false
                           }
                         ]
                       }
