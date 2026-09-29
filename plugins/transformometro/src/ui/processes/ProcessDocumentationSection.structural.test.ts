@@ -63,6 +63,19 @@ describe("Process Documentation wiring", () => {
     expect(section).toMatch(/activeHeadingId/);
     expect(section).toMatch(/aria-current=\{/);
   });
+
+  it("reader desktop usa scroller interno do documento", () => {
+    expect(section).toMatch(/documentScrollRef/);
+    expect(section).toMatch(/tm-process-documentation__document-scroll/);
+    // O observer aponta para o scroller interno, não para o `.content` do portal.
+    expect(section).toMatch(/documentScrollRef\.current\s*\?\?/);
+    // scrollToHeading calcula offset relativo ao scroller interno.
+    expect(section).toMatch(/scroller\.scrollTo\(\{\s*top,/);
+    // O header do artigo fica fora do scroller (título/meta/ações persistentes).
+    const articleStart = section.indexOf("__article-header");
+    const scrollStart = section.indexOf("__document-scroll");
+    expect(scrollStart).toBeGreaterThan(articleStart);
+  });
 });
 
 describe("Process Documentation layout/sticky CSS contract", () => {
@@ -84,5 +97,30 @@ describe("Process Documentation layout/sticky CSS contract", () => {
     );
     expect(threeCol).not.toBeNull();
     expect(css).toMatch(/@media \(max-width: 899\.98px\)/);
+  });
+
+  it("scroll interno só em desktop e sem nested-scroll em mobile", () => {
+    const internalScroll = css.match(
+      /@media \(min-width: 900px\)\{[^}]*tm-process-documentation__document-scroll\{[^}]*overflow-y:\s*auto/,
+    );
+    expect(internalScroll).not.toBeNull();
+    // Sem overflow obrigatório no bloco base (mobile rola com a página).
+    const base = css.match(/tm-process-documentation__document-scroll\{[^}]*\}/);
+    expect(base?.[0]).not.toMatch(/overflow-y:\s*auto/);
+  });
+
+  it("busca da biblioteca é expandida; busca do rail permanece compacta", () => {
+    const librarySearch = css.match(
+      /__library-head\s*\.tm-process-documentation__rail-search\{[^}]*\}/,
+    );
+    expect(librarySearch?.[0]).toMatch(/flex:\s*1 1 30rem/);
+    expect(librarySearch?.[0]).toMatch(/max-width:\s*38rem/);
+  });
+
+  it("headings dentro do scroller interno não usam o offset da top bar", () => {
+    const inner = css.match(
+      /__document-scroll\s*\.delpi-ui-md-doc\s*:is\(h1, h2, h3, h4, h5, h6\)\[id\]\{[^}]*scroll-margin-top:\s*0\.75rem/,
+    );
+    expect(inner).not.toBeNull();
   });
 });

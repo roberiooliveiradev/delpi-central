@@ -109,6 +109,7 @@ export function ProcessDocumentationSection({
   const moreAnchorRef = useRef<HTMLDivElement | null>(null);
   const morePanelRef = useRef<HTMLDivElement | null>(null);
   const readerRef = useRef<HTMLDivElement | null>(null);
+  const documentScrollRef = useRef<HTMLDivElement | null>(null);
   const sectionRef = useRef<HTMLElement | null>(null);
   const stickyOffsetRef = useRef(56);
 
@@ -260,12 +261,16 @@ export function ProcessDocumentationSection({
   }, []);
 
   // Active heading highlight in the outline (enhancement only — derived from
-  // the DOM, never persisted). IntersectionObserver callbacks are async, so
-  // the setState below never runs synchronously inside the effect body.
+  // the DOM, never persisted). The reader uses its own document scroller on
+  // desktop, so observation roots on it — not on the portal `.content`.
+  // IntersectionObserver callbacks are async, so the setState below never
+  // runs synchronously inside the effect body.
   useEffect(() => {
     if (editing || outlineItems.length === 0) return;
     const scroller =
-      sectionRef.current?.closest<HTMLElement>(".content") ?? null;
+      documentScrollRef.current ??
+      sectionRef.current?.closest<HTMLElement>(".content") ??
+      null;
     const headings = outlineItems
       .map((item) =>
         readerRef.current?.querySelector<HTMLElement>(
@@ -276,10 +281,10 @@ export function ProcessDocumentationSection({
     if (headings.length === 0 || typeof IntersectionObserver === "undefined")
       return;
     const pickActive = () => {
+      const isInternal = scroller === documentScrollRef.current;
       const limit =
         (scroller?.getBoundingClientRect().top ?? 0) +
-        stickyOffsetRef.current +
-        24;
+        (isInternal ? 24 : stickyOffsetRef.current + 24);
       let current: string | null = null;
       for (const heading of headings) {
         if (heading.getBoundingClientRect().top <= limit) current = heading.id;
@@ -289,7 +294,7 @@ export function ProcessDocumentationSection({
     const observer = new IntersectionObserver(pickActive, { root: scroller });
     for (const heading of headings) observer.observe(heading);
     return () => observer.disconnect();
-  }, [editing, outlineItems]);
+  }, [detail, editing, outlineItems]);
 
   // Remote delete while viewing the deleted doc: deterministic fallback
   // (first remaining doc) or back to the section root when the list is empty.
@@ -531,7 +536,18 @@ export function ProcessDocumentationSection({
 
   const scrollToHeading = (id: string) => {
     const target = readerRef.current?.querySelector(`#${CSS.escape(id)}`);
-    target?.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (!target) return;
+    const scroller = documentScrollRef.current;
+    if (scroller && scroller.contains(target)) {
+      const top =
+        target.getBoundingClientRect().top -
+        scroller.getBoundingClientRect().top +
+        scroller.scrollTop -
+        12;
+      scroller.scrollTo({ top, behavior: "smooth" });
+      return;
+    }
+    target.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   const createdLabel = detail ? nameFor(detail.created_by_user_id) : null;
@@ -948,36 +964,44 @@ export function ProcessDocumentationSection({
                 </div>
               </header>
 
-              {outlineItems.length > 0 ? (
-                <details className="tm-process-documentation__outline-popover">
-                  <summary>Sumário</summary>
-                  <nav aria-label="Sumário do documento">
-                    <ul>
-                      {outlineItems.map((item) => (
-                        <li key={item.id} data-depth={item.depth}>
-                          <button
-                            type="button"
-                            onClick={() => scrollToHeading(item.id)}
-                          >
-                            {item.text}
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  </nav>
-                </details>
-              ) : null}
+              <div
+                ref={documentScrollRef}
+                className="tm-process-documentation__document-scroll"
+                role="region"
+                aria-label="Conteúdo do documento"
+                tabIndex={0}
+              >
+                {outlineItems.length > 0 ? (
+                  <details className="tm-process-documentation__outline-popover">
+                    <summary>Sumário</summary>
+                    <nav aria-label="Sumário do documento">
+                      <ul>
+                        {outlineItems.map((item) => (
+                          <li key={item.id} data-depth={item.depth}>
+                            <button
+                              type="button"
+                              onClick={() => scrollToHeading(item.id)}
+                            >
+                              {item.text}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </nav>
+                  </details>
+                ) : null}
 
-              <div className="tm-process-documentation__body">
-                {detail.content_md.trim() && docModel ? (
-                  <MarkdownDocumentView
-                    model={docModel}
-                    className="tm-process-documentation__markdown"
-                    onInternalAnchorNavigate={scrollToHeading}
-                  />
-                ) : (
-                  <p className="ds-hint">Documento sem conteúdo Markdown.</p>
-                )}
+                <div className="tm-process-documentation__body">
+                  {detail.content_md.trim() && docModel ? (
+                    <MarkdownDocumentView
+                      model={docModel}
+                      className="tm-process-documentation__markdown"
+                      onInternalAnchorNavigate={scrollToHeading}
+                    />
+                  ) : (
+                    <p className="ds-hint">Documento sem conteúdo Markdown.</p>
+                  )}
+                </div>
               </div>
             </article>
           ) : null}
