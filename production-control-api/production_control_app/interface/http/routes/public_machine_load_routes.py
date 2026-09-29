@@ -13,6 +13,7 @@ from production_control_app.composition.pc_composer import (
     build_branch_access_service,
     build_machine_load_service,
     build_mes_downtime_classification_service,
+    build_mes_run_timeline_service,
     build_production_run_service,
     build_public_cockpit_access_service,
     build_public_machine_load_drawing_service,
@@ -471,6 +472,25 @@ def classify_run_downtime(
             reason_code=body.reason_code,
             note=body.note,
             session_token=session_token,
+        )
+    except Exception as exc:  # noqa: BLE001
+        return _handle_public_errors(exc)
+    return ok(data)
+
+
+@router.get("/{token}/runs/{run_id}/timeline")
+def get_run_timeline(
+    token: str,
+    run_id: str,
+    session_token: str | None = Header(default=None, alias=_BENCH_SESSION_HEADER),
+):
+    """Timeline operacional do run (estados + paradas derivadas)."""
+    denied = _assert_cockpit_token(token)
+    if denied is not None:
+        return denied
+    try:
+        data = build_mes_run_timeline_service().get_timeline(
+            run_id, session_token=session_token
         )
     except Exception as exc:  # noqa: BLE001
         return _handle_public_errors(exc)

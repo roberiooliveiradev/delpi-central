@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
 import { Pause, Play, Square } from "lucide-react";
 import type { MachineLoadOperation } from "./api";
+import { DowntimeElapsedTimer } from "./DowntimeElapsedTimer";
 import { DowntimeReasonModal } from "./DowntimeReasonModal";
+import { ProductionRunTimeline } from "./ProductionRunTimeline";
+import { useRunTimeline } from "./useRunTimeline";
 import { formatQty } from "./cockpitShared";
 import {
   piecesToOperatorUnit,
@@ -62,6 +65,14 @@ export function ProductionRunControls({
   const [reasonModalOpen, setReasonModalOpen] = useState(false);
   const openDowntime = run?.status === "paused" ? run.downtime : null;
   const downtimeUnclassified = Boolean(openDowntime && !openDowntime.confirmed);
+
+  const { timeline, serverNow } = useRunTimeline({
+    token,
+    sessionToken: session?.sessionToken ?? null,
+    runId: run?.id ?? null,
+    runRealtimeEvent,
+    realtimeConnected,
+  });
 
   // Assim que o Pause grava a parada, a classificação abre automaticamente.
   const openDowntimeId = openDowntime?.id ?? null;
@@ -135,6 +146,27 @@ export function ProductionRunControls({
 
           {run && runMatchesOperation ? (
             <div className="pcp-pub__run-readout" aria-live="polite">
+              {run.status === "paused" ? (
+                <div
+                  className="pcp-pub__downtime"
+                  role="status"
+                  aria-label="Produção parada"
+                >
+                  <p className="pcp-pub__downtime-title">Produção parada</p>
+                  {openDowntime?.startedAt ? (
+                    <DowntimeElapsedTimer
+                      startedAt={openDowntime.startedAt}
+                      serverNow={serverNow}
+                    />
+                  ) : null}
+                  <p className="pcp-pub__downtime-reason">
+                    {openDowntime?.reasonLabel ?? "Motivo não informado"}
+                  </p>
+                  {openDowntime?.note ? (
+                    <p className="pcp-pub__downtime-note">{openDowntime.note}</p>
+                  ) : null}
+                </div>
+              ) : null}
               {progress ? (
                 <div className="pcp-pub__run-progress">
                   <p className="pcp-pub__run-progress-state">
@@ -263,6 +295,12 @@ export function ProductionRunControls({
                   Encerrar
                 </button>
               </div>
+              {timeline && timeline.items.length > 0 ? (
+                <details className="pcp-pub__timeline">
+                  <summary>Linha do tempo</summary>
+                  <ProductionRunTimeline timeline={timeline} serverNow={serverNow} />
+                </details>
+              ) : null}
             </div>
           ) : (
             <div className="pcp-pub__run-actions">

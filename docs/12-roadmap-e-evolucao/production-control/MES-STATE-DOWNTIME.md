@@ -1,9 +1,9 @@
 # MES — estados operacionais e paradas (fundação)
 
-> **Status:** Etapa 03 implementada — classificação do motivo no cockpit.
+> **Status:** Etapa 04 implementada — timer realtime da parada + timeline do run.
 > **Owner do domínio MES:** `production-control-api`
 > **Owner da telemetria:** `production-pulse-api` (apenas hardware/counter/epoch/saúde)
-> **Timer/timeline visual da parada:** Etapa 04 — *não implementada ainda*
+> **Robustez/recuperação/homologação:** Etapa 05 — *não implementada ainda*
 
 Documento canônico do modelo MES de estados do centro de trabalho e paradas.
 A contagem de peças Pulse → run permanece documentada em
@@ -195,13 +195,89 @@ Com parada MES **observada e aberta**:
 `/performance/downtime-items` = histórico/indicador de horas improdutivas do
 ecossistema TOTVS — conceito diferente, **não reutilizado** para classificação.
 
-## 8. O que NÃO foi feito (fica para a Etapa 04+)
+## 8. Timer e timeline (Etapa 04)
+
+### Princípio
+
+```text
+PERSISTIR FATOS → DERIVAR TEMPOS E INDICADORES
+```
+
+Nenhum `duration_seconds`, tempo acumulado ou OEE é persistido. Toda duração
+é derivada de `started_at`/`ended_at` no momento da leitura.
+
+### Endpoint
+
+`GET /public/machine-load/{token}/runs/{run_id}/timeline`
+(header `X-Delpi-Bench-Session`)
+
+Contrato:
+
+```json
+{
+  "runId": "...",
+  "branch": "01",
+  "workCenter": "CT-35",
+  "status": "paused",
+  "referenceAt": "2026-09-28T23:20:00+00:00",
+  "summary": {
+    "elapsedSeconds": 3600,
+    "producingSeconds": 3200,
+    "stoppedSeconds": 400,
+    "stopCount": 2
+  },
+  "items": [
+    {
+      "id": "...",
+      "state": "stopped",
+      "startedAt": "...",
+      "endedAt": null,
+      "durationSeconds": 245,
+      "source": "operator",
+      "downtime": {
+        "id": "...",
+        "reasonCode": "raw_material",
+        "reasonLabel": "Falta de material",
+        "category": "material",
+        "confirmed": true,
+        "note": null
+      }
+    }
+  ]
+}
+```
+
+- `MesRunTimelineService` (application) monta: eventos de estado do run +
+  downtimes associados por `state_event_id`, ordenados cronologicamente.
+- `referenceAt` = relógio do backend; eventos abertos (`endedAt = null`) usam
+  `referenceAt` na duração. O frontend estima o "agora" do servidor com o
+  offset `referenceAt − Date.now()` — o relógio local do operador não distorce
+  o timer, e a aba em background nunca perde tempo.
+- `summary` deriva apenas producing/stopped/stopCount — sem OEE.
+- `stopped` sem downtime (inconsistência histórica) não quebra a UI
+  ("Motivo não disponível").
+
+### Frontend
+
+- `DowntimeElapsedTimer`: `elapsed = serverNow() − startedAt`, tick visual de
+  1 s recalculando sempre do timestamp oficial; formato `HH:MM:SS` sem limite.
+- `useRunTimeline`: fetch inicial + reconciliação por WS
+  (`run_started`/`run_paused`/`run_resumed`/`run_stopped`/`downtime_classified`),
+  single-flight com coalescing; `pieces_updated` **não** recarrega a timeline;
+  reconnect faz uma única reconciliação HTTP.
+- `ProductionRunTimeline`: faixa proporcional compacta + histórico legível em
+  seção expansível "Linha do tempo" dentro de `ProductionRunControls` — mesmo
+  componente no card e no detalhe.
+
+Sem polling periódico de timeline; o trecho aberto evolui localmente.
+
+## 9. O que NÃO foi feito (fica para a Etapa 05+)
 
 - abertura de `idle` ao finalizar run — não necessária nesta fase;
-- timer realtime da parada e timeline visual do run (Etapa 04);
 - administração do catálogo de motivos;
 - nenhum cálculo de OEE/disponibilidade/performance;
 - nenhum backfill de histórico;
 - nenhuma alteração no Production Pulse;
 - detecção automática de parada / microparadas;
-- integração da parada MES com TOTVS.
+- integração da parada MES com TOTVS;
+- robustez/recuperação/auditoria e homologação industrial (Etapa 05).

@@ -614,6 +614,40 @@ export type MesDowntimeReason = {
   requiresNote: boolean;
 };
 
+/** Item da timeline operacional do run (Etapa 04). */
+export type RunTimelineItem = {
+  id: string;
+  state: "producing" | "stopped" | "setup" | "idle" | "planned_stop" | string;
+  startedAt: string;
+  endedAt: string | null;
+  durationSeconds: number;
+  source: string | null;
+  downtime: {
+    id: string;
+    reasonCode: string | null;
+    reasonLabel: string | null;
+    category: string | null;
+    note: string | null;
+    confirmed: boolean;
+  } | null;
+};
+
+export type RunTimeline = {
+  runId: string;
+  branch: string;
+  workCenter: string;
+  status: string;
+  /** Horário atual do backend em UTC — base do relógio do cockpit. */
+  referenceAt: string;
+  summary: {
+    elapsedSeconds: number;
+    producingSeconds: number;
+    stoppedSeconds: number;
+    stopCount: number;
+  };
+  items: RunTimelineItem[];
+};
+
 export type BenchSessionSnapshot = {
   sessionToken: string;
   expiresAt: string | null;
@@ -711,6 +745,23 @@ export async function classifyRunDowntime(
     },
   );
   return readEnvelope<RunDowntimeView>(response, "Não foi possível registrar o motivo.");
+}
+
+export async function fetchRunTimeline(
+  token: string,
+  sessionToken: string,
+  runId: string,
+): Promise<RunTimeline> {
+  const response = await fetch(
+    `${API_BASE}/public/machine-load/${encodeURIComponent(token)}/runs/${encodeURIComponent(runId)}/timeline`,
+    {
+      headers: {
+        Accept: "application/json",
+        [BENCH_SESSION_HEADER]: sessionToken,
+      },
+    },
+  );
+  return readEnvelope<RunTimeline>(response, "Linha do tempo indisponível.");
 }
 
 export async function fetchActiveProductionRun(
