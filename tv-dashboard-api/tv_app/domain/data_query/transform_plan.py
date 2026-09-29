@@ -36,6 +36,18 @@ _SPEC_NODE_KINDS = frozenset(
 
 _SPEC_NODE_KEYS = frozenset({"kind", "value", "children"})
 
+# Aridade fixa por kind — mesma fonte usada por from_dict e pela projeção de
+# contrato do catálogo (expression_ast_node_contract).
+_SPEC_NODE_ARITY = {
+    "if": 3,
+    "each": 1,
+    "unary": 1,
+    "recordField": 1,
+    "binary": 2,
+}
+
+_SPEC_NO_CHILDREN = frozenset({"literal", "identifier", "field", "type"})
+
 _BINARY_OPERATORS = frozenset(
     {"+", "-", "*", "/", "=", "<>", ">", ">=", "<", "<=", "and", "or", "&"}
 )
@@ -43,6 +55,57 @@ _BINARY_OPERATORS = frozenset(
 _UNARY_OPERATORS = frozenset({"+", "-", "not"})
 
 _LITERAL_TYPES = (str, int, float, bool)
+
+
+def expression_ast_node_contract() -> dict[str, Any]:
+    """Contrato canônico de shape dos nós do AST persistido.
+
+    Projeção derivada das mesmas constantes que ``CompiledExpression.from_dict``
+    aplica — não é um segundo schema: o loader continua sendo a autoridade.
+    Consumidores de catálogo filtram por fase antes de projetar.
+    """
+    kinds: dict[str, dict[str, Any]] = {}
+    for kind in sorted(_SPEC_NODE_KINDS):
+        entry: dict[str, Any] = {}
+        if kind in _SPEC_NODE_ARITY:
+            entry["children"] = _SPEC_NODE_ARITY[kind]
+        elif kind in _SPEC_NO_CHILDREN:
+            entry["children"] = 0
+        else:
+            entry["children"] = "0..n"
+        if kind == "literal":
+            entry["value"] = "scalar|null (str|number|bool|null)"
+            entry["required"] = ["kind"]
+        elif kind in {"identifier", "field", "type", "recordField"}:
+            entry["value"] = "nonEmptyString"
+            entry["required"] = ["kind", "value"]
+        elif kind == "call":
+            entry["value"] = "functionName (scalar do registry)"
+            entry["required"] = ["kind", "value", "children"]
+            entry["children"] = "minArgs..maxArgs (registry)"
+        elif kind == "unary":
+            entry["value"] = sorted(_UNARY_OPERATORS)
+            entry["required"] = ["kind", "value", "children"]
+        elif kind == "binary":
+            entry["value"] = sorted(_BINARY_OPERATORS)
+            entry["required"] = ["kind", "value", "children"]
+            entry["childrenOrder"] = ["left", "right"]
+        else:
+            entry["required"] = ["kind"]
+        if kind == "unary":
+            entry["childrenOrder"] = ["operand"]
+        if kind == "if":
+            entry["childrenOrder"] = ["condition", "then", "else"]
+        kinds[kind] = entry
+    return {
+        "nodeKeys": sorted(_SPEC_NODE_KEYS),
+        "operators": {
+            "binary": sorted(_BINARY_OPERATORS),
+            "unary": sorted(_UNARY_OPERATORS),
+        },
+        "literalTypes": ["string", "number", "boolean", "null"],
+        "nodeKinds": kinds,
+    }
 
 
 def _spec_fail(code: str, message: str) -> None:
@@ -129,17 +192,10 @@ class CompiledExpression:
                     "children da expressão deve ser uma lista.",
                 )
 
-            expected_children = {
-                "if": 3,
-                "each": 1,
-                "unary": 1,
-                "recordField": 1,
-                "binary": 2,
-            }
-            if kind in expected_children and len(children) != expected_children[kind]:
+            if kind in _SPEC_NODE_ARITY and len(children) != _SPEC_NODE_ARITY[kind]:
                 _spec_fail(
                     "m.expression_schema_invalid",
-                    f"Nó {kind} exige {expected_children[kind]} filho(s).",
+                    f"Nó {kind} exige {_SPEC_NODE_ARITY[kind]} filho(s).",
                 )
             if kind == "literal":
                 if children:

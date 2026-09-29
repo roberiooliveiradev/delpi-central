@@ -42,6 +42,7 @@ from tv_app.application.services.tv_date_range_preset_service import (
 from tv_app.domain.data_query.transform_plan import (
     CompiledExpression,
     ExpressionSpecError,
+    expression_ast_node_contract,
 )
 
 EXPRESSION_PARAM_MARKER = "expression"
@@ -445,6 +446,94 @@ def assert_no_unresolved_expressions(params: Mapping[str, Any] | None) -> None:
         )
 
 
+# Exemplos canônicos de AST — cada um deve passar por CompiledExpression.from_dict
+# + validação de fase PARAMETER (garantido por teste de drift no catálogo).
+_CATALOG_AST_EXAMPLES: dict[str, dict[str, Any]] = {
+    "today": {"kind": "identifier", "value": CONTEXT_TODAY},
+    "previousYearSameDay": {
+        "kind": "call",
+        "value": "Date.AddMonths",
+        "children": [
+            {"kind": "identifier", "value": CONTEXT_TODAY},
+            {"kind": "literal", "value": -12},
+        ],
+    },
+    "previousYearMonthStart": {
+        "kind": "call",
+        "value": "Date.StartOfMonth",
+        "children": [
+            {
+                "kind": "call",
+                "value": "Date.AddMonths",
+                "children": [
+                    {"kind": "identifier", "value": CONTEXT_TODAY},
+                    {"kind": "literal", "value": -12},
+                ],
+            }
+        ],
+    },
+    "yearStart": {
+        "kind": "call",
+        "value": "Date.StartOfYear",
+        "children": [{"kind": "identifier", "value": CONTEXT_TODAY}],
+    },
+    "numericVariationPct": {
+        "kind": "binary",
+        "value": "*",
+        "children": [
+            {
+                "kind": "binary",
+                "value": "-",
+                "children": [
+                    {
+                        "kind": "binary",
+                        "value": "/",
+                        "children": [
+                            {"kind": "literal", "value": 120},
+                            {"kind": "literal", "value": 100},
+                        ],
+                    },
+                    {"kind": "literal", "value": 1},
+                ],
+            },
+            {"kind": "literal", "value": 100},
+        ],
+    },
+}
+
+
+def _parameter_ast_contract() -> dict[str, Any]:
+    """Projeção de authoring PARAMETER filtrada do contrato canônico do loader."""
+    contract = expression_ast_node_contract()
+    return {
+        "nodeKeys": contract["nodeKeys"],
+        "nodeKinds": {
+            kind: contract["nodeKinds"][kind]
+            for kind in sorted(_PARAMETER_KINDS)
+        },
+        "operators": contract["operators"],
+        "literalTypes": contract["literalTypes"],
+        # Mapeamento ref → JSON exato: VISTA/UI nunca inventam shape.
+        "refs": {
+            f"context:{CONTEXT_TODAY}": {
+                "kind": "identifier",
+                "value": CONTEXT_TODAY,
+            },
+            f"context:{CONTEXT_NOW}": {
+                "kind": "identifier",
+                "value": CONTEXT_NOW,
+            },
+            "param.<schemaParam>": {
+                "kind": "identifier",
+                "value": "param.<schemaParam>",
+            },
+        },
+        "literalValue": "kind=literal; value = escalar JSON (str|number|bool|null) — tipo inferido do JSON",
+        "callShape": 'kind=call; value=<functionName>; children=[args...] na ordem dos parâmetros da signature',
+        "examples": _CATALOG_AST_EXAMPLES,
+    }
+
+
 def expression_capability(*, transport: str = "mcp") -> dict[str, Any]:
     """Bloco de capability de expressões para a projeção de catálogo (VISTA).
 
@@ -481,4 +570,5 @@ def expression_capability(*, transport: str = "mcp") -> dict[str, Any]:
             "maxStringBytes": int(value_expression_setting("maxStringBytes", 512)),
         },
         "paramPolicy": "paramSchema query params; spec.expressionAllowed=false opts out; path/fixed params denied",
+        "ast": _parameter_ast_contract(),
     }
