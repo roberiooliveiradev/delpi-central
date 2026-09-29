@@ -190,11 +190,27 @@ CREATE DATABASE bpmn_modeler OWNER bpmn_modeler_admin;
 -- no database bpmn_modeler:
 GRANT CONNECT ON DATABASE bpmn_modeler TO bpmn_modeler_app;
 GRANT USAGE ON SCHEMA public TO bpmn_modeler_app;
-GRANT SELECT, INSERT, UPDATE ON TABLE public.models, public.revisions TO bpmn_modeler_app;
--- default privileges para objetos criados pelo owner:
-ALTER DEFAULT PRIVILEGES FOR ROLE bpmn_modeler_admin IN SCHEMA public
-  GRANT SELECT, INSERT, UPDATE ON TABLES TO bpmn_modeler_app;
 ```
+
+Grants por objeto são aplicados **pela migration que cria o objeto** (executada por `bpmn_modeler_admin` — §22), nunca por `ALTER DEFAULT PRIVILEGES` amplo. `FROZEN` — concessões exatas da V1:
+
+```sql
+-- aplicadas pela migration que cria as tabelas (role: bpmn_modeler_admin)
+GRANT SELECT, INSERT, UPDATE ON TABLE public.models    TO bpmn_modeler_app;
+GRANT SELECT, INSERT         ON TABLE public.revisions TO bpmn_modeler_app;
+```
+
+Denials explícitos do runtime role:
+
+```text
+NO UPDATE  ON revisions
+NO DELETE  ON models
+NO DELETE  ON revisions
+NO grants  ON schema_migrations
+NO DDL     (CREATE/ALTER/DROP em qualquer objeto)
+```
+
+**`ALTER DEFAULT PRIVILEGES ... GRANT SELECT, INSERT, UPDATE ON TABLES` é proibido na V1** — `future table ≠ automatically authorized runtime resource`; cada migration que criar objeto concede explicitamente apenas os privileges necessários daquele objeto (least privilege opt-in por objeto).
 
 O DDL acima é **contrato normativo** — o script init real deve ser semanticamente equivalente. `REVOKE CREATE ON SCHEMA public FROM PUBLIC` é default em PG15 e permanece.
 
@@ -466,14 +482,14 @@ Total: 8 VIEW + 3 EDIT + 5 MANAGE + 1 MANAGE+VIEW = **17/17**. Transversal: toke
 |---|---|---|---|---|
 | T01 | unauthorized read | `require_permission(view)` em todo read | backend | negative test 401/403 |
 | T02 | unauthorized write | `require_permission(edit/manage)` + AuthZ no use case | backend | negative test por UC |
-| T03 | horizontal model-id access | RBAC por contexto + permissões do catálogo (escopo de catálogo é de permissão, não por-owner na V1) | backend | 403 ao model sem permissão |
+| T03 | unauthorized arbitrary model-id access | permissão `bpmn-modeler.*` context-wide exigida **antes** de resolver/retornar dado do recurso; **V1 authorization scope = catalog/context-wide — sem per-model ACL** (per-model ACL = `OUT_OF_V1`/`FUTURE`) | backend | principal sem `bpmn-modeler.view` + model id válido arbitrário → `403`; principal com `bpmn-modeler.view` pode ler qualquer model do escopo catálogo V1 |
 | T04 | stale write | CAS `version` + `expected_version` obrigatório | backend | teste de CONFLICT |
 | T05 | SQL injection | bind parameters + allowlist sort + nenhuma concatenação | backend | static gate + teste com payload malicioso |
 | T06 | XXE | `resolve_entities=False`, doctype/DTD → `INPUT_REJECTED_SECURITY` | intake/validation | fixture FX-SEC-* (P3) |
 | T07 | DTD/entity expansion | `load_dtd=False`, `expansion_evidence`, limites de elemento/texto | validation | fixture expansion |
 | T08 | oversized upload | `MAX_INPUT_BYTES` medido no raw body antes de decode | intake | teste >10 MiB |
 | T09 | XML resource exhaustion | `MAX_XML_DEPTH/ELEMENTS/ATTRS/TEXT_NODE` + `huge_tree=False` + `statement_timeout` | validation+DB | teste de profundidade/fan-out |
-| T10 | malformed XML | `XML_WELL_FORMEDNESS` stage + classificação `NON_XML` | validation | fixture malformado |
+| T10 | malformed XML | `XML_WELL_FORMEDNESS` stage → classificação `MALFORMED_XML` (texto XML + parse tentado + well-formedness failure). `NON_XML` é restrito a input que não produz texto XML utilizável (binário/não-decodável/sem XML text) — estados distintos do Prompt 3 | validation | fixture FX-BADXML-* (P3) |
 | T11 | stored script-like BPMN text | BPMN names/documentation = texto não confiável; escape as text; `dangerouslySetInnerHTML` proibido; vendor renderiza labels como SVG text | frontend | teste com `<script>`/`on*` em nome; evidence de render como texto |
 | T12 | log leakage | somente metadata segura; nunca XML/token/body; redaction | backend | scan de logs em teste |
 | T13 | token leakage | Bearer não persistido/logado; `sub` opaco em audit | full stack | redaction gate |
@@ -540,11 +556,20 @@ application_name = bpmn-modeler-api
 | Endpoint | Tipo | Comportamento |
 |---|---|---|
 | `GET /health` | liveness, público | processo vivo; `200` sem DB |
-| `GET /ready` | readiness, público | `SELECT 1` via pool + XSD bundle carregado → `200`/`503` |
+| `GET /ready` | readiness, público | ver abaixo |
 
 Rotas públicas intencionais, explicitamente liberadas pelo `auth_middleware`.
 
-**Startup validation (fail-closed):** presença de `KEYCLOAK_JWKS_URL`, `KEYCLOAK_ISSUER`, `KEYCLOAK_AUDIENCE`, `BPMN_MODELER_DB_*`; XSD bundle carrega e passa checksum; se `BPMN_MODELER_RUN_MIGRATIONS_ON_STARTUP=true`, migrations (role `bpmn_modeler_admin`) + validação de histórico rodam no boot e abortam em falha.
+**Readiness (`/ready`) — `FROZEN`:**
+
+- **Nunca** executa migrations.
+- Verifica somente, conectando como `bpmn_modeler_app`:
+  - runtime DB connectivity (`SELECT 1` via pool);
+  - XSD bundle carregado (checksum ok);
+  - runtime config obrigatória presente (Keycloak + `BPMN_MODELER_DB_*` de runtime);
+  - **migration version compatible** — verificada pela existência dos objetos exigidos pela última migration esperada (`to_regclass('public.models')`, `to_regclass('public.revisions')`; metadata de `pg_catalog` não depende de grant em `schema_migrations`). Objeto ausente → `READINESS = FAIL` (`503`); a API **não** tenta corrigir — correção é o migration job de §22.
+
+**Startup validation (fail-closed):** presença de `KEYCLOAK_JWKS_URL`, `KEYCLOAK_ISSUER`, `KEYCLOAK_AUDIENCE`, `BPMN_MODELER_DB_HOST/PORT/NAME/USER/PASSWORD`; XSD bundle carrega e passa checksum. **Não existe flag de run-migrations-on-startup**: o processo `bpmn-modeler-api` nunca recebe credencial DDL nem executa migration (§22).
 
 ---
 
@@ -559,19 +584,39 @@ Rotas públicas intencionais, explicitamente liberadas pelo `auth_middleware`.
 | `KEYCLOAK_JWKS_URL` | sim | não | `.../protocol/openid-connect/certs` |
 | `KEYCLOAK_ISSUER` | sim | não | `.../realms/delpi` |
 | `KEYCLOAK_AUDIENCE` | sim | não | audience do client da API |
+**Runtime API env** (`bpmn-modeler-api` process — produção recebe somente isto):
+
+| Variável | Obrigatória | Secret | Padrão / exemplo |
+|---|---|---|---|
+| `KEYCLOAK_URL` | sim | não | `http://keycloak:8080/auth` |
+| `KEYCLOAK_REALM` | sim | não | `delpi` |
+| `KEYCLOAK_JWKS_URL` | sim | não | `.../protocol/openid-connect/certs` |
+| `KEYCLOAK_ISSUER` | sim | não | `.../realms/delpi` |
+| `KEYCLOAK_AUDIENCE` | sim | não | audience do client da API |
 | `BPMN_MODELER_DB_HOST` | sim | não | `postgres-plugins` |
 | `BPMN_MODELER_DB_PORT` | sim | não | `5432` |
 | `BPMN_MODELER_DB_NAME` | sim | não | `bpmn_modeler` |
 | `BPMN_MODELER_DB_USER` | sim | **secret** | `bpmn_modeler_app` |
 | `BPMN_MODELER_DB_PASSWORD` | sim | **secret** | via env/secret store |
-| `BPMN_MODELER_DB_ADMIN_USER` | sim (migration path) | **secret** | `bpmn_modeler_admin` |
-| `BPMN_MODELER_DB_ADMIN_PASSWORD` | sim (migration path) | **secret** | via env/secret store |
 | `BPMN_MODELER_DB_POOL_MAX_SIZE` | não | não | `5` |
 | `BPMN_MODELER_DB_POOL_ACQUIRE_TIMEOUT` | não | não | `30` |
 | `BPMN_MODELER_ROOT_PATH` | sim | não | `/apps/bpmn-modeler-api` |
-| `BPMN_MODELER_RUN_MIGRATIONS_ON_STARTUP` | não | não | `false` |
 | `LOG_LEVEL` | não | não | `INFO` |
 
+**Migration job env** (step de deploy separado — §22; **nunca** injetado no processo da API):
+
+| Variável | Obrigatória | Secret | Padrão / exemplo |
+|---|---|---|---|
+| `BPMN_MODELER_DB_HOST` | sim | não | `postgres-plugins` |
+| `BPMN_MODELER_DB_PORT` | sim | não | `5432` |
+| `BPMN_MODELER_DB_NAME` | sim | não | `bpmn_modeler` |
+| `BPMN_MODELER_DB_ADMIN_USER` | sim | **secret** | `bpmn_modeler_admin` |
+| `BPMN_MODELER_DB_ADMIN_PASSWORD` | sim | **secret** | via env/secret store |
+
+`FROZEN` — admin credential isolation:
+
+- `BPMN_MODELER_DB_ADMIN_*` **não existe** no ambiente do processo `bpmn-modeler-api` em produção — o runtime não conhece credencial DDL.
+- `BPMN_MODELER_RUN_MIGRATIONS_ON_STARTUP` **removido do contrato** — não há migration pelo startup da API. Conveniência local/dev futura usa processo/container de migration separado, nunca eleva o processo API.
 - Nenhuma variável controla limites de segurança, namespaces BPMN ou permission codes.
 - `env.*.example` documenta placeholders apenas.
 
@@ -629,12 +674,14 @@ style-src-attr 'unsafe-inline';
 ```text
 bpmn-modeler-api:
   build: bpmn-modeler/Dockerfile (python:3.11-slim)
-  env:   BPMN_MODELER_DB_*, KEYCLOAK_*, BPMN_MODELER_*, LOG_LEVEL
-  root:  /apps/bpmn-modeler-api
+  env:   BPMN_MODELER_DB_HOST/PORT/NAME/USER/PASSWORD (app role only), KEYCLOAK_*, BPMN_MODELER_ROOT_PATH, LOG_LEVEL
   port:  8000 (interno)
   deps:  postgres-plugins (healthy)
   healthcheck: curl -f http://localhost:8000/health
 ```
+
+- O env do serviço contém **somente** credenciais `bpmn_modeler_app` — `BPMN_MODELER_DB_ADMIN_*` nunca é injetado no container da API (§17).
+- Migration roda como step/job separado com `bpmn_modeler_admin` antes do rollout (§22).
 
 - Receita dos demais `*-api` (`uvicorn` + `--root-path`).
 - Gateway: location `/apps/bpmn-modeler-api/` → `bpmn-modeler-api:8000`, com `limit_req` zone dedicada e headers de §19.
@@ -665,9 +712,20 @@ bpmn-modeler-api:
 | Executor | runner do contexto sob role **`bpmn_modeler_admin`** (migration role — §4.2); runtime role nunca executa migration |
 | Tracking | `public.schema_migrations` (`version`, `name`, `checksum` SHA-256, `executed_at`) — runtime role sem grants nela |
 | Imutabilidade | arquivo aplicado nunca editado; checksum divergente = falha |
-| Startup | `BPMN_MODELER_RUN_MIGRATIONS_ON_STARTUP` (default `false`); `true` → roda no boot como admin e aborta em falha |
+| Execução | **dedicated deploy/migration step** (job/CLI separado) executado **antes** do backend rollout; nunca pelo startup da API em produção — `BPMN_MODELER_RUN_MIGRATIONS_ON_STARTUP` removido do contrato |
 | Produção | apenas `up`; nunca reset destrutivo |
-| Migrations V1 | `V001` (tabelas + constraints + índices em `public`). Database/roles/extensão **não** são migration — são bootstrap de infra (§4.2) |
+| Grants | a migration que cria objeto aplica os GRANTs exatos de §4.2 (opt-in por objeto; sem `ALTER DEFAULT PRIVILEGES` amplo) |
+| Migrations V1 | `V001` (tabelas + constraints + índices em `public` + GRANTs §4.2). Database/roles **não** são migration — são bootstrap de infra (§4.2) |
+
+**Sequência de deploy `FROZEN`:**
+
+```text
+bootstrap database/roles (init script infra, quando requerido)
+→ migration job/CLI com bpmn_modeler_admin
+→ verify migration history (checksums, objetos criados, grants aplicados)
+→ backend rollout com bpmn_modeler_app apenas
+→ frontend rollout
+```
 
 ---
 
@@ -694,7 +752,7 @@ bpmn-modeler-api:
 | Offline XSD validation | teste `no_network` | sim |
 | Frontend build | `npm ci` + `vite build` (worker asset presente) | sim |
 | Lock integrity | `package-lock.json` + `npm ci` (sem `--force`/`--legacy-peer-deps`) | sim |
-| Grants/role test | teste conectando como `bpmn_modeler_app` provando ausência de DDL/DELETE/cross-db | sim |
+| Grants/role test | acceptance explícito como `bpmn_modeler_app` — PASS: `SELECT`/`INSERT`/`UPDATE` em `models`; `SELECT`/`INSERT` em `revisions`. FAIL: `UPDATE revisions`, `DELETE models`, `DELETE revisions`, `SELECT schema_migrations`, `CREATE TABLE`, `ALTER TABLE`, acesso a outro database de contexto | sim |
 | Secret scan | gate canônico | sim |
 | License scan | allowlist §3.3 | sim |
 | Workflow dedicado | `.github/workflows/bpmn-modeler-api.yml` | sim |
@@ -734,6 +792,9 @@ Nenhum teste depende de rede externa para XSD; nenhum gate existente é enfraque
 - ❌ dependência de produção com range flutuante.
 - ❌ alterar migrations aplicadas.
 - ❌ DDL no runtime role para "facilitar" migration.
+- ❌ credencial admin/migration injetada no processo da API (`BPMN_MODELER_DB_ADMIN_*` ausente do env runtime).
+- ❌ migration executada pelo startup da API em produção — sempre step de deploy separado.
+- ❌ `ALTER DEFAULT PRIVILEGES` amplo — grants são opt-in por objeto via migration.
 - ❌ `pgcrypto`/`pg_trgm` ou qualquer extensão sem requirement.
 
 ---
@@ -753,6 +814,12 @@ Nenhum teste depende de rede externa para XSD; nenhum gate existente é enfraque
 | `least privilege`/`GRANT`/`REVOKE` | grants matrix §4.2 explícita | fechado |
 | `pagination`/`SQL injection`/`parameterized`/`threat`/`resource ownership`/`unsafe-inline`/`CORS`/`CSRF`/`rate limit`/`connection pool` | contratos explícitos §5, §6, §12, §15, §18.1, §19 | fechado |
 | `Transformômetro DB`/`visual JSON`/`moddle JSON`/`generic SQL`/`generic proxy`/`full XML log`/`force overwrite`/`hard delete`/`runtime schema download` | apenas como proibição | ok |
+| `GRANT SELECT, INSERT, UPDATE ON TABLE public.models, public.revisions` (conjunto único) | **removido** — grants separados por tabela (§4.2); `UPDATE revisions` negado ao runtime | corrigido |
+| `ALTER DEFAULT PRIVILEGES` | **removido** — sem grants default amplos; opt-in por objeto via migration | corrigido |
+| `BPMN_MODELER_DB_ADMIN_*` / `BPMN_MODELER_RUN_MIGRATIONS_ON_STARTUP` no runtime | **removido** do env da API; migration = step separado (§17, §22) | corrigido |
+| `horizontal`/`per-model` | T03 corrigido — autorização context-wide; per-model ACL = `OUT_OF_V1` | corrigido |
+| `NON_XML` em malformed XML | T10 corrigido — `MALFORMED_XML` ≠ `NON_XML` (Prompt 3) | corrigido |
+| `schema_migrations` | acesso negado ao runtime; readiness verifica compatibilidade via `to_regclass` (§16) | consistente |
 
 ---
 
@@ -777,6 +844,14 @@ FROZEN
 
 - DATABASE AUTHORITY: **BPMN MODELER DEDICATED DATABASE** (`bpmn_modeler` em `postgres-plugins`).
 - RUNTIME DB ROLE: **`bpmn_modeler_app` — BPMN MODELER ONLY** (least privilege; sem DDL, sem DELETE, sem outros databases).
+- RUNTIME REVISION UPDATE PRIVILEGE: **DENIED**
+- RUNTIME DELETE PRIVILEGE: **DENIED**
+- RUNTIME DDL: **DENIED**
+- RUNTIME SCHEMA_MIGRATIONS ACCESS: **DENIED**
+- API RUNTIME ADMIN CREDENTIAL: **ABSENT**
+- PRODUCTION MIGRATION EXECUTION: **SEPARATE DEPLOY STEP**
+- PER-MODEL ACL: **NOT IN V1** (context-wide Core RBAC)
+- MALFORMED XML CLASSIFICATION: **MALFORMED_XML** (≠ `NON_XML`)
 - CROSS-CONTEXT BUSINESS DB ACCESS: **NONE**.
 - PEER DEPENDENCY STATUS: **PASS** (conjunto §3.1 resolvido sem `--force`/`--legacy-peer-deps`).
 - Todas as 9 mutations têm contrato de transação (§9); search persistence explícita (§5); threat model e resource ownership explícitos (§11–§12); AuthZ 17/17 (§10.2); nenhuma decisão de runtime/segurança resta aberta.
