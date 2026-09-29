@@ -79,8 +79,12 @@ describe("TypedExpressionEditor — hydration", () => {
       <TypedExpressionEditor value={MTD_START} onChange={vi.fn()} support={SUPPORT} />,
     );
     const triggers = screen.getAllByRole("button", { name: "Função" });
-    expect(triggers.map((t) => t.textContent)).toContain("Date.StartOfMonth");
-    expect(triggers.map((t) => t.textContent)).toContain("Date.AddMonths");
+    const labels = triggers.map((t) => t.textContent ?? "");
+    // Label amigável + nome canônico persistido (§ friendly labels)
+    expect(labels.join(" ")).toContain("Início do mês");
+    expect(labels.join(" ")).toContain("Date.StartOfMonth");
+    expect(labels.join(" ")).toContain("Adicionar meses");
+    expect(labels.join(" ")).toContain("Date.AddMonths");
     // identifier "today" hidrata na referência
     const refTrigger = screen.getByRole("button", { name: "Referência" });
     expect(refTrigger.textContent).toContain("Hoje");
@@ -120,7 +124,10 @@ describe("TypedExpressionEditor — authoring", () => {
         support={SUPPORT}
       />,
     );
-    chooseOption(screen.getByRole("button", { name: "Função" }), "Date.AddMonths");
+    chooseOption(
+      screen.getByRole("button", { name: "Função" }),
+      /Adicionar meses \(Date\.AddMonths\)/,
+    );
     const emitted = readExpressionAst(onChange.mock.calls[0][0]);
     expect(emitted).toEqual({
       kind: "call",

@@ -10,13 +10,10 @@ import {
   expressionCanonicalText,
   summarizeExpressionSpec,
 } from "../utils/paramExpressionLabels";
-import { readExpressionAst } from "../utils/paramExpressions";
-
-type TraceEntry = {
-  resolved?: unknown;
-  error?: { message?: unknown; code?: unknown } | null;
-  expectedType?: unknown;
-};
+import {
+  findParamExpressionTrace,
+  readExpressionAst,
+} from "../utils/paramExpressions";
 
 function formatTraceValue(value: unknown): string {
   if (value === null || value === undefined) return "—";
@@ -28,20 +25,6 @@ function formatTraceValue(value: unknown): string {
     }
   }
   return String(value);
-}
-
-/** Entrada do trace backend (`resolved.paramExpressions`) para o param. */
-export function findParamExpressionTrace(
-  resolved: ComunicadoDataResolved | null | undefined,
-  paramKey: string,
-): TraceEntry | null {
-  const raw = (resolved as { paramExpressions?: unknown } | null | undefined)
-    ?.paramExpressions;
-  if (!Array.isArray(raw)) return null;
-  const entry = raw.find(
-    (item) => item && typeof item === "object" && (item as { param?: unknown }).param === paramKey,
-  );
-  return (entry as TraceEntry | undefined) ?? null;
 }
 
 type Props = {

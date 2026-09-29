@@ -29,7 +29,9 @@ export function attachListDragGhost(
   transfer.setData("text/plain", source.dataset.reorderId ?? "");
 
   const ghost = source.cloneNode(true) as HTMLElement;
-  ghost.classList.add("td-reorder-ghost");
+  // O ghost é teleportado para document.body — carrega a classe de escopo
+  // para continuar recebendo os estilos `.dashboard-tv-dashboard.td-reorder-ghost`.
+  ghost.classList.add("td-reorder-ghost", "dashboard-tv-dashboard");
   ghost.setAttribute("aria-hidden", "true");
   const width = source.offsetWidth;
   ghost.style.position = "fixed";

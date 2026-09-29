@@ -77,6 +77,13 @@
   min-height: 0;
 }
 
+/* Fill cards must keep shrinking even when a trailing utility sibling
+   (e.g. FilePreviewModal's hidden anchor span) takes :last-child. */
+.dashboard-helpdesk .helpdesk-page-stack > .delpi-ui-section-card--fill {
+  flex-shrink: 1;
+  min-height: 0;
+}
+
 #root:has(> .dashboard-helpdesk.dashboard-page--fill) {
   height: 100%;
   min-height: 100%;

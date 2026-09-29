@@ -16,7 +16,8 @@ import {
   type DataParamUpdateValue,
 } from "../utils/applyDataParamUpdates";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
-import { DataParamFields, visibleParamSchema } from "./DataParamFields";
+import { visibleParamSchema } from "../utils/dataParamSchema";
+import { DataParamFields } from "./DataParamFields";
 import type { PanelLayout } from "./SelectedDataSidePanel";
 import { DeckField } from "./deck/DeckField";
 import { DeckPropertySection } from "./deck/DeckPropertySection";

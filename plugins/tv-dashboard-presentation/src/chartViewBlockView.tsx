@@ -217,4 +217,4 @@ export function ChartViewBlockView({
   );
 }
 
-export type { ComunicadoDataResolved };
+export type { ComunicadoDataResolved } from "./comunicadoTypes";

@@ -8,7 +8,7 @@ import type { TvDataRouteCatalogItem } from "../api/tvDashboardApi";
 import {
   visibleParamSchema,
   type DataParamSchema,
-} from "../components/DataParamFields";
+} from "./dataParamSchema";
 import {
   DATE_RANGE_PRESET_PARAM,
   PERIOD_DAYS_PARAM,

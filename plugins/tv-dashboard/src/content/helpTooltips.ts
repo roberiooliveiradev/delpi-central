@@ -461,6 +461,18 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
       "1) Inserir → Dados (ou catálogo) → escolha uma rota (cria a fonte no palco). 2) Inserir → KPI, Gráficos ou Tabelas → insira o visual. 3) Selecione o visual → painel Dados → Fonte de dados. Qualquer fonte serve para qualquer visual.",
     /** Faixa Dados — uma linha; o fluxo completo fica no painel lateral. */
     connectFlowRibbon: "Sem fonte — escolha no seletor do painel ou abra o catálogo.",
+    dataRibbonSource:
+      "Fonte de dados do elemento: DataModel do slide ou fonte no palco. Trocar aqui atualiza o painel lateral Dados na hora — mesma seleção, mesmos parâmetros.",
+    dataRibbonField:
+      "Campo e agregação projetados no visual (KPI, texto, série ou coluna). Gráfico e tabela abrem o editor completo com várias colunas/séries.",
+    dataRibbonPeriod:
+      "Período da fonte: preset relativo recalculado a cada atualização da TV ou datas fixas (Personalizado).",
+    dataRibbonRefresh:
+      "Intervalo de atualização desta fonte na TV. Vazio = padrão da programação.",
+    dataRibbonExpression:
+      "Expressões tipadas dos parâmetros (ex.: Date.AddMonths(Hoje,-12)). O cartão mostra o resumo; «Editar» abre o editor completo à direita.",
+    dataRibbonMore:
+      "Demais parâmetros e filtros da fonte fora do grupo Período, além de atalhos do painel lateral.",
     connectOnStage:
       "Com um gráfico, tabela, KPI ou texto/forma selecionado sem fonte, clique em um bloco de fonte (ícone de banco) no palco para conectar automaticamente.",
     kpiCard:

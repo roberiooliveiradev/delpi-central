@@ -2,7 +2,6 @@ import { FormSelectControl, NativeTextControl } from "@delpi/plugin-ui/index";
 import {
   EXCLUDE_WEEKENDS_PARAM,
   isEffectiveDailyGranularity,
-  routeSupportsDailyGranularity,
   type ComunicadoDataResolved,
   type ParamExpressionSpec,
 } from "@delpi/tv-dashboard-presentation";
@@ -14,8 +13,6 @@ import {
   type DataParamUpdateValue,
 } from "../utils/applyDataParamUpdates";
 import {
-  ENUM_OPTION_LABELS,
-  UI_FALLBACK_ENUMS,
   resolveParamFieldHint,
   resolveParamFieldLabel,
 } from "../content/dataParamCatalog";
@@ -26,9 +23,16 @@ import {
   DATE_RANGE_PRESET_PARAM,
   PERIOD_DAYS_PARAM,
   findDateRangeKeys,
+  isDateParam,
   isDateRangePairKey,
   type DateRangePresetId,
 } from "../utils/dateRangePresets";
+import {
+  resolveParamSelectOptions,
+  withExcludeWeekendsSchemaField,
+  type DataParamSchema,
+  type DataParamSchemaField,
+} from "../utils/dataParamSchema";
 import {
   buildFilterSelectOptions,
   canClearFilterValue,
@@ -63,99 +67,12 @@ export type DataParamExpressionEditRequest = Omit<
   "previewBlockId"
 >;
 
-export type DataParamSchemaField = {
-  type?: string;
-  label?: string;
-  description?: string;
-  default?: string | number | boolean;
-  optional?: boolean;
-  enum?: Array<string | number | boolean>;
-  /** `in: path` — parâmetro de path, nunca editável por expressão. */
-  in?: string;
-  /** Opt-out do contrato — expressionAllowed=false no paramSchema. */
-  expressionAllowed?: boolean;
-  format?: string;
-};
-
-export type DataParamSchema = Record<string, DataParamSchemaField>;
+export type { DataParamSchema, DataParamSchemaField } from "../utils/dataParamSchema";
 
 const BRANCH_PARAM_KEYS = new Set(["branch", "filial", "branch_code", "filial_id"]);
 
-const EXCLUDE_WEEKENDS_FIELD: DataParamSchemaField = {
-  type: "boolean",
-  optional: true,
-  enum: [true, false],
-};
-
-const DATE_PARAM_KEYS = new Set([
-  "start_date",
-  "end_date",
-  "date_start",
-  "date_end",
-  "dataInicio",
-  "dataFim",
-  "data_inicial",
-  "data_final",
-  "reference_date",
-  "date",
-  "date_from",
-  "date_to",
-  "data_inicio",
-  "data_fim",
-  "issue_date_start",
-  "issue_date_end",
-  "modified_from",
-  "modified_to",
-  "from",
-  "to",
-]);
-
-/** Máximo de campos inline na ribbon; acima disso abre modal. */
-export const RIBBON_INLINE_PARAM_LIMIT = 4;
-
 function hintForParam(key: string, field: DataParamSchemaField): string | undefined {
   return resolveParamFieldHint(key, field.description);
-}
-
-export function enumOptionLabel(paramKey: string, value: string): string {
-  return ENUM_OPTION_LABELS[paramKey]?.[value] ?? value;
-}
-
-export function resolveParamSelectOptions(
-  key: string,
-  field: DataParamSchemaField,
-): Array<{ value: string; label: string }> | null {
-  // Período em dias: sempre input numérico (qualquer valor positivo).
-  if (key === PERIOD_DAYS_PARAM) return null;
-
-  const rawEnum = Array.isArray(field.enum)
-    ? field.enum.filter((item) => item !== null && item !== undefined)
-    : [];
-  const values =
-    rawEnum.length > 0
-      ? rawEnum
-      : field.type === "boolean"
-        ? [true, false]
-        : (UI_FALLBACK_ENUMS[key] ?? null);
-  if (!values || values.length === 0) return null;
-
-  if (field.type === "boolean" || values.every((item) => typeof item === "boolean")) {
-    return values.map((item) => ({
-      value: String(item),
-      label: item === true || String(item) === "true" ? "Sim" : "Não",
-    }));
-  }
-
-  return values.map((item) => {
-    const value = String(item);
-    return { value, label: enumOptionLabel(key, value) };
-  });
-}
-
-function isDateParam(key: string, field: DataParamSchemaField): boolean {
-  if (DATE_PARAM_KEYS.has(key)) return true;
-  const format = String((field as { format?: string }).format || "").toLowerCase();
-  return format === "date" || format === "date-time";
 }
 
 function displayParamValue(
@@ -236,11 +153,6 @@ type Props = {
    */
   onChange(updates: Record<string, DataParamUpdateValue>): void;
 };
-
-/** @deprecated Preferir rótulos em helpTooltips; mantido para testes de contrato. */
-export function resolveFallbackPreset(openEndedDateRange: boolean): DateRangePresetId {
-  return openEndedDateRange ? "custom" : "this_month";
-}
 
 function ClearableControl({
   clearLabel,
@@ -347,23 +259,6 @@ function ParamValueModeSwitch({
   );
 }
 
-/** Injeta o boolean visual quando a rota admite granularidade diária. */
-export function withExcludeWeekendsSchemaField(
-  schema: DataParamSchema,
-  options?: {
-    fullSchema?: DataParamSchema;
-    fixedQueryParams?: Record<string, unknown> | null;
-  },
-): DataParamSchema {
-  const full = options?.fullSchema ?? schema;
-  if (!routeSupportsDailyGranularity(full, options?.fixedQueryParams)) return schema;
-  if (schema[EXCLUDE_WEEKENDS_PARAM]) return schema;
-  return {
-    ...schema,
-    [EXCLUDE_WEEKENDS_PARAM]: EXCLUDE_WEEKENDS_FIELD,
-  };
-}
-
 function orderedParamEntries(schema: DataParamSchema): Array<[string, DataParamSchemaField]> {
   const entries = Object.entries(schema);
   const weekendIdx = entries.findIndex(([key]) => key === EXCLUDE_WEEKENDS_PARAM);
@@ -438,7 +333,7 @@ export function DataParamFields({
     );
   }
 
-  function commitSelectChange(key: string, raw: string, patch: (value: string) => void) {
+  function commitSelectChange(raw: string, patch: (value: string) => void) {
     const next = normalizeFilterSelectChange(raw);
     if (next === null) return;
     patch(next);
@@ -516,7 +411,7 @@ export function DataParamFields({
               ariaLabel="Período relativo"
               value={periodSelectValue}
               onChange={(value: string) =>
-                commitSelectChange(DATE_RANGE_PRESET_PARAM, value, patchDateRangePreset)
+                commitSelectChange(value, patchDateRangePreset)
               }
               options={periodOptions}
             />
@@ -613,14 +508,21 @@ export function DataParamFields({
         idPrefix={`${fieldId}-mode`}
         onSwitch={(mode) => {
           if (mode === "expression") {
-            patchParam(
-              key,
-              buildExpressionParamValue(
-                isDateParam(key, field)
-                  ? { kind: "identifier", value: "today" }
-                  : { kind: "literal" },
-              ),
+            const spec = buildExpressionParamValue(
+              isDateParam(key, field)
+                ? { kind: "identifier", value: "today" }
+                : { kind: "literal" },
             );
+            patchParam(key, spec);
+            // Troca já entra no authoring — drawer abre com o draft inicial.
+            onEditExpression?.({
+              paramKey: key,
+              paramLabel: labelBase,
+              spec,
+              expectedReturnTypes,
+              refParamKeys: refParamKeys.filter((ref) => ref.key !== key),
+              apply: (next) => patchParam(key, next),
+            });
           } else {
             patchParam(key, "");
           }
@@ -749,7 +651,7 @@ export function DataParamFields({
             ariaLabel={labelBase}
             value={resolveFilterSelectValue(displayValue, fieldDiverged)}
             onChange={(value: string) =>
-              commitSelectChange(key, value, (next) => patchParam(key, next))
+              commitSelectChange(value, (next) => patchParam(key, next))
             }
             options={options}
           />
@@ -814,22 +716,4 @@ export function DataParamFields({
   }
 
   return <>{allFields}</>;
-}
-
-export function visibleParamSchema(
-  schema: DataParamSchema | undefined | null,
-  fixedQueryParams?: Record<string, unknown> | null,
-): DataParamSchema {
-  const base = (schema ?? {}) as DataParamSchema;
-  const fixed = fixedQueryParams ?? {};
-  const visible =
-    !fixed || Object.keys(fixed).length === 0
-      ? base
-      : (Object.fromEntries(
-          Object.entries(base).filter(([key]) => !(key in fixed)),
-        ) as DataParamSchema);
-  return withExcludeWeekendsSchemaField(visible, {
-    fullSchema: base,
-    fixedQueryParams: fixed,
-  });
 }

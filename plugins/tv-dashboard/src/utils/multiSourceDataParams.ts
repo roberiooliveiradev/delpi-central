@@ -10,7 +10,7 @@ import type { TvDataRouteCatalogItem } from "../api/tvDashboardApi";
 import {
   visibleParamSchema,
   type DataParamSchema,
-} from "../components/DataParamFields";
+} from "./dataParamSchema";
 import { applyDataParamRawUpdates } from "./applyDataParamUpdates";
 import {
   AGGREGATE_EXCLUDED_PARAM_KEYS,
