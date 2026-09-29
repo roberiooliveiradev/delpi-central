@@ -22,7 +22,7 @@ from mcp.types import (
 )
 
 if TYPE_CHECKING:
-    from mcp.server.fastmcp import FastMCP
+    from mcp.server.mcpserver import MCPServer
 
 logger = logging.getLogger(__name__)
 
@@ -155,7 +155,7 @@ def build_probe_pdf_bytes() -> bytes:
     return header + body + b"".join(xref_lines) + trailer
 
 
-def register_document_transport_spike(mcp: "FastMCP") -> None:
+def register_document_transport_spike(mcp: "MCPServer") -> None:
     """Register experimental resource(s) + optional probe tool. Caller gates with flag."""
 
     @mcp.resource(

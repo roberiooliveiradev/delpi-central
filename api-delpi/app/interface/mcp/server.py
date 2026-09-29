@@ -1,16 +1,17 @@
-"""FastMCP server exposing governed DAVI dynamic READ tools only."""
+"""MCPServer exposing governed DAVI dynamic READ tools only."""
 
 from __future__ import annotations
 
 import logging
 from typing import Any
 
-from mcp.server.fastmcp import FastMCP
+from mcp.server.mcpserver import MCPServer
+from mcp.server.transport_security import TransportSecuritySettings
 from delpi_mcp.errors import mcp_tool_result
 from delpi_mcp.tool_metadata import security_schemes_meta, tool_annotations_payload
 from delpi_mcp.transport import mcp_transport_security_settings
 from mcp.types import CallToolResult, TextContent, Tool as MCPTool, ToolAnnotations
-from pydantic import ValidationError
+from pydantic import ConfigDict, ValidationError
 
 from app.application.external_capabilities.constants import (
     EXTERNAL_INTERNAL_ERROR_MESSAGE,
@@ -50,7 +51,7 @@ from app.interface.mcp.schemas import (
 from app.utils.logger import log_error
 
 __all__ = [
-    "ApiDelpiFastMCP",
+    "ApiDelpiMCPServer",
     "VALIDATION_ERROR_CODE",
     "VALIDATION_ERROR_MESSAGE",
     "create_mcp_server",
@@ -108,7 +109,18 @@ def _authz_error_result(exc: PermissionError) -> CallToolResult:
     return mcp_tool_result(is_error=True, text="Forbidden")
 
 
-class ApiDelpiFastMCP(FastMCP):
+class _DaviWireTool(MCPTool):
+    """Tool wire model that preserves the top-level ``securitySchemes`` extension.
+
+    mcp-types 2.x ``Tool`` ignores unknown fields at validation; DAVI's
+    provider contract promotes ``_meta.securitySchemes`` to the tool top
+    level, so the extra field must survive ``model_validate``/``model_dump``.
+    """
+
+    model_config = ConfigDict(extra="allow")
+
+
+class ApiDelpiMCPServer(MCPServer):
     """Promote OpenAI securitySchemes and project canonical input/output schemas."""
 
     async def list_tools(self) -> list[MCPTool]:
@@ -137,7 +149,7 @@ class ApiDelpiFastMCP(FastMCP):
             }
             if schemes:
                 payload["securitySchemes"] = schemes
-            listed.append(MCPTool.model_validate(payload))
+            listed.append(_DaviWireTool.model_validate(payload))
         return listed
 
     async def call_tool(self, name: str, arguments: dict[str, Any]) -> Any:
@@ -152,7 +164,15 @@ class ApiDelpiFastMCP(FastMCP):
         return await super().call_tool(name, arguments)
 
 
-def create_mcp_server() -> FastMCP:
+def davi_mcp_transport_security() -> TransportSecuritySettings:
+    hosts, origins = public_host_allowed_for_mcp()
+    return mcp_transport_security_settings(
+        allowed_hosts=hosts,
+        allowed_origins=origins,
+    )
+
+
+def create_mcp_server() -> MCPServer:
     try:
         from app.composition.davi_dynamic_read_composer import (
             refresh_davi_action_index_from_live_openapi,
@@ -162,17 +182,9 @@ def create_mcp_server() -> FastMCP:
     except Exception as exc:
         logger.warning("DAVI action index live OpenAPI refresh skipped: %s", exc)
 
-    hosts, origins = public_host_allowed_for_mcp()
-    mcp = ApiDelpiFastMCP(
+    mcp = ApiDelpiMCPServer(
         name="api-delpi",
         instructions=DAVI_MCP_INSTRUCTIONS,
-        streamable_http_path="/",
-        stateless_http=True,
-        json_response=True,
-        transport_security=mcp_transport_security_settings(
-            allowed_hosts=hosts,
-            allowed_origins=origins,
-        ),
     )
 
     @mcp.tool(
