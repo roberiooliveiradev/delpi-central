@@ -57,7 +57,14 @@ export function applyProductionRunDowntimeEvent(
     return run;
   }
   const next: ProductionRunSnapshot = { ...run };
-  if (downtime) next.downtime = downtime;
+  // `downtime` no snapshot = parada ABERTA. Uma parada classificada que já
+  // estava encerrada (ex.: pendência de run antigo) não pode sobrescrever a
+  // parada atual — senão o timer passa a contar o horário da parada antiga.
+  if (downtime && !downtime.endedAt) next.downtime = downtime;
+  if (downtime && next.pendingDowntime?.id === downtime.id) {
+    next.pendingDowntime = null;
+    next.pendingDowntimeCount = Math.max(0, (next.pendingDowntimeCount ?? 1) - 1);
+  }
   if (event.reason === "automatic_downtime_ended") {
     next.downtime = null;
     next.pendingDowntime = downtime ?? next.pendingDowntime;

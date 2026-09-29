@@ -109,6 +109,63 @@ describe("downtime_classified realtime event", () => {
     assert.equal(updated?.id, "run-1");
   });
 
+  it("does not replace the open downtime with an already-ended classified one", () => {
+    // Regressão: classificar uma parada antiga não pode sobrescrever a
+    // parada aberta (o timer passava a contar o startedAt da antiga).
+    const stopped: ProductionRunSnapshot = {
+      ...run,
+      downtime: {
+        id: "dt-current",
+        runId: "run-1",
+        reasonCode: null,
+        reasonLabel: null,
+        category: null,
+        note: null,
+        confirmed: false,
+        startedAt: "2026-01-01T12:00:00Z",
+        endedAt: null,
+      },
+      pendingDowntime: {
+        id: "dt-old",
+        runId: "run-1",
+        reasonCode: null,
+        reasonLabel: null,
+        category: null,
+        note: null,
+        confirmed: false,
+        startedAt: "2026-01-01T10:00:00Z",
+        endedAt: "2026-01-01T10:30:00Z",
+      },
+      pendingDowntimeCount: 1,
+    };
+    const updated = applyProductionRunDowntimeEvent(
+      stopped,
+      {
+        type: "production_run_updated",
+        reason: "downtime_classified",
+        branch: "01",
+        workCenter: "CT01",
+        runId: "run-1",
+        downtime: {
+          id: "dt-old",
+          runId: "run-1",
+          reasonCode: "raw_material",
+          reasonLabel: "Falta de material",
+          category: "material",
+          note: null,
+          confirmed: true,
+          startedAt: "2026-01-01T10:00:00Z",
+          endedAt: "2026-01-01T10:30:00Z",
+        },
+      },
+      "01",
+      "CT01",
+    );
+    assert.equal(updated?.downtime?.id, "dt-current");
+    assert.equal(updated?.pendingDowntime, null);
+    assert.equal(updated?.pendingDowntimeCount, 0);
+  });
+
   it("ignores the event when the downtime payload is missing", () => {
     const updated = applyProductionRunDowntimeEvent(
       run,
