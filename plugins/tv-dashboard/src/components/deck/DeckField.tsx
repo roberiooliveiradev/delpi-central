@@ -11,15 +11,17 @@ type Props = {
   hint?: string;
   children: ReactNode;
   className?: string;
+  /** Slot à direita do label (ex.: switch Valor/Expressão — §22). */
+  labelAside?: ReactNode;
 };
 
 /**
  * Campo de formulário do deck — shell canônico do plugin-ui (`FormFieldShell`)
  * com classes `td-field` do TV Dashboard.
  */
-export function DeckField({ id, label, hint, children, className }: Props) {
+export function DeckField({ id, label, hint, children, className, labelAside }: Props) {
   return (
-    <Shell id={id ?? ""} label={label} hint={hint} className={className}>
+    <Shell id={id ?? ""} label={label} hint={hint} className={className} labelAside={labelAside}>
       {children}
     </Shell>
   );

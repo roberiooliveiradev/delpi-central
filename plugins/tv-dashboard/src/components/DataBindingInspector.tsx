@@ -34,6 +34,7 @@ import {
   DataParamFields,
   RIBBON_INLINE_PARAM_LIMIT,
   visibleParamSchema,
+  type DataParamExpressionEditRequest,
   type DataParamSchema,
 } from "./DataParamFields";
 import { FieldLabelsEditor } from "./FieldLabelsEditor";
@@ -185,6 +186,7 @@ export function DataBindingInspector({
     setLastDataDisplayMode,
     playlistId,
     playlistDefaults,
+    openExpressionEditor,
   } = useComunicadoEditor();
   const [paramsModalOpen, setParamsModalOpen] = useState(false);
   const [refreshCustom, setRefreshCustom] = useState(false);
@@ -220,6 +222,8 @@ export function DataBindingInspector({
 
   const editingLinkedSource = Boolean(blockOverride && selected && blockOverride.id !== selected.id);
   const binding = target.dataBinding;
+  const targetResolved =
+    "resolved" in target && target.resolved ? target.resolved : null;
 
   const applyPatch = (patch: Partial<ComunicadoBlock>) => {
     if (blockOverride) {
@@ -256,6 +260,11 @@ export function DataBindingInspector({
     applyPatch({
       dataBinding: { ...binding, params: nextParams },
     } as Partial<ComunicadoBlock>);
+  }
+
+  /** «Editar expressão» → drawer do editor (mesmo canal da ribbon/sidebar). */
+  function handleEditExpression(request: DataParamExpressionEditRequest) {
+    openExpressionEditor({ ...request, previewBlockId: targetId || null });
   }
 
   function updateDisplayMode(displayMode: ComunicadoDataDisplayMode) {
@@ -412,6 +421,8 @@ export function DataBindingInspector({
       openEndedDateRange={Boolean(route?.openEndedDateRange)}
       expressionSupport={expressionSupport}
       fixedQueryParams={route?.fixedQueryParams}
+      resolved={targetResolved}
+      onEditExpression={handleEditExpression}
       onChange={updateParams}
     />
   );
@@ -497,6 +508,8 @@ export function DataBindingInspector({
         openEndedDateRange={Boolean(route?.openEndedDateRange)}
         expressionSupport={expressionSupport}
         fixedQueryParams={route?.fixedQueryParams}
+        resolved={targetResolved}
+        onEditExpression={handleEditExpression}
         onChange={updateParams}
       />
     </HostContainedDialog>

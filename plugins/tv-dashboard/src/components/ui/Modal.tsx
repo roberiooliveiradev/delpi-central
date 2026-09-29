@@ -1,4 +1,5 @@
 import {
+  createHostContainedDrawerShell,
   createHostContainedModalShell,
   createModalShell,
 } from "@delpi/plugin-ui/index";
@@ -25,4 +26,10 @@ export const HostContainedDialog = createHostContainedModalShell({
   prefix: "td",
   portalScopeClassName: TV_DASHBOARD_ROOT_CLASS,
   containedLayout: "dialog",
+});
+
+/** Painel lateral deslizante na área do MFE (editor de expressão etc.). */
+export const HostContainedDrawer = createHostContainedDrawerShell({
+  prefix: "td",
+  portalScopeClassName: TV_DASHBOARD_ROOT_CLASS,
 });

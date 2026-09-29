@@ -243,6 +243,11 @@ export function ComunicadoEditorProvider({
   const [dataCatalogModalOpen, setDataCatalogModalOpen] = useState(false);
   const [dataCatalogAnchor, setDataCatalogAnchor] = useState<HTMLElement | null>(null);
   const [dataCatalogMode, setDataCatalogMode] = useState<"insert" | "replace">("insert");
+  const [expressionEditRequest, setExpressionEditRequest] =
+    useState<import("./comunicadoEditorContextCore").ExpressionEditRequest | null>(null);
+  const closeExpressionEditorCallback = useCallback(() => {
+    setExpressionEditRequest(null);
+  }, []);
   const [shapeMenuOpen, setShapeMenuOpen] = useState(false);
   const [stageDrawTool, setStageDrawTool] = useState<
     import("@delpi/tv-dashboard-presentation").ComunicadoLineToolId | null
@@ -949,6 +954,9 @@ export function ComunicadoEditorProvider({
     setDataPanelOpen,
     dataPanelIntent,
     setDataPanelIntent,
+    expressionEditRequest,
+    openExpressionEditor: setExpressionEditRequest,
+    closeExpressionEditor: closeExpressionEditorCallback,
     selectionPanelTab: selection.selectionPanelTab,
     setSelectionPanelTab: selection.setSelectionPanelTab,
     addShape: blockActions.addShape,
