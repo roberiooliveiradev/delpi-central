@@ -1,4 +1,5 @@
 delpi_api_client
 delpi_auth
+delpi_mcp
 strategic_indicators_client
 transformometro_client
