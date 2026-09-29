@@ -29,10 +29,12 @@ delpi_auth/tests/test_rbac_freshness_and_principal.py
 delpi_mcp/__init__.py
 delpi_mcp/conformance.py
 delpi_mcp/protocol.py
+delpi_mcp/resource_contract.py
 delpi_mcp/tool_validation.py
 delpi_mcp/tests/__init__.py
 delpi_mcp/tests/test_conformance.py
 delpi_mcp/tests/test_no_domain_imports.py
+delpi_mcp/tests/test_resource_contract.py
 delpi_mcp/tests/test_tool_validation.py
 strategic_indicators_client/__init__.py
 strategic_indicators_client/client.py

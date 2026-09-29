@@ -22,6 +22,25 @@ from __future__ import annotations
 import os
 from typing import Any
 
+from delpi_mcp.resource_contract import (
+    build_www_authenticate_challenge as _shared_build_challenge,
+)
+from delpi_mcp.resource_contract import (
+    build_www_authenticate_meta as _shared_www_authenticate_meta,
+)
+from delpi_mcp.resource_contract import (
+    extract_token_audiences as _shared_extract_token_audiences,
+)
+from delpi_mcp.resource_contract import (
+    extract_token_scopes as _shared_extract_token_scopes,
+)
+from delpi_mcp.resource_contract import (
+    missing_required_scopes as _shared_missing_required_scopes,
+)
+from delpi_mcp.resource_contract import (
+    token_has_required_audience as _shared_token_has_audience,
+)
+
 # Required in JWT ``scope`` for MCP transport acceptance.
 MCP_OAUTH_SCOPES: tuple[str, ...] = (
     "openid",
@@ -78,19 +97,13 @@ def build_www_authenticate_challenge(
     error_description: str | None = None,
 ) -> str:
     """RFC 9728 / OpenAI Bearer challenge (no internal details)."""
-    metadata_url = resolve_resource_metadata_url()
-    parts = [
-        "Bearer",
-        'realm="api-delpi-mcp"',
-        f'resource_metadata="{metadata_url}"',
-        f'scope="{" ".join(MCP_OAUTH_SCOPES)}"',
-    ]
-    if error:
-        parts.append(f'error="{error}"')
-    if error_description:
-        safe = error_description.replace('"', "'")
-        parts.append(f'error_description="{safe}"')
-    return " ".join(parts)
+    return _shared_build_challenge(
+        realm="api-delpi-mcp",
+        metadata_url=resolve_resource_metadata_url(),
+        scope_value=" ".join(MCP_OAUTH_SCOPES),
+        error=error,
+        error_description=error_description,
+    )
 
 
 def mcp_www_authenticate_meta(
@@ -99,44 +112,28 @@ def mcp_www_authenticate_meta(
     error_description: str,
 ) -> dict[str, list[str]]:
     """Tool-result `_meta` payload required by OpenAI for OAuth linking UX."""
-    return {
-        "mcp/www_authenticate": [
-            build_www_authenticate_challenge(
-                error=error,
-                error_description=error_description,
-            )
-        ]
-    }
+    return _shared_www_authenticate_meta(
+        build_www_authenticate_challenge(
+            error=error,
+            error_description=error_description,
+        ),
+        wrap_in_list=True,
+    )
 
 
 def extract_token_scopes(claims: dict[str, Any]) -> set[str]:
-    raw = claims.get("scope") or claims.get("scp") or ""
-    if isinstance(raw, (list, tuple, set)):
-        return {str(item).strip() for item in raw if str(item).strip()}
-    return {part for part in str(raw).split() if part}
+    return _shared_extract_token_scopes(claims)
 
 
 def missing_required_oauth_scopes(claims: dict[str, Any]) -> list[str]:
-    present = extract_token_scopes(claims)
-    return [scope for scope in MCP_OAUTH_SCOPES if scope not in present]
+    return _shared_missing_required_scopes(claims, MCP_OAUTH_SCOPES)
 
 
 def extract_token_audiences(claims: dict[str, Any]) -> set[str]:
     """Normalize JWT ``aud`` (string or array) to a set of exact audience strings."""
-    raw = claims.get("aud")
-    if raw is None:
-        return set()
-    if isinstance(raw, str):
-        value = raw.strip()
-        return {value} if value else set()
-    if isinstance(raw, (list, tuple, set)):
-        return {str(item).strip() for item in raw if str(item).strip()}
-    return set()
+    return _shared_extract_token_audiences(claims)
 
 
 def token_has_exact_audience(claims: dict[str, Any], expected: str) -> bool:
     """Semantic membership check — exact string match, no trailing-slash rewrite."""
-    target = (expected or "").strip()
-    if not target:
-        return False
-    return target in extract_token_audiences(claims)
+    return _shared_token_has_audience(claims, expected)

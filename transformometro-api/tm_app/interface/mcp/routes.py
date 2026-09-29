@@ -2,27 +2,10 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter
-from fastapi.responses import JSONResponse
+from delpi_mcp.resource_contract import mcp_metadata_router as _build_metadata_router
 
-from tm_app.interface.mcp.resource_metadata import build_oauth_protected_resource_metadata
+from tm_app.interface.mcp.resource_metadata import MCP_RESOURCE_CONFIG
 
-router = APIRouter(tags=["Transformômetro MCP OAuth Metadata"])
-
-
-@router.get(
-    "/.well-known/oauth-protected-resource",
-    include_in_schema=False,
-    operation_id="tm_mcp_oauth_protected_resource_metadata",
+router = _build_metadata_router(
+    MCP_RESOURCE_CONFIG, tags=["Transformômetro MCP OAuth Metadata"]
 )
-def oauth_protected_resource_metadata():
-    return JSONResponse(build_oauth_protected_resource_metadata())
-
-
-@router.get(
-    "/.well-known/oauth-protected-resource/mcp",
-    include_in_schema=False,
-    operation_id="tm_mcp_oauth_protected_resource_metadata_path",
-)
-def oauth_protected_resource_metadata_path():
-    return JSONResponse(build_oauth_protected_resource_metadata())

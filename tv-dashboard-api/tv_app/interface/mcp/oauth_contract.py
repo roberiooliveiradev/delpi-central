@@ -11,6 +11,15 @@ from __future__ import annotations
 import os
 import urllib.parse
 
+from delpi_mcp.resource_contract import (
+    build_www_authenticate_challenge as _shared_build_challenge,
+)
+from delpi_mcp.resource_contract import (
+    missing_required_scopes,
+    protected_resource_metadata_url,
+    token_has_required_audience,
+)
+
 from tv_app.config import settings
 
 from .constants import CANONICAL_MCP_RESOURCE_URL, MCP_GATEWAY_ROOT, MCP_PREDEFINED_CLIENT_ID
@@ -47,50 +56,27 @@ def resolve_required_mcp_resource_audience() -> str:
 
 def build_www_authenticate_challenge(*, include_mcp_tools_scope: bool = True) -> str:
     """RFC 6750 challenge for 401 on MCP JSON-RPC (RFC 9728 resource_metadata)."""
-    from .resource_metadata import protected_resource_metadata_url
-
-    resource = resolve_required_mcp_resource_audience()
-    meta = protected_resource_metadata_url(resource)
-    parts = [
-        'Bearer realm="mcp"',
-        f'resource_metadata="{meta}"',
-        'error="invalid_token"',
-        'error_description="Missing or invalid access token"',
-    ]
-    if include_mcp_tools_scope:
-        parts.append('scope="mcp:tools"')
-    return ", ".join(parts)
-
-
-def _jwt_token_audiences_claims(payload: dict) -> set[str]:
-    aud = payload.get("aud")
-    if aud is None:
-        return set()
-    if isinstance(aud, str):
-        return {aud}
-    if isinstance(aud, list):
-        return {str(x) for x in aud}
-    return set()
+    meta = protected_resource_metadata_url(resolve_required_mcp_resource_audience())
+    return _shared_build_challenge(
+        realm="mcp",
+        metadata_url=meta,
+        scope_value="mcp:tools" if include_mcp_tools_scope else "",
+        separator=", ",
+        scope_last=True,
+        default_error=("invalid_token", "Missing or invalid access token"),
+    )
 
 
 def mcp_audience_satisfied(payload: dict) -> bool:
     """JWT `aud` must contain the exact MCP resource URL (not gateway root alone)."""
-    expected = resolve_required_mcp_resource_audience()
-    actual = _jwt_token_audiences_claims(payload)
-    return bool(actual) and expected in actual
-
-
-def _parse_jwt_scope_strings(payload: dict) -> list[str]:
-    raw = payload.get("scope")
-    if not isinstance(raw, str):
-        return []
-    return [s for s in raw.split() if s]
+    return token_has_required_audience(
+        payload, resolve_required_mcp_resource_audience()
+    )
 
 
 def mcp_required_scopes_satisfied(payload: dict) -> bool:
     """Generic OAuth scopes only — never product/resource client ids."""
-    scopes = set(_parse_jwt_scope_strings(payload))
-    return set(MCP_CLIENT_SCOPES).issubset(scopes)
+    return not missing_required_scopes(payload, MCP_CLIENT_SCOPES)
 
 
 def valid_oauth_client_id(value: str) -> bool:

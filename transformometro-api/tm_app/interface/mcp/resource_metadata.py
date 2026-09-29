@@ -4,7 +4,12 @@ from __future__ import annotations
 
 import os
 from typing import Any
-from urllib.parse import urlparse
+
+from delpi_mcp.resource_contract import (
+    McpResourceConfig,
+    build_protected_resource_metadata,
+    mcp_allowed_hosts_and_origins,
+)
 
 from tm_app.interface.mcp.oauth_contract import (
     MCP_OAUTH_SCOPES,
@@ -13,9 +18,22 @@ from tm_app.interface.mcp.oauth_contract import (
     resolve_resource_metadata_url,
 )
 
-_MCP_CONNECTOR_ORIGINS = (
-    "https://chatgpt.com",
-    "https://chat.openai.com",
+MCP_RESOURCE_CONFIG = McpResourceConfig(
+    resolve_resource_url=lambda: resolve_required_mcp_resource_audience(),
+    resolve_authorization_server=lambda: resolve_authorization_server_issuer(),
+    required_scopes=MCP_OAUTH_SCOPES,
+    resource_documentation=(
+        "https://github.com/roberiooliveiradev/delpi-central/blob/main/"
+        "transformometro-api/docs/integrations/openai-plugin-mcp.md"
+    ),
+    metadata_paths=(
+        "/.well-known/oauth-protected-resource",
+        "/.well-known/oauth-protected-resource/mcp",
+    ),
+    metadata_operation_ids=(
+        "tm_mcp_oauth_protected_resource_metadata",
+        "tm_mcp_oauth_protected_resource_metadata_path",
+    ),
 )
 
 
@@ -34,19 +52,7 @@ def resolve_mcp_resource_url() -> str:
 
 
 def build_oauth_protected_resource_metadata() -> dict[str, Any]:
-    resource = resolve_mcp_resource_url()
-    issuer = resolve_authorization_server_issuer()
-    auth_servers = [issuer] if issuer else []
-    return {
-        "resource": resource,
-        "authorization_servers": auth_servers,
-        "scopes_supported": list(MCP_OAUTH_SCOPES),
-        "bearer_methods_supported": ["header"],
-        "resource_documentation": (
-            "https://github.com/roberiooliveiradev/delpi-central/blob/main/"
-            "transformometro-api/docs/integrations/openai-plugin-mcp.md"
-        ),
-    }
+    return build_protected_resource_metadata(MCP_RESOURCE_CONFIG)
 
 
 def www_authenticate_challenge(
@@ -61,28 +67,7 @@ def www_authenticate_challenge(
 
 
 def public_host_allowed_for_mcp() -> tuple[list[str], list[str]]:
-    hosts = ["127.0.0.1:*", "localhost:*", "[::1]:*"]
-    origins = [
-        "http://127.0.0.1:*",
-        "http://localhost:*",
-        "http://[::1]:*",
-        *_MCP_CONNECTOR_ORIGINS,
-    ]
-    base = resolve_public_base_url()
-    if not base:
-        return hosts, origins
-    parsed = urlparse(base)
-    host = parsed.hostname
-    if not host:
-        return hosts, origins
-    hosts.append(host)
-    hosts.append(f"{host}:*")
-    scheme = parsed.scheme or "https"
-    if parsed.port:
-        origins.append(f"{scheme}://{host}:{parsed.port}")
-    else:
-        origins.append(f"{scheme}://{host}")
-    return hosts, origins
+    return mcp_allowed_hosts_and_origins(resolve_public_base_url())
 
 
 __all__ = [
