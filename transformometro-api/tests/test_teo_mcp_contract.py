@@ -111,7 +111,7 @@ def test_list_tools_exposes_governed_full_crud_tools() -> None:
     names = [t.name for t in tools]
     assert set(names) == set(MCP_TOOL_NAMES)
     assert "get_methodology_guide" in names
-    assert len(names) == 20
+    assert len(names) == 24
     assert "prepare_record_change" in names
     assert "commit_proposal" in names
     assert "prepare_improvement_package" in names

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import Any, Literal
 
 from mcp.server.fastmcp import FastMCP
 from mcp.server.transport_security import TransportSecuritySettings
@@ -251,6 +251,39 @@ def create_mcp_server() -> FastMCP:
         )
 
     @mcp.tool(
+        name="get_diagnostic",
+        title="Get diagnostic",
+        description=(
+            "READ: one Diagnostic V1 with revision context, resolved evidence "
+            "links and data-quality signals. Findings are OBSERVED/CALCULATED; "
+            "hypotheses and conclusions are INFERRED claims (VALIDATED != "
+            "FACT). Unresolved evidence links remain reported. "
+            "Use before prepare_manage_diagnostic when target ids are unknown."
+        ),
+        annotations=_annotations("get_diagnostic", "Get diagnostic"),
+        meta=meta,
+    )
+    def get_diagnostic(diagnostic_id: str) -> CallToolResult:
+        return bridge.tool_get_diagnostic(diagnostic_id=diagnostic_id)
+
+    @mcp.tool(
+        name="list_diagnostics_by_revision",
+        title="List diagnostics by revision",
+        description=(
+            "READ: Diagnostic V1 summaries for one revision, canonical "
+            "ordering, no evidence fan-out. Use get_diagnostic for detail."
+        ),
+        annotations=_annotations(
+            "list_diagnostics_by_revision", "List diagnostics by revision"
+        ),
+        meta=meta,
+    )
+    def list_diagnostics_by_revision(revision_id: str) -> CallToolResult:
+        return bridge.tool_list_diagnostics_by_revision(
+            revision_id=revision_id
+        )
+
+    @mcp.tool(
         name="generate_from_transcript",
         title="Generate from transcript",
         description=(
@@ -482,6 +515,74 @@ def create_mcp_server() -> FastMCP:
     ) -> CallToolResult:
         return bridge.tool_prepare_meeting_minute_manage(
             action=action, minute_id=minute_id, data=data
+        )
+
+    @mcp.tool(
+        name="prepare_create_diagnostic",
+        title="Prepare create diagnostic",
+        description=(
+            "PREPARE only — does not persist. Creates a governed proposal to "
+            "create a Diagnostic on a revision. diagnostic_id is "
+            "server-generated and shown in the exact sealed change; never "
+            "supply it. Show the exact change, get explicit user "
+            "confirmation, then commit_proposal."
+        ),
+        annotations=_annotations(
+            "prepare_create_diagnostic", "Prepare create diagnostic"
+        ),
+        meta=meta,
+    )
+    def prepare_create_diagnostic(
+        revision_id: str,
+        problem_statement: str,
+        provenance: dict | None = None,
+    ) -> CallToolResult:
+        return bridge.tool_prepare_create_diagnostic(
+            revision_id=revision_id,
+            problem_statement=problem_statement,
+            provenance=provenance,
+        )
+
+    @mcp.tool(
+        name="prepare_manage_diagnostic",
+        title="Prepare manage diagnostic",
+        description=(
+            "PREPARE only — does not persist. One governed Diagnostic action "
+            "per call. Additive actions (add_*) generate the new entity id "
+            "server-side — never supply finding_id/hypothesis_id/link_id/"
+            "conclusion_id. Lifecycle/mark actions target EXISTING ids — "
+            "READ first via get_diagnostic when ids are unknown; ids are "
+            "never generated for you. Show the exact change, get explicit "
+            "user confirmation, then commit_proposal."
+        ),
+        annotations=_annotations(
+            "prepare_manage_diagnostic", "Prepare manage diagnostic"
+        ),
+        meta=meta,
+    )
+    def prepare_manage_diagnostic(
+        diagnostic_id: str,
+        action: Literal[
+            "add_finding",
+            "add_hypothesis",
+            "add_causal_link",
+            "add_evidence_link",
+            "add_conclusion",
+            "validate_hypothesis",
+            "reject_hypothesis",
+            "supersede_hypothesis",
+            "mark_hypothesis_stale_evidence",
+            "mark_hypothesis_revalidation_required",
+            "validate_conclusion",
+            "reject_conclusion",
+            "supersede_conclusion",
+        ],
+        payload: dict | None = None,
+    ) -> CallToolResult:
+        return bridge.tool_prepare_manage_diagnostic(
+            diagnostic_id=diagnostic_id,
+            action=action,
+            payload=payload,
         )
 
     # --- COMMON COMMIT (proposal_handle only; not a generic executor) -----

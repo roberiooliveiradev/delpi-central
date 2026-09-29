@@ -59,8 +59,16 @@ TOOL_TO_GPT_OPERATION: dict[str, str] = {
     for tool in tools
 }
 
-# MCP tools with no GPT Action. Methodology is on both surfaces.
-MCP_NATIVE_TOOLS: frozenset[str] = frozenset()
+# MCP tools with no GPT Action. Diagnostic V1 is MCP-native in this slice —
+# GPT parity, if desired, is a separate decision (no fake parity mapping).
+MCP_NATIVE_TOOLS: frozenset[str] = frozenset(
+    {
+        "get_diagnostic",
+        "list_diagnostics_by_revision",
+        "prepare_create_diagnostic",
+        "prepare_manage_diagnostic",
+    }
+)
 
 # READ | PREPARE | ACT | ANALYSIS (non-persist)
 # ACT class retained for commit_proposal (common governed commit).
@@ -75,6 +83,8 @@ TOOL_CLASS: dict[str, str] = {
     "list_evidence": "READ",
     "get_process_timeline": "READ",
     "meeting_minute_read": "READ",
+    "get_diagnostic": "READ",
+    "list_diagnostics_by_revision": "READ",
     "generate_from_transcript": "ANALYSIS",
     "prepare_record_change": "PREPARE",
     "prepare_activate_revision": "PREPARE",
@@ -84,6 +94,8 @@ TOOL_CLASS: dict[str, str] = {
     "prepare_manage_evidence": "PREPARE",
     "prepare_adjust_shared_resource_cost": "PREPARE",
     "prepare_meeting_minute_manage": "PREPARE",
+    "prepare_create_diagnostic": "PREPARE",
+    "prepare_manage_diagnostic": "PREPARE",
     "commit_proposal": "ACT",
 }
 
@@ -144,4 +156,6 @@ PREPARE_TOOL_CAPABILITY: dict[str, str] = {
     "prepare_manage_evidence": "manage_evidence",
     "prepare_adjust_shared_resource_cost": "adjust_shared_resource_cost",
     "prepare_meeting_minute_manage": "meeting_minute_manage",
+    "prepare_create_diagnostic": "create_diagnostic",
+    "prepare_manage_diagnostic": "manage_diagnostic",
 }
