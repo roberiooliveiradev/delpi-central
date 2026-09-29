@@ -552,7 +552,7 @@ def tool_prepare_record_change(
 
 
 def tool_commit_proposal(
-    proposal_handle: str, confirmation: bool = True
+    proposal_handle: str, confirmation: bool
 ) -> CallToolResult:
     """Common governed commit: opaque handle only; capability from stored proposal."""
     try:
@@ -998,48 +998,70 @@ def tool_prepare_manage_diagnostic(
 # --- Legacy ACT helpers (delegate to common commit; not MCP-registered) ---
 
 
-def tool_act_create_record(proposal_handle: str) -> CallToolResult:
-    return tool_commit_proposal(proposal_handle)
+def tool_act_create_record(
+    proposal_handle: str, confirmation: bool
+) -> CallToolResult:
+    return tool_commit_proposal(proposal_handle, confirmation=confirmation)
 
 
-def tool_act_update_record(proposal_handle: str) -> CallToolResult:
-    return tool_commit_proposal(proposal_handle)
+def tool_act_update_record(
+    proposal_handle: str, confirmation: bool
+) -> CallToolResult:
+    return tool_commit_proposal(proposal_handle, confirmation=confirmation)
 
 
-def tool_act_delete_record(proposal_handle: str) -> CallToolResult:
-    return tool_commit_proposal(proposal_handle)
+def tool_act_delete_record(
+    proposal_handle: str, confirmation: bool
+) -> CallToolResult:
+    return tool_commit_proposal(proposal_handle, confirmation=confirmation)
 
 
-def tool_act_duplicate_record(proposal_handle: str) -> CallToolResult:
-    return tool_commit_proposal(proposal_handle)
+def tool_act_duplicate_record(
+    proposal_handle: str, confirmation: bool
+) -> CallToolResult:
+    return tool_commit_proposal(proposal_handle, confirmation=confirmation)
 
 
-def tool_act_activate_revision(proposal_handle: str) -> CallToolResult:
-    return tool_commit_proposal(proposal_handle)
+def tool_act_activate_revision(
+    proposal_handle: str, confirmation: bool
+) -> CallToolResult:
+    return tool_commit_proposal(proposal_handle, confirmation=confirmation)
 
 
-def tool_act_recalculate_dashboard(proposal_handle: str) -> CallToolResult:
-    return tool_commit_proposal(proposal_handle)
+def tool_act_recalculate_dashboard(
+    proposal_handle: str, confirmation: bool
+) -> CallToolResult:
+    return tool_commit_proposal(proposal_handle, confirmation=confirmation)
 
 
-def tool_act_meeting_minute_workflow(proposal_handle: str) -> CallToolResult:
-    return tool_commit_proposal(proposal_handle)
+def tool_act_meeting_minute_workflow(
+    proposal_handle: str, confirmation: bool
+) -> CallToolResult:
+    return tool_commit_proposal(proposal_handle, confirmation=confirmation)
 
 
-def tool_act_commit_improvement_package(proposal_handle: str) -> CallToolResult:
-    return tool_commit_proposal(proposal_handle)
+def tool_act_commit_improvement_package(
+    proposal_handle: str, confirmation: bool
+) -> CallToolResult:
+    return tool_commit_proposal(proposal_handle, confirmation=confirmation)
 
 
-def tool_act_manage_evidence(proposal_handle: str) -> CallToolResult:
-    return tool_commit_proposal(proposal_handle)
+def tool_act_manage_evidence(
+    proposal_handle: str, confirmation: bool
+) -> CallToolResult:
+    return tool_commit_proposal(proposal_handle, confirmation=confirmation)
 
 
-def tool_act_adjust_shared_resource_cost(proposal_handle: str) -> CallToolResult:
-    return tool_commit_proposal(proposal_handle)
+def tool_act_adjust_shared_resource_cost(
+    proposal_handle: str, confirmation: bool
+) -> CallToolResult:
+    return tool_commit_proposal(proposal_handle, confirmation=confirmation)
 
 
-def tool_act_meeting_minute_manage(proposal_handle: str) -> CallToolResult:
-    return tool_commit_proposal(proposal_handle)
+def tool_act_meeting_minute_manage(
+    proposal_handle: str, confirmation: bool
+) -> CallToolResult:
+    return tool_commit_proposal(proposal_handle, confirmation=confirmation)
 
 
 # Back-compat aliases used by older smoke tests (map to prepare/act semantics).
@@ -1066,10 +1088,13 @@ def tool_commit_improvement_package(
     dry_run: bool = False,
     activate_scenario: bool = False,
     recalculate: bool = False,
+    confirmation: bool = False,
 ) -> CallToolResult:
     """ACT requires proposal_handle. dry_run without handle re-prepares only."""
     if proposal_handle:
-        return tool_act_commit_improvement_package(proposal_handle)
+        return tool_act_commit_improvement_package(
+            proposal_handle, confirmation=confirmation
+        )
     if dry_run:
         return tool_prepare_improvement_package(
             process=process,
@@ -1096,9 +1121,12 @@ def tool_manage_evidence(
     descricao: str | None = None,
     confirm_delete: bool = False,
     proposal_handle: str | None = None,
+    confirmation: bool = False,
 ) -> CallToolResult:
     if proposal_handle:
-        return tool_act_manage_evidence(proposal_handle)
+        return tool_act_manage_evidence(
+            proposal_handle, confirmation=confirmation
+        )
     return tool_prepare_manage_evidence(
         scope=scope,
         operation=operation,

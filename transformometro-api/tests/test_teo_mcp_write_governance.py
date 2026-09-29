@@ -489,7 +489,7 @@ class TestMcpBridgeGoverned:
             ):
                 from tm_app.interface.mcp.tool_bridge import tool_commit_proposal
 
-                result = tool_commit_proposal("fake.handle")
+                result = tool_commit_proposal("fake.handle", confirmation=True)
             assert result.isError is True
             assert (
                 result.structuredContent["data"]["error_code"]
@@ -539,3 +539,58 @@ class TestMcpBridgeGoverned:
         finally:
             reset_request_authorization(auth_token)
             reset_current_user(user_token)
+
+
+class TestExplicitConfirmationHardening:
+    """Prompt 10 — omitted confirmation must never mean confirmed."""
+
+    def test_mcp_schema_requires_confirmation_without_default(self):
+        import asyncio
+
+        from tm_app.interface.mcp.server import create_mcp_server
+
+        tools = {t.name: t for t in asyncio.run(create_mcp_server().list_tools())}
+        schema = tools["commit_proposal"].inputSchema
+        assert set(schema.get("required") or []) == {
+            "proposal_handle",
+            "confirmation",
+        }
+        assert "default" not in schema["properties"]["confirmation"]
+
+    def test_bridge_commit_requires_confirmation_argument(self):
+        import inspect
+
+        from tm_app.interface.mcp.tool_bridge import tool_commit_proposal
+
+        params = inspect.signature(tool_commit_proposal).parameters
+        assert params["confirmation"].default is inspect.Parameter.empty
+
+    def test_bridge_commit_without_confirmation_is_type_error(self):
+        import inspect
+
+        from tm_app.interface.mcp.tool_bridge import tool_commit_proposal
+
+        with pytest.raises(TypeError):
+            tool_commit_proposal("any.handle")
+
+    def test_legacy_act_helpers_do_not_implicitly_confirm(self):
+        import inspect
+
+        from tm_app.interface.mcp import tool_bridge
+
+        for name in (
+            "tool_act_create_record",
+            "tool_act_update_record",
+            "tool_act_delete_record",
+            "tool_act_duplicate_record",
+            "tool_act_activate_revision",
+            "tool_act_recalculate_dashboard",
+            "tool_act_meeting_minute_workflow",
+            "tool_act_commit_improvement_package",
+            "tool_act_manage_evidence",
+            "tool_act_adjust_shared_resource_cost",
+            "tool_act_meeting_minute_manage",
+        ):
+            params = inspect.signature(getattr(tool_bridge, name)).parameters
+            assert "confirmation" in params, name
+            assert params["confirmation"].default is inspect.Parameter.empty, name

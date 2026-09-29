@@ -600,7 +600,7 @@ def create_mcp_server() -> FastMCP:
         meta=meta,
     )
     def commit_proposal(
-        proposal_handle: str, confirmation: bool = True
+        proposal_handle: str, confirmation: bool
     ) -> CallToolResult:
         return bridge.tool_commit_proposal(
             proposal_handle=proposal_handle, confirmation=confirmation
